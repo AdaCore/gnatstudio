@@ -361,6 +361,12 @@ package body Src_Editor_Module is
       Kernel  : Kernel_Handle);
    --  Callback for the "file_closed" signal.
 
+   procedure File_Changed_On_Disk_Cb
+     (Widget  : access Glib.Object.GObject_Record'Class;
+      Args    : GValues;
+      Kernel  : Kernel_Handle);
+   --  Callback for the "file_changed_on_disk" signal.
+
    procedure File_Saved_Cb
      (Widget  : access Glib.Object.GObject_Record'Class;
       Args    : GValues;
@@ -1131,6 +1137,44 @@ package body Src_Editor_Module is
       when E : others =>
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end File_Edited_Cb;
+
+   -----------------------------
+   -- File_Changed_On_Disk_Cb --
+   -----------------------------
+
+   procedure File_Changed_On_Disk_Cb
+     (Widget  : access Glib.Object.GObject_Record'Class;
+      Args    : GValues;
+      Kernel  : Kernel_Handle)
+   is
+      pragma Unreferenced (Widget);
+      File  : constant String := Get_String (Nth (Args, 1));
+      Iter  : Child_Iterator := First_Child (Get_MDI (Kernel));
+      Child : MDI_Child;
+      Box   : Source_Box;
+   begin
+      loop
+         Child := Get (Iter);
+
+         exit when Child = null;
+
+         if (Get_Widget (Child).all in Source_Box_Record'Class) then
+            declare
+               Title : constant String := Get_Title (Child);
+            begin
+               if Title'Length >= File'Length
+                 and then File_Equal
+                   (File, Title (Title'First .. Title'First + File'Length - 1))
+               then
+                  Box := Source_Box (Get_Widget (Child));
+                  Check_Timestamp (Box.Editor);
+               end if;
+            end;
+         end if;
+
+         Next (Iter);
+      end loop;
+   end File_Changed_On_Disk_Cb;
 
    --------------------
    -- File_Closed_Cb --
@@ -3003,6 +3047,12 @@ package body Src_Editor_Module is
            File_Closed_Signal,
            File_Closed_Cb'Access,
            Kernel_Handle (Kernel));
+
+      Kernel_Callback.Connect
+        (Kernel,
+         File_Changed_On_Disk_Signal,
+         File_Changed_On_Disk_Cb'Access,
+         Kernel_Handle (Kernel));
 
       Source_Editor_Module (Src_Editor_Module_Id).File_Edited_Id :=
         Kernel_Callback.Connect
