@@ -74,6 +74,8 @@ package body Glide_Kernel.Scripts is
       Entity_Class         : Class_Type := No_Class;
       File_Class           : Class_Type := No_Class;
       Project_Class        : Class_Type := No_Class;
+      Context_Class        : Class_Type := No_Class;
+      Area_Context_Class   : Class_Type := No_Class;
       File_Context_Class   : Class_Type := No_Class;
       File_Location_Class  : Class_Type := No_Class;
       Entity_Context_Class : Class_Type := No_Class;
@@ -1165,12 +1167,25 @@ package body Glide_Kernel.Scripts is
       Kernel   : constant Kernel_Handle := Get_Kernel (Data);
       Instance : Class_Instance;
       File     : File_Selection_Context_Access;
+      Area     : File_Area_Context_Access;
       Context  : Selection_Context_Access;
       L, C     : Integer := -1;
 
    begin
       if Command = Constructor_Method then
          Set_Error_Msg (Data, -"Cannot create an instance of this class");
+
+      elsif Command = "start_line" then
+         Instance := Nth_Arg (Data, 1, Get_Area_Context_Class (Kernel));
+         Area := File_Area_Context_Access'(Get_Data (Instance));
+         Get_Area (Area, L, C);
+         Set_Return_Value (Data, L);
+
+      elsif Command = "end_line" then
+         Instance := Nth_Arg (Data, 1, Get_Area_Context_Class (Kernel));
+         Area := File_Area_Context_Access'(Get_Data (Instance));
+         Get_Area (Area, L, C);
+         Set_Return_Value (Data, C);
 
       elsif Command = "file" then
          Instance := Nth_Arg (Data, 1, Get_File_Context_Class (Kernel));
@@ -1248,6 +1263,11 @@ package body Glide_Kernel.Scripts is
             Set_Return_Value
              (Data, Create_Entity_Context
                (Get_Script (Data), Entity_Selection_Context_Access (Context)));
+
+         elsif Context.all in File_Area_Context'Class then
+            Set_Return_Value
+             (Data, Create_Area_Context
+                (Get_Script (Data), File_Area_Context_Access (Context)));
 
          elsif Context.all in File_Selection_Context'Class then
             Set_Return_Value
@@ -1755,6 +1775,28 @@ package body Glide_Kernel.Scripts is
       Register_Command
         (Kernel,
          Command      => Constructor_Method,
+         Return_Value => "AreaContext",
+         Description  => -"Prevents creation of AreaContext instances",
+         Class        => Get_Area_Context_Class (Kernel),
+         Handler      => Context_Command_Handler'Access);
+      Register_Command
+        (Kernel,
+         Command      => "start_line",
+         Return_Value => "integer",
+         Description  => -"Return the first selected line",
+         Class        => Get_Area_Context_Class (Kernel),
+         Handler      => Context_Command_Handler'Access);
+      Register_Command
+        (Kernel,
+         Command      => "end_line",
+         Return_Value => "integer",
+         Description  => -"Return the last selected line",
+         Class        => Get_Area_Context_Class (Kernel),
+         Handler      => Context_Command_Handler'Access);
+
+      Register_Command
+        (Kernel,
+         Command      => Constructor_Method,
          Return_Value => "EntityContext",
          Description  => -"Prevents creation of EntityContext instances",
          Class        => Get_Entity_Context_Class (Kernel),
@@ -2188,6 +2230,122 @@ package body Glide_Kernel.Scripts is
       return Location.Column;
    end Get_Column;
 
+   -----------------------
+   -- Get_Context_Class --
+   -----------------------
+
+   function Get_Context_Class
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
+      return Class_Type is
+   begin
+      if Scripting_Data (Kernel.Scripts).Context_Class = No_Class then
+         Scripting_Data (Kernel.Scripts).Context_Class := New_Class
+           (Kernel,
+            "Context",
+            "Represents a context in GPS");
+      end if;
+
+      return Scripting_Data (Kernel.Scripts).Context_Class;
+   end Get_Context_Class;
+
+   ----------------------------
+   -- Get_Area_Context_Class --
+   ----------------------------
+
+   function Get_Area_Context_Class
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
+      return Class_Type is
+   begin
+      if Scripting_Data (Kernel.Scripts).Area_Context_Class = No_Class then
+         Scripting_Data (Kernel.Scripts).Area_Context_Class := New_Class
+           (Kernel,
+            "AreaContext",
+            -("Represents an context that contains file information and a"
+              & " range of lines currently selected"),
+            Base => Get_File_Context_Class (Kernel));
+      end if;
+
+      return Scripting_Data (Kernel.Scripts).Area_Context_Class;
+   end Get_Area_Context_Class;
+
+   -------------------------
+   -- Create_Area_Context --
+   -------------------------
+
+   function Create_Area_Context
+     (Script  : access Scripting_Language_Record'Class;
+      Context : Glide_Kernel.Contexts.File_Area_Context_Access)
+      return Class_Instance
+   is
+      Instance : constant Class_Instance := New_Instance
+        (Script, Get_Area_Context_Class (Get_Kernel (Script)));
+   begin
+      Set_Data (Instance, Selection_Context_Access (Context));
+      return Instance;
+   end Create_Area_Context;
+
+   --------------
+   -- Get_Data --
+   --------------
+
+   function Get_Data (Instance : access Class_Instance_Record'Class)
+                      return Glide_Kernel.Contexts.File_Area_Context_Access
+   is
+      Script : constant Scripting_Language := Get_Script (Instance);
+   begin
+      if not Is_Subclass
+        (Script,
+         Get_Class (Instance),
+         Get_Area_Context_Class (Get_Kernel (Script)))
+      then
+         raise Invalid_Data;
+      end if;
+
+      return File_Area_Context_Access
+        (Selection_Context_Access'(Convert (Get_Data (Instance))));
+   end Get_Data;
+
+   --------------------
+   -- Create_Context --
+   --------------------
+
+   function Create_Context
+     (Script  : access Scripting_Language_Record'Class;
+      Context : Glide_Kernel.Selection_Context_Access) return Class_Instance is
+   begin
+      if Context.all in Entity_Selection_Context'Class then
+         return Create_Entity_Context
+           (Script, Entity_Selection_Context_Access (Context));
+      elsif Context.all in File_Selection_Context'Class then
+         return Create_File_Context
+           (Script, File_Selection_Context_Access (Context));
+      else
+         Trace (Me, "Context type is not supported by GPS");
+         return null;
+      end if;
+   end Create_Context;
+
+   --------------
+   -- Get_Data --
+   --------------
+
+   function Get_Data
+     (Instance : access Class_Instance_Record'Class)
+      return Glide_Kernel.Selection_Context_Access
+   is
+      Script : constant Scripting_Language := Get_Script (Instance);
+   begin
+      if not Is_Subclass
+        (Script,
+         Get_Class (Instance),
+         Get_Context_Class (Get_Kernel (Script)))
+      then
+         raise Invalid_Data;
+      end if;
+
+      return Selection_Context_Access'(Convert (Get_Data (Instance)));
+   end Get_Data;
+
    ----------------------------
    -- Get_File_Context_Class --
    ----------------------------
@@ -2200,7 +2358,8 @@ package body Glide_Kernel.Scripts is
          Scripting_Data (Kernel.Scripts).File_Context_Class := New_Class
            (Kernel,
             "FileContext",
-            "Represents an context that contains file information");
+            "Represents an context that contains file information",
+            Base => Get_Context_Class (Kernel));
       end if;
 
       return Scripting_Data (Kernel.Scripts).File_Context_Class;
