@@ -3,17 +3,17 @@
 
    Copyright (C) 2000 Helix Code, Inc.
    Copyright (C) 2002 ACT-Europe
-   
+
    This library is free software; you can redistribute it and/or
    modify it under the terms of the GNU Library General Public
    License as published by the Free Software Foundation; either
    version 2 of the License, or (at your option) any later version.
-   
+
    This library is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
    Library General Public License for more details.
-   
+
    You should have received a copy of the GNU Library General Public License
    along with this library; see the file COPYING.LIB.  If not, write to
    the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
@@ -24,15 +24,12 @@
 #include <string.h>
 #include <pango/pango-font.h>
 
-
-/* FIXME this should be dynamically done, and based on the base font name.  */
-
 static guint real_font_sizes[CSC_HTML_FONT_STYLE_SIZE_MAX] = {
    6, 7, 8, 10, 12, 14, 16
 };
 
 /* Font size adjustment for the real_font_sizes array above, if any */
-#define FONT_ADJUST 0
+int _gdk_font_adjust = 0;
 
 static void unref_fonts (gpointer key, GdkFont *font, gpointer user_data);
 
@@ -91,10 +88,10 @@ html_gdk_font_manager_get_font
   GdkFont *font = NULL;
   gint i;
   gchar  key [256];
-  
+
   g_return_val_if_fail (manager != NULL, NULL);
   g_return_val_if_fail (style < CSC_HTML_FONT_STYLE_MAX, NULL);
-  
+
   if (face) {
     sprintf (key, "%s%d\n", face, style);
   } else {
@@ -111,7 +108,7 @@ html_gdk_font_manager_get_font
   if (size == 0)
     size = 3;
 
-  size = real_font_sizes [size] + FONT_ADJUST;
+  size = real_font_sizes [size] + _gdk_font_adjust;
 
   /* Compute the weight of the font */
 
@@ -144,7 +141,7 @@ html_gdk_font_manager_get_font
      font_name = g_strdup_printf
        ("%s %s%s%d", font_names [i], weight_string, slant_string, size);
      descr = pango_font_description_from_string (font_name);
-     font = gdk_font_from_description (descr);	
+     font = gdk_font_from_description (descr);
      pango_font_description_free (descr);
      g_free (font_name);
   }
@@ -155,7 +152,7 @@ html_gdk_font_manager_get_font
     g_warning ("font `%s' not found", face);
 
     descr = pango_font_description_from_string ("sans 10");
-    font = gdk_font_from_description (descr);	
+    font = gdk_font_from_description (descr);
     pango_font_description_free (descr);
   }
 
@@ -163,6 +160,6 @@ html_gdk_font_manager_get_font
 
   g_hash_table_insert
     ((GHashTable *)manager->font_hash, g_strdup(key), font);
-   
+
   return gdk_font_ref (font);
 }
