@@ -32,8 +32,13 @@ with Prj_API;       use Prj_API;
 with Types;         use Types;
 with Prj.Tree;      use Prj.Tree;
 with Stringt;       use Stringt;
+with Namet;         use Namet;
 
 package body Prj_Scenarios is
+
+   Scenario_Attribute_Name : constant String := "scenario";
+   --  Name of the attribute used to store the name of the current
+   --  configuration.
 
    use Name_Htables;
 
@@ -184,6 +189,133 @@ package body Prj_Scenarios is
       end loop;
       return 0;
    end Variable_Index;
+
+   ------------------------
+   -- Append_Declaration --
+   ------------------------
+
+   procedure Append_Declaration
+     (Manager : Scenario_Manager; Prj_Or_Pkg : Project_Node_Id)
+   is
+      Last_Decl_Item, Item : Project_Node_Id;
+      Var_Values : Project_Node_Array (Manager.Variables'Range) :=
+        (others => Empty_Node);
+      Cases : Project_Node_Array (Manager.Variables'Range);
+      Strings : String_Id_Array (Manager.Variables'Range);
+      Index : Natural := Var_Values'First;
+      Str : String_Id;
+
+   begin
+      pragma Assert (Manager.Variables /= null);
+      pragma Assert (Kind_Of (Prj_Or_Pkg) = N_Project
+                     or else Kind_Of (Prj_Or_Pkg) = N_Package_Declaration);
+
+      --  Create the types and variables. Note that some of the nodes are
+      --  shared, including the list of possible values in the types.
+
+      for Var in Manager.Variables'Range loop
+         Item := Get_Or_Create_Type
+           (Prj_Or_Pkg => Prj_Or_Pkg,
+            Name       => Get_Name_String
+              (Name_Of (String_Type_Of (Manager.Variables (Var)))));
+         Set_First_Literal_String
+           (Item,
+            First_Literal_String (String_Type_Of (Manager.Variables (Var))));
+
+         Item := Get_Or_Create_Typed_Variable
+           (Prj_Or_Pkg => Prj_Or_Pkg,
+            Name => Get_Name_String (Name_Of (Manager.Variables (Var))),
+            Typ  => Item);
+         Set_Expression_Of (Item, Expression_Of (Manager.Variables (Var)));
+      end loop;
+
+      --  Find the last declarative item, so that we can add the case statement
+      --  after the declaration of variables.
+
+      case Kind_Of (Prj_Or_Pkg) is
+         when N_Project =>
+            Last_Decl_Item := First_Declarative_Item_Of
+              (Project_Declaration_Of (Prj_Or_Pkg));
+         when N_Package_Declaration =>
+            Last_Decl_Item := Prj_Or_Pkg;
+         when others =>
+            null;
+      end case;
+
+      while Next_Declarative_Item (Last_Decl_Item) /= Empty_Node loop
+         Last_Decl_Item := Next_Declarative_Item (Last_Decl_Item);
+      end loop;
+
+      Cases (Cases'First) := Empty_Node;
+
+      --  Create the nested case statement that sets all the possible names.
+
+      Main_Loop :
+      loop
+         --  Open all the case statements that were closed (or not yet open)
+
+         while Index <= Var_Values'Last loop
+            --  Set the default value for the variable if it is not set yet
+            if Var_Values (Index) = Empty_Node then
+               Var_Values (Index) := First_Literal_String
+                 (String_Type_Of (Manager.Variables (Index)));
+               Strings (Index) := String_Value_Of (Var_Values (Index));
+            end if;
+
+            --  The declarative item
+            Item := Default_Project_Node (N_Declarative_Item);
+            if Index = Var_Values'First then
+               Set_Next_Declarative_Item (Last_Decl_Item, Item);
+               Last_Decl_Item := Item;
+            else
+               Set_First_Declarative_Item_Of
+                 (First_Case_Item_Of (Cases (Index - 1)), Item);
+            end if;
+
+            --  "case " & Var & " is", and first "when" statement
+            Cases (Index) := Default_Project_Node (N_Case_Construction);
+            Set_Current_Item_Node (Item, Cases (Index));
+            Set_Case_Variable_Reference_Of
+              (Cases (Index),
+               Create_Variable_Reference (Manager.Variables (Index)));
+            Create_Case_Item
+              (Cases (Index), String_Value_Of (Var_Values (Index)));
+
+            Index := Index + 1;
+         end loop;
+
+         Index := Index - 1;
+
+         --  "For Scenario use " & Name
+
+         Str := Get (Manager.Names, Build_Key (Strings));
+
+         if Str /= No_String then
+            Set_Expression_Of
+              (Get_Or_Create_Attribute
+               (First_Case_Item_Of (Cases (Index)),
+                Scenario_Attribute_Name, Kind => Prj.Single),
+               String_As_Expression (Str));
+         end if;
+
+         --  Move to the next value in case
+
+         loop
+            Var_Values (Index) := Next_Literal_String (Var_Values (Index));
+
+            if Var_Values (Index) = Empty_Node then
+               Index := Index - 1;
+               exit Main_Loop when Index = 0;
+            else
+               Strings (Index) := String_Value_Of (Var_Values (Index));
+               Create_Case_Item (Cases (Index), Strings (Index));
+               exit;
+            end if;
+         end loop;
+
+         Index := Index + 1;
+      end loop Main_Loop;
+   end Append_Declaration;
 
 end Prj_Scenarios;
 

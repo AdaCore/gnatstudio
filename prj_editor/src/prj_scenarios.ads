@@ -58,6 +58,7 @@ with GNAT.Spitbol;
 with Prj_API;
 
 with Types;
+with Prj.Tree;
 
 package Prj_Scenarios is
 
@@ -101,6 +102,14 @@ package Prj_Scenarios is
    --  file for the variable, but really the name of the environment variable.
    --
    --  0 is returned if the variable wasn't found.
+
+   procedure Append_Declaration
+     (Manager : Scenario_Manager; Prj_Or_Pkg : Prj.Tree.Project_Node_Id);
+   --  Append the declaration of the types and variables that define scenarios,
+   --  as well as the big case statement that defines the scenario values at
+   --  the end of Decl_Item.
+   --  Only the cases that have named projects associated with them are
+   --  generated.
 
 private
 
