@@ -1,5 +1,7 @@
 New features in GPS 1.0.2
 
+- Implement recursive directory operations for version control.
+
 - Possibility in the editor to jump to the matching parenthesis/brackets.
 
 - Builds/Run can now be launched on a remote host.
