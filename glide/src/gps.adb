@@ -439,6 +439,11 @@ procedure GPS is
          --  do not open the welcome dialog.
 
          if not Auto_Load_Project then
+            --  Load a default project, in case the wizard needs to be
+            --  launched.
+
+            Load_Default_Project (GPS.Kernel, Get_Current_Dir);
+
             --  Load the project selected by the user
 
             if Project_Name = null then
