@@ -85,6 +85,7 @@ package Glide_Kernel.Preferences is
    Animated_Image        : Param_Spec_String;
    Splash_Screen         : Param_Spec_Boolean;
    Tmp_Dir               : Param_Spec_String;
+   Toolbar_Show_Text     : Param_Spec_Boolean;
 
    -- Console --
    Highlight_File  : Param_Spec_Color;
@@ -96,7 +97,6 @@ package Glide_Kernel.Preferences is
    Patch_Cmd           : Param_Spec_String;
 
    -- Explorer --
-   Normalized_Directories       : Param_Spec_Boolean;
    Show_Directories             : Param_Spec_Boolean;
    File_View_Shows_Only_Project : Param_Spec_Boolean;
 

@@ -75,6 +75,15 @@ package body Glide_Kernel.Preferences is
       Register_Property
         (Kernel.Preferences, Param_Spec (Splash_Screen), -"General");
 
+      Toolbar_Show_Text := Param_Spec_Boolean (Gnew_Boolean
+        (Name    => "General-Toolbar-Text",
+         Nick    => -"Images and text in tool bar",
+         Blurb   => -("True if the tool bar should show both text and icons,"
+                      & " False if it should only show icons"),
+         Default => True));
+      Register_Property
+        (Kernel.Preferences, Param_Spec (Toolbar_Show_Text), -"General");
+
       Tmp_Dir := Param_Spec_String (Gnew_String
         (Name    => "General-Tmp-Dir",
          Nick    => -"Temporary directory",
@@ -133,18 +142,6 @@ package body Glide_Kernel.Preferences is
         (Kernel.Preferences, Param_Spec (Patch_Cmd), -"Visual diff");
 
       -- Explorer --
-
-      Normalized_Directories := Param_Spec_Boolean (Gnew_Boolean
-        (Name    => "Explorer-Normalized-Directories",
-         Nick    => -"Normalize directories",
-         Blurb   => -("True if directories should be fully normalized, eg"
-                      & " links should be resolved. False if the explorer"
-                      & " should display the name as given in the project"
-                      & " file"),
-         Default => True,
-         Flags   => Param_Readable));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (Normalized_Directories), -"Explorer");
 
       Show_Directories := Param_Spec_Boolean (Gnew_Boolean
         (Name    => "Explorer-Show-Directories",
