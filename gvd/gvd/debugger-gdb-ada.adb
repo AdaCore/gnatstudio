@@ -239,8 +239,7 @@ package body Debugger.Gdb.Ada is
       Type_Str   : String;
       Index      : in out Natural;
       Result     : in out Generic_Values.Generic_Type_Access;
-      Repeat_Num : out Positive)
-   is
+      Repeat_Num : out Positive) is
    begin
       Internal_Parse_Value (Lang, Type_Str, Index, Result, Repeat_Num,
                             Parent => null);
@@ -355,7 +354,6 @@ package body Debugger.Gdb.Ada is
 
          --  Do we have a slice, or an simple array item ?
          if Tmp_Index >= Entity'First and then Entity (Tmp_Index) = '.' then
-
             Skip_To_Char (Entity, Tmp_Index, '(', Step => -1);
             Tmp_Index := Tmp_Index + 1;
 
@@ -407,7 +405,7 @@ package body Debugger.Gdb.Ada is
 
          Set_Item_Type (R.all,
             Parse_Type (Get_Debugger (Lang),
-               Array_Item_Name (Lang, Entity, To_String (Index_Str))));
+              Array_Item_Name (Lang, Entity, To_String (Index_Str))));
       end if;
    end Parse_Array_Type;
 
@@ -781,9 +779,8 @@ package body Debugger.Gdb.Ada is
    -- Get_Language_Context --
    --------------------------
 
-   function Get_Language_Context (Lang : access Gdb_Ada_Language)
-                                 return Language_Context
-   is
+   function Get_Language_Context
+     (Lang : access Gdb_Ada_Language) return Language_Context is
    begin
       return (Record_Field_Length => 2,
               Record_Start        => '(',
