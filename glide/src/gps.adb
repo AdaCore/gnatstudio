@@ -780,6 +780,8 @@ begin
    --  Initialize the traces
    Traces.Parse_Config_File
      (Default => String_Utils.Name_As_Directory (Dir.all) & "traces.cfg");
+   Trace (Me, "GPS " & GVD.Version & " (" & GVD.Source_Date &
+          ") hosted on " & GVD.Target);
 
    Gtk_New
      (GPS, "<gps>", Glide_Menu.Glide_Menu_Items.all, Dir.all, Prefix.all);
