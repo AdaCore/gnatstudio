@@ -385,11 +385,13 @@ package body Debugger is
          declare
             Current_Command : constant String := Process.Current_Command.all;
             Result          : Boolean;
+            Pos             : Positive;
          begin
             Free (Process.Current_Command);
 
             if Process_Command (Debugger) then
-               --  ??? register if needed for context_changed/process_stopped
+               --  ??? register if needed for
+               --  executable_changed/context_changed/process_stopped
                --  before returning
                return;
             end if;
@@ -397,7 +399,21 @@ package body Debugger is
             Set_Command_In_Process (Get_Process (Debugger));
             Final_Post_Process (Process);
 
-            if Is_Context_Command (Debugger, Current_Command) then
+            if Is_Load_Command (Debugger, Current_Command) then
+               Pos := Current_Command'First;
+               Skip_To_Blank (Current_Command, Pos);
+               Skip_Blanks (Current_Command, Pos);
+
+               declare
+                  pragma Suppress (Index_Check);
+                  pragma Suppress (Range_Check);
+                  --  ??? work around a bug in GNAT 3.14
+               begin
+                  Executable_Changed
+                    (Process, Current_Command (Pos .. Current_Command'Last));
+               end;
+
+            elsif Is_Context_Command (Debugger, Current_Command) then
                Context_Changed (Process);
             elsif Is_Execution_Command (Debugger, Current_Command) then
                Process_Stopped (Process);
@@ -499,9 +515,9 @@ package body Debugger is
       Debugger.Processing_User_Command := False;
       Set_Command_In_Process (Get_Process (Debugger), False);
 
-      --  Should this be Internal or Internal + Hidden ???
       if Mode /= Internal and then Process_Command (Debugger) then
-         --  ??? register if needed for context_changed/process_stopped
+         --  ??? register if needed for
+         --  executable_changed/context_changed/process_stopped
          --  before returning
          return;
       end if;
