@@ -185,7 +185,8 @@ package body GVD.Dialogs.Callbacks is
       S         : Unbounded_String;
       Tmp       : Gint_List.Glist := Gint_List.First (Selection);
       Button    : Message_Dialog_Buttons;
-      Debugger  : constant Debugger_Process_Tab :=                                      Convert (Dialog.Main_Window, Dialog.Debugger);
+      Debugger  : constant Debugger_Process_Tab :=
+        Convert (Dialog.Main_Window, Dialog.Debugger);
 
    begin
       while Tmp /= Gint_List.Null_List loop
