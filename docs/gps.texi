@@ -2907,18 +2907,6 @@ all the projects that import that project. Similarly, clicking
 on the right arrow will display all the projects that are imported by
 that project.
 
-The contextual menu obtained when right-clicking in the background of
-the browser contains the standard entries (@code{zoom in}, @code{zoom
-out} and @code{orthogonal links}), in addition to
-
-@table @command
-@item refresh
-@cindex refresh
-The project graph is not automatically refreshed. If you change the
-dependencies in the hierarchy (adding or removing dependencies), you
-need to select this menu item to force a refresh of the browser.
-@end table
-
 The contextual menu obtained by right-clicking on a project item
 contains several items. Most of them are added by the project editor,
 and gives direct access to editing the properties of the project,
@@ -3282,9 +3270,9 @@ either vertically or horizontally. This algorithm tries to preserve as
 much as possible the positions of the items that were moved
 interactively. 
 
-The @code{refresh} menu item in the background contextual menu can be
-used to recompute the layout of items at any time, even for items that
-were previously moved interactively.
+The @code{refresh layout} menu item in the background contextual menu
+can be used to recompute the layout of items at any time, even for
+items that were previously moved interactively.
 
 @item Interactive moving of items
 Items can be moved interactively with the mouse. Click and drag the
