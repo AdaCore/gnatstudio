@@ -554,7 +554,7 @@ package body Src_Editor_Buffer.Line_Information is
          Widths (J) := -1;
 
          if Info (J).Text /= null then
-            Set_Text (Layout, String'(Info (J).Text.all));
+            Set_Markup (Layout, String'(Info (J).Text.all));
             Get_Pixel_Size (Layout, Num, Height);
 
             if Num = 0 then
@@ -744,7 +744,8 @@ package body Src_Editor_Buffer.Line_Information is
       begin
          if Line_Info.Info /= null then
             if Line_Info.Info.Text /= null then
-               Set_Text (Layout, Line_Info.Info.Text.all);
+               Set_Markup (Layout, Line_Info.Info.Text.all);
+
                Draw_Layout
                  (Drawable => Drawable,
                   GC       => GC,
