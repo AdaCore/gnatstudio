@@ -719,6 +719,8 @@ package body VCS_View_Pkg is
       is
          Stored_Object : GObject;
          Child         : MDI_Child;
+         File_Name     : String
+           := Get_String (Explorer.Model, Iter, Name_Column);
       begin
          Stored_Object := Get_Object (Explorer.Model, Iter, Log_Editor_Column);
 
@@ -727,11 +729,10 @@ package body VCS_View_Pkg is
             Parameter_Object.Log_Editor := Log_Editor;
 
             Set_Title (Log_Editor,
-                       -"Log editor for "
-                       & Get_String (Explorer.Model, Iter, Name_Column));
+                       -"Log editor : "
+                       & Base_Name (File_Name));
 
-            Add_File_Name (Log_Editor,
-                           Get_String (Explorer.Model, Iter, Name_Column));
+            Add_File_Name (Log_Editor, File_Name);
 
             Set (Explorer.Model,
                  Iter, Log_Editor_Column,
@@ -787,7 +788,8 @@ package body VCS_View_Pkg is
             Parameter_Object.Log_Editor := Log_Editor;
 
             Set_Title
-              (Log_Editor, -"Log editor for " & String_List.Head (Temp_Files));
+              (Log_Editor, -"Log editor : "
+               & Base_Name (String_List.Head (Temp_Files)));
             Add_File_Name (Log_Editor, String_List.Head (Temp_Files));
             Set_Text (Log_Editor, "");
 
