@@ -26,12 +26,7 @@ private
       Src_Dir_Selection : Directory_Tree.Dir_Tree;
       Src_Dir_List      : Gtk.Clist.Gtk_Clist;
       Obj_Dir_Selection : Directory_Tree.Dir_Tree;
-      Switches          : Switches_Editors.Switches_Editor;
-
-      Make_Switches     : Switches_Editors.Switches_Editor;
-      Comp_Switches     : Switches_Editors.Switches_Editor;
-      Bind_Switches     : Switches_Editors.Switches_Editor;
-      Link_Switches     : Switches_Editors.Switches_Editor;
+      Switches          : Switches_Editors.Switches_Edit;
       Title_Style       : Gtk.Style.Gtk_Style;
 
       Dir_Contextual_Menu : Gtk.Menu.Gtk_Menu;
