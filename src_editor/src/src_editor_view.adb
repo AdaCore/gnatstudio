@@ -1057,19 +1057,20 @@ package body Src_Editor_View is
       X, Y, W, H, D : Gint;
 
    begin
-      if Realized_Is_Set (View) then
-         Return_Callback.Connect
-           (View, "expose_event",
-            Marsh => Return_Callback.To_Marshaller (Expose_Event_Cb'Access),
-            After => False);
+      --  ??? if Realized_Is_Set (View) then
+      --  When will we connect Expose_Event_Cb in case the View isn't
+      --  realized ???
 
-         Get_Geometry (Win, X, Y, W, H, D);
-         Clear_Area_E (Win, X, Y, W, H);
+      Return_Callback.Connect
+        (View, "expose_event",
+         Marsh => Return_Callback.To_Marshaller (Expose_Event_Cb'Access),
+         After => False);
 
-         Clear_Text_Window (View);
+      Get_Geometry (Win, X, Y, W, H, D);
+      Clear_Area_E (Win, X, Y, W, H);
+      Clear_Text_Window (View);
+      View.Connect_Expose_Registered := False;
 
-         View.Connect_Expose_Registered := False;
-      end if;
       return False;
    end Connect_Expose;
 
