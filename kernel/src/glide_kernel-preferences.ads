@@ -26,6 +26,7 @@
 -- executable file  might be covered by the  GNU Public License.     --
 -----------------------------------------------------------------------
 
+with Gdk.Color;
 with Glib.Properties;
 with Glib;
 with Default_Preferences; use Default_Preferences;
@@ -55,7 +56,14 @@ package Glide_Kernel.Preferences is
    function Get_Pref
      (Kernel : access Kernel_Handle_Record'Class;
       Pref   : Glib.Properties.Property_Boolean) return Boolean;
+   function Get_Pref
+     (Kernel : access Kernel_Handle_Record'Class;
+      Pref   : Glib.Properties.Property_String) return String;
+   function Get_Pref
+     (Kernel : access Kernel_Handle_Record'Class;
+      Pref   : Property_Color) return Gdk.Color.Gdk_Color;
    --  Return the value for a specific property.
+   --  The colors and fonts have already been allocated when they are returned.
 
    -----------------------
    -- List of constants --
@@ -76,7 +84,47 @@ package Glide_Kernel.Preferences is
 
    Show_Directories : constant Glib.Properties.Property_Boolean :=
      Register_Property ("Explorer:Show_Directories", True);
-   --  <preference> Whether directories should be displayed in the tree.
-   --  If False, only the projects are shown.
+   --  Whether directories should be displayed in the tree.  If False, only the
+   --  projects are shown.
+
+   --------------------
+   -- Project editor --
+   --------------------
+
+   Timestamp_Picture : constant Glib.Properties.Property_String :=
+     Register_Property ("Prj_Editor:Timestamp_Picture", "%Y/%m/%d %H:%M:%S");
+   --  Format used to display timestamps in the project editor
+
+   Default_Switches_Color : constant Property_Color :=
+     Register_Property ("Prj_Editor:Default_Switches_Color", "#777777");
+   --  Color to use when displaying switches that are not file specific, but
+   --  set at the project or package level.
+
+   Switches_Editor_Title_Font : constant Glib.Properties.Property_String :=
+     Register_Property ("Prj_Editor:Title_Font", "helvetica bold oblique 14");
+   --  Font to use for the switches editor dialog
+
+   Variable_Ref_Background : constant Property_Color :=
+     Register_Property ("Prj_Editor:Var_Ref_Bg", "#AAAAAA");
+   --  Color to use for the background of variable references in the value
+   --  editor
+
+   Invalid_Variable_Ref_Background : constant Property_Color :=
+     Register_Property ("Prj_Editor:Invalid_Var_Ref_Bg", "#AA0000");
+   --  Color to use for the foreground of invalid variable references.
+
+   -------------
+   -- Wizards --
+   -------------
+
+   Wizard_Toc_Highlight_Color : constant Property_Color :=
+     Register_Property ("Wizard:Toc_Highlight_Color", "yellow");
+   --  Color to use to highlight strings in the TOC.
+
+   Wizard_Title_Font : constant Glib.Properties.Property_String :=
+     Register_Property ("Wizard:Title_Font", "helvetica bold oblique 14");
+   --  Font to use for the title of the pages in the wizard
+
+
 
 end Glide_Kernel.Preferences;
