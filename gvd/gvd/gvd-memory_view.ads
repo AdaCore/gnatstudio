@@ -78,7 +78,9 @@ package Odd.Memory_View is
 
    type Odd_Memory_View is access all Odd_Memory_View_Record'Class;
 
-   function Create_Memory_View (Window : Gtk_Widget) return Odd_Memory_View;
+   procedure Gtk_New
+     (View   : out Odd_Memory_View;
+      Window : in Gtk_Widget);
    --  Create a new memory view.
 
    procedure Display_Memory
