@@ -19,6 +19,8 @@
 -----------------------------------------------------------------------
 
 with Ada.Unchecked_Deallocation;
+with Ada.Strings.Maps.Constants;
+
 with Basic_Types;                 use Basic_Types;
 with GNAT.Regpat;                 use GNAT.Regpat;
 with GNAT.OS_Lib;
@@ -29,6 +31,10 @@ with Glib.Unicode;                use Glib, Glib.Unicode;
 with Traces;                      use Traces;
 
 package body Language is
+
+   Default_Word_Character_Set : constant Character_Set :=
+           Constants.Letter_Set or Constants.Decimal_Digit_Set or To_Set ("_");
+   --  Default character set for keywords and indentifiers
 
    procedure Looking_At
      (Lang      : access Language_Root;
@@ -708,5 +714,18 @@ package body Language is
          Free (Fields (F).Description);
       end loop;
    end Free;
+
+   ------------------------
+   -- Word_Character_Set --
+   ------------------------
+
+   function Word_Character_Set
+     (Lang : access Language_Root)
+      return Character_Set
+   is
+      pragma Unreferenced (Lang);
+   begin
+      return Default_Word_Character_Set;
+   end Word_Character_Set;
 
 end Language;
