@@ -249,7 +249,7 @@ package body Glide_Kernel.Preferences is
            -"Should the editor remove trailing blanks when saving files",
          Nick    => -"Strip blanks"));
       Register_Property
-        (Kernel.Preferences, Param_Spec (Strip_Blanks), -"Editor:General");
+        (Kernel.Preferences, Param_Spec (Strip_Blanks), -"Editor");
 
       Line_Terminator := Param_Spec_Enum (Line_Terminators_Properties.Gnew_Enum
         (Name  => "Src-Editor-Line-Terminator",
@@ -257,7 +257,7 @@ package body Glide_Kernel.Preferences is
          Blurb => -"Line terminator style to use when saving files",
          Default => Unchanged));
       Register_Property
-        (Kernel.Preferences, Param_Spec (Line_Terminator), -"Editor:General");
+        (Kernel.Preferences, Param_Spec (Line_Terminator), -"Editor");
 
       Display_Line_Numbers := Param_Spec_Boolean (Gnew_Boolean
         (Name    => "Src-Editor-Display-Line_Numbers",
@@ -267,7 +267,7 @@ package body Glide_Kernel.Preferences is
          Nick    => -"Display line numbers"));
       Register_Property
         (Kernel.Preferences, Param_Spec (Display_Line_Numbers),
-         -"Editor:General");
+         -"Editor");
 
       Display_Tooltip := Param_Spec_Boolean (Gnew_Boolean
         (Name    => "Src-Editor-Display-Tooltip",
@@ -275,7 +275,7 @@ package body Glide_Kernel.Preferences is
          Blurb   => -"Whether tooltips should be displayed automatically",
          Nick    => -"Tooltips"));
       Register_Property
-        (Kernel.Preferences, Param_Spec (Display_Tooltip), -"Editor:General");
+        (Kernel.Preferences, Param_Spec (Display_Tooltip), -"Editor");
 
       Highlight_Delimiters := Param_Spec_Boolean (Gnew_Boolean
         (Name    => "Src-Editor-Highlight-Delimiters",
@@ -284,7 +284,7 @@ package body Glide_Kernel.Preferences is
          Nick    => -"Highlight delimiters"));
       Register_Property
         (Kernel.Preferences, Param_Spec (Highlight_Delimiters),
-         -"Editor:General");
+         -"Editor");
 
       Periodic_Save := Param_Spec_Int (Gnew_Int
         (Name    => "Src-Editor-Periodic-Save",
@@ -295,7 +295,7 @@ package body Glide_Kernel.Preferences is
                       & " is automatically saved. 0 if none."),
          Nick    => -"Autosave delay"));
       Register_Property
-        (Kernel.Preferences, Param_Spec (Periodic_Save), -"Editor:General");
+        (Kernel.Preferences, Param_Spec (Periodic_Save), -"Editor");
 
       Highlight_Column := Param_Spec_Int (Gnew_Int
         (Name    => "Src-Editor-Highlight-Column",
@@ -305,7 +305,7 @@ package body Glide_Kernel.Preferences is
          Blurb   => -"The column number to highlight. 0 if none.",
          Nick    => -"Column highlight"));
       Register_Property
-        (Kernel.Preferences, Param_Spec (Highlight_Column), -"Editor:General");
+        (Kernel.Preferences, Param_Spec (Highlight_Column), -"Editor");
 
       Tab_Width := Param_Spec_Int (Gnew_Int
         (Name    => "Src-Editor-Tab-Width",
@@ -316,7 +316,7 @@ package body Glide_Kernel.Preferences is
          Nick    => -"Tabulation width",
          Flags   => Param_Readable));
       Register_Property
-        (Kernel.Preferences, Param_Spec (Tab_Width), -"Editor:General");
+        (Kernel.Preferences, Param_Spec (Tab_Width), -"Editor");
 
       Source_Editor_Font := Param_Spec_Font (Gnew_Font
         (Name    => "Src-Editor-Default-Font",
@@ -383,7 +383,7 @@ package body Glide_Kernel.Preferences is
         (Name    => "Src-Editor-Highlight-Region-Color",
          Default => "cyan",
          Blurb   => -"Color for highlighting regions",
-         Flags   => Param_Readable,
+--         Flags   => Param_Readable,
          Nick    => -"Region highlighting color"));
       Register_Property
         (Kernel.Preferences, Param_Spec (Default_HL_Region_Color),
@@ -536,7 +536,7 @@ package body Glide_Kernel.Preferences is
          Nick    => -"Background color"));
       Register_Property
         (Kernel.Preferences, Param_Spec (Browsers_Bg_Color),
-         -"Browsers:General");
+         -"Browsers");
 
       Browsers_Bg_Image := Param_Spec_String (Gnew_String
         (Name    => "Browsers-Bg-Image",
@@ -549,7 +549,7 @@ package body Glide_Kernel.Preferences is
          Default => ""));
       Register_Property
         (Kernel.Preferences, Param_Spec (Browsers_Bg_Image),
-         -"Browsers:General");
+         -"Browsers");
 
       Browsers_Draw_Grid := Param_Spec_Boolean (Gnew_Boolean
         (Name    => "Browsers-Draw-Grid",
@@ -559,7 +559,7 @@ package body Glide_Kernel.Preferences is
          Nick    => -"Draw grid"));
       Register_Property
         (Kernel.Preferences, Param_Spec (Browsers_Draw_Grid),
-         -"Browsers:General");
+         -"Browsers");
 
       Browsers_Hyper_Link_Color := Param_Spec_Color (Gnew_Color
         (Name    => "Browsers-Hyper-Link-Color",
@@ -568,7 +568,7 @@ package body Glide_Kernel.Preferences is
          Nick    => -"Hyper link color"));
       Register_Property
         (Kernel.Preferences, Param_Spec (Browsers_Hyper_Link_Color),
-         -"Browsers:General");
+         -"Browsers");
 
       Selected_Link_Color := Param_Spec_Color (Gnew_Color
         (Name    => "Browsers-Selected-Link-Color",
@@ -577,7 +577,7 @@ package body Glide_Kernel.Preferences is
          Nick    => -"Selected link color"));
       Register_Property
         (Kernel.Preferences, Param_Spec (Selected_Link_Color),
-         -"Browsers:General");
+         -"Browsers");
 
       Unselected_Link_Color := Param_Spec_Color (Gnew_Color
         (Name    => "Browsers-Unselected-Link-Color",
@@ -586,7 +586,7 @@ package body Glide_Kernel.Preferences is
          Nick    => -"Default link color"));
       Register_Property
         (Kernel.Preferences, Param_Spec (Unselected_Link_Color),
-         -"Browsers:General");
+         -"Browsers");
 
       Parent_Linked_Item_Color := Param_Spec_Color (Gnew_Color
         (Name    => "Browsers-Linked-Item-Color",
@@ -596,7 +596,7 @@ package body Glide_Kernel.Preferences is
          Nick    => -"Ancestor items color"));
       Register_Property
         (Kernel.Preferences, Param_Spec (Parent_Linked_Item_Color),
-         -"Browsers:General");
+         -"Browsers");
 
       Child_Linked_Item_Color := Param_Spec_Color (Gnew_Color
         (Name    => "Browsers-Child-Linked-Item-Color",
@@ -606,7 +606,7 @@ package body Glide_Kernel.Preferences is
          Nick    => -"Offspring items color"));
       Register_Property
         (Kernel.Preferences, Param_Spec (Child_Linked_Item_Color),
-         -"Browsers:General");
+         -"Browsers");
 
       Browsers_Vertical_Layout := Param_Spec_Boolean (Gnew_Boolean
         (Name    => "Browsers-Vertical-Layout",
@@ -616,7 +616,7 @@ package body Glide_Kernel.Preferences is
          Nick    => -"Vertical layout"));
       Register_Property
         (Kernel.Preferences, Param_Spec (Browsers_Vertical_Layout),
-         -"Browsers:General");
+         -"Browsers");
 
       -- Diff_Utils --
 
@@ -648,29 +648,6 @@ package body Glide_Kernel.Preferences is
          Default => "patch"));
       Register_Property
         (Kernel.Preferences, Param_Spec (Patch_Cmd), -"Visual diff");
-
-      -- Explorer --
-
-      Show_Directories := Param_Spec_Boolean (Gnew_Boolean
-        (Name    => "Explorer-Show-Directories",
-         Nick    => -"Show directories",
-         Blurb   => -"True if directories should be displayed in the explorer",
-         Default => True,
-         Flags   => Param_Readable));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (Show_Directories), -"Explorer");
-      --  ??? Does it really make sense.
-
-      File_View_Shows_Only_Project := Param_Spec_Boolean (Gnew_Boolean
-        (Name    => "Prj-Editor-File-View-Shows-Only-Project",
-         Nick    => -"Files from project only",
-         Blurb   => -("True if the file view should only show files belonging"
-                      & " to the project"),
-         Default => False,
-         Flags   => Param_Readable));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (File_View_Shows_Only_Project),
-         -"Explorer");
 
       -- Messages --
 

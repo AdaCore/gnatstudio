@@ -154,10 +154,6 @@ package Glide_Kernel.Preferences is
    Diff_Cmd            : Param_Spec_String;
    Patch_Cmd           : Param_Spec_String;
 
-   -- Explorer --
-   Show_Directories             : Param_Spec_Boolean;
-   File_View_Shows_Only_Project : Param_Spec_Boolean;
-
    -- Source Editor --
    Keywords_Style            : Param_Spec_Style;
    Comments_Style            : Param_Spec_Style;
