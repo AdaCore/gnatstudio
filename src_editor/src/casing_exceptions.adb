@@ -127,15 +127,16 @@ package body  Casing_Exceptions is
    begin
       while N /= null loop
 
-         if N.Tag.all = "exceptions" then
+         if N.Tag.all = "case_exceptions" then
             --  Ok this is a case exceptions node
 
             declare
                Child : Node_Ptr := N.Child;
             begin
                while Child /= null loop
-                  if Child.Tag.all = "exception" then
-                     --  Ignore all other nodes
+                  if Child.Tag.all = "word" then
+                     --  This is a full word exception, we ignore all other
+                     --  nodes for Now.
                      Add_Exception
                        (Casing_Exceptions_Table,
                         Child.Value.all, Read_Only => True);
