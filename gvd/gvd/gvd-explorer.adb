@@ -38,7 +38,6 @@ with Gtk.Enums;             use Gtk.Enums;
 with Gtk.Menu;              use Gtk.Menu;
 with GNAT.OS_Lib;           use GNAT.OS_Lib;
 with Odd.Code_Editors;      use Odd.Code_Editors;
-with Debugger.Gdb.Ada;      use Debugger.Gdb.Ada;
 with Odd.Types;             use Odd.Types;
 with Odd.Process;           use Odd.Process;
 with Debugger;              use Debugger;
@@ -244,6 +243,9 @@ package body Odd.Explorer is
          File_Node := Row_Get_Parent
            (Node_Get_Row (Row_Get_Parent (Node_Get_Row (Node))));
          Data := Row_Data_Pkg.Node_Get_Row_Data (Explorer, File_Node);
+         Set_Current_Language
+           (Code_Editor (Explorer.Code_Editor),
+            Get_Language_From_File (Data.Extension));
          Load_File (Code_Editor (Explorer.Code_Editor),
                     Find_File (Tab.Debugger, Data.Extension));
          Highlight_Word (Code_Editor (Explorer.Code_Editor),
@@ -254,6 +256,9 @@ package body Odd.Explorer is
       else
          Data := Row_Data_Pkg.Node_Get_Row_Data (Explorer, Node);
          if Data.Is_File_Node then
+            Set_Current_Language
+              (Code_Editor (Explorer.Code_Editor),
+               Get_Language_From_File (Data.Extension));
             Load_File (Code_Editor (Explorer.Code_Editor),
                        Find_File (Tab.Debugger, Data.Extension));
             --  Set_Line (Code_Editor (Explorer.Code_Editor), 1);
@@ -402,9 +407,9 @@ package body Odd.Explorer is
 
                   --  Need to read the file independently from the
                   --  code_editor.
-                  --  ??? Fix: Correctly detect the language.
                   Explore
-                    (Explorer, Node, Explorer, S, new Gdb_Ada_Language,
+                    (Explorer, Node, Explorer, S,
+                     Get_Language_From_File (Full_Name),
                      Full_Name);
                end;
                Close (F);
