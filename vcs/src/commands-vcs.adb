@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2004                       --
---                            ACT-Europe                             --
+--                     Copyright (C) 2001-2005                       --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -21,7 +21,6 @@
 with GPS.Intl; use GPS.Intl;
 with VFS;        use VFS;
 with Traces;     use Traces;
-with GPS.Kernel.Console; use GPS.Kernel.Console;
 with Basic_Types; use Basic_Types;
 
 package body Commands.VCS is
@@ -193,15 +192,12 @@ package body Commands.VCS is
       The_Context : Selection_Context_Access := Context.Context;
    begin
       if The_Context = null then
-         Console.Insert
-           (Command.Kernel, -"VCS: current selection is empty", Mode => Error);
-         return Failure;
-
-      else
-         Ref (The_Context);
-         Command.Callback (Command.Kernel, The_Context);
-         Unref (The_Context);
+         The_Context := Get_Current_Context (Command.Kernel);
       end if;
+
+      Ref (The_Context);
+      Command.Callback (Command.Kernel, The_Context);
+      Unref (The_Context);
 
       return Success;
    end Execute;
