@@ -54,6 +54,7 @@ with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
 with Glide_Kernel.Project;      use Glide_Kernel.Project;
 with Glide_Kernel.Console;      use Glide_Kernel.Console;
 with Glide_Page;                use Glide_Page;
+with GVD.Preferences;           use GVD.Preferences;
 with GVD.Process;               use GVD.Process;
 with GVD.Main_Window;           use GVD.Main_Window;
 with Interfaces.C.Strings;      use Interfaces.C.Strings;
@@ -173,6 +174,8 @@ package body Glide_Kernel is
 
       Gtk_New (Handle.Tooltips);
 
+      Handle.Preferences := new GPS_Preferences_Record;
+      GVD.Preferences.GVD_Prefs := GVD_Preferences (Handle.Preferences);
       Register_Global_Preferences (Handle);
       Load_Preferences
         (Handle.Preferences,
