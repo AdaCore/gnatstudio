@@ -1,4 +1,4 @@
-## This file provides extra support for editing python scripts through GPS
+
 ## Nothing is done if the projects do not support python, otherwise, the
 ## following are provided:
 ##   - Create highlight rules for python files
@@ -12,7 +12,12 @@
 ##     python
 ##   - Add links to python documentation on the internet
 
+## To be added (from idle environment)
+##   - "indent region", "dedent region", "check module", "run module"
+##   - "class browser" -> project view in GPS
+
 import GPS, sys, os.path
+
 
 pydoc_proc = None
 pydoc_port = 9432
@@ -52,7 +57,12 @@ def project_recomputed (hook_name):
     GPS.Project.root().languages (recursive=True).index ("python")
 
     # The rest is done only if we support python
-    GPS.Project.add_predefined_paths (sources=os.pathsep.join (sys.path))
+    list=[]
+    for p in sys.path:
+      for root, dirs, files in os.walk ("/usr/local/lib/python2.3"):
+         list += [os.path.join (root, d) for d in dirs]
+      
+    GPS.Project.add_predefined_paths (sources=os.pathsep.join (list))
 
   except:
     pass
