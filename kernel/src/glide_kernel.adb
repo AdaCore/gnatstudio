@@ -533,13 +533,14 @@ package body Glide_Kernel is
          Pack_Start (Col, Renderer, False);
          Add_Attribute (Col, Renderer, "text", 1);
 
-         Button := Add_Button (Dialog, Stock_Ok, Gtk_Response_OK);
+         Button := Add_Button (Dialog, Stock_Apply, Gtk_Response_Apply);
+         Button := Add_Button (Dialog, -"None",  Gtk_Response_No);
          Button := Add_Button (Dialog, Stock_Cancel, Gtk_Response_Cancel);
 
          Show_All (Dialog);
 
          Response := Run (Dialog);
-         if Response = Gtk_Response_OK then
+         if Response = Gtk_Response_Apply then
             It := Get_Iter_First (Model);
             while It /= Null_Iter loop
                if Get_Boolean (Model, It, 0) then
@@ -562,7 +563,7 @@ package body Glide_Kernel is
                Next (Model, It);
             end loop;
 
-         else
+         elsif Response /= Gtk_Response_No then
             Destroy (Dialog);
             return False;
          end if;
