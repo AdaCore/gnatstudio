@@ -1040,7 +1040,23 @@ package body Debugger.Gdb is
       end if;
 
       if Get_Pref (GVD_Prefs, Break_On_Exception) then
-         Break_Exception (Debugger, Mode => Visible);
+         declare
+            Cmd : constant String :=
+                    Break_Exception
+                      (Language_Debugger_Access (Get_Language (Debugger)));
+            S   : constant String := Send (Debugger, Cmd);
+
+         begin
+            if Process /= null then
+               Output_Text (Process, Cmd & ASCII.LF, Set_Position => True);
+
+               if S /= "" then
+                  Output_Text (Process, S & ASCII.LF, Set_Position => True);
+               end if;
+
+               Display_Prompt (Debugger);
+            end if;
+         end;
       end if;
 
       Set_Parse_File_Name (Get_Process (Debugger), False);
