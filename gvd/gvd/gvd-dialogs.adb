@@ -247,8 +247,9 @@ package body Odd.Dialogs is
       Debugger        : Debugger_Access;
       Questions       : Question_Array)
    is
-      Temp : Chars_Ptr_Array (0 .. 1);
-      Row  : Gint;
+      Temp     : Chars_Ptr_Array (0 .. 1);
+      Row      : Gint;
+      Width    : Gint;
    begin
       Initialize (Question_Dialog, "Question", Main_Window);
       Widget_Callback.Connect
@@ -262,7 +263,7 @@ package body Odd.Dialogs is
         (Question_Dialog.Vbox1, Question_Dialog.Scrolledwindow1,
          True, True, 0);
       Set_Policy
-        (Question_Dialog.Scrolledwindow1, Policy_Never, Policy_Automatic);
+        (Question_Dialog.Scrolledwindow1, Policy_Automatic, Policy_Automatic);
 
       Gtk_New (Question_Dialog.List, 2, Question_Titles);
       Widget_Callback.Connect
@@ -285,6 +286,13 @@ package body Odd.Dialogs is
         (Question_Dialog.List, 1,
          Gint'Min (Optimal_Column_Width (Question_Dialog.List, 1),
                    Max_Column_Width));
+      Set_Column_Auto_Resize (Question_Dialog.List, 0, True);
+      Set_Column_Auto_Resize (Question_Dialog.List, 1, True);
+
+      Width := Optimal_Column_Width (Question_Dialog.List, 0)
+        + Optimal_Column_Width (Question_Dialog.List, 1)
+        + 20;
+      Set_Default_Size (Question_Dialog, Gint'Min (Width, 500), 200);
    end Initialize;
 
    ----------
