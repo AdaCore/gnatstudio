@@ -44,6 +44,7 @@ with System;                    use System;
 with String_Utils;              use String_Utils;
 with Glide_Intl;                use Glide_Intl;
 with Glide_Main_Window;         use Glide_Main_Window;
+with Glide_Interactive_Consoles; use Glide_Interactive_Consoles;
 with Default_Preferences;       use Default_Preferences;
 with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
 with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
@@ -921,6 +922,10 @@ package body Glide_Kernel is
 
       Window := Glide_Window (Handle.Main_Window);
 
+      if State in Action_Kernel_State'Range then
+         Enable_Prompt_Display (Get_Interactive_Console (Handle), False);
+      end if;
+
       if State = Busy then
          Set_Busy_Cursor (Get_Window (Window), True, True);
          Window.Busy_Level := Window.Busy_Level + 1;
@@ -962,12 +967,14 @@ package body Glide_Kernel is
             end if;
          end if;
 
-         if Window.State_Level = 0
-           and then Window.Timeout_Id /= 0
-         then
-            Timeout_Remove (Window.Timeout_Id);
-            Window.Timeout_Id := 0;
-            Display_Default_Image (Handle);
+         if Window.State_Level = 0 then
+            Enable_Prompt_Display (Get_Interactive_Console (Handle), True);
+
+            if Window.Timeout_Id /= 0 then
+               Timeout_Remove (Window.Timeout_Id);
+               Window.Timeout_Id := 0;
+               Display_Default_Image (Handle);
+            end if;
          end if;
       end if;
    end Pop_State;
