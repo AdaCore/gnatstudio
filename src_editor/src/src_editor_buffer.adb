@@ -67,15 +67,27 @@ package body Src_Editor_Buffer is
    procedure Changed_Handler
      (Buffer : access Source_Buffer_Record'Class;
       Params : Glib.Values.GValues);
+   --  This procedure is used to signal to the clients that the insert
+   --  cursor position may have changed by emitting the
+   --  "cursor_position_changed" signal.
 
    procedure Mark_Set_Handler
      (Buffer : access Source_Buffer_Record'Class;
       Params : Glib.Values.GValues);
+   --  This procedure is used to signal to the clients that the insert
+   --  cursor position has changed by emitting the "cursor_position_changed"
+   --  signal. This signal is emitted only when the mark changed is the
+   --  Insert_Mark.
 
    procedure Insert_Text_Cb
      (Buffer          : access Source_Buffer_Record'Class;
       End_Insert_Iter : Gtk.Text_Iter.Gtk_Text_Iter;
       Text            : String);
+   --  This procedure recomputes the syntax-highlighting of the buffer
+   --  in a semi-optimized manor, based on syntax-highlighting already
+   --  done before the insertiong and the text added.
+   --
+   --  This procedure assumes that the language has been set.
 
    procedure Insert_Text_Handler
      (Buffer : access Source_Buffer_Record'Class;
@@ -92,6 +104,11 @@ package body Src_Editor_Buffer is
    procedure Delete_Range_Cb
      (Buffer : access Source_Buffer_Record'Class;
       Iter   : Gtk_Text_Iter);
+   --  This procedure recomputes the syntax-highlighting of the buffer
+   --  in a semi-optimized manor, based on syntax-highlighting already
+   --  done before the deletion and the location of deletion.
+   --
+   --  This procedure assumes that the language has been set.
 
    procedure Delete_Range_Handler
      (Buffer : access Source_Buffer_Record'Class;
@@ -171,7 +188,7 @@ package body Src_Editor_Buffer is
             Col  : Gint;
          begin
             Get_Text_Iter (Glib.Values.Nth (Params, 1), Iter);
-            Line := Get_Line (Iter) + 1;
+            Line := Get_Line (Iter);
             Col := Get_Line_Offset (Iter);
             Emit_New_Cursor_Position (Buffer, Line => Line, Column => Col);
          end;
@@ -622,9 +639,7 @@ package body Src_Editor_Buffer is
       Insert_Iter : Gtk_Text_Iter;
    begin
       Get_Iter_At_Mark (Buffer, Insert_Iter, Buffer.Insert_Mark);
-      Line := Get_Line (Insert_Iter) + 1;
-      --  We need to add one to the line number to start counting lines
-      --  from 1 rather than from 0;
+      Line := Get_Line (Insert_Iter);
       Column := Get_Line_Offset (Insert_Iter);
    end Get_Cursor_Position;
 
