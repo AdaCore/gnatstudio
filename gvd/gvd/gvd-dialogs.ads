@@ -5,13 +5,13 @@ with Gtk.Clist; use Gtk.Clist;
 with Gtk.Label; use Gtk.Label;
 with Gtk.Hbutton_Box; use Gtk.Hbutton_Box;
 with Gtk.Button; use Gtk.Button;
-with Main_Debug_Window_Pkg; use Main_Debug_Window_Pkg;
+with Gtk.Window; use Gtk.Window;
 with Language; use Language;
 
 package Task_Dialog_Pkg is
 
    type Task_Dialog_Record is new Gtk_Dialog_Record with record
-      Main_Window : Main_Debug_Window_Access;
+      Main_Window : Gtk_Window;
       Vbox1 : Gtk_Vbox;
       Scrolledwindow1 : Gtk_Scrolled_Window;
       Task_List : Gtk_Clist;
@@ -29,12 +29,12 @@ package Task_Dialog_Pkg is
 
    procedure Gtk_New
      (Task_Dialog : out Task_Dialog_Access;
-      Main_Window : Main_Debug_Window_Access;
+      Main_Window : Gtk_Window;
       Information : Thread_Information_Array);
 
    procedure Initialize
      (Task_Dialog : access Task_Dialog_Record'Class;
-      Main_Window : Main_Debug_Window_Access;
+      Main_Window : Gtk_Window;
       Information : Thread_Information_Array);
 
 end Task_Dialog_Pkg;

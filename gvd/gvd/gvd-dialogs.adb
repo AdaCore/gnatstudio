@@ -15,7 +15,7 @@ package body Task_Dialog_Pkg is
 
    procedure Gtk_New
      (Task_Dialog : out Task_Dialog_Access;
-      Main_Window : Main_Debug_Window_Access;
+      Main_Window : Gtk_Window;
       Information : Thread_Information_Array) is
    begin
       Task_Dialog := new Task_Dialog_Record;
@@ -24,7 +24,7 @@ package body Task_Dialog_Pkg is
 
    procedure Initialize
      (Task_Dialog : access Task_Dialog_Record'Class;
-      Main_Window : Main_Debug_Window_Access;
+      Main_Window : Gtk_Window;
       Information : Thread_Information_Array)
    is
       Num_Columns : Thread_Fields;
