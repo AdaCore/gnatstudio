@@ -905,7 +905,6 @@ package body Src_Editor_Buffer.Line_Information is
       End_Action (Editor);
 
       LFs := (others => ASCII.LF);
-
       Get_Iter_At_Line (Editor, Iter, Gint (Buffer_Line - 1));
 
       Editor.Modifying_Editable_Lines := False;
