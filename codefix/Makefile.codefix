@@ -31,7 +31,7 @@ OBJ_DIR = $(CODEFIX_OBJ_DIR)
 CFLAGS = -g -O2
 
 PROJECT_FILE = codefix
-ADA_SOURCES=gnatfix.adb regression.adb codefix_interface.adb
+ADA_SOURCES=gnatfix.adb codefix_interface.adb
 
 ifneq ($(strip $(CODEFIX_SRCS)),)
    LIBS := $(CODEFIX_OBJ_DIR)/libcodefix$(AR_EXT) $(LIBS)
