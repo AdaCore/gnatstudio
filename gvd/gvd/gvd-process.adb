@@ -37,6 +37,7 @@ with Gtk.Notebook; use Gtk.Notebook;
 with Gtk.Label;    use Gtk.Label;
 with Gtk.Object;   use Gtk.Object;
 with Gtk.Dialog;   use Gtk.Dialog;
+with Gtk.Window;   use Gtk.Window;
 
 with Gtk.Extra.PsFont; use Gtk.Extra.PsFont;
 
@@ -58,7 +59,9 @@ with GNAT.Regpat;     use GNAT.Regpat;
 with Gtk.Handlers;    use Gtk.Handlers;
 with Odd.Menus;       use Odd.Menus;
 
-with Main_Debug_Window_Pkg;  use Main_Debug_Window_Pkg;
+with Main_Debug_Window_Pkg;      use Main_Debug_Window_Pkg;
+with Breakpoints_Pkg;            use Breakpoints_Pkg;
+with Breakpoints_Pkg.Callbacks;  use Breakpoints_Pkg.Callbacks;
 with System;
 with Unchecked_Conversion;
 
@@ -665,7 +668,44 @@ package body Odd.Process is
       Process.Breakpoints := new Breakpoint_Array'
         (List_Breakpoints (Process.Debugger));
 
+      --  Update the breakpoints in the editor
       Update_Breakpoints (Process.Editor_Text, Process.Breakpoints.all);
+
+      --  Update the breakpoints dialog if necessary
+      if Process.Window.Breakpoints_Editor /= null
+        and then Mapped_Is_Set (Process.Window.Breakpoints_Editor)
+      then
+         Update_Breakpoint_List
+           (Breakpoints_Access (Process.Window.Breakpoints_Editor));
+      end if;
    end Update_Breakpoints;
+
+   -----------------------------
+   -- Toggle_Breakpoint_State --
+   -----------------------------
+
+   function Toggle_Breakpoint_State
+     (Process        : access Debugger_Process_Tab_Record;
+      Breakpoint_Num : Integer)
+     return Boolean
+   is
+   begin
+      --  ??? Maybe we should also update the icons in the code_editor to have
+      --  an icon of a different color ?
+      if Process.Breakpoints /= null then
+         for J in Process.Breakpoints'Range loop
+            if Process.Breakpoints (J).Num = Breakpoint_Num then
+               Process.Breakpoints (J).Enabled :=
+                 not Process.Breakpoints (J).Enabled;
+               Enable_Breakpoint
+                 (Process.Debugger, Breakpoint_Num,
+                  Process.Breakpoints (J).Enabled,
+                  Display => True);
+               return Process.Breakpoints (J).Enabled;
+            end if;
+         end loop;
+      end if;
+      return False;
+   end Toggle_Breakpoint_State;
 
 end Odd.Process;

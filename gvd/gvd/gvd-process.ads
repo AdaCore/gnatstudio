@@ -235,8 +235,23 @@ package Odd.Process is
    --  Destroy any registered dialog.
    --  Nothing happens if there is no such dialog.
 
+   --------------------------
+   -- Breakpoints handling --
+   --------------------------
+
    procedure Update_Breakpoints
      (Object : access Gtk.Widget.Gtk_Widget_Record'Class);
    --  Update the list of breakpoints every time the process is stopped.
+
+   function Toggle_Breakpoint_State
+     (Process        : access Debugger_Process_Tab_Record;
+      Breakpoint_Num : Integer)
+     return Boolean;
+   --  Toggle the enabled/disabled state of a specific breakpoint in the
+   --  current process, and return the new state.
+   --  The internal list of breakpoints is also updated, but no command is
+   --  emitted to the debugger.
+   --  False is returned when there is no such breakpoint in the list (or the
+   --  list of breakpoints has never been parsed before).
 
 end Odd.Process;
