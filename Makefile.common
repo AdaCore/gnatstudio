@@ -39,7 +39,8 @@ OBJ_DIR?=../obj
 NO_STYLE_FILES+=${wildcard *_pkg.adb}
 
 CFLAGS=-g
-GNATBIND_FLAGS=-bargs -E
+GNATBIND_FLAGS+=-bargs -E
+GNATLINK_FLAGS+=
 GNATMAKE_FLAGS=-gnataQ -m ${CFLAGS}
 STYLE_FLAGS=-gnaty -gnatwu
 
@@ -128,7 +129,7 @@ check_gtkada: force
 # since we want to make sure that make will not search for object files in
 # directories specified in VPATH.
 
-ALL_FLAGS:=${GNATMAKE_FLAGS} -aI../src -aO../obj ${MODULE_INCLUDE} ${GNATBIND_FLAGS}
+ALL_FLAGS:=${GNATMAKE_FLAGS} -aI../src -aO../obj ${MODULE_INCLUDE} ${GNATBIND_FLAGS} ${GNATLINK_FLAGS}
 C_OBJS:=${foreach name,${C_FILES},${OBJ_DIR}/${notdir ${name:.c=.o}}}
 
 .PHONY: all force check_modules clean
