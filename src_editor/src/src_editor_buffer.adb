@@ -1888,7 +1888,12 @@ package body Src_Editor_Buffer is
                      Filename        => Buffer.Filename.all,
                      Lang_Autodetect => True,
                      Success         => Success);
-                  Set_Cursor_Position (Buffer, Line, Column);
+
+                  if Is_Valid_Position (Buffer, Line, Column) then
+                     Set_Cursor_Position (Buffer, Line, Column);
+                  elsif Is_Valid_Position (Buffer, Line, 0) then
+                     Set_Cursor_Position (Buffer, Line, 0);
+                  end if;
 
                when others =>
                   null;
