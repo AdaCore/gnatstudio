@@ -221,6 +221,14 @@ package Prj_API is
    --  Attribute_Index is the associative array index for the attribute (for
    --  instance the file name when modifying the switches).
 
+   procedure Update_Attribute_Value_In_Scenario
+     (Project         : Project_Node_Id;
+      Pkg_Name        : String := "";
+      Attribute_Name  : String := "";
+      Value           : String;
+      Attribute_Index : Types.String_Id := Types.No_String);
+   --  Same as above, but for an attribute that contains a single value.
+
    -----------------
    -- Expressions --
    -----------------
