@@ -768,8 +768,7 @@ package body Directory_Tree is
 
             Path := Get_Path (Selector.Directory.File_Model, Iter);
 
-            --  ??? Should we create the intermediate directories.
-            Make_Dir (Get_Text (Ent));
+            Make_Dir_Recursive (Locale_From_UTF8 (Get_Text (Ent)));
 
             Success := Collapse_Row (Selector.Directory.File_Tree, Path);
             Success := Expand_Row (Selector.Directory.File_Tree, Path, False);
