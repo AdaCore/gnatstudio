@@ -41,6 +41,8 @@ BASE_DIR=$(GLIDE_BASE_DIR)/../builder
 include $(BASE_DIR)/Makefile.builder
 BASE_DIR=$(GLIDE_BASE_DIR)/../navigation
 include $(BASE_DIR)/Makefile.navigation
+BASE_DIR=$(GLIDE_BASE_DIR)/../keymanager
+include $(BASE_DIR)/Makefile.keymanager
 BASE_DIR=$(GLIDE_BASE_DIR)/../custom
 include $(BASE_DIR)/Makefile.custom
 BASE_DIR=$(GLIDE_BASE_DIR)/../help

@@ -22,6 +22,7 @@ with "../aliases/aliases";
 with "../shared";
 with "../python/python";
 with "../shell/shell";
+with "../keymanager/keymanager";
 with "../design/design";
 
 project GPS is
