@@ -509,12 +509,12 @@ package body Project_Explorers is
 
    function Load_Desktop
      (Node : Node_Ptr; User : Kernel_Handle) return Gtk_Widget;
-   --  Save the status of the project explorer to an XML tree
+   --  Restore the status of the explorer from a saved XML tree.
 
    function Save_Desktop
      (Widget : access Gtk.Widget.Gtk_Widget_Record'Class)
       return Node_Ptr;
-   --  Restore the status of the explorer from a saved XML tree.
+   --  Save the status of the project explorer to an XML tree
 
    procedure On_Open_Explorer
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
@@ -3165,6 +3165,7 @@ package body Project_Explorers is
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
    is
       Project : constant String := '/' & (-"Project");
+      N       : Node_Ptr;
    begin
       Register_Module
         (Module                  => Explorer_Module_ID,
@@ -3177,8 +3178,17 @@ package body Project_Explorers is
       Glide_Kernel.Kernel_Desktop.Register_Desktop_Functions
         (Save_Desktop'Access, Load_Desktop'Access);
 
-      --  If a desktop was loaded, we do not want to force an explorer if none
-      --  was saved. However, in the default case we want to open an explorer.
+      --  Add a project explorer to the default desktop.
+      N := new Node;
+      N.Tag := new String' ("Project_Explorer");
+
+      Add_Default_Desktop_Item
+        (Kernel, N,
+         10, 10,
+         300, 600,
+         "Project Explorer", "Project Explorer",
+         Docked, Left,
+         True);
 
       Register_Menu
         (Kernel, Project, -"Explorer", "", On_Open_Explorer'Access);
