@@ -269,7 +269,7 @@ package Glide_Kernel.Modules is
    --  each of its module whether it can display some specific data.
    --  The type of data is indicated through standard MIME types.
 
-   Mime_Source_File : constant String := "glide/source";
+   Mime_Source_File : constant String := "gps/source";
    --  There are multiple data associated with this type:
    --     first  : full name of the source file to open (use Get_String)
    --     second : line to display initially (use Get_Int). Ignored if 0
@@ -279,12 +279,12 @@ package Glide_Kernel.Modules is
    --              with Back/Forward.
    --  See also the function Open_File_Editor.
 
-   Mime_File_Line_Info : constant String := "glide/file_info";
+   Mime_File_Line_Info : constant String := "gps/file_info";
    --  There are multiple data associated with this type:
    --     first  : full name of the source file to open (use Get_String)
    --     second : source_line_info data (use Get_Address)
 
-   Mime_Html_File : constant String := "glide/html";
+   Mime_Html_File : constant String := "gps/html";
    --  Request to display a html file
    --  There are multiple data associated with this type:
    --     first  : full name of the html file to open (use Get_String)
