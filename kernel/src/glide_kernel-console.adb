@@ -40,6 +40,7 @@ with Ada.Exceptions;       use Ada.Exceptions;
 with Glide_Result_View;    use Glide_Result_View;
 with Gtkada.Handlers;      use Gtkada.Handlers;
 with Histories;            use Histories;
+with Gtk.Widget;           use Gtk.Widget;
 
 package body Glide_Kernel.Console is
 
@@ -143,6 +144,7 @@ package body Glide_Kernel.Console is
          Gtk_New (Results, Kernel_Handle (Kernel),
                   Module_ID (Console_Module_Id));
          Child := Put (Get_MDI (Kernel), Results);
+
          Set_Title (Child, -"Locations");
          Set_Dock_Side (Child, Bottom);
          Dock_Child (Child);
@@ -530,7 +532,8 @@ package body Glide_Kernel.Console is
       Set_Completion_Handler (Interactive, Commands_As_List'Access);
       Child := Put
         (Get_MDI (Kernel), Interactive,
-         Iconify_Button or Maximize_Button);
+         Iconify_Button or Maximize_Button,
+         Focus_Widget => Gtk_Widget (Get_Child (Interactive)));
       Set_Title (Child, -"Shell");
       Set_Dock_Side (Child, Bottom);
       Dock_Child (Child);
