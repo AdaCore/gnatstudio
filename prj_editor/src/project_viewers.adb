@@ -1017,10 +1017,10 @@ package body Project_Viewers is
       declare
          Name : constant String := Run (Wiz);
       begin
-
          --  If we have a child project, report limitations.
+         --  Ignore trailing ".gpr" file extension in this check
 
-         for J in reverse Name'Range loop
+         for J in reverse Name'First .. Name'Last - 4 loop
             if Name (J) = '.' then
                Insert
                  (Kernel,
@@ -1616,11 +1616,11 @@ package body Project_Viewers is
    is
       pragma Unreferenced (Event_Widget, Kernel);
 
-      Context     : constant File_Selection_Context_Access :=
+      Context : constant File_Selection_Context_Access :=
         new File_Selection_Context;
-      V           : constant Project_Viewer := Project_Viewer (Object);
-      Item        : Gtk_Menu_Item;
-      Iter        : Gtk_Tree_Iter;
+      V       : constant Project_Viewer := Project_Viewer (Object);
+      Item    : Gtk_Menu_Item;
+      Iter    : Gtk_Tree_Iter;
 
    begin
       --  ??? Should call Project_Editor_Contextual
