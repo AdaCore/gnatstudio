@@ -1037,8 +1037,12 @@ package body Prj_API is
 
    function Get_Project_From_View (View : Project_Id) return Project_Node_Id is
    begin
-      return Tree_Private_Part.Projects_Htable.Get
-        (Projects.Table (View).Name).Node;
+      if View = No_Project then
+         return Empty_Node;
+      else
+         return Tree_Private_Part.Projects_Htable.Get
+           (Projects.Table (View).Name).Node;
+      end if;
    end Get_Project_From_View;
 
    --------------

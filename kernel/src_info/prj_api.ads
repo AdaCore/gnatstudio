@@ -554,7 +554,7 @@ package Prj_API is
    --  The following attributes should be read through specialized subprograms
    --  (Get_Languages, Get_Vcs_Kind)
    Vcs_Kind_Attribute         : constant String := "vcs_kind";
-   Languages_Attribute : constant String := "languages";
+   Languages_Attribute        : constant String := "languages";
 
    function Get_Attribute_Value
      (Project_View   : Project_Id;
@@ -575,8 +575,8 @@ package Prj_API is
    --  array is returned if the attribute isn't defined.
    --  It is the responsability of the called to free the memory.
 
-   function Get_Languages (Project_View : Project_Id)
-      return GNAT.OS_Lib.Argument_List;
+   function Get_Languages
+     (Project_View : Project_Id) return GNAT.OS_Lib.Argument_List;
    --  Return the value of the Languages attribute. You should use this
    --  function instead of Get_Attribute_Value, since it will correctly default
    --  to Ada if no language was defined by the user.
@@ -588,8 +588,8 @@ package Prj_API is
    --  The empty string is returned if this attribute wasn't defined
    --  explicitely by the user or Project_View is No_Project.
 
-   function Executables_Directory (Project_View : Prj.Project_Id)
-      return String;
+   function Executables_Directory
+     (Project_View : Prj.Project_Id) return String;
    --  Return the directory that contains the executables generated for the
    --  main programs in Project_View. This is either Exec_Dir or Object_Dir.
    --  The returned string always ends with a directory separator.
