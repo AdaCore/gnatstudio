@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2001-2003                       --
+--                     Copyright (C) 2001-2004                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -171,9 +171,10 @@ package body Project_Viewers is
    Remove_Dep_Cmd_Parameters : constant Glide_Kernel.Scripts.Cst_Argument_List
      := (1 => Imported_Cst'Access);
 
-   File_Name_Column         : constant := 0;
-   Compiler_Switches_Column : constant := 1;
-   Compiler_Color_Column    : constant := 2;
+   Base_File_Name_Column     : constant := 0;
+   Absolute_File_Name_Column : constant := 1;
+   Compiler_Switches_Column  : constant := 2;
+   Compiler_Color_Column     : constant := 3;
 
    type Project_Viewer_Record is new Gtk.Box.Gtk_Hbox_Record with record
       Tree  : Gtk.Tree_View.Gtk_Tree_View;
@@ -353,7 +354,7 @@ package body Project_Viewers is
      (Viewer    : access Project_Viewer_Record'Class;
       Project   : Project_Type;
       Directory : String := "";
-      File      : String := "");
+      File      : Virtual_File := VFS.No_File);
    --  Update the contents of the viewer.
    --  Directory and File act as filters for the information that is displayed.
 
@@ -610,8 +611,7 @@ package body Project_Viewers is
 
       File_Name  : constant Virtual_File :=
         Create
-          (Get_String (Viewer.Model, Iter, File_Name_Column),
-           Viewer.Current_Project);
+          (Get_String (Viewer.Model, Iter, Absolute_File_Name_Column));
       Color      : Gdk_Color;
       Value      : Prj.Variable_Value;
       Is_Default : Boolean;
@@ -652,7 +652,14 @@ package body Project_Viewers is
         or else Dir_Name (File_Name).all = Name_As_Directory (Directory_Filter)
       then
          Append (Viewer.Model, Iter, Null_Iter);
-         Set (Viewer.Model, Iter, File_Name_Column, Base_Name (File_Name));
+         Set (Viewer.Model,
+              Iter,
+              Base_File_Name_Column,
+              Base_Name (File_Name));
+         Set (Viewer.Model,
+              Iter,
+              Absolute_File_Name_Column,
+              Full_Name (File_Name).all);
          Project_Viewers_Set (Viewer, Iter);
       end if;
    end Append_Line;
@@ -721,7 +728,7 @@ package body Project_Viewers is
      (Viewer    : access Project_Viewer_Record'Class;
       Project   : Project_Type;
       Directory : String := "";
-      File      : String := "")
+      File      : Virtual_File := VFS.No_File)
    is
       Child : MDI_Child;
       Iter  : Gtk_Tree_Iter;
@@ -752,14 +759,18 @@ package body Project_Viewers is
          Show_Project (Viewer, Viewer.Current_Project, Directory);
       end if;
 
-      if File /= "" then
+      if File /= VFS.No_File then
          Iter := Get_Iter_First (Viewer.Model);
          while Iter /= Null_Iter loop
-            if Get_String (Viewer.Model, Iter, File_Name_Column) = File then
+            if Create
+              (Get_String
+                 (Viewer.Model, Iter, Absolute_File_Name_Column)) = File
+            then
                Unselect_All (Get_Selection (Viewer.Tree));
                Select_Iter (Get_Selection (Viewer.Tree), Iter);
                exit;
             end if;
+
             Next (Viewer.Model, Iter);
          end loop;
       end if;
@@ -783,10 +794,11 @@ package body Project_Viewers is
         and then Context.all in File_Selection_Context'Class
       then
          File := File_Selection_Context_Access (Context);
-         Update_Contents (Viewer,
-                          Project_Information (File),
-                          Dir_Name (File_Information (File)).all,
-                          Base_Name (File_Information (File)));
+         Update_Contents
+           (Viewer,
+            Project_Information (File),
+            Dir_Name (File_Information (File)).all,
+            File_Information (File));
       end if;
 
    exception
@@ -837,9 +849,10 @@ package body Project_Viewers is
       Kernel   : access Kernel_Handle_Record'Class)
    is
       Column_Types : constant GType_Array :=
-        (File_Name_Column         => GType_String,
-         Compiler_Switches_Column => GType_String,
-         Compiler_Color_Column    => Gdk_Color_Type);
+        (Base_File_Name_Column     => GType_String,
+         Absolute_File_Name_Column => GType_String,
+         Compiler_Switches_Column  => GType_String,
+         Compiler_Color_Column     => Gdk_Color_Type);
 
       Scrolled   : Gtk_Scrolled_Window;
       Col        : Gtk_Tree_View_Column;
@@ -869,7 +882,7 @@ package body Project_Viewers is
       Set_Reorderable (Col, True);
       Gtk_New (Render);
       Pack_Start (Col, Render, False);
-      Add_Attribute (Col, Render, "text", File_Name_Column);
+      Add_Attribute (Col, Render, "text", Base_File_Name_Column);
 
       Gtk_New (Col);
       Col_Number := Append_Column (Viewer.Tree, Col);
@@ -1577,7 +1590,7 @@ package body Project_Viewers is
       Event        : Gdk.Event.Gdk_Event;
       Menu         : Gtk.Menu.Gtk_Menu) return Selection_Context_Access
    is
-      pragma Unreferenced (Event_Widget);
+      pragma Unreferenced (Event_Widget, Kernel);
 
       Context     : constant File_Selection_Context_Access :=
         new File_Selection_Context;
@@ -1600,12 +1613,12 @@ package body Project_Viewers is
 
          declare
             File_Name   : constant String := Get_String
-              (V.Model, Iter, File_Name_Column);
+              (V.Model, Iter, Absolute_File_Name_Column);
          begin
             Set_File_Information
               (Context,
-               File    => Create (File_Name, Kernel, Use_Object_Path => False),
-               Project      => V.Current_Project);
+               File    => Create (File_Name),
+               Project => V.Current_Project);
          end;
       end if;
 
@@ -1655,10 +1668,8 @@ package body Project_Viewers is
 
          while Iter /= Null_Iter loop
             if Iter_Is_Selected (Selection, Iter) then
-               --  ??? This isn't really a full file name
-               Names (N) := Create_From_Base
-                 (Base_Name =>
-                    Get_String (V.Model, Iter, File_Name_Column));
+               Names (N) := Create
+                 (Get_String (V.Model, Iter, Absolute_File_Name_Column));
                N := N + 1;
             end if;
 
