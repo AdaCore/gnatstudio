@@ -1185,7 +1185,7 @@ package body GUI_Utils is
       is
          pragma Unreferenced (Data);
       begin
-         if Accel_Key /= 0 and then Changed then
+         if Changed then
             Put_Line (File, "(gtk_accel_path """
                       & Accel_Path
                       & """ """
