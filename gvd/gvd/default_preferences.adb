@@ -848,9 +848,9 @@ package body Default_Preferences is
       T : constant Gtk_Toggle_Button := Gtk_Toggle_Button (Toggle);
    begin
       if Get_Active (T) then
-         Set_Text (Gtk_Label (Get_Child (T)), -"True");
+         Set_Text (Gtk_Label (Get_Child (T)), -"Enabled");
       else
-         Set_Text (Gtk_Label (Get_Child (T)), -"False");
+         Set_Text (Gtk_Label (Get_Child (T)), -"Disabled");
       end if;
    end Toggled_Boolean;
 
@@ -1351,7 +1351,7 @@ package body Default_Preferences is
             Prop : constant Param_Spec_Boolean := Param_Spec_Boolean (Param);
             Toggle : Gtk_Check_Button;
          begin
-            Gtk_New (Toggle, -"True");
+            Gtk_New (Toggle, -"Enabled");
             Widget_Callback.Connect
               (Toggle, "toggled",
                Widget_Callback.To_Marshaller
