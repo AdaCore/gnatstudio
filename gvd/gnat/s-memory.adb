@@ -32,19 +32,22 @@
 ------------------------------------------------------------------------------
 
 --  This is a GPS specific implementation of this package.
---  Enabling the Memory_Check trace will disable all memory deallocations.
+--  Setting the GPS_MEMORY_CHECK env variable will disable all memory
+--  deallocations.
 --  In the future, we may want to connect a garbage collector instead.
 
 with Ada.Exceptions;
 with System.CRTL;
-with Traces;
 
 package body System.Memory is
 
    use Ada.Exceptions;
-   use Traces;
 
-   Memory_Check : constant Debug_Handle := Create ("Memory_Check", Off, False);
+   function getenv (S : String) return System.Address;
+   pragma Import (C, getenv);
+
+   Memory_Check : constant Boolean :=
+     getenv ("GPS_MEMORY_CHECK" & ASCII.NUL) /= Null_Address;
 
    -----------
    -- Alloc --
@@ -82,7 +85,7 @@ package body System.Memory is
 
    procedure Free (Ptr : System.Address) is
    begin
-      if not Active (Memory_Check) then
+      if not Memory_Check then
          System.CRTL.free (Ptr);
       end if;
    end Free;
