@@ -294,7 +294,7 @@ package Codefix.Errors_Parser is
    --  Problems of misspelling of packages
 
    type Sth_Should_Be_Sth is new Error_Parser
-     (new String'("Wrong_Keyword"), 2)
+     (new String'("Wrong_Keyword"), 3)
    with null record;
 
    procedure Initialize (This : in out Sth_Should_Be_Sth);
