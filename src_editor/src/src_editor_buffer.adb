@@ -4848,7 +4848,7 @@ package body Src_Editor_Buffer is
          begin
             --  Does this word fits on the line
 
-            if Line_Size + Word'Length + 1 >= Max then
+            if Line_Size + Word'Length + 1 > Max then
                --  +1 for the space before the word
                Add_EOL;
             end if;
