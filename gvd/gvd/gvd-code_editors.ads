@@ -118,12 +118,15 @@ package Odd.Code_Editors is
    --  Clear the contents of the editor.
 
    procedure Load_File
-     (Editor    : access Code_Editor_Record;
-      File_Name : String);
+     (Editor      : access Code_Editor_Record;
+      File_Name   : String;
+      Set_Current : Boolean := True);
    --  Load and append a file in the editor.
    --  The contents is highlighted based on the current language.
    --  Debugger is used to calculate which lines should get icons on the side,
    --  through calls to Line_Contains_Code.
+   --  If Set_Current is True, then File_Name becomes the current file for the
+   --  debugger (ie the one that contains the current execution line).
 
    procedure File_Not_Found
      (Editor    : access Code_Editor_Record;
@@ -132,9 +135,16 @@ package Odd.Code_Editors is
    --  This delete the currently displayed file, and display a warning message.
 
    procedure Set_Line
-     (Editor    : access Code_Editor_Record;
-      Line      : Natural);
+     (Editor      : access Code_Editor_Record;
+      Line        : Natural;
+      Set_Current : Boolean := True);
    --  Set the current line (and draw the button on the side).
+   --  If Set_Current is True, then the line becomes the current line (ie the
+   --  one on which the debugger is stopped). Otherwise, Line is simply the
+   --  line that we want to display in the editor.
+
+   function Get_Line (Editor : access Code_Editor_Record) return Natural;
+   --  Return the current line.
 
    procedure Update_Breakpoints
      (Editor    : access Code_Editor_Record;

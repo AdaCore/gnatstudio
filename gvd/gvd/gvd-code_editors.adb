@@ -41,6 +41,8 @@ with Gtkada.Types;        use Gtkada.Types;
 with Language;            use Language;
 with Debugger;            use Debugger;
 with GNAT.OS_Lib;         use GNAT.OS_Lib;
+with Gtk.Check_Menu_Item; use Gtk.Check_Menu_Item;
+with Gtk.Menu_Item;       use Gtk.Menu_Item;
 
 with Odd.Explorer;        use Odd.Explorer;
 with Odd.Menus;           use Odd.Menus;
@@ -86,13 +88,34 @@ package body Odd.Code_Editors is
    subtype Line_Number is String (1 .. Line_Numbers_Width);
    --  Type of strings used to display line numbers.
 
+   Editor_Contextual_Menu_Name : constant String := "odd_editor_context";
+   --  String used to store the editor contextual menu as a user data
+
    --------------------
    -- Local packages --
    --------------------
 
+   type Breakpoint_Record (File_Length : Natural) is record
+      Process : Debugger_Process_Tab;
+      File    : String (1 .. File_Length);
+      Line    : Integer;
+   end record;
+
+   type Variable_Record (Name_Length : Natural) is record
+      Process      : Debugger_Process_Tab;
+      Name         : String (1 .. Name_Length);
+      Auto_Refresh : Boolean;
+   end record;
+
    package Editor_Cb is new Callback (Code_Editor_Record);
    package Editor_Event_Cb is new Gtk.Handlers.Return_Callback
      (Code_Editor_Record, Boolean);
+   package Check_Editor_Handler is new Gtk.Handlers.User_Callback
+     (Gtk_Check_Menu_Item_Record, Odd.Code_Editors.Code_Editor);
+   package Widget_Breakpoint_Handler is new Gtk.Handlers.User_Callback
+     (Gtk_Widget_Record, Breakpoint_Record);
+   package Widget_Variable_Handler is new Gtk.Handlers.User_Callback
+     (Gtk_Widget_Record, Variable_Record);
 
    -----------------------
    -- Local subprograms --
@@ -126,6 +149,43 @@ package body Odd.Code_Editors is
    procedure Destroy_Cb (Editor : access Code_Editor_Record'Class);
    --  Free the memory occupied by the editor and the buttons layout, as well
    --  as all the associated pixmaps.
+
+   function Editor_Contextual_Menu
+     (Editor   : access Odd.Code_Editors.Code_Editor_Record'Class;
+      Line     : Glib.Gint;
+      Entity   : String)
+     return Gtk.Menu.Gtk_Menu;
+   --  Create (if necessary) and reset the contextual menu used when a specific
+   --  entity is selected in the code editor.
+
+   procedure Set_Breakpoint
+     (Widget : access Gtk_Widget_Record'Class;
+      Br     : Breakpoint_Record);
+   --  Set a breakpoint on a specific line.
+
+   procedure Till_Breakpoint
+     (Widget : access Gtk_Widget_Record'Class;
+      Br     : Breakpoint_Record);
+   --  Set a temporary breakpoint on a line, and continue execution.
+
+   procedure Change_Line_Nums
+     (Item   : access Gtk_Check_Menu_Item_Record'Class;
+      Editor : Code_Editor);
+   --  Callback for the "show line numbers" contextual menu item.
+
+   procedure Print_Variable
+     (Widget : access Gtk_Widget_Record'Class;
+      Var    : Variable_Record);
+   --  Callback for the "print variable" or "display variable" contextual menu
+   --  items.
+
+   procedure Change_Lines_With_Code
+     (Item   : access Gtk_Check_Menu_Item_Record'Class;
+      Editor : Code_Editor);
+   --  Callback for the "show lines with code" contextual menu item.
+
+   procedure Show_Current_Line_Menu (Editor : access Code_Editor_Record'Class);
+   --  Display the current file and current line in the editor.
 
    -------------------
    -- Scroll_Layout --
@@ -677,7 +737,7 @@ package body Odd.Code_Editors is
          Pop_Internal_Command_Status (Get_Process (Debug));
       end if;
 
-      Set_Line (Editor, Editor.Current_Line);
+      Set_Line (Editor, Editor.Current_Line, Set_Current => False);
       Show_All (Editor.Buttons);
 
       Thaw (Editor.Buttons);
@@ -709,8 +769,9 @@ package body Odd.Code_Editors is
    ---------------
 
    procedure Load_File
-     (Editor    : access Code_Editor_Record;
-      File_Name : String)
+     (Editor      : access Code_Editor_Record;
+      File_Name   : String;
+      Set_Current : Boolean := True)
    is
       F      : File_Descriptor;
       Length : Positive;
@@ -727,7 +788,7 @@ package body Odd.Code_Editors is
       else
          Free (Editor.Current_File);
          Free (Editor.Buffer);
-         Editor.Current_File := new String' (File_Name);
+         Editor.Current_File := new String'(File_Name);
       end if;
 
       --  Read the size of the file
@@ -753,7 +814,9 @@ package body Odd.Code_Editors is
 
       --  Create the explorer tree.
 
-      Set_Current_File (Editor.Explorer, File_Name);
+      if Set_Current then
+         Set_Current_File (Editor.Explorer, File_Name);
+      end if;
 
       Print_Buffer (Editor);
       Update_Buttons (Editor);
@@ -786,8 +849,9 @@ package body Odd.Code_Editors is
    --------------
 
    procedure Set_Line
-     (Editor    : access Code_Editor_Record;
-      Line      : Natural)
+     (Editor      : access Code_Editor_Record;
+      Line        : Natural;
+      Set_Current : Boolean := True)
    is
       Line_Height : Gint;
       Y : Gint;
@@ -823,10 +887,23 @@ package body Odd.Code_Editors is
 
       Editor.Current_Line := Line;
 
+      if Set_Current then
+         Set_Current_Line (Editor.Explorer, Line);
+      end if;
+
       --  Make sure the arrow that indicated the previous line is no longer
       --  visible.
       Queue_Draw (Editor.Buttons);
    end Set_Line;
+
+   --------------
+   -- Get_Line --
+   --------------
+
+   function Get_Line (Editor : access Code_Editor_Record) return Natural is
+   begin
+      return Editor.Current_Line;
+   end Get_Line;
 
    ------------------------
    -- Set_Show_Line_Nums --
@@ -1000,5 +1077,206 @@ package body Odd.Code_Editors is
    begin
       return Editor.Process;
    end Get_Process;
+
+   ----------------------------
+   -- Editor_Contextual_Menu --
+   ----------------------------
+
+   function Editor_Contextual_Menu
+     (Editor   : access Odd.Code_Editors.Code_Editor_Record'Class;
+      Line     : Glib.Gint;
+      Entity   : String)
+     return Gtk.Menu.Gtk_Menu
+   is
+      Menu  : Gtk_Menu;
+      Mitem : Gtk_Menu_Item;
+      Check : Gtk_Check_Menu_Item;
+   begin
+      --  Destroy the previous menu (which we couldn't do earlier because
+      --  of the call to popup. We will change every item anyway.
+
+      begin
+         Menu := Menu_User_Data.Get (Editor, Editor_Contextual_Menu_Name);
+         Destroy (Menu);
+      exception
+         when Gtkada.Types.Data_Error => null;
+      end;
+
+      --  Create a new menu
+
+      Gtk_New (Menu);
+
+      Gtk_New (Mitem, Label => -"Print " & Entity);
+      Append (Menu, Mitem);
+      Widget_Variable_Handler.Connect
+        (Mitem, "activate",
+         Widget_Variable_Handler.To_Marshaller (Print_Variable'Access),
+         Variable_Record'(Name_Length  => Entity'Length,
+                          Name         => Entity,
+                          Auto_Refresh => False,
+                          Process      => Convert (Editor)));
+      if Entity'Length = 0 then
+         Set_State (Mitem, State_Insensitive);
+      end if;
+
+      Gtk_New (Mitem, Label => -"Display " & Entity);
+      Append (Menu, Mitem);
+      Widget_Variable_Handler.Connect
+        (Mitem, "activate",
+         Widget_Variable_Handler.To_Marshaller (Print_Variable'Access),
+         Variable_Record'(Name_Length  => Entity'Length,
+                          Name         => Entity,
+                          Auto_Refresh => True,
+                          Process      => Convert (Editor)));
+      if Entity'Length = 0 then
+         Set_State (Mitem, State_Insensitive);
+      end if;
+
+      --  Display a separator
+
+      Gtk_New (Mitem);
+      Append (Menu, Mitem);
+
+      --  Line specific items
+
+      Gtk_New (Mitem, Label => -"Set Breakpoint on Line" & Gint'Image (Line));
+      Append (Menu, Mitem);
+      Widget_Breakpoint_Handler.Connect
+        (Mitem, "activate",
+         Widget_Breakpoint_Handler.To_Marshaller (Set_Breakpoint'Access),
+         Breakpoint_Record'(File_Length  => Get_Current_File (Editor)'Length,
+                            Process      => Convert (Editor),
+                            File         => Get_Current_File (Editor),
+                            Line         => Integer (Line)));
+
+      Gtk_New (Mitem, Label => -"Continue Until Line" & Gint'Image (Line));
+      Append (Menu, Mitem);
+      Widget_Breakpoint_Handler.Connect
+        (Mitem, "activate",
+         Widget_Breakpoint_Handler.To_Marshaller (Till_Breakpoint'Access),
+         Breakpoint_Record'(File_Length  => Get_Current_File (Editor)'Length,
+                            Process      => Convert (Editor),
+                            File         => Get_Current_File (Editor),
+                            Line         => Integer (Line)));
+
+      Gtk_New (Mitem);
+      Append (Menu, Mitem);
+
+      Gtk_New (Mitem, Label => -"Show Current Line");
+      Append (Menu, Mitem);
+      Editor_Cb.Object_Connect
+        (Mitem, "activate",
+         Editor_Cb.To_Marshaller (Show_Current_Line_Menu'Access),
+         Editor);
+      Set_Sensitive (Mitem, Get_Current_File (Editor.Explorer) /= "");
+
+      Gtk_New (Mitem);
+      Append (Menu, Mitem);
+
+      --  Editor specific items
+
+      Gtk_New (Check, Label => -"Display Line Numbers");
+      Set_Always_Show_Toggle (Check, True);
+      Set_Active (Check, Get_Show_Line_Nums (Editor));
+      Append (Menu, Check);
+      Check_Editor_Handler.Connect
+        (Check, "activate",
+         Check_Editor_Handler.To_Marshaller (Change_Line_Nums'Access),
+         Code_Editor (Editor));
+
+      Gtk_New (Check, Label => -"Show lines with code");
+      Set_Always_Show_Toggle (Check, True);
+      Set_Active (Check, Get_Show_Lines_With_Code (Editor));
+      Append (Menu, Check);
+      Check_Editor_Handler.Connect
+        (Check, "activate",
+         Check_Editor_Handler.To_Marshaller (Change_Lines_With_Code'Access),
+         Code_Editor (Editor));
+
+      Show_All (Menu);
+      Menu_User_Data.Set (Editor, Menu, Editor_Contextual_Menu_Name);
+      return Menu;
+   end Editor_Contextual_Menu;
+
+   ----------------------------
+   -- Change_Lines_With_Code --
+   ----------------------------
+
+   procedure Change_Lines_With_Code
+     (Item   : access Gtk_Check_Menu_Item_Record'Class;
+      Editor : Code_Editor) is
+   begin
+      Set_Show_Lines_With_Code (Editor, Get_Active (Item));
+   end Change_Lines_With_Code;
+
+   --------------------
+   -- Set_Breakpoint --
+   --------------------
+
+   procedure Set_Breakpoint
+     (Widget : access Gtk_Widget_Record'Class;
+      Br     : Breakpoint_Record) is
+   begin
+      Break_Source (Br.Process.Debugger, Br.File, Br.Line);
+   end Set_Breakpoint;
+
+   ---------------------
+   -- Till_Breakpoint --
+   ---------------------
+
+   procedure Till_Breakpoint
+     (Widget : access Gtk_Widget_Record'Class;
+      Br     : Breakpoint_Record) is
+   begin
+      Break_Source (Br.Process.Debugger, Br.File, Br.Line, Temporary => True);
+      Continue (Br.Process.Debugger, Display => True);
+   end Till_Breakpoint;
+
+   --------------------
+   -- Print_Variable --
+   --------------------
+
+   procedure Print_Variable
+     (Widget : access Gtk_Widget_Record'Class;
+      Var    : Variable_Record)
+   is
+      pragma Warnings (Off, Widget);
+   begin
+      if Var.Auto_Refresh then
+         Process_User_Command
+           (Var.Process, "graph display " & Var.Name,
+            Output_Command => True);
+      else
+         Process_User_Command
+           (Var.Process, "graph print " & Var.Name,
+            Output_Command => True);
+      end if;
+   end Print_Variable;
+
+   ----------------------
+   -- Change_Line_Nums --
+   ----------------------
+
+   procedure Change_Line_Nums
+     (Item   : access Gtk_Check_Menu_Item_Record'Class;
+      Editor : Code_Editor) is
+   begin
+      Set_Show_Line_Nums (Editor, Get_Active (Item));
+   end Change_Line_Nums;
+
+   ----------------------------
+   -- Show_Current_Line_Menu --
+   ----------------------------
+
+   procedure Show_Current_Line_Menu (Editor : access Code_Editor_Record'Class)
+   is
+      Name : constant String := Get_Current_File (Editor.Explorer);
+   begin
+      if Name /= "" then
+         Load_File (Editor, Name, Set_Current => False);
+         Set_Line (Editor, Get_Current_Line (Editor.Explorer),
+                   Set_Current => False);
+      end if;
+   end Show_Current_Line_Menu;
 
 end Odd.Code_Editors;
