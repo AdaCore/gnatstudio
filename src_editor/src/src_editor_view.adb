@@ -239,12 +239,17 @@ package body Src_Editor_View is
       Data   : access Hooks_Data'Class);
    --  Callback for "File_Saved_Signal"
 
+   procedure Size_Allocated_Before (View : access Gtk_Widget_Record'Class);
+   --  Called before a new size is allocated
+
    procedure Size_Allocated (View : access Gtk_Widget_Record'Class);
    --  Called when a new size has been allocated
 
-   function Cursor_Is_On_Screen (View : access Source_View_Record'Class)
-      return Boolean;
-   --  Return True if the cursor is currently visible on screen
+   function Cursor_Screen_Position
+     (View : access Source_View_Record'Class) return Gdouble;
+   --  Return the cursor position on screen.
+   --  0.0 for the top of the view, 1.0 for the bottom of the view.
+   --  (< 0.0 or > 1.0 if the cursor is off-screen)
 
    procedure Remove_Synchronization
      (View : access Source_View_Record'Class);
@@ -308,12 +313,12 @@ package body Src_Editor_View is
       return False;
    end Hide_Speed_Column_Timeout;
 
-   -------------------------
-   -- Cursor_Is_On_Screen --
-   -------------------------
+   ----------------------------
+   -- Cursor_Screen_Position --
+   ----------------------------
 
-   function Cursor_Is_On_Screen (View : access Source_View_Record'Class)
-      return Boolean
+   function Cursor_Screen_Position
+     (View : access Source_View_Record'Class) return Gdouble
    is
       Y, Height   : Gint;
       Rect        : Gdk_Rectangle;
@@ -324,8 +329,12 @@ package body Src_Editor_View is
       Get_Line_Yrange (Source_View (View), Iter, Y, Height);
       Get_Visible_Rect (Source_View (View), Rect);
 
-      return Rect.Y <= Y and then Y + Height <= Rect.Y + Rect.Height;
-   end Cursor_Is_On_Screen;
+      if Rect.Height = 0 then
+         return 0.5;
+      else
+         return (Gdouble (Y) - Gdouble (Rect.Y)) / Gdouble (Rect.Height);
+      end if;
+   end Cursor_Screen_Position;
 
    -----------
    -- Setup --
@@ -670,19 +679,45 @@ package body Src_Editor_View is
                 "Unexpected exception: " & Exception_Information (E));
    end Change_Handler;
 
+   ---------------------------
+   -- Size_Allocated_Before --
+   ---------------------------
+
+   procedure Size_Allocated_Before (View : access Gtk_Widget_Record'Class) is
+      V : constant Source_View := Source_View (View);
+   begin
+      if V.Cursor_Position = Gdouble'Last then
+         --  The size has never been allocated before: the cursor should be in
+         --  the middle.
+         V.Cursor_Position := 0.5;
+      else
+         Source_View (View).Cursor_Position :=
+           Cursor_Screen_Position (Source_View (View));
+      end if;
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
+   end Size_Allocated_Before;
+
    --------------------
    -- Size_Allocated --
    --------------------
 
    procedure Size_Allocated (View : access Gtk_Widget_Record'Class) is
+      V : constant Source_View := Source_View (View);
    begin
       --  Keep the cursor on screen when the editor is resized.
       --  Do not do this if the editor is synchronized with another editor.
 
-      if not Cursor_Is_On_Screen (Source_View (View))
-        and then Source_View (View).Synchronized_Editor = null
+      if V.Synchronized_Editor = null
+        and then V.Cursor_Position >= 0.0
+        and then V.Cursor_Position <= 1.0
       then
-         Scroll_To_Cursor_Location (Source_View (View));
+         Save_Cursor_Position (V);
+         Scroll_To_Mark
+           (V, Get_Insert (Get_Buffer (V)), Use_Align => True,
+            Within_Margin => 0.0, Xalign => 0.5, Yalign => V.Cursor_Position);
       end if;
 
    exception
@@ -1269,6 +1304,10 @@ package body Src_Editor_View is
         (View, "size_allocate",
          Widget_Callback.To_Marshaller (Size_Allocated'Access),
          After => True);
+      Widget_Callback.Connect
+        (View, "size_allocate",
+         Widget_Callback.To_Marshaller (Size_Allocated_Before'Access),
+         After => False);
 
       Source_Buffer_Callback.Connect
         (Buffer, "cursor_position_changed",
