@@ -11660,8 +11660,10 @@ Default configuration for the system traces. These traces are used to analyze
 problems with GPS.
 By default, they are sent to the file @file{$HOME/.gps/log.<pid>}.
 
-This file is created automatically when it does not exist. When
-upgrading to a new version of GPS, it is recommended to remove it since
+This file is created automatically when the @file{$HOME/.gps/} directory is
+created. If you remove it manually, it won't be recreated the next time you
+start GPS.
+When upgrading to a new version of GPS, it is recommended to remove it since
 its contents may change from version to version.
 
    @item @i{prefix}
