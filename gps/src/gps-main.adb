@@ -30,7 +30,6 @@ with Gtk.Enums;                   use Gtk.Enums;
 with Gtk.Handlers;                use Gtk.Handlers;
 with Gtk.Image;                   use Gtk.Image;
 with Gtk.Main;                    use Gtk.Main;
-with Gtk.Menu_Item;               use Gtk.Menu_Item;
 with Gtk.Window;                  use Gtk.Window;
 with Gtk.Rc;
 
@@ -147,6 +146,7 @@ procedure GPS.Main is
    Action_Editor_Trace : constant Debug_Handle :=
      Create ("MODULE.Action_Editor", On);
    Codefix_Trace : constant Debug_Handle := Create ("MODULE.Codefix", On);
+   Builder_Trace : constant Debug_Handle := Create ("MODULE.Builder", On);
    GVD_Trace     : constant Debug_Handle := Create ("MODULE.GVD", On);
    Aunit_Trace   : constant Debug_Handle := Create ("MODULE.Aunit", On);
    VFS_Trace     : constant Debug_Handle := Create ("MODULE.VFS", On);
@@ -1257,11 +1257,13 @@ procedure GPS.Main is
          External_Editor_Module.Register_Module (GPS_Main.Kernel);
       end if;
 
+      if Active (Builder_Trace) then
+         Builder_Module.Register_Module (GPS_Main.Kernel);
+      end if;
+
       if Active (GVD_Trace) then
          GVD_Module.Register_Module (GPS_Main.Kernel);
       end if;
-
-      Builder_Module.Register_Module (GPS_Main.Kernel);
 
       if Get_Pref (GPS_Main.Kernel, Old_Vdiff) then
          Vdiff_Module.Register_Module (GPS_Main.Kernel);
@@ -1341,20 +1343,6 @@ procedure GPS.Main is
       if Active (Python_Trace) then
          Python_Module.Load_Python_Startup_Files (GPS_Main.Kernel);
       end if;
-
-      --  Temporarily disable unimplemented menu items
-
-      declare
-         Navigate : constant String := '/' & (-"Navigate") & '/';
-         Tools    : constant String := '/' & (-"Tools") & '/';
-      begin
-         Set_Sensitive (Find_Menu_Item
-           (GPS_Main.Kernel, Navigate & (-"Goto Parent Unit")), False);
-         Set_Sensitive (Find_Menu_Item
-           (GPS_Main.Kernel, Tools & (-"Profile")), False);
-         Set_Sensitive (Find_Menu_Item
-           (GPS_Main.Kernel, Tools & (-"Memory Analyzer")), False);
-      end;
 
       --  Print a welcome message in the console, but before parsing the error
       --  messages, so that these are visible
