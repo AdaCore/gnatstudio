@@ -300,7 +300,7 @@ package body Docgen_Module is
             Type_Source_File_Table.Set
               (List,
                Source,
-               (Package_Name  => new String'(Get_Unit_Name (Source)),
+               (Unit_Name     => new String'(Get_Unit_Name (Source)),
                 Doc_File_Name => new String'
                   (Get_Doc_File_Name (File, Doc_Suffix)),
                 Is_Spec       => Is_Spec));
@@ -679,7 +679,7 @@ package body Docgen_Module is
       Type_Source_File_Table.Set
         (Source_File_List,
          Source,
-         (Package_Name  => new String'(Get_Unit_Name (Source)),
+         (Unit_Name     => new String'(Get_Unit_Name (Source)),
           Doc_File_Name => new String'
             (Get_Doc_File_Name (File, Docgen.Backend.Get_Extension (B))),
           Is_Spec       => Is_Spec_File (Kernel, File)));
@@ -704,7 +704,7 @@ package body Docgen_Module is
             Type_Source_File_Table.Set
               (Source_File_List,
                Source,
-               (Package_Name  => new String'(Get_Unit_Name (Source)),
+               (Unit_Name     => new String'(Get_Unit_Name (Source)),
                 Doc_File_Name => new String'
                   (Get_Doc_File_Name
                      (Body_File,
