@@ -3534,7 +3534,6 @@ package body Src_Editor_Module is
          Description  =>
            -("Marks a line as belonging to a highlighting category."
              & " If line is not specified, mark all lines in file."),
-
          Minimum_Args => 2,
          Maximum_Args => 3,
          Handler      => Line_Highlighting.Edit_Command_Handler'Access);
