@@ -9,8 +9,6 @@
       <switches columns="2">
          <title column="1" line="1" >Dependencies</title>
          <title column="2" line="1" >Compilation</title>
-         <check label="Consider all files" switch="-a"
-                tip="Consider all files, even locked files. Locked files are file whose ALI file is write-protected" />
          <check label="Recompile if switches changed" switch="-s"
                 tip="Recompile if compiler switches have changed since last compilation" />
          <check label="Minimal recompilation" switch="-m"
@@ -46,8 +44,8 @@
             <combo-entry label="Full optimization" value="2" />
             <combo-entry label="Full + Automatic inline" value="3" />
          </combo>
-         <check label="front-end inlining" switch="-gnatN"
-                tip="The front end inlining activated by this switch is generally more extensive and quite often more effective than the -gnatn inlining" />
+         <check label="Inlining" switch="-gnatn"
+                tip="Enable inlining of Ada subprograms marked with a pragma Inline" />
          <check label="Unroll loops" switch="-funroll-loops"
                 tip="Perform the optimization of loop unrolling. This is only done for loops whose number of iterations can be determined at compile time or run time" />
          <check label="Position independent code" switch="-fPIC"
@@ -204,12 +202,7 @@
                       master-status="on" slave-status="on" />
           <check label="Enable assertions" switch="-gnata" line="2" column="2"
                  tip="Assertions enabled. Pragma Assert and pragma Debug are activated" />
-          <check label="Debug expanded code" switch="-gnatD" line="2" column="2"
-                 tip="Output expanded source files for low level debugging" />
 
-          <check label="Language extensions" switch="-gnatX" line="3" column="2"
-                 tip="Activates various GNAT-specific extensions to the language"
-                 />
           <check label="Ada 83 mode" switch="-gnat83" line="3" column="2"
                  tip="Enforces Ada 83 restrictions" />
           <check label="Ada 05 mode" switch="-gnat05" line="3" column="2"
