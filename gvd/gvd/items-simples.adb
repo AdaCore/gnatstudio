@@ -680,13 +680,6 @@ package body Items.Simples is
 
          --  Compare the lines
 
-         if V /= null then
-            Put_Line ("Comparing : ");
-            Put_Line (S (Line_Start_New .. Index_New - 1) & "--");
-            Put_Line (V (Line_Start_Old + 1 .. Index_Old - 1) & "--");
-            New_Line;
-         end if;
-
          if V = null or else
            S (Line_Start_New .. Index_New - 1) /=
            V (Line_Start_Old + 1 .. Index_Old - 1)
