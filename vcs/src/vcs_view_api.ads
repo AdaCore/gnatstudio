@@ -23,6 +23,7 @@ with Glib.Object;       use Glib.Object;
 with Glide_Kernel;      use Glide_Kernel;
 with Gtk.Menu;          use Gtk.Menu;
 with VCS;               use VCS;
+with Projects;          use Projects;
 
 package VCS_View_API is
 
@@ -132,5 +133,14 @@ package VCS_View_API is
      (Kernel : access Kernel_Handle_Record'Class;
       Child  : Gtk.Widget.Gtk_Widget) return Selection_Context_Access;
    --  Return the current context relative to the VCS Explorer.
+
+   function Get_Current_Ref (Project : Project_Type) return VCS_Access;
+   --  Return the VCS reference registered in Project.
+
+   procedure Display_Editor_Status
+     (Kernel : access Kernel_Handle_Record'Class;
+      Status : File_Status_Record);
+   --  Display a label corresponding to the file. If the file is not open,
+   --  do nothing.
 
 end VCS_View_API;
