@@ -153,7 +153,8 @@ package body SN.Xref_Pools is
                   Xref_Elmt.Source_Filename :=
                     new String'(Src_Buf (Src_Buf'First .. Src_Buf_Last));
                   Xref_Elmt.Xref_Filename :=
-                    new String'(Ref_Buf (Ref_Buf'First + 1 .. Ref_Buf_Last));
+                    new String'(Dir_Name (Filename)
+                                & Ref_Buf (Ref_Buf'First + 1 .. Ref_Buf_Last));
 
                   if Ref_Buf (Ref_Buf'First) = '1' then
                      Xref_Elmt.Valid := True;
@@ -293,7 +294,8 @@ package body SN.Xref_Pools is
             FD          : File_Descriptor;
          begin
             if not Is_Regular_File (Full_Name) then
-               Data.Xref_Filename := new String'(Name);
+               Data.Xref_Filename := new String'(Full_Name);
+
                --  touch this file
                FD := Create_New_File (Full_Name, Binary);
                if FD = Invalid_FD then -- unable to create a new file
