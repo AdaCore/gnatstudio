@@ -388,14 +388,15 @@ package body Default_Preferences is
             Descr => null,
             Index => Manager.Current_Index,
             Value => null);
-         Manager.Current_Index := Manager.Current_Index + 1;
          Set (Manager.Preferences, Pspec_Name (Param), Info);
       else
          Free (Info.Page);
          Info.Page := new String'(Page);
-
+         Info.Index := Manager.Current_Index;
          Info.Param := Param;
       end if;
+
+      Manager.Current_Index := Manager.Current_Index + 1;
    end Register_Property;
 
    ----------------------
