@@ -662,7 +662,7 @@ package body GVD.Dialogs is
 
       Gtk_New (History_Dialog.List);
       Add_With_Viewport (History_Dialog.Scrolledwindow1, History_Dialog.List);
-      Set_Selection_Mode (History_Dialog.List, Selection_Extended);
+      Set_Selection_Mode (History_Dialog.List, Selection_Multiple);
 
       Gtk_New (History_Dialog.Hbuttonbox1);
       Pack_Start
