@@ -677,8 +677,11 @@ package body Src_Editor_View is
    procedure Size_Allocated (View : access Gtk_Widget_Record'Class) is
    begin
       --  Keep the cursor on screen when the editor is resized.
+      --  Do not do this if the editor is synchronized with another editor.
 
-      if not Cursor_Is_On_Screen (Source_View (View)) then
+      if not Cursor_Is_On_Screen (Source_View (View))
+        and then Source_View (View).Synchronized_Editor = null
+      then
          Scroll_To_Cursor_Location (Source_View (View));
       end if;
 
@@ -1382,6 +1385,26 @@ package body Src_Editor_View is
       end if;
 
       View.Connect_Expose_Registered := False;
+
+      --  If there is a synchronized editor, scroll this editor to align it
+      --  with the synchronized editor.
+
+      View.Scrolling := True;
+
+      if View.Synchronized_Editor /= null
+        and then View.Scroll /= null
+        and then View.Synchronized_Editor.Scroll /= null
+      then
+         Set_Value
+           (Get_Vadjustment (View.Scroll),
+         Get_Value (Get_Vadjustment (View.Synchronized_Editor.Scroll)));
+
+         Set_Value
+           (Get_Hadjustment (View.Scroll),
+         Get_Value (Get_Hadjustment (View.Synchronized_Editor.Scroll)));
+      end if;
+
+      View.Scrolling := False;
 
       return False;
    end Connect_Expose;
