@@ -597,81 +597,87 @@ package body Glide_Result_View is
 
    begin
       Get_Selected (Get_Selection (Explorer.Tree), Model, Iter);
-      Path := Get_Path (Model, Iter);
 
-      if Path /= null then
-         if not Path_Is_Selected (Get_Selection (Explorer.Tree), Path) then
-            Unselect_All (Get_Selection (Explorer.Tree));
-            Select_Path (Get_Selection (Explorer.Tree), Path);
-         end if;
-
-         Iter := Get_Iter (Explorer.Tree.Model, Path);
-
-         if Get_Depth (Path) = 1 then
-            Gtk_New (Mitem, -"Remove category");
-            Gtkada.Handlers.Widget_Callback.Object_Connect
-              (Mitem, "activate",
-               Gtkada.Handlers.Widget_Callback.To_Marshaller
-                 (Remove_Category'Access),
-               Explorer,
-               After => False);
-            Append (Menu, Mitem);
-
-         elsif Get_Depth (Path) = 2 then
-            Gtk_New (Mitem, -"Remove File");
-            Gtkada.Handlers.Widget_Callback.Object_Connect
-              (Mitem, "activate",
-               Gtkada.Handlers.Widget_Callback.To_Marshaller
-                 (Remove_Category'Access),
-               Explorer,
-               After => False);
-            Append (Menu, Mitem);
-
-         elsif Get_Depth (Path) = 3 then
-            Gtk_New (Mitem, -"Jump to location");
-            Gtkada.Handlers.Widget_Callback.Object_Connect
-              (Mitem, "activate",
-               Gtkada.Handlers.Widget_Callback.To_Marshaller
-                 (Goto_Location'Access),
-               Explorer,
-               After => False);
-
-            Append (Menu, Mitem);
-
-            declare
-               Line   : constant Positive := Positive'Value
-                 (Get_String (Model, Iter, Line_Column));
-               Column : constant Positive := Positive'Value
-                 (Get_String (Model, Iter, Column_Column));
-               Par    : constant Gtk_Tree_Iter := Parent (Model, Iter);
-               Granpa : constant Gtk_Tree_Iter := Parent (Model, Par);
-               File   : constant String :=
-                 Get_String (Model, Par, Absolute_Name_Column);
-               Category : constant String :=
-                 Get_String (Model, Granpa, Base_Name_Column);
-               Message : constant String :=
-                 Get_String (Model, Iter, Base_Name_Column) &
-                 Get_String (Model, Iter, Message_Column);
-            begin
-               Result := new File_Location_Context;
-
-               Set_File_Information
-                 (Result,
-                  Dir_Name (File),
-                  Base_Name (File));
-
-               Set_Location_Information
-                 (Result,
-                  Category,
-                  Message,
-                  Line,
-                  Column);
-            end;
-         end if;
-
-         Path_Free (Path);
+      if Model = null then
+         return null;
       end if;
 
+      Path := Get_Path (Model, Iter);
+
+      if Path = null then
+         return null;
+      end if;
+
+      if not Path_Is_Selected (Get_Selection (Explorer.Tree), Path) then
+         Unselect_All (Get_Selection (Explorer.Tree));
+         Select_Path (Get_Selection (Explorer.Tree), Path);
+      end if;
+
+      Iter := Get_Iter (Explorer.Tree.Model, Path);
+
+      if Get_Depth (Path) = 1 then
+         Gtk_New (Mitem, -"Remove category");
+         Gtkada.Handlers.Widget_Callback.Object_Connect
+           (Mitem, "activate",
+            Gtkada.Handlers.Widget_Callback.To_Marshaller
+              (Remove_Category'Access),
+            Explorer,
+            After => False);
+         Append (Menu, Mitem);
+
+      elsif Get_Depth (Path) = 2 then
+         Gtk_New (Mitem, -"Remove File");
+         Gtkada.Handlers.Widget_Callback.Object_Connect
+           (Mitem, "activate",
+            Gtkada.Handlers.Widget_Callback.To_Marshaller
+              (Remove_Category'Access),
+            Explorer,
+            After => False);
+         Append (Menu, Mitem);
+
+      elsif Get_Depth (Path) = 3 then
+         Gtk_New (Mitem, -"Jump to location");
+         Gtkada.Handlers.Widget_Callback.Object_Connect
+           (Mitem, "activate",
+            Gtkada.Handlers.Widget_Callback.To_Marshaller
+              (Goto_Location'Access),
+            Explorer,
+            After => False);
+
+         Append (Menu, Mitem);
+
+         declare
+            Line   : constant Positive := Positive'Value
+              (Get_String (Model, Iter, Line_Column));
+            Column : constant Positive := Positive'Value
+              (Get_String (Model, Iter, Column_Column));
+            Par    : constant Gtk_Tree_Iter := Parent (Model, Iter);
+            Granpa : constant Gtk_Tree_Iter := Parent (Model, Par);
+            File   : constant String :=
+              Get_String (Model, Par, Absolute_Name_Column);
+            Category : constant String :=
+              Get_String (Model, Granpa, Base_Name_Column);
+            Message : constant String :=
+              Get_String (Model, Iter, Base_Name_Column) &
+              Get_String (Model, Iter, Message_Column);
+         begin
+            Result := new File_Location_Context;
+
+            Set_File_Information
+              (Result,
+               Dir_Name (File),
+               Base_Name (File));
+
+            Set_Location_Information
+              (Result,
+               Category,
+               Message,
+               Line,
+               Column);
+         end;
+      end if;
+
+      Path_Free (Path);
       return Selection_Context_Access (Result);
    end Context_Func;
 
