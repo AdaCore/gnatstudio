@@ -61,6 +61,7 @@ with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
 with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
 with Glide_Kernel.Project;      use Glide_Kernel.Project;
 with Ada.Exceptions;            use Ada.Exceptions;
+with Ada.Calendar;              use Ada.Calendar;
 with String_Utils;              use String_Utils;
 with Traces;                    use Traces;
 with Src_Editor_View;           use Src_Editor_View;
@@ -80,6 +81,12 @@ package body Src_Editor_Buffer is
    use type System.Address;
 
    Me : constant Debug_Handle := Create ("Source_Editor_Buffer");
+
+   Buffer_Recompute_Interval : constant Guint32 := 200;
+   --  The interval at which to check whether the buffer should be reparsed.
+
+   Buffer_Recompute_Delay    : constant Duration := 1000.0;
+   --  The delay between the last edit and the re-parsing of the buffer.
 
    package Buffer_Timeout is new Gtk.Main.Timeout (Source_Buffer);
 
@@ -313,6 +320,47 @@ package body Src_Editor_Buffer is
       New_Line    : Boolean := True) return Boolean;
    --  Perform indentation for Cursor_Line.
 
+   procedure Request_Blocks (Buffer : access Source_Buffer_Record'Class);
+   --  Request that the blocks be recomputed whenever there is time.
+
+   function Check_Blocks (Buffer : Source_Buffer) return Boolean;
+   --  Timeout that recomputes the blocks if needed.
+
+   ------------------
+   -- Check_Blocks --
+   ------------------
+
+   function Check_Blocks (Buffer : Source_Buffer) return Boolean is
+   begin
+      if Buffer.Blocks_Request_Timestamp + Buffer_Recompute_Delay < Clock then
+         return True;
+      end if;
+
+      Compute_Blocks (Buffer);
+      Emit_New_Cursor_Position (Buffer);
+
+      --  Unregister the timeout.
+      Buffer.Blocks_Timeout_Registered := False;
+      return False;
+   end Check_Blocks;
+
+   --------------------
+   -- Request_Blocks --
+   --------------------
+
+   procedure Request_Blocks (Buffer : access Source_Buffer_Record'Class) is
+   begin
+      Buffer.Blocks_Request_Timestamp := Clock;
+
+      if not Buffer.Blocks_Timeout_Registered then
+         Buffer.Blocks_Timeout_Registered := True;
+         Buffer.Blocks_Timeout := Buffer_Timeout.Add
+           (Buffer_Recompute_Interval,
+            Check_Blocks'Access,
+            Source_Buffer (Buffer));
+      end if;
+   end Request_Blocks;
+
    ---------------------
    -- Get_Buffer_Line --
    ---------------------
@@ -434,6 +482,10 @@ package body Src_Editor_Buffer is
       --  Clear the completion data.
 
       Clear (Buffer.Completion);
+
+      --  Request re-parsing of the blocks.
+
+      Request_Blocks (Buffer);
    end User_Edit_Hook;
 
    ------------------
@@ -448,6 +500,12 @@ package body Src_Editor_Buffer is
       GNAT.OS_Lib.Free (Buffer.Completion.Prefix);
 
       --  ??? Must remove the line information column
+
+      --  Unregister the blocks timeout.
+
+      if Buffer.Blocks_Timeout_Registered then
+         Timeout_Remove (Buffer.Blocks_Timeout);
+      end if;
    end Destroy_Hook;
 
    --------------------
@@ -1491,7 +1549,7 @@ package body Src_Editor_Buffer is
 
       --  Compute the block information.
 
-      Compute_Blocks (Buffer);
+      Request_Blocks (Buffer);
    end Initialize_Hook;
 
    ----------------
@@ -1652,7 +1710,7 @@ package body Src_Editor_Buffer is
       end if;
 
       if not Prev and then B.Parse_Blocks then
-         Compute_Blocks (B);
+         Request_Blocks (B);
       end if;
    end Preferences_Changed;
 
@@ -2477,6 +2535,8 @@ package body Src_Editor_Buffer is
       if not Enable_Undo then
          Buffer.Inserting := Previous_Inserting_Value;
       end if;
+
+      Request_Blocks (Buffer);
    end Insert;
 
    procedure Insert
@@ -2531,6 +2591,8 @@ package body Src_Editor_Buffer is
       if not Enable_Undo then
          Buffer.Inserting := Previous_Inserting_Value;
       end if;
+
+      Request_Blocks (Buffer);
    end Delete;
 
    procedure Delete
@@ -2594,6 +2656,8 @@ package body Src_Editor_Buffer is
       if not Enable_Undo then
          Buffer.Inserting := Previous_Inserting_Value;
       end if;
+
+      Request_Blocks (Buffer);
    end Replace_Slice;
 
    procedure Replace_Slice
@@ -2759,7 +2823,7 @@ package body Src_Editor_Buffer is
       Add_Lines (Buffer, Start, Number);
 
       --  Parse the block information.
-      Compute_Blocks (Buffer);
+      Request_Blocks (Buffer);
    end Lines_Add_Hook;
 
    ------------------------------
@@ -2796,7 +2860,7 @@ package body Src_Editor_Buffer is
       pragma Unreferenced (Start_Line, End_Line);
    begin
       --  Parse the block information.
-      Compute_Blocks (Buffer);
+      Request_Blocks (Buffer);
    end Lines_Remove_Hook_After;
 
    ---------------------
