@@ -2151,7 +2151,7 @@ package body Debugger.Gdb is
       S : constant String := Send
         (Debugger, "print &(" & Variable & ")", Mode => Internal);
       Index : Integer := S'Last;
-      SNF : constant String := -"No symbol ";
+      SNF : constant String := -"No ";
    begin
       if S (S'First .. S'First + SNF'Length - 1) = SNF then
          return "";
