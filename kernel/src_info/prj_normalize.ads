@@ -76,8 +76,8 @@
 --     scenarios (like common source directories, common switches when inside a
 --     package, ...). This section can not include any case statement.
 --
---     Nested_Case is one big case statement, including other nested cases (one
---     case per scenario variables). Its format is similar to:
+--     Nested_Case is one big case statement, including other nested cases. Its
+--     format is similar to:
 --
 --           case Var1 is
 --              when Value1 =>
@@ -104,34 +104,27 @@ with Prj.Tree;
 
 package Prj_Normalize is
 
+   type Matching_Item_Callback is access
+     procedure (Item : Prj.Tree.Project_Node_Id);
+   --  A callback function called for each case item that matches a specific
+   --  set of values (see For_Each_Scenario_Case_Item).
+
    procedure Normalize_Project (Project : Prj.Tree.Project_Node_Id);
    --  Converts Project to a normalized form.
-   --
-   --  The following constructs can not currently be normalized:
-   --
-   --  - Case statements based on a non-external variable.
-   --
-   --  - ???  Order is sometimes incorrectly respected:
-   --          case Var1 is
-   --              when Value1 => A := "a";
-   --          end case;
-   --          A := A & "b";
-   --    will be incorrect (non-normalied => would return "ab", normalize =>
-   --    "a")
-   --
-   --  - ???  "when others" is partially incorrect.
 
-   function Current_Scenario_Case_Item
+   procedure For_Each_Scenario_Case_Item
      (Project : Prj.Tree.Project_Node_Id;
-      Pkg     : Prj.Tree.Project_Node_Id := Prj.Tree.Empty_Node)
-      return Prj.Tree.Project_Node_Id;
-   --  Return a pointer to the inner case item corresponding to the current
-   --  scenario variables.
+      Pkg     : Prj.Tree.Project_Node_Id := Prj.Tree.Empty_Node;
+      Action  : Matching_Item_Callback);
+   --  Execute Action for all the nested case items in Project or Pkg that
+   --  match the current scenario.
+   --  If there is currently no scenario variable, we simply call Action once
+   --  on Project or Pkg itself.
    --  For instance, in the example above, and if the current value for Var1 is
-   --  Value1, and the current value for Var2 is Value_1_1, this returns a
-   --  pointer to the "when Value_1_1 => " case item.
-   --  New statements can be added at the end of the declaration list.
-   --  If there is no case statement in the project, a new one is created.
+   --  Value1, and the current value for Var2 is Value_1_1, this calls Action
+   --  once on the case item for "when Value_1_1 => ".
+   --
+   --  Nested case items are created if needed to match the current scenario.
    --
    --  Important: Project must have been normalized first.
 
