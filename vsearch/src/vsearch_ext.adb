@@ -54,6 +54,7 @@ with Gtkada.Types;          use Gtkada.Types;
 with Glide_Intl;            use Glide_Intl;
 with Glide_Kernel;          use Glide_Kernel;
 with Glide_Kernel.Console;  use Glide_Kernel.Console;
+with Glide_Kernel.Hooks;    use Glide_Kernel.Hooks;
 with Glide_Kernel.Modules;  use Glide_Kernel.Modules;
 with Glide_Kernel.Task_Manager; use Glide_Kernel.Task_Manager;
 with GNAT.OS_Lib;           use GNAT.OS_Lib;
@@ -157,7 +158,8 @@ package body Vsearch_Ext is
    --  If Find_Next is False, a new search will be started, otherwise the next
    --  occurence of the current search will be searched.
 
-   procedure Set_First_Next_Mode_Cb (Search : access Gtk_Widget_Record'Class);
+   procedure Set_First_Next_Mode_Cb
+     (Kernel : access Kernel_Handle_Record'Class);
    --  Aborts the current search pattern
 
    procedure Reset_All_Occurrences (Search : access Gtk_Widget_Record'Class);
@@ -259,7 +261,7 @@ package body Vsearch_Ext is
    --  Callback for menu Edit->Search Previous
 
    procedure New_Predefined_Regexp
-     (Vsearch : access GObject_Record'Class; Kernel : Kernel_Handle);
+     (Kernel : access Kernel_Handle_Record'Class);
    --  Called when a new predefined regexp has been added to the kernel.
 
    procedure Selection_Changed (Vsearch : access Gtk_Widget_Record'Class);
@@ -267,7 +269,7 @@ package body Vsearch_Ext is
    --  for the predefined patterns
 
    procedure Search_Functions_Changed
-     (Object : access GObject_Record'Class; Kernel : Kernel_Handle);
+     (Kernel : access Kernel_Handle_Record'Class);
    --  Called when the list of registered search functions has changed.
 
    procedure Close_Vsearch (Search : access Gtk_Widget_Record'Class);
@@ -880,12 +882,14 @@ package body Vsearch_Ext is
    ----------------------------
 
    procedure Set_First_Next_Mode_Cb
-     (Search : access Gtk_Widget_Record'Class) is
+     (Kernel : access Kernel_Handle_Record'Class)
+   is
+      pragma Unreferenced (Kernel);
    begin
       --  We might be in the process of destroying GPS (for instance, the
       --  current search context detects that the current MDI_Child was
       --  destroyed, and resets the context).
-      Set_First_Next_Mode (Vsearch_Extended (Search), Find_Next => False);
+      Set_First_Next_Mode (Vsearch_Module_Id.Search, Find_Next => False);
 
    exception
       when E : others =>
@@ -962,9 +966,9 @@ package body Vsearch_Ext is
    ---------------------------
 
    procedure New_Predefined_Regexp
-     (Vsearch : access GObject_Record'Class; Kernel : Kernel_Handle)
+     (Kernel : access Kernel_Handle_Record'Class)
    is
-      Search  : constant Vsearch_Extended := Vsearch_Extended (Vsearch);
+      Search  : constant Vsearch_Extended := Vsearch_Module_Id.Search;
       Item    : Gtk_List_Item;
       Is_Regexp, Case_Sensitive : Boolean;
       Data    : Search_User_Data_Record;
@@ -1003,9 +1007,9 @@ package body Vsearch_Ext is
    ------------------------------
 
    procedure Search_Functions_Changed
-     (Object : access GObject_Record'Class; Kernel : Kernel_Handle)
+     (Kernel : access Kernel_Handle_Record'Class)
    is
-      Vsearch : constant Vsearch_Extended := Vsearch_Extended (Object);
+      Vsearch : constant Vsearch_Extended := Vsearch_Module_Id.Search;
       Num     : Positive := 1;
    begin
       loop
@@ -1158,17 +1162,14 @@ package body Vsearch_Ext is
          Kernel_Callback.To_Marshaller (Reset_Search'Access), Handle);
 
       --  Show the already registered modules
-      Search_Functions_Changed (Vsearch, Handle);
+      Search_Functions_Changed (Handle);
+      New_Predefined_Regexp (Handle);
 
-      Widget_Callback.Object_Connect
-        (Handle, Search_Reset_Signal,
-         Widget_Callback.To_Marshaller (Set_First_Next_Mode_Cb'Access),
-         Vsearch);
-      Kernel_Callback.Object_Connect
-        (Handle, Search_Functions_Changed_Signal,
-         Kernel_Callback.To_Marshaller (Search_Functions_Changed'Access),
-         Slot_Object => Vsearch,
-         User_Data => Handle);
+      Add_Hook (Handle, Search_Reset_Hook, Set_First_Next_Mode_Cb'Access);
+      Add_Hook (Handle, Search_Functions_Changed_Hook,
+                Search_Functions_Changed'Access);
+      Add_Hook (Handle, Search_Regexps_Changed_Hook,
+                New_Predefined_Regexp'Access);
 
       --  Include all the patterns that have been predefined so far, and make
       --  sure that new patterns will be automatically added.
@@ -1177,11 +1178,6 @@ package body Vsearch_Ext is
          Widget_Callback.To_Marshaller (Selection_Changed'Access),
          Vsearch);
 
-      Kernel_Callback.Object_Connect
-        (Handle, Search_Regexps_Changed_Signal,
-         Kernel_Callback.To_Marshaller (New_Predefined_Regexp'Access),
-         Slot_Object => Vsearch, User_Data => Handle);
-      New_Predefined_Regexp (Vsearch, Handle);
 
       --  Fill the replace combo first, so that the selection remains in
       --  the pattern combo
@@ -1391,7 +1387,7 @@ package body Vsearch_Ext is
          Sink (Data.Extra_Information);
       end if;
 
-      Search_Functions_Changed (Kernel);
+      Run_Hook (Kernel, Search_Functions_Changed_Hook);
    end Register_Search_Function;
 
    ---------------------------
@@ -1513,7 +1509,7 @@ package body Vsearch_Ext is
          Case_Sensitive => Case_Sensitive,
          Is_Regexp      => Is_Regexp);
 
-      Search_Regexps_Changed (Kernel);
+      Run_Hook (Kernel, Search_Regexps_Changed_Hook);
    end Register_Search_Pattern;
 
    --------------------------
