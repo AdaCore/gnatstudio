@@ -18,18 +18,20 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with ALI;                 use ALI;
-with GNAT.OS_Lib;         use GNAT.OS_Lib;
+with ALI;                       use ALI;
+with GNAT.Directory_Operations; use GNAT.Directory_Operations;
+with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with Krunch;
-with Namet;               use Namet;
-with Prj;                 use Prj;
-with Prj_API;             use Prj_API;
+with Namet;                     use Namet;
+with Prj;                       use Prj;
+with Prj_API;                   use Prj_API;
 with Prj.Com;
-with Src_Info.ALI_Maps;   use Src_Info.ALI_Maps;
-with Src_Info.Prj_Utils;  use Src_Info.Prj_Utils;
-with String_Utils;        use String_Utils;
-with Types;               use Types;
-with Traces;              use Traces;
+with Prj.Env;
+with Src_Info.ALI_Maps;         use Src_Info.ALI_Maps;
+with Src_Info.Prj_Utils;        use Src_Info.Prj_Utils;
+with String_Utils;              use String_Utils;
+with Types;                     use Types;
+with Traces;                    use Traces;
 
 package body Src_Info.ALI is
 
@@ -266,6 +268,15 @@ package body Src_Info.ALI is
    --  Create a new LI_File_Ptr from the given ALIs_Record. This LI_File_Ptr
    --  is left unconnected to the LI_File_List.
 
+   function Locate_Load_And_Scan_ALI
+     (ALI_Filename      : String;
+      Project           : Prj.Project_Id;
+      Extra_Object_Path : String)
+     return ALI_Id;
+   --  Try to locate ALI_Filename inside the Project object path, then
+   --  in Extra_Object_Path, and finally in the current directory. Then
+   --  scan the ALI file if found.
+
    -------------
    -- Destroy --
    -------------
@@ -383,7 +394,8 @@ package body Src_Info.ALI is
       return String
    is
       Flen    : constant Natural := Filename'Length;
-      Fext    : constant String := '.' & File_Extension (Filename);
+      Fext    : constant String :=
+        '.' & String_Utils.File_Extension (Filename);
       Rlen    : Natural;
       Result  : String (1 .. Flen) := Filename;
       --  Result'First must be equal to 1 because of Krunch.Krunch.
@@ -1548,30 +1560,79 @@ package body Src_Info.ALI is
          raise;
    end Create_New_ALI;
 
+   ------------------------------
+   -- Locate_Load_And_Scan_ALI --
+   ------------------------------
+
+   function Locate_Load_And_Scan_ALI
+     (ALI_Filename      : String;
+      Project           : Prj.Project_Id;
+      Extra_Object_Path : String)
+     return ALI_Id
+   is
+      Current_Dir_Name   : constant Character := '.';
+      Short_ALI_Filename : constant String := Base_Name (ALI_Filename);
+      Dir                : String_Access;
+      Result             : ALI_Id;
+   begin
+      --  Compute the search path. If the objects path of the project is
+      --  not null, then prepend it to the total search path.
+      if Prj.Env.Ada_Objects_Path (Project) /= null then
+         Dir := Locate_Regular_File
+           (Short_ALI_Filename,
+            Prj.Env.Ada_Objects_Path (Project).all & Path_Separator &
+            Extra_Object_Path & Path_Separator & Current_Dir_Name);
+      else
+         Dir := Locate_Regular_File
+           (Short_ALI_Filename,
+            Extra_Object_Path & Path_Separator & Current_Dir_Name);
+      end if;
+
+      --  Abort if we did not find the ALI file.
+      if Dir = null then
+         if Debug_Mode then
+            Trace (Me, "Could not locate ALI file: " & Short_ALI_Filename);
+         end if;
+         return No_ALI_Id;
+      end if;
+
+      --  Scan the ALI file and return the result. Add a trace if we failed
+      --  to scan it.
+      Result := Load_And_Scan_ALI (Dir.all);
+      if Result = No_ALI_Id then
+         if Debug_Mode then
+            Trace (Me, "Failed to scan " & Dir.all);
+         end if;
+      end if;
+      Free (Dir);
+
+      return Result;
+   end Locate_Load_And_Scan_ALI;
+
    --------------------
    -- Parse_ALI_File --
    --------------------
 
    procedure Parse_ALI_File
-      (ALI_Filename : String;
-       Project      : Prj.Project_Id;
-       Source_Path  : String;
-       List         : in out LI_File_List;
-       Unit         : out LI_File_Ptr;
-       Success      : out Boolean)
+      (ALI_Filename      : String;
+       Project           : Prj.Project_Id;
+       Extra_Source_Path : String;
+       Extra_Object_Path : String;
+       List              : in out LI_File_List;
+       Unit              : out LI_File_Ptr;
+       Success           : out Boolean)
    is
-      New_ALI_Id    : constant ALI_Id := Load_And_Scan_ALI (ALI_Filename);
+      New_ALI_Id    : constant ALI_Id :=
+        Locate_Load_And_Scan_ALI (ALI_Filename, Project, Extra_Object_Path);
    begin
       if New_ALI_Id = No_ALI_Id then
          Unit    := null;
          Success := False;
-         Trace (Me, "Parse_ALI_File: Couldn't load or scan "
-                & ALI_Filename);
          return;
       end if;
 
       Create_New_ALI
-        (Unit, ALIs.Table (New_ALI_Id), Project, Source_Path, List);
+        (Unit, ALIs.Table (New_ALI_Id), Project, Extra_Source_Path, List);
       Success := True;
 
    exception
@@ -1596,6 +1657,8 @@ package body Src_Info.ALI is
       Prj_Data       : Project_Data renames Prj.Projects.Table (Project);
       Naming         : Naming_Data renames Prj_Data.Naming;
 
+      Short_Source_Name : constant String
+        := Base_File_Name (Source_Filename);
       Source_Name_Id : File_Name_Type;
       Body_Id        : Array_Element_Id;
       Spec_Id        : Array_Element_Id;
@@ -1604,8 +1667,8 @@ package body Src_Info.ALI is
       Filename       : Name_Id;
    begin
       --  Store the source filename in the Namet buffer and get its Name ID
-      Namet.Name_Buffer (1 .. Source_Filename'Length) := Source_Filename;
-      Namet.Name_Len := Source_Filename'Length;
+      Namet.Name_Buffer (1 .. Short_Source_Name'Length) := Short_Source_Name;
+      Namet.Name_Len := Short_Source_Name'Length;
       Source_Name_Id := Namet.Name_Find;
 
       --  First, check the body filename exception list
@@ -1726,17 +1789,14 @@ package body Src_Info.ALI is
             Full_File : constant String := Find_Object_File
               (Project, Ali_File, Extra_Object_Path);
          begin
-            Trace (Me, "Parsing LI file for " & Source_Filename
-                   & " ALI_File=" & Ali_File
-                   & " full_name=" & Full_File);
-            Parse_ALI_File (Full_File, Project,
-                            Extra_Source_Path,
-                            List,
-                            Lib_Info,
-                            Success);
+            Parse_ALI_File
+              (Full_File, Project, Extra_Source_Path, Extra_Object_Path,
+               List, Lib_Info, Success);
 
             if not Success then
-               Trace (Me, "Couldn't parse LI file for " & Source_Filename);
+               if Debug_Mode then
+                  Trace (Me, "Couldn't parse LI file for " & Source_Filename);
+               end if;
                Lib_Info := No_LI_File;
             end if;
          end;
