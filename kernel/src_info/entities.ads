@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003-2004                       --
---                            ACT-Europe                             --
+--                     Copyright (C) 2003-2005                       --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -768,14 +768,11 @@ private
 
    procedure Destroy (D : in out Entity_Information_List_Access);
 
-   --  Warnings(Off) for the storage_pool
-   pragma Warnings (Off);
    package Entities_Tries is new Tries
      (Data_Type => Entity_Information_List_Access,
       No_Data   => null,
       Get_Index => Get_Name,
       Free      => Destroy);
-   pragma Warnings (On);
    --  Each node in the tree contains all the entities with the same name.
 
    ------------------------
