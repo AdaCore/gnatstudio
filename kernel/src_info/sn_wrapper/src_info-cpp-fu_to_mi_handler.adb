@@ -29,7 +29,6 @@ procedure Fu_To_Mi_Handler (Ref : TO_Table) is
       return E_Declaration_Info_List;
    --  searches for forward declaration. if no fwd decl found, searches for
    --  implementation. If nothing found throws Declaration_Not_Found
-   --  TODO multiple forward declarations
 
    function Find_Method (Fn : MI_Table; MD_Tab : MD_Table)
       return E_Declaration_Info_List is
