@@ -538,12 +538,14 @@ package body SN.DB_Structures is
          when 3      => -- .fu table
             tab.Buffer (1) := '#';
             cur_pos := 2;
+            tab.Class.First := 1;
+            tab.Class.Last  := 1;
          when 4      => -- .mi table
             Len := Get_Field_Length (Key_Data_Pair.Key, 1);
             tab.Buffer (1 .. Len) :=
                Get_Field (Key_Data_Pair.Key, 1);
             tab.Class.First := 1;
-            tab.Class.Last := Len;
+            tab.Class.Last  := Len;
             cur_pos := 1 + Len;
             Field_Offset := 1;
          when others =>
