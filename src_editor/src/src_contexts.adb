@@ -803,6 +803,50 @@ package body Src_Contexts is
       Context.Current_File := Context.Files'First - 1;
    end Set_File_List;
 
+   --------------------------
+   -- Get_Current_Progress --
+   --------------------------
+
+   function Get_Current_Progress
+     (Context : access Files_Project_Context) return Integer is
+   begin
+      return Context.Current_File;
+   end Get_Current_Progress;
+
+   ------------------------
+   -- Get_Total_Progress --
+   ------------------------
+
+   function Get_Total_Progress
+     (Context : access Files_Project_Context) return Integer is
+   begin
+      if Context.Files = null then
+         return 0;
+      else
+         return Context.Files'Length;
+      end if;
+   end Get_Total_Progress;
+
+   --------------------------
+   -- Get_Current_Progress --
+   --------------------------
+
+   function Get_Current_Progress
+     (Context : access Files_Context) return Integer is
+   begin
+      return Context.Current_Dir;
+   end Get_Current_Progress;
+
+   ------------------------
+   -- Get_Total_Progress --
+   ------------------------
+
+   function Get_Total_Progress
+     (Context : access Files_Context) return Integer is
+   begin
+      return Context.Total_Dirs;
+   end Get_Total_Progress;
+
    -------------------
    -- Set_File_List --
    -------------------
@@ -1503,6 +1547,7 @@ package body Src_Contexts is
       --  ??? Can this function be called at any other place than when the end
       --  is reached ?
       Move_To_Next_File (Context);
+      Context.Current_Dir := 1;
    end Move_To_First_File;
 
    -----------------------
@@ -1531,11 +1576,11 @@ package body Src_Contexts is
       end if;
 
       while Context.Current_File = null loop
-
          Read (Head (Context.Dirs).Dir, File_Name, Last);
 
          if Last = 0 then
             Next (Context.Dirs);
+            Context.Current_Dir := Context.Current_Dir + 1;
 
             if Context.Dirs = Null_List then
                --  No more searches
@@ -1557,6 +1602,7 @@ package body Src_Contexts is
                      --  ??? Do not try to follow symbolic links for now,
                      --  so that we avoid infinite recursions.
                      Prepend (Context.Dirs, new Dir_Data);
+                     Context.Total_Dirs := Context.Total_Dirs + 1;
                      Head (Context.Dirs).Name := new String'
                        (Name_As_Directory (Full_Name));
                      Open (Head (Context.Dirs).Dir, Full_Name);

@@ -134,6 +134,12 @@ package Src_Contexts is
    type Files_Context_Access is access all Files_Context'Class;
    --  A special context for searching in a specific list of files
 
+   function Get_Current_Progress
+     (Context : access Files_Context) return Integer;
+   function Get_Total_Progress
+     (Context : access Files_Context) return Integer;
+   --  Get the current/total search progress.
+
    procedure Set_File_List
      (Context       : access Files_Context;
       Files_Pattern : GNAT.Regexp.Regexp;
@@ -161,6 +167,12 @@ package Src_Contexts is
 
    type Files_Project_Context is new Abstract_Files_Context with private;
    type Files_Project_Context_Access is access all Files_Project_Context'Class;
+
+   function Get_Current_Progress
+     (Context : access Files_Project_Context) return Integer;
+   function Get_Total_Progress
+     (Context : access Files_Project_Context) return Integer;
+   --  Get the current/total search progress.
 
    procedure Set_File_List
      (Context : access Files_Project_Context;
@@ -269,6 +281,9 @@ private
 
       Directory     : GNAT.OS_Lib.String_Access := null;
       --  Set to null at the end of the search
+
+      Total_Dirs    : Natural := 0;
+      Current_Dir   : Natural := 0;
    end record;
 
    type Files_Project_Context is new Abstract_Files_Context with record
