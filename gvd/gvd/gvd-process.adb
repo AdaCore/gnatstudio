@@ -464,11 +464,14 @@ package body Odd.Process is
       Process_User_Data.Set (Process.Process_Paned, Process.all'Access);
 
       --  Set the output filter, so that we output everything in the Gtk_Text
-      --  window.
+      --  window. This filter must be inserted after all the other filters,
+      --  so that for instance the language detection takes place before we
+      --  try to detect any reference to a file/line.
 
       Add_Output_Filter
         (Get_Descriptor (Get_Process (Process.Debugger)).all,
-         Text_Output_Handler'Access, Window.all'Address);
+         Text_Output_Handler'Access, Window.all'Address,
+         After => True);
       Id := My_Input.Add
         (To_Gint
          (Get_Output_Fd
