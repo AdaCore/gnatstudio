@@ -28,17 +28,15 @@ with Types;
 
 package Project_Browsers is
 
-   type Project_Vertex is new Gtkada.Canvas.Buffered_Item_Record with private;
-   type Project_Vertex_Access is access all Project_Vertex'Class;
-
    type Vertex_Factory is access function
-     (Project_Name : Types.Name_Id) return Project_Vertex_Access;
+     (Project_Name : Types.Name_Id) return Gtkada.Canvas.Canvas_Item;
    --  This function should return a new vertex to put in the graph. You should
    --  pass your own factory if you want to put the item into the canvas
    --  afterwards.
 
    type Edge_Factory is access function
-     (V1, V2 : access Project_Vertex'Class) return Gtkada.Canvas.Canvas_Link;
+     (V1, V2 : access Gtkada.Canvas.Canvas_Item_Record'Class)
+     return Gtkada.Canvas.Canvas_Link;
    --  This function should return a new edge between the two vertices V1 and
    --  V2.
 
@@ -64,18 +62,5 @@ package Project_Browsers is
    --  If Factory is null, then a default vertex is created.
    --  The graph can be used directly in GtkAda.Canvas provided you set up the
    --  vertices correctly in your factory.
-
-   function Project_Name (Vertex : access Project_Vertex) return Types.Name_Id;
-   --  Return the name of the project for Vertex.
-
-   procedure Set_Project_Name
-     (Vertex : access Project_Vertex; Name : Types.Name_Id);
-   --  Set the name of the project associated with Vertex
-
-private
-   type Project_Vertex is new Gtkada.Canvas.Buffered_Item_Record with record
-      Name         : Types.Name_Id;
-      Fully_Parsed : Boolean := False;
-   end record;
 
 end Project_Browsers;

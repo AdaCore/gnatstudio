@@ -22,94 +22,32 @@ with Gtkada.Canvas; use Gtkada.Canvas;
 with Glib.Graphs;   use Glib.Graphs;
 with Prj.Tree;      use Prj.Tree;
 with Types;         use Types;
+with HTables;
 
 package body Project_Browsers is
 
-   procedure Find_Or_Create_Project_Vertex
-     (G       : in out Graph;
-      Name    : Name_Id;
-      V       : out Project_Vertex_Access;
-      Factory : Vertex_Factory := null);
-   --  Return the vertex in G for the project Name.
-   --  If such a node doesn't exist, a new vertex is created.
+   type Header_Num is range 0 .. 999;
 
-   procedure Process_Project
-     (G       : in out Graph;
-      Project : Project_Node_Id;
-      Origin  : Project_Vertex_Access;
-      Factory : Vertex_Factory := null;
-      E_Factory : Edge_Factory := null);
-   --  Add project and its dependencies, recursively, into the graph.
+   function Hash (N : Name_Id) return Header_Num;
+   --  hash function to use for the htables.
 
-   -----------------------------------
-   -- Find_Or_Create_Project_Vertex --
-   -----------------------------------
+   package Vertex_Htable is new HTables.Simple_HTable
+     (Header_Num => Header_Num,
+      Element    => Gtkada.Canvas.Canvas_Item,
+      No_Element => null,
+      Key        => Name_Id,
+      Hash       => Hash,
+      Equal      => Types."=");
+   use Vertex_Htable;
 
-   procedure Find_Or_Create_Project_Vertex
-     (G       : in out Graph;
-      Name    : Name_Id;
-      V       : out Project_Vertex_Access;
-      Factory : Vertex_Factory := null)
-   is
-      Iter : Vertex_Iterator := First (G);
+   ----------
+   -- Hash --
+   ----------
+
+   function Hash (N : Name_Id) return Header_Num is
    begin
-      while not At_End (Iter) loop
-         V := Project_Vertex_Access (Get (Iter));
-         if V.Name = Name then
-            return;
-         end if;
-         Next (Iter);
-      end loop;
-
-      if Factory = null then
-         V := new Project_Vertex;
-      else
-         V := Factory (Name);
-      end if;
-
-      V.Fully_Parsed := False;
-      V.Name := Name;
-
-      Add_Vertex (G, V);
-   end Find_Or_Create_Project_Vertex;
-
-   ---------------------
-   -- Process_Project --
-   ---------------------
-
-   procedure Process_Project
-     (G       : in out Graph;
-      Project : Project_Node_Id;
-      Origin  : Project_Vertex_Access;
-      Factory : Vertex_Factory := null;
-      E_Factory : Edge_Factory := null)
-   is
-      With_Clause : Project_Node_Id := First_With_Clause_Of (Project);
-      Dest : Project_Vertex_Access;
-      E : Canvas_Link;
-   begin
-      pragma Assert (not Origin.Fully_Parsed);
-      Origin.Fully_Parsed := True;
-
-      while With_Clause /= Empty_Node loop
-         Find_Or_Create_Project_Vertex
-           (G, Prj.Tree.Name_Of (With_Clause), Dest, Factory);
-
-         if E_Factory = null then
-            E := new Canvas_Link_Record;
-         else
-            E := E_Factory (Origin, Dest);
-         end if;
-         Add_Edge (G, E, Origin, Dest);
-
-         if not Dest.Fully_Parsed then
-            Process_Project (G, Project_Node_Of (With_Clause), Dest,
-                             Factory, E_Factory);
-         end if;
-
-         With_Clause := Next_With_Clause_Of (With_Clause);
-      end loop;
-   end Process_Project;
+      return Header_Num ((N - Names_Low_Bound) mod 1000);
+   end Hash;
 
    ----------------------
    -- Dependency_Graph --
@@ -118,16 +56,82 @@ package body Project_Browsers is
    function Dependency_Graph
      (Root_Project : Project_Node_Id;
       Factory      : Vertex_Factory := null;
-      E_Factory : Edge_Factory := null)
+      E_Factory    : Edge_Factory := null)
       return Glib.Graphs.Graph
    is
+      Table : Vertex_Htable.HTable;
       G : Graph;
-      Origin : Project_Vertex_Access;
+
+      function Create_Project_Vertex (Name    : Name_Id)
+        return Canvas_Item;
+      --  Return the vertex in G for the project Name.
+      --  If such a node doesn't exist, a new vertex is created.
+
+      procedure Process_Project
+        (Project : Project_Node_Id; Origin  : Canvas_Item);
+      --  Add project and its dependencies, recursively, into the graph.
+
+      ---------------------------
+      -- Create_Project_Vertex --
+      ---------------------------
+
+      function Create_Project_Vertex (Name : Name_Id)
+         return Canvas_Item
+      is
+         V : Canvas_Item;
+      begin
+         if Factory = null then
+            V := new Buffered_Item_Record;
+         else
+            V := Factory (Name);
+         end if;
+
+         Add_Vertex (G, V);
+         Set (Table, Name, V);
+         return V;
+      end Create_Project_Vertex;
+
+      ---------------------
+      -- Process_Project --
+      ---------------------
+
+      procedure Process_Project
+        (Project : Project_Node_Id; Origin  : Canvas_Item)
+      is
+         With_Clause : Project_Node_Id := First_With_Clause_Of (Project);
+         Dest        : Canvas_Item;
+         E           : Canvas_Link;
+         New_Item    : Boolean;
+      begin
+         while With_Clause /= Empty_Node loop
+            Dest := Get (Table, Prj.Tree.Name_Of (With_Clause));
+            New_Item := Dest = null;
+
+            if New_Item then
+               Dest := Create_Project_Vertex (Prj.Tree.Name_Of (With_Clause));
+            end if;
+
+            if E_Factory = null then
+               E := new Canvas_Link_Record;
+            else
+               E := E_Factory (Origin, Dest);
+            end if;
+            Add_Edge (G, E, Origin, Dest);
+
+            if New_Item then
+               Process_Project (Project_Node_Of (With_Clause), Dest);
+            end if;
+
+            With_Clause := Next_With_Clause_Of (With_Clause);
+         end loop;
+      end Process_Project;
+
+      Origin : Canvas_Item;
    begin
       Set_Directed (G, True);
-      Find_Or_Create_Project_Vertex
-        (G, Prj.Tree.Name_Of (Root_Project), Origin, Factory);
-      Process_Project (G, Root_Project, Origin, Factory, E_Factory);
+      Origin := Create_Project_Vertex (Prj.Tree.Name_Of (Root_Project));
+      Process_Project (Root_Project, Origin);
+      Reset (Table);
       return G;
    end Dependency_Graph;
 
@@ -147,25 +151,6 @@ package body Project_Browsers is
       Destroy (G);
       return Result;
    end Has_Circular_Dependencies;
-
-   ------------------
-   -- Project_Name --
-   ------------------
-
-   function Project_Name (Vertex : access Project_Vertex) return Name_Id is
-   begin
-      return Vertex.Name;
-   end Project_Name;
-
-   ----------------------
-   -- Set_Project_Name --
-   ----------------------
-
-   procedure Set_Project_Name
-     (Vertex : access Project_Vertex; Name : Types.Name_Id) is
-   begin
-      Vertex.Name := Name;
-   end Set_Project_Name;
 
 end Project_Browsers;
 
