@@ -130,13 +130,12 @@ package body Process_Proxies is
    -- Send --
    ----------
 
-   procedure Send (Proxy : access Process_Proxy;
-                   Cmd : String;
-                   Empty_Buffer : Boolean := False)
-   is
+   procedure Send
+     (Proxy : access Process_Proxy;
+      Cmd : String;
+      Empty_Buffer : Boolean := False) is
    begin
-      Send (Proxy.Descriptor.all, Cmd,
-            Add_LF => True,
+      Send (Proxy.Descriptor.all, Cmd, Add_LF => True,
             Empty_Buffer => Empty_Buffer);
    end Send;
 
