@@ -30,7 +30,6 @@ with Gtk.Box;                   use Gtk.Box;
 with Gtk.Cell_Renderer_Text;    use Gtk.Cell_Renderer_Text;
 with Gtk.Cell_Renderer_Pixbuf;  use Gtk.Cell_Renderer_Pixbuf;
 with Gtk.Enums;
-with Gtk.Handlers;              use Gtk.Handlers;
 with Gtk.Menu;                  use Gtk.Menu;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;
 with Gtk.Label;                 use Gtk.Label;
@@ -75,9 +74,6 @@ package body VCS_View_Pkg is
 
    package Explorer_Selection_Foreach is
      new Selection_Foreach (VCS_View_Record);
-
-   package Check_VCS_View_Handler is new Gtk.Handlers.User_Callback
-     (Gtk_Check_Menu_Item_Record, VCS_View_Access);
 
    ---------------------
    -- Local constants --
@@ -165,13 +161,11 @@ package body VCS_View_Pkg is
    ---------------
 
    procedure Change_Hide_Up_To_Date
-     (Item     : access Gtk_Check_Menu_Item_Record'Class;
-      Explorer : VCS_View_Access);
+     (Explorer : access Gtk_Widget_Record'Class);
    --  Callback for toggling of "Hide up-to-date files".
 
    procedure Change_Hide_Not_Registered
-     (Item     : access Gtk_Check_Menu_Item_Record'Class;
-      Explorer : VCS_View_Access);
+     (Explorer : access Gtk_Widget_Record'Class);
    --  Callback for toggling of "Hide not registered files".
 
    function Button_Press
@@ -820,13 +814,12 @@ package body VCS_View_Pkg is
    ----------------------------
 
    procedure Change_Hide_Up_To_Date
-     (Item     : access Gtk_Check_Menu_Item_Record'Class;
-      Explorer : VCS_View_Access)
+     (Explorer : access Gtk_Widget_Record'Class)
    is
-      pragma Unreferenced (Item);
+      E : constant VCS_View_Access := VCS_View_Access (Explorer);
    begin
-      Explorer.Hide_Up_To_Date := not Explorer.Hide_Up_To_Date;
-      Refresh (Explorer);
+      E.Hide_Up_To_Date := not E.Hide_Up_To_Date;
+      Refresh (E);
    end Change_Hide_Up_To_Date;
 
    --------------------------------
@@ -834,13 +827,12 @@ package body VCS_View_Pkg is
    --------------------------------
 
    procedure Change_Hide_Not_Registered
-     (Item     : access Gtk_Check_Menu_Item_Record'Class;
-      Explorer : VCS_View_Access)
+     (Explorer : access Gtk_Widget_Record'Class)
    is
-      pragma Unreferenced (Item);
+      E : constant VCS_View_Access := VCS_View_Access (Explorer);
    begin
-      Explorer.Hide_Not_Registered := not Explorer.Hide_Not_Registered;
-      Refresh (Explorer);
+      E.Hide_Not_Registered := not E.Hide_Not_Registered;
+      Refresh (E);
    end Change_Hide_Not_Registered;
 
    ------------------
@@ -962,19 +954,18 @@ package body VCS_View_Pkg is
       Gtk_New (Check, Label => -"Hide up-to-date files");
       Set_Active (Check, Explorer.Hide_Up_To_Date);
       Append (Menu, Check);
-      Check_VCS_View_Handler.Connect
-        (Check, "activate",
-         Check_VCS_View_Handler.To_Marshaller (Change_Hide_Up_To_Date'Access),
-         Explorer);
+      Widget_Callback.Object_Connect
+         (Check, "activate",
+          Widget_Callback.To_Marshaller (Change_Hide_Up_To_Date'Access),
+          Explorer);
 
       Gtk_New (Check, Label => -"Hide non registered files");
       Set_Active (Check, Explorer.Hide_Not_Registered);
       Append (Menu, Check);
-      Check_VCS_View_Handler.Connect
-        (Check, "activate",
-         Check_VCS_View_Handler.To_Marshaller
-         (Change_Hide_Not_Registered'Access),
-         Explorer);
+      Widget_Callback.Object_Connect
+         (Check, "activate",
+          Widget_Callback.To_Marshaller (Change_Hide_Not_Registered'Access),
+          Explorer);
 
       Grab_Focus (Explorer);
       Show_All (Menu);
