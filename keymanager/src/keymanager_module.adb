@@ -807,7 +807,8 @@ package body KeyManager_Module is
                   elsif Filter_Matches (Command.Filter, Context, Kernel) then
                      Trace (Me, "Executing action " & Binding.Action.all);
                      Launch_Background_Command
-                       (Kernel, Create_Proxy (Command.Command, Event),
+                       (Kernel,
+                        Create_Proxy (Command.Command, (Event, null, null)),
                         Destroy_On_Exit => False,
                         Active          => False,
                         Show_Bar        => False,
@@ -826,7 +827,8 @@ package body KeyManager_Module is
          if Any_Context_Command /= No_Action then
             Trace (Me, "Executing any context action");
             Launch_Background_Command
-              (Kernel, Create_Proxy (Any_Context_Command.Command, Event),
+              (Kernel,
+               Create_Proxy (Any_Context_Command.Command, (Event, null, null)),
                Destroy_On_Exit => False,
                Active          => False,
                Show_Bar        => False,
