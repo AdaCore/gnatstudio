@@ -1321,6 +1321,23 @@ package body Src_Editor_View is
 
    begin
       Get_Pref
+        (Get_Kernel (Buffer),
+         Delimiters_Jump_Key,
+         Delim_Jump_Modif,
+         Delim_Jump_Key);
+
+      if Key = Delim_Jump_Key
+        and then Get_State (Event) = Delim_Jump_Modif
+      then
+         Jump_To_Delimiter (Buffer);
+         return True;
+      end if;
+
+      if not Get_Editable (View) then
+         return False;
+      end if;
+
+      Get_Pref
         (Get_Kernel (Buffer), Indentation_Key, Indent_Modif, Indent_Key);
 
       if Key = Indent_Key and then Get_State (Event) = Indent_Modif then
@@ -1334,19 +1351,6 @@ package body Src_Editor_View is
 
       if Key = Complete_Key and then Get_State (Event) = Complete_Modif then
          Do_Completion (Buffer);
-         return True;
-      end if;
-
-      Get_Pref
-        (Get_Kernel (Buffer),
-         Delimiters_Jump_Key,
-         Delim_Jump_Modif,
-         Delim_Jump_Key);
-
-      if Key = Delim_Jump_Key
-        and then Get_State (Event) = Delim_Jump_Modif
-      then
-         Jump_To_Delimiter (Buffer);
          return True;
       end if;
 
