@@ -18,66 +18,83 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
---  ??? missing general description of the purpose of this package
+--  This Package provide the structure for all command for Vdiff2
 
 with Glide_Kernel; use Glide_Kernel;
 with Commands;     use Commands;
-with Diff_Utils;   use Diff_Utils;
+with Diff_Utils2;   use Diff_Utils2;
 
 package Vdiff2_Command is
-
-   --  ??? All the types and functions in this package need to be commented
 
    type Handler_Action is access procedure
      (Kernel : Kernel_Handle;
       Diff   : in out Diff_Head_Access);
+      --  Is an access for the action executed by an Diff_Command
 
    type Diff_Command is new Root_Command with record
       Kernel    : Kernel_Handle;
-      List_Diff : Diff_Occurrence_List_Access;
+      List_Diff : Diff_Head_List_Access;
       Action    : Handler_Action;
    end record;
+
    type Diff_Command_Access is access all Diff_Command;
 
    procedure Create
      (Item      : out Diff_Command_Access;
       Kernel    : Kernel_Handle;
-      List_Diff : Diff_Occurrence_List_Access;
+      List_Diff : Diff_Head_List_Access;
       Action    : Handler_Action);
+      --  Create a command with all information needed by this
 
    function Execute
      (Command : access Diff_Command) return Command_Return_Type;
+   --  Execute the command Command
+   --  Search in the global List of Diff the current diff end apply Action on
+   --  this
 
    procedure Next_Difference
      (Kernel : Kernel_Handle;
       Diff   : in out  Diff_Head_Access);
+   --  Goto Next difference
 
    procedure Prev_Difference
      (Kernel : Kernel_Handle;
       Diff   : in out Diff_Head_Access);
+   --  Goto prev difference
 
    procedure First_Difference
      (Kernel : Kernel_Handle;
       Diff   : in out Diff_Head_Access);
+   --  Goto First difference
 
    procedure Last_Difference
      (Kernel : Kernel_Handle;
       Diff   : in out Diff_Head_Access);
+   --  Goto Last difference
 
    procedure Reload_Difference
      (Kernel : Kernel_Handle;
       Diff   : in out Diff_Head_Access);
+   --  Remove the highlighting, recalculate differences and show difference
 
    procedure Remove_Difference
      (Kernel : Kernel_Handle;
       Diff   : in out Diff_Head_Access);
+   --  Remove the highlighting, and free the memory associated with Diff_list
 
    procedure Close_Difference
      (Kernel : Kernel_Handle;
       Diff   : in out Diff_Head_Access);
+   --  Close the current difference
 
    procedure Unhighlight_Difference
      (Kernel : Kernel_Handle;
       Diff   : in out Diff_Head_Access);
+   --  Remove the highlighting from all file of diff
+
+   procedure Goto_Difference
+     (Kernel : Kernel_Handle;
+      Link   : Diff_Chunk_Access);
 
 end Vdiff2_Command;
+
