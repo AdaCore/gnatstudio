@@ -551,7 +551,7 @@ package body Entities is
    function Get_Or_Create
      (Db           : Entities_Database;
       File         : VFS.Virtual_File;
-      LI           : LI_File;
+      LI           : LI_File := null;
       Timestamp    : Ada.Calendar.Time := VFS.No_Time;
       Allow_Create : Boolean := True) return Source_File
    is
@@ -981,5 +981,20 @@ package body Entities is
    begin
       return LI.Timestamp;
    end Get_Timestamp;
+
+   -----------------
+   -- Update_Xref --
+   -----------------
+
+   procedure Update_Xref (File : Source_File) is
+      F : Source_File;
+      pragma Unreferenced (F);
+   begin
+      if File /= null then
+         F := Get_Source_Info
+           (Get_LI_Handler (File.Db, Get_Filename (File)),
+            Get_Filename (File));
+      end if;
+   end Update_Xref;
 
 end Entities;

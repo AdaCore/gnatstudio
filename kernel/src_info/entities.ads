@@ -266,7 +266,7 @@ package Entities is
    function Get_Or_Create
      (Db           : Entities_Database;
       File         : VFS.Virtual_File;
-      LI           : LI_File;
+      LI           : LI_File := null;
       Timestamp    : Ada.Calendar.Time := VFS.No_Time;
       Allow_Create : Boolean := True) return Source_File;
    --  Get or create a Source_File corresponding to File.
@@ -275,7 +275,13 @@ package Entities is
    --  parameter is not No_Time. Otherwise, a new entry is added.
    --  You need to Ref the entry if you intend to keep it in a separate
    --  structure.
+   --  The cross-references for this file are not updated. You need to call
+   --  Update_Xref if needed.
    --  The file is automatically added to the list of files for that LI.
+
+   procedure Update_Xref (File : Source_File);
+   --  Update the cross-reference information for File, if the information on
+   --  the disk is more up-to-date
 
    procedure Add_Depends_On
      (File                : Source_File;
@@ -396,8 +402,7 @@ package Entities is
 
    function Get_Source_Info
      (Handler         : access LI_Handler_Record;
-      Source_Filename : VFS.Virtual_File;
-      Project         : Projects.Project_Type) return Source_File is abstract;
+      Source_Filename : VFS.Virtual_File) return Source_File is abstract;
    --  Return a handle to the source file structure corresponding to
    --  Source_Filename. If necessary, the LI file is parsed from the disk to
    --  update the internal structure.
