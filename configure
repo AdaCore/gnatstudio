@@ -633,7 +633,7 @@ test "$host_alias" != "$target_alias" &&
   program_prefix=${target_alias}-
 
 
-GLIDE_VERSION=0.5.0
+GLIDE_VERSION=0.6.0
 GVD_VERSION=$GLIDE_VERSION
 STRIP_CR=False
 ASYNC_COMMANDS=True
