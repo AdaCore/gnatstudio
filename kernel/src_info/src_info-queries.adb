@@ -2026,6 +2026,7 @@ package body Src_Info.Queries is
          end if;
          Dep := Dep.Next;
       end loop;
+
       return No_Entity_Information;
    end Find_Declaration_In_LI_Or_Dependencies;
 
@@ -2033,8 +2034,9 @@ package body Src_Info.Queries is
    -- Next_Real_Reference --
    -------------------------
 
-   function Next_Real_Reference (Ref : E_Reference_List)
-                                    return E_Reference_List
+   function Next_Real_Reference
+     (Ref : E_Reference_List)
+      return E_Reference_List
    is
       R : E_Reference_List := Ref;
    begin
@@ -2042,8 +2044,10 @@ package body Src_Info.Queries is
          if Is_Real_Reference (R.Value.Kind) then
             return R;
          end if;
+
          R := R.Next;
       end loop;
+
       return null;
    end Next_Real_Reference;
 
@@ -2080,10 +2084,12 @@ package body Src_Info.Queries is
             return null;
          else
             D := Find_Declaration (Declarations, Iterator.Entity);
+
             if D /= null then
                return Next_Real_Reference (D.Value.References);
             end if;
          end if;
+
          return null;
       end Check_Declarations;
 
