@@ -503,15 +503,6 @@ package body Glide_Kernel.Preferences is
       Register_Property
         (Kernel.Preferences, Param_Spec (Diff_Cmd), -"Visual diff");
 
-      Diff3_Cmd := Param_Spec_String (Gnew_String
-        (Name  => "Diff-Utils-Diff3",
-         Nick  => -"Diff3 command",
-         Blurb => -("Command used to compute differences between three files."
-                    & " Arguments can also be specified"),
-         Default => "diff3"));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (Diff3_Cmd), -"Visual diff");
-
       Patch_Cmd := Param_Spec_String (Gnew_String
         (Name    => "Diff-Utils-Patch",
          Nick    => -"Patch command",
