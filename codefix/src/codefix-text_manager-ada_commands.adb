@@ -790,6 +790,7 @@ package body Codefix.Text_Manager.Ada_Commands is
       procedure Initialize_Profile
         (Position                 : File_Cursor;
          Begin_Cursor, End_Cursor : out File_Cursor);
+      --  ???
 
       procedure Initialize_Profile
         (Position                 : File_Cursor;
@@ -804,7 +805,6 @@ package body Codefix.Text_Manager.Ada_Commands is
 
          End_Cursor := File_Cursor
            (Get_Right_Paren (Current_Text, Begin_Cursor));
-
 
          Garbage_Cursor := End_Cursor;
          Garbage_Cursor.Col := Garbage_Cursor.Col + 1;
