@@ -575,9 +575,12 @@ package body Debugger.Jdb is
    -- Display_Prompt --
    --------------------
 
-   procedure Display_Prompt (Debugger : access Jdb_Debugger) is
+   procedure Display_Prompt
+     (Debugger        : access Jdb_Debugger;
+      Wait_For_Prompt : Boolean := True)
+   is
    begin
-      Send (Debugger, "  ");
+      Send (Debugger, "  ", Wait_For_Prompt => Wait_For_Prompt);
    end Display_Prompt;
 
    ----------------------

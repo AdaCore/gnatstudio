@@ -51,7 +51,9 @@ package Debugger.Jdb is
    function Highlighting_Pattern
      (Debugger : access Jdb_Debugger) return GNAT.Regpat.Pattern_Matcher;
 
-   procedure Display_Prompt (Debugger : access Jdb_Debugger);
+   procedure Display_Prompt
+     (Debugger        : access Jdb_Debugger;
+      Wait_For_Prompt : Boolean := True);
 
    function Type_Of
      (Debugger : access Jdb_Debugger;
