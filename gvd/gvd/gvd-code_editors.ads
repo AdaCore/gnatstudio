@@ -55,6 +55,9 @@ package GVD.Code_Editors is
    type Code_Editor_Record is new Gtk.Box.Gtk_Hbox_Record with private;
    type Code_Editor is access all Code_Editor_Record'Class;
 
+   type View_Mode is (Source, Asm, Source_Asm);
+   --  Describe what kind of source GVD should display.
+
    procedure Gtk_New_Hbox
      (Editor      : out Code_Editor;
       Process     : access Gtk.Widget.Gtk_Widget_Record'Class);
@@ -66,6 +69,10 @@ package GVD.Code_Editors is
      (Editor      : access Code_Editor_Record'Class;
       Process     : access Gtk.Widget.Gtk_Widget_Record'Class);
    --  Internal procedure.
+
+   procedure Apply_Mode
+     (Editor : access Code_Editor_Record; Mode : View_Mode); 
+   --  Apply mode changes to the editor.
 
    procedure Load_File
      (Editor      : access Code_Editor_Record;
@@ -124,6 +131,9 @@ package GVD.Code_Editors is
 
    function Get_Line (Editor : access Code_Editor_Record) return Natural;
    --  Return the current line.
+
+   function Get_Mode (Editor : access Code_Editor_Record) return View_Mode;
+   --  Return the current view mode of Editor.
 
    function Get_Process
      (Editor : access Code_Editor_Record'Class) return Gtk.Widget.Gtk_Widget;
@@ -194,8 +204,6 @@ package GVD.Code_Editors is
 
 private
 
-   type View_Mode is (Source_Only, Asm_Only, Source_Asm);
-
    type Code_Editor_Record is new Gtk.Box.Gtk_Hbox_Record with record
       --  Contains either Explorer_Editor_Pane or Editor_Container.
 
@@ -210,12 +218,12 @@ private
       Asm             : GVD.Asm_Editors.Asm_Editor;
       Source_Asm_Pane : Gtk.Paned.Gtk_Paned;
 
-      Mode    : View_Mode := Source_Only;
+      Mode            : View_Mode := GVD.Code_Editors.Source;
 
-      Source_Line : Natural;
-      Asm_Address : GVD.Types.String_Access;
+      Source_Line     : Natural;
+      Asm_Address     : GVD.Types.String_Access;
 
-      Process : Gtk.Widget.Gtk_Widget;
+      Process         : Gtk.Widget.Gtk_Widget;
       --  The process tab in which the editor is found.
 
       Explorer        : GVD.Explorer.Explorer_Access;

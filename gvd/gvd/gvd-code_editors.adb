@@ -81,10 +81,6 @@ package body GVD.Code_Editors is
    procedure Update_Editor_Frame (Editor : access Gtk_Widget_Record'Class);
    --  Updates the label on top of the source editor.
 
-   procedure Apply_Mode
-     (Data : Editor_Mode_Data);
-   --  Actually apply mode changes to the editor.
-
    -------------------------
    -- Update_Editor_Frame --
    -------------------------
@@ -186,7 +182,7 @@ package body GVD.Code_Editors is
          --  If the assembly code is displayed, highlight the code for the
          --  current line
 
-         if Editor.Mode = Asm_Only or else Editor.Mode = Source_Asm then
+         if Editor.Mode = Asm or else Editor.Mode = Source then
             Highlight_Address_Range (Editor.Asm, Line);
          end if;
 
@@ -226,6 +222,15 @@ package body GVD.Code_Editors is
    begin
       return Get_Line (Editor.Source);
    end Get_Line;
+
+   --------------
+   -- Get_Mode --
+   --------------
+
+   function Get_Mode (Editor : access Code_Editor_Record) return View_Mode is
+   begin
+      return Editor.Mode;
+   end Get_Mode;
 
    -----------------
    -- Get_Process --
@@ -313,11 +318,11 @@ package body GVD.Code_Editors is
      (Editor    : access Code_Editor_Record;
       Br        : GVD.Types.Breakpoint_Array) is
    begin
-      if Editor.Mode = Source_Only or else Editor.Mode = Source_Asm then
+      if Editor.Mode = Source or else Editor.Mode = Source_Asm then
          Update_Breakpoints (Editor.Source, Br);
       end if;
 
-      if Editor.Mode = Asm_Only or else Editor.Mode = Source_Asm then
+      if Editor.Mode = Asm or else Editor.Mode = Source_Asm then
          Update_Breakpoints (Editor.Asm, Br);
       end if;
    end Update_Breakpoints;
@@ -394,22 +399,22 @@ package body GVD.Code_Editors is
       Append (Menu, Mitem);
 
       Gtk_New (Radio, Widget_SList.Null_List, -"Show Source Code");
-      Set_Active (Radio, Editor.Mode = Source_Only);
+      Set_Active (Radio, Editor.Mode = Source);
       Editor_Mode_Cb.Connect
         (Radio, "activate",
          Editor_Mode_Cb.To_Marshaller (Change_Mode'Access),
          Editor_Mode_Data'(Editor => Code_Editor (Editor),
-                           Mode   => Source_Only));
+                           Mode   => Source));
       Append (Menu, Radio);
       Set_Always_Show_Toggle (Radio, True);
 
       Gtk_New (Radio, Group (Radio), -"Show Asm Code");
-      Set_Active (Radio, Editor.Mode = Asm_Only);
+      Set_Active (Radio, Editor.Mode = Asm);
       Editor_Mode_Cb.Connect
         (Radio, "activate",
          Editor_Mode_Cb.To_Marshaller (Change_Mode'Access),
          Editor_Mode_Data'(Editor => Code_Editor (Editor),
-                           Mode   => Asm_Only));
+                           Mode   => Asm));
       Append (Menu, Radio);
       Set_Always_Show_Toggle (Radio, True);
 
@@ -428,109 +433,100 @@ package body GVD.Code_Editors is
    -- Apply_Mode --
    ----------------
 
-   procedure Apply_Mode (Data : Editor_Mode_Data) is
+   procedure Apply_Mode
+     (Editor : access Code_Editor_Record; Mode : View_Mode)
+   is
       Process : constant Debugger_Process_Tab :=
-        Debugger_Process_Tab (Data.Editor.Process);
+        Debugger_Process_Tab (Editor.Process);
       Win     : Gtk_Window;
    begin
-      if Data.Mode = Data.Editor.Mode then
+      if Mode = Editor.Mode then
          return;
       end if;
 
-      if Data.Editor.External_XID /= 0 then
-         if Data.Editor.Mode = Asm_Only then
-            Win := Gtk_Window (Get_Toplevel (Data.Editor.External_Source));
+      if Editor.External_XID /= 0 then
+         if Editor.Mode = Asm then
+            Win := Gtk_Window (Get_Toplevel (Editor.External_Source));
          else
             Gtk_New (Win);
             Show (Win);
-            Reparent (Data.Editor.External_Source, Win);
+            Reparent (Editor.External_Source, Win);
          end if;
       end if;
 
-      case Data.Editor.Mode is
-         when Source_Only =>
-            if Data.Editor.External_XID = 0 then
-               Remove (Data.Editor.Editor_Container, Data.Editor.Source);
+      case Editor.Mode is
+         when Source =>
+            if Editor.External_XID = 0 then
+               Remove (Editor.Editor_Container, Editor.Source);
             end if;
-         when Asm_Only =>
-            Remove (Data.Editor.Editor_Container, Data.Editor.Asm);
+         when Asm =>
+            Remove (Editor.Editor_Container, Editor.Asm);
          when Source_Asm =>
-            if Data.Editor.External_XID = 0 then
-               Remove (Data.Editor.Source_Asm_Pane, Data.Editor.Source);
+            if Editor.External_XID = 0 then
+               Remove (Editor.Source_Asm_Pane, Editor.Source);
             end if;
 
-            Remove (Data.Editor.Source_Asm_Pane, Data.Editor.Asm);
-            Remove (Data.Editor.Editor_Container,
-                    Data.Editor.Source_Asm_Pane);
+            Remove (Editor.Source_Asm_Pane, Editor.Asm);
+            Remove (Editor.Editor_Container, Editor.Source_Asm_Pane);
       end case;
 
-      Data.Editor.Mode := Data.Mode;
+      Editor.Mode := Mode;
 
-      case Data.Editor.Mode is
-         when Source_Only =>
-            if Data.Editor.External_XID /= 0 then
-               Reparent
-                 (Data.Editor.External_Source, Data.Editor.Editor_Container);
+      case Editor.Mode is
+         when Source =>
+            if Editor.External_XID /= 0 then
+               Reparent (Editor.External_Source, Editor.Editor_Container);
                Destroy (Win);
 
             else
-               Add (Data.Editor.Editor_Container, Data.Editor.Source);
-               Show_All (Data.Editor.Source);
+               Add (Editor.Editor_Container, Editor.Source);
+               Show_All (Editor.Source);
             end if;
 
-            Set_Line (Data.Editor.Source, Data.Editor.Source_Line,
-                      Set_Current => True);
+            Set_Line (Editor.Source, Editor.Source_Line, Set_Current => True);
 
             if Process.Breakpoints /= null then
-               Update_Breakpoints
-                 (Data.Editor.Source, Process.Breakpoints.all);
+               Update_Breakpoints (Editor.Source, Process.Breakpoints.all);
             end if;
 
-         when Asm_Only =>
-            Add (Data.Editor.Editor_Container, Data.Editor.Asm);
-            Show_All (Data.Editor.Asm);
+         when Asm =>
+            Add (Editor.Editor_Container, Editor.Asm);
+            Show_All (Editor.Asm);
 
-            if Data.Editor.Asm_Address /= null then
-               Set_Address (Data.Editor.Asm, Data.Editor.Asm_Address.all);
+            if Editor.Asm_Address /= null then
+               Set_Address (Editor.Asm, Editor.Asm_Address.all);
             end if;
 
-            Highlight_Address_Range
-              (Data.Editor.Asm, Data.Editor.Source_Line);
+            Highlight_Address_Range (Editor.Asm, Editor.Source_Line);
 
             if Process.Breakpoints /= null then
-               Update_Breakpoints
-                 (Data.Editor.Asm, Process.Breakpoints.all);
+               Update_Breakpoints (Editor.Asm, Process.Breakpoints.all);
             end if;
 
          when Source_Asm =>
-            Add (Data.Editor.Editor_Container, Data.Editor.Source_Asm_Pane);
+            Add (Editor.Editor_Container, Editor.Source_Asm_Pane);
 
-            if Data.Editor.External_XID /= 0 then
-               Reparent
-                 (Data.Editor.External_Source, Data.Editor.Source_Asm_Pane);
+            if Editor.External_XID /= 0 then
+               Reparent (Editor.External_Source, Editor.Source_Asm_Pane);
                Destroy (Win);
 
             else
-               Add1 (Data.Editor.Source_Asm_Pane, Data.Editor.Source);
+               Add1 (Editor.Source_Asm_Pane, Editor.Source);
             end if;
 
-            Add2 (Data.Editor.Source_Asm_Pane, Data.Editor.Asm);
-            Show_All (Data.Editor.Source_Asm_Pane);
+            Add2 (Editor.Source_Asm_Pane, Editor.Asm);
+            Show_All (Editor.Source_Asm_Pane);
 
-            if Data.Editor.Asm_Address /= null then
-               Set_Address (Data.Editor.Asm, Data.Editor.Asm_Address.all);
+            if Editor.Asm_Address /= null then
+               Set_Address (Editor.Asm, Editor.Asm_Address.all);
             end if;
 
-            Highlight_Address_Range
-              (Data.Editor.Asm, Data.Editor.Source_Line);
-            Set_Line (Data.Editor.Source, Data.Editor.Source_Line,
-                      Set_Current => True);
+            Highlight_Address_Range (Editor.Asm, Editor.Source_Line);
+            Set_Line (Editor.Source, Editor.Source_Line, Set_Current => True);
 
             if Process.Breakpoints /= null then
-               Update_Breakpoints
-                 (Data.Editor.Source, Process.Breakpoints.all);
-               Update_Breakpoints
-                 (Data.Editor.Asm, Process.Breakpoints.all);
+               Update_Breakpoints (Editor.Source, Process.Breakpoints.all);
+               Update_Breakpoints (Editor.Asm, Process.Breakpoints.all);
             end if;
       end case;
    end Apply_Mode;
@@ -554,7 +550,7 @@ package body GVD.Code_Editors is
             return;
          end if;
 
-         Apply_Mode (Data);
+         Apply_Mode (Data.Editor, Data.Mode);
       end if;
    end Change_Mode;
 
@@ -569,7 +565,7 @@ package body GVD.Code_Editors is
       Free (Editor.Asm_Address);
       Editor.Asm_Address := new String'(Pc);
 
-      if Editor.Mode = Asm_Only or else Editor.Mode = Source_Asm then
+      if Editor.Mode = Asm or else Editor.Mode = Source_Asm then
          Set_Address (Editor.Asm, Pc);
       end if;
    end Set_Address;
@@ -605,11 +601,11 @@ package body GVD.Code_Editors is
       Edit : constant Code_Editor := Code_Editor (Editor);
       Win  : Gtk_Window;
    begin
-      if Edit.Mode = Source_Only or else Edit.Mode = Source_Asm then
+      if Edit.Mode = Source or else Edit.Mode = Source_Asm then
          GVD.Source_Editors.Preferences_Changed (Edit.Source);
       end if;
 
-      if Edit.Mode = Asm_Only or else Edit.Mode = Source_Asm then
+      if Edit.Mode = Asm or else Edit.Mode = Source_Asm then
          GVD.Asm_Editors.Preferences_Changed (Edit.Asm);
          Highlight_Address_Range (Edit.Asm, Edit.Source_Line);
       end if;
@@ -674,7 +670,7 @@ package body GVD.Code_Editors is
       if Editor.External_XID /= 0 then
          return Gint (Get_Allocation_Width (Editor.External_Source)) -
            Layout_Width;
-      elsif Editor.Mode = Asm_Only then
+      elsif Editor.Mode = Asm then
          return Gint (Get_Allocation_Width (Editor.Asm)) - Layout_Width;
       else
          return Gint (Get_Allocation_Width (Editor.Source)) - Layout_Width;
