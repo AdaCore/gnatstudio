@@ -600,6 +600,7 @@ package body Vsearch_Ext is
                0, 2, 4, 5, Fill, 0, 2, 0);
             Show_All (Vsearch.Table);
             Vsearch.Extra_Information := Data.Extra_Information;
+            Queue_Resize (Vsearch);
          end if;
       end if;
 
@@ -833,8 +834,6 @@ package body Vsearch_Ext is
         (Vsearch.Search_Next_Button, "clicked",
          Widget_Callback.To_Marshaller (On_Search'Access), Vsearch);
 
-      Ref (Vsearch.Search_Next_Button);
-
       Gtk_New (Vsearch.Search_Replace_Button, -"Replace");
       Pack_Start
         (Vsearch.Buttons_Hbox, Vsearch.Search_Replace_Button, False, False, 0);
@@ -958,16 +957,12 @@ package body Vsearch_Ext is
          --  Create if if not done yet
          if Vsearch_Module_Id.Search = null then
             Gtk_New (Vsearch_Module_Id.Search, Kernel_Handle (Kernel));
+
+            --  keep a reference on it so that it isn't destroyed when the MDI
+            --  child is destroyed.
+
+            Ref (Vsearch_Module_Id.Search);
          end if;
-
-         --  keep a reference on it so that it isn't destroyed when the MDI
-         --  child is destroyed.
-
-         --  ??? Commenting this will break the search, but will make a MDI bug
-         --  apparent: click on the close button => Storage_Error, because gtk+
-         --  is still trying to access the close_button after it has been
-         --  destroyed.
-         Ref (Vsearch_Module_Id.Search);
 
          --  Temporarily remove the options frame, to avoid immediate resizing
          --  of the floating window, whose size_request would include it,
