@@ -79,10 +79,6 @@ package Glide_Kernel is
    --  Reload a saved desktop.
    --  Return False if no desktop could be loaded.
 
-   function Has_Saved_Desktop (Handle : access Kernel_Handle_Record)
-      return Boolean;
-   --  Return True if a saved desktop exists and will be loaded.
-
    function Get_MDI
      (Handle : access Kernel_Handle_Record) return Gtkada.MDI.MDI_Window;
    --  Return the MDI associated with Handle
