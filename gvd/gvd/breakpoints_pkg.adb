@@ -366,14 +366,14 @@ begin
    Set_Case_Sensitive (Breakpoints.Exception_Name, False);
    Set_Use_Arrows (Breakpoints.Exception_Name, True);
    Set_Use_Arrows_Always (Breakpoints.Exception_Name, False);
-   String_List.Append (Exception_Name_Items, -"All exceptions");
+   String_List.Append (Exception_Name_Items, -"");
    Combo.Set_Popdown_Strings (Breakpoints.Exception_Name, Exception_Name_Items);
    Free_String_List (Exception_Name_Items);
 
    Breakpoints.Combo_Entry4 := Get_Entry (Breakpoints.Exception_Name);
    Set_Editable (Breakpoints.Combo_Entry4, True);
    Set_Max_Length (Breakpoints.Combo_Entry4, 0);
-   Set_Text (Breakpoints.Combo_Entry4, -"All exceptions");
+   Set_Text (Breakpoints.Combo_Entry4, -"");
    Set_Visibility (Breakpoints.Combo_Entry4, True);
 
    Gtk_New (Breakpoints.Temporary_Exception, -"Temporary breakpoint");

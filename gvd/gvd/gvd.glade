@@ -4100,8 +4100,7 @@ read or written
 	    <case_sensitive>False</case_sensitive>
 	    <use_arrows>True</use_arrows>
 	    <use_arrows_always>False</use_arrows_always>
-	    <items>All exceptions
-Assert failure
+	    <items>
 </items>
 	    <child>
 	      <padding>0</padding>
@@ -4117,7 +4116,7 @@ Assert failure
 	      <editable>True</editable>
 	      <text_visible>True</text_visible>
 	      <text_max_length>0</text_max_length>
-	      <text>All exceptions</text>
+	      <text></text>
 	    </widget>
 	  </widget>
 
