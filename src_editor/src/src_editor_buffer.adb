@@ -4,7 +4,7 @@
 --                     Copyright (C) 2001-2002                       --
 --                            ACT-Europe                             --
 --                                                                   --
--- GPS is free software; you can redistribute it and/or modify  it   --
+-- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -213,9 +213,11 @@ package body Src_Editor_Buffer is
         Get_Text_Mark (Glib.Values.Nth (Params, 2));
       Line : Gint;
       Col  : Gint;
+
    begin
       --  Emit the new cursor position if it is the Insert_Mark that was
       --  changed.
+
       if Get_Object (Mark) /= Get_Object (Buffer.Insert_Mark) then
          Get_Cursor_Position (Buffer, Line, Col);
          Emit_New_Cursor_Position (Buffer, Line => Line, Column => Col);
@@ -332,9 +334,9 @@ package body Src_Editor_Buffer is
       Length      : constant Gint := Get_Int (Nth (Params, 3));
       Text        : constant String :=
         Get_String (Nth (Params, 2), Length => Length);
-      Command     : Editor_Command
-        := Editor_Command (Buffer.Current_Command);
+      Command     : Editor_Command := Editor_Command (Buffer.Current_Command);
       Indented    : Boolean := False;
+
    begin
       if Buffer.Inserting then
          return;
@@ -890,6 +892,7 @@ package body Src_Editor_Buffer is
       UTF8     : Gtkada.Types.Chars_Ptr;
       Ignore   : aliased Natural;
       Length   : aliased Natural;
+
    begin
       Success := True;
       Contents := Read_File (Filename);
@@ -941,10 +944,11 @@ package body Src_Editor_Buffer is
       FD         : File_Descriptor := Invalid_FD;
       Start_Iter : Gtk_Text_Iter;
       End_Iter   : Gtk_Text_Iter;
+
    begin
       Success := True;
 
-      FD := Create_File (Filename & ASCII.NUL, Fmode => Text);
+      FD := Create_File (Filename, Fmode => Binary);
 
       if FD = Invalid_FD then
          Success := False;
@@ -954,17 +958,56 @@ package body Src_Editor_Buffer is
       Get_Bounds (Buffer, Start_Iter, End_Iter);
 
       declare
-         File_Buffer : constant String :=
+         New_Line       : constant String := (1 => ASCII.LF);
+         File_Buffer    : constant String :=
            Get_Text (Buffer, Start_Iter, End_Iter);
-         Bytes_Written : Integer;
+         Bytes_Written  : Integer;
+         First, Current : Natural := File_Buffer'First;
+         Blanks         : Natural := 0;
 
       begin
-         Bytes_Written := Write (FD, File_Buffer'Address, File_Buffer'Length);
+         while Current <= File_Buffer'Last loop
+            case File_Buffer (Current) is
+               when ASCII.LF | ASCII.CR =>
+                  if Blanks /= 0 then
+                     Bytes_Written :=
+                       Write (FD, File_Buffer (First)'Address, Blanks - First);
+                     Bytes_Written :=
+                       Write (FD, New_Line'Address, New_Line'Length);
+                     Blanks := 0;
+                     First := Current + 1;
+                  end if;
 
-         if Bytes_Written /= File_Buffer'Length then
-            --  Means that there is not enough space to save the file. Return
-            --  a failure.
-            Success := False;
+               when ' ' | ASCII.HT =>
+                  if Blanks = 0 then
+                     Blanks := Current;
+                  end if;
+
+               when others =>
+                  Blanks := 0;
+            end case;
+
+            Current := Current + 1;
+         end loop;
+
+         if First < File_Buffer'Last then
+            if Blanks /= 0 then
+               Bytes_Written :=
+                 Write (FD, File_Buffer (First)'Address, Blanks - First);
+               Bytes_Written :=
+                 Write (FD, New_Line'Address, New_Line'Length);
+
+            else
+               Bytes_Written :=
+                 Write (FD, File_Buffer (First)'Address, Current - First);
+
+               if File_Buffer (File_Buffer'Last) /= ASCII.LF
+                 and then File_Buffer (File_Buffer'Last) /= ASCII.CR
+               then
+                  Bytes_Written :=
+                    Write (FD, New_Line'Address, New_Line'Length);
+               end if;
+            end if;
          end if;
       end;
 
@@ -1047,6 +1090,7 @@ package body Src_Editor_Buffer is
    begin
       --  First check that Line does not exceed the number of lines
       --  in the buffer.
+
       if Line >= Get_Line_Count (Buffer) then
          return False;
       end if;
@@ -1054,6 +1098,7 @@ package body Src_Editor_Buffer is
       --  At this point, we know that the line number is valid. If the column
       --  number is 0, then no need to verify the column number as well.
       --  Column 0 always exists and this speeds up the query.
+
       if Column = 0 then
          return True;
       end if;
@@ -1061,11 +1106,13 @@ package body Src_Editor_Buffer is
       --  Get a text iterator at the begining of the line number Line.
       --  Then, move it to the end of the line to get the number of
       --  characters in this line.
+
       Get_Iter_At_Line_Offset (Buffer, Iter, Line, 0);
       Forward_To_Line_End (Iter);
 
       --  Check that Column does not exceed the number of character in
       --  in the current line.
+
       if Column > Get_Line_Offset (Iter) then
          return False;
       end if;
@@ -1542,10 +1589,10 @@ package body Src_Editor_Buffer is
    -- End_Action --
    ----------------
 
-   procedure End_Action (Buffer : access Source_Buffer_Record)
-   is
-      Command : Editor_Command
-        := Editor_Command (Buffer.Current_Command);
+   procedure End_Action (Buffer : access Source_Buffer_Record) is
+      Command : constant Editor_Command :=
+        Editor_Command (Buffer.Current_Command);
+
    begin
       if not Is_Null_Command (Command) then
          Buffer.Current_Command := null;
@@ -1566,8 +1613,9 @@ package body Src_Editor_Buffer is
    ----------
 
    procedure Undo (Buffer : access Source_Buffer_Record) is
-      Command : Editor_Command
-        := Editor_Command (Buffer.Current_Command);
+      Command : constant Editor_Command :=
+        Editor_Command (Buffer.Current_Command);
+
    begin
       if not Is_Null_Command (Command) then
          End_Action (Buffer);
@@ -1581,8 +1629,7 @@ package body Src_Editor_Buffer is
    ---------------
 
    function Get_Queue
-     (Buffer : access Source_Buffer_Record)
-     return Command_Queue is
+     (Buffer : access Source_Buffer_Record) return Command_Queue is
    begin
       return Buffer.Queue;
    end Get_Queue;
