@@ -421,7 +421,13 @@ package body Variable_Editors is
                      Set_Name_Of (Editor.Var, Name_Find);
                   end if;
 
-                  if Get_Active (Editor.Untyped_List_Variable) then
+                  --  Note: the order is important below, since some of the
+                  --  widgets might not exist if the variable editor is
+                  --  configured for scenario variables only.
+
+                  if Get_Active (Editor.Typed_Variable) then
+                     Set_Expression_Kind_Of (Editor.Var, Single);
+                  elsif Get_Active (Editor.Untyped_List_Variable) then
                      Set_Expression_Kind_Of (Editor.Var, Prj.List);
                   else
                      Set_Expression_Kind_Of (Editor.Var, Single);
