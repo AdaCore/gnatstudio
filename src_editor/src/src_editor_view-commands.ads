@@ -46,4 +46,14 @@ package Src_Editor_View.Commands is
    --  This command scrolls the current editor.
    --  Currently, it can only be used to center the cursor.
 
+   type Delete_Command is new Interactive_Command with record
+      Kernel : Glide_Kernel.Kernel_Handle;
+      Kind   : Movement_Type := Word;
+      Count  : Integer := 1;  --  Delete backward if negative
+   end record;
+   function Execute
+     (Command : access Delete_Command; Event : Gdk.Event.Gdk_Event)
+      return Standard.Commands.Command_Return_Type;
+   --  This command deletes some text.
+
 end Src_Editor_View.Commands;

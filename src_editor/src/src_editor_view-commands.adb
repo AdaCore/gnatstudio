@@ -27,6 +27,36 @@ with Glib;              use Glib;
 
 package body Src_Editor_View.Commands is
 
+   procedure Move_Iter
+     (Iter : in out Gtk_Text_Iter; Kind : Movement_Type; Step : Integer);
+   --  Move the iterator according to Kind
+
+   ---------------
+   -- Move_Iter --
+   ---------------
+
+   procedure Move_Iter
+     (Iter : in out Gtk_Text_Iter; Kind : Movement_Type; Step : Integer)
+   is
+      Ignored : Boolean;
+   begin
+      case Kind is
+         when Word =>
+            if Step > 0 then
+               Forward_Word_Ends (Iter, Gint (Step), Ignored);
+            else
+               Backward_Word_Starts (Iter, -Gint (Step), Ignored);
+            end if;
+
+         when Paragraph =>
+            if Step > 0 then
+               Forward_Sentence_Ends (Iter, Gint (Step), Ignored);
+            else
+               Backward_Sentence_Starts (Iter, -Gint (Step), Ignored);
+            end if;
+      end case;
+   end Move_Iter;
+
    -------------
    -- Execute --
    -------------
@@ -40,25 +70,9 @@ package body Src_Editor_View.Commands is
         Source_View (Get_Current_Focus_Widget (Command.Kernel));
       Buffer : constant Source_Buffer := Source_Buffer (Get_Buffer (View));
       Iter        : Gtk_Text_Iter;
-      Ignored     : Boolean;
    begin
       Get_Iter_At_Mark (Buffer, Iter, View.Saved_Cursor_Mark);
-
-      case Command.Kind is
-         when Word =>
-            if Command.Step > 0 then
-               Forward_Word_Ends (Iter, Gint (Command.Step), Ignored);
-            else
-               Backward_Word_Starts (Iter, -Gint (Command.Step), Ignored);
-            end if;
-
-         when Paragraph =>
-            if Command.Step > 0 then
-               Forward_Sentence_Ends (Iter, Gint (Command.Step), Ignored);
-            else
-               Backward_Sentence_Starts (Iter, -Gint (Command.Step), Ignored);
-            end if;
-      end case;
+      Move_Iter (Iter, Command.Kind, Command.Step);
       Move_Mark (Buffer, View.Saved_Cursor_Mark, Iter);
       Place_Cursor (Buffer, Iter);
       return Success;
@@ -83,6 +97,27 @@ package body Src_Editor_View.Commands is
          Use_Align => True,
          Xalign => 0.0,
          Yalign => 0.5);
+      return Success;
+   end Execute;
+
+   -------------
+   -- Execute --
+   -------------
+
+   function Execute
+     (Command : access Delete_Command; Event : Gdk.Event.Gdk_Event)
+      return Command_Return_Type
+   is
+      pragma Unreferenced (Event);
+      View   : constant Source_View   :=
+        Source_View (Get_Current_Focus_Widget (Command.Kernel));
+      Buffer : constant Source_Buffer := Source_Buffer (Get_Buffer (View));
+      Iter, Start : Gtk_Text_Iter;
+   begin
+      Get_Iter_At_Mark (Buffer, Iter, View.Saved_Cursor_Mark);
+      Copy (Source => Iter, Dest => Start);
+      Move_Iter (Iter, Command.Kind, Command.Count);
+      Delete (Buffer, Iter, Start);
       return Success;
    end Execute;
 
