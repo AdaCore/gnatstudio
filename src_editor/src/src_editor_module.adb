@@ -114,7 +114,6 @@ package body Src_Editor_Module is
       Source_Lines_Revealed_Id : Handler_Id := No_Handler;
       File_Edited_Id           : Handler_Id := No_Handler;
       File_Closed_Id           : Handler_Id := No_Handler;
-      Location_Open_Id         : Idle_Handler_Id := 0;
       Display_Line_Numbers     : Boolean    := False;
 
       Stored_Marks             : Mark_Identifier_List.List;
@@ -205,10 +204,6 @@ package body Src_Editor_Module is
 
    function Location_Callback (D : Location_Idle_Data) return Boolean;
    --  Idle callback used to scroll the source editors.
-
-   procedure Location_Destroy (D : in out Location_Idle_Data);
-   --  Called when the Idle callback to scroll the source editors is
-   --  destroyed.
 
    function File_Edit_Callback (D : Location_Idle_Data) return Boolean;
    --  Emit the File_Edited signal.
@@ -1756,16 +1751,6 @@ package body Src_Editor_Module is
          return False;
    end Location_Callback;
 
-   ----------------------
-   -- Location_Destroy --
-   ----------------------
-
-   procedure Location_Destroy (D : in out Location_Idle_Data) is
-      pragma Unreferenced (D);
-   begin
-      Source_Editor_Module (Src_Editor_Module_Id).Location_Open_Id := 0;
-   end Location_Destroy;
-
    ------------------
    -- Save_To_File --
    ------------------
@@ -2615,6 +2600,8 @@ package body Src_Editor_Module is
       Source    : Source_Box;
       Edit      : Source_Editor_Box;
       MDI       : constant MDI_Window := Get_MDI (Kernel);
+      Tmp       : Boolean;
+      pragma Unreferenced (Tmp);
 
    begin
       if Mime_Type = Mime_Source_File then
@@ -2627,8 +2614,6 @@ package body Src_Editor_Module is
               Get_Boolean (Data (Data'First + 4));
             New_File    : constant Boolean :=
               Get_Boolean (Data (Data'First + 6));
-            The_Data    : Source_Editor_Module :=
-              Source_Editor_Module (Src_Editor_Module_Id);
             Iter        : Child_Iterator := First_Child (MDI);
             Child       : MDI_Child;
             No_Location : Boolean := False;
@@ -2654,10 +2639,6 @@ package body Src_Editor_Module is
                return True;
 
             else
-               if The_Data.Location_Open_Id /= 0 then
-                  Idle_Remove (The_Data.Location_Open_Id);
-               end if;
-
                if Line = 0 and then Column = 0 then
                   No_Location := True;
                end if;
@@ -2688,21 +2669,12 @@ package body Src_Editor_Module is
                then
                   Trace (Me, "Setup editor to go to line,col="
                          & Line'Img & Column'Img);
-                  --  For some reason, we can not directly call
-                  --  Set_Cursor_Location, since the source editor won't be
-                  --  scrolled the first time the editor is displayed. Doing
-                  --  this in an idle callback ensures that all the proper
-                  --  events and initializations have taken place before we
-                  --  try to scroll the editor.
-
-                  The_Data.Location_Open_Id := Location_Idle.Add
-                    (Location_Callback'Access,
-                     (Edit,
+                  Tmp := Location_Callback
+                    ((Edit,
                       Natural (Line),
                       Natural (Column),
                       Natural (Column_End),
-                      Kernel_Handle (Kernel)),
-                     Destroy => Location_Destroy'Access);
+                      Kernel_Handle (Kernel)));
 
                   if Highlight then
                      Highlight_Line (Edit, Natural (Line));
