@@ -198,6 +198,7 @@ package body Vsearch_Ext is
    begin
       Search_Modules_List.Free (Search_Modules);
       Unref (Vsearch_Extended (Object).Next_Menu_Item);
+      Unref (Vsearch_Extended (Object).Search_Next_Button);
 
    exception
       when E : others =>
@@ -742,6 +743,7 @@ package body Vsearch_Ext is
          Ref_Item => Goto_Decl,
          Accel_Key => GDK_N, Accel_Mods => Control_Mask);
       Ref (Vsearch.Next_Menu_Item);
+
       Set_Sensitive (Vsearch.Next_Menu_Item, False);
       Gtk_New (Mitem);
       Register_Menu (Handle, Navigate, Mitem, Ref_Item => Goto_Decl);
@@ -770,6 +772,8 @@ package body Vsearch_Ext is
       Widget_Callback.Object_Connect
         (Vsearch.Search_Next_Button, "clicked",
          Widget_Callback.To_Marshaller (On_Search'Access), Vsearch);
+
+      Ref (Vsearch.Search_Next_Button);
 
       Gtk_New (Vsearch.Search_Replace_Button, -"Replace");
       Pack_Start
