@@ -35,6 +35,7 @@ with Gdk.Types.Keysyms;           use Gdk.Types.Keysyms;
 with Gtk;                         use Gtk;
 with Gtk.Enums;                   use Gtk.Enums;
 with Gtk.Handlers;
+with Gtk.Main;                    use Gtk.Main;
 with Gtk.Text_Buffer;             use Gtk.Text_Buffer;
 with Gtk.Text_Iter;               use Gtk.Text_Iter;
 with Gtk.Text_Mark;               use Gtk.Text_Mark;
@@ -75,9 +76,14 @@ package body Src_Editor_View is
    procedure Free (X : in out Line_Info_Width);
    --  Free memory associated to X.
 
+   package Source_View_Idle is new Gtk.Main.Idle (Source_View);
+
    --------------------------
    -- Forward declarations --
    --------------------------
+
+   function Connect_Expose (View : in Source_View) return Boolean;
+   --  Connect Expose_Event_Cb to the expose event. Emit an expose event.
 
    procedure Realize_Cb (Widget : access Gtk_Widget_Record'Class);
    --  This procedure is invoked when the Source_View widget is realized.
@@ -618,6 +624,8 @@ package body Src_Editor_View is
       Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
    is
       Insert_Iter : Gtk_Text_Iter;
+      Id          : Idle_Handler_Id;
+      pragma Unreferenced (Id);
    begin
       --  Initialize the Source_View. Some of the fields can not be initialized
       --  until the widget is realize or mapped. Their initialization is thus
@@ -645,10 +653,6 @@ package body Src_Editor_View is
         (View, "map",
          Marsh => Widget_Callback.To_Marshaller (Map_Cb'Access),
          After => True);
-      Return_Callback.Connect
-        (View, "expose_event",
-         Marsh => Return_Callback.To_Marshaller (Expose_Event_Cb'Access),
-         After => False);
       Return_Callback.Connect
         (View, "focus_in_event",
          Marsh => Return_Callback.To_Marshaller (Focus_In_Event_Cb'Access),
@@ -700,7 +704,32 @@ package body Src_Editor_View is
          File_Saved'Access,
          Slot_Object => View,
          User_Data   => Kernel_Handle (Kernel));
+
+      Id := Source_View_Idle.Add
+        (Connect_Expose'Access,
+         Source_View (View));
    end Initialize;
+
+   --------------------
+   -- Connect_Expose --
+   --------------------
+
+   function Connect_Expose (View : in Source_View) return Boolean is
+      Win           : constant Gdk.Window.Gdk_Window
+        := Get_Window (View, Text_Window_Left);
+      X, Y, W, H, D : Gint;
+
+   begin
+      Return_Callback.Connect
+        (View, "expose_event",
+         Marsh => Return_Callback.To_Marshaller (Expose_Event_Cb'Access),
+         After => False);
+
+      Get_Geometry (Win, X, Y, W, H, D);
+      Clear_Area_E (Win, X, Y, W, H);
+
+      return False;
+   end Connect_Expose;
 
    -------------------------
    -- Preferences_Changed --
