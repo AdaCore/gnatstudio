@@ -1,12 +1,9 @@
-<?xml version="1.0"?>
-
+<?xml version="1.0"?> 
 <!--  This file adds support for cvs -->
 
 <cvs_support>
 
-   <!---------------->
    <!-- CVS status -->
-   <!---------------->
 
    <action name="generic_cvs_status" show-command="true" output="none">
       <shell>pwd</shell>
@@ -19,9 +16,7 @@
       <shell>VCS.status_parse "CVS" "%1" "$1" FALSE "%3"</shell>
    </action>
 
-   <!-------------------->
    <!-- CVS status dir -->
-   <!-------------------->
 
    <action name="generic_cvs_status_dir" show-command="true" output="none">
       <shell>pwd</shell>
@@ -34,9 +29,7 @@
       <shell>VCS.status_parse "CVS" "%1" "$1" FALSE "%3"</shell>
    </action>
 
-   <!------------------>
    <!-- CVS annotate -->
-   <!------------------>
 
    <action name="generic_cvs_annotate" show-command="true" output="">
       <shell>echo "Querying annotations for $1"</shell>
@@ -48,9 +41,7 @@
       <shell output="none">VCS.annotations_parse "CVS" "$1" "%1"</shell>
    </action>
 
-   <!---------------------->
    <!-- CVS local status -->
-   <!---------------------->
 
    <action name="generic_cvs_local_status" show-command="true" output="none">
       <shell>pwd</shell>
@@ -58,9 +49,7 @@
       <shell>VCS.status_parse "CVS" "%1" FALSE TRUE "%2"</shell>
    </action>
 
-   <!---------------->
    <!-- CVS commit -->
-   <!---------------->
 
    <action name="generic_cvs_commit" show-command="true" output="none">
       <shell output="">echo "Committing file(s) $2-"</shell>
@@ -75,9 +64,7 @@
       <shell>Hook.run %1 null</shell>
    </action>
 
-   <!------------->
    <!-- CVS add -->
-   <!------------->
 
    <action name="generic_cvs_add" show-command="true" output="none">
       <shell output="">echo "adding file(s) $2-"</shell>
@@ -95,9 +82,7 @@
       <shell>delete "%2"</shell>
    </action>
 
-   <!---------------->
    <!-- CVS remove -->
-   <!---------------->
 
    <action name="generic_cvs_remove" show-command="true" output="none">
       <shell output="">echo "removing file(s) $2-"</shell>
@@ -116,9 +101,7 @@
       <shell>delete "%2"</shell>
    </action>
 
-   <!----------------->
    <!-- CVS history -->
-   <!----------------->
 
    <action name="generic_cvs_history" show-command="true" output="none">
       <shell output="">echo "Querying history for $1"</shell>
@@ -146,9 +129,7 @@
       <shell>delete "%3"</shell>
    </action>
 
-   <!---------------->
    <!-- CVS update -->
-   <!---------------->
 
    <action name="generic_cvs_update" show-command="true" output="none">
       <external output="">cvs update "$*"</external>
@@ -160,9 +141,7 @@
       <shell>Hook.run %1 null</shell>
    </action>
 
-   <!-------------->
    <!-- CVS diff -->
-   <!-------------->
 
    <action name="generic_cvs_diff_head" show-command="true" output="none">
       <shell output="">echo "Getting comparison for $1 ..."</shell>
@@ -240,9 +219,7 @@
       <shell output="">echo "No differences found between BASE and HEAD for $1"</shell>
    </action>
 
-   <!-------------->
    <!-- CVS open -->
-   <!-------------->
 
    <action name="generic_cvs_open" show-command="true" output="none">
       <shell output="">echo "Opening CVS file $*"</shell>
@@ -256,9 +233,7 @@
       <shell>Editor.edit "$1" 0 0</shell>
    </action>
 
-   <!---------------->
    <!-- CVS revert -->
-   <!---------------->
 
    <action name="generic_cvs_revert" show-command="true" output="none">
       <external output="">cvs update -C "$*"</external>
@@ -270,9 +245,7 @@
       <shell>Hook.run %1 null</shell>
    </action>
 
-   <!--------->
    <!-- CVS -->
-   <!--------->
 
    <vcs name="CVS" absolute_names="FALSE">
       <status_files       action="generic_cvs_status"         label="Query status"/>

@@ -4,9 +4,7 @@
 
 <ClearCase_support>
 
-   <!------------------------>
    <!-- ClearCase describe -->
-   <!------------------------>
 
    <action name="clearcase_describe" show-command="true" output="none">
       <shell output="">echo "Describing $2-"</shell>
@@ -14,9 +12,7 @@
       <shell>VCS.status_parse "ClearCase Native" "%1" $1 FALSE</shell>
    </action>
 
-   <!------------------------>
    <!-- ClearCase annotate -->
-   <!------------------------>
 
    <action name="clearcase_annotate" show-command="true" output="none">
       <shell output="">echo "Querying annotations for $1"</shell>
@@ -24,18 +20,14 @@
       <shell>VCS.annotations_parse "ClearCase Native" "$1" "%1"</shell>
    </action>
 
-   <!---------------------------->
    <!-- ClearCase local status -->
-   <!---------------------------->
 
    <action name="clearcase_local_status" show-command="true" output="none">
       <external>cleartool ls -short "$2-"</external>
       <shell>VCS.status_parse "ClearCase Native" "%1" FALSE TRUE</shell>
    </action>
 
-   <!----------------------->
    <!-- ClearCase checkin -->
-   <!----------------------->
 
    <action name="clearcase_checkin" show-command="true" output="none">
       <shell output="">echo "Checking in file(s) $2-"</shell>
@@ -49,9 +41,7 @@
       <shell>delete "%2"</shell>
    </action>
 
-   <!----------------------->
    <!-- ClearCase history -->
-   <!----------------------->
 
 
    <action name="clearcase_history" show-command="true" output="none">
@@ -74,9 +64,7 @@
       <shell>delete "%7"</shell>
    </action>
 
-   <!---------------------->
    <!-- ClearCase update -->
-   <!---------------------->
 
    <action name="clearcase_update" show-command="true" output="none">
       <external>cleartool update $*</external>
@@ -89,9 +77,7 @@
       <shell>Hook.run %1 null</shell>
    </action>
 
-   <!-------------------->
    <!-- ClearCase diff -->
-   <!-------------------->
 
    <action name="clearcase_diff_head" show-command="true" output="none">
       <external>cleartool diff -diff_format  "${1}@@/main/LATEST" "$1"</external>
@@ -121,9 +107,7 @@
       <shell>echo No differences found</shell>
    </action>
 
-   <!------------------------>
    <!-- ClearCase checkout -->
-   <!------------------------>
 
    <action name="clearcase_checkout" show-command="true" output="none">
       <shell>MDI.input_dialog "Checking out file(s)" "Comment:=GPS check-out"</shell>
@@ -137,9 +121,7 @@
       <shell>Hook.run %1 null</shell>
    </action>
 
-   <!-------------------------->
    <!-- Clearcase uncheckout -->
-   <!-------------------------->
 
    <action name="clearcase_uncheckout" show-command="true" output="none">
       <external>cleartool uncheckout -keep "$*"</external>
@@ -152,9 +134,7 @@
       <shell>Hook.run %1 null</shell>
    </action>
 
-   <!------------------->
    <!-- ClearCase Add -->
-   <!------------------->
 
    <action name="clearcase_add" show-command="true" output="">
       <shell>dump "$1 TRUE</shell>
@@ -165,9 +145,7 @@
       <shell>delete "%5"</shell>
    </action>
 
-   <!---------------------->
    <!-- ClearCase Remove -->
-   <!---------------------->
 
    <action name="clearcase_remove" show-command="true" output="">
       <shell>dump "$1 TRUE</shell>
@@ -178,9 +156,7 @@
       <shell>delete "%5"</shell>
    </action>
 
-   <!--------------->
    <!-- ClearCase -->
-   <!--------------->
 
    <vcs name="ClearCase Native" absolute_names="FALSE">
       <status_files     action="clearcase_describe"       label="Describe"/>
