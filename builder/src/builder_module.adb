@@ -1,4 +1,4 @@
------------------------------------------------------------------------
+----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
 --                     Copyright (C) 2001-2003                       --
@@ -43,10 +43,10 @@ with Glide_Kernel.Project;      use Glide_Kernel.Project;
 with Glide_Kernel.Timeout;      use Glide_Kernel.Timeout;
 with Glide_Kernel.Task_Manager; use Glide_Kernel.Task_Manager;
 with VFS;                       use VFS;
+with Projects;                  use Projects;
 
 with Language_Handlers;         use Language_Handlers;
 with Language_Handlers.Glide;   use Language_Handlers.Glide;
-with Projects.Editor;           use Projects, Projects.Editor;
 with Projects.Registry;         use Projects.Registry;
 with Src_Info;                  use Src_Info;
 with Histories;                 use Histories;
@@ -586,9 +586,15 @@ package body Builder_Module is
                if Prj = No_Project
                  or else Status (Get_Project (Kernel)) /= From_File
                then
+                  --  Use the default switches for that tool
                   Args := new Argument_List'
-                    (Clone (Default_Builder_Switches)
-                     & new String'(Full_Name (F).all));
+                    (Get_Switches
+                       (Handle   => Kernel,
+                        Project  => No_Project,
+                        In_Pkg   => Builder_Package,
+                        Index    => Ada_String,
+                        Use_Initial_Value => True)
+                       & new String'(Full_Name (F).all));
                else
                   Args := Compute_Arguments (Kernel, Syntax, Prj, F);
                end if;
@@ -614,8 +620,14 @@ package body Builder_Module is
                         Mode => Error);
                      return;
                   else
+                     --  Use the default switches for that tool
                      Args := new Argument_List'
-                       (Clone (Default_Builder_Switches)
+                       (Get_Switches
+                          (Handle   => Kernel,
+                           Project  => No_Project,
+                           In_Pkg   => Builder_Package,
+                           Index    => Ada_String,
+                           Use_Initial_Value => True)
                         & new String'(Full_Name (File).all));
                   end if;
 
@@ -815,14 +827,25 @@ package body Builder_Module is
       Fd := new TTY_Process_Descriptor;
 
       if Status (Prj) /= From_File then
-         Insert_And_Launch
-           (Kernel,
-            Remote_Protocol => Get_Pref (GVD_Prefs, Remote_Protocol),
-            Remote_Host    => Get_Attribute_Value (Prj, Remote_Host_Attribute),
-            Command         => Cmd.all,
-            Arguments       => Default_Builder_Switches &
-              Common_Args.all & (1 => Local_File'Unchecked_Access),
-            Fd              => Fd);
+         --  Use the default switches for that tool
+         declare
+            Default_Builder_Switches : Argument_List := Get_Switches
+              (Handle   => Kernel,
+               Project  => No_Project,
+               In_Pkg   => Builder_Package,
+               Index    => Ada_String,
+               Use_Initial_Value => True);
+         begin
+            Insert_And_Launch
+              (Kernel,
+               Remote_Protocol => Get_Pref (GVD_Prefs, Remote_Protocol),
+               Remote_Host => Get_Attribute_Value (Prj, Remote_Host_Attribute),
+               Command         => Cmd.all,
+               Arguments       => Default_Builder_Switches &
+               Common_Args.all & (1 => Local_File'Unchecked_Access),
+               Fd              => Fd);
+            Free (Default_Builder_Switches);
+         end;
 
       else
          Args := Compute_Arguments
