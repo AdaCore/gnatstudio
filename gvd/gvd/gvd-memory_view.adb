@@ -113,6 +113,66 @@ package body GVD.Memory_View is
       Position : in Gint) return Integer;
    --  Gives the bloc number at the given position.
 
+   procedure Swap_Blocks
+     (View : access GVD_Memory_View_Record'Class;
+      Size : Data_Size);
+   --  Swap blocks of size Size in the View's values to swap endianness.
+
+   -----------------
+   -- Swap_Blocks --
+   -----------------
+
+   procedure Swap_Blocks
+     (View : access GVD_Memory_View_Record'Class;
+      Size : Data_Size)
+   is
+      Index     : Integer := 0;
+      Unit_Size : Integer;
+   begin
+      if View.Values = null
+        or else View.Flags = null
+      then
+         return;
+      end if;
+
+      case Size is
+         when Byte =>
+            return;
+         when Halfword =>
+            Unit_Size := 4;
+         when Word =>
+            Unit_Size := 8;
+      end case;
+
+      declare
+         Buffer     : String (1 .. Unit_Size);
+      begin
+         while Index <= View.Number_Of_Bytes * 2 loop
+            Buffer (1 .. Unit_Size)
+              := View.Values.all
+              (View.Values.all'First + Index
+               .. View.Values.all'First + Index + Unit_Size - 1);
+            for I in 0 .. Unit_Size / 2 - 1 loop
+               View.Values.all
+                 (View.Values.all'First + Index + I * 2
+                  .. View.Values.all'First + Index + I * 2 + 1)
+                 := Buffer (Buffer'Last -  I * 2 - 1 .. Buffer'Last -  I * 2);
+            end loop;
+            Buffer (1 .. Unit_Size)
+              := View.Flags.all
+              (View.Flags.all'First + Index
+               .. View.Flags.all'First + Index + Unit_Size - 1);
+            for I in 0 .. Unit_Size / 2 - 1 loop
+               View.Flags.all
+                 (View.Flags.all'First + Index + I * 2
+                  .. View.Flags.all'First + Index + I * 2 + 1)
+                 := Buffer (Buffer'Last -  I * 2 - 1 .. Buffer'Last -  I * 2);
+            end loop;
+            Index := Index + Unit_Size;
+         end loop;
+      end;
+   end Swap_Blocks;
+
    ---------------------
    -- Get_Coordinates --
    ---------------------
@@ -321,6 +381,7 @@ package body GVD.Memory_View is
       Background : Gdk_Color := Null_Color;
       Foreground : Gdk_Color := Null_Color;
       Current    : String_Access;
+      Old_Size   : Data_Size := View.Data;
 
    begin
       if View.Values = null then
@@ -356,6 +417,18 @@ package body GVD.Memory_View is
             raise Program_Error;
          end if;
       end;
+
+      if Get_Endian_Type (Get_Current_Process (View.Window).Debugger)
+        = Little_Endian
+        and then Old_Size /= View.Data
+      then
+         Put_Line ("swwapp");
+         --  Swap back to original.
+         Swap_Blocks (View, Old_Size);
+
+         --  Swap again to new size.
+         Swap_Blocks (View, View.Data);
+      end if;
 
       case View.Data is
          when Byte =>
