@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2001-2004                       --
+--                     Copyright (C) 2001-2005                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
@@ -1189,8 +1189,6 @@ package body Src_Editor_Buffer is
 
       Free_Queue (Buffer.Queue);
 
-      Free_Column_Info (Buffer.Buffer_Line_Info_Columns);
-      Unchecked_Free (Buffer.Buffer_Line_Info_Columns);
       Free_Column_Info (Buffer.Editable_Line_Info_Columns);
       Unchecked_Free (Buffer.Editable_Line_Info_Columns);
 
@@ -1199,7 +1197,6 @@ package body Src_Editor_Buffer is
             if Buffer.Editable_Lines (J).Where = In_Mark then
                Free (Buffer.Editable_Lines (J).Text);
             end if;
-
             if Buffer.Editable_Lines (J).Side_Info_Data /= null then
                Free (Buffer.Editable_Lines (J).Side_Info_Data.all);
                Unchecked_Free (Buffer.Editable_Lines (J).Side_Info_Data);
@@ -1212,11 +1209,6 @@ package body Src_Editor_Buffer is
       for J in Buffer.Line_Data'Range loop
          if Buffer.Line_Data (J).Enabled_Highlights /= null then
             Unchecked_Free (Buffer.Line_Data (J).Enabled_Highlights);
-         end if;
-
-         if Buffer.Line_Data (J).Side_Info_Data /= null then
-            Free (Buffer.Line_Data (J).Side_Info_Data.all);
-            Unchecked_Free (Buffer.Line_Data (J).Side_Info_Data);
          end if;
       end loop;
 
@@ -2139,6 +2131,9 @@ package body Src_Editor_Buffer is
       --  Compute the block information.
 
       Register_Edit_Timeout (Buffer);
+
+      --  Show the line number information, if needed
+      Recalculate_Side_Column_Width (Buffer);
    end Initialize_Hook;
 
    ----------------
@@ -2223,6 +2218,9 @@ package body Src_Editor_Buffer is
          Cb => Delete_Range_Before_Handler'Access,
          After => False);
 
+      Buffer.Editable_Line_Info_Columns := new Line_Info_Display_Array_Access'
+        (null);
+
       Initialize_Hook (Buffer);
 
       --  Create the queue change hook that will be called every
@@ -2236,11 +2234,6 @@ package body Src_Editor_Buffer is
          "State_Check");
 
       Buffer.First_Removed_Line := 0;
-
-      Buffer.Editable_Line_Info_Columns := new Line_Info_Display_Array_Access'
-        (null);
-      Buffer.Buffer_Line_Info_Columns   := new Line_Info_Display_Array_Access'
-        (null);
    end Initialize;
 
    -------------------
@@ -2448,7 +2441,6 @@ package body Src_Editor_Buffer is
 
          Buffer.Original_Text_Inserted := False;
 
-         Free_Column_Info (Buffer.Buffer_Line_Info_Columns);
          Free_Column_Info (Buffer.Editable_Line_Info_Columns);
 
          if Buffer.Editable_Lines /= null then
@@ -4019,29 +4011,17 @@ package body Src_Editor_Buffer is
      (Buffer : access Source_Buffer_Record;
       Line   : Buffer_Line_Type) return Boolean
    is
-      Editable_Line : Editable_Line_Type;
+      EL : Editable_Line_Type;
    begin
-      if Buffer.Line_Data (Line).Side_Info_Data /= null then
-         for J in Buffer.Line_Data (Line).Side_Info_Data'Range loop
-            if not Buffer.Line_Data (Line).Side_Info_Data (J).Set then
-               return True;
-            end if;
-         end loop;
-      end if;
+      EL := Get_Editable_Line (Buffer, Line);
 
-      Editable_Line := Get_Editable_Line (Buffer, Line);
-
-      if Editable_Line = 0 then
+      if EL = 0 then
          return False;
       end if;
 
-      if Buffer.Editable_Lines (Editable_Line).Side_Info_Data /= null then
-         for J in Buffer.Editable_Lines
-           (Editable_Line).Side_Info_Data'Range
-         loop
-            if not Buffer.Editable_Lines
-              (Editable_Line).Side_Info_Data (J).Set
-            then
+      if Buffer.Editable_Lines (EL).Side_Info_Data /= null then
+         for J in Buffer.Editable_Lines (EL).Side_Info_Data'Range loop
+            if not Buffer.Editable_Lines (EL).Side_Info_Data (J).Set then
                return True;
             end if;
          end loop;
@@ -4049,33 +4029,6 @@ package body Src_Editor_Buffer is
 
       return False;
    end Line_Needs_Refresh;
-
-   ----------------------
-   -- Create_Side_Info --
-   ----------------------
-
-   procedure Create_Side_Info
-     (Buffer : access Source_Buffer_Record;
-      Line   : Buffer_Line_Type)
-   is
-      Buffer_Lines   : Line_Data_Array_Access renames Buffer.Line_Data;
-      Columns_Config : Line_Info_Display_Array_Access
-        renames Buffer.Buffer_Line_Info_Columns.all;
-   begin
-      if Columns_Config /= null then
-         if Buffer_Lines (Line).Side_Info_Data = null then
-            Buffer_Lines (Line).Side_Info_Data := new
-              Line_Info_Width_Array (Columns_Config'Range);
-
-            for K in Columns_Config'Range loop
-               Buffer_Lines (Line).Side_Info_Data (K) :=
-                 (null,
-                  Width => -1,
-                  Set   => not Columns_Config (K).Every_Line);
-            end loop;
-         end if;
-      end if;
-   end Create_Side_Info;
 
    ----------------------
    -- Create_Side_Info --
@@ -5434,5 +5387,15 @@ package body Src_Editor_Buffer is
       Highlight_Slice (Buffer, Start_Iter, End_Iter);
       Buffer.Highlight_Needed := False;
    end Process_Highlight_Region;
+
+   -------------------------
+   -- Refresh_Side_Column --
+   -------------------------
+
+   procedure Refresh_Side_Column (Buffer : access Source_Buffer_Record) is
+   begin
+      Recalculate_Side_Column_Width (Buffer);
+      Side_Column_Configuration_Changed (Buffer);
+   end Refresh_Side_Column;
 
 end Src_Editor_Buffer;
