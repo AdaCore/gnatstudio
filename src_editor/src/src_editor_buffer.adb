@@ -318,31 +318,64 @@ package body Src_Editor_Buffer is
    function Check_Blocks (Buffer : Source_Buffer) return Boolean;
    --  Timeout that recomputes the blocks if needed.
 
+   type Src_String is record
+      Contents  : GNAT.OS_Lib.String_Access;
+      Length    : Natural := 0;
+      Read_Only : Boolean := False;
+   end record;
+   --  Special purpose string type to avoid extra copies and string allocation
+   --  as much as possible.
+   --  The actual contents of a Src_String is represented by
+   --  Contents (1 .. Length).
+   --  Never use Free (Contents) directly, use the Free procedure below.
+
+   procedure Free (S : in out Src_String);
+   --  Free the memory associated with S.
+
    function Get_String
      (Buffer : Source_Buffer;
-      Line   : Editable_Line_Type) return String;
-   --  Return the string at line Line.
-   --  This should return the line without line terminator.
+      Line   : Editable_Line_Type) return Src_String;
+   --  Return the string at line Line, without the line terminator.
+   --  Return null if the Line is not a valid line or there is no contents
+   --  associated with the line.
+   --  The caller is responsible for freeing the returned value.
 
-   function Get_String (Buffer : Source_Buffer) return String;
+   function Get_String
+     (Buffer : Source_Buffer) return GNAT.OS_Lib.String_Access;
    pragma Unreferenced (Get_String);
    --  Return the entire editable string.
+   --  The caller is responsible for freeing the returned value.
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (S : in out Src_String) is
+   begin
+      if S.Read_Only then
+         S.Contents := null;
+      else
+         Free (S.Contents);
+      end if;
+   end Free;
 
    ----------------
    -- Get_String --
    ----------------
 
-   --  ??? These two functions should be optimized for speed.
+   --  ??? See whether these two functions could be optimized further.
 
    function Get_String
      (Buffer : Source_Buffer;
-      Line   : Editable_Line_Type) return String
+      Line   : Editable_Line_Type) return Src_String
    is
       Start_Iter, End_Iter : Gtk_Text_Iter;
       Success              : Boolean;
+      Result               : Src_String;
+
    begin
       if Line not in Buffer.Editable_Lines'Range then
-         return "";
+         return Result;
       end if;
 
       case Buffer.Editable_Lines (Line).Where is
@@ -355,64 +388,63 @@ package body Src_Editor_Buffer is
             Forward_To_Line_End (End_Iter, Success);
 
             if Get_Line (Start_Iter) /= Get_Line (End_Iter) then
-               return "";
+               return Result;
             end if;
 
             declare
-               Ignore, Length  : Natural;
-               UTF8            : constant Gtkada.Types.Chars_Ptr :=
+               Ignore   : Natural;
+               UTF8     : constant Gtkada.Types.Chars_Ptr :=
                  Get_Text (Buffer, Start_Iter, End_Iter, True);
-               Contents        : GNAT.OS_Lib.String_Access;
+               Length   : constant Natural := Integer (Strlen (UTF8));
+
             begin
-               Length := Integer (Strlen (UTF8));
-               Contents := new String (1 .. Length);
+               Result.Contents := new String (1 .. Length);
                Glib.Convert.Convert
                  (UTF8, Length,
                   Get_Pref (Buffer.Kernel, Default_Charset), "UTF-8",
-                  Ignore, Length, Result => Contents.all);
+                  Ignore, Result.Length, Result => Result.Contents.all);
                g_free (UTF8);
-
-               declare
-                  Output : constant String := Contents.all;
-               begin
-                  Free (Contents);
-                  return Output;
-               end;
             end;
 
          when In_Mark =>
-            if Buffer.Editable_Lines (Line).Text = null then
-               return "";
-            else
-               return Buffer.Editable_Lines (Line).Text.all;
+            if Buffer.Editable_Lines (Line).Text /= null then
+               Result.Read_Only := True;
+               Result.Contents  := Buffer.Editable_Lines (Line).Text;
+               Result.Length    := Result.Contents'Length;
             end if;
       end case;
+
+      return Result;
    end Get_String;
 
-   function Get_String (Buffer : Source_Buffer) return String is
-      A : GNAT.OS_Lib.Argument_List
-        (Integer (Buffer.Editable_Lines'First) ..
-           Integer (Buffer.Editable_Lines'Last));
-      Len : Integer := 0;
+   function Get_String
+     (Buffer : Source_Buffer) return GNAT.OS_Lib.String_Access
+   is
+      A      : array (Buffer.Editable_Lines'Range) of Src_String;
+      Len    : Integer := 0;
+      Index  : Integer := 1;
+      Output : GNAT.OS_Lib.String_Access;
+
    begin
       for J in A'Range loop
-         A (J) := new String'(Get_String (Buffer, Editable_Line_Type (J)));
-         Len := Len + A (J)'Length;
+         A (J) := Get_String (Buffer, Editable_Line_Type (J));
+         Len := Len + A (J).Length;
       end loop;
 
-      declare
-         Output : String (1 .. 1 + Len);
-         Index  : Integer := 1;
+      Output := new String (1 .. Len);
 
-      begin
-         for J in A'Range loop
-            Output (Index .. Index + A (J)'Length - 1) := A (J).all;
-            Index := Index + A (J)'Length;
-            Free (A (J));
-         end loop;
+      for J in A'Range loop
+         Len := A (J).Length;
 
-         return Output;
-      end;
+         if Len > 0 then
+            Output (Index .. Index + Len - 1) := A (J).Contents (1 .. Len);
+            Index := Index + Len;
+         end if;
+
+         Free (A (J));
+      end loop;
+
+      return Output;
    end Get_String;
 
    ------------------
@@ -1979,31 +2011,33 @@ package body Src_Editor_Buffer is
 
          Strip_Blank := Get_Pref (Buffer.Kernel, Strip_Blanks);
 
-         for Line in Buffer.Editable_Lines'First
-           ..  Buffer.Last_Editable_Line
+         for Line in
+           Buffer.Editable_Lines'First .. Buffer.Last_Editable_Line
          loop
             declare
-               Str : constant String := Get_String (Buffer, Line);
+               Str : Src_String := Get_String (Buffer, Line);
             begin
-               if Str /= "" then
+               if Str.Length > 0 then
                   if Strip_Blank then
-                     Index := Str'Last;
-                     while Index >= Str'First
-                       and then (Str (Index) = ' '
-                                 or else Str (Index) = ASCII.HT)
+                     Index := Str.Length;
+
+                     while Index >= 1
+                       and then (Str.Contents (Index) = ' '
+                                 or else Str.Contents (Index) = ASCII.HT)
                      loop
                         Index := Index - 1;
                      end loop;
 
                      Bytes_Written :=
-                       Write
-                         (FD, Str (Str'First)'Address,
-                          Index - Str'First + 1);
+                       Write (FD, Str.Contents (1)'Address, Index);
+
                   else
                      Bytes_Written :=
-                       Write (FD, Str (Str'First)'Address, Str'Length);
+                       Write (FD, Str.Contents (1)'Address, Str.Length);
                   end if;
                end if;
+
+               Free (Str);
 
                if Line /= Buffer.Last_Editable_Line then
                   New_Line (FD);
@@ -2223,7 +2257,7 @@ package body Src_Editor_Buffer is
          return False;
       end if;
 
-      --  At this point, we passed all the checks, so the position is licit.
+      --  At this point, we passed all the checks, so the position is valid.
       return True;
    end Is_Valid_Position;
 
@@ -2236,7 +2270,8 @@ package body Src_Editor_Buffer is
         Get_Buffer_Line (Buffer, Line);
    begin
       if Buffer_Line = 0 then
-         raise Program_Error;
+         Trace (Me, "invalid buffer line");
+         return False;
       end if;
 
       return Is_Valid_Position
@@ -2276,8 +2311,10 @@ package body Src_Editor_Buffer is
    begin
       --  ??? We should be able to set cursor in non-visible lines, by making
       --  them visible.
+
       if Buffer_Line = 0 then
-         raise Program_Error;
+         Trace (Me, "invalid buffer line");
+         return;
       end if;
 
       Set_Cursor_Position (Buffer, Gint (Buffer_Line - 1), Gint (Column - 1));
@@ -2575,7 +2612,8 @@ package body Src_Editor_Buffer is
         Get_Buffer_Line (Buffer, Line);
    begin
       if Buffer_Line = 0 then
-         raise Program_Error;
+         Trace (Me, "invalid buffer line");
+         return;
       end if;
 
       Insert (Buffer, Gint (Buffer_Line - 1), Gint (Column - 1), Text,
@@ -2632,7 +2670,8 @@ package body Src_Editor_Buffer is
 
    begin
       if Buffer_Line = 0 then
-         raise Program_Error;
+         Trace (Me, "invalid buffer line");
+         return;
       end if;
 
       Delete (Buffer, Gint (Buffer_Line - 1), Gint (Column - 1), Gint (Length),
@@ -2700,7 +2739,8 @@ package body Src_Editor_Buffer is
         Get_Buffer_Line (Buffer, End_Line);
    begin
       if Buffer_Start_Line = 0 or else Buffer_End_Line = 0 then
-         raise Program_Error;
+         Trace (Me, "invalid buffer line");
+         return;
       end if;
 
       Replace_Slice
@@ -3450,7 +3490,7 @@ package body Src_Editor_Buffer is
       Id     : String;
       Set    : Boolean)
    is
-      Category : Natural;
+      Category   : Natural;
       Last_Index : Natural;
    begin
       Category := Lookup_Category (Id);
@@ -3467,8 +3507,7 @@ package body Src_Editor_Buffer is
       if Line < Editor.Line_Data'First
         or else Line > Editor.Line_Data'Last
       then
-         Trace (Me, -"Wrong line number: "
-                & Line'Img & (-" Real line:") & Line'Img);
+         Trace (Me, "Wrong line number: " & Image (Integer (Line)));
          return;
       end if;
 
@@ -3477,6 +3516,7 @@ package body Src_Editor_Buffer is
       if Editor.Line_Data (Line).Enabled_Highlights = null then
          --  If we are removing a highlight where no highlight is defined,
          --  we can exit immediately.
+
          if not Set then
             return;
          end if;
@@ -3525,6 +3565,7 @@ package body Src_Editor_Buffer is
 
       --  If we reach this stage, no highlighting was found, therefore we
       --  remove the current GC.
+
       Editor.Line_Data (Line).Current_Highlight := null;
    end Set_Line_Highlighting;
 
@@ -3658,6 +3699,7 @@ package body Src_Editor_Buffer is
          Copy (Iter, Pos);
 
          Set_Line_Offset (Pos, 0);
+
          while Success and then Is_Space (Get_Char (Pos)) loop
             Forward_Char (Pos, Success);
          end loop;
@@ -3672,11 +3714,11 @@ package body Src_Editor_Buffer is
       --  Special case if we were at the end of the line, otherwise the cursor
       --  is left on the first non-blank character of the line after the newly
       --  inserted one.
+
       if not Ending then
          --  If the cursor was set in the middle of a line, restore its
-         --  position
-         --  within the line. Otherwise, restore it at the first non-blank
-         --  character.
+         --  position within the line. Otherwise, restore it at the first
+         --  non-blank character.
 
          Get_Iter_At_Mark (Buffer, Iter, Buffer.Insert_Mark);
          Set_Line_Offset (Iter, 0);
@@ -3938,9 +3980,6 @@ package body Src_Editor_Buffer is
             Blank_Slice (Next_Indent, Use_Tabs) &
             Slice (Blanks .. Slice_Length));
          Enqueue (Buffer, Command_Access (Replace_Cmd));
-
-         --  Need to recompute iter, since the slice replacement that
-         --  we just did has invalidated iter.
 
       else
          Current_Line := Get_Line (Start);
