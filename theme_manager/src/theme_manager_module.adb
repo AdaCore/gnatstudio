@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003-2004                       --
---                            ACT-Europe                             --
+--                     Copyright (C) 2003-2005                       --
+--                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -18,15 +18,15 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with GPS.Kernel;             use GPS.Kernel;
-with GPS.Kernel.Modules;     use GPS.Kernel.Modules;
-with GPS.Kernel.Console;     use GPS.Kernel.Console;
-with GPS.Kernel.Custom;      use GPS.Kernel.Custom;
-with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
+with GPS.Kernel;               use GPS.Kernel;
+with GPS.Kernel.Modules;       use GPS.Kernel.Modules;
+with GPS.Kernel.Console;       use GPS.Kernel.Console;
+with GPS.Kernel.Custom;        use GPS.Kernel.Custom;
+with GPS.Kernel.Preferences;   use GPS.Kernel.Preferences;
 with Default_Preferences;      use Default_Preferences;
 with GUI_Utils;                use GUI_Utils;
 with Glib.Xml_Int;             use Glib.Xml_Int;
-with GPS.Intl;               use GPS.Intl;
+with GPS.Intl;                 use GPS.Intl;
 with Glib;                     use Glib;
 with Glib.Object;              use Glib.Object;
 with Glib.Properties.Creation; use Glib.Properties.Creation;
