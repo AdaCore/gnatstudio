@@ -578,10 +578,11 @@ package body Find_Utils is
       Callback : Scan_Callback)
    is
       Max_File_Len  : constant := 2 ** 21;
-      FD            : constant File_Descriptor := Open_Read (Name, Text);
+      FD            : File_Descriptor;
       Lang          : Language_Access;
       Len           : Natural;
       Buffer        : Basic_Types.String_Access;
+      Child         : MDI_Child;
 
    begin
       --  ??? Would be nice to handle backward search, which is extremely hard
@@ -589,22 +590,37 @@ package body Find_Utils is
 
       Lang := Get_Language_From_File (Get_Language_Handler (Kernel), Name);
 
-      if FD = Invalid_FD then
-         return;
-      end if;
+      --  If there is already an open editor, that might contain local
+      --  modification, use its contents, otherwise read the buffer from the
+      --  file itself.
 
-      Len := Natural (File_Length (FD));
+      Child := Get_File_Editor (Kernel, Name);
 
-      --  ??? Temporary, until we are sure that we only manipulate text files.
+      if Child = null then
+         FD := Open_Read (Name, Text);
+         if FD = Invalid_FD then
+            return;
+         end if;
 
-      if Len > Max_File_Len then
+         Len := Natural (File_Length (FD));
+
+         --  ??? Temporary, until we are sure that we only manipulate text
+         --  files.
+
+         if Len > Max_File_Len then
+            Close (FD);
+            return;
+         end if;
+
+         Buffer := new String (1 .. Len);
+         Len := Read (FD, Buffer.all'Address, Len);
          Close (FD);
-         return;
-      end if;
 
-      Buffer := new String (1 .. Len);
-      Len := Read (FD, Buffer.all'Address, Len);
-      Close (FD);
+      else
+         Buffer := new String'
+           (Get_Slice (Get_Source_Box_From_MDI (Child), 1, 1));
+         Len := Buffer'Last;
+      end if;
 
       Scan_Buffer (Buffer (1 .. Len), Context, Callback, Lang);
       Free (Buffer);
@@ -760,7 +776,7 @@ package body Find_Utils is
       Look_For : String;
       Options  : Search_Options) is
    begin
-      Free (Context.all);
+      Free (Search_Context (Context.all));
       Context.Look_For       := new String' (Look_For);
       Context.Options        := Options;
       Context.BM_Initialized := False;
@@ -1098,6 +1114,10 @@ package body Find_Utils is
          return False;
    end Search;
 
+   ------------
+   -- Search --
+   ------------
+
    function Search
      (Context         : access Files_Project_Context;
       Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
@@ -1147,6 +1167,10 @@ package body Find_Utils is
          Context.Next_Matches_In_File (Context.Last_Match_Returned).all);
       return True;
    end Search;
+
+   ------------
+   -- Search --
+   ------------
 
    function Search
      (Context         : access Files_Context;
