@@ -20,7 +20,6 @@
 
 with Ada.Unchecked_Deallocation;
 with Ada.Exceptions;            use Ada.Exceptions;
-with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with Gtkada.MDI;                use Gtkada.MDI;
 with Gtk.Box;                   use Gtk.Box;
 with Gtk.Combo;                 use Gtk.Combo;
@@ -173,10 +172,6 @@ package body Src_Contexts is
       Interactive : Boolean);
    --  Print the result of the search in the glide console
 
-   function Is_Word_Delimiter (C : Character) return Boolean;
-   pragma Inline (Is_Word_Delimiter);
-   --  Return True if C is a character which can't be in a word.
-
    procedure Free (Result : in out Match_Result_Array_Access);
    --  Free Result and its components
 
@@ -193,15 +188,6 @@ package body Src_Contexts is
       Search_Backward : Boolean) return Boolean;
    --  Auxiliary function, factorizes code between Search and Replace.
    --  Return True in case of success
-
-   -----------------------
-   -- Is_Word_Delimiter --
-   -----------------------
-
-   function Is_Word_Delimiter (C : Character) return Boolean is
-   begin
-      return not (Is_Alphanumeric (C) or else C = '_');
-   end Is_Word_Delimiter;
 
    -----------------
    -- Scan_Buffer --
