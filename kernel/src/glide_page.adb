@@ -52,7 +52,8 @@ package body Glide_Page is
       Set_Policy (Page.Console_Sw, Policy_Never, Policy_Always);
       Child := Put (Page.Process_Mdi, Page.Console_Sw);
       Set_Title (Child, "Glide Console");
-      Dock_Child (Child, Side => Bottom);
+      Set_Dock_Side (Child, Bottom);
+      Dock_Child (Child);
       Raise_Child (Child);
 
       Gtk_New (Page.Console);

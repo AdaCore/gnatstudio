@@ -70,7 +70,8 @@ begin
    Set_Policy (Glide.Console_Sw, Policy_Never, Policy_Always);
    Child := Put (Glide.Mdi, Glide.Console_Sw);
    Set_Title (Child, "Console");
-   Dock_Child (Child, Side => Bottom);
+   Set_Dock_Side (Child, Bottom);
+   Dock_Child (Child);
 
    Gtk_New (Glide.Console);
    Set_Editable (Glide.Console, False);
