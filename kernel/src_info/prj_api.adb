@@ -1272,7 +1272,8 @@ package body Prj_API is
    function Add_Imported_Project
      (Project                   : Project_Node_Id;
       Imported_Project_Location : String;
-      Report_Errors             : Output.Output_Proc := null) return Boolean
+      Report_Errors             : Output.Output_Proc := null;
+      Use_Relative_Path         : Boolean) return Boolean
    is
       use Prj.Tree.Tree_Private_Part;
 
@@ -1366,7 +1367,17 @@ package body Prj_API is
       Set_First_With_Clause_Of (Project, With_Clause);
 
       Start_String;
-      Store_String_Chars (Get_Name_String (Path_Name_Of (Imported_Project)));
+
+      if Use_Relative_Path then
+         Store_String_Chars
+           (Relative_Path_Name
+            (Imported_Project_Location,
+             Dir_Name (Get_Name_String (Path_Name_Of (Project)))));
+      else
+         Store_String_Chars
+           (Get_Name_String (Path_Name_Of (Imported_Project)));
+      end if;
+
       Set_String_Value_Of (With_Clause, End_String);
 
       if Has_Circular_Dependencies (Project) then

@@ -339,10 +339,13 @@ package Prj_API is
    function Add_Imported_Project
      (Project : Project_Node_Id;
       Imported_Project_Location : String;
-      Report_Errors  : Output.Output_Proc := null) return Boolean;
+      Report_Errors  : Output.Output_Proc := null;
+      Use_Relative_Path         : Boolean) return Boolean;
    --  Add a new with_statement for Imported_Project.
    --  Errors while parsing the project file are sent to Report_Errors.
    --  True is returned if the project was modified with success
+   --  If Use_Relative_Path is True, then a relative path is used in the with
+   --  statement, otherwise an absolute path is used.
 
    procedure Remove_Imported_Project
      (Project : Project_Node_Id; Imported_Project : String);
