@@ -984,16 +984,29 @@ package body Glide_Menu is
       Vdiff  : Vdiff_Access;
       Result : Diff_Occurrence_Link;
       File1  : constant String := File_Selection_Dialog ("Select First File");
-      File2  : constant String := File_Selection_Dialog ("Select Second File");
 
    begin
-      Result := Diff (File1, File2);
-      Gtk_New (Vdiff);
-      Set_Text (Vdiff.File_Label1, File1);
-      Set_Text (Vdiff.File_Label2, File2);
-      Fill_Diff_Lists (Vdiff.Clist1, Vdiff.Clist2, File1, File2, Result);
-      Show_All (Vdiff);
-      --  ??? Free (Result);
+      if File1 = "" then
+         return;
+      end if;
+
+      declare
+         File2 : constant String :=
+           File_Selection_Dialog ("Select Second File");
+
+      begin
+         if File2 = "" then
+            return;
+         end if;
+
+         Result := Diff (File1, File2);
+         Gtk_New (Vdiff);
+         Set_Text (Vdiff.File_Label1, File1);
+         Set_Text (Vdiff.File_Label2, File2);
+         Fill_Diff_Lists (Vdiff.Clist1, Vdiff.Clist2, File1, File2, Result);
+         Show_All (Vdiff);
+         --  ??? Free (Result);
+      end;
    end On_Compare_Two_Files;
 
    ---------------
