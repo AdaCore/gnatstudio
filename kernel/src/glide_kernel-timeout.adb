@@ -41,6 +41,7 @@ with Glide_Kernel;               use Glide_Kernel;
 with Glide_Kernel.Console;       use Glide_Kernel.Console;
 with Glide_Kernel.Preferences;   use Glide_Kernel.Preferences;
 with Interactive_Consoles;       use Interactive_Consoles;
+with Histories;                  use Histories;
 
 with Glide_Intl;           use Glide_Intl;
 
