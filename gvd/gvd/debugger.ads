@@ -879,6 +879,14 @@ package Debugger is
    --  again. In particular it ensures that all the memory associated with
    --  the current connection is freed.
 
+   function Support_TTY (Debugger : access Debugger_Root) return Boolean;
+   --  Return True if the given debugger supports a Set_TTY command.
+
+   procedure Set_TTY (Debugger : access Debugger_Root; TTY : String);
+   --  If supported (see Support_TTY above), set the terminal of the program
+   --  debugged to TTY (e.g "/dev/pts/2").
+   --  If not supported, raise Unknown_Command.
+
 private
 
    type Command_Record;

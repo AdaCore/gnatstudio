@@ -954,4 +954,24 @@ package body Debugger is
       Close_Processes (Debugger.Handle);
    end Close_Processes;
 
+   -----------------
+   -- Support_TTY --
+   -----------------
+
+   function Support_TTY (Debugger : access Debugger_Root) return Boolean is
+      pragma Unreferenced (Debugger);
+   begin
+      return False;
+   end Support_TTY;
+
+   -------------
+   -- Set_TTY --
+   -------------
+
+   procedure Set_TTY (Debugger : access Debugger_Root; TTY : String) is
+      pragma Unreferenced (Debugger, TTY);
+   begin
+      raise Unknown_Command;
+   end Set_TTY;
+
 end Debugger;
