@@ -580,7 +580,7 @@ package body Glide_Kernel.Preferences is
             Nick  => -"File pattern",
             Blurb =>
               -"Pattern used to detect file locations (e.g error messages)",
-            Default => "^([^:]+):(\d+):(\d+): (warning)?(\(style)?"));
+            Default => "^([^:]+):(\d+):(\d+)?:? (warning)?(\(style)(.*)?"));
       Register_Property
         (Kernel.Preferences, Param_Spec (File_Pattern), -"Messages");
 
@@ -613,6 +613,16 @@ package body Glide_Kernel.Preferences is
          Nick    => -"Column index"));
       Register_Property
         (Kernel.Preferences, Param_Spec (Column_Pattern_Index), -"Messages");
+
+      Message_Pattern_Index := Param_Spec_Int (Gnew_Int
+        (Name    => "Messages-Message-Pattern-Index",
+         Minimum => 0,
+         Maximum => 9,
+         Default => 6,
+         Blurb   => -"Index of message in the pattern, 0 if none",
+         Nick    => -"Message index"));
+      Register_Property
+        (Kernel.Preferences, Param_Spec (Message_Pattern_Index), -"Messages");
 
       Warning_Pattern_Index := Param_Spec_Int (Gnew_Int
         (Name    => "Messages-Warning-Pattern-Index",
