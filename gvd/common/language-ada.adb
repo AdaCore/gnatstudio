@@ -87,7 +87,6 @@ package body Language.Debugger.Ada is
      Compile ("^[ \t]*protected[ \t]+((type|body)[ \t]+)?(\w+)",
               Multiple_Lines);
 
-
    --  The Specs are not parsed specifically. Instead, all the work is done
    --  while parsing for subprograms, and the function Make_Entry_Subprogram
    --  distinguishes between the two cases.
