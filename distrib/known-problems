@@ -1,5 +1,10 @@
 Known Problems fixed in GPS 2.1.0
 
+- D920-004 The bottom of files may get corrupted when using block folding
+  Problem:    When using block folding, GPS may change the order or corrupt the
+              last lines in the file.
+  Workaround: Do not use block folding.
+
 - Search misses occurrences in sources with tabs
   Problem:    The search tool will miss some occurrences if your source file
               contains tabs.
