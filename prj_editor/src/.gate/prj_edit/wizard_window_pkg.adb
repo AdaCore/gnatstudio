@@ -64,21 +64,81 @@ begin
    Set_Child_Ipadding (Wizard_Window.Hbuttonbox1, 7, 0);
    Pack_Start (Wizard_Window.Vbox1, Wizard_Window.Hbuttonbox1, False, False, 0);
 
-   Gtk_New (Wizard_Window.Previous, -"Previous");
+   Gtk_New (Wizard_Window.Previous);
    Set_Flags (Wizard_Window.Previous, Can_Default);
    Add (Wizard_Window.Hbuttonbox1, Wizard_Window.Previous);
 
-   Gtk_New (Wizard_Window.Next, -"Next");
+   Gtk_New_Hbox (Wizard_Window.Hbox1, False, 0);
+   Add (Wizard_Window.Previous, Wizard_Window.Hbox1);
+
+   Wizard_Window.Pixmap1 := Create_Pixmap ("stock_left_arrow_xpm", Wizard_Window);
+   Set_Alignment (Wizard_Window.Pixmap1, 0.5, 0.5);
+   Set_Padding (Wizard_Window.Pixmap1, 0, 0);
+   Pack_Start (Wizard_Window.Hbox1, Wizard_Window.Pixmap1, False, True, 0);
+
+   Gtk_New (Wizard_Window.Label2, -("Prev"));
+   Set_Alignment (Wizard_Window.Label2, 0.5, 0.5);
+   Set_Padding (Wizard_Window.Label2, 0, 0);
+   Set_Justify (Wizard_Window.Label2, Justify_Center);
+   Set_Line_Wrap (Wizard_Window.Label2, False);
+   Pack_Start (Wizard_Window.Hbox1, Wizard_Window.Label2, True, True, 0);
+
+   Gtk_New (Wizard_Window.Next);
    Set_Flags (Wizard_Window.Next, Can_Default);
    Add (Wizard_Window.Hbuttonbox1, Wizard_Window.Next);
 
-   Gtk_New (Wizard_Window.Finish, -"Finish");
+   Gtk_New_Hbox (Wizard_Window.Hbox2, False, 0);
+   Add (Wizard_Window.Next, Wizard_Window.Hbox2);
+
+   Gtk_New (Wizard_Window.Label3, -("Next"));
+   Set_Alignment (Wizard_Window.Label3, 0.5, 0.5);
+   Set_Padding (Wizard_Window.Label3, 0, 0);
+   Set_Justify (Wizard_Window.Label3, Justify_Center);
+   Set_Line_Wrap (Wizard_Window.Label3, False);
+   Pack_Start (Wizard_Window.Hbox2, Wizard_Window.Label3, True, True, 0);
+
+   Wizard_Window.Pixmap2 := Create_Pixmap ("stock_right_arrow_xpm", Wizard_Window);
+   Set_Alignment (Wizard_Window.Pixmap2, 0.5, 0.5);
+   Set_Padding (Wizard_Window.Pixmap2, 0, 0);
+   Pack_Start (Wizard_Window.Hbox2, Wizard_Window.Pixmap2, False, True, 0);
+
+   Gtk_New (Wizard_Window.Finish);
    Set_Flags (Wizard_Window.Finish, Can_Default);
    Add (Wizard_Window.Hbuttonbox1, Wizard_Window.Finish);
 
-   Gtk_New (Wizard_Window.Cancel, -"Cancel");
+   Gtk_New_Hbox (Wizard_Window.Hbox5, False, 0);
+   Add (Wizard_Window.Finish, Wizard_Window.Hbox5);
+
+   Wizard_Window.Pixmap4 := Create_Pixmap ("stock_button_apply_xpm", Wizard_Window);
+   Set_Alignment (Wizard_Window.Pixmap4, 0.5, 0.5);
+   Set_Padding (Wizard_Window.Pixmap4, 0, 0);
+   Pack_Start (Wizard_Window.Hbox5, Wizard_Window.Pixmap4, False, True, 0);
+
+   Gtk_New (Wizard_Window.Label5, -("Apply"));
+   Set_Alignment (Wizard_Window.Label5, 0.5, 0.5);
+   Set_Padding (Wizard_Window.Label5, 0, 0);
+   Set_Justify (Wizard_Window.Label5, Justify_Center);
+   Set_Line_Wrap (Wizard_Window.Label5, False);
+   Pack_Start (Wizard_Window.Hbox5, Wizard_Window.Label5, True, True, 0);
+
+   Gtk_New (Wizard_Window.Cancel);
    Set_Flags (Wizard_Window.Cancel, Can_Default);
    Add (Wizard_Window.Hbuttonbox1, Wizard_Window.Cancel);
+
+   Gtk_New_Hbox (Wizard_Window.Hbox4, False, 0);
+   Add (Wizard_Window.Cancel, Wizard_Window.Hbox4);
+
+   Wizard_Window.Pixmap3 := Create_Pixmap ("stock_button_cancel_xpm", Wizard_Window);
+   Set_Alignment (Wizard_Window.Pixmap3, 0.5, 0.5);
+   Set_Padding (Wizard_Window.Pixmap3, 0, 0);
+   Pack_Start (Wizard_Window.Hbox4, Wizard_Window.Pixmap3, False, True, 0);
+
+   Gtk_New (Wizard_Window.Label4, -("Cancel"));
+   Set_Alignment (Wizard_Window.Label4, 0.5, 0.5);
+   Set_Padding (Wizard_Window.Label4, 0, 0);
+   Set_Justify (Wizard_Window.Label4, Justify_Center);
+   Set_Line_Wrap (Wizard_Window.Label4, False);
+   Pack_Start (Wizard_Window.Hbox4, Wizard_Window.Label4, True, True, 0);
 
 end Initialize;
 

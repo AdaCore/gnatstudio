@@ -4,6 +4,8 @@ with Gtk.Widget; use Gtk.Widget;
 with Wizard_Window_Pkg; use Wizard_Window_Pkg;
 
 procedure Prj_Edit is
+   Wizard_Window : Wizard_Window_Access;
+
 begin
    Gtk.Main.Set_Locale;
    Gtk.Main.Init;
