@@ -1507,6 +1507,95 @@ package body Codefix.Errors_Parser is
       end loop;
    end Fix;
 
+   ------------------------
+   -- Hidden_Declaration --
+   ------------------------
+
+   procedure Initialize (This : in out Hidden_Declaration) is
+   begin
+      This.Matcher := (1 => new Pattern_Matcher'
+         (Compile ("""([^""]+)"" is not visible")));
+   end Initialize;
+
+   procedure Free (This : in out Hidden_Declaration) is
+   begin
+      Free (Error_Parser (This));
+      Free (This.Check_Possible);
+      Free (This.Get_From_Current_File);
+      Free (This.Get_From_Other_File);
+   end Free;
+
+   procedure Fix
+     (This         : Hidden_Declaration;
+      Errors_List  : in out Errors_Interface'Class;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Message      : Error_Message;
+      Solutions    : out Solution_List;
+      Matches      : Match_Array)
+   is
+      Matches_Check   : Match_Array (0 .. 0);
+      Matches_Loc     : Match_Array (0 .. 2);
+      Preview         : Error_Message;
+      Solution_Cursor : File_Cursor;
+   begin
+      Solution_Cursor.Col := 1;
+
+      Get_Preview (Errors_List, Current_Text, Preview);
+
+      if Preview = Invalid_Error_Message then
+         raise Uncorrectible_Message;
+      end if;
+
+      Match (This.Check_Possible.all, Get_Message (Preview), Matches_Check);
+
+      if Matches_Check (0) = No_Match then
+         raise Uncorrectible_Message;
+      end if;
+
+      Get_Message (Errors_List, Current_Text, Preview);
+
+      loop
+         Get_Preview (Errors_List, Current_Text, Preview);
+
+         exit when Preview = Invalid_Error_Message;
+
+         Match
+           (This.Get_From_Other_File.all, Get_Message (Preview), Matches_Loc);
+
+         if Matches_Loc (0) = No_Match then
+            Match
+              (This.Get_From_Current_File.all,
+               Get_Message (Preview),
+               Matches_Loc);
+
+            exit when Matches_Loc (0) = No_Match;
+
+            Assign
+              (Solution_Cursor.File_Name, Message.File_Name);
+
+            Solution_Cursor.Line := Integer'Value
+              (Get_Message (Preview)
+                 (Matches_Loc (1).First .. Matches_Loc (1).Last));
+         else
+            Assign
+              (Solution_Cursor.File_Name, Get_Message (Preview)
+                 (Matches_Loc (1).First .. Matches_Loc (1).Last));
+
+            Solution_Cursor.Line := Integer'Value
+              (Get_Message (Preview)
+                 (Matches_Loc (2).First .. Matches_Loc (2).Last));
+         end if;
+
+         Append (Solutions, Resolve_Ambiguity
+                   (Current_Text,
+                    Message,
+                    Solution_Cursor,
+                    Get_Message (Message)
+                      (Matches (1).First .. Matches (1).Last)));
+         Get_Message (Errors_List, Current_Text, Preview);
+      end loop;
+   end Fix;
+
    --------------------------
    -- Redundant_Conversion --
    --------------------------
@@ -1597,6 +1686,10 @@ begin
    Add_Parser (new Pragma_Missplaced);
    Add_Parser (new Constant_Expected);
    Add_Parser (new Possible_Interpretation);
+
+   --  Add_Parser (new Hidden_Declaration);
+   --  Seems to works bad. Needs more investigations
+
    Add_Parser (new Redundant_Conversion);
    Add_Parser (new Missplaced_With);
 
