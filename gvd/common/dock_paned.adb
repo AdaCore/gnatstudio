@@ -53,7 +53,7 @@ package body Dock_Paned is
 
       if Paned.Is_Child2 then
          declare
-            Child2 : Gtk_Widget := Get_Child (Paned, 0);
+            Child2 : constant Gtk_Widget := Get_Child (Paned, 0);
          begin
             Ref (Child2);
             Remove (Gtk_Container (Paned), Child2);
@@ -88,7 +88,7 @@ package body Dock_Paned is
 
       if Paned.Is_Child1 then
          declare
-            Child1 : Gtk_Widget := Get_Child (Paned, 0);
+            Child1 : constant Gtk_Widget := Get_Child (Paned, 0);
          begin
             Ref (Child1);
             Remove (Gtk_Container (Paned), Child1);
@@ -262,4 +262,3 @@ package body Dock_Paned is
    end Get_Gutter_Size;
 
 end Dock_Paned;
-

@@ -164,7 +164,7 @@ package body Debugger is
       Value       : in out Items.Generic_Type_Access;
       Value_Found : out Boolean)
    is
-      Type_Str   : String := Value_Of (Debugger, Entity);
+      Type_Str   : constant String := Value_Of (Debugger, Entity);
       Index      : Natural := Type_Str'First;
       Repeat_Num : Positive;
 

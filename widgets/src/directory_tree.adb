@@ -62,7 +62,7 @@ package body Directory_Tree is
    Drives_String : constant String := "Drives";
    --  String used on systems that support the notion of drives (e.g Windows).
 
-   Me : Debug_Handle := Create ("Directory_Tree");
+   Me : constant Debug_Handle := Create ("Directory_Tree");
 
    package Boolean_Data is new Gtk.Ctree.Row_Data (Boolean);
 
@@ -359,8 +359,8 @@ package body Directory_Tree is
    procedure Expand_Tree_Cb
      (Widget : access Gtk.Widget.Gtk_Widget_Record'Class; Args : Gtk_Args)
    is
-      Node : Gtk_Ctree_Node := Gtk_Ctree_Node (To_C_Proxy (Args, 1));
-      Win  : Gdk_Window := Get_Window (Widget);
+      Node : constant Gtk_Ctree_Node := Gtk_Ctree_Node (To_C_Proxy (Args, 1));
+      Win  : constant Gdk_Window := Get_Window (Widget);
    begin
       if Win /= null then
          Set_Busy_Cursor (Win, True, True);
@@ -384,8 +384,9 @@ package body Directory_Tree is
    procedure Collapse_Tree_Cb
      (Widget : access Gtk.Widget.Gtk_Widget_Record'Class; Args : Gtk_Args)
    is
-      Tree    : Dir_Tree := Dir_Tree (Widget);
-      Node    : Gtk_Ctree_Node := Gtk_Ctree_Node (To_C_Proxy (Args, 1));
+      Tree    : constant Dir_Tree := Dir_Tree (Widget);
+      Node    : constant Gtk_Ctree_Node :=
+        Gtk_Ctree_Node (To_C_Proxy (Args, 1));
       Current : Gtk_Ctree_Node;
       Sibling : Gtk_Ctree_Node;
 
@@ -831,7 +832,7 @@ package body Directory_Tree is
    ----------------------
 
    procedure Add_Directory_Cb (W : access Gtk_Widget_Record'Class) is
-      Selector : Directory_Selector := Directory_Selector (W);
+      Selector : constant Directory_Selector := Directory_Selector (W);
       Dir      : constant String    := Get_Selection (Selector.Directory);
 
    begin
@@ -868,7 +869,7 @@ package body Directory_Tree is
 
       List    : Gint_List.Glist := Get_Selection (Selector.List);
       Next    : Gint_List.Glist;
-      Num     : Guint := Gint_List.Length (List);
+      Num     : constant Guint := Gint_List.Length (List);
       Strings : Gtkada.Types.Chars_Ptr_Array (1 .. 1);
 
    begin
@@ -924,7 +925,7 @@ package body Directory_Tree is
    -------------------------
 
    procedure Remove_Directory_Cb (W : access Gtk_Widget_Record'Class) is
-      Selector : Directory_Selector := Directory_Selector (W);
+      Selector : constant Directory_Selector := Directory_Selector (W);
    begin
       Freeze (Selector.List);
       Remove_Directory (Selector, Recursive => True);
@@ -941,7 +942,7 @@ package body Directory_Tree is
    -----------------------------
 
    procedure Add_Single_Directory_Cb (W : access Gtk_Widget_Record'Class) is
-      Selector : Directory_Selector := Directory_Selector (W);
+      Selector : constant Directory_Selector := Directory_Selector (W);
    begin
       Add_Directory (Selector, Get_Selection (Selector.Directory), False);
       Sort (Selector.List);
@@ -1067,7 +1068,7 @@ package body Directory_Tree is
    procedure Create_Directory_Cb
      (W : access Gtk_Widget_Record'Class)
    is
-      Selector : Directory_Selector := Directory_Selector (W);
+      Selector : constant Directory_Selector := Directory_Selector (W);
       Current_Dir : constant String := Get_Selection (Selector.Directory);
       Dialog : Gtk_Dialog;
       Label : Gtk_Label;

@@ -59,6 +59,8 @@ package body GNAT.Expect.TTY is
       Pipe2      : access Pipe_Type;
       Pipe3      : access Pipe_Type)
    is
+      pragma Unreferenced (Err_To_Out, Pipe1, Pipe2, Pipe3);
+
       procedure Internal (Process : System.Address);
       pragma Import (C, Internal, "gvd_setup_communication");
 
@@ -76,6 +78,8 @@ package body GNAT.Expect.TTY is
       Pipe2 : in out Pipe_Type;
       Pipe3 : in out Pipe_Type)
    is
+      pragma Unreferenced (Pipe1, Pipe2, Pipe3);
+
       procedure Internal
         (Process  : System.Address;
          Inputfp  : out File_Descriptor;
@@ -101,6 +105,7 @@ package body GNAT.Expect.TTY is
       Cmd   : in String;
       Args  : in System.Address)
    is
+      pragma Unreferenced (Pipe1, Pipe2, Pipe3, Cmd);
       procedure Internal (Process : System.Address; Argv : System.Address);
       pragma Import (C, Internal, "gvd_setup_child_communication");
 

@@ -25,7 +25,7 @@ with String_Utils;      use String_Utils;
 
 package body Language.C is
 
-   Keywords_List : Pattern_Matcher := Compile
+   Keywords_List : constant Pattern_Matcher := Compile
      ("^(" & C_Keywords_Regexp & ")\W");
    --  for java: ("finally" "synchronized" "implements" "extends" "throws"
    --  "threadsafe" "transient" "native" "volatile"

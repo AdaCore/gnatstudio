@@ -246,7 +246,7 @@ package body GVD.Text_Box is
       Line        : Natural;
       Set_Current : Boolean := True)
    is
-      Y : Gint := Gint (Line - 1) * Box.Line_Height + 3;
+      Y : constant Gint := Gint (Line - 1) * Box.Line_Height + 3;
    begin
       --  Display the current line icon
       --  Note that we start by hiding everything, and then show everything
@@ -418,7 +418,7 @@ package body GVD.Text_Box is
       Columns : Integer)
    is
       J        : Integer := 1;
-      Tab_Size : Integer := Integer (Get_Tab_Size);
+      Tab_Size : constant Integer := Integer (Get_Tab_Size);
 
    begin
       --  Go to the right column, but make sure we are still on
@@ -793,7 +793,7 @@ package body GVD.Text_Box is
       Fore        : Gdk.Color.Gdk_Color := Gdk.Color.Null_Color;
       Back        : Gdk.Color.Gdk_Color := Gdk.Color.Null_Color)
    is
-      WFrom : Gint := Widget_From;
+      WFrom : constant Gint := Widget_From;
    begin
       --  If this range is currently highlighted, do nothing for efficiency
 

@@ -52,8 +52,9 @@ package body Commands.Debugger is
    function Execute (Command : access Set_Breakpoint_Command) return Boolean
    is
       Other_Command : Set_Breakpoint_Command_Access;
-      L             : Integer := Command.Line;
+      L             : constant Integer := Command.Line;
       A             : Line_Information_Array (L .. L);
+
    begin
       case Command.BMode is
          when Set =>

@@ -59,7 +59,7 @@ with Traces;               use Traces;
 
 package body Variable_Editors is
 
-   Me : Debug_Handle := Create ("Variable_Editors");
+   Me : constant Debug_Handle := Create ("Variable_Editors");
 
    New_Value_Name : constant String := -"<Enter value name>";
    --  Name used for the new variables.
@@ -276,7 +276,7 @@ package body Variable_Editors is
      (Editor : access Gtk_Widget_Record'Class;
       Params : Glib.Values.GValues)
    is
-      M           : Gtk_Tree_Store :=
+      M           : constant Gtk_Tree_Store :=
         Gtk_Tree_Store (New_Var_Edit (Editor).Model);
       Path_String : constant String := Get_String (Nth (Params, 1));
       Iter        : Gtk_Tree_Iter;
@@ -294,7 +294,7 @@ package body Variable_Editors is
    ------------------
 
    procedure New_Variable (Editor : access Gtk_Widget_Record'Class) is
-      E    : New_Var_Edit := New_Var_Edit (Editor);
+      E    : constant New_Var_Edit := New_Var_Edit (Editor);
       Iter, Iter2 : Gtk_Tree_Iter;
 
    begin
@@ -317,7 +317,8 @@ package body Variable_Editors is
    procedure Rename_Variable (Editor : access Gtk_Widget_Record'Class) is
       E         : New_Var_Edit := New_Var_Edit (Editor);
       Iter      : Gtk_Tree_Iter;
-      Selection : Gtk_Tree_Selection := Get_Selection (E.Values_List);
+      Selection : constant Gtk_Tree_Selection :=
+        Get_Selection (E.Values_List);
 
    begin
       Get_Selected (Selection, Gtk_Tree_Model (E.Model), Iter);
@@ -339,7 +340,8 @@ package body Variable_Editors is
    procedure Delete_Variable (Editor : access Gtk_Widget_Record'Class) is
       E         : New_Var_Edit := New_Var_Edit (Editor);
       Iter      : Gtk_Tree_Iter;
-      Selection : Gtk_Tree_Selection := Get_Selection (E.Values_List);
+      Selection : constant Gtk_Tree_Selection :=
+        Get_Selection (E.Values_List);
 
    begin
       Get_Selected (Selection, Gtk_Tree_Model (E.Model), Iter);
@@ -507,7 +509,7 @@ package body Variable_Editors is
             declare
                Name    : constant String := Get_String
                  (Editor.Model, Iter, Value_Column);
-               Default : Boolean := Get_Boolean
+               Default : constant Boolean := Get_Boolean
                  (Editor.Model, Iter, Default_Value_Column);
                Id      : String_Id := No_String;
 

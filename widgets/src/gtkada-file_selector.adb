@@ -57,7 +57,7 @@ with Ada.Exceptions;            use Ada.Exceptions;
 
 package body Gtkada.File_Selector is
 
-   Me : Debug_Handle := Create ("Gtkada.File_Selector");
+   Me : constant Debug_Handle := Create ("Gtkada.File_Selector");
 
    -----------------------
    -- Local subprograms --
@@ -445,10 +445,10 @@ package body Gtkada.File_Selector is
          --  Register the function that will fill the list in the background.
 
          Win.Remaining_Files := First (Win.Files);
-         Win.Idle_Handler
-           := Add (Display_File'Access,
-                   File_Selector_Window_Access (Win),
-                   Destroy => On_Idle_Destroy'Access);
+         Win.Idle_Handler :=
+           Add (Display_File'Access,
+                Win,
+                Destroy => On_Idle_Destroy'Access);
 
          return False;
 
@@ -515,7 +515,7 @@ package body Gtkada.File_Selector is
    -------------------
 
    procedure Refresh_Files (Win : access File_Selector_Window_Record'Class) is
-      Dir     : String := Win.Current_Directory.all;
+      Dir     : constant String := Win.Current_Directory.all;
       Filter  : File_Filter := null;
       Strings : Chars_Ptr_Array (1 .. 3);
 
@@ -537,7 +537,7 @@ package body Gtkada.File_Selector is
       declare
          use Filter_List;
 
-         S : String := Get_Text (Win.Filter_Combo_Entry);
+         S : constant String := Get_Text (Win.Filter_Combo_Entry);
          C : Filter_List.List_Node := First (Win.Filters);
 
       begin
@@ -853,7 +853,7 @@ package body Gtkada.File_Selector is
         File_Selector_Window_Access (Get_Toplevel (Object));
       Row_List : constant Gtk.Enums.Gint_List.Glist :=
         Get_Selection (Win.File_List);
-      Event : Gdk_Event := To_Event (Args, 3);
+      Event    : constant Gdk_Event := To_Event (Args, 3);
 
    begin
       if Gtk.Enums.Gint_List.Length (Row_List) /= 0 then
@@ -975,7 +975,7 @@ package body Gtkada.File_Selector is
    is
       Win   : constant File_Selector_Window_Access :=
         File_Selector_Window_Access (Get_Toplevel (Object));
-      Event : Gdk_Event := To_Event (Params, 1);
+      Event : constant Gdk_Event := To_Event (Params, 1);
 
    begin
       declare
@@ -990,7 +990,7 @@ package body Gtkada.File_Selector is
                exit when Found;
 
                declare
-                  T : String := Get_Text (Win.File_List, J, 1);
+                  T : constant String := Get_Text (Win.File_List, J, 1);
                begin
                   if T'Length /= 0
                     and then T (T'First) = S (S'First)
@@ -1192,8 +1192,8 @@ package body Gtkada.File_Selector is
                exit when Found;
 
                declare
-                  T : String := Get_Text (Win.File_List, J, 1);
-                  S : String := Get_Text (Win.Selection_Entry) & G;
+                  T : constant String := Get_Text (Win.File_List, J, 1);
+                  S : constant String := Get_Text (Win.Selection_Entry) & G;
                begin
                   if T'Length >= S'Length
                     and then T (T'First .. T'First + S'Length - 1)

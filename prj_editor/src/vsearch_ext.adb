@@ -49,7 +49,7 @@ with Traces; use Traces;
 
 package body Vsearch_Ext is
 
-   Me : Debug_Handle := Create ("Vsearch_Project");
+   Me : constant Debug_Handle := Create ("Vsearch_Project");
 
    type Search_Module_Data is record
       Label             : String_Access;
@@ -386,7 +386,7 @@ package body Vsearch_Ext is
       use Widget_List;
 
       Vsearch : constant Vsearch_Extended := Vsearch_Extended (Object);
-      Data    : Search_Module_Data := Find_Module
+      Data    : constant Search_Module_Data := Find_Module
         (Get_Text (Get_Entry (Vsearch.Context_Combo)));
       Replace : Boolean;
 

@@ -744,7 +744,7 @@ package body Display_Items is
    is
       pragma Unreferenced (Canvas);
       Value_Found : Boolean;
-      Was_Visible : Boolean := Get_Visibility (Item.Entity.all);
+      Was_Visible : constant Boolean := Get_Visibility (Item.Entity.all);
 
    begin
       --  Parse the value
@@ -1163,7 +1163,7 @@ package body Display_Items is
       Update_Value : Boolean := False)
    is
       pragma Unreferenced (Win);
-      Width : Gint := Gint (Get_Coord (Item).Width);
+      Width   : constant Gint := Gint (Get_Coord (Item).Width);
       Context : constant Box_Drawing_Context :=
         Get_Box_Context (GVD_Canvas (Item.Debugger.Data_Canvas));
       W, H : Gint;
@@ -1482,7 +1482,8 @@ package body Display_Items is
       --  Else recompute the id for the item
       Free (It.Id);
       declare
-         Id : String := Get_Uniq_Id (It.Debugger.Debugger, It.Name.all);
+         Id : constant String :=
+           Get_Uniq_Id (It.Debugger.Debugger, It.Name.all);
       begin
          if Id /= "" then
             It.Id := new String' (Id);
@@ -1606,7 +1607,7 @@ package body Display_Items is
      (Canvas : access Interactive_Canvas_Record'Class;
       Item   : access Canvas_Item_Record'Class) return Boolean
    is
-      It : Display_Item := Display_Item (Item);
+      It : constant Display_Item := Display_Item (Item);
    begin
       if It.Is_Alias_Of /= null then
          Set_Visibility (It, False);

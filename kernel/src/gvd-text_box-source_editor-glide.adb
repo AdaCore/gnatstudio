@@ -162,8 +162,8 @@ package body GVD.Text_Box.Source_Editor.Glide is
       Tab     : constant Debugger_Process_Tab :=
         Debugger_Process_Tab (Process);
 
-      Prev_Current_Line : Integer := Get_Current_Source_Line (Tab);
-      Prev_File         : String  := Get_Current_Source_File (Tab);
+      Prev_Current_Line : constant Integer := Get_Current_Source_Line (Tab);
+      Prev_File         : constant String  := Get_Current_Source_File (Tab);
    begin
       if Editor.Current_File = null then
          return;

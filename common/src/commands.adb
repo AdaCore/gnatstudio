@@ -157,7 +157,7 @@ package body Commands is
       Queue.Command_In_Progress := True;
 
       declare
-         Action  : Command_Access := Data (Queue.Queue_Node);
+         Action  : constant Command_Access := Data (Queue.Queue_Node);
          Success : Boolean;
       begin
          Queue.Queue_Node := Next (Queue.Queue_Node);

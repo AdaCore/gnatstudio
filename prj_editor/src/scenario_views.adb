@@ -52,7 +52,7 @@ with Traces;   use Traces;
 
 package body Scenario_Views is
 
-   Me : Debug_Handle := Create ("Scenario_Views");
+   Me : constant Debug_Handle := Create ("Scenario_Views");
 
    procedure Refresh (View : access GObject_Record'Class; Data : GObject);
    --  Callback when the current view of the project has changed
@@ -209,7 +209,7 @@ package body Scenario_Views is
         & ASCII.LF
         & "that variable, except for the currently selected value";
 
-      Response : Message_Dialog_Buttons := Message_Dialog
+      Response : constant Message_Dialog_Buttons := Message_Dialog
         (Msg           => (-"Are you sure you want to remove the variable ")
            & '"' & Ext_Variable & """?" & ASCII.LF & (-Message),
          Dialog_Type   => Confirmation,

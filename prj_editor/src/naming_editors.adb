@@ -48,7 +48,7 @@ package body Naming_Editors is
    ----------------
 
    procedure On_Destroy (Widget : access Gtk_Widget_Record'Class) is
-      Naming : Naming_Editor := Naming_Editor (Widget);
+      Naming : constant Naming_Editor := Naming_Editor (Widget);
    begin
       for P in Naming.Pages'Range loop
          Free (Naming.Pages (P).Language);

@@ -271,7 +271,8 @@ package body GVD.Dialogs is
         Debugger_Process_Tab (Debugger);
       Mask   : constant Stack_List_Mask :=
         Process.Backtrace_Mask;
-      List     : Gtk_Clist := Process.Stack_List;
+      List     : constant Gtk_Clist := Process.Stack_List;
+
    begin
       Set_Column_Visibility (List, 0, (Mask and Frame_Num) /= 0);
       Set_Column_Visibility (List, 1, (Mask and Program_Counter) /= 0);
@@ -294,7 +295,7 @@ package body GVD.Dialogs is
       Tab      : constant Debugger_Process_Tab :=
         Debugger_Process_Tab (Debugger);
       Process  : constant Process_Proxy_Access := Get_Process (Tab.Debugger);
-      List     : Gtk_Clist := Tab.Stack_List;
+      List     : constant Gtk_Clist := Tab.Stack_List;
       Columns  : Gint;
       Index    : Integer;
       Subp     : String_Access;

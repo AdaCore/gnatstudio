@@ -60,7 +60,7 @@ with Traces;               use Traces;
 
 package body Switches_Editors is
 
-   Me : Debug_Handle := Create ("Switches_Editors");
+   Me : constant Debug_Handle := Create ("Switches_Editors");
 
    procedure Filter_Switches
      (Editor   : access Switches_Edit_Record'Class;
@@ -377,7 +377,7 @@ package body Switches_Editors is
          Index          : in out Natural)
       is
          use Widget_List;
-         List     : Gtk_List := Get_List (Combo);
+         List     : constant Gtk_List := Get_List (Combo);
          Position : Integer;
 
       begin
@@ -1185,10 +1185,10 @@ package body Switches_Editors is
       Context   : Selection_Context_Access;
       File_Name : String)
    is
-      File    : File_Selection_Context_Access :=
+      File    : constant File_Selection_Context_Access :=
         File_Selection_Context_Access (Context);
-      S       : Switches_Edit   := Switches_Edit (Switches);
-      Project : Project_Node_Id := Get_Project_From_View
+      S       : constant Switches_Edit   := Switches_Edit (Switches);
+      Project : constant Project_Node_Id := Get_Project_From_View
         (Project_Information (File));
 
       procedure Change_Switches
@@ -1474,7 +1474,7 @@ package body Switches_Editors is
      (Context       : Selection_Context_Access;
       Force_Default : Boolean := False)
    is
-      File      : File_Selection_Context_Access :=
+      File      : constant File_Selection_Context_Access :=
         File_Selection_Context_Access (Context);
       Switches  : Switches_Edit;
       Dialog    : Gtk_Dialog;

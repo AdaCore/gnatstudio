@@ -24,7 +24,7 @@ with Language.C;  use Language.C;
 
 package body Language.Cpp is
 
-   Keywords_List : Pattern_Matcher := Compile
+   Keywords_List : constant Pattern_Matcher := Compile
      ("^(" & C_Keywords_Regexp &
       "|abstract|c(atch|lass)|f(inal|riend)|interface|namespace|"
       & "p(r(ivate|otected)|ublic)|synchronized|t(emplate|ry)|virtual"

@@ -220,7 +220,7 @@ package body GVD.Status_Bar is
            and then Num < 30
          loop
             declare
-               Msg : Status_Bar_Msg := Messages_List.Get_Data (List);
+               Msg : constant Status_Bar_Msg := Messages_List.Get_Data (List);
             begin
                Insert
                  (Text,

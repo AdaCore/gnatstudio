@@ -66,8 +66,8 @@ package body Basic_Mapper is
       File_Name_1 : String;
       File_Name_2 : String)
    is
-      Key_1 : String_Access := new String' (File_Name_1);
-      Key_2 : String_Access := new String' (File_Name_2);
+      Key_1 : constant String_Access := new String' (File_Name_1);
+      Key_2 : constant String_Access := new String' (File_Name_2);
    begin
       if Mapper = null then
          Mapper := new File_Mapper;

@@ -37,7 +37,7 @@ with GNAT.OS_Lib;              use GNAT.OS_Lib;
 
 package body Glide_Consoles is
 
-   Me : Debug_Handle := Create ("Glide_Console");
+   Me : constant Debug_Handle := Create ("Glide_Console");
 
    File_Pattern : constant Pattern_Matcher :=
      Compile ("^([^:]+):(\d+):(\d+)?", Multiple_Lines);
@@ -189,7 +189,7 @@ package body Glide_Consoles is
    function On_Button_Release
      (Widget : access Gtk_Widget_Record'Class) return Boolean
    is
-      Console     : Glide_Console := Glide_Console (Widget);
+      Console     : constant Glide_Console := Glide_Console (Widget);
       Position    : constant Gint := Get_Position (Console.Text);
       Contents    : constant String := Get_Chars (Console.Text, 0);
       Start       : Natural := Natural (Position);

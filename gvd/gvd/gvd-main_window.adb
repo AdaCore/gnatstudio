@@ -58,7 +58,7 @@ package body GVD.Main_Window is
    is
       Tab          : Debugger_Process_Tab;
       Page         : Gtk_Widget;
-      Num_Children : Gint :=
+      Num_Children : constant Gint :=
         Gint (Page_List.Length (Get_Children (Window.Process_Notebook)));
 
    begin
@@ -241,7 +241,7 @@ package body GVD.Main_Window is
    procedure Preferences_Changed
      (Window : access GVD_Main_Window_Record'Class)
    is
-      Handler : GVD_Language_Handler := GVD_Language_Handler
+      Handler : constant GVD_Language_Handler := GVD_Language_Handler
         (Window.Lang_Handler);
    begin
       Widget_Callback.Emit_By_Name

@@ -389,9 +389,9 @@ package body Project_Properties is
    ----------------------
 
    procedure Remove_Main_Unit (Editor : access Gtk_Widget_Record'Class) is
-      Ed : Properties_Editor := Properties_Editor (Editor);
+      Ed : constant Properties_Editor := Properties_Editor (Editor);
       Iter, Tmp : Gtk_Tree_Iter;
-      Selection : Gtk_Tree_Selection := Get_Selection (Ed.Tree_View);
+      Selection : constant Gtk_Tree_Selection := Get_Selection (Ed.Tree_View);
    begin
       Iter := Get_Iter_First (Ed.Executables);
       while Iter /= Null_Iter loop
@@ -409,7 +409,7 @@ package body Project_Properties is
    ---------------------
 
    procedure Browse_Location (Editor : access Gtk_Widget_Record'Class) is
-      Ed : Properties_Editor := Properties_Editor (Editor);
+      Ed : constant Properties_Editor := Properties_Editor (Editor);
       Name : constant String := Select_Directory
         (-"Select project file location",
          Base_Directory => Name_As_Directory (Get_Text (Ed.Path)));
@@ -594,7 +594,7 @@ package body Project_Properties is
       Context : Glide_Kernel.Selection_Context_Access)
    is
       pragma Unreferenced (Widget);
-      C : File_Selection_Context_Access :=
+      C : constant File_Selection_Context_Access :=
         File_Selection_Context_Access (Context);
    begin
       Edit_Properties (Project_Information (C), Get_Kernel (Context));
