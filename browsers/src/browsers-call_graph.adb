@@ -642,10 +642,13 @@ package body Browsers.Call_Graph is
          Set_Children_Shown (Cb.Item, True);
          Examine_Entity_Call_Graph_Iterator
            (Kernel, Entity, Cb, Add_Entity_And_Link'Access);
-         Layout (Cb.Browser, Force => False);
-         Refresh_Canvas (Get_Canvas (Cb.Browser));
-         Show_Item (Get_Canvas (Cb.Browser), Cb.Item);
       end if;
+
+      --  We need to do a layout in all cases, so that the newly added item
+      --  is put at a correct place.
+      Layout (Cb.Browser, Force => False);
+      Refresh_Canvas (Get_Canvas (Cb.Browser));
+      Show_Item (Get_Canvas (Cb.Browser), Cb.Item);
 
       Redraw_Title_Bar (Cb.Item);
 
