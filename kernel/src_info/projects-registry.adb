@@ -793,9 +793,14 @@ package body Projects.Registry is
             while File /= Nil_String loop
                Get_Name_String (String_Elements.Table (File).Value);
                Canonical_Case_File_Name (Name_Buffer (1 .. Name_Len));
-               Set (Registry.Data.Sources,
-                    K => Name_Buffer (1 .. Name_Len),
-                    E => (No_Project, Unknown_Language, No_Name));
+
+               if Get (Registry.Data.Sources, Name_Buffer (1 .. Name_Len)).Lang
+                 = No_Name
+               then
+                  Set (Registry.Data.Sources,
+                       K => Name_Buffer (1 .. Name_Len),
+                       E => (No_Project, Unknown_Language, No_Name));
+               end if;
                File := String_Elements.Table (File).Next;
             end loop;
          end if;
@@ -831,9 +836,14 @@ package body Projects.Registry is
                        and then (Last = 1 or else Line (1 .. 2) /= "--")
                      then
                         Canonical_Case_File_Name (Line (1 .. Last));
-                        Set (Registry.Data.Sources,
-                             K => Line (1 .. Last),
-                             E => (No_Project, Unknown_Language, No_Name));
+
+                        if Get (Registry.Data.Sources,
+                                Line (1 .. Last)).Lang = No_Name
+                        then
+                           Set (Registry.Data.Sources,
+                                K => Line (1 .. Last),
+                                E => (No_Project, Unknown_Language, No_Name));
+                        end if;
                      end if;
                   end loop;
 
