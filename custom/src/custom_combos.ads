@@ -44,9 +44,11 @@ package Custom_Combos is
      (Kernel  : access Kernel_Handle_Record'Class;
       Id      : String;
       Label   : String;
-      Command : Action_Record_Access);
+      Command : Action_Record_Access;
+      On_Selected : Glide_Kernel.Scripts.Subprogram_Type);
    --  Add a combo entry and a command that should be
    --  executed whenever this entry is selected.
+   --  On_Selected is also executed when the entry is selected
 
    procedure Custom_Entry_Handler
      (Data : in out Callback_Data'Class; Command : String);

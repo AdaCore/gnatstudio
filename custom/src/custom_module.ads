@@ -158,6 +158,7 @@ package Custom_Module is
       --  This can never be null.
 
       Command : Action_Record_Access;
+      On_Selected : Glide_Kernel.Scripts.Subprogram_Type;
       --  This should not be allocated/deallocated.
    end record;
 
@@ -167,10 +168,11 @@ package Custom_Module is
    package Entry_List is new Generic_List (Entry_Action_Record);
 
    type GPS_Combo_Record is record
-      Label            : String_Access;
-      Combo            : Gtk_Combo;
-      On_Change_Action : Action_Record_Access;
-      Entries          : Entry_List.List;
+      Label                : String_Access;
+      Combo                : Gtk_Combo;
+      On_Change_Action     : Action_Record_Access;
+      On_Change_Subprogram : Glide_Kernel.Scripts.Subprogram_Type;
+      Entries              : Entry_List.List;
    end record;
 
    type GPS_Combo_Access is access GPS_Combo_Record;

@@ -40,7 +40,19 @@ with Gtk.List;                  use Gtk.List;
 
 package body Custom_Combos is
 
-   --  ??? Should the registered combos be freed ?
+   Entry_Cst         : aliased constant String := "id";
+   Label_Cst         : aliased constant String := "label";
+   Choice_Cst        : aliased constant String := "choice";
+   On_Select         : aliased constant String := "on_selected";
+   On_Changed        : aliased constant String := "on_changed";
+   Add_Args : constant Cst_Argument_List :=
+     (Entry_Cst'Access, Choice_Cst'Access, On_Select'Access);
+   Create_Args : constant Cst_Argument_List :=
+     (Entry_Cst'Access, Label_Cst'Access, On_Changed'Access);
+   Remove_Args : constant Cst_Argument_List :=
+     (Entry_Cst'Access, Choice_Cst'Access);
+   Set_Text_Args : constant Cst_Argument_List :=
+     (Entry_Cst'Access, Choice_Cst'Access);
 
    -----------------------
    -- Local subprograms --
@@ -92,6 +104,12 @@ package body Custom_Combos is
       Id     : String;
       Label  : String);
    --  Remove choice identified by Label from combo identified by Id.
+
+   procedure Set_Combo_Changed_Action
+     (Kernel  : access Kernel_Handle_Record'Class;
+      Id      : String;
+      Command : Subprogram_Type);
+   --  Set the callback to call when the content of the combo is changed
 
    -----------------------
    -- Remove_Combo_Item --
@@ -206,7 +224,7 @@ package body Custom_Combos is
          Node := Next (Node);
       end loop;
 
-      return (null, null);
+      return (null, null, null);
    end Lookup_Entry;
 
    --------------------------
@@ -294,6 +312,21 @@ package body Custom_Combos is
             Combo_Text);
       end if;
 
+      if GPS_Combo.On_Change_Subprogram /= null then
+         declare
+            D : Callback_Data'Class := Create
+              (Get_Script (GPS_Combo.On_Change_Subprogram.all),
+               Arguments_Count => 2);
+            Tmp : Boolean;
+            pragma Unreferenced (Tmp);
+         begin
+            Set_Nth_Arg (D, 1, GPS_Combo.Label.all);
+            Set_Nth_Arg (D, 2, Combo_Text);
+            Tmp := Execute (GPS_Combo.On_Change_Subprogram, D);
+            Free (D);
+         end;
+      end if;
+
       --  Attempt to find an item in the registered items.
       --  If such an item is found, execute the associated action.
 
@@ -306,6 +339,21 @@ package body Custom_Combos is
            (Combo_Entry.Command,
             GPS_Combo.Label.all,
             Combo_Text);
+      end if;
+
+      if Combo_Entry.On_Selected /= null then
+         declare
+            D : Callback_Data'Class := Create
+              (Get_Script (Combo_Entry.On_Selected.all),
+               Arguments_Count => 2);
+            Tmp : Boolean;
+            pragma Unreferenced (Tmp);
+         begin
+            Set_Nth_Arg (D, 1, GPS_Combo.Label.all);
+            Set_Nth_Arg (D, 2, Combo_Text);
+            Tmp := Execute (Combo_Entry.On_Selected, D);
+            Free (D);
+         end;
       end if;
    end Combo_Changed;
 
@@ -361,10 +409,30 @@ package body Custom_Combos is
    procedure Set_Combo_Changed_Action
      (Kernel  : access Kernel_Handle_Record'Class;
       Id      : String;
+      Command : Subprogram_Type)
+   is
+      GPS_Combo : constant GPS_Combo_Access := Lookup_GPS_Combo (Id);
+   begin
+      if GPS_Combo = null then
+         Insert
+           (Kernel, -"Entry not registered: " & Id,
+            Mode => Error);
+         return;
+      end if;
+
+      GPS_Combo.On_Change_Subprogram := Command;
+   end Set_Combo_Changed_Action;
+
+   ------------------------------
+   -- Set_Combo_Changed_Action --
+   ------------------------------
+
+   procedure Set_Combo_Changed_Action
+     (Kernel  : access Kernel_Handle_Record'Class;
+      Id      : String;
       Command : Action_Record_Access)
    is
       GPS_Combo : constant GPS_Combo_Access := Lookup_GPS_Combo (Id);
-
    begin
       if GPS_Combo = null then
          Insert
@@ -384,7 +452,8 @@ package body Custom_Combos is
      (Kernel  : access Kernel_Handle_Record'Class;
       Id      : String;
       Label   : String;
-      Command : Action_Record_Access)
+      Command : Action_Record_Access;
+      On_Selected : Glide_Kernel.Scripts.Subprogram_Type)
    is
       GPS_Combo   : constant GPS_Combo_Access := Lookup_GPS_Combo (Id);
       Combo_Entry : Entry_Action_Record;
@@ -405,8 +474,9 @@ package body Custom_Combos is
          return;
       end if;
 
-      Combo_Entry.Label := new String'(Label);
-      Combo_Entry.Command := Command;
+      Combo_Entry.Label       := new String'(Label);
+      Combo_Entry.Command     := Command;
+      Combo_Entry.On_Selected := On_Selected;
 
       Entry_List.Append
         (GPS_Combo.Entries,
@@ -465,26 +535,46 @@ package body Custom_Combos is
      (Data : in out Callback_Data'Class; Command : String)
    is
       Kernel    : constant Kernel_Handle := Custom_Module_ID.Kernel;
-      Title     : constant String := Nth_Arg (Data, 1);
+      Callback  : Subprogram_Type;
    begin
       if Command = "entry_add" then
+         Name_Parameters (Data, Add_Args);
          Add_Combo_Entry
            (Kernel,
-            Title,
             Nth_Arg (Data, 2),
-            Lookup_Action (Kernel, Nth_Arg (Data, 3, "")));
+            Nth_Arg (Data, 3),
+            Command     => null,
+            On_Selected => Nth_Arg (Data, 4, null));
+
+      elsif Command = "entry_create" then
+         Name_Parameters (Data, Create_Args);
+         declare
+            Id : constant String := Nth_Arg (Data, 2);
+         begin
+            Register_Combo
+              (Kernel,
+               Title => Nth_Arg (Data, 3, ""),
+               Id    => Id);
+            Callback := Nth_Arg (Data, 4, null);
+            if Callback /= null then
+               Set_Combo_Changed_Action
+                 (Kernel, Id => Id, Command => Callback);
+            end if;
+         end;
 
       elsif Command = "entry_remove" then
-         Remove_Combo_Item (Kernel, Title, Nth_Arg (Data, 2));
+         Name_Parameters (Data, Remove_Args);
+         Remove_Combo_Item (Kernel, Nth_Arg (Data, 2), Nth_Arg (Data, 3));
 
       elsif Command = "entry_clear" then
-         Clear_Combo (Kernel, Title);
+         Clear_Combo (Kernel, Nth_Arg (Data, 2));
 
       elsif Command = "entry_get_text" then
-         Set_Return_Value (Data, Get_Combo_Text (Kernel, Title));
+         Set_Return_Value (Data, Get_Combo_Text (Kernel, Nth_Arg (Data, 2)));
 
       elsif Command = "entry_set_text" then
-         Set_Combo_Text (Kernel, Title, Nth_Arg (Data, 2));
+         Name_Parameters (Data, Set_Text_Args);
+         Set_Combo_Text (Kernel, Nth_Arg (Data, 2), Nth_Arg (Data, 3));
       end if;
    end Custom_Entry_Handler;
 

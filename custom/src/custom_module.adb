@@ -513,13 +513,13 @@ package body Custom_Module is
       procedure Parse_Entry_Node (Node : Node_Ptr) is
          Child   : Node_Ptr;
          Id      : constant String := Get_Attribute (Node, "id", "");
+         Label   : constant String := Get_Attribute (Node, "label", "");
       begin
          if Id = "" then
             Insert
               (Kernel,
                -"<entry> nodes must have a non-empty ""id"" attribute",
                Mode => Error);
-
             return;
          end if;
 
@@ -527,13 +527,7 @@ package body Custom_Module is
 
          --  Determine the title of the combo and register it.
 
-         if Child /=
-           null and then To_Lower (Child.Tag.all) = "label"
-         then
-            Register_Combo (Kernel, Child.Value.all, Id);
-         else
-            Register_Combo (Kernel, "", Id);
-         end if;
+         Register_Combo (Kernel, Label, Id);
 
          --  Determine the default action for this entry
 
@@ -568,7 +562,8 @@ package body Custom_Module is
                   Id,
                   Child.Value.all,
                   Lookup_Action
-                    (Kernel, Get_Attribute (Child, "on-selected")));
+                    (Kernel, Get_Attribute (Child, "on-selected")),
+                  On_Selected => null);
 
             elsif To_Lower (Child.Tag.all) = "label" then
                Insert
@@ -946,35 +941,36 @@ package body Custom_Module is
          Minimum_Args  => 2,
          Maximum_Args  => 3,
          Class         => Toolbar_Class,
-         Static_Method => True,
          Handler       => Custom_Entry_Handler'Access);
       Register_Command
         (Kernel, "entry_remove",
          Minimum_Args  => 2,
          Maximum_Args  => 2,
          Class         => Toolbar_Class,
-         Static_Method => True,
+         Handler       => Custom_Entry_Handler'Access);
+      Register_Command
+        (Kernel, "entry_create",
+         Minimum_Args  => 2,
+         Maximum_Args  => 4,
+         Class         => Toolbar_Class,
          Handler       => Custom_Entry_Handler'Access);
       Register_Command
         (Kernel, "entry_clear",
          Minimum_Args  => 1,
          Maximum_Args  => 1,
          Class         => Toolbar_Class,
-         Static_Method => True,
          Handler       => Custom_Entry_Handler'Access);
       Register_Command
         (Kernel, "entry_get_text",
          Minimum_Args  => 1,
          Maximum_Args  => 1,
          Class         => Toolbar_Class,
-         Static_Method => True,
          Handler       => Custom_Entry_Handler'Access);
       Register_Command
         (Kernel, "entry_set_text",
          Minimum_Args  => 2,
          Maximum_Args  => 2,
          Class         => Toolbar_Class,
-         Static_Method => True,
          Handler       => Custom_Entry_Handler'Access);
    end Register_Module;
 
