@@ -241,18 +241,21 @@ package body GVD.Main_Window is
    procedure Preferences_Changed
      (Window : access GVD_Main_Window_Record'Class)
    is
-      Handler : constant GVD_Language_Handler := GVD_Language_Handler
-        (Window.Lang_Handler);
+      Handler : GVD_Language_Handler;
    begin
       Widget_Callback.Emit_By_Name
         (Gtk_Widget (Window), "preferences_changed");
-      Reset_File_Extensions (Handler);
-      Add_File_Extensions
-        (Handler, "ada", Get_Pref (GVD_Prefs, Ada_Extensions));
-      Add_File_Extensions
-        (Handler, "c",   Get_Pref (GVD_Prefs, C_Extensions));
-      Add_File_Extensions
-        (Handler, "c++", Get_Pref (GVD_Prefs, Cpp_Extensions));
+
+      if Window.Lang_Handler.all in GVD_Language_Handler_Record'Class then
+         Handler := GVD_Language_Handler (Window.Lang_Handler);
+         Reset_File_Extensions (Handler);
+         Add_File_Extensions
+           (Handler, "ada", Get_Pref (GVD_Prefs, Ada_Extensions));
+         Add_File_Extensions
+           (Handler, "c",   Get_Pref (GVD_Prefs, C_Extensions));
+         Add_File_Extensions
+           (Handler, "c++", Get_Pref (GVD_Prefs, Cpp_Extensions));
+      end if;
    end Preferences_Changed;
 
 end GVD.Main_Window;
