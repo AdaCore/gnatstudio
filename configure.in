@@ -3,8 +3,8 @@ AC_INIT(common/src/sdefault.adb.in)
 
 AC_CANONICAL_SYSTEM
 
-GLIDE_VERSION=0.7.0
-GVD_VERSION=$GLIDE_VERSION
+GPS_VERSION=0.7.0
+GVD_VERSION=$GPS_VERSION
 STRIP_CR=False
 ASYNC_COMMANDS=True
 LINK_SIZE=7
@@ -190,8 +190,8 @@ opsysfile="\\\"system/${opsys}.h\\\""
 # checking for gtk
 AM_PATH_GTK(2.0.0,,AC_MSG_ERROR(Test for GtkAda failed. See the file 'INSTALL' for help.))
 
-# Set the version number of GLIDE/GVD
-AC_SUBST(GLIDE_VERSION)
+# Set the version number of GPS/GVD
+AC_SUBST(GPS_VERSION)
 AC_SUBST(GVD_VERSION)
 
 AC_SUBST(opsysfile)

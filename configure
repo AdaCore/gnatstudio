@@ -633,8 +633,8 @@ test "$host_alias" != "$target_alias" &&
   program_prefix=${target_alias}-
 
 
-GLIDE_VERSION=0.7.0
-GVD_VERSION=$GLIDE_VERSION
+GPS_VERSION=0.7.0
+GVD_VERSION=$GPS_VERSION
 STRIP_CR=False
 ASYNC_COMMANDS=True
 LINK_SIZE=7
@@ -2177,7 +2177,7 @@ fi
   rm -f conf.gtktest
 
 
-# Set the version number of GLIDE/GVD
+# Set the version number of GPS/GVD
 
 
 
@@ -2384,7 +2384,7 @@ s%@GTK_PREFIX@%$GTK_PREFIX%g
 s%@GTK_CFLAGS@%$GTK_CFLAGS%g
 s%@GTK_LIBS@%$GTK_LIBS%g
 s%@GTK_STATIC_LIBS@%$GTK_STATIC_LIBS%g
-s%@GLIDE_VERSION@%$GLIDE_VERSION%g
+s%@GPS_VERSION@%$GPS_VERSION%g
 s%@GVD_VERSION@%$GVD_VERSION%g
 s%@opsysfile@%$opsysfile%g
 s%@ROOT@%$ROOT%g
