@@ -489,41 +489,41 @@ package body Docgen.Work_On_Source is
             end loop;
 
             if Found_Main_Unit then
-                  Process_File_Description
-                    (B, Kernel, Result,
-                     File_Text.all, Options,
-                     Get_Language_From_File
-                       (Get_Language_Handler (Kernel), Source_Filename),
-                     Level);
+               Process_File_Description
+                 (B, Kernel, Result,
+                  File_Text.all, Options,
+                  Get_Language_From_File
+                    (Get_Language_Handler (Kernel), Source_Filename),
+                  Level);
 
-                  Process_With_Clause
-                    (B, Kernel, Result,
-                     Parsed_List,
-                     List_Ref_In_File,
-                     Source_Filename,
-                     File_Text,
-                     Source_File_List,
-                     Options,
-                     Level);
+               Process_With_Clause
+                 (B, Kernel, Result,
+                  Parsed_List,
+                  List_Ref_In_File,
+                  Source_Filename,
+                  File_Text,
+                  Source_File_List,
+                  Options,
+                  Level);
 
-                  --  Process types, variables, subprograms, entries,
-                  --  exceptions, packages (recursive calls for inner packages)
+               --  Process types, variables, subprograms, entries,
+               --  exceptions, packages (recursive calls for inner packages)
 
-                  Process_Source_Spec
-                    (B, Kernel, Result,
-                     Source_File_List,
-                     Source_Filename,
-                     Unit_Name,
-                     Entity.Entity,
-                     True,
-                     Entity_List,
-                     List_Ref_In_File,
-                     Tagged_Types_List,
-                     Private_Tagged_Types_List,
-                     Options,
-                     Level,
-                     File_Text,
-                     Parsed_List);
+               Process_Source_Spec
+                 (B, Kernel, Result,
+                  Source_File_List,
+                  Source_Filename,
+                  Unit_Name,
+                  Entity.Entity,
+                  True,
+                  Entity_List,
+                  List_Ref_In_File,
+                  Tagged_Types_List,
+                  Private_Tagged_Types_List,
+                  Options,
+                  Level,
+                  File_Text,
+                  Parsed_List);
             end if;
 
             Free (Parsed_List);
@@ -1483,10 +1483,19 @@ package body Docgen.Work_On_Source is
                      Entity.Entity,
                      File_Text.all));
 
+               Level := Level + 1;
+
+               if Description.all /= "" then
+                  Doc_Subtitle
+                    (B, Kernel, Result, Level, Subtitle_Name => "Description");
+                  Process_Description
+                    (B, Kernel, Result,
+                     Level,
+                     Description.all);
+               end if;
+
                --  Recursive call in order to deal with entities defined
                --  in the current package.
-
-               Level := Level + 1;
 
                Process_Source_Spec
                  (B, Kernel, Result,
@@ -1513,13 +1522,6 @@ package body Docgen.Work_On_Source is
                   Level,
                   Entity => Entity.Entity,
                   Header => "end " & Get_Full_Name (Entity.Entity));
-
-               if Description.all /= "" then
-                  Process_Description
-                    (B, Kernel, Result,
-                     Level,
-                     Description.all);
-               end if;
             end if;
 
             exit when Entity_Node = TEL.Last (Entity_List);
