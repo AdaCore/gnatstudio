@@ -26,6 +26,7 @@ with Gdk.Drawable;                use Gdk.Drawable;
 with Gdk.Color;                   use Gdk.Color;
 with Gdk.Event;                   use Gdk.Event;
 with Gdk.GC;                      use Gdk.GC;
+with Gdk.Rectangle;               use Gdk.Rectangle;
 with Gdk.Window;                  use Gdk.Window;
 with Gdk.Pixbuf;                  use Gdk.Pixbuf;
 with Gdk.Pixmap;                  use Gdk.Pixmap;
@@ -183,6 +184,33 @@ package body Src_Editor_View is
    --  Side window.
    --  Return (null, 0)  if the information was never set.
    --  Return (null, -1) if the information was set to null.
+
+   procedure Size_Allocated (View : access Gtk_Widget_Record'Class);
+   --  Called when a new size has been allocated
+
+   function Cursor_Is_On_Screen (View : access Source_View_Record'Class)
+      return Boolean;
+   --  Return True if the cursor is currently visible on screen
+
+   -------------------------
+   -- Cursor_Is_On_Screen --
+   -------------------------
+
+   function Cursor_Is_On_Screen (View : access Source_View_Record'Class)
+      return Boolean
+   is
+      Y, Height   : Gint;
+      Rect        : Gdk_Rectangle;
+      Insert_Mark : constant Gtk_Text_Mark := Get_Insert
+        (Get_Buffer (Source_View (View)));
+      Iter        : Gtk_Text_Iter;
+   begin
+      Get_Iter_At_Mark (Get_Buffer (Source_View (View)), Iter, Insert_Mark);
+      Get_Line_Yrange (Source_View (View), Iter, Y, Height);
+      Get_Visible_Rect (Source_View (View), Rect);
+
+      return Rect.Y <= Y and then Y + Height <= Rect.Y + Rect.Height;
+   end Cursor_Is_On_Screen;
 
    -------------------
    -- Get_Side_Info --
@@ -344,6 +372,19 @@ package body Src_Editor_View is
       when E : others =>
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end Change_Handler;
+
+   --------------------
+   -- Size_Allocated --
+   --------------------
+
+   procedure Size_Allocated (View : access Gtk_Widget_Record'Class) is
+   begin
+      --  Keep the cursor on screen when the editor is resized.
+
+      if not Cursor_Is_On_Screen (Source_View (View)) then
+         Scroll_To_Cursor_Location (Source_View (View), Center => True);
+      end if;
+   end Size_Allocated;
 
    ---------------------
    -- Expose_Event_Cb --
@@ -671,6 +712,10 @@ package body Src_Editor_View is
         (View, "key_press_event",
          Marsh => Return_Callback.To_Marshaller (Key_Press_Event_Cb'Access),
          After => False);
+      Widget_Callback.Connect
+        (View, "size_allocate",
+         Widget_Callback.To_Marshaller (Size_Allocated'Access),
+         After => True);
 
       Source_Buffer_Callback.Connect
         (Buffer, "cursor_position_changed",
@@ -703,6 +748,8 @@ package body Src_Editor_View is
          Slot_Object => View,
          User_Data   => Kernel_Handle (Kernel));
 
+      --  Connect in an idle callback, otherwise the lines-with-code in the
+      --  debugger are recomputed all at once (before the editor has a size).
       View.Connect_Expose_Id := Source_View_Idle.Add
         (Connect_Expose'Access,
          Source_View (View));
