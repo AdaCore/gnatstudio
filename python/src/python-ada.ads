@@ -140,7 +140,8 @@ package Python.Ada is
       Dict  : PyObject;
       Name  : PyObject) return PyClassObject;
    --  Create a new class.
-   --  Bases should be either null or a tuple of PyClassObject.
+   --  Bases should be either null or a tuple of PyClassObject (See
+   --  Lookup_Class_Object below)
    --  Dict must be a dictionary, used to store the attributes of the class,
    --  including subprograms. The following keys are automatically extracted
    --  and use for the class:
@@ -151,6 +152,24 @@ package Python.Ada is
    --    - "__delattr__" (default subprogram to remove an attribute)
    --  Name is the name of the class.
    --  The class must be added to the module, through PyModule_AddObject.
+   --
+   --  Typical use to build a new class:
+   --     Dict := PyDict_New;
+   --     PyDict_SetItemString
+   --       (Dict, "__module__", PyString_FromString ("mymodule"));
+   --     Klass := PyClass_New
+   --       (Create_Tuple ((1 => Lookup_Class_Object ("__builtin__", "file"))),
+   ---       Dict,
+   --        PyString_FromString ("Myclass"));
+   --     Add_Method (Dict, Create_Method_Def (...), Klass);
+   --     Add_Method (Dict, Create_Method_Def (...), Klass);
+
+   function Lookup_Class_Object
+     (Module : String; Name : String) return PyObject;
+   --  Lookup a class object.
+   --  Typical use is
+   --     Klass := Lookup_Class_Object ("__builtin__", "file");
+   --  null is returned if the class is not found
 
    procedure Add_Method (Class : PyClassObject; Func : PyMethodDef);
    --  Add a new method to the class.
@@ -169,6 +188,18 @@ package Python.Ada is
    --  It can be called either on the class or an instance. If a class method
    --  is called for a derived class, the derived class object is passed as the
    --  implied first argument.
+
+   procedure Add_Method
+     (Dict  : PyDictObject;
+      Func  : PyMethodDef;
+      Klass : PyClassObject;
+      Self  : PyObject := null);
+   --  Add a new method in Dict.
+   --  Dict should be the dictionnary of Klass.
+   --  When the method is called from the python interpreter, its Self argument
+   --  is set to the value of Self.
+   --  Its first argument will always be the instance itself. Therefore the
+   --  first character in the argument to PyArg_ParseTuple should be "O".
 
    ------------------------------------
    -- Creating and declaring methods --

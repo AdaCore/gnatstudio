@@ -58,6 +58,14 @@ package body Python.Ada is
    --  the function. Instance_Class is the type description for the instance
    --  that is allowed (or one of its subclasses).
 
+   function PyMethod_New
+     (Func : PyObject; Self : PyObject := null; Klass : PyObject)
+      return PyObject;
+   pragma Import (C, PyMethod_New, "PyMethod_New");
+   --  Create a new method, which calls Func.
+   --  The method is unbounded if Self is null (and will be bound when the
+   --  method is called). It is automatically bound if Self is not null.
+
    -------------------
    -- Py_InitModule --
    -------------------
@@ -136,6 +144,25 @@ package body Python.Ada is
       end if;
    end Add_Method;
 
+   ----------------
+   -- Add_Method --
+   ----------------
+
+   procedure Add_Method
+     (Dict  : PyDictObject;
+      Func  : PyMethodDef;
+      Klass : PyClassObject;
+      Self  : PyObject := null)
+   is
+      C_Func : constant PyObject :=
+        PyCFunction_New (new PyMethodDef'(Func), Self);
+      C_Meth : constant PyObject := PyMethod_New (C_Func, Self, Klass);
+      Ignored : Integer;
+      pragma Unreferenced (Ignored);
+   begin
+      Ignored := PyDict_SetItemString (Dict, Func.Name, C_Meth);
+   end Add_Method;
+
    -----------------------
    -- Add_Static_Method --
    -----------------------
@@ -209,5 +236,23 @@ package body Python.Ada is
               Flags => METH_KEYWORDS,
               Doc   => New_String (Doc));
    end Create_Method_Def;
+
+   -------------------------
+   -- Lookup_Class_Object --
+   -------------------------
+
+   function Lookup_Class_Object
+     (Module : String; Name : String) return PyObject
+   is
+      M : constant PyObject := PyImport_AddModule (Module);
+      Dict : PyObject;
+   begin
+      if M = null then
+         return null;
+      end if;
+
+      Dict   := PyModule_GetDict (M);
+      return PyDict_GetItemString (Dict, Name);
+   end Lookup_Class_Object;
 
 end Python.Ada;
