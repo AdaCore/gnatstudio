@@ -62,8 +62,7 @@ package body Commands.External is
       Dir          : String_List.List;
       Args         : String_List.List;
       Head         : String_List.List;
-      Handler      : String_List_Handler;
-      Next_Command : Command_Access := null) is
+      Handler      : String_List_Handler) is
    begin
       Item := new External_Command;
       Item.Kernel  := Kernel;
@@ -72,7 +71,6 @@ package body Commands.External is
       Item.Args    := Copy_String_List (Args);
       Item.Head    := Copy_String_List (Head);
       Item.Handler := Handler;
-      Item.Next_Command := Next_Command;
    end Create;
 
    --------------------
@@ -106,17 +104,22 @@ package body Commands.External is
          end;
 
          Close (D.Fd);
+
          declare
             Success : Boolean;
          begin
             Success := D.Handler (D.Kernel, D.Head, D.Output);
 
-            if D.Next_Command /= null then
-               Success := Execute (D.Next_Command);
-            else
-               Command_Finished (D.Queue);
-               Pop_State (D.Kernel);
+            if Success then
+               while not Command_Queues.Is_Empty (D.Next_Commands) loop
+                  Enqueue
+                    (D.Queue, Command_Queues.Head (D.Next_Commands), True);
+                  D.Next_Commands := Command_Queues.Next (D.Next_Commands);
+               end loop;
             end if;
+
+            Pop_State (D.Kernel);
+            Command_Finished (D.Queue);
          end;
 
          return False;
@@ -135,11 +138,12 @@ package body Commands.External is
       Temp_Args : String_List.List := Command.Args;
 
       Old_Dir   : Dir_Name_Str := Get_Current_Dir;
-      New_Dir   : Dir_Name_Str := String_List.Head (Command.Dir);
    begin
       --  ??? Must add many checks for empty lists, etc.
 
-      Change_Dir (New_Dir);
+      if not String_List.Is_Empty (Command.Dir) then
+         Change_Dir (String_List.Head (Command.Dir));
+      end if;
 
       for J in Args'Range loop
          Args (J) := new String' (String_List.Head (Temp_Args));
@@ -159,7 +163,9 @@ package body Commands.External is
       Temp_Args := Command.Args;
       String_List.Free (Temp_Args);
 
-      Change_Dir (Old_Dir);
+      if not String_List.Is_Empty (Command.Dir) then
+         Change_Dir (Old_Dir);
+      end if;
 
       Id := String_List_Idle.Add (50,
                                   Atomic_Command'Access,
@@ -171,9 +177,22 @@ package body Commands.External is
    exception
       when Directory_Error =>
          Insert (Command.Kernel,
-                 "Directory error : cannot access " & New_Dir,
+                 "Directory error : cannot access "
+                 & String_List.Head (Command.Dir),
                  False, True, Error);
          return False;
    end Execute;
+
+   ----------------------------
+   -- Add_Consequence_Action --
+   ----------------------------
+
+   procedure Add_Consequence_Action
+     (Item   : External_Command_Access;
+      Action : Command_Access)
+   is
+   begin
+      Command_Queues.Append (Item.Next_Commands, Action);
+   end Add_Consequence_Action;
 
 end Commands.External;
