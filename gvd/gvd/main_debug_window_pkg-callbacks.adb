@@ -170,7 +170,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
              (Main_Debug_Window_Access (Object),
               Program.Debugger,
               Program.Program.all,
-              List, "",
+              List,
               Program.Remote_Host.all,
               Program.Remote_Target.all,
               Program.Protocol.all,
