@@ -356,7 +356,7 @@ package body Glide_Interactive_Consoles is
                Completions : List :=
                  Console.Completion (Text, Console.User_Data);
                Node        : List_Node := First (Completions);
-               First_S     : String := Data (Node);
+               First_S     : constant String := Data (Node);
                Length      : Integer := Text'Length;
                Line        : Gint;
                Offset      : Gint;
@@ -380,7 +380,7 @@ package body Glide_Interactive_Consoles is
                         Length := Data (Node)'Length;
                      else
                         declare
-                           Data_S  : String := Data (Node);
+                           Data_S  : constant String := Data (Node);
                            Current : Integer := Text'Length;
                         begin
                            while Current <= Length
