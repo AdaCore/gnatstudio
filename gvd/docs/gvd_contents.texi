@@ -289,7 +289,7 @@ executable to debug before loading a core file.
 @cindex edit source
 Launches an external editor that will open the file currently displayed
 in the source window (see @ref{The Source Window}). You can specify the name of
-the external editor by using the @ref{preferences menu}.
+the external editor by using the @ref{preferences dialog}.
 
    @item Open Source...
 @cindex open source
@@ -380,7 +380,7 @@ Saves the window settings and exit GVD.
 The only item currently available in this menu is the preferences menu.
 
 @subsubsection Preferences...
-@anchor{preferences menu}
+@anchor{preferences dialog}
 Opens a dialog window allowing you to modify the global preferences of GVD.
 To enable the new preferences, you simply need to confirm by pressing the
 @i{OK} button. The preferences will be saved in a file located in
@@ -692,6 +692,7 @@ the following commands. Failing to do so will result in blank windows.
 @cindex assembly
       Opens a new window displaying an assembly dump of the current code
       being executed.
+      See @ref{The Assembly Window} for more details.
 @end ifset
 
    @item Edit Breakpoints
@@ -1386,10 +1387,8 @@ the second click will remove it).
    If you leave the cursor over a variable, a tooltip will
    appear showing the value of this variable. Automatic tooltips can be
    disabled in the preferences menu.
-@ifclear GPS
 @cindex preferences
-   See @ref{preferences menu}.
-@end ifclear
+   See @ref{preferences dialog}.
 
 @ifclear GPS
    The contextual menu of the source window contains the following entries.
@@ -1482,20 +1481,24 @@ Shows both the source code and the assembly window at the same time.
 
    @end table
 
-@ifclear GPS
-
 @c --------------------------------------------------------------------
 @node The Assembly Window
 @section The Assembly Window
 @c --------------------------------------------------------------------
 
-It is often convenient to look at the assembly code for the subprogram
+It is sometimes convenient to look at the assembly code for the subprogram
 or source line you are currently debugging.
 
+@ifclear GPS
 You can access the assembly window by right-clicking in the source
 window, and selecting one of the menus "Show Asm Code" or "Show Asm and
 Source", the later will allow you to see both the source code and the
 matching assembly code.
+@end ifclear
+
+@ifset GPS
+You can open the assembly window by using the menu @code{Debug->Data->Assembly}.
+@end ifset
 
 @iftex
 @cindex screen shot
@@ -1520,23 +1523,22 @@ being called.
 
 For efficiency reasons, only a small part of the assembly code around the
 current instruction is displayed.
-You can specify in the @ref{preferences menu} how many instructions
+You can specify in the @ref{preferences dialog} how many instructions
 are displayed by default. Also, you can easily
 display the instructions immediately preceding or following the
 currently displayed instructions by pressing one of the @key{Page up} or
 @key{Page down} keys, or by using the contextual menu in the assembly
 window.
 
-A critical requirement for debugging at the assembly level is the
+A convenient complement when debugging at the assembly level is the
 ability of displaying the contents  of machine registers.
-When the debugger supports it
-(as gdb does), you can select the @code{Data->Display Registers} menu
-to get an item in the canvas that will show the current contents of each 
-machine register, and that will be updated every time one of them changes.
+When the debugger supports it (as gdb does), you can select the
+@code{Data->Display Registers} menu to get an item in the canvas that will
+show the current contents of each machine register, and that will be updated
+every time one of them changes.
 
-You might however choose to look at a single register. Although this is
-dependent on the debugger you are currently using, you can do this with
-gdb by selecting the @code{Data->Display Any Expression}, entering
+You might also choose to look at a single register.
+With gdb, select the @code{Data->Display Any Expression}, entering
 something like
 
 @cindex example
@@ -1547,9 +1549,6 @@ output /x $eax
 in the field, and selecting the toggle button "Expression is a subprogram
 call". This will create a new canvas item that will be refreshed every
 time the value of the register (in this case eax) changes.
-
-@end ifclear
-@c GPS
 
 @c --------------------------------------------------------------------
 @node The Debugger Console
@@ -2090,7 +2089,7 @@ but will slow down GVD if $HOME is located on a network disk.
 
    @item $HOME/.gvd/preferences
 Contains all the preferences in XML format, as specified in the
-@ref{preferences menu}.
+@ref{preferences dialog}.
 
    @item $HOME/.gvd/window_settings
 Contains all the settings of the windows (window sizes, pane
