@@ -922,8 +922,30 @@ package body Default_Preferences is
       Data : Nodes) return Boolean
    is
       E : constant Gtk_Entry := Gtk_Entry (Ent);
+      N      : Node_Ptr;
    begin
-      Set_Pref (Data.Top, Pspec_Name (Data.Param), Get_Text (E));
+      if Value_Type (Data.Param) = Pango.Font.Get_Type then
+         Set_Pref (Data.Top, Pspec_Name (Data.Param), Get_Text (E));
+      else
+         N := Find_Node_By_Name (Data.Top, Pspec_Name (Data.Param));
+
+         if N.Value /= null then
+            Set_Pref
+              (Data.Top, Pspec_Name (Data.Param),
+               To_String (Font => Get_Text (E),
+                          Fg   => Style_Token (N.Value.all, 2),
+                          Bg   => Style_Token (N.Value.all, 3)));
+         else
+            Set_Pref
+              (Data.Top, Pspec_Name (Data.Param),
+               To_String (Font => Get_Text (E),
+                          Fg   => Style_Token
+                          (Default (Param_Spec_String (Data.Param)), 2),
+                          Bg   => Style_Token
+                          (Default (Param_Spec_String (Data.Param)), 3)));
+         end if;
+      end if;
+
       Reset_Font (E);
       return False;
    end Font_Entry_Changed;
