@@ -1,93 +1,27 @@
 with String_Utils;            use String_Utils;
 with Ada.Characters.Handling; use Ada.Characters.Handling;
-with Ada.Text_IO;             use Ada.Text_IO;
+with GNAT.IO;                 use GNAT.IO;
 with Ada.Unchecked_Deallocation;
-with Generic_Stack;
 
-package body Source_Analyzer is
+package body Ada_Analyzer is
 
-   -----------
-   -- Types --
-   -----------
+   use Basic_Types;
 
-   Max_Identifier : constant := 256;
-   --  Maximum length of an identifier.
+   -----------------
+   -- Local types --
+   -----------------
 
-   type Extended_Token is record
-      Token       : Token_Type := No_Token;
-      --  Enclosing token
+   subtype Token_Class_Literal is
+     Token_Type range Tok_Integer_Literal .. Tok_Operator_Symbol;
+   --  Literal
 
-      Declaration : Boolean := False;
-      --  Are we inside a declarative part ?
-      --  For a Tok_Record, set to True if the keyword "record" was found on
-      --  its own line.
-
-      Identifier  : String (1 .. Max_Identifier);
-      --  Name of the enclosing token
-      --  The actual name is Identifier (1 .. Ident_Len)
-
-      Ident_Len   : Natural := 0;
-      --  Actual length of Indentifier
-
-      Sloc        : Source_Location;
-      --  Source location for this entity
-   end record;
-   --  Extended information for a token
-
-   package Token_Stack is new Generic_Stack (Extended_Token);
-   use Token_Stack;
-
-   package Indent_Stack is new Generic_Stack (Integer);
-   use Indent_Stack;
-
-   --------------------------
-   -- Line Buffer Handling --
-   --------------------------
-
-   --  The line buffer represents a buffer (e.g contents of a file) line
-   --  by line. Line separators (LF or CR/LF) are kept at the end of the buffer
-   --  It is recommended to take advantage of the bound information that comes
-   --  with a String_Access so that there can be a direct mapping between
-   --  the original raw buffer and a line buffer.
-   --  Len is used to keep the length of the original line stored. Since this
-   --  type is intended for making changes in buffers at a minimal cost
-   --  (e.g avoiding copies of complete buffers when inserting a few
-   --  characters), being able to convert from the original buffer's position
-   --  information to the line buffer is critical and is achieved using the Len
-   --  field.
-
-   type Line_Buffer_Record;
-   type Line_Buffer is access Line_Buffer_Record;
-   type Line_Buffer_Record is record
-      Line : String_Access;
-      Len  : Natural;
-      Next : Line_Buffer;
-   end record;
-
-   procedure Free is new
-     Ada.Unchecked_Deallocation (Line_Buffer_Record, Line_Buffer);
-
-   type Extended_Line_Buffer is record
-      First   : Line_Buffer;
-      Current : Line_Buffer;
-   end record;
-
-   function To_Line_Buffer (Buffer : String) return Extended_Line_Buffer;
-   --  Convert a string to a line buffer.
-   --  CR/LF and LF are treated as end of lines.
-
-   procedure Print (Buffer : Extended_Line_Buffer);
-   --  Output the contents of Buffer on standard output.
-
-   procedure Free (Buffer : in out Extended_Line_Buffer);
-   --  Free the contents of buffer.
+   subtype Token_Class_Declk is
+     Token_Type range Tok_Entry .. Tok_Procedure;
+   --  Keywords which start a declaration
 
    ----------------------
-   -- Parsing Routines --
+   -- Local procedures --
    ----------------------
-
-   function End_Of_Word (Buffer : String; P : Natural) return Natural;
-   --  Return the end of the word pointed by P.
 
    function Get_Token (S : String) return Token_Type;
    --  Return a token_Type given a string.
@@ -96,15 +30,6 @@ package body Source_Analyzer is
    function Is_Word_Char (C : Character) return Boolean;
    --  Return whether C is a word character (alphanumeric or underscore).
    pragma Inline (Is_Word_Char);
-
-   function Line_Start (Buffer : String; P : Natural) return Natural;
-   --  Return the start of the line pointed by P.
-
-   function Line_End   (Buffer : String; P : Natural) return Natural;
-   --  Return the end of the line pointed by P.
-
-   function Next_Line  (Buffer : String; P : Natural) return Natural;
-   --  Return the start of the next line.
 
    function Next_Char  (P : Natural) return Natural;
    --  Return the next char in buffer. P is the current character.
@@ -120,22 +45,6 @@ package body Source_Analyzer is
       Last    : Natural;
       Replace : String);
    --  Replace the slice First .. Last - 1 in Buffer by Replace.
-
-   type Construct_List_Access is access all Construct_List;
-
-   procedure Analyze_Ada_Source
-     (Buffer           : String;
-      New_Buffer       : in out Extended_Line_Buffer;
-      Indent_Params    : Indent_Parameters;
-      Reserved_Casing  : Casing_Type           := Lower;
-      Ident_Casing     : Casing_Type           := Mixed;
-      Format_Operators : Boolean               := True;
-      Indent           : Boolean               := True;
-      Constructs       : Construct_List_Access := null;
-      Current_Indent   : out Natural;
-      Prev_Indent      : out Natural);
-   --  Analyze a given Ada source in Buffer, and store the result in New_Buffer
-   --  if New_Buffer.First isn't null.
 
    ------------------
    -- Is_Word_Char --
@@ -154,22 +63,6 @@ package body Source_Analyzer is
    begin
       return P + 1;
    end Next_Char;
-
-   -----------------
-   -- End_Of_Word --
-   -----------------
-
-   function End_Of_Word (Buffer : String; P : Natural) return Natural is
-      Tmp : Natural := P;
-   begin
-      while Tmp < Buffer'Last
-        and then Is_Word_Char (Buffer (Next_Char (Tmp)))
-      loop
-         Tmp := Next_Char (Tmp);
-      end loop;
-
-      return Tmp;
-   end End_Of_Word;
 
    ---------------
    -- Get_Token --
@@ -418,51 +311,6 @@ package body Source_Analyzer is
       return Tok_Identifier;
    end Get_Token;
 
-   ----------------
-   -- Line_Start --
-   ----------------
-
-   function Line_Start (Buffer : String; P : Natural) return Natural is
-   begin
-      for J in reverse Buffer'First .. P loop
-         if Buffer (J) = ASCII.LF or else Buffer (J) = ASCII.CR then
-            return J + 1;
-         end if;
-      end loop;
-
-      return Buffer'First;
-   end Line_Start;
-
-   --------------
-   -- Line_End --
-   --------------
-
-   function Line_End (Buffer : String; P : Natural) return Natural is
-   begin
-      for J in P .. Buffer'Last loop
-         if Buffer (J) = ASCII.LF or else Buffer (J) = ASCII.CR then
-            return J - 1;
-         end if;
-      end loop;
-
-      return Buffer'Last;
-   end Line_End;
-
-   ---------------
-   -- Next_Line --
-   ---------------
-
-   function Next_Line (Buffer : String; P : Natural) return Natural is
-   begin
-      for J in P .. Buffer'Last - 1 loop
-         if Buffer (J) = ASCII.LF then
-            return J + 1;
-         end if;
-      end loop;
-
-      return Buffer'Last;
-   end Next_Line;
-
    ---------------
    -- Prev_Char --
    ---------------
@@ -477,7 +325,8 @@ package body Source_Analyzer is
    ------------------------
 
    procedure Analyze_Ada_Source
-     (Buffer           : String;
+     (Buffer           : Unchecked_String_Access;
+      Buffer_Length    : Natural;
       New_Buffer       : in out Extended_Line_Buffer;
       Indent_Params    : Indent_Parameters;
       Reserved_Casing  : Casing_Type           := Lower;
@@ -547,6 +396,18 @@ package body Source_Analyzer is
       --    New_Buffer, Num_Parens, Line_Count, Indents, Indent_Done,
       --    Prev_Token.
 
+      function End_Of_Word (P : Natural) return Natural;
+      --  Return the end of the word pointed by P.
+
+      function Line_Start (P : Natural) return Natural;
+      --  Return the start of the line pointed by P.
+
+      function Line_End (P : Natural) return Natural;
+      --  Return the end of the line pointed by P.
+
+      function Next_Line (P : Natural) return Natural;
+      --  Return the start of the next line.
+
       procedure New_Line (Count : in out Natural);
       pragma Inline (New_Line);
       --  Increment Count and poll if needed (e.g for graphic events).
@@ -585,7 +446,7 @@ package body Source_Analyzer is
 
       begin
          if not Indent_Done then
-            Start := Line_Start (Buffer, Prec);
+            Start := Line_Start (Prec);
             Index := Start;
 
             while Buffer (Index) = ' ' or else Buffer (Index) = ASCII.HT loop
@@ -607,6 +468,67 @@ package body Source_Analyzer is
             Prev_Spaces := Indentation;
          end if;
       end Do_Indent;
+
+      -----------------
+      -- End_Of_Word --
+      -----------------
+
+      function End_Of_Word (P : Natural) return Natural is
+         Tmp : Natural := P;
+      begin
+         while Tmp < Buffer_Length
+           and then Is_Word_Char (Buffer (Next_Char (Tmp)))
+         loop
+            Tmp := Next_Char (Tmp);
+         end loop;
+
+         return Tmp;
+      end End_Of_Word;
+
+      ----------------
+      -- Line_Start --
+      ----------------
+
+      function Line_Start (P : Natural) return Natural is
+      begin
+         for J in reverse Buffer'First .. P loop
+            if Buffer (J) = ASCII.LF or else Buffer (J) = ASCII.CR then
+               return J + 1;
+            end if;
+         end loop;
+
+         return Buffer'First;
+      end Line_Start;
+
+      --------------
+      -- Line_End --
+      --------------
+
+      function Line_End (P : Natural) return Natural is
+      begin
+         for J in P .. Buffer_Length loop
+            if Buffer (J) = ASCII.LF or else Buffer (J) = ASCII.CR then
+               return J - 1;
+            end if;
+         end loop;
+
+         return Buffer_Length;
+      end Line_End;
+
+      ---------------
+      -- Next_Line --
+      ---------------
+
+      function Next_Line (P : Natural) return Natural is
+      begin
+         for J in P .. Buffer_Length - 1 loop
+            if Buffer (J) = ASCII.LF then
+               return J + 1;
+            end if;
+         end loop;
+
+         return Buffer_Length;
+      end Next_Line;
 
       --------------
       -- New_Line --
@@ -632,7 +554,7 @@ package body Source_Analyzer is
          Token_Stack.Pop (Stack, Value);
 
          if Constructs /= null then
-            Column := Prec - Line_Start (Buffer, Prec) + 1;
+            Column := Prec - Line_Start (Prec) + 1;
 
             Info := Constructs.Current;
 
@@ -647,7 +569,7 @@ package body Source_Analyzer is
             end if;
 
             Constructs.Last          := Constructs.Current;
-            Constructs.Current.Token := Value.Token;
+            Constructs.Current.Token := Token_Type'Pos (Value.Token);
 
             if Value.Ident_Len > 0 then
                Constructs.Current.Name :=
@@ -685,7 +607,7 @@ package body Source_Analyzer is
       begin
          Temp.Token       := Reserved;
          Temp.Sloc.Line   := Line_Count;
-         Temp.Sloc.Column := Prec - Line_Start (Buffer, Prec) + 1;
+         Temp.Sloc.Column := Prec - Line_Start (Prec) + 1;
 
          --  Note: the order of the following conditions is important
 
@@ -1044,7 +966,7 @@ package body Source_Analyzer is
 
             P := Next_Char (P);
 
-            if P < Buffer'Last and then Buffer (Next_Char (P)) /= ' ' then
+            if P < Buffer_Length and then Buffer (Next_Char (P)) /= ' ' then
                Long := Long + 1;
             end if;
 
@@ -1057,8 +979,8 @@ package body Source_Analyzer is
             Indent_Done := False;
          end if;
 
-         Start_Of_Line := Line_Start (Buffer, P);
-         End_Of_Line   := Line_End (Buffer, Start_Of_Line);
+         Start_Of_Line := Line_Start (P);
+         End_Of_Line   := Line_End (Start_Of_Line);
 
          if New_Buffer.Current /= null then
             if New_Buffer.Current.Line'First = Start_Of_Line then
@@ -1072,8 +994,8 @@ package body Source_Analyzer is
 
          loop
             if P > End_Of_Line then
-               Start_Of_Line := Line_Start (Buffer, P);
-               End_Of_Line   := Line_End (Buffer, Start_Of_Line);
+               Start_Of_Line := Line_Start (P);
+               End_Of_Line   := Line_End (Start_Of_Line);
                New_Line (Line_Count);
                Padding       := 0;
                Indent_Done   := False;
@@ -1089,15 +1011,15 @@ package body Source_Analyzer is
                --               --  comment should be aligned properly
                --  ??? Do_Indent (P, Num_Spaces);
 
-               P             := Next_Line (Buffer, P);
+               P             := Next_Line (P);
                Start_Of_Line := P;
-               End_Of_Line   := Line_End (Buffer, P);
+               End_Of_Line   := Line_End (P);
                New_Line (Line_Count);
                Padding       := 0;
                Indent_Done   := False;
             end loop;
 
-            exit when P = Buffer'Last or else Is_Word_Char (Buffer (P));
+            exit when P = Buffer_Length or else Is_Word_Char (Buffer (P));
 
             case Buffer (P) is
                when '(' =>
@@ -1397,9 +1319,9 @@ package body Source_Analyzer is
       Push (Indents, None);
 
       Next_Word (Prec);
-      Current := End_Of_Word (Buffer, Prec);
+      Current := End_Of_Word (Prec);
 
-      while Current < Buffer'Last loop
+      while Current < Buffer_Length loop
          Str_Len := Current - Prec + 1;
 
          for J in Prec .. Current loop
@@ -1501,7 +1423,7 @@ package body Source_Analyzer is
          Prec            := Current + 1;
          Prev_Token      := Token;
          Next_Word (Prec);
-         Current := End_Of_Word (Buffer, Prec);
+         Current := End_Of_Word (Prec);
       end loop;
 
       if Prev_Spaces < 0 then
@@ -1536,7 +1458,7 @@ package body Source_Analyzer is
 
    begin
       loop
-         exit when Index >= Buffer'Last;
+         exit when Index >= Buffer'Length;
 
          First := Index;
          Skip_To_Char (Buffer, Index, ASCII.LF);
@@ -1550,7 +1472,7 @@ package body Source_Analyzer is
             Prev.Next := Tmp;
          end if;
 
-         if Index < Buffer'Last and then Buffer (Index + 1) = ASCII.CR then
+         if Index < Buffer'Length and then Buffer (Index + 1) = ASCII.CR then
             Index := Index + 1;
          end if;
 
@@ -1651,104 +1573,4 @@ package body Source_Analyzer is
       end if;
    end Replace_Text;
 
-   ----------------
-   -- Format_Ada --
-   ----------------
-
-   procedure Format_Ada
-     (Buffer           : String;
-      Indent_Params    : Indent_Parameters := Default_Indent_Parameters;
-      Reserved_Casing  : Casing_Type       := Lower;
-      Ident_Casing     : Casing_Type       := Mixed;
-      Format_Operators : Boolean           := True)
-   is
-      New_Buffer : Extended_Line_Buffer;
-      Ignore     : Natural;
-   begin
-      New_Buffer := To_Line_Buffer (Buffer);
-      Analyze_Ada_Source
-        (Buffer, New_Buffer, Indent_Params,
-         Reserved_Casing, Ident_Casing, Format_Operators,
-         Current_Indent => Ignore,
-         Prev_Indent   => Ignore);
-      Print (New_Buffer);
-      Free (New_Buffer);
-   end Format_Ada;
-
-   --------------------------
-   -- Parse_Ada_Constructs --
-   --------------------------
-
-   procedure Parse_Ada_Constructs
-     (Buffer          : String;
-      Result          : out Construct_List;
-      Indent          : out Natural;
-      Next_Indent     : out Natural;
-      Indent_Params   : Indent_Parameters := Default_Indent_Parameters)
-   is
-      New_Buffer : Extended_Line_Buffer;
-      Constructs : aliased Construct_List;
-
-   begin
-      Analyze_Ada_Source
-        (Buffer, New_Buffer, Indent_Params,
-         Reserved_Casing  => Unchanged,
-         Ident_Casing     => Unchanged,
-         Format_Operators => False,
-         Indent           => False,
-         Constructs       => Constructs'Unchecked_Access,
-         Current_Indent   => Next_Indent,
-         Prev_Indent      => Indent);
-      Result := Constructs;
-   end Parse_Ada_Constructs;
-
-   --------------------------
-   -- Next_Ada_Indentation --
-   --------------------------
-
-   procedure Next_Ada_Indentation
-     (Buffer          : String;
-      Indent          : out Natural;
-      Next_Indent     : out Natural;
-      Indent_Params   : Indent_Parameters := Default_Indent_Parameters)
-   is
-      New_Buffer : Extended_Line_Buffer;
-   begin
-      Analyze_Ada_Source
-        (Buffer, New_Buffer, Indent_Params,
-         Reserved_Casing  => Unchanged,
-         Ident_Casing     => Unchanged,
-         Format_Operators => False,
-         Indent           => False,
-         Current_Indent   => Next_Indent,
-         Prev_Indent      => Indent);
-   end Next_Ada_Indentation;
-
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (List : in out Construct_List) is
-      Info, Tmp : Construct_Access;
-
-      procedure Free is new
-        Ada.Unchecked_Deallocation (Construct_Information, Construct_Access);
-
-   begin
-      Info := List.First;
-
-      loop
-         exit when Info = null;
-
-         Free (Info.Name);
-         Tmp := Info;
-         Info := Info.Next;
-         Free (Tmp);
-      end loop;
-
-      List.First   := null;
-      List.Current := null;
-      List.Last    := null;
-   end Free;
-
-end Source_Analyzer;
+end Ada_Analyzer;
