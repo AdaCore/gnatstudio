@@ -39,6 +39,7 @@ with String_List_Utils;         use String_List_Utils;
 with VCS_Module;                use VCS_Module;
 with Log_Utils;                 use Log_Utils;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
+with GNAT.OS_Lib;
 
 with Basic_Types;               use Basic_Types;
 
@@ -196,6 +197,10 @@ package body VCS_View_API is
       Context : Selection_Context_Access);
 
    procedure On_Menu_Commit
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context_Access);
+
+   procedure On_Menu_Remove_Log
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access);
 
@@ -560,6 +565,17 @@ package body VCS_View_API is
                Gtk_New (Item);
                Append (Menu, Item);
 
+               Gtk_New (Item, Label => -"Remove log");
+               Append (Menu, Item);
+               Context_Callback.Connect
+                 (Item, "activate",
+                  Context_Callback.To_Marshaller
+                  (On_Menu_Remove_Log'Access),
+                  Selection_Context_Access (Context));
+
+               Gtk_New (Item);
+               Append (Menu, Item);
+
                Gtk_New (Item, Label => -"Add to repository");
                Append (Menu, Item);
                Context_Callback.Connect
@@ -825,7 +841,7 @@ package body VCS_View_API is
 
       while not String_List.Is_Empty (List) loop
          Open_File_Editor
-           (Kernel, Get_Log_From_File (Kernel, String_List.Head (List)));
+           (Kernel, Get_Log_From_File (Kernel, String_List.Head (List), True));
          String_List.Next (List);
       end loop;
 
@@ -867,7 +883,7 @@ package body VCS_View_API is
 
          Child := Get_File_Editor
            (Kernel,
-            Get_Log_From_File (Kernel, Head (Files)));
+            Get_Log_From_File (Kernel, Head (Files), False));
 
          if Child /= null then
             Success := Save_Child (Kernel, Child, True) /= Cancel;
@@ -902,7 +918,7 @@ package body VCS_View_API is
                Log_Check_Script  : constant String := Get_Attribute_Value
                  (Project, Vcs_Log_Check, Ide_Package);
                Log_File  : constant String :=
-                 Get_Log_From_File (Kernel, Data (Files_Temp));
+                 Get_Log_From_File (Kernel, Data (Files_Temp), True);
                File_Args         : String_List.List;
                Log_Args          : String_List.List;
                Head_List         : String_List.List;
@@ -1009,6 +1025,57 @@ package body VCS_View_API is
       return Get_VCS_From_Id ("");
    end Get_Current_Ref;
 
+   ------------------------
+   -- On_Menu_Remove_Log --
+   ------------------------
+
+   procedure On_Menu_Remove_Log
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context_Access)
+   is
+      pragma Unreferenced (Widget);
+
+      use String_List;
+      Kernel         : constant Kernel_Handle := Get_Kernel (Context);
+      Files          : String_List.List;
+      Files_Temp     : String_List.List_Node;
+
+      Explorer       : VCS_View_Access;
+   begin
+      Files := Get_Selected_Files (Context);
+      Explorer := Get_Explorer (Kernel);
+      Files_Temp := First (Files);
+
+      while Files_Temp /= Null_Node loop
+         declare
+            File  : constant String := Data (Files_Temp);
+            Log   : constant String
+              := Get_Log_From_File (Kernel, File, False);
+            Dummy : Boolean;
+         begin
+            if Log /= ""
+              and then GNAT.OS_Lib.Is_Regular_File (Log)
+            then
+               GNAT.OS_Lib.Delete_File (Log, Dummy);
+               Close_File_Editors (Kernel, Log);
+            end if;
+
+            Remove_File_From_Mapping (Kernel, File);
+
+            if Explorer /= null then
+               Refresh_Log (Explorer, File);
+            end if;
+         end;
+
+         Files_Temp := Next (Files_Temp);
+      end loop;
+
+      Free (Files);
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+   end On_Menu_Remove_Log;
+
    --------------------
    -- On_Menu_Commit --
    --------------------
@@ -1042,7 +1109,8 @@ package body VCS_View_API is
             All_Logs_Exist := False;
             Open_File_Editor
               (Kernel,
-               Get_Log_From_File (Kernel, String_List.Data (Files_Temp)));
+               Get_Log_From_File
+                 (Kernel, String_List.Data (Files_Temp), True));
          end if;
 
          Files_Temp := String_List.Next (Files_Temp);
