@@ -6156,7 +6156,7 @@ Sets the color used for the foreground of most visual objects.
 
 @item base[@i{state}] = @i{color}
 Sets the color used for the background of visual objects displaying editable
-text.
+text, for instance the text editor in GPS.
 
 @item text[@i{state}] = @i{color}
 Sets the color used for foreground of visual objects using base for the
@@ -6496,13 +6496,13 @@ GPS, thanks to a abstract interface defined in the GPS core. As a
 result, GPS modules do not have to be modified when new scripting
 languages are added.
 
-@cindex --batch
+@cindex --load
 Scripts can be executed immediately upon startup of GPS by using the
-command line switch @code{--batch}. Specifying the following command
+command line switch @code{--load}. Specifying the following command
 line:
 
 @smallexample
-gps --batch=shell:mytest.gps
+gps --load=shell:mytest.gps
 @end smallexample
 
 will force the gps script @file{mytest.gps} to be executed
@@ -6510,6 +6510,11 @@ immediately, before GPS starts reacting to user's requests. This is
 useful if you want to do some special initializations of the
 environment. It can also be used as a command line interface to GPS,
 if you script's last command is to exit GPS.
+
+@cindex --eval
+Inline commands can also be given directly on the command line through
+@code{--eval} command line switch.
+
 
 
 @node The GPS Shell
@@ -6570,6 +6575,11 @@ languages such as @code{Python}.
 @c bottom of the GPS window. However, GPS might not have been compiled
 @c with support for python, and therefore python might not be available
 @c to you.
+@c
+@c If a script is executed that requires user input, the whole GPS environment
+@c is frozen. This is to prevent the user from selecting a menu that would in
+@c turn launch a new python command while the previous one has not finished to
+@c execute.
 @c
 @c Type @code{help(GPS)} to see the list of functions exported by GPS to
 @c python. This list is also given in @ref{Python Commands} at the end
@@ -6671,7 +6681,8 @@ Options:
                        program with the given arguments
    --debugger debugger Specify the debugger's command line
    --target=TARG:PRO   Load program on machine TARG using protocol PRO
-   --batch=lang:file   Execute a script written in the language lang
+   --load=lang:file    Execute an external file written in the language lang
+   --eval=lang:file    Execute an inline script written in the language lang
 
 Source files are searched everywhere on the project's source path
 @end smallexample
