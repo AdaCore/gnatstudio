@@ -445,6 +445,13 @@ package body Glide_Kernel is
 
    begin
       if Force then
+         if Project_Modified (Get_Project (Handle), Recursive => True) then
+            Save_Project
+              (Kernel    => Handle,
+               Project   => Get_Project (Handle),
+               Recursive => True);
+         end if;
+
          if Children /= No_Children then
             for C in Children'Range loop
                if Children (C) /= null then
