@@ -4953,6 +4953,16 @@ removed on the next explicit save operation.
 @cindex column highlight
 The column number to highlight and draw in the editors. 0 if none.
 
+@item Block highlighting
+@cindex block highlighting
+Whether the editor should highlight the current block.
+The current block depends on the programming language, and will include
+e.g. procedures, loops, if statements, @dots{}
+
+@item Block folding
+@cindex block folding
+Whether the editor should provide the ability to fold/unfold blocks.
+
 @item External editor
 @cindex external editor
 The default external editor to use.
@@ -5001,16 +5011,11 @@ needs to be explicitly called by the user.
 @cindex color
 
 @table @b
+@item Default font
+The font used in the source editor.
+
 @item Keywords
 Font and colors used to highlight keywords.
-
-@item Current line color
-Color for highlighting the current line. Leave it to blank for no highlighting.
-Setting the color to white will set a transparent color.
-
-@item Current block color
-Color for highlighting the current source block. Setting the color to white
-will disable the block highlighting (recommended on slow machines).
 
 @item Comments
 Font and colors used to highlight comments.
@@ -5020,11 +5025,15 @@ Setting the color to white will set a transparent color.
 Font and colors used to highlight strings.
 Setting the color to white will set a transparent color.
 
-@item Line highlighting color
-Color for highlighting lines.
+@item Current line color
+Color for highlighting the current line. Leave it to blank for no highlighting.
+Setting the color to white will set a transparent color.
 
-@item Default font
-The font used in the source editor.
+@item Current block color
+Color for highlighting the current source block.
+
+@item Delimiter highlighting color
+Color for highlighting delimiters.
 
 @end table
 
