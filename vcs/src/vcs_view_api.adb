@@ -2584,6 +2584,9 @@ package body VCS_View_API is
          when Removed =>
             return -"removed from repository";
 
+         when Added =>
+            return -"added to repository";
+
          when Needs_Merge =>
             return -"needs merge";
 
