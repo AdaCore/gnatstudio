@@ -775,8 +775,7 @@ package body Debugger.Gdb is
          Set_Parse_File_Name (Get_Process (Debugger), False);
 
          declare
-            Str : constant String :=
-              Send (Debugger, "up", Mode => Internal);
+            Str : constant String := Send (Debugger, "up", Mode => Internal);
          begin
             Set_Parse_File_Name (Get_Process (Debugger), True);
 
