@@ -846,9 +846,6 @@ package body Glide_Result_View is
 
                   begin
                      Iter := Get_Iter (Explorer.Model, Path);
-
-                     Init (Value, GType_Pointer);
-
                      Get_Value (Explorer.Model, Iter, Action_Column, Value);
                      Action := To_Action_Item (Get_Address (Value));
 
@@ -937,7 +934,6 @@ package body Glide_Result_View is
                   Set (View.Model, Line_Iter,
                        Button_Column, C_Proxy (Null_Pixbuf));
 
-                  Init (Value, GType_Pointer);
                   Get_Value (View.Model, Line_Iter, Action_Column, Value);
                   Old_Action := To_Action_Item (Get_Address (Value));
 
