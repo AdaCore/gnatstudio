@@ -211,27 +211,32 @@ package body Vdiff2_Command is
 
    procedure Reload_Difference
      (Kernel : Kernel_Handle;
-      Item   : in out Diff_Head_Access) is
-      Tmp    : Diff_List;
+      Item   : in out Diff_Head_Access)
+   is
+      Tmp : Diff_List;
    begin
       Unhighlight_Difference (Kernel, Item);
-      Tmp := Item.List;
-
       if Item.File3 = VFS.No_File then
-         Item.List := Diff
+         Trace (Me, "Execute Action Diff");
+         Tmp := Diff
            (Kernel, Item.File1,
             Item.File2);
       else
-         Item.List := Diff3
+         Trace (Me, "Execute Action Diff3");
+         Tmp := Diff3
            (Kernel, Item.File1,
             Item.File2, Item.File3);
       end if;
 
-      Free_List (Tmp);
-      Item.Current_Node := First (Item.List);
-      First_Difference (Kernel, Item);
-      Modify_Differences (Kernel, Item.all, Id);
-
+      if Tmp = Diff_Chunk_List.Null_List then
+         Trace (Me, "no difference found it's not normal");
+      else
+         Free_List (Item.List);
+         Item.List := Tmp;
+      end if;
+      --  ??? Just For the Moment
+         Item.Current_Node := First (Item.List);
+         Modify_Differences (Kernel, Item.all, Id);
    end Reload_Difference;
 
 
@@ -303,4 +308,3 @@ package body Vdiff2_Command is
    end Change_Ref_File;
 
 end Vdiff2_Command;
-
