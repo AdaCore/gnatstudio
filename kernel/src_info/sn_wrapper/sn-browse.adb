@@ -4,15 +4,19 @@ with GNAT.Directory_Operations,
      Ada.Strings.Fixed,
      Ada.Unchecked_Deallocation,
      SN.Xref_Pools,
+--     Ada.Text_IO,
      GNAT.OS_Lib;
 
 use  GNAT.Directory_Operations,
      GNAT.IO_Aux,
      Ada.Strings.Fixed,
      SN.Xref_Pools,
+--     Ada.Text_IO,
      GNAT.OS_Lib;
 
 package body SN.Browse is
+
+   Xrefs : Xref_Pool;
 
    procedure Free is new Ada.Unchecked_Deallocation
                               (String, String_Access);
@@ -31,8 +35,7 @@ package body SN.Browse is
 
    procedure Browse (File_Name, DB_Directory, Browser_Name,
                      DBUtils_Path : in String) is
-      Xref_File_Name      : String := DB_Directory & Directory_Separator
-                             & File_Name & Xref_Suffix & ASCII.Nul;
+      Xref_File_Name      : String_Access;
       Success             : Boolean;
       Args                : Argument_List_Access;
    begin
@@ -49,10 +52,16 @@ package body SN.Browse is
             Make_Dir (DB_Directory);
       end;
 
+      Xref_File_Name := Xref_Filename_For (File_Name, DB_Directory, Xrefs);
       --  unlink cross reference file, if any
-      if File_Exists (Xref_File_Name) then
-         Delete_File (Xref_File_Name'Address, Success);
+      if File_Exists (Xref_File_Name.all) then
+         declare
+            Xref_File_Name_Nul  : String := Xref_File_Name.all & ASCII.Nul;
+         begin
+            Delete_File (Xref_File_Name_Nul'Address, Success);
+         end;
          if not Success then
+            Free (Xref_File_Name);
             raise Unlink_Failure;
          end if;
       end if;
@@ -61,11 +70,12 @@ package body SN.Browse is
       Args := Argument_String_To_List (
           "-n " & DB_Directory & Directory_Separator & DB_File_Name
           & " -p " & DBUtils_Path & Directory_Separator & "dbimp"
-          & " -x " & Xref_File_Name
+          & " -x " & DB_Directory & Directory_Separator & Xref_File_Name.all
           & " " & File_Name);
       Spawn (DBUtils_Path & Directory_Separator & Browser_Name,
              Args.all, Success);
       Delete (Args);
+      Free (Xref_File_Name);
       if not Success then
          raise Spawn_Failure;
       end if;
@@ -147,7 +157,8 @@ package body SN.Browse is
          raise Unlink_Failure;
       end if;
    end Generate_Xrefs;
-
+begin
+   Init (Xrefs);
 end SN.Browse;
 
 
