@@ -74,6 +74,7 @@ package body Src_Editor_Module is
       List                     : String_List_Utils.String_List.List;
       Source_Lines_Revealed_Id : Handler_Id := No_Handler;
       File_Edited_Id           : Handler_Id := No_Handler;
+      Location_Open_Id         : Idle_Handler_Id;
    end record;
    type Source_Editor_Module is access all Source_Editor_Module_Record'Class;
 
@@ -1369,7 +1370,6 @@ package body Src_Editor_Module is
       pragma Unreferenced (Mode);
 
       Edit : Source_Editor_Box;
-      Id   : Idle_Handler_Id;
 
    begin
       if Mime_Type = Mime_Source_File then
@@ -1381,8 +1381,13 @@ package body Src_Editor_Module is
               Get_Boolean (Data (Data'First + 3));
             New_File  : constant Boolean :=
               Get_Boolean (Data (Data'First + 5));
+            The_Data  : Source_Editor_Module :=
+              Source_Editor_Module (Src_Editor_Module_Id);
+
 
          begin
+            Idle_Remove (The_Data.Location_Open_Id);
+
             Edit := Open_File (Kernel, File, Create_New => New_File).Editor;
 
             if Edit /= null
@@ -1397,7 +1402,7 @@ package body Src_Editor_Module is
 
                Grab_Focus (Edit);
 
-               Id := Location_Idle.Add
+               The_Data.Location_Open_Id := Location_Idle.Add
                  (Location_Callback'Access,
                   (Edit, Natural (Line), Natural (Column)));
 
