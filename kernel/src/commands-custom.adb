@@ -200,19 +200,22 @@ package body Commands.Custom is
          return "";
       end Substitution;
 
+      use type Glib.String_Ptr;
       N : Node_Ptr := Command;
    begin
       while N /= null loop
-         declare
-            Tmp : constant String := Substitute
-              (N.Value.all,
-               Substitution_Char => '%',
-               Callback          => Substitution'Unrestricted_Access,
-               Recursive         => False);
-            pragma Unreferenced (Tmp);
-         begin
-            null;
-         end;
+         if N.Value /= null then
+            declare
+               Tmp : constant String := Substitute
+                 (N.Value.all,
+                  Substitution_Char => '%',
+                  Callback          => Substitution'Unrestricted_Access,
+                  Recursive         => False);
+               pragma Unreferenced (Tmp);
+            begin
+               null;
+            end;
+         end if;
 
          N := N.Next;
       end loop;
