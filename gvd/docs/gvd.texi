@@ -13,6 +13,7 @@
 @subtitle Document revision level $Revision$
 @subtitle Date: $Date$
 @author A. Charlet
+@author E. Briot
 
 @page
 @vskip 0pt plus 1filll
@@ -64,6 +65,7 @@ Description of the main windows
 * The Data Window::
 * The Explorer Window::
 * The Source Window::
+* The Assembly Window::
 * The Debugger Console::
 * The Status Line::
 
@@ -124,6 +126,7 @@ at the moment it crashed.
 * The Data Window::
 * The Explorer Window::
 * The Source Window::
+* The Assembly Window::
 * The Debugger Console::
 * The Status Line::
 @end menu
@@ -627,9 +630,61 @@ specified.
      @item Show Asm and Source
    @end itemize
 
+@c --------------------------------------------------------------------
+@node The Assembly Window
+@section The Assembly Window
+@c --------------------------------------------------------------------
+
+It is often convenient to look at the assembly code for the subprogram
+or source line you are currently debugging. If the underlying debugger
+provides this kind of support (gdb does, but not jdb), then GVD will
+fully support that kind of debugging.
+
+You can access the assembly window by right-clicking in the source
+window, and select one of the menus "Show Asm Code" or "Show Asm and
+Source", the later will allow you to see both the source code and the
+matching assembly code.
+
 @iftex
 @image{assembly, 14cm}
 @end iftex
+
+The current assembly instruction is, as usual, highlighted with a green
+arrow on its left.  The instructions corresponding to the current source
+line are highlighted in red by default. This allows you to easily see
+where the program counter will point to once you have pressed the "Next"
+button on the toolbar.
+
+Moving to the next assembly instruction is done through the "Nexti"
+(next instruction) button in the toolbar. If you choose "Stepi"
+instead (step instruction), this will also jump to the subprogram
+being called.
+
+For efficiency reasons, GVD will only display a small part of the
+assembly code around the current instruction. However, you can easily
+display the instructions immediately preceding or following the
+currently displayed instructions by pressing one of the @key{Page up} or
+@key{Page down} keys, or by using the contextual menu in the assembly
+window.
+
+One feature which is related to debugging at the assembly level is
+the display of the value of registers. When the debugger supports it
+(as gvd does), you can select the @code{Data->Display Registers} menu
+to get an item in the canvas that will show the current value of the
+registers, and will be updated every time one of them changes.
+
+You might however choose to look at a single register. Although this is
+dependent on the debugger you are currently using, you can do this with
+gdb by selecting the @code{Data->Display Any Expression}, entering
+something like
+
+@smallexample
+output /x $eax
+@end smallexample
+
+in the field, and select the toggle button "Expression is a subprogram
+call". This will create a new canvas item that will be refreshed every
+time the value of the register (in this case eax) changes.
 
 @c --------------------------------------------------------------------
 @node The Debugger Console
