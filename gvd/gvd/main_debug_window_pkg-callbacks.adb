@@ -221,7 +221,8 @@ package body Main_Debug_Window_Pkg.Callbacks is
       Prog   : GNAT.OS_Lib.String_Access;
 
    begin
-      Text_Output_Handler (Tab, Editor, Is_Command => True);
+      Print_Message
+        (Main_Debug_Window_Access (Tab.Window).Statusbar1, Help, Editor);
 
       Args := Argument_String_To_List (Editor);
       Prog := Locate_Exec_On_Path (Args (Args'First).all);
