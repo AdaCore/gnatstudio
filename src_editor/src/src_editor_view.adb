@@ -959,7 +959,7 @@ package body Src_Editor_View is
          After => False);
       Return_Callback.Connect
         (View, "button_press_event",
-      Marsh => Return_Callback.To_Marshaller (Button_Press_Event_Cb'Access),
+         Marsh => Return_Callback.To_Marshaller (Button_Press_Event_Cb'Access),
          After => False);
       Return_Callback.Connect
         (View, "key_press_event",
@@ -1279,6 +1279,8 @@ package body Src_Editor_View is
       Left_Window : constant Gdk.Window.Gdk_Window :=
         Get_Window (View, Text_Window_Left);
 
+      Result : Boolean;
+      pragma Unreferenced (Result);
    begin
       External_End_Action (Buffer);
 
@@ -1311,6 +1313,22 @@ package body Src_Editor_View is
             Set_Focus_Child (Get_MDI (View.Kernel), View);
             On_Click (Buffer, Line, Button_X);
          end;
+
+      elsif Get_Event_Type (Event) = Gdk_2button_Press then
+         --  ??? This is a tweak necessary to implement the feature
+         --  "select an entire word containing '_' when double-clicking".
+         --  Might be worth investigating whether it could be implemented at
+         --  the gtk+ level (the proper fix would be to change the Pango
+         --  word break algorithms probably in break.c ?) and to redefine
+         --  the "is_word_break" behaviour of the underscore.
+
+         --  Here we send a button_release_event before selecting the word, so
+         --  that
+         Result := Return_Callback.Emit_By_Name
+           (Widget, "button_release_event", Event);
+
+         Select_Current_Word (Buffer);
+         return True;
       end if;
 
       return False;
