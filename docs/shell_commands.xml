@@ -962,7 +962,8 @@ The new paths are added in front, so that they have priorities over previously d
       <param name="column" default="1">An integer</param>
       <param name="length" default="0">An integer</param>
       <param name="force" default="false">A boolean</param>
-      <description>Open a file editor for file_name. Length is the number of characters to select after the cursor. If line and column are set to 0, then the location of the cursor is not changed if the file is already opened in an editor. If force is set to true, a reload is forced in case the file is already open.
+      <param name="position" default="5">An integer</param>
+      <description>Open a file editor for file_name. Length is the number of characters to select after the cursor. If line and column are set to 0, then the location of the cursor is not changed if the file is already opened in an editor. If force is set to true, a reload is forced in case the file is already open. Position indicates the MDI position to open the child in (5 for default, 1 for bottom).
 
 The filename can be a network file name, with the following general format:
    protocol://username@host:port/full/path
