@@ -385,6 +385,27 @@ package body Src_Info.CPP is
    --
    --  Kind is a kind of a reference.
 
+   procedure Create_Overload_List
+     (Name             : String;
+      Class_Name       : String;
+      Filename         : String;
+      Handler          : access CPP_LI_Handler_Record'Class;
+      File             : out LI_File_Ptr;
+      List             : out LI_File_List;
+      Project_View     : Prj.Project_Id;
+      Module_Type_Defs : Module_Typedefs_List);
+   --  Generates list of dependency declarations for the method
+   --  with given name
+
+   procedure Create_Overload_List
+     (Name             : String;
+      Filename         : String;
+      Handler          : access CPP_LI_Handler_Record'Class;
+      File             : out LI_File_Ptr;
+      List             : out LI_File_List);
+   --  Generates list of dependency declarations for the function
+   --  with given name
+
    function Get_Method_Kind
      (Handler                 : access CPP_LI_Handler_Record'Class;
       Class_Name, Return_Type : String)
@@ -694,7 +715,7 @@ package body Src_Info.CPP is
 
          Free (P);
       end loop;
-
+      Release_Cursor (Handler.SN_Table (FIL));
       Free (Module_Typedefs);
    exception
       when others   => -- unexpected exception
@@ -1079,25 +1100,29 @@ package body Src_Info.CPP is
       MD_Tab_Tmp   : MD_Table;
       First_MD_Pos : Point := Invalid_Point;
       CL_Tab       : CL_Table;
+      MD_File      : DB_File;
    begin
       Decl_Info := null;
       if not Is_Open (Handler.SN_Table (MD)) then
          return; -- .md table does not exist
       end if;
 
+      MD_File := Dup (Handler.SN_Table (MD));
+
       --  First we have to find the first forward declaration
       --  that corresponds to our method, that is prototypes
       --  should be the same
       Set_Cursor
-        (Handler.SN_Table (MD),
+        (MD_File,
          By_Key,
          Buffer (Class_Name.First .. Class_Name.Last) & Field_Sep
             & Buffer (Name.First .. Name.Last) & Field_Sep,
          False);
 
       loop
-         P := Get_Pair (Handler.SN_Table (MD), Next_By_Key);
+         P := Get_Pair (MD_File, Next_By_Key);
          if P = null then -- no fwd decls at all
+            Close (MD_File);
             return;
          end if;
          MD_Tab := Parse_Pair (P.all);
@@ -1113,16 +1138,18 @@ package body Src_Info.CPP is
          Free (MD_Tab);
       end loop;
 
+      Release_Cursor (MD_File);
+
       --  now find the first declaration in the file
       Set_Cursor
-        (Handler.SN_Table (MD),
+        (MD_File,
          By_Key,
          Buffer (Class_Name.First .. Class_Name.Last) & Field_Sep
             & Buffer (Name.First .. Name.Last) & Field_Sep,
          False);
 
       loop
-         P := Get_Pair (Handler.SN_Table (MD), Next_By_Key);
+         P := Get_Pair (MD_File, Next_By_Key);
          exit when P = null;
          MD_Tab_Tmp := Parse_Pair (P.all);
          Free (P);
@@ -1143,6 +1170,9 @@ package body Src_Info.CPP is
          end if;
          Free (MD_Tab_Tmp);
       end loop;
+
+      Release_Cursor (MD_File);
+      Close (MD_File);
 
       Assert (Fail_Stream, First_MD_Pos /= Invalid_Point, "DB inconsistency");
       if Filename
@@ -1227,31 +1257,35 @@ package body Src_Info.CPP is
       P            : Pair_Ptr;
       FD_Tab       : FD_Table;
       FD_Tab_Tmp   : FD_Table;
-      First_FD_Pos : Point := Invalid_Point;
+      First_FD_Pos : Point;
       Match        : Boolean;
       Target_Kind  : E_Kind;
+      FD_File      : DB_File;
    begin
+      Decl_Info := null;
+
       if not Is_Open (Handler.SN_Table (FD)) then
          return; -- .fd table does not exist
       end if;
+
+      FD_File := Dup (Handler.SN_Table (FD));
 
       --  First we have to find the first forward declaration
       --  that corresponds to our function, that is prototypes
       --  should be the same.
       Set_Cursor
-        (Handler.SN_Table (FD),
+        (FD_File,
          By_Key,
          Buffer (Name.First .. Name.Last) & Field_Sep,
          False);
 
       loop
-         P := Get_Pair (Handler.SN_Table (FD), Next_By_Key);
-         if P = null then -- no fwd decls at all
-            return;
-         end if;
+         Match := False;
+         P := Get_Pair (FD_File, Next_By_Key);
+         exit when P = null;
          FD_Tab := Parse_Pair (P.all);
          Free (P);
-         --  Update position of the first forward declaration
+         Match := True;
          exit when Cmp_Prototypes
               (FD_Tab.Buffer,
                Buffer,
@@ -1262,15 +1296,25 @@ package body Src_Info.CPP is
          Free (FD_Tab);
       end loop;
 
+      Release_Cursor (FD_File);
+
+      if not Match then
+         --  we did not found what we wanted, that's strange
+         Close (FD_File);
+         return;
+      end if;
+
+      First_FD_Pos := FD_Tab.Start_Position;
+
       --  now find the first declaration in the file
       Set_Cursor
-        (Handler.SN_Table (FD),
+        (FD_File,
          By_Key,
          Buffer (Name.First .. Name.Last) & Field_Sep,
          False);
 
       loop
-         P := Get_Pair (Handler.SN_Table (FD), Next_By_Key);
+         P := Get_Pair (FD_File, Next_By_Key);
          exit when P = null;
          FD_Tab_Tmp := Parse_Pair (P.all);
          Free (P);
@@ -1287,12 +1331,14 @@ package body Src_Info.CPP is
             FD_Tab.Return_Type,
             FD_Tab_Tmp.Return_Type);
 
-         if (Match and then First_FD_Pos = Invalid_Point)
-            or else FD_Tab_Tmp.Start_Position < First_FD_Pos then
+         if Match and then FD_Tab_Tmp.Start_Position < First_FD_Pos then
             First_FD_Pos := FD_Tab_Tmp.Start_Position;
          end if;
          Free (FD_Tab_Tmp);
       end loop;
+
+      Release_Cursor (FD_File);
+      Close (FD_File);
 
       Assert (Fail_Stream, First_FD_Pos /= Invalid_Point, "DB inconsistency");
 
@@ -1354,9 +1400,9 @@ package body Src_Info.CPP is
       Add (HT.Table, LIFP, Success);
    end Add;
 
-   ------------------------
-   --  Fu_To_Cl_Handler  --
-   ------------------------
+   ----------------------
+   -- Fu_To_Cl_Handler --
+   ----------------------
 
    procedure Fu_To_Cl_Handler
      (Ref              : TO_Table;
@@ -1450,9 +1496,9 @@ package body Src_Info.CPP is
       Free (Class_Desc);
    end Fu_To_Cl_Handler;
 
-   ------------------------
-   -- Fu_To_Con_Handler  --
-   ------------------------
+   -----------------------
+   -- Fu_To_Con_Handler --
+   -----------------------
 
    procedure Fu_To_Con_Handler
      (Ref     : TO_Table;
@@ -1598,9 +1644,9 @@ package body Src_Info.CPP is
                            Ref.Referred_Symbol_Name.Last));
    end Fu_To_Con_Handler;
 
-   ------------------------
-   --  Fu_To_E_Handler  --
-   ------------------------
+   ---------------------
+   -- Fu_To_E_Handler --
+   ---------------------
 
    procedure Fu_To_E_Handler
      (Ref              : TO_Table;
@@ -1694,9 +1740,9 @@ package body Src_Info.CPP is
       Free (Enum_Desc);
    end Fu_To_E_Handler;
 
-   ------------------------
-   --  Fu_To_Ec_Handler  --
-   ------------------------
+   ----------------------
+   -- Fu_To_Ec_Handler --
+   ----------------------
 
    procedure Fu_To_Ec_Handler
      (Ref              : TO_Table;
@@ -1778,9 +1824,238 @@ package body Src_Info.CPP is
          Fail ("unable to find enumeration constant " & Ref_Id);
    end Fu_To_Ec_Handler;
 
-   ------------------------
-   --  Fu_To_Fu_Handler  --
-   ------------------------
+   --------------------------
+   -- Create_Overload_List --
+   --------------------------
+
+   procedure Create_Overload_List
+     (Name             : String;
+      Class_Name       : String;
+      Filename         : String;
+      Handler          : access CPP_LI_Handler_Record'Class;
+      File             : out LI_File_Ptr;
+      List             : out LI_File_List;
+      Project_View     : Prj.Project_Id;
+      Module_Type_Defs : Module_Typedefs_List)
+   is
+      P              : Pair_Ptr;
+      MDecl          : MD_Table;
+      MBody          : MI_Table;
+      Decl_Info      : E_Declaration_Info_List;
+      MI_File        : LI_File_Ptr;
+   begin
+      if Is_Open (Handler.SN_Table (MD)) then
+         Set_Cursor
+           (Handler.SN_Table (MD),
+            By_Key,
+            Class_Name & Field_Sep & Name,
+            False);
+
+         loop
+            P := Get_Pair (Handler.SN_Table (MD), Next_By_Key);
+            exit when P = null;
+            MDecl := Parse_Pair (P.all);
+            Free (P);
+            if MDecl.Buffer (MDecl.File_Name.First .. MDecl.File_Name.Last)
+               /= Filename
+            then
+               --  this will find/create dependency declaration
+               Find_First_Forward_Declaration
+                 (MDecl.Buffer,
+                  MDecl.Class,
+                  MDecl.Name,
+                  Filename,
+                  MDecl.Return_Type,
+                  MDecl.Arg_Types,
+                  Handler,
+                  File,
+                  List,
+                  Project_View,
+                  Module_Type_Defs,
+                  Decl_Info);
+            end if;
+            Free (MDecl);
+         end loop;
+         Release_Cursor (Handler.SN_Table (MD));
+      end if;
+
+      if Is_Open (Handler.SN_Table (MD)) then
+         Set_Cursor
+           (Handler.SN_Table (MD),
+            By_Key,
+            Class_Name & Field_Sep & Name,
+            False);
+
+         loop
+            P := Get_Pair (Handler.SN_Table (MD), Next_By_Key);
+            exit when P = null;
+            MBody := Parse_Pair (P.all);
+            Free (P);
+            if MBody.Buffer (MBody.File_Name.First .. MBody.File_Name.Last)
+               /= Filename
+            then
+               --  this will find/create dependency declaration
+               Find_First_Forward_Declaration
+                 (MBody.Buffer,
+                  MBody.Class,
+                  MBody.Name,
+                  Filename,
+                  MBody.Return_Type,
+                  MBody.Arg_Types,
+                  Handler,
+                  File,
+                  List,
+                  Project_View,
+                  Module_Type_Defs,
+                  Decl_Info);
+
+               --  MI symbols do not appear without MD
+               --  add end of scope and body entity references
+               if Decl_Info /= null then
+                  MI_File := Locate_From_Source
+                    (List,
+                     MBody.Buffer
+                        (MBody.File_Name.First .. MBody.File_Name.Last));
+                  if MI_File = No_LI_File then
+                     Create_Stub_For_File
+                       (LI            => MI_File,
+                        Handler       => Handler,
+                        List          => List,
+                        Full_Filename => MBody.Buffer
+                           (MBody.File_Name.First .. MBody.File_Name.Last));
+                  end if;
+                  Insert_Reference
+                    (Decl_Info,
+                     MI_File,
+                     MBody.Start_Position,
+                     Body_Entity);
+                  Set_End_Of_Scope (Decl_Info, MI_File, MBody.End_Position);
+               end if;
+            end if;
+            Free (MBody);
+         end loop;
+         Release_Cursor (Handler.SN_Table (MD));
+      end if;
+   end Create_Overload_List;
+
+   --------------------------
+   -- Create_Overload_List --
+   --------------------------
+
+   procedure Create_Overload_List
+     (Name             : String;
+      Filename         : String;
+      Handler          : access CPP_LI_Handler_Record'Class;
+      File             : out LI_File_Ptr;
+      List             : out LI_File_List)
+   is
+      P              : Pair_Ptr;
+      FDecl          : FD_Table;
+      Fn             : FU_Table;
+      Decl_Info      : E_Declaration_Info_List;
+      Fn_File        : LI_File_Ptr;
+      Target_Kind    : E_Kind;
+   begin
+      if Is_Open (Handler.SN_Table (FD)) then
+         Set_Cursor (Handler.SN_Table (FD), By_Key, Name, False);
+
+         loop
+            P := Get_Pair (Handler.SN_Table (FD), Next_By_Key);
+            exit when P = null;
+            FDecl := Parse_Pair (P.all);
+            Free (P);
+            if FDecl.Buffer (FDecl.File_Name.First .. FDecl.File_Name.Last)
+               /= Filename
+            then
+               --  this will find/create dependency declaration
+               Find_First_Forward_Declaration
+                 (FDecl.Buffer,
+                  FDecl.Name,
+                  Filename,
+                  FDecl.Return_Type,
+                  FDecl.Arg_Types,
+                  Handler,
+                  File,
+                  List,
+                  Decl_Info);
+            end if;
+            Free (FDecl);
+         end loop;
+         Release_Cursor (Handler.SN_Table (FD));
+      end if;
+
+      if Is_Open (Handler.SN_Table (FU)) then
+         Set_Cursor (Handler.SN_Table (FU), By_Key, Name, False);
+
+         loop
+            P := Get_Pair (Handler.SN_Table (FU), Next_By_Key);
+            exit when P = null;
+            Fn := Parse_Pair (P.all);
+            Free (P);
+            if Fn.Buffer (Fn.File_Name.First .. Fn.File_Name.Last)
+               /= Filename
+            then
+               --  this will find/create dependency declaration
+               Find_First_Forward_Declaration
+                 (Fn.Buffer,
+                  Fn.Name,
+                  Filename,
+                  Fn.Return_Type,
+                  Fn.Arg_Types,
+                  Handler,
+                  File,
+                  List,
+                  Decl_Info);
+
+               if Decl_Info = null then -- only implementation
+                  if Fn.Buffer (Fn.Return_Type.First .. Fn.Return_Type.Last)
+                     = "void" then
+                     Target_Kind := Non_Generic_Procedure;
+                  else
+                     Target_Kind := Non_Generic_Function_Or_Operator;
+                  end if;
+
+                  Insert_Dependency_Declaration
+                    (Handler            => Handler,
+                     File               => File,
+                     List               => List,
+                     Symbol_Name        => Name,
+                     Referred_Filename  => Fn.Buffer
+                        (Fn.File_Name.First .. Fn.File_Name.Last),
+                     Location           => Fn.Start_Position,
+                     Kind               => Target_Kind,
+                     Scope              => Global_Scope,
+                     End_Of_Scope_Location => Fn.End_Position,
+                     Declaration_Info   => Decl_Info);
+               else -- add end of scope and body entity references
+                  Fn_File := Locate_From_Source
+                    (List,
+                     Fn.Buffer (Fn.File_Name.First .. Fn.File_Name.Last));
+                  if Fn_File = No_LI_File then
+                     Create_Stub_For_File
+                       (LI            => Fn_File,
+                        Handler       => Handler,
+                        List          => List,
+                        Full_Filename => Fn.Buffer
+                           (Fn.File_Name.First .. Fn.File_Name.Last));
+                  end if;
+                  Insert_Reference
+                    (Decl_Info,
+                     Fn_File,
+                     Fn.Start_Position,
+                     Body_Entity);
+                  Set_End_Of_Scope (Decl_Info, Fn_File, Fn.End_Position);
+               end if;
+            end if;
+            Free (Fn);
+         end loop;
+         Release_Cursor (Handler.SN_Table (FU));
+      end if;
+   end Create_Overload_List;
+
+   ----------------------
+   -- Fu_To_Fu_Handler --
+   ----------------------
 
    procedure Fu_To_Fu_Handler
      (Ref              : TO_Table;
@@ -1832,6 +2107,7 @@ package body Src_Info.CPP is
                exit when Overloaded;
             end if;
          end loop;
+         Release_Cursor (Handler.SN_Table (FD));
       end if;
 
       if not Overloaded then
@@ -1877,6 +2153,7 @@ package body Src_Info.CPP is
             end if;
             exit when Overloaded;
          end loop;
+         Release_Cursor (Handler.SN_Table (FU));
       end if;
 
       if not Forward_Declared and No_Body then
@@ -1945,6 +2222,15 @@ package body Src_Info.CPP is
             --  have we already declared it?
          Assert (Warn_Stream, File /= null,
                  "Fu_To_Fu_Handler, File not created yet");
+         --  Here we have to generate all dependency declarations
+         --  of the overloaded functions
+
+         Create_Overload_List
+           (Ref_Id,
+            Ref.Buffer (Ref.File_Name.First .. Ref.File_Name.Last),
+            Handler,
+            File,
+            List);
 
          Decl_Info := Find_Declaration
            (File        => File,
@@ -1981,9 +2267,9 @@ package body Src_Info.CPP is
       return;
    end Fu_To_Fu_Handler;
 
-   ------------------------
-   --  Fu_To_Gv_Handler  --
-   ------------------------
+   ----------------------
+   -- Fu_To_Gv_Handler --
+   ----------------------
 
    procedure Fu_To_Gv_Handler
      (Ref     : TO_Table;
@@ -2122,9 +2408,9 @@ package body Src_Info.CPP is
          Fail ("unable to find global variable " & Ref_Id);
    end Fu_To_Gv_Handler;
 
-   ------------------------
-   --  Fu_To_Ma_Handler  --
-   ------------------------
+   ----------------------
+   -- Fu_To_Ma_Handler --
+   ----------------------
 
    procedure Fu_To_Ma_Handler
      (Ref              : TO_Table;
@@ -2211,9 +2497,9 @@ package body Src_Info.CPP is
          Fail ("unable to find macro " & Ref_Id);
    end Fu_To_Ma_Handler;
 
-   ------------------------
-   --  Fu_To_Mi_Handler  --
-   ------------------------
+   ----------------------
+   -- Fu_To_Mi_Handler --
+   ----------------------
 
    procedure Fu_To_Mi_Handler
      (Ref     : TO_Table;
@@ -2264,6 +2550,7 @@ package body Src_Info.CPP is
             exit when Overloaded;
          end if;
       end loop;
+      Release_Cursor (Handler.SN_Table (MD));
 
       if Init then -- declaration for the referred method not found
          --  ??? We should handle this situation in a special way:
@@ -2295,6 +2582,7 @@ package body Src_Info.CPP is
             Init := True;
             Free (Fn);
          end loop;
+         Release_Cursor (Handler.SN_Table (MI));
 
          if Init then -- implementation for the referred method not found
             --  this must be a pure virtual method
@@ -2347,6 +2635,15 @@ package body Src_Info.CPP is
 
       else -- overloaded entity
          --  have we already declared it?
+         Create_Overload_List
+           (Ref_Id,
+            Ref_Class,
+            Ref.Buffer (Ref.File_Name.First .. Ref.File_Name.Last),
+            Handler,
+            File,
+            List,
+            Project_View,
+            Module_Type_Defs);
          declare
             Class_Def : CL_Table;
          begin
@@ -2404,9 +2701,9 @@ package body Src_Info.CPP is
          return;
    end Fu_To_Mi_Handler;
 
-   ------------------------
-   --  Fu_To_T_Handler  --
-   ------------------------
+   ---------------------
+   -- Fu_To_T_Handler --
+   ---------------------
 
    procedure Fu_To_T_Handler
      (Ref     : TO_Table;
@@ -2587,9 +2884,9 @@ package body Src_Info.CPP is
          Fail ("unable to find typedef " & Ref_Id);
    end Fu_To_T_Handler;
 
-   ------------------------
-   --  Fu_To_Un_Handler  --
-   ------------------------
+   ----------------------
+   -- Fu_To_Un_Handler --
+   ----------------------
 
    procedure Fu_To_Un_Handler
      (Ref     : TO_Table;
@@ -2775,6 +3072,7 @@ package body Src_Info.CPP is
          Free (Super);
          Free (P);
       end loop;
+      Release_Cursor (Handler.SN_Table (SN_IN));
 
       Free (Desc);
       Free (Class_Def);
@@ -3100,6 +3398,7 @@ package body Src_Info.CPP is
          end if;
          Free (FD_Tab_Tmp);
       end loop;
+      Release_Cursor (Handler.SN_Table (FD));
 
       Assert (Fail_Stream, First_FD_Pos /= Invalid_Point, "DB inconsistency");
 
@@ -3161,6 +3460,7 @@ package body Src_Info.CPP is
             exit when Match;
             Free (FU_Tab);
          end loop;
+         Release_Cursor (Handler.SN_Table (FU));
          if Match -- we found the body
             and then FU_Tab.Buffer (FU_Tab.File_Name.First ..
                                     FU_Tab.File_Name.Last)
@@ -3451,6 +3751,7 @@ package body Src_Info.CPP is
 
          Free (P);
       end loop;
+      Release_Cursor (Handler.SN_Table (TO));
 
       if Sym.Symbol = MI then
          Free (MI_Tab);
@@ -3822,6 +4123,7 @@ package body Src_Info.CPP is
          end if;
          Free (MD_Tab_Tmp);
       end loop;
+      Release_Cursor (Handler.SN_Table (MD));
 
       Assert (Fail_Stream, First_MD_Pos /= Invalid_Point, "DB inconsistency");
 
@@ -3922,6 +4224,7 @@ package body Src_Info.CPP is
             exit when Found;
             Free (MI_Tab);
          end loop;
+         Release_Cursor (Handler.SN_Table (MI));
          if Found -- we found the body
             and then MI_Tab.Buffer (MI_Tab.File_Name.First ..
                                     MI_Tab.File_Name.Last)
