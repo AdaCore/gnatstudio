@@ -92,39 +92,6 @@ package body Main_Debug_Window_Pkg.Callbacks is
       return False;
    end On_Main_Debug_Window_Delete_Event;
 
-   ----------------------
-   -- Session Handling --
-   ----------------------
-
-   --  The format for session files is as follows:
-   --
-   --  [Session_File Header]
-   --  <number_of_processes>
-   --  ---------------------
-   --      <program_file_name_1>
-   --      <debugger_type_1>
-   --      <remote_host_1>
-   --      <remote_target_1>
-   --      <protocol_1>
-   --      <debugger_name_1>
-   --  ---------------------
-   --      <program_file_name_2>
-   --      <debugger_type_2>
-   --      <remote_host_2>
-   --      <remote_target_2>
-   --      <protocol_2>
-   --      <debugger_name_2>
-   --  (etc)
-   --  [History]
-   --    <debugger_number>
-   --    <command_type>
-   --    <command>
-   --    <debugger_number>
-   --    <command_type>
-   --    <command>
-   --  (etc)
-   --  ---------------------
-
    -------------------------------
    -- On_Open_Program1_Activate --
    -------------------------------
