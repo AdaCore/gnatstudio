@@ -516,9 +516,10 @@ package body Main_Debug_Window_Pkg.Callbacks is
          Gtk_New (Top.GVD_Preferences, Top);
       end if;
 
-      GVD.Preferences.Fill_Dialog (Top.GVD_Preferences);
-
+      --  First do a show_all, so that Fill_Dialog can choose to
+      --  hide or deactivate widgets.
       Show_All (Top.GVD_Preferences);
+      GVD.Preferences.Fill_Dialog (Top.GVD_Preferences);
    end On_Preferences1_Activate;
 
    -------------------------------
