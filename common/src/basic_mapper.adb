@@ -1,11 +1,10 @@
-
 -----------------------------------------------------------------------
---                          G L I D E  I I                           --
+--                               G P S                               --
 --                                                                   --
 --                        Copyright (C) 2002                         --
 --                            ACT-Europe                             --
 --                                                                   --
--- GLIDE is free software; you can redistribute it and/or modify  it --
+-- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -14,7 +13,7 @@
 -- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
 -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
 -- General Public License for more details. You should have received --
--- a copy of the GNU General Public License along with this library; --
+-- a copy of the GNU General Public License along with this program; --
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
@@ -31,8 +30,8 @@ package body Basic_Mapper is
    --------------------
 
    function Get_Other_Text
-     (Mapper    : File_Mapper_Access;
-      Text      : String) return String
+     (Mapper : File_Mapper_Access;
+      Text   : String) return String
    is
       Element : String_Access;
       Key     : String_Access := new String' (Text);
@@ -63,9 +62,9 @@ package body Basic_Mapper is
    ---------------
 
    procedure Add_Entry
-     (Mapper      : in out File_Mapper_Access;
-      Text_1      : String;
-      Text_2      : String)
+     (Mapper : in out File_Mapper_Access;
+      Text_1 : String;
+      Text_2 : String)
    is
       Key_1 : constant String_Access := new String' (Text_1);
       Key_2 : constant String_Access := new String' (Text_2);
@@ -83,10 +82,10 @@ package body Basic_Mapper is
    -----------------
 
    procedure Save_Mapper
-     (Mapper      : File_Mapper_Access;
-      File_Name   : String)
+     (Mapper    : File_Mapper_Access;
+      File_Name : String)
    is
-      File : Ada.Text_IO.File_Type;
+      File    : Ada.Text_IO.File_Type;
       Element : String_Access;
    begin
       if Mapper = null then
@@ -115,14 +114,15 @@ package body Basic_Mapper is
    -----------------
 
    procedure Load_Mapper
-     (Mapper      : out File_Mapper_Access;
-      File_Name   : String)
+     (Mapper    : out File_Mapper_Access;
+      File_Name : String)
    is
       File     : Ada.Text_IO.File_Type;
       Buffer_1 : String (1 .. 8192);
       Buffer_2 : String (1 .. 8192);
       Last_1   : Integer := 1;
       Last_2   : Integer := 1;
+
    begin
       if Mapper = null then
          Mapper := new File_Mapper;

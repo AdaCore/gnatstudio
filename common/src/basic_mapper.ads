@@ -1,10 +1,10 @@
 -----------------------------------------------------------------------
---                          G L I D E  I I                           --
+--                               G P S                               --
 --                                                                   --
 --                        Copyright (C) 2002                         --
 --                            ACT-Europe                             --
 --                                                                   --
--- GLIDE is free software; you can redistribute it and/or modify  it --
+-- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -13,7 +13,7 @@
 -- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
 -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
 -- General Public License for more details. You should have received --
--- a copy of the GNU General Public License along with this library; --
+-- a copy of the GNU General Public License along with this program; --
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
@@ -22,7 +22,7 @@
 --  of strings.
 
 with String_Hash;
-with GNAT.OS_Lib;   use GNAT.OS_Lib;
+with GNAT.OS_Lib; use GNAT.OS_Lib;
 
 package Basic_Mapper is
 
@@ -30,25 +30,25 @@ package Basic_Mapper is
    type File_Mapper_Access is access File_Mapper;
 
    function Get_Other_Text
-     (Mapper    : File_Mapper_Access;
-      Text : String) return String;
+     (Mapper : File_Mapper_Access;
+      Text   : String) return String;
    --  Return the file that has been entered as corresponding to
    --  Text in Mapper, or "" if no such entry was found.
 
    procedure Add_Entry
-     (Mapper      : in out File_Mapper_Access;
-      Text_1      : String;
-      Text_2      : String);
+     (Mapper : in out File_Mapper_Access;
+      Text_1 : String;
+      Text_2 : String);
    --  Add a couple of corresponding strings in Mapper.
 
    procedure Save_Mapper
-     (Mapper      : File_Mapper_Access;
-      File_Name   : String);
+     (Mapper    : File_Mapper_Access;
+      File_Name : String);
    --  Save Mapper to file File_Name.
 
    procedure Load_Mapper
-     (Mapper      : out File_Mapper_Access;
-      File_Name   : String);
+     (Mapper    : out File_Mapper_Access;
+      File_Name : String);
    --  Load Mapper from file File_Name.
 
    procedure Free (Mapper : in out File_Mapper_Access);
