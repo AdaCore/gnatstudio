@@ -38,8 +38,7 @@
 
 package Src_Info.Debug is
 
-   procedure Dump_LI_File_Ptr
-     (LIFP : LI_File_Ptr; Show_Timestamps : Boolean := True);
+   procedure Dump_LI_File_Ptr (LIFP : LI_File_Ptr);
 
    procedure Dump_LI_File_From_Name
      (LIFL : LI_File_List; Unit_Name : String);
@@ -92,10 +91,9 @@ private
    --  Dump the 'U' line and the associated 'W' lines. Part must be either
    --  Unit_Spec of Unit_Body.
 
-   procedure Dump_File_Dependency_Section
-     (LIF : LI_File; Show_Timestamps : Boolean := True);
+   procedure Dump_File_Dependency_Section (LIF : LI_File);
    --  Dump all the 'D' lines for the given LI_File.
 
-   procedure Dump_LI_File (LIF : LI_File; Show_Timestamps : Boolean := True);
+   procedure Dump_LI_File (LIF : LI_File);
 
 end Src_Info.Debug;
