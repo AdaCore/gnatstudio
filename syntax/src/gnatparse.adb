@@ -20,9 +20,10 @@
 
 with Ada_Analyzer;     use Ada_Analyzer;
 with Ada.Command_Line; use Ada.Command_Line;
-with GNAT.OS_Lib;  use GNAT.OS_Lib;
-with Ada.Text_IO;  use Ada.Text_IO;
-with String_Utils; use String_Utils;
+with GNAT.OS_Lib;      use GNAT.OS_Lib;
+with GNAT.Case_Util;   use GNAT.Case_Util;
+with Ada.Text_IO;      use Ada.Text_IO;
+with String_Utils;     use String_Utils;
 with Basic_Types;      use Basic_Types;
 with Language;         use Language;
 
@@ -66,7 +67,7 @@ begin
       declare
          Cat : String := Info.Category'Img;
       begin
-         Lower_Case (Cat (5 .. Cat'Last));
+         To_Lower (Cat (5 .. Cat'Last));
          Put (Cat (5 .. Cat'Last) & " ");
       end;
 
