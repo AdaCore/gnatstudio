@@ -20,6 +20,22 @@ int ada_pystring_check (PyObject* obj) {
   return PyString_Check (obj);
 }
 
+int ada_pyint_check (PyObject* obj) {
+  return PyInt_Check (obj);
+}
+
+int ada_pycobject_check (PyObject* obj) {
+  return PyCObject_Check (obj);
+}
+
+int ada_pytuple_check (PyObject* obj) {
+  return PyTuple_Check (obj);
+}
+
+int ada_pyinstance_check (PyObject* obj) {
+  return PyInstance_Check (obj);
+}
+
 PyTypeObject* ada_gettypeobject (PyObject* obj) {
   return (PyTypeObject*)(obj->ob_type);
 }
