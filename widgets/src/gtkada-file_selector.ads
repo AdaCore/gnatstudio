@@ -52,6 +52,7 @@
 --
 --     Show_All (File_Selector_Window);
 --     Gtk.Main.Main;
+--     Free (Filter_A);
 --  end Run_Test_File_Selector;
 --  </description>
 
@@ -81,7 +82,9 @@ with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 
 package Gtkada.File_Selector is
 
-   function Select_File (Base_Directory : String := "") return String;
+   function Select_File
+     (Title          : String := "Select a file";
+      Base_Directory : String := "") return String;
    --  Create a file selection dialog, display it, and return the absolute file
    --  name that was selected, if any, or return an empty string.
    --  Base_Directory is the directory on which the dialog starts. If the
@@ -168,6 +171,7 @@ package Gtkada.File_Selector is
      with null record;
    type Filter_Show_All_Access is access all Filter_Show_All'Class;
    --  This provides a basic filter that shows all files.
+   --  ??? Missing Destroy/Free functions.
 
    procedure Gtk_New
      (File_Selector_Window : out File_Selector_Window_Access;

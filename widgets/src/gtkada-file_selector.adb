@@ -199,16 +199,15 @@ package body Gtkada.File_Selector is
    -- Select_File --
    -----------------
 
-   function Select_File (Base_Directory : String := "") return String is
+   function Select_File
+     (Title          : String := "Select a file";
+      Base_Directory : String := "") return String
+   is
       File_Selector_Window : File_Selector_Window_Access;
    begin
       Gtk_New (File_Selector_Window, "/", Base_Directory, "Select a file");
       return Select_File (File_Selector_Window);
    end Select_File;
-
-   -----------------
-   -- Select_File --
-   -----------------
 
    function Select_File
      (File_Selector : access File_Selector_Window_Record) return String
@@ -233,6 +232,8 @@ package body Gtkada.File_Selector is
          File : constant String := Get_Selection (File_Selector);
       begin
          Destroy (File_Selector);
+         Destroy (Filter_A);
+         --  ??? Free (Filter_A);
          return File;
       end;
    end Select_File;
