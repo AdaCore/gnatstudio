@@ -117,21 +117,22 @@ package body Src_Editor_Module is
    close_block_xpm  : aliased Chars_Ptr_Array (0 .. 0);
    pragma Import (C, close_block_xpm, "close_block_xpm");
 
-   Filename_Cst  : aliased constant String := "filename";
-   Line_Cst      : aliased constant String := "line";
-   Col_Cst       : aliased constant String := "column";
-   Length_Cst    : aliased constant String := "length";
-   Pattern_Cst   : aliased constant String := "pattern";
-   Case_Cst      : aliased constant String := "case_sensitive";
-   Regexp_Cst    : aliased constant String := "regexp";
-   Recursive_Cst : aliased constant String := "recursive";
-   Scope_Cst     : aliased constant String := "scope";
-   Force_Cst     : aliased constant String := "force";
-   All_Cst       : aliased constant String := "all";
-   Interactive_Cst : aliased constant String := "interactive";
+   Filename_Cst          : aliased constant String := "filename";
+   Line_Cst              : aliased constant String := "line";
+   Col_Cst               : aliased constant String := "column";
+   Length_Cst            : aliased constant String := "length";
+   Pattern_Cst           : aliased constant String := "pattern";
+   Case_Cst              : aliased constant String := "case_sensitive";
+   Regexp_Cst            : aliased constant String := "regexp";
+   Recursive_Cst         : aliased constant String := "recursive";
+   Scope_Cst             : aliased constant String := "scope";
+   Force_Cst             : aliased constant String := "force";
+   All_Cst               : aliased constant String := "all";
+   Interactive_Cst       : aliased constant String := "interactive";
    Current_Line_Only_Cst : aliased constant String := "current_line_only";
-   Before_Cst    : aliased constant String := "before";
-   After_Cst    : aliased constant String := "after";
+   Before_Cst            : aliased constant String := "before";
+   After_Cst             : aliased constant String := "after";
+   Name_Cst              : aliased constant String := "name";
 
    Edit_Cmd_Parameters : constant Cst_Argument_List :=
      (1 => Filename_Cst'Access,
@@ -162,6 +163,8 @@ package body Src_Editor_Module is
       3 => Col_Cst'Access,
       4 => Before_Cst'Access,
       5 => After_Cst'Access);
+   Case_Exception_Cmd_Parameters : constant Cst_Argument_List :=
+     (1 => Name_Cst'Access);
 
    type Editor_Child_Record is new GPS_MDI_Child_Record
       with null record;
@@ -1496,6 +1499,8 @@ package body Src_Editor_Module is
       elsif Command = "add_case_exception"
         or else Command = "remove_case_exception"
       then
+         Name_Parameters (Data, Case_Exception_Cmd_Parameters);
+
          declare
             Name : constant String := Nth_Arg (Data, 1);
          begin
@@ -4275,7 +4280,8 @@ package body Src_Editor_Module is
       Register_Command
         (Kernel,
          Command       => "add_case_exception",
-         Params        => "(name)",
+         Params        => Parameter_Names_To_Usage
+           (Case_Exception_Cmd_Parameters),
          Description   =>
            -"Add name into the case exception dictionary",
          Minimum_Args  => 1,
@@ -4287,7 +4293,8 @@ package body Src_Editor_Module is
       Register_Command
         (Kernel,
          Command       => "remove_case_exception",
-         Params        => "(name)",
+         Params        => Parameter_Names_To_Usage
+           (Case_Exception_Cmd_Parameters),
          Description   =>
            -"Remove name from the case exception dictionary",
          Minimum_Args  => 1,
