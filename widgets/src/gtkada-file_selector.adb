@@ -38,6 +38,7 @@ with Gtk.Ctree;       use Gtk.Ctree;
 with Gtk.Paned;       use Gtk.Paned;
 with Gtk.Hbutton_Box; use Gtk.Hbutton_Box;
 with Gtk.Toolbar;     use Gtk.Toolbar;
+with Gdk.Event;       use Gdk.Event;
 with Gdk.Pixmap;      use Gdk.Pixmap;
 with Gdk.Bitmap;      use Gdk.Bitmap;
 with Gdk.Color;       use Gdk.Color;
@@ -50,6 +51,8 @@ with Gtkada.Intl;     use Gtkada.Intl;
 with GUI_Utils; use GUI_Utils;
 
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
+
+with Ada.Characters.Handling; use Ada.Characters.Handling;
 
 package body Gtkada.File_Selector is
 
@@ -129,6 +132,7 @@ package body Gtkada.File_Selector is
          L1_Last := L1_First;
          L2_Last := L2_First;
          L := L.Next.Next;
+
          while L /= null loop
             if Append_To_L1 then
                L1_Last.Next := L;
@@ -139,12 +143,16 @@ package body Gtkada.File_Selector is
                L2_Last := L2_Last.Next;
                Append_To_L1 := True;
             end if;
+
             L := L.Next;
          end loop;
+
          L1_Last.Next := null;
+
          if L2_Last /= null then
             L2_Last.Next := null;
          end if;
+
          L1 := L1_First;
          L2 := L2_First;
       end if;
@@ -187,6 +195,7 @@ package body Gtkada.File_Selector is
             List_Last.Next := LL2;
             LL2 := LL2.Next;
          end if;
+
          List_Last := List_Last.Next;
       end loop;
 
@@ -251,6 +260,14 @@ package body Gtkada.File_Selector is
 
    procedure On_Cancel_Button_Clicked
      (Object : access Gtk_Widget_Record'Class);
+
+   function On_File_List_Key_Press_Event
+     (Object : access Gtk_Widget_Record'Class;
+      Params : Gtk.Arguments.Gtk_Args) return Boolean;
+
+   function On_Selection_Entry_Key_Press_Event
+     (Object : access Gtk_Widget_Record'Class;
+      Params : Gtk.Arguments.Gtk_Args) return Boolean;
 
    -------------------
    -- Get_Selection --
@@ -394,11 +411,13 @@ package body Gtkada.File_Selector is
          Set_Text (Win.File_List,
                    Current_Row, 1,
                    Win.Remaining_Files.Element.all);
+
          if Text /= null then
             Set_Text (Win.File_List,
                       Current_Row, 2,
                       Text.all);
          end if;
+
          if Pixmap /= Null_Pixmap then
             Set_Pixmap (Win.File_List,
                         Current_Row, 0,
@@ -447,6 +466,7 @@ package body Gtkada.File_Selector is
          begin
             Id := Add (Display_File'Access, Win);
          end;
+
          return False;
       end if;
 
@@ -458,6 +478,7 @@ package body Gtkada.File_Selector is
       else
          Prepend (Win.Files, Buffer (1 .. Last));
       end if;
+
       return True;
    end Read_File;
 
@@ -542,6 +563,7 @@ package body Gtkada.File_Selector is
       Win.Remaining_Files := null;
 
       --  Find out which filter to use.
+
       declare
          S : String := Get_Text (Win.Filter_Combo_Entry);
          C : Filter_List := Win.Filters;
@@ -570,6 +592,7 @@ package body Gtkada.File_Selector is
             Close (Win.Current_Directory_Id.all);
             Win.Current_Directory_Is_Open := False;
          end if;
+
          GNAT.Directory_Operations.Open (Win.Current_Directory_Id.all, Dir);
          Win.Current_Directory_Is_Open := True;
          Id := Add (Read_File'Access, Win);
@@ -578,6 +601,7 @@ package body Gtkada.File_Selector is
             Clear (Win.File_List);
             Insert (Win.File_List, -1, "" + ("Could not open " & Dir) + "");
       end;
+
       Set_Busy_Cursor (Get_Window (Win), False, False);
    end Refresh_Files;
 
@@ -645,6 +669,7 @@ package body Gtkada.File_Selector is
       S   : String_Access;
    begin
       Pop (Win.Past_History, S);
+
       if Is_Empty (Win.Past_History) then
          Set_Sensitive (Win.Back_Button, False);
       end if;
@@ -743,9 +768,11 @@ package body Gtkada.File_Selector is
       Show_Directory (Win.Explorer_Tree, S.all);
 
       Free (S);
+
    exception
       when Stack_Empty =>
          null;
+
    end On_Forward_Button_Clicked;
 
    ------------------------
@@ -861,8 +888,148 @@ package body Gtkada.File_Selector is
       then
          Set_Text (Win.Selection_Entry, "");
       end if;
+
       Main_Quit;
    end On_Cancel_Button_Clicked;
+
+   ----------------------------------
+   -- On_File_List_Key_Press_Event --
+   ----------------------------------
+
+   function On_File_List_Key_Press_Event
+     (Object : access Gtk_Widget_Record'Class;
+      Params : Gtk.Arguments.Gtk_Args) return Boolean
+   is
+      Win      : constant File_Selector_Window_Access :=
+        File_Selector_Window_Access (Get_Toplevel (Object));
+
+      Event : Gdk_Event := To_Event (Params, 1);
+      S     : String := Get_String (Event);
+   begin
+      if S'Length /= 0
+        and then (Is_Alphanumeric (S (S'First))
+                  or else Is_Special (S (S'First)))
+      then
+         declare
+            Found : Boolean := False;
+         begin
+            for J in 0 .. Get_Rows (Win.File_List) - 1 loop
+               exit when Found;
+               declare
+                  T : String := Get_Text (Win.File_List, J, 1);
+               begin
+                  if T'Length /= 0
+                    and then T (T'First) = S (S'First)
+                  then
+                     Found := True;
+                     Select_Row (Win.File_List, J, 1);
+                     Moveto (Win.File_List, J, 1, 0.1, 0.1);
+                  end if;
+               end;
+            end loop;
+         end;
+         return True;
+      else
+         return False;
+      end if;
+   end On_File_List_Key_Press_Event;
+
+   ----------------------------------------
+   -- On_Selection_Entry_Key_Press_Event --
+   ----------------------------------------
+
+   function On_Selection_Entry_Key_Press_Event
+     (Object : access Gtk_Widget_Record'Class;
+      Params : Gtk.Arguments.Gtk_Args) return Boolean
+   is
+      Win      : constant File_Selector_Window_Access :=
+        File_Selector_Window_Access (Get_Toplevel (Object));
+
+      Found    : Boolean := False;
+      Event    : Gdk_Event := To_Event (Params, 1);
+      G : String := Get_String (Event);
+   begin
+      if G'Length /= 0
+        and then G (G'First) = ASCII.HT
+      then
+         --  Handle "Tab completion".
+         --  The current implementation will fail if there are file names
+         --  longer than 512 characters.
+
+         --  Find out what is the biggest common prefix matching the
+         --  text in the selection entry.
+
+         declare
+            S : String := Get_Text (Win.Selection_Entry);
+
+            First_Match : Gint := -1;
+            --  The first column that completely matches S.
+
+            Suffix_Length : Integer := -1;
+            --  The length of the biggest common matching prefix.
+
+            Best_Match : String (1 .. 512);
+         begin
+            for J in 0 .. Get_Rows (Win.File_List) - 1 loop
+               declare
+                  T : String := Get_Text (Win.File_List, J, 1);
+                  K : Natural := 0;
+               begin
+                  while K < T'Length
+                    and then K < S'Length
+                    and then T (T'First + K) = S (S'First + K) loop
+                     K := K + 1;
+                  end loop;
+
+                  --  Does the prefix match S ?
+                  if K = S'Length then
+                     if Suffix_Length = -1 then
+                        First_Match := J;
+                        Best_Match (1 .. T'Length) := T;
+                        Suffix_Length := T'Length;
+                     else
+                        --  If there is already a biggest match, try to
+                        --  get it.
+                        while K < Suffix_Length
+                          and then K < T'Length
+                          and then T (T'First + K) = Best_Match (K + 1)
+                        loop
+                           K := K + 1;
+                        end loop;
+
+                        Suffix_Length := K;
+                     end if;
+                  end if;
+               end;
+            end loop;
+
+            Select_Row (Win.File_List, First_Match, 1);
+            Moveto (Win.File_List, First_Match, 1, 0.0, 0.0);
+            Set_Text (Win.Selection_Entry, Best_Match (1 .. Suffix_Length));
+            Set_Position (Win.Selection_Entry, Gint (Suffix_Length));
+         end;
+
+         return True;
+      end if;
+
+      for J in 0 .. Get_Rows (Win.File_List) - 1 loop
+         exit when Found;
+         declare
+            T : String := Get_Text (Win.File_List, J, 1);
+            S : String := Get_Text (Win.Selection_Entry) & G;
+         begin
+            if T'Length >= S'Length
+              and then T (T'First .. T'First + S'Length - 1)
+              = S (S'First .. S'First + S'Length - 1)
+            then
+               Found := True;
+               Moveto (Win.File_List, J, 1, 0.0, 0.0);
+            end if;
+         end;
+      end loop;
+
+      return False;
+   end On_Selection_Entry_Key_Press_Event;
 
    ----------------------
    -- Free_String_List --
@@ -1088,6 +1255,10 @@ package body Gtkada.File_Selector is
       Set_Column_Width (File_Selector_Window.File_List, 2, 80);
       Set_Row_Height (File_Selector_Window.File_List, 15);
 
+      Return_Callback.Connect
+        (File_Selector_Window.File_List, "key_press_event",
+         On_File_List_Key_Press_Event'Access);
+
       Widget_Callback.Connect
         (File_Selector_Window.File_List, "select_row",
          Widget_Callback.To_Marshaller (On_File_List_End_Selection'Access));
@@ -1130,7 +1301,7 @@ package body Gtkada.File_Selector is
 
       File_Selector_Window.Filter_Combo_Entry :=
         Get_Entry (File_Selector_Window.Filter_Combo);
-      Set_Editable (File_Selector_Window.Filter_Combo_Entry, True);
+      Set_Editable (File_Selector_Window.Filter_Combo_Entry, False);
       Set_Max_Length (File_Selector_Window.Filter_Combo_Entry, 0);
       Set_Visibility (File_Selector_Window.Filter_Combo_Entry, True);
 
@@ -1145,6 +1316,11 @@ package body Gtkada.File_Selector is
       Set_Visibility (File_Selector_Window.Selection_Entry, True);
       Pack_Start
         (Hbox5, File_Selector_Window.Selection_Entry, True, True, 3);
+
+      Return_Callback.Connect
+        (File_Selector_Window.Selection_Entry,
+         "key_press_event", On_Selection_Entry_Key_Press_Event'Access);
+
       Widget_Callback.Connect
         (File_Selector_Window.Selection_Entry, "changed",
          Widget_Callback.To_Marshaller (On_Selection_Entry_Changed'Access));
