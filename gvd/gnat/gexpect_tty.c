@@ -38,6 +38,8 @@ Boston, MA 02111-1307, USA.
 #include <stdlib.h>
 #include <sys/stat.h>
 #include <sys/types.h>		/* some typedefs are used in sys/file.h */
+#include <sys/wait.h>
+
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
@@ -1772,6 +1774,25 @@ gvd_interrupt_process (struct GVD_Process* p)
   process_send_signal (p, SIGINT, 1);
 }
 
+/* kill a process. */
+
+int
+gvd_terminate_process (struct GVD_Process* p)
+{
+  return kill (p->pid, SIGKILL);
+}
+
+/* wait for process pid to terminate and return the process status. */
+
+int
+gvd_waitpid (struct GVD_Process* p)
+{
+  int status = 0;
+
+  waitpid (p->pid, &status, 0);
+  return WEXITSTATUS (status);
+}
+
 #else /* !WIN32 */
 
 typedef struct _child_process
@@ -1921,5 +1942,35 @@ gvd_interrupt_process (struct GVD_Process* p)
     }
 
   return rc;
+}
+
+/* kill a process, as this implementation use CreateProcess on Win32 we need
+   to use Win32 TerminateProcess API */
+int
+gvd_terminate_process (struct GVD_Process* p)
+{
+  if (TerminateProcess (p->procinfo.hProcess, 1) == FALSE)
+    return -1;
+  else
+    return 0;
+}
+
+/* wait for process pid to terminate and return the process status. This
+   implementation is different from the a-adaint.c one for Windows as it uses
+   the Win32 API instead of the C one. */
+
+int
+gvd_waitpid (struct GVD_Process* p)
+{
+  int status = 0;
+
+  DWORD exitcode;
+  DWORD res;
+  HANDLE proc_hand = p->procinfo.hProcess;
+
+  res = WaitForSingleObject (proc_hand, 0);
+  GetExitCodeProcess (proc_hand, &exitcode);
+
+  return (int) exitcode;
 }
 #endif /* !WIN32 */
