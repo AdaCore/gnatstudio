@@ -36,6 +36,7 @@ begin
    Snames.Initialize;
    Prj.Initialize;
    Prj.Tree.Initialize;
+   Glide_Kernel.Gtk_New (Kernel, null);
    Load_Project (Kernel, "../src_editor.gpr");
 
    Gtk_New (My_Box, Kernel);
