@@ -2,7 +2,7 @@
 --                              G P S                                --
 --                                                                   --
 --                    Copyright (C) 2003-2005                        --
---                            ACT-Europe                             --
+--                            AdaCore                                --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -775,7 +775,7 @@ package body Src_Editor_Buffer.Line_Information is
    function Add_Blank_Lines
      (Buffer : access Source_Buffer_Record'Class;
       Line   : Editable_Line_Type;
-      GC     : Gdk.GC.Gdk_GC;
+      Highlight_Category : Integer;
       Text   : String;
       Number : Positive) return Gtk.Text_Mark.Gtk_Text_Mark
    is
@@ -827,7 +827,7 @@ package body Src_Editor_Buffer.Line_Information is
 
       for J in Buffer_Line .. Buffer_Line + Buffer_Line_Type (Number) - 1 loop
          Buffer.Line_Data (J).Editable_Line := 0;
-         Buffer.Line_Data (J).Current_Highlight := GC;
+         Buffer.Line_Data (J).Highlight_Category := Highlight_Category;
       end loop;
 
       Get_Iter_At_Line_Offset (Buffer, Iter, Gint (Buffer_Line - 1), 0);

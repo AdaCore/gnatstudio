@@ -72,7 +72,7 @@ package Src_Editor_Buffer.Line_Information is
    function Add_Blank_Lines
      (Buffer : access Source_Buffer_Record'Class;
       Line   : Editable_Line_Type;
-      GC     : Gdk.GC.Gdk_GC;
+      Highlight_Category : Integer;
       Text   : String;
       Number : Positive) return Gtk.Text_Mark.Gtk_Text_Mark;
    --  Add Number blank lines at line Line.
