@@ -26,29 +26,23 @@
 -- executable file  might be covered by the  GNU Public License.     --
 -----------------------------------------------------------------------
 
---  with System; use System;
---  with Glib; use Glib;
---  with Gdk.Event; use Gdk.Event;
---  with Gdk.Types; use Gdk.Types;
---  with Gtk.Accel_Group; use Gtk.Accel_Group;
---  with Gtk.Object; use Gtk.Object;
---  with Gtk.Enums; use Gtk.Enums;
---  with Gtk.Style; use Gtk.Style;
 with Gtk.Widget; use Gtk.Widget;
 
-with Search_Callback;       use Search_Callback;
 with Find_Utils;            use Find_Utils;
+with Hyper_Grep;            use Hyper_Grep;
+with Glide_Pkg;             use Glide_Pkg;
+with Search_Callback;
 
+with GNAT.Regpat;           use GNAT.Regpat;
 with GNAT.Regexp;           use GNAT.Regexp;
 with GNAT.OS_Lib;
-
 with Ada.Text_IO;           use Ada.Text_IO;
 with Ada.Exceptions;        use Ada.Exceptions;
+with Ada.Strings.Fixed;     use Ada.Strings.Fixed;
 
 with Gtkada.File_Selection; use Gtkada.File_Selection;
-
-with Gtk.Editable;
-
+with Gdk.Color;             use Gdk.Color;
+with Gtk.Text;              use Gtk.Text;
 with Gtk.Main;
 
 package body Hyper_Grep_Base_Pkg.Callbacks is
@@ -166,16 +160,116 @@ package body Hyper_Grep_Base_Pkg.Callbacks is
    procedure On_Start_Button_Clicked
      (Object : access Gtk_Button_Record'Class)
    is
-      S  : Code_Search;
-      RE : Regexp;
+      Highlight_File : constant String := "#FF0000000000";
 
-      Hyper_Grep_Window : constant Hyper_Grep_Base_Access :=
-        Hyper_Grep_Base_Access (Get_Toplevel (Object));
+      S         : Code_Search;
+      RE        : Regexp;
+      Continue  : Boolean := True;
+      Highlight : Gdk_Color;
+
+
+      Hyper_Grep_Window : constant Hyper_Grep_Access :=
+        Hyper_Grep_Access (Get_Toplevel (Object));
 
       Scope : Search_Scope;
 
-      use Gtk.Editable;
+      procedure Reset_Search;
+      --  Call it before every search using this callback.
+
+      procedure Abort_Search;
+      --  Call it to abort the search. The next time the callback is called, it
+      --  will abort the search.
+
+      function Callback
+        (Match_Found : Boolean;
+         File        : String;
+         Line_Nr     : Positive    := 1;
+         Line_Text   : String      := "";
+         Sub_Matches : Match_Array := (0 => No_Match)) return Boolean;
+      --  Print every match 'file:line:text'; ignore file calls.
+      --  Handle Gtk pending events.
+
+      ------------------
+      -- Abort_Search --
+      ------------------
+
+      procedure Abort_Search is
+      begin
+         Continue := False;
+      end Abort_Search;
+
+      --------------
+      -- Callback --
+      --------------
+
+      function Callback
+        (Match_Found : Boolean;
+         File        : String;
+         Line_Nr     : Positive    := 1;
+         Line_Text   : String      := "";
+         Sub_Matches : Match_Array := (0 => No_Match)) return Boolean
+      is
+         Dummy       : Boolean;
+         Parentheses : String (Line_Text'Range);
+
+         use Ada.Strings;
+
+         Location    : constant String :=
+           File & ':' & Fixed.Trim (Positive'Image (Line_Nr), Left);
+         Blanks      : constant String (Location'Range) := (others => ' ');
+
+      begin
+         if Match_Found then
+            Insert (Glide_Access (Hyper_Grep_Window.Glide).Console,
+                    Fore => Highlight,
+                    Chars => Location);
+            Insert (Glide_Access (Hyper_Grep_Window.Glide).Console,
+                    Chars => ':' & Line_Text & ASCII.LF);
+
+            if Sub_Matches (0) /= No_Match then
+               for K in Sub_Matches'Range loop
+                  Insert (Glide_Access (Hyper_Grep_Window.Glide).Console,
+                          Chars => Natural'Image (K));
+                  --  Natural_IO.Put (K, Width => Location'Length);
+
+                  Parentheses := (others => ' ');
+
+                  if Sub_Matches (K) /= No_Match then
+                     Parentheses
+                       (Sub_Matches (K).First .. Sub_Matches (K).Last) :=
+                         (others => '#');
+                  end if;
+
+                  Insert (Glide_Access (Hyper_Grep_Window.Glide).Console,
+                          Chars => '>' & Parentheses & '<');
+               end loop;
+            end if;
+         end if;
+
+         while Gtk.Main.Events_Pending loop
+            Dummy := Gtk.Main.Main_Iteration;
+         end loop;
+
+         if Continue then
+            return True;
+         else
+            return False;
+         end if;
+      end Callback;
+
+      ------------------
+      -- Reset_Search --
+      ------------------
+
+      procedure Reset_Search is
+      begin
+         Continue := True;
+      end Reset_Search;
+
    begin
+      Highlight := Parse (Highlight_File);
+      Alloc (Get_Default_Colormap, Highlight);
+
       if Get_Active (Hyper_Grep_Window.Whole_Rbutton) then
          Scope := Whole;
       elsif Get_Active (Hyper_Grep_Window.Comm_Only_Rbutton) then
@@ -213,15 +307,19 @@ package body Hyper_Grep_Base_Pkg.Callbacks is
             Scope);
       end if;
 
-      Reset_Search;
-
       Set_Sensitive (Hyper_Grep_Window.Stop_Button,  True);
       Set_Sensitive (Hyper_Grep_Window.Start_Button, False);
-      Do_Search (S, Callback'Access);
+
+      if Hyper_Grep_Window.Glide = null then
+         Search_Callback.Reset_Search;
+         Do_Search (S, Search_Callback.Callback'Access);
+      else
+         Reset_Search;
+         Do_Search (S, Callback'Unrestricted_Access);
+      end if;
+
       Set_Sensitive (Hyper_Grep_Window.Stop_Button,  False);
       Set_Sensitive (Hyper_Grep_Window.Start_Button, True);
-
-      Put_Line ("====== End of search");
       Free (S);
 
    exception
@@ -244,7 +342,8 @@ package body Hyper_Grep_Base_Pkg.Callbacks is
      (Object : access Gtk_Button_Record'Class)
    is
    begin
-      Abort_Search;
+      --  ??? Abort_Search;
+      null;
    end On_Stop_Button_Clicked;
 
 end Hyper_Grep_Base_Pkg.Callbacks;
