@@ -235,6 +235,7 @@ package body Language is
                           Buffer (Next_Char - 1) /= Context.Quote_Character));
          end loop;
 
+         --  ??? why is this code commented out
          --  if Buffer (Next_Char) = ASCII.LF then
          --     Line := Line + 1;
          --     Column := 0;
