@@ -1398,7 +1398,8 @@ package body GUI_Utils is
       Accelerators : Gtk.Accel_Group.Gtk_Accel_Group;
       Allow_Create : Boolean := True;
       Ref_Item     : String  := "";
-      Add_Before   : Boolean := True) return Gtk_Menu_Item
+      Add_Before   : Boolean := True;
+      Use_Mnemonics : Boolean := True) return Gtk_Menu_Item
    is
       First     : Natural := Path'First;
       Last      : Natural;
@@ -1443,7 +1444,11 @@ package body GUI_Utils is
             Last := First + 1;
             Skip_To_Char (Path, Last, '/');
 
-            Gtk_New_With_Mnemonic (Menu_Item, Path (First .. Last - 1));
+            if Use_Mnemonics then
+               Gtk_New_With_Mnemonic (Menu_Item, Path (First .. Last - 1));
+            else
+               Gtk_New (Menu_Item, Path (First .. Last - 1));
+            end if;
 
             --  Should we create a submenu ?
             if Last <= Path'Last then

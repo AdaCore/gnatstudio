@@ -300,17 +300,21 @@ package GUI_Utils is
    --  if the latter is null.
 
    function Find_Or_Create_Menu_Tree
-     (Menu_Bar     : Gtk.Menu_Bar.Gtk_Menu_Bar;
-      Menu         : Gtk.Menu.Gtk_Menu;
-      Path         : String;
-      Accelerators : Gtk.Accel_Group.Gtk_Accel_Group;
-      Allow_Create : Boolean := True;
-      Ref_Item     : String  := "";
-      Add_Before   : Boolean := True) return Gtk.Menu_Item.Gtk_Menu_Item;
+     (Menu_Bar      : Gtk.Menu_Bar.Gtk_Menu_Bar;
+      Menu          : Gtk.Menu.Gtk_Menu;
+      Path          : String;
+      Accelerators  : Gtk.Accel_Group.Gtk_Accel_Group;
+      Allow_Create  : Boolean := True;
+      Ref_Item      : String  := "";
+      Add_Before    : Boolean := True;
+      Use_Mnemonics : Boolean := True) return Gtk.Menu_Item.Gtk_Menu_Item;
    --  Create or return the menu_item corresponding to Path in Menu.
    --  Path is a '/'-separated list of menu names, for instance File/New.
    --  Menu_Bar is used if Menu is null
    --  null is returned if the menu couldn't be created.
+   --  If Use_Mnemonics is True, then '_' characters in the path will indicate
+   --  keyboard shortcuts, and need to be doubled to actually display an
+   --  underscore.
 
    procedure Add_Menu
      (Parent     : Gtk.Menu.Gtk_Menu;
