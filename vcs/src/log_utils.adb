@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2002                         --
+--                        Copyright (C) 2002-2003                    --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -43,8 +43,7 @@ package body Log_Utils is
    ----------------
 
    procedure Initialize (Kernel : access Kernel_Handle_Record'Class) is
-      Logs_Dir : constant String :=
-        Normalize_Pathname (Get_Home_Dir (Kernel) & "/log_files");
+      Logs_Dir : constant String := Get_Home_Dir (Kernel) & "log_files";
       Mapping  : constant String :=
         Normalize_Pathname (Logs_Dir & "/mapping");
       Mapper   : File_Mapper_Access;
@@ -88,8 +87,7 @@ package body Log_Utils is
         and then Create
       then
          declare
-            Logs_Dir : constant String :=
-              Normalize_Pathname (Get_Home_Dir (Kernel) & "/log_files");
+            Logs_Dir : constant String := Get_Home_Dir (Kernel) & "log_files";
             File     : File_Descriptor;
             S : constant String := Logs_Dir
               & Directory_Separator
@@ -180,13 +178,11 @@ package body Log_Utils is
      (Kernel    : access Kernel_Handle_Record'Class;
       File_Name : String)
    is
-      Logs_Dir : constant String :=
-        Normalize_Pathname (Get_Home_Dir (Kernel) & "/log_files");
+      Logs_Dir : constant String := Get_Home_Dir (Kernel) & "log_files";
       Mapper   : File_Mapper_Access := Get_Logs_Mapper (Kernel);
    begin
       Remove_Entry (Mapper, File_Name);
-      Save_Mapper
-        (Mapper, Normalize_Pathname (Logs_Dir & "/mapping"));
+      Save_Mapper (Mapper, Logs_Dir & "/mapping");
    end Remove_File_From_Mapping;
 
 end Log_Utils;
