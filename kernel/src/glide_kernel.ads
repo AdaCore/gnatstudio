@@ -288,6 +288,9 @@ private
       Creator : Module_ID;
    end record;
 
+   procedure Free (Module : in out Module_ID);
+   --  Free memory associated to a Module_ID.
+
    package Module_List is new Generic_List (Module_ID);
    Global_Modules_List : Module_List.List;
    --  The list of all the modules that have been loaded in Glide. This has to

@@ -473,6 +473,14 @@ package body Glide_Kernel is
       end if;
    end Complete_ALI_File_If_Needed;
 
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Module : in out Module_ID) is
+   begin
+      null;
+   end Free;
 
    ----------
    -- Free --
