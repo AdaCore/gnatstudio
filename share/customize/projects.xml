@@ -98,7 +98,8 @@
        editor_page="General"
        editor_section="External configuration"
        description="External file that contains the configuration pragmas to use for Ada sources. This file will be used both for this project and all its imported projects"
-       label="Global pragmas">
+       label="Global pragmas"
+       base_name_only="true" >
        <string type="file" />
    </project_attribute> 
 
@@ -108,7 +109,8 @@
        editor_page="General"
        editor_section="External configuration"
        description="External file that contains the configuration pragmas to use for Ada sources in this project. This is the combined with the pragmas found in the Global pragmas attribute of the root project"
-       label="Local pragmas">
+       label="Local pragmas"
+       base_name_only="true" >
        <string type="file" />
    </project_attribute>
 
