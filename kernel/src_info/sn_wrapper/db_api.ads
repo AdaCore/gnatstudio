@@ -159,6 +159,8 @@ private
    type CSF is access CSF_Record;
    pragma Convention (C, CSF);
 
+   pragma Convention (C, Pair);
+
    No_Pair : constant Pair := (null, null, -1);
 
 end DB_API;

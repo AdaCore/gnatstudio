@@ -217,45 +217,24 @@ package body DB_API is
       Movement : Cursor_Movement := Next;
       Result   : out Pair)
    is
-      I_Pair   : System.Address;
-
-      function I_Get_Pair
-        (DB    : DB_File;
-         Move  : Cursor_Movement) return System.Address;
+      procedure I_Get_Pair
+        (DB : DB_File; Move  : Cursor_Movement; Result : out Pair);
       pragma Import (C, I_Get_Pair, "ada_db_get_pair");
-
-      procedure I_Free (Addr : System.Address);
-      pragma Import (C, I_Free, "free");
-
-      function I_Get_Key (I_Pair : System.Address) return CSF;
-      pragma Import (C, I_Get_Key, "ada_get_key");
-
-      function I_Get_Data (I_Pair : System.Address) return CSF;
-      pragma Import (C, I_Get_Data, "ada_get_data");
-
-      function I_Get_DBI (I_Pair : System.Address) return Integer;
-      pragma Import (C, I_Get_DBI, "ada_get_dbi");
 
    begin
       if DB = null then
          Raise_Exception (DB_Error'Identity,
            E_Init_Failed);
       else
-         I_Pair := I_Get_Pair (DB, Movement);
+         I_Get_Pair (DB, Movement, Result);
 
-         if I_Pair = System.Null_Address then
+         if Result.Key = null then
             if Last_ErrNo (DB) /= 0 then -- error occurred
                Raise_Exception (DB_Error'Identity,
                  Error_Message (DB));
             end if;
 
             Result := No_Pair;
-
-         else
-            Result := (Key  => I_Get_Key  (I_Pair),
-                       Data => I_Get_Data (I_Pair),
-                       DBI  => I_Get_DBI  (I_Pair));
-            I_Free (I_Pair);
          end if;
       end if;
    end Get_Pair;
