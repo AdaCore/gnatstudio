@@ -171,6 +171,7 @@ private
       --  The current position when browsing the command history.
 
       Idle_Id : Gtk.Main.Idle_Handler_Id := 0;
+      Idle_Registered : Boolean := False;
       --  The handler for idle callbacks.
    end record;
 
