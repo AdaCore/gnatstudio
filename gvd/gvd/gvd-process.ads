@@ -33,6 +33,7 @@ with Gtkada.Canvas;
 with Debugger; use Debugger;
 with Main_Debug_Window_Pkg;
 with Process_Tab_Pkg;
+with Generic_Values;
 
 package Odd.Process is
 
@@ -82,8 +83,9 @@ package Odd.Process is
       Debugger_Text_Font : Gdk.Font.Gdk_Font := Gdk.Font.Null_Font;
        --  Font used in the debugger window.
 
-      Selected_Item : Gtkada.Canvas.Canvas_Item := null;
-       --  The currently selected item.
+      Selected_Item      : Gtkada.Canvas.Canvas_Item := null;
+      Selected_Component : Generic_Values.Generic_Type_Access := null;
+       --  The currently selected item, and its specific component.
 
    end record;
    type Debugger_Process_Tab is access all Debugger_Process_Tab_Record'Class;

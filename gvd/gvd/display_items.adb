@@ -121,7 +121,15 @@ package body Display_Items is
 
    procedure Update_Display (Item : access Display_Item_Record'Class);
    --  Recompute the size of an item, and redraw its contents.
-   --  It also warns the canvas that the item has changed
+   --  It also warns the canvas that the item has changed.
+
+   procedure Update_Component (Item : access Display_Item_Record'Class;
+                               Component : Generic_Type_Access := null);
+   --  Update a specific component of a complex item.
+   --  The item must have been displayed at least once before the last time
+   --  its visibility state changed.
+   --  If Component is null, the whole item is redraw, otherwise only the
+   --  specific Component is updated.
 
    procedure Dereference_Item (Item : access Display_Item_Record;
                                X    : Gint;
@@ -397,6 +405,30 @@ package body Display_Items is
       end if;
    end Update_Display;
 
+   ----------------------
+   -- Update_Component --
+   ----------------------
+
+   procedure Update_Component (Item : access Display_Item_Record'Class;
+                               Component : Generic_Type_Access := null)
+   is
+   begin
+      if not Get_Selected (Component) then
+         Draw_Rectangle (Pixmap (Item),
+                         GC     => White_GC,
+                         Filled => True,
+                         X      => Get_X (Component.all),
+                         Y      => Get_Y (Component.all),
+                         Width  => Get_Width (Component.all),
+                         Height => Get_Height (Component.all));
+      end if;
+      Paint (Component.all,
+             Black_GC, Xref_Gc, Font,
+             Pixmap (Item),
+             X => Get_X (Component.all),
+             Y => Get_Y (Component.all));
+   end Update_Component;
+
    -----------------
    -- Search_Item --
    -----------------
@@ -585,28 +617,25 @@ package body Display_Items is
             Component : Generic_Type_Access := Get_Component
               (Item.Entity, Gint (Get_X (Event)),
                Gint (Get_Y (Event)) - Item.Title_Height - Border_Spacing);
-
-            Value : Boolean := not Get_Selected (Component);
-            --  Have to memorize it first, since its state might be changed
-            --  when we unselect the current one.
          begin
-            if Item.Debugger.Selected_Item /= null then
-               Set_Selected
-                 (Display_Item (Item.Debugger.Selected_Item).Entity, False);
+            if Item.Debugger.Selected_Item /= null
+              and then Item.Debugger.Selected_Component /= Component
+            then
+               Set_Selected (Item.Debugger.Selected_Component, False);
+               Update_Component (Display_Item (Item.Debugger.Selected_Item),
+                                 Item.Debugger.Selected_Component);
                if Item.Debugger.Selected_Item /= Canvas_Item (Item)  then
-
-                  --  Size hasn't change, so no need to recalculate it.
-                  Update_Display (Display_Item (Item.Debugger.Selected_Item));
                   Gtkada.Canvas.Item_Updated
                     (Item.Debugger.Data_Canvas, Item.Debugger.Selected_Item);
                end if;
             end if;
 
-            Set_Selected (Component, Value);
-            Update_Display (Item);
+            Set_Selected (Component, not Get_Selected (Component));
+            Update_Component (Item, Component);
             Gtkada.Canvas.Item_Updated (Item.Debugger.Data_Canvas, Item);
             if Get_Selected (Component) then
                Item.Debugger.Selected_Item := Canvas_Item (Item);
+               Item.Debugger.Selected_Component := Component;
             else
                Item.Debugger.Selected_Item := null;
             end if;
