@@ -29,6 +29,7 @@ with Interfaces.C.Strings; use Interfaces.C.Strings;
 with System;
 with Gtk.Object; use Gtk.Object;
 with Gtkada.Intl;     use Gtkada.Intl;
+with GVD.Canvas;      use GVD.Canvas;
 
 package body Process_Tab_Pkg is
 
@@ -132,7 +133,7 @@ begin
    Set_Policy (Process_Tab.Scrolledwindow12, Policy_Automatic, Policy_Automatic);
    Add (Process_Tab.Hpaned1, Process_Tab.Scrolledwindow12);
 
-   Gtk_New (Process_Tab.Data_Canvas);
+   Gtk_New (GVD_Canvas (Process_Tab.Data_Canvas));
    Set_Shadow_Type (Process_Tab.Data_Canvas, Shadow_In);
    Add (Process_Tab.Scrolledwindow12, Process_Tab.Data_Canvas);
 
