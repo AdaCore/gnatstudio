@@ -153,8 +153,10 @@ package body Odd.Histories is
       if History.List /= Hlist.Null_List then
          if D = Backward then
             History.Current := Hlist.First (History.List);
+            History.Position := Before_Beginnning;
          else
             History.Current := Hlist.Last (History.List);
+            History.Position := After_End;
          end if;
       end if;
    end Wind;
