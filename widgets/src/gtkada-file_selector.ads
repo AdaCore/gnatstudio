@@ -106,6 +106,7 @@ package Gtkada.File_Selector is
 
    function Get_Selection (Dialog : File_Selector_Window_Access) return String;
    --  Return the selected file.
+   --  Return an empty string if the entry does not exist.
 
    function Get_Ok_Button
      (File_Selection : access File_Selector_Window_Record)

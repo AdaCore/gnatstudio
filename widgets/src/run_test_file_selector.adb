@@ -5,6 +5,7 @@ with Gdk.Pixmap; use Gdk.Pixmap;
 with Gdk.Color;  use Gdk.Color;
 with Test_File_Selector; use Test_File_Selector;
 with Gtkada.File_Selector; use Gtkada.File_Selector;
+with Gtkada.Handlers; use Gtkada.Handlers;
 
 with Pixmaps_IDE; use Pixmaps_IDE;
 
@@ -17,7 +18,7 @@ procedure Run_Test_File_Selector is
 begin
    Gtk.Main.Set_Locale;
    Gtk.Main.Init;
-   Gtk_New (File_Selector_Window, "/");
+   Gtk_New (File_Selector_Window, "");
 
    Create_From_Xpm_D
      (Filter_B.Spec_Pixmap,
@@ -39,5 +40,11 @@ begin
    Register_Filter (File_Selector_Window, Filter_B);
 
    Show_All (File_Selector_Window);
+   Widget_Callback.Connect
+     (Get_Ok_Button (File_Selector_Window), "clicked",
+      Widget_Callback.To_Marshaller (On_Ok_Button_Clicked'Access));
+   Widget_Callback.Connect
+     (Get_Cancel_Button (File_Selector_Window), "clicked",
+      Widget_Callback.To_Marshaller (On_Cancel_Button_Clicked'Access));
    Gtk.Main.Main;
 end Run_Test_File_Selector;

@@ -34,8 +34,15 @@ with Gdk.Pixmap;
 with Gdk.Bitmap;
 
 with Gtkada.File_Selector; use Gtkada.File_Selector;
+with Gtk.Widget; use Gtk.Widget;
 
 package Test_File_Selector is
+
+   procedure On_Ok_Button_Clicked
+     (Object : access Gtk_Widget_Record'Class);
+
+   procedure On_Cancel_Button_Clicked
+     (Object : access Gtk_Widget_Record'Class);
 
    type Filter_Show_Ada is new File_Filter_Record (new String'("Ada Files"))
      with record

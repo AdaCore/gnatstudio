@@ -28,8 +28,38 @@
 
 with String_Utils;              use String_Utils;
 with Ada.Text_IO;               use Ada.Text_IO;
+with Gtk.Widget;                use Gtk.Widget;
+with Gtk.Main;
 
 package body Test_File_Selector is
+
+   --------------------------
+   -- On_Ok_Button_Clicked --
+   --------------------------
+
+   procedure On_Ok_Button_Clicked
+     (Object : access Gtk_Widget_Record'Class)
+   is
+      Win : constant File_Selector_Window_Access :=
+        File_Selector_Window_Access (Get_Toplevel (Object));
+      S   : String := Get_Selection (Win);
+   begin
+      Gtk.Main.Main_Quit;
+      if S /= "" then
+         Put_Line ("You have selected : " & S);
+      end if;
+   end On_Ok_Button_Clicked;
+
+   ------------------------------
+   -- On_Cancel_Button_Clicked --
+   ------------------------------
+
+   procedure On_Cancel_Button_Clicked
+     (Object : access Gtk_Widget_Record'Class)
+   is
+   begin
+      Gtk.Main.Main_Quit;
+   end On_Cancel_Button_Clicked;
 
    ---------------------
    -- Use_File_Filter --
@@ -75,10 +105,13 @@ package body Test_File_Selector is
                   end if;
                end if;
             end loop;
+            Close (File_T);
          exception
             when End_Error =>
                Close (File_T);
             when Use_Error =>
+               null;
+            when Name_Error =>
                null;
          end;
       elsif File'Length >= 4
