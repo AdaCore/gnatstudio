@@ -2224,7 +2224,7 @@ package body Src_Editor_Buffer is
       Strip_CR (Contents.all, Last, CR_Found);
 
       UTF8 := Glib.Convert.Convert
-        (Contents.all (Contents'First .. Last), "UTF-8",
+        (Contents (Contents'First .. Last), "UTF-8",
          Get_Pref (Buffer.Kernel, Default_Charset),
          Ignore'Unchecked_Access, Length'Unchecked_Access);
 
@@ -2232,14 +2232,14 @@ package body Src_Editor_Buffer is
          --  In case conversion failed, use a default encoding so that we can
          --  at least show something in the editor
          UTF8 := Glib.Convert.Convert
-           (Contents.all (Contents'First .. Last), "UTF-8", "ISO-8859-1",
+           (Contents (Contents'First .. Last), "UTF-8", "ISO-8859-1",
             Ignore'Unchecked_Access, Length'Unchecked_Access);
       end if;
 
+      Free (Contents);
       Insert_At_Cursor (Buffer, UTF8, Gint (Length));
 
       g_free (UTF8);
-      Free (Contents);
 
       if CR_Found then
          Buffer.Line_Terminator := CR_LF;
