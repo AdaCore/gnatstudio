@@ -64,6 +64,7 @@ with String_Utils; use String_Utils;
 with Glide_Kernel; use Glide_Kernel;
 with Glide_Kernel.Project; use Glide_Kernel.Project;
 with Glide_Kernel.Editor;  use Glide_Kernel.Editor;
+with Variable_Editors; use Variable_Editors;
 with GUI_Utils;    use GUI_Utils;
 
 package body Project_Trees is
@@ -322,6 +323,21 @@ package body Project_Trees is
       return Gtk_Menu;
    --  Return the contextual menu to be used for the tree.
 
+   procedure On_Add_Variable (Tree : access Gtk_Widget_Record'Class);
+   --  Callback for the "Add variable" contextual menu item
+
+   ---------------------
+   -- On_Add_Variable --
+   ---------------------
+
+   procedure On_Add_Variable (Tree : access Gtk_Widget_Record'Class) is
+      T : Project_Tree := Project_Tree (Tree);
+      Edit : New_Var_Edit;
+   begin
+      Gtk_New (Edit, T.Kernel, Scenario_Variable_Only => True);
+      Show_All (Edit);
+   end On_Add_Variable;
+
    --------------------------
    -- Tree_Contextual_Menu --
    --------------------------
@@ -340,10 +356,34 @@ package body Project_Trees is
 
       Gtk_New (T.Contextual_Menu);
 
-      Gtk_New (Item, Label => "Add directory");
+      Gtk_New (Item, Label => "Add Directory");
+      Set_Sensitive (Item, False);
       Append (T.Contextual_Menu, Item);
 
-      Gtk_New (Item, Label => "Remove directory");
+      Gtk_New (Item, Label => "Change Object Directory");
+      Set_Sensitive (Item, False);
+      Append (T.Contextual_Menu, Item);
+
+      Gtk_New (Item, Label => "Remove Directory");
+      Set_Sensitive (Item, False);
+      Append (T.Contextual_Menu, Item);
+
+      Gtk_New (Item, Label => "");
+      Set_Sensitive (Item, False);
+      Append (T.Contextual_Menu, Item);
+
+      Gtk_New (Item, Label => "Add Variable");
+      Append (T.Contextual_Menu, Item);
+      Widget_Callback.Object_Connect
+        (Item, "activate",
+         Widget_Callback.To_Marshaller (On_Add_Variable'Access), T);
+
+      Gtk_New (Item, Label => "Edit Default Switches");
+      Set_Sensitive (Item, False);
+      Append (T.Contextual_Menu, Item);
+
+      Gtk_New (Item, Label => "Edit Switches for <file>");
+      Set_Sensitive (Item, False);
       Append (T.Contextual_Menu, Item);
 
       return T.Contextual_Menu;
