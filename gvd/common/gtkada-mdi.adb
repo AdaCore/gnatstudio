@@ -2406,9 +2406,8 @@ package body Gtkada.MDI is
       while List /= Null_List loop
          C := MDI_Child (Get_Data (List));
 
-         if C.State = Normal or else C.State = Iconified then
+         if C.State = Normal then
             Num_Children := Num_Children + 1;
-            Minimize_Child (C, False);
          end if;
 
          List := Widget_List.Next (List);
@@ -2469,9 +2468,8 @@ package body Gtkada.MDI is
       while List /= Null_List loop
          C := MDI_Child (Get_Data (List));
 
-         if C.State = Normal or else C.State = Iconified then
+         if C.State = Normal then
             Num_Children := Num_Children + 1;
-            Minimize_Child (C, False);
          end if;
 
          List := Widget_List.Next (List);
@@ -2485,7 +2483,7 @@ package body Gtkada.MDI is
       while List /= Null_List loop
          C := MDI_Child (Get_Data (List));
 
-         if C.State = Normal or else C.State = Iconified then
+         if C.State = Normal then
             C.X := 0;
             C.Y := Level;
             C.Uniconified_Width := W;
@@ -2824,9 +2822,7 @@ package body Gtkada.MDI is
             C2 := MDI_Child (Get_Data (List));
 
             if C2 /= MDI_Child (Child) and then C2.State = Iconified then
-               if C2.Y mod Icon_Height = 0
-                 and then C2.Y <= Child.Y
-               then
+               if abs (C2.Y - Child.Y) / Icon_Height <= 1 then
                   if C2.X + Icons_Width >=
                     Gint (Get_Allocation_Width (MDI.Layout))
                   then
