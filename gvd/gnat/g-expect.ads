@@ -310,15 +310,6 @@ package GNAT.Expect is
    --  process that died while Expect was executing.
 
 private
-
-   type Process_Id is new Integer;
-   Invalid_Pid     : constant Process_Id := -1;
-   Null_Process_Id : constant Process_Id := 0;
-
-   --  ??? The one in GNAT.OS_Lib should be convertible to Integer...
-   type File_Descriptor is new Integer;
-   Invalid_FD      : constant File_Descriptor := -1;
-
    type Filter_List_Elem;
    type Filter_List is access Filter_List_Elem;
    type Filter_List_Elem is
@@ -329,10 +320,14 @@ private
 
    type Pipes_Id is
       record
-         Pid              : Process_Id := Invalid_Pid;
-         Input_Fd         : File_Descriptor := Invalid_FD;
-         Output_Fd        : File_Descriptor := Invalid_FD;
-         Error_Fd         : File_Descriptor := Invalid_FD;
+         Pid              : GNAT.OS_Lib.Process_Id
+           := GNAT.OS_Lib.Invalid_Pid;
+         Input_Fd         : GNAT.OS_Lib.File_Descriptor
+           := GNAT.OS_Lib.Invalid_FD;
+         Output_Fd        : GNAT.OS_Lib.File_Descriptor
+           := GNAT.OS_Lib.Invalid_FD;
+         Error_Fd         : GNAT.OS_Lib.File_Descriptor
+           := GNAT.OS_Lib.Invalid_FD;
          Out_Filters      : Filter_List := null;
          In_Filters       : Filter_List := null;
 
