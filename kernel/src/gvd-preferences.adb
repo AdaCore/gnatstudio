@@ -22,7 +22,7 @@ with Glib;                     use Glib;
 with Default_Preferences;      use Default_Preferences;
 with Glib.Properties.Creation; use Glib.Properties.Creation;
 with Glib.Generic_Properties;  use Glib.Generic_Properties;
-with Odd_Intl;                 use Odd_Intl;
+with Glide_Intl;               use Glide_Intl;
 with Config;                   use Config;
 
 package body GVD.Preferences is

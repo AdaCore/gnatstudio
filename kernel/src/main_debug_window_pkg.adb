@@ -21,7 +21,7 @@
 with Gtk;             use Gtk;
 with Gtk.Enums;       use Gtk.Enums;
 with Gtkada.Handlers; use Gtkada.Handlers;
-with Odd_Intl;        use Odd_Intl;
+with Glide_Intl;      use Glide_Intl;
 with Main_Debug_Window_Pkg.Callbacks; use Main_Debug_Window_Pkg.Callbacks;
 
 package body Main_Debug_Window_Pkg is
