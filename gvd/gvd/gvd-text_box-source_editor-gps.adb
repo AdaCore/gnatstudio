@@ -195,17 +195,23 @@ package body GVD.Text_Box.Source_Editor.GPS is
       File_Name : VFS.Virtual_File)
    is
       Kernel : constant Kernel_Handle := GPS_Window (Editor.Window).Kernel;
+      File   : Virtual_File;
    begin
-      if Editor.Current_File /= File_Name then
-         Editor.Current_File := File_Name;
+      if File_Name = VFS.No_File then
+         Editor.Current_File := VFS.No_File;
+         return;
+      end if;
 
-         if File_Name /= VFS.No_File then
-            Open_File_Editor
-              (Kernel, File_Name,
-               New_File          => False,
-               Enable_Navigation => False,
-               Focus             => False);
-         end if;
+      File := Create_From_Base (Full_Name (File_Name).all, Kernel);
+
+      if Editor.Current_File /= File then
+         Editor.Current_File := File;
+
+         Open_File_Editor
+           (Kernel, File,
+            New_File          => False,
+            Enable_Navigation => False,
+            Focus             => False);
       end if;
    end Load_File;
 
