@@ -272,7 +272,7 @@ package body Glide_Kernel.Preferences is
       File_View_Shows_Only_Project := Param_Spec_Boolean (Gnew_Boolean
         (Name    => "Prj-Editor-File-View-Shows-Only-Project",
          Nick    => -"Files from project only",
-         Blurb   => -("True if the files view should only show files belonging"
+         Blurb   => -("True if the file view should only show files belonging"
                       & " to the project"),
          Default => False,
          Flags   => Param_Readable));
