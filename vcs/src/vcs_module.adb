@@ -431,7 +431,6 @@ package body VCS_Module is
 
       VCS_Root    : constant String := -"VCS";
       VCS         : constant String := '/' & VCS_Root;
-      VCS_Compare : constant String := VCS & "/_" & (-"Compare");
       VCS_Dir     : constant String := VCS & "/_" & (-"Directory");
 
    begin
@@ -474,22 +473,28 @@ package body VCS_Module is
       Gtk_New (Menu_Item);
       Register_Menu (Kernel, VCS, Menu_Item);
       Register_Menu (Kernel, VCS, -"_Update", "", Update'Access);
+      Register_Menu (Kernel, VCS, -"_Commit", "", Commit'Access);
       Register_Menu (Kernel, VCS, -"Start _Editing", "", Open'Access);
       Register_Menu (Kernel, VCS, -"_View revision history", "",
                      View_Log'Access);
 
-      Register_Menu (Kernel, VCS_Compare, -"Against _head revision", "",
+      Gtk_New (Menu_Item);
+      Register_Menu (Kernel, VCS, Menu_Item);
+      Register_Menu (Kernel, VCS, -"Compare against _head rev.", "",
                      View_Head_Diff'Access);
-      Register_Menu (Kernel, VCS_Compare, -"Against _working revision", "",
+      Register_Menu (Kernel, VCS, -"Compare against _working rev.", "",
                      View_Work_Diff'Access);
-      Register_Menu (Kernel, VCS_Compare,
-                     -"Working revision _against head revision", "",
+      Register_Menu (Kernel, VCS,
+                     -"Compare working _against head rev.", "",
                      View_Work_Head_Diff'Access);
+      Gtk_New (Menu_Item);
+
+      Register_Menu (Kernel, VCS, Menu_Item);
+
       Register_Menu (Kernel, VCS, -"_Annotate", "", View_Annotate'Access);
       Register_Menu (Kernel, VCS, -"Remove a_nnotations", "",
                      Remove_Annotations'Access);
       Register_Menu (Kernel, VCS, -"Edit revision _log", "", Edit_Log'Access);
-      Register_Menu (Kernel, VCS, -"_Commit", "", Commit'Access);
       Register_Menu (Kernel, VCS, -"_Revert", "", Revert'Access,
                      Sensitive => False);
       Gtk_New (Menu_Item);
