@@ -550,10 +550,7 @@ package body Commands.Custom is
          --  If substitution failed
          if not Success then
             null;
-
          elsif Script /= null then
-            Trace (Me, "Executing internal command " & Subst_Cmd_Line);
-
             if Command.Save_Output (Command.Cmd_Index) then
                Command.Outputs (Command.Cmd_Index) := new String'
                  (Execute_Command
