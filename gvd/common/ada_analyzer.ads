@@ -50,12 +50,14 @@ package Source_Analyzer is
      (Buffer           : String;
       Indent_Level     : Natural     := 3;
       Indent_Continue  : Natural     := 2;
+      Indent_Decl      : Natural     := 0;
       Reserved_Casing  : Casing_Type := Lower;
       Ident_Casing     : Casing_Type := Mixed;
       Format_Operators : Boolean     := True);
    --  Format Buffer and output the result on standard output.
    --  Indent_Level is the number of spaces when indenting a block.
    --  Indent_Continue is the number of spaces for a continuation line.
+   --  Indent_Decl is the number of spaces for variables declaration.
    --  Reserved_Casing specifies the casing for reserved words.
    --  Ident_Casing specifies the casing for identifiers.
    --  If Format_Operators is True, spaces are added when appropriate around
@@ -67,7 +69,8 @@ package Source_Analyzer is
       Indent          : out Natural;
       Next_Indent     : out Natural;
       Indent_Level    : Natural := 3;
-      Indent_Continue : Natural := 2);
+      Indent_Continue : Natural := 2;
+      Indent_Decl     : Natural := 0);
    --  Parse the constructs contained in Buffer and store all the Ada
    --  constructs with their source location in Result.
    --  As a bonus (since it is computed anyway), store the current and
@@ -78,7 +81,8 @@ package Source_Analyzer is
       Indent          : out Natural;
       Next_Indent     : out Natural;
       Indent_Level    : Natural := 3;
-      Indent_Continue : Natural := 2);
+      Indent_Continue : Natural := 2;
+      Indent_Decl     : Natural := 0);
    --  Given a Buffer, return the indentation level for the last character
    --  in the buffer and for the next line.
 

@@ -126,6 +126,7 @@ package body Source_Analyzer is
       New_Buffer       : in out Extended_Line_Buffer;
       Indent_Level     : Natural               := 3;
       Indent_Continue  : Natural               := 2;
+      Indent_Decl      : Natural               := 0;
       Reserved_Casing  : Casing_Type           := Lower;
       Ident_Casing     : Casing_Type           := Mixed;
       Format_Operators : Boolean               := True;
@@ -480,6 +481,7 @@ package body Source_Analyzer is
       New_Buffer       : in out Extended_Line_Buffer;
       Indent_Level     : Natural               := 3;
       Indent_Continue  : Natural               := 2;
+      Indent_Decl      : Natural               := 0;
       Reserved_Casing  : Casing_Type           := Lower;
       Ident_Casing     : Casing_Type           := Mixed;
       Format_Operators : Boolean               := True;
@@ -1402,7 +1404,19 @@ package body Source_Analyzer is
          end case;
 
          if Started then
-            Do_Indent (Prec, Num_Spaces);
+            --  Inside a declare block, indent broken lines specially
+            --  declare
+            --     A,
+            --         B : Integer;
+
+            if Top (Tokens).Token = Tok_Declare
+               and then Prev_Token = Tok_Comma
+            then
+               Do_Indent (Prec, Num_Spaces + Indent_Decl);
+            else
+               Do_Indent (Prec, Num_Spaces);
+            end if;
+
          else
             Started := True;
          end if;
@@ -1569,6 +1583,7 @@ package body Source_Analyzer is
      (Buffer           : String;
       Indent_Level     : Natural     := 3;
       Indent_Continue  : Natural     := 2;
+      Indent_Decl      : Natural     := 0;
       Reserved_Casing  : Casing_Type := Lower;
       Ident_Casing     : Casing_Type := Mixed;
       Format_Operators : Boolean     := True)
@@ -1578,7 +1593,7 @@ package body Source_Analyzer is
    begin
       New_Buffer := To_Line_Buffer (Buffer);
       Analyze_Ada_Source
-        (Buffer, New_Buffer, Indent_Level, Indent_Continue,
+        (Buffer, New_Buffer, Indent_Level, Indent_Continue, Indent_Decl,
          Reserved_Casing, Ident_Casing, Format_Operators,
          Current_Indent => Ignore,
          Prev_Indent   => Ignore);
@@ -1596,7 +1611,8 @@ package body Source_Analyzer is
       Indent          : out Natural;
       Next_Indent     : out Natural;
       Indent_Level    : Natural := 3;
-      Indent_Continue : Natural := 2)
+      Indent_Continue : Natural := 2;
+      Indent_Decl     : Natural := 0)
    is
       New_Buffer : Extended_Line_Buffer;
       Constructs : aliased Construct_List;
@@ -1604,6 +1620,7 @@ package body Source_Analyzer is
    begin
       Analyze_Ada_Source
         (Buffer, New_Buffer,
+         Indent_Level, Indent_Continue, Indent_Decl,
          Reserved_Casing  => Unchanged,
          Ident_Casing     => Unchanged,
          Format_Operators => False,
@@ -1623,12 +1640,14 @@ package body Source_Analyzer is
       Indent          : out Natural;
       Next_Indent     : out Natural;
       Indent_Level    : Natural := 3;
-      Indent_Continue : Natural := 2)
+      Indent_Continue : Natural := 2;
+      Indent_Decl     : Natural := 0)
    is
       New_Buffer : Extended_Line_Buffer;
    begin
       Analyze_Ada_Source
         (Buffer, New_Buffer,
+         Indent_Level, Indent_Continue, Indent_Decl,
          Reserved_Casing  => Unchanged,
          Ident_Casing     => Unchanged,
          Format_Operators => False,
