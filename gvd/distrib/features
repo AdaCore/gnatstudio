@@ -4,6 +4,7 @@ New features in GVD 2.0.0
   while the underlying debugger is busy.
 - [9325-017] The fields in the "New Debugger" dialog are now filled with
   parameters from the command line.
+- [9403-007] GVD shows the main source file in the explorer when it opens.
 
 - A new multiple document interface (MDI) is provided.
 
