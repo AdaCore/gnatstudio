@@ -507,6 +507,7 @@ package Src_Info.Queries is
       Project         : Projects.Project_Type := Projects.No_Project;
       Include_Self    : Boolean := False;
       LI_Once         : Boolean := False;
+      Indirect_Imports : Boolean := False;
       Single_Source_File : Boolean := False);
    --  Prepare Iterator to return the list of all files that directly import
    --  Source_Filename. The rule is the following:
@@ -539,6 +540,10 @@ package Src_Info.Queries is
    --
    --  You must destroy the iterator when you are done with it, to avoid memory
    --  leaks.
+   --
+   --  If Indirect_Imports is true, then files that indirectly import
+   --  Source_Filename are also returned. In this case, one of the Get
+   --  subprogram is not callable.
 
    procedure Next
      (Lang_Handler : Language_Handlers.Language_Handler;
@@ -548,6 +553,8 @@ package Src_Info.Queries is
 
    function Get (Iterator : Dependency_Iterator) return Dependency;
    --  Return the file pointed to. You must free the returned value.
+   --  This function is not callable if you set Indirect_Imports to True in the
+   --  call to Find_Ancestor_Dependencies.
 
    function Get (Iterator : Dependency_Iterator) return LI_File_Ptr;
    --  Return the LI for the file that contains the dependency. Note that this
@@ -857,6 +864,10 @@ private
 
       LI_Once : Boolean;
       --  True if only one source file per LI should be returned.
+
+      Indirect_Imports : Boolean;
+      --  True if the iterator should also return true for indirect imports of
+      --  Source_Filename.
    end record;
 
    type Entity_Reference_Iterator is record

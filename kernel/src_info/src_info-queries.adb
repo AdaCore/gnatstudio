@@ -2233,6 +2233,7 @@ package body Src_Info.Queries is
             Iterator.Decl_Iter,
             Project                => Project,
             Include_Self           => True,
+            Indirect_Imports       => True,
             LI_Once                => True);
       else
          Find_Ancestor_Dependencies
@@ -2241,6 +2242,7 @@ package body Src_Info.Queries is
             Project                => Project,
             Include_Self           => True,
             LI_Once                => True,
+            Indirect_Imports       => True,
             Single_Source_File     => True);
       end if;
 
@@ -2424,8 +2426,10 @@ package body Src_Info.Queries is
          end if;
 
          while Dep /= No_Dependencies loop
-            exit when (Dep.Value.Dep_Info.Depends_From_Spec
-                       or else Dep.Value.Dep_Info.Depends_From_Body)
+            exit when
+              (Iterator.Indirect_Imports
+               or else Dep.Value.Dep_Info.Depends_From_Spec
+               or else Dep.Value.Dep_Info.Depends_From_Body)
               and then Dep.Value.File.LI = Iterator.Decl_LI
               and then Get_Source_Filename (Dep.Value.File) =
               Iterator.Source_Filename.all;
@@ -2433,11 +2437,11 @@ package body Src_Info.Queries is
          end loop;
 
          if Dep /= null then
-            if Dep.Value.Dep_Info.Depends_From_Spec then
+            if Dep.Value.Dep_Info.Depends_From_Body then
+               Iterator.Current_Part := Unit_Body;
+            else
                Iterator.Current_Part := Unit_Spec;
                --  body will be checked on next call to Next
-            else
-               Iterator.Current_Part := Unit_Body;
             end if;
          end if;
 
@@ -2521,6 +2525,7 @@ package body Src_Info.Queries is
       Project         : Project_Type := No_Project;
       Include_Self    : Boolean := False;
       LI_Once         : Boolean := False;
+      Indirect_Imports : Boolean := False;
       Single_Source_File : Boolean := False)
    is
       Decl_Project : Project_Type := Project;
@@ -2549,6 +2554,7 @@ package body Src_Info.Queries is
       Iterator.Decl_LI          := Locate_From_Source (List, Source_Filename);
       Iterator.Source_Filename  := new String'(Source_Filename);
       Iterator.Include_Self     := Include_Self;
+      Iterator.Indirect_Imports := Indirect_Imports;
 
       Create_Or_Complete_LI
         (Handler                => Get_LI_Handler_From_File
@@ -2601,6 +2607,8 @@ package body Src_Info.Queries is
    is
       S : GNAT.OS_Lib.String_Access;
    begin
+      Assert (Me, not Iterator.Indirect_Imports,
+              "Get cannot be used when searching indirect imports");
       --  Is this a dependency from a separate ?
       if Iterator.Current_Separate /= null then
          return
