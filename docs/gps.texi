@@ -5005,6 +5005,11 @@ version of that file in the repository.
 Show a visual comparison between the corresponding version of the
 file in the repository and the most recent version of that file.
 
+@item Compare against revision...
+@anchor{Compare against revision}
+Show a visual comparison between the local file and a specific revision
+of that file in the repository.
+
 @item Annotate
 @anchor{Annotate}
 Display the annotations for the file, i.e. the information for each
