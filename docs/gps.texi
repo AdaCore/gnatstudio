@@ -2408,7 +2408,6 @@ the same as the ones used by GNAT itself. These are text files
 (using the extension @file{.gpr}) which can be edited either manually, with
 any text editor, or through the more advanced GPS interface.
 
-@cindex url
 The exact syntax of the project files is fully described in the GNAT
 User's Guide (@url{gnat_ug.html}) and GNAT Reference Manual
 (@url{gnat_rm.html}). This is a recommended reading in any case if you
@@ -2425,6 +2424,15 @@ You will usually not need to edit the project files manually, since several
 graphical tools are provided such as the project wizard
 (@ref{The Project Wizard}) and the properties editor(@ref{The
 Project Properties Editor}).
+
+@cindex normalization of projects
+GPS doesn't preserver the layout of whole content of manually created
+project after you have edited them in GPS. For instance, comments are
+not currently preserved. Likewise, multiple case statements in the
+project will be coalesced into a single case statement. This
+normalization is required for GPS to be able to preserve the previous
+semantic of the project in addition to the new settings.
+
 
 @cindex GNAT
 All the non graphical GNAT tools are project aware, meaning that the notion
