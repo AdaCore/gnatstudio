@@ -1,0 +1,28 @@
+CC        = @CC@
+LANGUAGES = c ada
+GNATMAKE  = gnatmake
+
+OBJ_EXT  = .o
+C_EXT    = .c
+CXX_EXT  = .C
+MAIN     = ada
+
+ROOT     = @ROOT@
+GTK_PREFIX = @GTK_PREFIX@
+
+CFLAGS  = -g -O2 -DSYSTEM_INCLUDE=@opsysfile@ \
+	 @DEFS@
+LDFLAGS  = $(shell gtkada-config --libs)
+OBJ_DIR  = $(ROOT)/obj
+SRC_DIRS = $(ROOT)/gvd/gnat $(ROOT)/gvd/pixmaps $(ROOT)/prj_editor/src \
+           $(ROOT)/gbuilder/pixmaps $(ROOT)/gbuilder/src \
+           $(GTK_PREFIX)/include/gtk-2.0 \
+           $(GTK_PREFIX)/lib/gtk-2.0/include \
+           $(GTK_PREFIX)/include/glib-2.0 \
+           $(GTK_PREFIX)/lib/glib-2.0/include \
+           $(GTK_PREFIX)/include/pango-1.0 \
+           $(GTK_PREFIX)/include/atk-1.0
+
+C_SRCS   = gexpect.c gexpect_tty.c pixmaps.c env.c prj_pixmaps.c gui_pixmaps.c
+# utils.c does not compile, otherwise, we would not need to set C_SRCS
+
