@@ -34,12 +34,14 @@ package Glide_Result_View is
 
    procedure Gtk_New
      (View        : out Result_View;
-      Kernel      : Kernel_Handle := null);
+      Kernel      : Kernel_Handle;
+      Module      : Module_ID);
    --  Create a new Location_View.
 
    procedure Initialize
      (View   : access Result_View_Record'Class;
-      Kernel : Kernel_Handle := null);
+      Kernel : Kernel_Handle;
+      Module : Module_ID);
    --  Internal initialization procedure.
 
    procedure Insert
