@@ -418,6 +418,8 @@ package body Python_Module is
          Set_Title (Child, -"Python");
          Set_Dock_Side (Child, Bottom);
          Dock_Child (Child);
+         Raise_Child (Child);
+
       else
          Console := Interpreter_View (Get_Widget (Child));
          Set_Console (Script.Interpreter, Gtk_Text_View (Get_Child (Console)),
