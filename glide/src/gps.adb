@@ -21,7 +21,6 @@
 with Glib.Error;                use Glib.Error;
 with Glib.Messages;             use Glib.Messages;
 with Glib.Object;               use Glib.Object;
-with Pango.Font;                use Pango.Font;
 with Gdk.Pixbuf;                use Gdk.Pixbuf;
 with Gtk;                       use Gtk;
 with Gtk.Accel_Map;             use Gtk.Accel_Map;
@@ -98,10 +97,6 @@ with KeyManager_Module;
 
 procedure GPS is
    use Glide_Main_Window;
-
-   Override_Gtk_Theme : constant Boolean := True;
-   --  Set to False for a True integration with a pre installed Gtk+ 2.0
-   --  environment.
 
    Me        : constant Debug_Handle := Create ("GPS");
    Gtk_Trace : constant Debug_Handle := Create ("Gtk+");
@@ -446,24 +441,6 @@ procedure GPS is
       end if;
 
       Free (Charset);
-
-      if Override_Gtk_Theme then
-         declare
-            Key_Theme : String := Key_Themes'Image
-              (Key_Themes'Val (Get_Pref (GPS.Kernel, Key_Theme_Name)));
-         begin
-            String_Utils.Mixed_Case (Key_Theme);
-            Gtk.Rc.Parse_String
-              ("gtk-font-name=""" &
-               To_String (Get_Pref (GPS.Kernel, Default_Font)) &
-               '"' & ASCII.LF &
-               "gtk-can-change-accels=" &
-               Integer'Image
-                 (Boolean'Pos
-                    (Get_Pref (GPS.Kernel, Can_Change_Accels))) & ASCII.LF &
-               "gtk-key-theme-name=""" & Key_Theme & '"');
-         end;
-      end if;
 
       Parse_Switches;
       Display_Splash_Screen;
@@ -1091,6 +1068,13 @@ procedure GPS is
       if Batch_File /= null then
          Execute_Batch (Batch_File.all, As_File => True);
       end if;
+
+      --  Take into account the preferences loaded when creating the kernel.
+      --  This needs to be done after all the graphical elements have been
+      --  created, to be sure they are realized and will take the preferences
+      --  into acocunt.
+
+      Preferences_Changed (GPS.Kernel);
 
       Started := True;
 
