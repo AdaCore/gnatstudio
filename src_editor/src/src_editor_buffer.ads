@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2002                       --
+--                     Copyright (C) 2001-2003                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -46,6 +46,7 @@ with Glide_Kernel.Modules; use Glide_Kernel.Modules;
 with Src_Info;
 
 with String_List_Utils;
+with Gdk.GC; use Gdk.GC;
 
 package Src_Editor_Buffer is
 
@@ -559,6 +560,29 @@ package Src_Editor_Buffer is
    --  Add the line information to the Buffer.
    --  User must not free Info.
 
+   procedure Add_Line_Highlighting
+     (Editor : access Source_Buffer_Record;
+      Line   : Natural;
+      Id     : String);
+   --  Enable the highlighting of Line using colors defined in category
+   --  corresponding to Id.
+   --  See Src_Editor_Box.Add_Line_Highlighting.
+
+   procedure Remove_Line_Highlighting
+     (Editor : access Source_Buffer_Record;
+      Line   : Natural;
+      Id     : String);
+   --  Disable the highlighting of Line using colors defined in category
+   --  corresponding to Id.
+   --  See Src_Editor_Box.Remove_Line_Highlighting.
+
+   function Get_Highlight_GC
+     (Editor : access Source_Buffer_Record;
+      Line   : Positive) return Gdk_GC;
+   pragma Inline (Get_Highlight_GC);
+   --  Return the current highlighting for Line, or null if no highlighting
+   --  is set.
+
    --------------
    --  Signals --
    --------------
@@ -571,6 +595,10 @@ package Src_Editor_Buffer is
    --    Emitted when the information in the side column has been
    --    changed.
    --
+   --  - "line_highlights_changed"
+   --    procedure Handler (Buffer : Gtk_Object_Record'Class);
+   --    Emitted when the line highlightings have been updated.
+   --
    --  - "buffer_information_changed"
    --    procedure Handler (Buffer : Gtk_Object_Record'Class);
    --    Emitted when the buffer information (such as VCS status)
@@ -581,7 +609,41 @@ package Src_Editor_Buffer is
    --    Emitted when the status of the buffer has been changed.
    --
    --  </signals>
+
 private
+
+   -----------------------
+   -- Line highlighting --
+   -----------------------
+
+   type Boolean_Array is array (Natural range <>) of Boolean;
+   type Boolean_Array_Access is access Boolean_Array;
+
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+     (Boolean_Array, Boolean_Array_Access);
+
+   type Highlighting_Record is record
+      --  The following corresponds to line highlighting.
+      Current_Highlight  : Gdk_GC;
+
+      Enabled_Highlights : Boolean_Array_Access;
+      --  This array corresponds to the categories in Source_Editor_Module_Id.
+      --  If an item is set to True, that means that line highlighting is
+      --  enabled for that categories.
+      --  For simplicity, the range of this array should match the range of
+      --  the array of categories in the cache.
+   end record;
+
+   type Highlighting_Array is array (Natural range <>) of Highlighting_Record;
+   type Highlighting_Array_Access is access Highlighting_Array;
+
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+     (Highlighting_Array, Highlighting_Array_Access);
+
+   ----------------
+   -- Completion --
+   ----------------
+
    type Completion_Data is record
       Prefix : GNAT.OS_Lib.String_Access;
       --  The current prefix for the search.
@@ -708,6 +770,10 @@ private
       --  This array associates original line numbers (ie lines that were
       --  in the view the last time it was saved) with lines in the current
       --  view.
+
+      Highlightings       : Highlighting_Array_Access;
+      --  Associates line numbers in the buffer with highlighting information.
+      --  ??? This could be merged with Real_Lines.
 
       Original_Lines_Number : Natural := 1;
       --  The number of lines in the file on disk.
