@@ -22,10 +22,9 @@ package Language.Debugger.Java is
 
    type Java_Language is abstract new Language_Debugger with private;
 
-   function Is_Simple_Type (Lang : access Java_Language;
-                            Str : String)
-                           return Boolean;
-   --  Return True if Str is a simple type, like integer, ...
+   function Is_Simple_Type
+     (Lang : access Java_Language;
+      Str : String) return Boolean;
 
 private
 
