@@ -35,6 +35,7 @@ with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
 with Glide_Kernel.Console;      use Glide_Kernel.Console;
 with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
 with Glide_Kernel.Project;      use Glide_Kernel.Project;
+with Glide_Kernel.Task_Manager; use Glide_Kernel.Task_Manager;
 
 with String_List_Utils;         use String_List_Utils;
 
@@ -1216,7 +1217,8 @@ package body VCS_View_API is
                           "",
                           File_Args,
                           Null_List,
-                          Check_Handler'Access);
+                          Check_Handler'Access,
+                          -"Version Control: Checking files");
 
                   if First_Check = null then
                      First_Check := Command_Access (File_Checks);
@@ -1279,7 +1281,8 @@ package body VCS_View_API is
                      "",
                      Log_Args,
                      Head_List,
-                     Check_Handler'Access);
+                     Check_Handler'Access,
+                     -"CVS: Checking file changelogs");
 
                   if First_Check = null then
                      First_Check := Command_Access (Log_Checks);
@@ -1311,7 +1314,7 @@ package body VCS_View_API is
       if Cancel_All then
          Destroy (First_Check);
       else
-         Enqueue (Get_Queue (Ref), First_Check);
+         Launch_Background_Command (Kernel, First_Check, True, Name (Ref));
       end if;
 
       Free (Logs);
