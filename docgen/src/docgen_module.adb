@@ -24,7 +24,6 @@ with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
 with Glide_Kernel.Project;     use Glide_Kernel.Project;
 with Glide_Kernel.Modules;     use Glide_Kernel.Modules;
 with Glide_Kernel.Hooks;       use Glide_Kernel.Hooks;
-with Glide_Kernel.Standard_Hooks; use Glide_Kernel.Standard_Hooks;
 with Glide_Intl;               use Glide_Intl;
 with Glib.Object;              use Glib.Object;
 with VFS;                      use VFS;
@@ -602,14 +601,8 @@ package body Docgen_Module is
          Docgen_Module (Docgen_Module_ID).Options);
       Type_Source_File_Table.Reset (List);
 
-      --  ??? <frameset> not supported by internal html viewer.
-
-      Open_Html
-        (Kernel,
-         Filename => Create
-           (Full_Filename =>
-              Get_Doc_Directory (Backend, Kernel)
-            & "index" & Get_Extension (Backend)));
+      --  ??? Since <frameset> not supported by internal html viewer, the
+      --  generated is not open by GPS itself anymore.
 
       Pop_State (Kernel);
 
