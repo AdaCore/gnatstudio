@@ -69,10 +69,10 @@ begin
       --  add reference to the type of this field
       begin
          Type_Decl_Info := Find_Declaration
-           (Global_LI_File,
-            Inst_Var.Buffer
+           (File        => Global_LI_File,
+            Symbol_Name => Inst_Var.Buffer
                (Inst_Var.Value_Type.First .. Inst_Var.Value_Type.Last),
-            Desc.Parent_Point);
+            Location    => Desc.Parent_Point);
 
          Insert_Reference
            (Declaration_Info     => Type_Decl_Info,
