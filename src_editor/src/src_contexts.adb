@@ -310,13 +310,14 @@ package body Src_Contexts is
       is
          Str_Delim     : Character renames Lang.String_Delimiter;
          Quote_Char    : Character renames Lang.Quote_Character;
-         NL_Comm_Start : String    renames Lang.New_Line_Comment_Start;
          M_Comm_Start  : String    renames Lang.Comment_Start;
          M_Comm_End    : String    renames Lang.Comment_End;
          Char_Delim    : Character renames Lang.Constant_Character;
 
-         Looking_For : constant Boolean := not Scanning_Allowed (State);
+         Looking_For   : constant Boolean := not Scanning_Allowed (State);
          --  Whether the final range should or should not be scanned.
+
+         Matches       : Match_Array (0 .. 0);
 
       begin
          while Pos <= Buffer'Last
@@ -337,26 +338,27 @@ package body Src_Contexts is
                         Pos := Pos + M_Comm_Start'Length;
                         exit;
 
-                     elsif NL_Comm_Start'Length /= 0
-                       and then Pos + NL_Comm_Start'Length - 1 <= Buffer'Last
-                       and then Buffer (Pos .. Pos + NL_Comm_Start'Length - 1)
-                       = NL_Comm_Start
-                     then
-                        State := Mono_Comments;
-                        Section_End := Pos - 1;
-                        Pos := Pos + NL_Comm_Start'Length;
-                        exit;
+                     else
+                        Match (Lang.New_Line_Comment_Start.all,
+                               Buffer, Matches, Pos);
 
-                     elsif Buffer (Pos) = Str_Delim
-                       and then (Pos = Buffer_First
-                                 or else Pos = Buffer'Last
-                                 or else Buffer (Pos - 1) /= Char_Delim
-                                 or else Buffer (Pos + 1) /= Char_Delim)
-                     then
-                        State := Strings;
-                        Section_End := Pos - 1;
-                        Pos := Pos + 1;
-                        exit;
+                        if Matches (0) /= No_Match then
+                           State := Mono_Comments;
+                           Section_End := Pos - 1;
+                           Pos := Matches (0).Last + 1;
+                           exit;
+
+                        elsif Buffer (Pos) = Str_Delim
+                          and then (Pos = Buffer_First
+                                    or else Pos = Buffer'Last
+                                    or else Buffer (Pos - 1) /= Char_Delim
+                                    or else Buffer (Pos + 1) /= Char_Delim)
+                        then
+                           State := Strings;
+                           Section_End := Pos - 1;
+                           Pos := Pos + 1;
+                           exit;
+                        end if;
                      end if;
 
                      Pos := Pos + 1;
