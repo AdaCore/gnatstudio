@@ -48,7 +48,7 @@ with Prj;                       use Prj;
 with Src_Info;                  use Src_Info;
 with Traces;                    use Traces;
 
---  Modules registered by Glide.
+--  Modules registered by GPS.
 with Aunit_Module;
 with Browsers.Dependency_Items;
 with Browsers.Projects;
@@ -70,7 +70,7 @@ with Navigation_Module;
 --  The LI parsers
 with Src_Info.ALI;
 
-procedure Glide2 is
+procedure GPS is
    use Glide_Main_Window;
 
    Me : Debug_Handle := Create ("GPS");
@@ -145,7 +145,7 @@ procedure Glide2 is
             Create
               (File,
                Name => String_Utils.Name_As_Directory (Dir.all)
-                 & "traces_conf");
+                 & "traces.cfg");
             Put_Line (File, ">log");
             Put_Line (File, "+");
             Put_Line (File, "DEBUG.COLORS=no");
@@ -190,7 +190,7 @@ begin
 
    --  Initialize the traces
    Traces.Parse_Config_File
-     (Default => String_Utils.Name_As_Directory (Dir.all) & "traces_conf");
+     (Default => String_Utils.Name_As_Directory (Dir.all) & "traces.cfg");
 
    Gtk_New
      (GPS, "<gps>", Glide_Menu.Glide_Menu_Items.all, Dir.all, Prefix.all);
@@ -367,4 +367,4 @@ begin
    Free (Home);
    Free (Dir);
    Free (Prefix);
-end Glide2;
+end GPS;
