@@ -1,5 +1,11 @@
 Known Problems fixed in GVD 2.0.0
 
+- [9125-003] Incorrect parsing of incomplete record types
+  Problem:    When trying to display an incomplete record (in some rare cases,
+              when the compiler generates partial debug information), GVD will
+              hang trying to parse its type.
+  Workaround: Use the tooltips or print these types instead.
+
 - Incorrect detection of file extension in the explorer
   Problem:    The explorer tree on the left of the GVD window incorrectly
               handles files with no extension, and they are put at the same
