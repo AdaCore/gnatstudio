@@ -25,8 +25,13 @@ with Gtk.Style;
 with Prj;
 
 with Glide_Kernel;
+with Histories;
 
 package Project_Viewers is
+
+   Project_History_Key : constant Histories.History_Key := "project_files";
+   --  Key to use in the kernel histories to store the most recently opened
+   --  files.
 
    type Project_Viewer_Record is new Gtk.Box.Gtk_Hbox_Record with private;
    type Project_Viewer is access all Project_Viewer_Record'Class;

@@ -107,10 +107,6 @@ package body Project_Viewers is
 
    Project_Switches_Name : constant String := "Project Switches";
 
-   Hist_Key : constant History_Key := "project_files";
-   --  Key to use in the kernel histories to store the most recently opened
-   --  files.
-
    type View_Display is access procedure
      (Viewer    : access Project_Viewer_Record'Class;
       File_Name : String;
@@ -486,7 +482,7 @@ package body Project_Viewers is
      (Kernel : access Kernel_Handle_Record'Class)
    is
       Value       : constant String_List_Access := Get_History
-        (Get_History (Kernel), Hist_Key);
+        (Get_History (Kernel).all, Project_History_Key);
       Reopen_Menu : Gtk_Menu;
       Mitem       : Gtk_Menu_Item;
    begin
@@ -521,7 +517,7 @@ package body Project_Viewers is
      (Kernel : access Kernel_Handle_Record'Class;
       Filename : String) is
    begin
-      Add_To_History (Kernel, Hist_Key, Filename);
+      Add_To_History (Kernel, Project_History_Key, Filename);
       Refresh_Reopen_Menu (Kernel);
    end Add_To_Reopen;
 
@@ -1433,7 +1429,8 @@ package body Project_Viewers is
                  File_Pattern      => "*.gpr",
                  Pattern_Name      => "Project files",
                  Use_Native_Dialog =>
-                   Get_Pref (Get_Kernel (File), Use_Native_Dialogs));
+                   Get_Pref (Get_Kernel (File), Use_Native_Dialogs),
+                 History           => Get_History (Get_Kernel (File)));
 
          begin
             if Name /= "" then
@@ -1689,7 +1686,8 @@ package body Project_Viewers is
                      File_Pattern      => "*.ad*",
                      Pattern_Name      => "Ada source files",
                      Use_Native_Dialog =>
-                       Get_Pref (Ed.Kernel, Use_Native_Dialogs));
+                       Get_Pref (Ed.Kernel, Use_Native_Dialogs),
+                     History           => Get_History (Ed.Kernel));
 
                begin
                   if File /= "" then
@@ -1702,7 +1700,8 @@ package body Project_Viewers is
                     (Title             => -"Select the main file to add",
                      Base_Directory    => Get_String (Dirs (Dirs'First)),
                      Use_Native_Dialog =>
-                       Get_Pref (Ed.Kernel, Use_Native_Dialogs));
+                       Get_Pref (Ed.Kernel, Use_Native_Dialogs),
+                     History           => Get_History (Ed.Kernel));
                begin
                   if File /= "" then
                      Add_Main_File (Ed, Base_Name (File));
@@ -1715,7 +1714,8 @@ package body Project_Viewers is
             File : constant String := Select_File
               (Title             => -"Select the main file to add",
                Use_Native_Dialog =>
-                 Get_Pref (Ed.Kernel, Use_Native_Dialogs));
+                 Get_Pref (Ed.Kernel, Use_Native_Dialogs),
+               History           => Get_History (Ed.Kernel));
 
          begin
             if File /= "" then
@@ -2435,7 +2435,8 @@ package body Project_Viewers is
       Register_Menu (Kernel, Project, null, Ref_Item => -"Edit",
                      Add_Before => False);
 
-      Register_Menu (Kernel, Project, -"New...", "", On_New_Project'Access);
+      Register_Menu (Kernel, Project, -"New...", "", On_New_Project'Access,
+                     Ref_Item => -"Open...", Add_Before => True);
 
       Prj_Editor_Module_ID.Reopen_Menu := Register_Menu
         (Kernel, Project, -"Reopen", "",
