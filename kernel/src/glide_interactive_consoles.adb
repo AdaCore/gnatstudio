@@ -167,6 +167,10 @@ package body Glide_Interactive_Consoles is
 
       Get_Iter_At_Mark (Console.Buffer, Prompt_Iter, Console.Prompt_Mark);
       Get_End_Iter (Console.Buffer, Last_Iter);
+
+      Success :=
+        Scroll_To_Iter (Console.View, Last_Iter, 0.0, False, 0.0, 0.0);
+
       Apply_Tag
         (Console.Buffer, Console.Uneditable_Tag, Prompt_Iter, Last_Iter);
 
