@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2001-2003                       --
+--                     Copyright (C) 2001-2004                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
@@ -259,6 +259,9 @@ package body Src_Editor_Buffer is
 
    procedure User_Edit_Hook (Buffer : access Source_Buffer_Record'Class);
    --  Actions that must be executed whenever the user inserts or deletes text.
+
+   procedure Edit_Hook (Buffer : access Source_Buffer_Record'Class);
+   --  Actions that must be executed whenever the buffer text is changed.
 
    procedure Lines_Remove_Hook_Before
      (Buffer     : access Source_Buffer_Record'Class;
@@ -794,6 +797,17 @@ package body Src_Editor_Buffer is
       Clear (Buffer.Completion);
    end Cursor_Move_Hook;
 
+   ---------------
+   -- Edit_Hook --
+   ---------------
+
+   procedure Edit_Hook (Buffer : access Source_Buffer_Record'Class) is
+   begin
+      --  Request re-parsing of the blocks.
+
+      Register_Edit_Timeout (Buffer);
+   end Edit_Hook;
+
    --------------------
    -- User_Edit_Hook --
    --------------------
@@ -803,10 +817,6 @@ package body Src_Editor_Buffer is
       --  Clear the completion data.
 
       Clear (Buffer.Completion);
-
-      --  Request re-parsing of the blocks.
-
-      Register_Edit_Timeout (Buffer);
    end User_Edit_Hook;
 
    ------------------
@@ -1058,6 +1068,8 @@ package body Src_Editor_Buffer is
         To_Unchecked_String (Get_Chars (Nth (Params, 2)));
 
    begin
+      Edit_Hook (Buffer);
+
       if Buffer.Inserting then
          return;
       end if;
@@ -1248,6 +1260,8 @@ package body Src_Editor_Buffer is
             Buffer_Line_Type (Line_Start + 1),
             Buffer_Line_Type (Line_End + 1));
       end if;
+
+      Edit_Hook (Buffer);
 
       if Buffer.Inserting then
          return;
