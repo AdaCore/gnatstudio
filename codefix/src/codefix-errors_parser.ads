@@ -32,16 +32,17 @@
 
 --  Adding an error parser is quite easy. An error parser is a tagged type
 --  derived from 'Error_Parser'. The two values of the discriminant should be
---  defined at the derivation. 'Subcategory' is used to know which category of
+--  defined at the derivation. 'Category' is used to know which category of
 --  error the parser fixes. It is used to know if the user wants or not to fix
---  this error. If you want to create a new category, just add it at the end of
---  the type 'Errors_Subcategories'. The genius programmers of GPS should have
---  managed a way to update automatically the structure of the preferences. The
---  second parameter of 'Error_Parser'is 'Nb_Parser'. It is used to know how
---  many regular expressions you want to check in your parser. In fact, you can
---  have some messages that can't be described in one expression, but close
---  enough to make a bit redundant the creation of a new 'Error_Parser'. That's
---  why you can create more than one regular expression for a parser.
+--  this error. If you want to create a new category, just type an indedite
+--  indedite value for the discriminant. The genius programmers of GPS should
+--  have managed a way to update automatically the structure of the
+--  preferences. The second parameter of 'Error_Parser'is 'Nb_Parser'. It is
+--  used to know how many regular expressions you want to check in your parser.
+--  In fact, you can have some messages that can't be described in one
+--  expression, but close enough to make a bit redundant the creation of a new
+--  'Error_Parser'. That's why you can create more than one regular expression
+--  for a parser.
 
 
 --  After having chosen the two discriminants, you must at least implement the
@@ -73,15 +74,14 @@
 --  'Uncorrectable_Message'. Then, Codefix will consider that the message does
 --  not match and the search will continue.
 
---  A possible fix is an object called 'Extract'. It is a copy of the original
---  text with some modifications (lines deleted, added or modified). More than
---  one possibility can be associated with an error, each one have to be
---  appended to the object Solution_List, which is a 'Generic_List' of
---  'Extract'. Later, the user will chose which one he wants. The main
---  functionality of this procedure Fix is to add extracts to Solution_List.
+--  A possible fix is represented in an object derived from Text_Command.
+--  Most of times, you won't have to care about the internal representation
+--  of this object. You just have to get the solution list given from the
+--  formal error function, and then return it with the parameter 'Solution'
+--  of Fix function.
 
 --  The object Message is the message that matches a parser. The cols that it
---  contains is a little modified (a tabulation is equal to a character, not a
+--  contains are a little modified (a tabulation is equal to a character, not a
 --  position mod 8).
 
 --  The object Matches is the Match_Array resulting from the execution of the
@@ -92,16 +92,16 @@
 --  can extract new errors captions. It is necessary to use this object when a
 --  message is on more than one line. The problem is that if you use the
 --  function 'Get_Message' and discover that the message is not matching with
---  ones you need,
---  this message will never be parsed by other parsers. So, you have to call
---  first the function 'Preview', check if you really want to treat this
---  message and then call 'Skip_Message' to suppress the message from the list.
---  This function assumes that you won't need to get nonadjacent message for
---  the same treatment. If you need such of thing, add a complain at the
---  beginning of the document.
+--  ones you need, this message will never be parsed by other parsers. So, you
+--  have to call first the function 'Preview', check if you really want to
+--  treat this message and then call 'Skip_Message' to suppress the message
+--  from the list. This function assumes that you won't need to get nonadjacent
+--  message for the same treatment. If you need such of thing, add a complain
+--  at the beginning of the document.
 
 --  In the body of Fix, you have to call one or more functions from
---  Formal_Errors to generate at least one extract and add it in 'Solutions'.
+--  Formal_Errors to generate at least one Text_Command and add it in
+--  'Solutions'.
 
 
 --  After having created your own 'Error_Parser', you have to add it in the
@@ -118,8 +118,8 @@
 --  'Text_Manager' packages to know which possibilities you have. The only
 --  thing important is to avoid using the error message, but variables that
 --  have been initialized from it in the Errors_Parser, because the error
---  message can change
---  and 'Formal_Errors' should not be disturbed by these changes.
+--  message can change and 'Formal_Errors' should not be disturbed by these
+--  changes.
 
 with Ada.Unchecked_Deallocation;
 
@@ -352,6 +352,21 @@ package Codefix.Errors_Parser is
       Solutions    : out Solution_List;
       Matches      : Match_Array);
    --  Fix instruction where '|' stands for 'or'
+
+   type Bad_End_Block is new Error_Parser
+     (new String'("Wrong_Keyword"), 1)
+   with null record;
+
+   procedure Initialize (This : in out Bad_End_Block);
+
+   procedure Fix
+     (This         : Bad_End_Block;
+      Errors_List  : in out Errors_Interface'Class;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Message      : Error_Message;
+      Solutions    : out Solution_List;
+      Matches      : Match_Array);
+   --  Fix "end sth" expected in column 7 for "sth"
 
    type Unqualified_Expression is new Error_Parser
      (new String'("Qualified_Expression"), 1)
