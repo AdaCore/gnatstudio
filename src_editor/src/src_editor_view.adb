@@ -1288,6 +1288,7 @@ package body Src_Editor_View is
 
       if Get_Window (Event) = Left_Window
         and then Get_Event_Type (Event) = Button_Press
+        and then Get_Button (Event) = 1
       then
          declare
             Dummy_Gint         : Gint;
