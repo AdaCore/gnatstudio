@@ -54,7 +54,7 @@ with Traces; use Traces;
 package body Prj_API is
    use Project_Hash.Project_Htable;
 
-   Me : Debug_Handle := Create ("Prj_API");
+   Me : constant Debug_Handle := Create ("Prj_API");
 
    procedure Initialize;
    --  Initialize this package and the GNAT packages.
@@ -185,7 +185,7 @@ package body Prj_API is
 
    function Create_Project (Name, Path : String) return Project_Node_Id is
       D : constant String := Path & Name & Project_File_Extension;
-      Project : Project_Node_Id := Default_Project_Node (N_Project);
+      Project : constant Project_Node_Id := Default_Project_Node (N_Project);
       Project_Name : Name_Id;
    begin
       --  Adding the name of the project
@@ -228,7 +228,7 @@ package body Prj_API is
       Kind : Variable_Kind := List)
       return Project_Node_Id
    is
-      Node : Project_Node_Id :=
+      Node : constant Project_Node_Id :=
         Default_Project_Node (N_Variable_Declaration, Kind);
    begin
       Name_Len := Name'Length;
@@ -253,7 +253,7 @@ package body Prj_API is
       Kind : Variable_Kind := List)
       return Project_Node_Id
    is
-      Node : Project_Node_Id :=
+      Node : constant Project_Node_Id :=
         Default_Project_Node (N_Attribute_Declaration, Kind);
    begin
       Name_Len := Name'Length;
@@ -281,7 +281,7 @@ package body Prj_API is
       Add_Before_First_Case_Or_Pkg : Boolean := False)
       return Project_Node_Id
    is
-      Node : Project_Node_Id :=
+      Node : constant Project_Node_Id :=
         Default_Project_Node (N_Typed_Variable_Declaration, Prj.Single);
    begin
       Name_Len := Name'Length;
@@ -1515,7 +1515,8 @@ package body Prj_API is
    function Enclose_In_Expression (Node : Project_Node_Id)
       return Project_Node_Id
    is
-      Expr : Project_Node_Id := Default_Project_Node (N_Expression, Single);
+      Expr : constant Project_Node_Id :=
+        Default_Project_Node (N_Expression, Single);
    begin
       Set_First_Term (Expr, Default_Project_Node (N_Term, Single));
       Set_Current_Term (First_Term (Expr), Node);
@@ -3290,7 +3291,7 @@ package body Prj_API is
    is
       type Boolean_Array is array (Positive range <>) of Boolean;
 
-      List    : Name_Id_Array := Topological_Sort (Root_Project);
+      List    : constant Name_Id_Array := Topological_Sort (Root_Project);
       Include : Boolean_Array (List'Range) := (others => False);
       Result  : Project_Id_Array (List'Range);
       Name    : Name_Id := No_Name;
@@ -3365,7 +3366,7 @@ package body Prj_API is
    begin
       if Recursive then
          declare
-            List : Name_Id_Array := Topological_Sort (Root_Project);
+            List : constant Name_Id_Array := Topological_Sort (Root_Project);
             Iter : Imported_Project_Iterator (List'Length);
          begin
             Iter.List := List;
@@ -3552,7 +3553,7 @@ package body Prj_API is
          return Sources;
       else
          declare
-            S : String_Array_Access := new String_Array
+            S : constant String_Array_Access := new String_Array
               (Sources'First .. Index - 1);
          begin
             S.all := Sources (Sources'First .. Index - 1);
@@ -3804,7 +3805,7 @@ package body Prj_API is
       Current_Language : String_List_Id;
       Current_Dir : String_List_Id;
       Dir : Dir_Type;
-      Naming : Naming_Data := Projects.Table (Project_View).Naming;
+      Naming : constant Naming_Data := Projects.Table (Project_View).Naming;
       Elem : Array_Element_Id;
 
    begin
@@ -3885,7 +3886,7 @@ package body Prj_API is
    function Get_Language_Of
      (Project : Project_Id; Source_Filename : String) return Name_Id
    is
-      Naming : Naming_Data := Projects.Table (Project).Naming;
+      Naming : constant Naming_Data := Projects.Table (Project).Naming;
       Elem   : Array_Element_Id;
    begin
       --  Check if it matches one of the naming schemes
@@ -3991,7 +3992,7 @@ package body Prj_API is
       Default        : String := "";
       Index          : String := "") return String
    is
-      Value : Variable_Value := Get_Attribute_Value
+      Value : constant Variable_Value := Get_Attribute_Value
         (Project_View, Attribute_Name, Package_Name, Index);
    begin
       case Value.Kind is
@@ -4019,7 +4020,7 @@ package body Prj_API is
       Index          : String := "") return GNAT.OS_Lib.Argument_List
    is
       No_Value : Argument_List (1 .. 0);
-      Value : Variable_Value := Get_Attribute_Value
+      Value    : constant Variable_Value := Get_Attribute_Value
         (Project_View, Attribute_Name, Package_Name, Index);
       Val : String_List_Id;
    begin
@@ -4074,7 +4075,7 @@ package body Prj_API is
    function Get_Languages (Project_View : Project_Id)
       return GNAT.OS_Lib.Argument_List
    is
-      Languages : Argument_List :=
+      Languages : constant Argument_List :=
         Get_Attribute_Value (Project_View, Languages_Attribute);
    begin
       if Languages'Length = 0 then

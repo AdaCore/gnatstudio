@@ -42,7 +42,7 @@ with Ada.Exceptions;            use Ada.Exceptions;
 
 package body Glide_Kernel.Help is
 
-   Me : Debug_Handle := Create ("Glide_Kernel.Help");
+   Me : constant Debug_Handle := Create ("Glide_Kernel.Help");
 
    type Help_Browser_Record is new Gtk_Scrolled_Window_Record with record
       Current_Help_File : GNAT.OS_Lib.String_Access;
@@ -155,9 +155,9 @@ package body Glide_Kernel.Help is
      (Object : access Gtk_Widget_Record'Class;
       Params : Glib.Values.GValues)
    is
-      Html   : Help_Browser := Help_Browser (Object);
+      Html   : constant Help_Browser := Help_Browser (Object);
       Url    : constant String := Get_String (Nth (Params, 1));
-      Stream : Csc_HTML_Stream :=
+      Stream : constant Csc_HTML_Stream :=
         Csc_HTML_Stream (Get_Proxy (Nth (Params, 2)));
       Buffer : String_Access;
 
@@ -214,7 +214,7 @@ package body Glide_Kernel.Help is
       Params : Glib.Values.GValues;
       Kernel : Kernel_Handle)
    is
-      Html     : Help_Browser := Help_Browser (Object);
+      Html     : constant Help_Browser := Help_Browser (Object);
       Url      : constant String := Get_String (Nth (Params, 1));
       Result   : Boolean := True;
       Anchor   : Natural := Index (Url, "#");
@@ -246,11 +246,11 @@ package body Glide_Kernel.Help is
       end if;
 
       if Result and then Anchor < Url'Last then
-         Push_State (Kernel_Handle (Kernel), Busy);
+         Push_State (Kernel, Busy);
          Trace (Me, "jumping to anchor " & Url (Anchor .. Url'Last));
          Result := Jump_To_Anchor
            (Html.Csc, Url (Anchor + 1 .. Url'Last));
-         Pop_State (Kernel_Handle (Kernel));
+         Pop_State (Kernel);
       end if;
 
    exception
@@ -292,7 +292,7 @@ package body Glide_Kernel.Help is
      (Html : access Gtk_Widget_Record'Class;
       Event : Gdk_Event) return Boolean
    is
-      H : Help_Browser := Help_Browser (Html);
+      H   : constant Help_Browser := Help_Browser (Html);
       Adj : Gtk_Adjustment;
    begin
       case Get_Key_Val (Event) is
@@ -430,7 +430,7 @@ package body Glide_Kernel.Help is
       Regular        : Boolean := False) return Boolean
    is
       MDI      : constant MDI_Window := Get_MDI (Kernel);
-      Child    : MDI_Child := Find_MDI_Child_By_Tag
+      Child    : constant MDI_Child := Find_MDI_Child_By_Tag
         (MDI, Help_Browser_Record'Tag);
       Scrolled : Help_Browser;
 
@@ -453,7 +453,7 @@ package body Glide_Kernel.Help is
      (Kernel : access Kernel_Handle_Record'Class) return Boolean
    is
       MDI      : constant MDI_Window := Get_MDI (Kernel);
-      Child    : MDI_Child := Find_MDI_Child_By_Tag
+      Child    : constant MDI_Child := Find_MDI_Child_By_Tag
         (MDI, Help_Browser_Record'Tag);
       Scrolled : Help_Browser;
 

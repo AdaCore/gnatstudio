@@ -60,7 +60,7 @@ with Ada.Text_IO;               use Ada.Text_IO;
 
 package body Src_Editor_Module is
 
-   Me : Debug_Handle := Create ("Src_Editor_Module");
+   Me : constant Debug_Handle := Create ("Src_Editor_Module");
 
    type Source_Editor_Module_Record is new Module_ID_Record with record
       Reopen_Menu_Item : Gtk_Menu_Item;
@@ -285,7 +285,7 @@ package body Src_Editor_Module is
    is
       pragma Unreferenced (Widget);
 
-      File  : String := Get_String (Nth (Args, 1));
+      File  : constant String := Get_String (Nth (Args, 1));
    begin
       Create_Line_Information_Column
         (Kernel,
@@ -345,7 +345,7 @@ package body Src_Editor_Module is
    is
       pragma Unreferenced (Widget);
 
-      Context      : Selection_Context_Access :=
+      Context      : constant Selection_Context_Access :=
         To_Selection_Context_Access (Get_Address (Nth (Args, 1)));
       Area_Context : File_Area_Context_Access;
       Infos        : Line_Information_Data;
@@ -503,8 +503,8 @@ package body Src_Editor_Module is
       Force  : Boolean := False) return Save_Return_Value
    is
       Success        : Boolean;
-      Containing_Box : Source_Box := Source_Box (Child);
-      Box            : Source_Editor_Box := Containing_Box.Editor;
+      Containing_Box : constant Source_Box := Source_Box (Child);
+      Box            : constant Source_Editor_Box := Containing_Box.Editor;
       Button         : Message_Dialog_Buttons;
    begin
       if Force then
@@ -747,7 +747,7 @@ package body Src_Editor_Module is
       Name    : String := "";
       Success : out Boolean)
    is
-      Child    : MDI_Child := Find_Current_Editor (Kernel);
+      Child    : constant MDI_Child := Find_Current_Editor (Kernel);
       Source   : Source_Editor_Box;
 
    begin
@@ -822,8 +822,8 @@ package body Src_Editor_Module is
       Kernel : Kernel_Handle)
    is
       pragma Unreferenced (Params);
-      Item : Gtk_Menu_Item := Gtk_Menu_Item (Widget);
-      Label : Gtk_Label := Gtk_Label (Get_Child (Item));
+      Item  : constant Gtk_Menu_Item := Gtk_Menu_Item (Widget);
+      Label : constant Gtk_Label := Gtk_Label (Get_Child (Item));
    begin
       Open_File_Editor (Kernel, Get_Text (Label));
 
@@ -1072,7 +1072,7 @@ package body Src_Editor_Module is
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
       pragma Unreferenced (Widget);
-      Editor : Source_Editor_Box := Find_Current_Editor (Kernel);
+      Editor : constant Source_Editor_Box := Find_Current_Editor (Kernel);
    begin
       Goto_Declaration_Or_Body
         (Kernel,
@@ -1094,7 +1094,7 @@ package body Src_Editor_Module is
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
       pragma Unreferenced (Widget);
-      Editor : Source_Editor_Box := Find_Current_Editor (Kernel);
+      Editor : constant Source_Editor_Box := Find_Current_Editor (Kernel);
    begin
       Goto_Declaration_Or_Body
         (Kernel, To_Body => True,
@@ -1301,7 +1301,7 @@ package body Src_Editor_Module is
             MDI   : constant MDI_Window := Get_MDI (Kernel);
             File  : constant String  := Get_String (Data (Data'First));
             Id    : constant String  := Get_String (Data (Data'First + 1));
-            Info  : Line_Information_Data :=
+            Info  : constant Line_Information_Data :=
               To_Line_Information (Get_Address (Data (Data'First + 2)));
             Stick_To_Data : constant Boolean :=
               Get_Boolean (Data (Data'First + 3));
@@ -1341,7 +1341,7 @@ package body Src_Editor_Module is
                   exit when Child = null;
 
                   declare
-                     Title : String := Get_Title (Child);
+                     Title : constant String := Get_Title (Child);
                   begin
                      --  ??? Right now, we detect that a certain MDI child
                      --  is an editor by looking at the first character of
@@ -1395,7 +1395,7 @@ package body Src_Editor_Module is
    is
       pragma Unreferenced (Widget);
 
-      File : File_Selection_Context_Access :=
+      File : constant File_Selection_Context_Access :=
         File_Selection_Context_Access (Context);
    begin
       Trace (Me, "On_Edit_File: " & File_Information (File));
@@ -1456,7 +1456,7 @@ package body Src_Editor_Module is
      (Kernel : access Kernel_Handle_Record'Class;
       Child  : Gtk.Widget.Gtk_Widget) return Selection_Context_Access
    is
-      C : Source_Box := Source_Box (Child);
+      C : constant Source_Box := Source_Box (Child);
    begin
       return Default_Factory (Kernel, C.Editor);
    end Default_Factory;
@@ -1476,7 +1476,7 @@ package body Src_Editor_Module is
       Button      : Gtk_Button;
       Toolbar     : constant Gtk_Toolbar := Get_Toolbar (Kernel);
       Undo_Redo   : Undo_Redo_Information;
-      Reopen_File_Name : String
+      Reopen_File_Name : constant String
         := Format_Pathname (Get_Home_Dir (Kernel) & "/recent_files");
       Reopen_File : File_Type;
       Buffer      : String (1 .. 1024);
@@ -1671,7 +1671,7 @@ package body Src_Editor_Module is
    is
       use String_List_Utils.String_List;
 
-      The_Data    : Source_Editor_Module :=
+      The_Data    : constant Source_Editor_Module :=
         Source_Editor_Module (Src_Editor_Module_Id);
       Node        : List_Node;
       Reopen_Menu : Gtk_Menu;

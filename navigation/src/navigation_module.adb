@@ -43,7 +43,7 @@ package body Navigation_Module is
 
    Navigation_Module_Name : constant String := "Navigation";
 
-   Me : Debug_Handle := Create ("Navigation");
+   Me : constant Debug_Handle := Create ("Navigation");
 
    type Navigation_Info is record
       --  Fields related to back/forward navigation.
@@ -232,7 +232,8 @@ package body Navigation_Module is
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
       pragma Unreferenced (Widget);
-      Context : Selection_Context_Access := Get_Current_Context (Kernel);
+      Context : constant Selection_Context_Access :=
+        Get_Current_Context (Kernel);
       File : File_Selection_Context_Access;
    begin
       Push_State (Kernel, Busy);

@@ -49,7 +49,7 @@ package body Glide_Kernel.Project is
 
    use Project_Hash.Project_Htable;
 
-   Me : Debug_Handle := Create ("glide_kernel.project");
+   Me : constant Debug_Handle := Create ("glide_kernel.project");
 
    procedure Compute_Predefined_Paths
      (Handle : access Kernel_Handle_Record'Class);
@@ -651,4 +651,3 @@ package body Glide_Kernel.Project is
    end Project_Modified;
 
 end Glide_Kernel.Project;
-

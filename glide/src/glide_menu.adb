@@ -44,7 +44,7 @@ with Traces;                       use Traces;
 
 package body Glide_Menu is
 
-   Me : Debug_Handle := Create ("Menu");
+   Me : constant Debug_Handle := Create ("Menu");
 
    type Help_Context is
      (Welcome_Help,
@@ -143,7 +143,7 @@ package body Glide_Menu is
       pragma Unreferenced (Action, Widget);
 
       MDI   : constant MDI_Window := Get_MDI (Glide_Window (Object).Kernel);
-      Child : MDI_Child := Get_Focus_Child (MDI);
+      Child : constant MDI_Child := Get_Focus_Child (MDI);
 
    begin
       if Child /= null then

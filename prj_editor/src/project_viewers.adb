@@ -78,7 +78,7 @@ with Snames;        use Snames;
 
 package body Project_Viewers is
 
-   Me : Debug_Handle := Create ("Project_Viewers");
+   Me : constant Debug_Handle := Create ("Project_Viewers");
 
    Prj_Editor_Module_ID : Module_ID;
    --  Id for the project editor module
@@ -456,10 +456,10 @@ package body Project_Viewers is
    procedure Select_Row
      (Viewer : access Gtk_Widget_Record'Class; Args : Gtk_Args)
    is
-      V            : Project_Viewer := Project_Viewer (Viewer);
-      Row          : Gint := To_Gint (Args, 1);
-      Column       : Gint := To_Gint (Args, 2);
-      Event        : Gdk_Event := To_Event (Args, 3);
+      V            : constant Project_Viewer := Project_Viewer (Viewer);
+      Row          : constant Gint := To_Gint (Args, 1);
+      Column       : constant Gint := To_Gint (Args, 2);
+      Event        : constant Gdk_Event := To_Event (Args, 3);
       User         : User_Data;
       Callback     : View_Callback;
       File         : File_Selection_Context_Access;
@@ -532,11 +532,9 @@ package body Project_Viewers is
          then
             Set_Title (Child,
                        Title => -"Editing switches for project "
-                         & Project_Name (Project_Information
-                         (File_Selection_Context_Access (File))),
+                         & Project_Name (Project_Information (File)),
                        Short_Title => Project_Switches_Name);
-            Viewer.Current_Project :=
-              Project_Information (File_Selection_Context_Access (File));
+            Viewer.Current_Project := Project_Information (File);
          else
             Set_Title (Child,
                        Title => -"Editing switches for directory "
@@ -579,7 +577,7 @@ package body Project_Viewers is
      (Viewer  : access Gtk_Widget_Record'Class;
       Args    : Gtk_Args)
    is
-      Context      : Selection_Context_Access :=
+      Context      : constant Selection_Context_Access :=
         To_Selection_Context_Access (To_Address (Args, 1));
    begin
       Explorer_Selection_Changed (Project_Viewer (Viewer), Context);
@@ -693,9 +691,9 @@ package body Project_Viewers is
       Context : Selection_Context_Access)
    is
       pragma Unreferenced (Widget);
-      File_Context : File_Selection_Context_Access :=
+      File_Context : constant File_Selection_Context_Access :=
         File_Selection_Context_Access (Context);
-      Initial_Dirs_Id : String_Id_Array := Source_Dirs
+      Initial_Dirs_Id : constant String_Id_Array := Source_Dirs
         (Project_Information (File_Context));
       Initial_Dirs : Argument_List (Initial_Dirs_Id'Range);
       Selector : Directory_Selector;
@@ -755,7 +753,7 @@ package body Project_Viewers is
       Context : Selection_Context_Access)
    is
       pragma Unreferenced (Widget);
-      Project   : Project_Id :=
+      Project   : constant Project_Id :=
         Project_Information (File_Selection_Context_Access (Context));
       Old_Dir   : constant String :=
         Name_As_Directory (GNAT.OS_Lib.Normalize_Pathname
@@ -845,9 +843,10 @@ package body Project_Viewers is
       Kernel : Kernel_Handle)
    is
       pragma Unreferenced (Widget);
-      Child  : MDI_Child;
-      Viewer : Project_Viewer;
-      Context : Selection_Context_Access := Get_Current_Context (Kernel);
+      Child   : MDI_Child;
+      Viewer  : Project_Viewer;
+      Context : constant Selection_Context_Access :=
+        Get_Current_Context (Kernel);
 
    begin
       Child := Find_MDI_Child_By_Tag
@@ -887,7 +886,7 @@ package body Project_Viewers is
       Label  : Gtk_Label;
       Text   : Gtk_Entry;
       Widget : Gtk_Widget;
-      View   : Project_Id := Get_Project_View_From_Project (Project);
+      View   : constant Project_Id := Get_Project_View_From_Project (Project);
    begin
       Gtk_New (Dialog,
                Title  => -"Select name for project",
@@ -957,7 +956,7 @@ package body Project_Viewers is
       pragma Unreferenced (Widget);
       File    : constant File_Selection_Context_Access :=
         File_Selection_Context_Access (Context);
-      Kernel  : Kernel_Handle := Get_Kernel (Context);
+      Kernel  : constant Kernel_Handle := Get_Kernel (Context);
       Project : Project_Node_Id;
    begin
       Project := Get_Project_From_View (Project_Information (File));
@@ -981,7 +980,7 @@ package body Project_Viewers is
       Context : Selection_Context_Access)
    is
       pragma Unreferenced (Widget);
-      File : File_Selection_Context_Access :=
+      File : constant File_Selection_Context_Access :=
         File_Selection_Context_Access (Context);
    begin
       if Has_Project_Information (File)
@@ -1012,7 +1011,7 @@ package body Project_Viewers is
    is
       pragma Unreferenced (Widget);
       Prj : Project_Node_Id;
-      File : File_Selection_Context_Access :=
+      File : constant File_Selection_Context_Access :=
         File_Selection_Context_Access (Context);
       Wiz  : Creation_Wizard.Prj_Wizard;
    begin
@@ -1050,9 +1049,9 @@ package body Project_Viewers is
       Context : Selection_Context_Access)
    is
       pragma Unreferenced (Widget);
-      File : File_Selection_Context_Access :=
+      File : constant File_Selection_Context_Access :=
         File_Selection_Context_Access (Context);
-      Prj : Project_Node_Id :=
+      Prj : constant Project_Node_Id :=
         Get_Project_From_View (Importing_Project_Information (File));
    begin
       Remove_Imported_Project
@@ -1091,10 +1090,10 @@ package body Project_Viewers is
       end Report_Error;
 
 
-      File : File_Selection_Context_Access :=
+      File : constant File_Selection_Context_Access :=
         File_Selection_Context_Access (Context);
       Selector : File_Selector_Window_Access;
-      Prj : Project_Node_Id :=
+      Prj : constant Project_Node_Id :=
         Get_Project_From_View (Project_Information (File));
 
       Dir : constant String := Get_Name_String (Path_Name_Of (Prj));
@@ -1288,9 +1287,9 @@ package body Project_Viewers is
    is
       pragma Unreferenced (Kernel, Event_Widget);
 
-      Context     : File_Selection_Context_Access :=
+      Context     : constant File_Selection_Context_Access :=
         new File_Selection_Context;
-      V           : Project_Viewer := Project_Viewer (Object);
+      V           : constant Project_Viewer := Project_Viewer (Object);
       Item        : Gtk_Menu_Item;
       Row, Column : Gint;
       Is_Valid    : Boolean;

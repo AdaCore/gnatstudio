@@ -44,7 +44,8 @@ package body Glide_Main_Window is
    -------------
 
    function Anim_Cb (Kernel : Kernel_Handle) return Boolean is
-      Window : Glide_Window := Glide_Window (Get_Main_Window (Kernel));
+      Window : constant Glide_Window :=
+        Glide_Window (Get_Main_Window (Kernel));
    begin
       if Advance (Window.Animation_Iter) then
          Set (Window.Animation_Image, Get_Pixbuf (Window.Animation_Iter));

@@ -220,7 +220,7 @@ package body Language_Handlers.Glide is
      (Handler : access Glide_Language_Handler_Record;
       Name    : String) return Src_Info.LI_Handler
    is
-      Index : Natural := Get_LI_Handler_By_Name
+      Index : constant Natural := Get_LI_Handler_By_Name
         (Handler, Name);
    begin
       if Index = 0 then
@@ -318,8 +318,8 @@ package body Language_Handlers.Glide is
       Default_Spec_Suffix : String;
       Default_Body_Suffix : String)
    is
-      Index : Natural := Get_Index_From_Language (Handler, Language_Name);
-      Lang : Name_Id;
+      Index : constant Natural := Get_Index_From_Language (Handler, Language_Name);
+      Lang  : Name_Id;
       Spec, Impl : Name_Id;
    begin
       if Index /= 0 then
@@ -356,7 +356,7 @@ package body Language_Handlers.Glide is
    is
       Lang : constant String :=
         Get_Language_From_File (Handler, Source_Filename, Project);
-      Index : Natural := Get_Index_From_Language (Handler, Lang);
+      Index : constant Natural := Get_Index_From_Language (Handler, Lang);
    begin
       if Index /= 0
         and then Handler.Languages (Index).Handler /= null
