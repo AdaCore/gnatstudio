@@ -14,14 +14,17 @@
 
 8 * [Yeti] Update sensitivity of "Files" and "Directory" labels
 
+  * [Yeti] Add predefined files extensions
+    e.g.: *.ad[sb], *.[ch], *.java, ...
+
+  * [Yeti] Add predefined patterns
+    e.g.: "when \w+( : \w+) =>", "pragma \w+;", ...
+
 ------------------
 -- Improvements --
 ------------------
 
   * [Yeti] Obtaining the project file list
-
-  * [Yeti] Scan empty lines ?
-    Only useful when pattern matches empty string.
 
   * [Yeti] Move the abort flag and the callback access in Hyper_Grep_Record.
 
@@ -42,7 +45,10 @@
 
 9 * [Yeti] When no initial directory, use no explicit one.
 
-  * [Yeti] Whole_Word option unuseful when Regexp ???
+  * [Yeti] Select between reporting all matches in the line or only the first.
+
+  * [Yeti] Avoid endless recursion
+    Links such as "up_dir -> ..", "here -> ."
 
 -----------
 -- Speed --
