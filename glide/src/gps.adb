@@ -92,6 +92,7 @@ procedure GPS is
    subtype String_Access is GNAT.OS_Lib.String_Access;
 
    GPS            : Glide_Window;
+   Kernel         : Kernel_Handle;
    Page           : Glide_Page.Glide_Page;
    Directory      : Dir_Type;
    Str            : String (1 .. 1024);
@@ -642,8 +643,9 @@ begin
 
    Handlers_Destroy (GPS.Kernel);
 
+   Kernel := GPS.Kernel;
    Destroy (GPS);
-   Destroy (GPS.Kernel, Dir.all);
+   Destroy (Kernel, Dir.all);
    Prj_API.Finalize;
    Traces.Finalize;
 
