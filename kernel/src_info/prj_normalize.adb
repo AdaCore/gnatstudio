@@ -102,8 +102,8 @@ package body Prj_Normalize is
 
    begin
       --  ??? This doesn't check that two references to the same external
-      --  ??? variable has the same type. In fact, this needs to be checked for
-      --  ??? a project and all its imported projects, so outside of this
+      --  ??? variable have the same type. In fact, this needs to be checked
+      --  ??? for a project and all its imported projects, so outside of this
       --  ??? subprogram
 
       if Kind_Of (Node) = N_Project then
@@ -285,7 +285,7 @@ package body Prj_Normalize is
          procedure Add_Decl_Item (To_Case_Item : Project_Node_Id) is
          begin
             --  ??? Should be a deep clone
-            Add_At_End (To_Case_Item, Clone_Node (Decl_Item));
+            Add_At_End (To_Case_Item, Clone_Node (Decl_Item, True));
          end Add_Decl_Item;
 
       begin
@@ -425,6 +425,8 @@ package body Prj_Normalize is
       end loop;
 
       Free (Values);
+
+      Post_Process_After_Clone (Project_Norm);
 
       --  Directly replace in the table, so that all references to this project
       --  are automatically updated. There is a small memory leak, but since
@@ -746,4 +748,5 @@ package body Prj_Normalize is
 
       return Construct;
    end Create_Case_Construction;
+
 end Prj_Normalize;
