@@ -1,5 +1,12 @@
 Known Problems fixed in GPS 2.1.0
 
+- D614-009 Errors in C files are not displayed in the Locations window
+  Problem:    Under Windows, the errors produced by compilation of C files are
+              not visible in the Locations window.
+  Workaround: Open the Preferences, in the "Messages" section, and change the
+              "File pattern" entry to
+                 "^([^:]:?[^:]*):(\d+):((\d+):)? ((warning)?(\(style)?.*)".
+
 - D603-010 Can't evaluate nested python commands
   Problem:    When you enter interactively a command in the python console,
               nested blocks (a if inside a while for instance), the command
