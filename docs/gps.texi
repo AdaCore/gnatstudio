@@ -207,7 +207,7 @@ such as a visual comparison, automatic generation of files, source reformatting.
 
 @cindex customization
 GPS is fully customizable, providing several levels of customizations:
-a first level, available through the preferences dialog;
+a first level, available through the preferences and key manager dialogs;
 a second level, which allows you to customize your menu items, tool bar and key
 bindings; a third level, which allows you to automate processing through
 scripts; and a fourth level, which allows any kind of very specific or tight
@@ -1494,7 +1494,7 @@ settings that can be customized.
 When enabled, lines are automatically indented each time you press the
 @key{Enter} key, or by pressing the indentation key.
 The indentation key is @key{Ctrl-Tab} by default, and can be changed in the
-preferences dialog, @xref{The Preferences Dialog}.
+key manager dialog, @xref{The Key Manager Dialog}.
 
 If a set of lines is selected when you press the indentation key, this whole
 set of lines will be indented.
@@ -1525,7 +1525,7 @@ the preferences dialog. @xref{The Preferences Dialog}.
 @cindex completion
 It is useful when editing a file and using often the same words to get
 automatic word completion. This is possible by typing the @key{Ctrl-/} key
-combination (customizable through the preferences dialog) after a partial
+combination (customizable through the key manager dialog) after a partial
 word: the next possible completion will be inserted in the editor. Typing this
 key again will cycle through the list of possible completions.
 
@@ -1544,9 +1544,31 @@ that can be configured in the preferences. Typing twice on this key will move
 the cursor back to its original position.
 
 @item Current line highlighting
-@cindex current
+@cindex current line
 You can configure the editor to highlight the current line with a certain
 color. @xref{The Preferences Dialog}.
+
+@item Current block highlighting
+@cindex block
+If this preference is enabled, the editor will highlight the current block
+of code, e.g. the current @code{begin...end} block, or loop statement,
+etc@dots{}
+
+The block highlighting will also take into account the changes made in
+your source code, and will recompute automatically the current block when
+needed.
+
+This capability is currently implemented for Ada, C and C++ languages.
+
+@item Block folding
+@cindex block
+When enabled, the editor will display @code{-} icons on the left side,
+corresponding to the beginning of subprograms. If you click on one of these
+icons, all the lines corresponding to this subprogram are hidden, except
+the first one. As for the block highlighting, these icons are recomputed
+automatically when you modify your sources and are always kept up to date.
+
+This capability is currently implemented for Ada, C and C++ languages.
 
 @item Auto save
 @cindex auto save
