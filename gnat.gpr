@@ -4,7 +4,7 @@ project GNAT is
    for Object_Dir use "obj";
 
    package Compiler is
-      for Default_Switches ("Ada") use ("-gnatpg", "-O2");
+      for Default_Switches ("Ada") use ("-gnata", "-gnatpg", "-O2");
    end Compiler;
 
 end GNAT;
