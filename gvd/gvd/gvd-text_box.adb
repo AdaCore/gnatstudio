@@ -162,7 +162,7 @@ package body Odd.Text_Boxes is
       Ref (Box.Current_Line_Button);
 
       --  ???Unfortunately, it is not possible currently to specify the
-      --  step_increment for the adjustments, since this is overriden in
+      --  step_increment for the adjustments, since this is overridden in
       --  several places in the text widget.
       --    Set_Step_Increment
       --     (Get_Vadj (Editor.Text),
@@ -208,7 +208,7 @@ package body Odd.Text_Boxes is
       --  already equal, do nothing to prevent loops.
       --
       --  To work around a bug in gtk+ (when adjusting the value of the
-      --  adjustment when we are resing the code editor beyond the last line),
+      --  adjustment when we are resizing the code editor beyond the last line),
       --  we first hide it, and then show it again.
 
       if Get_Value (Get_Vadjustment (Box.Buttons)) /=
