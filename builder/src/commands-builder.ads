@@ -21,8 +21,13 @@
 --  This package handles build commands.
 
 with Glide_Kernel.Timeout; use Glide_Kernel.Timeout;
+with Glide_Intl;           use Glide_Intl;
 
 package Commands.Builder is
+
+   Error_Category   : constant String := -"Builder results";
+   Warning_Category : constant String := -"Builder warnings";
+   Style_Category   : constant String := -"Style errors";
 
    type Build_Command is new Root_Command with private;
    type Build_Command_Access is access all Build_Command;
