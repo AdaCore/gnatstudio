@@ -58,9 +58,11 @@ package body Glide_Kernel.Console is
    --  Return the console associated with the kernel.
 
    function Get_Or_Create_Result_View
-     (Kernel : access Kernel_Handle_Record'Class)
+     (Kernel         : access Kernel_Handle_Record'Class;
+      Allow_Creation : Boolean := True)
       return Result_View;
-   --  Return the results view widget. Create it if it doesn't exist
+   --  Return the results view widget. Create it if it doesn't exist and
+   --  Allow_Creation is true.
 
    procedure Console_Destroyed
      (Console : access Glib.Object.GObject_Record'Class;
@@ -118,7 +120,8 @@ package body Glide_Kernel.Console is
    -------------------------------
 
    function Get_Or_Create_Result_View
-     (Kernel : access Kernel_Handle_Record'Class)
+     (Kernel : access Kernel_Handle_Record'Class;
+      Allow_Creation : Boolean := True)
      return Result_View
    is
       Child   : MDI_Child := Find_MDI_Child_By_Tag
@@ -126,6 +129,10 @@ package body Glide_Kernel.Console is
       Results : Result_View;
    begin
       if Child = null then
+         if not Allow_Creation then
+            return null;
+         end if;
+
          Gtk_New (Results, Kernel_Handle (Kernel));
          Child := Put (Get_MDI (Kernel), Results);
          Set_Title (Child, -"Results");
@@ -223,7 +230,8 @@ package body Glide_Kernel.Console is
      (Kernel   : access Kernel_Handle_Record'Class;
       Category : String)
    is
-      View : constant Result_View := Get_Or_Create_Result_View (Kernel);
+      View : constant Result_View :=
+        Get_Or_Create_Result_View (Kernel, Allow_Creation => False);
    begin
       if View /= null then
          Remove_Category (View, Category);
