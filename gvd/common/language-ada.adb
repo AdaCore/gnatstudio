@@ -344,6 +344,22 @@ package body Language.Ada is
               Constant_Character            => ''');
    end Get_Language_Context;
 
+   --------------
+   -- Get_Name --
+   --------------
+
+   function Get_Name
+     (Lang           : access Ada_Language;
+      Token          : Generic_Token_Type;
+      Is_Declaration : Boolean;
+      Category       : access Language_Category) return String
+   is
+      Name : String := Token_Type'Image (Token_Type'Val (Token));
+   begin
+      Category.all := Cat_Unknown;
+      return Name;
+   end Get_Name;
+
    -------------------
    -- Format_Source --
    -------------------
