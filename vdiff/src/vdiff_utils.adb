@@ -18,22 +18,132 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Text_IO; use Ada.Text_IO;
+with Ada.Text_IO;               use Ada.Text_IO;
 with Interfaces.C.Strings;
-with Glib; use Glib;
-with Gdk.Color; use Gdk.Color;
-with Pango.Font; use Pango.Font;
-with Gtk.Adjustment; use Gtk.Adjustment;
-with Glide_Kernel;             use Glide_Kernel;
-with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
-with Gtk.Enums; use Gtk.Enums;
-with Gtk.Style; use Gtk.Style;
-with Vdiff_Pkg; use Vdiff_Pkg;
-with String_Utils; use String_Utils;
+with Glib;                      use Glib;
+with Glib.Object;               use Glib.Object;
+with Glib.Values;
+with Gdk.Color;                 use Gdk.Color;
+with Pango.Font;                use Pango.Font;
+with Gtk.Adjustment;            use Gtk.Adjustment;
+with Glide_Kernel;              use Glide_Kernel;
+with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
+with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
+with Gtk.Enums;                 use Gtk.Enums;
+with Gtk.Style;                 use Gtk.Style;
+with Gtk.Handlers;              use Gtk.Handlers;
+with Vdiff_Pkg;                 use Vdiff_Pkg;
+with Vdiff_Module;              use Vdiff_Module;
+with String_Utils;              use String_Utils;
+
+with GNAT.Directory_Operations; use GNAT.Directory_Operations;
+with Basic_Types;               use Basic_Types;
+
+with Gtk.Widget;                use Gtk.Widget;
+with Gtk.Menu;
+with Gdk.Event;
 
 package body Vdiff_Utils is
 
    package ICS renames Interfaces.C.Strings;
+
+   type Vdiff_Info is new GObject_Record with record
+      Kernel : Kernel_Handle;
+      File   : String_Access;
+   end record;
+   type Vdiff_Info_Access is access all Vdiff_Info'Class;
+
+   package GObject_Callback is new Gtk.Handlers.Callback (GObject_Record);
+
+   procedure Gtk_New
+     (Vdiff  : out Vdiff_Info_Access;
+      Kernel : Kernel_Handle;
+      File   : String);
+   procedure Initialize
+     (Vdiff  : access Vdiff_Info'Class;
+      Kernel : Kernel_Handle;
+      File   : String);
+
+   procedure On_Destroy
+     (Object : access GObject_Record'Class;
+      Params : Glib.Values.GValues);
+   --  Callback for the "destroy" signal.
+
+   function Context_Factory
+     (Kernel       : access Kernel_Handle_Record'Class;
+      Event_Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Object       : access Glib.Object.GObject_Record'Class;
+      Event        : Gdk.Event.Gdk_Event;
+      Menu         : Gtk.Menu.Gtk_Menu) return Selection_Context_Access;
+
+   ---------------------
+   -- Context_Factory --
+   ---------------------
+
+   function Context_Factory
+     (Kernel       : access Kernel_Handle_Record'Class;
+      Event_Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Object       : access Glib.Object.GObject_Record'Class;
+      Event        : Gdk.Event.Gdk_Event;
+      Menu         : Gtk.Menu.Gtk_Menu) return Selection_Context_Access
+   is
+      Context : File_Selection_Context_Access
+        := new File_Selection_Context;
+      Vdiff   : Vdiff_Info_Access := Vdiff_Info_Access (Object);
+
+      pragma Unreferenced (Event_Widget, Menu, Event);
+
+   begin
+      Set_Context_Information (Context, Kernel, Vdiff_Module_ID);
+      Set_File_Information
+        (Context,
+         Dir_Name (Vdiff.File.all),
+         Base_Name (Vdiff.File.all));
+
+      return Selection_Context_Access (Context);
+   end Context_Factory;
+
+   -------------
+   -- Gtk_New --
+   -------------
+
+   procedure Gtk_New
+     (Vdiff  : out Vdiff_Info_Access;
+      Kernel : Kernel_Handle;
+      File   : String) is
+   begin
+      Vdiff := new Vdiff_Info;
+      Initialize (Vdiff, Kernel, File);
+   end Gtk_New;
+
+   ----------------
+   -- On_Destroy --
+   ----------------
+
+   procedure On_Destroy
+     (Object : access GObject_Record'Class;
+      Params : Glib.Values.GValues)
+   is
+      pragma Unreferenced (Params);
+      Vdiff   : Vdiff_Info_Access := Vdiff_Info_Access (Object);
+   begin
+      Free (Vdiff.File);
+      Unref (Vdiff);
+   end On_Destroy;
+
+   ----------------
+   -- Initialize --
+   ----------------
+
+   procedure Initialize
+     (Vdiff  : access Vdiff_Info'Class;
+      Kernel : Kernel_Handle;
+      File   : String) is
+   begin
+      --  Initialize_Widget (Vdiff);
+      Vdiff.Kernel := Kernel;
+      Vdiff.File := new String' (File);
+   end Initialize;
 
    ---------------------
    -- Fill_Diff_Lists --
@@ -75,6 +185,9 @@ package body Vdiff_Utils is
       Context_Changed : Boolean;
       Desc            : constant Pango_Font_Description :=
         Get_Pref (Kernel, Default_Source_Editor_Font);
+
+      Info_1          : Vdiff_Info_Access;
+      Info_2          : Vdiff_Info_Access;
 
       procedure Add_Line
         (List  : access Gtk_Clist_Record'Class;
@@ -127,6 +240,28 @@ package body Vdiff_Utils is
       end Read_Line;
 
    begin
+      Gtk_New (Info_1, Kernel_Handle (Kernel), File1);
+      Gtk_New (Info_2, Kernel_Handle (Kernel), File2);
+
+      GObject_Callback.Object_Connect
+        (List1, "destroy",
+         On_Destroy'Access,
+         Info_1);
+
+      Register_Contextual_Menu
+        (Kernel,
+         List1,
+         Info_1,
+         Vdiff_Module_ID,
+         Context_Factory'Access);
+
+      Register_Contextual_Menu
+        (Kernel,
+         List2,
+         Info_2,
+         Vdiff_Module_ID,
+         Context_Factory'Access);
+
       if Context_Len = -1 then
          Context_Len := Integer'Last;
       end if;
