@@ -874,6 +874,13 @@ package body Directory_Tree is
             Selector);
          Append (Menu, Item);
 
+         Gtk_New (Item, -"Create new subdirectory");
+         Append (Menu, Item);
+         Widget_Callback.Object_Connect
+           (Item, "activate",
+            Widget_Callback.To_Marshaller (Create_Directory_Cb'Access),
+            Selector);
+
          return Menu;
       end if;
 
@@ -937,14 +944,6 @@ package body Directory_Tree is
          Selector);
       Set_Sensitive (Item, Is_Valid);
       Append (Menu, Item);
-
-      Gtk_New (Menu);
-      Gtk_New (Item, -"Create new subdirectory");
-      Append (Menu, Item);
-      Widget_Callback.Object_Connect
-        (Item, "activate",
-         Widget_Callback.To_Marshaller (Create_Directory_Cb'Access),
-         Selector);
 
       return Menu;
    end List_Contextual_Menu;

@@ -1166,9 +1166,12 @@ package body Gtkada.File_Selector is
 
       Hbuttonbox1 : Gtk_Hbutton_Box;
 
-      Style       : Gtk_Style := Get_Default_Style;
+      Style       : Gtk_Style;
 
    begin
+      Gtk.Window.Initialize (File_Selector_Window, Window_Toplevel);
+
+      Style := Get_Style (File_Selector_Window);
       File_Selector_Window.Highlighted_Style := Copy (Style);
       File_Selector_Window.Insensitive_Style := Copy (Style);
       File_Selector_Window.Normal_Style      := Copy (Style);
@@ -1184,10 +1187,9 @@ package body Gtkada.File_Selector is
         (File_Selector_Window.Explorer_Tree,
          File_Selector_Window.Home_Directory.all);
 
-      Set_Indent (File_Selector_Window.Explorer_Tree, 10);
-      Set_Row_Height (File_Selector_Window.Explorer_Tree, 15);
+      --  Set_Indent (File_Selector_Window.Explorer_Tree, 10);
+      --  Set_Row_Height (File_Selector_Window.Explorer_Tree, 15);
 
-      Gtk.Window.Initialize (File_Selector_Window, Window_Toplevel);
       Set_Title (File_Selector_Window, Dialog_Title);
 
       if Show_Files then
@@ -1339,7 +1341,7 @@ package body Gtkada.File_Selector is
          Set_Column_Width (File_Selector_Window.File_List, 0, 20);
          Set_Column_Width (File_Selector_Window.File_List, 1, 180);
          Set_Column_Width (File_Selector_Window.File_List, 2, 80);
-         Set_Row_Height (File_Selector_Window.File_List, 15);
+         --  Set_Row_Height (File_Selector_Window.File_List, 15);
 
          Return_Callback.Connect
            (File_Selector_Window.File_List, "key_press_event",
