@@ -8,6 +8,7 @@ with Prj.Part; use Prj.Part;
 with Prj.PP;   use Prj.PP;
 with Types;    use Types;
 with Stringt;  use Stringt;
+with Namet;    use Namet;
 
 
 --  Takes a project file as parameter, and normalizes it
@@ -213,8 +214,8 @@ procedure Normalize is
       Vars : Variable_Decl_Array := Find_Scenario_Variables (Project);
       Ref  : Variable_Ref_Array (Vars'Range);
    begin
-      for Var in Variable_Decl_Array'Range loop
-         Vars (Var) := Create_Variable_Reference (Var);
+      for Var in Vars'Range loop
+         Ref (Var) := Create_Variable_Reference (Vars (Var));
       end loop;
       return Ref;
    end Find_Scenario_Variables;
@@ -373,7 +374,7 @@ procedure Normalize is
                      String_To_Name_Buffer (Var_Values (K));
 
                      if Name_Buffer (1 .. Name_Len) = "others" then
-                        Var_Values (K) := Empty_Node;
+                        Var_Values (K) := No_String;
                      end if;
 
                      Recurse (First_Declarative_Item_Of (Case_Item),
@@ -470,7 +471,7 @@ procedure Normalize is
    Initial_Name : constant String := "test.apr";
    Project : Project_Node_Id;
 begin
-   Parse (Project, Initial_Name);
+   Parse (Project, Initial_Name, Always_Errout_Finalize => True);
    if Project = Empty_Node then
       Put_Line ("Couldn't find the project file");
       return;
