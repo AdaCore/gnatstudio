@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2001-2002                    --
+--                        Copyright (C) 2001-2003                    --
 --                             ACT-Europe                            --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -1072,9 +1072,9 @@ package body Browsers.Canvas is
          while Get (Iter) /= null loop
             if Is_Selected (Canvas, Get (Iter)) then
                if Is_Linked_From (Iter) then
-                  return Get_Parent_Linked_Item_GC (B);
-               else
                   return Get_Child_Linked_Item_GC (B);
+               else
+                  return Get_Parent_Linked_Item_GC (B);
                end if;
             end if;
             Next (Iter);
