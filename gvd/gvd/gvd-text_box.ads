@@ -103,6 +103,16 @@ package GVD.Text_Boxes is
      return Natural;
    --  Return the index in the buffer at which Line starts.
 
+   procedure Move_N_Columns
+     (Box     : access Gvd_Text_Box_Record'Class;
+      Index   : in out Natural;
+      Columns : Integer);
+   --  Moves the current Index by Columns columns to the left, while
+   --  staying on the current line. Index will never be moved to the next
+   --  line.
+   --  Note that Columns is the number of visible columns in the widget, ie
+   --  after Tabs have been expanded.
+
    procedure Hide_Current_Line_Button (Box : access GVD_Text_Box_Record);
    --  Hide the arrow that shows the current line.
 
