@@ -394,7 +394,10 @@ package body VCS_View_API is
       Context : constant Selection_Context_Access :=
         Get_Current_Context (Kernel);
    begin
-      if Context /= null then
+      if Context = null then
+         Console.Insert
+           (Kernel, -"No file selected, cannot get status", Mode => Error);
+      else
          On_Menu_Get_Status (Widget, Context);
       end if;
    end Get_Status;
@@ -410,7 +413,10 @@ package body VCS_View_API is
       Context : constant Selection_Context_Access :=
         Get_Current_Context (Kernel);
    begin
-      if Context /= null then
+      if Context = null then
+         Console.Insert
+           (Kernel, -"No file selected, cannot add file", Mode => Error);
+      else
          On_Menu_Add (Widget, Context);
       end if;
    end Add;
@@ -426,7 +432,10 @@ package body VCS_View_API is
       Context : constant Selection_Context_Access :=
         Get_Current_Context (Kernel);
    begin
-      if Context /= null then
+      if Context = null then
+         Console.Insert
+           (Kernel, -"No file selected, cannot remove file", Mode => Error);
+      else
          On_Menu_Remove (Widget, Context);
       end if;
    end Remove;
@@ -459,7 +468,10 @@ package body VCS_View_API is
    begin
       --  ??? Is this the behaviour we want ?
 
-      if Context /= null then
+      if Context = null then
+         Console.Insert
+           (Kernel, -"No file selected, cannot commit", Mode => Error);
+      else
          On_Menu_Edit_Log (Widget, Context);
       end if;
    end Commit;
@@ -475,7 +487,10 @@ package body VCS_View_API is
       Context : constant Selection_Context_Access :=
         Get_Current_Context (Kernel);
    begin
-      if Context /= null then
+      if Context = null then
+         Console.Insert
+           (Kernel, -"No file selected, cannot diff", Mode => Error);
+      else
          On_Menu_Diff (Widget, Context);
       end if;
    end View_Head_Diff;
@@ -491,7 +506,10 @@ package body VCS_View_API is
       Context : constant Selection_Context_Access :=
         Get_Current_Context (Kernel);
    begin
-      if Context /= null then
+      if Context = null then
+         Console.Insert
+           (Kernel, -"No file selected, cannot diff", Mode => Error);
+      else
          On_Menu_Diff_Local (Widget, Context);
       end if;
    end View_Work_Diff;
@@ -507,7 +525,10 @@ package body VCS_View_API is
       Context : constant Selection_Context_Access :=
         Get_Current_Context (Kernel);
    begin
-      if Context /= null then
+      if Context = null then
+         Console.Insert
+           (Kernel, -"No file selected, cannot diff", Mode => Error);
+      else
          On_Menu_Diff_Working_Head (Widget, Context);
       end if;
    end View_Work_Head_Diff;
@@ -523,7 +544,10 @@ package body VCS_View_API is
       Context : constant Selection_Context_Access :=
         Get_Current_Context (Kernel);
    begin
-      if Context /= null then
+      if Context = null then
+         Console.Insert
+           (Kernel, -"No file selected, cannot display log", Mode => Error);
+      else
          On_Menu_View_Log (Widget, Context);
       end if;
    end View_Log;
@@ -539,7 +563,10 @@ package body VCS_View_API is
       Context : constant Selection_Context_Access :=
         Get_Current_Context (Kernel);
    begin
-      if Context /= null then
+      if Context = null then
+         Console.Insert
+           (Kernel, -"No file selected, cannot annotate", Mode => Error);
+      else
          On_Menu_Annotate (Widget, Context);
       end if;
    end View_Annotate;
@@ -555,7 +582,11 @@ package body VCS_View_API is
       Context : constant Selection_Context_Access :=
         Get_Current_Context (Kernel);
    begin
-      if Context /= null then
+      if Context = null then
+         Console.Insert
+           (Kernel, -"No file selected, cannot remove annotations",
+            Mode => Error);
+      else
          On_Menu_Remove_Annotate (Widget, Context);
       end if;
    end Remove_Annotations;
@@ -571,7 +602,10 @@ package body VCS_View_API is
       Context : constant Selection_Context_Access :=
         Get_Current_Context (Kernel);
    begin
-      if Context /= null then
+      if Context = null then
+         Console.Insert
+           (Kernel, -"No file selected, cannot edit log", Mode => Error);
+      else
          On_Menu_Edit_Log (Widget, Context);
       end if;
    end Edit_Log;
