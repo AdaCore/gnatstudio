@@ -1,5 +1,12 @@
 Known Problems fixed in GVD 1.1.0
 
+- ASM view does not work properly
+  Problem:    When switching the source editor to Asm only mode, GVD generates
+              error messages on standard output and does not handle properly
+              the windows when switching back to Source mode.
+
+  Workaround: Use the Asm+Source mode instead.
+
 - [8524-008] Cannot call the editor under NT
   Problem:    When using the File->Edit Current Source menu under NT, GVD
               launches the external editor using forward slashes instead of
