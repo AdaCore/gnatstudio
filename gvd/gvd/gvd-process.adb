@@ -220,13 +220,15 @@ package body GVD.Process is
    --  Callback for the "grab_focus" signal on the command window.
 
    function Interpret_Command_Handler
-     (Input  : String;
-      Object : access GObject_Record'Class) return String;
+     (Console : access Interactive_Console_Record'Class;
+      Input   : String;
+      Object  : System.Address) return String;
    --  Launch the command interpreter for Input and return the output.
 
    function Debuggee_Console_Handler
-     (Input  : String;
-      Object : access GObject_Record'Class) return String;
+     (Console : access Interactive_Console_Record'Class;
+      Input   : String;
+      Object  : System.Address) return String;
    --  Handler of I/O for the debuggee console.
 
    function On_Debuggee_Console_Delete_Event
@@ -236,7 +238,7 @@ package body GVD.Process is
 
    function Complete_Command
      (Input  : in String;
-      Object : GObject)
+      Object : System.Address)
       return String_List_Utils.String_List.List;
    --  Return the list of completions for Input.
 
@@ -250,6 +252,9 @@ package body GVD.Process is
      (Process : access Visual_Debugger_Record'Class;
       History : Histories.History);
    --  Set up/initialize the command window associated with Process.
+
+   function Convert is new Ada.Unchecked_Conversion
+     (System.Address, Visual_Debugger);
 
    ------------
    -- TTY_Cb --
@@ -298,12 +303,11 @@ package body GVD.Process is
 
    function Complete_Command
      (Input  : in String;
-      Object : GObject)
+      Object : System.Address)
      return String_List_Utils.String_List.List
    is
       use String_List_Utils.String_List;
-
-      Top    : constant Visual_Debugger := Visual_Debugger (Object);
+      Top    : constant Visual_Debugger := Convert (Object);
       Result : List;
    begin
       if not Command_In_Process (Get_Process (Top.Debugger)) then
@@ -338,10 +342,12 @@ package body GVD.Process is
    -------------------------------
 
    function Interpret_Command_Handler
-     (Input  : String;
-      Object : access GObject_Record'Class) return String
+     (Console : access Interactive_Console_Record'Class;
+      Input  : String;
+      Object : System.Address) return String
    is
-      Top : constant Visual_Debugger := Visual_Debugger (Object);
+      pragma Unreferenced (Console);
+      Top : constant Visual_Debugger := Convert (Object);
    begin
       Top.Interactive_Command := True;
       Process_User_Command (Top, Input, Mode => User);
@@ -353,10 +359,12 @@ package body GVD.Process is
    ------------------------------
 
    function Debuggee_Console_Handler
-     (Input  : String;
-      Object : access GObject_Record'Class) return String
+     (Console : access Interactive_Console_Record'Class;
+      Input   : String;
+      Object  : System.Address) return String
    is
-      Top : constant Visual_Debugger := Visual_Debugger (Object);
+      pragma Unreferenced (Console);
+      Top : constant Visual_Debugger := Convert (Object);
       NL  : aliased Character := ASCII.LF;
       N   : Integer;
       pragma Unreferenced (N);
@@ -1033,7 +1041,7 @@ package body GVD.Process is
         (Process.Debugger_Text,
          "",
          Interpret_Command_Handler'Access,
-         GObject (Process),
+         Process.all'Address,
          Process.Debugger_Text_Font,
          History_List => History,
          Key          => "gvd_console",
@@ -1365,7 +1373,7 @@ package body GVD.Process is
            (Process.Debuggee_Console,
             "",
             Debuggee_Console_Handler'Access,
-            GObject (Process),
+            Process.all'Address,
             Process.Debugger_Text_Font,
             History_List => null,
             Key          => "gvd_tty_console",
