@@ -117,11 +117,11 @@ package body VCS.CVS is
       List   : String_List.List) return Boolean;
    --  Display the annotations for the file.
 
-   function Error_Output_Handler
+   function Message_Output_Handler
      (Kernel : Kernel_Handle;
       Head   : String_List.List;
       List   : String_List.List) return Boolean;
-   --  Treat the output as an error.
+   --  Insert the output in the console.
 
    function Status_Output_Handler
      (Kernel : Kernel_Handle;
@@ -158,7 +158,6 @@ package body VCS.CVS is
       Head   : String_List.List;
       List   : String_List.List) return Boolean
    is
-      pragma Unreferenced (Kernel, List);
       Success : Boolean;
 
    begin
@@ -167,6 +166,8 @@ package body VCS.CVS is
       if not String_List.Is_Empty (Head) then
          GNAT.OS_Lib.Delete_File (String_List.Head (Head), Success);
       end if;
+
+      Success := Message_Output_Handler (Kernel, Head, List);
 
       return True;
    end Checkin_Handler;
@@ -181,11 +182,11 @@ package body VCS.CVS is
       return CVS_Identifier;
    end Name;
 
-   --------------------------
-   -- Error_Output_Handler --
-   --------------------------
+   ----------------------------
+   -- Message_Output_Handler --
+   ----------------------------
 
-   function Error_Output_Handler
+   function Message_Output_Handler
      (Kernel : Kernel_Handle;
       Head   : String_List.List;
       List   : String_List.List) return Boolean
@@ -216,7 +217,7 @@ package body VCS.CVS is
       end if;
 
       return True;
-   end Error_Output_Handler;
+   end Message_Output_Handler;
 
    ------------------------
    -- Real_Simple_Action --
@@ -260,7 +261,7 @@ package body VCS.CVS is
          Dir_Name (Head (Filenames)),
          Args,
          Null_List,
-         Error_Output_Handler'Access,
+         Message_Output_Handler'Access,
          -"CVS: Basic query");
 
       Launch_Background_Command
@@ -817,7 +818,6 @@ package body VCS.CVS is
       Arguments : String_List.List;
       Node      : String_List.List_Node := First (Filenames);
    begin
-      String_List.Append (Arguments, "-Q");
       String_List.Append (Arguments, "edit");
 
       Simple_Action (Rep, Filenames, Arguments);
@@ -857,7 +857,6 @@ package body VCS.CVS is
             Fd       : GNAT.OS_Lib.File_Descriptor;
 
          begin
-            Append (Arguments, "-Q");
             Append (Arguments, "commit");
             Append (Arguments, "-F");
             Append (Arguments, Log_File);
@@ -951,13 +950,11 @@ package body VCS.CVS is
       Arguments   : String_List.List;
       Arguments_2 : String_List.List;
    begin
-      String_List.Append (Arguments, "-Q");
       String_List.Append (Arguments, "add");
 
       Simple_Action (Rep, Filenames, Arguments);
       String_List.Free (Arguments);
 
-      String_List.Append (Arguments_2, "-Q");
       String_List.Append (Arguments_2, "commit");
       String_List.Append (Arguments_2, "-m");
 
@@ -978,13 +975,11 @@ package body VCS.CVS is
       Arguments : String_List.List;
       Arguments_2 : String_List.List;
    begin
-      String_List.Append (Arguments, "-Q");
       String_List.Append (Arguments, "remove");
       String_List.Append (Arguments, "-f");
 
       Simple_Action (Rep, Filenames, Arguments);
 
-      String_List.Append (Arguments_2, "-Q");
       String_List.Append (Arguments_2, "commit");
       String_List.Append (Arguments_2, "-m");
 
@@ -1004,7 +999,6 @@ package body VCS.CVS is
    is
       Arguments : String_List.List;
    begin
-      String_List.Append (Arguments, "-Q");
       String_List.Append (Arguments, "update");
       String_List.Append (Arguments, "-C");
 
