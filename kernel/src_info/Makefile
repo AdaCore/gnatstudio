@@ -6,14 +6,6 @@ CP=cp -p
 build:
 	cd standalone_obj; gcc -c ../common/file-utils.c
 	gnatmake -m -a ${GNATMAKE_FLAGS} -Pstandalone test_parse $(LARGS) `gtkada-config`
-#gnatmake -m -a ${GNATMAKE_FLAGS} -Pstandalone read_ali $(LARGS) `gtkada-config`
-#gnatmake -m -a ${GNATMAKE_FLAGS} -Pstandalone read_many_ali $(LARGS) `gtkada-config`
-#gnatmake -m -a ${GNATMAKE_FLAGS} -Pstandalone read_ali_twice $(LARGS) `gtkada-config`
-#gnatmake -m -a ${GNATMAKE_FLAGS} -Pstandalone read_scope_tree $(LARGS) `gtkada-config`
-#gnatmake -m -a ${GNATMAKE_FLAGS} -Pstandalone find_ref $(LARGS) `gtkada-config`
-#gnatmake -m -a ${GNATMAKE_FLAGS} -Pstandalone find_local_ref $(LARGS) `gtkada-config`
-#gnatmake -m -a ${GNATMAKE_FLAGS} -Pstandalone find_dep $(LARGS) `gtkada-config`
-#gnatmake -m -a ${GNATMAKE_FLAGS} -Pstandalone generate_db $(LARGS) `gtkada-config`
 
 distrib:
 	@-mkdir -p gvd gnat > /dev/null 2>&1
@@ -35,8 +27,7 @@ distrib:
 	$(CP) ../../gvd/common/language.ad? gvd
 	$(CP) ../../gvd/common/odd_intl.ad? gvd
 	$(CP) ../../ada_module/src/ali_parser.ad? common
-	$(CP) ../../ada_module/src/src_info-* common
-	$(CP) ../../cpp_module/src/src_info-* common
+	$(CP) ../../cpp_module/src/cpp_parser.ad? common
 	$(CP) ../../gvd/gnat/g-exptty.ad? gvd
 	$(CP) ../../gvd/gnat/g-tty.ad? gvd
 	$(CP) ../../gvd/gnat/gexpect_tty.c gvd
