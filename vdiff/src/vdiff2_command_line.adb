@@ -150,7 +150,7 @@ package body Vdiff2_Command_Line is
    begin
       Put_Line ("j'ai cliquer a la ligne "
                 & Natural'Image (Line) &
-                " dans le fichier " & Full_Name (File));
+                " dans le fichier " & Full_Name (File).all);
    end test_button;
 
    ------------------------

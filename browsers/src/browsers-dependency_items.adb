@@ -542,9 +542,9 @@ package body Browsers.Dependency_Items is
       if Lib_Info = No_LI_File then
          Trace (Me,
                 "Examine_Dependencies: Couldn't find LI file for "
-                & Base_Name (File));
+                & Base_Name (File).all);
          Insert (Kernel, -"Couldn't find dependency information for "
-                 & Full_Name (File),
+                 & Full_Name (File).all,
                  Mode => Glide_Kernel.Console.Error);
          Pop_State (Kernel_Handle (Kernel));
          return;
@@ -784,7 +784,7 @@ package body Browsers.Dependency_Items is
 
    function Is_System_File (Source : Internal_File) return Boolean is
       Name : constant String :=
-        Full_Name (Get_Source_Filename (Source));
+        Full_Name (Get_Source_Filename (Source)).all;
    begin
       Name_Len := Name'Length;
       Name_Buffer (1 .. Name_Len) := Name;
@@ -967,7 +967,7 @@ package body Browsers.Dependency_Items is
          if Has_File_Information (File_Context) then
             declare
                Name : constant String :=
-                 Krunch (Base_Name (File_Information (File_Context)));
+                 Krunch (Base_Name (File_Information (File_Context)).all);
             begin
                Gtk_New
                  (Item, Label => (-"Show dependencies for ") & Name);
@@ -1124,7 +1124,7 @@ package body Browsers.Dependency_Items is
       Browser : access General_Browser_Record'Class;
       File  : Internal_File) is
    begin
-      Initialize (Item, Browser, Base_Name (Get_Source_Filename (File)),
+      Initialize (Item, Browser, Base_Name (Get_Source_Filename (File)).all,
                   Examine_From_Dependencies'Access,
                   Examine_Dependencies'Access);
       Item.Source := File;
@@ -1201,7 +1201,7 @@ package body Browsers.Dependency_Items is
 
       if P = No_Project then
          Trace (Me, "Project_Of return No_Project for "
-                & Full_Name (File_Name));
+                & Full_Name (File_Name).all);
       end if;
 
       return P;
@@ -1256,7 +1256,7 @@ package body Browsers.Dependency_Items is
          new File_Selection_Context;
       Src     : constant Src_Info.Internal_File := Get_Source (Item);
       Filename : constant Virtual_File := Get_Source_Filename (Src);
-      Base  : constant String := Krunch (Base_Name (Filename));
+      Base  : constant String := Krunch (Base_Name (Filename).all);
       Mitem : Gtk_Image_Menu_Item;
       Pix   : Gtk_Image;
    begin

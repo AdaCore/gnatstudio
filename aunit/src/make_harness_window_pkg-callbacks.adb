@@ -122,7 +122,7 @@ package body Make_Harness_Window_Pkg.Callbacks is
          return;
       end if;
 
-      Get_Suite_Name (Full_Name (S), Package_Name, Suite_Name);
+      Get_Suite_Name (Full_Name (S).all, Package_Name, Suite_Name);
 
       if Suite_Name /= null
         and then Package_Name /= null
@@ -138,7 +138,7 @@ package body Make_Harness_Window_Pkg.Callbacks is
             -"Warning: no suite was found in that file.");
       end if;
 
-      Set_Text (Harness_Window.File_Name_Entry, Full_Name (S));
+      Set_Text (Harness_Window.File_Name_Entry, Full_Name (S).all);
    end On_Ok_Button_Clicked;
 
    ------------------------------

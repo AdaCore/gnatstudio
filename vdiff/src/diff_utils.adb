@@ -135,11 +135,11 @@ package body Diff_Utils is
    begin
       Cmd_Args := Argument_String_To_List (Diff_Command);
       Cmd := Locate_Exec_On_Path (Cmd_Args (Cmd_Args'First).all);
-      Args (1) := new String'(Full_Name (File1));
-      Args (2) := new String'(Full_Name (File2));
+      Args (1) := new String'(Full_Name (File1).all);
+      Args (2) := new String'(Full_Name (File2).all);
 
       Trace (Me, "spawn: " & Diff_Command & " "
-             & Full_Name (File1) & " " & Full_Name (File2));
+             & Full_Name (File1).all & " " & Full_Name (File2).all);
 
       Non_Blocking_Spawn
         (Descriptor, Cmd.all,
@@ -201,18 +201,18 @@ package body Diff_Utils is
       Args (2) := new String'("-o");
 
       if Revert then
-         Args (3) := new String'(Full_Name (Orig_File));
+         Args (3) := new String'(Full_Name (Orig_File).all);
          Args (4) := new String'("-R");
-         Args (5) := new String'(Full_Name (New_File));
+         Args (5) := new String'(Full_Name (New_File).all);
          Num_Args := 6;
 
       else
-         Args (3) := new String'(Full_Name (New_File));
-         Args (4) := new String'(Full_Name (Orig_File));
+         Args (3) := new String'(Full_Name (New_File).all);
+         Args (4) := new String'(Full_Name (Orig_File).all);
          Num_Args := 5;
       end if;
 
-      Args (Num_Args) := new String'(Full_Name (Diff_File));
+      Args (Num_Args) := new String'(Full_Name (Diff_File).all);
 
       Trace (Me, "spawn: " &
              Argument_List_To_String (Cmd_Args.all & Args (1 .. Num_Args)));

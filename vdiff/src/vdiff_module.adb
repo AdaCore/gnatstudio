@@ -113,8 +113,8 @@ package body Vdiff_Module is
          end if;
 
          Gtk_New (Vdiff);
-         Set_Text (Vdiff.File_Label1, Full_Name (File1));
-         Set_Text (Vdiff.File_Label2, Full_Name (File2));
+         Set_Text (Vdiff.File_Label1, Full_Name (File1).all);
+         Set_Text (Vdiff.File_Label2, Full_Name (File2).all);
          Fill_Diff_Lists
            (Kernel, Vdiff.Clist1, Vdiff.Clist2, File1, File2, Result);
          Show_All (Vdiff);

@@ -1033,7 +1033,7 @@ package body Browsers.Call_Graph is
       else
          Insert (Get_Kernel (Entity),
                  -"No information found for the file "
-                   & Full_Name (File_Information (Entity)),
+                   & Full_Name (File_Information (Entity)).all,
                  Mode => Error);
       end if;
 
@@ -1817,7 +1817,7 @@ package body Browsers.Call_Graph is
    begin
       if not Is_Predefined_Entity (Item.Entity) then
          Set_Text (Layout,
-                   Base_Name (Get_Declaration_File_Of (Item.Entity))
+                   Base_Name (Get_Declaration_File_Of (Item.Entity)).all
                    & ':' & Image (Get_Declaration_Line_Of (Item.Entity)));
       else
          Set_Text (Layout, -"<Unresolved>");

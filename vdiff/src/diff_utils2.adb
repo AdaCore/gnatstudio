@@ -273,7 +273,8 @@ package body Diff_Utils2 is
       Args (2) := new String'(Locale_Full_Name (New_File));
 
       Trace (Me, "spawn: " & Diff_Command
-             & " " & Full_Name (New_File) & " " & Full_Name (Ref_File));
+             & " " & Full_Name (New_File).all
+             & " " & Full_Name (Ref_File).all);
 
       Non_Blocking_Spawn
         (Descriptor, Cmd.all,
@@ -458,9 +459,9 @@ package body Diff_Utils2 is
       Args (3) := new String'(Locale_Full_Name (Your_Change));
 
       Trace (Me, "spawn: " & Diff3_Command & " " &
-             Full_Name (My_Change)
-             & " " & Full_Name (Old_File)
-             & " " & Full_Name (Your_Change));
+             Full_Name (My_Change).all
+             & " " & Full_Name (Old_File).all
+             & " " & Full_Name (Your_Change).all);
 
       Non_Blocking_Spawn
         (Descriptor, Cmd.all,
@@ -687,8 +688,9 @@ package body Diff_Utils2 is
    begin
       Free_List (Link.List);
       if Link.Tmp_File /= VFS.No_File then
-         Trace (Me, "Delete Temporary File : " & Full_Name (Link.Tmp_File));
-         Delete_File (Full_Name (Link.Tmp_File), Success);
+         Trace (Me, "Delete Temporary File : "
+                & Full_Name (Link.Tmp_File).all);
+         Delete_File (Full_Name (Link.Tmp_File).all, Success);
       end if;
    end Free_All;
 

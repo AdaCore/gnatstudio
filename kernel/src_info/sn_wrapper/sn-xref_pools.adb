@@ -204,7 +204,7 @@ package body SN.Xref_Pools is
          else
             Put (FD, '0');
          end if;
-         Put_Line (FD, Full_Name (E.Xref_Filename));
+         Put_Line (FD, Full_Name (E.Xref_Filename).all);
          STable.Get_Next (Pool.HTable, E);
       end loop;
 
@@ -261,7 +261,7 @@ package body SN.Xref_Pools is
       Directory       : String;
       N               : Integer) return Virtual_File
    is
-      Name  : constant String := Base_Name (Source_Filename);
+      Name  : constant String := Base_Name (Source_Filename).all;
    begin
       if N = 0 then
          return Create (Full_Filename => Directory & Name & Xref_Suffix);
@@ -282,7 +282,7 @@ package body SN.Xref_Pools is
    is
       Data  : Xref_Elmt_Ptr;
       N     : Integer := 0;
-      Source : aliased constant String := Full_Name (Source_Filename);
+      Source : aliased constant String := Full_Name (Source_Filename).all;
    begin
       --  Get hashed value
 
@@ -318,7 +318,7 @@ package body SN.Xref_Pools is
                   Raise_Exception
                     (Xref_File_Error'Identity,
                      "unable to create a new file: "
-                     & VFS.Full_Name (Full_Name));
+                     & VFS.Full_Name (Full_Name).all);
                end if;
 
                Close (FD);
@@ -344,7 +344,7 @@ package body SN.Xref_Pools is
      (Source_Filename : VFS.Virtual_File;
       Pool            : Xref_Pool) return Boolean
    is
-      Full : aliased constant String := Full_Name (Source_Filename);
+      Full : aliased constant String := Full_Name (Source_Filename).all;
       Xref_Elmt : constant Xref_Elmt_Ptr :=
         STable.Get (Pool.HTable, Full'Unrestricted_Access);
    begin
@@ -360,7 +360,7 @@ package body SN.Xref_Pools is
       Valid           : Boolean;
       Pool            : Xref_Pool)
    is
-      Full : aliased constant String := Full_Name (Source_Filename);
+      Full : aliased constant String := Full_Name (Source_Filename).all;
       Xref_Elmt : Xref_Elmt_Ptr :=
         STable.Get (Pool.HTable, Full'Unrestricted_Access);
    begin

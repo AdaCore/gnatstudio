@@ -331,7 +331,7 @@ package body Vdiff2_Module.Utils is
    is
       Curr_Node  : Diff_List_Node;
       Curr_Chunk : Diff_Chunk_Access;
-      VFile      : T_VFile := (Item.File1, Item.File2, Item.File3);
+      VFile      : constant T_VFile := (Item.File1, Item.File2, Item.File3);
 
    begin
       Curr_Node := First (Item.List);

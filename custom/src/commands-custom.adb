@@ -135,9 +135,9 @@ package body Commands.Custom is
                File := File_Selection_Context_Access (Context);
 
                if Param = "f" then
-                  return Base_Name (File_Information (File));
+                  return Base_Name (File_Information (File)).all;
                else
-                  return Full_Name (File_Information (File));
+                  return Full_Name (File_Information (File)).all;
                end if;
 
             else
@@ -201,7 +201,7 @@ package body Commands.Custom is
                         Files_List := Get_Source_Files (Project, Recurse);
                         if Files_List /= null then
                            for K in Files_List'Range loop
-                              Put_Line (File, Full_Name (Files_List (K)));
+                              Put_Line (File, Full_Name (Files_List (K)).all);
                            end loop;
                            Unchecked_Free (Files_List);
                         end if;
@@ -270,7 +270,7 @@ package body Commands.Custom is
 
                      for K in List'Range loop
                         New_New_Args (Last) :=
-                          new String'(Base_Name (List (K)));
+                          new String'(Base_Name (List (K)).all);
                         Last := Last + 1;
                      end loop;
 

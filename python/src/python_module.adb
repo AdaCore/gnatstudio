@@ -646,15 +646,15 @@ package body Python_Module is
       Info     : constant File_Info := Get_Data (Instance);
    begin
       if Command = "__str__" or else Command = "__repr__" then
-         Set_Return_Value (Data, Full_Name (Get_File (Info)));
+         Set_Return_Value (Data, Full_Name (Get_File (Info)).all);
 
       elsif Command = "__cmp__" then
          declare
             Inst2 : constant Class_Instance := Nth_Arg
               (Data, 2, Get_File_Class (Kernel));
             Info2 : constant File_Info := Get_Data (Inst2);
-            Name  : constant String := Full_Name (Get_File (Info));
-            Name2 : constant String := Full_Name (Get_File (Info2));
+            Name  : constant String := Full_Name (Get_File (Info)).all;
+            Name2 : constant String := Full_Name (Get_File (Info2)).all;
          begin
             if Name < Name2 then
                Set_Return_Value (Data, -1);
@@ -666,7 +666,8 @@ package body Python_Module is
          end;
 
       elsif Command = "__hash__" then
-         Set_Return_Value (Data, Integer (Hash (Full_Name (Get_File (Info)))));
+         Set_Return_Value
+           (Data, Integer (Hash (Full_Name (Get_File (Info)).all)));
       end if;
 
    exception
@@ -746,19 +747,20 @@ package body Python_Module is
          if Is_Predefined_Entity (Entity) then
             Set_Return_Value (Data, Get_Name (Entity));
          else
-            Set_Return_Value (Data,
-                              Get_Name (Entity) & ':'
-                              & Base_Name (Get_Declaration_File_Of (Entity))
-                              & ':'
-                              & Image (Get_Declaration_Line_Of (Entity)) & ':'
-                              & Image (Get_Declaration_Column_Of (Entity)));
+            Set_Return_Value
+              (Data,
+               Get_Name (Entity) & ':'
+               & Base_Name (Get_Declaration_File_Of (Entity)).all
+               & ':'
+               & Image (Get_Declaration_Line_Of (Entity)) & ':'
+               & Image (Get_Declaration_Column_Of (Entity)));
          end if;
 
       elsif Command = "__hash__" then
          Set_Return_Value
            (Data, Integer
             (Hash (Get_Name (Entity)
-                   & Full_Name (Get_Declaration_File_Of (Entity))
+                   & Full_Name (Get_Declaration_File_Of (Entity)).all
                    & Image (Get_Declaration_Line_Of (Entity))
                    & Image (Get_Declaration_Column_Of (Entity)))));
 
@@ -776,9 +778,9 @@ package body Python_Module is
             elsif Name1 = Name2 then
                declare
                   File1 : constant String :=
-                    Full_Name (Get_Declaration_File_Of (Entity));
+                    Full_Name (Get_Declaration_File_Of (Entity)).all;
                   File2 : constant String :=
-                    Full_Name (Get_Declaration_File_Of (Entity2));
+                    Full_Name (Get_Declaration_File_Of (Entity2)).all;
                begin
                   if File1 < File2 then
                      Set_Return_Value (Data, -1);
@@ -837,14 +839,14 @@ package body Python_Module is
         or else Command = "__repr__"
       then
          Set_Return_Value (Data,
-                           Base_Name (Get_File (Fileinfo)) & ':'
+                           Base_Name (Get_File (Fileinfo)).all & ':'
                            & Image (Get_Line (Info)) & ':'
                            & Image (Get_Column (Info)));
 
       elsif Command = "__hash__" then
          Set_Return_Value
            (Data, Integer
-            (Hash (Full_Name (Get_File (Fileinfo))
+            (Hash (Full_Name (Get_File (Fileinfo)).all
                    & Image (Get_Line (Info))
                    & Image (Get_Column (Info)))));
 
@@ -855,8 +857,8 @@ package body Python_Module is
             Info2 : constant File_Location_Info := Get_Data (Inst2);
             Fileinfo2 : constant File_Info := Get_Data (Get_File (Info2));
             Line1, Line2 : Integer;
-            Name1 : constant String := Full_Name (Get_File (Fileinfo));
-            Name2 : constant String := Full_Name (Get_File (Fileinfo2));
+            Name1 : constant String := Full_Name (Get_File (Fileinfo)).all;
+            Name2 : constant String := Full_Name (Get_File (Fileinfo2)).all;
          begin
             if Name1 < Name2 then
                Set_Return_Value (Data, -1);

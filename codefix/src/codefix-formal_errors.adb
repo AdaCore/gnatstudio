@@ -796,7 +796,7 @@ package body Codefix.Formal_Errors is
       Set_Caption
         (New_Command,
          "Move with clause from """ & Base_Name (Cursor.File_Name.all) &
-         """ to """ & Base_Name (Body_Name) & """");
+         """ to """ & Base_Name (Body_Name).all & """");
       Append (Result, New_Command);
       Free (With_Cursor);
 

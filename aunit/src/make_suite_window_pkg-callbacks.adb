@@ -85,7 +85,7 @@ package body Make_Suite_Window_Pkg.Callbacks is
 
       File         : constant Virtual_File :=
         Get_Selection (Suite_Window.Explorer);
-      S            : constant String := Full_Name (File);
+      S            : constant String := Full_Name (File).all;
       Row_Num      : Gint;
       Suite_Name   : String_Access;
       Package_Name : String_Access;

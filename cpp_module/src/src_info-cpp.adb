@@ -207,11 +207,11 @@ package body Src_Info.CPP is
          Full_Filename => Referred_Filename);
 
       Assert (Fail_Stream, File.LI.Body_Info.Source_Filename.all /=
-              Base_Name (Referred_Filename),
+              Base_Name (Referred_Filename).all,
               "Can't insert dependency, LI file "
-              & Base_Name (Referred_LI.LI.LI_Filename)
+              & Base_Name (Referred_LI.LI.LI_Filename).all
               & " is already for file "
-              & Full_Name (Referred_Filename));
+              & Full_Name (Referred_Filename).all);
 
       --  Is this a first dependencies info in this file?
 
@@ -443,7 +443,7 @@ package body Src_Info.CPP is
 
          if File.LI.Body_Info /= null
            and then Base_Name (File.LI.Body_Info.Source_Filename.all) =
-           Base_Name (Parent_Filename)
+           Base_Name (Parent_Filename).all
          then
             Tmp_LI_File_Ptr := File;
 
@@ -1148,8 +1148,8 @@ package body Src_Info.CPP is
          --  Create the list of files that need to be analyzed.
 
          Create (Tmp_File, Out_File, Name => HI.List_Filename.all);
-         Put_Line (Tmp_File, "@" & Full_Name (Xref_File_Name));
-         Put_Line (Tmp_File, Full_Name (Full_Filename));
+         Put_Line (Tmp_File, "@" & Full_Name (Xref_File_Name).all);
+         Put_Line (Tmp_File, Full_Name (Full_Filename).all);
          Close (Tmp_File);
 
          Close_DB_Files (Handler.SN_Table);
@@ -1261,8 +1261,8 @@ package body Src_Info.CPP is
                   Delete (Xref_File_Name);
                end if;
 
-               Put_Line (Tmp_File, "@" & Full_Name (Xref_File_Name));
-               Put_Line (Tmp_File, Full_Name (File));
+               Put_Line (Tmp_File, "@" & Full_Name (Xref_File_Name).all);
+               Put_Line (Tmp_File, Full_Name (File).all);
 
             elsif To_Timestamp (File_Time_Stamp (Xref_File_Name)) >
               To_Timestamp (File_Time_Stamp (TO_File_Name))
@@ -1653,7 +1653,7 @@ package body Src_Info.CPP is
       Init (Module_Typedefs);
       Set_Cursor (Handler.SN_Table (FIL),
                   Position    => By_Key,
-                  Key         => Full_Name (Full_Filename) & Field_Sep,
+                  Key         => Full_Name (Full_Filename).all & Field_Sep,
                   Exact_Match => False);
 
       loop -- iterate thru all symbols for specified file
@@ -1796,8 +1796,8 @@ package body Src_Info.CPP is
          return;
       end if;
 
-      if Dir_Name (Source_Filename) = "./" then
-         Warn ("File not found: " & Base_Name (Source_Filename));
+      if Dir_Name (Source_Filename).all = "./" then
+         Warn ("File not found: " & Base_Name (Source_Filename).all);
          return;
       end if;
 
@@ -1831,7 +1831,7 @@ package body Src_Info.CPP is
       end if;
 
       Trace (Info_Stream, "Create_Or_Complete_LI "
-             & Full_Name (Source_Filename));
+             & Full_Name (Source_Filename).all);
 
       Convert_To_Parsed
         (File, File.LI.LI_Filename, Update_Timestamp => True);
@@ -1922,7 +1922,7 @@ package body Src_Info.CPP is
       Set_Cursor
         (Handler.SN_Table (FIL),
          Position    => By_Key,
-         Key         => Full_Name (File_Name) & Field_Sep,
+         Key         => Full_Name (File_Name).all & Field_Sep,
          Exact_Match => False);
 
       loop
@@ -2094,7 +2094,7 @@ package body Src_Info.CPP is
         Create (Full_Filename => DB_Dir & Browse.Xref_Pool_Filename);
 
    begin
-      if Dir_Name (Source_Filename) = "" then
+      if Dir_Name (Source_Filename).all = "" then
          return VFS.No_File;
       end if;
 
@@ -2202,7 +2202,7 @@ package body Src_Info.CPP is
       Sym        : FIL_Table;
       Class_Kind : E_Kind := Non_Generic_Class;
    begin
-      if Full_Name (Source_Filename) =
+      if Full_Name (Source_Filename).all =
         CL_Tab.Buffer (CL_Tab.File_Name.First .. CL_Tab.File_Name.Last)
       then -- this class should be declared in the current file
          Decl_Info := Find_Declaration
@@ -2435,7 +2435,7 @@ package body Src_Info.CPP is
       Assert (Fail_Stream, First_MD_Pos /= Invalid_Point, "DB inconsistency");
 
       --  ??? Do we want to compare the full or base name
-      if Full_Name (Filename) =
+      if Full_Name (Filename).all =
         MD_Tab.Buffer  (MD_Tab.File_Name.First .. MD_Tab.File_Name.Last)
       then -- work with declarations in the same file
          Decl_Info := Find_Declaration
@@ -2618,7 +2618,7 @@ package body Src_Info.CPP is
       Assert (Fail_Stream, First_FD_Pos /= Invalid_Point, "DB inconsistency");
 
       --  ??? Do we need to compare full or base names ?
-      if Full_Name (Filename) =
+      if Full_Name (Filename).all =
         FD_Tab.Buffer  (FD_Tab.File_Name.First .. FD_Tab.File_Name.Last)
       then -- work with declarations in the same file
          Decl_Info := Find_Declaration
@@ -3142,7 +3142,7 @@ package body Src_Info.CPP is
 
             --  ??? Should we compare base or full name here ?
             if MDecl.Buffer (MDecl.File_Name.First .. MDecl.File_Name.Last) /=
-              Full_Name (Filename)
+              Full_Name (Filename).all
             then
                --  this will find/create dependency declaration
                Find_First_Forward_Declaration
@@ -3182,7 +3182,7 @@ package body Src_Info.CPP is
 
             --  ??? Should we compare full or base name
             if MBody.Buffer (MBody.File_Name.First .. MBody.File_Name.Last) /=
-              Full_Name (Filename)
+              Full_Name (Filename).all
             then
                --  this will find/create dependency declaration
                Find_First_Forward_Declaration
@@ -3267,7 +3267,7 @@ package body Src_Info.CPP is
 
             --  ??? Should we compare full or base name
             if FDecl.Buffer (FDecl.File_Name.First .. FDecl.File_Name.Last) /=
-               Full_Name (Filename)
+               Full_Name (Filename).all
             then
                --  this will find/create dependency declaration
                Find_First_Forward_Declaration
@@ -3301,7 +3301,7 @@ package body Src_Info.CPP is
 
             --  ??? Should we compare full or base name
             if Fn.Buffer (Fn.File_Name.First .. Fn.File_Name.Last) /=
-               Full_Name (Filename)
+               Full_Name (Filename).all
             then
                --  this will find/create dependency declaration
                Find_First_Forward_Declaration
@@ -6255,7 +6255,7 @@ package body Src_Info.CPP is
 
          --  ??? Should we compare full or base names
          if Ref.Buffer (Ref.File_Name.First .. Ref.File_Name.Last) =
-           Full_Name (Var_File_Name)
+           Full_Name (Var_File_Name).all
            and then Cmp_Arg_Types
              (FU_Tab.Buffer,
               Ref.Buffer,

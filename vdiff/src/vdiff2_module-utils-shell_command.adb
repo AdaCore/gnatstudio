@@ -42,7 +42,7 @@ package body Vdiff2_Module.Utils.Shell_Command is
       Number : Natural := 1) return String
    is
       Args_Line : Argument_List :=
-        (1 => new String'(Full_Name (File)),
+        (1 => new String'(Full_Name (File).all),
          2 => new String'(Image (Pos)),
          3 => new String'(Image (Number)),
          4 => new String'(Style));
@@ -63,7 +63,7 @@ package body Vdiff2_Module.Utils.Shell_Command is
       File   : Virtual_File)
    is
       Args_edit           : Argument_List :=
-        (1 => new String'(Full_Name (File)));
+        (1 => new String'(Full_Name (File).all));
 
    begin
       Execute_GPS_Shell_Command (Kernel, "edit", Args_edit);
@@ -83,7 +83,7 @@ package body Vdiff2_Module.Utils.Shell_Command is
       After  : Integer := -1) return String
    is
       Args_Replace_Text : Argument_List :=
-        (1 => new String'(Full_Name (File)),
+        (1 => new String'(Full_Name (File).all),
          2 => new String'(Image (Line)),
          3 => new String'(Image (Column)),
          4 => new String'(Image (Before)),
@@ -105,7 +105,7 @@ package body Vdiff2_Module.Utils.Shell_Command is
       File : Virtual_File) return Natural
    is
       Args_Line : Argument_List :=
-        (1 => new String'(Full_Name (File)));
+        (1 => new String'(Full_Name (File).all));
       Res       : constant String :=  Execute_GPS_Shell_Command
         (Kernel, "get_last_line", Args_Line);
 
@@ -174,7 +174,7 @@ package body Vdiff2_Module.Utils.Shell_Command is
       Number : Natural := 1)
    is
       Args_Highlight : Argument_List :=
-        (1 => new String'(Full_Name (File)),
+        (1 => new String'(Full_Name (File).all),
          2 => new String'(Style),
          3 => null);
 
@@ -202,7 +202,7 @@ package body Vdiff2_Module.Utils.Shell_Command is
       End_C   : Integer := -1)
    is
       Args_Highlight_Range : Argument_List :=
-        (1 => new String'(Full_Name (File)),
+        (1 => new String'(Full_Name (File).all),
          2 => new String'(Style),
          3 => new String'(Image (Line)),
          4 => new String'("-1"),
@@ -238,7 +238,7 @@ package body Vdiff2_Module.Utils.Shell_Command is
       Pos   : Natural) return String
    is
       Args : Argument_List :=
-        (1 => new String'(Full_Name (File)),
+        (1 => new String'(Full_Name (File).all),
          2 => new String'(Image (Pos)),
          3 => new String'("1"));
       Res : constant String := Execute_GPS_Shell_Command
@@ -335,7 +335,7 @@ package body Vdiff2_Module.Utils.Shell_Command is
       After  : Integer := -1)
    is
       Args_Replace_Text : Argument_List :=
-        (1 => new String'(Full_Name (File)),
+        (1 => new String'(Full_Name (File).all),
          2 => new String'(Image (Line)),
          3 => new String'(Image (Column)),
          4 => new String'(Text),
@@ -359,7 +359,7 @@ package body Vdiff2_Module.Utils.Shell_Command is
       Style : String := "")
    is
       Args_Highlight : Argument_List :=
-        (1 => new String'(Full_Name (File)),
+        (1 => new String'(Full_Name (File).all),
          2 => new String'(Style),
          3 => new String'(Image (Pos)));
 
@@ -397,7 +397,7 @@ package body Vdiff2_Module.Utils.Shell_Command is
       End_C   : Integer := -1)
    is
       Args_Highlight_Range : Argument_List :=
-        (1 => new String'(Full_Name (File)),
+        (1 => new String'(Full_Name (File).all),
          2 => new String'(Style),
          3 => new String'(Image (Line)),
          4 => new String'("-1"),

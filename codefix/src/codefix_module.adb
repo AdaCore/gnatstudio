@@ -33,9 +33,7 @@ with Glib.Values;            use Glib.Values;
 with Glide_Kernel;           use Glide_Kernel;
 with Glide_Kernel.Modules;   use Glide_Kernel.Modules;
 with Glide_Kernel.Console;   use Glide_Kernel.Console;
-with Glide_Kernel.Project;   use Glide_Kernel.Project;
 with Glide_Intl;             use Glide_Intl;
-with Projects.Registry;      use Projects, Projects.Registry;
 
 with Traces;                 use Traces;
 with Basic_Types;            use Basic_Types;
@@ -105,12 +103,9 @@ package body Codefix_Module is
    ----------------------
 
    function Get_Body_Or_Spec
-     (Text : GPS_Navigator; File_Name : Virtual_File) return Virtual_File
-   is
-      Project : constant Project_Type := Get_Project_From_File
-        (Get_Registry (Text.Kernel), File_Name);
+     (Text : GPS_Navigator; File_Name : Virtual_File) return Virtual_File is
    begin
-      return Other_File_Name (Project, File_Name);
+      return Other_File_Name (Text.Kernel, File_Name);
    end Get_Body_Or_Spec;
 
    ------------
@@ -265,7 +260,7 @@ package body Codefix_Module is
            and then Has_File_Information (Location)
          then
             Assign (Error_Caption,
-                    Base_Name (File_Information (Location)) &
+                    Base_Name (File_Information (Location)).all &
                     ":" & Message_Information (Location));
          else
             return;

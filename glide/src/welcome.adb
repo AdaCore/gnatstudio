@@ -438,7 +438,7 @@ package body Welcome is
 
       begin
          if File /= VFS.No_File then
-            Set_Text (Get_Entry (S.Open_Project), Full_Name (File));
+            Set_Text (Get_Entry (S.Open_Project), Full_Name (File).all);
          end if;
       end;
 

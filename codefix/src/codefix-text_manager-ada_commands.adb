@@ -360,7 +360,8 @@ package body Codefix.Text_Manager.Ada_Commands is
 
       if Destination /= VFS.No_File then
          Last_With := File_Cursor
-           (Get_Next_With_Position (Current_Text, Full_Name (Destination)));
+           (Get_Next_With_Position
+              (Current_Text, Full_Name (Destination).all));
 
          This.Last_With := new Mark_Abstr'Class'
            (Get_New_Mark (Current_Text, Last_With));
