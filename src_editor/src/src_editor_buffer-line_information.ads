@@ -96,4 +96,10 @@ package Src_Editor_Buffer.Line_Information is
       End_Line   : Buffer_Line_Type);
    --  Remove lines from the column info and line highlights.
 
+   procedure Remove_Blank_Lines
+     (Buffer : access Source_Buffer_Record'Class;
+      Mark   : Gtk.Text_Mark.Gtk_Text_Mark;
+      Number : Natural);
+   --  Remove Number blank lines associated with Mark.
+
 end Src_Editor_Buffer.Line_Information;
