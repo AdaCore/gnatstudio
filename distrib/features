@@ -3,6 +3,8 @@ details, look at the documentation.
 
 New features in GPS 1.2.0
 
+- Improved user interface
+
 - Speed improvement when displaying many files at once in the VCS explorer
 
 - Support for project file pathname in custom file
