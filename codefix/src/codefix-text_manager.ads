@@ -91,7 +91,7 @@ package Codefix.Text_Manager is
    type Mark_Abstr is abstract tagged private;
    type Ptr_Mark is access all Mark_Abstr'Class;
 
-   procedure Free (This : in out Mark_Abstr) is abstract;
+   procedure Free (This : in out Mark_Abstr);
    --  Free the memory associated to a Mark_Abstr.
 
    procedure Free_Data (This : in out Mark_Abstr'Class);
@@ -260,6 +260,8 @@ package Codefix.Text_Manager is
    type Text_Navigator_Abstr is abstract tagged private;
 
    type Ptr_Text_Navigator is access all Text_Navigator_Abstr'Class;
+
+   procedure Free (This : in out Ptr_Text_Navigator);
 
    function New_Text_Interface (This : Text_Navigator_Abstr)
      return Ptr_Text is abstract;
@@ -908,13 +910,15 @@ package Codefix.Text_Manager is
    --  Execute a command, and create an extract to preview the changes. This
    --  procedure raises a Codefix_Panic is the correction is no longer avaible.
 
+   type Execute_Corrupted is access procedure (Error_Message : String);
+
    procedure Secured_Execute
      (This         : Text_Command'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       New_Extract  : out Extract'Class;
-      Success      : out Boolean);
+      Error_Cb     : Execute_Corrupted := null);
    --  Same as the previous one, but when problems happend no exception is
-   --  raised but Success is False. Otherwise it is True. This function also
+   --  raised but Error_Cb is called. This function also
    --  updates the current text, in order to be conformant with user's changes.
 
    procedure Free (This : in out Text_Command);
