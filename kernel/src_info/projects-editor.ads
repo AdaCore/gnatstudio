@@ -271,9 +271,9 @@ package Projects.Editor is
    --  Update the value of the attribute Attribute_Name in Project/Pkg_Name.
    --  If Pkg_Name is the empty string "", then the value is updated at the
    --  top-level of the project.
-   --  List is the list of new values for the variable. If Prepend is True,
+   --  List is the list of new values for the variable. If Prepend is False,
    --  these values are the only values for the variable, and they override any
-   --  other value that was there before. If Prepend is False, the values in
+   --  other value that was there before. If Prepend is True, the values in
    --  List are prepended to the current value of the attribute.
    --  Attribute_Index is the associative array index for the attribute (for
    --  instance the file name when modifying the switches).
