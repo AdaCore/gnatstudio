@@ -22,9 +22,9 @@ Known Problems fixed in GPS 2.1.0
   Workaround: Remove all auto-saves before building.
 
 - DA10-004 Crash in "Find all local refs"
-  Problem:    GPS would sometimes crashes when calling the Find all locals
-              refs contextual menu
-  Workaround: Use "Find all refs"
+  Problem:    GPS sometimes crashes when calling the Find all locals
+              refs contextual menu.
+  Workaround: Use "Find all refs" instead.
 
 - When using CVS, operation "Query status for directory" is recursive
   Problem:    When using CVS, the operation "Query status for directory"
