@@ -949,6 +949,7 @@ package body Debugger.Gdb is
       -------------------
       --  The value looks like:   (access integer) 0xbffff54c
       --  or                  :    0x0
+      --  or                  :   (<ref> TstringS29b) @0xbfffdba0
 
       elsif Result'Tag = Access_Type'Tag then
 
@@ -956,6 +957,10 @@ package body Debugger.Gdb is
          if Index <= Type_Str'Last and then Type_Str (Index) = '(' then
             Skip_To_Char (Type_Str, Index, ')');
             Index := Index + 2;
+         end if;
+
+         if Index <= Type_Str'Last and then Type_Str (Index) = '@' then
+            Index := Index + 1;
          end if;
 
          declare
@@ -1006,8 +1011,13 @@ package body Debugger.Gdb is
          --  ("array (1..1) of string" can have a value of "(0x0").
          --  For such cases, we change the type once and for all, since we will
          --  never need to go back to an array type.
+         --  See also "(<ref> TstringS29b) @0xbfffdba0: Index bound unknown.",
+         --  which starts with the right character but is in fact an array type
 
-         if Type_Str (Index) /= Context.Array_Start then
+         if Type_Str (Index) /= Context.Array_Start
+           or else (Index + 5 <= Type_Str'Last
+                    and then Type_Str (Index + 1 .. Index + 5) = "<ref>")
+         then
             if Parent /= null then
                Result := Replace (Parent, Result, New_Access_Type);
             else
