@@ -1082,7 +1082,7 @@ package body Browsers.Call_Graph is
       end if;
 
       Console.Insert_Result
-        (Kernel, Category, Base_Name (File), Name, Line, Col, Name'Length);
+        (Kernel, Category, File, Name, Line, Col, Name'Length);
    end Print_Ref;
 
    -------------------------
