@@ -491,6 +491,13 @@ package body Src_Info.Debug is
          New_Line;
       end if;
 
+      Current := LIF.Separate_Info;
+      while Current /= null loop
+         Put_Line ("D " & Current.Value.Source_Filename.all
+                   & " " & Current.Value.Unit_Name.all);
+         Current := Current.Next;
+      end loop;
+
       --  Generate the file dependency section
       Dump_File_Dependency_Section (LIF);
       New_Line;
@@ -510,7 +517,6 @@ package body Src_Info.Debug is
       end loop;
 
       Dump_Dependency_File_Info_List (LIF.Dependencies_Info);
-
    end Dump_LI_File;
 
    -------------------
