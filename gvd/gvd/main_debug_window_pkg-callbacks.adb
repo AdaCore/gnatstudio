@@ -42,6 +42,7 @@ with Odd.Canvas;          use Odd.Canvas;
 with Odd.Dialogs;         use Odd.Dialogs;
 with Gtkada.Types;        use Gtkada.Types;
 with Odd.Types;           use Odd.Types;
+with Odd.Strings;         use Odd.Strings;
 
 package body Main_Debug_Window_Pkg.Callbacks is
 
@@ -99,7 +100,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
    procedure On_Open_Program1_Activate
      (Object : access Gtk_Widget_Record'Class)
    is
-      Tab : Debugger_Process_Tab := Get_Current_Process (Object);
+      Tab : constant Debugger_Process_Tab := Get_Current_Process (Object);
    begin
       if Tab = null
         or else Command_In_Process (Get_Process (Tab.Debugger))
@@ -108,7 +109,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
       end if;
 
       declare
-         S   : constant String := File_Selection_Dialog;
+         S : constant String := To_Unix_Pathname (File_Selection_Dialog);
       begin
          if S /= "" then
             Set_Executable (Tab.Debugger, S, Mode => Hidden);
@@ -273,10 +274,10 @@ package body Main_Debug_Window_Pkg.Callbacks is
       end if;
 
       declare
-         Dir : constant String := File_Selection_Dialog
+         Dir : constant String := To_Unix_Pathname (File_Selection_Dialog
            (Title       => "Directory Selection",
             Dir_Only    => True,
-            Must_Exist  => True);
+            Must_Exist  => True));
 
       begin
          if Dir /= "" then

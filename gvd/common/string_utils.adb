@@ -460,4 +460,26 @@ package body Odd.Strings is
       return "";
    end File_Extension;
 
+   ----------------------
+   -- To_Unix_Pathname --
+   ----------------------
+
+   function To_Unix_Pathname (Path : String) return String is
+      Result : String (Path'Range);
+   begin
+      if GNAT.OS_Lib.Directory_Separator ='/' then
+         return Path;
+      end if;
+
+      for J in Result'Range loop
+         if Path (J) = GNAT.OS_Lib.Directory_Separator then
+            Result (J) := '/';
+         else
+            Result (J) := Path (J);
+         end if;
+      end loop;
+
+      return Result;
+   end To_Unix_Pathname;
+
 end Odd.Strings;
