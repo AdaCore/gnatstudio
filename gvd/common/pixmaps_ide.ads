@@ -7,7 +7,9 @@ package Odd.Pixmaps is
    --  enough for our needs and avoid having to maintain this information here.
 
    arrow_xpm        : Chars_Ptr_Array (0 .. 0);
+   box_xpm          : Chars_Ptr_Array (0 .. 0);
    breakat_xpm      : Chars_Ptr_Array (0 .. 0);
+   cancel_xpm       : Chars_Ptr_Array (0 .. 0);
    cont_xpm         : Chars_Ptr_Array (0 .. 0);
    display_xpm      : Chars_Ptr_Array (0 .. 0);
    dot_xpm          : Chars_Ptr_Array (0 .. 0);
@@ -16,6 +18,7 @@ package Odd.Pixmaps is
    finish_xpm       : Chars_Ptr_Array (0 .. 0);
    interrupt_xpm    : Chars_Ptr_Array (0 .. 0);
    kill_xpm         : Chars_Ptr_Array (0 .. 0);
+   lock_xpm         : Chars_Ptr_Array (0 .. 0);
    lookup_xpm       : Chars_Ptr_Array (0 .. 0);
    mini_folder_xpm  : Chars_Ptr_Array (0 .. 0);
    mini_ofolder_xpm : Chars_Ptr_Array (0 .. 0);
@@ -41,7 +44,9 @@ package Odd.Pixmaps is
 
 private
    pragma Import (C, arrow_xpm, "arrow_xpm");
+   pragma Import (C, box_xpm, "box_xpm");
    pragma Import (C, breakat_xpm, "breakat_xpm");
+   pragma Import (C, cancel_xpm, "cancel_xpm");
    pragma Import (C, cont_xpm, "cont_xpm");
    pragma Import (C, display_xpm, "display_xpm");
    pragma Import (C, dot_xpm, "dot_xpm");
@@ -50,6 +55,7 @@ private
    pragma Import (C, finish_xpm, "finish_xpm");
    pragma Import (C, interrupt_xpm, "interrupt_xpm");
    pragma Import (C, kill_xpm, "kill_xpm");
+   pragma Import (C, lock_xpm, "lock_xpm");
    pragma Import (C, lookup_xpm, "lookup_xpm");
    pragma Import (C, mini_folder_xpm, "mini_folder_xpm");
    pragma Import (C, mini_ofolder_xpm, "mini_ofolder_xpm");
