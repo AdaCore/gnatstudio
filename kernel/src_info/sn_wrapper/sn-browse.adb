@@ -34,7 +34,6 @@ use  GNAT.Directory_Operations,
      Ada.Strings.Fixed;
 
 with GNAT.OS_Lib; use GNAT.OS_Lib;
---  with Ada.Text_IO; use Ada.Text_IO;
 
 package body SN.Browse is
 
@@ -52,12 +51,13 @@ package body SN.Browse is
       Args : Argument_List (1 .. 6);
    begin
       --  Execute browser
-      Args := (1 => new String'("-n"),
-               2 => new String'(DB_Directory & DB_File_Name),
-               3 => new String'("-p"),
-               4 => new String'(DBIMP_Path),
-               5 => new String'("-y"),
-               6 => new String'(File_Name));
+      Args :=
+        (1 => new String'("-n"),
+         2 => new String'(DB_Directory & DB_File_Name),
+         3 => new String'("-p"),
+         4 => new String'(DBIMP_Path),
+         5 => new String'("-y"),
+         6 => new String'(File_Name));
 
       GNAT.Expect.Non_Blocking_Spawn
         (PD, Cbrowser_Path, Args, Err_To_Out => True);
@@ -80,9 +80,7 @@ package body SN.Browse is
          := DB_Directories (1).all & DB_File_Name & ".to";
       Dir          : Dir_Type;
       Last         : Natural;
-      Dir_Entry    : String (1 .. 1024);
-      --  1024 is the value of FILENAME_MAX in stdio.h (see
-      --  GNAT.Directory_Operations)
+      Dir_Entry    : String (1 .. 8192);
       Success      : Boolean;
       Args         : Argument_List_Access;
       Content      : String_Access;
