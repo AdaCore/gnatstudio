@@ -1403,7 +1403,8 @@ package body Src_Editor_Box is
                   return Selection_Context_Access (Area);
                end;
 
-            elsif Line /= Get_Line (Start_Iter)
+            elsif not Result
+              or else Line /= Get_Line (Start_Iter)
               or else Column < Get_Line_Offset (Start_Iter) - 1
               or else Column > Get_Line_Offset (End_Iter) + 1
             then
