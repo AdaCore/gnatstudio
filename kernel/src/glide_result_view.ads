@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2004                       --
---                            ACT-Europe                             --
+--                     Copyright (C) 2001-2005                       --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -90,18 +90,13 @@ package Glide_Result_View is
       Category : String);
    --  Update the counters for Category.
 
-   procedure Remove_Category
-     (View          : access Result_View_Record'Class;
-      Identifier    : String);
-   --  Remove category Identifier from the view. All corresponding marks
-   --  are deleted.
-
    procedure Remove_Result_Category
      (Kernel   : access Kernel_Handle_Record'Class;
-      Category : String);
+      Category : String;
+      File     : VFS.Virtual_File := VFS.No_File);
    --  Remove Category from the results view, if it exists.
-   --  Same as Remove_Category, except for the parameters type.
-
+   --  If File /= No_File, remove only the node corresponding to File in
+   --  the category.
 
    procedure Next_Item
      (View      : access Result_View_Record'Class;
