@@ -1785,7 +1785,7 @@ package body GVD.Text_Box.Source_Editor.Builtin is
         Get_Pref (GVD_Prefs, Keywords_Color);
       Editor.Show_Line_Nums :=
         Get_Pref (GVD_Prefs, Editor_Show_Line_Nums);
-      Set_Font (Edit, Get_Pref (GVD_Prefs, Editor_Font));
+      Set_Font (Edit, Get_Pref (GVD_Prefs, Fixed_Font));
 
       --  Pretend we have changed the contents of the buffer. This removes
       --  all highlighting of the current line, and reset any marker we

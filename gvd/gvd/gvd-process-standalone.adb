@@ -69,7 +69,7 @@ package body GVD.Process.Standalone is
       if Window.External_XID = 0 then
          Builtin.Gtk_New
            (Builtin_Source, Process, Window.TTY_Mode,
-            Get_Pref (GVD_Prefs, Editor_Font),
+            Get_Pref (GVD_Prefs, Fixed_Font),
             dot_xpm, arrow_xpm, stop_xpm,
             Comments_Color => Get_Pref (GVD_Prefs, Comments_Color),
             Strings_Color  => Get_Pref (GVD_Prefs, Strings_Color),
