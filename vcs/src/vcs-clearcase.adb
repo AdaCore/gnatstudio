@@ -37,6 +37,7 @@ with VCS_Module;                use VCS_Module;
 
 with Commands;                  use Commands;
 with Commands.External;         use Commands.External;
+with Commands.Console;          use Commands.Console;
 
 package body VCS.ClearCase is
 
@@ -490,11 +491,30 @@ package body VCS.ClearCase is
             Checkin_Element_Command : External_Command_Access;
             Checkin_Dir_Command  : External_Command_Access;
 
+            Fail_Message    : Console_Command_Access;
+            Success_Message : Console_Command_Access;
+
          begin
             Insert (Kernel,
                     -"Clearcase: Adding element: "
                       & File & " ...",
                     False, False, Info);
+
+            --  Create the end of the message.
+
+            Create (Fail_Message,
+                    Kernel,
+                    -("Adding of ") & File & (-" failed."),
+                    False,
+                    True,
+                    Info);
+
+            Create (Success_Message,
+                    Kernel,
+                    -"... done.",
+                    False,
+                    True,
+                    Info);
 
             --  Check out the directory.
 
@@ -583,10 +603,22 @@ package body VCS.ClearCase is
               (Checkout_Dir_Command,
                Make_Element_Command);
 
+            Add_Alternate_Action
+              (Checkout_Dir_Command,
+               Fail_Message);
+
             --  If the element was successfully created, check it in.
             Add_Consequence_Action
               (Make_Element_Command,
                Checkin_Element_Command);
+
+            Add_Alternate_Action
+              (Make_Element_Command,
+               Copy (Fail_Message));
+
+            Add_Consequence_Action
+              (Checkin_Dir_Command,
+               Success_Message);
 
             Enqueue (Rep.Queue, Checkout_Dir_Command);
             Enqueue (Rep.Queue, Checkin_Dir_Command);
