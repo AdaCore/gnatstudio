@@ -73,6 +73,7 @@ package body Src_Info.Debug is
    procedure Dump_Pos_And_E_Kind
      (FL : File_Location; Kind : E_Kind := Overloaded_Entity) is
    begin
+      Put (Get_File (FL) & ":");
       if Kind /= Overloaded_Entity then
          Put (Image (FL.Line) & E_Kind_To_Char (Kind) & Image (FL.Column));
       else
