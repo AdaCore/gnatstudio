@@ -99,11 +99,6 @@ package body Python.GUI is
    pragma Convention (C, Is_A_TTY);
    --  Override the python's methods of the File class.
 
-   procedure Insert_Text
-     (Interpreter : access Python_Interpreter_Record'Class;
-      Text        : String);
-   --  Insert some text in the interpreter console, and scroll as necessary
-
    procedure Process_Gtk_Events
      (Interpreter : access Python_Interpreter_Record'Class;
       Force       : Boolean := False);

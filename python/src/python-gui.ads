@@ -57,6 +57,11 @@ package Python.GUI is
    --  command is incomplete and would require extra input (a secondary prompt
    --  in interactive mode), then it is not executed.
 
+   procedure Insert_Text
+     (Interpreter : access Python_Interpreter_Record'Class;
+      Text        : String);
+   --  Insert some text in the interpreter console, and scroll as necessary
+
    Interpreter_Error : exception;
 
 private
