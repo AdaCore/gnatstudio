@@ -1,6 +1,43 @@
+-----------------------------------------------------------------------
+--                                                                   --
+--                     Copyright (C) 2001                            --
+--                          ACT-Europe                               --
+--                                                                   --
+-- This library is free software; you can redistribute it and/or     --
+-- modify it under the terms of the GNU General Public               --
+-- License as published by the Free Software Foundation; either      --
+-- version 2 of the License, or (at your option) any later version.  --
+--                                                                   --
+-- This library is distributed in the hope that it will be useful,   --
+-- but WITHOUT ANY WARRANTY; without even the implied warranty of    --
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
+-- General Public License for more details.                          --
+--                                                                   --
+-- You should have received a copy of the GNU General Public         --
+-- License along with this library; if not, write to the             --
+-- Free Software Foundation, Inc., 59 Temple Place - Suite 330,      --
+-- Boston, MA 02111-1307, USA.                                       --
+--                                                                   --
+-- As a special exception, if other files instantiate generics from  --
+-- this unit, or you link this unit with other files to produce an   --
+-- executable, this  unit  does not  by itself cause  the resulting  --
+-- executable to be covered by the GNU General Public License. This  --
+-- exception does not however invalidate any other reasons why the   --
+-- executable file  might be covered by the  GNU Public License.     --
+-----------------------------------------------------------------------
+
+with Unchecked_Deallocation;
+with Src_Info.ALI;              use Src_Info.ALI;
+with Prj.Env;                   use Prj.Env;
+
 package body Src_Info.Queries is
 
-   function Search_Is_Completed (Status : Query_Status) return Boolean;
+   procedure Free is new
+     Unchecked_Deallocation (Dependency_Node, Dependency_List);
+
+   function Search_Is_Completed
+     (Status : Find_Decl_Or_Body_Query_Status)
+      return Boolean;
    --  Return False unless Status is equal to Entity_Not_Found. The idea
    --  implemented behind this function is to have a single function to decide,
    --  given an xref query, whether the results from a sub-query should be
@@ -25,7 +62,7 @@ package body Src_Info.Queries is
       Start_Column    : out Positive;
       End_Line        : out Positive;
       End_Column      : out Positive;
-      Status          : out Query_Status);
+      Status          : out Find_Decl_Or_Body_Query_Status);
    --  Search for the body reference to the given declaration immediately
    --  following the given reference. If there is none then return the
    --  location of the declaration.
@@ -45,14 +82,61 @@ package body Src_Info.Queries is
       Start_Column    : out Positive;
       End_Line        : out Positive;
       End_Column      : out Positive;
-      Status          : out Query_Status);
+      Status          : out Find_Decl_Or_Body_Query_Status);
    --  ??? Document...
+
+   procedure Destroy (Dep : in out Dependency);
+   --  Deallocates the memory associated with the given Dependency record.
+
+   ----------------------
+   -- Find_Object_File --
+   ----------------------
+
+   function Find_Object_File
+     (Project_View    : Prj.Project_Id;
+      Short_File_Name : String;
+      Object_Path     : String)
+      return String
+   is
+      Path : String_Access;
+   begin
+      --  First, try on the project object path
+      Path := Locate_Regular_File
+        (Short_File_Name, Ada_Objects_Path (Project_View).all);
+
+      if Path /= null then
+         declare
+            Full_Path : constant String := Path.all;
+         begin
+            Free (Path);
+            return Full_Path;
+         end;
+      end if;
+
+      --  Fallback, try on the Object_Path (only if Use_Object_Path is set)
+      if Object_Path /= "" then
+         Path := Locate_Regular_File (Short_File_Name, Object_Path);
+         if Path /= null then
+            declare
+               Full_Path : constant String := Path.all;
+            begin
+               Free (Path);
+               return Full_Path;
+            end;
+         end if;
+      end if;
+
+      --  Object file not found anywhere, return the empty string
+      return "";
+   end Find_Object_File;
 
    -------------------------
    -- Search_Is_Completed --
    -------------------------
 
-   function Search_Is_Completed (Status : Query_Status) return Boolean is
+   function Search_Is_Completed
+     (Status : Find_Decl_Or_Body_Query_Status)
+      return Boolean is
    begin
       case Status is
          when Entity_Not_Found =>
@@ -102,7 +186,7 @@ package body Src_Info.Queries is
       Start_Column    : out Positive;
       End_Line        : out Positive;
       End_Column      : out Positive;
-      Status          : out Query_Status)
+      Status          : out Find_Decl_Or_Body_Query_Status)
    is
       Last_Body_Ref : E_Reference_List;
       Current_Ref   : E_Reference_List;
@@ -166,7 +250,7 @@ package body Src_Info.Queries is
       Start_Column    : out Positive;
       End_Line        : out Positive;
       End_Column      : out Positive;
-      Status          : out Query_Status)
+      Status          : out Find_Decl_Or_Body_Query_Status)
    is
       Current_Decl : E_Declaration_Info_List := Decl;
       Current_Ref  : E_Reference_List;
@@ -254,7 +338,7 @@ package body Src_Info.Queries is
       Start_Column    : out Positive;
       End_Line        : out Positive;
       End_Column      : out Positive;
-      Status          : out Query_Status)
+      Status          : out Find_Decl_Or_Body_Query_Status)
    is
       Current_Sep : File_Info_Ptr_List;
       Current_Dep : Dependency_File_Info_List;
@@ -350,5 +434,140 @@ package body Src_Info.Queries is
          End_Column := 1;
          Status := Internal_Error;
    end Find_Declaration_Or_Body;
+
+   -------------------
+   -- Get_Unit_Name --
+   -------------------
+
+   procedure Get_Unit_Name
+     (Source_Info_List : in out Src_Info.LI_File_List;
+      Project          : Prj.Project_Id;
+      Source_Path      : String;
+      Object_Path      : String;
+      Dep              : in out Dependency;
+      Unit_Name        : out String_Access) is
+   begin
+      if Dep.Unit_Name = null then
+         --  To find the Unit_Name, we need to parse the corresponding ALI
+         --  file.  There is no other choice, because the function that
+         --  associates the filename to a given unit is not bijective.
+         declare
+            Short_ALI_Filename : constant String := ALI_Filename_From_Source
+              (Dep.Filename.all, Project, Source_Path);
+            --  ??? Seems unefficient to search the path again, since the
+            --  ??? function above just did it.
+            Path : constant String :=
+              Find_Object_File (Project, Short_ALI_Filename, Object_Path);
+            Unit : LI_File_Ptr;
+            Success : Boolean;
+         begin
+            Parse_ALI_File
+              (Path, Project, Source_Path,
+               Source_Info_List, Unit, Success);
+
+            if Success then
+               Dep.Unit_Name := new String'(Unit.Spec_Info.Unit_Name.all);
+            end if;
+         end;
+      end if;
+
+      Unit_Name := Dep.Unit_Name;
+   end Get_Unit_Name;
+
+   ------------------
+   -- Get_Filename --
+   ------------------
+
+   function Get_Filename (Dep : Dependency) return String is
+   begin
+      return Dep.Filename.all;
+   end Get_Filename;
+
+   ---------------------------
+   -- Get_Depends_From_Spec --
+   ---------------------------
+
+   function Get_Depends_From_Spec (Dep : Dependency) return Boolean is
+   begin
+      return Dep.Depends_From_Spec;
+   end Get_Depends_From_Spec;
+
+   ---------------------------
+   -- Get_Depends_From_Body --
+   ---------------------------
+
+   function Get_Depends_From_Body (Dep : Dependency) return Boolean is
+   begin
+      return Dep.Depends_From_Body;
+   end Get_Depends_From_Body;
+
+   -------------
+   -- Destroy --
+   -------------
+
+   procedure Destroy (Dep : in out Dependency) is
+   begin
+      Free (Dep.Unit_Name);
+      Free (Dep.Unit_Name);
+   end Destroy;
+
+   procedure Destroy (List : in out Dependency_List) is
+      Current_Dep : Dependency_List renames List;
+      Next_Dep    : Dependency_List;
+   begin
+      while Current_Dep /= null loop
+         Next_Dep := Current_Dep.Next;
+         Destroy (Current_Dep.Value);
+         Free (Current_Dep);
+         Current_Dep := Next_Dep;
+      end loop;
+   end Destroy;
+
+   -----------------------
+   -- Find_Dependencies --
+   -----------------------
+
+   procedure Find_Dependencies
+     (Lib_Info     : LI_File_Ptr;
+      Dependencies : out Dependency_List;
+      Status       : out Dependencies_Query_Status)
+   is
+      Current_Dep : Dependency_File_Info_List;
+   begin
+      if Lib_Info = null then
+         Dependencies := null;
+         Status := Internal_Error;
+         return;
+      end if;
+
+      Current_Dep  := Lib_Info.Dependencies_Info;
+      Dependencies := null;
+
+      while Current_Dep /= null loop
+         declare
+            FI : constant File_Info_Ptr :=
+              Get_File_Info (Current_Dep.Value.File);
+         begin
+            if FI = null or else FI.Source_Filename = null then
+               Destroy (Dependencies);
+               Status := Internal_Error;
+            end if;
+
+            Dependencies := new Dependency_Node'
+              (Value =>
+                (Unit_Name => null,
+                 Filename  => new String'(FI.Source_Filename.all),
+                 Depends_From_Spec => Current_Dep.Value.Depends_From_Spec,
+                 Depends_From_Body => Current_Dep.Value.Depends_From_Body),
+               Next  => Dependencies);
+            if FI.Unit_Name /= null then
+               Dependencies.Value.Unit_Name := new String'(FI.Unit_Name.all);
+            end if;
+            Current_Dep := Current_Dep.Next;
+         end;
+      end loop;
+
+      Status := Success;
+   end Find_Dependencies;
 
 end Src_Info.Queries;
