@@ -1107,7 +1107,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
         ("GVD " & Version &
          (-(": The GNU Visual Debugger" & ASCII.LF & ASCII.LF &
             "by Emmanuel Briot & Arnaud Charlet" & ASCII.LF & ASCII.LF &
-            "(c) 2000 ACT-Europe")),
+            "(c) 2000, 2001 ACT-Europe")),
          Help_Msg =>
            -("This is the About information box." & ASCII.LF & ASCII.LF &
              "Click on the OK button to close this window."),
