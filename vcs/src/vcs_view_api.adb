@@ -119,14 +119,15 @@ package body VCS_View_API is
    --  Display Head in the console, then return True if List is not
    --  empty, otherwise display List in the console and return False.
 
-   procedure Commit_Files
+   procedure Log_Action_Files
      (Kernel : Kernel_Handle;
       Ref    : VCS_Access;
+      Action : VCS_Action;
       Files  : String_List.List);
-   --  Commit the list of files, assuming that they are all checked-in through
+   --  Perform Action on the list of files, assuming that they all belong to
    --  the VCS system identified by Ref.
    --  This subprogram will do all the necessary file/log checks before
-   --  committing.
+   --  performing Action.
 
    function Get_Files_In_Project
      (Project   : Project_Type;
@@ -160,6 +161,11 @@ package body VCS_View_API is
       Save_Logs : Boolean := False) return Boolean;
    --  Ask the user whether he wants to save the file editors for Files.
    --  Return False if the user has cancelled the action.
+
+   procedure On_Log_Action
+     (Context : Selection_Context_Access;
+      Action  : VCS_Action);
+   --  Generic callback for an action that requires associated logs.
 
    ---------------------
    -- Get_Current_Ref --
@@ -299,20 +305,27 @@ package body VCS_View_API is
 
       procedure Add_Action
         (Action   : VCS_Action;
-         Callback : Context_Callback.Marshallers.Void_Marshaller.Handler);
+         Callback : Context_Callback.Marshallers.Void_Marshaller.Handler;
+         Via_Log  : Boolean := False);
       --  Add a menu item corresponding to Action.
+      --  If Via_Log is True,
 
       procedure Add_Action
         (Action   : VCS_Action;
-         Callback : Context_Callback.Marshallers.Void_Marshaller.Handler) is
+         Callback : Context_Callback.Marshallers.Void_Marshaller.Handler;
+         Via_Log  : Boolean := False) is
       begin
          if Actions (Action) /= null then
-            Gtk_New (Item, Label => Actions (Action).all);
+            if Via_Log then
+               Gtk_New (Item, Actions (Action).all & (-" (via revision log)"));
+            else
+               Gtk_New (Item, Actions (Action).all);
+            end if;
+
             Append (Menu, Item);
             Context_Callback.Connect
               (Item, "activate",
-               Context_Callback.To_Marshaller
-                 (Callback),
+               Context_Callback.To_Marshaller (Callback),
                Context);
 
             if not Section_Active then
@@ -321,7 +334,8 @@ package body VCS_View_API is
          end if;
       end Add_Action;
 
-      Log_File : Boolean := False;
+      Log_File   : Boolean := False;
+      Log_Exists : Boolean;
 
    begin
       if Context = null then
@@ -399,31 +413,11 @@ package body VCS_View_API is
             end;
 
          else
+            Log_Exists := Get_Log_From_File
+              (Kernel, File_Information (File_Name), False) /= VFS.No_File;
             Add_Action (Status, On_Menu_Get_Status'Access);
             Add_Action (Update, On_Menu_Update'Access);
-
-            if Actions (Commit) /= null then
-               if Section_Active
-                 and then Get_Log_From_File
-                   (Kernel, File_Information (File_Name), False) = VFS.No_File
-               then
-                  Gtk_New
-                    (Item,
-                     Label =>
-                       Actions (Commit).all & (-" (via revision log)"));
-               else
-                  Gtk_New (Item, Label => Actions (Commit).all);
-               end if;
-
-               Append (Menu, Item);
-               Context_Callback.Connect
-                 (Item, "activate",
-                  Context_Callback.To_Marshaller
-                    (On_Menu_Commit'Access),
-                  Context);
-
-               Set_Sensitive (Item, Section_Active);
-            end if;
+            Add_Action (Commit, On_Menu_Commit'Access, not Log_Exists);
 
             Gtk_New (Item);
             Append (Menu, Item);
@@ -484,8 +478,8 @@ package body VCS_View_API is
             Gtk_New (Item);
             Append (Menu, Item);
 
-            Add_Action (Add, On_Menu_Add'Access);
-            Add_Action (Remove, On_Menu_Remove'Access);
+            Add_Action (Add, On_Menu_Add'Access, not Log_Exists);
+            Add_Action (Remove, On_Menu_Remove'Access, not Log_Exists);
             Add_Action (Revert, On_Menu_Revert'Access);
          end if;
       end if;
@@ -1099,13 +1093,14 @@ package body VCS_View_API is
       end if;
    end Save_Files;
 
-   ------------------
-   -- Commit_Files --
-   ------------------
+   ----------------------
+   -- Log_Action_Files --
+   ----------------------
 
-   procedure Commit_Files
+   procedure Log_Action_Files
      (Kernel : Kernel_Handle;
       Ref    : VCS_Access;
+      Action : VCS_Action;
       Files  : String_List.List)
    is
       use String_List;
@@ -1113,7 +1108,7 @@ package body VCS_View_API is
       Logs               : String_List.List;
       Files_Temp         : List_Node := First (Files);
 
-      Commit_Command     : Commit_Command_Access;
+      Commit_Command     : Log_Action_Command_Access;
       Get_Status_Command : Get_Status_Command_Access;
 
       Project            : Project_Type;
@@ -1143,7 +1138,7 @@ package body VCS_View_API is
       end loop;
 
       --  Create the Commit command.
-      Create (Commit_Command, Ref, Files, Logs);
+      Create (Commit_Command, Ref, Action, Files, Logs);
 
       --  Create the Get_Status command.
       Create (Get_Status_Command, Ref, Files);
@@ -1288,7 +1283,7 @@ package body VCS_View_API is
       end if;
 
       Free (Logs);
-   end Commit_Files;
+   end Log_Action_Files;
 
    ---------------------
    -- Get_Current_Ref --
@@ -1381,8 +1376,22 @@ package body VCS_View_API is
       Context : Selection_Context_Access)
    is
       pragma Unreferenced (Widget);
-      use String_List;
+   begin
+      On_Log_Action (Context, Commit);
 
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+   end On_Menu_Commit;
+
+   -------------------
+   -- On_Log_Action --
+   -------------------
+
+   procedure On_Log_Action
+     (Context : Selection_Context_Access;
+      Action  : VCS_Action)
+   is
       Kernel         : constant Kernel_Handle := Get_Kernel (Context);
       Files          : String_List.List;
       Real_Files     : String_List.List;
@@ -1390,6 +1399,7 @@ package body VCS_View_API is
       All_Logs_Exist : Boolean := True;
       File           : Virtual_File;
 
+      use String_List;
       use type String_List.List_Node;
    begin
       Real_Files := Get_Selected_Files (Context);
@@ -1459,15 +1469,11 @@ package body VCS_View_API is
       --  If All files have a log, commit the whole lot.
 
       if All_Logs_Exist then
-         Commit_Files (Kernel, Get_Current_Ref (Context), Files);
+         Log_Action_Files (Kernel, Get_Current_Ref (Context), Action, Files);
       end if;
 
       String_List.Free (Files);
-
-   exception
-      when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
-   end On_Menu_Commit;
+   end On_Log_Action;
 
    ------------------
    -- On_Menu_Open --
@@ -1522,21 +1528,9 @@ package body VCS_View_API is
       Context : Selection_Context_Access)
    is
       pragma Unreferenced (Widget);
-      Files    : String_List.List;
    begin
-      Files := Get_Selected_Files (Context);
+      On_Log_Action (Context, Add);
 
-      if String_List.Is_Empty (Files) then
-         Console.Insert
-           (Get_Kernel (Context), -"VCS: No file selected, cannot add file",
-            Mode => Error);
-         return;
-      end if;
-
-      Add (Get_Current_Ref (Context), Files);
-      Get_Status (Get_Current_Ref (Context), Files, True);
-
-      String_List.Free (Files);
    exception
       when E : others =>
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
@@ -1580,21 +1574,8 @@ package body VCS_View_API is
       Context : Selection_Context_Access)
    is
       pragma Unreferenced (Widget);
-      Files : String_List.List;
    begin
-      Files := Get_Selected_Files (Context);
-
-      if String_List.Is_Empty (Files) then
-         Console.Insert
-           (Get_Kernel (Context), -"VCS: No file selected, cannot remove file",
-            Mode => Error);
-         return;
-      end if;
-
-      Remove (Get_Current_Ref (Context), Files);
-      Get_Status (Get_Current_Ref (Context), Files);
-
-      String_List.Free (Files);
+      On_Log_Action (Context, Remove);
    exception
       when E : others =>
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
@@ -2680,7 +2661,7 @@ package body VCS_View_API is
 
       elsif Command = "commit" then
          --  ??? Should we check for the existence of logs ?
-         Commit_Files (Kernel, Ref, Files);
+         Log_Action_Files (Kernel, Ref, Commit, Files);
 
       elsif Command = "diff_head" then
          if Save_Files (Kernel, Files) then
