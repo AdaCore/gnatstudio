@@ -1363,27 +1363,27 @@ package body Switches_Editors is
                if Args'Length /= 0 then
                   Update_Attribute_Value_In_Scenario
                     (Project            => Rename_Prj,
-                     Pkg_Name           => Page.Pkg.all,
                      Scenario_Variables => Scenario_Variables,
-                     Attribute_Name     => Get_String (Name_Switches),
+                     Attribute          =>
+                       Build (Page.Pkg.all, Get_String (Name_Switches)),
                      Values             => Args,
                      Attribute_Index    => File_Name,
                      Prepend            => False);
                else
                   Delete_Attribute
                     (Project            => Rename_Prj,
-                     Pkg_Name           => Page.Pkg.all,
                      Scenario_Variables => Scenario_Variables,
-                     Attribute_Name     => Get_String (Name_Switches),
+                     Attribute          =>
+                       Build (Page.Pkg.all, Get_String (Name_Switches)),
                      Attribute_Index    => File_Name);
                end if;
 
             elsif Args'Length /= 0 then
                Update_Attribute_Value_In_Scenario
                  (Project            => Rename_Prj,
-                  Pkg_Name           => Page.Pkg.all,
                   Scenario_Variables => Scenario_Variables,
-                  Attribute_Name     => Get_String (Name_Default_Switches),
+                  Attribute          =>
+                    Build (Page.Pkg.all, Get_String (Name_Default_Switches)),
                   Values             => Args,
                   Attribute_Index    => Get_String (Language),
                   Prepend            => False);
@@ -1391,9 +1391,9 @@ package body Switches_Editors is
             else
                Delete_Attribute
                  (Project            => Rename_Prj,
-                  Pkg_Name           => Page.Pkg.all,
                   Scenario_Variables => Scenario_Variables,
-                  Attribute_Name     => Get_String (Name_Default_Switches),
+                  Attribute          =>
+                    Build (Page.Pkg.all, Get_String (Name_Default_Switches)),
                   Attribute_Index    => Get_String (Language));
             end if;
 

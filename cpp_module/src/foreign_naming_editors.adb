@@ -32,7 +32,6 @@ with Gtk.Widget;                       use Gtk.Widget;
 with Gtkada.Types;                     use Gtkada.Types;
 with Interfaces.C.Strings;             use Interfaces.C.Strings;
 with Projects.Editor;                  use Projects, Projects.Editor;
-with Snames;                           use Snames;
 with Types;                            use Types;
 
 package body Foreign_Naming_Editors is
@@ -89,7 +88,6 @@ package body Foreign_Naming_Editors is
       Project : Projects.Project_Type;
       Scenario_Variables : Scenario_Variable_Array) return Boolean
    is
-      Naming   : constant String := Get_String (Name_Naming);
       Lang     : constant String := Get_String (Editor.Language);
       Num_Rows : constant Gint := Get_Rows (Editor.GUI.Exception_List);
       Bodies   : Argument_List (1 .. Integer (Num_Rows));
@@ -107,8 +105,7 @@ package body Foreign_Naming_Editors is
          declare
             Old_Exceptions : Argument_List := Get_Attribute_Value
               (Project        => Project,
-               Attribute_Name => Impl_Exception_Attribute,
-               Package_Name   => Naming,
+               Attribute      => Impl_Exception_Attribute,
                Index          => Lang);
          begin
             Changed := not Is_Equal (Bodies, Old_Exceptions);
@@ -120,17 +117,15 @@ package body Foreign_Naming_Editors is
          if Num_Rows /= 0 then
             Update_Attribute_Value_In_Scenario
               (Project           => Project,
-               Pkg_Name          => Naming,
                Scenario_Variables => Scenario_Variables,
-               Attribute_Name    => Impl_Exception_Attribute,
+               Attribute         => Impl_Exception_Attribute,
                Values            => Bodies,
                Attribute_Index   => Lang);
          else
             Delete_Attribute
               (Project            => Project,
-               Pkg_Name           => Naming,
                Scenario_Variables => Scenario_Variables,
-               Attribute_Name     => Impl_Exception_Attribute,
+               Attribute          => Impl_Exception_Attribute,
                Attribute_Index    => Lang);
          end if;
 
@@ -140,16 +135,14 @@ package body Foreign_Naming_Editors is
       if Project = No_Project
         or else Get_Attribute_Value
           (Project        => Project,
-           Attribute_Name => Spec_Suffix_Attribute,
-           Package_Name   => Naming,
+           Attribute      => Spec_Suffix_Attribute,
            Index          => Lang) /=
         Get_Text (Get_Entry (Editor.GUI.Header_File_Extension))
       then
          Update_Attribute_Value_In_Scenario
            (Project            => Project,
-            Pkg_Name           => Naming,
             Scenario_Variables => Scenario_Variables,
-            Attribute_Name     => Spec_Suffix_Attribute,
+            Attribute          => Spec_Suffix_Attribute,
             Value  => Get_Text (Get_Entry (Editor.GUI.Header_File_Extension)),
             Attribute_Index    => Lang);
          Changed := True;
@@ -158,16 +151,14 @@ package body Foreign_Naming_Editors is
       if Project = No_Project
         or else Get_Attribute_Value
           (Project        => Project,
-           Attribute_Name => Impl_Suffix_Attribute,
-           Package_Name   => Naming,
+           Attribute      => Impl_Suffix_Attribute,
            Index          => Lang) /=
         Get_Text (Get_Entry (Editor.GUI.Implementation_Extension))
       then
          Update_Attribute_Value_In_Scenario
            (Project            => Project,
-            Pkg_Name           => Naming,
             Scenario_Variables => Scenario_Variables,
-            Attribute_Name     => Impl_Suffix_Attribute,
+            Attribute          => Impl_Suffix_Attribute,
             Value              =>
               Get_Text (Get_Entry (Editor.GUI.Implementation_Extension)),
             Attribute_Index    => Lang);
@@ -189,7 +180,6 @@ package body Foreign_Naming_Editors is
       Project            : Projects.Project_Type;
       Display_Exceptions : Boolean := True)
    is
-      Naming : constant String := Get_String (Name_Naming);
       Lang   : constant String := Get_String (Editor.Language);
       Row    : Gint;
       pragma Unreferenced (Row);
@@ -211,20 +201,19 @@ package body Foreign_Naming_Editors is
       Set_Text
         (Get_Entry (Editor.GUI.Header_File_Extension),
          Get_Attribute_Value
-            (P, Spec_Suffix_Attribute, Naming_Package,
+            (P, Spec_Suffix_Attribute,
              Index => Get_String (Editor.Language)));
       Set_Text
         (Get_Entry (Editor.GUI.Implementation_Extension),
          Get_Attribute_Value
-            (P, Impl_Suffix_Attribute, Naming_Package,
+            (P, Impl_Suffix_Attribute,
              Index => Get_String (Editor.Language)));
 
       if Project /= No_Project and then Display_Exceptions then
          declare
             Bodies : Argument_List := Get_Attribute_Value
               (Project,
-               Attribute_Name => Get_String (Name_Implementation_Exceptions),
-               Package_Name   => Naming,
+               Attribute      => Impl_Exception_Attribute,
                Index          => Lang);
          begin
             Clear (Editor.GUI.Exception_List);

@@ -353,7 +353,7 @@ package body Project_Properties is
               (Ent,
                Get_Attribute_Value
                  (Project, Compiler_Command_Attribute,
-                  Ide_Package, Default => "gnatmake",
+                  Default => "gnatmake",
                   Index => Languages (L).all));
 
          else
@@ -363,7 +363,7 @@ package body Project_Properties is
               (Ent,
                Get_Attribute_Value
                  (Project, Compiler_Command_Attribute,
-                  Ide_Package, Default => "gcc",
+                  Default => "gcc",
                   Index => Languages (L).all));
          end if;
 
@@ -421,8 +421,7 @@ package body Project_Properties is
       Set_Text
         (Editor.Gnatls,
          Get_Attribute_Value
-         (Project, Gnatlist_Attribute,
-          Ide_Package, Default => "gnatls"));
+         (Project, Gnatlist_Attribute, Default => "gnatls"));
 
       Set_Sensitive (Editor.Gnatls, Get_Active (Ada_Check));
       Object_User_Callback.Connect
@@ -465,8 +464,7 @@ package body Project_Properties is
       Set_Text
         (Editor.Debugger,
          Get_Attribute_Value
-         (Project, Debugger_Command_Attribute,
-          Ide_Package, Default => "gdb"));
+         (Project, Debugger_Command_Attribute, Default => "gdb"));
 
       --  Configuration frame
 
@@ -498,7 +496,7 @@ package body Project_Properties is
         (Editor.Global_Pragmas,
          Get_Attribute_Value
          (Project, Global_Pragmas_Attribute,
-          Builder_Package, Default => ""));
+          Default => ""));
 
       Gtk_New (Button2, -"Browse");
       Pack_Start (Hbox, Button2, Expand => False);
@@ -530,7 +528,7 @@ package body Project_Properties is
         (Editor.Local_Pragmas,
          Get_Attribute_Value
          (Project, Local_Pragmas_Attribute,
-          Compiler_Package, Default => ""));
+          Default => ""));
 
       Gtk_New (Button2, -"Browse");
       Pack_Start (Hbox, Button2, Expand => False);
@@ -573,8 +571,7 @@ package body Project_Properties is
       Set_Text
         (Editor.Tools_Host,
          Get_Attribute_Value
-         (Project, Remote_Host_Attribute,
-          Ide_Package, Default => ""));
+         (Project, Remote_Host_Attribute, Default => ""));
 
       --  Program host
 
@@ -598,8 +595,7 @@ package body Project_Properties is
       Set_Text
         (Editor.Program_Host,
          Get_Attribute_Value
-         (Project, Program_Host_Attribute,
-          Ide_Package, Default => ""));
+         (Project, Program_Host_Attribute, Default => ""));
 
       --  Protocol
 
@@ -629,8 +625,7 @@ package body Project_Properties is
       Set_Text
         (Editor.Protocol,
          Get_Attribute_Value
-         (Project, Protocol_Attribute,
-          Ide_Package, Default => ""));
+         (Project, Protocol_Attribute, Default => ""));
 
       Free (Languages);
       Free (Project_Languages);
@@ -898,14 +893,12 @@ package body Project_Properties is
 
          if Project = No_Project
            or else Get_Text (Editor.Gnatls) /= Get_Attribute_Value
-           (Project, Gnatlist_Attribute, Ide_Package,
-            Default => "gnatls")
+           (Project, Gnatlist_Attribute, Default => "gnatls")
          then
             Update_Attribute_Value_In_Scenario
               (Project            => Project,
-               Pkg_Name           => Ide_Package,
                Scenario_Variables => Scenario_Variables,
-               Attribute_Name     => Gnatlist_Attribute,
+               Attribute          => Gnatlist_Attribute,
                Value              => Get_Text (Editor.Gnatls));
             Changed := True;
             Trace (Me, "gnatls changed");
@@ -913,14 +906,12 @@ package body Project_Properties is
 
          if Project = No_Project
            or else Get_Text (Editor.Debugger) /= Get_Attribute_Value
-           (Project, Debugger_Command_Attribute, Ide_Package,
-            Default => "gdb")
+           (Project, Debugger_Command_Attribute, Default => "gdb")
          then
             Update_Attribute_Value_In_Scenario
               (Project            => Project,
-               Pkg_Name           => Ide_Package,
                Scenario_Variables => Scenario_Variables,
-               Attribute_Name     => Debugger_Command_Attribute,
+               Attribute          => Debugger_Command_Attribute,
                Value              => Get_Text (Editor.Debugger));
             Changed := True;
             Trace (Me, "debugger command changed");
@@ -944,21 +935,20 @@ package body Project_Properties is
                         if To_Lower (Languages (J).all) = "ada" then
                            Different := Get_Attribute_Value
                              (Project, Compiler_Command_Attribute,
-                              Ide_Package, Default => "gnatmake",
+                              Default => "gnatmake",
                               Index => Languages (J).all) /= Get_Text (Ent);
                         else
                            Different := Get_Attribute_Value
                              (Project, Compiler_Command_Attribute,
-                              Ide_Package, Default => "gcc",
+                              Default => "gcc",
                               Index => Languages (J).all) /= Get_Text (Ent);
                         end if;
 
                         if Different then
                            Update_Attribute_Value_In_Scenario
                              (Project  => Project,
-                              Pkg_Name => Ide_Package,
                               Scenario_Variables => Scenario_Variables,
-                              Attribute_Name => Compiler_Command_Attribute,
+                              Attribute => Compiler_Command_Attribute,
                               Value => Get_Text (Ent),
                               Attribute_Index => Languages (J).all);
                            Changed := True;
@@ -973,10 +963,9 @@ package body Project_Properties is
                   then
                      Changed := True;
                      Update_Attribute_Value_In_Scenario
-                       (Project           => Project,
-                        Pkg_Name          => "",
+                       (Project            => Project,
                         Scenario_Variables => Scenario_Variables,
-                        Attribute_Name     => Languages_Attribute,
+                        Attribute          => Languages_Attribute,
                         Values             => New_Languages);
                      Trace (Me, "List of languages changed");
                   end if;
@@ -988,19 +977,17 @@ package body Project_Properties is
                Changed := True;
                Trace (Me, "No project view initially");
                Update_Attribute_Value_In_Scenario
-                 (Project           => Project,
-                  Pkg_Name          => "",
+                 (Project            => Project,
                   Scenario_Variables => Scenario_Variables,
-                  Attribute_Name     => Languages_Attribute,
+                  Attribute          => Languages_Attribute,
                   Values             => New_Languages);
 
                for J in Languages'Range loop
                   Ent := Gtk_GEntry (Editor.Compilers (J));
                   Update_Attribute_Value_In_Scenario
                     (Project            => Project,
-                     Pkg_Name           => Ide_Package,
                      Scenario_Variables => Scenario_Variables,
-                     Attribute_Name     => Compiler_Command_Attribute,
+                     Attribute          => Compiler_Command_Attribute,
                      Value              => Get_Text (Ent),
                      Attribute_Index    => Languages (J).all);
                end loop;
@@ -1012,8 +999,7 @@ package body Project_Properties is
 
          if Project = No_Project
            or else Get_Text (Editor.Tools_Host) /= Get_Attribute_Value
-           (Project, Remote_Host_Attribute,
-            Ide_Package, Default => "")
+           (Project, Remote_Host_Attribute, Default => "")
          then
             Changed := True;
             Trace (Me, "Remote_Host changed");
@@ -1021,23 +1007,20 @@ package body Project_Properties is
             if Get_Text (Editor.Tools_Host) /= "" then
                Update_Attribute_Value_In_Scenario
                  (Project            => Project,
-                  Pkg_Name           => Ide_Package,
                   Scenario_Variables => Scenario_Variables,
-                  Attribute_Name     => Remote_Host_Attribute,
+                  Attribute          => Remote_Host_Attribute,
                   Value              => Get_Text (Editor.Tools_Host));
             else
                Delete_Attribute
                  (Project            => Project,
-                  Pkg_Name           => Ide_Package,
                   Scenario_Variables => Scenario_Variables,
-                  Attribute_Name     => Remote_Host_Attribute);
+                  Attribute          => Remote_Host_Attribute);
             end if;
          end if;
 
          if Project = No_Project
            or else Get_Text (Editor.Program_Host) /= Get_Attribute_Value
-           (Project, Program_Host_Attribute,
-            Ide_Package, Default => "")
+           (Project, Program_Host_Attribute, Default => "")
          then
             Changed := True;
             Trace (Me, "Program_Host changed");
@@ -1045,23 +1028,20 @@ package body Project_Properties is
             if Get_Text (Editor.Program_Host) /= "" then
                Update_Attribute_Value_In_Scenario
                  (Project            => Project,
-                  Pkg_Name           => Ide_Package,
                   Scenario_Variables => Scenario_Variables,
-                  Attribute_Name     => Program_Host_Attribute,
+                  Attribute          => Program_Host_Attribute,
                   Value              => Get_Text (Editor.Program_Host));
             else
                Delete_Attribute
                  (Project            => Project,
-                  Pkg_Name           => Ide_Package,
                   Scenario_Variables => Scenario_Variables,
-                  Attribute_Name     => Program_Host_Attribute);
+                  Attribute          => Program_Host_Attribute);
             end if;
          end if;
 
          if Project = No_Project
            or else Get_Text (Editor.Protocol) /= Get_Attribute_Value
-           (Project, Protocol_Attribute,
-            Ide_Package, Default => "")
+           (Project, Protocol_Attribute, Default => "")
          then
             Changed := True;
             Trace (Me, "Protocol changed");
@@ -1069,23 +1049,20 @@ package body Project_Properties is
             if Get_Text (Editor.Protocol) /= "" then
                Update_Attribute_Value_In_Scenario
                  (Project            => Project,
-                  Pkg_Name           => Ide_Package,
                   Scenario_Variables => Scenario_Variables,
-                  Attribute_Name     => Protocol_Attribute,
+                  Attribute          => Protocol_Attribute,
                   Value              => Get_Text (Editor.Protocol));
             else
                Delete_Attribute
                  (Project            => Project,
-                  Pkg_Name           => Ide_Package,
                   Scenario_Variables => Scenario_Variables,
-                  Attribute_Name     => Protocol_Attribute);
+                  Attribute          => Protocol_Attribute);
             end if;
          end if;
 
          if Project = No_Project
            or else Get_Text (Editor.Global_Pragmas) /= Get_Attribute_Value
-           (Project, Global_Pragmas_Attribute,
-            Builder_Package, Default => "")
+           (Project, Global_Pragmas_Attribute, Default => "")
          then
             Changed := True;
             Trace (Me, "global pragmas changed");
@@ -1093,23 +1070,20 @@ package body Project_Properties is
             if Get_Text (Editor.Global_Pragmas) /= "" then
                Update_Attribute_Value_In_Scenario
                  (Project            => Project,
-                  Pkg_Name           => Builder_Package,
                   Scenario_Variables => Scenario_Variables,
-                  Attribute_Name     => Global_Pragmas_Attribute,
+                  Attribute          => Global_Pragmas_Attribute,
                   Value              => Get_Text (Editor.Global_Pragmas));
             else
                Delete_Attribute
                  (Project            => Project,
-                  Pkg_Name           => Builder_Package,
                   Scenario_Variables => Scenario_Variables,
-                  Attribute_Name     => Global_Pragmas_Attribute);
+                  Attribute          => Global_Pragmas_Attribute);
             end if;
          end if;
 
          if Project = No_Project
            or else Get_Text (Editor.Local_Pragmas) /= Get_Attribute_Value
-           (Project, Local_Pragmas_Attribute,
-            Compiler_Package, Default => "")
+           (Project, Local_Pragmas_Attribute, Default => "")
          then
             Changed := True;
             Trace (Me, "local pragmas changed");
@@ -1117,16 +1091,14 @@ package body Project_Properties is
             if Get_Text (Editor.Local_Pragmas) /= "" then
                Update_Attribute_Value_In_Scenario
                  (Project            => Project,
-                  Pkg_Name           => Compiler_Package,
                   Scenario_Variables => Scenario_Variables,
-                  Attribute_Name     => Local_Pragmas_Attribute,
+                  Attribute          => Local_Pragmas_Attribute,
                   Value              => Get_Text (Editor.Local_Pragmas));
             else
                Delete_Attribute
                  (Project            => Project,
-                  Pkg_Name           => Compiler_Package,
                   Scenario_Variables => Scenario_Variables,
-                  Attribute_Name     => Local_Pragmas_Attribute);
+                  Attribute          => Local_Pragmas_Attribute);
             end if;
          end if;
 

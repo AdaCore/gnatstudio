@@ -41,7 +41,6 @@ with GNAT.OS_Lib;               use GNAT.OS_Lib;
 
 with Projects.Editor; use Projects, Projects.Editor;
 with Projects.Registry; use Projects.Registry;
-with Snames;   use Snames;
 
 with Basic_Types;      use Basic_Types;
 with Wizards;          use Wizards;
@@ -365,7 +364,7 @@ package body Creation_Wizard is
       Update_Attribute_Value_In_Scenario
         (Project            => Project,
          Scenario_Variables => (1 .. 0 => No_Variable),
-         Attribute_Name     => Get_String (Name_Languages),
+         Attribute          => Languages_Attribute,
          Values             => Languages);
 
       for P in 1 .. Project_Editor_Pages_Count (Wiz.Kernel) loop
