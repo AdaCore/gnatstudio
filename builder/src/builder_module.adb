@@ -1221,14 +1221,15 @@ package body Builder_Module is
                      Full_Name (Data.File) & ' ' & Arguments);
                   Launch
                     (Args (Args'First).all, Args (Args'First + 1 .. Args'Last),
-                     -"Run: " & Full_Name (Data.File) & ' ' & Arguments);
+                     -"Run: " & Base_Name (Data.File) & ' ' &
+                     Krunch (Arguments, 12));
 
                else
                   Args := Argument_String_To_List (Arguments);
                   Launch
                     (Full_Name (Data.File),
                      Args.all, -"Run: " & Base_Name (Data.File)
-                     & ' ' & Arguments);
+                     & ' ' & Krunch (Arguments, 12));
                end if;
 
                Free (Args);
