@@ -2174,6 +2174,7 @@ package body Ada_Analyzer is
                           Tokens.Next.Val.Token /= Tok_Select)
             then
                Pop (Tokens);
+               Top_Token := Top (Tokens);
             end if;
 
             Handle_Two_Chars ('>');
@@ -2868,6 +2869,10 @@ package body Ada_Analyzer is
       end Replace_Text;
 
    begin  --  Analyze_Ada_Source
+      if Buffer'Length = 0 then
+         return;
+      end if;
+
       --  Push a dummy token so that stack will never be empty.
       Push (Tokens, Default_Extended);
 
