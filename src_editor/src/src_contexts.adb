@@ -833,11 +833,11 @@ package body Src_Contexts is
       Extra_Information  : Gtk.Widget.Gtk_Widget)
       return Search_Context_Access
    is
-      Context  : Current_File_Context_Access;
-      Context2 : Files_Project_Context_Access;
-      Scope   : constant Scope_Selector := Scope_Selector (Extra_Information);
+      Scope    : constant Scope_Selector := Scope_Selector (Extra_Information);
       Child    : MDI_Child;
       Editor   : Source_Editor_Box;
+      Context  : Current_File_Context_Access;
+      Context2 : Files_Project_Context_Access := new Files_Project_Context;
 
    begin
       --  If we are looking for all the occurrences, we simply reuse another
@@ -847,18 +847,14 @@ package body Src_Contexts is
          if Child = null then
             return null;
          end if;
-
-         Context2 := new Files_Project_Context;
-         Context2.Scope := Search_Scope'Val (Get_Index_In_List (Scope.Combo));
-         Context2.All_Occurrences := True;
-
          Editor := Get_Source_Box_From_MDI (Child);
 
+         Context2.Scope := Search_Scope'Val (Get_Index_In_List (Scope.Combo));
+         Context2.All_Occurrences := True;
          Set_File_List
            (Context2, new String_Array'
               (1 => new String'(Get_Filename (Editor))));
          return Search_Context_Access (Context2);
-
       else
          Context := new Current_File_Context;
          Context.All_Occurrences := False;
@@ -877,18 +873,30 @@ package body Src_Contexts is
       Extra_Information  : Gtk.Widget.Gtk_Widget)
       return Search_Context_Access
    is
-      Context : Files_Project_Context_Access;
-      Scope   : constant Scope_Selector := Scope_Selector (Extra_Information);
+      Scope : constant Scope_Selector := Scope_Selector (Extra_Information);
+      Context : Files_Project_Context_Access := new Files_Project_Context;
    begin
-      Context := new Files_Project_Context;
-      Context.Scope := Search_Scope'Val (Get_Index_In_List (Scope.Combo));
+      Context.Scope      := Search_Scope'Val (Get_Index_In_List (Scope.Combo));
       Context.All_Occurrences := All_Occurrences;
-      Context.Begin_Line := 0;
-
-      Set_File_List
-        (Context,
-         Get_Source_Files (Get_Project (Kernel), True));
+      Context.Begin_Line      := 0;
+      Set_File_List (Context, Get_Source_Files (Get_Project (Kernel), True));
       return Search_Context_Access (Context);
+   end Files_From_Project_Factory;
+
+   --------------------------------
+   -- Files_From_Project_Factory --
+   --------------------------------
+
+   function Files_From_Project_Factory
+     (Scope              : Search_Scope;
+      All_Occurrences    : Boolean) return Files_Project_Context_Access
+   is
+      Context : Files_Project_Context_Access := new Files_Project_Context;
+   begin
+      Context.Scope           := Scope;
+      Context.All_Occurrences := All_Occurrences;
+      Context.Begin_Line      := 0;
+      return Context;
    end Files_From_Project_Factory;
 
    -------------------
@@ -1135,10 +1143,8 @@ package body Src_Contexts is
 
    function Search
      (Context         : access Abstract_Files_Context;
-      Handler         : access Language_Handlers.Language_Handler_Record'Class;
       Kernel          : Kernel_Handle;
-      Callback        : Scan_Callback;
-      All_Occurrences : Boolean) return Boolean
+      Callback        : Scan_Callback) return Boolean
    is
       Match       : Match_Result_Access;
       C           : constant Abstract_Files_Context_Access :=
@@ -1149,7 +1155,7 @@ package body Src_Contexts is
       Tmp    : Boolean;
 
    begin
-      if not All_Occurrences then
+      if not Context.All_Occurrences then
          --  Are there any more match in the current file ?
          --  Stop looking in this file if the editor was closed (we know it was
          --  opened when the first match was seen)
@@ -1157,7 +1163,7 @@ package body Src_Contexts is
          if Context.Begin_Line /= 0 then
             First_Match
               (Context       => Context,
-               Handler       => Handler,
+               Handler       => Get_Language_Handler (Kernel),
                Kernel        => Kernel,
                Name          => Current_File (C),
                Scope         => Context.Scope,
@@ -1202,7 +1208,7 @@ package body Src_Contexts is
 
             First_Match
               (Context       => Context,
-               Handler       => Handler,
+               Handler       => Get_Language_Handler (Kernel),
                Kernel        => Kernel,
                Name          => Current_File (C),
                Scope         => Context.Scope,
@@ -1235,7 +1241,8 @@ package body Src_Contexts is
             begin
                Scan_File
                  (Context,
-                  Handler, Kernel,
+                  Get_Language_Handler (Kernel),
+                  Kernel,
                   Current_File (C), Callback, Context.Scope,
                   Lexical_State => State, Force_Read => Kernel = null,
                   Was_Partial => Was_Partial);
@@ -1255,13 +1262,11 @@ package body Src_Contexts is
       Search_Backward : Boolean) return Boolean
    is
       pragma Unreferenced (Search_Backward);
-      Interactive : constant Boolean := not Context.All_Occurrences;
       C : constant Abstract_Files_Context_Access :=
         Abstract_Files_Context_Access (Context);
       --  For dispatching purposes
 
       function Interactive_Callback (Match : Match_Result) return Boolean;
-      function Non_Interactive_Callback (Match : Match_Result) return Boolean;
       --  Callbacks for the general search function
 
       function Interactive_Callback (Match : Match_Result) return Boolean is
@@ -1270,35 +1275,14 @@ package body Src_Contexts is
            (Kernel      => Kernel,
             File_Name   => Current_File (C),
             Match       => Match,
-            Interactive => True);
+            Interactive => not Context.All_Occurrences);
          return True;
       end Interactive_Callback;
 
-      function Non_Interactive_Callback (Match : Match_Result)
-         return Boolean is
-      begin
-         Highlight_Result
-           (Kernel      => Kernel,
-            File_Name   => Current_File (C),
-            Match       => Match,
-            Interactive => False);
-         return True;
-      end Non_Interactive_Callback;
-
    begin
-      if Interactive then
-         return Search (Context,
-                        Get_Language_Handler (Kernel),
-                        Kernel_Handle (Kernel),
-                        Interactive_Callback'Unrestricted_Access,
-                        All_Occurrences => False);
-      else
-         return Search (Context,
-                        Get_Language_Handler (Kernel),
-                        Kernel_Handle (Kernel),
-                        Non_Interactive_Callback'Unrestricted_Access,
-                        All_Occurrences => True);
-      end if;
+      return Search (Context,
+                     Kernel_Handle (Kernel),
+                     Interactive_Callback'Unrestricted_Access);
    end Search;
 
    -------------

@@ -30,7 +30,6 @@ with Gtk.Combo;
 with Gtk.Frame;
 with Find_Utils;   use Find_Utils;
 with Files_Extra_Info_Pkg;
-with Language_Handlers;
 
 package Src_Contexts is
 
@@ -85,6 +84,7 @@ package Src_Contexts is
       return Search_Context_Access;
    --  Factory for "Current File". A Files_Project_Context is returned if
    --  searching for All_Occurrences
+   --  This only works from the GUI, and shouldn't be used for text mode
 
    ----------------------------
    -- Abstract files context --
@@ -98,10 +98,8 @@ package Src_Contexts is
 
    function Search
      (Context         : access Abstract_Files_Context;
-      Handler         : access Language_Handlers.Language_Handler_Record'Class;
       Kernel          : Glide_Kernel.Kernel_Handle;
-      Callback        : Scan_Callback;
-      All_Occurrences : Boolean) return Boolean;
+      Callback        : Scan_Callback) return Boolean;
    --  Search either the next match or all the occurrences, depending on the
    --  parameter All_Occurrences. For each one of them, Callback is called.
    --  This function returns True if there are potentially more matches in the
@@ -170,7 +168,15 @@ package Src_Contexts is
       All_Occurrences    : Boolean;
       Extra_Information  : Gtk.Widget.Gtk_Widget)
       return Search_Context_Access;
-   --  Factory for "Files From Project"
+   --  Factory for "Files From Project".
+   --  The list of files is automatically set to the files of the root project
+   --  and its imported projects
+
+   function Files_From_Project_Factory
+     (Scope              : Search_Scope;
+      All_Occurrences    : Boolean) return Files_Project_Context_Access;
+   --  Same as above, but suitable for use outside the GUI.
+   --  No file it set, you need to call Set_File_List explicitely
 
 private
 
