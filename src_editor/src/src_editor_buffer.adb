@@ -3885,9 +3885,11 @@ package body Src_Editor_Buffer is
       Current_Line := Get_Line (Iter);
 
       Copy (To, Dest => End_Pos);
+
       if not Ends_Line (End_Pos) then
          Forward_To_Line_End (End_Pos, Result);
       end if;
+
       Line := Get_Line (End_Pos);
 
       --  We're spending most of our time getting this string.
