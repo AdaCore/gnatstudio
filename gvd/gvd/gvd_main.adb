@@ -33,6 +33,7 @@ with Main_Debug_Window_Pkg; use Main_Debug_Window_Pkg;
 with Debugger;
 with Process_Proxies;
 with GVD.Process;           use GVD.Process;
+with GVD.Trace;             use GVD.Trace;
 with GVD.Types;
 with GVD.Strings;           use GVD.Strings;
 with GVD.Preferences;       use GVD.Preferences;
@@ -48,7 +49,7 @@ pragma Warnings (On);
 with Ada.Command_Line;  use Ada.Command_Line;
 with Ada.Strings.Fixed; use Ada.Strings.Fixed;
 with Ada.Exceptions;    use Ada.Exceptions;
-with Ada.Text_IO;       use Ada.Text_IO;
+with GNAT.IO;           use GNAT.IO;
 
 procedure GVD_Main is
    Process           : Debugger_Process_Tab;
@@ -74,7 +75,8 @@ procedure GVD_Main is
    procedure Init;
    --  Set up environment for GVD.
 
-   procedure Bug_Dialog (E : Exception_Occurrence);
+   procedure Bug_Dialog
+     (Win : Main_Debug_Window_Access; E : Exception_Occurrence);
    --  Display a bug box on the screen with as much information as possible.
 
    function Format (Str : String; Columns : Positive) return String;
@@ -196,22 +198,14 @@ procedure GVD_Main is
       return Strip_CR (S);
    end Format;
 
-   procedure Bug_Dialog (E : Exception_Occurrence) is
+   procedure Bug_Dialog
+     (Win : Main_Debug_Window_Access; E : Exception_Occurrence) is
    begin
-      if GVD.Can_Output then
-         Put_Line (Standard_Error, -"Bug detected in GVD");
-         Put_Line (Standard_Error,
-                   -"Please report with the contents of the file " &
-                   Dir.all & Directory_Separator & "log");
-         Put_Line (Standard_Error, -"the following information:");
-         Put_Line (Standard_Error, (-"Version: ") & GVD.Version);
-         Put_Line (Standard_Error, (-"Date: ") & GVD.Source_Date);
-         Put_Line (Standard_Error, (-"Target: ") & GVD.Target);
-         Put_Line (Standard_Error, Exception_Information (E));
-         Put_Line (Standard_Error,
-           -("and a description as complete as possible " &
-             "(including sources) to reproduce the bug"));
-      end if;
+      Output_Line (Win, "# Bug detected in GVD");
+      Output_Line (Win, "# Version: " & GVD.Version);
+      Output_Line (Win, "# Date: " & GVD.Source_Date);
+      Output_Line (Win, "# Target: " & GVD.Target);
+      Output_Line (Win, Exception_Information (E));
 
       Button := Message_Dialog
         (-"Please report with the contents of the file " &
@@ -259,8 +253,8 @@ procedure GVD_Main is
             (-"   gvd [options...] executable-file") &
             (-" [--dargs [debugger options]] [--pargs [program options]]") &
             LF & (-"Options:") & LF &
-            (-"   --debugger DEBUG    use DEBUG as the underlying debugger.") &
-            LF & (-"   --jdb               assume a java debugger.") & LF &
+            (-"   --debugger DEBUG    use DEBUG as the underlying debugger.")
+            & LF & (-"   --jdb               assume a java debugger.") & LF &
             (-"   --host HOST         Run inferior debugger on HOST.") & LF &
             (-"   --target=TARG:PRO   ") &
             (-"Load program on machine TARG using protocol PRO.") & LF &
@@ -542,7 +536,7 @@ begin
                end loop;
             end;
 
-            Bug_Dialog (E);
+            Bug_Dialog (Main_Debug_Window, E);
       end;
    end loop;
 
@@ -562,6 +556,6 @@ exception
       Help;
 
    when E : others =>
-      Bug_Dialog (E);
+      Bug_Dialog (Main_Debug_Window, E);
       Destroy (Main_Debug_Window);
 end GVD_Main;
