@@ -1572,12 +1572,12 @@ package body Python_Module is
 
       Obj := PyEval_EvalCodeEx
         (PyFunction_Get_Code (Cmd),
-         Globals  => PyFunction_Get_Globals (Command),
+         Globals  => PyFunction_Get_Globals (Cmd),
          Locals   => null,
          Args     => Args2,
          Kwds     => Python_Callback_Data (Args).Kw,
-         Defaults => PyFunction_Get_Defaults (Command),
-         Closure  => PyFunction_Get_Closure (Command));
+         Defaults => PyFunction_Get_Defaults (Cmd),
+         Closure  => PyFunction_Get_Closure (Cmd));
 
       Py_DECREF (Args2);
 
