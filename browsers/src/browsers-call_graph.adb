@@ -23,9 +23,13 @@ with Glib.Xml_Int;     use Glib.Xml_Int;
 with Glib.Object;      use Glib.Object;
 with Gdk.GC;           use Gdk.GC;
 with Gdk.Event;        use Gdk.Event;
+with Gtk.Enums;            use Gtk.Enums;
+with Gtk.Image;            use Gtk.Image;
+with Gtk.Image_Menu_Item;  use Gtk.Image_Menu_Item;
 with Gtk.Main;         use Gtk.Main;
 with Gtk.Menu;         use Gtk.Menu;
 with Gtk.Menu_Item;    use Gtk.Menu_Item;
+with Gtk.Stock;            use Gtk.Stock;
 with Gtk.Widget;       use Gtk.Widget;
 with Gtkada.Canvas;    use Gtkada.Canvas;
 with Gtkada.Handlers;  use Gtkada.Handlers;
@@ -300,7 +304,7 @@ package body Browsers.Call_Graph is
       Browser : Call_Graph_Browser;
    begin
       Browser := new Call_Graph_Browser_Record;
-      Initialize (Browser, Kernel);
+      Initialize (Browser, Kernel, Create_Toolbar => False);
 
       Register_Contextual_Menu
         (Kernel          => Kernel,
@@ -1341,7 +1345,8 @@ package body Browsers.Call_Graph is
       pragma Unreferenced (Event);
       Context : constant Selection_Context_Access :=
         new Entity_Selection_Context;
-      Mitem : Gtk_Menu_Item;
+      Mitem : Gtk_Image_Menu_Item;
+      Pix   : Gtk_Image;
    begin
       if Get_Declaration_File_Of (Item.Entity) /= ":" then
          declare
@@ -1366,22 +1371,26 @@ package body Browsers.Call_Graph is
 
       if Menu /= null then
          Gtk_New (Mitem, Get_Name (Item.Entity) & (-" calls..."));
+         Gtk_New (Pix, Stock_Go_Forward, Icon_Size_Menu);
+         Set_Image (Mitem, Pix);
          Append (Menu, Mitem);
          Context_Callback.Connect
            (Mitem, "activate",
             Context_Callback.To_Marshaller
               (Edit_Entity_Call_Graph_From_Contextual'Access),
             Context);
-         Set_Sensitive (Mitem, Get_Left_Arrow (Item));
+         Set_Sensitive (Mitem, Get_Right_Arrow (Item));
 
          Gtk_New (Mitem, Get_Name (Item.Entity) & (-" is called by..."));
+         Gtk_New (Pix, Stock_Go_Back, Icon_Size_Menu);
+         Set_Image (Mitem, Pix);
          Append (Menu, Mitem);
          Context_Callback.Connect
            (Mitem, "activate",
             Context_Callback.To_Marshaller
               (Edit_Ancestors_Call_Graph_From_Contextual'Access),
             Context);
-         Set_Sensitive (Mitem, Get_Right_Arrow (Item));
+         Set_Sensitive (Mitem, Get_Left_Arrow (Item));
 
          Gtk_New (Mitem, -"Go to spec");
          Append (Menu, Mitem);
