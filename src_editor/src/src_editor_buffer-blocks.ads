@@ -18,10 +18,15 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-private package Src_Editor_Buffer.Blocks is
+package Src_Editor_Buffer.Blocks is
 
    procedure Compute_Blocks (Buffer : access Source_Buffer_Record'Class);
    --  Fill the buffer information with the data necessary to handle block
    --  folding.
+
+   function Get_Screen_Offset
+     (Buffer : access Source_Buffer_Record'Class;
+      Block  : Block_Record) return Integer;
+   --  Return the screen position, after TAB expansion, of the block.
 
 end Src_Editor_Buffer.Blocks;
