@@ -1251,6 +1251,10 @@ package body Switches_Editors is
       end if;
 
       Free (File_Name);
+
+      --  Workaround a bug in gtk+ (?), where the callback for switch_page is
+      --  still called when the notebook is being destroyed.
+      Handler_Block (Switches.Notebook, Switches.Switch_Page_Id);
       Destroy (Dialog);
    end Edit_Switches_For_Context;
 
