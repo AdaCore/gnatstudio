@@ -567,10 +567,11 @@ package body Src_Editor_View is
    -----------------------------
 
    procedure Window_To_Buffer_Coords
-     (View   : access Source_View_Record;
-      X, Y   : Gint;
-      Line   : out Gint;
-      Column : out Gint)
+     (View          : access Source_View_Record;
+      X, Y          : Gint;
+      Line          : out Gint;
+      Column        : out Gint;
+      Out_Of_Bounds : out Boolean)
    is
       Buffer_X      : Gint;
       Buffer_Y      : Gint;
@@ -610,11 +611,16 @@ package body Src_Editor_View is
       Get_Iter_Location (View, Iter, Iter_Location);
       Get_Line_Yrange (View, Iter, Unused, Line_Height);
 
-      if Buffer_X > Iter_Location.X
-        or else Buffer_Y > Iter_Location.Y + Line_Height
-      then
-         Line   := -1;
-         Column := -1;
+      Out_Of_Bounds := False;
+
+      if Buffer_X > Iter_Location.X then
+         Buffer_X := Iter_Location.X;
+         Out_Of_Bounds := True;
+      end if;
+
+      if Buffer_Y > Iter_Location.Y + Line_Height then
+         Buffer_Y := Iter_Location.Y + Line_Height;
+         Out_Of_Bounds := True;
       end if;
    end Window_To_Buffer_Coords;
 
@@ -626,10 +632,12 @@ package body Src_Editor_View is
      (View     : access Source_View_Record;
       Event    : Gdk_Event;
       Line     : out Gint;
-      Column   : out Gint) is
+      Column   : out Gint;
+      Out_Of_Bounds : out Boolean) is
    begin
       Window_To_Buffer_Coords
-        (View, Gint (Get_X (Event)), Gint (Get_Y (Event)), Line, Column);
+        (View, Gint (Get_X (Event)), Gint (Get_Y (Event)),
+         Line, Column, Out_Of_Bounds);
    end Event_To_Buffer_Coords;
 
    ---------------------------

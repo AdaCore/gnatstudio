@@ -80,24 +80,28 @@ package Src_Editor_View is
    --  within the part of the text currently visible.
 
    procedure Window_To_Buffer_Coords
-     (View     : access Source_View_Record;
-      X, Y     : Gint;
-      Line     : out Gint;
-      Column   : out Gint);
+     (View          : access Source_View_Record;
+      X, Y          : Gint;
+      Line          : out Gint;
+      Column        : out Gint;
+      Out_Of_Bounds : out Boolean);
    --  Translate the window coordinates (X, Y) into a Line/Column
-   --  position in the buffer of the given Source_View_Record. Return
-   --  -1,-1 if the window coordinates are outside of the area where
-   --  some text is written.
+   --  position in the buffer of the given Source_View_Record.
+   --  If X, Y is outside the text area (for instance too far to the right of
+   --  a line), then Line and Column are set to the closest matching position,
+   --  and Out_Of_Bounds is set to True.
 
    procedure Event_To_Buffer_Coords
-     (View     : access Source_View_Record;
-      Event    : Gdk.Event.Gdk_Event;
-      Line     : out Gint;
-      Column   : out Gint);
+     (View          : access Source_View_Record;
+      Event         : Gdk.Event.Gdk_Event;
+      Line          : out Gint;
+      Column        : out Gint;
+      Out_Of_Bounds : out Boolean);
    --  Translate the window coordinates of the Event into a Line/Column
-   --  position in the buffer of the given Source_View_Record. Return
-   --  -1,-1 if the window coordinates are outside of the area where
-   --  some text is written.
+   --  position in the buffer of the given Source_View_Record.
+   --  If X, Y is outside the text area (for instance too far to the right of
+   --  a line), then Line and Column are set to the closest matching position,
+   --  and Out_Of_Bounds is set to True.
 
    procedure Add_File_Information
      (View          : access Source_View_Record;
