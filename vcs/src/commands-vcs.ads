@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                          G L I D E  I I                           --
 --                                                                   --
---                     Copyright (C) 2001 - 2002                     --
+--                     Copyright (C) 2001-2002                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GLIDE is free software; you can redistribute it and/or modify  it --
@@ -18,7 +18,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with VCS;            use VCS;
+with VCS; use VCS;
 with String_List;
 
 package Commands.VCS is
@@ -28,8 +28,7 @@ package Commands.VCS is
    function Create
      (Rep       : VCS_Access;
       Filenames : String_List.List;
-      Logs      : String_List.List)
-     return Commit_Command;
+      Logs      : String_List.List) return Commit_Command;
    --  Create a new Commit_Command.
    --  The user must free Filenames and Logs after calling Create.
 
@@ -39,7 +38,7 @@ private
    type Commit_Command is record
       Rep       : VCS_Access;
       Filenames : String_List.List;
-      Logs      : String_List.List
+      Logs      : String_List.List;
    end record;
 
 end Commands.VCS;

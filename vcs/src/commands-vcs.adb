@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                          G L I D E  I I                           --
 --                                                                   --
---                     Copyright (C) 2001 - 2002                     --
+--                     Copyright (C) 2001-2002                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GLIDE is free software; you can redistribute it and/or modify  it --
@@ -18,7 +18,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-package Commands.VCS is
+package body Commands.VCS is
 
    ------------
    -- Create --
@@ -27,8 +27,7 @@ package Commands.VCS is
    function Create
      (Rep       : VCS_Access;
       Filenames : String_List.List;
-      Logs      : String_List.List)
-     return Commit_Command
+      Logs      : String_List.List) return Commit_Command
    is
       Result : Commit_Command;
    begin
@@ -36,7 +35,7 @@ package Commands.VCS is
       Result.Filenames := Copy_String_List (Filenames);
       Result.Logs      := Copy_String_List (Logs);
       return Result;
-   end Commit_Command;
+   end Create;
 
    -------------
    -- Execute --
