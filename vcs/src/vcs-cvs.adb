@@ -31,6 +31,7 @@ with GNAT.OS_Lib;
 with GNAT.Case_Util;            use GNAT.Case_Util;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 
+with Ada.Calendar;              use Ada.Calendar;
 with Ada.Text_IO;               use Ada.Text_IO;
 with Ada.Strings;               use Ada.Strings;
 with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
@@ -38,7 +39,6 @@ with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
 with String_Utils;              use String_Utils;
 with OS_Utils;                  use OS_Utils;
 
-with Src_Info;                  use Src_Info;
 
 with VCS_View_Pkg;              use VCS_View_Pkg;
 with VCS_Module;                use VCS_Module;
@@ -595,8 +595,8 @@ package body VCS.CVS is
 
       Result            : File_Status_List.List;
       New_Dir           : constant Dir_Name_Str := Dir_Name (Head (Filenames));
-      Entries           : constant String := Format_Pathname
-        (New_Dir & "CVS/Entries");
+      Entries           : constant Virtual_File :=
+        Create (Full_Filename => Format_Pathname (New_Dir & "CVS/Entries"));
       Blank_Status      : File_Status_Record;
       Current_Status    : File_Status_Record := Blank_Status;
       File              : File_Type;
@@ -604,19 +604,20 @@ package body VCS.CVS is
       Last              : Integer := 1;
       Index             : Natural;
       Next_Index        : Natural;
-      Entries_Timestamp : Timestamp;
-      File_Timestamp    : Timestamp;
+      Entries_Timestamp : Ada.Calendar.Time;
+      File_Timestamp    : Ada.Calendar.Time;
+      F                 : Virtual_File;
 
    begin
-      if not GNAT.OS_Lib.Is_Regular_File (Entries) then
+      if not Is_Regular_File (Entries) then
          return Result;
       end if;
 
       --  Open and parse the Entries file.
+      --  ??? Should use VFS.Read_File
 
-      Open (File, In_File, Entries);
-      Entries_Timestamp := To_Timestamp
-        (GNAT.OS_Lib.File_Time_Stamp (Entries));
+      Open (File, In_File, Full_Name (Entries).all);
+      Entries_Timestamp := File_Time_Stamp (Entries);
 
       while Last >= 0
         and then not End_Of_File (File)
@@ -632,10 +633,8 @@ package body VCS.CVS is
             Append (Current_Status.File_Name,
                     New_Dir & Buffer (2 .. Index - 1));
 
-            File_Timestamp :=
-              To_Timestamp
-                (GNAT.OS_Lib.File_Time_Stamp
-                     (New_Dir & Buffer (2 .. Index - 1)));
+            F := Create (Full_Filename => New_Dir & Buffer (2 .. Index - 1));
+            File_Timestamp := File_Time_Stamp (F);
 
             if File_Timestamp > Entries_Timestamp then
                Current_Status.Status := Modified;
