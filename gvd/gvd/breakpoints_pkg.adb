@@ -137,7 +137,7 @@ begin
    Set_Justify (Breakpoints.Label62, Justify_Center);
    Set_Line_Wrap (Breakpoints.Label62, False);
 
-   Gtk_New (Line_Spin_Adj, 1.0, 0.0, 100.0, 1.0, 10.0, 10.0);
+   Gtk_New (Line_Spin_Adj, 1.0, 0.0, 1.0e+08, 1.0, 10.0, 10.0);
    Gtk_New (Breakpoints.Line_Spin, Line_Spin_Adj, 1.0, 0);
    Pack_Start (Breakpoints.Hbox5, Breakpoints.Line_Spin, True, True, 0);
    Set_Numeric (Breakpoints.Line_Spin, False);

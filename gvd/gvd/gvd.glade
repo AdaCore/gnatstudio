@@ -5674,7 +5674,7 @@
 		    <wrap>False</wrap>
 		    <value>1</value>
 		    <lower>0</lower>
-		    <upper>100</upper>
+		    <upper>1e+08</upper>
 		    <step>1</step>
 		    <page>10</page>
 		    <page_size>10</page_size>
