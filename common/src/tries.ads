@@ -46,7 +46,7 @@ package Tries is
    --  Insert a new entry in the tree.
    --  Index mustn't be the empty string.
 
-   procedure Delete
+   procedure Remove
      (Tree  : in out Trie_Tree;
       Index : String);
    --  Remove the entry at Index

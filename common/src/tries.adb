@@ -297,10 +297,10 @@ package body Tries is
    end Dump;
 
    ------------
-   -- Delete --
+   -- Remove --
    ------------
 
-   procedure Delete
+   procedure Remove
      (Tree  : in out Trie_Tree;
       Index : String)
    is
@@ -318,7 +318,7 @@ package body Tries is
          Free (Cell.Data);
          Cell.Data := No_Data;
       end if;
-   end Delete;
+   end Remove;
 
    ---------
    -- Get --
