@@ -1196,7 +1196,7 @@ package body Switches_Editors is
 
       Page.Lang_Filter := null;
 
-      Page.Attribute_Index := new String'(To_Lower (Attribute_Index));
+      Page.Attribute_Index := new String'(Attribute_Index);
       Page.Title := new String'(Title);
       Page.Pkg   := new String'(To_Lower (Project_Package));
       Page.Coalesce_Switches  := new GNAT.OS_Lib.String_List (1 .. 0);
