@@ -139,7 +139,7 @@ at the moment it crashed.
 
 The menu bar provides operations that act either at a global level, or on
 a specific debugger. Since GVD can handle multiple debuggers at the same
-time, the commands that deal with debugging or a specific module are always
+time, the commands that deal with debugging on a specific module are always
 using the current debugger to perform the various operations provided by the
 menus. Key shortcuts are also available for the most common operations, and
 are displayed in the menus themselves.
@@ -147,8 +147,8 @@ Here is a detailed list of the menu items that can be found in the menu bar:
 
 @subsection File
 @itemize @bullet
-   @item Open Program.
-@anchor{open program menu}..
+   @item Open Program...
+@anchor{open program menu}
 Open a file selection dialog that allows you to choose a program to
 debug. The program to debug is either an executable for native debugging, or
 a partially linked module for cross environments (e.g vxWorks).
@@ -466,7 +466,7 @@ of breakpoints is recommended instead to stop programs.
 
    By default, the subprogram and parameters are displayed.
    You can hide the call stack window using the menu Data->Call Stack, and
-   show it again using the same menu (this is menu item is a check button that
+   show it again using the same menu (this menu item is a check button that
    can be enabled/disabled)
 
 @c --------------------------------------------------------------------
@@ -497,9 +497,10 @@ of breakpoints is recommended instead to stop programs.
      @item The name of the expression: this is the expression or variable
        specified when creating the box.
 
-     @item An icon representing either a lamp, or a lock
+     @item An icon representing either a flash light, or a lock.
        This is a click-able icon that will change the state of the box from
-       automatically updated (the lamp icon) to frozen (the lock icon).
+       automatically updated (the flash light icon) to frozen (the lock
+       icon).
        When frozen, the value is grayed, and will never change, until you change
        the state. When updated, the value of the box will be recomputed each
        time an execution command is sent to the debugger (e.g step, next).
