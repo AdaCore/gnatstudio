@@ -65,7 +65,6 @@ begin
    Set_Handle_Size (Process_Tab.Process_Paned, 10);
    Set_Gutter_Size (Process_Tab.Process_Paned, 6);
    Set_Position (Process_Tab.Process_Paned, 500);
-   --  Add (Process_Tab, Process_Tab.Process_Paned);
    Pack_Start (Process_Tab.Process_Hbox, Process_Tab.Process_Paned, True, True, 0);
 
    Gtk_New_Vpaned (Process_Tab.Data_Editor_Paned);
