@@ -431,6 +431,37 @@ package body Codefix.Errors_Parser is
       Concat (Solutions, Should_Be (Current_Text, Message, "or", "\|"));
    end Fix;
 
+
+   -------------------
+   -- Bad_End_Block --
+   -------------------
+
+   procedure Initialize (This : in out Bad_End_Block) is
+   begin
+      This.Matcher := (1 => new Pattern_Matcher'
+        (Compile ("""(end [\w]+;)"" expected in column [\d]+ for ""[\w]+""")));
+   end Initialize;
+
+   procedure Fix
+     (This         : Bad_End_Block;
+      Errors_List  : in out Errors_Interface'Class;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Message      : Error_Message;
+      Solutions    : out Solution_List;
+      Matches      : Match_Array)
+   is
+      pragma Unreferenced (This, Errors_List);
+   begin
+      Concat
+        (Solutions,
+         Should_Be
+           (Current_Text,
+            Message,
+            Get_Message (Message) (Matches (1).First .. Matches (1).Last),
+            "([^;]+;)",
+            Regular_Expression));
+   end Fix;
+
    ----------------------------
    -- Unqualified_Expression --
    ----------------------------
@@ -1651,6 +1682,7 @@ begin
    Add_Parser (new Should_Be_Semicolon);
    Add_Parser (new And_Meant);
    Add_Parser (new Or_Meant);
+   Add_Parser (new Bad_End_Block);
    Add_Parser (new Unqualified_Expression);
    Add_Parser (new Goes_Before);
    Add_Parser (new Sth_Expected_3);
