@@ -21,8 +21,12 @@
 with Ada.Characters.Handling;  use Ada.Characters.Handling;
 with Ada.Text_IO;              use Ada.Text_IO;
 with GNAT.OS_Lib;
+
+pragma Warnings (Off);
 with System.Img_BIU;           use System.Img_BIU;
-with System.WCh_StW;           use System.WCh_StW;
+--  used for Set_Image_Based_Integer
+--  ??? Consider using Ada.Integer_Text_IO instead
+pragma Warnings (On);
 
 with Glib;             use Glib;
 
@@ -155,8 +159,7 @@ package body Odd.Memory_View is
          end if;
       end if;
 
-      Long := Long_Long_Integer'Wide_Value
-        (String_To_Wide_String ("16#" & S & "#", 1));
+      Long := Long_Long_Integer'Value ("16#" & S & "#");
 
       case Format is
          when Hex =>
@@ -171,11 +174,11 @@ package body Odd.Memory_View is
                Value  : Integer;
             begin
                for J in 1 .. Result'Last loop
-                  Value := Integer'Wide_Value
-                    (String_To_Wide_String
-                     ("16#" &
-                      S (S'First + 2 * J - 2 .. S'First + 2 * J - 1)
-                      & "#", 1));
+                  Value :=
+                    Integer'Value
+                      ("16#" & S (S'First + 2 * J - 2 .. S'First + 2 * J - 1) &
+                       "#");
+
                   if Value > 31 and then Value < 128 then
                      Result (J) := Character'Val (Value);
                   else
@@ -437,9 +440,7 @@ package body Odd.Memory_View is
    begin
       Display_Memory
         (View,
-         Long_Long_Integer'Wide_Value
-           (String_To_Wide_String
-             ("16#" & Address (3 .. Address'Last) & "#", 1)));
+         Long_Long_Integer'Value ("16#" & Address (3 .. Address'Last) & "#"));
    end Display_Memory;
 
    -------------------
@@ -631,12 +632,9 @@ package body Odd.Memory_View is
          --  Modify flags string to match the new value.
          View.Flags (Value_Index .. Value_Index + View.Unit_Size - 1) :=
            (To_Standard_Base
-            (Long_Long_Integer'Wide_Value
-             (String_To_Wide_String
-              (Prefix & Current
-               (Index + 1 .. Next_Index - 1) & "#", 1)),
-             16,
-             View.Unit_Size));
+             (Long_Long_Integer'Value
+               (Prefix & Current (Index + 1 .. Next_Index - 1) & "#"),
+              16, View.Unit_Size));
       end;
 
       Set_Position (View.View, Get_Position (View.View) + 1);
