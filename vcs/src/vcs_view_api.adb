@@ -1136,11 +1136,11 @@ package body VCS_View_API is
 
       while not String_List.Is_Empty (List) loop
          Open_File_Editor
-           (Kernel,
-            Get_Log_From_File
+           (Kernel, Get_Log_From_File
               (Kernel,
-               Create (Full_Filename => String_List.Head (List)), True),
-            Dock => Bottom);
+               Create (Full_Filename => String_List.Head (List)), True));
+         Split (Get_MDI (Kernel), Gtk.Enums.Orientation_Vertical);
+
          String_List.Next (List);
       end loop;
 
@@ -1525,8 +1525,8 @@ package body VCS_View_API is
             All_Logs_Exist := False;
             Open_File_Editor
               (Kernel,
-               Get_Log_From_File (Kernel, File, True),
-               Dock => Bottom);
+               Get_Log_From_File (Kernel, File, True));
+            Split (Get_MDI (Kernel), Gtk.Enums.Orientation_Vertical);
          end if;
 
          Files_Temp := String_List.Next (Files_Temp);
