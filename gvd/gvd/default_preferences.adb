@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2002                       --
+--                     Copyright (C) 2001-2003                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
@@ -1618,12 +1618,16 @@ package body Default_Preferences is
       begin
          if Current_Selection /= null then
             Set_Child_Visible (Current_Selection, False);
+            Current_Selection := null;
          end if;
 
          Get_Selected (Get_Selection (Gtk_Tree_View (Tree)), M, Iter);
-         Current_Selection := Gtk_Table (Get_Object (Model, Iter, 1));
-         Set_Child_Visible (Current_Selection, True);
-         Set_Text (Title, Get_String (Model, Iter, 0));
+
+         if Iter /= Null_Iter then
+            Current_Selection := Gtk_Table (Get_Object (Model, Iter, 1));
+            Set_Child_Visible (Current_Selection, True);
+            Set_Text (Title, Get_String (Model, Iter, 0));
+         end if;
       end Selection_Changed;
 
       Dialog     : Gtk_Dialog;
