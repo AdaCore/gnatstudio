@@ -1004,19 +1004,6 @@ private
    --  Return a pointer to the LI_File whose filename is LI_Filename.
    --  Return No_LI_File if no such LI_File is found.
 
-   procedure Get_First
-     (HT : in out LI_File_HTable.HTable; Result : out LI_File_Ptr);
-   --  Returns No_LI_File if the hash-table is empty, otherwise returns one
-   --  non specified LI_File_Ptr. There is no guarantee that 2 calls to
-   --  this function will return the same element.
-
-   procedure Get_Next
-     (HT : in out LI_File_HTable.HTable; Result : out LI_File_Ptr);
-   --  Returns a non-specified LI_File_Ptr that has not been returned
-   --  by the same function since the last call to Get_First or No_LI_File if
-   --  there is no such element. If there is no call to 'Set' in between
-   --  Get_Next calls, all the elements of the Htable will be traversed.
-
    ---------------------------
    -- Non-exported services --
    ---------------------------

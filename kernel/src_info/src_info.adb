@@ -128,7 +128,7 @@ package body Src_Info is
       return LI_File_Ptr
    is
       Short_Filename : constant String := Base_Name (Source_Filename);
-      Current_LI     : LI_File_Ptr;
+      Current_LI     : LI_File_Node_Ptr;
       Current_Sep    : File_Info_Ptr_List;
       Table : LI_File_HTable.HTable := List.Table;
       --  ??? Make a copy of the table since Get_First and Get_Next need
@@ -144,36 +144,36 @@ package body Src_Info is
       --  search; that'll do for now, and it works fast enough on small
       --  projects.
 
-      Get_First (Table, Current_LI);
+      LI_File_HTable.Get_First (Table, Current_LI);
 
       LI_File_Loop :
       while Current_LI /= null loop
          --  Check if the filename matches the body filename
 
-         if Current_LI.LI.Body_Info /= null
-           and then Current_LI.LI.Body_Info.Source_Filename.all =
+         if Current_LI.Value.LI.Body_Info /= null
+           and then Current_LI.Value.LI.Body_Info.Source_Filename.all =
               Short_Filename
          then
-            return Current_LI;
+            return Current_LI.Value;
          end if;
 
          --  See if the filename matches the spec filename
 
-         if Current_LI.LI.Spec_Info /= null
-           and then Current_LI.LI.Spec_Info.Source_Filename.all =
+         if Current_LI.Value.LI.Spec_Info /= null
+           and then Current_LI.Value.LI.Spec_Info.Source_Filename.all =
               Short_Filename
          then
-            return Current_LI;
+            return Current_LI.Value;
          end if;
 
          --  Finally, check the filenames of the separates
 
-         Current_Sep := Current_LI.LI.Separate_Info;
+         Current_Sep := Current_LI.Value.LI.Separate_Info;
 
          Separate_Loop :
          while Current_Sep /= null loop
             if Current_Sep.Value.Source_Filename.all = Short_Filename then
-               return Current_LI;
+               return Current_LI.Value;
             end if;
 
             Current_Sep := Current_Sep.Next;
@@ -181,7 +181,7 @@ package body Src_Info is
 
          --  This LI_File does not match, try the next one in the table...
 
-         Get_Next (Table, Current_LI);
+         LI_File_HTable.Get_Next (Table, Current_LI);
       end loop LI_File_Loop;
 
       --  If we reach this point, then there is no matching LI_File
@@ -330,42 +330,6 @@ package body Src_Info is
          return Node.Value;
       end if;
    end Get;
-
-   ---------------
-   -- Get_First --
-   ---------------
-
-   procedure Get_First
-     (HT : in out LI_File_HTable.HTable; Result : out LI_File_Ptr)
-   is
-      Node : LI_File_Node_Ptr;
-   begin
-      LI_File_HTable.Get_First (HT, Node);
-
-      if Node = null then
-         Result := No_LI_File;
-      else
-         Result := Node.Value;
-      end if;
-   end Get_First;
-
-   --------------
-   -- Get_Next --
-   --------------
-
-   procedure Get_Next
-     (HT : in out LI_File_HTable.HTable; Result : out LI_File_Ptr)
-   is
-      Node : LI_File_Node_Ptr;
-   begin
-      LI_File_HTable.Get_Next (HT, Node);
-
-      if Node = null then
-         Result := No_LI_File;
-      else
-         Result := Node.Value;
-      end if;
-   end Get_Next;
 
    ----------------------
    -- Is_File_Location --
