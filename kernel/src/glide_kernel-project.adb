@@ -249,7 +249,7 @@ package body Glide_Kernel.Project is
 
          Free (Path);
          Free (Gnatls_Args);
-         Expect (Fd, Result, "Source Search Path:\n", Timeout => -1);
+         Expect (Fd, Result, "Source Search Path:", Timeout => -1);
 
          loop
             Expect (Fd, Result, "\n", Timeout => -1);
