@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --               GtkAda - Ada95 binding for Gtk+/Gnome               --
 --                                                                   --
---                   Copyright (C) 2001 ACT-Europe                   --
+--                 Copyright (C) 2001-2002 ACT-Europe                --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -234,9 +234,8 @@ package Gtkada.MDI is
    --  Widget must be the exact same one you gave in argument to Put.
 
    function Find_MDI_Child_By_Tag
-     (MDI    : access MDI_Window_Record;
-      Tag    : Ada.Tags.Tag)
-     return MDI_Child;
+     (MDI : access MDI_Window_Record;
+      Tag : Ada.Tags.Tag) return MDI_Child;
    --  Return the first child matching Tag
 
    type Child_Iterator is private;
