@@ -3644,9 +3644,11 @@ case "${host}" in
                 opsys=sol2-4
                 ;;
       *-sunos5.5* | *-solaris2.5* )
+		PYTHON_LIBS="-lresolv -lsocket -lnsl -ldl -lm"
                 opsys=sol2-5
                 ;;
       *-sunos5* | *-solaris* )
+		PYTHON_LIBS="-lresolv -lsocket -lnsl -ldl -lm"
                 opsys=sol2-5
                 ;;
       *-linux-gnu* )
