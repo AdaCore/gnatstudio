@@ -2332,8 +2332,9 @@ package body Entities is
          end if;
 
          Find_Next_Body (Entity, Location => Location);
-
-         if Location /= No_File_Location then
+         if Location /= No_File_Location
+           and then Location /= Get_Declaration_Of (Entity)
+         then
             Buffer := Read_File (Get_Filename (Location.File));
             Must_Free_Buffer := True;
             Index := Buffer'First;
