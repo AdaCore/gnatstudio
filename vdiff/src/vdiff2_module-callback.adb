@@ -340,7 +340,6 @@ package body Vdiff2_Module.Callback is
                   New_F  := Create (Full_Filename => New_File);
                   Diff_F := Create (Full_Filename => Diff_File);
                   Ref_F  := Create (Full_Filename => Ref_File);
-
                   return Visual_Patch (Ref_F, New_F, Diff_F, True);
                end;
 
@@ -357,7 +356,6 @@ package body Vdiff2_Module.Callback is
                   Orig_F := Create (Full_Filename => Orig_File);
                   Ref_F  := Create (Full_Filename => Ref_File);
                   Diff_F := Create (Full_Filename => Diff_File);
-
                   return Visual_Patch (Orig_F, Ref_F, Diff_F);
                end;
 
@@ -367,7 +365,6 @@ package body Vdiff2_Module.Callback is
                Orig_F := Create (Full_Filename => Orig_File);
                New_F  := Create (Full_Filename => New_File);
                Diff_F := Create (Full_Filename => Diff_File);
-
                return Visual_Patch (Orig_F, New_F, Diff_F);
             end if;
          end;
