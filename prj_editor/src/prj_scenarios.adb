@@ -181,6 +181,18 @@ package body Prj_Scenarios is
    procedure Set_Scenario_Name
      (Manager : in out Scenario_Manager;
       Values  : String_Id_Array;
+      Name    : String_Id) is
+   begin
+      Set (Manager.Names.all, Build_Key (Values), Name);
+   end Set_Scenario_Name;
+
+   -----------------------
+   -- Set_Scenario_Name --
+   -----------------------
+
+   procedure Set_Scenario_Name
+     (Manager : in out Scenario_Manager;
+      Values  : String_Id_Array;
       Name    : String) is
    begin
       Start_String;
@@ -389,6 +401,80 @@ package body Prj_Scenarios is
       end loop;
       return Num;
    end Scenarios_Count;
+
+   ----------------
+   -- Initialize --
+   ----------------
+
+   procedure Initialize
+     (Manager   : in out Scenario_Manager;
+      Internal_Project : Prj.Tree.Project_Node_Id)
+   is
+      Vars : constant Project_Node_Array :=
+        Find_Scenario_Variables (Internal_Project, Parse_Imported => False);
+      Values : String_Id_Array (Vars'Range) := (others => No_String);
+      Decl : Project_Node_Id;
+
+      procedure Recurse (Decl : Project_Node_Id);
+      --  Process recursively a nested case construction.
+      --  This case is used to define the names for scenarios.
+
+      -------------
+      -- Recurse --
+      -------------
+
+      procedure Recurse (Decl : Project_Node_Id) is
+         Index : Natural;
+         Case_Item : Project_Node_Id;
+      begin
+         case Kind_Of (Current_Item_Node (Decl)) is
+
+            when N_Case_Construction =>
+               Index := Variable_Index
+                 (Manager, External_Variable_Name
+                  (Internal_Project, Case_Variable_Reference_Of
+                   (Current_Item_Node (Decl))));
+
+               pragma Assert (Index /= 0);
+
+               Case_Item := First_Case_Item_Of (Current_Item_Node (Decl));
+               while Case_Item /= Empty_Node loop
+                  Values (Index) :=
+                    String_Value_Of (First_Choice_Of (Case_Item));
+                  Recurse (First_Declarative_Item_Of (Case_Item));
+                  Case_Item := Next_Case_Item (Case_Item);
+               end loop;
+               Values (Index) := No_String;
+
+            when N_Attribute_Declaration =>
+               Case_Item := Expression_Of (Current_Item_Node (Decl));
+               Case_Item := First_Term (Case_Item);
+               Case_Item := Current_Term (Case_Item);
+
+               pragma Assert (Kind_Of (Case_Item) = N_Literal_String);
+
+               Set_Scenario_Name
+                 (Manager, Values, String_Value_Of (Case_Item));
+
+            when others =>
+               null;
+         end case;
+      end Recurse;
+
+   begin
+      Initialize (Manager, Vars);
+
+      --  Now find the case statement that defines the scenario
+      Decl := First_Declarative_Item_Of
+        (Project_Declaration_Of (Internal_Project));
+      while Decl /= Empty_Node loop
+         if Kind_Of (Current_Item_Node (Decl)) = N_Case_Construction then
+            Recurse (Decl);
+            exit;
+         end if;
+         Decl := Next_Declarative_Item (Decl);
+      end loop;
+   end Initialize;
 
 end Prj_Scenarios;
 

@@ -47,6 +47,10 @@
 --           end case;
 --     end case;
 --
+--  This case statement is found in was is known as the internal project (a
+--  project whose file name is <root>.Internal, where <root> is the name of the
+--  project at the top of the project hierarchy).
+--
 --  The scenario manager can report the list of names that match a given set of
 --  values.
 --
@@ -73,11 +77,17 @@ package Prj_Scenarios is
    --  value of No_String indicates that the variable can take any value. This
    --  is the equivalent of a "when others" in a case statements.
 
+   --------------------------
+   -- Manipulate scenarios --
+   --------------------------
+
    procedure Initialize
      (Manager   : in out Scenario_Manager;
       Variables : Prj_API.Project_Node_Array);
    --  Create a new scenario manager for the list of Variables.
    --  The previous contents of Manager is discarded.
+   --  Note that there is another Initialize function that directly reads the
+   --  internal project
 
    procedure Set_Scenario_Name
      (Manager : in out Scenario_Manager;
@@ -86,6 +96,12 @@ package Prj_Scenarios is
    --  Set a new name for the scenario matching Values.
    --  The old name is overriden.
    --  No element in Values can be equal to No_String.
+
+   procedure Set_Scenario_Name
+     (Manager : in out Scenario_Manager;
+      Values  : String_Id_Array;
+      Name    : Types.String_Id);
+   --  Same as above, but acts directly on a String_Id
 
    function Get_Scenario_Names
      (Manager : Scenario_Manager;
@@ -107,14 +123,6 @@ package Prj_Scenarios is
    --
    --  0 is returned if the variable wasn't found.
 
-   procedure Append_Declaration
-     (Manager : Scenario_Manager; Prj_Or_Pkg : Prj.Tree.Project_Node_Id);
-   --  Append the declaration of the types and variables that define scenarios,
-   --  as well as the big case statement that defines the scenario values at
-   --  the end of Decl_Item.
-   --  Only the cases that have named projects associated with them are
-   --  generated.
-
    function Get_Scenario_Var_Reference
      (Manager : Scenario_Manager; Internal_Project : Prj.Tree.Project_Node_Id)
       return Prj.Tree.Project_Node_Id;
@@ -130,6 +138,27 @@ package Prj_Scenarios is
      (Manager : Scenario_Manager; Values : String_Id_Array) return Natural;
    --  Return the number of scenarios matching Values.
    --  This is the size of the array returned by Get_Scenario_Names.
+
+   ------------------------------
+   -- Manipulate project files --
+   ------------------------------
+
+   procedure Append_Declaration
+     (Manager : Scenario_Manager; Prj_Or_Pkg : Prj.Tree.Project_Node_Id);
+   --  Append the declaration of the types and variables that define scenarios,
+   --  as well as the big case statement that defines the scenario values at
+   --  the end of Prj_Or_Pkg.
+   --  Only the cases that have named projects associated with them are
+   --  generated.
+
+   procedure Initialize
+     (Manager   : in out Scenario_Manager;
+      Internal_Project : Prj.Tree.Project_Node_Id);
+   --  Initialize Manager from the contents of the internal project. The
+   --  previous contents of Manager is discarded.
+   --  Internal_Project is assumed to have the correct format (ie no hand
+   --  modification by the user).
+
 
 private
 
