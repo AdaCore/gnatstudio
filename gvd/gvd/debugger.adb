@@ -794,16 +794,17 @@ package body Debugger is
    -----------------------
 
    procedure Wait_User_Command (Debugger : access Debugger_Root) is
-      Tmp        : Boolean;
-      Num_Events : Positive;
-      Max_Events : constant := 30;
+      Current_Process : Process_Proxy_Access;
+      Tmp             : Boolean;
+      Num_Events      : Positive;
+      Max_Events      : constant := 30;
       --  Limit the number of events to process in one iteration
 
-      Current_Process : Process_Proxy_Access;
    begin
       --  Wait until the command has been processed
 
       Current_Process := Get_Process (Debugger);
+
       while Current_Process /= null
         and then Command_In_Process (Current_Process)
       loop
@@ -815,6 +816,7 @@ package body Debugger is
             Tmp := Gtk.Main.Main_Iteration;
             Num_Events := Num_Events + 1;
          end loop;
+
          Current_Process := Get_Process (Debugger);
       end loop;
    end Wait_User_Command;
