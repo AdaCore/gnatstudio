@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2002                      --
+--                      Copyright (C) 2000-2003                      --
 --                              ACT-Europe                           --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -61,8 +61,9 @@ with GNAT.TTY;            use GNAT.TTY;
 with GNAT.Expect.TTY;     use GNAT.Expect.TTY;
 pragma Warnings (On);
 
-with GNAT.Regpat;         use GNAT.Regpat;
-with GNAT.OS_Lib;         use GNAT.OS_Lib;
+with GNAT.Regpat;                use GNAT.Regpat;
+with GNAT.OS_Lib;                use GNAT.OS_Lib;
+with GNAT.Directory_Operations;  use GNAT.Directory_Operations;
 
 with Odd_Intl;                   use Odd_Intl;
 with Display_Items;              use Display_Items;
@@ -819,7 +820,7 @@ package body GVD.Process is
             Set_Current_Language
               (Process.Editor_Text, Get_Language_From_File
                  (Process.Window.Lang_Handler,
-                  "." & File_Extension (File_Name)));
+                  File_Extension (File_Name)));
 
             Load_File (Process.Editor_Text, File_Name);
          end;
@@ -2160,7 +2161,7 @@ package body GVD.Process is
          --  Set the label text.
          Set_Title
            (Find_MDI_Child (Process.Window.Process_Mdi, Process.Editor_Text),
-            Base_File_Name (Get_Current_File (Process.Editor_Text)));
+            Base_Name (Get_Current_File (Process.Editor_Text)));
       end if;
    end Update_Editor_Frame;
 
