@@ -838,7 +838,7 @@ package body GVD.Dialogs is
          declare
             S : constant String := Get_Text (Get_Entry (Dialog.Entry_Field));
          begin
-            if S /= "" and then History /= null then
+            if History /= null then
                Add_To_History (History.all, Key, S);
             end if;
 
