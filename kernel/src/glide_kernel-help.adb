@@ -18,28 +18,34 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glib;                      use Glib;
-with Glib.Xml_Int;              use Glib.Xml_Int;
-with Glib.Values;               use Glib.Values;
-with Csc_HTML_Widget;           use Csc_HTML_Widget;
-with GNAT.Directory_Operations; use GNAT.Directory_Operations;
-with GNAT.OS_Lib;               use GNAT.OS_Lib;
-with Glide_Kernel.Console;      use Glide_Kernel.Console;
-with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
-with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
-with Gtkada.MDI;                use Gtkada.MDI;
-with Gdk.Event;                 use Gdk.Event;
-with Gdk.Types.Keysyms;         use Gdk.Types.Keysyms;
-with Gtk.Adjustment;            use Gtk.Adjustment;
-with Gtk.Enums;                 use Gtk.Enums;
-with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
-with Gtk.Widget;                use Gtk.Widget;
-with Gtkada.Handlers;           use Gtkada.Handlers;
-with Glide_Intl;                use Glide_Intl;
-with Traces;                    use Traces;
-with OS_Utils;                  use OS_Utils;
-with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
-with Ada.Exceptions;            use Ada.Exceptions;
+with Glib;                         use Glib;
+with Glib.Object;                  use Glib.Object;
+with Glib.Xml_Int;                 use Glib.Xml_Int;
+with Glib.Values;                  use Glib.Values;
+with GVD;
+with Csc_HTML_Widget;              use Csc_HTML_Widget;
+with GNAT.Directory_Operations;    use GNAT.Directory_Operations;
+with GNAT.OS_Lib;                  use GNAT.OS_Lib;
+with Glide_Main_Window;            use Glide_Main_Window;
+with Glide_Kernel.Console;         use Glide_Kernel.Console;
+with Glide_Kernel.Modules;         use Glide_Kernel.Modules;
+with Glide_Kernel.Preferences;     use Glide_Kernel.Preferences;
+with Gtkada.Dialogs;               use Gtkada.Dialogs;
+with Gtkada.File_Selector;         use Gtkada.File_Selector;
+with Gtkada.File_Selector.Filters; use Gtkada.File_Selector.Filters;
+with Gtkada.MDI;                   use Gtkada.MDI;
+with Gdk.Event;                    use Gdk.Event;
+with Gdk.Types.Keysyms;            use Gdk.Types.Keysyms;
+with Gtk.Adjustment;               use Gtk.Adjustment;
+with Gtk.Enums;                    use Gtk.Enums;
+with Gtk.Scrolled_Window;          use Gtk.Scrolled_Window;
+with Gtk.Widget;                   use Gtk.Widget;
+with Gtkada.Handlers;              use Gtkada.Handlers;
+with Glide_Intl;                   use Glide_Intl;
+with Traces;                       use Traces;
+with OS_Utils;                     use OS_Utils;
+with Ada.Strings.Fixed;            use Ada.Strings.Fixed;
+with Ada.Exceptions;               use Ada.Exceptions;
 
 package body Glide_Kernel.Help is
 
@@ -116,6 +122,66 @@ package body Glide_Kernel.Help is
 
    procedure On_Destroy (Html : access Gtk_Widget_Record'Class);
    --  Called when an html browser is destroyed.
+
+   generic
+      HTML_File : String;
+   procedure On_Load_HTML
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   --  Load HMTL_File in the HTML/Help widget
+
+   procedure On_Open_HTML
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   --  Callback for Help->Open HTML...
+   --  Display a file selection dialog, and then open the HTML file in the
+   --  help widget.
+
+   ------------------
+   -- On_Load_HTML --
+   ------------------
+
+   procedure On_Load_HTML
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   is
+      pragma Unreferenced (Widget);
+      Top  : constant Glide_Window := Glide_Window (Get_Main_Window (Kernel));
+   begin
+      Display_Help
+        (Kernel,
+         Format_Pathname
+           (Top.Prefix_Directory.all & "/doc/gps/html/" & HTML_File));
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+   end On_Load_HTML;
+
+   procedure On_Welcome is new On_Load_HTML ("gps-welcome.html");
+   --  Menu Help->Welcome
+
+   procedure On_GPS_Help is new On_Load_HTML ("gps.html");
+   --  Menu Help->Using GPS
+
+   procedure On_GVD_Help is new On_Load_HTML ("gvd.html");
+   --  Menu Help->Using the GNU Visual Debugger
+
+   procedure On_GNAT_UG_Help is new On_Load_HTML ("gnat_ug.html");
+   --  Menu Help->GNAT User's Guide
+
+   procedure On_GNAT_RM_Help is new On_Load_HTML ("gnat_rm.html");
+   --  Menu Help->GNAT Reference Manual
+
+   procedure On_ARM95_Help is new On_Load_HTML ("arm95.html");
+   --  Menu Help->Ada 95 Reference Manual
+
+   procedure On_GDB_Help is new On_Load_HTML ("gdb.html");
+   --  Menu Help->Using the GNU Debugger
+
+   procedure On_GCC_Help is new On_Load_HTML ("gcc.html");
+   --  Menu Help->Using GCC
+
+   procedure On_About
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   --  Menu Help->About...
 
    ---------------
    -- Load_File --
@@ -575,22 +641,97 @@ package body Glide_Kernel.Help is
       return False;
    end Mime_Action;
 
+   --------------
+   -- On_About --
+   --------------
+
+   procedure On_About
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   is
+      pragma Unreferenced (Widget, Kernel);
+      Button : Message_Dialog_Buttons;
+   begin
+      Button := Message_Dialog
+        ("GPS " & GVD.Version & " (" & GVD.Source_Date &
+         (-") hosted on ") & GVD.Target & ASCII.LF & ASCII.LF &
+         (-"The GNAT Programming System") & ASCII.LF & ASCII.LF &
+         "(c) 2001-2002 ACT-Europe",
+         Buttons => Button_OK,
+         Title   => -"About...");
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+   end On_About;
+
+   ------------------
+   -- On_Open_HTML --
+   ------------------
+
+   procedure On_Open_HTML
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   is
+      pragma Unreferenced (Widget);
+
+      File_Selector : File_Selector_Window_Access;
+   begin
+      Gtk_New
+        (File_Selector, (1 => Directory_Separator),
+         Get_Current_Dir, -"Open HTML File");
+      Register_Filter (File_Selector, HTML_File_Filter);
+
+      declare
+         Filename : constant String := Select_File (File_Selector);
+      begin
+         if Filename /= "" then
+            Display_Help (Kernel, Filename);
+         end if;
+      end;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+   end On_Open_HTML;
+
    ---------------------
    -- Register_Module --
    ---------------------
 
    procedure Register_Module
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class) is
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
+   is
+      Help : constant String := "/_" & (-"Help") & '/';
    begin
       Register_Module
         (Module                  => Help_Module_ID,
          Kernel                  => Kernel,
          Module_Name             => Help_Module_Name,
-         Priority                => Default_Priority,
+         Priority                => Default_Priority - 20,
          Contextual_Menu_Handler => null,
          Mime_Handler            => Mime_Action'Access);
       Glide_Kernel.Kernel_Desktop.Register_Desktop_Functions
         (Save_Desktop'Access, Load_Desktop'Access);
+
+      --  Add help menus
+
+      Register_Menu (Kernel, Help, -"Open HTML File...",
+                     "", On_Open_HTML'Access);
+      Register_Menu (Kernel, Help, -"Welcome", "", On_Welcome'Access);
+      Register_Menu (Kernel, Help, -"Using the GPS Development Environment",
+                     "", On_GPS_Help'Access);
+      Register_Menu (Kernel, Help, -"Using the GNU Visual Debugger",
+                     "", On_GVD_Help'Access);
+      Register_Menu (Kernel, Help, -"GNAT User's Guide",
+                     "", On_GNAT_UG_Help'Access);
+      Register_Menu (Kernel, Help, -"GNAT Reference Manual",
+                     "", On_GNAT_RM_Help'Access);
+      Register_Menu (Kernel, Help, -"Ada 95 Reference Manual",
+                     "", On_ARM95_Help'Access);
+      Register_Menu (Kernel, Help, -"Using the GNU Debugger",
+                     "", On_GDB_Help'Access);
+      Register_Menu (Kernel, Help, -"Using GCC",
+                     "", On_GCC_Help'Access);
+      Register_Menu (Kernel, Help, -"About...", "", On_About'Access);
    end Register_Module;
 
 end Glide_Kernel.Help;
