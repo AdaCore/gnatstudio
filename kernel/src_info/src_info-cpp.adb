@@ -882,24 +882,26 @@ package body Src_Info.CPP is
      (Handler : access CPP_LI_Handler_Record'Class;
       DB_Dirs : GNAT.OS_Lib.String_List_Access) return Boolean
    is
+      use SN_Prj_HTables;
+      Iter : Iterator;
       Prj_Data : SN_Prj_Data;
       CDirs    : Integer := 0;
    begin
       --  Check if every new DB dir (from DB_Dirs) is in Prj_HTable
       for J in DB_Dirs'Range loop
          Prj_Data := SN_Prj_HTables.Get
-           (Handler.Prj_HTable.all, DB_Dirs (J));
+           (Handler.Prj_HTable.all, DB_Dirs (J).all);
 
          if Prj_Data = No_SN_Prj_Data then
             return True;
          end if;
       end loop;
 
-      SN_Prj_HTables.Get_First (Handler.Prj_HTable.all, Prj_Data);
+      SN_Prj_HTables.Get_First (Handler.Prj_HTable.all, Iter);
 
-      while Prj_Data /= No_SN_Prj_Data loop
+      while Get_Element (Iter) /= No_SN_Prj_Data loop
          CDirs := CDirs + 1;
-         SN_Prj_HTables.Get_Next (Handler.Prj_HTable.all, Prj_Data);
+         SN_Prj_HTables.Get_Next (Handler.Prj_HTable.all, Iter);
       end loop;
 
       if CDirs = DB_Dirs'Length then
@@ -5775,21 +5777,6 @@ package body Src_Info.CPP is
    end Process_Template_Arguments;
 
    ----------
-   -- Hash --
-   ----------
-
-   function Hash (Key : String_Access) return HTable_Range is
-      function Hash is new HTables.Hash (HTable_Range);
-   begin
-      return Hash (Key.all);
-   end Hash;
-
-   function Equal (Key1, Key2 : String_Access) return Boolean is
-   begin
-      return Key1.all = Key2.all;
-   end Equal;
-
-   ----------
    -- Init --
    ----------
 
@@ -5815,8 +5802,8 @@ package body Src_Info.CPP is
       end if;
 
       for I in Keys.all'Range loop
-         Prj_Data := SN_Prj_HTables.Get (Prj_HTable.all, Keys.all (I));
-         SN_Prj_HTables.Remove (Prj_HTable.all, Keys.all (I));
+         Prj_Data := SN_Prj_HTables.Get (Prj_HTable.all, Keys (I).all);
+         SN_Prj_HTables.Remove (Prj_HTable.all, Keys (I).all);
       end loop;
 
       Internal_Free (Prj_HTable);
@@ -5836,9 +5823,7 @@ package body Src_Info.CPP is
       if Prj_HTable = null then
          return Empty_Xref_Pool;
       end if;
-      Prj_Data := SN_Prj_HTables.Get
-        (Prj_HTable.all,
-         DB_Dir'Unrestricted_Access);
+      Prj_Data := SN_Prj_HTables.Get (Prj_HTable.all, DB_Dir);
       if Prj_Data = No_SN_Prj_Data then
          Fail ("Get_Xref_Pool: empty pool for " & DB_Dir);
          return Empty_Xref_Pool;
@@ -5856,16 +5841,13 @@ package body Src_Info.CPP is
       Pool       : Xref_Pool)
    is
       Prj_Data : SN_Prj_Data :=
-         SN_Prj_HTables.Get (Prj_HTable.all, DB_Dir);
+         SN_Prj_HTables.Get (Prj_HTable.all, DB_Dir.all);
    begin
       if Prj_Data /= No_SN_Prj_Data then
          Free (Prj_Data.Pool);
       end if;
       Prj_Data.Pool := Pool;
-      SN_Prj_HTables.Set
-        (Prj_HTable.all,
-         DB_Dir,
-         Prj_Data);
+      SN_Prj_HTables.Set (Prj_HTable.all, DB_Dir.all, Prj_Data);
    end Set_Xref_Pool;
 
    -----------------------
@@ -5879,9 +5861,7 @@ package body Src_Info.CPP is
    is
       Pool : Xref_Pool;
    begin
-      Pool := SN_Prj_HTables.Get
-        (Prj_HTable.all,
-         DB_Dir'Unrestricted_Access).Pool;
+      Pool := SN_Prj_HTables.Get (Prj_HTable.all, DB_Dir).Pool;
       if Pool = Empty_Xref_Pool then
          Fail ("Xref_Filename_For: empty pool for " & DB_Dir);
          return null;
@@ -5904,9 +5884,7 @@ package body Src_Info.CPP is
       Pool           : out Xref_Pool)
    is
    begin
-      Pool := SN_Prj_HTables.Get
-        (Prj_HTable.all,
-         DB_Dir'Unrestricted_Access).Pool;
+      Pool := SN_Prj_HTables.Get (Prj_HTable.all, DB_Dir).Pool;
       if Pool = Empty_Xref_Pool then
          Fail ("Xref_Filename_For: empty pool for " & DB_Dir);
          Xref_Filename := null;
@@ -5960,11 +5938,5 @@ package body Src_Info.CPP is
    begin
       null;
    end False_Free_Element;
-
-   procedure False_Free_Key (X : in out String_Access) is
-      pragma Unreferenced (X);
-   begin
-      null;
-   end False_Free_Key;
 
 end Src_Info.CPP;

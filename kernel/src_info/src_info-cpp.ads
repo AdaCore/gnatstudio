@@ -229,21 +229,18 @@ private
    HTable_Size : constant := 4097;
    type HTable_Range is range 1 .. HTable_Size;
 
-   function Hash (Key : String_Access) return HTable_Range;
-   function Equal (Key1, Key2 : String_Access) return Boolean;
+   function Hash is new HTables.Hash (HTable_Range);
 
    procedure False_Free_Element (X : in out SN_Prj_Data);
-   procedure False_Free_Key (X : in out String_Access);
 
    package SN_Prj_HTables is new HTables.Simple_HTable
      (Header_Num   => HTable_Range,
       Element      => SN_Prj_Data,
       Free_Element => False_Free_Element,
       No_Element   => No_SN_Prj_Data,
-      Key          => String_Access,
-      Free_Key     => False_Free_Key,
+      Key          => String,
       Hash         => Hash,
-      Equal        => Equal);
+      Equal        => "=");
 
    subtype SN_Prj_HTable_Record is SN_Prj_HTables.HTable;
    type SN_Prj_HTable is access SN_Prj_HTable_Record;
