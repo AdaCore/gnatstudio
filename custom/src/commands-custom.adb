@@ -328,6 +328,7 @@ package body Commands.Custom is
                Display_In_Console => True);
             Success := True;
          else
+            Trace (Me, "Executing external command " & Command.Command.all);
             Launch_Process
               (Command.Kernel,
                Command.Command.all,
