@@ -432,6 +432,7 @@ package body Ada_Naming_Editors is
 
       Value := Value_Of
         (Index => Name_Ada, In_Array => Data.Specification_Suffix);
+
       if Value.Kind = Single and then Value.Value /= No_String then
          Set_Text
            (Get_Entry (Editor.Spec_Extension), Get_String (Value.Value));
@@ -441,7 +442,8 @@ package body Ada_Naming_Editors is
       end if;
 
       Value := Value_Of
-        (Index    => Name_Ada, In_Array => Data.Implementation_Suffix);
+        (Index => Name_Ada, In_Array => Data.Implementation_Suffix);
+
       if Value.Kind = Single and then Value.Value /= No_String then
          Set_Text
            (Get_Entry (Editor.Body_Extension), Get_String (Value.Value));
