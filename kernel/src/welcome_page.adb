@@ -145,8 +145,7 @@ package body Welcome_Page is
       Gtk_New
         (Label,
          -("GPS is a complete integrated development environment that gives"
-           & " access to a wide range of tools and integrates them smoothly,"
-           & " unleashing the full power of GNAT Pro."));
+           & " access to a wide range of tools and integrates them smoothly.");
       Set_Line_Wrap (Label, True);
       Pack_Start (Hbox, Label);
 
