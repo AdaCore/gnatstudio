@@ -6,12 +6,12 @@ package Src_Info.CPP.LI_Utils is
       Symbol_Name             : in String;
       Source_Filename         : in String;
       Location                : in Point;
-      Parent_Filename         : in String := null;
+      Parent_Filename         : in String := "";
       Parent_Location         : in Point := Invalid_Point;
       Kind                    : in E_Kind;
       Scope                   : in E_Scope;
       End_Of_Scope_Location   : in Point := Invalid_Point;
-      Rename_Filename         : in String := String;
+      Rename_Filename         : in String := "";
       Rename_Location         : in Point := Invalid_Point;
       Declaration_Info        : in out E_Declaration_Info_List := null);
    --  Inserts new declaration with specified parameters to given
@@ -27,12 +27,12 @@ package Src_Info.CPP.LI_Utils is
       Name                    : in String;
       Source_Filename         : in String
       Location                : in Point;
-      Parent_Filename         : in String := null;
+      Parent_Filename         : in String := "";
       Parent_Location         : in Point := Invalid_Point;
       Kind                    : in E_Kind;
       Scope                   : in E_Scope;
       End_Of_Scope_Location   : in Point := Invalid_Point;
-      Rename_Filename         : in String := String;
+      Rename_Filename         : in String := "";
       Rename_Location         : in Point := Invalid_Point;
       Declaration_Info        : in out E_Declaration_Info_List := null);
    --  Inserts new dependency declaration with specified parameters to given
