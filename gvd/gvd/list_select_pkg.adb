@@ -28,7 +28,6 @@ with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Main;                  use Gtk.Main;
 with Gtk.Stock;                 use Gtk.Stock;
 with Callbacks_Odd;             use Callbacks_Odd;
-with Odd_Intl;                  use Odd_Intl;
 with List_Select_Pkg.Callbacks; use List_Select_Pkg.Callbacks;
 with Gtkada.Handlers;           use Gtkada.Handlers;
 with Gtkada.Types;              use Gtkada.Types;
