@@ -44,7 +44,6 @@ with Glide_Kernel.Project; use Glide_Kernel.Project;
 with Variable_Editors; use Variable_Editors;
 with Glide_Intl;    use Glide_Intl;
 
-with Stringt;  use Stringt;
 with Namet;    use Namet;
 with Traces;   use Traces;
 
@@ -167,7 +166,7 @@ package body Scenario_Views is
    begin
       while not Done (Iter) loop
          --  We know this is a list of static strings
-         String_To_Name_Buffer (Data (Iter));
+         Get_Name_String (Data (Iter));
          Gtk_New (Item, Locale_To_UTF8
                     (Name_Buffer (Name_Buffer'First .. Name_Len)));
          Add (List, Item);

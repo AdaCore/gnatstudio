@@ -87,9 +87,7 @@ with Project_Properties;       use Project_Properties;
 with Histories;                use Histories;
 with GUI_Utils;                use GUI_Utils;
 
-with Stringt;       use Stringt;
 with Types;         use Types;
-with Namet;         use Namet;
 
 package body Project_Viewers is
 
@@ -197,7 +195,7 @@ package body Project_Viewers is
 
    procedure Append_Line
      (Viewer           : access Project_Viewer_Record'Class;
-      File_Name        : String_Id;
+      File_Name        : Name_Id;
       Directory_Filter : String := "");
    --  Append a new line in the current page of Viewer, for File_Name.
    --  The exact contents inserted depends on the current view.
@@ -599,16 +597,13 @@ package body Project_Viewers is
 
    procedure Append_Line
      (Viewer           : access Project_Viewer_Record'Class;
-      File_Name        : String_Id;
+      File_Name        : Name_Id;
       Directory_Filter : String := "")
    is
-      File_N     : String (1 .. Integer (String_Length (File_Name)));
+      File_N     : constant String := Get_String (File_Name);
       Iter       : Gtk_Tree_Iter;
 
    begin
-      String_To_Name_Buffer (File_Name);
-      File_N := Name_Buffer (1 .. Name_Len);
-
       if Directory_Filter = ""
         or else Is_Regular_File
           (String_Utils.Name_As_Directory (Directory_Filter) & File_N)
@@ -880,7 +875,7 @@ package body Project_Viewers is
       Project_Filter   : Project_Type;
       Directory_Filter : String := "")
    is
-      Files : constant String_Id_Array := Get_Source_Files
+      Files : constant Name_Id_Array := Get_Source_Files
         (Project_Filter, Recursive => False);
    begin
       Viewer.Current_Project := Project_Filter;
@@ -1661,7 +1656,7 @@ package body Project_Viewers is
    begin
       if Ed.Project /= No_Project then
          declare
-            Dirs : constant String_Id_Array := Source_Dirs (Ed.Project);
+            Dirs : constant Name_Id_Array := Source_Dirs (Ed.Project);
          begin
             if Dirs'Length = 0 then
                Add_File (Dir_Name (Project_Path (Ed.Project)));
@@ -1929,7 +1924,7 @@ package body Project_Viewers is
    begin
       if Project /= No_Project then
          declare
-            Initial_Dirs_Id : constant String_Id_Array := Source_Dirs
+            Initial_Dirs_Id : constant Name_Id_Array := Source_Dirs
               (Project);
             Initial_Dirs : Argument_List (Initial_Dirs_Id'Range);
          begin
@@ -1988,7 +1983,7 @@ package body Project_Viewers is
         Get_Paths_Type (Project) = Projects.Relative
         or else (Get_Paths_Type (Project) = From_Pref
                  and then Get_Pref (Kernel, Generate_Relative_Paths));
-      Initial_Dirs_Id : constant String_Id_Array := Source_Dirs (Project);
+      Initial_Dirs_Id : constant Name_Id_Array := Source_Dirs (Project);
       Initial_Dirs : Argument_List (Initial_Dirs_Id'Range);
 
    begin

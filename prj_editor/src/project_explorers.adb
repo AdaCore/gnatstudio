@@ -55,7 +55,6 @@ with Gtkada.Tree_View;         use Gtkada.Tree_View;
 with Gtkada.Handlers;          use Gtkada.Handlers;
 
 with Namet;                    use Namet;
-with Stringt;                  use Stringt;
 
 with Types;                    use Types;
 
@@ -975,13 +974,13 @@ package body Project_Explorers is
          N    : Gtk_Tree_Iter;
          pragma Unreferenced (N);
          Dirs : String_List_Utils.String_List.List;
-         Dir  : constant String_Id_Array := Source_Dirs (Project);
+         Dir  : constant Name_Id_Array := Source_Dirs (Project);
          Dir_Node : String_List_Utils.String_List.List_Node;
       begin
          --  ??? Should show only first-level directories
 
          for D in Dir'Range loop
-            String_To_Name_Buffer (Dir (D));
+            Get_Name_String (Dir (D));
             Append (Dirs, Name_Buffer (1 .. Name_Len));
          end loop;
 
@@ -1079,7 +1078,7 @@ package body Project_Explorers is
         Get_Directory_From_Node (Explorer.Tree.Model, Node);
       Files     : String_List_Utils.String_List.List;
       File_Node : List_Node;
-      Src       : constant String_Id_Array :=
+      Src       : constant Name_Id_Array :=
         Get_Source_Files (Project, Recursive => False);
 
    begin
@@ -1353,7 +1352,7 @@ package body Project_Explorers is
 
       Project : constant Project_Type :=
         Get_Project_From_Node (Explorer, Node, False);
-      Sources : String_Id_Array := Source_Dirs (Project);
+      Sources : Name_Id_Array := Source_Dirs (Project);
       Imported : Project_Type_Array := Get_Imported_Projects (Project);
 
       function Is_Same_Directory (Dir1, Dir2 : String) return Boolean is
@@ -1373,8 +1372,8 @@ package body Project_Explorers is
          --  Sources directory
 
          for J in Sources'Range loop
-            if Sources (J) /= No_String then
-               String_To_Name_Buffer (Sources (J));
+            if Sources (J) /= No_Name then
+               Get_Name_String (Sources (J));
                Append (Dirs, Name_Buffer (1 .. Name_Len));
             end if;
          end loop;
@@ -1456,13 +1455,13 @@ package body Project_Explorers is
                   Index := Sources'First;
 
                   while Index <= Sources'Last loop
-                     if Sources (Index) /= No_String
+                     if Sources (Index) /= No_Name
                        and then
                          (Get_String (Sources (Index)) = Dir
                           or else Is_Same_Directory
                             (Get_String (Sources (Index)), Dir))
                      then
-                        Sources (Index) := No_String;
+                        Sources (Index) := No_Name;
                         exit;
                      end if;
 

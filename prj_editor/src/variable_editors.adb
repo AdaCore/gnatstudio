@@ -43,7 +43,6 @@ with Gtkada.Dialogs;           use Gtkada.Dialogs;
 
 with Ada.Characters.Handling;  use Ada.Characters.Handling;
 with Types;                    use Types;
-with Stringt;                  use Stringt;
 with Interfaces.C.Strings;     use Interfaces.C.Strings;
 with System;                   use System;
 
@@ -441,13 +440,11 @@ package body Variable_Editors is
                          & External_Reference_Of (Editor.Var)
                          & " from " & Old_Val & " to " & New_Val);
 
-                  Start_String;
-                  Store_String_Chars (New_Val);
                   Rename_Value_For_External_Variable
                     (Get_Project (Editor.Kernel),
                      Ext_Variable_Name => External_Reference_Of (Editor.Var),
                      Old_Value_Name => Old_Val,
-                     New_Value_Name => End_String);
+                     New_Value_Name => Get_String (New_Val));
                   Changed := True;
                end if;
             end;
@@ -487,7 +484,7 @@ package body Variable_Editors is
       --  Add the new values
 
       declare
-         Values     : String_Id_Array (1 .. Num_Rows);
+         Values     : Name_Id_Array (1 .. Num_Rows);
          Num_Values : Natural := Values'First - 1;
       begin
          Iter := Get_Iter_First (Editor.Model);
@@ -500,7 +497,7 @@ package body Variable_Editors is
                  (Editor.Model, Iter, Value_Column);
                Default : constant Boolean := Get_Boolean
                  (Editor.Model, Iter, Default_Value_Column);
-               Id      : String_Id := No_String;
+               Id      : Name_Id := No_Name;
 
             begin
                if Name /= New_Value_Name then
@@ -517,9 +514,7 @@ package body Variable_Editors is
 
                   if not Found then
                      Num_Values := Num_Values + 1;
-                     Start_String;
-                     Store_String_Chars (Name);
-                     Id := End_String;
+                     Id := Get_String (Name);
                      Values (Num_Values) := Id;
                      Trace (Me, "Adding new value " & Name & " for "
                             & External_Reference_Of (Editor.Var));
@@ -531,10 +526,8 @@ package body Variable_Editors is
                           External_Default (Editor.Var);
                      begin
                         if Expr = "" or else Expr /= Name then
-                           if Id = No_String then
-                              Start_String;
-                              Store_String_Chars (Name);
-                              Id := End_String;
+                           if Id = No_Name then
+                              Id := Get_String (Name);
                            end if;
 
                            Changed := True;
@@ -570,12 +563,10 @@ package body Variable_Editors is
       if External_Reference_Of (Editor.Var) /= New_Name then
          Trace (Me, "Renaming variable "
                 & External_Reference_Of (Editor.Var) & " to " & New_Name);
-         Start_String;
-         Store_String_Chars (New_Name);
          Rename_External_Variable
            (Get_Project (Editor.Kernel),
             Variable => Editor.Var,
-            New_Name => End_String);
+            New_Name => Get_String (New_Name));
          Changed := True;
       end if;
 
