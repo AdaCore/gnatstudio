@@ -889,7 +889,9 @@ package body Vsearch_Ext is
       --  We might be in the process of destroying GPS (for instance, the
       --  current search context detects that the current MDI_Child was
       --  destroyed, and resets the context).
-      Set_First_Next_Mode (Vsearch_Module_Id.Search, Find_Next => False);
+      if Vsearch_Module_Id.Search /= null then
+         Set_First_Next_Mode (Vsearch_Module_Id.Search, Find_Next => False);
+      end if;
 
    exception
       when E : others =>
@@ -994,8 +996,8 @@ package body Vsearch_Ext is
          Search_User_Data.Set (Item, Data, Search_User_Data_Quark);
       end loop;
 
-      --  Restore the options as before (they might have changed depending on
-      --  the last predefined regexp we inserted)
+      --  Restore the options as before (they might have changed depending
+      --  on the last predefined regexp we inserted)
 
       Set_Active (Search.Case_Check, Options.Case_Sensitive);
       Set_Active (Search.Whole_Word_Check, Options.Whole_Word);
@@ -1161,23 +1163,12 @@ package body Vsearch_Ext is
         (Vsearch.Regexp_Check, "toggled",
          Kernel_Callback.To_Marshaller (Reset_Search'Access), Handle);
 
-      --  Show the already registered modules
-      Search_Functions_Changed (Handle);
-      New_Predefined_Regexp (Handle);
-
-      Add_Hook (Handle, Search_Reset_Hook, Set_First_Next_Mode_Cb'Access);
-      Add_Hook (Handle, Search_Functions_Changed_Hook,
-                Search_Functions_Changed'Access);
-      Add_Hook (Handle, Search_Regexps_Changed_Hook,
-                New_Predefined_Regexp'Access);
-
       --  Include all the patterns that have been predefined so far, and make
       --  sure that new patterns will be automatically added.
       Widget_Callback.Object_Connect
         (Get_List (Vsearch.Pattern_Combo), "selection_changed",
          Widget_Callback.To_Marshaller (Selection_Changed'Access),
          Vsearch);
-
 
       --  Fill the replace combo first, so that the selection remains in
       --  the pattern combo
@@ -1204,6 +1195,12 @@ package body Vsearch_Ext is
         (Get_History (Handle).all,
          "regexp_search",
          Vsearch.Regexp_Check);
+
+      Add_Hook (Handle, Search_Reset_Hook, Set_First_Next_Mode_Cb'Access);
+      Add_Hook (Handle, Search_Functions_Changed_Hook,
+                Search_Functions_Changed'Access);
+      Add_Hook (Handle, Search_Regexps_Changed_Hook,
+                New_Predefined_Regexp'Access);
    end Initialize;
 
    ---------------
@@ -1242,6 +1239,10 @@ package body Vsearch_Ext is
 
          if Vsearch_Module_Id.Search = null then
             Gtk_New (Vsearch_Module_Id.Search, Kernel_Handle (Kernel));
+
+            --  Show the already registered modules
+            Search_Functions_Changed (Kernel);
+            New_Predefined_Regexp (Kernel);
 
             --  keep a reference on it so that it isn't destroyed when the MDI
             --  child is destroyed.
