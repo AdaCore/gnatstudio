@@ -31,8 +31,8 @@ with System.Assertions;         use System.Assertions;
 with Glide_Kernel;              use Glide_Kernel;
 with Glide_Kernel.Console;      use Glide_Kernel.Console;
 with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
-with Glide_Kernel.Scripts;      use Glide_Kernel.Scripts;
 with Glide_Intl;                use Glide_Intl;
+with Projects;                  use Projects;
 
 with Language;                  use Language;
 with Language.Custom;           use Language.Custom;
@@ -73,55 +73,56 @@ package body Custom_Module is
       --  what Current_Node contains.
 
       procedure Parse_Action_Node (Node : Node_Ptr);
-      function Parse_Shell_Node
-        (Node : Node_Ptr) return Custom_Command_Access;
-      function Parse_External_Node
-        (Node : Node_Ptr) return Custom_Command_Access;
       procedure Parse_Button_Node (Node : Node_Ptr);
+      procedure Parse_Tool_Node (Node : Node_Ptr);
       procedure Parse_Menu_Node (Node : Node_Ptr; Parent_Path : UTF8_String);
       --  Parse the various nodes: <action>, <shell>, ...
 
-      ----------------------
-      -- Parse_Shell_Node --
-      ----------------------
+      ---------------------
+      -- Parse_Tool_Node --
+      ---------------------
 
-      function Parse_Shell_Node
-        (Node : Node_Ptr) return Custom_Command_Access
-      is
-         Lang    : constant String := Get_Attribute (Node, "lang");
-         Script  : Scripting_Language;
-         Command : Custom_Command_Access;
+      procedure Parse_Tool_Node (Node : Node_Ptr) is
+         Name  : constant String := Get_Attribute (Node, "name");
+         Pack  : constant String :=
+           Get_Attribute (Node, "package", Projects.Ide_Package);
+         Index : constant String := Get_Attribute (Node, "index", Name);
+         Switches : String_Access;
+         N     : Node_Ptr := Node.Child;
       begin
-         if Lang = "" then
-            Script := Lookup_Scripting_Language (Kernel, GPS_Shell_Name);
-         else
-            Script := Lookup_Scripting_Language (Kernel, Lang);
-         end if;
-
-         if Script = null then
+         if Name = "" then
             Insert (Kernel,
-                    -"Invalid language specified for <shell> node: " & Lang,
+                    -"Invalid <tool> node, it must have a name attribute",
                     Mode => Error);
             raise Assert_Failure;
          end if;
 
-         --  ??? Command is never freed
-         Create (Command, Kernel_Handle (Kernel), Node.Value.all, Script);
-         return Command;
-      end Parse_Shell_Node;
+         while N /= null loop
+            if N.Tag.all = "default-switches" then
+               Free (Switches);
+               Switches := new String'(N.Value.all);
+            elsif N.Tag.all = "language"
+              or else N.Tag.all = "switches"
+            then
+               --  Handled in prj_editor module
+               null;
+            else
+               Insert (Kernel,
+                       -"Unsupport child tag for <tool>: " & N.Tag.all,
+                       Mode => Error);
+            end if;
 
-      -------------------------
-      -- Parse_External_Node --
-      -------------------------
+            N := N.Next;
+         end loop;
 
-      function Parse_External_Node
-        (Node : Node_Ptr) return Custom_Command_Access
-      is
-         Command : Custom_Command_Access;
-      begin
-         Create (Command, Kernel_Handle (Kernel), Node.Value.all, null);
-         return Command;
-      end Parse_External_Node;
+         Register_Tool
+           (Kernel,
+            Tool_Name => Name,
+            Tool      => (Project_Package   => new String'(Pack),
+                          Project_Attribute => new String'("default_switches"),
+                          Project_Index     => new String'(Index),
+                          Default_Switches  => null));
+      end Parse_Tool_Node;
 
       -----------------------
       -- Parse_Action_Node --
@@ -130,7 +131,7 @@ package body Custom_Module is
       procedure Parse_Action_Node (Node : Node_Ptr) is
          Name    : constant String := Get_Attribute (Node, "name");
          Child   : Node_Ptr;
-         Command, C : Custom_Command_Access;
+         Command : Custom_Command_Access;
          Description : String_Access := new String'("");
          Context     : String_Access;
          Context_A   : Action_Context;
@@ -146,21 +147,11 @@ package body Custom_Module is
 
          Child := Node.Child;
          while Child /= null loop
-            if To_Lower (Child.Tag.all) = "shell" then
-               C := Parse_Shell_Node (Child);
-               if Command = null then
-                  Command := C;
-               else
-                  Add_Consequence_Action (Command, C);
-               end if;
-
-            elsif To_Lower (Child.Tag.all) = "external" then
-               C := Parse_External_Node (Child);
-               if Command = null then
-                  Command := C;
-               else
-                  Add_Consequence_Action (Command, C);
-               end if;
+            if To_Lower (Child.Tag.all) = "shell"
+              or else To_Lower (Child.Tag.all) = "external"
+            then
+               --  Handled directly by Commands.Custom
+               null;
 
             elsif To_Lower (Child.Tag.all) = "context" then
                Free (Context);
@@ -169,10 +160,6 @@ package body Custom_Module is
                Free (Description);
                Description := new String'(Child.Value.all);
             else
-               if Command /= null then
-                  Destroy (Command_Access (Command));
-               end if;
-
                Insert
                  (Kernel,
                   -"Invalid child node for <action> tag",
@@ -193,6 +180,8 @@ package body Custom_Module is
                raise Assert_Failure;
             end if;
          end if;
+
+         Create (Command, Kernel_Handle (Kernel), Node.Child);
 
          Register_Action
            (Kernel,
@@ -382,6 +371,10 @@ package body Custom_Module is
 
          elsif To_Lower (Current_Node.Tag.all) = "button" then
             Parse_Button_Node (Current_Node);
+
+         elsif To_Lower (Current_Node.Tag.all) = "tool" then
+            Parse_Tool_Node (Current_Node);
+
          end if;
       end Add_Child;
 
