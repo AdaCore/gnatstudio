@@ -97,18 +97,24 @@ package body Odd.Process is
 
 
    Graph_Cmd_Format : Pattern_Matcher := Compile
-     ("graph\s+(print|display)\s+(`([^`]+)`|(\S+))\s*"
-      & "(dependent\s+on\s+(\S+)\s*)?"
-      & "(link_name\s+(\S+))?", Case_Insensitive);
+     ("graph\s+(print|display)\s+(`([^`]+)`|""([^""]+)"")?(.*)",
+      Case_Insensitive);
    --  Format of the graph print commands, and how to parse them
 
    Graph_Cmd_Type_Paren          : constant := 1;
    Graph_Cmd_Expression_Paren    : constant := 3;
-   Graph_Cmd_Variable_Name_Paren : constant := 4;
-   Graph_Cmd_Dependent_Paren     : constant := 6;
-   Graph_Cmd_Link_Paren          : constant := 8;
+   Graph_Cmd_Quoted_Paren        : constant := 4;
+   Graph_Cmd_Rest_Paren          : constant := 5;
    --  Indexes of the parentheses pairs in Graph_Cmd_Format for each of the
    --  relevant fields.
+
+   Graph_Cmd_Dependent_Format : Pattern_Matcher := Compile
+     ("dependent\s+on\s+(\d+)\s*", Case_Insensitive);
+   --  Partial analyses of the last part of a graph command
+
+   Graph_Cmd_Link_Format : Pattern_Matcher := Compile
+     ("link_name\s+(.+)", Case_Insensitive);
+   --  Partial analyses of the last part of a graph command
 
    Graph_Cmd_Format2 : Pattern_Matcher := Compile
      ("graph\s+(enable|disable)\s+display\s+(.*)", Case_Insensitive);
@@ -586,13 +592,19 @@ package body Odd.Process is
      (Process : access Debugger_Process_Tab_Record'Class;
       Cmd     : String)
    is
-      Matched : Match_Array (0 .. 10);
+      Matched  : Match_Array (0 .. 10);
+      Matched2 : Match_Array (0 .. 10);
       Item    : Display_Item;
       Index,
       Last    : Positive;
       Enable  : Boolean;
+      First   : Natural;
+      Dependent_On_First : Natural := Natural'Last;
+      Link_Name_First    : Natural := Natural'Last;
+      Link_Name : Odd.Types.String_Access;
+      Link_From : Display_Item;
    begin
-      --  graph (print|display) variable [dependent on display_num]
+      --  graph (print|display) expression [dependent on display_num]
       --        [link_name name]
       --  graph (print|display) `command`
       --  graph enable display display_num [display_num ...]
@@ -602,6 +614,35 @@ package body Odd.Process is
       if Matched (0) /= No_Match then
          Enable := Cmd (Matched (Graph_Cmd_Type_Paren).First) = 'd'
            or else Cmd (Matched (Graph_Cmd_Type_Paren).First) = 'D';
+
+
+         --  Do we have any 'dependent on' expression ?
+         if Matched (Graph_Cmd_Rest_Paren).First >= Cmd'First then
+            Match (Graph_Cmd_Dependent_Format,
+                   Cmd (Matched (Graph_Cmd_Rest_Paren).First
+                        .. Matched (Graph_Cmd_Rest_Paren).Last),
+                   Matched2);
+            if Matched2 (1) /= No_Match then
+               Dependent_On_First := Matched2 (0).First;
+               Link_From := Find_Item
+                 (Process.Data_Canvas,
+                  Integer'Value
+                  (Cmd (Matched2 (1).First .. Matched2 (1).Last)));
+            end if;
+         end if;
+
+         --  Do we have any 'link name' expression ?
+         if Matched (Graph_Cmd_Rest_Paren).First >= Cmd'First then
+            Match (Graph_Cmd_Link_Format,
+                   Cmd (Matched (Graph_Cmd_Rest_Paren).First
+                        .. Matched (Graph_Cmd_Rest_Paren).Last),
+                   Matched2);
+            if Matched2 (0) /= No_Match then
+               Link_Name_First := Matched2 (0).First;
+               Link_Name := new String'
+                 (Cmd (Matched2 (1).First .. Matched2 (1).Last));
+            end if;
+         end if;
 
          --  A general expression  (graph print `cmd`)
          if Matched (Graph_Cmd_Expression_Paren) /= No_Match then
@@ -617,98 +658,110 @@ package body Odd.Process is
                   Send (Process.Debugger,
                         Refresh_Command (Debugger_Output_Type (Entity.all)),
                         Is_Internal => True));
-               Gtk_New
-                 (Item, Get_Window (Process.Data_Canvas),
-                  Variable_Name  => Expr,
-                  Debugger       => Process,
-                  Auto_Refresh   => Enable,
-                  Default_Entity => Entity);
-               Put (Process.Data_Canvas, Item);
-            end;
 
-         --  A variable name
-
-         else
-            declare
-               Var : String :=
-                 Cmd (Matched (Graph_Cmd_Variable_Name_Paren).First
-                      .. Matched (Graph_Cmd_Variable_Name_Paren).Last);
-            begin
-
-               --  If we don't want any link:
-               if Matched (Graph_Cmd_Dependent_Paren) = No_Match then
-
-                  if Enable_Block_Search then
-                     Gtk_New
-                       (Item, Get_Window (Process.Data_Canvas),
-                        Variable_Name => Variable_Name_With_Frame
-                        (Process.Debugger, Var),
-                        Debugger      => Process,
-                     Auto_Refresh  =>
-                          Cmd (Matched (Graph_Cmd_Type_Paren).First) = 'd');
-                  end if;
-
-                  --  If we could not get the variable with the block, try
-                  --  without, since some debuggers (gdb most notably) can have
-                  --  more efficient algorithms to find the variable.
-
-                  if Item = null then
-                     Gtk_New
-                       (Item, Get_Window (Process.Data_Canvas),
-                        Variable_Name => Var,
-                        Debugger      => Process,
-                        Auto_Refresh  =>
-                          Cmd (Matched (Graph_Cmd_Type_Paren).First) = 'd');
-                  end if;
-
-                  if Item /= null then
-                     Put (Process.Data_Canvas, Item);
-                     Recompute_All_Aliases
-                       (Process.Data_Canvas, Recompute_Values => False);
-                  end if;
-
-               --  We have a link
+               --  No link ?
+               if Dependent_On_First = Natural'Last then
+                  Gtk_New
+                    (Item, Get_Window (Process.Data_Canvas),
+                     Variable_Name  => Expr,
+                     Debugger       => Process,
+                     Auto_Refresh   => Enable,
+                     Default_Entity => Entity);
+                  Put (Process.Data_Canvas, Item);
                else
-                  if Matched (Graph_Cmd_Link_Paren) = No_Match then
-                     Matched (Graph_Cmd_Link_Paren) :=
-                       (First => Cmd'First, Last => Cmd'First - 1);
-                  end if;
-
-                  declare
-                     Link_Name : String :=
-                       Cmd (Matched (Graph_Cmd_Link_Paren).First
-                            .. Matched (Graph_Cmd_Link_Paren).Last);
-                     Num : Integer :=
-                       Integer'Value
-                       (Cmd (Matched (Graph_Cmd_Dependent_Paren).First
-                             .. Matched (Graph_Cmd_Dependent_Paren).Last));
-                     Link_From : Display_Item :=
-                       Find_Item (Process.Data_Canvas, Num);
-                  begin
-                     if Enable_Block_Search then
-                        Gtk_New_And_Put
-                          (Item, Get_Window (Process.Data_Canvas),
-                           Variable_Name => Variable_Name_With_Frame
-                           (Process.Debugger, Var),
-                           Debugger      => Process,
-                           Auto_Refresh  => Enable,
-                           Link_From     => Link_From,
-                           Link_Name     => Link_Name);
-                     end if;
-
-                     if Item = null then
-                        Gtk_New_And_Put
-                          (Item, Get_Window (Process.Data_Canvas),
-                           Variable_Name => Var,
-                           Debugger      => Process,
-                           Auto_Refresh  => Enable,
-                           Link_From     => Link_From,
-                           Link_Name     => Link_Name);
-                     end if;
-                  end;
+                  Gtk_New_And_Put
+                    (Item, Get_Window (Process.Data_Canvas),
+                     Variable_Name  => Expr,
+                     Debugger       => Process,
+                     Auto_Refresh   => Enable,
+                     Link_From      => Link_From,
+                     Link_Name      => Link_Name.all,
+                     Default_Entity => Entity);
                end if;
             end;
+
+         --  A quoted name or standard name
+         else
+
+            --  Quoted
+            if Matched (Graph_Cmd_Quoted_Paren) /= No_Match then
+               First := Matched (Graph_Cmd_Quoted_Paren).First;
+               Last  := Matched (Graph_Cmd_Quoted_Paren).Last;
+
+            --  Standard
+            else
+               First := Matched (Graph_Cmd_Rest_Paren).First;
+               Last  := Natural'Min (Link_Name_First, Dependent_On_First);
+               if Last = Natural'Last then
+                  Last  := Matched (Graph_Cmd_Rest_Paren).Last;
+               else
+                  Last := Last - 1;
+               end if;
+            end if;
+
+            --  If we don't want any link:
+            if Dependent_On_First = Natural'Last then
+
+               if Enable_Block_Search then
+                  Gtk_New
+                    (Item, Get_Window (Process.Data_Canvas),
+                     Variable_Name => Variable_Name_With_Frame
+                     (Process.Debugger, Cmd (First .. Last)),
+                     Debugger      => Process,
+                     Auto_Refresh  =>
+                       Cmd (Matched (Graph_Cmd_Type_Paren).First) = 'd');
+               end if;
+
+               --  If we could not get the variable with the block, try
+               --  without, since some debuggers (gdb most notably) can have
+               --  more efficient algorithms to find the variable.
+
+               if Item = null then
+                  Gtk_New
+                    (Item, Get_Window (Process.Data_Canvas),
+                     Variable_Name => Cmd (First .. Last),
+                     Debugger      => Process,
+                     Auto_Refresh  =>
+                       Cmd (Matched (Graph_Cmd_Type_Paren).First) = 'd');
+               end if;
+
+               if Item /= null then
+                  Put (Process.Data_Canvas, Item);
+                  Recompute_All_Aliases
+                    (Process.Data_Canvas, Recompute_Values => False);
+               end if;
+
+            --  Else if we have a link
+            else
+               if Link_Name = null then
+                  Link_Name := new String'(Cmd (First .. Last));
+               end if;
+
+               if Enable_Block_Search then
+                  Gtk_New_And_Put
+                    (Item, Get_Window (Process.Data_Canvas),
+                     Variable_Name => Variable_Name_With_Frame
+                     (Process.Debugger, Cmd (First .. Last)),
+                     Debugger      => Process,
+                     Auto_Refresh  => Enable,
+                     Link_From     => Link_From,
+                     Link_Name     => Link_Name.all);
+               end if;
+
+               if Item = null then
+                  Gtk_New_And_Put
+                    (Item, Get_Window (Process.Data_Canvas),
+                     Variable_Name => Cmd (First .. Last),
+                     Debugger      => Process,
+                     Auto_Refresh  => Enable,
+                     Link_From     => Link_From,
+                     Link_Name     => Link_Name.all);
+               end if;
+
+            end if;
          end if;
+
+         Free (Link_Name);
 
       else
          --  Is this an enable/disable command ?
