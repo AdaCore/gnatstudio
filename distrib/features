@@ -3,6 +3,9 @@ details, please see the documentation.
 
 New features in GPS 2.1.0
 
+- DA17-004 It is now possible to define an empty switch for <radio-entry>
+  in XML files, to indicate the default meaning.
+
 - D930-007 Add support for substring case exceptions
 
 - New preferences to choose cursor width and color
