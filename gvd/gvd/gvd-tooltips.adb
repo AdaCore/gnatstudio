@@ -62,11 +62,11 @@ package body GVD.Tooltips is
      Ada.Unchecked_Deallocation (Tooltips_Record, Tooltips);
    --  Free memory used by tooltip.
 
-   --------------------
-   -- Mouse_Event_Cb --
-   --------------------
+   ----------------------
+   -- Tooltip_Event_Cb --
+   ----------------------
 
-   function Mouse_Event_Cb
+   function Tooltip_Event_Cb
      (Widget  : access Widget_Type'Class;
       Event   : Gdk.Event.Gdk_Event;
       Tooltip : Tooltips) return Boolean
@@ -75,7 +75,7 @@ package body GVD.Tooltips is
    begin
       Set_Tooltip (Tooltip);
       return False;
-   end Mouse_Event_Cb;
+   end Tooltip_Event_Cb;
 
    -----------------
    -- Set_Timeout --
@@ -125,19 +125,23 @@ package body GVD.Tooltips is
          Area           => Area);
       Tooltip_Handler.Connect
         (Widget, "button_press_event",
-         Tooltip_Handler.To_Marshaller (Mouse_Event_Cb'Access),
+         Tooltip_Handler.To_Marshaller (Tooltip_Event_Cb'Access),
+         User_Data => Tooltip);
+      Tooltip_Handler.Connect
+        (Widget, "key_press_event",
+         Tooltip_Handler.To_Marshaller (Tooltip_Event_Cb'Access),
          User_Data => Tooltip);
       Tooltip_Handler.Connect
         (Widget, "motion_notify_event",
-         Tooltip_Handler.To_Marshaller (Mouse_Event_Cb'Access),
+         Tooltip_Handler.To_Marshaller (Tooltip_Event_Cb'Access),
          User_Data => Tooltip);
       Tooltip_Handler.Connect
         (Widget, "focus_in_event",
-         Tooltip_Handler.To_Marshaller (Mouse_Event_Cb'Access),
+         Tooltip_Handler.To_Marshaller (Tooltip_Event_Cb'Access),
          User_Data => Tooltip);
       Tooltip_Handler.Connect
         (Widget, "focus_out_event",
-         Tooltip_Handler.To_Marshaller (Mouse_Event_Cb'Access),
+         Tooltip_Handler.To_Marshaller (Tooltip_Event_Cb'Access),
          User_Data => Tooltip);
    end New_Tooltip;
 
