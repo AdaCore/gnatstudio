@@ -123,10 +123,10 @@ package body VFS_Module is
 
             if Match (Buffer (1 .. Last), File_Regexp) then
                if Is_Cur_Dir then
-                  Set_Return_Value (Data, Buffer (1 .. Last), Append => True);
+                  Set_Return_Value (Data, Buffer (1 .. Last));
                else
                   Set_Return_Value
-                    (Data, Directory.all & Buffer (1 .. Last), Append => True);
+                    (Data, Directory.all & Buffer (1 .. Last));
                end if;
             end if;
          end loop;

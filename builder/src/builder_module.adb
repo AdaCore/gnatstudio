@@ -865,7 +865,7 @@ package body Builder_Module is
          Set_Return_Value_As_List (Data);
          while Node /= Null_Node loop
             Set_Return_Value
-              (Data, String_List_Utils.String_List.Data (Node), True);
+              (Data, String_List_Utils.String_List.Data (Node));
             Node := Next (Node);
          end loop;
       end if;
