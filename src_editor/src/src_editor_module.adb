@@ -1242,7 +1242,7 @@ package body Src_Editor_Module is
 
             if Old_Name /= New_Name then
                Set_Title (Child, New_Name, Base_Name (New_Name));
-               Change_Dir (Dir_Name (New_Name));
+               Change_Project_Dir (Kernel, Dir_Name (New_Name));
             end if;
          end;
       end;
@@ -1258,14 +1258,18 @@ package body Src_Editor_Module is
       pragma Unreferenced (Widget);
    begin
       declare
-         Filename : constant String := Select_File (Title => -"Open File");
+         Filename : constant String :=
+           Select_File
+             (Title             => -"Open File",
+              Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs));
+
       begin
          if Filename = "" then
             return;
          end if;
 
          Open_File_Editor (Kernel, Filename);
-         Change_Dir (Dir_Name (Filename));
+         Change_Project_Dir (Kernel, Dir_Name (Filename));
       end;
 
    exception
@@ -1413,7 +1417,11 @@ package body Src_Editor_Module is
    begin
       if Source /= null then
          declare
-            New_Name : constant String := Select_File (-"Save File As");
+            New_Name : constant String :=
+              Select_File
+                (Title             => -"Save File As",
+                 Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs));
+
          begin
             if New_Name = "" then
                return;
@@ -1592,7 +1600,8 @@ package body Src_Editor_Module is
 
       exception
          when Constraint_Error =>
-            Console.Insert (Kernel, -"Invalid line number: " & Str);
+            Console.Insert
+              (Kernel, -"Invalid line number: " & Str, Mode => Error);
       end;
 
    exception
