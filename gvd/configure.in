@@ -17,6 +17,7 @@ COLOR_SELECTION="#000000"
 EXEC_COMMAND="sh -c"
 BUILTIN_PS="stub"
 LN="ln -f -s"
+HTML_BROWSER="netscape"
 
 AC_CANONICAL_SYSTEM
 
@@ -158,6 +159,7 @@ case "${host}" in
 	EXEC_COMMAND="cmd /c"
 	BUILTIN_PS="winnt"
 	LN="cp -p"
+	HTML_BROWSER="c:\progra~1\intern~1\iexplore"
 	;;
       ## Otherwise, we'll fall through to the generic opsys code at the bottom.
     esac
@@ -191,6 +193,7 @@ AC_SUBST(TARGET)
 AC_SUBST(EXEC_COMMAND)
 AC_SUBST(BUILTIN_PS)
 AC_SUBST(LN)
+AC_SUBST(HTML_BROWSER)
 
 EXEC_PREFIX="$prefix"
 AC_SUBST(EXEC_PREFIX)
