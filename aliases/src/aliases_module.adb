@@ -1965,7 +1965,7 @@ package body Aliases_Module is
          Module_Name             => "Aliases",
          Priority                => Default_Priority);
 
-         Register_Menu
+      Register_Menu
         (Kernel, Edit, -"_Aliases",
          Ref_Item   => -"Preferences",
          Add_Before => False,
@@ -1977,7 +1977,7 @@ package body Aliases_Module is
       Command.Kernel := Kernel_Handle (Kernel);
       Register_Key
         (Get_Key_Handler (Kernel),
-         Name        => "expand alias",
+         Name        => "Expand alias",
          Default_Key => GDK_LC_o,
          Default_Mod => Control_Mask,
          Command => Command_Access (Command));
