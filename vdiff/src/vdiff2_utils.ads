@@ -44,6 +44,13 @@ package Vdiff2_Utils is
       File3  : String := "");
    --  show a result of diff Diff.
 
+   procedure Hide_Differences
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Diff   : Diff_Occurrence_Link;
+      File1  : String;
+      File2  : String;
+      File3  : String := "");
+   --  hide the hightlighting.
    type Text_Iterator;
 
    type Text_Iterator_Access is access all Text_Iterator;
