@@ -276,6 +276,7 @@ package body Language is
       end if;
 
       --  Do we have a string ?
+      --  Note that we consider that strings never span over multiple lines...
 
       if Buffer (Buffer'First) = Context.String_Delimiter then
          Entity := String_Text;
@@ -284,6 +285,7 @@ package body Language is
          loop
             Next_Char := Next_Char + 1;
             exit when Next_Char >= Buffer'Last
+              or else Buffer (Next_Char) = ASCII.LF
               or else
                 (Buffer (Next_Char) = Context.String_Delimiter
                    and then
@@ -294,6 +296,18 @@ package body Language is
 
          Next_Char := Next_Char + 1;
          return;
+      end if;
+
+      --  A protected constant character
+
+      if Buffer'Length > 4
+        and then Buffer (Buffer'First) = Context.Constant_Character
+        and then Buffer (Buffer'First + 1) = Context.Quote_Character
+        and then Buffer (Buffer'First + 3) = Context.Constant_Character
+      then
+        Entity := String_Text;
+        Next_Char := Buffer'First + 4;
+        return;
       end if;
 
       --  A constant character
@@ -327,7 +341,6 @@ package body Language is
          end if;
 
          while Next_Char <= Buffer'Last
-           and then Buffer (Next_Char) /= ' '
            and then Buffer (Next_Char) /= ASCII.LF
            and then Buffer (Next_Char) /= ASCII.HT
            and then Buffer (Next_Char) /= Context.String_Delimiter
