@@ -82,8 +82,7 @@ package body GVD.Preferences is
    -- XML_Free --
    --------------
 
-   procedure XML_Free (N : in out Node_Ptr)
-   is
+   procedure XML_Free (N : in out Node_Ptr) is
       procedure Free_Node (N : in out Node_Ptr);
       --  Free the memory for a node, but doesn't remove it from its parent
 
@@ -387,7 +386,7 @@ package body GVD.Preferences is
       Set (Tab_Size, Gint' (8));
       Set (Tooltips_In_Source, Simple);
       Set (String (Asm_Highlight_Color), "#FF0000");
-      Set (String (Assembly_Range_Size), "50");
+      Set (String (Assembly_Range_Size), "100");
       Set (String (Xref_Color), "#0000FF");
       Set (String (Title_Color), "#BEBEBE");
       Set (String (Change_Color), "#FF0000");
