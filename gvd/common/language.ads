@@ -18,6 +18,8 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Ada.Strings.Maps;  use Ada.Strings.Maps;
+
 with GNAT.Regpat;
 with Basic_Types;
 with VFS;
@@ -445,6 +447,11 @@ package Language is
 
    procedure Free (List : in out Construct_List);
    --  Free the contents of List.
+
+   function Word_Character_Set
+     (Lang : access Language_Root)
+      return Character_Set;
+   --  Returns the character set used for the language identifiers
 
    function Comment_Line
      (Lang    : access Language_Root;
