@@ -833,7 +833,18 @@ package body GVD.Process is
       --  Add a new page to the notebook
 
       Gtk_New (Label);
-      Append_Page (Window.Process_Notebook, Process.Process_Paned, Label);
+
+      if Window.TTY_Mode then
+         Ref (Process.Command_Scrolledwindow);
+         Remove (Process.Process_Paned, Process.Command_Scrolledwindow);
+         Ref (Process.Data_Editor_Paned);
+         Remove (Process.Process_Paned, Process.Data_Editor_Paned);
+         Ref (Process.Process_Paned);
+         Remove (Process.Process_Hbox, Process.Process_Paned);
+         Add (Process.Process_Hbox, Process.Data_Editor_Paned);
+      end if;
+
+      Append_Page (Window.Process_Notebook, Process.Process_Hbox, Label);
 
       --  Set the graphical parameters.
 
@@ -842,7 +853,7 @@ package body GVD.Process is
                           & "window_settings")
       then
          Geometry_Info := Get_Process_Tab_Geometry
-           (Page_Num (Window.Process_Notebook, Process.Process_Paned));
+           (Page_Num (Window.Process_Notebook, Process.Process_Hbox));
 
          Set_Position (Process.Data_Editor_Paned, Geometry_Info.Data_Height);
 
@@ -892,7 +903,7 @@ package body GVD.Process is
 
       Process_User_Data.Set
         (Process.Editor_Text, Process, Process_User_Data_Name);
-      Process_User_Data.Set (Process.Process_Paned, Process.all'Access);
+      Process_User_Data.Set (Process.Process_Hbox, Process.all'Access);
 
       --  Spawn the debugger. Note that this needs to be done after the
       --  creation of a new notebook page, since Spawn might need to access
@@ -1038,7 +1049,7 @@ package body GVD.Process is
       --  Change the title of the tab for that debugger
 
       Label := Get_Tab_Label
-        (Debugger.Window.Process_Notebook, Debugger.Process_Paned);
+        (Debugger.Window.Process_Notebook, Debugger.Process_Hbox);
       Set_Text (Gtk_Label (Label),
                 Debug (1 .. Debug'Last - 5) & " - "
                 & Base_File_Name (Executable_Name));
@@ -1344,7 +1355,7 @@ package body GVD.Process is
       Next_Page (Notebook);
 
       Close (Debugger.Debugger);
-      Remove_Page (Notebook, Page_Num (Notebook, Debugger.Process_Paned));
+      Remove_Page (Notebook, Page_Num (Notebook, Debugger.Process_Hbox));
       Destroy (Debugger);
 
       --  If the last notebook page was destroyed, disable "Open Program"
@@ -1706,7 +1717,7 @@ package body GVD.Process is
             Attach
               (Get_Source (Process.Editor_Text),
                Get_Editor_Container (Process.Editor_Text));
-            Show_All (Process.Process_Paned);
+            Show_All (Process.Process_Hbox);
          end if;
       end if;
    end Preferences_Changed;
