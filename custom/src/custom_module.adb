@@ -18,32 +18,35 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glib;                    use Glib;
-with Glib.Convert;            use Glib.Convert;
-with Glib.Xml_Int;            use Glib.Xml_Int;
-with Gtk.Menu_Item;           use Gtk.Menu_Item;
-with Gtk.Image;               use Gtk.Image;
+with Glib;                      use Glib;
+with Glib.Convert;              use Glib.Convert;
+with Glib.Xml_Int;              use Glib.Xml_Int;
+with Gtk.Enums;
+with Gtk.Menu_Item;             use Gtk.Menu_Item;
+with Gtk.Image;                 use Gtk.Image;
+with Gtk.Toolbar;               use Gtk.Toolbar;
+with Gtkada.Dialogs;            use Gtkada.Dialogs;
 
-with GNAT.OS_Lib;             use GNAT.OS_Lib;
-with Ada.Exceptions;          use Ada.Exceptions;
-with Ada.Characters.Handling; use Ada.Characters.Handling;
-with System.Assertions;       use System.Assertions;
+with GNAT.OS_Lib;               use GNAT.OS_Lib;
+with GNAT.Directory_Operations; use GNAT.Directory_Operations;
+with Ada.Exceptions;            use Ada.Exceptions;
+with Ada.Characters.Handling;   use Ada.Characters.Handling;
+with System.Assertions;         use System.Assertions;
 
-with Glide_Kernel;            use Glide_Kernel;
-with Glide_Kernel.Console;    use Glide_Kernel.Console;
-with Glide_Kernel.Modules;    use Glide_Kernel.Modules;
-with Glide_Intl;              use Glide_Intl;
+with Glide_Kernel;              use Glide_Kernel;
+with Glide_Kernel.Console;      use Glide_Kernel.Console;
+with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
+with Glide_Intl;                use Glide_Intl;
 
-with Language;                use Language;
-with Language.Custom;         use Language.Custom;
-with Language_Handlers;       use Language_Handlers;
-with Language_Handlers.Glide; use Language_Handlers.Glide;
-with Src_Info.Dummy;          use Src_Info.Dummy;
+with Language;                  use Language;
+with Language.Custom;           use Language.Custom;
+with Language_Handlers;         use Language_Handlers;
+with Language_Handlers.Glide;   use Language_Handlers.Glide;
+with Src_Info.Dummy;            use Src_Info.Dummy;
 
-with Traces;                  use Traces;
-with Commands;                use Commands;
-with Commands.Custom;         use Commands.Custom;
-with Gtk.Toolbar;             use Gtk.Toolbar;
+with Traces;                    use Traces;
+with Commands;                  use Commands;
+with Commands.Custom;           use Commands.Custom;
 
 with Ada.Unchecked_Deallocation;
 
@@ -58,17 +61,26 @@ package body Custom_Module is
    procedure Register_Module
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
    is
-      File      : constant String := Get_Home_Dir (Kernel) & "custom";
-      Node      : Node_Ptr;
-      File_Node : Node_Ptr;
-      Handler   : constant Glide_Language_Handler := Glide_Language_Handler
+      Custom_File  : constant String := Get_Home_Dir (Kernel) & "custom";
+      Local_Custom : constant String :=
+        Normalize_Pathname (Get_Home_Dir (Kernel) & "customize/");
+      Sys_Custom   : constant String :=
+        Normalize_Pathname (Get_System_Dir (Kernel) & "share/gps/customize/");
+      Handler      : constant Glide_Language_Handler := Glide_Language_Handler
         (Get_Language_Handler (Kernel));
+      Button         : Message_Dialog_Buttons;
+      pragma Unreferenced (Button);
+      Custom_Parsed : Boolean := False;
+      Success       : Boolean;
 
       procedure Add_Child
         (Parent_Path  : String;
          Current_Node : Node_Ptr);
       --  Add a menuitem or submenu to the Parent_Path, according to
       --  what Current_Node contains.
+
+      procedure Parse_Custom_Dir (Directory : String);
+      --  Parse all custom files located in Directory
 
       procedure Add_Child
         (Parent_Path  : String;
@@ -223,33 +235,81 @@ package body Custom_Module is
          Free (Current_Pixmap);
       end Add_Child;
 
+      ----------------------
+      -- Parse_Custom_Dir --
+      ----------------------
+
+      procedure Parse_Custom_Dir (Directory : String) is
+         File      : String (1 .. 1024);
+         Last      : Natural;
+         Dir       : Dir_Type;
+         Node      : Node_Ptr;
+         File_Node : Node_Ptr;
+
+      begin
+         Open (Dir, Directory);
+         loop
+            Read (Dir, File, Last);
+            exit when Last = 0;
+
+            declare
+               F : constant String := Directory & File (1 .. Last);
+            begin
+               if Is_Regular_File (F) then
+                  Trace (Me, "Loading " & F);
+                  File_Node := Parse (F).Child;
+                  Node := File_Node;
+                  Custom_Parsed := True;
+
+                  while Node /= null loop
+                     Add_Child ("", Node);
+                     Node := Node.Next;
+                  end loop;
+
+                  Free (File_Node);
+               end if;
+
+            exception
+               when Assert_Failure =>
+                  Console.Insert
+                    (Kernel, -"could not parse custom file " & F,
+                     Mode => Error);
+            end;
+         end loop;
+
+         Close (Dir);
+
+      exception
+         when Directory_Error =>
+            null;
+      end Parse_Custom_Dir;
+
    begin
-      if not Is_Regular_File (File) then
-         return;
+      if Is_Regular_File (Custom_File) then
+         Rename_File (Custom_File, Local_Custom & "custom", Success);
+
+         if Success then
+            Button := Message_Dialog
+              ((-"Moved file ") & Custom_File & ASCII.LF &
+               (-"to directory ") & Local_Custom,
+               Information, Button_OK,
+               Justification => Gtk.Enums.Justify_Left);
+         end if;
       end if;
 
-      File_Node := Parse (File).Child;
-      Node := File_Node;
+      Parse_Custom_Dir (Local_Custom);
+      Parse_Custom_Dir (Sys_Custom);
 
-      Register_Module
-        (Module                  => Custom_Module_ID,
-         Kernel                  => Kernel,
-         Module_Name             => Custom_Module_Name,
-         Priority                => Low_Priority,
-         Contextual_Menu_Handler => null);
-
-      while Node /= null loop
-         Add_Child ("", Node);
-         Node := Node.Next;
-      end loop;
-
-      Free (File_Node);
+      if Custom_Parsed then
+         Register_Module
+           (Module                  => Custom_Module_ID,
+            Kernel                  => Kernel,
+            Module_Name             => Custom_Module_Name,
+            Priority                => Low_Priority,
+            Contextual_Menu_Handler => null);
+      end if;
 
    exception
-      when Assert_Failure =>
-         Console.Insert
-           (Kernel, -"could not parse custom file", Mode => Error);
-
       when E : others =>
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end Register_Module;
