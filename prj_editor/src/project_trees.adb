@@ -284,6 +284,12 @@ package body Project_Trees is
    --  This procedure tries to keep as many things as possible in the current
    --  state (expanded nodes,...)
 
+   procedure Project_Changed
+     (Kernel : access GObject_Record'Class; Tree : GObject);
+   --  Called when the project as changed, as opposed to the project view.
+   --  This means we need to start up with a completely new tree, no need to
+   --  try to keep the current one.
+
    -------------
    -- Gtk_New --
    -------------
@@ -338,11 +344,33 @@ package body Project_Trees is
 
       --  Automatic update of the tree when the project changes
       Tree.Kernel := Kernel_Handle (Kernel);
+
       Object_User_Callback.Connect
         (Kernel, "project_view_changed",
          Object_User_Callback.To_Marshaller (Refresh'Access),
          GObject (Tree));
+      Object_User_Callback.Connect
+        (Kernel, "project_changed",
+         Object_User_Callback.To_Marshaller (Project_Changed'Access),
+         GObject (Tree));
    end Gtk_New;
+
+   ---------------------
+   -- Project_Changed --
+   ---------------------
+
+   procedure Project_Changed
+     (Kernel : access GObject_Record'Class; Tree : GObject)
+   is
+      T : Project_Tree := Project_Tree (Tree);
+   begin
+      --  Destroy all the items in the tree.
+      --  The next call to refresh via the "project_view_changed" signal will
+      --  completely restore the tree.
+      Freeze (T);
+      Remove_Node (T, null);
+      Thaw (T);
+   end Project_Changed;
 
    --------------------
    -- Add_Dummy_Node --
