@@ -51,7 +51,7 @@ package body Docgen.Work_On_Source is
       Package_Info       : Entity_Information;
       Entity_List        : in out Type_Entity_List.List;
       List_Ref_In_File   : in out List_Reference_In_File.List;
-      Tagged_Types_List : in out Type_List_Tagged_Element.List;
+      Tagged_Types_List  : in out Type_List_Tagged_Element.List;
       Private_Tagged_Types_List : in out Type_List_Tagged_Element.List;
       Process_Body_File  : Boolean;
       LI_Unit            : LI_File_Ptr;
@@ -65,9 +65,28 @@ package body Docgen.Work_On_Source is
       Parsed_List        : in out Construct_List);
    --  It's in charge of processing packages, types, variables, subprograms,
    --  exceptions, entries. It can be called recursively for inner package.
-   --  Tree_Package : scope tree of entities (it contains only declarations)
-   --  Package_Info : Entity_Information of the current package.
-   --  Level : level of the current package.
+   --  Source_File_List : list of all files that must be processed by docgen.
+   --  Source_Filename  : current file processed.
+   --  Package_Name     : name of the current package. The first time, it's
+   --  the name of the main package which is defined in the file. Then, in the
+   --  case of inner package, this subprogram is called recursively and this
+   --  field is the name of the inner package.
+   --  Package_Info     : Entity_Information of the current package.
+   --  Tree_Package     : scope tree of entities in the current package (it
+   --  contains only declarations)
+   --  File_Text        : source code of the current package.
+   --  Entity_List      : list of entities in the current file.
+   --  List_Ref_In_File : list of references in the current file.
+   --  Tagged_Types_List: list of public tagged types.
+   --  Private_Tagged_Types_List: list of private tagged types.
+   --  Options          : options set by the preferences.
+   --  Process_Body_File: indicate if bofy files must be processed.
+   --  ???  This last parameter is redondant because Options indicate it.
+   --  Converter        : used to indicate the subprogram used in order to
+   --  start making the output (currently, it's Launch_Doc_Create).
+   --  Level            : the level of the current package. By default, the
+   --  level of the package file is 1, then this level is increased by 1 at
+   --  each inner package
 
    procedure Process_One_Body_File
      (B                : Backend_Handle;
@@ -195,10 +214,10 @@ package body Docgen.Work_On_Source is
       Tree_Package              : Scope_Tree;
       Process_Body_File         : Boolean);
    --  Will process renamed and instantiated packages and pass
-   --  them to the output subprogram
-   --  Private_Entity indicates if it must process private or public entites
-   --  Display_Private is used to indicate if it's necessary to print the
-   --  "Private" header
+   --  them to the output subprogram.
+   --  Display_Private : indicate if we print the "Private" header.
+   --  Private_Entity  : indicate if it must process private/public entities
+   --  contained in Entity_List.
 
    procedure Process_Package_Open
      (B                 : Backend_Handle;
@@ -247,9 +266,9 @@ package body Docgen.Work_On_Source is
       Tree_Package     : Scope_Tree);
    --  Called by Process_Source to work on the constants
    --  and named numbers and pass each of them to the output subprogram
-   --  Private_Entity indicates if it must process private or public entites
-   --  Display_Private is used to indicate if it's necessary to print the
-   --  "Private" header
+   --  Display_Private : indicate if we print the "Private" header.
+   --  Private_Entity  : indicate if it must process private/public entities
+   --  contained in Entity_List.
 
    procedure Process_Exceptions
      (B                : Backend_Handle;
@@ -274,9 +293,9 @@ package body Docgen.Work_On_Source is
       Tree_Package     : Scope_Tree);
    --  Called by Process_Source to work on the exceptions and
    --  pass each of them to the output subprogram
-   --  Private_Entity indicates if it must process private or public entites
-   --  Display_Private is used to indicate if it's necessary to print the
-   --  "Private" header
+   --  Display_Private : indicate if we print the "Private" header.
+   --  Private_Entity  : indicate if it must process private/public entities
+   --  contained in Entity_List.
 
    procedure Process_Entries
      (B                 : Backend_Handle;
@@ -302,9 +321,9 @@ package body Docgen.Work_On_Source is
       Tree_Package      : Scope_Tree);
    --  Called by Process_Source to work on the entires and entry
    --  families and pass each of them to the output subprogram
-   --  Private_Entity indicates if it must process private or public entites
-   --  Display_Private is used to indicate if it's necessary to print the
-   --  "Private" header.
+   --  Display_Private : indicate if we print the "Private" header.
+   --  Private_Entity  : indicate if it must process private/public entities
+   --  contained in Entity_List.
 
    procedure Process_References
      (B                 : Backend_Handle;
@@ -389,9 +408,9 @@ package body Docgen.Work_On_Source is
       Tree_Package              : Scope_Tree);
    --  Called by Process_Source to work on the types and
    --  pass each of them to the output subprogram
-   --  Private_Entity indicates if it must process private or public entites
-   --  Display_Private is used to indicate if it's necessary to print the
-   --  "Private" header
+   --  Display_Private : indicate if we print the "Private" header.
+   --  Private_Entity  : indicate if it must process private/public entities
+   --  contained in Entity_List.
 
    procedure Process_Header
      (B                 : Backend_Handle;
@@ -2052,7 +2071,14 @@ package body Docgen.Work_On_Source is
          Header_File      => Package_File,
          Header_Line      => Declar_Line,
          Header_Link      => Process_Body_File);
+      --           Header_Link      =>
+      --           (Process_Body_File and
+      --           (Other_File_Name (Kernel, Source_Filename) /= No_File));
+      --  If a file x.ads (resp. x.adb) has no file x. adb (resp. x.ads),
+      --  no link is made
 
+      --  ??? currently, there's a bug with Other_File_Name. When it will be
+      --  fixed, those commented lines will avoid making a link.
    begin
       if not TEL.Is_Empty (Entity_List) then
          Entity_Node := TEL.First (Entity_List);
@@ -2253,6 +2279,7 @@ package body Docgen.Work_On_Source is
       Data_Subtitle      : Doc_Info (Info_Type => Subtitle_Info);
       Data_With          : Doc_Info (Info_Type => With_Info);
       Old_Line, New_Line : GNAT.OS_Lib.String_Access;
+      Final              : GNAT.OS_Lib.String_Access;
       Parse_Node         : Construct_Access;
       Parsed_List_End    : Boolean;
       First_With_Line    : Natural;
@@ -2303,6 +2330,12 @@ package body Docgen.Work_On_Source is
             Data_Subtitle, Doc_Directory, Doc_Suffix,
             Level);
 
+         Final := new String'(New_Line.all
+                                (New_Line.all'First + 1 ..
+                                   New_Line.all'Last));
+         --  the "+1" avoids the first ASCII.LF in New_Line
+         Free (New_Line);
+
          Data_With := Doc_Info'
            (With_Info,
             Doc_Info_Options => Options,
@@ -2310,7 +2343,7 @@ package body Docgen.Work_On_Source is
             Doc_File_List    => Source_File_List,
             With_Header_Line => First_With_Line,
             With_File        => Source_Filename,
-            With_Header      => New_Line);
+            With_Header      => Final);
          Converter (B, Kernel, Doc_File,
                     List_Ref_In_File,
                     Data_With, Doc_Directory, Doc_Suffix,
@@ -2320,7 +2353,7 @@ package body Docgen.Work_On_Source is
          Free (Data_Subtitle.Subtitle_Package);
       end if;
 
-      Free (New_Line);
+      Free (Final);
    end Process_With_Clause;
 
    -----------------------------
