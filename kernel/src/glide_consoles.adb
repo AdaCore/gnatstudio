@@ -40,7 +40,7 @@ package body Glide_Consoles is
    Me : Debug_Handle := Create ("Glide_Console");
 
    File_Pattern : constant Pattern_Matcher :=
-     Compile ("^([^:]+):(\d+):(\d+)?");
+     Compile ("^([^:]+):(\d+):(\d+)?", Multiple_Lines);
 
    function On_Button_Release
      (Widget : access Gtk_Widget_Record'Class) return Boolean;
