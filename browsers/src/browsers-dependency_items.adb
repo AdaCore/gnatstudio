@@ -21,12 +21,16 @@
 with Gdk.Drawable;         use Gdk.Drawable;
 with Gdk.Event;            use Gdk.Event;
 with Gdk.Font;             use Gdk.Font;
+with Gdk.Pixbuf;           use Gdk.Pixbuf;
 with Gdk.Window;           use Gdk.Window;
 with Glib.Object;          use Glib.Object;
 with Glib;                 use Glib;
 with Gtk.Check_Menu_Item;  use Gtk.Check_Menu_Item;
+with Gtk.Enums;            use Gtk.Enums;
+with Gtk.Main;             use Gtk.Main;
 with Gtk.Menu;             use Gtk.Menu;
 with Gtk.Menu_Item;        use Gtk.Menu_Item;
+with Gtk.Stock;            use Gtk.Stock;
 with Gtk.Widget;           use Gtk.Widget;
 with Gtkada.Canvas;        use Gtkada.Canvas;
 with Gtkada.File_Selector; use Gtkada.File_Selector;
@@ -45,9 +49,7 @@ with Src_Info.Queries;          use Src_Info.Queries;
 with Src_Info;                  use Src_Info;
 with Traces;                    use Traces;
 with Prj_API;                   use Prj_API;
-with Basic_Types;               use Basic_Types;
 with Prj;                       use Prj;
-with Prj.Tree;                  use Prj.Tree;
 with Types;                     use Types;
 with Fname;                     use Fname;
 with Namet;                     use Namet;
@@ -64,12 +66,24 @@ package body Browsers.Dependency_Items is
 
    Me : Debug_Handle := Create ("Browsers.Dependency");
 
+   type Examine_Dependencies_Idle_Data is record
+      Iter    : Dependency_Iterator_Access;
+      Browser : Dependency_Browser;
+      Item    : File_Item;
+   end record;
+   package Dependency_Idle is new Gtk.Main.Idle
+     (Examine_Dependencies_Idle_Data);
+
    procedure Examine_Dependencies
      (Kernel     : access Glide_Kernel.Kernel_Handle_Record'Class;
-      In_Browser : access Dependency_Browser_Record'Class;
       File       : String);
    --  Examine the dependencies for File in In_Browser.
    --  The browser is not cleared first.
+
+   procedure Examine_From_Dependencies
+     (Kernel     : access Glide_Kernel.Kernel_Handle_Record'Class;
+      File       : String);
+   --  Display the list of files that depend directly on File.
 
    procedure Open_File
      (Browser : access Glib.Object.GObject_Record'Class;
@@ -82,10 +96,7 @@ package body Browsers.Dependency_Items is
    --  Return the child that shows Filename in the browser, or null if Filename
    --  is not already displayed in the canvas.
 
-   function Filter
-     (Part   : Unit_Part;
-      Dep : Dependency)
-      return Boolean;
+   function Filter (Dep : Dependency) return Boolean;
    --  A filter function that decides whether Dep should be displayed in the
    --  canvas. It should return false if Dep should not be displayed.
    --
@@ -113,6 +124,11 @@ package body Browsers.Dependency_Items is
       Context : Selection_Context_Access);
    --  Examine the dependencies of a specific file
 
+   procedure Edit_Ancestor_Dependencies_From_Contextual
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context_Access);
+   --  Edit the ancestor dependencies for a specific file.
+
    procedure Browser_Contextual_Menu
      (Object  : access Glib.Object.GObject_Record'Class;
       Context : access Selection_Context'Class;
@@ -136,6 +152,13 @@ package body Browsers.Dependency_Items is
    --  Browser_Type.
    --  If there is already a browser in Glide2 that handles all the types
    --  Browser_Type, we re-use this one instead.
+
+   procedure Destroy_Idle (Data : in out Examine_Dependencies_Idle_Data);
+   --  Called when the idle loop is destroyed.
+
+   function Examine_Ancestors_Idle
+     (Data : Examine_Dependencies_Idle_Data) return Boolean;
+   --  Idle loop for Examine_From_Dependencies
 
    function Project_Of
      (Kernel : access Kernel_Handle_Record'Class;
@@ -220,6 +243,10 @@ package body Browsers.Dependency_Items is
          Object          => Browser,
          ID              => Dependency_Browser_Module_ID,
          Context_Func    => Browser_Context_Factory'Access);
+      Browser.Left_Arrow := Render_Icon
+        (Browser, Stock_Go_Back, Icon_Size_Menu);
+      Browser.Right_Arrow := Render_Icon
+        (Browser, Stock_Go_Forward, Icon_Size_Menu);
       Set_Size_Request
         (Browser,
          Get_Pref (Kernel, Default_Widget_Width),
@@ -256,9 +283,10 @@ package body Browsers.Dependency_Items is
 
    procedure Examine_Dependencies
      (Kernel       : access Kernel_Handle_Record'Class;
-      In_Browser   : access Dependency_Browser_Record'Class;
       File         : String)
    is
+      Browser       : Dependency_Browser;
+      Child_Browser : MDI_Child;
       F             : constant String := Base_Name (File);
       Item, Initial : File_Item;
       Link          : Dependency_Link;
@@ -268,10 +296,14 @@ package body Browsers.Dependency_Items is
       Intern        : Internal_File;
       New_Item      : Boolean;
       Must_Add_Link : Boolean;
-      Part : Unit_Part;
 
    begin
       Push_State (Kernel_Handle (Kernel), Busy);
+
+      --  Create the browser if it doesn't exist
+      Child_Browser := Open_Dependency_Browser (Kernel);
+      Browser := Dependency_Browser (Get_Widget (Child_Browser));
+
       Lib_Info := Locate_From_Source_And_Complete (Kernel, F);
 
       if Lib_Info = No_LI_File then
@@ -284,74 +316,213 @@ package body Browsers.Dependency_Items is
       end if;
 
       --  For efficiency, do not recompute the layout for each item
-      Set_Auto_Layout (Get_Canvas (In_Browser), False);
+      Set_Auto_Layout (Get_Canvas (Browser), False);
 
-      Initial := File_Item (Find_File (In_Browser, F));
+      Initial := File_Item (Find_File (Browser, F));
       if Initial = null then
-         Gtk_New (Initial, Get_Window (In_Browser), In_Browser, Kernel,  F);
-         Put (Get_Canvas (In_Browser), Initial);
-
-         --  ??? Should check if the item was already expanded, so as to avoid
-         --  useless work.
+         Gtk_New (Initial, Get_Window (Browser), Browser, Kernel,  F);
+         Put (Get_Canvas (Browser), Initial);
       end if;
 
-      Find_Dependencies (Lib_Info, List, Status);
+      if not Initial.To_Parsed then
+         Initial.To_Parsed := True;
+         Refresh (Browser, Initial);
 
-      Part := Get_Unit_Part (Get_Source_Info_List (Kernel), F);
+         Find_Dependencies (Lib_Info, F, List, Status);
 
-      if Status = Success then
-         Dep := List;
+         if Status = Success then
+            Dep := List;
 
-         while Dep /= null loop
-            if Filter (Part, Dep.Value) then
-               Intern := File_Information (Dep.Value);
-               Item := File_Item
-                 (Find_File (In_Browser, Get_Source_Filename (Intern)));
-               New_Item := Item = null;
-               Must_Add_Link := True;
+            while Dep /= null loop
+               if Filter (Dep.Value) then
+                  Intern := File_Information (Dep.Value);
+                  Item := File_Item
+                    (Find_File (Browser, Get_Source_Filename (Intern)));
+                  New_Item := Item = null;
+                  Must_Add_Link := True;
 
-               if New_Item then
-                  Gtk_New (Item, Get_Window (In_Browser), In_Browser, Intern);
+                  if New_Item then
+                     Gtk_New
+                       (Item, Get_Window (Browser), Browser, Intern);
 
-               else
-                  --  If the item already existed, chances are that the link
-                  --  also existed. Don't duplicate it in that case.
-                  Must_Add_Link := not Has_Link
-                    (Get_Canvas (In_Browser), Initial, Item);
+                  else
+                     --  If the item already existed, chances are that the link
+                     --  also existed. Don't duplicate it in that case.
+                     Must_Add_Link := not Has_Link
+                       (Get_Canvas (Browser), Initial, Item);
+                  end if;
+
+                  if Must_Add_Link then
+                     Gtk_New (Link, Dependency_Information (Dep.Value));
+                     Add_Link (Get_Canvas (Browser),
+                               Link => Link,
+                               Src  => Initial,
+                               Dest => Item);
+                  end if;
+
+                  if New_Item then
+                     Put (Get_Canvas (Browser), Item);
+                  end if;
                end if;
 
-               if Must_Add_Link then
-                  Gtk_New (Link, Dependency_Information (Dep.Value));
-                  Add_Link (Get_Canvas (In_Browser),
-                            Link => Link,
-                            Src  => Initial,
-                            Dest => Item);
-               end if;
+               Dep := Dep.Next;
+            end loop;
 
-               if New_Item then
-                  Put (Get_Canvas (In_Browser), Item);
-               end if;
-            end if;
+            --  Center the initial item
+            Show_Item (Get_Canvas (Browser), Item);
 
-            Dep := Dep.Next;
-         end loop;
-
-         Destroy (List);
-         Set_Auto_Layout (Get_Canvas (In_Browser), True);
-         Layout (Get_Canvas (In_Browser),
-                 Force => False,
-                 Vertical_Layout =>
-                   Get_Pref (Kernel, Browsers_Vertical_Layout));
-         Refresh_Canvas (Get_Canvas (In_Browser));
+            Destroy (List);
+            Set_Auto_Layout (Get_Canvas (Browser), True);
+            Layout (Get_Canvas (Browser),
+                    Force => False,
+                    Vertical_Layout =>
+                      Get_Pref (Kernel, Browsers_Vertical_Layout));
+            Refresh_Canvas (Get_Canvas (Browser));
+         end if;
       end if;
 
       Pop_State (Kernel_Handle (Kernel));
 
    exception
-      when others =>
+      when Unsupported_Language =>
          Pop_State (Kernel_Handle (Kernel));
-         raise;
+         Insert (Kernel, "Query unsupported for this language",
+                 Mode => Glide_Kernel.Console.Error);
+
+      when E : others =>
+         Pop_State (Kernel_Handle (Kernel));
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end Examine_Dependencies;
+
+   ------------------
+   -- Destroy_Idle --
+   ------------------
+
+   procedure Destroy_Idle (Data : in out Examine_Dependencies_Idle_Data) is
+   begin
+      Set_Auto_Layout (Get_Canvas (Data.Browser), True);
+      Layout (Get_Canvas (Data.Browser),
+              Force => False,
+              Vertical_Layout =>
+                Get_Pref (Get_Kernel (Data.Browser),
+                          Browsers_Vertical_Layout));
+      Refresh_Canvas (Get_Canvas (Data.Browser));
+
+      --  Center the initial item
+      Show_Item (Get_Canvas (Data.Browser), Data.Item);
+
+      Data.Browser.Idle_Id := 0;
+      Destroy (Data.Iter);
+      Pop_State (Get_Kernel (Data.Browser));
+   end Destroy_Idle;
+
+   ----------------------------
+   -- Examine_Ancestors_Idle --
+   ----------------------------
+
+   function Examine_Ancestors_Idle
+     (Data : Examine_Dependencies_Idle_Data) return Boolean
+   is
+      Child : File_Item;
+      Link  : Glide_Browser_Link;
+      Dep   : Dependency;
+   begin
+      if Get (Data.Iter.all) = No_LI_File then
+         return False;
+      else
+         Dep := Get (Data.Iter.all);
+         if Filter (Dep) then
+            declare
+               File : constant String :=
+                 Get_Source_Filename (File_Information (Dep));
+            begin
+               Child := File_Item (Find_File (Data.Browser, File));
+               if Child = null then
+                  Gtk_New (Child, Get_Window (Data.Browser), Data.Browser,
+                           Get_Kernel (Data.Browser), File);
+                  Put (Get_Canvas (Data.Browser), Child);
+               end if;
+
+               if not Has_Link
+                 (Get_Canvas (Data.Browser), Child, Data.Item)
+               then
+                  Link := new Glide_Browser_Link_Record;
+                  Add_Link
+                    (Get_Canvas (Data.Browser), Link => Link,
+                     Src => Child, Dest => Data.Item);
+               end if;
+            end;
+         end if;
+
+         Destroy (Dep);
+         Next (Get_Kernel (Data.Browser), Data.Iter.all);
+         return True;
+      end if;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         return False;
+   end Examine_Ancestors_Idle;
+
+   -------------------------------
+   -- Examine_From_Dependencies --
+   -------------------------------
+
+   procedure Examine_From_Dependencies
+     (Kernel     : access Glide_Kernel.Kernel_Handle_Record'Class;
+      File       : String)
+   is
+      Data : Examine_Dependencies_Idle_Data;
+      Browser       : Dependency_Browser;
+      Child_Browser : MDI_Child;
+      Item : File_Item;
+
+   begin
+      Push_State (Kernel_Handle (Kernel), Busy);
+
+      --  Create the browser if it doesn't exist
+      Child_Browser := Open_Dependency_Browser (Kernel);
+      Browser := Dependency_Browser (Get_Widget (Child_Browser));
+
+      --  Look for an existing item corresponding to entity
+      Item := File_Item (Find_File (Browser, File));
+      if Item = null then
+         Gtk_New (Item, Get_Window (Browser), Browser,  Kernel, File);
+         Put (Get_Canvas (Browser), Item);
+      end if;
+
+      Item.From_Parsed := True;
+      Refresh (Browser, Item);
+
+      --  For efficiency, do not recompute the layout for each item.
+      Set_Auto_Layout (Get_Canvas (Browser), False);
+
+      Data := (Iter    => new Dependency_Iterator,
+               Browser => Dependency_Browser (Browser),
+               Item    => Item);
+      Find_Ancestor_Dependencies (Kernel, File, Data.Iter.all);
+
+      Browser.Idle_Id := Dependency_Idle.Add
+        (Cb       => Examine_Ancestors_Idle'Access,
+         D        => Data,
+         Priority => Priority_Low_Idle,
+         Destroy  => Destroy_Idle'Access);
+
+      --  All memory is freed at the end of Examine_From_Dependencies_Idle
+
+   exception
+      when Unsupported_Language =>
+         Pop_State (Kernel_Handle (Kernel));
+         Insert (Kernel, "Query unsupported for this language",
+                 Mode => Glide_Kernel.Console.Error);
+         Destroy (Data.Iter);
+
+      when E : others =>
+         Pop_State (Kernel_Handle (Kernel));
+         Destroy (Data.Iter);
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+   end Examine_From_Dependencies;
 
    --------------------
    -- Is_System_File --
@@ -370,10 +541,7 @@ package body Browsers.Dependency_Items is
    -- Filter --
    ------------
 
-   function Filter
-     (Part   : Unit_Part;
-      Dep    : Dependency) return Boolean
-   is
+   function Filter (Dep : Dependency) return Boolean  is
       Explicit_Dependency : Boolean;
       Info                : constant Dependency_Info :=
         Dependency_Information (Dep);
@@ -383,9 +551,8 @@ package body Browsers.Dependency_Items is
 
       --  Only show explicit dependencies, not implicit ones
 
-      Explicit_Dependency :=
-        (Part = Unit_Spec and then Get_Depends_From_Spec (Info))
-         or else (Part = Unit_Body and then Get_Depends_From_Body (Info));
+      Explicit_Dependency := Get_Depends_From_Spec (Info)
+        or else Get_Depends_From_Body (Info);
 
       --  Do not display dependencies on runtime files
 
@@ -461,24 +628,38 @@ package body Browsers.Dependency_Items is
       Context : Selection_Context_Access)
    is
       pragma Unreferenced (Widget);
-      Browser : MDI_Child;
    begin
-      Browser := Open_Dependency_Browser (Get_Kernel (Context));
       Examine_Dependencies
         (Get_Kernel (Context),
-         Dependency_Browser (Get_Widget (Browser)),
          File_Information (File_Selection_Context_Access (Context)));
 
    exception
-      when E : Unsupported_Language =>
-         Insert (Get_Kernel (Context), Exception_Message (E),
-                 Mode => Glide_Kernel.Console.Error);
-
       when E : others =>
          Trace (Me,
                 "Unexpected exception in Edit_Dependencies_From_Contextual "
                 & Exception_Information (E));
    end Edit_Dependencies_From_Contextual;
+
+   ------------------------------------------------
+   -- Edit_Ancestor_Dependencies_From_Contextual --
+   ------------------------------------------------
+
+   procedure Edit_Ancestor_Dependencies_From_Contextual
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context_Access)
+   is
+      pragma Unreferenced (Widget);
+   begin
+      Examine_From_Dependencies
+        (Get_Kernel (Context),
+         File_Information (File_Selection_Context_Access (Context)));
+
+   exception
+      when E : others =>
+         Trace (Me,
+                "Unexpected exception in Edit_Dependencies_From_Contextual "
+                & Exception_Information (E));
+   end Edit_Ancestor_Dependencies_From_Contextual;
 
    -----------------------
    -- Initialize_Module --
@@ -501,12 +682,12 @@ package body Browsers.Dependency_Items is
      (Browser  : access GObject_Record'Class;
       Context : Selection_Context_Access)
    is
+      pragma Unreferenced (Browser);
       File : constant String := Select_File (Base_Directory => "");
       --  ??? Should set up filters to only open file from the current project.
    begin
       if File /= "" then
-         Examine_Dependencies
-           (Get_Kernel (Context), Dependency_Browser (Browser), File);
+         Examine_Dependencies (Get_Kernel (Context), File);
       end if;
    end Open_File;
 
@@ -535,6 +716,15 @@ package body Browsers.Dependency_Items is
               (Item, "activate",
                Context_Callback.To_Marshaller
                (Edit_Dependencies_From_Contextual'Access),
+               Selection_Context_Access (Context));
+
+            Gtk_New (Item, Label => (-"Examining files depending on ") &
+                     File_Information (File_Context));
+            Append (Menu, Item);
+            Context_Callback.Connect
+              (Item, "activate",
+               Context_Callback.To_Marshaller
+               (Edit_Ancestor_Dependencies_From_Contextual'Access),
                Selection_Context_Access (Context));
          end if;
       end if;
@@ -601,6 +791,7 @@ package body Browsers.Dependency_Items is
       File  : Internal_File)
    is
       use type Gdk_Window;
+      B             : Dependency_Browser := Dependency_Browser (Browser);
       Str           : constant String := Get_Source_Filename (File);
       Font          : Gdk_Font;
       Width, Height : Gint;
@@ -612,8 +803,11 @@ package body Browsers.Dependency_Items is
 
       Font := Get_Text_Font (Item.Browser);
 
-      Width  := String_Width (Font, Str) + 4 * Margin;
-      Height := (Get_Ascent (Font) + Get_Descent (Font)) + 2 * Margin;
+      Width  := String_Width (Font, Str) + 4 * Margin
+        + Get_Width (B.Left_Arrow) + Get_Width (B.Right_Arrow);
+      Height := (Get_Ascent (Font) + Get_Descent (Font));
+      Height := Gint'Max (Height, Get_Height (B.Left_Arrow));
+      Height := Height + 2 * Margin;
 
       Set_Screen_Size_And_Pixmap
         (Item, Get_Window (Item.Browser), Width, Height);
@@ -629,6 +823,7 @@ package body Browsers.Dependency_Items is
                       Item    : access File_Item_Record)
    is
       use type Gdk.Gdk_GC;
+      B : Dependency_Browser := Dependency_Browser (Browser);
       Font : Gdk_Font := Get_Text_Font (Browser);
    begin
       Draw_Item_Background (Browser, Item);
@@ -636,9 +831,38 @@ package body Browsers.Dependency_Items is
         (Pixmap (Item),
          Font  => Font,
          GC    => Get_Text_GC (Browser),
-         X     => Margin,
+         X     => Margin + Get_Width (B.Left_Arrow),
          Y     => Margin + Get_Ascent (Font),
          Text  => Get_Source_Filename (Item.Source));
+
+      if not Item.From_Parsed then
+         Render_To_Drawable_Alpha
+           (Pixbuf          => B.Left_Arrow,
+            Drawable        => Pixmap (Item),
+            Src_X           => 0,
+            Src_Y           => 0,
+            Dest_X          => Margin,
+            Dest_Y          => Margin,
+            Width           => -1,
+            Height          => -1,
+            Alpha           => Alpha_Full,
+            Alpha_Threshold => 128);
+      end if;
+
+      if not Item.To_Parsed then
+         Render_To_Drawable_Alpha
+           (Pixbuf          => B.Right_Arrow,
+            Drawable        => Pixmap (Item),
+            Src_X           => 0,
+            Src_Y           => 0,
+            Dest_X          => Gint (Get_Coord (Item).Width)
+              - Margin - Get_Width (B.Right_Arrow),
+            Dest_Y          => Margin,
+            Width           => -1,
+            Height          => -1,
+            Alpha           => Alpha_Full,
+            Alpha_Threshold => 128);
+      end if;
    end Refresh;
 
    ---------------------
@@ -652,12 +876,14 @@ package body Browsers.Dependency_Items is
       if Get_Button (Event) = 1
         and then Get_Event_Type (Event) = Gdk_2button_Press
       then
-         Examine_Dependencies
-           (Get_Kernel (Item.Browser), Dependency_Browser (Item.Browser),
-            Get_Source_Filename (Item.Source));
-
-         --  Make sure that the item we clicked on is still visible
-         Show_Item (Get_Canvas (Item.Browser), Item);
+         --  Should we display the ancestors ?
+         if Gint (Get_X (Event)) < Get_Coord (Item).Width / 2 then
+            Examine_From_Dependencies
+              (Get_Kernel (Item.Browser), Get_Source_Filename (Item.Source));
+         else
+            Examine_Dependencies
+              (Get_Kernel (Item.Browser), Get_Source_Filename (Item.Source));
+         end if;
 
       elsif Get_Event_Type (Event) = Button_Press then
          Select_Item (Item.Browser, Item, True);
@@ -701,36 +927,21 @@ package body Browsers.Dependency_Items is
 
    function Project_Of
      (Kernel : access Kernel_Handle_Record'Class;
-      Item : access File_Item_Record'Class) return Project_Id is
+      Item : access File_Item_Record'Class) return Project_Id
+   is
+      File_Name : constant String := Get_Source_Filename (Get_Source (Item));
    begin
       if Item.Project_Name = No_Name then
          declare
-            Iter : Imported_Project_Iterator := Start
-              (Get_Project (Kernel), True);
+            P : Project_Id := Get_Project_From_File
+              (Get_Project_View (Kernel), File_Name);
+            P_Name : constant String := Project_Name (P);
          begin
-            Project_Loop :
-            while Current (Iter) /= Empty_Node loop
-               declare
-                  Sources : String_Array_Access := Get_Source_Files
-                    (Current (Iter), False);
-               begin
-                  for S in Sources'Range loop
-                     if Base_Name (Sources (S).all) =
-                       Get_Source_Filename (Get_Source (Item))
-                     then
-                        Item.Project_Name := Name_Of (Current (Iter));
-                        exit Project_Loop;
-                     end if;
-                  end loop;
-
-                  Free (Sources);
-               end;
-
-               Next (Iter);
-            end loop Project_Loop;
+            Name_Len := P_Name'Length;
+            Name_Buffer (1 .. Name_Len) := P_Name;
+            Item.Project_Name := Name_Find;
          end;
       end if;
-
       return Get_Project_View_From_Name (Item.Project_Name);
    end Project_Of;
 

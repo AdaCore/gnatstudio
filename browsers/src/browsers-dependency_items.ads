@@ -19,7 +19,9 @@
 -----------------------------------------------------------------------
 
 with Gdk.Event;
+with Gdk.Pixbuf;
 with Gdk.Window;
+with Gtk.Main;
 with Gtk.Menu;
 
 with Src_Info;
@@ -30,7 +32,7 @@ with Types;
 package Browsers.Dependency_Items is
 
    type Dependency_Browser_Record is new Browsers.Canvas.Glide_Browser_Record
-     with null record;
+     with private;
    type Dependency_Browser is access all Dependency_Browser_Record'Class;
 
    procedure Register_Module
@@ -116,12 +118,23 @@ private
       Browser : Browsers.Canvas.Glide_Browser := null;
       --  Pointer to the parent browser. Note that this is initialized lazily
       --  the first time we need to access this browser.
+
+      From_Parsed, To_Parsed : Boolean := False;
+      --  These two booleans are set to True when the parents of the item have
+      --  been fully parsed (ie all the subprograms that call Entity), or when
+      --  all the children have been parsed.
    end record;
 
    type Dependency_Link_Record is new Browsers.Canvas.Glide_Browser_Link_Record
    with record
       Dep : Src_Info.Dependency_Info;
    end record;
+
+   type Dependency_Browser_Record is new Browsers.Canvas.Glide_Browser_Record
+     with record
+        Idle_Id                 : Gtk.Main.Idle_Handler_Id;
+        Left_Arrow, Right_Arrow : Gdk.Pixbuf.Gdk_Pixbuf;
+     end record;
 
    pragma Inline (Get_Source);
 end Browsers.Dependency_Items;
