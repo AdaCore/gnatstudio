@@ -1056,7 +1056,7 @@ package body Glide_Menu is
          Gtk_New (-"/_Project/Edit...", "",
                   Stock_Properties, On_Edit_Project'Access),
          Gtk_New (-"/_Project/sep1", Item_Type => Separator),
-         Gtk_New (-"/_Project/Make API-Doc", "", null),
+         Gtk_New (-"/_Project/Generate API doc", "", Stock_Execute, null),
          Gtk_New (-"/_Project/sep2", Item_Type => Separator),
          Gtk_New (-"/_Project/Task Manager", "", null),
 
