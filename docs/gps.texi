@@ -1078,7 +1078,7 @@ then possible to generate as much relevant information as possible for a
 complete set of non compilable sources.
 
 There are a few special cases where GPS can not find the external file
-(called @file{ALI file}) that contains the cross-references
+(called @file{ALI file}) that contains the cross-reference
 information. Most likely, this is either because you haven't compiled
 your sources yet, or because the source code has changed since the
 @file{ALI file} was generated.
@@ -1087,7 +1087,7 @@ It could also be that you haven't included in the project the object
 directories that contain the @file{ALI files}.
 
 In addition, one special case can not be handled automatically. This
-is for separate units, whose file name have been krunched through the
+is for separate units, whose file names have been krunched through the
 @file{gnatkr} command. To handle this, you should force GPS to parse
 all the @file{ALI files} in the appropriate object directory. This is
 done by right-clicking on the object directory in the explorer
@@ -1116,8 +1116,8 @@ In addition, the C/C++ parser has the following limitations: namespaces
 are currently ignored (no specific processing is done for namespaces);
 no attempt is made to process the macros and other preprocessor defines.
 Macros are considered as special entities, so it is possible to navigate
-from a macro use to its definition, but the contents of the macro itself
-is ignored, which means for example that function calls made through macros
+from a macro use to its definition, but the macro content is ignored,
+which means for example that function calls made through macros
 won't be detected.
 
 @end table
@@ -1181,7 +1181,7 @@ On this screenshot, you can see three entry fields:
 @table @b
 @item @code{"Search for"}
 This is the location where you type the string or pattern you are
-looking for. The search widget supports two mode, either fixed strings
+looking for. The search widget supports two modes, either fixed strings
 or regular expressions. You can commute between the two modes by
 either clicking on the @code{Options} button and selecting the
 appropriate check box, or by opening the combo box (click on the arrow
@@ -1260,7 +1260,7 @@ substrings. "sensitive" will no longer match "insensitive".
 
 @item @code{"Regular Expression"}
 This button commutes between fixed string patterns and regular
-expressions. As mentioned above, you can also commute these two modes
+expressions. As mentioned above, you can also commute between these two modes
 by selecting the arrow on the right of the @code{Search for:} field.
 
 @end table
@@ -1311,7 +1311,7 @@ to integrate existing build scripts and makefiles. In the following section,
 we will call such projects that integrate with existing build procedures a
 @i{foreign project}.
 
-You first need to provide your own Makefile.@i{project} file, that will
+You first need to provide your own @code{Makefile.<project>} file, that will
 provide stubs to the real build commands.
 
 Then to tell GPS that it should not generate automatically the makefile
@@ -1521,12 +1521,12 @@ Here is an example for such a file:
 </Custom>
 @end smallexample
 
-The example above creates a two toplevel menus, named @file{custom menu}
+The example above creates two toplevel menus, named @file{custom menu}
 and @file{custom menu number 2}. The first one contains a menu item named
 @file{item 1}, which is associated to the shell command @file{shell command
 1}, and a submenu named @file{other menu}, and so on.
 
-As well as shell commands, you can use custom menu item to invoke GPS
+As well as shell commands, you can use custom menu items to invoke GPS
 shell commands. The following example shows how to create menus to
 invoke the @file{help} interactive command and to open the file
 @file{main.c}.
@@ -1821,7 +1821,7 @@ Each file in the @code{sessions} directory represents a particular session
 saved by the user.
 
    @item $HOME/.gps/traces.cfg
-Default configuration for the system traces. This traces are used to analyse
+Default configuration for the system traces. These traces are used to analyse
 problems with GPS. By default, they are sent to the file @file{$HOME/.gps/log}.
 
    @item @i{prefix}
@@ -1908,7 +1908,7 @@ Q: I have installed GPS originally as super user, and ran GPS successfully,
 but normal users can't.
 
 A: You should check the permissions of the directory $HOME/.gps and its
-subdirectories, they should be owned by the user itself.
+subdirectories, they should be owned by the user.
 
 @item GPS crashes whenever I open a source editor
 This is usually due to font problems. Typically, editing the file
