@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2002                       --
+--                     Copyright (C) 2001-2003                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -342,9 +342,9 @@ procedure GPS is
       Rc                : constant String :=
         String_Utils.Name_As_Directory (Dir.all) & "gtkrc";
       Log               : constant String :=
-        String_Utils.Name_As_Directory (GPS.Home_Dir.all) & "debugger.log";
+        Get_Home_Dir (GPS.Kernel) & "debugger.log";
       Key               : constant String :=
-        String_Utils.Name_As_Directory (Dir.all) & "custom_key";
+        Get_Home_Dir (GPS.Kernel) & "custom_key";
       Auto_Load_Project : Boolean := True;
       Screen            : Welcome_Screen;
       pragma Unreferenced (Data);
@@ -733,7 +733,7 @@ begin
          Button := Message_Dialog
            ((-"Unexpected fatal error, GPS is in an inconsistent state") &
             ASCII.LF & (-"Please report with contents of ") &
-            Format_Pathname (GPS.Home_Dir.all & "/log") & ASCII.LF & ASCII.LF &
+            Get_Home_Dir (GPS.Kernel) & "log" & ASCII.LF & ASCII.LF &
             (-"You will be asked to save modified files before GPS exits"),
             Error, Button_OK,
             Title => -"Fatal Error",
@@ -760,7 +760,7 @@ begin
 
    GPS.Animation_Image := null;
    Destroy (GPS);
-   Destroy (Kernel, Dir.all);
+   Destroy (Kernel);
    Projects.Registry.Finalize;
    Traces.Finalize;
 
