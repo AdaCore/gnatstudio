@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --               GtkAda - Ada95 binding for Gtk+/Gnome               --
 --                                                                   --
---                Copyright (C) 2001-2002 ACT-Europe                 --
+--                Copyright (C) 2001-2003 ACT-Europe                 --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -62,8 +62,8 @@
 
 with Gdk.Color;           use Gdk.Color;
 with Gdk.Pixbuf;          use Gdk.Pixbuf;
+with Gtk.Dialog;          use Gtk.Dialog;
 with Gtk.Window;          use Gtk.Window;
-with Gtk.Box;             use Gtk.Box;
 with Gtk.Widget;          use Gtk.Widget;
 with Gtk.Label;           use Gtk.Label;
 with Gtk.Combo;           use Gtk.Combo;
@@ -138,8 +138,7 @@ package Gtkada.File_Selector is
    --    Insensitive means the file is shown but cannot be selected.
    --    Invisible means the file is not shown.
 
-   type File_Selector_Window_Record is new
-     Gtk.Widget.Gtk_Widget_Record with private;
+   type File_Selector_Window_Record is new Gtk_Dialog_Record with private;
    type File_Selector_Window_Access is
      access all File_Selector_Window_Record'Class;
    --  A file selector window.
@@ -298,7 +297,7 @@ private
    --  Implementation of the Use_File_Filter procedure for
    --  the Filter_Show_All filter.
 
-   type File_Selector_Window_Record is new Gtk_Window_Record with record
+   type File_Selector_Window_Record is new Gtk_Dialog_Record with record
       Current_Directory    : String_Access := new String'("");
       Current_Directory_Id : Dir_Type_Access := new Dir_Type;
       --  The directory that is currently being explored.
@@ -342,9 +341,6 @@ private
 
       Past_History : Simple_Stack;
       Future_History : Simple_Stack;
-
-      File_Selector_Vbox : Gtk_Vbox;
-
       Back_Button : Gtk_Button;
       Forward_Button : Gtk_Button;
       Home_Button : Gtk_Button;
