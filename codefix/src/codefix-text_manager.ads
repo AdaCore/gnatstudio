@@ -151,13 +151,15 @@ package Codefix.Text_Manager is
      (This   : Text_Interface;
       Cursor : Text_Cursor'Class;
       Len    : Natural) return String is abstract;
-   --  Get Len characters from the the position specified by the cursor.
+   --  Get Len characters from the the position specified by the cursor. The
+   --  String resultinh must have parameter 'First equal to Cursor.Col.
 
    function Get_Line
      (This   : Text_Interface;
       Cursor : Text_Cursor'Class) return String is abstract;
    --  Get all character from the column specified by the cursor to the end of
-   --  the line.
+   --  the line. The String resulting must have parameter 'First equal to
+   --  Cursor.Col.
 
    procedure Replace
      (This      : in out Text_Interface;
@@ -247,6 +249,12 @@ package Codefix.Text_Manager is
    procedure Constrain_Update (This : in out Text_Interface) is abstract;
    --  This function should constrain the update of the information contained
    --  in This.
+
+   function Previous_Char
+     (This : Text_Interface'Class; Cursor : Text_Cursor'Class)
+     return Text_Cursor'Class;
+   --  Return a cursor positioned on the first non-blank character before the
+   --  position specified by the cursor
 
    ----------------------------------------------------------------------------
    --  type Text_Navigator
@@ -411,6 +419,13 @@ package Codefix.Text_Manager is
    procedure Update_All
      (This : Text_Navigator_Abstr'Class);
    --  This function update all the text contained in This.
+
+   function Previous_Char
+     (This : Text_Navigator_Abstr'Class; Cursor : File_Cursor'Class)
+     return File_Cursor'Class;
+   --  Return a cursor positioned on the first non-blank character before the
+   --  position specified by the cursor
+
 
    ----------------------------------------------------------------------------
    --  type Extract_Line
@@ -1155,7 +1170,7 @@ private
    ----------------------------------------------------------------------------
 
    type Extract is tagged record
-      First   : Ptr_Extract_Line;
+      First : Ptr_Extract_Line;
    end record;
 
    function Get_Word_Length
