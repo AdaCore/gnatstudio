@@ -407,6 +407,7 @@ package body Src_Editor_Box is
    begin
       Set_Cursor_Position
         (Editor.Source_Buffer, Buffer_Line, Buffer_Col, Success);
+      Scroll_To_Cursor_Location (Editor.Source_View);
    end Set_Cursor_Location;
 
    ------------------------
