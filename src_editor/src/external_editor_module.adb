@@ -63,12 +63,14 @@ package body External_Editor_Module is
    Default_External_Editor    : Param_Spec_Enum;
    Always_Use_External_Editor : Param_Spec_Boolean;
 
+   type Constant_String_Access is access constant String;
+
    -----------
    -- Types --
    -----------
 
    type External_Client is record
-      Command_Name      : GNAT.OS_Lib.String_Access;
+      Command_Name      : Constant_String_Access;
       --  The command to load a file.
       --  The following substitutions are provided:
       --     %l = line to display
@@ -77,11 +79,11 @@ package body External_Editor_Module is
       --     %e = extended lisp command
       --     %% = percent sign ('%')
 
-      Lisp_Command_Name : GNAT.OS_Lib.String_Access;
+      Lisp_Command_Name : Constant_String_Access;
       --  The command to use to emit any lisp command, null if this is not
       --  possible. Same substitutions as above
 
-      Server_Start_Command : GNAT.OS_Lib.String_Access;
+      Server_Start_Command : Constant_String_Access;
       --  The lisp command to provide to Emacs to start the server.
       --  This code will not attempt to start a server if this is
       --  null. Otherwise, if Command_Name fails, then Emacs is started with
@@ -90,7 +92,7 @@ package body External_Editor_Module is
       --  If this is null, then Command_Name is started in the background, so
       --  as not to block the current process.
 
-      Extra_Test : GNAT.OS_Lib.String_Access;
+      Extra_Test : Constant_String_Access;
       --  Name of an extra executable to look for on the executable path to
       --  test whether this client is available. This should be used in cases
       --  where Command_Name starts a terminal that contains the editor
@@ -99,7 +101,7 @@ package body External_Editor_Module is
    type External_Clients is array (Supported_Clients) of External_Client;
 
    type External_Server is record
-      Command_Name : GNAT.OS_Lib.String_Access;
+      Command_Name : Constant_String_Access;
       --  The command to start a server.
       --  The following substitutions are provided:
       --     %e = lisp command to use to start the server. This is provided
@@ -110,47 +112,64 @@ package body External_Editor_Module is
    type Supported_Servers is (Glide, Emacs);
    type External_Servers is array (Supported_Servers) of External_Server;
 
+   --  We use constant strings, to avoid allocating memory below, and thus
+   --  avoid memory leaks.
+   Gnuclient_Command : aliased constant String := "gnuclient -q +%l %f";
+   Gnuclient_Lisp    : aliased constant String := "gnudoit -q %e";
+   Gnuclient_Server  : aliased constant String :=
+     "(progn (load-library ""gnuserv"") (gnuserv-start))";
+
+   Emacsclient_Command : aliased constant String := "emacsclient -n +%l:%c %f";
+   Emacsclient_Server  : aliased constant String := "(server-start)";
+
+   Emacs_Command       : aliased constant String := "emacs +%l %f";
+
+   Vim_Command         : aliased constant String :=
+     "xterm -geometry 80x50 -exec vim +%l %f";
+   Vim_Extra           : aliased constant String := "vim";
+
+   Vi_Command          : aliased constant String :=
+     "xterm -geometry 80x50 -exec vi +%l %f";
+   Vi_Extra            : aliased constant String := "vi";
+
    Clients : constant External_Clients :=
      (Auto      => (null, null, null, null),
       Gnuclient =>
-        (Command_Name         => new String' ("gnuclient -q +%l %f"),
-         Lisp_Command_Name    => new String' ("gnudoit -q %e"),
-         Server_Start_Command => new String'
-           ("(progn (load-library ""gnuserv"") (gnuserv-start))"),
-         Extra_Test            => null),
+        (Command_Name         => Gnuclient_Command'Access,
+         Lisp_Command_Name    => Gnuclient_Lisp'Access,
+         Server_Start_Command => Gnuclient_Server'Access,
+         Extra_Test           => null),
 
       Emacsclient =>
-        (Command_Name         => new String' ("emacsclient -n +%l:%c %f"),
+        (Command_Name         => Emacsclient_Command'Access,
          Lisp_Command_Name    => null,
-         Server_Start_Command => new String' ("(server-start)"),
+         Server_Start_Command => Emacsclient_Server'Access,
          Extra_Test           => null),
 
       Emacs =>
-        (Command_Name         => new String' ("emacs +%l %f"),
+        (Command_Name         => Emacs_Command'Access,
          Lisp_Command_Name    => null,
          Server_Start_Command => null,
          Extra_Test           => null),
 
       Vim =>
-        (Command_Name         => new String'
-           ("xterm -geometry 80x50 -exec vim +%l %f"),
+        (Command_Name         => Vim_Command'Access,
          Lisp_Command_Name    => null,
          Server_Start_Command => null,
-         Extra_Test           => new String' ("vim")),
+         Extra_Test           => Vim_Extra'Access),
 
       Vi =>
-        (Command_Name         => new String'
-           ("xterm -geometry 80x50 -exec vi +%l %f"),
+        (Command_Name         => Vi_Command'Access,
          Lisp_Command_Name    => null,
          Server_Start_Command => null,
-         Extra_Test           => new String' ("vi")));
+         Extra_Test           => Vi_Extra'Access));
+
+   Glide_Command : aliased constant String := "glide -emacs --eval -emacs %e";
+   Emacs_Server_Command : aliased constant String := "emacs --eval %e";
 
    Servers : constant External_Servers :=
-     (Glide =>
-        (Command_Name         => new String'
-           ("glide -emacs --eval -emacs %e")),
-      Emacs =>
-        (Command_Name         => new String' ("emacs --eval %e")));
+     (Glide => (Command_Name => Glide_Command'Access),
+      Emacs => (Command_Name => Emacs_Server_Command'Access));
 
    type Process_Descriptor_Array is array (Positive range <>)
      of Process_Descriptor_Access;
