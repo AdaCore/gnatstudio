@@ -577,8 +577,8 @@ package body GVD.Text_Box.Asm_Editor is
       Address_Length : Natural;
 
    begin
-      --  Address might have the form "0xABCD" but be in the the disass might
-      --  appear with leading 0s, such as "0x00ABCD".
+      --  Address might have the form "0xABCD" but be the inspected disassembly
+      --  might appear with leading 0s, such as "0x00ABCD".
 
       if Address'Length > 2
         and then Address (Address_First .. Address_First + 1) = "0x"
