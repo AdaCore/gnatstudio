@@ -40,6 +40,7 @@ with Gtk.Text_View;               use Gtk.Text_View;
 with Gtk.Widget;                  use Gtk.Widget;
 with Gtkada.Handlers;             use Gtkada.Handlers;
 with Src_Editor_Buffer;           use Src_Editor_Buffer;
+with Pango.Font;                  use Pango.Font;
 
 with Ada.Exceptions;              use Ada.Exceptions;
 with Traces;                      use Traces;
@@ -576,9 +577,7 @@ package body Src_Editor_View is
 
       Get_Iter_At_Mark (Buffer, Insert_Iter, Get_Insert (Buffer));
 
-      View.Pango_Font := Font;
-
-      View.Font := Gdk.Font.From_Description (View.Pango_Font);
+      Set_Font (View, Font);
 
       Widget_Callback.Connect
         (View, "realize",
@@ -644,15 +643,17 @@ package body Src_Editor_View is
      (View : access Source_View_Record'Class;
       Font : Pango.Font.Pango_Font_Description)
    is
+      use type Gdk.Gdk_Font;
    begin
       View.Pango_Font := Font;
       View.Font := Gdk.Font.From_Description (Font);
+      Assert (Me, View.Font /= null,
+              "Font could not be allocated " & To_String (Font));
 
       --  Make sure the widget is already realized. Otherwise, the
       --  layout and style are not created yet.
       if not Realized_Is_Set (View) then
          return;
-         --  ??? We should probably log a warning...
       end if;
 
       Modify_Font (View, Font);
