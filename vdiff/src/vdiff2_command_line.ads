@@ -88,4 +88,10 @@ package Vdiff2_Command_Line is
       File   : Virtual_File := VFS.No_File);
    --  Move a diff block to the Ref_File
 
+   procedure Delete_From_Ref_File
+     (Kernel : Kernel_Handle;
+      Diff   : Diff_Head_Access;
+      Line   : Natural := 0;
+      File   : Virtual_File := VFS.No_File);
+
 end Vdiff2_Command_Line;
