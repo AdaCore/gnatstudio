@@ -394,11 +394,16 @@ package body VCS.Generic_VCS is
         Lookup_Action (Kernel, Ref.Commands (Action));
       Custom     : Command_Access;
       Args       : GNAT.OS_Lib.String_List_Access;
+      Dir        : GNAT.Strings.String_Access;
 
       use type GNAT.OS_Lib.String_List_Access;
       use GNAT.Strings;
 
    begin
+      if not Ref.Absolute_Names then
+         Dir := new String'(Locale_From_UTF8 (Dir_Name (File).all));
+      end if;
+
       if The_Action = No_Action then
          return;
       end if;
@@ -411,19 +416,23 @@ package body VCS.Generic_VCS is
               new String'(First_Args (J).all);
          end loop;
 
-         Args (Args'Last) := new String'(Full_Name (File).all);
       else
-         Args := new GNAT.OS_Lib.String_List'
-           ((1 => new String'(Full_Name (File).all)));
+         Args := new GNAT.OS_Lib.String_List (1 .. 1);
       end if;
 
-
+      if Ref.Absolute_Names then
+         Args (Args'Last) := new String'
+           (Locale_From_UTF8 (Full_Name (File).all));
+      else
+         Args (Args'Last) := new String'
+           (Locale_From_UTF8 (Base_Name (File)));
+      end if;
 
       Custom := Create_Proxy
         (The_Action.Command,
          (null,
           Create_File_Context (Kernel, File),
-          null,
+          Dir,
           Args));
 
       Launch_Background_Command
