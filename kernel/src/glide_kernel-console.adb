@@ -54,6 +54,7 @@ package body Glide_Kernel.Console is
 
    type Console_Module_Id_Record is new Module_ID_Record with record
       Console : GPS_Message;
+      Child   : MDI_Child;
    end record;
 
    type Console_Module_Id_Access is access all Console_Module_Id_Record'Class;
@@ -157,12 +158,10 @@ package body Glide_Kernel.Console is
    -------------------
 
    procedure Raise_Console (Kernel : access Kernel_Handle_Record'Class) is
-      MDI   : constant MDI_Window := Get_MDI (Kernel);
-      Child : constant MDI_Child :=
-        Find_MDI_Child_By_Name (MDI, -"Messages");
+      pragma Unreferenced (Kernel);
    begin
-      if Child /= null then
-         Raise_Child (Child, Give_Focus => False);
+      if Console_Module_Id.Child /= null then
+         Raise_Child (Console_Module_Id.Child, Give_Focus => False);
       end if;
    end Raise_Console;
 
@@ -177,6 +176,7 @@ package body Glide_Kernel.Console is
       pragma Unreferenced (Console, Kernel);
    begin
       Console_Module_Id.Console := null;
+      Console_Module_Id.Child := null;
    end Console_Destroyed;
 
    --------------------------
@@ -346,6 +346,7 @@ package body Glide_Kernel.Console is
       Dock_Child (Child);
       Raise_Child (Child);
 
+      Console_Module_Id.Child   := Child;
       Console_Module_Id.Console := Console;
 
       Kernel_Callback.Connect
@@ -392,17 +393,19 @@ package body Glide_Kernel.Console is
             Allow_Duplicates (Get_History (Kernel).all, History, True, True);
 
             Child := Put (Get_MDI (Kernel), Gtk_Widget (Console));
+            Raise_Child (Child);
             Set_Dock_Side (Child, Bottom);
             Dock_Child (Child);
             Set_Title (Child, Title, Title);
             Set_Focus_Child (Child);
          else
+            Highlight_Child (Child);
             Console := Interactive_Console (Get_Widget (Child));
          end if;
 
-         Raise_Child (Child);
          return Console;
       else
+         Highlight_Child (Console_Module_Id.Child);
          return Get_Console (Kernel);
       end if;
    end Create_Interactive_Console;
