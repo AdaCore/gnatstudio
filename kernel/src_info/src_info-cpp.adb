@@ -282,14 +282,13 @@ package body Src_Info.CPP is
    --    Original_Type
    --    Find_Class
    --
-   --  Parent_xxx: For typedefs Parent_xxx is the location of the
-   --  last type definition in the chain.
-   --  For enum, class definitions it is the location of the
-   --  declaration itself.
-   --  For builtin types this location is empty (invalid)
+   --  Parent_xxx: the same as Ancestor_xxx (see below) but used for
+   --  all other entities except typedefs. For builtin types Parent_Point is
+   --  undefined (Invalid_Point).
    --
    --  Ancestor_xxx: location of the closest typedef in the chain of
-   --  typedefs. Used only for typedefs.
+   --  typedefs. Used only for typedefs. For builtin types Ancestor_Point is
+   --  Predefined_Point
    --
    --  Builtin_Name is set for builtin type occurences. Also it is used
    --  (compared with null) in resolving typedef parent type (see
@@ -610,6 +609,9 @@ package body Src_Info.CPP is
       Builtin_Type_To_Kind (Type_Name, Desc, Success);
       if Success then
          --  Info ("builtin type");
+         if Desc.Ancestor_Point = Invalid_Point then -- was not set yet
+            Desc.Ancestor_Point := Predefined_Point;
+         end if;
          return;
       end if;
 
@@ -733,9 +735,6 @@ package body Src_Info.CPP is
       Set (Module_Typedefs, Key, (Key, Incomplete));
       --  add this type as an unidentified one
 
-      --  typedef found, it is time to set Is_Typedef
-      Desc.Is_Typedef := True;
-
       --  lookup left side of the typedef in our type
       --  hash table
       Seek_Key  := new String'
@@ -743,16 +742,23 @@ package body Src_Info.CPP is
       HTTypedef := Get (Module_Typedefs, Seek_Key);
       Free (Seek_Key);
 
+      if Desc.Is_Typedef = True
+         and then Desc.Ancestor_Point = Invalid_Point
+      then -- was not set yet
+         Desc.Ancestor_Point    := Typedef.Start_Position;
+         Desc.Ancestor_Filename := new String' (Typedef.Buffer (
+                       Typedef.File_Name.First .. Typedef.File_Name.Last));
+      end if;
+
+      Desc.Is_Typedef := True;
+
       if HTTypedef.State = Incomplete then -- loop detected
          Desc.Kind := Unresolved_Entity;
-
-         --  Set parent type to ancestor type
-         Desc.Parent_Point := Desc.Ancestor_Point;
-         if Desc.Ancestor_Filename /= null then
-            --  we need a copy here
-            Desc.Parent_Filename := new String' (Desc.Ancestor_Filename.all);
+         if Desc.Parent_Point = Invalid_Point then
+            Desc.Parent_Point    := Typedef.Start_Position;
+            Desc.Parent_Filename := new String' (Typedef.Buffer (
+                       Typedef.File_Name.First .. Typedef.File_Name.Last));
          end if;
-
          Success   := True;
          Free (Typedef);
          return;
@@ -762,30 +768,20 @@ package body Src_Info.CPP is
               Typedef.Original.First .. Typedef.Original.Last),
               Desc, Success);
 
-      if Desc.Ancestor_Point = Invalid_Point then -- was not set yet
-         Desc.Ancestor_Point    := Typedef.Start_Position;
-         Desc.Ancestor_Filename := new String' (Typedef.Buffer (
-                       Typedef.File_Name.First .. Typedef.File_Name.Last));
-      end if;
-
       if Success then
          --  parent type found (E_Kind is resolved)
-         Desc.Parent_Point     := Typedef.Start_Position;
+         Desc.Parent_Point    := Typedef.Start_Position;
          Desc.Parent_Filename := new String'(Typedef.Buffer (
                     Typedef.File_Name.First .. Typedef.File_Name.Last));
-
          Free (Typedef);
          Success := True;
          Set (Module_Typedefs, Key, (Key, Complete));
          return;
       end if;
 
-      --  original type not found
-      if Desc.Is_Typedef then
-         --  but typedef clause present
-         Desc.Kind := Unresolved_Entity;
-         Success := True;
-      end if;
+      --  original type not found, but typedef clause present
+      Desc.Kind := Unresolved_Entity;
+      Success := True;
 
       Free (Typedef);
 
