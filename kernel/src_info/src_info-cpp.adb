@@ -537,8 +537,8 @@ package body Src_Info.CPP is
 
       case Iterator.State is
          when Done =>
-            --  see below.
             null;
+            --  see below.
 
          when Analyze_Files =>
             --  If we haven't finished the first phase, keep waiting.
