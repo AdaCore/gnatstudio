@@ -151,8 +151,8 @@ package body Src_Editor_Box is
       Gtk_New (Scrolling_Area);
       Set_Policy
         (Scrolling_Area,
-         H_Scrollbar_Policy => Policy_Always,
-         V_Scrollbar_Policy => Policy_Always);
+         H_Scrollbar_Policy => Policy_Automatic,
+         V_Scrollbar_Policy => Policy_Automatic);
       Add (Frame, Scrolling_Area);
 
       Gtk_New (Box.Source_Buffer, Lang => Lang);
