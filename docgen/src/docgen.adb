@@ -982,14 +982,14 @@ package body Docgen is
    -----------------------
 
    function Get_Doc_File_Name
-     (Source_Filename : VFS.Virtual_File;
+     (Source_Filename : VFS.Virtual_File_Access;
       Source_Path     : String;
       Doc_Suffix      : String) return String
    is
-      Ext : constant String := File_Extension (Source_Filename);
+      Ext : constant String := File_Extension (Source_Filename.all);
    begin
       return Source_Path &
-        Base_Name (Source_Filename, Ext)
+        Base_Name (Source_Filename.all, Ext)
         & "_"
         & Ext (Ext'First + 1 .. Ext'Last)
         & Doc_Suffix;
@@ -1040,7 +1040,7 @@ package body Docgen is
 
    function Source_File_In_List
      (Source_File_List : Type_Source_File_List.List;
-      Name             : Virtual_File) return Boolean
+      Name             : Virtual_File_Access) return Boolean
    is
       package TSFL renames Type_Source_File_List;
       use type TSFL.List_Node;
@@ -1051,11 +1051,11 @@ package body Docgen is
       while Source_File_Node /= TSFL.Null_Node loop
          Data := TSFL.Data_Ref (Source_File_Node);
 
-         if Data.File_Name = Name then
+         if Data.File_Name = Name.all then
             return True;
          end if;
 
-         if Full_Name (Data.File_Name).all > Full_Name (Name).all then
+         if Full_Name (Data.File_Name).all > Full_Name (Name.all).all then
             --  The list is sorted, we can exit
             return False;
          end if;
@@ -1082,36 +1082,6 @@ package body Docgen is
       return Counter;
    end Count_Points;
 
-   -----------------
-   -- Spec_Suffix --
-   -----------------
-
-   function Spec_Suffix
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
-      File   : VFS.Virtual_File) return String is
-   begin
-      if Is_Spec_File (Kernel, File) then
-         return File_Extension (File);
-      else
-         return File_Extension (Other_File_Name (Kernel, File));
-      end if;
-   end Spec_Suffix;
-
-   -----------------
-   -- Body_Suffix --
-   -----------------
-
-   function Body_Suffix
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
-      File   : VFS.Virtual_File) return String is
-   begin
-      if Is_Spec_File (Kernel, File) then
-         return File_Extension (Other_File_Name (Kernel, File));
-      else
-         return File_Extension (File);
-      end if;
-   end Body_Suffix;
-
    ------------------
    -- Is_Spec_File --
    ------------------
@@ -1123,6 +1093,13 @@ package body Docgen is
       return Get_Unit_Part_From_Filename
         (Get_Project_From_File (Get_Registry (Kernel), File), File) =
         Unit_Spec;
+   end Is_Spec_File;
+
+   function Is_Spec_File
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+      File   : VFS.Virtual_File_Access) return Boolean is
+   begin
+      return Is_Spec_File (Kernel, File.all);
    end Is_Spec_File;
 
 end Docgen;
