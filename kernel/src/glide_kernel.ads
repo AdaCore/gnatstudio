@@ -239,7 +239,8 @@ package Glide_Kernel is
    --------------
 
    type Module_ID_Information (<>) is private;
-   type Module_ID is access Module_ID_Information;
+   type Module_ID_Record is tagged private;
+   type Module_ID is access Module_Id_Record'Class;
    --  Module identifier. Each of the registered module in Glide has such a
    --  identifier, that contains its name and all the callbacks associated with
    --  the module.
@@ -430,6 +431,15 @@ package Glide_Kernel is
      (Glib.Object.GObject_Record, Kernel_Handle);
    --  Generic callback that can be used to connect a signal to a kernel.
 
+   type File_Project_Record (Length : Natural) is record
+      Project : Prj.Project_Id;
+      File    : String (1 .. Length);
+   end record;
+
+   package File_Project_Cb is new Gtk.Handlers.User_Callback
+     (Glib.Object.GObject_Record, File_Project_Record);
+   --  Generic callback that can be used to connect a signal to a kernel.
+
    procedure Project_Changed (Handle : access Kernel_Handle_Record);
    --  Emits the "project_changed" signal
 
@@ -515,6 +525,12 @@ private
       Save_Function   : Module_Save_Function;
       Child_Tag       : Ada.Tags.Tag;
       Tooltip_Handler : Module_Tooltip_Handler;
+   end record;
+
+   type Module_ID_Information_Access is access Module_ID_Information;
+
+   type Module_ID_Record is tagged record
+      Info : Module_ID_Information_Access;
    end record;
 
    type Selection_Context is tagged record

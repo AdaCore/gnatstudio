@@ -192,10 +192,10 @@ package body Glide_Kernel is
       Module := Get_Module_From_Child (Handle, Child);
 
       if Module /= null
-        and then Module.Save_Function /= null
+        and then Module.Info.Save_Function /= null
       then
          return
-           Module.Save_Function
+           Module.Info.Save_Function
              (Handle,
               Get_Widget (Child),
               Force);
@@ -238,7 +238,7 @@ package body Glide_Kernel is
       Module := Module_List.First (Handle.Modules_List);
 
       while Module /= Module_List.Null_Node loop
-         if Module_List.Data (Module).Child_Tag =
+         if Module_List.Data (Module).Info.Child_Tag =
            Get_Widget (Child)'Tag
          then
             return Module_List.Data (Module);
@@ -518,10 +518,10 @@ package body Glide_Kernel is
       --  ??? for the user.
 
       while Module /= Module_List.Null_Node loop
-         if Module_List.Data (Module).Child_Tag = Get_Widget (C)'Tag then
-            if Module_List.Data (Module).Default_Factory /= null then
+         if Module_List.Data (Module).Info.Child_Tag = Get_Widget (C)'Tag then
+            if Module_List.Data (Module).Info.Default_Factory /= null then
                Kernel.Current_Context :=
-                 Module_List.Data (Module).Default_Factory
+                 Module_List.Data (Module).Info.Default_Factory
                  (Kernel, Get_Widget (C));
 
                if Kernel.Current_Context /= null then
