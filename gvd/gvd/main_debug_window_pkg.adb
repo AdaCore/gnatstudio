@@ -195,9 +195,9 @@ begin
    Gtk_New (Main_Debug_Window.Exit1, -"Exit");
    Add_Accelerator (Main_Debug_Window.Exit1, "activate",
      The_Accel_Group, GDK_Q, Gdk.Types.Control_Mask, Accel_Visible);
-   Menu_Item_Callback.Connect
+   Widget_Callback.Object_Connect
      (Main_Debug_Window.Exit1, "activate",
-      Menu_Item_Callback.To_Marshaller (On_Exit1_Activate'Access));
+      Widget_Callback.To_Marshaller (On_Exit1_Activate'Access), Main_Debug_Window);
    Add (Main_Debug_Window.File1_Menu, Main_Debug_Window.Exit1);
    Set_Right_Justify (Main_Debug_Window.Exit1, False);
 
@@ -394,9 +394,9 @@ begin
    Gtk_New (Main_Debug_Window.Run1, -"Run...");
    Add_Accelerator (Main_Debug_Window.Run1, "activate",
      The_Accel_Group, GDK_F2, 0, Accel_Visible);
-   Menu_Item_Callback.Connect
+   Widget_Callback.Object_Connect
      (Main_Debug_Window.Run1, "activate",
-      Menu_Item_Callback.To_Marshaller (On_Run1_Activate'Access));
+      Widget_Callback.To_Marshaller (On_Run1_Activate'Access), Main_Debug_Window);
    Add (Main_Debug_Window.Program1_Menu, Main_Debug_Window.Run1);
    Set_Right_Justify (Main_Debug_Window.Run1, False);
 
@@ -410,9 +410,9 @@ begin
    Set_Right_Justify (Main_Debug_Window.Run_Again1, False);
 
    Gtk_New (Main_Debug_Window.Start1, -"Start");
-   Menu_Item_Callback.Connect
+   Widget_Callback.Object_Connect
      (Main_Debug_Window.Start1, "activate",
-      Menu_Item_Callback.To_Marshaller (On_Start1_Activate'Access));
+      Widget_Callback.To_Marshaller (On_Start1_Activate'Access), Main_Debug_Window);
    Add (Main_Debug_Window.Program1_Menu, Main_Debug_Window.Start1);
    Set_Right_Justify (Main_Debug_Window.Start1, False);
 
@@ -1199,12 +1199,16 @@ begin
       Text => -"",
       Tooltip_Text => -"Start the debugged program",
       Icon => Gtk_Widget (Create_Pixmap (run_xpm, Main_Debug_Window)));
+   Widget_Callback.Object_Connect
+     (Main_Debug_Window.Button49, "clicked", Widget_Callback.To_Marshaller (On_Run1_Activate'Access), Main_Debug_Window);
    Main_Debug_Window.Button50 := Append_Element
      (Toolbar => Main_Debug_Window.Toolbar2,
       The_Type => Toolbar_Child_Button,
       Text => -"",
       Tooltip_Text => -"Start the debugged program, stopping at the beginning of the main procedure",
       Icon => Gtk_Widget (Create_Pixmap (start_xpm, Main_Debug_Window)));
+   Widget_Callback.Object_Connect
+     (Main_Debug_Window.Button50, "clicked", Widget_Callback.To_Marshaller (On_Start1_Activate'Access), Main_Debug_Window);
    Main_Debug_Window.Button52 := Append_Element
      (Toolbar => Main_Debug_Window.Toolbar2,
       The_Type => Toolbar_Child_Button,
