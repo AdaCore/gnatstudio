@@ -60,7 +60,8 @@ package Src_Contexts is
 
    type Current_File_Context is new Search_Context with private;
    type Current_File_Context_Access is access all Current_File_Context'Class;
-   --  A special context for searching in the current file
+   --  A special context for searching interactively in the current file.
+   --  It doesn't support All_Occurrences.
 
    procedure Free (Context : in out Current_File_Context);
    --  Free the memory allocated for the context
@@ -122,23 +123,24 @@ package Src_Contexts is
    -----------------------------
 
    function Current_File_Factory
-     (Kernel            : access Glide_Kernel.Kernel_Handle_Record'Class;
-      All_Occurences    : Boolean;
-      Extra_Information : Gtk.Widget.Gtk_Widget)
+     (Kernel             : access Glide_Kernel.Kernel_Handle_Record'Class;
+      All_Occurrences    : Boolean;
+      Extra_Information  : Gtk.Widget.Gtk_Widget)
       return Search_Context_Access;
-   --  Factory for "Current File"
+   --  Factory for "Current File". A Files_Project_Context is returned if
+   --  searching for All_Occurrences
 
    function Files_From_Project_Factory
-     (Kernel            : access Glide_Kernel.Kernel_Handle_Record'Class;
-      All_Occurences    : Boolean;
-      Extra_Information : Gtk.Widget.Gtk_Widget)
+     (Kernel             : access Glide_Kernel.Kernel_Handle_Record'Class;
+      All_Occurrences    : Boolean;
+      Extra_Information  : Gtk.Widget.Gtk_Widget)
       return Search_Context_Access;
    --  Factory for "Files From Project"
 
    function Files_Factory
-     (Kernel            : access Glide_Kernel.Kernel_Handle_Record'Class;
-      All_Occurences    : Boolean;
-      Extra_Information : Gtk.Widget.Gtk_Widget)
+     (Kernel             : access Glide_Kernel.Kernel_Handle_Record'Class;
+      All_Occurrences    : Boolean;
+      Extra_Information  : Gtk.Widget.Gtk_Widget)
       return Search_Context_Access;
    --  Factory for "Files..."
 
@@ -173,7 +175,7 @@ private
 
    type Current_File_Context is new Search_Context with record
       Scope                : Search_Scope              := Whole;
-      All_Occurences       : Boolean;
+      All_Occurrences      : Boolean;
       Next_Matches_In_File : Match_Result_Array_Access := null;
       Last_Match_Returned  : Natural                   := 0;
       --  These two fields are used to memorize the list of matches in the

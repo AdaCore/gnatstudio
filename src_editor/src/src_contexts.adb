@@ -117,9 +117,9 @@ package body Src_Contexts is
       Current_Line   : Integer;
       Current_Column : Integer;
       Backward       : Boolean) return Match_Result_Access;
-   --  Return the next occurence of Context in Editor, just before or just
+   --  Return the next occurrence of Context in Editor, just before or just
    --  after Current_Line, Current_Column. If no match is found after the
-   --  current position, for a forward search, return the first occurence from
+   --  current position, for a forward search, return the first occurrence from
    --  the beginning of the editor. Likewise for a backward search.
    --  Note that the index in the result might be incorrect, although the line
    --  and column will always be correct.
@@ -694,21 +694,43 @@ package body Src_Contexts is
    --------------------------
 
    function Current_File_Factory
-     (Kernel            : access Glide_Kernel.Kernel_Handle_Record'Class;
-      All_Occurences    : Boolean;
-      Extra_Information : Gtk.Widget.Gtk_Widget)
+     (Kernel             : access Glide_Kernel.Kernel_Handle_Record'Class;
+      All_Occurrences    : Boolean;
+      Extra_Information  : Gtk.Widget.Gtk_Widget)
       return Search_Context_Access
    is
-      pragma Unreferenced (Kernel);
-      Context : Current_File_Context_Access;
+      Context  : Current_File_Context_Access;
+      Context2 : Files_Project_Context_Access;
       Scope   : constant Scope_Selector := Scope_Selector (Extra_Information);
+      Child    : MDI_Child;
+      Editor   : Source_Editor_Box;
 
    begin
-      Context := new Current_File_Context;
-      Context.All_Occurences := All_Occurences;
-      Context.Scope := Search_Scope'Val
-        (Get_Index_In_List (Scope.Combo));
-      return Search_Context_Access (Context);
+      --  If we are looking for all the occurrences, we simply reuse another
+      --  context, instead of the interactive Current_File_Context
+      if All_Occurrences then
+         Child := Find_Current_Editor (Kernel);
+         if Child = null then
+            return null;
+         end if;
+
+         Context2 := new Files_Project_Context;
+         Context2.Scope := Search_Scope'Val (Get_Index_In_List (Scope.Combo));
+
+         Editor := Get_Source_Box_From_MDI (Child);
+
+         Set_File_List
+           (Context2, new String_Array'
+              (1 => new String'(Get_Filename (Editor))));
+         return Search_Context_Access (Context2);
+
+      else
+         Context := new Current_File_Context;
+         Context.All_Occurrences := False;
+         Context.Scope := Search_Scope'Val
+           (Get_Index_In_List (Scope.Combo));
+         return Search_Context_Access (Context);
+      end if;
    end Current_File_Factory;
 
    --------------------------------
@@ -716,12 +738,12 @@ package body Src_Contexts is
    --------------------------------
 
    function Files_From_Project_Factory
-     (Kernel            : access Glide_Kernel.Kernel_Handle_Record'Class;
-      All_Occurences    : Boolean;
-      Extra_Information : Gtk.Widget.Gtk_Widget)
+     (Kernel             : access Glide_Kernel.Kernel_Handle_Record'Class;
+      All_Occurrences    : Boolean;
+      Extra_Information  : Gtk.Widget.Gtk_Widget)
       return Search_Context_Access
    is
-      pragma Unreferenced (All_Occurences);
+      pragma Unreferenced (All_Occurrences);
       Context : Files_Project_Context_Access;
       Scope   : constant Scope_Selector := Scope_Selector (Extra_Information);
    begin
@@ -739,12 +761,12 @@ package body Src_Contexts is
    -------------------
 
    function Files_Factory
-     (Kernel            : access Glide_Kernel.Kernel_Handle_Record'Class;
-      All_Occurences    : Boolean;
-      Extra_Information : Gtk.Widget.Gtk_Widget)
+     (Kernel             : access Glide_Kernel.Kernel_Handle_Record'Class;
+      All_Occurrences    : Boolean;
+      Extra_Information  : Gtk.Widget.Gtk_Widget)
       return Search_Context_Access
    is
-      pragma Unreferenced (Kernel, All_Occurences);
+      pragma Unreferenced (Kernel, All_Occurrences);
 
       Context : Files_Context_Access;
       Extra   : constant Files_Extra_Scope := Files_Extra_Scope
@@ -791,6 +813,8 @@ package body Src_Contexts is
       Child   : constant MDI_Child := Find_Current_Editor (Kernel);
 
    begin
+      Assert (Me, not Context.All_Occurrences,
+              "All occurences not supported for current_file_context");
       if Child = null then
          return False;
       end if;
@@ -800,7 +824,8 @@ package body Src_Contexts is
       Minimize_Child (Child, False);
 
       --  If there are still some matches in the current file that we haven't
-      --  returned, do it now (only the case when searching for all occurences)
+      --  returned, do it now (only the case when searching for all
+      --  occurrences)
 
       if Context.Next_Matches_In_File /= null then
          if Search_Backward then
@@ -823,9 +848,11 @@ package body Src_Contexts is
            Context.Next_Matches_In_File (Context.Last_Match_Returned);
 
          if Is_Valid_Location (Editor, Match.Line, Match.End_Column) then
+
             Set_Cursor_Location (Editor, Match.Line, Match.Column);
             Select_Region
-              (Editor, Match.Line, Match.Column, Match.Line, Match.End_Column);
+              (Editor, Match.Line, Match.Column,
+               Match.Line, Match.End_Column);
             return True;
 
          else
@@ -834,7 +861,7 @@ package body Src_Contexts is
          end if;
       end if;
 
-      --  Search either all occurences at once, or only the next matching
+      --  Search either all occurrences at once, or only the next matching
       --  one. Note that when searching backward, we have to search from the
       --  beginning, since otherwise we don't know how to handle regular
       --  expressions and the search engine computed for Boyer-Moore is only
@@ -844,41 +871,24 @@ package body Src_Contexts is
         (Get_Language_Handler (Kernel), Get_Filename (Editor));
       Get_Cursor_Location (Editor, Line, Column);
 
-      if Context.All_Occurences then
-         Context.Next_Matches_In_File := Scan_And_Store
-           (Context, Kernel, Get_Slice (Editor, 1, 1), Is_File => False,
-            Scope => Context.Scope, Lang => Lang);
+      Match := Scan_Next
+        (Context, Kernel,
+         Editor         => Editor,
+         Scope          => Context.Scope,
+         Lang           => Lang,
+         Current_Line   => Line,
+         Current_Column => Column,
+         Backward       => Search_Backward);
 
-         if Context.Next_Matches_In_File = null then
-            return False;
-         end if;
-
-         Context.Last_Match_Returned := Context.Next_Matches_In_File'First;
-         Match := Context.Next_Matches_In_File (Context.Last_Match_Returned);
-
-      else
-         Match := Scan_Next
-           (Context, Kernel,
-            Editor         => Editor,
-            Scope          => Context.Scope,
-            Lang           => Lang,
-            Current_Line   => Line,
-            Current_Column => Column,
-            Backward       => Search_Backward);
-
-         if Match = null then
-            return False;
-         end if;
+      if Match = null then
+         return False;
       end if;
 
       Set_Cursor_Location (Editor, Match.Line, Match.Column);
-
       Select_Region
         (Editor, Match.Line, Match.Column, Match.Line, Match.End_Column);
 
-      if not Context.All_Occurences then
-         Unchecked_Free (Match);
-      end if;
+      Unchecked_Free (Match);
 
       return True;
 
@@ -922,7 +932,7 @@ package body Src_Contexts is
       end if;
 
       --  ??? Should handle the case where the file has changed, when we are
-      --  not searching for all occurences.
+      --  not searching for all occurrences.
 
       --  Loop until at least one match
       loop
