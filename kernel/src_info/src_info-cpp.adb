@@ -2405,7 +2405,7 @@ package body Src_Info.CPP is
             Location                => Var.Start_Position);
 
          if Decl_Info = null then
-            Info ("Forward reference to the variable: " & Ref_Id);
+--          Info ("Forward reference to the variable: " & Ref_Id);
             Sym.Buffer         := Var.Buffer;
             Sym.Identifier     := Var.Name;
             Sym.Start_Position := Var.Start_Position;
@@ -4505,12 +4505,12 @@ package body Src_Info.CPP is
                Var.Arg_Types,
                Strict => True)
          then
-            Info
-              (FU_Tab.Buffer (FU_Tab.Class.First .. FU_Tab.Class.Last) &
-               "::" & Fu_Id & ", lv: " &
-               Var.Buffer (Var.Name.First .. Var.Name.Last));
-            Info ("Type: " &
-              Var.Buffer (Var.Value_Type.First .. Var.Value_Type.Last));
+--          Info
+--            (FU_Tab.Buffer (FU_Tab.Class.First .. FU_Tab.Class.Last) &
+--             "::" & Fu_Id & ", lv: " &
+--             Var.Buffer (Var.Name.First .. Var.Name.Last));
+--          Info ("Type: " &
+--            Var.Buffer (Var.Value_Type.First .. Var.Value_Type.Last));
 
             --  Collect information about the local variable:
             --  type, scope, location of type declaration...
