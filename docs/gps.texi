@@ -188,6 +188,7 @@ Customizing the Menu and Tool Bar
 * Customization files::
 * Defining Actions::
 * Macro arguments::
+* Filtering actions::
 * Adding new menus::
 * Adding tool bar buttons::
 * Binding actions to keys::
@@ -6127,7 +6128,10 @@ It also provides an easy way to redefine the menu shortcuts.
 Actions are referenced by their name, and are grouped into categories. These
 categories indicate when the action applies. For instance, the indentation
 command only applies in source editors, whereas the command to change the
-current window applies anywhere in GPS.
+current window applies anywhere in GPS. The categories correspond in fact to
+filters that indicate when the action can be executed. You can create your own
+new categories by using the @code{<filter>} tag in the customization files
+(@pxref{Customizing the Menu and Tool Bar}).
 
 Through the key manager, you can define key bindings similar to what Emacs
 uses (@key{control-x} followed by @key{control-k} for instance). To register
@@ -6149,6 +6153,7 @@ items yet.
 * Customization files::
 * Defining Actions::
 * Macro arguments::
+* Filtering actions::
 * Adding new menus::
 * Adding tool bar buttons::
 * Binding actions to keys::
@@ -6276,6 +6281,8 @@ described in later sections. This includes:
   (@pxref{Defining new search patterns})
 @item <tool>
   (@pxref{Adding support for new tools})
+@item <filter>
+  (@pxref{Filtering actions})
 @end table
 
 @c -----------------------------------------------------------------------
@@ -6285,6 +6292,7 @@ described in later sections. This includes:
 @cindex <action>
 @cindex <shell>
 @cindex <external>
+@cindex <filter>
 @c -----------------------------------------------------------------------
 
 @noindent
@@ -6381,16 +6389,10 @@ project browser.
 This tag contains a description for the command, which is used in the
 graphical editor for the key manager. @xref{The Key Manager Dialog}.
 
-@item <context>
-@cindex context
-This is the name of the context in which the action applies. By default,
-actions are applicable anywhere in GPS. You can restrict for instance the
-action to the source editors by specifying "Source editor" in this field.
-This allows you to have the same key binding defined for multiple actions
-but which do not act in the same context.
-
-The list of valid context names can be seen in the
-@code{Edit->Key shortcuts} menu dialog.
+@item <filter>, <filter_and>, <filter_or>
+@cindex filter
+This is the context in which the action can be executed,
+@xref{Filtering actions}.
 
 @end table
 
@@ -6409,8 +6411,12 @@ As seen in some of the examples above, some special strings are expanded by
 GPS just prior to executing the command. These are the "%f", "%d",.. See below
 for a full list.
 
+More information on chaining commands is provided in @xref{Chaining commands}.
+
 Some actions are also predefined in GPS itself. This include for instance
-aliases expansion, manipulating MDI windows,...
+aliases expansion, manipulating MDI windows,... All known actions (predefined
+and the ones you have defined in your own customization files) can be
+discovered by opening the keyshortcut editor (@code{Edit->Keyshortcuts} menu).
 
 @c ---------------------------------------------------------------------
 @node Macro arguments
@@ -6506,6 +6512,187 @@ Replaced by the name of a file that contains a list of source
 directories in the current project, and all imported sub projects,
 recursively.
 @end table
+
+@c ----------------------------------------------------------------------
+@node Filtering actions
+@subsection Filtering actions
+@cindex <filter>
+@cindex <filter_and>
+@cindex <filter_or>
+@c ----------------------------------------------------------------------
+
+@noindent
+By default, an action will execute in any context in GPS. The user just
+selects the menu or key, and GPS tries to execute the action.
+
+It is possible to restrict when an action should be considered as valid. If the
+current context is incorrect for the action, GPS will not attempt to run
+anything, and will display an error message for the user.
+
+Actions can be restricted in several ways:
+
+@enumerate
+@item Using macro arguments (@pxref{Macro arguments}).
+If you are using one of the macro arguments defined in the previous section,
+anywhere in the chain of commands for that action, GPS will first check that
+the information is available, and if not will not start running any of the
+shell commands or external commands for that action.
+
+For instance, if you have specified @code{%F} as a parameter to one of the
+commands, GPS will check prior to running the action that there is a current
+file. This can be either a currently selected file editor, or for instance that
+the project explorer is selected, and a file node inside it is also selected.
+
+You do not have to specify anything else, this filtering is automatic
+
+@item Defining explicit filters
+Explicit restrictions can be specified in the customization files. These are
+specified through the @code{<filter>}, @code{<filter_and>}
+and @code{<filter_or>} tags, see below.
+
+These tags can be used to further restrict when the command is valid. For
+instance, you can use them to specify that the command only applies to Ada
+files, or only if a source editor is currently selected.
+
+@end enumerate
+
+
+@subsubsection The filters tags
+
+Such filters can be defined in one of two places in the customization files:
+
+@enumerate
+@item At the toplevel
+At the same level as other tags such as @code{<action>}, @code{<menu>} or
+@code{<button>} tags, you can define named filters. These are general filters,
+but they can be referenced elsewhere without requiring code duplication. They
+also appear explicitely in the keyshortcuts editor if at least one action is
+depending on them.
+
+@item As a child of the @code{<action>} tag
+Such filters are anonymous, although they provide exactly the same capacity as
+the ones above. These are mostly meant for simple filters, or filters that you
+use only once, or don't want to appear in the keyshortcuts manager.
+@end enumerate
+
+There are three different kinds of tags:
+
+@table @code
+@item <filter>
+This defines a simple filter. This tag takes no child tag.
+
+@item <filter_and>
+All the children of this tag are composed together to form a compound filter.
+They are evaluated in turn, and as soon as one of them fails, the whole filter
+fails. Children of this tag can be of type @code{<filter>}, @code{<filter_and>}
+and @code{<filter_or>}.
+
+@item <filter_or>
+All the children of this tag are composed together to form a compound filter.
+They are evaluated in turn, and as soon as one of them succeeds, the whole
+filter succeeds. Children of this tag can be of type @code{<filter>},
+@code{<filter_and>} and @code{<filter_or>}.
+
+@end table
+
+If several such tags are found following one another under an @code{<action>}
+tag, they are combined through "or", ie any of the filters must match for the
+action to be executed.
+
+The @code{<filter>}, @code{<filter_and>} and @code{<filter_or>} tags accept the
+following set of common attributes:
+
+@table @code
+@item name       (optional)
+This attribute is used to create named filters, that can be reused elsewhere
+in actions or compound filters through the @code{id} attribute. The name can
+take any form. This is also the name that appears in the context of the
+keyshortcuts editor.
+
+@item error      (optional)
+This is the error message printed in the GPS console if the filter doesn't
+match, and thus the action cannot be executed. If you are composing filters
+through @code{<filter_and>} and @code{<filter_or>}, only the error message of
+the top-level filter will be printed.
+
+@end table
+
+In addition, the @code{<filter>} has the following specific attributes:
+
+@table @code
+@item id         (optional)
+If this attribute is specified, all other attributes are ignored. This is used
+to reference a named filter previously defined. Here is for instance how you
+can make an action depend on a named filter:
+
+  @smallexample
+  <filter name="Test filter" language="ada" />
+  <action name="Test action" >
+     <filter id="Test filter" />
+     <shell>pwd</shell>
+  </action>
+  @end smallexample
+
+  A number of predefined filters are predefined by GPS itself. The full list
+  appears in the keyshortcut editor, but here is the full list with
+  description:
+
+  @table @code
+  @item Source editor
+  This filter will only match if the currently selected window in GPS is an
+  editor.
+  @end table
+
+@item language   (optional)
+This attribute specifies the name of language that the current file must be in
+to match. For instance, if you modify a value of "ada", you must have an Ada
+file selected, or the action won't execute. The language for a file is found by
+GPS following several algorithms (file extensions, and more important the
+naming scheme defined in the project files).
+
+@item shell_cmd  (optional)
+This attribute specifies a shell command to execute. The output value of this
+command is used to find whether the filter matches: if it returned "1" or
+"true", the filter matches. In any other case, the filter fails.
+
+Note that currently no expansion of macro arguments (%f, %p,@dots{}) is done
+in this command.
+
+@item shell_lang (optional)
+This attribute specifies in which language the shell command above is written.
+Its default value indicates that the command is written using the GPS shell.
+
+@end table
+
+When several attributes are specified for a @code{<filter>} node (which is not
+possible with @code{id}), they must all match for the action to be executed.
+
+@smallexample
+<!-- The following filter will only match if the currently selected
+     window is a text editor editing an Ada source file -->
+
+<filter_and name="Source editor in Ada" >
+    <filter language="ada" />
+    <filter id="Source editor" />
+</filter_and>
+
+<!-- The following action will only be executed for such an editor -->
+
+<action name="Test Ada action" >
+    <filter id="Source editor in Ada" />
+    <shell>pwd</shell>
+</action>
+
+<!--  An action with an anonymous filter. It will be executed if the
+      selected file is in Ada, even if the file was selected through
+      the project explorer  -->
+
+<action name="Test for Ada files" >
+    <filter language="ada" />
+    <shell>pwd</shell>
+</action>
+
+@end smallexample
 
 
 @c ----------------------------------------------------------------------
@@ -6644,6 +6831,11 @@ corresponding action.
 @smallexample
 <key action="expand alias">control-o</key>
 @end smallexample
+
+Multiple actions can be bound to the same key binding. The first one with a
+filter valid for the current context is executed. If no action with a filter
+can be executed, then the first action with no filter will be executed.
+
 
 @c ----------------------------------------------------------------
 @node Defining new search patterns
