@@ -176,6 +176,12 @@ package String_Utils is
    --  Return a deep-copy of List. The returned value must be freed by the
    --  caller.
 
+   procedure Append (List  : in out GNAT.OS_Lib.Argument_List_Access;
+                     List2 : GNAT.OS_Lib.Argument_List);
+   --  Append all the strings in List2 to the end of List.
+   --  The strings in List2 are not duplicated.
+   --  List might be null initially.
+
    ----------------------------
    -- File name manipulation --
    ----------------------------

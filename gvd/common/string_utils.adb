@@ -23,6 +23,7 @@ with Ada.Characters.Handling; use Ada.Characters.Handling;
 with Ada.Strings.Fixed;       use Ada.Strings.Fixed;
 with GNAT.OS_Lib;             use GNAT.OS_Lib;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
+with Ada.Unchecked_Deallocation;
 
 package body String_Utils is
 
@@ -987,5 +988,27 @@ package body String_Utils is
       end loop;
       return L;
    end Clone;
+
+   ------------
+   -- Append --
+   ------------
+
+   procedure Append (List  : in out GNAT.OS_Lib.Argument_List_Access;
+                     List2 : GNAT.OS_Lib.Argument_List)
+   is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Argument_List, Argument_List_Access);
+      L : Argument_List_Access := List;
+   begin
+      if List = null then
+         List := new Argument_List (1 .. List2'Length);
+      else
+         List := new Argument_List (L'First .. L'Last + List2'Length);
+         List (L'Range) := L.all;
+         Unchecked_Free (L);
+      end if;
+
+      List (List'Last - List2'Length + 1 .. List'Last) := List2;
+   end Append;
 
 end String_Utils;
