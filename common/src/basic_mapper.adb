@@ -26,15 +26,15 @@ package body Basic_Mapper is
    use Double_String_Table.String_Hash_Table;
 
    --------------------
-   -- Get_Other_File --
+   -- Get_Other_Text --
    --------------------
 
-   function Get_Other_File
+   function Get_Other_Text
      (Mapper    : File_Mapper_Access;
-      File_Name : String) return String
+      Text      : String) return String
    is
       Element : String_Access;
-      Key     : String_Access := new String' (File_Name);
+      Key     : String_Access := new String' (Text);
    begin
       if Mapper = null then
          Free (Key);
@@ -45,7 +45,7 @@ package body Basic_Mapper is
 
       if Element = No_Element then
          Free (Key);
-         Key := new String' (File_Name);
+         Key := new String' (Text);
          Element := Get (Mapper.Table_2, Key);
       end if;
 
@@ -55,7 +55,7 @@ package body Basic_Mapper is
       else
          return Element.all;
       end if;
-   end Get_Other_File;
+   end Get_Other_Text;
 
    ---------------
    -- Add_Entry --
@@ -63,11 +63,11 @@ package body Basic_Mapper is
 
    procedure Add_Entry
      (Mapper      : in out File_Mapper_Access;
-      File_Name_1 : String;
-      File_Name_2 : String)
+      Text_1      : String;
+      Text_2      : String)
    is
-      Key_1 : constant String_Access := new String' (File_Name_1);
-      Key_2 : constant String_Access := new String' (File_Name_2);
+      Key_1 : constant String_Access := new String' (Text_1);
+      Key_2 : constant String_Access := new String' (Text_2);
    begin
       if Mapper = null then
          Mapper := new File_Mapper;
@@ -102,7 +102,7 @@ package body Basic_Mapper is
 
       while Element /= No_Element loop
          Ada.Text_IO.Put_Line (File, Element.all);
-         Ada.Text_IO.Put_Line (File, Get_Other_File (Mapper, Element.all));
+         Ada.Text_IO.Put_Line (File, Get_Other_Text (Mapper, Element.all));
          Get_Next (Mapper.Table_1, Element);
       end loop;
 
