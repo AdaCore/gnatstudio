@@ -18,11 +18,18 @@
  * Place - Suite 330, Boston, MA 02111-1307, USA.                    *
  *********************************************************************/
 
+#ifdef _WIN32
+#define __MSVCRT__
+#include <stdlib.h>
+#define gnat_envp environ
+
+#else
+extern char** gnat_envp;
+#endif
+
 char*
 get_nth_environment (int index)
 {
-  extern char** gnat_envp;
-
   if (gnat_envp == (char**) 0)
     return (char*) 0;
   else
