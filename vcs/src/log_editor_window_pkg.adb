@@ -37,13 +37,14 @@ package body Log_Editor_Window_Pkg is
      (Log_Editor_Window : access Log_Editor_Window_Record'Class;
       File_Name         : String)
    is
+      use String_List_Utils.String_List;
       Label : Gtk_Label;
    begin
-      if not String_List.Is_Empty (Log_Editor_Window.Files) then
+      if not Is_Empty (Log_Editor_Window.Files) then
          Set_Text (Log_Editor_Window.Files_Label, -"Edit log for files:");
       end if;
 
-      String_List.Append (Log_Editor_Window.Files, File_Name);
+      Append (Log_Editor_Window.Files, File_Name);
 
       Gtk_New (Label, File_Name);
       Set_Alignment (Log_Editor_Window.Files_Label, 0.0, 0.5);
@@ -159,9 +160,11 @@ package body Log_Editor_Window_Pkg is
    -----------
 
    procedure Close
-     (Log_Editor_Window : access Log_Editor_Window_Record'Class) is
+     (Log_Editor_Window : access Log_Editor_Window_Record'Class)
+   is
+      use String_List_Utils.String_List;
    begin
-      String_List.Free (Log_Editor_Window.Files);
+      Free (Log_Editor_Window.Files);
       Destroy (Log_Editor_Window);
    end Close;
 
