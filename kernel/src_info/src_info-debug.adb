@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2001-2003                    --
+--                      Copyright (C) 2001-2004                      --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -96,7 +96,7 @@ package body Src_Info.Debug is
         ("<unhandled exception '" & Exception_Name (E) & ':' &
          Exception_Message (E) & "' trapped in " & In_Subprogram);
       --  ??? Maybe use backtraces here, that will probably help avoiding
-      --  ??? to pass in the subprgram name.
+      --  to pass in the subprogram name.
    end Print_Exception_Info;
 
    -------------------------
