@@ -38,12 +38,6 @@ package Language.Debugger.Ada is
    function Get_Language_Context
      (Lang : access Ada_Language) return Language_Context;
 
-   --------------------------------
-   -- Language specific commands --
-   --------------------------------
-
-   function Start (Debugger : access Ada_Language) return String;
-
    --------------
    -- Explorer --
    --------------
