@@ -41,12 +41,13 @@ with VFS;                       use VFS;
 package Docgen.Html_Output is
 
    procedure Doc_HTML_Create
-     (B             : access Backend_HTML;
-      Kernel        : access Glide_Kernel.Kernel_Handle_Record'Class;
-      File          : in Ada.Text_IO.File_Type;
-      Info          : in out Docgen.Doc_Info;
-      Doc_Directory : String;
-      Doc_Suffix    : String);
+     (B                : access Backend_HTML;
+      Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
+      File             : in Ada.Text_IO.File_Type;
+      List_Ref_In_File : in out List_Reference_In_File.List;
+      Info             : in out Docgen.Doc_Info;
+      Doc_Directory    : String;
+      Doc_Suffix       : String);
    --  This procedure is called every time the HTML files are concerned.
    --  What happens with the given information (which of the procedures
    --  below will be called) depands on the contents and the kind of the
