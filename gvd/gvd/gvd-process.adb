@@ -881,7 +881,9 @@ package body GVD.Process is
          else
             Set_Position
               (Process.Process_Paned,
-               Geometry_Info.Data_Height + Geometry_Info.Editor_Height);
+               Geometry_Info.Data_Height
+               + Geometry_Info.Editor_Height
+               + Gint (Get_Gutter_Size (Process.Data_Editor_Paned)));
          end if;
 
          if Get_Active (Window.Call_Stack) then
