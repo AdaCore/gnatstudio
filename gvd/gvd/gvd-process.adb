@@ -192,8 +192,8 @@ package body Odd.Process is
       Is_Command : Boolean := False)
    is
       Matched : GNAT.Regpat.Match_Array (0 .. 0);
-      Start   : Positive := Str'First;
       Str2    : String := Strip_Control_M (Str);
+      Start   : Positive := Str2'First;
 
    begin
       Freeze (Process.Debugger_Text);
@@ -393,9 +393,6 @@ package body Odd.Process is
       Canvas_Handler.Connect
         (Process.Data_Canvas, "background_click",
          Canvas_Handler.To_Marshaller (On_Background_Click'Access));
-      Widget_Callback.Connect
-        (Gtk_Widget (Process), "process_stopped",
-         Widget_Callback.To_Marshaller (Update_Breakpoints'Access));
 
       --  Set up the command window for the contextual menus
 
