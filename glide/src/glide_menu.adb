@@ -522,7 +522,7 @@ package body Glide_Menu is
       --  Id   : Message_Id;
 
    begin
-      Gtk_New (Grep, Object.all'Access);
+      Gtk_New (Grep, Top.Kernel);
       Show_All (Grep);
       Main;
       --  Id := Push (Top.Statusbar, 1, "end of search.");
