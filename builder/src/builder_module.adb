@@ -1008,17 +1008,21 @@ package body Builder_Module is
       end loop;
 
       --  No main program ?
+      Gtk_New (Mitem, -"<current file>");
+      Append (Menu1, Mitem);
+      File_Project_Cb.Object_Connect
+        (Mitem, "activate",
+         File_Project_Cb.To_Marshaller (On_Build'Access),
+         Slot_Object => Kernel,
+         User_Data => File_Project_Record'
+         (Length  => 0,
+          Project => No_Project,
+          File    => ""));
+
       if not Has_Child then
-         Gtk_New (Mitem, -"<current file>");
-         Append (Menu1, Mitem);
-         File_Project_Cb.Object_Connect
-           (Mitem, "activate",
-            File_Project_Cb.To_Marshaller (On_Build'Access),
-            Slot_Object => Kernel,
-            User_Data => File_Project_Record'
-            (Length  => 0,
-             Project => No_Project,
-             File    => ""));
+         Add_Accelerator
+           (Mitem, "activate", Get_Default_Accelerators (Kernel),
+            GDK_F4, 0, Gtk.Accel_Group.Accel_Visible);
       end if;
 
       Gtk_New (Mitem, -"Custom...");
