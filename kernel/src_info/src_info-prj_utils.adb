@@ -30,6 +30,12 @@ with Prj_API;                 use Prj_API;
 
 package body Src_Info.Prj_Utils is
 
+   Full_Naming_Scheme_Handling : constant Boolean := False;
+   --  <preference> Should be set to True if different naming schemes can be
+   --  seen in various subprojects (ie naming_scheme1 for project A and a
+   --  different naming_scheme2 for project B).
+   --  This must be synchronized with the matching constant in Src_Info.ALI,
+
    function Get_Filename
      (Unit_Name_Id       : Name_Id;
       Dot_Replacement_Id : Name_Id;
@@ -83,37 +89,6 @@ package body Src_Info.Prj_Utils is
 
       return Namet.Name_Find;
    end Get_Filename;
-
-   --------------------------
-   -- Get_Source_Filenames --
-   --------------------------
-
-   --  procedure Get_Source_Filenames
-   --     (Project       : Prj.Project_Id;
-   --      Unit_Name     : String;
-   --      Spec_Filename : out Types.Name_Id;
-   --      Body_Filename : out Types.Name_Id)
-   --  is
-   --     Unit_Name_Id : Name_Id;
-   --     Unit  : Prj.Com.Unit_Id;
-   --  begin
-   --     Name_Buffer (1 .. Unit_Name'Length) := Unit_Name;
-   --     Name_Len := Unit_Name'Length;
-   --     Unit_Name_Id := Name_Find;
-
-   --     Unit  := Units_Htable.Get (Unit_Name_Id);
-   --     if Unit = Prj.Com.No_Unit then
-   --        Put_Line ("*** Warning: Failed to locate " & Unit_Name &
-   --                  " project file tables.");
-   --        Spec_Filename := No_Name;
-   --        Body_Filename := No_Name;
-   --        return;
-   --     end if;
-
-   --     Spec_Filename := Units.Table (Unit).File_Names (Specification).Name;
-   --     Body_Filename := Units.Table (Unit).File_Names (Body_Part).Name;
-   --  end Get_Source_Filenames;
-   --  ??? Why was this code commented out and not just removed.
 
    -----------------------
    -- Get_Spec_Filename --
@@ -204,14 +179,84 @@ package body Src_Info.Prj_Utils is
    -------------------------
 
    function Get_Source_Filename
-     (Unit_Name : Unit_Name_Type;
-      Naming    : Prj.Naming_Data)
+     (Unit_Name : Unit_Name_Type; Project : Prj.Project_Id)
       return String
    is
+      Part        : Unit_Part;
+      Short_Uname : Name_Id;
+
+      procedure Check_Project
+        (View : Project_Id; Result : in out Name_Id);
+      --  Check into the specific View
+
+      -------------------
+      -- Check_Project --
+      -------------------
+
+      procedure Check_Project
+        (View : Project_Id; Result : in out Name_Id)
+      is
+         Candidate : Name_Id;
+         Except_Id : Array_Element_Id;
+      begin
+         if Result /= No_Name then
+            return;
+         end if;
+
+         case Part is
+            when Unit_Body =>
+               Except_Id := Search_Unit_Name
+                 (Projects.Table (View).Naming.Bodies, Short_Uname);
+            when Unit_Spec =>
+               Except_Id := Search_Unit_Name
+                 (Projects.Table (View).Naming.Specifications, Short_Uname);
+            when others =>
+               null;
+         end case;
+
+         --  If found, then return the associated filename
+         if Except_Id /= No_Array_Element then
+            Candidate := Get_Filename (Except_Id);
+
+         else
+            --  If not found, then return the filename computed using the
+            --  regular naming scheme. As a safety precaution, put back the
+            --  stripped unit name in the name buffer, because we need it and
+            --  it might have been overwritten during previous calls.
+            case Part is
+               when Unit_Spec =>
+                  Candidate := Get_Spec_Filename
+                    (Short_Uname, Projects.Table (View).Naming);
+               when Unit_Body =>
+                  Candidate := Get_Body_Filename
+                    (Short_Uname, Projects.Table (View).Naming);
+               when others =>
+                  --  Impossible or would be an error.
+                  Candidate := No_Name;
+            end case;
+         end if;
+
+         if not Full_Naming_Scheme_Handling then
+            Result := Candidate;
+
+         elsif Candidate /= No_Name
+           and then Is_Direct_Source (Get_Name_String (Candidate), View)
+         then
+            Result := Candidate;
+         end if;
+      end Check_Project;
+
+      procedure For_All_Projects is new For_Every_Project_Imported
+        (Name_Id, Check_Project);
+
       Part_Marker_Len : constant := 2; --  It is either '%s' or '%b'
-      Part            : Unit_Part;
-      Except_Id       : Array_Element_Id;
+      Result : Name_Id := No_Name;
+      D, S : Name_Id;
+
    begin
+      --  ??? This should be implemented with mapping files instead. See
+      --  ??? fname.ad[bs] in the GNAT sources
+
       Namet.Get_Name_String (Unit_Name);
 
       --  Check that the '%' marker is there
@@ -225,43 +270,44 @@ package body Src_Info.Prj_Utils is
       --  in the Name_Buffer, and search the unit name in the associated
       --  exception list
       case Namet.Name_Buffer (Namet.Name_Len) is
-         when 'b' =>
-            Part := Unit_Body;
-            Namet.Name_Len := Namet.Name_Len - Part_Marker_Len;
-            Except_Id := Search_Unit_Name (Naming.Bodies, Namet.Name_Find);
-         when 's' =>
-            Part := Unit_Spec;
-            Namet.Name_Len := Namet.Name_Len - Part_Marker_Len;
-            Except_Id :=
-              Search_Unit_Name (Naming.Specifications, Namet.Name_Find);
-         when others =>
-            --  Incorrect unit name
-            return "";
+         when 'b'    => Part := Unit_Body;
+         when 's'    => Part := Unit_Spec;
+         when others => return "";  --  Incorrect unit name
       end case;
 
-      --  If found, then return the associated filename
-      if Except_Id /= No_Array_Element then
-         return Get_Name_String (Get_Filename (Except_Id));
+      Namet.Name_Len := Namet.Name_Len - Part_Marker_Len;
+      Short_Uname := Namet.Name_Find;
+
+      if Full_Naming_Scheme_Handling then
+         For_All_Projects (Project, Result);
+      else
+         Check_Project (Project, Result);
       end if;
 
-      --  If not found, then return the filename computed using the regular
-      --  naming scheme. As a safety precaution, put back the stripped unit
-      --  name in the name buffer, because we need it and it might have been
-      --  overwritten during previous calls.
-      Namet.Get_Name_String (Unit_Name);
-      Namet.Name_Len := Namet.Name_Len - Part_Marker_Len;
+      if Result = No_Name then
+         --  ??? Special handling for the runtime files
+         --  ??? Could be simplified if we have direct access to the default
+         --  ??? naming scheme.
 
-      case Part is
-         when Unit_Spec =>
-            return Get_Name_String
-              (Get_Spec_Filename (Name_Find, Naming));
-         when Unit_Body =>
-            return Get_Name_String
-              (Get_Body_Filename (Name_Find, Naming));
-         when others =>
-            --  Impossible or would be an error.
-            return "";
-      end case;
+         Name_Len := 1;
+         Name_Buffer (1 .. Name_Len) := "-";
+         D := Name_Find;
+
+         Name_Len := 4;
+
+         if Part = Unit_Body then
+            Name_Buffer (1 .. Name_Len) := ".ads";
+         else
+            Name_Buffer (1 .. Name_Len) := ".ads";
+         end if;
+
+         S := Name_Find;
+         return Get_Name_String
+           (Get_Filename (Short_Uname, D, All_Lower_Case, S));
+
+      else
+         return Get_Name_String (Result);
+      end if;
    end Get_Source_Filename;
 
    -----------------------

@@ -24,18 +24,6 @@ with Types;    use Types;
 
 package Src_Info.Prj_Utils is
 
-   --  procedure Get_Source_Filenames
-   --     (Project       : Prj.Project_Id;
-   --      Unit_Name     : String;
-   --      Spec_Filename : out Types.Name_Id;
-   --      Body_Filename : out Types.Name_Id);
-   --  Get the name of the files containing the specifications and the body
-   --  of a given Unit_Name. The Unit_Name must be all lower-case. If the
-   --  given unit does not have a spec or a body, the corresponding Name_Id
-   --  return is set to No_Name.
-   --  ??? This does not work for system files such as the RTL files for
-   --  ??? instance.
-
    function Get_Spec_Filename (U : Prj.Com.Unit_Id) return File_Name_Type;
    --  Return Units.Table (U).File_Names (Specification).Name, or No_Name if
    --  U is equal to Prj_Unit /= Prj.Com.No_Unit.
@@ -66,13 +54,14 @@ package Src_Info.Prj_Utils is
 
    function Get_Source_Filename
      (Unit_Name : Unit_Name_Type;
-      Naming    : Prj.Naming_Data)
+      Project   : Prj.Project_Id)
       return String;
-   --  Return the source filename for the given Unit_Name, using the
-   --  Naming_Data (including the exception list). Unit_Name must be
-   --  encoded in the same format as the Unit_Name in the 'W' lines
-   --  of the GNAT ALI files (the encoding is used to determine the
-   --  unit part).
+   --  Return the source filename for the given Unit_Name.
+   --  Project and all its imported projects are tested for possible naming
+   --  schemes.
+   --  Unit_Name must be encoded in the same format as the Unit_Name in the 'W'
+   --  lines of the GNAT ALI files (the encoding is used to determine the unit
+   --  part).
 
    function Get_Spec_Filename
      (Unit_Name : Unit_Name_Type;
@@ -92,7 +81,7 @@ package Src_Info.Prj_Utils is
      (Filename : File_Name_Type;
       Project  : Prj.Project_Id)
       return Name_Id;
-   --  Compute the Unit Name associated to the given Filename using the
+   --  Compute the Unit Name associated with the given Filename using the
    --  Naming information, whithout taking the exceptions into account.
    --  ??? Note that this function does not handles krunched filenames
    --  ??? at all (and will probably never do, since it does not have
