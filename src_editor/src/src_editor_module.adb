@@ -24,6 +24,8 @@ with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNAT.Case_Util;            use GNAT.Case_Util;
 with Glib.Xml_Int;              use Glib.Xml_Int;
+with Gdk.Color;                 use Gdk.Color;
+with Gdk.GC;                    use Gdk.GC;
 with Gdk.Types;                 use Gdk.Types;
 with Gdk.Types.Keysyms;         use Gdk.Types.Keysyms;
 with Glib;                      use Glib;
@@ -86,6 +88,7 @@ with Generic_List;
 with GVD.Preferences; use GVD.Preferences;
 
 with Src_Editor_Module.Line_Highlighting;
+with Src_Editor_Buffer.Buffer_Commands; use Src_Editor_Buffer. Buffer_Commands;
 
 package body Src_Editor_Module is
 
@@ -411,6 +414,49 @@ package body Src_Editor_Module is
    end record;
    procedure Activate (Callback : access On_Recent; Item : String);
 
+   procedure Map_Cb (Widget : access Gtk_Widget_Record'Class);
+   --  Create the module-wide GCs.
+
+   ------------
+   -- Map_Cb --
+   ------------
+
+   procedure Map_Cb (Widget : access Gtk_Widget_Record'Class) is
+      Color   : Gdk_Color;
+      Success : Boolean;
+      Id      : constant Source_Editor_Module :=
+        Source_Editor_Module (Src_Editor_Module_Id);
+   begin
+      Gdk_New (Id.Blank_Lines_GC, Get_Window (Widget));
+      Gdk_New (Id.Post_It_Note_GC, Get_Window (Widget));
+
+      --  ??? Should this be a preference ?
+      Color := Parse ("#AAAAAA");
+      Alloc_Color (Get_Default_Colormap, Color, False, True, Success);
+
+      if Success then
+         Set_Foreground
+           (Id.Blank_Lines_GC, Color);
+      else
+         Set_Foreground
+           (Id.Blank_Lines_GC,
+            Black (Get_Default_Colormap));
+      end if;
+
+      --  ??? This should be a preference !
+      Color := Parse ("#FFFF88");
+      Alloc_Color (Get_Default_Colormap, Color, False, True, Success);
+
+      if Success then
+         Set_Foreground
+           (Id.Post_It_Note_GC, Color);
+      else
+         Set_Foreground
+           (Id.Post_It_Note_GC,
+            Black (Get_Default_Colormap));
+      end if;
+   end Map_Cb;
+
    ------------------
    -- Get_Filename --
    ------------------
@@ -692,7 +738,10 @@ package body Src_Editor_Module is
                      Mark_Record.Child := Child;
                      Box := Source_Box (Get_Widget (Child));
                      Mark_Record.Mark :=
-                       Create_Mark (Box.Editor, Line, Column);
+                       Create_Mark
+                         (Box.Editor,
+                          Editable_Line_Type (Line),
+                          Column);
                   else
                      Mark_Record.Line := Line;
                      Mark_Record.Column := Column;
@@ -935,6 +984,28 @@ package body Src_Editor_Module is
                end if;
             end if;
          end;
+      elsif Command = "add_blank_lines" then
+         declare
+            Filename : constant String  := Nth_Arg (Data, 1);
+            Line     : constant Integer := Nth_Arg (Data, 2);
+            Number   : constant Integer := Nth_Arg (Data, 3);
+            Child    : MDI_Child;
+            Box      : Source_Box;
+         begin
+            Child := Find_Editor (Kernel, Filename);
+
+            if Child = null then
+               Set_Error_Msg (Data, -"file not open");
+            else
+               Box := Source_Box (Get_Widget (Child));
+
+               if Line >= 0 and then Number > 0 then
+                  Add_Blank_Lines
+                    (Box.Editor, Editable_Line_Type (Line),
+                    Id.Blank_Lines_GC, "", Number);
+               end if;
+            end if;
+         end;
       end if;
    end Edit_Command_Handler;
 
@@ -984,7 +1055,8 @@ package body Src_Editor_Module is
                      Mark =>
                        Create_Mark
                          (Box.Editor,
-                          Mark_Record.Line, Mark_Record.Column),
+                          Editable_Line_Type (Mark_Record.Line),
+                          Mark_Record.Column),
                      Column => Mark_Record.Column,
                      Length => Mark_Record.Length));
             end if;
@@ -3171,6 +3243,8 @@ package body Src_Editor_Module is
            File_Edited_Cb'Access,
            Kernel_Handle (Kernel));
 
+      --  Commands
+
       Register_Command
         (Kernel,
          Command      => "edit",
@@ -3209,6 +3283,17 @@ package body Src_Editor_Module is
          Minimum_Args => 2,
          Maximum_Args => 3,
          Handler      => Line_Highlighting.Edit_Command_Handler'Access);
+
+      Register_Command
+        (Kernel,
+         Command      => "add_blank_lines",
+         Params       => "(file, start_line, number_of_lines)",
+         Description  =>
+           -("Adds number_of_lines non-editable lines to the buffer editing"
+             & " file, starting at line start_line."),
+         Minimum_Args => 3,
+         Maximum_Args => 3,
+         Handler      => Edit_Command_Handler'Access);
 
       Register_Command
         (Kernel,
@@ -3452,6 +3537,18 @@ package body Src_Editor_Module is
       Register_Special_Alias_Entity
         (Kernel, -"Directory of current file", 'd',
          Expand_Aliases_Entities'Access);
+
+      --  Create the module-wide GCs.
+      --  We need to do that in a callback to "map"
+
+      if not Mapped_Is_Set (Get_Main_Window (Kernel)) then
+         Widget_Callback.Connect
+           (Get_Main_Window (Kernel), "map",
+            Marsh => Widget_Callback.To_Marshaller (Map_Cb'Access),
+            After => True);
+      else
+         Map_Cb (Get_Main_Window (Kernel));
+      end if;
    end Register_Module;
 
    -------------------------
@@ -3523,6 +3620,9 @@ package body Src_Editor_Module is
    begin
       String_List_Utils.String_List.Free (Id.Unopened_Files);
       Mark_Identifier_List.Free (Id.Stored_Marks);
+
+      Unref (Id.Post_It_Note_GC);
+      Unref (Id.Blank_Lines_GC);
    end Destroy;
 
    -----------------
