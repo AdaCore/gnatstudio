@@ -246,6 +246,28 @@ package body Main_Debug_Window_Pkg.Callbacks is
    end On_Select_All1_Activate;
 
    ------------------------------
+   -- On_Edit_Source1_Activate --
+   ------------------------------
+
+   procedure On_Edit_Source1_Activate
+     (Object : access Gtk_Menu_Item_Record'Class)
+   is
+   begin
+      null;
+   end On_Edit_Source1_Activate;
+
+   --------------------------------
+   -- On_Reload_Source1_Activate --
+   --------------------------------
+
+   procedure On_Reload_Source1_Activate
+     (Object : access Gtk_Menu_Item_Record'Class)
+   is
+   begin
+      null;
+   end On_Reload_Source1_Activate;
+
+   ------------------------------
    -- On_Preferences1_Activate --
    ------------------------------
 
@@ -267,16 +289,60 @@ package body Main_Debug_Window_Pkg.Callbacks is
       null;
    end On_Gdb_Settings1_Activate;
 
-   -------------------------------
-   -- On_Save_Options1_Activate --
-   -------------------------------
+   --------------------------
+   -- On_Lookup_1_Activate --
+   --------------------------
 
-   procedure On_Save_Options1_Activate
+   procedure On_Lookup_1_Activate
      (Object : access Gtk_Menu_Item_Record'Class)
    is
    begin
       null;
-   end On_Save_Options1_Activate;
+   end On_Lookup_1_Activate;
+
+   ------------------------
+   -- On_Find_1_Activate --
+   ------------------------
+
+   procedure On_Find_1_Activate
+     (Object : access Gtk_Menu_Item_Record'Class)
+   is
+   begin
+      null;
+   end On_Find_1_Activate;
+
+   ------------------------
+   -- On_Find_2_Activate --
+   ------------------------
+
+   procedure On_Find_2_Activate
+     (Object : access Gtk_Menu_Item_Record'Class)
+   is
+   begin
+      null;
+   end On_Find_2_Activate;
+
+   ----------------------------------
+   -- On_Find_Words_Only1_Activate --
+   ----------------------------------
+
+   procedure On_Find_Words_Only1_Activate
+     (Object : access Gtk_Check_Menu_Item_Record'Class)
+   is
+   begin
+      null;
+   end On_Find_Words_Only1_Activate;
+
+   --------------------------------------
+   -- On_Find_Case_Sensitive1_Activate --
+   --------------------------------------
+
+   procedure On_Find_Case_Sensitive1_Activate
+     (Object : access Gtk_Check_Menu_Item_Record'Class)
+   is
+   begin
+      null;
+   end On_Find_Case_Sensitive1_Activate;
 
    -----------------------------------
    -- On_Execution_Window1_Activate --
@@ -674,105 +740,6 @@ package body Main_Debug_Window_Pkg.Callbacks is
       null;
    end On_Signals1_Activate;
 
-   --------------------------
-   -- On_Lookup_1_Activate --
-   --------------------------
-
-   procedure On_Lookup_1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class)
-   is
-   begin
-      null;
-   end On_Lookup_1_Activate;
-
-   ------------------------
-   -- On_Find_1_Activate --
-   ------------------------
-
-   procedure On_Find_1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class)
-   is
-   begin
-      null;
-   end On_Find_1_Activate;
-
-   ------------------------
-   -- On_Find_2_Activate --
-   ------------------------
-
-   procedure On_Find_2_Activate
-     (Object : access Gtk_Menu_Item_Record'Class)
-   is
-   begin
-      null;
-   end On_Find_2_Activate;
-
-   ----------------------------------
-   -- On_Find_Words_Only1_Activate --
-   ----------------------------------
-
-   procedure On_Find_Words_Only1_Activate
-     (Object : access Gtk_Check_Menu_Item_Record'Class)
-   is
-   begin
-      null;
-   end On_Find_Words_Only1_Activate;
-
-   --------------------------------------
-   -- On_Find_Case_Sensitive1_Activate --
-   --------------------------------------
-
-   procedure On_Find_Case_Sensitive1_Activate
-     (Object : access Gtk_Check_Menu_Item_Record'Class)
-   is
-   begin
-      null;
-   end On_Find_Case_Sensitive1_Activate;
-
-   ---------------------------------------
-   -- On_Display_Line_Numbers1_Activate --
-   ---------------------------------------
-
-   procedure On_Display_Line_Numbers1_Activate
-     (Object : access Gtk_Check_Menu_Item_Record'Class)
-   is
-   begin
-      null;
-   end On_Display_Line_Numbers1_Activate;
-
-   ---------------------------------------
-   -- On_Display_Machine_Code1_Activate --
-   ---------------------------------------
-
-   procedure On_Display_Machine_Code1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class)
-   is
-   begin
-      null;
-   end On_Display_Machine_Code1_Activate;
-
-   ------------------------------
-   -- On_Edit_Source1_Activate --
-   ------------------------------
-
-   procedure On_Edit_Source1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class)
-   is
-   begin
-      null;
-   end On_Edit_Source1_Activate;
-
-   --------------------------------
-   -- On_Reload_Source1_Activate --
-   --------------------------------
-
-   procedure On_Reload_Source1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class)
-   is
-   begin
-      null;
-   end On_Reload_Source1_Activate;
-
    -----------------------------------
    -- On_Edit_Breakpoints1_Activate --
    -----------------------------------
@@ -871,6 +838,17 @@ package body Main_Debug_Window_Pkg.Callbacks is
    begin
       null;
    end On_Display_Registers1_Activate;
+
+   ---------------------------------------
+   -- On_Display_Machine_Code1_Activate --
+   ---------------------------------------
+
+   procedure On_Display_Machine_Code1_Activate
+     (Object : access Gtk_Menu_Item_Record'Class)
+   is
+   begin
+      null;
+   end On_Display_Machine_Code1_Activate;
 
    --------------------------------------
    -- On_More_Status_Display1_Activate --

@@ -66,14 +66,32 @@ package Main_Debug_Window_Pkg.Callbacks is
    procedure On_Select_All1_Activate
      (Object : access Gtk_Menu_Item_Record'Class);
 
+   procedure On_Edit_Source1_Activate
+     (Object : access Gtk_Menu_Item_Record'Class);
+
+   procedure On_Reload_Source1_Activate
+     (Object : access Gtk_Menu_Item_Record'Class);
+
    procedure On_Preferences1_Activate
      (Object : access Gtk_Widget_Record'Class);
 
    procedure On_Gdb_Settings1_Activate
      (Object : access Gtk_Widget_Record'Class);
 
-   procedure On_Save_Options1_Activate
+   procedure On_Lookup_1_Activate
      (Object : access Gtk_Menu_Item_Record'Class);
+
+   procedure On_Find_1_Activate
+     (Object : access Gtk_Menu_Item_Record'Class);
+
+   procedure On_Find_2_Activate
+     (Object : access Gtk_Menu_Item_Record'Class);
+
+   procedure On_Find_Words_Only1_Activate
+     (Object : access Gtk_Check_Menu_Item_Record'Class);
+
+   procedure On_Find_Case_Sensitive1_Activate
+     (Object : access Gtk_Check_Menu_Item_Record'Class);
 
    procedure On_Execution_Window1_Activate
      (Object : access Gtk_Menu_Item_Record'Class);
@@ -183,33 +201,6 @@ package Main_Debug_Window_Pkg.Callbacks is
    procedure On_Signals1_Activate
      (Object : access Gtk_Widget_Record'Class);
 
-   procedure On_Lookup_1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class);
-
-   procedure On_Find_1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class);
-
-   procedure On_Find_2_Activate
-     (Object : access Gtk_Menu_Item_Record'Class);
-
-   procedure On_Find_Words_Only1_Activate
-     (Object : access Gtk_Check_Menu_Item_Record'Class);
-
-   procedure On_Find_Case_Sensitive1_Activate
-     (Object : access Gtk_Check_Menu_Item_Record'Class);
-
-   procedure On_Display_Line_Numbers1_Activate
-     (Object : access Gtk_Check_Menu_Item_Record'Class);
-
-   procedure On_Display_Machine_Code1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class);
-
-   procedure On_Edit_Source1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class);
-
-   procedure On_Reload_Source1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class);
-
    procedure On_Edit_Breakpoints1_Activate
      (Object : access Gtk_Widget_Record'Class);
 
@@ -236,6 +227,9 @@ package Main_Debug_Window_Pkg.Callbacks is
 
    procedure On_Display_Registers1_Activate
      (Object : access Gtk_Widget_Record'Class);
+
+   procedure On_Display_Machine_Code1_Activate
+     (Object : access Gtk_Menu_Item_Record'Class);
 
    procedure On_More_Status_Display1_Activate
      (Object : access Gtk_Menu_Item_Record'Class);
