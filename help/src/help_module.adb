@@ -54,7 +54,6 @@ with Glide_Kernel.Scripts;         use Glide_Kernel.Scripts;
 with VFS;                          use VFS;
 with System;                       use System;
 with Welcome_Page;                 use Welcome_Page;
-with GVD.Preferences;
 
 package body Help_Module is
 
@@ -133,6 +132,10 @@ package body Help_Module is
      (Kernel    : access Kernel_Handle_Record'Class;
       Help_File : VFS.Virtual_File);
    --  Display HTML Help file.
+
+   procedure Display_Help
+     (Kernel    : access Kernel_Handle_Record'Class;
+      Help_File : VFS.Virtual_File) is separate;
 
    procedure On_Load_HTML
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
@@ -670,58 +673,6 @@ package body Help_Module is
    end Register_Help;
 
    ------------------
-   -- Display_Help --
-   ------------------
-
-   procedure Display_Help
-     (Kernel    : access Kernel_Handle_Record'Class;
-      Help_File : VFS.Virtual_File)
-   is
-      Args    : Argument_List_Access;
-      File    : GNAT.OS_Lib.String_Access;
-      Cmd     : GNAT.OS_Lib.String_Access;
-      Process : Process_Id;
-
-   begin
-      if not Is_Regular_File (Help_File) then
-         Insert (Kernel,
-                 Full_Name (Help_File).all & (-": File not found"),
-                 Mode => Error);
-      end if;
-
-      Args := Argument_String_To_List
-        (Get_Pref (Kernel, GVD.Preferences.Html_Browser));
-      Cmd := Locate_Exec_On_Path
-               (Unprotect (Protect (Args (Args'First).all, False)));
-
-      if Cmd = null then
-         Insert
-           (Kernel,
-            -"Could not locate web browser on path: "
-            & Args (Args'First).all,
-            Mode => Error);
-
-      else
-         File := new String'(Full_Name (Help_File, True).all);
-         Process :=
-           Non_Blocking_Spawn
-             (Cmd.all, Args (Args'First + 1 .. Args'Last) & (1 => File));
-
-         if Process = Invalid_Pid then
-            Insert
-              (Kernel,
-               -"Could not launch web browser: " & Args (Args'First).all,
-               Mode => Error);
-         end if;
-
-         Free (Cmd);
-         Free (File);
-      end if;
-
-      Free (Args);
-   end Display_Help;
-
-   ------------------
    -- Load_Desktop --
    ------------------
 
@@ -1053,7 +1004,6 @@ package body Help_Module is
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
    is
       Help  : constant String := "/_" & (-"Help") & '/';
---        Name  : constant String := -"Help";
       Recent_Menu_Item : Gtk_Menu_Item;
       Path_From_Env : GNAT.OS_Lib.String_Access := Getenv ("GPS_DOC_PATH");
 
@@ -1080,17 +1030,6 @@ package body Help_Module is
       end if;
 
       Free (Path_From_Env);
---
---        Register_Search_Function
---          (Kernel => Kernel,
---           Data   => (Length            => Name'Length,
---                      Label             => Name,
---                      Factory           => Help_Factory'Access,
---                      Extra_Information => null,
---                      Id                => Module_ID (Help_Module_ID),
---                 Mask              => All_Options and not Supports_Replace
---                        and not Search_Backward
---                        and not Whole_Word and not All_Occurrences));
 
       --  Add help menus
 
