@@ -24,6 +24,7 @@ with Glide_Intl;                use Glide_Intl;
 with Glide_Kernel;              use Glide_Kernel;
 with Glide_Kernel.Console;      use Glide_Kernel.Console;
 with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
+with Glide_Kernel.Scripts;      use Glide_Kernel.Scripts;
 with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
 with Glide_Kernel.Task_Manager; use Glide_Kernel.Task_Manager;
 
@@ -45,6 +46,7 @@ with VCS_Module;                use VCS_Module;
 
 with Commands;                  use Commands;
 with Commands.External;         use Commands.External;
+with Commands.Custom;           use Commands.Custom;
 with Traces;                    use Traces;
 with VFS;                       use VFS;
 
@@ -1202,6 +1204,7 @@ package body VCS.CVS is
         Create (Full_Filename => String_List.Head (Head));
       A            : Line_Information_Array (1 .. Length);
       Index        : Natural;
+      Script       : Scripting_Language;
 
    begin
       --  ??? This assumes that the file currently opened is identical to the
@@ -1249,13 +1252,29 @@ package body VCS.CVS is
          Index := Index - S'First + 2;
       end;
 
+      Script := Lookup_Scripting_Language (Kernel, GPS_Shell_Name);
+
       for J in 1 .. Length loop
          exit when L_Temp = Null_Node;
 
          declare
-            S : constant String := Data (L_Temp);
+            S         : constant String := Data (L_Temp);
+            Rev_Index : Natural := S'First;
+            Command   : Custom_Command_Access;
          begin
             A (J).Text := new String'(S (S'First .. S'First + Index));
+
+            Skip_To_Char (S, Rev_Index, '(');
+
+            Create
+              (Command, Kernel,
+               "vcs.log "
+               & String_List.Head (Head)
+               & " "
+               & Strip_Quotes (S (S'First .. Rev_Index - 1)),
+               Script);
+
+            A (J).Associated_Command := Command_Access (Command);
          end;
 
          L_Temp := Next (L_Temp);
@@ -1309,7 +1328,8 @@ package body VCS.CVS is
 
    procedure Log
      (Rep  : access CVS_Record;
-      File : VFS.Virtual_File)
+      File : VFS.Virtual_File;
+      Rev  : String)
    is
       use String_List;
 
@@ -1319,8 +1339,13 @@ package body VCS.CVS is
 
    begin
       Append (Args, "log");
+
+      if Rev /= "" then
+         Append (Args, "-r" & Rev);
+      end if;
+
       Append (Args, Locale_Base_Name (File));
-      Append (Command_Head, Base_Name (File) & "$changelog");
+      Append (Command_Head, Base_Name (File) & "$changelog_" & Rev);
 
       Create
         (C,
