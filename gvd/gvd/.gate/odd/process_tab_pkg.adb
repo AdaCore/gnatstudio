@@ -43,6 +43,8 @@ begin
    Set_Shadow_Type (Process_Tab.Data_Canvas, Shadow_In);
 
    Gtk_New (Process_Tab.Thread_Notebook);
+   Notebook_Callback.Connect
+     (Process_Tab.Thread_Notebook, "switch_page", On_Thread_Notebook_Switch_Page'Access);
    Add (Process_Tab.Vpaned6, Process_Tab.Thread_Notebook);
    Set_Scrollable (Process_Tab.Thread_Notebook, True);
    Set_Show_Border (Process_Tab.Thread_Notebook, True);
@@ -58,7 +60,7 @@ begin
    Gtk_New_Hbox (Process_Tab.Editor_Text, False, 0);
    Add (Process_Tab.Frame10, Process_Tab.Editor_Text);
 
-   Gtk_New (Process_Tab.Label52, -("Main Thread"));
+   Gtk_New (Process_Tab.Label52, -("Current Thread"));
    Set_Alignment (Process_Tab.Label52, 0.5, 0.5);
    Set_Padding (Process_Tab.Label52, 0, 0);
    Set_Justify (Process_Tab.Label52, Justify_Center);
