@@ -248,6 +248,7 @@ package body Builder_Module is
       Buffer       : String_Access := new String (1 .. 1024);
       Buffer_Pos   : Natural := Buffer'First;
       Tmp          : String_Access;
+      Status       : Integer;
 
    begin
       if Top.Interrupted then
@@ -317,14 +318,9 @@ package body Builder_Module is
          Set_Progress_Text (Top.Statusbar, "");
          Console.Insert (Kernel, Expect_Out (Fd.all), Add_LF => True);
 
-         Close (Fd.all);
-         Console.Insert (Kernel, -"process terminated.");
-
-         --  ??? As soon as GNAT.Expect is modified, change the lines above by
-         --  the following:
-         --  Close (Fd.all, Status);
-         --  Console.Insert
-         --    (Kernel, -"process exited with status" & Status'Img);
+         Close (Fd.all, Status);
+         Console.Insert
+           (Kernel, -"process exited with status" & Status'Img);
 
          Pop_State (Kernel);
          Set_Sensitive_Menus (Kernel, True);
