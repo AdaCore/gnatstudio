@@ -429,6 +429,26 @@ package body Src_Editor_Module is
       Data   : access Hooks_Data'Class);
    --  Callback for the "cursor_stopped" hook.
 
+   type Child_Triplet is array (1 .. 3) of MDI_Child;
+   type Child_Triplet_Access is access Child_Triplet;
+
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+     (Child_Triplet, Child_Triplet_Access);
+
+   package Child_Triplet_Callback is new Gtk.Handlers.User_Callback
+     (Widget_Type => Gtk_Widget_Record,
+      User_Type   => Child_Triplet_Access);
+
+   procedure On_Raise_Child
+     (Child   : access Gtk_Widget_Record'Class;
+      Triplet : Child_Triplet_Access);
+   --  Called when synchronized editor Child in Triplet is raised.
+
+   procedure On_Delete_Child
+     (Child   : access Gtk_Widget_Record'Class;
+      Triplet : Child_Triplet_Access);
+   --  Called when synchronized editor Child in Triplet is deleted.
+
    procedure Preferences_Changed
      (Kernel : access Kernel_Handle_Record'Class);
    --  Called when the preferences have changed.
@@ -1696,11 +1716,15 @@ package body Src_Editor_Module is
               Create (Nth_Arg (Data, 2), Kernel);
             Child_1    : MDI_Child;
             Child_2    : MDI_Child;
+            use Child_Triplet_Callback;
+            Triplet    : Child_Triplet_Access;
          begin
             Child_1 := Find_Editor (Kernel, Filename_1);
             Child_2 := Find_Editor (Kernel, Filename_2);
 
             if Child_1 /= null and then Child_2 /= null then
+               Triplet := new Child_Triplet'(Child_1, Child_2, null);
+
                Set_Synchronized_Editor
                  (Get_View (Source_Box (Get_Widget (Child_1)).Editor),
                   Get_View (Source_Box (Get_Widget (Child_2)).Editor));
@@ -1725,12 +1749,30 @@ package body Src_Editor_Module is
                            Get_View
                              (Source_Box (Get_Widget (Child_1)).Editor));
                      end if;
+
+                     Triplet (3) := Child_3;
                   end;
+
                else
                   Set_Synchronized_Editor
                     (Get_View (Source_Box (Get_Widget (Child_2)).Editor),
                      Get_View (Source_Box (Get_Widget (Child_1)).Editor));
                end if;
+
+               for C in Triplet'Range loop
+                  if Triplet (C) /= null then
+                     Connect
+                       (Triplet (C), "grab_focus",
+                        Marshallers.Void_Marshaller.To_Marshaller
+                          (On_Raise_Child'Access),
+                        User_Data => Triplet);
+                     Connect
+                       (Triplet (C), "destroy",
+                        Marshallers.Void_Marshaller.To_Marshaller
+                          (On_Delete_Child'Access),
+                        User_Data => Triplet);
+                  end if;
+               end loop;
             end if;
          end;
 
@@ -1970,6 +2012,64 @@ package body Src_Editor_Module is
          Trace (Exception_Handle,
                 "Unexpected exception: " & Exception_Information (E));
    end File_Saved_Cb;
+
+   ---------------------
+   -- On_Delete_Child --
+   ---------------------
+
+   procedure On_Delete_Child
+     (Child   : access Gtk_Widget_Record'Class;
+      Triplet : Child_Triplet_Access)
+   is
+      All_Null : Boolean := True;
+   begin
+      for C in Triplet'Range loop
+         if Triplet (C) = MDI_Child (Child) then
+            Triplet (C) := null;
+         end if;
+
+         if Triplet (C) /= null then
+            All_Null := False;
+         end if;
+      end loop;
+
+      if All_Null then
+         --  All editors in Triplet are closed: free memory associated to it
+         declare
+            X : Child_Triplet_Access := Triplet;
+         begin
+            Unchecked_Free (X);
+         end;
+      end if;
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
+   end On_Delete_Child;
+
+   --------------------
+   -- On_Raise_Child --
+   --------------------
+
+   procedure On_Raise_Child
+     (Child   : access Gtk_Widget_Record'Class;
+      Triplet : Child_Triplet_Access) is
+   begin
+      for C in Triplet'Range loop
+         if Triplet (C) /= null
+           and then Triplet (C) /= MDI_Child (Child)
+           and then not Is_Floating (Triplet (C))
+           and then not Is_Raised (Triplet (C))
+           and then Get_Parent (Triplet (C)) /= Get_Parent (Child)
+         then
+            Raise_Child (Triplet (C), False);
+         end if;
+      end loop;
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
+   end On_Raise_Child;
 
    -----------------------
    -- Cursor_Stopped_Cb --
