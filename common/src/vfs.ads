@@ -61,7 +61,7 @@ package VFS is
    --  Return a file, given its base name.
    --  The full name will never be computable. Consider using Projects.Create
    --  if you know to which project the file belongs. Also consider using
-   --  Glide_Kernel.Create
+   --  GPS.Kernel.Create
    --
    --  ??? Currently, this does the same thing as create, but it is
    --  preferable to distinguish both cases just in case.
