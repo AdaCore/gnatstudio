@@ -35,6 +35,7 @@ with Commands;             use Commands;
 with Commands.Debugger;    use Commands.Debugger;
 
 with Ada.Unchecked_Deallocation;
+with GNAT.OS_Lib;
 
 package body GVD.Text_Box.Source_Editor.Glide is
 
@@ -153,7 +154,8 @@ package body GVD.Text_Box.Source_Editor.Glide is
 
          if Set_Current then
             Free (Editor.Debugger_Current_File);
-            Editor.Debugger_Current_File := new String'(File_Name);
+            Editor.Debugger_Current_File := new String'
+              (GNAT.OS_Lib.Normalize_Pathname (File_Name));
          end if;
 
          Open_File_Editor
