@@ -52,7 +52,9 @@ package Debugger.Gdb is
    function Highlighting_Pattern
      (Debugger : access Gdb_Debugger) return GNAT.Regpat.Pattern_Matcher;
 
-   procedure Display_Prompt (Debugger : access Gdb_Debugger);
+   procedure Display_Prompt
+     (Debugger : access Gdb_Debugger;
+      Wait_For_Prompt : Boolean := True);
 
    procedure Found_File_Name
      (Debugger    : access Gdb_Debugger;

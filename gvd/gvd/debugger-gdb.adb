@@ -427,7 +427,7 @@ package body Debugger.Gdb is
       --  We do that only in graphical mode, since the filter needs to
       --  access the main_debug_window.
 
-      if Proxy.all in Gui_Process_Proxy'Class then
+      if Window /= null then
          Add_Output_Filter
            (Get_Descriptor (Debugger.Process).all,
             Language_Filter'Access,
@@ -444,13 +444,17 @@ package body Debugger.Gdb is
 
       --  ??? Should avoid the duplication of this code
 
-      if Main_Debug_Window_Access (Window).Debug_Mode then
+      if Window /= null
+        and then Main_Debug_Window_Access (Window).Debug_Mode
+      then
          Add_Output_Filter
            (Get_Descriptor (Debugger.Process).all, Trace_Filter'Access);
          Add_Input_Filter
            (Get_Descriptor (Debugger.Process).all, Trace_Filter'Access);
 
-      elsif Main_Debug_Window_Access (Window).TTY_Mode then
+      elsif Window /= null
+        and then Main_Debug_Window_Access (Window).TTY_Mode
+      then
          Add_Output_Filter
            (Get_Descriptor (Debugger.Process).all,
             TTY_Filter'Access,
@@ -958,9 +962,12 @@ package body Debugger.Gdb is
    -- Display_Prompt --
    --------------------
 
-   procedure Display_Prompt (Debugger : access Gdb_Debugger) is
+   procedure Display_Prompt
+     (Debugger : access Gdb_Debugger;
+      Wait_For_Prompt : Boolean := True)
+   is
    begin
-      Send (Debugger, "  ");
+      Send (Debugger, "  ", Wait_For_Prompt => Wait_For_Prompt);
    end Display_Prompt;
 
    ---------------------
@@ -985,6 +992,9 @@ package body Debugger.Gdb is
       if Matched (0) = No_Match then
 
          --  Try another regexp
+         --  This regexp takes longer to execute when the output has a lot of
+         --  lines. There wouldn't be any need to test that if we knew what
+         --  is the debugger output and what is the user's program output???
          Match (File_Name_Pattern2, Str, Matched);
          if Matched (0) = No_Match then
             Name_First := 0;
@@ -1015,7 +1025,7 @@ package body Debugger.Gdb is
      (Debugger : access Gdb_Debugger) return Odd.Types.String_Array
    is
       S         : constant String :=
-        Send (Debugger, "info sources");
+        Send (Debugger, "info sources", Is_Internal => True);
       Num_Files : Natural := 0;
    begin
       --  Count the number of files
@@ -1118,13 +1128,28 @@ package body Debugger.Gdb is
       --  The value looks like:   (access integer) 0xbffff54c
       --  or                  :    0x0
       --  or                  :   (<ref> TstringS29b) @0xbfffdba0
+      --  or                  :   (void (*)()) 0x804845c <foo>
 
       elsif Result'Tag = Access_Type'Tag then
 
          --  Skip the parenthesis contents if needed
          if Index <= Type_Str'Last and then Type_Str (Index) = '(' then
-            Skip_To_Char (Type_Str, Index, ')');
-            Index := Index + 2;
+            declare
+               Num : Natural := 1;
+            begin
+               Index := Index + 1;
+               while Num /= 0
+                 and then Index <= Type_Str'Last
+               loop
+                  if Type_Str (Index) = ')' then
+                     Num := Num - 1;
+                  elsif Type_Str (Index) = '(' then
+                     Num := Num + 1;
+                  end if;
+                  Index := Index + 1;
+               end loop;
+            end;
+            Index := Index + 1;
          end if;
 
          --  Access to subprograms are sometimes printed as:
@@ -1346,116 +1371,112 @@ package body Debugger.Gdb is
      return Breakpoint_Array
    is
       Num_Breakpoints : Natural := 0;
+      S : String := Send (Debugger, "info breakpoints", Is_Internal => True);
+      Index : Natural := S'First;
+      Tmp   : Natural;
    begin
-      Send (Debugger, "info breakpoints", Is_Internal => True);
+
+      --  Skip the first line (that indicates there is no breakpoints,
+      --  or that gives the title of each column).
+      --  A breakpoint exists for each line that starts with a number.
+
+      while Index <= S'Last loop
+         if S (Index) in '0' .. '9' then
+            Num_Breakpoints := Num_Breakpoints + 1;
+         end if;
+         Skip_To_Char (S, Index, ASCII.LF);
+         Index := Index + 1;
+      end loop;
+
+      --  Parse each line. The general format looks like:
+      --  Num Type           Disp Enb Address    What
+      --  1   breakpoint     keep y   0x08052c1f on unhandled exception
+      --                                         at a-except.adb:1460
 
       declare
-         S     : String := Expect_Out (Get_Process (Debugger));
-         Index : Natural := S'First;
-         Tmp   : Natural;
+         Br      : Breakpoint_Array (1 .. Num_Breakpoints);
+         Num     : Natural := 1;
+         Matched : Match_Array (0 .. 10);
       begin
-         --  Skip the first line (that indicates there is no breakpoints,
-         --  or that gives the title of each column).
-         --  A breakpoint exists for each line that starts with a number.
+         Index := S'First;
+         Skip_To_Char (S, Index, ASCII.LF);
+         Index := Index + 1;
 
-         while Index <= S'Last loop
-            if S (Index) in '0' .. '9' then
-               Num_Breakpoints := Num_Breakpoints + 1;
-            end if;
-            Skip_To_Char (S, Index, ASCII.LF);
-            Index := Index + 1;
-         end loop;
+         while Num <= Num_Breakpoints loop
+            Match (Breakpoint_Pattern, S (Index .. S'Last), Matched);
 
-         --  Parse each line. The general format looks like:
-         --  Num Type           Disp Enb Address    What
-         --  1   breakpoint     keep y   0x08052c1f on unhandled exception
-         --                                         at a-except.adb:1460
+            if Matched (0) /= No_Match then
+               Br (Num).Num :=
+                 Integer'Value (S (Matched (1).First .. Matched (1).Last));
 
-         declare
-            Br      : Breakpoint_Array (1 .. Num_Breakpoints);
-            Num     : Natural := 1;
-            Matched : Match_Array (0 .. 10);
-         begin
-            Index := S'First;
-            Skip_To_Char (S, Index, ASCII.LF);
-            Index := Index + 1;
-
-            while Num <= Num_Breakpoints loop
-               Match (Breakpoint_Pattern, S (Index .. S'Last), Matched);
-
-               if Matched (0) /= No_Match then
-                  Br (Num).Num :=
-                    Integer'Value (S (Matched (1).First .. Matched (1).Last));
-
-                  if S (Matched (2).First) = 'b' then
-                     Br (Num).The_Type := Breakpoint;
-                  else
-                     Br (Num).The_Type := Watchpoint;
-                  end if;
-
-                  case S (Matched (3).First) is
-                     when 'k' => Br (Num).Disposition := Keep;
-                     when 'd' => Br (Num).Disposition := Disable;
-                     when others => Br (Num).Disposition := Delete;
-                  end case;
-
-                  Br (Num).Enabled := S (Matched (4).First) = 'y';
-
-                  if Br (Num).The_Type = Breakpoint then
-                     Br (Num).Address :=
-                       new String'(S (Matched (5).First .. Matched (5).Last));
-                  else
-                     Br (Num).Expression :=
-                       new String'(S (Matched (5).First .. Matched (5).Last));
-                  end if;
-
-                  --  Go to beginning of next line.
-                  --  If we don't have a new breackpoint, add the line to the
-                  --  information.
-                  Tmp := Matched (6).First;
-                  Index := Tmp;
+               if S (Matched (2).First) = 'b' then
+                  Br (Num).The_Type := Breakpoint;
                else
-                  Tmp := Index;
+                  Br (Num).The_Type := Watchpoint;
                end if;
 
-               while Index <= S'Last
-                 and then not (S (Index) in '0' .. '9')
-               loop
-                  Skip_To_Char (S, Index, ASCII.LF);
-                  Index := Index + 1;
-               end loop;
+               case S (Matched (3).First) is
+                  when 'k' => Br (Num).Disposition := Keep;
+                  when 'd' => Br (Num).Disposition := Disable;
+                  when others => Br (Num).Disposition := Delete;
+               end case;
 
-               if Matched (0) /= No_Match then
-                  Br (Num).Info := new String'(S (Tmp .. Index - 2));
+               Br (Num).Enabled := S (Matched (4).First) = 'y';
 
-                  Match (File_Name_In_Breakpoint, Br (Num).Info.all, Matched);
-                  if Matched (0) /= No_Match then
-                     Br (Num).File := new String'
-                       (Base_File_Name (Br (Num).Info
-                          (Matched (1).First .. Matched (1).Last)));
-                     Br (Num).Line := Integer'Value
-                       (Br (Num).Info (Matched (2).First .. Matched (2).Last));
-                  end if;
-
-                  Match (Exception_In_Breakpoint, Br (Num).Info.all, Matched);
-                  if Matched (0) /= No_Match then
-                     Br (Num).Except := new String'
-                       (Br (Num).Info (Matched (1).First .. Matched (1).Last));
-                  end if;
-
-                  Match (Subprogram_In_Breakpoint, Br (Num).Info.all, Matched);
-                  if Matched (0) /= No_Match then
-                     Br (Num).Subprogram := new String'
-                       (Br (Num).Info (Matched (1).First .. Matched (1).Last));
-                  end if;
-
-                  Num := Num + 1;
-
+               if Br (Num).The_Type = Breakpoint then
+                  Br (Num).Address :=
+                    new String'(S (Matched (5).First .. Matched (5).Last));
+               else
+                  Br (Num).Expression :=
+                    new String'(S (Matched (5).First .. Matched (5).Last));
                end if;
+
+               --  Go to beginning of next line.
+               --  If we don't have a new breackpoint, add the line to the
+               --  information.
+               Tmp := Matched (6).First;
+               Index := Tmp;
+            else
+               Tmp := Index;
+            end if;
+
+            while Index <= S'Last
+              and then not (S (Index) in '0' .. '9')
+            loop
+               Skip_To_Char (S, Index, ASCII.LF);
+               Index := Index + 1;
             end loop;
 
-            return Br;
-         end;
+            if Matched (0) /= No_Match then
+               Br (Num).Info := new String'(S (Tmp .. Index - 2));
+
+               Match (File_Name_In_Breakpoint, Br (Num).Info.all, Matched);
+               if Matched (0) /= No_Match then
+                  Br (Num).File := new String'
+                    (Base_File_Name (Br (Num).Info
+                                     (Matched (1).First .. Matched (1).Last)));
+                  Br (Num).Line := Integer'Value
+                    (Br (Num).Info (Matched (2).First .. Matched (2).Last));
+               end if;
+
+               Match (Exception_In_Breakpoint, Br (Num).Info.all, Matched);
+               if Matched (0) /= No_Match then
+                  Br (Num).Except := new String'
+                    (Br (Num).Info (Matched (1).First .. Matched (1).Last));
+               end if;
+
+               Match (Subprogram_In_Breakpoint, Br (Num).Info.all, Matched);
+               if Matched (0) /= No_Match then
+                  Br (Num).Subprogram := new String'
+                    (Br (Num).Info (Matched (1).First .. Matched (1).Last));
+               end if;
+
+               Num := Num + 1;
+
+            end if;
+         end loop;
+
+         return Br;
       end;
    end List_Breakpoints;
 
