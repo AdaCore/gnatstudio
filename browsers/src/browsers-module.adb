@@ -113,7 +113,8 @@ package body Browsers.Module is
       Child   : MDI_Child;
       Browser : Glide_Browser;
    begin
-      Child := Find_MDI_Child_By_Tag (Kernel, Glide_Browser_Record'Tag);
+      Child := Find_MDI_Child_By_Tag (Get_MDI (Kernel),
+                                      Glide_Browser_Record'Tag);
 
       --  ??? Should handle masks as well -- perhaps we need a more general
       --  ??? find function in the kernel

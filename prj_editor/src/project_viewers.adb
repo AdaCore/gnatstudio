@@ -1026,7 +1026,8 @@ package body Project_Viewers is
       Child  : MDI_Child;
       Viewer : Project_Viewer;
    begin
-      Child := Find_MDI_Child_By_Tag (Kernel, Project_Viewer_Record'Tag);
+      Child := Find_MDI_Child_By_Tag (Get_MDI (Kernel),
+                                      Project_Viewer_Record'Tag);
 
       if Child /= null then
          Raise_Child (Child);

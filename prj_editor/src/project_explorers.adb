@@ -1897,7 +1897,7 @@ package body Project_Explorers is
    begin
       --  If no explorer was already created by reading the desktop:
       if Find_MDI_Child_By_Tag
-        (Kernel, Project_Explorer_Record'Tag) = null
+        (Get_MDI (Kernel), Project_Explorer_Record'Tag) = null
       then
          Gtk_New (Explorer, Kernel);
          Child := Put (Get_MDI (Kernel), Explorer);
