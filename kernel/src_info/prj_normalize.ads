@@ -133,7 +133,7 @@ package Prj_Normalize is
    --  a case construction of a normalized project.
    --  If Negated is True, then Variable_Name must not be Variable_Value for
    --  the case item to match.
-   --  See the example in the description of External_Variable_Values_Array.
+   --  See the example in the description of External_Variable_Value_Array.
 
    type External_Variable_Value_Array is array (Natural range <>) of
      External_Variable_Value;
@@ -158,7 +158,7 @@ package Prj_Normalize is
    --            end V3;
    --      end case;
    --
-   --  Then stmt1 can be reach with an External_Variable_Values_Array equal to:
+   --  Then stmt1 can be reach with an External_Variable_Value_Array equal to:
    --      ((V1, Val1), (V1, Val2), (V2, Val2_1))
    --  stmt2 can be reached with
    --      ((V1, Val1), (V1, Val2), (V2, Val2_1, False))
@@ -169,6 +169,9 @@ package Prj_Normalize is
    --
    --  If there was at least one non-negated element in the array, then at
    --  least one of the non-negated elements must be matched
+
+   All_Case_Items : constant External_Variable_Value_Array;
+   --  Matching all case items.
 
    procedure For_Each_Matching_Case_Item
      (Project : Prj.Tree.Project_Node_Id;
@@ -197,4 +200,14 @@ package Prj_Normalize is
    --  Important: Project must have been normalized first, and it is
    --  recommended to call Check_Case_Construction before
 
+private
+
+   No_Value : constant External_Variable_Value :=
+     (Variable_Type  => Prj.Tree.Empty_Node,
+      Variable_Name  => Types.No_String,
+      Variable_Value => Types.No_String,
+      Negated        => False);
+
+   All_Case_Items : constant External_Variable_Value_Array (1 .. 0) :=
+     (others => No_Value);
 end Prj_Normalize;
