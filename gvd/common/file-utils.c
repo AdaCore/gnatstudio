@@ -20,6 +20,7 @@
 
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <stdio.h>
 #ifdef _WIN32
 #include <windows.h>
 #endif
@@ -52,7 +53,8 @@ __gnat_subdirectories_count (name)
 #endif
 }
 
-int __gnat_get_logical_drive_strings (char *buffer, int len)
+int
+__gnat_get_logical_drive_strings (char *buffer, int len)
 {
 #ifdef _WIN32
   return GetLogicalDriveStringsA ((DWORD)len, (LPSTR)buffer);
@@ -61,7 +63,8 @@ int __gnat_get_logical_drive_strings (char *buffer, int len)
 #endif
 }
 
-void __gnat_set_writable (char *file, int set)
+void
+__gnat_set_writable (char *file, int set)
 {
   struct stat statbuf;
 
@@ -74,7 +77,8 @@ void __gnat_set_writable (char *file, int set)
     }
 }
 
-void __gnat_set_readable (char *file, int set)
+void
+__gnat_set_readable (char *file, int set)
 {
   struct stat statbuf;
 
@@ -85,4 +89,26 @@ void __gnat_set_readable (char *file, int set)
       else
 	chmod (file, statbuf.st_mode & (~S_IREAD));
     }
+}
+
+void
+__gnat_ensure_valid_output (void)
+{
+#ifdef _WIN32
+  static int alloc_console_called = 0;
+  HANDLE handle;
+
+  if (!alloc_console_called)
+    { 
+      handle = (HANDLE) _get_osfhandle (fileno (stdout));
+
+      if (handle == INVALID_HANDLE_VALUE)
+        { 
+          AllocConsole ();
+          alloc_console_called = 1;
+          freopen ("CONOUT$", "w", stdout);
+          freopen ("CONOUT$", "w", stderr);
+        }
+    }
+#endif
 }
