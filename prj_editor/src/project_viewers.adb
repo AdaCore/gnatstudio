@@ -1121,7 +1121,9 @@ package body Project_Viewers is
             if Name /= "" then
                Prj := Get_Project_From_View (Project_Information (File));
                if Add_Imported_Project
-                 (Prj, Name, Report_Error'Unrestricted_Access)
+                 (Prj, Name, Report_Error'Unrestricted_Access,
+                  Use_Relative_Path => Project_Uses_Relative_Paths
+                    (Get_Kernel (Context), Prj))
                then
                   Set_Project_Modified (Get_Kernel (Context), Prj, True);
                   Recompute_View (Get_Kernel (Context));
@@ -1211,11 +1213,15 @@ package body Project_Viewers is
                   Changed := Add_Imported_Project
                     (Prj,
                      Relative_Path_Name (Name, Base),
-                     Report_Error'Unrestricted_Access);
+                     Report_Error'Unrestricted_Access,
+                     Use_Relative_Path => Project_Uses_Relative_Paths
+                       (Get_Kernel (Context), Prj));
                else
                   Changed := Add_Imported_Project
                     (Prj, Normalize_Pathname (Name, Base),
-                     Report_Error'Unrestricted_Access);
+                     Report_Error'Unrestricted_Access,
+                     Use_Relative_Path => Project_Uses_Relative_Paths
+                       (Get_Kernel (Context), Prj));
                end if;
 
                if Changed then
