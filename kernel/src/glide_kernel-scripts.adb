@@ -592,6 +592,12 @@ package body Glide_Kernel.Scripts is
       elsif Command = "exit" then
          Quit (Glide_Window (Get_Main_Window (Kernel)));
 
+      elsif Command = "busy_indicator.push_state" then
+         Push_State (Kernel, Processing);
+
+      elsif Command = "busy_indicator.pop_state" then
+         Pop_State (Kernel);
+
       elsif Command = "add_xml_customization" then
          Name_Parameters (Data, Xml_Custom_Parameters);
          Glide_Kernel.Custom.Add_Customization_String
@@ -1257,6 +1263,7 @@ package body Glide_Kernel.Scripts is
          Minimum_Args => 2,
          Maximum_Args => 100,
          Handler      => Default_Command_Handler'Access);
+
       Register_Command
         (Kernel,
          Command      => "add_xml_customization",
@@ -1270,6 +1277,25 @@ package body Glide_Kernel.Scripts is
              & " starting from the <?xml?> header"),
          Minimum_Args => 1,
          Maximum_Args => 1,
+         Handler      => Default_Command_Handler'Access);
+
+      Register_Command
+        (Kernel,
+         Command      => "busy_indicator.push_state",
+         Params       => "()",
+         Description  =>
+           -("Activate the ""busy"" indicator in GPS."),
+         Minimum_Args => 0,
+         Maximum_Args => 0,
+         Handler      => Default_Command_Handler'Access);
+      Register_Command
+        (Kernel,
+         Command      => "busy_indicator.pop_state",
+         Params       => "()",
+         Description  =>
+           -("Deactivate the ""busy"" indicator in GPS."),
+         Minimum_Args => 0,
+         Maximum_Args => 0,
          Handler      => Default_Command_Handler'Access);
 
 
