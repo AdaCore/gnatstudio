@@ -976,6 +976,19 @@
 	    <label>Refresh</label>
 	    <right_justify>False</right_justify>
 	  </widget>
+
+	  <widget>
+	    <class>GtkMenuItem</class>
+	    <name>show1</name>
+	    <signal>
+	      <name>activate</name>
+	      <handler>on_show1_activate</handler>
+	      <object>main_debug_window</object>
+	      <last_modification_time>Tue, 28 Mar 2000 02:45:53 GMT</last_modification_time>
+	    </signal>
+	    <label>Show</label>
+	    <right_justify>False</right_justify>
+	  </widget>
 	</widget>
       </widget>
 
@@ -2339,29 +2352,6 @@
 	  </widget>
 
 	  <widget>
-	    <class>GtkCheckButton</class>
-	    <name>Look_3D_Check</name>
-	    <can_focus>True</can_focus>
-	    <label>3D Look</label>
-	    <active>True</active>
-	    <draw_indicator>True</draw_indicator>
-	    <child>
-	      <left_attach>0</left_attach>
-	      <right_attach>4</right_attach>
-	      <top_attach>3</top_attach>
-	      <bottom_attach>4</bottom_attach>
-	      <xpad>0</xpad>
-	      <ypad>0</ypad>
-	      <xexpand>True</xexpand>
-	      <yexpand>False</yexpand>
-	      <xshrink>False</xshrink>
-	      <yshrink>False</yshrink>
-	      <xfill>True</xfill>
-	      <yfill>False</yfill>
-	    </child>
-	  </widget>
-
-	  <widget>
 	    <class>GtkLabel</class>
 	    <name>label88</name>
 	    <label>Item Name</label>
@@ -2808,6 +2798,52 @@
 	      <text_max_length>0</text_max_length>
 	      <text></text>
 	    </widget>
+	  </widget>
+
+	  <widget>
+	    <class>GtkCheckButton</class>
+	    <name>Look_3D_Check</name>
+	    <can_focus>True</can_focus>
+	    <label>3D Look</label>
+	    <active>True</active>
+	    <draw_indicator>True</draw_indicator>
+	    <child>
+	      <left_attach>0</left_attach>
+	      <right_attach>2</right_attach>
+	      <top_attach>3</top_attach>
+	      <bottom_attach>4</bottom_attach>
+	      <xpad>0</xpad>
+	      <ypad>0</ypad>
+	      <xexpand>True</xexpand>
+	      <yexpand>False</yexpand>
+	      <xshrink>False</xshrink>
+	      <yshrink>False</yshrink>
+	      <xfill>True</xfill>
+	      <yfill>False</yfill>
+	    </child>
+	  </widget>
+
+	  <widget>
+	    <class>GtkCheckButton</class>
+	    <name>Separate_Data_Check</name>
+	    <can_focus>True</can_focus>
+	    <label>Separate Window</label>
+	    <active>False</active>
+	    <draw_indicator>True</draw_indicator>
+	    <child>
+	      <left_attach>2</left_attach>
+	      <right_attach>4</right_attach>
+	      <top_attach>3</top_attach>
+	      <bottom_attach>4</bottom_attach>
+	      <xpad>0</xpad>
+	      <ypad>0</ypad>
+	      <xexpand>False</xexpand>
+	      <yexpand>False</yexpand>
+	      <xshrink>False</xshrink>
+	      <yshrink>False</yshrink>
+	      <xfill>True</xfill>
+	      <yfill>False</yfill>
+	    </child>
 	  </widget>
 	</widget>
       </widget>
@@ -3602,10 +3638,17 @@
 <widget>
   <class>GtkWindow</class>
   <name>process_tab</name>
-  <title></title>
+  <signal>
+    <name>delete_event</name>
+    <handler>on_process_tab_delete_event</handler>
+    <last_modification_time>Sun, 04 Feb 2001 00:07:26 GMT</last_modification_time>
+  </signal>
+  <title>Data</title>
   <type>GTK_WINDOW_TOPLEVEL</type>
   <position>GTK_WIN_POS_NONE</position>
   <modal>False</modal>
+  <default_width>500</default_width>
+  <default_height>300</default_height>
   <allow_shrink>False</allow_shrink>
   <allow_grow>True</allow_grow>
   <auto_shrink>False</auto_shrink>
@@ -3619,7 +3662,7 @@
 
     <widget>
       <class>GtkVPaned</class>
-      <name>vpaned6</name>
+      <name>data_editor_paned</name>
       <handle_size>10</handle_size>
       <gutter_size>6</gutter_size>
       <position>200</position>
@@ -3630,7 +3673,7 @@
 
       <widget>
 	<class>GtkHPaned</class>
-	<name>hpaned1</name>
+	<name>data_paned</name>
 	<handle_size>10</handle_size>
 	<gutter_size>6</gutter_size>
 	<position>200</position>
@@ -3641,7 +3684,7 @@
 
 	<widget>
 	  <class>GtkScrolledWindow</class>
-	  <name>scrolledwindow13</name>
+	  <name>stack_scrolledwindow</name>
 	  <hscrollbar_policy>GTK_POLICY_AUTOMATIC</hscrollbar_policy>
 	  <vscrollbar_policy>GTK_POLICY_AUTOMATIC</vscrollbar_policy>
 	  <hupdate_policy>GTK_UPDATE_CONTINUOUS</hupdate_policy>
@@ -3742,7 +3785,7 @@
 
 	<widget>
 	  <class>GtkScrolledWindow</class>
-	  <name>scrolledwindow12</name>
+	  <name>data_scrolledwindow</name>
 	  <hscrollbar_policy>GTK_POLICY_AUTOMATIC</hscrollbar_policy>
 	  <vscrollbar_policy>GTK_POLICY_AUTOMATIC</vscrollbar_policy>
 	  <hupdate_policy>GTK_UPDATE_CONTINUOUS</hupdate_policy>
@@ -3789,7 +3832,7 @@
 
     <widget>
       <class>GtkScrolledWindow</class>
-      <name>scrolledwindow7</name>
+      <name>command_scrolledwindow</name>
       <hscrollbar_policy>GTK_POLICY_NEVER</hscrollbar_policy>
       <vscrollbar_policy>GTK_POLICY_ALWAYS</vscrollbar_policy>
       <hupdate_policy>GTK_UPDATE_CONTINUOUS</hupdate_policy>
