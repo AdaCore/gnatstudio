@@ -211,6 +211,12 @@ package body Src_Editor_View is
    --  Called when the preferences have changed, to refresh the editor
    --  appropriately.
 
+   procedure File_Saved
+     (Widget  : access Glib.Object.GObject_Record'Class;
+      Args    : GValues;
+      Kernel  : Kernel_Handle);
+   --  Callback for "File_Saved_Signal".
+
    --------------------------
    -- Save_Cursor_Position --
    --------------------------
@@ -687,6 +693,12 @@ package body Src_Editor_View is
          Kernel_Callback.To_Marshaller (Preferences_Changed'Access),
          Slot_Object => View,
          User_Data   => Kernel_Handle (Kernel));
+
+      Kernel_Callback.Object_Connect
+        (Kernel, File_Saved_Signal,
+         File_Saved'Access,
+         Slot_Object => View,
+         User_Data   => Kernel_Handle (Kernel));
    end Initialize;
 
    -------------------------
@@ -701,6 +713,49 @@ package body Src_Editor_View is
       when E : others =>
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end Preferences_Changed;
+
+   ----------------
+   -- File_Saved --
+   ----------------
+
+   procedure File_Saved
+     (Widget  : access Glib.Object.GObject_Record'Class;
+      Args    : GValues;
+      Kernel  : Kernel_Handle)
+   is
+      pragma Unreferenced (Kernel);
+      View : Source_View := Source_View (Widget);
+      File : constant String := Get_String (Nth (Args, 1));
+
+      Max : Natural;
+   begin
+      if Get_Filename (Source_Buffer (Get_Buffer (View))) = File then
+
+         --  The file corresponding to the view was saved:
+         --  resynchronize the real lines with the original lines.
+
+         for J in View.Real_Lines'Range loop
+            if View.Real_Lines (J) /= 0 then
+               Max := J;
+            end if;
+         end loop;
+
+         Unchecked_Free (View.Real_Lines);
+         View.Real_Lines
+           := new Natural_Array (1 .. Max * 2);
+
+         for J in 1 .. Max loop
+            View.Real_Lines (J) := J;
+         end loop;
+
+         View.Real_Lines (Max + 1 .. Max * 2) := (others => 0);
+
+         Redraw_Columns (View);
+      end if;
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+   end File_Saved;
 
    --------------
    -- Set_Font --
