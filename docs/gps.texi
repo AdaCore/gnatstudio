@@ -6009,12 +6009,13 @@ Whether the progress bar should show progress during builds.
 @item File pattern
 @cindex file pattern
 @cindex location
-Pattern used to detect file locations from the messages window.
+Pattern used to detect file locations and the type of the output from the
+messages window.
 This is particularly useful when using an external tool such as a compiler
 or a search tool, so that GPS will highlight and allow navigation through source
-locations. This is a standard system V regular expression containing two
-or three parenthesized subexpressions corresponding to the file, line and
-column patterns.
+locations. This is a standard system V regular expression containing from two
+to five parenthesized subexpressions corresponding to the file, line, column,
+warnings or style error patterns.
 
 @item File index
 @cindex file index
@@ -6027,6 +6028,14 @@ Index of the line number in the file pattern.
 @item Column index
 @cindex column index
 Index of the column number in the file pattern.
+
+@item Warning index
+@cindex warning index
+Index of the warning identifier in the file pattern.
+
+@item Style index
+@cindex column index
+Index of the style error identifier in the file pattern.
 
 @end table
 
