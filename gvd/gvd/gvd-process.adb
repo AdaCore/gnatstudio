@@ -539,6 +539,7 @@ package body Odd.Process is
       Process.Descriptor.Debugger_Name := new String' (Debugger_Name);
 
       Process.Window := Window.all'Access;
+      Set_Process (Process.Data_Canvas, Process);
 
       Widget_Callback.Object_Connect
         (Process,
