@@ -5463,13 +5463,3 @@ Index: widgets/cschtml/regex.c
   #include <limits.h>
   
   #ifdef __DBINTERFACE_PRIVATE
---- vcs/src/vcs_view_pkg.adb.old	2003-01-14 11:28:54 +0100
-+++ vcs/src/vcs_view_pkg.adb	2003-01-14 11:31:17 +0100
-@@ -258,6 +258,7 @@
-          Path, Column,
-          Cell_X, Cell_Y,
-          Row_Found);
-+      Row_Found := False;
- 
-       if not Row_Found then
-          return;
