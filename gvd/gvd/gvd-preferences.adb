@@ -20,7 +20,7 @@
 
 with Glib;                    use Glib;
 with GVD.Preferences_Dialog;  use GVD.Preferences_Dialog;
-with Gint_Xml;                use Gint_Xml;
+with Glib.Xml_Int;            use Glib.Xml_Int;
 with Gtk.Widget;              use Gtk.Widget;
 with Gtk.GEntry;              use Gtk.GEntry;
 with Gtk.Extra.Font_Combo;    use Gtk.Extra.Font_Combo;
@@ -212,7 +212,7 @@ package body GVD.Preferences is
          N.Value := new String' (Value);
          Add_Child (Current_Preferences, N);
       elsif Override then
-         Gint_Xml.Free (N.Value);
+         Glib.Xml_Int.Free (N.Value);
          N.Value := new String' (Value);
       end if;
    end Set;

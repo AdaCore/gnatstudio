@@ -19,6 +19,7 @@
 -----------------------------------------------------------------------
 
 with Glib;             use Glib;
+with Glib.Xml_Int;     use Glib.Xml_Int;
 with Glib.Object;      use Glib.Object;
 with Gdk.Drawable;     use Gdk.Drawable;
 with Gdk.GC;           use Gdk.GC;
@@ -35,7 +36,6 @@ with Gtkada.Canvas;    use Gtkada.Canvas;
 with Gtkada.Handlers;  use Gtkada.Handlers;
 with Gtkada.MDI;       use Gtkada.MDI;
 
-with Gint_Xml;                 use Gint_Xml;
 with Src_Info;                 use Src_Info;
 with Src_Info.Queries;         use Src_Info.Queries;
 with Glide_Kernel;             use Glide_Kernel;
@@ -168,8 +168,7 @@ package body Browsers.Call_Graph is
    --  context (if any)
 
    function Load_Desktop
-     (Node : Gint_Xml.Node_Ptr; User : Kernel_Handle)
-      return Gtk_Widget;
+     (Node : Node_Ptr; User : Kernel_Handle) return Gtk_Widget;
    function Save_Desktop
      (Widget : access Gtk.Widget.Gtk_Widget_Record'Class)
       return Node_Ptr;
@@ -1200,8 +1199,7 @@ package body Browsers.Call_Graph is
    ------------------
 
    function Load_Desktop
-     (Node : Gint_Xml.Node_Ptr; User : Kernel_Handle)
-      return Gtk_Widget is
+     (Node : Node_Ptr; User : Kernel_Handle) return Gtk_Widget is
    begin
       if Node.Tag.all = "Call_Graph" then
          return Gtk_Widget (Create_Call_Graph_Browser (User));

@@ -20,11 +20,11 @@
 
 with Glib;              use Glib;
 with Glib.Properties;   use Glib.Properties;
-with Gint_Xml;          use Gint_Xml;
+with Glib.Xml_Int;      use Glib.Xml_Int;
 
 package body Default_Preferences is
 
-   Default_Preferences : Gint_Xml.Node_Ptr;
+   Default_Preferences : Node_Ptr;
    --  All the preferences and their default values.
    --  This is a global variable, but is only modified at elaboration time when
    --  the preferences are declared.
@@ -38,7 +38,7 @@ package body Default_Preferences is
    -- Get_Default_Preferences --
    -----------------------------
 
-   function Get_Default_Preferences return Gint_Xml.Node_Ptr is
+   function Get_Default_Preferences return Node_Ptr is
    begin
       return Default_Preferences;
    end Get_Default_Preferences;
@@ -47,7 +47,7 @@ package body Default_Preferences is
    -- Find_Default_Pref --
    -----------------------
 
-   function Find_Default_Pref (Name : String) return Gint_Xml.Node_Ptr is
+   function Find_Default_Pref (Name : String) return Node_Ptr is
       Node : Node_Ptr;
    begin
       Node := Find_Tag (Default_Preferences.Child, Name);
@@ -63,7 +63,7 @@ package body Default_Preferences is
       N : Node_Ptr;
    begin
       if Default_Preferences = null then
-         Default_Preferences := new Gint_Xml.Node;
+         Default_Preferences := new Node;
          Default_Preferences.Tag := new String' ("Preferences");
       end if;
 
@@ -74,8 +74,9 @@ package body Default_Preferences is
          N.Tag := new String' (Name);
          Add_Child (Default_Preferences, N);
       else
-         Gint_Xml.Free (N.Value);
+         Glib.Xml_Int.Free (N.Value);
       end if;
+
       N.Value := new String' (Default);
    end Create_Default_Pref;
 

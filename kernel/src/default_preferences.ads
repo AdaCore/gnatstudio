@@ -25,7 +25,7 @@
 --  circularity reaons.
 
 with Glib.Properties;
-with Gint_Xml;
+with Glib.Xml_Int;
 
 package Default_Preferences is
 
@@ -52,10 +52,11 @@ package Default_Preferences is
    --  The returned value should be used later on to retrieve the value of the
    --  property.
 
-   function Find_Default_Pref (Name : String) return Gint_Xml.Node_Ptr;
+   function Find_Default_Pref
+     (Name : String) return Glib.Xml_Int.Node_Ptr;
    --  Return the node in the default preferences that matches Name
 
-   function Get_Default_Preferences return Gint_Xml.Node_Ptr;
+   function Get_Default_Preferences return Glib.Xml_Int.Node_Ptr;
    --  Return the default preferences node.
 
 end Default_Preferences;

@@ -19,6 +19,7 @@
 -----------------------------------------------------------------------
 
 with Glib;                      use Glib;
+with Glib.Xml_Int;              use Glib.Xml_Int;
 with Glib.Object;               use Glib.Object;
 with Gdk.Pixbuf;                use Gdk.Pixbuf;
 with Gtk.Handlers;              use Gtk.Handlers;
@@ -34,7 +35,6 @@ with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with Ada.Unchecked_Deallocation;
 with String_Utils;              use String_Utils;
-with Gint_Xml;                  use Gint_Xml;
 with Glide_Main_Window;         use Glide_Main_Window;
 with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
 with Glide_Kernel.Project;      use Glide_Kernel.Project;

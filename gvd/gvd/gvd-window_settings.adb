@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2001                      --
+--                      Copyright (C) 2000-2002                      --
 --                              ACT-Europe                           --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -18,7 +18,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Gint_Xml;            use Gint_Xml;
+with Glib.Xml_Int;        use Glib.Xml_Int;
 
 with Gtk.Clist;           use Gtk.Clist;
 with Gtk.Widget;          use Gtk.Widget;
@@ -358,7 +358,7 @@ package body GVD.Window_Settings is
          Add_Child (Current_Window_Settings, N);
 
       elsif Override then
-         Gint_Xml.Free (N.Value);
+         Glib.Xml_Int.Free (N.Value);
          N.Value := new String' (Value);
       end if;
    end Set;

@@ -1,10 +1,10 @@
 -----------------------------------------------------------------------
---                          G L I D E  I I                           --
+--                               G P S                               --
 --                                                                   --
 --                     Copyright (C) 2001-2002                       --
 --                            ACT-Europe                             --
 --                                                                   --
--- GLIDE is free software; you can redistribute it and/or modify  it --
+-- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -13,13 +13,13 @@
 -- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
 -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
 -- General Public License for more details. You should have received --
--- a copy of the GNU General Public License along with this library; --
+-- a copy of the GNU General Public License along with this program; --
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Gint_Xml;                  use Gint_Xml;
 with Glib;                      use Glib;
+with Glib.Xml_Int;              use Glib.Xml_Int;
 with Glib.Values;               use Glib.Values;
 with Csc_HTML_Widget;           use Csc_HTML_Widget;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
@@ -83,8 +83,7 @@ package body Glide_Kernel.Help is
    --  Handler for the title_changed signal
 
    function Load_Desktop
-     (Node : Gint_Xml.Node_Ptr; User : Kernel_Handle)
-      return Gtk_Widget;
+     (Node : Node_Ptr; User : Kernel_Handle) return Gtk_Widget;
    function Save_Desktop
      (Widget : access Gtk.Widget.Gtk_Widget_Record'Class)
       return Node_Ptr;
@@ -439,8 +438,7 @@ package body Glide_Kernel.Help is
    ------------------
 
    function Load_Desktop
-     (Node : Gint_Xml.Node_Ptr; User : Kernel_Handle)
-      return Gtk_Widget
+     (Node : Node_Ptr; User : Kernel_Handle) return Gtk_Widget
    is
       Editor : Help_Browser;
       File   : Glib.String_Ptr;

@@ -20,13 +20,14 @@
 
 with Ada.Exceptions;       use Ada.Exceptions;
 
+with Glib;                 use Glib;
+with Glib.Object;          use Glib.Object;
+with Glib.Xml_Int;         use Glib.Xml_Int;
 with Gdk.Drawable;         use Gdk.Drawable;
 with Gdk.Event;            use Gdk.Event;
 with Gdk.Font;             use Gdk.Font;
 with Gdk.Pixbuf;           use Gdk.Pixbuf;
 with Gdk.Window;           use Gdk.Window;
-with Glib.Object;          use Glib.Object;
-with Glib;                 use Glib;
 with Gtk.Check_Menu_Item;  use Gtk.Check_Menu_Item;
 with Gtk.Enums;            use Gtk.Enums;
 with Gtk.Main;             use Gtk.Main;
@@ -39,7 +40,6 @@ with Gtkada.File_Selector; use Gtkada.File_Selector;
 with Gtkada.Handlers;      use Gtkada.Handlers;
 with Gtkada.MDI;           use Gtkada.MDI;
 
-with Gint_Xml;                  use Gint_Xml;
 with Browsers.Canvas;           use Browsers.Canvas;
 with Browsers.Dependency_Items; use Browsers.Dependency_Items;
 with Glide_Intl;                use Glide_Intl;
@@ -64,11 +64,11 @@ with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 
 package body Browsers.Dependency_Items is
 
-   Margin : constant := 2;
+   Me : Debug_Handle := Create ("Browsers.Dependency");
 
    Dependency_Browser_Module_ID : Module_ID;
 
-   Me : Debug_Handle := Create ("Browsers.Dependency");
+   Margin : constant := 2;
 
    type Examine_Dependencies_Idle_Data is record
       Iter    : Dependency_Iterator_Access;
@@ -173,8 +173,7 @@ package body Browsers.Dependency_Items is
    --  ??? Needs to be reset when the project or its view changes
 
    function Load_Desktop
-     (Node : Gint_Xml.Node_Ptr; User : Kernel_Handle)
-      return Gtk_Widget;
+     (Node : Node_Ptr; User : Kernel_Handle) return Gtk_Widget;
    function Save_Desktop
      (Widget : access Gtk.Widget.Gtk_Widget_Record'Class)
       return Node_Ptr;
@@ -1120,8 +1119,7 @@ package body Browsers.Dependency_Items is
    ------------------
 
    function Load_Desktop
-     (Node : Gint_Xml.Node_Ptr; User : Kernel_Handle)
-      return Gtk_Widget is
+     (Node : Node_Ptr; User : Kernel_Handle) return Gtk_Widget is
    begin
       if Node.Tag.all = "Dependency_Browser" then
          return Gtk_Widget (Create_Dependency_Browser (User));

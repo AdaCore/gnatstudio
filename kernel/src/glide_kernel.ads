@@ -4,7 +4,7 @@
 --                     Copyright (C) 2001-2002                       --
 --                            ACT-Europe                             --
 --                                                                   --
--- GPS is free  software;  you can redistribute it and/or modify  it   --
+-- GPS is free  software; you  can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -24,8 +24,8 @@ with Ada.Tags;
 with Basic_Mapper;
 with GNAT.OS_Lib;
 with Generic_List;
-with Gint_Xml;
 with Glib.Object;
+with Glib.Xml_Int;
 with Glib.Values;
 with Gdk;
 with Gtk.Handlers;
@@ -570,7 +570,7 @@ private
       --  The semantic information associated to the files for the current
       --  project.
 
-      Preferences : Gint_Xml.Node_Ptr;
+      Preferences : Glib.Xml_Int.Node_Ptr;
       --  The XML tree that contains the current preferences
 
       Scenario_Variables : Prj_API.Project_Node_Array_Access := null;

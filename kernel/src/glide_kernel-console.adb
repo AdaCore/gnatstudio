@@ -18,7 +18,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Gint_Xml;             use Gint_Xml;
+with Glib.Xml_Int;         use Glib.Xml_Int;
 with Glib.Object;          use Glib.Object;
 with Glide_Main_Window;    use Glide_Main_Window;
 with Glide_Page;           use Glide_Page;
@@ -53,8 +53,7 @@ package body Glide_Kernel.Console is
    --  Callback for File->Console->Clear menu.
 
    function Load_Desktop
-     (Node : Gint_Xml.Node_Ptr; User : Kernel_Handle)
-      return Gtk_Widget;
+     (Node : Node_Ptr; User : Kernel_Handle) return Gtk_Widget;
    --  Save the status of the console to an XML tree
 
    function Save_Desktop
@@ -180,8 +179,7 @@ package body Glide_Kernel.Console is
    ------------------
 
    function Load_Desktop
-     (Node : Gint_Xml.Node_Ptr; User : Kernel_Handle)
-      return Gtk_Widget
+     (Node : Node_Ptr; User : Kernel_Handle) return Gtk_Widget
    is
       Console : Glide_Console;
    begin

@@ -18,7 +18,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Gint_Xml;            use Gint_Xml;
 with Glide_Kernel;        use Glide_Kernel;
 with Scenario_Views;      use Scenario_Views;
 with Vsearch_Ext;         use Vsearch_Ext;
@@ -29,14 +28,17 @@ with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with Ada.Exceptions;            use Ada.Exceptions;
 
+with Glib;                 use Glib;
+with Glib.Object;          use Glib.Object;
+with Glib.Values;          use Glib.Values;
+with Glib.Xml_Int;         use Glib.Xml_Int;
+
 with Gdk.Bitmap;           use Gdk.Bitmap;
 with Gdk.Color;            use Gdk.Color;
 with Gdk.Event;            use Gdk.Event;
 with Gdk.Pixmap;           use Gdk.Pixmap;
 with Gdk.Pixbuf;           use Gdk.Pixbuf;
-with Glib;                 use Glib;
-with Glib.Object;          use Glib.Object;
-with Glib.Values;          use Glib.Values;
+
 with Gtk.Enums;            use Gtk.Enums;
 with Gtk.Arguments;        use Gtk.Arguments;
 with Gtk.Ctree;            use Gtk.Ctree;
@@ -499,8 +501,7 @@ package body Project_Explorers is
    --  Create the Glide_Kernel.Get_Current_Context.
 
    function Load_Desktop
-     (Node : Gint_Xml.Node_Ptr; User : Kernel_Handle)
-      return Gtk_Widget;
+     (Node : Node_Ptr; User : Kernel_Handle) return Gtk_Widget;
    --  Save the status of the project explorer to an XML tree
 
    function Save_Desktop
@@ -1193,8 +1194,7 @@ package body Project_Explorers is
    ------------------
 
    function Load_Desktop
-     (Node : Gint_Xml.Node_Ptr; User : Kernel_Handle)
-      return Gtk_Widget
+     (Node : Node_Ptr; User : Kernel_Handle) return Gtk_Widget
    is
       Explorer : Project_Explorer;
    begin

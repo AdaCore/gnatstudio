@@ -20,8 +20,8 @@
 
 with Gdk.Color;         use Gdk.Color;
 with Glib;              use Glib;
+with Glib.Xml_Int;      use Glib.Xml_Int;
 with Glib.Properties;   use Glib.Properties;
-with Gint_Xml;          use Gint_Xml;
 with Gtk.Widget;        use Gtk.Widget;
 with Pango.Font;        use Pango.Font;
 
