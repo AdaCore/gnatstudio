@@ -27,8 +27,10 @@ with Glide_Kernel.Contexts;       use Glide_Kernel.Contexts;
 with Glide_Kernel.Modules;        use Glide_Kernel.Modules;
 with Glide_Kernel.Standard_Hooks; use Glide_Kernel.Standard_Hooks;
 with Glide_Kernel.Preferences;    use Glide_Kernel.Preferences;
+with Glide_Kernel.Scripts;        use Glide_Kernel.Scripts;
 with Glide_Kernel.Hooks;          use Glide_Kernel.Hooks;
 with GUI_Utils;                   use GUI_Utils;
+with Basic_Types;                 use Basic_Types;
 with VFS;                         use VFS;
 with Pixmaps_IDE;                 use Pixmaps_IDE;
 with Gdk.Pixbuf;                  use Gdk.Pixbuf;
@@ -45,6 +47,7 @@ with Gtkada.Handlers;             use Gtkada.Handlers;
 with Gtkada.MDI;                  use Gtkada.MDI;
 with Glide_Intl;                  use Glide_Intl;
 with Entities;                    use Entities;
+with String_Utils;                use String_Utils;
 with Projects;                    use Projects;
 with Language;                    use Language;
 with Language_Handlers.Glide;     use Language_Handlers.Glide;
@@ -52,9 +55,10 @@ with Basic_Types;                 use Basic_Types;
 with Gtk.Scrolled_Window;         use Gtk.Scrolled_Window;
 with Project_Explorers_Common;    use Project_Explorers_Common;
 with Commands.Interactive;        use Commands, Commands.Interactive;
---  with Traces;                      use Traces;
 with Default_Preferences;         use Default_Preferences;
 with Entities;                    use Entities;
+with GNAT.OS_Lib;                 use GNAT.OS_Lib;
+--  with Traces;                      use Traces;
 
 package body Outline_View is
 
@@ -66,6 +70,9 @@ package body Outline_View is
    Outline_View_Profiles            : Param_Spec_Boolean;
    Outline_View_Sort_Alphabetically : Param_Spec_Boolean;
    Outline_View_Link_Editor         : Param_Spec_Boolean;
+
+   Entity_Name_Column : constant := 2;
+   Mark_Column        : constant := 3;
 
    procedure On_Context_Changed
      (Kernel : access Kernel_Handle_Record'Class;
@@ -146,6 +153,13 @@ package body Outline_View is
      (Kernel : access Kernel_Handle_Record'Class;
       Data   : access Hooks_Data'Class);
    --  Called when the current editor reaches a new location
+
+   procedure On_Destroy
+     (Outline : access Gtk_Widget_Record'Class);
+   --  Called when the outline is destroyed
+
+   procedure Clear (Outline : access Outline_View_Record'Class);
+   --  Clear the contents of the outline view, and reset all marks
 
    ----------------------
    -- Location_Changed --
@@ -254,6 +268,7 @@ package body Outline_View is
       Model : constant Gtk_Tree_Store :=
         Gtk_Tree_Store (Get_Model (Outline.Tree));
       Path      : Gtk_Tree_Path;
+      Line, Column : Integer;
    begin
       Iter := Find_Iter_For_Event (Outline.Tree, Model, Event);
 
@@ -264,16 +279,29 @@ package body Outline_View is
          end if;
          Path_Free (Path);
 
+         declare
+            Mark_Name : aliased String :=
+              Get_String (Model, Iter, Mark_Column);
+            Args : constant Argument_List := (1 => Mark_Name'Unchecked_Access);
+         begin
+            Line := Safe_Value
+              (Execute_GPS_Shell_Command
+                 (Outline.Kernel, "Editor.get_line", Args));
+            Column := Safe_Value
+              (Execute_GPS_Shell_Command
+                 (Outline.Kernel, "Editor.get_column", Args));
+         end;
+
          Context := new Entity_Selection_Context;
          Set_Entity_Information
            (Context       => Context,
-            Entity_Name   => Get_String (Model, Iter, 5),
-            Entity_Column => Integer (Get_Int (Model, Iter, 2)));
+            Entity_Name   => Get_String (Model, Iter, Entity_Name_Column),
+            Entity_Column => Column);
          Set_File_Information
            (Context => Context,
             Project => Projects.No_Project,
             File    => Outline.File,
-            Line    => Integer (Get_Int (Model, Iter, 1)));
+            Line    => Line);
          return Selection_Context_Access (Context);
       else
          return null;
@@ -358,7 +386,6 @@ package body Outline_View is
         Gtk_Tree_Store (Get_Model (View.Tree));
       Iter : Gtk_Tree_Iter;
       Path : Gtk_Tree_Path;
-      Line, Column, Column_End : Gint;
    begin
       if Get_Button (Event) = 1 then
          Iter := Find_Iter_For_Event (View.Tree, Model, Event);
@@ -366,18 +393,16 @@ package body Outline_View is
             Path := Get_Path (Model, Iter);
             Set_Cursor (View.Tree, Path, null, False);
             Path_Free (Path);
-            Line       := Get_Int (Model, Iter, 2);
-            Column     := Get_Int (Model, Iter, 3);
-            Column_End := Get_Int (Model, Iter, 4);
 
-            if Line /= -1 then
-               Open_File_Editor
-                 (View.Kernel,
-                  View.File,
-                  Line       => Natural (Line),
-                  Column     => Natural (Column),
-                  Column_End => Natural (Column_End));
-            end if;
+            declare
+               Mark_Name : aliased String :=
+                 Get_String (Model, Iter, Mark_Column);
+               Args : constant Argument_List :=
+                 (1 => Mark_Name'Unchecked_Access);
+            begin
+               Execute_GPS_Shell_Command
+                 (View.Kernel, "Editor.goto_mark", Args);
+            end;
          end if;
       end if;
       return False;
@@ -392,7 +417,7 @@ package body Outline_View is
       Kernel  : access Kernel_Handle_Record'Class)
    is
       Scrolled : Gtk_Scrolled_Window;
-      Initial_Sort : Integer := 2;
+      Initial_Sort : Integer := 1;
    begin
       Outline := new Outline_View_Record;
       Outline.Kernel := Kernel_Handle (Kernel);
@@ -407,12 +432,11 @@ package body Outline_View is
       Set_Policy (Scrolled, Policy_Automatic, Policy_Automatic);
 
       Outline.Tree := Create_Tree_View
-        (Column_Types       => (1 => Gdk.Pixbuf.Get_Type,
-                                2 => GType_String,
-                                3 => GType_Int,     --  line
-                                4 => GType_Int,     --  column
-                                5 => GType_Int,     --  column_end
-                                6 => GType_String), --  entity name
+        (Column_Types       =>
+           (0 => Gdk.Pixbuf.Get_Type,
+            1 => GType_String,
+            Entity_Name_Column => GType_String,
+            Mark_Column        => GType_String), --  mark ID
          Column_Names       => (1 => null, 2 => null),
          Show_Column_Titles => False,
          Initial_Sort_On    => Initial_Sort,
@@ -430,6 +454,8 @@ package body Outline_View is
          Return_Callback.To_Marshaller (Button_Press'Access),
          Slot_Object => Outline,
          After       => False);
+      Widget_Callback.Connect
+        (Outline, "destroy", On_Destroy'Access);
 
       Register_Contextual_Menu
         (Kernel          => Kernel,
@@ -438,6 +464,16 @@ package body Outline_View is
          ID              => Outline_View_Module,
          Context_Func    => Outline_Context_Factory'Access);
    end Gtk_New;
+
+   ----------------
+   -- On_Destroy --
+   ----------------
+
+   procedure On_Destroy
+     (Outline : access Gtk_Widget_Record'Class) is
+   begin
+      Clear (Outline_View_Access (Outline));
+   end On_Destroy;
 
    -------------
    -- Execute --
@@ -460,6 +496,36 @@ package body Outline_View is
       return Failure;
    end Execute;
 
+   -----------
+   -- Clear --
+   -----------
+
+   procedure Clear (Outline : access Outline_View_Record'Class) is
+      Model : constant Gtk_Tree_Store :=
+        Gtk_Tree_Store (Get_Model (Outline.Tree));
+      Iter  : Gtk_Tree_Iter := Get_Iter_First (Model);
+      Args  : Argument_List (1 .. 1);
+   begin
+      if Iter /= Null_Iter then
+         Iter := Children (Model, Iter);
+      end if;
+
+      while Iter /= Null_Iter loop
+         declare
+            Name : aliased String := Get_String (Model, Iter, Mark_Column);
+         begin
+            if Name /= "" then
+               Args (1) := Name'Unchecked_Access;
+               Execute_GPS_Shell_Command
+                 (Outline.Kernel, "Editor.delete_mark", Args);
+            end if;
+         end;
+         Next (Model, Iter);
+      end loop;
+
+      Clear (Model);
+   end Clear;
+
    -------------
    -- Refresh --
    -------------
@@ -477,9 +543,10 @@ package body Outline_View is
       Show_Profiles : constant Boolean :=
         Get_Pref (Outline.Kernel, Outline_View_Profiles);
       Sort_Column : constant Gint := Freeze_Sort (Model);
+      Args : Argument_List (1 .. 4);
    begin
       Push_State (Outline.Kernel, Busy);
-      Clear (Model);
+      Clear (Outline);
 
       if Outline.File /= VFS.No_File then
          Handler := Get_LI_Handler_From_File (Languages, Outline.File);
@@ -487,16 +554,12 @@ package body Outline_View is
          Append (Model, Root, Null_Iter);
          Set (Model, Root, 0, C_Proxy (Outline.File_Icon));
          Set (Model, Root, 1, "File: " & Base_Name (Outline.File));
-         Set (Model, Root, 2, -1);
       end if;
-
 
       if Handler = null or else Lang = null then
          Append (Model, Iter, Root);
          Set (Model, Iter, 0, C_Proxy (Outline.Icon));
          Set (Model, Iter, 1, "No outline available");
-         Set (Model, Iter, 2, -1);
-         Set (Model, Iter, 3, -1);
       else
          Parse_File_Constructs
            (Handler, Languages, Outline.File, Constructs);
@@ -511,14 +574,19 @@ package body Outline_View is
                   Set (Model, Iter, 1,
                        Entity_Name_Of (Constructs.Current.all,
                                        Show_Profiles => Show_Profiles));
-                  Set (Model, Iter, 2,
-                       Gint (Constructs.Current.Sloc_Entity.Line));
-                  Set (Model, Iter, 3,
-                       Gint (Constructs.Current.Sloc_Entity.Column));
-                  Set (Model, Iter, 4,
-                       Gint (Constructs.Current.Sloc_Entity.Column
-                             + Constructs.Current.Name'Length));
-                  Set (Model, Iter, 5, Constructs.Current.Name.all);
+                  Set (Model, Iter, Entity_Name_Column,
+                       Constructs.Current.Name.all);
+
+                  Args (1) := new String'(Full_Name (Outline.File).all);
+                  Args (2) := new String'
+                    (Constructs.Current.Sloc_Entity.Line'Img);
+                  Args (3) := new String'
+                    (Constructs.Current.Sloc_Entity.Column'Img);
+                  Args (4) := new String'(Constructs.Current.Name'Length'Img);
+                  Set (Model, Iter, Mark_Column,
+                       Execute_GPS_Shell_Command
+                         (Outline.Kernel, "Editor.create_mark", Args));
+                  Free (Args);
                end if;
             end if;
             Constructs.Current := Constructs.Current.Next;
