@@ -1205,7 +1205,12 @@ package body Entities is
          File.Depends_On.Table (Index).Explicit := Explicit_Dependency;
 
          Index := Find (Depends_On.Depended_On, File);
-         Depends_On.Depended_On.Table (Index).Explicit := Explicit_Dependency;
+         if Index < Dependency_Arrays.First then
+            Append (Depends_On.Depended_On, (File, Explicit_Dependency));
+         else
+            Depends_On.Depended_On.Table (Index).Explicit :=
+              Explicit_Dependency;
+         end if;
       end if;
    end Add_Depends_On;
 
