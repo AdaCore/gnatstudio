@@ -2,7 +2,7 @@
 --                               G P S                               --
 --                                                                   --
 --                     Copyright (C) 2001-2005                       --
---                            ACT-Europe                             --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -1367,6 +1367,13 @@ package body Src_Editor_View is
          After       => True,
          Slot_Object => View);
 
+      Widget_Callback.Object_Connect
+        (Get_Hadjustment (View.Scroll),
+         "value_changed",
+         Marsh       => Widget_Callback.To_Marshaller (On_Scroll'Access),
+         After       => True,
+         Slot_Object => View);
+
       if Win /= null then
          Get_Geometry (Win, X, Y, W, H, D);
          Clear_Area_E (Win, X, Y, W, H);
@@ -2206,6 +2213,10 @@ package body Src_Editor_View is
          Set_Value
            (Get_Vadjustment (Src_View.Synchronized_Editor.Scroll),
             Get_Value (Get_Vadjustment (Src_View.Scroll)));
+
+         Set_Value
+           (Get_Hadjustment (Src_View.Synchronized_Editor.Scroll),
+            Get_Value (Get_Hadjustment (Src_View.Scroll)));
       end if;
 
       Src_View.Scrolling := False;
