@@ -19,6 +19,7 @@
 -----------------------------------------------------------------------
 
 with GNAT.Expect;
+with GNAT.OS_Lib;
 
 with SN;             use SN;
 with SN.Xref_Pools;  use SN.Xref_Pools;
@@ -74,7 +75,7 @@ package Src_Info.CPP is
       Project         : Prj.Project_Id;
       SN_Dir          : SN.String_Access;
       Xrefs           : Xref_Pool;
-      Tmp_Filename    : SN.String_Access;
+      Tmp_Filename    : GNAT.OS_Lib.Temp_File_Name;
       PD              : GNAT.Expect.Process_Descriptor;
    end record;
    --  An iterator to generate the LI database for a set of source files.

@@ -36,7 +36,8 @@ with SN.Browse;
 with SN.Xref_Pools;     use SN.Xref_Pools;
 
 with File_Buffer;
-with Traces; use Traces;
+with Traces;  use Traces;
+with Prj_API;
 
 package body Src_Info.CPP is
 
@@ -269,14 +270,25 @@ package body Src_Info.CPP is
       return LI_Handler_Iterator'Class
    is
       pragma Unreferenced (Handler);
-      pragma Unreferenced (Project);
-      pragma Unreferenced (Recursive);
       HI : CPP_LI_Handler_Iterator;
    begin
       HI.SN_Dir := new String' (Get_SN_Dir (Root_Project));
 
       --  Delete old databse
       Browse.Delete_Database (HI.SN_Dir.all);
+
+      --  Prepare the list of files
+      HI.Source_Files := Get_Source_Files (Project, Recursive);
+      HI.Current_File := HI.Source_Files'First;
+
+      Init (HI.Xrefs);
+
+      Browse.Browse
+        (HI.Source_Files (HI.Current_File).all,
+         HI.SN_Dir.all,
+         "cbrowser",
+         HI.Xrefs,
+         HI.PD);
 
       return HI;
    end Generate_LI_For_Project;
@@ -285,9 +297,44 @@ package body Src_Info.CPP is
      (Iterator : in out CPP_LI_Handler_Iterator;
       Finished : out Boolean)
    is
-      pragma Unreferenced (Iterator);
+      Process_Alive : Boolean;
+      Success       : Boolean;
    begin
-      Finished := True;
+      Finished := False;
+      Browse.Is_Alive (Iterator.PD, Process_Alive);
+
+      if Process_Alive then
+         return;
+      end if;
+
+      if Iterator.Current_File < Iterator.Source_Files'Last then
+         --  process next file
+         Iterator.Current_File := Iterator.Current_File + 1;
+
+         Browse.Browse
+           (Iterator.Source_Files (Iterator.Current_File).all,
+            Iterator.SN_Dir.all,
+            "cbrowser",
+            Iterator.Xrefs,
+            Iterator.PD);
+      elsif Iterator.Current_File = Iterator.Source_Files'Last then
+         --  begin generating xrefs
+         Iterator.Current_File := Iterator.Current_File + 1;
+         Browse.Generate_Xrefs
+           (Iterator.SN_Dir.all,
+            Iterator.Tmp_Filename,
+            Iterator.PD);
+      else
+         Finished := True;
+         Save
+           (Iterator.Xrefs,
+            Iterator.SN_Dir.all
+              & Directory_Separator & Browse.Xref_Pool_Filename);
+         Free (Iterator.Xrefs);
+         Delete_File (Iterator.Tmp_Filename'Address, Success);
+         Free_String (Iterator.SN_Dir);
+      end if;
+
    end Continue;
 
    ----------------
