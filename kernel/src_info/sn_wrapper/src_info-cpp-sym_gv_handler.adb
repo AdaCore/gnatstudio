@@ -6,6 +6,22 @@ separate (Src_Info.CPP)
 
 procedure Sym_GV_Handler (Sym : FIL_Table)
 is
+   type Type_To_Object_Array is array (E_Kind) of E_Kind;
+   Type_To_Object : Type_To_Object_Array :=
+     (Access_Type               => Access_Object,
+      Array_Type                => Array_Object,
+      Boolean_Type              => Boolean_Object,
+      Class_Wide_Type           => Class_Wide_Object,
+      Decimal_Fixed_Point_Type  => Decimal_Fixed_Point_Object,
+      Enumeration_Type          => Enumeration_Object,
+      Modular_Integer_Type      => Modular_Integer_Object,
+      Protected_Type            => Protected_Object,
+      Record_Type               => Record_Object,
+      Ordinary_Fixed_Point_Type => Ordinary_Fixed_Point_Object,
+      Signed_Integer_Type       => Signed_Integer_Object,
+      String_Type               => String_Object,
+      Task_Type                 => Task_Object,
+      others                    => Overloaded_Entity);
    Desc       : CType_Description;
    Var        : GV_Table;
    Success    : Boolean;
@@ -28,7 +44,7 @@ begin
    Type_Name_To_Kind (Var.Buffer
       (Var.Value_Type.First .. Var.Value_Type.Last), Desc, Success);
 
-   if not Success then
+   if not Success or Type_To_Object (Desc.Kind) = Overloaded_Entity then
       Free (Var);
       return; -- type not found, ignore errors
    end if;
@@ -47,7 +63,7 @@ begin
       Source_Filename   =>
         Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
       Location          => Sym.Start_Position,
-      Kind              => Desc.Kind,
+      Kind              => Type_To_Object (Desc.Kind),
       Scope             => Scope,
       Declaration_Info  => tmp_ptr);
 
