@@ -29,6 +29,7 @@ with Glide_Intl;                use Glide_Intl;
 with Traces;                    use Traces;
 
 with VCS_View_API;              use VCS_View_API;
+with VCS_View_Pkg;              use VCS_View_Pkg;
 
 with Ada.Exceptions;            use Ada.Exceptions;
 
@@ -61,7 +62,7 @@ package body VCS_Module is
    is
       pragma Unreferenced (Widget);
    begin
-      Open_Explorer (Kernel);
+      Open_Explorer (Kernel, null);
 
    exception
       when E : others =>
@@ -106,7 +107,9 @@ package body VCS_Module is
          Kernel                  => Kernel,
          Module_Name             => VCS_Module_Name,
          Priority                => Default_Priority,
-         Contextual_Menu_Handler => VCS_Contextual_Menu'Access);
+         MDI_Child_Tag           => VCS_View_Record'Tag,
+         Contextual_Menu_Handler => VCS_Contextual_Menu'Access,
+         Default_Context_Factory => VCS_View_API.Context_Factory'Access);
 
       Register_Menu
         (Kernel,
