@@ -127,6 +127,7 @@ with Gdk.Event;
 with Glib.Object;
 with Gdk.Types;
 with Gdk.Pixbuf;
+with Gtk.Image;
 with Gtk.Handlers;
 with Gtk.Menu_Item;
 with Gtk.Widget;
@@ -372,6 +373,17 @@ package Glide_Kernel.Modules is
    --  Given an absolute path (see Register_Menu) for a menu item, return
    --  the underlying gtk menu item. Useful in particular to check or change
    --  the state of a menu item.
+
+   ---------------------
+   -- Toolbar buttons --
+   ---------------------
+
+   procedure Register_Button
+     (Kernel  : access Kernel_Handle_Record'Class;
+      Text    : String;
+      Command : Command_Access := null;
+      Image   : Gtk.Image.Gtk_Image := null);
+   --  Add a button at the end of the toolbar.
 
    ------------
    -- Search --

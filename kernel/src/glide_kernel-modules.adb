@@ -33,6 +33,7 @@ with Glib.Values;       use Glib.Values;
 with Glide_Main_Window; use Glide_Main_Window;
 with Gtk.Image_Menu_Item; use Gtk.Image_Menu_Item;
 with Gtk.Accel_Map;     use Gtk.Accel_Map;
+with Gtk.Button;        use Gtk.Button;
 with Gtk.Enums;         use Gtk.Enums;
 with Gtk.Image;         use Gtk.Image;
 with Gtk.Label;         use Gtk.Label;
@@ -40,6 +41,7 @@ with Gtk.Menu;          use Gtk.Menu;
 with Gtk.Menu_Bar;      use Gtk.Menu_Bar;
 with Gtk.Menu_Item;     use Gtk.Menu_Item;
 with Gtk.Menu_Shell;    use Gtk.Menu_Shell;
+with Gtk.Toolbar;       use Gtk.Toolbar;
 with Gtk.Widget;        use Gtk.Widget;
 with Gtkada.MDI;        use Gtkada.MDI;
 with Language;          use Language;
@@ -1136,6 +1138,27 @@ package body Glide_Kernel.Modules is
 
       return Item;
    end Register_Menu;
+
+   ---------------------
+   -- Register_Button --
+   ---------------------
+
+   procedure Register_Button
+     (Kernel  : access Kernel_Handle_Record'Class;
+      Text    : String;
+      Command : Command_Access := null;
+      Image   : Gtk.Image.Gtk_Image := null)
+   is
+      Button  : Gtk_Button;
+      Toolbar : constant Gtk_Toolbar := Get_Toolbar (Kernel);
+   begin
+      Button := Append_Item (Toolbar, Text, Text, "", Gtk_Widget (Image));
+
+      Command_Callback.Connect
+        (Button, "clicked",
+         Command_Callback.To_Marshaller (Execute_Command'Access),
+         Command);
+   end Register_Button;
 
    -----------------
    -- Mime_Action --
