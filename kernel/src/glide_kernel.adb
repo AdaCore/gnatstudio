@@ -911,6 +911,8 @@ package body Glide_Kernel is
       --  Read the previous contents of the file, to save the desktops for
       --  other projects
 
+      Trace (Me, "saving desktop file " & File_Name);
+
       if Is_Regular_File (File_Name) then
          Old := Parse (File_Name);
       end if;
