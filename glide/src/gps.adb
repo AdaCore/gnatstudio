@@ -1026,6 +1026,12 @@ procedure GPS is
 
       Load_Preferences (GPS.Kernel);
 
+      --  Load the customization files before loading the actual projects,
+      --  so that the usual hooks are taken into account right from the
+      --  beginning
+
+      Python_Module.Load_Python_Startup_Files (GPS.Kernel);
+
       --  Temporarily disable unimplemented menu items
 
       declare
@@ -1199,8 +1205,6 @@ procedure GPS is
       if Splash /= null then
          Destroy (Splash);
       end if;
-
-      Python_Module.Load_Python_Startup_Files (GPS.Kernel);
 
       if Batch_Script /= null then
          Execute_Batch (Batch_Script.all, As_File => False);
