@@ -674,7 +674,7 @@ package body Src_Editor_View is
       --  behavior.
 
       Scroll_To_Mark
-        (View, Insert_Mark, Use_Align => True,
+        (View, Insert_Mark, Use_Align => False,
          Within_Margin => 0.0, Xalign => 0.5, Yalign => 0.5);
    end Scroll_To_Cursor_Location;
 
