@@ -36,29 +36,28 @@ with GPS.Kernel;
 package GPS.Main_Window is
 
    type GPS_Window_Record is new Gtk_Window_Record with record
-      Kernel           : GPS.Kernel.Kernel_Handle;
-      Main_Accel_Group : Gtk_Accel_Group;
+      Kernel            : GPS.Kernel.Kernel_Handle;
+      Main_Accel_Group  : Gtk_Accel_Group;
       --  The default accelerators for the window.
 
-      Menu_Box         : Gtk.Box.Gtk_Hbox;
-      Menu_Bar         : Gtk.Menu_Bar.Gtk_Menu_Bar;
-      Toolbar_Box      : Gtk_Vbox;
-      Toolbar          : Gtk_Toolbar;
-      MDI              : Gtkada.MDI.MDI_Window;
-      Statusbar        : Gtk.Box.Gtk_Hbox;
+      Menu_Box          : Gtk.Box.Gtk_Hbox;
+      Menu_Bar          : Gtk.Menu_Bar.Gtk_Menu_Bar;
+      Toolbar_Box       : Gtk_Vbox;
+      Toolbar           : Gtk_Toolbar;
+      MDI               : Gtkada.MDI.MDI_Window;
+      Statusbar         : Gtk.Box.Gtk_Hbox;
 
-      Animation_Frame  : Gtk_Frame;
-      Static_Image     : Gdk_Pixbuf;
-      Animation        : Gdk_Pixbuf_Animation;
-      Animation_Iter   : Gdk_Pixbuf_Animation_Iter;
-      Animation_Image  : Gtk_Image;
+      Animation_Frame   : Gtk_Frame;
+      Static_Image      : Gdk_Pixbuf;
+      Animation         : Gdk_Pixbuf_Animation;
+      Animation_Iter    : Gdk_Pixbuf_Animation_Iter;
+      Animation_Image   : Gtk_Image;
+      Animation_Timeout : Gtk.Main.Timeout_Handler_Id;
 
-      Timeout_Id       : Gtk.Main.Timeout_Handler_Id;
-
-      State_Level      : Integer := 0;
-      Busy_Level       : Integer := 0;
-      Desktop_Loaded   : Boolean := False;
-      Public_Version   : Boolean := True;
+      State_Level       : Integer := 0;
+      Busy_Level        : Integer := 0;
+      Desktop_Loaded    : Boolean := False;
+      Public_Version    : Boolean := True;
    end record;
    type GPS_Window is access all GPS_Window_Record'Class;
 

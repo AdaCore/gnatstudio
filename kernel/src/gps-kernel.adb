@@ -967,7 +967,7 @@ package body GPS.Kernel is
       Window : constant GPS_Window := GPS_Window (Data.Kernel.Main_Window);
    begin
       if Anim_Cb (Data.Kernel) then
-         Window.Timeout_Id := Process_Timeout.Add
+         Window.Animation_Timeout := Process_Timeout.Add
            (Guint32 (Get_Delay_Time (Window.Animation_Iter)),
             Process_Anim'Access, Data);
       end if;
@@ -1001,10 +1001,10 @@ package body GPS.Kernel is
       end if;
 
       if Window.State_Level = 0
-        and then Window.Timeout_Id = 0
+        and then Window.Animation_Timeout = 0
         and then Window.Animation_Iter /= null
       then
-         Window.Timeout_Id := Process_Timeout.Add
+         Window.Animation_Timeout := Process_Timeout.Add
            (Guint32 (Get_Delay_Time (Window.Animation_Iter)),
             Process_Anim'Access,
             (Handle, null, null, null, System.Null_Address));
@@ -1043,10 +1043,10 @@ package body GPS.Kernel is
 
          if Window.State_Level = 0
            and then not Gtk.Object.Destroyed_Is_Set (Get_Main_Window (Handle))
-           and then Window.Timeout_Id /= 0
+           and then Window.Animation_Timeout /= 0
          then
-            Timeout_Remove (Window.Timeout_Id);
-            Window.Timeout_Id := 0;
+            Timeout_Remove (Window.Animation_Timeout);
+            Window.Animation_Timeout := 0;
             Display_Default_Image (Handle);
          end if;
       end if;
