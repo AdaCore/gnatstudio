@@ -161,17 +161,19 @@ package body Projects.Graphs is
       procedure Process_Project
         (Project : Project_Node_Id; Origin  : Vertex_Access)
       is
-         With_Clause : Project_Node_Id := First_With_Clause_Of (Project);
-         Dest        : Vertex_Access;
-         E           : Edge_Access;
-         New_Item    : Boolean;
-      begin
-         while With_Clause /= Empty_Node loop
-            Dest := Get (Table, Prj.Tree.Name_Of (With_Clause));
+         procedure Add_Project (Node : Project_Node_Id; Name : Name_Id);
+         --  Add a new vertex for the project Name
+
+         procedure Add_Project (Node : Project_Node_Id; Name : Name_Id) is
+            Dest        : Vertex_Access;
+            E           : Edge_Access;
+            New_Item    : Boolean;
+         begin
+            Dest := Get (Table, Name);
             New_Item := Dest = null;
 
             if New_Item then
-               Dest := Create_Project_Vertex (Prj.Tree.Name_Of (With_Clause));
+               Dest := Create_Project_Vertex (Name);
             end if;
 
             if E_Factory = null then
@@ -182,11 +184,25 @@ package body Projects.Graphs is
             Add_Edge (G, E, Origin, Dest);
 
             if New_Item then
-               Process_Project (Project_Node_Of (With_Clause), Dest);
+               Process_Project (Node, Dest);
             end if;
+         end Add_Project;
 
+         With_Clause : Project_Node_Id := First_With_Clause_Of (Project);
+         Extended    : Project_Node_Id;
+      begin
+         while With_Clause /= Empty_Node loop
+            Add_Project (Project_Node_Of (With_Clause),
+                         Prj.Tree.Name_Of (With_Clause));
             With_Clause := Next_With_Clause_Of (With_Clause);
          end loop;
+
+         --  Is this an extending project ?
+
+         Extended := Extended_Project_Of (Project_Declaration_Of (Project));
+         if Extended /= Empty_Node then
+            Add_Project (Extended, Prj.Tree.Name_Of (Extended));
+         end if;
       end Process_Project;
 
       Origin : Vertex_Access;
