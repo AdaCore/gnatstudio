@@ -36,9 +36,8 @@ with Traces;                    use Traces;
 with Commands;                  use Commands;
 
 with Diff_Utils2;               use Diff_Utils2;
-with Vdiff2_Utils;              use Vdiff2_Utils;
 with Vdiff2_Command;            use Vdiff2_Command;
-with Vdiff2_Module;             use Vdiff2_Module;
+with Vdiff2_Module.Utils;       use Vdiff2_Module.Utils;
 
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
@@ -127,11 +126,7 @@ package body Vdiff2_Module.Callback is
                      File3 => File3,
                      Current_Node => First (Result),
                      Ref_File => 2);
-            Append (Id.List_Diff.all, Item);
-
-            Trace (Me, "begin Show_Differences3");
-            Show_Differences3 (Kernel, Item);
-            Trace (Me, "end Show_Differences3");
+            Process_Differences (Kernel, Item, Id.List_Diff);
             Dummy := Execute (Id.Command_First);
             --  Free (Result);
          end;
@@ -176,8 +171,6 @@ package body Vdiff2_Module.Callback is
               Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs),
               Kind              => Unspecified,
               History           => Get_History (Kernel));
-         Dummy : Command_Return_Type;
-         pragma Unreferenced (Dummy);
 
       begin
          if File2 = VFS.No_File then
@@ -200,9 +193,7 @@ package body Vdiff2_Module.Callback is
                   File3 => VFS.No_File,
                   Current_Node => First (Result),
                   Ref_File => 2);
-         Append (Id.List_Diff.all, Item);
-         Show_Differences3 (Kernel, Item);
-         Dummy := Execute (Id.Command_First);
+         Process_Differences (Kernel, Item, Id.List_Diff);
       end;
 
    exception
@@ -260,8 +251,8 @@ package body Vdiff2_Module.Callback is
                  Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs),
                  Kind              => Unspecified,
                  History           => Get_History (Kernel));
-            Dummy : Command_Return_Type;
-            pragma Unreferenced (Dummy);
+            F1, F2, F3 : Virtual_File;
+
          begin
             if File3 = VFS.No_File then
                return;
@@ -284,9 +275,7 @@ package body Vdiff2_Module.Callback is
                      File3 => File3,
                      Current_Node => First (Result),
                      Ref_File => 2);
-            Append (Id.List_Diff.all, Item);
-            Show_Differences3 (Kernel, Item);
-            Dummy := Execute (Id.Command_First);
+            Process_Differences (Kernel, Item, Id.List_Diff);
 
             declare
                Merge     : constant Virtual_File :=
@@ -300,7 +289,7 @@ package body Vdiff2_Module.Callback is
                Args_edit : Argument_List := (1 => new String'(Merge));
 
             begin
-               if Merge /= Virtual_File then
+               if Merge /= VFS.No_File then
                   Show_Merge (Kernel, Full_Name (Merge), Item);
                end if;
 
@@ -348,8 +337,6 @@ package body Vdiff2_Module.Callback is
               Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs),
               Kind              => Unspecified,
               History           => Get_History (Kernel));
-         Dummy : Command_Return_Type;
-         pragma Unreferenced (Dummy);
 
       begin
          if File2 = VFS.No_File then
@@ -373,9 +360,7 @@ package body Vdiff2_Module.Callback is
                   File3 => VFS.No_File,
                   Current_Node => First (Result),
                   Ref_File => 2);
-         Append (Id.List_Diff.all, Item);
-         Show_Differences3 (Kernel, Item);
-         Dummy := Execute (Id.Command_First);
+         Process_Differences (Kernel, Item, Id.List_Diff);
 
          declare
             Merge     : constant Virtual_File :=
@@ -417,8 +402,7 @@ package body Vdiff2_Module.Callback is
       Result  : Diff_List;
       Success : Boolean;
       Button  : Message_Dialog_Buttons;
-      Dummy : Command_Return_Type;
-      pragma Unreferenced (Mode, Button, Dummy);
+      pragma Unreferenced (Mode, Button);
 
    begin
 
@@ -464,8 +448,7 @@ package body Vdiff2_Module.Callback is
                      File3 => VFS.No_File,
                      Current_Node => First (Result),
                      Ref_File => 2);
-                  Append (Id.List_Diff.all, Item);
-                  Show_Differences3 (Kernel, Item);
+                  Process_Differences (Kernel, Item, Id.List_Diff);
                   Delete_File (Ref_File, Success);
                end;
 
@@ -498,8 +481,7 @@ package body Vdiff2_Module.Callback is
                                  File3 => VFS.No_File,
                                  Current_Node => First (Result),
                                  Ref_File => 2);
-                  Append (Id.List_Diff.all, Item);
-                  Show_Differences3 (Kernel, Item);
+                  Process_Differences (Kernel, Item, Id.List_Diff);
                   Delete_File (Ref_File, Success);
                end;
 
@@ -526,11 +508,9 @@ package body Vdiff2_Module.Callback is
                   File3 => VFS.No_File,
                   Current_Node => First (Result),
                   Ref_File => 2);
-               Append (Id.List_Diff.all, Item);
-               Show_Differences3 (Kernel, Item);
+               Process_Differences (Kernel, Item, Id.List_Diff);
             end if;
 
-            Dummy := Execute (Id.Command_First);
             return True;
          end;
       end if;
