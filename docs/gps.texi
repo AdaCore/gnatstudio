@@ -803,6 +803,19 @@ To navigate through the next and previous location (also called @code{Tag}),
 you can use the menu items @code{Navigate->Previous Tag} and
 @code{Navigate->Next Tag}, or the corresponding key bindings.
 
+Left-clicking on a line in the Location Tree brings up a contextual
+menu with the following entries:
+
+@table @b
+@item Sort by subcategory
+Toggle the sorting of the entries by sub-categories. This is useful,
+for example, for separating the warnings from the errors in the build
+results.
+
+@item Jump to location
+Open the location contained in the message, if any.
+@end table
+
 In some cases, a wrench icon will be associated on the left of a compilation
 message. See @ref{Code Fixing} for more information on how to make advantage
 of this icon.
@@ -4996,35 +5009,93 @@ Shows the status of the file. This column can be sorted by clicking on
 the header. The different possible status for files are the following:
 
 @table @code
+
+
 @item Unknown
+@iftex
+@image{gps-vcs-unknown}
+@end iftex
+@ifhtml
+@image{gps-vcs-unknown}
+@end ifhtml
 The status is not yet determined or the VCS repository is not able to
 give this information (for example if it is unavailable, or locked).
 
 @item Not registered
+@iftex
+@image{gps-vcs-not-registered}
+@end iftex
+@ifhtml
+@image{gps-vcs-not-registered}
+@end ifhtml
 The file is not known to the VCS repository.
 
 @item Up-to-date
+@iftex
+@image{gps-vcs-up-to-date}
+@end iftex
+@ifhtml
+@image{gps-vcs-up-to-date}
+@end ifhtml
 The file corresponds to the latest version in the corresponding branch
 on the repository.
 
 @item Added
+@iftex
+@image{gps-vcs-added}
+@end iftex
+@ifhtml
+@image{gps-vcs-added}
+@end ifhtml
 The file has been added remotely but is not yet updated in the local
 view.
 
 @item Removed
+@iftex
+@image{gps-vcs-removed}
+@end iftex
+@ifhtml
+@image{gps-vcs-removed}
+@end ifhtml
 The file still exists locally but is known to have been removed from
 the VCS repository.
 
 @item Modified
+@iftex
+@image{gps-vcs-modified}
+@end iftex
+@ifhtml
+@image{gps-vcs-modified}
+@end ifhtml
 The file has been modified by the user or has been explicitly opened
 for editing.
 
 @item Needs merge
+@iftex
+@image{gps-vcs-needs-merge}
+@end iftex
+@ifhtml
+@image{gps-vcs-needs-merge}
+@end ifhtml
 The file has been modified locally and on the repository.
 
 @item Needs update
+@iftex
+@image{gps-vcs-needs-update}
+@end iftex
+@ifhtml
+@image{gps-vcs-needs-update}
+@end ifhtml
 The file has been modified in the repository but not locally.
 
+@item Contains merge conflicts
+@iftex
+@image{gps-vcs-has-conflicts}
+@end iftex
+@ifhtml
+@image{gps-vcs-has-conflicts}
+@end ifhtml
+The file contains conflicts from a previous update operation.
 @end table
 
 @item Log
@@ -5081,6 +5152,25 @@ sub-projects, recursively.
 
 @item Query status for all projects
 Query the status of all files in the project and all imported sub-projects.
+@end table
+
+For a description of the other entries in the VCS menu, see
+@ref{The Version Control Contextual Menu}
+
+@node The Version Control Contextual Menu
+@section The Version Control Contextual Menu
+@noindent
+This section describes the version control contextual menu displayed when you
+right-click on an entity (e.g. a file, a directory, a project) from various
+parts of GPS, including the project explorer, the source editor and the VCS
+Explorer.
+
+Depending on the context, some of the items described in this section won't
+be shown, which means that they are not relevant to the current context.
+
+@table @b
+@item Query status
+Query the status of the selected item. Brings up the VCS Explorer.
 
 @item Update
 @anchor{Update}
@@ -5104,36 +5194,38 @@ specifying a @code{Log checker} in the project properties dialog. This
 works on change-log files in the same way as the @code{File checker} works on
 source files.
 
-@item Start Editing
-@anchor{Start Editing}
+@item Open
+@anchor{Open}
 Open the currently selected file for writing. On some VCS systems,
 this is a necessary operation, and on other systems it is not.
 
-@item View revision history
+@item View entire revision history
 @anchor{View revision history}
 Show the revision logs for all previous revisions of this file.
 
-@item Compare against head rev.
+@item View specific revision history
+Show the revision logs for one previous revision of this file.
+
+@item Compare against head revision
 @cindex compare
 @anchor{Compare against head}
-
 Show a visual comparison between the local file and the most recent
 version of that file in the repository.
 
-@item Compare against working rev.
+@item Compare against other revision
 @anchor{Compare against working}
-Show a visual comparison between the local file and the corresponding
+Show a visual comparison between the local file and one specific
 version of that file in the repository.
 
-@item Compare working against head rev.
+@item Compare between two revisions
+@anchor{Compare against revision}
+Show a visual comparison between two specific revisions
+of the file in the repository.
+
+@item Compare base against head
 @anchor{Compare working against head}
 Show a visual comparison between the corresponding version of the
 file in the repository and the most recent version of that file.
-
-@item Compare against revision...
-@anchor{Compare against revision}
-Show a visual comparison between the local file and a specific revision
-of that file in the repository.
 
 @item Annotate
 @anchor{Annotate}
@@ -5145,7 +5237,7 @@ When using CVS, the annotations are clickable. Left-clicking on an
 annotation line will query and display the changelog associated to the
 specific revision for this line.
 
-@item Remove annotations
+@item Remove Annotate
 Remove the annotations from the selected file.
 
 @item Edit revision log
@@ -5155,81 +5247,21 @@ Edit the current revision log for the selected file.
 Edit the global ChangeLog entry for the selected file.
 @pxref{Working with global ChangeLog file}.
 
-@c @item Revert
-@item Add to repository
-Add a file to the repository.
+@item Remove revision log
+Clear the current revision associated to the selected file.
 
-@item Remove from repository
-Remove a file from the repository.
+@item Add
+Add a file to the repository, using the current revision log for this
+file. If no revision log exists, activating this menu will create one.
 
-@end table
-
-@node The Version Control Contextual Menu
-@section The Version Control Contextual Menu
-@noindent
-This section describes the version control contextual menu displayed when you
-right-click on an entity (e.g. a file, a directory, a project) from various
-parts of GPS, including the project explorer, the source editor and the VCS
-Explorer.
-
-Depending on the context, some of the items described in this section won't
-be shown, which means that they are not relevant to the current context.
-
-@table @b
-@item Query status
-Query the status of the selected item. Brings up the VCS Explorer.
-
-@item Update
-Update the selected item. @xref{Update}.
-
-@item Commit via revision log
-This menu item is titled @i{Commit} when a revision log has already been
-created.
-@xref{Commit}.
-
-@item Start editing
-Open the selected file for editing. @xref{Start Editing}.
-
-@item View revision history
-View the revision history for the selected file. @xref{View revision history}.
-
-@item Compare against head rev.
-@cindex compare
-Compare selected files. @xref{Compare against head}.
-
-@item Compare against working rev.
-Compare selected files. @xref{Compare against working}.
-
-@item Compare working against head rev.
-Compare selected files. @xref{Compare working against head}.
-
-@item Annotate
-@cindex annotate
-Enable annotations for the selected files.
-@xref{Annotate}.
-
-@item Remove annotations
-Remove annotations for the selected files.
-
-@item Edit revision log
-Edit the revision log file corresponding to the selected files.
-
-@item Edit global ChangeLog
-Edit the global ChangeLog entry for the selected file.
-@pxref{Working with global ChangeLog file}.
+@item Remove
+Remove a file from the repository, using the current revision log for
+this file. If no revision log exists, activating this menu will create
+one.
 
 @item Revert
-Revert the file to the latest version in the repository, erasing
-your local changes.
-
-@item Remove revision log
-Deletes the revision log file corresponding to the selected files.
-
-@item Add to repository
-Add the selected items to the repository.
-
-@item Remove from repository
-Remove the selected items from the repository.
+Revert a locale file to the repository revision, discarding all local
+changes.
 
 @item Directory
 Only available when the current context contains directory information
@@ -5238,12 +5270,12 @@ Only available when the current context contains directory information
 @item Query status for directory
 Query status for the files contained in the selected directory.
 
+@item Update directory
+Update the files in the selected directory.
+
 @item Query status for directory recursively
 Query status for the files in the selected directory and all
 subdirectories recursively, links not included.
-
-@item Update directory
-Update the files in the selected directory.
 
 @item Update directory recursively
 Update the files in the selected directory and all
