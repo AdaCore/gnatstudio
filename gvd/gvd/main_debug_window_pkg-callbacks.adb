@@ -184,22 +184,34 @@ package body Main_Debug_Window_Pkg.Callbacks is
       Process : Debugger_Process_Tab;
       Top     : constant Main_Debug_Window_Access :=
         Main_Debug_Window_Access (Object);
+      Tab     : constant Debugger_Process_Tab := Get_Current_Process (Object);
 
    begin
       Open_Program (Top.Open_Program, Program);
 
-      if Program.Launch = New_Debugger then
-         Process :=
-           Create_Debugger
-             (Main_Debug_Window_Access (Object),
-              Program.Debugger,
-              Program.Program.all,
-              List, "",
-              Program.Remote_Host.all,
-              Program.Remote_Target.all,
-              Program.Protocol.all,
-              Program.Debugger_Name.all);
-      end if;
+      case Program.Launch is
+         when None =>
+            return;
+
+         when Current_Debugger =>
+            if Tab /= null then
+               Close_Debugger (Tab);
+            end if;
+
+         when New_Debugger =>
+            null;
+      end case;
+
+      Process :=
+        Create_Debugger
+          (Main_Debug_Window_Access (Object),
+           Program.Debugger,
+           Program.Program.all,
+           List, "",
+           Program.Remote_Host.all,
+           Program.Remote_Target.all,
+           Program.Protocol.all,
+           Program.Debugger_Name.all);
    end On_Open_Debugger1_Activate;
 
    ---------------------------------

@@ -5378,7 +5378,7 @@ read or written
       <widget>
 	<class>GtkTable</class>
 	<name>table7</name>
-	<rows>5</rows>
+	<rows>6</rows>
 	<columns>7</columns>
 	<homogeneous>False</homogeneous>
 	<row_spacing>3</row_spacing>
@@ -5919,6 +5919,29 @@ remote
 	    <text_max_length>0</text_max_length>
 	    <text></text>
 	  </widget>
+	</widget>
+
+	<widget>
+	  <class>GtkCheckButton</class>
+	  <name>replace_check</name>
+	  <can_focus>True</can_focus>
+	  <label>Replace Current Debugger</label>
+	  <active>True</active>
+	  <draw_indicator>True</draw_indicator>
+	  <child>
+	    <left_attach>0</left_attach>
+	    <right_attach>7</right_attach>
+	    <top_attach>5</top_attach>
+	    <bottom_attach>6</bottom_attach>
+	    <xpad>0</xpad>
+	    <ypad>0</ypad>
+	    <xexpand>False</xexpand>
+	    <yexpand>False</yexpand>
+	    <xshrink>False</xshrink>
+	    <yshrink>False</yshrink>
+	    <xfill>True</xfill>
+	    <yfill>False</yfill>
+	  </child>
 	</widget>
       </widget>
     </widget>

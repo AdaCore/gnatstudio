@@ -39,7 +39,7 @@ begin
    Set_Shadow_Type (Open_Program.Frame8, Shadow_Etched_In);
    Pack_Start (Open_Program.Vbox13, Open_Program.Frame8, True, True, 0);
 
-   Gtk_New (Open_Program.Table7, 5, 7, False);
+   Gtk_New (Open_Program.Table7, 6, 7, False);
    Set_Row_Spacings (Open_Program.Table7, 3);
    Set_Col_Spacings (Open_Program.Table7, 3);
    Add (Open_Program.Frame8, Open_Program.Table7);
@@ -256,6 +256,12 @@ begin
    Set_Max_Length (Open_Program.Debugger_Entry, 0);
    Set_Text (Open_Program.Debugger_Entry, -"");
    Set_Visibility (Open_Program.Debugger_Entry, True);
+
+   Gtk_New (Open_Program.Replace_Check, -"Replace Current Debugger");
+   Set_Active (Open_Program.Replace_Check, True);
+   Attach (Open_Program.Table7, Open_Program.Replace_Check, 0, 7, 5, 6,
+     Fill, 0,
+     0, 0);
 
    Gtk_New (Open_Program.Hbuttonbox7);
    Set_Spacing (Open_Program.Hbuttonbox7, 30);

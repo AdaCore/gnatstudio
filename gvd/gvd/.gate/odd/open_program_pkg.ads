@@ -7,6 +7,7 @@ with Gtk.Combo; use Gtk.Combo;
 with Gtk.GEntry; use Gtk.GEntry;
 with Gtk.Button; use Gtk.Button;
 with Gtk.Label; use Gtk.Label;
+with Gtk.Check_Button; use Gtk.Check_Button;
 with Gtk.Hbutton_Box; use Gtk.Hbutton_Box;
 with Gtk.Object; use Gtk.Object;
 package Open_Program_Pkg is
@@ -38,6 +39,7 @@ package Open_Program_Pkg is
       Label73 : Gtk_Label;
       Debugger_Combo : Gtk_Combo;
       Debugger_Entry : Gtk_Entry;
+      Replace_Check : Gtk_Check_Button;
       Hbuttonbox7 : Gtk_Hbutton_Box;
       Ok_Button : Gtk_Button;
       Cancel_Button : Gtk_Button;
