@@ -194,6 +194,7 @@ package body SN.Xref_Pools is
 
    procedure Save (Pool : Xref_Pool; Filename : VFS.Virtual_File) is
       FD : File_Type;
+      Iter : STable.Iterator;
       E  : Xref_Elmt_Ptr;
    begin
       if not Pool.Changed then
@@ -202,9 +203,12 @@ package body SN.Xref_Pools is
       end if;
 
       Create (FD, Out_File, Locale_Full_Name (Filename));
-      STable.Get_First (Pool.HTable, E);
+      STable.Get_First (Pool.HTable, Iter);
 
-      while E /= Null_Xref_Elmt loop
+      loop
+         E := STable.Get_Element (Iter);
+         exit when E = Null_Xref_Elmt;
+
          Put_Line (FD, E.Source_Filename.all);
          if E.Valid then
             Put (FD, '1');
@@ -212,7 +216,7 @@ package body SN.Xref_Pools is
             Put (FD, '0');
          end if;
          Put_Line (FD, Full_Name (E.Xref_Filename).all);
-         STable.Get_Next (Pool.HTable, E);
+         STable.Get_Next (Pool.HTable, Iter);
       end loop;
 
       Close (FD);
@@ -238,22 +242,24 @@ package body SN.Xref_Pools is
       procedure Internal_Free is new Ada.Unchecked_Deallocation
         (Xref_Pool_Record, Xref_Pool);
 
+      Iter : STable.Iterator;
       E    : Xref_Elmt_Ptr;
-      Next : Xref_Elmt_Ptr;
 
    begin
       if Pool = null then
          return;
       end if;
 
-      STable.Get_First (Pool.HTable, E);
+      STable.Get_First (Pool.HTable, Iter);
 
-      while E /= Null_Xref_Elmt loop
-         STable.Get_Next (Pool.HTable, Next);
+      loop
+         E := STable.Get_Element (Iter);
+         exit when E = Null_Xref_Elmt;
+
          STable.Remove (Pool.HTable, E.Source_Filename);
          Free (E.Source_Filename);
          Free (E);
-         E := Next;
+         STable.Get_Next (Pool.HTable, Iter);
       end loop;
 
       Internal_Free (Pool);

@@ -139,13 +139,9 @@ package body Src_Info is
      (Handler         : access LI_Handler_Record'Class;
       Source_Filename : VFS.Virtual_File) return LI_File_Ptr
    is
-      Current_LI     : LI_File_Node_Ptr;
-      Current_Sep    : File_Info_Ptr_List;
-      Table          : LI_File_HTable.HTable := Handler.Table.all;
-      --  ??? Make a copy of the table since Get_First and Get_Next need
-      --  a Read/Writable HTable. This is temporary since we should stop
-      --  using Get_First/Next soon. See ??? comment below.
-
+      Current_LI_Iter : LI_File_HTable.Iterator;
+      Current_LI      : LI_File_Node_Ptr;
+      Current_Sep     : File_Info_Ptr_List;
    begin
       --  ??? The best way of doing this is to convert the filename into the
       --  Library Info filename, and then use the Htable to retrieve the
@@ -155,10 +151,13 @@ package body Src_Info is
       --  search; that'll do for now, and it works fast enough on small
       --  projects.
 
-      LI_File_HTable.Get_First (Table, Current_LI);
+      LI_File_HTable.Get_First (Handler.Table.all, Current_LI_Iter);
 
       LI_File_Loop :
-      while Current_LI /= null loop
+      loop
+         Current_LI := LI_File_HTable.Get_Element (Current_LI_Iter);
+         exit LI_File_Loop when Current_LI = null;
+
          --  Check if the filename matches the body filename
 
          if Current_LI.Value.LI.Body_Info /= null
@@ -192,7 +191,7 @@ package body Src_Info is
 
          --  This LI_File does not match, try the next one in the table...
 
-         LI_File_HTable.Get_Next (Table, Current_LI);
+         LI_File_HTable.Get_Next (Handler.Table.all, Current_LI_Iter);
       end loop LI_File_Loop;
 
       --  If we reach this point, then there is no matching LI_File
@@ -291,15 +290,17 @@ package body Src_Info is
    -----------
 
    procedure Reset (HT : in out LI_File_HTable.HTable) is
+      Iter         : LI_File_HTable.Iterator;
       Current_Unit : LI_File_Node_Ptr;
-      Next_Unit    : LI_File_Node_Ptr;
    begin
       --  Destroy all elements pointed by the hash-table...
 
-      LI_File_HTable.Get_First (HT, Current_Unit);
+      LI_File_HTable.Get_First (HT, Iter);
 
-      while Current_Unit /= null loop
-         LI_File_HTable.Get_Next (HT, Next_Unit);
+      loop
+         Current_Unit := LI_File_HTable.Get_Element (Iter);
+         exit when Current_Unit = null;
+
 
          --  Destroy for LI_File_Node_Ptr will free the whole list, ie
          --  including elements that will be seen later in the table. Thus we
@@ -307,7 +308,7 @@ package body Src_Info is
          Destroy (Current_Unit.Value);
          Free (Current_Unit);
 
-         Current_Unit := Next_Unit;
+         LI_File_HTable.Get_Next (HT, Iter);
       end loop;
 
       --  And finally, reset the hash-table itself...
