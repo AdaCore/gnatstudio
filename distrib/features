@@ -1,5 +1,7 @@
 New features in GPS 1.2.0
 
+- BB29-016 C129-027 VCS explorer and location window now saved in desktops
+
 - New menu Help->Recent
 
 - C224-009 Added support for the new limited-with statements in projects
