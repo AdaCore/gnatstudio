@@ -579,6 +579,12 @@ the following commands. Failing to do so will result in blank windows.
 @image{tasks, 12.7cm}
 @end iftex
 
+   @item Protection Domains...
+      For VxWorks AE only, this will open a new window containing the
+      list of available protection domains in the target. To change to a
+      different protection domain, simply click on it. A @c{*} character
+      indicates the current protection domain.
+
    @item Edit Breakpoints...
       Opens an advanced window to create and modify any kind of breakpoint
       (see @ref{The Breakpoint Editor}).
@@ -962,6 +968,64 @@ It is possible to access to advanced breakpoint characteristics by clicking
 on the @i{Advanced} button, which will display a new area on the right of the
 window, where you can specify commands to run automatically after a breakpoint
 is hit, or specify how many times a selected breakpoint will be ignored.
+If running VxWorks AE, you can also change the Scope and Action
+of breakpoints.
+
+@subsection Scope/Action Settings for VxWorks AE
+
+@noindent
+In VxWorks AE breakpoints have two extra properties:
+
+@itemize @bullet
+@item Scope:
+ which task(s) can hit a given breakpoint. Possible Scope values are:
+ @itemize @minus
+  @item task:
+   the breakpoint can only be hit by the task that was active when the
+   breakpoint was set. If the breakpoint is set before the program is
+   run, the breakpoint will affect the environment task
+  @item pd:
+   any task in the current protection domain can hit that breakpoint
+  @item any:
+   any task in any protection domain can hit that breakpoint. This
+   setting is only allowed for tasks in the Kernel domain.
+
+ @end itemize
+
+@item Action:
+ when a task hits a breakpoints, which tasks are stopped:
+ @itemize @minus
+  @item task:
+   stop only the task that hit the breakpoint.
+  @item pd:
+   stop all tasks in the current protection domain
+  @item all:
+   stop all breakable tasks in the system
+
+ @end itemize
+@end itemize
+
+These two properties can be set/changed through the advanced breakpoints
+characteristics by clicking on the @i{Advanced} button. There are two
+ways of setting these properties:
+
+@itemize @bullet
+
+@item Per breakpoint settings:
+ after setting a breakpoint (the default Scope/Action values will be
+ task/task), select the @i{Scope/Action} tab in the @i{Advanced} settings.
+ To change these settings on a given breakpoint, select it from
+ the breakpoints list, select the desired values of Scope and Action and click
+ on the @i{Update} button.
+
+@item Default session settings:
+ select the @i{Scope/Action} tab in the
+ @i{Advanced} settings. Select the desired Scope and Action settings, check
+ the @i{Set as session defaults} checkbox below and click the @i{Close}
+ button. From now on, every new breakpoint will have the selected values
+ for Scope and Action.
+
+@end itemize
 
 @c --------------------------------------------------------------------
 @node The Memory Window
