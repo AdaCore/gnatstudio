@@ -1342,7 +1342,9 @@ package body Aliases_Module is
                     Current2, Current);
       end loop;
 
-      Queue_Draw (Editor.Expansion);
+      --  Force a refresh of the text area, otherwise the new tags are
+      --  sometimes not shown properly, which is probably a bug in gtk+
+      Grab_Focus (Editor.Expansion);
    end Highlight_Expansion_Range;
 
    -------------
