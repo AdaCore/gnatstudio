@@ -33,6 +33,7 @@ with Glib.Values;              use Glib.Values;
 with Glib.Xml_Int;             use Glib.Xml_Int;
 
 with Gdk.Event;                use Gdk.Event;
+with Gdk.Rectangle;            use Gdk.Rectangle;
 
 with Gtk.Enums;                use Gtk.Enums;
 with Gtk.Arguments;            use Gtk.Arguments;
@@ -1324,12 +1325,16 @@ package body Project_Explorers is
    procedure Expand_Tree_Cb
      (Explorer : access Gtk.Widget.Gtk_Widget_Record'Class; Args : GValues)
    is
+      Margin   : constant Gint := 30;
       T        : constant Project_Explorer := Project_Explorer (Explorer);
       Path     : constant Gtk_Tree_Path :=
         Gtk_Tree_Path (Get_Proxy (Nth (Args, 2)));
       Node     : constant Gtk_Tree_Iter := Get_Iter (T.Tree.Model, Path);
       Success  : Boolean;
       pragma Unreferenced (Success);
+      Area_Rect : Gdk_Rectangle;
+      Path2    : Gtk_Tree_Path;
+      H        : Gint;
    begin
       if T.Expanding then
          return;
@@ -1347,10 +1352,16 @@ package body Project_Explorers is
          Get_Node_Type (T.Tree.Model, Node),
          True);
 
-      Scroll_To_Cell
-        (T.Tree,
-         Path, null, True,
-         0.1, 0.1);
+
+      Path2 := Get_Path (T.Tree.Model, Children (T.Tree.Model, Node));
+      Get_Cell_Area (T.Tree, Path2, Get_Column (T.Tree, 0), Area_Rect);
+      if Area_Rect.Y > Get_Allocation_Height (T.Tree) - Margin then
+         Scroll_To_Cell
+           (T.Tree,
+            Path, null, True,
+            0.1, 0.1);
+      end if;
+      Path_Free (Path2);
 
       T.Expanding := False;
 
