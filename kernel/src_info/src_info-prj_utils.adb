@@ -100,7 +100,7 @@ package body Src_Info.Prj_Utils is
    is
       Fname    : constant String := Get_String (Filename);
       Dot_Repl : constant String := Get_Attribute_Value
-        (Project, Dot_Replacement_Attribute, Naming_Package, Default => "-");
+        (Project, Dot_Replacement_Attribute, Default => "-");
       Dot      : constant Character := '.';
 
       Index       : Integer;
