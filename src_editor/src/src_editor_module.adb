@@ -3340,7 +3340,9 @@ package body Src_Editor_Module is
       Result  : Boolean;
       pragma Unreferenced (Result);
    begin
-      Result := Do_Refill (Get_Buffer (Current));
+      if Current /= null then
+         Result := Do_Refill (Get_Buffer (Current));
+      end if;
 
    exception
       when E : others =>
