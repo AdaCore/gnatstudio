@@ -442,7 +442,7 @@ package Glide_Kernel.Modules is
    --  There are multiple data associated with this type:
    --     first   : identifier of the emitter (use Get_String)
    --     second  : name of the category (use Get_String)
-   --     third   : name of the file (use Get_String)
+   --     third   : file (use VFS.Get_File)
    --     fourth  : line (use Get_Int)
    --     fifth   : column (use Get_Int)
    --     sixth   : message (use Get_String)

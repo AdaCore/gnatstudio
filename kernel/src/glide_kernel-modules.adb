@@ -1383,14 +1383,14 @@ package body Glide_Kernel.Modules is
    begin
       Init (Value (1),  Glib.GType_String);
       Init (Value (2),  Glib.GType_String);
-      Init (Value (3),  Glib.GType_String);
+      Init (Value (3),  Get_Virtual_File_Type);
       Init (Value (4),  Glib.GType_Int);
       Init (Value (5),  Glib.GType_Int);
       Init (Value (6),  Glib.GType_String);
       Init (Value (7),  Glib.GType_Pointer);
       Set_String (Value (1), Identifier);
       Set_String (Value (2), Category);
-      Set_String (Value (3), Full_Name (File, Normalize => True).all);
+      Set_File   (Value (3), File);
       Set_Int (Value (4), Gint (Line));
       Set_Int (Value (5), Gint (Column));
       Set_String (Value (6), Message);
