@@ -20,10 +20,12 @@
 
 --  This Package provide the structure for all command for Vdiff2
 
-with Glide_Kernel; use Glide_Kernel;
-with Commands;     use Commands;
-with Diff_Utils2;   use Diff_Utils2;
-with GNAT.OS_Lib; use GNAT.OS_Lib;
+with Glide_Kernel;         use Glide_Kernel;
+with Commands;             use Commands;
+with Diff_Utils2;          use Diff_Utils2;
+with GNAT.OS_Lib;          use GNAT.OS_Lib;
+with Commands.Interactive; use Commands.Interactive;
+with Gdk.Event;
 
 package Vdiff2_Command is
 
@@ -32,7 +34,7 @@ package Vdiff2_Command is
       Diff   : in out Diff_Head_Access);
       --  Is an access for the action executed by an Diff_Command
 
-   type Diff_Command is new Root_Command with record
+   type Diff_Command is new Interactive_Command with record
       Kernel    : Kernel_Handle;
       List_Diff : Diff_Head_List_Access;
       Action    : Handler_Action;
@@ -52,6 +54,10 @@ package Vdiff2_Command is
       Diff    : in out Diff_Head_List.List_Node);
    --  Execute the command Command
    --  without control of existence in diff list
+
+   function Execute
+     (Command : access Diff_Command;
+      Event   : Gdk.Event.Gdk_Event) return Command_Return_Type;
 
    function Execute
      (Command : access Diff_Command) return Command_Return_Type;
