@@ -40,7 +40,7 @@ package body File_Utils is
       function Internal
         (Buffer : System.Address;
          Length : Integer) return Integer;
-      pragma Import (C, Internal, "__gnat_get_logical_drive_strings");
+      pragma Import (C, Internal, "__gps_get_logical_drive_strings");
 
    begin
       Len := Internal (Buffer'Address, Buffer'Length);
@@ -52,7 +52,7 @@ package body File_Utils is
 
    function Subdirectories_Count (Directory : String) return Integer is
       function C_Subdirectories_Count (Dir : String) return Integer;
-      pragma Import (C, C_Subdirectories_Count, "__gnat_subdirectories_count");
+      pragma Import (C, C_Subdirectories_Count, "__gps_subdirectories_count");
 
    begin
       return C_Subdirectories_Count (Directory & ASCII.NUL);
@@ -169,7 +169,7 @@ package body File_Utils is
       Writable : Boolean)
    is
       procedure Internal (File : String; Set : Integer);
-      pragma Import (C, Internal, "__gnat_set_writable");
+      pragma Import (C, Internal, "__gps_set_writable");
 
    begin
       Internal (Locale_Full_Name (File) & ASCII.NUL, Boolean'Pos (Writable));
@@ -184,7 +184,7 @@ package body File_Utils is
       Readable : Boolean)
    is
       procedure Internal (File : String; Set : Integer);
-      pragma Import (C, Internal, "__gnat_set_readable");
+      pragma Import (C, Internal, "__gps_set_readable");
 
    begin
       Internal (File & ASCII.NUL, Boolean'Pos (Readable));

@@ -26,7 +26,7 @@
 #endif
 
 int
-__gnat_subdirectories_count (name)
+__gps_subdirectories_count (name)
 {
   struct stat statbuf;
   int ret;
@@ -54,7 +54,7 @@ __gnat_subdirectories_count (name)
 }
 
 int
-__gnat_get_logical_drive_strings (char *buffer, int len)
+__gps_get_logical_drive_strings (char *buffer, int len)
 {
 #ifdef _WIN32
   return GetLogicalDriveStringsA ((DWORD)len, (LPSTR)buffer);
@@ -64,7 +64,7 @@ __gnat_get_logical_drive_strings (char *buffer, int len)
 }
 
 void
-__gnat_set_writable (char *file, int set)
+__gps_set_writable (char *file, int set)
 {
   struct stat statbuf;
 
@@ -78,7 +78,7 @@ __gnat_set_writable (char *file, int set)
 }
 
 void
-__gnat_set_readable (char *file, int set)
+__gps_set_readable (char *file, int set)
 {
   struct stat statbuf;
 
@@ -92,7 +92,7 @@ __gnat_set_readable (char *file, int set)
 }
 
 void
-__gnat_ensure_valid_output (void)
+__gps_ensure_valid_output (void)
 {
 #ifdef _WIN32
   static int alloc_console_called = 0;
