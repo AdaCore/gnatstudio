@@ -30,6 +30,7 @@ with Callbacks_Odd; use Callbacks_Odd;
 with Odd_Intl; use Odd_Intl;
 with Main_Debug_Window_Pkg.Callbacks; use Main_Debug_Window_Pkg.Callbacks;
 with Odd.Pixmaps; use Odd.Pixmaps;
+with Odd.Types;   use Odd.Types;
 
 package body Main_Debug_Window_Pkg is
 
@@ -1222,5 +1223,32 @@ begin
    Pack_Start (Main_Debug_Window.Hbox1, Main_Debug_Window.Statusbar1, True, True, 0);
 
 end Initialize;
+
+   -------------------
+   -- Find_In_Cache --
+   -------------------
+
+   function Find_In_Cache
+     (Window    : access Main_Debug_Window_Record'Class;
+      File_Name : String)
+     return File_Cache_Access
+   is
+      Tmp : Cache_List := Window.File_Caches;
+   begin
+      while Tmp /= null loop
+         if Tmp.File_Name /= null
+           and then Tmp.File_Name.all = File_Name
+         then
+            return Tmp.Cache;
+         end if;
+         Tmp := Tmp.Next;
+      end loop;
+
+      Window.File_Caches := new Cache_List_Record
+        '(File_Name => new String'(File_Name),
+          Cache     => new File_Cache,
+          Next      => Window.File_Caches);
+      return Window.File_Caches.Cache;
+   end Find_In_Cache;
 
 end Main_Debug_Window_Pkg;

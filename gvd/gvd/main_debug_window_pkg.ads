@@ -38,8 +38,13 @@ with Open_Program_Pkg; use Open_Program_Pkg;
 with Odd.Dialogs; use Odd.Dialogs;
 with Gtkada.Toolbar; use Gtkada.Toolbar;
 with GNAT.OS_Lib; use GNAT.OS_Lib;
+with Odd.Types;
 
 package Main_Debug_Window_Pkg is
+
+   type Cache_List_Record is private;
+   type Cache_List is access Cache_List_Record;
+   --  Implement caches for the files that can be loaded in the application.
 
    type Main_Debug_Window_Record is new Gtk_Window_Record with record
       -----------------------
@@ -54,6 +59,9 @@ package Main_Debug_Window_Pkg is
       Log_File            : File_Descriptor := Standerr;
       TTY_Mode            : Boolean := False;
       Debug_Mode          : Boolean := False;
+
+      File_Caches         : Cache_List;
+      --  List of data cached for each of the file of the application
 
       -------------------------
 
@@ -226,4 +234,20 @@ package Main_Debug_Window_Pkg is
    procedure Initialize
      (Main_Debug_Window : access Main_Debug_Window_Record'Class);
 
+
+   function Find_In_Cache
+     (Window    : access Main_Debug_Window_Record'Class;
+      File_Name : String)
+     return Odd.Types.File_Cache_Access;
+   --  Return the cached data for a given file.
+   --  If no data was previously cached for that file, then a new File_Cache
+   --  is returned.
+
+private
+
+   type Cache_List_Record is record
+      File_Name : Odd.Types.String_Access;
+      Cache     : Odd.Types.File_Cache_Access;
+      Next      : Cache_List;
+   end record;
 end Main_Debug_Window_Pkg;
