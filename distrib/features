@@ -7,7 +7,9 @@ New features in GPS 1.0.1
 - A separate execution window is now provided when running a program (both
   stand alone, and under the debugger).
 
-- New contexual menu item in the editor: Locate file in the explorer
+- New contexual menu items in the editor:
+  - Locate file in the explorer
+  - Remove annotations
 
 - Automatic word completion implemented in the source editor
 
