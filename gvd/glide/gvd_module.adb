@@ -29,6 +29,7 @@ with Gdk.Types.Keysyms;       use Gdk.Types.Keysyms;
 with Gdk.Window;              use Gdk.Window;
 with Gtk.Bin;                 use Gtk.Bin;
 with Gtk.Box;                 use Gtk.Box;
+with Gtk.Container;           use Gtk.Container;
 with Gtk.Dialog;              use Gtk.Dialog;
 with Gtk.Enums;               use Gtk.Enums;
 with Gtk.GEntry;              use Gtk.GEntry;
@@ -110,6 +111,16 @@ package body GVD_Module is
 
    package File_Line_List is new Generic_List (File_Line_Record);
 
+   type GPS_Proxy is new Process_Proxy with record
+      Kernel : Kernel_Handle;
+   end record;
+   --  GPS specific proxy, used to redefine Set_Command_In_Process
+
+   procedure Set_Command_In_Process
+     (Proxy      : access GPS_Proxy;
+      In_Process : Boolean := True);
+   --  Set the appropriate debugger menu items to the corresponding state.
+
    type GVD_Module_Record is new Module_ID_Record with record
       Kernel           : Kernel_Handle;
 
@@ -125,11 +136,17 @@ package body GVD_Module is
       --  Set to True when the list has been modified by a callback.
 
       Initialize_Menu  : Gtk_Menu;
+
+      Delete_Id        : Handler_Id := (Null_Signal_Id, null);
    end record;
    type GVD_Module is access all GVD_Module_Record'Class;
 
    procedure Destroy (Id : in out GVD_Module_Record);
    --  Terminate the debugger the module, and kill the underlying debugger.
+
+   function Delete_Asm
+     (Widget : access Gtk_Widget_Record'Class) return Boolean;
+   --  Callback for the "delete_event" signal of the assembly view.
 
    procedure GVD_Contextual
      (Object  : access GObject_Record'Class;
@@ -145,9 +162,15 @@ package body GVD_Module is
       Height      : out Gint);
    --  Create a pixmap suitable for a tooltip, if debugger has been initialized
 
+   type Debugger_State is (Debug_None, Debug_Busy, Debug_Available);
+   --  Possible states of a debugger:
+   --  - Debug_None: debugger is not running
+   --  - Debug_Busy: debugger is busy processing a command
+   --  - Debug_Available: debugger is available
+
    procedure Set_Sensitive
-     (Kernel    : Kernel_Handle;
-      Sensitive : Boolean);
+     (Kernel : Kernel_Handle;
+      State  : Debugger_State);
    --  Change the sensitive state of the debugger menu items and toolbar
    --  buttons
 
@@ -181,45 +204,6 @@ package body GVD_Module is
      (Kernel : access GObject_Record'Class; User : GObject);
    --  Called when the preferences are changed in the GPS kernel
 
-   -----------------------------
-   -- Create_Debugger_Columns --
-   -----------------------------
-
-   procedure Create_Debugger_Columns
-     (Kernel : Kernel_Handle;
-      File   : String) is
-   begin
-      --  Create the information column for the current line.
-      Create_Line_Information_Column
-        (Kernel,
-         File,
-         "Current Line",
-         --  ??? That should be centralized somewhere !!!
-         Stick_To_Data => True,
-         Every_Line    => False);
-
-      --  Create the information column for the breakpoints
-      Create_Line_Information_Column
-        (Kernel,
-         File,
-         Breakpoints_Column_Id,
-         Stick_To_Data => True,
-         Every_Line    => True);
-   end Create_Debugger_Columns;
-
-   -----------------------------
-   -- Remove_Debugger_Columns --
-   -----------------------------
-
-   procedure Remove_Debugger_Columns
-     (Kernel : Kernel_Handle;
-      File   : String) is
-   begin
-      Remove_Line_Information_Column (Kernel, File, "Current Line");
-      Remove_Line_Information_Column
-        (Kernel, File, Breakpoints_Column_Id);
-   end Remove_Debugger_Columns;
-
    ---------------------------
    -- Generic_Debug_Command --
    ---------------------------
@@ -227,16 +211,8 @@ package body GVD_Module is
    procedure Generic_Debug_Command
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
-      Top  : constant Glide_Window := Glide_Window (Get_Main_Window (Kernel));
-      Page : constant Glide_Page.Glide_Page :=
-        Glide_Page.Glide_Page (Get_Current_Process (Top));
-      use Debugger;
-
+      Top : constant Glide_Window := Glide_Window (Get_Main_Window (Kernel));
    begin
-      if Page.Debugger = null then
-         return;
-      end if;
-
       Debug_Command (Top.all'Access, 0, Null_Widget);
 
    exception
@@ -441,6 +417,62 @@ package body GVD_Module is
    --  ??? Should provide proper user data instead of using a global variable
    --  to access debugger info.
 
+   -----------------------------
+   -- Create_Debugger_Columns --
+   -----------------------------
+
+   procedure Create_Debugger_Columns
+     (Kernel : Kernel_Handle;
+      File   : String) is
+   begin
+      --  Create the information column for the current line.
+      Create_Line_Information_Column
+        (Kernel,
+         File,
+         "Current Line",
+         --  ??? That should be centralized somewhere !!!
+         Stick_To_Data => True,
+         Every_Line    => False);
+
+      --  Create the information column for the breakpoints
+      Create_Line_Information_Column
+        (Kernel,
+         File,
+         Breakpoints_Column_Id,
+         Stick_To_Data => True,
+         Every_Line    => True);
+   end Create_Debugger_Columns;
+
+   -----------------------------
+   -- Remove_Debugger_Columns --
+   -----------------------------
+
+   procedure Remove_Debugger_Columns
+     (Kernel : Kernel_Handle;
+      File   : String) is
+   begin
+      Remove_Line_Information_Column (Kernel, File, "Current Line");
+      Remove_Line_Information_Column
+        (Kernel, File, Breakpoints_Column_Id);
+   end Remove_Debugger_Columns;
+
+   ----------------------------
+   -- Set_Command_In_Process --
+   ----------------------------
+
+   procedure Set_Command_In_Process
+     (Proxy      : access GPS_Proxy;
+      In_Process : Boolean := True) is
+   begin
+      Set_Command_In_Process (Process_Proxy (Proxy.all)'Access, In_Process);
+
+      if In_Process then
+         Set_Sensitive (Proxy.Kernel, Debug_Busy);
+      else
+         Set_Sensitive (Proxy.Kernel, Debug_Available);
+      end if;
+   end Set_Command_In_Process;
+
    --------------------
    -- On_Add_Symbols --
    --------------------
@@ -456,18 +488,6 @@ package body GVD_Module is
       use Debugger;
 
    begin
-      if Page.Debugger = null then
-         return;
-      end if;
-
-      if Command_In_Process (Get_Process (Page.Debugger)) then
-         Console.Insert
-           (Kernel,
-            (-"Underlying debugger busy. ") &
-            (-"Interrupt the debugger or wait for its availability."));
-         return;
-      end if;
-
       declare
          S : constant String := Select_File (Title => -"Select Module");
       begin
@@ -489,6 +509,30 @@ package body GVD_Module is
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Add_Symbols;
 
+   ----------------
+   -- Delete_Asm --
+   ----------------
+
+   function Delete_Asm
+     (Widget : access Gtk_Widget_Record'Class) return Boolean
+   is
+      Data_Sub : constant String := '/' & (-"Debug") & '/' & (-"Data") & '/';
+      Id       : constant GVD_Module  := GVD_Module (GVD_Module_ID);
+      Editor   : constant Code_Editor := Code_Editor (Widget);
+      Asm      : constant Asm_Editor  := Get_Asm (Editor);
+
+   begin
+      Set_Sensitive
+        (Find_Menu_Item (Id.Kernel, Data_Sub & (-"Assembly")), True);
+      Ref (Asm);
+      Remove (Gtk_Container (Get_Parent (Asm)), Asm);
+      Set_Mode (Editor, Source);
+      Disconnect (Asm, Id.Delete_Id);
+      Id.Delete_Id := (Null_Signal_Id, null);
+
+      return False;
+   end Delete_Asm;
+
    -----------------
    -- On_Assembly --
    -----------------
@@ -498,34 +542,47 @@ package body GVD_Module is
    is
       pragma Unreferenced (Widget);
 
-      Top     : constant Glide_Window :=
+      Data_Sub : constant String := '/' & (-"Debug") & '/' & (-"Data") & '/';
+      Top      : constant Glide_Window :=
         Glide_Window (Get_Main_Window (Kernel));
-      Process : constant Debugger_Process_Tab := Get_Current_Process (Top);
-      Editor  : constant Code_Editor := Process.Editor_Text;
-      Address : constant String      := Get_Asm_Address (Editor);
-      Asm     : constant Asm_Editor  := Get_Asm (Editor);
-      Child   : MDI_Child;
+      Process  : constant Debugger_Process_Tab := Get_Current_Process (Top);
+      Editor   : constant Code_Editor  := Process.Editor_Text;
+      Address  : constant String       := Get_Asm_Address (Editor);
+      Assembly : constant Asm_Editor   := Get_Asm (Editor);
+      Child    : MDI_Child;
 
    begin
       if Get_Mode (Editor) = Source_Asm then
          return;
       end if;
 
-      Set_Mode (Editor, Source_Asm);
-      --  ??? Connect to delete_event signal to reset editor mode
+      Set_Sensitive (Find_Menu_Item (Kernel, Data_Sub & (-"Assembly")), False);
+      GVD_Module (GVD_Module_ID).Delete_Id :=
+        Gtkada.Handlers.Return_Callback.Object_Connect
+          (Assembly, "delete_event",
+           Gtkada.Handlers.Return_Callback.To_Marshaller (Delete_Asm'Access),
+           Editor);
 
-      Child := Put (Process.Process_Mdi, Asm);
+      Set_Mode (Editor, Source_Asm);
+      Child := Put (Process.Process_Mdi, Assembly);
+      Unref (Assembly);
       Set_Title (Child, -"Assembly View");
 
-      if Address /= "" then
-         Set_Address (Asm, Address);
+      if not Command_In_Process (Get_Process (Process.Debugger)) then
+         if Address /= "" then
+            Set_Address (Assembly, Address);
+         end if;
+
+         Highlight_Address_Range (Assembly, Get_Line (Editor));
+
+         if Process.Breakpoints /= null then
+            Update_Breakpoints (Assembly, Process.Breakpoints.all);
+         end if;
       end if;
 
-      Highlight_Address_Range (Asm, Get_Line (Editor));
-
-      if Process.Breakpoints /= null then
-         Update_Breakpoints (Asm, Process.Breakpoints.all);
-      end if;
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Assembly;
 
    -------------------------
@@ -551,10 +608,6 @@ package body GVD_Module is
       use Debugger;
 
    begin
-      if Page.Debugger = null then
-         return;
-      end if;
-
       Gtk_New
         (Dialog,
          Title  => -"Connect to board",
@@ -624,18 +677,6 @@ package body GVD_Module is
       use Debugger;
 
    begin
-      if Page.Debugger = null then
-         return;
-      end if;
-
-      if Command_In_Process (Get_Process (Page.Debugger)) then
-         Console.Insert
-           (Kernel,
-            (-"Underlying debugger busy. ") &
-            (-"Interrupt the debugger or wait for its availability."));
-         return;
-      end if;
-
       declare
          S : constant String := Select_File (Title => -"Select File to Debug");
       begin
@@ -677,18 +718,6 @@ package body GVD_Module is
       use Debugger;
 
    begin
-      if Page.Debugger = null then
-         return;
-      end if;
-
-      if Command_In_Process (Get_Process (Page.Debugger)) then
-         Console.Insert
-           (Kernel,
-            (-"Underlying debugger busy. ") &
-            (-"Interrupt the debugger or wait for its availability."));
-         return;
-      end if;
-
       declare
          S : constant String := Select_File (-"Select Core File");
       begin
@@ -735,89 +764,92 @@ package body GVD_Module is
            (Get_Main_Window (Get_Kernel (Context))).Debugger;
 
          if Debugger /= null then
-            Lang := Get_Language_From_File
-              (Get_Language_Handler (Get_Kernel (Context)),
-               File_Information (Entity));
-
             Gtk_New (Mitem, Label => -"Debug");
             Gtk_New (Submenu);
             Set_Submenu (Mitem, Gtk_Widget (Submenu));
             Append (Menu, Mitem);
 
-            if Has_Entity_Name_Information (Entity) then
-               declare
-                  Ent : constant String := Entity_Name_Information (Entity);
-               begin
-                  Gtk_New (Mitem, -"Print " & Ent);
-                  Append (Submenu, Mitem);
-                  Context_Callback.Connect
-                    (Mitem, "activate",
-                     Context_Callback.To_Marshaller (Print_Variable'Access),
-                     Selection_Context_Access (Context));
-                  Gtk_New (Mitem, -"Display " & Ent);
-                  Append (Submenu, Mitem);
-                  Context_Callback.Connect
-                    (Mitem, "activate",
-                     Context_Callback.To_Marshaller
-                       (Graph_Display_Variable'Access),
-                     Selection_Context_Access (Context));
-
-                  if Lang /= null then
-                     declare
-                        Ent_Deref : constant String :=
-                          Dereference_Name (Lang, Ent);
-                     begin
-                        Gtk_New (Mitem, -"Print " & Ent_Deref);
-                        Append (Submenu, Mitem);
+            if not Command_In_Process (Get_Process (Debugger)) then
+               if Has_Entity_Name_Information (Entity) then
+                  declare
+                     Ent : constant String := Entity_Name_Information (Entity);
+                  begin
+                     Gtk_New (Mitem, -"Print " & Ent);
+                     Append (Submenu, Mitem);
+                     Context_Callback.Connect
+                       (Mitem, "activate",
+                        Context_Callback.To_Marshaller (Print_Variable'Access),
+                        Selection_Context_Access (Context));
+                     Gtk_New (Mitem, -"Display " & Ent);
+                     Append (Submenu, Mitem);
                         Context_Callback.Connect
-                          (Mitem, "activate",
-                           Context_Callback.To_Marshaller
-                             (Print_Variable'Access),
-                           Selection_Context_Access (Context));
-                        Gtk_New (Mitem, -"Display " & Ent_Deref);
-                        Append (Submenu, Mitem);
-                        Context_Callback.Connect
-                          (Mitem, "activate",
-                           Context_Callback.To_Marshaller
-                             (Graph_Display_Variable'Access),
-                           Selection_Context_Access (Context));
-                     end;
-                  end if;
+                       (Mitem, "activate",
+                        Context_Callback.To_Marshaller
+                          (Graph_Display_Variable'Access),
+                        Selection_Context_Access (Context));
 
-                  Gtk_New (Mitem, -"View Memory at &" & Ent);
+                     Lang := Get_Language_From_File
+                       (Get_Language_Handler (Get_Kernel (Context)),
+                        File_Information (Entity));
+
+                     if Lang /= null then
+                        declare
+                           Ent_Deref : constant String :=
+                             Dereference_Name (Lang, Ent);
+                        begin
+                           Gtk_New (Mitem, -"Print " & Ent_Deref);
+                           Append (Submenu, Mitem);
+                           Context_Callback.Connect
+                             (Mitem, "activate",
+                              Context_Callback.To_Marshaller
+                                (Print_Variable'Access),
+                              Selection_Context_Access (Context));
+                           Gtk_New (Mitem, -"Display " & Ent_Deref);
+                           Append (Submenu, Mitem);
+                           Context_Callback.Connect
+                             (Mitem, "activate",
+                              Context_Callback.To_Marshaller
+                                (Graph_Display_Variable'Access),
+                              Selection_Context_Access (Context));
+                        end;
+                     end if;
+
+                     Gtk_New (Mitem, -"View memory at &" & Ent);
+                     Append (Submenu, Mitem);
+                     Context_Callback.Connect
+                       (Mitem, "activate",
+                        Context_Callback.To_Marshaller
+                          (View_Into_Memory'Access),
+                        Selection_Context_Access (Context));
+                     Gtk_New (Mitem);
+                     Append (Submenu, Mitem);
+                     Gtk_New (Mitem, -"Set breakpoint on " & Ent);
+                     Append (Submenu, Mitem);
+                     Context_Callback.Connect
+                       (Mitem, "activate",
+                        Context_Callback.To_Marshaller
+                          (Set_Subprogram_Breakpoint'Access),
+                        Selection_Context_Access (Context));
+                  end;
+               end if;
+
+               if Has_Line_Information (Entity) then
+                  Line := Line_Information (Entity);
+                  Gtk_New (Mitem, -"Set breakpoint on line" & Line'Img);
                   Append (Submenu, Mitem);
                   Context_Callback.Connect
                     (Mitem, "activate",
-                     Context_Callback.To_Marshaller (View_Into_Memory'Access),
+                     Context_Callback.To_Marshaller (Set_Breakpoint'Access),
+                     Selection_Context_Access (Context));
+                  Gtk_New (Mitem, -"Continue until line" & Line'Img);
+                  Append (Submenu, Mitem);
+                  Context_Callback.Connect
+                    (Mitem, "activate",
+                     Context_Callback.To_Marshaller (Till_Breakpoint'Access),
                      Selection_Context_Access (Context));
                   Gtk_New (Mitem);
                   Append (Submenu, Mitem);
-                  Gtk_New (Mitem, -"Set breakpoint on " & Ent);
-                  Append (Submenu, Mitem);
-                  Context_Callback.Connect
-                    (Mitem, "activate",
-                     Context_Callback.To_Marshaller
-                       (Set_Subprogram_Breakpoint'Access),
-                     Selection_Context_Access (Context));
-               end;
-            end if;
-
-            if Has_Line_Information (Entity) then
-               Line := Line_Information (Entity);
-               Gtk_New (Mitem, -"Set breakpoint on line" & Line'Img);
-               Append (Submenu, Mitem);
-               Context_Callback.Connect
-                 (Mitem, "activate",
-                  Context_Callback.To_Marshaller (Set_Breakpoint'Access),
-                  Selection_Context_Access (Context));
-               Gtk_New (Mitem, -"Continue until line" & Line'Img);
-               Append (Submenu, Mitem);
-               Context_Callback.Connect
-                 (Mitem, "activate",
-                  Context_Callback.To_Marshaller (Till_Breakpoint'Access),
-                  Selection_Context_Access (Context));
-               Gtk_New (Mitem);
-               Append (Submenu, Mitem);
+               end if;
             end if;
 
             Gtk_New (Mitem, -"Show Current Location");
@@ -981,25 +1013,27 @@ package body GVD_Module is
    -------------------
 
    procedure Set_Sensitive
-     (Kernel    : Kernel_Handle;
-      Sensitive : Boolean)
+     (Kernel : Kernel_Handle;
+      State  : Debugger_State)
    is
-      Top   : constant Glide_Window :=
+      Top       : constant Glide_Window :=
         Glide_Window (Get_Main_Window (Kernel));
-      Debug : constant String := '/' & (-"Debug") & '/';
+      Debug     : constant String := '/' & (-"Debug") & '/';
+      Available : constant Boolean := State = Debug_Available;
+      Sensitive : constant Boolean := State /= Debug_None;
 
    begin
       Set_Sensitive
         (Find_Menu_Item (Kernel, Debug & (-"Initialize")), not Sensitive);
 
       Set_Sensitive
-        (Find_Menu_Item (Kernel, Debug & (-"Debug")), Sensitive);
+        (Find_Menu_Item (Kernel, Debug & (-"Debug")), Available);
       Set_Sensitive
-        (Find_Menu_Item (Kernel, Debug & (-"Data")), Sensitive);
+        (Find_Menu_Item (Kernel, Debug & (-"Data")), Available);
       Set_Sensitive
-        (Find_Menu_Item (Kernel, Debug & (-"Session")), Sensitive);
+        (Find_Menu_Item (Kernel, Debug & (-"Session")), Available);
 
-      Set_Sensitive (Find_Menu_Item (Kernel, Debug & (-"Start")), Sensitive);
+      Set_Sensitive (Find_Menu_Item (Kernel, Debug & (-"Run...")), Available);
       Set_Sensitive (Find_Menu_Item (Kernel, Debug & (-"Step")), Sensitive);
       Set_Sensitive (Find_Menu_Item
         (Kernel, Debug & (-"Step Instruction")), Sensitive);
@@ -1011,7 +1045,7 @@ package body GVD_Module is
       Set_Sensitive (Find_Menu_Item
         (Kernel, Debug & (-"Continue")), Sensitive);
       Set_Sensitive (Find_Menu_Item
-        (Kernel, Debug & (-"Interrupt")), Sensitive);
+        (Kernel, Debug & (-"Interrupt")), State = Debug_Busy);
       Set_Sensitive (Find_Menu_Item
         (Kernel, Debug & (-"Terminate")), Sensitive);
 
@@ -1034,7 +1068,9 @@ package body GVD_Module is
         Glide_Page.Glide_Page (Get_Current_Process (Top));
       Project_View : constant Prj.Project_Id := Get_Project_View (K);
       Module  : String_Access;
+      Proxy   : Process_Proxy_Access;
       Success : Boolean;
+
       use Debugger;
 
    begin
@@ -1057,9 +1093,12 @@ package body GVD_Module is
                  Ide_Package, Default => "gdb"));
 
          begin
+            Proxy := new GPS_Proxy;
+            GPS_Proxy (Proxy.all).Kernel := K;
             Configure
               (Process         => Page,
                Kind            => Gdb_Type,
+               Proxy           => Proxy,
                Executable      => Module.all,
                Debugger_Args   => Args (2 .. Args'Last),
                Executable_Args => "",
@@ -1073,11 +1112,12 @@ package body GVD_Module is
 
             if not Success then
                Pop_State (K);
+               Free (Proxy);
                return;
             end if;
          end;
 
-         Set_Sensitive (K, True);
+         Set_Sensitive (K, Debug_Available);
          Page.Destroy_Id := Widget_Callback.Object_Connect
            (Top, "destroy",
             Widget_Callback.To_Marshaller (On_Destroy_Window'Access),
@@ -1112,36 +1152,51 @@ package body GVD_Module is
       use Debugger;
 
    begin
-      if Page = null then
+      if Page = null or else Page.Debugger = null then
          return;
       end if;
 
-      if Page.Debugger /= null then
-         Gtk.Handlers.Disconnect (Top, Page.Destroy_Id);
-         Push_State (Kernel, Busy);
-         Page.Exiting := True;
-         Close (Page.Debugger);
-         Page.Debugger := null;
+      Push_State (Kernel, Busy);
+      Page.Exiting := True;
+      Gtk.Handlers.Disconnect (Top, Page.Destroy_Id);
+      Close (Page.Debugger);
+      Page.Debugger := null;
 
-         --  This might have been closed by the user
-         if Page.Command_Scrolledwindow /= null then
-            Close (Page.Process_Mdi, Page.Command_Scrolledwindow);
-         end if;
+      --  This might have been closed by the user
+      if Page.Command_Scrolledwindow /= null then
+         Close (Page.Process_Mdi, Page.Command_Scrolledwindow);
+      end if;
 
-         if Page.Data_Paned /= null then
-            Close (Page.Process_Mdi, Page.Data_Paned);
-         end if;
+      if Page.Data_Paned /= null then
+         Close (Page.Process_Mdi, Page.Data_Paned);
+      end if;
 
-         Page.Exiting := False;
-         Set_Sensitive (Kernel, False);
-         Pop_State (Kernel);
+      if Top.History_Dialog /= null then
+         Hide (Top.History_Dialog);
+      end if;
+
+      if Top.Thread_Dialog /= null then
+         Hide (Top.Thread_Dialog);
+      end if;
+
+      if Top.Task_Dialog /= null then
+         Hide (Top.Task_Dialog);
+      end if;
+
+      if Top.PD_Dialog /= null then
+         Hide (Top.PD_Dialog);
+      end if;
+
+      if Top.Breakpoints_Editor /= null then
+         Hide (Top.Breakpoints_Editor);
       end if;
 
       Remove_Debugger_Columns (Kernel, "");
-      Free_Debug_Info
-        (GEdit
-           (Get_Source
-              (Debugger_Process_Tab (Get_Current_Process (Top)).Editor_Text)));
+      Free_Debug_Info (GEdit (Get_Source
+        (Debugger_Process_Tab (Get_Current_Process (Top)).Editor_Text)));
+      Page.Exiting := False;
+      Set_Sensitive (Kernel, Debug_None);
+      Pop_State (Kernel);
 
    exception
       when E : others =>
@@ -1367,11 +1422,11 @@ package body GVD_Module is
    -----------------------
 
    function Idle_Reveal_Lines return Boolean is
-      Kind         : Line_Kind;
-      C            : Set_Breakpoint_Command_Access;
-      File_Line    : File_Line_Record;
-      Timeout_Id   : Timeout_Handler_Id;
-      Debugger     : constant Debugger_Access :=
+      Kind       : Line_Kind;
+      C          : Set_Breakpoint_Command_Access;
+      File_Line  : File_Line_Record;
+      Timeout_Id : Timeout_Handler_Id;
+      Debugger   : constant Debugger_Access :=
         Get_Current_Process
           (Get_Main_Window (GVD_Module (GVD_Module_ID).Kernel)).Debugger;
       --  ??? Should attach the right debugger with GVD_Module_Id.
@@ -1633,9 +1688,7 @@ package body GVD_Module is
 
       --  Add debugger menus
 
-      Register_Menu
-        (Kernel, Debug_Sub, Ref_Item => -"Data");
-      Set_Sensitive (Find_Menu_Item (Kernel, Debug_Sub), False);
+      Register_Menu (Kernel, Debug_Sub, Ref_Item => -"Data");
       Register_Menu (Kernel, Debug_Sub, -"Connect to Board...", "",
                      On_Connect_To_Board'Access);
       Register_Menu (Kernel, Debug_Sub, -"Load File...", "",
@@ -1658,9 +1711,7 @@ package body GVD_Module is
                      null, Sensitive => False);
       Register_Menu (Kernel, Session_Sub, -"Command History", Stock_Index,
                      On_Command_History'Access);
-      Set_Sensitive (Find_Menu_Item (Kernel, Session_Sub), False);
 
-      Set_Sensitive (Find_Menu_Item (Kernel, Data_Sub), False);
       Mitem := Find_Menu_Item (Kernel, Data_Sub & (-"Call Stack"));
       Kernel_Callback.Connect
         (Mitem, "activate",
@@ -1705,7 +1756,7 @@ package body GVD_Module is
       Gtk_New (Mitem);
       Register_Menu (Kernel, Debug, Mitem);
 
-      Register_Menu (Kernel, Debug, -"Start", "",
+      Register_Menu (Kernel, Debug, -"Run...", "",
                      On_Start'Access, null, GDK_F2, Sensitive => False);
       Register_Menu (Kernel, Debug, -"Step", "",
                      On_Step'Access, null,  GDK_F5, Sensitive => False);
@@ -1741,7 +1792,6 @@ package body GVD_Module is
         (Top.Cont_Button, "clicked",
          Widget_Callback.To_Marshaller (On_Start_Continue'Access),
          Window);
-      Set_Sensitive (Top.Cont_Button, False);
 
       Top.Step_Button := Append_Element
         (Toolbar => Toolbar,
@@ -1751,7 +1801,6 @@ package body GVD_Module is
       Widget_Callback.Object_Connect
         (Top.Step_Button, "clicked",
          Widget_Callback.To_Marshaller (On_Step'Access), Window);
-      Set_Sensitive (Top.Step_Button, False);
 
       Top.Next_Button := Append_Element
         (Toolbar => Toolbar,
@@ -1761,7 +1810,6 @@ package body GVD_Module is
       Widget_Callback.Object_Connect
         (Top.Next_Button, "clicked",
          Widget_Callback.To_Marshaller (On_Next'Access), Window);
-      Set_Sensitive (Top.Next_Button, False);
 
       Top.Finish_Button := Append_Element
         (Toolbar => Toolbar,
@@ -1771,18 +1819,13 @@ package body GVD_Module is
       Widget_Callback.Object_Connect
         (Top.Finish_Button, "clicked",
          Widget_Callback.To_Marshaller (On_Finish'Access), Window);
-      Set_Sensitive (Top.Finish_Button, False);
+
+      Set_Sensitive (Kernel_Handle (Kernel), Debug_None);
 
       Widget_Callback.Object_Connect
-        (Kernel,
-         Source_Lines_Revealed_Signal,
-         Lines_Revealed_Cb'Access,
-         Top);
+        (Kernel, Source_Lines_Revealed_Signal, Lines_Revealed_Cb'Access, Top);
       Widget_Callback.Object_Connect
-        (Kernel,
-         File_Edited_Signal,
-         File_Edited_Cb'Access,
-         Top);
+        (Kernel, File_Edited_Signal, File_Edited_Cb'Access, Top);
       Object_User_Callback.Connect
         (Kernel,
          Preferences_Changed_Signal,
