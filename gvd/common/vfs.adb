@@ -38,8 +38,12 @@ with Remote_Connections;         use Remote_Connections;
 with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
 with System;
+with Traces;                     use Traces;
 
 package body VFS is
+
+   Resolve_Links_Handle : constant Debug_Handle :=
+      Create ("VFS.Resolve_Links", Off);
 
    Temporary_Dir : constant String := Get_Tmp_Dir;
    --  Cache the name of the temporary directory
@@ -183,12 +187,20 @@ package body VFS is
               new UTF8_String'(File.Value.Full_Name.all);
 
          else
+            --  To_Host_Pathname is only needed for the debugger: it is done
+            --     in Open_File_Editor.
+            --  Normalize_Pathname with link resolution is not needed, since
+            --     we want to keep links anyway (they have been checked for
+            --     the application's source files, and do not matter for other
+            --     files on the system).
+            --  Conversion to and from UTF8 are not needed, since '.' and '/'
+            --     are encoded the same in UTF8 anyway.
+
             File.Value.Normalized_Full := new UTF8_String'
-              (Locale_To_UTF8
-                 (To_Host_Pathname
-                    (Normalize_Pathname
-                       (Locale_From_UTF8 (File.Value.Full_Name.all),
-                        Resolve_Links => True))));
+              (Normalize_Pathname
+                 (File.Value.Full_Name.all,
+                  Resolve_Links => Active (Resolve_Links_Handle)));
+
             if not File_Utils.Filenames_Are_Case_Sensitive then
                To_Lower (File.Value.Normalized_Full.all);
             end if;
