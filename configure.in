@@ -229,4 +229,4 @@ echo "--------- Summary --------------"
 echo "       python: $PYTHON_BASE"
 echo ""
 
-AC_OUTPUT(Makefile Makefile.common widgets/Makefile.widgets common/src/sdefault.adb docs/Makefile po/Makefile gvd/Makefile.gvd_common gvd/gvd/gvd.ads gvd/tests/Makefile python/Makefile.python python/python.gpr)
+AC_OUTPUT(Makefile Makefile.common widgets/Makefile.widgets common/src/sdefault.adb docs/Makefile po/Makefile gvd/Makefile.gvd_common gvd/gvd/gvd.ads python/Makefile.python python/python.gpr)

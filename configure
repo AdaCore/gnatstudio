@@ -3955,7 +3955,7 @@ echo "--------- Summary --------------"
 echo "       python: $PYTHON_BASE"
 echo ""
 
-ac_config_files="$ac_config_files Makefile Makefile.common widgets/Makefile.widgets common/src/sdefault.adb docs/Makefile po/Makefile gvd/Makefile.gvd_common gvd/gvd/gvd.ads gvd/tests/Makefile python/Makefile.python python/python.gpr"
+ac_config_files="$ac_config_files Makefile Makefile.common widgets/Makefile.widgets common/src/sdefault.adb docs/Makefile po/Makefile gvd/Makefile.gvd_common gvd/gvd/gvd.ads python/Makefile.python python/python.gpr"
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
 # tests run on this system so they can be shared between configure
@@ -4461,7 +4461,6 @@ do
   "po/Makefile" ) CONFIG_FILES="$CONFIG_FILES po/Makefile" ;;
   "gvd/Makefile.gvd_common" ) CONFIG_FILES="$CONFIG_FILES gvd/Makefile.gvd_common" ;;
   "gvd/gvd/gvd.ads" ) CONFIG_FILES="$CONFIG_FILES gvd/gvd/gvd.ads" ;;
-  "gvd/tests/Makefile" ) CONFIG_FILES="$CONFIG_FILES gvd/tests/Makefile" ;;
   "python/Makefile.python" ) CONFIG_FILES="$CONFIG_FILES python/Makefile.python" ;;
   "python/python.gpr" ) CONFIG_FILES="$CONFIG_FILES python/python.gpr" ;;
   *) { { echo "$as_me:$LINENO: error: invalid argument: $ac_config_target" >&5
