@@ -1,10 +1,10 @@
 -----------------------------------------------------------------------
---                          G L I D E  I I                           --
+--                               G P S                               --
 --                                                                   --
 --                     Copyright (C) 2001-2002                       --
 --                            ACT-Europe                             --
 --                                                                   --
--- GLIDE is free software; you can redistribute it and/or modify  it --
+-- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -18,7 +18,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
---  This package provides the implementation for the glide console.
+--  This package provides the implementation for the GPS console.
 --  It includes all the functions related to manipulating the console.
 
 with Gtk.Scrolled_Window;
@@ -28,16 +28,9 @@ with Glide_Kernel.Console; use Glide_Kernel.Console;
 
 package Glide_Consoles is
 
-   Console_Module_Id   : Glide_Kernel.Module_ID;
-   Console_Module_Name : constant String := "Glide_Console";
-
    type Glide_Console_Record is new
      Gtk.Scrolled_Window.Gtk_Scrolled_Window_Record with private;
    type Glide_Console is access all Glide_Console_Record'Class;
-
-   procedure Register_Module
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
-   --  Register the console module into the list
 
    procedure Gtk_New
      (Console : out Glide_Console;

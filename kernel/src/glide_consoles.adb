@@ -22,18 +22,15 @@ with Glib;                     use Glib;
 with Gdk.Color;                use Gdk.Color;
 with Gtk.Adjustment;           use Gtk.Adjustment;
 with Gtk.Enums;                use Gtk.Enums;
-with Gtk.Menu_Item;            use Gtk.Menu_Item;
 with Gtk.Scrolled_Window;      use Gtk.Scrolled_Window;
 with Gtk.Text;                 use Gtk.Text;
 with Gtk.Widget;               use Gtk.Widget;
 with Gtkada.Handlers;          use Gtkada.Handlers;
 
-with Gint_Xml;                 use Gint_Xml;
-with Glide_Intl;               use Glide_Intl;
 with Glide_Kernel;             use Glide_Kernel;
-with Glide_Kernel.Console;     use Glide_Kernel.Console;
 with Glide_Kernel.Modules;     use Glide_Kernel.Modules;
 with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
+with Glide_Kernel.Project;     use Glide_Kernel.Project;
 with Traces;                   use Traces;
 
 with GNAT.Regpat;              use GNAT.Regpat;
@@ -41,21 +38,11 @@ with GNAT.OS_Lib;              use GNAT.OS_Lib;
 
 package body Glide_Consoles is
 
-   Me : Debug_Handle := Create (Console_Module_Name);
+   Me : Debug_Handle := Create ("Glide_Console");
 
    function On_Button_Release
      (Widget : access Gtk_Widget_Record'Class) return Boolean;
    --  Handler for "button_press_event" signal
-
-   function Load_Desktop
-     (Node : Gint_Xml.Node_Ptr; User : Kernel_Handle)
-      return Gtk_Widget;
-   --  Save the status of the console to an XML tree
-
-   function Save_Desktop
-     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class)
-      return Node_Ptr;
-   --  Restore the status of the console from a saved XML tree.
 
    -----------
    -- Clear --
@@ -241,9 +228,17 @@ package body Glide_Consoles is
          end if;
 
          if Matched (1).First < Matched (1).Last then
-            Open_File_Editor (Console.Kernel,
-                              Contents (Matched (1).First .. Matched (1).Last),
-                              Line, Column);
+            Freeze (Console.Text);
+            Claim_Selection (Console.Text, True, 0);
+            Select_Region (Console.Text, Gint (Start) - 1, Gint (Last));
+            Thaw (Console.Text);
+            Open_File_Editor
+              (Console.Kernel,
+               Find_Source_File
+                 (Console.Kernel,
+                  Contents (Matched (1).First .. Matched (1).Last),
+                  True),
+               Line, Column);
          end if;
       end if;
 
@@ -253,74 +248,5 @@ package body Glide_Consoles is
       when Constraint_Error =>
          return False;
    end On_Button_Release;
-
-   ------------------
-   -- Load_Desktop --
-   ------------------
-
-   function Load_Desktop
-     (Node : Gint_Xml.Node_Ptr; User : Kernel_Handle)
-      return Gtk_Widget
-   is
-      Console : Glide_Console;
-   begin
-      if Node.Tag.all = "Console" then
-         Gtk_New (Console, User);
-         return Gtk_Widget (Console);
-      end if;
-
-      return null;
-   end Load_Desktop;
-
-   ------------------
-   -- Save_Desktop --
-   ------------------
-
-   function Save_Desktop
-     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class)
-      return Node_Ptr
-   is
-      N : Node_Ptr;
-   begin
-      if Widget.all in Glide_Console_Record'Class then
-         N := new Node;
-         N.Tag := new String' ("Console");
-         return N;
-      end if;
-
-      return null;
-   end Save_Desktop;
-
-   ---------------------
-   -- Register_Module --
-   ---------------------
-
-   procedure Register_Module
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
-   is
-      Console : constant String := '/' & (-"File") & '/' & (-"Console");
-   begin
-      Console_Module_Id := Register_Module
-        (Kernel       => Kernel,
-         Module_Name  => Console_Module_Name,
-         Priority     => Default_Priority);
-
-      Register_Menu
-        (Kernel, Console, Ref_Item => -"Close");
-      Register_Menu
-        (Kernel, Console, -"Save As...", "", null);
-      --             On_Save_Console_As'Access);
-      Set_Sensitive
-        (Find_Menu_Item (Kernel, Console & '/' & (-"Save As...")), False);
-      Register_Menu
-        (Kernel, Console, -"Load Contents...", "", null);
-      --             On_Load_To_Console'Access);
-      Set_Sensitive
-        (Find_Menu_Item (Kernel, Console & '/' & (-"Load Contents...")),
-         False);
-
-      Glide_Kernel.Kernel_Desktop.Register_Desktop_Functions
-        (Save_Desktop'Access, Load_Desktop'Access);
-   end Register_Module;
 
 end Glide_Consoles;
