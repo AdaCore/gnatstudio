@@ -116,7 +116,7 @@ ifneq (,$(findstring gvd,$(MODULES)))
 # information on how to setup the required links
 GVD_SRC=../../gvd
 
-MODULE_INCLUDE+=-I${GVD_SRC}/gvd -I${GVD_SRC}/pixmaps -I${GVD_SRC}/gnat
+MODULE_INCLUDE+=-I${GVD_SRC}/common -I${GVD_SRC}/gvd -I${GVD_SRC}/pixmaps -I${GVD_SRC}/gnat
 endif
 
 .PHONY: check_gvd
