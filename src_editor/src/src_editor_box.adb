@@ -91,15 +91,12 @@ package body Src_Editor_Box is
    procedure Get_Declaration_Info
      (Editor      : access Source_Editor_Box_Record;
       Context     : access Entity_Selection_Context'Class;
-      File_Decl   : out String_Access;
-      Line_Decl   : out Natural;
-      Column_Decl : out Natural);
+      Entity      : out Entity_Information);
    --  Perform a cross-reference to the declaration of the entity located at
    --  (Line, Column) in Editor. Fail silently when no declaration or no
    --  entity can be located, and set File_Decl to null.
-   --  On success, File_Decl, Line_Decl and Column_Decl are set to the location
-   --  of the declaration of the entity. It is the responsibility of the
-   --  caller to free the memory associated with File_Decl.
+   --  Entity is set to the entity that was found, or No_Entity_Information if
+   --  not found. It must be destroyed by the caller.
 
    function Get_Contextual_Menu
      (Kernel       : access Glide_Kernel.Kernel_Handle_Record'Class;
@@ -528,17 +525,15 @@ package body Src_Editor_Box is
    procedure Get_Declaration_Info
      (Editor      : access Source_Editor_Box_Record;
       Context     : access Entity_Selection_Context'Class;
-      File_Decl   : out String_Access;
-      Line_Decl   : out Natural;
-      Column_Decl : out Natural)
+      Entity      : out Entity_Information)
    is
       Source_Info    : LI_File_Ptr;
       Status         : Src_Info.Queries.Find_Decl_Or_Body_Query_Status;
-      Entity         : Entity_Information;
       Filename       : constant String := Get_Filename (Editor);
 
    begin
       if Filename = "" then
+         Entity := No_Entity_Information;
          return;
       end if;
 
@@ -559,10 +554,7 @@ package body Src_Editor_Box is
             Entity             => Entity,
             Status             => Status);
 
-         if Status = Success or else Status = Fuzzy_Match then
-            Line_Decl   := Get_Declaration_Line_Of (Entity);
-            Column_Decl := Get_Declaration_Column_Of (Entity);
-            File_Decl   := new String'(Get_Declaration_File_Of (Entity));
+         if Status /= Success and then Status /= Fuzzy_Match then
             Destroy (Entity);
          end if;
       end if;
@@ -572,10 +564,12 @@ package body Src_Editor_Box is
    exception
       when Unsupported_Language =>
          Pop_State (Editor.Kernel);
+         Entity := No_Entity_Information;
 
       when E : others =>
          Pop_State (Editor.Kernel);
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Entity := No_Entity_Information;
    end Get_Declaration_Info;
 
    ----------------
@@ -599,7 +593,6 @@ package body Src_Editor_Box is
       Area          : out Gdk_Rectangle)
    is
       Line, Col        : Gint;
-      L, C             : Natural;
       Mouse_X, Mouse_Y : Gint;
       Win_X, Win_Y     : Gint;
       Start_Iter       : Gtk_Text_Iter;
@@ -608,7 +601,6 @@ package body Src_Editor_Box is
       Win              : Gdk.Gdk_Window;
       Context          : aliased Entity_Selection_Context;
       Location         : Gdk_Rectangle;
-      File             : String_Access;
       Filename         : constant String := Get_Filename (Data.Box);
       Out_Of_Bounds    : Boolean;
       Window           : Gdk.Gdk_Window;
@@ -673,6 +665,7 @@ package body Src_Editor_Box is
            Glib.Convert.Convert
              (Get_Text (Start_Iter, End_Iter),
               Get_Pref (Data.Box.Kernel, Default_Charset), "UTF-8");
+         Entity : Entity_Information;
 
       begin
          if Entity_Name = "" then
@@ -702,23 +695,34 @@ package body Src_Editor_Box is
          --  No module wants to handle this tooltip. Default to built-in
          --  tooltip, based on cross references.
 
-         Get_Declaration_Info (Data.Box, Context'Unchecked_Access, File, L, C);
+         Get_Declaration_Info (Data.Box, Context'Unchecked_Access, Entity);
 
          Destroy (Context);
 
-         if File = null then
+         if Entity = No_Entity_Information then
             return;
          end if;
 
-         Create_Pixmap_From_Text
-           (Text     => File.all & ':' & Image (L),
-            Font     => Get_Pref (Data.Box.Kernel, Tooltip_Font),
-            Bg_Color => White (Get_Default_Colormap),
-            Window   => Get_Window (Widget, Text_Window_Text),
-            Pixmap   => Pixmap,
-            Width    => Width,
-            Height   => Height);
-         Free (File);
+         declare
+            --  ??? Missing full name of enclosing scope
+            Str : constant String :=
+              "Entity: " & Entity_Name & ASCII.LF
+              & "Declaration: " & Get_Declaration_File_Of (Entity) & ':'
+              & Image (Get_Declaration_Line_Of (Entity)) & ASCII.LF
+              & "Type: " & Kind_To_String (Get_Kind (Entity)) & ASCII.LF
+              & "Scope: " & Scope_To_String (Get_Scope (Entity));
+         begin
+            Create_Pixmap_From_Text
+              (Text     => Str,
+               Font     => Get_Pref (Data.Box.Kernel, Tooltip_Font),
+               Bg_Color => White (Get_Default_Colormap),
+               Window   => Get_Window (Widget, Text_Window_Text),
+               Pixmap   => Pixmap,
+               Width    => Width,
+               Height   => Height);
+         end;
+
+         Destroy (Entity);
       end;
 
    exception
