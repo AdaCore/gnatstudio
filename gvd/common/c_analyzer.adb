@@ -167,6 +167,10 @@ package body C_Analyzer is
 
    subtype Cpp_Token is Token_Type range Tok_Abstract .. Tok_Wchar_t;
 
+   subtype Type_Token is Token_Type range Tok_Char .. Tok_Void;
+
+   subtype Storage_Token is Token_Type range Tok_Auto .. Tok_Volatile;
+
    type Extended_Token is record
       Token          : Token_Type := No_Token;
       --  Enclosing token
@@ -202,8 +206,29 @@ package body C_Analyzer is
    -- Local procedures --
    ----------------------
 
+   procedure Top
+     (Stack : in out Token_Stack.Simple_Stack;
+      Item  : out Token_Stack.Generic_Type_Access);
+   --  Returns first token from Stack that is not an identifier. This item
+   --  is not removed from the stack.
+
    function Get_Token (S : String) return Token_Type;
    --  Return a Token_Type given a string.
+
+   ---------
+   -- Top --
+   ---------
+
+   procedure Top
+     (Stack : in out Token_Stack.Simple_Stack;
+      Item  : out Token_Stack.Generic_Type_Access) is
+   begin
+      loop
+         Item := Top (Stack);
+         exit when Item.Token /= Tok_Identifier;
+         Pop (Stack);
+      end loop;
+   end Top;
 
    ---------------
    -- Get_Token --
@@ -492,6 +517,7 @@ package body C_Analyzer is
       Num_Ifdef         : Natural;
       Last_Replace_Line : Natural := 0;
       Top_Token         : Token_Stack.Generic_Type_Access;
+      Tok_Ident         : Extended_Token;
       Tokens            : Token_Stack.Simple_Stack;
       Indents           : Indent_Stack.Stack.Simple_Stack;
 
@@ -619,12 +645,15 @@ package body C_Analyzer is
       begin
          --  Never pop the initial value
 
-         if Top (Stack).Token = No_Token then
-            Value := Top (Stack).all;
-            return;
-         end if;
+         loop
+            if Top (Stack).Token = No_Token then
+               Value := Top (Stack).all;
+               return;
+            end if;
 
-         Token_Stack.Pop (Stack, Value);
+            Token_Stack.Pop (Stack, Value);
+            exit when Value.Token /= Tok_Identifier;
+         end loop;
 
          --  Build next entry of Constructs if needed.
 
@@ -664,10 +693,10 @@ package body C_Analyzer is
                   --  Tok_Void is used for blocks: {}
 
                   if Value.Curly_Level = 0 then
-                     --  ??? Would be nice to be able to find the name
-                     --  and parameters of this function
-
                      Constructs.Current.Category := Cat_Function;
+
+                     Constructs.Current.Name := new String'
+                       (Buffer (Value.Name_Start .. Value.Name_End));
 
                   else
                      Constructs.Current.Category := Cat_Simple_Block;
@@ -685,8 +714,8 @@ package body C_Analyzer is
                   Constructs.Current.Category := Cat_Unknown;
             end case;
 
-            Constructs.Current.Sloc_Start := Value.Sloc;
-            Constructs.Current.Sloc_End := (Line, Column, Index);
+            Constructs.Current.Sloc_Start     := Value.Sloc;
+            Constructs.Current.Sloc_End       := (Line, Column, Index);
             Constructs.Current.Is_Declaration := False;
          end if;
       end Pop;
@@ -1015,9 +1044,11 @@ package body C_Analyzer is
       function Identifier_Keyword return Boolean is
          Prev      : Natural := Index;
          Temp      : Extended_Token;
-         Top_Token : Token_Stack.Generic_Type_Access := Top (Tokens);
+         Top_Token : Token_Stack.Generic_Type_Access; -- := Top (Tokens);
 
       begin
+         Top (Tokens, Top_Token);
+
          First := Index;
          Start_Char := Char_In_Line;
 
@@ -1040,6 +1071,8 @@ package body C_Analyzer is
          Temp.Sloc.Line   := Line;
          Temp.Sloc.Column := Start_Char;
          Temp.Sloc.Index  := First;
+         Temp.Name_Start  := First;
+         Temp.Name_End    := Index;
 
          case Token is
             when Tok_For | Tok_Do | Tok_Switch | Tok_Else =>
@@ -1091,6 +1124,20 @@ package body C_Analyzer is
 
                Do_Indent (Index, Indent);
 
+            when Type_Token | Storage_Token =>
+               if Curly_Level = 0 then
+                  Push (Tokens, Temp);
+               end if;
+
+            when Tok_Identifier =>
+               if Curly_Level = 0 then
+                  --  Only record identifier outside function body, we only
+                  --  record them to be able to retreive routine name.
+                  Push (Tokens, Temp);
+               end if;
+
+               Do_Indent (Index, Indent);
+
             when others =>
                Do_Indent (Index, Indent);
          end case;
@@ -1122,7 +1169,7 @@ package body C_Analyzer is
             when '{' =>
                Token := Tok_Left_Bracket;
                Do_Indent (Index, Indent);
-               Top_Token := Top (Tokens);
+               Top (Tokens, Top_Token);
 
                if Top_Token.Token = No_Token
                  or else Top_Token.Curly_Level /= Curly_Level
@@ -1141,6 +1188,20 @@ package body C_Analyzer is
                         --  An simple block, e.g: { foo (); }
 
                         Val.Token := Tok_Void;
+                     end if;
+
+                     if Curly_Level = 0 then
+                        --  This is a top level curly brace, it defines a
+                        --  function, use Tok_Ident as the function name.
+                        --  Tok_Ident has been set while parsing a '('
+                        --  see below.
+
+                        if Tok_Ident.Token = Tok_Identifier then
+                           Val.Name_Start  := Tok_Ident.Name_Start;
+                           Val.Name_End    := Tok_Ident.Name_End;
+                           --  We do not want to reuse this value
+                           Tok_Ident.Token := Tok_Void;
+                        end if;
                      end if;
 
                      Val.Curly_Level := Curly_Level;
@@ -1164,7 +1225,7 @@ package body C_Analyzer is
                Token := Tok_Right_Bracket;
                Curly_Level := Curly_Level - 1;
 
-               Top_Token := Top (Tokens);
+               Top (Tokens, Top_Token);
                Indent := Indent - Indent_Level;
 
                if Top_Token.Token = Tok_Switch
@@ -1195,13 +1256,13 @@ package body C_Analyzer is
                      exit when Top_Token.Token = Tok_Do;
 
                      Pop (Tokens);
-                     Top_Token := Top (Tokens);
+                     Top (Tokens, Top_Token);
                   end loop;
                end;
 
             when ';' =>
                Token := Tok_Semicolon;
-               Top_Token := Top (Tokens);
+               Top (Tokens, Top_Token);
 
                if Top_Token.Token /= No_Token
                  and then Top_Token.Curly_Level = Curly_Level
@@ -1223,7 +1284,13 @@ package body C_Analyzer is
 
             when '(' =>
                Token := Tok_Left_Paren;
-               Top_Token := Top (Tokens);
+
+               --  Get identifier just before the parent, this is the name
+               --  of the function (if this is a function definition).
+
+               Tok_Ident := Token_Stack.Top (Tokens).all;
+
+               Top (Tokens, Top_Token);
 
                if (Top_Token.Token = Tok_Enum
                    or else Top_Token.Token = Tok_Struct
