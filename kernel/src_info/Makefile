@@ -1,4 +1,4 @@
-LARGS = -largs sn/lib/db_capi.o -Lsn/lib -lpafdb
+LARGS = -largs sn/lib/db_capi.o -Lsn/snsrc/db/PORT -ldb
 
 build:
 	gnatmake -Pstandalone read_ali $(LARGS)
