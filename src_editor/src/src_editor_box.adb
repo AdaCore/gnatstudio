@@ -1180,6 +1180,8 @@ package body Src_Editor_Box is
       case Char is
          when 'a' .. 'z' | 'A' .. 'Z' | '0' .. '9' | '_' =>
             return True;
+         when '<' | '=' | '>' | '+' | '-' | '*' | '/' =>
+            return True;
          when others =>
             return False;
       end case;
