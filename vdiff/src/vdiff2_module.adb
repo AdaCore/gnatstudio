@@ -50,7 +50,9 @@ with Gdk.Bitmap;                use Gdk.Bitmap;
 with Gtk.Image;                 use Gtk.Image;
 with Gdk.Color;                 use Gdk.Color;
 with Commands;                  use Commands;
+
 with Gtk.Handlers;              use Gtk.Handlers;
+
 
 package body Vdiff2_Module is
    use Diff_Occurrence_List;
@@ -108,7 +110,6 @@ package body Vdiff2_Module is
 
 
 
-
    ---------------------------
    -- On_Compare_Tree_Files --
    ---------------------------
@@ -162,7 +163,7 @@ package body Vdiff2_Module is
                return;
             end if;
 
-            Result := Diff (Kernel, File1, File2, File3);
+            Result := Diff3 (Kernel, File1, File2, File3);
 
             if Result = null then
                Button := Message_Dialog
@@ -171,10 +172,13 @@ package body Vdiff2_Module is
                   Parent      => Get_Main_Window (Kernel));
                return;
             end if;
-            Item := (Result, null, new String'(File1),
-                     new String'(File2), new String'(File3), Result);
+            Item := (List => Result,
+                     File1 => new String'(File1),
+                     File2 => new String'(File2),
+                     File3 => new String'(File3),
+                     Current_Diff => Result);
             Append (Id.List_Diff.all, Item);
-            Show_Differences (Kernel, Result, File1, File2, File3);
+            Show_Differences (Kernel, Item);
             --  Free (Result);
          end;
       end;
@@ -231,10 +235,13 @@ package body Vdiff2_Module is
                Parent      => Get_Main_Window (Kernel));
             return;
          end if;
-         Item := (Result, null, new String'(File1),
-                  new String'(File2), null, Result);
+         Item := (List => Result,
+                  File1 => new String'(File1),
+                  File2 => new String'(File2),
+                  File3 => null,
+                  Current_Diff => Result);
          Append (Id.List_Diff.all, Item);
-         Show_Differences (Kernel, Result, File1, File2);
+         Show_Differences (Kernel, Item);
       end;
 
    exception
@@ -303,10 +310,13 @@ package body Vdiff2_Module is
                   Parent      => Get_Main_Window (Kernel));
                return;
             end if;
-            Item := (Result, null, new String'(File1),
-                     new String'(File2), new String'(File3), Result);
+            Item := (List => Result,
+                     File1 => new String'(File1),
+                     File2 => new String'(File2),
+                     File3 => new String'(File3),
+                     Current_Diff => Result);
             Append (Id.List_Diff.all, Item);
-            Show_Differences (Kernel, Result, File1, File2, File3);
+            Show_Differences (Kernel, Item);
 
             declare
                Merge     : constant String :=
@@ -320,7 +330,7 @@ package body Vdiff2_Module is
 
             begin
                if Merge /= "" then
-                  Show_Merge (Kernel, Result, Merge, File1, File2, File3);
+                  Show_Merge (Kernel, Merge, Item);
                end if;
 
                Free (Args_edit);
@@ -380,10 +390,13 @@ package body Vdiff2_Module is
                Parent      => Get_Main_Window (Kernel));
             return;
          end if;
-         Item := (Result, null, new String'(File1),
-                  new String'(File2), null, Result);
+         Item := (List => Result,
+                  File1 => new String'(File1),
+                  File2 => new String'(File2),
+                  File3 => null,
+                  Current_Diff => Result);
          Append (Id.List_Diff.all, Item);
-         Show_Differences (Kernel, Result, File1, File2);
+         Show_Differences (Kernel, Item);
 
          declare
             Merge     : constant String :=
@@ -397,7 +410,7 @@ package body Vdiff2_Module is
 
          begin
             if Merge /= "" then
-               Show_Merge (Kernel, Result, Merge, File1, File2);
+               Show_Merge (Kernel, Merge, Item);
             end if;
 
             Free (Args_edit);
@@ -453,12 +466,13 @@ package body Vdiff2_Module is
                         Parent      => Get_Main_Window (Kernel));
                      return False;
                   end if;
-                  Item := (Result, null, new String'(Ref_File),
-                           new String'(New_File), null, Result);
+                  Item := (List => Result,
+                           File1 => new String'(Ref_File),
+                           File2 => new String'(New_File),
+                           File3 => null,
+                           Current_Diff => Result);
                   Append (Id.List_Diff.all, Item);
-                  Show_Differences
-                    (Kernel, Result, Ref_File,
-                     New_File);
+                  Show_Differences (Kernel, Item);
                   Delete_File (Ref_File, Success);
                end;
 
@@ -481,12 +495,13 @@ package body Vdiff2_Module is
                         Parent      => Get_Main_Window (Kernel));
                      return False;
                   end if;
-                  Item := (Result, null, new String'(Orig_File),
-                           new String'(Ref_File), null, Result);
+                  Item := (List => Result,
+                           File1 => new String'(Orig_File),
+                           File2 => new String'(Ref_File),
+                           File3 => null,
+                           Current_Diff => Result);
                   Append (Id.List_Diff.all, Item);
-                  Show_Differences
-                    (Kernel, Result, Orig_File,
-                     Ref_File);
+                  Show_Differences (Kernel, Item);
                   Delete_File (Ref_File, Success);
                end;
 
@@ -502,12 +517,14 @@ package body Vdiff2_Module is
                      Parent      => Get_Main_Window (Kernel));
                   return False;
                end if;
-               Item := (Result, null, new String'(Orig_File),
-                        new String'(New_File), null, Result);
+               Item := (List => Result,
+                        File1 => new String'(Orig_File),
+                        File2 => new String'(New_File),
+                        File3 => null,
+                        Current_Diff => Result);
                Append (Id.List_Diff.all, Item);
                Show_Differences
-                 (Kernel, Result, Orig_File,
-                  New_File);
+                 (Kernel, Item);
             end if;
 
             return True;
@@ -585,6 +602,16 @@ package body Vdiff2_Module is
          Module_Name  => Vdiff_Module_Name,
          Priority     => Default_Priority,
          Mime_Handler => Mime_Action'Access);
+
+      Diff3_Cmd := Param_Spec_String (Gnew_String
+        (Name  => "Diff-Utils-Diff3",
+         Nick  => -"Diff3 command",
+         Blurb => -("Command used to compute differences between three files."
+                     & " Arguments can also be specified"),
+         Default => "diff3"));
+
+      Register_Property
+        (Kernel, Param_Spec (Diff3_Cmd), -"Visual diff");
       Register_Menu
         (Kernel, Tools, -"Compare Two Files...", "",
          On_Compare_Two_Files'Access);
@@ -648,10 +675,10 @@ package body Vdiff2_Module is
 --        Create_From_Xpm_D
 --          (PixMap, Get_Window (Window), Mask, Null_Color, unhighlight_xpm);
 --        Gtk_New (Image, PixMap, Mask);
---        Register_Button (Kernel, -"remove highlighting",
+--       Register_Button (Kernel, -"remove highlighting",
 --                         Command_Access
---                       (VDiff2_Module (Vdiff_Module_ID).Command_Unhighlight),
---                         Image);
+--                      (VDiff2_Module (Vdiff_Module_ID).Command_Unhighlight),
+--                        Image);
    end Register_Module;
 
 
@@ -665,8 +692,9 @@ package body Vdiff2_Module is
       Free (Id.List_Diff.all);
       Free (Root_Command (Id.Command_Prev.all));
       Free (Root_Command (Id.Command_Next.all));
-      Free (Root_Command (Id.Command_First.all));
-      Free (Root_Command (Id.Command_Last.all));
+      --  Free (Root_Command (Id.Command_First.all));
+      --  Free (Root_Command (Id.Command_Last.all));
+
    end Destroy;
 
    --------------------
@@ -685,25 +713,23 @@ package body Vdiff2_Module is
       pragma Unreferenced (Widget);
 
    begin
-      while CurrNode /= Null_Node loop
+      while CurrNode /= Null_Node
+      loop
          Diff.all := Data (CurrNode);
-
-         exit when Diff.File1.all = File
-           or else Diff.File2.all = File
-           or else Diff.File3.all = File;
-
+         exit when ((Diff.File1 /= null and then Diff.File1.all = File)
+                    or else
+                      (Diff.File2 /= null and then Diff.File2.all = File)
+                    or else
+                      (Diff.File3 /= null and then Diff.File3.all = File));
          CurrNode := Next (CurrNode);
       end loop;
 
       if CurrNode /= Null_Node then
-         Hide_Differences
-           (Kernel, Diff.List, Diff.File1,
-            Diff.File2, Diff.File3);
-         Remove_Nodes
-           (VDiff2_Module (Vdiff_Module_ID).List_Diff.all,
-            Prev (VDiff2_Module (Vdiff_Module_ID).List_Diff.all,
-                  CurrNode),
-            CurrNode);
+         Hide_Differences (Kernel, Diff.all);
+         Remove_Nodes (VDiff2_Module (Vdiff_Module_ID).List_Diff.all,
+                       Prev (VDiff2_Module (Vdiff_Module_ID).List_Diff.all,
+                              CurrNode),
+                       CurrNode);
          Free (Diff);
       end if;
    end File_Closed_Cb;
