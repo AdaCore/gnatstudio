@@ -89,10 +89,9 @@ package body Log_Utils is
          declare
             Logs_Dir : constant String := Get_Home_Dir (Kernel) & "log_files";
             File     : File_Descriptor;
-            S : constant String := Logs_Dir
-              & Directory_Separator
-              & Base_Name (Real_Name)
-              & "$log";
+            S : constant String := Normalize_Pathname
+              (Logs_Dir & Directory_Separator & Base_Name (Real_Name)
+               & "$log");
          begin
             if not Is_Regular_File
               (Logs_Dir & Directory_Separator & Base_Name (Real_Name) & "$log")
@@ -107,10 +106,11 @@ package body Log_Utils is
             else
                for J in Natural loop
                   declare
-                     S : constant String := Logs_Dir
-                       & Directory_Separator
-                       & Base_Name (Real_Name)
-                       & "$" & Image (J) & "$log";
+                     S : constant String :=
+                     Normalize_Pathname (Logs_Dir
+                                         & Directory_Separator
+                                         & Base_Name (Real_Name)
+                                         & "$" & Image (J) & "$log");
                   begin
                      if not Is_Regular_File (S) then
                         File := Create_New_File (S, Text);
