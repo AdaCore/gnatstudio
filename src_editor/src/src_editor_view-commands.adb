@@ -96,9 +96,9 @@ package body Src_Editor_View.Commands is
         (View,
          View.Saved_Cursor_Mark,
          Within_Margin => 0.0,
-         Use_Align => True,
-         Xalign => 0.0,
-         Yalign => 0.5);
+         Use_Align     => True,
+         Xalign        => 0.0,
+         Yalign        => 0.5);
       return Success;
    end Execute;
 
@@ -136,9 +136,14 @@ package body Src_Editor_View.Commands is
       View   : constant Source_View   :=
         Source_View (Get_Current_Focus_Widget (Command.Kernel));
       Buffer : constant Source_Buffer := Source_Buffer (Get_Buffer (View));
+      Result : Boolean;
 
    begin
-      if Do_Indentation (Buffer, Force => True) then
+      Push_State (Command.Kernel, Busy);
+      Result := Do_Indentation (Buffer, Force => True);
+      Pop_State (Command.Kernel);
+
+      if Result then
          return Success;
       else
          return Failure;
