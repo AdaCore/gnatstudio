@@ -787,7 +787,7 @@ package body Glide_Result_View is
       Iter     : Gtk_Tree_Iter;
       Model    : Gtk_Tree_Model;
 
-      Result   : File_Location_Context_Access := null;
+      Result   : Message_Context_Access := null;
 
    begin
       Get_Selected (Get_Selection (Explorer.Tree), Model, Iter);
@@ -855,19 +855,19 @@ package body Glide_Result_View is
               Get_String (Model, Iter, Base_Name_Column) &
               Get_String (Model, Iter, Message_Column);
          begin
-            Result := new File_Location_Context;
+            Result := new Message_Context;
 
             Set_File_Information
               (Result,
                Dir_Name (File),
-               Base_Name (File));
+               Base_Name (File),
+               Line => Line,
+               Column => Column);
 
-            Set_Location_Information
+            Set_Message_Information
               (Result,
                Category,
-               Message,
-               Line,
-               Column);
+               Message);
          end;
       end if;
 
