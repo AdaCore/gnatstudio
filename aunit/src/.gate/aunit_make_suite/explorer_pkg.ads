@@ -23,6 +23,4 @@ package Explorer_Pkg is
    procedure Gtk_New (Explorer : out Explorer_Access);
    procedure Initialize (Explorer : access Explorer_Record'Class);
 
-   Explorer : Explorer_Access;
-
 end Explorer_Pkg;

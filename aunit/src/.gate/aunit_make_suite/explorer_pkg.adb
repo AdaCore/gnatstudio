@@ -29,18 +29,18 @@ begin
    Add (Explorer, Explorer.Vbox5);
 
    Gtk_New (Explorer.Scrolledwindow3);
-   Pack_Start (Explorer.Vbox5, Explorer.Scrolledwindow3, True, True, 0);
    Set_Policy (Explorer.Scrolledwindow3, Policy_Automatic, Policy_Automatic);
+   Pack_Start (Explorer.Vbox5, Explorer.Scrolledwindow3, True, True, 0);
 
    Gtk_New (Explorer.Clist, 2);
-   C_List_Callback.Connect
-     (Explorer.Clist, "select_row", On_Clist_Select_Row'Access);
-   Add (Explorer.Scrolledwindow3, Explorer.Clist);
    Set_Selection_Mode (Explorer.Clist, Selection_Extended);
    Set_Shadow_Type (Explorer.Clist, Shadow_In);
    Set_Show_Titles (Explorer.Clist, False);
    Set_Column_Width (Explorer.Clist, 0, 80);
    Set_Column_Width (Explorer.Clist, 1, 80);
+   C_List_Callback.Connect
+     (Explorer.Clist, "select_row", On_Clist_Select_Row'Access);
+   Add (Explorer.Scrolledwindow3, Explorer.Clist);
 
    Gtk_New (Explorer.Label3, -("label3"));
    Set_Alignment (Explorer.Label3, 0.5, 0.5);
@@ -57,11 +57,11 @@ begin
    Set_Column_Widget (Explorer.Clist, 1, Explorer.Label4);
 
    Gtk_New (Explorer.Hbuttonbox2);
-   Pack_Start (Explorer.Vbox5, Explorer.Hbuttonbox2, False, True, 0);
    Set_Spacing (Explorer.Hbuttonbox2, 30);
    Set_Layout (Explorer.Hbuttonbox2, Buttonbox_Spread);
    Set_Child_Size (Explorer.Hbuttonbox2, 85, 27);
    Set_Child_Ipadding (Explorer.Hbuttonbox2, 7, 0);
+   Pack_Start (Explorer.Vbox5, Explorer.Hbuttonbox2, False, True, 0);
 
    Gtk_New (Explorer.Ok, -"OK");
    Set_Flags (Explorer.Ok, Can_Default);

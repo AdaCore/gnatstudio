@@ -5,6 +5,9 @@ with Make_Suite_Window_Pkg; use Make_Suite_Window_Pkg;
 with Explorer_Pkg; use Explorer_Pkg;
 
 procedure Aunit_Make_Suite is
+   Make_Suite_Window : Make_Suite_Window_Access;
+   Explorer : Explorer_Access;
+
 begin
    Gtk.Main.Set_Locale;
    Gtk.Main.Init;

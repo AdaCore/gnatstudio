@@ -38,6 +38,4 @@ package Make_Suite_Window_Pkg is
    procedure Gtk_New (Make_Suite_Window : out Make_Suite_Window_Access);
    procedure Initialize (Make_Suite_Window : access Make_Suite_Window_Record'Class);
 
-   Make_Suite_Window : Make_Suite_Window_Access;
-
 end Make_Suite_Window_Pkg;

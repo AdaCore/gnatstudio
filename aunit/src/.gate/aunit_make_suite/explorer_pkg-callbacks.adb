@@ -27,6 +27,17 @@ package body Explorer_Pkg.Callbacks is
       null;
    end On_Clist_Select_Row;
 
+   -------------------
+   -- On_Ok_Clicked --
+   -------------------
+
+   procedure On_Ok_Clicked
+     (Object : access Gtk_Button_Record'Class)
+   is
+   begin
+      null;
+   end On_Ok_Clicked;
+
    ----------------------
    -- On_Close_Clicked --
    ----------------------
