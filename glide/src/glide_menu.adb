@@ -35,8 +35,8 @@ with GVD.Process;             use GVD.Process;
 with Debugger;                use Debugger;
 
 with Glide_Kernel;            use Glide_Kernel;
-with Glide_Kernel.Help;       use Glide_Kernel.Help;
 with Glide_Kernel.Console;    use Glide_Kernel.Console;
+with Glide_Kernel.Modules;    use Glide_Kernel.Modules;
 with Glide_Kernel.Project;    use Glide_Kernel.Project;
 
 with Glide_Main_Window;       use Glide_Main_Window;
@@ -630,32 +630,31 @@ package body Glide_Menu is
    begin
       case Help_Context'Val (Action) is
          when Welcome_Help =>
-            Display_Help (Top.Kernel,
-              Top.Prefix_Directory.all &
-              "/doc/glide2/html/glide-welcome.html");
+            Open_Html (Top.Kernel,
+              Top.Prefix_Directory.all & "/doc/html/glide-welcome.html");
 
          when GVD_Help =>
-            Display_Help (Top.Kernel,
+            Open_Html (Top.Kernel,
               Top.Prefix_Directory.all & "/doc/html/gvd.html");
 
          when GNAT_UG_Help =>
-            Display_Help (Top.Kernel,
+            Open_Html (Top.Kernel,
               Top.Prefix_Directory.all & "/doc/html/gnat_ug.html");
 
          when GNAT_RM_Help =>
-            Display_Help (Top.Kernel,
+            Open_Html (Top.Kernel,
               Top.Prefix_Directory.all & "/doc/html/gnat_rm.html");
 
          when ARM95_Help =>
-            Display_Help (Top.Kernel,
+            Open_Html (Top.Kernel,
               Top.Prefix_Directory.all & "/doc/html/arm95.html");
 
          when GDB_Help =>
-            Display_Help (Top.Kernel,
+            Open_Html (Top.Kernel,
               Top.Prefix_Directory.all & "/doc/html/gdb.html");
 
          when GCC_Help =>
-            Display_Help (Top.Kernel,
+            Open_Html (Top.Kernel,
               Top.Prefix_Directory.all & "/doc/html/gcc.html");
       end case;
 
