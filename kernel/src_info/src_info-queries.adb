@@ -261,10 +261,12 @@ package body Src_Info.Queries is
       Current_Ref := Decl.References;
 
       while Current_Ref /= null loop
-         --  The test against null is just a guard against programing errors,
-         --  just in case we are given a ref which is not part of the reference
-         --  list of Decl...
-         if Current_Ref.Value.Kind = Body_Entity then
+         --  Completion of private types is also considered as a body, since
+         --  they don't have an actual implementation anyway.
+         if Current_Ref.Value.Kind = Body_Entity
+           or else Current_Ref.Value.Kind =
+              Completion_Of_Private_Or_Incomplete_Type
+         then
             Result := Current_Ref;
          end if;
 
