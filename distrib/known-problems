@@ -1,5 +1,10 @@
 Known Problems fixed in GPS 2.1.0
 
+- When using CVS, operation "Query status for directory" is recursive
+  Problem:    When using CVS, the operation "Query status for directory"
+              the status for files in the sub-directories as well.
+  Workaround: Prefer the use of "Query status for project"
+
 - DA05-024 In VCS XML definitions, <diff_working> node has no effect
   Problem:    When writing or modifying XML files for supporting a new VCS,
               the <diff_working> node has no effect.
