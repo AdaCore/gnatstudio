@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2003                       --
+--                     Copyright (C) 2001-2002                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -20,325 +20,45 @@
 
 with Ada.Text_IO;               use Ada.Text_IO;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
+with Language;                  use Language;
+with Language.Ada;              use Language.Ada;
+with GNAT.OS_Lib;               use GNAT.OS_Lib;
+with Language.Ada;              use Language.Ada;
 with Src_Info;                  use Src_Info;
 with Src_Info.Queries;          use Src_Info.Queries;
 with String_Utils;              use String_Utils;
-with Glide_Kernel;              use Glide_Kernel;
---  with Traces;                    use Traces;
-with Basic_Types;
-with Docgen;
-
 
 package body Docgen.Html_Output is
 
-   --  Me : constant Debug_Handle := Create ("Docgen-html_output");
-
-   procedure Doc_HTML_Open
-     (File   : Ada.Text_IO.File_Type;
-      Info   : Doc_Info);
-   --  Called each time a new file has been created
-
-   procedure Doc_HTML_Close
-     (File   : Ada.Text_IO.File_Type;
-      Info   : Doc_Info);
-   --  Called each time the file should be closed
-
-   procedure Doc_HTML_Subtitle
-     (File   : Ada.Text_IO.File_Type;
-      Info   : Doc_Info;
-      Level  : Natural;
-      Indent : Natural);
-   --  Add a subtitle for the entity type to the documentation
-   --  Level : level of the current package.
-   --  Indent : number of space by step of indentation. This value is defined
-   --  in docgen.ads (attribute Indent of the type Backend).
-
-   procedure Doc_HTML_Entry
-     (B      : access Backend_HTML;
-      Kernel : access Kernel_Handle_Record'Class;
-      File   : Ada.Text_IO.File_Type;
-      List_Ref_In_File : in out List_Reference_In_File.List;
-      Info   : Doc_Info;
-      Level  : Natural;
-      Indent : Natural);
-   --  Add an entry or entry family to the documentation
-
-   procedure Doc_References_HTML
-     (Kernel : access Kernel_Handle_Record'Class;
-      File   : Ada.Text_IO.File_Type;
-      Info             : Doc_Info;
-      Level  : Natural;
-      Indent : Natural);
-   --  Add the callgraph of the subprogram Info.
-   --  Use the following subprogram.
-
-   procedure Print_Ref_List_HTML
-     (Kernel      : access Kernel_Handle_Record'Class;
-      File        : in Ada.Text_IO.File_Type;
-      Local_List  : Type_Reference_List.List;
-      Called_Subp : Boolean;
-      Level       : Natural;
-      Indent      : Natural);
-   --  For the current entity which is a subprogram, print the list
-   --  of called subprograms (if Called_Sub = True) or the list of
-   --  subprograms which call it (if Called_Sub = False).
-
-   procedure Doc_HTML_Subprogram
-     (B      : access Backend_HTML;
-      Kernel : access Kernel_Handle_Record'Class;
-      File   : in Ada.Text_IO.File_Type;
-      List_Ref_In_File : in out List_Reference_In_File.List;
-      Info   : Doc_Info;
-      Level  : Natural;
-      Indent : Natural);
-   --  Add a subprogram to the documentation
-
-   procedure Doc_HTML_Pack_Desc
-     (File   : Ada.Text_IO.File_Type;
-      Info   : Doc_Info);
-   --  Add the package description to the documentation
-
-   procedure Doc_HTML_Package
-     (B      : access Backend_HTML;
-      Kernel : access Kernel_Handle_Record'Class;
-      File   : Ada.Text_IO.File_Type;
-      List_Ref_In_File : in out List_Reference_In_File.List;
-      Info   : Doc_Info;
-      Level  : Natural;
-      Indent : Natural);
-   --  Add the renamed and instantiated package to the documentation
-   --  For an inner package, it adds its header (package ... is) and its
-   --  footer (end ...;)
-
-   procedure Doc_HTML_With
-     (B      : access Backend_HTML;
-      Kernel : access Kernel_Handle_Record'Class;
-      File   : Ada.Text_IO.File_Type;
-      List_Ref_In_File : in out List_Reference_In_File.List;
-      Info   : Doc_Info;
-      Indent : Natural);
-   --  Add the dependencies to the documentation
-
-   procedure Doc_HTML_Var
-     (B      : access Backend_HTML;
-      Kernel : access Kernel_Handle_Record'Class;
-      File   : Ada.Text_IO.File_Type;
-      List_Ref_In_File : in out List_Reference_In_File.List;
-      Info   : Doc_Info;
-      Level  : Natural;
-      Indent : Natural);
-   --  Add a constant or named number to the documentation
-
-   procedure Doc_HTML_Exception
-     (B      : access Backend_HTML;
-      Kernel : access Kernel_Handle_Record'Class;
-      File   : Ada.Text_IO.File_Type;
-      List_Ref_In_File : in out List_Reference_In_File.List;
-      Info   : Doc_Info;
-      Level  : Natural;
-      Indent : Natural);
-   --  Add an exception to the documentation
-
-   procedure Doc_HTML_Type
-     (B      : access Backend_HTML;
-      Kernel : access Kernel_Handle_Record'Class;
-      File   : Ada.Text_IO.File_Type;
-      List_Ref_In_File : in out List_Reference_In_File.List;
-      Info             : Doc_Info;
-      Level  : Natural;
-      Indent : Natural);
-   --  Add a type to the documentation
-
-   procedure Doc_Family_HTML
-     (File   : Ada.Text_IO.File_Type;
-      Info   : Doc_Info;
-      Level  : Natural;
-      Indent : Natural);
-   --  Add the lists of parents and children for a tagged type
-
-   procedure Doc_HTML_Header
-     (Kernel : access Kernel_Handle_Record'Class;
-      File   : in Ada.Text_IO.File_Type;
-      Info   : Doc_Info);
-   --  Add the header of a package to the documentation
-
-   procedure Doc_HTML_Header_Private
-     (Kernel : access Kernel_Handle_Record'Class;
-      File   : in Ada.Text_IO.File_Type;
-      Info   : Doc_Info;
-      Level  : Natural;
-      Indent : Natural);
-   --  Add the title "Private"
-
-   procedure Doc_HTML_Footer
-     (File   : in Ada.Text_IO.File_Type;
-      Info   : Doc_Info;
-      Kernel : access Kernel_Handle_Record'Class);
-   --  Add the footer of a package to the documentation
-
-   procedure Doc_HTML_Unit_Index_Header
-     (File          : in Ada.Text_IO.File_Type;
-      Info          : Doc_Info;
-      Doc_Directory : String;
-      Doc_Suffix    : String);
-   --  Create the header of the index of all packages
-   --  and also create the whole index.htm for the frames
-
-   procedure Doc_HTML_Sub_Index_Header
-     (File   : Ada.Text_IO.File_Type;
-      Info   : Doc_Info);
-   --  Create the header of the index of all subprograms
-
-   procedure Doc_HTML_Type_Index_Header
-     (File   : Ada.Text_IO.File_Type;
-      Info   : Doc_Info);
-   --  Create the header of the index of all types
-
-   procedure Doc_HTML_Tagged_Type_Index_Header
-     (File   : Ada.Text_IO.File_Type;
-      Info   : Doc_Info);
-   --  Create the header of the tagged types index
-
-   procedure Doc_HTML_Tagged_Type_Item
-     (File   : Ada.Text_IO.File_Type;
-      Info   : Doc_Info);
-   --  Add an item (a tagged type or its parent/child) to the tagged types
-   --  index
-
-   procedure Doc_HTML_Index_End
-     (File   : Ada.Text_IO.File_Type;
-      Info   : Doc_Info);
-   --  Close the index file
-
-   procedure Doc_HTML_Index_Item
-     (File   : Ada.Text_IO.File_Type;
-      Info   : Doc_Info);
-   --  Add an item to an index, used for 3 index types: units, types and
-   --  subprograms index
-
-   procedure Doc_HTML_Private_Index
-     (File   : Ada.Text_IO.File_Type;
-      Info   : Doc_Info);
-   --  Set the title "Private" in the index file
-
-   procedure Doc_HTML_Public_Index
-     (File   : Ada.Text_IO.File_Type;
-      Info   : Doc_Info);
-   --  Set the title "Public" in the index file
-
-   procedure Doc_HTML_Body
-     (B      : access Backend_HTML;
-      Kernel : access Kernel_Handle_Record'Class;
-      File : in Ada.Text_IO.File_Type;
-      List_Ref_In_File : in out List_Reference_In_File.List;
-      Info : in out Doc_Info);
-   --  Format the body by calling Format_HTML for the whole body file
-   --  and write it to the doc file
-
-   procedure Doc_HTML_Description
-     (File   : Ada.Text_IO.File_Type;
-      Info   : Doc_Info;
-      Level  : Natural;
-      Indent : Natural);
-   --  Add the description given for the source code
-
-   procedure Replace_HTML_Tags
-     (Input_Text : String;
-      File : in Ada.Text_IO.File_Type);
-   --  Replaces all "<"  which are by "&lt;" and all ">" by "&gt;"
-   --  and writes the output to the doc file.
-
-   ---------------------
-   -- Doc_HTML_Create --
-   ---------------------
+   package TEL renames Type_Entity_List;
 
    procedure Doc_HTML_Create
-     (B                : access Backend_HTML;
-      Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
-      File             : in Ada.Text_IO.File_Type;
-      List_Ref_In_File : in out List_Reference_In_File.List;
-      Info             : in out Docgen.Doc_Info;
-      Doc_Directory    : String;
-      Doc_Suffix       : String;
-      Level            : Natural) is
+     (File : Ada.Text_IO.File_Type;
+      Info : in out Doc_Info) is
    begin
       case Info.Info_Type is
          when Open_Info             => Doc_HTML_Open (File, Info);
          when Close_Info            => Doc_HTML_Close (File, Info);
-         when Header_Info           => Doc_HTML_Header (Kernel, File, Info);
-         when Header_Private_Info   =>
-            Doc_HTML_Header_Private
-              (Kernel, File, Info, Level, Get_Indent (B.all));
-         when Footer_Info           => Doc_HTML_Footer (File, Info, Kernel);
-         when Subtitle_Info         =>
-            Doc_HTML_Subtitle (File, Info, Level, Get_Indent (B.all));
+         when Header_Info           => Doc_HTML_Header (File, Info);
+         when Footer_Info           => Doc_HTML_Footer (File, Info);
+         when Subtitle_Info         => Doc_HTML_Subtitle (File, Info);
          when Package_Desc_Info     => Doc_HTML_Pack_Desc (File, Info);
-         when With_Info             =>
-            Doc_HTML_With
-              (B, Kernel, File,
-               List_Ref_In_File, Info, Get_Indent (B.all));
-         when Package_Info_Open_Close =>
-            Doc_HTML_Package
-              (B, Kernel, File, List_Ref_In_File, Info, Level,
-               Get_Indent (B.all));
-         when Package_Info          =>
-            Doc_HTML_Package
-              (B, Kernel, File, List_Ref_In_File, Info, Level,
-               Get_Indent (B.all));
-         when Var_Info              =>
-            Doc_HTML_Var
-              (B, Kernel, File, List_Ref_In_File, Info, Level,
-               Get_Indent (B.all));
-         when Entry_Info            =>
-            Doc_HTML_Entry
-              (B, Kernel, File, List_Ref_In_File, Info, Level,
-               Get_Indent (B.all));
-         when References_Info       =>
-            Doc_References_HTML
-              (Kernel, File, Info, Level,
-               Get_Indent (B.all));
-         when Subprogram_Info       =>
-            Doc_HTML_Subprogram
-              (B, Kernel, File, List_Ref_In_File, Info, Level,
-               Get_Indent (B.all));
-         when Type_Info             =>
-            Doc_HTML_Type
-              (B, Kernel, File,
-               List_Ref_In_File, Info, Level, Get_Indent (B.all));
-         when Tagged_Type_Info      =>
-            Doc_Family_HTML
-              (File, Info, Level, Get_Indent (B.all));
-         when Exception_Info        =>
-            Doc_HTML_Exception
-              (B, Kernel, File, List_Ref_In_File, Info, Level,
-               Get_Indent (B.all));
-         when Description_Info     =>
-            Doc_HTML_Description (File, Info, Level, Get_Indent (B.all));
-
-            --  For the index
-         when Unit_Index_Info       =>
-            Doc_HTML_Unit_Index_Header
-              (File, Info, Doc_Directory, Doc_Suffix);
-         when Subprogram_Index_Info =>
-            Doc_HTML_Sub_Index_Header (File, Info);
-         when Type_Index_Info       =>
-            Doc_HTML_Type_Index_Header (File, Info);
-         when Tagged_Type_Index_Info =>
-            Doc_HTML_Tagged_Type_Index_Header (File, Info);
-         when Index_Tagged_Type_Item =>
-            Doc_HTML_Tagged_Type_Item (File, Info);
-         when Private_Index_Info     =>
-            Doc_HTML_Private_Index (File, Info);
-         when Public_Index_Info      =>
-            Doc_HTML_Public_Index (File, Info);
+         when With_Info             => Doc_HTML_With (File, Info);
+         when Package_Info          => Doc_HTML_Package (File, Info);
+         when Var_Info              => Doc_HTML_Var (File, Info);
+         when Entry_Info            => Doc_HTML_Entry (File, Info);
+         when Subprogram_Info       => Doc_HTML_Subprogram (File, Info);
+         when Type_Info             => Doc_HTML_Type (File, Info);
+         when Exception_Info        => Doc_HTML_Exception (File, Info);
+         when Unit_Index_Info       => Doc_HTML_Unit_Index_Header (File, Info);
+         when Subprogram_Index_Info => Doc_HTML_Sub_Index_Header  (File, Info);
+         when Type_Index_Info       => Doc_HTML_Type_Index_Header (File, Info);
          when Index_Item_Info       => Doc_HTML_Index_Item (File, Info);
          when End_Of_Index_Info     => Doc_HTML_Index_End  (File, Info);
-
-            --  For the body file
-         when Body_Line_Info        =>
-            Doc_HTML_Body
-              (B, Kernel, File, List_Ref_In_File, Info);
+         when Body_Line_Info        => Doc_HTML_Body (File, Info);
+         when others                => null;
       end case;
+
    end Doc_HTML_Create;
 
    -------------------
@@ -346,28 +66,38 @@ package body Docgen.Html_Output is
    -------------------
 
    procedure Doc_HTML_Open
-     (File : Ada.Text_IO.File_Type; Info : Doc_Info) is
+     (File : Ada.Text_IO.File_Type;
+      Info : Doc_Info) is
    begin
-      Put_Line (File, "<HTML>");
-      Put_Line (File, "<HEAD>");
-      Put_Line (File, "<TITLE>" & Info.Open_Title.all & "</TITLE>");
-      Put_Line (File, "<META NAME=""generator"" CONTENT=""DocGen"">");
-      Put_Line
-        (File, "<META HTTP-EQUIV=""Content-" &
-         "Type"" CONTENT=""text/html; CHARSET=ISO-8859-1"">");
-      Put_Line (File, "</HEAD>");
-      Put_Line (File, "<BODY bgcolor=""white"">");
+      Ada.Text_IO.Put_Line (File, "<HTML>");
+      Ada.Text_IO.Put_Line (File, "<HEAD>");
+      Ada.Text_IO.Put_Line
+        (File, "<TITLE>" &
+         Info.Open_Title.all &
+         "</TITLE>");
+      Ada.Text_IO.Put_Line
+        (File, "<META name=""generator"" " &
+         "CONTENT=""DocGen ");
+      Ada.Text_IO.Put_Line
+        (File, "<META http-equiv=""Content-" &
+         "Type"" content=""" &
+         "text/html; charset=" & "ISO-8859-1" & """>");
+      Ada.Text_IO.Put_Line (File, "</HEAD>");
+      Ada.Text_IO.Put_Line (File, "<BODY bgcolor=""white"">");
    end Doc_HTML_Open;
 
    --------------------
    -- Doc_HTML_Close --
    --------------------
 
-   procedure Doc_HTML_Close (File : Ada.Text_IO.File_Type; Info : Doc_Info) is
+   procedure Doc_HTML_Close
+     (File : Ada.Text_IO.File_Type;
+      Info : Doc_Info)
+   is
       pragma Unreferenced (Info);
    begin
-      Put_Line (File, "</BODY>");
-      Put_Line (File, "</HTML>");
+      Ada.Text_IO.Put_Line (File, "</BODY>");
+      Ada.Text_IO.Put_Line (File, "</HTML>");
    end Doc_HTML_Close;
 
    -----------------------
@@ -375,23 +105,20 @@ package body Docgen.Html_Output is
    -----------------------
 
    procedure Doc_HTML_Subtitle
-     (File   : Ada.Text_IO.File_Type;
-      Info   : Doc_Info;
-      Level  : Natural;
-      Indent : Natural) is
+     (File : Ada.Text_IO.File_Type;
+      Info : Doc_Info) is
    begin
-      Put_Line
-        (File,
-         "<TABLE WIDTH=""1%"" "
-         & "CELLPADDING=""0"" CELLSPACING=""0"">"
-         & "<TR><TD><PRE>"
-         & (1 .. Level * Indent => ' ')
-         & "</PRE></TD>"
-         & "<TD bgcolor=""#9999FF""><PRE>"
-         & "<H" & Image (Level) & "><B>"
-         & Info.Subtitle_Name.all
-         & "</B></H" & Image (Level) & ">"
-         & "</PRE></TD></TR></TABLE>");
+      Ada.Text_IO.Put_Line (File, "<BR>");
+
+      Ada.Text_IO.Put_Line
+        (File, "<TABLE  bgcolor=""#9999FF"" " &
+         "width=""100%""><TR><TD> ");
+      Ada.Text_IO.Put_Line
+        (File, "<H3> "  &
+         Info.Subtitle_Name.all &
+         " </H3>");
+      Ada.Text_IO.Put_Line (File, "</TD></TR></TABLE>");
+      Ada.Text_IO.New_Line (File);
    end Doc_HTML_Subtitle;
 
    ------------------------
@@ -399,11 +126,14 @@ package body Docgen.Html_Output is
    ------------------------
 
    procedure Doc_HTML_Pack_Desc
-     (File : Ada.Text_IO.File_Type; Info : Doc_Info) is
+     (File : Ada.Text_IO.File_Type;
+      Info : Doc_Info) is
    begin
-      Put_Line
-        (File,
-         "<H4><PRE>" & Info.Package_Desc_Description.all & " </PRE></H4>");
+      Ada.Text_IO.Put_Line
+        (File, "<h4><PRE>"  &
+         Info.Package_Desc_Description.all &
+         " </PRE></H4>");
+      Ada.Text_IO.Put_Line (File, "<HR> ");
    end Doc_HTML_Pack_Desc;
 
    ----------------------
@@ -411,85 +141,40 @@ package body Docgen.Html_Output is
    ----------------------
 
    procedure Doc_HTML_Package
-     (B      : access Backend_HTML;
-      Kernel : access Kernel_Handle_Record'Class;
-      File   : Ada.Text_IO.File_Type;
-      List_Ref_In_File : in out List_Reference_In_File.List;
-      Info   : Doc_Info;
-      Level  : Natural;
-      Indent : Natural)
-   is
-      Space : GNAT.OS_Lib.String_Access;
+     (File : Ada.Text_IO.File_Type;
+      Info : Doc_Info) is
    begin
-      Space := new String'(1 .. Level * Indent => ' ');
+      --  The mark for the HMTL browser to be able to find the position
 
-      if Info.Info_Type = Package_Info then
-         --  This package doesn't contain any declaration. Its header is
-         --  simply printed.
-         Put_Line
-           (File, "  <A NAME="""
-            & Image (Get_Declaration_Line_Of (Info.Package_Entity.Entity))
-            & """></A>  <BR>");
-         Put_Line
-           (File,
-            "<TABLE BGCOLOR=""WHITE"" WIDTH=""1%"" "
-            & "CELLPADDING=""0"" CELLSPACING=""0"">"
-            & "<TR><TD><PRE>"
-            & Space.all
-            & "</PRE></TD>"
-            & "<TD bgcolor=""#DDDDDD""><PRE>");
+      Ada.Text_IO.Put_Line
+        (File, "  <A name="""
+         & Image (Info.Package_Entity.Line)
+         & """></A>  <BR>");
+      Ada.Text_IO.Put_Line
+        (File, "<TABLE  bgcolor=""#DDDDDD"" " &
+         "width=""100%""><TR><TD> <PRE>");
 
-         Format_File
-           (B,
-            Kernel,
-            File,
-            List_Ref_In_File,
-            Info.Doc_LI_Unit,
-            Info.Package_Header.all,
-            Get_Declaration_File_Of (Info.Package_Entity.Entity),
-            Get_Declaration_Line_Of (Info.Package_Entity.Entity),
-            No_Body_Line_Needed,
-            Info.Doc_File_List,
-            Info.Doc_Info_Options.Link_All,
-            False,
-            Info.Doc_Info_Options.Process_Body_Files,
-            Info);
-      else
-         --  This package contains declarations.
-         --  Here we print either the header (package ... is)
-         --  or the footer (end ...;)
-         Put_Line
-           (File, "  <A NAME="""
-            & Image (Get_Declaration_Line_Of
-                       (Info.Package_Open_Close_Entity.Entity))
-            & """></A>  <BR>");
-         Put_Line
-           (File,
-            "<TABLE BGCOLOR=""WHITE"" WIDTH=""1%"" "
-            & "CELLPADDING=""0"" CELLSPACING=""0"">"
-            & "<TR><TD><PRE>"
-            & Space.all
-            & "</PRE></TD>"
-            & "<TD bgcolor=""#DDDDDD""><PRE>");
-         Format_File
-           (B,
-            Kernel,
-            File,
-            List_Ref_In_File,
-            Info.Doc_LI_Unit,
-            Info.Package_Open_Close_Header.all,
-            Get_Declaration_File_Of (Info.Package_Open_Close_Entity.Entity),
-            Get_Declaration_Line_Of (Info.Package_Open_Close_Entity.Entity),
-            No_Body_Line_Needed,
-            Info.Doc_File_List,
-            Info.Doc_Info_Options.Link_All,
-            False,
-            Info.Doc_Info_Options.Process_Body_Files,
-            Info);
+      if Info.Package_Entity.Is_Private then
+         Ada.Text_IO.Put_Line (File, "<i> private: </i>" & ASCII.LF);
       end if;
 
-      Put_Line (File, "</PRE></TD></TR></TABLE>");
-      Free (Space);
+      Format_HTML
+        (File,
+         Info.Doc_LI_Unit,
+         Info.Package_Header.all,
+         Info.Package_Entity.File_Name.all,
+         Info.Package_Entity.Short_Name.all,
+         Info.Package_Entity.Line,
+         No_Body_Line_Needed,
+         Info.Doc_File_List,
+         Info.Doc_Info_Options.Link_All,
+         False,
+         Info.Doc_Info_Options.Process_Body_Files,
+         True);
+
+      Ada.Text_IO.Put_Line (File, "</PRE></TD></TR></TABLE>");
+      Ada.Text_IO.Put_Line (File, Info.Package_Description.all);
+      Ada.Text_IO.Put_Line (File, "<HR> ");
    end Doc_HTML_Package;
 
    -------------------
@@ -497,39 +182,33 @@ package body Docgen.Html_Output is
    -------------------
 
    procedure Doc_HTML_With
-     (B      : access Backend_HTML;
-      Kernel : access Kernel_Handle_Record'Class;
-      File   : Ada.Text_IO.File_Type;
-      List_Ref_In_File : in out List_Reference_In_File.List;
-      Info   : Doc_Info;
-      Indent : Natural) is
+     (File : Ada.Text_IO.File_Type;
+      Info : Doc_Info) is
    begin
-      Put_Line
-        (File,
-         "<TABLE BGCOLOR=""WHITE"" WIDTH=""1%"" "
-         & "CELLPADDING=""0"" CELLSPACING=""0"">"
-         & "<TR><TD><PRE>"
-         & (1 .. Indent => ' ')
-         & "</PRE></TD>"
-         & "<TD bgcolor=""#DDDDDD""><PRE>");
+      Ada.Text_IO.Put_Line
+        (File, "<TABLE  bgcolor=""#DDDDDD"" " &
+         "width=""100%""><TR><TD> <PRE>");
 
-      Format_File
-        (B,
-         Kernel,
-         File,
-         List_Ref_In_File,
+      Ada.Text_IO.Put_Line
+        (File, "<TABLE  bgcolor=""#DDDDDD"" " &
+         "width=""100%""><TR><TD> <PRE>");
+
+      Format_HTML
+        (File,
          Info.Doc_LI_Unit,
          Info.With_Header.all,
-         Info.With_File,
+         Info.With_File.all,
+         "",
          Info.With_Header_Line,
          No_Body_Line_Needed,
          Info.Doc_File_List,
          Info.Doc_Info_Options.Link_All,
          False,
          Info.Doc_Info_Options.Process_Body_Files,
-         Info);
+         False);
 
-      Put_Line (File, "</PRE></TD></TR></TABLE>");
+      Ada.Text_IO.Put_Line (File, "</PRE></TD></TR></TABLE>");
+      Ada.Text_IO.Put_Line (File, "<HR> ");
    end Doc_HTML_With;
 
    ------------------
@@ -537,43 +216,41 @@ package body Docgen.Html_Output is
    ------------------
 
    procedure Doc_HTML_Var
-     (B                : access Backend_HTML;
-      Kernel           : access Kernel_Handle_Record'Class;
-      File             : Ada.Text_IO.File_Type;
-      List_Ref_In_File : in out List_Reference_In_File.List;
-      Info             : Doc_Info;
-      Level            : Natural;
-      Indent           : Natural) is
+     (File : Ada.Text_IO.File_Type;
+      Info : Doc_Info) is
    begin
-      Put_Line
-        (File, "  <A NAME="""
-         & Image (Get_Declaration_Line_Of (Info.Var_Entity.Entity))
-         & """></A>  <BR>");
-      Put_Line
-        (File,
-         "<TABLE BGCOLOR=""WHITE"" WIDTH=""1%"" "
-         & "CELLPADDING=""0"" CELLSPACING=""0"">"
-         & "<TR><TD><PRE>"
-         & (1 .. Level * Indent => ' ')
-         & "</PRE></TD>"
-         & "<TD bgcolor=""#DDDDDD""><PRE>");
+      --  The mark for the HMTL browser to be able to find the position
 
-      Format_File
-        (B,
-         Kernel,
-         File,
-         List_Ref_In_File,
+      Ada.Text_IO.Put_Line
+        (File, "  <A name="""
+         & Image (Info.Var_Entity.Line)
+         & """></A>  <BR>");
+
+      Ada.Text_IO.Put_Line
+        (File, "<TABLE  bgcolor=""#DDDDDD"" " &
+         "width=""100%""><TR><TD> <PRE>");
+
+      if Info.Var_Entity.Is_Private then
+         Ada.Text_IO.Put_Line (File, "<i> private: </i>" & ASCII.LF);
+      end if;
+
+      Format_HTML
+        (File,
          Info.Doc_LI_Unit,
          Info.Var_Header.all,
-         Get_Declaration_File_Of (Info.Var_Entity.Entity),
-         Get_Declaration_Line_Of (Info.Var_Entity.Entity),
+         Info.Var_Entity.File_Name.all,
+         Info.Var_Entity.Short_Name.all,
+         Info.Var_Entity.Line,
          No_Body_Line_Needed,
          Info.Doc_File_List,
          Info.Doc_Info_Options.Link_All,
          False,
          Info.Doc_Info_Options.Process_Body_Files,
-         Info);
-      Put_Line (File, "</PRE></TD></TR></TABLE>");
+         True);
+
+      Ada.Text_IO.Put_Line (File, "</PRE></TD></TR></TABLE>");
+      Ada.Text_IO.Put_Line (File, Info.Var_Description.all);
+      Ada.Text_IO.Put_Line (File, "<HR> ");
    end Doc_HTML_Var;
 
    ------------------------
@@ -581,43 +258,41 @@ package body Docgen.Html_Output is
    ------------------------
 
    procedure Doc_HTML_Exception
-     (B      : access Backend_HTML;
-      Kernel : access Kernel_Handle_Record'Class;
-      File   : Ada.Text_IO.File_Type;
-      List_Ref_In_File : in out List_Reference_In_File.List;
-      Info   : Doc_Info;
-      Level  : Natural;
-      Indent : Natural) is
+     (File : Ada.Text_IO.File_Type;
+      Info : Doc_Info) is
    begin
-      Put_Line
-        (File, "  <A NAME="""
-         & Image (Get_Declaration_Line_Of (Info.Exception_Entity.Entity))
-         & """></A>  <BR>");
-      Put_Line
-        (File,
-         "<TABLE BGCOLOR=""WHITE"" WIDTH=""1%"" "
-         & "CELLPADDING=""0"" CELLSPACING=""0"">"
-         & "<TR><TD><PRE>"
-         & (1 .. Level * Indent => ' ')
-         & "</PRE></TD>"
-         & "<TD bgcolor=""#DDDDDD""><PRE>");
+      --  The mark for the HMTL browser to be able to find the position
 
-      Format_File
-        (B,
-         Kernel,
-         File,
-         List_Ref_In_File,
+      Ada.Text_IO.Put_Line
+        (File, "  <A name="""
+         & Image (Info.Exception_Entity.Line)
+         & """></A>  <BR>");
+
+      Ada.Text_IO.Put_Line
+        (File, "<TABLE  bgcolor=""#DDDDDD"" " &
+         "width=""100%""><TR><TD> <PRE>");
+
+      if Info.Exception_Entity.Is_Private then
+         Ada.Text_IO.Put_Line (File, "<i> private: </i>" & ASCII.LF);
+      end if;
+
+      Format_HTML
+        (File,
          Info.Doc_LI_Unit,
          Info.Exception_Header.all,
-         Get_Declaration_File_Of (Info.Exception_Entity.Entity),
-         Get_Declaration_Line_Of (Info.Exception_Entity.Entity),
+         Info.Exception_Entity.File_Name.all,
+         Info.Exception_Entity.Short_Name.all,
+         Info.Exception_Entity.Line,
          No_Body_Line_Needed,
          Info.Doc_File_List,
          Info.Doc_Info_Options.Link_All,
          False,
          Info.Doc_Info_Options.Process_Body_Files,
-         Info);
-      Put_Line (File, "</PRE></TD></TR></TABLE>");
+         True);
+
+      Ada.Text_IO.Put_Line (File, "</PRE></TD></TR></TABLE>");
+      Ada.Text_IO.Put_Line (File, Info.Exception_Description.all);
+      Ada.Text_IO.Put_Line (File, "<HR> ");
    end Doc_HTML_Exception;
 
    -------------------
@@ -625,498 +300,676 @@ package body Docgen.Html_Output is
    -------------------
 
    procedure Doc_HTML_Type
-     (B                : access Backend_HTML;
-      Kernel           : access Kernel_Handle_Record'Class;
-      File             : Ada.Text_IO.File_Type;
-      List_Ref_In_File : in out List_Reference_In_File.List;
-      Info             : Doc_Info;
-      Level            : Natural;
-      Indent           : Natural) is
+     (File : Ada.Text_IO.File_Type;
+      Info : Doc_Info) is
    begin
-      Put_Line
-        (File, "  <A NAME="""
-         & Image (Get_Declaration_Line_Of (Info.Type_Entity.Entity))
-         & """></A>  <BR>");
-      Put_Line
-        (File,
-         "<TABLE BGCOLOR=""WHITE"" WIDTH=""1%"" "
-         & "CELLPADDING=""0"" CELLSPACING=""0"">"
-         & "<TR><TD><PRE>"
-         & (1 .. Level * Indent => ' ')
-         & "</PRE></TD>"
-         & "<TD bgcolor=""#DDDDDD""><PRE>");
+      --  The mark for the HMTL browser to be able to find the position
 
-      Format_File
-        (B,
-         Kernel,
-         File,
-         --  Entity_List,
-         List_Ref_In_File,
+      Ada.Text_IO.Put_Line
+        (File, "  <A name="""
+         & Image (Info.Type_Entity.Line)
+         & """></A>  <BR>");
+
+      Ada.Text_IO.Put_Line
+        (File, "<TABLE  bgcolor=""#DDDDDD"" " &
+         "width=""100%""><TR><TD> <PRE>");
+
+      if Info.Type_Entity.Is_Private then
+         Ada.Text_IO.Put_Line (File, "<i> private: </i>" & ASCII.LF);
+      end if;
+
+      Format_HTML
+        (File,
          Info.Doc_LI_Unit,
          Info.Type_Header.all,
-         Get_Declaration_File_Of (Info.Type_Entity.Entity),
-         Get_Declaration_Line_Of (Info.Type_Entity.Entity),
+         Info.Type_Entity.File_Name.all,
+         Info.Type_Entity.Short_Name.all,
+         Info.Type_Entity.Line,
          No_Body_Line_Needed,
          Info.Doc_File_List,
          Info.Doc_Info_Options.Link_All,
          False,
          Info.Doc_Info_Options.Process_Body_Files,
-         Info);
-      Put_Line (File, "</PRE></TD></TR></TABLE>");
+         True);
+
+      Ada.Text_IO.Put_Line (File, "</PRE></TD></TR></TABLE>");
+      Ada.Text_IO.Put_Line (File, Info.Type_Description.all);
+      Ada.Text_IO.Put_Line (File, "<HR> ");
    end Doc_HTML_Type;
-
-   -----------------------
-   --  Doc_Family_HTML  --
-   -----------------------
-
-   procedure Doc_Family_HTML
-     (File   : Ada.Text_IO.File_Type;
-      Info   : Doc_Info;
-      Level  : Natural;
-      Indent : Natural)
-   is
-      use Type_List_Tagged_Element;
-      use List_Entity_Handle;
-      Parent_Node   : List_Entity_Handle.List_Node;
-      Child_Node    : List_Entity_Handle.List_Node;
-      Item_Doc_File : String_Access;
-      Space         : GNAT.OS_Lib.String_Access;
-   begin
-      Put_Line
-        (File, "<TABLE BGCOLOR=""white"" WIDTH=""100%""><TR><TD>");
-      Space := new String'(1 .. Level * Indent => ' ');
-
-      --  Print parents
-      if Info.Tagged_Entity.Number_Of_Parents > 0 then
-         --  There is at least one parent
-         Put_Line (File, "<TR><TD><PRE>"
-                   & Space.all
-                   & "<B>Parents</B>"
-                   & "</PRE></TD></TR>");
-
-         Parent_Node := List_Entity_Handle.First
-           (Info.Tagged_Entity.My_Parents);
-
-         while Parent_Node /= List_Entity_Handle.Null_Node loop
-            if List_Entity_Handle.Data (Parent_Node) /= null then
-               if Source_File_In_List
-                 (Info.Tagged_Source_File_List,
-                  Get_Declaration_File_Of
-                    (List_Entity_Handle.Data (Parent_Node).all))
-               then
-                  --  Linkage is possible
-                  Item_Doc_File := new String'
-                    (Base_Name (Get_Doc_File_Name
-                                  (Get_Declaration_File_Of
-                                     (List_Entity_Handle.Data
-                                        (Parent_Node).all),
-                                   Info.Tagged_Directory.all,
-                                   Info.Tagged_Suffix.all)));
-                  Put_Line
-                    (File, "<TR><TD><PRE>"
-                     & Space.all
-                     & "<A HREF="""
-                     & Item_Doc_File.all
-                     & "#" & Image (Get_Declaration_Line_Of
-                                      (List_Entity_Handle.Data
-                                         (Parent_Node).all))
-                     & """ TARGET=""main"">"
-                     & Get_Name (List_Entity_Handle.Data (Parent_Node).all)
-                     & "</A> at&nbsp;"
-                     & Base_Name
-                       (Get_Declaration_File_Of
-                          (List_Entity_Handle.Data (Parent_Node).all))
-                     & "&nbsp;"
-                     & Image (Get_Declaration_Line_Of
-                                (List_Entity_Handle.Data (Parent_Node).all))
-                     & ":"
-                     & Image
-                       (Get_Declaration_Column_Of
-                          (List_Entity_Handle.Data (Parent_Node).all))
-                     & "</PRE></TD><TR>");
-                  Free (Item_Doc_File);
-               else
-                  --  No link for this parent
-                  Put_Line (File, "<TR><TD><PRE>"
-                            & Space.all
-                            & Get_Name (List_Entity_Handle.Data
-                                          (Parent_Node).all)
-                            & " at&nbsp;"
-                            & Base_Name
-                              (Get_Declaration_File_Of
-                                 (List_Entity_Handle.Data (Parent_Node).all))
-                            & "&nbsp;"
-                            & Image
-                              (Get_Declaration_Line_Of
-                                 (List_Entity_Handle.Data (Parent_Node).all))
-                            & ":"
-                            & Image
-                              (Get_Declaration_Column_Of
-                                 (List_Entity_Handle.Data (Parent_Node).all))
-                            & "</PRE></TD><TR>");
-               end if;
-            end if;
-
-            Parent_Node
-              := List_Entity_Handle.Next (Parent_Node);
-         end loop;
-
-      else
-         --  There's no parent
-         Put_Line (File, "<TR><TD><PRE>"
-                   & Space.all
-                   & "<B>No parent</B>"
-                   & "</PRE></TD></TR>");
-      end if;
-
-      --  Print chidren
-      if Info.Tagged_Entity.Number_Of_Children > 0 then
-         --  There is at least one child
-         Put_Line (File, "<TR><TD><PRE>"
-                   & Space.all
-                   & "<B>Children</B>"
-                   & "</PRE></TD></TR>");
-
-         Child_Node := List_Entity_Handle.First
-           (Info.Tagged_Entity.My_Children);
-
-         while Child_Node /= List_Entity_Handle.Null_Node loop
-            if List_Entity_Handle.Data (Child_Node) /= null then
-               if Source_File_In_List
-                 (Info.Tagged_Source_File_List, Get_Declaration_File_Of
-                    (List_Entity_Handle.Data (Child_Node).all))
-               then
-                  --  Linkage is possible
-                  Item_Doc_File := new String'
-                    (Base_Name (Get_Doc_File_Name
-                                  (Get_Declaration_File_Of
-                                     (List_Entity_Handle.Data
-                                        (Child_Node).all),
-                                   Info.Tagged_Directory.all,
-                                   Info.Tagged_Suffix.all)));
-                  Put_Line
-                    (File, "<TR><TD><PRE>"
-                     & Space.all
-                     & "<A HREF="""
-                     & Item_Doc_File.all
-                     & "#" & Image (Get_Declaration_Line_Of
-                                      (List_Entity_Handle.Data
-                                         (Child_Node).all))
-                     & """ TARGET=""main"">"
-                     & Get_Name (List_Entity_Handle.Data (Child_Node).all)
-                     & "</A> at&nbsp;"
-                     & Base_Name
-                       (Get_Declaration_File_Of
-                          (List_Entity_Handle.Data (Child_Node).all))
-                     & "&nbsp;"
-                     & Image (Get_Declaration_Line_Of
-                                (List_Entity_Handle.Data (Child_Node).all))
-                     & ":"
-                     & Image
-                       (Get_Declaration_Column_Of
-                          (List_Entity_Handle.Data (Child_Node).all))
-                     & "</PRE></TD><TR>");
-                  Free (Item_Doc_File);
-               else
-                  --  No link for this child
-                  Put_Line (File, "<TR><TD><PRE>"
-                            & Space.all
-                            & "<B>Child object : </B>"
-                            & Get_Name (List_Entity_Handle.Data
-                                          (Child_Node).all)
-                            & " at&nbsp;"
-                            & Base_Name
-                              (Get_Declaration_File_Of
-                                 (List_Entity_Handle.Data (Child_Node).all))
-                            & "&nbsp;"
-                            & Image
-                              (Get_Declaration_Line_Of
-                                 (List_Entity_Handle.Data (Child_Node).all))
-                            & ":"
-                            & Image
-                              (Get_Declaration_Column_Of
-                                 (List_Entity_Handle.Data (Child_Node).all))
-                            & "</PRE></TD><TR>");
-               end if;
-            end if;
-
-            Child_Node
-              := List_Entity_Handle.Next (Child_Node);
-         end loop;
-      else
-         --  There's no child
-         Put_Line (File, "<TR><TD><PRE>"
-                   & Space.all
-                   & "<B>No child</B>"
-                   & "</PRE></TD></TR>");
-      end if;
-
-      Free (Space);
-      Put_Line (File, "</TD></TR></TABLE>");
-   end Doc_Family_HTML;
 
    --------------------
    -- Doc_HTML_Entry --
    --------------------
 
    procedure Doc_HTML_Entry
-     (B                : access Backend_HTML;
-      Kernel           : access Kernel_Handle_Record'Class;
-      File             : Ada.Text_IO.File_Type;
-      List_Ref_In_File : in out List_Reference_In_File.List;
-      Info             : Doc_Info;
-      Level            : Natural;
-      Indent           : Natural) is
+     (File : Ada.Text_IO.File_Type;
+      Info : Doc_Info) is
    begin
-      Put_Line
-        (File,
-         "  <A NAME="""
-         & Image (Get_Declaration_Line_Of (Info.Entry_Entity.Entity))
-         & """></A>  <BR>");
-      Put_Line
-        (File,
-         "<TABLE BGCOLOR=""WHITE"" WIDTH=""1%"" "
-         & "CELLPADDING=""0"" CELLSPACING=""0"">"
-         & "<TR><TD><PRE>"
-         & (1 .. Level * Indent => ' ')
-         & "</PRE></TD>"
-         & "<TD bgcolor=""#DDDDDD""><PRE>");
+      --  The mark for the HMTL browser to be able to find the position
 
-      Format_File
-        (B,
-         Kernel,
-         File,
-         List_Ref_In_File,
+      Ada.Text_IO.Put_Line
+        (File, "  <A name="""
+         & Image (Info.Entry_Entity.Line)
+         & """></A>  <BR>");
+
+      Ada.Text_IO.Put_Line
+        (File, "<TABLE  bgcolor=""#DDDDDD"" " &
+         "width=""100%""><TR><TD> <PRE>");
+
+      if Info.Entry_Entity.Is_Private then
+         Ada.Text_IO.Put_Line (File, "<i> private: </i>" & ASCII.LF);
+      end if;
+
+      Format_HTML
+        (File,
          Info.Doc_LI_Unit,
          Info.Entry_Header.all,
-         Get_Declaration_File_Of (Info.Entry_Entity.Entity),
-         Get_Declaration_Line_Of (Info.Entry_Entity.Entity),
+         Info.Entry_Entity.File_Name.all,
+         Info.Entry_Entity.Short_Name.all,
+         Info.Entry_Entity.Line,
          No_Body_Line_Needed,
          Info.Doc_File_List,
          Info.Doc_Info_Options.Link_All,
          False,
          Info.Doc_Info_Options.Process_Body_Files,
-         Info);
+         True);
 
-      Put_Line (File, "</PRE></TD></TR></TABLE>");
+      Ada.Text_IO.Put_Line (File, "</PRE></TD></TR></TABLE>");
+      Ada.Text_IO.Put_Line (File, Info.Entry_Description.all);
+      Ada.Text_IO.Put_Line (File, "<HR> ");
    end Doc_HTML_Entry;
-
-   -------------------------
-   -- Doc_References_HTML --
-   -------------------------
-
-   procedure Doc_References_HTML
-     (Kernel : access Kernel_Handle_Record'Class;
-      File   : Ada.Text_IO.File_Type;
-      Info   : Doc_Info;
-      Level  : Natural;
-      Indent : Natural) is
-   begin
-      Put_Line
-        (File, "<TABLE BGCOLOR=""white"" WIDTH=""100%""><TR><TD>");
-      Print_Ref_List_HTML
-        (Kernel, File, Info.References_Entity.Called_List, True,
-         Level, Indent);
-      Print_Ref_List_HTML
-        (Kernel, File, Info.References_Entity.Calls_List, False,
-         Level, Indent);
-      Put_Line (File, "</TD></TR></TABLE>");
-   end Doc_References_HTML;
-
-   ---------------------------
-   --  Print_Ref_List_HTML  --
-   ---------------------------
-
-   procedure Print_Ref_List_HTML
-     (Kernel : access Kernel_Handle_Record'Class;
-      File   : in Ada.Text_IO.File_Type;
-      Local_List  : Type_Reference_List.List;
-      Called_Subp : Boolean;
-      Level  : Natural;
-      Indent : Natural)
-   is
-      use Type_Reference_List;
-      use type Basic_Types.String_Access;
-      Node   : Type_Reference_List.List_Node;
-      Space  : GNAT.OS_Lib.String_Access;
-   begin
-      if not Type_Reference_List.Is_Empty (Local_List) then
-         Space := new String'(1 .. Level * Indent => ' ');
-
-         if Called_Subp then
-            Put_Line (File, "<TR><TD><PRE>"
-                      & Space.all
-                      & "<B>Subprogram is called by: </B>"
-                      & "</PRE></TD><TR>");
-         else
-            Put_Line (File, "<TR><TD><PRE>"
-                      & Space.all
-                      & "<B>Subprogram calls: </B>"
-                      & "</PRE></TD><TR>");
-         end if;
-
-         Node := Type_Reference_List.First (Local_List);
-
-         --  For every reference found write the information to doc file
-         while Node /= Type_Reference_List.Null_Node loop
-            --  Check if the creating of a link is possible
-            if Type_Reference_List.Data (Node).Set_Link then
-               --  If a called subprogram => link to spec
-               Put_Line
-                 (File,
-                  "<TR><TD><PRE>"
-                  & Space.all
-                  & "<A HREF="""
-                  & Get_Html_File_Name
-                    (Kernel,
-                     Get_Declaration_File_Of
-                       (Type_Reference_List.Data (Node).Entity))
-                  & "#"
-                  & Image
-                    (Get_Declaration_Line_Of
-                       (Type_Reference_List.Data (Node).Entity))
-                     & """>"
-                     & Get_Name (Type_Reference_List.Data (Node).Entity)
-                  & "</A> at&nbsp;"
-                  & Base_Name
-                    (Get_Declaration_File_Of
-                       (Type_Reference_List.Data (Node).Entity))
-                  & "&nbsp;"
-                  & Image (Get_Declaration_Line_Of
-                             (Type_Reference_List.Data (Node).Entity))
-                  & ":"
-                  & Image
-                    (Get_Declaration_Column_Of
-                       (Type_Reference_List.Data (Node).Entity))
-                  & "</PRE></TD><TR>");
-
-            else
-               --  No link at all
-               Put_Line
-                 (File,
-                  "<TR><TD><PRE>"
-                  & Space.all
-                  & Get_Name (Type_Reference_List.Data (Node).Entity)
-                  & " at&nbsp;"
-                  & Base_Name
-                    (Get_Declaration_File_Of
-                       (Type_Reference_List.Data (Node).Entity))
-                  & "&nbsp;"
-                  & Image
-                    (Get_Declaration_Line_Of
-                       (Type_Reference_List.Data (Node).Entity))
-                  & ":"
-                  & Image
-                    (Get_Declaration_Column_Of
-                       (Type_Reference_List.Data (Node).Entity))
-                  & "</PRE></TD></TR>");
-            end if;
-
-            Node := Type_Reference_List.Next (Node);
-         end loop;
-
-         Free (Space);
-      end if;
-   end Print_Ref_List_HTML;
 
    -------------------------
    -- Doc_HTML_Subprogram --
    -------------------------
 
    procedure Doc_HTML_Subprogram
-     (B      : access Backend_HTML;
-      Kernel : access Kernel_Handle_Record'Class;
-      File   : in Ada.Text_IO.File_Type;
-      List_Ref_In_File : in out List_Reference_In_File.List;
-      Info   : Doc_Info;
-      Level  : Natural;
-      Indent : Natural) is
-   begin
-      Put_Line
-        (File, "  <A NAME="""
-         & Image (Get_Declaration_Line_Of (Info.Subprogram_Entity.Entity))
-         & """></A>  <BR> ");
-      Put_Line
-        (File,
-         "<TABLE BGCOLOR=""WHITE"" WIDTH=""1%"" "
-         & "CELLPADDING=""0"" CELLSPACING=""0"">"
-         & "<TR><TD><PRE>"
-         & (1 .. Level * Indent => ' ')
-         & "</PRE></TD>"
-         & "<TD bgcolor=""#DDDDDD""><PRE>");
+     (File      : in Ada.Text_IO.File_Type;
+      Info      : Doc_Info) is
 
-      Format_File
-        (B,
-         Kernel,
-         File,
-         List_Ref_In_File,
+      package TRL renames Type_Reference_List;
+
+      procedure Print_Ref_List
+        (Local_List    : TRL.List;
+         Called_Subp   : Boolean);
+      --  Processes the Ref_List to the output file.
+      --  If Called_Subp is True, the list of the subprograms
+      --  calling the current subprogram will be printed,
+      --  if False, the list of the subprograms called within it.
+
+      ----------------------
+      --  Print_Ref_List  --
+      ----------------------
+
+      procedure Print_Ref_List
+        (Local_List    : TRL.List;
+         Called_Subp   : Boolean) is
+         Node      : TRL.List_Node;
+         Suffix    : GNAT.OS_Lib.String_Access;
+      begin
+         if not TRL.Is_Empty (Local_List) then
+            if Called_Subp then
+               Ada.Text_IO.Put_Line (File,
+                                     "<H5> Subprogram is called by: </H5>");
+            else
+               Ada.Text_IO.Put_Line (File,
+                                     "<H5> Subprogram calls: </H5>");
+            end if;
+            Ada.Text_IO.Put_Line (File, "<TABLE>");
+
+            Node := TRL.First (Local_List);
+
+            --  For every reference found write the information to doc file
+
+            for J in 1 .. TRL.Length (Local_List) loop
+               --  Check if the creating of a link is possible
+
+               if TRL.Data (Node).Set_Link then
+                  --  If a called subprogram => link to spec
+
+                  if Called_Subp then
+                     Suffix := new String'
+                       ("_" & Body_Suffix (TRL.Data (Node).File_Name.all)
+                        & ".htm");
+                  else
+                     Suffix := new String'
+                       ("_" & Spec_Suffix (TRL.Data (Node).File_Name.all)
+                        & ".htm");
+                  end if;
+
+                  declare
+                     Body_File : constant String :=
+                       File_Name_Without_Suffix
+                         (TRL.Data (Node).File_Name.all)
+                       & Suffix.all;
+                  begin
+                     Ada.Text_IO.Put_Line
+                       (File,
+                        "<TR><TD><A href="""
+                        & Body_File & "#"
+                        & Image (TRL.Data (Node).Line)
+                        & """>"
+                        & TRL.Data
+                          (Node).Subprogram_Name.all
+                        & "</A></TD><TD> at &nbsp<I>"
+                        & TRL.Data (Node).File_Name.all
+                        & "</I></TD><TD>:"
+                        & Image (TRL.Data (Node).Line)
+                        & "</TD><TD>:"
+                        & Image (TRL.Data (Node).Column)
+                        & "</TD><TR>");
+                  end;
+               --  no link at all
+               else
+                  Ada.Text_IO.Put_Line
+                    (File,
+                     "<TR><TD>"
+                     & TRL.Data (Node).Subprogram_Name.all
+                     & "</TD><TD> at &nbsp<I>"
+                     & TRL.Data (Node).File_Name.all
+                     & "</I></TD><TD>:"
+                     & Image (TRL.Data (Node).Line)
+                     & "</TD><TD>:"
+                     & Image (TRL.Data (Node).Column)
+                     & "</TD></TR>");
+               end if;
+               Node := TRL.Next (Node);
+            end loop;
+               Ada.Text_IO.Put_Line (File, "</TABLE>");
+         end if;
+      end Print_Ref_List;
+
+   begin  --  Doc_HTML_Subprogram
+      --  The mark for the HMTL browser to be able to find the position
+
+      Ada.Text_IO.Put_Line
+        (File, "  <A name="""
+         & Image (Info.Subprogram_Entity.Line)
+         & """></A>  <BR> ");
+      Ada.Text_IO.Put_Line
+        (File, "<TABLE  bgcolor=""#DDDDDD"" " &
+         "width=""100%""><TR><TD> <PRE>");
+
+      if Info.Subprogram_Entity.Is_Private then
+         Ada.Text_IO.Put_Line (File, "<i> private: </i>" & ASCII.LF);
+      end if;
+
+      Format_HTML
+        (File,
          Info.Doc_LI_Unit,
          Info.Subprogram_Header.all,
-         Get_Declaration_File_Of (Info.Subprogram_Entity.Entity),
-         Get_Declaration_Line_Of (Info.Subprogram_Entity.Entity),
-         Get_Line (Info.Subprogram_Entity.Line_In_Body),
+         Info.Subprogram_Entity.File_Name.all,
+         Info.Subprogram_Entity.Short_Name.all,
+         Info.Subprogram_Entity.Line,
+         Info.Subprogram_Entity.Line_In_Body,
          Info.Doc_File_List,
          Info.Doc_Info_Options.Link_All,
          False,
          Info.Doc_Info_Options.Process_Body_Files,
-         Info);
+         True);
 
-      Put_Line (File, "</PRE></TD></TR></TABLE>");
+      Ada.Text_IO.Put_Line (File, "</PRE></TD></TR></TABLE>");
+
+      --  Write the description to doc file
+
+      Ada.Text_IO.Put_Line (File, Info.Subprogram_Description.all);
+      Ada.Text_IO.Put_Line (File, " <BR>  ");
+
+      Print_Ref_List (Info.Subprogram_Entity.Called_List, True);
+      Print_Ref_List (Info.Subprogram_Entity.Calls_List, False);
+
+      Ada.Text_IO.Put_Line (File, "<HR> ");
    end Doc_HTML_Subprogram;
+
+   -----------------
+   -- Format_HTML --
+   -----------------
+
+   procedure Format_HTML
+     (File             : Ada.Text_IO.File_Type;
+      LI_Unit          : LI_File_Ptr;
+      Text             : String;
+      File_Name        : String;
+      Entity_Name      : String;
+      Entity_Line      : Natural;
+      Line_In_Body     : Natural;
+      Source_File_List : Type_Source_File_List.List;
+      Link_All         : Boolean;
+      Is_Body          : Boolean;
+      Process_Body     : Boolean;
+      Do_Check_Pack    : Boolean) is
+      pragma Unreferenced (Do_Check_Pack, Entity_Name);
+
+      --  global variables for the callback function
+      Last_Index, Last_Line : Natural;
+      Loc_Start, Loc_End    : Natural;
+      Point_In_Column       : Natural;
+
+      procedure Set_Name_Tags
+        (Input_Text : String);
+      --  sets a "<A name="lind_number"> <A>" in front of each line in the
+      --  given strings (if in body file) and writes it to the doc file.
+
+      function HTML_Callback
+        (Entity         : Language_Entity;
+         Sloc_Start     : Source_Location;
+         Sloc_End       : Source_Location;
+         Partial_Entity : Boolean) return Boolean;
+      --  the callback function to add HTML code to the text being parsed.
+      --  for each possible kind of parsed entity some HTML code will
+      --  be added to the Result_Line and the Already_Added_Chars
+      --  increased by the number of the added chars in order to keep
+      --  track of the current position in the original string.
+
+      -------------------
+      -- Set_Name_Tags --
+      -------------------
+
+      procedure Set_Name_Tags (Input_Text : String) is
+         Last_Written     : Natural;
+         HTML_Name_Head   : constant String := "<A name=""";
+         HTML_Name_Middle : constant String := """>";
+         HTML_Name_End    : constant String := "</A>";
+
+      begin
+         Last_Written := Input_Text'First - 1;
+
+         for J in Input_Text'First .. Input_Text'Last loop
+            if Input_Text (J) = ASCII.LF then
+               Last_Line := Last_Line + 1;
+               Ada.Text_IO.Put
+                 (File, Input_Text (Last_Written + 1 .. J) &
+                  HTML_Name_Head &
+                  Image (Last_Line + Entity_Line - 1) &
+                  HTML_Name_Middle &
+                  HTML_Name_End);
+               Last_Written := J;
+            end if;
+         end loop;
+
+         Ada.Text_IO.Put
+           (File,
+            Input_Text (Last_Written + 1 .. Input_Text'Last));
+      end Set_Name_Tags;
+
+      -------------------
+      -- HTML_Callback --
+      -------------------
+
+      function HTML_Callback
+        (Entity         : Language_Entity;
+         Sloc_Start     : Source_Location;
+         Sloc_End       : Source_Location;
+         Partial_Entity : Boolean) return Boolean is
+         pragma Unreferenced (Partial_Entity);
+
+         Entity_Info : Entity_Information;
+         Status      : Find_Decl_Or_Body_Query_Status;
+
+         HTML_Comment_Prefix : constant String := "<FONT color=""green"">";
+         HTML_Comment_Suffix : constant String := "</FONT>";
+         HTML_Keyword_Prefix : constant String := "<B>";
+         HTML_Keyword_Suffix : constant String := "</B>";
+         HTML_String_Prefix  : constant String := "<FONT color=""red"">";
+         HTML_String_Suffix  : constant String := "</FONT>";
+         HTML_Char_Prefix    : constant String := "<FONT color=""red"">";
+         HTML_Char_Suffix    : constant String := "</FONT>";
+
+         procedure Callback_Output
+           (Start_Index : Natural;
+            End_Index   : Natural;
+            Prefix     : String;
+            Suffix     : String;
+            Check_Tags : Boolean);
+         --  Write the formatted text since the last output to doc file
+         --  Prefix and Suffix are the HTML code to be put around the
+         --  parsed entity. The both index values are needed, as for comment
+         --  lines the ASCII.LF at the line should be ignored, so you can't
+         --  used always the Sloc_Index values.
+
+         procedure Create_Regular_Link;
+         --  will create a regular link to the entity, links to both spec
+         --  and body files are possible.
+
+         procedure Create_Special_Link_To_Body;
+         --  will create a link to the reference of the entity in the body
+
+         function Link_Should_Be_Set return Boolean;
+         --  check if a link to that entity should be set
+
+         function Special_Link_Should_Be_Set return Boolean;
+         --  check if a special link to the body should be set
+         --  (a special link, because it doesn't link to the declaration
+         --  of the entity, but to a reference somewhere in the body)
+
+         function Regular_Link_Should_Be_Set return Boolean;
+         --  check if a regular link to the body should be set
+         --  (a regular link is a link to the entity's declaration)
+
+         procedure Replace_HTML_Tags
+           (Input_Text : String);
+         --  replaces all "<"  which are by "&lt;" and all ">" by "&gt;"
+         --  and writes the output to the doc file.
+
+         ---------------------
+         -- Callback_Output --
+         ---------------------
+
+         procedure Callback_Output
+           (Start_Index : Natural;
+            End_Index   : Natural;
+            Prefix      : String;
+            Suffix      : String;
+            Check_Tags  : Boolean) is
+         begin
+            if Sloc_Start.Line > Last_Line then
+               Set_Name_Tags (Text (Last_Index .. Start_Index - 1));
+            else
+               Ada.Text_IO.Put (File, Text (Last_Index .. Start_Index - 1));
+            end if;
+
+            if Check_Tags then
+               Ada.Text_IO.Put (File, Prefix);
+               Replace_HTML_Tags (Text (Start_Index .. End_Index));
+               Ada.Text_IO.Put (File, Suffix);
+            else
+               Ada.Text_IO.Put (File,
+                                Prefix &
+                                  Text (Start_Index .. End_Index) &
+                                  Suffix);
+            end if;
+            Last_Index := End_Index + 1;
+            Last_Line  := Sloc_End.Line;
+         end Callback_Output;
+
+         ---------------------------------
+         -- Create_Special_Link_To_Body --
+         ---------------------------------
+
+         procedure Create_Special_Link_To_Body is
+            Spec_File : constant String :=
+              GNAT.Directory_Operations.File_Name
+                (Get_Declaration_File_Of (Entity_Info));
+         begin
+            if Sloc_Start.Line > Last_Line then
+               Set_Name_Tags (Text (Last_Index .. Loc_Start - 1));
+            else
+               Ada.Text_IO.Put (File,
+                                Text (Last_Index .. Loc_Start - 1));
+            end if;
+
+            Ada.Text_IO.Put (File,
+                             "<A href=""" &
+                             File_Name_Without_Suffix (Spec_File) &
+                             "_" &
+                             Body_Suffix (Spec_File)
+                             & ".htm#" &
+                             Image (Line_In_Body) &
+                             """>" &
+                             Text (Loc_Start .. Loc_End) &
+                             "</A>");
+
+            Last_Index := Loc_End + 1;
+         end Create_Special_Link_To_Body;
+
+         -------------------------
+         -- Create_Regular_Link --
+         -------------------------
+
+         procedure Create_Regular_Link is
+            Line_To_Use : Natural;
+         begin
+            if Sloc_Start.Line > Last_Line then
+               Set_Name_Tags (Text (Last_Index .. Loc_Start - 1));
+            else
+               Ada.Text_IO.Put (File,
+                                Text (Last_Index .. Loc_Start - 1));
+            end if;
+
+            if Get_Kind (Entity_Info).Kind = Package_Kind then
+               Line_To_Use := First_File_Line;
+            else
+               Line_To_Use := Get_Declaration_Line_Of (Entity_Info);
+            end if;
+
+            Ada.Text_IO.Put (File,
+                             "<A href=""" &
+                             GNAT.Directory_Operations.File_Name
+                               (Get_Html_File_Name
+                                  (Get_Declaration_File_Of (Entity_Info))) &
+                             "#" &
+                             Image (Line_To_Use) &
+                             """>" &
+                             Text (Loc_Start .. Loc_End) &
+                             "</A>");
+
+            Last_Index := Loc_End + 1;
+         end Create_Regular_Link;
+
+         ------------------------
+         -- Link_Should_Be_Set --
+         ------------------------
+
+         function Link_Should_Be_Set return Boolean is
+         begin
+
+            --  if no links should be set to entities declared in not
+            --  processed source files => filter them out
+            return (Link_All or
+              Source_File_In_List (Source_File_List,
+                                   Get_Declaration_File_Of (Entity_Info)))
+            --  create no links if it is the declaration line itself;
+            --  only if it's a subprogram or entry in a spec sometimes
+            --  a link CAN be created to it body, so don't filter these ones.
+              and
+                ((GNAT.Directory_Operations.File_Name
+                    (Get_Declaration_File_Of (Entity_Info)) /=
+                   GNAT.Directory_Operations.File_Name (File_Name) or
+                    Get_Declaration_Line_Of (Entity_Info) /=
+                    Sloc_Start.Line + Entity_Line - 1)
+                   or (not Is_Body and
+                         (Get_Kind (Entity_Info).Kind = Entry_Or_Entry_Family
+                          or Get_Kind (Entity_Info).Kind = Procedure_Kind
+                          or Get_Kind (Entity_Info).Kind =
+                          Function_Or_Operator)));
+         end Link_Should_Be_Set;
+
+         --------------------------------
+         -- Special_Link_Should_Be_Set --
+         --------------------------------
+
+         function Special_Link_Should_Be_Set return Boolean is
+         begin
+
+            --  checks if a special link, a link not to a declaration,
+            --  should be set.
+            return
+            not Is_Body and
+              Process_Body and
+            (Get_Kind (Entity_Info).Kind = Entry_Or_Entry_Family
+               or Get_Kind (Entity_Info).Kind = Procedure_Kind
+               or Get_Kind (Entity_Info).Kind = Function_Or_Operator);
+         end Special_Link_Should_Be_Set;
+
+         --------------------------------
+         -- Regular_Link_Should_Be_Set --
+         --------------------------------
+
+         function Regular_Link_Should_Be_Set return Boolean is
+         begin
+            --  a regular link is a link to the entity's declaration
+            return
+            --  no subprograms/tasks are processed here,
+            --  if working on a spec file
+            (not (Get_Kind (Entity_Info).Kind = Entry_Or_Entry_Family
+                  or Get_Kind (Entity_Info).Kind = Procedure_Kind
+                  or Get_Kind (Entity_Info).Kind = Function_Or_Operator)
+               or Is_Body);
+         end Regular_Link_Should_Be_Set;
+
+         -----------------------
+         -- Replace_HTML_Tags --
+         -----------------------
+
+         procedure Replace_HTML_Tags
+           (Input_Text : String) is
+
+            Last_Index : Natural;
+         begin
+            Last_Index := Input_Text'First;
+
+            for J in Input_Text'First .. Input_Text'Last - 1 loop
+               if Input_Text (J) = '<' then
+                  Ada.Text_IO.Put (File, Input_Text (Last_Index .. J - 1) &
+                                "&lt;");
+                  Last_Index := J + 1;
+               elsif Input_Text (J) = '>' then
+                  Ada.Text_IO.Put (File, Input_Text (Last_Index .. J - 1) &
+                                "&gt;");
+                  Last_Index := J + 1;
+               elsif Input_Text (J) = '&' then
+                  Ada.Text_IO.Put (File, Input_Text (Last_Index .. J - 1) &
+                                "&amp;");
+                  Last_Index := J + 1;
+               end if;
+            end loop;
+            Ada.Text_IO.Put (File, Input_Text (Last_Index .. Input_Text'Last));
+         end Replace_HTML_Tags;
+
+      begin  -- HTML_Callback
+
+         case Entity is
+            when Comment_Text => Callback_Output
+                 (Sloc_Start.Index, Sloc_End.Index - 1,
+                  HTML_Comment_Prefix, HTML_Comment_Suffix, False);
+            when Keyword_Text => Callback_Output
+                 (Sloc_Start.Index, Sloc_End.Index,
+                  HTML_Keyword_Prefix, HTML_Keyword_Suffix, False);
+            when String_Text => Callback_Output
+                 (Sloc_Start.Index, Sloc_End.Index,
+                  HTML_String_Prefix, HTML_String_Suffix, True);
+            when Character_Text => Callback_Output
+                 (Sloc_Start.Index, Sloc_End.Index,
+                  HTML_Char_Prefix, HTML_Char_Suffix, False);
+            when Identifier_Text =>   --  perhaps links can be set:
+
+               Loc_Start := Sloc_Start.Index;
+
+               --  take apart parsed entites with any "."'s in the middle
+               for J in 1 .. 1 +
+                 Count_Points (Text (Sloc_Start.Index .. Sloc_End.Index)) loop
+
+                  Point_In_Column :=
+                    Get_String_Index (Text (Loc_Start .. Sloc_End.Index),
+                                      Loc_Start, ".");
+                  if Point_In_Column > 0 then
+                     Loc_End := Point_In_Column - 1;
+                  else
+                     Loc_End := Sloc_End.Index;
+                  end if;
+
+                  Find_Declaration (LI_Unit,
+                                    GNAT.Directory_Operations.File_Name
+                                      (File_Name),
+                                    Text (Loc_Start .. Loc_End),
+                                    Sloc_Start.Line + Entity_Line - 1,
+                                    Sloc_Start.Column +
+                                      (Loc_Start - Sloc_Start.Index),
+                                    Entity_Info,
+                                    Status);
+
+                  if Status = Success or Status = Fuzzy_Match then
+                     if Link_Should_Be_Set then
+                        if Special_Link_Should_Be_Set then
+                           Create_Special_Link_To_Body;
+                        elsif Regular_Link_Should_Be_Set then
+                           Create_Regular_Link;
+                        end if;
+                     end if;
+                  end if;
+
+                  if Point_In_Column > 0 then
+                     Loc_Start := Point_In_Column + 1;
+                  end if;
+               end loop;
+
+            when others => null;
+         end case;
+         return False;
+      end HTML_Callback;
+
+   begin  --  Format_HTML
+
+      --  set the global varibales
+      Last_Index := 1;
+      Last_Line  := 0;
+
+      --  parse the entities in Text
+      Parse_Entities (Ada_Lang,
+                      Text,
+                      HTML_Callback'Unrestricted_Access);
+
+      --  write the rest of the text, since the last found parsed entity
+      if Last_Index < Text'Last then
+         Set_Name_Tags (Text (Last_Index .. Text'Last));
+         --  Ada.Text_IO.Put (File, Text (Last_Index .. Text'Last));
+      end if;
+   end Format_HTML;
 
    ---------------------
    -- Doc_HTML_Header --
    ---------------------
 
    procedure Doc_HTML_Header
-     (Kernel : access Kernel_Handle_Record'Class;
-      File   : in Ada.Text_IO.File_Type;
+     (File   : in Ada.Text_IO.File_Type;
       Info   : Doc_Info) is
+
+      Body_File_Name : GNAT.OS_Lib.String_Access;
    begin
-      Put_Line (File, "<TABLE BGCOLOR=""#9999FF"" WIDTH=""100%""><TR><TD>");
-      Put_Line (File, " <H1>  Package <I>");
-      Put_Line (File, " <A NAME=""" & Image (First_File_Line) & """>");
-      --  Static anchor used by the unit index file
-      Put_Line (File, " <A NAME=""" & Image (Info.Header_Line) & """>");
+
+      Ada.Text_IO.Put_Line (File, "<TABLE  bgcolor=""#9999FF"" " &
+                            "width=""100%""><TR><TD>");
+      Ada.Text_IO.Put_Line (File, " <H1>  Package <I>");
+      Ada.Text_IO.Put_Line
+        (File, " <A NAME=""" & Image (Info.Header_Line) & """>");
 
       --  check if should set a link to the body file
-      if Info.Header_Link then
-         Put_Line
-           (File, "<A HREF="""
-            & Get_Html_File_Name (Kernel, Other_File_Name
-                                    (Kernel, Info.Header_File))
-            & """> ");
-         Put_Line (File, Info.Header_Package.all & "</A></I></H1>");
+      if Info.Header_Link and
+        Is_Spec_File (Info.Header_File.all) then
+         Body_File_Name :=
+           new String '(File_Name_Without_Suffix (Info.Header_File.all)
+                        & "_" &
+                        Body_Suffix (Info.Header_File.all)
+                        & ".htm");
+         Ada.Text_IO.Put_Line (File, "<A HREF=""" &
+                               File_Name (Body_File_Name.all) &
+                               """> ");
+         Ada.Text_IO.Put_Line (File, Info.Header_Package.all &
+                               "</A></A></I></H1>");
+      --  check if should set a link to the spec file
+      elsif not Is_Spec_File (Info.Header_File.all) then
+         Body_File_Name :=
+           new String '(File_Name_Without_Suffix (Info.Header_File.all)
+                        & "_" &
+                        Spec_Suffix (Info.Header_File.all)
+                        &  ".htm");
+
+         Ada.Text_IO.Put_Line (File, "<A href=""" &
+                               File_Name (Body_File_Name.all) &
+                               """> ");
+         Ada.Text_IO.Put_Line (File, Info.Header_Package.all &
+                               "</A></A></I></H1> ");
       else
-         Put_Line (File, Info.Header_Package.all & "</A></I></H1>");
+         Ada.Text_IO.Put_Line (File, Info.Header_Package.all &
+                               "</A> </I> </H1>");
       end if;
-      Put_Line (File, "</TD></TR></TABLE>");
-      Put_Line (File, "<PRE>");
+
+      Ada.Text_IO.Put_Line (File, "</TD></TR></TABLE>");
+      if not Is_Spec_File (Info.Header_File.all) then
+         Ada.Text_IO.Put_Line (File, "<PRE>");
+      end if;
+      Ada.Text_IO.Put_Line (File, "<HR>");
    end Doc_HTML_Header;
-
-   -----------------------------
-   -- Doc_HTML_Header_Private --
-   -----------------------------
-
-   procedure Doc_HTML_Header_Private
-     (Kernel : access Kernel_Handle_Record'Class;
-      File   : in Ada.Text_IO.File_Type;
-      Info   : Doc_Info;
-      Level  : Natural;
-      Indent : Natural)
-   is
-      pragma Unreferenced (Kernel);
-   begin
-      Put_Line
-        (File,
-         "<TABLE BGCOLOR=""#9999FF"" WIDTH=""100%""><TR><TD><PRE>");
-
-      Put_Line (File, "<H" & Image (Level) &"><B>"
-                & (1 .. Level * Indent => ' ')
-                & Info.Header_Title.all
-                & "</B></H" & Image (Level) & ">");
-      Put_Line (File, "</PRE></TD></TR></TABLE>");
-   end Doc_HTML_Header_Private;
 
    ---------------------
    -- Doc_HTML_Footer --
@@ -1124,11 +977,11 @@ package body Docgen.Html_Output is
 
    procedure Doc_HTML_Footer
      (File   : in Ada.Text_IO.File_Type;
-      Info   : Doc_Info;
-      Kernel : access Kernel_Handle_Record'Class) is
-      pragma Unreferenced (Info, Kernel);
+      Info   : Doc_Info) is
    begin
-      Put_Line (File, "</PRE>");
+      if not Is_Spec_File (Info.Footer_File.all) then
+         Ada.Text_IO.Put_Line (File, "</PRE>");
+      end if;
    end Doc_HTML_Footer;
 
    --------------------------------
@@ -1136,62 +989,76 @@ package body Docgen.Html_Output is
    --------------------------------
 
    procedure Doc_HTML_Unit_Index_Header
-     (File          : in Ada.Text_IO.File_Type;
-      Info          : Doc_Info;
-      Doc_Directory : String;
-      Doc_Suffix    : String)
-   is
+     (File   : in Ada.Text_IO.File_Type;
+      Info   : Doc_Info) is
+
       Frame_File       : File_Type;
-      Source_File_Node : constant Type_Source_File_List.List_Node :=
-        Type_Source_File_List.First (Info.Unit_File_List);
+      Source_File_Node : Type_Source_File_List.List_Node;
    begin
-      --  Create the main frame file
-      Create (Frame_File, Out_File, Doc_Directory & "index.htm");
-      Put_Line (Frame_File, "<HTML>");
-      Put_Line (Frame_File, "<HEAD>");
-      Put_Line (Frame_File, "<TITLE> Index </TITLE>");
-      Put_Line (Frame_File, "</HEAD>");
-      New_Line (Frame_File);
-      Put_Line (Frame_File, "<FRAMESET COLS=""30%,70%"">");
-      Put_Line (Frame_File, "<FRAME SRC=""index_unit.htm"" NAME=""index"" >");
-      Put_Line (Frame_File, "<FRAME SRC=""" &
-                Base_Name
-                  (Get_Doc_File_Name
-                     (Type_Source_File_List.Data (Source_File_Node).File_Name,
-                      Doc_Directory, Doc_Suffix)) & """ NAME=""main"" >");
-      New_Line (Frame_File);
-      Put_Line (Frame_File, "</FRAMESET>");
-      Put_Line (Frame_File, "<NOFRAMES>");
-      Put_Line (Frame_File, "<BODY>");
-      Put_Line (Frame_File, "</BODY>");
-      Put_Line (Frame_File, "</NOFRAMES>");
-      Put_Line (Frame_File, "</HTML>");
+
+      Source_File_Node :=
+        Type_Source_File_List.First (Info.Unit_File_List);
+
+      --  create the main frame file
+      Create (Frame_File,
+              Out_File,
+              Info.Doc_Info_Options.Doc_Directory.all & "index.htm");
+      Ada.Text_IO.Put_Line (Frame_File, "<HTML> ");
+      Ada.Text_IO.New_Line (Frame_File);
+      Ada.Text_IO.Put_Line (Frame_File, "<HEAD>");
+      Ada.Text_IO.New_Line (Frame_File);
+      Ada.Text_IO.Put_Line (Frame_File, "<TITLE> Index </TITLE>");
+      Ada.Text_IO.New_Line (Frame_File);
+      Ada.Text_IO.Put_Line (Frame_File, "</HEAD>");
+      Ada.Text_IO.New_Line (Frame_File);
+      Ada.Text_IO.Put_Line (Frame_File, "<FRAMESET cols=""30%,70%"">");
+      Ada.Text_IO.New_Line (Frame_File);
+      Ada.Text_IO.Put_Line (Frame_File, "<FRAME src=""index_unit.htm"" " &
+                            "NAME=""index"" >");
+      Ada.Text_IO.New_Line (Frame_File);
+      Ada.Text_IO.Put_Line (Frame_File, "<FRAME src=""" &
+                            Base_Name
+                              (Get_Doc_File_Name
+                                 (Type_Source_File_List.Data
+                                    (Source_File_Node).File_Name.all,
+                                  Info.Doc_Info_Options.Doc_Directory.all,
+                                  Info.Doc_Info_Options.Doc_Suffix.all)) &
+                            """ name=""main"" >");
+      Ada.Text_IO.New_Line (Frame_File);
+      Ada.Text_IO.Put_Line (Frame_File, "</FRAMESET>");
+      Ada.Text_IO.New_Line (Frame_File);
+      Ada.Text_IO.Put_Line (Frame_File, "<NOFRAMES>");
+      Ada.Text_IO.New_Line (Frame_File);
+      Ada.Text_IO.Put_Line (Frame_File, "<BODY>");
+      Ada.Text_IO.New_Line (Frame_File);
+      Ada.Text_IO.Put_Line (Frame_File, "</BODY>");
+      Ada.Text_IO.New_Line (Frame_File);
+      Ada.Text_IO.Put_Line (Frame_File, "</NOFRAMES>");
+      Ada.Text_IO.New_Line (Frame_File);
+      Ada.Text_IO.Put_Line (Frame_File, "</HTML>");
+      Ada.Text_IO.New_Line (Frame_File);
       Close (Frame_File);
 
-      --  Create the header for the unit index file
-
-      Put_Line (File, "<HTML> ");
-      Put_Line (File, "<HEAD>");
-      Put_Line (File, "<BASE TARGET=""main"">");
-      Put_Line (File, "<META http-equiv=""Content-Type"" " &
-                "content=""text/html; charset=ISO-8859-1" & """>");
-      Put_Line (File, "</HEAD>");
-      Put_Line (File, "<BODY BGCOLOR=""white"">");
-      Put_Line (File, "<TABLE BGCOLOR=""#9999FF"" " &
-                "WIDTH=""100%""><TR><TD> <PRE>");
-      Put_Line (File, "<H2> Unit Index </H2> ");
-      Put_Line (File, "</PRE></TD></TR></TABLE>");
-      Put_Line (File, "<H4> <A HREF=""index_sub.htm"" " &
-                "TARGET=""index""> Subprogram Index </A> <BR>");
-
-      if Info.Doc_Info_Options.Tagged_Types then
-         Put_Line (File, "<A HREF=""index_tagged_type.htm"" " &
-                   "TARGET=""index""> Tagged Type Index </A> <BR>");
-      end if;
-
-      Put_Line (File, " <A HREF=""index_type.htm"" " &
-                "TARGET=""index""> Type Index </A> </H4><BR>");
-      Put_Line (File, "<HR> <BR>");
+      --  create the header for the unit index file
+      Ada.Text_IO.Put_Line (File, "<HTML> ");
+      Ada.Text_IO.Put_Line (File, "<HEAD>");
+      Ada.Text_IO.Put_Line (File, "<BASE target=""main"">");
+      Ada.Text_IO.Put_Line (File, "<META http-equiv=""Content-Type"" " &
+                            "content=""" &
+                            "text/html; charset=" &
+                            "ISO-8859-1" & """>");
+      Ada.Text_IO.Put_Line (File, "</HEAD>");
+      Ada.Text_IO.Put_Line (File, "<BODY bgcolor=""white"">");
+      Ada.Text_IO.Put_Line (File, "<TABLE  bgcolor=""#9999FF"" " &
+                                  "width=""100%""><TR><TD> <PRE>");
+      Ada.Text_IO.Put_Line (File, "<H2> Unit Index </H2> ");
+      Ada.Text_IO.Put_Line (File, "</PRE></TD></TR></TABLE>");
+      Ada.Text_IO.Put_Line (File, "<H4> <a href=""index_sub.htm"" " &
+                            "target=""index""> Subprogram " &
+                            "Index </a> <br>");
+      Ada.Text_IO.Put_Line (File, " <A href=""index_type.htm"" " &
+                              "target=""index""> Type Index </A> </H4><BR>");
+      Ada.Text_IO.Put_Line (File, "<HR> <BR>");
    end Doc_HTML_Unit_Index_Header;
 
    --------------------------------
@@ -1199,37 +1066,37 @@ package body Docgen.Html_Output is
    --------------------------------
 
    procedure Doc_HTML_Sub_Index_Header
-     (File : in Ada.Text_IO.File_Type; Info : Doc_Info) is
+     (File   : in Ada.Text_IO.File_Type;
+      Info   : Doc_Info) is
+      pragma Unreferenced (Info);
    begin
-      Put_Line (File, "<HTML> ");
-      Put_Line (File, "<HEAD>");
-      Put_Line (File, "<BASE TARGET=""main"">");
-      Put_Line (File, "<META http-equiv=""Content-" &
-                "Type"" content=""text/html; charset=ISO-8859-1"">");
-      Put_Line (File, "</HEAD>");
-      New_Line (File);
-      Put_Line (File, "<BODY BGCOLOR=""white"">");
-      New_Line (File);
-      Put_Line (File, "<TABLE  BGCOLOR=""#9999FF"" " &
-                "WIDTH=""100%""><TR><TD> <PRE>");
-      Put_Line (File, "<H2> Subprogram Index </H2> ");
-      Put_Line (File, "</PRE></TD></TR></TABLE>");
-      New_Line (File);
-      Put_Line (File, "<H4> <A HREF=""index_unit.htm""  " &
-                "target=""index""> Unit Index </A> <BR>");
-      New_Line (File);
+      Ada.Text_IO.Put_Line (File, "<HTML> ");
+      Ada.Text_IO.New_Line (File);
+      Ada.Text_IO.Put_Line (File, "<HEAD>");
+      Ada.Text_IO.Put_Line (File, "<BASE target=""main"">");
+      Ada.Text_IO.New_Line (File);
+      Ada.Text_IO.Put_Line (File, "<META http-equiv=""Content-" &
+                            "Type"" content=""" &
+                            "text/html; charset=" &
+                            "ISO-8859-1" & """>");
+      Ada.Text_IO.Put_Line (File, "</HEAD>");
+      Ada.Text_IO.New_Line (File);
+      Ada.Text_IO.Put_Line (File, "<BODY bgcolor=""white"">");
+      Ada.Text_IO.New_Line (File);
+      Ada.Text_IO.Put_Line (File, "<TABLE  bgcolor=""#9999FF"" " &
+                            "width=""100%""><TR><TD> <PRE>");
+      Ada.Text_IO.Put_Line (File, "<H2> Subprogram Index </H2> ");
+      Ada.Text_IO.Put_Line (File, "</PRE></TD></TR></TABLE>");
+      Ada.Text_IO.New_Line (File);
+      Ada.Text_IO.Put_Line (File, "<H4> <A href=""index_unit.htm""  " &
+                            "target=""index""> Unit Index </A> <BR>");
+      Ada.Text_IO.New_Line (File);
+      Ada.Text_IO.Put_Line (File, " <A href=""index_type.htm"" " &
+                            "target=""index""> Type Index </A> </H4><BR>");
+      Ada.Text_IO.New_Line (File);
+      Ada.Text_IO.Put_Line (File, "<HR> <BR>");
+      Ada.Text_IO.New_Line (File);
 
-      if Info.Doc_Info_Options.Tagged_Types then
-         Put_Line (File, "<A HREF=""index_tagged_type.htm""  " &
-                "TARGET=""index""> Tagged Type Index </A> <BR>");
-         New_Line (File);
-      end if;
-
-      Put_Line (File, " <A HREF=""index_type.htm"" " &
-                "TARGET=""index""> Type Index </A> </H4><BR>");
-      New_Line (File);
-      Put_Line (File, "<HR> <BR>");
-      New_Line (File);
    end Doc_HTML_Sub_Index_Header;
 
    --------------------------------
@@ -1237,226 +1104,74 @@ package body Docgen.Html_Output is
    --------------------------------
 
    procedure Doc_HTML_Type_Index_Header
-     (File : in Ada.Text_IO.File_Type; Info : Doc_Info) is
-   begin
-      Put_Line (File, "<HTML> ");
-      New_Line (File);
-      Put_Line (File, "<HEAD>");
-      Put_Line (File, "<BASE TARGET=""main"">");
-      New_Line (File);
-      Put_Line (File, "<META http-equiv" &
-                "=""Content-Type"" content=""" &
-                "text/html; charset=" & "ISO-8859-1" & """>");
-      Put_Line (File, "</HEAD>");
-      New_Line (File);
-      Put_Line (File, "<BODY BGCOLOR=""white"">");
-      New_Line (File);
-      Put_Line
-        (File, "<TABLE BGCOLOR=""#9999FF"" WIDTH=""100%""><TR><TD> <PRE>");
-      Put_Line (File, "<H2> Type Index </H2> ");
-      Put_Line (File, "</PRE></TD></TR></TABLE>");
-      New_Line (File);
-      Put_Line (File, "<H4> <A HREF=""index_unit.htm"" " &
-                "TARGET=""index""> Unit Index </A> <BR>");
-      New_Line (File);
-
-      if Info.Doc_Info_Options.Tagged_Types then
-         Put_Line (File, "<A HREF=""index_tagged_type.htm"" " &
-                   "TARGET=""index""> Tagged Type Index </A> <BR>");
-         New_Line (File);
-      end if;
-
-      Put_Line (File, " <A HREF=""index_sub.htm"" " &
-                "TARGET=""index""> Subprogram Index </A></H4> <BR>");
-      New_Line (File);
-      Put_Line (File, "<HR> <BR>");
-      New_Line (File);
-   end Doc_HTML_Type_Index_Header;
-
-   ---------------------------------------
-   -- Doc_HTML_Tagged_Type_Index_Header --
-   ---------------------------------------
-
-   procedure Doc_HTML_Tagged_Type_Index_Header
-     (File : in Ada.Text_IO.File_Type; Info : Doc_Info)
-   is
+     (File   : in Ada.Text_IO.File_Type;
+      Info   : Doc_Info) is
       pragma Unreferenced (Info);
    begin
-      Put_Line (File, "<HTML> ");
-      New_Line (File);
-      Put_Line (File, "<HEAD>");
-      Put_Line (File, "<BASE TARGET=""main"">");
-      New_Line (File);
-      Put_Line (File, "<META http-equiv" &
-                "=""Content-Type"" content=""" &
-                "text/html; charset=" & "ISO-8859-1" & """>");
-      Put_Line (File, "</HEAD>");
-      New_Line (File);
-      Put_Line (File, "<BODY BGCOLOR=""white"">");
-      New_Line (File);
-      Put_Line
-        (File, "<TABLE BGCOLOR=""#9999FF"" WIDTH=""100%""><TR><TD> <PRE>");
-      Put_Line (File, "<H2> Tagged Type Index </H2> ");
-      Put_Line (File, "</PRE></TD></TR></TABLE>");
-      New_Line (File);
-      Put_Line (File, "<H4> <A HREF=""index_unit.htm"" " &
-                "TARGET=""index""> Unit Index </A> <BR>");
-      New_Line (File);
-      Put_Line (File, "<A HREF=""index_type.htm"" " &
-                "TARGET=""index""> Type Index </A> <BR>");
-      New_Line (File);
-      Put_Line (File, " <A HREF=""index_sub.htm"" " &
-                "TARGET=""index""> Subprogram Index </A></H4> <BR>");
-      New_Line (File);
-      Put_Line (File, "<HR> <BR>");
-      New_Line (File);
-   end Doc_HTML_Tagged_Type_Index_Header;
 
-   -------------------------------
-   -- Doc_HTML_Tagged_Type_Item --
-   -------------------------------
-   procedure Doc_HTML_Tagged_Type_Item
-     (File   : Ada.Text_IO.File_Type;
-      Info   : Doc_Info)
-   is
-      Item_Doc_File : String_Access;
-   begin
-      case Info.Doc_Family is
-         when Main =>
-            --  The tagged type itself
-            Item_Doc_File := new String'
-              (Base_Name (Get_Doc_File_Name
-                            (Get_Declaration_File_Of
-                               (Info.Doc_Tagged_Type),
-                             Info.Directory.all,
-                             Info.Suffix.all)));
-            Put_Line
-              (File, "<BR><A HREF=""" & Item_Doc_File.all
-               & "#" & Image (Get_Declaration_Line_Of (Info.Doc_Tagged_Type))
-               & """ target=""main""><B>"
-               & Get_Name (Info.Doc_Tagged_Type) & "</B></A><BR>");
-            New_Line (File);
-            Free (Item_Doc_File);
-
-         when No_Parent =>
-            Put_Line (File, "No parent.<BR>");
-
-         when Parent_With_Link =>
-            --  The parent of the tagged type is declared in one of the
-            --  processed files.
-            --  A link can be made.
-            Item_Doc_File := new String'
-              (Base_Name (Get_Doc_File_Name
-                            (Get_Declaration_File_Of
-                               (Info.Doc_Tagged_Type),
-                             Info.Directory.all,
-                             Info.Suffix.all)));
-            Put_Line
-              (File, "<B>Parent object : </B><A HREF=""" & Item_Doc_File.all
-               & "#" & Image (Get_Declaration_Line_Of (Info.Doc_Tagged_Type))
-               & """ TARGET=""main"">"
-               & Get_Name (Info.Doc_Tagged_Type) & "</A><BR>");
-            New_Line (File);
-            Free (Item_Doc_File);
-
-         when Parent_Without_Link =>
-            --  The parent of the tagged type is not declared in the processed
-            --  files. Link can't be made.
-            Put_Line (File,
-                      "<B>Parent object : </B>"
-                      & Get_Name (Info.Doc_Tagged_Type)
-                      & "<BR>");
-
-         when No_Child =>
-            Put_Line (File, "No child.<BR>");
-
-         when Child_With_Link =>
-            --  This child of the tagged type is declared in one of the
-            --  processed files.
-            --  Link can be made.
-            Item_Doc_File := new String'
-              (Base_Name (Get_Doc_File_Name
-                            (Get_Declaration_File_Of
-                               (Info.Doc_Tagged_Type),
-                             Info.Directory.all,
-                             Info.Suffix.all)));
-            Put_Line
-              (File, "<B>Child object : </B><A HREF=""" & Item_Doc_File.all
-               & "#" & Image (Get_Declaration_Line_Of (Info.Doc_Tagged_Type))
-               & """ TARGET=""main"">"
-               & Get_Name (Info.Doc_Tagged_Type) & "</A><BR>");
-            New_Line (File);
-            Free (Item_Doc_File);
-
-         when Child_Without_Link =>
-            --  This child of the tagged type is not declared in the processed
-            --  files. Link can't be made.
-            Put_Line (File, "<B>Child object : </B>"
-                      & Get_Name (Info.Doc_Tagged_Type)
-                      & "<BR>");
-      end case;
-   end Doc_HTML_Tagged_Type_Item;
+      Ada.Text_IO.Put_Line (File, "<HTML> ");
+      Ada.Text_IO.New_Line (File);
+      Ada.Text_IO.Put_Line (File, "<HEAD>");
+      Ada.Text_IO.Put_Line (File, "<BASE target=""main"">");
+      Ada.Text_IO.New_Line (File);
+      Ada.Text_IO.Put_Line (File, "<META http-equiv" &
+                            "=""Content-Type"" content=""" &
+                            "text/html; charset=" & "ISO-8859-1" & """>");
+      Ada.Text_IO.Put_Line (File, "</HEAD>");
+      Ada.Text_IO.New_Line (File);
+      Ada.Text_IO.Put_Line (File, "<BODY bgcolor=""white"">");
+      Ada.Text_IO.New_Line (File);
+      Ada.Text_IO.Put_Line (File, "<TABLE  bgcolor=""#9999FF"" " &
+                              "width=""100%""><TR><TD> <PRE>");
+      Ada.Text_IO.Put_Line (File, "<H2> Type Index </H2> ");
+      Ada.Text_IO.Put_Line (File, "</PRE></TD></TR></TABLE>");
+      Ada.Text_IO.New_Line (File);
+      Ada.Text_IO.Put_Line (File, "<H4> <A href=""index_unit.htm"" " &
+                            "target = ""index""> Unit Index </A> <BR>");
+      Ada.Text_IO.New_Line (File);
+      Ada.Text_IO.Put_Line (File, " <A href=""index_sub.htm"" " &
+                            "target=""index""> Subprogram " &
+                            "Index </A></H4> <BR>");
+      Ada.Text_IO.New_Line (File);
+      Ada.Text_IO.Put_Line (File, "<HR> <BR>");
+      Ada.Text_IO.New_Line (File);
+   end Doc_HTML_Type_Index_Header;
 
    -------------------------
    -- Doc_HTML_Index_Item --
    -------------------------
 
    procedure Doc_HTML_Index_Item
-     (File : in Ada.Text_IO.File_Type; Info : Doc_Info) is
+     (File    : in Ada.Text_IO.File_Type;
+      Info    : Doc_Info) is
    begin
-      Put_Line
-        (File, " <A HREF=""" & Info.Item_Doc_File.all
+      Ada.Text_IO.Put_Line
+        (File, " <A href=""" & Info.Item_Doc_File.all
          & "#" & Image (Info.Item_Line)
-         & """ TARGET=""main""> "
+         & """ target=""main""> "
          & Info.Item_Name.all & "</A>");
 
-      Put_Line
-        (File, " <BR> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; in " &
-         Base_Name (Info.Item_File));
-      New_Line (File);
-      Put_Line (File, "<BR>");
-      New_Line (File);
+      Ada.Text_IO.Put_Line
+        (File, " <BR> &nbsp&nbsp&nbsp&nbsp&nbsp in " &
+         Info.Item_File.all);
+      Ada.Text_IO.New_Line (File);
+      Ada.Text_IO.Put_Line (File, "<BR>");
+      Ada.Text_IO.New_Line (File);
    end Doc_HTML_Index_Item;
-
-   ----------------------------
-   -- Doc_HTML_Private_Index --
-   ----------------------------
-
-   procedure Doc_HTML_Private_Index
-     (File   : Ada.Text_IO.File_Type;
-      Info   : Doc_Info) is
-   begin
-      Put_Line (File, "<TABLE BGCOLOR=""#9999FF"" WIDTH=""100%""><TR><TD>");
-      Put_Line (File, " <BR><b> " & Info.Private_Index_Title.all & "</b><BR>");
-      Put_Line (File, "</TD></TR></TABLE>");
-   end Doc_HTML_Private_Index;
-
-   ---------------------------
-   -- Doc_HTML_Public_Index --
-   ---------------------------
-
-   procedure Doc_HTML_Public_Index
-     (File   : Ada.Text_IO.File_Type;
-      Info   : Doc_Info) is
-   begin
-      Put_Line (File, "<TABLE BGCOLOR=""#9999FF"" WIDTH=""100%""><TR><TD>");
-      Put_Line (File, " <BR><b> " & Info.Public_Index_Title.all & "</b><BR>");
-      Put_Line (File, "</TD></TR></TABLE>");
-   end Doc_HTML_Public_Index;
 
    ------------------------
    -- Doc_HTML_Index_End --
    ------------------------
 
    procedure Doc_HTML_Index_End
-     (File : Ada.Text_IO.File_Type; Info : Doc_Info)
-   is
+     (File   : Ada.Text_IO.File_Type;
+      Info   : Doc_Info) is
       pragma Unreferenced (Info);
    begin
-      Put_Line (File, "</BODY> ");
-      New_Line (File);
-      Put_Line (File, "</HTML>");
-      New_Line (File);
+      Ada.Text_IO.Put_Line (File, "</BODY> ");
+      Ada.Text_IO.New_Line (File);
+      Ada.Text_IO.Put_Line (File, "</HTML>");
+      Ada.Text_IO.New_Line (File);
    end Doc_HTML_Index_End;
 
    -------------------
@@ -1464,172 +1179,38 @@ package body Docgen.Html_Output is
    -------------------
 
    procedure Doc_HTML_Body
-     (B      : access Backend_HTML;
-      Kernel : access Kernel_Handle_Record'Class;
-      File   : in Ada.Text_IO.File_Type;
-      List_Ref_In_File : in out List_Reference_In_File.List;
+     (File   : in Ada.Text_IO.File_Type;
       Info   : in out Doc_Info) is
    begin
-      Format_File
-        (B,
-         Kernel,
-         File,
-         List_Ref_In_File,
+      Format_HTML
+        (File,
          Info.Doc_LI_Unit,
          Info.Body_Text.all,
-         Info.Body_File,
+         Info.Body_File.all,
+         "",
          First_File_Line,
          No_Body_Line_Needed,
          Info.Doc_File_List,
          Info.Doc_Info_Options.Link_All,
          True,
          Info.Doc_Info_Options.Process_Body_Files,
-         Info);
+         True);
    end Doc_HTML_Body;
-
-   --------------------------
-   -- Doc_HTML_Description --
-   --------------------------
-
-   procedure Doc_HTML_Description
-     (File   : Ada.Text_IO.File_Type;
-      Info   : Doc_Info;
-      Level  : Natural;
-      Indent : Natural)
-   is
-      Space : GNAT.OS_Lib.String_Access;
-   begin
-      Space := new String'(1 .. Level * Indent => ' ');
-      Put_Line
-        (File,
-         "<TABLE BGCOLOR=""white"" WIDTH=""1%"" "
-         & "CELLPADDING=""0"" CELLSPACING=""0"">"
-         & "<TR><TD><PRE>"
-         & Space.all
-         & "</PRE></TD>"
-         & "<TD><PRE>"
-         & "<B>Description</B>"
-         & "</PRE></TD></TR>"
-         & "<TR><TD><PRE>"
-         & Space.all
-         & "</PRE></TD>"
-         & "<TD><PRE>"
-         & Info.Description.all
-         & "</PRE></TD></TR>"
-         & "</TABLE>");
-      Free (Space);
-   end Doc_HTML_Description;
 
    ------------------------
    -- Get_Html_File_Name --
    ------------------------
 
    function Get_Html_File_Name
-     (Kernel : access Kernel_Handle_Record'Class;
-      File   : Virtual_File) return String
-   is
-      pragma Unreferenced (Kernel);
-      Ext  : constant String := File_Extension (File);
-      Temp : constant String := Base_Name (File, Ext) & '_'
-        & Ext (Ext'First + 1 .. Ext'Last) & ".htm";
+     (File : String) return String is
    begin
-      return Temp;
+      if Is_Spec_File (File) then
+         return File_Name_Without_Suffix (File) & "_" &
+                Spec_Suffix (File) & ".htm";
+      else
+         return File_Name_Without_Suffix (File) & "_" &
+                Body_Suffix (File) & ".htm";
+      end if;
    end Get_Html_File_Name;
-
-   -----------------------
-   -- Replace_HTML_Tags --
-   -----------------------
-
-   procedure Replace_HTML_Tags
-     (Input_Text : String;
-      File : in Ada.Text_IO.File_Type)
-   is
-      Last_Index : Natural := Input_Text'First;
-   begin
-      for J in Input_Text'First .. Input_Text'Last - 1 loop
-         if Input_Text (J) = '<' then
-            Put (File, Input_Text (Last_Index .. J - 1) & "&lt;");
-            Last_Index := J + 1;
-         elsif Input_Text (J) = '>' then
-            Put (File, Input_Text (Last_Index .. J - 1) & "&gt;");
-            Last_Index := J + 1;
-         elsif Input_Text (J) = '&' then
-            Put (File, Input_Text (Last_Index .. J - 1) & "&amp;");
-            Last_Index := J + 1;
-         end if;
-      end loop;
-      Put (File, Input_Text (Last_Index .. Input_Text'Last));
-   end Replace_HTML_Tags;
-
-   ---------------------
-   -- Callback_Output --
-   ---------------------
-
-   procedure Callback_Output
-     (B           : access Backend_HTML;
-      File        : Ada.Text_IO.File_Type;
-      Text        : String;
-      Start_Index : Natural;
-      Start_Line  : Natural;
-      End_Index   : Natural;
-      End_Line    : Natural;
-      Prefix      : String;
-      Suffix      : String;
-      Entity_Line : Natural;
-      Check_Tags  : Boolean) is
-   begin
-      if Start_Line > Get_Last_Line (B.all) then
-         Set_Name_Tags
-           (B,
-            File,
-            Text (Get_Last_Index (B.all) .. Start_Index - 1),
-            Entity_Line);
-      else
-         Put (File, Text (Get_Last_Index (B.all) .. Start_Index - 1));
-      end if;
-
-      if Check_Tags then
-         Put (File, Prefix);
-         Replace_HTML_Tags (Text (Start_Index .. End_Index), File);
-         Put (File, Suffix);
-      else
-         Put (File,
-              Prefix & Text (Start_Index .. End_Index) & Suffix);
-      end if;
-
-      Set_Last_Index (B.all, End_Index + 1);
-      Set_Last_Line (B.all, End_Line);
-   end Callback_Output;
-
-   -------------------
-   -- Set_Name_Tags --
-   -------------------
-
-   procedure Set_Name_Tags
-     (B           : access Backend_HTML;
-      File        : Ada.Text_IO.File_Type;
-      Input_Text  : String;
-      Entity_Line : Natural)
-   is
-      HTML_Name_Head   : constant String := "<A name=""";
-      HTML_Name_Middle : constant String := """>";
-      HTML_Name_End    : constant String := "</A>";
-      Last_Written     : Natural := Input_Text'First - 1;
-
-   begin
-      for J in Input_Text'Range loop
-         if Input_Text (J) = ASCII.LF then
-            Set_Last_Line (B.all, Get_Last_Line (B.all) + 1);
-            Put
-              (File, Input_Text (Last_Written + 1 .. J)
-               & HTML_Name_Head
-               & Image (Get_Last_Line (B.all) + Entity_Line - 1)
-               & HTML_Name_Middle
-               & HTML_Name_End);
-            Last_Written := J;
-         end if;
-      end loop;
-      Put (File, Input_Text (Last_Written + 1 .. Input_Text'Last));
-   end Set_Name_Tags;
 
 end Docgen.Html_Output;
