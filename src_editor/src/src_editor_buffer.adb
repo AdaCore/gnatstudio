@@ -789,11 +789,14 @@ package body Src_Editor_Buffer is
          Buffer.Has_Delimiters_Highlight := False;
       end if;
 
+      if not Get_Pref (Buffer.Kernel, Highlight_Delimiters) then
+         return;
+      end if;
+
       --  Highlight brackets if necessary.
 
       declare
          Current              : Gtk_Text_Iter;
-
          On_Cursor_Iter       : Gtk_Text_Iter;
          First_Highlight_Iter : Gtk_Text_Iter;
          Last_Highlight_Iter  : Gtk_Text_Iter;
