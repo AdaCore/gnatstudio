@@ -41,6 +41,7 @@ with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
 with Gtk.Check_Button;    use Gtk.Check_Button;
 with Gtk.Radio_Button;    use Gtk.Radio_Button;
 with Gtk.Handlers;        use Gtk.Handlers;
+with Gtk.Text;            use Gtk.Text;
 pragma Elaborate_All (Gtk.Handlers);
 with Gtk.Widget;          use Gtk.Widget;
 
@@ -62,12 +63,17 @@ with Value_Editors; use Value_Editors;
 package body Variable_Editors is
 
    procedure Display_Expr
-     (Editable : access Gtk_Editable_Record'Class;
+     (Editable : access Gtk_Entry_Record'Class;
       Expr : String_List_Iterator);
    --  Display Expr in GEntry, with variable references replaced with
    --  '$<name>'.
    --  It also displays the other expressions in the list.
    --  GEntry is not deleted first.
+
+   procedure Display_Expr
+     (Editable : access Gtk_Text_Record'Class;
+      Expr : String_List_Iterator);
+   --  Same as above for a text widget
 
    procedure Add_Possible_Values
      (List : access Gtk_List_Record'Class; Typ : Project_Node_Id);
@@ -205,15 +211,15 @@ package body Variable_Editors is
          if Kind_Of (Var) = N_Variable_Declaration then
             if Expression_Kind_Of (Var) = Single then
                Set_Active (Editor.Untyped_Single_Variable, True);
-               Display_Expr (Editor.Single_Value, Value_Of (Var));
+               --??? Display_Expr (Editor.Single_Value, Value_Of (Var));
             else
                Set_Active (Editor.Untyped_List_Variable, True);
-               Display_Expr (Editor.List_Value, Value_Of (Var));
+               --??? Display_Expr (Editor.List_Value, Value_Of (Var));
             end if;
 
          else  --  Typed variable
             Set_Active (Editor.Typed_Variable, True);
-            Display_Expr (Editor.Enumeration_Value, Type_Values (Var));
+            --??? Display_Expr (Editor.Enumeration_Value, Type_Values (Var));
          end if;
 
          Set_Text (Gtk_Label (Get_Child (Editor.Add_Button)), "Update");
@@ -228,7 +234,7 @@ package body Variable_Editors is
    ------------------
 
    procedure Display_Expr
-     (Editable : access Gtk_Editable_Record'Class;
+     (Editable : access Gtk_Text_Record'Class;
       Expr : String_List_Iterator)
    is
       Term, N : Project_Node_Id;
@@ -278,6 +284,59 @@ package body Variable_Editors is
          end if;
       end loop;
       Set_Position (Editable, 0);
+   end Display_Expr;
+
+   ------------------
+   -- Display_Expr --
+   ------------------
+
+   procedure Display_Expr
+     (Editable : access Gtk_Entry_Record'Class;
+      Expr : String_List_Iterator)
+   is
+      Term, N : Project_Node_Id;
+      E : String_List_Iterator := Expr;
+   begin
+      Realize (Editable); --  Make sure that the Value_Editors are realized
+      while not Done (E) loop
+         if Kind_Of (Data (E)) = N_Literal_String then
+            String_To_Name_Buffer (String_Value_Of (Data (E)));
+            Append_Text
+              (Editable, Name_Buffer (Name_Buffer'First .. Name_Len));
+
+         else
+            Term := First_Term (Data (E));
+            while Term /= Empty_Node loop
+               N := Current_Term (Term);
+
+               case Kind_Of (N) is
+                  when N_Variable_Reference =>
+                     Get_Name_String (Name_Of (N));
+                     Append_Text
+                       (Editable,
+                        "${" & Name_Buffer (Name_Buffer'First .. Name_Len)
+                        & '}');
+
+                  when N_Literal_String =>
+                     String_To_Name_Buffer (String_Value_Of (N));
+                     Append_Text
+                       (Editable,
+                        Name_Buffer (Name_Buffer'First .. Name_Len));
+
+                  when others =>
+                     Put_Line ("Display_Expr: " & Kind_Of (N)'Img);
+                     raise Program_Error;
+               end case;
+
+               Term := Next_Term (Term);
+            end loop;
+         end if;
+
+         E := Next (E);
+         if not Done (E) then
+            Append_Text (Editable, "" & ASCII.LF);
+         end if;
+      end loop;
    end Display_Expr;
 
    ------------------------
@@ -424,7 +483,7 @@ package body Variable_Editors is
          Add_Possible_Values
            (Get_List (Editor.Data (Row).Type_Combo),
             String_Type_Of (Var));
-         Delete_Text (Get_Entry (Editor.Data (Row).Type_Combo));
+         Set_Text (Get_Entry (Editor.Data (Row).Type_Combo), "");
          Display_Expr
            (Get_Entry (Editor.Data (Row).Type_Combo), Value_Of (Var));
          Show_All (Editor.Data (Row).Type_Combo);
