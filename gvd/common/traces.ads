@@ -112,10 +112,11 @@ package Traces is
    --  instance in generic packages to specialize the handle for a specific
    --  instance.
 
-   procedure Trace (Handle   : Debug_Handle;
-                    Message  : String;
-                    Location : String := GNAT.Source_Info.Source_Location;
-                    Entity   : String := GNAT.Source_Info.Enclosing_Entity);
+   procedure Trace
+     (Handle   : Debug_Handle;
+      Message  : String;
+      Location : String := GNAT.Source_Info.Source_Location;
+      Entity   : String := GNAT.Source_Info.Enclosing_Entity);
    pragma Inline (Trace);
    --  Output Message to the stream associated with Handle, along with any
    --  extra information setup by the user (see the default handles below).
@@ -126,13 +127,14 @@ package Traces is
    --  Do not modify the parameters Location and Entity, they will have proper
    --  default values.
 
-   procedure Assert (Handle             : Debug_Handle;
-                     Condition          : Boolean;
-                     Error_Message      : String;
-                     Message_If_Success : String := "";
-                     Raise_Exception    : Boolean := True;
-                     Location : String := GNAT.Source_Info.Source_Location;
-                     Entity   : String := GNAT.Source_Info.Enclosing_Entity);
+   procedure Assert
+     (Handle             : Debug_Handle;
+      Condition          : Boolean;
+      Error_Message      : String;
+      Message_If_Success : String := "";
+      Raise_Exception    : Boolean := True;
+      Location           : String := GNAT.Source_Info.Source_Location;
+      Entity             : String := GNAT.Source_Info.Enclosing_Entity);
    pragma Inline (Assert);
    --  If Condition is False, then output Error_Message to Handle.
    --  Assertion_Error is raised if Condition is False and Raise_Exception is
