@@ -11,6 +11,11 @@
 #define RESTRICTED_CURSOR
 */
 
+/* EINPROGRESS is not defined on all systems, e.g Windows */
+#ifndef EINPROGRESS
+#define EINPROGRESS EINVAL
+#endif
+
 /* Cursor positions */
 #define POS_FIRST       1	/* first key/data pair */
 #define POS_LAST        2	/* last key/data pair  */
