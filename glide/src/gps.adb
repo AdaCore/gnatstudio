@@ -42,6 +42,7 @@ with File_Utils;
 with String_Utils;
 with Glide_Kernel;                use Glide_Kernel;
 with Glide_Kernel.Console;        use Glide_Kernel.Console;
+with Glide_Kernel.Contexts;       use Glide_Kernel.Contexts;
 with Glide_Kernel.Custom;         use Glide_Kernel.Custom;
 with Glide_Kernel.Hooks;          use Glide_Kernel.Hooks;
 with Glide_Kernel.Modules;        use Glide_Kernel.Modules;
@@ -945,6 +946,11 @@ procedure GPS is
          Gtk.Accel_Map.Load (Key);
       end if;
 
+      --  Register the default filters, so that other modules can create
+      --  contextual menus
+
+      Glide_Kernel.Contexts.Register_Default_Filters (GPS.Kernel);
+
       --  Register this module first, in case someone needs to print a message
       --  in the console right away
 
@@ -1390,14 +1396,12 @@ procedure GPS is
       Kernel : Kernel_Handle)
    is
       pragma Unreferenced (Mdi);
-      Context : constant Selection_Context_Access :=
-        Get_Current_Context (Kernel);
       Child : constant MDI_Child := MDI_Child (To_Object (Params, 1));
    begin
       Set_Main_Title (Kernel, Child);
 
-      if Started and then Context /= null then
-         Context_Changed (Kernel, Context);
+      if Started then
+         Context_Changed (Kernel);
       end if;
    end Child_Selected;
 
