@@ -35,6 +35,7 @@
 --  </description>
 
 with Gtk.Ctree;
+with Gtk.Menu;
 with Gdk.Pixmap;
 with Gdk.Bitmap;
 
@@ -123,5 +124,7 @@ private
       Close_Pixmaps      : Pixmap_Array;
       Open_Masks         : Mask_Array;
       Close_Masks        : Mask_Array;
+
+      Contextual_Menu    : Gtk.Menu.Gtk_Menu;
    end record;
 end Project_Trees;

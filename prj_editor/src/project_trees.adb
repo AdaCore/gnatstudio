@@ -328,19 +328,22 @@ package body Project_Trees is
    function Tree_Contextual_Menu
      (Tree : access Gtk_Widget_Record'Class) return Gtk_Menu
    is
-      pragma Warnings (Off, Tree);
-      Menu : Gtk_Menu;
+      T : Project_Tree := Project_Tree (Tree);
       Item : Gtk_Menu_Item;
    begin
-      Gtk_New (Menu);
+      if T.Contextual_Menu /= null then
+         Destroy (T.Contextual_Menu);
+      end if;
+
+      Gtk_New (T.Contextual_Menu);
 
       Gtk_New (Item, Label => "Add directory");
-      Append (Menu, Item);
+      Append (T.Contextual_Menu, Item);
 
       Gtk_New (Item, Label => "Remove directory");
-      Append (Menu, Item);
+      Append (T.Contextual_Menu, Item);
 
-      return Menu;
+      return T.Contextual_Menu;
    end Tree_Contextual_Menu;
 
    -------------
