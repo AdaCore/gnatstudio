@@ -168,7 +168,7 @@ package body GVD.Text_Box.Source_Editor.Socket is
       pragma Unreferenced (Set_Current, Force);
    begin
       Free (Editor.Current_File);
-      Editor.Current_File := new String' (File_Name);
+      Editor.Current_File := new String'(File_Name);
 
       if Editor.TTY_Mode then
          Print_File_Location (File_Name, 1, 0);

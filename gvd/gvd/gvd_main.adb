@@ -73,7 +73,7 @@ procedure GVD_Main is
    Directory_Separator : constant Character := GNAT.OS_Lib.Directory_Separator;
    Process             : Debugger_Process_Tab;
    Debugger_List       : Argument_List (1 .. Argument_Count);
-   Program_Args        : String_Access := new String' ("");
+   Program_Args        : String_Access := new String'("");
    Debugger_Index      : Natural := 0;
    Main_Debug_Window   : GVD_Main_Window;
    Id                  : Glib.Gint;
@@ -83,10 +83,10 @@ procedure GVD_Main is
    Prefix              : String_Access;
    Home                : String_Access;
    Dir                 : String_Access;
-   Remote_Host         : String_Access := new String' ("");
-   Debugger_Name       : String_Access := new String' ("");
-   Target              : String_Access := new String' ("");
-   Protocol            : String_Access := new String' ("");
+   Remote_Host         : String_Access := new String'("");
+   Debugger_Name       : String_Access := new String'("");
+   Target              : String_Access := new String'("");
+   Protocol            : String_Access := new String'("");
    Tmp_String          : String_Access;
    Debuggee_Name       : String_Access;
    Item                : Gtk_List_Item;
@@ -130,11 +130,11 @@ procedure GVD_Main is
 
          if Prefix.all = "" then
             Free (Prefix);
-            Prefix := new String' (Executable_Location);
+            Prefix := new String'(Executable_Location);
 
             if Prefix.all = "" then
                Free (Prefix);
-               Prefix := new String' (GVD.Prefix);
+               Prefix := new String'(GVD.Prefix);
             end if;
          end if;
       end if;
@@ -145,10 +145,10 @@ procedure GVD_Main is
 
       if Home.all /= "" then
          if Is_Directory_Separator (Home (Home'Last)) then
-            Dir := new String' (Home (Home'First .. Home'Last - 1) &
+            Dir := new String'(Home (Home'First .. Home'Last - 1) &
               Directory_Separator & ".gvd");
          else
-            Dir := new String' (Home.all & Directory_Separator & ".gvd");
+            Dir := new String'(Home.all & Directory_Separator & ".gvd");
          end if;
 
       else
@@ -342,7 +342,7 @@ begin
                -- --debugger --
                when 'd' =>
                   Free (Debugger_Name);
-                  Debugger_Name := new String' (Clean_Parameter);
+                  Debugger_Name := new String'(Clean_Parameter);
 
                   if Main_Debug_Window.Open_Program = null then
                      Gtk_New (Main_Debug_Window.Open_Program);
@@ -481,7 +481,7 @@ begin
                   -- --host --
                   elsif Full_Switch = "-host" then
                      Free (Remote_Host);
-                     Remote_Host := new String' (Clean_Parameter);
+                     Remote_Host := new String'(Clean_Parameter);
 
                      if Main_Debug_Window.Open_Program = null then
                         Gtk_New (Main_Debug_Window.Open_Program);
@@ -509,7 +509,7 @@ begin
 
    --  Do we have an executable on the command line (this is the first
    --  non-switch argument found on the command line)
-   Debuggee_Name := new String' (GNAT.Command_Line.Get_Argument);
+   Debuggee_Name := new String'(GNAT.Command_Line.Get_Argument);
 
    if Debuggee_Name.all /= "" then
       if Main_Debug_Window.Open_Program = null then
@@ -534,7 +534,7 @@ begin
       exit when Getopt ("*") = ASCII.NUL;
 
       Debugger_Index := Debugger_Index + 1;
-      Debugger_List (Debugger_Index) := new String' (Full_Switch);
+      Debugger_List (Debugger_Index) := new String'(Full_Switch);
    end loop;
 
    --  Program args
@@ -544,7 +544,7 @@ begin
       exit when Getopt ("*") = ASCII.NUL;
 
       Tmp_String := Program_Args;
-      Program_Args := new String' (Program_Args.all & ' ' & Full_Switch);
+      Program_Args := new String'(Program_Args.all & ' ' & Full_Switch);
       Free (Tmp_String);
    end loop;
 

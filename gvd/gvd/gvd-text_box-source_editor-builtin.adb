@@ -988,7 +988,7 @@ package body GVD.Text_Box.Source_Editor.Builtin is
       use Gtk.Widget.Widget_List;
    begin
       Free (Editor.Current_File);
-      Editor.Current_File := new String' ("");
+      Editor.Current_File := new String'("");
 
       --  Clear the old file
       Delete_Text (Get_Child (Edit));
@@ -1032,7 +1032,7 @@ package body GVD.Text_Box.Source_Editor.Builtin is
       end if;
 
       Free (Editor.Current_File);
-      Editor.Current_File := new String' (File_Name);
+      Editor.Current_File := new String'(File_Name);
       Editor.Current_File_Cache := Find_In_Cache
         (Process.Window, Editor.Current_File.all);
 
@@ -1064,7 +1064,7 @@ package body GVD.Text_Box.Source_Editor.Builtin is
 
       if Set_Current then
          Free (Editor.Debugger_Current_File);
-         Editor.Debugger_Current_File := new String' (File_Name);
+         Editor.Debugger_Current_File := new String'(File_Name);
       end if;
 
    exception

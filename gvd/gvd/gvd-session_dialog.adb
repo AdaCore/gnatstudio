@@ -79,7 +79,7 @@ package body GVD.Session_Dialog is
       if Open = null then
          Open := new GVD_Session_Dialog_Record;
          Open_Session_Pkg.Initialize (Open);
-         Open.Sessions_Dir := new String' (Dir);
+         Open.Sessions_Dir := new String'(Dir);
       end if;
 
       Set_Title (Open, -"Save Session");
@@ -236,7 +236,7 @@ package body GVD.Session_Dialog is
       if Open = null then
          Open := new GVD_Session_Dialog_Record;
          Open_Session_Pkg.Initialize (Open);
-         Open.Sessions_Dir := new String' (Dir);
+         Open.Sessions_Dir := new String'(Dir);
       end if;
 
       Set_Title (Open, -"Open Session");
@@ -296,13 +296,13 @@ package body GVD.Session_Dialog is
                Get_Line (File, Buffer, Last);
                Program.Debugger := Debugger_Type'Value (Buffer (1 .. Last));
                Get_Line (File, Buffer, Last);
-               Program.Remote_Host := new String' (Buffer (1 .. Last));
+               Program.Remote_Host := new String'(Buffer (1 .. Last));
                Get_Line (File, Buffer, Last);
-               Program.Remote_Target := new String' (Buffer (1 .. Last));
+               Program.Remote_Target := new String'(Buffer (1 .. Last));
                Get_Line (File, Buffer, Last);
-               Program.Protocol := new String' (Buffer (1 .. Last));
+               Program.Protocol := new String'(Buffer (1 .. Last));
                Get_Line (File, Buffer, Last);
-               Program.Debugger_Name := new String' (Buffer (1 .. Last));
+               Program.Debugger_Name := new String'(Buffer (1 .. Last));
                Get_Line (File, Buffer, Last);
 
                if Get_Active (Current_Button.Button) then
@@ -385,7 +385,7 @@ package body GVD.Session_Dialog is
            new Button_Node'
              (Next   => null,
               Button => Button,
-              Label  => new String' (Label));
+              Label  => new String'(Label));
 
       else
          Buffer := Open.First_Button;
@@ -398,7 +398,7 @@ package body GVD.Session_Dialog is
            new Button_Node'
              (Next   => null,
               Button => Button,
-              Label  => new String' (Label));
+              Label  => new String'(Label));
       end if;
    end Append_Button;
 

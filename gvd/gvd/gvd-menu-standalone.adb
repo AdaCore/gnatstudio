@@ -100,25 +100,25 @@ package body GVD.Menu.Standalone is
 
                if Prog /= null then
                   Num_Args := Num_Args + 1;
-                  Args (Num_Args) := new String' (Program.Program.all);
+                  Args (Num_Args) := new String'(Program.Program.all);
 
                   if Program.Remote_Host.all /= "" then
                      Num_Args := Num_Args + 1;
                      Args (Num_Args) :=
-                       new String' ("--host=" & Program.Remote_Host.all);
+                       new String'("--host=" & Program.Remote_Host.all);
                   end if;
 
                   if Program.Remote_Target.all /= "" then
                      Num_Args := Num_Args + 1;
                      Args (Num_Args) :=
-                       new String' ("--target=" & Program.Remote_Target.all &
+                       new String'("--target=" & Program.Remote_Target.all &
                                     ":" & Program.Protocol.all);
                   end if;
 
                   if Program.Debugger_Name.all /= "" then
                      Num_Args := Num_Args + 1;
                      Args (Num_Args) :=
-                       new String' ("--debugger=" & Program.Debugger_Name.all);
+                       new String'("--debugger=" & Program.Debugger_Name.all);
                   end if;
 
                   Pid := GNAT.OS_Lib.Non_Blocking_Spawn
