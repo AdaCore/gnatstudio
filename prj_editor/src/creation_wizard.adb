@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2003                       --
+--                     Copyright (C) 2001-2004                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -410,7 +410,7 @@ package body Creation_Wizard is
             Ref_Project => Project);
       end loop;
 
-      Save_Single_Project (Wiz.Kernel, Project, Langs => Languages);
+      Save_Single_Project (Wiz.Kernel, Project);
       Free (Languages);
       Pop_State (Wiz.Kernel);
 
