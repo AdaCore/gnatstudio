@@ -109,7 +109,8 @@ package body Debugger.Jdb is
    procedure Spawn
      (Debugger        : access Jdb_Debugger;
       Executable      : String;
-      Arguments       : GNAT.OS_Lib.Argument_List;
+      Debugger_Args   : GNAT.OS_Lib.Argument_List;
+      Executable_Args : String;
       Proxy           : Process_Proxies.Process_Proxy_Access;
       Window          : Gtk.Window.Gtk_Window;
       Remote_Host     : String := "";
@@ -121,10 +122,10 @@ package body Debugger.Jdb is
 
       if Debugger_Name = "" then
          General_Spawn
-           (Debugger, Arguments, Jdb_Command, Proxy, Remote_Host);
+           (Debugger, Debugger_Args, Jdb_Command, Proxy, Remote_Host);
       else
          General_Spawn
-           (Debugger, Arguments, Debugger_Name, Proxy, Remote_Host);
+           (Debugger, Debugger_Args, Debugger_Name, Proxy, Remote_Host);
       end if;
 
       Free (Debugger.Main_Class);

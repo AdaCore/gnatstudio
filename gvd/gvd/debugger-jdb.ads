@@ -34,7 +34,8 @@ package Debugger.Jdb is
    procedure Spawn
      (Debugger        : access Jdb_Debugger;
       Executable      : String;
-      Arguments       : GNAT.OS_Lib.Argument_List;
+      Debugger_Args   : GNAT.OS_Lib.Argument_List;
+      Executable_Args : String;
       Proxy           : Process_Proxies.Process_Proxy_Access;
       Window          : Gtk.Window.Gtk_Window;
       Remote_Host     : String := "";

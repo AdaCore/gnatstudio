@@ -37,7 +37,8 @@ package Debugger is
    procedure Spawn
      (Debugger        : access Debugger_Root;
       Executable      : String;
-      Arguments       : GNAT.OS_Lib.Argument_List;
+      Debugger_Args   : GNAT.OS_Lib.Argument_List;
+      Executable_Args : String;
       Proxy           : Process_Proxies.Process_Proxy_Access;
       Window          : Gtk.Window.Gtk_Window;
       Remote_Host     : String := "";
@@ -50,7 +51,9 @@ package Debugger is
    --
    --  Executable is the name of the module to debug.
    --
-   --  Arguments are additional arguments to pass to the debugger.
+   --  Debugger_Args are additional arguments to pass to the debugger.
+   --
+   --  Executable_Args are arguments to pass to the debuggee.
    --
    --  Proxy is assigned to the debugger, after its underlying process has
    --  been created.

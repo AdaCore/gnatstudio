@@ -35,7 +35,8 @@ package Debugger.Gdb is
    procedure Spawn
      (Debugger        : access Gdb_Debugger;
       Executable      : String;
-      Arguments       : GNAT.OS_Lib.Argument_List;
+      Debugger_Args   : GNAT.OS_Lib.Argument_List;
+      Executable_Args : String;
       Proxy           : Process_Proxies.Process_Proxy_Access;
       Window          : Gtk.Window.Gtk_Window;
       Remote_Host     : String := "";
@@ -304,9 +305,10 @@ private
       return String;
 
    type Gdb_Debugger is new Debugger.Debugger_Root with record
-      Executable     : GNAT.OS_Lib.String_Access;
-      Remote_Target  : Boolean;
-      Target_Command : GNAT.OS_Lib.String_Access;
+      Executable      : GNAT.OS_Lib.String_Access;
+      Executable_Args : GNAT.OS_Lib.String_Access;
+      Remote_Target   : Boolean;
+      Target_Command  : GNAT.OS_Lib.String_Access;
    end record;
 
    procedure Internal_Parse_Value
