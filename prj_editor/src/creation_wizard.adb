@@ -345,10 +345,30 @@ package body Creation_Wizard is
    ----------------
 
    function Fifth_Page (Wiz : access Prj_Wizard_Record'Class)
-      return Gtk_Widget is
+      return Gtk_Widget
+   is
+      Languages : Argument_List (1 .. 3);
+      L : Natural := Languages'First - 1;
+      --  ??? Should get the list of supported languages from the kernel.
    begin
-      Gtk_New (Wiz.Naming);
-      return Get_Window (Wiz.Naming);
+      if Get_Active (Wiz.C_Support) then
+         L := L + 1;
+         Languages (L) := new String' (C_String);
+      end if;
+
+      if Get_Active (Wiz.Ada_Support) then
+         L := L + 1;
+         Languages (L) := new String' (Ada_String);
+      end if;
+
+      if Get_Active (Wiz.Cpp_Support) then
+         L := L + 1;
+         Languages (L) := new String' (Cpp_String);
+      end if;
+
+      Gtk_New (Wiz.Naming, Languages (Languages'First .. L));
+      Free (Languages);
+      return Gtk_Widget (Wiz.Naming);
    end Fifth_Page;
 
    ---------------------------
@@ -438,6 +458,20 @@ package body Creation_Wizard is
             Set_Value (Var, Dir);
          end if;
       end;
+
+      --  the languages
+      Var := Create_Attribute
+        (Project, Get_Name_String (Name_Languages), Kind => List);
+      if Get_Active (Wiz.C_Support) then
+         Append_To_List (Var, C_String);
+      end if;
+      if Get_Active (Wiz.Cpp_Support) then
+         Append_To_List (Var, Cpp_String);
+      end if;
+      if Get_Active (Wiz.Ada_Support) then
+         Append_To_List (Var, Ada_String);
+      end if;
+
 
       --  Append the switches
       Emit_Switches (Wiz, Project, Get_Name_String (Name_Builder), Gnatmake);
