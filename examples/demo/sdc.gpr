@@ -1,31 +1,11 @@
 project Sdc is
 
-  for Languages use ("Ada", "C");
-  for Source_Dirs use ("common", "struct", "matrix_handling");
-
+   for Languages use ("Ada", "C");
+   for Source_Dirs use ("common", "struct", "matrix_handling");
    for Main use ("sdc.adb");
    type Build_Type is ("PRODUCTION", "DEBUG");
    Build : Build_Type := external ("Build", "DEBUG");
-
    for Object_Dir use "obj";
-
-   package Compiler is
-      case Build is
-         when "DEBUG" =>
-            for Default_Switches ("ada") use
-              ("-gnatwe", "-gnaty", "-gnato", "-g");
-            for Switches ("screen_output.adb") use
-              ("-gnatwe", "-gnaty", "-g");
-            for Default_Switches ("C") use
-              ("-g", "-fexceptions", "-fnon-call-exceptions");
-
-         when "PRODUCTION" =>
-            for Default_Switches ("ada") use
-              ("-O2", "-gnatN", "-gnatwe", "-gnaty", "-gnatp");
-            for Default_Switches ("C") use
-              ("-O2");
-      end case;
-   end Compiler;
 
    package Builder is
       case Build is
@@ -37,8 +17,25 @@ project Sdc is
       end case;
    end Builder;
 
+   package Compiler is
+      case Build is
+         when "DEBUG" =>
+            for Default_Switches ("ada") use
+              ("-gnatwe", "-gnaty", "-gnato", "-g");
+            for Switches ("screen_output.adb") use
+              ("-gnatwe", "-gnaty", "-g");
+            for Default_Switches ("c") use ("-g");
+
+         when "PRODUCTION" =>
+            for Default_Switches ("ada") use
+              ("-O2", "-gnatN", "-gnatwe", "-gnaty", "-gnatp");
+            for Default_Switches ("c") use ("-O2");
+      end case;
+   end Compiler;
+
    package Ide is
       for Vcs_Kind use "CVS";
+      for Compiler_Command ("c") use "gcc";
    end Ide;
 
 end Sdc;

@@ -1,5 +1,5 @@
 
-# /cardiff.a/setton/src/work_gps/gps/examples/tutorial/Makefile.sdc
+# /home/charlet/gps/demo/sdc_c/demo/Makefile.sdc
 
 ifeq ($(SDC.project),)
 SDC.project=True
@@ -54,13 +54,27 @@ SDC.obj_dir:=$(strip $(shell gprcmd to_absolute $(SDC.base_dir) $(SDC.object_dir
 # case Sdc.Build is ...
 # when "DEBUG" => ...
 ifeq ($(SDC.BUILD),DEBUG)
-# for Default_Switches ("C") use ...
-SDC.compiler.default_switches.C:=-g -fexceptions -fnon-call-exceptions
+# for Default_Switches ("c") use ...
+SDC.compiler.default_switches.C:=-g
 CFLAGS:=$(SDC.compiler.default_switches.C)
+else
+# when "PRODUCTION" => ...
+ifeq ($(SDC.BUILD),PRODUCTION)
+# for Default_Switches ("c") use ...
+SDC.compiler.default_switches.C:=-O2
+CFLAGS:=$(SDC.compiler.default_switches.C)
+endif
 endif
 # end case;
 
 # end Compiler;
+
+
+# package Ide is ...
+# for Compiler_Command ("c") use ...
+SDC.ide.compiler_command.C:=gcc
+CC:=$(SDC.ide.compiler_command.C)
+# end Ide;
 
 
 SRC_DIRS:=$(SRC_DIRS) $(SDC.src_dirs)
