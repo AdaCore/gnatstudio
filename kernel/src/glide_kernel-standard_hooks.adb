@@ -23,6 +23,7 @@ with Glide_Kernel.Scripts;       use Glide_Kernel.Scripts;
 with VFS;                        use VFS;
 with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
+with File_Utils;                 use File_Utils;
 with Ada.Strings.Fixed;          use Ada.Strings.Fixed;
 with GNAT.OS_Lib;                use GNAT.OS_Lib;
 with System;                     use System;
@@ -331,7 +332,7 @@ package body Glide_Kernel.Standard_Hooks is
             Length : constant Integer := Integer'Max (0, Column_End - Column);
             Args   : Argument_List :=
               (new String'("Editor.edit"),
-               new String'(Full_Name (Filename).all),
+               new String'(To_Host_Pathname (Full_Name (Filename).all)),
                new String'(Image (Line)),
                new String'(Image (Column)),
                new String'(Image (Length)));
