@@ -56,6 +56,8 @@ with Gtkada.MDI;    use Gtkada.MDI;
 with Pango.Layout;  use Pango.Layout;
 with Gtkada.Types;
 
+with String_Utils;  use String_Utils;
+
 package body Browsers.Entities is
 
    Me : constant Debug_Handle := Create ("Browser.Entities");
@@ -514,8 +516,10 @@ package body Browsers.Entities is
          Entity_Context := Entity_Selection_Context_Access (Context);
 
          if Has_Entity_Name_Information (Entity_Context) then
-            Gtk_New (Item, Label => (-"Examine entity ") & Locale_To_UTF8
-                     (Entity_Name_Information (Entity_Context)));
+            Gtk_New
+              (Item, Label => (-"Examine entity ")
+               & Krunch (Locale_To_UTF8
+                           (Entity_Name_Information (Entity_Context))));
             Append (Menu, Item);
             Context_Callback.Connect
               (Item, "activate",

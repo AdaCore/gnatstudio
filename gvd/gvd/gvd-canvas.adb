@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2002                      --
+--                      Copyright (C) 2000-2003                      --
 --                              ACT-Europe                           --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -52,6 +52,8 @@ with GVD.Memory_View;  use GVD.Memory_View;
 with GVD.Menu;         use GVD.Menu;
 with GVD.Preferences;  use GVD.Preferences;
 with GVD.Process;      use GVD.Process;
+
+with String_Utils;     use String_Utils;
 
 package body GVD.Canvas is
 
@@ -790,7 +792,8 @@ package body GVD.Canvas is
                       Zoom           => 100));
       Append (Canvas.Item_Contextual_Menu, Mitem);
 
-      Gtk_New (Mitem, Label => -"View memory at address of " & Component_Name);
+      Gtk_New (Mitem, Label => -"View memory at address of "
+               & Krunch (Component_Name));
       Item_Handler.Connect
         (Mitem, "activate",
          Item_Handler.To_Marshaller (View_Into_Memory'Access),
@@ -805,7 +808,7 @@ package body GVD.Canvas is
       Append (Canvas.Item_Contextual_Menu, Mitem);
 
       if Is_A_Variable (Item) then
-         Gtk_New (Mitem, Label => -"Set Value of " & Component_Name);
+         Gtk_New (Mitem, Label => -"Set Value of " & Krunch (Component_Name));
       else
          Gtk_New (Mitem, Label => -"Set Value");
       end if;

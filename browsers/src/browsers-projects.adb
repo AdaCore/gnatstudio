@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2002                      --
+--                      Copyright (C) 2001-2003                      --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -45,6 +45,7 @@ with Types;                    use Types;
 with Ada.Exceptions;           use Ada.Exceptions;
 with Traces;                   use Traces;
 with Find_Utils;               use Find_Utils;
+with String_Utils;             use String_Utils;
 
 package body Browsers.Projects is
 
@@ -561,7 +562,8 @@ package body Browsers.Projects is
       pragma Unreferenced (Browser, Event);
       Context : constant Selection_Context_Access :=
         new File_Selection_Context;
-      Name : constant String := Locale_To_UTF8 (Get_String (Item.Name));
+      Name : constant String := Krunch
+        (Locale_To_UTF8 (Get_String (Item.Name)));
       Mitem : Gtk_Image_Menu_Item;
       Pix   : Gtk_Image;
    begin

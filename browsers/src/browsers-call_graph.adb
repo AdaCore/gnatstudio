@@ -1277,8 +1277,9 @@ package body Browsers.Call_Graph is
               or else Category_Information (Entity_Context) in
                 Subprogram_Category
             then
-               Gtk_New (Item, Label => Locale_To_UTF8
-                          (Entity_Name_Information (Entity_Context))
+               Gtk_New (Item, Label =>
+                          Krunch (Locale_To_UTF8
+                                    (Entity_Name_Information (Entity_Context)))
                         & (-" calls"));
                Append (Submenu, Item);
                Context_Callback.Connect
@@ -1287,8 +1288,9 @@ package body Browsers.Call_Graph is
                   (Edit_Entity_Call_Graph_From_Contextual'Access),
                   Selection_Context_Access (Context));
 
-               Gtk_New (Item, Label => Locale_To_UTF8
-                        (Entity_Name_Information (Entity_Context))
+               Gtk_New (Item, Label =>
+                          Krunch (Locale_To_UTF8
+                                    (Entity_Name_Information (Entity_Context)))
                         & (-" is called by"));
                Append (Submenu, Item);
                Context_Callback.Connect
@@ -1299,8 +1301,9 @@ package body Browsers.Call_Graph is
             end if;
 
             declare
-               Name : constant String := Locale_To_UTF8
-                 (Entity_Name_Information (Entity_Context));
+               Name : constant String :=
+                 Krunch (Locale_To_UTF8
+                           (Entity_Name_Information (Entity_Context)));
             begin
                Gtk_New (Item, Label => (-"Find all references to ") & Name);
                Append (Submenu, Item);

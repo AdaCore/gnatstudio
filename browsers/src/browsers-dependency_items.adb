@@ -61,6 +61,8 @@ with Ada.Exceptions;            use Ada.Exceptions;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 
+with String_Utils;              use String_Utils;
+
 package body Browsers.Dependency_Items is
 
    Me : constant Debug_Handle := Create ("Browsers.Dependency");
@@ -963,10 +965,11 @@ package body Browsers.Dependency_Items is
          File_Context := File_Selection_Context_Access (Context);
          if Has_File_Information (File_Context) then
             declare
-               Name : constant String := Locale_To_UTF8
-                 (File_Information (File_Context));
+               Name : constant String :=
+                 Krunch (Locale_To_UTF8 (File_Information (File_Context)));
             begin
-               Gtk_New (Item, Label => (-"Examine dependencies for ") & Name);
+               Gtk_New
+                 (Item, Label => (-"Examine dependencies for ") & Name);
                Append (Menu, Item);
                Context_Callback.Connect
                  (Item, "activate",
@@ -1262,7 +1265,7 @@ package body Browsers.Dependency_Items is
          Filename        => Filename,
          Use_Source_Path => True,
          Use_Object_Path => False);
-      Utf8_File : constant String := Locale_To_UTF8 (Filename);
+      Utf8_File : constant String := Krunch (Locale_To_UTF8 (Filename));
       Mitem : Gtk_Image_Menu_Item;
       Pix   : Gtk_Image;
    begin

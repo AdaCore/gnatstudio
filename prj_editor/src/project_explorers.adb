@@ -2586,7 +2586,7 @@ package body Project_Explorers is
 
          if Has_File_Information (File) then
             Gtk_New (Item, Label => -"Locate in explorer: "
-                     & Base_Name (File_Information (File)));
+                     & Krunch (Base_Name (File_Information (File))));
             Append (Menu, Item);
 
             Context_Callback.Connect
@@ -2596,7 +2596,7 @@ package body Project_Explorers is
 
          elsif Has_Project_Information (File) then
             Gtk_New (Item, Label => -"Locate in explorer: "
-                     & Project_Name (Project_Information (File)));
+                     & Krunch (Project_Name (Project_Information (File))));
             Append (Menu, Item);
 
             Context_Callback.Connect

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2002                      --
+--                      Copyright (C) 2000-2003                      --
 --                              ACT-Europe                           --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -525,7 +525,7 @@ package body GVD.Text_Box.Source_Editor.Builtin is
          Set_State (Mitem, State_Insensitive);
       end if;
 
-      Gtk_New (Mitem, Label => -"View memory at &" & Entity);
+      Gtk_New (Mitem, Label => -"View memory at &" & Krunch (Entity));
       Append (Source.Editor.Contextual_Menu, Mitem);
       Widget_Breakpoint_Handler.Connect
         (Mitem, "activate",
@@ -556,7 +556,7 @@ package body GVD.Text_Box.Source_Editor.Builtin is
       end if;
 
       Gtk_New
-        (Mitem, Label => -"Set Breakpoint on " & Entity);
+        (Mitem, Label => -"Set Breakpoint on " & Krunch (Entity));
       Append (Source.Editor.Contextual_Menu, Mitem);
       Widget_Breakpoint_Handler.Connect
         (Mitem, "activate",
