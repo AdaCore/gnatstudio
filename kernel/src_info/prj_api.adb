@@ -106,70 +106,30 @@ package body Prj_API is
       Kind : Variable_Kind := List)
       return Project_Node_Id
    is
-      Decl, Decl_Item, Var : Project_Node_Id;
-      Previous_Decl : Project_Node_Id := Empty_Node;
-      N : Name_Id;
+      Var : Project_Node_Id;
    begin
       pragma Assert
         (Kind_Of (Prj_Or_Pkg) = N_Package_Declaration
          or else Kind_Of (Prj_Or_Pkg) = N_Project
          or else Kind_Of (Prj_Or_Pkg) = N_Case_Item);
 
+      --  Create the variable
+
+      Var := Default_Project_Node (Item_Kind, Kind);
       Name_Len := Name'Length;
       Name_Buffer (1 .. Name_Len) := Name;
-      N := Name_Find;
+      Set_Name_Of (Var, Name_Find);
+      if Item_Kind = N_Attribute_Declaration then
+         Set_Associative_Array_Index_Of (Var, Array_Index);
+      end if;
 
       --  First step is to create the declarative item that will contain the
       --  variable. This is dependent on the kind of node for Prj_Or_Pkg
 
-      case Kind_Of (Prj_Or_Pkg) is
-         when N_Project =>
-            Decl := Get_Or_Create_Declaration (Prj_Or_Pkg);
-            Decl_Item := First_Declarative_Item_Of (Decl);
-
-         when N_Package_Declaration | N_Case_Item =>
-            Decl := Prj_Or_Pkg;
-            Decl_Item := First_Declarative_Item_Of (Decl);
-
-         when others =>
-            null;
-      end case;
-
-      --  Check if the variable already exists.
-      --  If it does, nothing to do, and we just exit.
-
-      while Decl_Item /= Empty_Node loop
-         Var := Current_Item_Node (Decl_Item);
-         if Kind_Of (Var) = Item_Kind
-           and then Prj.Tree.Name_Of (Var) = N
-         then
-            return Var;
-         end if;
-         Previous_Decl := Decl_Item;
-         Decl_Item := Next_Declarative_Item (Decl_Item);
-      end loop;
-
-      --  Otherwise create the declarative item
-
-      Decl_Item := Default_Project_Node (N_Declarative_Item);
-
-      --  Insert it in the list, in front, or create a new list
-
-      if Previous_Decl /= Empty_Node then
-         Set_Next_Declarative_Item (Previous_Decl, Decl_Item);
+      if Kind_Of (Prj_Or_Pkg) = N_Project then
+         Add_At_End (Get_Or_Create_Declaration (Prj_Or_Pkg), Var);
       else
-         Set_Next_Declarative_Item
-           (Decl_Item, First_Declarative_Item_Of (Decl));
-         Set_First_Declarative_Item_Of (Decl, Decl_Item);
-      end if;
-
-      --  Create the variable
-
-      Var := Default_Project_Node (Item_Kind, Kind);
-      Set_Current_Item_Node (Decl_Item, Var);
-      Set_Name_Of (Var, N);
-      if Item_Kind = N_Attribute_Declaration then
-         Set_Associative_Array_Index_Of (Var, Array_Index);
+         Add_At_End (Prj_Or_Pkg, Var);
       end if;
 
       --  Insert the attribute or the variable in the list Prj_Or_Pkg.Variables
@@ -208,19 +168,12 @@ package body Prj_API is
    function Get_Or_Create_Attribute
      (Prj_Or_Pkg : Project_Node_Id;
       Name : String;
-      Index_Name : String := "";
+      Index_Name : String_Id := No_String;
       Kind : Variable_Kind := List)
       return Project_Node_Id is
    begin
-      if Index_Name /= "" then
-         Start_String;
-         Store_String_Chars (Index_Name);
-         return Internal_Get_Or_Create_Attribute
-           (Prj_Or_Pkg, Name, End_String, N_Attribute_Declaration, Kind);
-      else
-         return Internal_Get_Or_Create_Attribute
-           (Prj_Or_Pkg, Name, No_String, N_Attribute_Declaration, Kind);
-      end if;
+      return Internal_Get_Or_Create_Attribute
+        (Prj_Or_Pkg, Name, Index_Name, N_Attribute_Declaration, Kind);
    end Get_Or_Create_Attribute;
 
    ------------------------
@@ -306,8 +259,6 @@ package body Prj_API is
       N := Name_Find;
 
       --  Check if the package already exists
-      --  ??? It seems that packages and variables should be stored in
-      --  different lists
       Pack := First_Package_Of (Project);
       while Pack /= Empty_Node loop
          if Prj.Tree.Name_Of (Pack) = N then
@@ -347,8 +298,7 @@ package body Prj_API is
       Store_String_Chars (Value);
       Expr := Expression_Of (Var);
       Concatenate_List (Expr, String_As_Expression (End_String));
-      Set_Expression_Of (Var, Expr);  --  ??? Could this be done
-      --  in Concatenate_List directly.
+      Set_Expression_Of (Var, Expr);
    end Append_To_List;
 
    --------------------------
@@ -356,26 +306,10 @@ package body Prj_API is
    --------------------------
 
    function String_As_Expression (Value : String_Id) return Project_Node_Id is
-      Expr, Term, Str : Project_Node_Id;
+      Str : Project_Node_Id := Default_Project_Node (N_Literal_String);
    begin
-      --  Create the expression if required
-      Expr := Default_Project_Node (N_Expression);
-      Set_Next_Expression_In_List (Expr, Empty_Node); --  No next in the list
-
-      --  Create the term (??? test is kept in case we manage to reuse an
-      --  existing unused expression node).
-      Term := First_Term (Expr);
-      pragma Assert (Term = Empty_Node or else Kind_Of (Term) = N_Term);
-      if Term = Empty_Node then
-         Term := Default_Project_Node (N_Term);
-         Set_First_Term (Expr, Term);
-      end if;
-
-      Str := Default_Project_Node (N_Literal_String);
-      Set_Current_Term (Term, Str);
-      Set_Next_Term (Term, Empty_Node);
       Set_String_Value_Of (Str, Value);
-      return Expr;
+      return Enclose_In_Expression (Str);
    end String_As_Expression;
 
    ---------------
@@ -426,25 +360,17 @@ package body Prj_API is
    procedure Set_Value_As_External
      (Var : Project_Node_Id; External_Name : String; Default : String := "")
    is
-      Expr : Project_Node_Id;
-      Term : Project_Node_Id;
       Ext : Project_Node_Id;
       Str : Project_Node_Id;
    begin
       pragma Assert (Expression_Kind_Of (Var) = Prj.Single);
 
       --  Create the expression if required
-      Expr := Default_Project_Node (N_Expression, Single);
-      Term := Default_Project_Node (N_Term, Single);
-      Set_First_Term (Expr, Term);
       Ext := Default_Project_Node (N_External_Value, Single);
-      Set_Current_Term (Term, Ext);
-
-      Set_Expression (Var, Expr);
+      Set_Expression (Var, Enclose_In_Expression (Ext));
 
       Start_String;
       Store_String_Chars (External_Name);
-
       Str := Default_Project_Node (N_Literal_String, Single);
       Set_String_Value_Of (Str, End_String);
 
@@ -511,13 +437,7 @@ package body Prj_API is
       if Kind_Of (Ext) = N_External_Value then
          Ext := External_Reference_Of (Ext);
          if Kind_Of (Ext) = N_Expression then
-            Ext := First_Term (Ext);
-
-            --  ??? Is something else authorized (N_Literal_String directly in
-            --  N_Expression, for instance)
-            if Kind_Of (Ext) = N_Term then
-               Ext := Current_Term (Ext);
-            end if;
+            Ext := Current_Term (First_Term (Ext));
          end if;
 
          pragma Assert (Kind_Of (Ext) = N_Literal_String);
@@ -694,12 +614,9 @@ package body Prj_API is
       pragma Assert (Kind_Of (Expr2) = N_Expression);
 
       if Expr = Empty_Node then
-         Expr := Default_Project_Node (N_Expression, List);
-         Term := Default_Project_Node (N_Term, List);
-         Set_First_Term (Expr, Term);
          L := Default_Project_Node (N_Literal_String_List, List);
-         Set_Current_Term (Term, L);
          Set_First_Expression_In_List (L, Expr2);
+         Expr := Enclose_In_Expression (L);
 
       else
          Term := First_Term (Expr);
@@ -1160,6 +1077,44 @@ package body Prj_API is
       return No_String;
    end External_Variable_Name;
 
+   ----------------
+   -- Add_At_End --
+   ----------------
+
+   procedure Add_At_End
+     (Parent : Project_Node_Id; Expr : Project_Node_Id)
+   is
+      New_Decl, Decl : Project_Node_Id;
+   begin
+      New_Decl := Default_Project_Node (N_Declarative_Item);
+      Set_Current_Item_Node (New_Decl, Expr);
+
+      Decl := First_Declarative_Item_Of (Parent);
+
+      if Decl = Empty_Node then
+         Set_First_Declarative_Item_Of (Parent, New_Decl);
+      else
+         while Next_Declarative_Item (Decl) /= Empty_Node loop
+            Decl := Next_Declarative_Item (Decl);
+         end loop;
+
+         Set_Next_Declarative_Item (Decl, New_Decl);
+      end if;
+   end Add_At_End;
+
+   ---------------------------
+   -- Enclose_In_Expression --
+   ---------------------------
+
+   function Enclose_In_Expression (Node : Project_Node_Id)
+      return Project_Node_Id
+   is
+      Expr : Project_Node_Id := Default_Project_Node (N_Expression, Single);
+   begin
+      Set_First_Term (Expr, Default_Project_Node (N_Term, Single));
+      Set_Current_Term (First_Term (Expr), Node);
+      return Expr;
+   end Enclose_In_Expression;
 
 begin
    Namet.Initialize;

@@ -95,7 +95,7 @@ package Prj_API is
    function Get_Or_Create_Attribute
      (Prj_Or_Pkg : Project_Node_Id;
       Name : String;
-      Index_Name : String := "";
+      Index_Name : Types.String_Id := Types.No_String;
       Kind : Variable_Kind := List)
       return Project_Node_Id;
    --  Create (or get an existing) variable by Name. This should be used
@@ -128,6 +128,15 @@ package Prj_API is
    procedure Add_Imported_Project
      (Project : Project_Node_Id; Imported_Project : Project_Node_Id);
    --  Add a new with_statement for Imported_Project.
+
+   procedure Add_At_End
+     (Parent : Project_Node_Id; Expr : Project_Node_Id);
+   --  Add a new declarative item at the end of the list contained in
+   --  parents. This new declarative item will contain Expr.
+
+   function Enclose_In_Expression (Node : Project_Node_Id)
+      return Project_Node_Id;
+   --  Enclose the Node inside a N_Expression node, and return this expression.
 
    ---------------------
    -- Variable values --
