@@ -66,8 +66,20 @@ package Case_Handling is
    --  Add a case exception into the container. Read_Only must be set for
    --  case exception that can't be removed interactively.
 
+   procedure Add_Substring_Exception
+     (C         : in out Casing_Exceptions;
+      Substring : String;
+      Read_Only : Boolean);
+   --  Add a substring case exception into the container. Read_Only must be set
+   --  for case exception that can't be removed interactively.
+
    procedure Remove_Exception (C : in out Casing_Exceptions; Word : String);
    --  Remove a case exception from the container
+
+   procedure Remove_Substring_Exception
+     (C         : in out Casing_Exceptions;
+      Substring : String);
+   --  Remove a substring case exception from the container
 
    procedure Load_Exceptions
      (C         : in out Casing_Exceptions;
@@ -108,8 +120,9 @@ private
 
    type Casing_Exceptions is record
       E : Exceptions_Table := new String_Hash_Table.HTable;
+      S : Exceptions_Table := new String_Hash_Table.HTable;
    end record;
 
-   No_Casing_Exception : constant Casing_Exceptions := (E => null);
+   No_Casing_Exception : constant Casing_Exceptions := (E => null, S => null);
 
 end Case_Handling;
