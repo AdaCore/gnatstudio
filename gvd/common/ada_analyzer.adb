@@ -268,7 +268,9 @@ package body Ada_Analyzer is
 
    function Get_Token (S : String) return Token_Type is
    begin
-      if S'Length = 1 then
+      if S'Length = 0 then
+         return No_Token;
+      elsif S'Length = 1 then
          if Is_Control (S (S'First)) then
             return No_Token;
          else
@@ -1727,6 +1729,10 @@ package body Ada_Analyzer is
 
          procedure Skip_Blank_Lines is
          begin
+            if P > Buffer_Last then
+               return;
+            end if;
+
             if Buffer (P) = ASCII.LF or else Buffer (P) = ASCII.CR then
                while P < Buffer_Last and then
                  (Buffer (P) = ASCII.LF or else Buffer (P) = ASCII.CR)
