@@ -171,7 +171,7 @@ package body Glide_Menu is
    is
       pragma Unreferenced (Action, Widget);
    begin
-      Confirm_And_Quit (Glide_Window (Object));
+      Quit (Glide_Window (Object));
 
    exception
       when E : others =>
