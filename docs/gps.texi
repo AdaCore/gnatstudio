@@ -311,7 +311,7 @@ application, as well as some advanced browsers like a call graph.
 For this to work, it needs some help from external tools, specific to
 each of the supported languages.
 
-@table @amp
+@table @command
 @item Ada
 The GNAT compiler itself is used to generate the cross-references
 information. This means that you need to compile your application to
@@ -336,6 +336,8 @@ all the @file{ALI files} in the appropriate object directory. This is
 done by right-clicking on the object directory in the explorer
 (left-side panel on the main window), and selecting the menu "Parse
 all xref information".
+
+@end table
 
 
 @c --------------------------------------------------------------------------
