@@ -240,6 +240,11 @@ package body Project_Viewers is
       Args    : Gtk_Args);
    --  Called every time the selection has changed in the tree
 
+   procedure Explorer_Selection_Changed
+     (Viewer  : access Project_Viewer_Record'Class;
+      Context : Selection_Context_Access);
+   --  Same as above, but work directly on a context.
+
    function Project_Editor_Context_Factory
      (Kernel       : access Kernel_Handle_Record'Class;
       Event_Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
@@ -656,42 +661,55 @@ package body Project_Viewers is
    --------------------------------
 
    procedure Explorer_Selection_Changed
-     (Viewer  : access Gtk_Widget_Record'Class;
-      Args    : Gtk_Args)
+     (Viewer  : access Project_Viewer_Record'Class;
+      Context : Selection_Context_Access)
    is
-      View         : Project_Viewer := Project_Viewer (Viewer);
-      Current_View : constant View_Type := Current_Page (View);
+      Current_View : constant View_Type := Current_Page (Viewer);
       User         : User_Data;
       Rows         : Gint;
-      Context      : Selection_Context_Access :=
-        To_Selection_Context_Access (To_Address (Args, 1));
       File         : File_Selection_Context_Access;
 
    begin
-      if Context.all in File_Selection_Context'Class then
+      if Context /= null
+        and then Context.all in File_Selection_Context'Class
+      then
          File := File_Selection_Context_Access (Context);
-         View.Current_Project := Project_Information (File);
+         Viewer.Current_Project := Project_Information (File);
 
-         Clear (View);  --  ??? Should delete selectively
+         Clear (Viewer);  --  ??? Should delete selectively
 
-         if View.Current_Project /= No_Project then
-            Show_Project (View, View.Current_Project,
+         if Viewer.Current_Project /= No_Project then
+            Show_Project (Viewer, Viewer.Current_Project,
                           Directory_Information (File));
          end if;
 
          if Has_File_Information (File) then
-            Rows := Get_Rows (View.Pages (Current_View));
+            Rows := Get_Rows (Viewer.Pages (Current_View));
 
             for J in 0 .. Rows - 1 loop
-               User := Project_User_Data.Get (View.Pages (Current_View), J);
+               User := Project_User_Data.Get (Viewer.Pages (Current_View), J);
 
                if Get_String (User.File_Name) = File_Information (File) then
-                  Select_Row (View.Pages (Current_View), J, 0);
+                  Select_Row (Viewer.Pages (Current_View), J, 0);
                   return;
                end if;
             end loop;
          end if;
       end if;
+   end Explorer_Selection_Changed;
+
+   --------------------------------
+   -- Explorer_Selection_Changed --
+   --------------------------------
+
+   procedure Explorer_Selection_Changed
+     (Viewer  : access Gtk_Widget_Record'Class;
+      Args    : Gtk_Args)
+   is
+      Context      : Selection_Context_Access :=
+        To_Selection_Context_Access (To_Address (Args, 1));
+   begin
+      Explorer_Selection_Changed (Project_Viewer (Viewer), Context);
    end Explorer_Selection_Changed;
 
    -------------
@@ -760,7 +778,8 @@ package body Project_Viewers is
 
       --  The initial contents of the viewer should be read immediately from
       --  the explorer, without forcing the user to do a new selection.
-      --  ??? Explorer_Selection_Changed (Viewer);
+      Explorer_Selection_Changed
+        (Viewer, Get_Current_Explorer_Context (Kernel));
    end Initialize;
 
    ----------------------------
