@@ -680,7 +680,6 @@ package body Python_Module is
          Module_Name => "Python");
       Glide_Kernel.Kernel_Desktop.Register_Desktop_Functions
         (Save_Desktop'Access, Load_Desktop'Access);
-      Add_Default_Desktop_Item (Kernel, "Python_Console", Position_Bottom);
 
       Python_Module_Id.Script := new Python_Scripting_Record;
       Python_Module_Id.Script.Kernel := Kernel_Handle (Kernel);
