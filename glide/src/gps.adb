@@ -1247,7 +1247,7 @@ procedure GPS is
 
       Cleanup_Needed := False;
 
-      if Get_Pref (Kernel, Save_Desktop_On_Exit) then
+      if Started and then Get_Pref (Kernel, Save_Desktop_On_Exit) then
          Save_Desktop (Kernel);
       end if;
 
