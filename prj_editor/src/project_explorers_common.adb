@@ -235,25 +235,25 @@ package body Project_Explorers_Common is
       if Construct.Is_Declaration then
          if Construct.Profile /= null then
             Set (Model, N, Base_Name_Column,
-                 Locale_To_UTF8 (Construct.Name.all & " (spec) " &
+                 Locale_To_UTF8 (Reduce (Construct.Name.all) & " (spec) " &
                                  Reduce (Construct.Profile.all)));
          else
             Set (Model, N, Base_Name_Column,
-                 Locale_To_UTF8 (Construct.Name.all & " (spec)"));
+                 Locale_To_UTF8 (Reduce (Construct.Name.all) & " (spec)"));
 
          end if;
 
       elsif Construct.Profile /= null then
          Set (Model, N, Base_Name_Column,
-              Locale_To_UTF8 (Construct.Name.all & " "
-                              & Reduce (Construct.Profile.all)));
+              Locale_To_UTF8 (Reduce (Construct.Name.all & " " &
+                                      Construct.Profile.all)));
       else
          Set (Model, N, Base_Name_Column,
-              Locale_To_UTF8 (Construct.Name.all));
+              Locale_To_UTF8 (Reduce (Construct.Name.all)));
       end if;
 
       Set (Model, N, Entity_Base_Column,
-           Locale_To_UTF8 (Construct.Name.all));
+           Locale_To_UTF8 (Reduce (Construct.Name.all)));
 
       Set (Model, N, Icon_Column,
            C_Proxy (Close_Pixbufs (Entity_Node)));
