@@ -417,6 +417,7 @@ package body Welcome is
       Project_Name : constant String := Get_Text (Get_Entry (S.Open_Project));
       Dir : String_Access;
    begin
+      Push_State (S.Kernel, Busy);
       if Project_Name = "" then
          Dir := new String'(Get_Text (S.Default_Dir));
       else
@@ -441,9 +442,11 @@ package body Welcome is
       end;
 
       Free (Dir);
+      Pop_State (S.Kernel);
 
    exception
       when E : others =>
+         Pop_State (S.Kernel);
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Browse_Load;
 
