@@ -853,10 +853,19 @@ package body Vsearch_Ext is
       Label : Gtk_Label;
       Image : Gtk_Image;
       Align : Gtk_Alignment;
+      Req   : Gtk_Requisition;
    begin
       Vsearch.Find_Next := Find_Next;
 
       if Find_Next then
+         --  Make sure the Search_Next_Button only grows in size. This makes
+         --  sure that a user won't click on "Find" and see the button shrink
+         --  so that next time he clicks (without moving the mouse) is on
+         --  "Replace".
+
+         Size_Request (Vsearch.Search_Next_Button, Req);
+         Set_Size_Request (Vsearch.Search_Next_Button, Req.Width, Req.Height);
+
          Set_Use_Stock (Vsearch.Search_Next_Button, False);
          Remove (Vsearch.Search_Next_Button,
                  Get_Child (Vsearch.Search_Next_Button));
@@ -875,6 +884,8 @@ package body Vsearch_Ext is
          Set_Sensitive (Vsearch_Module_Id.Prev_Menu_Item, True);
 
       else
+         --  Remove size constraints on Search_Next_Button.
+         Set_Size_Request (Vsearch.Search_Next_Button, -1, -1);
          Set_Use_Stock (Vsearch.Search_Next_Button, True);
          Set_Label (Vsearch.Search_Next_Button, Stock_Find);
          Set_Sensitive (Vsearch_Module_Id.Next_Menu_Item, False);
