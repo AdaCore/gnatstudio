@@ -163,7 +163,7 @@ opsysfile="'\"system/${opsys}.h\"'"
 AC_SUBST(opsysfile)
 
 # checking for gtk
-AM_PATH_GTK(1.2.10,,AC_MSG_ERROR(Test for GtkAda failed. See the file 'INSTALL' for help.))
+AM_PATH_GTK(1.2.11,,AC_MSG_ERROR(Test for GtkAda failed. See the file 'INSTALL' for help.))
 
 # Set the version number of GVD
 AC_SUBST(STRIP_CR)
