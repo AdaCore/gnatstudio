@@ -1,10 +1,17 @@
 Known Problems fixed in GPS 2.0.2
 
+- D719-003 GPS hangs when displaying dialogs when the main window is iconified
+  Problem:    Under windows, when the main GPS window is iconified, some modal
+              dialogs, such as the confirmation dialog at the end of a search
+              for example, are not displayed on the screen, thus causing GPS to
+              appear frozen.
+  Workaround: Un-iconify the main window, or press ESC to discard the dialog.
+
 - D722-009 Window unmaximized unexpectedly under Windows
-  Problem:   Under windows only, when using a floating and maximized window
-             (e.g. Shell window or source editor), some actions will cause
-             the window to temporarily get unmaximized and maximized again.
-  Workaround: Instead of maximizing the window, make it large. 
+  Problem:    Under windows only, when using a floating and maximized window
+              (e.g. Shell window or source editor), some actions will cause
+              the window to temporarily get unmaximized and maximized again.
+  Workaround: Instead of maximizing the window, make it large.
 
 - VCS "List all files in projects [and subprojects]" does not work
   Problem:    When using CVS, Native ClearCase or any custom VCS, the menu
