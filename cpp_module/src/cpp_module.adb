@@ -32,7 +32,7 @@ with Ada.Exceptions;          use Ada.Exceptions;
 with Ada.Unchecked_Deallocation;
 with Glide_Intl;              use Glide_Intl;
 with Projects;                use Projects;
-with Projects.Editor;         use Projects.Editor;
+with Projects.Registry;       use Projects.Registry;
 with Ada.Exceptions;          use Ada.Exceptions;
 with Glib.Properties.Creation; use Glib.Properties.Creation;
 with Glide_Intl;               use Glide_Intl;
@@ -42,7 +42,6 @@ with Language;                 use Language;
 with Project_Viewers;          use Project_Viewers;
 with Naming_Editors;           use Naming_Editors;
 with Foreign_Naming_Editors;   use Foreign_Naming_Editors;
-with Snames;                   use Snames;
 
 package body Cpp_Module is
 
@@ -68,10 +67,7 @@ package body Cpp_Module is
    --  Called when the preferences have changed
 
    function C_Naming_Scheme_Editor
-     (Kernel : access Kernel_Handle_Record'Class)
-      return Language_Naming_Editor;
-   function Cpp_Naming_Scheme_Editor
-     (Kernel : access Kernel_Handle_Record'Class)
+     (Kernel : access Kernel_Handle_Record'Class; Lang : String)
       return Language_Naming_Editor;
    --  Create the naming scheme editor page
 
@@ -80,30 +76,15 @@ package body Cpp_Module is
    ----------------------------
 
    function C_Naming_Scheme_Editor
-     (Kernel : access Kernel_Handle_Record'Class)
+     (Kernel : access Kernel_Handle_Record'Class; Lang : String)
       return Language_Naming_Editor
    is
       pragma Unreferenced (Kernel);
       Naming : Foreign_Naming_Editor;
    begin
-      Gtk_New (Naming, Name_C);
+      Gtk_New (Naming, Lang);
       return Language_Naming_Editor (Naming);
    end C_Naming_Scheme_Editor;
-
-   ------------------------------
-   -- Cpp_Naming_Scheme_Editor --
-   ------------------------------
-
-   function Cpp_Naming_Scheme_Editor
-     (Kernel : access Kernel_Handle_Record'Class)
-      return Language_Naming_Editor
-   is
-      pragma Unreferenced (Kernel);
-      Naming : Foreign_Naming_Editor;
-   begin
-      Gtk_New (Naming, Get_String (Cpp_String));
-      return Language_Naming_Editor (Naming);
-   end Cpp_Naming_Scheme_Editor;
 
    ----------------------------
    -- On_Preferences_Changed --
@@ -196,16 +177,22 @@ package body Cpp_Module is
       Register_LI_Handler (Handler, CPP_LI_Handler_Name, LI_Handler (LI));
 
       Register_Language (Handler, "c", C_Lang);
-      Add_Language_Info
+      Set_Language_Handler
         (Handler, "c",
-         LI                  => LI_Handler (LI),
+         LI                  => LI_Handler (LI));
+      Register_Default_Language_Extension
+        (Get_Registry (Kernel),
+         Language_Name       => "c",
          Default_Spec_Suffix => ".h",
          Default_Body_Suffix => ".c");
 
       Register_Language (Handler, "c++", Cpp_Lang);
-      Add_Language_Info
+      Set_Language_Handler
         (Handler, "c++",
-         LI                  => LI_Handler (LI),
+         LI                  => LI_Handler (LI));
+      Register_Default_Language_Extension
+        (Get_Registry (Kernel),
+         Language_Name       => "c++",
          Default_Spec_Suffix => ".hh",
          Default_Body_Suffix => ".cpp");
 
@@ -249,7 +236,7 @@ package body Cpp_Module is
       Register_Naming_Scheme_Editor
         (Kernel, C_String, C_Naming_Scheme_Editor'Access);
       Register_Naming_Scheme_Editor
-        (Kernel, Cpp_String, Cpp_Naming_Scheme_Editor'Access);
+        (Kernel, Cpp_String, C_Naming_Scheme_Editor'Access);
 
    exception
       when E : others =>
