@@ -90,7 +90,7 @@ package body Glide_Main_Window is
 
       declare
          File : constant String := Format_Pathname
-           (Prefix_Directory & "/share/glide/" &
+           (Prefix_Directory & "/share/gps/" &
             Get_Pref (Main_Window.Kernel, Animated_Image));
       begin
          if Is_Regular_File (File) then
