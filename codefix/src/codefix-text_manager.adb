@@ -273,12 +273,50 @@ package body Codefix.Text_Manager is
 
    function Get_New_Mark
      (Current_Text : Text_Navigator_Abstr'Class;
-      Cursor       : File_Cursor'Class) return Mark_Abstr'Class is
+      Cursor       : File_Cursor'Class) return Mark_Abstr'Class
+   is
+      Real_Cursor : File_Cursor := File_Cursor (Cursor);
    begin
-      return Get_New_Mark
-        (Get_File (Current_Text, Cursor.File_Name.all).all,
-         Text_Cursor (Cursor));
+      if Cursor.Line = 0 then
+         Real_Cursor.Line := 1;
+      end if;
+
+      declare
+         Res : Mark_Abstr'Class := Get_New_Mark
+          (Get_File (Current_Text, Real_Cursor.File_Name.all).all,
+            Text_Cursor (Real_Cursor));
+      begin
+         Assign (Res.File_Name, Cursor.File_Name);
+
+         if Cursor.Line = 0 then
+            Res.Is_First_Line := True;
+         else
+            Res.Is_First_Line := False;
+         end if;
+
+         return Res;
+      end;
    end Get_New_Mark;
+
+   ------------------------
+   -- Get_Current_Cursor --
+   ------------------------
+
+   function Get_Current_Cursor
+     (Current_Text : Text_Navigator_Abstr'Class;
+      Mark         : Mark_Abstr'Class) return File_Cursor'Class
+   is
+      Cursor : File_Cursor;
+   begin
+      Cursor := File_Cursor (Get_Current_Cursor
+        (Get_File (Current_Text, Mark.File_Name.all).all, Mark));
+
+      if Mark.Is_First_Line then
+         Cursor.Line := 0;
+      end if;
+
+      return Cursor;
+   end Get_Current_Cursor;
 
    --------------
    -- Get_Unit --
