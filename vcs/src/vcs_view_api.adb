@@ -1697,6 +1697,11 @@ package body VCS_View_API is
 
       while not String_List.Is_Empty (Files) loop
          File := Create (Full_Filename => String_List.Head (Files));
+
+         if not Is_Open (Get_Kernel (Context), File) then
+            Open_File_Editor (Get_Kernel (Context), File);
+         end if;
+
          Create_Line_Information_Column
            (Kernel        => Get_Kernel (Context),
             File          => File,
