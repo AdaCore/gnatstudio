@@ -515,13 +515,14 @@ package body SN.DB_Structures is
       Key, Data : CSF;
    begin
       CSF_Init (Key_Data_Pair.Key,  Key);
-      CSF_Init (Key_Data_Pair.Data, Data, 1);
+      CSF_Init (Key_Data_Pair.Data, Data, 2);
 
       Copy (Tab.Key,  Key_Data_Pair.Key,  Key_Data_Pair.Key_Size);
       Copy (Tab.Data, Key_Data_Pair.Data, Key_Data_Pair.Data_Size);
 
       Get_Field    (Key,  1, Tab.File_Name);
       Get_Field    (Data, 1, Tab.Language);
+      Get_Field    (Data, 2, Tab.Timestamp);
    end Parse_Pair;
 
    ----------------
