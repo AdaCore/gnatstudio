@@ -117,7 +117,7 @@ package body Browsers.Module is
                                       Glide_Browser_Record'Tag);
 
       --  ??? Should handle masks as well -- perhaps we need a more general
-      --  ??? find function in the kernel
+      --  find function in the kernel.
 
       --  Mask := Get_Mask (Glide_Browser (Get_Widget (Child)));
       --  if (Mask and Browser_Type) = Browser_Type then
@@ -190,8 +190,8 @@ package body Browsers.Module is
                 & File);
 
          --  ??? Should we put an item in the browser anyway, even if nothing
-         --  ??? can be done with it anyway ? This might give more indication
-         --  ??? to the user that we don't know anything about that file.
+         --  can be done with it anyway ? This might give more indication
+         --  to the user that we don't know anything about that file.
          return;
       end if;
 
@@ -204,7 +204,7 @@ package body Browsers.Module is
          Put (Get_Canvas (In_Browser), Initial);
 
          --  ??? Should check if the item was already expanded, so as to avoid
-         --  ??? useless work.
+         --  useless work.
       end if;
 
       Find_Dependencies (Lib_Info, List, Status);
@@ -213,6 +213,7 @@ package body Browsers.Module is
 
       if Status = Success then
          Dep := List;
+
          while Dep /= null loop
             if Filter (Kernel, Part, Dep.Value) then
                Intern := File_Information (Dep.Value);
@@ -228,6 +229,7 @@ package body Browsers.Module is
                else
                   --  If the item already existed, chances are that the link
                   --  also existed. Don't duplicate it in that case.
+
                   For_Each_Link
                     (Get_Canvas (In_Browser), Has_One'Unrestricted_Access,
                      From => Canvas_Item (Initial), To => Canvas_Item (Item));
@@ -266,7 +268,8 @@ package body Browsers.Module is
       Ada_Runtime_File, Gtk_System_File : Boolean;
    begin
       --  ??? The implementation here is too GNAT specific. However, getting
-      --  ??? the Unit_Name would be expensive.
+      --  the Unit_Name would be expensive.
+
       Ada_Runtime_File := Name'Length > 2
         and then (Name (Name'First .. Name'First + 1) = "a-"
                   or else Name (Name'First .. Name'First + 1) = "s-"
@@ -297,21 +300,23 @@ package body Browsers.Module is
    function Filter
      (Kernel : access Kernel_Handle_Record'Class;
       Part   : Unit_Part;
-      Dep    : Dependency)
-      return Boolean
+      Dep    : Dependency) return Boolean
    is
       Explicit_Dependency : Boolean;
-      Info : constant Dependency_Info := Dependency_Information (Dep);
+      Info                : constant Dependency_Info :=
+        Dependency_Information (Dep);
+
    begin
       --  ??? This must be configurable at the GUI level.
 
       --  Only show explicit dependencies, not implicit ones
+
       Explicit_Dependency :=
         (Part = Unit_Spec and then Get_Depends_From_Spec (Info))
-        or else
-        (Part = Unit_Body and then Get_Depends_From_Body (Info));
+         or else (Part = Unit_Body and then Get_Depends_From_Body (Info));
 
       --  Do not display dependencies on runtime files
+
       return Explicit_Dependency
         and then not Is_System_File (File_Information (Dep));
    end Filter;
@@ -346,6 +351,7 @@ package body Browsers.Module is
             Found := Canvas_Item (Item);
             return False;
          end if;
+
          return True;
       end Check_Item;
 
@@ -457,6 +463,7 @@ package body Browsers.Module is
       File_Context : File_Selection_Context_Access;
    begin
       --  File selection (for instance from the explorer)
+
       if Context.all in File_Selection_Context'Class then
          File_Context := File_Selection_Context_Access (Context);
 
