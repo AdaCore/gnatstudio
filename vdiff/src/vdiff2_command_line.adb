@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2001-2003                    --
---                            ACT-Europe                             --
+--                     Copyright (C) 2001-2005                       --
+--                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -22,7 +22,8 @@ with Glide_Kernel.Standard_Hooks;       use Glide_Kernel.Standard_Hooks;
 with Diff_Utils2;                       use Diff_Utils2;
 with Vdiff2_Module.Utils;               use Vdiff2_Module.Utils;
 with Vdiff2_Module.Utils.Text;          use Vdiff2_Module.Utils.Text;
-with Vdiff2_Module.Utils.Shell_Command; use Vdiff2_Module.Utils.Shell_Command;
+with Vdiff2_Module.Utils.Shell_Command;
+use Vdiff2_Module.Utils.Shell_Command;
 
 package body Vdiff2_Command_Line is
 
@@ -263,24 +264,22 @@ package body Vdiff2_Command_Line is
            (Kernel, VFile (Num_File), VRange (Num_File), "Append_diff");
       end;
 
-      VRange (Num_File).Blank_Lines :=
-        new String'(Add_Line
-                      (Kernel, VFile (Num_File),
-                       Get_Line_Number (Kernel, VRange (Num_File).Mark.all),
-                       "Default_diff",
-                       (VRange (Other).Last - VRange (Other).First)));
+      VRange (Num_File).Blank_Lines_Mark :=
+        Add_Line
+          (Kernel, VFile (Num_File),
+           VRange (Num_File).First,
+           "Default_diff",
+           (VRange (Other).Last - VRange (Other).First));
 
-      VRange (Diff.Ref_File).Blank_Lines :=
-        new String'(Add_Line
-                      (Kernel, VFile (Diff.Ref_File),
-                       Get_Line_Number
-                         (Kernel, VRange (Diff.Ref_File).Mark.all),
-                       "Default_diff",
-                       (VRange (Other).Last - VRange (Other).First)));
+      VRange (Diff.Ref_File).Blank_Lines_Mark :=
+        Add_Line
+          (Kernel, VFile (Diff.Ref_File),
+           VRange (Diff.Ref_File).First,
+           "Default_diff",
+           (VRange (Other).Last - VRange (Other).First));
 
       Diff1.Range1 := VRange (1);
       Diff1.Range2 := VRange (2);
       Diff1.Range3 := VRange (3);
-
    end Delete_From_Ref_File;
 end Vdiff2_Command_Line;
