@@ -467,9 +467,6 @@ procedure GPS is
    end Finish_Setup;
 
 begin
-   --  Initialize GtkAda
-
-   Gtk.Main.Set_Locale;
    Gtk.Main.Init;
 
    Init_Settings;
