@@ -1009,7 +1009,7 @@ package body Glide_Result_View is
       Gtk_New (Text_Rend);
       Pack_Start (View.Sorting_Column, Text_Rend, True);
       Add_Attribute (View.Sorting_Column, Text_Rend, "text", Message_Column);
-      Set_Sort_Column_Id (View.Sorting_Column, Highlight_Category_Column);
+      Set_Sort_Column_Id (View.Sorting_Column, Line_Column);
       Dummy := Append_Column (Tree, View.Sorting_Column);
       Clicked (View.Sorting_Column);
    end Set_Column_Types;
@@ -1210,7 +1210,7 @@ package body Glide_Result_View is
            (Explorer.Sorting_Column,
             Highlight_Category_Column);
       else
-         Set_Sort_Column_Id (Explorer.Sorting_Column, Base_Name_Column);
+         Set_Sort_Column_Id (Explorer.Sorting_Column, Line_Column);
       end if;
 
       Clicked (Explorer.Sorting_Column);
@@ -1982,6 +1982,12 @@ package body Glide_Result_View is
       end loop;
 
       Thaw_Sort (View.Tree.Model, Sort_Col);
+
+      if View.Sort_By_Category then
+         Set_Sort_Column_Id (View.Sorting_Column, Highlight_Category_Column);
+      else
+         Set_Sort_Column_Id (View.Sorting_Column, Line_Column);
+      end if;
    end Parse_File_Locations;
 
 end Glide_Result_View;
