@@ -172,19 +172,19 @@ package body GPS.Kernel is
    -------------
 
    procedure Gtk_New
-     (Handle      : out Kernel_Handle;
-      Main_Window : Gtk.Window.Gtk_Window;
-      Home_Dir    : String)
+     (Handle           : out Kernel_Handle;
+      Main_Window      : Gtk.Window.Gtk_Window;
+      Home_Dir         : String;
+      Prefix_Directory : String)
    is
       Handler : GPS_Language_Handler;
-      Dir     : constant String := Name_As_Directory (Home_Dir);
-
    begin
       Handle := new Kernel_Handle_Record;
       Glib.Object.Initialize (Handle);
 
       Handle.Main_Window  := Main_Window;
-      Handle.Home_Dir     := new String'(Dir);
+      Handle.Home_Dir     := new String'(Name_As_Directory (Home_Dir));
+      Handle.Prefix       := new String'(Name_As_Directory (Prefix_Directory));
 
       --  Create the language handler.
 
@@ -226,7 +226,7 @@ package body GPS.Kernel is
       On_Preferences_Changed (Handle);
 
       Handle.History := new History_Record;
-      Load (Handle.History.all, Dir & "history");
+      Load (Handle.History.all, Handle.Home_Dir.all & "history");
       Set_Max_Length (Handle.History.all, History_Max_Length);
 
       GPS.Kernel.Scripts.Initialize (Handle);
@@ -483,6 +483,15 @@ package body GPS.Kernel is
 
       return Get_Module_From_Child (C);
    end Get_Current_Module;
+
+   ----------------
+   -- Get_Kernel --
+   ----------------
+
+   function Get_Kernel (ID : Module_ID_Record'Class) return Kernel_Handle is
+   begin
+      return ID.Info.Kernel;
+   end Get_Kernel;
 
    --------------
    -- Get_Name --
@@ -1068,8 +1077,7 @@ package body GPS.Kernel is
    function Get_System_Dir
      (Handle : access Kernel_Handle_Record) return String is
    begin
-      return Name_As_Directory
-        (GPS_Window (Handle.Main_Window).Prefix_Directory.all);
+      return Handle.Prefix.all;
    end Get_System_Dir;
 
    ---------------------
@@ -1339,6 +1347,7 @@ package body GPS.Kernel is
       Destroy (Handle.Preferences);
       Free (Handle.Gnatls_Cache);
       Free (Handle.Home_Dir);
+      Free (Handle.Prefix);
 
       Destroy (Handle.Registry.all);
       Unchecked_Free (Handle.Registry);
