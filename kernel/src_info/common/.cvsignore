@@ -1,5 +1,8 @@
 glide_intl.adb
 glide_intl.ads
+file_utils.ads
+file_utils.adb
+a-file_utils.c
 htables.adb
 htables.ads
 sdefault.adb
