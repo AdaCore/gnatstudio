@@ -1161,7 +1161,7 @@ package body Commands.Custom is
                            if Files_List /= null then
                               for K in Files_List'Range loop
                                  Put_Line
-                                   (File, URL_File_Name (Files_List (K)));
+                                   (File, Full_Name (Files_List (K)).all);
                               end loop;
                               Unchecked_Free (Files_List);
                            end if;
@@ -1199,7 +1199,7 @@ package body Commands.Custom is
                                  Append
                                    (Result,
                                     '"'
-                                    & URL_File_Name (Files_List (K)) & """ ");
+                                    & Full_Name (Files_List (K)).all & """ ");
                               end loop;
                               Unchecked_Free (Files_List);
                            end if;
