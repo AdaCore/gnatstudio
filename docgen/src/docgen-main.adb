@@ -125,8 +125,8 @@ procedure Docgen.Main is
                Options.Process_Body_Files := True;
             elsif S = "-ic" then
                Options.Ignorable_Comments := True;
-            elsif S = "-under" then
-               Options.Comments_Under := True;
+            elsif S = "-above" then
+               Options.Comments_Above := True;
             elsif S = "-verbose" then
                Options.Info_Output := True;
             elsif S = "-ref" then
@@ -326,7 +326,7 @@ exception
       Put_Line (Current_Error, -"   docgen (-h | -help | --help | -?)");
       Put_Line (Current_Error, -("   docgen  .gpr-file  spec-file " &
                 "{ spec-files }"));
-      Put_Line (Current_Error, -("   [ -info ] [ -ic ] [ -under]" &
+      Put_Line (Current_Error, -("   [ -info ] [ -ic ] [ -above]" &
                 "[ -private] [ -texi ] "));
       Put_Line (Current_Error, -"  [ -ref] [ -docpath=DIR ] [-linkall]");
       New_Line (Current_Error);
@@ -342,7 +342,7 @@ exception
                 " for the body files"));
       Put_Line (Current_Error, -("   -ic       Comment starting with ""--!""" &
                 " should be ignored "));
-      Put_Line (Current_Error, -("   -under    use comments under" &
+      Put_Line (Current_Error, -("   -above    use comments above" &
                 " the entity headers "));
       Put_Line (Current_Error, -("   -private  Process also the entites" &
                 " declared as Private"));
