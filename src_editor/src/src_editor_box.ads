@@ -377,17 +377,19 @@ package Src_Editor_Box is
      (Editor        : access Source_Editor_Box_Record;
       Identifier    : String;
       Info          : Glide_Kernel.Modules.Line_Information_Data);
-   --  Add the line information to the view corresponding to Editor.
+   --  See Glide_Kernel.Modules for more information.
 
    procedure Create_Line_Information_Column
      (Editor         : access Source_Editor_Box_Record;
       Identifier     : String;
       Stick_To_Data  : Boolean;
       Every_Line     : Boolean);
+   --  See Glide_Kernel.Modules for more information.
 
    procedure Remove_Line_Information_Column
      (Editor         : access Source_Editor_Box_Record;
       Identifier     : String);
+   --  See Glide_Kernel.Modules for more information.
 
 private
 
