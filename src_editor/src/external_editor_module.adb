@@ -26,6 +26,7 @@ with Glib;                     use Glib;
 with Glib.Object;              use Glib.Object;
 with Glib.Values;              use Glib.Values;
 with Glide_Intl;               use Glide_Intl;
+with Glide_Kernel.Console;     use Glide_Kernel.Console;
 with Glide_Kernel.Modules;     use Glide_Kernel.Modules;
 with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
 with Glide_Kernel;             use Glide_Kernel;
@@ -652,7 +653,8 @@ package body External_Editor_Module is
       Path := Locate_Exec_On_Path (Args (Args'First).all);
 
       if Path = null then
-         Trace (Me, Args (Args'First).all & " not found on PATH");
+         Insert (Kernel, Args (Args'First).all & " not found on PATH",
+                 Mode => Error);
          Free (Args.all);
          Unchecked_Free (Args);
          return;
