@@ -83,6 +83,7 @@ procedure GVD_Main is
    Protocol            : String_Access := new String' ("");
    Tmp_String          : String_Access;
    Debuggee_Name       : String_Access;
+   Item                : Gtk_List_Item;
 
    procedure Init;
    --  Set up environment for GVD.
@@ -98,6 +99,10 @@ procedure GVD_Main is
    --  Return a clean version of the parameter for command line switches, ie
    --  return the same thing as GNAT.Command_Line.Parameter, but strips the
    --  leading '=' if any, so that users can say '--log-level=4' for instance.
+
+   ----------
+   -- Init --
+   ----------
 
    procedure Init is
       Dir_Created : Boolean := False;
@@ -184,25 +189,24 @@ procedure GVD_Main is
       end if;
    end Init;
 
+   ----------------
+   -- Bug_Dialog --
+   ----------------
+
    procedure Bug_Dialog
      (Win : GVD_Main_Window; E : Exception_Occurrence) is
    begin
-      Output_Line (Win, "# Bug detected in GVD");
-      Output_Line (Win, "# Version: " & GVD.Version);
-      Output_Line (Win, "# Date: " & GVD.Source_Date);
-      Output_Line (Win, "# Host: " & GVD.Target);
-      Output_Line (Win, Exception_Information (E));
-
-      Button := Message_Dialog
-        ((-"Please report [see GVD Manual under Reporting Bugs]") & ASCII.LF &
-         (-"with the contents of the file ") &
-         Dir.all & Directory_Separator & "log" & ASCII.LF &
-         (-"and a description as complete as possible (including sources)") &
-         ASCII.LF & (-"to reproduce the bug"),
-         Error, Button_OK,
-         Title => -"Bug detected in GVD",
-         Justification => Justify_Left);
+      Output_Line  (Win, "# Bug detected in GVD");
+      Output_Line  (Win, "# Version: " & GVD.Version);
+      Output_Line  (Win, "# Date: " & GVD.Source_Date);
+      Output_Line  (Win, "# Host: " & GVD.Target);
+      Output_Line  (Win, Exception_Information (E));
+      Output_Error (Win, "Unexpected internal error, please report");
    end Bug_Dialog;
+
+   ----------
+   -- Help --
+   ----------
 
    procedure Help is
       use ASCII;
@@ -262,11 +266,8 @@ procedure GVD_Main is
       end if;
    end Clean_Parameter;
 
-   procedure G_Type_Init (Debug_Flags : Gint);
-   pragma Import (C, G_Type_Init, "g_type_init");
 begin
    Gtk.Main.Set_Locale;
-   --  G_Type_Init (1 + 2);
    Gtk.Main.Init;
    Init;
    Gtk_New (Main_Debug_Window, "<gvd>", GVD_Menu_Items.all);
@@ -322,28 +323,24 @@ begin
                      Gtk_New (Main_Debug_Window.Open_Program);
                   end if;
 
-                  declare
-                     Item : Gtk_List_Item;
-                  begin
-                     Gtk_New (Item, Clean_Parameter);
-                     Add (Get_List
-                           (Main_Debug_Window.Open_Program.Debugger_Combo),
-                          Item);
-                     Set_Text
-                       (Get_Entry
-                         (Main_Debug_Window.Open_Program.Debugger_Combo),
-                        Clean_Parameter);
-                  end;
+                  Gtk_New (Item, Clean_Parameter);
+                  Add
+                    (Get_List (Main_Debug_Window.Open_Program.Debugger_Combo),
+                     Item);
+                  Set_Text
+                    (Get_Entry (Main_Debug_Window.Open_Program.Debugger_Combo),
+                     Clean_Parameter);
 
+               -- --editor-window --
                when 'e' =>
-                  -- --editor-window --
                   Main_Debug_Window.External_XID :=
                     Guint32'Value (Clean_Parameter);
 
                -- -fullname --
-               when 'f' => null;
+               when 'f' =>
                   --  supported for backward compatibility only, and
                   --  compatibility with Emacs' gdb mode
+                  null;
 
                -- --jdb --
                when 'j' => Debug_Type := Jdb_Type;
@@ -423,16 +420,11 @@ begin
                             (Main_Debug_Window.Open_Program.Protocol_Combo),
                            Protocol.all);
 
-                        declare
-                           Item : Gtk_List_Item;
-                        begin
-                           Gtk_New (Item, Target.all);
-                           Add (Get_List
-                                 (Main_Debug_Window.
-                                    Open_Program.Program_Host_Combo),
-                                Item);
-                        end;
-
+                        Gtk_New (Item, Target.all);
+                        Add (Get_List
+                               (Main_Debug_Window.
+                                  Open_Program.Program_Host_Combo),
+                             Item);
                         Set_Text
                           (Main_Debug_Window.Open_Program.Target_Entry,
                            Target.all);
@@ -470,25 +462,19 @@ begin
                         Gtk_New (Main_Debug_Window.Open_Program);
                      end if;
 
-                     declare
-                        Item : Gtk_List_Item;
-                     begin
-                        Gtk_New (Item, Clean_Parameter);
-                        Add (Get_List
-                             (Main_Debug_Window.Open_Program.Host_Combo),
-                             Item);
-                        Set_Text
-                          (Get_Entry
-                           (Main_Debug_Window.Open_Program.Host_Combo),
-                           Clean_Parameter);
-                     end;
+                     Gtk_New (Item, Clean_Parameter);
+                     Add (Get_List (Main_Debug_Window.Open_Program.Host_Combo),
+                          Item);
+                     Set_Text
+                       (Get_Entry (Main_Debug_Window.Open_Program.Host_Combo),
+                        Clean_Parameter);
                   end if;
 
                when others =>
                   null;
             end case;
 
-         when ASCII.Nul =>
+         when ASCII.NUL =>
             exit;
 
          when others =>
@@ -509,12 +495,9 @@ begin
          Item : Gtk_List_Item;
       begin
          Gtk_New (Item, Debuggee_Name.all);
-         Add (Get_List
-                (Main_Debug_Window.Open_Program.Program_Combo),
-              Item);
+         Add (Get_List (Main_Debug_Window.Open_Program.Program_Combo), Item);
          Set_Text
-           (Get_Entry
-              (Main_Debug_Window.Open_Program.Program_Combo),
+           (Get_Entry (Main_Debug_Window.Open_Program.Program_Combo),
             Debuggee_Name.all);
       end;
    end if;
@@ -589,6 +572,8 @@ begin
                    (Get_Children (Main_Debug_Window.Process_Notebook)));
 
             begin
+               Main_Debug_Window.Locked := False;
+
                for Page_Num in 0 .. Num_Pages - 1 loop
                   Page := Get_Nth_Page
                     (Main_Debug_Window.Process_Notebook, Page_Num);
