@@ -43,13 +43,14 @@ package body Docgen_Backend_HTML is
    ----------------
 
    procedure Doc_Create
-     (B             : access Backend_HTML;
-      Kernel        : access Glide_Kernel.Kernel_Handle_Record'Class;
-      File          : in Ada.Text_IO.File_Type;
-      List_Ref_In_File   : in out List_Reference_In_File.List;
-      Info          : in out Docgen.Doc_Info;
-      Doc_Directory : String;
-      Doc_Suffix    : String) is
+     (B                : access Backend_HTML;
+      Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
+      File             : in Ada.Text_IO.File_Type;
+      Entity_List      : in out Type_Entity_List.List;
+      List_Ref_In_File : in out List_Reference_In_File.List;
+      Info             : in out Docgen.Doc_Info;
+      Doc_Directory    : String;
+      Doc_Suffix       : String) is
    begin
       --  We call the subprogram responsible for the documentation
       --  process in html: see docgen_html_output.ads
@@ -58,6 +59,7 @@ package body Docgen_Backend_HTML is
         (B,
          Kernel,
          File,
+         Entity_List,
          List_Ref_In_File,
          Info,
          Doc_Directory,
@@ -182,7 +184,8 @@ package body Docgen_Backend_HTML is
 
    procedure Format_Identifier
      (B                : access Backend_HTML;
-      List_Ref_In_File : in out List_Reference_In_File.List;
+      Entity_List      : in out Type_Entity_List.List;
+      List_Ref_In_File   : in out List_Reference_In_File.List;
       Start_Index      : Natural;
       Start_Line       : Natural;
       Start_Column     : Natural;
@@ -198,7 +201,8 @@ package body Docgen_Backend_HTML is
       Source_File_List : Type_Source_File_List.List;
       Link_All         : Boolean;
       Is_Body          : Boolean;
-      Process_Body     : Boolean)
+      Process_Body     : Boolean;
+      Info             : Doc_Info)
    is
       pragma Unreferenced (End_Line);
    begin
@@ -209,6 +213,7 @@ package body Docgen_Backend_HTML is
 
       Format_All_Link
         (B,
+         Entity_List,
          List_Ref_In_File,
          Start_Index,
          Start_Line,
@@ -224,7 +229,8 @@ package body Docgen_Backend_HTML is
          Source_File_List,
          Link_All,
          Is_Body,
-         Process_Body);
+         Process_Body,
+         Info);
    end  Format_Identifier;
 
    -----------------
