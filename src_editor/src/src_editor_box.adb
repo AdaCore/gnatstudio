@@ -54,6 +54,8 @@ with Gtk.Menu_Item;              use Gtk.Menu_Item;
 with Gtk.Scrolled_Window;        use Gtk.Scrolled_Window;
 with Gtk.Text_Iter;              use Gtk.Text_Iter;
 with Gtk.Text_Mark;              use Gtk.Text_Mark;
+with Gtk.Text_Buffer;            use Gtk.Text_Buffer;
+with Gtk.Text_View;              use Gtk.Text_View;
 with Gtk.Widget;                 use Gtk.Widget;
 with Gtkada.Dialogs;             use Gtkada.Dialogs;
 with Gtkada.File_Selector;       use Gtkada.File_Selector;
@@ -961,8 +963,22 @@ package body Src_Editor_Box is
       Box    : Source_Editor_Box)
    is
       pragma Unreferenced (Object, Params);
-
+      Child_Box : Source_Editor_Box;
    begin
+      --  If the editor was primary, look for other editors with this buffer,
+      --  and give the Primary attribute to one of them.
+
+      if Box.Primary then
+         Child_Box := Find_Other_Editor
+           (Box.Kernel,
+            Gtk_Text_View (Box.Source_View),
+            Gtk_Text_Buffer (Box.Source_Buffer));
+
+         if Child_Box /= null then
+            Child_Box.Primary := True;
+         end if;
+      end if;
+
       Disconnect (Box.Source_Buffer, Box.Cursor_Handler);
       Disconnect (Box.Source_Buffer, Box.Status_Handler);
       Disconnect (Box.Source_Buffer, Box.Buffer_Info_Handler);
@@ -1037,6 +1053,7 @@ package body Src_Editor_Box is
 
       if Source = null then
          Gtk_New (Box.Source_Buffer, Kernel, Lang => Lang);
+         Box.Primary := True;
       else
          Box.Source_Buffer := Source;
       end if;
@@ -1250,6 +1267,17 @@ package body Src_Editor_Box is
 
       return False;
    end Check_Timestamp_Idle;
+
+   -------------------------
+   -- Get_Total_Ref_Count --
+   -------------------------
+
+   function Get_Total_Ref_Count
+     (Editor : access Source_Editor_Box_Record)
+      return Integer is
+   begin
+      return Get_Total_Ref_Count (Editor.Source_Buffer);
+   end Get_Total_Ref_Count;
 
    -------------------
    -- Get_Ref_Count --
@@ -1822,7 +1850,7 @@ package body Src_Editor_Box is
      (Editor : access Source_Editor_Box_Record)
       return Boolean is
    begin
-      return Needs_To_Be_Saved (Editor.Source_Buffer);
+      return Editor.Primary and then Needs_To_Be_Saved (Editor.Source_Buffer);
    end Needs_To_Be_Saved;
 
    ------------------
