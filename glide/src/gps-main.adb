@@ -116,7 +116,7 @@ with Action_Editor;
 with Outline_View;
 with Socket_Module;
 
-procedure GPS is
+procedure GPS.Main is
    use Glide_Main_Window;
 
    Me        : constant Debug_Handle := Create ("GPS");
@@ -1598,4 +1598,4 @@ exception
    when E : others =>
       Trace (Exception_Handle,
              "Unexpected exception: " & Exception_Information (E));
-end GPS;
+end GPS.Main;
