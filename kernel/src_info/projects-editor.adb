@@ -3075,17 +3075,19 @@ package body Projects.Editor is
       Prj.Tree.Tree_Private_Part.Projects_Htable.Set
         (Prj.Tree.Name_Of (Project.Node),
          Prj.Tree.Tree_Private_Part.Project_Name_And_Node'
-         (Name => Old_Name,
-          Node => Empty_Node,
-          Extended => False));
+         (Name           => Old_Name,
+          Node           => Empty_Node,
+          Canonical_Path => Old_Name,
+          Extended       => False));
 
       --  Register the new name
       Prj.Tree.Tree_Private_Part.Projects_Htable.Set
         (Prj.Tree.Name_Of (Project.Node),
          Prj.Tree.Tree_Private_Part.Project_Name_And_Node'
-         (Name => Name,
-          Node => Project.Node,
-          Extended => False));
+         (Name           => Name,
+          Canonical_Path => Old_Name,
+          Node           => Project.Node,
+          Extended       => False));
 
       Reset_Name_Table
         (Project_Registry (Get_Registry (Project)),
@@ -3167,9 +3169,10 @@ package body Projects.Editor is
       Prj.Tree.Tree_Private_Part.Projects_Htable.Set
         (Prj.Tree.Name_Of (Project),
          Prj.Tree.Tree_Private_Part.Project_Name_And_Node'
-         (Name => Project_Name,
-          Node => Project,
-          Extended => False));
+         (Name           => Project_Name,
+          Canonical_Path => Project_Name,
+          Node           => Project,
+          Extended       => False));
 
       P := Get_Project_From_Name (Registry, Prj.Tree.Name_Of (Project));
       Set_Project_Modified (P, True);
