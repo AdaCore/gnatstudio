@@ -62,7 +62,7 @@ package body Custom_Module is
    type Contextual_Menu_Access is access all Contextual_Menu_Record;
    type Contextual_Menu_Record is record
       Title  : String_Access;
-      Action : Action_Record;
+      Action : Action_Record_Access;
       Next   : Contextual_Menu_Access;
    end record;
 
@@ -74,7 +74,7 @@ package body Custom_Module is
    Custom_Module_ID   : Custom_Module_ID_Access;
 
    package Action_Callback is new Gtk.Handlers.User_Callback
-     (Glib.Object.GObject_Record, Action_Record);
+     (Glib.Object.GObject_Record, Action_Record_Access);
 
    procedure Customize
      (Kernel : access Kernel_Handle_Record'Class;
@@ -92,11 +92,11 @@ package body Custom_Module is
    procedure Register_Contextual_Menu
      (Kernel     : access Kernel_Handle_Record'Class;
       Menu_Title : String;
-      Action     : Action_Record);
+      Action     : Action_Record_Access);
    --  Register a new contextual menu
 
    procedure Contextual_Action
-     (Kernel : access GObject_Record'Class; Action : Action_Record);
+     (Kernel : access GObject_Record'Class; Action : Action_Record_Access);
    --  Execute action
 
    -----------------------
@@ -104,7 +104,7 @@ package body Custom_Module is
    -----------------------
 
    procedure Contextual_Action
-     (Kernel : access GObject_Record'Class; Action : Action_Record) is
+     (Kernel : access GObject_Record'Class; Action : Action_Record_Access) is
    begin
       Launch_Background_Command
         (Kernel          => Kernel_Handle (Kernel),
@@ -121,7 +121,7 @@ package body Custom_Module is
    procedure Register_Contextual_Menu
      (Kernel     : access Kernel_Handle_Record'Class;
       Menu_Title : String;
-      Action     : Action_Record)
+      Action     : Action_Record_Access)
    is
       pragma Unreferenced (Kernel);
    begin
@@ -209,7 +209,7 @@ package body Custom_Module is
          Action  : constant String := Get_Attribute (Node, "action");
          Child   : Node_Ptr;
          Title   : String_Access;
-         Command : Action_Record;
+         Command : Action_Record_Access;
       begin
          if Action = "" then
             Insert (Kernel,
@@ -467,7 +467,7 @@ package body Custom_Module is
          Title   : String_Access := new String'("");
          Pixmap  : String_Access := new String'("");
          Image   : Gtk_Image;
-         Command : Action_Record;
+         Command : Action_Record_Access;
 
       begin
          if Action = "" then
@@ -614,7 +614,7 @@ package body Custom_Module is
          Child  : Node_Ptr;
          Title  : String_Access := new String'("");
          Item   : Gtk_Menu_Item;
-         Command : Action_Record;
+         Command : Action_Record_Access;
       begin
          Child := Node.Child;
          while Child /= null loop
