@@ -545,6 +545,7 @@ private
       Filename_Label       : Gtk.Label.Gtk_Label;
       Read_Only_Label      : Gtk.Label.Gtk_Label;
       Modified_Label       : Gtk.Label.Gtk_Label;
+      Overwrite_Label      : Gtk.Label.Gtk_Label;
       Cursor_Loc_Label     : Gtk.Label.Gtk_Label;
 
       --  The non graphical attributes
@@ -554,6 +555,7 @@ private
       --  mouse.
 
       Writable             : Boolean := True;
+      Overwrite            : Boolean := False;
 
       Default_GC, Bg_GC    : Gdk.Gdk_GC;
 
