@@ -64,7 +64,7 @@ package Glide_Interactive_Consoles is
       Handler   : Command_Handler;
       User_Data : GObject;
       Font      : Pango.Font.Pango_Font_Description);
-   --  Create a new console for glide
+   --  Create a new console for glide.
 
    procedure Initialize
      (Console   : access Glide_Interactive_Console_Record'Class;
