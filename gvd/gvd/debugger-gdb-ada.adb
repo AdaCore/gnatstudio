@@ -627,7 +627,7 @@ package body Debugger.Gdb.Ada is
 
          Set_Item_Type (R.all,
            Parse_Type (Get_Debugger (Lang),
-             Array_Item_Name (Lang, Entity, To_String (Index_Str))));
+                       Array_Item_Name (Lang, Entity, To_String (Index_Str))));
       end if;
    end Parse_Array_Type;
 
@@ -817,10 +817,16 @@ package body Debugger.Gdb.Ada is
 
                exception
                   when Unexpected_Type =>
-                     --  However, sometimes we actually need to do a ptype
+                     --  However, sometimes we actually need to do a ptype.
+                     --  For efficiency, we try to do it directly on the type
+                     --  of the field (so as to avoid a costly request to gdb
+                     --  with A.B.C...).
+
                      Set_Value (R.all,
                                 Parse_Type (Get_Debugger (Lang),
-                                            Type_Str (Tmp_Index .. Index - 1)),
+                                            Entity & "."
+                                              & Get_Field_Name
+                                              (R.all, Fields).all),
                                 Field => Fields);
                end;
             end if;
