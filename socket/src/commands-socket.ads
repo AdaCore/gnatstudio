@@ -18,9 +18,9 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with GPS.Kernel; use GPS.Kernel;
-with GNAT.OS_Lib;  use GNAT.OS_Lib;
-with GNAT.Sockets; use GNAT.Sockets;
+with GPS.Kernel;         use GPS.Kernel;
+with GNAT.OS_Lib;        use GNAT.OS_Lib;
+with GNAT.Sockets;       use GNAT.Sockets;
 with GPS.Kernel.Scripts; use GPS.Kernel.Scripts;
 
 package Commands.Socket is
@@ -38,10 +38,10 @@ package Commands.Socket is
       Command : String;
       Shell   : String := GPS_Shell_Name;
       Stream  : Stream_Access);
-   --  Create a new custom command.
+   --  Create a new custom command
 
    procedure Free (X : in out Socket_Command);
-   --  Free memory associated to X.
+   --  Free memory associated to X
 
    function Execute
      (Command : access Socket_Command) return Command_Return_Type;
