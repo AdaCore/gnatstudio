@@ -7405,6 +7405,8 @@ create it. If this is the empty string (""), the preference will not be
 editable interactively. This could be used to save a value from one session
 of GPS to the next, without allowing the user to alter it.
 
+Subpages are references by separating pages name with colons (':').
+
 @item default (optional, default depends on the type of the preference)
 
 The default value of the preference, when not set by the user. This is 0 for integer preferences, the empty string for string preferences, True for boolean values, and the first possible choice for choice preferences.
@@ -7473,6 +7475,7 @@ Here is an example that defines a few new preferences:
                type="integer" />
 
    <preference name="my-enum"
+               page="Editor:Fonts &amp; Colors"
                label="My Enum"
                type="choices" >
      <choice>Choice1</choice>
