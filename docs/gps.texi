@@ -4,6 +4,7 @@
 @settitle Using the GNAT Programming System
 @syncodeindex fn cp
 
+@set GPS
 @set GPSVersion 1.0.2
 
 @titlepage
@@ -111,6 +112,14 @@ Source Browsing
 
 
 Debugging
+
+* The Debugger Menu::
+* The Call Stack Window::
+* The Data Window::
+* The Breakpoint Editor::
+* The Memory Window::
+* Using the Source Editors when Debugging::
+* The Debugger Console::
 
 
 Version Control System
@@ -1430,14 +1439,22 @@ menus, in particular in the source editor where it is possible to easily
 display variables, set breakpoints, and get automatic display (via @i{tooltips})
 of object values.
 
-During a debugging session, you can use all the facilities provided by GVD.
-See the GVD documentation (@url{gvd.html}) for a complete description
-of these functionalities.
-
 When you want to quit the debugger without quitting GPS, go to the menu
 @code{Debug->Terminate}, which will terminate your debug session, by closing
 the data window and the debugger console, as well as terminating the underlying
 debugger (e.g @code{gdb}) used by GPS to handle the low level debugging.
+
+@menu
+* The Debugger Menu::
+* The Call Stack Window::
+* The Data Window::
+* The Breakpoint Editor::
+* The Memory Window::
+* Using the Source Editors when Debugging::
+* The Debugger Console::
+@end menu
+
+@include ../gvd/docs/gvd_contents.texi
 
 @c --------------------------------------------------------------------
 @node Version Control System
