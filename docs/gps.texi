@@ -6371,6 +6371,9 @@ The currently directory.
 @item %p
 The current project. This is the name of the project, not the project file.
 
+@item %P
+The root project. This is the name of the project, not the project file.
+
 @item %pp
 The current project file pathname.
 
