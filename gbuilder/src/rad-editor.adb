@@ -5,16 +5,12 @@ with Gdk.Drawable;      use Gdk.Drawable;
 with Gdk.Event;         use Gdk.Event;
 with Gdk.GC;            use Gdk.GC;
 with Gdk.Pixmap;        use Gdk.Pixmap;
-with Gdk.Types;         use Gdk.Types;
-with Gdk.Types.Keysyms; use Gdk.Types.Keysyms;
 with Gdk.Window;        use Gdk.Window;
-with Gtk.Arguments;     use Gtk.Arguments;
 with Gtk.Container;     use Gtk.Container;
 with Gtk.Enums;         use Gtk.Enums;
 with Gtk.Fixed;         use Gtk.Fixed;
 with Gtk.Handlers;
 with Gtk.Layout;        use Gtk.Layout;
-with Gtk.Main;          use Gtk.Main;
 with Gtk.Menu_Bar;      use Gtk.Menu_Bar;
 with Gtk.Menu_Item;     use Gtk.Menu_Item;
 with Gtk.Notebook;      use Gtk.Notebook;
@@ -74,10 +70,6 @@ package body RAD.Editor is
    --  Currently always return False.
 
    procedure Draw_Grid (Widget : access Gtk_Widget_Record'Class);
-
-   procedure Draw_Widget (Widget : access Gtk_Widget_Record'Class);
-
-   procedure Draw_Widget_Focus (Widget : access Gtk_Widget_Record'Class);
 
    function Expose_Widget
      (Widget : access Gtk_Widget_Record'Class;
@@ -152,7 +144,7 @@ package body RAD.Editor is
 
    package Allocation_Marshaller is new
      Widget_Callback.Marshallers.Generic_Marshaller
-       (Gtk_Allocation_Access, To_Allocation);
+       (Gtk_Allocation_Access, Get_Allocation);
 
    ----------------------
    -- Add_Draw_Signals --
@@ -273,22 +265,9 @@ package body RAD.Editor is
         (Widget, "expose_event",
          Return_Callback.To_Marshaller (Expose_Widget'Access),
          After => True);
-      Widget_Callback.Connect (Widget, "draw",
-         Widget_Callback.To_Marshaller (Draw_Widget'Access),
-         After => True);
       Widget_Callback.Connect
         (Widget, "size_allocate",
          Allocation_Marshaller.To_Marshaller (On_Size_Allocate'Access),
-         After => True);
-
-      --  Needed for button, others?
-      Widget_Callback.Connect
-        (Widget, "draw_default",
-         Widget_Callback.To_Marshaller (Draw_Widget_Focus'Access),
-         After => True);
-      Widget_Callback.Connect
-        (Widget, "draw_focus",
-         Widget_Callback.To_Marshaller (Draw_Widget_Focus'Access),
          After => True);
 
       --  ??? mouse signal - This also needs to be added to all children.
@@ -329,10 +308,9 @@ package body RAD.Editor is
    begin
       if Widget.all in Gtk_Layout_Record'Class then
          Window := Get_Bin_Window (Gtk_Layout (Widget));
-         Origin_X := Grid_Horz_Spacing -
-           Gint (Get_Xoffset (Gtk_Layout (Widget))) mod Grid_Horz_Spacing;
-         Origin_Y := Grid_Vert_Spacing -
-           Gint (Get_Yoffset (Gtk_Layout (Widget))) mod Grid_Vert_Spacing;
+         Origin_X := 0;
+         Origin_Y := 0;
+
       else
          Window := Get_Window (Widget);
          Origin_X := 0;
@@ -374,30 +352,6 @@ package body RAD.Editor is
          end loop;
       end if;
    end Draw_Grid;
-
-   -----------------
-   -- Draw_Widget --
-   -----------------
-
-   procedure Draw_Widget (Widget : access Gtk_Widget_Record'Class) is
-   begin
-      pragma Debug (Message ("In Draw_Widget: " & Get_Name (Widget)));
-
-      Paint_Widget (Widget);
-      --  ??? Gtk.Handlers.Emit_Stop_By_Name (Widget, "draw");
-   end Draw_Widget;
-
-   -----------------------
-   -- Draw_Widget_Focus --
-   -----------------------
-
-   procedure Draw_Widget_Focus (Widget : access Gtk_Widget_Record'Class) is
-   begin
-      pragma Debug
-        (Message ("In Draw_Widget_Focus: " & Get_Name (Widget) &
-           " Parent: " & Get_Name (Get_Parent (Widget))));
-      Paint_Widget (Widget);
-   end Draw_Widget_Focus;
 
    -------------------
    -- Expose_Widget --
@@ -492,13 +446,13 @@ package body RAD.Editor is
       end Find_Child_At;
 
       procedure Find_Notebook_Tab (Widget : access Gtk_Widget_Record'Class) is
-         use Page_List;
+         use Widget_List;
 
          Children : Glist;
-         Page     : Gtk_Notebook_Page;
+         Page     : Gtk_Widget;
 
       begin
-         Children := Get_Children (Gtk_Notebook (Widget));
+         Children := Gtk.Container.Children (Gtk_Container (Widget));
 
          while Children /= Null_List loop
             Page := Get_Data (Children);
@@ -512,7 +466,7 @@ package body RAD.Editor is
             then
                --  Make sure this is a Gb_Widget.
                --  ??? if Is_GB_Widget (Get_Tab_Label (Page))
-               Found_Child := Get_Tab_Label (Page);
+               Found_Child := Get_Tab_Label (Gtk_Notebook (Widget), Page);
             end if;
 
             Children := Next (Children);
