@@ -166,6 +166,7 @@ package Src_Info.Queries is
    end record;
    --  A list of dependencies.
 
+   procedure Destroy (Dep  : in out Dependency);
    procedure Destroy (List : in out Dependency_List);
    --  Destroy the given list, and deallocates all the memory associated.
    --  Has no effect if List is null.
@@ -186,13 +187,63 @@ package Src_Info.Queries is
    --  The status returned by the Find_Dependencies routine.
 
    procedure Find_Dependencies
-     (Lib_Info     : LI_File_Ptr;
-      Dependencies : out Dependency_List;
-      Status       : out Dependencies_Query_Status);
+     (Lib_Info        : LI_File_Ptr;
+      Source_Filename : String;
+      Dependencies    : out Dependency_List;
+      Status          : out Dependencies_Query_Status);
    --  Return the list of units on which the units associated to the given
-   --  LI_File depend.
+   --  LI_File depend. Note that the dependencies.
+   --  Note that only the direct dependencies for Source_Filename are returned
+   --  (or the implicit dependencies). If Source_Filename is a spec, then the
+   --  files imported from the body are not returned.
    --
    --  The list returned by this procedure should be deallocated after use.
+
+   type Dependency_Iterator is private;
+   type Dependency_Iterator_Access is access Dependency_Iterator;
+
+   procedure Find_Ancestor_Dependencies
+     (Root_Project    : Prj.Tree.Project_Node_Id;
+      Source_Filename : String;
+      List            : in out LI_File_List;
+      Iterator        : out Dependency_Iterator;
+      Project         : Prj.Project_Id := Prj.No_Project;
+      Include_Self    : Boolean := False;
+      Predefined_Source_Path : String := "";
+      Predefined_Object_Path : String := "");
+   --  Prepare Iterator to return the list of all files that import
+   --  one of the files associated with the Unit of Source_Filename (that is it
+   --  will return files that depend either on the spec or the body of
+   --  Source_Filename).
+   --  Root_Project should be the root project under which we are looking.
+   --  Source files that don't belong to Root_Project or one of its imported
+   --  project will not be searched.
+   --  Project is the project to which the file where the declaration is found
+   --  belongs. It can optionally be left to Empty_Node if this is not known,
+   --  but the search will take a little bit longer.
+   --
+   --  If Include_Self is true, then the LI file for Source_Filename will also
+   --  be returned. Note, in this case the Dependency returned by Get is pretty
+   --  much irrelevant, and shouldn't be used.
+   --
+   --  You must destroy the iterator when you are done with it, to avoid memory
+   --  leaks.
+
+   procedure Next
+     (Iterator : in out Dependency_Iterator;
+      List     : in out LI_File_List);
+   --  Get the next reference to the entity
+
+   function Get (Iterator : Dependency_Iterator) return Dependency;
+   --  Return the file pointed to. You must free the returned value.
+
+   function Get (Iterator : Dependency_Iterator) return LI_File_Ptr;
+   --  Return the LI for the file that contains the dependency. Note that this
+   --  is not the LI file for Dependency, as returned by Get.
+
+   procedure Destroy (Iterator : in out Dependency_Iterator);
+   procedure Destroy (Iterator : in out Dependency_Iterator_Access);
+   --  Free the memory occupied by the iterator.
 
    ----------------
    -- Scope tree --
@@ -341,10 +392,12 @@ private
 
    package Name_Htable is new String_Hash (Boolean, False);
 
-   type Entity_Reference_Iterator is record
-      Entity : Entity_Information;
+   type Dependency_Iterator is record
       Decl_LI : LI_File_Ptr;
-      --  The entity we are looking for
+      --  The file we are looking for.
+
+      Source_Filename : String_Access;
+      --  Name of the source file that we are examining.
 
       Importing : Prj_API.Project_Id_Array_Access;
       --  List of projects to check
@@ -362,18 +415,30 @@ private
       Current_File : Natural;
       --  The current source file
 
+      Current_Decl : Dependency_File_Info_List;
+      --  The current declaration
+
+      Include_Self : Boolean;
+      --  Whether we should return the LI file for Decl_LI
+
+      LI : LI_File_Ptr;
+   end record;
+
+   type Entity_Reference_Iterator is record
+      Entity    : Entity_Information;
+      Decl_Iter : Dependency_Iterator;
+
       References : E_Reference_List;
       --  The current list of references we are processing.
 
       LI_Once : Boolean;
       --  True if we should return only one reference per LI file
 
-      LI : LI_File_Ptr;
       Part : Unit_Part;
       Current_Separate : File_Info_Ptr_List;
-      --  The LI file we are currently examining. If this is the file in which
-      --  the entity was declared, we need to examine the body, spec, and
-      --  separates, and part indicates which part we are examining
+      --  If the LI file we are examining is the file in which the entity was
+      --  declared, we need to examine the body, spec, and separates, and part
+      --  indicates which part we are examining
    end record;
 
    pragma Inline (File_Information);

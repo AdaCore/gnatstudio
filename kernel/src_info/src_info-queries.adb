@@ -83,9 +83,6 @@ package body Src_Info.Queries is
    --  Same as Find_Declaration_Or_Body, but for a specific declaration list.
    --  Entity_Name must be all lower-cases if the language is case insensitive
 
-   procedure Destroy (Dep : in out Dependency);
-   --  Deallocates the memory associated with the given Dependency record.
-
    procedure Trace_Dump
      (Handler : Debug_Handle;
       Scope : Scope_List;
@@ -394,11 +391,15 @@ package body Src_Info.Queries is
    -----------------------
 
    procedure Find_Dependencies
-     (Lib_Info     : LI_File_Ptr;
-      Dependencies : out Dependency_List;
-      Status       : out Dependencies_Query_Status)
+     (Lib_Info        : LI_File_Ptr;
+      Source_Filename : String;
+      Dependencies    : out Dependency_List;
+      Status          : out Dependencies_Query_Status)
    is
       Current_Dep : Dependency_File_Info_List;
+      FI          : File_Info_Ptr;
+      Part        : Unit_Part;
+      B, S        : Boolean;
    begin
       if Lib_Info = null then
          Dependencies := null;
@@ -407,22 +408,28 @@ package body Src_Info.Queries is
          return;
       end if;
 
+      Part := Get_Unit_Part (Lib_Info, Source_Filename);
+
       Trace (Me, "Getting dependencies for "
              & Get_LI_Filename (Lib_Info));
       Current_Dep  := Lib_Info.LI.Dependencies_Info;
       Dependencies := null;
 
       while Current_Dep /= null loop
-         declare
-            FI : constant File_Info_Ptr :=
-              Get_File_Info (Current_Dep.Value.File);
-         begin
+         B := Get_Depends_From_Body (Current_Dep.Value.Dep_Info);
+         S := Get_Depends_From_Spec (Current_Dep.Value.Dep_Info);
+
+         if (Part = Unit_Spec and then S)
+           or else (Part = Unit_Body and then B)
+           or else not (S or else B)
+         then
+            FI := Get_File_Info (Current_Dep.Value.File);
             if FI = null or else FI.Source_Filename = null then
                Destroy (Dependencies);
                Dependencies := null;
                Status := Internal_Error;
                Trace (Me, "Couldn't find the File_Info_Ptr for "
-                      & Get_LI_Filename (Lib_Info));
+                        & Get_LI_Filename (Lib_Info));
                return;
             end if;
 
@@ -434,9 +441,9 @@ package body Src_Info.Queries is
                        (Current_Dep.Value.File.LI.LI.LI_Filename.all)),
                   Dep  => Current_Dep.Value.Dep_Info),
                Next  => Dependencies);
+         end if;
 
-            Current_Dep := Current_Dep.Next;
-         end;
+         Current_Dep := Current_Dep.Next;
       end loop;
 
       Status := Success;
@@ -1260,9 +1267,7 @@ package body Src_Info.Queries is
    procedure Destroy (Iterator : in out Entity_Reference_Iterator) is
    begin
       Destroy (Iterator.Entity);
-      Free (Iterator.Importing);
-      Free (Iterator.Source_Files);
-      Reset (Iterator.Examined);
+      Destroy (Iterator.Decl_Iter);
    end Destroy;
 
    -------------
@@ -1296,7 +1301,7 @@ package body Src_Info.Queries is
 
    function Get_LI (Iterator : Entity_Reference_Iterator) return LI_File_Ptr is
    begin
-      return Iterator.LI;
+      return Get (Iterator.Decl_Iter);
    end Get_LI;
 
    ----------
@@ -1305,16 +1310,12 @@ package body Src_Info.Queries is
 
    procedure Next
      (Iterator : in out Entity_Reference_Iterator;
-      List         : in out LI_File_List)
+      List     : in out LI_File_List)
    is
       function Check_Declarations (Declarations : E_Declaration_Info_List)
          return E_Reference_List;
       --  Return the list of references to the entity in Declarations, or null
       --  if there is none.
-
-      function Check_File return E_Reference_List;
-      --  Check the current file in the iterator, and return the list of
-      --  references that matches the declaration (or null if there is none).
 
       function Check_LI (LI : LI_File_Ptr) return E_Reference_List;
       --  Set the iterator to examine the declarations in LI
@@ -1343,11 +1344,160 @@ package body Src_Info.Queries is
          return null;
       end Check_Declarations;
 
+      --------------
+      -- Check_LI --
+      --------------
+
+      function Check_LI (LI : LI_File_Ptr) return E_Reference_List is
+         Ref       : E_Reference_List;
+      begin
+         --  If this is the LI file for Decl, we need to parse the
+         --  body and spec infos. Otherwise, only the dependencies
+         if LI = Iterator.Decl_Iter.Decl_LI then
+            Iterator.Part := Unit_Spec;
+
+            if LI.LI.Spec_Info /= null then
+               Ref := Check_Declarations (LI.LI.Spec_Info.Declarations);
+               if Ref /= null then
+                  return Ref;
+               end if;
+            end if;
+
+            return Check_Decl_File;
+
+         --  Otherwise, check all the dependencies to see if we
+         --  have the entity.
+         else
+            return Check_Declarations
+              (Iterator.Decl_Iter.Current_Decl.Value.Declarations);
+         end if;
+      end Check_LI;
+
+      ---------------------
+      -- Check_Decl_File --
+      ---------------------
+
+      function Check_Decl_File return E_Reference_List is
+         Ref : E_Reference_List;
+         LI : LI_File_Ptr := Get (Iterator.Decl_Iter);
+      begin
+         --  Were we checking the declarations from the spec ?
+         if Iterator.Part = Unit_Spec then
+            Iterator.Part := Unit_Body;
+            if LI.LI.Body_Info /= null then
+               Ref := Check_Declarations (LI.LI.Body_Info.Declarations);
+               if Ref /= null then
+                  return Ref;
+               end if;
+            end if;
+         end if;
+
+         --  Were we checking the declarations from the body ?
+         if Iterator.Part = Unit_Body then
+            Iterator.Part := Unit_Separate;
+            Iterator.Current_Separate := LI.LI.Separate_Info;
+         end if;
+
+         --  Are we currently checking the separates
+         if Iterator.Part = Unit_Separate then
+            while Iterator.Current_Separate /= null loop
+               Ref := Check_Declarations
+                 (Iterator.Current_Separate.Value.Declarations);
+               if Ref /= null then
+                  return Ref;
+               end if;
+
+               Iterator.Current_Separate := Iterator.Current_Separate.Next;
+            end loop;
+         end if;
+         return null;
+      end Check_Decl_File;
+
+      First_Next : constant Boolean := Iterator.References = null;
+      --  True if this is the first time we call Next
+
+   begin
+      --  If necessary, force skipping to the next LI file
+      if Iterator.LI_Once then
+         Iterator.References := null;
+         Iterator.Part := Unit_Separate;
+         Iterator.Current_Separate := null;
+      end if;
+
+      --  If there are still some references
+      if Iterator.References /= null then
+         Iterator.References := Iterator.References.Next;
+      end if;
+
+      if Iterator.References = null then
+         --  Were we processing the LI file for the source file that contains
+         --  the initial declaration ?
+         if Get (Iterator.Decl_Iter) = Iterator.Decl_Iter.Decl_LI then
+            Iterator.References := Check_Decl_File;
+            if Iterator.References /= null then
+               return;
+            end if;
+         end if;
+
+         if not First_Next then
+            Next (Iterator.Decl_Iter, List);
+         end if;
+
+         while Get (Iterator.Decl_Iter) /= null loop
+            Iterator.References := Check_LI (Get (Iterator.Decl_Iter));
+            exit when Iterator.References /= null;
+            Next (Iterator.Decl_Iter, List);
+         end loop;
+      end if;
+   end Next;
+
+   -------------------------
+   -- Find_All_References --
+   -------------------------
+   --  Algorithm:
+
+   --  For efficiency, we only look in the direct sources of all the projects
+   --  that import, even indirectly the project that contains the declaration
+   --  source file. No files in other projects can reference that entity, since
+   --  it is not visible.
+   --  We also only look in the files that are in the same language.
+
+   procedure Find_All_References
+     (Root_Project : Prj.Tree.Project_Node_Id;
+      Entity       : Entity_Information;
+      List         : in out LI_File_List;
+      Iterator     : out Entity_Reference_Iterator;
+      Project      : Prj.Project_Id := Prj.No_Project;
+      LI_Once      : Boolean := False) is
+   begin
+      Iterator.Entity := Copy (Entity);
+      Iterator.LI_Once := LI_Once;
+      Find_Ancestor_Dependencies
+        (Root_Project, Get_Declaration_File_Of (Entity), List,
+         Iterator.Decl_Iter, Project, Include_Self => True);
+      Next (Iterator, List);
+   end Find_All_References;
+
+   ----------
+   -- Next --
+   ----------
+
+   procedure Next
+     (Iterator : in out Dependency_Iterator;
+      List     : in out LI_File_List)
+   is
+      function Check_File return Dependency_File_Info_List;
+      --  Check the current file in the iterator, and return the list of
+      --  references that matches the declaration (or null if there is none).
+
+      function Check_LI (LI : LI_File_Ptr) return Dependency_File_Info_List;
+      --  Set the iterator to examine the declarations in LI
+
       ----------------
       -- Check_File --
       ----------------
 
-      function Check_File return E_Reference_List is
+      function Check_File return Dependency_File_Info_List is
          LI      : LI_File_Ptr;
          Handler : LI_Handler;
          Sep_List : File_Info_Ptr_List;
@@ -1404,178 +1554,119 @@ package body Src_Info.Queries is
                return Check_LI (LI);
             end if;
          end if;
+         Iterator.LI := null;
          return null;
+
+      exception
+         when Unsupported_Language =>
+            Iterator.LI := null;
+            return null;
       end Check_File;
 
       --------------
       -- Check_LI --
       --------------
 
-      function Check_LI (LI : LI_File_Ptr) return E_Reference_List is
-         Ref       : E_Reference_List;
-         Decl_List : Dependency_File_Info_List;
+      function Check_LI (LI : LI_File_Ptr) return Dependency_File_Info_List is
+         Dep : Dependency_File_Info_List := LI.LI.Dependencies_Info;
       begin
-         --  If this is the LI file for Decl, we need to parse the
-         --  body and spec infos. Otherwise, only the dependencies
          Iterator.LI := LI;
-         if LI = Iterator.Decl_LI then
-            Iterator.Part := Unit_Spec;
 
-            if LI.LI.Spec_Info /= null then
-               Ref := Check_Declarations (LI.LI.Spec_Info.Declarations);
-               if Ref /= null then
-                  return Ref;
-               end if;
+         if Iterator.Include_Self and then LI = Iterator.Decl_LI then
+            --  We return a dummy value, which could be null (although there
+            --  will be one less test if it is not null).
+            return Dep;
+         end if;
+
+         while Dep /= No_Dependencies loop
+            if Dep.Value.File.LI = Iterator.Decl_LI
+              and then Get_Source_Filename (Dep.Value.File) =
+                Iterator.Source_Filename.all
+            then
+               return Dep;
             end if;
 
-            return Check_Decl_File;
-
-         --  Otherwise, check all the dependencies to see if we
-         --  have the entity.
-         else
-            Decl_List := LI.LI.Dependencies_Info;
-            while Decl_List /= null loop
-               if Decl_List.Value.File.LI = Iterator.Decl_LI then
-                  return Check_Declarations (Decl_List.Value.Declarations);
-               end if;
-
-               Decl_List := Decl_List.Next;
-            end loop;
-         end if;
+            Dep := Dep.Next;
+         end loop;
          return null;
       end Check_LI;
 
-      ---------------------
-      -- Check_Decl_File --
-      ---------------------
-
-      function Check_Decl_File return E_Reference_List is
-         Ref : E_Reference_List;
-      begin
-         --  Were we checking the declarations from the spec ?
-         if Iterator.Part = Unit_Spec then
-            Iterator.Part := Unit_Body;
-            if Iterator.LI.LI.Body_Info /= null then
-               Ref := Check_Declarations
-                 (Iterator.LI.LI.Body_Info.Declarations);
-               if Ref /= null then
-                  return Ref;
-               end if;
-            end if;
-         end if;
-
-         --  Were we checking the declarations from the body ?
-         if Iterator.Part = Unit_Body then
-            Iterator.Part := Unit_Separate;
-            Iterator.Current_Separate := Iterator.LI.LI.Separate_Info;
-         end if;
-
-         --  Are we currently checking the separates
-         if Iterator.Part = Unit_Separate then
-            while Iterator.Current_Separate /= null loop
-               Ref := Check_Declarations
-                 (Iterator.Current_Separate.Value.Declarations);
-               if Ref /= null then
-                  return Ref;
-               end if;
-
-               Iterator.Current_Separate := Iterator.Current_Separate.Next;
-            end loop;
-         end if;
-         return null;
-      end Check_Decl_File;
-
    begin
-      --  If necessary, force skipping to the next LI file
-      if Iterator.LI_Once then
-         Iterator.References := null;
-         Iterator.Part := Unit_Separate;
-         Iterator.Current_Separate := null;
-      end if;
-
-      --  If there are still some references
-      if Iterator.References /= null then
-         Iterator.References := Iterator.References.Next;
-      end if;
-
-      if Iterator.References = null then
-         --  Were we processing the LI file for the source file that contains
-         --  the initial declaration ?
-         if Iterator.LI = Iterator.Decl_LI then
-            Iterator.References := Check_Decl_File;
-            if Iterator.References /= null then
+      loop
+         --  Move to the next file in the current project
+         loop
+            Iterator.Current_File := Iterator.Current_File + 1;
+            exit when Iterator.Current_File > Iterator.Source_Files'Last;
+            Iterator.Current_Decl := Check_File;
+            if Iterator.Current_Decl /= null
+              or else (Iterator.LI = Iterator.Decl_LI
+                       and then Iterator.Include_Self)
+            then
                return;
             end if;
+         end loop;
+
+         --  Move to the next project
+
+         Free (Iterator.Source_Files);
+         Reset (Iterator.Examined);
+         Iterator.Current_Project := Iterator.Current_Project + 1;
+
+         if Iterator.Current_Project > Iterator.Importing'Last then
+            Iterator.Current_Decl := null;
+            Iterator.LI := No_LI_File;
+            Free (Iterator.Importing);
+            return;
          end if;
 
-         while Iterator.References = null loop
-
-            --  Move to the next file in the current project
-            loop
-               Iterator.Current_File := Iterator.Current_File + 1;
-               exit when Iterator.Current_File > Iterator.Source_Files'Last;
-               Iterator.References := Check_File;
-               if Iterator.References /= null then
-                  return;
-               end if;
-            end loop;
-
-            --  Move to the next project
-
-            Free (Iterator.Source_Files);
-            Reset (Iterator.Examined);
-            Iterator.Current_Project := Iterator.Current_Project + 1;
-
-            if Iterator.Current_Project > Iterator.Importing'Last then
-               Free (Iterator.Importing);
-               return;
-            end if;
-
-            Iterator.Source_Files := Get_Source_Files
-              (Get_Project_From_View
-                 (Iterator.Importing (Iterator.Current_Project)),
-               Recursive => False,
-               Full_Path => False);
-            Iterator.Current_File := Iterator.Source_Files'First - 1;
-         end loop;
-      end if;
+         Iterator.Source_Files := Get_Source_Files
+           (Get_Project_From_View
+              (Iterator.Importing (Iterator.Current_Project)),
+            Recursive => False,
+            Full_Path => False);
+         Iterator.Current_File := Iterator.Source_Files'First - 1;
+      end loop;
    end Next;
 
-   -------------------------
-   -- Find_All_References --
-   -------------------------
-   --  Algorithm:
+   --------------------------------
+   -- Find_Ancestor_Dependencies --
+   --------------------------------
 
-   --  For efficiency, we only look in the direct sources of all the projects
-   --  that import, even indirectly the project that contains the declaration
-   --  source file. No files in other projects can reference that entity, since
-   --  it is not visible.
-   --  We also only look in the files that are in the same language.
-
-   procedure Find_All_References
-     (Root_Project : Prj.Tree.Project_Node_Id;
-      Entity       : Entity_Information;
-      List         : in out LI_File_List;
-      Iterator     : out Entity_Reference_Iterator;
-      Project      : Prj.Project_Id := Prj.No_Project;
-      LI_Once      : Boolean := False)
+   procedure Find_Ancestor_Dependencies
+     (Root_Project    : Prj.Tree.Project_Node_Id;
+      Source_Filename : String;
+      List            : in out LI_File_List;
+      Iterator        : out Dependency_Iterator;
+      Project         : Prj.Project_Id := Prj.No_Project;
+      Include_Self    : Boolean := False;
+      Predefined_Source_Path : String := "";
+      Predefined_Object_Path : String := "")
    is
       Decl_Project : Project_Id := Project;
    begin
       if Decl_Project = No_Project then
          Decl_Project := Get_Project_From_File
-           (Get_Project_View_From_Project (Root_Project),
-            Get_Declaration_File_Of (Entity));
+           (Get_Project_View_From_Project (Root_Project), Source_Filename);
       end if;
 
-      Iterator.Decl_LI := Locate_From_Source
-        (List, Get_Declaration_File_Of (Entity));
+      Iterator.LI := No_LI_File;
+      Iterator.Decl_LI := Locate_From_Source (List, Source_Filename);
+      Create_Or_Complete_LI
+        (Handler                =>
+           Handler_From_Filename (Decl_Project, Source_Filename),
+         File                   => Iterator.Decl_LI,
+         Source_Filename        => Source_Filename,
+         List                   => List,
+         Project                => Decl_Project,
+         Predefined_Source_Path => Predefined_Source_Path,
+         Predefined_Object_Path => Predefined_Object_Path);
+
       Assert (Me,
               Iterator.Decl_LI /= null,
-              "LI file not found for entity " & Get_Name (Entity));
+              "LI file not found for " & Source_Filename);
 
-      Iterator.Entity := Copy (Entity);
-      Iterator.LI_Once := LI_Once;
+      Iterator.Source_Filename := new String' (Source_Filename);
+      Iterator.Include_Self := Include_Self;
       Iterator.Importing := new Project_Id_Array'
         (Find_All_Projects_Importing (Root_Project, Decl_Project));
       Iterator.Current_Project := Iterator.Importing'First;
@@ -1587,6 +1678,94 @@ package body Src_Info.Queries is
       Iterator.Current_File := Iterator.Source_Files'First - 1;
 
       Next (Iterator, List);
-   end Find_All_References;
+
+   exception
+      when Unsupported_Language =>
+         Trace (Me, "Find_Ancestor_Dependencies: Unsupported language");
+         Destroy (Iterator);
+
+      when Assert_Failure =>
+         Destroy (Iterator);
+   end Find_Ancestor_Dependencies;
+
+   ---------
+   -- Get --
+   ---------
+
+   function Get (Iterator : Dependency_Iterator)
+      return Dependency
+   is
+      S : GNAT.OS_Lib.String_Access;
+   begin
+      if Iterator.LI = Iterator.Decl_LI then
+         return
+           (File => Internal_File'
+              (File_Name => new String' (""),
+               LI_Name   => new String' (Iterator.Decl_LI.LI.LI_Filename.all)),
+            Dep => (False, False));
+      end if;
+
+      if Iterator.Current_Decl.Value.Dep_Info.Depends_From_Spec
+        and then Iterator.LI.LI.Spec_Info /= null
+      then
+         S := new String' (Iterator.LI.LI.Spec_Info.Source_Filename.all);
+
+      elsif Iterator.Current_Decl.Value.Dep_Info.Depends_From_Body
+        and then Iterator.LI.LI.Body_Info /= null
+      then
+         S := new String' (Iterator.LI.LI.Body_Info.Source_Filename.all);
+
+      elsif Iterator.LI.LI.Spec_Info /= null then
+         S := new String' (Iterator.LI.LI.Spec_Info.Source_Filename.all);
+
+      elsif Iterator.LI.LI.Body_Info /= null then
+         S := new String' (Iterator.LI.LI.Body_Info.Source_Filename.all);
+
+      else
+         S := new String' ("");
+      end if;
+
+      return
+        (File => Internal_File'
+           (File_Name => S,
+            LI_Name   => new String'
+              (Iterator.Current_Decl.Value.File.LI.LI.LI_Filename.all)),
+         Dep  => Iterator.Current_Decl.Value.Dep_Info);
+   end Get;
+
+   ---------
+   -- Get --
+   ---------
+
+   function Get (Iterator : Dependency_Iterator) return LI_File_Ptr is
+   begin
+      return Iterator.LI;
+   end Get;
+
+   -------------
+   -- Destroy --
+   -------------
+
+   procedure Destroy (Iterator : in out Dependency_Iterator) is
+   begin
+      Free (Iterator.Source_Filename);
+      Free (Iterator.Importing);
+      Free (Iterator.Source_Files);
+      Reset (Iterator.Examined);
+   end Destroy;
+
+   -------------
+   -- Destroy --
+   -------------
+
+   procedure Destroy
+     (Iterator : in out Dependency_Iterator_Access)
+   is
+      procedure Unchecked_Free is new Unchecked_Deallocation
+        (Dependency_Iterator, Dependency_Iterator_Access);
+   begin
+      Destroy (Iterator.all);
+      Unchecked_Free (Iterator);
+   end Destroy;
 
 end Src_Info.Queries;
