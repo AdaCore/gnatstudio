@@ -953,7 +953,6 @@ package body VCS_Module is
       Clear_Logs     : constant Boolean := Nth_Arg (Data, 3);
       Local          : constant Boolean := Nth_Arg (Data, 4);
 
-      Status : File_Status_List.List;
    begin
       Ref := Get_VCS_From_Id (VCS_Identifier);
 
@@ -964,14 +963,7 @@ package body VCS_Module is
          return;
       end if;
 
-      Status := Parse_Status (Ref, S, Local);
-      Display_File_Status
-        (Kernel, Status, Ref,
-         Override_Cache => not Local,
-         Force_Display  => True,
-         Clear_Logs     => Clear_Logs);
-
-      --  ??? Should we free Status ?
+      Parse_Status (Ref, S, Local, Clear_Logs);
    end Status_Parse_Handler;
 
    -------------------------------
@@ -1014,16 +1006,22 @@ package body VCS_Module is
       D : constant File_Hooks_Args := File_Hooks_Args (Data);
       Files  : List;
       Ref    : VCS_Access;
-
+      Status : File_Status_Record;
    begin
-      Append (Files, Full_Name (D.File).all);
       Ref    := Get_Current_Ref
         (Get_Project_From_File (Get_Registry (Kernel), D.File, True));
 
-      --  ??? We could try to retrieve the status from the VCS Explorer cache.
+      Status := Get_Cached_Status
+        (Get_Explorer (Kernel_Handle (Kernel), False), D.File, Ref);
 
-      Get_Status (Ref, Files, False, Local => True);
-      Free (Files);
+      if Status.File = VFS.No_File then
+         Append (Files, Full_Name (D.File).all);
+         Get_Status (Ref, Files, False, Local => True);
+         Free (Files);
+      else
+         Display_Editor_Status
+           (Kernel_Handle (Kernel), Ref, Status);
+      end if;
 
    exception
       when E : others =>
