@@ -60,13 +60,14 @@ package Open_Session_Pkg is
    --  button has been pressed.
    --  Open if null is set to the created window, that is hidden on return.
    --  If non null, Open_Session will show it instead of creating a new one.
-   --  Return the program descriptor. If Launch is None,
+   --  Return the session file name. If Launch is None,
    --  this means a cancellation from the user.
    --  Note that this is your responsibility to free the memory associated with
    --  Descriptor, using Free below.
 
+private
+
    procedure Gtk_New (Open_Session : out Open_Session_Access);
    procedure Initialize (Open_Session : access Open_Session_Record'Class);
-
 
 end Open_Session_Pkg;
