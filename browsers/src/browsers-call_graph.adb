@@ -1185,7 +1185,9 @@ package body Browsers.Call_Graph is
          Column    => Col,
          Length    => Name'Length,
          Highlight => True,
-         Highlight_Category => "Search Results");
+         Highlight_Category => "Search Results",
+         Remove_Duplicates => False,
+         Enable_Counter    => False);
    end Print_Ref;
 
    -------------------------
@@ -1200,6 +1202,8 @@ package body Browsers.Call_Graph is
       Location : File_Location;
    begin
       if At_End (Data.Iter.all) then
+         Recount_Category
+           (Data.Kernel, Data.Category.all & Get_Name (Data.Entity));
          Result := Success;
       else
          if Get (Data.Iter.all) /= No_Entity_Reference then
