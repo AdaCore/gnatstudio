@@ -1325,12 +1325,6 @@ package body Src_Editor_Buffer.Line_Information is
       if not Lines_Are_Real (Buffer) then
          EN := Buffer_Lines (End_Line).Editable_Line -
            Buffer_Lines (Start_Line).Editable_Line;
-
-         for J in Start_Line .. End_Line loop
-            if Buffer_Lines (J).Editable_Line = 0 then
-               EN := EN - 1;
-            end if;
-         end loop;
       end if;
 
       for J in Start_Line .. Buffer_Lines'Last - Number - 1 loop
