@@ -114,7 +114,9 @@ package body Main_Debug_Window_Pkg.Callbacks is
       declare
          S : constant String := To_Unix_Pathname (File_Selection_Dialog);
       begin
-         if Is_Regular_File (S) then
+         if Tab.Descriptor.Remote_Host /= null
+           or else Is_Regular_File (S)
+         then
             Set_Executable (Tab.Debugger, S, Mode => Hidden);
          else
             Print_Message
