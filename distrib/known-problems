@@ -36,6 +36,13 @@ Known Problems fixed in GPS 3.0.0
               refreshed after doing a Commit operation
   Workaround: Refresh the VCS Explorer using the Query Status operation.
 
+- E111-013 File casing incorrectly shown in project properties editor
+  Problem:    On Windows, if you edit the properties of a project file that
+              sets the Naming.Casing attribute to "MixedCase", the editor will
+              show "lower case" instead.
+  Workaround: This is just a display glitch, and doesn't impact the way your
+              project is loaded by GPS
+
 - E106-004 GPS crashes when closing editors of a file that has been modified
   Problem:    When a file is modified outside of GPS, and when closing the
               editor associated to this file, it is possible that the editor
