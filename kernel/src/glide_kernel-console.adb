@@ -412,7 +412,7 @@ package body Glide_Kernel.Console is
       Child := Put
         (Get_MDI (Kernel), Interactive_Console,
          Iconify_Button or Maximize_Button);
-      Set_Title (Child, -"Console");
+      Set_Title (Child, -"Shell");
       Set_Dock_Side (Child, Bottom);
       Dock_Child (Child);
 
@@ -463,8 +463,6 @@ package body Glide_Kernel.Console is
         (Kernel, Console, -"_Clear", "", On_Clear_Console'Access);
       Register_Menu
         (Kernel, Console, -"_Save As...", "", On_Save_Console_As'Access);
-      Register_Menu
-        (Kernel, Console, -"_Load Contents...", "", On_Load_To_Console'Access);
       Gtk_New (Mitem);
       Register_Menu (Kernel, File, Mitem, Ref_Item => -"Close");
    end Register_Module;
