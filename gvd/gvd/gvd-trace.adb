@@ -18,23 +18,28 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with GNAT.OS_Lib;     use GNAT.OS_Lib;
 with GVD.Main_Window; use GVD.Main_Window;
 with GVD.Types;       use GVD.Types;
 with Process_Proxies; use Process_Proxies;
 with Debugger;        use Debugger;
 with System;
 with Ada.Unchecked_Conversion;
+with Traces;          use Traces;
 
 package body GVD.Trace is
 
-   Input_String  : aliased constant String := "-> """;
-   Output_String : aliased constant String := "<- """;
-   Quote_EOL     : aliased constant String := '"' & ASCII.LF;
-   Quote_SOL     : aliased constant String := "       """;
-   Verbose_EOL   : aliased constant String := "\n";
-   Verbose_CR    : aliased constant String := "\r";
-   Verbose_HT    : aliased constant String := "\t";
+   --  Internally, we only handle two different handles, since it makes things
+   --  much simpler to activate, and anyway we either want the minimal or all
+   --  of it anyway
+   Me : constant array (Command_Type) of Debug_Handle :=
+     (Internal => Create ("GVD.Out", Off),   --  Could be "Internal"
+      Hidden   => Create ("GVD.Out", Off),   --  Could be "Hidden"
+      Visible  => Create ("GVD.Out", Off),   --  Could be "Visible"
+      User     => Create ("GVD.Out", Off));  --  Could be "User"
+
+   Direction_String : constant array (IO_Kind) of String (1 .. 4) :=
+     (Input_Kind  => "-> """,
+      Output_Kind => "<- """);
 
    pragma Warnings (Off);
    --  This UC is safe aliasing-wise, so kill warning
@@ -46,40 +51,34 @@ package body GVD.Trace is
    -- Output_Error --
    ------------------
 
-   procedure Output_Error (Window : GVD_Main_Window; Str : String) is
+   procedure Output_Error (Str : String) is
    begin
-      Output_Line (Window, "# " & Str);
+      Output_Line ("# " & Str);
       if Global_Output /= null then
          Output (Global_Output.all, Str, Error => True);
       end if;
    end Output_Error;
 
    -----------------
+   -- Output_Line --
+   -----------------
+
+   procedure Output_Line (Str : String) is
+   begin
+      Traces.Trace (Me (User), Str);
+   end Output_Line;
+
+   -----------------
    -- Output_Info --
    -----------------
 
-   procedure Output_Info (Window : GVD_Main_Window; Str : String) is
+   procedure Output_Info (Str : String) is
    begin
-      Output_Line (Window, "% " & Str);
+      Output_Line ("% " & Str);
       if Global_Output /= null then
          Output (Global_Output.all, Str, Error => False);
       end if;
    end Output_Info;
-
-   -----------------
-   -- Output_Line --
-   -----------------
-
-   procedure Output_Line (Window : GVD_Main_Window; Str : String) is
-      N  : Integer;
-      pragma Unreferenced (N);
-
-      LF : aliased constant String := (1 => ASCII.LF);
-
-   begin
-      N := Write (Window.Log_File, Str'Address, Str'Length);
-      N := Write (Window.Log_File, LF'Address, LF'Length);
-   end Output_Line;
 
    --------------------
    -- Output_Message --
@@ -91,50 +90,57 @@ package body GVD.Trace is
       Mode    : Command_Type;
       Kind    : IO_Kind := Input_Kind)
    is
-      N      : Integer;
-      pragma Unreferenced (N);
-
-      File   : File_Descriptor renames Process.Window.Log_File;
-      Num    : constant String := Integer'Image (Process.Debugger_Num);
-      Prefix : aliased constant String := '[' & Num (2 .. Num'Last) & "] ";
+      Num  : constant String := Integer'Image (Process.Debugger_Num);
+      Output : String (1 .. Str'Length * 2);
+      pragma Warnings (Off, Output);
+      Index  : Natural := Output'First;
+      Prefix : constant String := '[' & Num (2 .. Num'Last) & "] ";
+      Had_Output : Boolean := False;
 
    begin
-      if Mode < Process.Window.Log_Level then
-         return;
-      end if;
-
-      if Kind = Input_Kind then
-         N := Write (File, Prefix'Address, Prefix'Length);
-         N := Write (File, Input_String'Address, Input_String'Length);
-
-      elsif Kind = Output_Kind then
-         N := Write (File, Prefix'Address, Prefix'Length);
-         N := Write (File, Output_String'Address, Output_String'Length);
-
-      else
-         raise Program_Error;
-      end if;
-
       for J in Str'Range loop
          case Str (J) is
             when ASCII.LF =>
-               N := Write (File, Verbose_EOL'Address, Verbose_EOL'Length);
-
-               if J < Str'Last then
-                  N := Write (File, Quote_EOL'Address, Quote_EOL'Length);
-                  N := Write (File, Quote_SOL'Address, Quote_SOL'Length);
+               if not Had_Output then
+                  Traces.Trace (Me (Mode), Prefix
+                         & Direction_String (Kind)
+                         & Output (Output'First .. Index - 1)
+                         & '"');
+                  Had_Output := True;
+               else
+                  Traces.Trace (Me (Mode), Prefix & "..."
+                         & Direction_String (Kind)
+                         & Output (Output'First .. Index - 1)
+                         & '"');
                end if;
-
+               Index := Output'First;
             when ASCII.CR =>
-               N := Write (File, Verbose_CR'Address, Verbose_CR'Length);
+               Output (Index)     := '\';
+               Output (Index + 1) := 'r';
+               Index := Index + 2;
             when ASCII.HT =>
-               N := Write (File, Verbose_HT'Address, Verbose_HT'Length);
+               Output (Index)     := '\';
+               Output (Index + 1) := 't';
+               Index := Index + 2;
             when others =>
-               N := Write (File, Str (J)'Address, 1);
+               Output (Index) := Str (J);
+               Index := Index + 1;
          end case;
       end loop;
 
-      N := Write (File, Quote_EOL'Address, Quote_EOL'Length);
+      if Index > Output'First then
+         if not Had_Output then
+            Traces.Trace (Me (Mode), Prefix
+                   & Direction_String (Kind)
+                   & Output (Output'First .. Index - 1)
+                   & '"');
+         else
+            Traces.Trace (Me (Mode), Prefix & "..."
+                   & Direction_String (Kind)
+                   & Output (Output'First .. Index - 1)
+                   & '"');
+         end if;
+      end if;
    end Output_Message;
 
    ------------------

@@ -21,7 +21,6 @@
 with GNAT.Expect;     use GNAT.Expect;
 with GVD.Process;     use GVD.Process;
 with GVD.Types;       use GVD.Types;
-with GVD.Main_Window; use GVD.Main_Window;
 with System;
 
 package GVD.Trace is
@@ -40,13 +39,13 @@ package GVD.Trace is
 
    Global_Output : Output_Proc;
 
-   procedure Output_Error (Window : GVD_Main_Window; Str : String);
+   procedure Output_Error (Str : String);
    --  Output an error through Global_Output
 
-   procedure Output_Info (Window : GVD_Main_Window; Str : String);
+   procedure Output_Info (Str : String);
    --  Output some information through Global_Output
 
-   procedure Output_Line (Window : GVD_Main_Window; Str : String);
+   procedure Output_Line (Str : String);
    --  Write on the log file associated with Window.
 
    procedure Output_Message

@@ -259,8 +259,7 @@ package body Debugger.Gdb is
             return;
          else
             Output_Error
-              (Process.Window,
-               (-"Language unknown, defaulting to C: ") & Lang);
+              ((-"Language unknown, defaulting to C: ") & Lang);
             Language := new Gdb_C_Language;
          end if;
 

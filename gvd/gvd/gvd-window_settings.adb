@@ -28,8 +28,6 @@ with Gtkada.Canvas;       use Gtkada.Canvas;
 
 with Debugger;
 with GVD.Main_Window;     use GVD.Main_Window;
---  with GVD.Memory_View;     use GVD.Memory_View;
---  with GVD.Dialogs;         use GVD.Dialogs;
 with GVD.Process;         use GVD.Process;
 with GVD.Preferences;     use GVD.Preferences;
 with GVD.Call_Stack;      use GVD.Call_Stack;
@@ -64,12 +62,6 @@ package body GVD.Window_Settings is
      "Main_Debug_Window_Height";
    Main_Debug_Window_Width  : constant String_Gint :=
      "Main_Debug_Window_Width";
---     Memory_View_Height       : constant String_Gint := "Memory_View_Height";
---     Memory_View_Width        : constant String_Gint := "Memory_View_Width";
---  History_Dialog_Height    : constant String_Gint := "History_Dialog_Height";
---  History_Dialog_Width     : constant String_Gint := "History_Dialog_Width";
---     Task_Dialog_Height       : constant String_Gint := "Task_Dialog_Height";
---     Task_Dialog_Width        : constant String_Gint := "Task_Dialog_Width";
 
    ---------------------
    -- Local variables --
@@ -97,10 +89,8 @@ package body GVD.Window_Settings is
    --------------------------
 
    procedure Load_Window_Settings
-     (File_Name         : String;
-      Main_Debug_Window : Gtk_Widget)
+     (File_Name         : String)
    is
-      Top : constant GVD_Main_Window := GVD_Main_Window (Main_Debug_Window);
       Err : GNAT.OS_Lib.String_Access;
    begin
       if Current_Window_Settings /= null then
@@ -110,27 +100,9 @@ package body GVD.Window_Settings is
       XML_Parsers.Parse (File_Name, Current_Window_Settings, Err);
 
       if Current_Window_Settings = null then
-         Output_Line (Top, Err.all);
+         Output_Line (Err.all);
          Free (Err);
       end if;
-
-      --  Superceded by GPS's desktop
-
---        Set_Default_Size (Top,
---                          Get_Setting (Main_Debug_Window_Width),
---                          Get_Setting (Main_Debug_Window_Height));
---
---        Set_Default_Size (Top.Memory_View,
---                          Get_Setting (Memory_View_Width),
---                          Get_Setting (Memory_View_Height));
---
---        Set_Default_Size (Top.History_Dialog,
---                          Get_Setting (History_Dialog_Width),
---                          Get_Setting (History_Dialog_Height));
-
---        Set_Default_Size (Top.Task_Dialog,
---                          Get_Setting (Task_Dialog_Width),
---                          Get_Setting (Task_Dialog_Height));
    end Load_Window_Settings;
 
    --------------------------
@@ -158,41 +130,6 @@ package body GVD.Window_Settings is
 
       Set (Main_Debug_Window_Width, Gint (Get_Allocation_Width (Top)), True);
       Set (Main_Debug_Window_Height, Gint (Get_Allocation_Height (Top)), True);
-
-      --  Superceded by GPS's desktop
-
---        if Get_Allocation_Width (Top.Memory_View) /= 1
---          and then Get_Allocation_Height (Top.Memory_View) /= 1
---        then
---           Set (Memory_View_Width,
---                Gint (Get_Allocation_Width (Top.Memory_View)),
---                True);
---           Set (Memory_View_Height,
---                Gint (Get_Allocation_Height (Top.Memory_View)),
---                True);
---        end if;
---
---        if Get_Allocation_Width (Top.History_Dialog) /= 1
---          and then Get_Allocation_Height (Top.History_Dialog) /= 1
---        then
---           Set (History_Dialog_Width,
---                Gint (Get_Allocation_Width (Top.History_Dialog)),
---                True);
---           Set (History_Dialog_Height,
---                Gint (Get_Allocation_Height (Top.History_Dialog)),
---                True);
---        end if;
-
---        if Get_Allocation_Width (Top.Task_Dialog) /= 1
---          and then Get_Allocation_Height (Top.Task_Dialog) /= 1
---        then
---           Set (Task_Dialog_Width,
---                Gint (Get_Allocation_Width (Top.Task_Dialog)),
---                True);
---           Set (Task_Dialog_Height,
---                Gint (Get_Allocation_Height (Top.Task_Dialog)),
---                True);
---        end if;
 
       while Debugger_List /= null loop
          Process := Visual_Debugger (Debugger_List.Debugger);

@@ -273,8 +273,7 @@ package body Display_Items is
                       "Exception when getting type of entity: "
                       & Exception_Information (E));
                Output_Error
-                 (Debugger.Window,
-                  (-"Could not parse type for ") & Variable_Name);
+                 ((-"Could not parse type for ") & Variable_Name);
 
                Entity := New_Debugger_Type
                  (Print_Value_Cmd (Debugger.Debugger, Variable_Name));
@@ -284,8 +283,7 @@ package body Display_Items is
          if Entity = null then
             Trace (Me, "Result of Parse_Type is null");
             Output_Error
-              (Debugger.Window,
-               (-"Could not get the type of ") & Variable_Name);
+              ((-"Could not get the type of ") & Variable_Name);
             Entity := New_Debugger_Type
               (Print_Value_Cmd (Debugger.Debugger, Variable_Name));
             Is_Parsable_Entity := False;
@@ -349,15 +347,13 @@ package body Display_Items is
 
                if not Value_Found then
                   Output_Error
-                    (Debugger.Window,
-                     (-"Could not get the value of ") & Variable_Name);
+                    ((-"Could not get the value of ") & Variable_Name);
                end if;
 
             exception
                when Language.Unexpected_Type | Constraint_Error =>
                   Output_Error
-                    (Debugger.Window,
-                     (-"Could not parse the value for ") & Variable_Name);
+                    ((-"Could not parse the value for ") & Variable_Name);
                   Set_Busy (Debugger, False);
                   return;
             end;

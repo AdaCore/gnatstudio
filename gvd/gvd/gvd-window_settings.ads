@@ -32,8 +32,7 @@ package GVD.Window_Settings is
    --  Save the window settings in the given file.
 
    procedure Load_Window_Settings
-     (File_Name         : String;
-      Main_Debug_Window : Gtk_Widget);
+     (File_Name         : String);
    --  Load the window settings from the file.
 
    type Process_Tab_Geometry is record

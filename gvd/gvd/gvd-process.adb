@@ -1327,7 +1327,7 @@ package body GVD.Process is
 
          if Executable /= "" then
             Output_Error
-              (Process.Window, (-" Could not find file: ") & Executable);
+              ((-" Could not find file: ") & Executable);
          end if;
       end if;
 
@@ -1693,7 +1693,7 @@ package body GVD.Process is
    exception
       when Constraint_Error =>
          --  Usually because Find_Item returned a null value.
-         Output_Error (Process.Window, (-" Invalid command: ") & Cmd);
+         Output_Error ((-" Invalid command: ") & Cmd);
    end Process_Graph_Cmd;
 
    ----------------------
@@ -1720,7 +1720,7 @@ package body GVD.Process is
 
    exception
       when Constraint_Error =>
-         Output_Error (Process.Window, (-" Invalid command: ") & Cmd);
+         Output_Error ((-" Invalid command: ") & Cmd);
    end Process_View_Cmd;
 
    --------------------

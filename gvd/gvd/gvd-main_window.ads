@@ -74,10 +74,8 @@ package GVD.Main_Window is
       Task_Dialog         : Task_Dialog_Access;
       PD_Dialog           : PD_Dialog_Access;
       Breakpoints_Editor  : Gtk.Window.Gtk_Window;
-      Log_File            : File_Descriptor := Standerr;
       TTY_Mode            : Boolean := False;
       Debug_Mode          : Boolean := False;
-      Log_Level           : GVD.Types.Command_Type := GVD.Types.Internal;
       Prefix_Directory    : String_Access;
       External_XID        : Glib.Guint32 := 0;
 
