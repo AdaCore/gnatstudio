@@ -34,7 +34,7 @@ with Gtk.Label;             use Gtk.Label;
 with Gtk.Menu;              use Gtk.Menu;
 with Gtk.Table;             use Gtk.Table;
 with Gtk.Widget;            use Gtk.Widget;
-with Gtkada.File_Selection; use Gtkada.File_Selection;
+with Gtkada.File_Selector;  use Gtkada.File_Selector;
 with Gtkada.Handlers;       use Gtkada.Handlers;
 
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
@@ -353,11 +353,10 @@ package body Creation_Wizard is
    ---------------------------
 
    procedure Advanced_Prj_Location (W : access Gtk_Widget_Record'Class) is
-      Name : constant String := File_Selection_Dialog
-        (-"Select project file location",
-         Default_Dir => Name_As_Directory
-         (Get_Text (Prj_Wizard (W).Project_Location)),
-         Dir_Only => True);
+      Name : constant String := Select_Directory
+        (Title          => -"Select project file location",
+         Base_Directory => Name_As_Directory
+           (Get_Text (Prj_Wizard (W).Project_Location)));
    begin
       if Name /= "" then
          Set_Text (Prj_Wizard (W).Project_Location, Name);
