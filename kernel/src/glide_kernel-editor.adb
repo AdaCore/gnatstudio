@@ -215,7 +215,7 @@ package body Glide_Kernel.Editor is
       File      : String;
       Line      : Natural := 0;
       Column    : Natural := 0;
-      Highlight : Boolean := False)
+      Highlight : Boolean := True)
    is
       Edit : Source_Editor_Box;
    begin

@@ -51,7 +51,7 @@ package Glide_Kernel.Editor is
       File      : String;
       Line      : Natural := 0;
       Column    : Natural := 0;
-      Highlight : Boolean := False);
+      Highlight : Boolean := True);
    --  Go to the specified file at Line:Column
    --  Depending on the preferences, this may or may not open a new editor.
    --  If Highlight is True, Line will be highlighted.
