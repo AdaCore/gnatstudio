@@ -85,11 +85,18 @@ package body Glide_Kernel.Editor is
    ------------------------
 
    function Get_Current_Editor (Top : Glide_Window) return Source_Editor_Box is
-      MDI    : constant MDI_Window :=
+      MDI         : constant MDI_Window :=
         Glide_Page.Glide_Page (Get_Current_Process (Top)).Process_Mdi;
-      Source : Gtk_Widget := Get_Widget (Get_Focus_Child (MDI));
+      Focus_Child : constant MDI_Child := Get_Focus_Child (MDI);
+      Source : Gtk_Widget;
 
    begin
+      if Focus_Child = null then
+         return null;
+      end if;
+
+      Source := Get_Widget (Focus_Child);
+
       if Source.all in Source_Box_Record'Class then
          return Source_Box (Source).Editor;
       else
