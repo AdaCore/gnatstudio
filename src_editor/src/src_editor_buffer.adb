@@ -988,19 +988,17 @@ package body Src_Editor_Buffer is
      (Buffer : access Source_Buffer_Record'Class;
       Params : Glib.Values.GValues)
    is
-      Length : constant Gint := Get_Int (Nth (Params, 3));
+      Length : constant Integer := Integer (Get_Int (Nth (Params, 3)));
       Start  : Buffer_Line_Type;
       Iter   : Gtk_Text_Iter;
       Number : Buffer_Line_Type := 0;
+      Text   : constant Unchecked_String_Access :=
+        To_Unchecked_String (Get_Chars (Nth (Params, 2)));
 
-      Text : constant String :=
-        Get_String (Nth (Params, 2), Length => Length);
    begin
       Get_Text_Iter (Nth (Params, 1), Iter);
 
-      if Buffer.Lang /= null
-        and then Get_Language_Context (Buffer.Lang).Syntax_Highlighting
-      then
+      if Get_Language_Context (Buffer.Lang).Syntax_Highlighting then
          Insert_Text_Cb (Buffer, Iter);
       end if;
 
@@ -1008,7 +1006,7 @@ package body Src_Editor_Buffer is
 
       Start := Buffer_Line_Type (Get_Line (Iter) + 1);
 
-      for J in Text'Range loop
+      for J in 1 .. Length loop
          if Text (J) = ASCII.LF then
             Number := Number + 1;
          end if;
@@ -1032,10 +1030,10 @@ package body Src_Editor_Buffer is
       Params : Glib.Values.GValues)
    is
       Pos     : Gtk_Text_Iter;
-      Length  : constant Gint := Get_Int (Nth (Params, 3));
-      Text    : constant String :=
-        Get_String (Nth (Params, 2), Length => Length);
+      Length  : constant Integer := Integer (Get_Int (Nth (Params, 3)));
       Command : Editor_Command := Editor_Command (Buffer.Current_Command);
+      Text    : constant Unchecked_String_Access :=
+        To_Unchecked_String (Get_Chars (Nth (Params, 2)));
 
    begin
       if Buffer.Inserting then
@@ -1059,7 +1057,7 @@ package body Src_Editor_Buffer is
          Enqueue (Buffer, Command_Access (Command));
          Buffer.Inserting := False;
 
-         Add_Text (Command, Text);
+         Add_Text (Command, Text (1 .. Length));
          Buffer.Current_Command := Command_Access (Command);
 
       elsif Get_Mode (Command) = Insertion then
@@ -1081,7 +1079,7 @@ package body Src_Editor_Buffer is
             Buffer.Inserting := False;
          end if;
 
-         Add_Text (Command, Text);
+         Add_Text (Command, Text (1 .. Length));
          Buffer.Current_Command := Command_Access (Command);
 
       else
@@ -1094,7 +1092,7 @@ package body Src_Editor_Buffer is
             Get_Editable_Line (Buffer, Buffer_Line_Type (Get_Line (Pos) + 1)),
             Natural (Get_Line_Offset (Pos) + 1));
          Enqueue (Buffer, Command_Access (Command));
-         Add_Text (Command, Text);
+         Add_Text (Command, Text (1 .. Length));
          Buffer.Current_Command := Command_Access (Command);
       end if;
 
@@ -1126,9 +1124,7 @@ package body Src_Editor_Buffer is
    begin
       Get_Text_Iter (Nth (Params, 1), Start_Iter);
 
-      if Buffer.Lang /= null
-        and then Get_Language_Context (Buffer.Lang).Syntax_Highlighting
-      then
+      if Get_Language_Context (Buffer.Lang).Syntax_Highlighting then
          Delete_Range_Cb (Buffer, Start_Iter);
       end if;
 
@@ -1617,11 +1613,13 @@ package body Src_Editor_Buffer is
             Buffer.End_Delimiters_Highlight := Create_Mark
               (Buffer, "", Last_Highlight_Iter);
 
-            Backward_To_Tag_Toggle (First_Highlight_Iter, null, Success);
-            Forward_To_Tag_Toggle (Last_Highlight_Iter, null, Success);
+            if Get_Language_Context (Buffer.Lang).Syntax_Highlighting then
+               Backward_To_Tag_Toggle (First_Highlight_Iter, null, Success);
+               Forward_To_Tag_Toggle (Last_Highlight_Iter, null, Success);
 
-            Highlight_Slice
-              (Buffer, First_Highlight_Iter, Last_Highlight_Iter);
+               Highlight_Slice
+                 (Buffer, First_Highlight_Iter, Last_Highlight_Iter);
+            end if;
 
             Buffer.Has_Delimiters_Highlight := True;
          end if;
@@ -2079,6 +2077,7 @@ package body Src_Editor_Buffer is
       Length   : aliased Natural;
       Last     : Natural;
       CR_Found : Boolean := False;
+      F, L     : Gtk_Text_Iter;
 
       File_Is_New : constant Boolean := not Buffer.Original_Text_Inserted;
 
@@ -2187,16 +2186,13 @@ package body Src_Editor_Buffer is
 
       --  Force a highlight of the newly inserted text.
 
-      declare
-         F, L : Gtk_Text_Iter;
-      begin
+      if Get_Language_Context (Buffer.Lang).Syntax_Highlighting then
          Get_Bounds (Buffer, F, L);
          Buffer.Highlight_Needed := True;
          Move_Mark (Buffer, Buffer.First_Highlight_Mark, F);
          Move_Mark (Buffer, Buffer.Last_Highlight_Mark, L);
-
          Process_Highlight_Region (Source_Buffer (Buffer));
-      end;
+      end if;
 
       if CR_Found then
          Buffer.Line_Terminator := CR_LF;
@@ -2508,9 +2504,7 @@ package body Src_Editor_Buffer is
 
          --  Do not try to highlight an empty buffer
          if not Is_End (Buffer_Start_Iter) then
-            if Buffer.Lang /= null
-              and then Get_Language_Context (Buffer.Lang).Syntax_Highlighting
-            then
+            if Get_Language_Context (Buffer.Lang).Syntax_Highlighting then
                Highlight_Slice (Buffer, Buffer_Start_Iter, Buffer_End_Iter);
             else
                Kill_Highlighting (Buffer, Buffer_Start_Iter, Buffer_End_Iter);
@@ -4101,9 +4095,7 @@ package body Src_Editor_Buffer is
       Indent_Params : Indent_Parameters;
       Indent_Style  : Indentation_Kind;
    begin
-      if Lang = null
-        or else not Get_Language_Context (Lang).Can_Indent
-      then
+      if not Get_Language_Context (Lang).Can_Indent then
          return False;
       end if;
 
@@ -4293,9 +4285,7 @@ package body Src_Editor_Buffer is
       end Replace_Text;
 
    begin  --  Do_Indentation
-      if Lang = null
-        or else not Get_Language_Context (Lang).Can_Indent
-      then
+      if not Get_Language_Context (Lang).Can_Indent then
          return False;
       end if;
 
