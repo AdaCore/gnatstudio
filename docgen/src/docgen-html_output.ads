@@ -48,10 +48,11 @@ package Docgen.Html_Output is
       Info             : in out Docgen.Doc_Info;
       Doc_Directory    : String;
       Doc_Suffix       : String);
-   --  This procedure is called every time the HTML files are concerned.
+   --  Called every time the HTML files are concerned.
    --  What happens with the given information (which of the procedures
-   --  below will be called) depands on the contents and the kind of the
+   --  below will be called) depends on the contents and the kind of the
    --  Doc_Info type.
+   --  ??? Need to document parameters, in particular List_Reg_In_File and Info
 
    procedure Callback_Output
      (B           : access Backend_HTML;
@@ -65,18 +66,18 @@ package Docgen.Html_Output is
       Suffix      : String;
       Entity_Line : Natural;
       Check_Tags  : Boolean);
-   --  Write the formatted text since the last output to doc file
+   --  Write the formatted text since the last output to doc file.
    --  Prefix and Suffix are the HTML code to be put around the
-   --  parsed entity. The both index values are needed, as for comment
+   --  parsed entity. Both index values are needed, as for comment
    --  lines the ASCII.LF at the line should be ignored, so you can't
-   --  used always the Sloc_Index values.
+   --  always use the Sloc_Index values.
 
    procedure Set_Name_Tags
      (B           : access Backend_HTML;
       File        : Ada.Text_IO.File_Type;
       Input_Text  : String;
       Entity_Line : Natural);
-   --  Sets a "<A name="lind_number"> <A>" in front of each line in the
+   --  Set a "<a name="line_number"> <a>" in front of each line in the
    --  given strings (if in body file) and writes it to the doc file.
 
    function Get_Html_File_Name
