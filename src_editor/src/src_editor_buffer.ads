@@ -279,8 +279,19 @@ package Src_Editor_Buffer is
    --  If a line in the given buffer is highlighted (from using
    --  Highlight_Line), then restores this line un-highlighted.
 
+   procedure Select_Region
+     (Buffer       : access Source_Buffer_Record;
+      Start_Line   : Gint;
+      Start_Column : Gint;
+      End_Line     : Gint;
+      End_Column   : Gint);
+   --  Select the given region.
+   --  Both start and end positions must be verified before calling this
+   --  procedure. An incorrect position will cause an Assertion_Failure
+   --  when compiled with assertion checks, or an undefined behavior otherwise.
+
    procedure Highlight_Region
-     (Buffer : access Source_Buffer_Record;
+     (Buffer       : access Source_Buffer_Record;
       Start_Line   : Gint;
       Start_Column : Gint;
       End_Line     : Gint;

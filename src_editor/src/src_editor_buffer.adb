@@ -918,8 +918,8 @@ package body Src_Editor_Buffer is
          Keyword_Font_Desc   => Get_Pref (Kernel, Keyword_Font),
          Comment_Color       => Get_Pref (Kernel, Default_Comment_Color),
          Comment_Font_Desc   => Get_Pref (Kernel, Comment_Font),
-         Character_Color     => Get_Pref (Kernel, Default_Character_Color),
-         Character_Font_Desc => Get_Pref (Kernel, Character_Font),
+         Character_Color     => Get_Pref (Kernel, Default_String_Color),
+         Character_Font_Desc => Get_Pref (Kernel, String_Font),
          String_Color        => Get_Pref (Kernel, Default_String_Color),
          String_Font_Desc    => Get_Pref (Kernel, String_Font));
 
@@ -1289,6 +1289,7 @@ package body Src_Editor_Buffer is
       --  other characters, since we are converting to a string. Probably we
       --  should use pango to compute the width, but it only seems to return
       --  the position in pixels, which isn't very useful to us.
+
       Get_Iter_At_Line_Offset (Buffer, Start, Line, 0);
       declare
          S : constant String := Do_Tab_Expansion
@@ -1652,6 +1653,29 @@ package body Src_Editor_Buffer is
          Remove_Tag (Buffer, Buffer.HL_Line_Tag, Start_Iter, End_Iter);
       end if;
    end Cancel_Highlight_Line;
+
+   -------------------
+   -- Select_Region --
+   -------------------
+
+   procedure Select_Region
+     (Buffer       : access Source_Buffer_Record;
+      Start_Line   : Gint;
+      Start_Column : Gint;
+      End_Line     : Gint;
+      End_Column   : Gint)
+   is
+      Start_Iter : Gtk_Text_Iter;
+      End_Iter   : Gtk_Text_Iter;
+   begin
+      pragma Assert (Is_Valid_Position (Buffer, Start_Line, Start_Column));
+      pragma Assert (Is_Valid_Position (Buffer, End_Line, End_Column));
+
+      Get_Iter_At_Line_Offset (Buffer, Start_Iter, Start_Line, Start_Column);
+      Get_Iter_At_Line_Offset (Buffer, End_Iter, End_Line, End_Column);
+      Move_Mark_By_Name (Buffer, "select_bound", Start_Iter);
+      Move_Mark_By_Name (Buffer, "insert", End_Iter);
+   end Select_Region;
 
    ----------------------
    -- Highlight_Region --
