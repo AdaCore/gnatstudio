@@ -849,7 +849,7 @@ package body VCS.CVS is
             Head     : List;
             Log_File : constant String := Get_Tmp_Dir
               & "cvs_log_" & Base_Name (File);
-            Ft       : File_Type;
+            Fd       : GNAT.OS_Lib.File_Descriptor;
 
          begin
             Append (Arguments, "-Q");
@@ -857,9 +857,18 @@ package body VCS.CVS is
             Append (Arguments, "-F");
             Append (Arguments, Log_File);
 
-            Create (Ft, Out_File, Log_File);
-            Put (Ft, Data (Logs_Temp));
-            Close (Ft);
+            Fd := GNAT.OS_Lib.Create_File (Log_File, GNAT.OS_Lib.Binary);
+
+            declare
+               Log           : aliased constant String := Data (Logs_Temp);
+               Bytes_Written : Integer;
+               pragma Unreferenced (Bytes_Written);
+            begin
+               Bytes_Written :=
+                 GNAT.OS_Lib.Write (Fd, Log (Log'First)'Address, Log'Length);
+            end;
+
+            GNAT.OS_Lib.Close (Fd);
 
             Append (Arguments, Base_Name (File));
 
