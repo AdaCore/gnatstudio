@@ -1,5 +1,12 @@
 Known Problems fixed in GPS 1.0.2
 
+- B823-009 Crash at startup for project referencing external variables
+  Problem:    If a project other than the root project references an external
+              variable, and this variable isn't also referenced in the root
+              project, GPS crashes on startup.
+  Workaround: Set the variable in the environment before starting GPS, or
+              reference the variable in the root project itself.
+
 - B816-004 Crash in layout in the browsers
   Problem:    When a browser (call graph, dependencies,...) has lots of items
               displayed, it sometimes happens that the layout algorithm crashes
