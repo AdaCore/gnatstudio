@@ -109,6 +109,9 @@ package body Vsearch_Ext is
    procedure On_Options_Toggled (Object : access Gtk_Widget_Record'Class);
    --  Called when button "Options" is toggled.
 
+   procedure On_Destroy (Object : access Gtk_Widget_Record'Class);
+   --  Called when the widget is destroyed.
+
    procedure On_Context_Entry_Changed
      (Object : access Gtk_Widget_Record'Class);
    --  Called when the entry "Look in" is changed.
@@ -120,8 +123,21 @@ package body Vsearch_Ext is
    procedure Free (Data : in out Search_Module_Data) is
    begin
       Free (Data.Label);
-      Unref (Data.Extra_Information);
+      if Data.Extra_Information /= null then
+         Unref (Data.Extra_Information);
+      end if;
    end Free;
+
+   ----------------
+   -- On_Destroy --
+   ----------------
+
+   procedure On_Destroy (Object : access Gtk_Widget_Record'Class) is
+      Vsearch : constant Vsearch_Extended := Vsearch_Extended (Object);
+   begin
+      Unref (Vsearch.Options_Frame);
+      Search_Modules_List.Free (Search_Modules);
+   end On_Destroy;
 
    ------------------------------
    -- Register_Search_Function --
@@ -146,6 +162,7 @@ package body Vsearch_Ext is
 
       if Extra_Information /= null then
          Ref (Extra_Information);
+         Sink (Extra_Information);
       end if;
 
       if Get_Search_Module (Kernel) /= null then
@@ -482,13 +499,17 @@ package body Vsearch_Ext is
 
       Current : List_Node := First (Search_Modules);
    begin
-      Vsearch_Pkg.Initialize (Vsearch);
+      Vsearch_Pkg.Initialize (Vsearch, Handle);
       Vsearch.Kernel := Handle;
 
       Widget_Callback.Object_Connect
         (Vsearch.Context_Entry, "changed",
          Widget_Callback.To_Marshaller (On_Context_Entry_Changed'Access),
          Vsearch);
+
+      Widget_Callback.Connect
+        (Vsearch, "destroy",
+         Widget_Callback.To_Marshaller (On_Destroy'Access));
 
       Ref (Vsearch.Options_Frame);
       Remove (Vsearch.Table, Vsearch.Options_Frame);
@@ -573,7 +594,7 @@ package body Vsearch_Ext is
    is
       Extra : Files_Extra_Info_Access;
    begin
-      Gtk_New (Extra);
+      Gtk_New (Extra, Kernel);
 
       Register_Search_Function
         (Kernel            => Kernel,
