@@ -234,6 +234,15 @@ package body Debugger.Jdb is
       Wait_Prompt (Debugger);
    end Continue;
 
+   ---------------
+   -- Interrupt --
+   ---------------
+
+   procedure Interrupt (Debugger : access Jdb_Debugger) is
+   begin
+      Interrupt (Get_Descriptor (Get_Process (Debugger)).all);
+   end Interrupt;
+
    ----------------
    -- Stack_Down --
    ----------------
@@ -253,24 +262,6 @@ package body Debugger.Jdb is
       Send (Get_Process (Debugger), "up");
       Wait_Prompt (Debugger);
    end Stack_Up;
-
-   ---------------------
-   -- Break_Exception --
-   ---------------------
-
-   procedure Break_Exception
-     (Debugger  : access Jdb_Debugger;
-      Name      : String  := "";
-      Unhandled : Boolean := False) is
-   begin
-      if Unhandled then
-         raise Unknown_Command;
-      else
-         Send (Get_Process (Debugger), "catch " & Name);
-      end if;
-
-      Wait_Prompt (Debugger);
-   end Break_Exception;
 
    ---------------
    -- Backtrace --
@@ -298,6 +289,58 @@ package body Debugger.Jdb is
       Send (Get_Process (Debugger), "stop in " & Name);
       Wait_Prompt (Debugger);
    end Break_Subprogram;
+
+   ------------------
+   -- Break_Source --
+   ------------------
+
+   procedure Break_Source
+     (Debugger : access Jdb_Debugger;
+      File     : String;
+      Line     : Positive)
+   is
+      Str : constant String := Positive'Image (Line);
+      Pos : Positive;
+   begin
+      Pos := File'Last;
+
+      --  Remove the extension from the filename to get an estimation of the
+      --  class name.
+
+      while Pos > File'First and then File (Pos) /= '.' loop
+         Pos := Pos - 1;
+      end loop;
+
+      if File (Pos) = '.' then
+         Pos := Pos - 1;
+      else
+         --  No file extension, assume a valid class name.
+         Pos := File'Last;
+      end if;
+
+      Send (Get_Process (Debugger),
+        "stop at " & File (File'First .. Pos) & ':' &
+        Str (Str'First + 1 .. Str'Last));
+      Wait_Prompt (Debugger);
+   end Break_Source;
+
+   ---------------------
+   -- Break_Exception --
+   ---------------------
+
+   procedure Break_Exception
+     (Debugger  : access Jdb_Debugger;
+      Name      : String  := "";
+      Unhandled : Boolean := False) is
+   begin
+      if Unhandled then
+         raise Unknown_Command;
+      else
+         Send (Get_Process (Debugger), "catch " & Name);
+      end if;
+
+      Wait_Prompt (Debugger);
+   end Break_Exception;
 
    ------------
    -- Finish --
