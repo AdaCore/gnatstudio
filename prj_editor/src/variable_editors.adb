@@ -295,17 +295,17 @@ package body Variable_Editors is
 
    procedure New_Variable (Editor : access Gtk_Widget_Record'Class) is
       E    : New_Var_Edit := New_Var_Edit (Editor);
-      Iter : Gtk_Tree_Iter;
+      Iter, Iter2 : Gtk_Tree_Iter;
 
    begin
       --  Add a new entry. This will become the default value if this is also
       --  the first one in the list.
 
-      Iter := Get_Iter_Root (E.Model);
+      Iter2 := Get_Iter_Root (E.Model);
       Append (E.Model, Iter, Null_Iter);
       Variable_Editor_Set
         (E.Model, Iter,
-         Is_Default  => Iter = Null_Iter,
+         Is_Default  => Iter2 = Null_Iter,
          Value       => New_Value_Name,
          Is_Editable => True);
    end New_Variable;
@@ -395,7 +395,9 @@ package body Variable_Editors is
          return False;
       end if;
 
-      if Get_String (Get_Environment (Var)) /= New_Name then
+      if Var /= Empty_Node
+        and then Get_String (Get_Environment (Var)) /= New_Name
+      then
          declare
             Vars : constant Project_Node_Array :=
               Scenario_Variables (Editor.Kernel);
