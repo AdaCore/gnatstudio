@@ -447,6 +447,7 @@ package Projects is
    type Scenario_Variable_Array_Access is access Scenario_Variable_Array;
 
    No_Variable : constant Scenario_Variable;
+   No_Scenario : constant Scenario_Variable_Array;
 
    function Find_Scenario_Variables
      (Project        : Project_Type;
@@ -623,6 +624,9 @@ private
 
    No_Variable : constant Scenario_Variable :=
      (Types.No_Name, Types.No_Name, Prj.Tree.Empty_Node);
+
+   No_Scenario : constant Scenario_Variable_Array (1 .. 0) :=
+     (others => No_Variable);
 
    No_Project : constant Project_Type :=
      (Prj.Tree.Empty_Node, null);
