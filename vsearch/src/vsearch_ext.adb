@@ -147,7 +147,7 @@ package body Vsearch_Ext is
    function Get_Or_Create_Vsearch
      (Kernel : access Kernel_Handle_Record'Class;
       Raise_Widget : Boolean := False) return Vsearch_Extended;
-   --  Return a valid vsearch widget, creating one if necessary
+   --  Return a valid vsearch widget, creating one if necessary.
 
    function Load_Desktop
      (Node : Node_Ptr; User : Kernel_Handle) return Gtk_Widget;
@@ -222,8 +222,9 @@ package body Vsearch_Ext is
       Extended : Vsearch_Extended;
    begin
       if Node.Tag.all = "Vsearch" then
-         Gtk_New (Extended, User);
-         return Gtk_Widget (Extended);
+         Extended := Get_Or_Create_Vsearch (User, Raise_Widget => False);
+
+         return Gtk_Widget (Find_MDI_Child (Get_MDI (User), Extended));
       end if;
 
       return null;
@@ -943,7 +944,7 @@ package body Vsearch_Ext is
    ---------------------------
 
    function Get_Or_Create_Vsearch
-     (Kernel : access Kernel_Handle_Record'Class;
+     (Kernel       : access Kernel_Handle_Record'Class;
       Raise_Widget : Boolean := False) return Vsearch_Extended
    is
       Child  : MDI_Child;
