@@ -30,6 +30,11 @@ Known Problems fixed in GVD 1.1.0
   Workaround: Use the tooltips in the source window to look at the value of
               the variable.
 
+- Closing of the first of multiple debuggers.
+  Problem:    When multiple debuggers were present, closing the first one raised
+              an error.
+  Workaround: No workaround for this problem, fixed in GVD 1.1.0.
+
 Known Problems fixed in GVD 1.0.2
 
 - [8325-005] Interrupt button does not work under Windows
