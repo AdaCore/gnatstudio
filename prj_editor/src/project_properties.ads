@@ -69,7 +69,7 @@ private
    --  latter is ignored if the attribute is in fact not indexed
 
    function Get_Value_As_List
-     (Editor : access Root_Attribute_Editor_Record;
+     (Editor          : access Root_Attribute_Editor_Record;
       Attribute_Index : String := "") return GNAT.OS_Lib.String_List
      is abstract;
    --  Return the current value in Editor for the given attribute_Index.
