@@ -8367,6 +8367,10 @@ it represents the absolute path to a menu to execute instead.
 This attribute can be omitted only when no title is specified for the menu
 to make it a separator (see below).
 
+If a filter is associated with the action through the @code{<filter>} tag,
+then the menu will be greyed out when the filter doesn't match. As a
+result, users will not be able to click on it.
+
 @item before  (optional)
 It specifies the name of another menu item before
 which the new menu should be inserted. The reference menu must have been
