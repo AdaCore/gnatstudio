@@ -1,4 +1,3 @@
-with Ada.Text_IO; use Ada.Text_IO;
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
@@ -383,8 +382,6 @@ package body Python.GUI is
       Interpreter.Console := Console;
       Interpreter.Grab_Widget := Grab_Widget;
 
-      Put_Line ("Set_Console");
-
       if Interpreter.Uneditable /= null then
          Unref (Interpreter.Uneditable);
       end if;
@@ -503,8 +500,6 @@ package body Python.GUI is
             Gtk.Main.Grab_Remove (Grab_Widget);
             Unref (Grab_Widget);
          end if;
-
-         Put_Line ("Done");
 
          if Obj = null then
             PyErr_Print;
