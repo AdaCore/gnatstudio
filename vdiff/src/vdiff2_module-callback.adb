@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2001-2004                    --
---                             ACT-Europe                            --
+--                     Copyright (C) 2001-2005                       --
+--                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -382,16 +382,7 @@ package body Vdiff2_Module.Callback is
          Free_All (Diff.all);
       end if;
 
-      if VDiff2_Module
-        (Vdiff_Module_ID).Command_Prev.Last_Active_Diff = Diff.all then
-         Init_Prev_Diff_Cmd (Null_Head);
-      end if;
-
       Free (Diff);
-
-      if VDiff2_Module (Vdiff_Module_ID).List_Diff.all /= Null_List then
-         Remove_VDiff_Toolbar (Kernel);
-      end if;
 
    exception
       when E : others =>
