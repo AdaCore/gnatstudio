@@ -75,6 +75,9 @@ with GUI_Utils;                 use GUI_Utils;
 with Histories;                 use Histories;
 with OS_Utils;                  use OS_Utils;
 
+with Gtkada.Types;              use Gtkada.Types;
+with Gdk.Pixbuf;                use Gdk.Pixbuf;
+
 with Generic_List;
 with GVD.Preferences; use GVD.Preferences;
 
@@ -87,6 +90,9 @@ package body Src_Editor_Module is
    Hist_Key : constant History_Key := "reopen_files";
    --  Key to use in the kernel histories to store the most recently opened
    --  files.
+
+   editor_xpm          : aliased Chars_Ptr_Array (0 .. 0);
+   pragma Import (C, editor_xpm, "project_xpm");
 
    type Mark_Identifier_Record is record
       Id     : Natural;
@@ -1252,6 +1258,7 @@ package body Src_Editor_Module is
       Id     : Idle_Handler_Id;
       Line   : Positive := 1;
       Column : Positive := 1;
+      Child  : MDI_Child;
       pragma Unreferenced (Id);
 
    begin
@@ -1289,8 +1296,10 @@ package body Src_Editor_Module is
                  (File_Edit_Callback'Access,
                   (Src.Editor, Line, Column, 0, User));
 
-               return Put (MDI, Src,
+               Child := Put (MDI, Src,
                            Focus_Widget => Gtk_Widget (Get_View (Src.Editor)));
+               Set_Icon (Child, Gdk_New_From_Xpm_Data (editor_xpm));
+               return Child;
             end if;
          end if;
       end if;
@@ -1478,6 +1487,7 @@ package body Src_Editor_Module is
          if Add then
             Child := Put (MDI, Box,
                           Focus_Widget => Gtk_Widget (Get_View (Editor)));
+            Set_Icon (Child, Gdk_New_From_Xpm_Data (editor_xpm));
             Set_Focus_Child (Child);
 
             declare
@@ -1667,6 +1677,7 @@ package body Src_Editor_Module is
          if Add_To_MDI then
             Child := Put
               (MDI, Box, Focus_Widget => Gtk_Widget (Get_View (Editor)));
+            Set_Icon (Child, Gdk_New_From_Xpm_Data (editor_xpm));
 
             if Focus then
                Set_Focus_Child (Child);
