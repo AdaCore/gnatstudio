@@ -24,6 +24,7 @@ with HTables;
 with Tries;
 with VFS;
 with Dynamic_Arrays;
+with Projects;
 
 --  This package contains the list of all files and entities used in the
 --  current project.
@@ -33,10 +34,14 @@ with Dynamic_Arrays;
 
 package Entities is
 
-   No_Time : constant Ada.Calendar.Time := Ada.Calendar.Time_Of
-     (Ada.Calendar.Year_Number'First,
-      Ada.Calendar.Month_Number'First,
-      Ada.Calendar.Day_Number'First);
+   type Source_File_Record is tagged private;
+   type Source_File is access Source_File_Record'Class;
+
+   type LI_Handler_Record is abstract tagged limited private;
+   type LI_Handler is access all LI_Handler_Record'Class;
+   --  General type to handle and generate Library Information data (for
+   --  cross-references, and the various queries for the browsers).
+   --  Derived types should be created for all the languages supported.
 
    -----------------------
    -- Entities_Database --
@@ -49,6 +54,16 @@ package Entities is
 
    procedure Destroy (Db : in out Entities_Database);
    --  Free the memory occupied by Db
+
+   function Get_LI_Handler
+     (Db              : Entities_Database;
+      Source_Filename : VFS.Virtual_File) return LI_Handler;
+   --  Return the LI_Handler to use to get the cross-reference information for
+   --  that file.
+
+   procedure Register_Language_Handler
+     (Db : Entities_Database; Handler : LI_Handler);
+   --  Register a new language handler
 
    ------------
    -- E_Kind --
@@ -112,6 +127,75 @@ package Entities is
    Unresolved_Entity_Kind : constant E_Kind :=
      (Unresolved_Entity, False, False, False);
 
+   --------------------
+   -- Reference_Kind --
+   --------------------
+
+   type Reference_Kind is
+     (Reference,
+      Modification,
+      Instantiation_Reference,
+      Body_Entity,
+      Completion_Of_Private_Or_Incomplete_Type,
+      Discriminant,
+      Type_Extension,
+      Implicit,
+      Primitive_Operation,
+      Overriding_Primitive_Operation,
+      With_Line,
+      Label,
+      Subprogram_In_Parameter,
+      Subprogram_In_Out_Parameter,
+      Subprogram_Out_Parameter,
+      Subprogram_Access_Parameter,
+      Formal_Generic_Parameter,
+      Parent_Package,
+      End_Of_Spec,
+      End_Of_Body);
+   --  The kind of reference to an entity. They have the following meaning:
+   --    - Reference: The entity is used
+   --    - Modification: The value of the entity is changed
+   --    - Instantiation_Reference: Reference to the instantiation of a
+   --      generic.
+   --    - Body_Entity: Used for spec entities that are repeated in a body,
+   --      including the unit name itself, and the formals in the case of
+   --      a subprogram. Also used for entry-names in accept statements.
+   --    - Completion_Of_Private_Or_Incomplete_Type: Used to mark the
+   --      completion of a private type or incomplete type
+   --    - type_Extension: Used to mark the reference as the entity from
+   --      which a tagged type is extended.
+   --    - Implicit: Used to identify a reference to the entity in a generic
+   --      actual or in a default in a call.
+   --    - Label: Used for cases where the name of the entity appears in
+   --      syntactic constructs only, but doesn't impact the code, for instance
+   --      in "end Foo;" constructs in Ada.
+   --    - End_Of_Spec: Used to identify the end of the following constructs.
+   --      Block statement, loop statement, package specification, task
+   --      definition, protected definition, record definition.
+   --    - End_Of_Body: Used to identify the end of the following constructs.
+   --      Subprogram body, package body, task body, entry body, protected
+   --      body, accept statement.
+   --    - Primitive_Operation: used for primitive operations of tagged types
+   --      (in Ada), or for methods (in C++).
+   --    - Overriding_Primitive_Operation is used for primitive operations
+   --      that override one of the inherited operations from the parent (for
+   --      instance A derives from B and both define the operation foo() with
+   --      the same profile, foo() will be marked as an overriding primitive
+   --      operation for B.
+   --    - Subprogram_*_Parameter: for a subprogram declaration, references all
+   --      its parameters, along with their passing mode ("in", "in out", ...)
+   --    - Formal_Generic_Parameter: for a generic, reference its format
+   --      parameters.
+   --    - Parent_Package: for a child Ada package, reference its parent. This
+   --      parent, in turn, references its own parent package.
+   --    - Discriminant: points to the declaration of the discriminants for
+   --      this type.
+
+   function Is_End_Reference (Kind : Reference_Kind) return Boolean;
+   pragma Inline (Is_End_Reference);
+   --  Whether Kind represents a reference that indicates the end of scope for
+   --  an entity (either for its spec or its body)
+
    -------------
    -- LI_File --
    -------------
@@ -127,25 +211,52 @@ package Entities is
    --  Change reference counting for the file. When it reaches 0, the memory
    --  is freed.
 
+   procedure Reset (LI : LI_File);
+   --  Indicate that the parsed contents of LI is no longer valid. All
+   --  associated cross-references are removed from the table.
+
    function Get_Or_Create
      (Db        : Entities_Database;
       File      : VFS.Virtual_File;
-      Timestamp : Ada.Calendar.Time := No_Time) return LI_File;
+      Project   : Projects.Project_Type) return LI_File;
    --  Get (or create) a new entry for File in the database. If an entry
-   --  already exists, it is returned, and the timestamp is updated if the
-   --  parameter is not New_Name.
+   --  already exists, it is returned.
    --  You need to Ref the entry if you intend to keep it in a separate
    --  structure.
+
+   procedure Update_Timestamp
+     (LI : LI_File; Timestamp : Ada.Calendar.Time := VFS.No_Time);
+   pragma Inline (Update_Timestamp);
+   --  Update the timestamp that indicates when LI was last parsed
+
+   function Get_Project (LI : LI_File) return Projects.Project_Type;
+   pragma Inline (Get_Project);
+   --  Return the project to which LI belongs
+
+   function Get_Database (LI : LI_File) return Entities_Database;
+   pragma Inline (Get_Database);
+   --  Return the global LI database to which LI belongs
+
+   function Get_Timestamp (LI : LI_File) return Ada.Calendar.Time;
+   pragma Inline (Get_Timestamp);
+   --  Return the timestamp last set through Update_Timestamp
 
    -----------------
    -- Source_File --
    -----------------
 
-   type Source_File_Record is tagged private;
-   type Source_File is access Source_File_Record'Class;
-
    function Get_Filename (File : Source_File) return VFS.Virtual_File;
+   pragma Inline (Get_Filename);
    --  Return the name of the file file
+
+   function Get_LI (File : Source_File) return LI_File;
+   pragma Inline (Get_LI);
+   --  Return the LI file that contains the information for File.
+   --  null can be returned if the information is not known.
+
+   function Get_Database (File : Source_File) return Entities_Database;
+   pragma Inline (Get_Database);
+   --  Return the global LI database to which LI belongs
 
    procedure Unref (F : in out Source_File);
    procedure Ref   (F : Source_File);
@@ -153,10 +264,11 @@ package Entities is
    --  is freed.
 
    function Get_Or_Create
-     (Db        : Entities_Database;
-      File      : VFS.Virtual_File;
-      LI        : LI_File;
-      Timestamp : Ada.Calendar.Time := No_Time) return Source_File;
+     (Db           : Entities_Database;
+      File         : VFS.Virtual_File;
+      LI           : LI_File;
+      Timestamp    : Ada.Calendar.Time := VFS.No_Time;
+      Allow_Create : Boolean := True) return Source_File;
    --  Get or create a Source_File corresponding to File.
    --  If there is already an entry for it in the database, the corresponding
    --  Source_File is returned, and the timestamp is adjusted if the
@@ -166,14 +278,22 @@ package Entities is
    --  The file is automatically added to the list of files for that LI.
 
    procedure Add_Depends_On
-     (File : Source_File; Depends_On  : Source_File);
+     (File                : Source_File;
+      Depends_On          : Source_File;
+      Explicit_Dependency : Boolean := False);
    --  Add a new dependency to File. No check is done to ensure the dependency
    --  is not already listed. File is automatically added to the list of
    --  files that Depends_On imports.
+   --  If Explicit_Dependency is true, this indicates an explicit #include
+   --  or with statement in the file.
 
    procedure Reset (File : Source_File);
    --  Indicate that the parsed contents of File is no longer valid. All
    --  associated cross-references are removed from the table.
+
+   function Get_Predefined_File (Db : Entities_Database) return Source_File;
+   --  Returns a special source file, which should be used for all
+   --  predefined entities of the languages
 
    -------------------
    -- File_Location --
@@ -199,29 +319,47 @@ package Entities is
    --  is freed.
 
    function Get_Or_Create
-     (Name   : String;
+     (Db     : Entities_Database;
+      Name   : String;
       File   : Source_File;
       Line   : Natural;
       Column : Natural) return Entity_Information;
    --  Get an existing or create a new declaration for an entity. File, Line
    --  and column are the location of irs declaration.
 
+   procedure Get_End_Of_Scope
+     (Entity   : Entity_Information;
+      Location : out File_Location;
+      Kind     : out Reference_Kind);
+   --  Return the current end of scope for the entity
+
+   ----------------------
+   -- Setting entities --
+   ----------------------
+   --  The following subprogram is used to create new entities and their
+   --  properties.
+
    procedure Set_Kind (Entity : Entity_Information; Kind : E_Kind);
    procedure Set_End_Of_Scope
-     (Entity : Entity_Information; Location : File_Location);
+     (Entity   : Entity_Information;
+      Location : File_Location;
+      Kind     : Reference_Kind);
    procedure Set_Is_Renaming_Of
      (Entity : Entity_Information; Renaming_Of : Entity_Information);
    --  Override some information for the entity.
 
    procedure Add_Reference
-     (Entity : Entity_Information; Location : File_Location);
+     (Entity   : Entity_Information;
+      Location : File_Location;
+      Kind     : Reference_Kind);
    --  Add a new reference to the entity. No Check is done whether this
    --  reference already exists.
 
    procedure Set_Type_Of
      (Entity : Entity_Information; Is_Of_Type : Entity_Information);
    --  Specifies the type of a variable. If Entity is a type, this also
-   --  registers it as a child of Is_Of_Type for faster lookup.
+   --  registers it as a child of Is_Of_Type for faster lookup. Multiple
+   --  parents are supported.
 
    procedure Add_Primitive_Subprogram
      (Entity : Entity_Information; Primitive : Entity_Information);
@@ -235,12 +373,48 @@ package Entities is
      (Entity : Entity_Information; Returns : Entity_Information);
    --  Stores the type returned by a subprogram
 
+   -------------
+   -- Queries --
+   -------------
+
+   function Is_Subprogram (Entity : Entity_Information) return Boolean;
+   --  Return True if Entity is associated with a subprograms
+
    ----------------
    -- Scope_Tree --
    ----------------
 
    type Scope_Tree is private;
 
+   ----------------
+   -- LI_Handler --
+   ----------------
+
+   procedure Destroy (Handler : in out LI_Handler_Record);
+   procedure Destroy (Handler : in out LI_Handler);
+   --  Free the memory occupied by Handler. By default, this does nothing
+
+   function Get_Source_Info
+     (Handler         : access LI_Handler_Record;
+      Source_Filename : VFS.Virtual_File;
+      Project         : Projects.Project_Type) return Source_File is abstract;
+   --  Return a handle to the source file structure corresponding to
+   --  Source_Filename. If necessary, the LI file is parsed from the disk to
+   --  update the internal structure.
+
+   function Case_Insensitive_Identifiers
+     (Handler         : access LI_Handler_Record) return Boolean is abstract;
+   --  Return True if the language associated with Handler is case-insensitive.
+   --  Note that for case insensitive languages, the identifier names must be
+   --  storer in lower cases in the LI structure.
+
+   procedure Parse_All_LI_Information
+     (Handler         : access LI_Handler_Record;
+      Project         : Projects.Project_Type;
+      In_Directory    : String := "") is abstract;
+   --  Parse all the existing LI information for all the files in Project.
+   --  The search is limited to files in In_Directory if this isn't the
+   --  empty string.
 
 private
 
@@ -286,18 +460,25 @@ private
       return Entity_Information;
    --  Return entity declared at Loc, or null if there is no such entity
 
-   ------------------------
-   -- File_Location_List --
-   ------------------------
+   ---------------------
+   -- References_List --
+   ---------------------
 
-   package File_Location_Arrays is new Dynamic_Arrays
-     (Data                    => File_Location,
+   type Entity_Reference is record
+      Location : File_Location;
+      Kind     : Reference_Kind;
+   end record;
+   No_Entity_Reference : constant Entity_Reference :=
+     (No_File_Location, Reference);
+
+   package Entity_Reference_Arrays is new Dynamic_Arrays
+     (Data                    => Entity_Reference,
       Table_Multiplier        => 1,
       Table_Minimum_Increment => 10,
       Table_Initial_Size      => 5);
-   subtype File_Location_List is File_Location_Arrays.Instance;
-   Null_File_Location_List : constant File_Location_List :=
-     File_Location_Arrays.Empty_Instance;
+   subtype Entity_Reference_List is Entity_Reference_Arrays.Instance;
+   Null_Entity_Reference_List : constant Entity_Reference_List :=
+     Entity_Reference_Arrays.Empty_Instance;
 
    ------------------------
    -- Entity_Information --
@@ -310,10 +491,17 @@ private
       Declaration           : File_Location;
       --  The location of the declaration for this entity.
 
-      End_Of_Scope          : File_Location;
+      End_Of_Scope          : Entity_Reference;
       --  The location at which the declaration of this entity ends. This is
       --  used for all entites that contain other entities (records, C++
       --  classes, packages,...)
+      --  The handling of end_of_scope is the following: if the entity
+      --  has only one of these, it is stored in its declaration. If
+      --  the entity has two of these (spec+body of a package for
+      --  instance, only the one for the body is stored). However, in
+      --  the latter case we need to save the end-of-scope for the
+      --  spec in the standard list of references so that scope_trees
+      --  can be generated.
 
       Parent_Types          : Entity_Information_List;
       Pointed_Type          : Entity_Information;
@@ -335,7 +523,7 @@ private
       Child_Types           : Entity_Information_List;
       --  All the types derives from this one.
 
-      References            : File_Location_List;
+      References            : Entity_Reference_List;
       --  All the references to this entity in the parsed files
 
       Ref_Count             : Natural := 1;
@@ -385,12 +573,31 @@ private
    Null_Source_File_List : constant Source_File_List :=
      Source_File_Arrays.Empty_Instance;
 
+   type File_Dependency is record
+      File     : Source_File;
+      Explicit : Boolean;
+   end record;
+
+   package Dependency_Arrays is new Dynamic_Arrays
+     (Data                    => File_Dependency,
+      Table_Multiplier        => 1,
+      Table_Minimum_Increment => 10,
+      Table_Initial_Size      => 5);
+   subtype Dependency_List is Dependency_Arrays.Instance;
+   Null_Dependency_List : constant Dependency_List :=
+     Dependency_Arrays.Empty_Instance;
+
+   procedure Remove (E : in out Dependency_List; File : Source_File);
+   --  Remove the first dependency that mentions File
+
    -----------------
    -- Source_File --
    -----------------
 
    type Source_File_Record is tagged record
-      Timestamp    : Ada.Calendar.Time := No_Time;
+      Db           : Entities_Database;
+
+      Timestamp    : Ada.Calendar.Time := VFS.No_Time;
       --  The timestamp of the file at the time it was parsed. This is left
       --  to No_Time if the file has never been parsed.
 
@@ -399,7 +606,7 @@ private
       Entities    : Entities_Tries.Trie_Tree;
       --  All the entities defined in the source file
 
-      Depends_On  : Source_File_List;
+      Depends_On  : Dependency_List;
       Depended_On : Source_File_List;
       --  The list of dependencies on or from this file
 
@@ -408,7 +615,8 @@ private
       --  time it is needed.
 
       LI          : LI_File;
-      --  The LI file used to parse the file
+      --  The LI file used to parse the file. This might be left to null if
+      --  the file was created appart from parsing a LI file.
 
       All_Entities : Entities_Tries.Trie_Tree;
       --  The list of all entities referenced in the file, and that are defined
@@ -443,10 +651,12 @@ private
    -------------
 
    type LI_File_Record is tagged record
-      Db           : Entities_Database;
+      Db        : Entities_Database;
 
       Name      : VFS.Virtual_File;
-      Timestamp : Ada.Calendar.Time := No_Time;
+      Timestamp : Ada.Calendar.Time := VFS.No_Time;
+
+      Project   : Projects.Project_Type;
 
       Files     : Source_File_List;
       --  All the files for which xref is provided by this LI_File.
@@ -476,7 +686,12 @@ private
       Entities : Entities_Tries.Trie_Tree;
       Files    : Files_HTable.HTable;
       LIs      : LI_HTable.HTable;
+
+      Predefined_File : Source_File;
+      Handlers        : LI_Handler;   --  ??? should be Language_Handler
    end record;
    type Entities_Database is access Entities_Database_Record;
+
+   type LI_Handler_Record is abstract tagged limited null record;
 
 end Entities;

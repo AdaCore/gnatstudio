@@ -22,6 +22,7 @@ with Ada.Calendar; use Ada.Calendar;
 with Ada.Unchecked_Deallocation;
 with VFS;          use VFS;
 with GNAT.OS_Lib;  use GNAT.OS_Lib;
+with Projects;     use Projects;
 with Traces;       use Traces;
 
 package body Entities is
@@ -30,9 +31,10 @@ package body Entities is
    use Entities_Tries;
    use Files_HTable;
    use LI_HTable;
-   use File_Location_Arrays;
    use Entity_Information_Arrays;
    use Source_File_Arrays;
+   use Entity_Reference_Arrays;
+   use Dependency_Arrays;
 
    function String_Hash is new HTables.Hash (HTable_Header);
 
@@ -71,6 +73,30 @@ package body Entities is
    --  Free all entities declared in File, and remove them from internal
    --  tables. This ensures that the entities that are still referenced
    --  externally will still be usable.
+
+   Is_Subprogram_Entity : constant array (E_Kinds) of Boolean :=
+     (Procedure_Kind        => True,
+      Function_Or_Operator  => True,
+      Entry_Or_Entry_Family => True,
+      others                => False);
+   --  This table should contain true if the corresponding element is
+   --  considered as a subprogram (see Is_Subprogram)
+
+   Is_End_Reference_Array : constant array (Reference_Kind) of Boolean :=
+     (End_Of_Spec           => True,
+      End_Of_Body           => True,
+      others                => False);
+   --  True if the matching entity indicates an end-of-scope (end of subprogram
+   --  declaration, end of record definition, ...)
+
+   ----------------------
+   -- Is_End_Reference --
+   ----------------------
+
+   function Is_End_Reference (Kind : Reference_Kind) return Boolean is
+   begin
+      return Is_End_Reference_Array (Kind);
+   end Is_End_Reference;
 
    --------------
    -- Get_Name --
@@ -207,7 +233,7 @@ package body Entities is
          exit when EL = null;
 
          for E in Entity_Information_Arrays.First .. Last (EL.all) loop
-            Remove (File.LI.Db.Entities, EL.Table (E));
+            Remove (File.Db.Entities, EL.Table (E));
 
             if EL.Table (E).Ref_Count > 1 then
                Isolate (EL.Table (E));
@@ -225,6 +251,31 @@ package body Entities is
    -- Reset --
    -----------
 
+   procedure Reset (LI : LI_File) is
+   begin
+      for F in Source_File_Arrays.First .. Last (LI.Files) loop
+         Reset (LI.Files.Table (F));
+      end loop;
+   end Reset;
+
+   ------------
+   -- Remove --
+   ------------
+
+   procedure Remove (E : in out Dependency_List; File : Source_File) is
+   begin
+      for L in Dependency_Arrays.First .. Last (E) loop
+         if E.Table (L).File = File then
+            Remove (E, L);
+            exit;
+         end if;
+      end loop;
+   end Remove;
+
+   -----------
+   -- Reset --
+   -----------
+
    procedure Reset (File : Source_File) is
    begin
       Cleanup_All_Entities_Field (File);
@@ -233,8 +284,8 @@ package body Entities is
          Remove (File.Depended_On.Table (F).Depends_On, File);
       end loop;
 
-      for F in Source_File_Arrays.First .. Last (File.Depends_On) loop
-         Remove (File.Depends_On.Table (F).Depended_On, File);
+      for F in Dependency_Arrays.First .. Last (File.Depends_On) loop
+         Remove (File.Depends_On.Table (F).File.Depended_On, File);
       end loop;
 
       Reset_All_Entities (File);
@@ -254,7 +305,7 @@ package body Entities is
 
    procedure Isolate (Entity : in out Entity_Information) is
    begin
-      Entity.End_Of_Scope    := No_File_Location;
+      Entity.End_Of_Scope    := No_Entity_Reference;
       Entity.Pointed_Type    := null;
       Entity.Returned_Type   := null;
       Entity.Primitive_Op_Of := null;
@@ -272,16 +323,9 @@ package body Entities is
    procedure Reset (Entity : Entity_Information; File : Source_File) is
       procedure Check_And_Remove (E : in out Entity_Information);
       procedure Check_And_Remove (E : in out Entity_Information_List);
-      procedure Check_And_Remove (E : in out File_Location_List);
-      procedure Check_And_Remove (Loc : in out File_Location);
+      procedure Check_And_Remove (E : in out Entity_Reference_List);
+      procedure Check_And_Remove (E : in out Entity_Reference);
       --  Remove all references to File in E
-
-      procedure Check_And_Remove (Loc : in out File_Location) is
-      begin
-         if Loc.File = File then
-            Loc := No_File_Location;
-         end if;
-      end Check_And_Remove;
 
       procedure Check_And_Remove (E : in out Entity_Information) is
       begin
@@ -299,11 +343,18 @@ package body Entities is
          end loop;
       end Check_And_Remove;
 
-      procedure Check_And_Remove (E : in out File_Location_List) is
+      procedure Check_And_Remove (E : in out Entity_Reference) is
       begin
-         for J in reverse File_Location_Arrays.First .. Last (E) loop
-            if E.Table (J).File = File then
-               Remove (E, J);
+         if E.Location.File = File then
+            E := No_Entity_Reference;
+         end if;
+      end Check_And_Remove;
+
+      procedure Check_And_Remove (E : in out Entity_Reference_List) is
+      begin
+         for R in reverse Entity_Reference_Arrays.First .. Last (E) loop
+            if E.Table (R).Location.File = File then
+               Remove (E, R);
             end if;
          end loop;
       end Check_And_Remove;
@@ -460,6 +511,16 @@ package body Entities is
       return new Entities_Database_Record;
    end Create;
 
+   -------------------------------
+   -- Register_Language_Handler --
+   -------------------------------
+
+   procedure Register_Language_Handler
+     (Db : Entities_Database; Handler : LI_Handler) is
+   begin
+      Db.Handlers := Handler;
+   end Register_Language_Handler;
+
    ----------
    -- Hash --
    ----------
@@ -488,33 +549,44 @@ package body Entities is
    -------------------
 
    function Get_Or_Create
-     (Db        : Entities_Database;
-      File      : VFS.Virtual_File;
-      LI        : LI_File;
-      Timestamp : Ada.Calendar.Time := No_Time) return Source_File
+     (Db           : Entities_Database;
+      File         : VFS.Virtual_File;
+      LI           : LI_File;
+      Timestamp    : Ada.Calendar.Time := VFS.No_Time;
+      Allow_Create : Boolean := True) return Source_File
    is
       S : Source_File := Get (Db.Files, File);
    begin
-      if S = null then
-         Assert
-           (Assert_Me, LI /= null, "Null LI file passed to Get_Or_Create");
+      if S = null and then not Allow_Create then
+         null;
+
+      elsif S = null then
          S := new Source_File_Record'
-           (Timestamp      => Timestamp,
+           (Db             => Db,
+            Timestamp      => Timestamp,
             Name           => File,
             Entities       => Empty_Trie_Tree,
-            Depends_On     => Null_Source_File_List,
+            Depends_On     => Null_Dependency_List,
             Depended_On    => Null_Source_File_List,
             All_Entities   => Empty_Trie_Tree,
             Scope          => null,
             LI             => LI,
             Is_Valid       => True,
             Ref_Count      => 1);
-         Append (LI.Files, S);
          Set (Db.Files, File, S);
+
+         if LI /= null then
+            Append (LI.Files, S);
+         end if;
 
       else
          if Timestamp /= No_Time then
             S.Timestamp := Timestamp;
+         end if;
+
+         if LI /= null and then S.LI = null then
+            S.LI := LI;
+            Append (LI.Files, S);
          end if;
       end if;
 
@@ -546,9 +618,11 @@ package body Entities is
    --------------------
 
    procedure Add_Depends_On
-     (File : Source_File; Depends_On : Source_File) is
+     (File                : Source_File;
+      Depends_On          : Source_File;
+      Explicit_Dependency : Boolean := False) is
    begin
-      Append (File.Depends_On, Depends_On);
+      Append (File.Depends_On, (Depends_On, Explicit_Dependency));
       Add_Depended_On (Depends_On, File);
    end Add_Depends_On;
 
@@ -600,6 +674,16 @@ package body Entities is
       end if;
    end Add;
 
+   ----------------------
+   -- Update_Timestamp --
+   ----------------------
+
+   procedure Update_Timestamp
+     (LI : LI_File; Timestamp : Ada.Calendar.Time := VFS.No_Time) is
+   begin
+      LI.Timestamp := Timestamp;
+   end Update_Timestamp;
+
    -------------------
    -- Get_Or_Create --
    -------------------
@@ -607,22 +691,21 @@ package body Entities is
    function Get_Or_Create
      (Db        : Entities_Database;
       File      : VFS.Virtual_File;
-      Timestamp : Ada.Calendar.Time := No_Time) return LI_File
+      Project   : Projects.Project_Type) return LI_File
    is
       L : LI_File := Get (Db.LIs, File);
    begin
       Assert (Assert_Me, File /= VFS.No_File, "No LI filename");
+      Assert (Assert_Me, Project /= No_Project, "No project specified");
       if L = null then
          L := new LI_File_Record'
            (Db        => Db,
             Name      => File,
-            Timestamp => Timestamp,
+            Timestamp => No_Time,
+            Project   => Project,
             Files     => Null_Source_File_List,
             Ref_Count => 1);
          Set (Db.LIs, File, L);
-
-      elsif Timestamp /= No_Time then
-         L.Timestamp := Timestamp;
       end if;
 
       return L;
@@ -656,11 +739,27 @@ package body Entities is
    ----------------------
 
    procedure Set_End_Of_Scope
-     (Entity : Entity_Information; Location : File_Location) is
+     (Entity   : Entity_Information;
+      Location : File_Location;
+      Kind     : Reference_Kind)
+   is
    begin
-      Entity.End_Of_Scope := Location;
+      Entity.End_Of_Scope := (Location, Kind);
       Add_All_Entities (Location.File, Entity);
    end Set_End_Of_Scope;
+
+   ----------------------
+   -- Get_End_Of_Scope --
+   ----------------------
+
+   procedure Get_End_Of_Scope
+     (Entity   : Entity_Information;
+      Location : out File_Location;
+      Kind     : out Reference_Kind) is
+   begin
+      Location := Entity.End_Of_Scope.Location;
+      Kind     := Entity.End_Of_Scope.Kind;
+   end Get_End_Of_Scope;
 
    ------------------------
    -- Set_Is_Renaming_Of --
@@ -678,9 +777,11 @@ package body Entities is
    -------------------
 
    procedure Add_Reference
-     (Entity : Entity_Information; Location : File_Location) is
+     (Entity   : Entity_Information;
+      Location : File_Location;
+      Kind     : Reference_Kind) is
    begin
-      Append (Entity.References, Location);
+      Append (Entity.References, (Location, Kind));
       Add_All_Entities (Location.File, Entity);
    end Add_Reference;
 
@@ -740,12 +841,13 @@ package body Entities is
    -------------------
 
    function Get_Or_Create
-     (Name   : String;
+     (Db     : Entities_Database;
+      Name   : String;
       File   : Source_File;
       Line   : Natural;
       Column : Natural) return Entity_Information
    is
-      EL : Entity_Information_List_Access := Get (File.LI.Db.Entities, Name);
+      EL : Entity_Information_List_Access := Get (Db.Entities, Name);
       E  : Entity_Information;
       Is_Null : constant Boolean := (EL = null);
    begin
@@ -760,7 +862,7 @@ package body Entities is
            (Name                  => new String'(Name),
             Kind                  => Unresolved_Entity_Kind,
             Declaration           => (File, Line, Column),
-            End_Of_Scope          => No_File_Location,
+            End_Of_Scope          => No_Entity_Reference,
             Parent_Types          => Null_Entity_Information_List,
             Pointed_Type          => null,
             Returned_Type         => null,
@@ -768,7 +870,7 @@ package body Entities is
             Rename                => null,
             Primitive_Subprograms => Null_Entity_Information_List,
             Child_Types           => Null_Entity_Information_List,
-            References            => Null_File_Location_List,
+            References            => Null_Entity_Reference_List,
             Ref_Count             => 1);
          Append (EL.all, E);
 
@@ -776,10 +878,108 @@ package body Entities is
       end if;
 
       if Is_Null then
-         Insert (File.LI.Db.Entities, EL);
+         Insert (Db.Entities, EL);
       end if;
 
       return E;
    end Get_Or_Create;
+
+   ------------------
+   -- Get_Database --
+   ------------------
+
+   function Get_Database (File : Source_File) return Entities_Database is
+   begin
+      return File.Db;
+   end Get_Database;
+
+   function Get_Database (LI : LI_File) return Entities_Database is
+   begin
+      return LI.Db;
+   end Get_Database;
+
+   -----------------
+   -- Get_Project --
+   -----------------
+
+   function Get_Project (LI : LI_File) return Projects.Project_Type is
+   begin
+      return LI.Project;
+   end Get_Project;
+
+   -------------------------
+   -- Get_Predefined_File --
+   -------------------------
+
+   function Get_Predefined_File (Db : Entities_Database) return Source_File is
+   begin
+      if Db.Predefined_File = null then
+         Db.Predefined_File := Get_Or_Create (Db, VFS.No_File, null);
+      end if;
+      return Db.Predefined_File;
+   end Get_Predefined_File;
+
+   -------------------
+   -- Is_Subprogram --
+   -------------------
+
+   function Is_Subprogram (Entity : Entity_Information) return Boolean is
+   begin
+      return Is_Subprogram_Entity (Entity.Kind.Kind);
+
+   end Is_Subprogram;
+
+   -------------
+   -- Destroy --
+   -------------
+
+   procedure Destroy (Handler : in out LI_Handler_Record) is
+      pragma Unreferenced (Handler);
+   begin
+      null;
+   end Destroy;
+
+   -------------
+   -- Destroy --
+   -------------
+
+   procedure Destroy (Handler : in out LI_Handler) is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (LI_Handler_Record'Class, LI_Handler);
+   begin
+      Destroy (Handler.all);
+      Unchecked_Free (Handler);
+   end Destroy;
+
+   ------------
+   -- Get_LI --
+   ------------
+
+   function Get_LI (File : Source_File) return LI_File is
+   begin
+      return File.LI;
+   end Get_LI;
+
+   --------------------
+   -- Get_LI_Handler --
+   --------------------
+
+   function Get_LI_Handler
+     (Db              : Entities_Database;
+      Source_Filename : VFS.Virtual_File) return LI_Handler
+   is
+      pragma Unreferenced (Source_Filename);
+   begin
+      return Db.Handlers;
+   end Get_LI_Handler;
+
+   -------------------
+   -- Get_Timestamp --
+   -------------------
+
+   function Get_Timestamp (LI : LI_File) return Ada.Calendar.Time is
+   begin
+      return LI.Timestamp;
+   end Get_Timestamp;
 
 end Entities;
