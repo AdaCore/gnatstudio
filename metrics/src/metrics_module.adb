@@ -24,14 +24,10 @@ with Glide_Kernel;            use Glide_Kernel;
 with Glide_Kernel.Modules;    use Glide_Kernel.Modules;
 with Glide_Intl;              use Glide_Intl;
 
-with Traces;                  use Traces;
-
 package body Metrics_Module is
 
    Metrics_Module_ID   : Module_ID;
    Metrics_Module_Name : constant String := "Metrics";
-
-   Me : Debug_Handle := Create (Metrics_Module_Name);
 
    procedure Initialize_Module
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
@@ -104,4 +100,5 @@ package body Metrics_Module is
          Initializer             => Initialize_Module'Access,
          Contextual_Menu_Handler => null);
    end Register_Module;
+
 end Metrics_Module;
