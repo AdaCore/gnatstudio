@@ -28,6 +28,14 @@ with Unchecked_Deallocation;
 
 package body Process_Proxies is
 
+   procedure Free (Post_Processes : in out Post_Process_Access);
+   --  Free the list of post_processes pointed to by
+   --  Post_Processes.
+
+   procedure Process_Post_Processes (Proxy : access Process_Proxy'Class);
+   --  Call all of the post-processes to be executed for Proxy.
+   --  Free the list when the execution is completed.
+
    ----------
    -- Free --
    ----------
@@ -38,8 +46,12 @@ package body Process_Proxies is
       procedure Free_Internal is new Unchecked_Deallocation
         (GNAT.Expect.Process_Descriptor,
          GNAT.Expect.Process_Descriptor_Access);
+      procedure Free_Internal is new Unchecked_Deallocation
+        (Boolean, Boolean_Access);
    begin
       Free_Internal (Proxy.Descriptor);
+      Free_Internal (Proxy.Command_In_Process);
+      Free (Proxy.Post_Processes);
       Free_Internal (Proxy);
    end Free;
 
@@ -113,6 +125,7 @@ package body Process_Proxies is
       end if;
 
       Proxy.Command_In_Process.all := False;
+      Process_Post_Processes (Proxy);
    end Wait;
 
    procedure Wait
@@ -131,6 +144,7 @@ package body Process_Proxies is
       end if;
 
       Proxy.Command_In_Process.all := False;
+      Process_Post_Processes (Proxy);
    end Wait;
 
    procedure Wait
@@ -178,6 +192,14 @@ package body Process_Proxies is
       Num   : Integer := 1;
       Num_Events : Positive;
    begin
+
+      --  ??? We should always avoid concurrent calls to Wait, or the exact
+      --  behavior of the application will depend on specific timing, which is
+      --  not reliable.
+      if Proxy.Command_In_Process.all then
+         Put_Line ("!!! already running a Wait command!!");
+      end if;
+
       Proxy.Command_In_Process.all := True;
 
       --  We do not use a for loop, so that even if the timeout is 0 we
@@ -229,6 +251,7 @@ package body Process_Proxies is
       end loop;
 
       Proxy.Command_In_Process.all := False;
+      Process_Post_Processes (Proxy);
    end Wait;
 
    ----------
@@ -319,5 +342,71 @@ package body Process_Proxies is
          Put (Str);
       end if;
    end TTY_Filter;
+
+   -----------------------
+   -- Register_Post_Cmd --
+   -----------------------
+
+   procedure Register_Post_Cmd
+     (Proxy     : access Process_Proxy;
+      Cmd       : Post_Process_Cmd;
+      User_Data : System.Address)
+   is
+      Tmp : Post_Process_Access := Proxy.Post_Processes;
+   begin
+      if Tmp = null then
+         Proxy.Post_Processes := new Post_Process_Record'
+           (Cmd  => Cmd,
+            Data => User_Data,
+            Next => null);
+      else
+         while Tmp.Next /= null loop
+            Tmp := Tmp.Next;
+         end loop;
+         Tmp.Next := new Post_Process_Record'
+           (Cmd  => Cmd,
+            Data => User_Data,
+            Next => null);
+      end if;
+   end Register_Post_Cmd;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Post_Processes : in out Post_Process_Access)
+   is
+      procedure Free_Internal is new Unchecked_Deallocation
+        (Post_Process_Record, Post_Process_Access);
+      Tmp : Post_Process_Access;
+   begin
+      while Post_Processes /= null loop
+         Tmp := Post_Processes.Next;
+         Free_Internal (Post_Processes);
+         Post_Processes := Tmp;
+      end loop;
+   end Free;
+
+   ----------------------------
+   -- Process_Post_Processes --
+   ----------------------------
+
+   procedure Process_Post_Processes (Proxy : access Process_Proxy'Class) is
+      Initial : Post_Process_Access := Proxy.Post_Processes;
+      Tmp : Post_Process_Access := Proxy.Post_Processes;
+   begin
+      --  We must reinitialize the list list of post_processes for the proxy
+      --  before calling each of the command, otherwise if the command calls
+      --  Wait as well, then the same list of post_cmds will be processed
+      --  over and over again.
+
+      Proxy.Post_Processes := null;
+
+      while Tmp /= null loop
+         Tmp.Cmd (Tmp.Data);
+         Tmp := Tmp.Next;
+      end loop;
+      Free (Initial);
+   end Process_Post_Processes;
 
 end Process_Proxies;

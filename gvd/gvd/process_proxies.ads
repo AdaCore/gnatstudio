@@ -80,7 +80,7 @@ package Process_Proxies is
    function Get_Descriptor
      (Proxy : access Process_Proxy)
      return GNAT.Expect.Process_Descriptor_Access;
-   --  Returns the associates Process_Descriptor, so that all the functions of
+   --  Returns the associated Process_Descriptor, so that all the functions of
    --  GNAT.Expect can be applied to it.
    --  You should not use Expect directly, but rather Wait below.
 
@@ -165,6 +165,25 @@ package Process_Proxies is
    --  is not in internal state.
    --  Proxy is the address of a Process_Proxy'Class.
 
+   ---------------------
+   -- Post processing --
+   ---------------------
+   --  It is possible, at any time, to register some post-processing commands
+   --  that will be executed after the current (or next, if there is no
+   --  current) call to Wait.
+   --  These post-processing commands should be used so that not two
+   --  concurrent Wait calls can occur at the same time on a given
+   --  Process_Proxy.
+
+   type Post_Process_Cmd is access procedure (User_Data : System.Address);
+
+   procedure Register_Post_Cmd
+     (Proxy     : access Process_Proxy;
+      Cmd       : Post_Process_Cmd;
+      User_Data : System.Address);
+   --  Register a new post-processing command to be executed after the next
+   --  call to Wait.
+
    ----------------
    -- Exceptions --
    ----------------
@@ -177,6 +196,14 @@ private
    type Boolean_Array is array (1 .. Internal_Status_Stack_Size) of
      Boolean;
    pragma Pack (Boolean_Array);
+
+   type Post_Process_Record;
+   type Post_Process_Access is access Post_Process_Record;
+   type Post_Process_Record is record
+      Cmd  : Post_Process_Cmd;
+      Data : System.Address;
+      Next : Post_Process_Access;
+   end record;
 
    type Process_Proxy is tagged record
       Descriptor         : GNAT.Expect.Process_Descriptor_Access;
@@ -195,6 +222,9 @@ private
       --  True if file name/lines patterns should be recognized in the output
       --  of the debugger. If set to False, the text displayed in the code
       --  editor will not be changed.
+
+      Post_Processes     : Post_Process_Access := null;
+      --  The list of commands to be processed after the next call to wait.
    end record;
 
    type Gui_Process_Proxy is new Process_Proxy with null record;
