@@ -49,6 +49,14 @@ package GVD.Explorer is
       Code_Editor : access Gtk.Widget.Gtk_Widget_Record'Class);
    --  Create a new explorer
 
+   procedure Configure
+     (Explorer : access Explorer_Record;
+      TTY_Mode : Boolean);
+   --  Configure Explorer.
+   --  TTY_Mode is True when GVD is launched with TTY emulation, in which case
+   --  the explorer will try to send file position instructions when browsing
+   --  files.
+
    procedure Add_File_Node
      (Tree      : access Explorer_Record;
       File_Name : String);
@@ -108,5 +116,6 @@ private
       Folder_Open_Pixmap : Gdk.Pixmap.Gdk_Pixmap;
       Folder_Open_Mask   : Gdk.Bitmap.Gdk_Bitmap;
       Contextual_Menu    : Gtk.Menu.Gtk_Menu;
+      TTY_Mode           : Boolean := False;
    end record;
 end GVD.Explorer;

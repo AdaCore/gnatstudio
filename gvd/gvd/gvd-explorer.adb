@@ -38,6 +38,7 @@ with Gtkada.Handlers;       use Gtkada.Handlers;
 
 with GNAT.Regpat;           use GNAT.Regpat;
 with GNAT.OS_Lib;           use GNAT.OS_Lib;
+with GNAT.IO;               use GNAT.IO;
 
 with Language;              use Language;
 with Debugger;              use Debugger;
@@ -158,6 +159,17 @@ package body GVD.Explorer is
    --  calculated lazily only the first time the user wants to see it.
    --  Data is the user_data associated with To_Node.
 
+   ---------------
+   -- Configure --
+   ---------------
+
+   procedure Configure
+     (Explorer : access Explorer_Record;
+      TTY_Mode : Boolean) is
+   begin
+      Explorer.TTY_Mode := TTY_Mode;
+   end Configure;
+
    -------------
    -- Gtk_New --
    -------------
@@ -274,6 +286,50 @@ package body GVD.Explorer is
       Lang      : Language_Access;
       Line      : Natural := 1;
 
+      procedure Print_File_Location
+        (File     : String;
+         Buffer   : GVD.Types.String_Access;
+         Line     : Natural;
+         Position : Natural);
+      --  Print on standard output the location of a given file, following
+      --  the same syntax than gdb.
+      --  ??? This is gdb specific but gives a much better integration, so
+      --  it is worth it.
+
+      procedure Print_File_Location
+        (File     : String;
+         Buffer   : GVD.Types.String_Access;
+         Line     : Natural;
+         Position : Natural)
+      is
+         Pos_Img  : constant String := Natural'Image (Position);
+         My_Line  : Natural := 1;
+      begin
+         if Line = 0 and then Buffer /= null then
+            for Text_Pos in Buffer'First .. Buffer'First + Position loop
+               if Buffer (Text_Pos) = ASCII.LF then
+                  My_Line := My_Line + 1;
+               end if;
+            end loop;
+
+            declare
+               Line_Img : constant String := Natural'Image (My_Line);
+            begin
+               Put_Line (ASCII.SUB & ASCII.SUB & File & ":" &
+                 Line_Img (2 .. Line_Img'Last) & ":" &
+                 Pos_Img (2 .. Pos_Img'Last) & ":beg:0x0");
+            end;
+         else
+            declare
+               Line_Img : constant String := Natural'Image (Line);
+            begin
+               Put_Line (ASCII.SUB & ASCII.SUB & File & ":" &
+                 Line_Img (2 .. Line_Img'Last) & ":" &
+                 Pos_Img (2 .. Pos_Img'Last) & ":beg:0x0");
+            end;
+         end if;
+      end Print_File_Location;
+
    begin
       --  ???  Should set Data.Line to the current line for the current
       --  selection, so that when the user selects the same file again, we
@@ -289,6 +345,7 @@ package body GVD.Explorer is
          Lang := Get_Language_From_File (Data.Extension);
          Set_Current_Language
            (Code_Editor (Explorer.Code_Editor), Lang);
+
          Load_File (Code_Editor (Explorer.Code_Editor),
                     Find_File (Tab.Debugger, Data.Extension),
                     Set_Current => False);
@@ -298,8 +355,16 @@ package body GVD.Explorer is
                       Explorer.Current_Line, Set_Current => True);
          end if;
 
-         Highlight_Word (Get_Source (Code_Editor (Explorer.Code_Editor)),
-                         Row_Data_Explorer.Node_Get_Row_Data (Explorer, Node));
+         Highlight_Word
+           (Get_Source (Code_Editor (Explorer.Code_Editor)),
+            Row_Data_Explorer.Node_Get_Row_Data (Explorer, Node));
+
+         if Explorer.TTY_Mode then
+            Print_File_Location
+              (Find_File (Tab.Debugger, Data.Extension),
+               Get_Buffer (Get_Source (Code_Editor (Explorer.Code_Editor))), 0,
+               Natural (Row_Data_Explorer.Node_Get_Row_Data (Explorer, Node)));
+         end if;
 
       --  Else if a file was selected
 
@@ -325,6 +390,11 @@ package body GVD.Explorer is
             else
                Set_Line (Code_Editor (Explorer.Code_Editor), Line,
                          Set_Current => False);
+            end if;
+
+            if Explorer.TTY_Mode then
+               Print_File_Location
+                 (Find_File (Tab.Debugger, Data.Extension), null, Line, 0);
             end if;
          end if;
       end if;
