@@ -55,11 +55,15 @@ package Entities.Queries is
      (Iter                  : out Entity_Reference_Iterator;
       Entity                : Entity_Information;
       File_Has_No_LI_Report : File_Error_Reporter := null;
-      In_File               : Source_File := null);
-   --  Find all the references to the entity. This doesn't return the location
-   --  for the declaration of the entity, use Get_Declaration_Of in addition.
+      In_File               : Source_File := null;
+      In_Scope              : Entity_Information := null);
+   --  Find all the references to the entity. This also return the location
+   --  for the declaration of the entity.
    --  if In_File is specified, then only the references in that file will be
-   --  returned. This is also more efficient.
+   --  returned. This is also more efficient. Alternatively, In_Scope can be
+   --  specified to limit the list of references to the ones that appear
+   --  in the scope of In_Scope.
+   --  End_Line can specify a range of lines
    --  Source files with no LI file are reported through File_Has_No_LI_Report.
    --  You must destroy the iterator when you are done with it, to avoid
    --  memory leaks.
@@ -70,8 +74,8 @@ package Entities.Queries is
    procedure Next (Iter : in out Entity_Reference_Iterator);
    --  Move to the next reference to the entity
 
-   function Get (Iter : Entity_Reference_Iterator) return File_Location;
-   --  Return the current reference. This might be No_File_Location if the
+   function Get (Iter : Entity_Reference_Iterator) return Entity_Reference;
+   --  Return the current reference. This might be No_Entity_Reference if the
    --  iterator needs to parse more source files to get that information.
    --  The search is done with small steps, so that this can be easily put in
    --  the background, including the parsing of the source files.
@@ -148,7 +152,9 @@ package Entities.Queries is
    --  Return the current dependency. This is null if there are no remaining
    --  dependencies.
 
-
+   ---------------------------
+   -- Ancestor dependencies --
+   ---------------------------
 
    type Dependency_Iterator is private;
 
@@ -190,6 +196,36 @@ package Entities.Queries is
    --  Free the memory occupied by Iter
 
    -------------
+   -- Callers --
+   -------------
+
+   function Get_Caller (Ref : Entity_Reference) return Entity_Information;
+   --  Return the entity that encloses the reference
+
+   type Calls_Iterator is private;
+
+   function Get_All_Called_Entities
+     (Entity : Entity_Information)
+      return Calls_Iterator;
+   --  Return all the entities that are found in the scope of Entity. This is
+   --  not necessarily a subprogram call, but can be many things.
+   --  All entities returned are unique. If you need to find the specific
+   --  reference(s) to that entity, you'll need to search for the references in
+   --  the right scope through the iterators above.
+
+   function At_End (Iter : Calls_Iterator) return Boolean;
+   --  True if there are no more called entities
+
+   function Get (Iter : Calls_Iterator) return Entity_Information;
+   --  Return the current entity
+
+   procedure Next (Iter : in out Calls_Iterator);
+   --  Move to the next entity
+
+   procedure Destroy (Iter : in out Calls_Iterator);
+   --  Free the memory used by the iterator
+
+   -------------
    -- Parents --
    -------------
 
@@ -215,42 +251,8 @@ package Entities.Queries is
 --     procedure Destroy (Iter : in out Parent_Iterator);
    --  Free the memory occupied by the iterator
 
-   -----------------
-   -- Scope trees --
-   -----------------
-
-   type Scope_Tree_Iterator is private;
-
---     function Get_Scope_References
---       (File   : Source_File;
---        Entity : Entity_Information) return Scope_Tree_Iterator;
---     --  Return all the occurrences of the entity in File.
---
---     procedure Next (Iter : in out Scope_Tree_Iterator);
---     --  Move to the next reference
---
---     function Get (Iter : Scope_Tree_Iterator) return Scope_Tree;
---     --  Return the current occurrence, or null if there are no more caller
---
---
---     function Get_Parent (Node : Scope_Tree) return Scope_Tree;
---     --  Return the node that calls or contains a reference to Node.
---
---     function Get_Entity (Node : Scope_Tree) return Entity_Information;
---     --  Return the entity associated with that node
---
---     function Get_Location (Node : Scope_Tree) return File_Location;
---     --  Return the location associated with this node
---
---     function Get_Children (Node : Scope_Tree) return Scope_Tree_Iterator;
-   --  Return the first entity that Node calls
-
 
 private
-   type Scope_Tree_Iterator is record
-      File   : Source_File;
-      Entity : Entity_Information;
-   end record;
 
    type Dependency_Iterator is record
       Importing             : Projects.Imported_Project_Iterator;
@@ -287,11 +289,22 @@ private
       --  True if we are in the process of parsing all the required files to
       --  get the full xref information
 
+      Decl_Returned : Boolean;
+      --  Whether the declaration has already been returned or not
+
       Index   : Entity_Reference_Arrays.Index_Type;
       Entity  : Entity_Information;
       In_File : Source_File;
+      Start_Line, Last_Line  : Integer;
 
       Deps    : Dependency_Iterator;
+   end record;
+
+   type Calls_Iterator is record
+      Entity  : Entity_Information;
+      Iter    : Entities_Tries.Iterator;
+      EL      : Entity_Information_List_Access;
+      Index   : Entity_Information_Arrays.Index_Type;
    end record;
 
 end Entities.Queries;
