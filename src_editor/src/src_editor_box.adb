@@ -412,7 +412,7 @@ package body Src_Editor_Box is
             File_Name          => Base_Name (Get_Filename (Editor)),
             Entity_Name        => Entity_Name_Information (Context),
             Line               => Modules.Line_Information (Context),
-            Column             => Column_Information (Context),
+            Column             => Entity_Column_Information (Context),
             Location           => Location,
             Status             => Status);
 
@@ -423,7 +423,7 @@ package body Src_Editor_Box is
             File_Name          => Base_Name (Get_Filename (Editor)),
             Entity_Name        => Entity_Name_Information (Context),
             Line               => Modules.Line_Information (Context),
-            Column             => Column_Information (Context),
+            Column             => Entity_Column_Information (Context),
             Entity             => Entity,
             Status             => Status);
       end if;
@@ -607,7 +607,7 @@ package body Src_Editor_Box is
             File_Name          => Base_Name (Filename),
             Entity_Name        => Entity_Name_Information (Context),
             Line               => Modules.Line_Information (Context),
-            Column             => Column_Information (Context),
+            Column             => Entity_Column_Information (Context),
             Entity             => Entity,
             Status             => Status);
 
@@ -647,7 +647,7 @@ package body Src_Editor_Box is
       Width, Height : out Glib.Gint;
       Area          : out Gdk_Rectangle)
    is
-      Line, Col        : Gint;
+      Line, Col, Cursor_Col : Gint;
       Mouse_X, Mouse_Y : Gint;
       Win_X, Win_Y     : Gint;
       Start_Iter       : Gtk_Text_Iter;
@@ -702,6 +702,7 @@ package body Src_Editor_Box is
          return;
       end if;
 
+      Cursor_Col := Col;
       Get_Iter_At_Line_Offset
         (Data.Box.Source_Buffer, Start_Iter, Line, Col);
       Search_Entity_Bounds (Start_Iter, End_Iter);
@@ -739,12 +740,13 @@ package body Src_Editor_Box is
          Set_File_Information
            (Context      => Context'Unchecked_Access,
             Directory    => Dir_Name (Filename),
-            File_Name    => Base_Name (Filename));
+            File_Name    => Base_Name (Filename),
+            Line         => To_Box_Line (Line),
+            Column       => To_Box_Column (Cursor_Col));
          Set_Entity_Information
-           (Context     => Context'Unchecked_Access,
-            Entity_Name => Entity_Name,
-            Line        => To_Box_Line (Line),
-            Column      => To_Box_Column (Col));
+           (Context       => Context'Unchecked_Access,
+            Entity_Name   => Entity_Name,
+            Entity_Column => To_Box_Column (Col));
          Glide_Kernel.Modules.Compute_Tooltip
            (Data.Box.Kernel, Context'Unchecked_Access, Pixmap, Width, Height);
 
@@ -1379,8 +1381,9 @@ package body Src_Editor_Box is
    is
       Editor     : constant Source_Editor_Box := Source_Editor_Box (Object);
       V          : constant Source_View := Editor.Source_View;
-      Line       : Gint;
-      Column     : Gint;
+      Line       : Gint := 0;
+      Column     : Gint := 0;
+      Entity_Column : Gint;
       X, Y       : Gint;
       Item       : Gtk_Menu_Item;
       Start_Iter : Gtk_Text_Iter;
@@ -1396,10 +1399,6 @@ package body Src_Editor_Box is
         (Context => Context,
          Kernel  => Kernel,
          Creator => Src_Editor_Module_Id);
-      Set_File_Information
-        (Context,
-         Directory => Dir_Name (Filename),
-         File_Name => Base_Name (Filename));
 
       --  Click in the line numbers area ?
 
@@ -1412,7 +1411,6 @@ package body Src_Editor_Box is
             X, Y);
          Get_Iter_At_Location (Editor.Source_View, Start_Iter, X, Y);
          Line := Get_Line (Start_Iter);
-         Set_Entity_Information (Context, Line => To_Box_Line (Line));
          Place_Cursor (Editor.Source_Buffer, Start_Iter);
 
          if Menu /= null then
@@ -1525,14 +1523,14 @@ package body Src_Editor_Box is
 
             --  Expand the tabs
             Get_Screen_Position
-              (Editor.Source_Buffer, Start_Iter, Line, Column);
+              (Editor.Source_Buffer, Start_Iter, Line, Entity_Column);
 
             Set_Entity_Information
               (Context,
                Glib.Convert.Convert
                  (Get_Text (Start_Iter, End_Iter),
                   Get_Pref (Editor.Kernel, Default_Charset), "UTF-8"),
-               To_Box_Line (Line), To_Box_Column (Column));
+               To_Box_Column (Entity_Column));
          end if;
 
          if Menu /= null then
@@ -1584,6 +1582,13 @@ package body Src_Editor_Box is
             Set_Sensitive (Item, False);
          end if;
       end if;
+
+      Set_File_Information
+        (Context,
+         Directory => Dir_Name (Filename),
+         File_Name => Base_Name (Filename),
+         Line      => Integer (To_Box_Line (Line)),
+         Column    => Integer (To_Box_Column (Column)));
 
       return Selection_Context_Access (Context);
    end Get_Contextual_Menu;
