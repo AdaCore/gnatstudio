@@ -25,6 +25,7 @@ with GNAT.Regpat; use GNAT.Regpat;
 with String_Utils; use String_Utils;
 
 with Codefix.Text_Manager.Ada_Extracts; use Codefix.Text_Manager.Ada_Extracts;
+with Codefix.Ada_Tools;                 use Codefix.Ada_Tools;
 
 package body Codefix.Text_Manager.Ada_Commands is
 
@@ -273,22 +274,25 @@ package body Codefix.Text_Manager.Ada_Commands is
       Destination  : String := "";
       Category     : Language_Category := Cat_With)
    is
-      Use_Info, Pkg_Info     : Construct_Information;
-      Word_Used              : Word_Cursor := Clone (Word);
-      Index_Name, Prev_Index : Natural := 0;
-   begin
-      if Destination /= "" then
-         Assign (This.Destination, Destination);
-      end if;
+      use Codefix.Ada_Tools.Words_Lists;
 
+      Pkg_Info     : Construct_Information;
+      Word_Used    : Word_Cursor := Clone (Word);
+      Clauses_List : Words_Lists.List;
+      Clause_Node  : Words_Lists.List_Node;
+   begin
       if Word.String_Match /= null then
          Pkg_Info := Search_Unit
            (Current_Text, Word.File_Name.all, Cat_With, Word.String_Match.all);
       else
          Pkg_Info := Get_Unit
            (Current_Text, Word, Before, Category);
+      end if;
+
+      if Pkg_Info.Category /= Cat_Unknown then
          Assign (Word_Used.String_Match, Pkg_Info.Name.all);
       end if;
+
 
       if Pkg_Info.Category = Cat_Unknown then
          Pkg_Info := Search_Unit
@@ -302,55 +306,68 @@ package body Codefix.Text_Manager.Ada_Commands is
             Word_Used);
          This.Is_Instantiation := True;
       else
-
          Add_To_Remove
            (This.Clauses_Pkg,
             Current_Text,
             Word_Used);
 
          if Destination /= "" then
-            --  ??? Try to found a better position
             Append
               (This.Obj_List,
                new String'("with " & Pkg_Info.Name.all & ";"));
          end if;
-
          This.Is_Instantiation := False;
       end if;
 
-      if Category /= Cat_Use then
-         loop
-            Index_Name := Index_Name + 1;
-            Skip_To_Char (Pkg_Info.Name.all, Index_Name, '.');
-            exit when Index_Name > Pkg_Info.Name'Last + 1;
 
-            Use_Info := Search_Unit
-              (Current_Text,
-               Word.File_Name.all,
-               Cat_Use,
-               Pkg_Info.Name.all (Prev_Index + 1 .. Index_Name - 1));
+      Clauses_List := Get_Use_Clauses
+        (Word_Used.String_Match.all,
+         Word_Used.File_Name.all,
+         Current_Text,
+         True);
 
-            if Use_Info.Category /= Cat_Unknown then
-               Word_Used.Col := Use_Info.Sloc_Start.Column;
-               Word_Used.Line := Use_Info.Sloc_Start.Line;
-               Assign (Word_Used.String_Match, Use_Info.Name.all);
-               Add_To_Remove (This.Clauses_Pkg, Current_Text, Word_Used);
+      Clause_Node := First (Clauses_List);
 
-               if Destination /= "" then
-                  if Use_Info.Category = Cat_Use then
-                     Append
-                      (This.Obj_List,
-                        new String'("use " & Use_Info.Name.all & ";"));
-                  elsif Use_Info.Category = Cat_With then
-                     Append
-                      (This.Obj_List,
-                        new String'("with " & Use_Info.Name.all & ";"));
-                  end if;
-               end if;
-            end if;
-
-            Prev_Index := Index_Name;
+      if Destination /= "" then
+         while Clause_Node /= Words_Lists.Null_Node loop
+            Add_To_Remove (This.Clauses_Pkg, Current_Text, Data (Clause_Node));
+            Append
+              (This.Obj_List,
+               new String'
+                 ("use " & Data (Clause_Node).String_Match.all & ";"));
+            Clause_Node := Next (Clause_Node);
          end loop;
+      else
+         while Clause_Node /= Words_Lists.Null_Node loop
+            Add_To_Remove (This.Clauses_Pkg, Current_Text, Data (Clause_Node));
+            Clause_Node := Next (Clause_Node);
+         end loop;
+      end if;
+
+      if Destination /= "" then
+         declare
+            Current_Cursor : File_Cursor;
+            Current_Info   : Construct_Information;
+         begin
+            Current_Cursor.File_Name := new String'(Destination);
+            Current_Cursor.Line := 1;
+            Current_Cursor.Col := 1;
+
+            loop
+               Current_Info := Get_Unit
+                 (Current_Text, Current_Cursor, After);
+
+               exit when Current_Info.Category /= Cat_With
+                 and then Current_Info.Category /= Cat_Use;
+
+               Current_Cursor.Col := Current_Info.Sloc_End.Column;
+               Current_Cursor.Line := Current_Info.Sloc_End.Line;
+            end loop;
+
+            This.Last_With := new Mark_Abstr'Class'
+              (Get_New_Mark (Current_Text, Current_Cursor));
+            Free (Current_Cursor);
+         end;
       end if;
 
    end Initialize;
@@ -363,7 +380,7 @@ package body Codefix.Text_Manager.Ada_Commands is
       Instr_Extract, Clauses_Extract : Extract;
       Success                        : Boolean;
       Node                           : String_List.List_Node;
-      Line_Cursor                    : File_Cursor;
+      Last_With                      : File_Cursor;
    begin
       if This.Is_Instantiation then
          Execute (This.Instantiation_Pkg, Current_Text, Instr_Extract);
@@ -387,19 +404,19 @@ package body Codefix.Text_Manager.Ada_Commands is
 
       Delete_Empty_Lines (New_Extract);
 
-      if This.Destination /= null then
+      if This.Last_With /= null then
 
          Node := First (This.Obj_List);
 
-         Line_Cursor.File_Name := This.Destination;
-         Line_Cursor.Col := 1;
-         Line_Cursor.Line := 0;
+         Last_With := File_Cursor
+           (Get_Current_Cursor (Current_Text, This.Last_With.all));
 
          while Node /= String_List.Null_Node loop
-            Add_Line (New_Extract, Line_Cursor, Data (Node).all);
+            Add_Line (New_Extract, Last_With, Data (Node).all);
             Node := Next (Node);
          end loop;
 
+         Free (Last_With);
       end if;
 
    end Execute;
@@ -408,6 +425,7 @@ package body Codefix.Text_Manager.Ada_Commands is
    begin
       Free (This.Instantiation_Pkg);
       Free (This.Clauses_Pkg);
+      Free (This.Last_With);
       Free (Text_Command (This));
    end Free;
 
@@ -506,7 +524,7 @@ package body Codefix.Text_Manager.Ada_Commands is
          Free (Spec_Extract);
          Free (Body_Extract);
       else
-         Unchecked_Assign (New_Extract, Body_Extract);
+         Extract (New_Extract) := Body_Extract;
       end if;
 
       Free (Spec_Begin);
@@ -545,20 +563,43 @@ package body Codefix.Text_Manager.Ada_Commands is
       Current_Text : Text_Navigator_Abstr'Class;
       New_Extract  : out Extract'Class)
    is
-      Position : File_Cursor;
+      Position      : File_Cursor;
+      Pragma_Cursor : File_Cursor;
+      Line_Cursor   : File_Cursor;
+      Next_Str      : Dynamic_String;
    begin
       Position := File_Cursor
         (Get_Current_Cursor (Current_Text, This.Position.all));
 
-      --  ??? Later, this function could detect the presence of another pragma
-      --  and not add one a second time
+      Pragma_Cursor := Position;
+      Pragma_Cursor.Line := Pragma_Cursor.Line + 1;
+      Pragma_Cursor.Col := 1;
 
-      Add_Indented_Line
-        (New_Extract,
-         Position,
-         "pragma " & This.Name.all & " (" & This.Argument.all & ");",
-         Current_Text);
+      Next_Word (Current_Text, Pragma_Cursor, Next_Str);
 
+      if To_Lower (Next_Str.all) = "pragma" then
+         Free (Next_Str);
+         Next_Word (Current_Text, Pragma_Cursor, Next_Str);
+
+         if To_Lower (Next_Str.all) = To_Lower (This.Name.all) then
+            Pragma_Cursor := File_Cursor
+              (Search_String (Current_Text, Pragma_Cursor, ")"));
+            Line_Cursor := Pragma_Cursor;
+            Line_Cursor.Col := 1;
+            Get_Line (Current_Text, Line_Cursor, New_Extract);
+            Replace
+              (New_Extract, Pragma_Cursor, 1, ", " & This.Argument.all & ")");
+         end if;
+
+      else
+         Add_Indented_Line
+           (New_Extract,
+            Position,
+            "pragma " & This.Name.all & " (" & This.Argument.all & ");",
+            Current_Text);
+      end if;
+
+      Free (Next_Str);
       Free (Position);
    end Execute;
 
