@@ -27,6 +27,35 @@
 -- executable file  might be covered by the  GNU Public License.     --
 -----------------------------------------------------------------------
 
+--  <description>
+--  This widget provides an advanced file selection dialog.
+--
+--  This widget provides a directory explorer as well as a file explorer.
+--  The user decides which files should be viewed in the file explorer
+--  by selecting a filter.
+--
+--  User-defined filters can be created by inheriting from
+--  File_Filter_Record and overriding Use_File_Filter.
+--
+--  Before this widget can be used, any filters must be registered
+--  using Register_Filter.
+--
+--  For a basic usage, the typical code would be :
+--
+--  procedure Run_File_Selector is
+--     File_Selector_Window : File_Selector_Window_Access;
+--     Filter_A : Filter_Show_All_Access := new Filter_Show_All;
+--  begin
+--     Gtk.Main.Init;
+--     Gtk_New (File_Selector_Window, "/");
+--
+--     Register_Filter (File_Selector_Window, Filter_A);
+--
+--     Show_All (File_Selector_Window);
+--     Gtk.Main.Main;
+--  end Run_Test_File_Selector;
+--  </description>
+
 with Gtk.Window;          use Gtk.Window;
 with Gtk.Box;             use Gtk.Box;
 with Gtk.Toolbar;         use Gtk.Toolbar;
@@ -52,20 +81,25 @@ with GNAT.OS_Lib; use GNAT.OS_Lib;
 
 package Gtkada.File_Selector is
 
-   package String_Stack is new Generic_Stack (String_Access);
-   use String_Stack;
-
    type File_State is (Normal, Highlighted, Inactive, Invisible);
+   --  The state of a file :
+   --    Normal means the file is shown and selectable.
+   --    Highlighted means the file is shown with a different color and
+   --      selectable
+   --    Inactive means the file is shown but cannot be selected.
+   --    Invisible means the file is not shown.
 
-   type File_Selector_Window_Record;
+   type File_Selector_Window_Record is new
+     Gtk.Widget.Gtk_Widget_Record with private;
    type File_Selector_Window_Access is
      access all File_Selector_Window_Record'Class;
+   --  A file selector window.
 
    type File_Filter_Record
      (Label : String_Access)
       is abstract tagged null record;
-
    type File_Filter is access all File_Filter_Record'Class;
+   --  The basic type for file filters.
 
    procedure Use_File_Filter
      (Filter    : access File_Filter_Record;
@@ -77,18 +111,40 @@ package Gtkada.File_Selector is
       Mask      : out Gdk.Bitmap.Gdk_Bitmap;
       Text      : out String_Access)
      is abstract;
+   --  This is the function that is called every time that a file could
+   --  be shown in the file explorer.
+   --  Dir is the directory the file is in.
+   --  File is the file name.
+   --  State is the state the file should be displayed in.
+   --  Pixmap is an icon that can be associated to a file,
+   --  with the associated Mask.
+   --  Text represents additional info that can be displayed
 
    procedure Register_Filter
      (Win    : File_Selector_Window_Access;
       Filter : access File_Filter_Record'Class);
-
-   ----------------------
-   -- Standard filters --
-   ----------------------
+   --  Register a file filter in the file selector.
 
    type Filter_Show_All is new File_Filter_Record (new String'("All files"))
      with null record;
    type Filter_Show_All_Access is access all Filter_Show_All'Class;
+   --  This provides a basic filter that shows all files.
+
+   procedure Gtk_New
+     (File_Selector_Window : out File_Selector_Window_Access;
+      Directory            : in String);
+   --  Create a new file selector. Directory is the directory that should
+   --  be opened when the file selector is first shown.
+
+   procedure Initialize
+     (File_Selector_Window : access File_Selector_Window_Record'Class;
+      Directory            : in String);
+   --  Internal initialization function.
+
+private
+
+   package String_Stack is new Generic_Stack (String_Access);
+   use String_Stack;
 
    procedure Use_File_Filter
      (Filter    : access Filter_Show_All;
@@ -116,8 +172,8 @@ package Gtkada.File_Selector is
       Filters : Filter_List;
 
       Moving_Through_History : Boolean := True;
-      Current_Directory : String_Access := new String' ("");
-      Home_Directory : String_Access := new String' ("");
+      Current_Directory : String_Access := new String'("");
+      Home_Directory : String_Access := new String'("");
 
       Past_History : Simple_Stack;
       Future_History : Simple_Stack;
@@ -164,10 +220,4 @@ package Gtkada.File_Selector is
       Cancel_Button : Gtk_Button;
    end record;
 
-   procedure Gtk_New
-     (File_Selector_Window : out File_Selector_Window_Access;
-      Directory            : in String);
-   procedure Initialize
-     (File_Selector_Window : access File_Selector_Window_Record'Class;
-      Directory            : in String);
 end Gtkada.File_Selector;
