@@ -249,6 +249,15 @@ package body Commands.Custom is
          end if;
       end if;
 
+      if Filter.Need_Entity then
+         if Context.all not in Entity_Selection_Context'Class
+           or else not Has_Entity_Name_Information
+             (Entity_Selection_Context_Access (Context))
+         then
+            return False;
+         end if;
+      end if;
+
       return True;
    end Filter_Matches_Primitive;
 
