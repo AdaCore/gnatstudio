@@ -129,7 +129,7 @@ package body Browsers.Canvas is
       Browser.Kernel := Kernel_Handle (Kernel);
 
       Set_Layout_Algorithm (Browser.Canvas, Layer_Layout'Access);
-      Set_Auto_Layout (Browser.Canvas, False);
+      Set_Auto_Layout (Browser.Canvas, True);
 
       Widget_Callback.Object_Connect
         (Browser.Canvas, "realize",
