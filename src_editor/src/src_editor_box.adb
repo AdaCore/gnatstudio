@@ -991,16 +991,13 @@ package body Src_Editor_Box is
 
       Gtk_New_Vbox (Box.Root_Container, Homogeneous => False);
 
-      Gtk_New (Frame);
-      Set_Shadow_Type (Frame, Shadow_Out);
-      Pack_Start (Box.Root_Container, Frame, Expand => True, Fill => True);
-
       Gtk_New (Scrolling_Area);
       Set_Policy
         (Scrolling_Area,
          H_Scrollbar_Policy => Policy_Automatic,
          V_Scrollbar_Policy => Policy_Automatic);
-      Add (Frame, Scrolling_Area);
+      Pack_Start (Box.Root_Container, Scrolling_Area,
+                  Expand => True, Fill => True);
 
       if Source = null then
          Gtk_New (Box.Source_Buffer, Kernel, Lang => Lang);
