@@ -1,5 +1,7 @@
 New features in GVD 1.1.0
 
+- Under Windows, non ASCII characters are now displayed instead of being
+  truncated.
 - New command line option: --pargs to set program arguments on the command line
 - New command line option: --dargs to specify additional debugger arguments.
 - Start up of big programs have been significantly improved.
