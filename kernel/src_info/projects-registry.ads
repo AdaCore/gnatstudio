@@ -103,6 +103,8 @@ package Projects.Registry is
       Directory : String);
    --  Load the default project for Directory.
    --  Recompute_View must be called afterwards.
+   --  Use the function Glide_Kernel.Project.Load_Default_Project instead, so
+   --  that default switches are properly initialized.
 
    function Load_Or_Find
      (Registry     : Project_Registry;
