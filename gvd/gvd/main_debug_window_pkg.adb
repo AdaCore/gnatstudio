@@ -100,7 +100,6 @@ begin
    Set_Right_Justify (Main_Debug_Window.Separator1, False);
 
    Gtk_New (Main_Debug_Window.Open_Session1, -"Open Session...");
-   Set_Sensitive (Main_Debug_Window.Open_Session1, False);
    Add_Accelerator (Main_Debug_Window.Open_Session1, "activate",
      The_Accel_Group, GDK_N, Gdk.Types.Control_Mask, Accel_Visible);
    Widget_Callback.Object_Connect
@@ -110,7 +109,6 @@ begin
    Set_Right_Justify (Main_Debug_Window.Open_Session1, False);
 
    Gtk_New (Main_Debug_Window.Save_Session_As1, -"Save Session As...");
-   Set_Sensitive (Main_Debug_Window.Save_Session_As1, False);
    Add_Accelerator (Main_Debug_Window.Save_Session_As1, "activate",
      The_Accel_Group, GDK_S, Gdk.Types.Control_Mask, Accel_Visible);
    Widget_Callback.Object_Connect
@@ -314,7 +312,6 @@ begin
    Set_Right_Justify (Main_Debug_Window.Separator19, False);
 
    Gtk_New (Main_Debug_Window.Preferences1, -"Preferences...");
-   Set_Sensitive (Main_Debug_Window.Preferences1, False);
    Widget_Callback.Object_Connect
      (Main_Debug_Window.Preferences1, "activate",
       Widget_Callback.To_Marshaller (On_Preferences1_Activate'Access), Main_Debug_Window);

@@ -106,7 +106,6 @@
 	  <widget>
 	    <class>GtkMenuItem</class>
 	    <name>open_session1</name>
-	    <sensitive>False</sensitive>
 	    <accelerator>
 	      <modifiers>GDK_CONTROL_MASK</modifiers>
 	      <key>GDK_N</key>
@@ -125,7 +124,6 @@
 	  <widget>
 	    <class>GtkMenuItem</class>
 	    <name>save_session_as1</name>
-	    <sensitive>False</sensitive>
 	    <accelerator>
 	      <modifiers>GDK_CONTROL_MASK</modifiers>
 	      <key>GDK_S</key>
@@ -485,7 +483,6 @@
 	  <widget>
 	    <class>GtkMenuItem</class>
 	    <name>preferences1</name>
-	    <sensitive>False</sensitive>
 	    <signal>
 	      <name>activate</name>
 	      <handler>on_preferences1_activate</handler>
