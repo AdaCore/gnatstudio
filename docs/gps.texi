@@ -3580,6 +3580,13 @@ This option is currently only supported for Ada files.
 @item Compile File
 Compile the current file. Display an error message in the @i{Messages} window if
 no file is selected.
+
+If errors or warnings occur during the compilation, the corresponding locations
+will appear in the Locations Tree. If the corresponding Preference is set, the
+source lines will be highlighted in the editors (@xref{The Preferences Dialog}).
+To remove the highlighting on these lines, remove the files from the Locations
+Tree.
+
 This option is currently only supported for Ada files.
 
 @item Make
@@ -4980,6 +4987,10 @@ Font and colors used to highlight keywords.
 Color for highlighting the current line. Leave it to blank for no highlighting.
 Setting the color to white will set a transparent color.
 
+@item Current block color
+Color for highlighting the current source block. Setting the color to white
+will disable the block highlighting (recommended on slow machines).
+
 @item Comments
 Font and colors used to highlight comments.
 Setting the color to white will set a transparent color.
@@ -5341,6 +5352,12 @@ Command used to apply a patch. Arguments can also be specified.
 @item Color highlighting
 @cindex color
 Color used to highlight text in the messages window.
+
+@item Color highlighting
+@cindex errors
+Color used to highlight lines causing compilation errors/warnings in the
+source editors. When this color is set to white, the errors/warnings are
+not highlighted. (@ref{Compilation/Build})
 
 @item Show build progress
 @cindex build
