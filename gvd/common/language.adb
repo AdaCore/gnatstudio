@@ -87,11 +87,13 @@ package body Language is
       Context : constant Language_Context :=
         Get_Language_Context (Language_Access (Lang));
       Keys : constant Pattern_Matcher := Keywords (Language_Access (Lang));
+      Comm1, Comm2 : Character;
    begin
 
       --  Do we have a comment ?
 
-      if Buffer'Length > Context.Comment_Start'Length
+      if Context.Comment_Start_Length /= 0
+        and then Buffer'Length > Context.Comment_Start_Length
         and then Buffer
         (Buffer'First .. Buffer'First + Context.Comment_Start_Length - 1)
         = Context.Comment_Start
@@ -106,6 +108,26 @@ package body Language is
             Next_Char := Next_Char + 1;
          end loop;
          Next_Char := Next_Char + Context.Comment_End_Length;
+         return;
+      end if;
+
+      --  Do we have a comment that end on newline ?
+
+      if Context.New_Line_Comment_Start_Length /= 0
+        and then Buffer'Length > Context.New_Line_Comment_Start_Length
+        and then Buffer
+        (Buffer'First .. Buffer'First
+         + Context.New_Line_Comment_Start_Length - 1)
+        = Context.New_Line_Comment_Start
+      then
+         Entity := Comment_Text;
+         Next_Char := Buffer'First + Context.New_Line_Comment_Start_Length;
+         while Next_Char <= Buffer'Last
+           and then Buffer (Next_Char) /= ASCII.LF
+         loop
+            Next_Char := Next_Char + 1;
+         end loop;
+         Next_Char := Next_Char + 1;
          return;
       end if;
 
@@ -149,13 +171,23 @@ package body Language is
          Entity := Normal_Text;
          Next_Char := Buffer'First + 1;
 
+         Comm1 := ASCII.LF;
+         Comm2 := ASCII.LF;
+         if Context.Comment_Start_Length /= 0 then
+            Comm1 := Context.Comment_Start (Context.Comment_Start'First);
+         end if;
+         if Context.New_Line_Comment_Start_Length /= 0 then
+            Comm2 :=
+              Context.New_Line_Comment_Start (Context.Comment_Start'First);
+         end if;
+
          while Next_Char <= Buffer'Last
            and then Buffer (Next_Char) /= ' '
            and then Buffer (Next_Char) /= ASCII.LF
            and then Buffer (Next_Char) /= ASCII.HT
            and then Buffer (Next_Char) /= Context.String_Delimiter
-           and then Buffer (Next_Char) /=
-              Context.Comment_Start (Context.Comment_Start'First)
+           and then Buffer (Next_Char) /= Comm1
+           and then Buffer (Next_Char) /= Comm2
            and then Buffer (Next_Char) /= Context.Constant_Character
            and then not Is_Letter (Buffer (Next_Char))
          loop
