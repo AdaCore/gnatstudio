@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2001-2002                       --
---                            ACT-Europe                             --
+--                     Copyright (C) 2001-2005                       --
+--                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -23,15 +23,28 @@
 
 with Gtk.Button;    use Gtk.Button;
 with Gtk.Menu_Item; use Gtk.Menu_Item;
+with Gtk.Handlers;  use Gtk.Handlers;
 
 package Commands.Controls is
 
+   type Undo_Redo_Information is record
+      Undo_Button    : Gtk.Button.Gtk_Button;
+      Redo_Button    : Gtk.Button.Gtk_Button;
+
+      Undo_Menu_Item : Gtk.Menu_Item.Gtk_Menu_Item;
+      Redo_Menu_Item : Gtk.Menu_Item.Gtk_Menu_Item;
+
+      Undo_Button_Handler_ID    : Handler_Id;
+      Redo_Button_Handler_ID    : Handler_Id;
+      Undo_Menu_Item_Handler_ID : Handler_Id;
+      Redo_Menu_Item_Handler_ID : Handler_Id;
+   end record;
+
+   type Undo_Redo is access Undo_Redo_Information;
+
    procedure Set_Controls
-     (Queue          : Command_Queue;
-      Undo_Button    : Gtk_Button;
-      Redo_Button    : Gtk_Button;
-      Undo_Menu_Item : Gtk_Menu_Item;
-      Redo_Menu_Item : Gtk_Menu_Item);
+     (Queue  : Command_Queue;
+      UR     : Undo_Redo);
    --  Associate the state of Queue to the buttons:
    --  The sensitivity of Undo/Redo widgets (named "controls")
    --  indicate the presence of actions in the corresponding Undo/Redo Queues.
