@@ -2166,7 +2166,7 @@ Each project contains the following information, among other things
    A given project file hierarchy can be used to compile and link
    several executables. GPS will automatically update the Compile, Run
    and Debug menu with the list of executables, based on this list.
-   
+
 @item @b{Naming schemes}:
 @cindex naming scheme
    The naming scheme refer to the way files are named for each
@@ -2187,7 +2187,7 @@ Each project contains the following information, among other things
 
    The project file contains the information required to log on the
    remote host.
-   
+
 @item @b{Tools}:
 @cindex tools
    The project files provide a simply way to change the compiler that
@@ -2850,6 +2850,10 @@ stage. Therefore, before working on a project using version control
 system, make sure that the system is properly set-up before launching
 GPS.
 
+Note: the set-up must make sure that the VCS commands can be launched without
+entering a password, and that the commands can be run without interference
+(for CVS users, it is recommended to remove the ~/.cvsrc file, if it exists).
+
 @node The VCS Explorer
 @section The VCS Explorer
 @cindex VCS explorer
@@ -2880,7 +2884,7 @@ The VCS Explorer contains the following columns:
 @item Status
 Shows the status of the file. This column can be sorted by clicking on
 the header. The different possible status for files are the following:
-  
+
 @table @code
 @item Unknown
 The status is not yet determined or the VCS repository is not able to
