@@ -18,6 +18,8 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with String_Utils; use String_Utils;
+
 package body Codefix.Text_Manager.Ada_Extracts is
 
    ----------------------------------------------------------------------------
@@ -31,7 +33,7 @@ package body Codefix.Text_Manager.Ada_Extracts is
    function Is_Comment (Line : String) return Boolean is
    begin
       for J in Line'Range loop
-         if Line (J) /= ' ' then
+         if not Is_Blank (Line (J)) then
             if Line (J) /= '-'
               or else J = Line'Last
             then
@@ -181,52 +183,8 @@ package body Codefix.Text_Manager.Ada_Extracts is
    ------------------------
 
    procedure Remove_Instruction (This : in out Ada_Instruction) is
-      Current_Line : Ptr_Extract_Line := Get_First_Line (This);
-      Next_Line    : Ptr_Extract_Line;
    begin
-
-      if Get_Number_Lines (This) = 1 then
-         Assign
-           (Current_Line.Content,
-            Current_Line.Content (1 .. This.Start.Col - 1) &
-              Current_Line.Content
-                (This.Stop.Col + 1 .. Current_Line.Content'Last));
-         if Is_Blank (Current_Line.Content.all) then
-            Current_Line.Context := Line_Deleted;
-         else
-            Current_Line.Context := Line_Modified;
-         end if;
-         return;
-      end if;
-
-      Assign
-        (Current_Line.Content,
-         Current_Line.Content (1 .. This.Start.Col - 1));
-
-      if Is_Blank (Current_Line.Content.all) then
-         Current_Line.Context := Line_Deleted;
-      else
-         Current_Line.Context := Line_Modified;
-      end if;
-
-      loop
-         Next_Line := Next (Current_Line.all);
-         exit when Next_Line = null;
-         Current_Line := Next_Line;
-         Current_Line.Context := Line_Deleted;
-      end loop;
-
-      Assign
-        (Current_Line.Content,
-         Current_Line.Content
-           (This.Stop.Col + 1 .. Current_Line.Content'Last));
-
-      if Is_Blank (Current_Line.Content.all) then
-         Current_Line.Context := Line_Deleted;
-      else
-         Current_Line.Context := Line_Modified;
-      end if;
-
+      Erase (This, This.Start, This.Stop);
    end Remove_Instruction;
 
    --------------
@@ -300,9 +258,7 @@ package body Codefix.Text_Manager.Ada_Extracts is
 
       Token.Content := null; --  ??? Why, without this line, get I a SEGV ?
 
-      while Start <= Buffer'Last and then Buffer (Start) = ' ' loop
-         Start := Start + 1;
-      end loop;
+      Skip_Blanks (Buffer, Start);
 
       if Start > Buffer'Last then
          Col := 1;
@@ -315,13 +271,15 @@ package body Codefix.Text_Manager.Ada_Extracts is
          if Buffer (Stop) =  ';'
            or else Buffer (Stop) = ','
            or else Buffer (Stop) = ':'
-           or else Buffer (Stop) = ' '
+           or else Is_Blank (Buffer (Stop))
          then
             if Stop /= Start then
                Stop := Stop - 1;
             end if;
+
             exit;
          end if;
+
          exit when Stop >= Buffer'Last;
          Stop := Stop + 1;
       end loop;
