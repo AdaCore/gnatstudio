@@ -16,6 +16,7 @@ syntax \
 vdiff \
 aunit \
 prj_editor \
+browsers \
 src_editor \
 hypergrep \
 glide
