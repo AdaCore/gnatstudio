@@ -2511,14 +2511,14 @@ package body Src_Editor_Box is
 
    function Get_Block_Start
      (Editor : access Source_Editor_Box_Record;
-      Line   : Src_Editor_Buffer.Editable_Line_Type) return Positive
+      Line   : Src_Editor_Buffer.Editable_Line_Type) return Natural
    is
       B_Line : constant Buffer_Line_Type :=
         Get_Buffer_Line (Editor.Source_Buffer, Line);
       Block : constant Block_Record :=
         Get_Block (Editor.Source_Buffer, B_Line);
    begin
-      return Positive (Block.First_Line);
+      return Natural (Block.First_Line);
    end Get_Block_Start;
 
    -------------------
@@ -2527,14 +2527,14 @@ package body Src_Editor_Box is
 
    function Get_Block_End
      (Editor : access Source_Editor_Box_Record;
-      Line   : Src_Editor_Buffer.Editable_Line_Type) return Positive
+      Line   : Src_Editor_Buffer.Editable_Line_Type) return Natural
    is
       B_Line : constant Buffer_Line_Type :=
         Get_Buffer_Line (Editor.Source_Buffer, Line);
       Block : constant Block_Record :=
         Get_Block (Editor.Source_Buffer, B_Line);
    begin
-      return Positive (Block.Last_Line);
+      return Natural (Block.Last_Line);
    end Get_Block_End;
 
    --------------------

@@ -341,18 +341,18 @@ package Src_Editor_Box is
    --  Navigate->Goto Line... menu
 
    function Get_Last_Line
-     (Editor   : access Source_Editor_Box_Record) return Positive;
+     (Editor : access Source_Editor_Box_Record) return Positive;
    --  Return the number of the last line in the file.
 
    function Get_Block_Start
      (Editor : access Source_Editor_Box_Record;
-      Line   : Src_Editor_Buffer.Editable_Line_Type) return Positive;
+      Line   : Src_Editor_Buffer.Editable_Line_Type) return Natural;
    --  Returns the line number where block enclosing Line starts. Returns 0
    --  if Line is not in a block.
 
    function Get_Block_End
      (Editor : access Source_Editor_Box_Record;
-      Line   : Src_Editor_Buffer.Editable_Line_Type) return Positive;
+      Line   : Src_Editor_Buffer.Editable_Line_Type) return Natural;
    --  Returns the line number where block enclosing Line ends. Returns 0
    --  if Line is not in a block.
 
@@ -396,10 +396,10 @@ package Src_Editor_Box is
    ---------------------
 
    function Get_Contextual_Menu
-     (Kernel       : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Object       : access Glib.Object.GObject_Record'Class;
-      Event        : Gdk.Event.Gdk_Event;
-      Menu         : Gtk.Menu.Gtk_Menu)
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Object : access Glib.Object.GObject_Record'Class;
+      Event  : Gdk.Event.Gdk_Event;
+      Menu   : Gtk.Menu.Gtk_Menu)
       return Glide_Kernel.Selection_Context_Access;
    --  Return the contextual menu to use for the source box.
    --  This function is also used to create the context for
@@ -417,15 +417,15 @@ package Src_Editor_Box is
    --  See Glide_Kernel.Modules for more information.
 
    procedure Create_Line_Information_Column
-     (Editor         : access Source_Editor_Box_Record;
-      Identifier     : String;
-      Stick_To_Data  : Boolean;
-      Every_Line     : Boolean);
+     (Editor        : access Source_Editor_Box_Record;
+      Identifier    : String;
+      Stick_To_Data : Boolean;
+      Every_Line    : Boolean);
    --  See Glide_Kernel.Modules for more information.
 
    procedure Remove_Line_Information_Column
-     (Editor         : access Source_Editor_Box_Record;
-      Identifier     : String);
+     (Editor     : access Source_Editor_Box_Record;
+      Identifier : String);
    --  See Glide_Kernel.Modules for more information.
 
    procedure Undo (Editor : access Source_Editor_Box_Record);
