@@ -296,7 +296,6 @@ package body Src_Info.LI_Utils is
    procedure Create_LI_File
      (File        : out LI_File_Ptr;
       Project     : Projects.Project_Type;
-      List        : LI_File_List;
       LI_Filename : VFS.Virtual_File;
       Handler     : LI_Handler) is
    begin
@@ -310,7 +309,7 @@ package body Src_Info.LI_Utils is
                 Spec_Info       => null,
                 Separate_Info   => null,
                 LI_Timestamp    => No_Time));
-      Add (List.Table.all, File);
+      Add (Handler.Table.all, File);
    end Create_LI_File;
 
    ----------------------

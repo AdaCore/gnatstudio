@@ -78,7 +78,6 @@ private package Src_Info.LI_Utils is
    procedure Create_LI_File
      (File        : out LI_File_Ptr;
       Project     : Projects.Project_Type;
-      List        : LI_File_List;
       LI_Filename : VFS.Virtual_File;
       Handler     : LI_Handler);
    --  Creates an empty LI_File structure.
