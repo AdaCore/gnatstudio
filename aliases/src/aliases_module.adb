@@ -192,6 +192,7 @@ package body Aliases_Module is
       Current_Pos : Integer;
       First, Last : out Integer);
    --  Set First .. Last to the beginning and end of the current alias name.
+   --  If no alias name was found, set First > Last.
    --  ??? Should accept unicode
 
    function Expand_Alias
@@ -669,6 +670,11 @@ package body Aliases_Module is
             First := First - 1;
          end loop;
 
+         if First < Text'First then
+            First := Last + 1;
+            exit;
+         end if;
+
          exit when Get (Aliases_Module_Id.Aliases,
                         Text (First + 1 .. Last - 1)) /= No_Alias;
 
@@ -903,6 +909,10 @@ package body Aliases_Module is
                   Find_Current_Entity
                     (Text, Integer (Get_Position (Gtk_Editable (W))),
                      First, Last);
+
+                  if First > Last then
+                     return False;
+                  end if;
 
                   declare
                      Cursor : aliased Integer;
