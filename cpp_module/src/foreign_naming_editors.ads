@@ -19,11 +19,13 @@
 -----------------------------------------------------------------------
 
 with Gtk.Widget;
-with Foreign_Naming_Scheme_Editor_Pkg; use Foreign_Naming_Scheme_Editor_Pkg;
-with Types;
 with Projects;
 with Glide_Kernel;
 with Naming_Editors;
+with Naming_Exceptions;
+with GNAT.OS_Lib;
+with Gtk.Box;
+with Gtk.Combo;
 
 package Foreign_Naming_Editors is
 
@@ -33,7 +35,7 @@ package Foreign_Naming_Editors is
 
    procedure Gtk_New
      (Editor   : out Foreign_Naming_Editor;
-      Language : Types.Name_Id);
+      Language : String);
    --  Create a new naming scheme editor for languages other than Ada.
 
    procedure Destroy (Editor : access Foreign_Naming_Editor_Record);
@@ -55,7 +57,9 @@ private
    type Foreign_Naming_Editor_Record is new
      Naming_Editors.Language_Naming_Editor_Record
    with record
-      GUI      : Foreign_Naming_Scheme_Editor_Access;
-      Language : Types.Name_Id;
+      GUI        : Gtk.Box.Gtk_Box;
+      Language   : GNAT.OS_Lib.String_Access;
+      Exceptions : Naming_Exceptions.Exceptions_Editor;
+      Spec_Ext, Body_Ext : Gtk.Combo.Gtk_Combo;
    end record;
 end Foreign_Naming_Editors;

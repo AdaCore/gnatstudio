@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2002                            --
+--                     Copyright (C) 2002-2003                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software; you  can redistribute it and/or modify  it --
@@ -18,25 +18,21 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Basic_Types;                      use Basic_Types;
-with Foreign_Naming_Scheme_Editor_Pkg; use Foreign_Naming_Scheme_Editor_Pkg;
-with GNAT.OS_Lib;                      use GNAT.OS_Lib;
-with Glib;                             use Glib;
 with Glide_Intl;                       use Glide_Intl;
 with Glide_Kernel.Project;             use Glide_Kernel.Project;
 with Gtk.Box;                          use Gtk.Box;
-with Gtk.Clist;                        use Gtk.Clist;
 with Gtk.Combo;                        use Gtk.Combo;
+with Gtk.Enums;                        use Gtk.Enums;
+with Gtk.Frame;                        use Gtk.Frame;
+with Gtk.Label;                        use Gtk.Label;
 with Gtk.GEntry;                       use Gtk.GEntry;
+with Gtk.Size_Group;                   use Gtk.Size_Group;
 with Gtk.Widget;                       use Gtk.Widget;
-with Gtkada.Types;                     use Gtkada.Types;
-with Interfaces.C.Strings;             use Interfaces.C.Strings;
 with Projects.Editor;                  use Projects, Projects.Editor;
-with Types;                            use Types;
+with Naming_Exceptions;                use Naming_Exceptions;
+with GNAT.OS_Lib;                      use GNAT.OS_Lib;
 
 package body Foreign_Naming_Editors is
-
-   Empty_Filename : constant String := -"<filename>";
 
    -------------
    -- Gtk_New --
@@ -44,17 +40,66 @@ package body Foreign_Naming_Editors is
 
    procedure Gtk_New
      (Editor   : out Foreign_Naming_Editor;
-      Language : Types.Name_Id) is
+      Language : String)
+   is
+      Frame     : Gtk_Frame;
+      Box, Vbox : Gtk_Box;
+      Label     : Gtk_Label;
+      Group     : Gtk_Size_Group;
+      Items     : Gtk.Enums.String_List.Glist;
    begin
       Editor := new Foreign_Naming_Editor_Record;
-      Gtk_New (Editor.GUI);
-      Editor.Language := Language;
+      Editor.Language := new String'(Language);
 
-      Ref (Editor.GUI.Main_Box);
-      Unparent (Editor.GUI.Main_Box);
+      Gtk_New_Vbox (Editor.GUI, Homogeneous => False);
 
-      Set_Auto_Sort (Editor.GUI.Exception_List, True);
-      Set_Text (Editor.GUI.Filename_Entry, Empty_Filename);
+      Gtk_New (Group);
+
+      Gtk_New (Frame, -"Details");
+      Pack_Start (Editor.GUI, Frame, Expand => False);
+
+      Gtk_New_Vbox (Vbox, Homogeneous => True);
+      Add (Frame, Vbox);
+
+      Gtk_New_Hbox (Box, Homogeneous => False);
+      Pack_Start (Vbox, Box, Expand => False);
+
+      Gtk_New (Label, -"Header files:");
+      Set_Alignment (Label, 0.0, 0.5);
+      Add_Widget (Group, Label);
+      Pack_Start (Box, Label);
+
+      Gtk_New (Editor.Spec_Ext);
+      Pack_Start (Box, Editor.Spec_Ext);
+      Gtk.Enums.String_List.Append (Items, ".h");
+      Gtk.Enums.String_List.Append (Items, ".hh");
+      Gtk.Enums.String_List.Append (Items, ".H");
+      Gtk.Enums.String_List.Append (Items, ".hpp");
+      Set_Popdown_Strings (Editor.Spec_Ext, Items);
+      Gtk.Enums.String_List.Free (Items);
+
+      Gtk_New_Hbox (Box, Homogeneous => False);
+      Pack_Start (Vbox, Box, Expand => False);
+
+      Gtk_New (Label, -"Implementation:");
+      Set_Alignment (Label, 0.0, 0.5);
+      Add_Widget (Group, Label);
+      Pack_Start (Box, Label);
+
+      Gtk_New (Editor.Body_Ext);
+      Pack_Start (Box, Editor.Body_Ext);
+      Gtk.Enums.String_List.Append (Items, ".c");
+      Gtk.Enums.String_List.Append (Items, ".cc");
+      Gtk.Enums.String_List.Append (Items, ".C");
+      Gtk.Enums.String_List.Append (Items, ".cpp");
+      Set_Popdown_Strings (Editor.Body_Ext, Items);
+      Gtk.Enums.String_List.Free (Items);
+
+      Gtk_New (Frame, -"Exceptions");
+      Pack_Start (Editor.GUI, Frame, Expand => True, Fill => True);
+      Gtk_New (Editor.Exceptions, Language);
+      Set_Border_Width (Editor.Exceptions, 3);
+      Add (Frame, Editor.Exceptions);
    end Gtk_New;
 
    -------------
@@ -63,9 +108,8 @@ package body Foreign_Naming_Editors is
 
    procedure Destroy (Editor : access Foreign_Naming_Editor_Record) is
    begin
+      Free (Editor.Language);
       Destroy (Editor.GUI);
-      --  Editor.GUI.Main_Box is automatically destroyed when its parent
-      --  contain (multi-language naming editor) is destroyed.
    end Destroy;
 
    ----------------
@@ -76,7 +120,7 @@ package body Foreign_Naming_Editors is
      (Editor : access Foreign_Naming_Editor_Record)
       return Gtk.Widget.Gtk_Widget is
    begin
-      return Gtk_Widget (Editor.GUI.Main_Box);
+      return Gtk_Widget (Editor.GUI);
    end Get_Window;
 
    --------------------------
@@ -88,63 +132,25 @@ package body Foreign_Naming_Editors is
       Project : Projects.Project_Type;
       Scenario_Variables : Scenario_Variable_Array) return Boolean
    is
-      Lang     : constant String := Get_String (Editor.Language);
-      Num_Rows : constant Gint := Get_Rows (Editor.GUI.Exception_List);
-      Bodies   : Argument_List (1 .. Integer (Num_Rows));
-      Changed  : Boolean := False;
+      Changed  : Boolean;
 
    begin
-      for J in 0 .. Num_Rows - 1 loop
-         Bodies (Integer (J + 1)) := new String'
-           (Get_Text (Editor.GUI.Exception_List, J, 0));
-      end loop;
-
-      if Project = No_Project then
-         Changed := True;
-      else
-         declare
-            Old_Exceptions : Argument_List := Get_Attribute_Value
-              (Project        => Project,
-               Attribute      => Impl_Exception_Attribute,
-               Index          => Lang);
-         begin
-            Changed := not Is_Equal (Bodies, Old_Exceptions);
-            Free (Old_Exceptions);
-         end;
-      end if;
-
-      if Changed then
-         if Num_Rows /= 0 then
-            Update_Attribute_Value_In_Scenario
-              (Project           => Project,
-               Scenario_Variables => Scenario_Variables,
-               Attribute         => Impl_Exception_Attribute,
-               Values            => Bodies,
-               Attribute_Index   => Lang);
-         else
-            Delete_Attribute
-              (Project            => Project,
-               Scenario_Variables => Scenario_Variables,
-               Attribute          => Impl_Exception_Attribute,
-               Attribute_Index    => Lang);
-         end if;
-
-         Changed := True;
-      end if;
+      Changed := Create_Project_Entry
+        (Editor.Exceptions, Project, Scenario_Variables);
 
       if Project = No_Project
         or else Get_Attribute_Value
           (Project        => Project,
            Attribute      => Spec_Suffix_Attribute,
-           Index          => Lang) /=
-        Get_Text (Get_Entry (Editor.GUI.Header_File_Extension))
+           Index          => Editor.Language.all) /=
+              Get_Text (Get_Entry (Editor.Spec_Ext))
       then
          Update_Attribute_Value_In_Scenario
            (Project            => Project,
             Scenario_Variables => Scenario_Variables,
             Attribute          => Spec_Suffix_Attribute,
-            Value  => Get_Text (Get_Entry (Editor.GUI.Header_File_Extension)),
-            Attribute_Index    => Lang);
+            Value              => Get_Text (Get_Entry (Editor.Spec_Ext)),
+            Attribute_Index    => Editor.Language.all);
          Changed := True;
       end if;
 
@@ -152,20 +158,17 @@ package body Foreign_Naming_Editors is
         or else Get_Attribute_Value
           (Project        => Project,
            Attribute      => Impl_Suffix_Attribute,
-           Index          => Lang) /=
-        Get_Text (Get_Entry (Editor.GUI.Implementation_Extension))
+           Index          => Editor.Language.all) /=
+              Get_Text (Get_Entry (Editor.Body_Ext))
       then
          Update_Attribute_Value_In_Scenario
            (Project            => Project,
             Scenario_Variables => Scenario_Variables,
             Attribute          => Impl_Suffix_Attribute,
-            Value              =>
-              Get_Text (Get_Entry (Editor.GUI.Implementation_Extension)),
-            Attribute_Index    => Lang);
+            Value              => Get_Text (Get_Entry (Editor.Body_Ext)),
+            Attribute_Index    => Editor.Language.all);
          Changed := True;
       end if;
-
-      Free (Bodies);
 
       return Changed;
    end Create_Project_Entry;
@@ -180,13 +183,7 @@ package body Foreign_Naming_Editors is
       Project            : Projects.Project_Type;
       Display_Exceptions : Boolean := True)
    is
-      Lang   : constant String := Get_String (Editor.Language);
-      Row    : Gint;
-      pragma Unreferenced (Row);
-
-      Text   : Gtkada.Types.Chars_Ptr_Array (0 .. 0);
       P      : Project_Type := Project;
-
    begin
       --  If the project is null, we get the default values from the current
       --  top-level project. It will automatically have the default extensions
@@ -199,32 +196,18 @@ package body Foreign_Naming_Editors is
       --  ??? Do we get access to the default extensions correctly ?
 
       Set_Text
-        (Get_Entry (Editor.GUI.Header_File_Extension),
+        (Get_Entry (Editor.Spec_Ext),
          Get_Attribute_Value
             (P, Spec_Suffix_Attribute,
-             Index => Get_String (Editor.Language)));
+             Index => Editor.Language.all));
       Set_Text
-        (Get_Entry (Editor.GUI.Implementation_Extension),
+        (Get_Entry (Editor.Body_Ext),
          Get_Attribute_Value
             (P, Impl_Suffix_Attribute,
-             Index => Get_String (Editor.Language)));
+             Index => Editor.Language.all));
 
-      if Project /= No_Project and then Display_Exceptions then
-         declare
-            Bodies : Argument_List := Get_Attribute_Value
-              (Project,
-               Attribute      => Impl_Exception_Attribute,
-               Index          => Lang);
-         begin
-            Clear (Editor.GUI.Exception_List);
-            for B in Bodies'Range loop
-               Text (0) := New_String (Bodies (B).all);
-               Row := Append (Editor.GUI.Exception_List, Text);
-               Free (Text);
-            end loop;
-
-            Free (Bodies);
-         end;
+      if Display_Exceptions then
+         Show_Project_Settings (Editor.Exceptions, Project);
       end if;
    end Show_Project_Settings;
 
