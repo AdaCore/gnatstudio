@@ -288,6 +288,10 @@ package body Gtkada.MDI is
    --  Iconify a child (this act as toggles, for the title bar of all
    --  children).
 
+   function Children_Are_Maximized (MDI : access MDI_Window_Record'Class)
+      return Boolean;
+   --  Return true if the children of the MDI are currently maximized.
+
    procedure Docked_Switch_Page
      (Docked_Child : access Gtk_Widget_Record'Class;
       Args : Gtk_Args);
@@ -557,6 +561,17 @@ package body Gtkada.MDI is
       --  Free (List);
       --  Destroy (Region);
    end Realize_MDI;
+
+   ----------------------------
+   -- Children_Are_Maximized --
+   ----------------------------
+
+   function Children_Are_Maximized (MDI : access MDI_Window_Record'Class)
+      return Boolean is
+   begin
+      return MDI.Docks (None) /= null
+        and then Visible_Is_Set (MDI.Docks (None));
+   end Children_Are_Maximized;
 
    ----------------
    -- Expose_MDI --
@@ -1089,7 +1104,7 @@ package body Gtkada.MDI is
       --  Middle container
       Alloc := Compute_Workspace_Size (MDI);
 
-      if MDI.Docks (None) /= null then
+      if Children_Are_Maximized (MDI) then
          Size_Allocate (MDI.Docks (None), Alloc);
       else
          Size_Allocate (MDI.Layout, Alloc);
@@ -1232,7 +1247,9 @@ package body Gtkada.MDI is
       if not Result then
          if C.State = Docked then
             Dock_Child (C, False);
-         elsif C.State = Normal and then C.MDI.Docks (None) /= null then
+         elsif C.State = Normal
+           and then Children_Are_Maximized (C.MDI)
+         then
             Remove_From_Notebook (C, None);
          end if;
 
@@ -1286,7 +1303,9 @@ package body Gtkada.MDI is
 
       --  for maximized children
 
-      elsif C.State = Normal and then C.MDI.Docks (None) /= null then
+      elsif C.State = Normal
+        and then Children_Are_Maximized (C.MDI)
+      then
          Set_Show_Tabs
            (C.MDI.Docks (None), Get_Nth_Page (C.MDI.Docks (None), 1) /= null);
       end if;
@@ -1613,7 +1632,7 @@ package body Gtkada.MDI is
 
       --  Can't move items inside a notebook
       if C.State = Docked
-        or else (C.State = Normal and then MDI.Docks (None) /= null)
+        or else (C.State = Normal and then Children_Are_Maximized (MDI))
       then
          return False;
       end if;
@@ -1648,7 +1667,7 @@ package body Gtkada.MDI is
          Time => 0);
       Destroy (Cursor);
 
-      if MDI.Docks (None) = null
+      if not Children_Are_Maximized (MDI)
         and then
         ((not Opaque_Resize and then MDI.Current_Cursor /= Left_Ptr)
          or else (not Opaque_Move and then MDI.Current_Cursor = Left_Ptr))
@@ -1689,7 +1708,7 @@ package body Gtkada.MDI is
         (MDI.Current_X, MDI.Current_Y,
          Allocation_Int (MDI.Current_W), Allocation_Int (MDI.Current_H));
 
-      if MDI.Docks (None) = null
+      if not Children_Are_Maximized (MDI)
         and then ((not Opaque_Resize and then MDI.Current_Cursor /= Left_Ptr)
           or else (not Opaque_Move and then MDI.Current_Cursor = Left_Ptr))
       then
@@ -1744,7 +1763,7 @@ package body Gtkada.MDI is
         and then MDI.Selected_Child /= null
       then
 
-         if MDI.Docks (None) = null
+         if not Children_Are_Maximized (MDI)
            and then
            ((not Opaque_Resize and then MDI.Current_Cursor /= Left_Ptr)
             or else (not Opaque_Move and then MDI.Current_Cursor = Left_Ptr))
@@ -1825,7 +1844,7 @@ package body Gtkada.MDI is
             Size_Allocate (Child, Alloc);
          end if;
 
-         if MDI.Docks (None) = null
+         if not Children_Are_Maximized (MDI)
            and then
            ((not Opaque_Resize and then MDI.Current_Cursor /= Left_Ptr)
             or else (not Opaque_Move and then MDI.Current_Cursor = Left_Ptr))
@@ -1844,7 +1863,9 @@ package body Gtkada.MDI is
 
       --  A motion_event ? change the cursor if needed
 
-      elsif C.State = Normal and then MDI.Docks (None) = null then
+      elsif C.State = Normal
+        and then not Children_Are_Maximized (MDI)
+      then
          Delta_X := Gint (Get_X (Event));
          Delta_Y := Gint (Get_Y (Event));
          Curs := Side (C, Delta_X, Delta_Y);
@@ -2099,7 +2120,7 @@ package body Gtkada.MDI is
       C.X   := MDI.Default_X;
       C.Y   := MDI.Default_Y;
 
-      if MDI.Docks (None) = null
+      if not Children_Are_Maximized (MDI)
         and then MDI.Default_X + Threshold >
         Gint (Get_Allocation_Width (MDI.Layout))
       then
@@ -2108,7 +2129,7 @@ package body Gtkada.MDI is
          MDI.Default_X := MDI.Default_X + 10;
       end if;
 
-      if MDI.Docks (None) = null
+      if not Children_Are_Maximized (MDI)
         and then MDI.Default_Y + Threshold >
         Gint (Get_Allocation_Height (MDI.Layout))
       then
@@ -2133,7 +2154,7 @@ package body Gtkada.MDI is
 
       --  If all items are maximized, add Child to the notebook
 
-      if MDI.Docks (None) /= null then
+      if Children_Are_Maximized (MDI) then
          Put_In_Notebook (MDI, None, C);
       else
          --  Compute the initial size right away, since we cannot rely on
@@ -2211,7 +2232,7 @@ package body Gtkada.MDI is
            (Child.MDI.Docks (Child.Dock), Child, Child.Short_Title.all);
 
       elsif Child.State = Normal
-        and then Child.MDI.Docks (None) /= null
+        and then Children_Are_Maximized (Child.MDI)
       then
          Set_Tab_Label_Text
            (Child.MDI.Docks (None), Child, Child.Short_Title.all);
@@ -2339,7 +2360,7 @@ package body Gtkada.MDI is
          end if;
 
       elsif Child.State = Normal
-        and then Child.MDI.Docks (None) /= null
+        and then Children_Are_Maximized (Child.MDI)
       then
          Set_Page
            (Child.MDI.Docks (None), Page_Num (Child.MDI.Docks (None), Child));
@@ -2384,7 +2405,7 @@ package body Gtkada.MDI is
             Page_Num (Child.MDI.Docks (Child.Dock), Child));
 
       elsif Child.State = Normal
-        and then Child.MDI.Docks (None) /= null
+        and then Children_Are_Maximized (Child.MDI)
       then
          Set_Page
            (Child.MDI.Docks (None), Page_Num (Child.MDI.Docks (None), Child));
@@ -2576,7 +2597,7 @@ package body Gtkada.MDI is
       Max_W, Max_H : Gint;
 
    begin
-      if MDI.Docks (None) /= null then
+      if Children_Are_Maximized (MDI) then
          Max_W := Gint (Get_Allocation_Width (MDI.Docks (None)));
          Max_H := Gint (Get_Allocation_Height (MDI.Docks (None)));
          Maximize_Children (MDI, False);
@@ -2635,7 +2656,7 @@ package body Gtkada.MDI is
       Max_W, Max_H : Gint;
 
    begin
-      if MDI.Docks (None) /= null then
+      if Children_Are_Maximized (MDI) then
          Max_W := Gint (Get_Allocation_Width (MDI.Docks (None)));
          Max_H := Gint (Get_Allocation_Height (MDI.Docks (None)));
          Maximize_Children (MDI, False);
@@ -2718,7 +2739,7 @@ package body Gtkada.MDI is
          --  Ref is removed when the child is unfloated.
          Ref (Child);
 
-         if Child.MDI.Docks (None) /= null then
+         if Children_Are_Maximized (Child.MDI) then
             Remove_From_Notebook (Child, None);
          else
             Remove (Child.MDI.Layout, Child);
@@ -2759,7 +2780,7 @@ package body Gtkada.MDI is
             Destroy (Win);
          end if;
 
-         if Child.MDI.Docks (None) /= null then
+         if Children_Are_Maximized (Child.MDI) then
             Put_In_Notebook (Child.MDI, None, Child);
          else
             Put (Child.MDI.Layout, Child, Child.X, Child.Y);
@@ -2859,7 +2880,7 @@ package body Gtkada.MDI is
                Remove_From_Notebook (Child, Child.Dock);
 
             when Normal =>
-               if MDI.Docks (None) = null
+               if not Children_Are_Maximized (MDI)
                  or else Page_Num (MDI.Docks (None), Child) = -1
                then
                   Remove (MDI.Layout, Child);
@@ -2946,7 +2967,7 @@ package body Gtkada.MDI is
          Update_Dock_Menu (Child);
 
       elsif not Dock and then Child.State = Docked then
-         if MDI.Docks (None) /= null then
+         if Children_Are_Maximized (MDI) then
             Put_In_Notebook (MDI, None, Child);
 
          else
@@ -3000,9 +3021,6 @@ package body Gtkada.MDI is
       --  Items can't be iconified if they are maximized
 
       if Child.State /= Iconified and then Minimize then
-         pragma Assert
-           (MDI.Docks (None) = null, "Children can't be maximized");
-
          Float_Child (Child, False);
          Dock_Child (Child, False);
          Child.Uniconified_X := Child.X;
@@ -3069,7 +3087,11 @@ package body Gtkada.MDI is
       Created   : Boolean := False;
 
    begin
-      if Maximize and then MDI.Docks (None) = null then
+      if Maximize and then not Children_Are_Maximized (MDI) then
+         if MDI.Docks (None) /= null then
+            Show_All (MDI.Docks (None));
+         end if;
+
          while List /= Null_List loop
             C := MDI_Child (Get_Data (List));
             List := Prev (List);
@@ -3085,14 +3107,15 @@ package body Gtkada.MDI is
             Remove (MDI, MDI.Layout);
          end if;
 
-      elsif MDI.Docks (None) /= null then
+      elsif Children_Are_Maximized (MDI) then
          --  The middle notebook was already destroyed by the last call to
          --  Remove_From_Notebook in the above loop
          Put (MDI, MDI.Layout, 0, 0);
          Unref (MDI.Layout);
 
-         while MDI.Docks (None) /= null loop
+         loop
             C := MDI_Child (Get_Nth_Page (MDI.Docks (None), 0));
+            exit when C = null;
 
             --  Remove from middle notebook and put in layout
             Ref (C);
@@ -3106,6 +3129,7 @@ package body Gtkada.MDI is
             Unref (C);
          end loop;
 
+         Hide (MDI.Docks (None));
          Show (MDI.Layout);
       end if;
 
@@ -3191,7 +3215,7 @@ package body Gtkada.MDI is
    procedure Maximize_Child_Cb (Child : access Gtk_Widget_Record'Class) is
       M : MDI_Window := MDI_Child (Child).MDI;
    begin
-      Maximize_Children (M, M.Docks (None) = null);
+      Maximize_Children (M, not Children_Are_Maximized (M));
       Set_Focus_Child (MDI_Child (Child));
    end Maximize_Child_Cb;
 
