@@ -30,7 +30,6 @@ with Glide_Kernel;              use Glide_Kernel;
 with Glide_Kernel.Project;      use Glide_Kernel.Project;
 with VFS;                       use VFS;
 with Projects.Registry;         use Projects.Registry;
-with File_Utils;               use File_Utils;
 
 package body Docgen.Work_On_File is
 
@@ -41,7 +40,8 @@ package body Docgen.Work_On_File is
    package TRL  renames Type_Reference_List;
 
    procedure Process_One_File
-     (Doc_File           : File_Type;
+     (B                  : Backend_Handle;
+      Doc_File           : File_Type;
       Kernel             : access Glide_Kernel.Kernel_Handle_Record'Class;
       Source_Filename    : Virtual_File;
       Package_Name       : String;
@@ -71,7 +71,8 @@ package body Docgen.Work_On_File is
    -------------------
 
    procedure Process_Files
-     (Source_File_List : in out Docgen.Type_Source_File_List.List;
+     (B                : Backend_Handle;
+      Source_File_List : in out Docgen.Type_Source_File_List.List;
       Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
       Options          : Docgen.All_Options;
       Doc_Suffix       : String;
@@ -83,6 +84,9 @@ package body Docgen.Work_On_File is
       Prev_Package          : GNAT.OS_Lib.String_Access;
       Subprogram_Index_List : Type_Entity_List.List;
       Type_Index_List       : Type_Entity_List.List;
+
+      Doc_Directory_Root : constant String :=
+           Get_Doc_Directory (B, Kernel_Handle (Kernel));
 
       function Find_Next_Package
         (Package_Nr : Natural) return String;
@@ -165,14 +169,9 @@ package body Docgen.Work_On_File is
 
       for J in 1 .. TSFL.Length (Source_File_List) loop
          declare
-            Doc_Directory : constant String := File_Utils.Name_As_Directory
-              (Object_Path (Get_Project_From_File
-                              (Get_Registry (Kernel),
-                               TSFL.Data (Source_File_Node).File_Name),
-                            False));
             File_Name : constant String := Get_Doc_File_Name
               (TSFL.Data (Source_File_Node).File_Name,
-               Doc_Directory, Doc_Suffix);
+               Doc_Directory_Root, Doc_Suffix);
          begin
             Trace (Me, "From file: " &
                    Full_Name (TSFL.Data (Source_File_Node).File_Name).all
@@ -185,7 +184,8 @@ package body Docgen.Work_On_File is
             Prev_Package := new String'(Find_Prev_Package (J));
 
             Process_One_File
-              (Doc_File,
+              (B,
+               Doc_File,
                Kernel,
                TSFL.Data (Source_File_Node).File_Name,
                TSFL.Data (Source_File_Node).Package_Name.all,
@@ -198,7 +198,7 @@ package body Docgen.Work_On_File is
                Subprogram_Index_List,
                Type_Index_List,
                Converter,
-               Doc_Directory,
+               Doc_Directory_Root,
                Doc_Suffix);
 
             Source_File_Node := TSFL.Next (Source_File_Node);
@@ -215,21 +215,16 @@ package body Docgen.Work_On_File is
       Sort_List_Name (Type_Index_List);
 
       --  create the index doc files for the packages
-      declare
-         Doc_Directory_Root : constant String := File_Utils.Name_As_Directory
-              (Object_Path (Get_Root_Project (Get_Registry (Kernel)),
-                            False));
-      begin
          Process_Unit_Index
-          (Kernel, Source_File_List, Options, Converter,
+          (B, Kernel, Source_File_List, Options, Converter,
            Doc_Directory_Root, Doc_Suffix);
          Process_Subprogram_Index
-          (Kernel, Subprogram_Index_List, Options, Converter,
+          (B, Kernel, Subprogram_Index_List, Options, Converter,
            Doc_Directory_Root, Doc_Suffix);
          Process_Type_Index
-          (Kernel, Type_Index_List, Options, Converter,
+          (B, Kernel, Type_Index_List, Options, Converter,
           Doc_Directory_Root, Doc_Suffix);
-      end;
+
       TEL.Free (Subprogram_Index_List);
       TEL.Free (Type_Index_List);
    end Process_Files;
@@ -239,7 +234,8 @@ package body Docgen.Work_On_File is
    ----------------------
 
    procedure Process_One_File
-     (Doc_File           : File_Type;
+     (B                  : Backend_Handle;
+      Doc_File           : File_Type;
       Kernel             : access Glide_Kernel.Kernel_Handle_Record'Class;
       Source_Filename    : Virtual_File;
       Package_Name       : String;
@@ -420,13 +416,13 @@ package body Docgen.Work_On_File is
             end if;
 
             Find_All_References
-              (Get_Root_Project (Get_Registry (Kernel)),
-               Get_Language_Handler (Kernel),
-               Info,
-               Get_LI_File_List (Kernel),
-               Reference_Iter,
-               No_Project,
-               True);
+                (Get_Root_Project (Get_Registry (Kernel)),
+                 Get_Language_Handler (Kernel),
+                 Info,
+                 Get_LI_File_List (Kernel),
+                 Reference_Iter,
+                 No_Project,
+                 True);
 
             --  1. Find all subprograms called in the subprogram processed
 
@@ -444,7 +440,8 @@ package body Docgen.Work_On_File is
 
                Decl_Found := Source_File_In_List
                  (Source_File_List,
-                  Get_File (Get_Location (Get (Reference_Iter))));
+                  Get_File (Get_Location
+                              (Get (Reference_Iter))));
 
                --  For the rest use the scope tree
 
@@ -462,7 +459,8 @@ package body Docgen.Work_On_File is
                end if;
 
                Free (Reference_Scope_Tree);
-               Next (Get_Language_Handler (Kernel), Reference_Iter,
+               Next (Get_Language_Handler (Kernel),
+                     Reference_Iter,
                      Get_LI_File_List (Kernel));
             end loop;
 
@@ -510,7 +508,8 @@ package body Docgen.Work_On_File is
 
       if not Is_Spec_File (Kernel, Source_Filename) then
          Process_Source
-           (Kernel,
+           (B,
+            Kernel,
             Doc_File,
             Next_Package,
             Prev_Package,
@@ -616,7 +615,6 @@ package body Docgen.Work_On_File is
                end case;
 
                --  Add to the entity list of this file
-
                Type_Entity_List.Append (Entity_List, Entity_Node);
 
             end if;
@@ -633,7 +631,8 @@ package body Docgen.Work_On_File is
          --  Process the documentation of this file
 
          Process_Source
-           (Kernel,
+           (B,
+            Kernel,
             Doc_File,
             Next_Package,
             Prev_Package,
