@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2003                       --
+--                     Copyright (C) 2001-2004                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -308,6 +308,26 @@ package body Glide_Result_View is
    function Idle_Redraw (View : Result_View) return Boolean is
       Category_Iter : Gtk_Tree_Iter;
       File_Iter     : Gtk_Tree_Iter;
+
+      procedure Set_Total (Iter : Gtk_Tree_Iter; Nb_Items : Integer);
+      --  Set in View.Tree.Model and Item the Total_Column string
+
+      ---------------
+      -- Set_Total --
+      ---------------
+
+      procedure Set_Total (Iter : Gtk_Tree_Iter; Nb_Items : Integer) is
+         Img : constant String := Image (Nb_Items);
+      begin
+         if Nb_Items = 1 then
+            Set (View.Tree.Model, Iter, Total_Column,
+                 " (" & Img & (-" item") & ")");
+         else
+            Set (View.Tree.Model, Iter, Total_Column,
+                 " (" & Img & (-" items") & ")");
+         end if;
+      end Set_Total;
+
    begin
       Category_Iter := Get_Iter_First (View.Tree.Model);
 
@@ -315,27 +335,19 @@ package body Glide_Result_View is
          File_Iter := Children (View.Tree.Model, Category_Iter);
 
          while File_Iter /= Null_Iter loop
-            Set
-              (View.Tree.Model, File_Iter, Total_Column,
-               " ("
-               & Image
-                 (Integer
-                    (Get_Int
-                       (View.Tree.Model, File_Iter, Number_Of_Items_Column)))
-               & (-" items") & ")");
-
+            Set_Total
+              (File_Iter,
+               Integer
+                 (Get_Int
+                    (View.Tree.Model, File_Iter, Number_Of_Items_Column)));
             Next (View.Tree.Model, File_Iter);
          end loop;
 
-         Set
-           (View.Tree.Model, Category_Iter, Total_Column,
-            " ("
-            & Image
-              (Integer
-                 (Get_Int
-                    (View.Tree.Model, Category_Iter, Number_Of_Items_Column)))
-               & (-" items") & ")");
-
+         Set_Total
+           (Category_Iter,
+            Integer
+              (Get_Int
+                 (View.Tree.Model, Category_Iter, Number_Of_Items_Column)));
          Next (View.Tree.Model, Category_Iter);
       end loop;
 
