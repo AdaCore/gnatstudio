@@ -51,19 +51,22 @@ package Glide_Kernel.Timeout is
    package Process_Timeout is new Gtk.Main.Timeout (Process_Data);
 
    procedure Launch_Process
-     (Kernel    : Kernel_Handle;
-      Command   : String;
-      Arguments : GNAT.OS_Lib.Argument_List;
-      Title     : String := "";
-      Callback  : Process_Callback := null;
-      Exit_Cb   : Exit_Callback := null;
-      Name      : String;
-      Success   : out Boolean);
+     (Kernel      : Kernel_Handle;
+      Command     : String;
+      Arguments   : GNAT.OS_Lib.Argument_List;
+      Title       : String := "";
+      Callback    : Process_Callback := null;
+      Exit_Cb     : Exit_Callback := null;
+      Name        : String;
+      Success     : out Boolean;
+      Interactive : Boolean := False);
    --  Launch a given command with arguments.
    --  Set Success to True if the command could be spawned.
    --  Title is a short title used for the MDI window.
    --  Callback will be called asynchronousely when the process has terminated.
    --  Name is the string to set in Process_Data when calling Callback.
    --  Exit_Callback will be called when the underlying process dies.
+   --  If Interactive is True, the process will be launched in its own
+   --  interactive console.
 
 end Glide_Kernel.Timeout;
