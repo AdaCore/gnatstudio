@@ -2366,7 +2366,8 @@ package body Glide_Kernel is
    function Create
      (Language : String := "";
       Shell    : String := "";
-      Shell_Lang : String := "Shell") return Base_Action_Filter
+      Shell_Lang : String := "Shell";
+      Module     : String := "") return Base_Action_Filter
    is
       F : Base_Action_Filter :=
         new Base_Action_Filter_Record (Standard_Filter);
@@ -2378,6 +2379,10 @@ package body Glide_Kernel is
       if Shell /= "" then
          F.Shell := new String'(Shell);
          F.Shell_Lang := new String'(Shell_Lang);
+      end if;
+
+      if Module /= "" then
+         F.Module := new String'(Module);
       end if;
 
       return F;
@@ -2450,17 +2455,14 @@ package body Glide_Kernel is
    ------------------------------
 
    function Filter_Matches_Primitive
-     (Filter : access Base_Action_Filter_Record;
-      Kernel : access Kernel_Handle_Record'Class) return Boolean
-   is
+     (Filter  : access Base_Action_Filter_Record;
       Context : Selection_Context_Access;
+      Kernel  : access Kernel_Handle_Record'Class) return Boolean
+   is
       Result  : Boolean := True;
    begin
       case Filter.Kind is
          when Standard_Filter =>
-            Context := Get_Current_Context (Kernel);
-            Ref (Context);
-
             if Filter.Language /= null then
                if Context = null
                  or else Context.all not in File_Selection_Context'Class
@@ -2484,6 +2486,16 @@ package body Glide_Kernel is
                      end if;
                   end;
                end if;
+            end if;
+
+            if Result
+              and then Filter.Module /= null
+              and then
+                (Context = null
+                 or else not Case_Insensitive_Equal
+                   (Module_Name (Get_Creator (Context)), Filter.Module.all))
+            then
+               Result := False;
             end if;
 
             if Result and then Filter.Shell /= null then
@@ -2514,16 +2526,15 @@ package body Glide_Kernel is
                end;
             end if;
 
-            Unref (Context);
             return Result;
 
          when Filter_And =>
-            return Filter_Matches (Filter.And1, Kernel)
-              and then Filter_Matches (Filter.And2, Kernel);
+            return Filter_Matches (Filter.And1, Context, Kernel)
+              and then Filter_Matches (Filter.And2, Context, Kernel);
 
          when Filter_Or =>
-            return Filter_Matches (Filter.Or1, Kernel)
-              or else Filter_Matches (Filter.Or2, Kernel);
+            return Filter_Matches (Filter.Or1, Context, Kernel)
+              or else Filter_Matches (Filter.Or2, Context, Kernel);
       end case;
    end Filter_Matches_Primitive;
 
@@ -2532,11 +2543,18 @@ package body Glide_Kernel is
    --------------------
 
    function Filter_Matches
-     (Filter : Action_Filter;
-      Kernel : access Kernel_Handle_Record'Class) return Boolean is
+     (Filter  : Action_Filter;
+      Context : Selection_Context_Access;
+      Kernel  : access Kernel_Handle_Record'Class) return Boolean
+   is
+      Result : Boolean;
+      C      : Selection_Context_Access := Context;
    begin
-      return Filter = null
-        or else Filter_Matches_Primitive (Filter, Kernel);
+      Ref (C);
+      Result := Filter = null
+        or else Filter_Matches_Primitive (Filter, C, Kernel);
+      Unref (C);
+      return Result;
    end Filter_Matches;
 
 

@@ -504,9 +504,11 @@ package Glide_Kernel is
    type Action_Filter is access all Action_Filter_Record'Class;
 
    function Filter_Matches_Primitive
-     (Filter : access Action_Filter_Record;
-      Kernel : access Kernel_Handle_Record'Class) return Boolean is abstract;
-   --  Whether the current context matches Filter
+     (Filter  : access Action_Filter_Record;
+      Context : Selection_Context_Access;
+      Kernel  : access Kernel_Handle_Record'Class) return Boolean is abstract;
+   --  Whether the current context matches Filter.
+   --  Context doesn't need to be Ref-ed or Unref-ed.
 
 
    type Base_Action_Filter_Record (<>)
@@ -514,14 +516,16 @@ package Glide_Kernel is
    type Base_Action_Filter is access Base_Action_Filter_Record'Class;
 
    function Filter_Matches_Primitive
-     (Filter : access Base_Action_Filter_Record;
-      Kernel : access Kernel_Handle_Record'Class) return Boolean;
+     (Filter  : access Base_Action_Filter_Record;
+      Context : Selection_Context_Access;
+      Kernel  : access Kernel_Handle_Record'Class) return Boolean;
    --  See docs for inherited subprograms
 
    function Create
      (Language   : String := "";
       Shell      : String := "";
-      Shell_Lang : String := "Shell") return Base_Action_Filter;
+      Shell_Lang : String := "Shell";
+      Module     : String := "") return Base_Action_Filter;
    --  Create a new filter.
    --  It does a logical AND for all its attributes specified as parameters.
    --  The default values for the parameters indicate that no special filter
@@ -546,8 +550,9 @@ package Glide_Kernel is
    --  display in the key manager GUI
 
    function Filter_Matches
-     (Filter : Action_Filter;
-      Kernel : access Kernel_Handle_Record'Class) return Boolean;
+     (Filter  : Action_Filter;
+      Context : Selection_Context_Access;
+      Kernel  : access Kernel_Handle_Record'Class) return Boolean;
    --  Same as Filter_Matches_Primitive, except it matches if Filter is null
 
 
@@ -968,6 +973,7 @@ private
             Language   : GNAT.OS_Lib.String_Access;
             Shell      : GNAT.OS_Lib.String_Access;
             Shell_Lang : GNAT.OS_Lib.String_Access;
+            Module     : GNAT.OS_Lib.String_Access;
 
          when Filter_And =>
             And1, And2 : Action_Filter;
