@@ -6057,7 +6057,8 @@ from @url{www.inf.enst.fr/~demaille/a2ps}
 
 Under Windows systems, this program is optional and is empty by default, since
 a built-in printing is provided. An external tool will be used if specified,
-such as the PrintFile freeware utility available from @url{www.lerup.com/printfile/descr.html}
+such as the PrintFile freeware utility available from
+@url{www.lerup.com/printfile/descr.html}
 
 @end table
 
