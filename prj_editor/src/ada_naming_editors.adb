@@ -58,6 +58,11 @@ package body Ada_Naming_Editors is
    Default_Gnat_Separate_Suffix : constant String := ".adb";
    --  Default settings for the GNAT naming scheme.
 
+   Gnat_Naming_Scheme   : constant := 0;
+   Apex_Naming_Scheme   : constant := 1;
+   Dec_Naming_Scheme    : constant := 2;
+   Custom_Naming_Scheme : constant := 3;
+
    -------------
    -- Gtk_New --
    -------------
@@ -101,9 +106,6 @@ package body Ada_Naming_Editors is
 
       Set_Popdown_Strings (Editor.Casing, Casing_Items);
       Free_String_List (Casing_Items);
-
-      --  Set the GNAT naming scheme
-      Select_Item (Get_List (Editor.Standard_Scheme), 0);
    end Gtk_New;
 
    ----------------
@@ -149,7 +151,7 @@ package body Ada_Naming_Editors is
       Scheme_Num : Natural) is
    begin
       case Scheme_Num is
-         when 0 =>
+         when Gnat_Naming_Scheme =>
             --  GNAT Default
             Set_Text (Get_Entry (Editor.Casing), -Image (All_Lower_Case));
             Set_Text (Editor.Dot_Replacement, Default_Gnat_Dot_Replacement);
@@ -160,7 +162,7 @@ package body Ada_Naming_Editors is
             Set_Text (Get_Entry (Editor.Separate_Extension),
                       Default_Gnat_Separate_Suffix);
 
-         when 1 =>
+         when Apex_Naming_Scheme =>
             --  APEX Default
             Set_Text (Get_Entry (Editor.Casing), -Image (All_Lower_Case));
             Set_Text (Editor.Dot_Replacement, ".");
@@ -168,7 +170,7 @@ package body Ada_Naming_Editors is
             Set_Text (Get_Entry (Editor.Body_Extension), ".2.ada");
             Set_Text (Get_Entry (Editor.Separate_Extension), ".2.ada");
 
-         when 2 =>
+         when Dec_Naming_Scheme =>
             --  DEC Ada Default
             Set_Text (Get_Entry (Editor.Casing), -Image (All_Lower_Case));
             Set_Text (Editor.Dot_Replacement, "__");
@@ -410,6 +412,40 @@ package body Ada_Naming_Editors is
       end if;
 
       Thaw (Editor.Exception_List);
+
+      --  GNAT naming scheme ?
+      if Get_Rows (Editor.Exception_List) /= 0
+        or else Get_Text (Get_Entry (Editor.Casing)) /= -Image (All_Lower_Case)
+      then
+         Select_Item (Get_List (Editor.Standard_Scheme), Custom_Naming_Scheme);
+
+      elsif Get_Text (Editor.Dot_Replacement) = Default_Gnat_Dot_Replacement
+        and then Get_Text (Get_Entry (Editor.Spec_Extension)) =
+        Default_Gnat_Spec_Suffix
+        and then Get_Text (Get_Entry (Editor.Body_Extension)) =
+        Default_Gnat_Body_Suffix
+        and then Get_Text (Get_Entry (Editor.Separate_Extension)) =
+        Default_Gnat_Separate_Suffix
+      then
+         Select_Item (Get_List (Editor.Standard_Scheme), Gnat_Naming_Scheme);
+
+      elsif Get_Text (Editor.Dot_Replacement) = "."
+        and then Get_Text (Get_Entry (Editor.Spec_Extension)) = ".1.ada"
+        and then Get_Text (Get_Entry (Editor.Body_Extension)) = ".2.ada"
+        and then Get_Text (Get_Entry (Editor.Separate_Extension)) = ".2.ada"
+      then
+         Select_Item (Get_List (Editor.Standard_Scheme), Apex_Naming_Scheme);
+
+      elsif Get_Text (Editor.Dot_Replacement) = "__"
+        and then Get_Text (Get_Entry (Editor.Spec_Extension)) = "_.ada"
+        and then Get_Text (Get_Entry (Editor.Body_Extension)) = ".ada"
+        and then Get_Text (Get_Entry (Editor.Separate_Extension)) = ".ada"
+      then
+         Select_Item (Get_List (Editor.Standard_Scheme), Dec_Naming_Scheme);
+
+      else
+         Select_Item (Get_List (Editor.Standard_Scheme), Custom_Naming_Scheme);
+      end if;
    end Show_Project_Settings;
 
    -----------------------
