@@ -31,6 +31,12 @@ with Language.Debugger; use Language.Debugger;
 
 package body Items is
 
+   Max_Item_Width : constant := 1200;
+   --  Maximal width (in pixels) an item can have
+
+   Max_Item_Height : constant := 1200;
+   --  Maximal height (in pixels) an item can have
+
    ---------------
    -- Get_Width --
    ---------------
@@ -370,5 +376,20 @@ package body Items is
          Next (Iter);
       end loop;
    end Reset_Recursive;
+
+   ---------------------
+   -- Constraint_Size --
+   ---------------------
+
+   procedure Constraint_Size (Item : in out Generic_Type) is
+   begin
+      if Item.Width > Max_Item_Width then
+         Item.Width := Max_Item_Width;
+      end if;
+
+      if Item.Height > Max_Item_Height then
+         Item.Height := Max_Item_Height;
+      end if;
+   end Constraint_Size;
 
 end Items;

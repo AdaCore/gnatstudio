@@ -162,6 +162,11 @@ package Items is
    --  If Hide_Big_Items is True, then items bigger than a certain limit will
    --  be automatically hidden before their size is computed.
 
+   procedure Constraint_Size (Item : in out Generic_Type);
+   --  Constraint the size of the item so that it can be fully displayed in
+   --  the canvas. Items that are too big (>50000 pixels wide for instance)
+   --  can not be drawn.
+
    --------------------------------
    -- Manipulating the structure --
    --------------------------------
