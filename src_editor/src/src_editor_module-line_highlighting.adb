@@ -33,6 +33,29 @@ use Src_Editor_Buffer.Line_Information;
 
 package body Src_Editor_Module.Line_Highlighting is
 
+   Category_Cst  : aliased constant String := "category";
+   Color_Cst     : aliased constant String := "color";
+   Speedbar_Cst  : aliased constant String := "speedbar";
+   File_Cst      : aliased constant String := "file";
+   Line_Cst      : aliased constant String := "line";
+   Start_Col_Cst : aliased constant String := "start_column";
+   End_Col_Cst   : aliased constant String := "end_column";
+   Register_Highlighting_Parameters : constant Cst_Argument_List :=
+     (1 => Category_Cst'Access,
+      2 => Color_Cst'Access,
+      3 => Speedbar_Cst'Access);
+   Highlight_Parameters : constant Cst_Argument_List :=
+     (1 => File_Cst'Access,
+      2 => Category_Cst'Access,
+      3 => Line_Cst'Access);
+   Highlight_Range_Parameters : constant Cst_Argument_List :=
+     (1 => File_Cst'Access,
+      2 => Category_Cst'Access,
+      3 => Line_Cst'Access,
+      4 => Start_Col_Cst'Access,
+      5 => End_Col_Cst'Access);
+
+
    --------------------------
    -- Edit_Command_Handler --
    --------------------------
@@ -45,6 +68,7 @@ package body Src_Editor_Module.Line_Highlighting is
 
    begin
       if Command = "highlight" or else Command = "unhighlight" then
+         Name_Parameters (Data, Highlight_Parameters);
          declare
             File     : constant Virtual_File  :=
               Create (Nth_Arg (Data, 1), Kernel);
@@ -73,6 +97,7 @@ package body Src_Editor_Module.Line_Highlighting is
          end;
 
       elsif Command = "register_highlighting" then
+         Name_Parameters (Data, Register_Highlighting_Parameters);
          declare
             Category : constant String := Nth_Arg (Data, 1);
             Color_Id : constant String := Nth_Arg (Data, 2);
@@ -95,6 +120,7 @@ package body Src_Editor_Module.Line_Highlighting is
       elsif Command = "highlight_range"
         or else Command = "unhighlight_range"
       then
+         Name_Parameters (Data, Highlight_Range_Parameters);
          declare
             Module_Id : constant Source_Editor_Module :=
               Source_Editor_Module (Src_Editor_Module_Id);
