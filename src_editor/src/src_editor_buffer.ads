@@ -301,11 +301,13 @@ package Src_Editor_Buffer is
       Start_Line   : Gint;
       Start_Column : Gint;
       End_Line     : Gint;
-      End_Column   : Gint);
+      End_Column   : Gint;
+      Expand_Tabs  : Boolean := True);
    --  Select the given region.
    --  Both start and end positions must be verified before calling this
    --  procedure. An incorrect position will cause an Assertion_Failure
    --  when compiled with assertion checks, or an undefined behavior otherwise.
+   --  Takes Tabs into account when Expand_Tabs = True.
 
    procedure Highlight_Region
      (Buffer       : access Source_Buffer_Record;
