@@ -3093,6 +3093,13 @@ package body Src_Editor_Module is
            -"Move to the next sentence in the current source editor",
          Src_Action_Context);
 
+      Command := new Scroll_Command;
+      Scroll_Command (Command.all).Kernel := Kernel_Handle (Kernel);
+      Register_Action
+        (Kernel, "Center cursor on screen", Command,
+           -"Scroll the current source editor so that the cursor is centerd",
+         Src_Action_Context);
+
       Register_Module
         (Module                  => Src_Editor_Module_Id,
          Kernel                  => Kernel,
