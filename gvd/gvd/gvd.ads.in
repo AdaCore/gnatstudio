@@ -89,4 +89,7 @@ package GVD is
    Default_HTML_Browser : constant String := "@HTML_BROWSER@";
    --  Command use to browse HTML pages.
 
+   Default_Ps : constant String :=
+     "@DEFAULT_PS@";
+
 end GVD;
