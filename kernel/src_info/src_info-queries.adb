@@ -54,12 +54,14 @@ package body Src_Info.Queries is
       File_Name : String;
       Line      : Positive;
       Column    : Positive)
-      return Boolean;
-   --  Return True if the given File_Location is pointing to the same
+      return Integer;
+   --  Return 0 if the given File_Location is pointing to the same
    --  Line, Column, and Filename. The filename comparison is done after
    --  comparing the position for better performance.
-   --  ??? This could be adapted to do approximate matches, for when the LI
-   --  ??? file wasn't up-to-date.
+   --  Otherwise, the distance from Location to (Line, Column) is returned. In
+   --  the end, the closest match will be used.
+   --  Integer'Last should be returned if the entity doesn't match (different
+   --  file for instance).
 
    function Find_Next_Body_Ref
      (Decl : E_Declaration_Info;
@@ -78,12 +80,19 @@ package body Src_Info.Queries is
       Entity_Name     : String;
       Line            : Positive;
       Column          : Positive;
-      Entity_Decl     : out E_Declaration_Info;
-      Ref             : out E_Reference_List;
-      Status          : out Find_Decl_Or_Body_Query_Status);
+      Proximity       : in out Integer;
+      Entity_Decl     : in out E_Declaration_Info;
+      Ref             : in out E_Reference_List;
+      Status          : in out Find_Decl_Or_Body_Query_Status);
    --  Same as Internal_Find_Declaration_Or_Body, but for a specific
    --  declaration list.  Entity_Name must be all lower-cases if the language
-   --  is case insensitive
+   --  is case insensitive.
+   --
+   --  Status is not reset.
+   --
+   --  If no exact match is found for the entity, the closest match will be
+   --  returned (e.g the LI file wasn't up-to-date), and Proximity will be set
+   --  to the distance. Status will be set to Fuzzy_Match.
 
    procedure Trace_Dump
      (Handler : Debug_Handle;
@@ -144,7 +153,7 @@ package body Src_Info.Queries is
       return Boolean is
    begin
       case Status is
-         when Entity_Not_Found =>
+         when Entity_Not_Found | Fuzzy_Match =>
             return False;
             --  We should continue the search if we can.
          when Internal_Error =>
@@ -171,11 +180,27 @@ package body Src_Info.Queries is
       File_Name : String;
       Line      : Positive;
       Column    : Positive)
-      return Boolean is
+      return Integer
+   is
+      Num_Columns_Per_Line : constant := 250;
+      --  The number of columns in each line, when computing the proximity of a
+      --  match. This is an approximate number, for efficiency. Big values mean
+      --  that we give advantage to matches on the same line rather than on the
+      --  same column.
+
    begin
-      return Location.Line = Line
+      if Get_Source_Filename (Location.File) /= File_Name then
+         return Integer'Last;
+
+      elsif Location.Line = Line
         and then (Location.Column = 0 or else Location.Column = Column)
-        and then Get_Source_Filename (Location.File) = File_Name;
+      then
+         return 0;
+
+      else
+         return (Line - Location.Line) * Num_Columns_Per_Line
+           + (Column - Location.Column);
+      end if;
    end Location_Matches;
 
    ------------------------
@@ -219,18 +244,15 @@ package body Src_Info.Queries is
       Entity_Name     : String;
       Line            : Positive;
       Column          : Positive;
-      Entity_Decl     : out E_Declaration_Info;
-      Ref             : out E_Reference_List;
-      Status          : out Find_Decl_Or_Body_Query_Status)
+      Proximity       : in out Integer;
+      Entity_Decl     : in out E_Declaration_Info;
+      Ref             : in out E_Reference_List;
+      Status          : in out Find_Decl_Or_Body_Query_Status)
    is
       Current_Decl : E_Declaration_Info_List := Decl;
       Current_Ref  : E_Reference_List;
+      Prox         : Integer;
    begin
-      --  Initialize the value of the returned parameters
-      Entity_Decl := No_Declaration_Info;
-      Ref         := null;
-      Status      := Entity_Not_Found;
-
       --  Search the entity in the list of declarations
       Decl_Loop :
       while Current_Decl /= null loop
@@ -239,27 +261,42 @@ package body Src_Info.Queries is
          if Current_Decl.Value.Declaration.Name.all = Entity_Name then
             --  Check if the location corresponds to the declaration,
             --  in which case we need to jump to the first body.
-            if Location_Matches
+            Prox := Location_Matches
               (Current_Decl.Value.Declaration.Location,
-               File_Name, Line, Column)
-            then
+               File_Name, Line, Column);
+
+            if Prox = 0 then
                Entity_Decl := Current_Decl.Value;
                Ref         := null;
                Status      := Success;
+               Proximity   := 0;
                return;
+
+            elsif abs (Prox) < abs (Proximity) then
+               Entity_Decl := Current_Decl.Value;
+               Ref         := null;
+               Status      := Fuzzy_Match;
+               Proximity   := Prox;
             end if;
 
             --  Search in the list of references.
             Current_Ref := Current_Decl.Value.References;
             Ref_Loop :
             while Current_Ref /= null loop
-               if Location_Matches
-                 (Current_Ref.Value.Location, File_Name, Line, Column)
-               then
+               Prox := Location_Matches
+                 (Current_Ref.Value.Location, File_Name, Line, Column);
+
+               if Prox = 0 then
                   Entity_Decl := Current_Decl.Value;
                   Ref         := Current_Ref;
                   Status      := Success;
                   return;
+
+               elsif abs (Prox) < abs (Proximity) then
+                  Entity_Decl := Current_Decl.Value;
+                  Ref         := Current_Ref;
+                  Status      := Fuzzy_Match;
+                  Proximity   := Prox;
                end if;
 
                Current_Ref := Current_Ref.Next;
@@ -287,6 +324,10 @@ package body Src_Info.Queries is
       Current_Dep : Dependency_File_Info_List;
       E_Name      : String := Entity_Name;
 
+      Proximity   : Integer := Integer'Last - 1;
+      --  Not Integer'Last, so that if Location_Matches returns Integer'Last,
+      --  this is not considered as a match.
+
    begin
       if Case_Insensitive_Identifiers (Lib_Info.LI.Handler) then
          E_Name := To_Lower (E_Name);
@@ -303,7 +344,7 @@ package body Src_Info.Queries is
          Find_Spec_Or_Body
            (Lib_Info.LI.Spec_Info.Declarations,
             File_Name, E_Name, Line, Column,
-            Decl, Ref, Status);
+            Proximity, Decl, Ref, Status);
       end if;
 
       --  Search in the Body
@@ -314,7 +355,7 @@ package body Src_Info.Queries is
          Find_Spec_Or_Body
            (Lib_Info.LI.Body_Info.Declarations,
             File_Name, E_Name, Line, Column,
-            Decl, Ref, Status);
+            Proximity, Decl, Ref, Status);
       end if;
 
       --  Search in the separates
@@ -325,9 +366,9 @@ package body Src_Info.Queries is
                Find_Spec_Or_Body
                  (Current_Sep.Value.Declarations,
                   File_Name, E_Name, Line, Column,
-                  Decl, Ref, Status);
+                  Proximity, Decl, Ref, Status);
 
-               if Status = Success then
+               if Search_Is_Completed (Status) then
                   exit;
                end if;
             end if;
@@ -344,8 +385,8 @@ package body Src_Info.Queries is
                Find_Spec_Or_Body
                  (Current_Dep.Value.Declarations,
                   File_Name, E_Name, Line, Column,
-                  Decl, Ref, Status);
-               if Status = Success then
+                  Proximity, Decl, Ref, Status);
+               if Search_Is_Completed (Status) then
                   exit;
                end if;
             end if;
@@ -353,6 +394,10 @@ package body Src_Info.Queries is
             Current_Dep := Current_Dep.Next;
          end loop;
       end if;
+
+      Trace (Me, "Internal_Find_Declaration_Or_Body: Status="
+             & Status'Img
+             & " Proximity=" & Proximity'Img);
    end Internal_Find_Declaration_Or_Body;
 
    ----------------------
@@ -381,7 +426,7 @@ package body Src_Info.Queries is
          Ref         => Ref,
          Status      => Status);
 
-      if Status = Success then
+      if Status = Success or else Status = Fuzzy_Match then
          if Decl.Declaration.Kind /= Overloaded_Entity then
             Entity := Get_Entity (Decl.Declaration);
          else
@@ -392,7 +437,7 @@ package body Src_Info.Queries is
          Entity := No_Entity_Information;
          Trace (Me, "Couldn't find a valid xref for " & Entity_Name
                 & " line=" & Line'Img & " Column=" & Column'Img
-                & " file=" & File_Name);
+                & " file=" & File_Name & " Status=" & Status'Img);
       end if;
 
    exception
@@ -440,7 +485,7 @@ package body Src_Info.Queries is
          Ref         => Ref,
          Status      => Status);
 
-      if Status = Success
+      if (Status = Success or else Status = Fuzzy_Match)
         and then Decl.Declaration.Kind = Overloaded_Entity
       then
          Status := Overloaded_Entity_Found;
@@ -449,7 +494,7 @@ package body Src_Info.Queries is
       end if;
 
 
-      if Status = Success then
+      if Status = Success or else Status = Fuzzy_Match then
 
          --  If we need to parse the LI File that contains the body
          --  information. Note that we have to change the line,column
@@ -489,7 +534,7 @@ package body Src_Info.Queries is
       --  Otherwise, if this is a body reference, then we try to navigate
       --  to the next body reference.
 
-      if Status = Success then
+      if Status = Success or else Status = Fuzzy_Match then
          Ref := Find_Next_Body_Ref (Decl, Ref);
 
          if Ref /= null then
@@ -2102,7 +2147,7 @@ package body Src_Info.Queries is
       return Node.Decl.Rename /= Null_File_Location
         and then Location_Matches
         (Node.Decl.Rename, Entity.Decl_File.all,
-         Entity.Decl_Line, Entity.Decl_Column);
+         Entity.Decl_Line, Entity.Decl_Column) = 0;
    end Is_Renaming_Of;
 
    ---------------------

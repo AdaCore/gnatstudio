@@ -102,8 +102,12 @@ package Src_Info.Queries is
       Internal_Error,
       No_Body_Entity_Found,
       Overloaded_Entity_Found,
+      Fuzzy_Match,
       Success);
    --  The status returned by the Find_Declaration_Or_Body routine.
+   --  Fuzzy_Match is returned if the exact location wasn't found (e.g the LI
+   --  file wasn't up-to-date), and the returned location is the closest that
+   --  matched.
 
    procedure Find_Declaration
      (Lib_Info      : LI_File_Ptr;
