@@ -38,6 +38,7 @@ with Gtkada.MDI;           use Gtkada.MDI;
 with Src_Editor_Box;       use Src_Editor_Box;
 with Src_Info;             use Src_Info;
 with Src_Info.ALI;         use Src_Info.ALI;
+with Src_Info.Queries;     use Src_Info.Queries;
 with GVD.Process;          use GVD.Process;
 with String_Utils;         use String_Utils;
 
@@ -437,6 +438,7 @@ package body Glide_Kernel.Editor is
       Start_Column : Positive;
       End_Line     : Positive;
       End_Column   : Positive;
+      Status       : Src_Info.Queries.Query_Status;
 
    begin
       if Get_Filename (Source) = "" then
@@ -461,7 +463,7 @@ package body Glide_Kernel.Editor is
                Kernel.Source_Info_List, Source_Info, Success);
             if not Success then
                Console.Insert
-                 (Kernel, "Could not find associated ALI file",
+                 (Kernel, "Could not find associated ALI file.",
                   Highlight_Sloc => False);
                return;
             end if;
@@ -471,14 +473,37 @@ package body Glide_Kernel.Editor is
       Find_Declaration_Or_Body
         (Editor => Source, Lib_Info => Source_Info, Filename => Filename,
          Start_Line => Start_Line, Start_Column => Start_Column,
-         End_Line => End_Line, End_Column => End_Column);
+         End_Line => End_Line, End_Column => End_Column, Status => Status);
 
+      case Status is
+         when Entity_Not_Found =>
+            Console.Insert
+              (Kernel, "Cross-reference failed.", Highlight_Sloc => False);
+            return;
+         when Internal_Error =>
+            Console.Insert
+              (Kernel, "Cross-reference internal error detected.",
+               Highlight_Sloc => False);
+            return;
+         when No_Body_Entity_Found =>
+            Console.Insert
+              (Kernel,
+               "This entity does not have an associated declaration or body.",
+               Highlight_Sloc => False);
+            return;
+         when Success =>
+            null; --  No error message to print
+      end case;
+
+      --  Extra safety check, verify that Filename is not null before starting
+      --  dereferencing it. That would be a programing error
       if Filename = null then
-         --  Means the query failed.
          Console.Insert
-           (Kernel, "Cross-reference failed", Highlight_Sloc => False);
-         --  ??? A more elaborate error message, with intl support will be
-         --  ??? done later.
+           (Kernel, "Internal error detected.", Highlight_Sloc => False);
+         --  Note that the error message is different from the internal error
+         --  message above. This will help us pin-pointing the location of
+         --  the error message without any doubt, thus helping us debug the
+         --  situation, should this happen. (but it won't, of course :-)
          return;
       end if;
 
