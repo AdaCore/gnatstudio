@@ -184,6 +184,8 @@ package body VCS_Module is
 
    begin
       if Context.all in File_Selection_Context'Class
+        and then (Context.all not in Entity_Selection_Context'Class
+                  or else Get_Name (Get_Creator (Context)) = "Source_Editor")
         and then Get_Current_Ref (Selection_Context_Access (Context)) /=
           Unknown_VCS_Reference
       then
