@@ -261,8 +261,7 @@ package Glide_Kernel.Modules is
       Enable_Navigation : Boolean := True);
    --  Open, or create, an editor that edits Filename (Mime_Source_File type)
    --  If Enable_Navigation is True, then the location visited will be
-   --  stored in the history for Back/Forward navigation
-   --  (Mime_Source_File_Navigate type).
+   --  stored in the history for Back/Forward navigation.
 
    procedure Open_Html
      (Kernel         : access Kernel_Handle_Record'Class;
