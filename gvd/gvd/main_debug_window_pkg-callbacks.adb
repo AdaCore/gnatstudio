@@ -250,8 +250,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
          while Index < Name'Last loop
             if Name (Index) = '%' and then Name (Index + 1) = 'f' then
                return Name (Name'First .. Index - 1) &
-                 File &
-                 Substitute (Name (Index + 2 .. Name'Last), File, Line);
+                 File & Substitute (Name (Index + 2 .. Name'Last), File, Line);
 
             elsif Name (Index) = '%' and then Name (Index + 1) = 'l' then
                declare
@@ -269,11 +268,13 @@ package body Main_Debug_Window_Pkg.Callbacks is
          return Name;
       end Substitute;
 
-      Tab    : constant Debugger_Process_Tab := Get_Current_Process (Object);
+      Tab       : constant Debugger_Process_Tab :=
+        Get_Current_Process (Object);
+      Host_File : constant String :=
+        To_Host_Pathname (Get_Current_File (Tab.Editor_Text));
       Editor : constant String := Substitute
         (Main_Debug_Window_Access (Tab.Window).External_Editor.all,
-         Get_Current_File (Tab.Editor_Text),
-         Get_Line (Tab.Editor_Text));
+         Host_File, Get_Line (Tab.Editor_Text));
       Args   : Argument_List_Access;
       Pid    : GNAT.OS_Lib.Process_Id;
       Prog   : GNAT.OS_Lib.String_Access;
