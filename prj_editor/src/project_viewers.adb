@@ -2152,10 +2152,7 @@ package body Project_Viewers is
          Set_Text
            (Obj_Dir.Exec_Dir,
             Name_As_Directory (GNAT.OS_Lib.Normalize_Pathname
-             (Get_Attribute_Value
-              (Project   => Project,
-               Attribute => Exec_Dir_Attribute,
-               Default   => Get_Current_Dir))));
+                                 (Executables_Directory (Project))));
       else
          Set_Text (Obj_Dir.Exec_Dir, Dir_Name (Full_Project));
       end if;
