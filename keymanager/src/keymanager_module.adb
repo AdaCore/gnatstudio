@@ -20,6 +20,7 @@
 
 with Glide_Kernel; use Glide_Kernel;
 with Glide_Kernel.Modules; use Glide_Kernel.Modules;
+with Glide_Kernel.Console; use Glide_Kernel.Console;
 with Gdk.Event;    use Gdk.Event;
 with Gdk.Types;    use Gdk.Types;
 with Gdk.Types.Keysyms; use Gdk.Types.Keysyms;
@@ -28,6 +29,7 @@ with Commands.Interactive;     use Commands, Commands.Interactive;
 with HTables;      use HTables;
 with GNAT.OS_Lib;  use GNAT.OS_Lib;
 with GUI_Utils;    use GUI_Utils;
+with Ada.Exceptions;           use Ada.Exceptions;
 with Ada.Unchecked_Conversion;
 with Gtk.Cell_Renderer_Text;   use Gtk.Cell_Renderer_Text;
 with Gtk.Dialog;               use Gtk.Dialog;
@@ -367,6 +369,11 @@ package body KeyManager_Module is
 
          Free (File);
       end if;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Insert (Kernel, -"Could not parse " & Filename, Mode => Error);
    end Load_Custom_Keys;
 
    -----------------
@@ -443,13 +450,16 @@ package body KeyManager_Module is
       is
          Iter : Gtk_Tree_Iter;
          pragma Unreferenced (Data, Changed, Iter);
-         First : Natural := Accel_Path'First;
+         First : constant Natural := Accel_Path'First;
       begin
-         while First <= Accel_Path'Last
-           and then Accel_Path (First) /= '/'
-         loop
-            First := First + 1;
-         end loop;
+--  Temporarily commented out, we'll show the leading <gps> prefix anyway.
+--  We need it to update the menus dynamically on exit, and GPS uses both
+--  <gps> and <gtkada>. An extra column should be added to store this prefix
+--           while First <= Accel_Path'Last
+--             and then Accel_Path (First) /= '/'
+--           loop
+--              First := First + 1;
+--           end loop;
 
          if Accel_Key /= 0 then
             Iter := Set (Parent => Menu_Iter,
@@ -547,7 +557,18 @@ package body KeyManager_Module is
          if Get_String (Editor.Model, Context_Iter, Action_Column) =
            -Menu_Context_Name
          then
-            null;
+            Child := Children (Editor.Model, Context_Iter);
+            while Child /= Null_Iter loop
+               Change_Entry
+                 (Accel_Path =>
+                    Get_String (Editor.Model, Child, Action_Column),
+                  Accel_Key  =>
+                    Gdk_Key_Type (Get_Int (Editor.Model, Child, Key_Column)),
+                  Accel_Mods => Gdk_Modifier_Type
+                    (Get_Int (Editor.Model, Child, Modif_Column)),
+                  Replace => True);
+               Next (Editor.Model, Child);
+            end loop;
 
          --  Standard key bindings
          else
@@ -627,7 +648,7 @@ package body KeyManager_Module is
                   Title  => -"Key shortcuts",
                   Parent => Get_Main_Window (Kernel),
                   Flags  => Destroy_With_Parent or Modal);
-      Set_Default_Size (Editor, 400, 400);
+      Set_Default_Size (Editor, 640, 480);
       Editor.Kernel  := Kernel;
 
       Gtk_New_Hbox (Box, Homogeneous => False);
