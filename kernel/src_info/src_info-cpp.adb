@@ -1047,7 +1047,15 @@ package body Src_Info.CPP is
       Ptr_A : Segment_Vector.Node_Access := Args_A;
       Ptr_B : Segment_Vector.Node_Access := Args_B;
    begin
-      while Ptr_A /= null and Ptr_B /= null loop
+      if (Ptr_A = null and then Ptr_B /= null and then Ptr_B.Next = null
+         and then Buffer_B (Ptr_B.Data.First .. Ptr_B.Data.Last) = "void")
+         or else (Ptr_B = null and then Ptr_A /= null
+         and then Ptr_A.Next = null
+         and then Buffer_A (Ptr_A.Data.First .. Ptr_A.Data.Last) = "void")
+      then
+         return True;
+      end if;
+      while Ptr_A /= null and then Ptr_B /= null loop
          if Buffer_A (Ptr_A.Data.First .. Ptr_A.Data.Last)
             /= Buffer_B (Ptr_B.Data.First .. Ptr_B.Data.Last) then
             return False;
@@ -1056,7 +1064,7 @@ package body Src_Info.CPP is
          Ptr_B := Ptr_B.Next;
       end loop;
 
-      return Ptr_A = null and Ptr_B = null;
+      return Ptr_A = null and then Ptr_B = null;
    end Cmp_Arg_Types;
 
    --------------------
