@@ -9,6 +9,7 @@ with "../vdiff/vdiff";
 with "../browsers/browsers";
 with "../vcs/vcs";
 with "../metrics/metrics";
+with "../builder/builder";
 
 project Glide is
 
@@ -39,6 +40,7 @@ project Glide is
    end Compiler;
 
    package Binder is
-      for Default_Switches ("Ada") use ("-E");
+      for Default_Switches ("Ada") use ("-E", "-static");
    end Binder;
+
 end Glide;
