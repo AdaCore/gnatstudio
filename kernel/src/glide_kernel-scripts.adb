@@ -470,7 +470,8 @@ package body Glide_Kernel.Scripts is
                   Use_Object_Path => True);
             begin
                if Full /= "" then
-                  Ent.Name := new String'(Full);
+                  Ent.Name := new String'
+                    (Normalize_Pathname (Full, Resolve_Links => True));
                else
                   Ent.Name := new String'(Name);
                end if;
