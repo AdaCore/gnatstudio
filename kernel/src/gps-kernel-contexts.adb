@@ -462,7 +462,11 @@ package body GPS.Kernel.Contexts is
       Status   : Find_Decl_Or_Body_Query_Status;
 
    begin
-      if Context.Entity = null then
+      if Context.Entity = null
+        and then Has_Entity_Name_Information (Context)
+        and then Has_Line_Information (Context)
+        and then Has_File_Information (Context)
+      then
          Find_Declaration_Or_Overloaded
            (Kernel      => Get_Kernel (Context),
             File        => Get_Or_Create
