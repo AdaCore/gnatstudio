@@ -62,7 +62,7 @@ pragma Warnings (On);
 with GNAT.Regpat;                use GNAT.Regpat;
 with GNAT.OS_Lib;                use GNAT.OS_Lib;
 
-with Odd_Intl;                   use Odd_Intl;
+with Glide_Intl;                 use Glide_Intl;
 with Display_Items;              use Display_Items;
 with Debugger.Gdb;               use Debugger.Gdb;
 with Process_Proxies;            use Process_Proxies;

@@ -36,7 +36,7 @@ with Gtk.Menu_Item;            use Gtk.Menu_Item;
 
 with Gtkada.Handlers;          use Gtkada.Handlers;
 
-with Odd_Intl;                 use Odd_Intl;
+with Glide_Intl;               use Glide_Intl;
 with GVD.Types;                use GVD.Types;
 with Process_Proxies;          use Process_Proxies;
 with Basic_Types;              use Basic_Types;
@@ -49,8 +49,8 @@ with Ada.Exceptions;           use Ada.Exceptions;
 package body GVD.Call_Stack is
 
    type Call_Stack_Frame_Record is record
-      Stack      : Call_Stack;
-      Mask       : Stack_List_Mask;
+      Stack : Call_Stack;
+      Mask  : Stack_List_Mask;
    end record;
    package Call_Stack_Cb is new Gtk.Handlers.User_Callback
      (Gtk_Menu_Item_Record, Call_Stack_Frame_Record);

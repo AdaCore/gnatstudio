@@ -1,10 +1,10 @@
 -----------------------------------------------------------------------
---                   GVD - The GNU Visual Debugger                   --
+--                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2000-2004                      --
---                              ACT-Europe                           --
+--                      Copyright (C) 2000-2005                      --
+--                              AdaCore                              --
 --                                                                   --
--- GVD is free  software;  you can redistribute it and/or modify  it --
+-- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -46,7 +46,7 @@ with GVD.Preferences;   use GVD.Preferences;
 with String_Utils;      use String_Utils;
 with GVD.Types;         use GVD.Types;
 with Basic_Types;       use Basic_Types;
-with Odd_Intl;          use Odd_Intl;
+with Glide_Intl;        use Glide_Intl;
 
 with GNAT.Regpat;       use GNAT.Regpat;
 with Ada.Exceptions;    use Ada.Exceptions;

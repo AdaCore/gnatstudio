@@ -34,7 +34,7 @@ with Gtk.Window;        use Gtk.Window;
 
 with GVD.Main_Window;   use GVD.Main_Window;
 with OS_Utils;          use OS_Utils;
-with Odd_Intl;          use Odd_Intl;
+with Glide_Intl;        use Glide_Intl;
 with Language;          use Language;
 with Language.Debugger; use Language.Debugger;
 with Debugger.Gdb.Ada;  use Debugger.Gdb.Ada;

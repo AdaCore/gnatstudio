@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
---                   GVD - The GNU Visual Debugger                   --
+--                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2000-2003                      --
---                              ACT-Europe                           --
+--                      Copyright (C) 2000-2005                      --
+--                              AdaCore                              --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -46,7 +46,7 @@ with Gtk.Widget;       use Gtk.Widget;
 with Gtkada.Handlers;  use Gtkada.Handlers;
 with Gtkada.Types;     use Gtkada.Types;
 with Basic_Types;      use Basic_Types;
-with Odd_Intl; use Odd_Intl;
+with Glide_Intl;       use Glide_Intl;
 with Breakpoints_Pkg.Callbacks; use Breakpoints_Pkg.Callbacks;
 with Pixmaps_IDE;      use Pixmaps_IDE;
 with GVD.Code_Editors; use GVD.Code_Editors;
