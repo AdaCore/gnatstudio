@@ -179,6 +179,7 @@ begin
 
    --  Register all modules
 
+   Navigation_Module.Register_Module (Glide.Kernel);
    Metrics_Module.Register_Module (Glide.Kernel);
    Browsers.Call_Graph.Register_Module (Glide.Kernel);
    Browsers.Dependency_Items.Register_Module (Glide.Kernel);
@@ -194,7 +195,6 @@ begin
    VCS.CVS.Register_Module (Glide.Kernel);
    Aunit_Module.Register_Module (Glide.Kernel);
    Glide_Consoles.Register_Module (Glide.Kernel);
-   Navigation_Module.Register_Module (Glide.Kernel);
 
    --  Register the supported languages
 
