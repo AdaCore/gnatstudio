@@ -224,15 +224,6 @@ package body Work_on_File is
       --  tries to find the file in the list and if found, it returns it
       --  with all his path in front of the name
 
-      function Is_Constant_Or_Named_Number
-        (Header : String) return Boolean;
-
-      function Get_Whole_Header
-        (Source_Filename : String;
-         Line            : Natural;
-         Is_Generic      : Boolean) return String;
-         --  returns one string with all the header of the entity
-
       procedure Process_Subprogram
         (Source_Filename : String;
          Entity_File     : String;
@@ -314,131 +305,6 @@ package body Work_on_File is
          return "";
       end Get_Full_Entity_Filename;
 
-      ----------------------------------
-      --  Is_Constant_Or_Named_Number --
-      ----------------------------------
-
-      function Is_Constant_Or_Named_Number
-        (Header : String) return Boolean is
-         --  returns true if the found header is really a constant or named
-         --  number definition: is a ":=" can be found
-      begin
-         if Get_String_Index (Header, 1, ":=") > 0 then
-            return True;
-         else
-            return False;
-         end if;
-      end Is_Constant_Or_Named_Number;
-
-      ----------------------
-      -- Get_Whole_Header --
-      ----------------------
-
-      function Get_Whole_Header
-        (Source_Filename : String;
-         Line            : Natural;
-         Is_Generic      : Boolean) return String is
-         --  returns one string with all the header of the entity
-
-         Line_Nr     : Natural;
-         Open_Braces : Integer;
-         Column_Nr   : Natural;
-         Result      : ASU.Unbounded_String;
-         New_Line    : ASU.Unbounded_String;
-         Is_Record   : Boolean;
-      begin
-         Line_Nr     := Line;
-         Is_Record   := False;
-         Open_Braces := 0;
-         Result      := ASU.To_Unbounded_String ("");
-
-         --  process the lines of the subprogram header
-         while True loop
-            New_Line := ASU.To_Unbounded_String (Get_Line_From_File
-                                                   (Source_Filename,
-                                                    Line_Nr));
-
-            if Is_Generic then
-               Column_Nr := Get_String_Index (To_Lower
-                                             (ASU.To_String (New_Line)), 1,
-                                              "generic");
-               if Column_Nr > 0 and
-                 (ASU.Length (New_Line) = Column_Nr + 6)
-               then
-                  if (Get_String_Index (To_Lower (ASU.To_String (New_Line)),
-                                        1,
-                                        "--") = 0) or
-                    (Get_String_Index (To_Lower (ASU.To_String (New_Line)),
-                                        1,
-                                        "--") > Column_Nr) then
-                     ASU.Append (New_Line, ASCII.LF);
-                     ASU.Append (New_Line, Result);
-                     Result := New_Line;
-                     return ASU.To_String (Result);
-                  end if;
-               elsif Column_Nr > 0 and
-                  (ASU.Element (New_Line, Column_Nr + 7) = ' '
-                  or ASU.Element (New_Line, Column_Nr + 7) = ASCII.HT
-                  or ASU.Element (New_Line, Column_Nr + 7) = ASCII.LF
-                  or ASU.Element (New_Line, Column_Nr + 7) = ASCII.CR) then
-                  if (Get_String_Index (To_Lower (ASU.To_String (New_Line)),
-                                        1,
-                                        "--") = 0) or
-                    (Get_String_Index (To_Lower (ASU.To_String (New_Line)),
-                                        1,
-                                        "--") > Column_Nr) then
-                     ASU.Append (New_Line, ASCII.LF);
-                     ASU.Append (New_Line, Result);
-                     Result := New_Line;
-                     return ASU.To_String (Result);
-                  end if;
-               end if;
-               Line_Nr := Line_Nr - 1;
-               ASU.Append (New_Line, ASCII.LF);
-               ASU.Append (New_Line, Result);
-               Result := New_Line;
-                  --  if not generic
-                  --  check if "record_" found (with a space after!)
-            else
-
-               if Get_String_Index (To_Lower (ASU.To_String (New_Line)),
-                                    1,
-                                     " record") > 0
-               then
-                  if Is_Record and
-                    Get_String_Index (To_Lower (ASU.To_String (New_Line)),
-                                      1,
-                                      " end") > 0 then
-                     ASU.Append (Result, New_Line);
-                     return ASU.To_String (Result);
-                  else
-                     Is_Record := True;
-                  end if;
-               end if;
-
-               if not Is_Record then
-                  for J in 1 .. ASU.Length (New_Line) loop
-                     if ASU.Element (New_Line, J) = '(' then
-                        Open_Braces := Open_Braces + 1;
-                     elsif ASU.Element (New_Line, J) = ')' then
-                        Open_Braces := Open_Braces - 1;
-                     elsif ASU.Element (New_Line, J) = ';' then
-                        if Open_Braces < 1 then
-                           ASU.Append (Result, New_Line);
-                           return ASU.To_String (Result);
-                        end if;
-                     end if;
-                  end loop;
-               end if;
-
-               Line_Nr := Line_Nr + 1;
-               ASU.Append (Result, New_Line);
-               ASU.Append (Result, ASCII.LF);
-            end if;
-         end loop;
-         return "";
-      end Get_Whole_Header;
-
       ------------------------
       -- Process_Subprogram --
       ------------------------
@@ -461,6 +327,7 @@ package body Work_on_File is
          --  find all positions where the procedure is called
          if File_Name (Entity_Node.File_Name.all) =
            File_Name (Source_Filename)
+         --  and when references wished
          and Options.References
          then
             Find_All_References (Project_Tree,
@@ -653,20 +520,6 @@ package body Work_on_File is
                              (Get_Declaration_File_Of (Info)));
             Entity_Node.Column          := Get_Declaration_Column_Of (Info);
             Entity_Node.Line            := Get_Declaration_Line_Of (Info);
-            if Get_Kind (Info) = Generic_Function_Or_Operator or
-              Get_Kind (Info) = Generic_Procedure then
-               Entity_Node.Header := new String '(Get_Whole_Header
-                                                    (Entity_Node.File_Name.all,
-                                                     Entity_Node.Line,
-                                                     True));
-            else
-               Entity_Node.Header := new String '(Get_Whole_Header
-                                                    (Entity_Node.File_Name.all,
-                                                     Entity_Node.Line,
-                                                     False));
-            end if;
-            Entity_Node.Header_Lines    :=
-              Count_Lines (Entity_Node.Header.all);
             Entity_Node.File_Found      := True;
 
             --  get the entity specific parameters
@@ -708,11 +561,7 @@ package body Work_on_File is
                         String_Object | Task_Object |
                         Access_Object | Class_Wide_Object |
                         Ordinary_Fixed_Point_Object =>
-                  if Is_Constant_Or_Named_Number (Entity_Node.Header.all) then
-                     Entity_Node.Kind := Var_Entity;
-                  else
-                     Entity_Node.Kind := Other_Entity;
-                  end if;
+                        Entity_Node.Kind := Var_Entity;
                when Generic_Package  =>
                   Entity_Node.Kind := Package_Entity;
                when  Non_Generic_Package =>
@@ -743,75 +592,7 @@ package body Work_on_File is
                       Entity_List,
                       Process_Body_File,
                       Options);
+
    end Process_One_File;
-
-   --------------------
-   -- Kind_To_String --
-   --------------------
-
-   function Kind_To_String (Kind : Src_Info.E_Kind) return String is
-   begin
-      --  ??? Would be nice to do it as a primitive subprogram of the
-      --  LI_Handlers, unfortunately they currently don't have access to
-      --  Glide_Intl for proper translations.
-
-      case Kind is
-         when Overloaded_Entity            => return "???";
-         when Unresolved_Entity            => return "unknown";
-         when Access_Object                =>
-            return "access variable / pointer";
-         when Access_Type                  => return "access type / pointer";
-         when Array_Object                 => return "array";
-         when Array_Type                   => return "array type";
-         when Boolean_Object               => return "boolean";
-         when Boolean_Type                 => return "boolean type";
-         when Class_Wide_Object            => return "class wide";
-         when Class_Wide_Type              => return "class wide type";
-         when Decimal_Fixed_Point_Object   => return "decimal fixed point";
-         when Decimal_Fixed_Point_Type     =>
-            return "decimal fixed point type";
-         when Entry_Or_Entry_Family        => return "entry or entry family";
-            --  later
-         when Enumeration_Literal          => return "enumeration literal";
-            --  not used
-         when Enumeration_Object           => return "enumeration";
-         when Enumeration_Type             => return "enumeration type";
-         when Exception_Entity             => return "exception";
-         when Floating_Point_Object        => return "floating point";
-         when Floating_Point_Type          => return "floating point type";
-         when Generic_Class                => return "generic class";
-            --  later
-         when Generic_Function_Or_Operator => return "generic function";
-         when Generic_Package              => return "generic package";
-            --  later
-         when Generic_Procedure            => return "generic procedure";
-         when Label_On_Block               => return "label on block";
-            --  not used
-         when Label_On_Loop                => return "label on loop";
-            --  not used
-         when Label_On_Statement           => return "label on statement";
-            --  not used
-         when Modular_Integer_Object       => return "modular integer";
-         when Modular_Integer_Type         => return "modular integer type";
-         when Named_Number                 => return "named number";
-         when Non_Generic_Function_Or_Operator => return "function";
-         when Non_Generic_Package          => return "package";
-            --  later
-         when Non_Generic_Procedure        => return "procedure";
-         when Ordinary_Fixed_Point_Object  => return "fixed point";
-         when Ordinary_Fixed_Point_Type    => return "fixed point type";
-         when Private_Type                 => return "private type";
-         when Protected_Object             => return "protected object";
-         when Protected_Type               => return "protected type";
-         when Record_Object                => return "record / struct";
-         when Record_Type                  => return "record type / struct";
-         when Signed_Integer_Object        => return "signed integer";
-         when Signed_Integer_Type          => return "signed integer type";
-         when String_Object                => return "string";
-         when String_Type                  => return "string type";
-         when Task_Object                  => return "task";
-         when Task_Type                    => return "task type";
-      end case;
-   end Kind_To_String;
 
 end Work_on_File;
