@@ -87,41 +87,20 @@ package body DB_API is
    -- Open --
    ----------
 
-   procedure Open (DB : out DB_File; File_Names : String_List_Access) is
-      function Internal_Open
-        (Num_Of_Files : Integer;
-         File_Names   : System.Address) return DB_File;
+   procedure Open (DB : out DB_File; File_Name : String) is
+      function Internal_Open (File_Name : String) return DB_File;
       pragma Import (C, Internal_Open, "ada_db_open");
-
-      procedure Free (List : in out String_List);
-
-      procedure Free (List : in out String_List) is
-      begin
-         for I in List'Range loop
-            Free (List (I));
-         end loop;
-      end Free;
-
-      C_File_Names : String_List (File_Names'Range);
    begin
-      for I in File_Names'Range loop
-         C_File_Names (I) := new String' (File_Names (I).all & ASCII.NUL);
-      end loop;
-
-      DB := Internal_Open (C_File_Names'Length, C_File_Names'Address);
-
-      Free (C_File_Names);
-
+      DB := Internal_Open (File_Name & ASCII.NUL);
       if Is_Null (DB) then
          Raise_Exception (DB_Open_Error'Identity,
            E_Mem_Failed);
       end if;
-
       if Last_ErrNo (DB) /= 0 then
          Raise_Exception (DB_Open_Error'Identity,
            Error_Message (DB));
       end if;
-
+      Set_Cursor (DB, First);
    end Open;
 
    ---------
@@ -312,18 +291,16 @@ package body DB_API is
      (The_CSF : CSF;
       Separator : Character := ' ') return String
    is
-      N : constant Natural := Get_Field_Count (The_CSF);
+      N : Natural := Get_Field_Count (The_CSF);
       S : Unbounded_String;
    begin
       for F in 1 .. N - 1 loop
          Append (S, Get_Field (The_CSF, F));
          Append (S, Separator);
       end loop;
-
-      if N > 0 then
+      if (N > 0) then
          Append (S, Get_Field (The_CSF, N));
       end if;
-
       return To_String (S);
    end Get_All_Fields;
 
@@ -355,14 +332,13 @@ package body DB_API is
    ---------------
 
    function Get_Field (The_CSF : CSF; Index : Positive) return String is
-      function I_Get_Field
-        (The_CSF : CSF; Index : C.int) return CStrings.chars_ptr;
+      function I_Get_Field (The_CSF : CSF; Index : C.int)
+        return CStrings.chars_ptr;
       pragma Import (C, I_Get_Field, "csf_get_field");
-
-      R : constant CStrings.chars_ptr :=
+      R : CStrings.chars_ptr :=
         I_Get_Field (The_CSF, C.int (Index));
    begin
-      if R = CStrings.Null_Ptr then
+      if (R = CStrings.Null_Ptr) then
          Raise_Exception (Index_Out_Of_Range'Identity,
            "Index out of range: " & Positive'Image (Index) & " > "
              & Positive'Image (Get_Field_Count (The_CSF)));

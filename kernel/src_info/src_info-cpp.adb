@@ -42,7 +42,6 @@ with Traces;  use Traces;
 with String_Utils; use String_Utils;
 with Prj_API;
 with Snames; use Snames;
-with Ada.Strings.Fixed;
 
 package body Src_Info.CPP is
 
@@ -325,8 +324,8 @@ package body Src_Info.CPP is
    end Table_Extension;
 
    procedure Open_DB_Files
-     (DB_Dirs     : in GNAT.OS_Lib.String_List_Access;
-      SN_Table    : out SN_Table_Array);
+     (DB_Prefix : in String;
+      SN_Table  : out SN_Table_Array);
 
    procedure Close_DB_Files (SN_Table : in out SN_Table_Array);
 
@@ -414,12 +413,10 @@ package body Src_Info.CPP is
 
    pragma Inline (Info, Warn, Fail);
 
-   function Get_SN_Dirs (Project : Prj.Project_Id)
-      return GNAT.OS_Lib.String_List_Access;
-   pragma Inline (Get_SN_Dirs);
-   --  Return the names of the directories that contain the source navigator
-   --  databases for the current project and all nested ones, or null if no
-   --  directories are available
+   function Get_SN_Dir (Project : Prj.Project_Id) return String;
+   pragma Inline (Get_SN_Dir);
+   --  Return the name of the directory that contains the source navigator
+   --  database, or the empty string if this directory couldn't be found.
 
    procedure Refer_Type
      (Type_Name          : String;
@@ -521,10 +518,10 @@ package body Src_Info.CPP is
    procedure Create_DB_Directory
      (Handler : access CPP_LI_Handler_Record'Class) is
    begin
-      if Get_DB_Dir (Handler) /= ""
-        and then not Is_Directory (Get_DB_Dir (Handler))
+      if Handler.DB_Dir.all /= ""
+        and then not Is_Directory (Handler.DB_Dir.all)
       then
-         Make_Dir (Get_DB_Dir (Handler));
+         Make_Dir (Handler.DB_Dir.all);
       end if;
    end Create_DB_Directory;
 
@@ -569,7 +566,7 @@ package body Src_Info.CPP is
       HI.Handler := CPP_LI_Handler (Handler);
 
       --  Do nothing if we couldn't create the database directory
-      if Get_DB_Dir (Handler) = "" then
+      if Handler.DB_Dir.all = "" then
          HI.State := Done;
          return HI;
       end if;
@@ -580,7 +577,7 @@ package body Src_Info.CPP is
         (HI, Project, Recursive,
          Languages => (1 => Name_C, 2 => Name_C_Plus_Plus));
 
-      HI.List_Filename := new String' (Get_DB_Dir (Handler) & "gps_list");
+      HI.List_Filename := new String' (Handler.DB_Dir.all & "gps_list");
 
       --  If there is at least one source file, make sure the database
       --  directory exists.
@@ -603,12 +600,12 @@ package body Src_Info.CPP is
             --  2. Source is newer than xref file
 
             Xref_File_Name := Xref_Filename_For
-              (File, Get_DB_Dir (Handler), Handler.Xrefs);
+              (File, Handler.DB_Dir.all, Handler.Xrefs);
 
             if not Is_Xref_Valid (File, Handler.Xrefs)
               or else To_Timestamp (File_Time_Stamp (File)) >
                 To_Timestamp (File_Time_Stamp
-                   (Get_DB_Dir (Handler) & Xref_File_Name.all))
+                   (Handler.DB_Dir.all & Xref_File_Name.all))
             then
                Num_Source_Files := Num_Source_Files + 1;
 
@@ -618,14 +615,14 @@ package body Src_Info.CPP is
                --  cbrowser opens it in append mode.
 
                if Is_Regular_File
-                 (Get_DB_Dir (Handler) & Xref_File_Name.all)
+                 (Handler.DB_Dir.all & Xref_File_Name.all)
                then
                   Delete_File
-                    (Get_DB_Dir (Handler) & Xref_File_Name.all, Success);
+                    (Handler.DB_Dir.all & Xref_File_Name.all, Success);
                end if;
 
                Put_Line
-                 (Tmp_File, "@" & Get_DB_Dir (Handler) & Xref_File_Name.all);
+                 (Tmp_File, "@" & Handler.DB_Dir.all & Xref_File_Name.all);
                Put_Line (Tmp_File, File);
             end if;
          end;
@@ -638,7 +635,7 @@ package body Src_Info.CPP is
          Close_DB_Files (Handler.SN_Table);
          SN.Browse.Browse
            (File_Name     => HI.List_Filename.all,
-            DB_Directory  => Get_DB_Dir (Handler),
+            DB_Directory  => Handler.DB_Dir.all,
             DBIMP_Path    => Handler.DBIMP_Path.all,
             Cbrowser_Path => Handler.CBrowser_Path.all,
             PD            => HI.PD);
@@ -679,10 +676,10 @@ package body Src_Info.CPP is
             --  All files processed, start generating of xrefs
             Iterator.State := Process_Xrefs;
             Browse.Generate_Xrefs
-              (DB_Directories => Iterator.Handler.DB_Dirs,
-               DBIMP_Path     => Iterator.Handler.DBIMP_Path.all,
-               Temp_Name      => Iterator.Tmp_Filename,
-               PD             => Iterator.PD);
+              (DB_Directory  => Iterator.Handler.DB_Dir.all,
+               DBIMP_Path    => Iterator.Handler.DBIMP_Path.all,
+               Temp_Name     => Iterator.Tmp_Filename,
+               PD            => Iterator.PD);
 
          when Process_Xrefs =>
             --  If we haven't finished the second phase, keep waiting.
@@ -694,7 +691,7 @@ package body Src_Info.CPP is
             Iterator.State := Done;
 
             Open_DB_Files
-              (Iterator.Handler.DB_Dirs,
+              (Iterator.Handler.DB_Dir.all & Browse.DB_File_Name,
                Iterator.Handler.SN_Table);
       end case;
 
@@ -717,103 +714,48 @@ package body Src_Info.CPP is
    begin
       if Iterator.Handler.Xrefs /= Empty_Xref_Pool then
          Save (Iterator.Handler.Xrefs,
-               Get_DB_Dir (Iterator.Handler) & Browse.Xref_Pool_Filename);
+               Iterator.Handler.DB_Dir.all & Browse.Xref_Pool_Filename);
       end if;
       Destroy (LI_Handler_Iterator (Iterator));
    end Destroy;
 
-   -----------------
-   -- Get_SN_Dirs --
-   -----------------
+   ----------------
+   -- Get_SN_Dir --
+   ----------------
 
-   function Get_SN_Dirs
-     (Project : Prj.Project_Id) return GNAT.OS_Lib.String_List_Access
-   is
-      N             : Integer := 0;
-      Dirs          : GNAT.OS_Lib.String_List_Access;
-      Path          : constant String := Prj_API.Object_Path (Project, True);
-      First_Dir     : constant String := Prj_API.Object_Path (Project, False);
-      J             : Integer := Path'First;
-      K             : Integer;
-      Tmp           : GNAT.OS_Lib.String_Access;
-
+   function Get_SN_Dir (Project : Prj.Project_Id) return String is
+      Obj : constant String := Prj_API.Object_Path
+        (Project, Recursive => False);
    begin
-      if Path = "" then
-         return null;
+      if Obj /= "" then
+         return Name_As_Directory (Obj)
+           & Name_As_Directory (Browse.DB_Dir_Name);
+      else
+         return "";
       end if;
-
-      loop
-         J := Ada.Strings.Fixed.Index
-           (Path (J .. Path'Last),
-            "" & GNAT.OS_Lib.Path_Separator);
-         exit when J = 0;
-         N := N + 1;
-         J := J + 1;
-      end loop;
-
-      Dirs := new GNAT.OS_Lib.String_List (1 .. N + 1);
-
-      J := Path'First;
-      N := 1;
-      loop
-         K := J;
-         J := Ada.Strings.Fixed.Index
-           (Path (J .. Path'Last),
-            (1 => GNAT.OS_Lib.Path_Separator));
-
-         if J = 0 then
-            Dirs (N) := new String'(
-               Name_As_Directory (Path (K .. Path'Last))
-               & Name_As_Directory (Browse.DB_Dir_Name)
-            );
-            exit;
-         end if;
-
-         Dirs (N) := new String'(
-            Name_As_Directory (Path (K .. J - 1))
-            & Name_As_Directory (Browse.DB_Dir_Name)
-         );
-
-         if N /= 1 and First_Dir = Dirs (N).all then -- should be the first dir
-            Tmp      := Dirs (1);
-            Dirs (1) := Dirs (N);
-            Dirs (N) := Tmp;
-         end if;
-         N := N + 1;
-         J := J + 1;
-      end loop;
-      return Dirs;
-   end Get_SN_Dirs;
+   end Get_SN_Dir;
 
    -------------------
    -- Open_DB_Files --
    -------------------
 
    procedure Open_DB_Files
-     (DB_Dirs   : in GNAT.OS_Lib.String_List_Access;
+     (DB_Prefix : in String;
       SN_Table  : out SN_Table_Array) is
    begin
       for Table in Table_Type loop
          declare
-            Ext   : constant String := Table_Extension (Table);
-            Files : String_List_Access
-               := new String_List (1 .. DB_Dirs'Length);
+            Ext  : constant String := Table_Extension (Table);
+            File : constant String := DB_Prefix & Ext;
          begin
-            for J in DB_Dirs'Range loop
-               Files (J) := new String'(
-                  DB_Dirs (J).all & Browse.DB_File_Name & Ext
-               );
-            end loop;
-
-            if Ext /= "" then
-               Open (SN_Table (Table), Files);
+            if Ext /= "" and then Is_Regular_File (File) then
+               Open (SN_Table (Table), File);
             end if;
 
-            GNAT.OS_Lib.Free (Files);
          exception
             when DB_Open_Error =>
                --  Could not open table, ignore this error
-               Free (Files);
+               null;
          end;
       end loop;
    end Open_DB_Files;
@@ -842,7 +784,7 @@ package body Src_Info.CPP is
      (Full_Filename : String;
       Handler       : access CPP_LI_Handler_Record'Class;
       File          : in out LI_File_Ptr;
-      Project_View  : Prj.Project_Id;
+      Project_View     : Prj.Project_Id;
       List_Of_Files : in out LI_File_List)
    is
       P               : Pair_Ptr;
@@ -887,7 +829,6 @@ package body Src_Info.CPP is
       when others   => -- unexpected exception
          Free (P);
          Free (Module_Typedefs);
-         Release_Cursor (Handler.SN_Table (FIL));
          --  ??? Here we probably want to report the unexpected exception
          --  and continue to work further, but currently we reraise that
          --  exception
@@ -927,7 +868,7 @@ package body Src_Info.CPP is
    procedure Destroy (Handler : in out CPP_LI_Handler_Record) is
    begin
       Free (Handler.Xrefs);
-      Free (Handler.DB_Dirs);
+      Free (Handler.DB_Dir);
       Free (Handler.DBIMP_Path);
       Free (Handler.CBrowser_Path);
    end Destroy;
@@ -940,35 +881,32 @@ package body Src_Info.CPP is
      (Handler : access CPP_LI_Handler_Record'Class;
       Project : Prj.Project_Id)
    is
-      Dirs : GNAT.OS_Lib.String_List_Access := Get_SN_Dirs (Project);
+      Dir : constant String := Name_As_Directory (Get_SN_Dir (Project));
    begin
-      if Dirs = null then
-         Free (Handler.DB_Dirs);
+      if Dir = "" then
+         Free (Handler.DB_Dir);
          Free (Handler.Xrefs);
-         Handler.DB_Dirs := null;
+         Handler.DB_Dir := new String' ("");
          Handler.Xrefs := Empty_Xref_Pool;
          return;
       end if;
 
       --  Reset the previous contents
-      if Handler.DB_Dirs = null
-        or else Handler.DB_Dirs (1).all /= Dirs (1).all
+      if Handler.DB_Dir = null
+        or else Handler.DB_Dir.all /= Dir
       then
-         if Handler.DB_Dirs /= null then
+         if Handler.DB_Dir /= null then
             Free (Handler.Xrefs);
-            Free (Handler.DB_Dirs);
+            Free (Handler.DB_Dir);
          end if;
 
-         Handler.DB_Dirs := Dirs;
+         Handler.DB_Dir := new String' (Dir);
 
-         Load
-           (Handler.Xrefs,
-            Handler.DB_Dirs (1).all & Browse.Xref_Pool_Filename);
-      else
-         Free (Dirs);
+         Load (Handler.Xrefs, Handler.DB_Dir.all & Browse.Xref_Pool_Filename);
       end if;
       Close_DB_Files (Handler.SN_Table);
-      Open_DB_Files (Handler.DB_Dirs, Handler.SN_Table);
+      Open_DB_Files
+        (Handler.DB_Dir.all & Browse.DB_File_Name, Handler.SN_Table);
    end Reset;
 
    ---------------------------
@@ -993,7 +931,7 @@ package body Src_Info.CPP is
 
    begin
       --  Do nothing if we couldn't create the database directory
-      if Get_DB_Dir (Handler) = "" then
+      if Handler.DB_Dir.all = "" then
          return;
       end if;
 
@@ -1036,7 +974,7 @@ package body Src_Info.CPP is
       Process_File (Full_Filename, Handler, File, Project, List);
 
       Save (Handler.Xrefs,
-            Get_DB_Dir (Handler) & Browse.Xref_Pool_Filename);
+            Handler.DB_Dir.all & Browse.Xref_Pool_Filename);
    exception
       when E : others =>
          Trace (Warn_Stream, "Unexpected exception: "
@@ -1093,7 +1031,7 @@ package body Src_Info.CPP is
         (Source_Filename, Include_Path (Project, Recursive => True),
          Predefined_Path => "");
       Xref_Pool_Filename : constant String :=
-        Get_DB_Dir (Handler) & Browse.Xref_Pool_Filename;
+        Handler.DB_Dir.all & Browse.Xref_Pool_Filename;
 
    begin
       if Full_Filename = "" then
@@ -1102,7 +1040,7 @@ package body Src_Info.CPP is
 
       declare
          Xref_Filename : constant String := Xref_Filename_For
-           (Full_Filename, Get_DB_Dir (Handler), Handler.Xrefs).all;
+           (Full_Filename, Handler.DB_Dir.all, Handler.Xrefs).all;
       begin
          Save (Handler.Xrefs, Xref_Pool_Filename);
          return Xref_Filename;
@@ -1789,7 +1727,7 @@ package body Src_Info.CPP is
       --  Find declaration
       if Xref_Filename_For
          (Var.Buffer (Var.File_Name.First .. Var.File_Name.Last),
-          Get_DB_Dir (Handler),
+          Handler.DB_Dir.all,
           Handler.Xrefs).all = Get_LI_Filename (File)
       then
          Decl_Info := Find_Declaration
@@ -2021,7 +1959,7 @@ package body Src_Info.CPP is
       if Xref_Filename_For
          (Enum_Const.Buffer
             (Enum_Const.File_Name.First .. Enum_Const.File_Name.Last),
-          Get_DB_Dir (Handler),
+          Handler.DB_Dir.all,
           Handler.Xrefs).all = Get_LI_Filename (File)
       then
          Decl_Info := Find_Declaration
@@ -2546,7 +2484,7 @@ package body Src_Info.CPP is
       --  Find declaration
       if Xref_Filename_For
          (Var.Buffer (Var.File_Name.First .. Var.File_Name.Last),
-          Get_DB_Dir (Handler),
+          Handler.DB_Dir.all,
           Handler.Xrefs).all = Get_LI_Filename (File)
       then
          Decl_Info := Find_Declaration
@@ -2683,7 +2621,7 @@ package body Src_Info.CPP is
 
       if Xref_Filename_For
          (Macro.Buffer (Macro.File_Name.First .. Macro.File_Name.Last),
-          Get_DB_Dir (Handler),
+          Handler.DB_Dir.all,
           Handler.Xrefs).all = Get_LI_Filename (File)
       then
          --  look for declaration in current file
@@ -2974,7 +2912,7 @@ package body Src_Info.CPP is
 
       if Xref_Filename_For
          (Typedef.Buffer (Typedef.File_Name.First .. Typedef.File_Name.Last),
-          Get_DB_Dir (Handler),
+          Handler.DB_Dir.all,
           Handler.Xrefs).all = Get_LI_Filename (File)
       then
          --  look for declaration in current file
@@ -4619,10 +4557,7 @@ package body Src_Info.CPP is
    function Get_DB_Dir (Handler : access CPP_LI_Handler_Record)
       return String is
    begin
-      if Handler.DB_Dirs /= null then
-         return Handler.DB_Dirs (1).all;
-      end if;
-      return "";
+      return Handler.DB_Dir.all;
    end Get_DB_Dir;
 
    ---------------
@@ -4733,7 +4668,7 @@ package body Src_Info.CPP is
                         & " for member function "
                         & FU_Tab.Buffer (FU_Tab.Name.First ..
                            FU_Tab.Name.Last));
-                     exit;
+                     return;
                   end if;
 
                   Free (Desc);
@@ -4816,7 +4751,7 @@ package body Src_Info.CPP is
                Fail ("unable to create declaration for local variable " &
                  Var.Buffer (Var.Name.First .. Var.Name.Last));
                Free (Var);
-               exit;
+               return;
             end if;
 
             Process_Local_Variable

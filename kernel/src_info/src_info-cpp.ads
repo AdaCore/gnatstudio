@@ -134,7 +134,7 @@ private
    type CPP_LI_Handler_Record is new LI_Handler_Record with record
       Xrefs          : SN.Xref_Pools.Xref_Pool :=
         SN.Xref_Pools.Empty_Xref_Pool;
-      DB_Dirs        : GNAT.OS_Lib.String_List_Access;
+      DB_Dir         : GNAT.OS_Lib.String_Access;
       SN_Table       : Src_Info.Type_Utils.SN_Table_Array;
       DBIMP_Path     : GNAT.OS_Lib.String_Access := null;
       --  full path to dbimp (found in PATH) or null, if DBIMP is not in PATH

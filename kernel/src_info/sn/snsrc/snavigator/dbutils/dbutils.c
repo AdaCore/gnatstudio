@@ -70,7 +70,6 @@ MA 02111-1307, USA.
 
 #define	BUG_TRACE	0		/* Should be always 0 */
 
-unsigned int dbnum = 0;
 static	DB	*db_class_tree;
 static	DB	*db_cached_classes;
 
@@ -98,11 +97,11 @@ int  comment_database = FALSE;
 static int Paf_Pipe_Write MX_VARARGS(char *,str);
 static int Paf_Pipe_Flush ();
 
-static DB *db_syms [MAX_DB_NUM][50];           /* Keep enough space */
+static DB *db_syms[50];           /* Keep enough space */
 
 #define CREATE_ALWAYS_BTREES 1
 
-static	char	db_project_dir[MAX_DB_NUM][MAXPATHLEN];
+static	char	db_project_dir[MAXPATHLEN];
 static	u_int	db_cachesize;
 static	u_int	db_cross_cachesize;
 
@@ -326,7 +325,7 @@ read_next_int_field (char *str, char sep)
  * this is to be changed in 5.0
  */
 static	DB *
-create_table(int type,int mode,int cachesize, unsigned int dbi)
+create_table(int type,int mode,int cachesize)
 {
 	DB	*dbp;
 	char	fname[MAXPATHLEN + 1];
@@ -335,8 +334,8 @@ create_table(int type,int mode,int cachesize, unsigned int dbi)
 	HASHINFO	db_hash_info;
 	BTREEINFO       db_btree_info;
 
-	if (db_syms[dbi][type])	/* Don't open it twice ! */
-		return db_syms[dbi][type];
+	if (db_syms[type])	/* Don't open it twice ! */
+		return db_syms[type];
 
 #if CREATE_ALWAYS_BTREES
 	db_type = DB_BTREE;
@@ -361,7 +360,7 @@ create_table(int type,int mode,int cachesize, unsigned int dbi)
 
 	db_inf = (void *)&db_btree_info;
 
-	sprintf(fname,"%s.%s",db_project_dir[dbi],SN_symbol_types[type]);
+	sprintf(fname,"%s.%s",db_project_dir,SN_symbol_types[type]);
 
 	dbp = dbopen(fname, mode, get_db_permission(),db_type,db_inf);
 	
@@ -400,7 +399,7 @@ create_table(int type,int mode,int cachesize, unsigned int dbi)
 		db_inf = (void *)&db_btree_info;
 	}
 
-	sprintf(fname,"%s.%s",db_project_dir[dbi],SN_symbol_types[type]);
+	sprintf(fname,"%s.%s",db_project_dir,SN_symbol_types[type]);
 
 	dbp = dbopen (fname, mode, get_db_permission(), db_type, db_inf);
 #endif
@@ -416,7 +415,7 @@ create_table(int type,int mode,int cachesize, unsigned int dbi)
 			Paf_panic(PAF_PANIC_SIMPLE);
 		}
 	}
-	db_syms[dbi][type] = dbp;
+	db_syms[type] = dbp;
 
 	return dbp;
 }
@@ -440,7 +439,7 @@ put_file_db(char *file_name,char *group,char *highlight_file)
 {
 	Tcl_DString filenameDStr;
 
-	DB      *dbp = db_syms[0][PAF_FILE];
+	DB      *dbp = db_syms[PAF_FILE];
 	DBT     data;
 	DBT     key;
 	int		found;
@@ -458,7 +457,7 @@ put_file_db(char *file_name,char *group,char *highlight_file)
 
 	if (!dbp)
 	{
-		dbp = create_table(PAF_FILE,O_RDWR|O_CREAT,db_cachesize, 0);
+		dbp = create_table(PAF_FILE,O_RDWR|O_CREAT,db_cachesize);
 		if (!dbp)
 			return -1;
 	}
@@ -920,25 +919,22 @@ Paf_db_close_tables()
 	int		ret = 0;
 	int		saved_errno = 0;
 	int		fd;
-   unsigned int i;
 
 	for (cou = 0, max = sizeof(db_syms) / sizeof(*db_syms); cou < max; cou++)
 	{
-      for ( i = 0; i < dbnum; ++i ) {
-    		dbp = db_syms[i][cou];
+		dbp = db_syms[cou];
 
-	    	if (dbp)
-    		{
-	    		fd = dbp->fd(dbp);
-		    	if (dbp->close(dbp) == -1)
-			    {
-				    ret = -1;
-    				saved_errno = errno;
-	    			close(fd);
-		    	}
-			    db_syms[i][cou] = NULL;
-	    	}
-      }
+		if (dbp)
+		{
+			fd = dbp->fd(dbp);
+			if (dbp->close(dbp) == -1)
+			{
+				ret = -1;
+				saved_errno = errno;
+				close(fd);
+			}
+			db_syms[cou] = NULL;
+		}
 	}
 	if (db_class_tree)
 	{
@@ -952,7 +948,7 @@ Paf_db_close_tables()
 			close(fd);
 		}
 
-		sprintf(fname,"%s.ctr",db_project_dir[0]);
+		sprintf(fname,"%s.ctr",db_project_dir);
 /*		unlink(fname); */
 	}
 	if (db_cached_classes)
@@ -967,7 +963,7 @@ Paf_db_close_tables()
 			close(fd);
 		}
 
-		sprintf(fname,"%s.xhs",db_project_dir[0]);
+		sprintf(fname,"%s.xhs",db_project_dir);
 		unlink(fname);
 	}
 
@@ -990,7 +986,7 @@ Paf_db_close_tables()
 static void
 db_remove_comment_def(int softdel,char *file)
 {
-	DB      *dbp = db_syms[0][PAF_COMMENT_DEF];
+	DB      *dbp = db_syms[PAF_COMMENT_DEF];
 	DBT     data;
 	DBT     key;
 	char    filename[MAXPATHLEN];
@@ -1017,7 +1013,7 @@ db_remove_comment_def(int softdel,char *file)
 void
 db_remove_file_def(int softdel,char *file)
 {
-	DB      *dbp = db_syms[0][PAF_FILE_SYMBOLS];
+	DB      *dbp = db_syms[PAF_FILE_SYMBOLS];
 	DB      *db_del = NULL;
 	DBT     data;
 	DBT     key;
@@ -1038,12 +1034,12 @@ db_remove_file_def(int softdel,char *file)
 
 	if (!dbp)
 	{
-		dbp = create_table(PAF_FILE_SYMBOLS,O_RDWR,db_cachesize, 0);
+		dbp = create_table(PAF_FILE_SYMBOLS,O_RDWR,db_cachesize);
 		if (!dbp)
 			return;
 
-		if (!db_syms[0][PAF_COMMENT_DEF])
-			create_table(PAF_COMMENT_DEF,O_RDWR,db_cachesize, 0);
+		if (!db_syms[PAF_COMMENT_DEF])
+			create_table(PAF_COMMENT_DEF,O_RDWR,db_cachesize);
 	}
 
 
@@ -1164,9 +1160,9 @@ db_remove_file_def(int softdel,char *file)
 		sc_key.data = (void *)delkey.buf;
 		sc_key.size = delkey.len + 1;
 
-		if (!(db_del = db_syms[0][scope_val]))
+		if (!(db_del = db_syms[scope_val]))
 		{
-			db_del = create_table(scope_val,O_RDWR,db_cachesize, 0);
+			db_del = create_table(scope_val,O_RDWR,db_cachesize);
 			if (!db_del)
 			{
 				continue;
@@ -1198,8 +1194,8 @@ void
 db_remove_file_xfer_using_keys(int softdel, char *key_files)
 {
 	FILE	*fp;
-	DB		*dbp = db_syms[0][PAF_CROSS_REF];
-	DB		*dbp_by = db_syms[0][PAF_CROSS_REF_BY];
+	DB		*dbp = db_syms[PAF_CROSS_REF];
+	DB		*dbp_by = db_syms[PAF_CROSS_REF_BY];
 	DBT		key;
 	DBT		by_key;
 	DBT		data;
@@ -1228,7 +1224,7 @@ db_remove_file_xfer_using_keys(int softdel, char *key_files)
 	if (!dbp)
 	{
 		dbp = create_table(PAF_CROSS_REF,O_RDWR,
-			db_cross_cachesize,0);		/* Open the table ! */
+			db_cross_cachesize);		/* Open the table ! */
 
 		if (!dbp)
 			return;
@@ -1345,7 +1341,7 @@ void
 db_insert_entry(int type,char *key_buf,char *data_buf)
 {
 	register unsigned char *p;
-	DB      *dbp = db_syms[0][type];
+	DB      *dbp = db_syms[type];
 	DBT     data;
 	DBT     key;
 	LongString tmp;
@@ -1393,7 +1389,7 @@ db_insert_entry(int type,char *key_buf,char *data_buf)
 			csize = db_cachesize;
 		}
 
-		dbp = create_table(type,O_RDWR|O_CREAT,csize,0);		/* Open the table ! */
+		dbp = create_table(type,O_RDWR|O_CREAT,csize);		/* Open the table ! */
 		if (!dbp)
 			return;
 	}
@@ -1859,7 +1855,7 @@ inherit_members(char *class_name,char *inherited_class, char *inh_buf)
 {
 	DB	*dbp = db_class_tree;
 #if OPT_CLASS_TREE
-	DB *db_mbr;
+	DB *db_mbr = db_syms[PAF_MBR_FUNC_DCL];
 #endif /* OPT_CLASS_TREE */
 	DBT	key;
 	DBT	data;
@@ -1898,7 +1894,6 @@ inherit_members(char *class_name,char *inherited_class, char *inh_buf)
 
 	key.data = (void *)nm;
 	key.size = len;
-   /* find members of the inherited class in the class tree */
 	for (flag = R_CURSOR; dbp->seq(dbp,&key,&data,flag) == 0; flag = R_NEXT)
 	{
 		if ((int)key.size < len || memcmp(nm,key.data,len) != 0)
@@ -1943,36 +1938,29 @@ inherit_members(char *class_name,char *inherited_class, char *inh_buf)
 			mbr_name,   DB_FLDSEP_STR,
 			NULL);
 
-		/* Don't load members of base classes that exist in the superclass . */
 #if OPT_CLASS_TREE
-      for ( dbi = 0; dbi < dbnum; ++dbi ) {
-          db_mbr = db_syms [dbi][PAF_MBR_FUNC_DCL];
-          if (inh_symbol_type[0] == SN_symbol_types[PAF_MBR_FUNC_DCL][0]
-			     && db_mbr )		/* Search for method of the superclass. */
-		    {
-    			/* We load (inherit) the member only if the superclass
-	    		 * does not contain such a member.
-	    		 */
-	    		char	*keyp = key_buf.buf;
-	    		int	kln = key_buf.len;
+		/* Don't load members of base classes that exist in the superclass . */
+		if (inh_symbol_type[0] == SN_symbol_types[PAF_MBR_FUNC_DCL][0]
+			&& db_mbr)		/* Search for method of the superclass. */
+		{
+			/* We load (inherit) the member only if the superclass
+			 * does not contain such a member.
+			 */
+			char	*keyp = key_buf.buf;
+			int	kln = key_buf.len;
 
-		    	mbr_key.data = (void *)keyp;
-		    	mbr_key.size = kln;
-		    	mbr_data.data = NULL;
-		    	mbr_data.size = 0;
-		    	if (db_mbr->seq(db_mbr, &mbr_key,&mbr_data,R_CURSOR) == 0 &&
-		    		mbr_key.size >= kln && memcmp(mbr_key.data,keyp,kln) == 0)
-		    	{
-			    	/* The superclass has such a member. */
-				   skip = 1;
-               break;
-		    	}
-	    	}
-      }
-
-      if ( skip ) continue;
+			mbr_key.data = (void *)keyp;
+			mbr_key.size = kln;
+			mbr_data.data = NULL;
+			mbr_data.size = 0;
+			if (db_mbr->seq(db_mbr,&mbr_key,&mbr_data,R_CURSOR) == 0 &&
+				mbr_key.size >= kln && memcmp(mbr_key.data,keyp,kln) == 0)
+			{
+				/* The superclass has such a member. */
+				continue;
+			}
+		}
 #endif /* OPT_CLASS_TREE */
-
 		key_buf.append(&key_buf,rest,-1);
 
 		sprintf(inh_access_tmp, "0x%lx%c", inh_ac_tp, DB_FLDSEP_CHR);
@@ -2006,9 +1994,9 @@ inherit_members(char *class_name,char *inherited_class, char *inh_buf)
  * tables.
  */
 static void
-load_class_members(int type, char *class_name, int dbi)
+load_class_members(int type, char *class_name)
 {
-	DB	*dbp = db_syms[dbi][type];
+	DB	*dbp = db_syms[type];
 	DBT	key;
 	DBT	data;
 	DBT	mbr_key;
@@ -2044,7 +2032,7 @@ load_class_members(int type, char *class_name, int dbi)
 	key.size = len;
 	data.data = NULL;
 	data.size = 0;
-	for (flag = R_CURSOR; dbp->seq(dbp, &key, &data, flag) == 0; flag = R_NEXT)
+	for (flag = R_CURSOR; dbp->seq(dbp,&key,&data,flag) == 0; flag = R_NEXT)
 	{
 		if ((int)key.size < len || memcmp(nm,key.data,len) != 0)
 		{
@@ -2162,8 +2150,7 @@ load_class(char *class_name)
 	DBT	data;
 	LongString	tmp_class_name;
 	char	*nm;
-	unsigned int	len, i;
-   int found;
+	unsigned int	len;
 
 	key.data = (void *)class_name;
 	key.size = strlen(class_name);
@@ -2174,11 +2161,10 @@ load_class(char *class_name)
 		return;		/* It has already been loaded, don't do it again! */
 	}
 
-   /*
 	dbp = db_syms[PAF_CLASS_DEF];
 	if (!dbp)
 		return;
-   */
+
 	LongStringInit(&tmp_class_name,0);
 
 	tmp_class_name.copystrings(&tmp_class_name,class_name,NULL);
@@ -2187,30 +2173,16 @@ load_class(char *class_name)
 
 	key.data = (void *)nm;
 	key.size = len;
-
-   for ( i = 0, found = 0; i < dbnum; ++i ) {
-      dbp = db_syms [i][PAF_CLASS_DEF];
-      if ( dbp ) {
-         found = dbp->seq (dbp,&key,&data,R_CURSOR) == 0 &&
-		       (int)key.size >= len && memcmp(nm,key.data,len) == 0;
-      }
-
-      if ( found ) {
-          break;
-      } else {
-	       key.data = (void *)nm;
-          key.size = len;
-      }
-   }
-
-   if ( !found ) {
+	if (dbp->seq(dbp,&key,&data,R_CURSOR) != 0 ||
+		(int)key.size < len  || memcmp(nm,key.data,len) != 0)
+	{
 		tmp_class_name.free(&tmp_class_name);
 		return;		/* The class does not exist. */
 	}
 
 	store_symbol_to_cache(class_name,PAF_CLASS_DEF,NULL);
 
-	dbp = db_syms[i][PAF_CLASS_INHERIT];
+	dbp = db_syms[PAF_CLASS_INHERIT];
 	if (dbp)
 	{
 		LongString	tmp_inherited_class;
@@ -2254,9 +2226,9 @@ load_class(char *class_name)
 	}
 	tmp_class_name.free(&tmp_class_name);
 
-	load_class_members(PAF_MBR_VAR_DEF, class_name, i);
-	load_class_members(PAF_MBR_FUNC_DCL, class_name, i);
-	load_class_members(PAF_TEMPLATE_ARG_DEF, class_name, i);
+	load_class_members(PAF_MBR_VAR_DEF, class_name);
+	load_class_members(PAF_MBR_FUNC_DCL, class_name);
+	load_class_members(PAF_TEMPLATE_ARG_DEF, class_name);
 }
 
 void
@@ -2265,13 +2237,12 @@ open_tables_for_cross_ref()
 	char	fname[MAXPATHLEN];
 	BTREEINFO	db_inf;
 	HASHINFO	ha_inf;
-   unsigned int i;
 
 	memset((char *)&db_inf,0,sizeof(db_inf));
 	db_inf.cachesize = (u_int)db_cross_cachesize;
 	db_inf.compare = db_case_compare;
 
-	sprintf(fname,"%s.ctr",db_project_dir[0]);
+	sprintf(fname,"%s.ctr",db_project_dir);
 
 	db_class_tree = dbopen(fname, O_RDWR|O_CREAT|O_TRUNC, get_db_permission(), DB_BTREE,
 		&db_inf);
@@ -2287,7 +2258,7 @@ open_tables_for_cross_ref()
 	ha_inf.cachesize = (u_int)db_cross_cachesize;
 	ha_inf.nelem = 10000;
 
-	sprintf(fname,"%s.xhs",db_project_dir[0]);
+	sprintf(fname,"%s.xhs",db_project_dir);
 	db_cached_classes = dbopen(fname,O_RDWR|O_CREAT|O_TRUNC, get_db_permission(), DB_HASH,
 		&ha_inf);
 	if (!db_cached_classes)
@@ -2298,24 +2269,22 @@ open_tables_for_cross_ref()
 		Paf_panic(PAF_PANIC_SIMPLE);
 	}
 
-   for ( i = 0; i < dbnum; ++i ) {
-    	create_table(PAF_CLASS_DEF,O_RDONLY,db_cachesize, i);
-    	create_table(PAF_TYPE_DEF,O_RDONLY,db_cachesize, i);
-    	create_table(PAF_MBR_VAR_DEF,O_RDONLY,db_cachesize, i);
-    	create_table(PAF_CONS_DEF,O_RDONLY,db_cachesize, i);
-    	create_table(PAF_MACRO_DEF,O_RDONLY,db_cachesize, i);
-    	create_table(PAF_FUNC_DEF,O_RDONLY,db_cachesize, i);
-    	create_table(PAF_FUNC_DCL,O_RDONLY,db_cachesize, i);
-    	create_table(PAF_GLOB_VAR_DEF,O_RDONLY,db_cachesize, i);
-    	create_table(PAF_CLASS_INHERIT,O_RDONLY,db_cachesize, i);
-    	create_table(PAF_MBR_FUNC_DCL,O_RDONLY,db_cachesize, i);
-    	create_table(PAF_ENUM_CONST_DEF,O_RDONLY,db_cachesize, i);
-    	create_table(PAF_ENUM_DEF,O_RDONLY,db_cachesize, i);
-    	create_table(PAF_TEMPLATE_ARG_DEF,O_RDONLY,db_cachesize, i);
+	create_table(PAF_CLASS_DEF,O_RDONLY,db_cachesize);
+	create_table(PAF_TYPE_DEF,O_RDONLY,db_cachesize);
+	create_table(PAF_MBR_VAR_DEF,O_RDONLY,db_cachesize);
+	create_table(PAF_CONS_DEF,O_RDONLY,db_cachesize);
+	create_table(PAF_MACRO_DEF,O_RDONLY,db_cachesize);
+	create_table(PAF_FUNC_DEF,O_RDONLY,db_cachesize);
+	create_table(PAF_FUNC_DCL,O_RDONLY,db_cachesize);
+	create_table(PAF_GLOB_VAR_DEF,O_RDONLY,db_cachesize);
+	create_table(PAF_CLASS_INHERIT,O_RDONLY,db_cachesize);
+	create_table(PAF_MBR_FUNC_DCL,O_RDONLY,db_cachesize);
+	create_table(PAF_ENUM_CONST_DEF,O_RDONLY,db_cachesize);
+	create_table(PAF_ENUM_DEF,O_RDONLY,db_cachesize);
+	create_table(PAF_TEMPLATE_ARG_DEF,O_RDONLY,db_cachesize);
 #if PAF_UNION_DEF != PAF_CLASS_DEF
-    	create_table(PAF_UNION_DEF,O_RDONLY,db_cachesize, i);
+	create_table(PAF_UNION_DEF,O_RDONLY,db_cachesize);
 #endif /* PAF_UNION_DEF != PAF_CLASS_DEF */
-   }
 }
 
 #undef USE_LEVELS
@@ -2406,7 +2375,6 @@ search_for_symbol(char *global_class_name,char *local_class_name,
 	int arg_types_len;
 	int num;
 	char **fields;
-   unsigned int dbi;
 #if BUG_TRACE
 	static	FILE	*trace_fp;
 
@@ -2422,7 +2390,6 @@ search_for_symbol(char *global_class_name,char *local_class_name,
 	LongStringInit(&cls_name,0);
 	LongStringInit(&tmp,0);
 
-   /*
 	if (db_type == PAF_CLASS_TREE)
 	{
 		dbp = db_class_tree;
@@ -2434,7 +2401,6 @@ search_for_symbol(char *global_class_name,char *local_class_name,
 
 	if (!dbp)
 		return FALSE;
-   */
 
 	if (db_type == PAF_CLASS_TREE)
 	{
@@ -2459,19 +2425,7 @@ search_for_symbol(char *global_class_name,char *local_class_name,
 	key.size = (u_int)length;
 	data.data = NULL;
 	data.size = 0;
-   if ( db_type == PAF_CLASS_TREE ) {
-       dbp = db_class_tree;
-	    fetch = dbp->seq(dbp, &key, &data, R_CURSOR);
-   } else {
-       for ( dbi = 0; dbi < dbnum; ++dbi ) {
-           fetch = 1;
-		     dbp = db_syms [dbi][db_type];
-           if ( !dbp ) continue;
-	        fetch = dbp->seq(dbp,&key,&data,R_CURSOR);
-           if ( 0 == fetch && (int) key.size >= length
-                && memcmp (buf.buf, key.data, length) == 0 ) break;
-       }
-   }
+	fetch = dbp->seq(dbp,&key,&data,R_CURSOR);
 
 #if BUG_TRACE
 	fprintf(trace_fp,"Search for: <%s> return: %d ARGS: <%s>\n",
@@ -2491,7 +2445,7 @@ search_for_symbol(char *global_class_name,char *local_class_name,
 		if (db_type == PAF_CLASS_TREE && !exact && arg_types)
 		{
 #if !OPT_CLASS_TREE
-			DB	*db_md; /* = db_syms[PAF_MBR_FUNC_DCL]; */
+			DB	*db_md = db_syms[PAF_MBR_FUNC_DCL];
 #endif /* !OPT_CLASS_TREE */
 			char	*cl_nm_p;
 			int Round;
@@ -2513,9 +2467,9 @@ search_for_symbol(char *global_class_name,char *local_class_name,
 
 #if !OPT_CLASS_TREE
 			/* Search for the method in the current class, (not in base classes) */
-			/* if (db_md) */
+			if (db_md)
 			{
-				int function_avail = 0, fn_dbi = -1;
+				int function_avail = 0;
 
 				for (Round = 1; Round < LEVELS; Round++)
 				{
@@ -2525,66 +2479,58 @@ search_for_symbol(char *global_class_name,char *local_class_name,
 					data.size = 0;
 
 					/* search for method in the base class! */
-               for ( dbi = 0; dbi < dbnum; ++dbi ) {
-			          db_md = db_syms [dbi][PAF_MBR_FUNC_DCL];
-                   if ( !db_md ) continue;
-				       for (flag = R_CURSOR; db_md->seq(db_md, &key, &data, flag)== 0;
-                        flag = R_NEXT)
-					    {
-					    	/* Still target class and method name ? */
-					    	if ((int)key.size < length + 1
-                         || memcmp (cl_nm_p, key.data, length) != 0)
-					    		break;
-                                                                                                             
-					    	function_avail = 1;
-                     fn_dbi = (int) dbi;
+					for (flag = R_CURSOR; db_md->seq(db_md, &key, &data, flag)== 0; flag = R_NEXT)
+					{
+						/* Still target class and method name ? */
+						if ((int)key.size < length + 1 || memcmp (cl_nm_p, key.data, length) != 0)
+							break;
 
-					    	/*
-					    	 * Format:
-					    	 *
-					    	 *  <line> <access> <return type> <parameters>
-                      *                                <parameter names>
-					    	 */
-					    	my_SplitList (data.data, &num, &fields, DB_FLDSEP_CHR);
-					    	if (num >= 4)
-					    	{
-					    		MY_STRNCPY (in_access_val, fields[1], sizeof (in_access_val));
-					    		MY_STRNCPY (ret_type,      fields[2], 1024); /* FIXME. */
-					    		MY_STRNCPY (param_args,    fields[3], sizeof (param_args));
-					    	}
-					    	else
-					    	{
-					    		in_access_val[0] = 0;
-					    		ret_type     [0] = 0;
-					    		param_args   [0] = 0;
-					    	}
-					    	ckfree ((char*)fields);
-					    	
-					    	tmp.makespace (&tmp,data.size);
-					    	tmp.len = RemoveIgnoredWords (tmp.buf, param_args);
-#if BUG_TRACE                                                                                                
-					    	fprintf(trace_fp,"method type: <%s> <%s> <%s>\n",
-					    		tmp.buf,cl_nm_p,(char *)data.data);
+						function_avail = 1;
+
+						/*
+						 * Format:
+						 *
+						 *          <line> <access> <return type> <parameters> <parameter names>
+						 */
+						my_SplitList (data.data, &num, &fields, DB_FLDSEP_CHR);
+						if (num >= 4)
+						{
+							MY_STRNCPY (in_access_val, fields[1], sizeof (in_access_val));
+							MY_STRNCPY (ret_type,      fields[2], 1024); /* FIXME. */
+							MY_STRNCPY (param_args,    fields[3], sizeof (param_args));
+						}
+						else
+						{
+							in_access_val[0] = 0;
+							ret_type     [0] = 0;
+							param_args   [0] = 0;
+						}
+						ckfree ((char*)fields);
+						
+						tmp.makespace (&tmp,data.size);
+						tmp.len = RemoveIgnoredWords (tmp.buf, param_args);
+#if BUG_TRACE
+						fprintf(trace_fp,"method type: <%s> <%s> <%s>\n",
+							tmp.buf,cl_nm_p,(char *)data.data);
 #endif /* BUG_TRACE */
-					    	if (tmp.len == rounded_arg_types.len &&
-					    		memcmp(tmp.buf,rounded_arg_types.buf,tmp.len) == 0)
-					    	{
-					    		/* method found and arguments are similar. */
-					    		memcpy(arg_types, param_args, strlen (param_args)+1);
-                                                                                                             
-					    		if (scope)
-					    		{
-					    			sscanf(cl_nm_p,"%s",scope);
-					    			MY_DEBUG ((Output, "sscanf used by cl_nm_p <%s> Scope <%s>\n", cl_nm_p, scope));
-					    		}
-#if BUG_TRACE                                                                                                
-					    		fprintf(trace_fp,"1 scope: <%s> access: <%s> ret_type: <%s> arg_types: <%s>\n",
-					    			scope ? scope : NULL,in_access_val,ret_type,arg_types);
-#endif /* BUG_T    RACE */
-					    		RETURN_FROM_SEARCH(PAF_MBR_FUNC_DEF);
-					    	}
-					    }
-               } /* for */
+						if (tmp.len == rounded_arg_types.len &&
+							memcmp(tmp.buf,rounded_arg_types.buf,tmp.len) == 0)
+						{
+							/* method found and arguments are similar. */
+							memcpy(arg_types, param_args, strlen (param_args)+1);
+
+							if (scope)
+							{
+								sscanf(cl_nm_p,"%s",scope);
+								MY_DEBUG ((Output, "sscanf used by cl_nm_p <%s> Scope <%s>\n", cl_nm_p, scope));
+							}
+#if BUG_TRACE
+							fprintf(trace_fp,"1 scope: <%s> access: <%s> ret_type: <%s> arg_types: <%s>\n",
+								scope ? scope : NULL,in_access_val,ret_type,arg_types);
+#endif /* BUG_TRACE */
+							RETURN_FROM_SEARCH(PAF_MBR_FUNC_DEF);
+						}
+					}
 				}
 				/*
 				 * If method is availiable, we don't search in base classes,
@@ -2596,9 +2542,7 @@ search_for_symbol(char *global_class_name,char *local_class_name,
 					key.size = (u_int)length;
 					data.data = NULL;
 					data.size = 0;
-
-					if (fn_dbi == - 1 || !(db_md = db_syms [fn_dbi][PAF_MBR_FUNC_DCL])
-                   || db_md->seq (db_md, &key, &data, R_CURSOR) != 0)
+					if (db_md->seq (db_md, &key, &data, R_CURSOR) != 0)
 					{
 						RETURN_FROM_SEARCH(FALSE);
 					}
@@ -2645,7 +2589,7 @@ search_for_symbol(char *global_class_name,char *local_class_name,
 				key.size  = (u_int)length;
 				data.data = NULL;
 				data.size = 0;
-				for (flag = R_CURSOR; db_class_tree->seq(db_class_tree, &key, &data, flag)== 0; flag = R_NEXT)
+				for (flag = R_CURSOR; dbp->seq(dbp, &key, &data, flag)== 0; flag = R_NEXT)
 				{
 					/* Still the method being searching for ? */
 					if ((int)key.size < length + 1 || memcmp (cl_nm_p, key.data, length) != 0)
@@ -2699,7 +2643,7 @@ search_for_symbol(char *global_class_name,char *local_class_name,
 			key.size  = (u_int)length;
 			data.data = NULL;
 			data.size = 0;
-			if (db_class_tree->seq(db_class_tree, &key, &data, R_CURSOR) != 0 ||
+			if (dbp->seq(dbp, &key, &data, R_CURSOR) != 0 ||
 				(int)key.size < length || memcmp(cl_nm_p, key.data, length) != 0)
 			{
 				RETURN_FROM_SEARCH(FALSE);
@@ -2796,7 +2740,7 @@ search_for_symbol(char *global_class_name,char *local_class_name,
 		}
 		ckfree ((char*)fields);
 	} while(arg_types &&
-		(fetch = dbp->seq (dbp, &key, &data, R_NEXT)) == 0 &&
+		(fetch = dbp->seq(dbp,&key,&data,R_NEXT)) == 0 &&
 		(int)key.size >= length &&
 		(cmp = memcmp(bufval,key.data,length)) == 0);
 
@@ -2857,37 +2801,30 @@ int get_template_argument (const char* class_name, const char* fn_name,
                 const char* name, char* type_name) {
 	 DBT	key;
 	 DBT	data;
+	 DB   *dbp = db_syms [PAF_TEMPLATE_ARG_DEF];
     LongString key_str;
     LongString fields;
-    unsigned int dbi;
-    DB* dbp;
+
+    if ( !dbp ) return 0;
 
     /* first search type_name among func template arguments */
     LongStringInit (&key_str, 0);
     key_str.copystrings (&key_str, fn_name, DB_FLDSEP_STR,
                                    name, DB_FLDSEP_STR, 0);
+    key.data = (void*) key_str.buf;
+    key.size = key_str.len;
 
-    for ( dbi = 0; dbi < dbnum; ++dbi ) {
-        dbp = db_syms [dbi][PAF_TEMPLATE_ARG_DEF];
-        if ( !dbp ) continue;
+    if ( 0 == dbp->seq (dbp, &key, &data, R_CURSOR) ) {
+       key_str.free (&key_str);
 
-        key.data = (void*) key_str.buf;
-        key.size = key_str.len;
-
-        if ( 0 == dbp->seq (dbp, &key, &data, R_CURSOR)
-             && (int) key.size >= key_str.len
-             && 0 == memcmp (key.data, key_str.buf, key_str.len) ) {
-           key_str.free (&key_str);
-
-           if ( type_name ) {
-               LongStringInit(&fields, 0);
-               fields.split (&fields, data.data, data.size - 1, FALSE, DB_FLDSEP_CHR, 4);
-               memcpy (type_name, fields.field_value [2], fields.field_size [2]);
-               type_name [fields.field_size [2]] = 0;
-               fields.free (&fields);
-           }
-           return PAF_TEMPLATE_ARG_DEF;
-        }
+       if ( type_name ) {
+           LongStringInit(&fields, 0);
+           fields.split (&fields, data.data, data.size - 1, FALSE, DB_FLDSEP_CHR, 4);
+           memcpy (type_name, fields.field_value [2], fields.field_size [2]);
+           type_name [fields.field_size [2]] = 0;
+           fields.free (&fields);
+       }
+       return PAF_TEMPLATE_ARG_DEF;
     }
 
     /* then search type_name among class template arguments */
@@ -2898,26 +2835,19 @@ int get_template_argument (const char* class_name, const char* fn_name,
 
     key_str.copystrings (&key_str, class_name, DB_FLDSEP_STR,
                                    name, DB_FLDSEP_STR, 0);
-    for ( dbi = 0; dbi < dbnum; ++dbi ) {
-        dbp = db_syms [dbi][PAF_TEMPLATE_ARG_DEF];
-        if ( !dbp ) continue;
+    key.data = (void*) key_str.buf;
+    key.size = key_str.len;
 
-        key.data = (void*) key_str.buf;
-        key.size = key_str.len;
-
-        if ( 0 == dbp->seq (dbp, &key, &data, R_CURSOR)
-             && (int) key.size >= key_str.len
-             && 0 == memcmp (key.data, key_str.buf, key_str.len) ) {
-           key_str.free (&key_str);
-           if ( type_name ) {
-               LongStringInit(&fields, 0);
-               fields.split (&fields, data.data, data.size - 1, FALSE, DB_FLDSEP_CHR, 4);
-               memcpy (type_name, fields.field_value [2], fields.field_size [2]);
-               type_name [fields.field_size [2]] = 0;
-               fields.free (&fields);
-           }
-           return PAF_TEMPLATE_ARG_DEF;
-        }
+    if ( 0 == dbp->seq (dbp, &key, &data, R_CURSOR) ) {
+       key_str.free (&key_str);
+       if ( type_name ) {
+           LongStringInit(&fields, 0);
+           fields.split (&fields, data.data, data.size - 1, FALSE, DB_FLDSEP_CHR, 4);
+           memcpy (type_name, fields.field_value [2], fields.field_size [2]);
+           type_name [fields.field_size [2]] = 0;
+           fields.free (&fields);
+       }
+       return PAF_TEMPLATE_ARG_DEF;
     }
 
     key_str.free (&key_str);
@@ -3042,14 +2972,9 @@ get_symbol(char *global_class_name,char *local_class_name,char *name,
 void
 Paf_db_init_tables(char *proj_dir,char *cache,char *cross_cache)
 {
-   if ( dbnum == MAX_DB_NUM ) {
-       printf ("Too many databases open\n");
-       abort ();
-   }
-
 	if (proj_dir)
 	{
-		strcpy(db_project_dir [dbnum], proj_dir);
+		strcpy(db_project_dir,proj_dir);
 	}
 	if (cache)
 	{
@@ -3067,8 +2992,6 @@ Paf_db_init_tables(char *proj_dir,char *cache,char *cross_cache)
 	{
 		db_cross_cachesize = 0;
 	}
-
-   ++dbnum;
 }
 
 int
