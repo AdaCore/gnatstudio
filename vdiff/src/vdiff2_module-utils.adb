@@ -508,9 +508,8 @@ package body Vdiff2_Module.Utils is
       pragma Unreferenced (Button);
 
    begin
-
       if not VDiff2_Module (Vdiff_Module_ID).Is_Active then
-         VDiff2_Module (Vdiff_Module_ID).Is_Active := true;
+         VDiff2_Module (Vdiff_Module_ID).Is_Active := True;
          VDiff_Toolbar (Kernel);
       end if;
 
