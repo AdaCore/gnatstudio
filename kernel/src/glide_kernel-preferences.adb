@@ -576,7 +576,7 @@ package body Glide_Kernel.Preferences is
 
       File_Pattern := Param_Spec_String
         (Gnew_String
-           (Name  => "Extended-Messages-File-Pattern",
+           (Name  => "Messages-File-Regexp",
             Nick  => -"File pattern",
             Blurb =>
               -"Pattern used to detect file locations (e.g error messages)",
@@ -585,7 +585,7 @@ package body Glide_Kernel.Preferences is
         (Kernel.Preferences, Param_Spec (File_Pattern), -"Messages");
 
       File_Pattern_Index := Param_Spec_Int (Gnew_Int
-        (Name    => "Messages-File-Pattern-Index",
+        (Name    => "Messages-File-Regexp-Index",
          Minimum => 1,
          Maximum => 9,
          Default => 1,
@@ -595,7 +595,7 @@ package body Glide_Kernel.Preferences is
         (Kernel.Preferences, Param_Spec (File_Pattern_Index), -"Messages");
 
       Line_Pattern_Index := Param_Spec_Int (Gnew_Int
-        (Name    => "Messages-Line-Pattern-Index",
+        (Name    => "Messages-Line-Regexp-Index",
          Minimum => 1,
          Maximum => 9,
          Default => 2,
@@ -605,7 +605,7 @@ package body Glide_Kernel.Preferences is
         (Kernel.Preferences, Param_Spec (Line_Pattern_Index), -"Messages");
 
       Column_Pattern_Index := Param_Spec_Int (Gnew_Int
-        (Name    => "Messages-Col-Pattern-Index",
+        (Name    => "Messages-Column-Regexp-Index",
          Minimum => 0,
          Maximum => 9,
          Default => 4,
@@ -615,7 +615,7 @@ package body Glide_Kernel.Preferences is
         (Kernel.Preferences, Param_Spec (Column_Pattern_Index), -"Messages");
 
       Message_Pattern_Index := Param_Spec_Int (Gnew_Int
-        (Name    => "Messages-Message-Pattern-Index",
+        (Name    => "Messages-Message-Regexp-Index",
          Minimum => 0,
          Maximum => 9,
          Default => 5,
@@ -625,7 +625,7 @@ package body Glide_Kernel.Preferences is
         (Kernel.Preferences, Param_Spec (Message_Pattern_Index), -"Messages");
 
       Warning_Pattern_Index := Param_Spec_Int (Gnew_Int
-        (Name    => "Messages-Warning-Pattern-Index",
+        (Name    => "Messages-Warning-Regexp-Index",
          Minimum => 0,
          Maximum => 9,
          Default => 6,
@@ -635,7 +635,7 @@ package body Glide_Kernel.Preferences is
         (Kernel.Preferences, Param_Spec (Warning_Pattern_Index), -"Messages");
 
       Style_Pattern_Index := Param_Spec_Int (Gnew_Int
-        (Name    => "Messages-Style-Pattern-Index",
+        (Name    => "Messages-Style-Regexp-Index",
          Minimum => 0,
          Maximum => 9,
          Default => 7,
