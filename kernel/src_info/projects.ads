@@ -172,6 +172,12 @@ package Projects is
    --  normalized (".." is removed), but links are not resolved unless
    --  Normalized is true.
    --
+   --  The sources that are returned are not necessarily the ones that are used
+   --  when compiling the root project, since some of them might be overriden
+   --  by extending projects. Instead, they are the sources that would be used
+   --  when compiling from Project ("gnatmake -PProject"). The basenames of the
+   --  returned files are always unique.
+   --
    --  If Matching_Language is not No_Name, then only the source files matching
    --  the specific language are returned.
 

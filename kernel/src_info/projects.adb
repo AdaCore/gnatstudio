@@ -63,6 +63,12 @@ package body Projects is
       Null_Ptr  => No_Directory_Info);
    use Directory_Htable.String_Hash_Table;
 
+   procedure Do_Nothing (Bool : in out Boolean);
+   package Boolean_Htable is new String_Hash
+     (Data_Type => Boolean,
+      Free_Data => Do_Nothing,
+      Null_Ptr  => False);
+
    type Project_Type_Data is record
       View : Prj.Project_Id;
 
@@ -162,6 +168,12 @@ package body Projects is
 
    procedure Do_Nothing (Dep : in out Directory_Info) is
       pragma Unreferenced (Dep);
+   begin
+      null;
+   end Do_Nothing;
+
+   procedure Do_Nothing (Bool : in out Boolean) is
+      pragma Unreferenced (Bool);
    begin
       null;
    end Do_Nothing;
@@ -469,8 +481,12 @@ package body Projects is
       View    : Project_Id;
       Iter    : Imported_Project_Iterator;
       P       : Project_Type;
+      Seen    : Boolean_Htable.String_Hash_Table.HTable;
+      use Boolean_Htable.String_Hash_Table;
 
    begin
+      Reset (Seen);
+
       Iter := Start (Project, Recursive);
       Sources := new String_Array (1 .. Count);
 
@@ -488,42 +504,49 @@ package body Projects is
                Name_Buffer (1 .. Name_Len),
                Matching_Languages)
             then
-               if Full_Path then
-                  declare
-                     File : constant String := Name_Buffer (1 .. Name_Len);
-                  begin
-                     Get_Full_Path_From_File
-                       (Project.Data.Registry.all, File,
-                        Use_Source_Path => True, Use_Object_Path => False);
-
-                     --  Sometimes the file cannot be found in the project
-                     --  registry, and Get_Full_Path_From_File above sets
-                     --  an empty name in Name_Buffer.
-                     --  For example, this happens when there are broken links
-                     --  in the sources directory. In this case, we set the
-                     --  file name with the base name, so that other operations
-                     --  (such as search in project files for examples) can go
-                     --  on.
-
-                     if Name_Len <= 0 then
-                        Name_Len := File'Length;
-                        Name_Buffer (1 .. Name_Len) := File;
-                     end if;
-                  end;
-
-                  if Normalized then
+               if not Get (Seen, Name_Buffer (1 .. Name_Len))  then
+                  if Full_Path then
                      declare
-                        Full : constant String := Normalize_Pathname
-                          (Name_Buffer (1 .. Name_Len), Resolve_Links => True);
+                        File : constant String := Name_Buffer (1 .. Name_Len);
                      begin
-                        Name_Len := Full'Length;
-                        Name_Buffer (1 .. Name_Len) := Full;
-                     end;
-                  end if;
-               end if;
+                        Get_Full_Path_From_File
+                          (Project.Data.Registry.all, File,
+                           Use_Source_Path => True, Use_Object_Path => False);
 
-               Sources (Index) := new String'(Name_Buffer (1 .. Name_Len));
-               Index := Index + 1;
+                        --  Sometimes the file cannot be found in the project
+                        --  registry, and Get_Full_Path_From_File above sets an
+                        --  empty name in Name_Buffer.
+                        --  For example, this happens when there are broken
+                        --  links in the sources directory. In this case, we
+                        --  set the file name with the base name, so that other
+                        --  operations (such as search in project files for
+                        --  examples) can go on.
+
+                        if Name_Len <= 0 then
+                           Name_Len := File'Length;
+                           Name_Buffer (1 .. Name_Len) := File;
+                        end if;
+
+                        Set (Seen, File, True);
+                     end;
+
+                     if Normalized then
+                        declare
+                           Full : constant String := Normalize_Pathname
+                             (Name_Buffer (1 .. Name_Len),
+                              Resolve_Links => True);
+                        begin
+                           Name_Len := Full'Length;
+                           Name_Buffer (1 .. Name_Len) := Full;
+                        end;
+                     end if;
+                  else
+                     Set (Seen, Name_Buffer (1 .. Name_Len), True);
+                  end if;
+
+                  Sources (Index) := new String'(Name_Buffer (1 .. Name_Len));
+                  Index := Index + 1;
+               end if;
             end if;
 
             Src := String_Elements.Table (Src).Next;
@@ -531,6 +554,8 @@ package body Projects is
 
          Next (Iter);
       end loop;
+
+      Reset (Seen);
 
       --  Shrink the array if needed
       if Index <= Sources'Last then
