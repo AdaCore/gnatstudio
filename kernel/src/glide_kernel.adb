@@ -266,6 +266,10 @@ package body Glide_Kernel is
       Iter := First_Child (MDI);
       Child := Get (Iter);
 
+      if not Save_Project_Conditional (Handle, Force) then
+         return False;
+      end if;
+
       --  Browse through all MDI children.
 
       while Child /= null loop
@@ -298,22 +302,6 @@ package body Glide_Kernel is
       raise Program_Error;
       return False;
    end Save_All_Editors;
-
-   --------------------------
-   -- Save_Current_Project --
-   --------------------------
-
-   function Save_Current_Project
-     (Handle : access Kernel_Handle_Record;
-      Force  : Boolean) return Boolean
-   is
-      pragma Unreferenced (Force);
-      pragma Unreferenced (Handle);
-   begin
-      --  ??? not implemented yet.
-      raise Program_Error;
-      return False;
-   end Save_Current_Project;
 
    -------------------------------------
    -- Locate_From_Source_And_Complete --

@@ -37,6 +37,7 @@ with Gtk.Widget;
 with Gtk.Window;
 with Gtkada.MDI;
 with Language_Handlers;
+with Project_Hash;
 with Prj.Tree;
 with Prj;
 with Prj_API;
@@ -354,6 +355,7 @@ package Glide_Kernel is
    --  ask the user first.
    --  If the user has refused to save the widget, return False,
    --  otherwise return True.
+   --  Child is the widget that put directly in the MDI.
 
    type Module_Tooltip_Handler is access procedure
      (Context : access Selection_Context'Class;
@@ -397,7 +399,7 @@ package Glide_Kernel is
    function Save_All_MDI_Children
      (Handle : access Kernel_Handle_Record;
       Force  : Boolean := False) return Boolean;
-   --  Save all the MDI children.
+   --  Save all the MDI children, as well as the current project
    --  If Force is False, ask the user first.
    --  If at any time the user answers "no", the function stops asking
    --  the children and returns False.
@@ -411,13 +413,6 @@ package Glide_Kernel is
    --  If at any time the user answers "no", the function stops asking
    --  the children and returns False.
    --  Return True otherwise.
-
-   function Save_Current_Project
-     (Handle : access Kernel_Handle_Record;
-      Force  : Boolean) return Boolean;
-   --  Save the current project.
-   --  If Force is False, then ask the user first.
-   --  Return False if the action has been canceled.
 
    ---------------------
    -- Signal emission --
@@ -547,6 +542,12 @@ private
       Project_View : Prj.Project_Id := Prj.No_Project;
       --  The current project view. This is the same Project, after it has been
       --  evaluated based on the current value of the environment variables.
+
+      Projects_Data : Project_Hash.Project_Htable.Htable;
+      --  Information stored about each loaded project (and the imported
+      --  projects).
+      --  ??? This wouldn't be necessary if we could save user data in
+      --  Project_Node_Record.
 
       Main_Window : Gtk.Window.Gtk_Window;
       --  The main glide window
