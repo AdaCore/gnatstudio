@@ -16,7 +16,7 @@ include $(BASE_DIR)/Makefile.gvd_common
 BASE_DIR=$(WIDGETS_BASE_DIR)/../common
 include $(BASE_DIR)/Makefile.common
 
-WIDGETS_SRC_DIRS = $(WIDGETS_BASE_DIR)/src $(WIDGETS_BASE_DIR)/cschtml
+WIDGETS_SRC_DIRS = $(WIDGETS_BASE_DIR)/src
 SRC_DIRS += $(WIDGETS_SRC_DIRS)
 C_SRCS = \
   $(foreach name,$(WIDGETS_SRC_DIRS),$(notdir $(wildcard $(name)/*$(C_EXT))))
