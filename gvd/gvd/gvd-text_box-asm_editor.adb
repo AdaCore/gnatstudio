@@ -716,15 +716,15 @@ package body GVD.Text_Box.Asm_Editor is
    ---------------------------
 
    procedure On_Executable_Changed (Editor : access Asm_Editor_Record) is
-      Tmp : Cache_Data_Access := Editor.Cache;
+      Tmp : Cache_Data_Access;
    begin
       --  Clear the cache, since it is no longer valid.
 
       while Editor.Cache /= null loop
          Tmp := Editor.Cache.Next;
-         Free (Tmp.Low);
-         Free (Tmp.High);
-         Free (Tmp.Data);
+         Free (Editor.Cache.Low);
+         Free (Editor.Cache.High);
+         Free (Editor.Cache.Data);
          Editor.Cache := Tmp;
       end loop;
    end On_Executable_Changed;
