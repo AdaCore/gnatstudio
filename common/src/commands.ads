@@ -224,7 +224,7 @@ private
    --  return any value.
 
    procedure Command_Finished
-     (Action  : access Root_Command;
+     (Action  : access Root_Command'Class;
       Success : Boolean);
    --  This procedure should be called every time the execution of a Command
    --  ends. This starts the execution of the next Command in Action.Queue.

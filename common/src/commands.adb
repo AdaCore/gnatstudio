@@ -223,7 +223,7 @@ package body Commands is
    ----------------------
 
    procedure Command_Finished
-     (Action  : access Root_Command;
+     (Action  : access Root_Command'Class;
       Success : Boolean)
    is
       Queue : Command_Queue renames Action.Queue;
