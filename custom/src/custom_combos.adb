@@ -361,11 +361,11 @@ package body Custom_Combos is
          end if;
 
       elsif Command = "append" then
+         Name_Parameters (Data, Append_Args);
          declare
             Title : constant String := Nth_Arg (Data, 3, "");
             Label : Gtk_Label;
          begin
-            Name_Parameters (Data, Append_Args);
             EntInst := New_Instance (Get_Script (Data), EntClass);
             Combo := Create_Combo
               (Kernel, Id => Nth_Arg (Data, 2),
@@ -379,7 +379,8 @@ package body Custom_Combos is
             end if;
 
             Append_Widget (Get_Toolbar (Kernel), Combo, Tooltip_Text => Title);
-            Free (EntInst);
+            Set_Return_Value (Data, EntInst);
+--            Free (EntInst);
             Show_All (Combo);
          end;
       end if;

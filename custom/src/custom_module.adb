@@ -531,9 +531,9 @@ package body Custom_Module is
          Execute_GPS_Shell_Command
            (Kernel => Kernel,
             Command =>
-              "ToolbarEntry """ & Id & """ """
-              & Get_Attribute (Node, "on-changed")
-              & """; Toolbar; Toolbar.append %1 %2 """ & Label & """");
+              "Toolbar; Toolbar.append %1 """
+              & Id & """ """ & Label & """ """
+              & Get_Attribute (Node, "on-changed") & """");
 
          --  Parse the child nodes
 
@@ -884,7 +884,7 @@ package body Custom_Module is
    procedure Register_Module
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
    is
-      Menu_Class : constant Class_Type := New_Instance (Kernel, "Menu");
+--      Menu_Class : constant Class_Type := New_Instance (Kernel, "Menu");
    begin
       Custom_Module_ID := new Custom_Module_ID_Record;
       Register_Module
@@ -900,12 +900,12 @@ package body Custom_Module is
       Expect_Interface.Register_Commands (Kernel);
       Custom_Combos.Register_Commands (Kernel);
 
-      Register_Command
-        (Kernel, Constructor_Method,
-         Minimum_Args => 1,
-         Maximum_Args => 2,
-         Class        => Menu_Class,
-         Handler      => Menu_Handler'Access);
+--        Register_Command
+--          (Kernel, Constructor_Method,
+--           Minimum_Args => 1,
+--           Maximum_Args => 2,
+--           Class        => Menu_Class,
+--           Handler      => Menu_Handler'Access);
    end Register_Module;
 
    ----------
