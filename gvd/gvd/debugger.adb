@@ -41,7 +41,7 @@ with Language;          use Language;
 with Language.Debugger; use Language.Debugger;
 with GVD.Strings;       use GVD.Strings;
 with GVD.Types;         use GVD.Types;
-with Odd.Process;       use Odd.Process;
+with GVD.Process;       use GVD.Process;
 with Main_Debug_Window_Pkg; use Main_Debug_Window_Pkg;
 with GVD.Preferences;   use GVD.Preferences;
 

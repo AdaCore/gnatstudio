@@ -29,20 +29,20 @@ with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
 with Gtk.Widget;          use Gtk.Widget;
 
 with GVD.Asm_Editors;     use GVD.Asm_Editors;
-with Odd.Explorer;        use Odd.Explorer;
+with GVD.Explorer;        use GVD.Explorer;
 with GVD.Preferences;     use GVD.Preferences;
-with Odd.Source_Editors;  use Odd.Source_Editors;
+with GVD.Source_Editors;  use GVD.Source_Editors;
 with GVD.Types;           use GVD.Types;
 with Odd_Intl;            use Odd_Intl;
 
 with Ada.Text_IO;         use Ada.Text_IO;
 with Process_Proxies;     use Process_Proxies;
-with Odd.Process;         use Odd.Process;
+with GVD.Process;         use GVD.Process;
 with Debugger;            use Debugger;
 
 package body GVD.Code_Editors is
 
-   use Odd;
+   use GVD;
 
    ---------------------
    -- Local constants --
@@ -174,7 +174,7 @@ package body GVD.Code_Editors is
 
    function Get_Source
      (Editor : access Code_Editor_Record'Class)
-      return Odd.Source_Editors.Source_Editor is
+      return GVD.Source_Editors.Source_Editor is
    begin
       return Editor.Source;
    end Get_Source;
@@ -401,7 +401,7 @@ package body GVD.Code_Editors is
    is
       Edit : Code_Editor := Code_Editor (Editor);
    begin
-      Odd.Explorer.On_Executable_Changed (Edit.Explorer);
+      GVD.Explorer.On_Executable_Changed (Edit.Explorer);
 
       --  Always clear the cache for the assembly editor, even if it is not
       --  displayed.

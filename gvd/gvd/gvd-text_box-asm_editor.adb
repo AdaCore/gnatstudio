@@ -33,11 +33,11 @@ with Gtkada.Types;     use Gtkada.Types;
 
 with Debugger;         use Debugger;
 
-with Odd.Process;      use Odd.Process;
+with GVD.Process;      use GVD.Process;
 with GVD.Code_Editors; use GVD.Code_Editors;
 with GVD.Preferences;  use GVD.Preferences;
 with GVD.Strings;      use GVD.Strings;
-with Odd.Text_Boxes;   use Odd.Text_Boxes;
+with GVD.Text_Boxes;   use GVD.Text_Boxes;
 with GVD.Types;        use GVD.Types;
 with Odd_Intl;         use Odd_Intl;
 
@@ -119,7 +119,7 @@ package body GVD.Asm_Editors is
      (Editor  : access Asm_Editor_Record'Class;
       Process : access Gtk.Widget.Gtk_Widget_Record'Class) is
    begin
-      Odd.Text_Boxes.Initialize (Editor);
+      GVD.Text_Boxes.Initialize (Editor);
       Editor.Process := Gtk_Widget (Process);
       Show_All (Editor);
    end Initialize;

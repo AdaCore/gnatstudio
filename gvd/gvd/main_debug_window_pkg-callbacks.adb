@@ -28,30 +28,30 @@ with Odd_Preferences_Pkg; use Odd_Preferences_Pkg;
 with Gtkada.Dialogs;      use Gtkada.Dialogs;
 with Odd_Intl;            use Odd_Intl;
 with GVD;                 use GVD;
-with Odd.Process;         use Odd.Process;
+with GVD.Process;         use GVD.Process;
 with GNAT.OS_Lib;         use GNAT.OS_Lib;
 with Glib;                use Glib;
 with Debugger;            use Debugger;
 with Process_Proxies;     use Process_Proxies;
 with Breakpoints_Pkg;     use Breakpoints_Pkg;
-with Odd.Process;         use Odd.Process;
+with GVD.Process;         use GVD.Process;
 with Ada.Text_IO;         use Ada.Text_IO;
 with Gtkada.File_Selection; use Gtkada.File_Selection;
 with Display_Items;       use Display_Items;
 with Gtkada.Canvas;       use Gtkada.Canvas;
 with GVD.Canvas;          use GVD.Canvas;
-with Odd.Dialogs;         use Odd.Dialogs;
+with GVD.Dialogs;         use GVD.Dialogs;
 with Gtkada.Types;        use Gtkada.Types;
 with GVD.Types;           use GVD.Types;
 with GVD.Strings;         use GVD.Strings;
 with GVD.Preferences;
 with GVD.Code_Editors;    use GVD.Code_Editors;
-with Odd.Memory_View;     use Odd.Memory_View;
+with GVD.Memory_View;     use GVD.Memory_View;
 with Unchecked_Deallocation;
 
 package body Main_Debug_Window_Pkg.Callbacks is
 
-   use Odd;
+   use GVD;
    use Gtk.Arguments;
 
    procedure Cleanup_Debuggers (Top : Main_Debug_Window_Access);

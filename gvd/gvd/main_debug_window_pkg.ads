@@ -26,16 +26,16 @@ with Gtk.Menu; use Gtk.Menu;
 with Gtk.Widget; use Gtk.Widget;
 with Gtk.Frame; use Gtk.Frame;
 with Gtk.Notebook; use Gtk.Notebook;
-with Odd.Status_Bar; use Odd.Status_Bar;
+with GVD.Status_Bar; use GVD.Status_Bar;
 with Odd_Preferences_Pkg; use Odd_Preferences_Pkg;
 with Open_Program_Pkg; use Open_Program_Pkg;
 with Open_Session_Pkg; use Open_Session_Pkg;
-with Odd.Dialogs; use Odd.Dialogs;
+with GVD.Dialogs; use GVD.Dialogs;
 with Gtkada.Toolbar; use Gtkada.Toolbar;
 with GNAT.OS_Lib; use GNAT.OS_Lib;
 with GVD.Types;
-with Odd.Histories;
-with Odd.Memory_View;
+with GVD.Histories;
+with GVD.Memory_View;
 
 package Main_Debug_Window_Pkg is
 
@@ -53,7 +53,7 @@ package Main_Debug_Window_Pkg is
       Next     : Debugger_List_Link;
    end record;
 
-   package String_History is new Odd.Histories (History_Data);
+   package String_History is new GVD.Histories (History_Data);
    use String_History;
 
    type Main_Debug_Window_Record is new Gtk_Window_Record with record
@@ -61,7 +61,7 @@ package Main_Debug_Window_Pkg is
       -- Additional fields --
       -----------------------
 
-      Memory_View         : Odd.Memory_View.Odd_Memory_View;
+      Memory_View         : GVD.Memory_View.Odd_Memory_View;
       Odd_Preferences     : Odd_Preferences_Access;
       Open_Program        : Open_Program_Access;
       Open_Session        : Open_Session_Access;

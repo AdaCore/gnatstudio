@@ -42,11 +42,11 @@ with Memory_View_Pkg;       use Memory_View_Pkg;
 
 with GVD.Strings;     use GVD.Strings;
 with GVD.Types;       use GVD.Types;
-with Odd.Process;     use Odd.Process;
+with GVD.Process;     use GVD.Process;
 with GVD.Preferences; use GVD.Preferences;
 with Process_Proxies; use Process_Proxies;
 
-package body Odd.Memory_View is
+package body GVD.Memory_View is
 
    --------------------
    -- Local packages --
@@ -740,4 +740,4 @@ package body Odd.Memory_View is
       Set_Position (View.View, Get_Position (View.View) + 1);
    end Insert;
 
-end Odd.Memory_View;
+end GVD.Memory_View;

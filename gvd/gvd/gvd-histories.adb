@@ -20,7 +20,7 @@
 
 with Unchecked_Deallocation;
 
-package body Odd.Histories is
+package body GVD.Histories is
 
    ------------
    -- Append --
@@ -204,4 +204,4 @@ package body Odd.Histories is
       end if;
    end Free;
 
-end Odd.Histories;
+end GVD.Histories;

@@ -46,24 +46,24 @@ with Main_Debug_Window_Pkg; use Main_Debug_Window_Pkg;
 with Process_Proxies;       use Process_Proxies;
 
 with GVD.Code_Editors;      use GVD.Code_Editors;
-with Odd.Explorer;          use Odd.Explorer;
-with Odd.Menus;             use Odd.Menus;
+with GVD.Explorer;          use GVD.Explorer;
+with GVD.Menus;             use GVD.Menus;
 with GVD.Preferences;       use GVD.Preferences;
-with Odd.Process;           use Odd.Process;
+with GVD.Process;           use GVD.Process;
 with GVD.Strings;           use GVD.Strings;
-with Odd.Text_Boxes;        use Odd.Text_Boxes;
+with GVD.Text_Boxes;        use GVD.Text_Boxes;
 with GVD.Types;             use GVD.Types;
 with Odd_Intl;              use Odd_Intl;
 with Display_Items;         use Display_Items;
 with Items;                 use Items;
 with Process_Proxies;       use Process_Proxies;
 with GVD.Files;             use GVD.Files;
-with Odd.Status_Bar;        use Odd.Status_Bar;
+with GVD.Status_Bar;        use GVD.Status_Bar;
 
 with Gdk.Drawable; use Gdk.Drawable;
 with Gdk.Types; use Gdk.Types;
 
-package body Odd.Source_Editors is
+package body GVD.Source_Editors is
 
    ---------------------
    -- Local Constants --
@@ -194,7 +194,7 @@ package body Odd.Source_Editors is
    is
       Data : Editor_Tooltip_Data;
    begin
-      Odd.Text_Boxes.Initialize (Editor);
+      GVD.Text_Boxes.Initialize (Editor);
       Editor.Process := Gtk_Widget (Process);
       Editor_Cb.Connect
         (Editor, "destroy", Editor_Cb.To_Marshaller (Destroy_Cb'Access));
@@ -602,7 +602,7 @@ package body Odd.Source_Editors is
 
    procedure Highlight_Word
      (Editor   : access Source_Editor_Record;
-      Position : Odd.Explorer.Position_Type)
+      Position : GVD.Explorer.Position_Type)
    is
       Last   : Positive;
       Text   : constant Gtk_Text := Get_Child (Editor);
@@ -1422,4 +1422,4 @@ package body Odd.Source_Editors is
       end if;
    end Highlight_Current_Line;
 
-end Odd.Source_Editors;
+end GVD.Source_Editors;

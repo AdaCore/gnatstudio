@@ -35,7 +35,7 @@ with GVD.Types;
 --  side that can contain any widget. This layout is scrolled at the same
 --  time as the widget itself.
 
-package Odd.Text_Boxes is
+package GVD.Text_Boxes is
 
    type Odd_Text_Box_Record is new Gtk.Box.Gtk_Box_Record with private;
    type Odd_Text_Box is access all Odd_Text_Box_Record'Class;
@@ -210,4 +210,4 @@ private
       Highlight_Index     : Glib.Gint := 0;
       Highlight_Index_End : Glib.Gint := 0;
    end record;
-end Odd.Text_Boxes;
+end GVD.Text_Boxes;

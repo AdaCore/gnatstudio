@@ -35,7 +35,7 @@
 
 generic
    type Data_Type (<>) is private;
-package Odd.Histories is
+package GVD.Histories is
 
    type History_List is private;
 
@@ -108,4 +108,4 @@ private
       Length   : Integer := 0;
    end record;
 
-end Odd.Histories;
+end GVD.Histories;

@@ -32,7 +32,7 @@ with Gtk.Main;
 with Gtk.Status_Bar;
 with Gtk.Window;
 
-package Odd.Status_Bar is
+package GVD.Status_Bar is
 
    type Odd_Status_Bar_Record is new Gtk.Box.Gtk_Box_Record with private;
    type Odd_Status_Bar is access all Odd_Status_Bar_Record'Class;
@@ -71,4 +71,4 @@ private
       Is_Blank     : Boolean := False;
       --  True if the message currently displayed is a blank message.
    end record;
-end Odd.Status_Bar;
+end GVD.Status_Bar;

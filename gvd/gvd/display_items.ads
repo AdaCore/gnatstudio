@@ -23,7 +23,7 @@ with Gtk.Widget;
 with GVD.Canvas;
 with Gdk.Window;
 with Items;
-with Odd.Process;
+with GVD.Process;
 with Gdk.Event;
 with GVD.Types;
 with Gtkada.Canvas;
@@ -47,7 +47,7 @@ package Display_Items is
      (Item           : out Display_Item;
       Win            : Gdk.Window.Gdk_Window;
       Variable_Name  : String;
-      Debugger       : access Odd.Process.Debugger_Process_Tab_Record'CLass;
+      Debugger       : access GVD.Process.Debugger_Process_Tab_Record'CLass;
       Auto_Refresh   : Boolean := True;
       Default_Entity : Items.Generic_Type_Access := null);
    --  Create a new item to display the value of Variable_Name.
@@ -64,7 +64,7 @@ package Display_Items is
      (Item           : out Display_Item;
       Win            : Gdk.Window.Gdk_Window;
       Variable_Name  : String;
-      Debugger       : access Odd.Process.Debugger_Process_Tab_Record'Class;
+      Debugger       : access GVD.Process.Debugger_Process_Tab_Record'Class;
       Auto_Refresh   : Boolean := True;
       Link_From      : access Display_Item_Record'Class;
       Link_Name      : String := "";
@@ -146,7 +146,7 @@ package Display_Items is
 
    function Get_Debugger
      (Item : access Display_Item_Record'Class)
-     return Odd.Process.Debugger_Process_Tab;
+     return GVD.Process.Debugger_Process_Tab;
    --  Return the process tab to which item belongs
 
    function Is_A_Variable
@@ -191,7 +191,7 @@ private
       Name         : GVD.Types.String_Access := null;
       Entity       : Items.Generic_Type_Access := null;
       Auto_Refresh : Boolean := True;
-      Debugger     : Odd.Process.Debugger_Process_Tab;
+      Debugger     : GVD.Process.Debugger_Process_Tab;
 
       Is_A_Variable : Boolean := True;
       --  Set to False if the item is not related to a variable

@@ -577,7 +577,7 @@ end Initialize;
 
 procedure Breakpoint_Editor
   (Editor     : in out Breakpoints_Access;
-   Process    : access Odd.Process.Debugger_Process_Tab_Record'Class)
+   Process    : access GVD.Process.Debugger_Process_Tab_Record'Class)
 is
 begin
    if Editor = null then
@@ -600,9 +600,9 @@ end Breakpoint_Editor;
 
 procedure Set_Process
   (Editor  : access Breakpoints_Record;
-   Process : access Odd.Process.Debugger_Process_Tab_Record'Class) is
+   Process : access GVD.Process.Debugger_Process_Tab_Record'Class) is
 begin
-   Editor.Process := Odd.Process.Debugger_Process_Tab (Process);
+   Editor.Process := GVD.Process.Debugger_Process_Tab (Process);
    Update_Breakpoint_List (Editor);
 
    --  Reinitialize the contents of the file combo boxes

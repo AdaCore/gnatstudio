@@ -39,11 +39,11 @@ with Items;            use Items;
 with Items.Simples;    use Items.Simples;
 
 with GVD.Canvas;       use GVD.Canvas;
-with Odd.Menus;        use Odd.Menus;
+with GVD.Menus;        use GVD.Menus;
 with GVD.Pixmaps;      use GVD.Pixmaps;
 with GVD.Preferences;  use GVD.Preferences;
-with Odd.Process;      use Odd.Process;
-with Odd.Status_Bar;   use Odd.Status_Bar;
+with GVD.Process;      use GVD.Process;
+with GVD.Status_Bar;   use GVD.Status_Bar;
 with GVD.Types;        use GVD.Types;
 
 with Ada.Text_IO;     use Ada.Text_IO;
@@ -89,7 +89,7 @@ package body Display_Items is
 
    --  ??? Should get rid of these global variables.
    --  This could be done in a global initialization file, for all the
-   --  graphic contexts we use in Odd.
+   --  graphic contexts we use in GVD.
 
    Thaw_Bg_Gc   : Gdk.GC.Gdk_GC;
    Freeze_Bg_Gc : Gdk.GC.Gdk_GC;

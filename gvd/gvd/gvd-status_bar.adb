@@ -39,7 +39,7 @@ with GVD.Preferences; use GVD.Preferences;
 
 with Interfaces.C.Strings; use Interfaces.C.Strings;
 
-package body Odd.Status_Bar is
+package body GVD.Status_Bar is
 
    package Status_Timeout is new Gtk.Main.Timeout (Odd_Status_Bar);
 
@@ -276,4 +276,4 @@ package body Odd.Status_Bar is
       return False;
    end Button_Press;
 
-end Odd.Status_Bar;
+end GVD.Status_Bar;

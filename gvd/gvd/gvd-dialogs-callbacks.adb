@@ -25,7 +25,7 @@ with Gtk.List; use Gtk.List;
 with Gtk.List_Item; use Gtk.List_Item;
 with Gtk.Label; use Gtk.Label;
 with Gtk.Container; use Gtk.Container;
-with Odd.Process; use Odd.Process;
+with GVD.Process; use GVD.Process;
 with Debugger; use Debugger;
 with Main_Debug_Window_Pkg; use Main_Debug_Window_Pkg;
 with Gtk.Clist;       use Gtk.Clist;
@@ -33,9 +33,9 @@ with Gtk.Enums;       use Gtk.Enums;
 with Ada.Strings.Unbounded;  use Ada.Strings.Unbounded;
 with GVD.Types; use GVD.Types;
 
-package body Odd.Dialogs.Callbacks is
+package body GVD.Dialogs.Callbacks is
 
-   use Odd;
+   use GVD;
    use Gtk.Arguments;
 
    ------------------------------
@@ -230,4 +230,4 @@ package body Odd.Dialogs.Callbacks is
       null;
    end On_History_Help_Clicked;
 
-end Odd.Dialogs.Callbacks;
+end GVD.Dialogs.Callbacks;

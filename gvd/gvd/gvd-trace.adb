@@ -20,7 +20,7 @@
 
 with GNAT.OS_Lib; use GNAT.OS_Lib;
 with Main_Debug_Window_Pkg; use Main_Debug_Window_Pkg;
-with Odd.Process; use Odd.Process;
+with GVD.Process; use GVD.Process;
 with GVD.Types; use GVD.Types;
 with Process_Proxies; use Process_Proxies;
 with Debugger; use Debugger;

@@ -43,8 +43,8 @@ with Gtk.Widget;
 with Gtkada.Types;
 with Language;
 with GVD.Asm_Editors;
-with Odd.Explorer;
-with Odd.Source_Editors;
+with GVD.Explorer;
+with GVD.Source_Editors;
 with GVD.Types;
 
 package GVD.Code_Editors is
@@ -123,7 +123,7 @@ package GVD.Code_Editors is
 
    function Get_Source
      (Editor : access Code_Editor_Record'Class)
-      return Odd.Source_Editors.Source_Editor;
+      return GVD.Source_Editors.Source_Editor;
    --  Return the widget used to display the source code
 
    function Get_Asm
@@ -161,7 +161,7 @@ private
    type View_Mode is (Source_Only, Asm_Only, Source_Asm);
 
    type Code_Editor_Record is new Gtk.Paned.Gtk_Paned_Record with record
-      Source  : Odd.Source_Editors.Source_Editor;
+      Source  : GVD.Source_Editors.Source_Editor;
       Asm     : GVD.Asm_Editors.Asm_Editor;
       Pane    : Gtk.Paned.Gtk_Paned;
 
@@ -173,7 +173,7 @@ private
       Process : Gtk.Widget.Gtk_Widget;
       --  The process tab in which the editor is found.
 
-      Explorer        : Odd.Explorer.Explorer_Access;
+      Explorer        : GVD.Explorer.Explorer_Access;
       Explorer_Scroll : Gtk.Scrolled_Window.Gtk_Scrolled_Window;
    end record;
 

@@ -31,7 +31,7 @@ with Gdk.Visual;      use Gdk.Visual;
 with Gdk.Window_Attr; use Gdk.Window_Attr;
 with Unchecked_Deallocation;
 
-package body Odd.Tooltips is
+package body GVD.Tooltips is
 
    --------------------
    -- Local packages --
@@ -301,4 +301,4 @@ package body Odd.Tooltips is
       return Tooltip.Data.all;
    end Get_Data;
 
-end Odd.Tooltips;
+end GVD.Tooltips;

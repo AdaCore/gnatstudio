@@ -32,16 +32,16 @@ with Gtk.Widget;          use Gtk.Widget;
 with Odd_Intl;            use Odd_Intl;
 with Display_Items;       use Display_Items;
 with Items;               use Items;
-with Odd.Process;         use Odd.Process;
+with GVD.Process;         use GVD.Process;
 with Debugger;            use Debugger;
-with Odd.Dialogs;         use Odd.Dialogs;
+with GVD.Dialogs;         use GVD.Dialogs;
 with Main_Debug_Window_Pkg.Callbacks; use Main_Debug_Window_Pkg.Callbacks;
 
 with Ada.Text_IO;         use Ada.Text_IO;
 with Process_Proxies;     use Process_Proxies;
 with Debugger;            use Debugger;
 
-package body Odd.Menus is
+package body GVD.Menus is
 
    ---------------------
    -- local constants --
@@ -501,7 +501,7 @@ package body Odd.Menus is
    ------------------------------
 
    function Debugger_Contextual_Menu
-     (Process  : access Odd.Process.Debugger_Process_Tab_Record'Class)
+     (Process  : access GVD.Process.Debugger_Process_Tab_Record'Class)
      return Gtk.Menu.Gtk_Menu
    is
       Menu  : Gtk_Menu;
@@ -526,5 +526,5 @@ package body Odd.Menus is
          return Menu;
    end Debugger_Contextual_Menu;
 
-end Odd.Menus;
+end GVD.Menus;
 

@@ -59,14 +59,14 @@ with Main_Debug_Window_Pkg;     use Main_Debug_Window_Pkg;
 with Breakpoints_Pkg;           use Breakpoints_Pkg;
 with Breakpoints_Pkg.Callbacks; use Breakpoints_Pkg.Callbacks;
 with GVD.Canvas;                use GVD.Canvas;
-with Odd.Dialogs;               use Odd.Dialogs;
+with GVD.Dialogs;               use GVD.Dialogs;
 with GVD.Pixmaps;               use GVD.Pixmaps;
 with GVD.Strings;               use GVD.Strings;
 with GVD.Types;                 use GVD.Types;
 with GVD.Code_Editors;          use GVD.Code_Editors;
-with Odd.Menus;                 use Odd.Menus;
+with GVD.Menus;                 use GVD.Menus;
 with GVD.Preferences;           use GVD.Preferences;
-with Odd.Status_Bar;            use Odd.Status_Bar;
+with GVD.Status_Bar;            use GVD.Status_Bar;
 with GVD.Utils;                 use GVD.Utils;
 
 with System;
@@ -74,7 +74,7 @@ with Unchecked_Conversion;
 
 pragma Warnings (Off, Debugger.Jdb);
 
-package body Odd.Process is
+package body GVD.Process is
 
    Enable_Block_Search    : constant Boolean := False;
    --  Whether we should try to find the block of a variable when printing
@@ -1267,4 +1267,4 @@ package body Odd.Process is
       return Gint (Tab.Debugger_Num);
    end Get_Num;
 
-end Odd.Process;
+end GVD.Process;

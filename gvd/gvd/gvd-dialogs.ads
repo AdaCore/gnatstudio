@@ -31,7 +31,7 @@ with Debugger; use Debugger;
 with GVD.Types;
 with Gtk.Widget;
 
-package Odd.Dialogs is
+package GVD.Dialogs is
 
    type Odd_Dialog_Record is new Gtk_Dialog_Record with private;
    type Odd_Dialog is access all Odd_Dialog_Record'Class;
@@ -198,4 +198,4 @@ private
       --  Used to lock the History_Dialog while replaying commands.
    end record;
 
-end Odd.Dialogs;
+end GVD.Dialogs;

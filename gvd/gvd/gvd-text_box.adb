@@ -43,7 +43,7 @@ with Ada.Characters.Handling; use Ada.Characters.Handling;
 
 with Ada.Text_IO; use Ada.Text_IO;
 
-package body Odd.Text_Boxes is
+package body GVD.Text_Boxes is
 
    Layout_Width : constant := 20;
    --  Width for the area reserved for the buttons.
@@ -792,4 +792,4 @@ package body Odd.Text_Boxes is
       end if;
    end Highlight_Range;
 
-end Odd.Text_Boxes;
+end GVD.Text_Boxes;

@@ -33,7 +33,7 @@ with Gdk.Bitmap;
 --     - File extension
 --     - System and user files
 
-package Odd.Explorer is
+package GVD.Explorer is
 
    type Explorer_Record is new Gtk.Ctree.Gtk_Ctree_Record with private;
    type Explorer_Access is access all Explorer_Record'Class;
@@ -121,4 +121,4 @@ private
       Folder_Open_Pixmap : Gdk.Pixmap.Gdk_Pixmap;
       Folder_Open_Mask   : Gdk.Bitmap.Gdk_Bitmap;
    end record;
-end Odd.Explorer;
+end GVD.Explorer;

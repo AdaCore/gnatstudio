@@ -44,7 +44,7 @@ with Gdk.Window;
 --  user could insert a pointer to that widget within his data type.
 --
 --  (For an example showing the use of that package, please see
---  Odd.Source_Editors)
+--  GVD.Source_Editors)
 
 generic
    type User_Type (<>) is private;
@@ -66,7 +66,7 @@ generic
    --  user stays within this area. The X, Y coordinates of the rectangle
    --  should be relative to Widget.
 
-package Odd.Tooltips is
+package GVD.Tooltips is
 
    Default_Timeout : constant Glib.Guint32 := 600;
    --  The delay before a tooltip is displayed, in milliseconds)
@@ -152,4 +152,4 @@ private
       Event   : Gdk.Event.Gdk_Event;
       Tooltip :  Tooltips);
 
-end Odd.Tooltips;
+end GVD.Tooltips;

@@ -31,9 +31,9 @@ with Odd_Intl; use Odd_Intl;
 with Main_Debug_Window_Pkg.Callbacks; use Main_Debug_Window_Pkg.Callbacks;
 with GVD.Pixmaps; use GVD.Pixmaps;
 with GVD.Types;   use GVD.Types;
-with Odd.Dialogs; use Odd.Dialogs;
-with Odd.Process; use Odd.Process;
-with Odd.Memory_View; use Odd.Memory_View;
+with GVD.Dialogs; use GVD.Dialogs;
+with GVD.Process; use GVD.Process;
+with GVD.Memory_View; use GVD.Memory_View;
 
 package body Main_Debug_Window_Pkg is
 

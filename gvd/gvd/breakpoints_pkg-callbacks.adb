@@ -24,7 +24,7 @@ with GVD.Types;               use GVD.Types;
 with Gtkada.Types;            use Gtkada.Types;
 with Gtk.Arguments;           use Gtk.Arguments;
 with Ada.Text_IO;             use Ada.Text_IO;
-with Odd.Process;             use Odd.Process;
+with GVD.Process;             use GVD.Process;
 with Debugger;                use Debugger;
 with Odd_Intl;                use Odd_Intl;
 with Gtk.Enums;               use Gtk.Enums;

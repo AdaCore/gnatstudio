@@ -38,7 +38,7 @@ with Gtk.GEntry; use Gtk.GEntry;
 with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
 with Gtk.Clist; use Gtk.Clist;
 with Gtk.Hbutton_Box; use Gtk.Hbutton_Box;
-with Odd.Process;
+with GVD.Process;
 package Breakpoints_Pkg is
 
    type Breakpoints_Record is new Gtk_Window_Record with record
@@ -116,7 +116,7 @@ package Breakpoints_Pkg is
       Hbuttonbox4 : Gtk_Hbutton_Box;
       Ok_Button : Gtk_Button;
 
-      Process        : Odd.Process.Debugger_Process_Tab;
+      Process        : GVD.Process.Debugger_Process_Tab;
       Enabled_Pixmap : Gdk.Pixmap.Gdk_Pixmap;
       Enabled_Mask   : Gdk.Bitmap.Gdk_Bitmap;
    end record;
@@ -124,7 +124,7 @@ package Breakpoints_Pkg is
 
    procedure Breakpoint_Editor
      (Editor     : in out Breakpoints_Access;
-      Process    : access Odd.Process.Debugger_Process_Tab_Record'Class);
+      Process    : access GVD.Process.Debugger_Process_Tab_Record'Class);
    --  Open a breakpoint editor and launch a main loop until the ok or cancel
    --  button has been pressed.
    --  Editor if null is set to the created window, that is hidden on return.
@@ -136,7 +136,7 @@ package Breakpoints_Pkg is
 
    procedure Set_Process
      (Editor  : access Breakpoints_Record;
-      Process : access Odd.Process.Debugger_Process_Tab_Record'Class);
+      Process : access GVD.Process.Debugger_Process_Tab_Record'Class);
    --  Change the process on which the dialogs applies.
    --  The list of breakpoints is automatically updated for the new process.
 

@@ -24,7 +24,7 @@ with Gtk.Widget;            use Gtk.Widget;
 with Memory_View_Pkg;       use Memory_View_Pkg;
 with GVD.Types;             use GVD.Types;
 
-package Odd.Memory_View is
+package GVD.Memory_View is
 
    type Display_Type is (Hex, Decimal, Octal, Text);
 
@@ -131,4 +131,4 @@ package Odd.Memory_View is
       Char : String);
    --  Inserts string at the current location.
 
-end Odd.Memory_View;
+end GVD.Memory_View;

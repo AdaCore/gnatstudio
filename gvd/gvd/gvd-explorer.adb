@@ -43,18 +43,18 @@ with Language;              use Language;
 with Debugger;              use Debugger;
 
 with GVD.Code_Editors;      use GVD.Code_Editors;
-with Odd.Menus;             use Odd.Menus;
+with GVD.Menus;             use GVD.Menus;
 with GVD.Pixmaps;           use GVD.Pixmaps;
 with GVD.Preferences;       use GVD.Preferences;
-with Odd.Process;           use Odd.Process;
-with Odd.Source_Editors;    use Odd.Source_Editors;
+with GVD.Process;           use GVD.Process;
+with GVD.Source_Editors;    use GVD.Source_Editors;
 with GVD.Strings;           use GVD.Strings;
 with GVD.Types;             use GVD.Types;
 with Odd_Intl;              use Odd_Intl;
 
 with Ada.Text_IO; use Ada.Text_IO;
 
-package body Odd.Explorer is
+package body GVD.Explorer is
 
    type Node_Data (Length : Integer) is record
       Extension    : String (1 .. Length);
@@ -877,7 +877,7 @@ package body Odd.Explorer is
       end if;
 
       Clear (Explorer);
-      Odd.Explorer.On_Executable_Changed (Explorer);
+      GVD.Explorer.On_Executable_Changed (Explorer);
 
       if Current /= null then
          Set_Current_File (Explorer, Current.all);
@@ -1060,4 +1060,4 @@ package body Odd.Explorer is
       end if;
    end Show_Current_File;
 
-end Odd.Explorer;
+end GVD.Explorer;

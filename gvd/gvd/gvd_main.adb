@@ -26,7 +26,7 @@ with Gtk.Enums; use Gtk.Enums;
 with Main_Debug_Window_Pkg; use Main_Debug_Window_Pkg;
 with Gtkada.Intl; use Gtkada.Intl;
 with Gtkada.Dialogs; use Gtkada.Dialogs;
-with Odd.Process; use Odd.Process;
+with GVD.Process; use GVD.Process;
 with GVD.Types;
 with GNAT.OS_Lib; use GNAT.OS_Lib;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
@@ -61,7 +61,7 @@ procedure GVD_Main is
    Debuggee_Name     : String_Access;
 
    procedure Init;
-   --  Set up environment for Odd.
+   --  Set up environment for GVD.
 
    procedure Bug_Dialog (E : Exception_Occurrence);
    --  Display a bug box on the screen with as much information as possible.

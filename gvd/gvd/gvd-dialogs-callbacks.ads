@@ -21,7 +21,7 @@
 with Gtk.Widget; use Gtk.Widget;
 with Gtk.Arguments;
 
-package Odd.Dialogs.Callbacks is
+package GVD.Dialogs.Callbacks is
    procedure On_Stack_Process_Stopped
      (Object : access Gtk_Widget_Record'Class;
       Params : Gtk.Arguments.Gtk_Args);
@@ -53,4 +53,4 @@ package Odd.Dialogs.Callbacks is
    procedure On_History_Help_Clicked
      (Object : access Gtk_Button_Record'Class);
 
-end Odd.Dialogs.Callbacks;
+end GVD.Dialogs.Callbacks;

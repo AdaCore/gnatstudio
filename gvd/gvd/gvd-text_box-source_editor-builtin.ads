@@ -30,15 +30,15 @@ with Gtkada.Types;
 with Language;
 with GVD.Preferences;
 with GVD.Types;
-with Odd.Explorer;
-with Odd.Text_Boxes;
-with Odd.Tooltips;
+with GVD.Explorer;
+with GVD.Text_Boxes;
+with GVD.Tooltips;
 with Items;
 with Gtk.Text;
 
-package Odd.Source_Editors is
+package GVD.Source_Editors is
 
-   type Source_Editor_Record is new Odd.Text_Boxes.Odd_Text_Box_Record with
+   type Source_Editor_Record is new GVD.Text_Boxes.Odd_Text_Box_Record with
      private;
    type Source_Editor is access all Source_Editor_Record'Class;
 
@@ -62,23 +62,23 @@ package Odd.Source_Editors is
       Comments_Color    : String;
       Strings_Color     : String;
       Keywords_Color    : String);
-   --  See Odd.Code_Editors for more information
+   --  See GVD.Code_Editors for more information
 
    function On_Pixmap_Clicked
      (Editor : access Source_Editor_Record;
       Button : Natural;
       Line   : Natural) return Boolean;
-   --  See Odd.Boxes for documentation
+   --  See GVD.Boxes for documentation
 
    function Invisible_Column_Width
      (Editor : access Source_Editor_Record) return Glib.Gint;
-   --  See Odd.Boxes for documentation
+   --  See GVD.Boxes for documentation
 
    function Child_Contextual_Menu
      (Source : access Source_Editor_Record;
       Line   : Natural;
       Entity : String) return Gtk.Menu.Gtk_Menu;
-   --  See Odd.Boxes for documentation
+   --  See GVD.Boxes for documentation
 
    procedure Insert_Buffer
      (Editor : access Source_Editor_Record;
@@ -97,7 +97,7 @@ package Odd.Source_Editors is
 
    procedure Highlight_Word
      (Editor   : access Source_Editor_Record;
-      Position : Odd.Explorer.Position_Type);
+      Position : GVD.Explorer.Position_Type);
    --  Highlight the word that starts at the given position in the file
    --  associated with the editor (ie ignoring the line numbers that could
    --  be displayed).
@@ -129,7 +129,7 @@ package Odd.Source_Editors is
 
    function Get_Current_File
      (Editor : access Source_Editor_Record) return String;
-   --  See Odd.Code_Editors for more information
+   --  See GVD.Code_Editors for more information
 
    procedure Load_File
      (Editor      : access Source_Editor_Record;
@@ -167,13 +167,13 @@ private
       Height : out Glib.Gint;
       Area   : out Gdk.Rectangle.Gdk_Rectangle);
 
-   package Editor_Tooltips is new Odd.Tooltips
+   package Editor_Tooltips is new GVD.Tooltips
      (Editor_Tooltip_Data, Gtk.Text.Gtk_Text_Record, Draw_Tooltip);
 
    type Color_Array is array (Language.Language_Entity'Range) of
      Gdk.Color.Gdk_Color;
 
-   type Source_Editor_Record is new Odd.Text_Boxes.Odd_Text_Box_Record with
+   type Source_Editor_Record is new GVD.Text_Boxes.Odd_Text_Box_Record with
    record
       Process : Gtk.Widget.Gtk_Widget;
 
@@ -213,4 +213,4 @@ private
       Highlight_Color     : Gdk.Color.Gdk_Color;
    end record;
 
-end Odd.Source_Editors;
+end GVD.Source_Editors;

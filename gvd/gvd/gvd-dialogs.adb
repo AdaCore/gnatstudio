@@ -23,13 +23,13 @@ with Gtk;                   use Gtk;
 with Gtk.Enums;             use Gtk.Enums;
 with Gtkada.Types;          use Gtkada.Types;
 with GVD;                   use GVD;
-with Odd.Dialogs.Callbacks; use Odd.Dialogs.Callbacks;
+with GVD.Dialogs.Callbacks; use GVD.Dialogs.Callbacks;
 with Callbacks_Odd;         use Callbacks_Odd;
 with Gtkada.Handlers;       use Gtkada.Handlers;
 with Interfaces.C;          use Interfaces.C;
 with Interfaces.C.Strings;
 with GVD.Types;             use GVD.Types;
-with Odd.Process;           use Odd.Process;
+with GVD.Process;           use GVD.Process;
 with Odd_Intl;              use Odd_Intl;
 with Gtk.GEntry;            use Gtk.GEntry;
 with Gtk.Widget;            use Gtk.Widget;
@@ -46,7 +46,7 @@ with Language;              use Language;
 with Main_Debug_Window_Pkg; use Main_Debug_Window_Pkg;
 with GVD.Utils;             use GVD.Utils;
 
-package body Odd.Dialogs is
+package body GVD.Dialogs is
 
    type Odd_Dialog_Access is access all Odd_Dialog;
 
@@ -114,7 +114,7 @@ package body Odd.Dialogs is
       Main_Window    : Gtk_Window) is
    begin
       History_Dialog := new History_Dialog_Record;
-      Odd.Dialogs.Initialize (History_Dialog);
+      GVD.Dialogs.Initialize (History_Dialog);
       History_Dialog.Window := Main_Window;
    end Gtk_New;
 
@@ -777,8 +777,7 @@ package body Odd.Dialogs is
    -- Freeze --
    ------------
 
-   procedure Freeze (Dialog : History_Dialog_Access)
-   is
+   procedure Freeze (Dialog : History_Dialog_Access) is
    begin
       Dialog.Freeze_Count := Dialog.Freeze_Count + 1;
    end Freeze;
@@ -787,10 +786,9 @@ package body Odd.Dialogs is
    -- Thaw --
    ----------
 
-   procedure Thaw (Dialog : History_Dialog_Access)
-   is
+   procedure Thaw (Dialog : History_Dialog_Access) is
    begin
       Dialog.Freeze_Count := Dialog.Freeze_Count - 1;
    end Thaw;
 
-end Odd.Dialogs;
+end GVD.Dialogs;

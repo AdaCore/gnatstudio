@@ -30,7 +30,7 @@ with Gtk.Notebook; use Gtk.Notebook;
 with Gdk.Types.Keysyms;  use Gdk.Types.Keysyms;
 with Gdk.Event;   use Gdk.Event;
 
-with Odd.Process; use Odd.Process;
+with GVD.Process; use GVD.Process;
 with Main_Debug_Window_Pkg; use Main_Debug_Window_Pkg;
 with Debugger; use Debugger;
 with Process_Proxies; use Process_Proxies;
@@ -94,7 +94,7 @@ package body Process_Tab_Pkg.Callbacks is
       type Guint_Ptr is access all Guint;
       function To_Guint_Ptr is new Unchecked_Conversion (Address, Guint_Ptr);
 
-      use Odd.Process;
+      use GVD.Process;
 
    begin
       if To_Guint_Ptr (Position).all < Top.Edit_Pos then

@@ -30,7 +30,7 @@ with Language.Debugger; use Language.Debugger;
 with Debugger.Jdb.Java; use Debugger.Jdb.Java;
 with Process_Proxies;   use Process_Proxies;
 with Gtk.Window;        use Gtk.Window;
-with Odd.Process;       use Odd.Process;
+with GVD.Process;       use GVD.Process;
 with GVD.Trace;         use GVD.Trace;
 with GVD.Types;         use GVD.Types;
 with Main_Debug_Window_Pkg; use Main_Debug_Window_Pkg;

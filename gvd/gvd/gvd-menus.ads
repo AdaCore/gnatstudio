@@ -31,9 +31,9 @@ with Gtk.Object;
 
 with Display_Items;
 with Items;
-with Odd.Process;
+with GVD.Process;
 
-package Odd.Menus is
+package GVD.Menus is
 
    package Menu_User_Data is new Gtk.Object.User_Data (Gtk.Menu.Gtk_Menu);
 
@@ -54,11 +54,11 @@ package Odd.Menus is
    --  on the title bar.
 
    function Debugger_Contextual_Menu
-     (Process  : access Odd.Process.Debugger_Process_Tab_Record'Class)
+     (Process  : access GVD.Process.Debugger_Process_Tab_Record'Class)
       return Gtk.Menu.Gtk_Menu;
    --  Create (if necessary) and reset the contextual menu used in the
    --  debugger command window.
    --  ??? Should we pass a Task_Dialog_Record as well, for the current
    --  thread/task ?
 
-end Odd.Menus;
+end GVD.Menus;

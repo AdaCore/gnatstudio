@@ -43,7 +43,7 @@ with GVD.Code_Editors;
 with GVD.Types;
 with GVD.Types;
 
-package Odd.Process is
+package GVD.Process is
 
    package Canvas_Handler is new Gtk.Handlers.Callback
      (GVD.Canvas.GVD_Canvas_Record);
@@ -315,4 +315,4 @@ package Odd.Process is
    --  False is returned when there is no such breakpoint in the list (or the
    --  list of breakpoints has never been parsed before).
 
-end Odd.Process;
+end GVD.Process;
