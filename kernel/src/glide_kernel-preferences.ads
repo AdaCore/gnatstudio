@@ -92,6 +92,10 @@ package Glide_Kernel.Preferences is
      Register_Property ("General:Animated_Image", "gps-animation.gif");
    --  Animated image used to inform the user about a command in process.
 
+   Splash_Screen : constant Glib.Properties.Property_String :=
+     Register_Property ("General:Splash_Screen", "gps-splash.jpg");
+   --  Splash screen displayed (if found) when starting GPS.
+
    Tmp_Dir : constant Glib.Properties.Property_String :=
      Register_Property ("General:Tmp_Dir", "/tmp");
    --  Directory used to create temporary files
