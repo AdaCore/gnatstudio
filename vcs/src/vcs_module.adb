@@ -466,7 +466,7 @@ package body VCS_Module is
       Register_Menu (Kernel, VCS, -"_Annotate", "", View_Annotate'Access);
       Register_Menu (Kernel, VCS, -"Remove a_nnotations", "",
                      Remove_Annotations'Access);
-      Register_Menu (Kernel, VCS, -"Edit change_log", "", Edit_Log'Access);
+      Register_Menu (Kernel, VCS, -"Edit revision _log", "", Edit_Log'Access);
       Register_Menu (Kernel, VCS, -"_Commit", "", Commit'Access);
       Register_Menu (Kernel, VCS, -"_Revert", "", Revert'Access,
                      Sensitive => False);
