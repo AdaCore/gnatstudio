@@ -8010,14 +8010,41 @@ with a quote.
 @end ifset
 
 @item Auto-correcting errors
-@cindex codefix_parse
+@cindex Codefix.parse
 GPS has support for automatically correcting errors for some of the languages.
-You can get access to this auto-fixing feature through the @code{codefix_parse}
+You can get access to this auto-fixing feature through the @code{Codefix.parse}
 shell command, which takes the same arguments as for @code{locations_parse}.
 
 This will automatically add pixmaps to the relevant entries in the location
 window, and therefore @code{locations_parse} should be called first prior to
 calling this command.
+
+Errors can also be fixed automatically by calling the methods of the
+@code{Codefix} class. Several codefix sessions can be active at the same time,
+each of which is associated with a specific category. The list of currently
+active sessions can be retrieved through the @code{Codefix.sessions()} command.
+
+@ifset python
+@cindex Codefix.errors
+@cindex CodefixError.fix
+@cindex CodefixError.possible_fixes
+If you need to manipulate the fixable errors for a given session, you must
+first get a handle on that section, as shown in the example below. You can then
+get the list of fixable errors through the @code{errors} command.
+
+Each of this error is of the class @code{CodefixError}, which has one important
+method @code{fix} which allows you to force an automatic fixing for that error.
+The list of possible fixes is retrieved through @code{possible_fixes}.
+
+@smallexample
+print GPS.Codefix.sessions ()
+session = GPS.Codefix ("category")
+errors  = session.errors ()
+print errors [0].possible_fixes ()
+errors [0].fix ()
+@end smallexample
+
+@end ifset
 
 @end enumerate
 
