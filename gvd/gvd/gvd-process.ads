@@ -250,12 +250,18 @@ package Odd.Process is
       Mode           : Odd.Types.Visible_Command := Odd.Types.Visible);
    --  Process a command entered by the user.
    --  In most cases, the command is simply transfered asynchronously to the
-   --  debugger process. However, commands internal to odd are filtered and
+   --  debugger process. However, commands internal to GVD are filtered and
    --  are not transmitted to the debugger.
    --  If Output_Command is True, then the command is first output to the
    --  command window. An ASCII.LF is appended at the end before printing.
    --  Mode is the type of the command which will be transmitted to the
    --  debugger.
+
+   procedure Wait_User_Command
+     (Debugger : Debugger_Process_Tab);
+   --  Wait until the current user command ends.
+   --  This is useful in particular when handling batches of command,
+   --  e.g when replaying sessions or a set of user commands.
 
    procedure Text_Output_Handler
      (Process      : Debugger_Process_Tab;

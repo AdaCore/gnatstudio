@@ -27,6 +27,7 @@ with Gdk.Types;    use Gdk.Types;
 with Gdk.Event;    use Gdk.Event;
 
 with Gtk;          use Gtk;
+with Gtk.Main;     use Gtk.Main;
 with Gtk.Handlers; use Gtk.Handlers;
 with Gtk.Text;     use Gtk.Text;
 with Gtk.Menu;     use Gtk.Menu;
@@ -1056,6 +1057,33 @@ package body Odd.Process is
             Mode => Mode);
       end if;
    end Process_User_Command;
+
+   -----------------------
+   -- Wait_User_Command --
+   -----------------------
+
+   procedure Wait_User_Command
+     (Debugger : Debugger_Process_Tab)
+   is
+      Tmp        : Boolean;
+      Num_Events : Positive;
+      Max_Events : constant := 30;
+      --  Limit the number of events to process in one iteration
+
+   begin
+      --  Wait until the command has been processed
+
+      while Command_In_Process (Get_Process (Debugger.Debugger)) loop
+         Num_Events := 1;
+
+         while Gtk.Main.Events_Pending
+           and then Num_Events <= Max_Events
+         loop
+            Tmp := Gtk.Main.Main_Iteration;
+            Num_Events := Num_Events + 1;
+         end loop;
+      end loop;
+   end Wait_User_Command;
 
    ---------------------
    -- Input_Available --
