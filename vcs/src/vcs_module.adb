@@ -174,7 +174,7 @@ package body VCS_Module is
       Register_Menu (Kernel, VCS, -"Explorer", "", On_Open_Interface'Access);
       Register_Menu (Kernel, VCS, -"Update project", "", On_Update_All'Access);
       Register_Menu
-        (Kernel, VCS, -"List open files in project", "",
+        (Kernel, VCS, -"Query status for project", "",
          List_Open_Files'Access);
       Gtk_New (Menu_Item);
       Register_Menu (Kernel, VCS, Menu_Item);
