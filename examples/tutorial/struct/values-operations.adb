@@ -99,6 +99,7 @@ package body Values.Operations is
 
       when Constraint_Error =>
          Screen_Output.Error_Msg ("Operation error. Values popped.");
+         raise;
 
    end Process;
 
