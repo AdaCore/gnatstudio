@@ -100,12 +100,15 @@ package body Custom_Module is
                   Current_Title := new String'(Current_Child.Value.all);
                end if;
 
-               if Current_Child.Tag.all = "Action" then
+               if Current_Child.Tag.all = "Action"
+                 or else Current_Child.Tag.all = "GPS_Action"
+               then
                   declare
                      Args : Argument_List_Access :=
                        Argument_String_To_List (Current_Child.Value.all);
                      A : Argument_List_Access;
                      C : Custom_Command_Access;
+                     GPS_Command : Boolean := True;
 
                      procedure Free_Array is new Ada.Unchecked_Deallocation
                        (Object => String_List, Name => String_List_Access);
@@ -115,11 +118,16 @@ package body Custom_Module is
                           (Args (Args'First + 1 .. Args'Last));
                      end if;
 
+                     if Current_Child.Tag.all = "Action" then
+                        GPS_Command := False;
+                     end if;
+
                      Create
                        (C,
                         Kernel_Handle (Kernel),
                         Args (Args'First).all,
-                        A);
+                        A,
+                        GPS_Command);
 
                      Free (Args (Args'First));
                      Free_Array (Args);
@@ -130,6 +138,8 @@ package body Custom_Module is
                         Add_Consequence_Action (Command, Command_Access (C));
                      end if;
                   end;
+
+
                end if;
 
                Current_Child := Current_Child.Next;
