@@ -327,6 +327,7 @@ package body Custom_Combos is
       if Title /= "" then
          Gtk_New (Label, Title & " ");
          Append_Widget (Toolbar, Label, "", "");
+         Show_All (Label);
       end if;
 
       GPS_Combo := new GPS_Combo_Record;
@@ -342,6 +343,7 @@ package body Custom_Combos is
          After => True);
 
       Append_Widget (Toolbar, GPS_Combo.Combo, Title, Title);
+      Show_All (GPS_Combo.Combo);
 
       Combo_List.Append (Custom_Module_ID.Combos, GPS_Combo);
    end Register_Combo;
