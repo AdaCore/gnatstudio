@@ -230,6 +230,7 @@ package body Codefix.Text_Manager.Ada_Commands is
 
          Already_Loaded := False;
 
+         Free (Current_Cursor);
          Current_Word := Next (Current_Word);
       end loop;
 
@@ -246,6 +247,8 @@ package body Codefix.Text_Manager.Ada_Commands is
                Data (Current_Extract),
                Merge_Success,
                False);
+
+            Free (Extract_Temp);
          end;
 
          if not Merge_Success then
@@ -255,6 +258,7 @@ package body Codefix.Text_Manager.Ada_Commands is
          Current_Extract := Next (Current_Extract);
       end loop;
 
+      Free (Remove_Extracts);
    end Execute;
 
    procedure Free (This : in out Remove_Elements_Cmd) is
@@ -348,6 +352,8 @@ package body Codefix.Text_Manager.Ada_Commands is
                Clause_Node := Next (Clause_Node);
             end loop;
          end if;
+
+         Free (Clauses_List);
       end if;
 
       if Destination /= "" then
@@ -359,6 +365,8 @@ package body Codefix.Text_Manager.Ada_Commands is
 
          Free (Last_With);
       end if;
+
+      Free (Word_Used);
 
    end Initialize;
 
@@ -416,6 +424,7 @@ package body Codefix.Text_Manager.Ada_Commands is
       Free (This.Instantiation_Pkg);
       Free (This.Clauses_Pkg);
       Free (This.Last_With);
+      Free (This.Obj_List);
       Free (Text_Command (This));
    end Free;
 
@@ -595,6 +604,7 @@ package body Codefix.Text_Manager.Ada_Commands is
             Get_Line (Current_Text, Line_Cursor, New_Extract);
             Replace
               (New_Extract, Pragma_Cursor, 1, ", " & This.Argument.all & ")");
+            Free (Line_Cursor);
          end if;
 
       else
