@@ -2139,71 +2139,73 @@ package body Aliases_Module is
       Old    : Alias_Record;
       N      : Node_Ptr := Node;
    begin
-      while N /= null and then N.Tag.all /= "alias" loop
-         declare
-            Name : constant String := Get_Attribute (N, "name");
-            Must_Reindent : constant Boolean :=
-              Get_Attribute (N, "indent", "false") = "true";
-         begin
-            Expand := null;
-            P := null;
+      while N /= null loop
+         if N.Tag.all = "alias" then
+            declare
+               Name : constant String := Get_Attribute (N, "name");
+               Must_Reindent : constant Boolean :=
+                 Get_Attribute (N, "indent", "false") = "true";
+            begin
+               Expand := null;
+               P := null;
 
-            if N.Tag.all /= "alias"
-              or else Name = ""
-            then
-               Insert
-                 (Kernel, -"Invalid alias format for " & Name,
-                  Mode => Error);
-            end if;
-
-            Child := N.Child;
-            while Child /= null loop
-               if Child.Tag.all = "text" then
-                  Expand := Child.Value;
-
-               elsif Child.Tag.all = "param" then
-                  P := new Param_Record'
-                    (Name     => new String'(Get_Attribute (Child, "name")),
-                     Initial  => new String'(Child.Value.all),
-                     From_Env =>
-                       Get_Attribute (Child, "environment") = "true",
-                     Next     => P);
-
-               else
-                  Insert (Kernel,
-                          -"Unknown XML tag in alias definition for "
-                          & Name,
-                          Mode => Error);
+               if N.Tag.all /= "alias"
+                 or else Name = ""
+               then
+                  Insert
+                    (Kernel, -"Invalid alias format for " & Name,
+                     Mode => Error);
                end if;
 
-               Child := Child.Next;
-            end loop;
+               Child := N.Child;
+               while Child /= null loop
+                  if Child.Tag.all = "text" then
+                     Expand := Child.Value;
 
-            --  Do not override a read-only alias: they have been parsed
-            --  before all others, but should in fact have higher priority
+                  elsif Child.Tag.all = "param" then
+                     P := new Param_Record'
+                       (Name     => new String'(Get_Attribute (Child, "name")),
+                        Initial  => new String'(Child.Value.all),
+                        From_Env =>
+                          Get_Attribute (Child, "environment") = "true",
+                        Next     => P);
 
-            Old := Get (Aliases_Module_Id.Aliases, Name);
+                  else
+                     Insert (Kernel,
+                             -"Unknown XML tag in alias definition for "
+                             & Name,
+                             Mode => Error);
+                  end if;
 
-            if Old = No_Alias or else Old.Read_Only then
-               if Expand /= null then
-                  Set (Aliases_Module_Id.Aliases,
-                       Name,
-                       (Expansion => new String'(Expand.all),
-                        Params    => P,
-                        Read_Only => Read_Only,
-                        Must_Reindent => Must_Reindent));
+                  Child := Child.Next;
+               end loop;
+
+               --  Do not override a read-only alias: they have been parsed
+               --  before all others, but should in fact have higher priority
+
+               Old := Get (Aliases_Module_Id.Aliases, Name);
+
+               if Old = No_Alias or else Old.Read_Only then
+                  if Expand /= null then
+                     Set (Aliases_Module_Id.Aliases,
+                          Name,
+                          (Expansion => new String'(Expand.all),
+                           Params    => P,
+                           Read_Only => Read_Only,
+                           Must_Reindent => Must_Reindent));
+                  else
+                     Set (Aliases_Module_Id.Aliases,
+                          Name,
+                          (Expansion => new String'(""),
+                           Params    => P,
+                           Read_Only => Read_Only,
+                           Must_Reindent => Must_Reindent));
+                  end if;
                else
-                  Set (Aliases_Module_Id.Aliases,
-                       Name,
-                       (Expansion => new String'(""),
-                        Params    => P,
-                        Read_Only => Read_Only,
-                        Must_Reindent => Must_Reindent));
+                  Free (P);
                end if;
-            else
-               Free (P);
-            end if;
-         end;
+            end;
+         end if;
 
          N := N.Next;
       end loop;
