@@ -513,9 +513,12 @@ package body Help_Module is
             end if;
          end;
 
+         Free (Inst);
+
       elsif Command = "reset" then
          Inst := Nth_Arg (Data, 1, Help_Module_ID.Help_Class);
          Set_Data (Inst, System.Null_Address);
+         Free (Inst);
 
       elsif Command = "browse" then
          Name_Parameters (Data, Help_Cmd_Parameters);
