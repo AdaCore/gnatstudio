@@ -73,6 +73,9 @@ package body Display_Items is
    Title_Color : constant String := "grey";
    --  Color to use for the background of the title.
 
+   Change_Color : constant String := "red";
+   --  Color used to highlight fields that have changed since the last update.
+
    Look_3d : constant Boolean := True;
    --  Should the items have a 3d look ?
 
@@ -106,6 +109,7 @@ package body Display_Items is
    Grey_GC    : Gdk.GC.Gdk_GC;
    Black_GC   : Gdk.GC.Gdk_GC;
    Xref_Gc    : Gdk.GC.Gdk_GC;
+   Change_Gc  : Gdk.GC.Gdk_GC;
    Font       : Gdk.Font.Gdk_Font;
    Title_Font : Gdk.Font.Gdk_Font;
    Refresh_Button_Gc : Gdk.GC.Gdk_GC;
@@ -273,6 +277,11 @@ package body Display_Items is
          Alloc (Gtk.Widget.Get_Default_Colormap, Color);
          Gdk_New (Grey_GC, Win);
          Set_Foreground (Grey_GC, Color);
+
+         Color := Parse (Change_Color);
+         Alloc (Gtk.Widget.Get_Default_Colormap, Color);
+         Gdk_New (Change_GC, Win);
+         Set_Foreground (Change_GC, Color);
 
          Gdk_New (Black_GC, Win);
          Set_Foreground (Black_GC, Black (Gtk.Widget.Get_Default_Colormap));
@@ -442,8 +451,12 @@ package body Display_Items is
 
       if Item.Entity /= null then
          Paint
-           (Item.Entity.all, Black_GC, Xref_Gc, Font,
-            Pixmap (Item),
+           (Item.Entity.all,
+            Drawing_Context'(Pixmap      => Pixmap (Item),
+                             GC          => Black_GC,
+                             Xref_Gc     => Xref_Gc,
+                             Modified_Gc => Change_Gc,
+                             Font        => Font),
             X => Border_Spacing,
             Y => Title_Height + Border_Spacing);
       end if;
@@ -470,8 +483,11 @@ package body Display_Items is
 
       Paint
         (Component.all,
-         Black_GC, Xref_Gc, Font,
-         Pixmap (Item),
+         Drawing_Context'(Pixmap      => Pixmap (Item),
+                          GC          => Black_GC,
+                          Xref_Gc     => Xref_Gc,
+                          Modified_Gc => Change_Gc,
+                          Font        => Font),
          X => Get_X (Component.all),
          Y => Get_Y (Component.all));
    end Update_Component;
