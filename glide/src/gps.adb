@@ -48,8 +48,10 @@ with Gtkada.Dialogs;            use Gtkada.Dialogs;
 with Gtkada.MDI;                use Gtkada.MDI;
 with GVD.Types;
 with OS_Utils;                  use OS_Utils;
+with Projects.Editor;           use Projects.Editor;
 with Projects.Registry;         use Projects;
 with GNAT.Command_Line;         use GNAT.Command_Line;
+with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
 with Ada.Text_IO;               use Ada.Text_IO;
 with Traces;                    use Traces;
 with Ada.Exceptions;            use Ada.Exceptions;
@@ -108,7 +110,9 @@ procedure GPS is
    Home           : String_Access;
    Prefix         : String_Access;
    Dir            : String_Access;
-   File_Opened    : Boolean := False;
+   Target,
+   Protocol,
+   Debugger_Name  : String_Access;
    Splash         : Gtk_Window;
    Timeout_Id     : Timeout_Handler_Id;
    User_Directory_Existed : Boolean;
@@ -296,10 +300,16 @@ procedure GPS is
          Put_Line ("GPS " & GVD.Version & " (" & GVD.Source_Date & ")" &
                    (-", the GNAT Programming System."));
          Put_Line (-"Usage:");
-         Put_Line (-"   gps [-Pproject-file] [source1] [source2] ...");
+         Put_Line
+           (-"   gps [options] [-Pproject-file] [source1] [source2] ...");
          Put_Line (-"Options:");
-         Put_Line (-"   --help              Show this help message and exit.");
-         Put_Line (-"   --version           Show the GPS version and exit.");
+         Put_Line (-"   --help              Show this help message and exit");
+         Put_Line (-"   --version           Show the GPS version and exit");
+         Put_Line (-"   --debug [program]   Start a debug session");
+         Put_Line
+           (-"   --debugger debugger Specify the debugger's command line");
+         Put_Line ((-"   --target=TARG:PRO   ") &
+                   (-"Load program on machine TARG using protocol PRO"));
          New_Line;
          Put_Line (-("Source files are searched everywhere on the project's "
                    & " source path"));
@@ -309,12 +319,17 @@ procedure GPS is
            ("GPS " & GVD.Version & " (" & GVD.Source_Date & ")" &
             (-", the GNAT Programming System.") & LF &
             (-"Usage:") & LF &
-            (-"   gps [-Pproject-file] [source1] [source2] ...") & LF &
-            (-"Options:") & LF &
+            (-"   gps [options] [-Pproject-file] [source1] [source2] ...") &
+            LF & (-"Options:") & LF &
             (-"   --help              Show this help message and exit.") & LF &
             (-"   --version           Show the GPS version and exit.") & LF &
-            LF & (-("Source files are searched everywhere on the project's" &
-                    " source path")),
+            (-"   --debug [program]   Start a debug session") & LF &
+            (-"   --debugger debugger Specify the debugger's command line") &
+            LF &
+            (-"   --target=TARG:PRO   ") &
+            (-"Load program on machine TARG using protocol PRO") & LF &
+            (-("Source files are searched everywhere on the project's" &
+               " source path")),
             Information, Button_OK,
             Title => -"Help",
             Justification => Justify_Left);
@@ -346,6 +361,8 @@ procedure GPS is
       Key               : constant String :=
         Get_Home_Dir (GPS.Kernel) & "custom_key";
       Auto_Load_Project : Boolean := True;
+      File_Opened       : Boolean := False;
+      Project           : Projects.Project_Type;
       Screen            : Welcome_Screen;
       pragma Unreferenced (Data);
 
@@ -491,7 +508,53 @@ procedure GPS is
       --  If no project has been specified on the command line, try to open
       --  the first one in the current directory (if any).
 
-      if Project_Name = null then
+      if GPS.Program_Args /= null then
+         --  --debug has been specified
+         --  Load default project, and set debugger-related project properties
+
+         File_Opened := True;
+         Auto_Load_Project := False;
+         Load_Default_Project
+           (GPS.Kernel, Get_Current_Dir, Load_Default_Desktop => True);
+         Load_Sources;
+         Project := Get_Project (GPS.Kernel);
+
+         if Debugger_Name /= null then
+            Update_Attribute_Value_In_Scenario
+              (Project            => Project,
+               Scenario_Variables => (1 .. 0 => No_Variable),
+               Attribute          => Debugger_Command_Attribute,
+               Value              => Debugger_Name.all);
+         end if;
+
+         if Target /= null then
+            Update_Attribute_Value_In_Scenario
+              (Project            => Project,
+               Scenario_Variables => (1 .. 0 => No_Variable),
+               Attribute          => Program_Host_Attribute,
+               Value              => Target.all);
+         end if;
+
+         if Protocol /= null then
+            Update_Attribute_Value_In_Scenario
+              (Project            => Project,
+               Scenario_Variables => (1 .. 0 => No_Variable),
+               Attribute          => Protocol_Attribute,
+               Value              => Protocol.all);
+         end if;
+
+         Update_Attribute_Value_In_Scenario
+           (Project            => Project,
+            Scenario_Variables => (1 .. 0 => No_Variable),
+            Attribute          => Languages_Attribute,
+            Values             =>
+              (new String'("ada"), new String'("c"), new String'("c++")));
+
+         Set_Project_Modified (Project, False);
+         Recompute_View (GPS.Kernel);
+         GVD_Module.Initialize_Debugger (GPS.Kernel);
+
+      elsif Project_Name = null then
          Auto_Load_Project := False;
          Open (Directory, Get_Current_Dir);
 
@@ -650,8 +713,12 @@ begin
       end;
    end if;
 
+   --  Switch parsing
+
    loop
-      case Getopt ("-version -help P: -log-level:") is
+      case Getopt ("-version -help P: -log-level: " &
+                   "-debug: -debugger: -target:")
+      is
          -- long option names --
          when '-' =>
             case Full_Switch (Full_Switch'First + 1) is
@@ -694,6 +761,41 @@ begin
 
                         Help;
                         OS_Exit (-1);
+                  end;
+
+               when 'd' =>
+                  --  --debug
+                  if Full_Switch = "-debug" then
+                     Free (GPS.Program_Args);
+                     GPS.Program_Args := new String'(Clean_Parameter);
+
+                  else
+                     --  --debugger
+                     Free (Debugger_Name);
+                     Debugger_Name := new String'(Clean_Parameter);
+                  end if;
+
+               -- --target --
+               when 't' =>
+                  declare
+                     Param  : constant String := Clean_Parameter;
+                     Column : constant Natural :=
+                       Ada.Strings.Fixed.Index
+                         (Param, ":", Ada.Strings.Backward);
+
+                  begin
+                     --  Param should be of the form target:protocol
+
+                     if Column = 0 then
+                        raise Invalid_Switch;
+                     end if;
+
+                     Free (Target);
+                     Free (Protocol);
+                     Target   :=
+                       new String '(Param (Param'First .. Column - 1));
+                     Protocol :=
+                       new String '(Param (Column + 1 .. Param'Last));
                   end;
 
                when others =>
