@@ -146,8 +146,8 @@ package body Src_Editor_View is
       User   : Source_View);
    --  Callback for the "side_columns_configuration_changed" signal.
 
-   procedure Clear_Text_Window (User : Source_View);
-   --  Clear the buffer window.
+   procedure Invalidate_Window (User : Source_View);
+   --  Redraw the buffer window.
 
    procedure Line_Highlight_Change_Handler
      (Buffer : access Source_Buffer_Record'Class;
@@ -317,7 +317,7 @@ package body Src_Editor_View is
       Src_View : constant Source_View := Source_View (View);
    begin
       if Src_View.Highlight_Blocks then
-         Clear_Text_Window (Src_View);
+         Invalidate_Window (Src_View);
       end if;
 
       return False;
@@ -364,23 +364,22 @@ package body Src_Editor_View is
    end Realize_Cb;
 
    -----------------------
-   -- Clear_Text_Window --
+   -- Invalidate_Window --
    -----------------------
 
-   procedure Clear_Text_Window (User : Source_View) is
+   procedure Invalidate_Window (User : Source_View) is
       Win           : constant Gdk.Window.Gdk_Window :=
         Get_Window (User, Text_Window_Text);
       X, Y, W, H, D : Gint;
-      Rect          : Gdk_Rectangle;
+
    begin
       if Win = null then
          return;
       end if;
 
       Get_Geometry (Win, X, Y, W, H, D);
-      Rect := Gdk_Rectangle'(X, Y, W, H);
-      Gdk.Window.Invalidate_Rect (Win, Rect, True);
-   end Clear_Text_Window;
+      Gdk.Window.Invalidate_Rect (Win, (X, Y, W, H), True);
+   end Invalidate_Window;
 
    -----------------------------------
    -- Line_Highlight_Change_Handler --
@@ -392,9 +391,8 @@ package body Src_Editor_View is
       User   : Source_View)
    is
       pragma Unreferenced (Params, Buffer);
-
    begin
-      Clear_Text_Window (User);
+      Invalidate_Window (User);
    end Line_Highlight_Change_Handler;
 
    ---------------------------------------
@@ -509,7 +507,7 @@ package body Src_Editor_View is
         and then User.Current_Block /=
           Get_Block (Buffer, Buffer_Line_Type (Line), False)
       then
-         Clear_Text_Window (User);
+         Invalidate_Window (User);
       end if;
 
    exception
@@ -1064,7 +1062,7 @@ package body Src_Editor_View is
       Get_Iter_At_Mark (Buffer, Insert_Iter, Get_Insert (Buffer));
       View.Saved_Cursor_Mark := Create_Mark (Buffer, "", Insert_Iter);
 
-      Clear_Text_Window (Source_View (View));
+      Invalidate_Window (Source_View (View));
    end Initialize;
 
    --------------------
@@ -1089,7 +1087,7 @@ package body Src_Editor_View is
       if Win /= null then
          Get_Geometry (Win, X, Y, W, H, D);
          Clear_Area_E (Win, X, Y, W, H);
-         Clear_Text_Window (View);
+         Invalidate_Window (View);
       end if;
 
       View.Connect_Expose_Registered := False;
