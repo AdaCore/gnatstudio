@@ -247,6 +247,12 @@ package body Src_Editor_Module is
       Child  : Gtk.Widget.Gtk_Widget) return Selection_Context_Access;
    --  Create the current context for Glide_Kernel.Get_Current_Context
 
+   function Default_Factory
+     (Kernel : access Kernel_Handle_Record'Class;
+      Editor : access Source_Editor_Box_Record'Class)
+      return Selection_Context_Access;
+   --  Same as above.
+
    procedure New_View
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
    --  Create a new view for the current editor and add it in the MDI.
@@ -1066,8 +1072,14 @@ package body Src_Editor_Module is
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
       pragma Unreferenced (Widget);
+      Editor : Source_Editor_Box := Find_Current_Editor (Kernel);
    begin
-      Goto_Declaration_Or_Body (Kernel, To_Body => False);
+      Goto_Declaration_Or_Body
+        (Kernel,
+         To_Body => False,
+         Editor  => Editor,
+         Context => Entity_Selection_Context_Access
+           (Default_Factory (Kernel, Editor)));
 
    exception
       when E : others =>
@@ -1082,8 +1094,13 @@ package body Src_Editor_Module is
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
       pragma Unreferenced (Widget);
+      Editor : Source_Editor_Box := Find_Current_Editor (Kernel);
    begin
-      Goto_Declaration_Or_Body (Kernel, To_Body => True);
+      Goto_Declaration_Or_Body
+        (Kernel, To_Body => True,
+         Editor => Editor,
+         Context => Entity_Selection_Context_Access
+           (Default_Factory (Kernel, Editor)));
 
    exception
       when E : others =>
@@ -1425,11 +1442,23 @@ package body Src_Editor_Module is
 
    function Default_Factory
      (Kernel : access Kernel_Handle_Record'Class;
+      Editor : access Source_Editor_Box_Record'Class)
+      return Selection_Context_Access is
+   begin
+      return Get_Contextual_Menu (Kernel, Editor, null, null);
+   end Default_Factory;
+
+   ---------------------
+   -- Default_Factory --
+   ---------------------
+
+   function Default_Factory
+     (Kernel : access Kernel_Handle_Record'Class;
       Child  : Gtk.Widget.Gtk_Widget) return Selection_Context_Access
    is
       C : Source_Box := Source_Box (Child);
    begin
-      return Get_Contextual_Menu (Kernel, Child, C.Editor, null, null);
+      return Default_Factory (Kernel, C.Editor);
    end Default_Factory;
 
    ---------------------
