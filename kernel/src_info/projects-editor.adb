@@ -68,6 +68,9 @@ package body Projects.Editor is
    --  Set the attributes of the with_clause (imported project node, imported
    --  project path,....)
 
+   procedure Reset_All_Caches (Project : Project_Type);
+   --  Reset all the caches for the whole project hierarchy
+
    ---------------
    -- Variables --
    ---------------
@@ -2599,6 +2602,39 @@ package body Projects.Editor is
       return P;
    end Find_Project_Of_Package;
 
+   ----------------------
+   -- Reset_All_Caches --
+   ----------------------
+
+   procedure Reset_All_Caches (Project : Project_Type) is
+      Root : constant Project_Type := Get_Root_Project
+        (Project_Registry (Get_Registry (Project)));
+      Iter : Imported_Project_Iterator := Start (Root, Recursive => True);
+      Count : Natural := 0;
+   begin
+      while Current (Iter) /= No_Project loop
+         Count := Count + 1;
+         Projects.Next (Iter);
+      end loop;
+
+      declare
+         Prjs : Project_Type_Array (1 .. Count);
+      begin
+         Count := Prjs'First;
+         Iter := Start (Root, Recursive => True);
+         while Current (Iter) /= No_Project loop
+            Prjs (Count) := Current (Iter);
+            Count := Count + 1;
+            Projects.Next (Iter);
+         end loop;
+
+         for P in Prjs'Range loop
+            Reset_Cache (Prjs (P), Imported_By => False);
+            Reset_Cache (Prjs (P), Imported_By => True);
+         end loop;
+      end;
+   end Reset_All_Caches;
+
    -----------------------------
    -- Remove_Imported_Project --
    -----------------------------
@@ -2612,7 +2648,7 @@ package body Projects.Editor is
    begin
       --  ??? When the project is no longer found in the hierarchy, it should
       --  ??? also be removed from the htable in Prj.Tree, so that another
-      --  ??? project by that nane can be loaded.
+      --  ??? project by that name can be loaded.
 
       --  Cleanup the name
 
@@ -2642,8 +2678,7 @@ package body Projects.Editor is
 
       --  Need to reset all the caches, since the caches contain the indirect
       --  dependencies as well.
-      Reset_Cache (Project, Imported_By => False);
-      Reset_Cache (Imported_Project, Imported_By => True);
+      Reset_All_Caches (Project);
    end Remove_Imported_Project;
 
    --------------------------
