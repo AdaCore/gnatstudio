@@ -29,6 +29,11 @@ with Interfaces.C;
 
 package body Commands.Editor is
 
+   function g_utf8_strlen
+     (P : String; Max : Interfaces.C.size_t) return Long_Integer;
+   pragma Import (C, g_utf8_strlen);
+   --  Return the text size of an UTF8 string.
+
    Me : constant Debug_Handle := Create ("Commands.Editor");
 
    ------------
@@ -300,7 +305,11 @@ package body Commands.Editor is
                  (Command.Buffer,
                   Command.Line,
                   Command.Column,
-                  Command.Current_Text_Size,
+                  Natural
+                    (g_utf8_strlen
+                       (Command.Current_Text
+                          (First .. Command.Current_Text_Size + First),
+                        Interfaces.C.size_t (Command.Current_Text_Size))),
                   False);
 
                Set_Cursor_Position
@@ -348,10 +357,6 @@ package body Commands.Editor is
      (Command : access Editor_Replace_Slice_Type) return Command_Return_Type
    is
       Editor : Source_Editor_Box;
-
-      function g_utf8_strlen
-        (P : String; Max : Interfaces.C.size_t) return Long_Integer;
-      pragma Import (C, g_utf8_strlen);
 
    begin
       if not
