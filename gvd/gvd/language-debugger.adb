@@ -41,4 +41,89 @@ package body Language.Debugger is
       return The_Language.The_Debugger;
    end Get_Debugger;
 
+   ----------------
+   -- Parse_Type --
+   ----------------
+
+   procedure Parse_Type
+     (Lang     : access Language_Debugger;
+      Type_Str : String;
+      Entity   : String;
+      Index    : in out Natural;
+      Result   : out Items.Generic_Type_Access) is
+   begin
+      raise Program_Error;
+   end Parse_Type;
+
+   -----------------
+   -- Parse_Value --
+   -----------------
+
+   procedure Parse_Value
+     (Lang       : access Language_Debugger;
+      Type_Str   : String;
+      Index      : in out Natural;
+      Result     : in out Items.Generic_Type_Access;
+      Repeat_Num : out Positive) is
+   begin
+      raise Program_Error;
+   end Parse_Value;
+
+   ----------------------
+   -- Parse_Array_Type --
+   ----------------------
+
+   procedure Parse_Array_Type
+     (Lang      : access Language_Debugger;
+      Type_Str  : String;
+      Entity    : String;
+      Index     : in out Natural;
+      Start_Of_Dim : in Natural;
+      Result    : out Items.Generic_Type_Access) is
+   begin
+      raise Program_Error;
+   end Parse_Array_Type;
+
+   -----------------------
+   -- Parse_Record_Type --
+   -----------------------
+
+   procedure Parse_Record_Type
+     (Lang      : access Language_Debugger;
+      Type_Str  : String;
+      Entity    : String;
+      Index     : in out Natural;
+      Is_Union  : Boolean;
+      Result    : out Items.Generic_Type_Access;
+      End_On    : String) is
+   begin
+      raise Program_Error;
+   end Parse_Record_Type;
+
+   -----------------------
+   -- Parse_Array_Value --
+   -----------------------
+
+   procedure Parse_Array_Value
+     (Lang     : access Language_Debugger;
+      Type_Str : String;
+      Index    : in out Natural;
+      Result   : in out Items.Arrays.Array_Type_Access) is
+   begin
+      raise Program_Error;
+   end Parse_Array_Value;
+
+   --------------------------
+   -- Get_Language_Context --
+   --------------------------
+
+   function Get_Language_Context (Lang : access Language_Debugger)
+                                 return Language_Context
+   is
+      L : Language_Context (1);
+   begin
+      raise Program_Error;
+      return L;
+   end Get_Language_Context;
+
 end Language.Debugger;

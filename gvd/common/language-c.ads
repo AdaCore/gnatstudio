@@ -23,7 +23,7 @@
 
 package Language.Debugger.C is
 
-   type C_Language is abstract new Language_Debugger with private;
+   type C_Language is new Language_Debugger with private;
 
    -------------
    -- Parsing --
@@ -76,5 +76,5 @@ package Language.Debugger.C is
                               return String;
 
 private
-   type C_Language is abstract new Language_Debugger with null record;
+   type C_Language is new Language_Debugger with null record;
 end Language.Debugger.C;

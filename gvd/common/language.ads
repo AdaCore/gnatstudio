@@ -182,20 +182,27 @@ package Language is
    --  The types provided below enable the display debugger to get information
    --  that is both generic enough to handle most debuggers/languages, but
    --  also precise enough that a nice graphical object can be displayed.
+   --
+   --  The default implementation of these subprograms raises Program_Error.
+   --  since this requires a debugger session. However, since we need to
+   --  be able to declare some instances of Language_Debugger_Ada, for
+   --  instance, we need a non-abstract subprogram.
 
    function Thread_List
-     (Lang : access Language_Root) return String is abstract;
+     (Lang : access Language_Root) return String;
    --  Return a string that corresponds to the thread list command
    --  for a particular language/debugger.
    --  This should be used by a debugger in cunjunction with Parse_Thread_List
    --  below.
+   --  The default implementation raises Program_Error.
 
    function Thread_Switch
      (Lang   : access Language_Root;
-      Thread : Natural) return String is abstract;
+      Thread : Natural) return String;
    --  Return a string that corresponds to the thread switch command
    --  for a particular language/debugger.
    --  Thread is a debugger specific thread id.
+   --  The default implementation raises Program_Error.
 
    subtype Thread_Fields is Interfaces.C.size_t range 1 .. 20;
    --  This represents the maximum number of fields in a thread list output.
@@ -213,8 +220,9 @@ package Language is
 
    function Parse_Thread_List
      (Lang   : access Language_Root;
-      Output : String) return Thread_Information_Array is abstract;
+      Output : String) return Thread_Information_Array;
    --  Parse the result of a thread list command.
+   --  The default implementation raises Program_Error.
 
    procedure Free (Info : in out Thread_Information_Array);
    --  Free the dyamic memory associated with each element of the array.

@@ -23,7 +23,7 @@
 
 package Language.Debugger.Ada is
 
-   type Ada_Language is abstract new Language_Debugger with private;
+   type Ada_Language is new Language_Debugger with private;
 
    -------------
    -- Parsing --
@@ -79,5 +79,5 @@ package Language.Debugger.Ada is
       Field : String) return String;
 
 private
-   type Ada_Language is abstract new Language_Debugger with null record;
+   type Ada_Language is new Language_Debugger with null record;
 end Language.Debugger.Ada;

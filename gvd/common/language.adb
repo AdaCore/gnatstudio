@@ -109,4 +109,40 @@ package body Language is
       return False;
    end Is_System_File;
 
+   -----------------
+   -- Thread_List --
+   -----------------
+
+   function Thread_List (Lang : access Language_Root) return String is
+   begin
+      raise Program_Error;
+      return "";
+   end Thread_List;
+
+   -------------------
+   -- Thread_Switch --
+   -------------------
+
+   function Thread_Switch
+     (Lang   : access Language_Root;
+      Thread : Natural) return String is
+   begin
+      raise Program_Error;
+      return "";
+   end Thread_Switch;
+
+   -----------------------
+   -- Parse_Thread_List --
+   -----------------------
+
+   function Parse_Thread_List
+     (Lang   : access Language_Root;
+      Output : String) return Thread_Information_Array
+   is
+      Null_Array : Thread_Information_Array (1 .. 0);
+   begin
+      raise Program_Error;
+      return Null_Array;
+   end Parse_Thread_List;
+
 end Language;
