@@ -310,7 +310,7 @@ package body Process_Proxies is
       Is_Internal : Boolean) is
    begin
       if Proxy.Internal_Command = Internal_Status_Stack_Size then
-         raise Internal_Command_Status_Stack_Overfull;
+         raise Internal_Command_Status_Stack_Overflow;
       end if;
 
       Proxy.Internal_Command := Proxy.Internal_Command + 1;

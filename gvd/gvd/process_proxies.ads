@@ -56,7 +56,7 @@ package Process_Proxies is
    --  Set a new internal status for the following commands, and save the
    --  previous value. If you are trying to call this function more than
    --  Internal_Status_Stack_Size times (without an Pop_Internal_Command_Status
-   --  in between), an exception Internal_Command_Status_Stack_Overfull is
+   --  in between), an exception Internal_Command_Status_Stack_Overflow is
    --  emitted.
    --  The default behavior is False, so as to show as much output as
    --  possible from the debugger.
@@ -189,7 +189,7 @@ package Process_Proxies is
    -- Exceptions --
    ----------------
 
-   Internal_Command_Status_Stack_Overfull : exception;
+   Internal_Command_Status_Stack_Overflow : exception;
 
 private
 
