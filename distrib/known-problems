@@ -1,5 +1,10 @@
 Known Problems fixed in GPS 1.4.0
 
+- C811-002 Can't use Windows Notepad as an external editor
+  Problem:    It is not possible to use standard Windows Notepad (nor any GUI
+              Win32 editors) as external editor.
+  Workaround: None known
+
 - C822-014 Cross-references fail on Ada files with file-specific naming schemes
   Problem:    If you are using Ada files with an irregular naming scheme (ie
               you don't specificy a general way to compute the name of the
