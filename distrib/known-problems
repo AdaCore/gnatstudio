@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 1.4.1
 
+- CC01-003 Error when saving project
+  Problem:    Saving a project through Project->Save All might result in an
+              internal error which blocks GPS, and does not save the project.
+  Workaround: Save the modified projects one by one through the contextual
+              menu in the project explorer
+
 - CB19-011 Keywords always case sensitive in custom languages
   Problem:    When defining a custom language in an xml file, the keywords
               regexp will always be case sensitive.
