@@ -145,7 +145,7 @@ package body Debugger.Gdb is
    procedure Initialize (Debugger : access Gdb_Debugger) is
       Result    : Expect_Match;
       Matched   : GNAT.Regpat.Match_Array (0 .. 2);
-   
+
    begin
       --  Start the external debugger.
       --  Note that there is no limitation on the buffer size, since we can
@@ -187,6 +187,7 @@ package body Debugger.Gdb is
          end if;
 
          Set_Language (Debugger.all, Language);
+         Wait_Prompt (Debugger.all);
          Set_Debugger
            (Language_Debugger (Language.all), Debugger.all'Access);
       end;
@@ -343,7 +344,7 @@ package body Debugger.Gdb is
    begin
       --  Empty the buffer.
       Expect (Debugger.Process.all, Result, ".*", Timeout => 0);
- 
+
       Send (Debugger.Process.all, "info line " & File & ':' &
         Positive'Image (Line));
       Wait_Prompt (Debugger);
