@@ -13,26 +13,15 @@ IMAGES = gps_title.jpg *.jpg
 
 TEXI=gps.texi ../gvd/docs/gvd_contents.texi
 
-all: cp_gvd stamp-pdf doc tutorial gps_pg clean-temp-files
-distrib: cp_gvd stamp-pdf doc tutorial clean-temp-files
+all: stamp-pdf doc tutorial gps_pg clean-temp-files
+distrib: stamp-pdf doc tutorial clean-temp-files
 non-ps: common clean-temp-files
 static:
 
-cp_gvd:
-	@-for img in main-window breakpoints bp-advanced memory-view \
-	     call-stack assembly canvas process colors tasks explorer \
-	     tooltips; do \
-	  $(CP) ../gvd/docs/$${img}.gif .; \
-	done
-
 stamp-pdf: $(IMAGES)
-	@echo "Converting images to JPG"
-	@-for img in [^g]*.gif gps-vcs-*.gif; do \
-	  $(CONVERT) $${img} `basename $${img} .gif`.jpg; \
-	done
 	@echo "Converting images to PDF"
-	@-for img in [^g]*.gif gps-vcs-*.gif; do \
-	  $(CONVERT) -compress none $${img} `basename $${img} .gif`.pdf; \
+	@-for img in [^g]*.jpg gps-vcs-*.jpg; do \
+	  $(CONVERT) $${img} `basename $${img} .jpg`.pdf; \
 	done
 	touch stamp-pdf
 
@@ -83,7 +72,6 @@ install:
 	   ${INSTALL_DATA} $${file} $(docdir)/html; \
 	done
 	-$(INSTALL_DATA) gps/index.html $(docdir)/html/gps.html
-	-cd ../design; ./convert.pl > $(docdir)/html/TODO.html
 	-$(INSTALL_DATA) gps.pdf  $(docdir)/pdf
 	-$(INSTALL_DATA) gps.txt  $(docdir)/txt
 	-for img in $(IMAGES); do \
