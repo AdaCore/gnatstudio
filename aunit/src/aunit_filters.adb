@@ -1,10 +1,10 @@
 -----------------------------------------------------------------------
---                          G L I D E  I I                           --
+--                               G P S                               --
 --                                                                   --
 --                        Copyright (C) 2001-2002                    --
 --                            ACT-Europe                             --
 --                                                                   --
--- GLIDE is free software; you can redistribute it and/or modify  it --
+-- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -13,7 +13,7 @@
 -- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
 -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
 -- General Public License for more details. You should have received --
--- a copy of the GNU General Public License along with this library; --
+-- a copy of the GNU General Public License along with this program; --
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
@@ -55,7 +55,9 @@ package body Aunit_Filters is
    begin
       if not Is_Regular_File (File_Name)
         or else File_Name'Length <= 4
-        or else File_Name (File_Name'Last - 3 .. File_Name'Last - 1) /= ".ad"
+        or else
+          (File_Name (File_Name'Last - 3 .. File_Name'Last) /= ".ads"
+           and then File_Name (File_Name'Last - 3 .. File_Name'Last) /= ".adb")
       then
          return;
       end if;
@@ -113,6 +115,7 @@ package body Aunit_Filters is
 
             Current_Construct := Current_Construct.Next;
          end loop;
+
       elsif File_Name (File_Name'Last - 3 .. File_Name'Last) = ".adb" then
          while not Found
            and then Current_Construct /= null
@@ -143,8 +146,7 @@ package body Aunit_Filters is
       --  Find the name of the main unit.
 
       if Found then
-         Package_Name := GNAT.OS_Lib.String_Access
-           (Constructs.Last.Name);
+         Package_Name := GNAT.OS_Lib.String_Access (Constructs.Last.Name);
       end if;
 
    exception
@@ -169,8 +171,9 @@ package body Aunit_Filters is
       Text      : out GNAT.OS_Lib.String_Access)
    is
       pragma Unreferenced (Win);
-      Suite_Name   : GNAT.OS_Lib.String_Access := null;
+      Suite_Name   : GNAT.OS_Lib.String_Access;
       Package_Name : GNAT.OS_Lib.String_Access;
+
    begin
       --  To find suites, look for tests and suites in body files.
 
@@ -180,17 +183,18 @@ package body Aunit_Filters is
          Get_Suite_Name (Dir & File, Package_Name, Suite_Name);
 
          if Suite_Name /= null then
-            State := Normal;
-            Text := Suite_Name;
+            State  := Normal;
+            Text   := Suite_Name;
             Pixmap := Filter.Suite_Pixmap;
-            Mask := Filter.Suite_Bitmap;
+            Mask   := Filter.Suite_Bitmap;
+            return;
          end if;
-      else
-         State := Invisible;
-         Text := new String'("");
-         Pixmap := Gdk.Pixmap.Null_Pixmap;
-         Mask   := Gdk.Bitmap.Null_Bitmap;
       end if;
+
+      State  := Invisible;
+      Text   := new String'("");
+      Pixmap := Gdk.Pixmap.Null_Pixmap;
+      Mask   := Gdk.Bitmap.Null_Bitmap;
    end Use_File_Filter;
 
    ---------------------
@@ -214,13 +218,13 @@ package body Aunit_Filters is
       Get_Suite_Name (Dir & File, Package_Name, Suite_Name);
 
       if Suite_Name /= null then
-         State := Normal;
-         Text := Suite_Name;
+         State  := Normal;
+         Text   := Suite_Name;
          Pixmap := Filter.Suite_Pixmap;
-         Mask := Filter.Suite_Bitmap;
+         Mask   := Filter.Suite_Bitmap;
       else
-         State := Invisible;
-         Text := new String'("");
+         State  := Invisible;
+         Text   := new String'("");
          Pixmap := Gdk.Pixmap.Null_Pixmap;
          Mask   := Gdk.Bitmap.Null_Bitmap;
       end if;
@@ -243,7 +247,8 @@ package body Aunit_Filters is
       pragma Unreferenced (Win);
    begin
       --  ??? In fact, we should gather all the possible extensions in the
-      --  ??? projects, as well as the naming scheme exceptions.
+      --  projects, as well as the naming scheme exceptions.
+
       if File'Length >= 4
         and then (File (File'Last - 3 .. File'Last) = ".ads"
                   or else File (File'Last - 3 .. File'Last) = ".adb")
@@ -254,8 +259,9 @@ package body Aunit_Filters is
             Found     : Boolean := False;
             File_T    : File_Type;
             Index_End : Integer;
-            Line      : String (1 .. 256);
+            Line      : String (1 .. 1024);
             Line_Last : Integer;
+
          begin
             Ada.Text_IO.Open (File_T, In_File, Dir & File);
 
@@ -285,6 +291,7 @@ package body Aunit_Filters is
             when End_Error =>
                Close (File_T);
          end;
+
       elsif File'Length >= 4
         and then File (File'Last - 3 .. File'Last) = Project_File_Extension
       then
