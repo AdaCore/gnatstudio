@@ -214,8 +214,8 @@ endif
 # Automatic handling of dependencies
 
 ifeq ($(strip $(filter-out %gcc,$(CC))),)
-# Compiler is GCC, take avantage of the preprocessor option -MD
-DEP_CFLAGS = -Wp,-MD,$(OBJ_DIR)/$(*F).d
+# Compiler is GCC, take avantage of the preprocessor option -MMD
+DEP_CFLAGS = -Wp,-MMD,$(OBJ_DIR)/$(*F).d
 
 else
 # Compiler unknown, use a more general approach based on the output of $(CC) -M
