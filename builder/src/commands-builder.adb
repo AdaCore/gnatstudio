@@ -84,7 +84,7 @@ package body Commands.Builder is
       String_List_Utils.String_List.Append
         (Builder_Module_ID_Access (Builder_Module_ID).Output,
          Output);
-      Parse_File_Locations (Kernel, Output, -"Builder Results", True);
+      Parse_File_Locations (Kernel, Output, "builder_results", True);
 
    exception
       when E : others =>
