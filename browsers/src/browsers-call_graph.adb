@@ -23,13 +23,12 @@ with Glib.Xml_Int;     use Glib.Xml_Int;
 with Glib.Object;      use Glib.Object;
 with Gdk.GC;           use Gdk.GC;
 with Gdk.Event;        use Gdk.Event;
-with Gdk.Drawable;     use Gdk.Drawable;
 with Gtk.Image;            use Gtk.Image;
 with Gtk.Image_Menu_Item;  use Gtk.Image_Menu_Item;
 with Gtk.Main;         use Gtk.Main;
 with Gtk.Menu;         use Gtk.Menu;
 with Gtk.Menu_Item;    use Gtk.Menu_Item;
-with Gtk.Style;        use Gtk.Style;
+with Gtk.Object;       use Gtk.Object;
 with Gtk.Widget;       use Gtk.Widget;
 with Pango.Layout;     use Pango.Layout;
 with Gtkada.Canvas;    use Gtkada.Canvas;
@@ -96,6 +95,7 @@ package body Browsers.Call_Graph is
    type Entity_Item_Record is new Browsers.Canvas.Arrow_Item_Record
    with record
       Entity : Src_Info.Queries.Entity_Information;
+      Refs   : Xref_List;
    end record;
    type Entity_Item is access all Entity_Item_Record'Class;
 
@@ -133,6 +133,26 @@ package body Browsers.Call_Graph is
       Xoffset, Yoffset            : in out Glib.Gint;
       Layout                  : access Pango.Layout.Pango_Layout_Record'Class);
    --  See doc for inherited subprogram
+
+   function Build
+     (Kernel : access Kernel_Handle_Record'Class;
+      Parent_Item : access Entity_Item_Record'Class;
+      File   : Virtual_File;
+      Line, Column : Natural) return Active_Area_Cb;
+   --  Build a callback for links in callgraph items
+
+   type Show_Location_Callback is new Active_Area_Callback with record
+      Kernel : Kernel_Handle;
+      Parent : Entity_Item;
+      File   : Virtual_File;
+      Line   : Natural;
+      Column : Natural;
+   end record;
+   type Show_Location_Callback_Access
+     is access all Show_Location_Callback'Class;
+   function Call (Callback : Show_Location_Callback;
+                  Event    : Gdk.Event.Gdk_Event) return Boolean;
+   --  See inherated doc
 
    --------------------
    -- Renaming links --
@@ -398,6 +418,21 @@ package body Browsers.Call_Graph is
                   Examine_Ancestors_Call_Graph'Access,
                   Examine_Entity_Call_Graph'Access);
       Set_Children_Shown (Item, not May_Have_To_Dependencies);
+
+      if not Is_Predefined_Entity (Entity) then
+         Add_Line
+           (Item.Refs,
+            "(Decl) @" & Base_Name (Get_Declaration_File_Of (Item.Entity))
+            & ':' & Image (Get_Declaration_Line_Of (Item.Entity)) & '@',
+            Length1 => 0,
+            Callback => Build (Get_Kernel (Get_Browser (Item)),
+                               Item,
+                               Get_Declaration_File_Of (Item.Entity),
+                               Get_Declaration_Line_Of (Item.Entity),
+                               Get_Declaration_Column_Of (Item.Entity)));
+      else
+         Add_Line (Item.Refs, "<Unresolved>");
+      end if;
    end Initialize;
 
    -------------
@@ -405,9 +440,56 @@ package body Browsers.Call_Graph is
    -------------
 
    procedure Destroy (Item : in out Entity_Item_Record) is
+      Item2 : constant Entity_Item := Item'Unrestricted_Access;
+      Iter : Item_Iterator := Start (Get_Canvas (Get_Browser (Item2)));
+      It : Canvas_Item;
+      Line : Positive;
+      Text : String_Access;
+      Callback : Active_Area_Cb;
+      Cb : Show_Location_Callback_Access;
+      Removed : Boolean;
    begin
-      Destroy (Arrow_Item_Record (Item));
+      if not Gtk.Object.In_Destruction_Is_Set (Get_Browser (Item2)) then
+         --  Remove all references to the current item in other items, to keep
+         --  the browser's contents as simple as possible.
+
+         --  We have to iterate over all items, since the item being destroyed
+         --  is no longer linked to anything at this point.
+
+         loop
+            It := Get (Iter);
+            exit when It = null;
+
+            Removed := False;
+            Line := 1;
+            loop
+               Get_Line (Entity_Item (It).Refs, Line, Callback, Text);
+               exit when Text = null;
+
+               if Callback /= null then
+                  Cb := Show_Location_Callback_Access (Callback);
+                  if Cb.Parent = Item2 then
+                     Remove_Line (Entity_Item (It).Refs, Line);
+                     Removed := True;
+                  else
+                     Line := Line + 1;
+                  end if;
+               else
+                  Line := Line + 1;
+               end if;
+            end loop;
+
+            if Removed then
+               Refresh (Entity_Item (It));
+            end if;
+
+            Next (Iter);
+         end loop;
+      end if;
+
       Destroy (Item.Entity);
+      Free (Item.Refs);
+      Destroy (Arrow_Item_Record (Item));
    end Destroy;
 
    ----------------
@@ -649,6 +731,9 @@ package body Browsers.Call_Graph is
          Set_Children_Shown (Cb.Item, True);
          Examine_Entity_Call_Graph_Iterator
            (Kernel, Entity, Cb, Add_Entity_And_Link'Access);
+
+         --  Refresh all linked items, since we have added references in them
+         Refresh_Linked_Items (Cb.Item, Refresh_Children => True);
       end if;
 
       --  We need to do a layout in all cases, so that the newly added item
@@ -686,6 +771,9 @@ package body Browsers.Call_Graph is
 
    begin
       if Data.Callback.Browser /= null then
+         --  Refresh the item, since we might have added links to it
+         Refresh (Data.Callback.Item);
+
          Layout (Data.Callback.Browser, Force => False);
          Refresh_Canvas (Get_Canvas (Data.Callback.Browser));
          Show_Item (Get_Canvas (Data.Callback.Browser), Data.Callback.Item);
@@ -837,9 +925,9 @@ package body Browsers.Call_Graph is
       Ref         : E_Reference;
       Is_Renaming : Boolean)
    is
-      pragma Unreferenced (Ref);
       Child : Entity_Item;
       Link  : Browser_Link;
+      Loc   : File_Location;
    begin
       Child := Add_Entity_If_Not_Present (Cb.Browser, Entity);
 
@@ -867,6 +955,34 @@ package body Browsers.Call_Graph is
                          Src => Child, Dest => Cb.Item);
             end if;
          end if;
+      end if;
+
+      Loc := Get_Location (Ref);
+
+      if Cb.Link_From_Item then
+         Add_Line
+           (Child.Refs,
+            "@("
+            & Get_Name (Cb.Item.Entity) & ") "
+            & Image (Get_Line (Loc)) & ':' & Image (Get_Column (Loc)) & '@',
+            Length1 => 0,
+            Callback => Build (Get_Kernel (Get_Browser (Child)),
+                               Cb.Item,
+                               Get_File (Loc),
+                               Get_Line (Loc),
+                               Get_Column (Loc)));
+      else
+         Add_Line
+           (Cb.Item.Refs,
+            "@("
+            & Get_Name (Child.Entity) & ") "
+            & Image (Get_Line (Loc)) & ':' & Image (Get_Column (Loc)) & '@',
+            Length1 => 0,
+            Callback => Build (Get_Kernel (Get_Browser (Child)),
+                               Child,
+                               Get_File (Loc),
+                               Get_Line (Loc),
+                               Get_Column (Loc)));
       end if;
    end Add_Entity_And_Link;
 
@@ -1822,6 +1938,42 @@ package body Browsers.Call_Graph is
          Join_Style => Join_Miter);
    end Draw_Link;
 
+   -----------
+   -- Build --
+   -----------
+
+   function Build
+     (Kernel : access Kernel_Handle_Record'Class;
+      Parent_Item : access Entity_Item_Record'Class;
+      File   : Virtual_File;
+      Line, Column : Natural) return Active_Area_Cb is
+   begin
+      return new Show_Location_Callback'
+        (Active_Area_Callback with
+         Kernel => Kernel_Handle (Kernel),
+         Parent => Entity_Item (Parent_Item),
+         File   => File,
+         Line   => Line,
+         Column => Column);
+   end Build;
+
+   ----------
+   -- Call --
+   ----------
+
+   function Call (Callback : Show_Location_Callback;
+                  Event    : Gdk.Event.Gdk_Event) return Boolean
+   is
+      pragma Unreferenced (Event);
+   begin
+      Open_File_Editor
+        (Callback.Kernel,
+         Filename => Callback.File,
+         Line     => Callback.Line,
+         Column   => Callback.Column);
+      return True;
+   end Call;
+
    ---------------------
    -- Resize_And_Draw --
    ---------------------
@@ -1833,30 +1985,19 @@ package body Browsers.Call_Graph is
       Xoffset, Yoffset            : in out Glib.Gint;
       Layout                  : access Pango.Layout.Pango_Layout_Record'Class)
    is
-      W, H : Gint;
+      Ref_W1, Ref_W2, Ref_H, Y : Gint;
    begin
-      if not Is_Predefined_Entity (Item.Entity) then
-         Set_Text (Layout,
-                   Base_Name (Get_Declaration_File_Of (Item.Entity))
-                   & ':' & Image (Get_Declaration_Line_Of (Item.Entity)));
-      else
-         Set_Text (Layout, -"<Unresolved>");
-      end if;
-
-      Get_Pixel_Size (Layout, W, H);
+      Get_Pixel_Size
+        (Get_Browser (Item), Item.Refs, Ref_W1, Ref_W2, Ref_H,  Layout);
 
       Resize_And_Draw
         (Arrow_Item_Record (Item.all)'Access,
-         Gint'Max (Width, W + 2 * Margin),
-         Height + H,
+         Gint'Max (Ref_W1 + Ref_W2 + 2 * Margin, Width),
+         Height + Ref_H,
          Width_Offset, Height_Offset, Xoffset, Yoffset, Layout);
 
-      Draw_Layout
-        (Drawable => Pixmap (Item),
-         GC       => Get_Black_GC (Get_Style (Get_Browser (Item))),
-         X        => Xoffset + Margin,
-         Y        => Yoffset + 1,
-         Layout   => Pango_Layout (Layout));
+      Y := Yoffset + 1;
+      Display_Lines (Item, Item.Refs, Margin + Xoffset, Y, Ref_W1, Layout);
    end Resize_And_Draw;
 
 end Browsers.Call_Graph;
