@@ -782,7 +782,6 @@ package body GVD.Memory_View is
      (View  : access GVD_Memory_View_Record'Class;
       Where : in Dir)
    is
-      Move       : Gint := 0;
       Position   : constant Gint := Get_Position (View.View);
       ASCII_Size : Integer := 0;
 
@@ -826,13 +825,6 @@ package body GVD.Memory_View is
                   Set_Position
                     (View.View, Position + Data_Separator'Length);
                end if;
-
-            end if;
-
-            if Get_Chars (View.View, Position + 2, Position + 3) (1)
-              = End_Of_Line (End_Of_Line'First)
-            then
-               Move := 21;
             end if;
 
          when Left =>
