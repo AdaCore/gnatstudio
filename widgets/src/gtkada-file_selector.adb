@@ -1429,8 +1429,7 @@ package body Gtkada.File_Selector is
       Set_Column_Width (File_Selector_Window.Explorer_Tree, 2, 80);
       Widget_Callback.Connect
         (File_Selector_Window.Explorer_Tree, "tree_select_row",
-         Widget_Callback.To_Marshaller (On_Explorer_Tree_Select_Row'Access),
-         After => True);
+         Widget_Callback.To_Marshaller (On_Explorer_Tree_Select_Row'Access));
       Add (File_Selector_Window.Explorer_Tree_Scrolledwindow,
            File_Selector_Window.Explorer_Tree);
 
