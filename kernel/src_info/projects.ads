@@ -149,6 +149,10 @@ package Projects is
    --  The empty string is returned if the project doesn't have any object
    --  directory (i.e. the user explicitely set it to the empty string).
 
+   function Directory_Contains_Files
+     (Project   : Project_Type;
+      Directory : String) return Boolean;
+   --  True if Directory contains at least one source file of Project.
 
    ------------------
    -- Source files --
@@ -529,6 +533,12 @@ private
    --  You should never call this function yourself, since the project also
    --  needs to be registered in the registry. Use Get_Project_From_Name from
    --  name instead.
+
+   procedure Update_Directory_Cache
+     (Project   : Project_Type;
+      Dir_Name  : String;
+      Has_Files : Boolean);
+   --  Update the directories cache.
 
    procedure Destroy (Project : in out Project_Type);
    --  Free the memory associated with the project.

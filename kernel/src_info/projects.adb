@@ -38,6 +38,7 @@ with Projects.Graphs;           use Projects.Graphs;
 with Projects.Editor;           use Projects.Editor;
 with Projects.Registry;         use Projects.Registry;
 with Snames;                    use Snames;
+with String_Hash;
 with String_Utils;              use String_Utils;
 with Stringt;                   use Stringt;
 with Traces;                    use Traces;
@@ -48,6 +49,19 @@ package body Projects is
    Me : constant Debug_Handle := Create ("Projects");
 
    type Name_Id_Array_Access is access Name_Id_Array;
+
+   type Directory_Info is record
+      Has_Files  : Boolean;
+   end record;
+   No_Directory_Info : constant Directory_Info := (Has_Files => False);
+
+   procedure Do_Nothing (Dep : in out Directory_Info);
+
+   package Directory_Htable is new String_Hash
+     (Data_Type => Directory_Info,
+      Free_Data => Do_Nothing,
+      Null_Ptr  => No_Directory_Info);
+   use Directory_Htable.String_Hash_Table;
 
    type Project_Type_Data is record
       View : Prj.Project_Id;
@@ -67,6 +81,9 @@ package body Projects is
       Importing_Projects : Name_Id_Array_Access;
       --  Sorted list of imported projects (Cache for
       --  Imported_Project_Iterator)
+
+      Directories : Directory_Htable.String_Hash_Table.HTable;
+      --  Information for the various directories of the project
 
       Registry   : Project_Registry_Access;
       --  Needed so that we can return other projects like imported projects
@@ -126,6 +143,28 @@ package body Projects is
    function Substitute_Dot
      (Unit_Name : String; Dot_Replacement : String) return String;
    --  Replace the '.' in unit_name with Dot_Replacement
+
+   ----------------
+   -- Do_Nothing --
+   ----------------
+
+   procedure Do_Nothing (Dep : in out Directory_Info) is
+      pragma Unreferenced (Dep);
+   begin
+      null;
+   end Do_Nothing;
+
+   ----------------------------
+   -- Update_Directory_Cache --
+   ----------------------------
+
+   procedure Update_Directory_Cache
+     (Project   : Project_Type;
+      Dir_Name  : String;
+      Has_Files : Boolean) is
+   begin
+      Set (Project.Data.Directories, Dir_Name, (Has_Files => Has_Files));
+   end Update_Directory_Cache;
 
    ------------------
    -- Save_Project --
@@ -1392,7 +1431,10 @@ package body Projects is
          P := Get_Project_From_Name
            (Iterator.Root.Data.Registry.all,
             Iterator.Root.Data.Imported_Projects (Iterator.Current));
-         Assert (Me, P /= No_Project, "Current: project not found");
+         Assert (Me, P /= No_Project,
+                 "Current: project not found: "
+                 & Get_String (Iterator.Root.Data.Imported_Projects
+                               (Iterator.Current)));
          return P;
       end if;
 
@@ -2147,5 +2189,19 @@ package body Projects is
       end if;
       return From_Project;
    end Get_Executable_Name;
+
+   ------------------------------
+   -- Directory_Contains_Files --
+   ------------------------------
+
+   function Directory_Contains_Files
+     (Project   : Project_Type;
+      Directory : String) return Boolean
+   is
+      Info : constant Directory_Info := Get
+        (Project.Data.Directories, Name_As_Directory (Directory));
+   begin
+      return Info.Has_Files;
+   end Directory_Contains_Files;
 
 end Projects;
