@@ -695,6 +695,10 @@ package body Browsers.Canvas is
    begin
       Grab_Focus (General_Browser (Browser).Canvas);
       Internal_Select (General_Browser (Browser), null, True);
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Background_Click;
 
    -----------------
@@ -761,8 +765,9 @@ package body Browsers.Canvas is
    -- Reset --
    -----------
 
-   procedure Reset (Browser : access General_Browser_Record'Class;
-                    Item : access Browser_Item_Record)
+   procedure Reset
+     (Browser : access General_Browser_Record'Class;
+      Item    : access Browser_Item_Record)
    is
       pragma Unreferenced (Browser, Item);
    begin
@@ -773,8 +778,9 @@ package body Browsers.Canvas is
    -- Reset --
    -----------
 
-   procedure Reset (Browser : access General_Browser_Record'Class;
-                    Item : access Text_Item_With_Arrows_Record)
+   procedure Reset
+     (Browser : access General_Browser_Record'Class;
+      Item    : access Text_Item_With_Arrows_Record)
    is
       pragma Unreferenced (Browser);
    begin
@@ -1197,6 +1203,10 @@ package body Browsers.Canvas is
 
       Raise_Item (Get_Canvas (Get_Browser (Item)), Item);
       Activate (Browser_Item (Item), Event);
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Button_Click;
 
    -----------------
