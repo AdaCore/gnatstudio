@@ -18,6 +18,8 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with GVD;                  use GVD;
+
 with Glib;                 use Glib;
 with Glib.Object;          use Glib.Object;
 with Glib.Values;
@@ -274,7 +276,34 @@ package body Glide_Kernel.Timeout is
          end if;
 
          Fd := new TTY_Process_Descriptor;
-         Non_Blocking_Spawn (Fd.all, Exec.all, Arguments, Err_To_Out => True);
+
+         if Host = Windows then
+            declare
+               Exec_Command_Args : GNAT.OS_Lib.Argument_List_Access;
+               Real_Args         : GNAT.OS_Lib.Argument_List_Access;
+            begin
+               Exec_Command_Args :=
+                 GNAT.OS_Lib.Argument_String_To_List (Exec_Command);
+               Real_Args := new GNAT.OS_Lib.Argument_List (1 .. 1);
+               Real_Args (1) := new String'(Command);
+
+               Non_Blocking_Spawn
+                 (Fd.all,
+                  Exec_Command_Args (Exec_Command_Args'First).all,
+                  Exec_Command_Args
+                    (Exec_Command_Args'First + 1 .. Exec_Command_Args'Last)
+                  & Real_Args.all
+                  & Arguments,
+                  Err_To_Out => True);
+
+               GNAT.OS_Lib.Free (Real_Args);
+               GNAT.OS_Lib.Free (Exec_Command_Args);
+            end;
+         else
+            Non_Blocking_Spawn
+              (Fd.all, Exec.all, Arguments, Err_To_Out => True);
+         end if;
+
          Success := True;
          Free (Exec);
 
