@@ -21,11 +21,9 @@
 with Glib;                use Glib;
 with Gdk.Color;           use Gdk.Color;
 with Gdk.Event;           use Gdk.Event;
---  ??? Needed by GtkAda 1.2 but not GtkAda 2.0
 pragma Warnings (Off);
 with Gdk.Types;           use Gdk.Types;
 pragma Warnings (On);
-with Gdk.Types;           use Gdk.Types;
 with Gdk.Window;          use Gdk.Window;
 with Gtk.Box;
 with Gtk.Pixmap;          use Gtk.Pixmap;

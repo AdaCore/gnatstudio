@@ -22,7 +22,10 @@ with Gtk; use Gtk;
 with Gtk.Enums;       use Gtk.Enums;
 with Gtkada.Handlers; use Gtkada.Handlers;
 with Callbacks_Odd;   use Callbacks_Odd;
+pragma Warnings (Off);
+with Gdk.Event;       use Gdk.Event;
 with Gdk.Types;       use Gdk.Types;
+pragma Warnings (On);
 
 with Process_Tab_Pkg.Callbacks; use Process_Tab_Pkg.Callbacks;
 with Interfaces.C.Strings; use Interfaces.C.Strings;
