@@ -86,7 +86,8 @@ package Histories is
      (Hist        : History_Record;
       Key         : History_Key;
       Combo       : access Gtk.Combo.Gtk_Combo_Record'Class;
-      Clear_Combo : Boolean := True);
+      Clear_Combo : Boolean := True;
+      Prepend     : Boolean := False);
    --  Set the contents of the combo to the list of strings associated with
    --  Key.
    --  If Clear_Combo is False, then the previous contents of the combo is kept

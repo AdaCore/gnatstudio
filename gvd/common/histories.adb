@@ -278,7 +278,8 @@ package body Histories is
      (Hist  : History_Record;
       Key   : History_Key;
       Combo : access Gtk.Combo.Gtk_Combo_Record'Class;
-      Clear_Combo : Boolean := True)
+      Clear_Combo : Boolean := True;
+      Prepend     : Boolean := False)
    is
       Item : Gtk_List_Item;
       List : constant Gtk_List := Get_List (Combo);
@@ -301,7 +302,7 @@ package body Histories is
                   Show (Item);
                   Add (List, Item);
                else
-                  Add_Unique_List_Entry (List, Value (V).all);
+                  Add_Unique_List_Entry (List, Value (V).all, Prepend);
                end if;
             end if;
          end loop;
