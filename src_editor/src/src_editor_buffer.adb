@@ -18,6 +18,13 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Ada.Exceptions;            use Ada.Exceptions;
+with Ada.Calendar;              use Ada.Calendar;
+with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
+with Ada.Unchecked_Deallocation;
+with Interfaces.C.Strings;      use Interfaces.C.Strings;
+with System;
+
 with Glib;                      use Glib;
 with Glib.Convert;              use Glib.Convert;
 with Glib.Object;               use Glib.Object;
@@ -43,14 +50,10 @@ with Language;                  use Language;
 with Language_Handlers;         use Language_Handlers;
 with Src_Highlighting;          use Src_Highlighting;
 
-with Interfaces.C.Strings;      use Interfaces.C.Strings;
-with System;
-with Glide_Intl;                use Glide_Intl;
-
 with Language_Handlers.Glide;   use Language_Handlers.Glide;
 with Commands.Editor;           use Commands.Editor;
 with Commands.Controls;         use Commands.Controls;
-with Src_Editor_Module;         use Src_Editor_Module;
+with Glide_Intl;                use Glide_Intl;
 with Glide_Kernel;              use Glide_Kernel;
 with Glide_Kernel.Console;      use Glide_Kernel.Console;
 with Glide_Kernel.Contexts;     use Glide_Kernel.Contexts;
@@ -58,21 +61,18 @@ with Glide_Kernel.Hooks;        use Glide_Kernel.Hooks;
 with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
 with Glide_Kernel.Project;      use Glide_Kernel.Project;
 with Glide_Kernel.Scripts;      use Glide_Kernel.Scripts;
-with Ada.Exceptions;            use Ada.Exceptions;
-with Ada.Calendar;              use Ada.Calendar;
 with String_Utils;              use String_Utils;
 with Traces;                    use Traces;
-with Src_Editor_View;           use Src_Editor_View;
 with Casing_Exceptions;         use Casing_Exceptions;
 
 with Pango.Font;                use Pango.Font;
 
 with String_List_Utils;         use String_List_Utils;
-with Ada.Unchecked_Deallocation;
 with VFS;                       use VFS;
 
+with Src_Editor_Module;         use Src_Editor_Module;
 with Src_Editor_Module.Line_Highlighting;
-
+with Src_Editor_View;           use Src_Editor_View;
 with Src_Editor_Buffer.Blocks;
 with Src_Editor_Buffer.Line_Information;
 with Src_Editor_Buffer.Hooks;   use Src_Editor_Buffer.Hooks;
@@ -4577,6 +4577,368 @@ package body Src_Editor_Buffer is
                 "Unexpected exception: " & Exception_Information (E));
          return False;
    end Do_Indentation;
+
+   ---------------
+   -- Do_Refill --
+   ---------------
+
+   function Do_Refill (Buffer : Source_Buffer) return Boolean is
+
+      Max       : constant Positive :=
+                    Positive (Get_Pref (Buffer.Kernel, Highlight_Column));
+      --  Right margin, wrap line if longer than Max character
+
+      From, To  : Gtk_Text_Iter;
+      From_Line : Editable_Line_Type;
+      To_Line   : Editable_Line_Type;
+      --  Block to work on
+
+      B_Sep     : Basic_Types.String_Access; --  Spaces/TAB before comment line
+      Sep       : Basic_Types.String_Access; --  Comment symbol
+      After     : Natural;                   --  Spaces after comment symbol
+      --  Note that if Sep is null we are not working on a comment, in this
+      --  case Indent and After must be ignored.
+
+      New_Text  : Unbounded_String;
+      --  The new content, will replace the selection
+
+      Is_First  : Boolean := True; -- True if first iteration (first line)
+      Is_Start  : Boolean := True; -- True if at the start of a new line
+      Line_Size : Natural := 0;    -- Current line size
+
+      procedure Analyse_Line
+        (Buffer : Source_Buffer;
+         Line   : Editable_Line_Type);
+      --  Analyse line content and set refill separator if comment
+
+      procedure Add_Result (Str : String; Last_Line : Boolean);
+      --  Add Str to the result string, Last_Line is set to true if Str is
+      --  the last line content.
+
+      ----------------
+      -- Add_Result --
+      ----------------
+
+      procedure Add_Result (Str : String; Last_Line : Boolean) is
+
+         Insert_EOL : Boolean := True;
+
+         procedure Add (Str : String);
+         pragma Inline (Add);
+         --  Add Str to the result string
+
+         procedure Add_Word (Word : String);
+         --  Add Word to the result string, properly insert a new-line if
+         --  line goes over the right margin.
+
+         procedure Add_EOL (Force : Boolean := False);
+         --  Add LF to the result string if needed
+
+         ---------
+         -- Add --
+         ---------
+
+         procedure Add (Str : String) is
+         begin
+            Append (New_Text, Str);
+
+            for K in Str'Range loop
+               if Str (K) = ASCII.HT then
+                  Line_Size := Line_Size + 8;
+               else
+                  Line_Size := Line_Size + 1;
+               end if;
+            end loop;
+         end Add;
+
+         -------------
+         -- Add_EOL --
+         -------------
+
+         procedure Add_EOL (Force : Boolean := False) is
+         begin
+            if Force or else Insert_EOL then
+               Add ((1 => ASCII.LF));
+               Is_Start := True;
+               Line_Size := 0;
+
+            else
+               --  EOL was temporaryly disabled, reenable it now
+               Insert_EOL := True;
+            end if;
+         end Add_EOL;
+
+         --------------
+         -- Add_Word --
+         --------------
+
+         procedure Add_Word (Word : String) is
+            Space : constant String := (1 => ' ');
+         begin
+            --  Does this word fits on the line
+
+            if Line_Size + Word'Length + 1 >= Max then
+               --  +1 for the space before the word
+               Add_EOL (True);
+            end if;
+
+            if Is_Start then
+               --  Add spaces before comment line
+
+               if B_Sep /= null then
+                  Add (B_Sep.all);
+               end if;
+
+               if Sep /= null then
+                  if Is_First then
+                     Is_First := False;
+                     Add (Sep.all);
+
+                  else
+                     if Sep'Length > 1
+                       and then Sep (Sep'First) /= Sep (Sep'First + 1)
+                     then
+                        --  Comment separator is composed of 2 different
+                        --  characters, treat it a a multi-line comment, just
+                        --  add Sep'length spaces
+
+                        for K in Sep'Range loop
+                           Add (Space);
+                        end loop;
+
+                     else
+                        Add (Sep.all);
+                     end if;
+                  end if;
+
+                  --  Add spaces after comment separator
+
+                  for K in 1 .. After loop
+                     Add (Space);
+                  end loop;
+               end if;
+
+               Is_Start := False;
+
+            else
+               --  Add a space before this word, this is not done for the
+               --  first word on the line.
+               Add (Space);
+            end if;
+
+            Add (Word);
+         end Add_Word;
+
+         F, L : Natural;
+
+      begin
+         if Str'Length > Max then
+            --  This line is longer than the limit, do not insert a new-line
+            --  after it, we want the following line to continue on the same
+            --  line.
+            Insert_EOL := False;
+         else
+            Insert_EOL := True;
+         end if;
+
+         F := Str'First;
+
+         while F < Str'Last loop
+            --  Skip spaces and HT
+
+            while F < Str'Last
+              and then (Str (F) = ' ' or else Str (F) = ASCII.HT)
+            loop
+               F := F + 1;
+            end loop;
+
+            --  Skip comment separator
+
+            if Sep /= null
+              and then F + Sep'Length <= Str'Last
+              and then Str (F .. F + Sep'Length - 1) = Sep.all
+            then
+               F := F + Sep'Length;
+            end if;
+
+            --  Skip spaces
+
+            while F < Str'Last and then Str (F) = ' ' loop
+               F := F + 1;
+            end loop;
+
+            --  Get word
+
+            L := F;
+            while L < Str'Last and then Str (L) /= ' ' loop
+               L := L + 1;
+            end loop;
+
+            if Str (L) = ' ' then
+               Add_Word (Str (F .. L - 1));
+            else
+               Add_Word (Str (F .. L));
+            end if;
+
+            F := L + 1;
+         end loop;
+
+         Add_EOL (Force => Last_Line);
+      end Add_Result;
+
+      ------------------
+      -- Analyse_Line --
+      ------------------
+
+      procedure Analyse_Line
+        (Buffer : Source_Buffer;
+         Line   : Editable_Line_Type)
+      is
+         F, L : Natural;
+
+         procedure Parse_Comment_Sep (Line : Src_String; P : in out Natural);
+         --  Parse comment separator starting a position P in Line. Set
+         --  P to last character in separator.
+
+         -----------------------
+         -- Parse_Comment_Sep --
+         -----------------------
+
+         procedure Parse_Comment_Sep (Line : Src_String; P : in out Natural) is
+         begin
+            if P < Line.Length + 1
+              and then
+                (Line.Contents (P + 1 .. P + 2) = "/*"
+                 or else Line.Contents (P + 1 .. P + 2) = "//"
+                 or else Line.Contents (P + 1 .. P + 2) = "--")
+            then
+               --  This is a 2 characters comment separator
+               P := P + 2;
+
+            elsif P < Line.Length
+              and then Line.Contents (P + 1) = '#'
+            then
+               --  A single character comment separator
+               P := P + 1;
+            end if;
+         end Parse_Comment_Sep;
+
+      begin
+         declare
+            First_Line : constant Src_String := Get_String (Buffer, Line);
+         begin
+            if First_Line.Contents = null then
+               --  Emptry line, nothing to do
+               return;
+            end if;
+
+            --  Get current indent level based on the first line. Note that
+            --  this routine will change the indentation level based on the
+            --  first Line.
+
+            F := 0;
+            while F + 1 <= First_Line.Length
+              and then (First_Line.Contents (F + 1) = ' '
+                        or else First_Line.Contents (F + 1) = ASCII.HT)
+            loop
+               F := F + 1;
+            end loop;
+
+            if F > 0 then
+               B_Sep := new String'(First_Line.Contents (1 .. F));
+            end if;
+
+            --  Get comment separator if any
+
+            L := F;
+            F := F + 1;
+
+            Parse_Comment_Sep (First_Line, L);
+
+            if L >= F then
+               Sep := new String'(First_Line.Contents (F .. L));
+            end if;
+
+            --  Get spaces after comment separator
+
+            if Sep /= null then
+               After := 0;
+               while L < First_Line.Length + 1
+                 and then First_Line.Contents (L + 1) = ' '
+               loop
+                  L := L + 1;
+                  After := After + 1;
+               end loop;
+            end if;
+         end;
+      end Analyse_Line;
+
+   begin -- Do_Refill
+      declare
+         Result : Boolean;
+      begin
+         Get_Selection_Bounds (Buffer, From, To, Result);
+
+         if Result then
+            --  Do not consider a line selected if only the first character
+            --  is selected.
+
+            if Get_Line_Offset (To) = 0 then
+               Backward_Char (To, Result);
+            end if;
+
+            --  Do not consider a line selected if only the last character is
+            --  selected.
+
+            if Ends_Line (From) then
+               Forward_Char (From, Result);
+            end if;
+
+            --  Get editable lines
+
+            From_Line := Get_Editable_Line
+              (Buffer, Buffer_Line_Type (Get_Line (From) + 1));
+            To_Line := Get_Editable_Line
+              (Buffer, Buffer_Line_Type (Get_Line (To) + 1));
+
+         else
+            --  No selection, get the current position
+            declare
+               Column : Positive;
+            begin
+               Get_Cursor_Position (Buffer, From_Line, Column);
+               To_Line := From_Line;
+            end;
+         end if;
+      end;
+
+      Analyse_Line (Buffer, From_Line);
+
+      --  Create new content
+
+      for K in From_Line .. To_Line loop
+         declare
+            Line : constant Src_String := Get_String (Buffer, K);
+         begin
+            if Line.Contents = null then
+               Add_Result ("", Last_Line => K = To_Line);
+            else
+               Add_Result
+                 (Line.Contents (1 .. Line.Length), Last_Line => K = To_Line);
+            end if;
+         end;
+      end loop;
+
+      --  Replace text with the new one
+
+      Replace_Slice
+        (Buffer, From_Line, 1, To_Line + 1, 1, To_String (New_Text));
+
+      Free (B_Sep);
+      Free (Sep);
+
+      return True;
+   end Do_Refill;
 
    ------------------------------
    -- Filter_Matches_Primitive --
