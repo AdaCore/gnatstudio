@@ -390,8 +390,8 @@ package body Log_Utils is
             --  where:
             --
             --  <ISO-DATE>   A date with format YYYY-MM-DD
-            --  <name>       A name, generally the developper name
-            --  <<e-mail>>   The e-mail address of the developper surrounder
+            --  <name>       A name, generally the developer name
+            --  <<e-mail>>   The e-mail address of the developer surrounded
             --               with '<' and '>' characters.
             --  <HT>         Horizontal tabulation (or 8 spaces)
 
