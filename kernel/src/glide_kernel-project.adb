@@ -221,6 +221,7 @@ package body Glide_Kernel.Project is
 
    begin
       --  Unless we are reloading the same project
+
       if not Same_Project then
          if not Save_All_MDI_Children (Kernel, Force => False) then
             return;
@@ -232,6 +233,8 @@ package body Glide_Kernel.Project is
       end if;
 
       if Is_Regular_File (Project) then
+         Change_Dir (Dir_Name (Project));
+
          Load (Registry           => Kernel.Registry.all,
                Root_Project_Path  => Project,
                Errors             => Report_Error'Unrestricted_Access,
