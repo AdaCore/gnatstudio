@@ -1233,7 +1233,7 @@ package body Entities is
             Insert (Name, Pointer, EL);
          end if;
       else
-         E := Find (EL.all, (File, Line, Column));
+         E := Find (EL.all, (File, Line, Column_Type (Column)));
       end if;
 
       if E = null and then Allow_Create then
@@ -1241,7 +1241,7 @@ package body Entities is
            (Name                  => new String'(Name),
             Kind                  => Unresolved_Entity_Kind,
             Attributes            => (others => False),
-            Declaration           => (File, Line, Column),
+            Declaration           => (File, Line, Column_Type (Column)),
             Caller_At_Declaration => null,
             End_Of_Scope          => No_E_Reference,
             Parent_Types          => Null_Entity_Information_List,
@@ -1427,7 +1427,7 @@ package body Entities is
 
    function Get_Column (Loc : File_Location) return Natural is
    begin
-      return Loc.Column;
+      return Natural (Loc.Column);
    end Get_Column;
 
    -------------------------

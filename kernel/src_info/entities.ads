@@ -423,10 +423,12 @@ package Entities is
    -- File_Location --
    -------------------
 
+   type Column_Type is mod 2 ** 16;
+
    type File_Location is record
       File   : Source_File;
-      Line   : Natural;
-      Column : Natural;
+      Line   : Integer;
+      Column : Column_Type;
    end record;
    No_File_Location : constant File_Location := (null, 0, 0);
 
@@ -707,6 +709,11 @@ private
       Caller   : Entity_Information;
       Kind     : Reference_Kind;
    end record;
+   --  To spare some memory in the entity table, pack E_Reference,
+   --  but keep a reasonable alignment to avoid inefficiencies.
+   pragma Pack (E_Reference);
+   for E_Reference'Alignment use 4;
+
    No_E_Reference : constant E_Reference :=
      (No_File_Location, null, Reference);
    --  Caller is the enclosing entity at that location
