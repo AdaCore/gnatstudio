@@ -17,6 +17,21 @@ Known Problems fixed in GPS 2.0.1
               doesn't work on windows, where only one directory is shown
   Workaround: Deactivate this filter, and scroll to the project's directory
 
+- D603-010 Can't evaluate nested python commands
+  Problem:    When you enter interactively a command in the python console,
+              nested blocks (a if inside a while for instance), the command
+              is never executed properly and results in an error
+  Workaround: write the command in a file, and execute that file instead
+
+- D602-016 Duplicate Build menu entries with extending projects
+  Problem:    If you are using extending projects, the Build->Make menu
+              will contain apparently duplicate entries.
+  Workaround: In fact, these entries will build the same executable, but using
+              a different project each time. Click on the first entry that
+              matches the executable you want to build
+
+- D601-005 To be completed ???
+
 - D528-004 Directory names always absolute in project files on Windows
   Problem:    If you add directories to a project file through the "Edit
               project properties" dialog, the generated project file will in
