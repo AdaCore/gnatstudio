@@ -206,6 +206,11 @@ package body Debugger.Jdb is
 
       Close (Get_Descriptor (Get_Process (Debugger)).all);
       Free (Debugger.Process);
+
+      exception
+         when Process_Died =>
+            Close (Get_Descriptor (Get_Process (Debugger)).all);
+            Free (Debugger.Process);
    end Close;
 
    --------------------
@@ -264,9 +269,6 @@ package body Debugger.Jdb is
    -- Wait_Prompt --
    -----------------
 
-   In_Wait : Boolean := False;
-   --  ??? Temporary kludge to suppress when this unit is correctly implemented
-
    function Wait_Prompt
      (Debugger : access Jdb_Debugger;
       Timeout  : Integer) return Boolean
@@ -275,34 +277,28 @@ package body Debugger.Jdb is
       Matches : Match_Array (0 .. 4);
 
    begin
-      if In_Wait then
-         return False;
-      end if;
-
-      In_Wait := True;
-
       Wait (Get_Process (Debugger), Num, Prompt_Regexp, Matches, Timeout);
 
       if Matches (0) /= No_Match then
-         Send (Debugger, "where", Wait_For_Prompt => False, Mode => Internal);
-         Wait (Get_Process (Debugger), Num, Prompt_Regexp, Matches, -1);
-
-         --  ??? Shouldn't be using Expect_Out here, but the functional version
-         --  of Send.
-         if Matches (2) /= No_Match then
-            declare
-               S : String := Expect_Out (Get_Process (Debugger));
-            begin
-               Debugger.Frame :=
-                 Natural'Value (S (Matches (2).First .. Matches (2).Last));
-            end;
+         if Command_In_Process (Get_Process (Debugger)) then
+            return True;
          end if;
 
-         In_Wait := False;
+         declare
+            S : constant String :=
+              Send_Full (Debugger, "where", Mode => Internal);
+         begin
+            Match (Prompt_Regexp, S, Matches);
+
+            if Matches (2) /= No_Match then
+               Debugger.Frame :=
+                 Natural'Value (S (Matches (2).First .. Matches (2).Last));
+            end if;
+         end;
+
          return True;
       end if;
 
-      In_Wait := False;
       return False;
    end Wait_Prompt;
 
@@ -319,8 +315,7 @@ package body Debugger.Jdb is
    procedure Run
      (Debugger  : access Jdb_Debugger;
       Arguments : String := "";
-      Mode      : Command_Type := Hidden)
-   is
+      Mode      : Command_Type := Hidden) is
    begin
       if Debugger.Main_Class /= null then
          Send (Debugger, "run " & Debugger.Main_Class.all, Mode => Mode);
@@ -341,16 +336,18 @@ package body Debugger.Jdb is
       Mode      : Command_Type := Hidden) is
    begin
       Send (Debugger, "stop in " & Debugger.Main_Class.all & '.' &
-         Debugger.Main_Class.all, Mode => Mode);
-      Run (Debugger, "", Mode);
+        Debugger.Main_Class.all & ASCII.LF & "run " & Debugger.Main_Class.all,
+        Mode => Mode);
+      Set_Is_Started (Debugger, True);
    end Start;
 
    ---------------
    -- Step_Into --
    ---------------
 
-   procedure Step_Into (Debugger : access Jdb_Debugger;
-                        Mode     : Command_Type := Hidden) is
+   procedure Step_Into
+     (Debugger : access Jdb_Debugger;
+      Mode     : Command_Type := Hidden) is
    begin
       Send (Debugger, "step", Mode => Mode);
    end Step_Into;
@@ -359,8 +356,9 @@ package body Debugger.Jdb is
    -- Step_Over --
    ---------------
 
-   procedure Step_Over (Debugger : access Jdb_Debugger;
-                        Mode     : Command_Type := Hidden) is
+   procedure Step_Over
+     (Debugger : access Jdb_Debugger;
+      Mode     : Command_Type := Hidden) is
    begin
       Send (Debugger, "next", Mode => Mode);
    end Step_Over;
@@ -391,8 +389,9 @@ package body Debugger.Jdb is
    -- Continue --
    --------------
 
-   procedure Continue (Debugger : access Jdb_Debugger;
-                       Mode     : Command_Type := Hidden) is
+   procedure Continue
+     (Debugger : access Jdb_Debugger;
+      Mode     : Command_Type := Hidden) is
    begin
       Send (Debugger, "cont", Mode => Mode);
    end Continue;
@@ -541,8 +540,7 @@ package body Debugger.Jdb is
      (Debugger  : access Jdb_Debugger;
       Name      : String;
       Temporary : Boolean := False;
-      Mode      : Command_Type := Hidden)
-   is
+      Mode      : Command_Type := Hidden) is
    begin
       Send (Debugger, "stop in " & Name, Mode => Mode);
    end Break_Subprogram;
@@ -635,8 +633,9 @@ package body Debugger.Jdb is
    -- Finish --
    ------------
 
-   procedure Finish (Debugger : access Jdb_Debugger;
-                     Mode     : Command_Type := Hidden) is
+   procedure Finish
+     (Debugger : access Jdb_Debugger;
+      Mode     : Command_Type := Hidden) is
    begin
       Send (Debugger, "step up", Mode => Mode);
    end Finish;
@@ -646,8 +645,7 @@ package body Debugger.Jdb is
    ------------------
 
    function Info_Threads
-     (Debugger : access Jdb_Debugger)
-     return Language.Thread_Information_Array
+     (Debugger : access Jdb_Debugger) return Language.Thread_Information_Array
    is
       S : String :=
         Send (Debugger, Thread_List (Get_Language (Debugger)), True,
@@ -900,8 +898,7 @@ package body Debugger.Jdb is
    function Get_Memory
      (Debugger : access Jdb_Debugger;
       Size     : in Integer;
-      Address  : in String) return String
-   is
+      Address  : in String) return String is
    begin
       return "";
       --  ??? Must implement this function !
@@ -914,8 +911,7 @@ package body Debugger.Jdb is
    procedure Put_Memory_Byte
      (Debugger : access Jdb_Debugger;
       Address  : in String;
-      Byte     : in String)
-   is
+      Byte     : in String) is
    begin
       null;
       --  ??? Must implement this function !
@@ -927,8 +923,7 @@ package body Debugger.Jdb is
 
    function Get_Variable_Address
      (Debugger  : access Jdb_Debugger;
-      Variable  : in String) return String
-   is
+      Variable  : in String) return String is
    begin
       return "";
       --  ??? Must implement this function !
