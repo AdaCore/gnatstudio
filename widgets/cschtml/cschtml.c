@@ -61,7 +61,7 @@ static guint signals [LAST_SIGNAL] = { 0 };
 
 /* Values for selection information.  FIXME: what about COMPOUND_STRING and
    TEXT?  */
-enum _TargetInfo {  
+enum _TargetInfo {
 	TARGET_STRING,
 	TARGET_TEXT,
 	TARGET_COMPOUND_TEXT
@@ -356,7 +356,7 @@ inc_adjustment (GtkAdjustment *adj, gint doc_width, gint alloc_width, gint inc)
 	gint max;
 
 	value = adj->value + (gdouble) inc;
-	
+
 	if (doc_width > alloc_width)
 		max = doc_width - alloc_width;
 	else
@@ -549,7 +549,7 @@ static void
 unrealize (GtkWidget *widget)
 {
 	CscHTML *html = CSC_HTML (widget);
-	
+
 	html_gdk_painter_unrealize (HTML_GDK_PAINTER (html->engine->painter));
 
 	if (GTK_WIDGET_CLASS (parent_class)->unrealize)
@@ -579,7 +579,7 @@ size_allocate (GtkWidget *widget, GtkAllocation *allocation)
 	g_return_if_fail (widget != NULL);
 	g_return_if_fail (GTK_IS_CSCHTML (widget));
 	g_return_if_fail (allocation != NULL);
-	
+
 	html = CSC_HTML (widget);
 
 	if (GTK_WIDGET_CLASS (parent_class)->size_allocate)
@@ -661,7 +661,7 @@ motion_notify_event (GtkWidget *widget,
 					   html->selection_x1, html->selection_y1,
 					   x + engine->x_offset, y + engine->y_offset,
 					   TRUE);
-		
+
 		if (html_engine_get_editable (engine))
 			html_engine_jump_at (engine,
 					     event->x + engine->x_offset,
@@ -716,27 +716,27 @@ button_press_event (GtkWidget *widget,
 
 	if (event->type == GDK_BUTTON_PRESS) {
 		GtkAdjustment *vadj;
-			
+
 		vadj = GTK_LAYOUT (widget)->vadjustment;
-		
+
 		switch (event->button) {
 		case 4:
 			/* Mouse wheel scroll up.  */
 			value = vadj->value - vadj->step_increment * 3;
-			
+
 			if (value < vadj->lower)
 				value = vadj->lower;
-			
+
 			gtk_adjustment_set_value (vadj, value);
 			return TRUE;
 			break;
 		case 5:
 			/* Mouse wheel scroll down.  */
 			value = vadj->value + vadj->step_increment * 3;
-			
+
 			if (value > (vadj->upper - vadj->page_size))
 				value = vadj->upper - vadj->page_size;
-			
+
 			gtk_adjustment_set_value (vadj, value);
 			return TRUE;
 			break;
@@ -799,6 +799,10 @@ button_release_event (GtkWidget *widget,
 
 	remove_scroll_timeout (html);
 
+	/* Fake a motion event, so that the URL under the cursor is
+	   activated, if needed */
+        motion_notify_event (widget, (GdkEventMotion *) (event));
+
 	return TRUE;
 }
 
@@ -828,26 +832,26 @@ focus_out_event (GtkWidget *widget,
 /* X11 selection support.  */
 
 static void
-selection_get (GtkWidget        *widget, 
+selection_get (GtkWidget        *widget,
 	       GtkSelectionData *selection_data_ptr,
 	       guint             info,
 	       guint             time)
 {
 	CscHTML *html;
 	gchar *selection_string;
-	
+
 	g_return_if_fail (widget != NULL);
 	g_return_if_fail (GTK_IS_CSCHTML (widget));
-	
+
 	html = CSC_HTML (widget);
 	selection_string = html_engine_get_selection_string (html->engine);
-	
+
 	if (selection_string != NULL) {
 		if (info == TARGET_STRING)
 			{
 				gtk_selection_data_set (selection_data_ptr,
 							GDK_SELECTION_TYPE_STRING, 8,
-							selection_string, 
+							selection_string,
 							strlen (selection_string));
 			}
 		else if ((info == TARGET_TEXT) || (info == TARGET_COMPOUND_TEXT))
@@ -856,8 +860,8 @@ selection_get (GtkWidget        *widget,
 				GdkAtom encoding;
 				gint format;
 				gint new_length;
-				
-				gdk_string_to_compound_text (selection_string, 
+
+				gdk_string_to_compound_text (selection_string,
 							     &encoding, &format,
 							     &text, &new_length);
 
@@ -874,49 +878,49 @@ selection_get (GtkWidget        *widget,
 /* Signal handler called when the selections owner returns the data */
 static void
 selection_received (GtkWidget *widget,
-		    GtkSelectionData *selection_data, 
+		    GtkSelectionData *selection_data,
 		    guint time)
 {
 	g_return_if_fail (widget != NULL);
 	g_return_if_fail (GTK_IS_CSCHTML (widget));
 	g_return_if_fail (selection_data != NULL);
-	
+
 	// printf("got selection from system\n");
-	
+
 #if 0
 	/* **** IMPORTANT **** Check to see if retrieval succeeded  */
 	/* If we have more selection types we can ask for, try the next one,
 	   until there are none left */
 	if (selection_data->length < 0) {
 		struct _zvtprivate *zp = _ZVT_PRIVATE(widget);
-		
+
 		/* now, try again with next selection type */
 		if (csc_html_request_paste(widget, zp->lastselectiontype+1, time)==0)
 			g_print ("Selection retrieval failed\n");
 		return;
 	}
 #endif
-	
+
 	/* we will get a selection type of atom(UTF-8) for utf text,
 	   perhaps that needs to do something different if the terminal
 	   isn't actually in utf8 mode? */
-	
+
 	/* Make sure we got the data in the expected form */
 	if (selection_data->type != GDK_SELECTION_TYPE_STRING) {
 		g_print ("Selection \"STRING\" was not returned as strings!\n");
 		return;
 	}
-	
+
 	if (selection_data->length) {
 		// printf ("selection text \"%.*s\"\n",
-		//	selection_data->length, selection_data->data); 
+		//	selection_data->length, selection_data->data);
 
 		html_engine_disable_selection (CSC_HTML (widget)->engine);
-		html_engine_insert (CSC_HTML (widget)->engine, 
+		html_engine_insert (CSC_HTML (widget)->engine,
 				    selection_data->data,
 				    selection_data->length);
 	}
-}  
+}
 
 int
 csc_html_request_paste (GtkWidget *widget, gint32 time)
@@ -974,17 +978,17 @@ class_init (CscHTMLClass *klass)
 	GtkWidgetClass *widget_class;
 	GtkObjectClass *object_class;
 	GtkLayoutClass *layout_class;
-	
+
 	html_class = (CscHTMLClass *)klass;
 	widget_class = (GtkWidgetClass *)klass;
 	object_class = (GtkObjectClass *)klass;
 	layout_class = (GtkLayoutClass *)klass;
-	
+
 	object_class->destroy = destroy;
 
 	parent_class = gtk_type_class (GTK_TYPE_LAYOUT);
 
-	signals [TITLE_CHANGED] = 
+	signals [TITLE_CHANGED] =
 	  gtk_signal_new ("title_changed",
 			  GTK_RUN_FIRST,
 			  G_TYPE_FROM_CLASS (object_class),
@@ -1001,7 +1005,7 @@ class_init (CscHTMLClass *klass)
 			  GTK_TYPE_NONE, 2,
 			  GTK_TYPE_STRING,
 			  GTK_TYPE_POINTER);
-	signals [LOAD_DONE] = 
+	signals [LOAD_DONE] =
 	  gtk_signal_new ("load_done",
 			  GTK_RUN_FIRST,
 			  G_TYPE_FROM_CLASS (object_class),
@@ -1032,7 +1036,7 @@ class_init (CscHTMLClass *klass)
 				gtk_marshal_NONE__STRING,
 				GTK_TYPE_NONE, 1,
 				GTK_TYPE_STRING);
-	
+
 	signals [ON_URL] =
 		gtk_signal_new ("on_url",
 				GTK_RUN_FIRST,
@@ -1041,7 +1045,7 @@ class_init (CscHTMLClass *klass)
 				gtk_marshal_NONE__STRING,
 				GTK_TYPE_NONE, 1,
 				GTK_TYPE_STRING);
-	
+
 	signals [REDIRECT] =
 		gtk_signal_new ("redirect",
 				GTK_RUN_FIRST,
@@ -1051,7 +1055,7 @@ class_init (CscHTMLClass *klass)
 				GTK_TYPE_NONE, 2,
 				GTK_TYPE_STRING,
 				GTK_TYPE_INT);
-	
+
 	signals [SUBMIT] =
 		gtk_signal_new ("submit",
 				GTK_RUN_FIRST,
@@ -1071,7 +1075,7 @@ class_init (CscHTMLClass *klass)
 				gtk_marshal_BOOL__POINTER,
 				GTK_TYPE_BOOL, 1,
 				GTK_TYPE_OBJECT);
-	
+
 	signals [CURRENT_PARAGRAPH_STYLE_CHANGED] =
 		gtk_signal_new ("current_paragraph_style_changed",
 				GTK_RUN_FIRST,
@@ -1107,9 +1111,9 @@ class_init (CscHTMLClass *klass)
 				gtk_marshal_NONE__INT,
 				GTK_TYPE_NONE, 1,
 				GTK_TYPE_INT);
-	
+
 	object_class->destroy = destroy;
-	
+
 	widget_class->realize = realize;
 	widget_class->unrealize = unrealize;
 	widget_class->key_press_event = key_press_event;
@@ -1132,7 +1136,7 @@ init (CscHTML* html)
 {
 	static const GtkTargetEntry targets[] = {
 		{ "STRING", 0, TARGET_STRING },
-		{ "TEXT",   0, TARGET_TEXT }, 
+		{ "TEXT",   0, TARGET_TEXT },
 		{ "COMPOUND_TEXT", 0, TARGET_COMPOUND_TEXT },
 	};
 	static const gint n_targets = sizeof(targets) / sizeof(targets[0]);
@@ -1190,7 +1194,7 @@ csc_html_get_type (void)
 			/* reserved_2 */ NULL,
 			(GtkClassInitFunc) NULL,
 		};
-		
+
 		html_type = gtk_type_unique (GTK_TYPE_LAYOUT, &html_info);
 	}
 
@@ -1352,7 +1356,7 @@ csc_html_jump_to_anchor (CscHTML *html,
 {
 	g_return_val_if_fail (html != NULL, FALSE);
 	g_return_val_if_fail (GTK_IS_CSCHTML (html), FALSE);
-	
+
 	return html_engine_goto_anchor (html->engine, anchor);
 }
 
@@ -1365,7 +1369,7 @@ csc_html_save (CscHTML *html,
 	g_return_val_if_fail (html != NULL, FALSE);
 	g_return_val_if_fail (GTK_IS_CSCHTML (html), FALSE);
 	g_return_val_if_fail (receiver != NULL, FALSE);
-	
+
 	return html_engine_save (html->engine, receiver, data);
 }
 
@@ -1378,12 +1382,12 @@ csc_html_export (CscHTML *html,
 	g_return_val_if_fail (html != NULL, FALSE);
 	g_return_val_if_fail (GTK_IS_CSCHTML (html), FALSE);
 	g_return_val_if_fail (receiver != NULL, FALSE);
-	
+
 	if (strcmp (type, "text/html") == 0) {
 		return html_engine_save (html->engine, receiver, data);
 	} else if (strcmp (type, "text/plain") == 0) {
 		return html_engine_save_plain (html->engine, receiver,
-					       data);  
+					       data);
 	} else {
 		return FALSE;
 	}
