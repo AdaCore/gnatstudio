@@ -203,7 +203,7 @@ package body Src_Editor_View is
    function On_Delete
      (View  : access Gtk_Widget_Record'Class;
       Event : Gdk_Event) return Boolean;
-   --  Callback for the "delete_event" signal.
+   --  Callback for the "delete_event" signal
 
    function On_Button_Press
      (View  : access Gtk_Widget_Record'Class;
@@ -212,11 +212,11 @@ package body Src_Editor_View is
 
    procedure Save_Cursor_Position
      (View : access Source_View_Record'Class);
-   --  Save the cursor position.
+   --  Save the cursor position
 
    procedure Restore_Cursor_Position
      (View : access Source_View_Record'Class);
-   --  Restore the stored cursor position.
+   --  Restore the stored cursor position
 
    type Preferences_Hook_Record is new Hook_No_Args_Record with record
       View : Source_View;
@@ -235,7 +235,7 @@ package body Src_Editor_View is
      (Hook   : File_Hook_Record;
       Kernel : access Kernel_Handle_Record'Class;
       Data   : Hooks_Data'Class);
-   --  Callback for "File_Saved_Signal".
+   --  Callback for "File_Saved_Signal"
 
    procedure Size_Allocated (View : access Gtk_Widget_Record'Class);
    --  Called when a new size has been allocated
@@ -246,13 +246,13 @@ package body Src_Editor_View is
 
    procedure Remove_Synchronization
      (View : access Source_View_Record'Class);
-   --  Remove the synchronized scrolling loop related to this editor.
+   --  Remove the synchronized scrolling loop related to this editor
 
    procedure On_Scroll (View : access Gtk_Widget_Record'Class);
-   --  Callback when the adjustments have changed.
+   --  Callback when the adjustments have changed
 
    function Scroll_Timeout (View : Source_View) return Boolean;
-   --  Scroll to View.Scroll_To_Value;
+   --  Scroll to View.Scroll_To_Value
 
    function Hide_Speed_Column_Timeout (View : Source_View) return Boolean;
    --  Hide the speed column.
@@ -260,14 +260,14 @@ package body Src_Editor_View is
    function Speed_Bar_Expose_Event_Cb
      (Widget : access Gtk_Widget_Record'Class;
       Event  : Gdk_Event) return Boolean;
-   --  Callback for an "expose" event on the speed bar.
+   --  Callback for an "expose" event on the speed bar
 
    procedure Speed_Bar_Size_Allocate_Cb
      (Widget : access Gtk_Widget_Record'Class);
-   --  Callback for an "size_allocate" signal on the speed bar.
+   --  Callback for an "size_allocate" signal on the speed bar
 
    procedure Register_Idle_Column_Redraw (View : Source_View);
-   --  Register an idle redrawing of the side columns.
+   --  Register an idle redrawing of the side columns
 
    ---------------------------------
    -- Register_Idle_Column_Redraw --
@@ -1701,8 +1701,8 @@ package body Src_Editor_View is
      (Widget : access Gtk_Widget_Record'Class;
       Event  : Gdk_Event) return Boolean
    is
-      View   : constant Source_View := Source_View (Widget);
-      Left_Window  : constant Gdk.Window.Gdk_Window :=
+      View        : constant Source_View := Source_View (Widget);
+      Left_Window : constant Gdk.Window.Gdk_Window :=
         Get_Window (View, Text_Window_Left);
 
    begin
@@ -1729,7 +1729,7 @@ package body Src_Editor_View is
       View   : constant Source_View := Source_View (Widget);
       Buffer : constant Source_Buffer := Source_Buffer (Get_Buffer (View));
 
-      Left_Window  : constant Gdk.Window.Gdk_Window :=
+      Left_Window : constant Gdk.Window.Gdk_Window :=
         Get_Window (View, Text_Window_Left);
 
       Window : Gdk.Window.Gdk_Window;
@@ -1836,7 +1836,7 @@ package body Src_Editor_View is
       View   : constant Source_View   := Source_View (Widget);
       Buffer : constant Source_Buffer := Source_Buffer (Get_Buffer (View));
       Start, Last : Gtk_Text_Iter;
-      Result : Boolean;
+      Result      : Boolean;
 
    begin
       if Realized_Is_Set (View)
@@ -1852,7 +1852,9 @@ package body Src_Editor_View is
 
       case Get_Key_Val (Event) is
          when GDK_Return =>
-            Word_Added (Buffer);
+            if not View.As_Is_Mode then
+               Word_Added (Buffer);
+            end if;
 
             External_End_Action (Buffer);
 
@@ -1871,7 +1873,13 @@ package body Src_Editor_View is
                   --  ??? Could be a key handler as well
                   Get_Iter_At_Mark (Buffer, Last, Get_Insert (Buffer));
                   Copy (Last, Dest => Start);
-                  Backward_Line (Start, Result);
+
+                  --  We do not want to get the previous line if we have the
+                  --  as-is modifier set.
+
+                  if not View.As_Is_Mode then
+                     Backward_Line (Start, Result);
+                  end if;
 
                   if not Ends_Line (Last) then
                      Forward_To_Line_End (Last, Result);
@@ -1880,6 +1888,7 @@ package body Src_Editor_View is
                   Result := Do_Indentation (Buffer, Start, Last);
                end if;
 
+               View.As_Is_Mode := False;
                return True;
             end if;
 
@@ -1900,10 +1909,14 @@ package body Src_Editor_View is
                  and then
                    not Is_In (Key_Str (Key_Str'First), Constants.Control_Set)
                then
-                  Word_Added (Buffer);
+                  if not View.As_Is_Mode then
+                     Word_Added (Buffer);
+                  end if;
                end if;
             end;
       end case;
+
+      View.As_Is_Mode := False;
 
       return False;
 
