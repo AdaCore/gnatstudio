@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                       Copyright (C) 2004                          --
---                            ACT-Europe                             --
+--                     Copyright (C) 2004-2005                       --
+--                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -413,11 +413,13 @@ package body Expect_Interface is
      (Data    : in out Callback_Data'Class;
       Command : String)
    is
-      Kernel : constant Kernel_Handle := Custom_Module_ID.Kernel;
-      D : Custom_Action_Access;
+      Kernel        : constant Kernel_Handle :=
+        Get_Kernel (Custom_Module_ID.all);
+      D             : Custom_Action_Access;
       Process_Class : constant Class_Type := New_Class (Kernel, "Process");
-      E : Exit_Type;
+      E             : Exit_Type;
       pragma Unreferenced (E);
+
    begin
       if Command = Constructor_Method then
          Name_Parameters (Data, Constructor_Args);
