@@ -186,7 +186,7 @@ package body Process_Proxies is
       Matched : out GNAT.Regpat.Match_Array;
       Timeout : Integer := 20)
    is
-      Event : Gdk_Event;
+      Event      : Gdk_Event;
       Num        : Integer := 1;
       Num_Events : Positive;
       Max_Events : constant := 30;
