@@ -943,8 +943,9 @@ package body String_Utils is
       Callback          : Substitute_Callback;
       Recursive         : Boolean := False) return String
    is
-      Result : Unbounded_String;
-      First, Last : Natural := Str'First;
+      Result        : Unbounded_String;
+      First, Last   : Natural := Str'First;
+      Between_Curly : Boolean;
    begin
       while First <= Str'Last loop
          Last := First;
@@ -959,13 +960,27 @@ package body String_Utils is
          exit when Last > Str'Last;
 
          First := Last + 1;
-         while First <= Str'Last
-           and then Is_Graphic (Str (First))
-           and then Str (First) /= '"'
-           and then Str (First) /= ' '
-         loop
-            First := First + 1;
-         end loop;
+
+         Between_Curly := False;
+
+         if Str (First) = '{' then
+            Between_Curly := True;
+            Last := Last + 1;
+
+            while First <= Str'Last
+              and then Str (First) /= '}'
+            loop
+               First := First + 1;
+            end loop;
+         else
+            while First <= Str'Last
+              and then Is_Graphic (Str (First))
+              and then Str (First) /= ' '
+              and then Str (First) /= '"'
+            loop
+               First := First + 1;
+            end loop;
+         end if;
 
          if Last + 1 <= First - 1 then
             declare
@@ -986,6 +1001,10 @@ package body String_Utils is
             end;
          else
             Result := Result & Str (Last .. First - 1);
+         end if;
+
+         if Between_Curly then
+            First := First + 1;
          end if;
       end loop;
 
