@@ -57,10 +57,11 @@ with GVD.Strings;           use GVD.Strings;
 
 procedure GVD_Main is
    Process           : Debugger_Process_Tab;
-   List              : Argument_List (1 .. Argument_Count);
+   Debugger_List     : Argument_List (1 .. Argument_Count);
+   Program_Args      : String_Access := new String' ("");
+   Debugger_Index    : Natural := 0;
    Main_Debug_Window : Main_Debug_Window_Access;
    Id                : Glib.Gint;
-   Index             : Natural := 0;
    Level             : Integer;
    Debug_Type        : GVD.Types.Debugger_Type := GVD.Types.Gdb_Type;
    Button            : Message_Dialog_Buttons;
@@ -72,6 +73,7 @@ procedure GVD_Main is
    Debugger_Name     : String_Access := new String' ("");
    Target            : String_Access := new String' ("");
    Protocol          : String_Access := new String' ("");
+   Tmp_String        : String_Access;
    Debuggee_Name     : String_Access;
    Lang              : Language_Access;
 
@@ -176,6 +178,7 @@ procedure GVD_Main is
       Add_File_Extension (Lang, "\.a$");
       Add_File_Extension (Lang, "\.adb$");
       Add_File_Extension (Lang, "\.ads$");
+      Add_File_Extension (Lang, "\.dg$");
       Lang := new C_Language;
       Add_File_Extension (Lang, "\.c$");
       Add_File_Extension (Lang, "\.h$");
@@ -250,7 +253,8 @@ procedure GVD_Main is
       if GVD.Can_Output then
          Put_Line ("GVD " & GVD.Version & ", the GNU Visual Debugger.");
          Put_Line (-"Usage:");
-         Put_Line (-"   gvd [options...] executable-file");
+         Put_Line (-"   gvd [options...] executable-file " &
+           "[--dargs [debugger options]] [--pargs [program options]]");
          Put_Line (-"Options:");
          Put_Line
            (-"   --debugger DEBUG  use DEBUG as the underlying debugger.");
@@ -272,7 +276,8 @@ procedure GVD_Main is
          Button := Message_Dialog
            ("GVD " & GVD.Version & LF &
             "Usage:" & LF &
-            "   gvd [options...] executable-file" & LF &
+            "   gvd [options...] executable-file " &
+              "[--dargs [debugger options]] [--pargs [program options]]" & LF &
             "Options:" & LF &
             "   --debugger DEBUG  use DEBUG as the underlying debugger." & LF &
             "   --jdb             assume a java debugger." & LF &
@@ -329,6 +334,8 @@ begin
       Main_Debug_Window.External_Editor :=
         new String' (Get_Pref (Default_External_Editor));
    end if;
+
+   Initialize_Option_Scan (Section_Delimiters => "-dargs -pargs");
 
    loop
       case Getopt ("-debugger: -jdb -tty fullname -version -help " &
@@ -458,15 +465,43 @@ begin
    --  non-switch argument found on the command line)
    Debuggee_Name := new String' (GNAT.Command_Line.Get_Argument);
 
+   --  Debugger args
+   Goto_Section ("-dargs");
+
+   loop
+      exit when Getopt ("*") = ASCII.NUL;
+
+      Debugger_Index := Debugger_Index + 1;
+      Debugger_List (Debugger_Index) := new String' (Full_Switch);
+   end loop;
+
+   --  Program args
+   Goto_Section ("-pargs");
+
+   loop
+      exit when Getopt ("*") = ASCII.NUL;
+
+      Tmp_String := Program_Args;
+      Program_Args := new String' (Program_Args.all & ' ' & Full_Switch);
+      Free (Tmp_String);
+   end loop;
+
    Process := Create_Debugger
      (Window          => Main_Debug_Window,
       Kind            => Debug_Type,
       Executable      => Debuggee_Name.all,
-      Params          => List (1 .. Index),
+      Debugger_Args   => Debugger_List (1 .. Debugger_Index),
+      Executable_Args => Program_Args.all,
       Remote_Host     => Remote_Host.all,
       Remote_Target   => Target.all,
       Remote_Protocol => Protocol.all,
       Debugger_Name   => Debugger_Name.all);
+
+   Free (Program_Args);
+
+   for J in Debugger_List'Range loop
+      Free (Debugger_List (J));
+   end loop;
 
    if Dir /= null
      and then Is_Directory (Dir.all & Directory_Separator & "sessions")
