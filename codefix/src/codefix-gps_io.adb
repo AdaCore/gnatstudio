@@ -383,6 +383,12 @@ package body Codefix.GPS_Io is
       Initialize
         (Current, This.Errors_Buffer (Last_Index .. This.Current_Index - 1));
 
+      if Current /= Invalid_Error_Message then
+         Assign
+           (Current.File_Name, Find_Source_File
+              (This.Kernel, Current.File_Name.all));
+      end if;
+
       This.Current_Index := This.Current_Index + 1;
    end Get_Direct_Message;
 
@@ -408,6 +414,7 @@ package body Codefix.GPS_Io is
    begin
       Assign
         (This.Errors_Buffer, Interpret_Command (Kernel, "get_build_output"));
+      This.Kernel := Kernel;
    end Get_Last_Output;
 
 
