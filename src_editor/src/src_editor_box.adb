@@ -321,8 +321,7 @@ package body Src_Editor_Box is
       Width, Height : out Glib.Gint;
       Area          : out Gdk_Rectangle)
    is
-      Line, Col    : Natural;
-      X, Y         : Gint;
+      Line, Col    : Gint;
       Win_X, Win_Y : Gint;
       Start_Iter   : Gtk_Text_Iter;
       End_Iter     : Gtk_Text_Iter;
@@ -332,15 +331,25 @@ package body Src_Editor_Box is
    begin
       Width  := 0;
       Height := 0;
+      Pixmap := null;
+      Area   := (0, 0, 0, 0);
 
       Get_Pointer
         (Get_Window (Widget, Text_Window_Text), Win_X, Win_Y, Mask, Win);
-      Window_To_Buffer_Coords (Widget, Text_Window_Text, Win_X, Win_Y, X, Y);
-      Get_Iter_At_Location (Widget, Start_Iter, X, Y);
-      Search_Entity_Bounds (Data.Box.Source_Buffer, Start_Iter, End_Iter);
+      Window_To_Buffer_Coords (Widget, Win_X, Win_Y, Line, Col);
 
-      Line := To_Box_Line (Get_Line (Start_Iter));
-      Col  := To_Box_Column (Get_Line_Offset (Start_Iter));
+      if Line = -1 or else Col = -1 then
+         --  Invalid position: the cursor is outside the text, do not
+         --  display a tooltip.
+
+         return;
+
+      else
+         Get_Iter_At_Line_Offset
+           (Data.Box.Source_Buffer, Start_Iter, Line, Col);
+         Search_Entity_Bounds
+           (Data.Box.Source_Buffer, Start_Iter, End_Iter);
+      end if;
 
       declare
          Entity_Name : constant String := Get_Text (Start_Iter, End_Iter);
@@ -348,8 +357,6 @@ package body Src_Editor_Box is
          Trace (Me, "Tooltip on " & Entity_Name);
       end;
 
-      Pixmap := null;
-      Area := (0, 0, 0, 0);
       return;
    end Draw_Tooltip;
 
@@ -619,11 +626,11 @@ package body Src_Editor_Box is
          Editor.Menu_Col_Pos  := To_Box_Column (Column);
 
          if Editor.Menu_Line_Pos = 0 or else Editor.Menu_Col_Pos = 0 then
-            --  Means that the user did not click on some text. Set Start_Iter
-            --  and End_Iter to the same location, so that the slice between
-            --  these 2 iterators is the empty string.
+            --  Invalid position: the cursor is outside the text.
+
             Get_Start_Iter (Editor.Source_Buffer, Start_Iter);
             Get_Start_Iter (Editor.Source_Buffer, End_Iter);
+
          else
             Get_Iter_At_Line_Offset
               (Editor.Source_Buffer, Start_Iter,
