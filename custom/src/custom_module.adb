@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2002                       --
+--                     Copyright (C) 2001-2003                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
@@ -30,6 +30,12 @@ with Ada.Exceptions;          use Ada.Exceptions;
 with Glide_Kernel;            use Glide_Kernel;
 with Glide_Kernel.Modules;    use Glide_Kernel.Modules;
 
+with Language;                use Language;
+with Language.Custom;         use Language.Custom;
+with Language_Handlers;       use Language_Handlers;
+with Language_Handlers.Glide; use Language_Handlers.Glide;
+with Src_Info.Dummy;          use Src_Info.Dummy;
+
 with Traces;                  use Traces;
 with Commands;                use Commands;
 with Commands.Custom;         use Commands.Custom;
@@ -53,6 +59,8 @@ package body Custom_Module is
         String_Utils.Name_As_Directory (Get_Home_Dir (Kernel)) & "custom";
       Node      : Node_Ptr;
       File_Node : Node_Ptr;
+      Handler   : constant Glide_Language_Handler := Glide_Language_Handler
+        (Get_Language_Handler (Kernel));
 
       procedure Add_Child
         (Parent_Path  : String;
@@ -72,6 +80,7 @@ package body Custom_Module is
          Item           : Gtk_Menu_Item;
          Image          : Gtk_Image;
          Menuitem       : Boolean := False;
+         Lang           : Custom_Language_Access;
 
       begin
          if Current_Node = null
@@ -80,7 +89,18 @@ package body Custom_Module is
             return;
          end if;
 
-         if Current_Node.Tag.all = "Submenu" then
+         if Current_Node.Tag.all = "Language" then
+            Lang := new Language.Custom.Custom_Language;
+            Initialize (Lang, Current_Node);
+            Register_Language
+              (Handler, Get_Name (Lang), Language_Access (Lang));
+            Add_Language_Info
+              (Handler, Get_Name (Lang),
+               LI                  => Dummy_Handler.all'Access,
+               Default_Spec_Suffix => Get_Spec_Suffix (Lang),
+               Default_Body_Suffix => Get_Body_Suffix (Lang));
+
+         elsif Current_Node.Tag.all = "Submenu" then
             Current_Child := Current_Node.Child;
 
             if Current_Child.Tag.all = "Title" then
@@ -188,13 +208,11 @@ package body Custom_Module is
                      Command,
                      Image);
                end if;
+            elsif Menuitem then
+               Gtk_New (Item);
+               Register_Menu (Kernel, Locale_To_UTF8 (Parent_Path), Item);
             else
-               if Menuitem then
-                  Gtk_New (Item);
-                  Register_Menu (Kernel, Locale_To_UTF8 (Parent_Path), Item);
-               else
-                  Append_Space (Get_Toolbar (Kernel));
-               end if;
+               Append_Space (Get_Toolbar (Kernel));
             end if;
          end if;
 
