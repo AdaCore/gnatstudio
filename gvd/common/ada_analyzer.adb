@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2001-2003                      --
+--                      Copyright (C) 2001-2004                      --
 --                              ACT-Europe                           --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -2458,6 +2458,8 @@ package body Ada_Analyzer is
                         if (P <= Buffer'First + 1
                             or else To_Upper (Buffer (P - 1)) /= 'E'
                             or else Buffer (P - 2) not in '0' .. '9')
+                          and then Prev_Prev_Token /= Tok_Colon_Equal
+                          and then Prev_Prev_Token not in Reserved_Token_Type
                           and then
                             (P = Buffer'Last
                              or else (Buffer (P + 1) /= '"'
