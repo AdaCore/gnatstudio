@@ -714,6 +714,53 @@ package body Projects.Editor is
       return Value;
    end Get_Attribute_Value;
 
+   --------------------------
+   -- Attribute_Is_Defined --
+   --------------------------
+
+   function Attribute_Is_Defined
+     (Project        : Project_Type;
+      Attribute      : Attribute_Pkg;
+      Index          : String := "") return Boolean
+   is
+      Sep : constant Natural := Split_Package (Attribute);
+      Attribute_Name : constant String :=
+        String (Attribute (Sep + 1 .. Attribute'Last));
+      Pkg_Name       : constant String :=
+        String (Attribute (Attribute'First .. Sep - 1));
+      Pkg : Package_Id := No_Package;
+      Var : Variable_Id;
+      Arr : Array_Id;
+      N   : Name_Id;
+      Project_View : constant Project_Id := Get_View (Project);
+   begin
+      if Project_View = Prj.No_Project then
+         return False;
+      end if;
+
+      if Pkg_Name /= "" then
+         Pkg := Value_Of
+           (Get_String (Pkg_Name),
+            In_Packages => Prj.Projects.Table (Project_View).Decl.Packages);
+         if Pkg = No_Package then
+            return False;
+         end if;
+         Var := Packages.Table (Pkg).Decl.Attributes;
+         Arr := Packages.Table (Pkg).Decl.Arrays;
+      else
+         Var := Prj.Projects.Table (Project_View).Decl.Attributes;
+         Arr := Prj.Projects.Table (Project_View).Decl.Arrays;
+      end if;
+
+      N := Get_String (Attribute_Name);
+
+      if Index /= "" then
+         return Value_Of (N, In_Arrays => Arr) /= No_Array_Element;
+      else
+         return not Value_Of (N, Var).Default;
+      end if;
+   end Attribute_Is_Defined;
+
    ----------------------------------------
    -- Update_Attribute_Value_In_Scenario --
    ----------------------------------------

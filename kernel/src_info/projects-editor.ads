@@ -313,6 +313,14 @@ package Projects.Editor is
       Index          : String := "") return Variable_Value;
    --  Internal version of Get_Attribute_Value
 
+   function Attribute_Is_Defined
+     (Project        : Project_Type;
+      Attribute      : Attribute_Pkg;
+      Index          : String := "") return Boolean;
+   --  True if the attribute was defined in the project. Get_Attribute_Value
+   --  will return Nil_Variable_Value either if the attribute is not defined
+   --  or has a default empty value (for instance for the languages attribute)
+
    -----------
    -- Lists --
    -----------
