@@ -19,6 +19,7 @@
 -----------------------------------------------------------------------
 
 with Gdk.Event;   use Gdk.Event;
+with GNAT.OS_Lib; use GNAT.OS_Lib;
 
 package body Commands.Interactive is
 
@@ -30,7 +31,7 @@ package body Commands.Interactive is
      return Command_Return_Type
    is
    begin
-      return Execute (Interactive_Command_Access (Command), Event => null);
+      return Execute (Interactive_Command_Access (Command), Null_Context);
    end Execute;
 
    ------------------------------------
@@ -39,7 +40,7 @@ package body Commands.Interactive is
 
    procedure Launch_Synchronous_Interactive
      (Command : access Interactive_Command'Class;
-      Event   : Gdk.Event.Gdk_Event;
+      Context : Interactive_Command_Context;
       Wait    : Duration := 0.0)
    is
       function Execute_Command
@@ -49,7 +50,7 @@ package body Commands.Interactive is
         (Command : Command_Access) return Command_Return_Type is
       begin
          return Execute
-           (Interactive_Command_Access (Command), Event);
+           (Interactive_Command_Access (Command), Context);
       end Execute_Command;
 
       procedure Internal is new Launch_Synchronous_Generic
@@ -64,12 +65,12 @@ package body Commands.Interactive is
 
    function Create_Proxy
      (Command : access Interactive_Command'Class;
-      Event   : Gdk.Event.Gdk_Event) return Command_Access
+      Context : Interactive_Command_Context) return Command_Access
    is
       C : Interactive_Command_Proxy_Access := new Interactive_Command_Proxy;
    begin
       C.Command := Interactive_Command_Access (Command);
-      C.Event   := Event;
+      C.Context := Context;
       return Command_Access (C);
    end Create_Proxy;
 
@@ -81,7 +82,7 @@ package body Commands.Interactive is
      (Command : access Interactive_Command_Proxy) return Command_Return_Type
    is
    begin
-      return Execute (Command.Command, Command.Event);
+      return Execute (Command.Command, Command.Context);
    end Execute;
 
    ----------
@@ -90,18 +91,20 @@ package body Commands.Interactive is
 
    procedure Free (X : in out Interactive_Command_Proxy) is
    begin
-      Destroy (Command_Access (X.Command));
+      Free (X.Context);
    end Free;
 
---     ---------------------------
---     -- Set_Execution_Context --
---     ---------------------------
---
---     procedure Set_Execution_Context
---       (Command : access Interactive_Command;
---        Context : Glide_Kernel.Selection_Context_Access) is
---     begin
---        Command.Default_Context := Context;
---     end Set_Execution_Context;
---
+   procedure Free (X : in out Interactive_Command_Context) is
+   begin
+      Glide_Kernel.Unref (X.Context);
+
+      if X.Args /= null then
+         for J in X.Args'Range loop
+            Free (X.Args (J));
+         end loop;
+
+         Free (X.Args);
+      end if;
+   end Free;
+
 end Commands.Interactive;
