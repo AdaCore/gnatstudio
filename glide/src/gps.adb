@@ -106,6 +106,7 @@ with KeyManager_Module;
 with Theme_Manager_Module;
 with Docgen_Module;
 with SSH_Protocol;
+with HTTP_Protocol;
 with Refactoring_Module;
 with Action_Editor;
 
@@ -149,6 +150,7 @@ procedure GPS is
    VFS_Trace     : constant Debug_Handle := Create ("MODULE.VFS", On);
    Help_Trace    : constant Debug_Handle := Create ("MODULE.Help", On);
    SSH_Trace     : constant Debug_Handle := Create ("MODULE.SSH", On);
+   HTTP_Trace    : constant Debug_Handle := Create ("MODULE.HTTP", On);
    Project_Viewer_Trace : constant Debug_Handle :=
      Create ("MODULE.Project_Viewer", On);
    Project_Properties_Trace : constant Debug_Handle :=
@@ -977,6 +979,10 @@ procedure GPS is
 
       if Active (SSH_Trace) then
          SSH_Protocol.Register_Protocol;
+      end if;
+
+      if Active (HTTP_Trace) then
+         HTTP_Protocol.Register_Protocol;
       end if;
 
       --  Register all modules (scripting languages must be registered first)
