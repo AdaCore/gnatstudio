@@ -25,7 +25,9 @@ with Gtk.Widget;       use Gtk.Widget;
 with Gdk.Font;         use Gdk.Font;
 with Gdk.Pixmap;       use Gdk.Pixmap;
 with Gdk.Window;       use Gdk.Window;
+pragma Warnings (Off);
 with Gdk.Types;        use Gdk.Types;
+pragma Warnings (On);
 with Gdk.Event;        use Gdk.Event;
 with Gtk.Menu;         use Gtk.Menu;
 with Gtkada.Canvas;    use Gtkada.Canvas;
@@ -506,6 +508,8 @@ package body Display_Items is
       Zoom_Border : constant Gint :=
         To_Canvas_Coordinates (Item.Debugger.Data_Canvas, Border_Spacing);
       W, H : Gint;
+
+      use Gdk;
 
    begin
       --  Compute the required size for the value itself.
