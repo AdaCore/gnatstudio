@@ -1571,31 +1571,30 @@ package body Docgen.Work_On_Source is
       use TEL;
       use type Basic_Types.String_Access;
       Entity_Node       : Type_Entity_List.List_Node;
-      Entity_Node_Prec  : Type_Entity_List.List_Node;
       Description       : GNAT.OS_Lib.String_Access;
       Header            : GNAT.OS_Lib.String_Access;
       Header_Lines      : Natural;
       Header_Start, Header_End : Natural;
       First_Already_Set : Boolean;
-      Delete_Node       : Boolean;
       Entity            : TEL.Data_Access;
 
    begin
       if not TEL.Is_Empty (Entity_List) then
          First_Already_Set := False;
          Entity_Node := TEL.First (Entity_List);
-         Entity_Node_Prec := TEL.Null_Node;
 
          while Entity_Node /= TEL.Null_Node loop
             Entity := TEL.Data_Ref (Entity_Node);
-            Delete_Node := False;
 
-            if Entity.Is_Private = Private_Entity
+            if not Entity.Processed
+              and then Entity.Is_Private = Private_Entity
               and then Entity.Kind = Var_Entity
               and then Source_Filename =
                 Get_Filename (Get_File (Get_Declaration_Of (Entity.Entity)))
               and then Entity_Defined_In_Package (Entity.Entity, Package_Info)
             then
+               Entity.Processed := True;
+
                Get_Whole_Header
                  (File_Text.all,
                   Parsed_List,
@@ -1643,27 +1642,14 @@ package body Docgen.Work_On_Source is
                        (B, Kernel, Result, Level, Description.all);
                   end if;
 
-                  Delete_Node := True;
                   Free (Header);
                   Free (Description);
                end if;
             end if;
 
-            if Delete_Node then
-               Type_Entity_List.Remove_Nodes
-                 (Entity_List,
-                  Entity_Node_Prec,
-                  Entity_Node);
+            exit when Entity_Node = TEL.Last (Entity_List);
 
-               if Entity_Node_Prec = TEL.Null_Node then
-                  Entity_Node := TEL.First (Entity_List);
-               else
-                  Entity_Node := TEL.Next (Entity_Node_Prec);
-               end if;
-            else
-               Entity_Node_Prec := Entity_Node;
-               Entity_Node := TEL.Next (Entity_Node);
-            end if;
+            Entity_Node := TEL.Next (Entity_Node);
          end loop;
       end if;
    end Process_Vars;
@@ -1703,31 +1689,30 @@ package body Docgen.Work_On_Source is
    is
       use TEL;
       Entity_Node       : Type_Entity_List.List_Node;
-      Entity_Node_Prec  : Type_Entity_List.List_Node;
       Description       : GNAT.OS_Lib.String_Access;
       Header            : GNAT.OS_Lib.String_Access;
       Header_Lines      : Natural;
       Header_Start, Header_End : Natural;
       First_Already_Set : Boolean;
-      Delete_Node       : Boolean;
       Entity            : TEL.Data_Access;
 
    begin
       if not TEL.Is_Empty (Entity_List) then
          First_Already_Set := False;
          Entity_Node := TEL.First (Entity_List);
-         Entity_Node_Prec := TEL.Null_Node;
 
          while Entity_Node /= TEL.Null_Node loop
-            Delete_Node := False;
             Entity := TEL.Data_Ref (Entity_Node);
 
-            if Entity.Is_Private = Private_Entity
+            if not Entity.Processed
+              and then Entity.Is_Private = Private_Entity
               and then Entity.Kind = Exception_Entity
               and then Source_Filename =
                 Get_Filename (Get_File (Get_Declaration_Of (Entity.Entity)))
               and then Entity_Defined_In_Package (Entity.Entity, Package_Info)
             then
+               Entity.Processed := True;
+
                Get_Whole_Header
                  (File_Text.all,
                   Parsed_List,
@@ -1771,27 +1756,14 @@ package body Docgen.Work_On_Source is
                        (B, Kernel, Result, Level, Description.all);
                   end if;
 
-                  Delete_Node := True;
                   Free (Header);
                   Free (Description);
                end if;
             end if;
 
-            if Delete_Node then
-               Type_Entity_List.Remove_Nodes
-                 (Entity_List,
-                  Entity_Node_Prec,
-                  Entity_Node);
+            exit when Entity_Node = TEL.Last (Entity_List);
 
-               if Entity_Node_Prec = TEL.Null_Node then
-                  Entity_Node := TEL.First (Entity_List);
-               else
-                  Entity_Node := TEL.Next (Entity_Node_Prec);
-               end if;
-            else
-               Entity_Node_Prec := Entity_Node;
-               Entity_Node := TEL.Next (Entity_Node);
-            end if;
+            Entity_Node := TEL.Next (Entity_Node);
          end loop;
       end if;
    end Process_Exceptions;
@@ -1870,13 +1842,11 @@ package body Docgen.Work_On_Source is
    is
       use TEL;
       Entity_Node              : Type_Entity_List.List_Node;
-      Entity_Node_Prec         : Type_Entity_List.List_Node;
       Description              : GNAT.OS_Lib.String_Access;
       Header                   : GNAT.OS_Lib.String_Access;
       Header_Lines             : Natural;
       Header_Start, Header_End : Natural;
       First_Already_Set        : Boolean;
-      Delete_Node              : Boolean;
       Entity                   : TEL.Data_Access;
       Kind                     : E_Kinds;
       Info                     : Entity_Information;
@@ -1885,10 +1855,8 @@ package body Docgen.Work_On_Source is
       if not TEL.Is_Empty (Entity_List) then
          First_Already_Set := False;
          Entity_Node      := TEL.First (Entity_List);
-         Entity_Node_Prec := TEL.Null_Node;
 
          while Entity_Node /= TEL.Null_Node loop
-            Delete_Node := False;
             Entity := TEL.Data_Ref (Entity_Node);
 
             --  We search if the type is declared in the current package
@@ -1908,12 +1876,15 @@ package body Docgen.Work_On_Source is
                Info := Entity.Public_Declaration;
             end if;
 
-            if Entity.Is_Private = Private_Entity
+            if not Entity.Processed
+              and then Entity.Is_Private = Private_Entity
               and then Entity.Kind = Type_Entity
               and then Source_Filename =
                 Get_Filename (Get_File (Get_Declaration_Of (Entity.Entity)))
               and then Entity_Defined_In_Package (Info, Package_Info)
             then
+               Entity.Processed := True;
+
                Get_Whole_Header
                  (File_Text.all,
                   Parsed_List,
@@ -1994,27 +1965,14 @@ package body Docgen.Work_On_Source is
                      end if;
                   end if;
 
-                  Delete_Node := True;
                   Free (Header);
                   Free (Description);
                end if;
             end if;
 
-            if Delete_Node then
-               Type_Entity_List.Remove_Nodes
-                 (Entity_List,
-                  Entity_Node_Prec,
-                  Entity_Node);
+            exit when Entity_Node = TEL.Last (Entity_List);
 
-               if Entity_Node_Prec = TEL.Null_Node then
-                  Entity_Node := TEL.First (Entity_List);
-               else
-                  Entity_Node := TEL.Next (Entity_Node_Prec);
-               end if;
-            else
-               Entity_Node_Prec := Entity_Node;
-               Entity_Node := TEL.Next (Entity_Node);
-            end if;
+            Entity_Node := TEL.Next (Entity_Node);
          end loop;
       end if;
    end Process_Types;
@@ -2055,31 +2013,30 @@ package body Docgen.Work_On_Source is
    is
       use TEL;
       Entity_Node              : Type_Entity_List.List_Node;
-      Entity_Node_Prec         : Type_Entity_List.List_Node;
       Description              : GNAT.OS_Lib.String_Access;
       Header                   : GNAT.OS_Lib.String_Access;
       Header_Lines             : Natural;
       Header_Start, Header_End : Natural;
       First_Already_Set        : Boolean;
-      Delete_Node              : Boolean;
       Entity                   : TEL.Data_Access;
 
    begin
       if not TEL.Is_Empty (Entity_List) then
          First_Already_Set := False;
          Entity_Node := TEL.First (Entity_List);
-         Entity_Node_Prec := TEL.Null_Node;
 
          while Entity_Node /= TEL.Null_Node loop
             Entity := TEL.Data_Ref (Entity_Node);
-            Delete_Node := False;
 
-            if Entity.Is_Private = Private_Entity
+            if not Entity.Processed
+              and then Entity.Is_Private = Private_Entity
               and then Entity.Kind = Entry_Entity
               and then Source_Filename =
                 Get_Filename (Get_File (Get_Declaration_Of (Entity.Entity)))
               and then Entity_Defined_In_Package (Entity.Entity, Package_Info)
             then
+               Entity.Processed := True;
+
                Get_Whole_Header
                  (File_Text.all,
                   Parsed_List,
@@ -2123,27 +2080,14 @@ package body Docgen.Work_On_Source is
                        (B, Kernel, Result, Level, Description.all);
                   end if;
 
-                  Delete_Node := True;
                   Free (Header);
                   Free (Description);
                end if;
             end if;
 
-            if Delete_Node then
-               Type_Entity_List.Remove_Nodes
-                 (Entity_List,
-                  Entity_Node_Prec,
-                  Entity_Node);
+            exit when Entity_Node = TEL.Last (Entity_List);
 
-               if Entity_Node_Prec = TEL.Null_Node then
-                  Entity_Node := TEL.First (Entity_List);
-               else
-                  Entity_Node := TEL.Next (Entity_Node_Prec);
-               end if;
-            else
-               Entity_Node_Prec := Entity_Node;
-               Entity_Node := TEL.Next (Entity_Node);
-            end if;
+            Entity_Node := TEL.Next (Entity_Node);
          end loop;
       end if;
    end Process_Entries;
@@ -2260,27 +2204,24 @@ package body Docgen.Work_On_Source is
    is
       use TEL;
       Entity_Node       : Type_Entity_List.List_Node;
-      Entity_Node_Prec  : Type_Entity_List.List_Node;
       Description       : GNAT.OS_Lib.String_Access;
       Header            : GNAT.OS_Lib.String_Access;
       Header_Lines      : Natural;
       Header_Start      : Natural;
       Header_End        : Natural;
       First_Already_Set : Boolean;
-      Delete_Node       : Boolean;
       Entity            : TEL.Data_Access;
 
    begin
       if not TEL.Is_Empty (Entity_List) then
          First_Already_Set := False;
          Entity_Node       := TEL.First (Entity_List);
-         Entity_Node_Prec  := TEL.Null_Node;
 
          while Entity_Node /= TEL.Null_Node loop
-            Entity      := TEL.Data_Ref (Entity_Node);
-            Delete_Node := False;
+            Entity := TEL.Data_Ref (Entity_Node);
 
-            if Entity.Is_Private = Private_Entity
+            if not Entity.Processed
+              and then Entity.Is_Private = Private_Entity
               and then Entity.Kind = Subprogram_Entity
               and then Source_Filename =
                 Get_Filename (Get_File (Get_Declaration_Of (Entity.Entity)))
@@ -2290,6 +2231,8 @@ package body Docgen.Work_On_Source is
             --  The subprogram must either belong to the package currently
             --  processed or be the main unit itself in order to be processed.
             then
+               Entity.Processed := True;
+
                Get_Whole_Header
                  (File_Text.all,
                   Parsed_List,
@@ -2353,27 +2296,14 @@ package body Docgen.Work_On_Source is
                         Level            => Level);
                   end if;
 
-                  Delete_Node := True;
                   Free (Header);
                   Free (Description);
                end if;
             end if;
 
-            if Delete_Node then
-               Type_Entity_List.Remove_Nodes
-                 (Entity_List,
-                  Entity_Node_Prec,
-                  Entity_Node);
+            exit when Entity_Node = TEL.Last (Entity_List);
 
-               if Entity_Node_Prec = TEL.Null_Node then
-                  Entity_Node := TEL.First (Entity_List);
-               else
-                  Entity_Node := TEL.Next (Entity_Node_Prec);
-               end if;
-            else
-               Entity_Node_Prec := Entity_Node;
-               Entity_Node := TEL.Next (Entity_Node);
-            end if;
+            Entity_Node := TEL.Next (Entity_Node);
          end loop;
       end if;
    end Process_Subprograms;
