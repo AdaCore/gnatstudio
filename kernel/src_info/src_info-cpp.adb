@@ -604,15 +604,16 @@ package body Src_Info.CPP is
          False, -- no recursion
          Languages => (1 => Name_C, 2 => Name_C_Plus_Plus));
 
-      Iterator.List_Filename := new String'(DB_Dir & "gps_list");
-
       --  If there is at least one source file, make sure the database
       --  directory exists.
 
       if Current_Source_File (Iterator) /= "" then
          Create_DB_Directory (DB_Dir);
          --  Create the list of files that need to be analyzed.
+         Iterator.List_Filename := new String'(DB_Dir & "gps_list");
          Create (Tmp_File, Out_File, Name => Iterator.List_Filename.all);
+      else
+         Iterator.List_Filename := null;
       end if;
 
       loop
@@ -657,7 +658,7 @@ package body Src_Info.CPP is
          Next_Source_File (Iterator);
       end loop;
 
-      if Is_Open (Tmp_File) then
+      if Iterator.List_Filename /= null then
          Close (Tmp_File);
       end if;
 
@@ -671,6 +672,11 @@ package body Src_Info.CPP is
             Cbrowser_Path => Iterator.Handler.CBrowser_Path.all,
             PD            => Iterator.PD);
       else
+         if Iterator.List_Filename /= null then
+            Delete_File (Iterator.List_Filename.all, Success);
+            Free (Iterator.List_Filename);
+            Iterator.List_Filename := null;
+         end if;
          Iterator.State := Skip_Project;
       end if;
    end Browse_Project;
@@ -688,11 +694,12 @@ package body Src_Info.CPP is
    is
       HI : CPP_LI_Handler_Iterator;
    begin
-      HI.Handler      := CPP_LI_Handler (Handler);
-      HI.Prj_Iterator := new Imported_Project_Iterator'
+      HI.Handler       := CPP_LI_Handler (Handler);
+      HI.Prj_Iterator  := new Imported_Project_Iterator'
         (Prj_API.Start (Get_Project_From_View (Project), Recursive));
-      HI.Project      := Project;
-      HI.Root_Project := Root_Project;
+      HI.Project       := Project;
+      HI.Root_Project  := Root_Project;
+      HI.List_Filename := null;
 
       if Prj_API.Current (HI.Prj_Iterator.all) /= Prj.No_Project then
          Browse_Project (Prj_API.Current (HI.Prj_Iterator.all), HI);
