@@ -260,7 +260,8 @@ ifneq (,$(findstring kernel,$(MODULES)))
 # information on how to setup the required links
 KERNEL_SRC=../../kernel
 
-MODULE_INCLUDE+=-aI${KERNEL_SRC}/src -aO${KERNEL_SRC}/obj
+MODULE_INCLUDE+=-aI${KERNEL_SRC}/src -aL../../kbody/obj -aO../../glide/obj \
+ -aO../../src_editor/obj -aO../../gvd
 endif
 
 .PHONY: check_kernel
@@ -312,7 +313,7 @@ empty:=
 space:= $(empty) $(empty)
 vpath %.c ${subst ${space},:,${dir ${C_FILES}}}
 
-C_MODULE_INCLUDE+=${subst -aI,-I,${filter-out -aO%,${MODULE_INCLUDE}}}
+C_MODULE_INCLUDE+=${subst -aI,-I,${filter-out -aO% -aL%,${MODULE_INCLUDE}}}
 
 ${OBJ_DIR}/%.o: %.c
 	cd ${OBJ_DIR}; gcc ${CFLAGS} -Wall -c ../src/$< -I../src ${C_MODULE_INCLUDE}
