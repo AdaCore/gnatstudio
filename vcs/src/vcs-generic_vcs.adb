@@ -316,9 +316,48 @@ package body VCS.Generic_VCS is
       Filenames   : String_List.List;
       Clear_Logs  : Boolean := False)
    is
-      pragma Unreferenced (Clear_Logs);
+      Kernel : Kernel_Handle renames Rep.Kernel;
+
+      The_Action : constant Action_Record :=
+        Lookup_Action (Kernel, Rep.Commands (Status));
+
+      Node   : List_Node := First (Filenames);
+
+      Custom : Command_Access;
+
+      Args   : GNAT.OS_Lib.String_List_Access;
+      Index  : Natural := 2;
    begin
-      Generic_Command (Rep, Filenames, Status);
+      if The_Action = No_Action
+        or else Is_Empty (Filenames)
+      then
+         return;
+      end if;
+
+      --  ??? Where is Args freed ?
+      Args := new GNAT.OS_Lib.String_List (1 .. Length (Filenames) + 1);
+
+      Args (1) := new String'(Clear_Logs'Img);
+
+      while Node /= Null_Node loop
+         Args (Index) := new String'(Data (Node));
+         Index := Index + 1;
+         Node := Next (Node);
+      end loop;
+
+      Custom := Create_Proxy
+        (The_Action.Command,
+         (null,
+          null,
+          Args));
+
+      Launch_Background_Command
+        (Kernel,
+         Custom,
+         True,
+         True,
+         Rep.Id.all,
+         True);
    end Get_Status;
 
    ----------------------
@@ -693,10 +732,6 @@ package body VCS.Generic_VCS is
          declare
             St : File_Status_Record;
          begin
-            Trace (Me, "File: #"
-                   & S (Matches (Rep.File_Index).First
-                        .. Matches (Rep.File_Index).Last) & "#");
-
             St.File := Glide_Kernel.Create
               (S (Matches (Rep.File_Index).First
                   .. Matches (Rep.File_Index).Last),
@@ -731,8 +766,6 @@ package body VCS.Generic_VCS is
                     S (Matches (Rep.Status_Index).First
                        .. Matches (Rep.Status_Index).Last);
                begin
-                  Trace (Me, "Status: #" & Status_String & "#");
-
                   for A in File_Status'Range loop
                      if Rep.Status (A) /= null
                        and then Status_String = Rep.Status (A).all
