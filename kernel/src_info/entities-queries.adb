@@ -678,4 +678,15 @@ package body Entities.Queries is
       end case;
    end Get_Type;
 
+   -----------------
+   -- Renaming_Of --
+   -----------------
+
+   function Renaming_Of
+     (Entity : Entity_Information) return Entity_Information is
+   begin
+      Resolve_Partial_Entity (Entity.Rename);
+      return Entity.Rename;
+   end Renaming_Of;
+
 end Entities.Queries;
