@@ -343,57 +343,6 @@ html_engine_object_requested_cb (HTMLEngine *engine,
 }
 
 
-/* GtkAdjustment handling.  */
-
-static void
-vertical_scroll_cb (GtkAdjustment *adjustment, gpointer data)
-{
-	CscHTML *html = CSC_HTML (data);
-
-	html->engine->y_offset = (gint)adjustment->value;
-}
-
-static void
-horizontal_scroll_cb (GtkAdjustment *adjustment, gpointer data)
-{
-	CscHTML *html = CSC_HTML (data);
-		
-	html->engine->x_offset = (gint)adjustment->value;
-}
-
-static void
-connect_adjustments (CscHTML *html,
-		     GtkAdjustment *hadj,
-		     GtkAdjustment *vadj)
-{
-	GtkLayout *layout;
-
-	layout = GTK_LAYOUT (html);
-
-	if (html->hadj_connection != 0)
-		gtk_signal_disconnect (GTK_OBJECT(layout->hadjustment),
-				       html->hadj_connection);
-
-	if (html->vadj_connection != 0)
-		gtk_signal_disconnect (GTK_OBJECT(layout->vadjustment),
-				       html->vadj_connection);
-
-	if (vadj != NULL)
-		html->vadj_connection =
-			gtk_signal_connect (GTK_OBJECT (vadj), "value_changed",
-					    GTK_SIGNAL_FUNC (vertical_scroll_cb), (gpointer)html);
-	else
-		html->vadj_connection = 0;
-	
-	if (hadj != NULL)
-		html->hadj_connection =
-			gtk_signal_connect (GTK_OBJECT (hadj), "value_changed",
-					    GTK_SIGNAL_FUNC (horizontal_scroll_cb), (gpointer)html);
-	else
-		html->hadj_connection = 0;
-}
-
-
 /* Scroll timeout handling.  */
 
 static void
@@ -514,8 +463,6 @@ destroy (GtkObject *object)
 	gdk_cursor_destroy (html->hand_cursor);
 	gdk_cursor_destroy (html->arrow_cursor);
 	gdk_cursor_destroy (html->ibeam_cursor);
-
-	connect_adjustments (html, NULL, NULL);
 
 	if (html->idle_handler_id != 0)
 		gtk_idle_remove (html->idle_handler_id);
@@ -1009,8 +956,6 @@ set_adjustments (GtkLayout     *layout,
 {
 	CscHTML *html = CSC_HTML(layout);
 
-	connect_adjustments (html, hadj, vadj);
-	
 	if (parent_class->set_scroll_adjustments)
 		(* parent_class->set_scroll_adjustments) (layout, hadj, vadj);
 }
