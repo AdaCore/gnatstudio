@@ -91,6 +91,10 @@ package Python.GUI is
    procedure Destroy (Interpreter : access Python_Interpreter_Record);
    --  Free the memory occupied by the interpreter
 
+   function In_Process
+     (Interpreter : access Python_Interpreter_Record) return Boolean;
+   --  Whether the interpreter is processing a command
+
    Interpreter_Error : exception;
 
 private

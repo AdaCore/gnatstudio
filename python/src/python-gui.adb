@@ -819,4 +819,14 @@ package body Python.GUI is
       return Interpreter.Console;
    end Get_Console;
 
+   ----------------
+   -- In_Process --
+   ----------------
+
+   function In_Process
+     (Interpreter : access Python_Interpreter_Record) return Boolean is
+   begin
+      return Interpreter.In_Process;
+   end In_Process;
+
 end Python.GUI;
