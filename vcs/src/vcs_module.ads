@@ -25,7 +25,8 @@ with GNAT.OS_Lib;
 
 package VCS_Module is
 
-   VCS_Module_ID : Module_ID;
+   VCS_Module_ID   : Module_ID;
+   VCS_Module_Name : constant String := "VCS_Interface";
 
    procedure Register_Module
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
