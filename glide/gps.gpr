@@ -54,6 +54,15 @@ project GPS is
       end case;
    end Linker;
 
+   package Naming is
+      case Shared.OS is
+         when "Windows_NT" =>
+            for Implementation ("dde") use "dde_win32.adb";
+         when "unix" =>
+            for Implementation ("dde") use "dde_default.adb";
+      end case;
+   end Naming;
+
    package IDE renames Shared.IDE;
 
 end GPS;
