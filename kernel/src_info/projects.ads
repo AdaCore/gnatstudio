@@ -580,12 +580,14 @@ private
 
    procedure Get_Unit_Part_And_Name_From_Filename
      (Filename  : String;
-      Project   : Prj.Project_Id;
+      Project   : Project_Type;
       Part      : out Unit_Part;
       Unit_Name : out Types.Name_Id;
       Lang      : out Types.Name_Id);
    --  Return the unit name and unit part for Filename.
    --  This procedure doesn't fully handle krunched file name.
+   --  It will return No_Name for Lang if the file doesn't belong to any
+   --  language supported by the project.
 
    type Scenario_Variable is record
       Name        : Types.Name_Id;
@@ -656,9 +658,9 @@ private
    --  Naming package
    Casing_Attribute           : constant Attribute_Pkg := "naming#casing";
    Specification_Suffix_Attribute : constant Attribute_Pkg :=
-     "naming#specification_suffix";
+     "naming#specification_suffix";    --  Specific to Ada
    Implementation_Suffix_Attribute : constant Attribute_Pkg :=
-     "naming#implementation_suffix";
+     "naming#implementation_suffix";   --  Specific to Ada
    Separate_Suffix_Attribute  : constant Attribute_Pkg :=
      "naming#separate_suffix";
    Spec_Suffix_Attribute      : constant Attribute_Pkg := "naming#spec_suffix";

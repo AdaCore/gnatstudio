@@ -138,7 +138,10 @@ package body Projects is
    --  Callback is called for each of them.
 
    procedure Check_Suffix_List
-     (Filename : String; List : in out Array_Element_Id; Len : out Natural);
+     (Filename : String;
+      Langs    : String_List_Id;
+      List     : in out Array_Element_Id;
+      Len      : out Natural);
    pragma Inline (Check_Suffix_List);
    --  Check in List whether any suffix matches Filename.
    --  Len is set to the length of the suffix, and List to the matching item
@@ -609,14 +612,32 @@ package body Projects is
    -----------------------
 
    procedure Check_Suffix_List
-     (Filename : String; List : in out Array_Element_Id; Len : out Natural) is
+     (Filename : String;
+      Langs    : String_List_Id;
+      List     : in out Array_Element_Id;
+      Len      : out Natural)
+   is
+      Lang : Name_Id;
+      L    : String_List_Id;
    begin
-      while List /= No_Array_Element loop
-         Get_Name_String (Array_Elements.Table (List).Value.Value);
-         exit when Suffix_Matches (Filename, Name_Buffer (1 .. Name_Len));
+      Suffixes : while List /= No_Array_Element loop
+         Lang := Array_Elements.Table (List).Index;
+
+         --  Only check for supported languages
+         L    := Langs;
+         while L /= Nil_String loop
+            if String_Elements.Table (L).Value = Lang then
+               Get_Name_String (Array_Elements.Table (List).Value.Value);
+               exit Suffixes when Suffix_Matches
+                 (Filename, Name_Buffer (1 .. Name_Len));
+            end if;
+
+            L := String_Elements.Table (L).Next;
+         end loop;
+
          Len := 0;
          List := Array_Elements.Table (List).Next;
-      end loop;
+      end loop Suffixes;
       Len := Name_Len;
    end Check_Suffix_List;
 
@@ -626,16 +647,18 @@ package body Projects is
 
    procedure Get_Unit_Part_And_Name_From_Filename
      (Filename  : String;
-      Project   : Prj.Project_Id;
+      Project   : Project_Type;
       Part      : out Unit_Part;
       Unit_Name : out Name_Id;
       Lang      : out Name_Id)
    is
-      Naming : constant Naming_Data := Prj.Projects.Table (Project).Naming;
+      View   : constant Project_Id := Get_View (Project);
+      Naming : constant Naming_Data := Prj.Projects.Table (View).Naming;
       F    : String := Filename;
       Arr  : Array_Element_Id;
       Len  : Natural;
       File : Name_Id;
+      Langs : String_List_Id;
    begin
       Canonical_Case_File_Name (F);
 
@@ -644,7 +667,7 @@ package body Projects is
       File := Get_String (F);
 
       Arr := Check_Full_File
-        (File, Prj.Projects.Table (Project).Naming.Bodies);
+        (File, Prj.Projects.Table (View).Naming.Bodies);
 
       if Arr = No_Array_Element then
          Arr := Check_Full_File (File, Naming.Specs);
@@ -687,8 +710,10 @@ package body Projects is
 
       --  Check standard extensions. The index in this table is the language
 
+      Langs := Get_Attribute_Value (Project, Languages_Attribute).Values;
+
       Arr := Naming.Spec_Suffix;
-      Check_Suffix_List (F, Arr, Len);
+      Check_Suffix_List (F, Langs, Arr, Len);
       if Arr /= No_Array_Element then
          Part      := Unit_Spec;
          Unit_Name := Get_String (F (F'First .. F'Last - Len));
@@ -697,7 +722,7 @@ package body Projects is
       end if;
 
       Arr := Naming.Body_Suffix;
-      Check_Suffix_List (F, Arr, Len);
+      Check_Suffix_List (F, Langs, Arr, Len);
       if Arr /= No_Array_Element then
          Part      := Unit_Body;
          Unit_Name := Get_String (F (F'First .. F'Last - Len));
@@ -751,7 +776,7 @@ package body Projects is
       Name, Lang : Name_Id;
    begin
       Get_Unit_Part_And_Name_From_Filename
-        (Filename, Get_View (Project), Unit, Name, Lang);
+        (Filename, Project, Unit, Name, Lang);
       return Unit;
    end Get_Unit_Part_From_Filename;
 
@@ -903,18 +928,21 @@ package body Projects is
       View : constant Project_Id := Get_View (Project);
       Arr  : Array_Element_Id;
       Len  : Natural;
+      Langs : String_List_Id;
    begin
       --  View will be null when called from the project wizard
 
       if View /= Prj.No_Project then
+         Langs := Get_Attribute_Value (Project, Languages_Attribute).Values;
+
          Arr := Prj.Projects.Table (View).Naming.Spec_Suffix;
-         Check_Suffix_List (Filename, Arr, Len);
+         Check_Suffix_List (Filename, Langs, Arr, Len);
          if Arr /= No_Array_Element then
             return Filename'Last - Len;
          end if;
 
          Arr := Prj.Projects.Table (View).Naming.Body_Suffix;
-         Check_Suffix_List (Filename, Arr, Len);
+         Check_Suffix_List (Filename, Langs, Arr, Len);
          if Arr /= No_Array_Element then
             return Filename'Last - Len;
          end if;
@@ -946,7 +974,7 @@ package body Projects is
       P          : Project_Type;
    begin
       Get_Unit_Part_And_Name_From_Filename
-        (File, Get_View (Project), Unit, Name, Lang);
+        (File, Project, Unit, Name, Lang);
 
       case Unit is
          when Unit_Spec                 => Part := Unit_Body;
@@ -1183,8 +1211,8 @@ package body Projects is
 
             while Value /= Nil_String loop
                declare
-                  Str : constant String := To_Lower
-                    (Get_String (String_Elements.Table (Value).Value));
+                  Str : constant String :=
+                    Get_String (String_Elements.Table (Value).Value);
                begin
                   for L in Lang'First .. Index - 1 loop
                      if Lang (L).all = Str then
@@ -1860,6 +1888,8 @@ package body Projects is
       --  change when the view changes
 
       Free (Project.Data.Non_Recursive_Include_Path);
+
+      Reset (Project.Data.Directories);
    end Reset;
 
    --------------
