@@ -146,6 +146,15 @@ package String_Utils is
    --  depending on the value of Tab_Size.
    --  This function works correctly with multiple-line strings.
 
+   function To_File_Name (Name : in String) return String;
+   --  Returns a file name from an ada subprogram/package name.
+
+   procedure Mixed_Case (S : in out String);
+   --  Returns S with a casing matching Ada style.
+
+   function Strip_Quotes (S : in String) return String;
+   --  Removes the quotes and the spaces at the beginning and end of S.
+
 private
    pragma Inline (Looking_At);
    pragma Inline (Skip_Blanks);

@@ -599,4 +599,55 @@ package body String_Utils is
       end if;
    end Do_Tab_Expansion;
 
+   ------------------
+   -- To_File_Name --
+   ------------------
+
+   function To_File_Name (Name : String) return String is
+      Result : String (1 .. Name'Length) := To_Lower (Name);
+   begin
+      for J in Result'First .. Result'Last loop
+         if Result (J) = '.' then
+               Result (J) := '-';
+         end if;
+      end loop;
+
+      return Result;
+   end To_File_Name;
+
+   ----------------
+   -- Mixed_Case --
+   ----------------
+
+   procedure Mixed_Case (S : in out String) is
+   begin
+      S (S'First) := To_Upper (S (S'First));
+
+      for J in S'First + 1 .. S'Last loop
+         if S (J - 1) = '_' then
+            S (J) := To_Upper (S (J));
+         end if;
+      end loop;
+   end Mixed_Case;
+
+   ------------------
+   -- Strip_Quotes --
+   ------------------
+
+   function Strip_Quotes (S : in String) return String is
+      S_First : Integer := S'First;
+      S_Last  : Integer := S'Last;
+
+   begin
+      while S (S_First) = ' ' or else S (S_First) = '"' loop
+         S_First := S_First + 1;
+      end loop;
+
+      while S (S_Last) = ' ' or else S (S_Last) = '"' loop
+         S_Last := S_Last - 1;
+      end loop;
+
+      return S (S_First .. S_Last);
+   end Strip_Quotes;
+
 end String_Utils;
