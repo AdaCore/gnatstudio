@@ -1,3 +1,31 @@
+-----------------------------------------------------------------------
+--                                                                   --
+--                     Copyright (C) 2001                            --
+--                          ACT-Europe                               --
+--                                                                   --
+-- This library is free software; you can redistribute it and/or     --
+-- modify it under the terms of the GNU General Public               --
+-- License as published by the Free Software Foundation; either      --
+-- version 2 of the License, or (at your option) any later version.  --
+--                                                                   --
+-- This library is distributed in the hope that it will be useful,   --
+-- but WITHOUT ANY WARRANTY; without even the implied warranty of    --
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
+-- General Public License for more details.                          --
+--                                                                   --
+-- You should have received a copy of the GNU General Public         --
+-- License along with this library; if not, write to the             --
+-- Free Software Foundation, Inc., 59 Temple Place - Suite 330,      --
+-- Boston, MA 02111-1307, USA.                                       --
+--                                                                   --
+-- As a special exception, if other files instantiate generics from  --
+-- this unit, or you link this unit with other files to produce an   --
+-- executable, this  unit  does not  by itself cause  the resulting  --
+-- executable to be covered by the GNU General Public License. This  --
+-- exception does not however invalidate any other reasons why the   --
+-- executable file  might be covered by the  GNU Public License.     --
+-----------------------------------------------------------------------
+
 with Glib; use Glib;
 with Gtk; use Gtk;
 with Gdk.Types;       use Gdk.Types;
@@ -18,6 +46,7 @@ end Gtk_New;
 procedure Initialize (Hyper_Grep_Base : access Hyper_Grep_Base_Record'Class) is
    pragma Suppress (All_Checks);
    Pattern_Combo_Items : String_List.Glist;
+   Scan_In_Vbox_Group : Widget_SList.GSList;
    Directory_Combo_Items : String_List.Glist;
    Files_Combo_Items : String_List.Glist;
 
@@ -70,27 +99,40 @@ begin
      Fill, 0,
      0, 0);
 
-   Gtk_New (Hyper_Grep_Base.Scan_In_Frame, "Scan in");
-   Set_Border_Width (Hyper_Grep_Base.Scan_In_Frame, 5);
-   Set_Shadow_Type (Hyper_Grep_Base.Scan_In_Frame, Shadow_Etched_In);
-   Attach (Hyper_Grep_Base.Search_Table, Hyper_Grep_Base.Scan_In_Frame, 2, 4, 1, 2,
+   Gtk_New (Hyper_Grep_Base.Scope_Frame, "Scope");
+   Set_Border_Width (Hyper_Grep_Base.Scope_Frame, 5);
+   Set_Shadow_Type (Hyper_Grep_Base.Scope_Frame, Shadow_Etched_In);
+   Attach (Hyper_Grep_Base.Search_Table, Hyper_Grep_Base.Scope_Frame, 2, 4, 1, 2,
      Fill, Fill,
      0, 0);
 
    Gtk_New_Vbox (Hyper_Grep_Base.Scan_In_Vbox, False, 0);
-   Add (Hyper_Grep_Base.Scan_In_Frame, Hyper_Grep_Base.Scan_In_Vbox);
+   Add (Hyper_Grep_Base.Scope_Frame, Hyper_Grep_Base.Scan_In_Vbox);
 
-   Gtk_New (Hyper_Grep_Base.Statements_Check, "Statements");
-   Set_Active (Hyper_Grep_Base.Statements_Check, True);
-   Pack_Start (Hyper_Grep_Base.Scan_In_Vbox, Hyper_Grep_Base.Statements_Check, False, False, 0);
+   Gtk_New (Hyper_Grep_Base.Whole_Rbutton, Scan_In_Vbox_Group, "Whole text");
+   Scan_In_Vbox_Group := Group (Hyper_Grep_Base.Whole_Rbutton);
+   Set_Active (Hyper_Grep_Base.Whole_Rbutton, True);
+   Pack_Start (Hyper_Grep_Base.Scan_In_Vbox, Hyper_Grep_Base.Whole_Rbutton, False, False, 0);
 
-   Gtk_New (Hyper_Grep_Base.Strings_Check, "Strings");
-   Set_Active (Hyper_Grep_Base.Strings_Check, True);
-   Pack_Start (Hyper_Grep_Base.Scan_In_Vbox, Hyper_Grep_Base.Strings_Check, False, False, 0);
+   Gtk_New (Hyper_Grep_Base.Comm_Only_Rbutton, Scan_In_Vbox_Group, "Comments only");
+   Scan_In_Vbox_Group := Group (Hyper_Grep_Base.Comm_Only_Rbutton);
+   Set_Active (Hyper_Grep_Base.Comm_Only_Rbutton, False);
+   Pack_Start (Hyper_Grep_Base.Scan_In_Vbox, Hyper_Grep_Base.Comm_Only_Rbutton, False, False, 0);
 
-   Gtk_New (Hyper_Grep_Base.Comments_Check, "Comments");
-   Set_Active (Hyper_Grep_Base.Comments_Check, True);
-   Pack_Start (Hyper_Grep_Base.Scan_In_Vbox, Hyper_Grep_Base.Comments_Check, False, False, 0);
+   Gtk_New (Hyper_Grep_Base.Strings_Rbutton, Scan_In_Vbox_Group, "Strings only");
+   Scan_In_Vbox_Group := Group (Hyper_Grep_Base.Strings_Rbutton);
+   Set_Active (Hyper_Grep_Base.Strings_Rbutton, False);
+   Pack_Start (Hyper_Grep_Base.Scan_In_Vbox, Hyper_Grep_Base.Strings_Rbutton, False, False, 0);
+
+   Gtk_New (Hyper_Grep_Base.Comm_Str_Rbutton, Scan_In_Vbox_Group, "Comments and strings");
+   Scan_In_Vbox_Group := Group (Hyper_Grep_Base.Comm_Str_Rbutton);
+   Set_Active (Hyper_Grep_Base.Comm_Str_Rbutton, False);
+   Pack_Start (Hyper_Grep_Base.Scan_In_Vbox, Hyper_Grep_Base.Comm_Str_Rbutton, False, False, 0);
+
+   Gtk_New (Hyper_Grep_Base.All_But_Comm_Rbutton, Scan_In_Vbox_Group, "All but comments");
+   Scan_In_Vbox_Group := Group (Hyper_Grep_Base.All_But_Comm_Rbutton);
+   Set_Active (Hyper_Grep_Base.All_But_Comm_Rbutton, False);
+   Pack_Start (Hyper_Grep_Base.Scan_In_Vbox, Hyper_Grep_Base.All_But_Comm_Rbutton, False, False, 0);
 
    Gtk_New (Hyper_Grep_Base.Options_Frame, "Options");
    Set_Border_Width (Hyper_Grep_Base.Options_Frame, 5);
@@ -104,15 +146,15 @@ begin
 
    Gtk_New (Hyper_Grep_Base.Case_Check, "Match case");
    Set_Active (Hyper_Grep_Base.Case_Check, False);
-   Pack_Start (Hyper_Grep_Base.Options_Vbox, Hyper_Grep_Base.Case_Check, False, False, 0);
+   Pack_Start (Hyper_Grep_Base.Options_Vbox, Hyper_Grep_Base.Case_Check, True, True, 0);
 
    Gtk_New (Hyper_Grep_Base.Whole_Word_Check, "Match whole word");
    Set_Active (Hyper_Grep_Base.Whole_Word_Check, False);
-   Pack_Start (Hyper_Grep_Base.Options_Vbox, Hyper_Grep_Base.Whole_Word_Check, False, False, 0);
+   Pack_Start (Hyper_Grep_Base.Options_Vbox, Hyper_Grep_Base.Whole_Word_Check, True, True, 0);
 
    Gtk_New (Hyper_Grep_Base.Regexp_Check, "Regular expression");
    Set_Active (Hyper_Grep_Base.Regexp_Check, False);
-   Pack_Start (Hyper_Grep_Base.Options_Vbox, Hyper_Grep_Base.Regexp_Check, False, False, 0);
+   Pack_Start (Hyper_Grep_Base.Options_Vbox, Hyper_Grep_Base.Regexp_Check, True, True, 0);
 
    Gtk_New (Hyper_Grep_Base.Files_Frame, "Files");
    Set_Border_Width (Hyper_Grep_Base.Files_Frame, 5);

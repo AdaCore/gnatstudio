@@ -37,47 +37,34 @@ with Ada.Unchecked_Deallocation;
 package body Find_Utils is
 
    procedure Common_Init
-     (Search          : out Code_Search;
-      Look_For        : String;
-      Match_Case      : Boolean;
-      Whole_Word      : Boolean;
-      Regexp          : Boolean;
-      Scan_Comments   : Boolean;
-      Scan_Strings    : Boolean;
-      Scan_Statements : Boolean);
+     (Search     : out Code_Search;
+      Look_For   : String;
+      Match_Case : Boolean;
+      Whole_Word : Boolean;
+      Regexp     : Boolean;
+      Scope      : Search_Scope);
    --  Initialize file-independent fields.
    --
    --  Raise Search_Error if:
    --  * Look_For is empty, or can't compile
-   --  * Neither Comments nor Strings nor Statements are scanned
 
    -----------------
    -- Common_Init --
    -----------------
 
    procedure Common_Init
-     (Search          : out Code_Search;
-      Look_For        : String;
-      Match_Case      : Boolean;
-      Whole_Word      : Boolean;
-      Regexp          : Boolean;
-      Scan_Comments   : Boolean;
-      Scan_Strings    : Boolean;
-      Scan_Statements : Boolean)
+     (Search     : out Code_Search;
+      Look_For   : String;
+      Match_Case : Boolean;
+      Whole_Word : Boolean;
+      Regexp     : Boolean;
+      Scope      : Search_Scope)
    is
       Flags : Regexp_Flags := No_Flags;
       WD    : constant String := "\b";  -- Word_Delimiter
 
    begin
-      if Look_For = ""
-        or else not
-          (Scan_Comments
-           or else Scan_Strings
-           or else Scan_Statements)
-
-      --  Really need 'or else' in the sub-expression ???
-
-      then
+      if Look_For = "" then
          raise Search_Error;
       end if;
 
@@ -110,13 +97,11 @@ package body Find_Utils is
          end if;
       end if;
 
-      Search.Look_For        := new String' (Look_For);
-      Search.Match_Case      := Match_Case;
-      Search.Whole_Word      := Whole_Word;
-      Search.Regexp          := Regexp;
-      Search.Scan_Comments   := Scan_Comments;
-      Search.Scan_Strings    := Scan_Strings;
-      Search.Scan_Statements := Scan_Statements;
+      Search.Look_For   := new String' (Look_For);
+      Search.Match_Case := Match_Case;
+      Search.Whole_Word := Whole_Word;
+      Search.Regexp     := Regexp;
+      Search.Scope      := Scope;
 
    exception
       when Expression_Error =>
@@ -262,7 +247,7 @@ package body Find_Utils is
       function Scan_File (Name : String) return Boolean is
          Language : Language_Access := Get_Language_From_File (Name);
       begin
-         if Language = null then
+         if Search.Scope = Whole or else Language = null then
             return Scan_File_Without_Context (Name);
          else
             return Scan_File_With_Context
@@ -374,7 +359,6 @@ package body Find_Utils is
          end;
 
          Close (FD);
-
          return Continue and then Callback (False, Name);
       end Scan_File_Without_Context;
 
@@ -390,10 +374,10 @@ package body Find_Utils is
       is
          Scanning_Allowed :
            constant array (Recognized_Lexical_States) of Boolean :=
-             (Statements     => Search.Scan_Statements,
-              Strings        => Search.Scan_Strings,
-              Mono_Comments  => Search.Scan_Comments,
-              Multi_Comments => Search.Scan_Comments);
+             (Statements     => Search.Scope = All_But_Comm,
+              Strings        => Search.Scope in Comm_Str .. All_But_Comm,
+              Mono_Comments  => Search.Scope in Comm_Only .. Comm_Str,
+              Multi_Comments => Search.Scope in Comm_Only .. Comm_Str);
 
          EOL : constant Natural := Line'Last;  -- End Of Line
 
@@ -565,23 +549,20 @@ package body Find_Utils is
    -----------------
 
    procedure Init_Search
-     (Search          : out Code_Search;
-      Look_For        : String;
-      Files           : Project_Files_Access;
-      Match_Case      : Boolean := False;
-      Whole_Word      : Boolean := False;
-      Regexp          : Boolean := False;
-      Scan_Comments   : Boolean := True;
-      Scan_Strings    : Boolean := True;
-      Scan_Statements : Boolean := True) is
+     (Search     : out Code_Search;
+      Look_For   : String;
+      Files      : Project_Files_Access;
+      Match_Case : Boolean := False;
+      Whole_Word : Boolean := False;
+      Regexp     : Boolean := False;
+      Scope      : Search_Scope := Whole) is
    begin
       if Files = null then
          raise Search_Error;
       end if;
 
       Common_Init
-        (Search, Look_For, Match_Case, Whole_Word, Regexp,
-         Scan_Comments, Scan_Strings, Scan_Statements);
+        (Search, Look_For, Match_Case, Whole_Word, Regexp, Scope);
       Search.Files := Files;
    end Init_Search;
 
@@ -590,17 +571,15 @@ package body Find_Utils is
    -----------------
 
    procedure Init_Search
-     (Search          : out Code_Search;
-      Look_For        : String;
-      Files_Pattern   : Regexp;
-      Directory       : String  := "";
-      Recurse         : Boolean := False;
-      Match_Case      : Boolean := False;
-      Whole_Word      : Boolean := False;
-      Regexp          : Boolean := False;
-      Scan_Comments   : Boolean := True;
-      Scan_Strings    : Boolean := True;
-      Scan_Statements : Boolean := True)
+     (Search        : out Code_Search;
+      Look_For      : String;
+      Files_Pattern : Regexp;
+      Directory     : String  := "";
+      Recurse       : Boolean := False;
+      Match_Case    : Boolean := False;
+      Whole_Word    : Boolean := False;
+      Regexp        : Boolean := False;
+      Scope         : Search_Scope := Whole)
    is
       Result : Boolean;
    begin
@@ -614,8 +593,7 @@ package body Find_Utils is
       end;
 
       Common_Init
-        (Search, Look_For, Match_Case, Whole_Word, Regexp,
-         Scan_Comments, Scan_Strings, Scan_Statements);
+        (Search, Look_For, Match_Case, Whole_Word, Regexp, Scope);
       Search.Files_Pattern := Files_Pattern;
       Search.Recurse := Recurse;
 

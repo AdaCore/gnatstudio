@@ -122,9 +122,9 @@
 
 	<widget>
 	  <class>GtkFrame</class>
-	  <name>scan_in_frame</name>
+	  <name>scope_frame</name>
 	  <border_width>5</border_width>
-	  <label>Scan in</label>
+	  <label>Scope</label>
 	  <label_xalign>0</label_xalign>
 	  <shadow_type>GTK_SHADOW_ETCHED_IN</shadow_type>
 	  <child>
@@ -149,10 +149,10 @@
 	    <spacing>0</spacing>
 
 	    <widget>
-	      <class>GtkCheckButton</class>
-	      <name>statements_check</name>
+	      <class>GtkRadioButton</class>
+	      <name>whole_rbutton</name>
 	      <can_focus>True</can_focus>
-	      <label>Statements</label>
+	      <label>Whole text</label>
 	      <active>True</active>
 	      <draw_indicator>True</draw_indicator>
 	      <child>
@@ -163,11 +163,11 @@
 	    </widget>
 
 	    <widget>
-	      <class>GtkCheckButton</class>
-	      <name>strings_check</name>
+	      <class>GtkRadioButton</class>
+	      <name>comm_only_rbutton</name>
 	      <can_focus>True</can_focus>
-	      <label>Strings</label>
-	      <active>True</active>
+	      <label>Comments only</label>
+	      <active>False</active>
 	      <draw_indicator>True</draw_indicator>
 	      <child>
 		<padding>0</padding>
@@ -177,11 +177,39 @@
 	    </widget>
 
 	    <widget>
-	      <class>GtkCheckButton</class>
-	      <name>comments_check</name>
+	      <class>GtkRadioButton</class>
+	      <name>strings_rbutton</name>
 	      <can_focus>True</can_focus>
-	      <label>Comments</label>
-	      <active>True</active>
+	      <label>Strings only</label>
+	      <active>False</active>
+	      <draw_indicator>True</draw_indicator>
+	      <child>
+		<padding>0</padding>
+		<expand>False</expand>
+		<fill>False</fill>
+	      </child>
+	    </widget>
+
+	    <widget>
+	      <class>GtkRadioButton</class>
+	      <name>comm_str_rbutton</name>
+	      <can_focus>True</can_focus>
+	      <label>Comments and strings</label>
+	      <active>False</active>
+	      <draw_indicator>True</draw_indicator>
+	      <child>
+		<padding>0</padding>
+		<expand>False</expand>
+		<fill>False</fill>
+	      </child>
+	    </widget>
+
+	    <widget>
+	      <class>GtkRadioButton</class>
+	      <name>all_but_comm_rbutton</name>
+	      <can_focus>True</can_focus>
+	      <label>All but comments</label>
+	      <active>False</active>
 	      <draw_indicator>True</draw_indicator>
 	      <child>
 		<padding>0</padding>
@@ -229,8 +257,8 @@
 	      <draw_indicator>True</draw_indicator>
 	      <child>
 		<padding>0</padding>
-		<expand>False</expand>
-		<fill>False</fill>
+		<expand>True</expand>
+		<fill>True</fill>
 	      </child>
 	    </widget>
 
@@ -243,8 +271,8 @@
 	      <draw_indicator>True</draw_indicator>
 	      <child>
 		<padding>0</padding>
-		<expand>False</expand>
-		<fill>False</fill>
+		<expand>True</expand>
+		<fill>True</fill>
 	      </child>
 	    </widget>
 
@@ -257,8 +285,8 @@
 	      <draw_indicator>True</draw_indicator>
 	      <child>
 		<padding>0</padding>
-		<expand>False</expand>
-		<fill>False</fill>
+		<expand>True</expand>
+		<fill>True</fill>
 	      </child>
 	    </widget>
 	  </widget>

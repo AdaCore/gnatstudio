@@ -58,20 +58,21 @@ package Find_Utils is
    type Project_Files_Access is access Project_Files;
    --  Type to get the list of project files.
 
+   type Search_Scope is (Whole, Comm_Only, Comm_Str, Str_Only, All_But_Comm);
+   --  Scope wanted for the search. Comm is comments, str is strings.
+
    Search_Error : exception;
    --  This exception is raised when trying to initialize a search with bad
    --  arguments.
 
    procedure Init_Search
-     (Search          : out Code_Search;
-      Look_For        : String;
-      Files           : Project_Files_Access;
-      Match_Case      : Boolean := False;
-      Whole_Word      : Boolean := False;
-      Regexp          : Boolean := False;
-      Scan_Comments   : Boolean := True;
-      Scan_Strings    : Boolean := True;
-      Scan_Statements : Boolean := True);
+     (Search     : out Code_Search;
+      Look_For   : String;
+      Files      : Project_Files_Access;
+      Match_Case : Boolean := False;
+      Whole_Word : Boolean := False;
+      Regexp     : Boolean := False;
+      Scope      : Search_Scope := Whole);
    --  Prepare searching for a word or a pattern in given file list.
    --
    --  Look_For         Searched word or single line pattern (see g-regpat.ads)
@@ -80,28 +81,22 @@ package Find_Utils is
    --  Match_Case       UPPER & lowercase letters are respected
    --  Whole_Word       Match only full words (eg 'end' not found in 'friend')
    --  Regexp           Look for a pattern instead of a word
-   --  Scan_Comments    Allows the word to be matched in comments
-   --  Scan_Strings     Allows the word to be matched in strings
-   --  Scan_Statements  Allows the word to be matched in statements (everywhere
-   --                   except in comments and strings)
+   --  Scope            Scope of the search
    --
    --  Raise Search_Error if:
    --  * Look_For is empty, or can't compile
    --  * Files is null
-   --  * Neither Comments nor Strings nor Statements are scanned
 
    procedure Init_Search
-     (Search          : out Code_Search;
-      Look_For        : String;
-      Files_Pattern   : Regexp;
-      Directory       : String  := "";
-      Recurse         : Boolean := False;
-      Match_Case      : Boolean := False;
-      Whole_Word      : Boolean := False;
-      Regexp          : Boolean := False;
-      Scan_Comments   : Boolean := True;
-      Scan_Strings    : Boolean := True;
-      Scan_Statements : Boolean := True);
+     (Search        : out Code_Search;
+      Look_For      : String;
+      Files_Pattern : Regexp;
+      Directory     : String  := "";
+      Recurse       : Boolean := False;
+      Match_Case    : Boolean := False;
+      Whole_Word    : Boolean := False;
+      Regexp        : Boolean := False;
+      Scope         : Search_Scope := Whole);
    --  Prepare searching for a word or a pattern in files selected by
    --  Files_Pattern, Directory and Recurse.
    --
@@ -115,7 +110,6 @@ package Find_Utils is
    --  Raise Search_Error if:
    --  * Look_For is empty, or can't compile
    --  * Files_Pattern is uninitialized
-   --  * Neither Comments nor Strings nor Statements are scanned
 
    type Poll_Search_Handler is access function
      (Match_Found : Boolean;
@@ -160,6 +154,7 @@ private
    type Recognized_Lexical_States is
      (Statements, Strings, Mono_Comments, Multi_Comments);
    --  Current lexical state of the currently parsed file.
+   --  Statements is all but comments and strings.
 
    type Code_Search is record
       Look_For        : String_Access := null;
@@ -174,9 +169,7 @@ private
       Whole_Word      : Boolean := False;
       Regexp          : Boolean := False;
 
-      Scan_Comments   : Boolean := True;
-      Scan_Strings    : Boolean := True;
-      Scan_Statements : Boolean := True;
+      Scope           : Search_Scope;
       Lexical_State   : Recognized_Lexical_States;
    end record;
 
