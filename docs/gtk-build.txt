@@ -14,7 +14,7 @@ ignore the special comments.
 
 Under HP-UX, a recent version of GCC (e.g 3.2) should be used.
 
-Under AiX, the vendor C compiler have been used:
+Under AiX, the vendor C compiler is used:
 # CC=cc
 # export CC
 
