@@ -144,6 +144,10 @@ private
    --  To check that a Source_File is not null, a quick and good enough
    --  check is to verify that Source_File.LI is not null.
 
+   function "=" (Left, Right : Source_File) return Boolean;
+   --  A redefined equality function that compares the Unit_Name values, not
+   --  the access value.
+
    type File_Location is record
       File   : Source_File;
       Line   : Positive;
@@ -158,6 +162,10 @@ private
    --  To verify that a File_Location is not null, a quick and good enough
    --  check is to verify that File_Location.File.LI is not null.
    --  See function Is_File_Location which performs this check.
+
+   function "=" (Left, Right : File_Location) return Boolean;
+   --  A redefined equality function that compares uses the redefined equality
+   --  for the source file field.
 
    type E_Reference is record
       Location : File_Location;
@@ -232,8 +240,13 @@ private
       Value : File_Info_Ptr;
       Next  : File_Info_Ptr_List;
    end record;
-   --  File_Info_Node_List is a chained list of File_Info. File_Info_Node is
-   --  a node of this list.
+   --  File_Info_Ptr_List is a chained list of File_Info_Ptr.
+   --  File_Info_Ptr_Node is a node of this list.
+   --
+   --  Note that we defined a list of File_Info_Ptr as opposed to a list of
+   --  File_Info records because it will provide a more homegeneous interface
+   --  inside LI_File record between the Spec_Info, Body_Info and Separate_Info
+   --  fields which all contain File_Info_Ptr types.
 
    type Dependency_File_Info is record
       File              : Source_File;
@@ -460,6 +473,10 @@ private
    --
    --  Note that only the Node pointed by LIFNP is deallocated, and not
    --  all the following ones.
+
+   function Copy (SF : Source_File) return Source_File;
+   --  Return a deep-copy of the given Source_File. The copy should be
+   --  deallocated after use.
 
 end Src_Info;
 
