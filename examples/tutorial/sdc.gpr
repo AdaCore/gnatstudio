@@ -16,7 +16,8 @@ project Sdc is
               ("-gnatwe", "-gnaty", "-gnato", "-g");
             for Switches ("screen_output.adb") use
               ("-gnatwe", "-gnaty", "-g");
-            for Default_Switches ("c") use ("-g");
+            for Default_Switches ("C") use
+              ("-g", "-fexceptions", "-fnon-call-exceptions");
 
          when "PRODUCTION" =>
             for Default_Switches ("ada") use
