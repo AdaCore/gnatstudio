@@ -531,9 +531,9 @@ begin
    Free (Dir);
    Free (Prefix);
 
+   Destroy (GPS.Kernel);
    Glide_Page.Destroy (Page);
    Destroy (GPS);
-   Destroy (GPS.Kernel);
    Prj_API.Finalize;
    Traces.Finalize;
 
