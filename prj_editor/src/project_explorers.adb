@@ -18,52 +18,52 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glide_Kernel;        use Glide_Kernel;
-with Scenario_Views;      use Scenario_Views;
-with Vsearch_Ext;         use Vsearch_Ext;
-with Gtk.Box;             use Gtk.Box;
-with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
+with Glide_Kernel;            use Glide_Kernel;
+with Scenario_Views;          use Scenario_Views;
+with Vsearch_Ext;             use Vsearch_Ext;
+with Gtk.Box;                 use Gtk.Box;
+with Gtk.Scrolled_Window;     use Gtk.Scrolled_Window;
 with Interfaces.C.Strings;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with Ada.Exceptions;            use Ada.Exceptions;
 
-with Glib;                 use Glib;
-with Glib.Object;          use Glib.Object;
-with Glib.Values;          use Glib.Values;
-with Glib.Xml_Int;         use Glib.Xml_Int;
+with Glib;                     use Glib;
+with Glib.Object;              use Glib.Object;
+with Glib.Values;              use Glib.Values;
+with Glib.Xml_Int;             use Glib.Xml_Int;
 
-with Gdk.Bitmap;           use Gdk.Bitmap;
-with Gdk.Color;            use Gdk.Color;
-with Gdk.Event;            use Gdk.Event;
-with Gdk.Pixmap;           use Gdk.Pixmap;
-with Gdk.Pixbuf;           use Gdk.Pixbuf;
+with Gdk.Bitmap;               use Gdk.Bitmap;
+with Gdk.Color;                use Gdk.Color;
+with Gdk.Event;                use Gdk.Event;
+with Gdk.Pixmap;               use Gdk.Pixmap;
+with Gdk.Pixbuf;               use Gdk.Pixbuf;
 
-with Gtk.Enums;            use Gtk.Enums;
-with Gtk.Arguments;        use Gtk.Arguments;
-with Gtk.Ctree;            use Gtk.Ctree;
-with Gtk.Main;             use Gtk.Main;
-with Gtk.Menu;             use Gtk.Menu;
-with Gtk.Menu_Item;        use Gtk.Menu_Item;
-with Gtk.Widget;           use Gtk.Widget;
-with Gtk.Label;            use Gtk.Label;
-with Gtk.Notebook;         use Gtk.Notebook;
-with Gtk.Cell_Renderer_Text;    use Gtk.Cell_Renderer_Text;
-with Gtk.Cell_Renderer_Pixbuf;  use Gtk.Cell_Renderer_Pixbuf;
-with Gtk.Tree_View;        use Gtk.Tree_View;
-with Gtk.Tree_View_Column; use Gtk.Tree_View_Column;
-with Gtk.Tree_Store;       use Gtk.Tree_Store;
-with Gtk.Tree_Model;       use Gtk.Tree_Model;
-with Gtk.Tree_Selection;   use Gtk.Tree_Selection;
-with Gtkada.Handlers;      use Gtkada.Handlers;
-with Gtkada.Types;         use Gtkada.Types;
-with Gtkada.MDI;           use Gtkada.MDI;
+with Gtk.Enums;                use Gtk.Enums;
+with Gtk.Arguments;            use Gtk.Arguments;
+with Gtk.Ctree;                use Gtk.Ctree;
+with Gtk.Main;                 use Gtk.Main;
+with Gtk.Menu;                 use Gtk.Menu;
+with Gtk.Menu_Item;            use Gtk.Menu_Item;
+with Gtk.Widget;               use Gtk.Widget;
+with Gtk.Label;                use Gtk.Label;
+with Gtk.Notebook;             use Gtk.Notebook;
+with Gtk.Cell_Renderer_Text;   use Gtk.Cell_Renderer_Text;
+with Gtk.Cell_Renderer_Pixbuf; use Gtk.Cell_Renderer_Pixbuf;
+with Gtk.Tree_View;            use Gtk.Tree_View;
+with Gtk.Tree_View_Column;     use Gtk.Tree_View_Column;
+with Gtk.Tree_Store;           use Gtk.Tree_Store;
+with Gtk.Tree_Model;           use Gtk.Tree_Model;
+with Gtk.Tree_Selection;       use Gtk.Tree_Selection;
+with Gtkada.Handlers;          use Gtkada.Handlers;
+with Gtkada.Types;             use Gtkada.Types;
+with Gtkada.MDI;               use Gtkada.MDI;
 
-with Prj;                  use Prj;
-with Namet;                use Namet;
-with Stringt;              use Stringt;
+with Prj;                      use Prj;
+with Namet;                    use Namet;
+with Stringt;                  use Stringt;
 
-with Types;                use Types;
+with Types;                    use Types;
 
 with Prj_API;                  use Prj_API;
 with Pixmaps_IDE;              use Pixmaps_IDE;
@@ -791,6 +791,7 @@ package body Project_Explorers is
       New_D      : Append_Directory_Idle_Data_Access;
 
       use String_List_Utils.String_List;
+
    begin
       --  If we are appending at the base, create a node indicating the
       --  absolute path to the directory.
@@ -979,7 +980,14 @@ package body Project_Explorers is
       Timeout_Id : Timeout_Handler_Id;
 
    begin
-      Open (D.D, Dir);
+      begin
+         Open (D.D, Dir);
+      exception
+         when Directory_Error =>
+            Free (D);
+            return;
+      end;
+
       D.Norm_Dest := new String' (Normalize_Pathname (Append_To_Dir));
       D.Norm_Dir  := new String' (Normalize_Pathname (Dir));
       D.Depth     := Depth;
@@ -1598,6 +1606,10 @@ package body Project_Explorers is
          Success := Expand_Row (T.File_Tree, Path, False);
          T.Expanding := False;
       end if;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Message (E));
    end File_Tree_Expand_Row_Cb;
 
    ------------------------
@@ -1621,6 +1633,11 @@ package body Project_Explorers is
          Project_View => Get_Project_From_Node (T, Node));
       Context_Changed (T.Kernel, Selection_Context_Access (Context));
       Free (Selection_Context_Access (Context));
+
+   exception
+      when E : others =>
+         Free (Selection_Context_Access (Context));
+         Trace (Me, "Unexpected exception: " & Exception_Message (E));
    end Tree_Select_Row_Cb;
 
    ---------------------
