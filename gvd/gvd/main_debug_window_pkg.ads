@@ -23,6 +23,7 @@ with Gtk.Box; use Gtk.Box;
 with Gtk.Menu_Bar; use Gtk.Menu_Bar;
 with Gtk.Menu_Item; use Gtk.Menu_Item;
 with Gtk.Menu; use Gtk.Menu;
+with Gtk.Check_Menu_Item; use Gtk.Check_Menu_Item;
 with Gtk.Widget; use Gtk.Widget;
 with Gtk.Frame; use Gtk.Frame;
 with Gtk.Notebook; use Gtk.Notebook;
@@ -149,6 +150,7 @@ package Main_Debug_Window_Pkg is
       Edit_Buttons1 : Gtk_Menu_Item;
       Data1 : Gtk_Menu_Item;
       Data1_Menu : Gtk_Menu;
+      Call_Stack : Gtk_Check_Menu_Item;
       Threads1 : Gtk_Menu_Item;
       Processes1 : Gtk_Menu_Item;
       Signals1 : Gtk_Menu_Item;
