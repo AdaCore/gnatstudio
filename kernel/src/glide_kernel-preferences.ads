@@ -80,6 +80,8 @@ package Glide_Kernel.Preferences is
    --  preference.
 
    -- General --
+   Default_Font          : Param_Spec_Font;
+   Key_Theme_Name        : Param_Spec_String;
    Default_Widget_Width  : Param_Spec_Int;
    Default_Widget_Height : Param_Spec_Int;
    Animated_Image        : Param_Spec_String;

@@ -36,6 +36,23 @@ package body Glide_Kernel.Preferences is
    begin
       -- General --
 
+      Default_Font := Param_Spec_Font (Gnew_Font
+        (Name    => "General-Default-Font",
+         Default => "Sans 10",
+         Blurb   => -"The default font used in GPS",
+         Nick    => -"Default font"));
+      Register_Property
+        (Kernel.Preferences, Param_Spec (Default_Font), -"General");
+
+      Key_Theme_Name := Param_Spec_String (Gnew_String
+        (Name    => "General-Key-Theme-Name",
+         Nick    => -"Key theme",
+         Blurb   =>
+           -"Name of key theme to use. Default and Emacs are supported",
+         Default => "Default"));
+      Register_Property
+        (Kernel.Preferences, Param_Spec (Key_Theme_Name), -"General");
+
       Default_Widget_Width := Param_Spec_Int (Gnew_Int
         (Name    => "General-Default-Widget-Width",
          Nick    => -"Default width",
