@@ -37,13 +37,13 @@ with SN.Find_Fns;       use SN.Find_Fns;
 with SN.Browse;
 with SN.Xref_Pools;     use SN.Xref_Pools;
 
-with Types; use Types;
-with Traces;  use Traces;
-with String_Utils; use String_Utils;
-with Snames; use Snames;
+with Snames;            use Snames;
+with Types;             use Types;
+with Traces;            use Traces;
+with File_Utils;        use File_Utils;
 with Ada.Strings.Fixed;
 with Ada.Unchecked_Deallocation;
-with VFS; use VFS;
+with VFS;               use VFS;
 
 package body Src_Info.CPP is
 
