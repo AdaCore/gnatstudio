@@ -92,6 +92,16 @@ package Glide_Kernel.Preferences is
    --  Whether directories should be displayed in the tree.  If False, only the
    --  projects are shown.
 
+   Ada_Extensions : constant Glib.Properties.Property_String :=
+     Register_Property ("File_Extensions::Ada", ".ads;.adb;.ada;.a;.dg");
+   C_Extensions : constant Glib.Properties.Property_String :=
+     Register_Property ("File_Extensions::C", ".c;.h");
+   Cpp_Extensions : constant Glib.Properties.Property_String :=
+     Register_Property ("File_Extensions::Cpp", ".cc;.cpp;.C;.hh;.H");
+   --  The file extensions that are recognized for each language.
+   --  Each possible extension should be separated from the others by a
+   --  semicolon.
+
    --------------------
    -- Project editor --
    --------------------
