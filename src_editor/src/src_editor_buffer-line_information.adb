@@ -1215,7 +1215,7 @@ package body Src_Editor_Buffer.Line_Information is
                end Find_Next_Line_In_Buffer;
 
             begin
-               --  ??? This implementation implies that the first editable
+               --  ??? This implementation assumes that the first editable
                --  line is always in the buffer. In this true ?
 
                while El <= Editable_Lines'Last loop
