@@ -164,18 +164,10 @@ package body VCS_View_Pkg is
      (Explorer      : access VCS_View_Record'Class;
       Iter          : Gtk_Tree_Iter;
       Status_Record : File_Status_Record;
-      Selected      : Boolean := False;
       Success       : out Boolean);
    --  Fills the tree info at the given Iter with values from
    --  Status_Record.
    --  Success tells whether the information has been filled or not.
-
-   procedure Commit
-     (Kernel   : Kernel_Handle;
-      Files    : String_List.List;
-      Log      : String;
-      Ref      : VCS_Access);
-   --  ???
 
    procedure Foreach_Selected_File
      (Explorer : access VCS_View_Record'Class;
@@ -250,10 +242,11 @@ package body VCS_View_Pkg is
 
       while not Is_Empty (L) loop
          if not Explorer.Hide_Up_To_Date
-           or else Head (L).Status /= Up_To_Date
+           or else (Head (L).Status /= Up_To_Date
+                    and then Head (L).Status /= Unknown)
          then
             Append (Explorer.Model, Iter, Null_Iter);
-            Fill_Info (Explorer, Iter, Head (L), False, Success);
+            Fill_Info (Explorer, Iter, Head (L), Success);
 
             if not Success then
                Remove (Explorer.Model, Iter);
@@ -374,6 +367,8 @@ package body VCS_View_Pkg is
               := String_List.Head (New_Status.File_Name);
             Temp_Stored_Status : File_Status_List.List
               := Explorer.Stored_Status;
+            Iter               : Gtk_Tree_Iter := Null_Iter;
+            Success            : Boolean;
          begin
             Found := False;
 
@@ -385,6 +380,8 @@ package body VCS_View_Pkg is
                then
                   Found := True;
                   Replace_Head (Temp_Stored_Status, New_Status);
+                  Iter := Get_Iter_From_Name
+                    (Explorer, String_List.Head (New_Status.File_Name));
                end if;
 
                Temp_Stored_Status := Next (Temp_Stored_Status);
@@ -393,12 +390,25 @@ package body VCS_View_Pkg is
             if not Found then
                Prepend (Explorer.Stored_Status, New_Status);
             end if;
+
+            if not (Explorer.Hide_Up_To_Date
+                    and then (New_Status.Status = Up_To_Date
+                              or else New_Status.Status = Unknown))
+            then
+               if Iter = Null_Iter then
+                  Append (Explorer.Model, Iter, Null_Iter);
+               end if;
+
+               Fill_Info (Explorer, Iter, New_Status, Success);
+            else
+               if Iter /= Null_Iter then
+                  Remove (Explorer.Model, Iter);
+               end if;
+            end if;
          end;
 
          Status_Temp := Next (Status_Temp);
       end loop;
-
-      Refresh (Explorer);
    end Display_File_Status;
 
    -------------------------
@@ -427,10 +437,7 @@ package body VCS_View_Pkg is
      (Explorer      : access VCS_View_Record'Class;
       Iter          : Gtk_Tree_Iter;
       Status_Record : File_Status_Record;
-      Selected      : Boolean := False;
-      Success       : out Boolean)
-   is
-      pragma Unreferenced (Selected);
+      Success       : out Boolean) is
    begin
       Success := True;
 
@@ -635,12 +642,23 @@ package body VCS_View_Pkg is
       Parameter : Log_Parameter)
    is
       pragma Unreferenced (Object);
+
+      Logs       : String_List.List;
+      Files_Copy : String_List.List;
+      Files_Temp : String_List.List := Parameter.Log_Editor.Files;
    begin
-      Commit (Parameter.Kernel,
-              Parameter.Log_Editor.Files,
-              Get_Text (Parameter.Log_Editor),
-              Parameter.VCS_Ref);
-      Get_Status (Parameter.VCS_Ref, Parameter.Log_Editor.Files);
+      while not String_List.Is_Empty (Files_Temp) loop
+         String_List.Append (Logs, Get_Text (Parameter.Log_Editor));
+         String_List.Append (Files_Copy, String_List.Head (Files_Temp));
+         Files_Temp := String_List.Next (Files_Temp);
+      end loop;
+
+      Commit (Parameter.VCS_Ref,
+              Files_Copy,
+              Logs);
+      Get_Status (Parameter.VCS_Ref,
+                  Files_Copy);
+
       Close (Parameter.Log_Editor);
    end Log_Editor_Ok_Clicked;
 
@@ -789,42 +807,6 @@ package body VCS_View_Pkg is
          end loop;
       end if;
    end Edit_Log;
-
-   ------------
-   -- Commit --
-   ------------
-
-   procedure Commit
-     (Kernel   : Kernel_Handle;
-      Files    : String_List.List;
-      Log      : String;
-      Ref      : VCS_Access)
-   is
-      Temp_Files : String_List.List := Files;
-      Files_List : String_List.List;
-      Logs_List  : String_List.List;
-
-   begin
-      pragma Assert (Ref /= null);
-
-      if String_List.Is_Empty (Files) then
-         return;
-      end if;
-
-      Push_Message (Kernel, Verbose, -"Committing files:");
-      Display_String_List (Kernel, Files_List);
-
-      while not String_List.Is_Empty (Temp_Files) loop
-         String_List.Append (Files_List, String_List.Head (Temp_Files));
-         String_List.Append (Logs_List, Log);
-         Temp_Files := String_List.Next (Temp_Files);
-      end loop;
-
-      Commit (Ref, Files_List, Logs_List);
-
-      String_List.Free (Files_List);
-      String_List.Free (Logs_List);
-   end Commit;
 
    ---------------------
    -- Edited_Callback --
