@@ -2,7 +2,7 @@
 --                               G P S                               --
 --                                                                   --
 --                        Copyright (C) 2001-2002                    --
---                            ACT-Europe                             --
+--                             ACT-Europe                            --
 --                                                                   --
 -- GLIDE is free software; you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
