@@ -76,6 +76,8 @@ with GVD_Module;                 use GVD_Module;
 with GVD.Canvas;                 use GVD.Canvas;
 with GVD.Code_Editors;           use GVD.Code_Editors;
 with GVD.Dialogs;                use GVD.Dialogs;
+with GPS.Kernel;
+with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
 with GPS.Main_Window;            use GPS.Main_Window;
 with GPS.Main_Window.Debug;      use GPS.Main_Window.Debug;
 with Default_Preferences;        use Default_Preferences;
@@ -936,12 +938,11 @@ package body GVD.Process is
         (Process.Stack, "delete_event",
          On_Stack_Delete_Event'Access, Process);
 
-      --  ??? Would be nicer to use GPS.Kernel.MDI.Put, but we need access to
-      --  the kernel
       Child := Put
-        (Process.Window.MDI,
+        (GPS.Kernel.Get_Kernel (Debugger_Module_ID.all),
          Process.Stack,
-         Position => Position_Default);
+         Position => Position_Debugger_Stack,
+         Module   => Debugger_Module_ID);
       Set_Focus_Child (Child);
       Split (Process.Window.MDI,
              Orientation_Horizontal,
@@ -997,12 +998,13 @@ package body GVD.Process is
       Configure (Process.Data_Canvas, Annotation_Font => Annotation_Font);
       Free (Annotation_Font);
 
-      --  ??? Would be nicer to use GPS.Kernel.MDI.Put, but we need access to
-      --  the kernel
       Child := Put
-        (Process.Window.MDI, Process.Data_Scrolledwindow,
-         Position => Position_Default,
-         Flags => All_Buttons);
+        (GPS.Kernel.Get_Kernel (Debugger_Module_ID.all),
+         Process.Data_Scrolledwindow,
+         Position => Position_Debugger_Data,
+         Flags    => All_Buttons,
+         Module   => Debugger_Module_ID);
+
       Set_Focus_Child (Child);
       Split (Process.Window.MDI,
              Orientation_Vertical,
