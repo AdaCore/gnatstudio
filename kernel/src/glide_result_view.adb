@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2004                       --
---                            ACT-Europe                             --
+--                     Copyright (C) 2001-2005                       --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -163,6 +163,13 @@ package body Glide_Result_View is
    -----------------------
    -- Local subprograms --
    -----------------------
+
+   procedure Remove_Category
+     (View       : access Result_View_Record'Class;
+      Identifier : String;
+      File       : VFS.Virtual_File);
+   --  Remove category Identifier from the view. All corresponding marks
+   --  are deleted.
 
    procedure Set_Column_Types (View : access Result_View_Record'Class);
    --  Sets the types of columns to be displayed in the tree_view.
@@ -522,6 +529,10 @@ package body Glide_Result_View is
          5 => new String'(Image (Column + Length)));
       Command : GNAT.OS_Lib.String_Access;
    begin
+      if Highlight_Category = "" then
+         return;
+      end if;
+
       if Highlight then
          if Length = 0 then
             Command := new String'("Editor.highlight");
@@ -1501,13 +1512,14 @@ package body Glide_Result_View is
 
    procedure Remove_Result_Category
      (Kernel   : access Kernel_Handle_Record'Class;
-      Category : String)
+      Category : String;
+      File     : VFS.Virtual_File := VFS.No_File)
    is
-      View  : constant Result_View :=
-                Get_Or_Create_Result_View (Kernel, Allow_Creation => False);
+      View : constant Result_View :=
+        Get_Or_Create_Result_View (Kernel, Allow_Creation => False);
    begin
       if View /= null then
-         Remove_Category (View, Category);
+         Remove_Category (View, Category, File);
       end if;
    end Remove_Result_Category;
 
@@ -1516,18 +1528,28 @@ package body Glide_Result_View is
    ---------------------
 
    procedure Remove_Category
-     (View          : access Result_View_Record'Class;
-      Identifier    : String)
+     (View       : access Result_View_Record'Class;
+      Identifier : String;
+      File       : VFS.Virtual_File)
    is
       Iter       : Gtk_Tree_Iter;
-      Dummy_Iter : Gtk_Tree_Iter;
+      File_Iter  : Gtk_Tree_Iter;
       Dummy      : Boolean;
    begin
       Get_Category_File
         (View,
          View.Tree.Model,
-         Identifier, "", VFS.No_File, Iter, Dummy_Iter, Dummy);
-      Remove_Category_Or_File_Iter (Result_View (View), Iter);
+         Identifier, "", File, Iter, File_Iter, Dummy);
+
+      if File_Iter = Null_Iter then
+         Remove_Category_Or_File_Iter (Result_View (View), Iter);
+      else
+         Remove_Category_Or_File_Iter (Result_View (View), File_Iter);
+
+         if Children (View.Tree.Model, Iter) = Null_Iter then
+            Remove_Category_Or_File_Iter (Result_View (View), Iter);
+         end if;
+      end if;
    end Remove_Category;
 
    ------------------
