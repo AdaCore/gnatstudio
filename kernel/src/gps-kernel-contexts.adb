@@ -35,6 +35,13 @@ package body GPS.Kernel.Contexts is
       return Boolean;
    --  See inherited documentation
 
+   type Filter_Directory is new Action_Filter_Record with null record;
+   function Filter_Matches_Primitive
+     (Filter  : access Filter_Directory;
+      Ctxt    : access GPS.Kernel.Selection_Context'Class)
+      return Boolean;
+   --  See inherited documentation
+
    type Filter_Entity is new Action_Filter_Record with null record;
    function Filter_Matches_Primitive
      (Filter  : access Filter_Entity;
@@ -122,6 +129,22 @@ package body GPS.Kernel.Contexts is
    begin
       return Ctxt.all in File_Selection_Context'Class
         and then Has_File_Information (File_Selection_Context_Access (Ctxt));
+   end Filter_Matches_Primitive;
+
+   ------------------------------
+   -- Filter_Matches_Primitive --
+   ------------------------------
+
+   function Filter_Matches_Primitive
+     (Filter  : access Filter_Directory;
+      Ctxt    : access GPS.Kernel.Selection_Context'Class)
+      return Boolean
+   is
+      pragma Unreferenced (Filter);
+   begin
+      return Ctxt.all in File_Selection_Context'Class
+        and then Has_Directory_Information
+          (File_Selection_Context_Access (Ctxt));
    end Filter_Matches_Primitive;
 
    --------------------------
@@ -480,11 +503,13 @@ package body GPS.Kernel.Contexts is
      (Kernel : access Kernel_Handle_Record'Class)
    is
       File_Filter         : constant Action_Filter := new Filter_File;
+      Directory_Filter    : constant Action_Filter := new Filter_Directory;
       Entity_Filter       : constant Action_Filter := new Filter_Entity;
       Project_File_Filter : constant Action_Filter := new Filter_Project_File;
       Project_Only_Filter : constant Action_Filter := new Filter_Project_Only;
    begin
       Register_Filter (Kernel, File_Filter, "File");
+      Register_Filter (Kernel, Directory_Filter, "Directory");
       Register_Filter (Kernel, Entity_Filter, "Entity");
       Register_Filter (Kernel, Project_Only_Filter, "Project only");
       Register_Filter (Kernel, Project_File_Filter, "Project and file");
