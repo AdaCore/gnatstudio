@@ -26,6 +26,7 @@ with Gtkada.MDI;                use Gtkada.MDI;
 with Glide_Main_Window;         use Glide_Main_Window;
 with Glide_Page;                use Glide_Page;
 with GVD.Process;               use GVD.Process;
+with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Widget;                use Gtk.Widget;
 with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
 with Glide_Intl;                use Glide_Intl;
@@ -200,10 +201,12 @@ package body Glide_Kernel.Help is
    begin
       if Kernel.HTML_Widget = null then
          Gtk_New (Scrolled);
+         Set_Policy (Scrolled, Policy_Automatic, Policy_Always);
          Gtk_New (HTML);
          Add (Scrolled, HTML);
          Kernel.HTML_Widget := Gtk_Widget (HTML);
          Child := Put (MDI, Scrolled);
+
          Set_Title (Child, -"Help");
          Set_Size_Request (Scrolled, Default_Width, Default_Height);
          Show_All (Scrolled);
