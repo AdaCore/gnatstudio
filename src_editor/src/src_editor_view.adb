@@ -640,8 +640,10 @@ package body Src_Editor_View is
                Bracket_Offset : constant := 2;
                --  The distance between brackets and text.
 
-               First         : constant Gint := Gint (B.First_Line - 1);
-               Last          : constant Gint := Gint (B.Last_Line - 1);
+               First         : constant Gint :=
+                 Gint (Get_Buffer_Line (Buffer, B.First_Line) - 1);
+               Last          : constant Gint :=
+                 Gint (Get_Buffer_Line (Buffer, B.Last_Line) - 1);
 
             begin
                --  Do not draw blocks that are on the first column.
