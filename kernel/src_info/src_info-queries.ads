@@ -616,7 +616,7 @@ private
    end record;
 
    No_Entity_Information : constant Entity_Information :=
-     (null, 1, 0, null, Global_Scope, Unresolved_Entity);
+     (null, 1, 0, null, Global_Scope, Unresolved_Entity_Kind);
 
    type Scope_Node;
    type Scope_List is access Scope_Node;
@@ -771,4 +771,5 @@ private
 
    pragma Inline (File_Information);
    pragma Inline (Dependency_Information);
+   pragma Inline (Is_Label);
 end Src_Info.Queries;

@@ -38,58 +38,60 @@ package body Src_Info.Queries is
 
    Me : constant Debug_Handle := Create ("SRC_INFO");
 
-   type E_Kind_To_Boolean_Map is array (E_Kind) of Boolean;
+   type E_Kind_To_Boolean_Map is array (E_Kinds) of Boolean;
    pragma Pack (E_Kind_To_Boolean_Map);
 
    Is_Scope_Entity : constant E_Kind_To_Boolean_Map :=
-     (Overloaded_Entity                => False,
-      Unresolved_Entity                => False,
-      Access_Object                    => False,
-      Access_Type                      => False,
-      Array_Object                     => False,
-      Array_Type                       => False,
-      Boolean_Object                   => False,
-      Boolean_Type                     => False,
-      Class_Wide_Object                => False,
-      Class_Wide_Type                  => False,
-      Decimal_Fixed_Point_Object       => False,
-      Decimal_Fixed_Point_Type         => False,
-      Entry_Or_Entry_Family            => False,
-      Enumeration_Literal              => False,
-      Enumeration_Object               => False,
-      Enumeration_Type                 => False,
-      Exception_Entity                 => False,
-      Floating_Point_Object            => False,
-      Floating_Point_Type              => False,
-      Generic_Class                    => True,
-      Generic_Function_Or_Operator     => True,
-      Generic_Package                  => True,
-      Generic_Procedure                => True,
-      Label_On_Block                   => False,
-      Label_On_Loop                    => False,
-      Label_On_Statement               => False,
-      Modular_Integer_Object           => False,
-      Modular_Integer_Type             => False,
-      Named_Number                     => False,
-      Non_Generic_Function_Or_Operator => True,
-      Non_Generic_Package              => True,
-      Non_Generic_Procedure            => True,
-      Ordinary_Fixed_Point_Object      => False,
-      Ordinary_Fixed_Point_Type        => False,
-      Private_Type                     => False,
-      Protected_Object                 => False,
-      Protected_Type                   => False,
-      Record_Object                    => True,
-      Record_Type                      => True,
-      Signed_Integer_Object            => False,
-      Signed_Integer_Type              => False,
-      String_Object                    => False,
-      String_Type                      => False,
-      Task_Object                      => False,
-      Task_Type                        => False);
+     (Overloaded_Entity     => False,
+      Unresolved_Entity     => False,
+      Access_Kind           => False,
+      Array_Kind            => False,
+      Boolean_Kind          => False,
+      Class_Wide            => True,
+      Class                 => True,
+      Decimal_Fixed_Point   => False,
+      Entry_Or_Entry_Family => False,
+      Enumeration_Literal   => False,
+      Enumeration_Kind      => False,
+      Exception_Entity      => False,
+      Floating_Point        => False,
+      Function_Or_Operator  => True,
+      Package_Kind          => True,
+      Procedure_Kind        => True,
+      Label_On_Block        => False,
+      Label_On_Loop         => False,
+      Label_On_Statement    => False,
+      Modular_Integer       => False,
+      Named_Number          => False,
+      Ordinary_Fixed_Point  => False,
+      Private_Type          => False,
+      Protected_Kind        => False,
+      Record_Kind           => True,
+      Signed_Integer        => False,
+      String_Kind           => False,
+      Task_Kind             => False);
    --  This table should contain true if the corresponding element should
    --  appear when computing the full scope name for an entity (see
    --  Get_Full_Name).
+
+   Is_Subprogram_Entity : constant E_Kind_To_Boolean_Map :=
+     (Procedure_Kind        => True,
+      Function_Or_Operator  => True,
+      Entry_Or_Entry_Family => True,
+      Overloaded_Entity     => True,
+      --  ??? Should we check that at least one of the possible
+      --  completions is a subprogram
+      others                => False);
+   --  This table should contain true if the corresponding element is
+   --  considered as a subprogram (see Is_Subprogram)
+
+   Is_Label_Entity : constant E_Kind_To_Boolean_Map :=
+     (Label_On_Loop      => True,
+      Label_On_Statement => True,
+      Label_On_Block     => True,
+      others             => False);
+   --  This table should contain true if the corresponding element is a label
+   --  (see Is_Label)
 
    use Name_Htable.String_Hash_Table;
 
@@ -534,7 +536,7 @@ package body Src_Info.Queries is
          Status           => Status);
 
       if Status = Success or else Status = Fuzzy_Match then
-         if Decl.Declaration.Kind /= Overloaded_Entity then
+         if Decl.Declaration.Kind.Kind /= Overloaded_Entity then
             Entity := Get_Entity (Decl.Declaration);
          else
             Entity := No_Entity_Information;
@@ -594,7 +596,7 @@ package body Src_Info.Queries is
          Status           => Status);
 
       if (Status = Success or else Status = Fuzzy_Match)
-        and then Decl.Declaration.Kind = Overloaded_Entity
+        and then Decl.Declaration.Kind.Kind = Overloaded_Entity
       then
          Status := Overloaded_Entity_Found;
          Location := Null_File_Location;
@@ -867,8 +869,7 @@ package body Src_Info.Queries is
       while L /= null loop
          if not Subprograms_Pkg_Only
            or else Is_Subprogram (Scope_Tree_Node (L))
-           or else L.Decl.Kind = Generic_Package
-           or else L.Decl.Kind = Non_Generic_Package
+           or else L.Decl.Kind.Kind = Package_Kind
          then
             Trace (Handler, Prefix & Dump (L));
             if L.Typ = Declaration then
@@ -925,17 +926,8 @@ package body Src_Info.Queries is
    -------------------
 
    function Is_Subprogram (Node : Scope_Tree_Node) return Boolean is
-      K : constant E_Kind := Node.Decl.Kind;
    begin
-      return (K = Generic_Function_Or_Operator
-              or else K = Generic_Procedure
-              or else K = Non_Generic_Function_Or_Operator
-              or else K = Non_Generic_Procedure
-              or else K = Entry_Or_Entry_Family
-
-               --  ??? Should we check that at least one of the possible
-               --  completions is a subprogram
-              or else K = Overloaded_Entity)
+      return Is_Subprogram_Entity (Node.Decl.Kind.Kind)
         and then (Node.Typ = Declaration
                   or else not Is_End_Reference (Node.Ref.Kind));
    end Is_Subprogram;
@@ -945,11 +937,8 @@ package body Src_Info.Queries is
    --------------
 
    function Is_Label (Node : Scope_Tree_Node) return Boolean is
-      K : constant E_Kind := Node.Decl.Kind;
    begin
-      return K = Label_On_Loop
-        or else K = Label_On_Block
-        or else K = Label_On_Statement;
+      return Is_Label_Entity (Node.Decl.Kind.Kind);
    end Is_Label;
 
    --------------
@@ -1377,9 +1366,7 @@ package body Src_Info.Queries is
             --  we are
 
             if List.Value.Declaration.End_Of_Scope /= No_Reference
-              and then
-                (List.Value.Declaration.Kind = Non_Generic_Package
-                 or else List.Value.Declaration.Kind = Generic_Package)
+              and then List.Value.Declaration.Kind.Kind = Package_Kind
             then
                New_Item := new Scope_Node'
                  (Typ            => Declaration,
@@ -1757,7 +1744,7 @@ package body Src_Info.Queries is
          --  Only include the names that are actually part of a scope (the
          --  entity itself is automatically part of the scope, whatever its
          --  kind)
-         if Tmp = Node or else Is_Scope_Entity (Get_Kind (Tmp)) then
+         if Tmp = Node or else Is_Scope_Entity (Get_Kind (Tmp).Kind) then
             T := Get_Entity (Tmp);
 
             if Length (Full_Name) /= 0 then
@@ -2849,7 +2836,7 @@ package body Src_Info.Queries is
          --  While there remains some declarations to analyze in the current
          --  file
          while Iterator.Current /= null loop
-            if Iterator.Current.Value.Declaration.Kind /=
+            if Iterator.Current.Value.Declaration.Kind.Kind /=
               Overloaded_Entity
               and then
               (Iterator.Entity_Name = null
