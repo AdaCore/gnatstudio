@@ -37,6 +37,7 @@ with Gtk.Frame;                  use Gtk.Frame;
 with Gtk.Handlers;               use Gtk.Handlers;
 with Gtk.Label;                  use Gtk.Label;
 with Gtk.Scrolled_Window;        use Gtk.Scrolled_Window;
+with Gtk.Text_Iter;              use Gtk.Text_Iter;
 with Gtk.Text_Layout;            use Gtk.Text_Layout;
 
 with Language;                   use Language;
@@ -44,6 +45,7 @@ with String_Utils;               use String_Utils;
 with Src_Editor;                 use Src_Editor;
 with Src_Editor_Buffer;          use Src_Editor_Buffer;
 with Src_Editor_View;            use Src_Editor_View;
+with Src_Info.Queries;
 
 package body Src_Editor_Box is
 
@@ -111,6 +113,17 @@ package body Src_Editor_Box is
    --  Perform the initialization of the given editor box. If Source_Buffer
    --  is null, then a new buffer will automatically be created. Otherwise,
    --  the editor creates a new editor for the same Source_Buffer.
+
+   function Is_Entity_Letter (Char : Character) return Boolean;
+   --  Return True if the given letter is a valid letter for an entity name
+   --  (ie if the letter is either alphanumeric or an '_').
+
+   procedure Search_Entity_Bounds
+     (Buffer       : access Source_Buffer_Record'Class;
+      Start_Iter   : in out Gtk_Text_Iter;
+      End_Iter     : out Gtk_Text_Iter);
+   --  Find the position of the begining and the end of the entity pointed to
+   --  by Start_Iter.
 
    -----------------
    -- To_Box_Line --
@@ -280,6 +293,48 @@ package body Src_Editor_Box is
 
    end Initialize_Box;
 
+   ----------------------
+   -- Is_Entity_Letter --
+   ----------------------
+
+   function Is_Entity_Letter (Char : Character) return Boolean is
+   begin
+      case Char is
+         when 'a' .. 'z' | 'A' .. 'Z' | '0' .. '9' | '_' =>
+            return True;
+         when others =>
+            return False;
+      end case;
+   end Is_Entity_Letter;
+
+   --------------------------
+   -- Search_Entity_Bounds --
+   --------------------------
+
+   procedure Search_Entity_Bounds
+     (Buffer       : access Source_Buffer_Record'Class;
+      Start_Iter   : in out Gtk_Text_Iter;
+      End_Iter     : out Gtk_Text_Iter)
+   is
+      Ignored     : Boolean;
+   begin
+      --  Search forward the end of the entity...
+      Copy (Source => Start_Iter, Dest => End_Iter);
+      while not Is_End (End_Iter) loop
+         exit when not Is_Entity_Letter (Get_Char (End_Iter));
+         Forward_Char (End_Iter, Ignored);
+      end loop;
+
+      --  And search backward the begining of the entity...
+      while not Is_Start (Start_Iter) loop
+         Backward_Char (Start_Iter, Ignored);
+         if not Is_Entity_Letter (Get_Char (Start_Iter)) then
+            Forward_Char (Start_Iter, Ignored);
+            exit;
+         end if;
+      end loop;
+   end Search_Entity_Bounds;
+
    -------------
    -- Gtk_New --
    -------------
@@ -377,8 +432,17 @@ package body Src_Editor_Box is
       Lang_Autodetect : Boolean := True;
       Success         : out Boolean) is
    begin
+      Free (Editor.Filename);
       Load_File (Editor.Source_Buffer, Filename, Lang_Autodetect, Success);
       Set_Cursor_Location (Editor, 1, 1);
+
+      if Success then
+         Editor.Filename := new String'(Filename);
+         --  ??? Not sure whether we should store the basename or not. For the
+         --  ??? moment we store the full path, but this might be an error,
+         --  ??? expecially if we change the cwd inside GLIDE. Should not
+         --  ??? happen though.
+      end if;
    end Load_File;
 
    ------------------
@@ -762,5 +826,52 @@ package body Src_Editor_Box is
    begin
       return Get_Show_Line_Numbers (Editor.Source_View);
    end Get_Show_Line_Numbers;
+
+   ------------------------------
+   -- Find_Declaration_Or_Body --
+   ------------------------------
+
+   procedure Find_Declaration_Or_Body
+     (Editor       : access Source_Editor_Box_Record;
+      Line         : Natural := 0;
+      Column       : Natural := 0;
+      Lib_Info     : Src_Info.LI_File_Ptr;
+      Filename     : out GNAT.OS_Lib.String_Access;
+      Start_Line   : out Positive;
+      Start_Column : out Positive;
+      End_Line     : out Positive;
+      End_Column   : out Positive)
+   is
+      Tmp_Line   : Natural := Line;
+      Tmp_Col    : Natural := Column;
+
+      Start_Iter : Gtk_Text_Iter;
+      End_Iter   : Gtk_Text_Iter;
+   begin
+      --  Get the cursor position if either Line or Column is equal to 0
+      if Tmp_Line = 0 or else Tmp_Col = 0 then
+         Get_Cursor_Location (Editor, Tmp_Line, Tmp_Col);
+      end if;
+
+      --  Transform this position into an iterator, and then locate the
+      --  bounds of the entity...
+      Get_Iter_At_Line_Offset
+        (Editor.Source_Buffer, Start_Iter,
+         To_Buffer_Line (Tmp_Line), To_Buffer_Column (Tmp_Col));
+      Search_Entity_Bounds (Editor.Source_Buffer, Start_Iter, End_Iter);
+
+      --  Compute the start of entity position
+      Tmp_Line := To_Box_Line (Get_Line (Start_Iter));
+      Tmp_Col  := To_Box_Column (Get_Line_Offset (Start_Iter));
+
+      declare
+         Entity_Name : constant String := Get_Text (Start_Iter, End_Iter);
+      begin
+         Src_Info.Queries.Find_Declaration_Or_Body
+           (Lib_Info, Base_File_Name (Editor.Filename.all),
+            Entity_Name, Tmp_Line, Tmp_Col,
+            Filename, Start_Line, Start_Column, End_Line, End_Column);
+      end;
+   end Find_Declaration_Or_Body;
 
 end Src_Editor_Box;
