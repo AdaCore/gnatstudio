@@ -701,7 +701,7 @@ package body Vdiff2_Module is
         (Kernel, Param_Spec (Diff_Change_Color), -"Visual diff");
 
       Kernel_Callback.Connect
-        (Kernel, "preferences_changed",
+        (Kernel, Preferences_Changed_Signal,
          Kernel_Callback.To_Marshaller (On_Preferences_Changed'Access),
          Kernel_Handle (Kernel));
 
