@@ -583,7 +583,10 @@ package body Vsearch_Ext is
                   Parent  => Get_Main_Window (Vsearch.Kernel));
             end if;
 
-            Set_First_Next_Mode (Vsearch, Find_Next => Has_Next);
+            --  We keep the "Next" mode until a new context is created by
+            --  the user, so that even after reaching the end of the search,
+            --  we can restart from the beginning simply by pressing Ctrl-N
+            Set_First_Next_Mode (Vsearch, Find_Next => True);
          end if;
       end if;
 
