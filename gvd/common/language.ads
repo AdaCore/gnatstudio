@@ -212,9 +212,9 @@ package Language is
    pragma Convention (C, Casing_Type);
    --  Casing used for identifiers and reserved words.
    --  Only relevant for case insensitive languages.
-   --  Mixed : set first character of each word and characters after an
+   --  - Mixed: Set first character of each word and characters after an
    --    underscore to upper-case, all other characters are set to lower-case.
-   --  Smart_Mixed : As Mixed but never force an upper-case to lower-case.
+   --  - Smart_Mixed: As Mixed but never force an upper-case to lower-case.
 
    type Source_Location is record
       Line   : Natural := 0;
