@@ -4056,11 +4056,13 @@ package body Src_Editor_Buffer is
    -- Execute --
    -------------
 
-   function Execute (Command : access Jump_To_Delimiter_Command)
+   function Execute
+     (Command : access Jump_To_Delimiter_Command; Event : Gdk.Event.Gdk_Event)
       return Command_Return_Type
    is
-      Data   : constant Event_Data := Get_Current_Event_Data (Command.Kernel);
-      View   : constant Source_View   := Source_View (Get_Widget (Data));
+      pragma Unreferenced (Event);
+      View   : constant Source_View   :=
+        Source_View (Get_Current_Focus_Widget (Command.Kernel));
       Buffer : constant Source_Buffer := Source_Buffer (Get_Buffer (View));
       On_Cursor_Iter       : Gtk_Text_Iter;
       First_Highlight_Iter : Gtk_Text_Iter;
@@ -4088,13 +4090,14 @@ package body Src_Editor_Buffer is
    -- Execute --
    -------------
 
-   function Execute (Command : access Completion_Command)
+   function Execute
+     (Command : access Completion_Command; Event : Gdk.Event.Gdk_Event)
       return Command_Return_Type
    is
+      pragma Unreferenced (Event);
       use String_List_Utils.String_List;
-
-      Event  : constant Event_Data := Get_Current_Event_Data (Command.Kernel);
-      View   : constant Source_View   := Source_View (Get_Widget (Event));
+      View   : constant Source_View   :=
+        Source_View (Get_Current_Focus_Widget (Command.Kernel));
       Buffer : constant Source_Buffer := Source_Buffer (Get_Buffer (View));
 
       procedure Extend_Completions_List;
@@ -4363,11 +4366,13 @@ package body Src_Editor_Buffer is
    -- Execute --
    -------------
 
-   function Execute (Command : access Indentation_Command)
+   function Execute
+     (Command : access Indentation_Command; Event : Gdk.Event.Gdk_Event)
       return Command_Return_Type
    is
-      Data   : constant Event_Data := Get_Current_Event_Data (Command.Kernel);
-      View   : constant Source_View   := Source_View (Get_Widget (Data));
+      pragma Unreferenced (Event);
+      View   : constant Source_View   :=
+        Source_View (Get_Current_Focus_Widget (Command.Kernel));
       Buffer : constant Source_Buffer := Source_Buffer (Get_Buffer (View));
    begin
       if Do_Indentation (Buffer, Get_Language (Buffer), False) then
@@ -4395,11 +4400,12 @@ package body Src_Editor_Buffer is
 
    function Context_Matches
      (Context : access Src_Editor_Key_Context;
-      Event   : Glide_Kernel.Event_Data) return Boolean
+      Kernel  : access Kernel_Handle_Record'Class) return Boolean
    is
       pragma Unreferenced (Context);
+      Widget : constant Gtk_Widget := Get_Current_Focus_Widget (Kernel);
    begin
-      return Get_Widget (Event).all in Source_View_Record'Class;
+      return Widget.all in Source_View_Record'Class;
    end Context_Matches;
 
 

@@ -26,6 +26,7 @@
 --  </description>
 
 with Glib; use Glib;
+with Gdk.Event;
 with Gtk;
 with Gtk.Main;
 with Gtk.Text_Buffer;
@@ -40,7 +41,7 @@ with Src_Highlighting;
 
 with GNAT.OS_Lib; use GNAT.OS_Lib;
 with Ada.Unchecked_Deallocation;
-with Commands;    use Commands;
+with Commands.Interactive;    use Commands, Commands.Interactive;
 with Glide_Kernel;
 with Glide_Kernel.Modules; use Glide_Kernel.Modules;
 with Generic_List;
@@ -604,27 +605,30 @@ package Src_Editor_Buffer is
    -- Commands --
    --------------
 
-   type Jump_To_Delimiter_Command is new Commands.Root_Command
+   type Jump_To_Delimiter_Command is new Interactive_Command
       with record
          Kernel : Glide_Kernel.Kernel_Handle;
       end record;
-   function Execute (Command : access Jump_To_Delimiter_Command)
+   function Execute
+     (Command : access Jump_To_Delimiter_Command; Event : Gdk.Event.Gdk_Event)
       return Command_Return_Type;
    --  This commands jmps to the next delimiter for the one currently
    --  under the cursor.
 
-   type Completion_Command is new Commands.Root_Command with record
+   type Completion_Command is new Interactive_Command with record
       Kernel : Glide_Kernel.Kernel_Handle;
    end record;
-   function Execute (Command : access Completion_Command)
+   function Execute
+     (Command : access Completion_Command; Event : Gdk.Event.Gdk_Event)
       return Command_Return_Type;
    --  This command completes the word under the cursor based on the
    --  contents of the buffer.
 
-   type Indentation_Command is new Commands.Root_Command with record
+   type Indentation_Command is new Interactive_Command with record
       Kernel : Glide_Kernel.Kernel_Handle;
    end record;
-   function Execute (Command : access Indentation_Command)
+   function Execute
+     (Command : access Indentation_Command; Event : Gdk.Event.Gdk_Event)
       return Command_Return_Type;
    --  This command reindents the current line
 
@@ -634,7 +638,8 @@ package Src_Editor_Buffer is
      (Context : access Src_Editor_Key_Context) return String;
    function Context_Matches
      (Context : access Src_Editor_Key_Context;
-      Event   : Glide_Kernel.Event_Data) return Boolean;
+      Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class)
+     return Boolean;
    --  A key context that matches if the current widget is a source editor
 
 
