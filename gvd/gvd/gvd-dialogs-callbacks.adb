@@ -32,7 +32,6 @@ with Gtk.Clist;       use Gtk.Clist;
 with Gtk.Enums;       use Gtk.Enums;
 with Ada.Strings.Unbounded;  use Ada.Strings.Unbounded;
 with Odd.Types; use Odd.Types;
-with Unchecked_Deallocation;
 
 package body Odd.Dialogs.Callbacks is
 

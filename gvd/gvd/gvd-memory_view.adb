@@ -44,7 +44,6 @@ with Odd.Strings;     use Odd.Strings;
 with Odd.Types;       use Odd.Types;
 with Odd.Process;     use Odd.Process;
 with Odd.Preferences; use Odd.Preferences;
-with Odd.Utils;       use Odd.Utils;
 with Process_Proxies; use Process_Proxies;
 
 package body Odd.Memory_View is
