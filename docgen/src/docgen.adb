@@ -472,7 +472,7 @@ package body Docgen is
                   Ref_List_Info,
                   Result,
                   Entity_Abstract);
-               if Result = True then
+               if Result then
                   List_Reference_In_File.Remove_Nodes
                     (List_Ref_In_File, Ref_List_Info_Prec,
                      Ref_List_Info);
@@ -489,7 +489,7 @@ package body Docgen is
             end loop;
 
             --  We create a link on the declaration for this entity
-            if Result = True then
+            if Result then
                Format_Link
                  (B,
                   Start_Index, Start_Line, Start_Column, End_Index,

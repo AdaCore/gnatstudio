@@ -442,9 +442,8 @@ package body Docgen.Work_On_File is
 
             Entity := Get_Entity (Child_Node);
 
-            if (Get_Kind (Entity).Kind = Function_Or_Operator
-                or else
-                  Get_Kind (Entity).Kind =  Procedure_Kind)
+            if Get_Kind (Entity).Kind = Function_Or_Operator
+              or else Get_Kind (Entity).Kind =  Procedure_Kind
             --  Is_Subprogram (Child_Node) was the previous instruction.
             --  ??? For this function package are subprograms.
             then
