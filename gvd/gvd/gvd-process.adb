@@ -70,7 +70,7 @@ with Breakpoints_Pkg;            use Breakpoints_Pkg;
 with Breakpoints_Pkg.Callbacks;  use Breakpoints_Pkg.Callbacks;
 with GVD.Canvas;                 use GVD.Canvas;
 with GVD.Dialogs;                use GVD.Dialogs;
-with GVD.Pixmaps;                use GVD.Pixmaps;
+with Pixmaps_IDE;                use Pixmaps_IDE;
 with String_Utils;               use String_Utils;
 with GVD.Types;                  use GVD.Types;
 with Basic_Types;                use Basic_Types;

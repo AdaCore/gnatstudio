@@ -44,7 +44,7 @@ with Language;              use Language;
 with Debugger;              use Debugger;
 
 with GVD.Code_Editors;      use GVD.Code_Editors;
-with GVD.Pixmaps;           use GVD.Pixmaps;
+with Pixmaps_IDE;           use Pixmaps_IDE;
 with GVD.Preferences;       use GVD.Preferences;
 with GVD.Process;           use GVD.Process;
 with GVD.Text_Box.Source_Editor; use GVD.Text_Box.Source_Editor;

@@ -31,7 +31,7 @@ with Gdk.GC;              use Gdk.GC;
 with Gdk.Rectangle;       use Gdk.Rectangle;
 with Gdk.Pixmap;          use Gdk.Pixmap;
 with Gdk.Bitmap;          use Gdk.Bitmap;
-with GVD.Pixmaps;         use GVD.Pixmaps;
+with Pixmaps_IDE;         use Pixmaps_IDE;
 with Gtk.Frame;           use Gtk.Frame;
 with Gtk.Button;          use Gtk.Button;
 --  For some reason, GNAT incorrectly reports these two packages as

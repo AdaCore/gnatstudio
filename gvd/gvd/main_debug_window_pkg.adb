@@ -31,7 +31,7 @@ with Gtkada.Types;
 with Callbacks_Odd; use Callbacks_Odd;
 with Odd_Intl; use Odd_Intl;
 with Main_Debug_Window_Pkg.Callbacks; use Main_Debug_Window_Pkg.Callbacks;
-with GVD.Pixmaps; use GVD.Pixmaps;
+with Pixmaps_IDE; use Pixmaps_IDE;
 with GVD.Types;   use GVD.Types;
 with GVD.Dialogs; use GVD.Dialogs;
 with GVD.Preferences; use GVD.Preferences;

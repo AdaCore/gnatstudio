@@ -28,7 +28,7 @@ with Odd_Intl; use Odd_Intl;
 with Breakpoints_Pkg.Callbacks; use Breakpoints_Pkg.Callbacks;
 with Gdk.Color;        use Gdk.Color;
 with Gdk.Pixmap;       use Gdk.Pixmap;
-with GVD.Pixmaps;      use GVD.Pixmaps;
+with Pixmaps_IDE;      use Pixmaps_IDE;
 with Gtkada.Handlers;  use Gtkada.Handlers;
 with Gtk.Style;        use Gtk.Style;
 with GVD.Code_Editors; use GVD.Code_Editors;

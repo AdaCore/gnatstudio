@@ -19,7 +19,7 @@
 -----------------------------------------------------------------------
 
 with GNAT.Regpat;  use GNAT.Regpat;
-with GVD.Pixmaps;  use GVD.Pixmaps;
+with Pixmaps_IDE;  use Pixmaps_IDE;
 with String_Utils; use String_Utils;
 
 package body Language.Ada is

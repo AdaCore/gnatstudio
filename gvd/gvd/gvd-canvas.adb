@@ -34,7 +34,7 @@ with Gtk.Widget;       use Gtk.Widget;
 with Gdk.Types.Keysyms; use Gdk.Types.Keysyms;
 with Gtk.Accel_Group;  use Gtk.Accel_Group;
 with Items;            use Items;
-with GVD.Pixmaps;      use GVD.Pixmaps;
+with Pixmaps_IDE;      use Pixmaps_IDE;
 with GVD.Dialogs;      use GVD.Dialogs;
 with GVD.Process;      use GVD.Process;
 with GVD.Memory_View;  use GVD.Memory_View;
