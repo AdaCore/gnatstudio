@@ -1560,14 +1560,17 @@ package body GVD_Module is
          return True;
       end if;
 
-      --  ??? we could make smart use of the case Kind = No_More_Code:
-      --  clear the list and return False.
-
       declare
          L          : constant Integer := File_Line.Line;
          A          : Line_Information_Array (L .. L);
          Mode       : Breakpoint_Command_Mode := Set;
          Identifier : Breakpoint_Identifier := 0;
+
+         use File_Line_List;
+
+         Node : List_Node;
+         Prev_Node : List_Node;
+
       begin
          if Kind = Have_Code then
             A (L).Image := Line_Has_Code_Pixbuf;
@@ -1598,6 +1601,46 @@ package body GVD_Module is
                Identifier);
 
             A (L).Associated_Command := Command_Access (C);
+
+         elsif Kind = No_More_Code then
+
+            --  If Kind is No_More_Code, browse through the list of
+            --  unexplored lines, and clean it of all lines after the
+            --  current line in the current file.
+
+            Node := First (GVD_Module (GVD_Module_ID).Unexplored_Lines);
+
+            while Node /= Null_Node loop
+               if Data (Node).File.all = File_Line.File.all
+                 and then Data (Node).Line > File_Line.Line
+               then
+                  Prev_Node :=
+                    Prev (GVD_Module (GVD_Module_ID).Unexplored_Lines, Node);
+                  Remove_Nodes
+                    (GVD_Module (GVD_Module_ID).Unexplored_Lines,
+                     Prev_Node,
+                     Node);
+
+                  if Prev_Node = Null_Node then
+                     Node :=
+                       First (GVD_Module (GVD_Module_ID).Unexplored_Lines);
+
+                     if Node = Null_Node then
+                        return False;
+                     end if;
+                  else
+                     Node := Prev_Node;
+                  end if;
+               end if;
+
+               Node := Next (Node);
+            end loop;
+
+            if File_Line_List.Is_Empty
+              (GVD_Module (GVD_Module_ID).Unexplored_Lines)
+            then
+               return False;
+            end if;
          end if;
 
          Add_Line_Information
