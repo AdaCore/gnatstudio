@@ -21,18 +21,15 @@
 with Glib.Object;              use Glib.Object;
 with Glide_Kernel;             use Glide_Kernel;
 with Glide_Kernel.Modules;     use Glide_Kernel.Modules;
-with Gtk.Scrolled_Window;      use Gtk.Scrolled_Window;
-with Gtk.Text_Buffer;          use Gtk.Text_Buffer;
 with Gtk.Text_View;            use Gtk.Text_View;
 with Gtk.Widget;               use Gtk.Widget;
 with Gtkada.MDI;               use Gtkada.MDI;
 with Glib.Xml_Int;             use Glib.Xml_Int;
 with Glide_Kernel.Console;     use Glide_Kernel.Console;
-with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
+with Histories;                use Histories;
 with Python.GUI;               use Python, Python.GUI;
 with Python.Ada;               use Python.Ada;
 with Glide_Intl;               use Glide_Intl;
-with Gtk.Enums;                use Gtk.Enums;
 with Interfaces.C.Strings;     use Interfaces.C, Interfaces.C.Strings;
 with Interactive_Consoles;     use Interactive_Consoles;
 with GNAT.OS_Lib;              use GNAT.OS_Lib;
@@ -43,6 +40,7 @@ with Glide_Kernel.Scripts;     use Glide_Kernel.Scripts;
 with System;                   use System;
 with Traces;                   use Traces;
 with String_Utils;             use String_Utils;
+with String_List_Utils;        use String_List_Utils;
 with Projects;                 use Projects;
 with Entities;                 use Entities;
 with VFS;                      use VFS;
@@ -332,14 +330,26 @@ package body Python_Module is
    -- Interpreter_View --
    ----------------------
 
-   type Interpreter_View_Record is new Gtk_Scrolled_Window_Record
-     with null record;
-   type Interpreter_View is access all Interpreter_View_Record'Class;
-
    function Create_Python_Console
      (Script : access Python_Scripting_Record'Class;
       Kernel : Kernel_Handle) return MDI_Child;
    --  Create the python console if it doesn't exist yet.
+
+   function Python_Console_Command_Handler
+     (Console   : access Interactive_Console_Record'Class;
+      Input     : String;
+      User_Data : System.Address) return String;
+   --  Called when a command was typed by the user in the python console
+
+   function Python_Console_Completion_Handler
+     (Input     : String;
+      User_Data : System.Address) return String_List_Utils.String_List.List;
+   --  Provides completion in the Python console
+
+   procedure Python_Console_Interrupt_Handler
+     (Console   : access Interactive_Console_Record'Class;
+      User_Data : System.Address);
+   --  Called when ctrl-c is pressed in the console
 
    function First_Level (Self, Args, Kw : PyObject) return PyObject;
    pragma Convention (C, First_Level);
@@ -377,18 +387,6 @@ package body Python_Module is
      (Data : in out Callback_Data'Class; Command : String);
    --  Handler for the commands related to the various classes
 
-   function Set_Console (Self : PyObject; Args : PyObject) return PyObject;
-   pragma Convention (C, Set_Console);
-   --  Handler for "set_console" function
-
-   procedure Create_Scrolled_Window
-     (Scrolled : in out Gtk_Scrolled_Window;
-      View     : out Gtk_Text_View;
-      Kernel   : access Kernel_Handle_Record'Class;
-      Title    : String);
-   --  Create a scrolled window suitable for python output, and insert it in
-   --  the MDI.
-
    ----------------
    -- Trace_Dump --
    ----------------
@@ -415,45 +413,110 @@ package body Python_Module is
       Destroy (Script.Interpreter);
    end Destroy;
 
-   ----------------------------
-   -- Create_Scrolled_Window --
-   ----------------------------
+   ------------------------------------
+   -- Python_Console_Command_Handler --
+   ------------------------------------
 
-   procedure Create_Scrolled_Window
-     (Scrolled : in out Gtk_Scrolled_Window;
-      View     : out Gtk_Text_View;
-      Kernel   : access Kernel_Handle_Record'Class;
-      Title    : String)
+   function Python_Console_Command_Handler
+     (Console   : access Interactive_Console_Record'Class;
+      Input     : String;
+      User_Data : System.Address) return String
    is
-      Buffer : Gtk_Text_Buffer;
-      Child  : MDI_Child;
+      Errors  : aliased Boolean;
+      Result : PyObject;
+      pragma Unreferenced (Result, User_Data);
    begin
-      if Scrolled = null then
-         Scrolled := new Gtk_Scrolled_Window_Record;
+      Result := Run_Command
+        (Interpreter  => Python_Module_Id.Script.Interpreter,
+         Command      => Input,
+         Console      => null,
+         Show_Command => False,
+         Hide_Output  => False,
+         Errors       => Errors'Unrestricted_Access);
+
+      --  Preserve the focus on the console after interactive execution
+      Grab_Focus (Get_View (Console));
+
+      --  Do not return anything, since the output of the command is handled
+      --  directly by python already.
+      return "";
+   end Python_Console_Command_Handler;
+
+   ---------------------------------------
+   -- Python_Console_Completion_Handler --
+   ---------------------------------------
+
+   function Python_Console_Completion_Handler
+     (Input     : String;
+      User_Data : System.Address) return String_List_Utils.String_List.List
+   is
+      use String_List_Utils.String_List;
+      pragma Unreferenced (User_Data);
+      List        : String_List_Utils.String_List.List;
+      Start       : Natural := Input'First - 1;
+      Last        : Natural := Input'Last + 1;
+      Obj, Item   : PyObject;
+      Errors      : aliased Boolean;
+
+   begin
+      for N in reverse Input'Range loop
+         if Input (N) = ' ' or else Input (N) = ASCII.HT then
+            Start := N;
+            exit;
+         elsif Input (N) = '.' and then Last > Input'Last then
+            Last := N;
+         end if;
+      end loop;
+
+      if Start >= Input'Last then
+         return Null_List;
+      else
+         Obj := Run_Command
+           (Python_Module_Id.Script.Interpreter,
+            "__builtins__.dir(" & Input (Start + 1 .. Last - 1) & ")",
+            Hide_Output => True, Errors => Errors'Unrestricted_Access);
+
+         if Obj = null then
+            return Null_List;
+         else
+            for Index in 0 .. PyList_Size (Obj) - 1 loop
+               Item := PyList_GetItem (Obj, Index);
+
+               declare
+                  S : constant String := PyString_AsString (Item);
+               begin
+                  if S'First + Input'Last - Last - 1 <= S'Last
+                    and then
+                      (Last >= Input'Last
+                       or else Input (Last + 1 .. Input'Last)
+                       = S (S'First .. S'First + Input'Last - Last - 1))
+                  then
+                     Prepend
+                       (List, Input (Input'First .. Last - 1) & '.' & S);
+                  end if;
+               end;
+            end loop;
+
+            Py_DECREF (Obj);
+            return List;
+         end if;
       end if;
+   end Python_Console_Completion_Handler;
 
-      Gtk.Scrolled_Window.Initialize (Scrolled);
-      Set_Policy (Scrolled, Policy_Automatic, Policy_Automatic);
+   --------------------------------------
+   -- Python_Console_Interrupt_Handler --
+   --------------------------------------
 
-      Gtk_New (Buffer);
-      Gtk_New (View, Buffer);
-      Add (Scrolled, View);
-      Modify_Font (View, Get_Pref_Font (Kernel, Default_Style));
-      Set_Wrap_Mode (View, Wrap_Char);
-
-      Child := Put
-        (Kernel, Scrolled,
-         Focus_Widget        => Gtk_Widget (View),
-         Module              => Python_Module_Id,
-         Default_Width       => Get_Pref (Kernel, Default_Widget_Width),
-         Default_Height      => Get_Pref (Kernel, Default_Widget_Height),
-         Desktop_Independent => True);
-      Set_Focus_Child (Child);
-      Set_Title (Child, Title);
-      Set_Dock_Side (Child, Bottom);
-      Dock_Child (Child);
-      Raise_Child (Child);
-   end Create_Scrolled_Window;
+   procedure Python_Console_Interrupt_Handler
+     (Console   : access Interactive_Console_Record'Class;
+      User_Data : System.Address)
+   is
+      pragma Unreferenced (Console, User_Data);
+   begin
+      --      if Python_Module_Id.Script.Interpreter.In_Process then
+      PyErr_SetInterrupt;
+--      end if;
+   end Python_Console_Interrupt_Handler;
 
    ---------------------------
    -- Create_Python_Console --
@@ -463,27 +526,25 @@ package body Python_Module is
      (Script : access Python_Scripting_Record'Class;
       Kernel : Kernel_Handle) return MDI_Child
    is
-      Child   : constant MDI_Child := Find_MDI_Child_By_Tag
-        (Get_MDI (Kernel), Interpreter_View_Record'Tag);
-      View   : Gtk_Text_View;
-      Console : Interpreter_View;
+      Console : Interactive_Console;
    begin
-      if Child = null then
-         Console := new Interpreter_View_Record;
-         Create_Scrolled_Window
-           (Gtk_Scrolled_Window (Console), View, Kernel, -"Python");
-         Set_Default_Console
-           (Script.Interpreter, View, Grab_Widget => Gtk_Widget (Console),
-            Display_Prompt => True);
-      else
-         Console := Interpreter_View (Get_Widget (Child));
-         Set_Default_Console
-           (Script.Interpreter, Gtk_Text_View (Get_Child (Console)),
-            Display_Prompt => True);
-         Raise_Child (Child);
-      end if;
+      Console := Create_Interactive_Console
+        (Kernel              => Kernel,
+         Title               => -"Python",
+         Module              => Module_ID (Python_Module_Id),
+         History             => History_Key'("python_console"),
+         Create_If_Not_Exist => True);
+      Set_Default_Console
+        (Script.Interpreter, Console, Display_Prompt => True);
 
-      return Child;
+      Set_Command_Handler
+        (Console, Python_Console_Command_Handler'Access, System.Null_Address);
+      Set_Completion_Handler
+        (Console, Python_Console_Completion_Handler'Access);
+      Set_Interrupt_Handler
+        (Console, Python_Console_Interrupt_Handler'Access);
+
+      return Find_MDI_Child (Get_MDI (Kernel), Console);
    end Create_Python_Console;
 
    ------------------
@@ -515,55 +576,15 @@ package body Python_Module is
    is
       N : Node_Ptr;
    begin
-      if Widget.all in Interpreter_View_Record'Class then
+      if Gtk_Widget (Widget) =
+        Gtk_Widget (Get_Console (Python_Module_Id.Script.Interpreter))
+      then
          N := new Node;
          N.Tag := new String'("Python_Console");
          return N;
       end if;
       return null;
    end Save_Desktop;
-
-   -----------------
-   -- Set_Console --
-   -----------------
-
-   function Set_Console (Self : PyObject; Args : PyObject) return PyObject is
-      pragma Unreferenced (Self);
-      S        : aliased chars_ptr := Null_Ptr;
-      Instance : aliased PyObject;
-      Console  : Gtk_Text_View;
-      Scrolled : Gtk_Scrolled_Window;
-      Child    : MDI_Child;
-   begin
-      if not PyArg_ParseTuple (Args, "O|s", Instance'Address, S'Address) then
-         return null;
-      end if;
-
-      if S = Null_Ptr then
-         Set_Console (Python_Module_Id.Script.Interpreter, Instance, null);
-      else
-         Child := Find_MDI_Child_By_Name
-           (Get_MDI (Python_Module_Id.Script.Kernel), Value (S));
-         if Child = null then
-            Create_Scrolled_Window
-              (Scrolled, Console, Python_Module_Id.Script.Kernel, Value (S));
-         else
-            Scrolled := Gtk_Scrolled_Window (Get_Widget (Child));
-            Console := Gtk_Text_View (Get_Child (Scrolled));
-         end if;
-
-         Set_Console (Python_Module_Id.Script.Interpreter, Instance, Console);
-      end if;
-
-      Py_INCREF (Py_None);
-      return Py_None;
-
-   exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception " & Exception_Information (E));
-         return null;
-   end Set_Console;
 
    ---------------------
    -- Register_Module --
@@ -577,8 +598,6 @@ package body Python_Module is
       pragma Unreferenced (Ignored, Result);
       N       : Node_Ptr;
       Errors  : aliased Boolean;
-      Klass   : PyClassObject;
-      S       : chars_ptr;
 
    begin
       Python_Module_Id := new Python_Module_Record;
@@ -594,11 +613,11 @@ package body Python_Module is
       Register_Scripting_Language (Kernel, Python_Module_Id.Script);
 
       Python_Module_Id.Script.Interpreter := new Python_Interpreter_Record;
-      Initialize (Python_Module_Id.Script.Interpreter, Get_History (Kernel));
+      Initialize (Python_Module_Id.Script.Interpreter);
 
       Set_Default_Console
         (Python_Module_Id.Script.Interpreter,
-         Get_View (Get_Console (Kernel)),
+         Get_Console (Kernel),
          Display_Prompt => False);
 
       N     := new Node;
@@ -632,24 +651,6 @@ package body Python_Module is
         (GPS_Module_Name & ".Missing_Arguments", null, null);
       Python_Module_Id.Script.GPS_Invalid_Arg := PyErr_NewException
         (GPS_Module_Name & ".Invalid_Argument", null, null);
-
-      Klass := Lookup_Class_Object
-        (Python_Module_Id.Script.GPS_Module, Console_Class_Name);
-      S := New_String (Console_Class_Name);
-      Ignored := PyModule_AddObject
-        (Python_Module_Id.Script.GPS_Module, S, Klass);
-      Free (S);
-
-      Add_Method
-        (Klass, Create_Method_Def
-           ("set_console", Set_Console'Access,
-            -("Change the console to which the output of Python is sent. If"
-              & ASCII.LF
-              & "an argument is specified, it should contain the name of"
-              & ASCII.LF
-              & "a console to create. If no argument is specified the Python"
-              & ASCII.LF
-              & "console will be used")));
 
       Register_Menu
         (Kernel,
