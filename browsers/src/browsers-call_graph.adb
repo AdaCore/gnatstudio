@@ -129,7 +129,12 @@ package body Browsers.Call_Graph is
    --  Create a new call graph browser.
    --  It is now added automatically to the MDI
 
-   procedure Edit_Source_From_Contextual
+   procedure Edit_Spec_From_Contextual
+     (Widget : access GObject_Record'Class;
+      Context : Selection_Context_Access);
+   --  Open an editor for the entity described in Context.
+
+   procedure Edit_Body_From_Contextual
      (Widget : access GObject_Record'Class;
       Context : Selection_Context_Access);
    --  Open an editor for the entity described in Context.
@@ -843,11 +848,11 @@ package body Browsers.Call_Graph is
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end Examine_Ancestors_Call_Graph;
 
-   ---------------------------------
-   -- Edit_Source_From_Contextual --
-   ---------------------------------
+   -------------------------------
+   -- Edit_Body_From_Contextual --
+   -------------------------------
 
-   procedure Edit_Source_From_Contextual
+   procedure Edit_Body_From_Contextual
      (Widget : access GObject_Record'Class;
       Context : Selection_Context_Access)
    is
@@ -887,7 +892,33 @@ package body Browsers.Call_Graph is
    exception
       when E : others =>
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
-   end Edit_Source_From_Contextual;
+   end Edit_Body_From_Contextual;
+
+   -------------------------------
+   -- Edit_Spec_From_Contextual --
+   -------------------------------
+
+   procedure Edit_Spec_From_Contextual
+     (Widget : access GObject_Record'Class;
+      Context : Selection_Context_Access)
+   is
+      pragma Unreferenced (Widget);
+
+      C : constant Entity_Selection_Context_Access :=
+        Entity_Selection_Context_Access (Context);
+      Entity   : Entity_Information := Get_Entity (C);
+   begin
+      --  If the body wasn't found then display the specs
+      Open_File_Editor
+        (Get_Kernel (Context),
+         Get_Declaration_File_Of (Entity),
+         Line   => Get_Declaration_Line_Of (Entity),
+         Column => Get_Declaration_Column_Of (Entity));
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+   end Edit_Spec_From_Contextual;
 
    --------------------------------------------
    -- Edit_Entity_Call_Graph_From_Contextual --
@@ -1221,12 +1252,20 @@ package body Browsers.Call_Graph is
             Context);
          Set_Sensitive (Mitem, not Item.From_Parsed);
 
-         Gtk_New (Mitem, -"Edit source");
+         Gtk_New (Mitem, -"Go to spec");
          Append (Menu, Mitem);
          Context_Callback.Connect
            (Mitem, "activate",
             Context_Callback.To_Marshaller
-              (Edit_Source_From_Contextual'Access),
+              (Edit_Spec_From_Contextual'Access),
+            Context);
+
+         Gtk_New (Mitem, -"Go to body");
+         Append (Menu, Mitem);
+         Context_Callback.Connect
+           (Mitem, "activate",
+            Context_Callback.To_Marshaller
+              (Edit_Body_From_Contextual'Access),
             Context);
       end if;
 
