@@ -152,7 +152,10 @@ begin
    Pack_Start (Main_Debug_Window.Vbox, Main_Debug_Window.Frame, True, True, 0);
 
    Gtk_New (Main_Debug_Window.Process_Notebook);
-   Set_Scrollable (Main_Debug_Window.Process_Notebook, True);
+   --  ??? Do not use scrollable notebooks for now, since if the tabs are
+   --  ??? hidden then some blank windows are displayed in the middle of
+   --  ??? the screen with gtk+1.3.7
+   --  Set_Scrollable (Main_Debug_Window.Process_Notebook, True);
    Set_Show_Border (Main_Debug_Window.Process_Notebook, True);
    Set_Show_Tabs (Main_Debug_Window.Process_Notebook, False);
    Set_Tab_Hborder (Main_Debug_Window.Process_Notebook, 2);
