@@ -1617,7 +1617,7 @@ package body Src_Editor_Buffer.Line_Information is
 
       Command := new Unhide_Editable_Lines_Type;
       Command.Buffer := Source_Buffer (Buffer);
-      Get_Iter_At_Mark (Buffer, Iter, Mark);
+      Get_Iter_At_Line (Buffer, Iter, Gint (Buffer_Line - 1));
       Command.Mark := Create_Mark (Buffer, "", Iter);
       Command.First_Line := Line_Start;
       Command.Last_Line  := Line_End;
@@ -1648,10 +1648,10 @@ package body Src_Editor_Buffer.Line_Information is
       Number_Of_Lines_Unfolded : Natural := 0;
    begin
       Get_Iter_At_Mark (Buffer, Iter, Mark);
-      Buffer_Line := Buffer_Line_Type (Get_Line (Iter) + 1);
+      Buffer_Line := Buffer_Line_Type (Get_Line (Iter));
 
-      First_Line := Get_Editable_Line (Buffer, Buffer_Line - 1);
-      Last_Line  := Get_Editable_Line (Buffer, Buffer_Line);
+      First_Line := Get_Editable_Line (Buffer, Buffer_Line);
+      Last_Line  := Get_Editable_Line (Buffer, Buffer_Line + 1);
 
       for Line in reverse First_Line .. Last_Line loop
          --  If the line is already in the buffer, skip.
