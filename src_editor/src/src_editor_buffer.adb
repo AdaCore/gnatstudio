@@ -434,6 +434,9 @@ package body Src_Editor_Buffer is
                   Ignore, Length, Result => Output);
                g_free (UTF8);
 
+               --  ??? Need to find a way to avoid this extra copy, which
+               --  is too costly.
+
                return new String'(Output (1 .. Length));
             end;
          end;
