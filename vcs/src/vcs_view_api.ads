@@ -139,6 +139,7 @@ package VCS_View_API is
 
    procedure Display_Editor_Status
      (Kernel : access Kernel_Handle_Record'Class;
+      Ref    : VCS_Access;
       Status : File_Status_Record);
    --  Display a label corresponding to the file. If the file is not open,
    --  do nothing.
