@@ -188,7 +188,8 @@ package Glide_Kernel.Modules is
    --
    --  Customization_Handler is called every time some customization has
    --  changed: initially after all modules are loaded, or every time a
-   --  module adds a customization string.
+   --  module adds a customization string. Only one XML node is passed to
+   --  Customization_Handler every time.
 
    procedure Dynamic_Register_Module
      (Kernel      : access Kernel_Handle_Record'Class;
