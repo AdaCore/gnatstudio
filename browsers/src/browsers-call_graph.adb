@@ -1658,9 +1658,7 @@ package body Browsers.Call_Graph is
       end Add_To_List;
 
       Kernel     : constant Kernel_Handle := Get_Kernel (Data);
-      Instance   : constant Class_Instance :=
-        Nth_Arg (Data, 1, Get_Entity_Class (Kernel));
-      Entity     : constant Entity_Information := Get_Data (Instance);
+      Entity     : constant Entity_Information := Get_Data (Data, 1);
       Cb         : constant Examine_Callback := (null, null, False);
 
    begin

@@ -507,9 +507,7 @@ package body Browsers.Entities is
       Command : String)
    is
       Kernel     : constant Kernel_Handle := Get_Kernel (Data);
-      Instance   : constant Class_Instance :=
-        Nth_Arg (Data, 1, Get_Entity_Class (Kernel));
-      Entity     : constant Entity_Information := Get_Data (Instance);
+      Entity     : constant Entity_Information := Get_Data (Data, 1);
       Child      : MDI_Child;
       Item       : Type_Item;
       pragma Unreferenced (Item);
