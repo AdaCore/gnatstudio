@@ -45,7 +45,7 @@ Index: common/src/stubs.c
 --- Makefile.gnat	Fri May 31 19:50:04 2002
 ***************
 *** 22,27 ****
---- 22,44 ----
+--- 22,45 ----
     fmap.adb \
     fname.ads \
     fname.adb \
@@ -62,6 +62,7 @@ Index: common/src/stubs.c
 +   g-string.adb \
 +   gpr2make.ads \
 +   gpr2make.adb \
++   gprcmd.adb   \
 +   bld.ads      \
 +   bld.adb      \
 +   bld-io.ads   \
