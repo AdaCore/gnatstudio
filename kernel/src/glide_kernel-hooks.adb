@@ -28,6 +28,7 @@ with Ada.Unchecked_Deallocation;
 with Glide_Intl; use Glide_Intl;
 with Glide_Kernel.Console; use Glide_Kernel.Console;
 with Glide_Kernel.Scripts; use Glide_Kernel.Scripts;
+with System.Address_Image;
 
 package body Glide_Kernel.Hooks is
 
@@ -262,11 +263,14 @@ package body Glide_Kernel.Hooks is
    --------------
 
    function Get_Name (Hook : Simple_No_Args_Wrapper_Record) return String is
+      function Convert is new Ada.Unchecked_Conversion
+        (No_Args_Execute, System.Address);
    begin
       if Hook.Name /= null then
          return Hook.Name.all;
       else
-         return -"<internal>";
+         return -"<internal 0x"
+           & System.Address_Image (Convert (Hook.Func)) & '>';
       end if;
    end Get_Name;
 
@@ -284,11 +288,14 @@ package body Glide_Kernel.Hooks is
    --------------
 
    function Get_Name (Hook : Simple_Args_Wrapper_Record) return String is
+      function Convert is new Ada.Unchecked_Conversion
+        (Args_Execute, System.Address);
    begin
       if Hook.Name /= null then
          return Hook.Name.all;
       else
-         return -"<internal>";
+         return -"<internal 0x"
+         & System.Address_Image (Convert (Hook.Func)) & '>';
       end if;
    end Get_Name;
 
@@ -306,11 +313,14 @@ package body Glide_Kernel.Hooks is
    --------------
 
    function Get_Name (Hook : Simple_Shell_Args_Wrapper_Record) return String is
+      function Convert is new Ada.Unchecked_Conversion
+        (Shell_Args_Execute, System.Address);
    begin
       if Hook.Name /= null then
          return Hook.Name.all;
       else
-         return -"<internal>";
+         return -"<internal 0x"
+         & System.Address_Image (Convert (Hook.Func)) & '>';
       end if;
    end Get_Name;
 
@@ -328,11 +338,14 @@ package body Glide_Kernel.Hooks is
    --------------
 
    function Get_Name (Hook : Simple_Return_Wrapper_Record) return String is
+      function Convert is new Ada.Unchecked_Conversion
+        (Args_Return_Execute, System.Address);
    begin
       if Hook.Name /= null then
          return Hook.Name.all;
       else
-         return -"<internal>";
+         return -"<internal 0x"
+         & System.Address_Image (Convert (Hook.Func)) & '>';
       end if;
    end Get_Name;
 
