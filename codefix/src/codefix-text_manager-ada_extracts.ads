@@ -28,12 +28,21 @@ package Codefix.Text_Manager.Ada_Extracts is
      (Current_Text : Text_Navigator_Abstr'Class;
       Position     : File_Cursor'Class;
       Destination  : in out Ada_Instruction);
+   --  Initialise Destination considerate that position is on a random position
+   --  in an instruction.
 
    function Clone (This : Ada_Instruction) return Ada_Instruction;
    --  Duplicate all informations associated to an extract, specially
    --  information referenced in pools.
 
    procedure Remove_Instruction (This : in out Ada_Instruction);
+   --  Delete the instruction recored in This.
+
+   function Get_Stop (This : Ada_Instruction) return File_Cursor;
+   --  Return the cursor stands at the beginning of the instruction/
+
+   function Get_Stop (This : Ada_Instruction) return File_Cursor;
+   --  Return the cursors stands at the end of the instruction.
 
    type Ada_List is new Ada_Instruction with private;
 
@@ -41,6 +50,8 @@ package Codefix.Text_Manager.Ada_Extracts is
      (Current_Text : Text_Navigator_Abstr'Class;
       Position     : File_Cursor'Class;
       Destination  : in out Ada_List);
+   --  Initialise Destination considerate that position is on a random position
+   --  in an list (typically a with / use list or a multiple vars declaration).
 
    function Clone (This : Ada_List) return Ada_List;
    --  Duplicate all informations associated to an extract, specially
@@ -48,27 +59,40 @@ package Codefix.Text_Manager.Ada_Extracts is
 
    procedure Cut_Off_Elements
      (This        : in out Ada_List;
-      Destination : out Ada_List;
+      New_Instr   : out Dynamic_String;
       First       : Natural;
       Last        : Natural := 0);
+   --  Remove elements from the list and write in the string a new list with
+   --  these elements, and right declarative part (if needed). If last = 0 then
+   --  only First element will be deleted.
 
    procedure Cut_Off_Elements
      (This        : in out Ada_List;
-      Destination : out Ada_List;
+      New_Instr   : out Dynamic_String;
       First       : String;
       Last        : String := "");
+   --  Remove elements from the list and write in the string a new list with
+   --  these elements, and right declarative part (if needed). If last = 0 then
+   --  only First element will be deleted.
 
-   function Get_Number_Elements (This : Ada_List) return Natural;
+   function Get_Number_Of_Elements (This : Ada_List) return Natural;
+   --  Return the number of token contained in the list, including ','.
 
    procedure Remove_Elements
      (This  : in out Ada_List; First : Natural; Last : Natural := 0);
+   --  Remove elements form form First to Last. If Last = 0 then only First
+   --  will be removed.
 
    procedure Remove_Elements
      (This  : in out Ada_List; First : String; Last : String := "");
+   --  Remove elements form form First to Last. If Last = 0 then only First
+   --  will be removed.
 
    function Get_Element (This : Ada_List; Num : Natural) return String;
+   --  Return one element from the list.
 
    function Get_Nth_Element (This : Ada_List; Name : String) return Natural;
+   --  Return the number of the element Name in the list.
 
 private
 
@@ -83,53 +107,32 @@ private
       Start, Stop : File_Cursor;
    end record;
 
-   type Lines_Array is array (Integer range <>) of Ptr_Extract_Line;
-   type Ptr_Lines_Array is access all Lines_Array;
-
-   type Element is record
-      Lines               : Ptr_Lines_Array;
-      First_Col, Last_Col : Integer;
-      Name                : Dynamic_String;
-   end record;
-
-   procedure Free (This : in out Element);
-   --  Do not destroy the lines !!!
-
    type Token_Record is record
+      Line                : Ptr_Extract_Line;
       First_Col, Last_Col : Natural := 0;
-      Line                : Natural := 0;
+      Content             : Dynamic_String;
+      Is_Separator        : Boolean;
    end record;
 
-   package Elements_Lists is new Generic_List (Element);
-   use Elements_Lists;
+   procedure Free (This : in out Token_Record);
 
-   function Is_Separator (Str : String) return Boolean;
+   package Tokens_List is new Generic_List (Token_Record);
+   use Tokens_List;
 
    procedure Get_Token
-     (Line      : Extract_Line;
+     (Line      : Ptr_Extract_Line;
       Col       : in out Integer;
-      Token     : out Token_Record;
-      Str_Token : in out Dynamic_String);
+      Token     : out Token_Record);
 
    type Ada_List is new Ada_Instruction with record
-      Elements_List : Elements_Lists.List;
-      Head, Back    : Element; -- not yet usable
+      Elements_List : Tokens_List.List;
+      Back          : Dynamic_String;
    end record;
 
-   procedure Add
-     (File_Name    : String;
-      Destination  : in out Ada_List;
-      First_Token  : Token_Record;
-      Last_Token   : Token_Record;
-      Str_Last_Token : String);
-
-   function Is_Alone (This : Element) return Boolean;
-
-   procedure Delete_All_Lines (This : Element);
-
-   procedure Erase (This : Element);
+   function Is_Alone (This : Token_Record; Offset_Col : Integer)
+     return Boolean;
 
    function Get_Element (This : Ada_List; Num : Natural)
-     return Elements_Lists.List_Node;
+     return Tokens_List.List_Node;
 
 end Codefix.Text_Manager.Ada_Extracts;
