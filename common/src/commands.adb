@@ -200,7 +200,7 @@ package body Commands is
          Node := First (Action.Next_Commands);
 
          while Node /= Null_Node loop
-            Enqueue (Queue, Data (Node), True);
+            Enqueue (Queue, Data (Node), False);
             Node := Next (Node);
          end loop;
 
