@@ -50,6 +50,7 @@ with GVD.Menu;                use GVD.Menu;
 with GVD.Types;               use GVD.Types;
 with GVD.Toolbar;             use GVD.Toolbar;
 with GVD.Process;             use GVD.Process;
+with Process_Proxies;         use Process_Proxies;
 with Debugger;                use Debugger;
 with Language;                use Language;
 with Language_Handlers;       use Language_Handlers;
@@ -558,6 +559,7 @@ package body GVD_Module is
 
       if Debugger.Debugger = null
         or else not Has_Entity_Name_Information (Selection)
+        or else Command_In_Process (Get_Process (Debugger.Debugger))
       then
          return;
       end if;
@@ -1023,44 +1025,50 @@ package body GVD_Module is
    --  Idle_Reveal_Lines --
    ------------------------
 
-   function Idle_Reveal_Lines (D : GVD_Module_User_Data_Access) return Boolean
+   function Idle_Reveal_Lines
+     (D : GVD_Module_User_Data_Access) return Boolean
    is
       Kind         : Line_Kind;
       A            : Line_Information_Array (1 .. 1);
       C            : Console_Command_Access;
-
       File_Line    : File_Line_Record;
+      Debugger     : constant Debugger_Access :=
+        Get_Current_Process (Get_Main_Window (D.Kernel)).Debugger;
+      --  ??? Should attach the right debugger with D.
+
    begin
       if File_Line_List.Is_Empty (D.Unexplored_Lines) then
          return False;
+
+      elsif Command_In_Process (Get_Process (Debugger)) then
+         return True;
       end if;
 
-      File_Line :=  File_Line_List.Head (D.Unexplored_Lines);
+      File_Line := File_Line_List.Head (D.Unexplored_Lines);
 
-      Kind :=  Line_Contains_Code
-        (Get_Current_Process (Get_Main_Window (D.Kernel)).Debugger,
-         File_Line.File.all, File_Line.Line);
+      Kind := Line_Contains_Code
+        (Debugger, File_Line.File.all, File_Line.Line);
 
       case Kind is
          when Have_Code =>
             Create (C, D.Kernel, "set bp on line " & File_Line.Line'Img);
-
             A (1).Line := File_Line.Line;
             A (1).Text := new String' ("< >");
             A (1).Associated_Command := Command_Access (C);
-
-            Add_Line_Information (D.Kernel,
-                                  File_Line.File.all,
-                                  GVD_Module_Name & "/Line Information",
-                                  20,
-                                  new Line_Information_Array' (A));
+            Add_Line_Information
+              (D.Kernel,
+               File_Line.File.all,
+               GVD_Module_Name & "/Line Information",
+               20,
+               new Line_Information_Array' (A));
 
          when No_Code =>
             null;
 
          when No_More_Code =>
             null;
-            --  ??? we could make smarter use of this information.
+            --  ??? we could make smarter use of this information:
+            --  Clear the list and return False.
 
       end case;
 
@@ -1082,12 +1090,11 @@ package body GVD_Module is
         To_Selection_Context_Access (Get_Address (Nth (Args, 1)));
       Area_Context : File_Area_Context_Access;
       Timeout_Id   : Timeout_Handler_Id;
+      Process      : constant Debugger_Process_Tab :=
+        Get_Current_Process (Get_Main_Window (Get_Kernel (Context)));
 
    begin
-      if Get_Current_Process (Get_Main_Window (Get_Kernel (Context))) = null
-        or else Get_Current_Process
-                 (Get_Main_Window (Get_Kernel (Context))).Debugger = null
-      then
+      if Process = null or else Process.Debugger = null then
          return;
       end if;
 
@@ -1095,10 +1102,11 @@ package body GVD_Module is
          Area_Context := File_Area_Context_Access (Context);
 
          declare
-            File : String := Directory_Information (Area_Context) &
+            File : constant String := Directory_Information (Area_Context) &
               File_Information (Area_Context);
             Line1, Line2 : Integer;
             Data : GVD_Module_User_Data_Access;
+
          begin
             Get_Area (Area_Context, Line1, Line2);
 
@@ -1111,8 +1119,8 @@ package body GVD_Module is
             end if;
 
             for J in Line1 .. Line2 loop
-               File_Line_List.Append (Data.Unexplored_Lines,
-                                      (new String' (File), J));
+               File_Line_List.Append
+                 (Data.Unexplored_Lines, (new String' (File), J));
                --  ??? We might want to use a LIFO structure here
                --  instead of FIFO, so that the lines currently shown
                --  are displayed first.
@@ -1136,6 +1144,7 @@ package body GVD_Module is
       Data_Sub     : constant String := Debug & (-"Data") & '/';
       Session_Sub  : constant String := Debug & (-"Session") & '/';
       Mitem        : Gtk_Menu_Item;
+      --  ??? Should get the right process
    begin
       GVD_Module_ID := Register_Module
         (Kernel                  => Kernel,
@@ -1283,11 +1292,11 @@ package body GVD_Module is
          Lines_Revealed_Cb'Access,
          Top);
 
-      GVD_Module_Kernel_Data.Set (Kernel,
-                                  new GVD_Module_User_Data'
-                                     (Kernel_Handle (Kernel),
-                                      File_Line_List.Null_List),
-                                  GVD_Module_Kernel_Data_Id);
+      GVD_Module_Kernel_Data.Set
+        (Kernel,
+         new GVD_Module_User_Data'
+           (Kernel_Handle (Kernel), File_Line_List.Null_List),
+         GVD_Module_Kernel_Data_Id);
    end Register_Module;
 
    ----------
