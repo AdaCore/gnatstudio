@@ -56,7 +56,6 @@ with File_Utils;                use File_Utils;
 with Traces;                    use Traces;
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with Ada.Unchecked_Deallocation;
-with System;
 
 package body Directory_Tree is
 
@@ -517,26 +516,6 @@ package body Directory_Tree is
 
       procedure Add_Dummy_Node (N : Gtk_Ctree_Node);
       --  Add a dummy node in Tree for a given node N.
-
-      procedure Get_Logical_Drive_Strings
-        (Buffer : out String;
-         Len    : out Natural);
-      --  Store in Buffer (Buffer'First .. Buffer'First + Len) a ASCII.NUL
-      --  separated string containing the names of the --  drives, e.g
-      --  "a:\" & NUL & "c:\", or a null string if not relevant on the target.
-
-      procedure Get_Logical_Drive_Strings
-        (Buffer : out String;
-         Len    : out Natural)
-      is
-         function Internal
-           (Buffer : System.Address;
-            Length : Integer) return Integer;
-         pragma Import (C, Internal, "__gnat_get_logical_drive_strings");
-
-      begin
-         Len := Internal (Buffer'Address, Buffer'Length);
-      end Get_Logical_Drive_Strings;
 
       function Insert_Directory_Node
         (Parent, Sibling : Gtk_Ctree_Node; Dir : String)
