@@ -113,7 +113,7 @@ package Language is
       Name           : Odd.Types.String_Access;
       Regexp         : Pattern_Matcher_Access;
       Position_Index : Natural;
-      Icon           : Odd.Types.Chars_Ptr_Array_Access;
+      Icon           : Odd.Types.Pixmap_Access;
       Make_Entry     : Make_Entry_Func;
    end record;
    --  Definition for a category (ie one of the subtrees of the explorer).
