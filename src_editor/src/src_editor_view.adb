@@ -89,16 +89,14 @@ package body Src_Editor_View is
 
    function Focus_Out_Event_Cb
      (View   : access Source_View_Record'Class;
-      Event  : Gdk.Event.Gdk_Event_Focus)
-     return Boolean;
+      Event  : Gdk.Event.Gdk_Event_Focus) return Boolean;
    --  Save the current insert cursor position before the Source_View looses
    --  the focus. This will allow us to restore it as soon as the focus is
    --  gained back.
 
    function Focus_In_Event_Cb
      (View   : access Source_View_Record'Class;
-      Event  : Gdk.Event.Gdk_Event_Focus)
-     return Boolean;
+      Event  : Gdk.Event.Gdk_Event_Focus) return Boolean;
    --  Restore the previously saved insert cursor position when the Source_View
    --  gains the focus back.
 
@@ -367,7 +365,6 @@ package body Src_Editor_View is
          exit Drawing_Loop when Y_In_Buffer + Line_Height >= Bottom_In_Buffer;
          Forward_Line (Iter, Dummy_Boolean);
       end loop Drawing_Loop;
-
    end Redraw_Line_Numbers;
 
    -------------
@@ -411,6 +408,7 @@ package body Src_Editor_View is
       else
          View.Pango_Font := Font;
       end if;
+
       View.Font := Gdk.Font.From_Description (View.Pango_Font);
       View.Show_Line_Numbers := Show_Line_Numbers;
       View.LNA_Width_In_Digits := Minimal_Number_Of_Digits_In_LNA;
@@ -443,7 +441,6 @@ package body Src_Editor_View is
          Marsh => Source_View_Return_Callback.To_Marshaller
                     (Focus_Out_Event_Cb'Access),
          After => False);
-
    end Initialize;
 
    --------------

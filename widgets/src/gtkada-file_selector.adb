@@ -318,6 +318,7 @@ package body Gtkada.File_Selector is
       end if;
 
       Read (Win.Current_Directory_Id.all, Buffer, Last);
+
       if Last = 0 then
          Close (Win.Current_Directory_Id.all);
          Win.Current_Directory_Is_Open := False;
