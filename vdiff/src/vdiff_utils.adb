@@ -53,16 +53,27 @@ package body Vdiff_Utils is
    end record;
    type Vdiff_Info_Access is access all Vdiff_Info'Class;
 
+   --------------------
+   -- Local packages --
+   --------------------
+
    package GObject_Callback is new Gtk.Handlers.Callback (GObject_Record);
+
+   -----------------------
+   -- Local subprograms --
+   -----------------------
 
    procedure Gtk_New
      (Vdiff  : out Vdiff_Info_Access;
       Kernel : Kernel_Handle;
       File   : String);
+   --  Create a new Vdiff_Info.
+
    procedure Initialize
      (Vdiff  : access Vdiff_Info'Class;
       Kernel : Kernel_Handle;
       File   : String);
+   --  Internal initialization function.
 
    procedure On_Destroy
      (Object : access GObject_Record'Class;
@@ -75,6 +86,7 @@ package body Vdiff_Utils is
       Object       : access Glib.Object.GObject_Record'Class;
       Event        : Gdk.Event.Gdk_Event;
       Menu         : Gtk.Menu.Gtk_Menu) return Selection_Context_Access;
+   --  Creates a new context relative to Object.
 
    ---------------------
    -- Context_Factory --
@@ -140,7 +152,7 @@ package body Vdiff_Utils is
       Kernel : Kernel_Handle;
       File   : String) is
    begin
-      --  Initialize_Widget (Vdiff);
+      Initialize (Vdiff);
       Vdiff.Kernel := Kernel;
       Vdiff.File := new String' (File);
    end Initialize;
