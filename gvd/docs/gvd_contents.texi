@@ -706,6 +706,15 @@ the following commands. Failing to do so will result in blank windows.
       Opens a memory viewer/editor. See @ref{The Memory Window} for more
       details.
 
+@ifset GPS
+   @item Command History
+@cindex command
+@cindex history
+      Opens a dialog with the list of commands executed in the current session.
+      You can select any number of items in this list and replay the selection
+      automatically.
+@end ifset
+
    @item Display Local Variables
 @cindex local variables
       Opens an item in the Data Window containing all the local variables
@@ -736,21 +745,6 @@ the following commands. Failing to do so will result in blank windows.
 @cindex refresh
       Refreshes all the items displayed in the Data Window.
 @end table
-
-@ifset GPS
-@subsection Session
-@cindex session
-
-@table @b
-   @item Command History
-@cindex command
-@cindex history
-Opens a dialog with the list of commands executed in the current session.
-You can select any number of items in this list and replay the selection
-automatically.
-
-@end table
-@end ifset
 
 @ifclear GPS
 
