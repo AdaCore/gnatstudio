@@ -255,9 +255,10 @@ package body VCS.Unknown_VCS is
 
    procedure Log
      (Rep  : access Unknown_VCS_Record;
-      File : VFS.Virtual_File)
+      File : VFS.Virtual_File;
+      Rev  : String)
    is
-      pragma Unreferenced (Rep);
+      pragma Unreferenced (Rep, Rev);
    begin
       Error (Full_Name (File).all);
    end Log;

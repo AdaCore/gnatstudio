@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2002                       --
+--                     Copyright (C) 2001-2003                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -84,7 +84,8 @@ package VCS.Unknown_VCS is
 
    procedure Log
      (Rep  : access Unknown_VCS_Record;
-      File : VFS.Virtual_File);
+      File : VFS.Virtual_File;
+      Rev  : String);
 
    procedure Annotate
      (Rep  : access Unknown_VCS_Record;
