@@ -1,4 +1,6 @@
-\input texiplus   @c -*-texinfo-*-
+\input texinfo   @c -*-texinfo-*-
+@input texiplus
+
 @c %**start of header
 @setfilename gps.info
 @settitle Using the GNAT Programming System
