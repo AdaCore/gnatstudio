@@ -508,13 +508,15 @@ package body Entities is
          exit when EL = null;
 
          for E in Entity_Information_Arrays.First .. Last (EL.all) loop
-            Isolate (EL.Table (E), Clear_References => True);
+            if EL.Table (E) /= null then
+               Isolate (EL.Table (E), Clear_References => True);
 
-            if not Active (Debug_Me) then
-               Free (EL.Table (E).Name);
-               Unchecked_Free (EL.Table (E));
-            else
-               EL.Table (E) := null;
+               if not Active (Debug_Me) then
+                  Free (EL.Table (E).Name);
+                  Unchecked_Free (EL.Table (E));
+               else
+                  EL.Table (E) := null;
+               end if;
             end if;
          end loop;
 
