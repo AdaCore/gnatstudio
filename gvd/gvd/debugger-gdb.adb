@@ -144,7 +144,7 @@ package body Debugger.Gdb is
       --  not control the length of what gdb will return...
 
       Debugger.Process :=
-        new Pipes_Id'(Non_Blocking_Spawn ("gdb", Null_List, Buffer_Size => 0));
+        new Pipes_Id' (Non_Blocking_Spawn ("gdb", Null_List, 0, True));
 
 --        Add_Output_Filter (Debugger.Process.all, Trace_Filter'Access);
 --        Add_Input_Filter (Debugger.Process.all, Trace_Filter'Access);
