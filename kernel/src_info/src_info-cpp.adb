@@ -125,6 +125,7 @@ package body Src_Info.CPP is
          Kind         : E_Kind;
          IsVolatile   : Boolean;
          IsConst      : Boolean;
+         IsTemplate   : Boolean;
       end record;
 
    --  Debugging utils
@@ -326,6 +327,11 @@ package body Src_Info.CPP is
    --  example: int (*[]) ()
    --                ^^^ this is cut
 
+   Template_Type_Pat : constant Pattern_Matcher
+                     := Compile ("^([^<\s]+)\s*<");
+   --  Regexp to find plain class name in the templatized
+   --  name.
+
    -----------------------
    -- Type_Name_To_Kind --
    -----------------------
@@ -341,6 +347,7 @@ package body Src_Info.CPP is
    begin
       Desc.IsVolatile := False;
       Desc.IsConst    := False;
+      Desc.IsTemplate := False;
 
       --  check for leading volatile/const modifier
       if Type_Name'Length > Volatile_Str'Length
@@ -432,9 +439,17 @@ package body Src_Info.CPP is
       --  look in classes
       if Is_Open (SN_Table (CL)) then
          declare
-            Class_Def : CL_Table;
+            Class_Def  : CL_Table;
          begin
-            Class_Def := Find (SN_Table (CL), Type_Name);
+            Match (Template_Type_Pat, Type_Name, Matches);
+            if Matches (1) /= No_Match then
+               Class_Def := Find (SN_Table (CL), Type_Name
+                  (Matches (1).First .. Matches (1).Last));
+               Desc.IsTemplate := True;
+            else
+               Class_Def := Find (SN_Table (CL), Type_Name);
+            end if;
+
             Free (Class_Def);
             Desc.Kind := Record_Type;
             Success := True;
