@@ -1165,8 +1165,8 @@ package body Vdiff2_Module.Utils is
 
       Item :=
         (List         => Result,
-         File1        => Orig_File,
-         File2        => New_File,
+         File1        => New_File,
+         File2        => Orig_File,
          File3        => VFS.No_File,
          Current_Node => First (Result),
          Ref_File     => 2,
