@@ -143,6 +143,11 @@ package body VCS_Module is
       Command : String);
    --  Handler for the command "vcs_status_parse".
 
+   procedure Annotations_Parse_Handler
+     (Data    : in out Glide_Kernel.Scripts.Callback_Data'Class;
+      Command : String);
+   --  Handler for the command "VCS.annotations_parse".
+
    -----------------------
    -- On_Open_Interface --
    -----------------------
@@ -685,15 +690,28 @@ package body VCS_Module is
       Register_Command
         (Kernel       => Kernel,
          Command      => "status_parse",
-         Params       => "(vcs_identifier, string, [clear_logs])",
+         Params       => "(vcs_identifier, string, clear_logs, local)",
          Description  =>
          -("Parses string for vcs status."
             & " See the GPS documentation for detailed usage description."),
-         Minimum_Args => 2,
-         Maximum_Args => 3,
+         Minimum_Args => 4,
+         Maximum_Args => 4,
          Class         => VCS_Class,
          Static_Method => True,
          Handler      => Status_Parse_Handler'Access);
+
+      Register_Command
+        (Kernel       => Kernel,
+         Command      => "annotations_parse",
+         Params       => "(vcs_identifier, file, string)",
+         Description  =>
+         -("Parses string for vcs annotations."
+            & " See the GPS documentation for detailed usage description."),
+         Minimum_Args => 3,
+         Maximum_Args => 3,
+         Class         => VCS_Class,
+         Static_Method => True,
+         Handler      => Annotations_Parse_Handler'Access);
    end Register_Module;
 
    --------------------------
@@ -713,7 +731,9 @@ package body VCS_Module is
       VCS_Identifier : constant String := Nth_Arg (Data, 1);
       S              : constant String := Nth_Arg (Data, 2);
 
-      Clear_Logs     : constant Boolean := Nth_Arg (Data, 3, Default => False);
+      Clear_Logs     : constant Boolean := Nth_Arg (Data, 3);
+      Local          : constant Boolean := Nth_Arg (Data, 4);
+
       Status : File_Status_List.List;
    begin
       Ref := Get_VCS_From_Id (VCS_Identifier);
@@ -725,13 +745,41 @@ package body VCS_Module is
          return;
       end if;
 
-      Open_Explorer (Kernel, null);
+--        Open_Explorer (Kernel, null);
 
-      Status := Parse_Status (Ref, S);
+      Status := Parse_Status (Ref, S, Local);
       Display_File_Status (Kernel, Status, Ref, True, True, Clear_Logs);
 
       --  ??? Should we free Status ?
    end Status_Parse_Handler;
+
+   -------------------------------
+   -- Annotations_Parse_Handler --
+   -------------------------------
+
+   procedure Annotations_Parse_Handler
+     (Data    : in out Glide_Kernel.Scripts.Callback_Data'Class;
+      Command : String)
+   is
+      pragma Unreferenced (Command);
+      Kernel : constant Kernel_Handle := Get_Kernel (Data);
+      Ref    : VCS_Access;
+      VCS_Identifier : constant String := Nth_Arg (Data, 1);
+      File           : constant VFS.Virtual_File :=
+        Create (Nth_Arg (Data, 2));
+      S              : constant String := Nth_Arg (Data, 3);
+   begin
+      Ref := Get_VCS_From_Id (VCS_Identifier);
+
+      if Ref = null then
+         Insert (Kernel,
+                 -"Could not find registered VCS corresponding to identifier: "
+                 & VCS_Identifier);
+         return;
+      end if;
+
+      Parse_Annotations (Ref, File, S);
+   end Annotations_Parse_Handler;
 
    --------------------
    -- File_Edited_Cb --
@@ -744,7 +792,6 @@ package body VCS_Module is
       use String_List_Utils.String_List;
       D : constant File_Hooks_Args := File_Hooks_Args (Data);
       Files  : List;
-      Status : File_Status_List.List;
       Ref    : VCS_Access;
 
    begin
@@ -754,14 +801,8 @@ package body VCS_Module is
 
       --  ??? We could try to retrieve the status from the VCS Explorer cache.
 
-      Status := Local_Get_Status (Ref, Files);
+      Get_Status (Ref, Files, False, Local => True);
       Free (Files);
-
-      if not File_Status_List.Is_Empty (Status) then
-         Display_Editor_Status (Kernel, Ref, File_Status_List.Head (Status));
-      end if;
-
-      File_Status_List.Free (Status);
 
    exception
       when E : others =>
