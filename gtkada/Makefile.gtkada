@@ -1,0 +1,26 @@
+ifeq ($(GTKADA_PROJECT),)
+GTKADA_PROJECT=True
+
+ifeq ($(BASE_DIR),)
+   BASE_DIR=$(shell pwd)
+
+   internal-clean:
+   internal-build:
+   internal-compile:
+   internal-link:
+   internal-ada:
+   internal-c:
+endif
+
+GTKADA_BASE_DIR := $(BASE_DIR)
+
+GTKADA_SRC_DIRS = $(GTK_PREFIX)/include/gtk-2.0 \
+	$(GTK_PREFIX)/lib/gtk-2.0/include \
+	$(GTK_PREFIX)/include/glib-2.0 \
+	$(GTK_PREFIX)/lib/glib-2.0/include \
+	$(GTK_PREFIX)/include/pango-1.0 \
+	$(GTK_PREFIX)/include/atk-1.0
+SRC_DIRS += $(GTKADA_SRC_DIRS)
+LDFLAGS += $(shell gtkada-config --libs)
+
+endif
