@@ -35,8 +35,8 @@ package body Python.Ada is
    type MethodDef_Access is access PyMethodDef;
    pragma Convention (C, MethodDef_Access);
 
-   function PyCFunction_New (MethodDef : MethodDef_Access; Self : PyObject)
-      return PyObject;
+   function PyCFunction_New
+     (MethodDef : MethodDef_Access; Self : PyObject) return PyObject;
    pragma Import (C, PyCFunction_New, "PyCFunction_New");
    --  Create a new callable object, which, when called from python, will call
    --  the Ada subprogram.
@@ -61,11 +61,11 @@ package body Python.Ada is
       Doc         : String := "") return PyObject
    is
       function Internal
-        (N : String;
+        (N       : String;
          Methods : System.Address;
-         Doc : String;
-         Self : PyObject := null;
-         Apiver : Integer := Python_API_Version) return PyObject;
+         Doc     : String;
+         Self    : PyObject := null;
+         Apiver  : Integer := Python_API_Version) return PyObject;
       pragma Import (C, Internal, "ada_Py_InitModule4");
 
       M : constant Methods_Access := new PyMethodDef_Array'
@@ -135,9 +135,9 @@ package body Python.Ada is
       Func  : PyMethodDef;
       Self  : PyObject := null)
    is
-      C_Func : constant PyObject :=
+      C_Func  : constant PyObject :=
         PyCFunction_New (new PyMethodDef'(Func), Self);
-      C_Meth : constant PyObject := PyMethod_New (C_Func, null, Class);
+      C_Meth  : constant PyObject := PyMethod_New (C_Func, null, Class);
       Ignored : Integer;
       pragma Unreferenced (Ignored);
    begin
@@ -243,7 +243,7 @@ package body Python.Ada is
          return null;
       end if;
 
-      Dict   := PyModule_GetDict (Module);
+      Dict := PyModule_GetDict (Module);
       return PyDict_GetItemString (Dict, Name);
    end Lookup_Class_Object;
 

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003                            --
+--                      Copyright (C) 2003-2004                      --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
@@ -226,9 +226,9 @@ package Python.Ada is
    ------------------------------------
 
    function Create_Method_Def
-     (Name  : String;
-      Func  : C_Method_Vargs;
-      Doc   : String           := "")
+     (Name : String;
+      Func : C_Method_Vargs;
+      Doc  : String           := "")
       return PyMethodDef;
    --  Convenience function to create method definitions.
    --  See the description of the parameters in the declaration of PyMethodDef
@@ -237,9 +237,9 @@ package Python.Ada is
    --  The returned value must be freed by the caller.
 
    function Create_Method_Def
-     (Name  : String;
-      Func  : C_Method_Keywords;
-      Doc   : String           := "")
+     (Name : String;
+      Func : C_Method_Keywords;
+      Doc  : String           := "")
       return PyMethodDef;
    --  Same as above, for methods accepting keywords.
    --  The returned value must be freed by the caller
@@ -262,9 +262,9 @@ package Python.Ada is
    pragma Convention (C, PyCObject_Destructor2);
 
    function PyCObject_FromVoidPtr
-     (Obj : System.Address;
+     (Obj   : System.Address;
       Destr : PyCObject_Destructor := null)
-     return PyObject;
+      return PyObject;
    --  Create a new PyCObject that encapsulate Obj. Dest is called when the
    --  object is reclaimed, unless it is null.
    --  Returns a newly referenced object.
@@ -273,7 +273,7 @@ package Python.Ada is
      (Obj   : System.Address;
       Desc  : System.Address;
       Destr : PyCObject_Destructor2 := null)
-     return PyObject;
+      return PyObject;
    --  Same as above, except Desc is also passed to Destr.
 
    function PyCObject_AsVoidPtr (Self : PyObject) return System.Address;
