@@ -363,14 +363,14 @@ package body Items.Records is
    begin
       Clone_Dispatching (Generic_Type (Item), Clone);
 
-      for J in R.Fields'Range loop
+      for J in Item.Fields'Range loop
          R.Fields (J).Name := new String'(Item.Fields (J).Name.all);
          --  Duplicate the type structure, but not the value itself.
          R.Fields (J).Value := Items.Clone (Item.Fields (J).Value.all);
          if Item.Fields (J).Variant_Part /= null then
             R.Fields (J).Variant_Part :=
               new Record_Type_Array'(Item.Fields (J).Variant_Part.all);
-            for V in R.Fields (J).Variant_Part'Range loop
+            for V in Item.Fields (J).Variant_Part'Range loop
                R.Fields (J).Variant_Part (V) := Record_Type_Access
                  (Items.Clone (Item.Fields (J).Variant_Part (V).all));
             end loop;
@@ -651,23 +651,42 @@ package body Items.Records is
       --  Else, find the relevant item
 
       for F in Item.Fields'Range loop
-         Tmp_Height := Total_Height + Item.Fields (F).Value.Height
-           + Line_Spacing;
-         if Y <= Tmp_Height then
-            declare
-               Field_Name : constant String :=
-                 Record_Field_Name (Lang, Name, Item.Fields (F).Name.all);
-            begin
-               if X < Field_Start then
-                  return Field_Name;
-               end if;
+         if Item.Fields (F).Value /= null then
+            Tmp_Height := Total_Height + Item.Fields (F).Value.Height
+              + Line_Spacing;
+            if Y <= Tmp_Height then
+               declare
+                  Field_Name : constant String :=
+                    Record_Field_Name (Lang, Name, Item.Fields (F).Name.all);
+               begin
+                  if X < Field_Start then
+                     return Field_Name;
+                  end if;
 
-               return Get_Component_Name
-                 (Item.Fields (F).Value, Lang, Field_Name,
-                  X - Field_Start, Y - Total_Height);
-            end;
+                  return Get_Component_Name
+                    (Item.Fields (F).Value, Lang, Field_Name,
+                     X - Field_Start, Y - Total_Height);
+               end;
+            end if;
+            Total_Height := Tmp_Height;
          end if;
-         Total_Height := Tmp_Height;
+
+         if Item.Fields (F).Variant_Part /= null then
+            for V in Item.Fields (F).Variant_Part'Range loop
+               Tmp_Height := Total_Height
+                 + Item.Fields (F).Variant_Part (V).Height + Line_Spacing;
+               if Y <= Tmp_Height then
+                  if X < Field_Start then
+                     return Name;
+                  end if;
+                  return Get_Component_Name
+                    (Item.Fields (F).Variant_Part (V), Lang, Name,
+                     X - Field_Start, Y - Total_Height);
+               end if;
+               Total_Height := Tmp_Height;
+            end loop;
+         end if;
+
       end loop;
 
       return Name;
@@ -699,17 +718,36 @@ package body Items.Records is
       --  Else, find the relevant item
 
       for F in Item.Fields'Range loop
-         Tmp_Height := Total_Height + Item.Fields (F).Value.Height
-           + Line_Spacing;
-         if Y <= Tmp_Height then
-            if X < Field_Start then
-               return Item.Fields (F).Value;
-            end if;
+         if Item.Fields (F).Value /= null then
+            Tmp_Height := Total_Height + Item.Fields (F).Value.Height
+              + Line_Spacing;
+            if Y <= Tmp_Height then
+               if X < Field_Start then
+                  return Item.Fields (F).Value;
+               end if;
 
-            return Get_Component
-              (Item.Fields (F).Value, X - Field_Start, Y - Total_Height);
+               return Get_Component
+                 (Item.Fields (F).Value, X - Field_Start, Y - Total_Height);
+            end if;
+            Total_Height := Tmp_Height;
          end if;
-         Total_Height := Tmp_Height;
+
+         if Item.Fields (F).Variant_Part /= null then
+            for V in Item.Fields (F).Variant_Part'Range loop
+               Tmp_Height := Total_Height
+                 + Item.Fields (F).Variant_Part (V).Height + Line_Spacing;
+               if Y <= Tmp_Height then
+                  if X < Field_Start then
+                     return Generic_Type_Access
+                       (Item.Fields (F).Variant_Part (V));
+                  end if;
+                  return Get_Component
+                    (Item.Fields (F).Variant_Part (V),
+                     X - Field_Start, Y - Total_Height);
+               end if;
+               Total_Height := Tmp_Height;
+            end loop;
+         end if;
       end loop;
 
       return Generic_Type_Access (Item);
