@@ -247,10 +247,8 @@ package body Browsers.Call_Graph is
    --  Find, or create a new, call graph editor.
 
    function Create_Call_Graph_Browser
-     (Kernel       : access Kernel_Handle_Record'Class)
-      return Call_Graph_Browser;
+     (Kernel : access Kernel_Handle_Record'Class) return MDI_Child;
    --  Create a new call graph browser.
-   --  It is now added automatically to the MDI
 
    procedure Edit_Spec_From_Contextual
      (Widget : access GObject_Record'Class;
@@ -419,10 +417,10 @@ package body Browsers.Call_Graph is
    -------------------------------
 
    function Create_Call_Graph_Browser
-     (Kernel : access Kernel_Handle_Record'Class)
-      return Call_Graph_Browser
+     (Kernel : access Kernel_Handle_Record'Class) return MDI_Child
    is
       Browser : Call_Graph_Browser;
+      Child   : MDI_Child;
    begin
       Browser := new Call_Graph_Browser_Record;
       Initialize (Browser, Kernel, Create_Toolbar => False);
@@ -437,7 +435,16 @@ package body Browsers.Call_Graph is
       Widget_Callback.Connect
         (Browser, "destroy",
          Widget_Callback.To_Marshaller (On_Destroy'Access));
-      return Browser;
+
+      Child := Put
+        (Kernel, Browser,
+         Focus_Widget   => Gtk_Widget (Get_Canvas (Browser)),
+         Default_Width  => Get_Pref (Kernel, Default_Widget_Width),
+         Default_Height => Get_Pref (Kernel, Default_Widget_Height),
+         Module => Call_Graph_Module_Id);
+      Set_Title (Child, -"Call graph Browser");
+
+      return Child;
    end Create_Call_Graph_Browser;
 
    -----------------------------
@@ -449,7 +456,6 @@ package body Browsers.Call_Graph is
       return Gtkada.MDI.MDI_Child
    is
       Child   : MDI_Child;
-      Browser : Call_Graph_Browser;
    begin
       Child := Find_MDI_Child_By_Tag
         (Get_MDI (Kernel), Call_Graph_Browser_Record'Tag);
@@ -457,15 +463,8 @@ package body Browsers.Call_Graph is
       if Child /= null then
          Raise_Child (Child);
       else
-         Browser := Create_Call_Graph_Browser (Kernel);
-         Child := Put
-           (Kernel, Browser,
-            Focus_Widget => Gtk_Widget (Get_Canvas (Browser)),
-            Default_Width  => Get_Pref (Kernel, Default_Widget_Width),
-            Default_Height => Get_Pref (Kernel, Default_Widget_Height),
-            Module => Call_Graph_Module_Id);
+         Child := Create_Call_Graph_Browser (Kernel);
          Set_Focus_Child (Child);
-         Set_Title (Child, -"Call graph Browser");
       end if;
 
       return Child;
@@ -641,11 +640,12 @@ package body Browsers.Call_Graph is
            (Kernel, Entity, Cb, Add_Entity_And_Link'Access);
          Layout (Cb.Browser, Force => False);
          Refresh_Canvas (Get_Canvas (Cb.Browser));
-         Show_Item (Get_Canvas (Cb.Browser), Cb.Item);
 
       else
          Redraw_Title_Bar (Cb.Item);
       end if;
+
+      Show_Item (Get_Canvas (Cb.Browser), Cb.Item);
 
    exception
       when E : others =>
@@ -1742,11 +1742,7 @@ package body Browsers.Call_Graph is
       pragma Unreferenced (MDI);
    begin
       if Node.Tag.all = "Call_Graph" then
-         return Put
-           (User, Gtk_Widget (Create_Call_Graph_Browser (User)),
-            Default_Width  => Get_Pref (User, Default_Widget_Width),
-            Default_Height => Get_Pref (User, Default_Widget_Height),
-            Module => Call_Graph_Module_Id);
+         return Create_Call_Graph_Browser (User);
       end if;
 
       return null;
