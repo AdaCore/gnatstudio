@@ -6,6 +6,11 @@ Known Problems fixed in GPS 2.1.1
   Workaround: Select other fonts, or type the font name in the text entry
               directly.
 
+- DC05-002 The command Refill was not filling up to the last column
+  Problem:    If the last character in a word was ending in the last column
+              the word was wrapped into the next line.
+  Workaround: Fill the last word manually.
+
 - DC03-028 GPS exits even though it couldn't save some files
   Problem:    If you exit GPS with some modified files, GPS displays a dialog
               asking which should be saved. However, if there is an error
