@@ -27,6 +27,7 @@ with Gtk.Text_View;            use Gtk.Text_View;
 with Gtk.Widget;               use Gtk.Widget;
 with Gtkada.MDI;               use Gtkada.MDI;
 with Glib.Xml_Int;             use Glib.Xml_Int;
+with Glide_Kernel.Console;     use Glide_Kernel.Console;
 with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
 with Python.GUI;               use Python, Python.GUI;
 with Python.Ada;               use Python.Ada;
@@ -1354,13 +1355,15 @@ package body Python_Module is
             Kwds     => Python_Callback_Data (Args).Kw,
             Defaults => PyFunction_Get_Defaults (Obj),
             Closure  => PyFunction_Get_Closure (Obj));
+         if Obj = null then
+            PyErr_Print;
+         end if;
       else
          Trace (Me, Command & " is not a function");
+         Insert (Script.Kernel,
+                 Command & (-" is not a function, when called from a hook"));
       end if;
 
-      if Obj = null then
-         PyErr_Print;
-      end if;
 
       return Obj /= null
         and then ((PyInt_Check (Obj) and then PyInt_AsLong (Obj) = 1)
