@@ -26,18 +26,22 @@ with GNAT.Expect; use GNAT.Expect;
 
 with Gdk.Color;
 with Gdk.Font;
-with Gdk.Input;
-with Gdk.Types;
 with Gtk.Menu;
-with Gtk.Object; use Gtk.Object;
+with Gtk.Object;          use Gtk.Object;
 pragma Elaborate_All (Gtk.Object);
 with Gtk.Dialog;
+with Gtk.Handlers;
+pragma Elaborate_All (Gtk.Handlers);
 with Gtk.Main;
+with Gtk.Clist;           use Gtk.Clist;
+with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
+with Gtk.Text;            use Gtk.Text;
 with Gtk.Window;
 with Gtk.Widget;
-with Gtkada.Canvas;
+with Gtkada.Canvas;       use Gtkada.Canvas;
 
-with Debugger; use Debugger;
+with Dock_Paned;          use Dock_Paned;
+with Debugger;            use Debugger;
 with GVD.Main_Window;
 with Process_Tab_Pkg;
 with Items;
@@ -46,21 +50,6 @@ with GVD.Code_Editors;
 with GVD.Types;
 
 package GVD.Process is
-
-   package Standard_Input_Package is new Gdk.Input.Input_Add
-     (GVD.Main_Window.GVD_Main_Window_Record'Class);
-   --  This package is needed to handle the tty mode.
-
-   procedure Input_Available
-     (Debugger  : Standard_Input_Package.Data_Access;
-      Source    : Glib.Gint;
-      Condition : Gdk.Types.Gdk_Input_Condition);
-   --  This procedure should be used in conjunction with Standard_Input above.
-   --  This is the callback input function that will retrieve the current
-   --  page in the process notebook contained by Debugger and send the
-   --  command (line read from Source) using Process_User_Command.
-   --  Note that this handler currently assumes that Source is the standard
-   --  input file descriptor.
 
    Command_History_Collapse_Entries : constant Boolean := True;
    --  Whether we should collapse entries in the history list.
@@ -126,6 +115,18 @@ package GVD.Process is
       Window                  : GVD.Main_Window.GVD_Main_Window;
       --  The associated main window.
 
+      Delete_Text_Handler_Id  : Gtk.Handlers.Handler_Id;
+      Stack_List_Select_Id    : Gtk.Handlers.Handler_Id;
+
+      Data_Paned              : Dock_Hpaned;
+      Stack_Scrolledwindow    : Gtk_Scrolled_Window;
+      Stack_List              : Gtk_Clist;
+      Data_Scrolledwindow     : Gtk_Scrolled_Window;
+      Data_Canvas             : Interactive_Canvas;
+
+      Command_Scrolledwindow  : Gtk_Scrolled_Window;
+      Debugger_Text           : Gtk_Text;
+
       Edit_Pos                : Glib.Guint;
       --  The last position in the text window of the debugger where text
       --  was inserted. This is used to find what was typed by the user.
@@ -168,6 +169,9 @@ package GVD.Process is
       --  Complete output received in the underlying debugger for the current
       --  command. This is needed to buffer the output before calling the
       --  various filters.
+
+      Current_Output_Pos      : Natural := 1;
+      --  Position in Current_Output to insert new text.
 
       Post_Processing         : Boolean := False;
       --  True if the debugger is handling post processing of a command.
@@ -233,19 +237,13 @@ package GVD.Process is
    --  See Debugger.Spawn for a documentation on Remote_Host, Remote_Target,
    --  Remote_Protocol and Debugger_Name.
 
-   function Create_Debugger
-     (Window          : access GVD.Main_Window.GVD_Main_Window_Record'Class;
-      Kind            : GVD.Types.Debugger_Type;
-      Executable      : String;
-      Debugger_Args   : Argument_List;
-      Executable_Args : String;
-      Remote_Host     : String := "";
-      Remote_Target   : String := "";
-      Remote_Protocol : String := "";
-      Debugger_Name   : String := "") return Debugger_Process_Tab;
-   --  Create a debugger with a given list of arguments.
-   --  A new page is added to the window's main notebook.
-   --  See Configure for details on the arguments.
+   procedure Setup_Data_Window
+     (Process : access Debugger_Process_Tab_Record'Class);
+   --  Set up/initialize the data window associated with Process.
+
+   procedure Setup_Command_Window
+     (Process : access Debugger_Process_Tab_Record'Class);
+   --  Set up/initialize the command window associated with Process.
 
    Debugger_Not_Supported : exception;
    --  Raised by Create_Debugger when the debugger type is not supported.
