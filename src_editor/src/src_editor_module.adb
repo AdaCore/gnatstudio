@@ -42,6 +42,7 @@ with GVD.Status_Bar;            use GVD.Status_Bar;
 with GVD.Dialogs;               use GVD.Dialogs;
 with Gtk.Box;                   use Gtk.Box;
 with Gtk.Button;                use Gtk.Button;
+with Gtk.Combo;                 use Gtk.Combo;
 with Gtk.Dialog;                use Gtk.Dialog;
 with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.GEntry;                use Gtk.GEntry;
@@ -67,6 +68,7 @@ with Ada.Text_IO;               use Ada.Text_IO;
 with Prj_API;                   use Prj_API;
 with Src_Contexts;              use Src_Contexts;
 with Find_Utils;                use Find_Utils;
+with GUI_Utils;                 use GUI_Utils;
 
 with Generic_List;
 
@@ -99,6 +101,9 @@ package body Src_Editor_Module is
 
       Stored_Marks             : Mark_Identifier_List.List;
       Next_Mark_Id             : Natural := 0;
+
+      Open_File_Entry          : Gtkada_Entry;
+      Open_File_Dialog         : Gtk_Dialog;
    end record;
    type Source_Editor_Module is access all Source_Editor_Module_Record'Class;
 
@@ -1276,43 +1281,62 @@ package body Src_Editor_Module is
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
       pragma Unreferenced (Widget);
-      Dialog : Gtk_Dialog;
-      Ent    : Gtkada_Entry;
       Label  : Gtk_Label;
       Button : Gtk_Widget;
+      Id     : Source_Editor_Module :=
+        Source_Editor_Module (Src_Editor_Module_Id);
 
    begin
-      Gtk_New (Dialog,
-               Title  => -"Open file from project",
-               Parent => Get_Main_Window (Kernel),
-               Flags  => Modal or Destroy_With_Parent);
-      Set_Default_Size (Dialog, 300, 100);
-      Set_Position (Dialog, Win_Pos_Mouse);
+      if Id.Open_File_Dialog = null then
+         Gtk_New (Id.Open_File_Dialog,
+                  Title  => -"Open file from project",
+                  Parent => Get_Main_Window (Kernel),
+                  Flags  => Modal or Destroy_With_Parent);
+         Set_Default_Size (Id.Open_File_Dialog, 300, 200);
+         Set_Position (Id.Open_File_Dialog, Win_Pos_Mouse);
 
-      Gtk_New (Label, -"Enter file name (use <tab> for completion):");
-      Pack_Start (Get_Vbox (Dialog), Label, Expand => False);
+         Gtk_New (Label, -"Enter file name (use <tab> for completion):");
+         Pack_Start (Get_Vbox (Id.Open_File_Dialog), Label, Expand => False);
 
-      Gtk_New (Ent);
-      Set_Width_Chars (Ent, 20);
-      Set_Completions
-        (Ent, Get_Source_Files
-           (Get_Project_View (Kernel), Recursive => True, Full_Path => False));
+         Gtk_New (Id.Open_File_Entry);
+         Pack_Start (Get_Vbox (Id.Open_File_Dialog), Id.Open_File_Entry,
+                     Fill => True, Expand => True);
 
-      Pack_Start (Get_Vbox (Dialog), Ent, Fill => True, Expand => True);
-      Grab_Focus (Ent);
-      Set_Activates_Default (Ent, True);
-
-      Button := Add_Button (Dialog, Stock_Ok, Gtk_Response_OK);
-      Button := Add_Button (Dialog, Stock_Cancel, Gtk_Response_Cancel);
-      Set_Default_Response (Dialog, Gtk_Response_OK);
-
-      Show_All (Dialog);
-
-      if Run (Dialog) = Gtk_Response_OK then
-         Open_File_Editor (Kernel, Get_Text (Ent), From_Path => True);
+         Button := Add_Button (Id.Open_File_Dialog, Stock_Ok, Gtk_Response_OK);
+         Button := Add_Button
+           (Id.Open_File_Dialog, Stock_Cancel, Gtk_Response_Cancel);
+         Set_Default_Response (Id.Open_File_Dialog, Gtk_Response_OK);
+      else
+         Set_Text (Get_Entry (Get_Combo (Id.Open_File_Entry)), "");
       end if;
 
-      Destroy (Dialog);
+      Grab_Focus (Get_Entry (Get_Combo (Id.Open_File_Entry)));
+      Show_All (Id.Open_File_Dialog);
+
+      declare
+         List1 : String_Array_Access := Get_Source_Files
+           (Project_View => Get_Project_View (Kernel),
+            Recursive    => True,
+            Full_Path    => False);
+         List2 : String_Array_Access := Get_Predefined_Source_Files (Kernel);
+      begin
+         Set_Completions
+           (Id.Open_File_Entry, new String_Array'(List1.all & List2.all));
+         Unchecked_Free (List1);
+         Unchecked_Free (List2);
+      end;
+
+      if Run (Id.Open_File_Dialog) = Gtk_Response_OK then
+         declare
+            Text : constant String :=
+              Get_Text (Get_Entry (Get_Combo (Id.Open_File_Entry)));
+         begin
+            Add_Unique_Combo_Entry (Get_Combo (Id.Open_File_Entry), Text);
+            Open_File_Editor (Kernel, Text, From_Path => True);
+         end;
+      end if;
+
+      Hide_All (Id.Open_File_Dialog);
 
    exception
       when E : others =>
@@ -2491,6 +2515,7 @@ package body Src_Editor_Module is
    procedure Destroy (Id : in out Source_Editor_Module_Record) is
    begin
       String_List_Utils.String_List.Free (Id.List);
+      Destroy (Id.Open_File_Dialog);
    end Destroy;
 
 end Src_Editor_Module;
