@@ -571,6 +571,11 @@ package Glide_Kernel is
       File    : String);
    --  Emits the "file_closed" signal
 
+   procedure Compilation_Finished
+     (Handle  : access Kernel_Handle_Record;
+      File    : String);
+   --  Emits the "compilation_finished" signal
+
    procedure Preferences_Changed (Handle : access Kernel_Handle_Record);
    --  Emits the "preferences_changed" signal.
 
@@ -664,6 +669,13 @@ package Glide_Kernel is
    --
    --    Emitted when the list of registered search functions has changed.
    --
+   --  - "compilation_finished"
+   --    procedure Handler (Handle : access Kernel_Handle_Record'Class;
+   --                       File   : String);
+   --    Emitted when a compile operation has finished.
+   --    File indicates the file that has just been compiled, in the case
+   --    when only one file is compiled.
+   --
    --  </signals>
 
    Project_Changed_Signal        : constant String := "project_changed";
@@ -673,7 +685,8 @@ package Glide_Kernel is
    Source_Lines_Revealed_Signal  : constant String := "source_lines_revealed";
    File_Edited_Signal            : constant String := "file_edited";
    File_Saved_Signal             : constant String := "file_saved";
-   File_Closed_Signal             : constant String := "file_closed";
+   File_Closed_Signal            : constant String := "file_closed";
+   Compilation_Finished_Signal   : constant String := "compilation_finished";
    Preferences_Changed_Signal    : constant String := "preferences_changed";
    Search_Regexps_Changed_Signal : constant String := "search_regexps_changed";
    Search_Reset_Signal           : constant String := "search_reset";

@@ -95,11 +95,12 @@ package body Glide_Kernel is
       6  => New_String (File_Edited_Signal),
       7  => New_String (File_Saved_Signal),
       8  => New_String (File_Closed_Signal),
+      9  => New_String (Compilation_Finished_Signal),
 
-      9  => New_String (Preferences_Changed_Signal),
-      10  => New_String (Search_Regexps_Changed_Signal),
-      11 => New_String (Search_Reset_Signal),
-      12 => New_String (Search_Functions_Changed_Signal));
+      10 => New_String (Preferences_Changed_Signal),
+      11 => New_String (Search_Regexps_Changed_Signal),
+      12 => New_String (Search_Reset_Signal),
+      13 => New_String (Search_Functions_Changed_Signal));
    --  The list of signals defined for this object
 
    Kernel_Class : GObject_Class := Uninitialized_Class;
@@ -160,9 +161,9 @@ package body Glide_Kernel is
       Home_Dir    : String)
    is
       Signal_Parameters : constant Signal_Parameter_Types :=
-        (1 .. 2 | 4 | 9 .. 12 => (1 => GType_None),
+        (1 .. 2 | 4 | 10 .. 13 => (1 => GType_None),
          3      | 5           => (1 => GType_Pointer),
-         6 .. 8               => (1 => GType_String));
+         6 .. 9               => (1 => GType_String));
       Handler : Glide_Language_Handler;
       Dir : constant String := String_Utils.Name_As_Directory (Home_Dir);
    begin
@@ -701,6 +702,27 @@ package body Glide_Kernel is
 
       Remove_From_List (Handle.Open_Files, File);
    end File_Closed;
+
+   --------------------------
+   -- Compilation_Finished --
+   --------------------------
+
+   procedure Compilation_Finished
+     (Handle  : access Kernel_Handle_Record;
+      File    : String)
+   is
+      procedure Internal
+        (Handle : System.Address;
+         Signal : String;
+         File   : String);
+      pragma Import (C, Internal, "g_signal_emit_by_name");
+
+   begin
+      Internal
+        (Get_Object (Handle),
+         Compilation_Finished_Signal & ASCII.NUL,
+         File & ASCII.NUL);
+   end Compilation_Finished;
 
    -------------
    -- Is_Open --
