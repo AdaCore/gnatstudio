@@ -18,7 +18,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with OS_Utils;                use OS_Utils;
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 with Ada.Strings.Fixed;       use Ada.Strings.Fixed;
 with GNAT.OS_Lib;             use GNAT.OS_Lib;
@@ -397,24 +396,6 @@ package body String_Utils is
       end loop;
    end Skip_Simple_Value;
 
-   --------------------
-   -- Base_File_Name --
-   --------------------
-
-   function Base_File_Name (File_Name : String) return String is
-      Last : Natural := File_Name'Last;
-   begin
-      --  Maybe we should also ignore drive letters
-
-      while Last >= File_Name'First loop
-         exit when Is_Directory_Separator (File_Name (Last));
-
-         Last := Last - 1;
-      end loop;
-
-      return File_Name (Last + 1 .. File_Name'Last);
-   end Base_File_Name;
-
    ---------------
    -- Skip_Word --
    ---------------
@@ -490,22 +471,6 @@ package body String_Utils is
 
       return To (1 .. Index_To - 1);
    end Strip_CR;
-
-   --------------------
-   -- File_Extension --
-   --------------------
-
-   function File_Extension (File_Name : String) return String is
-      Base : constant String := Base_File_Name (File_Name);
-   begin
-      for J in reverse Base'Range loop
-         if Base (J) = '.' then
-            return Base (J + 1 .. Base'Last);
-         end if;
-      end loop;
-
-      return "";
-   end File_Extension;
 
    ----------------------
    -- To_Host_Pathname --
@@ -1150,4 +1115,3 @@ package body String_Utils is
    end Substitute;
 
 end String_Utils;
-
