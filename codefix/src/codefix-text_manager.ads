@@ -52,7 +52,7 @@ package Codefix.Text_Manager is
    ----------------------------------------------------------------------------
 
    type Text_Cursor is tagged record
-      Line, Col : Natural;
+      Line, Col : Natural := 0;
       --  If Line = 0, indicates a special case to handle the first line
       --  differently. ??? Not quite clear why it is needed to handle it
       --  specially.
