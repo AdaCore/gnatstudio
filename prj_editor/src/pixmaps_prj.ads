@@ -26,6 +26,7 @@
 -- executable file  might be covered by the  GNU Public License.     --
 -----------------------------------------------------------------------
 
+with Interfaces.C.Strings;
 with Gtkada.Types; use Gtkada.Types;
 
 package Pixmaps_Prj is
@@ -41,9 +42,34 @@ package Pixmaps_Prj is
    project_imported_xpm   : aliased Chars_Ptr_Array (0 .. 0);
    project_modified_xpm   : aliased Chars_Ptr_Array (0 .. 0);
    mini_folder_object_xpm : aliased Chars_Ptr_Array (0 .. 0);
+   mini_page_xpm          : aliased constant Chars_Ptr_Array;
 
 private
 
+   package ICS renames Interfaces.C.Strings;
+
+   Mini_Page_Xpm          : aliased constant Chars_Ptr_Array :=
+     (ICS.New_String ("16 16 4 1"),
+      ICS.New_String ("       c None s None"),
+      ICS.New_String (".      c black"),
+      ICS.New_String ("X      c white"),
+      ICS.New_String ("O      c #808080"),
+      ICS.New_String ("                "),
+      ICS.New_String ("   .......      "),
+      ICS.New_String ("   .XXXXX..     "),
+      ICS.New_String ("   .XoooX.X.    "),
+      ICS.New_String ("   .XXXXX....   "),
+      ICS.New_String ("   .XooooXoo.o  "),
+      ICS.New_String ("   .XXXXXXXX.o  "),
+      ICS.New_String ("   .XooooooX.o  "),
+      ICS.New_String ("   .XXXXXXXX.o  "),
+      ICS.New_String ("   .XooooooX.o  "),
+      ICS.New_String ("   .XXXXXXXX.o  "),
+      ICS.New_String ("   .XooooooX.o  "),
+      ICS.New_String ("   .XXXXXXXX.o  "),
+      ICS.New_String ("   ..........o  "),
+      ICS.New_String ("    oooooooooo  "),
+      ICS.New_String ("                "));
    pragma Import (C, logo_xpm);
    pragma Import (C, delete_var_xpm);
    pragma Import (C, project_closed_xpm);
