@@ -2147,8 +2147,6 @@ package body Src_Info.Queries is
 
             Trace (Me, "Check_LI: found dependency "
                    & Dep.Value.File.LI.LI.LI_Filename.all);
-         else
-            Trace (Me, "Check_LI: no more dependencies");
          end if;
 
          return Dep;
