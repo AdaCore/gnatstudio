@@ -183,10 +183,6 @@ package Csc_HTML_Widget is
    -- (e.g. images) at loading time.                 --
    ----------------------------------------------------
 
-   function Stream_Ref (Handle : Csc_HTML_Stream) return Csc_HTML_Stream;
-
-   procedure Stream_Unref (Handle : Csc_HTML_Stream);
-
    procedure Stream_Write
      (Stream : Csc_HTML_Stream;
       Buffer : String);
@@ -397,8 +393,6 @@ private
    type Csc_HTML_Record is new Gtk.Layout.Gtk_Layout_Record with null record;
 
    pragma Import (C, Get_Type, "csc_html_get_type");
-   pragma Import (C, Stream_Ref, "csc_html_stream_ref");
-   pragma Import (C, Stream_Unref, "csc_html_stream_unref");
    pragma Import (C, Stream_Close, "csc_html_stream_close");
    pragma Import (C, Freeze, "html_engine_freeze");
    pragma Import (C, Thaw, "html_engine_thaw");
