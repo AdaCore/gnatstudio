@@ -261,9 +261,14 @@ package body Entities is
    ----------------------
 
    procedure Add_All_Entities
-     (File : Source_File; Entity : Entity_Information) is
+     (File : Source_File; Entity : Entity_Information)
+   is
+      Predef : constant Source_File := Get_Predefined_File (File.Db);
    begin
-      if Entity.Declaration.File /= File then
+      if Entity.Declaration.File /= File
+        and then Entity.Declaration.File /= Predef
+        and then File /= Predef
+      then
          --  ??? This might be costly, but we need to ensure there is a proper
          --  reference between the two files, for proper clean up
          Add_Depends_On (File, Entity.Declaration.File);
@@ -906,7 +911,7 @@ package body Entities is
    begin
       Assert (Assert_Me, Renaming_Of /= null, "Invalid renamed entity");
       Entity.Rename := Renaming_Of;
-      Add_All_Entities (Renaming_Of.Declaration.File, Entity);
+      Add_All_Entities (Entity.Declaration.File, Renaming_Of);
    end Set_Is_Renaming_Of;
 
    -------------------
@@ -938,7 +943,7 @@ package body Entities is
          Append (Is_Of_Type.Child_Types, Entity);
       end if;
 
-      Add_All_Entities (Is_Of_Type.Declaration.File, Entity);
+      Add_All_Entities (Entity.Declaration.File, Is_Of_Type);
    end Set_Type_Of;
 
    ------------------------------
