@@ -1354,6 +1354,7 @@ package body GVD.Process is
       Next_Page (Notebook);
 
       Close (Debugger.Debugger);
+      Free (Debugger.Debugger);
       Remove_Page (Notebook, Page_Num (Notebook, Debugger.Process_Hbox));
       Destroy (Debugger);
 
