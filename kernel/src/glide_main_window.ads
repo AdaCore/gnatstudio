@@ -21,12 +21,14 @@
 with GVD.Main_Window;
 with Glide_Kernel;
 with Gtk.Item_Factory; use Gtk.Item_Factory;
+with Gtk.Toolbar; use Gtk.Toolbar;
 
 package Glide_Main_Window is
 
    type Glide_Window_Record is new GVD.Main_Window.GVD_Main_Window_Record with
    record
       Kernel      : Glide_Kernel.Kernel_Handle;
+      Toolbar     : Gtk_Toolbar;
       Interrupted : Boolean := False;
    end record;
    type Glide_Window is access all Glide_Window_Record'Class;
