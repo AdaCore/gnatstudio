@@ -154,6 +154,15 @@ case "${host}" in
       *) opsys=bsd4-2   ;;
     esac;;
 
+  # IA64 processors
+  ia64-*-* )
+    case "${host}" in
+      *-linux-gnu* )
+        opsys=gnu-linux
+        ;;
+    esac
+  ;;
+
   ## Intel 386 machines where we don't care about the manufacturer
   i[[3456]]86-*-* )
     machine=intel386
