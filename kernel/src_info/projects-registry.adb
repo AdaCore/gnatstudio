@@ -1833,12 +1833,12 @@ package body Projects.Registry is
          Gnatls_Args (2 .. Gnatls_Args'Last),
          Buffer_Size => 0, Err_To_Out => True);
 
-      Expect (Fd, Result, "GNATLS .+\)", Timeout => -1);
+      Expect (Fd, Result, "GNATLS .+ Copyright", Timeout => -1);
 
       declare
          S : constant String := Expect_Out_Match (Fd);
       begin
-         GNAT_Version.all := new String'(S (S'First + 7 .. S'Last));
+         GNAT_Version.all := new String'(S (S'First + 7 .. S'Last - 10));
       end;
 
       Expect (Fd, Result, "Source Search Path:", Timeout => -1);
