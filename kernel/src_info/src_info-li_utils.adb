@@ -785,7 +785,7 @@ package body Src_Info.LI_Utils is
              D_Ptr.Value.Declaration.Location.Line < Position.Line
                or else (D_Ptr.Value.Declaration.Location.Line =
                                                    Position.Line and
-                 D_Ptr.Value.Declaration.Location.Column < Position.Column))
+                 D_Ptr.Value.Declaration.Location.Column <= Position.Column))
            and then (
              D_Ptr.Value.Declaration.End_Of_Scope.Location.Line > Position.Line
                or else (D_Ptr.Value.Declaration.End_Of_Scope.Location.Line =
