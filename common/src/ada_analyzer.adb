@@ -2637,11 +2637,11 @@ package body Ada_Analyzer is
                            Prev_Token := Tok_Plus;
                         end if;
 
-                        if (P <= Buffer'First + 1
-                            or else To_Upper (Buffer (P - 1)) /= 'E'
-                            or else Buffer (P - 2) not in '0' .. '9')
-                          and then Prev_Prev_Token /= Tok_Colon_Equal
-                          and then Prev_Prev_Token not in Reserved_Token_Type
+                        if Prev_Prev_Token = Tok_Identifier
+                          and then
+                            (P <= Buffer'First + 1
+                             or else To_Upper (Buffer (P - 1)) /= 'E'
+                             or else Buffer (P - 2) not in '0' .. '9')
                           and then
                             (P = Buffer'Last
                              or else (Buffer (P + 1) /= '"'
