@@ -25,9 +25,11 @@ with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with Gtkada.MDI;                use Gtkada.MDI;
 with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
+with Gtk.Window;                use Gtk.Window;
 with Glide_Intl;                use Glide_Intl;
 with Traces;                    use Traces;
 with OS_Utils;                  use OS_Utils;
+with GUI_Utils;                 use GUI_Utils;
 with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
 
 package body Glide_Kernel.Help is
@@ -204,6 +206,7 @@ package body Glide_Kernel.Help is
       Child    : MDI_Child;
       Result   : Boolean;
    begin
+      Set_Busy_Cursor (Get_Window (Get_Main_Window (Kernel)), True, True);
       Child := Find_MDI_Child_By_Tag (MDI, Help_Browser_Record'Tag);
 
       if Child = null then
@@ -234,6 +237,7 @@ package body Glide_Kernel.Help is
       end if;
 
       Result := Load_File (Kernel, Scrolled, Help_File);
+      Set_Busy_Cursor (Get_Window (Get_Main_Window (Kernel)), False);
    end Display_Help;
 
    ------------
