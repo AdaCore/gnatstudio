@@ -50,6 +50,12 @@ package body Glide_Menu is
       Widget : Limited_Widget);
    --  File->Close menu
 
+   procedure On_Close_All
+     (Object : Data_Type_Access;
+      Action : Guint;
+      Widget : Limited_Widget);
+   --  File->Close All menu
+
    procedure On_Save_Desktop
      (Object : Data_Type_Access;
       Action : Guint;
@@ -160,6 +166,24 @@ package body Glide_Menu is
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Close;
 
+   ------------------
+   -- On_Close_All --
+   ------------------
+
+   procedure On_Close_All
+     (Object : Data_Type_Access;
+      Action : Guint;
+      Widget : Limited_Widget)
+   is
+      pragma Unreferenced (Action, Widget);
+
+      Kernel : constant Kernel_Handle := Glide_Window (Object).Kernel;
+   begin
+      if Save_All_MDI_Children (Kernel) then
+         Close_All_Children (Kernel);
+      end if;
+   end On_Close_All;
+
    -------------
    -- On_Exit --
    -------------
@@ -232,13 +256,13 @@ package body Glide_Menu is
 
    begin
       return new Gtk_Item_Factory_Entry_Array'
-        (Gtk_New (File & (-"S_ave...") & '/' & (-"Desktop"), "",
+        (Gtk_New (File & (-"Sa_ve...") & '/' & (-"Desktop"), "",
                   On_Save_Desktop'Access),
          Gtk_New (File & "sep1", Item_Type => Separator),
          Gtk_New (File & (-"Change _Directory..."), "", "",
                   On_Change_Dir'Access),
          Gtk_New (File & (-"_Close"), "", Stock_Close, On_Close'Access),
-         Gtk_New (File & (-"Close _All"), "", null),
+         Gtk_New (File & (-"Close _All"), "", On_Close_All'Access),
          Gtk_New (File & "sep2", Item_Type => Separator),
          Gtk_New (File & (-"_Exit"), "", "", On_Exit'Access),
 
@@ -249,7 +273,6 @@ package body Glide_Menu is
                   On_Open_Project'Access),
          Gtk_New (Project & "sep1", Item_Type => Separator),
 
-         Gtk_New (Debug & Data_Sub & (-"_Call Stack"), "", null, Check_Item),
          Gtk_New (Debug & Data_Sub & (-"_Protection Domains"), "", null),
 
          Gtk_New (Tools & (-"_Profile"), "", null),
