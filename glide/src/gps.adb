@@ -106,6 +106,8 @@ procedure GPS is
    Me        : constant Debug_Handle := Create ("GPS");
    Gtk_Trace : constant Debug_Handle := Create ("Gtk+");
    Pid_Image : constant String := String_Utils.Image (Get_Process_Id);
+   Splash_Default_Size : constant := 39326;
+   --  Default size of the splash screen.
 
    subtype String_Access is GNAT.OS_Lib.String_Access;
 
@@ -127,6 +129,7 @@ procedure GPS is
    User_Directory_Existed : Boolean;
    Cleanup_Needed         : Boolean := False;
    Unexpected_Exception   : Boolean := False;
+   Splash_Timeout         : Glib.Guint32 := 1000;
 
    Started                : Boolean := False;
    --  Whether the main loop is started.
@@ -210,11 +213,19 @@ procedure GPS is
       Image  : Gtk_Image;
       Pixbuf : Gdk_Pixbuf;
       Error  : GError;
+      FD     : File_Descriptor;
 
    begin
       if Get_Pref (GPS.Kernel, Splash_Screen)
         and then Is_Regular_File (File)
       then
+         FD := Open_Read (File, Binary);
+
+         if File_Length (FD) /= Splash_Default_Size then
+            Splash_Timeout := 4000;
+         end if;
+
+         Close (FD);
          Gtk_New (Splash, Window_Popup);
          Set_Policy (Splash,
                      Allow_Shrink => False,
@@ -463,7 +474,7 @@ procedure GPS is
             (GPS.Kernel, null, null, null, null));
       else
          Timeout_Id := Process_Timeout.Add
-           (1000, Finish_Setup'Unrestricted_Access,
+           (Splash_Timeout, Finish_Setup'Unrestricted_Access,
             (GPS.Kernel, null, null, null, null));
       end if;
    end Init_Settings;
