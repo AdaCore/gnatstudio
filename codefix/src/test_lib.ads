@@ -55,6 +55,7 @@ package Test_Lib is
 
    procedure Ambiguity
      (Alternative_1, Alternative_2 : Extract;
+      Current_Text                 : Text_Navigator_Abstr'Class;
       Delete_Choice                : out Alternative_Choice);
    --  Put on screen the ambiguity problem.
 
