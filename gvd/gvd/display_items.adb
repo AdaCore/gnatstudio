@@ -43,6 +43,7 @@ with GVD.Process;      use GVD.Process;
 with GVD.Types;
 with Basic_Types;      use Basic_Types;
 with GVD.Trace;        use GVD.Trace;
+with Process_Proxies;  use Process_Proxies;
 
 package body Display_Items is
 
@@ -998,30 +999,36 @@ package body Display_Items is
          for B in 0 .. Num_Buttons - 1 loop
             if Gint (Get_X (Event)) >= Buttons_Start
               and then Gint (Get_X (Event)) <=
-                Buttons_Start + Buttons_Size
+              Buttons_Start + Buttons_Size
             then
-               case B is
-                  when 0 =>
-                     if Item.Auto_Refresh then
+               if not Command_In_Process
+                 (Get_Process (Item.Debugger.Debugger))
+               then
+                  case B is
+                     when 0 =>
+                        if Item.Auto_Refresh then
+                           Process_User_Command
+                             (Item.Debugger,
+                              "graph disable display"
+                                & Integer'Image (Item.Num),
+                              Output_Command => True);
+
+                        else
+                           Process_User_Command
+                             (Item.Debugger,
+                              "graph enable display"
+                                & Integer'Image (Item.Num),
+                              Output_Command => True);
+                        end if;
+
+                     when 1 =>
                         Process_User_Command
                           (Item.Debugger,
-                           "graph disable display" & Integer'Image (Item.Num),
+                           "graph undisplay" & Integer'Image (Item.Num),
                            Output_Command => True);
 
-                     else
-                        Process_User_Command
-                          (Item.Debugger,
-                           "graph enable display" & Integer'Image (Item.Num),
-                           Output_Command => True);
-                     end if;
-
-                  when 1 =>
-                     Process_User_Command
-                       (Item.Debugger,
-                        "graph undisplay" & Integer'Image (Item.Num),
-                        Output_Command => True);
-
-               end case;
+                  end case;
+               end if;
 
                return;
             end if;
