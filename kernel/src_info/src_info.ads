@@ -102,12 +102,12 @@ package Src_Info is
    --  filenames that don't have a matching LI_File.
 
    procedure Get_Unit_Name
-     (File              : in out Internal_File;
-      Source_Info_List  : in out Src_Info.LI_File_List;
-      Project           : Prj.Project_Id;
-      Extra_Source_Path : String;
-      Extra_Object_Path : String;
-      Unit_Name         : out String_Access);
+     (File                   : in out Internal_File;
+      Source_Info_List       : in out Src_Info.LI_File_List;
+      Project                : Prj.Project_Id;
+      Predefined_Source_Path : String;
+      Predefined_Object_Path : String;
+      Unit_Name              : out String_Access);
    --  Return the Unit Name from the given File. The returned string must not
    --  be freed by the caller, as it is cached in File for later retrieval.
    --
@@ -256,12 +256,12 @@ private
    --  the access value.
 
    procedure Get_Unit_Name
-     (Source            : in out Source_File;
-      Source_Info_List  : in out LI_File_List;
-      Project           : Prj.Project_Id;
-      Extra_Source_Path : String;
-      Extra_Object_Path : String;
-      Unit_Name         : out String_Access);
+     (Source                 : in out Source_File;
+      Source_Info_List       : in out LI_File_List;
+      Project                : Prj.Project_Id;
+      Predefined_Source_Path : String;
+      Predefined_Object_Path : String;
+      Unit_Name              : out String_Access);
    --  Return the Unit Name from the given Source. The returned string must not
    --  be freed by the caller.
    --
