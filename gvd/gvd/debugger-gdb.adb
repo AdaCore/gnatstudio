@@ -33,6 +33,7 @@ with Gtk.Window;        use Gtk.Window;
 
 with Main_Debug_Window_Pkg; use Main_Debug_Window_Pkg;
 
+with Odd_Intl;          use Odd_Intl;
 with Language;          use Language;
 with Language.Debugger; use Language.Debugger;
 with Debugger.Gdb.Ada;  use Debugger.Gdb.Ada;
@@ -43,6 +44,7 @@ with GVD.Strings;       use GVD.Strings;
 with GVD.Dialogs;       use GVD.Dialogs;
 with GVD.Types;         use GVD.Types;
 with GVD.Trace;         use GVD.Trace;
+with GVD.Status_Bar;    use GVD.Status_Bar;
 with Items;             use Items;
 with Items.Simples;     use Items.Simples;
 with Items.Arrays;      use Items.Arrays;
@@ -186,8 +188,10 @@ package body Debugger.Gdb is
          elsif Lang = "c" then
             Language := new Gdb_C_Language;
          else
-            pragma Assert (False, "Language not currently supported");
-            raise Program_Error;
+            Print_Message
+              (Process.Window.Statusbar1,
+               Error, (-"Language currently not supported: ") & Lang);
+            Language := new Gdb_C_Language;
          end if;
 
          Set_Language (Debugger, Language);
