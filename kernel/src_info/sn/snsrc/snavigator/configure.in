@@ -416,8 +416,6 @@ hyper/Makefile
 db/Makefile
 dbutils/Makefile
 parsers/Makefile
-parsers/java/Makefile
-parsers/libjcreuse/Makefile
 parsers/cpp/Makefile
 parsers/cpp/cpplib/Makefile
 misc/Makefile
