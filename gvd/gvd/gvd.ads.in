@@ -99,6 +99,9 @@ package GVD is
      "@DEFAULT_PS@";
    --  Command used to list processes on a native system.
 
+   Default_Print_Cmd : constant String := "@PRINT_CMD@";
+   --  Command used to print a file.
+
    Default_Opaque_MDI : constant Boolean := @OPAQUE_MDI@;
    --  Default value for the MDI opaque preference.
 
