@@ -157,6 +157,11 @@ package body Src_Info.Queries is
    --  If Entity_Name is the empty string, no matching is done on the name,
    --  only on the line and column
 
+   function Get_Declarations_From_File
+     (Lib_Info : LI_File_Ptr; File_Name : String)
+      return E_Declaration_Info_List;
+   --  Return the list of declarations for a specific source file.
+
    -------------------------
    -- Search_Is_Completed --
    -------------------------
@@ -2574,13 +2579,47 @@ package body Src_Info.Queries is
       end if;
    end Renaming_Of;
 
+   --------------------------------
+   -- Get_Declarations_From_File --
+   --------------------------------
+
+   function Get_Declarations_From_File
+     (Lib_Info : LI_File_Ptr; File_Name : String)
+      return E_Declaration_Info_List
+   is
+      Sep : File_Info_Ptr_List;
+   begin
+      if Lib_Info.LI.Body_Info /= null
+        and then Lib_Info.LI.Body_Info.Source_Filename.all = File_Name
+      then
+         return Lib_Info.LI.Body_Info.Declarations;
+      end if;
+
+      if Lib_Info.LI.Spec_Info /= null
+        and then Lib_Info.LI.Spec_Info.Source_Filename.all = File_Name
+      then
+         return Lib_Info.LI.Spec_Info.Declarations;
+      end if;
+
+      Sep := Lib_Info.LI.Separate_Info;
+      while Sep /= null loop
+         if Sep.Value.Source_Filename.all = File_Name then
+            return Sep.Value.Declarations;
+         end if;
+         Sep := Sep.Next;
+      end loop;
+
+      return null;
+   end Get_Declarations_From_File;
+
    ------------------------------------
    -- Find_All_Possible_Declarations --
    ------------------------------------
 
    function Find_All_Possible_Declarations
      (Lib_Info    : LI_File_Ptr;
-      Entity_Name : String := "") return Entity_Declaration_Iterator
+      Entity_Name : String := "";
+      In_Source_File : String := "") return Entity_Declaration_Iterator
    is
       Iter : Entity_Declaration_Iterator;
    begin
@@ -2597,9 +2636,17 @@ package body Src_Info.Queries is
 
       Iter.Lib_Info    := Lib_Info;
       Iter.Current_Dep := Lib_Info.LI.Dependencies_Info;
+      Iter.Part := None;
       Iter.Current     := null;
-      Iter.Part        := None;
       Iter.Sep_Source  := null;
+
+      if In_Source_File /= "" then
+         Iter.Current := Get_Declarations_From_File
+           (Lib_Info, In_Source_File);
+         Iter.Uniq_List := True;
+      else
+         Iter.Uniq_List := False;
+      end if;
 
       Next (Iter);
       return Iter;
@@ -2657,6 +2704,13 @@ package body Src_Info.Queries is
             end if;
             Iterator.Current := Iterator.Current.Next;
          end loop;
+
+         --  Are we done yet ?
+         if Iterator.Uniq_List then
+            Iterator.Lib_Info := null;
+            Destroy (Iterator);
+            return;
+         end if;
 
          pragma Assert (Iterator.Current = null);
 

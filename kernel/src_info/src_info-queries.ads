@@ -203,7 +203,8 @@ package Src_Info.Queries is
 
    function Find_All_Possible_Declarations
      (Lib_Info    : LI_File_Ptr;
-      Entity_Name : String := "") return Entity_Declaration_Iterator;
+      Entity_Name : String := "";
+      In_Source_File : String := "") return Entity_Declaration_Iterator;
    --  Return the first entity declaration in Lib_Info or its imported units
    --  whose name is Entity_Name. Note that the fake declarations for
    --  unresolved overloaded entities (with E_Kind = Overloaded_Entity) are not
@@ -211,6 +212,8 @@ package Src_Info.Queries is
    --  Lib_Info and its dependencies
    --  If Entity_Name is the empty string, all entities declared in Lib_Info
    --  will be returned.
+   --  If In_Source_File is not the empty string, the search is limited to that
+   --  file and doesn't include the dependencies.
 
    function Get (Iterator : Entity_Declaration_Iterator)
       return Entity_Information;
@@ -717,6 +720,10 @@ private
       Part        : Analyzed_Part;
       Sep_Source  : File_Info_Ptr_List;
       --  The source file we are parsing.
+
+      Uniq_List   : Boolean;
+      --  If True, the search will stop as soon as Current becomes null. No
+      --  search will be done in other files
    end record;
 
    pragma Inline (File_Information);
