@@ -1,4 +1,5 @@
 with GNAT.Regpat; use GNAT.Regpat;
+with SN.Find_Fns; use SN.Find_Fns;
 with HTables;
 
 package body Src_Info.Type_Utils is
@@ -149,6 +150,7 @@ package body Src_Info.Type_Utils is
 
    procedure Type_Name_To_Kind
      (Type_Name : in String;
+      SN_Table  : in SN_Table_Array;
       Desc      : out CType_Description;
       Success   : out Boolean)
    is
@@ -164,9 +166,12 @@ package body Src_Info.Type_Utils is
                      Type_Name'First + Volatile_Str'Length - 1)
                      = Volatile_Str
       then -- volatile modifier
-         Type_Name_To_Kind (Type_Name
-            (Type_Name'First + Volatile_Str'Length .. Type_Name'Last),
-            Desc, Success);
+         Type_Name_To_Kind
+           (Type_Name
+              (Type_Name'First + Volatile_Str'Length .. Type_Name'Last),
+            SN_Table,
+            Desc,
+            Success);
          Desc.IsVolatile := True;
          return;
       end if;
@@ -176,9 +181,12 @@ package body Src_Info.Type_Utils is
                      Type_Name'First + Const_Str'Length - 1)
                      = Const_Str
       then -- const modifier
-         Type_Name_To_Kind (Type_Name
-            (Type_Name'First + Const_Str'Length .. Type_Name'Last),
-            Desc, Success);
+         Type_Name_To_Kind
+           (Type_Name
+              (Type_Name'First + Const_Str'Length .. Type_Name'Last),
+            SN_Table,
+            Desc,
+            Success);
          Desc.IsConst := True;
          return;
       end if;
@@ -208,7 +216,7 @@ package body Src_Info.Type_Utils is
          end if;
          Type_Name_To_Kind (
             Type_Name (Matches (1).First ..  Matches (1).Last),
-            Desc, Success);
+            SN_Table, Desc, Success);
          return;
       end if;
 
@@ -220,7 +228,7 @@ package body Src_Info.Type_Utils is
       end if;
 
       --  look in typedefs
-      Original_Type (Type_Name, Desc, Success);
+      Find_Original_Type (Type_Name, SN_Table, Desc, Success);
       if Success then -- original type found
          return;
       end if;
@@ -230,7 +238,7 @@ package body Src_Info.Type_Utils is
          declare
             Class_Def  : CL_Table;
          begin
-            Find_Class (Type_Name, Desc, Class_Def, Success);
+            Find_Class (Type_Name, SN_Table, Desc, Class_Def, Success);
             if Success then
                Free (Class_Def);
                return;
@@ -243,7 +251,7 @@ package body Src_Info.Type_Utils is
          declare
             Union_Def  : UN_Table;
          begin
-            Find_Union (Type_Name, Desc, Union_Def, Success);
+            Find_Union (Type_Name, SN_Table, Desc, Union_Def, Success);
             if Success then
                Free (Union_Def);
                return;
@@ -256,7 +264,7 @@ package body Src_Info.Type_Utils is
          declare
             Enum_Def : E_Table;
          begin
-            Find_Enum (Type_Name, Desc, Enum_Def, Success);
+            Find_Enum (Type_Name, SN_Table, Desc, Enum_Def, Success);
             if Success then
                Free (Enum_Def);
                return;
@@ -273,7 +281,8 @@ package body Src_Info.Type_Utils is
    ------------------------
 
    procedure Find_Original_Type
-     (Type_Name : String;
+     (Type_Name : in String;
+      SN_Table  : in SN_Table_Array;
       Desc      : out CType_Description;
       Success   : out Boolean)
    is
@@ -327,7 +336,7 @@ package body Src_Info.Type_Utils is
 
       Type_Name_To_Kind (Typedef.Buffer (
               Typedef.Original.First .. Typedef.Original.Last),
-              Desc, Success);
+              SN_Table, Desc, Success);
 
       if Success then
          --  parent type found (E_Kind is resolved)
@@ -350,7 +359,7 @@ package body Src_Info.Type_Utils is
       when  DB_Error |   -- non-existent table
             Not_Found => -- missed, fall thru'
          null;
-   end Original_Type;
+   end Find_Original_Type;
 
    ----------------
    -- Find_Class --
@@ -358,6 +367,7 @@ package body Src_Info.Type_Utils is
 
    procedure Find_Class
      (Type_Name : in String;
+      SN_Table  : in SN_Table_Array;
       Desc      : in out CType_Description;
       Class_Def : out CL_Table;
       Success   : out Boolean)
@@ -398,6 +408,7 @@ package body Src_Info.Type_Utils is
 
    procedure Find_Union
      (Type_Name : in String;
+      SN_Table  : in SN_Table_Array;
       Desc      : in out CType_Description;
       Union_Def : out UN_Table;
       Success   : out Boolean)
@@ -438,6 +449,7 @@ package body Src_Info.Type_Utils is
 
    procedure Find_Enum
      (Type_Name : in String;
+      SN_Table  : in SN_Table_Array;
       Desc      : in out CType_Description;
       Enum_Def  : out E_Table;
       Success   : out Boolean)
@@ -522,5 +534,14 @@ package body Src_Info.Type_Utils is
          and then Buffer_A (Ret_Type_A.First .. Ret_Type_A.Last)
             = Buffer_B (Ret_Type_B.First .. Ret_Type_B.Last);
    end Cmp_Prototypes;
+
+   ---------------------------
+   -- Free_Modules_Typedefs --
+   ---------------------------
+
+   procedure Free_Module_Typedefs is
+   begin
+      Free (Module_Typedefs);
+   end Free_Module_Typedefs;
 
 end Src_Info.Type_Utils;

@@ -60,12 +60,10 @@ package SN is
    function Length (s : Segment) return Integer;
 
    subtype String_Access is GNAT.OS_Lib.String_Access;
---   type String_Access is access String;
    procedure Free_String is
          new Ada.Unchecked_Deallocation (String, String_Access);
 
    function To_String (Buffer : String_Access; Seg : Segment) return String;
---   pragma Inline (To_String);
 
    type SN_Attributes is mod 2**32;
 

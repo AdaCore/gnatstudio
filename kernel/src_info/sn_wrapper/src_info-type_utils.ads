@@ -1,3 +1,5 @@
+with DB_API; use DB_API;
+
 with SN; use SN;
 with SN.DB_Structures; use SN.DB_Structures;
 
@@ -64,6 +66,8 @@ private package Src_Info.Type_Utils is
    --  This array establishes relation between E_Kind type entities
    --  and object entities
 
+   type SN_Table_Array is array (Table_Type) of DB_File;
+
    procedure Builtin_Type_To_Kind
      (Type_Name : in String;
       Desc      : out CType_Description;
@@ -73,6 +77,7 @@ private package Src_Info.Type_Utils is
 
    procedure Type_Name_To_Kind
      (Type_Name : in String;
+      SN_Table  : in SN_Table_Array;
       Desc      : out CType_Description;
       Success   : out Boolean);
    --  Attempts to convert type name into E_Kind.
@@ -80,7 +85,8 @@ private package Src_Info.Type_Utils is
    --  the name in the class, typedef, enum tables.
 
    procedure Find_Original_Type
-     (Type_Name : String;
+     (Type_Name : in String;
+      SN_Table  : in SN_Table_Array;
       Desc      : out CType_Description;
       Success   : out Boolean);
    --  Gets E_Kind of original type for specified typedef type.
@@ -92,6 +98,7 @@ private package Src_Info.Type_Utils is
 
    procedure Find_Class
      (Type_Name : in String;
+      SN_Table  : in SN_Table_Array;
       Desc      : in out CType_Description;
       Class_Def : out CL_Table;
       Success   : out Boolean);
@@ -101,6 +108,7 @@ private package Src_Info.Type_Utils is
 
    procedure Find_Union
      (Type_Name : in String;
+      SN_Table  : in SN_Table_Array;
       Desc      : in out CType_Description;
       Union_Def : out UN_Table;
       Success   : out Boolean);
@@ -110,6 +118,7 @@ private package Src_Info.Type_Utils is
 
    procedure Find_Enum
      (Type_Name : in String;
+      SN_Table  : in SN_Table_Array;
       Desc      : in out CType_Description;
       Enum_Def  : out E_Table;
       Success   : out Boolean);
@@ -124,13 +133,18 @@ private package Src_Info.Type_Utils is
      (Buffer_A, Buffer_B     : SN.String_Access;
       Args_A, Args_B         : DB_Structures.Segment_Vector.Node_Access)
       return Boolean;
-   --  checks to see if argument types are the same
+   --  Checks to see if argument types are the same.
 
    function Cmp_Prototypes
      (Buffer_A, Buffer_B     : SN.String_Access;
       Args_A, Args_B         : DB_Structures.Segment_Vector.Node_Access;
       Ret_Type_A, Ret_Type_B : Segment)
       return Boolean;
-   --  checks to see if function prototypes are the same
+   --  Checks to see if function prototypes are the same.
+
+   procedure Free_Module_Typedefs;
+   --  Deallocates internal structures needed for resolving original
+   --  type for the chain of typedefs. Must be called after processing
+   --  of each file.
 
 end Src_Info.Type_Utils;

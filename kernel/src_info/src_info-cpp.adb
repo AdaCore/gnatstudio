@@ -37,8 +37,6 @@ with File_Buffer;
 
 package body Src_Info.CPP is
 
-   type SN_Table_Array is array (Table_Type) of DB_File;
-
    ----------------
    --  SN_Table  --
    ----------------
@@ -264,12 +262,12 @@ package body Src_Info.CPP is
          Free (P);
       end loop;
       File_Buffer.Done;
-      --  Free (Module_Typedefs);
+      Free_Module_Typedefs;
    exception
       when others   => -- unexpected exception
          Free (P);
          File_Buffer.Done;
-         --  Free (Module_Typedefs);
+         Free_Module_Typedefs;
          --  ??? Here we probably want to report the unexpected exception
          --  and continue to work further, but currently we reraise that
          --  exception
@@ -690,6 +688,7 @@ package body Src_Info.CPP is
 
       Find_Class
         (Type_Name      => Ref_Id,
+         SN_Table       => SN_Table,
          Desc           => Class_Desc,
          Class_Def      => Class_Def,
          Success        => Success);
@@ -838,6 +837,7 @@ package body Src_Info.CPP is
                Type_Name_To_Kind
                  (Var.Buffer
                     (Var.Declared_Type.First .. Var.Declared_Type.Last),
+                  SN_Table,
                   Desc,
                   Success);
                if not Success then -- unknown type
@@ -929,6 +929,7 @@ package body Src_Info.CPP is
 
       Find_Enum
         (Type_Name      => Ref_Id,
+         SN_Table       => SN_Table,
          Desc           => Enum_Desc,
          Enum_Def       => Enum_Def,
          Success        => Success);
@@ -1378,7 +1379,9 @@ package body Src_Info.CPP is
                --  Collect information about the variable:
                --  type, scope, location of type declaration...
                Type_Name_To_Kind
-                 (Var.Buffer (Var.Value_Type.First .. Var.Value_Type.Last),
+                 (Var.Buffer
+                    (Var.Value_Type.First .. Var.Value_Type.Last),
+                  SN_Table,
                   Desc,
                   Success);
                if not Success then -- unknown type
@@ -1861,7 +1864,7 @@ package body Src_Info.CPP is
          exception
             when Declaration_Not_Found =>
                --  Declaration for type is not created yet
-               Find_Original_Type (Ref_Id, Desc, Success);
+               Find_Original_Type (Ref_Id, SN_Table, Desc, Success);
 
                if not Success then
                   Fail ("unable to find type for typedef " & Ref_Id);
@@ -1927,7 +1930,7 @@ package body Src_Info.CPP is
          exception
             when Declaration_Not_Found => -- dep decl does not yet exist
 
-               Find_Original_Type (Ref_Id, Desc, Success);
+               Find_Original_Type (Ref_Id, SN_Table, Desc, Success);
 
                if not Success then
                   Fail ("unable to find type for typedef " & Ref_Id);
@@ -2024,6 +2027,7 @@ package body Src_Info.CPP is
 
       Find_Union
         (Type_Name      => Ref_Id,
+         SN_Table       => SN_Table,
          Desc           => Union_Desc,
          Union_Def      => Union_Def,
          Success        => Success);
@@ -2124,6 +2128,7 @@ package body Src_Info.CPP is
 
       Find_Class
         (Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last),
+         SN_Table,
          Desc,
          Class_Def,
          Success);
@@ -2167,10 +2172,11 @@ package body Src_Info.CPP is
             & Super.Buffer (Super.Base_Class.First .. Super.Base_Class.Last));
          --  Lookup base class definition to find its precise location
          Find_Class
-          (Super.Buffer (Super.Base_Class.First .. Super.Base_Class.Last),
-           Super_Desc,
-           Super_Def,
-           Success);
+           (Super.Buffer (Super.Base_Class.First .. Super.Base_Class.Last),
+            SN_Table,
+            Super_Desc,
+            Super_Def,
+            Success);
          if Success then -- if found, add it to parent list
             Add_Parent
               (Decl_Info,
@@ -2218,8 +2224,12 @@ package body Src_Info.CPP is
       --  Lookup variable type
       Var := Find (SN_Table (CON), Sym.Buffer
          (Sym.Identifier.First .. Sym.Identifier.Last));
-      Type_Name_To_Kind (Var.Buffer
-         (Var.Value_Type.First .. Var.Value_Type.Last), Desc, Success);
+      Type_Name_To_Kind
+        (Var.Buffer
+           (Var.Value_Type.First .. Var.Value_Type.Last),
+         SN_Table,
+         Desc,
+         Success);
 
       if not Success then -- type not found
          --  ?? Is ot OK to set E_Kind to Unresolved_Entity for global
@@ -2362,7 +2372,7 @@ package body Src_Info.CPP is
               (EC_Def.Buffer
                  (EC_Def.Enumeration_Name.First ..
                   EC_Def.Enumeration_Name.Last),
-               Desc, E_Def, Has_Enum);
+               SN_Table, Desc, E_Def, Has_Enum);
             Free (E_Def);
             Free (EC_Def);
          exception
@@ -2776,8 +2786,12 @@ package body Src_Info.CPP is
       Var := Find (SN_Table (GV), Sym.Buffer
          (Sym.Identifier.First .. Sym.Identifier.Last));
 
-      Type_Name_To_Kind (Var.Buffer
-         (Var.Value_Type.First .. Var.Value_Type.Last), Desc, Success);
+      Type_Name_To_Kind
+        (Var.Buffer
+           (Var.Value_Type.First .. Var.Value_Type.Last),
+         SN_Table,
+         Desc,
+         Success);
 
       if not Success then -- type not found
          --  ?? Is ot OK to set E_Kind to Unresolved_Entity for global vars
@@ -2900,6 +2914,7 @@ package body Src_Info.CPP is
       Type_Name_To_Kind
         (Inst_Var.Buffer
            (Inst_Var.Value_Type.First .. Inst_Var.Value_Type.Last),
+         SN_Table,
          Desc,
          Success);
 
@@ -3134,7 +3149,7 @@ package body Src_Info.CPP is
       end if;
 
       --  find original type for given typedef
-      Find_Original_Type (Identifier, Desc, Success);
+      Find_Original_Type (Identifier, SN_Table, Desc, Success);
 
       if Success then
          --  we know E_Kind for original type
@@ -3219,6 +3234,7 @@ package body Src_Info.CPP is
 
       Find_Union
         (Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last),
+         SN_Table,
          Desc,
          Union_Def,
          Success);
