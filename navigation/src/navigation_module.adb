@@ -185,6 +185,8 @@ package body Navigation_Module is
 
       Data : Navigation_Info_Access := new Navigation_Info;
    begin
+      Append_Space (Toolbar);
+
       Button := Insert_Stock
         (Toolbar, Stock_Go_Back, -"Go To Previous Location");
       Data.Back_Button := Gtk_Widget (Button);
@@ -202,8 +204,6 @@ package body Navigation_Module is
         (Button, "clicked",
          Kernel_Callback.To_Marshaller (On_Forward'Access),
          Kernel_Handle (Kernel));
-
-      Append_Space (Toolbar);
 
       Data.Locations_Queue := New_Queue;
       Set_Navigation_Data (Kernel_Handle (Kernel), Data);
