@@ -51,20 +51,22 @@ package Glide_Result_View is
    --  Internal initialization procedure.
 
    procedure Insert
-     (View          : access Result_View_Record'Class;
-      Identifier    : String;
-      Source_File   : VFS.Virtual_File;
-      Source_Line   : Positive;
-      Source_Column : Positive;
-      Message       : String;
-      Length        : Natural;
-      Highlight     : Boolean := False);
+     (View               : access Result_View_Record'Class;
+      Identifier         : String;
+      Source_File        : VFS.Virtual_File;
+      Source_Line        : Positive;
+      Source_Column      : Positive;
+      Message            : String;
+      Length             : Natural;
+      Highlight          : Boolean := False;
+      Highlight_Category : String := "");
    --  Insert a new location item for the category corresponding to
    --  Identifier. Message is the text that will be displayed next to the
    --  file location. If necessary, the category corresponding to Identifier
    --  is created.
    --  If Highlight is True, the corresponding line will be highlighted in
-   --  the editor with the highlighting category identified by Identifier.
+   --  the editor with the highlighting category identified by
+   --  Highlight_Category.
 
    procedure Remove_Category
      (View          : access Result_View_Record'Class;
@@ -83,6 +85,7 @@ package Glide_Result_View is
      (View          : access Result_View_Record'Class;
       Identifier    : String;
       Category      : String;
+      H_Category    : String;
       File          : VFS.Virtual_File;
       Line          : Natural;
       Column        : Natural;
@@ -90,6 +93,7 @@ package Glide_Result_View is
       Action        : Action_Item);
    --  Add an action item to be associated to a specified location.
    --  If Action is null, the action item will be removed from that location.
+   --  H_Category is the category to highlight the item with.
 
 private
    type Result_View_Record is new Gtk_Hbox_Record with record
