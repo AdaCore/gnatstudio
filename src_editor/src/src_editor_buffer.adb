@@ -334,6 +334,10 @@ package body Src_Editor_Buffer is
      (Column_Info : in out Columns_Config_Access);
    --  Free the info contained in Column_Info;
 
+   procedure C_Free (S : Interfaces.C.Strings.chars_ptr);
+   pragma Import (C, C_Free, "free");
+   --  Binding to the C "free" function.
+
    ----------------------
    -- Free_Column_Info --
    ----------------------
@@ -433,7 +437,7 @@ package body Src_Editor_Buffer is
          --  inneficient.
 
          Result := new String'(Value (Chars));
-         Free (Chars);
+         C_Free (Chars);
          return Result;
 
       else
