@@ -140,6 +140,7 @@ package Glide_Kernel.Preferences is
    Tab_Width                 : Param_Spec_Int;
 
    Indentation_Key           : Param_Spec_Key;
+   Completion_Key            : Param_Spec_Key;
 
    -- MDI --
    MDI_Opaque            : Param_Spec_Boolean;

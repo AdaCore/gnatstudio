@@ -312,6 +312,15 @@ package body Glide_Kernel.Preferences is
       Register_Property
         (Kernel.Preferences, Param_Spec (Indentation_Key), -"Editor:General");
 
+      Completion_Key := Gnew_Key
+        (Name  => "Src-Editor-Complete-Key",
+         Nick  => -"Completion",
+         Blurb => -"Key used for automatic completion of identifiers",
+         Default_Modifier => Control_Mask,
+         Default_Key      => GDK_Return);
+      Register_Property
+        (Kernel.Preferences, Param_Spec (Completion_Key), -"Editor:General");
+
       Default_Keyword_Color := Param_Spec_Color (Gnew_Color
         (Name    => "Src-Editor-Keyword-Color",
          Nick    => -"Keyword color",
