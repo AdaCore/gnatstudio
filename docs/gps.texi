@@ -8605,6 +8605,13 @@ tag accepts the following XML attributes:
 This gives the default value to be used for the string (and therefore
 the project attribute), in case the user hasn't overridden it.
 
+If the attribute's type is a file or a directory, the default value will be
+normalized (ie an absolute path will be generated from it, based on the
+project's location, where @code{"."} will represent the project's directory).
+As a special case, if default is surrounded by parenthesis, no normalization
+takes place, so that you can later on test whether the user is still using
+the default value or not).
+
 @item @code{type} (one of "", "file", "directory", default "")
 
 This indicates what the string represents. In the first case, any
