@@ -8,7 +8,7 @@ TEX= @TEX@
 MKDIR = mkdir -p
 INSTALL = @INSTALL@
 INSTALL_DATA = @INSTALL_DATA@
-IMAGES = launch.gif
+IMAGES = gps_title.jpg
 
 TEXI2HTML_FLAGS=--split chapter -menu
 
