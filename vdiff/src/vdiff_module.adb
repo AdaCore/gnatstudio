@@ -96,7 +96,8 @@ package body Vdiff_Module is
       Child  : MDI_Child;
    begin
       if Result = null then
-         Insert (Kernel, -"No differences found");
+         Insert (Kernel, -"No differences found for: " &
+                 Base_Name (File1) & ", " & Base_Name (File2));
          return null;
       end if;
 
