@@ -1,10 +1,6 @@
-with Glib; use Glib;
 with Gtk; use Gtk;
-with Gdk.Types;       use Gdk.Types;
 with Gtk.Widget;      use Gtk.Widget;
 with Gtk.Enums;       use Gtk.Enums;
-with Gtkada.Handlers; use Gtkada.Handlers;
-with Callbacks_Prj_Edit; use Callbacks_Prj_Edit;
 with Prj_Edit_Intl; use Prj_Edit_Intl;
 
 package body Wizard_Window_Pkg is

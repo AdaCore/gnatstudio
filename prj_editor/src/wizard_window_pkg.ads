@@ -6,7 +6,6 @@ with Gtk.Label; use Gtk.Label;
 with Gtk.Separator; use Gtk.Separator;
 with Gtk.Hbutton_Box; use Gtk.Hbutton_Box;
 with Gtk.Button; use Gtk.Button;
-with Gtk.Object; use Gtk.Object;
 package Wizard_Window_Pkg is
 
    type Wizard_Window_Record is new Gtk_Window_Record with record

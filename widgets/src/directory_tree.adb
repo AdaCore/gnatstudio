@@ -4,15 +4,11 @@ with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with Glib;                      use Glib;
 with Gdk.Color;                 use Gdk.Color;
 with Gdk.Pixmap;                use Gdk.Pixmap;
-with Gtk.Adjustment;            use Gtk.Adjustment;
 with Gtk.Arguments;             use Gtk.Arguments;
 with Gtk.Ctree;                 use Gtk.Ctree;
-with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Widget;                use Gtk.Widget;
 with Gtkada.Handlers;           use Gtkada.Handlers;
 with Gtkada.Types;              use Gtkada.Types;
-
-with Ada.Text_IO; use Ada.Text_IO;
 
 package body Directory_Tree is
 

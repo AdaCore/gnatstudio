@@ -1,6 +1,7 @@
 with Glib; use Glib;
 with Gtk; use Gtk;
 with Gdk.Types;       use Gdk.Types;
+with Gtk.Adjustment;  use Gtk.Adjustment;
 with Gtk.Widget;      use Gtk.Widget;
 with Gtk.Enums;       use Gtk.Enums;
 with Gtkada.Handlers; use Gtkada.Handlers;

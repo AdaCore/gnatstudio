@@ -4,7 +4,6 @@ with Gtk.Notebook; use Gtk.Notebook;
 with Gtk.Table; use Gtk.Table;
 with Gtk.Frame; use Gtk.Frame;
 with Gtk.Check_Button; use Gtk.Check_Button;
-with Gtk.Adjustment; use Gtk.Adjustment;
 with Gtk.Spin_Button; use Gtk.Spin_Button;
 with Gtk.GEntry; use Gtk.GEntry;
 with Gtk.Label; use Gtk.Label;
@@ -12,7 +11,6 @@ with Gtk.Combo; use Gtk.Combo;
 with Gtk.GEntry; use Gtk.GEntry;
 with Gtk.Radio_Button; use Gtk.Radio_Button;
 with Gtk.Hbutton_Box; use Gtk.Hbutton_Box;
-with Gtk.Button; use Gtk.Button;
 package Switches_Editor_Pkg is
 
    type Switches_Editor_Record is new Gtk_Window_Record with record
@@ -87,6 +85,7 @@ package Switches_Editor_Pkg is
    type Switches_Editor_Access is access all Switches_Editor_Record'Class;
 
    procedure Gtk_New (Switches_Editor : out Switches_Editor_Access);
-   procedure Initialize (Switches_Editor : access Switches_Editor_Record'Class);
+   procedure Initialize
+     (Switches_Editor : access Switches_Editor_Record'Class);
 
 end Switches_Editor_Pkg;
