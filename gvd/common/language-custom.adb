@@ -23,8 +23,11 @@ with Glib.Xml_Int;          use Glib.Xml_Int;
 with GNAT.Regpat;           use GNAT.Regpat;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
+with Traces;                 use Traces;
 
 package body Language.Custom is
+
+   Me : constant Debug_Handle := Create ("Language.Custom");
 
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Project_Field_Array, Project_Field_Array_Access);
@@ -323,7 +326,8 @@ package body Language.Custom is
       Node := Parent.Child;
 
       for J in 1 .. Num_Categories loop
-         pragma Assert (Node.Tag.all = "Category");
+         Assert (Me, Node.Tag.all = "Category",
+                 "Expecting <category> node in XML file");
 
          --  Concatenate all Pattern tags
 
@@ -356,6 +360,8 @@ package body Language.Custom is
             when Constraint_Error =>
                --  ??? Should display an error instead.
                Lang.Categories (J) := (Cat_Unknown, null, 0, null, null);
+               Trace (Me, "Invalid Category found for language "
+                      & Lang.Name.all);
          end;
 
          Node := Node.Next;
