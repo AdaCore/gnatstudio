@@ -474,7 +474,7 @@ package body Src_Info.Queries is
 
    begin
       if Case_Insensitive_Identifiers (Lib_Info.LI.Handler) then
-         E_Name := Utf8_Strdown (E_Name);
+         E_Name := UTF8_Strdown (E_Name);
       end if;
 
       Decl   := No_Declaration_Info;

@@ -661,9 +661,9 @@ package body Language.C is
 
                while Index <= Buffer'Last
                  and then Is_Entity_Letter
-                   (Utf8_Get_Char (Buffer (Index + 1 .. Buffer'Last)))
+                   (UTF8_Get_Char (Buffer (Index + 1 .. Buffer'Last)))
                loop
-                  Index := Utf8_Find_Next_Char (Buffer, Index);
+                  Index := UTF8_Find_Next_Char (Buffer, Index);
                end loop;
 
                Token := Get_Token (Buffer (First .. Index));

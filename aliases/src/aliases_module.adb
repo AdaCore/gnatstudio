@@ -655,18 +655,18 @@ package body Aliases_Module is
 
       Last := Current_Pos;
       while Last <= Text'Last
-        and then Is_Entity_Letter (Utf8_Get_Char (Text (Last .. Text'Last)))
+        and then Is_Entity_Letter (UTF8_Get_Char (Text (Last .. Text'Last)))
       loop
-         Last := Utf8_Find_Next_Char (Text, Last);
+         Last := UTF8_Find_Next_Char (Text, Last);
       end loop;
 
       First := Current_Pos;
       loop
          while First >= Text'First
            and then Is_Entity_Letter
-             (Utf8_Get_Char (Text (First .. Text'Last)))
+             (UTF8_Get_Char (Text (First .. Text'Last)))
          loop
-            First := Utf8_Find_Prev_Char (Text, First);
+            First := UTF8_Find_Prev_Char (Text, First);
          end loop;
 
          if First < Text'First then
@@ -675,13 +675,13 @@ package body Aliases_Module is
 
          exit when Get
            (Aliases_Module_Id.Aliases,
-            Text (Utf8_Find_Next_Char (Text, First) .. Last - 1)) /= No_Alias;
+            Text (UTF8_Find_Next_Char (Text, First) .. Last - 1)) /= No_Alias;
 
          while First >= Text'First
            and then not Is_Entity_Letter
-             (Utf8_Get_Char (Text (First .. Text'Last)))
+             (UTF8_Get_Char (Text (First .. Text'Last)))
          loop
-            First := Utf8_Find_Prev_Char (Text, First);
+            First := UTF8_Find_Prev_Char (Text, First);
          end loop;
       end loop;
    end Find_Current_Entity;
@@ -916,7 +916,7 @@ package body Aliases_Module is
                   Cursor : aliased Integer;
                   Replace : constant String := Expand_Alias
                     (Command.Kernel,
-                     Text (Utf8_Find_Next_Char (Text, First) .. Last - 1),
+                     Text (UTF8_Find_Next_Char (Text, First) .. Last - 1),
                      Cursor'Unchecked_Access, 0);
                begin
                   if Replace /= "" then
@@ -1141,7 +1141,7 @@ package body Aliases_Module is
             begin
                if Name'Length = 0
                  or else not Is_Entity_Letter
-                   (Utf8_Get_Char (Name (Name'First .. Name'Last)))
+                   (UTF8_Get_Char (Name (Name'First .. Name'Last)))
                then
                   Set (Ed.Aliases_Model, Iter, 0, Old);
                   Message := Message_Dialog

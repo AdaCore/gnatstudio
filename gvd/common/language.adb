@@ -138,7 +138,7 @@ package body Language is
            (Next_Char .. Next_Char + Context.Comment_End_Length - 1)
            /= Context.Comment_End
          loop
-            Next_Char := Utf8_Find_Next_Char (Buffer, Next_Char);
+            Next_Char := UTF8_Find_Next_Char (Buffer, Next_Char);
          end loop;
 
          Next_Char := Next_Char + Context.Comment_End_Length;
@@ -160,7 +160,7 @@ package body Language is
          while Next_Char <= Buffer'Last
            and then Buffer (Next_Char) /= ASCII.LF
          loop
-            Next_Char := Utf8_Find_Next_Char (Buffer, Next_Char);
+            Next_Char := UTF8_Find_Next_Char (Buffer, Next_Char);
          end loop;
 
          return;
@@ -185,7 +185,7 @@ package body Language is
                           Buffer (Next_Char - 1) /= Context.Quote_Character));
          end loop;
 
-         Next_Char := Utf8_Find_Next_Char (Buffer, Next_Char);
+         Next_Char := UTF8_Find_Next_Char (Buffer, Next_Char);
          return;
       end if;
 
@@ -219,7 +219,7 @@ package body Language is
       Match (Keys, Buffer, Matched);
 
       if Matched (0) /= No_Match then
-         Next_Char := Utf8_Find_Next_Char (Buffer, Matched (0).Last);
+         Next_Char := UTF8_Find_Next_Char (Buffer, Matched (0).Last);
          Entity := Keyword_Text;
          return;
       end if;
@@ -229,9 +229,9 @@ package body Language is
       --  It is better to return a pointer to the newline, so that the icons
       --  on the side might be displayed properly.
 
-      if not Is_Entity_Letter (Utf8_Get_Char (Buffer)) then
+      if not Is_Entity_Letter (UTF8_Get_Char (Buffer)) then
          Entity := Normal_Text;
-         Next_Char := Utf8_Find_Next_Char (Buffer, Buffer'First);
+         Next_Char := UTF8_Find_Next_Char (Buffer, Buffer'First);
 
          Comm1 := ASCII.LF;
          Comm2 := ASCII.LF;
@@ -246,7 +246,7 @@ package body Language is
          end if;
 
          while Next_Char <= Buffer'Last loop
-            C := Utf8_Get_Char (Buffer (Next_Char .. Buffer'Last));
+            C := UTF8_Get_Char (Buffer (Next_Char .. Buffer'Last));
 
             exit when C = Character'Pos (ASCII.LF)
               or else C = Character'Pos (ASCII.HT)
@@ -256,7 +256,7 @@ package body Language is
               or else C = Character'Pos (Context.Constant_Character)
               or else Is_Alpha (C);
 
-            Next_Char := Utf8_Find_Next_Char (Buffer, Next_Char);
+            Next_Char := UTF8_Find_Next_Char (Buffer, Next_Char);
          end loop;
 
          return;
@@ -265,16 +265,16 @@ package body Language is
       --  Skip to the next meaningful character. we know we are
       --  starting with a letter
 
-      Next_Char := Utf8_Find_Next_Char (Buffer, Buffer'First);
+      Next_Char := UTF8_Find_Next_Char (Buffer, Buffer'First);
       Entity := Normal_Text;
 
       --  Skip the current word
 
       while Next_Char <= Buffer'Last
         and then Is_Entity_Letter
-          (Utf8_Get_Char (Buffer (Next_Char .. Buffer'Last)))
+          (UTF8_Get_Char (Buffer (Next_Char .. Buffer'Last)))
       loop
-         Next_Char := Utf8_Find_Next_Char (Buffer, Next_Char);
+         Next_Char := UTF8_Find_Next_Char (Buffer, Next_Char);
       end loop;
    end Looking_At;
 

@@ -2060,12 +2060,12 @@ package body Src_Editor_Buffer is
                      Index := Contents'Length;
 
                      while Index >= Contents'First loop
-                        C := Utf8_Get_Char
+                        C := UTF8_Get_Char
                           (Contents (Index .. Contents'First));
                         exit when C /= Character'Pos (' ')
                           and then C /= Character'Pos (ASCII.HT);
 
-                        Index := Utf8_Find_Prev_Char (Contents, Index);
+                        Index := UTF8_Find_Prev_Char (Contents, Index);
                      end loop;
 
                      Bytes_Written := Write
