@@ -156,6 +156,13 @@ package body Src_Editor_View is
    --  Return the index of the column corresponding to the identifier.
    --  Create such a column if necessary.
 
+   function Get_Side_Info
+     (View          : access Source_View_Record'Class;
+      Line          : Positive;
+      Column        : Positive) return Line_Info_Width;
+   --  Return the side information corresponding to Line, Column in the
+   --  Side window.
+
    ----------------
    -- Realize_Cb --
    ----------------
@@ -229,6 +236,34 @@ package body Src_Editor_View is
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end Insert_Text_Handler;
 
+   -------------------
+   -- Get_Side_Info --
+   -------------------
+
+   function Get_Side_Info
+     (View          : access Source_View_Record'Class;
+      Line          : Positive;
+      Column        : Positive) return Line_Info_Width
+   is
+   begin
+      if View.Line_Info (Column).Stick_To_Data then
+         if Line > View.Real_Lines'Last
+           or else View.Real_Lines (Line) = 0
+         then
+            return (null, -1);
+         else
+            return View.Line_Info (Column).Column_Info
+              (View.Real_Lines (Line));
+         end if;
+      else
+         if Line > View.Line_Info (Column).Column_Info'Last then
+            return (null, 0);
+         else
+            return View.Line_Info (Column).Column_Info (Line);
+         end if;
+      end if;
+   end Get_Side_Info;
+
    ---------------------
    -- Expose_Event_Cb --
    ---------------------
@@ -243,7 +278,7 @@ package body Src_Editor_View is
         Get_Window (View, Text_Window_Left);
    begin
       --  If the event applies to the left border window, then redraw
-      --  the line numbers.
+      --  the side window information.
       if Get_Window (Event) = Left_Window then
          declare
             Top_In_Buffer              : Gint;
@@ -253,8 +288,7 @@ package body Src_Editor_View is
             Top_Line                   : Natural;
             Bottom_Line                : Natural;
             X, Y, Width, Height, Depth : Gint;
-            Previous_Top_Line          : Natural := View.Min_Top_Line;
-            Previous_Bottom_Line       : Natural := View.Max_Bottom_Line;
+            Info                       : Line_Info_Width;
          begin
             Get_Geometry (Left_Window, X, Y, Width, Height, Depth);
 
@@ -268,20 +302,16 @@ package body Src_Editor_View is
                Buffer_X => Dummy_Gint, Buffer_Y => Bottom_In_Buffer);
             Get_Line_At_Y (View, Iter, Top_In_Buffer, Dummy_Gint);
             Top_Line := Natural (Get_Line (Iter) + 1);
+
             Get_Line_At_Y (View, Iter, Bottom_In_Buffer, Dummy_Gint);
             Bottom_Line := Natural (Get_Line (Iter) + 1);
 
-            --  If one of the values hadn't been initialized, display the
-            --  whole range of lines.
-            View.Top_Line := Top_Line;
-            View.Bottom_Line := Bottom_Line;
-
-            if View.Real_Lines'Last < View.Bottom_Line then
+            if View.Real_Lines'Last < Bottom_Line then
                declare
                   A : Natural_Array := View.Real_Lines.all;
                begin
                   View.Real_Lines := new Natural_Array
-                    (1 .. View.Bottom_Line * 2);
+                    (1 .. Bottom_Line * 2);
                   View.Real_Lines (A'Range) := A;
                   View.Real_Lines (A'Last + 1 .. View.Real_Lines'Last)
                     := (others => 0);
@@ -290,25 +320,54 @@ package body Src_Editor_View is
                end;
             end if;
 
-            if Previous_Top_Line = 0
-              or else Previous_Top_Line = 0
-            then
+            --  If one of the values hadn't been initialized, display the
+            --  whole range of lines.
+
+            if View.Bottom_Line = 0 then
+               View.Top_Line    := Top_Line;
+               View.Bottom_Line := Bottom_Line;
                Source_Lines_Revealed (Buffer, Top_Line, Bottom_Line);
-               View.Min_Top_Line := Top_Line;
-               View.Max_Bottom_Line := Bottom_Line;
-
-            elsif Top_Line < Previous_Top_Line then
-               Source_Lines_Revealed (Buffer, Top_Line, Previous_Top_Line);
-               View.Min_Top_Line := Top_Line;
-
-            elsif Bottom_Line > Previous_Bottom_Line then
-               Source_Lines_Revealed
-                 (Buffer, Previous_Bottom_Line, Bottom_Line);
-               View.Max_Bottom_Line := Bottom_Line;
+            else
+               View.Top_Line    := Top_Line;
+               View.Bottom_Line := Bottom_Line;
             end if;
 
-            Redraw_Columns (View);
+            --  Compute the smallest connected area that needs refresh.
+
+            Find_Top_Line :
+            while Top_Line <= Bottom_Line loop
+               for J in View.Line_Info'Range loop
+                  Info := Get_Side_Info (View, Top_Line, J);
+
+                  if Info.Width = 0 then
+                     exit Find_Top_Line;
+                  end if;
+               end loop;
+
+               Top_Line := Top_Line + 1;
+            end loop Find_Top_Line;
+
+            Find_Bottom_Line :
+            while Bottom_Line >= Top_Line loop
+               for J in View.Line_Info'Range loop
+                  Info := Get_Side_Info (View, Bottom_Line, J);
+
+                  if Info.Width = 0 then
+                     exit Find_Bottom_Line;
+                  end if;
+               end loop;
+
+               Bottom_Line := Bottom_Line - 1;
+            end loop Find_Bottom_Line;
+
+            --  If necessary, emit the Source_Lines_Revealed signal.
+
+            if Bottom_Line >= Top_Line then
+               Source_Lines_Revealed (Buffer, Top_Line, Bottom_Line);
+            end if;
          end;
+
+         Redraw_Columns (View);
       end if;
 
       --  Return false, so that the signal is not blocked, and other
@@ -422,6 +481,10 @@ package body Src_Editor_View is
 
       pragma Assert (Buffer /= null);
 
+      View.Line_Info := new Line_Info_Display_Array (1 .. 0);
+      View.Real_Lines := new Natural_Array (1 .. 1);
+      --  ??? when is this freed ?
+
       Gtk.Text_View.Initialize (View, Gtk_Text_Buffer (Buffer));
 
       Set_Border_Window_Size (View, Enums.Text_Window_Left, 1);
@@ -472,10 +535,6 @@ package body Src_Editor_View is
          Cb        => Delete_Range_Handler'Access,
          User_Data => Source_View (View),
          After     => False);
-
-      View.Line_Info := new Line_Info_Display_Array (1 .. 0);
-      View.Real_Lines := new Natural_Array (1 .. 1);
-      --  ??? when is this freed ?
    end Initialize;
 
    --------------
@@ -623,6 +682,7 @@ package body Src_Editor_View is
             Button_X, Button_Y : Gint;
             X, Y               : Gint;
             Dummy_Boolean      : Boolean;
+            Info               : Line_Info_Width;
 
          begin
             --  Get the coordinates of the click.
@@ -651,29 +711,12 @@ package body Src_Editor_View is
             end loop;
 
             --  If a command exists at the specified position, execute it.
-            if Column_Index > 0 then
-               if View.Line_Info (Column_Index).Stick_To_Data then
-                  if View.Real_Lines (Line) /= 0
-                    and then View.Line_Info (Column_Index).Column_Info
-                    (View.Real_Lines (Line)).Info /= null
-                    and then View.Line_Info (Column_Index).Column_Info
-                    (View.Real_Lines (Line)).Info.Associated_Command /= null
-                  then
-                     Dummy_Boolean := Execute
-                       (View.Line_Info (Column_Index).Column_Info
-                        (View.Real_Lines (Line)).Info.Associated_Command);
-                  end if;
-               else
-                  if View.Line_Info (Column_Index).Column_Info (Line).Info
-                    /= null
-                    and then View.Line_Info (Column_Index).Column_Info
-                    (Line).Info.Associated_Command /= null
-                  then
-                     Dummy_Boolean := Execute
-                       (View.Line_Info (Column_Index).Column_Info
-                        (Line).Info.Associated_Command);
-                  end if;
-               end if;
+            Info := Get_Side_Info (View, Line, Column_Index);
+
+            if Info.Info /= null
+              and then Info.Info.Associated_Command /= null
+            then
+               Dummy_Boolean := Execute (Info.Info.Associated_Command);
             end if;
          end;
       end if;
@@ -732,7 +775,8 @@ package body Src_Editor_View is
             A : Natural_Array := View.Real_Lines.all;
          begin
             View.Real_Lines := new Natural_Array
-              (View.Min_Top_Line .. Line * 2);
+              (1 .. Line * 2);
+
             View.Real_Lines (A'Range) := A;
             View.Real_Lines (A'Last + 1 .. View.Real_Lines'Last)
               := (others => 0);
@@ -785,7 +829,6 @@ package body Src_Editor_View is
       Current_Line               : Natural;
       X, Y, Width, Height, Depth : Gint;
       Dummy_Boolean              : Boolean;
-
       Data                       : Line_Info_Width;
    begin
       Get_Geometry (Left_Window, X, Y, Width, Height, Depth);
@@ -824,20 +867,7 @@ package body Src_Editor_View is
            Y_In_Window + Get_Ascent (View.Font) + Get_Descent (View.Font) - 2;
 
          for J in View.Line_Info'Range loop
-            if View.Line_Info (J).Stick_To_Data then
-               if View.Real_Lines (Current_Line) /= 0 then
-                  Data := View.Line_Info (J).Column_Info
-                    (View.Real_Lines (Current_Line));
-               else
-                  Data := (null, 0);
-               end if;
-            else
-               if Current_Line <= View.Line_Info (J).Column_Info'Last then
-                  Data := View.Line_Info (J).Column_Info (Current_Line);
-               else
-                  Data := (null, 0);
-               end if;
-            end if;
+            Data := Get_Side_Info (View, Current_Line, J);
 
             if Data.Info /= null then
                if Data.Info.Text /= null then
@@ -891,13 +921,13 @@ package body Src_Editor_View is
    is
       Column : Integer;
       Buffer : Integer;
-      Width  : Integer := 0;
+      Width  : Integer := -1;
       Widths : array (Info'Range) of Integer;
 
    begin
       --  Compute the maximum width of the items to add.
       for J in Info'Range loop
-         Widths (J) := 0;
+         Widths (J) := -1;
          if Info (J).Text /= null then
             Buffer := Integer
               (String_Width (View.Font, String' (Info (J).Text.all)));
@@ -933,7 +963,7 @@ package body Src_Editor_View is
       --  Update the stored data.
       for J in Info'Range loop
          Insert_At_Position
-           (View, Info (J), Column, Info (J).Line, Widths (J));
+           (View, Info (J), Column, J, Widths (J));
       end loop;
 
       --  If some of the data was in the display range, draw it.
