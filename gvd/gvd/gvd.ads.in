@@ -18,6 +18,9 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+--  This package contains target specific parameters that are set at configure
+--  time.
+
 package GVD is
    pragma Pure;
 
@@ -29,6 +32,9 @@ package GVD is
    --  Version number of this software.
 
    Prefix : constant String := "@prefix@";
+   --  Default prefix used e.g for finding suppoer files like po files.
+   --  Note that this prefix can be overriden by using the GVD_ROOT
+   --  environment variable.
 
    Max_Frame : constant := 500;
    --  Maximum number of frames displayed in the backtrace window.
