@@ -12,4 +12,9 @@ package Src_Menu is
       Box  : Src_Editor_Box.Source_Editor_Box);
    --  Create the menu for the source editor...
 
+   procedure Create_Main_Window
+     (Main_Window  : out Gtk.Window.Gtk_Window;
+      Box          : Src_Editor_Box.Source_Editor_Box);
+   --  Create a window with menu and the given Source Editor Box.
+
 end Src_Menu;
