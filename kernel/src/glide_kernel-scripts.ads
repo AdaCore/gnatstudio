@@ -210,6 +210,7 @@ package Glide_Kernel.Scripts is
    --  Set an error message.
    --  The return value for this callback will be ignored. On most languages
    --  (python,...) this is equivalent to raising an exception.
+   --  If Msg is set to the empty string, an exception will still be raised
 
    procedure Set_Return_Value_As_List
      (Data : in out Callback_Data; Size : Natural := 0) is abstract;
