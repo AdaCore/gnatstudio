@@ -564,7 +564,7 @@ package body Help_Module is
          Trace (Me, "On_Load_HTML: No file specified, executing shell cmd");
          declare
             Errors : aliased Boolean := False;
-            File   : constant String := Execute_Command
+            File   : constant String := GPS.Kernel.Scripts.Execute_Command
               (Script      =>
                  Lookup_Scripting_Language (Kernel, Item.Shell_Lang.all),
                Command     => Item.Shell.all,
