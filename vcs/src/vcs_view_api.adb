@@ -148,6 +148,11 @@ package body VCS_View_API is
      return VCS_Access;
    --  Return the VCS reference registered in Project.
 
+   function Get_Selected_Files
+     (Context : Selection_Context_Access)
+     return String_List.List;
+   --  Return the list of files that are selected, according to Context.
+
    -------------------------------
    -- Contextual menu callbacks --
    -------------------------------
@@ -313,17 +318,9 @@ package body VCS_View_API is
 
    procedure Update
      (Widget : access GObject_Record'Class;
-      Kernel : Kernel_Handle)
-   is
-      pragma Unreferenced (Widget);
-
-      Files : String_List.List := Get_Selected_Files (Kernel);
-      Ref   : constant VCS_Access := Get_Current_Ref (Kernel);
-
+      Kernel : Kernel_Handle) is
    begin
-      Update (Ref, Files);
-      Get_Status (Ref, Copy_String_List (Files));
-      String_List.Free (Files);
+      On_Menu_Update (Widget, Get_Current_Context (Kernel));
    end Update;
 
    ----------------
@@ -332,17 +329,9 @@ package body VCS_View_API is
 
    procedure Get_Status
      (Widget : access GObject_Record'Class;
-      Kernel : Kernel_Handle)
-   is
-      pragma Unreferenced (Widget);
-
-      Files : String_List.List := Get_Selected_Files (Kernel);
-      Ref   : constant VCS_Access := Get_Current_Ref (Kernel);
-
+      Kernel : Kernel_Handle) is
    begin
-      Open_Explorer (Kernel, null);
-      Get_Status (Ref, Files);
-      String_List.Free (Files);
+      On_Menu_Get_Status (Widget, Get_Current_Context (Kernel));
    end Get_Status;
 
    ---------
@@ -351,16 +340,9 @@ package body VCS_View_API is
 
    procedure Add
      (Widget : access GObject_Record'Class;
-      Kernel : Kernel_Handle)
-   is
-      pragma Unreferenced (Widget);
-
-      Files : String_List.List := Get_Selected_Files (Kernel);
-      Ref   : constant VCS_Access := Get_Current_Ref (Kernel);
-
+      Kernel : Kernel_Handle) is
    begin
-      Add (Ref, Files);
-      String_List.Free (Files);
+      On_Menu_Add (Widget, Get_Current_Context (Kernel));
    end Add;
 
    ------------
@@ -369,16 +351,9 @@ package body VCS_View_API is
 
    procedure Remove
      (Widget : access GObject_Record'Class;
-      Kernel : Kernel_Handle)
-   is
-      pragma Unreferenced (Widget);
-
-      Files : String_List.List := Get_Selected_Files (Kernel);
-      Ref   : constant VCS_Access := Get_Current_Ref (Kernel);
-
+      Kernel : Kernel_Handle) is
    begin
-      Remove (Ref, Files);
-      String_List.Free (Files);
+      On_Menu_Remove (Widget, Get_Current_Context (Kernel));
    end Remove;
 
    ------------
@@ -389,14 +364,11 @@ package body VCS_View_API is
      (Widget : access GObject_Record'Class;
       Kernel : Kernel_Handle)
    is
-      pragma Unreferenced (Widget);
-
-      Files : String_List.List := Get_Selected_Files (Kernel);
-      Ref   : constant VCS_Access := Get_Current_Ref (Kernel);
-
+      pragma Unreferenced (Widget, Kernel);
    begin
-      Revert (Ref, Files);
-      String_List.Free (Files);
+      --  ??? Not implemented yet.
+      --  On_Menu_Revert (Widget, Get_Current_Context (Kernel));
+      null;
    end Revert;
 
    ------------
@@ -407,10 +379,8 @@ package body VCS_View_API is
      (Widget : access GObject_Record'Class;
       Kernel : Kernel_Handle) is
    begin
-      --  ??? Right now, commit opens a log editor for the file.
-      --  We should decide what the correct behavior should be.
-
-      Edit_Log (Widget, Kernel);
+      --  ??? Is this the behaviour we want ?
+      On_Menu_Edit_Log (Widget, Get_Current_Context (Kernel));
    end Commit;
 
    ---------------
@@ -419,18 +389,9 @@ package body VCS_View_API is
 
    procedure View_Diff
      (Widget : access GObject_Record'Class;
-      Kernel : Kernel_Handle)
-   is
-      pragma Unreferenced (Widget);
-
-      Files : String_List.List := Get_Selected_Files (Kernel);
-      Ref   : constant VCS_Access := Get_Current_Ref (Kernel);
-
+      Kernel : Kernel_Handle) is
    begin
-      while not String_List.Is_Empty (Files) loop
-         Diff (Ref, String_List.Head (Files));
-         String_List.Next (Files);
-      end loop;
+      On_Menu_Diff (Widget, Get_Current_Context (Kernel));
    end View_Diff;
 
    --------------
@@ -441,16 +402,11 @@ package body VCS_View_API is
      (Widget : access GObject_Record'Class;
       Kernel : Kernel_Handle)
    is
-      pragma Unreferenced (Widget);
-
-      Files : String_List.List := Get_Selected_Files (Kernel);
-      Ref   : constant VCS_Access := Get_Current_Ref (Kernel);
-
+      pragma Unreferenced (Widget, Kernel);
    begin
-      while not String_List.Is_Empty (Files) loop
-         Log (Ref, String_List.Head (Files));
-         String_List.Next (Files);
-      end loop;
+      --  ??? Not implemented yet.
+      --  On_Menu_View_Log (Widget, Get_Current_Context (Kernel));
+      null;
    end View_Log;
 
    -------------------
@@ -459,18 +415,9 @@ package body VCS_View_API is
 
    procedure View_Annotate
      (Widget : access GObject_Record'Class;
-      Kernel : Kernel_Handle)
-   is
-      pragma Unreferenced (Widget);
-
-      Files : String_List.List := Get_Selected_Files (Kernel);
-      Ref   : constant VCS_Access := Get_Current_Ref (Kernel);
-
+      Kernel : Kernel_Handle) is
    begin
-      while not String_List.Is_Empty (Files) loop
-         Annotate (Ref, String_List.Head (Files));
-         String_List.Next (Files);
-      end loop;
+      On_Menu_Annotate (Widget, Get_Current_Context (Kernel));
    end View_Annotate;
 
    --------------
@@ -479,16 +426,9 @@ package body VCS_View_API is
 
    procedure Edit_Log
      (Widget : access GObject_Record'Class;
-      Kernel : Kernel_Handle)
-   is
-      pragma Unreferenced (Widget);
-      Files : String_List.List := Get_Selected_Files (Kernel);
+      Kernel : Kernel_Handle) is
    begin
-      while not String_List.Is_Empty (Files) loop
-         Open_File_Editor
-           (Kernel, Get_Log_From_File (Kernel, String_List.Head (Files)));
-         String_List.Next (Files);
-      end loop;
+      On_Menu_Edit_Log (Widget, Get_Current_Context (Kernel));
    end Edit_Log;
 
    -------------------------
@@ -830,20 +770,18 @@ package body VCS_View_API is
       end if;
    end Open_Explorer;
 
-   ----------------------
-   -- On_Menu_Edit_Log --
-   ----------------------
+   ------------------------
+   -- Get_Selected_Files --
+   ------------------------
 
-   procedure On_Menu_Edit_Log
-     (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access)
+   function Get_Selected_Files
+     (Context : Selection_Context_Access)
+     return String_List.List
    is
-      pragma Unreferenced (Widget);
-      File     : File_Selection_Context_Access;
-      List     : String_List.List;
-      Explorer : VCS_View_Access;
       Kernel   : constant Kernel_Handle := Get_Kernel (Context);
-
+      Explorer : VCS_View_Access;
+      List     : String_List.List;
+      File     : File_Selection_Context_Access;
    begin
       if Context.all in File_Selection_Context'Class then
          File := File_Selection_Context_Access (Context);
@@ -858,13 +796,31 @@ package body VCS_View_API is
                   Directory_Information (File) & File_Information (File));
             end if;
          end if;
-
-         while not String_List.Is_Empty (List) loop
-            Open_File_Editor
-              (Kernel, Get_Log_From_File (Kernel, String_List.Head (List)));
-            String_List.Next (List);
-         end loop;
       end if;
+
+      return List;
+   end Get_Selected_Files;
+
+   ----------------------
+   -- On_Menu_Edit_Log --
+   ----------------------
+
+   procedure On_Menu_Edit_Log
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context_Access)
+   is
+      pragma Unreferenced (Widget);
+      List     : String_List.List;
+      Kernel   : constant Kernel_Handle := Get_Kernel (Context);
+
+   begin
+      List := Get_Selected_Files (Context);
+
+      while not String_List.Is_Empty (List) loop
+         Open_File_Editor
+           (Kernel, Get_Log_From_File (Kernel, String_List.Head (List)));
+         String_List.Next (List);
+      end loop;
 
    exception
       when E : others =>
@@ -1074,25 +1030,18 @@ package body VCS_View_API is
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access)
    is
-      File     : File_Selection_Context_Access;
+      pragma Unreferenced (Widget);
+
       Kernel   : constant Kernel_Handle := Get_Kernel (Context);
       Files    : String_List.List;
    begin
-      if Get_Creator (Context) = VCS_Module_ID then
-         Commit (Widget, Kernel);
+      Files := Get_Selected_Files (Context);
 
-      elsif Context.all in File_Selection_Context'Class then
-         File := File_Selection_Context_Access (Context);
-
-         if Has_File_Information (File) then
-            String_List.Append (Files,
-                                Directory_Information (File)
-                                & File_Information (File));
-
-            Commit_Files (Kernel, Get_Current_Ref (Context), Files);
-         end if;
+      if String_List.Is_Empty (Files) then
+         return;
       end if;
 
+      Commit_Files (Kernel, Get_Current_Ref (Context), Files);
       String_List.Free (Files);
 
    exception
@@ -1109,40 +1058,32 @@ package body VCS_View_API is
       Context : Selection_Context_Access)
    is
       pragma Unreferenced (Widget);
-      File     : File_Selection_Context_Access;
       List     : String_List.List;
-      Explorer : VCS_View_Access;
-      Kernel   : constant Kernel_Handle := Get_Kernel (Context);
    begin
-      if Context.all in File_Selection_Context'Class then
-         File := File_Selection_Context_Access (Context);
+      List := Get_Selected_Files (Context);
 
-         if Get_Creator (Context) = VCS_Module_ID then
-            Explorer := Get_Explorer (Kernel);
-            List := Get_Selected_Files (Explorer);
-         else
-            if Has_File_Information (File) then
-               String_List.Append (List,
-                                   Directory_Information (File)
-                                   & File_Information (File));
-            end if;
-         end if;
-
-         Open (Get_Current_Ref (Context), List);
-
-         declare
-            use String_List;
-
-            L_Temp : List_Node := First (List);
-         begin
-            while L_Temp /= Null_Node loop
-               Open_File_Editor (Kernel, Data (L_Temp));
-               L_Temp := Next (L_Temp);
-            end loop;
-         end;
-
-         String_List.Free (List);
+      if String_List.Is_Empty (List) then
+         return;
       end if;
+
+      Open (Get_Current_Ref (Context), List);
+
+      --  ??? The following should be the responsibility of
+      --  the VCS modules themselves, due to the possibility
+      --  of having asynchronous commands, permission problems, etc.
+
+      --        declare
+      --           use String_List;
+
+      --           L_Temp : List_Node := First (List);
+      --        begin
+      --           while L_Temp /= Null_Node loop
+      --              Open_File_Editor (Kernel, Data (L_Temp));
+      --              L_Temp := Next (L_Temp);
+      --           end loop;
+      --        end;
+
+      String_List.Free (List);
 
    exception
       when E : others =>
@@ -1157,26 +1098,17 @@ package body VCS_View_API is
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access)
    is
-      File     : File_Selection_Context_Access;
-      Kernel   : constant Kernel_Handle := Get_Kernel (Context);
+      pragma Unreferenced (Widget);
       Files    : String_List.List;
    begin
-      if Get_Creator (Context) = VCS_Module_ID then
-         Add (Widget, Kernel);
+      Files := Get_Selected_Files (Context);
 
-      elsif Context.all in File_Selection_Context'Class then
-         File := File_Selection_Context_Access (Context);
-
-         if Has_File_Information (File) then
-            String_List.Append (Files,
-                                Directory_Information (File)
-                                & File_Information (File));
-
-            Add (Get_Current_Ref (Context), Files);
-            String_List.Free (Files);
-         end if;
+      if String_List.Is_Empty (Files) then
+         return;
       end if;
 
+      Add (Get_Current_Ref (Context), Files);
+      String_List.Free (Files);
    exception
       when E : others =>
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
@@ -1190,26 +1122,17 @@ package body VCS_View_API is
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access)
    is
-      File     : File_Selection_Context_Access;
-      Kernel   : constant Kernel_Handle := Get_Kernel (Context);
+      pragma Unreferenced (Widget);
       Files    : String_List.List;
    begin
-      if Get_Creator (Context) = VCS_Module_ID then
-         Remove (Widget, Kernel);
+      Files := Get_Selected_Files (Context);
 
-      elsif Context.all in File_Selection_Context'Class then
-         File := File_Selection_Context_Access (Context);
-
-         if Has_File_Information (File) then
-            String_List.Append (Files,
-                                Directory_Information (File)
-                                & File_Information (File));
-
-            Remove (Get_Current_Ref (Context), Files);
-            String_List.Free (Files);
-         end if;
+      if String_List.Is_Empty (Files) then
+         return;
       end if;
 
+      Remove (Get_Current_Ref (Context), Files);
+      String_List.Free (Files);
    exception
       when E : others =>
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
@@ -1223,21 +1146,19 @@ package body VCS_View_API is
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access)
    is
-      File     : File_Selection_Context_Access;
-      Kernel   : constant Kernel_Handle := Get_Kernel (Context);
+      pragma Unreferenced (Widget);
+      Files    : String_List.List;
    begin
-      if Get_Creator (Context) = VCS_Module_ID then
-         View_Annotate (Widget, Kernel);
+      Files := Get_Selected_Files (Context);
 
-      elsif Context.all in File_Selection_Context'Class then
-         File := File_Selection_Context_Access (Context);
-
-         if Has_File_Information (File) then
-            Annotate (Get_Current_Ref (Context),
-                      Directory_Information (File)
-                      & File_Information (File));
-         end if;
+      if String_List.Is_Empty (Files) then
+         return;
       end if;
+
+      while not String_List.Is_Empty (Files) loop
+         Annotate (Get_Current_Ref (Context), String_List.Head (Files));
+         String_List.Next (Files);
+      end loop;
 
    exception
       when E : others =>
@@ -1252,25 +1173,21 @@ package body VCS_View_API is
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access)
    is
-      File     : File_Selection_Context_Access;
-      Kernel   : constant Kernel_Handle := Get_Kernel (Context);
+      pragma Unreferenced (Widget);
+
       Files    : String_List.List;
+      Ref      : VCS_Access := Get_Current_Ref (Context);
    begin
-      if Get_Creator (Context) = VCS_Module_ID then
-         Update (Widget, Kernel);
+      Files := Get_Selected_Files (Context);
 
-      elsif Context.all in File_Selection_Context'Class then
-         File := File_Selection_Context_Access (Context);
-
-         if Has_File_Information (File) then
-            String_List.Append (Files,
-                                Directory_Information (File)
-                                & File_Information (File));
-
-            Update (Get_Current_Ref (Context), Files);
-            String_List.Free (Files);
-         end if;
+      if String_List.Is_Empty (Files) then
+         return;
       end if;
+
+      Update (Ref, Files);
+      Get_Status (Ref, Files);
+
+      String_List.Free (Files);
 
    exception
       when E : others =>
@@ -1287,33 +1204,19 @@ package body VCS_View_API is
    is
       pragma Unreferenced (Widget);
 
-      File     : File_Selection_Context_Access;
       Kernel   : constant Kernel_Handle := Get_Kernel (Context);
       Files    : String_List.List;
-      Explorer : VCS_View_Access;
 
    begin
-      Open_Explorer (Kernel, Context);
-      Explorer := Get_Explorer (Kernel);
+      Files := Get_Selected_Files (Context);
 
-      if Get_Creator (Context) = VCS_Module_ID then
-         Files := Get_Selected_Files (Kernel);
-         Get_Status (Get_Current_Ref (Context), Files);
-         String_List.Free (Files);
-
-      elsif Context.all in File_Selection_Context'Class then
-         File := File_Selection_Context_Access (Context);
-
-         if Has_File_Information (File) then
-            String_List.Append (Files,
-                                Directory_Information (File)
-                                & File_Information (File));
-
-            Get_Status (Get_Current_Ref (Context), Files);
-            String_List.Free (Files);
-         end if;
+      if String_List.Is_Empty (Files) then
+         return;
       end if;
 
+      Open_Explorer (Kernel, Context);
+      Get_Status (Get_Current_Ref (Context), Files);
+      String_List.Free (Files);
    exception
       when E : others =>
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
@@ -1374,6 +1277,8 @@ package body VCS_View_API is
             Get_Status (Get_Current_Ref (Context), Files);
          end if;
       end if;
+
+      String_List.Free (Files);
 
    exception
       when E : others =>
@@ -1635,22 +1540,16 @@ package body VCS_View_API is
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access)
    is
-      File     : File_Selection_Context_Access;
-      Kernel   : constant Kernel_Handle := Get_Kernel (Context);
+      pragma Unreferenced (Widget);
 
+      Files    : String_List.List;
    begin
-      if Get_Creator (Context) = VCS_Module_ID then
-         View_Diff (Widget, Kernel);
+      Files := Get_Selected_Files (Context);
 
-      elsif Context.all in File_Selection_Context'Class then
-         File := File_Selection_Context_Access (Context);
-
-         if Has_File_Information (File) then
-            Diff (Get_Current_Ref (Context),
-                  Directory_Information (File)
-                  & File_Information (File));
-         end if;
-      end if;
+      while not String_List.Is_Empty (Files) loop
+         Diff (Get_Current_Ref (Context), String_List.Head (Files));
+         String_List.Next (Files);
+      end loop;
 
    exception
       when E : others =>
@@ -1669,23 +1568,15 @@ package body VCS_View_API is
       pragma Unreferenced (Widget);
 
       Files  : String_List.List;
-      File   : File_Selection_Context_Access;
       Ref    : constant VCS_Access := Get_Current_Ref (Context);
       Status : File_Status_List.List;
       Status_Temp : List_Node;
 
    begin
-      if Get_Creator (Context) = VCS_Module_ID then
-         Files  := Get_Selected_Files (Get_Kernel (Context));
+      Files := Get_Selected_Files (Context);
 
-      else
-         File := File_Selection_Context_Access (Context);
-
-         if Has_File_Information (File) then
-            String_List.Append (Files,
-                                Directory_Information (File)
-                                & File_Information (File));
-         end if;
+      if String_List.Is_Empty (Files) then
+         return;
       end if;
 
       Status := Local_Get_Status (Ref, Files);
