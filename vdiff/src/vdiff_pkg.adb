@@ -1,10 +1,10 @@
+pragma Style_Checks (Off);
+
 with Glib; use Glib;
 with Gtk; use Gtk;
-with Gdk.Types;       use Gdk.Types;
 with Gtk.Widget;      use Gtk.Widget;
 with Gtk.Enums;       use Gtk.Enums;
 with Gtkada.Handlers; use Gtkada.Handlers;
-with Callbacks_Vdiff; use Callbacks_Vdiff;
 with Vdiff_Intl; use Vdiff_Intl;
 with Vdiff_Utils;     use Vdiff_Utils;
 

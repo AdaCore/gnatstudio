@@ -1,11 +1,10 @@
-with Glib; use Glib;
+pragma Style_Checks (Off);
+
 with Gtk; use Gtk;
-with Gdk.Types;       use Gdk.Types;
 with Gtk.Adjustment;  use Gtk.Adjustment;
 with Gtk.Widget;      use Gtk.Widget;
 with Gtk.Enums;       use Gtk.Enums;
 with Gtkada.Handlers; use Gtkada.Handlers;
-with Callbacks_Switches_Glade; use Callbacks_Switches_Glade;
 with Switches_Glade_Intl; use Switches_Glade_Intl;
 with Switches_Editor_Pkg.Callbacks; use Switches_Editor_Pkg.Callbacks;
 with Gtk.Handlers; use Gtk.Handlers;
