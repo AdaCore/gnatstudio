@@ -42,6 +42,7 @@ with Gdk.Rectangle; use Gdk.Rectangle;
 with Gdk.Region;    use Gdk.Region;
 with Gdk.Window;    use Gdk.Window;
 with Gtk.Enums;     use Gtk.Enums;
+with Gtk.Main;      use Gtk.Main;
 with Gtk.Menu;      use Gtk.Menu;
 with Gtk.Menu_Item; use Gtk.Menu_Item;
 with Gtk.Stock;     use Gtk.Stock;
@@ -79,6 +80,7 @@ package body Browsers.Entities is
    type Type_Browser_Record is new Browsers.Canvas.General_Browser_Record
    with record
       Primitive_Button : Gdk.Pixbuf.Gdk_Pixbuf;
+      Idle_Id          : Gtk.Main.Idle_Handler_Id;
    end record;
    type Type_Browser is access all Type_Browser_Record'Class;
 
@@ -335,6 +337,20 @@ package body Browsers.Entities is
 
    procedure Sort (Arr : in out Entity_Information_Array);
    --  Sort the array alphabetically
+
+   type Find_Children_Types_Data is record
+      Iter    : Entity_Reference_Iterator_Access;
+      Item    : Type_Item;
+      Kernel  : Kernel_Handle;
+      Browser : Type_Browser;
+   end record;
+
+   package Children_Types_Idle is new Gtk.Main.Idle (Find_Children_Types_Data);
+
+   procedure Destroy_Idle (Data : in out Find_Children_Types_Data);
+   function Find_Children_Types_Idle
+     (Data : Find_Children_Types_Data) return Boolean;
+   --  Subprograms used for the lazy computation of children entities
 
    ----------
    -- Call --
@@ -1063,16 +1079,74 @@ package body Browsers.Entities is
                 & Exception_Information (E));
    end Find_Parent_Types;
 
+   ------------------------------
+   -- Find_Children_Types_Idle --
+   ------------------------------
+
+   function Find_Children_Types_Idle
+     (Data : Find_Children_Types_Data) return Boolean
+   is
+      LI    : LI_File_Ptr;
+      Child : Child_Type_Iterator;
+      C     : Entity_Information;
+   begin
+      if Get (Data.Iter.all) = No_Reference then
+         return False;
+
+      else
+         LI := Get_LI (Data.Iter.all);
+
+         --  The following loop is fast enough that we should do it all at once
+         --  in the idle callback. It only acts on a single LI file
+         Child := Get_Children_Types (LI, Data.Item.Entity);
+
+         loop
+            C := Get (Child);
+            exit when C = No_Entity_Information;
+
+            Add_Item_And_Link
+              (Data.Item, C, "", Parent_Link => True,
+               Reverse_Link => True);
+            Destroy (C);
+            Next (Child);
+         end loop;
+
+         Destroy (Child);
+
+         Next (Get_Language_Handler (Data.Kernel), Data.Iter.all,
+               Get_LI_File_List (Data.Kernel));
+         return True;
+      end if;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         return False;
+   end Find_Children_Types_Idle;
+
+   ------------------
+   -- Destroy_Idle --
+   ------------------
+
+   procedure Destroy_Idle (Data : in out Find_Children_Types_Data) is
+   begin
+      Layout (Data.Browser, Force => False);
+      Destroy (Data.Iter);
+      Pop_State (Data.Kernel);
+      Data.Browser.Idle_Id := 0;
+   end Destroy_Idle;
+
    -------------------------
    -- Find_Children_Types --
    -------------------------
 
    procedure Find_Children_Types  (Item  : access Arrow_Item_Record'Class) is
-      Iter   : Entity_Reference_Iterator;
-      Child  : Child_Type_Iterator;
       Kernel : constant Kernel_Handle := Get_Kernel (Get_Browser (Item));
-      LI     : LI_File_Ptr;
-      C      : Entity_Information;
+      Data   : Find_Children_Types_Data :=
+        (Kernel  => Kernel,
+         Browser => Type_Browser (Get_Browser (Item)),
+         Item    => Type_Item (Item),
+         Iter    => new Entity_Reference_Iterator);
    begin
       Push_State (Kernel, Busy);
       Find_All_References
@@ -1080,37 +1154,17 @@ package body Browsers.Entities is
          Lang_Handler => Get_Language_Handler (Kernel),
          Entity       => Type_Item (Item).Entity,
          List         => Get_LI_File_List (Kernel),
-         Iterator     => Iter,
+         Iterator     => Data.Iter.all,
          LI_Once      => True);
 
-      while Get (Iter) /= No_Reference loop
-         LI := Get_LI (Iter);
-
-         Child := Get_Children_Types (LI, Type_Item (Item).Entity);
-
-         loop
-            C := Get (Child);
-            exit when C = No_Entity_Information;
-
-            Add_Item_And_Link
-              (Type_Item (Item), C, "", Parent_Link => True,
-               Reverse_Link => True);
-
-            Destroy (C);
-            Next (Child);
-         end loop;
-
-         Destroy (Child);
-
-         Next (Get_Language_Handler (Kernel), Iter, Get_LI_File_List (Kernel));
-      end loop;
-
-      Destroy (Iter);
+      Data.Browser.Idle_Id := Children_Types_Idle.Add
+        (Cb       => Find_Children_Types_Idle'Access,
+         D        => Data,
+         Priority => Priority_Low_Idle,
+         Destroy  => Destroy_Idle'Access);
 
       Set_Children_Shown (Item, True);
       Redraw_Title_Bar (Item);
-
-      Pop_State (Kernel);
 
    exception
       when E : others =>
