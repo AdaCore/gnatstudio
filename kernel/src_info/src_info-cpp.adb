@@ -304,7 +304,7 @@ package body Src_Info.CPP is
       HI.SN_Dir := new String' (Get_SN_Dir (Root_Project));
 
       --  Prepare the list of files
-      Compute_Sources (HI, Project, Recursive);
+      Compute_Sources (HI, Project, Recursive, Language => Name_C_Plus_Plus);
 
       if not Is_Directory (HI.SN_Dir.all) then
          GNAT.Directory_Operations.Make_Dir (HI.SN_Dir.all);
