@@ -27,7 +27,6 @@ with Glib.Object;              use Glib.Object;
 with VFS;                      use VFS;
 with Docgen.Work_On_File;      use Docgen.Work_On_File;
 with Docgen;                   use Docgen;
-with Docgen.Html_Output;       use Docgen.Html_Output;
 with Src_Info;                 use Src_Info;
 with Traces;                   use Traces;
 with Ada.Exceptions;           use Ada.Exceptions;
@@ -38,51 +37,61 @@ with Glib.Generic_Properties;
 with Glib.Properties.Creation; use Glib.Properties.Creation;
 with Gtk.Menu_Item;            use Gtk.Menu_Item;
 with Gtk.Menu;                 use Gtk.Menu;
-with File_Utils;               use File_Utils;
-with Projects.Registry;        use Projects.Registry;
 with Src_Info.Queries;         use Src_Info.Queries;
 with String_Utils;             use String_Utils;
+with Docgen_Backend_HTML;      use Docgen_Backend_HTML;
+with Docgen;
+with GNAT.Directory_Operations; use GNAT.Directory_Operations;
+--  with Docgen_Backend_TEXI;     use Docgen_Backend_TEXI; not ready
 
 package body Docgen_Module is
 
    Me : constant Debug_Handle := Create ("Docgen");
+
+   type Docgen_Module_Record is new Module_ID_Record with record
+      --  Docgen preferences
+
+      Type_Generated_File   : Param_Spec_Enum;
+      --  Type of the generated file (html, texi...)
+
+      Generate_Body_Files   : Param_Spec_Boolean;
+      --  Create also the body documentation
+
+      Ignore_Some_Comments  : Param_Spec_Boolean;
+      --  Ignore all comments with "--!"
+
+      Comments_Before       : Param_Spec_Boolean;
+      --  Find doc comments for entities before the entity itself
+
+      Show_Private_Entities : Param_Spec_Boolean;
+      --  Show also private entities
+
+      Show_References       : Param_Spec_Boolean;
+      --  True if the program should search for the references
+      --  Adding information like "subprogram called by..."
+
+      One_Document_File     : Param_Spec_Boolean;
+      --  Used for TexInfo: True, if the project.texi file should be
+      --  build and the package files should be included there later.
+
+      Link_All_References   : Param_Spec_Boolean;
+      --  Should links be created to entities whose declaration files
+      --  aren't being processed
+
+      Options : All_Options;
+      --  Group all the preferences
+
+      B : Docgen.Docgen_Backend.Backend_Handle;
+      --  An instance of this object is used to lead the documentation process
+      --     througth the good method (ie. for the good format)
+   end record;
+   type Docgen_Module is access all Docgen_Module_Record'Class;
 
    package TSFL renames Type_Source_File_List;
 
    package Type_Api_Doc_Properties is new
      Glib.Generic_Properties.Generic_Enumeration_Property
      ("Type_Api_Doc", Type_Api_Doc);
-
-   --  Docgen preferences
-   Type_Generated_File   : Param_Spec_Enum;
-   --  Type of the generated file (html, texi...)
-
-   Generate_Body_Files   : Param_Spec_Boolean;
-   --  Create also the body documentation?
-
-   Ignore_Some_Comments  : Param_Spec_Boolean;
-   --  Ignore all comments with "--!"
-
-   Comments_Before       : Param_Spec_Boolean;
-   --  Find doc comments for entities before the entity itself
-
-   Show_Private_Entities : Param_Spec_Boolean;
-   --  Show also private entities
-
-   Show_References       : Param_Spec_Boolean;
-   --  True if the program should search for the references
-   --  Adding information like "subprogram called by..."
-
-   One_Document_File     : Param_Spec_Boolean;
-   --  Used for TexInfo: True, if the project.texi file should be
-   --  build and the package files should be included there later.
-
-   Link_All_References   : Param_Spec_Boolean;
-   --  Should links be created to entities whose declaration files
-   --  aren't being processed
-
-   Options : All_Options;
-   --  Group all the preferences
 
    procedure Set_Options
      (Type_Of_File_P       : Type_Api_Doc := HTML;
@@ -94,7 +103,19 @@ package body Docgen_Module is
       One_Doc_File_P       : Boolean := False;
       Link_All_P           : Boolean := False);
    --  Set new options or reset options
-   --  ??? Need to document each parameter.
+   --
+   --  Type_Of_File_P is the type of the generated file (html, texi...)
+   --  Process_Body_Files_P indicates if we create also documentation
+   --    for body files
+   --  Ignorable_Comments_P indicates if we ignore all comments with "--!"
+   --  Comments_Above_P says if we generate doc comments for entities above
+   --    the header
+   --  Show_Private_P indicates if we show also private entities
+   --  References_P says if we add information like "subprogram called by..."
+   --  One_Doc_File_P says if we create documentation in only one
+   --    file (only fortexi)
+   --  Link_All_P indicates if links are created for entities whose
+   --    declaration files aren't processed
 
    procedure Array2List
      (Kernel : Kernel_Handle;
@@ -182,6 +203,30 @@ package body Docgen_Module is
    --  With the list of source files, it generates the documentation
 
    -------------------
+   --  Get_Options  --
+   -------------------
+
+   procedure Get_Options (My_Options : in out All_Options) is
+   begin
+      My_Options.Type_Of_File
+        := Docgen_Module (Docgen_Module_ID).Options.Type_Of_File;
+      My_Options.Process_Body_Files
+        := Docgen_Module (Docgen_Module_ID).Options.Process_Body_Files;
+      My_Options.Ignorable_Comments
+        := Docgen_Module (Docgen_Module_ID).Options.Ignorable_Comments;
+      My_Options.Comments_Above
+        := Docgen_Module (Docgen_Module_ID).Options.Comments_Above;
+      My_Options.Show_Private
+        := Docgen_Module (Docgen_Module_ID).Options.Show_Private;
+      My_Options.References
+        := Docgen_Module (Docgen_Module_ID).Options.References;
+      My_Options.One_Doc_File
+        := Docgen_Module (Docgen_Module_ID).Options.One_Doc_File;
+      My_Options.Link_All
+        := Docgen_Module (Docgen_Module_ID).Options.Link_All;
+   end Get_Options;
+
+   -------------------
    --  Set_Options  --
    -------------------
 
@@ -196,14 +241,22 @@ package body Docgen_Module is
       Link_All_P           : Boolean := False)
    is
    begin
-      Options.Type_Of_File := Type_Of_File_P;
-      Options.Process_Body_Files := Process_Body_Files_P;
-      Options.Ignorable_Comments := Ignorable_Comments_P;
-      Options.Comments_Above := Comments_Above_P;
-      Options.Show_Private := Show_Private_P;
-      Options.References := References_P;
-      Options.One_Doc_File := One_Doc_File_P;
-      Options.Link_All := Link_All_P;
+      Docgen_Module (Docgen_Module_ID).Options.Type_Of_File
+        := Type_Of_File_P;
+      Docgen_Module (Docgen_Module_ID).Options.Process_Body_Files
+        := Process_Body_Files_P;
+      Docgen_Module (Docgen_Module_ID).Options.Ignorable_Comments
+        := Ignorable_Comments_P;
+      Docgen_Module (Docgen_Module_ID).Options.Comments_Above
+        := Comments_Above_P;
+      Docgen_Module (Docgen_Module_ID).Options.Show_Private
+        := Show_Private_P;
+      Docgen_Module (Docgen_Module_ID).Options.References
+        := References_P;
+      Docgen_Module (Docgen_Module_ID).Options.One_Doc_File
+        := One_Doc_File_P;
+      Docgen_Module (Docgen_Module_ID).Options.Link_All
+        := Link_All_P;
    end Set_Options;
 
    -----------------
@@ -223,7 +276,7 @@ package body Docgen_Module is
          File := Tab (J);
 
          if Is_Spec_File (Kernel, File)
-           or else Options.Process_Body_Files
+           or else Docgen_Module (Docgen_Module_ID).Options.Process_Body_Files
          then
             LI := Locate_From_Source_And_Complete (Kernel, File);
             Append
@@ -244,15 +297,15 @@ package body Docgen_Module is
    is
       pragma Unreferenced (Kernel);
    begin
-      Set_Options
-        (Type_Api_Doc'Val (Get_Pref (K, Type_Generated_File)),
-         Get_Pref (K, Generate_Body_Files),
-         Get_Pref (K, Ignore_Some_Comments),
-         Get_Pref (K, Comments_Before),
-         Get_Pref (K, Show_Private_Entities),
-         Get_Pref (K, Show_References),
-         Get_Pref (K, One_Document_File),
-         Get_Pref (K, Link_All_References));
+      Set_Options (Type_Api_Doc'Val (
+         Get_Pref (K, Docgen_Module (Docgen_Module_ID).Type_Generated_File)),
+         Get_Pref (K, Docgen_Module (Docgen_Module_ID).Generate_Body_Files),
+         Get_Pref (K, Docgen_Module (Docgen_Module_ID).Ignore_Some_Comments),
+         Get_Pref (K, Docgen_Module (Docgen_Module_ID).Comments_Before),
+         Get_Pref (K, Docgen_Module (Docgen_Module_ID).Show_Private_Entities),
+         Get_Pref (K, Docgen_Module (Docgen_Module_ID).Show_References),
+         Get_Pref (K, Docgen_Module (Docgen_Module_ID).One_Document_File),
+         Get_Pref (K, Docgen_Module (Docgen_Module_ID).Link_All_References));
    end On_Preferences_Changed;
 
    -----------------------
@@ -504,7 +557,8 @@ package body Docgen_Module is
 
    begin
       if not Is_Spec_File (Kernel, File)
-        and then not Options.Process_Body_Files
+        and then not
+          Docgen_Module (Docgen_Module_ID).Options.Process_Body_Files
       then
          return;
       end if;
@@ -517,7 +571,7 @@ package body Docgen_Module is
           Other_File_Found => True));
 
       if Is_Spec_File (Kernel, File)
-        and then Options.Process_Body_Files
+        and then Docgen_Module (Docgen_Module_ID).Options.Process_Body_Files
       then
          Body_File := Get_Other_File_Of (LI, File);
 
@@ -542,29 +596,48 @@ package body Docgen_Module is
       List   : in out Type_Source_File_List.List)
    is
       use Type_Source_File_List;
+      use Docgen.Docgen_Backend;
    begin
       Push_State (Kernel, Busy);
 
-      --  ??? Should give a choice of the format
+      case Docgen_Module (Docgen_Module_ID).Options.Type_Of_File is
+         when HTML =>
+            Docgen_Module (Docgen_Module_ID).B := new Backend_HTML;
+--       when TEXI =>
+--          Docgen_Module (Docgen_Module_ID).B :=  new Backend_TEXI;
+         when others =>
+            Docgen_Module (Docgen_Module_ID).B :=  new Backend_HTML;
+      end case;
+
+      --  It's better to remove old documentation
+      --  In fact, files may have changed since last
+      --    documentation process (eg. so links aren't valid)
+      --  Only old documentation which has the same format is
+      --     removed
+      Remove_Dir (Get_Doc_Directory
+                    (Docgen_Module (Docgen_Module_ID).B, Kernel),
+                  True);
+      Make_Dir (Get_Doc_Directory
+                  (Docgen_Module (Docgen_Module_ID).B, Kernel));
+
       Process_Files
-        (List,
+        (Docgen_Module (Docgen_Module_ID).B,
+         List,
          Kernel,
-         Options,
-         Doc_Suffix => ".htm",
-         Converter  => Doc_HTML_Create'Access);
+         Docgen_Module (Docgen_Module_ID).Options,
+         Doc_Suffix => Get_Extension (Docgen_Module (Docgen_Module_ID).B),
+         Converter  =>
+           Launch_Doc_Create'Access);
       Free (List);
 
-      --  ??? Should open the appropriate file, this one is only valid for html
       --  ??? <frameset> not supported by internal html viewer.
 
-      declare
-         Doc_Directory_Root : constant String := File_Utils.Name_As_Directory
-           (Object_Path (Get_Root_Project (Get_Registry (Kernel)),
-                         False)) & "index.htm";
-      begin
-         Open_Html (Kernel, Filename =>
-                      Create (Full_Filename => Doc_Directory_Root));
-      end;
+      Open_Html
+        (Kernel,
+         Filename => Create
+           (Full_Filename =>
+              Get_Doc_Directory (Docgen_Module (Docgen_Module_ID).B, Kernel)
+            & "index" & Get_Extension (Docgen_Module (Docgen_Module_ID).B)));
 
       Pop_State (Kernel);
 
@@ -581,12 +654,11 @@ package body Docgen_Module is
    procedure Register_Module
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
    is
-      Docgen_Module_ID : Module_ID;
-
       Tools    : constant String := '/' & (-"Tools");
       Generate : constant String := '/' & (-"_Documentation");
-
    begin
+      Docgen_Module_ID := new Docgen_Module_Record;
+
       Register_Module
         (Module                  => Docgen_Module_ID,
          Kernel                  => Kernel,
@@ -594,25 +666,32 @@ package body Docgen_Module is
          Contextual_Menu_Handler => Docgen_Contextual'Access,
          Priority                => Default_Priority);
 
-      Type_Generated_File := Param_Spec_Enum
+      Docgen_Module (Docgen_Module_ID).Type_Generated_File
+        := Param_Spec_Enum
         (Type_Api_Doc_Properties.Gnew_Enum
            (Name    => "Doc-Output",
             Default => HTML,
             Blurb   => -"Choose the kind of documentation generated",
             Nick    => -"Output"));
       Register_Property
-        (Kernel, Param_Spec (Type_Generated_File), -"Documentation");
+        (Kernel,
+         Param_Spec (Docgen_Module (Docgen_Module_ID).Type_Generated_File),
+         -"Documentation");
 
-      Generate_Body_Files := Param_Spec_Boolean
+      Docgen_Module (Docgen_Module_ID).Generate_Body_Files
+        := Param_Spec_Boolean
         (Gnew_Boolean
           (Name    => "Doc-Process-Body",
            Default => False,
            Blurb   => -"Whether body files should be processed",
            Nick    => -"Process body files"));
       Register_Property
-        (Kernel, Param_Spec (Generate_Body_Files), -"Documentation");
+        (Kernel,
+         Param_Spec (Docgen_Module (Docgen_Module_ID).Generate_Body_Files),
+         -"Documentation");
 
-      Ignore_Some_Comments := Param_Spec_Boolean
+      Docgen_Module (Docgen_Module_ID).Ignore_Some_Comments
+        := Param_Spec_Boolean
         (Gnew_Boolean
           (Name    => "Doc-Ignore-Special-Comments",
            Default => False,
@@ -621,10 +700,11 @@ package body Docgen_Module is
            Nick    => -"Ignore comments with --!"));
       Register_Property
         (Kernel,
-         Param_Spec (Ignore_Some_Comments),
+         Param_Spec (Docgen_Module (Docgen_Module_ID).Ignore_Some_Comments),
          -"Documentation");
 
-      Comments_Before := Param_Spec_Boolean
+      Docgen_Module (Docgen_Module_ID).Comments_Before
+        := Param_Spec_Boolean
         (Gnew_Boolean
           (Name    => "Doc-Comments-Before",
            Default => False,
@@ -632,9 +712,12 @@ package body Docgen_Module is
              -("Whether comments are found before corresponding entities"),
            Nick    => -"Comments before entities"));
       Register_Property
-        (Kernel, Param_Spec (Comments_Before), -"Documentation");
+        (Kernel,
+         Param_Spec (Docgen_Module (Docgen_Module_ID).Comments_Before),
+         -"Documentation");
 
-      Show_Private_Entities := Param_Spec_Boolean
+      Docgen_Module (Docgen_Module_ID).Show_Private_Entities
+        := Param_Spec_Boolean
         (Gnew_Boolean
           (Name    => "Doc-Show-Private",
            Default => False,
@@ -642,10 +725,10 @@ package body Docgen_Module is
            Nick    => -"Show private entities"));
       Register_Property
         (Kernel,
-         Param_Spec (Show_Private_Entities),
+         Param_Spec (Docgen_Module (Docgen_Module_ID).Show_Private_Entities),
          -"Documentation");
 
-      Show_References := Param_Spec_Boolean
+      Docgen_Module (Docgen_Module_ID).Show_References := Param_Spec_Boolean
         (Gnew_Boolean
           (Name    => "Doc-References",
            Default => False,
@@ -653,9 +736,11 @@ package body Docgen_Module is
              -("Whether Docgen should compute references (e.g. call graph)"),
            Nick    => -"Compute references"));
       Register_Property
-        (Kernel, Param_Spec (Show_References), -"Documentation");
+        (Kernel,
+         Param_Spec (Docgen_Module (Docgen_Module_ID).Show_References),
+         -"Documentation");
 
-      One_Document_File := Param_Spec_Boolean
+      Docgen_Module (Docgen_Module_ID).One_Document_File := Param_Spec_Boolean
         (Gnew_Boolean
           (Name    => "Doc-Texi-Single",
            Default => False,
@@ -663,9 +748,12 @@ package body Docgen_Module is
              -("Whether Docgen should generate doc in one file (TexInfo"),
            Nick    => -"Single file (for TexInfo)"));
       Register_Property
-        (Kernel, Param_Spec (One_Document_File), -"Documentation");
+        (Kernel,
+         Param_Spec (Docgen_Module (Docgen_Module_ID).One_Document_File),
+         -"Documentation");
 
-      Link_All_References := Param_Spec_Boolean
+      Docgen_Module (Docgen_Module_ID).Link_All_References
+        := Param_Spec_Boolean
         (Gnew_Boolean
           (Name    => "Doc-Xref-All",
            Default => False,
@@ -674,7 +762,7 @@ package body Docgen_Module is
            Nick    => -"Create all links"));
       Register_Property
         (Kernel,
-         Param_Spec (Link_All_References),
+         Param_Spec (Docgen_Module (Docgen_Module_ID).Link_All_References),
          -"Documentation");
 
       Kernel_Callback.Connect
