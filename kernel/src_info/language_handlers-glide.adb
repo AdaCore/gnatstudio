@@ -451,7 +451,9 @@ package body Language_Handlers.Glide is
 
       if Handler.Handlers /= null then
          for H in Handler.Handlers'Range loop
-            Destroy (Handler.Handlers (H).Handler);
+            if Handler.Handlers (H).Handler /= null then
+               Destroy (Handler.Handlers (H).Handler);
+            end if;
             Free (Handler.Handlers (H).Name);
          end loop;
          Unchecked_Free (Handler.Handlers);
