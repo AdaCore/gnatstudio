@@ -1110,6 +1110,15 @@ package body Ada_Analyzer is
          New_Lines : Natural;
 
       begin
+         --  Do not try to go past '.' and line breaks when reformatting,
+         --  this is casuing too much trouble for no gain.
+         --  Getting full identifiers is only useful when parsing, not
+         --  when reformatting.
+
+         if Format then
+            return P - 1;
+         end if;
+
          loop
             New_Lines := 0;
 
