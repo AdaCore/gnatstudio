@@ -2884,14 +2884,13 @@ package body Gtkada.MDI is
          Remove_Page (Note, Page);
       end if;
 
-      if Get_Nth_Page (Note, 0) = null then
+      if Get_Nth_Page (Note, 0) = null
+        and then Side /= None
+      then
          Destroy (MDI.Docks (Side));
          MDI.Docks (Side) := null;
-
-         if Side /= None then
-            MDI.Docks_Size (Side) := 0;
-            Reposition_Handles (MDI);
-         end if;
+         MDI.Docks_Size (Side) := 0;
+         Reposition_Handles (MDI);
       else
          Set_Show_Tabs (Note, Get_Nth_Page (Note, 1) /= null);
       end if;
