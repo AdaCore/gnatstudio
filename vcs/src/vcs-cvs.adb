@@ -23,6 +23,7 @@ with Glide_Kernel;              use Glide_Kernel;
 with Glide_Kernel.Console;      use Glide_Kernel.Console;
 with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
 with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
+with Glide_Kernel.Task_Manager; use Glide_Kernel.Task_Manager;
 
 with GNAT.OS_Lib;
 with GNAT.Case_Util;            use GNAT.Case_Util;
@@ -259,9 +260,11 @@ package body VCS.CVS is
          Dir_Name (Head (Filenames)),
          Args,
          Null_List,
-         Error_Output_Handler'Access);
+         Error_Output_Handler'Access,
+         -"CVS: basic query");
 
-      Enqueue (Rep.Queue, C);
+      Launch_Background_Command
+        (Rep.Kernel, Command_Access (C), False, CVS_Identifier);
 
       Free (Args);
    end Real_Simple_Action;
@@ -563,9 +566,11 @@ package body VCS.CVS is
               Dir,
               Args,
               Command_Head,
-              Status_Output_Handler'Access);
+              Status_Output_Handler'Access,
+              -"CVS: Querying status");
 
-      Enqueue (Rep.Queue, C);
+      Launch_Background_Command
+        (Rep.Kernel, Command_Access (C), False, CVS_Identifier);
 
       Check_Files (Rep, Filenames);
 
@@ -881,9 +886,13 @@ package body VCS.CVS is
                Dir_Name (File),
                Arguments,
                Head,
-               Checkin_Handler'Access);
+               Checkin_Handler'Access,
+               -"CVS: committing");
 
-            Enqueue (Rep.Queue, Checkin_File_Command);
+            Launch_Background_Command
+              (Rep.Kernel,
+               Command_Access (Checkin_File_Command),
+               False, CVS_Identifier);
 
             Free (Arguments);
             Free (Head);
@@ -1140,9 +1149,12 @@ package body VCS.CVS is
                     Dir_Name (File),
                     Args_2,
                     Command_Head,
-                    Intermediate_Diff_Handler'Access);
+                    Intermediate_Diff_Handler'Access,
+                    -"CVS: Querying differences");
 
-            Enqueue (Rep.Queue, C_2);
+            Launch_Background_Command
+              (Rep.Kernel, Command_Access (C_2), False, CVS_Identifier);
+
             Free (Args_2);
          end;
       end if;
@@ -1169,9 +1181,11 @@ package body VCS.CVS is
               Dir_Name (File),
               Args,
               Command_Head,
-              Diff_Handler'Access);
+              Diff_Handler'Access,
+              -"CVS: Querying differences");
 
-      Enqueue (Rep.Queue, C);
+      Launch_Background_Command
+        (Rep.Kernel, Command_Access (C), False, CVS_Identifier);
 
       Free (Command_Head);
       Free (Args);
@@ -1306,9 +1320,11 @@ package body VCS.CVS is
          Dir_Name (File),
          Args,
          Command_Head,
-         Text_Output_Handler'Access);
+         Text_Output_Handler'Access,
+         -"CVS: Querying revision history");
 
-      Enqueue (Rep.Queue, C);
+      Launch_Background_Command
+        (Rep.Kernel, Command_Access (C), False, CVS_Identifier);
 
       Free (Command_Head);
       Free (Args);
@@ -1340,9 +1356,11 @@ package body VCS.CVS is
          Dir_Name (File),
          Args,
          Command_Head,
-         Annotation_Output_Handler'Access);
+         Annotation_Output_Handler'Access,
+         -"CVS: Querying annotations");
 
-      Enqueue (Rep.Queue, C);
+      Launch_Background_Command
+        (Rep.Kernel, Command_Access (C), False, CVS_Identifier);
 
       Free (Command_Head);
       Free (Args);
