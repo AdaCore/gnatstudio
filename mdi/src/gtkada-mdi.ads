@@ -1,6 +1,7 @@
 with Glib;
 with Gdk.GC;
 with Gdk.Types;
+with Gtk.Button;
 with Gtk.Event_Box;
 with Gtk.Handlers;
 with Gtk.Layout;
@@ -26,6 +27,7 @@ with GNAT.OS_Lib;
 --  - Automatically add a new menu bar when a child is floated (settable
 --    on a per-child basis).
 --  - contextual menu in the title bar of children to dock them, float them,...
+--  - Maximize_Children should work even if there is no child in MDI.
 
 package Gtkada.MDI is
 
@@ -115,6 +117,8 @@ package Gtkada.MDI is
      (MDI : access MDI_Window_Record; Maximize : Boolean := True);
    --  All windows, except docked and floating ones, are maximized and occupy
    --  as much space as possible in MDI.
+   --  This function has no effect unless there is already at least one child
+   --  in MDI.
 
    function Get_Focus_Child
      (MDI : access MDI_Window_Record) return MDI_Child;
@@ -168,7 +172,7 @@ package Gtkada.MDI is
    -- Floating and docking children --
    -----------------------------------
 
-   procedure Set_Priorites
+   procedure Set_Priorities
      (MDI : access MDI_Window_Record; Prio : Priorities_Array);
    --  Set the priorities to use for the docks (see description of
    --  Priorities_Array).
@@ -289,6 +293,8 @@ private
 
       Menu_Item : Gtk.Radio_Menu_Item.Gtk_Radio_Menu_Item;
       --  The item in the dynamic menu that represents this child.
+
+      Maximize_Button : Gtk.Button.Gtk_Button;
    end record;
 
    procedure Gtk_New (Child : out MDI_Child;

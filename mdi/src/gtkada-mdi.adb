@@ -375,7 +375,7 @@ package body Gtkada.MDI is
       Gdk_New (Region);
       while Tmp /= Null_List loop
          Child := MDI_Child (Get_Data (Tmp));
-         if Child.State /= Docked then
+         if Child.State /= Docked and then Child.State /= Embedded then
             Size_Request (Child, Child_Req);
             Child.Uniconified_Width := Child_Req.Width;
             Child.Uniconified_Height := Child_Req.Height;
@@ -548,7 +548,13 @@ package body Gtkada.MDI is
          Widget_List.Remove (C.MDI.Invisible_Items, Gtk_Widget (C));
          Unref (C);
          if C.State = Floating then
-            Destroy (Get_Parent (C.Initial_Child));
+            --  Initial_Child could be null if we are destroying a floating
+            --  child explicitly (by closing its X11 window)
+            if C.Initial_Child /= null
+              and then Get_Parent (C.Initial_Child) /= null
+            then
+               Destroy (Get_Parent (C.Initial_Child));
+            end if;
          else
             Ref (C.Initial_Child);
             Remove_From_Notebook (C, Docked_Side (C));
@@ -739,7 +745,9 @@ package body Gtkada.MDI is
       --  It sometimes happens that widgets let events pass through (for
       --  instance scrollbars do that), and thus wouldn't be useful anymore
       --  if we do a grab.
-      if Get_Window (Child) /= Get_Window (Event) then
+      if Get_Window (Child) /= Get_Window (Event)
+        or else Get_Event_Type (Event) /= Button_Press
+      then
          return False;
       end if;
 
@@ -1183,11 +1191,12 @@ package body Gtkada.MDI is
          Gdk.Pixmap.Create_From_Xpm_D
            (Pix, null, Get_Default_Colormap, Mask, Null_Color, Maximize_Xpm);
          Gtk_New (Pixmap, Pix, Mask);
-         Gtk_New (Button);
-         Add (Button, Pixmap);
-         Pack_End (Box2, Button, Expand => False, Fill => False);
+         Gtk_New (Child.Maximize_Button);
+         Add (Child.Maximize_Button, Pixmap);
+         Pack_End
+           (Box2, Child.Maximize_Button, Expand => False, Fill => False);
          Widget_Callback.Object_Connect
-           (Button, "clicked",
+           (Child.Maximize_Button, "clicked",
             Widget_Callback.To_Marshaller (Maximize_Child'Access), Child);
       end if;
 
@@ -1250,13 +1259,17 @@ package body Gtkada.MDI is
          Create_Menu_Entry (C);
       end if;
 
-      if C.State /= Docked then
-         --  If MDI is not realized, then we don't need to do anything now,
-         --  this will be done automatically in Realize_MDI
-         if Realized_Is_Set (MDI) then
+      --  If MDI is not realized, then we don't need to do anything now,
+      --  this will be done automatically in Realize_MDI
+      if C.State /= Docked
+        and then Realized_Is_Set (MDI)
+      then
+         --  If all items are maximized, add Child to the notebook
+         if MDI.Docks (None) /= null then
+            Put_In_Notebook (MDI, None, C);
+         else
             Layout_Child (C);
          end if;
-
          Activate_Child (C);
       end if;
       return C;
@@ -1387,7 +1400,9 @@ package body Gtkada.MDI is
             end if;
          end loop;
       end if;
-      if Child.MDI.Docks (None) /= null then
+      if Child.MDI.Docks (None) /= null
+        and then Realized_Is_Set (Child.MDI.Docks (None))
+      then
          Lower (Get_Window (Child.MDI.Docks (None)));
       end if;
    end Raise_Child;
@@ -2032,6 +2047,8 @@ package body Gtkada.MDI is
          if Child.MDI.Docks (None) /= null and then S /= None then
             Put_In_Notebook (Child.MDI, None, Child);
          else
+            Child.X := Constrain_X (MDI, Child.X);
+            Child.Y := Constrain_Y (MDI, Child.Y);
             Gtk.Layout.Put
               (Gtk_Layout_Record (MDI.all)'Access, Child, Child.X, Child.Y);
          end if;
@@ -2120,11 +2137,12 @@ package body Gtkada.MDI is
          end;
          Move (MDI, Child, Child.X, Child.Y);
          Activate_Child (Child);
+         Hide (Child.Maximize_Button);
 
       elsif Child.State = Iconified and then not Minimize then
          Set_USize (Child, Child.Uniconified_Width, Child.Uniconified_Height);
-         Child.X := Child.Uniconified_X;
-         Child.Y := Child.Uniconified_Y;
+         Child.X := Constrain_X (MDI, Child.Uniconified_X);
+         Child.Y := Constrain_Y (MDI, Child.Uniconified_Y);
          Child.State := Normal;
          Move (MDI, Child, Child.X, Child.Y);
 
@@ -2134,6 +2152,7 @@ package body Gtkada.MDI is
          end if;
 
          Activate_Child (Child);
+         Show (Child.Maximize_Button);
       end if;
    end Minimize_Child;
 
@@ -2535,14 +2554,14 @@ package body Gtkada.MDI is
       return Menu;
    end Create_Child_Menu;
 
-   -------------------
-   -- Set_Priorites --
-   -------------------
+   --------------------
+   -- Set_Priorities --
+   --------------------
 
-   procedure Set_Priorites
+   procedure Set_Priorities
      (MDI : access MDI_Window_Record; Prio : Priorities_Array) is
    begin
       MDI.Priorities := Prio;
-   end Set_Priorites;
+   end Set_Priorities;
 
 end Gtkada.MDI;
