@@ -22,7 +22,6 @@ with Glib;                use Glib;
 with Gtk.Widget;          use Gtk.Widget;
 with Gtk.Main;            use Gtk.Main;
 with Gtk.Menu_Item;       use Gtk.Menu_Item;
-with Gtk.Handlers;        use Gtk.Handlers;
 with Gtk.Notebook;        use Gtk.Notebook;
 with Gtk.Window;          use Gtk.Window;
 with Gtkada.Types;        use Gtkada.Types;
@@ -105,11 +104,6 @@ package body Main_Debug_Window_Pkg.Callbacks is
       Menu_Item : Gtk_Menu_Item;
 
    begin
-      if Main.Locked then
-         Emit_Stop_By_Name (Object, "switch_page");
-         return;
-      end if;
-
       Process :=
         Debugger_Process_Tab (Process_User_Data.Get (Page));
       Update_External_Dialogs (Main, Gtk_Widget (Process));
