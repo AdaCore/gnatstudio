@@ -26,7 +26,7 @@ private package Src_Info.LI_Utils is
    procedure Insert_Declaration
      (File                  : in out LI_File_Ptr;
       List                  : in out LI_File_List;
-      Project               : Prj.Project_Id;
+      DB_Dir                : String;
       Symbol_Name           : String;
       Location              : SN.Point;
       Parent_Filename       : String := "";
@@ -51,7 +51,7 @@ private package Src_Info.LI_Utils is
 
    procedure Insert_Dependency
      (Handler              : access Src_Info.CPP.CPP_LI_Handler_Record'Class;
-      Project              : Prj.Project_Id;
+      DB_Dir               : String;
       File                 : in out LI_File_Ptr;
       List                 : in out LI_File_List;
       Referred_Filename    : String);
@@ -60,7 +60,7 @@ private package Src_Info.LI_Utils is
 
    procedure Insert_Dependency_Declaration
      (Handler               : access Src_Info.CPP.CPP_LI_Handler_Record'Class;
-      Project               : Prj.Project_Id;
+      DB_Dir                : String;
       File                  : in out LI_File_Ptr;
       List                  : in out LI_File_List;
       Symbol_Name           : String;
@@ -83,7 +83,7 @@ private package Src_Info.LI_Utils is
    procedure Add_Parent
      (Declaration_Info : in out E_Declaration_Info_List;
       Handler          : Src_Info.CPP.CPP_LI_Handler;
-      Project          : Prj.Project_Id;
+      DB_Dir           : String;
       List             : in out LI_File_List;
       Parent_Filename  : String;
       Parent_Location  : SN.Point);
@@ -150,7 +150,7 @@ private package Src_Info.LI_Utils is
    procedure Create_Stub_For_File
      (LI            : out LI_File_Ptr;
       Handler       : access Src_Info.CPP.CPP_LI_Handler_Record'Class;
-      Project       : Prj.Project_Id;
+      DB_Dir        : String;
       List          : in out LI_File_List;
       Full_Filename : String);
    --  Create a stub LI file for Full_Filename, if there is no matching LI file

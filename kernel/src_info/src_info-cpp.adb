@@ -1190,7 +1190,7 @@ package body Src_Info.CPP is
       Create_Stub_For_File
         (LI            => File,
          Handler       => Handler,
-         Project       => Project,
+         DB_Dir        => DB_Dir,
          List          => List,
          Full_Filename => Full_Filename);
 
@@ -1432,7 +1432,8 @@ package body Src_Info.CPP is
          if Decl_Info = null then
             Insert_Dependency_Declaration
               (Handler            => Handler,
-               Project            => Project_View,
+               DB_Dir             => Get_DB_Dir
+                 (Handler.SN_Table (CL), CL_Tab.DBI),
                File               => File,
                List               => List,
                Symbol_Name        => CL_Tab.Buffer
@@ -1667,7 +1668,8 @@ package body Src_Info.CPP is
             end;
             Insert_Dependency_Declaration
               (Handler            => Handler,
-               Project            => Project_View,
+               DB_Dir             => Get_DB_Dir
+                 (Handler.SN_Table (MD), MD_Tab.DBI),
                File               => File,
                List               => List,
                Symbol_Name        => Buffer (Name.First .. Name.Last),
@@ -1706,6 +1708,7 @@ package body Src_Info.CPP is
       Decl_Info    : out E_Declaration_Info_List;
       Strict       : Boolean := False)
    is
+      pragma Unreferenced (Project_View);
       P            : Pair_Ptr;
       FD_Tab       : FD_Table;
       FD_Tab_Tmp   : FD_Table;
@@ -1829,7 +1832,8 @@ package body Src_Info.CPP is
 
             Insert_Dependency_Declaration
               (Handler            => Handler,
-               Project            => Project_View,
+               DB_Dir             => Get_DB_Dir
+                 (Handler.SN_Table (FD), FD_Tab.DBI),
                File               => File,
                List               => List,
                Symbol_Name        => Buffer (Name.First .. Name.Last),
@@ -1870,6 +1874,7 @@ package body Src_Info.CPP is
       Module_Type_Defs : Module_Typedefs_List)
    is
       pragma Unreferenced (Module_Type_Defs);
+      pragma Unreferenced (Project_View);
       Class_Desc : CType_Description;
       Class_Def  : CL_Table;
       Success    : Boolean;
@@ -1913,7 +1918,8 @@ package body Src_Info.CPP is
          if Decl_Info = null then
             Insert_Dependency_Declaration
               (Handler            => Handler,
-               Project            => Project_View,
+               DB_Dir             => Get_DB_Dir
+                 (Handler.SN_Table (CL), Class_Def.DBI),
                File               => File,
                List               => List,
                Symbol_Name        => Class_Def.Buffer
@@ -1938,7 +1944,8 @@ package body Src_Info.CPP is
             Insert_Declaration
               (File               => File,
                List               => List,
-               Project            => Project_View,
+               DB_Dir             => Get_DB_Dir
+                 (Handler.SN_Table (CL), Class_Def.DBI),
                Symbol_Name        => Class_Def.Buffer
                  (Class_Def.Name.First .. Class_Def.Name.Last),
                Location           => Class_Def.Start_Position,
@@ -2053,7 +2060,8 @@ package body Src_Info.CPP is
             if Desc.Parent_Point = Invalid_Point then
                Insert_Dependency_Declaration
                  (Handler           => Handler,
-                  Project           => Project_View,
+                  DB_Dir            => Get_DB_Dir
+                     (Handler.SN_Table (CON), Var.DBI),
                   File              => File,
                   List              => List,
                   Symbol_Name       =>
@@ -2067,7 +2075,8 @@ package body Src_Info.CPP is
             else
                Insert_Dependency_Declaration
                  (Handler           => Handler,
-                  Project           => Project_View,
+                  DB_Dir            => Get_DB_Dir
+                     (Handler.SN_Table (CON), Var.DBI),
                   File              => File,
                   List              => List,
                   Symbol_Name       =>
@@ -2118,6 +2127,7 @@ package body Src_Info.CPP is
       Module_Type_Defs : Module_Typedefs_List)
    is
       pragma Unreferenced (Module_Type_Defs);
+      pragma Unreferenced (Project_View);
       Ref_Id     : constant String := Ref.Buffer
         (Ref.Referred_Symbol_Name.First .. Ref.Referred_Symbol_Name.Last);
       Enum_Desc  : CType_Description;
@@ -2156,7 +2166,8 @@ package body Src_Info.CPP is
          if Decl_Info = null then
             Insert_Dependency_Declaration
               (Handler            => Handler,
-               Project            => Project_View,
+               DB_Dir             => Get_DB_Dir
+                 (Handler.SN_Table (E), Enum_Def.DBI),
                File               => File,
                List               => List,
                Symbol_Name        => Enum_Def.Buffer
@@ -2181,7 +2192,8 @@ package body Src_Info.CPP is
             Insert_Declaration
               (File               => File,
                List               => List,
-               Project            => Project_View,
+               DB_Dir             => Get_DB_Dir
+                 (Handler.SN_Table (E), Enum_Def.DBI),
                Symbol_Name        => Enum_Def.Buffer
                  (Enum_Def.Name.First .. Enum_Def.Name.Last),
                Location           => Enum_Def.Start_Position,
@@ -2213,6 +2225,7 @@ package body Src_Info.CPP is
       Module_Type_Defs : Module_Typedefs_List)
    is
       pragma Unreferenced (Module_Type_Defs);
+      pragma Unreferenced (Project_View);
       Decl_Info  : E_Declaration_Info_List;
       Enum_Const : EC_Table;
       Ref_Id     : constant String := Ref.Buffer
@@ -2239,7 +2252,8 @@ package body Src_Info.CPP is
             Insert_Declaration
               (File              => File,
                List              => List,
-               Project           => Project_View,
+               DB_Dir            => Get_DB_Dir
+                 (Handler.SN_Table (EC), Enum_Const.DBI),
                Symbol_Name       => Ref_Id,
                Location          => Enum_Const.Start_Position,
                Kind              => Enumeration_Literal,
@@ -2258,7 +2272,8 @@ package body Src_Info.CPP is
          if Decl_Info = null then
             Insert_Dependency_Declaration
               (Handler           => Handler,
-               Project           => Project_View,
+               DB_Dir            => Get_DB_Dir
+                 (Handler.SN_Table (EC), Enum_Const.DBI),
                File              => File,
                List              => List,
                Symbol_Name       => Ref_Id,
@@ -2388,7 +2403,8 @@ package body Src_Info.CPP is
                      Create_Stub_For_File
                        (LI            => MI_File,
                         Handler       => Handler,
-                        Project       => Project_View,
+                        DB_Dir        => Get_DB_Dir
+                          (Handler.SN_Table (MI), MBody.DBI),
                         List          => List,
                         Full_Filename => MBody.Buffer
                            (MBody.File_Name.First .. MBody.File_Name.Last));
@@ -2497,7 +2513,8 @@ package body Src_Info.CPP is
 
                   Insert_Dependency_Declaration
                     (Handler            => Handler,
-                     Project            => Project,
+                     DB_Dir             => Get_DB_Dir
+                       (Handler.SN_Table (FU), Fn.DBI),
                      File               => File,
                      List               => List,
                      Symbol_Name        => Name,
@@ -2518,7 +2535,8 @@ package body Src_Info.CPP is
                      Create_Stub_For_File
                        (LI            => Fn_File,
                         Handler       => Handler,
-                        Project       => Project,
+                        DB_Dir        => Get_DB_Dir
+                          (Handler.SN_Table (FU), Fn.DBI),
                         List          => List,
                         Full_Filename => Fn.Buffer
                            (Fn.File_Name.First .. Fn.File_Name.Last));
@@ -2708,7 +2726,8 @@ package body Src_Info.CPP is
             Insert_Declaration
               (File               => File,
                List               => List,
-               Project            => Project_View,
+               DB_Dir             => Get_DB_Dir
+                 (Handler.SN_Table (TO), Ref.DBI),
                Symbol_Name        => Ref_Id,
                Location           => Ref.Position,
                Kind               => Kind,
@@ -2856,7 +2875,8 @@ package body Src_Info.CPP is
             if Desc.Parent_Point = Invalid_Point then
                Insert_Dependency_Declaration
                  (Handler           => Handler,
-                  Project           => Project_View,
+                  DB_Dir             => Get_DB_Dir
+                    (Handler.SN_Table (GV), Var.DBI),
                   File              => File,
                   List              => List,
                   Symbol_Name       =>
@@ -2870,7 +2890,8 @@ package body Src_Info.CPP is
             else
                Insert_Dependency_Declaration
                  (Handler           => Handler,
-                  Project           => Project_View,
+                  DB_Dir             => Get_DB_Dir
+                    (Handler.SN_Table (GV), Var.DBI),
                   File              => File,
                   List              => List,
                   Symbol_Name       =>
@@ -3044,7 +3065,8 @@ package body Src_Info.CPP is
             if Desc.Parent_Point = Invalid_Point then
                Insert_Dependency_Declaration
                  (Handler           => Handler,
-                  Project           => Project_View,
+                  DB_Dir             => Get_DB_Dir
+                    (Handler.SN_Table (IV), Var.DBI),
                   File              => File,
                   List              => List,
                   Symbol_Name       => Ref_Id,
@@ -3057,7 +3079,8 @@ package body Src_Info.CPP is
             else
                Insert_Dependency_Declaration
                  (Handler           => Handler,
-                  Project           => Project_View,
+                  DB_Dir             => Get_DB_Dir
+                    (Handler.SN_Table (IV), Var.DBI),
                   File              => File,
                   List              => List,
                   Symbol_Name       => Ref_Id,
@@ -3105,6 +3128,7 @@ package body Src_Info.CPP is
       Module_Type_Defs : Module_Typedefs_List)
    is
       pragma Unreferenced (Module_Type_Defs);
+      pragma Unreferenced (Project_View);
       Macro  : MA_Table;
       Ref_Id : constant String := Ref.Buffer
         (Ref.Referred_Symbol_Name.First .. Ref.Referred_Symbol_Name.Last);
@@ -3134,7 +3158,8 @@ package body Src_Info.CPP is
             Insert_Declaration
               (File               => File,
                List               => List,
-               Project            => Project_View,
+               DB_Dir             => Get_DB_Dir
+                 (Handler.SN_Table (MA), Macro.DBI),
                Symbol_Name        => Ref_Id,
                Location           => Macro.Start_Position,
                Kind               => Unresolved_Entity,
@@ -3154,7 +3179,8 @@ package body Src_Info.CPP is
          if Decl_Info = null then
             Insert_Dependency_Declaration
               (Handler           => Handler,
-               Project           => Project_View,
+               DB_Dir             => Get_DB_Dir
+                 (Handler.SN_Table (MA), Macro.DBI),
                File              => File,
                List              => List,
                Symbol_Name       => Ref_Id,
@@ -3308,7 +3334,8 @@ package body Src_Info.CPP is
             Insert_Declaration
               (File               => File,
                List               => List,
-               Project            => Project_View,
+               DB_Dir             => Get_DB_Dir
+                 (Handler.SN_Table (TO), Ref.DBI),
                Symbol_Name        => Ref_Id,
                Location           => Ref.Position,
                Kind               => Kind,
@@ -3396,6 +3423,7 @@ package body Src_Info.CPP is
       Project_View     : Prj.Project_Id;
       Module_Type_Defs : Module_Typedefs_List)
    is
+      pragma Unreferenced (Project_View);
       Typedef   : T_Table;
       Ref_Id    : constant String := Ref.Buffer
         (Ref.Referred_Symbol_Name.First .. Ref.Referred_Symbol_Name.Last);
@@ -3443,7 +3471,8 @@ package body Src_Info.CPP is
                Insert_Declaration
                  (File              => File,
                   List              => List,
-                  Project           => Project_View,
+                  DB_Dir             => Get_DB_Dir
+                    (Handler.SN_Table (T), Typedef.DBI),
                   Symbol_Name       => Ref_Id,
                   Location          => Typedef.Start_Position,
                   Kind              => Desc.Kind,
@@ -3454,7 +3483,8 @@ package body Src_Info.CPP is
                Insert_Declaration
                  (File              => File,
                   List              => List,
-                  Project           => Project_View,
+                  DB_Dir             => Get_DB_Dir
+                    (Handler.SN_Table (T), Typedef.DBI),
                   Symbol_Name       => Ref_Id,
                   Location          => Typedef.Start_Position,
                   Parent_Location   => Predefined_Point,
@@ -3466,7 +3496,8 @@ package body Src_Info.CPP is
                Insert_Declaration
                  (File              => File,
                   List              => List,
-                  Project           => Project_View,
+                  DB_Dir             => Get_DB_Dir
+                    (Handler.SN_Table (T), Typedef.DBI),
                   Symbol_Name       => Ref_Id,
                   Location          => Typedef.Start_Position,
                   Parent_Location   => Desc.Ancestor_Point,
@@ -3505,7 +3536,8 @@ package body Src_Info.CPP is
                --  unknown parent
                Insert_Dependency_Declaration
                  (Handler           => Handler,
-                  Project           => Project_View,
+                  DB_Dir             => Get_DB_Dir
+                    (Handler.SN_Table (T), Typedef.DBI),
                   File              => File,
                   List              => List,
                   Symbol_Name       => Ref_Id,
@@ -3519,7 +3551,8 @@ package body Src_Info.CPP is
                --  typedef for builtin type
                Insert_Dependency_Declaration
                  (Handler           => Handler,
-                  Project           => Project_View,
+                  DB_Dir             => Get_DB_Dir
+                    (Handler.SN_Table (T), Typedef.DBI),
                   File              => File,
                   List              => List,
                   Symbol_Name       => Ref_Id,
@@ -3534,7 +3567,8 @@ package body Src_Info.CPP is
                --  parent type found
                Insert_Dependency_Declaration
                  (Handler           => Handler,
-                  Project           => Project_View,
+                  DB_Dir             => Get_DB_Dir
+                    (Handler.SN_Table (T), Typedef.DBI),
                   File              => File,
                   List              => List,
                   Symbol_Name       => Ref_Id,
@@ -3577,6 +3611,7 @@ package body Src_Info.CPP is
       Module_Type_Defs : Module_Typedefs_List)
    is
       pragma Unreferenced (Module_Type_Defs);
+      pragma Unreferenced (Project_View);
       Ref_Id : constant String := Ref.Buffer
         (Ref.Referred_Symbol_Name.First .. Ref.Referred_Symbol_Name.Last);
       Union_Desc : CType_Description;
@@ -3615,7 +3650,8 @@ package body Src_Info.CPP is
          if Decl_Info = null then
             Insert_Dependency_Declaration
               (Handler            => Handler,
-               Project            => Project_View,
+               DB_Dir             => Get_DB_Dir
+                 (Handler.SN_Table (UN), Union_Def.DBI),
                File               => File,
                List               => List,
                Symbol_Name        => Union_Def.Buffer
@@ -3640,7 +3676,8 @@ package body Src_Info.CPP is
             Insert_Declaration
               (File               => File,
                List               => List,
-               Project            => Project_View,
+               DB_Dir             => Get_DB_Dir
+                 (Handler.SN_Table (UN), Union_Def.DBI),
                Symbol_Name        => Union_Def.Buffer
                  (Union_Def.Name.First .. Union_Def.Name.Last),
                Location           => Union_Def.Start_Position,
@@ -3701,7 +3738,8 @@ package body Src_Info.CPP is
       Insert_Declaration
         (File                  => File,
          List                  => List,
-         Project               => Project_View,
+         DB_Dir                => Get_DB_Dir
+           (Handler.SN_Table (CL), Class_Def.DBI),
          Symbol_Name           =>
            Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last),
          Location              => Sym.Start_Position,
@@ -3753,7 +3791,8 @@ package body Src_Info.CPP is
                   Add_Parent
                     (Decl_Info,
                      Handler => CPP_LI_Handler (Handler),
-                     Project => Project_View,
+                     DB_Dir  => Get_DB_Dir
+                       (Handler.SN_Table (CL), Super_Def.DBI),
                      List => List,
                      Parent_Filename => Super_Def.Buffer
                        (Super_Def.File_Name.First .. Super_Def.File_Name.Last),
@@ -3791,6 +3830,7 @@ package body Src_Info.CPP is
       Project_View     : Prj.Project_Id;
       Module_Type_Defs : Module_Typedefs_List)
    is
+      pragma Unreferenced (Project_View);
       Desc              : CType_Description;
       Var               : GV_Table;
       Success           : Boolean;
@@ -3831,7 +3871,8 @@ package body Src_Info.CPP is
          Insert_Declaration
            (File              => File,
             List              => List,
-            Project           => Project_View,
+            DB_Dir            => Get_DB_Dir
+              (Handler.SN_Table (CON), Var.DBI),
             Symbol_Name       =>
               Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last),
             Location          => Sym.Start_Position,
@@ -3842,7 +3883,8 @@ package body Src_Info.CPP is
          Insert_Declaration
            (File              => File,
             List              => List,
-            Project           => Project_View,
+            DB_Dir            => Get_DB_Dir
+              (Handler.SN_Table (CON), Var.DBI),
             Symbol_Name       =>
               Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last),
             Location          => Sym.Start_Position,
@@ -3916,7 +3958,7 @@ package body Src_Info.CPP is
       Project_View     : Prj.Project_Id;
       Module_Type_Defs : Module_Typedefs_List)
    is
-      pragma Unreferenced (Handler, Module_Type_Defs);
+      pragma Unreferenced (Project_View, Module_Type_Defs);
       Decl_Info : E_Declaration_Info_List;
       E_Id      : constant String := Sym.Buffer
         (Sym.Identifier.First .. Sym.Identifier.Last);
@@ -3927,7 +3969,8 @@ package body Src_Info.CPP is
       Insert_Declaration
         (File              => File,
          List              => List,
-         Project           => Project_View,
+         DB_Dir            => Get_DB_Dir
+           (Handler.SN_Table (FIL), Sym.DBI),
          Symbol_Name       => E_Id,
          Location          => Sym.Start_Position,
          Kind              => Enumeration_Type,
@@ -3948,6 +3991,7 @@ package body Src_Info.CPP is
       Module_Type_Defs : Module_Typedefs_List)
    is
       pragma Unreferenced (Module_Type_Defs);
+      pragma Unreferenced (Project_View);
       Decl_Info : E_Declaration_Info_List;
       Ec_Id     : constant String := Sym.Buffer
         (Sym.Identifier.First ..  Sym.Identifier.Last);
@@ -3984,7 +4028,8 @@ package body Src_Info.CPP is
          Insert_Declaration
            (File              => File,
             List              => List,
-            Project           => Project_View,
+            DB_Dir            => Get_DB_Dir
+              (Handler.SN_Table (FIL), Sym.DBI),
             Symbol_Name       => Ec_Id,
             Location          => Sym.Start_Position,
             Kind              => Enumeration_Literal,
@@ -3997,7 +4042,8 @@ package body Src_Info.CPP is
          Insert_Declaration
            (File              => File,
             List              => List,
-            Project           => Project_View,
+            DB_Dir            => Get_DB_Dir
+              (Handler.SN_Table (FIL), Sym.DBI),
             Symbol_Name       => Ec_Id,
             Location          => Sym.Start_Position,
             Kind              => Enumeration_Literal,
@@ -4019,6 +4065,7 @@ package body Src_Info.CPP is
       Module_Type_Defs : Module_Typedefs_List)
    is
       pragma Unreferenced (Module_Type_Defs);
+      pragma Unreferenced (Project_View);
       Target_Kind  : E_Kind;
       Decl_Info    : E_Declaration_Info_List;
       P            : Pair_Ptr;
@@ -4029,6 +4076,7 @@ package body Src_Info.CPP is
       Is_Static    : Boolean;
       Match        : Boolean;
       FU_File      : LI_File_Ptr;
+      First_DBI    : Integer;
    begin
       --  Info ("Sym_FD_Hanlder: """
       --        & Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last)
@@ -4042,6 +4090,7 @@ package body Src_Info.CPP is
          Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last));
 
       Is_Static  := (FD_Tab.Attributes and SN_STATIC) = SN_STATIC;
+      First_DBI  := FD_Tab.DBI;
 
       Set_Cursor
         (Handler.SN_Table (FD),
@@ -4078,6 +4127,7 @@ package body Src_Info.CPP is
          if (Match and then First_FD_Pos = Invalid_Point)
                or else FD_Tab_Tmp.Start_Position < First_FD_Pos then
             First_FD_Pos := FD_Tab_Tmp.Start_Position;
+            First_DBI    := FD_Tab_Tmp.DBI;
          end if;
          Free (FD_Tab_Tmp);
       end loop;
@@ -4099,7 +4149,8 @@ package body Src_Info.CPP is
          Insert_Declaration
            (File              => File,
             List              => List,
-            Project           => Project_View,
+            DB_Dir            => Get_DB_Dir
+              (Handler.SN_Table (FD), First_DBI),
             Symbol_Name       =>
               Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last),
             Location          => First_FD_Pos,
@@ -4155,7 +4206,8 @@ package body Src_Info.CPP is
                Create_Stub_For_File
                  (LI            => FU_File,
                   Handler       => Handler,
-                  Project       => Project_View,
+                  DB_Dir             => Get_DB_Dir
+                    (Handler.SN_Table (FU), FU_Tab.DBI),
                   List          => List,
                   Full_Filename => FU_Tab.Buffer
                      (FU_Tab.File_Name.First .. FU_Tab.File_Name.Last));
@@ -4328,7 +4380,8 @@ package body Src_Info.CPP is
          Insert_Declaration
            (File                  => File,
             List                  => List,
-            Project               => Project_View,
+            DB_Dir                => Get_DB_Dir
+              (Handler.SN_Table (FIL), Sym.DBI),
             Symbol_Name           => Fu_Id,
             Location              => Start_Position,
             Kind                  => Target_Kind,
@@ -4436,6 +4489,7 @@ package body Src_Info.CPP is
       Project_View     : Prj.Project_Id;
       Module_Type_Defs : Module_Typedefs_List)
    is
+      pragma Unreferenced (Project_View);
       Desc              : CType_Description;
       Var               : GV_Table;
       Success           : Boolean;
@@ -4478,7 +4532,8 @@ package body Src_Info.CPP is
          Insert_Declaration
            (File              => File,
             List              => List,
-            Project           => Project_View,
+            DB_Dir             => Get_DB_Dir
+              (Handler.SN_Table (GV), Var.DBI),
             Symbol_Name       =>
               Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last),
             Location          => Sym.Start_Position,
@@ -4489,7 +4544,8 @@ package body Src_Info.CPP is
          Insert_Declaration
            (File              => File,
             List              => List,
-            Project           => Project_View,
+            DB_Dir             => Get_DB_Dir
+              (Handler.SN_Table (GV), Var.DBI),
             Symbol_Name       =>
               Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last),
             Location          => Sym.Start_Position,
@@ -4541,6 +4597,8 @@ package body Src_Info.CPP is
    is
       pragma Unreferenced (Module_Type_Defs);
 
+      Prj_Data : SN_Prj_Data;
+
       --  ??? We shouldn't use Base_Name below, but should allow find file to
       --  recognize directories in the name.
       Full_Included : constant String := Find_File
@@ -4553,12 +4611,21 @@ package body Src_Info.CPP is
       --        & Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last)
       --        & " depends on " & Full_Included
       --        & """");
+
+      SN_Prj_HTables.Get_First (Handler.Prj_HTable.all, Prj_Data);
+      if Prj_Data = No_SN_Prj_Data then
+         Fail ("Failed to select directory for includes' xref files");
+      else
+         Info ("All includes go into " & Prj_Data.Key.all);
+      end if;
+
       if Full_Included = "" then
          Info ("File not found on path: "
                & Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last));
+
          Insert_Dependency
            (Handler           => Handler,
-            Project           => Project_View,
+            DB_Dir            => Prj_Data.Key.all,
             File              => File,
             List              => List,
             Referred_Filename => Sym.Buffer
@@ -4566,7 +4633,7 @@ package body Src_Info.CPP is
       else
          Insert_Dependency
            (Handler           => Handler,
-            Project           => Project_View,
+            DB_Dir            => Prj_Data.Key.all,
             File              => File,
             List              => List,
             Referred_Filename => Full_Included);
@@ -4585,6 +4652,7 @@ package body Src_Info.CPP is
       Project_View     : Prj.Project_Id;
       Module_Type_Defs : Module_Typedefs_List)
    is
+      pragma Unreferenced (Project_View);
       Inst_Var        : IV_Table;
       Decl_Info       : E_Declaration_Info_List;
       Success         : Boolean;
@@ -4670,7 +4738,8 @@ package body Src_Info.CPP is
          Insert_Declaration
            (File              => File,
             List              => List,
-            Project           => Project_View,
+            DB_Dir            => Get_DB_Dir
+              (Handler.SN_Table (FIL), Sym.DBI),
             Symbol_Name       =>
               Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last),
             Location          => Sym.Start_Position,
@@ -4681,7 +4750,8 @@ package body Src_Info.CPP is
          Insert_Declaration
            (File              => File,
             List              => List,
-            Project           => Project_View,
+            DB_Dir            => Get_DB_Dir
+              (Handler.SN_Table (FIL), Sym.DBI),
             Symbol_Name       =>
               Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last),
             Location          => Sym.Start_Position,
@@ -4720,7 +4790,7 @@ package body Src_Info.CPP is
       Project_View     : Prj.Project_Id;
       Module_Type_Defs : Module_Typedefs_List)
    is
-      pragma Unreferenced (Handler, Module_Type_Defs);
+      pragma Unreferenced (Project_View, Module_Type_Defs);
       tmp_ptr    : E_Declaration_Info_List;
    begin
       --  Info ("Sym_MA_Handler: """
@@ -4730,7 +4800,8 @@ package body Src_Info.CPP is
       Insert_Declaration
         (File              => File,
          List              => List,
-         Project           => Project_View,
+         DB_Dir             => Get_DB_Dir
+           (Handler.SN_Table (FIL), Sym.DBI),
          Symbol_Name       =>
            Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last),
          Location          => Sym.Start_Position,
@@ -4852,7 +4923,8 @@ package body Src_Info.CPP is
          Insert_Declaration
            (File              => File,
             List              => List,
-            Project           => Project_View,
+            DB_Dir             => Get_DB_Dir
+              (Handler.SN_Table (MD), MD_Tab.DBI),
             Symbol_Name       =>
                Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last),
             Location          => First_MD_Pos,
@@ -4909,7 +4981,8 @@ package body Src_Info.CPP is
                Create_Stub_For_File
                  (LI            => MI_File,
                   Handler       => Handler,
-                  Project       => Project_View,
+                  DB_Dir        => Get_DB_Dir
+                    (Handler.SN_Table (MI), MI_Tab.DBI),
                   List          => List,
                   Full_Filename => MI_Tab.Buffer
                      (MI_Tab.File_Name.First .. MI_Tab.File_Name.Last));
@@ -4947,6 +5020,7 @@ package body Src_Info.CPP is
       Project_View     : Prj.Project_Id;
       Module_Type_Defs : Module_Typedefs_List)
    is
+      pragma Unreferenced (Project_View);
       Decl_Info  : E_Declaration_Info_List;
       Desc       : CType_Description;
       Success    : Boolean;
@@ -4979,7 +5053,8 @@ package body Src_Info.CPP is
             Insert_Declaration
               (File              => File,
                List              => List,
-               Project           => Project_View,
+               DB_Dir            => Get_DB_Dir
+                 (Handler.SN_Table (T), Sym.DBI),
                Symbol_Name       => Identifier,
                Location          => Sym.Start_Position,
                Kind              => Desc.Kind,
@@ -4993,7 +5068,8 @@ package body Src_Info.CPP is
             Insert_Declaration
               (File              => File,
                List              => List,
-               Project           => Project_View,
+               DB_Dir            => Get_DB_Dir
+                 (Handler.SN_Table (T), Sym.DBI),
                Symbol_Name       => Identifier,
                Location          => Sym.Start_Position,
                Parent_Location   => Predefined_Point,
@@ -5006,7 +5082,8 @@ package body Src_Info.CPP is
             Insert_Declaration
               (File              => File,
                List              => List,
-               Project           => Project_View,
+               DB_Dir            => Get_DB_Dir
+                 (Handler.SN_Table (T), Sym.DBI),
                Symbol_Name       => Identifier,
                Location          => Sym.Start_Position,
                Parent_Filename   => Desc.Ancestor_Filename.all,
@@ -5038,6 +5115,7 @@ package body Src_Info.CPP is
       Module_Type_Defs : Module_Typedefs_List)
    is
       pragma Unreferenced (Module_Type_Defs);
+      pragma Unreferenced (Project_View);
       Decl_Info : E_Declaration_Info_List;
       Desc      : CType_Description;
       Union_Def : UN_Table;
@@ -5059,7 +5137,8 @@ package body Src_Info.CPP is
          Insert_Declaration
            (File                  => File,
             List                  => List,
-            Project               => Project_View,
+            DB_Dir                => Get_DB_Dir
+              (Handler.SN_Table (UN), Union_Def.DBI),
             Symbol_Name           =>
               Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last),
             Location              => Sym.Start_Position,
@@ -5108,6 +5187,7 @@ package body Src_Info.CPP is
       Project_View     : Prj.Project_Id;
       Module_Type_Defs : Module_Typedefs_List)
    is
+      pragma Unreferenced (Project_View);
       P           : Pair_Ptr;
       Var         : LV_Table;
       Decl_Info   : E_Declaration_Info_List;
@@ -5226,7 +5306,8 @@ package body Src_Info.CPP is
                   Insert_Declaration
                     (File              => File,
                      List              => List,
-                     Project           => Project_View,
+                     DB_Dir            => Get_DB_Dir
+                       (Handler.SN_Table (LV), Var.DBI),
                      Symbol_Name       => Var.Buffer
                        (Var.Name.First .. Var.Name.Last),
                      Location          => Var.Start_Position,
@@ -5237,7 +5318,8 @@ package body Src_Info.CPP is
                   Insert_Declaration
                     (File              => File,
                      List              => List,
-                     Project           => Project_View,
+                     DB_Dir            => Get_DB_Dir
+                       (Handler.SN_Table (LV), Var.DBI),
                      Symbol_Name       => Var.Buffer
                        (Var.Name.First .. Var.Name.Last),
                      Location          => Var.Start_Position,
@@ -5391,6 +5473,7 @@ package body Src_Info.CPP is
       Project_View     : Prj.Project_Id;
       Module_Type_Defs : Module_Typedefs_List)
    is
+      pragma Unreferenced (Project_View);
       Arg              : TA_Table;
       P                : Pair_Ptr;
       Decl_Info        : E_Declaration_Info_List;
@@ -5401,6 +5484,7 @@ package body Src_Info.CPP is
       File_Name        : Segment;
       Template_Args    : Segment;
       Class_Name       : Segment := (1, 0);
+      TA_File          : DB_File;
    begin
       if not Is_Open (Handler.SN_Table (TA)) then
          Fail (".ta table does not exist but template argument processing"
@@ -5424,14 +5508,15 @@ package body Src_Info.CPP is
          end if;
       end if;
 
+      TA_File := Dup (Handler.SN_Table (TA));
       Set_Cursor
-        (Handler.SN_Table (TA),
+        (TA_File,
          Position    => By_Key,
          Key         => Buffer (Scope.First .. Scope.Last) & Field_Sep,
          Exact_Match => False);
 
       loop
-         P := Get_Pair (Handler.SN_Table (TA), Next_By_Key);
+         P := Get_Pair (TA_File, Next_By_Key);
          exit when P = null;
          Arg := Parse_Pair (P.all);
          Free (P);
@@ -5450,7 +5535,8 @@ package body Src_Info.CPP is
                Insert_Declaration
                  (File             => File,
                   List             => List,
-                  Project          => Project_View,
+                  DB_Dir           => Get_DB_Dir
+                    (Handler.SN_Table (TA), Arg.DBI),
                   Symbol_Name      =>
                      Arg.Buffer (Arg.Name.First .. Arg.Name.Last),
                   Location         => Arg.Start_Position,
@@ -5478,7 +5564,8 @@ package body Src_Info.CPP is
                   Insert_Declaration
                     (File             => File,
                      List             => List,
-                     Project          => Project_View,
+                     DB_Dir           => Get_DB_Dir
+                       (Handler.SN_Table (TA), Arg.DBI),
                      Symbol_Name      =>
                         Arg.Buffer (Arg.Name.First .. Arg.Name.Last),
                      Location         => Arg.Start_Position,
@@ -5489,7 +5576,8 @@ package body Src_Info.CPP is
                   Insert_Declaration
                     (File             => File,
                      List             => List,
-                     Project          => Project_View,
+                     DB_Dir           => Get_DB_Dir
+                       (Handler.SN_Table (TA), Arg.DBI),
                      Symbol_Name      =>
                         Arg.Buffer (Arg.Name.First .. Arg.Name.Last),
                      Location         => Arg.Start_Position,
@@ -5529,7 +5617,8 @@ package body Src_Info.CPP is
          Free (Arg);
       end loop;
 
-      Release_Cursor (Handler.SN_Table (TA));
+      Release_Cursor (TA_File);
+      Close (TA_File, Success);
    end Process_Template_Arguments;
 
    ----------
