@@ -139,6 +139,7 @@ Debugging
 * The Memory Window::
 * Using the Source Editor when Debugging::
 * The Debugger Console::
+* Upgrading from GVD to GPS::
 
 Version Control System
 * The VCS Explorer::
@@ -4147,6 +4148,12 @@ e.g. the GDB documentation
 @end ifhtml
 - for more details.
 
+The integrated debugger provided by GPS is using an improved version of
+the GVD engine, so the functionalities between GVD and GPS are very similar.
+If you are familiar with GVD, you may be interested in reading
+@ref{Upgrading from GVD to GPS} which explains the differences between the
+two environments.
+
 Debugging is tightly integrated with the other components of GPS. For
 example, it is possible to edit files and navigate through your sources
 while debugging.
@@ -4180,9 +4187,202 @@ When you want to quit the debugger without quitting GPS, go to the menu
 * Using the Source Editor when Debugging::
 * The Assembly Window::
 * The Debugger Console::
+* Upgrading from GVD to GPS::
 @end menu
 
 @include ../gvd/docs/gvd_contents.texi
+
+@node Upgrading from GVD to GPS
+@section Upgrading from GVD to GPS
+@noindent
+This section is intended for users already familiar with GVD, in order
+to help them transitioning to GPS. If you have not used GVD, you may want
+to skip this section.
+
+This section outlines the differences between GVD and GPS, and also
+lists some of the advantages of GPS compared to GVD.
+
+@subsection Command Line Switches
+@noindent
+The following command line switches related to debugging are available
+in GPS:
+
+@table @code
+@item --debug
+Automatically start a debug session, as done by GVD.
+you can also specify a program name and its arguments, so this
+option replaces the @code{--pargs} and @code{executable-file} arguments in GVD.
+   
+@item --debugger
+Equivalent to the same GVD option, with the difference that
+arguments can be specified as well, replacing the @code{--dargs} option.
+
+@item --target
+Same as in GVD.
+@end table
+
+For example, the equivalent of the following command line:
+
+@smallexample
+$ gvd --debugger=gdb-5 executable --pargs 1 2 3
+@end smallexample
+
+would be
+
+@smallexample
+$ gps --debug='executable 1 2 3' --debugger=gdb-5
+@end smallexample
+
+@subsection Menu Items
+@noindent
+All the debugger-related menus in GVD can be found under the 'Debug'
+menu in GPS, with the following mapping:
+
+@table @code
+@item File->xxx
+available under @code{Debug->Debug->xxx}
+
+@item Program->xxx
+available under @code{Debug->xxx}
+
+@item Data->xxx
+available under @code{Debug->Data->xxx}
+@end table
+
+The menu @code{File->New Debugger...} is replaced by the combination of
+the menu @code{Debug->Initialize} and the project properties, available
+under @code{Project->Edit Project Properties} where you can similarly
+specify your @i{Debugger Host} (called @i{Tools Host}), your
+@i{Program Host}, the @i{Protocol} used by the underlying debugger
+to communicate with the target, and the name of the debugger.
+To conveniently switch between multiple debugger configurations, we
+recommend to use a scenario variable and set different properties based
+on the value of this variable. See
+@ref{Scenarios and Configuration Variables} and
+@ref{Working in a Cross Environment} for more details.
+
+@subsection Tool Bar Buttons
+@noindent
+GPS provides by default fewer debugger buttons than GVD, because some
+buttons are actually not used very often, and others have been merged.
+In addition, it will be possible in the future to completely configure
+the GPS tool bar.
+
+@table @code
+@item Run
+Menu @code{Debug->Run...} (@key{F2})
+
+@item Start
+Start/Continue button
+
+@item Step
+Step button
+
+@item Stepi
+Menu @code{Debug->Step Instruction} (@key{Shift-F5})
+
+@item Next
+Next button
+
+@item Nexti
+Menu @code{Debug->Next Instruction} (@key{Shift-F6})
+
+@item Finish
+Finish button
+
+@item Cont
+Start/Continue button
+
+@item Up
+Up button
+
+@item Down
+Down button
+
+@item Interrupt
+Menu @code{Debug->Interrupt} (@key{Control-Blackslash})
+@end table
+
+@subsection Key Short Cuts
+@noindent
+The same key shortcuts have been kept by default between GVD and GPS
+except for the Interrupt menu, which is now @key{Control-Backslash} instead
+of @key{Esc}.
+
+@subsection Contextual Menus
+@noindent
+All the debugger-related contextual menus can now be found under the
+@code{Debug} submenu.
+
+The only difference is the contextual menu @code{Show} used to display
+the assembly dump of the current code. It is replaced by the menu
+@code{Debug->Data->Assembly}, see @ref{The Assembly Window} for more
+details.
+
+@subsection File Explorer
+@noindent
+The file explorer provided in GVD is replaced by the @code{Project View}
+and the @code{File View} in GPS.
+
+When using the @code{--debug} command line switch and no explicit project
+file, GPS will automatically create a project file in a way very
+similar to what GVD does to display its file explorer, and available under
+the @code{Project View}.
+
+In addition, the @code{File View} gives access to any file in your file
+system, even if it is not available as part of the debug information.
+
+@subsection Advantages of GPS
+@noindent
+The advantages when using GPS instead of GVD can be classified in two main
+categories: when not using project files, and when using them.
+
+When not using project files, you get access to the following advantages
+in GPS:
+
+@itemize @bullet
+@item Complete source editor including indentation, shortcuts, multiple
+views, @dots{}
+See @ref{Editing Files} for more details.
+
+@item A more stable and robust debugger engine.
+The debugger engine included in GPS corresponds to GVD version 2.0.
+In effect, GPS @i{is} the new version of GVD.
+
+@item Integrated help, see @ref{Integrated Help} for more details.
+
+@item Better look and feel.
+GPS uses the new version of the graphical toolkit used by GVD, which
+provides a modern look and feel and a more stable interface under Windows
+(with additions such as support for the mouse wheel).
+
+@item Support for version control systems
+which is integrated and available through a few mouse clicks or key bindings.
+See @ref{Version Control System} for more details.
+
+@item A more flexible window handling,
+see @ref{Multiple Document Interface} for more details.
+@end itemize
+
+When using project files, you will get, in addition to the advantages listed
+above:
+
+@itemize @bullet
+@item Source navigation, see @ref{Source Navigation} for more details.
+
+@item Source Browsers,
+in particular the entity browser, a nice complement of the debugger data window.
+See @ref{Source Browsing} for more details.
+
+@item Builds, see @ref{Compilation/Build} for more details.
+
+@item Semantic support.
+In particular, future versions of GPS will be able to e.g. differenciate
+variables from types when displaying a contextual menu, which is not possible
+in GVD.
+
+@item Flexibility of project files, see @ref{Project Handling} for more details.
+@end itemize
 
 @c --------------------------------------------------------------------
 @node Version Control System
@@ -5424,10 +5624,17 @@ The key manager is accessible through the menu @code{Edit->Key Shortcuts}.
 This dialog provides an easy way to associate key shortcuts with actions.
 These actions are either predefined in GPS, or defined in your own
 customization files, as documented in @ref{Customizing the Menu and Tool Bar}.
-
 It also provides an easy way to redefine the menu shortcuts.
 
-@c ??? Add missing screenshot
+@iftex
+@cindex screen shot
+@image{key-shortcuts, 8.7cm}
+@end iftex
+
+@ifhtml
+@cindex screen shot
+@image{key-shortcuts}
+@end ifhtml
 
 Actions are referenced by their name, and are grouped into categories. These
 categories indicate when the action applies. For instance, the indentation
@@ -5441,7 +5648,7 @@ type the shortcut. The recording of the key binding will stop a short while
 after the last key stroke.
 
 This facility for creating complex shortcuts is not available for menu
-shortcuts yet.
+items yet.
 
 @c -----------------------------------------------------------------
 @node Customizing the Menu and Tool Bar
@@ -5491,7 +5698,7 @@ directory to the new format. This conversion tool is called
 @file{gps_convert_custom}, and must be run manually.
 
 @subsection Defining Actions
-@cindex <action>
+@cindex action
 @noindent
 
 These files distinguish the actions from their associated menus or
@@ -5508,7 +5715,7 @@ fails in which case the following commands are not executed.
 The following XML tags are valid children for @code{<action>}.
 @table @code
 
-@cindex <external>
+@cindex external
 @item <external>
 This defines a command to execute through the system (ie a standard Unix or
 Windows command)
@@ -5525,7 +5732,7 @@ Thus, the @code{external} tag would look like:
 @end smallexample
 
 
-@cindex <shell>
+@cindex shell
 @cindex shell
 @cindex interactive command
 @item <shell>
@@ -5567,12 +5774,12 @@ project browser.
 
 
 @item <description>
-@cindex <description>
+@cindex description
 This tag contains a description for the command, which is used in the
 graphical editor for the key manager. @xref{The Key Manager Dialog}.
 
 @item <context>
-@cindex <context>
+@cindex context
 This is the name of the context in which the action applies. By default,
 actions are applicable anywhere in GPS. You can restrict for instance the
 action to the source editors by specifying "Source editor" in this field.
@@ -5689,7 +5896,7 @@ The following example defines a new button:
 
 
 @subsection Binding actions to keys
-@cindex <key>
+@cindex key
 @noindent
 
 All the actions defined above can be bound to specific key shortcuts through
@@ -6017,16 +6224,6 @@ Here is an example of a language definition for the GPS project files:
 GPS provides a mechanism known as @b{aliases}. These are defined
 through the menu @code{Edit->Aliases}.
 
-@iftex
-@cindex screen shot
-@image{aliases, 10.7cm}
-@end iftex
-
-@ifhtml
-@cindex screen shot
-@image{aliases}
-@end ifhtml
-
 Each alias has a name, which is generally a short string of characters.
 When you type them in any textual entry in GPS (generally a source editor, but
 also entry fields for instance in the file selector), and then press the special
@@ -6038,6 +6235,16 @@ Alias names may be composed of any character, but must start with a
 letter. GPS will jump to the start of each word before the current
 cursor position, and if the characters between this word start and the
 cursor position is an alias name, this alias is expanded.
+
+@iftex
+@cindex screen shot
+@image{aliases, 10.7cm}
+@end iftex
+
+@ifhtml
+@cindex screen shot
+@image{aliases}
+@end ifhtml
 
 The alias editor is divided into three main parts: on the left side, the list of
 currently defined aliases is shown. Clicking on any of them will
@@ -7046,7 +7253,15 @@ defined.
    @item $HOME/.gps/log
 @cindex log
 @anchor{log file}
-Log file created automatically by GPS
+Log file created automatically by GPS.
+When GPS is running, it will create a file named @file{log.<pid>}, where
+@file{<pid>} is the GPS process id, so that multiple GPS sessions do not
+clobber each other's log. In case of a successful session, this
+file is renamed @file{log} when exiting; in case of an unexpected exit
+(a bug box will be displayed), the log file is kept under its original name.
+
+Note that the name of the log file is configured by the @file{traces.cfg}
+file.
 
    @item $HOME/.gps/aliases
 @cindex aliases
@@ -7107,7 +7322,12 @@ saved by the user.
 
    @item $HOME/.gps/traces.cfg
 Default configuration for the system traces. These traces are used to analyze
-problems with GPS. By default, they are sent to the file @file{$HOME/.gps/log}.
+problems with GPS.
+By default, they are sent to the file @file{$HOME/.gps/log.<pid>}.
+
+This file is created automatically when it does not exist. When
+upgrading to a new version of GPS, it is recommended to remove it since
+its contents may change from version to version.
 
    @item @i{prefix}
 The prefix directory where GPS is installed, e.g @file{/opt/gps}.
@@ -7197,6 +7417,10 @@ actions performed to reproduce the problem, as well as the tools (e.g
 
 The files @file{$HOME/.gps/log} and @file{$HOME/.gps/debugger.log} may also
 bring some useful information when reporting a bug.
+
+In case GPS generates a bug box, the log file will be kept under a separate
+name (@file{$HOME/.gps/log.<pid>} so that it does not get erased by further
+sessions. Be sure to include the right log file when reporting a bug box.
 
 @c --------------------------------------------------------------------
 @node Solving Problems
