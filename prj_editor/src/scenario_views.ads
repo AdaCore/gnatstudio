@@ -25,6 +25,26 @@ package Scenario_Views is
    --  and recompute the value to display.
    --  Current_Project_View describes the value of all the variables.
 
+   ----------------------
+   -- Emitting signals --
+   ----------------------
+
+   procedure Changed (View : access Scenario_View_Record);
+   --  Emits the "changed" signal.
+
+   -------------
+   -- Signals --
+   -------------
+
+   --  <signals>
+   --  The following new signals are defined for this widget:
+   --
+   --  - "changed"
+   --    procedure Handler (View : access Scenario_View_Record'Class);
+   --
+   --    Emitted every time the current settings for the project have changed.
+   --  </signals>
+
 private
    type Scenario_View_Record is new Gtk.Box.Gtk_Box_Record with record
       Project : Prj.Tree.Project_Node_Id;
