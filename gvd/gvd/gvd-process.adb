@@ -143,6 +143,7 @@ package body GVD.Process is
       File_Name : GVD.Types.String_Access;
       Line      : Natural;
       Addr      : GVD.Types.String_Access;
+      Frame     : Integer;
    end record;
    type Load_File_Data_Access is access Load_File_Data;
    function Convert is new Unchecked_Conversion
@@ -161,6 +162,9 @@ package body GVD.Process is
    procedure Set_Addr_Post_Process (User_Data : System.Address);
    --  Set an address, whose name was found while we were previously waiting
    --  for a prompt.
+
+   procedure Set_Frame_Post_Process (User_Data : System.Address);
+   --  Set the current stack frame (in the stack_list window)
 
    -----------------------
    -- Local Subprograms --
@@ -381,6 +385,16 @@ package body GVD.Process is
       Free (Data.Addr);
    end Set_Addr_Post_Process;
 
+   ----------------------------
+   -- Set_Frame_Post_Process --
+   ----------------------------
+
+   procedure Set_Frame_Post_Process (User_Data : System.Address) is
+      Data : Load_File_Data_Access := Convert (User_Data);
+   begin
+      Highlight_Stack_Frame (Data.Process, Data.Frame);
+   end Set_Frame_Post_Process;
+
    -------------------------
    -- Text_Output_Handler --
    -------------------------
@@ -441,7 +455,8 @@ package body GVD.Process is
                      (Process => Process,
                       File_Name => new String' (Str (File_First .. File_Last)),
                       Line      => 1,
-                      Addr      => null)));
+                      Addr      => null,
+                      Frame     => 1)));
       end if;
 
       if Line /= 0 then
@@ -452,7 +467,8 @@ package body GVD.Process is
                      (Process   => Process,
                       File_Name => null,
                       Line      => Line,
-                      Addr      => null)));
+                      Addr      => null,
+                      Frame     => 1)));
       end if;
 
       if Addr_First /= 0 then
@@ -464,7 +480,23 @@ package body GVD.Process is
                 (Process   => Process,
                  File_Name => null,
                  Line      => 1,
-                 Addr      => new String' (Str (Addr_First .. Addr_Last)))));
+                 Addr      => new String' (Str (Addr_First .. Addr_Last)),
+                 Frame     => 1)));
+      end if;
+
+      if Visible_Is_Set (Process.Stack_List) then
+         Found_Frame_Info (Process.Debugger, Str, First, Last);
+         if First /= 0 then
+            Register_Post_Cmd
+              (Get_Process (Process.Debugger),
+               Set_Frame_Post_Process'Access,
+               Convert (new Load_File_Data'
+                        (Process   => Process,
+                         File_Name => null,
+                         Line      => 1,
+                         Addr      => null,
+                         Frame     => Integer'Value (Str (First .. Last)))));
+         end if;
       end if;
    end Text_Output_Handler;
 
