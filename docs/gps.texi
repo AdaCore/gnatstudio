@@ -857,7 +857,15 @@ You can force the exit at any time by pressing the confirmation button, which
 will kill all remaining tasks, or continue working in GPS by pressing the
 Cancel button.
 
-@c ??? Add screen shots
+@iftex
+@cindex screen shot
+@image{task-manager, 9cm}
+@end iftex
+
+@ifhtml
+@cindex screen shot 
+@image{task-manager}
+@end ifhtml
 
 @c --------------------------------------------------------------------
 @node Integrated Help
