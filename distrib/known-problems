@@ -1,5 +1,10 @@
 Known Problems fixed in GPS 3.0.0
 
+- E228-007 Cross-references missing when a file has been recompiled
+  Problem:    When a file has been modified and recompiled, GPS is losing some
+              cross-references (for entities declared in other files).
+  Workaround: None found
+
 - E224-007 Incorrect cross-references after the object_directory is changed
   Problem:    If you change the object directory of your project, possibly
               by selecting a scenario with a different value for it, the cross-
