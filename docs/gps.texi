@@ -6457,14 +6457,14 @@ The root project pathname.
 
 @item %pps
 This is similar to @code{%pp}, except it returns the project name prepended
-with "-P', or an empty string if there is no project file selected and the
+with @code{-P}, or an empty string if there is no project file selected and the
 current source file doesn't belong to any project. This is mostly for use with
-the GNAT tools command line.
+the GNAT command line tools.
 
 @item %PPs
 This is similar to @code{%PP}, except it returns the project name prepended
-with "-P", or an empty string if the root project is the default project. This
-is mostly for use with the GNAT tools command line.
+with @code{-P}, or an empty string if the root project is the default project.
+This is mostly for use with the GNAT command line tools.
 
 @item %(p|P)[r](d|s)[f]
 Substituted by the list of sources or directories of a given project. This list
@@ -6565,14 +6565,14 @@ Such filters can be defined in one of two places in the customization files:
 @item At the toplevel
 At the same level as other tags such as @code{<action>}, @code{<menu>} or
 @code{<button>} tags, you can define named filters. These are general filters,
-but they can be referenced elsewhere without requiring code duplication. They
+that can be referenced elsewhere without requiring code duplication. They
 also appear explicitely in the keyshortcuts editor if at least one action is
 depending on them.
 
 @item As a child of the @code{<action>} tag
-Such filters are anonymous, although they provide exactly the same capacity as
-the ones above. These are mostly meant for simple filters, or filters that you
-use only once, or don't want to appear in the keyshortcuts manager.
+Such filters are anonymous, although they provide exactly the same capabilities
+as the ones above. These are mostly meant for simple filters, or filters that
+you use only once, or don't want to appear in the keyshortcuts manager.
 @end enumerate
 
 There are three different kinds of tags:
@@ -6596,7 +6596,7 @@ filter succeeds. Children of this tag can be of type @code{<filter>},
 @end table
 
 If several such tags are found following one another under an @code{<action>}
-tag, they are combined through "or", ie any of the filters must match for the
+tag, they are combined through "or", i.e. any of the filters may match for the
 action to be executed.
 
 The @code{<filter>}, @code{<filter_and>} and @code{<filter_or>} tags accept the
@@ -6634,8 +6634,7 @@ can make an action depend on a named filter:
   @end smallexample
 
   A number of predefined filters are predefined by GPS itself. The full list
-  appears in the keyshortcut editor, but here is the full list with
-  description:
+  appears in the keyshortcut editor, and is listed here:
 
   @table @code
   @item Source editor
@@ -6644,15 +6643,15 @@ can make an action depend on a named filter:
   @end table
 
 @item language   (optional)
-This attribute specifies the name of language that the current file must be in
-to match. For instance, if you modify a value of "ada", you must have an Ada
-file selected, or the action won't execute. The language for a file is found by
-GPS following several algorithms (file extensions, and more important the
-naming scheme defined in the project files).
+This attribute specifies the name of the language that must be associated
+with the current file to match. For instance, if you specify @code{ada},
+you must have an Ada file selected, or the action won't execute. The language
+for a file is found by GPS following several algorithms (file extensions, and
+via the naming scheme defined in the project files).
 
 @item shell_cmd  (optional)
 This attribute specifies a shell command to execute. The output value of this
-command is used to find whether the filter matches: if it returned "1" or
+command is used to find whether the filter matches: if it returns "1" or
 "true", the filter matches. In any other case, the filter fails.
 
 Note that currently no expansion of macro arguments (%f, %p,@dots{}) is done
@@ -6709,7 +6708,6 @@ These commands can be associated with menus, tool bar buttons and keys. All
 of these use similar syntax.
 
 Binding a menu to an action is done through the @code{<menu>} tag.
-
 This tag takes the following attributes:
 
 @table @code
@@ -7948,7 +7946,7 @@ as the text of the command itself, are sent to this new window.
 This attribute can also be specified at the @code{<action>} tag level, in which
 case it defines the default value for all @code{<shell>} and @code{<external>}
 tags underneath. If it isn't specified for the action itself, its default value
-will always be the empty string, ie send to the GPS console.
+will always be the empty string, i.e. output is sent to the GPS console.
 
 @smallexample
 <action name="ls current directory" output="default output" >
