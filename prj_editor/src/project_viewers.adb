@@ -65,6 +65,7 @@ with Interfaces.C;              use Interfaces.C;
 with Basic_Types;              use Basic_Types;
 with String_Utils;
 with Prj_API;                  use Prj_API;
+with Prj_Normalize;            use Prj_Normalize;
 with Creation_Wizard;          use Creation_Wizard;
 with Glide_Kernel;             use Glide_Kernel;
 with Glide_Kernel.Console;     use Glide_Kernel.Console;
@@ -83,6 +84,7 @@ with Variable_Editors;         use Variable_Editors;
 with String_Utils;             use String_Utils;
 with Project_Properties;       use Project_Properties;
 with Histories;                use Histories;
+with String_List_Utils;        use String_List_Utils;
 
 with Prj;           use Prj;
 with Prj.Part;      use Prj.Part;
@@ -319,6 +321,12 @@ package body Project_Viewers is
    --  Internal function that creates a dependency between two projects. If
    --  properly handle the case where a project with the same name as
    --  Imported_Project_Path already exists in the project hierarchy
+
+   function Project_Command_Handler
+     (Kernel  : access Kernel_Handle_Record'Class;
+      Command : String;
+      Args    : String_List_Utils.String_List.List) return String;
+   --  Handle the interactive commands related to the project editor
 
    --------------------------
    -- Project editor pages --
@@ -2422,6 +2430,39 @@ package body Project_Viewers is
         (Naming_Editor (Widget), Page.Kernel, Languages, Project_View);
    end Refresh;
 
+   -----------------------------
+   -- Project_Command_Handler --
+   -----------------------------
+
+   function Project_Command_Handler
+     (Kernel  : access Kernel_Handle_Record'Class;
+      Command : String;
+      Args    : String_List_Utils.String_List.List) return String
+   is
+   begin
+      if Command = "prj_add_main_unit" then
+         declare
+            A : Argument_List := List_To_Argument_List (Args);
+         begin
+            if not Has_Been_Normalized (Get_Project (Kernel)) then
+               Normalize (Get_Project (Kernel), Recurse => False);
+            end if;
+
+            Update_Attribute_Value_In_Scenario
+              (Project            => Get_Project (Kernel),
+               Scenario_Variables => Scenario_Variables (Kernel),
+               Attribute_Name     => Main_Attribute,
+               Values             => A,
+               Prepend            => True);
+            Set_Project_Modified (Kernel, Get_Project (Kernel), True);
+            Recompute_View (Kernel);
+            Free (A);
+         end;
+      end if;
+
+      return "";
+   end Project_Command_Handler;
+
    ---------------------
    -- Register_Module --
    ---------------------
@@ -2507,6 +2548,15 @@ package body Project_Viewers is
          Label => -"Switches",
          Toc   => -"Switches",
          Title => -"Please select the switches to build the project");
+
+      Register_Command
+        (Kernel,
+         "prj_add_main_unit",
+         (-"Usage:") & ASCII.LF
+         & "  prj_add_main_unit main1 [main2 ...]" & ASCII.LF
+         & (-("Add some main units to the current project, and for the"
+              & " current scenario. The project is not saved automatically.")),
+         Handler => Project_Command_Handler'Access);
    end Register_Module;
 
 end Project_Viewers;
