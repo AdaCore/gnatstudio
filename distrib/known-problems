@@ -1,6 +1,11 @@
 Known Problems fixed in GPS 1.4.0
 
-- CA21-003 GPS unstable when displaying xrefs or tooltips after project switch.
+- CA27-001  Bad indentation of 'exit when' inside a case statement
+  Problem:    The source editor will wrongly indent code containing
+              'exit when' construct inside a case statement.
+  Workaround: Indent the line by hand.
+
+- CA21-003 GPS unstable when displaying xrefs or tooltips after project switch
   Problem:    After changing projects within GPS using the Project->Open menu
               or the Project->Recent menu, GPS might become unstable when using
               xrefs or displaying tooltips.
