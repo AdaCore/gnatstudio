@@ -2575,4 +2575,130 @@ package body VCS_View_API is
       Free (Revision_Label);
    end Display_Editor_Status;
 
+   -------------------------
+   -- VCS_Command_Handler --
+   -------------------------
+
+   procedure VCS_Command_Handler
+     (Data    : in out Glide_Kernel.Scripts.Callback_Data'Class;
+      Command : String)
+   is
+      Kernel : constant Kernel_Handle := Get_Kernel (Data);
+      File   : constant String := Nth_Arg (Data, 1);
+      Full   : String_Access;
+      Prj    : Project_Type;
+      Ref    : VCS_Access;
+      Files  : String_List.List;
+
+   begin
+      if File = "" then
+         Insert (Kernel, -"Command "
+                 & Command
+                 & " must have at least one parameter.",
+                 Mode => Error);
+      end if;
+
+      if GNAT.OS_Lib.Is_Absolute_Path (File) then
+         Full := new String'(GNAT.OS_Lib.Normalize_Pathname (File));
+      else
+         declare
+            F : constant String := Get_Full_Path_From_File
+              (Registry        => Get_Registry (Kernel),
+               Filename        => File,
+               Use_Source_Path => True,
+               Use_Object_Path => False);
+         begin
+            if GNAT.OS_Lib.Is_Absolute_Path (F) then
+               Full := new String'(F);
+            else
+               Insert (Kernel, -"Could not find file: " & File, Mode => Error);
+               return;
+            end if;
+         end;
+      end if;
+
+      --  At this point Full must not be null.
+
+      Prj := Get_Project_From_File (Get_Registry (Kernel), Full.all, True);
+
+      if Prj = No_Project then
+         Insert
+           (Kernel,
+              -"Could not find project for file: " & File,
+            Mode => Error);
+
+         Free (Full);
+         return;
+      end if;
+
+      Ref := Get_Current_Ref (Prj);
+
+      if Ref = null then
+         Insert
+           (Kernel,
+              -"Could not find VCS for project: " & Project_Name (Prj),
+            Mode => Error);
+
+         Free (Full);
+         return;
+      end if;
+
+      if Ref = Unknown_VCS_Reference then
+         Insert
+           (Kernel,
+              -"There is no VCS associated to project: " & Project_Name (Prj),
+            Mode => Error);
+
+         Free (Full);
+         return;
+      end if;
+
+      String_List.Append (Files, Full.all);
+
+      --  Process the command.
+
+      if Command = "vcs.get_status" then
+         Open_Explorer (Kernel, null);
+         Get_Status (Ref, Files);
+
+      elsif Command = "vcs.update" then
+         Update (Ref, Files);
+         Get_Status (Ref, Files);
+
+      elsif Command = "vcs.commit" then
+         --  ??? Should we check for the existence of logs ?
+         Commit_Files (Kernel, Ref, Files);
+
+      elsif Command = "vcs.diff_head" then
+         Save_Files (Kernel, Files);
+         Diff (Ref, Full.all);
+
+      elsif Command = "vcs.diff_working" then
+         declare
+            Status : File_Status_List.List;
+         begin
+            Save_Files (Kernel, Files);
+            Status := Local_Get_Status (Ref, Files);
+
+            Diff
+              (Ref,
+               String_List.Head (File_Status_List.Head (Status).File_Name),
+               "",
+               String_List.Head (File_Status_List.Head
+                                   (Status).Working_Revision));
+            File_Status_List.Free (Status);
+         end;
+
+      elsif Command = "vcs.annotate" then
+         Annotate (Ref, Full.all);
+
+      elsif Command = "vcs.remove_annotations" then
+         Remove_Line_Information_Column (Kernel, Full.all, Annotation_Id);
+
+      end if;
+
+      Free (Full);
+      String_List.Free (Files);
+   end VCS_Command_Handler;
+
 end VCS_View_API;
