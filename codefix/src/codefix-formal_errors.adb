@@ -18,11 +18,12 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Exceptions;          use Ada.Exceptions;
+with Ada.Exceptions;                    use Ada.Exceptions;
 
-with GNAT.Regpat;             use GNAT.Regpat;
+with GNAT.Regpat;                       use GNAT.Regpat;
+with GNAT.Directory_Operations;         use GNAT.Directory_Operations;
 
-with Language;                use Language;
+with Language;                          use Language;
 
 with Codefix.Text_Manager.Ada_Commands; use Codefix.Text_Manager.Ada_Commands;
 with Codefix.Ada_Tools;                 use Codefix.Ada_Tools;
@@ -772,8 +773,8 @@ package body Codefix.Formal_Errors is
 
       Set_Caption
         (New_Command,
-         "Move with clause from """ & Cursor.File_Name.all &
-         """ to """ & Body_Name.all & """");
+         "Move with clause from """ & Base_Name (Cursor.File_Name.all) &
+         """ to """ & Base_Name (Body_Name.all) & """");
 
       Append (Result, New_Command);
 
@@ -804,8 +805,8 @@ package body Codefix.Formal_Errors is
       Initialize (Command1, Current_Text, Internal_Body_Cursor, Spec_Cursor);
       Initialize (Command2, Current_Text, Spec_Cursor, Internal_Body_Cursor);
 
-      Set_Caption (Command1, "Change the body to be conformant with the spec");
-      Set_Caption (Command2, "Change the spec to be conformant with the body");
+      Set_Caption (Command1, "Modify the the implementation profile");
+      Set_Caption (Command2, "Modify the specification profile");
 
       Append (Result, Command1);
       Append (Result, Command2);
