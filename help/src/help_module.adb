@@ -42,10 +42,6 @@ with Glide_Intl;                   use Glide_Intl;
 with Traces;                       use Traces;
 with OS_Utils;                     use OS_Utils;
 with Ada.Exceptions;               use Ada.Exceptions;
-with GNAT.Expect;                  use GNAT.Expect;
-pragma Warnings (Off);
-with GNAT.Expect.TTY;              use GNAT.Expect.TTY;
-pragma Warnings (On);
 with Find_Utils;                   use Find_Utils;
 with File_Utils;                   use File_Utils;
 with String_Utils;                 use String_Utils;
@@ -684,7 +680,8 @@ package body Help_Module is
    is
       Args    : Argument_List_Access;
       File    : GNAT.OS_Lib.String_Access;
-      Process : TTY_Process_Descriptor;
+      Cmd     : GNAT.OS_Lib.String_Access;
+      Process : Process_Id;
 
    begin
       if not Is_Regular_File (Help_File) then
@@ -695,15 +692,35 @@ package body Help_Module is
 
       Args := Argument_String_To_List
         (Get_Pref (Kernel, GVD.Preferences.Html_Browser));
-      File := new String'(Full_Name (Help_File, True).all);
 
-      Non_Blocking_Spawn
-        (Process,
-         Command => Args (Args'First).all,
-         Args    => Args (Args'First + 1 .. Args'Last) & (1 => File));
+      Cmd  := Locate_Exec_On_Path (Args (Args'First).all);
+
+      if Cmd = null then
+         Insert
+           (Kernel,
+            -"Could not locate web browser on path: "
+            & Args (Args'First).all,
+            Mode => Error);
+
+      else
+         File := new String'(Full_Name (Help_File, True).all);
+
+         Process :=
+           Non_Blocking_Spawn
+             (Cmd.all, Args (Args'First + 1 .. Args'Last) & (1 => File));
+
+         if Process = Invalid_Pid then
+            Insert
+              (Kernel,
+               -"Could not launch web browser: " & Args (Args'First).all,
+               Mode => Error);
+         end if;
+
+         Free (Cmd);
+         Free (File);
+      end if;
 
       Free (Args);
-      Free (File);
    end Display_Help;
 
    ------------------
