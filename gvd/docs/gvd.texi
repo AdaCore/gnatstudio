@@ -368,6 +368,9 @@ Whether the grid should be displayed in the canvas.
 
 @item Auto-Align Displays on Nearest Grid Point.
 Should items be aligned on the grid.
+
+@item Show Call Stack.
+Whether the Call Stack view should be shown in the data window.
 @end itemize
 
 @item Command.
