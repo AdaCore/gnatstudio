@@ -1300,6 +1300,9 @@ package body Src_Editor_View is
       Complete_Key   : Gdk_Key_Type;
       Complete_Modif : Gdk_Modifier_Type;
 
+      Delim_Jump_Key   : Gdk_Key_Type;
+      Delim_Jump_Modif : Gdk_Modifier_Type;
+
    begin
       Get_Pref
         (Get_Kernel (Buffer), Indentation_Key, Indent_Modif, Indent_Key);
@@ -1315,6 +1318,19 @@ package body Src_Editor_View is
 
       if Key = Complete_Key and then Get_State (Event) = Complete_Modif then
          Do_Completion (Buffer);
+         return True;
+      end if;
+
+      Get_Pref
+        (Get_Kernel (Buffer),
+         Delimiters_Jump_Key,
+         Delim_Jump_Modif,
+         Delim_Jump_Key);
+
+      if Key = Delim_Jump_Key
+        and then Get_State (Event) = Delim_Jump_Modif
+      then
+         Jump_To_Delimiter (Buffer);
          return True;
       end if;
 
