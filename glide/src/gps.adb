@@ -494,9 +494,18 @@ procedure GPS is
                case Full_Switch (Full_Switch'First + 1) is
                   -- --version --
                   when 'v' =>
-                     File_Utils.Ensure_Valid_Output;
-                     Put_Line ("GPS version " & GVD.Version & " (" &
-                               GVD.Source_Date & ") hosted on " & GVD.Target);
+                     if GVD.Can_Output then
+                        Put_Line ("GPS version " & GVD.Version & " (" &
+                          GVD.Source_Date & ") hosted on " & GVD.Target);
+                     else
+                        Button := Message_Dialog
+                          ("GPS version " & GVD.Version & " (" &
+                           GVD.Source_Date & ") hosted on " & GVD.Target,
+                           Information, Button_OK,
+                           Title => -"Version",
+                        Justification => Justify_Left);
+                     end if;
+
                      OS_Exit (0);
 
                   when 'h' =>
@@ -517,8 +526,10 @@ procedure GPS is
 
                         exception
                            when Constraint_Error =>
-                              File_Utils.Ensure_Valid_Output;
-                              Put_Line ("Invalid parameter to --log-level");
+                              if GVD.Can_Output then
+                                 Put_Line ("Invalid parameter to --log-level");
+                              end if;
+
                               Help;
                               OS_Exit (1);
                         end;
@@ -599,8 +610,10 @@ procedure GPS is
 
    exception
       when Invalid_Switch | GNAT.Command_Line.Invalid_Parameter =>
-         File_Utils.Ensure_Valid_Output;
-         Put_Line ("Invalid command line");
+         if GVD.Can_Output then
+            Put_Line ("Invalid command line");
+         end if;
+
          Help;
          OS_Exit (1);
    end Parse_Switches;
@@ -615,30 +628,58 @@ procedure GPS is
       --  We do not document the --log-level flag, since it will be replaced
       --  by the regular Traces mechanism.
 
-      File_Utils.Ensure_Valid_Output;
-      Put_Line ("GPS " & GVD.Version & " (" & GVD.Source_Date & ")" &
-                  (-", the GNAT Programming System."));
-      Put_Line (-"Usage:");
-      Put_Line
-        (-"   gps [options] [-Pproject-file] [source1] [source2] ...");
-      Put_Line (-"Options:");
-      Put_Line (-"   --help              Show this help message and exit");
-      Put_Line (-"   --version           Show the GPS version and exit");
-      Put_Line (-"   --debug[=program]   Start a debug session");
-      Put_Line
-        (-"   --debugger debugger Specify the debugger's command line");
-      Put_Line ((-"   --target=TARG:PRO   ") &
-                  (-"Load program on machine TARG using protocol PRO"));
-      Put_Line
-        (-"   --load=lang:file    Execute an external file written");
-      Put_Line (-"                        in the language lang");
-      Put_Line
-        (-"   --eval=lang:cmd     Execute a command written in the");
-      Put_Line (-"                        language lang. This is executed");
-      Put_Line (-"                        before the --load command");
-      New_Line;
-      Put_Line (-("Source files are searched everywhere on the project's "
-                  & " source path"));
+      if GVD.Can_Output then
+         Put_Line ("GPS " & GVD.Version & " (" & GVD.Source_Date & ")" &
+                   (-", the GNAT Programming System."));
+         Put_Line (-"Usage:");
+         Put_Line
+           (-"   gps [options] [-Pproject-file] [source1] [source2] ...");
+         Put_Line (-"Options:");
+         Put_Line (-"   --help              Show this help message and exit");
+         Put_Line (-"   --version           Show the GPS version and exit");
+         Put_Line (-"   --debug[=program]   Start a debug session");
+         Put_Line
+           (-"   --debugger debugger Specify the debugger's command line");
+         Put_Line ((-"   --target=TARG:PRO   ") &
+                     (-"Load program on machine TARG using protocol PRO"));
+         Put_Line
+           (-"   --load=lang:file    Execute an external file written");
+         Put_Line (-"                        in the language lang");
+         Put_Line
+           (-"   --eval=lang:cmd     Execute a command written in the");
+         Put_Line (-"                        language lang. This is executed");
+         Put_Line (-"                        before the --load command");
+         New_Line;
+         Put_Line (-("Source files are searched everywhere on the project's "
+                   & " source path"));
+
+      else
+         Button := Message_Dialog
+           ("GPS " & GVD.Version & " (" & GVD.Source_Date & ")" &
+            (-", the GNAT Programming System.") & LF &
+            (-"Usage:") & LF &
+            (-"   gps [options] [-Pproject-file] [source1] [source2] ...") &
+            LF & (-"Options:") & LF &
+            (-"   --help              Show this help message and exit.") & LF &
+            (-"   --version           Show the GPS version and exit.") & LF &
+            (-"   --load=lang:file    Execute an external file written")
+            & LF &
+            (-"                        in the language lang") & LF &
+            (-"   --eval=lang:cmd     Execute a command written in the")
+            & LF &
+            (-"                        language lang. This is executed") & LF &
+            (-"                        before the --load command") & LF &
+            (-"   --debug[=program]   Start a debug session") & LF &
+            (-"   --debugger debugger Specify the debugger's command line") &
+            LF &
+            (-"   --target=TARG:PRO   ") &
+            (-"Load program on machine TARG using protocol PRO") & LF &
+            (-("Source files are searched everywhere on the project's" &
+               " source path")),
+            Information, Button_OK,
+            Title => -"Help",
+            Justification => Justify_Left);
+      end if;
    end Help;
 
    --------------------
