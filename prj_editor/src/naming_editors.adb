@@ -201,14 +201,18 @@ package body Naming_Editors is
    ---------------------------
 
    procedure Show_Project_Settings
-     (Editor : access Naming_Editor_Record; Project_View : Prj.Project_Id) is
+     (Editor : access Naming_Editor_Record;
+      Project_View : Prj.Project_Id;
+      Display_Exceptions : Boolean := True) is
    begin
       for P in Editor.Pages'Range loop
          if Editor.Pages (P).Ada_Naming /= null then
-            Show_Project_Settings (Editor.Pages (P).Ada_Naming, Project_View);
+            Show_Project_Settings
+              (Editor.Pages (P).Ada_Naming, Project_View, Display_Exceptions);
          else
             Show_Project_Settings
-              (Editor.Pages (P).Foreign_Naming, Project_View);
+              (Editor.Pages (P).Foreign_Naming,
+               Project_View, Display_Exceptions);
          end if;
       end loop;
    end Show_Project_Settings;

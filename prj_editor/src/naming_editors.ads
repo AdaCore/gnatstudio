@@ -63,10 +63,15 @@ package Naming_Editors is
    --  Return True if the project was changed.
 
    procedure Show_Project_Settings
-     (Editor : access Naming_Editor_Record; Project_View : Prj.Project_Id);
+     (Editor             : access Naming_Editor_Record;
+      Project_View       : Prj.Project_Id;
+      Display_Exceptions : Boolean := True);
    --  Show the settings used for Project_View.
    --  Note that only the languages that were given to Gtk_New will be
    --  editable.
+   --  If Display_Exceptions is False, then the files in the exception list
+   --  will not be displayed, only the suffixes will be. This is intended to be
+   --  used when creating new projects based on an existing one.
 
 private
    type Language_Naming is record

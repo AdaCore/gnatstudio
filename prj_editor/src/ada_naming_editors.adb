@@ -314,7 +314,9 @@ package body Ada_Naming_Editors is
    ---------------------------
 
    procedure Show_Project_Settings
-     (Editor : access Ada_Naming_Editor_Record; Project_View : Prj.Project_Id)
+     (Editor             : access Ada_Naming_Editor_Record;
+      Project_View       : Prj.Project_Id;
+      Display_Exceptions : Boolean := True)
    is
       Data  : Naming_Data := Prj.Projects.Table (Project_View).Naming;
       Value : Variable_Value;
@@ -363,36 +365,39 @@ package body Ada_Naming_Editors is
       Freeze (Editor.Exception_List);
       Clear (Editor.Exception_List);
 
-      Elem := Data.Specifications;
-      while Elem /= No_Array_Element loop
-         Value := Prj.Array_Elements.Table (Elem).Value;
-         Row := Prepend
-           (Editor.Exception_List,
-            Get_Name_String (Prj.Array_Elements.Table (Elem).Index)
-            + Get_String (Value.Value) + "");
-         Elem := Prj.Array_Elements.Table (Elem).Next;
-      end loop;
-
-      Elem := Data.Bodies;
-      while Elem /= No_Array_Element loop
-         Value := Prj.Array_Elements.Table (Elem).Value;
-         Row := Find_First_Row_Matching
-           (Editor.Exception_List,
-            0,
-            Get_Name_String (Prj.Array_Elements.Table (Elem).Index));
-         if Row = -1 then
+      if Display_Exceptions then
+         Elem := Data.Specifications;
+         while Elem /= No_Array_Element loop
+            Value := Prj.Array_Elements.Table (Elem).Value;
             Row := Prepend
               (Editor.Exception_List,
                Get_Name_String (Prj.Array_Elements.Table (Elem).Index)
-               + "" + Get_String (Value.Value));
-         else
-            Set_Text (Editor.Exception_List, Row, 2,
-                      Get_String (Value.Value));
-         end if;
-         Elem := Prj.Array_Elements.Table (Elem).Next;
-      end loop;
+                 + Get_String (Value.Value) + "");
+            Elem := Prj.Array_Elements.Table (Elem).Next;
+         end loop;
 
-      Sort (Editor.Exception_List);
+         Elem := Data.Bodies;
+         while Elem /= No_Array_Element loop
+            Value := Prj.Array_Elements.Table (Elem).Value;
+            Row := Find_First_Row_Matching
+              (Editor.Exception_List,
+               0,
+               Get_Name_String (Prj.Array_Elements.Table (Elem).Index));
+            if Row = -1 then
+               Row := Prepend
+                 (Editor.Exception_List,
+                  Get_Name_String (Prj.Array_Elements.Table (Elem).Index)
+                    + "" + Get_String (Value.Value));
+            else
+               Set_Text (Editor.Exception_List, Row, 2,
+                         Get_String (Value.Value));
+            end if;
+            Elem := Prj.Array_Elements.Table (Elem).Next;
+         end loop;
+
+         Sort (Editor.Exception_List);
+      end if;
+
       Thaw (Editor.Exception_List);
    end Show_Project_Settings;
 
