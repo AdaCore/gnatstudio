@@ -22,6 +22,10 @@
 --
 --  See package VCS for a complete spec of this package.
 
+with Basic_Types;               use Basic_Types;
+with GNAT.Regpat;               use GNAT.Regpat;
+with Ada.Unchecked_Deallocation;
+
 package VCS.Generic_VCS is
 
    type Generic_VCS_Record is new VCS_Record with private;
@@ -88,14 +92,33 @@ package VCS.Generic_VCS is
      (Rep  : access Generic_VCS_Record;
       File : VFS.Virtual_File);
 
+   function Parse_Status
+     (Rep  : access Generic_VCS_Record;
+      Text : String) return File_Status_List.List;
+
    procedure Register_Module
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
    --  Register the VCS.Generic_VCS module
 
 private
 
+   type Pattern_Matcher_Access is access Pattern_Matcher;
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+     (Pattern_Matcher, Pattern_Matcher_Access);
+
    type Generic_VCS_Record is new VCS_Record with record
-      null;
+      Id       : String_Access;
+      Commands : Action_Array;
+      Labels   : Action_Array;
+
+      Regexp   : Pattern_Matcher_Access;
+
+      Status   : Status_Array;
+
+      File_Index           : Natural := 0;
+      Status_Index         : Natural := 0;
+      Local_Rev_Index      : Natural := 0;
+      Repository_Rev_Index : Natural := 0;
    end record;
 
 end VCS.Generic_VCS;
