@@ -144,11 +144,6 @@ package GVD.Dialogs is
    --  The information is read from Debugger (which is in fact a
    --  Visual_Debugger).
 
-   procedure Show_Call_Stack_Columns
-     (Debugger : access Glib.Object.GObject_Record'Class);
-   --  Show or hide the relevant column in the call stack list for a
-   --  specific debugger, based on the settings in Debugger.Backtrace_Filter
-
    procedure On_Stack_Process_Stopped
      (Widget : access Glib.Object.GObject_Record'Class);
    --  Callback function connected to the "process_stopped" signal.
