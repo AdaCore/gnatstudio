@@ -69,7 +69,7 @@ with GVD.Dialogs;                use GVD.Dialogs;
 
 package body Src_Editor_Box is
 
-   Me : Debug_Handle := Create ("Source_Editor");
+   Me : constant Debug_Handle := Create ("Source_Editor");
 
    package Box_Callback is new Gtk.Handlers.User_Callback
      (Widget_Type => Glib.Object.GObject_Record,
@@ -797,7 +797,7 @@ package body Src_Editor_Box is
    --------------
 
    function Focus_In (Box : access GObject_Record'Class) return Boolean is
-      B         : Source_Editor_Box := Source_Editor_Box (Box);
+      B         : constant Source_Editor_Box := Source_Editor_Box (Box);
       Undo_Redo : Undo_Redo_Information;
    begin
       if not Check_Timestamp (B.Source_Buffer, Ask_User => True) then
@@ -820,7 +820,7 @@ package body Src_Editor_Box is
    ---------------
 
    function Focus_Out (Box : access GObject_Record'Class) return Boolean is
-      B         : Source_Editor_Box := Source_Editor_Box (Box);
+      B         : constant Source_Editor_Box := Source_Editor_Box (Box);
    begin
       Unset_Controls (Get_Queue (B.Source_Buffer));
 
@@ -902,8 +902,8 @@ package body Src_Editor_Box is
       Menu         : Gtk.Menu.Gtk_Menu)
       return Glide_Kernel.Selection_Context_Access
    is
-      Editor     : Source_Editor_Box := Source_Editor_Box (Object);
-      V          : Source_View := Editor.Source_View;
+      Editor     : constant Source_Editor_Box := Source_Editor_Box (Object);
+      V          : constant Source_View := Editor.Source_View;
       Line       : Gint;
       Column     : Gint;
       X, Y       : Gint;
