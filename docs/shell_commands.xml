@@ -13,7 +13,7 @@
         a result, the fully qualified name doesn't include the class. For
         instance:   GPS.HTML.browse is searced as GPS.browse in fact
 
-        To account for this, the <shell_doc> tag accepts a real_name attribute
+        To account for this, the shell_doc tag accepts a real_name attribute
         which should contain the fully qualified name
 -->
 
@@ -195,7 +195,7 @@ Optionally you can also pass the full contents of an XML file, starting from the
   </shell_doc>
 
   <shell_doc name="GPS.dump">
-     <param name="string">A string<param>
+     <param name="string">A string</param>
      <param name="add_lf" default="False">A boolean</param>
      <return>A string, the name of the output file</return>
      <description>Dump string to a temporary file. Return the name of the file. If add_lf is TRUE, append a line feed at end of file</description>
