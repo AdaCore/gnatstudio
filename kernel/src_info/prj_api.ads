@@ -276,7 +276,8 @@ package Prj_API is
      (Project_View   : Project_Id;
       Attribute_Name : String;
       Package_Name   : String := "";
-      Default        : String := "") return String;
+      Default        : String := "";
+      Index          : String := "") return String;
    --  Return the value for a single-string attribute.
    --  Default is returned if the attribute wasn't set by the user and
    --  has no default value.

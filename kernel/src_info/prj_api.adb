@@ -3770,11 +3770,14 @@ package body Prj_API is
      (Project_View   : Project_Id;
       Attribute_Name : String;
       Package_Name   : String := "";
-      Default        : String := "") return String
+      Default        : String := "";
+      Index          : String := "") return String
    is
       Pkg : Package_Id := No_Package;
-      Value : Variable_Value;
+      Value : Variable_Value := Nil_Variable_Value;
       Var : Variable_Id;
+      Arr : Array_Id;
+      Elem : Array_Element_Id;
    begin
       if Package_Name /= "" then
          Name_Len := Package_Name'Length;
@@ -3786,22 +3789,38 @@ package body Prj_API is
             return Default;
          end if;
          Var := Packages.Table (Pkg).Decl.Attributes;
+         Arr := Packages.Table (Pkg).Decl.Arrays;
       else
          Var := Projects.Table (Project_View).Decl.Attributes;
+         Arr := Projects.Table (Project_View).Decl.Arrays;
       end if;
 
       Name_Len := Attribute_Name'Length;
       Name_Buffer (1 .. Name_Len) := Attribute_Name;
-      Value := Value_Of (Name_Find, Var);
 
-      if Value.Kind = Undefined then
-         return Default;
+      if Index /= "" then
+         Elem := Value_Of (Name_Find, In_Arrays => Arr);
+         if Elem /= No_Array_Element then
+            Name_Len := Index'Length;
+            Name_Buffer (1 .. Name_Len) := Index;
+            Value := Value_Of (Index => Name_Find, In_Array => Elem);
+         end if;
+      else
+         Value := Value_Of (Name_Find, Var);
       end if;
 
-      Assert (Me, Value.Kind = Prj.Single,
-              "Attribute " & Attribute_Name & " is not a single string");
+      case Value.Kind is
+         when Undefined =>
+            return Default;
 
-      return Get_String (Value.Value);
+         when Single =>
+            return Get_String (Value.Value);
+
+         when List =>
+            Trace (Me, "Attribute " & Attribute_Name
+                     & " is not a single string");
+            return Default;
+      end case;
    end Get_Attribute_Value;
 
 begin
