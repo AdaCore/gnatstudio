@@ -630,7 +630,6 @@ package body Codefix.Text_Manager.Ada_Extracts is
    ---------------------
 
    function Get_Nth_Element (This : Ada_List; Name : String) return Natural is
-
       Current_Num  : Natural := 1;
       Current_Node : Tokens_List.List_Node := First (This.Elements_List);
 
@@ -648,7 +647,6 @@ package body Codefix.Text_Manager.Ada_Extracts is
          Current_Node := Next (Current_Node);
          exit when Current_Node = Tokens_List.Null_Node;
       end loop;
-
 
       raise Codefix_Panic;
    end Get_Nth_Element;

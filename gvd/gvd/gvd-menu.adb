@@ -678,7 +678,6 @@ package body GVD.Menu is
 
          List := List.Next;
       end loop;
-
    end On_Call_Stack;
 
    ----------------
