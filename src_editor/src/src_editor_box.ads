@@ -341,13 +341,35 @@ package Src_Editor_Box is
    --  Navigate->Goto Line... menu
 
    function Get_Last_Line
-     (Editor   : access Source_Editor_Box_Record)
-     return Positive;
+     (Editor   : access Source_Editor_Box_Record) return Positive;
    --  Return the number of the last line in the file.
 
+   function Get_Block_Start
+     (Editor : access Source_Editor_Box_Record;
+      Line   : Src_Editor_Buffer.Editable_Line_Type) return Positive;
+   --  Returns the line number where block enclosing Line starts. Returns 0
+   --  if Line is not in a block.
+
+   function Get_Block_End
+     (Editor : access Source_Editor_Box_Record;
+      Line   : Src_Editor_Buffer.Editable_Line_Type) return Positive;
+   --  Returns the line number where block enclosing Line ends. Returns 0
+   --  if Line is not in a block.
+
+   function Get_Block_Type
+     (Editor : access Source_Editor_Box_Record;
+      Line   : Src_Editor_Buffer.Editable_Line_Type) return String;
+   --  Returns the type for block enclosing Line. Returns 0 if Line is not
+   --  in a block.
+
+   function Get_Block_Level
+     (Editor : access Source_Editor_Box_Record;
+      Line   : Src_Editor_Buffer.Editable_Line_Type) return Natural;
+   --  Returns the line number where block enclosing Line ends. Returns 0
+   --  if Line is not in a block.
+
    function Get_Buffer
-     (Editor : access Source_Editor_Box_Record)
-     return String;
+     (Editor : access Source_Editor_Box_Record) return String;
    --  Return the contents of the entire buffer.
 
    procedure Check_Timestamp

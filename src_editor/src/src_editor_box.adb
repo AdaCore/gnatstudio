@@ -2497,8 +2497,7 @@ package body Src_Editor_Box is
    -------------------
 
    function Get_Last_Line
-     (Editor   : access Source_Editor_Box_Record)
-     return Positive
+     (Editor   : access Source_Editor_Box_Record) return Positive
    is
       Iter : Gtk_Text_Iter;
    begin
@@ -2506,13 +2505,77 @@ package body Src_Editor_Box is
       return To_Box_Line (Get_Line (Iter));
    end Get_Last_Line;
 
+   ---------------------
+   -- Get_Block_Start --
+   ---------------------
+
+   function Get_Block_Start
+     (Editor : access Source_Editor_Box_Record;
+      Line   : Src_Editor_Buffer.Editable_Line_Type) return Positive
+   is
+      B_Line : constant Buffer_Line_Type :=
+        Get_Buffer_Line (Editor.Source_Buffer, Line);
+      Block : constant Block_Record :=
+        Get_Block (Editor.Source_Buffer, B_Line);
+   begin
+      return Positive (Block.First_Line);
+   end Get_Block_Start;
+
+   -------------------
+   -- Get_Block_End --
+   -------------------
+
+   function Get_Block_End
+     (Editor : access Source_Editor_Box_Record;
+      Line   : Src_Editor_Buffer.Editable_Line_Type) return Positive
+   is
+      B_Line : constant Buffer_Line_Type :=
+        Get_Buffer_Line (Editor.Source_Buffer, Line);
+      Block : constant Block_Record :=
+        Get_Block (Editor.Source_Buffer, B_Line);
+   begin
+      return Positive (Block.Last_Line);
+   end Get_Block_End;
+
+   --------------------
+   -- Get_Block_Type --
+   --------------------
+
+   function Get_Block_Type
+     (Editor : access Source_Editor_Box_Record;
+      Line   : Src_Editor_Buffer.Editable_Line_Type) return String
+   is
+      B_Line : constant Buffer_Line_Type :=
+        Get_Buffer_Line (Editor.Source_Buffer, Line);
+      Block : constant Block_Record :=
+        Get_Block (Editor.Source_Buffer, B_Line);
+   begin
+      return Language_Category'Image (Block.Block_Type);
+   end Get_Block_Type;
+
+   ---------------------
+   -- Get_Block_Level --
+   ---------------------
+
+   function Get_Block_Level
+     (Editor : access Source_Editor_Box_Record;
+      Line   : Src_Editor_Buffer.Editable_Line_Type) return Natural
+   is
+      B_Line : constant Buffer_Line_Type :=
+        Get_Buffer_Line (Editor.Source_Buffer, Line);
+      Block : constant Block_Record :=
+        Get_Block (Editor.Source_Buffer, B_Line);
+   begin
+      return Natural (Block.Indentation_Level);
+   end Get_Block_Level;
+
    ----------------
    -- Get_Buffer --
    ----------------
 
    function Get_Buffer
      (Editor : access Source_Editor_Box_Record)
-     return String
+      return String
    is
       Begin_Iter : Gtk_Text_Iter;
       End_Iter   : Gtk_Text_Iter;
