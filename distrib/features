@@ -3,6 +3,11 @@ details, please see the documentation.
 
 New features in GPS 2.0.0
 
+- Documentation is now provided in PDF format
+
+- D316-008 Improved startup time with network drives if the project obeys
+  a few restrictions (see preferences)
+
 - GPS uses less memory to keep the cross-references in memory
 
 - Add support for custom Version Control Systems.
