@@ -284,7 +284,10 @@ package body Glide_Kernel.Console is
             Insert_Result
               (Kernel,
                Category,
-               Text (Matched (File_Index).First .. Matched (File_Index).Last),
+               Create
+                 (Text (Matched
+                          (File_Index).First .. Matched (File_Index).Last),
+                  Kernel),
                Text (Last + 1 .. Real_Last),
                Positive (Line), Positive (Column), 0,
                Highlight);
@@ -315,7 +318,7 @@ package body Glide_Kernel.Console is
    procedure Insert_Result
      (Kernel    : access Kernel_Handle_Record'Class;
       Category  : String;
-      File      : String;
+      File      : VFS.Virtual_File;
       Text      : String;
       Line      : Positive;
       Column    : Positive;
@@ -555,7 +558,8 @@ package body Glide_Kernel.Console is
          declare
             Identifier : constant String := Get_String (Data (Data'First));
             Category   : constant String := Get_String (Data (Data'First + 1));
-            File       : constant String := Get_String (Data (Data'First + 2));
+            File       : constant Virtual_File :=
+              Create (Full_Filename => Get_String (Data (Data'First + 2)));
             Line       : constant Gint   := Get_Int (Data (Data'First + 3));
             Column     : constant Gint   := Get_Int (Data (Data'First + 4));
             Message    : constant String := Get_String (Data (Data'First + 5));

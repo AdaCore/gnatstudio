@@ -20,6 +20,7 @@
 
 with Interactive_Consoles; use Interactive_Consoles;
 with Glide_Result_View;
+with VFS;
 
 package Glide_Kernel.Console is
 
@@ -64,7 +65,7 @@ package Glide_Kernel.Console is
    procedure Insert_Result
      (Kernel    : access Kernel_Handle_Record'Class;
       Category  : String;
-      File      : String;
+      File      : VFS.Virtual_File;
       Text      : String;
       Line      : Positive;
       Column    : Positive;
