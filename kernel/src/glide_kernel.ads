@@ -132,13 +132,32 @@ package Glide_Kernel is
      (Handle : access Kernel_Handle_Record) return Gtk.Toolbar.Gtk_Toolbar;
    --  Return the main toolbar associated with the kernel.
 
-   procedure Set_Busy
+   type Kernel_State is
+     (Idle,
+      --  Kernel is idle, waiting for input
+
+      Processing,
+      --  Kernel is processing, other processing are possible
+
+      Busy
+      --  Kernel is busy, no other processing possible
+     );
+   --  Possible states of the kernel.
+
+   subtype Action_Kernel_State is Kernel_State range Processing .. Busy;
+
+   procedure Push_State
      (Handle : Kernel_Handle;
-      Busy   : Boolean := True);
-   --  If Busy is True, indicate that Glide is busy performing a computation
-   --  or wait. This usually involves changing the cursor appearance and
+      State  : Action_Kernel_State);
+   --  Push a new state for kernel.
+   --  If State is Busy, no further action and calls to Push_State are
+   --  allowed. Several Processing states can be pushed.
+   --  This procedure usually involves changing the cursor appearance and
    --  displaying an animation.
    --  If Handle is null, do nothing.
+
+   procedure Pop_State (Handle : Kernel_Handle);
+   --  Undo previous state.
 
    --------------
    -- Contexts --

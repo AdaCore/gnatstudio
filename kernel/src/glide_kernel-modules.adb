@@ -363,7 +363,7 @@ package body Glide_Kernel.Modules is
       --  Create the menu and add all the modules information
       Gtk_New (Menu);
 
-      Set_Busy (User.Kernel, True);
+      Push_State (User.Kernel, Busy);
       Context := User.Context_Func
         (Kernel       => User.Kernel,
          Event_Widget => User.Event_Widget,
@@ -393,8 +393,7 @@ package body Glide_Kernel.Modules is
          end loop;
       end if;
 
-      Set_Busy (User.Kernel, False);
-
+      Pop_State (User.Kernel);
       return Menu;
    end Create_Contextual_Menu;
 
@@ -657,7 +656,7 @@ package body Glide_Kernel.Modules is
       Current : Module_List.List := Global_Modules_List;
       Result  : Boolean := False;
    begin
-      Set_Busy (Kernel_Handle (Kernel), True);
+      Push_State (Kernel_Handle (Kernel), Busy);
 
       while not Module_List.Is_Empty (Current) loop
          if Module_List.Head (Current).Mime_Handler /= null then
@@ -669,7 +668,7 @@ package body Glide_Kernel.Modules is
          Current := Module_List.Next (Current);
       end loop;
 
-      Set_Busy (Kernel_Handle (Kernel), False);
+      Pop_State (Kernel_Handle (Kernel));
 
       return Result;
    end Mime_Action;

@@ -526,13 +526,13 @@ package body Glide_Kernel is
       return Glide_Window (Handle.Main_Window).Toolbar;
    end Get_Toolbar;
 
-   --------------
-   -- Set_Busy --
-   --------------
+   ----------------
+   -- Push_State --
+   ----------------
 
-   procedure Set_Busy
+   procedure Push_State
      (Handle : Kernel_Handle;
-      Busy   : Boolean := True)
+      State  : Action_Kernel_State)
    is
       Window : Glide_Window;
    begin
@@ -542,23 +542,35 @@ package body Glide_Kernel is
 
       Window := Glide_Window (Handle.Main_Window);
 
-      --  The tests below are somewhat redundant, but we prefer to be over
-      --  cautious rather than letting Glide in an inconsistent state.
+      --  Do not differentiate between Processing and Busy for now
 
-      if Busy then
-         if Window.Busy_Level = 0 then
-            Set_Busy_Cursor (Get_Window (Window), True, True);
+      if Window.Busy_Level = 0 then
+         Set_Busy_Cursor (Get_Window (Window), True, True);
 
-            if Window.Timeout_Id = 0 then
-               Window.Timeout_Id := Glide_Kernel.Timeout.Add
-                 (Guint32 (Get_Delay_Time (Window.Animation_Iter)),
-                  Anim_Cb'Access, Kernel_Handle (Handle));
-            end if;
+         if Window.Timeout_Id = 0 then
+            Window.Timeout_Id := Glide_Kernel.Timeout.Add
+              (Guint32 (Get_Delay_Time (Window.Animation_Iter)),
+               Anim_Cb'Access, Kernel_Handle (Handle));
          end if;
+      end if;
 
-         Window.Busy_Level := Window.Busy_Level + 1;
+      Window.Busy_Level := Window.Busy_Level + 1;
+   end Push_State;
 
-      elsif Window.Busy_Level > 0 then
+   ---------------
+   -- Pop_State --
+   ---------------
+
+   procedure Pop_State (Handle : Kernel_Handle) is
+      Window : Glide_Window;
+   begin
+      if Handle = null then
+         return;
+      end if;
+
+      Window := Glide_Window (Handle.Main_Window);
+
+      if Window.Busy_Level > 0 then
          Window.Busy_Level := Window.Busy_Level - 1;
 
          if Window.Busy_Level = 0 then
@@ -570,6 +582,6 @@ package body Glide_Kernel is
             Set_Busy_Cursor (Get_Window (Window), False, False);
          end if;
       end if;
-   end Set_Busy;
+   end Pop_State;
 
 end Glide_Kernel;
