@@ -45,7 +45,6 @@ with Default_Preferences;
 with Histories;
 with Projects.Registry;
 with Task_Manager;
-with Commands.Interactive;
 with Generic_List;
 with VFS;
 
@@ -490,7 +489,6 @@ package Glide_Kernel is
    --  Whether the current context matches Filter.
    --  Context doesn't need to be Ref-ed or Unref-ed.
 
-
    type Base_Action_Filter_Record (<>)
       is new Action_Filter_Record with private;
    type Base_Action_Filter is access Base_Action_Filter_Record'Class;
@@ -563,59 +561,6 @@ package Glide_Kernel is
 
    function Get (Iter : Action_Filter_Iterator) return Action_Filter;
    --  Return the current filter
-
-   --------------
-   -- Actions --
-   -------------
-   --  Actions are named commands (or list of commands) in GPS. These can
-   --  be associated with menus, keys and toolbar buttons among other things.
-
-   type Action_Record is record
-      Command     : Commands.Interactive.Interactive_Command_Access;
-      Filter      : Action_Filter;
-      Description : GNAT.OS_Lib.String_Access;
-   end record;
-   No_Action : constant Action_Record := (null, null, null);
-   --  Command is freed automatically by the kernel.
-   --  Context indicates when the action can be executed. If null, this means
-   --  the action can always be executed. The context mustn't deallocated
-   --  in the life of GPS, since there might be actions bound to it at any
-   --  time.
-
-   procedure Register_Action
-     (Kernel      : access Kernel_Handle_Record;
-      Name        : String;
-      Command     : access Commands.Interactive.Interactive_Command'Class;
-      Description : String := "";
-      Filter      : Action_Filter := null);
-   --  Register a new named action in GPS.
-   --  Only the actions that can be executed interactively by the user
-   --  should be registered.
-   --  Name must be unique in GPS.
-   --  Action will be freed automatically by the kernel.
-
-   function Lookup_Action
-     (Kernel : access Kernel_Handle_Record;
-      Name   : String) return Action_Record;
-   --  Lookup a command by name. Return No_Action if no such action has been
-   --  registered.
-
-   type Action_Iterator is private;
-
-   function Start (Kernel : access Kernel_Handle_Record'Class)
-      return Action_Iterator;
-   --  Return the first action registered in the kernel (this is in no
-   --  particular order).
-
-   procedure Next
-     (Kernel : access Kernel_Handle_Record'Class;
-      Iter   : in out Action_Iterator);
-   --  Move to the next action
-
-   function Get (Iter : Action_Iterator) return String;
-   function Get (Iter : Action_Iterator) return Action_Record;
-   --  Return the current action. The empty string or No_Action is returned if
-   --  there are no more actions.
 
    -----------
    -- Hooks --
@@ -916,11 +861,16 @@ private
    package Tools_Htable is new String_Hash
      (Tool_Properties_Record, Free, No_Tool);
 
-   procedure Free (Action : in out Action_Record);
-   --  Free the memory occupied by the action
+   ------------------------------------
+   -- Abstract type defining a table --
+   ------------------------------------
 
-   package Actions_Htable is new String_Hash
-     (Action_Record, Free, No_Action);
+   type Root_Table is abstract tagged null record;
+   type Root_Table_Access is access all Root_Table'Class;
+
+   procedure Reset (X : access Root_Table) is abstract;
+   --  Reset the table.
+
 
    procedure Do_Nothing (Filter : in out Action_Filter);
    --  Do nothing
@@ -930,10 +880,6 @@ private
 
    type Action_Filter_Iterator is record
       Iterator : Action_Filters_Htable.String_Hash_Table.Iterator;
-   end record;
-
-   type Action_Iterator is record
-      Iterator : Actions_Htable.String_Hash_Table.Iterator;
    end record;
 
    type Hook_Function_Record is abstract tagged record
@@ -960,7 +906,7 @@ private
       Tools   : Tools_Htable.String_Hash_Table.HTable;
       --  The tools registered in the kernel
 
-      Actions : Actions_Htable.String_Hash_Table.HTable;
+      Actions : Root_Table_Access;
       --  The actions registered in the kernel
 
       Hooks : Hooks_Hash.String_Hash_Table.HTable;
