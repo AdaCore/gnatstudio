@@ -35,6 +35,7 @@ package Pixmaps_IDE is
    dot_xpm                 : aliased Pixmap_Array;
    down_xpm                : aliased Pixmap_Array;
    finish_xpm              : aliased Pixmap_Array;
+   grey_dot_xpm            : aliased Pixmap_Array;
    interrupt_xpm           : aliased Pixmap_Array;
    lock_xpm                : aliased Pixmap_Array;
    mini_folder_xpm         : aliased Pixmap_Array;
@@ -66,6 +67,7 @@ private
    pragma Import (C, dot_xpm, "dot_xpm");
    pragma Import (C, down_xpm, "down_xpm");
    pragma Import (C, finish_xpm, "finish_xpm");
+   pragma Import (C, grey_dot_xpm, "grey_dot_xpm");
    pragma Import (C, interrupt_xpm, "interrupt_xpm");
    pragma Import (C, lock_xpm, "lock_xpm");
    pragma Import (C, mini_folder_xpm, "mini_folder_xpm");
