@@ -83,11 +83,9 @@ package body Glide_Result_View is
    Node_Type_Column     : constant := 5;
    Line_Column          : constant := 6;
    Column_Column        : constant := 7;
-   Weight_Column        : constant := 8;
-   Color_Column         : constant := 9;
-
-   --  Number_Of_Columns    : constant := 2;
-   --  Number of columns in the ctree.
+   Length_Column        : constant := 8;
+   Weight_Column        : constant := 9;
+   Color_Column         : constant := 10;
 
    -----------------------
    -- Local subprograms --
@@ -117,6 +115,7 @@ package body Glide_Result_View is
       Mark          : String;
       Line          : String;
       Column        : String;
+      Length        : String;
       Pixbuf        : Gdk.Pixbuf.Gdk_Pixbuf := Null_Pixbuf);
    --  Fill information in Iter.
 
@@ -126,6 +125,7 @@ package body Glide_Result_View is
       File     : String;
       Line     : Positive;
       Column   : Positive;
+      Length   : Natural;
       Message  : String);
    --  Add a file locaton in Category.
    --  File is an absolute file name. If File is not currently open, do not
@@ -279,6 +279,9 @@ package body Glide_Result_View is
                            & " -c"
                              & Get_String
                                (View.Model, Location, Column_Column)
+                           & " -L"
+                             & Get_String
+                               (View.Model, Location, Length_Column)
                            & " " & File));
                   end if;
 
@@ -321,13 +324,19 @@ package body Glide_Result_View is
                     Get_String (Model, Iter, Line_Column);
                   Column :  constant String :=
                     Get_String (Model, Iter, Column_Column);
+                  Length :  constant String :=
+                    Get_String (Model, Iter, Length_Column);
+
+                  Col    : constant Natural := Natural'Value
+                    (Column (Column'First + 1 .. Column'Last));
                begin
                   Open_File_Editor
                     (View.Kernel,
                      File,
                      Natural'Value (Line (Line'First + 1 .. Line'Last)),
-                     Natural'Value
-                       (Column (Column'First + 1 .. Column'Last)));
+                     Col,
+                     Col + Natural'Value
+                       (Length (Length'First + 1 .. Length'Last)));
                   File_Opened (View, File);
                end;
             end if;
@@ -372,6 +381,7 @@ package body Glide_Result_View is
       Mark          : String;
       Line          : String;
       Column        : String;
+      Length        : String;
       Pixbuf        : Gdk.Pixbuf.Gdk_Pixbuf := Null_Pixbuf) is
    begin
       Set (View.Model, Iter, Base_Name_Column, Base_Name);
@@ -380,6 +390,7 @@ package body Glide_Result_View is
       Set (View.Model, Iter, Mark_Column, Mark);
       Set (View.Model, Iter, Line_Column, Line);
       Set (View.Model, Iter, Column_Column, Column);
+      Set (View.Model, Iter, Length_Column, Length);
       Set (View.Model, Iter, Icon_Column, C_Proxy (Pixbuf));
 
       if Line = "" then
@@ -423,7 +434,7 @@ package body Glide_Result_View is
 
       if Category_Iter = Null_Iter then
          Append (View.Model, Category_Iter, Null_Iter);
-         Fill_Iter (View, Category_Iter, Category, "", "", "", "", "",
+         Fill_Iter (View, Category_Iter, Category, "", "", "", "", "", "",
                     View.Category_Pixbuf);
          New_Category := True;
       end if;
@@ -447,7 +458,7 @@ package body Glide_Result_View is
       --  When we reach this point, we need to create a new sub-category.
 
       Append (View.Model, File_Iter, Category_Iter);
-      Fill_Iter (View, File_Iter, Base_Name (File), File, "", "", "", "",
+      Fill_Iter (View, File_Iter, Base_Name (File), File, "", "", "", "", "",
                 View.File_Pixbuf);
 
       return;
@@ -463,6 +474,7 @@ package body Glide_Result_View is
       File     : String;
       Line     : Positive;
       Column   : Positive;
+      Length   : Natural;
       Message  : String)
    is
       Category_Iter    : Gtk_Tree_Iter;
@@ -483,11 +495,11 @@ package body Glide_Result_View is
       if Is_Open (View.Kernel, File) then
          declare
             Output : constant String := Create_Mark
-              (View.Kernel, File, Line, Column);
+              (View.Kernel, File, Line, Column, Length);
          begin
             Fill_Iter
               (View, Iter, Line'Img & ":" & Column'Img, File, Message, Output,
-               Line'Img, Column'Img);
+               Line'Img, Column'Img, Length'Img);
          end;
       else
          if not Is_In_List (View.Unopened_Files, File) then
@@ -496,7 +508,7 @@ package body Glide_Result_View is
 
          Fill_Iter
            (View, Iter, Line'Img & ":" & Column'Img, File, Message, "",
-            Line'Img, Column'Img);
+            Line'Img, Column'Img, Length'Img);
       end if;
 
       if Category_Created then
@@ -573,6 +585,7 @@ package body Glide_Result_View is
          Mark_Column               => GType_String,
          Line_Column               => GType_String,
          Column_Column             => GType_String,
+         Length_Column             => GType_String,
          Node_Type_Column          => GType_Int,
          Weight_Column             => GType_Int,
          Color_Column              => Gdk_Color_Type);
@@ -673,16 +686,14 @@ package body Glide_Result_View is
       Source_Line   : Positive;
       Source_Column : Positive;
       Message       : String;
-      Length        : Natural)
-   is
-      pragma Unreferenced (Length);
+      Length        : Natural) is
    begin
       --  Transform Source_File in an absolute file name if needed.
 
       if GNAT.OS_Lib.Is_Absolute_Path (Source_File) then
          Add_Location
            (View, Identifier, Source_File,
-            Source_Line, Source_Column, Message);
+            Source_Line, Source_Column, Length, Message);
 
       else
          declare
@@ -692,7 +703,7 @@ package body Glide_Result_View is
             if GNAT.OS_Lib.Is_Absolute_Path (F) then
                Add_Location
                  (View, Identifier, F,
-                  Source_Line, Source_Column, Message);
+                  Source_Line, Source_Column, Length, Message);
             end if;
          end;
       end if;
