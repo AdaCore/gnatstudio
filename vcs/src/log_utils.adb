@@ -514,7 +514,6 @@ package body Log_Utils is
                            Write (W_File, CL (P1 .. P2));
                         end loop Write_RH;
 
-                        Close (W_File);
                         exit Fill_Log;
                      end if;
                   end if;
@@ -524,6 +523,7 @@ package body Log_Utils is
 
             end if;
 
+            Close (W_File);
             Free (CL);
          end;
       end if;
