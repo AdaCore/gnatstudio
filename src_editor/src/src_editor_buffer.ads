@@ -664,21 +664,6 @@ package Src_Editor_Buffer is
      (Editor : access Source_Buffer_Record) return Boolean;
    --  Returh whether the buffer has relevant block information.
 
-   function Add_Blank_Lines
-     (Editor : access Source_Buffer_Record;
-      Line   : Editable_Line_Type;
-      GC     : Gdk.GC.Gdk_GC;
-      Text   : String;
-      Number : Positive) return Gtk.Text_Mark.Gtk_Text_Mark;
-   --  Add Number blank lines at line Line.
-   --  Blank lines cannot be edited, and are not saved on disk.
-
-   function Create_Mark
-     (Editor : access Source_Buffer_Record;
-      Line   : Editable_Line_Type;
-      Column : Positive) return Gtk.Text_Mark.Gtk_Text_Mark;
-   --  Create mark at Line, Column.
-
    type Src_Editor_Action_Context is new Glide_Kernel.Action_Context_Record
       with null record;
    function Get_Name
@@ -1002,6 +987,10 @@ private
 
       Editable_Lines      : Editable_Line_Array_Access;
       --  Reference array for editable lines.
+
+      Last_Editable_Line  : Editable_Line_Type := 0;
+      --  The last editable line in the buffer (corresponds to an index in
+      --  Editable_Lines)
 
       Modifying_Editable_Lines : Boolean := True;
       --  Whether we are currently making modifications to the
