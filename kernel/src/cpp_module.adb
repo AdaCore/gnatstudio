@@ -30,6 +30,8 @@ with Src_Info.CPP;            use Src_Info.CPP;
 with Traces;                  use Traces;
 with Ada.Exceptions;          use Ada.Exceptions;
 with Ada.Unchecked_Deallocation;
+with Prj_API;                 use Prj_API;
+with Glide_Intl;              use Glide_Intl;
 
 package body Cpp_Module is
 
@@ -57,9 +59,14 @@ package body Cpp_Module is
       Handler : constant Glide_Language_Handler := Glide_Language_Handler
         (Get_Language_Handler (Kernel));
    begin
+      if Object_Path (Get_Project_View (Kernel), False) = "" then
+         Insert (Kernel,
+                 -("The root project must have an object directory set, or"
+                   & " C and C++ browsing is disabled"), Mode => Error);
+      end if;
       Reset
         (CPP_LI_Handler
-           (Get_LI_Handler_By_Name (Handler, CPP_LI_Handler_Name)),
+         (Get_LI_Handler_By_Name (Handler, CPP_LI_Handler_Name)),
          Get_Project_View (Kernel));
 
    exception
