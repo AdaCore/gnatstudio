@@ -11,21 +11,21 @@ sharedir        = $(prefix)/share/make
 default build compile link ada c c++ clean:
 	$(MAKE) -s -C glide -f Makefile.gps $@
 
-install:
+install-common:
 	$(MKDIR) $(bindir)
-	$(INSTALL_PROGRAM) glide/obj/gps $(bindir)
 	$(INSTALL_DATA) gnat/Makefile.generic $(sharedir)
 	$(INSTALL_DATA) gnat/Makefile.prolog $(sharedir)
-	$(MAKE) -C kernel/src_info/sn/snsrc install
 	$(MAKE) -C docs install
 
-install-strip:
-	$(MKDIR) $(bindir)
+install: install-common
+	$(INSTALL_PROGRAM) glide/obj/gps $(bindir)
+	$(MAKE) -C kernel/src_info/sn/snsrc install
+
+install-strip: install-common
 	$(INSTALL_PROGRAM) -s glide/obj/gps $(bindir)
 	$(MAKE) -C kernel/src_info/sn/snsrc install-strip
-	$(MAKE) -C docs install
 
 gvd:
 	$(MAKE) -s -C gvd -f Makefile.gvd EXEC=gvd ADA_SOURCES=gvd_main.adb
 
-.PHONY: gvd install install-strip
+.PHONY: gvd install install-common install-strip
