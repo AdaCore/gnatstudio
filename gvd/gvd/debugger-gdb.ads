@@ -75,6 +75,11 @@ package Debugger.Gdb is
       Addr_First  : out Natural;
       Addr_Last   : out Natural);
 
+   procedure Found_Frame_Info
+     (Debugger    : access Gdb_Debugger;
+      Str         : String;
+      First, Last : out Natural);
+
    function Source_Files_List
      (Debugger : access Gdb_Debugger) return GVD.Types.String_Array;
 

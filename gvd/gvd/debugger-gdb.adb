@@ -100,6 +100,7 @@ package body Debugger.Gdb is
 
    Frame_Pattern : constant Pattern_Matcher := Compile
      ("^#(\d+) +((0x[0-9a-f]+) in )?(.+?)( at (.+))?$", Multiple_Lines);
+   --  Regular expression used to detect and parse callstack frames
 
    Breakpoint_Pattern : constant Pattern_Matcher := Compile
      ("^(\d+)\s+(breakpoint|\w+? watchpoint)\s+(keep|dis|del)\s+([yn])"
@@ -1270,6 +1271,28 @@ package body Debugger.Gdb is
       Line       := Natural'Value
         (Str (Matched (2).First .. Matched (2).Last));
    end Found_File_Name;
+
+   ----------------------
+   -- Found_Frame_Info --
+   ----------------------
+
+   procedure Found_Frame_Info
+     (Debugger    : access Gdb_Debugger;
+      Str         : String;
+      First, Last : out Natural)
+   is
+      Matched : Match_Array (0 .. 1);
+
+   begin
+      Match (Frame_Pattern, Str, Matched);
+      if Matched (1) /= No_Match then
+         First := Matched (1).First;
+         Last  := Matched (1).Last;
+      else
+         First := 0;
+         Last  := 0;
+      end if;
+   end Found_Frame_Info;
 
    -----------------------
    -- Source_Files_List --

@@ -284,6 +284,19 @@ package body Debugger is
       Addr_Last  := 1;
    end Found_File_Name;
 
+   ----------------------
+   -- Found_Frame_Info --
+   ----------------------
+
+   procedure Found_Frame_Info
+     (Debugger    : access Debugger_Root;
+      Str         : String;
+      First, Last : out Natural) is
+   begin
+      First := 0;
+      Last  := 0;
+   end Found_Frame_Info;
+
    -----------------
    -- Get_Uniq_Id --
    -----------------

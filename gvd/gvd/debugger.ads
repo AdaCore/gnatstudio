@@ -309,6 +309,15 @@ package Debugger is
    --  However, since display a file requires multiple operations, it seemed
    --  better to do it in Odd.Process.Text_Output_Handler.
 
+   procedure Found_Frame_Info
+     (Debugger    : access Debugger_Root;
+      Str         : String;
+      First, Last : out Natural);
+   --  Search for a callstack frame indication in Str.
+   --  First is set to 0 if no such frame is found, and to the beginning of
+   --  the substring otherwise. Last is set to the end of the substring if
+   --  there is one.
+
    function Source_Files_List
      (Debugger : access Debugger_Root) return GVD.Types.String_Array;
    --  Return the list of source files for the currently loaded executable.
