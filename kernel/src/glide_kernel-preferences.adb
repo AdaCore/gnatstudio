@@ -390,7 +390,7 @@ package body Glide_Kernel.Preferences is
         (Name    => "Src-Editor-Highlight-Region-Color",
          Default => "cyan",
          Blurb   => -"Color for highlighting regions",
---         Flags   => Param_Readable,
+         Flags   => Param_Readable,
          Nick    => -"Region highlighting color"));
       Register_Property
         (Kernel.Preferences, Param_Spec (Default_HL_Region_Color),
@@ -578,7 +578,7 @@ package body Glide_Kernel.Preferences is
         (Name    => "Messages-Src-Highlight-Color",
          Nick    => -"Errors highlighting",
          Blurb   => -"Color used to highlight errors in the source editors",
-         Default => "#FFE0E0"));
+         Default => "#FFA0A0"));
       Register_Property
         (Kernel.Preferences, Param_Spec (Message_Src_Highlight), -"Messages");
 
