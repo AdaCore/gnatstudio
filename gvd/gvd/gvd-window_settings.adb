@@ -135,6 +135,7 @@ package body GVD.Window_Settings is
       Page      : Gtk_Widget;
       Num_Pages : constant Gint :=
         Gint (Page_List.Length (Get_Children (Top.Process_Notebook)));
+      Widget    : Gtk_Widget;
 
    begin
       if Current_Window_Settings = null then
@@ -204,9 +205,15 @@ package body GVD.Window_Settings is
                        True);
                end if;
 
-               if Get_Active (Gtk_Check_Menu_Item (Get_Item
-                 (Top.Factory, -"/Data/Call Stack")))
-               then
+               Widget := Get_Widget (Top.Factory, -"/Data/Call Stack");
+
+               if Widget = null then
+                  --  This means that GVD is part of Glide
+                  Widget :=
+                    Get_Widget (Top.Factory, -"/Debug/Data/Call Stack");
+               end if;
+
+               if Get_Active (Gtk_Check_Menu_Item (Widget)) then
                   Set (String_Gint ("Stack_Width" & Image),
                        Gint (Get_Allocation_Width
                              (Process.Stack_Scrolledwindow)),

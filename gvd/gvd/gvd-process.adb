@@ -470,6 +470,7 @@ package body GVD.Process is
       First, Last : Natural := 0;
       Addr_First  : Natural := 0;
       Addr_Last   : Natural;
+      Widget      : Gtk_Widget;
 
    begin
       if Process.Post_Processing or else Process.Current_Output = null then
@@ -515,9 +516,15 @@ package body GVD.Process is
             Process.Current_Output (Addr_First .. Addr_Last));
       end if;
 
-      if Get_Active (Gtk_Check_Menu_Item (Get_Item
-        (Process.Window.Factory, -"/Data/Call Stack")))
-      then
+      Widget := Get_Widget (Process.Window.Factory, -"/Data/Call Stack");
+
+      if Widget = null then
+         --  This means that GVD is part of Glide
+         Widget :=
+           Get_Widget (Process.Window.Factory, -"/Debug/Data/Call Stack");
+      end if;
+
+      if Get_Active (Gtk_Check_Menu_Item (Widget)) then
          Found_Frame_Info
            (Process.Debugger, Process.Current_Output.all, First, Last);
 
@@ -720,6 +727,7 @@ package body GVD.Process is
       Widget := Get_Widget (Window.Factory, -"/Data/Call Stack");
 
       if Widget = null then
+         --  This means that GVD is part of Glide
          Widget := Get_Widget (Window.Factory, -"/Debug/Data/Call Stack");
       end if;
 

@@ -299,12 +299,20 @@ package body GVD.Dialogs is
       Columns  : Gint;
       Index    : Integer;
       Subp     : String_Access;
+      Widget   : Gtk_Widget;
 
    begin
       --  Do nothing if the stack list has been hidden
-      if not Get_Active (Gtk_Check_Menu_Item (Get_Item
-        (Tab.Window.Factory, -"/Data/Call Stack")))
-      then
+
+      Widget := Get_Widget (Tab.Window.Factory, -"/Data/Call Stack");
+
+      if Widget = null then
+         --  This means that GVD is part of Glide
+         Widget :=
+           Get_Widget (Tab.Window.Factory, -"/Debug/Data/Call Stack");
+      end if;
+
+      if not Get_Active (Gtk_Check_Menu_Item (Widget)) then
          return;
       end if;
 
