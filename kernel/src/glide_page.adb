@@ -91,8 +91,9 @@ package body Glide_Page is
       Position    : constant Gint := Get_Position (Console);
       Contents    : constant String := Get_Chars (Console, 0);
       Start       : Natural := Natural (Position);
+      Last        : Natural := Start;
       Pattern     : constant Pattern_Matcher :=
-        Compile ("([^:]*):(\d+):(\d+:)?");
+        Compile ("^([^:]*):(\d+):(\d+:)?");
       Matched     : Match_Array (0 .. 3);
       Line        : Positive;
       Column      : Positive;
@@ -111,7 +112,11 @@ package body Glide_Page is
          Start := Start - 1;
       end loop;
 
-      Match (Pattern, Contents (Start .. Contents'Last), Matched);
+      while Last < Contents'Last and then Contents (Last + 1) /= ASCII.LF loop
+         Last := Last + 1;
+      end loop;
+
+      Match (Pattern, Contents (Start .. Last), Matched);
 
       if Matched (0) /= No_Match then
          Line :=
@@ -121,13 +126,13 @@ package body Glide_Page is
             Column := 1;
          else
             Column := Positive'Value
-                        (Contents (Matched (3).First .. Matched (3).Last));
+                        (Contents (Matched (3).First .. Matched (3).Last - 1));
          end if;
 
          if Matched (1).First < Matched (1).Last then
             Go_To (Top.Kernel,
-                   Contents
-                     (Matched (1).First .. Matched (1).Last), Line, Column);
+                   Contents (Matched (1).First .. Matched (1).Last),
+                   Line, Column);
          end if;
       end if;
 
