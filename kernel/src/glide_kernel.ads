@@ -730,7 +730,7 @@ package Glide_Kernel is
 
    type File_Project_Record is record
       Project : Projects.Project_Type;
-      File    : VFS.Virtual_File;
+      File    : aliased VFS.Virtual_File;
    end record;
 
    package File_Project_Cb is new Gtk.Handlers.User_Callback
