@@ -225,6 +225,8 @@ package body Shell_Script is
    procedure Free (Subprogram : in out Shell_Subprogram_Record);
    function Get_Name
      (Subprogram : access Shell_Subprogram_Record) return String;
+   function Get_Script
+     (Subprogram : Shell_Subprogram_Record) return Scripting_Language;
    --  See doc from inherited subprograms
 
    -------------------------
@@ -325,6 +327,7 @@ package body Shell_Script is
    use Command_Hash.String_Hash_Table;
 
    type Shell_Module_Id_Record is new Module_ID_Record with record
+      Script        : Shell_Scripting;
       Commands_List : Command_Hash.String_Hash_Table.HTable;
       --  The list of all registered commands
    end record;
@@ -725,6 +728,7 @@ package body Shell_Script is
       Script := new Shell_Scripting_Record;
       Script.Kernel := Kernel_Handle (Kernel);
       Register_Scripting_Language (Kernel, Script);
+      Shell_Module_Id.Script := Script;
 
       N     := new Node;
       N.Tag := new String'("Shell_Console");
@@ -2019,5 +2023,17 @@ package body Shell_Script is
             Action_Name => new String'(Name));
       end if;
    end Nth_Arg;
+
+   ----------------
+   -- Get_Script --
+   ----------------
+
+   function Get_Script
+     (Subprogram : Shell_Subprogram_Record) return Scripting_Language
+   is
+      pragma Unreferenced (Subprogram);
+   begin
+      return Scripting_Language (Shell_Module_Id.Script);
+   end Get_Script;
 
 end Shell_Script;

@@ -60,6 +60,10 @@ package Glide_Kernel.Scripts is
    procedure Free (Subprogram : in out Subprogram_Type);
    --  Free the subprogram
 
+   function Get_Script
+     (Subprogram : Subprogram_Record) return Scripting_Language is abstract;
+   --  Return the language in which the subprogram was written
+
    procedure Free (Subprogram : in out Subprogram_Record) is abstract;
    --  Free the memory occupied by the subprogram instance
 
@@ -74,6 +78,12 @@ package Glide_Kernel.Scripts is
    --  Return the name of the subprogram, as a string that can be displayed for
    --  the user. This is used when analysing the contents of a hook for
    --  instance
+
+--     function Subprogram_From_Action
+--       (Action : Glide_Kernel.Actions.Action_Record_Access)
+--        return Subprogram_Type;
+   --  Not implemented, but left here for documentation purposes:
+   --  A GPS action is the same thing as a subprogram_type for the GPS shell
 
    -----------------
    -- Class types --

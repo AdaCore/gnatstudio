@@ -155,6 +155,8 @@ package body Python_Module is
    procedure Free (Subprogram : in out Python_Subprogram_Record);
    function Get_Name
      (Subprogram : access Python_Subprogram_Record) return String;
+   function Get_Script
+     (Subprogram : Python_Subprogram_Record) return Scripting_Language;
    --  See doc from inherited subprograms
 
    --------------------------
@@ -2247,5 +2249,17 @@ package body Python_Module is
       Py_DECREF (S);
       return Name;
    end Get_Name;
+
+   ----------------
+   -- Get_Script --
+   ----------------
+
+   function Get_Script
+     (Subprogram : Python_Subprogram_Record) return Scripting_Language
+   is
+      pragma Unreferenced (Subprogram);
+   begin
+      return Scripting_Language (Python_Module_Id.Script);
+   end Get_Script;
 
 end Python_Module;
