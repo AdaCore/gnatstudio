@@ -580,6 +580,14 @@ package body Codefix.Graphics is
          Graphic_Codefix.Unfixed_Cb (Data (Node));
          Node := Next (Node);
       end loop;
+
+      Remove_Nodes
+        (Graphic_Codefix.Fixes_List,
+         Error_Id_Lists.Null_Node,
+         Last (Graphic_Codefix.Fixes_List));
+
+      Graphic_Codefix.Current_Error := Null_Error_Id;
+      Load_Next_Error (Graphic_Codefix);
    end Cancel_All_Fixes;
 
 end Codefix.Graphics;
