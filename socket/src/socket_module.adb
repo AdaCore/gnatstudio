@@ -398,6 +398,13 @@ package body Socket_Module is
 
          String'Write (Read_Data.Channel, Nth_Arg (Data, 2));
       end if;
+
+   exception
+      when Socket_Error | End_Error =>
+         Trace (Me, "Communication error, closing socket.");
+
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end Socket_Command_Handler;
 
    ---------------------
