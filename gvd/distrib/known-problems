@@ -1,5 +1,14 @@
 Known Problems fixed in GVD 2.0.0
 
+- [9131-004] Constraint_Error when displaying the assembly code
+  Problem:    In some cases, notably vxworks, gdb isn't able to display in what
+              scope the assembly lines are, and the resulting assembly lines
+              couldn't be parsed by gvd. They look like "0x1234:...", ie no
+              space after the address.
+  Workaround: When you get the bug box, click on the OK button and keep using
+              gvd, which is still in a stable state. To display the assembly,
+              type "disassemble" in the console window directly.
+
 - Infinite loop when displaying the assembly code
   Problem:    When the application wasn't compiled with debug information,
               and you chose to display the assembly window, this resulted in
