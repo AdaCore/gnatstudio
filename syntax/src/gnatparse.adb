@@ -34,6 +34,7 @@ procedure Gnatparse is
    Name        : constant String := Argument (1) & ASCII.NUL;
    Buffer      : String_Access;
    Length      : Integer;
+   pragma Unreferenced (Length);
    Info        : Construct_Access;
    Indent      : Natural;
    Next_Indent : Natural;

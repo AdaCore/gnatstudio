@@ -31,6 +31,7 @@ procedure Gnatpp is
    Name       : constant String := Argument (1) & ASCII.NUL;
    Buffer     : String_Access;
    Length     : Integer;
+   pragma Unreferenced (Length);
    New_Buffer : Extended_Line_Buffer;
    Ignore     : Natural;
 
@@ -42,7 +43,7 @@ begin
    New_Buffer := To_Line_Buffer (Buffer.all);
    Analyze_Ada_Source
      (Buffer.all, New_Buffer,
-      Indent_Params  => (3, 2, 2, 8),
+      Indent_Params  => (3, 2, 2, 8, True),
       Current_Indent => Ignore,
       Prev_Indent    => Ignore);
    Print (New_Buffer);
