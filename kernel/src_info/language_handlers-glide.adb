@@ -47,6 +47,13 @@ package body Language_Handlers.Glide is
 
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Language_Info_Array, Language_Info_Access);
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+     (Handler_Info_Array, Handler_Info_Access);
+
+   function Get_LI_Handler_By_Name
+     (Handler : access Glide_Language_Handler_Record;
+      Name    : String) return Natural;
+   --  Return the index of the LI handler Name, or 0 if not found.
 
    -------------
    -- Gtk_New --
@@ -152,6 +159,93 @@ package body Language_Handlers.Glide is
       end if;
    end Get_Language_From_File;
 
+   -------------------------
+   -- Register_LI_Handler --
+   -------------------------
+
+   procedure Register_LI_Handler
+     (Handler : access Glide_Language_Handler_Record;
+      Name    : String;
+      LI      : Src_Info.LI_Handler)
+   is
+      Tmp   : Handler_Info_Access;
+      Index : Natural;
+   begin
+      if Handler.Handlers /= null then
+         Index := Get_LI_Handler_By_Name (Handler, Name);
+         if Index /= 0 then
+            Handler.Handlers (Index).Handler := LI;
+            return;
+         end if;
+
+         Tmp := new Handler_Info_Array
+           (Handler.Handlers'First .. Handler.Handlers'Last + 1);
+         Tmp (Handler.Handlers'Range) := Handler.Handlers.all;
+         Unchecked_Free (Handler.Handlers);
+         Handler.Handlers := Tmp;
+
+      else
+         Handler.Handlers := new Handler_Info_Array (1 .. 1);
+      end if;
+
+      Handler.Handlers (Handler.Handlers'Last) :=
+        (Name    => new String' (Name),
+         Handler => LI);
+   end Register_LI_Handler;
+
+   ----------------------------
+   -- Get_LI_Handler_By_Name --
+   ----------------------------
+
+   function Get_LI_Handler_By_Name
+     (Handler : access Glide_Language_Handler_Record;
+      Name    : String) return Natural is
+   begin
+      if Handler.Handlers /= null then
+         for J in Handler.Handlers'Range loop
+            if Handler.Handlers (J).Name.all = Name then
+               return J;
+            end if;
+         end loop;
+      end if;
+
+      return 0;
+   end Get_LI_Handler_By_Name;
+
+   ----------------------------
+   -- Get_LI_Handler_By_Name --
+   ----------------------------
+
+   function Get_LI_Handler_By_Name
+     (Handler : access Glide_Language_Handler_Record;
+      Name    : String) return Src_Info.LI_Handler
+   is
+      Index : Natural := Get_LI_Handler_By_Name
+        (Handler, Name);
+   begin
+      if Index = 0 then
+         return null;
+      else
+         return Handler.Handlers (Index).Handler;
+      end if;
+   end Get_LI_Handler_By_Name;
+
+   -----------------
+   -- Get_LI_Name --
+   -----------------
+
+   function Get_LI_Name
+     (Handler : access Glide_Language_Handler_Record;
+      Nth     : Natural) return String is
+   begin
+      if Handler.Handlers /= null
+        and then Nth <= Handler.Handlers'Length
+      then
+         return Handler.Handlers (Handler.Handlers'First + Nth - 1).Name.all;
+      end if;
+      return "";
+   end Get_LI_Name;
+
    -----------------------
    -- Register_Language --
    -----------------------
@@ -173,8 +267,7 @@ package body Language_Handlers.Glide is
 
          Tmp := new Language_Info_Array
            (Handler.Languages'First .. Handler.Languages'Last + 1);
-         Tmp (Handler.Languages'First .. Handler.Languages'Last) :=
-           Handler.Languages.all;
+         Tmp (Handler.Languages'Range) := Handler.Languages.all;
          Unchecked_Free (Handler.Languages);
          Handler.Languages := Tmp;
       else
@@ -289,6 +382,20 @@ package body Language_Handlers.Glide is
       end if;
    end Languages_Count;
 
+   -----------------------
+   -- LI_Handlers_Count --
+   -----------------------
+
+   function LI_Handlers_Count (Handler : access Glide_Language_Handler_Record)
+      return Natural is
+   begin
+      if Handler.Handlers = null then
+         return 0;
+      else
+         return Handler.Handlers'Length;
+      end if;
+   end LI_Handlers_Count;
+
    ---------------------
    -- Get_Nth_Handler --
    ---------------------
@@ -297,12 +404,12 @@ package body Language_Handlers.Glide is
      (Handler : access Glide_Language_Handler_Record;
       Num     : Positive) return Src_Info.LI_Handler is
    begin
-      if Handler.Languages = null
-        or else Num > Handler.Languages'Length
+      if Handler.Handlers = null
+        or else Num > Handler.Handlers'Length
       then
          return null;
       else
-         return Handler.Languages (Handler.Languages'First + Num - 1).Handler;
+         return Handler.Handlers (Handler.Handlers'First + Num - 1).Handler;
       end if;
    end Get_Nth_Handler;
 

@@ -18,7 +18,20 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
---  See documentation in parent package Language_Handlers
+--  See documentation in parent package Language_Handlers.
+--
+--  When adding new languages, the following needs to be done:
+--    - Register a LI handler (for generating the xref database for this
+--      language). Since such handlers can be shared by multiple languages,
+--      this registration is optional when it has already been done.
+--
+--    - Register the new language with Register_Language. This is associated
+--      with basic syntactic information for highlighting in the source editor
+--      and manipulation through the debugger.
+--
+--    - Register extra information for the language with
+--      Add_Language_Info. This registers default extensions for this language,
+--      and provide a mapping from this language to the matching LI handler.
 
 with Language;
 with Basic_Types;
@@ -39,6 +52,60 @@ package Language_Handlers.Glide is
      (Handler : access Glide_Language_Handler_Record;
       Project_View : Prj.Project_Id);
    --  Set the top-level project for Handler.
+
+   -----------------
+   -- LI handlers --
+   -----------------
+   --  These are the types responsible for generating the xref database for all
+   --  the supported language. It is possible that a given handler is
+   --  associated with multiple languages.
+
+   procedure Register_LI_Handler
+     (Handler : access Glide_Language_Handler_Record;
+      Name    : String;
+      LI      : Src_Info.LI_Handler);
+   --  Register a new LI handler that can generate xref.
+   --  The Name is used both for retrieval of the handler by
+   --  Get_LI_Handler_By_Name, and to print in the console when recomputing the
+   --  xref database.
+
+   function Get_LI_Handler_By_Name
+     (Handler : access Glide_Language_Handler_Record;
+      Name    : String) return Src_Info.LI_Handler;
+   --  Return the LI handler which name is Name.
+   --  Name is case-sensitive.
+
+   function Get_LI_Name
+     (Handler : access Glide_Language_Handler_Record;
+      Nth     : Natural) return String;
+   --  Return the name of LI.
+
+   function Get_LI_Handler_From_File
+     (Handler         : access Glide_Language_Handler_Record;
+      Source_Filename : String;
+      Project         : Prj.Project_Id := Prj.No_Project)
+      return Src_Info.LI_Handler;
+   --  Return the LI handler to use for a specific file name.
+   --  null is returned if the language is unknown
+   --  Raises Unsupported_Language if the language is unknown
+   --  Project is the project that contains Source_Filename, or No_Project if
+   --  it is unknown.
+
+   function LI_Handlers_Count
+     (Handler : access Glide_Language_Handler_Record) return Natural;
+   --  Return the number of LI handlers known. This count will generally be
+   --  different from the number of supported languages, since some LI handlers
+   --  will handle multiple languages.
+
+   function Get_Nth_Handler
+     (Handler : access Glide_Language_Handler_Record;
+      Num     : Positive) return Src_Info.LI_Handler;
+   --  Return the handler for the Num-th language.
+   --  The first handler is number 1.
+
+   ---------------
+   -- Languages --
+   ---------------
 
    function Get_Language_From_File
      (Handler : access Glide_Language_Handler_Record;
@@ -69,26 +136,9 @@ package Language_Handlers.Glide is
    --  Register some extra information for a specific language.
    --  Nothing is done if Language_Name hasn't been registered first.
 
-   function Get_LI_Handler_From_File
-     (Handler         : access Glide_Language_Handler_Record;
-      Source_Filename : String;
-      Project         : Prj.Project_Id := Prj.No_Project)
-      return Src_Info.LI_Handler;
-   --  Return the LI handler to use for a specific file name.
-   --  null is returned if the language is unknown
-   --  Raises Unsupported_Language if the language is unknown
-   --  Project is the project that contains Source_Filename, or No_Project if
-   --  it is unknown.
-
    function Languages_Count (Handler : access Glide_Language_Handler_Record)
       return Natural;
    --  Return the number of languages declared in Handler
-
-   function Get_Nth_Handler
-     (Handler : access Glide_Language_Handler_Record;
-      Num     : Positive) return Src_Info.LI_Handler;
-   --  Return the handler for the Num-th language.
-   --  The first handler is number 1.
 
    function Get_Nth_Language
      (Handler : access Glide_Language_Handler_Record;
@@ -109,9 +159,18 @@ private
    type Language_Info_Array is array (Positive range <>) of Language_Info;
    type Language_Info_Access is access Language_Info_Array;
 
+   type Handler_Info is record
+      Name          : Basic_Types.String_Access;
+      Handler       : Src_Info.LI_Handler;
+   end record;
+
+   type Handler_Info_Array is array (Positive range <>) of Handler_Info;
+   type Handler_Info_Access is access Handler_Info_Array;
+
    type Glide_Language_Handler_Record is new Language_Handler_Record
    with record
-      Languages : Language_Info_Access;
+      Languages    : Language_Info_Access;
+      Handlers     : Handler_Info_Access;
       Project_View : Prj.Project_Id;
    end record;
 
