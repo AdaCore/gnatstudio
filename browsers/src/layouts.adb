@@ -878,18 +878,22 @@ package body Layouts is
    procedure Insert_Dummy_Nodes
      (G : in out Graph; Layers : in out Natural_Array)
    is
-      Iter : Edge_Iterator := First (G, Src => Vertex_Access'(null));
-      S, D : Vertex_Access;
-      L1, L2 : Natural;
+      pragma Unreferenced (G, Layers);
+
+      --  Iter : Edge_Iterator := First (G, Src => Vertex_Access'(null));
+      --  S, D : Vertex_Access;
+      --  L1, L2 : Natural;
    begin
-      while not At_End (Iter) loop
-         S := Get_Src (Get (Iter));
-         D := Get_Dest (Get (Iter));
+      return;
+
+      --  while not At_End (Iter) loop
+         --  S := Get_Src (Get (Iter));
+         --  D := Get_Dest (Get (Iter));
          --  ??? Shouldn't do anything if S or D is a dummy node, since we
          --  already took care of that.
 
-         L1 := Layers (Get_Index (S));
-         L2 := Layers (Get_Index (D));
+         --  L1 := Layers (Get_Index (S));
+         --  L2 := Layers (Get_Index (D));
 
          --  if L2 - L1 > 1 then
          --     for Row in L1 + 1 .. L2 - 1 loop
@@ -918,8 +922,8 @@ package body Layouts is
          --     Remove_Edge (G, Get (Iter));
          --  end if;
 
-         Next (Iter);
-      end loop;
+         --  Next (Iter);
+      --  end loop;
    end Insert_Dummy_Nodes;
 
    ------------
