@@ -17,9 +17,10 @@
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
-with GNAT.Regpat;       use GNAT.Regpat;
+with GNAT.Regpat;          use GNAT.Regpat;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
-with Ada.Exceptions;    use Ada.Exceptions;
+with Ada.Exceptions;       use Ada.Exceptions;
+with GNAT.OS_Lib;          use GNAT.OS_Lib;
 
 with Prj;
 with Prj_API;              use Prj_API;
@@ -520,6 +521,10 @@ package body Src_Info.CPP is
    --  forward declaration is in another file which
    --  has not been yet processed
 
+   function Normalized_Compare (Path1, Path2 : String) return Boolean;
+   pragma Inline (Normalized_Compare);
+   --  Normalizes the paths and compares them
+
    ------------------------------------
    -- Find_First_Forward_Declaration --
    ------------------------------------
@@ -561,9 +566,9 @@ package body Src_Info.CPP is
          MD_Tab := Parse_Pair (P.all);
          Free (P);
          --  Update position of the first forward declaration
-         exit when (MD_Tab.Buffer (MD_Tab.File_Name.First ..
-                                   MD_Tab.File_Name.Last)
-            = Buffer (Filename.First .. Filename.Last))
+         exit when Normalized_Compare
+            (MD_Tab.Buffer (MD_Tab.File_Name.First .. MD_Tab.File_Name.Last),
+             Buffer (Filename.First .. Filename.Last))
             and then Cmp_Prototypes
               (MD_Tab.Buffer,
                Buffer,
@@ -588,9 +593,10 @@ package body Src_Info.CPP is
          MD_Tab_Tmp := Parse_Pair (P.all);
          Free (P);
          --  Update position of the first forward declaration
-         if MD_Tab.Buffer (MD_Tab.File_Name.First .. MD_Tab.File_Name.Last)
-            = MD_Tab_Tmp.Buffer (MD_Tab_Tmp.File_Name.First ..
-                                 MD_Tab_Tmp.File_Name.Last)
+         if Normalized_Compare
+            (MD_Tab.Buffer (MD_Tab.File_Name.First .. MD_Tab.File_Name.Last),
+             MD_Tab_Tmp.Buffer (MD_Tab_Tmp.File_Name.First ..
+                                MD_Tab_Tmp.File_Name.Last))
             and then Cmp_Prototypes
               (MD_Tab.Buffer,
                MD_Tab_Tmp.Buffer,
@@ -659,9 +665,9 @@ package body Src_Info.CPP is
          FD_Tab := Parse_Pair (P.all);
          Free (P);
          --  Update position of the first forward declaration
-         exit when (FD_Tab.Buffer (FD_Tab.File_Name.First ..
-                                 FD_Tab.File_Name.Last)
-               = Buffer (Filename.First .. Filename.Last))
+         exit when Normalized_Compare
+            (FD_Tab.Buffer (FD_Tab.File_Name.First .. FD_Tab.File_Name.Last),
+             Buffer (Filename.First .. Filename.Last))
             and then Cmp_Prototypes
               (FD_Tab.Buffer,
                Buffer,
@@ -685,10 +691,10 @@ package body Src_Info.CPP is
          FD_Tab_Tmp := Parse_Pair (P.all);
          Free (P);
          --  Update position of the first forward declaration
-         Match := FD_Tab.Buffer (FD_Tab.File_Name.First ..
-                                 FD_Tab.File_Name.Last)
-                = FD_Tab_Tmp.Buffer (FD_Tab_Tmp.File_Name.First ..
-                                     FD_Tab_Tmp.File_Name.Last);
+         Match := Normalized_Compare
+           (FD_Tab.Buffer (FD_Tab.File_Name.First .. FD_Tab.File_Name.Last),
+            FD_Tab_Tmp.Buffer (FD_Tab_Tmp.File_Name.First ..
+                               FD_Tab_Tmp.File_Name.Last));
          Match := Match and then Cmp_Prototypes
            (FD_Tab.Buffer,
             FD_Tab_Tmp.Buffer,
@@ -726,6 +732,12 @@ package body Src_Info.CPP is
       Add (HT.Table, LIFP, Success);
    end Add;
 
+   function Normalized_Compare (Path1, Path2 : String) return Boolean
+   is
+   begin
+      return Normalize_Pathname (Path1) = Normalize_Pathname (Path2);
+   end Normalized_Compare;
+
    ------------------------
    --  Fu_To_Cl_Handler  --
    ------------------------
@@ -755,9 +767,10 @@ package body Src_Info.CPP is
          return;
       end if;
 
-      if Ref.Buffer (Ref.File_Name.First .. Ref.File_Name.Last) /=
-            Class_Def.Buffer (Class_Def.File_Name.First ..
-                                       Class_Def.File_Name.Last)
+      if not Normalized_Compare
+         (Ref.Buffer (Ref.File_Name.First .. Ref.File_Name.Last),
+          Class_Def.Buffer (Class_Def.File_Name.First ..
+                            Class_Def.File_Name.Last))
       then
          begin
             Decl_Info :=
@@ -846,8 +859,9 @@ package body Src_Info.CPP is
                      Ref.Referred_Symbol_Name.Last));
 
       --  Find declaration
-      if Var.Buffer (Var.File_Name.First .. Var.File_Name.Last)
-         = Get_LI_Filename (Env.File) then
+      if Normalized_Compare
+         (Var.Buffer (Var.File_Name.First .. Var.File_Name.Last),
+          Get_LI_Filename (Env.File)) then
          begin
             Decl_Info := Find_Declaration
               (File                    => Env.File,
@@ -999,9 +1013,10 @@ package body Src_Info.CPP is
          return;
       end if;
 
-      if Ref.Buffer (Ref.File_Name.First .. Ref.File_Name.Last) /=
-            Enum_Def.Buffer (Enum_Def.File_Name.First ..
-                                       Enum_Def.File_Name.Last)
+      if not Normalized_Compare
+         (Ref.Buffer (Ref.File_Name.First .. Ref.File_Name.Last),
+          Enum_Def.Buffer (Enum_Def.File_Name.First ..
+                           Enum_Def.File_Name.Last))
       then
          begin
             Decl_Info :=
@@ -1084,9 +1099,11 @@ package body Src_Info.CPP is
       Enum_Const := Find (Env.SN_Table (EC), Ref_Id);
 
       --  Find declaration
-      if Enum_Const.Buffer
-         (Enum_Const.File_Name.First .. Enum_Const.File_Name.Last)
-         = Get_LI_Filename (Env.File) then
+      if Normalized_Compare
+         (Enum_Const.Buffer
+            (Enum_Const.File_Name.First .. Enum_Const.File_Name.Last),
+          Get_LI_Filename (Env.File))
+      then
          begin
             Decl_Info := Find_Declaration
               (File                    => Env.File,
@@ -1274,8 +1291,9 @@ package body Src_Info.CPP is
          --  If procedure
          --    defined in the current file => add reference
          --    defined in another file => add dep decl and reference it
-         if Buffer (Filename.First .. Filename.Last)
-               = Get_LI_Filename (Env.File) then
+         if Normalized_Compare
+            (Buffer (Filename.First .. Filename.Last),
+             Get_LI_Filename (Env.File)) then
             begin
                --  this is a function defined in the current file
                --  it may be either forward declared or implemented
@@ -1401,8 +1419,10 @@ package body Src_Info.CPP is
       Var := Find (Env.SN_Table (GV), Ref_Id);
 
       --  Find declaration
-      if Var.Buffer (Var.File_Name.First .. Var.File_Name.Last)
-         = Get_LI_Filename (Env.File) then
+      if Normalized_Compare
+         (Var.Buffer (Var.File_Name.First .. Var.File_Name.Last),
+          Get_LI_Filename (Env.File))
+      then
          begin
             Decl_Info := Find_Declaration
               (File                    => Env.File,
@@ -1538,8 +1558,9 @@ package body Src_Info.CPP is
 
       Macro := Find (Env.SN_Table (MA), Ref_Id);
 
-      if Macro.Buffer (Macro.File_Name.First .. Macro.File_Name.Last)
-        = Get_LI_Filename (Env.File)
+      if Normalized_Compare
+         (Macro.Buffer (Macro.File_Name.First .. Macro.File_Name.Last),
+          Get_LI_Filename (Env.File))
       then
          begin
             --  look for declaration in current file
@@ -1773,8 +1794,10 @@ package body Src_Info.CPP is
                Kind := Non_Generic_Procedure;
             end if;
          end if;
-         if Filename_Buf (Filename.First .. Filename.Last)
-               = Get_LI_Filename (Env.File) then
+         if Normalized_Compare
+            (Filename_Buf (Filename.First .. Filename.Last),
+             Get_LI_Filename (Env.File))
+         then
             begin
                --  this is a method defined in the current file
                --  it may be either forward declared or implemented
@@ -1921,8 +1944,9 @@ package body Src_Info.CPP is
 
       Typedef := Find (Env.SN_Table (T), Ref_Id);
 
-      if Typedef.Buffer (Typedef.File_Name.First .. Typedef.File_Name.Last)
-        = Get_LI_Filename (Env.File)
+      if Normalized_Compare
+         (Typedef.Buffer (Typedef.File_Name.First .. Typedef.File_Name.Last),
+          Get_LI_Filename (Env.File))
       then
          begin
             --  look for declaration in current file
@@ -2117,9 +2141,10 @@ package body Src_Info.CPP is
          return;
       end if;
 
-      if Ref.Buffer (Ref.File_Name.First .. Ref.File_Name.Last) /=
-            Union_Def.Buffer (Union_Def.File_Name.First ..
-                                       Union_Def.File_Name.Last)
+      if not Normalized_Compare
+         (Ref.Buffer (Ref.File_Name.First .. Ref.File_Name.Last),
+          Union_Def.Buffer (Union_Def.File_Name.First ..
+                            Union_Def.File_Name.Last))
       then
          begin
             Decl_Info :=
@@ -2554,10 +2579,10 @@ package body Src_Info.CPP is
          --  ones if this is a static function
          Match := True;
          if IsStatic then
-            Match := Match and Sym.Buffer (Sym.File_Name.First ..
-                                           Sym.File_Name.Last)
-                  = FD_Tab_Tmp.Buffer (FD_Tab_Tmp.File_Name.First ..
-                                       FD_Tab_Tmp.File_Name.Last);
+            Match := Match and Normalized_Compare
+               (Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
+                FD_Tab_Tmp.Buffer (FD_Tab_Tmp.File_Name.First ..
+                                   FD_Tab_Tmp.File_Name.Last));
          end if;
 
          Match := Match and Cmp_Prototypes
@@ -3164,9 +3189,10 @@ package body Src_Info.CPP is
          MD_Tab_Tmp := Parse_Pair (P.all);
          Free (P);
          --  Update position of the first forward declaration
-         if Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last)
-            = MD_Tab_Tmp.Buffer (MD_Tab_Tmp.File_Name.First ..
-                                   MD_Tab_Tmp.File_Name.Last)
+         if Normalized_Compare
+            (Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
+             MD_Tab_Tmp.Buffer (MD_Tab_Tmp.File_Name.First ..
+                                MD_Tab_Tmp.File_Name.Last))
             and then Cmp_Prototypes
               (MD_Tab.Buffer,
                MD_Tab_Tmp.Buffer,
