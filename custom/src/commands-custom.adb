@@ -233,7 +233,10 @@ package body Commands.Custom is
                end if;
             end if;
          end if;
-         return Param;
+
+         --  Keep the percent sign, since this might be useful for the shell
+         --  itself
+         return '%' & Param;
       end Substitution;
 
       Args : String_List_Access :=
@@ -298,10 +301,12 @@ package body Commands.Custom is
             null;
 
          elsif Command.Script /= null then
+            Trace (Me, "Executing internal command " & Command.Command.all);
             Execute_Command
               (Command.Script,
                Args (Args'First).all & ' '
-               & Argument_List_To_String (New_Args.all),
+               & Argument_List_To_String
+                 (New_Args.all, Protect_Quotes => False),
                Display_In_Console => True);
             Success := True;
          else
