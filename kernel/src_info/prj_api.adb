@@ -416,24 +416,29 @@ package body Prj_API is
    procedure Set_Value_As_External
      (Var : Project_Node_Id; External_Name : String; Default : String := "")
    is
+      Expr : Project_Node_Id;
+      Term : Project_Node_Id;
       Ext : Project_Node_Id;
    begin
       pragma Assert (Expression_Kind_Of (Var) = Prj.Single);
 
       --  Create the expression if required
+      Expr := Default_Project_Node (N_Expression, Single);
+      Term := Default_Project_Node (N_Term, Single);
+      Set_First_Term (Expr, Term);
       Ext := Default_Project_Node (N_External_Value, Single);
-      Set_Expression (Var, Ext);
+      Set_Current_Term (Term, Ext);
+
+      Set_Expression (Var, Expr);
 
       Start_String;
       Store_String_Chars (External_Name);
       Set_External_Reference_Of (Ext, String_As_Expression (End_String));
 
-      --  Always set the default value if we have a typed variable, so that
-      --  we can check if this is a valid value.
-      if Default /= ""
-        or else Kind_Of (Var) = N_Typed_Variable_Declaration
-      then
-         Set_Value (Var, Default);
+      if Default /= "" then
+         Start_String;
+         Store_String_Chars (Default);
+         Set_External_Default_Of (Ext, String_As_Expression (End_String));
       end if;
    end Set_Value_As_External;
 
