@@ -1,0 +1,40 @@
+*** ltmain.sh.old	Wed Jun 12 14:26:08 2002
+--- ltmain.sh	Wed Jun 12 15:05:32 2002
+***************
+*** 1473,1481 ****
+  	  esac # linkmode
+  	  continue
+  	  ;; # -L
+! 	-R*)
+  	  if test "$pass" = link; then
+! 	    dir=`$echo "X$deplib" | $Xsed -e 's/^-R//'`
+  	    # Make sure the xrpath contains only unique directories.
+  	    case "$xrpath " in
+  	    *" $dir "*) ;;
+--- 1473,1481 ----
+  	  esac # linkmode
+  	  continue
+  	  ;; # -L
+! 	-R* | +b*)
+  	  if test "$pass" = link; then
+! 	    dir=`$echo "X$deplib" | $Xsed -e 's/^-R//' -e 's/^+b//'`
+  	    # Make sure the xrpath contains only unique directories.
+  	    case "$xrpath " in
+  	    *" $dir "*) ;;
+***************
+*** 2455,2461 ****
+  	# If the user specified any rpath flags, then add them.
+  	temp_xrpath=
+  	for libdir in $xrpath; do
+! 	  temp_xrpath="$temp_xrpath -R$libdir"
+  	  case "$finalize_rpath " in
+  	  *" $libdir "*) ;;
+  	  *) finalize_rpath="$finalize_rpath $libdir" ;;
+--- 2455,2461 ----
+  	# If the user specified any rpath flags, then add them.
+  	temp_xrpath=
+  	for libdir in $xrpath; do
+! 	  temp_xrpath="$temp_xrpath +b$libdir"
+  	  case "$finalize_rpath " in
+  	  *" $libdir "*) ;;
+  	  *) finalize_rpath="$finalize_rpath $libdir" ;;
