@@ -41,6 +41,15 @@ package body Src_Highlighting is
    -- Forward_Declarations --
    --------------------------
 
+   procedure Create_Color
+     (Color      : out Gdk_Color;
+      Color_Name : String;
+      Success    : out Boolean);
+   --  Try to create a Gdk_Color by parsing the given Color_Name. The
+   --  returned color is also already allocated. Sucess is set to False if
+   --  the Color_Name could not be parsed or the new color could not be
+   --  allocated.
+
    procedure Set_Foreground_Color
      (Tag        : access Gtk_Text_Tag_Record'Class;
       Color_Name : String);
@@ -60,6 +69,27 @@ package body Src_Highlighting is
    --  empty string and can be parsed, then the Foreground_Gdk_Property is set
    --  with the given color.
 
+   ------------------
+   -- Create_Color --
+   ------------------
+
+   procedure Create_Color
+     (Color      : out Gdk_Color;
+      Color_Name : String;
+      Success    : out Boolean)
+   is
+   begin
+      Color := Parse (Color_Name);
+      Alloc_Color (Get_Default_Colormap, Color, Success => Success);
+
+   exception
+      when Wrong_Color =>
+         --  The given color could not be parsed. Return a Failure. Also
+         --  return a Null_Color to avoid returning an un-initialized value.
+         Color := Null_Color;
+         Success := False;
+   end Create_Color;
+
    --------------------------
    -- Set_Foreground_Color --
    --------------------------
@@ -71,20 +101,10 @@ package body Src_Highlighting is
       New_Color : Gdk_Color;
       Success   : Boolean;
    begin
-      New_Color := Parse (Color_Name);
-      Alloc_Color (Get_Default_Colormap, New_Color, Success => Success);
-
+      Create_Color (New_Color, Color_Name, Success);
       if Success then
          Set_Property (Tag, Foreground_Gdk_Property, New_Color);
       end if;
-      --  ??? Report a warning when failed to allocate the color?
-
-   exception
-      when Wrong_Color =>
-         --  The given color could not be parsed. We don't set the
-         --  foreground_gdk_property, so there is nothing more to do.
-         null;
-         --  ??? Maybe report a warning?
    end Set_Foreground_Color;
 
 
@@ -133,7 +153,7 @@ package body Src_Highlighting is
    -- Create_Tags --
    -----------------
 
-   function Create_Tags
+   function Create_Syntax_Tags
      (Keyword_Color     : String;
       Keyword_Font_Attr : Font_Attributes := To_Font_Attributes;
       Comment_Color     : String;
@@ -150,7 +170,27 @@ package body Src_Highlighting is
         New_Tag (Comment_Color_Tag_Name, Comment_Color, Comment_Font_Attr);
       Result (String_Text) :=
         New_Tag (String_Color_Tag_Name, String_Color, String_Font_Attr);
+      --  ??? Set the tags priority...
       return Result;
-   end Create_Tags;
+   end Create_Syntax_Tags;
+
+   --------------------------
+   -- Create_Highlight_Tag --
+   --------------------------
+
+   procedure Create_Highlight_Tag
+     (Tag        : out Gtk.Text_Tag.Gtk_Text_Tag;
+      Color_Name : String)
+   is
+      New_Color : Gdk_Color;
+      Success : Boolean;
+   begin
+      Gtk_New (Tag, Highlight_Tag_Name);
+      Create_Color (New_Color, Color_Name, Success);
+      if Success then
+         Set_Property (Tag, Background_Gdk_Property, New_Color);
+      end if;
+      --  ??? Set the tag priority...
+   end Create_Highlight_Tag;
 
 end Src_Highlighting;
