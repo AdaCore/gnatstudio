@@ -1316,13 +1316,16 @@ package body Directory_Tree is
                return;
          end;
 
-         D.Norm_Dir := new String'(Normalize_Pathname (Dir));
+         D.Norm_Dir := new String'
+           (Name_As_Directory (Normalize_Pathname (Dir)));
 
       else
-         D.Norm_Dir := new String'(Normalize_Pathname (Dir));
+         D.Norm_Dir := new String'
+           (Name_As_Directory (Normalize_Pathname (Dir)));
       end if;
 
-      D.Norm_Dest     := new String'(Normalize_Pathname (Append_To_Dir));
+      D.Norm_Dest     := new String'
+        (Name_As_Directory (Normalize_Pathname (Append_To_Dir)));
       D.Depth         := Depth;
       D.Base          := Base;
       D.Explorer      := Dir_Tree (Explorer);
