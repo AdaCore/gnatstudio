@@ -56,4 +56,18 @@ package OS_Utils is
    --  If the file cannot be found, return null.
    --  The caller is responsible for freeing the returned memory.
 
+   type Ctrl_C_Handler is access procedure;
+   --  Any parameterless library level procedure can be used as a handler.
+   --  Ctrl_C_Handler should not propagate exceptions.
+
+   procedure Install_Ctrl_C_Handler (Handler : Ctrl_C_Handler);
+   --  Set up Handler to be called if the operator hits Ctrl-C.
+
+   procedure Uninstall_Ctrl_C_Handler;
+   --  Reinstall the standard Control-C handler.
+   --  If Install_Handler has never been called, this procedure has no effect.
+
+private
+   pragma Import (C, Install_Ctrl_C_Handler, "__gnat_install_int_handler");
+   pragma Import (C, Uninstall_Ctrl_C_Handler, "__gnat_uninstall_int_handler");
 end OS_Utils;
