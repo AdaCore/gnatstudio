@@ -4,13 +4,13 @@ Building/Installing from sources
 To build GPS from sources, you need to have GNU make available as
 a prerequisite.
 
-Then you need to install the GNAT 3.15a compiler on your machine.
+Then you need to install the GNAT 3.15 compiler on your machine.
 
 GNAT must be installed before compiling any of the other
 packages, and the C compiler that comes with GNAT must be used to build
 Gtk+, since the Gtk+ packages are dependent on the particular compiler used.
 
-You then need to install the latest Gtk+ suite (currently 2.0.3).
+You then need to install the latest Gtk+ suite (currently 2.0.6).
 To download and build Gtk+, follow the instructions given at www.gtk.org
 
 Once Gtk+ has been installed, extract the GPS sources:
@@ -38,4 +38,3 @@ commands at the top level GPS source directory:
   $ ./configure --prefix=$prefix
   $ make
   $ make install
-
