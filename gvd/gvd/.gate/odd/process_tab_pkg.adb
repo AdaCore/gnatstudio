@@ -51,9 +51,12 @@ begin
    Set_Tab_Vborder (Process_Tab.Thread_Notebook, 2);
    Set_Tab_Pos (Process_Tab.Thread_Notebook, Pos_Top);
 
-   Gtk_New (Process_Tab.Editor_Text);
-   Add (Process_Tab.Thread_Notebook, Process_Tab.Editor_Text);
-   Set_Policy (Process_Tab.Editor_Text, Policy_Never, Policy_Always);
+   Gtk_New (Process_Tab.Frame10);
+   Add (Process_Tab.Thread_Notebook, Process_Tab.Frame10);
+   Set_Shadow_Type (Process_Tab.Frame10, Shadow_Etched_In);
+
+   Gtk_New_Hbox (Process_Tab.Editor_Text, False, 0);
+   Add (Process_Tab.Frame10, Process_Tab.Editor_Text);
 
    Gtk_New (Process_Tab.Label52, -("Main Thread"));
    Set_Alignment (Process_Tab.Label52, 0.5, 0.5);
@@ -71,6 +74,8 @@ begin
      (Process_Tab.Debugger_Text, "insert_text", On_Debugger_Text_Insert_Text'Access, Process_Tab);
    Widget_Callback.Object_Connect
      (Process_Tab.Debugger_Text, "delete_text", On_Debugger_Text_Delete_Text'Access, Process_Tab);
+   Widget_Callback.Object_Connect
+     (Process_Tab.Debugger_Text, "insert_text", On_Debugger_Text_Insert_Text2'Access, Process_Tab, True);
    Add (Process_Tab.Scrolledwindow7, Process_Tab.Debugger_Text);
    Set_Editable (Process_Tab.Debugger_Text, True);
 

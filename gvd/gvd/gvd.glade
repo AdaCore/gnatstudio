@@ -5427,6 +5427,13 @@
 	  <object>process_tab</object>
 	  <last_modification_time>Tue, 18 Apr 2000 21:38:25 GMT</last_modification_time>
 	</signal>
+	<signal>
+	  <name>insert_text</name>
+	  <handler>on_debugger_text_insert_text2</handler>
+	  <object>process_tab</object>
+	  <after>True</after>
+	  <last_modification_time>Tue, 30 May 2000 04:54:53 GMT</last_modification_time>
+	</signal>
 	<editable>True</editable>
 	<text></text>
       </widget>

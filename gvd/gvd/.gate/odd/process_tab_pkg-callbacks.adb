@@ -41,4 +41,19 @@ package body Process_Tab_Pkg.Callbacks is
       null;
    end On_Debugger_Text_Delete_Text;
 
+   -----------------------------------
+   -- On_Debugger_Text_Insert_Text2 --
+   -----------------------------------
+
+   procedure On_Debugger_Text_Insert_Text2
+     (Object : access Gtk_Widget_Record'Class;
+      Params : Gtk.Arguments.Gtk_Args)
+   is
+      Arg1 : String := To_String (Params, 1);
+      Arg2 : Gint := To_Gint (Params, 2);
+      Arg3 : Address := To_Address (Params, 3);
+   begin
+      null;
+   end On_Debugger_Text_Insert_Text2;
+
 end Process_Tab_Pkg.Callbacks;
