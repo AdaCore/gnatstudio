@@ -2700,6 +2700,10 @@ package body Src_Editor_Module is
                   Create_New => New_File,
                   Focus      => not No_Location);
 
+               if Child /= null then
+                  Set_Focus_Child (Child);
+               end if;
+
                if Source /= null then
                   Edit := Source.Editor;
                end if;
