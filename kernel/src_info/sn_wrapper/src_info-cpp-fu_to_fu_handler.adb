@@ -75,7 +75,7 @@ begin
    end loop;
 
    if Init then -- referred function not found
-      Fail ("Declaration for referred function " & Ref_Id & " not found");
+      Fail ("declaration for referred function " & Ref_Id & " not found");
       return;
    end if;
 
@@ -211,7 +211,7 @@ begin
       Reference);
 exception
    when Not_Found  | DB_Error => -- ignore
-      Fail ("unable to find function" & Ref_Id);
+      Fail ("unable to find function " & Ref_Id);
    return;
 end Fu_To_Fu_Handler;
 
