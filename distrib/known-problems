@@ -2,7 +2,7 @@ Known Problems fixed in GPS 2.0.0
 
 - The log files in directory log_files/ are not removed on Windows
   Problem:    After editing and committing a file the log file is not removed
-              from the $GPS_HOME/.gps/log_files directory.
+              from the %HOME%\.gps\log_files directory under Windows.
   Workaround: Remove the file manually after exiting GPS.
 
 - CC10-007 Opaque resizing of windows on Windows doesn't work
