@@ -760,6 +760,10 @@ package body Src_Editor_Buffer is
       Unchecked_Free (Buffer.Line_Data);
 
       Block_List.Free (Buffer.Blocks);
+
+      Delete_Mark (Buffer, Buffer.Completion.Mark);
+      Delete_Mark (Buffer, Buffer.Completion.Previous_Mark);
+      Delete_Mark (Buffer, Buffer.Completion.Next_Mark);
    end Buffer_Destroy;
 
    ---------------------
