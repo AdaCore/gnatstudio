@@ -96,8 +96,8 @@ install:
 	  $(INSTALL_DATA) $$file $(docdir)/html; \
 	done
 	-cd ../design; ./convert.pl > $(docdir)/html/TODO.html
-	-for file in $(wildcard gps.info); do \
-	  $(INSTALL_DATA) $$file $(docdir)/info
+	-for file in $(wildcard gps.info*); do \
+	  $(INSTALL_DATA) $$file $(docdir)/info; \
 	done
 	-$(INSTALL_DATA) gps.ps  $(docdir)/ps
 	-$(INSTALL_DATA) gps.txt  $(docdir)/txt
