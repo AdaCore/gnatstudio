@@ -398,9 +398,7 @@ package body GPS.Menu is
       File     : constant String := "/_" & (-"File")     & '/';
       Edit     : constant String := "/_" & (-"Edit")     & '/';
       Project  : constant String := "/_" & (-"Project")  & '/';
-      Tools    : constant String := "/_" & (-"Tools")    & '/';
-      Debug    : constant String := "/_" & (-"Debug")    & '/';
-      Data_Sub : constant String := (-"D_ata")           & '/';
+      Tools    : constant String := "/_" & (-"Tools");
       Window   : constant String := "/_" & (-"Window");
 
    begin
@@ -422,12 +420,7 @@ package body GPS.Menu is
                   On_Open_Project'Access),
          Gtk_New (Project & "sep1", Item_Type => Separator),
 
-
-         Gtk_New (Debug & Data_Sub & (-"_Protection Domains"), "", null),
-
-         Gtk_New (Tools & (-"_Profile"), "", null),
-         Gtk_New (Tools & (-"_Memory Analyzer"), "", null),
-
+         Gtk_New (Tools),
          Gtk_New (Window));
    end GPS_Menu_Items;
 
