@@ -335,12 +335,6 @@ package body Src_Editor_Buffer is
    --  associated with the line.
    --  The caller is responsible for freeing the returned value.
 
-   function Get_String
-     (Buffer : Source_Buffer) return GNAT.OS_Lib.String_Access;
-   pragma Unreferenced (Get_String);
-   --  Return the entire editable string.
-   --  The caller is responsible for freeing the returned value.
-
    ----------
    -- Free --
    ----------
@@ -426,14 +420,18 @@ package body Src_Editor_Buffer is
          Len := Len + A (J).Length;
       end loop;
 
-      Output := new String (1 .. Len);
+      Output := new String (1 .. Len + A'Length);
 
       for J in A'Range loop
          Len := A (J).Length;
 
-         if Len > 0 then
-            Output (Index .. Index + Len - 1) := A (J).Contents (1 .. Len);
-            Index := Index + Len;
+         if Len /= 0 then
+            Output (Index .. Index + Len) :=
+              A (J).Contents (1 .. Len) & ASCII.LF;
+            Index := Index + Len + 1;
+         else
+            Output (Index) := ASCII.LF;
+            Index := Index + 1;
          end if;
 
          Free (A (J));
@@ -458,6 +456,11 @@ package body Src_Editor_Buffer is
       --  Unregister the timeout.
       Buffer.Blocks_Timeout_Registered := False;
       return False;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         return False;
    end Check_Blocks;
 
    --------------------
