@@ -1299,7 +1299,7 @@ package body Src_Editor_Module is
         or else not (Context.all in File_Selection_Context'Class)
       then
          Console.Insert
-           (Kernel, -"No file selected, cannot generate body.", Mode => Error);
+           (Kernel, -"No file selected, cannot generate body", Mode => Error);
          return;
       end if;
 
@@ -1317,7 +1317,7 @@ package body Src_Editor_Module is
       begin
          if File = "" then
             Console.Insert
-              (Kernel, -"No file name, cannot generate body.", Mode => Error);
+              (Kernel, -"No file name, cannot generate body", Mode => Error);
             return;
          end if;
 
@@ -1325,7 +1325,7 @@ package body Src_Editor_Module is
 
          if Lang /= "ada" then
             Console.Insert
-              (Kernel, -"Body generation of non Ada file not yet supported.",
+              (Kernel, -"Body generation of non Ada file not yet supported",
                Mode => Error);
             return;
          end if;
@@ -1386,7 +1386,7 @@ package body Src_Editor_Module is
         or else not (Context.all in File_Selection_Context'Class)
       then
          Console.Insert
-           (Kernel, -"No file selected, cannot pretty print.", Mode => Error);
+           (Kernel, -"No file selected, cannot pretty print", Mode => Error);
          return;
       end if;
 
@@ -1406,7 +1406,7 @@ package body Src_Editor_Module is
       begin
          if File = "" then
             Console.Insert
-              (Kernel, -"No file name, cannot pretty print.", Mode => Error);
+              (Kernel, -"No file name, cannot pretty print", Mode => Error);
             return;
          end if;
 
@@ -1414,7 +1414,7 @@ package body Src_Editor_Module is
 
          if Lang /= "ada" then
             Console.Insert
-              (Kernel, -"Pretty printing of non Ada file not yet supported.",
+              (Kernel, -"Pretty printing of non Ada file not yet supported",
                Mode => Error);
             return;
          end if;

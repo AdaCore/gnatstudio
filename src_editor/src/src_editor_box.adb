@@ -237,7 +237,8 @@ package body Src_Editor_Box is
    begin
       if Get_Filename (Editor) = "" then
          Console.Insert
-           (Kernel, -"Cross-references not possible on unamed files!",
+           (Kernel, -"Cross-references not possible on unamed files",
+            Mode           => Error,
             Highlight_Sloc => False);
          return;
       end if;
@@ -256,6 +257,7 @@ package body Src_Editor_Box is
          Console.Insert
            (Kernel,
             -"Failed to find or parse ALI file for " & Get_Filename (Editor),
+            Mode           => Error,
             Highlight_Sloc => False);
          Pop_State (Kernel_Handle (Kernel));
          return;
@@ -288,29 +290,36 @@ package body Src_Editor_Box is
          when Entity_Not_Found | Overloaded_Entity_Found =>
             Console.Insert
               (Kernel, -"Cross-reference failed for "
-               & Entity_Name_Information (Context), Highlight_Sloc => False);
-            Pop_State (Kernel_Handle (Kernel));
-            return;
-         when Internal_Error =>
-            Console.Insert
-              (Kernel, -"Cross-reference internal error detected.",
+                 & Entity_Name_Information (Context),
+               Mode           => Error,
                Highlight_Sloc => False);
             Pop_State (Kernel_Handle (Kernel));
             return;
+
+         when Internal_Error =>
+            Console.Insert
+              (Kernel, -"Cross-reference internal error detected",
+               Mode           => Error,
+               Highlight_Sloc => False);
+            Pop_State (Kernel_Handle (Kernel));
+            return;
+
          when No_Body_Entity_Found =>
             if To_Body then
                Console.Insert
                  (Kernel,
-                  -"This entity does not have an associated body.",
+                  -"This entity does not have an associated body",
                   Highlight_Sloc => False);
             else
                Console.Insert
                  (Kernel,
-                  -"This entity does not have an associated declaration.",
+                  -"This entity does not have an associated declaration",
                   Highlight_Sloc => False);
             end if;
+
             Pop_State (Kernel_Handle (Kernel));
             return;
+
          when Success =>
             null; --  No error message to print
       end case;
@@ -384,7 +393,7 @@ package body Src_Editor_Box is
 
    exception
       when Unsupported_Language =>
-         Insert (Kernel, "No parser are registered for this language",
+         Insert (Kernel, "No parser is registered for this language",
                  Mode => Glide_Kernel.Console.Error);
          Pop_State (Kernel_Handle (Kernel));
 
