@@ -88,7 +88,6 @@ begin
    Set_Shadow_Type (Process_Tab.Stack_List, Shadow_In);
    Set_Show_Titles (Process_Tab.Stack_List, True);
    Set_Column_Width (Process_Tab.Stack_List, 0, 80);
-   Set_Column_Auto_Resize (Process_Tab.Stack_List, 0, True);
    Set_Column_Width (Process_Tab.Stack_List, 1, 80);
    Set_Column_Width (Process_Tab.Stack_List, 2, 80);
    Set_Column_Width (Process_Tab.Stack_List, 3, 80);
@@ -101,28 +100,28 @@ begin
    Set_Line_Wrap (Process_Tab.Label101, False);
    Set_Column_Widget (Process_Tab.Stack_List, 0, Process_Tab.Label101);
 
-   Gtk_New (Process_Tab.Label201, -("Subprogram"));
+   Gtk_New (Process_Tab.Label201, -("PC"));
    Set_Alignment (Process_Tab.Label201, 0.5, 0.5);
    Set_Padding (Process_Tab.Label201, 0, 0);
    Set_Justify (Process_Tab.Label201, Justify_Center);
    Set_Line_Wrap (Process_Tab.Label201, False);
    Set_Column_Widget (Process_Tab.Stack_List, 1, Process_Tab.Label201);
 
-   Gtk_New (Process_Tab.Label202, -("Parameters"));
+   Gtk_New (Process_Tab.Label202, -("Subprogram"));
    Set_Alignment (Process_Tab.Label202, 0.5, 0.5);
    Set_Padding (Process_Tab.Label202, 0, 0);
    Set_Justify (Process_Tab.Label202, Justify_Center);
    Set_Line_Wrap (Process_Tab.Label202, False);
    Set_Column_Widget (Process_Tab.Stack_List, 2, Process_Tab.Label202);
 
-   Gtk_New (Process_Tab.Label203, -("Location"));
+   Gtk_New (Process_Tab.Label203, -("Parameters"));
    Set_Alignment (Process_Tab.Label203, 0.5, 0.5);
    Set_Padding (Process_Tab.Label203, 0, 0);
    Set_Justify (Process_Tab.Label203, Justify_Center);
    Set_Line_Wrap (Process_Tab.Label203, False);
    Set_Column_Widget (Process_Tab.Stack_List, 3, Process_Tab.Label203);
 
-   Gtk_New (Process_Tab.Label204, -("PC"));
+   Gtk_New (Process_Tab.Label204, -("Location"));
    Set_Alignment (Process_Tab.Label204, 0.5, 0.5);
    Set_Padding (Process_Tab.Label204, 0, 0);
    Set_Justify (Process_Tab.Label204, Justify_Center);

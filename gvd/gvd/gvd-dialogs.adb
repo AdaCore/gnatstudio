@@ -220,10 +220,10 @@ package body GVD.Dialogs is
       List     : Gtk_Clist := Process.Stack_List;
    begin
       Set_Column_Visibility (List, 0, (Mask and Frame_Num) /= 0);
-      Set_Column_Visibility (List, 1, (Mask and Subprog_Name) /= 0);
-      Set_Column_Visibility (List, 2, (Mask and Params) /= 0);
-      Set_Column_Visibility (List, 3, (Mask and File_Location) /= 0);
-      Set_Column_Visibility (List, 4, (Mask and Program_Counter) /= 0);
+      Set_Column_Visibility (List, 1, (Mask and Program_Counter) /= 0);
+      Set_Column_Visibility (List, 2, (Mask and Subprog_Name) /= 0);
+      Set_Column_Visibility (List, 3, (Mask and Params) /= 0);
+      Set_Column_Visibility (List, 4, (Mask and File_Location) /= 0);
    end Show_Call_Stack_Columns;
 
    -----------------------
@@ -279,15 +279,13 @@ package body GVD.Dialogs is
             end loop;
 
             Temp (0) := Strings.New_String (Natural'Image (Bt (J).Frame_Id));
-            Temp (1) := Strings.New_String (Subp (Subp'First .. Index - 1));
-            Temp (2) := Strings.New_String (Subp (Index .. Subp'Last));
-            Temp (3) := Strings.New_String (Bt (J).Source_Location.all);
-            Temp (4) := Strings.New_String (Bt (J).Program_Counter.all);
+            Temp (1) := Strings.New_String (Bt (J).Program_Counter.all);
+            Temp (2) := Strings.New_String (Subp (Subp'First .. Index - 1));
+            Temp (3) := Strings.New_String (Subp (Index .. Subp'Last));
+            Temp (4) := Strings.New_String (Bt (J).Source_Location.all);
             Row := Append (List, Temp);
             Free (Temp);
          end loop;
-
-         Row := Columns_Autosize (List);
       end if;
 
       Free (Bt (1 .. Len));
