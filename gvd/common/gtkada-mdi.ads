@@ -151,6 +151,11 @@ package Gtkada.MDI is
    --  Put Child in the foreground.
    --  Note that this does not give the focus to this child.
 
+   procedure Lower_Child (Child : access MDI_Child_Record'Class);
+   --  Put Child in the background.
+   --  If the children are maximized, this selected the next page from the
+   --  notebook.
+
    procedure Minimize_Child
      (Child : access MDI_Child_Record'Class; Minimize : Boolean);
    --  Change the minimized state of a child.

@@ -1504,9 +1504,15 @@ package body Gtkada.MDI is
       --  if we do a grab.
 
       if Get_Window (Child) /= Get_Window (Event)
-        or else Get_Button (Event) /= 1
         or else Get_Event_Type (Event) /= Button_Press
       then
+         return False;
+      end if;
+
+      if Get_Button (Event) = 3 then
+         Lower_Child (C);
+         return False;
+      elsif Get_Button (Event) /= 1 then
          return False;
       end if;
 
@@ -2144,6 +2150,41 @@ package body Gtkada.MDI is
    end Find_MDI_Child_By_Tag;
 
    -----------------
+   -- Lower_Child --
+   -----------------
+
+   procedure Lower_Child (Child : access MDI_Child_Record'Class) is
+      Num : Gint;
+   begin
+      --  For an docked item, we in fact want to raise its parent dock,
+      --  and make sure the current page in that dock is the correct one.
+
+      if Child.State = Docked then
+         Num := Page_Num (Child.MDI.Docks (Child.Dock), Child) + 1;
+         if Get_Nth_Page (Child.MDI.Docks (Child.Dock), Num) = null then
+            Set_Page (Child.MDI.Docks (Child.Dock), 0);
+         else
+            Set_Page (Child.MDI.Docks (Child.Dock), Num);
+         end if;
+
+      elsif Child.State = Normal
+        and then Child.MDI.Docks (None) /= null
+      then
+         Set_Page
+           (Child.MDI.Docks (None), Page_Num (Child.MDI.Docks (None), Child));
+
+      elsif Realized_Is_Set (Child) then
+         Gdk.Window.Lower (Get_Window (Child));
+
+         if Child.State = Floating then
+            Gdk.Window.Lower
+              (Get_Window (Gtk_Window (Get_Parent (Child.Initial_Child))));
+         end if;
+      end if;
+
+   end Lower_Child;
+
+   -----------------
    -- Raise_Child --
    -----------------
 
@@ -2213,6 +2254,9 @@ package body Gtkada.MDI is
       C   : MDI_Child := MDI_Child (Child);
 
    begin
+      --  Make sure the page containing Child in a notebook is put on top.
+      Raise_Child (Child);
+
       --  Be lazy. And avoid infinite loop when updating the MDI menu...
 
       if C = Old then
@@ -2229,9 +2273,6 @@ package body Gtkada.MDI is
             Gint (Get_Allocation_Width (Old)) - 2 * Border_Thickness,
             Title_Bar_Height);
       end if;
-
-      --  Make sure the page containing Child in a notebook is put on top.
-      Raise_Child (Child);
 
       if Realized_Is_Set (C) then
          Queue_Draw_Area
