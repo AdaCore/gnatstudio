@@ -75,7 +75,7 @@ package body Switches_Editors is
    --  The following constants are defined to avoid allocating dynamic memory
    --  in Gtk_New. This should eventually be integrated in the kernel.
    --  The comments are there so that the script to handle internationalization
-   --  properly find the constants.
+   --  properly finds the constants.
 
    Cst_No_Optimization : aliased constant String := "No optimization";
    --  -"No optimization"
@@ -1581,14 +1581,18 @@ package body Switches_Editors is
                   0, 1, 0, 1);
                Attach
                  (Table, Create_Combo
-                  (Page, -"Reference: ",
-                   Switch               => "-r",
+                  (Page, -"Name: ",
+                   Switch               => "-n",
                    Default_No_Switch    => "D",
                    Default_No_Digit     => "D",
                    Buttons              => (1 => (Cst_As_Declared'Access,
                                                   Cst_D'Access),
                                             2 => (Cst_Mixed_Case'Access,
-                                                  Cst_M'Access)),
+                                                  Cst_M'Access),
+                                            3 => (Cst_Lower_Case'Access,
+                                                  Cst_L'Access),
+                                            4 => (Cst_Upper_Case'Access,
+                                                  Cst_U'Access)),
                    Label_Size_Group     => Group),
                   0, 1, 1, 2);
                Gtk_New (Group);
