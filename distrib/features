@@ -3,6 +3,9 @@ For more details, please see the documentation.
 
 New features in GPS 2.2.0
 
+- Apply button in the project wizard is now clickable as soon as the first
+  page has been completed. There is no need to go through all pages
+
 - Projects can now be created more easily simply by specifing a set of
   source and object directories, and letting GPS handle the creation
   automatically
