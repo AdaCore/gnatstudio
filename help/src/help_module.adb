@@ -1292,6 +1292,7 @@ package body Help_Module is
       Name  : constant String := -"Help";
       Mitem : Gtk_Menu_Item;
       Recent_Menu_Item : Gtk_Menu_Item;
+      Path_From_Env : GNAT.OS_Lib.String_Access := Getenv ("GPS_DOC_PATH");
 
    begin
       Help_Module_ID := new Help_Module_ID_Record;
@@ -1306,14 +1307,16 @@ package body Help_Module is
       Glide_Kernel.Kernel_Desktop.Register_Desktop_Functions
         (Save_Desktop'Access, Load_Desktop'Access);
 
-      Help_Module_ID.Doc_Path := Getenv ("GPS_DOC_PATH");
-      if Help_Module_ID.Doc_Path = null
-        or else Help_Module_ID.Doc_Path.all = ""
-      then
-         Free (Help_Module_ID.Doc_Path);
-         Help_Module_ID.Doc_Path :=
-           new String'(Get_System_Dir (Kernel) & "/doc/gps/html/");
+      if Path_From_Env = null or else Path_From_Env.all = "" then
+         Help_Module_ID.Doc_Path := new String'
+           (Get_System_Dir (Kernel) & "/doc/gps/html/");
+      else
+         Help_Module_ID.Doc_Path := new String'
+           (Path_From_Env.all & Path_Separator
+            & Get_System_Dir (Kernel) & "/doc/gps/html/");
       end if;
+
+      Free (Path_From_Env);
 
       Register_Search_Function
         (Kernel => Kernel,
