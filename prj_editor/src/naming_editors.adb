@@ -38,7 +38,6 @@ with Prj;                      use Prj;
 with Types;                    use Types;
 with Namet;                    use Namet;
 with Snames;                   use Snames;
-with Stringt;                  use Stringt;
 with Naming_Scheme_Editor_Pkg; use Naming_Scheme_Editor_Pkg;
 with GUI_Utils;                use GUI_Utils;
 with Glide_Intl;               use Glide_Intl;
@@ -273,18 +272,11 @@ package body Naming_Editors is
       for J in 0 .. Num_Rows - 1 loop
          declare
             U : constant String := Get_Text (Editor.Exception_List, J, 0);
-            U_Id : String_Id := No_String;
             Spec : constant String :=
               Get_Text (Editor.Exception_List, J, 1);
             Bod : constant String :=
               Get_Text (Editor.Exception_List, J, 2);
          begin
-            if U /= "" then
-               Start_String;
-               Store_String_Chars (U);
-               U_Id := End_String;
-            end if;
-
             if Spec /= "" then
                Update_Attribute_Value_In_Scenario
                  (Project            => Project,
@@ -292,7 +284,7 @@ package body Naming_Editors is
                   Scenario_Variables => (1 .. 0 => Empty_Node),
                   Attribute_Name     => Get_Name_String (Name_Specification),
                   Value              => Spec,
-                  Attribute_Index    => U_Id);
+                  Attribute_Index    => U);
             end if;
             if Bod /= "" then
                Update_Attribute_Value_In_Scenario
@@ -301,7 +293,7 @@ package body Naming_Editors is
                   Scenario_Variables => (1 .. 0 => Empty_Node),
                   Attribute_Name     => Get_Name_String (Name_Implementation),
                   Value              => Bod,
-                  Attribute_Index    => U_Id);
+                  Attribute_Index    => U);
             end if;
          end;
       end loop;
