@@ -3,6 +3,8 @@ with Ada.Unchecked_Deallocation;
 with Generic_List;
 
 with Codefix.Text_Manager; use Codefix.Text_Manager;
+with Codefix.Errors_Manager; use Codefix.Errors_Manager;
+with Codefix.Formal_Errors; use Codefix.Formal_Errors;
 
 package Codefix.File_Io is
 
@@ -16,82 +18,68 @@ package Codefix.File_Io is
 
    function Get
      (This   : File_Interface;
-      Cursor : File_Cursor'Class;
+      Cursor : Text_Cursor'Class;
       Len    : Natural)
       return String;
 
    function Get_Line
      (This   : File_Interface;
-      Cursor : File_Cursor'Class)
+      Cursor : Text_Cursor'Class)
       return String;
 
    procedure Replace
      (This      : in out File_Interface;
-      Cursor    : File_Cursor'Class;
+      Cursor    : Text_Cursor'Class;
       Len       : Natural;
       New_Value : String);
 
    procedure Add_Line
      (This        : in out File_Interface;
-      Cursor      : File_Cursor'Class;
+      Cursor      : Text_Cursor'Class;
       New_Line    : String);
 
    procedure Delete_Line
      (This : in out File_Interface;
-      Cursor : File_Cursor'Class);
+      Cursor : Text_Cursor'Class);
 
-   function Get_Declaration
-     (Current_Text : Text_Interface'Class
-      Cursor       : File_Cursor'Class
-      Category     : Language_Category)
-     return Construct_Information;
+   procedure Initialize
+     (This : in out File_Interface;
+      Path : String);
 
-   procedure Save (This : File_Interface);
+   function Read_File
+     (This : File_Interface)
+   return Dynamic_String;
+
+   procedure Update (This : File_Interface);
+
+   type Errors_File is new Errors_Interface with private;
+
+   procedure Get_Message
+     (This    : in out Errors_File;
+      Current : out Error_Message);
+
+   function No_More_Messages (This : Errors_File) return Boolean;
+
+   procedure Open (This : in out Errors_File; File_Name : String);
 
 private
 
    package List_Str is new Generic_List (Dynamic_String);
    use List_Str;
 
-   type File_Loaded is record
-      Content : List_Str.List;
-      Path    : Dynamic_String;
+   type File_Interface is new Text_Interface with record
+      Content   : List_Str.List;
    end record;
 
    function Get_Line_Node
-     (This : File_Loaded;
+     (This : File_Interface;
       Line : Positive) return List_Str.List_Node;
 
-   type Ptr_File_Loaded is access File_Loaded;
-   procedure Load
-     (Container : File_Interface;
-      New_File  : Ptr_File_Loaded;
-      Path : String);
-   --  Attention ! le second parametre a perdu sa pertienence !
-   procedure Save (This : in out File_Loaded; Path : String := "");
+   type File_Type_Access is access all File_Type;
 
-   procedure Free (This : in out Ptr_File_Loaded);
-
-   package File_Arrays is new Dynamic_Arrays (Ptr_File_Loaded, null);
-   use File_Arrays;
-
-   --  Penser a detruire le pointeur sur naturel
-   type Ptr_Natural is access Natural;
-   type Ptr_Files is access File_Arrays.Dynamic_Array;
-
-   procedure Free is new
-      Ada.Unchecked_Deallocation (Natural, Ptr_Natural);
-   procedure Free is new
-      Ada.Unchecked_Deallocation (File_Arrays.Dynamic_Array, Ptr_Files);
-
-   type File_Interface is new Text_Interface with record
-      Files        : Ptr_Files := new File_Arrays.Dynamic_Array;
-      Number_Files : Ptr_Natural := new Natural'(0);
+   type Errors_File is new Errors_Interface with record
+      File    : File_Type_Access;
+      Is_Open : Boolean := False;
    end record;
-
-   function Get_File_Loaded
-     (This : File_Interface;
-      File_Name : String)
-     return Ptr_File_Loaded;
 
 end Codefix.File_Io;
