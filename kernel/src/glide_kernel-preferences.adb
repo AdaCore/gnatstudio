@@ -1347,6 +1347,13 @@ package body Glide_Kernel.Preferences is
    end Get_Pref;
 
    function Get_Pref
+     (Kernel  : access Kernel_Handle_Record'Class;
+      Pref    : Param_Spec_Color) return String is
+   begin
+      return Get_Pref (Kernel.Preferences, Pref);
+   end Get_Pref;
+
+   function Get_Pref
      (Kernel : access Kernel_Handle_Record'Class;
       Pref   : Param_Spec_Font) return Pango.Font.Pango_Font_Description is
    begin
