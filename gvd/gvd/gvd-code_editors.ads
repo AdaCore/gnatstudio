@@ -114,9 +114,13 @@ private
    type Color_Array is array (Language.Language_Entity'Range) of
      Gdk.Color.Gdk_Color;
 
+   type String_Access is access String;
+
    type Code_Editor_Record is new Gtk.Box.Gtk_Box_Record with record
       Text           : Gtk.Text.Gtk_Text;
       Buttons        : Gtk.Layout.Gtk_Layout;
+
+      Current_File   : String_Access := null;
 
       Lang           : Language.Language_Access;
       Font           : Gdk.Font.Gdk_Font;

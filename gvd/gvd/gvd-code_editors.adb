@@ -32,10 +32,11 @@ with Gtk.Scrollbar;       use Gtk.Scrollbar;
 with Language;            use Language;
 with Debugger;            use Debugger;
 with Ada.Direct_IO;
-with Generic_Values;      use Generic_Values;
 with Gtkada.Types;        use Gtkada.Types;
 with Gtk.Pixmap;          use Gtk.Pixmap;
 with Gtk.Widget;          use Gtk.Widget;
+
+with Unchecked_Deallocation;
 
 with Gtk.Handlers; use Gtk.Handlers;
 
@@ -50,6 +51,8 @@ package body Gtkada.Code_Editors is
    --  Width for the area reserved for the buttons.
 
    package Editor_Cb is new Callback (Code_Editor_Record);
+
+   procedure Free is new Unchecked_Deallocation (String, String_Access);
 
    -------------------
    -- Scroll_Layout --
@@ -259,9 +262,18 @@ package body Gtkada.Code_Editors is
 
    begin
 
-      --  ??? Should keep a copy of the name of the current file, and not
-      --  redisplay it if it is already displayed. Just change the current line
-      --  indicator.
+      --  Avoid reloading a file twice.
+      --  This also solve the problem of recursive loops ("info line" in gdb,
+      --  with annotation level set to 1 will print a file reference as well).
+
+      if Editor.Current_File /= null
+        and then Editor.Current_File.all = File_Name
+      then
+         return;
+      else
+         Free (Editor.Current_File);
+         Editor.Current_File := new String'(File_Name);
+      end if;
 
       --  Clear the old file and the old icons.
       Freeze (Editor.Buttons);
@@ -325,13 +337,18 @@ package body Gtkada.Code_Editors is
                end if;
 
                Line := Line + 1;
-               Line_Start := Index + 1;
                Index := Index + 1;
+               Line_Start := Index;
 
             when others =>
                if Do_Color_Highlighting then
-                  Looking_At (Editor.Lang, Buffer (Index .. Buffer'Last),
-                              Entity, Next_Char);
+                  if Editor.Lang /= null then
+                     Looking_At (Editor.Lang, Buffer (Index .. Buffer'Last),
+                                 Entity, Next_Char);
+                  else
+                     Next_Char := Index + 1;
+                     Entity := Normal_Text;
+                  end if;
                   Insert (Editor.Text, Editor.Font, Editor.Colors (Entity),
                           Null_Color, Buffer (Index .. Next_Char - 1));
 
