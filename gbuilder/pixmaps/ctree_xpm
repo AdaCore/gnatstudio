@@ -1,0 +1,32 @@
+/* XPM */
+static char *ctree_xpm[] = {
+/* columns rows colors chars-per-pixel */
+"21 21 5 1",
+"  c Gray0",
+". c Green",
+"X c Yellow",
+"o c Gray87",
+"O c Gray100",
+/* pixels */
+"                     ",
+" ooooooooooooo ooooo ",
+" ooooooooooooo ooooo ",
+" ooooooooooooo ooooo ",
+"                     ",
+" OOOOOOOOOOOOO OOOOO ",
+" OOOOOOOOOOOOO OOOOO ",
+" OOO   OOOOOOO OOOOO ",
+" OOO X OOOOOOO       ",
+" OOO   OOOOOOO OOOOO ",
+" OOOO OOOOOOOO OOOOO ",
+" OOOO OO   OOO OOOOO ",
+" OOOO    . OOO       ",
+" OOOO OO   OOO OOOOO ",
+" OOOO OOOOOOOO OOOOO ",
+" OOOO OO   OOO OOOOO ",
+" OOOO    . OOO       ",
+" OOOOOOO   OOO OOOOO ",
+" OOOOOOOOOOOOO OOOOO ",
+" OOOOOOOOOOOOO OOOOO ",
+"                     "
+};

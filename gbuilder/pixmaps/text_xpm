@@ -1,0 +1,32 @@
+/* XPM */
+static char *text_xpm[] = {
+/* columns rows colors chars-per-pixel */
+"21 21 5 1",
+"  c Gray0",
+". c #7b7b7b",
+"X c #d6d6d6",
+"o c Gray87",
+"O c Gray100",
+/* pixels */
+"....................O",
+".                  XO",
+". OOOOOOOOOOOOOOOOOXO",
+". OOOOOOO OOOOOOOOOXO",
+". OOOOOOO OOOOOOOOOXO",
+". OO   OO o  OOo  OXO",
+". O.OOO O  Oo O Oo XO",
+". OO    O OOO O OOOXO",
+". O OOO O OOO O OOOXO",
+". O OOO O OOo O Oo XO",
+". OO    O    OOo  OXO",
+". OOOOOOOOOOOOOOOOOXO",
+". OOOOO OOOOOOOOO  XO",
+". OOOOO OO   OOO oOXO",
+". OO    O oOo OO OOXO",
+". O oOo O oOO O   OXO",
+". O OOO O    OOO OOXO",
+". O oOo O OOO.OO OOXO",
+". OO    OO   OOO OOXO",
+".XXXXXXXXXXXXXXXXXXXO",
+"OOOOOOOOOOOOOOOOOOOOO"
+};
