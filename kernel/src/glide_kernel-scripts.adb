@@ -94,6 +94,7 @@ package body Glide_Kernel.Scripts is
    --  Handler for the "create_project" command
 
    Name_Cst       : aliased constant String := "name";
+   Filename_Cst   : aliased constant String := "filename";
    File_Cst       : aliased constant String := "file";
    Line_Cst       : aliased constant String := "line";
    Col_Cst        : aliased constant String := "column";
@@ -110,6 +111,8 @@ package body Glide_Kernel.Scripts is
      (1 => Name_Cst'Access);
    Dialog_Cmd_Parameters   : constant Cst_Argument_List :=
      (1 => Msg_Cst'Access);
+   Open_Cmd_Parameters     : constant Cst_Argument_List :=
+     (1 => Filename_Cst'Access);
 
    ----------
    -- Free --
@@ -552,44 +555,53 @@ package body Glide_Kernel.Scripts is
      (Data : in out Callback_Data'Class; Command : String)
    is
       Kernel   : constant Kernel_Handle := Get_Kernel (Data);
-      Instance : constant Class_Instance :=
-        Nth_Arg (Data, 1, Get_Project_Class (Kernel));
+      Instance : Class_Instance;
       Project  : Project_Type;
    begin
-      if Command = Constructor_Method then
-         Name_Parameters (Data, Project_Cmd_Parameters);
-         Project  := Get_Project_From_Name
-           (Project_Registry (Get_Registry (Kernel)),
-            Get_String (Nth_Arg (Data, 2)));
+      if Command = "load_project" then
+         Name_Parameters (Data, Open_Cmd_Parameters);
+         Load_Project (Kernel, Nth_Arg (Data, 1));
+         Set_Return_Value
+           (Data, Create_Project (Get_Script (Data), Get_Project (Kernel)));
 
-         if Project = No_Project then
-            Set_Error_Msg (Data, -"No such project: " & Nth_Arg (Data, 2));
-         else
-            Set_Data (Instance, Project);
-         end if;
+      else
+         Instance := Nth_Arg (Data, 1, Get_Project_Class (Kernel));
 
-      elsif Command = "name" then
-         Project := Get_Data (Instance);
-         Set_Return_Value (Data, Project_Name (Project));
+         if Command = Constructor_Method then
+            Name_Parameters (Data, Project_Cmd_Parameters);
+            Project  := Get_Project_From_Name
+              (Project_Registry (Get_Registry (Kernel)),
+               Get_String (Nth_Arg (Data, 2)));
 
-      elsif Command = "ancestor_deps" then
-         declare
-            Iter : Imported_Project_Iterator;
-            P    : Project_Type;
-         begin
+            if Project = No_Project then
+               Set_Error_Msg (Data, -"No such project: " & Nth_Arg (Data, 2));
+            else
+               Set_Data (Instance, Project);
+            end if;
+
+         elsif Command = "name" then
             Project := Get_Data (Instance);
-            Set_Return_Value_As_List (Data);
-            Iter := Find_All_Projects_Importing
-              (Get_Project (Kernel), Project, Include_Self => True);
+            Set_Return_Value (Data, Project_Name (Project));
 
-            loop
-               P := Current (Iter);
-               exit when P = No_Project;
-               Set_Return_Value
-                 (Data, Create_Project (Get_Script (Data), P));
-               Next (Iter);
-            end loop;
-         end;
+         elsif Command = "ancestor_deps" then
+            declare
+               Iter : Imported_Project_Iterator;
+               P    : Project_Type;
+            begin
+               Project := Get_Data (Instance);
+               Set_Return_Value_As_List (Data);
+               Iter := Find_All_Projects_Importing
+                 (Get_Project (Kernel), Project, Include_Self => True);
+
+               loop
+                  P := Current (Iter);
+                  exit when P = No_Project;
+                  Set_Return_Value
+                    (Data, Create_Project (Get_Script (Data), P));
+                  Next (Iter);
+               end loop;
+            end;
+         end if;
       end if;
    end Create_Project_Command_Handler;
 
@@ -634,9 +646,9 @@ package body Glide_Kernel.Scripts is
          Command      => "dialog",
          Usage        =>
            Parameter_Names_To_Usage (Dialog_Cmd_Parameters, "None"),
-         Description  => -("Display a modal dialog to report information to a"
-                           & " user. This blocks the interpreter while the"
-                           & " dialog hasn't been closed."),
+         Description  =>
+           -("Display a modal dialog to report information to a user. This"
+             & " blocks the interpreter while the dialog hasn't been closed."),
          Minimum_Args => 1,
          Maximum_Args => 1,
          Handler      => Default_Command_Handler'Access);
@@ -682,9 +694,9 @@ package body Glide_Kernel.Scripts is
         (Kernel,
          Command      => "decl_file",
          Usage        => "() -> GPS.File",
-         Description  => -("Return the file in which the entity is declared."
-                           & " This file's name is empty for predefined"
-                           & " entities"),
+         Description  =>
+           -("Return the file in which the entity is declared. This file's"
+             & " name is empty for predefined entities"),
          Class        => Get_Entity_Class (Kernel),
          Handler      => Create_Entity_Command_Handler'Access);
       Register_Command
@@ -709,10 +721,25 @@ package body Glide_Kernel.Scripts is
          Command      => Constructor_Method,
          Usage        =>
            Parameter_Names_To_Usage (Project_Cmd_Parameters,  "project"),
-         Description  => -"Create a project handle, from its name.",
+         Description  =>
+           -("Create a project handle, from its name. The project must have"
+             & " been loaded already."),
          Minimum_Args => 1,
          Maximum_Args => 1,
          Class        => Get_Project_Class (Kernel),
+         Handler      => Create_Project_Command_Handler'Access);
+      Register_Command
+        (Kernel,
+         Command      => "load_project",
+         Usage        =>
+           Parameter_Names_To_Usage (Open_Cmd_Parameters, "project"),
+         Description  =>
+           -("Load a new project, which replaces the current project, and"
+             & " return a handle to it. All imported projects are also"
+             & " loaded at the same time. If the project is not found, a"
+             & " default project is loaded"),
+         Minimum_Args => 1,
+         Maximum_Args => 1,
          Handler      => Create_Project_Command_Handler'Access);
       Register_Command
         (Kernel,
@@ -725,11 +752,11 @@ package body Glide_Kernel.Scripts is
         (Kernel,
          Command      => "ancestor_deps",
          Usage        => "() -> list",
-         Description  => -("Return the list of projects that might contain"
-                           & " sources that depend on the project's sources."
-                           & " When doing extensive searches, it isn't worth"
-                           & " checking other projects." & ASCII.LF
-                           & "Project itself is included in the list."),
+         Description  =>
+           -("Return the list of projects that might contain sources that"
+             & " depend on the project's sources. When doing extensive"
+             & " searches it isn't worth checking other projects. Project"
+             & " itself is included in the list."),
          Class        => Get_Project_Class (Kernel),
          Handler      => Create_Project_Command_Handler'Access);
    end Register_Default_Script_Commands;
