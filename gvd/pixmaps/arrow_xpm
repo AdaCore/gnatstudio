@@ -1,0 +1,22 @@
+/* XPM */
+char *arrow_xpm[] = {
+/* width height num_colors chars_per_pixel */
+"     9    11       4      1",
+/* colors */
+". c #000000",
+"d c #00fc00",
+"  c none g none m none s Background",
+"n c #f8fc00",
+/* pixels */
+"   .     ",
+"   ..    ",
+"   .n.   ",
+"....nn.  ",
+".nnnndn. ",
+".ndddddn.",
+".nddddd. ",
+"....dd.  ",
+"   .d.   ",
+"   ..    ",
+"   .     "
+};
