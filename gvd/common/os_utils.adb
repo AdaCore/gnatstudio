@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                     Copyright (C) 2001-2003                       --
+--                     Copyright (C) 2001-2004                       --
 --                             ACT-Europe                            --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -74,6 +74,31 @@ package body OS_Utils is
       Free (S);
       return "/tmp/";
    end Get_Tmp_Dir;
+
+   ---------------------
+   -- Create_Tmp_File --
+   ---------------------
+
+   function Create_Tmp_File return String is
+      Current_Dir : constant String := Get_Current_Dir;
+      Temp_Dir    : constant String := Get_Tmp_Dir;
+      Fd          : File_Descriptor;
+      Base        : String_Access;
+
+   begin
+      Change_Dir (Get_Tmp_Dir);
+      Create_Temp_File (Fd, Base);
+      Close (Fd);
+
+      declare
+         Result : constant String := Base.all;
+      begin
+         Free (Base);
+         Change_Dir (Current_Dir);
+
+         return Temp_Dir & Result;
+      end;
+   end Create_Tmp_File;
 
    -------------------------
    -- Executable_Location --
