@@ -1448,7 +1448,7 @@ package body Odd.Code_Editors is
                     (Debugger_Process_Tab (Editor.Process).Debugger, Name),
                     Set_Current => False);
          Set_Line (Editor, Get_Current_Line (Editor.Explorer),
-                   Set_Current => False);
+                   Set_Current => True);
       end if;
    end Show_Current_Line_Menu;
 
