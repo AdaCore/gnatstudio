@@ -214,7 +214,6 @@ package body Docgen.Work_On_File is
       end Find_Prev_Package;
 
    begin
-
       Still_Warned := False;
 
       --  Sort the list of the files first
@@ -948,6 +947,15 @@ package body Docgen.Work_On_File is
 
                      Entity_Node.Name :=
                        new String'(Get_Full_Name (Info, LI_Unit, ".", Tree));
+
+                     --  Trace (Me, "Full name :: " & Entity_Node.Name.all);
+                     --  ??? Problem with name in three/four parts for generic
+                     --  entities. The full name returned is not the full one:
+                     --  so the file created is empty.  In fact, in
+                     --  Process_Source, the name of the main package is not
+                     --  matched (see line 747 in Process_Source in
+                     --  Docgen.Work_On_Source.adb)
+
                      Entity_Node.Entity := Copy (Info);
 
                      --  For all entities which are not subprograms the ref
