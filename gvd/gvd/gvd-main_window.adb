@@ -37,10 +37,6 @@ with GVD.Memory_View;     use GVD.Memory_View;
 with Debugger;            use Debugger;
 with Process_Proxies;     use Process_Proxies;
 
-with Language.Ada; use Language.Ada;
-with Language.C;   use Language.C;
-with Language.Cpp; use Language.Cpp;
-with Language;     use Language;
 with Language_Handlers;     use Language_Handlers;
 with Language_Handlers.GVD; use Language_Handlers.GVD;
 
@@ -137,7 +133,6 @@ package body GVD.Main_Window is
       Menu_Items  : Gtk_Item_Factory_Entry_Array)
    is
       Menu : Gtk_Widget;
-      Handler : GVD_Language_Handler;
    begin
       Main_Debug_Window_Pkg.Initialize (Main_Window);
       Initialize_Class_Record
@@ -160,17 +155,6 @@ package body GVD.Main_Window is
       Gtk_New (Main_Window.Thread_Dialog, Gtk_Window (Main_Window));
       Gtk_New (Main_Window.History_Dialog, Gtk_Window (Main_Window));
       Gtk_New (Main_Window.Memory_View, Gtk_Widget (Main_Window));
-
-      Gtk_New (Handler);
-      Main_Window.Lang_Handler := Language_Handler (Handler);
-      Register_Language (Handler, "ada", Ada_Lang);
-      Add_File_Extensions (Handler, "ada", Get_Pref (Ada_Extensions));
-
-      Register_Language (Handler, "c", C_Lang);
-      Add_File_Extensions (Handler, "c", Get_Pref (C_Extensions));
-
-      Register_Language (Handler, "c++", Cpp_Lang);
-      Add_File_Extensions (Handler, "c++", Get_Pref (Cpp_Extensions));
    end Initialize;
 
    -----------------

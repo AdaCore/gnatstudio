@@ -47,6 +47,7 @@ with GVD.Preferences;           use GVD.Preferences;
 with GVD.Window_Settings;       use GVD.Window_Settings;
 with GVD.Code_Editors;          use GVD.Code_Editors;
 with GVD.Toolbar;               use GVD.Toolbar;
+with Language_Handlers.GVD;     use Language_Handlers.GVD;
 
 with GVD.Open_Program_Dialog;   use GVD.Open_Program_Dialog;
 
@@ -84,6 +85,7 @@ procedure GVD_Main is
    Tmp_String          : String_Access;
    Debuggee_Name       : String_Access;
    Item                : Gtk_List_Item;
+   Handler             : GVD_Language_Handler;
 
    procedure Init;
    --  Set up environment for GVD.
@@ -271,6 +273,18 @@ begin
    Gtk.Main.Init;
    Init;
    Gtk_New (Main_Debug_Window, "<gvd>", GVD_Menu_Items.all);
+
+   Gtk_New (Handler);
+   Main_Debug_Window.Lang_Handler := Language_Handler (Handler);
+   Register_Language (Handler, "ada", Ada_Lang);
+   Add_File_Extensions (Handler, "ada", Get_Pref (Ada_Extensions));
+
+   Register_Language (Handler, "c", C_Lang);
+   Add_File_Extensions (Handler, "c", Get_Pref (C_Extensions));
+
+   Register_Language (Handler, "c++", Cpp_Lang);
+   Add_File_Extensions (Handler, "c++", Get_Pref (Cpp_Extensions));
+
    Set_Toolbar
      (Main_Debug_Window,
       Get_Handle_Box (Create_Toolbar (Main_Debug_Window)));
