@@ -31,6 +31,7 @@ with Debugger; use Debugger;
 with Basic_Types;
 with Gtk.Widget;
 with Gtk.Handlers;
+with Histories;
 
 package GVD.Dialogs is
 
@@ -201,14 +202,14 @@ package GVD.Dialogs is
       Title     : String;
       Message   : String;
       Position  : Gtk.Enums.Gtk_Window_Position := Gtk.Enums.Win_Pos_Mouse;
-      Key       : String := "") return String;
+      History   : Histories.History := null;
+      Key       : Histories.History_Key := "") return String;
    --  Open a simple dialog, with a single entry field, and returns the
    --  contents of this field (or ASCII.NUL) if the user selected cancel).
    --  The dialog is set up as a child of Parent, so that, depending on the
    --  window manager, it isn't displayed below it.
-   --  if Key is not the empty string, then the dialog is stored in Parent's
-   --  user data, and reused next time. This can be used to provide an history
-   --  of values entered in this dialog by the user.
+   --  if Key is not the empty string, then the combobox's content is
+   --  initialized from the corresponding entry in History.
    --  Position indicates where the dialog should be positionned.
 
    type Boolean_Access is access all Boolean;
@@ -220,7 +221,8 @@ package GVD.Dialogs is
       Position       : Gtk.Enums.Gtk_Window_Position :=
         Gtk.Enums.Win_Pos_Mouse;
       Check_Msg      : String;
-      Key            : String := "";
+      History        : Histories.History := null;
+      Key            : Histories.History_Key := "";
       Button_Active  : access Boolean;
       Check_Msg2     : String := "";
       Button2_Active : Boolean_Access := null) return String;
