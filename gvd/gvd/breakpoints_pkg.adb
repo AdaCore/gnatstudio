@@ -434,6 +434,13 @@ begin
    Gtk_New_Vbox (Breakpoints.Vbox16, False, 0);
    Add (Breakpoints.Frame11, Breakpoints.Vbox16);
 
+   Gtk_New (Breakpoints.Label72, -("Click in the ""Enb"" column to change the status"));
+   Pack_Start (Breakpoints.Vbox16, Breakpoints.Label72, False, False, 0);
+   Set_Alignment (Breakpoints.Label72, 0.05, 0.5);
+   Set_Padding (Breakpoints.Label72, 0, 0);
+   Set_Justify (Breakpoints.Label72, Justify_Center);
+   Set_Line_Wrap (Breakpoints.Label72, False);
+
    Gtk_New (Breakpoints.Scrolledwindow2);
    Pack_Start (Breakpoints.Vbox16, Breakpoints.Scrolledwindow2, True, True, 0);
    Set_Policy (Breakpoints.Scrolledwindow2, Policy_Automatic, Policy_Always);

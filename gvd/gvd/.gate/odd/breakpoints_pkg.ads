@@ -82,6 +82,7 @@ package Breakpoints_Pkg is
       Except : Gtk_Label;
       Frame11 : Gtk_Frame;
       Vbox16 : Gtk_Vbox;
+      Label72 : Gtk_Label;
       Scrolledwindow2 : Gtk_Scrolled_Window;
       Clist1 : Gtk_Clist;
       Label15 : Gtk_Label;

@@ -6112,6 +6112,23 @@ Assert failure
 	<spacing>0</spacing>
 
 	<widget>
+	  <class>GtkLabel</class>
+	  <name>label72</name>
+	  <label>Click in the &quot;Enb&quot; column to change the status</label>
+	  <justify>GTK_JUSTIFY_CENTER</justify>
+	  <wrap>False</wrap>
+	  <xalign>0.05</xalign>
+	  <yalign>0.5</yalign>
+	  <xpad>0</xpad>
+	  <ypad>0</ypad>
+	  <child>
+	    <padding>0</padding>
+	    <expand>False</expand>
+	    <fill>False</fill>
+	  </child>
+	</widget>
+
+	<widget>
 	  <class>GtkScrolledWindow</class>
 	  <name>scrolledwindow2</name>
 	  <width>179</width>
