@@ -1833,11 +1833,11 @@ package body GVD.Process is
          Update_Breakpoints (Debugger.Editor_Text, Debugger.Breakpoints.all);
 
          --  Update the breakpoints dialog if necessary
-         if Debugger.Window.Breakpoints_Editor /= null
-           and then Mapped_Is_Set (Debugger.Window.Breakpoints_Editor)
+         if GVD_Module.Breakpoints_Editor /= null
+           and then Mapped_Is_Set (GVD_Module.Breakpoints_Editor)
          then
             Update_Breakpoint_List
-              (Breakpoint_Editor_Access (Debugger.Window.Breakpoints_Editor));
+              (Breakpoint_Editor_Access (GVD_Module.Breakpoints_Editor));
          end if;
       end if;
    end Update_Breakpoints;

@@ -21,6 +21,8 @@
 --  This package defines the debugger module (called GVD).
 
 with Glib.Object;
+with Gtk.Dialog;
+with Gtk.Window;
 with GPS.Kernel;
 with Ada.Unchecked_Deallocation;
 
@@ -38,6 +40,16 @@ package GVD_Module is
 
    procedure Free is new
      Ada.Unchecked_Deallocation (Debugger_List_Node, Debugger_List_Link);
+
+   --  ??? The following global variables should be moved either as part of
+   --  GVD_Module_ID, or as part of Visual_Debugger.
+
+   Memory_View        : Gtk.Window.Gtk_Window;
+   History_Dialog     : Gtk.Dialog.Gtk_Dialog;
+   Thread_Dialog      : Gtk.Dialog.Gtk_Dialog;
+   Task_Dialog        : Gtk.Dialog.Gtk_Dialog;
+   PD_Dialog          : Gtk.Dialog.Gtk_Dialog;
+   Breakpoints_Editor : Gtk.Window.Gtk_Window;
 
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);

@@ -29,11 +29,12 @@ with Gtk.List_Item;         use Gtk.List_Item;
 with Gtk.Widget;            use Gtk.Widget;
 with Gtkada.Dialogs;        use Gtkada.Dialogs;
 
-with GPS.Intl;            use GPS.Intl;
+with GPS.Intl;              use GPS.Intl;
 with GVD.Process;           use GVD.Process;
 with Debugger;              use Debugger;
 with GPS.Main_Window;       use GPS.Main_Window;
 with GVD.Types;             use GVD.Types;
+with GVD_Module;            use GVD_Module;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with GNAT.Regpat;           use GNAT.Regpat;
 with Ada.Exceptions;        use Ada.Exceptions;
@@ -64,15 +65,14 @@ package body GVD.Dialogs.Callbacks is
       Matched     : Match_Array (0 .. 0);
       Info        : PD_Information_Array (1 .. Max_PD);
       Len         : Natural;
-      PD_Dialog   : PD_Dialog_Access;
 
    begin
       if Process.Debugger = null then
          Hide (Top);
       end if;
 
-      if Main_Window.Thread_Dialog /= null
-        and then Top = GVD_Dialog (Main_Window.Thread_Dialog)
+      if Thread_Dialog /= null
+        and then Top = GVD_Dialog (Thread_Dialog)
       then
          Match ("[0-9]+", Str, Matched);
          Thread_Switch
@@ -80,14 +80,14 @@ package body GVD.Dialogs.Callbacks is
             Natural'Value (Str (Matched (0).First .. Matched (0).Last)),
             Mode => GVD.Types.Visible);
 
-      elsif Main_Window.Task_Dialog /= null
-        and then Top = GVD_Dialog (Main_Window.Task_Dialog)
+      elsif Task_Dialog /= null
+        and then Top = GVD_Dialog (Task_Dialog)
       then
          Task_Switch
            (Process.Debugger, Natural (Index) + 1, Mode => GVD.Types.Visible);
 
-      elsif Main_Window.PD_Dialog /= null
-        and then Top = GVD_Dialog (Main_Window.PD_Dialog)
+      elsif PD_Dialog /= null
+        and then Top = GVD_Dialog (PD_Dialog)
       then
          Match ("(0x)?[0-9a-fA-F]+", Str, Matched);
 
@@ -108,12 +108,12 @@ package body GVD.Dialogs.Callbacks is
          Info_PD (Process.Debugger, Info, Len);
          Freeze (Gtk_Clist (Object));
 
-         PD_Dialog := PD_Dialog_Access (Main_Window.PD_Dialog);
-         Update_PD (PD_Dialog, Info (1 .. Len));
-         Handler_Block (Object, PD_Dialog.Select_Row_Id);
+         Update_PD (PD_Dialog_Access (PD_Dialog), Info (1 .. Len));
+         Handler_Block (Object, PD_Dialog_Access (PD_Dialog).Select_Row_Id);
          Select_Row (Gtk_Clist (Object), Index, 0);
-         Handler_Unblock (Object, PD_Dialog.Select_Row_Id);
+         Handler_Unblock (Object, PD_Dialog_Access (PD_Dialog).Select_Row_Id);
          Thaw (Gtk_Clist (Object));
+
       else
          raise Program_Error;
       end if;

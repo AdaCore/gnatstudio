@@ -20,6 +20,7 @@
 
 with Glib;               use Glib;
 with Gtk;                use Gtk;
+with Gtk.Dialog;         use Gtk.Dialog;
 with Gtk.Menu_Item;      use Gtk.Menu_Item;
 with Gtk.Widget;         use Gtk.Widget;
 with Gtkada.Handlers;    use Gtkada.Handlers;
@@ -113,20 +114,20 @@ package body GPS.Main_Window.Debug is
         and then Tab.Debugger /= null
         and then not Command_In_Process (Get_Process (Tab.Debugger))
       then
-         if Window.Thread_Dialog /= null then
-            Update (Thread_Dialog_Access (Window.Thread_Dialog), Tab);
+         if Thread_Dialog /= null then
+            Update (Thread_Dialog_Access (Thread_Dialog), Tab);
          end if;
 
-         if Window.Task_Dialog /= null then
-            Update (Task_Dialog_Access (Window.Task_Dialog), Tab);
+         if Task_Dialog /= null then
+            Update (Task_Dialog_Access (Task_Dialog), Tab);
          end if;
 
-         if Window.History_Dialog /= null then
-            Update (History_Dialog_Access (Window.History_Dialog), Tab);
+         if History_Dialog /= null then
+            Update (History_Dialog_Access (History_Dialog), Tab);
          end if;
 
-         if Window.PD_Dialog /= null then
-            Update (PD_Dialog_Access (Window.PD_Dialog), Tab);
+         if PD_Dialog /= null then
+            Update (PD_Dialog_Access (PD_Dialog), Tab);
          end if;
       end if;
    end Update_External_Dialogs;
@@ -168,9 +169,9 @@ package body GPS.Main_Window.Debug is
 
       Update_External_Dialogs (Window, Debugger);
 
-      if Window.Breakpoints_Editor /= null then
+      if GVD_Module.Breakpoints_Editor /= null then
          Set_Process
-           (Breakpoint_Editor_Access (Window.Breakpoints_Editor), Process);
+           (Breakpoint_Editor_Access (GVD_Module.Breakpoints_Editor), Process);
       end if;
 
       --  ??? Replace by a signal "debugger_switch" on the main window

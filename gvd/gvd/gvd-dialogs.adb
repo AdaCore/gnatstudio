@@ -25,13 +25,14 @@ with Gtkada.Types;          use Gtkada.Types;
 with GVD;                   use GVD;
 with GVD.Dialogs.Callbacks; use GVD.Dialogs.Callbacks;
 with GVD.Callbacks;         use GVD.Callbacks;
+with GVD_Module;            use GVD_Module;
 with Gtkada.Handlers;       use Gtkada.Handlers;
 with Interfaces.C;          use Interfaces.C;
 with Interfaces.C.Strings;
 with Basic_Types;           use Basic_Types;
 with GVD.Call_Stack;        use GVD.Call_Stack;
 with GVD.Process;           use GVD.Process;
-with GPS.Intl;            use GPS.Intl;
+with GPS.Intl;              use GPS.Intl;
 pragma Elaborate_All (GPS.Intl);
 with Gtk.Widget;            use Gtk.Widget;
 with Gtk.Dialog;            use Gtk.Dialog;
@@ -324,8 +325,8 @@ package body GVD.Dialogs is
    is
       Tab : constant Visual_Debugger := Visual_Debugger (Widget);
    begin
-      if Tab.Window.Task_Dialog /= null then
-         Update (Task_Dialog_Access (Tab.Window.Task_Dialog), Tab);
+      if Task_Dialog /= null then
+         Update (Task_Dialog_Access (Task_Dialog), Tab);
       end if;
    end On_Task_Process_Stopped;
 
@@ -338,8 +339,8 @@ package body GVD.Dialogs is
    is
       Tab : constant Visual_Debugger := Visual_Debugger (Widget);
    begin
-      if Tab.Window.Thread_Dialog /= null then
-         Update (Thread_Dialog_Access (Tab.Window.Thread_Dialog), Tab);
+      if Thread_Dialog /= null then
+         Update (Thread_Dialog_Access (Thread_Dialog), Tab);
       end if;
    end On_Thread_Process_Stopped;
 
@@ -352,8 +353,8 @@ package body GVD.Dialogs is
    is
       Tab : constant Visual_Debugger := Visual_Debugger (Widget);
    begin
-      if Tab.Window.PD_Dialog /= null then
-         Update (PD_Dialog_Access (Tab.Window.PD_Dialog), Tab);
+      if PD_Dialog /= null then
+         Update (PD_Dialog_Access (PD_Dialog), Tab);
       end if;
    end On_PD_Process_Stopped;
 
