@@ -18,20 +18,9 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with System;          use System;
 
 with Glib;            use Glib;
-
-with Gdk.Event;       use Gdk.Event;
-with Gdk.Types;       use Gdk.Types;
-
-with Gtk.Accel_Group; use Gtk.Accel_Group;
-with Gtk.Object;      use Gtk.Object;
-with Gtk.Enums;       use Gtk.Enums;
-with Gtk.Style;       use Gtk.Style;
-with Gtk.Widget;      use Gtk.Widget;
 with Gtk.Main;        use Gtk.Main;
-
 with Gtkada.Dialogs;  use Gtkada.Dialogs;
 
 package body List_Select_Pkg.Callbacks is
@@ -49,8 +38,6 @@ package body List_Select_Pkg.Callbacks is
       List_Select : List_Select_Access
         := List_Select_Access (Get_Toplevel (Object));
       Arg1 : Gint := To_Gint (Params, 1);
-      Arg2 : Gint := To_Gint (Params, 2);
-      Arg3 : Gdk_Event := To_Event (Params, 3);
    begin
       Set_Text (List_Select.The_Entry,
                 Get_Text (Object, Arg1, 0));

@@ -19,7 +19,6 @@
 -----------------------------------------------------------------------
 
 with Gtk.Arguments;
-with Gtk.Widget; use Gtk.Widget;
 
 package List_Select_Pkg.Callbacks is
    procedure On_Clist_Select_Row
