@@ -1090,8 +1090,6 @@ package body Src_Editor_View is
       --  the stacks used by Next_Indentation to avoid parsing
       --  the buffer from scratch each time.
 
-      --  ??? Should take into account UTF-8 characters and do a conversion
-
       C_Str        := Get_Slice (Buffer, 0, 0, Line, Col);
       Slice        := To_Unchecked_String (C_Str);
       Slice_Length := Natural (Strlen (C_Str));
@@ -1169,6 +1167,7 @@ package body Src_Editor_View is
       else
          Current_Line := Get_Line (Start);
          Set_Line_Offset (Start, 0);
+         Col := Get_Line_Offset (Pos);
 
          --  In the loop below, Global_Offset contains the offset between
          --  the modified buffer, and the original buffer, caused by the
@@ -1213,7 +1212,15 @@ package body Src_Editor_View is
          end loop;
 
          if Indented then
-            Get_Iter_At_Line_Offset (Buffer, Pos, Current_Line, Gint (Indent));
+            if Col >= Gint (Indent) then
+               Col := Col + Gint (Indent - Offset);
+
+               if Col < 0 then
+                  Col := 0;
+               end if;
+            end if;
+
+            Get_Iter_At_Line_Offset (Buffer, Pos, Current_Line, Col);
             Place_Cursor (Buffer, Pos);
          end if;
       end if;
