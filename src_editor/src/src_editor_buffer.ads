@@ -657,6 +657,7 @@ package Src_Editor_Buffer is
    --  lines in the actual Gtk_Text_Buffer, plus 1.
 
    function Blocks_Valid (Buffer : access Source_Buffer_Record) return Boolean;
+   pragma Inline (Blocks_Valid);
    --  Return whether the blocks stored in the buffer are valid.
    --  (Ie if the text has not been modified since the last computation).
 
