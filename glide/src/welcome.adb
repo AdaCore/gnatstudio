@@ -30,8 +30,10 @@ with Gtk.GEntry;           use Gtk.GEntry;
 with Gtk.Separator;        use Gtk.Separator;
 with Gtk.Size_Group;       use Gtk.Size_Group;
 with Gtk.Stock;            use Gtk.Stock;
+with Gtk.Tooltips;         use Gtk.Tooltips;
 with Gtk.Widget;           use Gtk.Widget;
 with Gtk.Window;           use Gtk.Window;
+with Gtkada.Dialogs;       use Gtkada.Dialogs;
 with Gtkada.Handlers;      use Gtkada.Handlers;
 with Gtkada.File_Selector; use Gtkada.File_Selector;
 
@@ -48,9 +50,12 @@ with Creation_Wizard;           use Creation_Wizard;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with Projects;                  use Projects;
-with Gtk.Tooltips;              use Gtk.Tooltips;
+with Traces;                    use Traces;
+with Ada.Exceptions;            use Ada.Exceptions;
 
 package body Welcome is
+
+   Me : constant Debug_Handle := Create ("Welcome");
 
    function On_New_Project
      (Screen : access Gtk_Widget_Record'Class) return Boolean;
@@ -304,6 +309,11 @@ package body Welcome is
 
       Destroy (Wiz);
       return Result;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         return False;
    end On_New_Project;
 
    ------------------------
@@ -314,7 +324,11 @@ package body Welcome is
       S : constant Welcome_Screen := Welcome_Screen (Screen);
    begin
       Load_Default_Project (S.Kernel, Get_Text (S.Default_Dir));
-      Response (Welcome_Screen (Screen), Gtk_Response_OK);
+      Response (S, Gtk_Response_OK);
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Default_Project;
 
    ---------------------
@@ -322,10 +336,25 @@ package body Welcome is
    ---------------------
 
    procedure On_Load_Project (Screen : access Gtk_Widget_Record'Class) is
-      S : constant Welcome_Screen := Welcome_Screen (Screen);
+      S            : constant Welcome_Screen := Welcome_Screen (Screen);
       Project_Name : constant String := Normalize_Pathname
         (Get_Text (Get_Entry (S.Open_Project)), Resolve_Links => False);
+      Directory    : constant String := Dir_Name (Project_Name);
+      Button       : Message_Dialog_Buttons;
+      pragma Unreferenced (Button);
+
    begin
+      Response (S, Gtk_Response_OK);
+
+      if not Is_Directory (Directory) then
+         Button := Message_Dialog
+           ((-"Invalid directory: ") & Directory & ASCII.LF &
+            (-"Loading default project instead"),
+            Error, Button_OK, Parent => Gtk_Window (S));
+         Load_Default_Project (S.Kernel, Get_Text (S.Default_Dir));
+         return;
+      end if;
+
       Change_Dir (Dir_Name (Project_Name));
 
       if File_Extension (Project_Name) = Project_File_Extension then
@@ -337,7 +366,10 @@ package body Welcome is
            (S.Kernel, Project_Name & Project_File_Extension);
       end if;
 
-      Response (Welcome_Screen (Screen), Gtk_Response_OK);
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Load_Default_Project (S.Kernel, Get_Text (S.Default_Dir));
    end On_Load_Project;
 
    -----------------------
@@ -356,6 +388,10 @@ package body Welcome is
       if Dir /= "" then
          Set_Text (S.Default_Dir, Dir);
       end if;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Browse_Default;
 
    --------------------
@@ -391,6 +427,10 @@ package body Welcome is
       end;
 
       Free (Dir);
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Browse_Load;
 
    --------------------------------
@@ -406,6 +446,10 @@ package body Welcome is
       Set_Sensitive (S.Open_Browse, False);
       Set_Sensitive (S.Default_Dir, True);
       Set_Sensitive (S.Default_Browse, True);
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Default_Project_Clicked;
 
    -------------------------------
@@ -421,6 +465,10 @@ package body Welcome is
       Set_Sensitive (S.Open_Browse, False);
       Set_Sensitive (S.Default_Dir, False);
       Set_Sensitive (S.Default_Browse, False);
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Create_Project_Clicked;
 
    -----------------------------
@@ -436,6 +484,10 @@ package body Welcome is
       Set_Sensitive (S.Open_Browse, True);
       Set_Sensitive (S.Default_Dir, False);
       Set_Sensitive (S.Default_Browse, False);
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Open_Project_Clicked;
 
 end Welcome;
