@@ -3,3 +3,4 @@ config.h
 config.status
 stamp-h
 Makefile
+confdefs.h
