@@ -74,9 +74,10 @@ package Language.Ada is
    ----------------------
 
    function Get_Name
-     (Lang     : access Ada_Language;
-      Token    : Generic_Token_Type;
-      Category : access Language_Category) return String;
+     (Lang           : access Ada_Language;
+      Token          : Generic_Token_Type;
+      Is_Declaration : Boolean;
+      Category       : access Language_Category) return String;
 
    procedure Format_Source
      (Lang             : access Ada_Language;
