@@ -24,7 +24,6 @@ with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with Ada.Strings.Fixed; use Ada.Strings.Fixed;
 with Interfaces.C.Strings; use Interfaces.C.Strings;
 with Odd.Strings; use Odd.Strings;
-with Text_IO;
 
 package body Debugger.Gdb.Ada is
 
@@ -310,22 +309,6 @@ package body Debugger.Gdb.Ada is
                                   Repeat_Item_Start    => '<');
                Set_Value (Simple_Type (Result.all),
                           Type_Str (Int .. Index - 1));
-
-               -------------------
-               -- Repeat values --
-               -------------------
-               --  This only happens inside arrays, so we can simply replace
-               --  Result (it will be deleted the next time the item is
-               --  parsed anyway).
-
-               if Looking_At (Type_Str, Index, "<repeats ") then
-                  Index := Index + 9;
-                  Parse_Num (Type_Str,
-                             Index,
-                             Long_Integer (Repeat_Num));
-                  Index := Index + 7;  --  skips " times>"
-               end if;
-
             end;
          else
             Set_Value (Simple_Type (Result.all), "<???>");
@@ -500,6 +483,22 @@ package body Debugger.Gdb.Ada is
               (Lang, Type_Str, Index, R, Repeat_Num, Parent => Result);
          end;
       end if;
+
+      -------------------
+      -- Repeat values --
+      -------------------
+      --  This only happens inside arrays, so we can simply replace
+      --  Result
+
+      Skip_Blanks (Type_Str, Index);
+      if Looking_At (Type_Str, Index, "<repeats ") then
+         Index := Index + 9;
+         Parse_Num (Type_Str,
+                    Index,
+                    Long_Integer (Repeat_Num));
+         Index := Index + 7;  --  skips " times>"
+      end if;
+
    end Internal_Parse_Value;
 
    ----------------------
