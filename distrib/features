@@ -52,3 +52,13 @@ New features in GPS 1.0.1
 
 - The call graph now automatically computes whether a subprogram calls any
   other subprogram.
+
+- The contents of all the combo box histories is restored every time GPS
+  is started.
+
+- New menu Project->Reopen
+
+- New contextual menus "Find all writes to" and "Find all reads to"
+
+- It is now possible to edit file-specific binder and linker switches when
+  editing the switches for one of the project's main files.
