@@ -27,6 +27,8 @@ GNAT_SOURCES= \
   fmap.adb \
   fname.ads \
   fname.adb \
+  g-regpat.ads \
+  g-regpat.adb \
   g-comlin.ads \
   g-comlin.adb \
   g-dirope.ads \
