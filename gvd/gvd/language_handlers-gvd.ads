@@ -22,6 +22,7 @@
 
 with Language;
 with Basic_Types;
+with GNAT.OS_Lib;
 
 package Language_Handlers.GVD is
 
@@ -42,7 +43,7 @@ package Language_Handlers.GVD is
 
    function Known_Languages
      (Handler : access GVD_Language_Handler_Record)
-      return Basic_Types.String_Array;
+      return GNAT.OS_Lib.Argument_List;
 
    procedure Register_Language
      (Handler : access GVD_Language_Handler_Record;
