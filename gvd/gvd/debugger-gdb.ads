@@ -252,7 +252,7 @@ package Debugger.Gdb is
 
    function Info_Threads
      (Debugger : access Gdb_Debugger)
-      return Language.Thread_Information_Array;
+      return Thread_Information_Array;
 
    function Line_Contains_Code
      (Debugger : access Gdb_Debugger;

@@ -18,6 +18,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Interfaces.C.Strings; use Interfaces.C.Strings;
 with Language;
 with Items;
 with GNAT.OS_Lib;
@@ -623,6 +624,23 @@ package Debugger is
    -- Thread Support --
    --------------------
 
+   subtype Thread_Fields is Interfaces.C.size_t range 1 .. 20;
+   --  This represents the maximum number of fields in a thread list output.
+
+   type Thread_Information
+     (Num_Fields : Thread_Fields := Thread_Fields'First) is
+   record
+      Information : chars_ptr_array (1 .. Num_Fields);
+   end record;
+   --  Represent the information of one thread.
+
+   type Thread_Information_Array is
+     array (Positive range <>) of Thread_Information;
+   --  List of thread information.
+
+   procedure Free (Info : in out Thread_Information_Array);
+   --  Free the dyamic memory associated with each element of the array.
+
    procedure Thread_Switch
      (Debugger : access Debugger_Root'Class;
       Thread   : Natural;
@@ -632,7 +650,7 @@ package Debugger is
 
    function Info_Threads
      (Debugger  : access Debugger_Root)
-      return Language.Thread_Information_Array is abstract;
+      return Thread_Information_Array is abstract;
    --  Return the current list of threads.
    --  GDB_COMMAND: "info threads" or "info tasks"
 

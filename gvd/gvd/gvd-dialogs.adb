@@ -43,7 +43,6 @@ with Gtk.List_Item;         use Gtk.List_Item;
 with Gtk.Object;            use Gtk.Object;
 with Gtk.Check_Button;      use Gtk.Check_Button;
 with Process_Proxies;       use Process_Proxies;
-with Language;              use Language;
 with Main_Debug_Window_Pkg; use Main_Debug_Window_Pkg;
 with GVD.Utils;             use GVD.Utils;
 

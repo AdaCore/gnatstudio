@@ -34,6 +34,7 @@ with Gtk.Main;          use Gtk.Main;
 with Gtk.Window;        use Gtk.Window;
 with Gdk.Input;
 with Gdk.Types;
+with Gtkada.Types;      use Gtkada.Types;
 
 with Odd_Intl;          use Odd_Intl;
 with GVD;               use GVD;
@@ -321,8 +322,10 @@ package body Debugger is
       Thread   : Natural;
       Mode     : Command_Type := Hidden) is
    begin
-      Send (Debugger, Thread_Switch (Get_Language (Debugger), Thread),
-            Mode => Mode);
+      Send
+        (Debugger, Thread_Switch
+           (Language_Debugger_Access (Get_Language (Debugger)), Thread),
+         Mode => Mode);
    end Thread_Switch;
 
    -----------------------
@@ -777,5 +780,16 @@ package body Debugger is
          end loop;
       end loop;
    end Wait_User_Command;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Info : in out Thread_Information_Array) is
+   begin
+      for J in Info'Range loop
+         Free (Info (J).Information);
+      end loop;
+   end Free;
 
 end Debugger;

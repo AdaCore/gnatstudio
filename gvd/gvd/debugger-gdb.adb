@@ -864,7 +864,8 @@ package body Debugger.Gdb is
    begin
       Send
         (Debugger,
-         Start (Get_Language (Debugger)) & " " & Arguments, Mode => Mode);
+         Start (Language_Debugger_Access (Get_Language (Debugger)))
+           & " " & Arguments, Mode => Mode);
       Set_Is_Started (Debugger, True);
    end Start;
 
@@ -1155,7 +1156,8 @@ package body Debugger.Gdb is
    begin
       Send
         (Debugger,
-         Break_Exception (Get_Language (Debugger), Name, Temporary, Unhandled),
+         Break_Exception (Language_Debugger_Access (Get_Language (Debugger)),
+                          Name, Temporary, Unhandled),
          Mode => Mode);
    end Break_Exception;
 
@@ -1211,12 +1213,14 @@ package body Debugger.Gdb is
 
    function Info_Threads
      (Debugger : access Gdb_Debugger)
-      return Language.Thread_Information_Array is
+      return Thread_Information_Array is
    begin
       return Parse_Thread_List
-        (Get_Language (Debugger),
-         Send (Debugger, Thread_List (Get_Language (Debugger)),
-               Mode => Internal));
+        (Language_Debugger_Access (Get_Language (Debugger)),
+         Send
+           (Debugger,
+            Thread_List (Language_Debugger_Access (Get_Language (Debugger))),
+            Mode => Internal));
    end Info_Threads;
 
    ------------------------

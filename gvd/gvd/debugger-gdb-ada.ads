@@ -60,7 +60,7 @@ package Debugger.Gdb.Ada is
 
    function Parse_Thread_List
      (Lang   : access Gdb_Ada_Language;
-      Output : String) return Language.Thread_Information_Array;
+      Output : String) return Thread_Information_Array;
 
    procedure Parse_Array_Type
      (Lang         : access Gdb_Ada_Language;

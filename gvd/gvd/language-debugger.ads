@@ -142,6 +142,65 @@ package Language.Debugger is
    --  Return the language/Debugger context.
    --  The default implementation raises Program_Error (See comment above)
 
+   ------------------------
+   -- Exception Handling --
+   ------------------------
+
+   function Break_Exception
+     (Debugger  : access Language_Debugger;
+      Name      : String  := "";
+      Temporary : Boolean := False;
+      Unhandled : Boolean := False) return String;
+   --  Return the command used in the current debugger/language to break
+   --  on exception. If name is null, break should occur on all exceptions.
+   --  The default implementation returns a null String.
+
+   ----------------------
+   -- Special commands --
+   ----------------------
+
+   function Start (Debugger  : access Language_Debugger) return String;
+   --  Return the command used in the current debugger to start the program
+   --  and stop on the first line of user's code.
+   --  The resulting string can be either null (in which case this function
+   --  is not available for the given debugger/language combination), a single
+   --  command, or multiple commands separated by ASCII.LF characters.
+
+   ----------------------------
+   -- Generic Thread Support --
+   ----------------------------
+
+   --  The types provided below enable the display debugger to get information
+   --  that is both generic enough to handle most debuggers/languages, but
+   --  also precise enough that a nice graphical object can be displayed.
+   --
+   --  The default implementation of these subprograms raises Program_Error.
+   --  since this requires a debugger session. However, since we need to
+   --  be able to declare some instances of Language_Debugger_Ada, for
+   --  instance, we need a non-abstract subprogram.
+
+   function Thread_List
+     (Lang : access Language_Debugger) return String;
+   --  Return a string that corresponds to the thread list command
+   --  for a particular language/debugger.
+   --  This should be used by a debugger in cunjunction with Parse_Thread_List
+   --  below.
+   --  The default implementation raises Program_Error.
+
+   function Thread_Switch
+     (Lang   : access Language_Debugger;
+      Thread : Natural) return String;
+   --  Return a string that corresponds to the thread switch command
+   --  for a particular language/debugger.
+   --  Thread is a debugger specific thread id.
+   --  The default implementation raises Program_Error.
+
+   function Parse_Thread_List
+     (Lang   : access Language_Debugger;
+      Output : String) return Thread_Information_Array;
+   --  Parse the result of a thread list command.
+   --  The default implementation raises Program_Error.
+
 private
    type Language_Debugger is abstract new Language_Root with record
       The_Debugger : Debugger_Access;

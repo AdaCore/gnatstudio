@@ -58,7 +58,7 @@ package Debugger.Gdb.C is
 
    function Parse_Thread_List
      (Lang   : access Gdb_C_Language;
-      Output : String) return Language.Thread_Information_Array;
+      Output : String) return Thread_Information_Array;
 
    procedure Parse_Array_Type
      (Lang         : access Gdb_C_Language;

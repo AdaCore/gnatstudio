@@ -30,6 +30,7 @@ package Debugger.Jdb.Java is
 
    type Jdb_Java_Language is new
      Language.Debugger.Java.Java_Language with private;
+   type Jdb_Java_Language_Access is access all Jdb_Java_Language'Class;
 
    procedure Parse_Type
      (Lang     : access Jdb_Java_Language;
@@ -53,7 +54,7 @@ package Debugger.Jdb.Java is
 
    function Parse_Thread_List
      (Lang   : access Jdb_Java_Language;
-      Output : String) return Language.Thread_Information_Array;
+      Output : String) return Thread_Information_Array;
 
    procedure Parse_Array_Type
      (Lang      : access Jdb_Java_Language;

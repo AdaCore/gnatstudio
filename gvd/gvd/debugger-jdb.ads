@@ -226,7 +226,7 @@ package Debugger.Jdb is
 
    function Info_Threads
      (Debugger : access Jdb_Debugger)
-      return Language.Thread_Information_Array;
+      return Thread_Information_Array;
 
    function Line_Contains_Code
      (Debugger : access Jdb_Debugger;

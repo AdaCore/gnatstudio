@@ -140,4 +140,62 @@ package body Language.Debugger is
       return L;
    end Get_Language_Debugger_Context;
 
+   ---------------------
+   -- Break_Exception --
+   ---------------------
+
+   function Break_Exception
+     (Debugger  : access Language_Debugger;
+      Name      : String  := "";
+      Temporary : Boolean := False;
+      Unhandled : Boolean := False) return String is
+   begin
+      return "";
+   end Break_Exception;
+
+   -----------
+   -- Start --
+   -----------
+
+   function Start (Debugger  : access Language_Debugger) return String is
+   begin
+      return "";
+   end Start;
+
+   -----------------
+   -- Thread_List --
+   -----------------
+
+   function Thread_List (Lang : access Language_Debugger) return String is
+   begin
+      raise Program_Error;
+      return "";
+   end Thread_List;
+
+   -------------------
+   -- Thread_Switch --
+   -------------------
+
+   function Thread_Switch
+     (Lang   : access Language_Debugger;
+      Thread : Natural) return String is
+   begin
+      raise Program_Error;
+      return "";
+   end Thread_Switch;
+
+   -----------------------
+   -- Parse_Thread_List --
+   -----------------------
+
+   function Parse_Thread_List
+     (Lang   : access Language_Debugger;
+      Output : String) return Thread_Information_Array
+   is
+      Null_Array : Thread_Information_Array (1 .. 0);
+   begin
+      raise Program_Error;
+      return Null_Array;
+   end Parse_Thread_List;
+
 end Language.Debugger;

@@ -657,16 +657,19 @@ package body Debugger.Jdb is
    ------------------
 
    function Info_Threads
-     (Debugger : access Jdb_Debugger) return Language.Thread_Information_Array
+     (Debugger : access Jdb_Debugger) return Thread_Information_Array
    is
-      S : String :=
-        Send (Debugger, Thread_List (Get_Language (Debugger)), True,
-              Mode => Internal);
+      S : String := Send
+        (Debugger,
+         Thread_List (Language_Debugger_Access (Get_Language (Debugger))),
+         True,
+         Mode => Internal);
       Matches : Match_Array (0 .. 0);
    begin
       Match (Prompt_Regexp, S, Matches);
       return Parse_Thread_List
-        (Get_Language (Debugger), S (S'First .. Matches (0).First - 1));
+        (Jdb_Java_Language_Access (Get_Language (Debugger)),
+         S (S'First .. Matches (0).First - 1));
    end Info_Threads;
 
    -----------------
