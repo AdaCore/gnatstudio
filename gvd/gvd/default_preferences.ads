@@ -36,6 +36,7 @@ with Gtk.Tooltips;
 with Gtk.Widget;
 with Gtk.Window;
 with String_Hash;
+with Ada.Unchecked_Deallocation;
 
 package Default_Preferences is
 
@@ -195,10 +196,55 @@ package Default_Preferences is
    type Action_Callback is access procedure
      (Manager : access Preferences_Manager_Record'Class);
 
+   -------------------------
+   -- Editing preferences --
+   -------------------------
+
+   type Preferences_Page_Record is abstract tagged null record;
+   type Preferences_Page is access all Preferences_Page_Record'Class;
+
+   type Preferences_Page_Array is array (Natural range <>)
+      of Preferences_Page;
+   type Preferences_Page_Array_Access is access Preferences_Page_Array;
+
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+     (Preferences_Page_Array, Preferences_Page_Array_Access);
+
+   function Name
+     (Pref : access Preferences_Page_Record) return String is abstract;
+   --  Return the name to use for this page in the list on the left of the
+   --  preferences dialog.
+
+   function Create
+     (Pref : access Preferences_Page_Record) return Gtk.Widget.Gtk_Widget
+      is abstract;
+   --  Return a widget to display in the preferences dialog.
+
+   procedure Validate
+     (Pref   : access Preferences_Page_Record;
+      Widget : access Gtk.Widget.Gtk_Widget_Record'Class) is abstract;
+   --  Take into acount the contents of the page. This would for instance
+   --  modify the current preferences. There is no need to save previous
+   --  values of the preferences, since this is done automatically prior to
+   --  validating all the pages.
+   --  This can be called any number of times if the user presses Apply in the
+   --  preferences dialog.
+
+   procedure Undo
+     (Pref   : access Preferences_Page_Record;
+      Widget : access Gtk.Widget.Gtk_Widget_Record'Class);
+   --  Undo the previous effect of Validate.
+   --  There is nothing to be done if Undo would simply restore the previous
+   --  value of the preferences, since this is done automatically prior to
+   --  undoing the effect of all the pages. This is the default behavior.
+   --  This might be called even if Validate has not previously been called for
+   --  this page.
+
    procedure Edit_Preferences
      (Manager            : access Preferences_Manager_Record;
       Parent             : access Gtk.Window.Gtk_Window_Record'Class;
-      On_Changed         : Action_Callback);
+      On_Changed         : Action_Callback;
+      Custom_Pages       : Preferences_Page_Array);
    --  Open a dialog to edit the registered preferences.
    --  When OK is clicked, the preferences in Manager are changed, the dialog
    --  is destroyed, and On_Changed is called.
@@ -209,6 +255,25 @@ package Default_Preferences is
    --  if at least one apply was emitted before (since we need to restore the
    --  widgets to their appropriate state).
 
+   --------------------------
+   -- Saving and restoring --
+   --------------------------
+
+   type Saved_Prefs_Data is private;
+
+   procedure Save_Preferences
+     (Manager : access Preferences_Manager_Record;
+      Saved   : out Default_Preferences.Saved_Prefs_Data);
+   --  Save the current value of the preferences
+
+   procedure Restore_Preferences
+     (Manager : access Preferences_Manager_Record;
+      Saved   : Default_Preferences.Saved_Prefs_Data);
+   --  Restore the previous value of the preferences.
+   --  Saved must not be destroyed afterwards
+
+   procedure Destroy (Data : in out Default_Preferences.Saved_Prefs_Data);
+   --  Free the memory occupied by Data
 
 private
    type Pref_Description;
@@ -220,8 +285,16 @@ private
    package Pref_Hash is new String_Hash (Pref_Description_Access, Free, null);
 
    type Preferences_Manager_Record is tagged record
-      Preferences : Pref_Hash.String_Hash_Table.HTable;
+      Preferences   : Pref_Hash.String_Hash_Table.HTable;
       Current_Index : Natural := 0;
+
+      Pref_Editor   : Gtk.Widget.Gtk_Widget;
+      --  The current preferences editor. This is set to null if there is no
+      --  editor open currently
+   end record;
+
+   type Saved_Prefs_Data is record
+      Preferences : Pref_Hash.String_Hash_Table.HTable;
    end record;
 
 end Default_Preferences;

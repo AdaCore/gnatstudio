@@ -43,6 +43,7 @@ with Gtk.Handlers;             use Gtk.Handlers;
 with Gtk.Label;                use Gtk.Label;
 with Gtk.List;                 use Gtk.List;
 with Gtk.List_Item;            use Gtk.List_Item;
+with Gtk.Object;               use Gtk.Object;
 with Gtk.Scrolled_Window;      use Gtk.Scrolled_Window;
 with Gtk.Separator;            use Gtk.Separator;
 with Gtk.Spin_Button;          use Gtk.Spin_Button;
@@ -69,8 +70,10 @@ with Odd_Intl;                 use Odd_Intl;
 with Pango.Layout;             use Pango.Layout;
 with String_Hash;
 with Ada.Unchecked_Deallocation;
+with Ada.Exceptions;           use Ada.Exceptions;
 with Traces;                   use Traces;
 with Ada.Text_IO;              use Ada.Text_IO;
+with Interfaces.C.Strings;     use Interfaces.C.Strings;
 
 package body Default_Preferences is
 
@@ -84,9 +87,21 @@ package body Default_Preferences is
       Value       : GNAT.OS_Lib.String_Access;
       Page        : GNAT.OS_Lib.String_Access;
       Param       : Glib.Param_Spec;
+      --  The definition of the preference. This can be null if the preference
+      --  has not been registered yet, but its value has been read in the
+      --  preferences file.
+
       Descr       : Pango.Font.Pango_Font_Description;
       Index       : Natural;
    end record;
+
+   type Preferences_Editor_Record is new Gtk_Dialog_Record with null record;
+   type Preferences_Editor is access all Preferences_Editor_Record'Class;
+   Preferences_Editor_Class_Record : Gtk.Object.GObject_Class :=
+     Gtk.Object.Uninitialized_Class;
+   Preferences_Editor_Signals : constant chars_ptr_array :=
+     (1 => New_String ("preferences_changed"));
+
 
    use Pref_Hash.String_Hash_Table;
 
@@ -126,15 +141,30 @@ package body Default_Preferences is
       Data : Pref_Description_Access);
    --  Called when a Gint preference has been changed.
 
+   procedure Update_Gint
+     (Adj  : access GObject_Record'Class;
+      Data : Pref_Description_Access);
+   --  Called when the preference Data has changed, to update Adj
+
    procedure Boolean_Changed
      (Toggle : access GObject_Record'Class;
       Data   : Pref_Description_Access);
    --  Called when a boolean preference has been changed.
 
+   procedure Update_Boolean
+     (Toggle : access GObject_Record'Class;
+      Data   : Pref_Description_Access);
+   --  Called when the preference Data has changed, to update Toggle
+
    procedure Entry_Changed
      (Ent  : access GObject_Record'Class;
       Data : Pref_Description_Access);
    --  Called when the text in an entry field has changed.
+
+   procedure Update_Entry
+     (Ent  : access GObject_Record'Class;
+      Data : Pref_Description_Access);
+   --  Called when the preference Data has changed, to update Ent
 
    function Font_Entry_Changed
      (Ent  : access GObject_Record'Class;
@@ -148,6 +178,23 @@ package body Default_Preferences is
      (Combo : access GObject_Record'Class;
       Data  : Pref_Description_Access);
    --  Called when a color has changed.
+
+   procedure Update_Font_Entry
+     (Ent  : access GObject_Record'Class;
+      Data : Pref_Description_Access);
+   procedure Update_Fg
+     (Combo  : access GObject_Record'Class;
+      Data : Pref_Description_Access);
+   procedure Update_Bg
+     (Combo  : access GObject_Record'Class;
+      Data : Pref_Description_Access);
+   --  Called when the preference Data has changed, to update Combo for the
+   --  Font, foreground or background of the preference
+
+   procedure Update_Color
+     (Combo  : access GObject_Record'Class;
+      Data : Pref_Description_Access);
+   --  Update the contents of the combo based on the color found in Data
 
    procedure Bg_Color_Changed
      (Combo : access GObject_Record'Class; Data  : Pref_Description_Access);
@@ -177,7 +224,8 @@ package body Default_Preferences is
    --  Check that Desc is a valid font, and associate it with the node N.
 
    function Create_Box_For_Font
-     (N            : Pref_Description_Access;
+     (Manager      : access Preferences_Manager_Record;
+      N            : Pref_Description_Access;
       Desc         : Pango_Font_Description;
       Button_Label : String) return Gtk_Box;
    --  Create a box suitable for editing fonts
@@ -610,10 +658,23 @@ package body Default_Preferences is
       Info : Pref_Description_Access := Get (Manager.Preferences, Name);
    begin
       if Info = null then
-         Trace (Me, "Can't assign value to unregistered preference: " & Name);
-      else
-         Free (Info.Value);
-         Info.Value := new String'(Value);
+         --  Create a dummy entry
+         Info := new Pref_Description'
+           (Page  => new String'("General"),
+            Param => null,
+            Descr => null,
+            Index => Manager.Current_Index,
+            Value => null);
+         Manager.Current_Index := Manager.Current_Index + 1;
+         Set (Manager.Preferences, Name, Info);
+      end if;
+
+      Free (Info.Value);
+      Info.Value := new String'(Value);
+
+      if Manager.Pref_Editor /= null then
+         Widget_Callback.Emit_By_Name
+           (Manager.Pref_Editor, "preferences_changed");
       end if;
    end Set_Pref;
 
@@ -748,7 +809,7 @@ package body Default_Preferences is
          exit when Info = null;
 
          if Info.Value /= null then
-            Put_Line (File, "   <pref name=""" & Pspec_Name (Info.Param)
+            Put_Line (File, "   <pref name=""" & Get_Key (Iter)
                       & """ >" & Info.Value.all & "</pref>");
          end if;
 
@@ -800,6 +861,19 @@ package body Default_Preferences is
       Data.Value := new String'(Gint'Image (Gint (Get_Value (A))));
    end Gint_Changed;
 
+   -----------------
+   -- Update_Gint --
+   -----------------
+
+   procedure Update_Gint
+     (Adj  : access GObject_Record'Class;
+      Data : Pref_Description_Access) is
+   begin
+      if Data.Value /= null then
+         Set_Value (Gtk_Adjustment (Adj), Gdouble'Value (Data.Value.all));
+      end if;
+   end Update_Gint;
+
    ---------------------
    -- Boolean_Changed --
    ---------------------
@@ -814,6 +888,20 @@ package body Default_Preferences is
       Data.Value := new String'(Boolean'Image (Get_Active (T)));
    end Boolean_Changed;
 
+   --------------------
+   -- Update_Boolean --
+   --------------------
+
+   procedure Update_Boolean
+     (Toggle : access GObject_Record'Class;
+      Data   : Pref_Description_Access) is
+   begin
+      if Data.Value /= null then
+         Set_Active
+           (Gtk_Toggle_Button (Toggle), Boolean'Value (Data.Value.all));
+      end if;
+   end Update_Boolean;
+
    -------------------
    -- Entry_Changed --
    -------------------
@@ -827,6 +915,19 @@ package body Default_Preferences is
       Free (Data.Value);
       Data.Value := new String'(Get_Text (E));
    end Entry_Changed;
+
+   ------------------
+   -- Update_Entry --
+   ------------------
+
+   procedure Update_Entry
+     (Ent  : access GObject_Record'Class;
+      Data : Pref_Description_Access) is
+   begin
+      if Data.Value /= null then
+         Set_Text (Gtk_Entry (Ent), Data.Value.all);
+      end if;
+   end Update_Entry;
 
    ----------------
    -- Reset_Font --
@@ -858,8 +959,6 @@ package body Default_Preferences is
       E : constant Gtk_Entry := Gtk_Entry (Ent);
    begin
       Free (Data.Value);
-      --  ??? Why is the following code commented out
---      Free (Data.Descr);
       Data.Descr := null;
 
       if Value_Type (Data.Param) = Pango.Font.Get_Type then
@@ -909,6 +1008,70 @@ package body Default_Preferences is
       Free (Data.Value);
       Data.Value := new String'(Get_Color (C));
    end Color_Changed;
+
+   ---------------
+   -- Update_Fg --
+   ---------------
+
+   procedure Update_Fg
+     (Combo  : access GObject_Record'Class;
+      Data : Pref_Description_Access)
+   is
+      Color : Gdk_Color;
+   begin
+      if Data.Value /= null then
+         Color := Parse (Style_Token (Data.Value.all, 2));
+         Alloc (Gtk.Widget.Get_Default_Colormap, Color);
+         Set_Color (Gvd_Color_Combo (Combo), Color);
+      end if;
+   end Update_Fg;
+
+   ---------------
+   -- Update_Bg --
+   ---------------
+
+   procedure Update_Bg
+     (Combo  : access GObject_Record'Class;
+      Data : Pref_Description_Access)
+   is
+      Color : Gdk_Color;
+   begin
+      if Data.Value /= null then
+         Color := Parse (Style_Token (Data.Value.all, 3));
+         Alloc (Gtk.Widget.Get_Default_Colormap, Color);
+         Set_Color (Gvd_Color_Combo (Combo), Color);
+      end if;
+   end Update_Bg;
+
+   -----------------------
+   -- Update_Font_Entry --
+   -----------------------
+
+   procedure Update_Font_Entry
+     (Ent  : access GObject_Record'Class;
+      Data : Pref_Description_Access) is
+   begin
+      if Data.Value /= null then
+         Set_Text (Gtk_Entry (Ent), Style_Token (Data.Value.all, 1));
+      end if;
+   end Update_Font_Entry;
+
+   ------------------
+   -- Update_Color --
+   ------------------
+
+   procedure Update_Color
+     (Combo  : access GObject_Record'Class;
+      Data : Pref_Description_Access)
+   is
+      Color : Gdk_Color;
+   begin
+      if Data.Value /= null then
+         Color := Parse (Data.Value.all);
+         Alloc (Gtk.Widget.Get_Default_Colormap, Color);
+         Set_Color (Gvd_Color_Combo (Combo), Color);
+      end if;
+   end Update_Color;
 
    ----------------------
    -- Fg_Color_Changed --
@@ -1080,7 +1243,8 @@ package body Default_Preferences is
    -------------------------
 
    function Create_Box_For_Font
-     (N            : Pref_Description_Access;
+     (Manager      : access Preferences_Manager_Record;
+      N            : Pref_Description_Access;
       Desc         : Pango_Font_Description;
       Button_Label : String) return Gtk_Box
    is
@@ -1104,6 +1268,10 @@ package body Default_Preferences is
         (Ent, "focus_out_event",
          Return_Param_Handlers.To_Marshaller (Font_Entry_Changed'Access),
          User_Data   => N);
+      Param_Handlers.Object_Connect
+        (Manager.Pref_Editor, "preferences_changed",
+         Param_Handlers.To_Marshaller (Update_Font_Entry'Access),
+         Ent, User_Data => N);
 
       Set_Style (Ent, Copy (Get_Style (Ent)));
       Set_Font_Description (Get_Style (Ent), Desc);
@@ -1145,6 +1313,10 @@ package body Default_Preferences is
               (Adj, "value_changed",
                Param_Handlers.To_Marshaller (Gint_Changed'Access),
                User_Data   => N);
+            Param_Handlers.Object_Connect
+              (Manager.Pref_Editor, "preferences_changed",
+               Param_Handlers.To_Marshaller (Update_Gint'Access),
+               Adj, User_Data => N);
 
             return Gtk_Widget (Spin);
          end;
@@ -1166,6 +1338,10 @@ package body Default_Preferences is
               (Toggle, "toggled",
                Param_Handlers.To_Marshaller (Boolean_Changed'Access),
                User_Data   => N);
+            Param_Handlers.Object_Connect
+              (Manager.Pref_Editor, "preferences_changed",
+               Param_Handlers.To_Marshaller (Update_Boolean'Access),
+               Toggle, User_Data => N);
 
             return Gtk_Widget (Toggle);
          end;
@@ -1200,6 +1376,10 @@ package body Default_Preferences is
                Param_Handlers.To_Marshaller (Entry_Changed'Access),
                User_Data   => N,
                After       => True);
+            Param_Handlers.Object_Connect
+              (Manager.Pref_Editor, "preferences_changed",
+               Param_Handlers.To_Marshaller (Update_Entry'Access),
+               Ent, User_Data => N);
 
             return Gtk_Widget (Box);
          end;
@@ -1222,6 +1402,10 @@ package body Default_Preferences is
                Param_Handlers.To_Marshaller (Entry_Changed'Access),
                User_Data   => N,
                After       => True);
+            Param_Handlers.Object_Connect
+              (Manager.Pref_Editor, "preferences_changed",
+               Param_Handlers.To_Marshaller (Update_Entry'Access),
+               Ent, User_Data => N);
 
             return Gtk_Widget (Ent);
          end;
@@ -1232,7 +1416,7 @@ package body Default_Preferences is
             Event : Gtk_Event_Box;
             Box   : Gtk_Box;
             F     : constant Gtk_Box := Create_Box_For_Font
-              (N, Get_Pref_Font (Manager, Prop), "...");
+              (Manager, N, Get_Pref_Font (Manager, Prop), "...");
             Combo : Gvd_Color_Combo;
 
          begin
@@ -1253,6 +1437,10 @@ package body Default_Preferences is
               (Combo, "color_changed",
                Param_Handlers.To_Marshaller (Fg_Color_Changed'Access),
                User_Data   => N);
+            Param_Handlers.Object_Connect
+              (Manager.Pref_Editor, "preferences_changed",
+               Param_Handlers.To_Marshaller (Update_Fg'Access),
+               Combo, User_Data => N);
 
             Gtk_New (Event);
             Gtk_New (Combo);
@@ -1264,10 +1452,13 @@ package body Default_Preferences is
               (Combo, "color_changed",
                Param_Handlers.To_Marshaller (Bg_Color_Changed'Access),
                User_Data   => N);
+            Param_Handlers.Object_Connect
+              (Manager.Pref_Editor, "preferences_changed",
+               Param_Handlers.To_Marshaller (Update_Bg'Access),
+               Combo, User_Data => N);
 
             return Gtk_Widget (Box);
          end;
-
 
       elsif Typ = Gdk.Color.Gdk_Color_Type then
          declare
@@ -1281,6 +1472,10 @@ package body Default_Preferences is
               (Combo, "color_changed",
                Param_Handlers.To_Marshaller (Color_Changed'Access),
                User_Data   => N);
+            Param_Handlers.Object_Connect
+              (Manager.Pref_Editor, "preferences_changed",
+               Param_Handlers.To_Marshaller (Update_Color'Access),
+               Combo, User_Data => N);
 
             return Gtk_Widget (Combo);
          end;
@@ -1290,7 +1485,8 @@ package body Default_Preferences is
             Prop : constant Param_Spec_Font := Param_Spec_Font (Param);
          begin
             return Gtk_Widget
-              (Create_Box_For_Font (N, Get_Pref (Manager, Prop), -"Browse"));
+              (Create_Box_For_Font
+                 (Manager, N, Get_Pref (Manager, Prop), -"Browse"));
          end;
 
       elsif Fundamental (Typ) = GType_Enum then
@@ -1329,6 +1525,10 @@ package body Default_Preferences is
                Param_Handlers.To_Marshaller (Enum_Changed'Access),
                Slot_Object => Combo,
                User_Data   => N);
+            Param_Handlers.Object_Connect
+              (Manager.Pref_Editor, "preferences_changed",
+               Param_Handlers.To_Marshaller (Update_Entry'Access),
+               Get_Entry (Combo), User_Data => N);
 
             return Gtk_Widget (Combo);
          end;
@@ -1350,25 +1550,34 @@ package body Default_Preferences is
    procedure Edit_Preferences
      (Manager           : access Preferences_Manager_Record;
       Parent            : access Gtk.Window.Gtk_Window_Record'Class;
-      On_Changed        : Action_Callback)
+      On_Changed        : Action_Callback;
+      Custom_Pages      : Preferences_Page_Array)
+
    is
       Model             : Gtk_Tree_Store;
       Main_Table        : Gtk_Table;
-      Current_Selection : Gtk_Table;
+      Current_Selection : Gtk_Widget;
       Title             : Gtk_Label;
 
-      function Find_Or_Create_Page (Name : String) return Gtk_Table;
-      --  Return the iterator in Model matching Name. The page is created if
-      --  needed.
+      function Find_Or_Create_Page
+        (Name : String; Widget : Gtk_Widget)
+         return Gtk_Widget;
+      --  Return the iterator in Model matching Name.
+      --  If no such page already exists, then eithe Widget (if non null) is
+      --  inserted for it, or a new table is created and inserted
 
       procedure Selection_Changed (Tree : access Gtk_Widget_Record'Class);
       --  Called when the selected page has changed.
 
-      function Find_Or_Create_Page (Name : String) return Gtk_Table is
+      function Find_Or_Create_Page
+        (Name : String; Widget : Gtk_Widget)
+         return Gtk_Widget
+      is
          Current : Gtk_Tree_Iter := Null_Iter;
          Child   : Gtk_Tree_Iter;
          First, Last : Integer := Name'First;
          Table   : Gtk_Table;
+         W       : Gtk_Widget;
 
       begin
          while First <= Name'Last loop
@@ -1390,18 +1599,23 @@ package body Default_Preferences is
             end loop;
 
             if Child = Null_Iter then
-               Gtk_New (Table, Rows => 0, Columns => 2,
+               if Widget = null then
+                  Gtk_New (Table, Rows => 0, Columns => 2,
                         Homogeneous => False);
-               Set_Row_Spacings (Table, 1);
-               Set_Col_Spacings (Table, 5);
+                  Set_Row_Spacings (Table, 1);
+                  Set_Col_Spacings (Table, 5);
+                  W := Gtk_Widget (Table);
+               else
+                  W := Widget;
+               end if;
 
                Append (Model, Child, Current);
                Set (Model, Child, 0, Name (First .. Last - 1));
-               Set (Model, Child, 1, GObject (Table));
+               Set (Model, Child, 1, GObject (W));
 
-               Attach (Main_Table, Table, 1, 2, 2, 3,
+               Attach (Main_Table, W, 1, 2, 2, 3,
                        Ypadding => 0, Xpadding => 10);
-               Set_Child_Visible (Table, False);
+               Set_Child_Visible (W, False);
             end if;
 
             Current := Child;
@@ -1409,7 +1623,7 @@ package body Default_Preferences is
             First := Last + 1;
          end loop;
 
-         return Gtk_Table (Get_Object (Model, Current, 1));
+         return Gtk_Widget (Get_Object (Model, Current, 1));
       end Find_Or_Create_Page;
 
       procedure Selection_Changed (Tree : access Gtk_Widget_Record'Class) is
@@ -1424,13 +1638,13 @@ package body Default_Preferences is
          Get_Selected (Get_Selection (Gtk_Tree_View (Tree)), M, Iter);
 
          if Iter /= Null_Iter then
-            Current_Selection := Gtk_Table (Get_Object (Model, Iter, 1));
+            Current_Selection := Gtk_Widget (Get_Object (Model, Iter, 1));
             Set_Child_Visible (Current_Selection, True);
             Set_Text (Title, Get_String (Model, Iter, 0));
          end if;
       end Selection_Changed;
 
-      Dialog     : Gtk_Dialog;
+      Dialog     : Preferences_Editor;
       Frame      : Gtk_Frame;
       Table      : Gtk_Table;
       View       : Gtk_Tree_View;
@@ -1439,10 +1653,15 @@ package body Default_Preferences is
       Num        : Gint;
       Scrolled   : Gtk_Scrolled_Window;
 
+      Signal_Parameters : constant Gtk.Object.Signal_Parameter_Types :=
+        (1 => (1 => GType_None));
+
+      Custom_Widgets : array (Custom_Pages'Range) of Gtk_Widget;
+
       Tmp        : Gtk_Widget;
       pragma Unreferenced (Tmp, Num);
 
-      Saved_Prefs : HTable;
+      Saved       : Saved_Prefs_Data;
       Iter        : Iterator;
       Info        : Pref_Description_Access;
 
@@ -1461,16 +1680,18 @@ package body Default_Preferences is
       Separator  : Gtk_Separator;
 
    begin
+      Save_Preferences (Manager, Saved);
+
       Get_First (Manager.Preferences, Iter);
       loop
          Info := Get_Element (Iter);
          exit when Info = null;
-         Set (Saved_Prefs, Get_Key (Iter), Clone (Info));
          Sorted_Prefs (Info.Index) := Info;
          Get_Next (Manager.Preferences, Iter);
       end loop;
 
-      Gtk_New
+      Dialog := new Preferences_Editor_Record;
+      Initialize
         (Dialog => Dialog,
          Title  => -"Preferences",
          Parent => Gtk_Window (Parent),
@@ -1478,6 +1699,14 @@ package body Default_Preferences is
       Set_Position (Dialog, Win_Pos_Mouse);
       Set_Default_Size (Dialog, 620, 400);
       Gtk_New (Tips);
+
+      Gtk.Object.Initialize_Class_Record
+        (Dialog,
+         Signals      => Preferences_Editor_Signals,
+         Class_Record => Preferences_Editor_Class_Record,
+         Type_Name    => "PreferencesEditor",
+         Parameters   => Signal_Parameters);
+      Manager.Pref_Editor := Gtk_Widget (Dialog);
 
       Gtk_New (Main_Table, Rows => 3, Columns => 2, Homogeneous => False);
       Pack_Start (Get_Vbox (Dialog), Main_Table);
@@ -1520,13 +1749,24 @@ package body Default_Preferences is
 
       Add (Scrolled, View);
 
+      --  Add all custom pages first
+
+      for P in Custom_Pages'Range loop
+         Custom_Widgets (P) := Find_Or_Create_Page
+           (Name (Custom_Pages (P)), Create (Custom_Pages (P)));
+
+      end loop;
+
+      --  Then add all implicitely defined pages
+
       for Index in Sorted_Prefs'Range loop
          Info := Sorted_Prefs (Index);
 
          if Info /= null
+           and then Info.Param /= null
            and then (Flags (Info.Param) and Param_Writable) /= 0
          then
-            Table := Find_Or_Create_Page (Info.Page.all);
+            Table := Gtk_Table (Find_Or_Create_Page (Info.Page.all, null));
             Row := Get_Property (Table, N_Rows_Property);
             Resize (Table, Rows =>  Row + 1, Columns => 2);
 
@@ -1556,7 +1796,12 @@ package body Default_Preferences is
       loop
          case Run (Dialog) is
             when Gtk_Response_OK =>
-               Reset (Saved_Prefs);
+               for P in Custom_Pages'Range loop
+                  Validate (Custom_Pages (P), Custom_Widgets (P));
+               end loop;
+
+               Manager.Pref_Editor := null;
+               Destroy (Saved);
                Destroy (Dialog);
                if On_Changed /= null then
                   On_Changed (Manager);
@@ -1564,15 +1809,23 @@ package body Default_Preferences is
                exit;
 
             when Gtk_Response_Apply =>
+               for P in Custom_Pages'Range loop
+                  Validate (Custom_Pages (P), Custom_Widgets (P));
+               end loop;
+
                if On_Changed /= null then
                   On_Changed (Manager);
                end if;
                Had_Apply := True;
 
             when others =>  --  including Cancel
+               for P in Custom_Pages'Range loop
+                  Undo (Custom_Pages (P), Custom_Widgets (P));
+               end loop;
+
+               Manager.Pref_Editor := null;
                Destroy (Dialog);
-               Reset (Manager.Preferences);
-               Manager.Preferences := Saved_Prefs;
+               Restore_Preferences (Manager, Saved);
 
                if Had_Apply and then On_Changed /= null then
                   On_Changed (Manager);
@@ -1585,8 +1838,64 @@ package body Default_Preferences is
       Destroy (Tips);
 
    exception
-      when others =>
+      when E : others =>
+         Trace (Me, "Unexpected information "
+                & Exception_Information (E));
          Destroy (Dialog);
    end Edit_Preferences;
+
+   ----------------------
+   -- Save_Preferences --
+   ----------------------
+
+   procedure Save_Preferences
+     (Manager : access Preferences_Manager_Record;
+      Saved   : out Default_Preferences.Saved_Prefs_Data)
+   is
+      Iter        : Iterator;
+      Info        : Pref_Description_Access;
+   begin
+      Get_First (Manager.Preferences, Iter);
+      loop
+         Info := Get_Element (Iter);
+         exit when Info = null;
+         Set (Saved.Preferences, Get_Key (Iter), Clone (Info));
+         Get_Next (Manager.Preferences, Iter);
+      end loop;
+   end Save_Preferences;
+
+   -------------------------
+   -- Restore_Preferences --
+   -------------------------
+
+   procedure Restore_Preferences
+     (Manager : access Preferences_Manager_Record;
+      Saved   : Default_Preferences.Saved_Prefs_Data) is
+   begin
+      Reset (Manager.Preferences);
+      Manager.Preferences := Saved.Preferences;
+   end Restore_Preferences;
+
+   -------------
+   -- Destroy --
+   -------------
+
+   procedure Destroy (Data : in out Default_Preferences.Saved_Prefs_Data) is
+   begin
+      Reset (Data.Preferences);
+   end Destroy;
+
+   ----------
+   -- Undo --
+   ----------
+
+   procedure Undo
+     (Pref   : access Preferences_Page_Record;
+      Widget : access Gtk.Widget.Gtk_Widget_Record'Class)
+   is
+      pragma Unreferenced (Pref, Widget);
+   begin
+      null;
+   end Undo;
 
 end Default_Preferences;
