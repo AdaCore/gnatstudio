@@ -518,13 +518,13 @@ package body VCS.Generic_VCS is
 
 
       if Local then
-         if Rep.Status_Parser.File_Index = 0 then
+         if Rep.Local_Status_Parser.File_Index = 0 then
             Rep.Current_Query_Files := Copy_String_List (Sorted);
          end if;
 
          Generic_Command (Rep, Sorted, Args, Local_Status_Files, False);
       else
-         if Rep.Local_Status_Parser.File_Index = 0 then
+         if Rep.Status_Parser.File_Index = 0 then
             Rep.Current_Query_Files := Copy_String_List (Sorted);
          end if;
 
