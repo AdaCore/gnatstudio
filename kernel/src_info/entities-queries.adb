@@ -224,6 +224,8 @@ package body Entities.Queries is
 
          Next (Iter);
       end loop;
+
+      Free (Iter);
    end Find_Any_Entity;
 
    ---------------------
