@@ -983,9 +983,11 @@ package body Src_Editor_Buffer is
          return Buffer_Line_Type (Line);
       end if;
 
-      if Line in Buffer.Editable_Lines'Range then
-         if Buffer.Editable_Lines (Line).Where = In_Buffer then
-            return Buffer.Editable_Lines (Line).Buffer_Line;
+      if Buffer.Editable_Lines /= null then
+         if Line in Buffer.Editable_Lines'Range then
+            if Buffer.Editable_Lines (Line).Where = In_Buffer then
+               return Buffer.Editable_Lines (Line).Buffer_Line;
+            end if;
          end if;
       end if;
 
