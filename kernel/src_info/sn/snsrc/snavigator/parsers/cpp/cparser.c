@@ -893,6 +893,7 @@ extern int obj_declaration( Declaration_t Declaration )
             konstrukciot ), akkor nem lehet deklarator_list */
          if(( token( 1 ) == '*' ) ||
             ( token( 1 ) == '&' ) ||
+            ( token( 1 ) == '<' ) ||
             ( token( 1 ) == SN_IDENTIFIER && ( token( 2 ) != '(' || token( 3 ) != '(' ))
            )
          {
@@ -2338,6 +2339,7 @@ extern int _member_declaration( Class_t Class )
             konstrukciot ), akkor nem lehet deklarator_list */
          if(( token( 1 ) == '*' ) ||
             ( token( 1 ) == '&' ) ||
+            ( token( 1 ) == '<' ) ||
             ( token( 1 ) == SN_IDENTIFIER && ( token( 2 ) != '(' || token( 3 ) != '(' ))
            )
          {
@@ -3133,6 +3135,7 @@ extern int qualified_name( LongString *plstr, int *plineno, int *pcharno )
    }
    else if( token( 0 ) == SN_IDENTIFIER && token( 1 ) == '<' )
    {
+      int lineno = f_lineno (0), charno = f_charno (0);
       if( plstr )
       {
          LongStringIdAppend( plstr, ident( 0 ));
@@ -3157,7 +3160,8 @@ extern int qualified_name( LongString *plstr, int *plineno, int *pcharno )
          niveau--;
          return False;
          */
-         qualified_name( plstr, plineno, pcharno );
+         if( plineno ) (*plineno) = lineno;
+         if( pcharno ) (*pcharno) = charno;
       }
       niveau--;
       return True;

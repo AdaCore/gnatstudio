@@ -1999,7 +1999,7 @@ extern void f_PutConstructor( Type_t Type, int lineno, int charno, int mode )
                                   , 0
                                   , filename_g
                                   , lineno
-				  , charno
+                                  , charno
                                   , PAF_REF_READ
                                   );
                   }
@@ -2031,7 +2031,7 @@ extern void f_PutConstructor( Type_t Type, int lineno, int charno, int mode )
                                   , 0
                                   , filename_g
                                   , lineno
-				  , charno
+				                      , charno
                                   , PAF_REF_READ
                                   );
                   }
