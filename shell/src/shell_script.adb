@@ -1182,8 +1182,6 @@ package body Shell_Script is
    function Nth_Arg (Data : Shell_Callback_Data; N : Positive) return String is
    begin
       if N > Data.Args'Last then
-         Trace (Me, "Missing parameters: " & N'Img
-                & " > " & Data.Args'Last'Img);
          raise Invalid_Parameter;
       else
          return Data.Args (N).all;
