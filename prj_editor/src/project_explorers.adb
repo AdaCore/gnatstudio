@@ -23,7 +23,6 @@ with Glide_Kernel;        use Glide_Kernel;
 with Scenario_Views;      use Scenario_Views;
 with Vsearch_Ext;         use Vsearch_Ext;
 with Gtk.Box;             use Gtk.Box;
-with Gtk.Frame;           use Gtk.Frame;
 with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
 with Interfaces.C.Strings;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
@@ -390,17 +389,18 @@ package body Project_Explorers is
       end Create_Pixmaps;
 
       Scrolled : Gtk_Scrolled_Window;
+
    begin
       Initialize_Vbox (Explorer, Homogeneous => False);
       Explorer.Kernel := Kernel_Handle (Kernel);
 
       Gtk_New (Explorer.Search, Kernel_Handle (Kernel));
-      Ref (Explorer.Search.Search_Frame);
-      Remove (Explorer.Search, Explorer.Search.Search_Frame);
+      Ref (Explorer.Search.Vbox_Search);
+      Remove (Explorer.Search, Explorer.Search.Vbox_Search);
       Pack_Start
-        (Explorer, Explorer.Search.Search_Frame,
+        (Explorer, Explorer.Search.Vbox_Search,
          Fill => True, Expand => False);
-      Unref (Explorer.Search.Search_Frame);
+      Unref (Explorer.Search.Vbox_Search);
 
       Gtk_New (Explorer.Scenario, Kernel);
       Pack_Start (Explorer, Explorer.Scenario, Fill => True, Expand => False);
