@@ -1091,7 +1091,7 @@ package body Glide_Kernel.Modules is
       Filename          : String;
       Line              : Natural := 0;
       Column            : Natural := 0;
-      Highlight_Line    : Boolean := True;
+      Highlight_Line    : Boolean := False;
       Enable_Navigation : Boolean := True;
       New_File          : Boolean := True;
       From_Path         : Boolean := False)

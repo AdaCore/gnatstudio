@@ -316,7 +316,7 @@ package Glide_Kernel.Modules is
       Name           : String;
       Regexp         : String;
       Case_Sensitive : Boolean := False;
-      Is_Regexp : Boolean := True);
+      Is_Regexp      : Boolean := True);
    --  Register a new template regular expression in the search engine.
    --  Name will appear in the popdown menu of the combo box, but this will be
    --  associated with the regular expression Regexp.
@@ -538,7 +538,7 @@ package Glide_Kernel.Modules is
       Filename          : String;
       Line              : Natural := 0;
       Column            : Natural := 0;
-      Highlight_Line    : Boolean := True;
+      Highlight_Line    : Boolean := False;
       Enable_Navigation : Boolean := True;
       New_File          : Boolean := True;
       From_Path         : Boolean := False);
