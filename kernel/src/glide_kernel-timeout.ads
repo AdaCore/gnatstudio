@@ -83,4 +83,19 @@ package Glide_Kernel.Timeout is
    --  If Directory is not empty, move to Dir before launching the command,
    --  and change back to the current directory once the command is spawned.
 
+   procedure Launch_Process
+     (Kernel        : Kernel_Handle;
+      Command       : String;
+      Arguments     : GNAT.OS_Lib.Argument_List;
+      Console       : Interactive_Consoles.Interactive_Console := null;
+      Callback      : Output_Callback := null;
+      Exit_Cb       : Exit_Callback := null;
+      Success       : out Boolean;
+      Show_Command  : Boolean := True;
+      Callback_Data : System.Address := System.Null_Address;
+      Line_By_Line  : Boolean := False;
+      Directory     : String := "";
+      Fd            : out GNAT.Expect.Process_Descriptor_Access);
+   --  Same as above, and returns the created Process_Descriptor
+
 end Glide_Kernel.Timeout;

@@ -229,17 +229,17 @@ package body Glide_Kernel.Timeout is
      (Kernel        : Kernel_Handle;
       Command       : String;
       Arguments     : GNAT.OS_Lib.Argument_List;
-      Console       : Interactive_Console := null;
+      Console       : Interactive_Consoles.Interactive_Console := null;
       Callback      : Output_Callback := null;
       Exit_Cb       : Exit_Callback := null;
       Success       : out Boolean;
       Show_Command  : Boolean := True;
       Callback_Data : System.Address := System.Null_Address;
       Line_By_Line  : Boolean := False;
-      Directory     : String := "")
+      Directory     : String := "";
+      Fd            : out GNAT.Expect.Process_Descriptor_Access)
    is
       Timeout : constant Guint32 := 50;
-      Fd      : Process_Descriptor_Access;
       Data    : Console_Process;
 
       procedure Spawn
@@ -367,12 +367,35 @@ package body Glide_Kernel.Timeout is
          Pop_State (Kernel);
       end if;
 
-
    exception
       when E : others =>
          Pop_State (Kernel);
          Trace (Exception_Handle,
                 "Unexpected exception: " & Exception_Information (E));
+   end Launch_Process;
+
+   --------------------
+   -- Launch_Process --
+   --------------------
+
+   procedure Launch_Process
+     (Kernel        : Kernel_Handle;
+      Command       : String;
+      Arguments     : GNAT.OS_Lib.Argument_List;
+      Console       : Interactive_Consoles.Interactive_Console := null;
+      Callback      : Output_Callback := null;
+      Exit_Cb       : Exit_Callback := null;
+      Success       : out Boolean;
+      Show_Command  : Boolean := True;
+      Callback_Data : System.Address := System.Null_Address;
+      Line_By_Line  : Boolean := False;
+      Directory     : String := "")
+   is
+      Fd : Process_Descriptor_Access;
+   begin
+      Launch_Process
+        (Kernel, Command, Arguments, Console, Callback, Exit_Cb, Success,
+         Show_Command, Callback_Data, Line_By_Line, Directory, Fd);
    end Launch_Process;
 
    --------------------
