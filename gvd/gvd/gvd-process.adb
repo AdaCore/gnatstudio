@@ -1990,6 +1990,7 @@ package body GVD.Process is
       Output_Command : Boolean := False;
       Mode           : Visible_Command := GVD.Types.Visible)
    is
+      Quit_String     : constant String := "quit     ";
       Lowered_Command : constant String := To_Lower (Command);
       First           : Natural := Lowered_Command'First;
       Data            : History_Data;
@@ -2039,7 +2040,9 @@ package body GVD.Process is
          Display_Prompt (Debugger.Debugger);
          Set_Busy (Debugger, False);
 
-      elsif Lowered_Command = "quit" then
+      elsif Lowered_Command'Length <= Quit_String'Length
+        and then Lowered_Command = Quit_String (1 .. Lowered_Command'Length)
+      then
          if Debugger.Window.Standalone then
             Close_Debugger (Debugger);
          else
