@@ -392,7 +392,7 @@ package body Projects is
             Sources (Index) := new String'
               (Name_As_Directory
                  (Normalize_Pathname
-                    (Get_String (String_Elements.Table (Src).Value))));
+                    (Get_String (String_Elements.Table (Src).Display_Value))));
             Index := Index + 1;
             Src   := String_Elements.Table (Src).Next;
          end loop;
