@@ -37,7 +37,7 @@ with Traces;                  use Traces;
 
 package body Aunit_Module is
 
-   Me : Debug_Handle := Create ("Aunit_Module");
+   Me : constant Debug_Handle := Create ("Aunit_Module");
 
    procedure On_New_Test_Case
      (Widget : access GObject_Record'Class;
