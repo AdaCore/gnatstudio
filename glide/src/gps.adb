@@ -1037,10 +1037,19 @@ procedure GPS is
      (MDI : access GObject_Record'Class;
       Kernel : Kernel_Handle)
    is
-      pragma Unreferenced (MDI);
       Context : constant Selection_Context_Access :=
         Get_Current_Context (Kernel);
+      Child   : constant MDI_Child := Get_Focus_Child (MDI_Window (MDI));
    begin
+      --  Set the title of the main window.
+
+      if Child = null then
+         Reset_Title (Glide_Window (Get_Main_Window (Kernel)));
+      else
+         Reset_Title
+           (Glide_Window (Get_Main_Window (Kernel)), Get_Title (Child));
+      end if;
+
       if Context /= null then
          Context_Changed (Kernel, Context);
       end if;
