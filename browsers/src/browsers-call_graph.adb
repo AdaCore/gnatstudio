@@ -196,6 +196,14 @@ package body Browsers.Call_Graph is
       Entity        : Entity_Information);
    --  Display the call graph for the node.
 
+   procedure Examine_Entity_Call_Graph_Iterator
+     (Kernel        : access Kernel_Handle_Record'Class;
+      Entity        : Entity_Information;
+      Callback      : Examine_Callback;
+      Execute       : Execute_Callback);
+   --  Same as Examine_Entity_Call_Graph, but calls Execute for each matching
+   --  entity.
+
    procedure Examine_Ancestors_Call_Graph
      (Kernel        : access Kernel_Handle_Record'Class;
       Entity        : Entity_Information);
@@ -293,11 +301,6 @@ package body Browsers.Call_Graph is
      (Browser : access Call_Graph_Browser_Record'Class;
       Entity  : Entity_Information) return Entity_Item;
    --  Add a new entity to the browser, if not already there.
-
-   function Add_Entity_If_Not_Present
-     (Browser : access Call_Graph_Browser_Record'Class;
-      Node    : Scope_Tree_Node) return Entity_Item;
-   --  Same as above
 
    procedure Add_Entity_And_Link
      (Cb     : Examine_Callback;
@@ -535,34 +538,16 @@ package body Browsers.Call_Graph is
       return Child;
    end Add_Entity_If_Not_Present;
 
-   -------------------------------
-   -- Add_Entity_If_Not_Present --
-   -------------------------------
+   ----------------------------------------
+   -- Examine_Entity_Call_Graph_Iterator --
+   ----------------------------------------
 
-   function Add_Entity_If_Not_Present
-     (Browser : access Call_Graph_Browser_Record'Class;
-      Node    : Scope_Tree_Node) return Entity_Item
+   procedure Examine_Entity_Call_Graph_Iterator
+     (Kernel        : access Kernel_Handle_Record'Class;
+      Entity        : Entity_Information;
+      Callback      : Examine_Callback;
+      Execute       : Execute_Callback)
    is
-      Entity : Entity_Information := Get_Entity (Node);
-      Child  : Entity_Item;
-   begin
-      Child := Add_Entity_If_Not_Present (Browser, Entity);
-      Destroy (Entity);
-      return Child;
-   end Add_Entity_If_Not_Present;
-
-   -------------------------------
-   -- Examine_Entity_Call_Graph --
-   -------------------------------
-
-   procedure Examine_Entity_Call_Graph
-     (Kernel   : access Kernel_Handle_Record'Class;
-      Entity   : Entity_Information)
-   is
-      Item, Child   : Entity_Item;
-      Child_Browser : MDI_Child;
-      Browser       : Call_Graph_Browser;
-      Link          : Browser_Link;
       Tree          : Scope_Tree;
       Node          : Scope_Tree_Node;
       Rename        : Entity_Information;
@@ -577,19 +562,12 @@ package body Browsers.Call_Graph is
 
       procedure Process_Item (Node : Scope_Tree_Node) is
          Iter  : Scope_Tree_Node_Iterator := Start (Node);
-         Child : Entity_Item;
-         Link  : Browser_Link;
       begin
          while Get (Iter) /= Null_Scope_Tree_Node loop
             if Is_Subprogram (Get (Iter)) then
-               Child := Add_Entity_If_Not_Present (Browser, Get (Iter));
-               if not Has_Link (Get_Canvas (Browser), Item, Child) then
-                  Link := new Browser_Link_Record;
-                  Add_Link (Get_Canvas (Browser),
-                            Link => Link,
-                            Src  => Item,
-                            Dest => Child);
-               end if;
+               Rename := Get_Entity (Get (Iter));
+               Execute (Callback, Rename, Is_Renaming => False);
+               Destroy (Rename);
 
             --  For a label, do not insert it in the browser, but process
             --  its children
@@ -610,43 +588,20 @@ package body Browsers.Call_Graph is
          return;
       end if;
 
-      --  Create the browser if necessary
-      Child_Browser := Open_Call_Graph_Browser (Kernel);
-      Browser := Call_Graph_Browser (Get_Widget (Child_Browser));
-
-      Item := Add_Entity_If_Not_Present (Browser, Node);
-
-      if not Children_Shown (Item) then
-         Set_Children_Shown (Item, True);
-
-         --  If we have a renaming, add the entry for the renamed entity
-         Renaming_Of
-           (Get_LI_File_List (Kernel), Entity, Is_Renaming, Rename);
-         if Is_Renaming and then Rename /= No_Entity_Information then
-            Child := Add_Entity_If_Not_Present (Browser, Rename);
-            if not Has_Link (Get_Canvas (Browser), Item, Child) then
-               Link := new Renaming_Link_Record;
-               Add_Link
-                 (Get_Canvas (Browser), Link => Link,
-                  Src => Item, Dest => Child, Arrow => Both_Arrow);
-            end if;
-            Destroy (Rename);
-
-         elsif Is_Renaming then
-            Insert (Kernel,
-                    Get_Name (Entity)
-                    & (-" is a renaming of an unknown entity"),
-                    Mode => Error);
-
-         else
-            Process_Item (Node);
-         end if;
-
-         Redraw_Title_Bar (Item);
+      --  If we have a renaming, add the entry for the renamed entity
+      Renaming_Of
+        (Get_LI_File_List (Kernel), Entity, Is_Renaming, Rename);
+      if Is_Renaming and then Rename /= No_Entity_Information then
+         Execute (Callback, Rename, Is_Renaming => True);
+         Destroy (Rename);
+      elsif Is_Renaming then
+         Insert (Kernel,
+                 Get_Name (Entity)
+                 & (-" is a renaming of an unknown entity"),
+                 Mode => Error);
+      else
+         Process_Item (Node);
       end if;
-
-      Layout (Browser, Force => False);
-      Refresh_Canvas (Get_Canvas (Browser));
 
       Pop_State (Kernel_Handle (Kernel));
       Free (Tree);
@@ -655,6 +610,45 @@ package body Browsers.Call_Graph is
       when E : others =>
          Pop_State (Kernel_Handle (Kernel));
          Free (Tree);
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+   end Examine_Entity_Call_Graph_Iterator;
+
+   -------------------------------
+   -- Examine_Entity_Call_Graph --
+   -------------------------------
+
+   procedure Examine_Entity_Call_Graph
+     (Kernel   : access Kernel_Handle_Record'Class;
+      Entity   : Entity_Information)
+   is
+      Child_Browser : MDI_Child;
+      Cb            : Examine_Callback;
+   begin
+      --  Create the browser if it doesn't exist
+      Child_Browser := Open_Call_Graph_Browser (Kernel);
+      Cb.Browser := Call_Graph_Browser (Get_Widget (Child_Browser));
+
+      --  Look for an existing item corresponding to entity
+      Cb.Item := Add_Entity_If_Not_Present (Cb.Browser, Entity);
+      Set_Parents_Shown (Cb.Item, True);
+      Redraw_Title_Bar (Cb.Item);
+
+      Cb.Link_From_Item := True;
+
+      if not Children_Shown (Cb.Item) then
+         Set_Children_Shown (Cb.Item, True);
+         Examine_Entity_Call_Graph_Iterator
+           (Kernel, Entity, Cb, Add_Entity_And_Link'Access);
+         Layout (Cb.Browser, Force => False);
+         Refresh_Canvas (Get_Canvas (Cb.Browser));
+
+      else
+         Redraw_Title_Bar (Cb.Item);
+      end if;
+
+   exception
+      when E : others =>
+         Pop_State (Kernel_Handle (Kernel));
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end Examine_Entity_Call_Graph;
 
@@ -1622,7 +1616,7 @@ package body Browsers.Call_Graph is
         (Cb     : Examine_Callback;
          Entity : Entity_Information;
          Is_Renaming : Boolean);
-      --  ???
+      --  Add a new entity to the return value
 
       procedure Add_To_List
         (Cb     : Examine_Callback;
@@ -1647,7 +1641,9 @@ package body Browsers.Call_Graph is
             Include_Writes => True,
                Include_Reads  => True);
       elsif Command = "calls" then
-         Examine_Entity_Call_Graph (Kernel, Entity);
+         Set_Return_Value_As_List (Data);
+         Examine_Entity_Call_Graph_Iterator
+           (Kernel, Entity, Cb, Add_To_List'Unrestricted_Access);
       elsif Command = "called_by" then
          Set_Return_Value_As_List (Data);
          Examine_Ancestors_Call_Graph_Iterator
