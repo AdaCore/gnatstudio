@@ -239,6 +239,7 @@ package body Glide_Kernel.Editor is
 
       if Child /= null then
          Raise_Child (Child);
+         Set_Focus_Child (Child);
          return Source_Box (Get_Widget (Child)).Editor;
       end if;
 
