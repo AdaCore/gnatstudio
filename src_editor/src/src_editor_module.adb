@@ -18,7 +18,10 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Ada.Characters.Handling;     use Ada.Characters.Handling;
 with Ada.Exceptions;              use Ada.Exceptions;
+with Ada.Strings.Maps;            use Ada.Strings.Maps;
+
 with GNAT.Directory_Operations;   use GNAT.Directory_Operations;
 with GNAT.OS_Lib;                 use GNAT.OS_Lib;
 with Glib.Xml_Int;                use Glib.Xml_Int;
@@ -89,7 +92,6 @@ with Gtkada.Types;                use Gtkada.Types;
 with Gdk.Pixbuf;                  use Gdk.Pixbuf;
 
 with Generic_List;
-with Ada.Characters.Handling;     use Ada.Characters.Handling;
 with File_Utils;                  use File_Utils;
 with GVD.Preferences; use GVD.Preferences;
 
@@ -98,6 +100,7 @@ with Src_Editor_Buffer.Buffer_Commands; use Src_Editor_Buffer.Buffer_Commands;
 with Src_Editor_Buffer.Line_Information;
 with Src_Editor_Buffer.Hooks;           use Src_Editor_Buffer.Hooks;
 with Src_Editor_Buffer.Text_Handling;   use Src_Editor_Buffer.Text_Handling;
+with Case_Handling;                     use Case_Handling;
 
 with Src_Printing;
 with Pango.Font;
@@ -216,6 +219,11 @@ package body Src_Editor_Module is
      (Kernel : access Kernel_Handle_Record'Class;
       Data   : Hooks_Data'Class) return Boolean;
    --  Reacts to the File_Line_Action_Hook
+
+   procedure Word_Added_Hook
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : Hooks_Data'Class);
+   --  Reacts to the word_added Hook
 
    procedure Save_To_File
      (Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class;
@@ -715,7 +723,7 @@ package body Src_Editor_Module is
    ------------------------------------
 
    procedure Current_Search_Command_Handler
-     (Data    : in out Callback_Data'Class; Command : String)
+     (Data : in out Callback_Data'Class; Command : String)
    is
       pragma Unreferenced (Command);
       Kernel  : constant Kernel_Handle := Get_Kernel (Data);
@@ -784,7 +792,7 @@ package body Src_Editor_Module is
    ---------------------------------
 
    procedure File_Search_Command_Handler
-     (Data    : in out Callback_Data'Class; Command : String)
+     (Data : in out Callback_Data'Class; Command : String)
    is
       pragma Unreferenced (Command);
       Kernel : constant Kernel_Handle := Get_Kernel (Data);
@@ -802,7 +810,7 @@ package body Src_Editor_Module is
    ------------------------------------
 
    procedure Project_Search_Command_Handler
-     (Data    : in out Callback_Data'Class; Command : String)
+     (Data : in out Callback_Data'Class; Command : String)
    is
       pragma Unreferenced (Command);
       Project   : constant Project_Type := Get_Data (Data, 1);
@@ -1876,15 +1884,15 @@ package body Src_Editor_Module is
    --------------------
 
    procedure File_Closed_Cb
-     (Kernel  : access Kernel_Handle_Record'Class;
-      Data    : Hooks_Data'Class)
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : Hooks_Data'Class)
    is
       pragma Unreferenced (Kernel);
       use Mark_Identifier_List;
 
-      D : constant File_Hooks_Args := File_Hooks_Args (Data);
-      Id    : constant Source_Editor_Module :=
-        Source_Editor_Module (Src_Editor_Module_Id);
+      D           : constant File_Hooks_Args := File_Hooks_Args (Data);
+      Id          : constant Source_Editor_Module :=
+                      Source_Editor_Module (Src_Editor_Module_Id);
       Node        : List_Node;
       Mark_Record : Mark_Identifier_Record;
       Added       : Boolean := False;
@@ -3502,6 +3510,106 @@ package body Src_Editor_Module is
          return False;
    end File_Line_Hook;
 
+   ---------------------
+   -- Word_Added_Hook --
+   ---------------------
+
+   procedure Word_Added_Hook
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : Hooks_Data'Class)
+   is
+      procedure Replace_Text
+        (Ln, F, L : Natural;
+         Replace  : String);
+      --  Replace text callback. Note that we do not use Ln, F, L here as
+      --  these are values from the parsed buffer which is a single word here.
+      --  We use insted the Line, First and Last variable below which represent
+      --  the real word position on the line.
+
+      File_Data : constant File_Hooks_Args := File_Hooks_Args (Data);
+      Buffer    : Source_Buffer;
+      Lang      : Language_Access;
+      Line      : Editable_Line_Type;
+      Column    : Positive;
+      First     : Natural;
+      W_End     : Gtk_Text_Iter;
+      W_Start   : Gtk_Text_Iter;
+
+      ------------------
+      -- Replace_Text --
+      ------------------
+
+      procedure Replace_Text
+        (Ln, F, L : Natural;
+         Replace  : String)
+      is
+         pragma Unreferenced (Ln, F, L);
+      begin
+         if Replace'Length > 0 then
+            Replace_Slice
+              (Buffer, Replace, Line, First,
+               Before => 0, After => Replace'Length);
+         end if;
+      end Replace_Text;
+
+   begin
+      Buffer := Get_Buffer
+        (Get_Source_Box_From_MDI (Find_Editor (Kernel, File_Data.File)));
+      Lang := Get_Language (Buffer);
+
+      Get_Cursor_Position (Buffer, W_End);
+
+      if Lang = null
+        or else Get_Language_Context (Lang).Case_Sensitive
+        or else Is_In_Comment (Buffer, W_End)
+      then
+         --  No language information or the language is case sensitive, in
+         --  those case there is nothing to do. We also check if we are
+         --  currently in a comment.
+         return;
+      end if;
+
+      Get_Cursor_Position (Buffer, W_End, Line, Column);
+
+      Copy (W_End, W_Start);
+
+      --  Look for the start of the word
+
+      First := Column;
+
+      declare
+         Result : Boolean;
+      begin
+         loop
+            Backward_Char (W_Start, Result);
+            exit when not Result
+              or else
+                not Is_In (Get_Char (W_Start), Word_Character_Set (Lang));
+            First := First - 1;
+         end loop;
+      end;
+
+      if First /= Column then
+         --  We have a word, set casing
+         declare
+            Indent_Params : Indent_Parameters;
+            Indent_Kind   : Indentation_Kind;
+            C             : constant Case_Handling.Casing_Exceptions :=
+                              Get_Case_Exceptions;
+         begin
+            Get_Indentation_Parameters
+              (Lang, Indent_Params, Indent_Kind);
+
+            Format_Buffer
+              (Lang,
+               Get_Slice (W_Start, W_End),
+               Replace         => Replace_Text'Unrestricted_Access,
+               Indent_Params   => Indent_Params,
+               Case_Exceptions => C);
+         end;
+      end if;
+   end Word_Added_Hook;
+
    ------------------
    -- On_Edit_File --
    ------------------
@@ -3828,6 +3936,9 @@ package body Src_Editor_Module is
 
       Add_Hook (Kernel, Open_File_Action_Hook, Source_File_Hook'Access);
       Add_Hook (Kernel, File_Line_Action_Hook, File_Line_Hook'Access);
+      Add_Hook
+        (Kernel, Src_Editor_Buffer.Hooks.Word_Added_Hook,
+         Word_Added_Hook'Access);
 
       --  Menus
 
