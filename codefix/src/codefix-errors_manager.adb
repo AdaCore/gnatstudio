@@ -381,6 +381,7 @@ package body Codefix.Errors_Manager is
       Current_Id : Error_Id := Get_First_Error (This);
 
       function Cmp_Messages (Str1, Str2 : String) return Boolean;
+      --  ???
 
       function Cmp_Messages (Str1, Str2 : String) return Boolean is
          Ind_Begin_1, Ind_End_1 : Natural := Str1'First;
