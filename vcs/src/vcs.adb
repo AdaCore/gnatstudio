@@ -52,8 +52,7 @@ package body VCS is
    -- Free --
    ----------
 
-   procedure Free (Ref : access VCS_Record)
-   is
+   procedure Free (Ref : access VCS_Record) is
    begin
       null;
    end Free;
