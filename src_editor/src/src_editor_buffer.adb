@@ -32,6 +32,7 @@ with Pango.Enums;
 
 with Basic_Types;            use Basic_Types;
 with Language;               use Language;
+with Language_Handlers;      use Language_Handlers;
 with Src_Highlighting;       use Src_Highlighting;
 
 with GNAT.OS_Lib;            use GNAT.OS_Lib;
@@ -750,6 +751,7 @@ package body Src_Editor_Buffer is
    procedure Load_File
      (Buffer          : access Source_Buffer_Record;
       Filename        : String;
+      Lang_Handler    : access Language_Handlers.Language_Handler_Record'Class;
       Lang_Autodetect : Boolean := True;
       Success         : out Boolean)
    is
@@ -769,7 +771,8 @@ package body Src_Editor_Buffer is
       Clear (Buffer);
 
       if Lang_Autodetect then
-         Set_Language (Buffer, Get_Language_From_File (Filename));
+         Set_Language
+           (Buffer, Get_Language_From_File (Lang_Handler, Filename));
       end if;
 
       UTF8 := Glib.Convert.Convert

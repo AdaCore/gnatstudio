@@ -37,6 +37,7 @@ with Gtk.Container;
 with Gtk.Label;
 
 with Language;
+with Language_Handlers;
 with GNAT.OS_Lib;         use GNAT.OS_Lib;
 with Glide_Kernel;
 with Src_Editor_Buffer;
@@ -98,6 +99,7 @@ package Src_Editor_Box is
    procedure Load_File
      (Editor          : access Source_Editor_Box_Record;
       Filename        : String;
+      Lang_Handler    : Language_Handlers.Language_Handler;
       Lang_Autodetect : Boolean := True;
       Success         : out Boolean);
    --  Load the file into the buffer. If Lang_Autodetect is set to True, then

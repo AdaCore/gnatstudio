@@ -346,7 +346,8 @@ package body Src_Editor_Module is
       end if;
 
       if File /= "" and then File_Exists then
-         Load_File (Editor, File, Success => Success);
+         Load_File (Editor, File, Get_Language_Handler (Kernel),
+                    Success => Success);
          if not Success then
             Destroy (Editor);
             Editor := null;

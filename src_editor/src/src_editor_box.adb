@@ -50,6 +50,8 @@ with Glide_Intl;                 use Glide_Intl;
 with GNAT.Directory_Operations;  use GNAT.Directory_Operations;
 
 with Language;                   use Language;
+with Language_Handlers;          use Language_Handlers;
+with Language_Handlers.Glide;    use Language_Handlers.Glide;
 with String_Utils;               use String_Utils;
 with Src_Editor_Buffer;          use Src_Editor_Buffer;
 with Src_Editor_View;            use Src_Editor_View;
@@ -942,11 +944,13 @@ package body Src_Editor_Box is
    procedure Load_File
      (Editor          : access Source_Editor_Box_Record;
       Filename        : String;
+      Lang_Handler    : Language_Handlers.Language_Handler;
       Lang_Autodetect : Boolean := True;
       Success         : out Boolean) is
    begin
       Free (Editor.Filename);
-      Load_File (Editor.Source_Buffer, Filename, Lang_Autodetect, Success);
+      Load_File (Editor.Source_Buffer, Filename, Lang_Handler,
+                 Lang_Autodetect, Success);
       Set_Cursor_Location (Editor, 1, 1);
 
       if Success then
