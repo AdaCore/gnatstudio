@@ -1113,14 +1113,14 @@ package body Python_Module is
       end if;
 
    exception
-      when Invalid_Parameter =>
+      when E : Invalid_Parameter =>
          Trace (Me, "Raised invalid_parameter");
 
          if not Callback.Has_Return_Value
            or else  Callback.Return_Value /= null
          then
-            PyErr_SetString (Handler.Script.GPS_Invalid_Arg,
-                             -"Invalid argument to GPS function");
+            PyErr_SetString
+              (Handler.Script.GPS_Invalid_Arg, Exception_Message (E));
          end if;
 
          Free (Callback);
@@ -1570,9 +1570,12 @@ package body Python_Module is
       Item : constant PyObject := Get_Param (Data, N);
    begin
       if not PyString_Check (Item) then
-         raise Invalid_Parameter;
+         Raise_Exception
+           (Invalid_Parameter'Identity,
+            "Parameter" & Integer'Image (N) & " should be a string");
+      else
+         return PyString_AsString (Item);
       end if;
-      return PyString_AsString (Item);
    end Nth_Arg;
 
    -------------
@@ -1585,10 +1588,12 @@ package body Python_Module is
       Item : constant PyObject := Get_Param (Data, N);
    begin
       if not PyInt_Check (Item) then
-         raise Invalid_Parameter;
+         Raise_Exception
+           (Invalid_Parameter'Identity,
+            "Parameter" & Integer'Image (N) & " should be an integer");
+      else
+         return Integer (PyInt_AsLong (Item));
       end if;
-
-      return Integer (PyInt_AsLong (Item));
    end Nth_Arg;
 
    -------------
@@ -1607,9 +1612,9 @@ package body Python_Module is
       if PyInt_Check (Item) then
          return PyInt_AsLong (Item) = 1;
       else
-         Trace (Me, "Nth_Arg: Invalid parameter type, expected boolean "
-                & N'Img);
-         raise Invalid_Parameter;
+         Raise_Exception
+           (Invalid_Parameter'Identity,
+            "Parameter" & Integer'Image (N) & " should be a boolean");
       end if;
    end Nth_Arg;
 
@@ -1623,9 +1628,12 @@ package body Python_Module is
       Item : constant PyObject := Get_Param (Data, N);
    begin
       if not PyCObject_Check (Item) then
-         raise Invalid_Parameter;
+         Raise_Exception
+           (Invalid_Parameter'Identity,
+            "Parameter" & Integer'Image (N) & " should be an address");
+      else
+         return PyCObject_AsVoidPtr (Item);
       end if;
-      return PyCObject_AsVoidPtr (Item);
    end Nth_Arg;
 
    -------------
@@ -1645,8 +1653,10 @@ package body Python_Module is
    begin
       Item := Get_Param (Data, N);
       if not PyInstance_Check (Item) then
-         Trace (Me, "Nth_Arg: Item is not an instance");
-         raise Invalid_Parameter;
+         Raise_Exception
+           (Invalid_Parameter'Identity,
+            "Parameter" & Integer'Image (N) & " should be an instance of "
+            & Get_Name (Class));
       end if;
 
       Item_Class := PyObject_GetAttrString (Item, "__class__");
@@ -1655,8 +1665,10 @@ package body Python_Module is
       end if;
 
       if not PyClass_IsSubclass (Item_Class, Base => C) then
-         Trace (Me, "Nth_Arg: invalid class");
-         raise Invalid_Parameter;
+         Raise_Exception
+           (Invalid_Parameter'Identity,
+            "Parameter" & Integer'Image (N) & " should be an instance of "
+            & Get_Name (Class));
       end if;
 
       --  The following call doesn't modify the refcounf of Item.
