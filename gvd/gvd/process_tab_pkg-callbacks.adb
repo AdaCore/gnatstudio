@@ -38,11 +38,11 @@ package body Process_Tab_Pkg.Callbacks is
    use Gtk.Arguments;
    use String_History;
 
-   procedure Move_Until_Match ( History : in out History_List;
-                                S : in String;
-                                D : in Direction;
-                                Index : out Integer;
-                                Found : out Boolean);
+   procedure Move_Until_Match (History : in out History_List;
+                               S : in String;
+                               D : in Direction;
+                               Index : out Integer;
+                               Found : out Boolean);
    --  Scan the history to find an entry which begins like S.
    --  Index indicates the number of characters found beyond that pattern.
 
@@ -185,27 +185,26 @@ package body Process_Tab_Pkg.Callbacks is
      (Object : access Gtk_Widget_Record'Class;
       Params : Gtk.Arguments.Gtk_Args)
    is
-      --  Arg1 : Gint := To_Gint (Params, 1);
+      Arg1 : Gint := To_Gint (Params, 1);
       Arg2 : Gint := To_Gint (Params, 2);
-
       Top  : Debugger_Process_Tab := Debugger_Process_Tab (Object);
-
    begin
       if Arg2 <= Gint (Top.Edit_Pos) then
          Emit_Stop_By_Name (Top.Debugger_Text, "delete_text");
+      elsif Arg1 < Gint (Top.Edit_Pos) then
+         Delete_Text (Top.Debugger_Text, Gint (Top.Edit_Pos), Arg2);
       end if;
    end On_Debugger_Text_Delete_Text;
-
 
    ----------------------
    -- Move_Until_Match --
    ----------------------
 
-   procedure Move_Until_Match ( History : in out History_List;
-                                S : in String;
-                                D : in Direction;
-                                Index : out Integer;
-                                Found : out Boolean) is
+   procedure Move_Until_Match (History : in out History_List;
+                               S : in String;
+                               D : in Direction;
+                               Index : out Integer;
+                               Found : out Boolean) is
       Counter : Integer := 0;
    begin
       Found := False;
@@ -294,7 +293,7 @@ package body Process_Tab_Pkg.Callbacks is
               (Top, Get_Current (Top.Command_History), Is_Command => True);
             Select_Region
               (Top.Debugger_Text,
-               Gint (Get_Length (Top.Debugger_Text) - Guint (Index) ));
+               Gint (Get_Length (Top.Debugger_Text) - Guint (Index)));
          else
             Delete_Text
               (Top.Debugger_Text,
