@@ -1271,6 +1271,7 @@ package body Glide_Kernel is
       Free (Handle.Gnatls_Cache);
       Free (Handle.Home_Dir);
       Free (Handle.Scenario_Variables);
+
       if Handle.Current_Context /= null then
          Free (Handle.Current_Context);
       end if;
