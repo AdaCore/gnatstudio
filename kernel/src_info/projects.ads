@@ -83,11 +83,10 @@ package Projects is
    --  that the latter remains independent of GPS as much as possible.
 
    function Create
-     (Base_Name : Glib.UTF8_String;
-      Project : Projects.Project_Type;
+     (Base_Name       : Glib.UTF8_String;
+      Project         : Projects.Project_Type;
       Use_Source_Path : Boolean := True;
-      Use_Object_Path : Boolean := True)
-      return VFS.Virtual_File;
+      Use_Object_Path : Boolean := True) return VFS.Virtual_File;
    --  Create a new instance of the file.
 
    -------------------
@@ -306,7 +305,7 @@ package Projects is
    Builder_Default_Switches_Attribute  : constant Attribute_Pkg;
    Compiler_Default_Switches_Attribute : constant Attribute_Pkg;
    Linker_Default_Switches_Attribute   : constant Attribute_Pkg;
-   Executable_Attribute       : constant Attribute_Pkg;
+   Executable_Attribute                : constant Attribute_Pkg;
 
    type Associative_Array_Element is record
       Index : Types.Name_Id;
