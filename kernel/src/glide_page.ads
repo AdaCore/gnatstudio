@@ -29,14 +29,12 @@
 with GVD.Process;
 with Glide_Consoles;
 with Glide_Main_Window; use Glide_Main_Window;
-with Project_Explorers;
 
 package Glide_Page is
 
    type Glide_Page_Record is new GVD.Process.Debugger_Process_Tab_Record with
    record
       Console    : Glide_Consoles.Glide_Console;
-      Explorer   : Project_Explorers.Project_Explorer;
    end record;
    type Glide_Page is access all Glide_Page_Record'Class;
 
