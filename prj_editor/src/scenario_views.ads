@@ -37,7 +37,7 @@
 with Gtk.Box;
 with Gtk.GEntry;
 
-with Prj_Manager;
+with Glide_Kernel;
 
 package Scenario_Views is
 
@@ -46,19 +46,19 @@ package Scenario_Views is
 
    procedure Gtk_New
      (View    : out Scenario_View;
-      Manager : access Prj_Manager.Project_Manager_Record'Class);
+      Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class);
    --  Create a new scenario view associated with Manager.
    --  The view is automatically refreshed every time the project view in
    --  the manager changes.
 
    procedure Initialize
      (View    : access Scenario_View_Record'Class;
-      Manager : access Prj_Manager.Project_Manager_Record'Class);
+      Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class);
    --  Internal function for creating new widgets
 
 private
    type Scenario_View_Record is new Gtk.Box.Gtk_Box_Record with record
-      Manager : Prj_Manager.Project_Manager;
-      Field   : Gtk.GEntry.Gtk_Entry;
+      Kernel : Glide_Kernel.Kernel_Handle;
+      Field  : Gtk.GEntry.Gtk_Entry;
    end record;
 end Scenario_Views;

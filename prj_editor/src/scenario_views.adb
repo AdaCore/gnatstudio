@@ -27,6 +27,7 @@
 -----------------------------------------------------------------------
 
 with Glib;            use Glib;
+with Glib.Object;     use Glib.Object;
 with Gtk.Box;         use Gtk.Box;
 with Gtk.Button;      use Gtk.Button;
 with Gtk.GEntry;      use Gtk.GEntry;
@@ -35,6 +36,8 @@ with Gtk.Widget;      use Gtk.Widget;
 
 with Prj_API;          use Prj_API;
 with Prj_Manager;      use Prj_Manager;
+with Glide_Kernel;     use Glide_Kernel;
+with Glide_Kernel.Project; use Glide_Kernel.Project;
 with Variable_Editors; use Variable_Editors;
 
 with Prj;      use Prj;
@@ -52,7 +55,7 @@ package body Scenario_Views is
    procedure Editor_Changed (View : access Gtk_Widget_Record'Class);
    --  Callback when the variable editor reports that a variable has changed
 
-   procedure Refresh (View : access Gtk_Widget_Record'Class);
+   procedure Refresh (View : access GObject_Record'Class; Data : GObject);
    --  Callback when the current view of the project has changed
 
    -------------
@@ -61,11 +64,11 @@ package body Scenario_Views is
 
    procedure Gtk_New
      (View : out Scenario_View;
-      Manager : access Project_Manager_Record'Class)
+      Kernel : access Kernel_Handle_Record'Class)
    is
    begin
       View := new Scenario_View_Record;
-      Initialize (View, Manager);
+      Initialize (View, Kernel);
    end Gtk_New;
 
    ----------------
@@ -74,11 +77,11 @@ package body Scenario_Views is
 
    procedure Initialize
      (View    : access Scenario_View_Record'Class;
-      Manager : access Project_Manager_Record'Class)
+      Kernel : access Kernel_Handle_Record'Class)
    is
       Button : Gtk_Button;
    begin
-      View.Manager := Project_Manager (Manager);
+      View.Kernel := Kernel_Handle (Kernel);
       Initialize_Hbox (View, Homogeneous => False, Spacing => 10);
 
       Gtk_New (Button, "Edit Scenario");
@@ -87,9 +90,9 @@ package body Scenario_Views is
         (Button, "clicked",
          Widget_Callback.To_Marshaller (On_Edit_Scenario'Access), View);
 
-      Widget_Callback.Object_Connect
-        (Manager, "project_view_changed",
-         Widget_Callback.To_Marshaller (Refresh'Access), View);
+      Object_User_Callback.Connect
+        (Kernel, "project_view_changed",
+         Object_User_Callback.To_Marshaller (Refresh'Access), GObject (View));
 
       Gtk_New (View.Field, 1024);
       Pack_Start (View, View.Field, Expand => True, Fill => True);
@@ -102,10 +105,11 @@ package body Scenario_Views is
    procedure On_Edit_Scenario (View : access Gtk_Widget_Record'Class) is
       V          : constant Scenario_View := Scenario_View (View);
       Edit       : Variable_Edit;
-      Scenar_Var : Project_Node_Array := Find_Scenario_Variables (V.Manager);
+      Scenar_Var : Project_Node_Array :=
+        Find_Scenario_Variables (Get_Project (V.Kernel));
 
    begin
-      Gtk_New (Edit, V.Manager);
+      Gtk_New (Edit, V.Kernel);
 
       for J in Scenar_Var'Range loop
          Refresh (Edit, Scenar_Var (J));
@@ -118,9 +122,10 @@ package body Scenario_Views is
    -- Refresh --
    -------------
 
-   procedure Refresh (View : access Gtk_Widget_Record'Class) is
-      V : Scenario_View := Scenario_View (View);
-      Vars : Project_Node_Array := Find_Scenario_Variables (V.Manager);
+   procedure Refresh (View : access GObject_Record'Class; Data : GObject) is
+      V : Scenario_View := Scenario_View (Data);
+      Vars : Project_Node_Array :=
+        Find_Scenario_Variables (Get_Project (V.Kernel));
       Str : String_Id;
    begin
       Set_Text (V.Field, "");
@@ -162,7 +167,7 @@ package body Scenario_Views is
       V : constant Scenario_View := Scenario_View (View);
 
    begin
-      Recompute_View (V.Manager);
+      Recompute_View (V.Kernel);
    end Editor_Changed;
 
 end Scenario_Views;
