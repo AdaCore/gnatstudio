@@ -276,8 +276,6 @@ package body Builder_Module is
       Console.Clear (Kernel);
 
       Remove_Result_Category (Kernel, Error_Category);
-      Remove_Result_Category (Kernel, Warning_Category);
-      Remove_Result_Category (Kernel, Style_Category);
 
       String_List_Utils.String_List.Free
         (Builder_Module_ID_Access (Builder_Module_ID).Output);
