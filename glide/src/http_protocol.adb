@@ -31,7 +31,7 @@ with Ada.Streams;             use Ada.Streams;
 
 package body HTTP_Protocol is
 
-   Me : constant Debug_Handle := Create ("HTTP");
+   Me : constant Debug_Handle := Create ("HTTP", Off);
 
    type Http_Connection_Record is new Remote_Connection_Record with record
       Host : String_Access;
