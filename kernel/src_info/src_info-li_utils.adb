@@ -408,7 +408,16 @@ package body Src_Info.LI_Utils is
       end if;
       Tmp_LI_File_Ptr := Get (List.Table, Parent_Filename);
       if Tmp_LI_File_Ptr = No_LI_File then
-         raise Parent_Not_Available;
+         --  FIXME, should also search for LI_File in current
+         --  declaration as well
+         if Parent_Filename = Declaration_Info.Value.Declaration
+                              .Location.File.Source_Filename.all
+         then
+            Tmp_LI_File_Ptr := Declaration_Info.Value
+                               .Declaration.Location.File.LI;
+         else
+            raise Parent_Not_Available;
+         end if;
       end if;
       FL_Ptr.Value :=
         (File        => (LI => Tmp_LI_File_Ptr,
@@ -417,7 +426,7 @@ package body Src_Info.LI_Utils is
                                new String'(Parent_Filename)),
          Line        => Parent_Location.Line,
          Column      => Parent_Location.Column);
-      FL_Ptr.Next.Next := null;
+      FL_Ptr.Next := null;
    end Add_Parent;
 
    ------------------------
