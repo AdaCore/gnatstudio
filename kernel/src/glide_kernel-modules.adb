@@ -1305,7 +1305,7 @@ package body Glide_Kernel.Modules is
                Entity      => Context.Entity,
                Status      => Status);
 
-            if Status /= Success then
+            if Status /= Success and then Status /= Fuzzy_Match then
                Destroy (Context.Entity);
                Context.Entity := No_Entity_Information;
             end if;
