@@ -24,11 +24,16 @@ package Test_Lib is
       Solutions    : Solution_List;
       Current_Text : Text_Navigator_Abstr'Class;
       Corrector    : in out Correction_Manager);
+   --  Put on screen all the solutions proposed to solve the error, and get
+   --  the choice of the user.
 
    function Get_Number (Min, Max : Integer) return Integer;
+   --  Get a number from the user between Min and Max. If the number is
+   --  incorrect, the user is asked again.
 
    procedure Ambiguity
      (Alternative_1, Alternative_2 : Extract;
       Delete_Choice                : out Alternative_Choice);
+   --  Put on screen the ambiguity problem.
 
 end Test_Lib;

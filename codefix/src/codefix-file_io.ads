@@ -15,52 +15,74 @@ package Codefix.File_Io is
    type Ptr_Text_File is access all File_Interface'Class;
 
    procedure Free (This : in out File_Interface);
+   --  Free the memory associated with the File_Interface
 
    function Get
      (This   : File_Interface;
       Cursor : Text_Cursor'Class;
       Len    : Natural)
-      return String;
+     return String;
+   --  Get Len characters from the file and the position specified by the
+   --  cursor.
 
    function Get_Line
      (This   : File_Interface;
       Cursor : Text_Cursor'Class)
       return String;
+   --  Get all character from the column and the line specified by the cursor
+   --  to the end of the line.
 
    procedure Replace
      (This      : in out File_Interface;
       Cursor    : Text_Cursor'Class;
       Len       : Natural;
       New_Value : String);
+   --  Replace the Len characters, from the position designed by the cursor, by
+   --  New_Value.
 
    procedure Add_Line
      (This        : in out File_Interface;
       Cursor      : Text_Cursor'Class;
       New_Line    : String);
+   --  Add a line at the cursor specified. To add a line at the
+   --  begining of the text, set cursor line = 0.
 
    procedure Delete_Line
      (This : in out File_Interface;
       Cursor : Text_Cursor'Class);
+   --  Delete the line where the cursor is.
 
    procedure Initialize
      (This : in out File_Interface;
       Path : String);
+   --  Initialize the structure of the Text_Interface. Get all data from the
+   --  disk.
 
    function Read_File
      (This : File_Interface)
-   return Dynamic_String;
+     return Dynamic_String;
+   --  Get the entire file in a Dynamic_String.
 
    procedure Update (This : File_Interface);
+   --  Save the file.
 
    type Errors_File is new Errors_Interface with private;
+   --  This type is an interface to the list of compilation errors that the
+   --  compilator has found.
+
+   procedure Free (This : in out Errors_File);
+   --  Free the memory associated to an Error_File.
 
    procedure Get_Direct_Message
      (This    : in out Errors_File;
       Current : out Error_Message);
+   --  Gets a message without any modification of cols or lines numbers.
 
    function No_More_Messages (This : Errors_File) return Boolean;
+   --  Is true where all the messages are got fron Get_Message.
 
    procedure Open (This : in out Errors_File; File_Name : String);
+   --  Opens the file where errors are recorded.
 
 private
 
@@ -76,6 +98,8 @@ private
       Line : Positive) return List_Str.List_Node;
 
    type File_Type_Access is access all File_Type;
+   procedure Free
+      is new Ada.Unchecked_Deallocation (File_Type, File_Type_Access);
 
    type Errors_File is new Errors_Interface with record
       File    : File_Type_Access;
