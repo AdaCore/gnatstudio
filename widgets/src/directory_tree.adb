@@ -285,6 +285,29 @@ package body Directory_Tree is
       Params : GValues);
    --  Callback for a change in the directory selection.
 
+   procedure On_Tree_Size_Allocate
+     (Object : access GObject_Record'Class;
+      Params : GValues);
+   --  Callback for a change in the directory tree size.
+
+   ---------------------------
+   -- On_Tree_Size_Allocate --
+   ---------------------------
+
+   procedure On_Tree_Size_Allocate
+     (Object : access GObject_Record'Class;
+      Params : GValues)
+   is
+      pragma Unreferenced (Params);
+      Tree  : constant Dir_Tree := Dir_Tree (Object);
+      Path  : Gtk_Tree_Path;
+      Col   : Gtk_Tree_View_Column;
+
+   begin
+      Get_Cursor (Tree.File_Tree, Path, Col);
+      Scroll_To_Cell (Tree.File_Tree, Path, null, True, 0.1, 0.1);
+   end On_Tree_Size_Allocate;
+
    ------------------------
    -- On_Tree_Select_Row --
    ------------------------
@@ -362,7 +385,9 @@ package body Directory_Tree is
       Parent   : Gtk_Tree_Iter;
       Iter     : Gtk_Tree_Iter;
       Path     : Gtk_Tree_Path;
+      Success  : Boolean;
       pragma Unreferenced (Busy_Cursor_On);
+
    begin
       --  Find the first non-expanded iter
 
@@ -385,17 +410,27 @@ package body Directory_Tree is
                return;
             end if;
 
-            if Curr_Dir'Length < D'Length
+            if Curr_Dir'Length = D'Length
+              and then D = Curr_Dir
+            then
+               Set_Cursor (Tree.File_Tree, Path, null, False);
+               Path_Free (Path);
+               return;
+
+            elsif Curr_Dir'Length <= D'Length
               and then D (D'First .. D'First + Curr_Dir'Length - 1) = Curr_Dir
             then
                if Row_Expanded (Tree.File_Tree, Path) then
                   Iter := Children (Tree.File_Model, Iter);
                else
-                  File_Append_Directory
-                    (Tree, Curr_Dir, Iter, 1, D, True, True);
-                  Set_Cursor (Tree.File_Tree, Path, null, False);
-                  Path_Free (Path);
-                  return;
+                  Success := Expand_Row (Tree.File_Tree, Path, False);
+
+                  if Success then
+                     Iter := Children (Tree.File_Model, Iter);
+                  else
+                     Set_Cursor (Tree.File_Tree, Path, null, False);
+                     Next (Tree.File_Model, Iter);
+                  end if;
                end if;
             else
                Next (Tree.File_Model, Iter);
@@ -1500,14 +1535,21 @@ package body Directory_Tree is
 
       if T.Scroll_To_Directory then
          T.Scroll_To_Directory := False;
-         Scroll_To_Cell
-           (T.File_Tree,
-            T.Path, null, True,
-            0.1, 0.1);
+         Scroll_To_Cell (T.File_Tree, T.Path, null, True, 0.1, 0.1);
 
          Select_Path (Get_Selection (T.File_Tree), T.Path);
          Set_Cursor (T.File_Tree, T.Path, null, False);
       end if;
+
+      --  When the tree is resized, try to scroll the currently selected
+      --  item onscreen.
+
+      Object_Callback.Object_Connect
+        (T.File_Tree,
+         "size_allocate",
+         On_Tree_Size_Allocate'Access,
+         Slot_Object => T,
+         After => True);
 
       return True;
    exception
