@@ -338,6 +338,23 @@ private
    --  True if the matching entity indicates an start-of-scope (start of
    --  subprogram declaration, start of record definition, ...)
 
+   Is_Real_Reference : constant Reference_Kind_To_Boolean_Map :=
+     (Reference                                => True,
+      Instantiation_Reference                  => True,
+      Modification                             => True,
+      Body_Entity                              => True,
+      Completion_Of_Private_Or_Incomplete_Type => True,
+      Type_Extension                           => True,
+      Implicit                                 => False,
+      Label                                    => True,
+      Primitive_Operation                      => False,
+      End_Of_Spec                              => False,
+      End_Of_Body                              => False);
+   --  True if the name of the entity really appears at that location in the
+   --  file (for instance, a primitive operation doesn't point directly to the
+   --  entity, but only provides more information about the entity).
+
+
    type E_Scope is (Global_Scope, Local_Scope);
    --  The scope of an entity. The values have the following meaning:
    --     - Global_Entity: publicly visible entity in a top level library.
@@ -427,6 +444,10 @@ private
       Location        : File_Location;
       Kind            : E_Kind;
       Parent_Location : File_Location;
+      --  Point to various information about the entity:
+      --   - The type we derive from for a type
+      --   - The type of a variable
+
       Parent_Kind     : E_Kind;
       Scope           : E_Scope;
       End_Of_Scope    : E_Reference := No_Reference;
@@ -548,13 +569,10 @@ private
 
    type Dependency_File_Info is record
       File              : Source_File;
-      File_Timestamp    : Timestamp;
       Dep_Info          : Dependency_Info;
       Declarations      : E_Declaration_Info_List;
    end record;
    --  the information about a file on which a source file depends.
-   --  File_Timestamp is the timestamp that File had when the current unit
-   --  was last compiled.
 
    type Dependency_File_Info_Node;
    type Dependency_File_Info_List is access Dependency_File_Info_Node;
@@ -575,6 +593,8 @@ private
       Spec_Info     : File_Info_Ptr;
       Body_Info     : File_Info_Ptr;
       Separate_Info : File_Info_Ptr_List;
+      LI_Timestamp  : Timestamp;
+
       case Parsed is
          when True =>
             Compilation_Errors_Found : Boolean;
