@@ -55,11 +55,18 @@ with Debugger;                use Debugger;
 with Language;                use Language;
 with Language_Handlers;       use Language_Handlers;
 with Basic_Types;             use Basic_Types;
+with GUI_Utils;               use GUI_Utils;
+with Prj_API;                 use Prj_API;
+with Prj;                     use Prj;
+with GNAT.Directory_Operations; use GNAT.Directory_Operations;
+with GNAT.OS_Lib;
 
 with Glide_Page;              use Glide_Page;
 with Glide_Main_Window;       use Glide_Main_Window;
 with Glide_Kernel;            use Glide_Kernel;
+with Glide_Kernel.Console;    use Glide_Kernel.Console;
 with Glide_Kernel.Modules;    use Glide_Kernel.Modules;
+with Glide_Kernel.Project;    use Glide_Kernel.Project;
 with Glide_Intl;              use Glide_Intl;
 with Pixmaps_IDE;             use Pixmaps_IDE;
 with Traces;                  use Traces;
@@ -89,19 +96,11 @@ package body GVD_Module is
 
    package File_Line_List is new Generic_List (File_Line_Record);
 
-   type GVD_Module_User_Data is record
+   type GVD_Module_User_Data is new Module_ID_Record with record
       Kernel           : Kernel_Handle;
-      Unexplored_Lines : File_Line_List.List;
+      Unexplored_Lines : File_Line_List.List := File_Line_List.Null_List;
+      Initialize_Menu  : Gtk_Menu;
    end record;
-   type GVD_Module_User_Data_Access is access GVD_Module_User_Data;
-
-   package GVD_Module_Kernel_Data is
-      new Glib.Object.User_Data (GVD_Module_User_Data_Access);
-
-   GVD_Module_Kernel_Data_Id : constant String := GVD_Module_Name & "/Data";
-
-   package GVD_Module_Timeout is
-      new Gtk.Main.Timeout (GVD_Module_User_Data_Access);
 
    procedure GVD_Contextual
      (Object  : access GObject_Record'Class;
@@ -132,6 +131,11 @@ package body GVD_Module is
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Generic procedure used for most debugger callbacks.
 
+   procedure On_View_Changed
+     (K : access GObject_Record'Class; Kernel : Kernel_Handle);
+   --  Called every time the project view changes, to recompute the dynamic
+   --  menus.
+
    ---------------------------
    -- Generic_Debug_Command --
    ---------------------------
@@ -161,7 +165,7 @@ package body GVD_Module is
    --------------------
 
    procedure On_Debug_Init
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+     (Kernel : access GObject_Record'Class; Data : File_Project_Record);
    --  Debug->Initialize
 
    procedure On_Connect_To_Board
@@ -342,7 +346,7 @@ package body GVD_Module is
       Args    : GValues);
    --  Callback for the "lines_revealed" signal.
 
-   function Idle_Reveal_Lines (D : GVD_Module_User_Data_Access) return Boolean;
+   function Idle_Reveal_Lines return Boolean;
    --  Idle/Timeout function to query the line information from the debugger.
 
    -------------------------
@@ -762,30 +766,45 @@ package body GVD_Module is
    -------------------
 
    procedure On_Debug_Init
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+     (Kernel : access GObject_Record'Class; Data : File_Project_Record)
    is
-      pragma Unreferenced (Widget);
+      K : Kernel_Handle := Kernel_Handle (Kernel);
 
-      Top  : constant Glide_Window := Glide_Window (Get_Main_Window (Kernel));
+      Top  : constant Glide_Window := Glide_Window (Get_Main_Window (K));
       Page : constant Glide_Page.Glide_Page :=
         Glide_Page.Glide_Page (Get_Current_Process (Top));
       use Debugger;
 
    begin
+      --  Initial the debugger if necessary
       if Page.Debugger = null then
-         Push_State (Kernel, Busy);
+         Push_State (K, Busy);
          Configure (Page, Gdb_Type, "", (1 .. 0 => null), "");
-         Set_Sensitive (Kernel, True);
+         Set_Sensitive (K, True);
          Page.Destroy_Id := Widget_Callback.Object_Connect
            (Top, "destroy",
             Widget_Callback.To_Marshaller (On_Destroy_Window'Access),
             Page);
-         Pop_State (Kernel);
+         Pop_State (K);
+      end if;
+
+      --  Load a file if necessary
+      if Data.File /= "" then
+         declare
+            Full : constant String := Executables_Directory (Data.Project);
+         begin
+            Set_Executable (Page.Debugger, Full & Data.File, Mode => Hidden);
+            Change_Dir (Full);
+
+         exception
+            when Executable_Not_Found =>
+               Insert (K, "File not found: " & Full & Data.File);
+         end;
       end if;
 
    exception
       when E : others =>
-         Pop_State (Kernel);
+         Pop_State (K);
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Debug_Init;
 
@@ -1025,9 +1044,9 @@ package body GVD_Module is
    --  Idle_Reveal_Lines --
    ------------------------
 
-   function Idle_Reveal_Lines
-     (D : GVD_Module_User_Data_Access) return Boolean
-   is
+   function Idle_Reveal_Lines return Boolean is
+      D : GVD_Module_User_Data renames
+        GVD_Module_User_Data (GVD_Module_ID.all);
       Kind         : Line_Kind;
       A            : Line_Information_Array (1 .. 1);
       C            : Set_Breakpoint_Command_Access;
@@ -1114,17 +1133,15 @@ package body GVD_Module is
             File : constant String := Directory_Information (Area_Context) &
               File_Information (Area_Context);
             Line1, Line2 : Integer;
-            Data : GVD_Module_User_Data_Access;
+            Data : GVD_Module_User_Data renames
+              GVD_Module_User_Data (GVD_Module_ID.all);
 
          begin
             Get_Area (Area_Context, Line1, Line2);
 
-            Data := GVD_Module_Kernel_Data.Get
-              (Get_Kernel (Context), GVD_Module_Kernel_Data_Id);
-
             if File_Line_List.Is_Empty (Data.Unexplored_Lines) then
-               Timeout_Id := GVD_Module_Timeout.Add
-                 (1, Idle_Reveal_Lines'Access, Data);
+               Timeout_Id := Timeout_Add
+                 (1, Idle_Reveal_Lines'Access);
             end if;
 
             for J in Line1 .. Line2 loop
@@ -1137,6 +1154,71 @@ package body GVD_Module is
          end;
       end if;
    end Lines_Revealed_Cb;
+
+   ---------------------
+   -- On_View_Changed --
+   ---------------------
+
+   procedure On_View_Changed
+     (K : access GObject_Record'Class; Kernel : Kernel_Handle)
+   is
+      pragma Unreferenced (K);
+      Mitem : Gtk_Menu_Item;
+      Menu : Gtk_Menu renames
+        GVD_Module_User_Data (GVD_Module_ID.all).Initialize_Menu;
+      Iter : Imported_Project_Iterator := Start (Get_Project (Kernel));
+   begin
+      --  Remove all existing menus
+      Remove_All_Children (Menu);
+
+      --  Specific entry to start the debugger without any main program
+      Gtk_New (Mitem, "<none>");
+      Append (Menu, Mitem);
+      File_Project_Cb.Object_Connect
+        (Mitem, "activate",
+         File_Project_Cb.To_Marshaller (On_Debug_Init'Access),
+         Slot_Object => Kernel,
+         User_Data => File_Project_Record'
+           (Length  => 0,
+            Project => Get_Project_View (Kernel),
+            File    => ""));
+
+      --  Add all the main units from all the imported projects.
+      while Current (Iter) /= No_Project loop
+         declare
+            Mains : GNAT.OS_Lib.Argument_List := Get_Attribute_Value
+              (Current (Iter), Attribute_Name => Main_Attribute);
+         begin
+            for M in Mains'Range loop
+               declare
+                  Exec : constant String := Base_Name (Mains (M).all,
+                    GNAT.Directory_Operations.File_Extension (Mains (M).all));
+               begin
+                  Gtk_New (Mitem, Exec);
+                  Append (Menu, Mitem);
+                  File_Project_Cb.Object_Connect
+                    (Mitem, "activate",
+                     File_Project_Cb.To_Marshaller (On_Debug_Init'Access),
+                     Slot_Object => Kernel,
+                     User_Data => File_Project_Record'
+                       (Length  => Exec'Length,
+                        Project => Current (Iter),
+                        File    => Exec));
+               end;
+            end loop;
+            Free (Mains);
+         end;
+
+         Next (Iter);
+      end loop;
+
+      Show_All (Menu);
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: "
+                & Exception_Information (E));
+   end On_View_Changed;
 
    ---------------------
    -- Register_Module --
@@ -1153,19 +1235,34 @@ package body GVD_Module is
       Data_Sub     : constant String := Debug & (-"Data") & '/';
       Session_Sub  : constant String := Debug & (-"Session") & '/';
       Mitem        : Gtk_Menu_Item;
+      Menu         : Gtk_Menu;
       --  ??? Should get the right process
    begin
-      GVD_Module_ID := Register_Module
-        (Kernel                  => Kernel,
+      GVD_Module_ID := new GVD_Module_User_Data;
+      GVD_Module_User_Data (GVD_Module_ID.all).Kernel :=
+        Kernel_Handle (Kernel);
+
+      Register_Module
+        (Module                  => GVD_Module_ID,
+         Kernel                  => Kernel,
          Module_Name             => GVD_Module_Name,
          Priority                => Default_Priority + 20,
          Contextual_Menu_Handler => GVD_Contextual'Access,
          Tooltip_Handler         => Tooltip_Handler'Access);
 
+      --  Dynamic Initialize menu
+      Mitem := Register_Menu (Kernel, Debug, -"Initialize", "", null,
+                              Ref_Item => -"Data");
+      Gtk_New (Menu);
+      Set_Submenu (Mitem, Menu);
+      GVD_Module_User_Data (GVD_Module_ID.all).Initialize_Menu := Menu;
+      Kernel_Callback.Connect
+        (Kernel, "project_view_changed",
+         Kernel_Callback.To_Marshaller (On_View_Changed'Access),
+         User_Data => Kernel_Handle (Kernel));
+
       --  Add debugger menus
 
-      Register_Menu (Kernel, Debug, -"Initialize", "", On_Debug_Init'Access,
-                     Ref_Item => -"Data");
       Register_Menu (Kernel, Debug_Sub, Ref_Item => -"Data");
       Register_Menu (Kernel, Debug_Sub, -"Connect to Board...", "",
                      On_Connect_To_Board'Access, Sensitive => False);
@@ -1300,12 +1397,6 @@ package body GVD_Module is
          Source_Lines_Revealed_Signal,
          Lines_Revealed_Cb'Access,
          Top);
-
-      GVD_Module_Kernel_Data.Set
-        (Kernel,
-         new GVD_Module_User_Data'
-           (Kernel_Handle (Kernel), File_Line_List.Null_List),
-         GVD_Module_Kernel_Data_Id);
 
       Init_Graphics;
    end Register_Module;
