@@ -1237,7 +1237,7 @@ package body Glide_Result_View is
              -("Whether GPS should automatically jump to the first location"
                & " when entries are added to the Location window (error"
                & " messages, find results, ...)"),
-           Nick    => -"Jump to First Location"));
+           Nick    => -"Jump to first location"));
       Register_Property
         (Kernel, Param_Spec (Auto_Jump_To_First), -"General");
    end Register_Module;
