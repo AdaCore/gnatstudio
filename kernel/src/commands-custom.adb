@@ -382,6 +382,8 @@ package body Commands.Custom is
                null;
             end;
 
+            Index := Index + 1;
+
             --  Check the "on-failure" attribute of <external> commands
             if N.Tag.all = "external" then
                declare
@@ -403,7 +405,6 @@ package body Commands.Custom is
                end;
             end if;
 
-            Index := Index + 1;
             N     := N.Next;
          end loop;
       end if;
