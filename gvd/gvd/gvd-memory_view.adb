@@ -72,7 +72,7 @@ package body GVD.Memory_View is
 
    Non_Valid_Character  : constant String := "-";
 
-   End_Of_Line       : constant String :=  ASCII.LF;
+   End_Of_Line       : constant String :=  "" & ASCII.LF;
    Hex_Header        : constant String := "16#";
    Hex_Footer        : constant String := "#";
 
@@ -189,7 +189,7 @@ package body GVD.Memory_View is
       then
          Set_Position (View.View,
                        Address_Separator'Length
-                       + Guint (Address_Length));
+                       + Gint (Address_Length));
       end if;
    end Watch_Cursor_Location;
 
