@@ -1888,8 +1888,9 @@ editors.
 
 @item Print
 @cindex print
-Print the current file by first saving it interactively if needed (if it has
-been modified), and then by launching the command defined in the preferences.
+Print the current file by first saving it interactively (if it has
+been modified) and then by launching the command defined in the preferences
+if the command is defined. (On Windows the command is optional.)
 @xref{Print Command}.
 
 @item Exit
@@ -4227,7 +4228,7 @@ in GPS:
 Automatically start a debug session, as done by GVD.
 you can also specify a program name and its arguments, so this
 option replaces the @code{--pargs} and @code{executable-file} arguments in GVD.
-   
+
 @item --debugger
 Equivalent to the same GVD option, with the difference that
 arguments can be specified as well, replacing the @code{--dargs} option.
@@ -5466,12 +5467,13 @@ Program used to execute commands externally.
 @cindex a2ps
 @cindex PrintFile
 @anchor{Print Command}
-Program used to print files. By default @code{a2ps}, available under GNU/Linux
-systems. This utility can be used on most Unix systems, and can be downloaded
-from @url{http://www.inf.enst.fr/~demaille/a2ps}
+Program used to print files. On GNU/Linux systems this program is required and
+is @code{a2ps} by default. The @code{a2ps} utility can be used on most Unix
+systems and can be downloaded from @url{http://www.inf.enst.fr/~demaille/a2ps}
 
-Under Windows systems, a possible replacement is the PrintFile freeware
-utility which is available from @url{http://www.lerup.com/printfile/descr.html}
+On Windows systems this program is not required and is empty by default. A
+replacement will be used if specified. A possible replacement is the PrintFile
+freeware utility available from @url{http://www.lerup.com/printfile/descr.html}
 
 @end table
 
