@@ -110,32 +110,17 @@ package body Docgen.Work_On_File is
       use List_Entity_Handle;
       use TSFL;
 
-      J                             : Natural;
-      Source_File_Node              : Type_Source_File_List.List_Node;
-      Doc_File                      : File_Descriptor;
-      Next_Package                  : GNAT.OS_Lib.String_Access;
-      Prev_Package                  : GNAT.OS_Lib.String_Access;
-      Subprogram_Index_List         : Type_Entity_List.List;
-      Type_Index_List               : Type_Entity_List.List;
-      Tagged_Types_List             : Type_List_Tagged_Element.List;
-      Private_Subprogram_Index_List : Type_Entity_List.List;
-      Private_Type_Index_List       : Type_Entity_List.List;
-      Private_Tagged_Types_List     : Type_List_Tagged_Element.List;
-      All_Tagged_Types_List         : List_Entity_Handle.List;
-      Doc_Directory_Root            : constant String :=
-        Docgen_Backend.Get_Doc_Directory (B, Kernel_Handle (Kernel));
-      Warned                        : Boolean := False;
-      Level                         : Natural := 1;
-
       function Find_Next_Package
-        (Package_Nr : Natural) return String;
+        (Source_File_Node : Type_Source_File_List.List_Node;
+         Package_Nr       : Natural) return String;
       --  Returns the name of the next package in the list
       --  (body files with the same package name are ignored)
       --  If next package doesn't exist, "" is returned.
 
       function Find_Prev_Package
-        (Package_Nr : Natural;
-         Data       : TSFL.Data_Access) return String;
+        (Source_File_Node : Type_Source_File_List.List_Node;
+         Package_Nr       : Natural;
+         Data             : TSFL.Data_Access) return String;
       --  Returns the name of the previous package in the list
       --  (body files with the same package name are ignored)
       --  If next package doesn't exist, "" is returned.
@@ -145,7 +130,8 @@ package body Docgen.Work_On_File is
       -----------------------
 
       function Find_Next_Package
-        (Package_Nr : Natural) return String
+        (Source_File_Node : Type_Source_File_List.List_Node;
+         Package_Nr       : Natural) return String
       is
          Local_Node : Type_Source_File_List.List_Node;
          Local_Data : TSFL.Data_Access;
@@ -176,8 +162,9 @@ package body Docgen.Work_On_File is
       -----------------------
 
       function Find_Prev_Package
-        (Package_Nr : Natural;
-         Data       : TSFL.Data_Access) return String
+        (Source_File_Node : Type_Source_File_List.List_Node;
+         Package_Nr       : Natural;
+         Data             : TSFL.Data_Access) return String
       is
          Local_Node : Type_Source_File_List.List_Node;
          Local_Data : TSFL.Data_Access;
@@ -208,6 +195,20 @@ package body Docgen.Work_On_File is
          end if;
       end Find_Prev_Package;
 
+      J                             : Natural;
+      Source_File_Node              : Type_Source_File_List.List_Node;
+      Subprogram_Index_List         : Type_Entity_List.List;
+      Type_Index_List               : Type_Entity_List.List;
+      Tagged_Types_List             : Type_List_Tagged_Element.List;
+      Private_Subprogram_Index_List : Type_Entity_List.List;
+      Private_Type_Index_List       : Type_Entity_List.List;
+      Private_Tagged_Types_List     : Type_List_Tagged_Element.List;
+      All_Tagged_Types_List         : List_Entity_Handle.List;
+      Doc_Directory_Root            : constant String :=
+        Docgen_Backend.Get_Doc_Directory (B, Kernel_Handle (Kernel));
+      Warned                        : Boolean := False;
+      Level                         : Natural := 1;
+
    begin
       --  Sort the list of the files first
 
@@ -217,20 +218,25 @@ package body Docgen.Work_On_File is
       J := 1;
       while Source_File_Node /= TSFL.Null_Node loop
          declare
-            Data      : constant TSFL.Data_Access :=
+            Data         : constant TSFL.Data_Access :=
               TSFL.Data_Ref (Source_File_Node);
-            File_Name : constant String := Get_Doc_File_Name
+            Doc_File     : File_Descriptor;
+            File_Name    : constant String := Get_Doc_File_Name
               (Data.File_Name'Unchecked_Access,
                Doc_Directory_Root,
                Doc_Suffix);
+            Next_Package : GNAT.OS_Lib.String_Access;
+            Prev_Package : GNAT.OS_Lib.String_Access;
 
          begin
             Doc_File := Create_File (File_Name, Binary);
 
             --  Find the next and the previous package name (used for TexInfo)
 
-            Next_Package := new String'(Find_Next_Package (J));
-            Prev_Package := new String'(Find_Prev_Package (J, Data));
+            Next_Package :=
+              new String'(Find_Next_Package (Source_File_Node, J));
+            Prev_Package :=
+              new String'(Find_Prev_Package (Source_File_Node, J, Data));
 
             Process_One_File
               (B,
