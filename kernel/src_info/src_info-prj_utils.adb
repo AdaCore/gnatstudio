@@ -380,7 +380,7 @@ package body Src_Info.Prj_Utils is
 
       if File /= null then
          declare
-            Full_Path : constant String := File.all;
+            Full_Path : constant String := Normalize_Pathname (File.all);
          begin
             Free (File);
             return Full_Path;
@@ -392,7 +392,7 @@ package body Src_Info.Prj_Utils is
          File := Locate_Regular_File (Short_File_Name, Predefined_Path);
          if File /= null then
             declare
-               Full_Path : constant String := File.all;
+               Full_Path : constant String := Normalize_Pathname (File.all);
             begin
                Free (File);
                return Full_Path;
