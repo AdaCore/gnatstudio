@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2001-2004                    --
---                            ACT-Europe                             --
+--                     Copyright (C) 2001-2005                       --
+--                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -24,7 +24,6 @@ with Glide_Intl;                        use Glide_Intl;
 with Basic_Types;                       use Basic_Types;
 with GNAT.OS_Lib;                       use GNAT.OS_Lib;
 with Diff_Utils2;                       use Diff_Utils2;
-with Vdiff2_Module.Utils.Shell_Command; use Vdiff2_Module.Utils.Shell_Command;
 with Vdiff2_Module.Utils;               use Vdiff2_Module.Utils;
 with Vdiff2_Module;                     use Vdiff2_Module;
 with Traces;                            use Traces;
@@ -141,92 +140,11 @@ package body Vdiff2_Command_Block is
          end if;
       end if;
 
-      Init_Prev_Diff_Cmd (Diff);
       return Commands.Success;
    exception
       when others =>
          return Failure;
    end Execute;
-
-   ---------------------
-   -- Next_Difference --
-   ---------------------
-
-   procedure Next_Difference
-     (Kernel : Kernel_Handle;
-      Diff   : in out Diff_Head)
-   is
-      Link      : Diff_List_Node;
-      Curr_Data : Diff_Chunk_Access;
-   begin
-      if Next (Diff.Current_Node) /= Diff_Chunk_List.Null_Node then
-         Diff.Current_Node := Next (Diff.Current_Node);
-         Link := Diff.Current_Node;
-         Curr_Data := Data (Link);
-         Trace (Me, "Execute Action Next");
-         Goto_Difference (Kernel, Curr_Data);
-      end if;
-   end Next_Difference;
-
-   ---------------------
-   -- Prev_Difference --
-   ---------------------
-
-   procedure Prev_Difference
-     (Kernel : Kernel_Handle;
-      Diff   : in out Diff_Head)
-   is
-      Link      : Diff_List_Node;
-      Curr_Data : Diff_Chunk_Access;
-   begin
-      Link := Prev (Diff.List, Diff.Current_Node);
-      if  Link /= Diff_Chunk_List.Null_Node then
-         Diff.Current_Node := Link;
-         Curr_Data := Data (Link);
-         Trace (Me, "Execute Prev_Difference");
-         Goto_Difference (Kernel, Curr_Data);
-      end if;
-   end Prev_Difference;
-
-   ---------------------
-   -- First_Difference --
-   ---------------------
-
-   procedure First_Difference
-     (Kernel : Kernel_Handle;
-      Diff   : in out Diff_Head)
-   is
-      Link      : Diff_List_Node;
-      Curr_Data : Diff_Chunk_Access;
-   begin
-      if Diff.Current_Node /= First (Diff.List) then
-         Diff.Current_Node := First (Diff.List);
-         Link := Diff.Current_Node;
-         Curr_Data := Data (Link);
-         Trace (Me, "Execute Action First_Difference");
-         Goto_Difference (Kernel, Curr_Data);
-      end if;
-   end First_Difference;
-
-   ---------------------
-   -- Last_Difference --
-   ---------------------
-
-   procedure Last_Difference
-     (Kernel : Kernel_Handle;
-      Diff   : in out Diff_Head)
-   is
-      Link     : Diff_List_Node;
-      Curr_Data : Diff_Chunk_Access;
-   begin
-      if Diff.Current_Node /= Last (Diff.List) then
-         Diff.Current_Node := Last (Diff.List);
-         Link := Diff.Current_Node;
-         Curr_Data := Data (Link);
-         Trace (Me, "Execute Action Last_Difference");
-         Goto_Difference (Kernel, Curr_Data);
-      end if;
-   end Last_Difference;
 
    -----------------------
    -- Reload_Difference --
@@ -241,7 +159,6 @@ package body Vdiff2_Command_Block is
       pragma Unreferenced (Button);
    begin
       Unhighlight_Difference (Kernel, Item);
-      Save_Difference (Kernel, Item);
 
       if Item.File3 = VFS.No_File then
          Tmp := Diff
@@ -335,42 +252,4 @@ package body Vdiff2_Command_Block is
       Modify_Differences (Kernel, Diff, Id);
    end Change_Ref_File;
 
-   ---------------------
-   -- Save_Difference --
-   ---------------------
-
-   procedure Save_Difference
-     (Kernel : Kernel_Handle;
-      Diff   : in out Diff_Head)
-   is
-      Link        : constant Diff_Chunk_Access := Data (Diff.Current_Node);
-      Interactive : constant String := "true";
-      Args        : Argument_List (1 .. 1);
-      Arg2        : Argument_List (1 .. 2) :=
-        (1 => new String'(Interactive),
-         2 => new String'("false"));
-   begin
-      if Link.Range1.Mark /= null then
-         Args := (1 => new String'(Link.Range1.Mark.all));
-         Execute_GPS_Shell_Command (Kernel, "Editor.goto_mark", Args);
-         Basic_Types.Free (Args);
-         Execute_GPS_Shell_Command (Kernel, "Editor.save", Arg2);
-      end if;
-
-      if Link.Range2.Mark /= null then
-         Args := (1 => new String'(Link.Range2.Mark.all));
-         Execute_GPS_Shell_Command (Kernel, "Editor.goto_mark", Args);
-         Basic_Types.Free (Args);
-         Execute_GPS_Shell_Command (Kernel, "Editor.save", Arg2);
-      end if;
-
-      if Link.Range3.Mark /= null then
-         Args := (1 => new String'(Link.Range3.Mark.all));
-         Execute_GPS_Shell_Command (Kernel, "Editor.goto_mark", Args);
-         Basic_Types.Free (Args);
-         Execute_GPS_Shell_Command (Kernel, "Editor.save", Arg2);
-      end if;
-
-      Basic_Types.Free (Arg2);
-   end Save_Difference;
 end Vdiff2_Command_Block;

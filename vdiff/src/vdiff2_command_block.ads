@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2001-2003                    --
---                            ACT-Europe                             --
+--                     Copyright (C) 2001-2005                       --
+--                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -64,26 +64,6 @@ package Vdiff2_Command_Block is
    --  Search in the global List of Diff the current diff end apply Action on
    --  this
 
-   procedure Next_Difference
-     (Kernel : Kernel_Handle;
-      Diff   : in out Diff_Head);
-   --  Goto Next difference
-
-   procedure Prev_Difference
-     (Kernel : Kernel_Handle;
-      Diff   : in out Diff_Head);
-   --  Goto prev difference
-
-   procedure First_Difference
-     (Kernel : Kernel_Handle;
-      Diff   : in out Diff_Head);
-   --  Goto First difference
-
-   procedure Last_Difference
-     (Kernel : Kernel_Handle;
-      Diff   : in out Diff_Head);
-   --  Goto Last difference
-
    procedure Reload_Difference
      (Kernel : Kernel_Handle;
       Item   : in out Diff_Head);
@@ -107,10 +87,5 @@ package Vdiff2_Command_Block is
    procedure Change_Ref_File
      (Kernel : Kernel_Handle;
       Diff   : in out Diff_Head);
-
-   procedure Save_Difference
-     (Kernel : Kernel_Handle;
-      Diff   : in out Diff_Head);
-   --  Save all file in Diff
 
 end Vdiff2_Command_Block;
