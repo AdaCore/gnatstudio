@@ -828,6 +828,7 @@ package body Src_Editor_Buffer.Line_Information is
       for J in Buffer_Line .. Buffer_Line + Buffer_Line_Type (Number) - 1 loop
          Buffer.Line_Data (J).Editable_Line := 0;
          Buffer.Line_Data (J).Highlight_Category := Highlight_Category;
+         Buffer.Line_Data (J).Highlight_In := (True, True);
       end loop;
 
       Get_Iter_At_Line_Offset (Buffer, Iter, Gint (Buffer_Line - 1), 0);
