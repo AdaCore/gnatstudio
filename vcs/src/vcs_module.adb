@@ -451,10 +451,13 @@ package body VCS_Module is
       Register_Menu (Kernel, VCS, -"Start _Editing", "", Open'Access);
       Register_Menu (Kernel, VCS, -"_View revision history", "",
                      View_Log'Access);
-      Register_Menu (Kernel, VCS, -"_Compare against head revision", "",
+      Register_Menu (Kernel, VCS, -"Compare against _head revision", "",
                      View_Head_Diff'Access);
-      Register_Menu (Kernel, VCS, -"_Compare against working revision", "",
+      Register_Menu (Kernel, VCS, -"Compare against _working revision", "",
                      View_Work_Diff'Access);
+      Register_Menu (Kernel, VCS,
+                     -"_Compare working revision against head revision", "",
+                     View_Work_Head_Diff'Access);
       Register_Menu (Kernel, VCS, -"_Annotate", "", View_Annotate'Access);
       Register_Menu (Kernel, VCS, -"Remove a_nnotations", "",
                      Remove_Annotations'Access);
