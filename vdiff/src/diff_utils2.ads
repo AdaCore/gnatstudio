@@ -24,9 +24,9 @@
 with Generic_List;
 with Glide_Kernel;
 with Ada.Unchecked_Deallocation;
-with GNAT.OS_Lib;              use GNAT.OS_Lib;
+with GNAT.OS_Lib;                use GNAT.OS_Lib;
 use Glide_Kernel;
-with VFS;
+with VFS;                        use VFS;
 
 package Diff_Utils2 is
 
@@ -47,6 +47,7 @@ package Diff_Utils2 is
    type   T_VRange  is array (1 .. 3) of Diff_Range;
    type   T_VStr    is array (1 .. 3) of String_Access;
    type   T_VOffset is array (1 .. 3) of Natural;
+   type   T_VFile   is array (1 .. 3) of Virtual_File;
 
    procedure Free (V : in out T_VStr);
    --  free memory of each element of vector V
@@ -129,7 +130,7 @@ package Diff_Utils2 is
    --  Just for Testing
 
    function Diff3
-     (My_Change, Old_File, Your_Change : VFS.Virtual_file)
+     (My_Change, Old_File, Your_Change : VFS.Virtual_File)
       return Diff_List;
    --  Just for Testing
 
