@@ -287,27 +287,33 @@ begin
    Aunit_Module.Register_Module (GPS.Kernel);
    Glide_Kernel.Console.Register_Module (GPS.Kernel);
 
-   --  Register the supported languages
+   --  Register the supported languages and their associated LI handlers.
 
    Handler := Glide_Language_Handler (Get_Language_Handler (GPS.Kernel));
+
+   Register_LI_Handler
+     (Handler, "Ada", new Src_Info.ALI.ALI_Handler_Record);
+   Register_LI_Handler
+     (Handler, "c/c++", new Src_Info.CPP.CPP_LI_Handler_Record);
+
    Register_Language (Handler, "Ada", Ada_Lang);
    Add_Language_Info
      (Handler, "Ada",
-      LI                  => new Src_Info.ALI.ALI_Handler_Record,
+      LI                  => Get_LI_Handler_By_Name (Handler, "Ada"),
       Default_Spec_Suffix => ".ads",
       Default_Body_Suffix => ".adb");
 
    Register_Language (Handler, "c", C_Lang);
    Add_Language_Info
      (Handler, "c",
-      LI                  => new Src_Info.CPP.CPP_LI_Handler_Record,
+      LI                  => Get_LI_Handler_By_Name (Handler, "c/c++"),
       Default_Spec_Suffix => ".h",
       Default_Body_Suffix => ".c");
 
    Register_Language (Handler, "c++", Cpp_Lang);
    Add_Language_Info
      (Handler, "c++",
-      LI                  => new Src_Info.CPP.CPP_LI_Handler_Record,
+      LI                  => Get_LI_Handler_By_Name (Handler, "c/c++"),
       Default_Spec_Suffix => ".h",
       Default_Body_Suffix => ".cc");
 
