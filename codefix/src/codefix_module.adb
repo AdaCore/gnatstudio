@@ -135,7 +135,7 @@ package body Codefix_Module is
       Remove_Location_Action
         (Kernel        => Codefix_Module_ID.Kernel,
          Identifier    => "--  ???",
-         Category      => "Builder Results",
+         Category      => Compilation_Category,
          File          => Get_Error_Message (Mitem.Error).File_Name.all,
          Line          => Get_Error_Message (Mitem.Error).Line,
          Column        => Get_Error_Message (Mitem.Error).Col,
@@ -275,6 +275,12 @@ package body Codefix_Module is
    begin
       if Context.all in File_Location_Context'Class then
          Location := File_Location_Context_Access (Context);
+
+         if not Has_Category_Information (Location)
+           or else Category_Information (Location) /= Compilation_Category
+         then
+            return;
+         end if;
 
          if Has_Message_Information (Location)
            and then Has_File_Information (Location)
