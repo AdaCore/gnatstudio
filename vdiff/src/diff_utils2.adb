@@ -638,8 +638,13 @@ package body Diff_Utils2 is
    --------------
 
    procedure Free_All (Link : in out Diff_Head) is
+      Success : Boolean;
    begin
       Free_List (Link.List);
+      if Link.Tmp_File /= VFS.No_File then
+         Trace (Me, "Delete Temporary File : " & Full_Name (Link.Tmp_File));
+         Delete_File (Full_Name (Link.Tmp_File), Success);
+      end if;
    end Free_All;
 
    ----------
@@ -693,8 +698,6 @@ package body Diff_Utils2 is
 
 
 end Diff_Utils2;
-
-
 
 
 
