@@ -1048,7 +1048,8 @@ where protocol is one of the recognized protocols (http, ftp,.. see the GPS docu
              real_name="GPS.Editor.register_highlighting">
       <param name="category">A string</param>
       <param name="color">A string</param>
-      <description>Create a new highlighting category with the given color. The format for color is "#RRGGBB"</description>
+      <param name="speedbar" default="False">A boolean</param>
+      <description>Create a new highlighting category with the given color. The format for color is "#RRGGBB". If speedbar is true, then a mark will be inserted in the speedbar to the left of the editor to give a fast overview to the user of where the highlighted lines are.</description>
   </shell_doc>
 
   <shell_doc name="GPS.set_background_color"
