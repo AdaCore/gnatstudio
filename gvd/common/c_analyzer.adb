@@ -1175,18 +1175,29 @@ package body C_Analyzer is
 
                Do_Indent (Index, Indent);
 
-               if Top_Token.Token /= No_Token
-                 and then Top_Token.Curly_Level = Curly_Level
-                 and then Top_Token.Paren_Level = Paren_Level
-               then
-                  if Top_Token.Start_New_Line then
-                     Indent := Indent - Indent_Level;
-                  end if;
+               declare
+                  First : Boolean := True;
+               begin
+                  while Top_Token.Token /= No_Token
+                    and then Top_Token.Curly_Level = Curly_Level
+                    and then Top_Token.Paren_Level = Paren_Level
+                  loop
+                     if First then
+                        First := False;
+                     else
+                        Indent := Indent - Indent_Level;
+                     end if;
 
-                  if Top_Token.Token /= Tok_Do then
+                     if Top_Token.Start_New_Line then
+                        Indent := Indent - Indent_Level;
+                     end if;
+
+                     exit when Top_Token.Token = Tok_Do;
+
                      Pop (Tokens);
-                  end if;
-               end if;
+                     Top_Token := Top (Tokens);
+                  end loop;
+               end;
 
             when ';' =>
                Token := Tok_Semicolon;
