@@ -1036,8 +1036,7 @@ package body GVD.Process is
 
       Configure
         (Process.Data_Canvas,
-         Annotation_Font => To_String
-           (Get_Pref (GVD_Prefs, Annotation_Font)));
+         Annotation_Font => Get_Pref (GVD_Prefs, Annotation_Font));
 
       Child := Put (Process.Window.Process_Mdi, Process.Data_Paned);
       Set_Title (Child, -"Debugger Data");
