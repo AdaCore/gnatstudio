@@ -469,8 +469,7 @@ package body Socket_Module is
         (Module                  => Socket_Module_ID,
          Kernel                  => Kernel,
          Module_Name             => Socket_Module_Name,
-         Priority                => Default_Priority,
-         Contextual_Menu_Handler => null);
+         Priority                => Default_Priority);
 
       Register_Command
         (Kernel, "send_socket",
