@@ -20,8 +20,8 @@
   <type>GTK_WINDOW_TOPLEVEL</type>
   <position>GTK_WIN_POS_NONE</position>
   <modal>False</modal>
-  <allow_shrink>False</allow_shrink>
-  <allow_grow>False</allow_grow>
+  <allow_shrink>True</allow_shrink>
+  <allow_grow>True</allow_grow>
   <auto_shrink>True</auto_shrink>
 
   <widget>
@@ -40,8 +40,8 @@
       <column_spacing>3</column_spacing>
       <child>
 	<padding>0</padding>
-	<expand>True</expand>
-	<fill>True</fill>
+	<expand>False</expand>
+	<fill>False</fill>
       </child>
 
       <widget>
@@ -241,8 +241,8 @@
       <spacing>0</spacing>
       <child>
 	<padding>0</padding>
-	<expand>True</expand>
-	<fill>True</fill>
+	<expand>False</expand>
+	<fill>False</fill>
       </child>
 
       <widget>
