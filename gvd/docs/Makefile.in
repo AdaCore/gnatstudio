@@ -1,6 +1,10 @@
 prefix = @prefix@
 docdir = $(prefix)/doc/gvd
 
+DVIPS= @DVIPS@
+MAKEINFO= @MAKEINFO@
+TEXI2HTML= @TEXI2HTML@
+TEX= @TEX@
 MKDIR = mkdir -p
 INSTALL = @INSTALL@
 INSTALL_DATA = @INSTALL_DATA@
@@ -11,24 +15,60 @@ all: doc clean-temp-files
 non-ps: common clean-temp-files
 static:
 
-common: gvd.texi
-	perl texi2html -menu -monolithic gvd.texi
-	makeinfo --force -o gvd.info gvd.texi
-	makeinfo --force --no-headers --no-split -o gvd.txt gvd.texi
+doc: gvd.txt gvd.html gvd.info gvd.ps
 
-doc: common
-	echo x | tex gvd.texi
+gvd.html: gvd.texi
+ifneq (${TEXI2HTML},)
+	perl ${TEXI2HTML} -menu -monolithic gvd.texi
+else
+	@echo "----------------------------------------------------"
+	@echo "texi2html not found, cannot build HTML documentation"
+	@echo "----------------------------------------------------"
+endif
+
+gvd.info: gvd.texi
+ifneq (${MAKEINFO},)
+	${MAKEINFO} --force -o gvd.info gvd.texi
+else
+	@echo "----------------------------------------------------"
+	@echo "makeinfo not found, cannot build INFO documentation"
+	@echo "----------------------------------------------------"
+endif
+
+gvd.txt: gvd.texi
+ifneq (${MAKEINFO},)
+	${MAKEINFO} --force --no-headers --no-split -o gvd.txt gvd.texi
+else
+	@echo "----------------------------------------------------"
+	@echo "makeinfo not found, cannot build TXT documentation"
+	@echo "----------------------------------------------------"
+endif
+
+gvd.ps: gvd.texi
+ifneq (${TEX},)
+	echo x | ${TEX} gvd.texi
 	texindex gvd.cp
-	tex gvd.texi
-	tex gvd.texi
-	dvips gvd.dvi -o gvd.ps
+	${TEX} gvd.texi
+	${TEX} gvd.texi
+ifneq (${DVIPS},)
+	${DVIPS} gvd.dvi -o gvd.ps
+else
+	@echo "------------------------------------------------------"
+	@echo "dvips not found, cannot build POSTSCRIPT documentation"
+	@echo "------------------------------------------------------"
+endif
+else
+	@echo "----------------------------------------------------"
+	@echo "tex not found, cannot build DVI or PS documentation"
+	@echo "----------------------------------------------------"
+endif
 
 install:
 	$(MKDIR) $(docdir)
-	$(INSTALL_DATA) gvd.html $(docdir)
-	$(INSTALL_DATA) gvd.info $(docdir)
+	-$(INSTALL_DATA) gvd.html $(docdir)
+	-$(INSTALL_DATA) gvd.info $(docdir)
 	-$(INSTALL_DATA) gvd.ps  $(docdir)
-	$(INSTALL_DATA) gvd.txt  $(docdir)
+	-$(INSTALL_DATA) gvd.txt  $(docdir)
 	for img in $(IMAGES); do \
 	  $(INSTALL_DATA) $$img $(docdir); \
 	done
