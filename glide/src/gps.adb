@@ -240,6 +240,9 @@ procedure GPS is
          Put_Line (-"Options:");
          Put_Line (-"   --help              Show this help message and exit.");
          Put_Line (-"   --version           Show the GPS version and exit.");
+         New_Line;
+         Put_Line (-("Source files are searched everywhere on the project's "
+                   & " source path"));
 
       else
          Button := Message_Dialog
@@ -413,7 +416,7 @@ procedure GPS is
          begin
             exit when S = "";
 
-            Open_File_Editor (GPS.Kernel, S);
+            Open_File_Editor (GPS.Kernel, S, From_Path => True);
             File_Opened := True;
          end;
       end loop;
