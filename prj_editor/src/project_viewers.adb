@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2001-2002                       --
+--                     Copyright (C) 2001-2003                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -2056,7 +2056,12 @@ package body Project_Viewers is
                   Dialog_Type => Information,
                   Buttons => Button_Yes or Button_No) = Button_Yes
                then
-                  Make_Dir (New_Dir.all);
+                  begin
+                     Make_Dir (New_Dir.all);
+                  exception
+                     when Directory_Error =>
+                        null;
+                  end;
                end if;
             end if;
 
@@ -2096,7 +2101,12 @@ package body Project_Viewers is
                   Dialog_Type => Information,
                   Buttons => Button_Yes or Button_No) = Button_Yes
                then
-                  Make_Dir (Exec_Dir.all);
+                  begin
+                     Make_Dir (Exec_Dir.all);
+                  exception
+                     when Directory_Error =>
+                        null;
+                  end;
                end if;
             end if;
 
