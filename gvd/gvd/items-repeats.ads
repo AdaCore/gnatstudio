@@ -54,8 +54,9 @@ private
    --  To handle the '0 <repeats .. times>' case.
 
    type Repeat_Type is new Generic_Type with record
-      Repeat_Num : Integer;
-      Value      : Generic_Type_Access := null;
+      Repeat_Num       : Integer;
+      Repeat_Str_Width : Glib.Gint := 0;
+      Value            : Generic_Type_Access := null;
    end record;
 
    procedure Print (Value : Repeat_Type; Indent : Natural := 0);

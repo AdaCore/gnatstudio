@@ -37,8 +37,9 @@ package body Items.Repeats is
    begin
       return new Repeat_Type'
         (Generic_Type with
-         Value      => null,
-         Repeat_Num => 0);
+         Value            => null,
+         Repeat_Str_Width => 0,
+         Repeat_Num       => 0);
    end New_Repeat_Type;
 
    --------------------
@@ -80,6 +81,7 @@ package body Items.Repeats is
       Value : Generic_Type_Access)
    is
    begin
+      Item.Valid := True;
       Item.Value := Value;
    end Set_Value;
 
@@ -170,7 +172,7 @@ package body Items.Repeats is
                  Text => Str);
 
       Paint (Item.Value.all, Context,
-             X + Text_Width (Context.Font, Str), Y + Border_Spacing);
+             X + Item.Repeat_Str_Width, Y + Border_Spacing);
 
       --  Draw a border
       Draw_Rectangle (Context.Pixmap,
@@ -202,9 +204,9 @@ package body Items.Repeats is
          Item.Height := Unknown_Height;
       else
          Size_Request (Item.Value.all, Context, Hide_Big_Items);
+         Item.Repeat_Str_Width := Text_Width (Context.Font, Str);
          Item.Width :=
-           Item.Value.Width + Text_Width (Context.Font, Str)
-           + 2 * Border_Spacing;
+           Item.Value.Width + Item.Repeat_Str_Width + 2 * Border_Spacing;
          Item.Height :=
            Gint'Max (Item.Value.Height,
                      Get_Ascent (Context.Font) + Get_Descent (Context.Font))
@@ -223,7 +225,12 @@ package body Items.Repeats is
                                return String
    is
    begin
-      return Name;
+      if X < Item.Repeat_Str_Width then
+         return Name;
+      end if;
+
+      return Get_Component_Name
+        (Item.Value, Lang, Name, X - Item.Repeat_Str_Width, Y);
    end Get_Component_Name;
 
    -------------------
@@ -235,7 +242,12 @@ package body Items.Repeats is
                           return Generic_Type_Access
    is
    begin
-      return Generic_Type_Access (Item);
+      if X < Item.Repeat_Str_Width then
+         return Generic_Type_Access (Item);
+      end if;
+
+      return Get_Component
+        (Item.Value, X - Item.Repeat_Str_Width, Y);
    end Get_Component;
 
    -------------
