@@ -51,13 +51,15 @@ package Commands is
    function Execute (Command : access Root_Command) return Boolean is abstract;
    --  Executes Command. Return value indicates whether the operation was
    --  successful.
-   --  IMPORTANT : every implementation for Execute must guarantee
+   --  IMPORTANT: every implementation for Execute must guarantee
    --  that Command_Finished will be called when the action is
    --  completed. See comments above.
 
    function Undo (Command : access Root_Command) return Boolean;
    --  Undo a Command. Return value indicates whether the operation was
    --  successful.
+   --  IMPORTANT: at the end of undoing, Command_Finished must be
+   --  called. See above for details.
 
    type Command_Queue is private;
 
@@ -72,6 +74,17 @@ package Commands is
    --  If High_Priority is True, the only thing that is guaranteed is
    --  that this Action will be executed before all the actions that
    --  were enqueued with High_Priority set to False.
+
+   procedure Undo (Queue : Command_Queue);
+   --  Undo one action from the queue.
+
+   procedure Redo (Queue : Command_Queue);
+   --  Redo one action from the queue.
+
+   function Undo_Queue_Empty (Queue : Command_Queue) return Boolean;
+   function Redo_Queue_Empty (Queue : Command_Queue) return Boolean;
+   --  These function indicate whether the undo and redo queues for
+   --  the Queue are empty.
 
    procedure Add_Consequence_Action
      (Item   : Command_Access;
@@ -98,12 +111,36 @@ private
       Command_In_Progress : Boolean := False;
       The_Queue           : Command_Queues.List;
       Queue_Node          : Command_Queues.List_Node;
+
+      Undo_Queue          : Command_Queues.List;
+      --  This contains the actions that have already been done,
+      --  in reverse chronological order (ie, most ancient actions are
+      --  at the end of the queue, recent actions are prepended at the
+      --  beginning.)
+
+      Redo_Queue          : Command_Queues.List;
+      --  This contains the actions that have been done and undone.
+      --  (Again, most recent additions to this queue are at its
+      --  beginning.)
    end record;
    type Command_Queue is access Command_Queue_Record;
+
+   type Command_Mode is (Normal, Done, Undone);
+   --  Normal actions are enqueued normally. When they end, they are
+   --  enqueued at the end of the Undo_Queue and their mode becomes
+   --  "Done".
+   --  When a "Done" action is enqueued, it will be undone when it's
+   --  time for its execution. It will then be added to the Redo_Queue
+   --  and its mode will be Undone. When executing an Undone action,
+   --  it will go to the Undo_Queue and become Done again, and so on.
 
    type Root_Command is abstract tagged limited record
       Queue         : Command_Queue;
       Next_Commands : Command_Queues.List;
+      Mode          : Command_Mode := Normal;
    end record;
+
+   pragma Inline (Undo_Queue_Empty);
+   pragma Inline (Redo_Queue_Empty);
 
 end Commands;
