@@ -490,6 +490,8 @@ package body Gtkada.MDI is
 
       --  Free (List);
       --  Destroy (Region);
+
+      Queue_Resize (M);
    end Realize_MDI;
 
    ----------------
