@@ -112,7 +112,7 @@ package body Codefix.Text_Manager.Ada_Extracts is
       Line_Cursor                           : File_Cursor;
       Str_Declare                           : constant String := "declare";
       Str_Begin                             : constant String := "begin";
-      Str_Is                                : constant String := "declare";
+      Str_Is                                : constant String := "is";
       Str_Semicolon                         : constant String := ";";
 
    begin
