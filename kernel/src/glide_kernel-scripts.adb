@@ -1155,7 +1155,7 @@ package body Glide_Kernel.Scripts is
          Params      => Parameter_Names_To_Usage (Input_Dialog_Cmd_Parameters),
          Return_Value => "list",
          Description  =>
-           -("Display a modal dialog and ask some input to the user."
+           -("Display a modal dialog and request some input from the user."
              & " The message is displayed at the top, and one input field"
              & " is displayed for each remaining argument. The return value"
              & " is the value that the user has input for each of these"
