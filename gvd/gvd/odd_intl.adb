@@ -24,7 +24,7 @@ package body Odd_Intl is
 
    function "-" (Msg : String) return String is
    begin
-      return Dgettext ("Odd", Msg);
+      return Dgettext ("gvd", Msg);
    end "-";
 
 end Odd_Intl;
