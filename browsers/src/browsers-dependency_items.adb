@@ -1062,8 +1062,26 @@ package body Browsers.Dependency_Items is
       Context_Callback.Object_Connect
         (Mitem, "activate",
          Context_Callback.To_Marshaller (On_Examine_Other_File'Access),
-         User_Data   => Selection_Context_Access (Context),
+         User_Data   => Context,
          Slot_Object => Browser);
+
+      Gtk_New (Mitem, Label => (-"Examine dependencies for ") & Filename);
+      Append (Menu, Mitem);
+      Context_Callback.Connect
+        (Mitem, "activate",
+         Context_Callback.To_Marshaller
+           (Edit_Dependencies_From_Contextual'Access),
+         Context);
+      Set_Sensitive (Mitem, not Item.To_Parsed);
+
+      Gtk_New (Mitem, Label => (-"Examining files depending on ") & Filename);
+      Append (Menu, Mitem);
+      Context_Callback.Connect
+        (Mitem, "activate",
+         Context_Callback.To_Marshaller
+           (Edit_Ancestor_Dependencies_From_Contextual'Access),
+         Context);
+      Set_Sensitive (Mitem, not Item.From_Parsed);
 
       return Context;
    end Contextual_Factory;

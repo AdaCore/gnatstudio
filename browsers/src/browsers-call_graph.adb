@@ -968,13 +968,31 @@ package body Browsers.Call_Graph is
          Column      => Get_Declaration_Column_Of (Item.Entity),
          Category    => Language.Cat_Procedure);
 
+      Gtk_New (Mitem, Get_Name (Item.Entity) & (-" calls..."));
+      Append (Menu, Mitem);
+      Context_Callback.Connect
+        (Mitem, "activate",
+         Context_Callback.To_Marshaller
+           (Edit_Entity_Call_Graph_From_Contextual'Access),
+               Selection_Context_Access (Context));
+      Set_Sensitive (Mitem, not Item.To_Parsed);
+
+      Gtk_New (Mitem, Get_Name (Item.Entity) & (-" is called by..."));
+      Append (Menu, Mitem);
+      Context_Callback.Connect
+        (Mitem, "activate",
+         Context_Callback.To_Marshaller
+           (Edit_Ancestors_Call_Graph_From_Contextual'Access),
+         Context);
+      Set_Sensitive (Mitem, not Item.From_Parsed);
+
       Gtk_New (Mitem, -"Edit source");
       Append (Menu, Mitem);
       Context_Callback.Connect
         (Mitem, "activate",
          Context_Callback.To_Marshaller
          (Edit_Source_From_Contextual'Access),
-         Selection_Context_Access (Context));
+         Context);
 
       return Context;
    end Contextual_Factory;
