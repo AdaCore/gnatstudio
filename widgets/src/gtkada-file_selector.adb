@@ -48,11 +48,16 @@ with Gtkada.Types;    use Gtkada.Types;
 with Gtkada.Handlers; use Gtkada.Handlers;
 
 with GUI_Utils; use GUI_Utils;
+with Traces;    use Traces;
 
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
+with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
+with Ada.Exceptions;            use Ada.Exceptions;
 
 package body Gtkada.File_Selector is
+
+   Me : Debug_Handle := Create ("Gtkada.File_Selector");
 
    -----------------------
    -- Local subprograms --
@@ -63,7 +68,7 @@ package body Gtkada.File_Selector is
       Dir : String);
    --  Called every time that the contents of a new directory should be
    --  displayed in the File_Explorer. Dir is the absolute pathname to
-   --  that directory, starting with a Directory_Separator.
+   --  that directory.
 
    procedure Refresh_Files
      (Win : access File_Selector_Window_Record'Class);
@@ -200,7 +205,9 @@ package body Gtkada.File_Selector is
    is
       File_Selector_Window : File_Selector_Window_Access;
    begin
-      Gtk_New (File_Selector_Window, "/", Base_Directory, Title);
+      Gtk_New
+        (File_Selector_Window,
+         (1 => Directory_Separator), Base_Directory, Title);
       return Select_File (File_Selector_Window);
    end Select_File;
 
@@ -214,7 +221,9 @@ package body Gtkada.File_Selector is
    is
       File_Selector_Window : File_Selector_Window_Access;
    begin
-      Gtk_New (File_Selector_Window, "/", Base_Directory, Title, False);
+      Gtk_New
+        (File_Selector_Window,
+         (1 => Directory_Separator), Base_Directory, Title, False);
       return Select_Directory (File_Selector_Window);
    end Select_Directory;
 
@@ -491,6 +500,7 @@ package body Gtkada.File_Selector is
    begin
       if Get_Window (Win) = null
         or else Win.File_List = null
+        or else Dir = ""
       then
          return;
       end if;
@@ -562,11 +572,15 @@ package body Gtkada.File_Selector is
       --  then update the File_List.
 
       if New_Dir /= ""
-        and then New_Dir (New_Dir'First) = Directory_Separator
         and then Win.Current_Directory.all /= New_Dir
       then
          Free (Win.Current_Directory);
-         Win.Current_Directory := new String' (New_Dir);
+
+         if Dir = -"Drives" then
+            Win.Current_Directory := new String' ("");
+         else
+            Win.Current_Directory := new String' (New_Dir);
+         end if;
 
          --  If we are currently moving through the history,
          --  do not append items to the Location_Combo.
@@ -633,6 +647,11 @@ package body Gtkada.File_Selector is
       Win.Moving_Through_History := True;
       Show_Directory (Win.Explorer_Tree, S.all);
       Free (S);
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Free (S);
    end On_Back_Button_Clicked;
 
    ----------------------------
@@ -647,6 +666,10 @@ package body Gtkada.File_Selector is
 
    begin
       Change_Directory (Win, Win.Home_Directory.all);
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Home_Button_Clicked;
 
    --------------------------
@@ -664,6 +687,10 @@ package body Gtkada.File_Selector is
    begin
       Show_Parent (Win.Explorer_Tree);
       Change_Directory (Win, Get_Selection (Win.Explorer_Tree));
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Up_Button_Clicked;
 
    -------------------------------
@@ -680,6 +707,10 @@ package body Gtkada.File_Selector is
 
    begin
       Refresh_Files (Win);
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Refresh_Button_Clicked;
 
    -------------------------------
@@ -716,6 +747,10 @@ package body Gtkada.File_Selector is
    exception
       when Stack_Empty =>
          null;
+
+      when E : others =>
+         Free (S);
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Forward_Button_Clicked;
 
    ------------------------
@@ -731,9 +766,9 @@ package body Gtkada.File_Selector is
       Change_Directory (Win, Get_Text (Win.Location_Combo_Entry));
    end Directory_Selected;
 
-   ------------------------
+   ---------------------
    -- Filter_Selected --
-   ------------------------
+   ---------------------
 
    procedure Filter_Selected
      (Object : access Gtk_Widget_Record'Class)
@@ -756,6 +791,10 @@ package body Gtkada.File_Selector is
 
    begin
       Change_Directory (Win, Get_Text (Win.Location_Combo_Entry));
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Location_Combo_Entry_Activate;
 
    ---------------------------------
@@ -770,6 +809,10 @@ package body Gtkada.File_Selector is
 
    begin
       Change_Directory (Win, Get_Selection (Dir_Tree (Object)));
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Explorer_Tree_Select_Row;
 
    --------------------------------
@@ -802,6 +845,10 @@ package body Gtkada.File_Selector is
             Win.Own_Main_Loop := False;
          end if;
       end if;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_File_List_End_Selection;
 
    --------------------------------
@@ -814,6 +861,10 @@ package body Gtkada.File_Selector is
       pragma Unreferenced (Object);
    begin
       null;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Selection_Entry_Changed;
 
    --------------------------
@@ -828,6 +879,10 @@ package body Gtkada.File_Selector is
    begin
       Main_Quit;
       Win.Own_Main_Loop := False;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Ok_Button_Clicked;
 
    ------------------------------
@@ -848,6 +903,10 @@ package body Gtkada.File_Selector is
 
       Main_Quit;
       Win.Own_Main_Loop := False;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Cancel_Button_Clicked;
 
    ----------------
@@ -869,6 +928,10 @@ package body Gtkada.File_Selector is
          Main_Quit;
          Win.Own_Main_Loop := False;
       end if;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Destroy;
 
    ----------------------------------
@@ -881,18 +944,17 @@ package body Gtkada.File_Selector is
    is
       Win   : constant File_Selector_Window_Access :=
         File_Selector_Window_Access (Get_Toplevel (Object));
-
       Event : Gdk_Event := To_Event (Params, 1);
-      S     : String := Get_String (Event);
 
    begin
-      if S'Length /= 0
-        and then (Is_Alphanumeric (S (S'First))
-                  or else Is_Special (S (S'First)))
-      then
-         declare
-            Found : Boolean := False;
-         begin
+      declare
+         S     : constant String := Get_String (Event);
+         Found : Boolean := False;
+      begin
+         if S'Length /= 0
+           and then (Is_Alphanumeric (S (S'First))
+                     or else Is_Special (S (S'First)))
+         then
             for J in 0 .. Get_Rows (Win.File_List) - 1 loop
                exit when Found;
 
@@ -908,12 +970,17 @@ package body Gtkada.File_Selector is
                   end if;
                end;
             end loop;
-         end;
 
-         return True;
-      else
+            return True;
+         else
+            return False;
+         end if;
+      end;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
          return False;
-      end if;
    end On_File_List_Key_Press_Event;
 
    ----------------------------------------
@@ -924,113 +991,117 @@ package body Gtkada.File_Selector is
      (Object : access Gtk_Widget_Record'Class;
       Params : Gtk.Arguments.Gtk_Args) return Boolean
    is
-      Win      : constant File_Selector_Window_Access :=
+      Win             : constant File_Selector_Window_Access :=
         File_Selector_Window_Access (Get_Toplevel (Object));
 
-      Found    : Boolean := False;
-      Event    : Gdk_Event := To_Event (Params, 1);
-      G        : String := Get_String (Event);
+      Found           : Boolean := False;
+      Event           : constant Gdk_Event := To_Event (Params, 1);
+      S               : constant String := Get_Text (Win.Selection_Entry);
 
-   begin
-      if G'Length /= 0
-        and then G (G'First) = ASCII.HT
-      then
-         --  Handle "Tab completion".
-         --  The current implementation will fail if there are file names
-         --  longer than 1024 characters.
+      First_Match     : Gint := -1;
+      --  The first column that completely matches S.
 
-         --  Find out what is the biggest common prefix matching the
-         --  text in the selection entry.
+      Suffix_Length   : Integer := -1;
+      --  The length of the biggest common matching prefix.
 
-         declare
-            S : String := Get_Text (Win.Selection_Entry);
+      Sep             : Natural;
+      Last            : Natural := S'Last;
 
-            First_Match : Gint := -1;
-            --  The first column that completely matches S.
+      D               : Dir_Type;
 
-            Suffix_Length : Integer := -1;
-            --  The length of the biggest common matching prefix.
+      Best_Match      : String (1 .. 1024);
+      Best_File_Match : String (1 .. 1024);
+      File            : String (1 .. 1024);
 
-            Best_Match : String (1 .. 1024);
-            Best_File_Match : String (1 .. 1024);
 
-            procedure Matcher
-              (T        : String;
-               Position : Gint := -1);
+      procedure Matcher
+        (T        : String;
+         Position : Gint := -1);
+      --  ???
 
-            -------------
-            -- Matcher --
-            -------------
+      -------------
+      -- Matcher --
+      -------------
 
-            procedure Matcher
-              (T        : String;
-               Position : Gint := -1)
-            is
-               K : Natural := 0;
-            begin
+      procedure Matcher
+        (T        : String;
+         Position : Gint := -1)
+      is
+         K : Natural := 0;
+      begin
 
-               while K < T'Length
-                 and then K < S'Length
-                 and then T (T'First + K) = S (S'First + K) loop
+         while K < T'Length
+           and then K < S'Length
+           and then T (T'First + K) = S (S'First + K) loop
+            K := K + 1;
+         end loop;
+
+         --  Does the prefix match S ?
+         if K = S'Length then
+            if Suffix_Length = -1 then
+               First_Match := Position;
+               Best_Match (1 .. T'Length) := T;
+               Suffix_Length := T'Length;
+            else
+               --  If there is already a biggest match, try to
+               --  get it.
+               while K < Suffix_Length
+                 and then K < T'Length
+                 and then T (T'First + K) = Best_Match (K + 1)
+               loop
                   K := K + 1;
                end loop;
 
-               --  Does the prefix match S ?
-               if K = S'Length then
-                  if Suffix_Length = -1 then
-                     First_Match := Position;
-                     Best_Match (1 .. T'Length) := T;
-                     Suffix_Length := T'Length;
-                  else
-                     --  If there is already a biggest match, try to
-                     --  get it.
-                     while K < Suffix_Length
-                       and then K < T'Length
-                       and then T (T'First + K) = Best_Match (K + 1)
-                     loop
-                        K := K + 1;
-                     end loop;
+               Suffix_Length := K;
+            end if;
+         end if;
+      end Matcher;
 
-                     Suffix_Length := K;
-                  end if;
-               end if;
-            end Matcher;
+   begin
+      declare
+         G : constant String := Get_String (Event);
+      begin
+         if G'Length /= 0
+           and then G (G'First) = ASCII.HT
+         then
+            --  Handle "Tab completion".
+            --  The current implementation will fail if there are file names
+            --  longer than 1024 characters.
 
-         begin
+            --  Find out what is the biggest common prefix matching the
+            --  text in the selection entry.
+
             if S = ".." or else S = ".." & Directory_Separator then
                Set_Text (Win.Selection_Entry, "");
                On_Up_Button_Clicked (Object);
                return True;
             end if;
 
-            if S'Length >= 1 and then S (S'First) = Directory_Separator then
-               Change_Directory (Win, "" & Directory_Separator);
-               Set_Text (Win.Selection_Entry, S (S'First + 1 .. S'Last));
-               Set_Position (Win.Selection_Entry, Gint (S'Last - S'First));
+            if S'Length >= 1 and then Is_Absolute_Path (S) then
+               Sep := Index (S, (1 => Directory_Separator));
+               Change_Directory (Win, S (S'First .. Sep));
+               Set_Text (Win.Selection_Entry, S (Sep + 1 .. S'Last));
+               Set_Position (Win.Selection_Entry, Gint (S'Last - Sep));
                return On_Selection_Entry_Key_Press_Event (Object, Params);
             end if;
 
-            declare
-               Last : Natural := S'Last;
-            begin
-               while Last > S'First
-                 and then S (Last) /= Directory_Separator loop
-                  Last := Last - 1;
-               end loop;
+            while Last > S'First
+              and then S (Last) /= Directory_Separator loop
+               Last := Last - 1;
+            end loop;
 
-               if Is_Directory (Win.Current_Directory.all
-                                & S (S'First .. Last))
-               then
-                  Change_Directory (Win, Win.Current_Directory.all
-                                    & S (S'First .. Last));
-                  if Last /= S'Last then
-                     Set_Text (Win.Selection_Entry, S (Last + 1 .. S'Last));
-                     Set_Position (Win.Selection_Entry, Gint (S'Last - Last));
-                     return On_Selection_Entry_Key_Press_Event
-                       (Object, Params);
-                  end if;
+            if Is_Directory (Win.Current_Directory.all
+                             & S (S'First .. Last))
+            then
+               Change_Directory (Win, Win.Current_Directory.all
+                                 & S (S'First .. Last));
+               if Last /= S'Last then
+                  Set_Text (Win.Selection_Entry, S (Last + 1 .. S'Last));
+                  Set_Position (Win.Selection_Entry, Gint (S'Last - Last));
+                  return On_Selection_Entry_Key_Press_Event
+                    (Object, Params);
                end if;
-            end;
+            end if;
 
             if Win.File_List /= null then
                for J in 0 .. Get_Rows (Win.File_List) - 1 loop
@@ -1040,21 +1111,14 @@ package body Gtkada.File_Selector is
 
             Best_File_Match := Best_Match;
 
-            declare
-               D    : Dir_Type;
-               File : String (1 .. 255);
-               Last : Natural;
+            Open (D, Win.Current_Directory.all);
 
-            begin
-               Open (D, Win.Current_Directory.all);
+            loop
+               Read (D, File, Last);
+               exit when Last = 0;
 
-               loop
-                  Read (D, File, Last);
-                  exit when Last = 0;
-
-                  Matcher (File (File'First .. Last));
-               end loop;
-            end;
+               Matcher (File (File'First .. Last));
+            end loop;
 
             if First_Match /= -1 then
                --  The best match is a file.
@@ -1086,31 +1150,36 @@ package body Gtkada.File_Selector is
                                     & Best_Match (1 .. Suffix_Length));
                end if;
             end if;
-         end;
 
-         return True;
-      end if;
+            return True;
+         end if;
 
-      if Win.File_List /= null then
-         for J in 0 .. Get_Rows (Win.File_List) - 1 loop
-            exit when Found;
+         if Win.File_List /= null then
+            for J in 0 .. Get_Rows (Win.File_List) - 1 loop
+               exit when Found;
 
-            declare
-               T : String := Get_Text (Win.File_List, J, 1);
-               S : String := Get_Text (Win.Selection_Entry) & G;
-            begin
-               if T'Length >= S'Length
-                 and then T (T'First .. T'First + S'Length - 1)
-                 = S (S'First .. S'First + S'Length - 1)
-               then
-                  Found := True;
-                  Moveto (Win.File_List, J, 1, 0.0, 0.0);
-               end if;
-            end;
-         end loop;
-      end if;
+               declare
+                  T : String := Get_Text (Win.File_List, J, 1);
+                  S : String := Get_Text (Win.Selection_Entry) & G;
+               begin
+                  if T'Length >= S'Length
+                    and then T (T'First .. T'First + S'Length - 1)
+                    = S (S'First .. S'First + S'Length - 1)
+                  then
+                     Found := True;
+                     Moveto (Win.File_List, J, 1, 0.0, 0.0);
+                  end if;
+               end;
+            end loop;
+         end if;
+      end;
 
       return False;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         return False;
    end On_Selection_Entry_Key_Press_Event;
 
    -------------
@@ -1150,6 +1219,8 @@ package body Gtkada.File_Selector is
       Dialog_Title         : String;
       Show_Files           : Boolean := True)
    is
+      pragma Suppress (All_Checks);
+
       Toolbar1    : Gtk_Toolbar;
 
       Label1      : Gtk_Label;
