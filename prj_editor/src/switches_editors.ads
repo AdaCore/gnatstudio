@@ -35,10 +35,10 @@ with Gtk.Size_Group;
 with Gtk.Tooltips;
 with Gtk.Widget;
 with GNAT.OS_Lib;
-with Glib.Object;
 with Glide_Kernel;
 with Projects;
 with VFS;
+with Commands.Interactive;
 
 package Switches_Editors is
 
@@ -274,11 +274,14 @@ package Switches_Editors is
    --  switches. They provide a higher-level framework over the standard
    --  switches editor.
 
-   procedure Edit_Switches
-     (Item    : access Glib.Object.GObject_Record'Class;
-      Context : Glide_Kernel.Selection_Context_Access);
-   --  Callback suitable for a contextual menu item.  If the file name is the
-   --  empty string, then the default switches for the project are edited,
+   type Edit_Switches_Command
+     is new Commands.Interactive.Interactive_Command with null record;
+   function Execute
+     (Command : access Edit_Switches_Command;
+      Context : Commands.Interactive.Interactive_Command_Context)
+      return Commands.Command_Return_Type;
+   --  Callback suitable for a contextual menu item.  If the context has no
+   --  file information, then the default switches for the project are edited,
    --  otherwise the switches for the specific file are edited.
 
    function Edit_Switches_For_Files

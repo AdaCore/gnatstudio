@@ -64,6 +64,7 @@ with Scenario_Selectors;   use Scenario_Selectors;
 with Projects;             use Projects;
 with Project_Viewers;      use Project_Viewers;
 with VFS;                  use VFS;
+with Commands.Interactive; use Commands, Commands.Interactive;
 
 with Types;                use Types;
 with Snames;               use Snames;
@@ -2178,39 +2179,35 @@ package body Switches_Editors is
                 "Unexpected exception: " & Exception_Information (E));
    end Fill_Editor;
 
-   -------------------
-   -- Edit_Switches --
-   -------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure Edit_Switches
-     (Item    : access GObject_Record'Class;
-      Context : Selection_Context_Access)
+   function Execute
+     (Command : access Edit_Switches_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
    is
       File      : constant File_Selection_Context_Access :=
-        File_Selection_Context_Access (Context);
+        File_Selection_Context_Access (Context.Context);
       Modified : Boolean;
-      pragma Unreferenced (Item, Modified);
+      pragma Unreferenced (Command, Modified);
    begin
       Assert (Me, Has_Project_Information (File),
               "Project unknown when editing switches");
 
       if Has_File_Information (File) then
          Modified := Edit_Switches_For_Files
-           (Get_Kernel (Context),
+           (Get_Kernel (File),
             Project_Information (File),
             (1 => File_Information (File)));
       else
          Modified := Edit_Switches_For_Files
-           (Get_Kernel (Context),
+           (Get_Kernel (File),
             Project_Information (File),
             (1 .. 0 => VFS.No_File));
       end if;
-
-   exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
-   end Edit_Switches;
+      return Success;
+   end Execute;
 
    -----------------------------
    -- Edit_Switches_For_Files --
