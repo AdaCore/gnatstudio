@@ -191,32 +191,32 @@ package body Vdiff2_Module is
         (PixMap, Get_Window (Window), Mask, Null_Color, up_diff_xpm);
       Gtk_New (Image, PixMap, Mask);
       Register_Button
-        (Kernel, -"Go to prev mark",
+        (Kernel, -"Prev",
          Command_Access (VDiff2_Module (Vdiff_Module_ID).Command_Prev),
-         Image);
+         Image, -"Go to prev mark");
 
       Create_From_Xpm_D
         (PixMap, Get_Window (Window), Mask, Null_Color, down_diff_xpm);
       Gtk_New (Image, PixMap, Mask);
-      Register_Button (Kernel, -"Go to next mark",
+      Register_Button (Kernel, -"Next",
                          Command_Access
                            (VDiff2_Module (Vdiff_Module_ID).Command_Next),
-                         Image);
+                         Image, -"Go to next mark");
 
       Create_From_Xpm_D
         (PixMap, Get_Window (Window), Mask, Null_Color, last_diff_xpm);
       Gtk_New (Image, PixMap, Mask);
-      Register_Button (Kernel, -"Go to the last difference",
+      Register_Button (Kernel, -"Last",
                          Command_Access
                            (VDiff2_Module (Vdiff_Module_ID).Command_Last),
-                         Image);
+                         Image, -"Go to the last difference");
       Create_From_Xpm_D
         (PixMap, Get_Window (Window), Mask, Null_Color, first_diff_xpm);
       Gtk_New (Image, PixMap, Mask);
-      Register_Button (Kernel, -"Go to the First difference",
+      Register_Button (Kernel, -"First",
                          Command_Access
                            (VDiff2_Module (Vdiff_Module_ID).Command_First),
-                       Image);
+                       Image, -"Go to the First difference");
       Register_Action
         (Kernel,
          "First difference",
