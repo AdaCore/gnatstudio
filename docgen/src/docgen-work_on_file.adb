@@ -65,8 +65,7 @@ package body Docgen.Work_On_File is
       Converter                     : Docgen.Doc_Subprogram_Type;
       Doc_Directory                 : String;
       Doc_Suffix                    : String;
-      Still_Warned                  : in out Boolean;
-      All_Scope_Tree : in out Tree_Htable.String_Hash_Table.HTable);
+      Still_Warned                  : in out Boolean);
    --  Called by Process_Files for each file from the given list
    --  will examine that file and call the function Work_On_Source
    --  from Docgen.Work_On_File.
@@ -135,7 +134,6 @@ package body Docgen.Work_On_File is
         Get_Doc_Directory (B, Kernel_Handle (Kernel));
       Still_Warned                  : Boolean;
       Level                         : Natural := 1;
-      All_Scope_Tree                : Tree_Htable.String_Hash_Table.HTable;
 
       function Find_Next_Package
         (Package_Nr : Natural) return String;
@@ -256,8 +254,7 @@ package body Docgen.Work_On_File is
                Converter,
                Doc_Directory_Root,
                Doc_Suffix,
-               Still_Warned,
-               All_Scope_Tree);
+               Still_Warned);
 
             Source_File_Node := TSFL.Next (Source_File_Node);
             J := J + 1;
@@ -297,13 +294,10 @@ package body Docgen.Work_On_File is
             Doc_Suffix, Level);
       end if;
 
-      Tree_Htable.String_Hash_Table.Reset (All_Scope_Tree);
-      --  Scope trees are deleted only when all files have been processed.
       TEL.Free (Subprogram_Index_List);
       TEL.Free (Type_Index_List);
       Type_List_Tagged_Element.Free (Tagged_Types_List);
       List_Entity_Handle.Free (All_Tagged_Types_List);
-
    end Process_Files;
 
    ----------------------
@@ -331,11 +325,9 @@ package body Docgen.Work_On_File is
       Converter             : Docgen.Doc_Subprogram_Type;
       Doc_Directory         : String;
       Doc_Suffix            : String;
-      Still_Warned          : in out Boolean;
-      All_Scope_Tree : in out Tree_Htable.String_Hash_Table.HTable)
+      Still_Warned          : in out Boolean)
    is
       LI_Unit          : LI_File_Ptr;
-      Tree             : Scope_Tree;
       Entity_Iter      : Local_Entities_Iterator;
       Ref_In_File      : E_Reference;
       Info             : Entity_Information;
@@ -351,7 +343,6 @@ package body Docgen.Work_On_File is
       Field            : Entity_Information;
       Entity_Complete  : Entity_List_Information_Handle;
       Found_Private    : Boolean;
-      Tree_Field       : Scope_Tree;
       Node_Field       : Scope_Tree_Node;
       Iter_Field       : Scope_Tree_Node_Iterator;
       --  The 6 variables above are used for private field of public types
@@ -480,7 +471,6 @@ package body Docgen.Work_On_File is
       is
          Decl_Found           : Boolean;
          Reference_Iter       : Entity_Reference_Iterator;
-         Reference_Scope_Tree : Scope_Tree;
          Local_Ref_List       : Type_Reference_List.List;
          Local_Calls_List     : Type_Reference_List.List;
          Entity_Tree_Node     : Scope_Tree_Node;
@@ -568,7 +558,7 @@ package body Docgen.Work_On_File is
 
             --  1. Find all subprograms called in the subprogram processed
 
-            Entity_Tree_Node := Find_Entity_Scope (Tree, Info);
+            Entity_Tree_Node := Find_Entity_Scope (LI_Unit, Info);
 
             if Entity_Tree_Node /= Null_Scope_Tree_Node then
                Add_Calls_References (Local_Calls_List, Entity_Tree_Node);
@@ -583,25 +573,8 @@ package body Docgen.Work_On_File is
                  (Source_File_List,
                   Get_File (Get_Location (Get (Reference_Iter))));
 
-               --  Try to get the scope tree associated with the ali file
-               Reference_Scope_Tree
-                 := Tree_Htable.String_Hash_Table.Get
-                   (All_Scope_Tree,
-                    Base_Name (Get_LI_Filename (Get_LI (Reference_Iter))));
-               --  First time, we met the ali file, we build the scope tree
-               --  and store it in the hash table during all the process of
-               --  docgen
-               if Reference_Scope_Tree = Null_Scope_Tree then
-                  Reference_Scope_Tree :=
-                    Create_Tree (Get_LI (Reference_Iter));
-                  Tree_Htable.String_Hash_Table.Set
-                    (All_Scope_Tree,
-                     Base_Name (Get_LI_Filename (Get_LI (Reference_Iter))),
-                     Reference_Scope_Tree);
-               end if;
-
                Find_Entity_References
-                 (Reference_Scope_Tree,
+                 (Get_LI (Reference_Iter),
                   Info,
                   Tree_Called_Callback'Unrestricted_Access);
 
@@ -858,8 +831,7 @@ package body Docgen.Work_On_File is
                Converter,
                Doc_Directory,
                Doc_Suffix,
-               Level,
-               All_Scope_Tree);
+               Level);
          else
             Trace (Me, "LI file not found");  --  later Exception?
          end if;
@@ -872,19 +844,6 @@ package body Docgen.Work_On_File is
          if LI_Unit /= No_LI_File then
             Entity_Iter :=
               Find_All_References_In_File (LI_Unit, Source_Filename);
-
-            --  Try to get the scope tree of the ali file.
-            Tree := Tree_Htable.String_Hash_Table.Get
-              (All_Scope_Tree, Base_Name (Get_LI_Filename (LI_Unit)));
-            --  The scope tree has never been created, we build and store it.
-            if Tree = Null_Scope_Tree then
-               Tree :=
-                 Create_Tree (LI_Unit);
-               Tree_Htable.String_Hash_Table.Set
-                 (All_Scope_Tree,
-                  Base_Name (Get_LI_Filename (LI_Unit)),
-                  Tree);
-            end if;
 
             loop
                Ref_In_File := Get (Entity_Iter);
@@ -935,7 +894,7 @@ package body Docgen.Work_On_File is
                      --  Get the parameters needed by all entities
 
                      Entity_Node.Name :=
-                       new String'(Get_Full_Name (Info, LI_Unit, ".", Tree));
+                       new String'(Get_Full_Name (Info, LI_Unit, "."));
 
                      Entity_Node.Entity := Copy (Info);
 
@@ -988,28 +947,32 @@ package body Docgen.Work_On_File is
                                  --  isn't done, only the documentation
                                  --  "type X is record with private" is given.
                                  --  The private fiels are forgotten.
-                                 Get_Scope_Tree (Kernel,
-                                                 Info,
-                                                 Tree_Field,
-                                                 Node_Field,
-                                                 True);
+                                 Get_Scope_Tree
+                                   (Kernel, Info, Node_Field);
+
                                  Iter_Field := Start (Node_Field);
                                  Found_Private := False;
                                  loop
                                     Node_Field := Get (Iter_Field);
-                                    exit when Node_Field
-                                      = Null_Scope_Tree_Node;
-                                    Field := Get_Entity (Node_Field);
+                                    exit when Node_Field =
+                                      Null_Scope_Tree_Node;
 
-                                    if not Is_Discriminant
-                                      (Field, LI_Unit, Info) then
-                                       if Get_Scope (Field)
-                                         /= Global_Scope then
-                                          Found_Private := True;
+                                    if Is_Declaration (Node_Field) then
+                                       Field := Get_Entity (Node_Field);
+
+                                       if not Is_Discriminant
+                                         (Field, LI_Unit, Info)
+                                       then
+                                          if Get_Scope (Field) /=
+                                            Global_Scope
+                                          then
+                                             Found_Private := True;
+                                          end if;
+                                          exit when Found_Private;
                                        end if;
-                                       exit when Found_Private;
+                                       Destroy (Field);
                                     end if;
-                                    Destroy (Field);
+
                                     Next (Iter_Field);
                                  end loop;
 
@@ -1034,7 +997,7 @@ package body Docgen.Work_On_File is
                                     Entity_Complete.Name :=
                                       new String'(Get_Full_Name
                                                     (Info,
-                                                     LI_Unit, ".", Tree));
+                                                     LI_Unit, "."));
                                     Entity_Complete.Kind := Type_Entity;
                                     Entity_Complete.Is_Private := True;
                                     Entity_Complete.Public_Declaration :=
@@ -1066,7 +1029,6 @@ package body Docgen.Work_On_File is
                                           Clone (Entity_Complete.all, False));
                                     end if;
                                  end if;
-                                 Free (Tree_Field);
                               end if;
 
                            else
@@ -1872,8 +1834,7 @@ package body Docgen.Work_On_File is
                Converter,
                Doc_Directory,
                Doc_Suffix,
-               Level,
-               All_Scope_Tree);
+               Level);
          else
             Trace (Me, "LI file not found: "
                    & Base_Name (Source_Filename));  --  later Exception?
@@ -1888,14 +1849,5 @@ package body Docgen.Work_On_File is
       List_Entity_In_File.Free (List_Ent_In_File, True);
       List_Reference_In_File.Free (List_Ref_In_File, True);
    end Process_One_File;
-
-   -------------------
-   -- Free_All_Tree --
-   -------------------
-
-   procedure Free_All_Tree (X : in out Scope_Tree) is
-   begin
-      Free (X);
-   end Free_All_Tree;
 
 end Docgen.Work_On_File;

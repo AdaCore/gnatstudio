@@ -61,7 +61,6 @@ package body Docgen.Work_On_Source is
       Doc_Suffix         : String;
       Level              : in out Natural;
       File_Text          : GNAT.OS_Lib.String_Access;
-      Tree_Package       : Scope_Tree;
       Parsed_List        : in out Construct_List);
    --  It's in charge of processing packages, types, variables, subprograms,
    --  exceptions, entries. It can be called recursively for inner package.
@@ -211,7 +210,6 @@ package body Docgen.Work_On_Source is
       Private_Entity            : Boolean;
       Display_Private           : in out Boolean;
       Level                     : in out Natural;
-      Tree_Package              : Scope_Tree;
       Process_Body_File         : Boolean);
    --  Will process renamed and instantiated packages and pass
    --  them to the output subprogram.
@@ -262,8 +260,7 @@ package body Docgen.Work_On_Source is
       Doc_Suffix       : String;
       Private_Entity   : Boolean;
       Display_Private  : in out Boolean;
-      Level            : in out Natural;
-      Tree_Package     : Scope_Tree);
+      Level            : in out Natural);
    --  Called by Process_Source to work on the constants
    --  and named numbers and pass each of them to the output subprogram
    --  Display_Private : indicate if we print the "Private" header.
@@ -289,8 +286,7 @@ package body Docgen.Work_On_Source is
       Doc_Suffix       : String;
       Private_Entity   : Boolean;
       Display_Private  : in out Boolean;
-      Level            : in out Natural;
-      Tree_Package     : Scope_Tree);
+      Level            : in out Natural);
    --  Called by Process_Source to work on the exceptions and
    --  pass each of them to the output subprogram
    --  Display_Private : indicate if we print the "Private" header.
@@ -317,8 +313,7 @@ package body Docgen.Work_On_Source is
       Doc_Suffix        : String;
       Private_Entity    : Boolean;
       Display_Private   : in out Boolean;
-      Level             : in out Natural;
-      Tree_Package      : Scope_Tree);
+      Level             : in out Natural);
    --  Called by Process_Source to work on the entires and entry
    --  families and pass each of them to the output subprogram
    --  Display_Private : indicate if we print the "Private" header.
@@ -360,8 +355,7 @@ package body Docgen.Work_On_Source is
       Doc_Suffix         : String;
       Private_Entity     : Boolean;
       Display_Private    : in out Boolean;
-      Level              : in out Natural;
-      Tree_Package       : Scope_Tree);
+      Level              : in out Natural);
    --  Called by Process_Source to work on the subprograms and
    --  pass each of them to the output subprogram
    --  Private_Entity indicates if it must process private or public entites
@@ -404,8 +398,7 @@ package body Docgen.Work_On_Source is
       Doc_Suffix                : String;
       Private_Entity            : Boolean;
       Display_Private           : in out Boolean;
-      Level                     : in out Natural;
-      Tree_Package              : Scope_Tree);
+      Level                     : in out Natural);
    --  Called by Process_Source to work on the types and
    --  pass each of them to the output subprogram
    --  Display_Private : indicate if we print the "Private" header.
@@ -583,13 +576,13 @@ package body Docgen.Work_On_Source is
    function Entity_Defined_In_Package
      (Entity_Info       : Entity_Information;
       Package_Container : Entity_Information;
-      Tree_Package      : Scope_Tree) return Boolean;
+      LI_Unit           : LI_File_Ptr) return Boolean;
    --  Determines if an entity is defined in a package.
 
    function Package_Contain_Entity
      (Package_Entity : Entity_Information;
       Entity_List    : Type_Entity_List.List;
-      Tree_Package   : Scope_Tree) return Boolean;
+      LI_Unit        : LI_File_Ptr)return Boolean;
    --  Determines if there's entities defined in a the package
 
    function Line_Is_Comment
@@ -651,13 +644,11 @@ package body Docgen.Work_On_Source is
       Converter         : Docgen.Doc_Subprogram_Type;
       Doc_Directory     : String;
       Doc_Suffix        : String;
-      Level             : in out Natural;
-      All_Scope_Tree    : in out Tree_Htable.String_Hash_Table.HTable)
+      Level             : in out Natural)
    is
       use TEL;
       use type Basic_Types.String_Access;
       File_Text          : GNAT.OS_Lib.String_Access;
-      Tree_Package       : Scope_Tree;
       Entity_Node        : Type_Entity_List.List_Node;
       Found_Main_Package : Boolean;
       Parsed_List        : Construct_List;
@@ -704,24 +695,6 @@ package body Docgen.Work_On_Source is
       --  Different ways of process for spec and body files
       if Is_Spec_File (Kernel, Source_Filename) then
          if not TEL.Is_Empty (Entity_List) then
-
-            --  Try to get the scope tree associated with the ali file
-            Tree_Package
-              := Tree_Htable.String_Hash_Table.Get
-                (All_Scope_Tree,
-                 Base_Name (Get_LI_Filename (LI_Unit)));
-            --  First time, we met the ali file, we build the scope tree
-            --  and store it in the hash table during all the process of
-            --  docgen
-            if Tree_Package = Null_Scope_Tree then
-               Tree_Package :=
-                 Create_Tree (LI_Unit);
-                  Tree_Htable.String_Hash_Table.Set
-                 (All_Scope_Tree,
-                  Base_Name (Get_LI_Filename (LI_Unit)),
-                  Tree_Package);
-            end if;
-
             --  Build of the scope tree.
             --  True means that only declarations are inserted into the tree
             --  (references don't needed).
@@ -797,7 +770,6 @@ package body Docgen.Work_On_Source is
                   Doc_Suffix,
                   Level,
                   File_Text,
-                  Tree_Package,
                   Parsed_List);
             end if;
             Free (Parsed_List);
@@ -870,7 +842,6 @@ package body Docgen.Work_On_Source is
       Doc_Suffix         : String;
       Level              : in out Natural;
       File_Text          : GNAT.OS_Lib.String_Access;
-      Tree_Package       : Scope_Tree;
       Parsed_List        : in out Construct_List)
    is
       use Type_Entity_List;
@@ -897,7 +868,6 @@ package body Docgen.Work_On_Source is
          Options,
          Converter, Doc_Directory, Doc_Suffix, False, Display_Private,
          Level,
-         Tree_Package,
          Process_Body_File);
       Process_Vars
         (B,
@@ -914,8 +884,7 @@ package body Docgen.Work_On_Source is
          Source_File_List,
          Options,
          Converter, Doc_Directory, Doc_Suffix, False, Display_Private,
-         Level,
-         Tree_Package);
+         Level);
       Process_Exceptions
         (B,
          Kernel,
@@ -931,8 +900,7 @@ package body Docgen.Work_On_Source is
          Source_File_List,
          Options,
          Converter, Doc_Directory, Doc_Suffix, False, Display_Private,
-         Level,
-         Tree_Package);
+         Level);
       Process_Types
         (B,
          Kernel,
@@ -950,8 +918,7 @@ package body Docgen.Work_On_Source is
          Source_File_List,
          Options,
          Converter, Doc_Directory, Doc_Suffix, False, Display_Private,
-         Level,
-         Tree_Package);
+         Level);
       Process_Entries
         (B,
          Kernel,
@@ -968,8 +935,7 @@ package body Docgen.Work_On_Source is
          Source_File_List,
          Options,
          Converter, Doc_Directory, Doc_Suffix, False, Display_Private,
-         Level,
-         Tree_Package);
+         Level);
       Process_Subprograms
         (B,
          Kernel,
@@ -986,8 +952,7 @@ package body Docgen.Work_On_Source is
          Source_File_List,
          Options,
          Converter, Doc_Directory, Doc_Suffix, False, Display_Private,
-         Level,
-         Tree_Package);
+         Level);
 
       if Options.Show_Private then
          --  Private entities are displayed. Hence, the value "True" is
@@ -1010,7 +975,6 @@ package body Docgen.Work_On_Source is
             Options,
             Converter, Doc_Directory, Doc_Suffix, True, Display_Private,
             Level,
-            Tree_Package,
             Process_Body_File);
          Process_Vars
            (B,
@@ -1027,8 +991,7 @@ package body Docgen.Work_On_Source is
             Source_File_List,
             Options,
             Converter, Doc_Directory, Doc_Suffix, True, Display_Private,
-            Level,
-            Tree_Package);
+            Level);
          Process_Exceptions
            (B,
             Kernel,
@@ -1044,8 +1007,7 @@ package body Docgen.Work_On_Source is
             Source_File_List,
             Options,
             Converter, Doc_Directory, Doc_Suffix, True, Display_Private,
-            Level,
-            Tree_Package);
+            Level);
          Process_Types
            (B,
             Kernel,
@@ -1063,8 +1025,7 @@ package body Docgen.Work_On_Source is
             Source_File_List,
             Options,
             Converter, Doc_Directory, Doc_Suffix, True, Display_Private,
-            Level,
-            Tree_Package);
+            Level);
          Process_Entries
            (B,
             Kernel,
@@ -1081,8 +1042,7 @@ package body Docgen.Work_On_Source is
             Source_File_List,
             Options,
             Converter, Doc_Directory, Doc_Suffix, True, Display_Private,
-            Level,
-            Tree_Package);
+            Level);
          Process_Subprograms
            (B,
             Kernel,
@@ -1099,8 +1059,7 @@ package body Docgen.Work_On_Source is
             Source_File_List,
             Options,
             Converter, Doc_Directory, Doc_Suffix, True, Display_Private,
-            Level,
-            Tree_Package);
+            Level);
       end if;
    end Process_Source_Spec;
 
@@ -2540,7 +2499,6 @@ package body Docgen.Work_On_Source is
       Private_Entity            : Boolean;
       Display_Private           : in out Boolean;
       Level                     : in out Natural;
-      Tree_Package              : Scope_Tree;
       Process_Body_File         : Boolean)
    is
       use TEL;
@@ -2579,11 +2537,11 @@ package body Docgen.Work_On_Source is
             --  The entity is defined in the current package
               Entity_Defined_In_Package (TEL.Data (Entity_Node).Entity,
                                          Package_Information,
-                                         Tree_Package)
+                                         LI_Unit)
             then
                if Package_Contain_Entity (TEL.Data (Entity_Node).Entity,
                                           Entity_List,
-                                          Tree_Package) then
+                                          LI_Unit) then
                   --  Entities are declared in the current package
                   Header_Temp := Get_Whole_Header
                     (File_Text.all,
@@ -2696,7 +2654,6 @@ package body Docgen.Work_On_Source is
                         Doc_Suffix,
                         Level,
                         File_Text,
-                        Tree_Package,
                         Parsed_List);
                      Level := Level - 1;
 
@@ -2924,8 +2881,7 @@ package body Docgen.Work_On_Source is
       Doc_Suffix       : String;
       Private_Entity   : Boolean;
       Display_Private  : in out Boolean;
-      Level            : in out Natural;
-      Tree_Package     : Scope_Tree)
+      Level            : in out Natural)
    is
       use TEL;
       use type Basic_Types.String_Access;
@@ -2957,9 +2913,8 @@ package body Docgen.Work_On_Source is
                 (TEL.Data (Entity_Node).Entity) = Source_Filename
               and then
             --  The entity is defined in the current package
-              Entity_Defined_In_Package (TEL.Data (Entity_Node).Entity,
-                                         Package_Info,
-                                         Tree_Package)
+              Entity_Defined_In_Package
+                (TEL.Data (Entity_Node).Entity, Package_Info, LI_Unit)
             then
                Header_Temp := Get_Whole_Header
                  (File_Text.all,
@@ -3131,8 +3086,7 @@ package body Docgen.Work_On_Source is
       Doc_Suffix       : String;
       Private_Entity   : Boolean;
       Display_Private  : in out Boolean;
-      Level            : in out Natural;
-      Tree_Package     : Scope_Tree)
+      Level            : in out Natural)
    is
       use TEL;
       Entity_Node       : Type_Entity_List.List_Node;
@@ -3164,9 +3118,8 @@ package body Docgen.Work_On_Source is
                 (TEL.Data (Entity_Node).Entity) = Source_Filename
               and then
             --  The entity is defined in the current package
-              Entity_Defined_In_Package (TEL.Data (Entity_Node).Entity,
-                                         Package_Info,
-                                         Tree_Package)
+              Entity_Defined_In_Package
+                (TEL.Data (Entity_Node).Entity, Package_Info, LI_Unit)
             then
                Header_Temp := Get_Whole_Header
                  (File_Text.all,
@@ -3408,8 +3361,7 @@ package body Docgen.Work_On_Source is
       Doc_Suffix                : String;
       Private_Entity            : Boolean;
       Display_Private           : in out Boolean;
-      Level                     : in out Natural;
-      Tree_Package              : Scope_Tree)
+      Level                     : in out Natural)
    is
       use TEL;
       Entity_Node        : Type_Entity_List.List_Node;
@@ -3434,10 +3386,8 @@ package body Docgen.Work_On_Source is
             if TEL.Data (Entity_Node).Public_Declaration
               = No_Entity_Information
             then
-               In_Current_Package
-                 := Entity_Defined_In_Package (TEL.Data (Entity_Node).Entity,
-                                               Package_Info,
-                                               Tree_Package);
+               In_Current_Package := Entity_Defined_In_Package
+                 (TEL.Data (Entity_Node).Entity, Package_Info, LI_Unit);
             else
                --  Public entity wich contains private fields.
                --  In this case, the name of the entity appears in two
@@ -3450,8 +3400,7 @@ package body Docgen.Work_On_Source is
                --  appears in the scope tree.
                In_Current_Package := Entity_Defined_In_Package
                  (TEL.Data (Entity_Node).Public_Declaration,
-                  Package_Info,
-                  Tree_Package);
+                  Package_Info, LI_Unit);
             end if;
 
             if
@@ -3686,8 +3635,7 @@ package body Docgen.Work_On_Source is
       Doc_Suffix         : String;
       Private_Entity     : Boolean;
       Display_Private    : in out Boolean;
-      Level              : in out Natural;
-      Tree_Package       : Scope_Tree)
+      Level              : in out Natural)
    is
       use TEL;
       Entity_Node       : Type_Entity_List.List_Node;
@@ -3719,9 +3667,8 @@ package body Docgen.Work_On_Source is
                 (TEL.Data (Entity_Node).Entity) = Source_Filename
               and then
             --  The entity is defined in the current package
-              Entity_Defined_In_Package (TEL.Data (Entity_Node).Entity,
-                                         Package_Info,
-                                         Tree_Package)
+              Entity_Defined_In_Package
+                (TEL.Data (Entity_Node).Entity, Package_Info, LI_Unit)
             then
                Header_Temp := Get_Whole_Header
                  (File_Text.all,
@@ -3934,8 +3881,7 @@ package body Docgen.Work_On_Source is
       Doc_Suffix         : String;
       Private_Entity     : Boolean;
       Display_Private    : in out Boolean;
-      Level              : in out Natural;
-      Tree_Package       : Scope_Tree)
+      Level              : in out Natural)
    is
       use TEL;
       Entity_Node       : Type_Entity_List.List_Node;
@@ -3967,9 +3913,8 @@ package body Docgen.Work_On_Source is
                 (TEL.Data (Entity_Node).Entity) = Source_Filename
               and then
             --  The entity is defined in the current package
-              Entity_Defined_In_Package (TEL.Data (Entity_Node).Entity,
-                                         Package_Info,
-                                         Tree_Package)
+              Entity_Defined_In_Package
+                (TEL.Data (Entity_Node).Entity, Package_Info, LI_Unit)
             then
                Header_Temp := Get_Whole_Header
                  (File_Text.all,
@@ -4109,14 +4054,15 @@ package body Docgen.Work_On_Source is
    function Entity_Defined_In_Package
      (Entity_Info       : Entity_Information;
       Package_Container : Entity_Information;
-      Tree_Package      : Scope_Tree) return Boolean
+      LI_Unit           : LI_File_Ptr) return Boolean
    is
       Temp_Entity : Entity_Information;
       Temp_Node   : Scope_Tree_Node;
       Temp        : Scope_Tree_Node;
    begin
+      Temp := Find_Entity_Scope (LI_Unit, Entity_Info);
+
       --  Research of Entity_Info in the scope tree
-      Temp := Find_Entity_Scope (Tree_Package, Entity_Info);
       if Temp /= Null_Scope_Tree_Node then
          --  We get the entity in wich Entity_Info is declared
          Temp_Node := Get_Parent (Temp);
@@ -4142,7 +4088,7 @@ package body Docgen.Work_On_Source is
    function Package_Contain_Entity
      (Package_Entity : Entity_Information;
       Entity_List    : Type_Entity_List.List;
-      Tree_Package   : Scope_Tree) return Boolean
+      LI_Unit        : LI_File_Ptr)return Boolean
    is
       use TEL;
       Entity_Node : Type_Entity_List.List_Node;
@@ -4152,7 +4098,7 @@ package body Docgen.Work_On_Source is
          while Entity_Node /= TEL.Null_Node loop
             if Entity_Defined_In_Package (TEL.Data (Entity_Node).Entity,
                                           Package_Entity,
-                                          Tree_Package)
+                                          LI_Unit)
             then
                --  The given package contains at least one declaration of an
                --  element of Entity_List
