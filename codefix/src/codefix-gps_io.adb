@@ -85,9 +85,6 @@ package body Codefix.GPS_Io is
 
    procedure Free (This : in out GPS_Mark) is
    begin
-      --  ??? Free the mark in the console (this.id)
-
-      --  Free the string access:
       Free (This.Id);
       Free (Mark_Abstr (This));
    end Free;
