@@ -689,8 +689,7 @@ package body Src_Editor_View is
    procedure Preferences_Changed
      (View : access GObject_Record'Class; Kernel : Kernel_Handle) is
    begin
-      Set_Font
-        (Source_View (View), Get_Pref (Kernel, Default_Source_Editor_Font));
+      Set_Font (Source_View (View), Get_Pref (Kernel, Source_Editor_Font));
    end Preferences_Changed;
 
    --------------
@@ -909,6 +908,7 @@ package body Src_Editor_View is
       Iter          : Gtk_Text_Iter;
       Indent        : Natural;
       Next_Indent   : Natural;
+      Ignore        : Natural;
       Line, Col     : Gint;
       Current_Line  : Gint;
       Offset        : Integer;
@@ -926,6 +926,8 @@ package body Src_Editor_View is
       Index         : Integer;
       Replace_Cmd   : Editor_Replace_Slice;
       Use_Tabs      : Boolean := False;
+      Indented      : Boolean := False;
+      Char          : Character;
 
       procedure Find_Non_Blank (Last : Natural);
       --  Set Index to the first non blank character in Slice (Index .. Last)
@@ -952,6 +954,7 @@ package body Src_Editor_View is
    begin
       if Lang = null
         or else not Get_Pref (Get_Kernel (Buffer), Automatic_Indentation)
+        or else not Can_Indent (Lang)
       then
          return False;
       end if;
@@ -990,17 +993,29 @@ package body Src_Editor_View is
          end if;
 
          while Blanks <= Slice_Length
-           and then (Slice (Blanks) = ' '
-                     or else Slice (Blanks) = ASCII.HT)
+           and then (Slice (Blanks) = ' ' or else Slice (Blanks) = ASCII.HT)
          loop
             Blanks := Blanks + 1;
          end loop;
 
-         Next_Indentation
-           (Lang, Slice (1 .. Slice_Length), Result, Indent, Next_Indent);
+         if Line_Ends then
+            Next_Indentation
+              (Lang, Slice (1 .. Slice_Length), Indent, Next_Indent);
+         else
+            Index := Integer (Get_Offset (Pos)) + 1;
+            Char  := Slice (Index);
+            Slice (Index) := ASCII.LF;
+            Next_Indentation (Lang, Slice (1 .. Index), Indent, Ignore);
+            Slice (Index) := Char;
 
-         if not Result then
-            return False;
+            --  ??? Would be nice to call Next_Indentation once, which would
+            --  be possible with e.g a Prev_Indent parameter
+
+            Next_Indentation
+              (Lang,
+               Slice (1 .. Index - 1) & ASCII.LF &
+                 Slice (Index .. Slice_Length),
+               Next_Indent, Ignore);
          end if;
 
          Set_Line_Offset (Iter, 0);
@@ -1030,8 +1045,7 @@ package body Src_Editor_View is
          --  Need to recompute iter, since the slice replacement that
          --  we just did has invalidated iter.
 
-         Get_Iter_At_Line_Offset
-           (Buffer, Pos, Line + 1, Gint (Next_Indent));
+         Get_Iter_At_Line_Offset (Buffer, Pos, Line + 1, Gint (Next_Indent));
          Place_Cursor (Buffer, Pos);
 
       else
@@ -1052,11 +1066,7 @@ package body Src_Editor_View is
 
             Line_End := Natural (Get_Offset (Start)) + 1 - Global_Offset;
             Next_Indentation
-              (Lang, Slice (1 .. Line_End), Result, Indent, Next_Indent);
-
-            if not Result then
-               return False;
-            end if;
+              (Lang, Slice (1 .. Line_End), Indent, Next_Indent);
 
             Find_Non_Blank (Line_End);
             Offset := Index - Line_Start;
@@ -1066,6 +1076,7 @@ package body Src_Editor_View is
                --  ??? Would be nice to indent the whole selection at once,
                --  this would make the undo/redo behavior more intuitive.
 
+               Indented := True;
                Create
                  (Replace_Cmd,
                   Buffer,
@@ -1076,14 +1087,16 @@ package body Src_Editor_View is
                Global_Offset := Global_Offset - Offset + Indent;
             end if;
 
-            exit when Current_Line = Line;
+            exit when Current_Line >= Line - 1;
 
             Current_Line := Current_Line + 1;
             Get_Iter_At_Line_Offset (Buffer, Start, Current_Line);
          end loop;
 
-         Get_Iter_At_Line_Offset (Buffer, Pos, Line, Gint (Indent));
-         Place_Cursor (Buffer, Pos);
+         if Indented then
+            Get_Iter_At_Line_Offset (Buffer, Pos, Current_Line, Gint (Indent));
+            Place_Cursor (Buffer, Pos);
+         end if;
       end if;
 
       g_free (C_Str);
@@ -1229,8 +1242,8 @@ package body Src_Editor_View is
       X, Y, Width, Height, Depth : Gint;
       Dummy_Boolean              : Boolean;
       Data                       : Line_Info_Width;
-
       Buffer                     : Gdk.Pixmap.Gdk_Pixmap;
+
    begin
       Get_Geometry (Left_Window, X, Y, Width, Height, Depth);
 
@@ -1248,8 +1261,6 @@ package body Src_Editor_View is
          Buffer_X => Dummy_Gint, Buffer_Y => Bottom_In_Buffer);
 
       Get_Line_At_Y (View, Iter, Top_In_Buffer, Dummy_Gint);
-
-
       Current_Line := View.Top_Line;
 
       Drawing_Loop :
