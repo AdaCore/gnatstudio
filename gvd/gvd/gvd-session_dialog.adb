@@ -19,16 +19,14 @@
 -----------------------------------------------------------------------
 
 with Glib; use Glib;
-with Gtk; use Gtk;
-with Gtk.Widget;      use Gtk.Widget;
-with Gtk.Enums;       use Gtk.Enums;
-with Callbacks_Odd; use Callbacks_Odd;
-with Odd_Intl; use Odd_Intl;
-with Open_Session_Pkg.Callbacks; use Open_Session_Pkg.Callbacks;
-
 with Gtk.Main;
-with Gtk.List; use Gtk.List;
+with Gtk;           use Gtk;
+with Gtk.GEntry;    use Gtk.GEntry;
+with Gtk.Box;       use Gtk.Box;
+with Gtk.Widget;    use Gtk.Widget;
+with Gtk.List;      use Gtk.List;
 with Gtk.List_Item; use Gtk.List_Item;
+
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib; use GNAT.OS_Lib;
 with Ada.Text_IO; use Ada.Text_IO;
