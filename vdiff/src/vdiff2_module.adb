@@ -198,35 +198,40 @@ package body Vdiff2_Module is
       Append_Space (Toolbar);
 
       Create_From_Xpm_D
+        (PixMap, Get_Window (Window), Mask, Null_Color, down_diff_xpm);
+      Gtk_New (Image, PixMap, Mask);
+      Register_Button
+        (Kernel, -"Next difference",
+         Command_Access
+           (VDiff2_Module (Vdiff_Module_ID).Command_Next),
+         Image, -"Go to next difference");
+
+      Create_From_Xpm_D
         (PixMap, Get_Window (Window), Mask, Null_Color, up_diff_xpm);
       Gtk_New (Image, PixMap, Mask);
       Register_Button
-        (Kernel, -"Previous",
+        (Kernel, -"Previous difference",
          Command_Access (VDiff2_Module (Vdiff_Module_ID).Command_Prev),
-         Image, -"Go to prev mark");
-
-      Create_From_Xpm_D
-        (PixMap, Get_Window (Window), Mask, Null_Color, down_diff_xpm);
-      Gtk_New (Image, PixMap, Mask);
-      Register_Button (Kernel, -"Next",
-                         Command_Access
-                           (VDiff2_Module (Vdiff_Module_ID).Command_Next),
-                         Image, -"Go to next mark");
+         Image, -"Go to previous difference");
 
       Create_From_Xpm_D
         (PixMap, Get_Window (Window), Mask, Null_Color, last_diff_xpm);
       Gtk_New (Image, PixMap, Mask);
-      Register_Button (Kernel, -"Last",
-                         Command_Access
-                           (VDiff2_Module (Vdiff_Module_ID).Command_Last),
-                         Image, -"Go to the last difference");
+      Register_Button
+        (Kernel, -"Last difference",
+         Command_Access
+           (VDiff2_Module (Vdiff_Module_ID).Command_Last),
+         Image, -"Go to the last difference");
+
       Create_From_Xpm_D
         (PixMap, Get_Window (Window), Mask, Null_Color, first_diff_xpm);
       Gtk_New (Image, PixMap, Mask);
-      Register_Button (Kernel, -"First",
-                         Command_Access
-                           (VDiff2_Module (Vdiff_Module_ID).Command_First),
-                       Image, -"Go to the First difference");
+      Register_Button
+        (Kernel, -"First difference",
+         Command_Access
+           (VDiff2_Module (Vdiff_Module_ID).Command_First),
+         Image, -"Go to the First difference");
+
       Register_Action
         (Kernel,
          "First difference",
@@ -274,7 +279,7 @@ package body Vdiff2_Module is
          Command      => "visual_diff",
          Params       => "(file1, file2, [file3])",
          Description  =>
-           -("..."),  --  ???
+           -("Open a Visual Diff between file1 ,file2 and file3"),  --  ???
          Minimum_Args => 2,
          Maximum_Args => 3,
          Handler      => Diff_Command_Handler'Access);
