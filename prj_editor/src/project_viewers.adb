@@ -1693,8 +1693,6 @@ package body Project_Viewers is
          File : constant Virtual_File := Select_File
            (Title             => -"Select the main file to add",
             Base_Directory    => Base_Dir,
-            File_Pattern      => "*.ad*",
-            Pattern_Name      => -"Ada source files",
             Parent            => Gtk_Window (Get_Toplevel (Editor)),
             Use_Native_Dialog => Get_Pref (Ed.Kernel, Use_Native_Dialogs),
             Kind              => Unspecified,
