@@ -328,14 +328,14 @@ package body GVD.Preferences is
         (Name     => XML_Prefix & "Title-Font",
          Nick     => -"Item name",
          Blurb    => -"Font used for the name of the variables",
-         Default  => "Helvetica Bold 10"));
+         Default  => "Sans Bold 10"));
       Register_Property (Prefs, Param_Spec (Title_Font), Data);
 
       Value_Font := Param_Spec_Font (Gnew_Font
         (Name     => XML_Prefix & "Value-Font",
          Nick     => -"Item value",
          Blurb    => -"Font used for the value of the variables",
-         Default  => "Helvetica 10"));
+         Default  => "Sans 10"));
       Register_Property (Prefs, Param_Spec (Value_Font), Data);
 
       Command_Font := Param_Spec_Font (Gnew_Font
@@ -349,14 +349,14 @@ package body GVD.Preferences is
         (Name     => XML_Prefix & "Type-Font",
          Nick     => -"Item type",
          Blurb    => -"Font used for the type of the variables",
-         Default  => "Helvetica Oblique 10"));
+         Default  => "Sans Oblique 10"));
       Register_Property (Prefs, Param_Spec (Type_Font), Data);
 
       Annotation_Font := Param_Spec_Font (Gnew_Font
         (Name     => XML_Prefix & "Annotation-Font",
          Nick     => -"Annotations",
          Blurb    => -"Font used for the links between two variables",
-         Default  => "Helvetica 7"));
+         Default  => "Sans 7"));
       Register_Property (Prefs, Param_Spec (Annotation_Font), Data);
 
       Hide_Big_Items := Param_Spec_Boolean (Gnew_Boolean
