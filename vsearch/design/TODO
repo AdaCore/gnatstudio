@@ -26,8 +26,6 @@
 
   * [Yeti] Move the abort flag and the callback access in Hyper_Grep_Record.
 
-8 * [Yeti] Desactivate Stop when not searching, Start when searching.
-
   * [Yeti] Don't discard syntactic delimiters " /* -- */ in matching ?
 
   * [Yeti] in C strings, '\' skips ASCII.LF; don't skip LF without '\' ?
