@@ -5448,3 +5448,18 @@ Index: widgets/cschtml/regex.c
 + trim-versions-without-asking: nil
 + End:
 + */
+*** kernel/src_info/sn/snsrc/db/include/db.h.old	Mon Sep 16 19:16:01 2002
+--- kernel/src_info/sn/snsrc/db/include/db.h	Mon Sep 16 19:16:18 2002
+***************
+*** 39,44 ****
+--- 39,48 ----
+  #include <sys/types.h>
+  #include <cdefs.h>
+  
++ #define u_int unsigned int
++ #define u_long unsigned long
++ #define u_char unsigned char
++ 
+  #include <limits.h>
+  
+  #ifdef __DBINTERFACE_PRIVATE
