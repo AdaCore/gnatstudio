@@ -75,6 +75,7 @@ with GVD.Dialogs;                use GVD.Dialogs;
 
 with Commands;                   use Commands;
 with Commands.Editor;            use Commands.Editor;
+with Find_Utils;                 use Find_Utils;
 
 package body Src_Editor_Box is
 
@@ -225,6 +226,78 @@ package body Src_Editor_Box is
       Kernel  : Kernel_Handle);
    --  Callback for "File_Saved_Signal".
 
+   procedure Find_Closest_Match
+     (Source : access Source_Editor_Box_Record'Class;
+      Line   : in out Natural;
+      Column : in out Natural;
+      Entity : String);
+   --  Find the reference to Entity in Source which is closest to (Line,
+   --  Column), and sets Line and Column to this new location
+
+   ------------------------
+   -- Find_Closest_Match --
+   ------------------------
+
+   procedure Find_Closest_Match
+     (Source : access Source_Editor_Box_Record'Class;
+      Line   : in out Natural;
+      Column : in out Natural;
+      Entity : String)
+   is
+      Best_Line     : Integer := 0;
+      Best_Column   : Integer := 0;
+
+      function Callback (Match : Match_Result) return Boolean;
+      --  Called every time a reference to the entity is found
+
+      --------------
+      -- Callback --
+      --------------
+
+      function Callback (Match : Match_Result) return Boolean is
+         Line_Diff : constant Integer :=
+           abs (Match.Line - Line) - abs (Best_Line - Line);
+         Col_Diff : constant Integer :=
+           abs (Match.Column - Column) - abs (Best_Column - Column);
+      begin
+         if Line_Diff < 0
+           or else (Line_Diff = 0 and then Col_Diff < 0)
+         then
+            Best_Line := Match.Line;
+            Best_Column := Match.Column;
+         end if;
+
+         return True;
+      end Callback;
+
+
+      Context : aliased Root_Search_Context;
+      L, C : Integer := 1;
+
+      Buffer : constant String := Get_Slice (Source, 1, 1);
+      Index  : Integer := Buffer'First;
+
+   begin
+      Set_Context
+        (Context'Access,
+         Look_For => Entity,
+         Options  => (Case_Sensitive =>
+                        Is_Case_Sensitive (Get_Language (Source)),
+                      Whole_Word     => True,
+                      Regexp         => False));
+
+      Scan_Buffer_No_Scope
+        (Context    => Context'Access,
+         Buffer     => Buffer,
+         Callback   => Callback'Unrestricted_Access,
+         Ref_Index  => Index,
+         Ref_Line   => L,
+         Ref_Column => C);
+
+      Line   := Best_Line;
+      Column := Best_Column;
+   end Find_Closest_Match;
+
    ------------------------------
    -- Goto_Declaration_Or_Body --
    ------------------------------
@@ -235,12 +308,15 @@ package body Src_Editor_Box is
       Editor  : access Source_Editor_Box_Record'Class;
       Context : access Entity_Selection_Context'Class)
    is
-      Source_Info : LI_File_Ptr;
-      Status      : Src_Info.Queries.Find_Decl_Or_Body_Query_Status;
-      Entity      : Entity_Information;
-      Location    : File_Location;
-      L, C        : Natural;
-      Length      : Natural;
+      Source          : Source_Editor_Box;
+      Source_Info     : LI_File_Ptr;
+      Status          : Src_Info.Queries.Find_Decl_Or_Body_Query_Status;
+      Entity          : Entity_Information;
+      Location        : File_Location;
+      L, C            : Natural;
+      Length          : Natural;
+      First, Last     : Gtk_Text_Iter;
+      File_Up_To_Date : Boolean;
 
    begin
       if Get_Filename (Editor) = "" then
@@ -372,9 +448,69 @@ package body Src_Editor_Box is
               (Kernel, Get_Declaration_File_Of (Entity),
                Use_Predefined_Source_Path => True),
             L, C, C + Length, False);
-         Destroy (Entity);
       end if;
 
+      --  Find the correct location for the entity, in case it is in fact
+      --  different from what was found in the LI file (ie for instance the LI
+      --  was older than the destination file).
+
+      Source := Get_Source_Box_From_MDI (Find_Current_Editor (Kernel));
+
+      if Source /= null then
+
+         --  Find the closest match of the entity, in case the LI file wasn't
+         --  up-to-date.
+
+         File_Up_To_Date := Is_Valid_Location (Source, L, C)
+           and then Is_Valid_Location (Source, L, C + Length);
+
+         if File_Up_To_Date then
+            Get_Iter_At_Line_Offset
+              (Source.Source_Buffer, First,
+               To_Buffer_Line (L), To_Buffer_Column (C));
+            Get_Iter_At_Line_Offset
+              (Source.Source_Buffer, Last,
+               To_Buffer_Line (L), To_Buffer_Column (C + Length));
+
+            File_Up_To_Date := Get_Text (Source.Source_Buffer, First, Last) =
+              Entity_Name_Information (Context);
+         end if;
+
+         --  Search for the closest reference to the entity if
+         --  necessary. Otherwise, there's nothing to be done, since the region
+         --  was already selected when opening the editor
+         if not File_Up_To_Date then
+            Console.Insert
+              (Kernel,
+               -("The cross-reference information and the destination file do"
+                 & " not match, the cursor was set at the closest reference"
+                 & " to ") & Entity_Name_Information (Context));
+
+            --  Search for the closest reference to entity, and highlight the
+            --  appropriate region in the editor.
+
+            Find_Closest_Match
+              (Source, L, C, Entity_Name_Information (Context));
+
+            if To_Body then
+               Open_File_Editor
+                 (Kernel,
+                  Find_Source_File
+                  (Kernel, Get_File (Location),
+                   Use_Predefined_Source_Path => True),
+                  L, C, C + Length, False);
+            else
+               Open_File_Editor
+                 (Kernel,
+                  Find_Source_File
+                  (Kernel, Get_Declaration_File_Of (Entity),
+                   Use_Predefined_Source_Path => True),
+                  L, C, C + Length, False);
+            end if;
+         end if;
+      end if;
+
+      Destroy (Entity);
       Pop_State (Kernel_Handle (Kernel));
 
    exception
