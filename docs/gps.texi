@@ -7964,7 +7964,7 @@ will always be the empty string, i.e. output is sent to the GPS console.
 
 @c --------------------------------------------------------------------------
 @node Processing the output of the tool
-@subsection Processing the output of the tool
+@subsubsection Processing the output of the tool
 @c --------------------------------------------------------------------------
 
 @noindent
@@ -7999,7 +7999,7 @@ location window afterwards.
 
 For languages that support it, it is also recommended that you quote the
 argument with triple quotes, so that any special character (newlines, quotes,
-@dots@{}) in the output of the tool are not specially interpreted by GPS. Note
+@dots{}) in the output of the tool are not specially interpreted by GPS. Note
 also that you should leave a space at the end, in case the output itself ends
 with a quote.
 
