@@ -33,16 +33,12 @@ package body Project_Browsers is
    procedure False_Free (X : in out Vertex_Access);
    --  Do nothing.
 
-   procedure Free_Name_Id (X : in out Name_Id);
-   --  Free memory associated to X.
-
    package Vertex_Htable is new HTables.Simple_HTable
      (Header_Num   => Header_Num,
       Element      => Vertex_Access,
       Free_Element => False_Free,
       No_Element   => null,
       Key          => Name_Id,
-      Free_Key     => Free_Name_Id,
       Hash         => Hash,
       Equal        => Types."=");
    use Vertex_Htable;
@@ -68,16 +64,6 @@ package body Project_Browsers is
    begin
       null;
    end False_Free;
-
-   ------------------
-   -- Free_Name_Id --
-   ------------------
-
-   procedure Free_Name_Id (X : in out Name_Id) is
-      pragma Unreferenced (X);
-   begin
-      null;
-   end Free_Name_Id;
 
    -------------
    -- Destroy --
