@@ -34,7 +34,7 @@ package body Debugger.Gdb is
    -- Constants --
    ---------------
 
-   Prompt_Regexp : constant Pattern_Matcher := Compile ("\(gdb\)");
+   Prompt_Regexp : constant Pattern_Matcher := Compile ("\(gdb\) ");
    --  Regular expressions used to recognize the prompt.
 
    Unexpected_Type : exception;
@@ -337,7 +337,8 @@ package body Debugger.Gdb is
             I := Index;
             Skip_To_Char (Type_Str, Index, ';');
 
-            --  If we have a simple type, no need to ask gdb, for efficiency reasons.
+            --  If we have a simple type, no need to ask gdb, for efficiency
+            --  reasons.
 
             if Is_Simple_Ada_Type (Type_Str (I .. Index - 1)) then
                R.Fields (Num_Fields).Value := new Simple_Type;
@@ -359,9 +360,9 @@ package body Debugger.Gdb is
    -- Skip_Simple_Value --
    -----------------------
 
-   procedure Skip_Simple_Value (Type_Str : in String;
-                                Index    : in out Natural)
-   is
+   procedure Skip_Simple_Value
+     (Type_Str : in String;
+      Index    : in out Natural) is
    begin
       while Index <= Type_Str'Last
         and then Type_Str (Index) /= Array_Item_Separator
@@ -890,18 +891,20 @@ package body Debugger.Gdb is
       --  Note that there is no limitation on the buffer size, since we can
       --  not control the length of what gdb will return...
 
-      Debugger.Process
-        := new Pipes_Id'(Non_Blocking_Spawn ("gdb", Null_List,
-                                             Buffer_Size => 0));
+      Debugger.Process :=
+        new Pipes_Id'
+          (Non_Blocking_Spawn ("gdb", Null_List, Buffer_Size => 0));
 
 --        Add_Output_Filter (Debugger.Process.all, Trace_Filter'Access);
 --        Add_Input_Filter (Debugger.Process.all, Trace_Filter'Access);
       Wait_Prompt (Debugger);
-      Send (Debugger.Process.all, "set prompt (gdb)");
+      Send (Debugger.Process.all, "set prompt (gdb) ");
       Wait_Prompt (Debugger);
       Send (Debugger.Process.all, "set width 0");
       Wait_Prompt (Debugger);
       Send (Debugger.Process.all, "set height 0");
+      Wait_Prompt (Debugger);
+      Send (Debugger.Process.all, "set annotate 1");
       Wait_Prompt (Debugger);
    end Initialize;
 
@@ -987,9 +990,8 @@ package body Debugger.Gdb is
    -- Break_Subprogram --
    ----------------------
 
-   procedure Break_Subprogram (Debugger : Gdb_Debugger;
-                               Name     : String)
-   is
+   procedure Break_Subprogram
+     (Debugger : Gdb_Debugger; Name : String) is
    begin
       Send (Debugger.Process.all, "break " & Name);
       Wait_Prompt (Debugger);
