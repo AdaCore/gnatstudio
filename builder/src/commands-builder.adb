@@ -53,11 +53,17 @@ package body Commands.Builder is
    Me : constant Debug_Handle := Create ("Commands.Builder");
 
    procedure Parse_Compiler_Output
-     (Kernel : Kernel_Handle;
-      Output : String);
+     (Kernel           : Kernel_Handle;
+      Category         : String;
+      Warning_Category : String;
+      Style_Category   : String;
+      Output           : String);
    --  Parse the output of build engine and insert the result
    --    - in the GPS results view if it corresponds to a file location
    --    - in the GPS console if it is a general message.
+   --  Category is the category to add to in the results view.
+   --  Warning_Category and Style_Category correspond to the categories
+   --  used for warnings and style errors.
 
    ------------
    -- Create --
@@ -77,14 +83,18 @@ package body Commands.Builder is
    ---------------------------
 
    procedure Parse_Compiler_Output
-     (Kernel : Kernel_Handle;
-      Output : String) is
+     (Kernel           : Kernel_Handle;
+      Category         : String;
+      Warning_Category : String;
+      Style_Category   : String;
+      Output           : String) is
    begin
       Insert (Kernel, Output, Add_LF => False);
       String_List_Utils.String_List.Append
         (Builder_Module_ID_Access (Builder_Module_ID).Output,
          Output);
-      Parse_File_Locations (Kernel, Output, "Builder Results", True);
+      Parse_File_Locations
+        (Kernel, Output, Category, True, Style_Category, Warning_Category);
 
    exception
       when E : others =>
@@ -183,7 +193,11 @@ package body Commands.Builder is
 
       if Buffer_Pos /= Buffer'First then
          Parse_Compiler_Output
-           (Kernel, Buffer (Buffer'First .. Buffer_Pos - 1));
+           (Kernel,
+            Error_Category,
+            Warning_Category,
+            Style_Category,
+            Buffer (Buffer'First .. Buffer_Pos - 1));
       end if;
 
       Free (Buffer);
@@ -195,11 +209,19 @@ package body Commands.Builder is
          if Buffer_Pos /= Buffer'First then
             Parse_Compiler_Output
               (Kernel,
+               Error_Category,
+               Warning_Category,
+               Style_Category,
                Buffer (Buffer'First .. Buffer_Pos - 1) & Expect_Out (Fd.all));
          end if;
 
          Free (Buffer);
-         Parse_Compiler_Output (Kernel, Expect_Out (Fd.all));
+         Parse_Compiler_Output
+           (Kernel,
+            Error_Category,
+            Warning_Category,
+            Style_Category,
+            Expect_Out (Fd.all));
          Close (Fd.all, Status);
 
          if Status = 0 then
