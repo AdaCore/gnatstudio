@@ -511,7 +511,10 @@ package body Debugger.Gdb is
          --  we still need to reset some data).
          --  Do this before looking for the current file, since the explorer
          --  must also be initialized.
-         Executable_Changed (Convert (Debugger.Window, Debugger));
+         --  No need to do anything in text-only mode
+         if Debugger.Window /= null then
+            Executable_Changed (Convert (Debugger.Window, Debugger));
+         end if;
 
          Push_Internal_Command_Status (Get_Process (Debugger), True);
 
@@ -577,7 +580,10 @@ package body Debugger.Gdb is
       --  Report a change in the executable. This has to be done before we
       --  look for the current file and line, so that the explorer can be
       --  correctly updated.
-      Executable_Changed (Convert (Debugger.Window, Debugger));
+      --  No need to do anything in text-only mode
+      if Debugger.Window /= null then
+         Executable_Changed (Convert (Debugger.Window, Debugger));
+      end if;
 
       --  Detect the current language, and get the name and line of the
       --  initial file.

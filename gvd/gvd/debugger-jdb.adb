@@ -168,7 +168,9 @@ package body Debugger.Jdb is
       else
          --  Indicate that a new executable is present (even if there is none,
          --  we still need to reset some data).
-         Executable_Changed (Convert (Debugger.Window, Debugger));
+         if Debugger.Window /= null then
+            Executable_Changed (Convert (Debugger.Window, Debugger));
+         end if;
       end if;
 
       Language := new Jdb_Java_Language;
