@@ -59,14 +59,14 @@ package body Vdiff2_Utils is
       VStyle  : T_VStr;
       Ref     : T_Loc;
       Loc     : T_Loc);
-   --  Hightlight the Chunk CurrChunk where action is Append
-   --  ??? What is CurrChunk
+   --  Hightlight the Chunk Curr_Chunk where action is Append
+   --  ??? What is Curr_Chunk
 
    procedure Show_Diff_Chunk
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Item   : Diff_Head; CurrChunk : Diff_Chunk_Access);
-   --  Hightlight the Chunk CurrChunk
-   --  ??? What is CurrChunk
+      Item   : Diff_Head; Curr_Chunk : Diff_Chunk_Access);
+   --  Hightlight the Chunk Curr_Chunk
+   --  ??? What is Curr_Chunk
 
    function Add_Line
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
@@ -148,10 +148,8 @@ package body Vdiff2_Utils is
       Item   : Diff_Head)
    is
       List      : constant Diff_List := Item.List;
-      CurrNode  : Diff_List_Node := First (List);
-      CurrChunk : Diff_Chunk_Access := Data (CurrNode);
-      --  ??? Do not use Pascal style identifier. Use Mixed_Case instead
-
+      Curr_Node  : Diff_List_Node := First (List);
+      Curr_Chunk : Diff_Chunk_Access := Data (Curr_Node);
       Offset1   : Natural;
       Offset2   : Natural;
       Args_edit : Argument_List := (1 => new String'(Item.File1.all));
@@ -165,63 +163,66 @@ package body Vdiff2_Utils is
       Execute_GPS_Shell_Command (Kernel, "edit", Args_edit);
       Basic_Types.Free (Args_edit);
 
-      while CurrNode /= Diff_Chunk_List.Null_Node loop
-         case CurrChunk.Range2.Action is
+      while Curr_Node /= Diff_Chunk_List.Null_Node loop
+         case Curr_Chunk.Range2.Action is
             when Append =>
-               CurrChunk.Range1.Mark := new String'
-                 (Add_Line (Kernel, Item.File1.all,
-                            CurrChunk.Range1.First, Append_Style,
-                            CurrChunk.Range2.Last - CurrChunk.Range2.First));
-               Highlight_Line (Kernel, Item.File2.all, CurrChunk.Range2.First,
-                               Old_Style,
-                               CurrChunk.Range2.Last - CurrChunk.Range2.First);
-               CurrChunk.Range2.Mark := new String'
+               Curr_Chunk.Range1.Mark := new String'
+                 (Add_Line
+                    (Kernel, Item.File1.all,
+                     Curr_Chunk.Range1.First, Append_Style,
+                     Curr_Chunk.Range2.Last - Curr_Chunk.Range2.First));
+               Highlight_Line
+                 (Kernel, Item.File2.all, Curr_Chunk.Range2.First,
+                  Old_Style,
+                  Curr_Chunk.Range2.Last - Curr_Chunk.Range2.First);
+               Curr_Chunk.Range2.Mark := new String'
                  (Mark_Diff_Block (Kernel, Item.File2.all,
-                                   CurrChunk.Range2.First));
+                                   Curr_Chunk.Range2.First));
 
             when Change =>
-               Offset1 := CurrChunk.Range1.Last - CurrChunk.Range1.First;
-               Offset2 := CurrChunk.Range2.Last - CurrChunk.Range2.First;
-               Highlight_Line (Kernel, Item.File1.all, CurrChunk.Range1.First,
+               Offset1 := Curr_Chunk.Range1.Last - Curr_Chunk.Range1.First;
+               Offset2 := Curr_Chunk.Range2.Last - Curr_Chunk.Range2.First;
+               Highlight_Line (Kernel, Item.File1.all, Curr_Chunk.Range1.First,
                                Change_Style, Offset1);
-               Highlight_Line (Kernel, Item.File2.all, CurrChunk.Range2.First,
+               Highlight_Line (Kernel, Item.File2.all, Curr_Chunk.Range2.First,
                                Old_Style, Offset2);
 
                if Offset1 < Offset2 then
                   Add_Line (Kernel, Item.File1.all,
-                            CurrChunk.Range1.Last, Change_Style,
+                            Curr_Chunk.Range1.Last, Change_Style,
                             Offset2 - Offset1);
                elsif Offset1 > Offset2 then
                   Add_Line (Kernel, Item.File2.all,
-                            CurrChunk.Range2.Last, Old_Style,
+                            Curr_Chunk.Range2.Last, Old_Style,
                             Offset1 - Offset2);
                end if;
 
-               CurrChunk.Range1.Mark := new String'
+               Curr_Chunk.Range1.Mark := new String'
                  (Mark_Diff_Block (Kernel, Item.File1.all,
-                                   CurrChunk.Range1.First));
-               CurrChunk.Range2.Mark := new String'
+                                   Curr_Chunk.Range1.First));
+               Curr_Chunk.Range2.Mark := new String'
                  (Mark_Diff_Block (Kernel, Item.File2.all,
-                                   CurrChunk.Range2.First));
+                                   Curr_Chunk.Range2.First));
 
             when Delete =>
-               Highlight_Line (Kernel, Item.File1.all,
-                               CurrChunk.Range1.First, Remove_Style,
-                               CurrChunk.Range1.Last - CurrChunk.Range1.First);
-               CurrChunk.Range2.Mark := new String'
+               Highlight_Line
+                 (Kernel, Item.File1.all,
+                  Curr_Chunk.Range1.First, Remove_Style,
+                  Curr_Chunk.Range1.Last - Curr_Chunk.Range1.First);
+               Curr_Chunk.Range2.Mark := new String'
                  (Add_Line (Kernel, Item.File2.all,
-                            CurrChunk.Range2.First, Old_Style,
-                            CurrChunk.Range1.Last - CurrChunk.Range1.First));
-               CurrChunk.Range1.Mark := new String'
+                            Curr_Chunk.Range2.First, Old_Style,
+                            Curr_Chunk.Range1.Last - Curr_Chunk.Range1.First));
+               Curr_Chunk.Range1.Mark := new String'
                  (Mark_Diff_Block (Kernel, Item.File1.all,
-                                   CurrChunk.Range1.First));
+                                   Curr_Chunk.Range1.First));
 
             when others =>
                null;
          end case;
 
-         CurrNode := Next (CurrNode);
-         CurrChunk := Data (CurrNode);
+         Curr_Node := Next (Curr_Node);
+         Curr_Chunk := Data (Curr_Node);
       end loop;
 
    end Show_Differences;
@@ -236,8 +237,8 @@ package body Vdiff2_Utils is
    is
       Args_edit : Argument_List := (1 => new String'(Item.File1.all));
       Res       : Diff_List;
-      CurrNode  : Diff_List_Node;
-      CurrChunk : Diff_Chunk_Access;
+      Curr_Node  : Diff_List_Node;
+      Curr_Chunk : Diff_Chunk_Access;
 
    begin
 
@@ -247,7 +248,7 @@ package body Vdiff2_Utils is
       end if;
 
       Res := Simplify (Item.List, Item.Ref_File);
-      CurrNode := First (Res);
+      Curr_Node := First (Res);
       Register_Highlighting (Kernel);
 
       Execute_GPS_Shell_Command (Kernel, "edit", Args_edit);
@@ -261,10 +262,10 @@ package body Vdiff2_Utils is
       Execute_GPS_Shell_Command (Kernel, "edit", Args_edit);
       Basic_Types.Free (Args_edit);
 
-      while CurrNode /= Diff_Chunk_List.Null_Node loop
-         CurrChunk := Data (CurrNode);
-         Show_Diff_Chunk (Kernel, Item, CurrChunk);
-         CurrNode := Next (CurrNode);
+      while Curr_Node /= Diff_Chunk_List.Null_Node loop
+         Curr_Chunk := Data (Curr_Node);
+         Show_Diff_Chunk (Kernel, Item, Curr_Chunk);
+         Curr_Node := Next (Curr_Node);
       end loop;
 
       Free_List (Res);
@@ -288,59 +289,58 @@ package body Vdiff2_Utils is
       Tmp : String_Access;
 
    begin
-      for I in 1 .. 3 loop
-      --  ??? Do not use I for loop indexing, use J instead
-         if I /= Ref and I /= Loc and Other = 0 then
-            Other := I;
+      for J in 1 .. 3 loop
+         if J /= Ref and J /= Loc and Other = 0 then
+            Other := J;
             if Loc /= 0 then
                Other2 := Loc;
                exit;
             end if;
          end if;
 
-         if I /= Other and Other /= 0 and I /= Ref then
-            Other2 := I;
+         if J /= Other and Other /= 0 and J /= Ref then
+            Other2 := J;
             exit;
          end if;
       end loop;
 
-      for I in 1 .. 3 loop
-         if VOffset (I) >= Offset_Max then
-            Offset_Max := VOffset (I);
+      for J in 1 .. 3 loop
+         if VOffset (J) >= Offset_Max then
+            Offset_Max := VOffset (J);
          end if;
       end loop;
 
-      for I in 1 .. 3 loop
+      for J in 1 .. 3 loop
          Highlight_Line
-           (Kernel, VFile (I).all,
-            VRange (I).First,
-            VStyle (I).all, VOffset (I));
+           (Kernel, VFile (J).all,
+            VRange (J).First,
+            VStyle (J).all, VOffset (J));
 
-         if VOffset (I) < Offset_Max then
+         if VOffset (J) < Offset_Max then
             Tmp := new String'
               (Add_Line
-                 (Kernel, VFile (I).all,
-                  VRange (I).Last, VStyle (I).all,
-                  Offset_Max - VOffset (I)));
+                 (Kernel, VFile (J).all,
+                  VRange (J).Last, VStyle (J).all,
+                  Offset_Max - VOffset (J)));
          end if;
 
-         if VRange (I).Action = Delete then
-            VRange (I).Mark := Tmp;
-         elsif I = Ref then
+         if VRange (J).Action = Delete then
+            VRange (J).Mark := Tmp;
+         elsif J = Ref then
 
             if VRange (Other).Action = Append or
               VRange (Other2).Action = Append then
-               VRange (I).Mark := Tmp;
+               VRange (J).Mark := Tmp;
 
             else
-               VRange (I).Mark := new String'
-                 (Mark_Diff_Block (Kernel, VFile (I).all,
-                                   VRange (I).First));
+               VRange (J).Mark := new String'
+                 (Mark_Diff_Block (Kernel, VFile (J).all,
+                                   VRange (J).First));
                Free (Tmp);
             end if;
          else
-            VRange (I).Mark := new String'
-              (Mark_Diff_Block (Kernel, VFile (I).all,
+            VRange (J).Mark := new String'
+              (Mark_Diff_Block (Kernel, VFile (J).all,
                                 VRange (I).First));
             Free (Tmp);
          end if;
@@ -353,40 +353,40 @@ package body Vdiff2_Utils is
 
    procedure Show_Diff_Chunk
      (Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Item    : Diff_Head; CurrChunk : Diff_Chunk_Access)
+      Item    : Diff_Head; Curr_Chunk : Diff_Chunk_Access)
    is
       Other   : T_Loc := 0;
       Other2  : T_Loc := 0;
-      Loc     : constant T_Loc := CurrChunk.Location;
+      Loc     : constant T_Loc := Curr_Chunk.Location;
       Ref     : constant T_Loc := Item.Ref_File;
       VRange  : T_VRange :=
-        (CurrChunk.Range1, CurrChunk.Range2, CurrChunk.Range3);
+        (Curr_Chunk.Range1, Curr_Chunk.Range2, Curr_Chunk.Range3);
       VFile   : constant T_VStr :=
         (Item.File1, Item.File2, Item.File3);
       VOffset : constant T_VOffset :=
-        ((CurrChunk.Range1.Last - CurrChunk.Range1.First),
-         (CurrChunk.Range2.Last - CurrChunk.Range2.First),
-         (CurrChunk.Range3.Last - CurrChunk.Range3.First));
+        ((Curr_Chunk.Range1.Last - Curr_Chunk.Range1.First),
+         (Curr_Chunk.Range2.Last - Curr_Chunk.Range2.First),
+         (Curr_Chunk.Range3.Last - Curr_Chunk.Range3.First));
       VStyle : T_VStr;
 
    begin
-      for I in 1 .. 3 loop
-         if I /= Ref and I /= Loc and Other = 0 then
-            Other := I;
+      for J in 1 .. 3 loop
+         if J /= Ref and J /= Loc and Other = 0 then
+            Other := J;
             if Loc /= 0 then
                Other2 := Loc;
                exit;
             end if;
          end if;
 
-         if I /= Other and Other /= 0 and I /= Ref then
-            Other2 := I;
+         if J /= Other and Other /= 0 and J /= Ref then
+            Other2 := J;
             exit;
          end if;
       end loop;
 
       if Loc = 0 then
-         if CurrChunk.Conflict then
+         if Curr_Chunk.Conflict then
             if VRange (Other).Action = Change
               and VRange (Other2).Action = Change then
                VStyle (Other2) := new String'(Change_Style);
@@ -445,9 +445,9 @@ package body Vdiff2_Utils is
             Free (VStyle);
          end if;
 
-         CurrChunk.Range1 := VRange (1);
-         CurrChunk.Range2 := VRange (2);
-         CurrChunk.Range3 := VRange (3);
+         Curr_Chunk.Range1 := VRange (1);
+         Curr_Chunk.Range2 := VRange (2);
+         Curr_Chunk.Range3 := VRange (3);
          return;
       end if;
 
@@ -477,9 +477,9 @@ package body Vdiff2_Utils is
       end case;
 
       Free (VStyle);
-      CurrChunk.Range1 := VRange (1);
-      CurrChunk.Range2 := VRange (2);
-      CurrChunk.Range3 := VRange (3);
+      Curr_Chunk.Range1 := VRange (1);
+      Curr_Chunk.Range2 := VRange (2);
+      Curr_Chunk.Range3 := VRange (3);
 
    end Show_Diff_Chunk;
 
