@@ -107,13 +107,15 @@ package body Codefix_Module is
    function Get_Body_Or_Spec
      (Text : GPS_Navigator; File_Name : String) return String
    is
+      F       : constant String := Base_Name (File_Name);
       Project : constant Project_Type :=
-        Get_Project_From_File (Get_Registry (Text.Kernel), File_Name);
+        Get_Project_From_File (Get_Registry (Text.Kernel), F);
    begin
-      return Find_On_Path
-        (Project   => Project,
-         Filename  => Other_File_Name (Project, Base_Name (File_Name)),
-         Recursive => False);
+      return Get_Full_Path_From_File
+        (Registry        => Get_Registry (Text.Kernel),
+         Filename        => Other_File_Name (Project, F),
+         Use_Source_Path => True,
+         Use_Object_Path => False);
    end Get_Body_Or_Spec;
 
    ------------
