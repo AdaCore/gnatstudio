@@ -46,6 +46,7 @@ package Vdiff_Utils is
       New_Line, Old_Line : String_Access;
       Original_Position  : Natural;
       Action             : Diff_Action := Nothing;
+      Color_Enabled      : Boolean := True;
       Next               : Text_Iterator_Access;
    end record;
    --  In this structure, Original_Position is the number of the line in the
