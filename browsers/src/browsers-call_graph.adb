@@ -588,6 +588,17 @@ package body Browsers.Call_Graph is
    ------------------
 
    procedure Destroy_Idle (Data : in out Examine_Ancestors_Idle_Data) is
+      procedure Clean;
+      --  Clean up before exiting Destroy_Idle
+
+      procedure Clean is
+      begin
+         Data.Browser.Idle_Id := 0;
+         Destroy (Data.Iter);
+         Destroy (Data.Entity);
+         Pop_State (Get_Kernel (Data.Browser));
+      end Clean;
+
    begin
       Set_Auto_Layout (Get_Canvas (Data.Browser), True);
       Layout (Get_Canvas (Data.Browser),
@@ -596,12 +607,12 @@ package body Browsers.Call_Graph is
                 Get_Pref (Get_Kernel (Data.Browser),
                           Browsers_Vertical_Layout));
       Refresh_Canvas (Get_Canvas (Data.Browser));
+      Clean;
 
-      Data.Browser.Idle_Id := 0;
-      Destroy (Data.Iter);
-      Destroy (Data.Entity);
-
-      Pop_State (Get_Kernel (Data.Browser));
+   exception
+      when E : others =>
+         Clean;
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end Destroy_Idle;
 
    ---------------------------------------
@@ -682,8 +693,8 @@ package body Browsers.Call_Graph is
 
          exception
             when E : others =>
-               Trace (Me, "Unexpected exception: "
-                      & Exception_Information (E));
+               Trace (Me, "Unexpected exception: " &
+                      Exception_Information (E));
                Free (Tree);
                return False;
          end;
