@@ -347,9 +347,6 @@ package body Src_Info.Debug is
               (' ' & FI.Original_Filename.all &
                ':' & Image (FI.Original_Line));
          end if;
-         if FI.File_Timestamp /= 0 then
-            Put (FI.File_Timestamp'Img);
-         end if;
       end if;
       New_Line;
       Dump_E_Declaration_Info_List (FI.Declarations);
@@ -552,7 +549,7 @@ package body Src_Info.Debug is
 
    procedure Force_Parsing (LIFP : LI_File_Ptr) is
    begin
-      LIFP.LI.LI_Timestamp := 0;
+      LIFP.LI.LI_Timestamp := Src_Info.No_Time;
    end Force_Parsing;
 
    -------------------

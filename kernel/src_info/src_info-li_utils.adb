@@ -73,8 +73,7 @@ package body Src_Info.LI_Utils is
       if Update_Timestamp
         and then Is_Regular_File (Full_LI_Name)
       then
-         File.LI.LI_Timestamp := To_Timestamp
-           (File_Time_Stamp (Full_LI_Name));
+         File.LI.LI_Timestamp := File_Time_Stamp (Full_LI_Name);
       end if;
    end Convert_To_Parsed;
 
@@ -302,7 +301,7 @@ package body Src_Info.LI_Utils is
                  Body_Info     => null,
                  Spec_Info     => null,
                  Separate_Info => null,
-                 LI_Timestamp  => 0));
+                 LI_Timestamp  => No_Time));
       Add (List.Table.all, File);
    end Create_LI_File;
 
@@ -317,7 +316,7 @@ package body Src_Info.LI_Utils is
       Unit_Name      : String := "")
    is
       Unit : GNAT.OS_Lib.String_Access;
-      Time : Timestamp := 0;
+      Time : Ada.Calendar.Time := No_Time;
 
    begin
       if Unit_Name /= "" then
@@ -325,7 +324,7 @@ package body Src_Info.LI_Utils is
       end if;
 
       if Set_Time_Stamp then
-         Time := To_Timestamp (File_Time_Stamp (Full_Filename));
+         Time := File_Time_Stamp (Full_Filename);
       end if;
 
       FI_Ptr := new File_Info'

@@ -870,7 +870,7 @@ private
    type Scope_Tree is record
       Lib_Info    : LI_File_Ptr;
       LI_Filename : VFS.Virtual_File;
-      Time_Stamp  : Timestamp;
+      Time_Stamp  : Ada.Calendar.Time;
       --  For efficiency, we keep an access to the LI file that was used to
       --  create the tree. However, we also keep the file name itself, so that
       --  we can check whether the LI file was updated, and the tree is no
@@ -892,7 +892,7 @@ private
    Null_Scope_Tree : constant Scope_Tree :=
      (Lib_Info       => null,
       LI_Filename    => VFS.No_File,
-      Time_Stamp     => 0,
+      Time_Stamp     => No_Time,
       Body_Tree      => null,
       Spec_Tree      => null,
       Separate_Trees => null);
