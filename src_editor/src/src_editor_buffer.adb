@@ -4061,7 +4061,6 @@ package body Src_Editor_Buffer is
          Set_Controls
            (Buffer.Queue, Undo_Redo_Data.Get (Buffer.Kernel, Undo_Redo_Id));
       end if;
-
       Buffer.Controls_Set := True;
    end Add_Controls;
 
