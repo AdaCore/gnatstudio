@@ -876,8 +876,8 @@ package body Glide_Kernel.Console is
              & " window if it doesn't exist. Preexisting contents for that"
              & " category is not removed, see locations_remove_category."
              & ASCII.LF
-             & "The regular expressions specifies how locations are recognized"
-             & ". By default, it matches file:line:column. The various indexes"
+             & "The regular expression specifies how locations are recognized."
+             & " By default, it matches file:line:column. The various indexes"
              & " indicate the index of the opening parenthesis that contains"
              & " the relevant information in the regular expression. Set it"
              & " to 0 if that information is not available. Style_Index and"
