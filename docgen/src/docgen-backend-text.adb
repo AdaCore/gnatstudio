@@ -35,7 +35,7 @@ package body Docgen.Backend.Text is
    -- Template Files --
    --------------------
 
-   Cache : constant Boolean := False;
+   Cache : constant Boolean := True;
    --  Control the templates parser cache option
 
    -----------------------
