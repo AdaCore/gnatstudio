@@ -612,33 +612,45 @@ package body Projects is
    -----------------------
 
    procedure Check_Suffix_List
-     (Filename : String;
-      Langs    : String_List_Id;
-      List     : in out Array_Element_Id;
-      Len      : out Natural)
+     (Filename           : String;
+      Langs              : String_List_Id;
+      List               : in out Array_Element_Id;
+      Len                : out Natural)
    is
+      Candidate     : Array_Element_Id := No_Array_Element;
+      Candidate_Len : Natural := 0;
       Lang : Name_Id;
       L    : String_List_Id;
    begin
-      Suffixes : while List /= No_Array_Element loop
+      while List /= No_Array_Element loop
          Lang := Array_Elements.Table (List).Index;
 
-         --  Only check for supported languages
-         L    := Langs;
+         --  We first need to check the naming schemes for the supported
+         --  languages (in case they redefine some of the predefined naming
+         --  schemes, such as .h for c++ files). In this is not found in the
+         --  list of supported languages, then return any match we had
+
+         L     := Langs;
          while L /= Nil_String loop
-            if String_Elements.Table (L).Value = Lang then
-               Get_Name_String (Array_Elements.Table (List).Value.Value);
-               exit Suffixes when Suffix_Matches
-                 (Filename, Name_Buffer (1 .. Name_Len));
+            Get_Name_String (Array_Elements.Table (List).Value.Value);
+            if Suffix_Matches (Filename, Name_Buffer (1 .. Name_Len)) then
+               if String_Elements.Table (L).Value = Lang then
+                  Len := Name_Len;
+                  return;
+               end if;
+
+               Candidate     := List;
+               Candidate_Len := Name_Len;
             end if;
 
             L := String_Elements.Table (L).Next;
          end loop;
 
-         Len := 0;
          List := Array_Elements.Table (List).Next;
-      end loop Suffixes;
-      Len := Name_Len;
+      end loop;
+
+      List := Candidate;
+      Len  := Candidate_Len;
    end Check_Suffix_List;
 
    ------------------------------------------
