@@ -87,13 +87,6 @@ package Commands.Interactive is
    procedure Free (X : in out Interactive_Command_Proxy);
    --  See doc for inherited subprogram
 
---     procedure Set_Execution_Context
---       (Command : access Interactive_Command;
---        Context : Glide_Kernel.Selection_Context_Access);
---     --  Sets the context with which the command should be executed.
---  --  Unref will be called on this context when a command is run using this
---     --  context.
-
 private
 
    type Interactive_Command is abstract new Root_Command with null record;
