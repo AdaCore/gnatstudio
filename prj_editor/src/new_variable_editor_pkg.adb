@@ -5,7 +5,7 @@ with Gtk.Widget;      use Gtk.Widget;
 with Gtk.Enums;       use Gtk.Enums;
 with Gtkada.Handlers; use Gtkada.Handlers;
 with Callbacks_Switches_Glade; use Callbacks_Switches_Glade;
-with Switches_Glade_Intl; use Switches_Glade_Intl;
+with Glide_Intl; use Glide_Intl;
 with New_Variable_Editor_Pkg.Callbacks; use New_Variable_Editor_Pkg.Callbacks;
 
 package body New_Variable_Editor_Pkg is

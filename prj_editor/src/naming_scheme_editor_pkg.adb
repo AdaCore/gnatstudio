@@ -3,7 +3,7 @@ pragma Style_Checks (Off);
 with Gtk; use Gtk;
 with Gtk.Enums;       use Gtk.Enums;
 with Gtkada.Handlers; use Gtkada.Handlers;
-with Switches_Glade_Intl; use Switches_Glade_Intl;
+with Glide_Intl; use Glide_Intl;
 with Naming_Scheme_Editor_Pkg.Callbacks; use Naming_Scheme_Editor_Pkg.Callbacks;
 
 package body Naming_Scheme_Editor_Pkg is
