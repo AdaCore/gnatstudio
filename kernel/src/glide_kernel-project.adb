@@ -266,7 +266,7 @@ package body Glide_Kernel.Project is
 
    begin
       if not Is_Regular_File (Project) then
-         Console.Insert (Kernel, Project & -" is not a regular file",
+         Console.Insert (Kernel, Project & (-" is not a regular file"),
                          Mode => Console.Error);
          return;
       end if;
