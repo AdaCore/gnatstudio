@@ -76,7 +76,7 @@ package body GVD.Canvas is
    --  would appear in the computation and make zoom_in not the reverse of
    --  zoom_out.
 
-   Zoom_Steps : constant := 12;
+   Zoom_Steps : constant := 3;
    --  Number of steps while zooming in or out.
 
    --------------------
