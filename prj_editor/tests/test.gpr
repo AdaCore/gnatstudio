@@ -3,36 +3,48 @@ project Test is
    type OS_Type is ("Linux", "Windows");
    OS : OS_Type := external ("OS", "Linux");
 
-
-   OS3 : OS_Type := "Linux"; --  not a scenario variable
+   type OS_Type2 is ("Linux", "Windows");
+   OS3 : OS_Type2 := "Linux"; --  not a scenario variable
    OS4 := external ("OS", "foo");  --  not a scenario variable
-   for Source_Dirs use ("common");
-
-   case OS is
-       when "Linux" => 
-          for Source_Dirs use Test'Source_Dirs & ("os=linux/");
-       when "Windows" => 
-          for Source_Dirs use Test'Source_Dirs & ("os=windows/");
-   end case;
+   for Source_Dirs use (".");
 
    type Target_Type is ("Devel", "Release");
    Target : Target_Type := external ("TARGET", "Devel");
 
-   package Gnatmake is
-     OS2 : OS_Type := external ("OS2", "Windows");
+   package Builder is
+     OS2 : OS_Type := external ("OS2", "Linux");
      case OS is
          when "Linux" =>
-             for Switches use Gnatmake'Switches & ("-mlinux");
-         when "Windows" =>
-             for Switches use Gnatmake'Switches & ("-mwindows");
+             --  case OS is
+             --     when "Linux" =>
+             for Default_Switches ("Ada") use ("-mlinux");
+             --  end case;
+         when others =>
+             for Default_Switches ("Ada") use ("-mwindows");
      end case;
 
      case Target is
          when "Devel" =>
-             for Switches use Gnatmake'Switches & ("-g");
+             for Default_Switches ("Ada")
+                use Builder'Default_Switches & ("-g");
          when "Release" =>
-             for Switches use Gnatmake'Switches & ("-O2");
+             for Default_Switches ("Ada") 
+                use Builder'Default_Switches & ("-O2");
      end case;
-   end Gnatmake;
+   end Builder;
 
+   case OS is
+       when "Linux" => 
+          for Source_Dirs use Test'Source_Dirs & ("prj11");
+       when "Windows" => 
+          for Source_Dirs use Test'Source_Dirs & ("prj1/foo");
+          case Target is
+             when "Devel" =>
+                for Source_Dirs use Test'Source_Dirs & ("prj1/bar");
+          end case;
+
+   end case;
+
+   for Source_Dirs use Test'Source_Dirs & ("..");
+ 
 end Test;
