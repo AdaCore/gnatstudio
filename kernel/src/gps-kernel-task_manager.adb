@@ -18,31 +18,28 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Gtk.Dialog;               use Gtk.Dialog;
-with Gtk.Label;                use Gtk.Label;
-with Gtk.Widget;               use Gtk.Widget;
-with Gtk.Box;                  use Gtk.Box;
-with Gtk.Stock;                use Gtk.Stock;
+with Gtk.Dialog;                use Gtk.Dialog;
+with Gtk.Label;                 use Gtk.Label;
+with Gtk.Widget;                use Gtk.Widget;
+with Gtk.Box;                   use Gtk.Box;
+with Gtk.Stock;                 use Gtk.Stock;
 
-with GVD.Status_Bar;           use GVD.Status_Bar;
-
-with GPS.Main_Window;        use GPS.Main_Window;
-
-with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
-with GPS.Kernel.Modules;     use GPS.Kernel.Modules;
-with GPS.Kernel.Scripts;     use GPS.Kernel.Scripts;
-with GPS.Kernel.Hooks;       use GPS.Kernel.Hooks;
+with GPS.Main_Window;           use GPS.Main_Window;
+with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
+with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
+with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
+with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
-with Task_Manager;             use Task_Manager;
-with Task_Manager.GUI;         use Task_Manager.GUI;
+with Task_Manager;              use Task_Manager;
+with Task_Manager.GUI;          use Task_Manager.GUI;
 
-with Glib.Xml_Int;             use Glib.Xml_Int;
-with Glib.Object;              use Glib.Object;
-with Gtkada.MDI;               use Gtkada.MDI;
-with Traces;                   use Traces;
-with Ada.Exceptions;           use Ada.Exceptions;
-with GPS.Intl;               use GPS.Intl;
-with Commands.Custom;          use Commands.Custom;
+with Glib.Xml_Int;              use Glib.Xml_Int;
+with Glib.Object;               use Glib.Object;
+with Gtkada.MDI;                use Gtkada.MDI;
+with Traces;                    use Traces;
+with Ada.Exceptions;            use Ada.Exceptions;
+with GPS.Intl;                  use GPS.Intl;
+with Commands.Custom;           use Commands.Custom;
 
 package body GPS.Kernel.Task_Manager is
 
@@ -373,9 +370,7 @@ package body GPS.Kernel.Task_Manager is
       Push_Command, Pop_Command : Custom_Command_Access;
       Script                    : Scripting_Language;
    begin
-      Task_Manager_Module_Id :=
-        new Task_Manager_Module_Id_Record;
-
+      Task_Manager_Module_Id := new Task_Manager_Module_Id_Record;
       Task_Manager_Module_Id.Kernel := Kernel_Handle (Kernel);
 
       Register_Module
@@ -388,8 +383,7 @@ package body GPS.Kernel.Task_Manager is
 
       Set_Progress_Area
         (Get_Task_Manager (Kernel),
-         Get_Progress_Area
-           (GPS_Window (Get_Main_Window (Kernel)).Statusbar));
+         GPS_Window (Get_Main_Window (Kernel)).Statusbar);
 
       Script := Lookup_Scripting_Language (Kernel, GPS_Shell_Name);
       Create

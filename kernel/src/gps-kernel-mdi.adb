@@ -91,7 +91,7 @@ package body GPS.Kernel.MDI is
    is
       Top : constant GPS_Window := GPS_Window (Handle.Main_Window);
    begin
-      return Top.Process_Mdi;
+      return Top.MDI;
    end Get_MDI;
 
    ---------
