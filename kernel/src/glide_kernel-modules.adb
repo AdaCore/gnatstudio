@@ -1248,14 +1248,13 @@ package body Glide_Kernel.Modules is
       Every_Line     : Boolean := True)
    is
       Value         : GValue_Array (1 .. 5);
-      Norm_Filename : constant String := Normalize_Pathname (File);
    begin
       Init (Value (1),  Glib.GType_String);
       Init (Value (2),  Glib.GType_String);
       Init (Value (3),  Glib.GType_Pointer);
       Init (Value (4),  Glib.GType_Boolean);
       Init (Value (5),  Glib.GType_Boolean);
-      Set_String (Value (1), Norm_Filename);
+      Set_String (Value (1), File);
       Set_String (Value (2), Identifier);
       Set_Address (Value (3), To_Address (Info));
       Set_Boolean (Value (4), Stick_To_Data);
