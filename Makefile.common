@@ -250,6 +250,24 @@ check_kernel: force
 	@[ -f ${KERNEL_SRC}/src/glide_kernel.ads ] || \
 	   (echo "kernel sources not found in ${KERNEL_SRC}, see README"; false)
 
+###################
+## syntax module ##
+###################
+
+ifneq (,$(findstring syntax,$(MODULES)))
+
+# Location of syntax sources. See the README file at the top-level for
+# information on how to setup the required links
+SYNTAX_SRC=../../syntax
+
+MODULE_INCLUDE+=-aI${SYNTAX_SRC}/src -aO${SYNTAX_SRC}/obj
+endif
+
+.PHONY: check_syntax
+check_syntax: force
+	@[ -f ${SYNTAX_SRC}/src/source_analyzer.adb ] || \
+	   (echo "syntax sources not found in ${SYNTAX_SRC}, see README"; false)
+
 ##################
 ## glide module ##
 ##################
