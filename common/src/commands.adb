@@ -19,6 +19,7 @@
 -----------------------------------------------------------------------
 
 with Glide_Intl; use Glide_Intl;
+with Unchecked_Deallocation;
 
 package body Commands is
 
@@ -40,17 +41,30 @@ package body Commands is
       return new Command_Queue_Record;
    end New_Queue;
 
+   ----------------
+   -- Free_Queue --
+   ----------------
+
+   procedure Free_Queue (Q : in out Command_Queue)
+   is
+      procedure Free_Queue_Access is
+         new Unchecked_Deallocation (Command_Queue_Record, Command_Queue);
+   begin
+      Free (Q.The_Queue);
+      Free (Q.Undo_Queue);
+      Free (Q.Redo_Queue);
+      Free (Q.Queue_Change_Hook);
+      Free_Queue_Access (Q);
+   end Free_Queue;
+
    ----------
    -- Free --
    ----------
 
    procedure Free (X : in out Command_Access) is
-      pragma Unreferenced (X);
    begin
-      --  ??? must correctly free memory.
-      --  In fact, actions are never freed, they are just moved from
-      --  one queue to the other.
-      null;
+      Free (X.Next_Commands);
+      Destroy (X);
    end Free;
 
    ----------
@@ -72,6 +86,16 @@ package body Commands is
       Command_Finished (Command, False);
       return False;
    end Undo;
+
+   -------------
+   -- Destroy --
+   -------------
+
+   procedure Destroy (X : access Root_Command) is
+      pragma Unreferenced (X);
+   begin
+      null;
+   end Destroy;
 
    -------------
    -- Enqueue --

@@ -61,10 +61,16 @@ package Commands is
    --  IMPORTANT: at the end of undoing, Command_Finished must be
    --  called. See above for details.
 
+   procedure Destroy (X : access Root_Command);
+   --  Free memory associated to X.
+
    type Command_Queue is private;
 
    function New_Queue return Command_Queue;
    --  Create a new empty Command_Queue.
+
+   procedure Free_Queue (Q : in out Command_Queue);
+   --  Free memory associated with Q.
 
    procedure Enqueue
      (Queue         : Command_Queue;
@@ -119,6 +125,8 @@ private
    --  Return the queue change hook.
 
    procedure Free (X : in out Command_Access);
+   --  Free memory associated with X.
+
    package Command_Queues is new Generic_List (Command_Access);
 
    type Command_Queue_Record is record
