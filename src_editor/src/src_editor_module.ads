@@ -37,10 +37,11 @@ with Glide_Kernel;       use Glide_Kernel;
 with Glide_Kernel.Hooks; use Glide_Kernel.Hooks;
 with String_List_Utils;  use String_List_Utils;
 with VFS;                use VFS;
+with Src_Contexts;
 
 with Ada.Unchecked_Deallocation;
 with Generic_List;
-
+with Basic_Types;
 with HTables;
 
 package Src_Editor_Module is
@@ -218,6 +219,12 @@ private
       Post_It_Note_GC          : Gdk.GC.Gdk_GC := null;
 
       Editors                  : Editors_Hash.HTable;
+
+      --  The following fields are related to the current search.
+
+      Search_Context           : Src_Contexts.Files_Project_Context_Access;
+      Search_File              : VFS.Virtual_File;
+      Search_Pattern           : Basic_Types.String_Access;
    end record;
    type Source_Editor_Module is access all Source_Editor_Module_Record'Class;
 
