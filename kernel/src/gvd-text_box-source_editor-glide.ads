@@ -92,6 +92,10 @@ package GVD.Text_Box.Source_Editor.Glide is
    function Get_Line (Editor : access GEdit_Record) return Natural;
    --  See GVD.Text_Box.Source_Editor for more information.
 
+   procedure Free_Debug_Info (Editor : access GEdit_Record);
+   --  Free dynamic memory associated to Editor, relative to debugger
+   --  information.
+
 private
 
    type GEdit_Record is new Source_Editor_Record with record
