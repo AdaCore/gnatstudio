@@ -102,9 +102,10 @@ procedure GVD_Main is
       end if;
 
       if Root.all /= "" then
-         Bind_Text_Domain ("GtkAda", Root.all & Directory_Separator & "share" &
-           Directory_Separator & "locale");
          Bind_Text_Domain ("gvd", Root.all & Directory_Separator & "share" &
+           Directory_Separator & "locale");
+      else
+         Bind_Text_Domain ("gvd", GVD.Prefix & Directory_Separator & "share" &
            Directory_Separator & "locale");
       end if;
 

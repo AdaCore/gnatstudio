@@ -28,6 +28,8 @@ package GVD is
    Version : constant String := "@GVD_VERSION@";
    --  Version number of this software.
 
+   Prefix : constant String := "@prefix@";
+
    Max_Frame : constant := 500;
    --  Maximum number of frames displayed in the backtrace window.
 
