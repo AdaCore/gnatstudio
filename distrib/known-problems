@@ -1,5 +1,14 @@
 Known Problems fixed in GPS 2.0.0
 
+- D128-002 Absolute paths generated when adding project dependencies
+  Problem:    When a new dependency is added between two projects, an absolute
+              path is almost always generated, no matter what the preference
+              "Relative project paths" is.
+  Workaround: Edit the project properties, unset the "Paths should be relative",
+              and press OK. Edit again the properties and set back the button.
+              You can then save the project, and all absolute paths have been
+              converted to absolute
+
 - Duplicate new file names
   Problem:    Creating several new files, and closing one that is not the last
               one, and creating a new one again result in a name duplication,
