@@ -75,7 +75,7 @@ Known Problems fixed in GPS 2.1.0
               buttons, those buttons are not displayed.
   Workaround: Use the XML files mechanism to create toolbar buttons
 
-- D914-023 Sort order in Project View now kept when scenario changes
+- D914-023 Sort order in Project View not kept when scenario changes
   Problem:    If you change the value of the environment variables that
               describe the current scenario, the list of directories in the
               project view will change appropriately, but the new directories
