@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2003                      --
+--                      Copyright (C) 2000-2004                      --
 --                             ACT-Europe                            --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -72,6 +72,7 @@ with String_Utils;             use String_Utils;
 with System;                   use System;
 with String_List_Utils;        use String_List_Utils;
 with Ada.Text_IO;              use Ada.Text_IO;
+with Ada.Exceptions;           use Ada.Exceptions;
 with Traces;                   use Traces;
 
 package body GUI_Utils is
@@ -343,6 +344,11 @@ package body GUI_Utils is
          Data.Destroy (Data.Widget, Gtk_Menu (Menu));
       end if;
       return False;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         return False;
    end Unmap_Menu;
 
    -----------------------------------
@@ -377,6 +383,11 @@ package body GUI_Utils is
       end if;
 
       return False;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         return False;
    end Key_Press_For_Contextual_Menu;
 
    --------------------------------------
@@ -412,6 +423,11 @@ package body GUI_Utils is
       end if;
 
       return False;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         return False;
    end Button_Press_For_Contextual_Menu;
 
    ------------------------------
@@ -478,6 +494,11 @@ package body GUI_Utils is
             User.Menu_Destroy (User.User, Gtk_Menu (Menu));
          end if;
          return False;
+
+      exception
+         when E : others =>
+            Trace (Me, "Unexpected exception: " & Exception_Information (E));
+            return False;
       end Unmap_User_Menu;
 
       -----------------------------------
@@ -514,6 +535,11 @@ package body GUI_Utils is
          end if;
 
          return False;
+
+      exception
+         when E : others =>
+            Trace (Me, "Unexpected exception: " & Exception_Information (E));
+            return False;
       end Key_Press_For_Contextual_Menu;
 
       --------------------------------------
@@ -549,6 +575,11 @@ package body GUI_Utils is
          end if;
 
          return False;
+
+      exception
+         when E : others =>
+            Trace (Me, "Unexpected exception: " & Exception_Information (E));
+            return False;
       end Button_Press_For_Contextual_Menu;
 
       ------------------------------
@@ -661,6 +692,10 @@ package body GUI_Utils is
             Set (M, Iter, Data, True);
          end if;
       end if;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end Radio_Callback;
 
    -------------------------------
@@ -694,6 +729,10 @@ package body GUI_Utils is
    begin
       Iter := Get_Iter_From_String (M, Path_String);
       Set_Value (M, Iter, Data, Text_Value);
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end Edited_Callback;
 
    -----------------------------
@@ -992,6 +1031,11 @@ package body GUI_Utils is
          Main_Quit;
       end if;
       return True;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         return False;
    end Key_Press_In_Grab;
 
    --------------
