@@ -12,6 +12,12 @@ Known Problems fixed in GPS 1.4.1
   Workaround: Save the modified projects one by one through the contextual
               menu in the project explorer
 
+- CB30-003 GPS hangs when compiling file with 'new abstract' syntax error
+  Problem:    When compiling a file with constrcuts such as
+              type A is new abstract B with private;
+              GPS hangs.
+  Workaround: Fix the code by swapping 'abstract' and 'new'
+
 - CB19-011 Keywords always case sensitive in custom languages
   Problem:    When defining a custom language in an xml file, the keywords
               regexp will always be case sensitive.
