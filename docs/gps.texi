@@ -2875,30 +2875,18 @@ graphical tools such as the project wizard (@ref{The Project Wizard})
 and the properties editor(@ref{The Project Properties Editor}) are
 provided.
 
-@c The English of the following paragraph is unclear
-@c
 @cindex normalization of projects
-GPS doesn't preserve the layout of whole content of manually created
-project after you have edited them in GPS. For instance, comments are
-not currently preserved. Likewise, multiple case statements in the
-project will be coalesced into a single case statement. This
-normalization is required for GPS to be able to preserve the previous
+GPS doesn't preserve the layout nor comments of manually created
+projects after you have edited them in GPS. For instance, multiple case
+statements in the project will be coalesced into a single case statement.
+This normalization is required for GPS to be able to preserve the previous
 semantic of the project in addition to the new settings.
-
 
 @cindex GNAT
 All command-line GNAT tools are project aware, meaning that the notion
 of project goes well beyond GPS' user interface. Most capabilities
 of project files can be accessed without using GPS itself, making
 project files very attractive.
-
-@cindex Ada
-@cindex gpr2make
-If you are using programming languages other than Ada, the project
-files can automatically generate Makefiles through the @file{gpr2make}
-tool provided with GNAT. Round trip editing is not available though,
-and any change you make to the generated Makefiles will be lost the
-next time the tool is run.
 
 @cindex ADA_PROJECT_PATH
 GPS uses the same mechanisms to locate project files as GNAT
