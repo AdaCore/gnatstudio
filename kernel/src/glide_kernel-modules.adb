@@ -1501,7 +1501,7 @@ package body Glide_Kernel.Modules is
                Use_Source_Path => True,
                Use_Object_Path => True);
          begin
-            File_Found := Full /= Filename;
+            File_Found := (Full /= Filename) and then Is_Regular_File (Full);
 
             if File_Found then
                Set_String (Value (1), Full);
