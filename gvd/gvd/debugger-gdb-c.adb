@@ -301,12 +301,16 @@ package body Debugger.Gdb.C is
 
       declare
          Ent : constant String := Type_Str (Tmp .. Type_Str'Last);
-         T : constant String := Type_Of (Get_Debugger (Lang), Ent);
-         J : Natural := T'First;
+         T   : constant String := Type_Of (Get_Debugger (Lang), Ent);
+         J   : Natural := T'First;
+
       begin
          if T = Type_Str then
-            --  We are about to recurse...
-            raise Storage_Error;
+            --  Also a simple (unknown) type
+
+            Result := New_Simple_Type;
+            Set_Type_Name (Result, Ent);
+            return;
          end if;
 
          --  In some cases, T might have a null length (for instance if we
