@@ -196,7 +196,7 @@ package body Creation_Wizard.Selector is
       Model := Gtk_Tree_Store (Get_Model (Dialog.View));
 
       Append (Model, From_Sources_Iter, Null_Iter);
-      Set (Model, From_Sources_Iter, 0, -"From existing application");
+      Set (Model, From_Sources_Iter, 0, -"From existing Ada sources");
       Set (Model, From_Sources_Iter, 1,
            -("Create a new set of projects given a set of source directories"
              & " and a set of object directories. GPS will try to create"
