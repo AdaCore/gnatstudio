@@ -218,16 +218,25 @@ package body Ada_Naming_Editors is
       procedure Update_If_Required
         (Name : Name_Id; Value : String; Index : String)
       is
-         Old : constant String := Get_Attribute_Value
-           (Project_View   => Project_View,
-            Attribute_Name => Get_Name_String (Name),
-            Package_Name   => Naming,
-            Index          => Index);
+         Modified : Boolean := False;
       begin
-         if Project_View = No_Project
-           or else (Value /= Old
-                    and then (Old /= "" or else not Ada_Scheme))
-         then
+         if Project_View = No_Project then
+            Modified := True;
+
+         else
+            declare
+               Old : constant String := Get_Attribute_Value
+                 (Project_View   => Project_View,
+                  Attribute_Name => Get_Name_String (Name),
+                  Package_Name   => Naming,
+                  Index          => Index);
+            begin
+               Modified := Value /= Old
+                 and then (Old /= "" or else not Ada_Scheme);
+            end;
+         end if;
+
+         if Modified then
             Changed := True;
             if Ada_Scheme then
                Delete_Attribute
