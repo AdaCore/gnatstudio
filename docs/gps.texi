@@ -1927,7 +1927,7 @@ Save the current source editor if needed.
 Same current file under a different name, using the file selector dialog.
 @xref{The File Selector}.
 
-@item Save...
+@item Save More
 @cindex save
 Give access to extra save capabilities.
 
@@ -3885,7 +3885,7 @@ To force this behavior, open the menu @code{Window}, select
 @code{Search} in the list at the bottom of the menu, and then select
 either @code{Floating} or @code{Docked}.
 
-If you save the desktop (@code{File->Save...->Desktop}, GPS will
+If you save the desktop (@code{File->Save More->Desktop}, GPS will
 automatically reopen the search dialog in its new place when it is
 started next time.
 
@@ -7729,7 +7729,7 @@ Log file created by the integrated debugger to trace of communication between
 GPS and gdb.
 
    @item $HOME/.gps/desktop
-Desktop file in XML format (using the menu @code{File->Save...->Desktop}),
+Desktop file in XML format (using the menu @code{File->Save More->Desktop}),
 loaded automatically if found.
 
    @item $HOME/.gps/gtkrc
