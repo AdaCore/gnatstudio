@@ -4111,7 +4111,8 @@ package body Src_Editor_Buffer is
 
    function Do_Indentation
      (Buffer            : Source_Buffer;
-      Current_Line_Only : Boolean := False) return Boolean
+      Current_Line_Only : Boolean := False;
+      Force             : Boolean := False) return Boolean
    is
       Iter, End_Pos : Gtk_Text_Iter;
       Result : Boolean;
@@ -4138,12 +4139,13 @@ package body Src_Editor_Buffer is
          Copy (Iter, Dest => End_Pos);
       end if;
 
-      return Do_Indentation (Buffer, Iter, End_Pos);
+      return Do_Indentation (Buffer, Iter, End_Pos, Force);
    end Do_Indentation;
 
    function Do_Indentation
      (Buffer      : Source_Buffer;
-      From, To    : Gtk_Text_Iter) return Boolean
+      From, To    : Gtk_Text_Iter;
+      Force       : Boolean := False) return Boolean
    is
       Lang          : constant Language_Access := Get_Language (Buffer);
       Indent_Style  : Indentation_Kind;
@@ -4291,6 +4293,10 @@ package body Src_Editor_Buffer is
         (Lang         => Lang,
          Params       => Indent_Params,
          Indent_Style => Indent_Style);
+
+      if Force then
+         Indent_Style := Extended;
+      end if;
 
       if Indent_Style = None then
          return False;

@@ -311,16 +311,20 @@ package Src_Editor_Buffer is
 
    function Do_Indentation
      (Buffer      : Source_Buffer;
-      From, To    : Gtk.Text_Iter.Gtk_Text_Iter) return Boolean;
+      From, To    : Gtk.Text_Iter.Gtk_Text_Iter;
+      Force       : Boolean := False) return Boolean;
    --  Reindent a specific range of lines (the ones containing From to To).
    --  Indentation depend on the language and the setup the user has chosen
    --  (either simple or extended indentation).
    --  Do nothing if the preference is not activated.
    --  Return whether the current range could be indented correctly.
+   --  If Force, perform indentation in Extended mode, even if auto
+   --  indentation is disabled.
 
    function Do_Indentation
      (Buffer            : Source_Buffer;
-      Current_Line_Only : Boolean := False) return Boolean;
+      Current_Line_Only : Boolean := False;
+      Force             : Boolean := False) return Boolean;
    --  Same as above, but for the current line (or current selection if there
    --  is one and Current_Line_Only is False).
 
