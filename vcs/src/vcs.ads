@@ -41,7 +41,8 @@ package VCS is
 
    type VCS_Access is access all VCS_Record'Class;
 
-   package String_List is new Generic_List (String);
+   procedure Free (S : in out String);
+   package String_List is new Generic_List (String, Free => Free);
 
    type File_Status is
      (Unknown,
@@ -94,6 +95,7 @@ package VCS is
       --  ???  We need to put additional info here : date, etc.
    end record;
 
+   procedure Free (F : in out File_Status_Record);
    package File_Status_List is new Generic_List (File_Status_Record);
 
    function Get_Status

@@ -46,4 +46,28 @@ package body VCS is
       end if;
    end Set_Error;
 
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (S : in out String) is
+   begin
+      null;
+   end Free;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (F : in out File_Status_Record) is
+      use String_List;
+      use File_Status_List;
+   begin
+      Free (F.File_Name);
+      Free (F.Working_Revision);
+      Free (F.Repository_Revision);
+      Free (F.Tags);
+      Free (F.Users);
+   end Free;
+
 end VCS;
