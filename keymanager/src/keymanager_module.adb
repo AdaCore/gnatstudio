@@ -622,12 +622,12 @@ package body KeyManager_Module is
                   --  We'll have to test last the commands that apply anywhere,
                   --  to give a chance to more specialized commands to get
                   --  called first.
-                  if Command.Context = null then
+                  if Command.Filter = null then
                      Any_Context_Command := Command;
                      Trace (Me, "Candidate action in any context: "
                             & Binding.Action.all);
 
-                  elsif Context_Matches (Command.Context, Kernel) then
+                  elsif Filter_Matches (Command.Filter, Kernel) then
                      Trace (Me, "Executing action " & Binding.Action.all);
                      Launch_Background_Command
                        (Kernel, Create_Proxy (Command.Command, Event),
@@ -912,7 +912,8 @@ package body KeyManager_Module is
                else
                   Action := Lookup_Action (Handler.Kernel, Binding.Action.all);
                   if Action /= No_Action then
-                     Parent := Find_Parent (Editor.Model, Action.Context);
+                     Parent := Find_Parent
+                       (Editor.Model, Get_Context (Action.Filter));
                      if Parent /= Null_Iter then
                         Parent := Children (Editor.Model, Parent);
                         while Parent /= Null_Iter loop
@@ -962,13 +963,14 @@ package body KeyManager_Module is
          Action := Get (Action_Iter);
          exit when Action = No_Action;
 
-         Parent := Find_Parent (Editor.Model, Action.Context);
+         Parent := Find_Parent (Editor.Model, Get_Context (Action.Filter));
          if Parent = Null_Iter then
-            if Action.Context = null then
+            if Get_Context (Action.Filter) = null then
                Parent := Set (Editor.Model, Null_Iter, -"General");
             else
                Parent := Set
-                 (Editor.Model, Null_Iter, Get_Name (Action.Context));
+                 (Editor.Model, Null_Iter,
+                  Get_Name (Get_Context (Action.Filter)));
             end if;
          end if;
 
