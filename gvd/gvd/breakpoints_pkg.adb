@@ -18,7 +18,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glib; use Glib;
 with Gtk; use Gtk;
 with Gtk.Adjustment; use Gtk.Adjustment;
 with Gtk.Widget;      use Gtk.Widget;
