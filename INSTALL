@@ -39,7 +39,3 @@ commands at the top level GPS source directory:
   $ make
   $ make install
 
-Optionally, you might want to setup the documentation path GPS_DOC_PATH,
-as described in the GPS documentation, to point to new doc directories.
-Indexes need to be created in these directories (gps_index.xml files, as
-described in the documentation)
