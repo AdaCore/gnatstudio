@@ -443,6 +443,7 @@ package body Glide_Kernel is
      (Handle      : access Kernel_Handle_Record;
       LI_File     : in out Src_Info.LI_File_Ptr)
    is
+      Unit          : Src_Info.LI_File_Ptr;
       Parse_Success : Boolean;
    begin
       if Is_Incomplete (LI_File) then
@@ -455,10 +456,19 @@ package body Glide_Kernel is
             Parse_ALI_File
               (Handle       => Handle,
                ALI_Filename => LI_Name,
-               Unit         => LI_File,
+               Unit         => Unit,
                Success      => Parse_Success);
 
-            --  ??? What do we do if Parse_Success is False ?
+            if Parse_Success then
+               LI_File := Unit;
+            else
+               LI_File := No_LI_File;
+
+               --  ??? Should be printed in the status bar
+               Put_Line
+                 ("Complete_Ali_File_If_Needed: couldn't parse ALI file "
+                  & LI_Name);
+            end if;
          end;
       end if;
    end Complete_Ali_File_If_Needed;
