@@ -715,6 +715,8 @@ package body Directory_Tree is
          end if;
 
          Gtk_Select (Data.Tree, Tmp);
+         Expand (Data.Tree, Tmp);
+
          Node_Moveto (Data.Tree, Tmp, 0, 0.1, 0.2);
 
          if Data.Busy_Cursor /= null then
