@@ -32,6 +32,7 @@ with Gtk.Label;         use Gtk.Label;
 with Gtk.Menu;          use Gtk.Menu;
 with Gtk.Menu_Bar;      use Gtk.Menu_Bar;
 with Gtk.Menu_Item;     use Gtk.Menu_Item;
+with Gtk.Menu_Shell;    use Gtk.Menu_Shell;
 with Gtk.Widget;        use Gtk.Widget;
 with Gtk.Window;        use Gtk.Window;
 with Prj;               use Prj;
@@ -411,18 +412,21 @@ package body Glide_Kernel.Modules is
       --------------
 
       procedure Add_Menu
-        (Parent : Gtk_Menu; Item : Gtk_Menu_Item; Index : Gint) is
+        (Parent : Gtk_Menu; Item : Gtk_Menu_Item; Index : Gint)
+      is
+         P : Gtk_Menu_Shell := Gtk_Menu_Shell (Parent);
       begin
+         --  Insertion in the menu bar
+         if Parent = null then
+            P := Gtk_Menu_Shell (Glide_Window (Kernel.Main_Window).Menu_Bar);
+         end if;
+
          if Index = -1 then
-            if Parent = null then
-               Append (Glide_Window (Kernel.Main_Window).Menu_Bar, Item);
-            else
-               Append (Parent, Item);
-            end if;
+            Append (P, Item);
          elsif Add_Before then
-            Insert (Parent, Item, Index);
+            Insert (P, Item, Index);
          else
-            Insert (Parent, Item, Index + 1);
+            Insert (P, Item, Index + 1);
          end if;
       end Add_Menu;
 
@@ -479,7 +483,7 @@ package body Glide_Kernel.Modules is
                Parent, Ref_Item, Pred, Index);
             Add_Menu (Parent, Menu_Item, Index);
          else
-            Append (Parent, Menu_Item);
+            Add_Menu (Parent, Menu_Item, -1);
          end if;
 
          Show_All (Menu_Item);
