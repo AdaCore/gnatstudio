@@ -112,6 +112,10 @@ package Src_Info.Queries is
    --
    --  You must call destroy on the Renamed_Entity.
 
+   function Is_Equal (Entity1, Entity2 : Entity_Information) return Boolean;
+   --  Return True if both Entity1 and Entity2 represent the same source entity
+   --  (same name and declaration location)
+
    --------------------------------------
    -- Goto Declaration<->Body requests --
    --------------------------------------

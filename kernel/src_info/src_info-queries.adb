@@ -3119,4 +3119,20 @@ package body Src_Info.Queries is
       end case;
    end Get_Reference;
 
+   --------------
+   -- Is_Equal --
+   --------------
+
+   function Is_Equal (Entity1, Entity2 : Entity_Information) return Boolean is
+   begin
+      return Entity1.Decl_Line = Entity2.Decl_Line
+        and then Entity1.Decl_Column = Entity2.Decl_Column
+        and then Entity1.Decl_File.all = Entity2.Decl_File.all
+        and then Entity1.Name.all = Entity2.Name.all;
+      --  In fact, we don't really need to test the names, since there is only
+      --  one possible entity at any given location. However, the source files
+      --  might have changed between the creation of Entity1 and Entity2, so we
+      --  do this as an extra check.
+   end Is_Equal;
+
 end Src_Info.Queries;
