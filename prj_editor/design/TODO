@@ -1,0 +1,18 @@
+
+---------------------------
+-- Directory_Tree widget --
+---------------------------
+
+  * [Manu] Handling a different root/base directory
+    Always starting the tree at '/' means that when the selection is returned,
+    the user must convert himself the absolute name to a relative one (for
+    instance if he wants to put relative names in the project file)
+
+  * [Manu] Adding extra information to directories
+    It would be nice if some extra children nodes could be added to the
+    directories, for instance if we want to show files in the tree.
+
+  * [Manu] Filters
+    There should be a way to add filters to the directories displayed in the
+    tree. For instance, remove hidden directories (starting with '.' on Unix
+    systems).
