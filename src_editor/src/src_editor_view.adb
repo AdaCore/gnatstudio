@@ -585,7 +585,7 @@ package body Src_Editor_View is
 
                Draw_Rectangle
                  (Window, View.Current_Line_GC, True, 0, Buffer_Line_Y,
-                  Rect.Width - 1, Line_Height - 1);
+                  Rect.Width, Line_Height);
             end if;
 
             --  Redraw the line showing the nth column if needed
