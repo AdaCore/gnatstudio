@@ -96,9 +96,13 @@ package body Debugger.Gdb is
       """?(auto; currently )?([^""\s]+)", Multiple_Lines);
    --  Pattern used to detect language changes in the debugger.
 
-   Running_Pattern : constant Pattern_Matcher := Compile
-     ("^Program exited normally.", Multiple_Lines);
+   Terminate_Pattern : constant Pattern_Matcher := Compile
+     ("^Program exited (normally|with code)", Multiple_Lines);
    --  Pattern used to detect when the debuggee terminates.
+
+   Running_Pattern : constant Pattern_Matcher := Compile
+     ("^The program is not being run.", Multiple_Lines);
+   --  Pattern used to detect when the debuggee is not running.
 
    Frame_Pattern : constant Pattern_Matcher := Compile
      ("^#(\d+) +((0x[0-9a-f]+) in )?(.+?)( at (.+))?$", Multiple_Lines);
@@ -259,6 +263,7 @@ package body Debugger.Gdb is
    is
       pragma Unreferenced (Str, Matched);
    begin
+      Gdb_Debugger (Process.Debugger.all).Has_Terminated := True;
       Set_Is_Started (Process.Debugger, False);
    end Running_Filter;
 
@@ -556,7 +561,7 @@ package body Debugger.Gdb is
       end loop;
 
       if Executable /= "" then
-         Debugger.Executable := new String' (To_Unix_Pathname (Executable));
+         Debugger.Executable := new String' (Executable);
       end if;
 
       if Executable_Args /= "" then
@@ -580,6 +585,10 @@ package body Debugger.Gdb is
          Add_Regexp_Filter
            (Convert (Window, Debugger),
             Language_Filter'Access, Language_Pattern);
+
+         Add_Regexp_Filter
+           (Convert (Window, Debugger),
+            Running_Filter'Access, Terminate_Pattern);
 
          Add_Regexp_Filter
            (Convert (Window, Debugger),
@@ -801,6 +810,7 @@ package body Debugger.Gdb is
    is
       pragma Unreferenced (Mode);
 
+      Exec                : constant String := To_Unix_Pathname (Executable);
       Num                 : Breakpoint_Identifier;
       No_Such_File_Regexp : constant Pattern_Matcher :=
         Compile ("No such file or directory.");
@@ -811,7 +821,7 @@ package body Debugger.Gdb is
       if Debugger.Remote_Target /= null then
          declare
             S : constant String :=
-              Send (Debugger, "load " & Executable, Mode => Hidden);
+              Send (Debugger, "load " & Exec, Mode => Hidden);
 
          begin
             if Match (No_Such_File_Regexp, S) /= 0 then
@@ -827,7 +837,7 @@ package body Debugger.Gdb is
       else
          declare
             S : constant String :=
-              Send (Debugger, "file " & Executable, Mode => Hidden);
+              Send (Debugger, "file " & Exec, Mode => Hidden);
 
          begin
             if Match (No_Such_File_Regexp, S) /= 0 then
@@ -926,10 +936,12 @@ package body Debugger.Gdb is
    procedure Load_Core_File
      (Debugger : access Gdb_Debugger;
       Core     : String;
-      Mode     : Command_Type := Hidden) is
+      Mode     : Command_Type := Hidden)
+   is
+      Core_File : constant String := To_Unix_Pathname (Core);
    begin
       Set_Is_Started (Debugger, False);
-      Send (Debugger, "core " & Core, Mode => Mode);
+      Send (Debugger, "core " & Core_File, Mode => Mode);
 
       if Mode in Visible_Command then
          Wait_User_Command (Debugger);
@@ -949,9 +961,11 @@ package body Debugger.Gdb is
    procedure Add_Symbols
      (Debugger : access Gdb_Debugger;
       Module   : String;
-      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden) is
+      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden)
+   is
+      Symbols : constant String := To_Unix_Pathname (Module);
    begin
-      Send (Debugger, "add-symbol-file " & Module, Mode => Mode);
+      Send (Debugger, "add-symbol-file " & Symbols, Mode => Mode);
 
       if Mode in Visible_Command then
          Wait_User_Command (Debugger);
@@ -1032,6 +1046,18 @@ package body Debugger.Gdb is
       Send (Debugger, "detach", Mode => Mode);
       Set_Is_Started (Debugger, False);
    end Detach_Process;
+
+   ------------------
+   -- Kill_Process --
+   ------------------
+
+   procedure Kill_Process
+     (Debugger : access Gdb_Debugger;
+      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden) is
+   begin
+      Send (Debugger, "kill", Mode => Mode);
+      Set_Is_Started (Debugger, False);
+   end Kill_Process;
 
    -----------------
    -- Wait_Prompt --
@@ -1230,10 +1256,13 @@ package body Debugger.Gdb is
      (Debugger : access Gdb_Debugger;
       Command  : String) return Boolean
    is
-      pragma Unreferenced (Debugger);
-
       Index : Natural := Command'First;
    begin
+      if Debugger.Has_Terminated then
+         Debugger.Has_Terminated := False;
+         return False;
+      end if;
+
       --  Note: some of commands below can have a numeric parameter, that needs
       --  to be ignored (e.g/ cont 99)
 
@@ -1750,9 +1779,11 @@ package body Debugger.Gdb is
    procedure Change_Directory
      (Debugger    : access Gdb_Debugger;
       Dir         : String;
-      Mode        : Command_Type := Hidden) is
+      Mode        : Command_Type := Hidden)
+   is
+      Directory : constant String := To_Unix_Pathname (Dir);
    begin
-      Send (Debugger, "cd " & Dir, Mode => Mode);
+      Send (Debugger, "cd " & Directory, Mode => Mode);
    end Change_Directory;
 
    ---------------------
@@ -2856,6 +2887,10 @@ package body Debugger.Gdb is
       end if;
 
       return Result;
+
+   exception
+      when Constraint_Error =>
+         return "";
    end Get_Memory;
 
    ---------------------
@@ -2913,19 +2948,28 @@ package body Debugger.Gdb is
    ---------------------
 
    function Get_Endian_Type
-     (Debugger : access Gdb_Debugger) return Endian_Type
-   is
-      S             : constant String := Send
-        (Debugger, "show endian", Mode => Internal);
-      Little        : constant String := "little endian";
-      S_Index       : Integer := S'First;
+     (Debugger : access Gdb_Debugger) return Endian_Type is
    begin
-      Skip_To_String (S, S_Index, Little);
-      if S_Index <= S'Last - Little'Length + 1 then
-         return Little_Endian;
-      else
-         return Big_Endian;
+      if Debugger.Endian /= Unknown_Endian then
+         --  Return the cached value, to avoid too much communication with
+         --  the underlying debugger.
+         return Debugger.Endian;
       end if;
+
+      declare
+         S      : constant String := Send
+           (Debugger, "show endian", Mode => Internal);
+         Little : constant String := "little endian";
+
+      begin
+         if Index (S, Little) > 0 then
+            Debugger.Endian := Little_Endian;
+         else
+            Debugger.Endian := Big_Endian;
+         end if;
+
+         return Debugger.Endian;
+      end;
    end Get_Endian_Type;
 
    --------------
