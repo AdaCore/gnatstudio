@@ -292,7 +292,7 @@ package body Vdiff2_Command is
                                 Diff   : in out Diff_Head_Access) is
    begin
       Unhighlight_Difference (Kernel, Diff);
-      Free (Diff);
+      Free (Diff.List);
    end Remove_Difference;
 
 end Vdiff2_Command;
