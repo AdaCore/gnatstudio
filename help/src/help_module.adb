@@ -53,14 +53,17 @@ with OS_Utils;                     use OS_Utils;
 with Ada.Exceptions;               use Ada.Exceptions;
 with Find_Utils;                   use Find_Utils;
 with File_Utils;                   use File_Utils;
+with String_Utils;                 use String_Utils;
 with Gtk.Clipboard;                use Gtk.Clipboard;
 with Generic_List;
 with Ada.Unchecked_Deallocation;
+with Ada.Unchecked_Conversion;
 with Ada.Strings.Fixed;            use Ada.Strings.Fixed;
 with Ada.Strings.Unbounded;        use Ada.Strings.Unbounded;
 with Histories;                    use Histories;
 with Glide_Kernel.Scripts;         use Glide_Kernel.Scripts;
 with VFS;                          use VFS;
+with System;                       use System;
 
 package body Help_Module is
 
@@ -77,10 +80,13 @@ package body Help_Module is
    Url_Cst    : aliased constant String := "URL";
    Anchor_Cst : aliased constant String := "anchor";
    Dir_Cst    : aliased constant String := "directory";
+   Name_Cst   : aliased constant String := "name";
    Help_Cmd_Parameters : constant Cst_Argument_List :=
      (1 => Url_Cst'Access, 2 => Anchor_Cst'Access);
    Add_Doc_Cmd_Parameters : constant Cst_Argument_List :=
      (1 => Dir_Cst'Access);
+   Getdoc_Parameters : constant Cst_Argument_List :=
+     (1 => Name_Cst'Access);
 
    type Help_File_Record is record
       File       : VFS.Virtual_File;
@@ -117,6 +123,9 @@ package body Help_Module is
       --  The registered help files
 
       Doc_Path : GNAT.OS_Lib.String_Access;
+
+      Html_Class : Class_Type;
+      Help_Class : Class_Type;
    end record;
    type Help_Module_ID_Access is access all Help_Module_ID_Record'Class;
 
@@ -272,6 +281,26 @@ package body Help_Module is
    --  Filename can be a full name or a base name, and can include ancors (e.g
    --  "foo.html#anchor").
 
+   function Get_Shell_Documentation
+     (XML_Doc_File : Glib.Xml_Int.Node_Ptr;
+      Language, Full_Name : String) return String;
+   --  Return the documentation for Entity, as read in the XML file
+
+   function Initialize_XML_Doc
+     (Kernel : access Kernel_Handle_Record'Class) return Glib.Xml_Int.Node_Ptr;
+   --  Parse and return the XML documentation file
+
+   function Get_Data is new Ada.Unchecked_Conversion
+     (System.Address, Glib.Xml_Int.Node_Ptr);
+   function Set_Data is new Ada.Unchecked_Conversion
+     (Glib.Xml_Int.Node_Ptr, System.Address);
+   --  The data stored in an instance of the Help class (this is the XML tree
+   --  corresponding to the XML documentation file
+
+   procedure On_Destroy_Html_Class (Value : System.Address);
+   pragma Convention (C, On_Destroy_Html_Class);
+   --  Called when an instance of the HTML class is destroyed
+
    -----------------
    -- Create_Html --
    -----------------
@@ -325,14 +354,163 @@ package body Help_Module is
       Free (Module.Doc_Path);
    end Destroy;
 
+   -----------------------------
+   -- Get_Shell_Documentation --
+   -----------------------------
+
+   function Get_Shell_Documentation
+     (XML_Doc_File : Glib.Xml_Int.Node_Ptr;
+      Language, Full_Name : String) return String
+   is
+      Tmp     : Node_Ptr := XML_Doc_File.Child;
+      Descr, Params, Returns, See_Also, Example : Unbounded_String;
+      Child   : Node_Ptr;
+   begin
+      if XML_Doc_File = null then
+         Trace (Me, "MANU: XML file hasn't been parsed");
+      end if;
+
+      Tmp := XML_Doc_File.Child;
+
+      while Tmp /= null loop
+         if Tmp.Tag.all = "shell_doc"
+           and then Get_Attribute (Tmp, "name", "") = Full_Name
+         then
+            Child := Tmp.Child;
+            while Child /= null loop
+               if Child.Tag.all = "description" then
+                  Descr := Descr & ASCII.LF & Child.Value.all;
+
+               elsif Child.Tag.all = "param" then
+                  if Params /= Null_Unbounded_String then
+                     Params := Params & ASCII.LF;
+                  end if;
+
+                  Params := Params
+                    & Get_Attribute (Child, "name") & ':'
+                    & ASCII.HT;
+
+                  declare
+                     Default : constant String := Get_Attribute
+                       (Child, "default", "@@");
+                  begin
+                     if Default /= "@@" then
+                        Params := Params & "(default=""" & Default & """) ";
+                     end if;
+                  end;
+                  Params := Params & Child.Value.all;
+
+               elsif Child.Tag.all = "return" then
+                  Returns := To_Unbounded_String
+                    ("returns" & ASCII.HT & ASCII.HT & Child.Value.all);
+
+               elsif Child.Tag.all = "see_also" then
+                  if See_Also /= Null_Unbounded_String then
+                     See_Also := See_Also & ASCII.LF;
+                  end if;
+                  See_Also := See_Also & ASCII.LF
+                    & "See also: " & Get_Attribute (Child, "name", "");
+
+               elsif Child.Tag.all = "example" then
+                  if Case_Insensitive_Equal
+                    (Get_Attribute (Child, "lang", GPS_Shell_Name),
+                     Language)
+                  then
+                     Example := Example & ASCII.LF & ASCII.LF
+                       & "Example:"
+                       & Child.Value.all;
+                  end if;
+               end if;
+
+               Child := Child.Next;
+            end loop;
+
+            return To_String
+              (Params & Returns & ASCII.LF & Descr & See_Also & Example);
+         end if;
+
+         Tmp := Tmp.Next;
+      end loop;
+
+      return "";
+   end Get_Shell_Documentation;
+
+   ------------------------
+   -- Initialize_XML_Doc --
+   ------------------------
+
+   function Initialize_XML_Doc
+     (Kernel : access Kernel_Handle_Record'Class) return Glib.Xml_Int.Node_Ptr
+   is
+      Error : GNAT.OS_Lib.String_Access;
+      Tmp   : Glib.Xml_Int.Node_Ptr;
+   begin
+      Trace (Me, "Parsing XML file "
+             & Get_System_Dir (Kernel)
+             & "share/gps/shell_commands.xml");
+      XML_Parsers.Parse
+        (File  =>
+           Get_System_Dir (Kernel) & "share/gps/shell_commands.xml",
+         Tree  => Tmp,
+         Error => Error);
+      if Error /= null then
+         Insert (Kernel, Error.all, Mode => Glide_Kernel.Console.Error);
+         Free (Error);
+      end if;
+      return Tmp;
+   end Initialize_XML_Doc;
+
+   ---------------------------
+   -- On_Destroy_Html_Class --
+   ---------------------------
+
+   procedure On_Destroy_Html_Class (Value : System.Address) is
+      XML : Node_Ptr := Get_Data (Value);
+   begin
+      if XML /= null then
+         Trace (Me, "Freeing XML file");
+         Glib.Xml_Int.Free (XML);
+      end if;
+   end On_Destroy_Html_Class;
+
    ---------------------
    -- Command_Handler --
    ---------------------
 
    procedure Command_Handler
-     (Data    : in out Callback_Data'Class; Command : String) is
+     (Data    : in out Callback_Data'Class; Command : String)
+   is
+      Kernel   : constant Kernel_Handle := Get_Kernel (Data);
+      Inst     : Class_Instance;
+      XML      : Node_Ptr;
    begin
-      if Command = "browse" then
+      if Command = Constructor_Method then
+         Inst := Nth_Arg (Data, 1, Help_Module_ID.Help_Class);
+         XML  := Initialize_XML_Doc (Kernel);
+         Set_Data (Inst, Set_Data (XML), On_Destroy_Html_Class'Access);
+         Free (Inst);
+
+      elsif Command = "getdoc" then
+         Name_Parameters (Data, Getdoc_Parameters);
+         Inst := Nth_Arg (Data, 1, Help_Module_ID.Help_Class);
+
+         declare
+            Doc : constant String := Get_Shell_Documentation
+              (Get_Data (Get_Data (Inst)),
+               Get_Name (Get_Script (Data)), Nth_Arg (Data, 2));
+         begin
+            if Doc /= "" then
+               Set_Return_Value (Data, Doc);
+            else
+               Set_Error_Msg (Data, "");
+            end if;
+         end;
+
+      elsif Command = "reset" then
+         Inst := Nth_Arg (Data, 1, Help_Module_ID.Help_Class);
+         Set_Data (Inst, System.Null_Address);
+
+      elsif Command = "browse" then
          Name_Parameters (Data, Help_Cmd_Parameters);
          Open_HTML_File
            (Get_Kernel (Data),
@@ -453,7 +631,7 @@ package body Help_Module is
                  Lookup_Scripting_Language (Kernel, Item.Shell_Lang.all),
                Command     => Item.Shell.all,
                Console     => null,
-               Hide_Output => True,
+               Hide_Output => False,
                Errors      => Errors'Unchecked_Access);
          begin
             if Errors then
@@ -599,8 +777,8 @@ package body Help_Module is
                while F /= Help_File_List.Null_Node loop
                   Append (Str, "<tr><td><a href=""");
                   if Data (F).File = VFS.No_File then
-                     Append (Str, "%" & Data (F).Shell_Lang.all
-                             & ":" & Protect (Data (F).Shell_Cmd.all));
+                     Append (Str, "%" & Data (F).Shell_Lang.all & ":"
+                             & Glib.Xml_Int.Protect (Data (F).Shell_Cmd.all));
                   else
                      Append (Str, Full_Name (Data (F).File).all);
                   end if;
@@ -1414,8 +1592,6 @@ package body Help_Module is
       Mitem : Gtk_Menu_Item;
       Recent_Menu_Item : Gtk_Menu_Item;
       Path_From_Env : GNAT.OS_Lib.String_Access := Getenv ("GPS_DOC_PATH");
-      Html_Class : constant Class_Type := New_Class
-        (Kernel, "HTML", -"Interface to the help system and html browser");
 
    begin
       Help_Module_ID := new Help_Module_ID_Record;
@@ -1423,7 +1599,7 @@ package body Help_Module is
         (Module                  => Module_ID (Help_Module_ID),
          Kernel                  => Kernel,
          Module_Name             => Help_Module_Name,
-         Priority                => Default_Priority - 20,
+         Priority                => Glide_Kernel.Default_Priority - 20,
          Contextual_Menu_Handler => null,
          Customization_Handler   => Customize'Access,
          Default_Context_Factory => Default_Factory'Access);
@@ -1476,6 +1652,34 @@ package body Help_Module is
 
       --  Register commands
 
+      Help_Module_ID.Html_Class := New_Class
+        (Kernel, "HTML", -"Interface to the help system and html browser");
+      Help_Module_ID.Help_Class := New_Class
+        (Kernel, "Help",
+         -"Interface to the documentation for shell commands");
+
+      Register_Command
+        (Kernel,
+         Command      => Constructor_Method,
+         Class        => Help_Module_ID.Help_Class,
+         Description  => -"Construct a new instance of Help",
+         Handler      => Command_Handler'Access);
+      Register_Command
+        (Kernel,
+         Command       => "getdoc",
+         Class         => Help_Module_ID.Help_Class,
+         Params        => "(name)",
+         Description   => -("Return the documentation for the given entity."),
+         Minimum_Args  => 1,
+         Maximum_Args  => 1,
+         Handler       => Command_Handler'Access);
+      Register_Command
+        (Kernel,
+         Command       => "reset",
+         Class         => Help_Module_ID.Help_Class,
+         Description   => -"Free the memory occupied by this instance",
+         Handler       => Command_Handler'Access);
+
       Register_Command
         (Kernel,
          Command      => "browse",
@@ -1483,7 +1687,7 @@ package body Help_Module is
          Description  => -"Launch a HTML viewer for URL at specified anchor.",
          Minimum_Args => 1,
          Maximum_Args => 2,
-         Class        => Html_Class,
+         Class        => Help_Module_ID.Html_Class,
          Static_Method => True,
          Handler      => Command_Handler'Access);
       Register_Command
@@ -1493,7 +1697,7 @@ package body Help_Module is
          Description  => -"Launch a HTML viewer for URL at specified anchor.",
          Minimum_Args => Add_Doc_Cmd_Parameters'Length,
          Maximum_Args => Add_Doc_Cmd_Parameters'Length,
-         Class        => Html_Class,
+         Class        => Help_Module_ID.Html_Class,
          Static_Method => True,
          Handler      => Command_Handler'Access);
 
