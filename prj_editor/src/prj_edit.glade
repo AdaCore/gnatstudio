@@ -19,9 +19,11 @@
   <type>GTK_WINDOW_TOPLEVEL</type>
   <position>GTK_WIN_POS_NONE</position>
   <modal>False</modal>
+  <default_width>640</default_width>
+  <default_height>480</default_height>
   <allow_shrink>True</allow_shrink>
   <allow_grow>True</allow_grow>
-  <auto_shrink>True</auto_shrink>
+  <auto_shrink>False</auto_shrink>
 
   <widget>
     <class>GtkVBox</class>
@@ -32,7 +34,6 @@
     <widget>
       <class>GtkHBox</class>
       <name>page_box</name>
-      <border_width>4</border_width>
       <homogeneous>False</homogeneous>
       <spacing>0</spacing>
       <child>
@@ -72,15 +73,10 @@
       </widget>
 
       <widget>
-	<class>GtkNotebook</class>
-	<name>notebook</name>
-	<show_tabs>False</show_tabs>
-	<show_border>False</show_border>
-	<tab_pos>GTK_POS_TOP</tab_pos>
-	<scrollable>False</scrollable>
-	<tab_hborder>2</tab_hborder>
-	<tab_vborder>2</tab_vborder>
-	<popup_enable>False</popup_enable>
+	<class>GtkVBox</class>
+	<name>vbox2</name>
+	<homogeneous>False</homogeneous>
+	<spacing>0</spacing>
 	<child>
 	  <padding>0</padding>
 	  <expand>True</expand>
@@ -88,20 +84,41 @@
 	</child>
 
 	<widget>
-	  <class>Placeholder</class>
+	  <class>GtkEventBox</class>
+	  <name>title_box</name>
+	  <child>
+	    <padding>0</padding>
+	    <expand>False</expand>
+	    <fill>False</fill>
+	  </child>
+
+	  <widget>
+	    <class>GtkLabel</class>
+	    <name>title</name>
+	    <label>&lt;title&gt;</label>
+	    <justify>GTK_JUSTIFY_CENTER</justify>
+	    <wrap>False</wrap>
+	    <xalign>0.5</xalign>
+	    <yalign>0.5</yalign>
+	    <xpad>0</xpad>
+	    <ypad>0</ypad>
+	  </widget>
 	</widget>
 
 	<widget>
-	  <class>GtkLabel</class>
-	  <child_name>Notebook:tab</child_name>
-	  <name>label1</name>
-	  <label>label1</label>
-	  <justify>GTK_JUSTIFY_CENTER</justify>
-	  <wrap>False</wrap>
-	  <xalign>0.5</xalign>
-	  <yalign>0.5</yalign>
-	  <xpad>0</xpad>
-	  <ypad>0</ypad>
+	  <class>GtkFrame</class>
+	  <name>page_frame</name>
+	  <label_xalign>0</label_xalign>
+	  <shadow_type>GTK_SHADOW_IN</shadow_type>
+	  <child>
+	    <padding>0</padding>
+	    <expand>True</expand>
+	    <fill>True</fill>
+	  </child>
+
+	  <widget>
+	    <class>Placeholder</class>
+	  </widget>
 	</widget>
       </widget>
     </widget>
