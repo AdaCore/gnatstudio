@@ -1,5 +1,10 @@
 Known Problems fixed in GPS 1.2.0
 
+- C117-005 Crash when adding lines in new file
+  Problem:    When editing a new file while the line numbers are displayed,
+              adding a few lines will cause GPS to crash.
+  Workaround: Disable the "Display line numbers" preference.
+
 - C130-023 Crash when opening multiple new files
   Problem:    When opening new files using the menu File->New or the
               toolbar icon, opening multiple new files when the line numbers
@@ -28,4 +33,3 @@ Known Problems fixed in GPS 1.2.0
   Problem:    When the debugger preference "show lines with code" is set,
               unsetting a breakpoint will leave a blue dot.
   Workaround: Always enable the "show lines with code" preference.
-
