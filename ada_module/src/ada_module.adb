@@ -742,7 +742,7 @@ package body Ada_Module is
       Gtk_New_Vbox (Box, False, 0);
       Attach (Page, Box, 0, 1, 0, 1);
       Create_Check
-        (Page, Box, -"Store call stack in expressions", "-E",
+        (Page, Box, -"Store call stack in exceptions", "-E",
          -("Store tracebacks in exception occurrences when the target"
            & " supports it"));
       Create_Check
