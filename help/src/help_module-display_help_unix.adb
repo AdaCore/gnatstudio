@@ -18,7 +18,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with GVD.Preferences;
+with GPS.Kernel.Preferences;
 
 separate (Help_Module)
 procedure Display_Help
@@ -26,7 +26,7 @@ procedure Display_Help
    Help_File : VFS.Virtual_File)
 is
    HTML_Browser : constant String :=
-     Get_Pref (Kernel, GVD.Preferences.Html_Browser);
+     Get_Pref (Kernel, GPS.Kernel.Preferences.Html_Browser);
    Args         : Argument_List_Access;
 
    type Cst_String_Access is access constant String;
