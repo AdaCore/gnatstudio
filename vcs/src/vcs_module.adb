@@ -36,6 +36,8 @@ with VCS;                       use VCS;
 with Ada.Exceptions;            use Ada.Exceptions;
 with String_List_Utils;         use String_List_Utils;
 
+with Log_Utils;
+
 package body VCS_Module is
 
    VCS_Module_Name : constant String := "VCS_Interface";
@@ -164,6 +166,8 @@ package body VCS_Module is
       Register_Menu (Kernel, VCS, -"Add to repository", "", Add'Access);
       Register_Menu
         (Kernel, VCS, -"Remove from repository", "", Remove'Access);
+
+      Log_Utils.Initialize (Kernel);
    end Initialize_Module;
 
    -------------------------
