@@ -176,7 +176,7 @@ package body Glide_Main_Window is
 
    procedure Quit (Main_Window : access Glide_Window_Record'Class) is
    begin
-      if Save_All_MDI_Children (Main_Window.Kernel) then
+      if Save_MDI_Children (Main_Window.Kernel) then
          Main_Quit;
       end if;
    end Quit;

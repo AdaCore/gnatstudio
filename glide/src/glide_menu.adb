@@ -165,7 +165,7 @@ package body Glide_Menu is
       Child : MDI_Child;
    begin
       if Command.Close_All then
-         if Save_All_MDI_Children (Command.Kernel) then
+         if Save_MDI_Children (Command.Kernel) then
             Close_All_Children (Command.Kernel);
          end if;
       else
