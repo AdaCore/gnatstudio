@@ -1,5 +1,11 @@
 Known Problems fixed in GVD 2.0.0
 
+- [9305-028] File selection does not handle directory selection properly
+  Problem:    When typing a directory name and then pressing the enter key in
+              the file selection dialog, this generates a bug box instead of
+              selecting the directory.
+  Workaround: Use the tab key instead.
+
 - [9305-014] Parsing array types in Ada
   Problem:    In some cases (array of strings declared in a declare block),
               GVD was trying to display the array as a pointer instead.
