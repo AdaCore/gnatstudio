@@ -89,6 +89,11 @@ package body Gtkada.Tree_View is
    is
       pragma Unreferenced (Detail);
 
+      Red   : constant := 120 * 256;
+      Green : constant := 152 * 256;
+      Blue  : constant := 181 * 256;
+      --  RGB values to emulate Windows XP style.
+
       Expander_Size      : Gint;
       Expander_Semi_Size : Gint;
       Local_X            : Gint;
@@ -107,6 +112,11 @@ package body Gtkada.Tree_View is
 
    begin
       Style_Get (Widget, "expander_size" & ASCII.NUL, Expander_Size);
+
+      if Expander_Size > 2 then
+         Expander_Size := Expander_Size - 2;
+      end if;
+
       GC := Get_Fg_GC (Style, State_Type);
 
       if Area /= null then
@@ -118,7 +128,7 @@ package body Gtkada.Tree_View is
       Local_Y := Y - Expander_Semi_Size;
 
       Color_Saved := Get_Foreground (Style, State_Type);
-      Set_Rgb (Color, 100 * 256, 100 * 256, 100 * 256);
+      Set_Rgb (Color, Red, Green, Blue);
       Alloc_Color (Get_Default_Colormap, Color, Success => Success);
 
       if Success then
