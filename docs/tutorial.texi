@@ -4,7 +4,7 @@
 @settitle GNAT Programming System Tutorial
 @syncodeindex fn cp
 
-@set GPSVersion 1.3.0
+@set GPSVersion 1.3.1
 
 @titlepage
 
@@ -151,7 +151,7 @@ color selection area.
 Click on the @code{Apply} button and look at the effects in the source
 editor. If you like the new display, click on @code{OK} to confirm the
 changes, otherwise clicking on @code{Cancel} will revert to the previous
-(black) color.
+color.
 
 @c --------------------------------------------------------------------
 @node Building applications
