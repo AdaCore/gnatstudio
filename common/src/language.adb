@@ -30,6 +30,7 @@ with Glib.Unicode;                use Glib, Glib.Unicode;
 with Traces;                      use Traces;
 
 package body Language is
+
    Default_Word_Character_Set : constant Character_Set :=
      Constants.Letter_Set or Constants.Decimal_Digit_Set or To_Set ("_");
    --  Default character set for keywords and indentifiers
@@ -360,12 +361,58 @@ package body Language is
    function Comment_Line
      (Lang    : access Language_Root;
       Line    : String;
-      Comment : Boolean := True) return String
+      Comment : Boolean := True;
+      Clean   : Boolean := False) return String
    is
-      pragma Unreferenced (Lang, Comment);
+      pragma Unreferenced (Lang, Comment, Clean);
    begin
       return Line;
    end Comment_Line;
+
+   ------------------
+   -- Comment_Block --
+   ------------------
+
+   function Comment_Block
+     (Lang    : access Language_Root;
+      Block   : String;
+      Comment : Boolean := True;
+      Clean   : Boolean := False) return String
+   is
+      Start_Of_Line : Natural := Block'First;
+      End_Of_Line   : Natural := Line_End (Block, Start_Of_Line);
+
+      New_Block     : String_Access := new String'
+        (Comment_Line
+           (Language_Access (Lang),
+            Block (Start_Of_Line .. End_Of_Line),
+            Comment,
+            Clean));
+      Tmp           : String_Access;
+   begin
+      loop
+         Start_Of_Line := Next_Line (Block, Start_Of_Line);
+         exit when Start_Of_Line = Block'Last;
+         End_Of_Line := Line_End (Block, Start_Of_Line);
+
+         Tmp       := New_Block;
+         New_Block := new String'
+           (New_Block.all & ASCII.LF &
+            Comment_Line
+              (Language_Access (Lang),
+               Block (Start_Of_Line .. End_Of_Line),
+               Comment,
+               Clean));
+         Free (Tmp);
+      end loop;
+
+      declare
+         Result : constant String := New_Block.all;
+      begin
+         Free (New_Block);
+         return Result;
+      end;
+   end Comment_Block;
 
    ----------------------
    -- Parse_Constructs --
