@@ -60,7 +60,8 @@ package body Codefix.GPS_Io is
          4 => new String'("0"));
    begin
       Result.Id := new String'
-        (Execute_GPS_Shell_Command (Current_Text.Kernel, "create_mark", Args));
+        (Execute_GPS_Shell_Command
+           (Current_Text.Kernel, "Editor.create_mark", Args));
       Free (Args);
       return Result;
    end Get_New_Mark;
@@ -80,10 +81,10 @@ package body Codefix.GPS_Io is
       Args (1) := new String'(GPS_Mark (Mark).Id.all);
 
       declare
-         Column : constant String :=
-           Execute_GPS_Shell_Command (Current_Text.Kernel, "get_column", Args);
-         Line : constant String :=
-           Execute_GPS_Shell_Command (Current_Text.Kernel, "get_line", Args);
+         Column : constant String := Execute_GPS_Shell_Command
+           (Current_Text.Kernel, "Editor.get_column", Args);
+         Line : constant String := Execute_GPS_Shell_Command
+           (Current_Text.Kernel, "Editor.get_line", Args);
 
       begin
          Set_Location
@@ -134,7 +135,7 @@ package body Codefix.GPS_Io is
       Args : Argument_List :=
         (1 => new String'(Full_Name (Get_File_Name (This)).all));
       Ignore : constant String := Execute_GPS_Shell_Command
-        (This.Kernel, "undo", Args);
+        (This.Kernel, "Editor.undo", Args);
       pragma Unreferenced (Ignore);
    begin
       Free (Args);
@@ -213,8 +214,8 @@ package body Codefix.GPS_Io is
                4 => new String'(New_Value),
                5 => new String'("0"),           --  before
                6 => new String'(Image (Len)));  --  after
-            S : constant String :=
-              Execute_GPS_Shell_Command (This.Kernel, "replace_text", Args);
+            S : constant String := Execute_GPS_Shell_Command
+              (This.Kernel, "Editor.replace_text", Args);
          begin
             if S /= "" then
                Insert (This.Kernel, S, True, Error);
@@ -232,8 +233,8 @@ package body Codefix.GPS_Io is
                4 => new String'(New_Value),
                5 => new String'("0"),  --  before
                6 => new String'("0")); --  after
-            S : constant String :=
-              Execute_GPS_Shell_Command (This.Kernel, "replace_text", Args);
+            S : constant String := Execute_GPS_Shell_Command
+              (This.Kernel, "Editor.replace_text", Args);
          begin
             if S /= "" then
                Insert (This.Kernel, S, True, Error);
@@ -286,7 +287,7 @@ package body Codefix.GPS_Io is
          3 => new String'(Image (Get_Column (Cursor))),
          4 => new String'(""));  --  replacement text
       S : constant String :=
-        Execute_GPS_Shell_Command (This.Kernel, "replace_text", Args);
+        Execute_GPS_Shell_Command (This.Kernel, "Editor.replace_text", Args);
    begin
       This.File_Modified.all := True;
       Text_Has_Changed (This);
@@ -321,7 +322,7 @@ package body Codefix.GPS_Io is
       Args : Argument_List :=
         (1 => new String'(Full_Name (Get_File_Name (This)).all));
       S    : constant GNAT.OS_Lib.String_Access := new String'
-        (Execute_GPS_Shell_Command (This.Kernel, "get_buffer", Args));
+        (Execute_GPS_Shell_Command (This.Kernel, "Editor.get_buffer", Args));
    begin
       Free (Args);
       return S;
@@ -393,8 +394,8 @@ package body Codefix.GPS_Io is
       declare
          Args : Argument_List :=
            (1 => new String'(Full_Name (Get_File_Name (This)).all));
-         Result : constant String :=
-           Execute_GPS_Shell_Command (This.Kernel, "get_last_line", Args);
+         Result : constant String := Execute_GPS_Shell_Command
+           (This.Kernel, "Editor.get_last_line", Args);
 
       begin
          This.Lines_Number.all := Natural'Value (Result);

@@ -284,15 +284,15 @@ package body Vdiff2_Command_Block is
       if Diff.File3 /= VFS.No_File then
          Args3 := (1 => new String'(Full_Name (Diff.File3).all));
          --  After this call all memory associated with the Diff is Free
-         Execute_GPS_Shell_Command (Kernel, "close", Args3);
+         Execute_GPS_Shell_Command (Kernel, "Editor.close", Args3);
       end if;
 
       if Diff.File1 /= VFS.No_File then
-         Execute_GPS_Shell_Command (Kernel, "close", Args1);
+         Execute_GPS_Shell_Command (Kernel, "Editor.close", Args1);
       end if;
 
       if Diff.File2 /= VFS.No_File then
-         Execute_GPS_Shell_Command (Kernel, "close", Args2);
+         Execute_GPS_Shell_Command (Kernel, "Editor.close", Args2);
       end if;
 
       Free (Args1);
@@ -352,23 +352,23 @@ package body Vdiff2_Command_Block is
    begin
       if Link.Range1.Mark /= null then
          Args := (1 => new String'(Link.Range1.Mark.all));
-         Execute_GPS_Shell_Command (Kernel, "goto_mark", Args);
+         Execute_GPS_Shell_Command (Kernel, "Editor.goto_mark", Args);
          Basic_Types.Free (Args);
-         Execute_GPS_Shell_Command (Kernel, "save", Arg2);
+         Execute_GPS_Shell_Command (Kernel, "Editor.save", Arg2);
       end if;
 
       if Link.Range2.Mark /= null then
          Args := (1 => new String'(Link.Range2.Mark.all));
-         Execute_GPS_Shell_Command (Kernel, "goto_mark", Args);
+         Execute_GPS_Shell_Command (Kernel, "Editor.goto_mark", Args);
          Basic_Types.Free (Args);
-         Execute_GPS_Shell_Command (Kernel, "save", Arg2);
+         Execute_GPS_Shell_Command (Kernel, "Editor.save", Arg2);
       end if;
 
       if Link.Range3.Mark /= null then
          Args := (1 => new String'(Link.Range3.Mark.all));
-         Execute_GPS_Shell_Command (Kernel, "goto_mark", Args);
+         Execute_GPS_Shell_Command (Kernel, "Editor.goto_mark", Args);
          Basic_Types.Free (Args);
-         Execute_GPS_Shell_Command (Kernel, "save", Arg2);
+         Execute_GPS_Shell_Command (Kernel, "Editor.save", Arg2);
       end if;
 
       Basic_Types.Free (Arg2);

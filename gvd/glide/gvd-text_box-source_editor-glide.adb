@@ -147,7 +147,7 @@ package body GVD.Text_Box.Source_Editor.Glide is
            (1 => new String'(Full_Name (Editor.Debugger_Current_File).all),
             2 => new String'(Highlight_Category));
       begin
-         Execute_GPS_Shell_Command (Kernel, "unhighlight", Args);
+         Execute_GPS_Shell_Command (Kernel, "Editor.unhighlight", Args);
 
          for A in Args'Range loop
             GNAT.OS_Lib.Free (Args (A));
@@ -161,7 +161,7 @@ package body GVD.Text_Box.Source_Editor.Glide is
                2 => new String'(Highlight_Category),
                3 => new String'(Editor.Line'Img));
          begin
-            Execute_GPS_Shell_Command (Kernel, "highlight", Args);
+            Execute_GPS_Shell_Command (Kernel, "Editor.highlight", Args);
 
             for A in Args'Range loop
                GNAT.OS_Lib.Free (Args (A));
@@ -570,7 +570,7 @@ package body GVD.Text_Box.Source_Editor.Glide is
               (1 => new String'(Head (Editor.Highlighted_Files)),
                2 => new String'(Highlight_Category));
          begin
-            Execute_GPS_Shell_Command (Kernel, "unhighlight", Args);
+            Execute_GPS_Shell_Command (Kernel, "Editor.unhighlight", Args);
 
             for A in Args'Range loop
                GNAT.OS_Lib.Free (Args (A));

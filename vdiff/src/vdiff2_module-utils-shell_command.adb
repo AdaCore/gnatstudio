@@ -47,7 +47,7 @@ package body Vdiff2_Module.Utils.Shell_Command is
          3 => new String'(Image (Number)),
          4 => new String'(Style));
       Res : constant String :=  Execute_GPS_Shell_Command
-        (Kernel, "add_blank_lines", Args_Line);
+        (Kernel, "Editor.add_blank_lines", Args_Line);
 
    begin
       Basic_Types.Free (Args_Line);
@@ -78,7 +78,7 @@ package body Vdiff2_Module.Utils.Shell_Command is
         (1 => new String'(Full_Name (File).all));
 
    begin
-      Execute_GPS_Shell_Command (Kernel, "edit", Args_edit);
+      Execute_GPS_Shell_Command (Kernel, "Editor.edit", Args_edit);
       Basic_Types.Free (Args_edit);
    end Edit;
 
@@ -106,7 +106,7 @@ package body Vdiff2_Module.Utils.Shell_Command is
       end if;
 
       Execute_GPS_Shell_Command
-        (Kernel, "set_synchronized_scrolling", Args.all);
+        (Kernel, "Editor.set_synchronized_scrolling", Args.all);
       Basic_Types.Free (Args.all);
       Free (Args);
    end Synchronize_Scrolling;
@@ -130,7 +130,7 @@ package body Vdiff2_Module.Utils.Shell_Command is
          4 => new String'(Image (Before)),
          5 => new String'(Image (After)));
       Res               : constant String := Execute_GPS_Shell_Command
-        (Kernel, "get_chars", Args_Replace_Text);
+        (Kernel, "Editor.get_chars", Args_Replace_Text);
 
    begin
       Basic_Types.Free (Args_Replace_Text);
@@ -148,7 +148,7 @@ package body Vdiff2_Module.Utils.Shell_Command is
       Args_Line : Argument_List :=
         (1 => new String'(Full_Name (File).all));
       Res       : constant String :=  Execute_GPS_Shell_Command
-        (Kernel, "get_last_line", Args_Line);
+        (Kernel, "Editor.get_last_line", Args_Line);
 
    begin
       Basic_Types.Free (Args_Line);
@@ -166,7 +166,7 @@ package body Vdiff2_Module.Utils.Shell_Command is
       Args_Line : Argument_List :=
         (1 => new String'(Mark));
       Res       : constant String :=  Execute_GPS_Shell_Command
-        (Kernel, "get_line", Args_Line);
+        (Kernel, "Editor.get_line", Args_Line);
 
    begin
       Basic_Types.Free (Args_Line);
@@ -186,19 +186,19 @@ package body Vdiff2_Module.Utils.Shell_Command is
 
       if Link.Range1.Mark /= null then
          Args := (1 => new String'(Link.Range1.Mark.all));
-         Execute_GPS_Shell_Command (Kernel, "goto_mark", Args);
+         Execute_GPS_Shell_Command (Kernel, "Editor.goto_mark", Args);
          Basic_Types.Free (Args);
       end if;
 
       if Link.Range2.Mark /= null then
          Args := (1 => new String'(Link.Range2.Mark.all));
-         Execute_GPS_Shell_Command (Kernel, "goto_mark", Args);
+         Execute_GPS_Shell_Command (Kernel, "Editor.goto_mark", Args);
          Basic_Types.Free (Args);
       end if;
 
       if Link.Range3.Mark /= null then
          Args := (1 => new String'(Link.Range3.Mark.all));
-         Execute_GPS_Shell_Command (Kernel, "goto_mark", Args);
+         Execute_GPS_Shell_Command (Kernel, "Editor.goto_mark", Args);
          Basic_Types.Free (Args);
       end if;
    end Goto_Difference;
@@ -223,7 +223,8 @@ package body Vdiff2_Module.Utils.Shell_Command is
 
       for J in 1 .. Number loop
          Args_Highlight (3) := new String'(Image (Pos + J - 1));
-         Execute_GPS_Shell_Command (Kernel, "highlight", Args_Highlight);
+         Execute_GPS_Shell_Command
+           (Kernel, "Editor.highlight", Args_Highlight);
          Free (Args_Highlight (3));
       end loop;
 
@@ -265,7 +266,7 @@ package body Vdiff2_Module.Utils.Shell_Command is
       end if;
 
       Execute_GPS_Shell_Command
-        (Kernel, "highlight_range", Args_Highlight_Range);
+        (Kernel, "Editor.highlight_range", Args_Highlight_Range);
       Basic_Types.Free (Args_Highlight_Range);
    end Highlight_Range;
 
@@ -283,7 +284,7 @@ package body Vdiff2_Module.Utils.Shell_Command is
          2 => new String'(Image (Pos)),
          3 => new String'("1"));
       Res : constant String := Execute_GPS_Shell_Command
-        (Kernel, "create_mark", Args);
+        (Kernel, "Editor.create_mark", Args);
 
    begin
       Basic_Types.Free (Args);
@@ -357,7 +358,7 @@ package body Vdiff2_Module.Utils.Shell_Command is
       if Mark /= null then
          Args (1) := Mark;
          Execute_GPS_Shell_Command
-           (Kernel, "remove_blank_lines", Args);
+           (Kernel, "Editor.remove_blank_lines", Args);
          Free (Mark);
       end if;
    end Remove_Blank_Lines;
@@ -385,7 +386,7 @@ package body Vdiff2_Module.Utils.Shell_Command is
 
    begin
       Execute_GPS_Shell_Command
-        (Kernel, "replace_text", Args_Replace_Text);
+        (Kernel, "Editor.replace_text", Args_Replace_Text);
       Basic_Types.Free (Args_Replace_Text);
    end Replace_Text;
 
@@ -405,7 +406,7 @@ package body Vdiff2_Module.Utils.Shell_Command is
          3 => new String'(Image (Pos)));
 
    begin
-      Execute_GPS_Shell_Command (Kernel, "unhighlight", Args_Highlight);
+      Execute_GPS_Shell_Command (Kernel, "Editor.unhighlight", Args_Highlight);
       Basic_Types.Free (Args_Highlight);
    end Unhighlight;
 
@@ -460,7 +461,7 @@ package body Vdiff2_Module.Utils.Shell_Command is
       end if;
 
       Execute_GPS_Shell_Command
-        (Kernel, "unhighlight_range", Args_Highlight_Range);
+        (Kernel, "Editor.unhighlight_range", Args_Highlight_Range);
       Basic_Types.Free (Args_Highlight_Range);
    end Unhighlight_Range;
 
