@@ -21,8 +21,14 @@
 with Glib;                    use Glib;
 with General_Preferences_Pkg; use General_Preferences_Pkg;
 with Glib.XML;
-with Gtk.Widget;
+with Gtk.Widget;              use Gtk.Widget;
+with Gtk.GEntry;              use Gtk.GEntry;
+with Gtk.Extra.Font_Combo;    use Gtk.Extra.Font_Combo;
 with Gdk.Color;               use Gdk.Color;
+with Gtk.Label;               use Gtk.Label;
+with Gtk.Check_Button;        use Gtk.Check_Button;
+with Gtk.Spin_Button;         use Gtk.Spin_Button;
+with GVD.Color_Combo;         use GVD.Color_Combo;
 with Ada.Text_IO; use Ada.Text_IO;
 with Unchecked_Deallocation;
 
@@ -33,6 +39,7 @@ package body GVD.Preferences is
 
    procedure XML_Add_Child (N : Node_Ptr; Child : Node_Ptr);
    procedure XML_Free (N : in out Node_Ptr);
+   procedure XML_Write (N : Node_Ptr; File_Name : String);
    --  These two functions are there only so that GVD doesn't depend on the
    --  very latest version of GtkAda and can be released independently.
    --  These should be coordinated with GtkAda when a new release of the latter
@@ -129,14 +136,44 @@ package body GVD.Preferences is
       Free_Node (N);
    end XML_Free;
 
-   -----------------
-   -- Fill_Dialog --
-   -----------------
+   ---------------
+   -- XML_Write --
+   ---------------
 
-   procedure Fill_Dialog (Dialog : General_Preferences_Access) is
+   procedure XML_Write (N : Node_Ptr; File_Name : String) is
+
+      File : File_Type;
+
+      procedure Write_Node (N : Node_Ptr; Indent : Natural);
+      --  Write a node and its children to the file
+
+      ----------------
+      -- Write_Node --
+      ----------------
+
+      procedure Write_Node (N : Node_Ptr; Indent : Natural) is
+         Child : Node_Ptr := N.Child;
+      begin
+         Put (File, (1 .. Indent => ' ') & '<' & N.Tag.all & '>');
+         if N.Value /= null then
+            Put (File, N.Value.all);
+         end if;
+         while Child /= null loop
+            New_Line (File);
+            Write_Node (Child, Indent + 3);
+            Child := Child.Next;
+         end loop;
+         if N.Child /= null then
+            New_Line (File);
+         end if;
+         Put (File, (1 .. Indent => ' ') & "</" & N.Tag.all & '>');
+      end Write_Node;
+
    begin
-      null;
-   end Fill_Dialog;
+      Create (File, Out_File, File_Name);
+      Write_Node (N, 0);
+      Close (File);
+   end XML_Write;
 
    ----------------------
    -- Load_Preferences --
@@ -157,7 +194,7 @@ package body GVD.Preferences is
 
    procedure Save_Preferences (File_Name : String) is
    begin
-      null;
+      XML_Write (Current_Preferences, File_Name);
    end Save_Preferences;
 
    ------------------
@@ -385,6 +422,131 @@ package body GVD.Preferences is
 
       Tab_Size_Cached := Get_Pref (Tab_Size);
    end Set_Default_Preferences;
+
+   -----------------
+   -- Fill_Dialog --
+   -----------------
+
+   procedure Fill_Dialog (Dialog : General_Preferences_Access) is
+   begin
+      --  Automatic display of button hints
+      Set_Sensitive (Dialog.Label13, False);
+      Set_Sensitive (Dialog.Button_Hint_Popup_Check, False);
+      Set_Sensitive (Dialog.Button_Hint_Status_Check, False);
+
+      --  Automatic display of variable values
+      --  ??? Should give access to the other values
+      Set_Sensitive (Dialog.Variable_Status_Check, False);
+      Set_Active (Dialog.Variable_Popup_Check,
+                  Get_Pref (Tooltips_In_Source) /= None);
+
+      --  Warn if multiple instances of GVD are running
+      Set_Sensitive (Dialog.Warn_Multiple_Check, False);
+
+      --  Break on exception
+      Set_Sensitive (Dialog.Break_Exception_Check, False);
+
+      --  Status bar timeout
+      Set_Text (Dialog.Statusbar_Timeout_Entry,
+                Guint'Image (Get_Pref (Hide_Delay)));
+
+      --  Display Explorer Tree
+      Set_Active (Dialog.Display_Explorer_Check, Get_Pref (Display_Explorer));
+
+      --  File name background
+      Set_Color
+        (Dialog.File_Name_Bg_Combo, Get_Pref (File_Name_Bg_Color));
+
+      --  Source font (??? Should handle bold and italic)
+      Font_Combo_Select        (Dialog.Editor_Font_Combo,
+         Get_Pref (Editor_Font),
+         Bold => False,
+         Italic => False,
+         Height => Get_Pref (Editor_Font_Size));
+
+      --  Show line numbers
+      Set_Active
+        (Dialog.Show_Line_Numbers_Check, Get_Pref (Editor_Show_Line_Nums));
+
+      --  Show lines with code
+      Set_Active
+        (Dialog.Show_Lines_Code_Check, Get_Pref (Editor_Show_Line_With_Code));
+
+      --  Syntax highlighting
+      Set_Active
+        (Dialog.Syntax_Hilight_Check, Get_Pref (Do_Color_Highlighting));
+
+      --  Entities color
+      Set_Color (Dialog.Comment_Color_Combo, Get_Pref (Comments_Color));
+      Set_Color (Dialog.String_Color_Combo, Get_Pref (Strings_Color));
+      Set_Color (Dialog.Keyword_Color_Combo, Get_Pref (Keywords_Color));
+
+      --  Current assembly line
+      Set_Color (Dialog.Asm_Highlight_Combo, Get_Pref (Asm_Highlight_Color));
+
+      --  Data colors
+      Set_Color (Dialog.Xref_Color_Combo, Get_Pref (Xref_Color));
+      Set_Color (Dialog.Title_Color_Combo, Get_Pref (Title_Color));
+      Set_Color (Dialog.Change_Color_Combo, Get_Pref (Change_Color));
+      Set_Color (Dialog.Thaw_Bg_Color_Combo, Get_Pref (Thaw_Bg_Color));
+      Set_Color (Dialog.Freeze_Bg_Color_Combo, Get_Pref (Freeze_Bg_Color));
+
+      --  Look 3d
+      Set_Active (Dialog.Look_3d_Check, Get_Pref (Look_3d));
+
+      --  Title font (??? Should handle bold and italic)
+      Font_Combo_Select
+        (Dialog.Title_Font_Combo,
+         Get_Pref (Title_Font),
+         Bold => False,
+         Italic => False,
+         Height => Get_Pref (Title_Font_Size));
+
+      --  Value font (??? Should handle bold and italic)
+      Font_Combo_Select
+        (Dialog.Value_Font_Combo,
+         Get_Pref (Value_Font),
+         Bold => False,
+         Italic => False,
+         Height => Get_Pref (Value_Font_Size));
+
+      --  Type font (??? Should handle bold and italic)
+      Font_Combo_Select
+        (Dialog.Type_Font_Combo,
+         Get_Pref (Type_Font),
+         Bold => False,
+         Italic => False,
+         Height => Get_Pref (Type_Font_Size));
+
+      --  Big items
+      Set_Active (Dialog.Hide_Big_Items_Check, Get_Pref (Hide_Big_Items));
+      Set_Value (Dialog.Big_Item_Spin, Gfloat (Get_Pref (Big_Item_Height)));
+      Set_Sensitive (Dialog.Big_Item_Spin, Get_Pref (Hide_Big_Items));
+
+      --  Detect aliases
+      Set_Active
+        (Dialog.Detect_Aliases_Check, Get_Pref (Default_Detect_Aliases));
+
+      --  Display grid points
+      Set_Active (Dialog.Display_Grid_Check, Get_Pref (Display_Grid));
+      Set_Active (Dialog.Align_Grid_Check, Get_Pref (Align_Items_On_Grid));
+
+      --  Command window
+      Set_Color
+        (Dialog.Debug_Higlight_Combo, Get_Pref (Debugger_Highlight_Color));
+      Font_Combo_Select
+        (Dialog.Debug_Font_Combo,
+         Get_Pref (Debugger_Font),
+         Bold => False,
+         Italic => False,
+         Height => Get_Pref (Debugger_Font_Size));
+
+      --  Helpers
+      Set_Text (Dialog.Edit_Source_Entry, Get_Pref (Default_External_Editor));
+      Set_Sensitive (Dialog.Get_Core_File_Entry, False);
+      Set_Text (Dialog.List_Processes_Entry, Get_Pref (List_Processes));
+      Set_Sensitive (Dialog.Web_Browser_Entry, False);
+   end Fill_Dialog;
 
 begin
    --  Initialize the default values

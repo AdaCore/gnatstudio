@@ -26,12 +26,13 @@ with Gtk.Table; use Gtk.Table;
 with Gtk.Label; use Gtk.Label;
 with Gtk.Check_Button; use Gtk.Check_Button;
 with Gtk.GEntry; use Gtk.GEntry;
-with Gtk.Extra.Color_Combo; use Gtk.Extra.Color_Combo;
 with Gtk.GEntry; use Gtk.GEntry;
 with Gtk.Extra.Font_Combo; use Gtk.Extra.Font_Combo;
 with Gtk.Spin_Button; use Gtk.Spin_Button;
 with Gtk.Hbutton_Box; use Gtk.Hbutton_Box;
 with Gtk.Button; use Gtk.Button;
+with GVD.Color_Combo;
+
 package General_Preferences_Pkg is
 
    type General_Preferences_Record is new Gtk_Window_Record with record
@@ -56,7 +57,7 @@ package General_Preferences_Pkg is
       Table9 : Gtk_Table;
       Display_Explorer_Check : Gtk_Check_Button;
       Label75 : Gtk_Label;
-      File_Name_Bg_Combo : Gtk_Color_Combo;
+      File_Name_Bg_Combo : GVD.Color_Combo.Gvd_Color_Combo;
       Frame17 : Gtk_Frame;
       Table10 : Gtk_Table;
       Label76 : Gtk_Label;
@@ -67,13 +68,13 @@ package General_Preferences_Pkg is
       Label80 : Gtk_Label;
       Label81 : Gtk_Label;
       Editor_Font_Combo : Gtk_Font_Combo;
-      Comment_Color_Combo : Gtk_Color_Combo;
-      String_Color_Combo : Gtk_Color_Combo;
-      Keyword_Color_Combo : Gtk_Color_Combo;
+      Comment_Color_Combo : GVD.Color_Combo.Gvd_Color_Combo;
+      String_Color_Combo : GVD.Color_Combo.Gvd_Color_Combo;
+      Keyword_Color_Combo : GVD.Color_Combo.Gvd_Color_Combo;
       Frame18 : Gtk_Frame;
       Hbox7 : Gtk_Hbox;
       Label82 : Gtk_Label;
-      Asm_Highlight_Combo : Gtk_Color_Combo;
+      Asm_Highlight_Combo : GVD.Color_Combo.Gvd_Color_Combo;
       Label8 : Gtk_Label;
       Frame3 : Gtk_Frame;
       Table3 : Gtk_Table;
@@ -95,18 +96,18 @@ package General_Preferences_Pkg is
       Title_Font_Combo : Gtk_Font_Combo;
       Value_Font_Combo : Gtk_Font_Combo;
       Type_Font_Combo : Gtk_Font_Combo;
-      Xref_Color_Combo : Gtk_Color_Combo;
-      Change_Color_Combo : Gtk_Color_Combo;
-      Thaw_Bg_Color_Combo : Gtk_Color_Combo;
-      Title_Color_Combo : Gtk_Color_Combo;
-      Freeze_Bg_Color_Combo : Gtk_Color_Combo;
+      Xref_Color_Combo : GVD.Color_Combo.Gvd_Color_Combo;
+      Change_Color_Combo : GVD.Color_Combo.Gvd_Color_Combo;
+      Thaw_Bg_Color_Combo : GVD.Color_Combo.Gvd_Color_Combo;
+      Title_Color_Combo : GVD.Color_Combo.Gvd_Color_Combo;
+      Freeze_Bg_Color_Combo : GVD.Color_Combo.Gvd_Color_Combo;
       Label9 : Gtk_Label;
       Frame13 : Gtk_Frame;
       Table8 : Gtk_Table;
       Label92 : Gtk_Label;
       Label93 : Gtk_Label;
       Debug_Font_Combo : Gtk_Font_Combo;
-      Debug_Higlight_Combo : Gtk_Color_Combo;
+      Debug_Higlight_Combo : GVD.Color_Combo.Gvd_Color_Combo;
       Label10 : Gtk_Label;
       Frame6 : Gtk_Frame;
       Table6 : Gtk_Table;

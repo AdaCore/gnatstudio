@@ -26,12 +26,23 @@ with Gtkada.Handlers; use Gtkada.Handlers;
 with Callbacks_Odd; use Callbacks_Odd;
 with Odd_Intl; use Odd_Intl;
 with General_Preferences_Pkg.Callbacks; use General_Preferences_Pkg.Callbacks;
-with GVD.Pixmaps; use GVD.Pixmaps;
-with Gdk.Pixmap; use Gdk.Pixmap;
-with Gdk.Bitmap; use Gdk.Bitmap;
 with Gtk.Pixmap; use Gtk.Pixmap;
+with Gtk.Handlers;
+with Gtk.Arguments; use Gtk.Arguments;
+with Gdk.GC;        use Gdk.GC;
+with Gdk.Color;     use Gdk.Color;
+with Gdk.Drawable;  use Gdk.Drawable;
+with Gdk.Rectangle; use Gdk.Rectangle;
+with GVD.Color_Combo; use GVD.Color_Combo;
 
 package body General_Preferences_Pkg is
+
+   package Color_Cb is new Gtk.Handlers.Callback
+     (Gvd_Color_Combo_Record);
+
+   procedure Color_Changed
+     (Combo : access Gvd_Color_Combo_Record'Class;
+      Args  : Gtk.Arguments.Gtk_Args);
 
 procedure Gtk_New (General_Preferences : out General_Preferences_Access) is
 begin
@@ -42,9 +53,6 @@ end Gtk_New;
 procedure Initialize (General_Preferences : access General_Preferences_Record'Class) is
    pragma Suppress (All_Checks);
    Big_Item_Spin_Adj : Gtk_Adjustment;
-   Color_Pixmap : Gtk_Pixmap;
-   Val  : Gdk_Pixmap;
-   Mask : Gdk_Bitmap;
 
 begin
    Gtk.Window.Initialize (General_Preferences, Window_Dialog);
@@ -644,30 +652,32 @@ begin
      (General_Preferences.Help_Button, "clicked",
       Button_Callback.To_Marshaller (On_Help_Button_Clicked'Access));
    Add (General_Preferences.Hbuttonbox6, General_Preferences.Help_Button);
-
-   Color_Pixmap := Create_Pixmap (paint_xpm, General_Preferences);
-   Get (Color_Pixmap, Val, Mask);
-   Add (Get_Button (General_Preferences.File_Name_Bg_Combo), Color_Pixmap);
-   Gtk_New (Color_Pixmap, Val, Mask);
-   Add (Get_Button (General_Preferences.Comment_Color_Combo), Color_Pixmap);
-   Gtk_New (Color_Pixmap, Val, Mask);
-   Add (Get_Button (General_Preferences.String_Color_Combo), Color_Pixmap);
-   Gtk_New (Color_Pixmap, Val, Mask);
-   Add (Get_Button (General_Preferences.Keyword_Color_Combo), Color_Pixmap);
-   Gtk_New (Color_Pixmap, Val, Mask);
-   Add (Get_Button (General_Preferences.Asm_Highlight_Combo), Color_Pixmap);
-   Gtk_New (Color_Pixmap, Val, Mask);
-   Add (Get_Button (General_Preferences.Xref_Color_Combo), Color_Pixmap);
-   Gtk_New (Color_Pixmap, Val, Mask);
-   Add (Get_Button (General_Preferences.Change_Color_Combo), Color_Pixmap);
-   Gtk_New (Color_Pixmap, Val, Mask);
-   Add (Get_Button (General_Preferences.Thaw_Bg_Color_Combo), Color_Pixmap);
-   Gtk_New (Color_Pixmap, Val, Mask);
-   Add (Get_Button (General_Preferences.Title_Color_Combo), Color_Pixmap);
-   Gtk_New (Color_Pixmap, Val, Mask);
-   Add (Get_Button (General_Preferences.Freeze_Bg_Color_Combo), Color_Pixmap);
-   Gtk_New (Color_Pixmap, Val, Mask);
-   Add (Get_Button (General_Preferences.Debug_Higlight_Combo), Color_Pixmap);
 end Initialize;
+
+   -------------------
+   -- Color_Changed --
+   -------------------
+
+   procedure Color_Changed
+     (Combo : access Gvd_Color_Combo_Record'Class;
+      Args  : Gtk.Arguments.Gtk_Args)
+   is
+      Name : String := To_String (Args, 2);
+      Tmp_Gc   : Gdk_Gc;
+      Color    : Gdk_Color;
+      Pixmap   : Gtk_Pixmap;
+   begin
+      Color := Parse (Name);
+      Alloc (Get_Colormap (Combo), Color);
+
+      Realize (Combo);
+      Pixmap := Gtk_Pixmap (Get_Child (Get_Button (Combo)));
+
+      Gdk_New (Tmp_Gc, Get_Window (Combo));
+      Set_Foreground (Tmp_Gc, Color);
+      Draw_Rectangle (Get_Pixmap (Pixmap), Tmp_Gc, True, 5, 20, 16, 4);
+      Draw (Pixmap, Full_Area);
+      Unref (Tmp_Gc);
+   end Color_Changed;
 
 end General_Preferences_Pkg;
