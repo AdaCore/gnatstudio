@@ -136,6 +136,7 @@ package VCS is
    --  Implementations for this procedure should document which fields are
    --  costly to obtain and which are easy.
    --
+   --  The user must free Filenames.
    --  ??? The behaviour is undetermined when the Filenames list
    --  has duplicate entries, or empty/invalid entries.
 
