@@ -659,7 +659,10 @@ package body Help_Module is
    begin
       if Item.File /= VFS.No_File then
          HTML_File := Create_Html (Full_Name (Item.File).all, Kernel);
+         Trace (Me, "Loading HTML file " & Full_Name (Item.File).all
+                & " => " & Full_Name (HTML_File).all);
       elsif Item.Shell /= null then
+         Trace (Me, "On_Load_HTML: No file specified, executing shell cmd");
          declare
             Errors : aliased Boolean := False;
             File   : constant String := Execute_Command
@@ -715,7 +718,10 @@ package body Help_Module is
          Item := new String_Menu_Item_Record;
          Gtk.Menu_Item.Initialize_With_Mnemonic (Item, Base_Name (Menu_Path));
          Item.File       := HTML_File;
-         Item.Shell      := new String'(Shell_Cmd);
+
+         if Shell_Cmd /= "" then
+            Item.Shell      := new String'(Shell_Cmd);
+         end if;
 
          if Shell_Lang = "" then
             Item.Shell_Lang := new String'(GPS_Shell_Name);
@@ -1512,6 +1518,7 @@ package body Help_Module is
       Name, Descr, Menu, Cat : Node_Ptr;
       Shell, Shell_Lang : GNAT.OS_Lib.String_Access;
       Field : Node_Ptr;
+      HTML_File : Virtual_File;
    begin
       if Node.Tag.all = "documentation_file" then
          Name  := null;
@@ -1550,15 +1557,21 @@ package body Help_Module is
                     -"<documentation_file> must have a <menu> child",
                     Mode => Error);
          elsif Name /= null then
-            Trace (Me, "Adding " & Name.Value.all & ' ' & Menu.Value.all);
-            Register_Help
-              (Kernel,
-               HTML_File   => Create_Html (Name.Value.all, Kernel),
-               Descr       => Descr.Value.all,
-               Category    => Cat.Value.all,
-               Menu_Before => Get_Attribute (Menu, "before", ""),
-               Menu_After  => Get_Attribute (Menu, "after", ""),
-               Menu_Path   => Menu.Value.all);
+            HTML_File := Create_Html (Name.Value.all, Kernel);
+            if HTML_File = VFS.No_File then
+               Trace (Me, "Not adding " & Name.Value.all
+                      & " since file not found");
+            else
+               Trace (Me, "Adding " & Name.Value.all & ' ' & Menu.Value.all);
+               Register_Help
+                 (Kernel,
+                  HTML_File   => Create_Html (Name.Value.all, Kernel),
+                  Descr       => Descr.Value.all,
+                  Category    => Cat.Value.all,
+                  Menu_Before => Get_Attribute (Menu, "before", ""),
+                  Menu_After  => Get_Attribute (Menu, "after", ""),
+                  Menu_Path   => Menu.Value.all);
+            end if;
          else
             if Shell = null then
                Insert
