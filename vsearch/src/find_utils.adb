@@ -23,7 +23,7 @@ package body Find_Utils is
    --
    --  Raise Search_Error if:
    --  * Look_For is empty, or can't compile
-   --         ? XXX (iff it is a regexp) ? 
+   --         ? XXX (iff it is a regexp) ?
    --  * Nor Comments nor Strings nor Statements are scanned
 
 
@@ -355,8 +355,7 @@ package body Find_Utils is
          --  ~ Line (Reached .. Pos - 1) is whole the same lexical state
 
          Next               : Positive;
-         Next_Lexical_State : Recognized_Lexical_States :=
-                                 Search.Lexical_State;
+         Next_Lexical_State : Recognized_Lexical_States;
          --  ~ Line (Next) is from where Next_Lexical_State applies
 
          Str_Delim     : constant Character := Context.String_Delimiter;
@@ -375,7 +374,9 @@ package body Find_Utils is
 
          Whole_Line_Loop : loop
             Pos := Reached;
+
             Next := EOL + 1;  -- ~ Default when whole line is same lexical
+            Next_Lexical_State := Search.Lexical_State;
 
             case Search.Lexical_State is
                when Statements =>
@@ -445,17 +446,17 @@ package body Find_Utils is
                Continue := Callback (True, Name, Line_Nr, Line);
                Called := True;
 
-               exit when not Continue;
+               exit Whole_Line_Loop when not Continue;
 
-               --  ? improve by exit when not Callback ?
-               --  ? OK since Search.L_St needn't being updated and Called no
-               --  more ?
+               --  ??? improve by 'exit when not Callback'
+               --  ??? OK since Search.Lexical_State needn't being updated and
+               --  ???   called no more
             end if;
 
             Reached := Next;  -- Skip the processed text
             Search.Lexical_State := Next_Lexical_State;
 
-            exit when Reached > EOL;
+            exit Whole_Line_Loop when Reached > EOL;
          end loop Whole_Line_Loop;
 
          return Continue;
@@ -465,6 +466,8 @@ package body Find_Utils is
 
       Continue : Boolean;
    begin
+      pragma Assert (Poll_Search_Handler /= null);
+
       if Search.Files = null then
          Continue := Explore_Directory (Search.Directory.all);
       else

@@ -16,9 +16,9 @@
 --  Classic options included: match case, whole word.
 
 
---  ? in C \ allow string to skip over the ASCII.LF ?
---  ???  assume strings can continue over ASCII.LF (wait for end delimiter)
---  ???  1 depth level of syntax, eg strings aren't found in comments
+--  ??? assume strings can continue over ASCII.LF (wait for end delimiter)
+--  ??? in C strings, \ skips ASCII.LF; don't skip LF without \ ?
+--  ??? 1 depth level of syntax, eg strings aren't found in comments
 
 
 
@@ -68,8 +68,6 @@ package Find_Utils is
    --  * Files is null
    --  * Nor Comments nor Strings nor Statements are scanned
    --
-   --  NOTE: Strings included in comments are not recognized as strings
-   --
    --  ??? Searching " in Ada strings badly implemented: treated as 2 strings
    --  ??? Searching empty lines match none !
 
@@ -98,7 +96,7 @@ package Find_Utils is
    --
    --  Raise Search_Error if:
    --  * Look_For is empty, or can't compile
-   --         ? XXX (iff it is a regexp) ? 
+   --         ? XXX (iff it is a regexp) ?
    --  * Files_Pattern is uninitialized
    --  * Nor Comments nor Strings nor Statements are scanned
    --
@@ -143,6 +141,8 @@ package Find_Utils is
    --  The callback is called whenever a match is found and at the end of each
    --  file until all files are scanned or the callback ask for aborting.
    --  An unopenable file is immediately considered as whole scanned.
+   --
+   --  NOTE: The callback mustn't be null.
 
    procedure Free (S : in out Code_Search);
    --  Free the memory occupied by S.
@@ -156,7 +156,6 @@ private
    type Recognized_Lexical_States is (Statements, Strings,
                                       Mono_Comments, Multi_Comments);
    --  Current lexical state of the currently parsed file
-
 
    type Code_Search is record
       Look_For        : String_Access := null;
