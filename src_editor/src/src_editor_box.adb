@@ -90,8 +90,8 @@ package body Src_Editor_Box is
 
    editor_xpm          : aliased Chars_Ptr_Array (0 .. 0);
    editor_modified_xpm : aliased Chars_Ptr_Array (0 .. 0);
-   pragma Import (C, editor_xpm, "project_xpm");
-   pragma Import (C, editor_modified_xpm, "project_modified_xpm");
+   pragma Import (C, editor_xpm, "mini_page_xpm");
+   pragma Import (C, editor_modified_xpm, "modified_page_xpm");
 
    procedure Setup (Data : Source_Editor_Box; Id : Handler_Id);
    package Box_Callback is new Gtk.Handlers.User_Callback_With_Setup

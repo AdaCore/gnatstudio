@@ -91,8 +91,8 @@ package body Src_Editor_Module is
    --  Key to use in the kernel histories to store the most recently opened
    --  files.
 
-   editor_xpm          : aliased Chars_Ptr_Array (0 .. 0);
-   pragma Import (C, editor_xpm, "project_xpm");
+   editor_xpm : aliased Chars_Ptr_Array (0 .. 0);
+   pragma Import (C, editor_xpm, "mini_page_xpm");
 
    type Mark_Identifier_Record is record
       Id     : Natural;
