@@ -161,10 +161,10 @@ private
       --  Whether the current search item that the context refers to
       --  is acceptable for a replace operation.
 
-      Begin_Line, Begin_Column, End_Line, End_Column : Natural;
+      Begin_Line, Begin_Column, End_Line, End_Column : Natural := 0;
       --  Begin_Line is set to 0 if no match was found
 
-      All_Occurrences : Boolean;
+      All_Occurrences : Boolean := False;
       Scope           : Search_Scope := Whole;
    end record;
 
