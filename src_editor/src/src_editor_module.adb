@@ -194,13 +194,15 @@ package body Src_Editor_Module is
       File       : VFS.Virtual_File := VFS.No_File;
       Create_New : Boolean := True;
       Focus      : Boolean := True;
-      Force      : Boolean := False) return Source_Box;
+      Force      : Boolean := False;
+      Dock       : Dock_Side := None) return Source_Box;
    --  Open a file and return the handle associated with it.
    --  If Add_To_MDI is set to True, the box will be added to the MDI window.
    --  If Focus is True, the box will be raised if it is in the MDI.
    --  See Create_File_Exitor.
    --  If Force is true, then the file is reloaded without asking confirmation
    --  from the user
+   --  The editor will be put in the MDI area specified by Dock.
 
    function Create_File_Editor
      (Kernel     : access Kernel_Handle_Record'Class;
@@ -2034,7 +2036,8 @@ package body Src_Editor_Module is
       File       : VFS.Virtual_File := VFS.No_File;
       Create_New : Boolean := True;
       Focus      : Boolean := True;
-      Force      : Boolean := False) return Source_Box
+      Force      : Boolean := False;
+      Dock       : Dock_Side := None) return Source_Box
    is
       MDI        : constant MDI_Window := Get_MDI (Kernel);
       Editor     : Source_Editor_Box;
@@ -2076,6 +2079,8 @@ package body Src_Editor_Module is
             Default_Width  => Get_Pref (Kernel, Default_Widget_Width),
             Default_Height => Get_Pref (Kernel, Default_Widget_Height),
             Module         => Src_Editor_Module_Id);
+         Set_Dock_Side (Child, Dock);
+         Dock_Child (Child);
          Set_Icon (Child, Gdk_New_From_Xpm_Data (editor_xpm));
 
          if Focus then
@@ -2882,6 +2887,8 @@ package body Src_Editor_Module is
               Get_Boolean (Data (Data'First + 5));
             Force       : constant Boolean :=
               Get_Boolean (Data (Data'First + 6));
+            Dock        : constant Gtkada.MDI.Dock_Side :=
+              Dock_Side'Val (Get_Int (Data (Data'First + 7)));
             Iter        : Child_Iterator := First_Child (MDI);
             Child       : MDI_Child;
             No_Location : Boolean := False;
@@ -2915,7 +2922,8 @@ package body Src_Editor_Module is
                  (Kernel, File,
                   Create_New => New_File,
                   Focus      => not No_Location,
-                  Force      => Force);
+                  Force      => Force,
+                  Dock       => Dock);
 
                if Source /= null then
                   Edit := Source.Editor;
