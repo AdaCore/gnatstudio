@@ -458,11 +458,11 @@ package body Navigation_Module is
       Gtk_New (Menu_Item);
       Register_Menu (Kernel, Navigate, Menu_Item);
       Register_Menu
-        (Kernel, Navigate, -"Previous Result", "", On_Previous_Result'Access,
+        (Kernel, Navigate, -"Previous Tag", "", On_Previous_Result'Access,
          Accel_Key  => GDK_less,
          Accel_Mods => Control_Mask);
       Register_Menu
-        (Kernel, Navigate, -"Next Result", "", On_Next_Result'Access,
+        (Kernel, Navigate, -"Next Tag", "", On_Next_Result'Access,
          Accel_Key  => GDK_greater,
          Accel_Mods => Control_Mask);
 
