@@ -61,7 +61,9 @@ package Glide_Result_View is
    --  Remove category Identifier from the view. All corresponding marks
    --  are deleted.
 
-   procedure Next_Item (View : access Result_View_Record'Class);
+   procedure Next_Item
+     (View      : access Result_View_Record'Class;
+      Backwards : Boolean := False);
    --  If an item if selected, jump to the location pointed to by the iter
    --  immediately following it in the same category. If there is none, jump
    --  to the first item in the category.

@@ -92,7 +92,7 @@ package body Glide_Result_View is
    -- Local subprograms --
    -----------------------
 
-   procedure Set_Column_Types (Tree : Gtk_Tree_View);
+   procedure Set_Column_Types (View : access Result_View_Record'Class);
    --  Sets the types of columns to be displayed in the tree_view.
 
    procedure Get_Category_File
@@ -409,7 +409,10 @@ package body Glide_Result_View is
    -- Next_Item --
    ---------------
 
-   procedure Next_Item (View : access Result_View_Record'Class) is
+   procedure Next_Item
+     (View      : access Result_View_Record'Class;
+      Backwards : Boolean := False)
+   is
       Iter          : Gtk_Tree_Iter;
       Path          : Gtk_Tree_Path;
       File_Path     : Gtk_Tree_Path;
@@ -437,19 +440,45 @@ package body Glide_Result_View is
       Category_Path := Copy (File_Path);
       Success := Up (Category_Path);
 
-      Next (Path);
+      if Backwards then
+         Success := Prev (Path);
+      else
+         Next (Path);
+      end if;
 
-      if Get_Iter (View.Model, Path) = Null_Iter then
-         Next (File_Path);
+      if not Success or else Get_Iter (View.Model, Path) = Null_Iter then
+         if Backwards then
+            Success := Prev (File_Path);
+         else
+            Next (File_Path);
+         end if;
 
-         if Get_Iter (View.Model, File_Path) = Null_Iter then
+         if not Success
+           or else Get_Iter (View.Model, File_Path) = Null_Iter
+         then
             File_Path := Copy (Category_Path);
             Down (File_Path);
+
+            if Backwards then
+               while Get_Iter (View.Model, File_Path) /= Null_Iter loop
+                  Next (File_Path);
+               end loop;
+
+               Success := Prev (File_Path);
+            end if;
          end if;
 
          Success := Expand_Row (View.Tree, File_Path, True);
          Path := Copy (File_Path);
          Down (Path);
+
+         if Backwards then
+            while Get_Iter (View.Model, Path) /= Null_Iter loop
+               Next (Path);
+            end loop;
+
+            Success := Prev (Path);
+         end if;
       end if;
 
       Select_Path (Get_Selection (View.Tree), Path);
@@ -597,10 +626,12 @@ package body Glide_Result_View is
    -- Set_Column_Types --
    ----------------------
 
-   procedure Set_Column_Types (Tree : Gtk_Tree_View) is
+   procedure Set_Column_Types (View : access Result_View_Record'Class) is
+      Tree          : Gtk_Tree_View := View.Tree;
       Col           : Gtk_Tree_View_Column;
       Text_Rend     : Gtk_Cell_Renderer_Text;
       Pixbuf_Rend   : Gtk_Cell_Renderer_Pixbuf;
+
       Dummy         : Gint;
 
    begin
@@ -618,9 +649,8 @@ package body Glide_Result_View is
       Add_Attribute (Col, Text_Rend, "foreground_gdk", Color_Column);
       Dummy := Append_Column (Tree, Col);
 
-      Gtk_New (Text_Rend);
-
       Gtk_New (Col);
+      Gtk_New (Text_Rend);
       Pack_Start (Col, Text_Rend, True);
       Add_Attribute (Col, Text_Rend, "text", Message_Column);
       Dummy := Append_Column (Tree, Col);
@@ -695,7 +725,7 @@ package body Glide_Result_View is
 
       Gtk_New (View.Model, Columns_Types);
       Gtk_New (View.Tree, View.Model);
-      Set_Column_Types (View.Tree);
+      Set_Column_Types (View);
       Set_Headers_Visible (View.Tree, False);
 
       Gtk_New (Scrolled);
