@@ -134,8 +134,10 @@ static int Vw32_start_process_share_console = 0;
 static int Vw32_start_process_inherit_error_mode = 1;
 
 /* Control whether create_child causes the process' window to be
-   hidden.  The default is 1. */
-static int Vw32_start_process_show_window = 1;
+   hidden.  The default is 0.
+   Setting this value to 1 means that -mwindows applications will
+   display a console each time a process is spawned, which is undesirable. */
+static int Vw32_start_process_show_window = 0;
 
 /* Control whether spawnve quotes arguments as necessary to ensure
    correct parsing by child process.  Because not all uses of spawnve
