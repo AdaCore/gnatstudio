@@ -259,8 +259,14 @@ package body GVD_Module is
    --  Callback for the "delete_event" signal of the assembly view.
    --  Widget is a Code_Editor.
 
+   procedure Debug_Init
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Data   : File_Project_Record;
+      Args   : String);
+   --  Initialize the debugger
+
    procedure Debug_Terminate (Kernel : Kernel_Handle);
-   --  Terminate the debugging session, and closes all debuggers.
+   --  Terminate the debugging session, and closes all debuggers
 
    procedure Debug_Terminate
      (Kernel   : Kernel_Handle;
@@ -887,10 +893,12 @@ package body GVD_Module is
    -------------------------
 
    procedure Initialize_Debugger
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) is
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Args   : String) is
    begin
-      On_Debug_Init
-        (Kernel, File_Project_Record'(Get_Project (Kernel), VFS.No_File));
+      Debug_Init
+        (Kernel,
+         File_Project_Record'(Get_Project (Kernel), VFS.No_File), Args);
    end Initialize_Debugger;
 
    -----------------------------
@@ -1630,12 +1638,14 @@ package body GVD_Module is
         (Kernel, Debug & (-"Terminate")), Sensitive);
    end Set_Sensitive;
 
-   -------------------
-   -- On_Debug_Init --
-   -------------------
+   ----------------
+   -- Debug_Init --
+   ----------------
 
-   procedure On_Debug_Init
-     (Kernel : access GObject_Record'Class; Data : File_Project_Record)
+   procedure Debug_Init
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Data   : File_Project_Record;
+      Args   : String)
    is
       K              : constant Kernel_Handle := Kernel_Handle (Kernel);
       Top            : constant GPS_Window :=
@@ -1663,20 +1673,17 @@ package body GVD_Module is
       Program_Args := new String'("");
 
       if Data.File /= No_File then
-         Module := new String'
-           (Full_Name (Data.File).all);
+         Module := new String'(Full_Name (Data.File).all);
 
-      elsif Top.Program_Args /= null then
-         Blank_Pos := Ada.Strings.Fixed.Index (Top.Program_Args.all, " ");
+      elsif Args /= "" then
+         Blank_Pos := Ada.Strings.Fixed.Index (Args, " ");
 
          if Blank_Pos = 0 then
-            Module := new String'(Top.Program_Args.all);
+            Module := new String'(Args);
          else
-            Module := new String'
-              (Top.Program_Args (Top.Program_Args'First .. Blank_Pos - 1));
+            Module := new String'(Args (Args'First .. Blank_Pos - 1));
             Free (Program_Args);
-            Program_Args := new String'
-              (Top.Program_Args (Blank_Pos + 1 .. Top.Program_Args'Last));
+            Program_Args := new String'(Args (Blank_Pos + 1 .. Args'Last));
          end if;
 
       else
@@ -1780,6 +1787,16 @@ package body GVD_Module is
          Pop_State (K);
          Trace (Exception_Handle,
                 "Unexpected exception: " & Exception_Information (E));
+   end Debug_Init;
+
+   -------------------
+   -- On_Debug_Init --
+   -------------------
+
+   procedure On_Debug_Init
+     (Kernel : access GObject_Record'Class; Data : File_Project_Record) is
+   begin
+      Debug_Init (Kernel_Handle (Kernel), Data, "");
    end On_Debug_Init;
 
    ---------------------
@@ -1829,19 +1846,19 @@ package body GVD_Module is
       --  This might have been closed by the user
 
       if Debugger.Debugger_Text /= null then
-         Close (Top.Process_Mdi, Debugger.Debugger_Text);
+         Close (Top.MDI, Debugger.Debugger_Text);
       end if;
 
       if Debugger.Debuggee_Console /= null then
-         Close (Top.Process_Mdi, Debugger.Debuggee_Console);
+         Close (Top.MDI, Debugger.Debuggee_Console);
       end if;
 
       if Debugger.Data_Scrolledwindow /= null then
-         Close (Top.Process_Mdi, Debugger.Data_Scrolledwindow);
+         Close (Top.MDI, Debugger.Data_Scrolledwindow);
       end if;
 
       if Debugger.Stack /= null then
-         Close (Top.Process_Mdi, Debugger.Stack);
+         Close (Top.MDI, Debugger.Stack);
       end if;
 
       if Debugger.Breakpoints /= null then

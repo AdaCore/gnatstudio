@@ -33,7 +33,8 @@ package GVD_Module is
    --  Register the module into the list
 
    procedure Initialize_Debugger
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Args   : String);
    --  Initialize the debugger if needed.
 
    procedure On_Assembly
