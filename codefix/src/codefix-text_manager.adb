@@ -32,10 +32,8 @@ with Language;              use Language;
 with VFS;                   use VFS;
 
 with Codefix.Merge_Utils;   use Codefix.Merge_Utils;
-with Traces; use Traces;
 
 package body Codefix.Text_Manager is
-   Me : constant Debug_Handle := Create ("Codefix");
 
    ------------------
    -- Compare_Last --
