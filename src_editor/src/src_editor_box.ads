@@ -317,16 +317,6 @@ package Src_Editor_Box is
      (Editor : access Source_Editor_Box_Record) return String;
    --  Return the contents of the entire buffer.
 
-   function Get_Ref_Count
-     (Editor : access Source_Editor_Box_Record)
-      return Integer;
-   --  Return the total number of current references to this buffer.
-
-   function Get_Total_Ref_Count
-     (Editor : access Source_Editor_Box_Record)
-      return Integer;
-   --  Return the total number of times the Source_Buffer was referenced.
-
    ---------------------
    -- Contextual menu --
    ---------------------
