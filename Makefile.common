@@ -134,6 +134,60 @@ check_gtkada: force
 	@[ `gtkada-config -v`" " != " " ] || \
 	   (echo "GTKAda installation not found, see README"; false)
 
+###########################
+## Project Editor module ##
+###########################
+
+ifneq (,$(findstring prj_editor,$(MODULES)))
+
+# Location of prj_editor sources. See the README file at the top-level for
+# information on how to setup the required links
+PRJ_EDITOR_SRC=../../prj_editor
+
+MODULE_INCLUDE+=-I${PRJ_EDITOR_SRC}/src
+endif
+
+.PHONY: check_prj_editor
+check_prj_editor: force
+	@[ -f ${PRJ_EDITOR_SRC}/src/wizards.ads ] || \
+	   (echo "prj editor sources not found in ${PRJ_EDITOR_SRC}, see README"; false)
+
+######################
+## hypergrep module ##
+######################
+
+ifneq (,$(findstring hypergrep,$(MODULES)))
+
+# Location of hypergrep sources. See the README file at the top-level for
+# information on how to setup the required links
+HYPERGREP_SRC=../../hypergrep
+
+MODULE_INCLUDE+=-I${HYPERGREP_SRC}/src
+endif
+
+.PHONY: check_hypergrep
+check_hypergrep: force
+	@[ -f ${HYPERGREP_SRC}/src/hyper_grep_base_pkg.ads ] || \
+	   (echo "hypergrep sources not found in ${HYPERGREP_SRC}, see README"; false)
+
+##################
+## glide module ##
+##################
+
+ifneq (,$(findstring glide,$(MODULES)))
+
+# Location of glide sources. See the README file at the top-level for
+# information on how to setup the required links
+GLIDE_SRC=../../glide
+
+MODULE_INCLUDE+=-I${GLIDE_SRC}/src
+endif
+
+.PHONY: check_glide
+check_glide: force
+	@[ -f ${GLIDE_SRC}/src/glide.adb ] || \
+	   (echo "hypergrep sources not found in ${GLIDE_SRC}, see README"; false)
+
 #############
 ## General ##
 #############
