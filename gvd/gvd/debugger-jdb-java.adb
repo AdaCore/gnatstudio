@@ -13,7 +13,7 @@
 -- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
 -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
 -- General Public License for more details. You should have received --
--- a copy of the GNU General Public License along with this library; --
+-- a copy of the GNU General Public License along with this program; --
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
@@ -126,55 +126,6 @@ package body Debugger.Jdb.Java is
    begin
       return Record_Field_Name (Java_Lang, Name, Field);
    end Record_Field_Name;
-
-   -------------------
-   -- Format_Source --
-   -------------------
-
-   procedure Format_Source
-     (Lang             : access Jdb_Java_Language;
-      Buffer           : String;
-      Indent_Params    : Indent_Parameters := Default_Indent_Parameters;
-      Reserved_Casing  : Casing_Type       := Lower;
-      Ident_Casing     : Casing_Type       := Mixed;
-      Format_Operators : Boolean           := True)
-   is
-      pragma Unreferenced (Lang);
-   begin
-      Format_Source
-        (Java_Lang, Buffer, Indent_Params, Reserved_Casing,
-         Ident_Casing, Format_Operators);
-   end Format_Source;
-
-   ----------------------
-   -- Parse_Constructs --
-   ----------------------
-
-   procedure Parse_Constructs
-     (Lang   : access Jdb_Java_Language;
-      Buffer : String;
-      Result : out Construct_List)
-   is
-      pragma Unreferenced (Lang);
-   begin
-      Parse_Constructs (Java_Lang, Buffer, Result);
-   end Parse_Constructs;
-
-   ----------------------
-   -- Next_Indentation --
-   ----------------------
-
-   procedure Next_Indentation
-     (Lang          : access Jdb_Java_Language;
-      Buffer        : String;
-      Indent        : out Natural;
-      Next_Indent   : out Natural;
-      Indent_Params : Indent_Parameters := Default_Indent_Parameters)
-   is
-      pragma Unreferenced (Lang);
-   begin
-      Next_Indentation (Java_Lang, Buffer, Indent, Next_Indent, Indent_Params);
-   end Next_Indentation;
 
    ------------------
    -- Set_Variable --

@@ -13,7 +13,7 @@
 -- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
 -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
 -- General Public License for more details. You should have received --
--- a copy of the GNU General Public License along with this library; --
+-- a copy of the GNU General Public License along with this program; --
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
@@ -69,6 +69,7 @@ package body Debugger.Gdb.Cpp is
       Result   : out Generic_Type_Access);
    --  Parse the contents of a class/union in C++ (ie the part after '{'
    --  Index should point to the character after '{'
+
    --------------------
    -- Is_Simple_Type --
    --------------------
@@ -169,55 +170,6 @@ package body Debugger.Gdb.Cpp is
    begin
       return Record_Field_Name (Cpp_Lang, Name, Field);
    end Record_Field_Name;
-
-   -------------------
-   -- Format_Source --
-   -------------------
-
-   procedure Format_Source
-     (Lang             : access Gdb_Cpp_Language;
-      Buffer           : String;
-      Indent_Params    : Indent_Parameters := Default_Indent_Parameters;
-      Reserved_Casing  : Casing_Type       := Lower;
-      Ident_Casing     : Casing_Type       := Mixed;
-      Format_Operators : Boolean           := True)
-   is
-      pragma Unreferenced (Lang);
-   begin
-      Format_Source
-        (Cpp_Lang, Buffer, Indent_Params, Reserved_Casing,
-         Ident_Casing, Format_Operators);
-   end Format_Source;
-
-   ----------------------
-   -- Parse_Constructs --
-   ----------------------
-
-   procedure Parse_Constructs
-     (Lang   : access Gdb_Cpp_Language;
-      Buffer : String;
-      Result : out Construct_List)
-   is
-      pragma Unreferenced (Lang);
-   begin
-      Parse_Constructs (Cpp_Lang, Buffer, Result);
-   end Parse_Constructs;
-
-   ----------------------
-   -- Next_Indentation --
-   ----------------------
-
-   procedure Next_Indentation
-     (Lang          : access Gdb_Cpp_Language;
-      Buffer        : String;
-      Indent        : out Natural;
-      Next_Indent   : out Natural;
-      Indent_Params : Indent_Parameters := Default_Indent_Parameters)
-   is
-      pragma Unreferenced (Lang);
-   begin
-      Next_Indentation (Cpp_Lang, Buffer, Indent, Next_Indent, Indent_Params);
-   end Next_Indentation;
 
    ---------------------
    -- Break Exception --

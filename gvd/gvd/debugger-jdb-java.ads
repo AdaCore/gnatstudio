@@ -13,7 +13,7 @@
 -- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
 -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
 -- General Public License for more details. You should have received --
--- a copy of the GNU General Public License along with this library; --
+-- a copy of the GNU General Public License along with this program; --
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
@@ -126,30 +126,6 @@ package Debugger.Jdb.Java is
    function Get_Language_Debugger_Context
      (Lang : access Jdb_Java_Language)
       return Language.Debugger.Language_Debugger_Context;
-
-   ----------------------
-   -- Source Analyzing --
-   ----------------------
-
-   procedure Format_Source
-     (Lang             : access Jdb_Java_Language;
-      Buffer           : String;
-      Indent_Params    : Indent_Parameters := Default_Indent_Parameters;
-      Reserved_Casing  : Casing_Type       := Lower;
-      Ident_Casing     : Casing_Type       := Mixed;
-      Format_Operators : Boolean           := True);
-
-   procedure Parse_Constructs
-     (Lang   : access Jdb_Java_Language;
-      Buffer : String;
-      Result : out Construct_List);
-
-   procedure Next_Indentation
-     (Lang          : access Jdb_Java_Language;
-      Buffer        : String;
-      Indent        : out Natural;
-      Next_Indent   : out Natural;
-      Indent_Params : Indent_Parameters := Default_Indent_Parameters);
 
 private
 
