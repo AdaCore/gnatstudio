@@ -325,6 +325,10 @@ package body Src_Editor_View is
    begin
       Save_Cursor_Position (User);
 
+      if User.Has_Focus then
+         Scroll_To_Cursor_Location (User);
+      end if;
+
    exception
       when E : others =>
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
@@ -458,6 +462,7 @@ package body Src_Editor_View is
       View   : constant Source_View := Source_View (Widget);
       Buffer : constant Source_Buffer := Source_Buffer (Get_Buffer (View));
    begin
+      View.Has_Focus := False;
       Save_Cursor_Position (View);
       External_End_Action (Buffer);
       return False;
@@ -477,6 +482,8 @@ package body Src_Editor_View is
    is
       View   : constant Source_View := Source_View (Widget);
    begin
+      View.Has_Focus := True;
+
       if not Selection_Exists (Get_Buffer (View)) then
          Restore_Cursor_Position (View);
       end if;
