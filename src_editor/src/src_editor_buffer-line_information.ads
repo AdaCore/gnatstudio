@@ -123,4 +123,10 @@ package Src_Editor_Buffer.Line_Information is
       Image       : Gdk_Pixbuf);
    --  Add a command in the block column information.
 
+   procedure Fold_All (Buffer : access Source_Buffer_Record'Class);
+   --  Folds all top-level foldable blocks.
+
+   procedure Unfold_All (Buffer : access Source_Buffer_Record'Class);
+   --  Unfold all top-level foldable blocks.
+
 end Src_Editor_Buffer.Line_Information;
