@@ -155,6 +155,10 @@ package Debugger.Gdb is
      (Debugger : access Gdb_Debugger;
       Mode     : GVD.Types.Command_Type := GVD.Types.Hidden);
 
+   procedure Kill_Process
+     (Debugger : access Gdb_Debugger;
+      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden);
+
    procedure Step_Into
      (Debugger : access Gdb_Debugger;
       Mode     : GVD.Types.Command_Type := GVD.Types.Hidden);
@@ -378,6 +382,8 @@ private
       Stored_Language : GNAT.OS_Lib.String_Access;
       WTX_List        : GNAT.OS_Lib.String_Access;
       WTX_Index       : Natural;
+      Endian          : Endian_Type := Unknown_Endian;
+      Has_Terminated  : Boolean := False;
    end record;
 
    procedure Internal_Parse_Value
