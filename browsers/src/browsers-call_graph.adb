@@ -1343,6 +1343,10 @@ package body Browsers.Call_Graph is
             end;
          end if;
       end if;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception " & Exception_Information (E));
    end Call_Graph_Contextual_Menu;
 
    ------------------------
@@ -1428,6 +1432,11 @@ package body Browsers.Call_Graph is
       end if;
 
       return Context;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception " & Exception_Information (E));
+         return null;
    end Contextual_Factory;
 
    -------------------
@@ -1463,8 +1472,7 @@ package body Browsers.Call_Graph is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception in On_Call_Graph "
-                & Exception_Information (E));
+         Trace (Me, "Unexpected exception " & Exception_Information (E));
    end On_Call_Graph;
 
    ----------------------------
@@ -1479,9 +1487,6 @@ package body Browsers.Call_Graph is
         Get_Current_Context (Kernel);
 
    begin
-      --  ??? Should we display an error message if the current context does
-      --  not contain an entity ?
-
       if Context /= null
         and then Context.all in Entity_Selection_Context'Class
       then
@@ -1491,7 +1496,17 @@ package body Browsers.Call_Graph is
             Category_Title => -All_Refs_Category,
             Include_Writes => True,
             Include_Reads  => True);
+
+      else
+         Console.Insert
+           (Kernel, -"Cannot find references: no entity selected",
+            Mode => Error);
       end if;
+
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception " & Exception_Information (E));
    end On_Find_All_References;
 
    ---------------------
@@ -1544,6 +1559,10 @@ package body Browsers.Call_Graph is
       elsif Command = "called_by" then
          Examine_Ancestors_Call_Graph (Kernel, Entity);
       end if;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception " & Exception_Information (E));
    end Call_Graph_Command_Handler;
 
    ---------------------
