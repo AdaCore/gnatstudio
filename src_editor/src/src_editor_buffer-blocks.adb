@@ -40,8 +40,7 @@ package body Src_Editor_Buffer.Blocks is
    procedure Compute_Blocks (Buffer : access Source_Buffer_Record'Class) is
 
       function Copy
-        (Str : Basic_Types.String_Access)
-         return GNAT.Strings.String_Access;
+        (Str : Basic_Types.String_Access) return GNAT.Strings.String_Access;
       pragma Inline (Copy);
       --  Returns a copy of Str.
 
@@ -54,9 +53,12 @@ package body Src_Editor_Buffer.Blocks is
       Buffer_Line       : Buffer_Line_Type;
       First_Buffer_Line : Buffer_Line_Type;
 
+      ----------
+      -- Copy --
+      ----------
+
       function Copy
-        (Str : Basic_Types.String_Access)
-         return GNAT.Strings.String_Access is
+        (Str : Basic_Types.String_Access) return GNAT.Strings.String_Access is
       begin
          if Str = null then
             return null;
