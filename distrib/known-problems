@@ -1,5 +1,12 @@
 Known Problems fixed in GPS 1.4.1
 
+- D114-006 Indentation in read-only editors
+  Problem:    When pressing the 'indent' key in a read-only editor, the
+              current line is wrongly indented, modyfing the contents of the
+              editor.
+  Workaround: You can undo this action by temporarily setting the editor
+              writable, clicking on the 'Read-Only' label.
+
 - Duplicated entries in the project properties editor
   Problem:    In the project properties, 'General' page, 'Tools' section,
               duplicated entries for 'Ada compiler' and 'Gnatls' are displayed.
