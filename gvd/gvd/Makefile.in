@@ -5,7 +5,7 @@ ALL_CFLAGS = $(CFLAGS) -gnatwu @GTK_CFLAGS@ -I../gnat
 LINK_FLAGS = ../gnat/gexpect.o ../pixmaps/pixmaps.o @GTK_LIBS@
 
 MAIN = odd_main
-EXEC = odd
+EXEC = gvd
 
 all: $(EXEC)
 
