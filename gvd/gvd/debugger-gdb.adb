@@ -64,107 +64,113 @@ package body Debugger.Gdb is
    -- Constants --
    ---------------
 
-   Prompt_Regexp : constant Pattern_Matcher :=
+   Prompt_Regexp             : constant Pattern_Matcher :=
      Compile ("^>*\(gdb\) ", Multiple_Lines);
    --  Regular expressions used to recognize the prompt.
    --  Note that this regexp needs to be as simple as possible, since it will
    --  be used several times when receiving long results from commands.
 
-   Prompt_Length : constant := 6;
+   Prompt_Length             : constant := 6;
    --  Length of the prompt ("(gdb) ").
 
-   Gdb_Command   : constant String := "gdb";
+   Gdb_Command               : constant String := "gdb";
    --  Name of the command to launch gdb.
 
-   Gdb_Options   : constant String := "-nw -q";
+   Gdb_Options               : constant String := "-nw -q";
    --  Options always passed to gdb.
 
-   Highlight_Pattern : constant Pattern_Matcher :=
+   Highlight_Pattern         : constant Pattern_Matcher :=
      Compile ("^\(gdb\) ", Multiple_Lines);
    --  Matches everything that should be highlighted in the debugger window.
 
-   File_Name_Pattern : constant Pattern_Matcher :=
+   File_Name_Pattern         : constant Pattern_Matcher :=
      Compile (ASCII.SUB & ASCII.SUB
               & "(.+):(\d+):\d+:[^:]+:(0x[0-9a-f]+)$", Multiple_Lines);
    --  Matches a file name/line indication in gdb's output.
 
-   File_Name_Pattern2 : constant Pattern_Matcher :=
+   File_Name_Pattern2        : constant Pattern_Matcher :=
      Compile ("^([^:\n]+):(\d+): No such file or directory.", Multiple_Lines);
    --  Second regexp used to detect when the current frame can not be displayed
    --  Note that this pattern should work even when LANG isn't english because
    --  gdb does not seem to take into account this variable at all.
 
-   Language_Pattern : constant Pattern_Matcher := Compile
+   Language_Pattern          : constant Pattern_Matcher := Compile
      ("^(The current source language is|Current language:) +" &
       """?(auto; currently )?([^""\s]+)("".)?\n", Multiple_Lines);
    --  Pattern used to detect language changes in the debugger.
 
-   Terminate_Pattern : constant Pattern_Matcher := Compile
+   Terminate_Pattern         : constant Pattern_Matcher := Compile
      ("^Program exited (normally|with code)", Multiple_Lines);
    --  Pattern used to detect when the debuggee terminates.
 
-   Running_Pattern : constant Pattern_Matcher := Compile
+   Running_Pattern           : constant Pattern_Matcher := Compile
      ("^The program is not being run.", Multiple_Lines);
    --  Pattern used to detect when the debuggee is not running.
 
-   Frame_Pattern : constant Pattern_Matcher := Compile
+   Frame_Pattern             : constant Pattern_Matcher := Compile
      ("^#(\d+) +((0x[0-9a-f]+) in )?(.+?)( at (.+))?$", Multiple_Lines);
    --  Regular expression used to detect and parse callstack frames
 
-   Frame_Pattern_With_File : constant Pattern_Matcher := Compile
+   Frame_Pattern_With_File   : constant Pattern_Matcher := Compile
      ("^#(\d+) +((0x[0-9a-f]+) in )?(.+?)( at (.+))$", Multiple_Lines);
    --  Regular expression used to detect and parse callstack frames
    --  with no file information
 
-   Breakpoint_Pattern : constant Pattern_Matcher := Compile
+   Breakpoint_Pattern        : constant Pattern_Matcher := Compile
      ("^(\d+)\s+(breakpoint|\w+? watchpoint)\s+(keep|dis|del)\s+([yn])"
       & "\s+((0x0*)?(\S+))\s+(.*)$",
       Multiple_Lines);
    --  Pattern to match a single line in "info breakpoint"
 
-   File_Name_In_Breakpoint : constant Pattern_Matcher := Compile
+   File_Name_In_Breakpoint   : constant Pattern_Matcher := Compile
      ("\bat (.+):(\d+)$", Multiple_Lines);
    --  How to find file names in the info given by "info breakpoint".
    --  Note that we have to allow for special characters in the directory
    --  or file name, since the user might be using some strange names. The only
    --  restriction is that the name can not contain newline characters.
 
-   Exception_In_Breakpoint : constant Pattern_Matcher := Compile
+   Exception_In_Breakpoint   : constant Pattern_Matcher := Compile
      ("\bon ([-\w_:]+|all exceptions)");
    --  How to detect exception names in the info given by "info breakpoint"
 
-   Subprogram_In_Breakpoint : constant Pattern_Matcher := Compile
+   Subprogram_In_Breakpoint  : constant Pattern_Matcher := Compile
      ("\bin (\S+)");
    --  How to detect subprogram names in the info given by "info breakpoint"
 
-   Condition_In_Breakpoint : constant Pattern_Matcher := Compile
+   Condition_In_Breakpoint   : constant Pattern_Matcher := Compile
      ("^\tstop only if (.*)");
    --  How to detect breakpoint conditions in "info breakpoint"
 
-   Ignore_In_Breakpoint : constant Pattern_Matcher := Compile
+   Ignore_In_Breakpoint      : constant Pattern_Matcher := Compile
      ("^\tignore next (\d+) hits");
    --  How to detect the ignore count in "info breakpoint"
 
-   Breakpoint_Extra_Info : constant Pattern_Matcher := Compile
+   Breakpoint_Extra_Info     : constant Pattern_Matcher := Compile
      ("^(\d+)\s+(task|pd|any)\s+(task|pd|all)(.*)$", Multiple_Lines);
    --  Pattern to match a single line in "info
    --  breakpoints-extra-info"
 
-   Question_Filter_Pattern1 : constant Pattern_Matcher :=
+   Question_Filter_Pattern1  : constant Pattern_Matcher :=
      Compile ("^\[0\] .*> ", Multiple_Lines + Single_Line);
 
-   Question_Filter_Pattern2 : constant Pattern_Matcher :=
+   Question_Filter_Pattern2  : constant Pattern_Matcher :=
      Compile ("^(.*\?) \(y or n\) ", Multiple_Lines);
    --  How to detect a question in gdb's output
 
    Continuation_Line_Pattern : constant Pattern_Matcher := Compile ("^>");
 
-   Address_Range_Pattern : constant Pattern_Matcher := Compile
+   Address_Range_Pattern     : constant Pattern_Matcher := Compile
      ("starts at address (0x[0-9a-f]+) <[^>]+> and ends at (0x[0-9a-f]+)");
    --  How to get the range of addresses for a given line
 
-   GNAT_Binder_File_Pattern : constant Pattern_Matcher := Compile
+   GNAT_Binder_File_Pattern  : constant Pattern_Matcher := Compile
      ("(b~.+\.adb)|(b_.+\.c)");
+
+   No_Definition_Of          : constant String := "No definition of";
+   --  String used to detect undefined commands.
+
+   List_Lines                : constant String := "^done,lines=[";
+   --  Used to parse output of -symbol-list-lines command
 
    procedure Language_Filter
      (Process : access Visual_Debugger_Record'Class;
@@ -728,7 +734,9 @@ package body Debugger.Gdb is
       Send (Debugger, "set height 0", Mode => Internal);
       Send (Debugger, "set annotate 1", Mode => Internal);
 
-      if Get_Pref (GVD_Prefs, Execution_Window) then
+      if Get_Pref (GVD_Prefs, Execution_Window)
+        and then Debugger.Remote_Host = null
+      then
          if Host = Windows then
             Send (Debugger, "set new-console", Mode => Internal);
          end if;
@@ -2023,40 +2031,126 @@ package body Debugger.Gdb is
       Version := Debugger.WTX_Version;
    end Info_WTX;
 
-   ------------------------
-   -- Line_Contains_Code --
-   ------------------------
+   ---------------------
+   -- Lines_With_Code --
+   ---------------------
 
-   function Line_Contains_Code
+   Cached_File  : VFS.Virtual_File;
+   Cached_Lines : Line_Array_Access;
+
+   procedure Lines_With_Code
      (Debugger : access Gdb_Debugger;
       File     : VFS.Virtual_File;
-      Line     : Positive) return Line_Kind is
-   begin
-      Set_Parse_File_Name (Get_Process (Debugger), False);
-      --  ??? The following would avoid having gdb ask unexpected questions
-      --  in Ada mode, but is too costly:
-      --  Switch_Language (Debugger, "c");
+      Result   : out Boolean;
+      Lines    : out Line_Array)
+   is
+      procedure Parse_List_Lines
+        (S         : String;
+         Lines     : Line_Array_Access;
+         Num_Lines : out Natural);
+      --  Parse S and set Num_Lines and Lines accordingly.
+      --  S is the output of the command -symbol-list-lines.
+      --  If Lines is null, only Num_Lines is computed.
 
-      declare
-         S : constant String := Send
-           (Debugger, "info line " & Base_Name (File) & ':' & Image (Line),
-            Mode => Internal);
+      ----------------------
+      -- Parse_List_Lines --
+      ----------------------
 
+      procedure Parse_List_Lines
+        (S         : String;
+         Lines     : Line_Array_Access;
+         Num_Lines : out Natural)
+      is
+         Pos, Last, Val : Natural;
       begin
-         --  ??? See comment above
-         --  Restore_Language (Debugger);
+         Num_Lines := 0;
+         Pos := S'First;
 
-         Set_Parse_File_Name (Get_Process (Debugger), True);
+         loop
+            Pos := Index (S (Pos .. S'Last), "line=");
 
-         if Index (S, "starts at address") /= 0 then
-            return Have_Code;
-         elsif Index (S, "out of range") /= 0 then
-            return No_More_Code;
+            exit when Pos = 0;
+
+            Pos  := Pos + 6;
+            Last := Index (S (Pos .. S'Last), """");
+            Val  := Integer'Value (S (Pos .. Last - 1));
+            --  Skip "},{pc="...
+            Pos := Last + 12;
+
+            if Val > Num_Lines then
+               Num_Lines := Val;
+            end if;
+
+            if Lines /= null and then Val in Lines'Range then
+               Lines (Val) := True;
+            end if;
+         end loop;
+
+      exception
+         when Constraint_Error =>
+            Result    := False;
+            Num_Lines := 0;
+      end Parse_List_Lines;
+
+   begin
+      Result := False;
+
+      if Debugger.Has_Symbol_List = 0 then
+         return;
+      end if;
+
+      --  We cache the result of -symbol-list-lines for the last file queried,
+      --  since Lines_With_Code is typically called for a line subset rather
+      --  than the whole file.
+
+      if Cached_File = File then
+         Result := True;
+      else
+         declare
+            S              : constant String := Send
+              (Debugger, "-symbol-list-lines " & Full_Name (File).all,
+               Mode => Internal);
+            Num_Lines, Pos : Natural;
+
+         begin
+            if Debugger.Has_Symbol_List = -1 then
+               if S'Length > No_Definition_Of'Length
+                 and then S (S'First ..
+                             S'First + No_Definition_Of'Length - 1) =
+                   No_Definition_Of
+               then
+                  Debugger.Has_Symbol_List := 0;
+                  return;
+               else
+                  Debugger.Has_Symbol_List := 1;
+               end if;
+            end if;
+
+            if S'Length < List_Lines'Length
+              or else S (S'First ..
+                         S'First + List_Lines'Length - 1) /= List_Lines
+            then
+               return;
+            end if;
+
+            Cached_File := File;
+            Result      := True;
+            Pos         := S'First + List_Lines'Length;
+            Parse_List_Lines (S (Pos .. S'Last), null, Num_Lines);
+            Free (Cached_Lines);
+            Cached_Lines := new Line_Array'(1 .. Num_Lines => False);
+            Parse_List_Lines (S (Pos .. S'Last), Cached_Lines, Num_Lines);
+         end;
+      end if;
+
+      for Val in Lines'Range loop
+         if Val in Cached_Lines'Range then
+            Lines (Val) := Cached_Lines (Val);
          else
-            return No_Code;
+            Lines (Val) := False;
          end if;
-      end;
-   end Line_Contains_Code;
+      end loop;
+   end Lines_With_Code;
 
    --------------------------
    -- Highlighting_Pattern --
@@ -3526,6 +3620,17 @@ package body Debugger.Gdb is
          Close_Processes (Debugger.Handle);
       end if;
    end Close_Processes;
+
+   ---------------------
+   -- Detect_Language --
+   ---------------------
+
+   procedure Detect_Language (Debugger : access Gdb_Debugger) is
+      S : constant String := Send (Debugger, "show lang", Mode => Internal);
+      pragma Unreferenced (S);
+   begin
+      null;
+   end Detect_Language;
 
    ---------------------
    -- Switch_Language --
