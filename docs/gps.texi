@@ -5381,7 +5381,9 @@ The GPS menu bar can be customized through an XML file put under the
 directory @file{$HOME/.gps/customize} on Unix
 systems, and @file{%HOME%\.gps\customize} on Windows systems.
 Any file in the @file{customize} directory will be loaded by GPS at
-start up.
+start up. Alternatively, you can also put system wide customization files
+under the directory @file{<INSTALL>/share/gps/customize}, where
+@file{<INSTALL>} is the name of the GPS installation directory.
 
 @cindex Unix
 @cindex Windows
