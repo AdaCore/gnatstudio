@@ -18,43 +18,46 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Glib;                use Glib;
 with Gdk.Window;          use Gdk.Window;
 with Gtk.Widget;          use Gtk.Widget;
 with Gtk.Main;            use Gtk.Main;
 with Gtk.Handlers;        use Gtk.Handlers;
 with Gtk.Notebook;        use Gtk.Notebook;
+with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
 with Gtk.Text;            use Gtk.Text;
 with General_Preferences_Pkg; use General_Preferences_Pkg;
 with Gtkada.Dialogs;      use Gtkada.Dialogs;
-with Odd_Intl;            use Odd_Intl;
-with GVD;                 use GVD;
-with GVD.Process;         use GVD.Process;
-with GVD.Proc_Utils;      use GVD.Proc_Utils;
+with Gtkada.File_Selection; use Gtkada.File_Selection;
+with Gtkada.Canvas;       use Gtkada.Canvas;
+with Gtkada.Types;        use Gtkada.Types;
+
+with Ada.Unchecked_Deallocation;
 with GNAT.OS_Lib;         use GNAT.OS_Lib;
 pragma Warnings (Off);
 with GNAT.Expect;         use GNAT.Expect;
 pragma Warnings (On);
-with Glib;                use Glib;
-with Debugger;            use Debugger;
-with Process_Proxies;     use Process_Proxies;
-with Breakpoints_Pkg;     use Breakpoints_Pkg;
+
+with Odd_Intl;            use Odd_Intl;
+with GVD;                 use GVD;
 with GVD.Process;         use GVD.Process;
-with Gtkada.File_Selection; use Gtkada.File_Selection;
-with Display_Items;       use Display_Items;
-with Gtkada.Canvas;       use Gtkada.Canvas;
+with GVD.Proc_Utils;      use GVD.Proc_Utils;
 with GVD.Canvas;          use GVD.Canvas;
 with GVD.Dialogs;         use GVD.Dialogs;
-with Gtkada.Types;        use Gtkada.Types;
+with GVD.Process;         use GVD.Process;
+with GVD.Trace;           use GVD.Trace;
 with GVD.Types;           use GVD.Types;
 with GVD.Strings;         use GVD.Strings;
 with GVD.Code_Editors;    use GVD.Code_Editors;
 with GVD.Preferences;     use GVD.Preferences;
 with GVD.Window_Settings; use GVD.Window_Settings;
 with GVD.Memory_View;     use GVD.Memory_View;
-with Ada.Unchecked_Deallocation;
-with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
 with List_Select_Pkg;     use List_Select_Pkg;
 with Dock_Paned;          use Dock_Paned;
+with Debugger;            use Debugger;
+with Process_Proxies;     use Process_Proxies;
+with Breakpoints_Pkg;     use Breakpoints_Pkg;
+with Display_Items;       use Display_Items;
 
 package body Main_Debug_Window_Pkg.Callbacks is
 
@@ -135,6 +138,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
    is
       Tab : constant Debugger_Process_Tab := Get_Current_Process (Object);
    begin
+      --  ??? Should be able to remove this test at some point
       if Tab = null
         or else Command_In_Process (Get_Process (Tab.Debugger))
       then
@@ -153,17 +157,15 @@ package body Main_Debug_Window_Pkg.Callbacks is
          then
             Set_Executable (Tab.Debugger, S, Mode => Hidden);
          else
-            Print_Message
-              (Main_Debug_Window_Access (Get_Toplevel (Object)).Statusbar1,
-               Error,
+            Output_Error
+              (Main_Debug_Window_Access (Get_Toplevel (Object)),
                (-" Could not find file: ") & S);
          end if;
 
       exception
          when Executable_Not_Found =>
-            Print_Message
-              (Main_Debug_Window_Access (Get_Toplevel (Object)).Statusbar1,
-               Error,
+            Output_Error
+              (Main_Debug_Window_Access (Get_Toplevel (Object)),
                (-" Could not find file: ") & S);
       end;
    end On_Open_Program1_Activate;
@@ -207,6 +209,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
    is
       Tab : constant Debugger_Process_Tab := Get_Current_Process (Object);
    begin
+      --  ??? Should be able to remove this test at some point
       if Tab = null
         or else Command_In_Process (Get_Process (Tab.Debugger))
       then
@@ -222,9 +225,9 @@ package body Main_Debug_Window_Pkg.Callbacks is
          then
             Load_Core_File (Tab.Debugger, S, Mode => Hidden);
          else
-            Print_Message
-              (Main_Debug_Window_Access (Get_Toplevel (Object)).Statusbar1,
-               Error, -(" Could not find core file: ") & S);
+            Output_Error
+              (Main_Debug_Window_Access (Get_Toplevel (Object)),
+               -(" Could not find core file: ") & S);
          end if;
       end;
    end On_Open_Core_Dump1_Activate;
@@ -282,8 +285,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
       Prog   : GNAT.OS_Lib.String_Access;
 
    begin
-      Print_Message
-        (Main_Debug_Window_Access (Tab.Window).Statusbar1, Help, Editor);
+      Output_Info (Main_Debug_Window_Access (Tab.Window), Editor);
 
       Args := Argument_String_To_List (Editor);
       Prog := Locate_Exec_On_Path (Args (Args'First).all);
@@ -359,9 +361,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
       Info          : Process_Info;
 
    begin
-      if Tab = null
-        or else Command_In_Process (Get_Process (Tab.Debugger))
-      then
+      if Tab = null then
          return;
       end if;
 
@@ -415,9 +415,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
    is
       Tab : constant Debugger_Process_Tab := Get_Current_Process (Object);
    begin
-      if Tab = null
-        or else Command_In_Process (Get_Process (Tab.Debugger))
-      then
+      if Tab = null then
          return;
       end if;
 
@@ -580,9 +578,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
    is
       Tab : constant Debugger_Process_Tab := Get_Current_Process (Object);
    begin
-      if Tab = null
-        or else Command_In_Process (Get_Process (Tab.Debugger))
-      then
+      if Tab = null then
          return;
       end if;
 
@@ -732,9 +728,10 @@ package body Main_Debug_Window_Pkg.Callbacks is
       Output_Text (Tab, "<^C>" & ASCII.LF, Is_Command => True);
       Unregister_Dialog (Tab);
 
-      Interrupt
-        (Tab.Debugger,
-         Wait_For_Prompt => False);
+      --  Need to flush the queue of commands
+      Clear_Queue (Tab.Debugger);
+
+      Interrupt (Tab.Debugger);
 
       if not Command_In_Process (Get_Process (Tab.Debugger)) then
          Display_Prompt (Tab.Debugger);
@@ -995,6 +992,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
    is
       Process : constant Debugger_Process_Tab := Get_Current_Process (Object);
    begin
+      --  ??? Should be able to remove this test at some point
       if Process /= null
         and then not Command_In_Process (Get_Process (Process.Debugger))
       then
@@ -1014,6 +1012,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
    is
       Tab : constant Debugger_Process_Tab := Get_Current_Process (Object);
    begin
+      --  ??? Should be able to remove this test at some point
       if Tab = null
         or else Command_In_Process (Get_Process (Tab.Debugger))
       then
@@ -1131,8 +1130,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
       Prog   : GNAT.OS_Lib.String_Access;
 
    begin
-      Print_Message
-        (Main_Debug_Window_Access (Object).Statusbar1, Help, Browse);
+      Output_Info (Main_Debug_Window_Access (Object), Browse);
 
       Args := Argument_String_To_List (Browse);
       Prog := Locate_Exec_On_Path (Args (Args'First).all);
@@ -1245,19 +1243,24 @@ package body Main_Debug_Window_Pkg.Callbacks is
       Arg2 : Guint := To_Guint (Params, 2);
       --  Number of the page that will be displayed
 
-      Page : Gtk_Widget := Get_Nth_Page
+      Page    : constant Gtk_Widget := Get_Nth_Page
         (Main_Debug_Window_Access (Object).Process_Notebook, Gint (Arg2));
+      Main    : constant Main_Debug_Window_Access :=
+        Main_Debug_Window_Access (Object);
       Process : Debugger_Process_Tab;
+
    begin
+      if Main.Locked then
+         Emit_Stop_By_Name (Object, "switch_page");
+         return;
+      end if;
+
       Process :=
         Debugger_Process_Tab (Process_User_Data.Get (Page));
-      Update_External_Dialogs
-        (Main_Debug_Window_Access (Object), Gtk_Widget (Process));
+      Update_External_Dialogs (Main, Gtk_Widget (Process));
 
-      if Main_Debug_Window_Access (Object).Breakpoints_Editor /= null then
-         Set_Process
-           (Breakpoints_Access
-            (Main_Debug_Window_Access (Object).Breakpoints_Editor), Process);
+      if Main.Breakpoints_Editor /= null then
+         Set_Process (Breakpoints_Access (Main.Breakpoints_Editor), Process);
       end if;
 
    exception
