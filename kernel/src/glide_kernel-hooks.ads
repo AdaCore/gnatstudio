@@ -158,6 +158,8 @@ package Glide_Kernel.Hooks is
    type Hooks_Data is abstract tagged record
       Kernel : Glide_Kernel.Kernel_Handle;
    end record;
+   --  If you need to destroy memory stored in Hooks_Data, you should do that
+   --  after calling Run_Hook
 
    function Get_Name (Data : Hooks_Data) return String is abstract;
    --  Return the name of that type. This should be unique in the application,
@@ -252,7 +254,8 @@ package Glide_Kernel.Hooks is
       Name     : String;
       Data     : access Glide_Kernel.Scripts.Callback_Data'Class;
       Set_Busy : Boolean := True);
-   --  See doc for Run_Hook above
+   --  See doc for Run_Hook above.
+   --  It is your responsability to destroy data on exit
 
    --------------------------
    -- Hooks with arguments --
