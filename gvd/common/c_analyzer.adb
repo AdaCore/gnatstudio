@@ -1008,7 +1008,7 @@ package body C_Analyzer is
       ------------------------
 
       function Identifier_Keyword return Boolean is
-         Prev      : Natural;
+         Prev      : Natural := Index;
          Temp      : Extended_Token;
          Top_Token : Token_Stack.Generic_Type_Access := Top (Tokens);
 
