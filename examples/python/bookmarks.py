@@ -6,7 +6,7 @@
 
 import GPS
 
-GPS.Editor.register_highlighting ("bookmarks", "lightblue")
+GPS.Editor.register_highlighting ("bookmarks", "light blue")
 
 def add_bookmark ():
    context=GPS.current_context()
@@ -16,7 +16,8 @@ def add_bookmark ():
           GPS.Locations.add ("Bookmarks", context.file(),
                              GPS.Editor.cursor_get_line (context.file().name()),
                              GPS.Editor.cursor_get_column (context.file().name()),
-                             name[0])
+                             name[0],
+                             "bookmarks")
 
 GPS.parse_xml ("""
   <action name="add bookmark" >
