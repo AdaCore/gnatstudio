@@ -20,6 +20,7 @@
 
 with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Calendar;              use Ada.Calendar;
+with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
 with Interfaces.C.Strings;      use Interfaces.C.Strings;
@@ -3003,20 +3004,49 @@ package body Src_Editor_Buffer is
       function Starts_Word (Iter : Gtk_Text_Iter) return Boolean;
 
       function Ends_Word (Iter : Gtk_Text_Iter) return Boolean is
+         Next : Gtk_Text_Iter;
+         Res  : Boolean;
+         N    : Character;
       begin
-         return Gtk.Text_Iter.Ends_Word (Iter) and then Get_Char (Iter) /= '_';
+         Copy (Iter, Next);
+         Forward_Char (Next, Res);
+
+         if Res then
+            N := Get_Char (Next);
+
+            if N = '_' then
+               return False;
+            else
+               return not Is_Alphanumeric (N);
+            end if;
+         else
+            return True;
+         end if;
       end Ends_Word;
 
       function Starts_Word (Iter : Gtk_Text_Iter) return Boolean is
          Prev : Gtk_Text_Iter;
          Res  : Boolean;
+         P    : Character;
+         C    : Character;
       begin
          Copy (Iter, Prev);
          Backward_Char (Prev, Res);
 
          if Res then
-            return Gtk.Text_Iter.Starts_Word (Iter)
-              and then Get_Char (Prev) /= '_';
+            P := Get_Char (Prev);
+
+            if P = '_' then
+               return False;
+            else
+               C := Get_Char (Iter);
+
+               if C = '_' then
+                  return not Is_Alphanumeric (P);
+               else
+                  return Gtk.Text_Iter.Starts_Word (Iter);
+               end if;
+            end if;
          else
             return True;
          end if;
@@ -3037,15 +3067,19 @@ package body Src_Editor_Buffer is
       Copy (Iter, End_Iter);
 
       while Success and then not Ends_Word (End_Iter) loop
-         Forward_Word_End (End_Iter, Success);
+         Forward_Char (End_Iter, Success);
       end loop;
+
+      if Success then
+         Forward_Char (End_Iter, Success);
+      end if;
 
       Copy (Iter, Start_Iter);
 
       Success := True;
 
       while Success and then not Starts_Word (Start_Iter) loop
-         Backward_Word_Start (Start_Iter, Success);
+         Backward_Char (Start_Iter, Success);
       end loop;
 
       Move_Mark_By_Name (Buffer, "selection_bound", Start_Iter);
