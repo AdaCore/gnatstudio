@@ -362,6 +362,14 @@ package Entities is
    --  Update_Xref if needed.
    --  The file is automatically added to the list of files for that LI.
 
+   function Get_Or_Create
+     (Db            : Entities_Database;
+      Full_Filename : String;
+      LI            : LI_File := null;
+      Timestamp     : Ada.Calendar.Time := VFS.No_Time;
+      Allow_Create  : Boolean := True) return Source_File;
+   --  Same as above, but the file name is specified through a string
+
    function Is_Up_To_Date (File : Source_File) return Boolean;
    --  Whether the cross-reference information is up-to-date for File
 
@@ -395,7 +403,9 @@ package Entities is
      (File : Source_File; Timestamp : Ada.Calendar.Time);
    pragma Inline (Get_Time_Stamp);
    pragma Inline (Set_Time_Stamp);
-   --  Return the timestamp last set through Update_Timestamp
+   --  Return the timestamp last set through Update_Timestamp.
+   --  If the timestamp is st to VFS.No_Time, then the timestamp is computed
+   --  by reading it from the physical source file itself
 
    procedure Set_Unit_Name (File : Source_File; Name : String);
    function  Get_Unit_Name (File : Source_File) return String;
@@ -897,16 +907,33 @@ private
    -----------------
 
    type HTable_Header is new Natural range 0 .. 3000;
-   function Hash (Key : VFS.Virtual_File) return HTable_Header;
 
-   package Files_HTable is new HTables.Simple_HTable
-     (Header_Num   => HTable_Header,
-      Element      => Source_File,
-      Free_Element => Unref,
-      No_Element   => null,
-      Key          => VFS.Virtual_File,
-      Hash         => Hash,
-      Equal        => VFS."=");
+   type Source_File_Item_Record;
+   type Source_File_Item is access Source_File_Item_Record;
+   type Source_File_Item_Record is record
+      File : Source_File;
+      Next : Source_File_Item;
+   end record;
+
+   procedure Set_Next (E : Source_File_Item; Next : Source_File_Item);
+   function  Next     (E : Source_File_Item) return Source_File_Item;
+   function  Get_Key  (E : Source_File_Item) return VFS.Cst_UTF8_String_Access;
+   function  Hash     (Key : VFS.Cst_UTF8_String_Access) return HTable_Header;
+   function  Equal    (K1, K2 : VFS.Cst_UTF8_String_Access) return Boolean;
+   procedure Free     (E : in out Source_File_Item);
+   pragma Inline (Set_Next, Next, Get_Key, Hash, Equal, Free);
+
+   package Files_HTable is new HTables.Static_HTable
+     (Header_Num    => HTable_Header,
+      Elmt_Ptr      => Source_File_Item,
+      Null_Ptr      => null,
+      Set_Next      => Set_Next,
+      Next          => Next,
+      Key           => VFS.Cst_UTF8_String_Access,
+      Get_Key       => Get_Key,
+      Hash          => Hash,
+      Equal         => Equal,
+      Free_Elmt_Ptr => Free);
 
    -------------
    -- LI_File --
@@ -931,14 +958,30 @@ private
    -- LI_Table --
    --------------
 
-   package LI_HTable is new HTables.Simple_HTable
-     (Header_Num   => HTable_Header,
-      Element      => LI_File,
-      Free_Element => Unref,
-      No_Element   => null,
-      Key          => VFS.Virtual_File,
-      Hash         => Hash,
-      Equal        => VFS."=");
+   type LI_File_Item_Record;
+   type LI_File_Item is access LI_File_Item_Record;
+   type LI_File_Item_Record is record
+      File : LI_File;
+      Next : LI_File_Item;
+   end record;
+
+   procedure Set_Next (E : LI_File_Item; Next : LI_File_Item);
+   function  Next     (E : LI_File_Item) return LI_File_Item;
+   function  Get_Key  (E : LI_File_Item) return VFS.Cst_UTF8_String_Access;
+   procedure Free     (E : in out LI_File_Item);
+   pragma Inline (Set_Next, Next, Get_Key, Free);
+
+   package LI_HTable is new HTables.Static_HTable
+     (Header_Num    => HTable_Header,
+      Elmt_Ptr      => LI_File_Item,
+      Null_Ptr      => null,
+      Set_Next      => Set_Next,
+      Next          => Next,
+      Key           => VFS.Cst_UTF8_String_Access,
+      Get_Key       => Get_Key,
+      Hash          => Hash,
+      Equal         => Equal,
+      Free_Elmt_Ptr => Free);
 
    -----------------------
    -- Entities_Database --

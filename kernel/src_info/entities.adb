@@ -26,6 +26,8 @@ with Projects;     use Projects;
 with Traces;       use Traces;
 with Language_Handlers.Glide; use Language_Handlers.Glide;
 with GNAT.Heap_Sort_G;
+with Namet;        use Namet;
+with Projects.Registry; use Projects.Registry;
 
 package body Entities is
    Assert_Me : constant Debug_Handle := Create ("Entities.Assert", Off);
@@ -90,6 +92,14 @@ package body Entities is
    --  Remove from Tree all the entities declared in File and that are marked
    --  as valid. These entities are about to be removed from memory anyway
 
+   function Internal_Get_Or_Create
+     (Db            : Entities_Database;
+      Full_Filename : VFS.Cst_UTF8_String_Access;
+      File          : VFS.Virtual_File;
+      LI            : LI_File := null;
+      Timestamp     : Ada.Calendar.Time := VFS.No_Time;
+      Allow_Create  : Boolean := True) return Source_File;
+   --  Internal version for Get_Or_Create
 
    Is_Subprogram_Entity : constant array (E_Kinds) of Boolean :=
      (Procedure_Kind        => True,
@@ -837,10 +847,97 @@ package body Entities is
    -- Hash --
    ----------
 
-   function Hash (Key : VFS.Virtual_File) return HTable_Header is
+   function Hash (Key : VFS.Cst_UTF8_String_Access) return HTable_Header is
    begin
-      return String_Hash (Full_Name (Key).all);
+      return String_Hash (Key.all);
    end Hash;
+
+   --------------
+   -- Set_Next --
+   --------------
+
+   procedure Set_Next (E : Source_File_Item; Next : Source_File_Item) is
+   begin
+      E.Next := Next;
+   end Set_Next;
+
+   ----------
+   -- Next --
+   ----------
+
+   function Next (E : Source_File_Item) return Source_File_Item is
+   begin
+      return E.Next;
+   end Next;
+
+   -------------
+   -- Get_Key --
+   -------------
+
+   function Get_Key (E : Source_File_Item) return VFS.Cst_UTF8_String_Access is
+   begin
+      return Full_Name (E.File.Name);
+   end Get_Key;
+
+   -----------
+   -- Equal --
+   -----------
+
+   function Equal (K1, K2 : VFS.Cst_UTF8_String_Access) return Boolean is
+   begin
+      return K1 = K2 or else K1.all = K2.all;
+   end Equal;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (E : in out Source_File_Item) is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Source_File_Item_Record, Source_File_Item);
+   begin
+      Unref (E.File);
+      Unchecked_Free (E);
+   end Free;
+
+   --------------
+   -- Set_Next --
+   --------------
+
+   procedure Set_Next (E : LI_File_Item; Next : LI_File_Item) is
+   begin
+      E.Next := Next;
+   end Set_Next;
+
+   ----------
+   -- Next --
+   ----------
+
+   function Next (E : LI_File_Item) return LI_File_Item is
+   begin
+      return E.Next;
+   end Next;
+
+   -------------
+   -- Get_Key --
+   -------------
+
+   function Get_Key (E : LI_File_Item) return VFS.Cst_UTF8_String_Access is
+   begin
+      return Full_Name (E.File.Name);
+   end Get_Key;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (E : in out LI_File_Item) is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (LI_File_Item_Record, LI_File_Item);
+   begin
+      Unref (E.File);
+      Unchecked_Free (E);
+   end Free;
 
    -----------
    -- Reset --
@@ -848,18 +945,17 @@ package body Entities is
 
    procedure Reset (Db : Entities_Database) is
       Iter : Files_HTable.Iterator;
-      File : Source_File;
+      File : Source_File_Item;
    begin
       Get_First (Db.Files, Iter);
       loop
          File := Get_Element (Iter);
          exit when File = null;
-         Fast_Reset (File);
+         Fast_Reset (File.File);
          Get_Next (Db.Files, Iter);
       end loop;
 
       Reset (Db.LIs);
-      Reset (Db.Files);
    end Reset;
 
    -------------
@@ -874,6 +970,74 @@ package body Entities is
       Unchecked_Free (Db);
    end Destroy;
 
+   ----------------------------
+   -- Internal_Get_Or_Create --
+   ----------------------------
+
+   function Internal_Get_Or_Create
+     (Db            : Entities_Database;
+      Full_Filename : VFS.Cst_UTF8_String_Access;
+      File          : VFS.Virtual_File;
+      LI            : LI_File := null;
+      Timestamp     : Ada.Calendar.Time := VFS.No_Time;
+      Allow_Create  : Boolean := True) return Source_File
+   is
+      S : Source_File_Item := Get (Db.Files, Full_Filename);
+      F : Source_File;
+   begin
+      if S = null and then not Allow_Create then
+         null;
+
+      elsif S = null then
+         if File = VFS.No_File then
+            F := new Source_File_Record'
+              (Db             => Db,
+               Timestamp      => Timestamp,
+               Unit_Name      => null,
+               Name           => Create (Full_Filename => Full_Filename.all),
+               Entities       => Empty_Trie_Tree,
+               Depends_On     => Null_Dependency_List,
+               Depended_On    => Null_Dependency_List,
+               All_Entities   => Empty_Trie_Tree,
+               Scope_Tree_Computed => False,
+               LI             => LI,
+               Ref_Count      => 1);
+         else
+            F := new Source_File_Record'
+              (Db             => Db,
+               Timestamp      => Timestamp,
+               Unit_Name      => null,
+               Name           => File,
+               Entities       => Empty_Trie_Tree,
+               Depends_On     => Null_Dependency_List,
+               Depended_On    => Null_Dependency_List,
+               All_Entities   => Empty_Trie_Tree,
+               Scope_Tree_Computed => False,
+               LI             => LI,
+               Ref_Count      => 1);
+         end if;
+
+         S := new Source_File_Item_Record'(File => F, Next => null);
+         Set (Db.Files, S);
+
+         if LI /= null then
+            Append (LI.Files, S.File);
+         end if;
+
+      else
+         if Timestamp /= No_Time then
+            S.File.Timestamp := Timestamp;
+         end if;
+
+         if LI /= null and then S.File.LI = null then
+            S.File.LI := LI;
+            Append (LI.Files, S.File);
+         end if;
+      end if;
+
+      return S.File;
+   end Internal_Get_Or_Create;
+
    -------------------
    -- Get_Or_Create --
    -------------------
@@ -883,44 +1047,50 @@ package body Entities is
       File         : VFS.Virtual_File;
       LI           : LI_File := null;
       Timestamp    : Ada.Calendar.Time := VFS.No_Time;
-      Allow_Create : Boolean := True) return Source_File
-   is
-      S : Source_File := Get (Db.Files, File);
+      Allow_Create : Boolean := True) return Source_File is
    begin
-      if S = null and then not Allow_Create then
-         null;
+      return Internal_Get_Or_Create
+        (Db, Full_Name (File), File, LI, Timestamp, Allow_Create);
+   end Get_Or_Create;
 
-      elsif S = null then
-         S := new Source_File_Record'
-           (Db             => Db,
-            Timestamp      => Timestamp,
-            Unit_Name      => null,
-            Name           => File,
-            Entities       => Empty_Trie_Tree,
-            Depends_On     => Null_Dependency_List,
-            Depended_On    => Null_Dependency_List,
-            All_Entities   => Empty_Trie_Tree,
-            Scope_Tree_Computed => False,
-            LI             => LI,
-            Ref_Count      => 1);
-         Set (Db.Files, File, S);
+   -------------------
+   -- Get_Or_Create --
+   -------------------
 
-         if LI /= null then
-            Append (LI.Files, S);
-         end if;
+   function Get_Or_Create
+     (Db            : Entities_Database;
+      Full_Filename : String;
+      LI            : LI_File := null;
+      Timestamp     : Ada.Calendar.Time := VFS.No_Time;
+      Allow_Create  : Boolean := True) return Source_File is
+   begin
+      if Is_Absolute_Path (Full_Filename) then
+         return Internal_Get_Or_Create
+           (Db, Full_Filename'Unrestricted_Access,
+            VFS.No_File, LI, Timestamp, Allow_Create);
 
       else
-         if Timestamp /= No_Time then
-            S.Timestamp := Timestamp;
-         end if;
+         Get_Full_Path_From_File
+           (Db.Registry.all,
+            Full_Filename,
+            Use_Source_Path => True,
+            Use_Object_Path => False);
 
-         if LI /= null and then S.LI = null then
-            S.LI := LI;
-            Append (LI.Files, S);
+         if Name_Len /= 0 then
+            return Internal_Get_Or_Create
+              (Db, Name_Buffer (1 .. Name_Len)'Unrestricted_Access,
+               VFS.No_File, LI, Timestamp, Allow_Create);
+         else
+            declare
+               Str : aliased constant String := Normalize_Pathname
+                 (Full_Filename, Resolve_Links => False);
+            begin
+               return Internal_Get_Or_Create
+                 (Db, Str'Unrestricted_Access,
+                  VFS.No_File, LI, Timestamp, Allow_Create);
+            end;
          end if;
       end if;
-
-      return S;
    end Get_Or_Create;
 
    ----------
@@ -1018,22 +1188,24 @@ package body Entities is
       File      : VFS.Virtual_File;
       Project   : Projects.Project_Type) return LI_File
    is
-      L : LI_File := Get (Db.LIs, File);
+      L : LI_File_Item := Get (Db.LIs, Full_Name (File));
    begin
       Assert (Assert_Me, File /= VFS.No_File, "No LI filename");
       Assert (Assert_Me, Project /= No_Project, "No project specified");
       if L = null then
-         L := new LI_File_Record'
-           (Db        => Db,
-            Name      => File,
-            Timestamp => No_Time,
-            Project   => Project,
-            Files     => Null_Source_File_List,
-            Ref_Count => 1);
-         Set (Db.LIs, File, L);
+         L := new LI_File_Item_Record'
+           (File => new LI_File_Record'
+              (Db        => Db,
+               Name      => File,
+               Timestamp => No_Time,
+               Project   => Project,
+               Files     => Null_Source_File_List,
+               Ref_Count => 1),
+            Next => null);
+         Set (Db.LIs, L);
       end if;
 
-      return L;
+      return L.File;
    end Get_Or_Create;
 
    -------------
@@ -1476,7 +1648,11 @@ package body Entities is
    procedure Set_Time_Stamp
      (File : Source_File; Timestamp : Ada.Calendar.Time) is
    begin
-      File.Timestamp := Timestamp;
+      if Timestamp = VFS.No_Time then
+         File.Timestamp := File_Time_Stamp (File.Name);
+      else
+         File.Timestamp := Timestamp;
+      end if;
    end Set_Time_Stamp;
 
    --------------
