@@ -86,13 +86,15 @@ package body Language.Debugger.Java is
    function Get_Language_Context
      (Lang : access Java_Language) return Language_Context is
    begin
-      return (Comment_Start_Length => 2,
-              Comment_End_Length   => 2,
-              Comment_Start        => "/*",
-              Comment_End          => "*/",
-              String_Delimiter     => '"',
-              Quote_Character      => '\',
-              Constant_Character   => ''');
+      return (Comment_Start_Length          => 2,
+              Comment_End_Length            => 2,
+              New_Line_Comment_Start_Length => 2,
+              Comment_Start                 => "/*",
+              Comment_End                   => "*/",
+              New_Line_Comment_Start        => "//",
+              String_Delimiter              => '"',
+              Quote_Character               => '\',
+              Constant_Character            => ''');
    end Get_Language_Context;
 
 
