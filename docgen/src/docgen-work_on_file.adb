@@ -153,7 +153,7 @@ package body Docgen.Work_On_File is
       Subprogram_Index_List         : in out Type_Entity_List.List;
       Tagged_Types_List             : out List_Entity_Information.List;
       Private_Tagged_Types_List     : out List_Entity_Information.List);
-   --  Handle an entity referenced fir the first time.
+   --  Handle an entity referenced for the first time.
 
    procedure Process_One_File
      (B                             : access Docgen.Backend.Backend'Class;
@@ -405,7 +405,7 @@ package body Docgen.Work_On_File is
       List_Ref_In_File := List_Reference_In_File.Null_List;
 
       while not At_End (Entity_Iter) loop
-         Info     := Get (Entity_Iter);
+         Info := Get (Entity_Iter);
 
          if File_Is_Spec then
             Process_New_Entity
