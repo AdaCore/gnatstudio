@@ -459,7 +459,7 @@ package body Src_Editor_View is
             Buffer_To_Window_Coords
               (View, Text_Window_Text, Rect.X, Rect.Y, X, Y);
             X := Column * View.Char_Width - Rect.X;
-            Draw_Line (Window, View.Default_GC, X, Y, X, Y + Rect.Width);
+            Draw_Line (Window, View.Default_GC, X, Y, X, Y + Rect.Height);
          end;
       end if;
 
