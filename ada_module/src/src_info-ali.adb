@@ -1318,41 +1318,32 @@ package body Src_Info.ALI is
 
                elsif (E_Ref.Kind = Primitive_Operation
                       or else E_Ref.Kind = Overriding_Primitive_Operation)
-                 and then Decl_Info.Declaration.Primitive_Subprograms = null
-               then
-                  Decl_Info.Declaration.Primitive_Subprograms :=
-                    new E_Reference_Node'(Value => E_Ref, Next => null);
-
-               elsif (E_Ref.Kind /= Primitive_Operation
-                      and then E_Ref.Kind /= Overriding_Primitive_Operation)
                then
                   --  Insert at the end, so that the result of
                   --  "Find_All_References" is properly sorted.
-
-                  if (E_Ref.Kind = Primitive_Operation
-                      or else E_Ref.Kind = Overriding_Primitive_Operation)
-                  then
-                     if List_Subprograms = null then
-                        Decl_Info.Declaration.Primitive_Subprograms :=
-                          new E_Reference_Node'
-                          (Value => E_Ref, Next => null);
-                        List_Subprograms :=
-                          Decl_Info.Declaration.Primitive_Subprograms;
-                     else
-                        List_Subprograms.Next := new E_Reference_Node'
-                          (Value => E_Ref, Next => null);
-                        List_Subprograms := List_Subprograms.Next;
-                     end if;
+                  if Decl_Info.Declaration.Primitive_Subprograms = null then
+                     Decl_Info.Declaration.Primitive_Subprograms :=
+                       new E_Reference_Node'(Value => E_Ref, Next => null);
+                     List_Subprograms :=
+                       Decl_Info.Declaration.Primitive_Subprograms;
                   else
-                     if List_Ref = null then
-                        Decl_Info.References := new E_Reference_Node'
-                          (Value => E_Ref, Next => null);
-                        List_Ref := Decl_Info.References;
-                     else
-                        List_Ref.Next := new E_Reference_Node'
-                          (Value => E_Ref, Next => null);
-                        List_Ref := List_Ref.Next;
-                     end if;
+                     List_Subprograms.Next := new E_Reference_Node'
+                       (Value => E_Ref, Next => null);
+                     List_Subprograms := List_Subprograms.Next;
+                  end if;
+
+               else
+                  --  Insert at the end, so that the result of
+                  --  "Find_All_References" is properly sorted.
+
+                  if List_Ref = null then
+                     Decl_Info.References := new E_Reference_Node'
+                       (Value => E_Ref, Next => null);
+                     List_Ref := Decl_Info.References;
+                  else
+                     List_Ref.Next := new E_Reference_Node'
+                       (Value => E_Ref, Next => null);
+                     List_Ref := List_Ref.Next;
                   end if;
                end if;
             end if;
