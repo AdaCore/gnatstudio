@@ -505,9 +505,9 @@ package body Python.GUI is
    -------------------------
 
    procedure Create_Output_Class
-     (Interpreter    : access Python_Interpreter_Record'Class;
-      Module_Name    : String;
-      Main_Module    : PyObject)
+     (Interpreter : access Python_Interpreter_Record'Class;
+      Module_Name : String;
+      Main_Module : PyObject)
    is
       Meths   : constant PyObject := PyDict_New;
       Output  : PyClassObject;
