@@ -31,13 +31,15 @@ pragma Warnings (On);
 with Gtkada.Dialogs;     use Gtkada.Dialogs;
 with GUI_Utils;          use GUI_Utils;
 with String_Utils;       use String_Utils;
+with File_Utils;         use File_Utils;
+with OS_Utils;           use OS_Utils;
 with System;
 with Traces;             use Traces;
 with Ada.Calendar;       use Ada.Calendar;
 with Ada.Characters.Handling;  use Ada.Characters.Handling;
 with GNAT.Calendar;      use GNAT.Calendar;
 with Ada.Exceptions;     use Ada.Exceptions;
-with Src_Info;
+with VFS;                use VFS;
 
 package body SSH_Protocol is
 
@@ -50,6 +52,21 @@ package body SSH_Protocol is
    End_Of_File_Mark : constant String := "GPSEOF";
    --  Mark sent at the end of a file when it is written back to the remote
    --  host
+
+   Temporary_Dir : constant String := Name_As_Directory ("/tmp");
+   --  Where temporary files are stored. This could also be in ~/.gps or
+   --  the root project's object directory.
+
+   Ls_Regexp : constant Pattern_Matcher := Compile
+     (".(........)\s+\d+\s+([\w\d]+)\s+([\w\d]+)\s+(\d+)\s+(\w\w\w) (\d\d)"
+      & "\s+((\d\d):(\d\d))?\s*(\d\d\d\d)?");
+   Ls_Month_Parens : constant := 5;
+   Ls_Day_Parens   : constant := 6;
+   Ls_Hour_Parens  : constant := 8;
+   Ls_Min_Parens   : constant := 9;
+   Ls_Year_Parens  : constant := 10;
+   --  Regexp to match the output of ls, and extract the required fields
+
 
    Max_Passwd_Attempts : constant := 3;
    --  Maximum number of attempts to enter the password
@@ -64,8 +81,17 @@ package body SSH_Protocol is
       Shell_Cmd           : String_Access;
       --  Command to execute to initialize the connection
 
-      Read_File_Cmd       : String_Access;
-      --  Command to execute on the remote host to see the contents of a file
+      Read_File_Cmd        : String_Access;
+      Inline_Read_File_Cmd : String_Access;
+      --  Command to execute on the remote host to see the contents of a file.
+      --  The inline version is used if it is defined, and uses the same
+      --  connection as previously open. The normal version indicates that the
+      --  file will be fetched directly, and copied to a local temporary file
+      --  the name of which is supplied in the %t parameter.
+      --  If Read_File_Cmd starts with the '@' character, a new connection is
+      --  started to emit the command, rather than sending the command to the
+      --  already open connection. The new connection is immediately closed
+      --  after the command.
 
       Exit_Status_Cmd     : String_Access;
       --  Command to execute on the host to get the status of the previous
@@ -90,12 +116,18 @@ package body SSH_Protocol is
 
       Timestamp_Cmd       : String_Access;
       --  Command to execute to get the timestamp. The excepted output of the
-      --  command is of the form "ddd mm yyyy" or "ddd mm hh:mm"
+      --  command is that of the Unix "ls" utility.
+      --  ??? Add support for other output formats, through regexps
 
-      Write_File_Cmd      : String_Access;
+      Write_File_Cmd        : String_Access;
+      Inline_Write_File_Cmd : String_Access;
       --  Command to execute to write the file on the remote host. The contents
       --  of the file is sent on standard input, and the string
       --  End_Of_File_Mark is sent on its own at the end of the file
+      --  The inline version is used if it is defined, and uses the same
+      --  connection as previously open.
+      --  The same behavior is provided for Write_File_Cmd as for
+      --  Read_File_Cmd.
 
       Has_Shell_Prompt    : Boolean;
       --  Whether we are expecting a prompt from the remote shell, or whether
@@ -113,6 +145,9 @@ package body SSH_Protocol is
    --    %d => directory local file name
    --    %h => host name
    --    %u => user name
+   --    %t => temporary local file to use (only for read and write)
+   --  Any of these command can be left to null, and a reasonnable default is
+   --  provided.
 
    type Generic_Connection_Record is new Remote_Connection_Record with record
       Is_Open  : Boolean := False;
@@ -151,7 +186,7 @@ package body SSH_Protocol is
    procedure Write
      (Connection      : access Generic_Connection_Record;
       Local_Full_Name : Glib.UTF8_String;
-      Contents        : String);
+      Temporary_File  : String);
    procedure Set_Writable
      (Connection      : access Generic_Connection_Record;
       Local_Full_Name : Glib.UTF8_String;
@@ -184,8 +219,10 @@ package body SSH_Protocol is
    --  Execute command, and return its exit status.
 
    function Substitute
-     (Cmd, Local_Full_Name, Host, User : String) return String;
+     (Cmd, Local_Full_Name, Host, User : String;
+      Temporary_File : String := "") return String;
    --  Substitute the special variables in Cmd (%f, %F, ...)
+   --  %t is only defined if Temporary_File is not the empty string
 
    procedure Trace_Filter_Input
      (Descriptor : Process_Descriptor'Class;
@@ -196,6 +233,19 @@ package body SSH_Protocol is
       Str        : String;
       User_Data  : System.Address := System.Null_Address);
    --  Filter all input/output of the shell
+
+   procedure Open_Connection
+     (Cmd     : String;
+      Connection : access Generic_Connection_Record'Class;
+      Is_Interactive_Shell : Boolean;
+      Fd      : out TTY_Process_Descriptor;
+      Is_Open : out Boolean);
+   --  Open a new connection with Cmd.
+   --  The password is assumed to be the same as in Connection. However, if it
+   --  doesn't match, the user will be asked interactively.
+   --  If Is_Interactive_Shell is true, the connection is assumed to be
+   --  interactive, and the shell will be setup.
+   --  Is_Open is set to False if the connection couldn't be initialized.
 
    ------------------------
    -- Trace_Filter_Input --
@@ -230,7 +280,8 @@ package body SSH_Protocol is
    -----------------------
 
    procedure Register_Protocol is
-      SSH, Telnet, Rsh : Generic_Connection := new Generic_Connection_Record;
+      SSH, Telnet, Rsh, Scp, Rsync, Ftp : Generic_Connection :=
+        new Generic_Connection_Record;
    begin
       SSH.Commands :=
         (Name                => new String'("ssh"),
@@ -242,23 +293,36 @@ package body SSH_Protocol is
             & " your PATH."),
          Shell_Cmd           => new String'("ssh %h -l %u -e none -q /bin/sh"),
          Has_Shell_Prompt    => False,
-         Read_File_Cmd       => new String'("cat %F"),
+         Inline_Read_File_Cmd => new String'("cat %F"),
+         Read_File_Cmd       => null,
          Exit_Status_Cmd     => new String'("echo $?"),
          Is_Regular_File_Cmd => new String'("test -r %F"),
          Is_Writable_Cmd     => new String'("test -w %F"),
          Is_Directory_Cmd    => new String'("test -d %F"),
          Delete_File_Cmd     => new String'("rm -f %F"),
-         Timestamp_Cmd       =>
-            new String'("ls -l %F 2>/dev/null| awk '{print $6,$7,$8}'"),
-         Write_File_Cmd      =>
+         Timestamp_Cmd       => new String'("ls -l %F 2>/dev/null"),
+         Inline_Write_File_Cmd =>
             new String'("cat > %F <<'" & End_Of_File_Mark & "'"),
+         Write_File_Cmd      => null,
          Set_Readable_Cmd    => new String'("chmod u+r %F"),
          Set_Writable_Cmd    => new String'("chmod u+w %F"),
          Set_Unreadable_Cmd  => new String'("chmod u-r %F"),
          Set_Unwritable_Cmd  => new String'("chmod u-w %F"));
       Remote_Connections.Register_Protocol (SSH);
 
-      --  Share the strings, it doesn't matter since we don't free them
+      Scp.Commands                       := SSH.Commands;
+      Scp.Commands.Name                  := new String'("scp");
+      Scp.Commands.Description           := new String'
+           ("This protocol uses a combination of ssh and scp. The former is"
+            & " used for commands that check the status and timestamp of"
+            & " files, the latter is used to transfer files in both"
+            & " direction");
+      Scp.Commands.Inline_Read_File_Cmd  := null;
+      Scp.Commands.Read_File_Cmd         := new String'("@scp -p %u@%h:%F %t");
+      Scp.Commands.Inline_Write_File_Cmd := null;
+      Scp.Commands.Write_File_Cmd        := new String'("@scp -p %t %u@%h:%F");
+      Remote_Connections.Register_Protocol (Scp);
+
       Telnet.Commands                  := SSH.Commands;
       Telnet.Commands.Name             := new String'("telnet");
       Telnet.Commands.Has_Shell_Prompt := True;
@@ -283,7 +347,202 @@ package body SSH_Protocol is
       Rsh.Commands.Shell_Cmd   := new String'("rsh -l %u %h ");
       Remote_Connections.Register_Protocol (Rsh);
 
+      Rsync.Commands                       := Rsh.Commands;
+      Rsync.Commands.Name                  := new String'("rsync");
+      Rsync.Commands.Description           := new String'
+        ("This protocol uses a combination of rsh and rsync. The former is"
+         & " used for commands thqt check the status and timestamp of"
+         & " files, the latter is used to transfer files in both"
+         & " direction. Rsync uses an optimized algorithm so that only"
+         & " the modified parts of a file are send, and is therefore very"
+         & " efficient when saving remote files");
+      Rsync.Commands.Inline_Read_File_Cmd  := null;
+      Rsync.Commands.Read_File_Cmd     := new String'("@rsync -p %u@%h:%F %t");
+      Rsync.Commands.Inline_Write_File_Cmd := null;
+      Rsync.Commands.Write_File_Cmd       := new String'("@rsync %t %u@%h:%F");
+      Remote_Connections.Register_Protocol (Rsync);
+
+      Ftp.Commands :=
+        (Name                => new String'("ftp"),
+         Description         => new String'
+           ("A protocol based on ftp. This keeps the connection open during"
+            & " the life of GPS for efficiency reasons."),
+         Shell_Cmd           => new String'("ftp %h"),
+         Has_Shell_Prompt    => True,
+         Inline_Read_File_Cmd => null,
+         Read_File_Cmd       => new String'("get %F %t"),
+         Exit_Status_Cmd     => null,
+         Is_Regular_File_Cmd => null,
+         Is_Writable_Cmd     => null,
+         Is_Directory_Cmd    => null,
+         Delete_File_Cmd     => null,
+         Timestamp_Cmd       => new String'("ls %F"),
+         Inline_Write_File_Cmd => null,
+         Write_File_Cmd      => new String'("put %t %F"),
+         Set_Readable_Cmd    => null,
+         Set_Writable_Cmd    => null,
+         Set_Unreadable_Cmd  => null,
+         Set_Unwritable_Cmd  => null);
+      Remote_Connections.Register_Protocol (Ftp);
    end Register_Protocol;
+
+   ---------------------
+   -- Open_Connection --
+   ---------------------
+
+   procedure Open_Connection
+     (Cmd     : String;
+      Connection : access Generic_Connection_Record'Class;
+      Is_Interactive_Shell : Boolean;
+      Fd      : out TTY_Process_Descriptor;
+      Is_Open : out Boolean)
+   is
+      Login_Match        : constant := 1;
+      Passwd_Match       : constant := 2;
+      Wrong_Passwd_Match : constant := 3;
+      Shell_Prompt_Match : constant := 4;
+      Unknown_Host_Match : constant := 5;
+      Regexps            : constant Compiled_Regexp_Array :=
+        (Login_Match        => Login_Regexp,
+         Passwd_Match       => Passwd_Regexp,
+         Wrong_Passwd_Match => Wrong_Passwd_Regexp,
+         Shell_Prompt_Match => Shell_Prompt_Regexp,
+         Unknown_Host_Match => Unknown_Host_Regexp);
+
+      Args : Argument_List_Access;
+      Passwd_Attempts : Natural := 1;
+
+      --  Note: We *must* use a TTY_Process_Description, or we won't
+      --  detect when we get asked for the password
+      Result   : Expect_Match;
+      Response : Message_Dialog_Buttons;
+      pragma Unreferenced (Response);
+   begin
+      Args := Argument_String_To_List (Cmd);
+      Trace (Me, "Connecting with " & Cmd);
+
+      --  Do not create a TTY on the remote site, so that commands we
+      --  send are not echoed. Otherwise, getting a file results in the
+      --  "cat" command sometimes appearing
+      Non_Blocking_Spawn
+        (Fd,
+         Command     => Args (Args'First).all,
+         Args        => Args (Args'First + 1 .. Args'Last),
+         Buffer_Size => 0,
+         Err_To_Out  => True);
+
+      if Active (Full_Me) then
+         Add_Filter (Fd, Trace_Filter_Output'Access, Output);
+         Add_Filter (Fd, Trace_Filter_Input'Access, Input);
+      end if;
+
+      Free (Args);
+
+      if Is_Interactive_Shell
+        and then not Connection.Commands.Has_Shell_Prompt
+      then
+         Send (Fd, "echo " & Prompt_String, Add_LF => True);
+      end if;
+
+      loop
+         Expect (Fd, Result, Regexps, Timeout => 10_000);
+
+         case Result is
+            when Expect_Timeout =>
+               Response := Message_Dialog
+                 ("Timeout when connection to "
+                  & Get_Host (Connection),
+                  Dialog_Type   => Error,
+                  Buttons       => Button_OK,
+                  Title         => "Time out",
+                  Justification => Justify_Left);
+               Close (Fd);
+               Is_Open := False;
+               return;
+
+            when Login_Match =>
+               Send (Fd, Get_User (Connection), Add_LF => True);
+
+            when Passwd_Match =>
+               Trace (Me, "Asking for password");
+               if Get_Passwd (Connection) /= "" then
+                  Send (Fd, Get_Passwd (Connection), Add_LF => True);
+               else
+                  declare
+                     Passwd : constant String := Query_Password
+                       (Get_User (Connection) & "'s password on "
+                        & Get_Host (Connection));
+                  begin
+                     Set_Passwd (Connection, Passwd);
+                     if Passwd = "" then
+                        Interrupt (Fd);
+                        Is_Open := False;
+                        return;
+                     end if;
+                     Send (Fd, Passwd, Add_LF => True);
+
+                     if Is_Interactive_Shell
+                       and then not Connection.Commands.Has_Shell_Prompt
+                     then
+                        Send (Fd, "echo " & Prompt_String,
+                              Add_LF => True);
+                     end if;
+                  end;
+               end if;
+
+            when Wrong_Passwd_Match =>
+               Trace (Me, "Invalid password " & Expect_Out (Fd));
+               Passwd_Attempts := Passwd_Attempts + 1;
+               Response := Message_Dialog
+                 ("Incorrect password",
+                  Dialog_Type   => Error,
+                  Buttons       => Button_OK,
+                  Title         => "Incorrect password",
+                  Justification => Justify_Left);
+               Set_Passwd (Connection, "");
+
+               if Passwd_Attempts > Max_Passwd_Attempts then
+                  Close (Fd);
+                  Is_Open := False;
+                  return;
+               end if;
+
+            when Shell_Prompt_Match =>
+               Is_Open := True;
+               Trace (Me, "Connected");
+
+               if Is_Interactive_Shell
+                 and then Connection.Commands.Has_Shell_Prompt
+               then
+                  Send (Fd, "stty -echo", Add_LF => True);
+                  Expect (Fd, Result, Shell_Prompt_Regexp.all);
+                  Flush (Fd);
+               end if;
+
+               return;
+
+            when Unknown_Host_Match =>
+               Trace (Me, "Invalid host " & Expect_Out (Fd));
+               Response := Message_Dialog
+                 ("Unknown host: " & Get_Host (Connection),
+                  Dialog_Type   => Error,
+                  Buttons       => Button_OK,
+                  Title         => "Unknown host",
+                  Justification => Justify_Left);
+               Close (Fd);
+               Connection.Is_Open := False;
+               return;
+
+            when others =>
+               null;
+         end case;
+      end loop;
+
+   exception
+      when Process_Died =>
+         Close (Fd);
+         Is_Open := False;
+   end Open_Connection;
 
    -----------------------
    -- Ensure_Connection --
@@ -294,157 +553,13 @@ package body SSH_Protocol is
    begin
       if not Connection.Is_Open then
          declare
-            Login_Match        : constant := 1;
-            Passwd_Match       : constant := 2;
-            Wrong_Passwd_Match : constant := 3;
-            Shell_Prompt_Match : constant := 4;
-            Unknown_Host_Match : constant := 5;
-            Regexps            : constant Compiled_Regexp_Array :=
-              (Login_Match        => Login_Regexp,
-               Passwd_Match       => Passwd_Regexp,
-               Wrong_Passwd_Match => Wrong_Passwd_Regexp,
-               Shell_Prompt_Match => Shell_Prompt_Regexp,
-               Unknown_Host_Match => Unknown_Host_Regexp);
             Connect_Cmd : constant String := Substitute
               (Connection.Commands.Shell_Cmd.all, "",
                Get_Host (Connection), Get_User (Connection));
-
-            Args : Argument_List_Access;
-            Passwd_Attempts : Natural := 1;
-
-            --  Note: We *must* use a TTY_Process_Description, or we won't
-            --  detect when we get asked for the password
-            Result   : Expect_Match;
-            Response : Message_Dialog_Buttons;
-            pragma Unreferenced (Response);
          begin
-            Args := Argument_String_To_List (Connect_Cmd);
-            Trace (Me, "Connecting with " & Connect_Cmd);
-
-            --  Do not create a TTY on the remote site, so that commands we
-            --  send are not echoed. Otherwise, getting a file results in the
-            --  "cat" command sometimes appearing
-            Non_Blocking_Spawn
-              (Connection.Fd,
-               Command     => Args (Args'First).all,
-               Args        => Args (Args'First + 1 .. Args'Last),
-               Buffer_Size => 0,
-               Err_To_Out  => True);
-
-            if Active (Full_Me) then
-               Add_Filter (Connection.Fd, Trace_Filter_Output'Access, Output);
-               Add_Filter (Connection.Fd, Trace_Filter_Input'Access, Input);
-            end if;
-
-            Free (Args);
-
-            if not Connection.Commands.Has_Shell_Prompt then
-               Send (Connection.Fd, "echo " & Prompt_String, Add_LF => True);
-            end if;
-
-            loop
-               Expect
-                 (Connection.Fd,
-                  Result,
-                  Regexps,
-                  Timeout => 10_000);   --  10 seconds
-
-               case Result is
-                  when Expect_Timeout =>
-                     Response := Message_Dialog
-                       ("Timeout when connection to "
-                        & Get_Host (Connection),
-                        Dialog_Type   => Error,
-                        Buttons       => Button_OK,
-                        Title         => "Time out",
-                        Justification => Justify_Left);
-                     Close (Connection.Fd);
-                     Connection.Is_Open := False;
-                     return;
-
-                  when Login_Match =>
-                     Send
-                       (Connection.Fd, Get_User (Connection), Add_LF => True);
-
-                  when Passwd_Match =>
-                     Trace (Me, "Asking for password");
-                     if Get_Passwd (Connection) /= "" then
-                        Send (Connection.Fd,
-                              Get_Passwd (Connection), Add_LF => True);
-                     else
-                        declare
-                           Passwd : constant String := Query_Password
-                             (Get_User (Connection) & "'s password on "
-                              & Get_Host (Connection));
-                        begin
-                           Set_Passwd (Connection, Passwd);
-                           if Passwd = "" then
-                              Interrupt (Connection.Fd);
-                              Connection.Is_Open := False;
-                              return;
-                           end if;
-                           Send
-                             (Connection.Fd, Passwd, Add_LF => True);
-
-                           if not Connection.Commands.Has_Shell_Prompt then
-                              Send (Connection.Fd, "echo " & Prompt_String,
-                                    Add_LF => True);
-                           end if;
-                        end;
-                     end if;
-
-                  when Wrong_Passwd_Match =>
-                     Trace (Me, "Invalid password "
-                              & Expect_Out (Connection.Fd));
-                     Passwd_Attempts := Passwd_Attempts + 1;
-                     Response := Message_Dialog
-                       ("Incorrect password",
-                        Dialog_Type   => Error,
-                        Buttons       => Button_OK,
-                        Title         => "Incorrect password",
-                        Justification => Justify_Left);
-                     Set_Passwd (Connection, "");
-
-                     if Passwd_Attempts > Max_Passwd_Attempts then
-                        Close (Connection.Fd);
-                        Connection.Is_Open := False;
-                        return;
-                     end if;
-
-                  when Shell_Prompt_Match =>
-                     Connection.Is_Open := True;
-                     Trace (Me, "Connected");
-
-                     if Connection.Commands.Has_Shell_Prompt then
-                        Send (Connection.Fd, "stty -echo", Add_LF => True);
-                        Expect
-                          (Connection.Fd, Result, Shell_Prompt_Regexp.all);
-                        Flush (Connection.Fd);
-                     end if;
-
-                     return;
-
-                  when Unknown_Host_Match =>
-                     Trace (Me, "Invalid host " & Expect_Out (Connection.Fd));
-                     Response := Message_Dialog
-                       ("Unknown host: " & Get_Host (Connection),
-                        Dialog_Type   => Error,
-                        Buttons       => Button_OK,
-                        Title         => "Unknown host",
-                        Justification => Justify_Left);
-                     Close (Connection.Fd);
-                     Connection.Is_Open := False;
-                     return;
-
-                  when others =>
-                     null;
-               end case;
-            end loop;
-
-         exception
-            when Process_Died =>
-               Close (Connection.Fd);
-               Connection.Is_Open := False;
+            Open_Connection
+              (Connect_Cmd, Connection, True,
+               Connection.Fd, Connection.Is_Open);
          end;
       end if;
    end Ensure_Connection;
@@ -497,20 +612,28 @@ package body SSH_Protocol is
      (Connection : access Generic_Connection_Record'Class;
       Cmd     : String) return Boolean
    is
-      Result : constant String := Send_Cmd_And_Get_Result
-        (Connection, Cmd & ';' & Connection.Commands.Exit_Status_Cmd.all);
-      Index : Natural := Result'First;
-      Last  : Natural;
-      Success : Boolean;
    begin
-      Skip_Blanks (Result, Index);
-      Last := Index + 1;
-      Skip_Blanks (Result, Last);
-      Success := Index <= Result'Last
-        and then Result (Index) = '0'
-        and then Last > Result'Last;
-      Trace (Me, "Result is " & Success'Img);
-      return Success;
+      if Connection.Commands.Exit_Status_Cmd = null then
+         return True;
+      else
+         declare
+            Result : constant String := Send_Cmd_And_Get_Result
+              (Connection, Cmd
+               & ';' & Connection.Commands.Exit_Status_Cmd.all);
+            Index : Natural := Result'First;
+            Last  : Natural;
+            Success : Boolean;
+         begin
+            Skip_Blanks (Result, Index);
+            Last := Index + 1;
+            Skip_Blanks (Result, Last);
+            Success := Index <= Result'Last
+              and then Result (Index) = '0'
+              and then Last > Result'Last;
+            Trace (Me, "Result is " & Success'Img);
+            return Success;
+         end;
+      end if;
    end Send_Cmd_And_Get_Result;
 
    ------------------
@@ -559,14 +682,19 @@ package body SSH_Protocol is
 
    function Is_Regular_File
      (Connection      : access Generic_Connection_Record;
-      Local_Full_Name : Glib.UTF8_String) return Boolean
-   is
-      C : constant String := Substitute
-        (Connection.Commands.Is_Regular_File_Cmd.all, Local_Full_Name,
-         Get_Host (Connection), Get_User (Connection));
+      Local_Full_Name : Glib.UTF8_String) return Boolean is
    begin
-      Ensure_Connection (Connection);
-      return Send_Cmd_And_Get_Result (Connection, C);
+      if Connection.Commands.Is_Regular_File_Cmd = null then
+         --  Assume the file exists, we'll make sure when we try to fetch it
+         return True;
+      else
+         Ensure_Connection (Connection);
+         return Send_Cmd_And_Get_Result
+           (Connection,
+            Substitute
+              (Connection.Commands.Is_Regular_File_Cmd.all, Local_Full_Name,
+               Get_Host (Connection), Get_User (Connection)));
+      end if;
    end Is_Regular_File;
 
    ----------------
@@ -574,14 +702,16 @@ package body SSH_Protocol is
    ----------------
 
    function Substitute
-     (Cmd, Local_Full_Name, Host, User : String) return String
+     (Cmd, Local_Full_Name, Host, User : String;
+      Temporary_File : String := "") return String
    is
       Substrings : Substitution_Array :=
         ((new String'("F"), new String'(Local_Full_Name)),
          (new String'("f"), new String'(Base_Name (Local_Full_Name))),
          (new String'("d"), new String'(Dir_Name (Local_Full_Name))),
          (new String'("h"), new String'(Host)),
-         (new String'("u"), new String'(User)));
+         (new String'("u"), new String'(User)),
+         (new String'("t"), new String'(Temporary_File)));
       C : constant String := Substitute
         (Cmd,
          Substitution_Char => '%',
@@ -600,12 +730,71 @@ package body SSH_Protocol is
       Local_Full_Name : Glib.UTF8_String)
       return GNAT.OS_Lib.String_Access
    is
-      Cmd : constant String := Substitute
-        (Connection.Commands.Read_File_Cmd.all, Local_Full_Name,
-         Get_Host (Connection), Get_User (Connection));
    begin
-      Ensure_Connection (Connection);
-      return new String'(Send_Cmd_And_Get_Result (Connection, Cmd));
+      if Connection.Commands.Inline_Read_File_Cmd /= null then
+         Ensure_Connection (Connection);
+         return new String'
+           (Send_Cmd_And_Get_Result
+              (Connection, Substitute
+                 (Connection.Commands.Inline_Read_File_Cmd.all,
+                  Local_Full_Name,
+                  Get_Host (Connection), Get_User (Connection))));
+
+      elsif Connection.Commands.Read_File_Cmd /= null then
+         declare
+            Base_Tmp    : String (1 .. Temp_File_Len);
+            Current_Dir : constant String := Get_Current_Dir;
+            Fd          : File_Descriptor;
+            Success     : Boolean;
+            Result      : String_Access;
+            Pd          : TTY_Process_Descriptor;
+         begin
+            Change_Dir (Temporary_Dir);
+            Create_Temp_File (Fd, Base_Tmp);
+            Change_Dir (Current_Dir);
+
+            if Connection.Commands.Read_File_Cmd
+              (Connection.Commands.Read_File_Cmd'First) = '@'
+            then
+               Open_Connection
+                 (Substitute
+                    (Connection.Commands.Read_File_Cmd.all
+                       (Connection.Commands.Read_File_Cmd'First + 1
+                          .. Connection.Commands.Read_File_Cmd'Last),
+                     Local_Full_Name,
+                     Get_Host (Connection), Get_User (Connection),
+                     Temporary_Dir & Base_Tmp),
+                  Connection,
+                  False,
+                  Pd,
+                  Success);
+               if Success then
+                  Close (Pd);
+               end if;
+
+            else
+               Ensure_Connection (Connection);
+               declare
+                  Result : constant String := Send_Cmd_And_Get_Result
+                    (Connection, Substitute
+                       (Connection.Commands.Read_File_Cmd.all,
+                        Local_Full_Name,
+                        Get_Host (Connection), Get_User (Connection),
+                        Temporary_Dir & Base_Tmp));
+                  pragma Unreferenced (Result);
+               begin
+                  null;
+               end;
+            end if;
+
+            Result := Read_File (Temporary_Dir & Base_Tmp);
+            Delete_File (Temporary_Dir & Base_Tmp, Success);
+            return Result;
+         end;
+
+      else
+         return null;
+      end if;
    end Read_File;
 
    ------------
@@ -616,14 +805,20 @@ package body SSH_Protocol is
      (Connection      : access Generic_Connection_Record;
       Local_Full_Name : Glib.UTF8_String)
    is
-      Cmd : constant String := Substitute
-        (Connection.Commands.Delete_File_Cmd.all, Local_Full_Name,
-         Get_Host (Connection), Get_User (Connection));
       Success : Boolean;
       pragma Unreferenced (Success);
    begin
-      Ensure_Connection (Connection);
-      Success := Send_Cmd_And_Get_Result (Connection, Cmd);
+      if Connection.Commands.Delete_File_Cmd = null then
+         --  Don't do anything
+         null;
+      else
+         Ensure_Connection (Connection);
+         Success := Send_Cmd_And_Get_Result
+           (Connection,
+            Substitute
+              (Connection.Commands.Delete_File_Cmd.all, Local_Full_Name,
+               Get_Host (Connection), Get_User (Connection)));
+      end if;
    end Delete;
 
    -----------------
@@ -632,14 +827,21 @@ package body SSH_Protocol is
 
    function Is_Writable
      (Connection      : access Generic_Connection_Record;
-      Local_Full_Name : Glib.UTF8_String) return Boolean
-   is
-      C : constant String := Substitute
-        (Connection.Commands.Is_Writable_Cmd.all, Local_Full_Name,
-         Get_Host (Connection), Get_User (Connection));
+      Local_Full_Name : Glib.UTF8_String) return Boolean is
    begin
-      Ensure_Connection (Connection);
-      return Send_Cmd_And_Get_Result (Connection, C);
+      if Connection.Commands.Is_Writable_Cmd = null then
+         --  Assume it is writable if we have a command defined for this,
+         --  we'll check when we try to write it
+         return Connection.Commands.Write_File_Cmd /= null
+           or else Connection.Commands.Inline_Write_File_Cmd /= null;
+      else
+         Ensure_Connection (Connection);
+         return Send_Cmd_And_Get_Result
+           (Connection,
+            Substitute
+              (Connection.Commands.Is_Writable_Cmd.all, Local_Full_Name,
+               Get_Host (Connection), Get_User (Connection)));
+      end if;
    end Is_Writable;
 
    ------------------
@@ -648,14 +850,21 @@ package body SSH_Protocol is
 
    function Is_Directory
      (Connection      : access Generic_Connection_Record;
-      Local_Full_Name : Glib.UTF8_String) return Boolean
-   is
-      C : constant String := Substitute
-        (Connection.Commands.Is_Directory_Cmd.all, Local_Full_Name,
-         Get_Host (Connection), Get_User (Connection));
+      Local_Full_Name : Glib.UTF8_String) return Boolean is
    begin
-      Ensure_Connection (Connection);
-      return Send_Cmd_And_Get_Result (Connection, C);
+      if Connection.Commands.Is_Directory_Cmd = null then
+         --  Assume it is a directory only if it ends with a directory
+         --  separator
+         return Local_Full_Name (Local_Full_Name'Last) = '/'
+           or else Local_Full_Name (Local_Full_Name'Last) = '\';
+      else
+         Ensure_Connection (Connection);
+         return Send_Cmd_And_Get_Result
+           (Connection,
+            Substitute
+              (Connection.Commands.Is_Directory_Cmd.all, Local_Full_Name,
+               Get_Host (Connection), Get_User (Connection)));
+      end if;
    end Is_Directory;
 
    ---------------------
@@ -670,6 +879,13 @@ package body SSH_Protocol is
       function Safe_Value (S : String; Default : Integer := 1) return Integer;
       --  Same as 'Value but doesn't crash on invalid input
 
+      function Month_Name_To_Number (M : String) return Month_Number;
+      --  Return the month number corresponding to M
+
+      ----------------
+      -- Safe_Value --
+      ----------------
+
       function Safe_Value
         (S : String; Default : Integer := 1) return Integer is
       begin
@@ -679,90 +895,109 @@ package body SSH_Protocol is
             return Default;
       end Safe_Value;
 
-      C : constant String := Substitute
-        (Connection.Commands.Timestamp_Cmd.all, Local_Full_Name,
-         Get_Host (Connection), Get_User (Connection));
-   begin
-      Ensure_Connection (Connection);
+      --------------------------
+      -- Month_Name_To_Number --
+      --------------------------
 
-      declare
-         Result : constant String := Send_Cmd_And_Get_Result (Connection, C);
-         Index  : Natural := Result'First;
-         Last   : Natural := Index;
-         Month  : Month_Number := 1;
-         Day    : Day_Number;
-         Year   : Year_Number := Ada.Calendar.Year (Clock);
-         Hour   : Hour_Number := 1;
-         Minute : Minute_Number := 1;
+      function Month_Name_To_Number (M : String) return Month_Number is
       begin
-         --  First part is the month. This can be either a digit or a literal
+         if M = "jan" then
+            return 1;
+         elsif M = "feb" then
+            return 2;
+         elsif M = "mar" then
+            return 3;
+         elsif M = "apr" then
+            return 4;
+         elsif M = "may" then
+            return 5;
+         elsif M = "jun" then
+            return 6;
+         elsif M = "jul" then
+            return 7;
+         elsif M = "aug" then
+            return 8;
+         elsif M = "sep" then
+            return 9;
+         elsif M = "oct" then
+            return 10;
+         elsif M = "nov" then
+            return 11;
+         else
+            return 12;
+         end if;
+      end Month_Name_To_Number;
 
-         Skip_To_Blank (Result, Last);
+   begin
+      if Connection.Commands.Timestamp_Cmd = null then
+         return VFS.No_Time;
 
-         if Last <= Result'Last
-           and then Last > 2 + Index
-         then
-            declare
-               M : constant String := To_Lower (Result (Index .. Index + 2));
-            begin
-               if M = "jan" then
-                  Month := 1;
-               elsif M = "feb" then
-                  Month := 2;
-               elsif M = "mar" then
-                  Month := 3;
-               elsif M = "apr" then
-                  Month := 4;
-               elsif M = "may" then
-                  Month := 5;
-               elsif M = "jun" then
-                  Month := 6;
-               elsif M = "jul" then
-                  Month := 7;
-               elsif M = "aug" then
-                  Month := 8;
-               elsif M = "sep" then
-                  Month := 9;
-               elsif M = "oct" then
-                  Month := 10;
-               elsif M = "nov" then
-                  Month := 11;
-               else
-                  Month := 12;
+      else
+         Ensure_Connection (Connection);
+
+         declare
+            C : constant String := Substitute
+              (Connection.Commands.Timestamp_Cmd.all, Local_Full_Name,
+               Get_Host (Connection), Get_User (Connection));
+            Result : constant String :=
+              Send_Cmd_And_Get_Result (Connection, C);
+            Month  : Month_Number := 1;
+            Day    : Day_Number;
+            Year   : Year_Number := Ada.Calendar.Year (Clock);
+            Hour   : Hour_Number := 1;
+            Minute : Minute_Number := 1;
+            Matched : Match_Array (0 .. 20);
+         begin
+            if Result = "" then
+               return VFS.No_Time;
+            end if;
+
+            Match (Ls_Regexp, Result, Matched);
+            if Matched (0) /= No_Match then
+               Month := Month_Name_To_Number
+                 (To_Lower (Result
+                              (Matched (Ls_Month_Parens).First
+                                 .. Matched (Ls_Month_Parens).Last)));
+
+               Day := Day_Number
+                 (Safe_Value
+                    (Result
+                       (Matched (Ls_Day_Parens).First
+                          .. Matched (Ls_Day_Parens).Last)));
+
+               if Matched (Ls_Hour_Parens) /= No_Match then
+                  Hour := Hour_Number
+                    (Safe_Value
+                       (Result
+                          (Matched (Ls_Hour_Parens).First
+                             .. Matched (Ls_Hour_Parens).Last)));
+                  Minute := Minute_Number
+                    (Safe_Value
+                       (Result
+                          (Matched (Ls_Min_Parens).First
+                             .. Matched (Ls_Min_Parens).Last)));
                end if;
-            end;
-         end if;
 
-         Skip_Blanks (Result, Last);
-         Index := Last;
-         Skip_To_Blank (Result, Last);
+               if Matched (Ls_Year_Parens) /= No_Match then
+                  Year := Year_Number
+                    (Safe_Value
+                       (Result
+                          (Matched (Ls_Year_Parens).First
+                             .. Matched (Ls_Year_Parens).Last)));
+               end if;
 
-         Day := Day_Number (Safe_Value (Result (Index .. Last - 1)));
+               return GNAT.Calendar.Time_Of
+                 (Year, Month, Day, Hour, Minute, Second => 0);
+            end if;
+         end;
+      end if;
 
-         Skip_Blanks (Result, Last);
-         Index := Last;
-         Skip_To_Blank (Result, Last);
-
-         if Last - Index = 4 then
-            Year := Year_Number (Safe_Value (Result (Index .. Last - 1)));
-         elsif Index + 2 <= Result'Last
-           and then Result (Index + 2) = ':'
-         then
-            Hour := Hour_Number (Safe_Value (Result (Index .. Index + 1)));
-            Minute :=
-              Minute_Number (Safe_Value (Result (Index + 3 .. Index + 4)));
-         end if;
-
-         return GNAT.Calendar.Time_Of
-           (Year, Month, Day, Hour, Minute, Second => 0);
-      end;
-
-      return Src_Info.No_Time;
+      return VFS.No_Time;
 
    exception
       when E : others =>
          Trace (Me, "Unexpected exception " & Exception_Information (E));
-         return Src_Info.No_Time;
+         return VFS.No_Time;
    end File_Time_Stamp;
 
    -----------
@@ -772,21 +1007,60 @@ package body SSH_Protocol is
    procedure Write
      (Connection      : access Generic_Connection_Record;
       Local_Full_Name : Glib.UTF8_String;
-      Contents        : String)
+      Temporary_File  : String)
    is
-      C : constant String := Substitute
-        (Connection.Commands.Write_File_Cmd.all, Local_Full_Name,
-         Get_Host (Connection), Get_User (Connection));
+      Success     : Boolean;
+      Pd          : TTY_Process_Descriptor;
    begin
-      Ensure_Connection (Connection);
+      if Connection.Commands.Inline_Write_File_Cmd /= null then
+         Ensure_Connection (Connection);
+         declare
+            Tmp : String_Access := Read_File (Temporary_File);
+            C : constant String := Substitute
+              (Connection.Commands.Inline_Write_File_Cmd.all, Local_Full_Name,
+               Get_Host (Connection), Get_User (Connection));
+            Result : constant String := Send_Cmd_And_Get_Result
+              (Connection, C, Cmd2 => Tmp.all & ASCII.LF & End_Of_File_Mark);
+            pragma Unreferenced (Result);
+         begin
+            Free (Tmp);
+         end;
 
-      declare
-         Result : constant String := Send_Cmd_And_Get_Result
-           (Connection, C, Cmd2 => Contents & ASCII.LF & End_Of_File_Mark);
-         pragma Unreferenced (Result);
-      begin
-         null;
-      end;
+      elsif Connection.Commands.Write_File_Cmd /= null then
+         if Connection.Commands.Write_File_Cmd
+           (Connection.Commands.Write_File_Cmd'First) = '@'
+         then
+            Open_Connection
+              (Substitute
+                 (Connection.Commands.Write_File_Cmd
+                    (Connection.Commands.Write_File_Cmd'First + 1
+                       .. Connection.Commands.Write_File_Cmd'Last),
+                  Local_Full_Name,
+                  Get_Host (Connection), Get_User (Connection),
+                  Temporary_File),
+               Connection,
+               False,
+               Pd,
+               Success);
+            if Success then
+               Close (Pd);
+            end if;
+
+         else
+            declare
+               Result : constant String := Send_Cmd_And_Get_Result
+                 (Connection,
+                  Substitute
+                    (Connection.Commands.Write_File_Cmd.all,
+                     Local_Full_Name,
+                     Get_Host (Connection), Get_User (Connection),
+                     Temporary_File));
+               pragma Unreferenced (Result);
+            begin
+               null;
+            end;
+         end if;
+      end if;
    end Write;
 
    -------------
@@ -821,29 +1095,35 @@ package body SSH_Protocol is
       Local_Full_Name : Glib.UTF8_String;
       Writable        : Boolean) is
    begin
-      Ensure_Connection (Connection);
-      if Writable then
-         declare
-            C : constant String := Substitute
-              (Connection.Commands.Set_Writable_Cmd.all, Local_Full_Name,
-               Get_Host (Connection), Get_User (Connection));
-            Result : constant String :=
-              Send_Cmd_And_Get_Result (Connection, C);
-            pragma Unreferenced (Result);
-         begin
-            null;
-         end;
+      if Connection.Commands.Set_Writable_Cmd = null then
+         --  Nothing to do
+         null;
+
       else
-         declare
-            C : constant String := Substitute
-              (Connection.Commands.Set_Unwritable_Cmd.all, Local_Full_Name,
-               Get_Host (Connection), Get_User (Connection));
-            Result : constant String :=
-              Send_Cmd_And_Get_Result (Connection, C);
-            pragma Unreferenced (Result);
-         begin
-            null;
-         end;
+         Ensure_Connection (Connection);
+         if Writable then
+            declare
+               C : constant String := Substitute
+                 (Connection.Commands.Set_Writable_Cmd.all, Local_Full_Name,
+                  Get_Host (Connection), Get_User (Connection));
+               Result : constant String :=
+                 Send_Cmd_And_Get_Result (Connection, C);
+               pragma Unreferenced (Result);
+            begin
+               null;
+            end;
+         else
+            declare
+               C : constant String := Substitute
+                 (Connection.Commands.Set_Unwritable_Cmd.all, Local_Full_Name,
+                  Get_Host (Connection), Get_User (Connection));
+               Result : constant String :=
+                 Send_Cmd_And_Get_Result (Connection, C);
+               pragma Unreferenced (Result);
+            begin
+               null;
+            end;
+         end if;
       end if;
    end Set_Writable;
 
@@ -856,29 +1136,35 @@ package body SSH_Protocol is
       Local_Full_Name : Glib.UTF8_String;
       Readable        : Boolean) is
    begin
-      Ensure_Connection (Connection);
-      if Readable then
-         declare
-            C : constant String := Substitute
-              (Connection.Commands.Set_Readable_Cmd.all, Local_Full_Name,
-               Get_Host (Connection), Get_User (Connection));
-            Result : constant String :=
-              Send_Cmd_And_Get_Result (Connection, C);
-            pragma Unreferenced (Result);
-         begin
-            null;
-         end;
+      if Connection.Commands.Set_Readable_Cmd = null then
+         --  Nothing to do
+         null;
+
       else
-         declare
-            C : constant String := Substitute
-              (Connection.Commands.Set_Unreadable_Cmd.all, Local_Full_Name,
-               Get_Host (Connection), Get_User (Connection));
-            Result : constant String :=
-              Send_Cmd_And_Get_Result (Connection, C);
-            pragma Unreferenced (Result);
-         begin
-            null;
-         end;
+         Ensure_Connection (Connection);
+         if Readable then
+            declare
+               C : constant String := Substitute
+                 (Connection.Commands.Set_Readable_Cmd.all, Local_Full_Name,
+                  Get_Host (Connection), Get_User (Connection));
+               Result : constant String :=
+                 Send_Cmd_And_Get_Result (Connection, C);
+               pragma Unreferenced (Result);
+            begin
+               null;
+            end;
+         else
+            declare
+               C : constant String := Substitute
+                 (Connection.Commands.Set_Unreadable_Cmd.all, Local_Full_Name,
+                  Get_Host (Connection), Get_User (Connection));
+               Result : constant String :=
+                 Send_Cmd_And_Get_Result (Connection, C);
+               pragma Unreferenced (Result);
+            begin
+               null;
+            end;
+         end if;
       end if;
    end Set_Readable;
 
