@@ -3897,7 +3897,7 @@ package body Src_Editor_Buffer is
             return True;
          end if;
 
-         if Always_Reload or else New_Timestamp > Buffer.Timestamp then
+         if Always_Reload or else New_Timestamp /= Buffer.Timestamp then
             if Always_Reload or else not Interactive then
                Response := Gtk_Response_No;
             else
@@ -3962,7 +3962,7 @@ package body Src_Editor_Buffer is
    begin
       if Buffer.Filename /= VFS.No_File then
          New_Timestamp := File_Time_Stamp (Buffer.Filename);
-         return New_Timestamp <= Buffer.Timestamp;
+         return New_Timestamp /= Buffer.Timestamp;
       end if;
 
       return True;
