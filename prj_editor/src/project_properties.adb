@@ -48,7 +48,7 @@ with Gtk.Tooltips;              use Gtk.Tooltips;
 with Gtk.Widget;                use Gtk.Widget;
 with Projects.Editor;           use Projects, Projects.Editor;
 with Projects.Registry;         use Projects.Registry;
-with String_Utils;              use String_Utils;
+with File_Utils;                use File_Utils;
 with Basic_Types;               use Basic_Types;
 with Language_Handlers;         use Language_Handlers;
 with Language;                  use Language;

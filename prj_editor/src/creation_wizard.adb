@@ -48,7 +48,7 @@ with Glide_Kernel;     use Glide_Kernel;
 with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
 with Glide_Kernel.Project; use Glide_Kernel.Project;
 with Glide_Intl;       use Glide_Intl;
-with String_Utils;     use String_Utils;
+with File_Utils;       use File_Utils;
 with Project_Viewers;  use Project_Viewers;
 with Languages_Lists;  use Languages_Lists;
 
