@@ -83,6 +83,11 @@ package Src_Info is
    --  Information on a file and its unit. This information can be stored for
    --  later used, and remains valid even when the LI file is parsed again.
 
+   type Unit_Part is (Unit_Spec, Unit_Body, Unit_Separate);
+   --  A unit is usally composed of two parts: the spec and the body.
+   --    - Unit_Spec represents package/subprogram/generic declarations
+   --    - Unit_Body represents package/subprogram/generic bodies and subunits.
+
    procedure Destroy (File : in out Internal_File);
    --  Destroy the memory associated with File_Info.
 
@@ -97,6 +102,10 @@ package Src_Info is
 
    function Get_Source_Filename (File : Internal_File) return String;
    --  Return the Filename for the given File.
+
+   function Get_Unit_Part
+     (Source_Info_List : LI_File_List; File : String) return Unit_Part;
+   --  Return the type of File (a body or a spec).
 
    procedure Get_Unit_Name
      (File              : in out Internal_File;
@@ -217,11 +226,6 @@ private
    --      body, accept statement.
    --    - End_Of_Body_With_Label: Identical to End_Of_Body, except that a
    --      label is attached to the construct.
-
-   type Unit_Part is (Unit_Spec, Unit_Body, Unit_Separate);
-   --  A unit is usally composed of two parts: the spec and the body.
-   --    - Unit_Spec represents package/subprogram/generic declarations
-   --    - Unit_Body represents package/subprogram/generic bodies and subunits.
 
    type E_Scope is (Global_Scope, Local_Scope);
    --  The scope of an entity. The values have the following meaning:
