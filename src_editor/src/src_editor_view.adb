@@ -614,7 +614,7 @@ package body Src_Editor_View is
          (Buffer, "insert_text",
           Cb        => Insert_Text_Handler'Access,
           User_Data => Source_View (View),
-          After     => True);
+          After     => True),
          View);
 
       Gtk.Handlers.Add_Watch
