@@ -1,5 +1,17 @@
 New features in GPS 1.0.2
 
+- Confirmation dialog on exit removed
+  Instead, it is possible to specify in the preferences whether the desktop
+  should be saved on exit. The Ctrl-Q shortcut has also been suppressed to
+  avoid unwanted termination. The use of Alt-F-E instead, or of a dynamic
+  key binding is still possible.
+
+- A line is drawn in the source editor showing the 80th column
+
+- [BA07-018] Support for Unix and Windows line terminators
+  Line terminators can be set in the preferences, independently of the host
+  platform.
+
 - New entities browser
 
 - Improved project view
