@@ -698,8 +698,11 @@ package body Glide_Kernel is
       if Is_Regular_File (File) then
          Node := Parse (File);
          Kernel_Desktop.Restore_Desktop (MDI, Node, Kernel_Handle (Handle));
+         Free (Handle.Default_Desktop);
          return True;
       else
+         Kernel_Desktop.Restore_Desktop
+           (MDI, Handle.Default_Desktop, Kernel_Handle (Handle));
          return False;
       end if;
    end Load_Desktop;
