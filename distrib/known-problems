@@ -1,24 +1,29 @@
 Known Problems fixed in GPS 1.2.1
 
+- C424-012 Cancel button not working under Windows in 'Save As' dialog
+  Problem:    When using the 'Save As' dialog under Windows, the cancel button
+              button is ignored, saving unconditionally the file.
+  Workaround: Avoid using the cancel button when using this dialog.
+
 - C418-010 Messages window not saved in the desktop
   Problem:    When the desktop is saved, the location of the messages window
               is not saved.
   Workaround: It is possible to manually edit the file $HOME/.gps/desktop, but
               it is simpler to move the messages window back to the location
-              where you want it on startup
+              where you want it on startup.
                                                                                 
 - C418-010 Incorrect desktop loading for location window
   Problem:    If the location window is put in the left dock, and the desktop
-              is saved, then GPS won't be able to restore the desktop on startup              and will crash
+              is saved, then GPS won't be able to restore the desktop on startup              and will crash.
   Workaround: Edit the file $HOME/.gps/desktop by hand to remove the location
-              window reference
+              window reference.
 
 - C425-020 Selection in greyed out fields in the project properties editor
   Problem:    If Ada is not a supported language for your project, the combo
               boxes for the compiler and gnatls can still be selected by
-              clicking on the arrow
+              clicking on the arrow.
   Workaround: Avoid clicking on the arrow, although no arm will result if you
-              do. The new setting is simply ignored when the project is saved
+              do. The new setting is simply ignored when the project is saved.
                                                                                 
 - Extra dialog displayed during search
   Problem:    When starting a search from the beginning of a file, GPS will ask
