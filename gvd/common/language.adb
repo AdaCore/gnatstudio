@@ -32,4 +32,18 @@ package body Language is
       Internal (Lang);
    end Free;
 
+   ----------------
+   -- Looking_At --
+   ----------------
+
+   procedure Looking_At (Lang      : access Language_Root;
+                         Buffer    : String;
+                         Entity    : out Language_Entity;
+                         Next_Char : out Positive)
+   is
+   begin
+      Next_Char := Buffer'First + 1;
+      Entity := Normal_Text;
+   end Looking_At;
+
 end Language;

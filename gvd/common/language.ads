@@ -92,7 +92,7 @@ package Language is
    procedure Looking_At (Lang      : access Language_Root;
                          Buffer    : String;
                          Entity    : out Language_Entity;
-                         Next_Char : out Positive) is abstract;
+                         Next_Char : out Positive);
    --  Should return the type of entity that is present at the first position
    --  in the buffer (ie starting at Buffer'First).
    --  Next_Char should be set to the index of the first character after the
