@@ -41,6 +41,8 @@ package GVD.Preferences is
 
    File_Name_Bg_Color : constant String := "#BEBEBE";
    --  Color used for the background of the file name in the editor (grey).
+   --  This is also used for the background of the current frame in the
+   --  stack_list window.
 
    -------------------
    -- Source Window --
