@@ -976,12 +976,10 @@ package body Glide_Kernel.Modules is
 
    procedure Execute_Command
      (Widget  : access GObject_Record'Class;
-      Command : Command_Access)
-   is
-      Kernel : constant Kernel_Handle := Kernel_Handle (Widget);
+      Command : Command_Access) is
    begin
       Launch_Background_Command
-        (Kernel, Command, Destroy_On_Exit => False,
+        (Kernel_Handle (Widget), Command, Destroy_On_Exit => False,
          Active => False, Queue_Id => "");
 
    exception
@@ -1004,8 +1002,7 @@ package body Glide_Kernel.Modules is
       Accel_Mods  : Gdk.Types.Gdk_Modifier_Type := 0;
       Ref_Item    : String := "";
       Add_Before  : Boolean := True;
-      Sensitive   : Boolean := True)
-     return Gtk_Menu_Item
+      Sensitive   : Boolean := True) return Gtk_Menu_Item
    is
       use type Kernel_Callback.Marshallers.Void_Marshaller.Handler;
       function Cleanup (Path : String) return String;
@@ -1093,11 +1090,11 @@ package body Glide_Kernel.Modules is
       Toolbar : constant Gtk_Toolbar := Get_Toolbar (Kernel);
    begin
       Button := Append_Item (Toolbar, Text, Text, Tooltip, Gtk_Widget (Image));
-
-      Command_Callback.Connect
+      Command_Callback.Object_Connect
         (Button, "clicked",
          Command_Callback.To_Marshaller (Execute_Command'Access),
-         Command);
+         Slot_Object => Kernel_Handle (Kernel),
+         User_Data   => Command);
    end Register_Button;
 
    ---------------------
@@ -1114,11 +1111,11 @@ package body Glide_Kernel.Modules is
       Toolbar : constant Gtk_Toolbar := Get_Toolbar (Kernel);
    begin
       Button := Insert_Stock (Toolbar, Stock_Id, Tooltip);
-
-      Command_Callback.Connect
+      Command_Callback.Object_Connect
         (Button, "clicked",
          Command_Callback.To_Marshaller (Execute_Command'Access),
-         Command);
+         Slot_Object => Kernel_Handle (Kernel),
+         User_Data   => Command);
    end Register_Button;
 
    -----------------
