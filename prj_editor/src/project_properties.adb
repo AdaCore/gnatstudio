@@ -640,7 +640,8 @@ package body Project_Properties is
 
          Gtk_New (Label, Get_Label (Page));
          Editor.Pages (E) := Widget_Factory
-           (Page, Project_View, Editor.Kernel);
+           (Page, Project_View,
+            Project_Path (Project_View), Editor.Kernel);
          Append_Page (Main_Note, Editor.Pages (E), Label);
       end loop;
 

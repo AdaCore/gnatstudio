@@ -156,7 +156,10 @@ package body Creation_Wizard is
               (W, Integer (Page_Num),
                Widget_Factory
                (Get_Nth_Project_Editor_Page (W.Kernel, Integer (Page_Num - 1)),
-                No_Project, W.Kernel));
+                No_Project,
+                Name_As_Directory (Get_Text (W.Project_Location)) &
+                Get_Text (W.Project_Name),
+                W.Kernel));
          end if;
 
          declare

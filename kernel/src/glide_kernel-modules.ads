@@ -360,6 +360,7 @@ package Glide_Kernel.Modules is
    function Widget_Factory
      (Page         : access Project_Editor_Page_Record;
       Project_View : Prj.Project_Id;
+      Full_Project : String;
       Kernel       : access Kernel_Handle_Record'Class)
       return Gtk.Widget.Gtk_Widget is abstract;
    --  Return a new widget to display in the project properties editor or the
@@ -371,6 +372,9 @@ package Glide_Kernel.Modules is
    --  This subprogram should call Show_All on the returned widget. This allows
    --  it to hide some of the components when necessary. The caller should not
    --  force a Show_All on the widget.
+   --  Full_Project is the directory/name  the user has chosen for the project
+   --  file. It should be used for the pages that need initial values for the
+   --  directories.
    --
    --  Refresh is always called just after Widget_Factory.
 

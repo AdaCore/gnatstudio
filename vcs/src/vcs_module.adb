@@ -98,6 +98,7 @@ package body VCS_Module is
    function Widget_Factory
      (Page         : access VCS_Editor_Record;
       Project_View : Project_Id;
+      Full_Project : String;
       Kernel       : access Kernel_Handle_Record'Class)
       return Gtk_Widget;
    function Project_Editor
@@ -200,10 +201,11 @@ package body VCS_Module is
    function Widget_Factory
      (Page         : access VCS_Editor_Record;
       Project_View : Project_Id;
+      Full_Project : String;
       Kernel       : access Kernel_Handle_Record'Class)
       return Gtk_Widget
    is
-      pragma Unreferenced (Page);
+      pragma Unreferenced (Page, Full_Project);
       Systems : Argument_List := Get_VCS_List (VCS_Module_ID);
       Radio : Gtk_Radio_Button;
       Main : VCS_Selector;
