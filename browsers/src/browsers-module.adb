@@ -20,6 +20,7 @@
 
 with Browsers.Canvas;           use Browsers.Canvas;
 with Browsers.Dependency_Items; use Browsers.Dependency_Items;
+with Browsers.Projects;         use Browsers.Projects;
 with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
 with Glide_Kernel;              use Glide_Kernel;
 with Glide_Intl;                use Glide_Intl;
@@ -27,6 +28,7 @@ with Src_Info.Queries;          use Src_Info.Queries;
 with Src_Info;                  use Src_Info;
 with String_Utils;              use String_Utils;
 with Traces;                    use Traces;
+with Prj_API;                   use Prj_API;
 
 with Glib.Object;          use Glib.Object;
 with Gtk.Menu;             use Gtk.Menu;
@@ -86,6 +88,11 @@ package body Browsers.Module is
      (Widget  : access Gtk_Widget_Record'Class;
       Context : Selection_Context_Access);
    --  Examine the dependencies of a specific file
+
+   procedure On_Examine_Prj_Hierarchy
+     (Widget  : access Gtk_Widget_Record'Class;
+      Context : Selection_Context_Access);
+   --  Open the project hierarchy browser for a specific project
 
    procedure Browser_Contextual_Menu
      (Object  : access Glib.Object.GObject_Record'Class;
@@ -192,7 +199,7 @@ package body Browsers.Module is
 
       Initial := File_Item (Find_File (In_Browser, F));
       if Initial = null then
-         Gtk_New (Initial, Get_Window (In_Browser), Kernel,  F);
+         Gtk_New (Initial, Get_Window (In_Browser), In_Browser, Kernel,  F);
          Put (Get_Canvas (In_Browser), Initial);
 
          --  ??? Should check if the item was already expanded, so as to avoid
@@ -214,7 +221,8 @@ package body Browsers.Module is
                Must_Add_Link := True;
 
                if New_Item then
-                  Gtk_New (Item, Get_Window (In_Browser), Kernel, Intern);
+                  Gtk_New (Item, Get_Window (In_Browser), In_Browser,
+                           Kernel, Intern);
 
                else
                   --  If the item already existed, chances are that the link
@@ -379,6 +387,24 @@ package body Browsers.Module is
          File_Information (File_Selection_Context_Access (Context)));
    end Edit_Dependencies_From_Contextual;
 
+   ------------------------------
+   -- On_Examine_Prj_Hierarchy --
+   ------------------------------
+
+   procedure On_Examine_Prj_Hierarchy
+     (Widget  : access Gtk_Widget_Record'Class;
+      Context : Selection_Context_Access)
+   is
+      Browser : MDI_Child;
+   begin
+      Browser := Open_Browser (Get_Kernel (Context), Project_Browser);
+      Examine_Project_Hierarchy
+        (Get_Kernel (Context),
+         Glide_Browser (Get_Widget (Browser)),
+         Get_Project_From_View
+         (Project_Information (File_Selection_Context_Access (Context))));
+   end On_Examine_Prj_Hierarchy;
+
    -----------------------
    -- Initialize_Module --
    -----------------------
@@ -432,6 +458,18 @@ package body Browsers.Module is
       --  File selection (for instance from the explorer)
       if Context.all in File_Selection_Context'Class then
          File_Context := File_Selection_Context_Access (Context);
+
+         if Has_Project_Information (File_Context) then
+            Gtk_New (Item, Label =>
+                     -"Examine project hierarchy for "
+                     & Project_Name (Project_Information (File_Context)));
+            Append (Menu, Item);
+            Context_Callback.Connect
+              (Item, "activate",
+               Context_Callback.To_Marshaller
+               (On_Examine_Prj_Hierarchy'Access),
+               Selection_Context_Access (Context));
+         end if;
 
          if Has_File_Information (File_Context) then
             Gtk_New (Item, Label => File_Information (File_Context)
