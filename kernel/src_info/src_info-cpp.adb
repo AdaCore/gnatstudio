@@ -1860,7 +1860,7 @@ package body Src_Info.CPP is
          Set_Cursor
            (Handler.SN_Table (MD),
             By_Key,
-            Class_Name & Field_Sep & Name,
+            Class_Name & Field_Sep & Name & Field_Sep,
             False);
 
          loop
@@ -1891,15 +1891,15 @@ package body Src_Info.CPP is
          Release_Cursor (Handler.SN_Table (MD));
       end if;
 
-      if Is_Open (Handler.SN_Table (MD)) then
+      if Is_Open (Handler.SN_Table (MI)) then
          Set_Cursor
-           (Handler.SN_Table (MD),
+           (Handler.SN_Table (MI),
             By_Key,
-            Class_Name & Field_Sep & Name,
+            Class_Name & Field_Sep & Name & Field_Sep,
             False);
 
          loop
-            P := Get_Pair (Handler.SN_Table (MD), Next_By_Key);
+            P := Get_Pair (Handler.SN_Table (MI), Next_By_Key);
             exit when P = null;
             MBody := Parse_Pair (P.all);
             Free (P);
@@ -1923,7 +1923,9 @@ package body Src_Info.CPP is
 
                --  MI symbols do not appear without MD
                --  add end of scope and body entity references
-               if Decl_Info /= null then
+               if Decl_Info /= null
+                  and then Decl_Info.Value.Declaration.End_Of_Scope
+                     = No_Reference then
                   MI_File := Locate_From_Source
                     (List,
                      MBody.Buffer
@@ -1946,7 +1948,7 @@ package body Src_Info.CPP is
             end if;
             Free (MBody);
          end loop;
-         Release_Cursor (Handler.SN_Table (MD));
+         Release_Cursor (Handler.SN_Table (MI));
       end if;
    end Create_Overload_List;
 
@@ -1969,7 +1971,7 @@ package body Src_Info.CPP is
       Target_Kind    : E_Kind;
    begin
       if Is_Open (Handler.SN_Table (FD)) then
-         Set_Cursor (Handler.SN_Table (FD), By_Key, Name, False);
+         Set_Cursor (Handler.SN_Table (FD), By_Key, Name & Field_Sep, False);
 
          loop
             P := Get_Pair (Handler.SN_Table (FD), Next_By_Key);
@@ -1997,7 +1999,7 @@ package body Src_Info.CPP is
       end if;
 
       if Is_Open (Handler.SN_Table (FU)) then
-         Set_Cursor (Handler.SN_Table (FU), By_Key, Name, False);
+         Set_Cursor (Handler.SN_Table (FU), By_Key, Name & Field_Sep, False);
 
          loop
             P := Get_Pair (Handler.SN_Table (FU), Next_By_Key);
@@ -3730,7 +3732,7 @@ package body Src_Info.CPP is
          Position => By_Key,
          Key => Sym.Buffer (Sym.Class.First .. Sym.Class.Last) & Field_Sep &
                 Fu_Id &
-                Field_Sep & To_String (Sym.Symbol),
+                Field_Sep & To_String (Sym.Symbol) & Field_Sep,
          Exact_Match => False);
 
       loop
