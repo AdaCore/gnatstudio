@@ -105,7 +105,9 @@ package Src_Info is
 
    function Get_Unit_Part
      (Source_Info_List : LI_File_List; File : String) return Unit_Part;
-   --  Return the type of File (a body or a spec).
+   --  Return the type of File (a body, a spec or a separate).
+   --  See also Prj_API.Get_Unit_Part_From_Filename if you are working with
+   --  filenames that don't have a matching LI_File.
 
    procedure Get_Unit_Name
      (File              : in out Internal_File;
