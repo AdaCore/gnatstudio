@@ -1,5 +1,12 @@
 Known Problems in GVD 1.0.1
 
+- Incorrect highlighting of ex-current line
+  Problem: When the current line (with green background) changes, the previous
+           one is incorrectly syntax-highlighted (comments are still in black)
+  Workaround: force a redisplay of the source window (for instance hide line
+           numbers and display them again)
+  Status: Fixed in GVD 1.0.2
+
 - Opening the preferences dialog multiple times
   Problem: If the preferences dialog was closed with the title bar's X button,
            it wasn't possible to reopen it afterwards.
