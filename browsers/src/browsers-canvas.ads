@@ -34,6 +34,7 @@ with Gtk.Menu;
 with Gtk.Widget;
 with Pango.Layout;
 with GNAT.OS_Lib;
+with Ada.Unchecked_Deallocation;
 
 package Browsers.Canvas is
 
@@ -209,6 +210,9 @@ package Browsers.Canvas is
 
    procedure Destroy (Callback : in out Active_Area_Callback);
    --  Destroy the callback
+
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+     (Active_Area_Callback'Class, Active_Area_Cb);
 
    type Item_Active_Callback is access
      procedure (Event : Gdk.Event.Gdk_Event;

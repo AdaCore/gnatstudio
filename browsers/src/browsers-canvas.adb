@@ -53,7 +53,7 @@ with GNAT.OS_Lib;         use GNAT.OS_Lib;
 
 with Glide_Kernel;              use Glide_Kernel;
 with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
-with GVD.Preferences;
+with GVD.Preferences;           use GVD.Preferences;
 with Glide_Intl;                use Glide_Intl;
 with Layouts;                   use Layouts;
 with Traces;                    use Traces;
@@ -158,6 +158,10 @@ package body Browsers.Canvas is
       Add (Scrolled, Browser.Canvas);
       Add_Events (Browser.Canvas, Key_Press_Mask);
       Browser.Kernel := Kernel_Handle (Kernel);
+
+      Configure
+        (Browser.Canvas,
+         Annotation_Font => Get_Pref (GVD_Prefs, Annotation_Font));
 
       Set_Layout_Algorithm (Browser.Canvas, Layer_Layout'Access);
       Set_Auto_Layout (Browser.Canvas, False);
@@ -291,7 +295,8 @@ package body Browsers.Canvas is
          B.Selected_Link_Color := Get_Pref (Kernel, Selected_Link_Color);
 
          Gdk_New (B.Selected_Item_GC, Get_Window (B.Canvas));
-         Color := Get_Pref (Kernel, Selected_Item_Color);
+         Color := Get_Pref
+           (Kernel, Glide_Kernel.Preferences.Selected_Item_Color);
          Set_Foreground (B.Selected_Item_GC, Color);
 
          Gdk_New (B.Default_Item_GC, Get_Window (B.Canvas));
@@ -726,6 +731,10 @@ package body Browsers.Canvas is
             and then Get_Dest (Link) /=
                Vertex_Access (Selected_Item (Browser)))
          then
+            --  ??? Should force recomputation of the annotations so that they
+            --  can have the same color as the link themselves. But since they
+            --  are cached, the cache needs to be freed whenever we change the
+            --  GC.
             Draw_Link
               (Canvas, Canvas_Link_Access (Link), Window,
                Invert_Mode, GC, Edge_Number);
@@ -1348,8 +1357,6 @@ package body Browsers.Canvas is
    procedure Reset_Active_Areas (Item : access Browser_Item_Record) is
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (Active_Area_Tree_Record, Active_Area_Tree);
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Active_Area_Callback'Class, Active_Area_Cb);
 
       procedure Free (Area : in out Active_Area_Tree);
       --  Free Area and its children
