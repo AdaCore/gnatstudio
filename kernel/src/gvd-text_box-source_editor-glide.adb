@@ -284,10 +284,49 @@ package body GVD.Text_Box.Source_Editor.Glide is
       function Copy_Bp (D : Breakpoint_Data) return Breakpoint_Data is
          Result : Breakpoint_Data;
       begin
+         Result.Num := D.Num;
+         Result.The_Type := D.The_Type;
+         Result.Disposition := D.Disposition;
+         Result.Enabled := D.Enabled;
+
+         if D.Address /= null then
+            Result.Address := new String'(D.Address.all);
+         end if;
+
+         if D.Expression /= null then
+            Result.Expression := new String'(D.Expression.all);
+         end if;
+
          if D.File /= null then
             Result.File := new String'(D.File.all);
-            Result.Line := D.Line;
          end if;
+
+         if D.Except /= null then
+            Result.Except := new String'(D.Except.all);
+         end if;
+
+         if D.Subprogram /= null then
+            Result.Subprogram := new String'(D.Subprogram.all);
+         end if;
+
+         Result.Line := D.Line;
+
+         if D.Info /= null then
+            Result.Info := new String'(D.Info.all);
+         end if;
+
+         Result.Ignore := D.Ignore;
+
+         if D.Condition /= null then
+            Result.Condition := new String'(D.Condition.all);
+         end if;
+
+         if D.Commands /= null then
+            Result.Commands := new String'(D.Commands.all);
+         end if;
+
+         Result.Scope := D.Scope;
+         Result.Action := D.Action;
 
          return Result;
       end Copy_Bp;
