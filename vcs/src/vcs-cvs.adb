@@ -1326,7 +1326,8 @@ package body VCS.CVS is
 
       Close (File);
       Open_File_Editor (Kernel, Text_File);
-      Split (Get_MDI (Kernel), Gtk.Enums.Orientation_Vertical);
+      Split (Get_MDI (Kernel), Gtk.Enums.Orientation_Vertical,
+             Reuse_If_Possible => True, After => True);
       Delete (Text_File);
 
       return True;
