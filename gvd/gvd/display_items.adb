@@ -93,7 +93,6 @@ package body Display_Items is
       Color  : Gdk_Color;
 
    begin
-
       Set_Internal_Command (Get_Process (Debugger.Debugger), True);
 
       begin
@@ -227,8 +226,12 @@ package body Display_Items is
                               Event  : Gdk.Event.Gdk_Event_Button)
    is
       New_Item : Display_Item;
-      Button_X : Gint := Gint (Get_Coord (Item).Width) - Refresh_Button_Size
-        - Spacing + 1;
+      Button_X : Gint :=
+        Gint (Display_Items.Get_Coord (Item).Width) - Refresh_Button_Size -
+          Spacing + 1;
+      --  ??? GNAT is apparently not finding Get_Coord if we don't use the
+      --  dotted notation.
+
    begin
 
       if Get_Button (Event) = 1
@@ -247,16 +250,21 @@ package body Display_Items is
         and then Get_Event_Type (Event) = Gdk_2button_Press
         and then Item.Entity.all in Access_Type'Class
       then
-         Gtk_New (New_Item,
-                  Get_Window (Item.Debugger.Data_Canvas),
-                  Variable_Name => Item.Name.all & ".all", -- ??? Ada specific
-                  Debugger      => Item.Debugger,
-                  Auto_Refresh  => Item.Auto_Refresh);
-         Add_Link (Item.Debugger.Data_Canvas,
-                   Src   => Item,
-                   Dest  => New_Item,
-                   Arrow => End_Arrow,
-                   Descr => ".all");  -- ??? Ada specific
+         Gtk_New
+           (New_Item,
+            Get_Window (Item.Debugger.Data_Canvas),
+            Variable_Name =>
+              Dereference
+                (Get_Language (Item.Debugger.Debugger), Item.Name.all),
+            Debugger      => Item.Debugger,
+            Auto_Refresh  => Item.Auto_Refresh);
+         Add_Link
+           (Item.Debugger.Data_Canvas,
+            Src   => Item,
+            Dest  => New_Item,
+            Arrow => End_Arrow,
+            Descr =>
+              Dereference (Get_Language (Item.Debugger.Debugger), "()"));
          Put (Item.Debugger.Data_Canvas, New_Item);
       end if;
    end On_Button_Click;
@@ -301,4 +309,3 @@ package body Display_Items is
    end Set_Auto_Refresh;
 
 end Display_Items;
-
