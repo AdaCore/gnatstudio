@@ -44,6 +44,7 @@ with Odd.Strings;     use Odd.Strings;
 with Odd.Types;       use Odd.Types;
 with Odd.Process;     use Odd.Process;
 with Odd.Preferences; use Odd.Preferences;
+with Odd.Utils;       use Odd.Utils;
 with Process_Proxies; use Process_Proxies;
 
 package body Odd.Memory_View is
@@ -448,6 +449,8 @@ package body Odd.Memory_View is
          return;
       end if;
 
+      Set_Busy_Cursor (Get_Window (View), True);
+
       Free (View.Values);
       Free (View.Flags);
       View.Starting_Address := Address;
@@ -463,6 +466,7 @@ package body Odd.Memory_View is
       View.Values := new String' (Values);
       View.Flags := new String' (Values);
       Update_Display (View);
+      Set_Busy_Cursor (Get_Window (View), False);
    end Display_Memory;
 
    --------------------
