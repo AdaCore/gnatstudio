@@ -109,7 +109,10 @@ package body GVD.Preferences is
         (Name      => XML_Prefix & "Break-On-Exception",
          Nick      => -"Break on exceptions",
          Blurb     =>
-           -"True if process should be stopped when an exception is raised",
+           -("True if process should be stopped when an exception is raised."
+             & " This setup is only taken into account when a new debugger"
+             & " is initialized, it doesn't modify the behavior for existing"
+             & " debuggers."),
          Default   => False));
       Register_Property (Prefs, Param_Spec (Break_On_Exception), General);
 
