@@ -558,7 +558,10 @@ package body Src_Editor_Module is
             return Command & ": " & (-"missing parameter file_name");
          end if;
 
-      elsif Command = "close" then
+      elsif Command = "close"
+        or else Command = "edit_undo"
+        or else Command = "edit_redo"
+      then
          Node := First (Args);
 
          while Node /= Null_Node loop
@@ -573,7 +576,30 @@ package body Src_Editor_Module is
          end loop;
 
          if Filename /= null then
-            Close_File_Editors (Kernel, Filename.all);
+            if Command = "close" then
+               Close_File_Editors (Kernel, Filename.all);
+            else
+               declare
+                  Child : MDI_Child;
+                  Box   : Source_Box;
+               begin
+                  Child := Find_Editor (Kernel, Filename.all);
+
+                  if Child = null then
+                     Free (Filename);
+                     return "file not open";
+                  end if;
+
+                  Box := Source_Box (Get_Widget (Child));
+
+                  if Command = "edit_redo" then
+                     Redo (Box.Editor);
+                  elsif Command = "edit_undo" then
+                     Undo (Box.Editor);
+                  end if;
+               end;
+            end if;
+
             Free (Filename);
 
             return "";
@@ -2959,6 +2985,22 @@ package body Src_Editor_Module is
          & (-"If <before> or <after> is omitted, the bounds will be")
          & ASCII.LF
          & (-"at the beginning and/or the end of the line."),
+         Handler => Edit_Command_Handler'Access);
+
+      Register_Command
+        (Kernel,
+         Command => "edit_undo",
+         Help    => -"Usage:" & ASCII.LF
+         & " edit_undo file"
+         & (-"Undo the last edition command for file."),
+         Handler => Edit_Command_Handler'Access);
+
+      Register_Command
+        (Kernel,
+         Command => "edit_redo",
+         Help    => -"Usage:" & ASCII.LF
+         & " edit_redo file"
+         & (-"Redo the last edition command for file."),
          Handler => Edit_Command_Handler'Access);
 
       Register_Command
