@@ -29,7 +29,6 @@ with VCS;                       use VCS;
 with VCS.Unknown_VCS;           use VCS.Unknown_VCS;
 with VCS_View_Pkg;              use VCS_View_Pkg;
 
-with Glib.Convert;              use Glib.Convert;
 with Glide_Intl;                use Glide_Intl;
 with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
 with Glide_Kernel.Console;      use Glide_Kernel.Console;
@@ -58,6 +57,7 @@ with Traces;                    use Traces;
 with Ada.Exceptions;            use Ada.Exceptions;
 with VFS;                       use VFS;
 with File_Utils;                use File_Utils;
+with String_Utils;              use String_Utils;
 
 package body VCS_View_API is
 
@@ -680,7 +680,7 @@ package body VCS_View_API is
                           (Get_Registry (Kernel), Original));
 
                      Gtk_New (Item, Label => -"Commit file "
-                              & Locale_To_UTF8 (Base_Name (Original)));
+                              & Krunch (Base_Name (Original)));
 
                      Append (Menu, Item);
                      Context_Callback.Connect
