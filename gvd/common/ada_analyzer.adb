@@ -2950,7 +2950,7 @@ package body Ada_Analyzer is
       loop
          Str_Len := Current - Prec + 1;
 
-         Str (1 .. Current - Prec + 1) := Buffer (Prec .. Current);
+         Str (1 .. Str_Len) := Buffer (Prec .. Current);
 
          Token := Get_Token (Str (1 .. Str_Len));
 
