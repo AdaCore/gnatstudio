@@ -48,8 +48,13 @@ with Gtk.Widget;               use Gtk.Widget;
 
 package body Glide_Kernel.Console is
 
+   type GPS_Message_Record is new Interactive_Console_Record with null record;
+   type GPS_Message is access GPS_Message_Record'Class;
+   --  Type for the messages window. This is mostly use to have a unique tag
+   --  for this console, so that we can save it in the desktop
+
    type Console_Module_Id_Record is new Module_ID_Record with record
-      Console : Interactive_Consoles.Interactive_Console;
+      Console : GPS_Message;
    end record;
 
    type Console_Module_Id_Access is access all Console_Module_Id_Record'Class;
@@ -139,7 +144,8 @@ package body Glide_Kernel.Console is
 
          Gtk_New (Results, Kernel_Handle (Kernel),
                   Module_ID (Console_Module_Id));
-         Child := Put (Get_MDI (Kernel), Results);
+         Child := Put (Kernel, Results, Module => Console_Module_Id,
+                       Desktop_Independent => True);
          Set_Focus_Child (Child);
 
          Set_Title (Child, -"Locations");
@@ -161,7 +167,7 @@ package body Glide_Kernel.Console is
    is
       pragma Unreferenced (Kernel);
    begin
-      return Console_Module_Id.Console;
+      return Interactive_Console (Console_Module_Id.Console);
    end Get_Console;
 
    -----------
@@ -483,28 +489,32 @@ package body Glide_Kernel.Console is
    procedure Initialize_Console
      (Kernel : access Kernel_Handle_Record'Class)
    is
-      Console     : Interactive_Console;
+      Console     : GPS_Message;
       Child       : MDI_Child;
 
    begin
       --  ??? Using an interactive_console seems overkill, since the user
       --  cannot write in the messages window
-      Gtk_New (Console,
-               "",
-               null,
-               GObject (Kernel),
-               Get_Pref (Kernel, Source_Editor_Font),
-               Highlight    => Get_Pref (Kernel, Message_Highlight),
-               History_List => null,
-               Key          => "",
-               Wrap_Mode    => Wrap_Char);
+      Console := new GPS_Message_Record;
+      Initialize
+        (Console,
+         "",
+         null,
+         GObject (Kernel),
+         Get_Pref (Kernel, Source_Editor_Font),
+         Highlight    => Get_Pref (Kernel, Message_Highlight),
+         History_List => null,
+         Key          => "",
+         Wrap_Mode    => Wrap_Char);
       Enable_Prompt_Display (Console, False);
 
       Child := Put
-        (Get_MDI (Kernel), Console, Iconify_Button or Maximize_Button,
-         Gtk_Widget (Get_View (Console)),
-         Default_Width => 400,
-         Default_Height => 100);
+        (Kernel, Console, Iconify_Button or Maximize_Button,
+         Focus_Widget   => Gtk_Widget (Get_View (Console)),
+         Default_Width  => 400,
+         Default_Height => 100,
+         Module         => Console_Module_Id,
+         Desktop_Independent => True);
       Set_Focus_Child (Child);
       Set_Title (Child, -"Messages");
       Set_Dock_Side (Child, Bottom);
@@ -579,6 +589,11 @@ package body Glide_Kernel.Console is
    begin
       if Node.Tag.all = "Result_View_Record" then
          return Get_Or_Create_Result_View_MDI (User, Allow_Creation => True);
+      elsif Node.Tag.all = "Message_Window" then
+         if Console_Module_Id.Console = null then
+            Initialize_Console (User);
+         end if;
+         return Find_MDI_Child (Get_MDI (User), Console_Module_Id.Console);
       end if;
 
       return null;
@@ -598,6 +613,9 @@ package body Glide_Kernel.Console is
          N := new Node;
          N.Tag := new String'("Result_View_Record");
          return N;
+      elsif Widget.all in GPS_Message_Record'Class then
+         N := new Node;
+         N.Tag := new String'("Message_Window");
       end if;
 
       return null;
