@@ -68,6 +68,7 @@ package body Logo_Boxes is
       Pix : Gdk_Pixmap;
       Mask : Gdk_Bitmap;
       Gpix : Gtk_Pixmap;
+      Frame : Gtk_Frame;
    begin
       Gtk.Dialog.Initialize
         (Dialog  => Win,
@@ -112,9 +113,12 @@ package body Logo_Boxes is
       Set_Style (Win.Title, Style);
       Add (Event, Win.Title);
 
-      Gtk_New (Win.Content);
-      Set_Shadow_Type (Win.Content, Shadow_In);
-      Pack_Start (Vbox, Win.Content, True, True, 0);
+      Gtk_New (Frame);
+      Set_Shadow_Type (Frame, Shadow_In);
+      Pack_Start (Vbox, Frame, True, True, 0);
+
+      Gtk_New_Hbox (Win.Content, Homogeneous => True);
+      Add (Frame, Win.Content);
    end Initialize;
 
    ------------------
@@ -142,7 +146,7 @@ package body Logo_Boxes is
    ------------------
 
    function Get_Contents (Win : access Logo_Box_Record)
-      return Gtk.Frame.Gtk_Frame is
+      return Gtk.Box.Gtk_Box is
    begin
       return Win.Content;
    end Get_Contents;

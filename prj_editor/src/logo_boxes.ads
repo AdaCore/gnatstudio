@@ -35,7 +35,6 @@
 
 with Gtk.Box;
 with Gtk.Dialog;
-with Gtk.Frame;
 with Gtk.Label;
 with Gtk.Window;
 with Pango.Font;
@@ -67,7 +66,7 @@ package Logo_Boxes is
    --  Return the label used to display the title.
 
    function Get_Contents (Win : access Logo_Box_Record)
-      return Gtk.Frame.Gtk_Frame;
+      return Gtk.Box.Gtk_Box;
    --  Return the box that contains the actual contents of the window. It is
    --  empty initially
 
@@ -75,7 +74,7 @@ private
    type Logo_Box_Record is new Gtk.Dialog.Gtk_Dialog_Record with record
       Side_Box : Gtk.Box.Gtk_Box;
       Title    : Gtk.Label.Gtk_Label;
-      Content  : Gtk.Frame.Gtk_Frame;
+      Content  : Gtk.Box.Gtk_Box;
    end record;
 
 end Logo_Boxes;
