@@ -112,6 +112,7 @@ package body Glide_Kernel.Editor is
       else
          --  Otherwise, return the last source editor registered that had
          --  the focus.
+
          return Source_Box (Get_Widget (Kernel.Current_Editor)).Editor;
       end if;
    end Get_Current_Editor;
@@ -130,7 +131,8 @@ package body Glide_Kernel.Editor is
 
       if Source_Info = No_LI_File or else Is_Incomplete (Source_Info) then
          --  ??? At the moment, this procedure does not handle out of date
-         --  ??? LI information. This should be corrected.
+         --  LI information. This should be corrected.
+
          declare
             ALI_Filename : constant String := ALI_Filename_From_Source
               (Source_Filename, Get_Project_View (Kernel),
@@ -139,12 +141,14 @@ package body Glide_Kernel.Editor is
             --  ??? We only have the ALI_Filename
 
             Success : Boolean;
+
          begin
             Parse_ALI_File
               (ALI_Filename, Get_Project_View (Kernel),
                Get_Predefined_Source_Path (Kernel),
                Get_Predefined_Object_Path (Kernel),
                Kernel.Source_Info_List, Source_Info, Success);
+
             if not Success then
                Console.Insert
                  (Kernel, "Failed to find or parse ALI file " & ALI_Filename,
