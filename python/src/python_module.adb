@@ -346,9 +346,9 @@ package body Python_Module is
       User_Data : System.Address) return String_List_Utils.String_List.List;
    --  Provides completion in the Python console
 
-   procedure Python_Console_Interrupt_Handler
+   function Python_Console_Interrupt_Handler
      (Console   : access Interactive_Console_Record'Class;
-      User_Data : System.Address);
+      User_Data : System.Address) return Boolean;
    --  Called when ctrl-c is pressed in the console
 
    function First_Level (Self, Args, Kw : PyObject) return PyObject;
@@ -507,15 +507,20 @@ package body Python_Module is
    -- Python_Console_Interrupt_Handler --
    --------------------------------------
 
-   procedure Python_Console_Interrupt_Handler
+   function Python_Console_Interrupt_Handler
      (Console   : access Interactive_Console_Record'Class;
-      User_Data : System.Address)
+      User_Data : System.Address) return Boolean
    is
       pragma Unreferenced (Console, User_Data);
    begin
-      --      if Python_Module_Id.Script.Interpreter.In_Process then
-      PyErr_SetInterrupt;
---      end if;
+      Trace (Me, "MANU Interrupt "
+             & In_Process (Python_Module_Id.Script.Interpreter)'Img);
+      if In_Process (Python_Module_Id.Script.Interpreter) then
+         PyErr_SetInterrupt;
+         return True;
+      else
+         return False;
+      end if;
    end Python_Console_Interrupt_Handler;
 
    ---------------------------
