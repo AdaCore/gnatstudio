@@ -1579,7 +1579,7 @@ package body Src_Info.CPP is
       File          : in out LI_File_Ptr;
       List_Of_Files : LI_File_List)
    is
-      P               : Pair_Ptr;
+      P               : Pair;
       Module_Typedefs : Src_Info.Type_Utils.Module_Typedefs_List;
       Sym             : FIL_Table;
 
@@ -1598,11 +1598,11 @@ package body Src_Info.CPP is
                   Exact_Match => False);
 
       loop -- iterate thru all symbols for specified file
-         P := Get_Pair (Handler.SN_Table (FIL), Next_By_Key);
-         exit when P = null;
+         Get_Pair (Handler.SN_Table (FIL), Next_By_Key, Result => P);
+         exit when P = No_Pair;
 
          begin
-            Parse_Pair (P.all, Sym);
+            Parse_Pair (P, Sym);
             --  apply corresponding symbol handler
 
             Symbol_Handlers (Sym.Symbol)
@@ -1822,7 +1822,7 @@ package body Src_Info.CPP is
 
       Constructs      : Language.Construct_List;
       Iterator        : CPP_LI_Handler_Iterator;
-      P               : Pair_Ptr;
+      P               : Pair;
       Module_Typedefs : Src_Info.Type_Utils.Module_Typedefs_List;
       Project         : constant Project_Type :=
         Get_Project_From_File
@@ -1868,8 +1868,8 @@ package body Src_Info.CPP is
          Exact_Match => False);
 
       loop
-         P := Get_Pair (Handler.SN_Table (FIL), Next_By_Key);
-         exit when P = null;
+         Get_Pair (Handler.SN_Table (FIL), Next_By_Key, Result => P);
+         exit when P = No_Pair;
 
          declare
             Sym  : FIL_Table;
@@ -1877,7 +1877,7 @@ package body Src_Info.CPP is
             C    : Construct_Access;
 
          begin
-            Parse_Pair (P.all, Sym);
+            Parse_Pair (P, Sym);
 
             --  Build the next construct
 
@@ -2286,7 +2286,7 @@ package body Src_Info.CPP is
       Decl_Info        : out E_Declaration_Info_List;
       Strict           : Boolean := False)
    is
-      P            : Pair_Ptr;
+      P            : Pair;
       MD_Tab       : MD_Table;
       MD_Tab_Tmp   : MD_Table;
       First_MD_Pos : Point := Invalid_Point;
@@ -2312,14 +2312,14 @@ package body Src_Info.CPP is
          False);
 
       loop
-         P := Get_Pair (MD_File, Next_By_Key);
+         Get_Pair (MD_File, Next_By_Key, Result => P);
 
-         if P = null then -- no fwd decls at all
+         if P = No_Pair then -- no fwd decls at all
             Close (MD_File, Success);
             return;
          end if;
 
-         Parse_Pair (P.all, MD_Tab);
+         Parse_Pair (P, MD_Tab);
          Free (P);
 
          --  Update position of the first forward declaration
@@ -2347,10 +2347,11 @@ package body Src_Info.CPP is
          False);
 
       loop
-         P := Get_Pair (MD_File, Next_By_Key);
-         exit when P = null;
-         Parse_Pair (P.all, MD_Tab_Tmp);
+         Get_Pair (MD_File, Next_By_Key, Result => P);
+         exit when P = No_Pair;
+         Parse_Pair (P, MD_Tab_Tmp);
          Free (P);
+
          --  Update position of the first forward declaration
          if MD_Tab.Buffer (MD_Tab.File_Name.First .. MD_Tab.File_Name.Last)
             = MD_Tab_Tmp.Buffer (MD_Tab_Tmp.File_Name.First ..
@@ -2464,7 +2465,7 @@ package body Src_Info.CPP is
       Decl_Info    : out E_Declaration_Info_List;
       Strict       : Boolean := False)
    is
-      P            : Pair_Ptr;
+      P            : Pair;
       FD_Tab       : FD_Table;
       FD_Tab_Tmp   : FD_Table;
       First_FD_Pos : Point;
@@ -2492,11 +2493,11 @@ package body Src_Info.CPP is
 
       loop
          Match := False;
-         P := Get_Pair (FD_File, Next_By_Key);
+         Get_Pair (FD_File, Next_By_Key, Result => P);
 
-         exit when P = null;
+         exit when P = No_Pair;
 
-         Parse_Pair (P.all, FD_Tab);
+         Parse_Pair (P, FD_Tab);
          Free (P);
          Match := True;
 
@@ -2529,9 +2530,9 @@ package body Src_Info.CPP is
          False);
 
       loop
-         P := Get_Pair (FD_File, Next_By_Key);
-         exit when P = null;
-         Parse_Pair (P.all, FD_Tab_Tmp);
+         Get_Pair (FD_File, Next_By_Key, Result => P);
+         exit when P = No_Pair;
+         Parse_Pair (P, FD_Tab_Tmp);
          Free (P);
          --  Update position of the first forward declaration
          Match :=
@@ -3060,7 +3061,7 @@ package body Src_Info.CPP is
       List             : LI_File_List;
       Module_Type_Defs : Module_Typedefs_List)
    is
-      P              : Pair_Ptr;
+      P              : Pair;
       MDecl          : MD_Table;
       MBody          : FU_Table;
       Decl_Info      : E_Declaration_Info_List;
@@ -3074,9 +3075,9 @@ package body Src_Info.CPP is
             False);
 
          loop
-            P := Get_Pair (Handler.SN_Table (MD), Next_By_Key);
-            exit when P = null;
-            Parse_Pair (P.all, MDecl);
+            Get_Pair (Handler.SN_Table (MD), Next_By_Key, Result => P);
+            exit when P = No_Pair;
+            Parse_Pair (P, MDecl);
             Free (P);
 
             --  ??? Should we compare base or full name here ?
@@ -3112,11 +3113,10 @@ package body Src_Info.CPP is
             False);
 
          loop
-            P := Get_Pair (Handler.SN_Table (MI), Next_By_Key);
+            Get_Pair (Handler.SN_Table (MI), Next_By_Key, Result => P);
+            exit when P = No_Pair;
 
-            exit when P = null;
-
-            Parse_Pair (P.all, MBody);
+            Parse_Pair (P, MBody);
             Free (P);
 
             --  ??? Should we compare full or base name
@@ -3185,7 +3185,7 @@ package body Src_Info.CPP is
       File     : out LI_File_Ptr;
       List     : LI_File_List)
    is
-      P           : Pair_Ptr;
+      P           : Pair;
       FDecl       : FD_Table;
       Fn          : FU_Table;
       Decl_Info   : E_Declaration_Info_List;
@@ -3197,11 +3197,10 @@ package body Src_Info.CPP is
          Set_Cursor (Handler.SN_Table (FD), By_Key, Name & Field_Sep, False);
 
          loop
-            P := Get_Pair (Handler.SN_Table (FD), Next_By_Key);
+            Get_Pair (Handler.SN_Table (FD), Next_By_Key, Result => P);
+            exit when P = No_Pair;
 
-            exit when P = null;
-
-            Parse_Pair (P.all, FDecl);
+            Parse_Pair (P, FDecl);
             Free (P);
 
             --  ??? Should we compare full or base name
@@ -3231,11 +3230,10 @@ package body Src_Info.CPP is
          Set_Cursor (Handler.SN_Table (FU), By_Key, Name & Field_Sep, False);
 
          loop
-            P := Get_Pair (Handler.SN_Table (FU), Next_By_Key);
+            Get_Pair (Handler.SN_Table (FU), Next_By_Key, Result => P);
+            exit when P = No_Pair;
 
-            exit when P = null;
-
-            Parse_Pair (P.all, Fn);
+            Parse_Pair (P, Fn);
             Free (P);
 
             --  ??? Should we compare full or base name
@@ -3317,7 +3315,7 @@ package body Src_Info.CPP is
       Module_Type_Defs : Module_Typedefs_List)
    is
       pragma Unreferenced (Module_Type_Defs);
-      P              : Pair_Ptr;
+      P              : Pair;
       Fn             : FU_Table;
       Fn_Tmp         : FU_Table;
       Decl_Info      : E_Declaration_Info_List;
@@ -3339,11 +3337,10 @@ package body Src_Info.CPP is
          Set_Cursor (Handler.SN_Table (FD), By_Key, Ref_Id & Field_Sep, False);
 
          loop
-            P := Get_Pair (Handler.SN_Table (FD), Next_By_Key);
+            Get_Pair (Handler.SN_Table (FD), Next_By_Key, Result => P);
+            exit when P = No_Pair;
 
-            exit when P = null;
-
-            Parse_Pair (P.all, FDecl_Tmp);
+            Parse_Pair (P, FDecl_Tmp);
             Free (P);
 
             if not Forward_Declared then
@@ -3373,11 +3370,10 @@ package body Src_Info.CPP is
          Set_Cursor (Handler.SN_Table (FU), By_Key, Ref_Id & Field_Sep, False);
 
          loop
-            P := Get_Pair (Handler.SN_Table (FU), Next_By_Key);
+            Get_Pair (Handler.SN_Table (FU), Next_By_Key, Result => P);
+            exit when P = No_Pair;
 
-            exit when P = null;
-
-            Parse_Pair (P.all, Fn_Tmp);
+            Parse_Pair (P, Fn_Tmp);
             Free (P);
 
             if not Forward_Declared and No_Body then
@@ -3940,7 +3936,7 @@ package body Src_Info.CPP is
       List             : LI_File_List;
       Module_Type_Defs : Module_Typedefs_List)
    is
-      P             : Pair_Ptr;
+      P             : Pair;
       Fn            : FU_Table;
       MDecl         : MD_Table;
       MDecl_Tmp     : MD_Table;
@@ -3963,9 +3959,9 @@ package body Src_Info.CPP is
          False);
 
       loop
-         P := Get_Pair (Handler.SN_Table (MD), Next_By_Key);
-         exit when P = null;
-         Parse_Pair (P.all, MDecl_Tmp);
+         Get_Pair (Handler.SN_Table (MD), Next_By_Key, Result => P);
+         exit when P = No_Pair;
+         Parse_Pair (P, MDecl_Tmp);
          Free (P);
          if Init then
             Init  := False;
@@ -4002,11 +3998,10 @@ package body Src_Info.CPP is
          Init := True;
 
          loop
-            P := Get_Pair (Handler.SN_Table (MI), Next_By_Key);
+            Get_Pair (Handler.SN_Table (MI), Next_By_Key, Result => P);
+            exit when P = No_Pair;
 
-            exit when P = null;
-
-            Parse_Pair (P.all, Fn);
+            Parse_Pair (P, Fn);
 
             Free (P);
             Init := False;
@@ -4439,7 +4434,7 @@ package body Src_Info.CPP is
       Desc           : CType_Description;
       Class_Def      : CL_Table;
       Success        : Boolean;
-      P              : Pair_Ptr;
+      P              : Pair;
       Super          : IN_Table;
       Super_Def      : CL_Table;
       Super_Desc     : CType_Description;
@@ -4500,11 +4495,10 @@ package body Src_Info.CPP is
                False);
 
             loop
-               P := Get_Pair (Handler.SN_Table (SN_IN), Next_By_Key);
+               Get_Pair (Handler.SN_Table (SN_IN), Next_By_Key, Result => P);
+               exit when P = No_Pair;
 
-               exit when P = null;
-
-               Parse_Pair (P.all, Super);
+               Parse_Pair (P, Super);
 
                --  Lookup base class definition to find its precise location
 
@@ -4781,7 +4775,7 @@ package body Src_Info.CPP is
 
       Target_Kind  : E_Kind;
       Decl_Info    : E_Declaration_Info_List;
-      P            : Pair_Ptr;
+      P            : Pair;
       First_FD_Pos : Point := Invalid_Point;
       FD_Tab       : FD_Table;
       FD_Tab_Tmp   : FD_Table;
@@ -4803,6 +4797,12 @@ package body Src_Info.CPP is
          Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
          Tab => FD_Tab);
 
+      if FD_Tab = Null_FD then
+         Fail ("unable to find function " &
+               Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last));
+         return;
+      end if;
+
       Is_Static  := (FD_Tab.Attributes and SN_STATIC) = SN_STATIC;
 
       Set_Cursor
@@ -4812,11 +4812,10 @@ package body Src_Info.CPP is
          False);
 
       loop
-         P := Get_Pair (Handler.SN_Table (FD), Next_By_Key);
+         Get_Pair (Handler.SN_Table (FD), Next_By_Key, Result => P);
+         exit when P = No_Pair;
 
-         exit when P = null;
-
-         Parse_Pair (P.all, FD_Tab_Tmp);
+         Parse_Pair (P, FD_Tab_Tmp);
          Free (P);
 
          --  Update position of the first forward declaration
@@ -4893,11 +4892,10 @@ package body Src_Info.CPP is
          Match := False;
 
          loop
-            P := Get_Pair (Handler.SN_Table (FU), Next_By_Key);
+            Get_Pair (Handler.SN_Table (FU), Next_By_Key, Result => P);
+            exit when P = No_Pair;
 
-            exit when P = null;
-
-            Parse_Pair (P.all, FU_Tab);
+            Parse_Pair (P, FU_Tab);
             Free (P);
             Match := Cmp_Prototypes
                (FD_Tab.Buffer,
@@ -4972,7 +4970,7 @@ package body Src_Info.CPP is
    is
       Decl_Info       : E_Declaration_Info_List := null;
       Target_Kind     : E_Kind;
-      P               : Pair_Ptr;
+      P               : Pair;
       FU_Tab          : aliased FU_Table;
       Start_Position  : constant Point := Sym.Start_Position;
       Body_Position   : Point := Invalid_Point;
@@ -5158,11 +5156,11 @@ package body Src_Info.CPP is
          Exact_Match => False);
 
       loop
-         P := Get_Pair (Handler.SN_Table (TO), Next_By_Key);
-         exit when P = null;
+         Get_Pair (Handler.SN_Table (TO), Next_By_Key, Result => P);
+         exit when P = No_Pair;
 
          begin
-            Parse_Pair (P.all, Ref);
+            Parse_Pair (P, Ref);
 
             if Fu_To_Handlers (Ref.Referred_Symbol) /= null then
                Our_Ref := Cmp_Arg_Types
@@ -5577,7 +5575,7 @@ package body Src_Info.CPP is
    is
       Target_Kind  : E_Kind;
       Decl_Info    : E_Declaration_Info_List;
-      P            : Pair_Ptr;
+      P            : Pair;
       First_MD_Pos : Point := Invalid_Point;
       MD_Tab       : MD_Table;
       MI_Tab       : FU_Table;
@@ -5610,9 +5608,9 @@ package body Src_Info.CPP is
          False);
 
       loop
-         P := Get_Pair (Handler.SN_Table (MD), Next_By_Key);
-         exit when P = null;
-         Parse_Pair (P.all, MD_Tab_Tmp);
+         Get_Pair (Handler.SN_Table (MD), Next_By_Key, Result => P);
+         exit when P = No_Pair;
+         Parse_Pair (P, MD_Tab_Tmp);
          Free (P);
 
          --  Update position of the first forward declaration
@@ -5712,11 +5710,10 @@ package body Src_Info.CPP is
          Found := False;
 
          loop
-            P := Get_Pair (Handler.SN_Table (MI), Next_By_Key);
+            Get_Pair (Handler.SN_Table (MI), Next_By_Key, Result => P);
+            exit when P = No_Pair;
 
-            exit when P = null;
-
-            Parse_Pair (P.all, MI_Tab);
+            Parse_Pair (P, MI_Tab);
             Free (P);
             Found := Cmp_Prototypes
                (MD_Tab.Buffer,
@@ -5948,7 +5945,7 @@ package body Src_Info.CPP is
       List             : LI_File_List;
       Module_Type_Defs : Module_Typedefs_List)
    is
-      P           : Pair_Ptr;
+      P           : Pair;
       Var         : LV_Table;
       Decl_Info   : E_Declaration_Info_List;
 
@@ -5969,10 +5966,11 @@ package body Src_Info.CPP is
          Exact_Match => False);
 
       loop
-         P := Get_Pair (Handler.SN_Table (LV), Next_By_Key);
-         exit when P = null;
-         Parse_Pair (P.all, Var);
+         Get_Pair (Handler.SN_Table (LV), Next_By_Key, Result => P);
+         exit when P = No_Pair;
+         Parse_Pair (P, Var);
          Free (P);
+
          --  Check if we found the right local variable:
          --  compare class names (for methods only)
          --  compare file names
@@ -6152,7 +6150,7 @@ package body Src_Info.CPP is
       File               : in out LI_File_Ptr;
       Decl_Info          : in out E_Declaration_Info_List)
    is
-      P        : Pair_Ptr;
+      P        : Pair;
       Ref      : TO_Table;
       Ref_Kind : Reference_Kind;
    begin
@@ -6181,11 +6179,10 @@ package body Src_Info.CPP is
          Exact_Match => False);
 
       loop
-         P := Get_Pair (Handler.SN_Table (TO), Next_By_Key);
+         Get_Pair (Handler.SN_Table (TO), Next_By_Key, Result => P);
+         exit when P = No_Pair;
 
-         exit when P = null;
-
-         Parse_Pair (P.all, Ref);
+         Parse_Pair (P, Ref);
          Free (P);
 
          --  Check if we found the right lv usage: comapre file name
@@ -6236,7 +6233,7 @@ package body Src_Info.CPP is
       File      : in out LI_File_Ptr;
       Decl_Info : in out E_Declaration_Info_List)
    is
-      P        : Pair_Ptr;
+      P        : Pair;
       Ref      : TO_Table;
       Ref_Kind : Reference_Kind;
    begin
@@ -6256,11 +6253,11 @@ package body Src_Info.CPP is
          Exact_Match => False);
 
       loop
-         P := Get_Pair (Handler.SN_Table (TO), Next_By_Key);
+         Get_Pair (Handler.SN_Table (TO), Next_By_Key, Result => P);
 
-         exit when P = null;
+         exit when P = No_Pair;
 
-         Parse_Pair (P.all, Ref);
+         Parse_Pair (P, Ref);
          Free (P);
 
          if Ref.Buffer (Ref.Access_Type.First .. Ref.Access_Type.Last)
@@ -6292,7 +6289,7 @@ package body Src_Info.CPP is
       Module_Type_Defs : Module_Typedefs_List)
    is
       Arg              : TA_Table;
-      P                : Pair_Ptr;
+      P                : Pair;
       Decl_Info        : E_Declaration_Info_List;
       Desc             : CType_Description;
       Success          : Boolean;
@@ -6333,11 +6330,10 @@ package body Src_Info.CPP is
          Exact_Match => False);
 
       loop
-         P := Get_Pair (TA_File, Next_By_Key);
+         Get_Pair (TA_File, Next_By_Key, Result => P);
+         exit when P = No_Pair;
 
-         exit when P = null;
-
-         Parse_Pair (P.all, Arg);
+         Parse_Pair (P, Arg);
          Free (P);
 
          if Buffer (File_Name.First .. File_Name.Last)
@@ -6434,7 +6430,7 @@ package body Src_Info.CPP is
                   Decl_Info);
 
                declare
-                  P        : Pair_Ptr;
+                  P        : Pair;
                   MI_Tab   : FU_Table;
                   MI_File  : DB_File;
                begin
@@ -6448,11 +6444,10 @@ package body Src_Info.CPP is
                         False);
 
                      loop -- iterate thru all methods of the class
-                        P := Get_Pair (MI_File, Next_By_Key);
+                        Get_Pair (MI_File, Next_By_Key, Result => P);
+                        exit when P = No_Pair;
 
-                        exit when P = null;
-
-                        Parse_Pair (P.all, MI_Tab);
+                        Parse_Pair (P, MI_Tab);
 
                         Process_Local_Variable
                           (Arg.Buffer (Arg.Name.First .. Arg.Name.Last),
