@@ -21,6 +21,7 @@
 --  This package defines the module for code fixing.
 
 with Gtk.Menu_Item;          use Gtk.Menu_Item;
+with Gtk.Menu;               use Gtk.Menu;
 
 with Glide_Kernel;           use Glide_Kernel;
 
@@ -59,5 +60,7 @@ package Codefix_Module is
    procedure Initialize
      (Menu_Item : access Codefix_Menu_Item_Record;
       Label     : String);
+
+   function Create_Submenu (Error : Error_Id) return Gtk_Menu;
 
 end Codefix_Module;
