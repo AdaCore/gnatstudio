@@ -1785,13 +1785,12 @@ package body Src_Editor_Box is
    procedure Add_File_Information
      (Editor        : access Source_Editor_Box_Record;
       Identifier    : String;
-      Width         : Integer;
       Info          : Glide_Kernel.Modules.Line_Information_Data;
       Stick_To_Data : Boolean := True)
    is
    begin
       Add_File_Information
-        (Editor.Source_View, Identifier, Width, Info, Stick_To_Data);
+        (Editor.Source_View, Identifier, Info, Stick_To_Data);
    end Add_File_Information;
 
 end Src_Editor_Box;
