@@ -179,7 +179,7 @@ package body Src_Editor_View is
       Column : Positive) return Line_Info_Width;
    --  Return the side information corresponding to Line, Column in the
    --  Side window.
-   --  Return (null, 0) if the information was never set.
+   --  Return (null, 0)  if the information was never set.
    --  Return (null, -1) if the information was set to null.
 
    function On_Delete
