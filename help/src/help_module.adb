@@ -517,6 +517,11 @@ package body Help_Module is
 
          Free (Inst);
 
+      elsif Command = "file" then
+         Set_Return_Value
+           (Data, Get_System_Dir (Kernel)
+            & "share/gps/shell_commands.xml");
+
       elsif Command = "reset" then
          Inst := Nth_Arg (Data, 1, Help_Module_ID.Help_Class);
          Set_Data (Inst, Help_Module_ID.Help_Class, System.Null_Address);
@@ -1692,6 +1697,11 @@ package body Help_Module is
       Register_Command
         (Kernel,
          Command       => "reset",
+         Class         => Help_Module_ID.Help_Class,
+         Handler       => Command_Handler'Access);
+      Register_Command
+        (Kernel,
+         Command       => "file",
          Class         => Help_Module_ID.Help_Class,
          Handler       => Command_Handler'Access);
 
