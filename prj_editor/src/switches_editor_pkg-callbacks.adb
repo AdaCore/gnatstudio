@@ -113,4 +113,15 @@ package body Switches_Editor_Pkg.Callbacks is
       Update_Gui_From_Cmdline (Switches_Edit (Object), Linker);
    end On_Linker_Switches_Entry_Changed;
 
+   -----------------------------
+   -- Refresh_Linker_Switches --
+   -----------------------------
+
+   procedure Refresh_Linker_Switches
+     (Object : access Gtk_Widget_Record'Class)
+   is
+   begin
+      Update_Cmdline (Switches_Edit (Object), Linker);
+   end Refresh_Linker_Switches;
+
 end Switches_Editor_Pkg.Callbacks;

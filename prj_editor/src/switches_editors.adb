@@ -117,15 +117,15 @@ package body Switches_Editors is
    is
       procedure Check_Toggle
         (Button : Gtk_Check_Button;
-         Str : String;
-         Arr : in out Argument_List;
-         Index : in out Natural);
+         Str    : String;
+         Arr    : in out Argument_List;
+         Index  : in out Natural);
 
       procedure Check_Combo
-        (Combo : Gtk_Combo;
+        (Combo  : Gtk_Combo;
          Switch : String;
-         Arr : in out Argument_List;
-         Index : in out Natural);
+         Arr    : in out Argument_List;
+         Index  : in out Natural);
       --  Set the parameter (starting with Switch, followed by a numeric
       --  argument) to use if Switch is set.
       --  If the numeric argument is 0, nothing is inserted into Arr.
@@ -136,9 +136,9 @@ package body Switches_Editors is
 
       procedure Check_Toggle
         (Button : Gtk_Check_Button;
-         Str : String;
-         Arr : in out Argument_List;
-         Index : in out Natural) is
+         Str    : String;
+         Arr    : in out Argument_List;
+         Index  : in out Natural) is
       begin
          if Get_Active (Button) then
             Arr (Index) := new String' (Str);
@@ -151,16 +151,18 @@ package body Switches_Editors is
       -----------------
 
       procedure Check_Combo
-        (Combo : Gtk_Combo;
+        (Combo  : Gtk_Combo;
          Switch : String;
-         Arr : in out Argument_List;
-         Index : in out Natural)
+         Arr    : in out Argument_List;
+         Index  : in out Natural)
       is
          use Widget_List;
+
          List  : Gtk_List := Get_List (Combo);
          Value : Gint := Child_Position
            (List, Get_Data (Get_Selection (List)));
          Level : constant String := Gint'Image (Value);
+
       begin
          if Value /= 0 then
             Arr (Index) := new String'
@@ -170,17 +172,19 @@ package body Switches_Editors is
       end Check_Combo;
 
       Num_Switches : Natural;
+
    begin
       case Tool is
          when Gnatmake => Num_Switches := 6 + 1;  --  +1 is for arg to -j
          when Compiler => Num_Switches := 20 + 1; --  +1 is for -g
          when Binder   => Num_Switches := 3 + 1;  --  +1 is for -g
-         when Linker   => Num_Switches := 0 + 1;  --  +1 is for -g
+         when Linker   => Num_Switches := 1 + 1;  --  +1 is for -g
       end case;
 
       declare
          Arr   : Argument_List (1 .. Num_Switches);
          Index : Natural := Arr'First;
+
       begin
          case Tool is
             when Gnatmake =>
@@ -189,6 +193,7 @@ package body Switches_Editors is
                Check_Toggle (Editor.Make_Minimal_Recompile, "-m", Arr, Index);
                Check_Toggle (Editor.Make_Keep_Going, "-k", Arr, Index);
                Check_Toggle (Editor.Make_Debug, "-g", Arr, Index);
+
                if Get_Active (Editor.Make_Multiprocessing) then
                   declare
                      Level : constant String := Gint'Image
@@ -249,7 +254,7 @@ package body Switches_Editors is
                Index := Index + 1;
 
             when Linker =>
-               null;
+               Check_Toggle (Editor.Linker_Strip, "-s", Arr, Index);
          end case;
 
          return Arr (Arr'First .. Index - 1);
@@ -285,6 +290,7 @@ package body Switches_Editors is
                return True;
             end if;
          end loop;
+
          return False;
       end Is_Set;
 
@@ -323,6 +329,7 @@ package body Switches_Editors is
                else
                   Select_Item (Get_List (Combo), Level);
                end if;
+
                return;
             else
                Select_Item (Get_List (Combo), 0);
@@ -395,7 +402,7 @@ package body Switches_Editors is
             Set_Active (Editor.Binder_Shared_Gnat, Is_Set ("-shared"));
 
          when Linker =>
-            null;
+            Set_Active (Editor.Linker_Strip, Is_Set ("-s"));
       end case;
    end Set_Switches;
 
@@ -473,7 +480,12 @@ package body Switches_Editors is
             end loop;
 
          when Linker =>
-            null;
+            for J in Switches'Range loop
+               if Switches (J) /= null and then Switches (J).all = "-s" then
+                  Free (Switches (J));
+               end if;
+            end loop;
+
       end case;
    end Filter_Switches;
 
@@ -501,9 +513,10 @@ package body Switches_Editors is
       end case;
 
       declare
-         Str : constant String := Get_Text (Cmd_Line);
-         Arr : Argument_List := Get_Switches (Editor, Tool);
+         Str     : constant String := Get_Text (Cmd_Line);
+         Arr     : Argument_List := Get_Switches (Editor, Tool);
          Current : Argument_List_Access;
+
       begin
          if Str'Length = 0 then
             Current := new Argument_List (1 .. 0);
@@ -518,6 +531,7 @@ package body Switches_Editors is
          end loop;
 
          --  Keep the switches set manually by the user
+
          Filter_Switches (Editor, Tool, Current.all);
 
          for K in Current'Range loop
@@ -550,6 +564,7 @@ package body Switches_Editors is
       declare
          Arg : Argument_List_Access :=
            Argument_String_To_List (Get_Chars (Cmd_Line));
+
       begin
          Editor.Block_Refresh := True;
          Set_Switches (Editor, Tool, Arg.all);
