@@ -249,6 +249,7 @@ package body GVD.Menu.Standalone is
         Get_Current_Process (Object);
 
    begin
+      Change_Dir (Dir_Name (File_Name));
       Load_File (Tab.Editor_Text, File_Name, Set_Current => False);
       Set_Line (Tab.Editor_Text, 1, Set_Current => False);
    end On_Open_Source;
