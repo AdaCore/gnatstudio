@@ -21,6 +21,7 @@
 with System;
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
+with GNAT.Calendar;             use GNAT.Calendar;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with String_Utils;              use String_Utils;
@@ -445,5 +446,28 @@ package body File_Utils is
       return Index <= Name'Last - 3
         and then Name (Index .. Index + 2) = "://";
    end Is_Absolute_Path_Or_URL;
+
+   ---------------------
+   -- File_Time_Stamp --
+   ---------------------
+
+   function File_Time_Stamp (File : String) return Ada.Calendar.Time is
+      T      : constant OS_Time := File_Time_Stamp (File);
+      Year   : Year_Type;
+      Month  : Month_Type;
+      Day    : Day_Type;
+      Hour   : Hour_Type;
+      Minute : Minute_Type;
+      Second : Second_Type;
+   begin
+      GM_Split (T, Year, Month, Day, Hour, Minute, Second);
+      return GNAT.Calendar.Time_Of
+        (Year   => Year,
+         Month  => Month,
+         Day    => Day,
+         Hour   => Hour,
+         Minute => Minute,
+         Second => Second);
+   end File_Time_Stamp;
 
 end File_Utils;
