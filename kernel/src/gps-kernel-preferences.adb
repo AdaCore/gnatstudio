@@ -613,7 +613,7 @@ package body GPS.Kernel.Preferences is
 
       Current_Line_Color := Param_Spec_Color (Gnew_Color
         (Name    => "Src-Editor-Current-Line-Color",
-         Default => "white",
+         Default => "#FFC38D",
          Blurb   => -"Color for highlighting the current line",
          Nick    => -"Current line color"));
       Register_Property
