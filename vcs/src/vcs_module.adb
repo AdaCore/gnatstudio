@@ -345,7 +345,7 @@ package body VCS_Module is
          Page  => new VCS_Editor_Record,
          Label => -"VCS",
          Toc   => -"Select VCS",
-         Title => -"Version control system configuration");
+         Title => -"Version Control System Configuration");
    end Register_Module;
 
 end VCS_Module;
