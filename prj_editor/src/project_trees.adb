@@ -319,6 +319,7 @@ package body Project_Trees is
       --  So that the horizontal scrollbars work correctly.
       Set_Column_Auto_Resize (Tree, 0, True);
 
+      --  Automatic update of the tree when the project changes
       Tree.Manager := Project_Manager (Manager);
       Widget_Callback.Object_Connect
         (Manager, "project_view_changed",
@@ -543,11 +544,7 @@ package body Project_Trees is
       Node_Set_Row_Data
         (Tree, N, (Category_Node,
                    Subprogram_Spec => Is_Specification,
-                   Up_To_Date => False));
-
-      if not Is_Leaf then
-         Add_Dummy_Node (Tree, N);
-      end if;
+                   Up_To_Date => True));
       return N;
    end Add_Category_Node;
 
@@ -577,11 +574,7 @@ package body Project_Trees is
          Expanded      => False);
 
       Node_Set_Row_Data
-        (Tree, N, (Entity_Node, Up_To_Date => False));
-
-      if not Is_Leaf then
-         Add_Dummy_Node (Tree, N);
-      end if;
+        (Tree, N, (Entity_Node, Up_To_Date => True));
       return N;
    end Add_Entity_Node;
 
@@ -1176,41 +1169,48 @@ package body Project_Trees is
       return No_Project;
    end Get_Selected_Project;
 
-   ------------------------------
-   -- Get_Selected_Directories --
-   ------------------------------
+   ----------------------------
+   -- Get_Selected_Directory --
+   ----------------------------
 
-   function Get_Selected_Directories
+   function Get_Selected_Directory
      (Tree    : access Project_Tree_Record;
-      Project : Prj.Project_Id) return Name_Id_Array
+      Project : Prj.Project_Id) return Name_Id
    is
       use type Node_List.Glist;
       Selection : Node_List.Glist := Get_Selection (Tree);
+      N : Gtk_Ctree_Node;
    begin
       if Selection /= Node_List.Null_List then
-         declare
-            N : constant Gtk_Ctree_Node := Node_List.Get_Data (Selection);
-            User : constant User_Data   := Node_Get_Row_Data (Tree, N);
-         begin
-            case User.Node_Type is
-               when Project_Node =>
-                  return Name_Id_Array' (1 .. 0 => No_Name);
+         N := Node_List.Get_Data (Selection);
 
-               when Directory_Node =>
-                  if Get_Parent_Project (Tree, N) /= Project then
-                     return Name_Id_Array' (1 .. 0 => No_Name);
-                  else
-                     String_To_Name_Buffer (User.Directory);
-                     return Name_Id_Array' (1 .. 1 => Name_Find);
-                  end if;
+         --  Loop until we get to a directory or project
+         while N /= null loop
+            declare
+               User : constant User_Data   := Node_Get_Row_Data (Tree, N);
+            begin
+               case User.Node_Type is
+                  when Project_Node =>
+                     return No_Name;
 
-               when others =>
-                  null;
-            end case;
-         end;
+                  when Directory_Node =>
+                     if Get_Parent_Project (Tree, N) /= Project then
+                        return No_Name;
+                     else
+                        String_To_Name_Buffer (User.Directory);
+                        return Name_Find;
+                     end if;
+
+                  when others =>
+                     null;
+               end case;
+            end;
+
+            N := Row_Get_Parent (Node_Get_Row (N));
+         end loop;
       end if;
-      return Name_Id_Array' (1 .. 0 => No_Name);
-   end Get_Selected_Directories;
+      return No_Name;
+   end Get_Selected_Directory;
 
 begin
    --  ??? Temporaru, this will be done in Glide itself.
