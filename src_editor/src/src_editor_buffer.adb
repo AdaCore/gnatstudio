@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                          G L I D E  I I                           --
 --                                                                   --
---                        Copyright (C) 2001                         --
+--                     Copyright (C) 2001-2002                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GLIDE is free software; you can redistribute it and/or modify  it --
@@ -19,6 +19,7 @@
 -----------------------------------------------------------------------
 
 with Glib;                   use Glib;
+with Glib.Convert;           use Glib.Convert;
 with Glib.Object;            use Glib.Object;
 with Glib.Values;            use Glib.Values;
 with Gtk;                    use Gtk;
@@ -37,6 +38,7 @@ with GNAT.OS_Lib;            use GNAT.OS_Lib;
 with Interfaces.C.Strings;   use Interfaces.C.Strings;
 with System;
 with String_Utils;           use String_Utils;
+with OS_Utils;               use OS_Utils;
 
 package body Src_Editor_Buffer is
 
@@ -785,15 +787,18 @@ package body Src_Editor_Buffer is
       Lang_Autodetect : Boolean := True;
       Success         : out Boolean)
    is
-      FD : File_Descriptor := Invalid_FD;
-      File_Buffer_Length : constant := 128 * 1_024;
-      File_Buffer : String (1 .. File_Buffer_Length);
-      Characters_Read : Natural;
+      Contents : GNAT.OS_Lib.String_Access;
+      UTF8     : Gtkada.Types.Chars_Ptr;
+      Ignore   : aliased Natural;
+      Length   : aliased Natural;
+
+      pragma Warnings (Off);
+
    begin
       Success := True;
+      Contents := Read_File (Filename);
 
-      FD := Open_Read (Filename & ASCII.NUL, Fmode => Text);
-      if FD = Invalid_FD then
+      if Contents = null then
          Success := False;
          return;
       end if;
@@ -804,27 +809,25 @@ package body Src_Editor_Buffer is
          Set_Language (Buffer, Get_Language_From_File (Filename));
       end if;
 
-      Characters_Read := File_Buffer_Length;
-      while Characters_Read = File_Buffer_Length loop
-         Characters_Read := Read (FD, File_Buffer'Address, File_Buffer_Length);
-         if Characters_Read > 0 then
-            Insert_At_Cursor (Buffer, File_Buffer (1 .. Characters_Read));
-         end if;
-      end loop;
+      UTF8 := Glib.Convert.Convert
+        (Contents.all, "UTF-8", "ISO-8859-1",
+         Ignore'Unchecked_Access, Length'Unchecked_Access);
 
-      Close (FD);
+      --  ??? This does not seem to work, but should
+      --  UTF8 := Locale_To_UTF8
+      --    (Contents.all, Ignore'Unchecked_Access, Length'Unchecked_Access);
 
+      if UTF8 = Gtkada.Types.Null_Ptr then
+         --  In case conversion failed
+         Insert_At_Cursor (Buffer, Contents.all);
+      else
+         Insert_At_Cursor (Buffer, UTF8, Gint (Length));
+      end if;
+
+      g_free (UTF8);
+      Free (Contents);
       Strip_Ending_Line_Terminator (Buffer);
-
-   exception
-      when others =>
-         --  To avoid consuming up all File Descriptors, we catch all
-         --  exceptions here, and close the current file descriptor before
-         --  reraising the exception.
-         if FD /= Invalid_FD then
-            Close (FD);
-         end if;
-         raise;
+      Set_Modified (Buffer, False);
    end Load_File;
 
    ------------------
@@ -866,6 +869,7 @@ package body Src_Editor_Buffer is
          end if;
       end;
 
+      Set_Modified (Buffer, False);
       Close (FD);
 
    exception
@@ -1325,8 +1329,7 @@ package body Src_Editor_Buffer is
    -- Unhighlight_All --
    ---------------------
 
-   procedure Unhighlight_All (Buffer : access Source_Buffer_Record)
-   is
+   procedure Unhighlight_All (Buffer : access Source_Buffer_Record) is
       Start_Iter : Gtk_Text_Iter;
       End_Iter   : Gtk_Text_Iter;
    begin
