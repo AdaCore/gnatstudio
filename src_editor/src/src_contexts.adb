@@ -1144,7 +1144,9 @@ package body Src_Contexts is
       C           : constant Abstract_Files_Context_Access :=
         Abstract_Files_Context_Access (Context);
       --  For dispatching purposes
-      Tmp : Boolean;
+
+      Button : Message_Dialog_Buttons;
+      Tmp    : Boolean;
 
    begin
       if not All_Occurrences then
@@ -1180,7 +1182,22 @@ package body Src_Contexts is
             --  Move to next file
             Move_To_Next_File (C);
             if Current_File (C) = "" then
-               return False;
+               Button := Message_Dialog
+                 (Msg     => (-"No more occurrences of '")
+                  & Context_As_String (C) &
+                    (-("' found."
+                       & ASCII.LF
+                       & "Search from the beginning ?")),
+                  Title   => -"Search",
+                  Buttons => Button_Yes or Button_No,
+                  Justification => Justify_Left,
+                  Parent  => Get_Main_Window (Kernel));
+
+               if Button = Button_Yes then
+                  Move_To_First_File (C);
+               else
+                  return False;
+               end if;
             end if;
 
             First_Match
@@ -1452,6 +1469,16 @@ package body Src_Contexts is
       end if;
    end Current_File;
 
+   ------------------------
+   -- Move_To_First_File --
+   ------------------------
+
+   procedure Move_To_First_File (Context : access Files_Project_Context) is
+   begin
+      Context.Current_File    := 1;
+      Context.Current_Lexical := Statements;
+   end Move_To_First_File;
+
    -----------------------
    -- Move_To_Next_File --
    -----------------------
@@ -1474,6 +1501,17 @@ package body Src_Contexts is
          return "";
       end if;
    end Current_File;
+
+   ------------------------
+   -- Move_To_First_File --
+   ------------------------
+
+   procedure Move_To_First_File (Context : access Files_Context) is
+   begin
+      --  ??? Can this function be called at any other place than when the end
+      --  is reached ?
+      Move_To_Next_File (Context);
+   end Move_To_First_File;
 
    -----------------------
    -- Move_To_Next_File --
