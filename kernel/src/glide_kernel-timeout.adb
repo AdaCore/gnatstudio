@@ -139,6 +139,8 @@ package body Glide_Kernel.Timeout is
          begin
             if Data.Console /= null then
                Insert (Data.Console, Output, Add_LF => False);
+
+               --  ??? This might be costly, we could cache this MDI Child
                Highlight_Child
                  (Find_MDI_Child (Get_MDI (Data.D.Kernel), Data.Console));
             end if;
