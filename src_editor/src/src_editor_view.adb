@@ -122,6 +122,11 @@ package body Src_Editor_View is
       Event  : Gdk_Event) return Boolean;
    --  Callback for the "button_press_event" signal.
 
+   function Button_Release_Event_Cb
+     (Widget : access Gtk_Widget_Record'Class;
+      Event  : Gdk_Event) return Boolean;
+   --  Callback for the "button_release_event" signal.
+
    function Speed_Bar_Button_Press_Event_Cb
      (Widget : access Gtk_Widget_Record'Class;
       Event  : Gdk_Event) return Boolean;
@@ -999,10 +1004,22 @@ package body Src_Editor_View is
    is
       View   : constant Source_View := Source_View (Widget);
       Buffer : constant Source_Buffer := Source_Buffer (Get_Buffer (View));
+      Result : Boolean;
+
+      pragma Unreferenced (Result);
+
    begin
       View.Has_Focus := False;
       Save_Cursor_Position (View);
       External_End_Action (Buffer);
+
+      if View.Button_Pressed then
+         Set_Time (View.Button_Event, 0);
+
+         Result := Return_Callback.Emit_By_Name
+           (Widget, "button_release_event", View.Button_Event);
+      end if;
+
       return False;
 
    exception
@@ -1206,6 +1223,11 @@ package body Src_Editor_View is
       Return_Callback.Connect
         (View, "button_press_event",
          Marsh => Return_Callback.To_Marshaller (Button_Press_Event_Cb'Access),
+         After => False);
+      Return_Callback.Connect
+        (View, "button_release_event",
+         Marsh => Return_Callback.To_Marshaller
+           (Button_Release_Event_Cb'Access),
          After => False);
       Return_Callback.Connect
         (View, "key_press_event",
@@ -1646,6 +1668,31 @@ package body Src_Editor_View is
          return False;
    end Speed_Bar_Button_Release_Event_Cb;
 
+   -----------------------------
+   -- Button_Release_Event_Cb --
+   -----------------------------
+
+   function Button_Release_Event_Cb
+     (Widget : access Gtk_Widget_Record'Class;
+      Event  : Gdk_Event) return Boolean
+   is
+      View   : constant Source_View := Source_View (Widget);
+      Left_Window  : constant Gdk.Window.Gdk_Window :=
+        Get_Window (View, Text_Window_Left);
+
+   begin
+      if Get_Event_Type (Event) = Button_Release
+        and then Get_Button (Event) = 1
+        and then Get_Window (Event) /= Left_Window
+        and then View.Button_Pressed
+      then
+         View.Button_Pressed := False;
+         Free (View.Button_Event);
+      end if;
+
+      return False;
+   end Button_Release_Event_Cb;
+
    ---------------------------
    -- Button_Press_Event_Cb --
    ---------------------------
@@ -1669,68 +1716,80 @@ package body Src_Editor_View is
 
       Window := Get_Window (Event);
 
-      if Window = Left_Window
-        and then Get_Event_Type (Event) = Button_Press
-        and then Get_Button (Event) = 1
-      then
-         declare
-            Dummy_Gint         : Gint;
-            Iter               : Gtk_Text_Iter;
-            Line               : Buffer_Line_Type;
-            Button_X, Button_Y : Gint;
-            X, Y               : Gint;
+      case Get_Event_Type (Event) is
+         when Button_Press =>
+            if Get_Button (Event) = 1 then
+               if Window = Left_Window then
+                  declare
+                     Dummy_Gint         : Gint;
+                     Iter               : Gtk_Text_Iter;
+                     Line               : Buffer_Line_Type;
+                     Button_X, Button_Y : Gint;
+                     X, Y               : Gint;
 
-         begin
-            --  Get the coordinates of the click.
+                  begin
+                     --  Get the coordinates of the click.
 
-            Button_X := Gint (Get_X (Event));
-            Button_Y := Gint (Get_Y (Event));
+                     Button_X := Gint (Get_X (Event));
+                     Button_Y := Gint (Get_Y (Event));
 
-            --  Find the line number.
-            Window_To_Buffer_Coords
-              (View, Text_Window_Left,
-               Window_X => Button_X, Window_Y => Button_Y,
-               Buffer_X => X, Buffer_Y => Y);
+                     --  Find the line number.
+                     Window_To_Buffer_Coords
+                       (View, Text_Window_Left,
+                        Window_X => Button_X, Window_Y => Button_Y,
+                        Buffer_X => X, Buffer_Y => Y);
 
-            Get_Line_At_Y (View, Iter, Y, Dummy_Gint);
-            Line := Buffer_Line_Type (Get_Line (Iter) + 1);
+                     Get_Line_At_Y (View, Iter, Y, Dummy_Gint);
+                     Line := Buffer_Line_Type (Get_Line (Iter) + 1);
 
-            View.Has_Focus := True;
-            Set_Focus_Child (Get_MDI (View.Kernel), View);
-            On_Click (Buffer, Line, Button_X);
-         end;
+                     View.Has_Focus := True;
+                     Set_Focus_Child (Get_MDI (View.Kernel), View);
+                     On_Click (Buffer, Line, Button_X);
+                  end;
+               else
+                  if not View.Button_Pressed then
+                     View.Button_Pressed := True;
+                     Deep_Copy (Event, View.Button_Event);
+                  end if;
+               end if;
 
-      elsif Get_Event_Type (Event) = Button_Press
-        and then Get_Button (Event) = 2
-      then
-         --  Short-circuit the textview handler to disable clipboard paste
-         --  under Windows: this is not a standard mechanism on this platform,
-         --  and it causes unwanted paste operations with some mouse wheels.
+            elsif Get_Button (Event) = 2 then
+               --  Short-circuit the textview handler to disable clipboard
+               --  paste under Windows: this is not a standard mechanism
+               --  on this platform, and it causes unwanted paste operations
+               --  with some mouse wheels.
 
-         if Host = Windows then
-            return True;
-         end if;
+               if Host = Windows then
+                  return True;
+               end if;
+            end if;
 
-      elsif Window /= Left_Window
-        and then Get_Event_Type (Event) = Gdk_2button_Press
-      then
-         --  ??? This is a tweak necessary to implement the feature
-         --  "select an entire word containing '_' when double-clicking".
-         --  Might be worth investigating whether it could be implemented at
-         --  the gtk+ level (the proper fix would be to change the Pango
-         --  word break algorithms probably in break.c ?) and to redefine
-         --  the "is_word_break" behaviour of the underscore.
+         when Gdk_2button_Press =>
+            if Window /= Left_Window
+              and then Get_Button (Event) = 1
+            then
+               --  ??? This is a tweak necessary to implement the feature
+               --  "select an entire word containing '_' when double-clicking".
+               --  Might be worth investigating whether it could be implemented
+               --  at the gtk+ level (the proper fix would be to change the
+               --  Pango word break algorithms probably in break.c ?) and to
+               --  redefine the "is_word_break" behaviour of the underscore.
 
-         --  Here we send a button_release_event before selecting the word, so
-         --  that we can stop propagating the "button_press_event" without
-         --  entering the selection-drag mode.
+               --  Here we send a button_release_event before selecting the
+               --  word, so that we can stop propagating the
+               --  "button_press_event" without entering the selection-drag
+               --  mode.
 
-         Result := Return_Callback.Emit_By_Name
-           (Widget, "button_release_event", Event);
+               Result := Return_Callback.Emit_By_Name
+                 (Widget, "button_release_event", Event);
 
-         Select_Current_Word (Buffer);
-         return True;
-      end if;
+               Select_Current_Word (Buffer);
+               return True;
+            end if;
+
+         when others =>
+            null;
+      end case;
 
       return False;
 
