@@ -40,9 +40,11 @@ with Gtk.Window;             use Gtk.Window;
 with Gtkada.Handlers;        use Gtkada.Handlers;
 with Gtkada.Handlers;        use Gtkada.Handlers;
 with String_Utils;           use String_Utils;
+with Ada.Exceptions;         use Ada.Exceptions;
+with Traces;                 use Traces;
+with Ada.Unchecked_Deallocation;
 
 package body Gtkada.Entry_Completion is
-
    procedure On_Destroy (The_Entry : access Gtk_Widget_Record'Class);
    --  Callback when the widget is destroyed.
 
@@ -59,6 +61,9 @@ package body Gtkada.Entry_Completion is
      (The_Entry : access Gtk_Widget_Record'Class;
       Event     : Gdk_Event) return Boolean;
    --  Called when the user clicked in the list
+
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+     (Completions_Factory'Class, Completions_Factory_Access);
 
    -------------
    -- Gtk_New --
@@ -119,7 +124,9 @@ package body Gtkada.Entry_Completion is
       Add (Scrolled, The_Entry.View);
       Set_Mode (Get_Selection (The_Entry.View), Selection_Single);
 
-      Gtk_New (The_Entry.List, (0 .. 0 => GType_String));
+      Gtk_New (The_Entry.List, (0 => GType_String,
+                                1 => GType_Int,
+                                2 => GType_String));
       Set_Model (The_Entry.View, Gtk_Tree_Model (The_Entry.List));
       Return_Callback.Object_Connect
         (The_Entry.View, "button_press_event",
@@ -130,12 +137,19 @@ package body Gtkada.Entry_Completion is
       Gtk_New (Col);
       Set_Title (Col, "Completions");
       Set_Sort_Column_Id (Col, 0);
-
       Num := Append_Column (The_Entry.View, Col);
       Pack_Start (Col, Renderer, False);
       Add_Attribute (Col, Renderer, "text", 0);
 
       Clicked (Col);
+
+      Gtk_New (Col);
+      Set_Title (Col, "");
+      Set_Sort_Column_Id (Col, 2);
+      Num := Append_Column (The_Entry.View, Col);
+      Pack_Start (Col, Renderer, False);
+      Add_Attribute (Col, Renderer, "text", 2);
+      Set_Visible (Col, False);
 
       Widget_List.Append (List, Gtk_Widget (Get_Entry (The_Entry)));
       Widget_List.Append (List, Gtk_Widget (Frame));
@@ -204,7 +218,7 @@ package body Gtkada.Entry_Completion is
 
       if Iter /= Null_Iter then
          Set_Text (Get_Entry (Ent), Get_String (Model, Iter, 0));
-         Ent.Completion_Index := Integer'First;
+         Ent.Completion_Index := Integer (Get_Int (Model, Iter, 1));
          Grab_Focus (Get_Entry (Ent));
       end if;
    end Selection_Changed;
@@ -225,7 +239,10 @@ package body Gtkada.Entry_Completion is
 
    procedure On_Destroy (The_Entry : access Gtk_Widget_Record'Class) is
    begin
-      Free (Gtkada_Entry (The_Entry).Completions);
+      if Gtkada_Entry (The_Entry).Completions /= null then
+         Destroy (Gtkada_Entry (The_Entry).Completions.all);
+         Unchecked_Free (Gtkada_Entry (The_Entry).Completions);
+      end if;
    end On_Destroy;
 
    ---------------------
@@ -237,9 +254,35 @@ package body Gtkada.Entry_Completion is
       Completions : Basic_Types.String_Array_Access) is
    begin
       Clear (The_Entry.List);
-      Free (The_Entry.Completions);
-      The_Entry.Completions := Completions;
-      The_Entry.Completion_Index := Completions'First - 1;
+
+      if The_Entry.Completions /= null then
+         Destroy (The_Entry.Completions.all);
+         Unchecked_Free (The_Entry.Completions);
+      end if;
+
+      The_Entry.Completions := new String_Factory'
+        (Completions => Completions);
+
+      The_Entry.Completion_Index := Positive'First;
+   end Set_Completions;
+
+   ---------------------
+   -- Set_Completions --
+   ---------------------
+
+   procedure Set_Completions
+     (The_Entry   : access Gtkada_Entry_Record;
+      Completions : Completions_Factory'Class) is
+   begin
+      Clear (The_Entry.List);
+      The_Entry.Completion_Index := Positive'First;
+
+      if The_Entry.Completions /= null then
+         Destroy (The_Entry.Completions.all);
+         Unchecked_Free (The_Entry.Completions);
+      end if;
+
+      The_Entry.Completions := new Completions_Factory'Class'(Completions);
    end Set_Completions;
 
    ------------------
@@ -252,51 +295,59 @@ package body Gtkada.Entry_Completion is
    is
       GEntry : constant Gtkada_Entry := Gtkada_Entry (The_Entry);
 
-      function Next_Matching
-        (T : String; Start_At, End_At : Integer) return Integer;
+      function Next_Matching (T : String; Start_At : Positive) return Integer;
       --  Return the integer of the first possible completion for T, after
       --  index Start_At, and found before End_At.
-      --  Integer'First is returned if no completion was found.
+      --  Integer'Last is returned if no completion was found.
 
       -------------------
       -- Next_Matching --
       -------------------
 
       function Next_Matching
-        (T : String; Start_At, End_At : Integer) return Integer is
+        (T : String; Start_At : Positive) return Integer
+      is
+         S : Positive := Start_At;
       begin
-         for S in Start_At .. End_At loop
-            if GEntry.Completions (S)'Length >= T'Length then
-               if GEntry.Case_Sensitive
-                 and then GEntry.Completions (S)
-                 (GEntry.Completions (S)'First
-                  .. GEntry.Completions (S)'First + T'Length - 1) = T
-               then
-                  return S;
+         loop
+            declare
+               Compl : constant String :=
+                 Completion (GEntry.Completions.all, S);
+            begin
+               exit when Compl = "";
 
-               elsif not GEntry.Case_Sensitive
-                 and then Case_Insensitive_Equal
-                   (GEntry.Completions (S)
-                      (GEntry.Completions (S)'First
-                       .. GEntry.Completions (S)'First + T'Length - 1), T)
-               then
-                  return S;
+               if Compl'Length >= T'Length then
+                  if GEntry.Case_Sensitive
+                    and then Compl
+                      (Compl'First .. Compl'First + T'Length - 1) = T
+                  then
+                     return S;
+
+                  elsif not GEntry.Case_Sensitive
+                    and then Case_Insensitive_Equal
+                      (Compl (Compl'First .. Compl'First + T'Length - 1), T)
+                  then
+                     return S;
+                  end if;
                end if;
-            end if;
+            end;
+
+            S := S + 1;
          end loop;
 
-         return Integer'First;
+         return Integer'Last;
       end Next_Matching;
 
+      Has_Description : Boolean := False;
+
    begin
-      if (Get_Key_Val (Event) = GDK_Tab
-            or else Get_Key_Val (Event) = GDK_KP_Tab)
-        and then GEntry.Completions /= null
+      if Get_Key_Val (Event) = GDK_Tab
+        or else Get_Key_Val (Event) = GDK_KP_Tab
       then
          declare
             T                     : constant String :=
               Get_Text (Get_Entry (GEntry));
-            Completion, Tmp       : String_Access;
+            Compl_Access, Tmp     : String_Access;
             Index, S, First_Index : Integer;
             Iter                  : Gtk_Tree_Iter;
             Col                   : constant Gint := Freeze_Sort (GEntry.List);
@@ -304,96 +355,192 @@ package body Gtkada.Entry_Completion is
          begin
             --  If there is no current series of tab (ie the user has pressed a
             --  key other than tab since the last tab).
-            if GEntry.Completion_Index = Integer'First then
+            if GEntry.Completion_Index = Integer'Last then
                Clear (GEntry.List);
                GEntry.Last_Position := Integer
                  (Get_Position (Get_Entry (GEntry)));
-               First_Index := Next_Matching
-                 (T, GEntry.Completions'First, GEntry.Completions'Last);
+               First_Index := Next_Matching (T, Positive'First);
 
                --  At least one match
-               if First_Index /= Integer'First then
+               if First_Index /= Integer'Last then
                   S := First_Index;
 
-                  Append
-                    (GEntry.List, Iter => Iter, Parent => Null_Iter);
-                  Set (GEntry.List, Iter, 0, GEntry.Completions (S).all);
-
-                  Completion := new String'(GEntry.Completions (S)
-                    (GEntry.Completions (S)'First + T'Length
-                     .. GEntry.Completions (S)'Last));
+                  declare
+                     Compl : constant String :=
+                       Completion (GEntry.Completions.all, S);
+                     Descr : constant String :=
+                       Description (GEntry.Completions.all, S);
+                  begin
+                     Append (GEntry.List, Iter => Iter, Parent => Null_Iter);
+                     Set (GEntry.List, Iter, 0, Compl);
+                     Set (GEntry.List, Iter, 1, Gint (S));
+                     if Descr /= "" then
+                        Set (GEntry.List, Iter, 2, Descr);
+                        Has_Description := True;
+                     end if;
+                     Compl_Access := new String'
+                       (Compl (Compl'First + T'Length .. Compl'Last));
+                  end;
 
                   loop
-                     S := Next_Matching (T, S + 1, GEntry.Completions'Last);
-                     exit when S = Integer'First;
+                     S := Next_Matching (T, S + 1);
+                     exit when S = Integer'Last;
 
-                     Append
-                       (GEntry.List, Iter => Iter, Parent => Null_Iter);
-                     Set (GEntry.List, Iter, 0, GEntry.Completions (S).all);
+                     declare
+                        Compl : constant String :=
+                          Completion (GEntry.Completions.all, S);
+                        Descr : constant String :=
+                          Description (GEntry.Completions.all, S);
+                     begin
+                        Append
+                          (GEntry.List, Iter => Iter, Parent => Null_Iter);
+                        Set (GEntry.List, Iter, 0, Compl);
+                        Set (GEntry.List, Iter, 1, Gint (S));
+                        if Descr /= "" then
+                           Set (GEntry.List, Iter, 2, Descr);
+                           Has_Description := True;
+                        end if;
 
-                     Index := Completion'First;
-                     while Index <= Completion'Last
-                       and then Completion (Index) =
-                       GEntry.Completions (S)(Index - Completion'First
-                          + GEntry.Completions (S)'First + T'Length)
-                     loop
-                        Index := Index + 1;
-                     end loop;
+                        --  Search for the longer common prefix in all the
+                        --  completions
+                        Index := Compl_Access'First;
+                        while Index <= Compl_Access'Last
+                          and then Compl_Access (Index) =
+                          Compl (Index - Compl_Access'First
+                                 + Compl'First + T'Length)
+                        loop
+                           Index := Index + 1;
+                        end loop;
+                     end;
 
                      Tmp := new String'
-                       (Completion (Completion'First .. Index - 1));
-                     Free (Completion);
-                     Completion := Tmp;
+                       (Compl_Access (Compl_Access'First .. Index - 1));
+                     Free (Compl_Access);
+                     Compl_Access := Tmp;
                   end loop;
 
-                  if Completion'Length /= 0 then
-                     GEntry.Completion_Index := Integer'First;
-                     Append_Text (Get_Entry (GEntry), Completion.all);
+                  --  Do we have a common prefix for all the possible choices ?
+                  if Compl_Access'Length /= 0 then
+                     Append_Text (Get_Entry (GEntry), Compl_Access.all);
                      Set_Position (Get_Entry (GEntry), -1);
-
-                  else
-                     GEntry.Completion_Index := GEntry.Completions'First - 1;
-                     Free (Completion);
                   end if;
 
-                  Thaw_Sort (GEntry.List, Col);
-                  return True;
+                  Free (Compl_Access);
+
+                  First_Index := Positive'First - 1;
+                  Set_Visible (Get_Column (GEntry.View, 1), Has_Description);
                end if;
 
             --  Else we display the next possible match
             else
                First_Index := Next_Matching
                  (T (T'First .. GEntry.Last_Position),
-                  GEntry.Completion_Index + 1, GEntry.Completions'Last);
+                  GEntry.Completion_Index + 1);
 
-               if First_Index = Integer'First then
-                  First_Index := GEntry.Completions'First - 1;
+               if First_Index = Integer'Last then
                   Delete_Text (Get_Entry (GEntry),
                                Gint (GEntry.Last_Position), -1);
+               end if;
+
+               if First_Index /= Integer'Last then
+                  Set_Text (Get_Entry (GEntry),
+                            Completion (GEntry.Completions.all, First_Index));
+                  Set_Position (Get_Entry (GEntry), -1);
                end if;
             end if;
 
             GEntry.Completion_Index := First_Index;
 
-            if First_Index >= GEntry.Completions'First then
-               Set_Text (Get_Entry (GEntry),
-                         GEntry.Completions (First_Index).all);
-               Set_Position (Get_Entry (GEntry), -1);
-            end if;
+            --  Select the corresponding line in the list of completions
+            Unselect_All (Get_Selection (GEntry.View));
+            Iter := Get_Iter_First (GEntry.List);
+            while Iter /= Null_Iter loop
+               if Get_Int (GEntry.List, Iter, 1) =
+                 Gint (GEntry.Completion_Index)
+               then
+                  Select_Iter (Get_Selection (GEntry.View), Iter);
+               end if;
+
+               Next (GEntry.List, Iter);
+            end loop;
 
             Thaw_Sort (GEntry.List, Col);
          end;
 
          return True;
+
+      elsif Get_Key_Val (Event) /= GDK_Return then
+         GEntry.Completion_Index := Integer'Last;
       end if;
 
-      GEntry.Completion_Index := Integer'First;
       return False;
 
    exception
-      when others =>
-         GEntry.Completion_Index := Integer'First;
+      when E : others =>
+         Trace (Exception_Handle, "Unexpected exception "
+                & Exception_Information (E));
+         GEntry.Completion_Index := Integer'Last;
          return False;
    end On_Entry_Tab;
+
+   ------------------------
+   -- Current_Completion --
+   ------------------------
+
+   function Current_Completion
+     (The_Entry : access Gtkada_Entry_Record) return Natural is
+   begin
+      if The_Entry.Completion_Index = Integer'Last then
+         return 0;
+      else
+         return The_Entry.Completion_Index;
+      end if;
+   end Current_Completion;
+
+   ----------------
+   -- Completion --
+   ----------------
+
+   function Completion
+     (Factory : String_Factory; Index : Positive) return String is
+   begin
+      if Index <= Factory.Completions'Length then
+         return Factory.Completions
+           (Index + Factory.Completions'First - 1).all;
+      else
+         return "";
+      end if;
+   end Completion;
+
+   -------------
+   -- Destroy --
+   -------------
+
+   procedure Destroy (Factory : in out String_Factory) is
+   begin
+      Free (Factory.Completions);
+   end Destroy;
+
+   -------------
+   -- Destroy --
+   -------------
+
+   procedure Destroy (Factory : in out Completions_Factory) is
+      pragma Unreferenced (Factory);
+   begin
+      null;
+   end Destroy;
+
+   -----------------
+   -- Description --
+   -----------------
+
+   function Description
+     (Factory : Completions_Factory; Index : Positive) return String
+   is
+      pragma Unreferenced (Factory, Index);
+   begin
+      return "";
+   end Description;
 
 end Gtkada.Entry_Completion;
