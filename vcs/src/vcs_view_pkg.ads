@@ -18,7 +18,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Gtk.Text;   use Gtk.Text;
 with Gtk.Box;    use Gtk.Box;
 
 with Gtk.Tree_View;  use Gtk.Tree_View;
@@ -36,23 +35,16 @@ package VCS_View_Pkg is
    type VCS_View_Access is access all VCS_View_Record'Class;
 
    type VCS_View_Record is new Gtk_Hbox_Record with record
-      Tree  : Gtk_Tree_View;
-      Model : Gtk_Tree_Store;
+      Tree   : Gtk_Tree_View;
+      Model  : Gtk_Tree_Store;
 
-      Model_Sync : Boolean := False;
-      --  This boolean indicates whether the model is currently
-      --  being synchronized with the view.
-
-      All_Selected : Boolean := False;
-      --  Indicates whether all the files in the view are selected.
-
-      VCS_Ref : VCS_Access := null;
-
-      Message_Text               : Gtk_Text;
-      --  When in independant mode, this acts as a console for displaying text.
-
-      Kernel                     : Kernel_Handle;
+      Kernel : Kernel_Handle;
       --  Reference to the Glide kernel that launched the explorer, if any.
+
+      Show_All : Boolean := False;
+
+      Stored_Status : File_Status_List.List;
+      Cached_Status : File_Status_List.List;
    end record;
 
    procedure Gtk_New (VCS_View : out VCS_View_Access;
@@ -61,10 +53,19 @@ package VCS_View_Pkg is
 
    procedure Initialize (VCS_View : access VCS_View_Record'Class);
 
+   procedure Clear (Explorer : VCS_View_Access);
+   --  Clear all the files in the model.
+
    procedure Display_File_Status
-     (Kernel : Kernel_Handle;
-      Status : File_Status_List.List);
-   --  ???
+     (Kernel         : Kernel_Handle;
+      Status         : File_Status_List.List;
+      Override_Cache : Boolean);
+   --  Display Status in the explorer. Status must NOT be freed by the user.
+   --  Memory allocated to this list is freed when calling Clear.
+   --
+   --  If Override_Cache is set to True, then the cache will be updated
+   --  with the new status information, if needed. Otherwise, the values from
+   --  the cache will be used for displaying the files.
 
    function Get_Selected_Files
      (Explorer : VCS_View_Access) return String_List.List;
@@ -89,14 +90,6 @@ package VCS_View_Pkg is
       Files    : String_List.List;
       Ref      : VCS_Access);
    --  Launch log editors for these files.
-   --  User must free Files afterwards.
-
-   procedure Update_File_List
-     (Explorer : VCS_View_Access;
-      Kernel   : Kernel_Handle;
-      Files    : String_List.List;
-      Ref      : VCS_Access);
-   --  Updates a list of files.
    --  User must free Files afterwards.
 
 end VCS_View_Pkg;
