@@ -6493,10 +6493,28 @@ recursively.
 These commands can be associated with menus, tool bar buttons and keys. All
 of these use similar syntax.
 
-Binding a menu to an action is done through the @code{<menu>} tag. This tag
-requires an @code{action} attribute which specifies which action to execute
+Binding a menu to an action is done through the @code{<menu>} tag.
+
+This tag takes the following attributes:
+
+@table @code
+@item action  (mandatory)
+This attribute specifies which action to execute
 when the menu is selected by the user. If no action by this name was defined,
 no new menu is added.
+
+@item before  (optional)
+It specifies the name of another menu item before
+which the new menu should be inserted. The reference menu must have been
+created before, otherwise the new menu is inserted at the end. This attribute
+can be used to control where precisely the new menu should be made visible.
+
+@item after   (optional)
+This attribute is similar to @code{before}, but has a lower priority. If it
+is specified, and there is no @code{before} attribute, it specifies a reference
+menu after which the new menu should be inserted.
+
+@end table
 
 It should also have one XML child called @code{<title>} which specifies the
 label of the menu
@@ -7698,9 +7716,7 @@ be shown to the user at all.
 
 @item ""
 The output of the command is sent to the GPS console window, entitled
-"Messages". This is the default value of this attribute. If you are using the
-@code{<shell>} tag, the output is sent to the default console for that
-language.
+"Messages".
 
 @item other values
 A new window is created, the name of which is given by the attribute. If such
@@ -7709,8 +7725,14 @@ chain is executed. The output of the command, as well
 as the text of the command itself, are sent to this new window.
 @end table
 
+
+This attribute can also be specified at the @code{<action>} tag level, in which
+case it defines the default value for all @code{<shell>} and @code{<external>}
+tags underneath. If it isn't specified for the action itself, its default value
+will always be the empty string, ie send to the GPS console.
+
 @smallexample
-<action name="ls current directory">
+<action name="ls current directory" output="default output" >
    <shell output="Current directory" >pwd</shell>
    <external output="Current directory contents" >/bin/ls </external>
 </action>
