@@ -21,17 +21,17 @@
 package SN is
    --  Types and constants specific to Source Navigator.
 
-   type Table_Type is
-      (BY, CL, COM, CON, COV, E, EC, F, FD, FIL, FR, FU, GV, SN_IN,
-       IU, IV, LV, MA, MD, MI, SN_REM, SU, T, TA, TO, UN);
-   --  Source Navigator DB tables types
+   type All_Table_Types is
+     (BY,      --  No longer used
+      F,       --  Project files
+      FIL,     --  Global per-file information
+      SN_REM,  --  Remarks
+      TO,      --  Global cross-references
 
-   type Symbol_Type is
-     (Undef,   --  undefined symbol
       CL,      --  class/struct
       COM,     --  common block (Fortran)
-      COV,     --  common variable (Fortran)
       CON,     --  constant
+      COV,     --  common variable (Fortran)
       E,       --  enum
       EC,      --  enum value
       FD,      --  function declaration
@@ -48,8 +48,15 @@ package SN is
       SU,      --  subroutine (Fortran)
       T,       --  typedef
       TA,      --  template argument
-      UN       --  union
-      );
+      UD,      --  predefined entity ?
+      UN,      --  union
+
+      Undef    --  Undefined (leave last)
+     );
+   --  Source Navigator DB tables types
+
+   subtype Table_Type  is All_Table_Types range BY .. UN;
+   subtype Symbol_Type is All_Table_Types range CL .. Undef;
 
    Max_Src_Line_Length : constant Integer := 4096;
    --  Specifies the maximum line length for arbitrary source file.
