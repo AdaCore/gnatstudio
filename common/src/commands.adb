@@ -51,9 +51,13 @@ package body Commands is
          new Unchecked_Deallocation (Command_Queue_Record, Command_Queue);
    begin
       if Q /= null then
+         --  Those lists contain only copies of commands that are in
+         --  Q.The_Queue, therefore their contents do not need to be
+         --  destroyed explicitely.
+         Free (Q.Undo_Queue, Free_Data => False);
+         Free (Q.Redo_Queue, Free_Data => False);
+
          Free (Q.The_Queue);
-         Free (Q.Undo_Queue);
-         Free (Q.Redo_Queue);
          Free (Q.Queue_Change_Hook);
          Free_Queue_Access (Q);
       end if;
