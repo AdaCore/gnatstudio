@@ -29,7 +29,6 @@
 
 #include "htmlengine-edit-copy.h"
 #include "htmlengine-edit-cursor.h"
-#include "htmlengine-edit-insert.h"
 #include "htmlengine-edit-movement.h"
 #include "htmlengine-edit.h"
 

@@ -26,7 +26,6 @@
 #include "htmlengine-edit-clueflowstyle.h"
 #include "htmlengine-edit-copy.h"
 #include "htmlengine-edit-fontstyle.h"
-#include "htmlengine-edit-insert.h"
 #include "htmlengine-edit-movement.h"
 #include "htmlengine-edit.h"
 
