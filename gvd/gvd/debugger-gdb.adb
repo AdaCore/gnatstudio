@@ -196,9 +196,10 @@ package body Debugger.Gdb is
       function To_Window is new
         Unchecked_Conversion (System.Address, Gtk_Window);
 
-      Dialog     : Question_Dialog_Access;
-      Index      : Natural;
+      Dialog         : Question_Dialog_Access;
+      Index          : Natural;
       Question_Start : Natural;
+
    begin
       --  Do we have a question ?
 
@@ -252,8 +253,8 @@ package body Debugger.Gdb is
 
                return;
             end if;
-            Index := Index + 1;
 
+            Index := Index + 1;
          end loop;
       end if;
    end Question_Filter;
@@ -514,6 +515,7 @@ package body Debugger.Gdb is
          --  Do this before looking for the current file, since the explorer
          --  must also be initialized.
          --  No need to do anything in text-only mode
+
          if Debugger.Window /= null then
             Executable_Changed (Convert (Debugger.Window, Debugger), "");
          end if;
@@ -538,7 +540,6 @@ package body Debugger.Gdb is
 
          --  Make sure everything is hidden
          Pop_Internal_Command_Status (Get_Process (Debugger));
-
       end if;
    end Initialize;
 
@@ -696,9 +697,11 @@ package body Debugger.Gdb is
 
    begin
       Send (Debugger, "set args " & Arguments, Mode => Mode);
+
       if Cmd /= "" then
          while Last <= Cmd'Last loop
             First := Last;
+
             while Last <= Cmd'Last
               and then Cmd (Last) /= ASCII.LF
             loop
@@ -978,11 +981,10 @@ package body Debugger.Gdb is
       Unhandled : Boolean := False;
       Mode      : Command_Type := Hidden) is
    begin
-         Send
-           (Debugger,
-            Break_Exception
-            (Get_Language (Debugger), Name, Temporary, Unhandled),
-            Mode => Mode);
+      Send
+        (Debugger,
+         Break_Exception (Get_Language (Debugger), Name, Temporary, Unhandled),
+         Mode => Mode);
    end Break_Exception;
 
    -------------------
@@ -1440,7 +1442,6 @@ package body Debugger.Gdb is
                --  Else we have a variant part record
 
                else
-
                   if Type_Str (Index) = ',' then
                      Index := Index + 1;
                      Skip_Blanks (Type_Str, Index);
@@ -1449,6 +1450,7 @@ package body Debugger.Gdb is
                   --  Find which part is active
                   --  We simply get the next field name and search for the
                   --  part that defines it
+
                   Int := Index;
                   Skip_To_Char (Type_Str, Int, ' ');
 
@@ -1511,7 +1513,6 @@ package body Debugger.Gdb is
                     Long_Integer (Repeat_Num));
          Index := Index + 7;  --  skips " times>"
       end if;
-
    end Internal_Parse_Value;
 
    ----------------------
@@ -1519,14 +1520,14 @@ package body Debugger.Gdb is
    ----------------------
 
    function List_Breakpoints
-     (Debugger  : access Gdb_Debugger)
-     return Breakpoint_Array
+     (Debugger  : access Gdb_Debugger) return Breakpoint_Array
    is
       Num_Breakpoints : Natural := 0;
       S : constant String :=
         Send (Debugger, "info breakpoints", Mode => Internal);
       Index : Natural := S'First;
       Tmp   : Natural;
+
    begin
 
       --  Skip the first line (that indicates there is no breakpoints,
@@ -1588,8 +1589,10 @@ package body Debugger.Gdb is
                --  Go to beginning of next line.
                --  If we don't have a new breackpoint, add the line to the
                --  information.
+
                Tmp := Matched (8).First;
                Index := Tmp;
+
             else
                Tmp := Index;
             end if;
@@ -1603,8 +1606,8 @@ package body Debugger.Gdb is
 
             if Matched (0) /= No_Match then
                Br (Num).Info := new String'(S (Tmp .. Index - 2));
-
                Match (File_Name_In_Breakpoint, Br (Num).Info.all, Matched);
+
                if Matched (0) /= No_Match then
                   Br (Num).File := new String'
                     (Base_File_Name (Br (Num).Info
@@ -1614,19 +1617,20 @@ package body Debugger.Gdb is
                end if;
 
                Match (Exception_In_Breakpoint, Br (Num).Info.all, Matched);
+
                if Matched (0) /= No_Match then
                   Br (Num).Except := new String'
                     (Br (Num).Info (Matched (1).First .. Matched (1).Last));
                end if;
 
                Match (Subprogram_In_Breakpoint, Br (Num).Info.all, Matched);
+
                if Matched (0) /= No_Match then
                   Br (Num).Subprogram := new String'
                     (Br (Num).Info (Matched (1).First .. Matched (1).Last));
                end if;
 
                Num := Num + 1;
-
             end if;
          end loop;
 
@@ -1782,8 +1786,7 @@ package body Debugger.Gdb is
    ---------------
 
    function Find_File
-     (Debugger : access Gdb_Debugger; File_Name : String)
-     return String
+     (Debugger : access Gdb_Debugger; File_Name : String) return String
    is
       File_First  : Natural := 0;
       File_Last   : Positive;
@@ -1791,6 +1794,7 @@ package body Debugger.Gdb is
       First, Last : Natural;
       Addr_First,
       Addr_Last   : Natural;
+
    begin
       Set_Parse_File_Name (Get_Process (Debugger), False);
 
@@ -1828,6 +1832,7 @@ package body Debugger.Gdb is
    is
       Index : Natural;
       Tmp   : Natural;
+
    begin
       Code := new String'
         (Send
@@ -1887,8 +1892,7 @@ package body Debugger.Gdb is
       Range_Start     : out Address_Type;
       Range_End       : out Address_Type;
       Range_Start_Len : out Natural;
-      Range_End_Len   : out Natural)
-   is
+      Range_End_Len   : out Natural) is
    begin
       Set_Parse_File_Name (Get_Process (Debugger), False);
 
