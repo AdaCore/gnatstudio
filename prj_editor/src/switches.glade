@@ -1267,6 +1267,7 @@ Variables
 	  <use_arrows_always>False</use_arrows_always>
 	  <items>GNAT default
 unit.separate.1.ada
+unit__separate_.ada
 &lt;custom&gt;
 </items>
 
@@ -1525,6 +1526,7 @@ mixedcase
 	    <use_arrows_always>False</use_arrows_always>
 	    <items>.ads
 .1.ada
+_.ada
 </items>
 	    <child>
 	      <left_attach>1</left_attach>
@@ -1569,6 +1571,7 @@ mixedcase
 	    <use_arrows_always>False</use_arrows_always>
 	    <items>.adb
 .2.ada
+.ada
 </items>
 	    <child>
 	      <left_attach>1</left_attach>
@@ -1613,6 +1616,7 @@ mixedcase
 	    <use_arrows_always>False</use_arrows_always>
 	    <items>.adb
 .2.ada
+.ada
 </items>
 	    <child>
 	      <left_attach>1</left_attach>

@@ -16,7 +16,7 @@ package body Naming_Scheme_Editor_Pkg.Callbacks is
 
    use Gtk.Arguments;
 
-   Custom_Scheme : constant Gint := 2;
+   Custom_Scheme : constant Gint := 3;
    --  Index of the "<custom>" choice in the list of predefined schemes.
 
    procedure Handle_Key

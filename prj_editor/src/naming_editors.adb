@@ -100,7 +100,7 @@ package body Naming_Editors is
    ---------------------------
 
    procedure Set_Predefined_Scheme
-     (Editor : access Naming_Editor_Record;
+     (Editor     : access Naming_Editor_Record;
       Scheme_Num : Natural) is
    begin
       case Scheme_Num is
@@ -119,6 +119,14 @@ package body Naming_Editors is
             Set_Text (Get_Entry (Editor.Spec_Extension), ".1.ada");
             Set_Text (Get_Entry (Editor.Body_Extension), ".2.ada");
             Set_Text (Get_Entry (Editor.Separate_Extension), ".2.ada");
+
+         when 2 =>
+            --  DEC Ada Default
+            Set_Text (Get_Entry (Editor.Casing), "lowercase");
+            Set_Text (Editor.Dot_Replacement, "__");
+            Set_Text (Get_Entry (Editor.Spec_Extension), "_.ada");
+            Set_Text (Get_Entry (Editor.Body_Extension), ".ada");
+            Set_Text (Get_Entry (Editor.Separate_Extension), ".ada");
 
          when others =>
             null;

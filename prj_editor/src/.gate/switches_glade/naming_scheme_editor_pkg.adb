@@ -50,6 +50,7 @@ begin
    Set_Use_Arrows_Always (Naming_Scheme_Editor.Standard_Scheme, False);
    String_List.Append (Standard_Scheme_Items, -"GNAT default");
    String_List.Append (Standard_Scheme_Items, -"unit.separate.1.ada");
+   String_List.Append (Standard_Scheme_Items, -"unit__separate_.ada");
    String_List.Append (Standard_Scheme_Items, -"<custom>");
    Combo.Set_Popdown_Strings (Naming_Scheme_Editor.Standard_Scheme, Standard_Scheme_Items);
    Free_String_List (Standard_Scheme_Items);
@@ -158,6 +159,7 @@ begin
    Set_Use_Arrows_Always (Naming_Scheme_Editor.Spec_Extension, False);
    String_List.Append (Spec_Extension_Items, -".ads");
    String_List.Append (Spec_Extension_Items, -".1.ada");
+   String_List.Append (Spec_Extension_Items, -"_.ada");
    Combo.Set_Popdown_Strings (Naming_Scheme_Editor.Spec_Extension, Spec_Extension_Items);
    Free_String_List (Spec_Extension_Items);
    Attach (Naming_Scheme_Editor.Table1, Naming_Scheme_Editor.Spec_Extension, 1, 2, 2, 3,
@@ -179,6 +181,7 @@ begin
    Set_Use_Arrows_Always (Naming_Scheme_Editor.Body_Extension, False);
    String_List.Append (Body_Extension_Items, -".adb");
    String_List.Append (Body_Extension_Items, -".2.ada");
+   String_List.Append (Body_Extension_Items, -".ada");
    Combo.Set_Popdown_Strings (Naming_Scheme_Editor.Body_Extension, Body_Extension_Items);
    Free_String_List (Body_Extension_Items);
    Attach (Naming_Scheme_Editor.Table1, Naming_Scheme_Editor.Body_Extension, 1, 2, 3, 4,
@@ -200,6 +203,7 @@ begin
    Set_Use_Arrows_Always (Naming_Scheme_Editor.Separate_Extension, False);
    String_List.Append (Separate_Extension_Items, -".adb");
    String_List.Append (Separate_Extension_Items, -".2.ada");
+   String_List.Append (Separate_Extension_Items, -".ada");
    Combo.Set_Popdown_Strings (Naming_Scheme_Editor.Separate_Extension, Separate_Extension_Items);
    Free_String_List (Separate_Extension_Items);
    Attach (Naming_Scheme_Editor.Table1, Naming_Scheme_Editor.Separate_Extension, 1, 2, 4, 5,
