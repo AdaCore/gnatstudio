@@ -35,6 +35,7 @@ with Naming_Editors;           use Naming_Editors;
 with Ada_Naming_Editors;       use Ada_Naming_Editors;
 with Projects.Registry;        use Projects.Registry;
 with Case_Handling;            use Case_Handling;
+with Traces;                   use Traces;
 
 package body Ada_Module is
 
@@ -44,6 +45,7 @@ package body Ada_Module is
    Ada_Continuation_Level    : Param_Spec_Int;
    Ada_Declaration_Level     : Param_Spec_Int;
    Ada_Indent_Case_Extra     : Param_Spec_Enum;
+   Ada_Casing_Policy         : Param_Spec_Enum;
    Ada_Reserved_Casing       : Param_Spec_Enum;
    Ada_Ident_Casing          : Param_Spec_Enum;
    Ada_Format_Operators      : Param_Spec_Boolean;
@@ -51,13 +53,17 @@ package body Ada_Module is
    Ada_Align_On_Arrows       : Param_Spec_Boolean;
    Ada_Align_Decl_On_Colon   : Param_Spec_Boolean;
 
+   package Casing_Policy_Properties is new
+     Glib.Generic_Properties.Generic_Enumeration_Property
+       ("Casing_Policy", Casing_Policy);
+
    package Casing_Properties is new
      Glib.Generic_Properties.Generic_Enumeration_Property
-     ("Casing_Type", Casing_Type);
+       ("Casing_Type", Casing_Type);
 
    package Indent_Properties is new
      Glib.Generic_Properties.Generic_Enumeration_Property
-     ("Indent_Style", Indent_Style);
+       ("Indent_Style", Indent_Style);
 
    procedure On_Preferences_Changed
      (Kernel : access Kernel_Handle_Record'Class);
@@ -104,6 +110,8 @@ package body Ada_Module is
             Tab_Width           => Integer (Get_Pref (Kernel, Tab_Width)),
             Indent_Case_Extra   => Indent_Style'Val
               (Get_Pref (Kernel, Ada_Indent_Case_Extra)),
+            Casing_Policy       => Casing_Policy'Val
+              (Get_Pref (Kernel, Ada_Casing_Policy)),
             Reserved_Casing     => Casing_Type'Val
               (Get_Pref (Kernel, Ada_Reserved_Casing)),
             Ident_Casing        => Casing_Type'Val
@@ -200,6 +208,17 @@ package body Ada_Module is
            Nick    => -"Case indentation"));
       Register_Property
         (Kernel, Param_Spec (Ada_Indent_Case_Extra), -"Editor:Ada");
+
+      Ada_Casing_Policy := Param_Spec_Enum
+        (Casing_Policy_Properties.Gnew_Enum
+           (Name    => "Ada-Casing-Policy",
+            Nick    => -"Casing policy",
+            Blurb   => -"Keywords and Identifiers casing policy",
+            Default => End_Of_Line));
+      if Active (On_The_Fly_Casing) then
+         Register_Property
+           (Kernel, Param_Spec (Ada_Casing_Policy), -"Editor:Ada");
+      end if;
 
       Ada_Reserved_Casing := Param_Spec_Enum
         (Casing_Properties.Gnew_Enum
