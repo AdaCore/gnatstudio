@@ -416,7 +416,6 @@ package body Debugger is
 
    begin
       Set_Command_In_Process (Get_Process (Debugger));
-
       Set_Command_Mode (Get_Process (Debugger), Mode);
 
       if Debugger.Window /= null then
@@ -620,8 +619,9 @@ package body Debugger is
       --  not reliable.
 
       if Command_In_Process (Get_Process (Debugger)) then
-         pragma Debug (Put_Line ("!!! already running a Wait command!!"));
-         null;
+         if Can_Output then
+            Put_Line ("!!! already running a Wait command!!");
+         end if;
       end if;
 
       --  Block if the global lock is set
@@ -635,7 +635,7 @@ package body Debugger is
          Wait_Prompt (Debugger);
 
          declare
-            S : String := Expect_Out (Get_Process (Debugger));
+            S : constant String := Expect_Out (Get_Process (Debugger));
          begin
             Send_Internal_Post (Debugger, Cmd, Mode);
 
