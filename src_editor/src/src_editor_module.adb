@@ -751,7 +751,17 @@ package body Src_Editor_Module is
               Create (Full_Filename => Nth_Arg (Data, 1));
          begin
             if Command = "close" then
-               Close_File_Editors (Kernel, Filename);
+               if Is_Absolute_Path (Filename) then
+                  Close_File_Editors (Kernel, Filename);
+               else
+                  Close_File_Editors
+                    (Kernel,
+                     Create
+                       (Get_Full_Path_From_File
+                          (Get_Registry (Kernel),
+                           Full_Name (Filename).all,
+                           True, False)));
+               end if;
             else
                declare
                   Child : MDI_Child;
