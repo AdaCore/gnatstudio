@@ -54,7 +54,7 @@ begin
             MD_Tab.Return_Type,
             MD_Tab_Tmp.Return_Type)
          and then ((First_MD_Pos = Invalid_Point)
-         or else Less (MD_Tab_Tmp.Start_Position, First_MD_Pos)) then
+         or else MD_Tab_Tmp.Start_Position < First_MD_Pos) then
          First_MD_Pos := MD_Tab_Tmp.Start_Position;
       end if;
       Free (MD_Tab_Tmp);

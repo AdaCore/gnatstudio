@@ -17,6 +17,7 @@ is
    Start_Position : Point := Sym.Start_Position;
    Body_Position  : Point := Invalid_Point;
    End_Position   : Point;
+   IsTemplate     : Boolean := False;
 
    Fu_Id          : constant String := Sym.Buffer
      (Sym.Identifier.First .. Sym.Identifier.Last);
@@ -28,18 +29,37 @@ begin
          & "'");
 
    if Sym.Symbol = MI then
+      declare
+         Class_Def    : CL_Table;
       begin
-         --  TODO templates
          MI_Tab := Find (SN_Table (MI),
              Sym.Buffer (Sym.Class.First .. Sym.Class.Last),
              Fu_Id,
              Sym.Start_Position,
              Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last));
+         begin -- check if this class is template
+            Class_Def := Find
+              (SN_Table (CL), Sym.Buffer (Sym.Class.First .. Sym.Class.Last));
+            IsTemplate := Class_Def.Template_Parameters.First
+               < Class_Def.Template_Parameters.Last;
+            Free (Class_Def);
+         exception
+            when DB_Error | Not_Found =>
+               null;
+         end;
          if MI_Tab.Buffer (MI_Tab.Return_Type.First ..
                            MI_Tab.Return_Type.Last) = "void" then
-            Target_Kind := Non_Generic_Procedure;
+            if IsTemplate then
+               Target_Kind := Generic_Procedure;
+            else
+               Target_Kind := Non_Generic_Procedure;
+            end if;
          else
-            Target_Kind := Non_Generic_Function_Or_Operator;
+            if IsTemplate then
+               Target_Kind := Generic_Function_Or_Operator;
+            else
+               Target_Kind := Non_Generic_Function_Or_Operator;
+            end if;
          end if;
          End_Position := MI_Tab.End_Position;
       exception
@@ -47,6 +67,7 @@ begin
             Fail ("unable to find method "
                   & Sym.Buffer (Sym.Class.First .. Sym.Class.Last) & "."
                   & Fu_Id);
+            return;
       end;
    else
       begin
@@ -65,6 +86,7 @@ begin
       exception
          when DB_Error | Not_Found =>
             Fail ("unable to find function " & Fu_Id);
+            return;
       end;
    end if;
 
@@ -81,14 +103,12 @@ begin
       if Decl_Info /= null then -- Body_Entity is inserted only w/ fwd decl
          Body_Position  := Sym.Start_Position;
       end if;
-      Free (MI_Tab);
    else
       --  Try to find forward declaration
       Decl_Info      := Find_First_Forward_Declaration (FU_Tab);
       if Decl_Info /= null then -- Body_Entity is inserted only w/ fwd decl
          Body_Position  := Sym.Start_Position;
       end if;
-      Free (FU_Tab);
    end if;
 
    if Decl_Info = null then
@@ -150,23 +170,46 @@ begin
                                     .. Ref.Referred_Symbol_Name.Last);
             Matches  : Match_Array (0 .. 0);
             Pat      : Pattern_Matcher := Compile ("\b" & S & "\b");
+            Our_Ref  : Boolean;
          begin
-            loop
-               Match (Pat, Src_Line (P .. Src_Line'Last), Matches);
-               exit when Matches (0) = No_Match or Ref.Symbol = Undef;
-               P := Matches (0).Last + 1;
-               PRef := Ref;
-               --  conversion to column
-               PRef.Position.Column := Matches (0).First - Src_Line'First;
-               if (Fu_To_Handlers (Ref.Referred_Symbol) /= null) then
-                  Fu_To_Handlers (Ref.Referred_Symbol)(PRef);
-               end if;
-            end loop;
+            if Sym.Symbol = MI then
+               Our_Ref := Cmp_Arg_Types
+                 (Ref.Buffer,
+                  MI_Tab.Buffer,
+                  Ref.Caller_Argument_Types,
+                  MI_Tab.Arg_Types);
+            else
+               Our_Ref := Cmp_Arg_Types
+                 (Ref.Buffer,
+                  FU_Tab.Buffer,
+                  Ref.Caller_Argument_Types,
+                  FU_Tab.Arg_Types);
+            end if;
+
+            if Our_Ref then
+               loop
+                  Match (Pat, Src_Line (P .. Src_Line'Last), Matches);
+                  exit when Matches (0) = No_Match or Ref.Symbol = Undef;
+                  P := Matches (0).Last + 1;
+                  PRef := Ref;
+                  --  conversion to column
+                  PRef.Position.Column := Matches (0).First - Src_Line'First;
+                  if (Fu_To_Handlers (Ref.Referred_Symbol) /= null) then
+                     Fu_To_Handlers (Ref.Referred_Symbol)(PRef);
+                  end if;
+               end loop;
+            end if;
             Free (Ref);
          end;
 
          Free (P);
    end loop;
+
+   if Sym.Symbol = MI then
+      Free (MI_Tab);
+   else
+      Free (FU_Tab);
+   end if;
 
 exception
    when DB_Error => null; -- non-existent table .to

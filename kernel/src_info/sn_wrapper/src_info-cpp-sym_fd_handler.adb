@@ -12,7 +12,9 @@ is
    First_FD_Pos : Point := Invalid_Point;
    FD_Tab       : FD_Table;
    FD_Tab_Tmp   : FD_Table;
-
+   Attributes   : SN_Attributes;
+   IsStatic     : Boolean;
+   Match        : Boolean;
 begin
    Info ("Sym_FD_Hanlder: """
          & Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last)
@@ -24,6 +26,9 @@ begin
       Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last),
       Sym.Start_Position,
       Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last));
+
+   Attributes := SN_Attributes (FD_Tab.Attributes);
+   IsStatic   := (Attributes and SN_STATIC) = SN_STATIC;
 
    Set_Cursor
      (SN_Table (FD),
@@ -37,18 +42,27 @@ begin
       FD_Tab_Tmp := Parse_Pair (P.all);
       Free (P);
       --  Update position of the first forward declaration
-      if Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last)
-         = FD_Tab_Tmp.Buffer (FD_Tab_Tmp.File_Name.First ..
-                              FD_Tab_Tmp.File_Name.Last)
-         and then Cmp_Prototypes
-           (FD_Tab.Buffer,
-            FD_Tab_Tmp.Buffer,
-            FD_Tab.Arg_Types,
-            FD_Tab_Tmp.Arg_Types,
-            FD_Tab.Return_Type,
-            FD_Tab_Tmp.Return_Type)
-         and then ((First_FD_Pos = Invalid_Point)
-         or else Less (FD_Tab_Tmp.Start_Position, First_FD_Pos)) then
+      --  We have to compare prototypes of all global functions
+      --  if this is a global function, or only local (static)
+      --  ones if this is a static function
+      Match := True;
+      if IsStatic then
+         Match := Match and Sym.Buffer (Sym.File_Name.First ..
+                                        Sym.File_Name.Last)
+               = FD_Tab_Tmp.Buffer (FD_Tab_Tmp.File_Name.First ..
+                                    FD_Tab_Tmp.File_Name.Last);
+      end if;
+
+      Match := Match and Cmp_Prototypes
+        (FD_Tab.Buffer,
+         FD_Tab_Tmp.Buffer,
+         FD_Tab.Arg_Types,
+         FD_Tab_Tmp.Arg_Types,
+         FD_Tab.Return_Type,
+         FD_Tab_Tmp.Return_Type);
+
+      if (Match and then First_FD_Pos = Invalid_Point)
+            or else FD_Tab_Tmp.Start_Position < First_FD_Pos then
          First_FD_Pos := FD_Tab_Tmp.Start_Position;
       end if;
       Free (FD_Tab_Tmp);

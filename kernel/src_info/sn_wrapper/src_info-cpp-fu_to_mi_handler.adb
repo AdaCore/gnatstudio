@@ -11,8 +11,8 @@ procedure Fu_To_Mi_Handler (Ref : TO_Table) is
    Decl_Info    : E_Declaration_Info_List;
    Overloaded   : Boolean := False;
    Init         : Boolean := True;
-   Ptr          : E_Declaration_Info_List;
    Kind         : E_Kind;
+   IsTemplate   : Boolean := False;
 
    function Find_Method (Fn : MI_Table) return E_Declaration_Info_List;
    --  searches for forward declaration. if no fwd decl found, searches for
@@ -78,12 +78,34 @@ begin
       --  If method
       --    defined in the current file => add reference
       --    defined in another file => add dep decl and reference it
-      --  TODO templates
+      declare
+         Class_Def    : CL_Table;
+      begin -- check if this class is template
+         Class_Def := Find
+           (SN_Table (CL),
+            Ref.Buffer (Ref.Referred_Class.First ..
+                        Ref.Referred_Class.Last));
+
+         IsTemplate := Class_Def.Template_Parameters.First
+            < Class_Def.Template_Parameters.Last;
+         Free (Class_Def);
+      exception
+         when DB_Error | Not_Found =>
+            null;
+      end;
       if Fn.Buffer (Fn.Return_Type.First .. Fn.Return_Type.Last)
             = "void" then
-         Kind := Non_Generic_Function_Or_Operator;
+         if IsTemplate then
+            Kind := Generic_Function_Or_Operator;
+         else
+            Kind := Non_Generic_Function_Or_Operator;
+         end if;
       else
-         Kind := Non_Generic_Procedure;
+         if IsTemplate then
+            Kind := Generic_Procedure;
+         else
+            Kind := Non_Generic_Procedure;
+         end if;
       end if;
       if Fn.Buffer (Fn.File_Name.First .. Fn.File_Name.Last)
             = Get_LI_Filename (Global_LI_File) then
@@ -141,26 +163,24 @@ begin
       end if;
    else -- overloaded entity
       --  have we already declared it?
-      Ptr := Global_LI_File.LI.Body_Info.Declarations;
-      while Ptr /= null loop
-         Decl_Info := Ptr;
-         exit when Ptr.Value.Declaration.Kind = Overloaded_Entity
-            and then Ptr.Value.Declaration.Name.all =
-               Fn.Buffer (Fn.Name.First .. Fn.Name.Last);
-         Ptr := Ptr.Next;
-      end loop;
-      if Ptr = null then -- no, we have not. Do it now
-         Decl_Info := new E_Declaration_Info_Node'
-           (Value =>
-              (Declaration => No_Declaration,
-               References => null),
-            Next => Global_LI_File.LI.Body_Info.Declarations);
-         Decl_Info.Value.Declaration.Name :=
-            new String'(Ref.Buffer (Ref.Referred_Symbol_Name.First ..
-                                    Ref.Referred_Symbol_Name.Last));
-         Decl_Info.Value.Declaration.Kind := Overloaded_Entity;
-         Global_LI_File.LI.Body_Info.Declarations := Decl_Info;
-      end if;
+      begin
+         Decl_Info := Find_Declaration
+           (File        => Global_LI_File,
+            Symbol_Name => Fn.Buffer (Fn.Name.First .. Fn.Name.Last),
+            Kind        => Overloaded_Entity);
+      exception
+         when Declaration_Not_Found =>
+            Decl_Info := new E_Declaration_Info_Node'
+              (Value =>
+                 (Declaration => No_Declaration,
+                  References => null),
+               Next => Global_LI_File.LI.Body_Info.Declarations);
+            Decl_Info.Value.Declaration.Name :=
+               new String'(Ref.Buffer (Ref.Referred_Symbol_Name.First ..
+                                       Ref.Referred_Symbol_Name.Last));
+            Decl_Info.Value.Declaration.Kind := Overloaded_Entity;
+            Global_LI_File.LI.Body_Info.Declarations := Decl_Info;
+      end;
    end if;
    Free (Fn);
 

@@ -11,7 +11,6 @@ procedure Fu_To_Fu_Handler (Ref : TO_Table) is
    Decl_Info    : E_Declaration_Info_List;
    Overloaded   : Boolean := False;
    Init         : Boolean := True;
-   Ptr          : E_Declaration_Info_List;
    Kind         : E_Kind;
 
    function Find_Function (Fn : FU_Table) return E_Declaration_Info_List;
@@ -131,26 +130,24 @@ begin
       end if;
    else -- overloaded entity
       --  have we already declared it?
-      Ptr := Global_LI_File.LI.Body_Info.Declarations;
-      while Ptr /= null loop
-         Decl_Info := Ptr;
-         exit when Ptr.Value.Declaration.Kind = Overloaded_Entity
-            and then Ptr.Value.Declaration.Name.all =
-               Fn.Buffer (Fn.Name.First .. Fn.Name.Last);
-         Ptr := Ptr.Next;
-      end loop;
-      if Ptr = null then -- no, we have not. Do it now
-         Decl_Info := new E_Declaration_Info_Node'
-           (Value =>
-              (Declaration => No_Declaration,
-               References => null),
-            Next => Global_LI_File.LI.Body_Info.Declarations);
-         Decl_Info.Value.Declaration.Name :=
-            new String'(Ref.Buffer (Ref.Referred_Symbol_Name.First ..
-                                    Ref.Referred_Symbol_Name.Last));
-         Decl_Info.Value.Declaration.Kind := Overloaded_Entity;
-         Global_LI_File.LI.Body_Info.Declarations := Decl_Info;
-      end if;
+      begin
+         Decl_Info := Find_Declaration
+           (File        => Global_LI_File,
+            Symbol_Name => Fn.Buffer (Fn.Name.First .. Fn.Name.Last),
+            Kind        => Overloaded_Entity);
+      exception
+         when Declaration_Not_Found =>
+            Decl_Info := new E_Declaration_Info_Node'
+              (Value =>
+                 (Declaration => No_Declaration,
+                  References => null),
+               Next => Global_LI_File.LI.Body_Info.Declarations);
+            Decl_Info.Value.Declaration.Name :=
+               new String'(Ref.Buffer (Ref.Referred_Symbol_Name.First ..
+                                       Ref.Referred_Symbol_Name.Last));
+            Decl_Info.Value.Declaration.Kind := Overloaded_Entity;
+            Global_LI_File.LI.Body_Info.Declarations := Decl_Info;
+      end;
    end if;
    Free (Fn);
 
