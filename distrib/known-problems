@@ -7,7 +7,7 @@ Known Problems fixed in GPS 1.3.1
 
 - C902-001 Wrong highlighting of special C #include directives
   Problem:    In a C file, when using #include constructs with no < nor "
-              (e.g. #include FOO), the source highlighting gets confused.
+              (e.g. #include MACRO), the source highlighting gets confused.
   Workaround: Avoid this kind of special construct
 
 - C901-002 Internal error when binding control-x and another control-x exists
@@ -26,7 +26,6 @@ Known Problems fixed in GPS 1.3.1
   Problem:    When starting gps, the following is displayed:
      /usr/lib/dld.sl: Can't open shared library: /opt/gtk-2.0/lib/libiconv.sl.2
      /usr/lib/dld.sl: No such file or directory
-     Abort(coredump)
   Workaround: None, an upgrade to 1.3.1 is needed
 
 - C825-002 Exit when using task manager suspend/resume
@@ -40,6 +39,12 @@ Known Problems fixed in GPS 1.3.1
               Win32 editors) as external editor.
   Workaround: Specify "cmd/c notepad %f" instead of simply "notepad" in the
               preference.
+
+- Global customization files not loaded
+  Problem:    Depending where gps is installed, it may not load the custom
+              xml files distributed under <prefix>/share/gps/customize
+  Workaround: Use the default (e.g. /opt/gnu/gnat under Solaris) GNAT prefix
+              to install gps.
 
 Known Problems fixed in GPS 1.3.0
 
