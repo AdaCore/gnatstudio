@@ -1310,9 +1310,9 @@ Contains all the preferences in XML format, as specified in the
 @ref{preferences menu}.
 
    @item $HOME/.gvd/window_settings
-Contains all the settings of the windows in GVD (window sizes, pane
+Contains all the settings of the windows (window sizes, pane
 offset) in XML format. These settings are saved automatically when quitting
-GVD, and loading automatically at start up. To reset the settings, simply
+GVD, and loaded automatically at start up. To reset the settings, simply
 remove this file.
 
    @item $HOME/.gvd/sessions
