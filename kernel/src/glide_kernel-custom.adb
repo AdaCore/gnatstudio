@@ -237,9 +237,9 @@ package body Glide_Kernel.Custom is
    -- Add_Customization_String --
    ------------------------------
 
-   procedure Add_Customization_String
+   function Add_Customization_String
      (Kernel        : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Customization : UTF8_String)
+      Customization : UTF8_String) return String
    is
       --  Add a valid prefix and toplevel node, since the string won't
       --  contain any
@@ -299,9 +299,15 @@ package body Glide_Kernel.Custom is
             Free (Node);
          end if;
 
+         return "";
+
       else
-         Insert (Kernel, Err.all, Mode => Error);
-         Free (Err);
+         declare
+            E : constant String := Err.all;
+         begin
+            Free (Err);
+            return E;
+         end;
       end if;
 
    exception
@@ -310,6 +316,7 @@ package body Glide_Kernel.Custom is
 
          Trace (Me, "Could not parse custom string " & Customization
                 & ' ' & Exception_Message (E));
+         return "internal error";
    end Add_Customization_String;
 
 end Glide_Kernel.Custom;

@@ -717,8 +717,15 @@ package body Glide_Kernel.Scripts is
 
       elsif Command = "parse_xml" then
          Name_Parameters (Data, Xml_Custom_Parameters);
-         Glide_Kernel.Custom.Add_Customization_String
-           (Kernel, Nth_Arg (Data, 1));
+         declare
+            Err : constant String :=
+              Glide_Kernel.Custom.Add_Customization_String
+                 (Kernel, Nth_Arg (Data, 1));
+         begin
+            if Err /= "" then
+               Set_Error_Msg (Data, Err);
+            end if;
+         end;
 
       elsif Command = "execute_action" then
          Name_Parameters (Data, Exec_Action_Parameters);

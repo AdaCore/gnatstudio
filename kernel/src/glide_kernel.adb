@@ -1845,10 +1845,13 @@ package body Glide_Kernel is
    procedure Bind_Default_Key
      (Kernel      : access Kernel_Handle_Record;
       Action      : String;
-      Default_Key : String) is
+      Default_Key : String)
+   is
+      Error : constant String := Add_Customization_String
+        (Kernel, "<key action=""" & Action & """>" & Default_Key & "</key>");
+      pragma Unreferenced (Error);
    begin
-      Add_Customization_String
-      (Kernel, "<key action=""" & Action & """>" & Default_Key & "</key>");
+      null;
    end Bind_Default_Key;
 
    ------------------------------
