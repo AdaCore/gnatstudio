@@ -104,9 +104,12 @@ package Src_Editor_Buffer is
    procedure Save_To_File
      (Buffer   : access Source_Buffer_Record;
       Filename : VFS.Virtual_File;
-      Success  : out Boolean);
+      Success  : out Boolean;
+      Internal : Boolean := False);
    --  Save the current buffer into a file. Success is set to False if this
    --  operation failed and the buffer could not be saved.
+   --  If Internal is True, save the file to disk but do not modify the buffer
+   --  status.
 
    procedure Set_Language
      (Buffer : access Source_Buffer_Record;
