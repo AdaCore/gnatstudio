@@ -2589,14 +2589,47 @@ package body Project_Explorers is
       N, N2  : Gtk_Ctree_Node;
       N_Type : Node_Types;
 
+
    begin
       --  If the information about the node hasn't been computed before,
       --  then we don't need to do anything. This will be done when the
       --  node is actually expanded by the user
 
+      --  We need to recompute if a node now has children, when it didn't
+      --  before.
+      if Row_Get_Children (Node_Get_Row (Node)) = null then
+         declare
+            Str : constant String := Node_Get_Text (Explorer.Tree, Node, 0);
+            Prj : Project_Id := Get_Project_From_Node (Explorer, Node);
+         begin
+            if (Data.Node_Type = Directory_Node
+                  and then Has_Entries (Prj, Str))
+              or else
+              (Data.Node_Type = Project_Node
+                 and then Projects.Table (Prj).Imported_Projects =
+                   Empty_Project_List
+                 and then (not Get_Pref (Explorer.Kernel, Show_Directories)
+                   or else Projects.Table (Prj).Source_Dirs = Nil_String))
+            then
+               Set_Node_Info
+                 (Ctree         => Explorer.Tree,
+                  Node          => Node,
+                  Text          => Str,
+                  Spacing       => Ctree_Spacing,
+                  Pixmap_Closed => Explorer.Close_Pixmaps (Data.Node_Type),
+                  Mask_Closed   => Explorer.Close_Masks   (Data.Node_Type),
+                  Pixmap_Opened => Explorer.Open_Pixmaps  (Data.Node_Type),
+                  Mask_Opened   => Explorer.Open_Masks    (Data.Node_Type),
+                  Is_Leaf       => False,
+                  Expanded      => False);
+               Add_Dummy_Node (Explorer, Node);
+            end if;
+         end;
+      end if;
+
       if Data.Up_To_Date then
          --  Likewise, if a node is not expanded, we simply remove all
-         --  underlying information
+         --  underlying information.
 
          if not Row_Get_Expanded (Node_Get_Row (Node)) then
             Data.Up_To_Date := False;
