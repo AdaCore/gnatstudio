@@ -327,7 +327,7 @@ package body Glide_Kernel.Standard_Hooks is
          declare
             Length : constant Integer := Integer'Max (0, Column_End - Column);
             Args   : Argument_List :=
-              (new String'("edit"),
+              (new String'("Editor.edit"),
                new String'(Full_Name (Filename).all),
                new String'(Image (Line)),
                new String'(Image (Column)),
