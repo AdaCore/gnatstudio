@@ -47,7 +47,7 @@ with Gtkada.Handlers;     use Gtkada.Handlers;
 with Pango.Font;          use Pango.Font;
 
 with GNAT.OS_Lib;         use GNAT.OS_Lib;
-with Unchecked_Deallocation;
+with Ada.Unchecked_Deallocation;
 
 with Prj_API;              use Prj_API;
 with Prj_Normalize;        use Prj_Normalize;
@@ -124,16 +124,26 @@ package body Switches_Editors is
    procedure Destroy_Pages
      (Editor : access Switches_Edit_Record; Pages : Page_Filter) is
    begin
-      Editor.Pages := not Pages;
+      Editor.Pages := Editor.Pages and not Pages;
 
       if (Pages and Gnatmake_Page) /= 0 then
          Destroy (Editor.Make_Switches);
          Editor.Make_Switches := null;
       end if;
 
-      if (Pages and Compiler_Page) /= 0 then
-         Destroy (Editor.Compiler_Switches);
-         Editor.Compiler_Switches := null;
+      if (Pages and Ada_Page) /= 0 then
+         Destroy (Editor.Ada_Switches);
+         Editor.Ada_Switches := null;
+      end if;
+
+      if (Pages and C_Page) /= 0 then
+         Destroy (Editor.C_Switches);
+         Editor.C_Switches := null;
+      end if;
+
+      if (Pages and Cpp_Page) /= 0 then
+         Destroy (Editor.Cpp_Switches);
+         Editor.Cpp_Switches := null;
       end if;
 
       if (Pages and Binder_Page) /= 0 then
@@ -179,25 +189,38 @@ package body Switches_Editors is
      (Editor : access Switches_Edit_Record; Tool : Tool_Names)
       return Argument_List
    is
-      Cmd_Line : Gtk_Entry;
+      Cmd_Line           : Gtk_Entry;
       Null_Argument_List : Argument_List (1 .. 0);
+      List               : Argument_List_Access;
+
+      procedure Simple_Free is new
+        Ada.Unchecked_Deallocation (Argument_List, Argument_List_Access);
+
    begin
       case Tool is
-         when Gnatmake => Cmd_Line := Editor.Make_Switches_Entry;
-         when Compiler => Cmd_Line := Editor.Compiler_Switches_Entry;
-         when Binder   => Cmd_Line := Editor.Binder_Switches_Entry;
-         when Linker   => Cmd_Line := Editor.Linker_Switches_Entry;
+         when Gnatmake     => Cmd_Line := Editor.Make_Switches_Entry;
+         when Ada_Compiler => Cmd_Line := Editor.Ada_Switches_Entry;
+         when C_Compiler   => Cmd_Line := Editor.C_Switches_Entry;
+         when Cpp_Compiler => Cmd_Line := Editor.Cpp_Switches_Entry;
+         when Binder       => Cmd_Line := Editor.Binder_Switches_Entry;
+         when Linker       => Cmd_Line := Editor.Linker_Switches_Entry;
       end case;
 
-      --  ??? Do we have a memory leak here ? We can't free the
-      --  ??? list contained, but should free the array access.
       declare
          Str : constant String := Get_Chars (Cmd_Line);
       begin
          if Str /= "" then
-            return Argument_String_To_List (Str).all;
+            List := Argument_String_To_List (Str);
+
+            declare
+               Ret : Argument_List := List.all;
+            begin
+               Simple_Free (List);
+               return Ret;
+            end;
          end if;
       end;
+
       return Null_Argument_List;
    end Get_Switches;
 
@@ -275,15 +298,18 @@ package body Switches_Editors is
 
    begin
       case Tool is
-         when Gnatmake => Num_Switches :=  6 + 1;  --  +1 is for arg to -j
-         when Compiler => Num_Switches := 20 + 1;  --  +1 is for -g
-         when Binder   => Num_Switches :=  3 + 1;  --  +1 is for -g
-         when Linker   => Num_Switches :=  1 + 1;  --  +1 is for -g
+         when Gnatmake     => Num_Switches :=  6 + 1;  --  +1 is for arg to -j
+         when Ada_Compiler => Num_Switches := 22;
+         when C_Compiler   => Num_Switches := 10;
+         when Cpp_Compiler => Num_Switches := 10;
+         when Binder       => Num_Switches :=  3;
+         when Linker       => Num_Switches :=  3;
       end case;
 
       declare
-         Arr   : Argument_List (1 .. Num_Switches);
-         Index : Natural := Arr'First;
+         Arr    : Argument_List (1 .. Num_Switches);
+         Index  : Natural := Arr'First;
+         Active : Boolean;
 
       begin
          case Tool is
@@ -293,6 +319,31 @@ package body Switches_Editors is
                Check_Toggle (Editor.Make_Minimal_Recompile, "-m", Arr, Index);
                Check_Toggle (Editor.Make_Keep_Going, "-k", Arr, Index);
                Check_Toggle (Editor.Make_Debug, "-g", Arr, Index);
+               Active := Get_Active (Editor.Make_Debug);
+
+               if Active /= Editor.Prev_Make_Debug then
+                  if (Editor.Pages and Ada_Page) /= 0 then
+                     Set_Active (Editor.Ada_Debug, Active);
+                     Set_Sensitive (Editor.Ada_Debug, not Active);
+                  end if;
+
+                  if (Editor.Pages and C_Page) /= 0 then
+                     Set_Active (Editor.C_Debug, Active);
+                     Set_Sensitive (Editor.C_Debug, not Active);
+                  end if;
+
+                  if (Editor.Pages and Cpp_Page) /= 0 then
+                     Set_Active (Editor.Cpp_Debug, Active);
+                     Set_Sensitive (Editor.Cpp_Debug, not Active);
+                  end if;
+
+                  if (Editor.Pages and Linker_Page) /= 0 then
+                     Set_Active (Editor.Linker_Debug, Active);
+                     Set_Sensitive (Editor.Linker_Debug, not Active);
+                  end if;
+
+                  Editor.Prev_Make_Debug := Active;
+               end if;
 
                if Get_Active (Editor.Make_Multiprocessing) then
                   Arr (Index) := new String' ("-j" &
@@ -300,42 +351,95 @@ package body Switches_Editors is
                   Index := Index + 1;
                end if;
 
-            when Compiler =>
-               Check_Combo (Editor.Optimization_Level, "-O", Arr, Index);
-               Check_Combo (Editor.Compile_Representation_Info,
-                           "-gnatR", Arr, Index);
+            when Ada_Compiler =>
+               Check_Combo (Editor.Ada_Optimization_Level, "-O", Arr, Index);
                Check_Toggle
-                 (Editor.Compile_No_Inline, "-fno-inline", Arr, Index);
+                 (Editor.Ada_No_Inline, "-fno-inline", Arr, Index);
                Check_Toggle
-                 (Editor.Compile_Interunit_Inlining, "-gnatN", Arr, Index);
+                 (Editor.Ada_Interunit_Inlining, "-gnatN", Arr, Index);
                Check_Toggle
-                 (Editor.Compile_Unroll_Loops, "-funroll-loops", Arr, Index);
+                 (Editor.Ada_Unroll_Loops, "-funroll-loops", Arr, Index);
                Check_Toggle
-                 (Editor.Compile_Full_Errors, "-gnatf", Arr, Index);
+                 (Editor.Ada_Code_Coverage, "-ftest-coverage", Arr, Index);
+               Set_Active
+                 (Editor.Ada_Instrument_Arcs,
+                  Get_Active (Editor.Ada_Code_Coverage));
                Check_Toggle
-                 (Editor.Compile_No_Warnings, "-gnatws", Arr, Index);
+                 (Editor.Ada_Instrument_Arcs, "-fprofile-arcs", Arr, Index);
                Check_Toggle
-                 (Editor.Compile_Warning_Error, "-gnatwe", Arr, Index);
+                 (Editor.Ada_Full_Errors, "-gnatf", Arr, Index);
                Check_Toggle
-                 (Editor.Compile_Elab_Warning, "-gnatwl", Arr, Index);
+                 (Editor.Ada_No_Warnings, "-gnatws", Arr, Index);
                Check_Toggle
-                 (Editor.Compile_Unused_Warning, "-gnatwu", Arr, Index);
+                 (Editor.Ada_Warning_Error, "-gnatwe", Arr, Index);
                Check_Toggle
-                 (Editor.Compile_Style_Checks, "-gnaty", Arr, Index);
+                 (Editor.Ada_Elab_Warning, "-gnatwl", Arr, Index);
                Check_Toggle
-                 (Editor.Compile_Overflow_Checking, "-gnato", Arr, Index);
+                 (Editor.Ada_Unused_Warning, "-gnatwu", Arr, Index);
                Check_Toggle
-                 (Editor.Compile_Suppress_All_Checks, "-gnatp", Arr, Index);
+                 (Editor.Ada_Style_Checks, "-gnaty", Arr, Index);
                Check_Toggle
-                 (Editor.Compile_Stack_Checking, "-fstack-check", Arr, Index);
+                 (Editor.Ada_Overflow_Checking, "-gnato", Arr, Index);
                Check_Toggle
-                 (Editor.Compile_Dynamic_Elaboration, "-gnatE", Arr, Index);
-               Check_Toggle (Editor.Compile_Assertions, "-gnata", Arr, Index);
+                 (Editor.Ada_Suppress_All_Checks, "-gnatp", Arr, Index);
                Check_Toggle
-                 (Editor.Compile_Debug_Expanded_Code, "-gnatD", Arr, Index);
+                 (Editor.Ada_Stack_Checking, "-fstack-check", Arr, Index);
                Check_Toggle
-                 (Editor.Compile_Language_Extensions, "-gnatX", Arr, Index);
-               Check_Toggle (Editor.Compile_Ada83_Mode, "-gnat83", Arr, Index);
+                 (Editor.Ada_Dynamic_Elaboration, "-gnatE", Arr, Index);
+               Check_Toggle (Editor.Ada_Debug, "-g", Arr, Index);
+               Check_Toggle (Editor.Ada_Assertions, "-gnata", Arr, Index);
+               Check_Toggle
+                 (Editor.Ada_Debug_Expanded_Code, "-gnatD", Arr, Index);
+               Check_Toggle
+                 (Editor.Ada_Language_Extensions, "-gnatX", Arr, Index);
+               Check_Toggle (Editor.Ada83_Mode, "-gnat83", Arr, Index);
+
+            when C_Compiler =>
+               Check_Combo (Editor.C_Optimization_Level, "-O", Arr, Index);
+               Check_Toggle (Editor.C_No_Inline, "-fno-inline", Arr, Index);
+               Check_Toggle
+                 (Editor.C_Unroll_Loops, "-funroll-loops", Arr, Index);
+               Check_Toggle (Editor.C_Profile, "-pg", Arr, Index);
+               Set_Active
+                 (Editor.Linker_Profile,
+                  (Get_Active (Editor.C_Profile))
+                   or else ((Editor.Pages and Cpp_Page) /= 0
+                     and then Get_Active (Editor.Cpp_Profile)));
+               Check_Toggle
+                 (Editor.C_Code_Coverage, "-ftest-coverage", Arr, Index);
+               Set_Active
+                 (Editor.C_Instrument_Arcs,
+                  Get_Active (Editor.C_Code_Coverage));
+               Check_Toggle
+                 (Editor.C_Instrument_Arcs, "-fprofile-arcs", Arr, Index);
+               Check_Toggle (Editor.C_Debug, "-g", Arr, Index);
+               Check_Toggle (Editor.C_All_Warnings, "-Wall", Arr, Index);
+               Check_Toggle (Editor.C_No_Warnings, "-w", Arr, Index);
+               Check_Toggle (Editor.C_Ansi, "-ansi", Arr, Index);
+
+            when Cpp_Compiler =>
+               Check_Combo (Editor.Cpp_Optimization_Level, "-O", Arr, Index);
+               Check_Toggle (Editor.Cpp_No_Inline, "-fno-inline", Arr, Index);
+               Check_Toggle
+                 (Editor.Cpp_Unroll_Loops, "-funroll-loops", Arr, Index);
+               Check_Toggle (Editor.Cpp_Profile, "-pg", Arr, Index);
+               Set_Active
+                 (Editor.Linker_Profile,
+                  (Get_Active (Editor.Cpp_Profile))
+                   or else ((Editor.Pages and C_Page) /= 0
+                     and then Get_Active (Editor.C_Profile)));
+               Check_Toggle
+                 (Editor.Cpp_Code_Coverage, "-ftest-coverage", Arr, Index);
+               Set_Active
+                 (Editor.Cpp_Instrument_Arcs,
+                  Get_Active (Editor.Cpp_Code_Coverage));
+               Check_Toggle
+                 (Editor.Cpp_Instrument_Arcs, "-fprofile-arcs", Arr, Index);
+               Check_Toggle
+                 (Editor.Cpp_Exceptions, "-fexceptions", Arr, Index);
+               Check_Toggle (Editor.Cpp_Debug, "-g", Arr, Index);
+               Check_Toggle (Editor.Cpp_All_Warnings, "-Wall", Arr, Index);
+               Check_Toggle (Editor.Cpp_No_Warnings, "-w", Arr, Index);
 
             when Binder =>
                Check_Toggle (Editor.Binder_Tracebacks, "-E", Arr, Index);
@@ -350,6 +454,8 @@ package body Switches_Editors is
 
             when Linker =>
                Check_Toggle (Editor.Linker_Strip, "-s", Arr, Index);
+               Check_Toggle (Editor.Linker_Debug, "-g", Arr, Index);
+               Check_Toggle (Editor.Linker_Profile, "-pg", Arr, Index);
          end case;
 
          return Arr (Arr'First .. Index - 1);
@@ -405,18 +511,13 @@ package body Switches_Editors is
             then
                if Switches (J)'Length > Switch'Length then
                   Level := Gint'Value
-                    (Switches (J)(Switches (J)'First + Switch'Length
+                    (Switches (J) (Switches (J)'First + Switch'Length
                                   .. Switches (J)'Last));
                else
                   Level := 0;
                end if;
 
-               if Switch = "-gnatR"
-                 and then Switches (J).all = "-gnatR"
-               then
-                  Select_Item (Get_List (Combo), 1);
-
-               elsif Switch = "-O"
+               if Switch = "-O"
                  and then Switches (J).all = "-O"
                then
                   Select_Item (Get_List (Combo), 1);
@@ -438,7 +539,11 @@ package body Switches_Editors is
       pragma Assert
         (Tool /= Gnatmake or else (Editor.Pages and Gnatmake_Page) /= 0);
       pragma Assert
-        (Tool /= Compiler or else (Editor.Pages and Compiler_Page) /= 0);
+        (Tool /= Ada_Compiler or else (Editor.Pages and Ada_Page) /= 0);
+      pragma Assert
+        (Tool /= C_Compiler or else (Editor.Pages and C_Page) /= 0);
+      pragma Assert
+        (Tool /= Cpp_Compiler or else (Editor.Pages and Cpp_Page) /= 0);
       pragma Assert
         (Tool /= Binder or else (Editor.Pages and Binder_Page) /= 0);
       pragma Assert
@@ -471,30 +576,58 @@ package body Switches_Editors is
 
             Cmd_Line := Editor.Make_Switches_Entry;
 
-         when Compiler =>
-            Set_Combo (Editor.Optimization_Level, "-O");
-            Set_Combo (Editor.Compile_Representation_Info, "-gnatR");
-            Set_Active (Editor.Compile_No_Inline, Is_Set ("-fno-inline"));
-            Set_Active (Editor.Compile_Interunit_Inlining, Is_Set ("-gnatN"));
-            Set_Active
-              (Editor.Compile_Unroll_Loops, Is_Set ("-funroll-loops"));
-            Set_Active (Editor.Compile_Full_Errors, Is_Set ("-gnatf"));
-            Set_Active (Editor.Compile_No_Warnings, Is_Set ("-gnatws"));
-            Set_Active (Editor.Compile_Warning_Error, Is_Set ("-gnatwe"));
-            Set_Active (Editor.Compile_Elab_Warning, Is_Set ("-gnatwl"));
-            Set_Active (Editor.Compile_Unused_Warning, Is_Set ("-gnatwu"));
-            Set_Active (Editor.Compile_Style_Checks, Is_Set ("-gnaty"));
-            Set_Active (Editor.Compile_Overflow_Checking, Is_Set ("-gnato"));
-            Set_Active (Editor.Compile_Suppress_All_Checks, Is_Set ("-gnatp"));
-            Set_Active
-              (Editor.Compile_Stack_Checking, Is_Set ("-fstack-check"));
-            Set_Active (Editor.Compile_Dynamic_Elaboration, Is_Set ("-gnatE"));
-            Set_Active (Editor.Compile_Assertions, Is_Set ("-gnata"));
-            Set_Active (Editor.Compile_Debug_Expanded_Code, Is_Set ("-gnatD"));
-            Set_Active (Editor.Compile_Language_Extensions, Is_Set ("-gnatX"));
-            Set_Active (Editor.Compile_Ada83_Mode, Is_Set ("-gnat83"));
+         when Ada_Compiler =>
+            Set_Combo (Editor.Ada_Optimization_Level, "-O");
+            Set_Active (Editor.Ada_No_Inline, Is_Set ("-fno-inline"));
+            Set_Active (Editor.Ada_Interunit_Inlining, Is_Set ("-gnatN"));
+            Set_Active (Editor.Ada_Unroll_Loops, Is_Set ("-funroll-loops"));
+            Set_Active (Editor.Ada_Code_Coverage, Is_Set ("-ftest-coverage"));
+            Set_Active (Editor.Ada_Instrument_Arcs, Is_Set ("-fprofile-arcs"));
+            Set_Active (Editor.Ada_Full_Errors, Is_Set ("-gnatf"));
+            Set_Active (Editor.Ada_No_Warnings, Is_Set ("-gnatws"));
+            Set_Active (Editor.Ada_Warning_Error, Is_Set ("-gnatwe"));
+            Set_Active (Editor.Ada_Elab_Warning, Is_Set ("-gnatwl"));
+            Set_Active (Editor.Ada_Unused_Warning, Is_Set ("-gnatwu"));
+            Set_Active (Editor.Ada_Style_Checks, Is_Set ("-gnaty"));
+            Set_Active (Editor.Ada_Overflow_Checking, Is_Set ("-gnato"));
+            Set_Active (Editor.Ada_Suppress_All_Checks, Is_Set ("-gnatp"));
+            Set_Active (Editor.Ada_Stack_Checking, Is_Set ("-fstack-check"));
+            Set_Active (Editor.Ada_Dynamic_Elaboration, Is_Set ("-gnatE"));
+            Set_Active (Editor.Ada_Debug, Is_Set ("-g"));
+            Set_Active (Editor.Ada_Assertions, Is_Set ("-gnata"));
+            Set_Active (Editor.Ada_Debug_Expanded_Code, Is_Set ("-gnatD"));
+            Set_Active (Editor.Ada_Language_Extensions, Is_Set ("-gnatX"));
+            Set_Active (Editor.Ada83_Mode, Is_Set ("-gnat83"));
 
-            Cmd_Line := Editor.Compiler_Switches_Entry;
+            Cmd_Line := Editor.Ada_Switches_Entry;
+
+         when C_Compiler =>
+            Set_Combo (Editor.C_Optimization_Level, "-O");
+            Set_Active (Editor.C_No_Inline, Is_Set ("-fno-inline"));
+            Set_Active (Editor.C_Unroll_Loops, Is_Set ("-funroll-loops"));
+            Set_Active (Editor.C_Profile, Is_Set ("-pg"));
+            Set_Active (Editor.C_Code_Coverage, Is_Set ("-ftest-coverage"));
+            Set_Active (Editor.C_Instrument_Arcs, Is_Set ("-fprofile-arcs"));
+            Set_Active (Editor.C_Debug, Is_Set ("-g"));
+            Set_Active (Editor.C_All_Warnings, Is_Set ("-Wall"));
+            Set_Active (Editor.C_No_Warnings, Is_Set ("-w"));
+            Set_Active (Editor.C_Ansi, Is_Set ("-ansi"));
+
+            Cmd_Line := Editor.C_Switches_Entry;
+
+         when Cpp_Compiler =>
+            Set_Combo (Editor.Cpp_Optimization_Level, "-O");
+            Set_Active (Editor.Cpp_No_Inline, Is_Set ("-fno-inline"));
+            Set_Active (Editor.Cpp_Unroll_Loops, Is_Set ("-funroll-loops"));
+            Set_Active (Editor.Cpp_Profile, Is_Set ("-pg"));
+            Set_Active (Editor.Cpp_Code_Coverage, Is_Set ("-ftest-coverage"));
+            Set_Active (Editor.Cpp_Instrument_Arcs, Is_Set ("-fprofile-arcs"));
+            Set_Active (Editor.Cpp_Exceptions, Is_Set ("-fexceptions"));
+            Set_Active (Editor.Cpp_Debug, Is_Set ("-g"));
+            Set_Active (Editor.Cpp_All_Warnings, Is_Set ("-Wall"));
+            Set_Active (Editor.Cpp_No_Warnings, Is_Set ("-w"));
+
+            Cmd_Line := Editor.Cpp_Switches_Entry;
 
          when Binder =>
             Set_Active (Editor.Binder_Tracebacks, Is_Set ("-E"));
@@ -505,6 +638,8 @@ package body Switches_Editors is
 
          when Linker =>
             Set_Active (Editor.Linker_Strip, Is_Set ("-s"));
+            Set_Active (Editor.Linker_Debug, Is_Set ("-g"));
+            Set_Active (Editor.Linker_Profile, Is_Set ("-pg"));
 
             Cmd_Line := Editor.Linker_Switches_Entry;
       end case;
@@ -541,39 +676,33 @@ package body Switches_Editors is
          when Gnatmake =>
             if (Editor.Pages and Gnatmake_Page) /= 0 then
                for J in Switches'Range loop
-                  if Switches (J) /= null
-                    and then
+                  if Switches (J) /= null and then
                     (Switches (J).all = "-a"
                      or else Switches (J).all = "-s"
                      or else Switches (J).all = "-m"
                      or else Switches (J).all = "-k"
                      or else Switches (J).all = "-g"
-                     or else
-                     (Switches (J)'Length >= 2
-                      and then Switches (J)
-                      (Switches (J)'First .. Switches (J)'First + 1) = "-j"))
+                     or else (Switches (J)'Length >= 2 and then
+                       Switches (J) (Switches (J)'First ..
+                                     Switches (J)'First + 1) = "-j"))
                   then
                      Free (Switches (J));
                   end if;
                end loop;
             end if;
 
-         when Compiler =>
-            if (Editor.Pages and Compiler_Page) /= 0 then
+         when Ada_Compiler =>
+            if (Editor.Pages and Ada_Page) /= 0 then
                for J in Switches'Range loop
-                  if Switches (J) /= null
-                    and then
+                  if Switches (J) /= null and then
                     ((Switches (J)'Length >= 2
-                      and then Switches (J)
-                      (Switches (J)'First .. Switches (J)'First + 1) = "-O")
-                     or else
-                     (Switches (J)'Length >= 6
-                      and then Switches (J)
-                      (Switches (J)'First .. Switches (J)'First + 5) =
-                      "-gnatR")
+                      and then Switches (J) (Switches (J)'First ..
+                                             Switches (J)'First + 1) = "-O")
                      or else Switches (J).all = "-fno-inline"
                      or else Switches (J).all = "-gnatN"
                      or else Switches (J).all = "-funroll-loops"
+                     or else Switches (J).all = "-ftest-coverage"
+                     or else Switches (J).all = "-fprofile-arcs"
                      or else Switches (J).all = "-gnatf"
                      or else Switches (J).all = "-gnatws"
                      or else Switches (J).all = "-gnatwe"
@@ -584,6 +713,7 @@ package body Switches_Editors is
                      or else Switches (J).all = "-gnatp"
                      or else Switches (J).all = "-fstack-check"
                      or else Switches (J).all = "-gnatE"
+                     or else Switches (J).all = "-g"
                      or else Switches (J).all = "-gnata"
                      or else Switches (J).all = "-gnatD"
                      or else Switches (J).all = "-gnatX"
@@ -594,11 +724,54 @@ package body Switches_Editors is
                end loop;
             end if;
 
+         when C_Compiler =>
+            if (Editor.Pages and C_Page) /= 0 then
+               for J in Switches'Range loop
+                  if Switches (J) /= null and then
+                    ((Switches (J)'Length >= 2
+                      and then Switches (J) (Switches (J)'First ..
+                                             Switches (J)'First + 1) = "-O")
+                     or else Switches (J).all = "-fno-inline"
+                     or else Switches (J).all = "-funroll-loops"
+                     or else Switches (J).all = "-pg"
+                     or else Switches (J).all = "-ftest-coverage"
+                     or else Switches (J).all = "-fprofile-arcs"
+                     or else Switches (J).all = "-g"
+                     or else Switches (J).all = "-Wall"
+                     or else Switches (J).all = "-w"
+                     or else Switches (J).all = "-ansi")
+                  then
+                     Free (Switches (J));
+                  end if;
+               end loop;
+            end if;
+
+         when Cpp_Compiler =>
+            if (Editor.Pages and Cpp_Page) /= 0 then
+               for J in Switches'Range loop
+                  if Switches (J) /= null and then
+                    ((Switches (J)'Length >= 2
+                      and then Switches (J) (Switches (J)'First ..
+                                             Switches (J)'First + 1) = "-O")
+                     or else Switches (J).all = "-fno-inline"
+                     or else Switches (J).all = "-funroll-loops"
+                     or else Switches (J).all = "-pg"
+                     or else Switches (J).all = "-ftest-coverage"
+                     or else Switches (J).all = "-fprofile-arcs"
+                     or else Switches (J).all = "-fexceptions"
+                     or else Switches (J).all = "-g"
+                     or else Switches (J).all = "-Wall"
+                     or else Switches (J).all = "-w")
+                  then
+                     Free (Switches (J));
+                  end if;
+               end loop;
+            end if;
+
          when Binder =>
             if (Editor.Pages and Binder_Page) /= 0 then
                for J in Switches'Range loop
-                  if Switches (J) /= null
-                    and then
+                  if Switches (J) /= null and then
                     (Switches (J).all = "-E"
                      or else Switches (J).all = "-static"
                      or else Switches (J).all = "-shared")
@@ -611,7 +784,11 @@ package body Switches_Editors is
          when Linker =>
             if (Editor.Pages and Linker_Page) /= 0 then
                for J in Switches'Range loop
-                  if Switches (J) /= null and then Switches (J).all = "-s" then
+                  if Switches (J) /= null and then
+                    (Switches (J).all = "-s"
+                     or else Switches (J).all = "-g"
+                     or else Switches (J).all = "-pg")
+                  then
                      Free (Switches (J));
                   end if;
                end loop;
@@ -637,10 +814,12 @@ package body Switches_Editors is
       end if;
 
       case Tool is
-         when Gnatmake => Cmd_Line := Editor.Make_Switches_Entry;
-         when Compiler => Cmd_Line := Editor.Compiler_Switches_Entry;
-         when Binder   => Cmd_Line := Editor.Binder_Switches_Entry;
-         when Linker   => Cmd_Line := Editor.Linker_Switches_Entry;
+         when Gnatmake     => Cmd_Line := Editor.Make_Switches_Entry;
+         when Ada_Compiler => Cmd_Line := Editor.Ada_Switches_Entry;
+         when C_Compiler   => Cmd_Line := Editor.C_Switches_Entry;
+         when Cpp_Compiler => Cmd_Line := Editor.Cpp_Switches_Entry;
+         when Binder       => Cmd_Line := Editor.Binder_Switches_Entry;
+         when Linker       => Cmd_Line := Editor.Linker_Switches_Entry;
       end case;
 
       declare
@@ -693,10 +872,12 @@ package body Switches_Editors is
       end if;
 
       case Tool is
-         when Gnatmake => Cmd_Line := Editor.Make_Switches_Entry;
-         when Compiler => Cmd_Line := Editor.Compiler_Switches_Entry;
-         when Binder   => Cmd_Line := Editor.Binder_Switches_Entry;
-         when Linker   => Cmd_Line := Editor.Linker_Switches_Entry;
+         when Gnatmake     => Cmd_Line := Editor.Make_Switches_Entry;
+         when Ada_Compiler => Cmd_Line := Editor.Ada_Switches_Entry;
+         when C_Compiler   => Cmd_Line := Editor.C_Switches_Entry;
+         when Cpp_Compiler => Cmd_Line := Editor.Cpp_Switches_Entry;
+         when Binder       => Cmd_Line := Editor.Binder_Switches_Entry;
+         when Linker       => Cmd_Line := Editor.Linker_Switches_Entry;
       end case;
 
       declare
@@ -727,7 +908,7 @@ package body Switches_Editors is
    ----------
 
    procedure Free (Switches : in out GNAT.OS_Lib.Argument_List_Access) is
-      procedure Internal is new Unchecked_Deallocation
+      procedure Internal is new Ada.Unchecked_Deallocation
         (Argument_List, Argument_List_Access);
    begin
       Free (Switches.all);
@@ -741,7 +922,7 @@ package body Switches_Editors is
    procedure Set_Page
      (Editor : access Switches_Edit_Record; Tool : Tool_Names) is
    begin
-      Set_Page (Editor.Notebook1, Tool_Names'Pos (Tool));
+      Set_Page (Editor.Notebook, Tool_Names'Pos (Tool));
    end Set_Page;
 
    -------------------------
@@ -788,8 +969,16 @@ package body Switches_Editors is
          Change_Switches (Gnatmake, "gnatmake");
       end if;
 
-      if (Get_Pages (S) and Compiler_Page) /= 0 then
-         Change_Switches (Compiler, "compiler");
+      if (Get_Pages (S) and Ada_Page) /= 0 then
+         Change_Switches (Ada_Compiler, "compiler");
+      end if;
+
+      if (Get_Pages (S) and C_Page) /= 0 then
+         Change_Switches (C_Compiler, "c_compiler");
+      end if;
+
+      if (Get_Pages (S) and Cpp_Page) /= 0 then
+         Change_Switches (Cpp_Compiler, "cpp_compiler");
       end if;
 
       if (Get_Pages (S) and Binder_Page) /= 0 then
@@ -862,7 +1051,11 @@ package body Switches_Editors is
                   Get_Window (Switches), Fill => True, Expand => True);
 
       if File_Name /= No_String then
-         Destroy_Pages (Switches, Gnatmake_Page or Binder_Page or Linker_Page);
+         --  ??? Need to decide depending on the langage
+
+         Destroy_Pages
+           (Switches, Gnatmake_Page or C_Page or Cpp_Page or
+            Binder_Page or Linker_Page);
       end if;
 
       --  Set the switches for all the pages
@@ -876,12 +1069,32 @@ package body Switches_Editors is
          end;
       end if;
 
-      if (Get_Pages (Switches) and Compiler_Page) /= 0 then
+      if (Get_Pages (Switches) and Ada_Page) /= 0 then
          Get_Switches (Project_View, "compiler", File, Value, Is_Default);
          declare
             List : Argument_List := To_Argument_List (Value);
          begin
-            Set_Switches (Switches, Compiler, List);
+            Set_Switches (Switches, Ada_Compiler, List);
+            Free (List);
+         end;
+      end if;
+
+      if (Get_Pages (Switches) and C_Page) /= 0 then
+         Get_Switches (Project_View, "c_compiler", File, Value, Is_Default);
+         declare
+            List : Argument_List := To_Argument_List (Value);
+         begin
+            Set_Switches (Switches, C_Compiler, List);
+            Free (List);
+         end;
+      end if;
+
+      if (Get_Pages (Switches) and Cpp_Page) /= 0 then
+         Get_Switches (Project_View, "cpp_compiler", File, Value, Is_Default);
+         declare
+            List : Argument_List := To_Argument_List (Value);
+         begin
+            Set_Switches (Switches, Cpp_Compiler, List);
             Free (List);
          end;
       end if;
