@@ -426,6 +426,9 @@ package body Src_Editor_Buffer is
             UTF8 := Get_Text (Buffer, Start, The_End, True);
             Length := Integer (Strlen (UTF8));
 
+            --  ??? Will return a string potentially too long, containing
+            --  garbage
+
             Result := new String (1 .. Length);
             Glib.Convert.Convert
               (UTF8, Length,
