@@ -532,7 +532,8 @@ package Glide_Kernel.Modules is
       Image              : Gdk.Pixbuf.Gdk_Pixbuf := Gdk.Pixbuf.Null_Pixbuf;
       Associated_Command : Command_Access := null;
    end record;
-   --  Text must be a valid Utf8 string.
+   --  Text must be a valid UTF8 string, which may contain markups in the pango
+   --  markup format.
 
    type Action_Item is access Line_Information_Record;
 
