@@ -286,8 +286,7 @@ package Python is
    function PyDict_SetItemString
      (Dict : PyDictObject;
       Key  : Interfaces.C.Strings.chars_ptr;
-      Obj  : PyObject)
-      return Integer;
+      Obj  : PyObject) return Integer;
    pragma Import (C, PyDict_SetItemString, "PyDict_SetItemString");
    --  Store a new object in Dict. Obj should be Py_DECREF after the call.
    --  Return 0 if all went well, -1 otherwise
@@ -297,6 +296,14 @@ package Python is
      (Dict : PyDictObject; Key : String; Obj : PyObject);
    --  Same as above
 
+   function PyDict_SetItem
+     (Dict  : PyDictObject;
+      Key   : PyObject;
+      Value : PyObject) return Integer;
+   --  Add a new item to the dictionnary.
+   --  Key and Value should be Py_DECREF'ed after this call.
+   --  Return 0 if all went well, -1 otherwise
+
    function PyDict_GetItemString
      (Dict : PyDictObject;
       Key  : Interfaces.C.Strings.chars_ptr) return PyObject;
@@ -305,6 +312,10 @@ package Python is
 
    function PyDict_GetItemString
      (Dict : PyDictObject; Key  : String) return PyObject;
+   --  Same as above
+
+   function PyDict_GetItem
+     (Dict : PyDictObject; Key : PyObject) return PyObject;
    --  Same as above
 
    procedure PyDict_Next
@@ -537,4 +548,6 @@ private
    pragma Import (C, PyDict_Size, "PyDict_Size");
    pragma Import (C, PyList_GetItem, "PyList_GetItem");
    pragma Import (C, PyList_Size, "PyList_Size");
+   pragma Import (C, PyDict_SetItem, "PyDict_SetItem");
+   pragma Import (C, PyDict_GetItem, "PyDict_GetItem");
 end Python;
