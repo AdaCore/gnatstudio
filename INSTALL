@@ -21,6 +21,9 @@ Once GtkAda has been installed, extract the GPS sources:
   $ gzip -dc gps-*-src.tgz | tar xvf -
   $ cd gps*
 
+If you are using a version of GNAT more recent than 3.15, remove the file
+common/src/stubs.c
+
 Then execute the following commands:
 
   $ ./configure --prefix=<prefix>
