@@ -110,7 +110,14 @@ package Debugger is
    --  If Display is True, display the command in the debugger window.
    --  If Empty_Buffer is True, any input waiting from the process (or in the
    --  buffer) is first discarded before the command is sent.
-   --  Call Wait_Prompt before exiting if Wait_For_Prompt is True.
+   --  Send_Completed is called right after the command is sent to the
+   --  debugger. Call Wait_Prompt before exiting if Wait_For_Prompt is True.
+
+   procedure Send_Completed
+     (Debugger : access Debugger_Root;
+      Cmd      : String);
+   --  Called by Send right after sending Cmd to the debugger, and before
+   --  any other post-processing (like Wait_Prompt).
 
    function Highlighting_Pattern
      (Debugger : access Debugger_Root)

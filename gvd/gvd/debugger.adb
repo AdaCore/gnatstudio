@@ -250,6 +250,7 @@ package body Debugger is
       end if;
 
       Send (Get_Process (Debugger), Cmd, Empty_Buffer);
+      Send_Completed (Debugger, Cmd);
 
       if Wait_For_Prompt then
          Wait_Prompt (Debugger);
@@ -265,5 +266,16 @@ package body Debugger is
          end if;
       end if;
    end Send;
+
+   --------------------
+   -- Send_Completed --
+   --------------------
+
+   procedure Send_Completed
+     (Debugger : access Debugger_Root;
+      Cmd      : String) is
+   begin
+      null;
+   end Send_Completed;
 
 end Debugger;
