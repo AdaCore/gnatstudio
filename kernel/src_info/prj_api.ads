@@ -74,6 +74,13 @@ package Prj_API is
    procedure Finalize;
    --  Free all the internal tables used by the project parser.
 
+   procedure Get_String
+     (Str    : Types.String_Id;
+      Buffer : out String;
+      Len    : out Natural);
+   --  Store the value of Str in Buffer without
+   --  affecting the contents of either Name_Buffer or Name_Len.
+
    function Get_String (Str : Types.String_Id) return String;
    --  This functional form returns the value of Str as a string without
    --  affecting the contents of either Name_Buffer or Name_Len.

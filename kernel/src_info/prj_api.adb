@@ -173,6 +173,28 @@ package body Prj_API is
    -- Get_String --
    ----------------
 
+   procedure Get_String
+     (Str    : Types.String_Id;
+      Buffer : out String;
+      Len    : out Natural)
+   is
+      pragma Suppress (All_Checks);
+      Last : Natural;
+
+   begin
+      if Str = No_String then
+         Len := 0;
+         return;
+      end if;
+
+      Len  := Natural (String_Length (Str));
+      Last := Natural'Min (Buffer'First + Len - 1, Buffer'Last);
+
+      for J in Buffer'First .. Last loop
+         Buffer (J) := Get_Character (Get_String_Char (Str, Int (J)));
+      end loop;
+   end Get_String;
+
    function Get_String (Str : Types.String_Id) return String is
       pragma Suppress (All_Checks);
       R : String (1 .. Natural (String_Length (Str)));
@@ -1093,7 +1115,7 @@ package body Prj_API is
 
    function Is_Equal (Str1 : String_Id; Str2 : String) return Boolean is
       pragma Suppress (All_Checks);
-      L : constant Int := String_Length (Str1);
+      L     : constant Int := String_Length (Str1);
       Index : Int := 1;
    begin
       if Integer (L) = Str2'Length then
@@ -1101,11 +1123,13 @@ package body Prj_API is
             if Get_Char_Code (Str2 (S)) /= Get_String_Char (Str1, Index) then
                return False;
             end if;
+
             Index := Index + 1;
          end loop;
       else
          return False;
       end if;
+
       return True;
    end Is_Equal;
 
@@ -1127,6 +1151,7 @@ package body Prj_API is
 
          Sources := String_Elements.Table (Sources).Next;
       end loop;
+
       return False;
    end Is_Direct_Source;
 
@@ -2129,33 +2154,40 @@ package body Prj_API is
      (Filename : String;
       Project  : Prj.Project_Id) return Unit_Part
    is
-      Arr : Array_Element_Id;
+      Arr  : Array_Element_Id;
+      Name : String (1 .. 4096);
+      Len  : Natural;
+
    begin
       Arr := Projects.Table (Project).Naming.Specification_Suffix;
+
       while Arr /= No_Array_Element loop
          pragma Assert (Array_Elements.Table (Arr).Value.Kind = Prj.Single);
-         if Suffix_Matches
-           (Filename, Get_String (Array_Elements.Table (Arr).Value.Value))
-         then
+         Get_String (Array_Elements.Table (Arr).Value.Value, Name, Len);
+
+         if Suffix_Matches (Filename, Name (1 .. Len)) then
             return Unit_Spec;
          end if;
+
          Arr := Array_Elements.Table (Arr).Next;
       end loop;
 
       Arr := Projects.Table (Project).Naming.Implementation_Suffix;
+
       while Arr /= No_Array_Element loop
          pragma Assert (Array_Elements.Table (Arr).Value.Kind = Prj.Single);
-         if Suffix_Matches
-           (Filename, Get_String (Array_Elements.Table (Arr).Value.Value))
-         then
+         Get_String (Array_Elements.Table (Arr).Value.Value, Name, Len);
+
+         if Suffix_Matches (Filename, Name (1 .. Len)) then
             return Unit_Body;
          end if;
+
          Arr := Array_Elements.Table (Arr).Next;
       end loop;
 
       --  ??? Should we check the default naming scheme as well ? Otherwise, it
-      --  ??? might happen that a project has its own naming scheme, but still
-      --  ??? references files in the runtime with the default naming scheme.
+      --  might happen that a project has its own naming scheme, but still
+      --  references files in the runtime with the default naming scheme.
 
       if GNAT.Directory_Operations.File_Extension (Filename) = ".ads" then
          return Unit_Spec;
@@ -2172,42 +2204,42 @@ package body Prj_API is
 
    function Delete_File_Suffix
      (Filename : String;
-      Project  : Prj.Project_Id)
-      return Natural
+      Project  : Prj.Project_Id) return Natural
    is
-      Arr : Array_Element_Id;
+      Arr  : Array_Element_Id;
+      Suff : String (1 .. 4096);
+      Len  : Natural;
+
    begin
       Arr := Projects.Table (Project).Naming.Specification_Suffix;
+
       while Arr /= No_Array_Element loop
          pragma Assert (Array_Elements.Table (Arr).Value.Kind = Prj.Single);
-         declare
-            Suff : constant String :=
-              Get_String (Array_Elements.Table (Arr).Value.Value);
-         begin
-            if Suffix_Matches (Filename, Suff) then
-               return Filename'Last - Suff'Last;
-            end if;
-         end;
+         Get_String (Array_Elements.Table (Arr).Value.Value, Suff, Len);
+
+         if Suffix_Matches (Filename, Suff (1 .. Len)) then
+            return Filename'Last - Len;
+         end if;
+
          Arr := Array_Elements.Table (Arr).Next;
       end loop;
 
       Arr := Projects.Table (Project).Naming.Implementation_Suffix;
+
       while Arr /= No_Array_Element loop
          pragma Assert (Array_Elements.Table (Arr).Value.Kind = Prj.Single);
-         declare
-            Suff : constant String :=
-              Get_String (Array_Elements.Table (Arr).Value.Value);
-         begin
-            if Suffix_Matches (Filename, Suff) then
-               return Filename'Last - Suff'Last;
-            end if;
-         end;
+         Get_String (Array_Elements.Table (Arr).Value.Value, Suff, Len);
+
+         if Suffix_Matches (Filename, Suff (1 .. Len)) then
+            return Filename'Last - Len;
+         end if;
+
          Arr := Array_Elements.Table (Arr).Next;
       end loop;
 
       --  ??? Should we check the default naming scheme as well ? Otherwise, it
-      --  ??? might happen that a project has its own naming scheme, but still
-      --  ??? references files in the runtime with the default naming scheme.
+      --  might happen that a project has its own naming scheme, but still
+      --  references files in the runtime with the default naming scheme.
 
       if GNAT.Directory_Operations.File_Extension (Filename) = ".ads" then
          return Filename'Last - 4;
@@ -2721,13 +2753,17 @@ package body Prj_API is
       -------------------------
 
       function Is_Reference_To_Ext
-        (Node             : Project_Node_Id) return Boolean is
+        (Node : Project_Node_Id) return Boolean
+      is
+         Name : String (1 .. 4096);
+         Len  : Natural;
       begin
          case Kind_Of (Node) is
             when N_External_Value =>
-               return Get_String
-                 (String_Value_Of (Prj.Tree.External_Reference_Of (Node))) =
-                 Ext_Variable_Name;
+               Get_String
+                 (String_Value_Of (Prj.Tree.External_Reference_Of (Node)),
+                  Name, Len);
+               return Name (1 .. Len) = Ext_Variable_Name;
 
             when N_Variable_Reference =>
                for J in Variable_Nodes'First .. Variable_Nodes_Last loop
@@ -2737,6 +2773,7 @@ package body Prj_API is
                      return True;
                   end if;
                end loop;
+
                return False;
 
             when others =>
@@ -2927,6 +2964,7 @@ package body Prj_API is
       Name_Len := Old_Name'Length;
       Name_Buffer (1 .. Name_Len) := Old_Name;
       N := Name_Find;
+
       if Value_Of (N) /= No_String then
          Add (Get_String (New_Name), Get_String (Value_Of (N)));
       end if;
@@ -3193,10 +3231,10 @@ package body Prj_API is
       Value_Name        : String)
    is
       Delete_Variable : exception;
-      Type_Decl : Project_Node_Id := Empty_Node;
+      Type_Decl       : Project_Node_Id := Empty_Node;
 
       procedure Callback (Project, Parent, Node, Choice : Project_Node_Id);
-      --  Called for each mtching node for the env. variable.
+      --  Called for each matching node for the env. variable.
 
       procedure Callback (Project, Parent, Node, Choice : Project_Node_Id) is
          pragma Unreferenced (Project, Choice);
@@ -3269,6 +3307,7 @@ package body Prj_API is
       --  Reset the value of the external variable if needed
       Name_Len := Ext_Variable_Name'Length;
       Name_Buffer (1 .. Name_Len) := Ext_Variable_Name;
+
       if Is_Equal (Value_Of (Name_Find), Value_Name) then
          if Type_Decl /= Empty_Node then
             Add (Ext_Variable_Name,
@@ -3975,13 +4014,18 @@ package body Prj_API is
      (File : String; List : Array_Element_Id) return Array_Element_Id
    is
       Prefix : Array_Element_Id := List;
+      Suffix : String (1 .. 4096);
+      Len    : Natural;
+
    begin
       while Prefix /= No_Array_Element loop
-         exit when Suffix_Matches
-           (File, Get_String (Array_Elements.Table (Prefix).Value.Value));
+         Get_String (Array_Elements.Table (Prefix).Value.Value, Suffix, Len);
+
+         exit when Suffix_Matches (File, Suffix (1 .. Len));
 
          Prefix := Array_Elements.Table (Prefix).Next;
       end loop;
+
       return Prefix;
    end Check_Suffix_List;
 
@@ -4088,7 +4132,7 @@ package body Prj_API is
       --  directly in the project itself.
 
       declare
-         Lang : Argument_List := Get_Languages (Project_View);
+         Lang   : Argument_List := Get_Languages (Project_View);
          Length : Natural;
       begin
          Current_Dir := Projects.Table (Project_View).Source_Dirs;
@@ -4344,12 +4388,14 @@ package body Prj_API is
             begin
                Val := Value.Values;
                Num := Result'First;
+
                while Val /= Nil_String loop
                   Result (Num) := new String'
                     (Get_String (String_Elements.Table (Val).Value));
                   Num := Num + 1;
                   Val := String_Elements.Table (Val).Next;
                end loop;
+
                return Result;
             end;
       end case;
