@@ -757,7 +757,13 @@ gtk-key-theme-name = "Emacs"
 
 @smallexample
 Usage:
-   gps [options...] [source files] [project file]
+   gps [-Pproject-file] [source1] [source2] ...
+Options:
+   --help              Show this help message and exit.
+   --version           Show the GPS version and exit.
+
+Source files are searched everywhere on the project's  source path
+
 @end smallexample
 
 @noindent
