@@ -21,16 +21,21 @@
 --  This package contains a series of subprograms that can be used
 --  for misc. graphical tasks.
 
-with Glib;
 with Gdk.Event;
 with Gdk.Window;
+with Glib.Object;
+with Glib;
+with Gtk.Cell_Renderer_Text;   use Gtk.Cell_Renderer_Text;
+with Gtk.Cell_Renderer_Toggle; use Gtk.Cell_Renderer_Toggle;
+with Gtk.Clist;
 with Gtk.Combo;
 with Gtk.Container;
+with Gtk.Handlers;
+with Gtk.Handlers;
 with Gtk.List;
 with Gtk.Menu;
-with Gtk.Handlers;
+with Gtk.Tree_Store;
 with Gtk.Widget;
-with Gtk.Clist;
 
 package GUI_Utils is
 
@@ -80,6 +85,23 @@ package GUI_Utils is
    --  Remove and destroy all the children from Container.
    --  If Container is a menu, this empties the menu, thus allowing dynamic
    --  menus.
+
+   package Tree_Model_Callback is new Gtk.Handlers.User_Callback
+     (Glib.Object.GObject_Record, Glib.Gint);
+
+   procedure Set_Radio_And_Callback
+     (Model    : access Gtk.Tree_Store.Gtk_Tree_Store_Record'Class;
+      Renderer : access Gtk_Cell_Renderer_Toggle_Record'Class;
+      Column   : Glib.Gint);
+   --  Equivalent of Gtk.Cell_Renderer_Toggle, but this also sets up a callback
+   --  to make sure that only one line is active.
+
+   procedure Set_Editable_And_Callback
+     (Model    : access Gtk.Tree_Store.Gtk_Tree_Store_Record'Class;
+      Renderer : access Gtk_Cell_Renderer_Text_Record'Class;
+      Column   : Glib.Gint);
+   --  Set the renderer as editable, and make sure that its text is updated
+   --  when the user has finished editing it.
 
    ----------------------
    -- Contextual menus --

@@ -18,21 +18,27 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glib;          use Glib;
-with Gdk.Cursor;    use Gdk.Cursor;
-with Gdk.Event;     use Gdk.Event;
-with Gdk.Window;    use Gdk.Window;
-with Gtk.Clist;     use Gtk.Clist;
-with Gtk.Combo;     use Gtk.Combo;
-with Gtk.Container; use Gtk.Container;
-with Gtk.GEntry;    use Gtk.GEntry;
-with Gtk.Label;     use Gtk.Label;
-with Gtk.List;      use Gtk.List;
-with Gtk.List_Item; use Gtk.List_Item;
-with Gtk.Widget;    use Gtk.Widget;
-with Gtk.Handlers;  use Gtk.Handlers;
-with Gtk.Menu;      use Gtk.Menu;
-with Gdk.Main;      use Gdk.Main;
+with Gdk.Cursor;               use Gdk.Cursor;
+with Gdk.Event;                use Gdk.Event;
+with Gdk.Main;                 use Gdk.Main;
+with Gdk.Window;               use Gdk.Window;
+with Glib.Object;              use Glib.Object;
+with Glib.Values;              use Glib.Values;
+with Glib;                     use Glib;
+with Gtk.Cell_Renderer_Toggle; use Gtk.Cell_Renderer_Toggle;
+with Gtk.Clist;                use Gtk.Clist;
+with Gtk.Combo;                use Gtk.Combo;
+with Gtk.Container;            use Gtk.Container;
+with Gtk.GEntry;               use Gtk.GEntry;
+with Gtk.Handlers;
+with Gtk.Handlers;             use Gtk.Handlers;
+with Gtk.Label;                use Gtk.Label;
+with Gtk.List;                 use Gtk.List;
+with Gtk.List_Item;            use Gtk.List_Item;
+with Gtk.Menu;                 use Gtk.Menu;
+with Gtk.Tree_Model;           use Gtk.Tree_Model;
+with Gtk.Tree_Store;           use Gtk.Tree_Store;
+with Gtk.Widget;               use Gtk.Widget;
 
 package body GUI_Utils is
 
@@ -54,6 +60,18 @@ package body GUI_Utils is
    function Unmap_Menu
      (Menu : access Gtk_Widget_Record'Class;
       Data : Contextual_Menu_Data) return Boolean;
+
+   procedure Radio_Callback
+     (Model  : access GObject_Record'Class;
+      Params : Glib.Values.GValues;
+      Data   : Glib.Gint);
+   --  Callback for the toggle renderer
+
+   procedure Edited_Callback
+     (Model  : access GObject_Record'Class;
+      Params : Glib.Values.GValues;
+      Data   : Glib.Gint);
+   --  Callback for the editable renderer
 
    ---------------------------
    -- Add_Unique_List_Entry --
@@ -375,5 +393,87 @@ package body GUI_Utils is
          Remove (Container, Widget_List.Get_Data (N));
       end loop;
    end Remove_All_Children;
+
+   ----------------------------
+   -- Set_Radio_And_Callback --
+   ----------------------------
+
+   procedure Set_Radio_And_Callback
+     (Model    : access Gtk.Tree_Store.Gtk_Tree_Store_Record'Class;
+      Renderer : access Gtk_Cell_Renderer_Toggle_Record'Class;
+      Column   : Glib.Gint) is
+   begin
+      Set_Radio (Renderer, True);
+
+      Tree_Model_Callback.Object_Connect
+        (Renderer, "toggled",
+         Radio_Callback'Access, Slot_Object => Model, User_Data => Column);
+   end Set_Radio_And_Callback;
+
+   --------------------
+   -- Radio_Callback --
+   --------------------
+
+   procedure Radio_Callback
+     (Model  : access GObject_Record'Class;
+      Params : Glib.Values.GValues;
+      Data   : Glib.Gint)
+   is
+      M           : constant Gtk_Tree_Store := Gtk_Tree_Store (Model);
+      Iter, Tmp   : Gtk_Tree_Iter;
+      Path_String : constant String := Get_String (Nth (Params, 1));
+
+   begin
+      Iter := Get_Iter_From_String (M, Path_String);
+
+      if Iter /= Null_Iter then
+         --  Can't click on an already active item, for a radio renderer, since
+         --  we want at least one selected item
+
+         if not Get_Boolean (M, Iter, Data) then
+            Tmp := Get_Iter_First (M);
+
+            while Tmp /= Null_Iter loop
+               Set (M, Tmp, Data, False);
+               Next (M, Tmp);
+            end loop;
+
+            Set (M, Iter, Data, True);
+         end if;
+      end if;
+   end Radio_Callback;
+
+   -------------------------------
+   -- Set_Editable_And_Callback --
+   -------------------------------
+
+   procedure Set_Editable_And_Callback
+     (Model    : access Gtk.Tree_Store.Gtk_Tree_Store_Record'Class;
+      Renderer : access Gtk_Cell_Renderer_Text_Record'Class;
+      Column   : Glib.Gint) is
+   begin
+      Tree_Model_Callback.Object_Connect
+        (Renderer, "edited", Edited_Callback'Access,
+         Slot_Object => Model, User_Data => Column);
+   end Set_Editable_And_Callback;
+
+   ---------------------
+   -- Edited_Callback --
+   ---------------------
+
+   procedure Edited_Callback
+     (Model  : access GObject_Record'Class;
+      Params : Glib.Values.GValues;
+      Data   : Glib.Gint)
+   is
+      M             : constant Gtk_Tree_Store := Gtk_Tree_Store (Model);
+      Iter          : Gtk_Tree_Iter;
+      Path_String   : constant String := Get_String (Nth (Params, 1));
+      Text_Value    : constant GValue := Nth (Params, 2);
+
+   begin
+      Iter := Get_Iter_From_String (M, Path_String);
+      Set_Value (M, Iter, Data, Text_Value);
+   end Edited_Callback;
 
 end GUI_Utils;
