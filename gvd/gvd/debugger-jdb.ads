@@ -34,7 +34,7 @@ package Debugger.Jdb is
       Executable      : String;
       Arguments       : GNAT.OS_Lib.Argument_List;
       Proxy           : Process_Proxies.Process_Proxy_Access;
-      Window          : Main_Debug_Window_Pkg.Main_Debug_Window_Access;
+      Window          : Gtk.Window.Gtk_Window;
       Remote_Host     : String := "";
       Remote_Target   : String := "";
       Remote_Protocol : String := "";

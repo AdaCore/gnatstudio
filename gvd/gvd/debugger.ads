@@ -23,7 +23,7 @@ with Generic_Values;
 with GNAT.OS_Lib;
 with Process_Proxies;
 with GNAT.Regpat;
-with Main_Debug_Window_Pkg;
+with Gtk.Window;
 
 package Debugger is
 
@@ -49,7 +49,7 @@ package Debugger is
       Executable      : String;
       Arguments       : GNAT.OS_Lib.Argument_List;
       Proxy           : Process_Proxies.Process_Proxy_Access;
-      Window          : Main_Debug_Window_Pkg.Main_Debug_Window_Access;
+      Window          : Gtk.Window.Gtk_Window;
       Remote_Host     : String := "";
       Remote_Target   : String := "";
       Remote_Protocol : String := "";
