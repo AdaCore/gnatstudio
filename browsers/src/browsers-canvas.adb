@@ -58,7 +58,7 @@ package body Browsers.Canvas is
    --  would appear in the computation and make zoom_in not the reverse of
    --  zoom_out.
 
-   Zoom_Steps : constant := 7;
+   Zoom_Steps : constant := 3;
    --  Number of steps while zooming in or out.
 
    Me : constant Debug_Handle := Create ("Browsers.Canvas");
