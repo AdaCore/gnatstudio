@@ -19,9 +19,6 @@ package SN.Find_Fns is
                            Where : in out Integer);
       --  converts Point to 000000.000 string
 
-      Invalid_Point   : constant Point := Point'(-1, -1);
-      Invalid_String  : constant String := "";
-
       --  Find functions for Referred by table
       function Find (DB : DB_File;
             Ref_Class : String := Invalid_String;

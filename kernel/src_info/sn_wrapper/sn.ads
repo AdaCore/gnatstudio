@@ -1,4 +1,5 @@
-with Ada.Unchecked_Deallocation;
+with Ada.Unchecked_Deallocation,
+     GNAT.OS_Lib;
 
 package SN is
    --  Types and constant SN_Attributess specific to Source Navigator.
@@ -42,6 +43,7 @@ package SN is
       end record;
    --  Position between symbols in source
    Invalid_Point : constant Point := (-1, -1);
+   Invalid_String  : constant String := "";
 
    function "<" (P1, P2 : Point) return Boolean;
    --  LessThan operation in the terms
@@ -55,7 +57,7 @@ package SN is
 
    function Length (s : Segment) return Integer;
 
-   type String_Access is access String;
+   subtype String_Access is GNAT.OS_Lib.String_Access;
    procedure Free_String is
          new Ada.Unchecked_Deallocation (String, String_Access);
 
