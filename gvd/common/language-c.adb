@@ -56,22 +56,45 @@ package body Language.C is
 
    type Token_Type is
      (Tok_Identifier,
+
+      --  Type specifiers:
+      Tok_Char,
+      Tok_Float,
+      Tok_Int,
+      Tok_Long,
+      Tok_Short,
+      Tok_Signed,
+      Tok_Unsigned,
+      Tok_Void,
+
+      --  Storage-class specifiers:
       Tok_Auto,
+      Tok_Extern,
+      Tok_Static,
+      Tok_Register,
+      Tok_Restrict,
+      Tok_Volatile,
+
+      --  Construct keywords:
+      Tok_Break,
       Tok_Case,
       Tok_Const,
+      Tok_Continue,
+      Tok_Default,
       Tok_Do,
+      Tok_Double,
       Tok_Else,
-      Tok_Extern,
+      Tok_Enum,
       Tok_For,
+      Tok_Goto,
       Tok_If,
-      Tok_Switch,
-      Tok_Register,
+      Tok_Inline,
       Tok_Return,
-      Tok_Static,
+      Tok_Sizeof,
       Tok_Struct,
+      Tok_Switch,
       Tok_Typedef,
       Tok_Union,
-      Tok_Volatile,
       Tok_While);
    --  Reserved words for C
 
@@ -119,21 +142,36 @@ package body Language.C is
                return Tok_Auto;
             end if;
 
+         when 'b' =>
+            if S (Second .. S'Last) = "reak" then
+               return Tok_Break;
+            end if;
+
          when 'c' =>
-            if S (Second .. S'Last) = "onst" then
-               return Tok_Const;
-            elsif S (Second .. S'Last) = "ase" then
+            if S (Second .. S'Last) = "ase" then
                return Tok_Case;
+            elsif S (Second .. S'Last) = "onst" then
+               return Tok_Const;
+            elsif S (Second .. S'Last) = "ontinue" then
+               return Tok_Continue;
+            elsif S (Second .. S'Last) = "har" then
+               return Tok_Char;
             end if;
 
          when 'd' =>
-            if S (Second .. S'Last) = "o" then
+            if S (Second .. S'Last) = "efault" then
+               return Tok_Default;
+            elsif S (Second .. S'Last) = "o" then
                return Tok_Do;
+            elsif S (Second .. S'Last) = "ouble" then
+               return Tok_Double;
             end if;
 
          when 'e' =>
             if S (Second .. S'Last) = "lse" then
                return Tok_Else;
+            elsif S (Second .. S'Last) = "num" then
+               return Tok_Enum;
             elsif S (Second .. S'Last) = "xtern" then
                return Tok_Extern;
             end if;
@@ -141,17 +179,35 @@ package body Language.C is
          when 'f' =>
             if S (Second .. S'Last) = "or" then
                return Tok_For;
+            elsif S (Second .. S'Last) = "loat" then
+               return Tok_Float;
+            end if;
+
+         when 'g' =>
+            if S (Second .. S'Last) = "oto" then
+               return Tok_Goto;
             end if;
 
          when 'i' =>
             if S (Second .. S'Last) = "f" then
                return Tok_If;
+            elsif S (Second .. S'Last) = "nt" then
+               return Tok_Int;
+            elsif S (Second .. S'Last) = "nline" then
+               return Tok_Inline;
+            end if;
+
+         when 'l' =>
+            if S (Second .. S'Last) = "ong" then
+               return Tok_Long;
             end if;
 
          when 'r' =>
             if S (Second) = 'e' then
                if S (Second + 1 .. S'Last) = "gister" then
                   return Tok_Register;
+               elsif S (Second + 1 .. S'Last) = "strict" then
+                  return Tok_Restrict;
                elsif S (Second + 1 .. S'Last) = "turn" then
                   return Tok_Return;
                end if;
@@ -165,6 +221,15 @@ package body Language.C is
                   return Tok_Struct;
                end if;
 
+            elsif S (Second) = 'i' then
+               if S (Second + 1 .. S'Last) = "gned" then
+                  return Tok_Signed;
+               elsif S (Second + 1 .. S'Last) = "zeof" then
+                  return Tok_Sizeof;
+               end if;
+
+            elsif S (Second .. S'Last) = "hort" then
+               return Tok_Short;
             elsif S (Second .. S'Last) = "witch" then
                return Tok_Switch;
             end if;
@@ -177,11 +242,17 @@ package body Language.C is
          when 'u' =>
             if S (Second .. S'Last) = "nion" then
                return Tok_Union;
+            elsif S (Second .. S'Last) = "nsigned" then
+               return Tok_Unsigned;
             end if;
 
          when 'v' =>
-            if S (Second .. S'Last) = "olatile" then
-               return Tok_Volatile;
+            if S (Second) = 'o' then
+               if S (Second + 1 .. S'Last) = "id" then
+                  return Tok_Void;
+               elsif S (Second + 1 .. S'Last) = "latile" then
+                  return Tok_Volatile;
+               end if;
             end if;
 
          when 'w' =>
@@ -527,6 +598,7 @@ package body Language.C is
    is
       pragma Unreferenced (Lang);
 
+      Tab_Width   : Natural renames Indent_Params.Tab_Width;
       First       : Natural := Buffer'Last - 1;
       Index       : Natural;
       Offset      : Integer := 0;
@@ -545,15 +617,23 @@ package body Language.C is
          First := First - 1;
       end loop;
 
-      Index := First;
+      Index  := First;
+      Indent := 0;
 
-      while Index < Buffer'Last
-        and then (Buffer (Index) = ' ' or else Buffer (Index) = ASCII.HT)
       loop
+         if Buffer (Index) = ' ' then
+            Indent := Indent + 1;
+         elsif Buffer (Index) = ASCII.HT then
+            Indent := (Indent / Tab_Width + 1) * Tab_Width;
+         else
+            exit;
+         end if;
+
+         exit when Index = Buffer'Last;
+
          Index := Index + 1;
       end loop;
 
-      Indent := Index - First;
       Analyze_C_Source
         (Buffer        => Buffer (Index .. Buffer'Last),
          Indent        => Offset,
