@@ -180,24 +180,28 @@ package Language is
    end record;
 
    type Indent_Parameters is record
-      Indent_Level    : Natural;
-      Indent_Continue : Natural;
-      Indent_Decl     : Natural;
-      Tab_Width       : Natural;
+      Indent_Level      : Natural;
+      Indent_Continue   : Natural;
+      Indent_Decl       : Natural;
+      Tab_Width         : Natural;
+      Indent_Case_Extra : Boolean;
    end record;
    --  Define all parameters to indent a source code.
    --  Note that some of these parameters will be ignored, depending on the
    --  actual language.
    --
-   --  Indent_Level    number of spaces when indenting a block.
-   --  Indent_Continue number of spaces for a continuation line.
-   --  Indent_Decl     number of spaces for multi-line variables declaration.
+   --  Indent_Level      number of spaces when indenting a block.
+   --  Indent_Continue   number of spaces for a continuation line.
+   --  Indent_Decl       number of spaces for multi-line variables declaration.
+   --  Tab_Width         number of spaces for a tab character.
+   --  Indent_Case_Extra if true, add extra indent level for case statements
 
    Default_Indent_Parameters : constant Indent_Parameters :=
-     (Indent_Level    => 3,
-      Indent_Continue => 2,
-      Indent_Decl     => 0,
-      Tab_Width       => 8);
+     (Indent_Level      => 3,
+      Indent_Continue   => 2,
+      Indent_Decl       => 0,
+      Tab_Width         => 8,
+      Indent_Case_Extra => True);
 
    type Language_Category is
      (Cat_Unknown,
