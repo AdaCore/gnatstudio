@@ -242,6 +242,8 @@ package body Codefix.Graphics is
             Proposition.Clist2,
             First_Iterator);
 
+         Free (First_Iterator);
+
          Set_Text (Proposition.Label1, "Old text");
          Set_Text (Proposition.Label2, "Fixed text");
          Set_Text (Proposition.File_Label1,
@@ -318,7 +320,7 @@ package body Codefix.Graphics is
       Possible_Correction := False;
 
       while Current_Sol /= Extract_List.Null_Node loop
-         Extended_Extract := Clone (Data (Current_Sol));
+         Extended_Extract := Clone (Extract (Data (Current_Sol)));
 
          Extend_Before
            (Extended_Extract,
@@ -336,6 +338,11 @@ package body Codefix.Graphics is
             Success_Update);
 
          if Success_Update then
+            Reduce
+              (Extended_Extract,
+               Display_Lines_Before,
+               Display_Lines_After);
+
             Possible_Correction := True;
 
             if Current_Vdiff /= Vdiff_Lists.Null_Node then
