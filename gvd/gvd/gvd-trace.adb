@@ -20,6 +20,7 @@
 
 with GNAT.OS_Lib; use GNAT.OS_Lib;
 with Main_Debug_Window_Pkg; use Main_Debug_Window_Pkg;
+with Gtk.Notebook; use Gtk.Notebook;
 with System;
 with Unchecked_Conversion;
 
@@ -28,7 +29,7 @@ package body Odd.Trace is
    Input_String  : aliased constant String := "-> """;
    Output_String : aliased constant String := "<- """;
    Quote_EOL     : aliased constant String := '"' & ASCII.LF;
-   Quote_SOL     : aliased constant String := "   """;
+   Quote_SOL     : aliased constant String := "       """;
    Verbose_EOL   : aliased constant String := "\n";
    Verbose_HT    : aliased constant String := "\t";
 
@@ -70,7 +71,11 @@ package body Odd.Trace is
    is
       Window : constant Main_Debug_Window_Access := To_Main_Window (User_Data);
       N      : Integer;
+      Page   : constant String :=
+        Gint'Image (Get_Current_Page (Window.Process_Notebook) + 1);
+      Prefix : aliased constant String := '[' & Page (2 .. Page'Last) & "] ";
    begin
+      N := Write (Window.Log_File, Prefix'Address, Prefix'Length);
       N := Write (Window.Log_File, Input_String'Address, Input_String'Length);
       Output_Message (Window.Log_File, Str);
       N := Write (Window.Log_File, Quote_EOL'Address, Quote_EOL'Length);
@@ -87,7 +92,11 @@ package body Odd.Trace is
    is
       Window : constant Main_Debug_Window_Access := To_Main_Window (User_Data);
       N      : Integer;
+      Page   : constant String :=
+        Gint'Image (Get_Current_Page (Window.Process_Notebook) + 1);
+      Prefix : aliased constant String := '[' & Page (2 .. Page'Last) & "] ";
    begin
+      N := Write (Window.Log_File, Prefix'Address, Prefix'Length);
       N := Write
         (Window.Log_File, Output_String'Address, Output_String'Length);
       Output_Message (Window.Log_File, Str);
