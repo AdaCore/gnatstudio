@@ -138,8 +138,13 @@ package body GVD.Text_Box.Source_Editor.Glide is
       end if;
 
       Open_File_Editor
-        (Kernel, Editor.Debugger_Current_File,
-         Editor.Line, 1, Enable_Navigation => False, New_File => False);
+        (Kernel,
+         Editor.Debugger_Current_File,
+         Editor.Line,
+         1,
+         Enable_Navigation => False,
+         New_File          => False,
+         Focus             => False);
 
       declare
          Args : GNAT.OS_Lib.Argument_List (1 .. 2) :=
@@ -270,8 +275,10 @@ package body GVD.Text_Box.Source_Editor.Glide is
 
          if File_Name /= VFS.No_File then
             Open_File_Editor
-              (Kernel, File_Name, New_File => False,
-               Enable_Navigation           => False);
+              (Kernel, File_Name,
+               New_File          => False,
+               Enable_Navigation => False,
+               Focus             => False);
          end if;
       end if;
    end Load_File;
@@ -333,7 +340,12 @@ package body GVD.Text_Box.Source_Editor.Glide is
 
       Editor.Line := Line;
       Open_File_Editor
-        (Kernel, Editor.Current_File, Editor.Line, 1, New_File => False);
+        (Kernel,
+         Editor.Current_File,
+         Editor.Line,
+         1,
+         New_File => False,
+         Focus    => False);
       Append (Editor.Highlighted_Files,
               Full_Name (Editor.Debugger_Current_File).all);
 
