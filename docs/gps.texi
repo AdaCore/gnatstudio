@@ -863,7 +863,7 @@ Cancel button.
 @end iftex
 
 @ifhtml
-@cindex screen shot 
+@cindex screen shot
 @image{task-manager}
 @end ifhtml
 
@@ -5214,7 +5214,7 @@ A name, generally the developer name
 @item <e-mail>
 The e-mail address of the developer surrounded with '<' and '>' characters.
 
-@item HT         
+@item HT
 Horizontal tabulation (or 8 spaces)
 @end table
 
@@ -6485,40 +6485,6 @@ This tag accepts the following attributes:
    This attribute can be used to override the homonym attribute specified for
    the @code{<action>} tag.
 
-   @item on-failure (optional)
-@iftex
-   @cindex on-failure
-@end iftex
-   This attribute specifies a shell command to be executed if the external
-   command fails. Typically, this is used to parse the output of the command
-   and fill the location window appropriately (@pxref{Processing the tool
-   output}).
-
-   For instance, the following action spawn an external tool, and parses its
-   output to the location window and the automatic fixing tool if the external
-   tool happens to fail. You must put the value of the @code{on-failure} on a
-   single line in the XML file.
-
-   Remember also to quote special XML character like '"' in the value of the
-   attribute. The output of the command that failed can be obtained through the
-   "%1" parameter.
-
-   @smallexample
-<action name="launch tool to location" >
-  <external on-failure="Locations.parse &quot;
-     &quot;&quot;%1 &quot;&quot;&quot; category;
-     codefix_parse &quot;&quot;&quot;%1 &quot;
-     &quot;&quot; category" >tool-path</external>
-</action>
-   @end smallexample
-
-   @item on-failure-lang (optional)
-@iftex
-   @cindex on-failure-lang
-@end iftex
-   This attribute specifies the shell language in which the above attribute is
-   written. By default, this is the GPS shell.
-
    @item progress-regexp (optional)
    This attribute specifies a regular expression that the output of the
    command will be checked against. Every time the regular expression matches,
@@ -6560,6 +6526,31 @@ This tag accepts the following attributes:
 
    @end table
 
+@cindex on-failure
+@item <on-failure>
+
+This tag specifies a group of command to be executed if the previous
+external command fails. Typically, this is used to parse the output of the
+command and fill the location window appropriately
+(@pxref{Processing the tool output}).
+
+For instance, the following action spawn an external tool, and parses its
+output to the location window and the automatic fixing tool if the external
+tool happens to fail. You must put the value of the @code{on-failure} on a
+single line in the XML file.
+
+In this group of commands the %... and $... macros can be used.
+
+@smallexample
+<action name="launch tool to location" >
+  <external>tool-path</external>
+  <on-failure>
+     <shell>Locations.parse "%1" category<shell>
+     <external>echo the error message is "%2"</external>
+  </on-failure>
+  <external>echo the tool succeeded with message %1</external>
+</action>
+@end smallexample
 
 @cindex shell
 @cindex shell
