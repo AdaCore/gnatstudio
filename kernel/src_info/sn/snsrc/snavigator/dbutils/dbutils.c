@@ -869,8 +869,7 @@ int	acc)
 		NULL);
 	data_value.copystrings(&data_value,
 		fnc_arg_types ? fnc_arg_types : "", DB_FLDSEP_STR,
-		arg_types ? arg_types : "",
-		NULL);
+		arg_types, NULL);
 
 	if (Paf_dbimp_running)
 	{
