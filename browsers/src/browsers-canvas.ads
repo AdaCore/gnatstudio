@@ -27,15 +27,15 @@ with Gdk.Window;
 with Gtkada.Canvas;
 with Glide_Kernel;
 with Glib.Object;
+with Gtk.Box;
+with Gtk.Hbutton_Box;
 with Gtk.Menu;
-with Gtk.Scrolled_Window;
 with Gtk.Widget;
 with Pango.Layout;
 
 package Browsers.Canvas is
 
-   type Glide_Browser_Record is new
-     Gtk.Scrolled_Window.Gtk_Scrolled_Window_Record with private;
+   type Glide_Browser_Record is new Gtk.Box.Gtk_Box_Record with private;
    type Glide_Browser is access all Glide_Browser_Record'Class;
 
    type Glide_Browser_Link_Record is new Gtkada.Canvas.Canvas_Link_Record
@@ -46,10 +46,21 @@ package Browsers.Canvas is
 
    procedure Initialize
      (Browser : access Glide_Browser_Record'Class;
-      Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class);
+      Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Create_Toolbar : Boolean);
    --  Initialize a new browser.
    --  It sets up all the contextual menu for this browser, as well as the key
    --  shortcuts to manipulate the browser.
+   --  If Create_Toolbar is True, then a button_bar is added at the bottom.
+
+   function Get_Toolbar (Browser : access Glide_Browser_Record)
+      return Gtk.Hbutton_Box.Gtk_Hbutton_Box;
+   --  Return the toolbar at the bottom of the browser. This returns null if no
+   --  toolbar was created in the call to Initialize.
+
+   procedure Setup_Default_Toolbar (Browser : access Glide_Browser_Record);
+   --  Add the default buttons to the toolbar of browser. Nothing is done if no
+   --  toolbar was created.
 
    function Get_Canvas (Browser : access Glide_Browser_Record)
       return Gtkada.Canvas.Interactive_Canvas;
@@ -220,23 +231,22 @@ package Browsers.Canvas is
    --  and adds the standard menu entries
 
 private
-   type Glide_Browser_Record is new
-     Gtk.Scrolled_Window.Gtk_Scrolled_Window_Record with
-      record
-         Canvas    : Gtkada.Canvas.Interactive_Canvas;
-         Kernel    : Glide_Kernel.Kernel_Handle;
+   type Glide_Browser_Record is new Gtk.Box.Gtk_Box_Record with record
+      Canvas    : Gtkada.Canvas.Interactive_Canvas;
+      Kernel    : Glide_Kernel.Kernel_Handle;
+      Toolbar   : Gtk.Hbutton_Box.Gtk_Hbutton_Box;
 
-         Selected_Link_Color   : Gdk.Color.Gdk_Color;
-         Default_Item_GC       : Gdk.GC.Gdk_GC;
-         Selected_Item_GC      : Gdk.GC.Gdk_GC;
-         Parent_Linked_Item_GC : Gdk.GC.Gdk_GC;
-         Child_Linked_Item_GC  : Gdk.GC.Gdk_GC;
-         Text_GC               : Gdk.GC.Gdk_GC;
+      Selected_Link_Color   : Gdk.Color.Gdk_Color;
+      Default_Item_GC       : Gdk.GC.Gdk_GC;
+      Selected_Item_GC      : Gdk.GC.Gdk_GC;
+      Parent_Linked_Item_GC : Gdk.GC.Gdk_GC;
+      Child_Linked_Item_GC  : Gdk.GC.Gdk_GC;
+      Text_GC               : Gdk.GC.Gdk_GC;
 
-         Selected_Item : Gtkada.Canvas.Canvas_Item;
+      Selected_Item : Gtkada.Canvas.Canvas_Item;
 
-         Left_Arrow, Right_Arrow : Gdk.Pixbuf.Gdk_Pixbuf;
-      end record;
+      Left_Arrow, Right_Arrow : Gdk.Pixbuf.Gdk_Pixbuf;
+   end record;
 
    type Glide_Browser_Link_Record is new Gtkada.Canvas.Canvas_Link_Record
      with null record;

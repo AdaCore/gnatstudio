@@ -34,8 +34,11 @@ with Gdk.Types.Keysyms;   use Gdk.Types.Keysyms;
 with Gdk.Window;          use Gdk.Window;
 with Gtk.Accel_Group;     use Gtk.Accel_Group;
 with Gtk.Arguments;       use Gtk.Arguments;
+with Gtk.Button;          use Gtk.Button;
 with Gtk.Enums;           use Gtk.Enums;
 with Gtk.Handlers;        use Gtk.Handlers;
+with Gtk.Hbutton_Box;     use Gtk.Hbutton_Box;
+with Gtk.Image;           use Gtk.Image;
 with Gtk.Menu;            use Gtk.Menu;
 with Gtk.Menu_Item;       use Gtk.Menu_Item;
 with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
@@ -129,17 +132,31 @@ package body Browsers.Canvas is
 
    procedure Initialize
      (Browser : access Glide_Browser_Record'Class;
-      Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class) is
+      Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Create_Toolbar : Boolean)
+   is
+      Scrolled : Gtk_Scrolled_Window;
    begin
-      Gtk.Scrolled_Window.Initialize (Browser);
-      Set_Policy (Browser, Policy_Automatic, Policy_Automatic);
+      Gtk.Box.Initialize_Vbox (Browser, Homogeneous => False);
+
+      Gtk_New (Scrolled);
+      Set_Policy (Scrolled, Policy_Automatic, Policy_Automatic);
+
+      Pack_Start (Browser, Scrolled, Expand => True, Fill => True);
+
       Gtk_New (Browser.Canvas);
-      Add (Browser, Browser.Canvas);
+      Add (Scrolled, Browser.Canvas);
       Add_Events (Browser.Canvas, Key_Press_Mask);
       Browser.Kernel := Kernel_Handle (Kernel);
 
       Set_Layout_Algorithm (Browser.Canvas, Layer_Layout'Access);
       Set_Auto_Layout (Browser.Canvas, True);
+
+      if Create_Toolbar then
+         Gtk_New (Browser.Toolbar);
+         Set_Layout (Browser.Toolbar, Buttonbox_Spread);
+         Pack_Start (Browser, Browser.Toolbar, Expand => False);
+      end if;
 
       Browser.Left_Arrow := Render_Icon
         (Browser, Stock_Go_Back, Icon_Size_Menu);
@@ -168,6 +185,44 @@ package body Browsers.Canvas is
          Get_Pref (Kernel, Default_Widget_Width),
          Get_Pref (Kernel, Default_Widget_Height));
    end Initialize;
+
+   ---------------------------
+   -- Setup_Default_Toolbar --
+   ---------------------------
+
+   procedure Setup_Default_Toolbar (Browser : access Glide_Browser_Record) is
+      Button : Gtk_Button;
+      Image  : Gtk_Image;
+   begin
+      if Browser.Toolbar /= null then
+         Gtk_New (Button);
+         Gtk_New (Image, Stock_Zoom_Out, Icon_Size_Small_Toolbar);
+         Add (Button, Image);
+         Pack_End (Browser.Toolbar, Button, Expand => False);
+         Widget_Callback.Object_Connect
+           (Button, "clicked",
+            Widget_Callback.To_Marshaller (Zoom_Out'Access), Browser);
+
+         Gtk_New (Button);
+         Gtk_New (Image, Stock_Zoom_In, Icon_Size_Small_Toolbar);
+         Add (Button, Image);
+         Pack_End (Browser.Toolbar, Button, Expand => False);
+         Widget_Callback.Object_Connect
+           (Button, "clicked",
+            Widget_Callback.To_Marshaller (Zoom_In'Access), Browser);
+
+      end if;
+   end Setup_Default_Toolbar;
+
+   -----------------
+   -- Get_Toolbar --
+   -----------------
+
+   function Get_Toolbar (Browser : access Glide_Browser_Record)
+      return Gtk.Hbutton_Box.Gtk_Hbutton_Box is
+   begin
+      return Browser.Toolbar;
+   end Get_Toolbar;
 
    ------------------
    -- On_Draw_Link --
@@ -544,7 +599,7 @@ package body Browsers.Canvas is
      (Canvas : access Gtkada.Canvas.Interactive_Canvas_Record'Class)
       return Glide_Browser is
    begin
-      return Glide_Browser (Get_Parent (Canvas));
+      return Glide_Browser (Get_Parent (Get_Parent (Canvas)));
    end To_Brower;
 
    -------------------
