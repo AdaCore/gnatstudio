@@ -821,6 +821,8 @@ package body Odd.Source_Editors is
       Hide_Current_Line_Button (Editor);
 
       --  Remove all existing buttons
+      Gtk.Widget.Widget_List.Free (Editor.Breakpoint_Buttons);
+      Editor.Breakpoint_Buttons := Gtk.Widget.Widget_List.Null_List;
       Forall (Get_Buttons (Editor), Gtk.Widget.Destroy_Cb'Access);
 
       --  Display the breakpoint icons
