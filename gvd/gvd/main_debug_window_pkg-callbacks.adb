@@ -66,19 +66,24 @@ package body Main_Debug_Window_Pkg.Callbacks is
       pragma Unreferenced (Params);
 
       --  Arg1 : Gdk_Event := To_Event (Params, 1);
-      Id : Idle_Handler_Id;
+      Id         : Idle_Handler_Id;
+      GVD_Window : GVD_Main_Window := GVD_Main_Window (Object);
 
    begin
       --  Ref the object since we will destroy it in the main procedure.
 
-      Ref (Object);
-      Save_Window_Settings
-        (GVD_Main_Window (Object).Home_Dir.all &
-         Directory_Separator & "window_settings", Gtk_Widget (Object));
-      Prepare_Cleanup_Debuggers (GVD_Main_Window (Object));
-      Id := Main_Window_Idle.Add (Idle_Exit'Access, GVD_Main_Window (Object));
+      if GVD_Window.Standalone then
+         Ref (Object);
+         Save_Window_Settings
+           (GVD_Window.Home_Dir.all &
+            Directory_Separator & "window_settings", Gtk_Widget (Object));
+         Prepare_Cleanup_Debuggers (GVD_Window);
+         Id := Main_Window_Idle.Add (Idle_Exit'Access, GVD_Window);
 
-      return True;
+         return True;
+      end if;
+
+      return False;
    end On_Main_Debug_Window_Delete_Event;
 
    -------------------------------------
