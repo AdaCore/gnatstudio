@@ -20,7 +20,6 @@
 
 with GNAT.OS_Lib;     use GNAT.OS_Lib;
 with GVD.Main_Window; use GVD.Main_Window;
-with GVD.Status_Bar;  use GVD.Status_Bar;
 with GVD.Types;       use GVD.Types;
 with Process_Proxies; use Process_Proxies;
 with Debugger;        use Debugger;
@@ -50,7 +49,9 @@ package body GVD.Trace is
    procedure Output_Error (Window : GVD_Main_Window; Str : String) is
    begin
       Output_Line (Window, "# " & Str);
-      Print_Message (Window.Statusbar, Error, Str);
+      if Global_Output /= null then
+         Output (Global_Output.all, Str, Error => True);
+      end if;
    end Output_Error;
 
    -----------------
@@ -60,7 +61,9 @@ package body GVD.Trace is
    procedure Output_Info (Window : GVD_Main_Window; Str : String) is
    begin
       Output_Line (Window, "% " & Str);
-      Print_Message (Window.Statusbar, Help, Str);
+      if Global_Output /= null then
+         Output (Global_Output.all, Str, Error => False);
+      end if;
    end Output_Info;
 
    -----------------

@@ -31,13 +31,20 @@ package GVD.Trace is
    --  Input_Kind means input strings sent to the debugger.
    --  Output_Kind means output strings received from the debugger.
 
+   type Output_Proc_Record is abstract tagged null record;
+   type Output_Proc is access Output_Proc_Record'Class;
+   procedure Output
+     (Proc : Output_Proc_Record; Str : String; Error : Boolean) is abstract;
+   --  Output the error to the appropriate stream. This is mostly use to
+   --  limit dependency circularities between the kernel and gvd
+
+   Global_Output : Output_Proc;
+
    procedure Output_Error (Window : GVD_Main_Window; Str : String);
-   --  Output an error line on the statusbar associated with Window, and
-   --  on its log file.
+   --  Output an error through Global_Output
 
    procedure Output_Info (Window : GVD_Main_Window; Str : String);
-   --  Output an information line on the statusbar associated with Window, and
-   --  on its log file.
+   --  Output some information through Global_Output
 
    procedure Output_Line (Window : GVD_Main_Window; Str : String);
    --  Write on the log file associated with Window.
