@@ -48,9 +48,6 @@ package body Prj_API is
 
    Me : Debug_Handle := Create ("Prj_API");
 
-   Project_File_Extension : constant String := ".gpr";
-   --  Extension used for the project file names
-
    File_Specific_Switches_Attribute : constant String := "switches";
    --  Name of the attribute used for file specific switches. Its index is the
    --  unit name
