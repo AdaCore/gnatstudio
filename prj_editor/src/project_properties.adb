@@ -141,6 +141,7 @@ package body Project_Properties is
       Ordered_List      : Boolean := False;
       Omit_If_Default   : Boolean := True;
       Base_Name_Only    : Boolean := False;
+      Case_Sensitive_Index : Boolean := False;
       Editor            : Attribute_Editor;
       case Indexed is
          when True =>
@@ -625,40 +626,46 @@ package body Project_Properties is
    is
       Attribute : constant Attribute_Pkg :=
         Build (Attr.Pkg.all, Attr.Name.all);
-      Default_Value : constant String := Get_Current_Value
-        (Project      => Project,
-         Attr         => Attr,
-         Index        => Attribute_Index,
-         Default_Only => True);
-      Old_Value : constant String := Get_Current_Value
-        (Project   => Project,
-         Attr      => Attr,
-         Ignore_Editor => True,
-         Index     => Attribute_Index);
       Lower_Attribute_Index : String := Attribute_Index;
    begin
-      if Value /= Old_Value then
+      if not Attr.Case_Sensitive_Index then
          To_Lower (Lower_Attribute_Index);
-
-         if Attr.Omit_If_Default and then Value = Default_Value then
-            Delete_Attribute
-              (Project            => Project,
-               Scenario_Variables => Scenario_Variables,
-               Attribute          => Attribute,
-               Attribute_Index    => Lower_Attribute_Index);
-         else
-            Update_Attribute_Value_In_Scenario
-              (Project            => Project,
-               Scenario_Variables => Scenario_Variables,
-               Attribute          => Attribute,
-               Value              => Value,
-               Attribute_Index    => Lower_Attribute_Index);
-         end if;
-         Trace (Me, "Change for attribute "
-                & Attr.Pkg.all & "'" & Attr.Name.all
-                & " Old=""" & Old_Value & """ New=""" & Value & """");
-         Project_Changed := True;
       end if;
+
+      declare
+         Default_Value : constant String := Get_Current_Value
+           (Project      => Project,
+            Attr         => Attr,
+            Index        => Lower_Attribute_Index,
+            Default_Only => True);
+         Old_Value : constant String := Get_Current_Value
+           (Project       => Project,
+            Attr          => Attr,
+            Ignore_Editor => True,
+            Index         => Lower_Attribute_Index);
+      begin
+         if Value /= Old_Value then
+            if Attr.Omit_If_Default and then Value = Default_Value then
+               Delete_Attribute
+                 (Project            => Project,
+                  Scenario_Variables => Scenario_Variables,
+                  Attribute          => Attribute,
+                  Attribute_Index    => Lower_Attribute_Index);
+            else
+               Update_Attribute_Value_In_Scenario
+                 (Project            => Project,
+                  Scenario_Variables => Scenario_Variables,
+                  Attribute          => Attribute,
+                  Value              => Value,
+                  Attribute_Index    => Lower_Attribute_Index);
+            end if;
+            Trace (Me, "Change for attribute "
+                   & Attr.Pkg.all & "'" & Attr.Name.all
+                   & " (" & Lower_Attribute_Index
+                   & ") Old=""" & Old_Value & """ New=""" & Value & """");
+            Project_Changed := True;
+         end if;
+      end;
    end Update_Attribute_Value;
 
    ----------------------------
@@ -676,59 +683,65 @@ package body Project_Properties is
    is
       Attribute : constant Attribute_Pkg :=
         Build (Attr.Pkg.all, Attr.Name.all);
-      Old_Values : aliased GNAT.OS_Lib.String_List := Get_Attribute_Value
-        (Project   => Project,
-         Attribute => Attribute,
-         Index     => Attribute_Index);
       Lower_Attribute_Index : String := Attribute_Index;
       Equal : Boolean;
    begin
-      if Old_Values'Length /= 0 then
-         Equal := Is_Equal (Values, Old_Values, Case_Sensitive => False);
-      else
-         declare
-            Default : GNAT.OS_Lib.String_List :=
-              Get_Current_Value
-                (Kernel       => Kernel,
-                 Project      => Project,
-                 Attr         => Attr,
-                 Index        => Attribute_Index,
-                 Default_Only => True);
-         begin
-            Equal := Is_Equal (Values, Default, Case_Sensitive => False);
-
---              if not Equal then
---                 for V in Default'Range loop
---                    Trace (Me, "MANU Default=" & Default (V).all);
---                 end loop;
---              end if;
-
-            Free (Default);
-         end;
-      end if;
-
-      if not Equal then
+      if not Attr.Case_Sensitive_Index then
          To_Lower (Lower_Attribute_Index);
-         Update_Attribute_Value_In_Scenario
-           (Project            => Project,
-            Scenario_Variables => Scenario_Variables,
-            Attribute          => Attribute,
-            Values             => Values,
-            Attribute_Index    => Lower_Attribute_Index);
-         Trace (Me, "Change for attribute "
-                & Attr.Pkg.all & "'" & Attr.Name.all & "("
-                & Attribute_Index & ")");
---           for V in Old_Values'Range loop
---              Trace (Me, "MANU Old=" & Old_Values (V).all);
---           end loop;
---           for V in Values'Range loop
---              Trace (Me, "MANU New=" & Values (V).all);
---           end loop;
-
-         Project_Changed := True;
       end if;
 
-      Free (Old_Values);
+      declare
+         Old_Values : aliased GNAT.OS_Lib.String_List := Get_Attribute_Value
+           (Project   => Project,
+            Attribute => Attribute,
+            Index     => Lower_Attribute_Index);
+      begin
+         if Old_Values'Length /= 0 then
+            Equal := Is_Equal (Values, Old_Values, Case_Sensitive => False);
+         else
+            declare
+               Default : GNAT.OS_Lib.String_List :=
+                 Get_Current_Value
+                   (Kernel       => Kernel,
+                    Project      => Project,
+                    Attr         => Attr,
+                    Index        => Lower_Attribute_Index,
+                    Default_Only => True);
+            begin
+               Equal := Is_Equal (Values, Default, Case_Sensitive => False);
+
+               --              if not Equal then
+               --                 for V in Default'Range loop
+               --                Trace (Me, "MANU Default=" & Default (V).all);
+               --                 end loop;
+               --              end if;
+
+               Free (Default);
+            end;
+         end if;
+
+         if not Equal then
+            Update_Attribute_Value_In_Scenario
+              (Project            => Project,
+               Scenario_Variables => Scenario_Variables,
+               Attribute          => Attribute,
+               Values             => Values,
+               Attribute_Index    => Lower_Attribute_Index);
+            Trace (Me, "Change for attribute "
+                   & Attr.Pkg.all & "'" & Attr.Name.all & "("
+                   & Lower_Attribute_Index & ")");
+            --           for V in Old_Values'Range loop
+            --              Trace (Me, "MANU Old=" & Old_Values (V).all);
+            --           end loop;
+            --           for V in Values'Range loop
+            --              Trace (Me, "MANU New=" & Values (V).all);
+            --           end loop;
+
+            Project_Changed := True;
+         end if;
+
+         Free (Old_Values);
+      end;
    end Update_Attribute_Value;
 
    ----------------------
@@ -831,9 +844,7 @@ package body Project_Properties is
      (Editor             : access List_Attribute_Editor_Record;
       Project            : Project_Type;
       Scenario_Variables : Scenario_Variable_Array;
-      Project_Changed    : in out Boolean)
-   is
-      Iter  : Gtk_Tree_Iter;
+      Project_Changed    : in out Boolean) is
    begin
       if Editor.Combo /= null then
          Update_Attribute_Value
@@ -844,26 +855,17 @@ package body Project_Properties is
             Project_Changed    => Project_Changed);
       else
          declare
-            Num    : constant Gint := N_Children (Editor.Model);
-            Values : GNAT.OS_Lib.Argument_List (1 .. Integer (Num));
-            N      : Integer := Values'First;
+            Values : GNAT.OS_Lib.String_List := Get_Current_Value
+              (Kernel  => Editor.Kernel,
+               Project => Project,
+               Attr    => Editor.Attribute);
          begin
-            Iter := Get_Iter_First (Editor.Model);
-            while Iter /= Null_Iter loop
-               if Get_Boolean (Editor.Model, Iter, 1) then
-                  Values (N) := new String'
-                    (Get_String (Editor.Model, Iter, 0));
-                  N := N + 1;
-               end if;
-               Next (Editor.Model, Iter);
-            end loop;
-
             Update_Attribute_Value
               (Kernel             => Editor.Kernel,
                Attr               => Editor.Attribute,
                Project            => Project,
                Scenario_Variables => Scenario_Variables,
-               Values             => Values (1 .. N - 1),
+               Values             => Values,
                Project_Changed    => Project_Changed);
             Free (Values);
          end;
@@ -884,8 +886,12 @@ package body Project_Properties is
    begin
       while Iter /= Null_Iter loop
          declare
-            Index : constant String := Get_String (Editor.Model, Iter, 0);
+            Index : String := Get_String (Editor.Model, Iter, 0);
          begin
+            if not Editor.Attribute.Case_Sensitive_Index then
+               To_Lower (Index);
+            end if;
+
             if Editor.Attribute.Is_List then
                declare
                   Values : GNAT.OS_Lib.String_List := Get_Current_Value
@@ -1191,13 +1197,18 @@ package body Project_Properties is
       end if;
 
       if Attr.Indexed then
+         if Attr.Case_Sensitive_Index then
+            Attr_Kind := Prj.Attr.Associative_Array;
+         else
+            Attr_Kind := Prj.Attr.Case_Insensitive_Associative_Array;
+         end if;
+
+         --  Priority is given to the registered type
          if Attr_Id /= Empty_Attribute then
             Attr_Kind := Attribute_Kind_Of (Attr_Id);
             if Attr_Kind = Attribute_Kind'(Single) then
                Attr_Kind := Prj.Attr.Associative_Array;
             end if;
-         else
-            Attr_Kind := Prj.Attr.Case_Insensitive_Associative_Array;
          end if;
 
          Index_Attr := Get_Attribute_Type_From_Name
@@ -1266,6 +1277,8 @@ package body Project_Properties is
       Label   : constant String := Get_Attribute (N, "label", A.Name.all);
       Is_List : constant String := Get_Attribute (N, "list", "false");
       Ordered : constant String := Get_Attribute (N, "ordered", "false");
+      Case_Sensitive_Index : constant String :=
+        Get_Attribute (N, "case_sensitive_index", "false");
       Omit    : constant String := Get_Attribute
         (N, "omit_if_default", "true");
       Base    : constant String := Get_Attribute
@@ -1344,6 +1357,8 @@ package body Project_Properties is
       A.Ordered_List := Ordered = "true" or else Ordered = "1";
       A.Omit_If_Default := Omit = "true" or else Omit = "1";
       A.Base_Name_Only := Base = "true" or else Omit = "1";
+      A.Case_Sensitive_Index :=
+        Case_Sensitive_Index = "true" or else Case_Sensitive_Index = "1";
 
       if Indexed then
          Child := N.Child;
@@ -1746,9 +1761,16 @@ package body Project_Properties is
             Set (Editor.Model, Iter, 0, Value);
 
             for C in Current_Value'Range loop
-               if Case_Insensitive_Equal (Value, Current_Value (C).all) then
-                  Selected := True;
-                  exit;
+               if Description.Case_Sensitive_Index then
+                  if Value = Current_Value (C).all then
+                     Selected := True;
+                     exit;
+                  end if;
+               else
+                  if Case_Insensitive_Equal (Value, Current_Value (C).all) then
+                     Selected := True;
+                     exit;
+                  end if;
                end if;
             end loop;
 
@@ -2462,8 +2484,23 @@ package body Project_Properties is
       Attribute_Index : String := "") return String
    is
       pragma Unreferenced (Attribute_Index);
+      M    : Gtk_Tree_Model;
+      Iter : Gtk_Tree_Iter;
    begin
-      return Get_Text (Editor.Ent);
+      if Editor.Ent /= null then
+         return Get_Text (Editor.Ent);
+      else
+         Get_Selected (Get_Selection (Editor.View), M, Iter);
+         if Iter = Null_Iter then
+            Iter := Get_Iter_First (Editor.Model);
+         end if;
+
+         if Iter /= Null_Iter then
+            return Get_String (Editor.Model, Iter, 0);
+         else
+            return "";
+         end if;
+      end if;
    end Get_Value_As_String;
 
    -------------------------
@@ -2891,12 +2928,21 @@ package body Project_Properties is
       procedure Value_Cb (Value : String; Selected : Boolean) is
          pragma Unreferenced (Selected);
          Iter : Gtk_Tree_Iter;
+         Matched : Boolean;
       begin
          for C in Current_Index'Range loop
-            if Case_Insensitive_Equal (Current_Index (C).all, Value) then
+            if Attr.Case_Sensitive_Index then
+               Matched := Current_Index (C).all = Value;
+            else
+               Matched :=
+                 Case_Insensitive_Equal (Current_Index (C).all, Value);
+            end if;
+
+            if Matched then
                Append (Ed.Model, Iter, Null_Iter);
                Set (Ed.Model, Iter, Index_Col, Value);
-               Set (Ed.Model, Iter, Editable_Col, Is_Any_String (Attr, Value));
+               Set (Ed.Model, Iter, Editable_Col,
+                    not Attr.Is_List and then Is_Any_String (Attr, Value));
 
                if Attr.Is_List then
                   declare
@@ -2923,13 +2969,13 @@ package body Project_Properties is
                      Ed.Current_Values (Ed.Current_Values'Last) :=
                        (Index  => new String'(Value),
                         Values => new GNAT.OS_Lib.String_List'(Current));
---                     Free (Current);
                   end;
                else
                   Set (Ed.Model, Iter, Attribute_Col,
                        Get_Current_Value
                          (Project => Project, Attr  => Attr, Index => Value));
                end if;
+               exit;
             end if;
          end loop;
       end Value_Cb;
@@ -2962,11 +3008,11 @@ package body Project_Properties is
       declare
          Current_Value : aliased GNAT.OS_Lib.String_List :=
            Get_Current_Value (Kernel, Project, Index);
-         Iter : Gtk_Tree_Iter;
       begin
+         Current_Index := Current_Value'Unchecked_Access;
+
          case Index.Non_Index_Type.Typ is
             when Attribute_As_Static_List | Attribute_As_Dynamic_List =>
-               Current_Index := Current_Value'Unchecked_Access;
                For_Each_Item_In_List
                  (Kernel, Index.Non_Index_Type, Value_Cb'Unrestricted_Access);
             when others =>
@@ -2978,14 +3024,7 @@ package body Project_Properties is
                           Mode => Error);
                else
                   for C in Current_Value'Range loop
-                     Append (Ed.Model, Iter, Null_Iter);
-                     Set (Ed.Model, Iter, Index_Col, Current_Value (C).all);
-                     Set (Ed.Model, Iter, Attribute_Col,
-                          Get_Current_Value
-                            (Project => Project, Attr  => Attr,
-                             Index => Current_Value (C).all));
-                     Set (Ed.Model, Iter, Editable_Col,
-                          Is_Any_String (Attr, Current_Value (C).all));
+                     Value_Cb (Current_Value (C).all, True);
                   end loop;
                end if;
          end case;
