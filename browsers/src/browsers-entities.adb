@@ -631,15 +631,21 @@ package body Browsers.Entities is
          Entity_Context := Entity_Selection_Context_Access (Context);
 
          if Has_Entity_Name_Information (Entity_Context) then
-            Gtk_New
-              (Item, Label => (-"Examine entity ")
-               & Krunch (Entity_Name_Information (Entity_Context)));
-            Append (Menu, Item);
-            Context_Callback.Connect
-              (Item, "activate",
-               Context_Callback.To_Marshaller
-               (Add_Or_Select_Item'Access),
-               Selection_Context_Access (Context));
+            Push_State (Get_Kernel (Context), Busy);
+
+            if Get_Entity (Entity_Context) /= No_Entity_Information then
+               Gtk_New
+                 (Item, Label => (-"Examine entity ")
+                  & Krunch (Entity_Name_Information (Entity_Context)));
+               Append (Menu, Item);
+               Context_Callback.Connect
+                 (Item, "activate",
+                  Context_Callback.To_Marshaller
+                    (Add_Or_Select_Item'Access),
+                  Selection_Context_Access (Context));
+            end if;
+
+            Pop_State (Get_Kernel (Context));
          end if;
       end if;
    end Browser_Contextual_Menu;
