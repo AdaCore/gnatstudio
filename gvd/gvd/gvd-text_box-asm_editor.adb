@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2002                      --
+--                      Copyright (C) 2000-2003                      --
 --                              ACT-Europe                           --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -841,21 +841,30 @@ package body GVD.Text_Box.Asm_Editor is
 
    function Add_Address (Addr : String; Offset : Integer) return String is
       Convert : constant String := "0123456789abcdef";
-      Str     : constant String :=
-        "16#" & Addr (Addr'First + 2 .. Addr'Last) & '#';
-      Value   : Long_Long_Integer := Long_Long_Integer'Value (Str) +
-        Long_Long_Integer (Offset);
       Buffer  : String (1 .. 32);
       Pos     : Natural := Buffer'Last;
 
    begin
-      while Value > 0 loop
-         Buffer (Pos) := Convert (Integer (Value mod 16) + Convert'First);
-         Pos := Pos - 1;
-         Value := Value / 16;
-      end loop;
+      if Addr'Length < 2
+        or else Addr (Addr'First .. Addr'First + 1) /= "0x"
+      then
+         return "0x0";
+      end if;
 
-      return "0x" & Buffer (Pos + 1 .. Buffer'Last);
+      declare
+         Str     : constant String :=
+           "16#" & Addr (Addr'First + 2 .. Addr'Last) & '#';
+         Value   : Long_Long_Integer := Long_Long_Integer'Value (Str) +
+           Long_Long_Integer (Offset);
+      begin
+         while Value > 0 loop
+            Buffer (Pos) := Convert (Integer (Value mod 16) + Convert'First);
+            Pos := Pos - 1;
+            Value := Value / 16;
+         end loop;
+
+         return "0x" & Buffer (Pos + 1 .. Buffer'Last);
+      end;
    end Add_Address;
 
    ----------------------
@@ -908,6 +917,11 @@ package body GVD.Text_Box.Asm_Editor is
       end case;
 
       return False;
+
+   exception
+      when others =>
+         --  ??? Should log an error using Traces
+         return False;
    end Key_Press;
 
 end GVD.Text_Box.Asm_Editor;
