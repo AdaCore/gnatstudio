@@ -25,6 +25,9 @@ with Ada.Unchecked_Conversion;
 with Glib; use Glib;
 with Glib.Object; use Glib.Object;
 
+with Pango.Enums;         use Pango.Enums;
+with Pango.Font;          use Pango.Font;
+
 with Gdk.Color;           use Gdk.Color;
 with Gdk.Event;           use Gdk.Event;
 
@@ -117,7 +120,7 @@ package body GVD.Process is
 
    --  Array of the signals created for this widget
    Signals : constant Chars_Ptr_Array :=
-   "executable_changed" + "process_stopped" + "context_changed" +
+     "executable_changed" + "process_stopped" + "context_changed" +
      "debugger_closed";
 
    Graph_Cmd_Format : constant Pattern_Matcher := Compile
@@ -293,9 +296,16 @@ package body GVD.Process is
                  Add_LF => False);
          Highlight_Child
            (Find_MDI_Child (Data.Window.Process_Mdi, Data.Debuggee_Console));
-         Close_TTY (Data.Debuggee_TTY);
-         Allocate_TTY (Data.Debuggee_TTY);
-         Set_TTY (Data.Debugger, TTY_Name (Data.Debuggee_TTY));
+
+         if Command_In_Process (Get_Process (Data.Debugger)) then
+            Data.Cleanup_TTY := True;
+         else
+            Close_TTY (Data.Debuggee_TTY);
+            Allocate_TTY (Data.Debuggee_TTY);
+            Close_Pseudo_Descriptor (Data.Debuggee_Descriptor);
+            Pseudo_Descriptor (Data.Debuggee_Descriptor, Data.Debuggee_TTY, 0);
+            Set_TTY (Data.Debugger, TTY_Name (Data.Debuggee_TTY));
+         end if;
 
          return True;
    end TTY_Cb;
@@ -861,6 +871,16 @@ package body GVD.Process is
          end if;
       end if;
 
+      if Process.Cleanup_TTY then
+         Process.Cleanup_TTY := False;
+         Close_TTY (Process.Debuggee_TTY);
+         Allocate_TTY (Process.Debuggee_TTY);
+         Close_Pseudo_Descriptor (Process.Debuggee_Descriptor);
+         Pseudo_Descriptor
+           (Process.Debuggee_Descriptor, Process.Debuggee_TTY, 0);
+         Set_TTY (Process.Debugger, TTY_Name (Process.Debuggee_TTY));
+      end if;
+
       Process.Post_Processing := False;
       Free (Process.Current_Output);
    end Final_Post_Process;
@@ -1095,7 +1115,8 @@ package body GVD.Process is
    procedure Setup_Data_Window
      (Process : access Visual_Debugger_Record'Class)
    is
-      Child : MDI_Child;
+      Child           : MDI_Child;
+      Annotation_Font : Pango_Font_Description;
    begin
       --  Create the data area
 
@@ -1123,9 +1144,13 @@ package body GVD.Process is
 
       --  Initialize the canvas
 
-      Configure
-        (Process.Data_Canvas,
-         Annotation_Font => Get_Pref (GVD_Prefs, Annotation_Font));
+      Annotation_Font := Copy
+        (Get_Pref (GVD_Prefs, GVD.Preferences.Default_Font));
+      Set_Size
+        (Annotation_Font,
+         Gint'Max (Pango_Scale, Get_Size (Annotation_Font) - 2 * Pango_Scale));
+      Configure (Process.Data_Canvas, Annotation_Font => Annotation_Font);
+      Free (Annotation_Font);
 
       Child := Put
         (Process.Window.Process_Mdi, Process.Data_Scrolledwindow,
