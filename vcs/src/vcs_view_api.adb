@@ -426,7 +426,7 @@ package body VCS_View_API is
                   (On_Menu_Update'Access),
                   Selection_Context_Access (Context));
 
-               Gtk_New (Item, Label => -"Open");
+               Gtk_New (Item, Label => -"Start Editing");
                Append (Menu, Item);
                Context_Callback.Connect
                  (Item, "activate",
