@@ -11,14 +11,12 @@ with GNAT.OS_Lib;     use GNAT.OS_Lib;
 
 with VCS; use VCS;
 
-package Vcs_View_Pkg is
+package VCS_View_Pkg is
 
    type VCS_View_Record;
-   type Vcs_View_Access is access all Vcs_View_Record'Class;
+   type VCS_View_Access is access all VCS_View_Record'Class;
 
-   --  package VCS_View_VCS is new VCS (Vcs_View_Access);
-
-   type Vcs_View_Record is new Gtk_Window_Record with record
+   type VCS_View_Record is new Gtk_Window_Record with record
       Current_Directory : String_Access;
       --  The directory that is currently being viewed.
       --  It must be an absolute directory name ending
@@ -52,11 +50,11 @@ package Vcs_View_Pkg is
       Message_Text               : Gtk_Text;
    end record;
 
-   procedure Gtk_New (Vcs_View : out Vcs_View_Access);
-   procedure Initialize (Vcs_View : access Vcs_View_Record'Class);
+   procedure Gtk_New (VCS_View : out VCS_View_Access);
+   procedure Initialize (VCS_View : access VCS_View_Record'Class);
 
-   procedure Show_Files (Explorer  : Vcs_View_Access;
+   procedure Show_Files (Explorer  : VCS_View_Access;
                          Directory : String);
    --
 
-end Vcs_View_Pkg;
+end VCS_View_Pkg;
