@@ -879,7 +879,7 @@ package body Browsers.Call_Graph is
          Status      => Status);
 
       --  If the body wasn't found then display the specs
-      if Status /= Success then
+      if Status /= Success and then Status /= Fuzzy_Match then
          Open_File_Editor
            (Get_Kernel (Context),
             Directory_Information (C) & File_Information (C),
