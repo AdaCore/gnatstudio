@@ -59,7 +59,6 @@ package VCS is
       History,          --  Get the entire revision history for one file
       Annotate,         --  Get the annotations for one file
       Diff_Head,        --  Diff current against head revision
-      Diff_Working,     --  Diff current against working revision
       Diff,             --  Diff current against specified revision
       Diff2,            --  Diff between two specified revisions
       Add,              --  Add one file or dir to the repository
