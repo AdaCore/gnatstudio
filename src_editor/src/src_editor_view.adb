@@ -934,7 +934,8 @@ package body Src_Editor_View is
       --  Go to last char of the line pointed by Pos
 
       if not Ends_Line (Iter) then
-         Forward_To_Line_End (Iter, Line_Ends);
+         Forward_To_Line_End (Iter, Result);
+         Line_Ends := False;
       end if;
 
       Line   := Get_Line (Iter);
@@ -946,11 +947,10 @@ package body Src_Editor_View is
       --  the stacks used by Next_Indentation to avoid parsing
       --  the buffer from scratch each time.
 
-      C_Str := Get_Slice (Buffer, 0, 0, Line, Col);
-      Slice := To_Unchecked_String (C_Str);
+      C_Str        := Get_Slice (Buffer, 0, 0, Line, Col);
+      Slice        := To_Unchecked_String (C_Str);
       Slice_Length := Natural (Strlen (C_Str));
-
-      Blanks := Slice_Length - Offset + 1;
+      Blanks       := Slice_Length - Offset + 1;
 
       if Line_Ends then
          Slice_Length := Slice_Length + 1;
