@@ -1232,4 +1232,23 @@ package body String_Utils is
       return File;
    end Relative_Path_Name;
 
+   -----------------
+   -- Copy_String --
+   -----------------
+
+   procedure Copy_String
+     (Item : Interfaces.C.Strings.chars_ptr;
+      Str  : out String;
+      Len  : Natural)
+   is
+      procedure Strncpy
+        (Dest : out String;
+         Src  : Interfaces.C.Strings.chars_ptr;
+         Len  : Interfaces.C.size_t);
+      pragma Import (C, Strncpy, "strncpy");
+
+   begin
+      Strncpy (Str, Item, Interfaces.C.size_t (Len));
+   end Copy_String;
+
 end String_Utils;

@@ -22,6 +22,7 @@
 --  strings.
 
 with GNAT.Directory_Operations;
+with Interfaces.C.Strings;
 
 package String_Utils is
 
@@ -210,9 +211,20 @@ package String_Utils is
    --  and '-' to the appropriate characters).
    --  ??? Note: this should be modified to use the naming schemes, if needed.
 
+   ---------------------------
+   -- C String manipulation --
+   ---------------------------
+
+   procedure Copy_String
+     (Item : Interfaces.C.Strings.chars_ptr;
+      Str  : out String;
+      Len  : Natural);
+   --  Copy Len characters from Item to Str
+
 private
    pragma Inline (Looking_At);
    pragma Inline (Skip_Blanks);
    pragma Inline (Skip_To_Char);
    pragma Inline (Is_Word_Char);
+   pragma Inline (Copy_String);
 end String_Utils;
