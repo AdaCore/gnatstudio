@@ -2540,7 +2540,8 @@ package body Src_Info.Queries is
       if Decl_Project = No_Project then
          Decl_Project := Get_Project_From_File
            (Project_Registry'Class (Get_Registry (Root_Project)),
-            Source_Filename);
+            Source_Filename,
+            Root_If_Not_Found => False);
          Iterator_Decl_Project := Decl_Project;
 
          if Decl_Project = No_Project then
