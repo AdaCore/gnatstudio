@@ -90,7 +90,8 @@ procedure Odd_Main is
                Dir_Created := True;
             end if;
 
-            if not Is_Directory (Dir.all & Directory_Separator & "sessions")
+            if not
+              Is_Directory (Dir.all & Directory_Separator & "sessions")
             then
                Make_Dir (Dir.all & Directory_Separator & "sessions");
                if not Dir_Created then
