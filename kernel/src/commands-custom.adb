@@ -92,6 +92,127 @@ package body Commands.Custom is
    procedure Store_Command_Output (Data : Process_Data; Output : String);
    --  Store the output of the current command
 
+   type Parameters_Filter_Record is new Action_Filter_Record with record
+      Need_File, Need_Directory : Boolean := False;
+      Need_Project : Character := ' ';
+   end record;
+   type Parameters_Filter is access all Parameters_Filter_Record'Class;
+   --  Check that the current context contains enough information to satisfy
+   --  the requirements for a custom command.
+   --  Need_Project is 'p' is a current project is needed, 'P' is a root
+   --  project is needed, different from the default project loaded by GPS at
+   --  startup, and any other character if no project is needed.
+
+   function Filter_Matches_Primitive
+     (Filter  : access Parameters_Filter_Record;
+      Context : Selection_Context_Access;
+      Kernel  : access Kernel_Handle_Record'Class) return Boolean;
+   --  See doc for inherited subprogram.
+
+   ------------------------------
+   -- Filter_Matches_Primitive --
+   ------------------------------
+
+   function Filter_Matches_Primitive
+     (Filter  : access Parameters_Filter_Record;
+      Context : Selection_Context_Access;
+      Kernel  : access Kernel_Handle_Record'Class) return Boolean
+   is
+      Project : Project_Type;
+   begin
+      if Filter.Need_Project = 'p'
+        or else Filter.Need_Project = 'P'
+      then
+         Project := Project_From_Param (Filter.Need_Project & ' ', Context);
+         if Project = No_Project then
+            Insert (Kernel, -"No project specified", Mode => Error);
+            return False;
+         end if;
+      end if;
+
+      if Filter.Need_File then
+         if Context = null
+           or else Context.all not in File_Selection_Context'Class
+           or else not Has_File_Information
+             (File_Selection_Context_Access (Context))
+         then
+            Insert (Kernel, -"No file specified", Mode => Error);
+            return False;
+         end if;
+      end if;
+
+      if Filter.Need_Directory then
+         if Context = null
+           or else Context.all not in File_Selection_Context'Class
+           or else not Has_Directory_Information
+             (File_Selection_Context_Access (Context))
+         then
+            Insert (Kernel, -"No directory specified", Mode => Error);
+            return False;
+         end if;
+      end if;
+
+      return True;
+   end Filter_Matches_Primitive;
+
+   -------------------
+   -- Create_Filter --
+   -------------------
+
+   function Create_Filter
+     (Command : Glib.Xml_Int.Node_Ptr) return Action_Filter
+   is
+      Filter : Parameters_Filter;
+
+      function Substitution (Param : String) return String;
+      --  Check whether the command has a '%' + digit parameter
+
+      function Substitution (Param : String) return String is
+      begin
+         if Param = "f" or else Param = "F" then
+            if Filter = null then
+               Filter := new Parameters_Filter_Record;
+            end if;
+            Filter.Need_File := True;
+
+         elsif Param = "d" then
+            if Filter = null then
+               Filter := new Parameters_Filter_Record;
+            end if;
+            Filter.Need_Directory := True;
+
+         elsif Param (Param'First) = 'p' or else Param (Param'First) = 'P' then
+            if Param /= "pps" and then Param /= "PPs" then
+               if Filter = null then
+                  Filter := new Parameters_Filter_Record;
+               end if;
+               Filter.Need_Project := Param (Param'First);
+            end if;
+         end if;
+
+         return "";
+      end Substitution;
+
+      N : Node_Ptr := Command;
+   begin
+      while N /= null loop
+         declare
+            Tmp : constant String := Substitute
+              (N.Value.all,
+               Substitution_Char => '%',
+               Callback          => Substitution'Unrestricted_Access,
+               Recursive         => False);
+            pragma Unreferenced (Tmp);
+         begin
+            null;
+         end;
+
+         N := N.Next;
+      end loop;
+
+      return Action_Filter (Filter);
+   end Create_Filter;
+
    -------------
    -- Exit_Cb --
    -------------

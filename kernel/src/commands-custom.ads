@@ -87,6 +87,8 @@ package Commands.Custom is
    --  If Script is null, the command is launched as a system
    --  command (Unix or Windows). Otherwise, it is interpreted as a GPS
    --  Internal command in the specific scripting language.
+   --  Filter is the filter that needs to be tested to make sure that all
+   --  parameters can be satisfied.
 
    procedure Create
      (Item           : out Custom_Command_Access;
@@ -94,11 +96,19 @@ package Commands.Custom is
       Command        : Glib.Xml_Int.Node_Ptr;
       Default_Output : String := Console_Output);
    --  Create a new command with a list of <shell> and <external> nodes, as
-   --  done in the customization files.
+   --  done in the customization files. Filter is the filter that needs to
+   --  be tested to make sure that all parameters can be satisfied.
    --  Each of the commands is executed in turn. Output from one command is
    --  made available to the next through %1, %2,...
    --  Default_Output specifies where the output should be sent by default, if
    --  not overriden by any "output" attribute in the XML tree.
+
+   function Create_Filter
+     (Command : Glib.Xml_Int.Node_Ptr) return Action_Filter;
+   --  Return null or a filter suitable for Command. This filter ensures that
+   --  all %f,... parameters can be properly substituted.
+   --  This filter should be checked if the command is used as an action in
+   --  GPS.
 
    procedure Free (X : in out Custom_Command);
    --  Free memory associated with X.
