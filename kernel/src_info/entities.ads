@@ -458,11 +458,11 @@ package Entities is
    function Is_Subprogram (Entity : Entity_Information) return Boolean;
    --  Return True if Entity is associated with a subprograms
 
-   ----------------
-   -- Scope_Tree --
-   ----------------
+   type Entity_Reference is private;
+   No_Entity_Reference : constant Entity_Reference;
 
-   type Scope_Tree is private;
+   function Get_Location (Ref : Entity_Reference) return File_Location;
+   --  Return the location of the reference
 
    -------------------------
    -- LI_Handler_Iterator --
@@ -576,21 +576,49 @@ private
    -- References_List --
    ---------------------
 
-   type Entity_Reference is record
+   type E_Reference is record
       Location : File_Location;
+      Caller   : Entity_Information;
       Kind     : Reference_Kind;
    end record;
-   No_Entity_Reference : constant Entity_Reference :=
-     (No_File_Location, Reference);
+   No_E_Reference : constant E_Reference :=
+     (No_File_Location, null, Reference);
+   --  Caller is the enclosing entity at that location
 
    package Entity_Reference_Arrays is new Dynamic_Arrays
-     (Data                    => Entity_Reference,
+     (Data                    => E_Reference,
       Table_Multiplier        => 1,
       Table_Minimum_Increment => 10,
       Table_Initial_Size      => 5);
    subtype Entity_Reference_List is Entity_Reference_Arrays.Instance;
    Null_Entity_Reference_List : constant Entity_Reference_List :=
      Entity_Reference_Arrays.Empty_Instance;
+
+   type Entity_Reference is record
+      Entity : Entity_Information;
+      Index  : Entity_Reference_Arrays.Index_Type;
+      --  If Index = Index_Type'Last, then this is a reference to the
+      --  declaration of the entity
+   end record;
+   No_Entity_Reference : constant Entity_Reference := (null, 0);
+
+
+
+   type Entity_Information_List_Access is access Entity_Information_List;
+
+   function Get_Name (D : Entity_Information) return GNAT.OS_Lib.String_Access;
+   function Get_Name
+     (D : Entity_Information_List_Access) return GNAT.OS_Lib.String_Access;
+   --  Return the name of the first entity in the list
+
+   procedure Destroy (D : in out Entity_Information_List_Access);
+
+   package Entities_Tries is new Tries
+     (Data_Type => Entity_Information_List_Access,
+      No_Data   => null,
+      Get_Index => Get_Name,
+      Free      => Destroy);
+   --  Each node in the tree contains all the entities with the same name.
 
    ------------------------
    -- Entity_Information --
@@ -601,9 +629,10 @@ private
       Kind                  : E_Kind;
 
       Declaration           : File_Location;
+      Caller_At_Declaration : Entity_Information;
       --  The location of the declaration for this entity.
 
-      End_Of_Scope          : Entity_Reference;
+      End_Of_Scope          : E_Reference;
       --  The location at which the declaration of this entity ends. This is
       --  used for all entites that contain other entities (records, C++
       --  classes, packages,...)
@@ -638,6 +667,10 @@ private
       References            : Entity_Reference_List;
       --  All the references to this entity in the parsed files
 
+      Called_Entities       : Entities_Tries.Trie_Tree;
+      --  List of entities that have a reference between the body and the
+      --  end-of-scope of the entity.
+
       Ref_Count             : Natural := 1;
       --  The reference count for this entity. When it reaches 0, the entity
       --  is released from memory.
@@ -646,22 +679,6 @@ private
    --------------------
    -- Entities_Table --
    --------------------
-
-   type Entity_Information_List_Access is access Entity_Information_List;
-
-   function Get_Name (D : Entity_Information) return GNAT.OS_Lib.String_Access;
-   function Get_Name
-     (D : Entity_Information_List_Access) return GNAT.OS_Lib.String_Access;
-   --  Return the name of the first entity in the list
-
-   procedure Destroy (D : in out Entity_Information_List_Access);
-
-   package Entities_Tries is new Tries
-     (Data_Type => Entity_Information_List_Access,
-      No_Data   => null,
-      Get_Index => Get_Name,
-      Free      => Destroy);
-   --  Each node in the tree contains all the entities with the same name.
 
    procedure Add (Entities         : in out Entities_Tries.Trie_Tree;
                   Entity           : Entity_Information;
@@ -722,9 +739,8 @@ private
       Depended_On : Dependency_List;
       --  The list of dependencies on or from this file
 
-      Scope       : Scope_Tree;
-      --  The scope tree for this file. This is created on-demand the first
-      --  time it is needed.
+      Scope_Tree_Computed : Boolean;
+      --  Whether the scope tree was computed
 
       LI          : LI_File;
       --  The LI file used to parse the file. This might be left to null if
