@@ -4,7 +4,7 @@
 --                        Copyright (C) 2001                         --
 --                            ACT-Europe                             --
 --                                                                   --
--- GVD is free  software;  you can redistribute it and/or modify  it --
+-- GLIDE is free software; you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -27,7 +27,6 @@ with GNAT.OS_Lib; use GNAT.OS_Lib;
 with GtkAda.File_Selector; use GtkAda.File_Selector;
 
 package Make_Suite_Window_Pkg is
-
 
    type Make_Suite_Window_Record is new Gtk_Window_Record with record
       Explorer   : File_Selector_Window_Access;
