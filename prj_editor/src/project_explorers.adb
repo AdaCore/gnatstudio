@@ -198,7 +198,9 @@ package body Project_Explorers is
    --  Create an array of strings suitable for display in the ctree.
    --  Always use this function instead of creating the array yourself, since
    --  this checks that there are as many elements in the array as columns in
-   --  the tree
+   --  the tree.
+   --  The caller is responsible for freeing the memory associated with the
+   --  returned value.
 
    function Parse_Path
      (Path : String) return String_List_Utils.String_List.List;
@@ -1646,14 +1648,15 @@ package body Project_Explorers is
    procedure Add_Dummy_Node
      (Explorer : access Project_Explorer_Record'Class; Node : Gtk_Ctree_Node)
    is
-      N : Gtk_Ctree_Node;
+      N    : Gtk_Ctree_Node;
+      Text : Tree_Chars_Ptr_Array := Create_Line_Text ("");
    begin
       --  Add a dummy node
       N := Insert_Node
         (Ctree         => Explorer.Tree,
          Parent        => Node,
          Sibling       => null,
-         Text          => Create_Line_Text (""),
+         Text          => Text,
          Spacing       => Ctree_Spacing,
          Pixmap_Closed => Null_Pixmap,
          Mask_Closed   => Null_Bitmap,
@@ -1667,6 +1670,7 @@ package body Project_Explorers is
           Name_Length => 0,
           Directory   => No_String,
           Up_To_Date  => False));
+      Free (Text);
    end Add_Dummy_Node;
 
    ----------------------
@@ -1685,6 +1689,7 @@ package body Project_Explorers is
         and then (not Get_Pref (Explorer.Kernel, Show_Directories)
                   or else Projects.Table (Project).Source_Dirs = Nil_String);
       Node_Type : Node_Types := Project_Node;
+      Text      : Tree_Chars_Ptr_Array;
 
    begin
       if Modified_Project then
@@ -1696,12 +1701,13 @@ package body Project_Explorers is
          Node_Type := Modified_Project_Node;
       end if;
 
+      Text := Create_Line_Text
+        (Get_Name_String (Projects.Table (Project).Name));
       N := Insert_Node
         (Ctree         => Explorer.Tree,
          Parent        => Parent_Node,
          Sibling       => null,
-         Text          => Create_Line_Text
-           (Get_Name_String (Projects.Table (Project).Name)),
+         Text          => Text,
          Spacing       => Ctree_Spacing,
          Pixmap_Closed => Explorer.Close_Pixmaps (Node_Type),
          Mask_Closed   => Explorer.Close_Masks (Node_Type),
@@ -1709,6 +1715,7 @@ package body Project_Explorers is
          Mask_Opened   => Explorer.Open_Masks (Node_Type),
          Is_Leaf       => Is_Leaf,
          Expanded      => False);
+      Free (Text);
 
       if Node_Type = Project_Node
         or else Node_Type = Modified_Project_Node
@@ -1782,6 +1789,7 @@ package body Project_Explorers is
       Is_Leaf   : Boolean;
       Node_Type : Node_Types := Directory_Node;
       Node_Text : String_Access;
+      Text      : Tree_Chars_Ptr_Array;
 
    begin
       pragma Assert (Object_Directory or else Directory_String /= No_String);
@@ -1805,11 +1813,12 @@ package body Project_Explorers is
         or else not Has_Entries
         (Get_Project_From_Node (Explorer, Parent_Node), Node_Text.all);
 
+      Text := Create_Line_Text (Node_Text.all);
       N := Insert_Node
         (Ctree         => Explorer.Tree,
          Parent        => Parent_Node,
          Sibling       => null,
-         Text          => Create_Line_Text (Node_Text.all),
+         Text          => Text,
          Spacing       => Ctree_Spacing,
          Pixmap_Closed => Explorer.Close_Pixmaps (Node_Type),
          Mask_Closed   => Explorer.Close_Masks (Node_Type),
@@ -1818,6 +1827,7 @@ package body Project_Explorers is
          Is_Leaf       => Is_Leaf,
          Expanded      => False);
       Free (Node_Text);
+      Free (Text);
 
       if Object_Directory then
          Node_Set_Row_Data
@@ -1851,16 +1861,19 @@ package body Project_Explorers is
       File        : String_Id;
       Parent_Node : Gtk_Ctree_Node) return Gtk_Ctree_Node
    is
-      N : Gtk_Ctree_Node;
+      N       : Gtk_Ctree_Node;
       Is_Leaf : constant Boolean := False;
+      Text    : Tree_Chars_Ptr_Array;
+
    begin
       String_To_Name_Buffer (File);
 
+      Text := Create_Line_Text (Name_Buffer (1 .. Name_Len));
       N := Insert_Node
         (Ctree         => Explorer.Tree,
          Parent        => Parent_Node,
          Sibling       => null,
-         Text          => Create_Line_Text (Name_Buffer (1 .. Name_Len)),
+         Text          => Text,
          Spacing       => Ctree_Spacing,
          Pixmap_Closed => Explorer.Close_Pixmaps (File_Node),
          Mask_Closed   => Explorer.Close_Masks (File_Node),
@@ -1868,6 +1881,7 @@ package body Project_Explorers is
          Mask_Opened   => Explorer.Open_Masks (File_Node),
          Is_Leaf       => Is_Leaf,
          Expanded      => False);
+      Free (Text);
 
       Node_Set_Row_Data
         (Explorer.Tree, N, (Node_Type   => File_Node,
@@ -1890,14 +1904,17 @@ package body Project_Explorers is
       Category    : Language_Category;
       Parent_Node : Gtk_Ctree_Node) return Gtk_Ctree_Node
    is
-      N : Gtk_Ctree_Node;
+      N       : Gtk_Ctree_Node;
       Is_Leaf : constant Boolean := False;
+      Text    : Tree_Chars_Ptr_Array;
+
    begin
+      Text := Create_Line_Text (Category_Name (Category));
       N := Insert_Node
         (Ctree         => Explorer.Tree,
          Parent        => Parent_Node,
          Sibling       => null,
-         Text          => Create_Line_Text (Category_Name (Category)),
+         Text          => Text,
          Spacing       => Ctree_Spacing,
          Pixmap_Closed => Explorer.Close_Pixmaps (Category_Node),
          Mask_Closed   => Explorer.Close_Masks (Category_Node),
@@ -1905,6 +1922,7 @@ package body Project_Explorers is
          Mask_Opened   => Explorer.Open_Masks (Category_Node),
          Is_Leaf       => Is_Leaf,
          Expanded      => False);
+      Free (Text);
 
       Node_Set_Row_Data
         (Explorer.Tree, N,
@@ -1924,9 +1942,10 @@ package body Project_Explorers is
       Construct   : Construct_Information;
       Parent_Node : Gtk_Ctree_Node) return Gtk_Ctree_Node
    is
-      N : Gtk_Ctree_Node;
+      N       : Gtk_Ctree_Node;
       Is_Leaf : constant Boolean := True;
-      Text : Tree_Chars_Ptr_Array;
+      Text    : Tree_Chars_Ptr_Array;
+
    begin
       if Construct.Is_Declaration then
          if Construct.Profile /= null then
@@ -1956,6 +1975,7 @@ package body Project_Explorers is
          Mask_Opened   => Explorer.Open_Masks (Entity_Node),
          Is_Leaf       => Is_Leaf,
          Expanded      => False);
+      Free (Text);
 
       Node_Set_Row_Data
         (Explorer.Tree, N,
