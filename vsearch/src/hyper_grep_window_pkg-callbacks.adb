@@ -8,18 +8,19 @@ with Gtk.Enums; use Gtk.Enums;
 with Gtk.Style; use Gtk.Style;
 with Gtk.Widget; use Gtk.Widget;
 
+
 with Search_Callback;       use Search_Callback;
 with Find_Utils;            use Find_Utils;
 
 with GNAT.Regexp;           use GNAT.Regexp;
---
 with GNAT.Os_Lib;
 
 with Ada.Text_IO;           use Ada.Text_IO;
 with Ada.Exceptions;        use Ada.Exceptions;
 
---
 with Gtkada.File_Selection; use Gtkada.File_Selection;
+
+with Gtk.Editable;
 
 package body Hyper_Grep_Window_Pkg.Callbacks is
 
@@ -46,21 +47,15 @@ package body Hyper_Grep_Window_Pkg.Callbacks is
    procedure On_Browse_Button_Clicked
      (Object : access Gtk_Button_Record'Class)
    is
-      use GNAT.Os_Lib;
-
-      S : String_Access;
+      S : constant String := File_Selection_Dialog
+                               ("Select a directory",
+                                "." & GNAT.Os_Lib.Directory_Separator,
+                                Dir_Only   => True,
+                                Must_Exist => True);
    begin
-      null;
-      S := new String '(File_Selection_Dialog
-                          ("Select a directory",
-                           "." & Directory_Separator,
-                           Dir_Only => True,
-                           Must_Exist => True));
-      if S.all /= "" then
-         Set_Text (Hyper_Grep_Window.Directory_Entry, S.all);
+      if S /= "" then
+         Set_Text (Hyper_Grep_Window.Directory_Entry, S);
       end if;
-
-      Free (S);
    end On_Browse_Button_Clicked;
 
    -----------------------------------
@@ -83,13 +78,15 @@ package body Hyper_Grep_Window_Pkg.Callbacks is
    is
       S : Code_Search;
       RE : Regexp;
+
+      use Gtk.Editable;
    begin
       if Get_Active (Hyper_Grep_Window.Only_Project_Check) then
          Init_Search
            (S,
-            Get_Text (Hyper_Grep_Window.Pattern_Entry),
+            Get_Chars (Hyper_Grep_Window.Pattern_Entry),
             null,
-  -- -Get_Text (),
+  -- -Get_Chars (),
             Get_Active (Hyper_Grep_Window.Case_Check),
             Get_Active (Hyper_Grep_Window.Whole_Word_Check),
             Get_Active (Hyper_Grep_Window.Regexp_Check),
@@ -97,14 +94,14 @@ package body Hyper_Grep_Window_Pkg.Callbacks is
             Get_Active (Hyper_Grep_Window.Strings_Check),
             Get_Active (Hyper_Grep_Window.Statements_Check));
       else
-         RE := Compile (Get_Text (Hyper_Grep_Window.Files_Entry),
+         RE := Compile (Get_Chars (Hyper_Grep_Window.Files_Entry),
                         Glob => True);
 
          Init_Search
            (S,
-            Get_Text (Hyper_Grep_Window.Pattern_Entry),
+            Get_Chars (Hyper_Grep_Window.Pattern_Entry),
             RE,
-            Get_Text (Hyper_Grep_Window.Directory_Entry),
+            Get_Chars (Hyper_Grep_Window.Directory_Entry),
             Get_Active (Hyper_Grep_Window.Subdirs_Check),
             Get_Active (Hyper_Grep_Window.Case_Check),
             Get_Active (Hyper_Grep_Window.Whole_Word_Check),
@@ -125,7 +122,7 @@ package body Hyper_Grep_Window_Pkg.Callbacks is
    exception
       when Error_In_Regexp =>
          Put_Line ("--- Bad globbing pattern: "
-                   & Get_Text (Hyper_Grep_Window.Files_Entry));
+                   & Get_Chars (Hyper_Grep_Window.Files_Entry));
 
       when E : others =>
          Put_Line ("--- Exception >>>");
