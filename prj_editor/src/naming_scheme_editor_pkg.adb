@@ -58,9 +58,15 @@ begin
    Set_Border_Width (Naming_Scheme_Editor.Main_Box, 4);
    Add (Naming_Scheme_Editor.Alignment1, Naming_Scheme_Editor.Main_Box);
 
-   Gtk_New (Naming_Scheme_Editor.Frame29, -"Standard naming scheme");
-   Set_Shadow_Type (Naming_Scheme_Editor.Frame29, Shadow_Etched_In);
-   Pack_Start (Naming_Scheme_Editor.Main_Box, Naming_Scheme_Editor.Frame29, False, False, 0);
+   Gtk_New_Hbox (Naming_Scheme_Editor.Hbox4, False, 0);
+   Pack_Start (Naming_Scheme_Editor.Main_Box, Naming_Scheme_Editor.Hbox4, False, False, 0);
+
+   Gtk_New (Naming_Scheme_Editor.Label_Naming_Scheme, -("Naming scheme:"));
+   Set_Alignment (Naming_Scheme_Editor.Label_Naming_Scheme, 7.45058e-09, 0.5);
+   Set_Padding (Naming_Scheme_Editor.Label_Naming_Scheme, 10, 0);
+   Set_Justify (Naming_Scheme_Editor.Label_Naming_Scheme, Justify_Center);
+   Set_Line_Wrap (Naming_Scheme_Editor.Label_Naming_Scheme, False);
+   Pack_Start (Naming_Scheme_Editor.Hbox4, Naming_Scheme_Editor.Label_Naming_Scheme, False, False, 0);
 
    Gtk_New (Naming_Scheme_Editor.Standard_Scheme);
    Set_Case_Sensitive (Naming_Scheme_Editor.Standard_Scheme, False);
@@ -72,7 +78,7 @@ begin
    String_List.Append (Standard_Scheme_Items, -"<custom>");
    Combo.Set_Popdown_Strings (Naming_Scheme_Editor.Standard_Scheme, Standard_Scheme_Items);
    Free_String_List (Standard_Scheme_Items);
-   Add (Naming_Scheme_Editor.Frame29, Naming_Scheme_Editor.Standard_Scheme);
+   Pack_Start (Naming_Scheme_Editor.Hbox4, Naming_Scheme_Editor.Standard_Scheme, True, True, 0);
 
    Naming_Scheme_Editor.Combo_Entry3 := Get_Entry (Naming_Scheme_Editor.Standard_Scheme);
    Set_Editable (Naming_Scheme_Editor.Combo_Entry3, False);
@@ -87,89 +93,66 @@ begin
    Set_Shadow_Type (Naming_Scheme_Editor.Frame28, Shadow_Etched_In);
    Pack_Start (Naming_Scheme_Editor.Main_Box, Naming_Scheme_Editor.Frame28, False, False, 0);
 
-   Gtk_New (Naming_Scheme_Editor.Table1, 5, 2, False);
-   Set_Row_Spacings (Naming_Scheme_Editor.Table1, 0);
-   Set_Col_Spacings (Naming_Scheme_Editor.Table1, 10);
-   Add (Naming_Scheme_Editor.Frame28, Naming_Scheme_Editor.Table1);
+   Gtk_New_Vbox (Naming_Scheme_Editor.Vbox53, False, 0);
+   Add (Naming_Scheme_Editor.Frame28, Naming_Scheme_Editor.Vbox53);
+
+   Gtk_New_Hbox (Naming_Scheme_Editor.Hbox5, False, 0);
+   Pack_Start (Naming_Scheme_Editor.Vbox53, Naming_Scheme_Editor.Hbox5, True, True, 0);
+
+   Gtk_New (Naming_Scheme_Editor.Label_Casing, -("Filename casing:"));
+   Set_Alignment (Naming_Scheme_Editor.Label_Casing, 7.45058e-09, 0.5);
+   Set_Padding (Naming_Scheme_Editor.Label_Casing, 10, 0);
+   Set_Justify (Naming_Scheme_Editor.Label_Casing, Justify_Center);
+   Set_Line_Wrap (Naming_Scheme_Editor.Label_Casing, False);
+   Pack_Start (Naming_Scheme_Editor.Hbox5, Naming_Scheme_Editor.Label_Casing, False, False, 0);
 
    Gtk_New (Naming_Scheme_Editor.Casing);
    Set_Case_Sensitive (Naming_Scheme_Editor.Casing, False);
    Set_Use_Arrows (Naming_Scheme_Editor.Casing, True);
    Set_Use_Arrows_Always (Naming_Scheme_Editor.Casing, False);
-   String_List.Append (Casing_Items, -"lowercase");
-   String_List.Append (Casing_Items, -"uppercase");
-   String_List.Append (Casing_Items, -"mixedcase");
+   String_List.Append (Casing_Items, -"");
    Combo.Set_Popdown_Strings (Naming_Scheme_Editor.Casing, Casing_Items);
    Free_String_List (Casing_Items);
-   Attach (Naming_Scheme_Editor.Table1, Naming_Scheme_Editor.Casing, 1, 2, 0, 1,
-     Expand or Fill, 0,
-     0, 0);
+   Pack_Start (Naming_Scheme_Editor.Hbox5, Naming_Scheme_Editor.Casing, True, True, 0);
 
    Naming_Scheme_Editor.Combo_Entry2 := Get_Entry (Naming_Scheme_Editor.Casing);
    Set_Editable (Naming_Scheme_Editor.Combo_Entry2, False);
    Set_Max_Length (Naming_Scheme_Editor.Combo_Entry2, 0);
-   Set_Text (Naming_Scheme_Editor.Combo_Entry2, -"lowercase");
+   Set_Text (Naming_Scheme_Editor.Combo_Entry2, -"");
    Set_Visibility (Naming_Scheme_Editor.Combo_Entry2, True);
    Widget_Callback.Object_Connect
      (Naming_Scheme_Editor.Combo_Entry2, "changed",
       Widget_Callback.To_Marshaller (Customized'Access), Naming_Scheme_Editor);
 
-   Gtk_New (Naming_Scheme_Editor.Label23, -("Filename casing:"));
-   Set_Alignment (Naming_Scheme_Editor.Label23, 0.5, 0.5);
-   Set_Padding (Naming_Scheme_Editor.Label23, 0, 0);
-   Set_Justify (Naming_Scheme_Editor.Label23, Justify_Center);
-   Set_Line_Wrap (Naming_Scheme_Editor.Label23, False);
-   Attach (Naming_Scheme_Editor.Table1, Naming_Scheme_Editor.Label23, 0, 1, 0, 1,
-     0, 0,
-     0, 0);
+   Gtk_New_Hbox (Naming_Scheme_Editor.Hbox7, False, 0);
+   Pack_Start (Naming_Scheme_Editor.Vbox53, Naming_Scheme_Editor.Hbox7, True, True, 0);
 
-   Gtk_New (Naming_Scheme_Editor.Label24, -("Dot replacement:"));
-   Set_Alignment (Naming_Scheme_Editor.Label24, 0.5, 0.5);
-   Set_Padding (Naming_Scheme_Editor.Label24, 0, 0);
-   Set_Justify (Naming_Scheme_Editor.Label24, Justify_Center);
-   Set_Line_Wrap (Naming_Scheme_Editor.Label24, False);
-   Attach (Naming_Scheme_Editor.Table1, Naming_Scheme_Editor.Label24, 0, 1, 1, 2,
-     0, 0,
-     0, 0);
+   Gtk_New (Naming_Scheme_Editor.Label_Dot_Replacement, -("Dot replacement:"));
+   Set_Alignment (Naming_Scheme_Editor.Label_Dot_Replacement, 7.45058e-09, 0.5);
+   Set_Padding (Naming_Scheme_Editor.Label_Dot_Replacement, 10, 0);
+   Set_Justify (Naming_Scheme_Editor.Label_Dot_Replacement, Justify_Center);
+   Set_Line_Wrap (Naming_Scheme_Editor.Label_Dot_Replacement, False);
+   Pack_Start (Naming_Scheme_Editor.Hbox7, Naming_Scheme_Editor.Label_Dot_Replacement, False, False, 0);
 
    Gtk_New (Naming_Scheme_Editor.Dot_Replacement);
    Set_Editable (Naming_Scheme_Editor.Dot_Replacement, True);
    Set_Max_Length (Naming_Scheme_Editor.Dot_Replacement, 0);
    Set_Text (Naming_Scheme_Editor.Dot_Replacement, -"-");
    Set_Visibility (Naming_Scheme_Editor.Dot_Replacement, True);
-   Attach (Naming_Scheme_Editor.Table1, Naming_Scheme_Editor.Dot_Replacement, 1, 2, 1, 2,
-     Expand or Fill, 0,
-     0, 0);
+   Pack_Start (Naming_Scheme_Editor.Hbox7, Naming_Scheme_Editor.Dot_Replacement, True, True, 0);
    Widget_Callback.Object_Connect
      (Naming_Scheme_Editor.Dot_Replacement, "changed",
       Widget_Callback.To_Marshaller (Customized'Access), Naming_Scheme_Editor);
 
-   Gtk_New (Naming_Scheme_Editor.Label25, -("Spec extensions:"));
-   Set_Alignment (Naming_Scheme_Editor.Label25, 0.5, 0.5);
-   Set_Padding (Naming_Scheme_Editor.Label25, 0, 0);
-   Set_Justify (Naming_Scheme_Editor.Label25, Justify_Center);
-   Set_Line_Wrap (Naming_Scheme_Editor.Label25, False);
-   Attach (Naming_Scheme_Editor.Table1, Naming_Scheme_Editor.Label25, 0, 1, 2, 3,
-     0, 0,
-     0, 0);
+   Gtk_New_Hbox (Naming_Scheme_Editor.Hbox6, False, 0);
+   Pack_Start (Naming_Scheme_Editor.Vbox53, Naming_Scheme_Editor.Hbox6, True, True, 0);
 
-   Gtk_New (Naming_Scheme_Editor.Label26, -("Body extensions:"));
-   Set_Alignment (Naming_Scheme_Editor.Label26, 0.5, 0.5);
-   Set_Padding (Naming_Scheme_Editor.Label26, 0, 0);
-   Set_Justify (Naming_Scheme_Editor.Label26, Justify_Center);
-   Set_Line_Wrap (Naming_Scheme_Editor.Label26, False);
-   Attach (Naming_Scheme_Editor.Table1, Naming_Scheme_Editor.Label26, 0, 1, 3, 4,
-     0, 0,
-     0, 0);
-
-   Gtk_New (Naming_Scheme_Editor.Label27, -("Separate extensions:"));
-   Set_Alignment (Naming_Scheme_Editor.Label27, 0.5, 0.5);
-   Set_Padding (Naming_Scheme_Editor.Label27, 0, 0);
-   Set_Justify (Naming_Scheme_Editor.Label27, Justify_Center);
-   Set_Line_Wrap (Naming_Scheme_Editor.Label27, False);
-   Attach (Naming_Scheme_Editor.Table1, Naming_Scheme_Editor.Label27, 0, 1, 4, 5,
-     0, 0,
-     0, 0);
+   Gtk_New (Naming_Scheme_Editor.Label_Spec_Extensions, -("Spec extensions:"));
+   Set_Alignment (Naming_Scheme_Editor.Label_Spec_Extensions, 7.45058e-09, 0.5);
+   Set_Padding (Naming_Scheme_Editor.Label_Spec_Extensions, 10, 0);
+   Set_Justify (Naming_Scheme_Editor.Label_Spec_Extensions, Justify_Center);
+   Set_Line_Wrap (Naming_Scheme_Editor.Label_Spec_Extensions, False);
+   Pack_Start (Naming_Scheme_Editor.Hbox6, Naming_Scheme_Editor.Label_Spec_Extensions, False, False, 0);
 
    Gtk_New (Naming_Scheme_Editor.Spec_Extension);
    Set_Case_Sensitive (Naming_Scheme_Editor.Spec_Extension, False);
@@ -180,9 +163,7 @@ begin
    String_List.Append (Spec_Extension_Items, -"_.ada");
    Combo.Set_Popdown_Strings (Naming_Scheme_Editor.Spec_Extension, Spec_Extension_Items);
    Free_String_List (Spec_Extension_Items);
-   Attach (Naming_Scheme_Editor.Table1, Naming_Scheme_Editor.Spec_Extension, 1, 2, 2, 3,
-     Expand or Fill, 0,
-     0, 0);
+   Pack_Start (Naming_Scheme_Editor.Hbox6, Naming_Scheme_Editor.Spec_Extension, True, True, 0);
 
    Naming_Scheme_Editor.Combo_Entry4 := Get_Entry (Naming_Scheme_Editor.Spec_Extension);
    Set_Editable (Naming_Scheme_Editor.Combo_Entry4, True);
@@ -193,6 +174,16 @@ begin
      (Naming_Scheme_Editor.Combo_Entry4, "changed",
       Widget_Callback.To_Marshaller (Customized'Access), Naming_Scheme_Editor);
 
+   Gtk_New_Hbox (Naming_Scheme_Editor.Hbox8, False, 0);
+   Pack_Start (Naming_Scheme_Editor.Vbox53, Naming_Scheme_Editor.Hbox8, True, True, 0);
+
+   Gtk_New (Naming_Scheme_Editor.Label_Body_Extensions, -("Body extensions:"));
+   Set_Alignment (Naming_Scheme_Editor.Label_Body_Extensions, 0.0, 0.5);
+   Set_Padding (Naming_Scheme_Editor.Label_Body_Extensions, 10, 0);
+   Set_Justify (Naming_Scheme_Editor.Label_Body_Extensions, Justify_Center);
+   Set_Line_Wrap (Naming_Scheme_Editor.Label_Body_Extensions, False);
+   Pack_Start (Naming_Scheme_Editor.Hbox8, Naming_Scheme_Editor.Label_Body_Extensions, False, False, 0);
+
    Gtk_New (Naming_Scheme_Editor.Body_Extension);
    Set_Case_Sensitive (Naming_Scheme_Editor.Body_Extension, False);
    Set_Use_Arrows (Naming_Scheme_Editor.Body_Extension, True);
@@ -202,9 +193,7 @@ begin
    String_List.Append (Body_Extension_Items, -".ada");
    Combo.Set_Popdown_Strings (Naming_Scheme_Editor.Body_Extension, Body_Extension_Items);
    Free_String_List (Body_Extension_Items);
-   Attach (Naming_Scheme_Editor.Table1, Naming_Scheme_Editor.Body_Extension, 1, 2, 3, 4,
-     Expand or Fill, 0,
-     0, 0);
+   Pack_Start (Naming_Scheme_Editor.Hbox8, Naming_Scheme_Editor.Body_Extension, True, True, 0);
 
    Naming_Scheme_Editor.Combo_Entry5 := Get_Entry (Naming_Scheme_Editor.Body_Extension);
    Set_Editable (Naming_Scheme_Editor.Combo_Entry5, True);
@@ -215,6 +204,16 @@ begin
      (Naming_Scheme_Editor.Combo_Entry5, "changed",
       Widget_Callback.To_Marshaller (Customized'Access), Naming_Scheme_Editor);
 
+   Gtk_New_Hbox (Naming_Scheme_Editor.Hbox9, False, 0);
+   Pack_Start (Naming_Scheme_Editor.Vbox53, Naming_Scheme_Editor.Hbox9, True, True, 0);
+
+   Gtk_New (Naming_Scheme_Editor.Label_Separate_Extensions, -("Separate extensions:"));
+   Set_Alignment (Naming_Scheme_Editor.Label_Separate_Extensions, 7.45058e-09, 0.5);
+   Set_Padding (Naming_Scheme_Editor.Label_Separate_Extensions, 10, 0);
+   Set_Justify (Naming_Scheme_Editor.Label_Separate_Extensions, Justify_Center);
+   Set_Line_Wrap (Naming_Scheme_Editor.Label_Separate_Extensions, False);
+   Pack_Start (Naming_Scheme_Editor.Hbox9, Naming_Scheme_Editor.Label_Separate_Extensions, False, False, 0);
+
    Gtk_New (Naming_Scheme_Editor.Separate_Extension);
    Set_Case_Sensitive (Naming_Scheme_Editor.Separate_Extension, False);
    Set_Use_Arrows (Naming_Scheme_Editor.Separate_Extension, True);
@@ -224,9 +223,7 @@ begin
    String_List.Append (Separate_Extension_Items, -".ada");
    Combo.Set_Popdown_Strings (Naming_Scheme_Editor.Separate_Extension, Separate_Extension_Items);
    Free_String_List (Separate_Extension_Items);
-   Attach (Naming_Scheme_Editor.Table1, Naming_Scheme_Editor.Separate_Extension, 1, 2, 4, 5,
-     Expand or Fill, 0,
-     0, 0);
+   Pack_Start (Naming_Scheme_Editor.Hbox9, Naming_Scheme_Editor.Separate_Extension, True, True, 0);
 
    Naming_Scheme_Editor.Combo_Entry6 := Get_Entry (Naming_Scheme_Editor.Separate_Extension);
    Set_Editable (Naming_Scheme_Editor.Combo_Entry6, True);
@@ -323,6 +320,7 @@ begin
      (Naming_Scheme_Editor.Body_Filename_Entry, "key_press_event", On_Body_Filename_Entry_Key_Press_Event'Access, Naming_Scheme_Editor);
 
    Gtk_New (Naming_Scheme_Editor.Update, -"Update");
+   Set_Relief (Naming_Scheme_Editor.Update, Relief_Normal);
    Pack_Start (Naming_Scheme_Editor.Hbox3, Naming_Scheme_Editor.Update, False, False, 0);
    Widget_Callback.Object_Connect
      (Naming_Scheme_Editor.Update, "clicked",

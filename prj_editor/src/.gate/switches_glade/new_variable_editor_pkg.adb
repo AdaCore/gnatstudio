@@ -215,6 +215,7 @@ begin
    Pack_Start (New_Variable_Editor.Vbox37, New_Variable_Editor.Hbuttonbox3, False, False, 0);
 
    Gtk_New (New_Variable_Editor.Add_Button, -"Add");
+   Set_Relief (New_Variable_Editor.Add_Button, Relief_Normal);
    Set_Flags (New_Variable_Editor.Add_Button, Can_Default);
    Widget_Callback.Object_Connect
      (New_Variable_Editor.Add_Button, "clicked",
@@ -222,6 +223,7 @@ begin
    Add (New_Variable_Editor.Hbuttonbox3, New_Variable_Editor.Add_Button);
 
    Gtk_New (New_Variable_Editor.Cancel_Button, -"Cancel");
+   Set_Relief (New_Variable_Editor.Cancel_Button, Relief_Normal);
    Set_Flags (New_Variable_Editor.Cancel_Button, Can_Default);
    Widget_Callback.Object_Connect
      (New_Variable_Editor.Cancel_Button, "clicked",
