@@ -72,6 +72,12 @@ package Glide_Kernel.Preferences is
    pragma Inline (Get_Pref);
    --  See Default_Preferences.Get_Pref
 
+   procedure Set_Pref
+     (Kernel : access Kernel_Handle_Record'Class;
+      Pref   : Param_Spec_Boolean;
+      Value  : Boolean);
+   --  See Default_Preferences.Set_Pref
+
    -----------------------
    -- List of constants --
    -----------------------
@@ -90,6 +96,7 @@ package Glide_Kernel.Preferences is
    Start_Maximized       : Param_Spec_Boolean;
    Tmp_Dir               : Param_Spec_String;
    Toolbar_Show_Text     : Param_Spec_Boolean;
+   Save_Desktop_On_Exit  : Param_Spec_Boolean;
 
    -- Messages --
    Message_Highlight    : Param_Spec_Color;

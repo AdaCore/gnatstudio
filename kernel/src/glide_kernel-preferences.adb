@@ -126,6 +126,16 @@ package body Glide_Kernel.Preferences is
       Register_Property
         (Kernel.Preferences, Param_Spec (Tmp_Dir), -"General");
 
+      Save_Desktop_On_Exit := Param_Spec_Boolean (Gnew_Boolean
+        (Name    => "General-Save-Desktop-On-Exit",
+         Nick    => -"Save desktop on exit",
+         Blurb   => -("True if the desktop should be saved when exiting GPS"
+                      & " and restore on next startup"),
+         Default => True,
+         Flags   => Param_Readable));
+      Register_Property
+        (Kernel.Preferences, Param_Spec (Save_Desktop_On_Exit), -"General");
+
       -- Messages --
 
       Message_Highlight := Param_Spec_Color (Gnew_Color
@@ -751,6 +761,18 @@ package body Glide_Kernel.Preferences is
    begin
       return Get_Pref (Kernel.Preferences, Pref);
    end Get_Pref;
+
+   --------------
+   -- Set_Pref --
+   --------------
+
+   procedure Set_Pref
+     (Kernel : access Kernel_Handle_Record'Class;
+      Pref   : Param_Spec_Boolean;
+      Value  : Boolean) is
+   begin
+      Set_Pref (Kernel.Preferences, Pspec_Name (Param_Spec (Pref)), Value);
+   end Set_Pref;
 
    -----------------------
    -- Register_Property --
