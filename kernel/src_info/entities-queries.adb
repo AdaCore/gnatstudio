@@ -638,7 +638,7 @@ package body Entities.Queries is
       --  We always return the declaration first
       if not Iter.Decl_Returned then
          Iter.Decl_Returned := True;
-      else
+      elsif Iter.Index <= Last (Iter.Entity.References) then
          Iter.Index := Iter.Index + 1;
       end if;
 
@@ -679,6 +679,14 @@ package body Entities.Queries is
       end if;
 
       Next (Iter.Deps);
+
+      --  The next time Next is called, Index will be incremented, so we have
+      --  to make sure not to lose a reference here.
+      if Get (Iter.Deps) /= null
+        and then Iter.Index <= Last (Iter.Entity.References)
+      then
+         Iter.Index := Iter.Index - 1;
+      end if;
    end Next;
 
    ---------
