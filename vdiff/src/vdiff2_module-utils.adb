@@ -57,6 +57,16 @@ package body Vdiff2_Module.Utils is
 
    type   T_VLine_Information is array (1 .. 3) of Line_Information_Data;
 
+   function Add_Line
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+      File   : Virtual_File;
+      Pos    : Natural;
+      Style  : String := "";
+      Number : Natural := 1) return String;
+   --  Add a line constaining Line in editor,at line Pos,
+   --  using Style for color
+   --  And return corresponding Mark
+
    procedure Append
      (Kernel   : access Glide_Kernel.Kernel_Handle_Record'Class;
       VRange   : in out T_VRange;
@@ -69,6 +79,39 @@ package body Vdiff2_Module.Utils is
       Conflict : Boolean := False);
    --  Hightlight the Current Chunk given in VRange where action is Append
 
+   function Get_File_Last_Line
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+      File : Virtual_File) return Natural;
+   --  Return the number of line in file File
+
+   procedure Highlight_Line
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+      File  : Virtual_File;
+      Pos   : Natural;
+      Style : String := "";
+      Number : Natural := 1);
+   --  Color a line constaining Line in editor,at line Pos,
+   --  using Style for color.
+
+   function Mark_Diff_Block
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+      File  : Virtual_File;
+      Pos   : Natural) return String;
+   --  Return the mark corresponding the beginig of line number Pos
+
+   procedure Move_Mark (Source, Dest : Diff_List);
+   --  Move Source mark on to Dest
+
+   procedure Put_Button
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Info     : T_VLine_Information;
+      Conflict : Boolean;
+      Pos      : Positive;
+      VRange   : T_VRange;
+      VFile    : T_VFile;
+      Action   : Handler_Action_Line := null);
+   --  Put an icon on the column information
+
    procedure Show_Differences
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
       Item   : in out Diff_Head);
@@ -80,26 +123,6 @@ package body Vdiff2_Module.Utils is
       Info    : T_VLine_Information);
    --  Hightlight the Current Chunk Curr_Chunk
 
-
-   function Add_Line
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
-      File   : Virtual_File;
-      Pos    : Natural;
-      Style  : String := "";
-      Number : Natural := 1) return String;
-   --  Add a line constaining Line in editor,at line Pos,
-   --  using Style for color
-   --  And return corresponding Mark
-
-   procedure Highlight_Line
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
-      File  : Virtual_File;
-      Pos   : Natural;
-      Style : String := "";
-      Number : Natural := 1);
-   --  Color a line constaining Line in editor,at line Pos,
-   --  using Style for color.
-
    procedure Unhighlight_Line
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
       File  : Virtual_File;
@@ -107,29 +130,278 @@ package body Vdiff2_Module.Utils is
       Style : String := "");
    --  Remove highlighting of line number Pos in file File
 
-   function Mark_Diff_Block
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
-      File  : Virtual_File;
-      Pos   : Natural) return String;
-   --  Return the mark corresponding the beginig of line number Pos
+   --------------
+   -- Add_Line --
+   --------------
 
-   procedure Move_Mark (Source, Dest : Diff_List);
-   --  Move Source mark on to Dest
+   function Add_Line
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+      File   : Virtual_File;
+      Pos    : Natural;
+      Style  : String := "";
+      Number : Natural := 1) return String
+   is
+      Args_Line : Argument_List :=
+        (1 => new String'(Full_Name (File)),
+         2 => new String'(Image (Pos)),
+         3 => new String'(Image (Number)),
+         4 => new String'(Style));
+      Res : constant String :=  Execute_GPS_Shell_Command
+        (Kernel, "add_blank_lines", Args_Line);
+
+   begin
+      Basic_Types.Free (Args_Line);
+      return Res;
+   end Add_Line;
+
+   -------------
+   --  Append --
+   -------------
+
+   procedure Append
+     (Kernel   : access Glide_Kernel.Kernel_Handle_Record'Class;
+      VRange   : in out T_VRange;
+      VFile    : T_VFile;
+      VOffset  : T_VOffset;
+      VStyle   : T_VStr;
+      Ref      : T_Loc;
+      Loc      : T_Loc;
+      Info     : T_VLine_Information;
+      Conflict : Boolean := False)
+   is
+      Other, Other2 : T_Loc := 0;
+      Offset_Max   : Natural := 0;
+      Tmp : String_Access;
+
+   begin
+      for J in 1 .. 3 loop
+         if J /= Ref and J /= Loc and Other = 0 then
+            Other := J;
+            if Loc /= 0 then
+               Other2 := Loc;
+               exit;
+            end if;
+         end if;
+
+         if J /= Other and Other /= 0 and J /= Ref then
+            Other2 := J;
+            exit;
+         end if;
+      end loop;
+
+      for J in 1 .. 3 loop
+         if VOffset (J) >= Offset_Max then
+            Offset_Max := VOffset (J);
+         end if;
+      end loop;
+
+      for J in 1 .. 3 loop
+
+         if VOffset (J) > 0 then
+            Put_Button
+              (Kernel, Info, Conflict, J,
+               VRange, VFile, Move_On_Ref_File'Access);
+         end if;
+
+         Highlight_Line
+           (Kernel, VFile (J),
+            VRange (J).First,
+            VStyle (J).all, VOffset (J));
+         if VOffset (J) < Offset_Max then
+            Tmp := new String'
+              (Add_Line
+                 (Kernel, VFile (J),
+                  VRange (J).Last, VStyle (J).all,
+                  Offset_Max - VOffset (J)));
+            VRange (J).Blank_Lines := new String'(Tmp.all);
+         end if;
+
+         if VRange (J).Action = Delete then
+            VRange (J).Mark := Tmp;
+         elsif J = Ref then
+
+            if VRange (Other).Action = Append or
+              VRange (Other2).Action = Append then
+               VRange (J).Mark := Tmp;
+
+            else
+               VRange (J).Mark := new String'
+                 (Mark_Diff_Block (Kernel, VFile (J),
+                                   VRange (J).First));
+               Free (Tmp);
+            end if;
+         else
+            VRange (J).Mark := new String'
+              (Mark_Diff_Block (Kernel, VFile (J),
+                                VRange (J).First));
+            Free (Tmp);
+         end if;
+      end loop;
+   end Append;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (This : in out Text_Iterator_Access) is
+      procedure Free_Data is
+        new Ada.Unchecked_Deallocation (Text_Iterator, Text_Iterator_Access);
+   begin
+      if This = null then
+         return;
+      end if;
+
+      if This.Next /= null then
+         Free (This.Next);
+      end if;
+
+      Free (This.New_Line);
+      Free (This.Old_Line);
+      Free_Data (This);
+   end Free;
+
+   --------------------------
+   --  Get_File_Last_Line  --
+   --------------------------
 
    function Get_File_Last_Line
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
-      File : Virtual_File) return Natural;
-   --  Return the number of line in file File
+      File : Virtual_File) return Natural
+   is
+      Args_Line : constant Argument_List :=
+        (1 => new String'(Full_Name (File)));
+      Res       : constant String :=  Execute_GPS_Shell_Command
+        (Kernel, "get_last_line", Args_Line);
+   begin
+      return Natural'Value (Res);
+   end Get_File_Last_Line;
 
-   procedure Put_Button
+   ---------------------
+   -- Goto_Difference --
+   ---------------------
+
+   procedure Goto_Difference
+     (Kernel : Kernel_Handle;
+      Link : Diff_Chunk_Access)
+   is
+      Args : Argument_List (1 .. 1);
+   begin
+      if Link.Range1.Mark /= null then
+         Args := (1 => new String'(Link.Range1.Mark.all));
+         Execute_GPS_Shell_Command (Kernel, "goto_mark", Args);
+         Basic_Types.Free (Args);
+         Trace (Me, "Execute Goto_Difference1");
+      end if;
+      if Link.Range2.Mark /= null then
+         Args := (1 => new String'(Link.Range2.Mark.all));
+         Execute_GPS_Shell_Command (Kernel, "goto_mark", Args);
+         Basic_Types.Free (Args);
+         Trace (Me, "Execute Goto_Difference2");
+      end if;
+      if Link.Range3.Mark /= null then
+         Args := (1 => new String'(Link.Range3.Mark.all));
+         Execute_GPS_Shell_Command (Kernel, "goto_mark", Args);
+         Basic_Types.Free (Args);
+         Trace (Me, "Execute Goto_Difference3");
+      end if;
+   end Goto_Difference;
+
+   ----------------------
+   -- Hide_Differences --
+   ----------------------
+
+   procedure Hide_Differences
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Info     : T_VLine_Information;
-      Conflict : Boolean;
-      Pos      : Positive;
-      VRange   : T_VRange;
-      VFile    : T_VFile;
-      Action   : Handler_Action_Line := null);
-   --  Put an icon on the column information
+      Item   : Diff_Head)
+   is
+      Curr_Node  : Diff_List_Node;
+      Curr_Chunk : Diff_Chunk_Access;
+      Args : Argument_List (1 .. 1);
+   begin
+      Curr_Node := First (Item.List);
+      while Curr_Node /= Diff_Chunk_List.Null_Node
+      loop
+         Curr_Chunk := Data (Curr_Node);
+
+         if Curr_Chunk.Range1.Blank_Lines /= null then
+            Args (1) := Curr_Chunk.Range1.Blank_Lines;
+            Execute_GPS_Shell_Command
+              (Kernel, "remove_blank_lines", Args);
+            Free (Curr_Chunk.Range1.Blank_Lines);
+         end if;
+
+         if Curr_Chunk.Range2.Blank_Lines /= null then
+            Args (1) := Curr_Chunk.Range2.Blank_Lines;
+            Execute_GPS_Shell_Command
+              (Kernel, "remove_blank_lines", Args);
+            Free (Curr_Chunk.Range2.Blank_Lines);
+         end if;
+
+         if Curr_Chunk.Range3.Blank_Lines /= null then
+            Args (1) := Curr_Chunk.Range3.Blank_Lines;
+            Execute_GPS_Shell_Command
+              (Kernel, "remove_blank_lines", Args);
+            Free (Curr_Chunk.Range3.Blank_Lines);
+         end if;
+         Curr_Node := Next (Curr_Node);
+      end loop;
+
+      if Item.File1 /= VFS.No_File then
+         Unhighlight_Line (Kernel, Item.File1, 0, Default_Style);
+         Unhighlight_Line (Kernel, Item.File1, 0, Old_Style);
+         Unhighlight_Line (Kernel, Item.File1, 0, Append_Style);
+         Unhighlight_Line (Kernel, Item.File1, 0, Remove_Style);
+         Unhighlight_Line (Kernel, Item.File1, 0, Change_Style);
+         Remove_Line_Information_Column
+           (Kernel, Item.File1, Id_Col_Vdiff);
+      end if;
+
+      if Item.File2 /= VFS.No_File then
+         Unhighlight_Line (Kernel, Item.File2, 0, Default_Style);
+         Unhighlight_Line (Kernel, Item.File2, 0, Old_Style);
+         Unhighlight_Line (Kernel, Item.File2, 0, Append_Style);
+         Unhighlight_Line (Kernel, Item.File2, 0, Remove_Style);
+         Unhighlight_Line (Kernel, Item.File2, 0, Change_Style);
+         Remove_Line_Information_Column
+           (Kernel, Item.File2, Id_Col_Vdiff);
+      end if;
+
+      if Item.File3 /= VFS.No_File then
+         Unhighlight_Line (Kernel, Item.File3, 0, Default_Style);
+         Unhighlight_Line (Kernel, Item.File3, 0, Old_Style);
+         Unhighlight_Line (Kernel, Item.File3, 0, Append_Style);
+         Unhighlight_Line (Kernel, Item.File3, 0, Remove_Style);
+         Unhighlight_Line (Kernel, Item.File3, 0, Change_Style);
+         Remove_Line_Information_Column
+           (Kernel, Item.File3, Id_Col_Vdiff);
+      end if;
+
+   end Hide_Differences;
+
+   --------------------
+   -- Highlight_Line --
+   --------------------
+
+   procedure Highlight_Line
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+      File  : Virtual_File;
+      Pos   : Natural;
+      Style : String := "";
+      Number : Natural := 1)
+   is
+      Args_Highlight : Argument_List :=
+        (1 => new String'(Full_Name (File)),
+         2 => new String'(Style),
+         3 => null);
+
+   begin
+      for J in 1 .. Number loop
+         Args_Highlight (3) := new String'(Image (Pos + J - 1));
+         Execute_GPS_Shell_Command (Kernel, "highlight", Args_Highlight);
+         Free (Args_Highlight (3));
+      end loop;
+      Basic_Types.Free (Args_Highlight);
+   end Highlight_Line;
 
    ---------------------
    -- Is_In_Diff_List --
@@ -152,6 +424,178 @@ package body Vdiff2_Module.Utils is
 
       return Curr_Node;
    end Is_In_Diff_List;
+
+   ---------------------
+   -- Mark_Diff_Block --
+   ---------------------
+
+   function Mark_Diff_Block
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+      File  : Virtual_File;
+      Pos   : Natural) return String
+   is
+      Args : Argument_List :=
+        (1 => new String'(Full_Name (File)),
+         2 => new String'(Image (Pos)),
+         3 => new String'("1"));
+      Res : constant String := Execute_GPS_Shell_Command
+        (Kernel, "create_mark", Args);
+
+   begin
+      Basic_Types.Free (Args);
+      return Res;
+   end Mark_Diff_Block;
+
+   -----------------
+   --  Move_Mark  --
+   -----------------
+
+   procedure Move_Mark (Source, Dest : Diff_List)
+   is
+      Curr_Node_Source           : Diff_List_Node := First (Source);
+      Curr_Chunk_Source          : Diff_Chunk_Access;
+      Curr_Node_Dest           : Diff_List_Node := First (Dest);
+      Curr_Chunk_Dest          : Diff_Chunk_Access;
+   begin
+
+      while Curr_Node_Source /= Diff_Chunk_List.Null_Node
+        and then Curr_Node_Dest /= Diff_Chunk_List.Null_Node
+      loop
+         Curr_Chunk_Source := Data (Curr_Node_Source);
+         Curr_Chunk_Dest := Data (Curr_Node_Dest);
+
+         Curr_Chunk_Dest.Range1.Mark :=
+           new String'(Curr_Chunk_Source.Range1.Mark.all);
+         Curr_Chunk_Dest.Range2.Mark :=
+           new String'(Curr_Chunk_Source.Range2.Mark.all);
+         Curr_Chunk_Dest.Range3.Mark :=
+           new String'(Curr_Chunk_Source.Range3.Mark.all);
+         Curr_Chunk_Dest.Range1.Blank_Lines :=
+           new String'(Curr_Chunk_Source.Range1.Blank_Lines.all);
+         Curr_Chunk_Dest.Range2.Blank_Lines :=
+           new String'(Curr_Chunk_Source.Range2.Blank_Lines.all);
+         Curr_Chunk_Dest.Range3.Blank_Lines :=
+           new String'(Curr_Chunk_Source.Range3.Blank_Lines.all);
+
+         Curr_Node_Source := Next (Curr_Node_Source);
+         Curr_Node_Dest := Next (Curr_Node_Dest);
+      end loop;
+   end Move_Mark;
+
+   ------------------
+   --  Move_Block  --
+   ------------------
+
+   procedure Move_Block
+     (Kernel       : Kernel_Handle;
+      Source_File  : Virtual_File;
+      Dest_File    : Virtual_File;
+      Source_Range : Diff_Range;
+      Dest_Range   : Diff_Range := Null_Range)
+   is
+      Offset_Dest       : constant Natural
+        := Dest_Range.Last - Dest_Range.First;
+      Offset_Source     : constant Natural
+        := Source_Range.Last - Source_Range.First;
+      Args_get_chars    : Argument_List :=
+        (1 => new String'(Full_Name (Source_File)),
+         2 => new String'(Natural'Image (Source_Range.First)),
+         3 => new String'(Integer'Image (1)));
+      Args_replace_text : Argument_List :=
+        (1 => new String'(Full_Name (Dest_File)),
+         2 => new String'(Natural'Image (Dest_Range.First)),
+         3 => new String'(Integer'Image (1)),
+         4 => null);
+      Current_Line      : String_Access;
+
+   begin
+
+      if Offset_Source > 0 and Offset_Dest > 0 then
+
+         for J in 1 .. Offset_Source
+         loop
+            Current_Line := new String'(Execute_GPS_Shell_Command
+                                          (Kernel, "get_chars",
+                                           Args_get_chars));
+            Args_replace_text (4) := Current_Line;
+            Execute_GPS_Shell_Command
+              (Kernel, "replace_text", Args_replace_text);
+            Free (Args_get_chars (2));
+            Free (Args_replace_text (2));
+            Free (Args_replace_text (4));
+            Args_get_chars (2) := new String'(Natural'Image
+                                                (Source_Range.First + J));
+            Args_replace_text (2) := new String'(Natural'Image
+                                                   (Dest_Range.First + J));
+         end loop;
+
+         if Offset_Source < Offset_Dest then
+            Args_replace_text (4) := new String'("");
+            for J in Offset_Source .. Offset_Dest loop
+               Free (Args_replace_text (2));
+               Args_replace_text (2) := new String'(Natural'Image
+                                                      (Dest_Range.First + J));
+               Execute_GPS_Shell_Command
+                 (Kernel, "replace_text", Args_replace_text);
+            end loop;
+         end if;
+      end if;
+
+      Basic_Types.Free (Args_get_chars);
+      Basic_Types.Free (Args_replace_text);
+   end Move_Block;
+
+   -------------------------
+   --  Modify_Differences --
+   -------------------------
+
+   procedure Modify_Differences
+     (Kernel    : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Item      : in out Diff_Head;
+      Diff_List : Diff_Head_List_Access)
+   is
+      Curr_Node : Diff_Head_List.List_Node;
+   begin
+      Curr_Node := Is_In_Diff_List (Item.File1, Diff_List.all);
+      if  Curr_Node /= Diff_Head_List.Null_Node then
+         Show_Differences3 (Kernel, Item);
+         Goto_Difference (Kernel_Handle (Kernel), Data (Item.Current_Node));
+      end if;
+   end Modify_Differences;
+
+   -------------------------
+   -- Process_Differences --
+   -------------------------
+
+   procedure Process_Differences
+     (Kernel    : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Item      : in out Diff_Head;
+      Diff_List : Diff_Head_List_Access)
+   is
+      Button : Message_Dialog_Buttons;
+      pragma Unreferenced (Button);
+
+   begin
+      if Is_In_Diff_List (Item.File1, Diff_List.all) =
+        Diff_Head_List.Null_Node
+        and then
+          Is_In_Diff_List (Item.File2, Diff_List.all) =
+          Diff_Head_List.Null_Node
+          and then
+            Is_In_Diff_List (Item.File3, Diff_List.all) =
+            Diff_Head_List.Null_Node
+      then
+         Append (Diff_List.all, Item);
+         Show_Differences3 (Kernel, Item);
+         Goto_Difference (Kernel_Handle (Kernel), Data (Item.Current_Node));
+      else
+         Button := Message_Dialog
+           (Msg         => -"One of this file is already used in VDiff.",
+            Buttons     => Button_OK,
+            Parent      => Get_Main_Window (Kernel));
+         return;
+      end if;
+   end Process_Differences;
 
    ------------------
    --  Put_Button  --
@@ -189,87 +633,49 @@ package body Vdiff2_Module.Utils is
         (VRange (Pos).First).Associated_Command := Command_Access (Cmd);
    end Put_Button;
 
-   -------------------------
-   -- Process_Differences --
-   -------------------------
+   ---------------------------
+   -- Register_Highlighting --
+   ---------------------------
 
-   procedure Process_Differences
-     (Kernel    : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Item      : in out Diff_Head;
-      Diff_List : Diff_Head_List_Access)
+   procedure Register_Highlighting
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
    is
-      Button : Message_Dialog_Buttons;
-      pragma Unreferenced (Button);
+      Default_Color : constant String  :=
+        To_String (Get_Pref (Kernel, Diff_Default_Color));
+      Old_Color     : constant String  :=
+        To_String (Get_Pref (Kernel, Diff_Old_Color));
+      Append_Color  : constant String  :=
+        To_String (Get_Pref (Kernel, Diff_Append_Color));
+      Remove_Color  : constant String  :=
+        To_String (Get_Pref (Kernel, Diff_Remove_Color));
+      Change_Color  : constant String  :=
+        To_String (Get_Pref (Kernel, Diff_Change_Color));
+      Args          : Argument_List :=
+        (1 => new String'(Default_Style),
+         2 => new String'(Default_Color));
 
    begin
-      if Is_In_Diff_List (Item.File1, Diff_List.all) =
-        Diff_Head_List.Null_Node
-        and then
-          Is_In_Diff_List (Item.File2, Diff_List.all) =
-          Diff_Head_List.Null_Node
-          and then
-            Is_In_Diff_List (Item.File3, Diff_List.all) =
-            Diff_Head_List.Null_Node
-      then
-         Append (Diff_List.all, Item);
-         Show_Differences3 (Kernel, Item);
-         Goto_Difference (Kernel_Handle (Kernel), Data (Item.Current_Node));
-      else
-         Button := Message_Dialog
-           (Msg         => -"One of this file is already used in VDiff.",
-            Buttons     => Button_OK,
-            Parent      => Get_Main_Window (Kernel));
-         return;
-      end if;
-   end Process_Differences;
+      --  <preferences>
 
-   -------------------------
-   --  Modify_Differences --
-   -------------------------
-
-   procedure Modify_Differences
-     (Kernel    : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Item      : in out Diff_Head;
-      Diff_List : Diff_Head_List_Access)
-   is
-      Curr_Node : Diff_Head_List.List_Node;
-   begin
-      Curr_Node := Is_In_Diff_List (Item.File1, Diff_List.all);
-      if  Curr_Node /= Diff_Head_List.Null_Node then
-         Show_Differences3 (Kernel, Item);
-         Goto_Difference (Kernel_Handle (Kernel), Data (Item.Current_Node));
-      end if;
-   end Modify_Differences;
-
-   ----------------
-   -- Show_Merge --
-   ----------------
-
-   procedure Show_Merge
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Merge  : String;
-      Item   : Diff_Head)
-   is
-      pragma Unreferenced (Item);
-      Button : Message_Dialog_Buttons;
-      Args_edit       : Argument_List := (1 => new String'(Merge));
-
-   begin
-
-      if Is_Regular_File (Merge) then
-         Button := Message_Dialog
-           (Msg         => -"Would you overwrite this file: "& Merge,
-            Buttons     => Button_Yes or Button_No,
-            Parent      => Get_Main_Window (Kernel));
-
-         if Button = Button_No then
-            return;
-         end if;
-      end if;
-
-      Execute_GPS_Shell_Command (Kernel, "edit", Args_edit);
-      Basic_Types.Free (Args_edit);
-   end Show_Merge;
+      Execute_GPS_Shell_Command (Kernel, "register_highlighting", Args);
+      Basic_Types.Free (Args);
+      Args := (1 => new String'(Append_Style),
+               2 => new String'(Append_Color));
+      Execute_GPS_Shell_Command (Kernel, "register_highlighting", Args);
+      Basic_Types.Free (Args);
+      Args := (1 => new String'(Old_Style),
+               2 => new String'(Old_Color));
+      Execute_GPS_Shell_Command (Kernel, "register_highlighting", Args);
+      Basic_Types.Free (Args);
+      Args := (1 => new String'(Remove_Style),
+               2 => new String'(Remove_Color));
+      Execute_GPS_Shell_Command (Kernel, "register_highlighting", Args);
+      Basic_Types.Free (Args);
+      Args := (1 => new String'(Change_Style),
+               2 => new String'(Change_Color));
+      Execute_GPS_Shell_Command (Kernel, "register_highlighting", Args);
+      Basic_Types.Free (Args);
+   end Register_Highlighting;
 
    ----------------------
    -- Show_Differences --
@@ -449,91 +855,6 @@ package body Vdiff2_Module.Utils is
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end Show_Differences3;
 
-   -------------
-   --  Append --
-   -------------
-
-   procedure Append
-     (Kernel   : access Glide_Kernel.Kernel_Handle_Record'Class;
-      VRange   : in out T_VRange;
-      VFile    : T_VFile;
-      VOffset  : T_VOffset;
-      VStyle   : T_VStr;
-      Ref      : T_Loc;
-      Loc      : T_Loc;
-      Info     : T_VLine_Information;
-      Conflict : Boolean := False)
-   is
-      Other, Other2 : T_Loc := 0;
-      Offset_Max   : Natural := 0;
-      Tmp : String_Access;
-
-   begin
-      for J in 1 .. 3 loop
-         if J /= Ref and J /= Loc and Other = 0 then
-            Other := J;
-            if Loc /= 0 then
-               Other2 := Loc;
-               exit;
-            end if;
-         end if;
-
-         if J /= Other and Other /= 0 and J /= Ref then
-            Other2 := J;
-            exit;
-         end if;
-      end loop;
-
-      for J in 1 .. 3 loop
-         if VOffset (J) >= Offset_Max then
-            Offset_Max := VOffset (J);
-         end if;
-      end loop;
-
-      for J in 1 .. 3 loop
-
-         if VOffset (J) > 0 then
-            Put_Button
-              (Kernel, Info, Conflict, J,
-               VRange, VFile, Move_On_Ref_File'Access);
-         end if;
-
-         Highlight_Line
-           (Kernel, VFile (J),
-            VRange (J).First,
-            VStyle (J).all, VOffset (J));
-         if VOffset (J) < Offset_Max then
-            Tmp := new String'
-              (Add_Line
-                 (Kernel, VFile (J),
-                  VRange (J).Last, VStyle (J).all,
-                  Offset_Max - VOffset (J)));
-            VRange (J).Blank_Lines := new String'(Tmp.all);
-         end if;
-
-         if VRange (J).Action = Delete then
-            VRange (J).Mark := Tmp;
-         elsif J = Ref then
-
-            if VRange (Other).Action = Append or
-              VRange (Other2).Action = Append then
-               VRange (J).Mark := Tmp;
-
-            else
-               VRange (J).Mark := new String'
-                 (Mark_Diff_Block (Kernel, VFile (J),
-                                   VRange (J).First));
-               Free (Tmp);
-            end if;
-         else
-            VRange (J).Mark := new String'
-              (Mark_Diff_Block (Kernel, VFile (J),
-                                VRange (J).First));
-            Free (Tmp);
-         end if;
-      end loop;
-   end Append;
-
    ---------------------
    -- Show_Diff_Chunk --
    ---------------------
@@ -683,164 +1004,35 @@ package body Vdiff2_Module.Utils is
 
    end Show_Diff_Chunk;
 
+   ----------------
+   -- Show_Merge --
+   ----------------
 
-   ----------------------
-   -- Hide_Differences --
-   ----------------------
-
-   procedure Hide_Differences
+   procedure Show_Merge
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Merge  : String;
       Item   : Diff_Head)
    is
-      Curr_Node  : Diff_List_Node;
-      Curr_Chunk : Diff_Chunk_Access;
-      Args : Argument_List (1 .. 1);
-   begin
-      Curr_Node := First (Item.List);
-      while Curr_Node /= Diff_Chunk_List.Null_Node
-      loop
-         Curr_Chunk := Data (Curr_Node);
+      pragma Unreferenced (Item);
+      Button : Message_Dialog_Buttons;
+      Args_edit       : Argument_List := (1 => new String'(Merge));
 
-         if Curr_Chunk.Range1.Blank_Lines /= null then
-            Args (1) := Curr_Chunk.Range1.Blank_Lines;
-            Execute_GPS_Shell_Command
-              (Kernel, "remove_blank_lines", Args);
-            Free (Curr_Chunk.Range1.Blank_Lines);
+   begin
+
+      if Is_Regular_File (Merge) then
+         Button := Message_Dialog
+           (Msg         => -"Would you overwrite this file: "& Merge,
+            Buttons     => Button_Yes or Button_No,
+            Parent      => Get_Main_Window (Kernel));
+
+         if Button = Button_No then
+            return;
          end if;
-
-         if Curr_Chunk.Range2.Blank_Lines /= null then
-            Args (1) := Curr_Chunk.Range2.Blank_Lines;
-            Execute_GPS_Shell_Command
-              (Kernel, "remove_blank_lines", Args);
-            Free (Curr_Chunk.Range2.Blank_Lines);
-         end if;
-
-         if Curr_Chunk.Range3.Blank_Lines /= null then
-            Args (1) := Curr_Chunk.Range3.Blank_Lines;
-            Execute_GPS_Shell_Command
-              (Kernel, "remove_blank_lines", Args);
-            Free (Curr_Chunk.Range3.Blank_Lines);
-         end if;
-         Curr_Node := Next (Curr_Node);
-      end loop;
-
-      if Item.File1 /= VFS.No_File then
-         Unhighlight_Line (Kernel, Item.File1, 0, Default_Style);
-         Unhighlight_Line (Kernel, Item.File1, 0, Old_Style);
-         Unhighlight_Line (Kernel, Item.File1, 0, Append_Style);
-         Unhighlight_Line (Kernel, Item.File1, 0, Remove_Style);
-         Unhighlight_Line (Kernel, Item.File1, 0, Change_Style);
-         Remove_Line_Information_Column
-           (Kernel, Item.File1, Id_Col_Vdiff);
       end if;
 
-      if Item.File2 /= VFS.No_File then
-         Unhighlight_Line (Kernel, Item.File2, 0, Default_Style);
-         Unhighlight_Line (Kernel, Item.File2, 0, Old_Style);
-         Unhighlight_Line (Kernel, Item.File2, 0, Append_Style);
-         Unhighlight_Line (Kernel, Item.File2, 0, Remove_Style);
-         Unhighlight_Line (Kernel, Item.File2, 0, Change_Style);
-         Remove_Line_Information_Column
-           (Kernel, Item.File2, Id_Col_Vdiff);
-      end if;
-
-      if Item.File3 /= VFS.No_File then
-         Unhighlight_Line (Kernel, Item.File3, 0, Default_Style);
-         Unhighlight_Line (Kernel, Item.File3, 0, Old_Style);
-         Unhighlight_Line (Kernel, Item.File3, 0, Append_Style);
-         Unhighlight_Line (Kernel, Item.File3, 0, Remove_Style);
-         Unhighlight_Line (Kernel, Item.File3, 0, Change_Style);
-         Remove_Line_Information_Column
-           (Kernel, Item.File3, Id_Col_Vdiff);
-      end if;
-
-   end Hide_Differences;
-
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (This : in out Text_Iterator_Access) is
-      procedure Free_Data is
-        new Ada.Unchecked_Deallocation (Text_Iterator, Text_Iterator_Access);
-   begin
-      if This = null then
-         return;
-      end if;
-
-      if This.Next /= null then
-         Free (This.Next);
-      end if;
-
-      Free (This.New_Line);
-      Free (This.Old_Line);
-      Free_Data (This);
-   end Free;
-
-   --------------
-   -- Add_Line --
-   --------------
-
-   function Add_Line
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
-      File   : Virtual_File;
-      Pos    : Natural;
-      Style  : String := "";
-      Number : Natural := 1) return String
-   is
-      Args_Line : Argument_List :=
-        (1 => new String'(Full_Name (File)),
-         2 => new String'(Image (Pos)),
-         3 => new String'(Image (Number)),
-         4 => new String'(Style));
-      Res : constant String :=  Execute_GPS_Shell_Command
-        (Kernel, "add_blank_lines", Args_Line);
-
-   begin
-      Basic_Types.Free (Args_Line);
-      return Res;
-   end Add_Line;
-
-   --------------------------
-   --  Get_File_Last_Line  --
-   --------------------------
-
-   function Get_File_Last_Line
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
-      File : Virtual_File) return Natural
-   is
-      Args_Line : constant Argument_List :=
-        (1 => new String'(Full_Name (File)));
-      Res       : constant String :=  Execute_GPS_Shell_Command
-        (Kernel, "get_last_line", Args_Line);
-   begin
-      return Natural'Value (Res);
-   end Get_File_Last_Line;
-
-   --------------------
-   -- Highlight_Line --
-   --------------------
-
-   procedure Highlight_Line
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
-      File  : Virtual_File;
-      Pos   : Natural;
-      Style : String := "";
-      Number : Natural := 1)
-   is
-      Args_Highlight : Argument_List :=
-        (1 => new String'(Full_Name (File)),
-         2 => new String'(Style),
-         3 => null);
-
-   begin
-      for J in 1 .. Number loop
-         Args_Highlight (3) := new String'(Image (Pos + J - 1));
-         Execute_GPS_Shell_Command (Kernel, "highlight", Args_Highlight);
-         Free (Args_Highlight (3));
-      end loop;
-      Basic_Types.Free (Args_Highlight);
-   end Highlight_Line;
+      Execute_GPS_Shell_Command (Kernel, "edit", Args_edit);
+      Basic_Types.Free (Args_edit);
+   end Show_Merge;
 
    ----------------------
    -- Unhighlight_Line --
@@ -884,199 +1076,4 @@ package body Vdiff2_Module.Utils is
       end if;
    end Unhighlight_Block;
 
-   ---------------------
-   -- Mark_Diff_Block --
-   ---------------------
-
-   function Mark_Diff_Block
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
-      File  : Virtual_File;
-      Pos   : Natural) return String
-   is
-      Args : Argument_List :=
-        (1 => new String'(Full_Name (File)),
-         2 => new String'(Image (Pos)),
-         3 => new String'("1"));
-      Res : constant String := Execute_GPS_Shell_Command
-        (Kernel, "create_mark", Args);
-
-   begin
-      Basic_Types.Free (Args);
-      return Res;
-   end Mark_Diff_Block;
-
-   ---------------------------
-   -- Register_Highlighting --
-   ---------------------------
-
-   procedure Register_Highlighting
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
-   is
-      Default_Color : constant String  :=
-        To_String (Get_Pref (Kernel, Diff_Default_Color));
-      Old_Color     : constant String  :=
-        To_String (Get_Pref (Kernel, Diff_Old_Color));
-      Append_Color  : constant String  :=
-        To_String (Get_Pref (Kernel, Diff_Append_Color));
-      Remove_Color  : constant String  :=
-        To_String (Get_Pref (Kernel, Diff_Remove_Color));
-      Change_Color  : constant String  :=
-        To_String (Get_Pref (Kernel, Diff_Change_Color));
-      Args          : Argument_List :=
-        (1 => new String'(Default_Style),
-         2 => new String'(Default_Color));
-
-   begin
-      --  <preferences>
-
-      Execute_GPS_Shell_Command (Kernel, "register_highlighting", Args);
-      Basic_Types.Free (Args);
-      Args := (1 => new String'(Append_Style),
-               2 => new String'(Append_Color));
-      Execute_GPS_Shell_Command (Kernel, "register_highlighting", Args);
-      Basic_Types.Free (Args);
-      Args := (1 => new String'(Old_Style),
-               2 => new String'(Old_Color));
-      Execute_GPS_Shell_Command (Kernel, "register_highlighting", Args);
-      Basic_Types.Free (Args);
-      Args := (1 => new String'(Remove_Style),
-               2 => new String'(Remove_Color));
-      Execute_GPS_Shell_Command (Kernel, "register_highlighting", Args);
-      Basic_Types.Free (Args);
-      Args := (1 => new String'(Change_Style),
-               2 => new String'(Change_Color));
-      Execute_GPS_Shell_Command (Kernel, "register_highlighting", Args);
-      Basic_Types.Free (Args);
-   end Register_Highlighting;
-
-   -----------------
-   --  Move_Mark  --
-   -----------------
-
-   procedure Move_Mark (Source, Dest : Diff_List)
-   is
-      Curr_Node_Source           : Diff_List_Node := First (Source);
-      Curr_Chunk_Source          : Diff_Chunk_Access;
-      Curr_Node_Dest           : Diff_List_Node := First (Dest);
-      Curr_Chunk_Dest          : Diff_Chunk_Access;
-   begin
-
-      while Curr_Node_Source /= Diff_Chunk_List.Null_Node
-        and then Curr_Node_Dest /= Diff_Chunk_List.Null_Node
-      loop
-         Curr_Chunk_Source := Data (Curr_Node_Source);
-         Curr_Chunk_Dest := Data (Curr_Node_Dest);
-
-         Curr_Chunk_Dest.Range1.Mark :=
-           new String'(Curr_Chunk_Source.Range1.Mark.all);
-         Curr_Chunk_Dest.Range2.Mark :=
-           new String'(Curr_Chunk_Source.Range2.Mark.all);
-         Curr_Chunk_Dest.Range3.Mark :=
-           new String'(Curr_Chunk_Source.Range3.Mark.all);
-         Curr_Chunk_Dest.Range1.Blank_Lines :=
-           new String'(Curr_Chunk_Source.Range1.Blank_Lines.all);
-         Curr_Chunk_Dest.Range2.Blank_Lines :=
-           new String'(Curr_Chunk_Source.Range2.Blank_Lines.all);
-         Curr_Chunk_Dest.Range3.Blank_Lines :=
-           new String'(Curr_Chunk_Source.Range3.Blank_Lines.all);
-
-         Curr_Node_Source := Next (Curr_Node_Source);
-         Curr_Node_Dest := Next (Curr_Node_Dest);
-      end loop;
-   end Move_Mark;
-
-   ------------------
-   --  Move_Block  --
-   ------------------
-
-   procedure Move_Block
-     (Kernel       : Kernel_Handle;
-      Source_File  : Virtual_File;
-      Dest_File    : Virtual_File;
-      Source_Range : Diff_Range;
-      Dest_Range   : Diff_Range := Null_Range)
-   is
-      Offset_Dest       : constant Natural
-        := Dest_Range.Last - Dest_Range.First;
-      Offset_Source     : constant Natural
-        := Source_Range.Last - Source_Range.First;
-      Args_get_chars    : Argument_List :=
-        (1 => new String'(Full_Name (Source_File)),
-         2 => new String'(Natural'Image (Source_Range.First)),
-         3 => new String'(Integer'Image (1)));
-      Args_replace_text : Argument_List :=
-        (1 => new String'(Full_Name (Dest_File)),
-         2 => new String'(Natural'Image (Dest_Range.First)),
-         3 => new String'(Integer'Image (1)),
-         4 => null);
-      Current_Line      : String_Access;
-
-   begin
-
-      if Offset_Source > 0 and Offset_Dest > 0 then
-
-         for J in 1 .. Offset_Source
-         loop
-            Current_Line := new String'(Execute_GPS_Shell_Command
-                                          (Kernel, "get_chars",
-                                           Args_get_chars));
-            Args_replace_text (4) := Current_Line;
-            Execute_GPS_Shell_Command
-              (Kernel, "replace_text", Args_replace_text);
-            Free (Args_get_chars (2));
-            Free (Args_replace_text (2));
-            Free (Args_replace_text (4));
-            Args_get_chars (2) := new String'(Natural'Image
-                                                (Source_Range.First + J));
-            Args_replace_text (2) := new String'(Natural'Image
-                                                   (Dest_Range.First + J));
-         end loop;
-
-         if Offset_Source < Offset_Dest then
-            Args_replace_text (4) := new String'("");
-            for J in Offset_Source .. Offset_Dest loop
-               Free (Args_replace_text (2));
-               Args_replace_text (2) := new String'(Natural'Image
-                                                      (Dest_Range.First + J));
-               Execute_GPS_Shell_Command
-                 (Kernel, "replace_text", Args_replace_text);
-            end loop;
-         end if;
-      end if;
-
-      Basic_Types.Free (Args_get_chars);
-      Basic_Types.Free (Args_replace_text);
-   end Move_Block;
-
-   ---------------------
-   -- Goto_Difference --
-   ---------------------
-
-   procedure Goto_Difference
-     (Kernel : Kernel_Handle;
-      Link : Diff_Chunk_Access)
-   is
-      Args : Argument_List (1 .. 1);
-   begin
-      if Link.Range1.Mark /= null then
-         Args := (1 => new String'(Link.Range1.Mark.all));
-         Execute_GPS_Shell_Command (Kernel, "goto_mark", Args);
-         Basic_Types.Free (Args);
-         Trace (Me, "Execute Goto_Difference1");
-      end if;
-      if Link.Range2.Mark /= null then
-         Args := (1 => new String'(Link.Range2.Mark.all));
-         Execute_GPS_Shell_Command (Kernel, "goto_mark", Args);
-         Basic_Types.Free (Args);
-         Trace (Me, "Execute Goto_Difference2");
-      end if;
-      if Link.Range3.Mark /= null then
-         Args := (1 => new String'(Link.Range3.Mark.all));
-         Execute_GPS_Shell_Command (Kernel, "goto_mark", Args);
-         Basic_Types.Free (Args);
-         Trace (Me, "Execute Goto_Difference3");
-      end if;
-   end Goto_Difference;
-
 end Vdiff2_Module.Utils;
-
