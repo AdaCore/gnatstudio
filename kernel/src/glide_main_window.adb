@@ -38,6 +38,9 @@ with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with String_Utils;              use String_Utils;
 with Traces;                    use Traces;
+with Projects;                  use Projects;
+with Glide_Intl;                use Glide_Intl;
+with Glide_Kernel.Project;      use Glide_Kernel.Project;
 
 package body Glide_Main_Window is
 
@@ -266,5 +269,15 @@ package body Glide_Main_Window is
    begin
       Was_Loaded := Load_Desktop (Window.Kernel);
    end Load_Desktop;
+
+   -----------------
+   -- Reset_Title --
+   -----------------
+
+   procedure Reset_Title (Window : access Glide_Window_Record) is
+   begin
+      Set_Title (Window, -"GPS - the GNAT Programming System (project: "
+                 & Project_Name (Get_Project (Window.Kernel)) & ')');
+   end Reset_Title;
 
 end Glide_Main_Window;
