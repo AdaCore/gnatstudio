@@ -1567,57 +1567,89 @@ Access the various suggested fixes through the methods of the Codefix class</des
          def on_selected (id, choice):
              print "on_selected " + choice + " in " + id
 
-         t=GPS.Toolbar()   ## The default toolbar
-         t.entry_create (id="foo", label="Foo", on_changed=on_changed)
-         t.entry_add (id="foo", choice="Choice1", on_selected=on_selected)
-         t.entry_add (id="foo", choice="Choice2", on_selected=on_selected)
-         t.entry_add (id="foo", choice="Choice3", on_selected=on_selected)
+         ent=GPS.ToolbarEntry("foo", on_changed=on_changed)
+         GPS.Toolbar().append (ent, label="Foo")   ## The default toolbar
+         ent.add (choice="Choice1", on_selected=on_selected)
+         ent.add (choice="Choice2", on_selected=on_selected)
+         ent.add (choice="Choice3", on_selected=on_selected)
+     </example>
+     <example lang="shell">
+         It is easier to use this interface through XML customization files, see the GPS documentation. However, this can also be done through standard shell commands.
+         ToolbarEntry "foo" "on_changed_action"
+         Toolbar
+         Toolbar.append %1 %2 "Label"
+
+         Toolbar
+         Toolbar.entry %1 "foo"
+         ToolbarEntry.add %1 "Choice1" "on_selected"action"
      </example>
   </shell_doc>
 
-  <shell_doc name="GPS.Toolbar.entry_create">
+  <shell_doc name="GPS.Toolbar.__init__">
      <param name="self">The instance of GPS.Toolbar</param>
-     <param name="id">A string, The unique id of the combo box to create</param>
-     <param name="label" default="">A string</param>
-     <param name="on_changed" default="None">A subprogram, see the GPS documentaion on Subprogram parameters</param>
-     <description>Create a new combo box in the selected toolbar. A text is displayed next to the combo box if the label parameter was specified. On_Changed will be called every time the user selects a new value for the combo box</description>
+     <description>Initializes a new instance of the toolbar, associated with the default toolbar of GPS. This is called implicitly from python</description>
   </shell_doc>
 
-  <shell_doc name="GPS.Toolbar.entry_add">
+  <shell_doc name="GPS.Toolbar.entry">
      <param name="self">The instance of GPS.Toolbar</param>
+     <param name="id">A string, the name of the entry to get</param>
+     <return>An instance of GPS.ToolbarEntry</return>
+     <description>Return the toolbar entry matching the given id. An error is raised if no such entry exists</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.Toolbar.append">
+     <param name="self">The instance of GPS.Toolbar</param>
+     <param name="entry">An instance of GPS.ToolbarEntry</param>
+     <param name="label" default="">A string, the label to add next to the entry</param>
+     <description>Add a new entry into the toolbar. The entry is appended after all current buttons and entries in the toolbar, preceded by a text if label was specified</description>
+  </shell_doc>
+ 
+  <!--#################################################################
+    ####   ToolbarEntry class
+    ###################################################################-->
+
+  <shell_doc name="GPS.ToolbarEntry">
+      <description>This class represents an entry in the GPS toolbar. The user can interactively select one of multiple values through this widget</description>
+      <see_also name="GPS.Toolbar"/>
+  </shell_doc>
+
+  <shell_doc name="GPS.ToolbarEntry.__init__">
+     <param name="self">The instance of GPS.ToolbarEntry</param>
      <param name="id">A string, The unique id of the combo box to create</param>
+     <param name="on_changed" default="None">A subprogram, see the GPS documentaion on Subprogram parameters</param>
+     <description>Create a new entry, which isn't added to any toolbar yet.On_Changed will be called every time the user selects a new value for the combo box</description>
+     <see_also name="GPS.Toolbar.append()" />
+  </shell_doc>
+
+  <shell_doc name="GPS.ToolbarEntry.add">
+     <param name="self">The instance of GPS.ToolbarEntry</param>
      <param name="choice">A string</param>
      <param name="on_selected" default="">A subprogram, see the GPS documentation on Subprogram parameters</param>
      <description>Add a choice to specified entry, action will be executed whenever this choice is selected</description>
   </shell_doc>
 
-  <shell_doc name="GPS.Toolbar.entry_remove">
-     <param name="self">The instance of GPS.Toolbar</param>
-     <param name="id">A string, The unique id of the combo box to create</param>
+  <shell_doc name="GPS.ToolbarEntry.remove">
+     <param name="self">The instance of GPS.ToolbarEntry</param>
      <param name="choice">A string</param>
      <description>Remove a choice from specified entry</description>
   </shell_doc>
 
-  <shell_doc name="GPS.Toolbar.entry_clear">
-     <param name="self">The instance of GPS.Toolbar</param>
-     <param name="id">A string, The unique id of the combo box to create</param>
+  <shell_doc name="GPS.ToolbarEntry.clear">
+     <param name="self">The instance of GPS.ToolbarEntry</param>
      <description>Remove all choices from specified entry</description>
   </shell_doc>
 
-  <shell_doc name="GPS.Toolbar.entry_get_text">
-     <param name="self">The instance of GPS.Toolbar</param>
-     <param name="id">A string, The unique id of the combo box to create</param>
+  <shell_doc name="GPS.ToolbarEntry.get_text">
+     <param name="self">The instance of GPS.ToolbarEntry</param>
      <return>A string</return>
      <description>Return the current selection in specified entry</description>
   </shell_doc>
 
-  <shell_doc name="GPS.Toolbar.entry_set_text">
-     <param name="self">The instance of GPS.Toolbar</param>
-     <param name="id">A string, The unique id of the combo box to create</param>
+  <shell_doc name="GPS.ToolbarEntry.set_text">
+     <param name="self">The instance of GPS.ToolbarEntry</param>
      <param name="choice">A string</param>
      <description>Set the current selection in specified entry</description>
   </shell_doc>
-
 
   <!--#################################################################
     ####   Process class
