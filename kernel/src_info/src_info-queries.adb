@@ -1978,8 +1978,7 @@ package body Src_Info.Queries is
       begin
          if not Get
            (Iterator.Examined,
-            GNAT.OS_Lib.String_Access
-            (Iterator.Source_Files (Iterator.Current_File)))
+            Iterator.Source_Files (Iterator.Current_File).all)
          then
             Handler := Get_LI_Handler_From_File
               (Glide_Language_Handler (Lang_Handler),
@@ -2018,14 +2017,14 @@ package body Src_Info.Queries is
                   if LI.LI.Spec_Info /= null then
                      Set
                        (Iterator.Examined,
-                        new String'(LI.LI.Spec_Info.Source_Filename.all),
+                        LI.LI.Spec_Info.Source_Filename.all,
                         True);
                   end if;
 
                   if LI.LI.Body_Info /= null then
                      Set
                        (Iterator.Examined,
-                        new String'(LI.LI.Body_Info.Source_Filename.all),
+                        LI.LI.Body_Info.Source_Filename.all,
                         True);
                   end if;
 
@@ -2034,7 +2033,7 @@ package body Src_Info.Queries is
                      if Sep_List.Value /= null then
                         Set
                           (Iterator.Examined,
-                           new String'(Sep_List.Value.Source_Filename.all),
+                           Sep_List.Value.Source_Filename.all,
                            True);
                      end if;
                      Sep_List := Sep_List.Next;
