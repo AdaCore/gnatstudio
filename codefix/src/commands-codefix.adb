@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2003                       --
+--                     Copyright (C) 2001-2004                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
@@ -24,8 +24,13 @@ with Codefix.Formal_Errors; use Codefix.Formal_Errors;
 use Codefix.Formal_Errors.Command_List;
 
 with Codefix_Module;        use Codefix_Module;
+with Traces;                use Traces;
+with Glide_Intl;            use Glide_Intl;
+with VFS;                   use VFS;
 
 package body Commands.Codefix is
+
+   Me : constant Debug_Handle := Create ("Commands.Codefix");
 
    -------------
    -- Execute --
@@ -86,5 +91,62 @@ package body Commands.Codefix is
    begin
       null;
    end Free;
+
+   -------------
+   -- Execute --
+   -------------
+
+   function Execute
+     (Command : access Codefix_Add_Command) return Command_Return_Type is
+   begin
+      if Command.Current_Error /= Null_Error_Id then
+         Trace
+           (Me, "Activate_Codefix: Error found at "
+            & Full_Name
+              (Get_File (Get_Error_Message (Command.Current_Error))).all
+            & Get_Line (Get_Error_Message (Command.Current_Error))'Img
+            & Get_Column (Get_Error_Message (Command.Current_Error))'Img);
+
+         Create_Pixmap_And_Category
+           (Command.Kernel, Command.Session, Command.Current_Error);
+
+         Command.Current_Error := Next (Command.Current_Error);
+         Command.Errors_Fixed  := Command.Errors_Fixed + 1;
+
+         return Execute_Again;
+      else
+         return Success;
+      end if;
+   end Execute;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Command : in out Codefix_Add_Command) is
+      pragma Unreferenced (Command);
+   begin
+      null;
+   end Free;
+
+   --------------
+   -- Progress --
+   --------------
+
+   function Progress
+     (Command : access Codefix_Add_Command) return Progress_Record is
+   begin
+      return (Running, Command.Errors_Fixed, Command.Errors_Num);
+   end Progress;
+
+   ----------
+   -- Name --
+   ----------
+
+   function Name (Command : access Codefix_Add_Command) return String is
+      pragma Unreferenced (Command);
+   begin
+      return -"Code fixing";
+   end Name;
 
 end Commands.Codefix;
