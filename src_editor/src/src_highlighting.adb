@@ -136,6 +136,21 @@ package body Src_Highlighting is
       return Result;
    end New_Tag;
 
+   procedure New_Tag
+     (Tag        : out Gtk.Text_Tag.Gtk_Text_Tag;
+      Tag_Name   : String;
+      Color_Name : String)
+   is
+      New_Color : Gdk_Color;
+      Success : Boolean;
+   begin
+      Gtk_New (Tag, Tag_Name);
+      Create_Color (New_Color, Color_Name, Success);
+      if Success then
+         Set_Property (Tag, Background_Gdk_Property, New_Color);
+      end if;
+   end New_Tag;
+
    ------------------------
    -- To_Font_Attributes --
    ------------------------
@@ -174,23 +189,28 @@ package body Src_Highlighting is
       return Result;
    end Create_Syntax_Tags;
 
-   --------------------------
-   -- Create_Highlight_Tag --
-   --------------------------
+   -------------------------------
+   -- Create_Highlight_Line_Tag --
+   -------------------------------
 
-   procedure Create_Highlight_Tag
+   procedure Create_Highlight_Line_Tag
      (Tag        : out Gtk.Text_Tag.Gtk_Text_Tag;
-      Color_Name : String)
-   is
-      New_Color : Gdk_Color;
-      Success : Boolean;
+      Color_Name : String) is
    begin
-      Gtk_New (Tag, Highlight_Tag_Name);
-      Create_Color (New_Color, Color_Name, Success);
-      if Success then
-         Set_Property (Tag, Background_Gdk_Property, New_Color);
-      end if;
+      New_Tag (Tag, Highlight_Line_Tag_Name, Color_Name);
       --  ??? Set the tag priority...
-   end Create_Highlight_Tag;
+   end Create_Highlight_Line_Tag;
+
+   ---------------------------------
+   -- Create_Highlight_Region_Tag --
+   ---------------------------------
+
+   procedure Create_Highlight_Region_Tag
+     (Tag        : out Gtk.Text_Tag.Gtk_Text_Tag;
+      Color_Name : String) is
+   begin
+      New_Tag (Tag, Highlight_Region_Tag_Name, Color_Name);
+      --  ??? Add the priority
+   end Create_Highlight_Region_Tag;
 
 end Src_Highlighting;
