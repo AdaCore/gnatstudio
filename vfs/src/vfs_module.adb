@@ -42,6 +42,15 @@ package body VFS_Module is
    Me              : constant Debug_Handle := Create (VFS_Module_Name);
    VFS_Module_Id   : Module_ID;
 
+   Dir_Cst  : aliased constant String := "dir";
+   Name_Cst : aliased constant String := "name";
+   Pattern_Cst  : aliased constant String := "pattern";
+   Cd_Cmd_Parameters : constant Cst_Argument_List :=     (1 => Dir_Cst'Access);
+   Delete_Cmd_Parameters : constant Cst_Argument_List :=
+     (1 => Name_Cst'Access);
+   Dir_Cmd_Parameters : constant Cst_Argument_List :=
+     (1 => Pattern_Cst'Access);
+
    -----------------
    -- Subprograms --
    -----------------
@@ -144,61 +153,57 @@ package body VFS_Module is
       if Command = "pwd" then
          Set_Return_Value (Data, Get_Current_Dir);
 
-      elsif Command = "cd" or else Command = "delete" then
+      elsif Command = "cd" then
+         Name_Parameters (Data, Cd_Cmd_Parameters);
          declare
             File : constant String := Nth_Arg (Data, 1);
          begin
-            if Command = "cd" then
+            Change_Dir (File);
+         exception
+            when Directory_Error =>
+               Set_Error_Msg
+                 (Data, Command & ": " & (-"cannot change current directory"));
+               return;
+         end;
+
+      elsif Command = "delete" then
+         Name_Parameters (Data, Delete_Cmd_Parameters);
+         declare
+            File : constant String := Nth_Arg (Data, 1);
+         begin
+            if Is_Directory (File) then
                begin
-                  Change_Dir (File);
+                  Remove_Dir (File, True);
                exception
                   when Directory_Error =>
                      Set_Error_Msg
-                       (Data, Command & ": " &
-                        (-"cannot change current directory"));
+                       (Data, Command & ": " & "cannot delete directory");
                      return;
                end;
 
-            elsif Command = "delete" then
-               if Is_Directory (File) then
-                  begin
-                     Remove_Dir (File, True);
-                  exception
-                     when Directory_Error =>
-                        Set_Error_Msg
-                          (Data, Command & ": " & "cannot delete directory");
-                        return;
-                  end;
+            else
+               Delete_File (File, Success);
 
-               else
-                  Delete_File (File, Success);
-
-                  if not Success then
-                     Set_Error_Msg
-                       (Data, Command & ": " & (-"cannot delete file"));
-                     return;
-                  end if;
+               if not Success then
+                  Set_Error_Msg
+                    (Data, Command & ": " & (-"cannot delete file"));
+                  return;
                end if;
             end if;
          end;
 
       elsif Command = "dir" or else Command = "ls" then
+         Name_Parameters (Data, Dir_Cmd_Parameters);
          Set_Return_Value_As_List (Data);
 
-         if Number_Of_Arguments (Data) = 0 then
-            List_Files ("*");
-         else
-            for A in 1 .. Number_Of_Arguments (Data) loop
-               begin
-                  List_Files (Nth_Arg (Data, A));
-               exception
-                  when Error_In_Regexp =>
-                     Set_Error_Msg
-                       (Data, -"error in regexp: " & Nth_Arg (Data, A));
-                     return;
-               end;
-            end loop;
-         end if;
+         begin
+            List_Files (Nth_Arg (Data, 1, Default => "*"));
+         exception
+            when Error_In_Regexp =>
+               Set_Error_Msg
+                 (Data, -"error in regexp: " & Nth_Arg (Data, 1));
+               return;
+         end;
       end if;
    end VFS_Command_Handler;
 
@@ -320,7 +325,7 @@ package body VFS_Module is
       Register_Command
         (Kernel,
          Command      => "cd",
-         Usage        => "(dir) -> None",
+         Usage        => Parameter_Names_To_Usage (Cd_Cmd_Parameters, "None"),
          Description  => -"Change the current directory to dir.",
          Minimum_Args => 1,
          Maximum_Args => 1,
@@ -328,7 +333,8 @@ package body VFS_Module is
       Register_Command
         (Kernel,
          Command      => "delete",
-         Usage        => "(name) -> None",
+         Usage        =>
+           Parameter_Names_To_Usage (Delete_Cmd_Parameters, "None"),
          Description  => -"Delete file/directory name from the file system.",
          Minimum_Args => 1,
          Maximum_Args => 1,
@@ -336,7 +342,8 @@ package body VFS_Module is
       Register_Command
         (Kernel,
          Command      => "dir",
-         Usage        => "([pattern]) -> None",
+         Usage        =>
+           Parameter_Names_To_Usage (Dir_Cmd_Parameters, "None", 1),
          Description  =>
            -"list files following pattern (all files by default).",
          Minimum_Args => 0,
@@ -345,7 +352,8 @@ package body VFS_Module is
       Register_Command
         (Kernel,
          Command      => "ls",
-         Usage        => "([pattern]) -> list of files",
+         Usage        =>
+           Parameter_Names_To_Usage (Dir_Cmd_Parameters, "list", 1),
          Description  =>
            -"list files following pattern (all files by default).",
          Minimum_Args => 0,
