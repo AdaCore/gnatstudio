@@ -43,11 +43,13 @@ with Interactive_Consoles; use Interactive_Consoles;
 with GNAT.OS_Lib;     use GNAT.OS_Lib;
 with System;
 with Python.Ada;      use Python.Ada;
-with Interfaces.C.Strings; use Interfaces.C.Strings;
+with Interfaces.C.Strings; use Interfaces.C, Interfaces.C.Strings;
 with String_List_Utils;    use String_List_Utils;
 with Ada.Unchecked_Conversion;
+with Ada.Unchecked_Deallocation;
 with Traces;          use Traces;
 with GUI_Utils;       use GUI_Utils;
+with Glide_Intl;      use Glide_Intl;
 
 package body Python.GUI is
 
@@ -58,6 +60,10 @@ package body Python.GUI is
    --  Timeout between two checks of the gtk+ event queue
 
    Python_Key : constant History_Key := "python_console";
+
+   Class_Data_Key          : constant String := "__gps_class_data__";
+   Class_Instance_Data_Key : constant String := "__gps_class_inst_data__";
+   --  The keys to extract the internal GPS data from a class or its instance
 
    function Convert is new Standard.Ada.Unchecked_Conversion
      (System.Address, Python_Interpreter);
@@ -77,6 +83,12 @@ package body Python.GUI is
       Interpreter : Python_Interpreter) return Boolean;
    --  Handle for "key_press" in the interpreter
 
+   function Console_Key_Press_Handler
+     (Console     : access Gtk_Widget_Record'Class;
+      Event       : Gdk_Event;
+      Interpreter : Python_Interpreter) return Boolean;
+   --  Handle for "key_press" in a console created for the output stream
+
    function Trace
      (User_Arg : PyObject;
       Frame    : System.Address;
@@ -92,9 +104,6 @@ package body Python.GUI is
 
    function Write (Self : PyObject; Args : PyObject) return PyObject;
    pragma Convention (C, Write);
-   function Write_No_Capture
-     (Self : PyObject; Args : PyObject) return PyObject;
-   pragma Convention (C, Write_No_Capture);
    --  The second is the same as Write, except the output is never saved and
    --  return to the code that executed a python command.
 
@@ -104,6 +113,9 @@ package body Python.GUI is
    pragma Convention (C, Read_Line);
    function Is_A_TTY (Self : PyObject; Args : PyObject) return PyObject;
    pragma Convention (C, Is_A_TTY);
+   function Output_Constructor
+     (Self : PyObject; Args : PyObject) return PyObject;
+   pragma Convention (C, Output_Constructor);
    --  Override the python's methods of the File class.
 
    procedure Process_Gtk_Events
@@ -119,6 +131,41 @@ package body Python.GUI is
    procedure Update_Prompt_End_Mark
      (Interpreter : access Python_Interpreter_Record'Class);
    --  Move the prompt_end mark to the end of the console.
+
+   type Output_Class_Data is record
+      Console      : Gtk.Text_View.Gtk_Text_View;
+      Capture      : Boolean;
+      Key_Press_Id : Gtk.Handlers.Handler_Id;
+      Uneditable   : Gtk.Text_Tag.Gtk_Text_Tag;
+   end record;
+   type Output_Class_Data_Access is access Output_Class_Data;
+   --  Data stored in the Output class
+
+   procedure Create_Output_Class
+     (Interpreter    : access Python_Interpreter_Record'Class;
+      Main_Module    : PyObject);
+   --  Create the GPS.Console class
+
+   procedure Destroy_Output_Data (Data : System.Address);
+   pragma Convention (C, Destroy_Output_Data);
+   --  Destroy an Output_Class_Data_Access, as stored in instances of the
+   --  Output class
+
+   function Convert is new Standard.Ada.Unchecked_Conversion
+     (System.Address, Output_Class_Data_Access);
+
+   procedure Insert_Text
+     (Interpreter : access Python_Interpreter_Record'Class;
+      Text        : String;
+      Console     : Gtk.Text_View.Gtk_Text_View := null);
+   --  Insert some text in the interpreter console, and scroll as necessary.
+   --  The text is inserted into Console if not null, or in the default
+   --  Python console otherwise.
+
+   procedure Console_Notify
+     (Output_Data          : System.Address;
+      Where_The_Object_Was : System.Address);
+   pragma Convention (C, Console_Notify);
 
    -------------
    -- Destroy --
@@ -167,8 +214,7 @@ package body Python.GUI is
    procedure Insert_Text
      (Interpreter : access Python_Interpreter_Record'Class;
       Text        : String;
-      Console     : Interactive_Consoles.Interactive_Console := null;
-      Highlight   : Boolean := False)
+      Console     : Gtk_Text_View := null)
    is
       Buffer : Gtk_Text_Buffer;
       Iter   : Gtk_Text_Iter;
@@ -177,13 +223,14 @@ package body Python.GUI is
 
       if not Interpreter.Hide_Output then
          if Console /= null then
-            Insert (Console, Text, Add_LF => False, Highlight => Highlight);
+            Buffer := Get_Buffer (Console);
+            Get_End_Iter (Buffer, Iter);
+            Insert (Buffer, Iter, Text);
 
          elsif Interpreter.Console /= null
            and then not Gtk.Object.Destroyed_Is_Set (Interpreter.Console)
          then
             Buffer := Get_Buffer (Interpreter.Console);
-
             Get_End_Iter (Buffer, Iter);
             Insert (Buffer, Iter, Text);
 
@@ -210,6 +257,7 @@ package body Python.GUI is
       Interpreter : Python_Interpreter;
       Data        : PyObject;
       Old         : String_Access;
+      Output_Data : Output_Class_Data_Access;
 
    begin
       if not PyArg_ParseTuple
@@ -218,52 +266,91 @@ package body Python.GUI is
          return null;
       end if;
 
-      Data := PyObject_GetAttrString (Stdout, "gpsdata");
+      Data := PyObject_GetAttrString (Stdout, Class_Data_Key);
       Interpreter := Convert (PyCObject_AsVoidPtr (Data));
+      Py_DECREF (Data);
 
-      if Interpreter.Save_Output then
+      Data := PyObject_GetAttrString (Stdout, Class_Instance_Data_Key);
+      Output_Data := Convert (PyCObject_AsVoidPtr (Data));
+      Py_DECREF (Data);
+
+      if Output_Data.Capture
+        and then Interpreter.Save_Output
+      then
          Old := Interpreter.Current_Output;
-         Interpreter.Current_Output := new String'(Old.all & Value (S));
+         Interpreter.Current_Output :=
+           new String'(Old.all & Value (S, size_t (N)));
          Free (Old);
       end if;
 
-      Insert_Text (Interpreter, Value (S));
+      Insert_Text (Interpreter, Value (S, size_t (N)), Output_Data.Console);
       Process_Gtk_Events (Interpreter);
 
       Py_INCREF (Py_None);
       return Py_None;
    end Write;
 
-   ----------------------
-   -- Write_No_Capture --
-   ----------------------
+   -----------------
+   -- Set_Console --
+   -----------------
 
-   function Write_No_Capture
-     (Self : PyObject; Args : PyObject) return PyObject
+   procedure Set_Console
+     (Interpreter    : access Python_Interpreter_Record'Class;
+      Class_Instance : PyObject;
+      Console        : Gtk.Text_View.Gtk_Text_View)
    is
-      pragma Unreferenced (Self);
-      S           : aliased chars_ptr;
-      N           : aliased Integer;
-      Stdout      : aliased PyObject;
-      Interpreter : Python_Interpreter;
-      Data        : PyObject;
-
+      Data        : constant PyObject :=
+        PyObject_GetAttrString (Class_Instance, Class_Instance_Data_Key);
+      Output_Data : constant Output_Class_Data_Access :=
+        Convert (PyCObject_AsVoidPtr (Data));
    begin
-      if not PyArg_ParseTuple
-        (Args, "Os#", Stdout'Address, S'Address, N'Address)
-      then
-         return null;
+      Py_DECREF (Data);
+
+      --  If we still have a previous console, disconnect it
+      if Output_Data.Console /= null then
+         Gtk.Handlers.Disconnect
+           (Output_Data.Console, Output_Data.Key_Press_Id);
+
+         if Output_Data.Uneditable /= null then
+            Unref (Output_Data.Uneditable);
+            Output_Data.Uneditable := null;
+         end if;
       end if;
 
-      Data := PyObject_GetAttrString (Stdout, "gpsdata");
-      Interpreter := Convert (PyCObject_AsVoidPtr (Data));
+      Output_Data.Console := Console;
 
-      Insert_Text (Interpreter, Value (S));
-      Process_Gtk_Events (Interpreter);
+      if Console /= null then
+         Set_Editable (Console, False);
 
-      Py_INCREF (Py_None);
-      return Py_None;
-   end Write_No_Capture;
+         Gtk_New (Output_Data.Uneditable);
+         Set_Property
+           (Output_Data.Uneditable, Gtk.Text_Tag.Editable_Property, False);
+         Add (Get_Tag_Table (Get_Buffer (Console)),
+              Output_Data.Uneditable);
+
+         Weak_Ref (Console, Console_Notify'Access, Output_Data.all'Address);
+
+         Output_Data.Key_Press_Id := Interpreter_Callback.Connect
+           (Console, "key_press_event",
+            Interpreter_Callback.To_Marshaller
+              (Console_Key_Press_Handler'Access),
+            Python_Interpreter (Interpreter));
+      end if;
+   end Set_Console;
+
+   --------------------
+   -- Console_Notify --
+   --------------------
+
+   procedure Console_Notify
+     (Output_Data          : System.Address;
+      Where_The_Object_Was : System.Address)
+   is
+      pragma Unreferenced (Where_The_Object_Was);
+      D : constant Output_Class_Data_Access := Convert (Output_Data);
+   begin
+      D.Console := null;
+   end Console_Notify;
 
    --------------
    -- Is_A_TTY --
@@ -286,6 +373,52 @@ package body Python.GUI is
       return Py_None;
    end Flush;
 
+   -------------------------
+   -- Destroy_Output_Data --
+   -------------------------
+
+   procedure Destroy_Output_Data (Data : System.Address) is
+      procedure Unchecked_Free is new Standard.Ada.Unchecked_Deallocation
+        (Output_Class_Data, Output_Class_Data_Access);
+      D : Output_Class_Data_Access := Convert (Data);
+   begin
+      Weak_Unref (D.Console, Console_Notify'Access, Data);
+      Unchecked_Free (D);
+   end Destroy_Output_Data;
+
+   ------------------------
+   -- Output_Constructor --
+   ------------------------
+
+   function Output_Constructor
+     (Self : PyObject; Args : PyObject) return PyObject
+   is
+      pragma Unreferenced (Self);
+      Output_Data : Output_Class_Data_Access;
+      User_Data   : PyObject;
+      Instance    : aliased PyObject;
+      Capture     : aliased Integer;
+   begin
+      if not PyArg_ParseTuple
+        (Args, "Oi", Instance'Address, Capture'Address)
+      then
+         return null;
+      end if;
+
+      Output_Data := new Output_Class_Data'
+        (Console      => null,
+         Uneditable   => null,
+         Key_Press_Id => (Null_Signal_Id, null),
+         Capture      => Capture /= 0);
+      User_Data := PyCObject_FromVoidPtr
+        (Output_Data.all'Address, Destroy_Output_Data'Access);
+      PyObject_SetAttrString (Instance, Class_Instance_Data_Key, User_Data);
+      Py_DECREF (User_Data);
+
+      Py_INCREF (Py_None);
+      return Py_None;
+   end Output_Constructor;
+
    ---------------
    -- Read_Line --
    ---------------
@@ -298,40 +431,145 @@ package body Python.GUI is
       Interpreter   : Python_Interpreter;
       Iter, Iter2   : Gtk_Text_Iter;
       Buffer        : Gtk_Text_Buffer;
+      Console       : Gtk_Text_View;
+      Output_Data   : Output_Class_Data_Access;
+      End_Mark      : Gtk.Text_Mark.Gtk_Text_Mark;
 
    begin
       if not PyArg_ParseTuple (Args, "O|i", File'Address, Size'Address) then
          return null;
       end if;
 
-      Data := PyObject_GetAttrString (File, "gpsdata");
+      Data := PyObject_GetAttrString (File, Class_Data_Key);
       Interpreter := Convert (PyCObject_AsVoidPtr (Data));
+      Py_DECREF (Data);
 
-      if Interpreter.Console = null
+      Data := PyObject_GetAttrString (File, Class_Instance_Data_Key);
+      Output_Data := Convert (PyCObject_AsVoidPtr (Data));
+      Py_DECREF (Data);
+
+      if Output_Data.Console /= null then
+         Console := Output_Data.Console;
+      else
+         Console := Interpreter.Console;
+      end if;
+
+      if Console = null
         or else Interpreter.Hide_Output
-        or else Gtk.Object.Destroyed_Is_Set (Interpreter.Console)
+        or else Gtk.Object.Destroyed_Is_Set (Console)
       then
          --  Report EOF on stdin
          return PyString_FromString ("");
       end if;
 
-      Buffer := Get_Buffer (Interpreter.Console);
-      Update_Prompt_End_Mark (Interpreter);
+      Buffer := Get_Buffer (Console);
+
+      if Output_Data.Console = null then
+         Update_Prompt_End_Mark (Interpreter);
+      else
+         --  Mark as uneditable the rest of the console
+         Get_Start_Iter (Buffer, Iter);
+         Get_End_Iter (Buffer, Iter2);
+         Apply_Tag (Buffer, Output_Data.Uneditable, Iter, Iter2);
+
+         End_Mark := Create_Mark (Buffer, "", Iter2);
+         Set_Editable (Console, True);
+      end if;
 
       Interpreter.Waiting_For_Input := True;
+      Grab_Focus (Console);
       Gtk.Main.Main;
       Interpreter.Waiting_For_Input := False;
 
-      Get_Iter_At_Mark (Buffer, Iter2, Interpreter.Prompt_End_Mark);
+      if Output_Data.Console = null then
+         Get_Iter_At_Mark (Buffer, Iter2, Interpreter.Prompt_End_Mark);
+      else
+         Get_Iter_At_Mark (Buffer, Iter2, End_Mark);
+         Delete_Mark (Buffer, End_Mark);
+         Set_Editable (Console, False);
+      end if;
+
       Get_End_Iter (Buffer, Iter);
 
       declare
          Response : constant String := Get_Slice (Buffer, Iter2, Iter);
       begin
-         Insert_Text (Interpreter, "" & ASCII.LF);
+         Insert_Text (Interpreter, "" & ASCII.LF, Output_Data.Console);
          return PyString_FromString (Response);
       end;
    end Read_Line;
+
+   -------------------------
+   -- Create_Output_Class --
+   -------------------------
+
+   procedure Create_Output_Class
+     (Interpreter    : access Python_Interpreter_Record'Class;
+      Main_Module    : PyObject)
+   is
+      Meths   : constant PyObject := PyDict_New;
+      Output  : PyClassObject;
+      Ignored : Integer;
+      pragma Unreferenced (Ignored);
+   begin
+      PyDict_SetItemString
+        (Meths, "__doc__", PyString_FromString
+         (-("This class redirects its input and output to one of GPS's"
+            & " consoles. The current console can be overriden by"
+            & " calls to set_console()")));
+      PyDict_SetItemString
+        (Meths, "__module__", PyString_FromString ("__builtin__"));
+      PyDict_SetItemString
+        (Meths, Class_Data_Key,
+         PyCObject_FromVoidPtr (Interpreter.all'Address));
+
+      Output := PyClass_New
+        (Bases => null,  --  could be "file"
+         Dict  => Meths,
+         Name  => PyString_FromString (Console_Class_Name));
+      Ignored := PyModule_AddObject (Main_Module, Console_Class_Name, Output);
+
+      Add_Method (Output, Create_Method_Def ("write",    Write'Access));
+      Add_Method (Output, Create_Method_Def ("flush",    Flush'Access));
+      Add_Method (Output, Create_Method_Def ("read",     Read_Line'Access));
+      Add_Method (Output, Create_Method_Def ("readline", Read_Line'Access));
+      Add_Method (Output, Create_Method_Def ("isatty",   Is_A_TTY'Access));
+      Add_Method (Output, Create_Method_Def
+        ("__init__", Output_Constructor'Access,
+         -("Build a new instance of the class. The parameter indicates"
+           & ASCII.LF
+           & "whether the output to this stream should be captured by GPS,"
+           & ASCII.LF
+           & "and returned when commands are executed through a GPS action")));
+   end Create_Output_Class;
+
+   -------------------
+   -- Initialize_IO --
+   -------------------
+
+   procedure Initialize_IO
+     (Interpreter : access Python_Interpreter_Record'Class;
+      Module_Name : String;
+      Module      : PyObject) is
+   begin
+      Create_Output_Class (Interpreter, Module);
+
+      --  Note: we also set __stdout__,..., so that the user can restore them
+      --  after temporarily modifying sys.stdout in their own programs
+      if not PyRun_SimpleString
+        ("sys.stdin="
+         & Module_Name & '.' & Console_Class_Name & "(1)" & ASCII.LF
+         & "sys.stdout="
+         & Module_Name & '.' & Console_Class_Name & "(1)" & ASCII.LF
+         & "sys.stderr="
+         & Module_Name & '.' & Console_Class_Name & "(0)" & ASCII.LF
+         & "sys.__stdout__=sys.stdout" & ASCII.LF
+         & "sys.__stdin__=sys.stdin" & ASCII.LF
+         & "sys.__stderr__=sys.stderr" & ASCII.LF)
+      then
+         raise Interpreter_Error;
+      end if;
+   end Initialize_IO;
 
    ----------------
    -- Initialize --
@@ -346,8 +584,6 @@ package body Python.GUI is
       Sigint         : constant Integer := 2;
       Old_Handler    : System.Address;
       Prompt         : PyObject;
-      Stdout, Stderr : PyClassObject;
-      Meths          : PyObject;
       Ignored        : Integer;
       pragma Unreferenced (Ignored);
 
@@ -378,54 +614,6 @@ package body Python.GUI is
       end if;
       Interpreter.Globals := PyModule_GetDict (Main_Module);
 
-      --  Create our own stdout handler
-
-      Meths := PyDict_New;
-      PyDict_SetItemString (Meths, "__module__", PyString_FromString ("gps"));
-      PyDict_SetItemString
-        (Meths, "gpsdata", PyCObject_FromVoidPtr (Interpreter.all'Address));
-
-      Stdout := PyClass_New
-        (Bases => null,
-         Dict  => Meths,
-         Name  => PyString_FromString ("GPSStdout"));
-      Ignored := PyModule_AddObject (Main_Module, "GPSStdout", Stdout);
-
-      Add_Method (Stdout, Create_Method_Def ("write",    Write'Access));
-      Add_Method (Stdout, Create_Method_Def ("flush",    Flush'Access));
-      Add_Method (Stdout, Create_Method_Def ("read",     Read_Line'Access));
-      Add_Method (Stdout, Create_Method_Def ("readline", Read_Line'Access));
-      Add_Method (Stdout, Create_Method_Def ("isatty",   Is_A_TTY'Access));
-
-      Meths := PyDict_New;
-      PyDict_SetItemString (Meths, "__module__", PyString_FromString ("gps"));
-      PyDict_SetItemString
-        (Meths, "gpsdata", PyCObject_FromVoidPtr (Interpreter.all'Address));
-
-      Stderr := PyClass_New
-        (Bases => null,
-         Dict  => Meths,
-         Name  => PyString_FromString ("GPSStderr"));
-      Ignored := PyModule_AddObject (Main_Module, "GPSStderr", Stderr);
-
-      Add_Method
-        (Stderr, Create_Method_Def ("write",  Write_No_Capture'Access));
-      Add_Method (Stderr, Create_Method_Def ("flush",    Flush'Access));
-      Add_Method (Stderr, Create_Method_Def ("read",     Read_Line'Access));
-      Add_Method (Stderr, Create_Method_Def ("readline", Read_Line'Access));
-      Add_Method (Stderr, Create_Method_Def ("isatty",   Is_A_TTY'Access));
-
-      --  Note: we also set __stdout__,..., so that the user can restore them
-      --  after temporarily modifying sys.stdout in their own programs
-      if not PyRun_SimpleString
-        ("sys.stdout=sys.stdin=GPSStdout ()" & ASCII.LF
-         & "sys.stderr=GPSStderr()" & ASCII.LF
-         & "sys.__stdout__=sys.__stdin__=sys.stdout" & ASCII.LF
-         & "sys.__stderr__=sys.stderr" & ASCII.LF)
-      then
-         raise Interpreter_Error;
-      end if;
-
       --  Initialize various variables
 
       Prompt := PySys_GetObject ("ps1");
@@ -448,11 +636,11 @@ package body Python.GUI is
         (Trace'Access, PyCObject_FromVoidPtr (Interpreter.all'Address));
    end Initialize;
 
-   -----------------
-   -- Set_Console --
-   -----------------
+   -------------------------
+   -- Set_Default_Console --
+   -------------------------
 
-   procedure Set_Console
+   procedure Set_Default_Console
      (Interpreter : access Python_Interpreter_Record'Class;
       Console     : Gtk.Text_View.Gtk_Text_View;
       Grab_Widget : Gtk.Widget.Gtk_Widget := null;
@@ -482,14 +670,10 @@ package body Python.GUI is
       if Interpreter.Console /= null
         and then not Gtk.Object.Destroyed_Is_Set (Interpreter.Console)
       then
-         --  Disconnect previous key_press_event signal
-         Disconnect (Interpreter.Console, Interpreter.Key_Press_Id);
-
          Gtk_New (Interpreter.Uneditable);
          Set_Property
            (Interpreter.Uneditable, Gtk.Text_Tag.Editable_Property, False);
          Add (Get_Tag_Table (Get_Buffer (Console)), Interpreter.Uneditable);
-         --  ??? Never unref-ed
 
          Interpreter.Key_Press_Id := Interpreter_Callback.Connect
            (Console, "key_press_event",
@@ -504,7 +688,7 @@ package body Python.GUI is
             Python.GUI.Display_Prompt (Interpreter);
          end if;
       end if;
-   end Set_Console;
+   end Set_Default_Console;
 
    -----------------------
    -- Console_Destroyed --
@@ -516,7 +700,7 @@ package body Python.GUI is
    is
       pragma Unreferenced (Console);
    begin
-      Set_Console (Interpreter, null);
+      Set_Default_Console (Interpreter, null);
    end Console_Destroyed;
 
    -----------
@@ -545,6 +729,7 @@ package body Python.GUI is
      (Interpreter : access Python_Interpreter_Record'Class;
       Command     : String;
       Console     : Interactive_Console := null;
+      Show_Command : Boolean := False;
       Hide_Output : Boolean := False;
       Errors      : access Boolean) return String
    is
@@ -555,7 +740,8 @@ package body Python.GUI is
       Interpreter.Current_Output := new String'("");
 
       Result :=
-        Run_Command (Interpreter, Command, Console, Hide_Output, Errors);
+        Run_Command (Interpreter, Command, Console,
+                     Show_Command, Hide_Output, Errors);
 
       declare
          Output : constant String := Interpreter.Current_Output.all;
@@ -571,11 +757,12 @@ package body Python.GUI is
    -----------------
 
    function Run_Command
-     (Interpreter : access Python_Interpreter_Record'Class;
-      Command     : String;
-      Console     : Interactive_Consoles.Interactive_Console := null;
-      Hide_Output : Boolean := False;
-      Errors      : access Boolean) return PyObject
+     (Interpreter  : access Python_Interpreter_Record'Class;
+      Command      : String;
+      Console      : Interactive_Consoles.Interactive_Console := null;
+      Show_Command : Boolean := False;
+      Hide_Output  : Boolean := False;
+      Errors       : access Boolean) return PyObject
    is
       Result, Builtin : PyObject := null;
       Obj            : PyObject;
@@ -595,6 +782,14 @@ package body Python.GUI is
    begin
       Trace (Me, "Running command: " & Cmd);
 
+      if not Hide_Output and then Show_Command then
+         if Console = null then
+            Insert_Text (Interpreter, Command & ASCII.LF, null);
+         else
+            Insert_Text (Interpreter, Command & ASCII.LF, Get_View (Console));
+         end if;
+      end if;
+
       Interpreter.Hide_Output := Hide_Output;
       Errors.all := False;
 
@@ -610,7 +805,7 @@ package body Python.GUI is
             Ref (Default_Console);
          end if;
 
-         Set_Console (Interpreter, Get_View (Console));
+         Set_Default_Console (Interpreter, Get_View (Console));
       end if;
 
       Interpreter.In_Process := True;
@@ -727,7 +922,7 @@ package body Python.GUI is
       Interpreter.Hide_Output := False;
 
       if Console /= null then
-         Set_Console (Interpreter, Default_Console);
+         Set_Default_Console (Interpreter, Default_Console);
 
          if Default_Console /= null then
             Unref (Default_Console);
@@ -745,7 +940,7 @@ package body Python.GUI is
          Errors.all := True;
 
          if Console /= null then
-            Set_Console (Interpreter, Default_Console);
+            Set_Default_Console (Interpreter, Default_Console);
 
             if Default_Console /= null then
                Unref (Default_Console);
@@ -809,6 +1004,29 @@ package body Python.GUI is
          Move_Mark (Buffer, Interpreter.Prompt_End_Mark, Iter);
       end if;
    end Update_Prompt_End_Mark;
+
+   -------------------------------
+   -- Console_Key_Press_Handler --
+   -------------------------------
+
+   function Console_Key_Press_Handler
+     (Console     : access Gtk_Widget_Record'Class;
+      Event       : Gdk_Event;
+      Interpreter : Python_Interpreter) return Boolean
+   is
+      pragma Unreferenced (Console);
+      Key : constant Gdk_Key_Type := Get_Key_Val (Event);
+   begin
+      case Key is
+         when GDK_Return | GDK_KP_Enter =>
+            if Interpreter.Waiting_For_Input then
+               Gtk.Main.Main_Quit;
+               return True;
+            end if;
+         when others => null;
+      end case;
+      return False;
+   end Console_Key_Press_Handler;
 
    -----------------------
    -- Key_Press_Handler --
@@ -949,12 +1167,14 @@ package body Python.GUI is
             end if;
 
          when GDK_Tab | GDK_KP_Tab =>
-            Do_Completion
-              (View            => Interpreter.Console,
-               Completion      => Completion'Unrestricted_Access,
-               Prompt_End_Mark => Interpreter.Prompt_End_Mark,
-               Uneditable_Tag  => Interpreter.Uneditable,
-               User_Data       => null);
+            if not Interpreter.Waiting_For_Input then
+               Do_Completion
+                 (View            => Interpreter.Console,
+                  Completion      => Completion'Unrestricted_Access,
+                  Prompt_End_Mark => Interpreter.Prompt_End_Mark,
+                  Uneditable_Tag  => Interpreter.Uneditable,
+                  User_Data       => null);
+            end if;
             return True;
 
          when GDK_Return | GDK_KP_Enter =>
@@ -978,7 +1198,7 @@ package body Python.GUI is
                begin
                   Result := Run_Command
                     (Interpreter, Get_Slice (Buffer, Prompt_End, Iter),
-                     null, False, Errors'Unrestricted_Access);
+                     null, False, False, Errors'Unrestricted_Access);
                end;
 
                --  Preserve the focus on the console after interactive

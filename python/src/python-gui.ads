@@ -36,6 +36,10 @@ package Python.GUI is
    type Python_Interpreter_Record is tagged private;
    type Python_Interpreter is access all Python_Interpreter_Record'Class;
 
+   Console_Class_Name : constant String := "Console";
+   --  The name of the class that redirects the output of Python to one of
+   --  GPS's windows
+
    procedure Initialize
      (Interpreter : access Python_Interpreter_Record'Class;
       History     : Histories.History);
@@ -43,7 +47,22 @@ package Python.GUI is
    --  application, since there is only one shared python interpreter.  Raises
    --  Interpreter_Error if the interpreter couldn't be initialized
 
+   procedure Initialize_IO
+     (Interpreter : access Python_Interpreter_Record'Class;
+      Module_Name : String;
+      Module      : PyObject);
+   --  Initialize the redirection of stdin, stdout and stderr.
+   --  Module_Name is the name of the module in which the new class is defined
+
    procedure Set_Console
+     (Interpreter    : access Python_Interpreter_Record'Class;
+      Class_Instance : PyObject;
+      Console        : Gtk.Text_View.Gtk_Text_View);
+   --  Set the console that should be used by an instance of Console_Class_Name
+   --  and to which all its output should be directed.
+   --  If Console is null, the default interpreter console will be used.
+
+   procedure Set_Default_Console
      (Interpreter : access Python_Interpreter_Record'Class;
       Console     : Gtk.Text_View.Gtk_Text_View;
       Grab_Widget : Gtk.Widget.Gtk_Widget := null;
@@ -64,11 +83,12 @@ package Python.GUI is
    --  interpreter is not associated with a console
 
    function Run_Command
-     (Interpreter : access Python_Interpreter_Record'Class;
-      Command     : String;
-      Console     : Interactive_Consoles.Interactive_Console := null;
-      Hide_Output : Boolean := False;
-      Errors      : access Boolean) return Python.PyObject;
+     (Interpreter  : access Python_Interpreter_Record'Class;
+      Command      : String;
+      Console      : Interactive_Consoles.Interactive_Console := null;
+      Show_Command : Boolean := False;
+      Hide_Output  : Boolean := False;
+      Errors       : access Boolean) return Python.PyObject;
    --  Execute a command in the interpreter, and send its output to the
    --  console. Return its return value (which doesn't need to be Py_DECREF,
    --  since it is a borrowed reference).
@@ -82,18 +102,10 @@ package Python.GUI is
      (Interpreter : access Python_Interpreter_Record'Class;
       Command     : String;
       Console     : Interactive_Consoles.Interactive_Console := null;
+      Show_Command : Boolean := False;
       Hide_Output : Boolean := False;
       Errors      : access Boolean) return String;
    --  Same as above, but also return the output of the command
-
-   procedure Insert_Text
-     (Interpreter : access Python_Interpreter_Record'Class;
-      Text        : String;
-      Console     : Interactive_Consoles.Interactive_Console := null;
-      Highlight   : Boolean := False);
-   --  Insert some text in the interpreter console, and scroll as necessary.
-   --  The text is inserted into Console if not null, or in the default
-   --  Python console otherwise.
 
    procedure Destroy (Interpreter : access Python_Interpreter_Record);
    --  Free the memory occupied by the interpreter
