@@ -38,6 +38,9 @@ package Generic_Stack is
    procedure Clear (Stack : in out Simple_Stack);
    --  Clear the contents of stack.
 
+   function Is_Empty (Stack : Simple_Stack) return Boolean;
+   --  Returns True if the stack is empty.
+
 private
    pragma Inline (Push);
    pragma Inline (Pop);
