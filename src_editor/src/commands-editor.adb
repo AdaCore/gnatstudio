@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2003                         --
+--                     Copyright (C) 2003 - 2004                     --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
@@ -310,7 +310,7 @@ package body Commands.Editor is
                   Natural
                     (g_utf8_strlen
                        (Command.Current_Text
-                          (First .. Command.Current_Text_Size + First),
+                          (First .. Command.Current_Text_Size + First - 1),
                         Interfaces.C.size_t (Command.Current_Text_Size))),
                   False);
 
