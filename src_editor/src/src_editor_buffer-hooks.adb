@@ -60,6 +60,17 @@ package body Src_Editor_Buffer.Hooks is
       Run_Hook (Buffer.Kernel, Cursor_Stopped_Hook, Data, False);
    end Cursor_Stopped;
 
+   ----------------
+   -- Word_Added --
+   ----------------
+
+   procedure Word_Added (Buffer : Source_Buffer) is
+      Data : constant File_Hooks_Args :=
+        (Hooks_Data with File => Buffer.Filename);
+   begin
+      Run_Hook (Buffer.Kernel, Word_Added_Hook, Data, False);
+   end Word_Added;
+
    ---------------------------
    -- Register_Editor_Hooks --
    ---------------------------
@@ -72,9 +83,15 @@ package body Src_Editor_Buffer.Hooks is
          -("Common type for all hooks related to source editors." & ASCII.LF
            & "Arguments are the following: (file)" & ASCII.LF),
          Hook_With_Args, Simple_Editor_Run_Hook_Handler'Access);
+
       Register_Hook
         (Kernel, Cursor_Stopped_Hook,
          -("Hook called when the cursor has stopped moving"),
+         Type_Name => Simple_Editor_Hook_Type);
+
+      Register_Hook
+        (Kernel, Word_Added_Hook,
+         -("Hook called when a word has been added in the editor"),
          Type_Name => Simple_Editor_Hook_Type);
    end Register_Editor_Hooks;
 
