@@ -13,4 +13,19 @@ project Glide is
    for Source_Dirs use ("src");
    for Object_Dir use "obj";
 
+  type OS_Type is ("linux", "windows");
+  OS : OS_Type := External ("OS", "linux");  --  Fail if no default value
+
+  type Debug_Type is ("False", "True");
+  Debug : Debug_Type := External ("DEBUG", "False");
+
+  package Compiler is
+     case Debug is
+        when "True" => 
+          for Switches use ("-g");
+        when others =>
+          for Switches use ("-O2");
+     end case;
+  end Compiler;
+
 end Glide;
