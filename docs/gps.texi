@@ -116,10 +116,8 @@ Project Handling
 Searching and Replacing
 
 Compilation/Build
-* Ada Compilation and Build::
-* C/C++ Compilation and Build::
-* Multi-language Build::
 * The Build Menu::
+@c * Multi-language Build::
 * Integrating existing build procedures with the GPS build system::
 
 Source Browsing
@@ -2666,7 +2664,6 @@ icon.
 
 @c ??? Insert here icon for modified project
 
-
 @c -------------------------------------------------------------------
 @node The Project Menu
 @section The Project Menu
@@ -2939,6 +2936,7 @@ belongs to the project, but GPS will complain later if it doesn't.
 
 @c ------------------------------------------------------------------
 @subsection Switches
+@anchor{Switches}
 @cindex switches
 @c ------------------------------------------------------------------
 
@@ -3297,39 +3295,114 @@ started next time.
 @cindex build
 @c --------------------------------------------------------------------
 
-@i{This chapter is incomplete}
-@c ??? incomplete
+@noindent
+This chapter describes how to compile files, build executables and run
+them. Most capabilities can be accessed through the @code{Build} menu item,
+or through the @code{Build} and @code{Run} contextual menu items, as
+described in the following section.
+
+When compiler messages are detected by GPS, an entry is added in the
+@i{Locations tree}, allowing you to easily navigate through the compiler
+messages (see @ref{The Locations Tree}), or even to automatically correct some
+errors or warnings (see @ref{Code Fixing}).
 
 @menu
-* Ada Compilation and Build::
-* C/C++ Compilation and Build::
-* Multi-language Build::
 * The Build Menu::
+@c * Multi-language Build::
 * Integrating existing build procedures with the GPS build system::
 @end menu
-
-@node Ada Compilation and Build
-@section Ada Compilation and Build
-@cindex Ada
-@noindent
-
-@node C/C++ Compilation and Build
-@section C/C++ Compilation and Build
-@cindex C
-@cindex C++
-@noindent
-
-@node Multi-language Build
-@section Multi-language Build
-@noindent
 
 @node The Build Menu
 @section The Build Menu
 @noindent
+The build menu gives access to capabilities related to checking, parsing and
+compiling files, as well as creating and running executables.
+
+@table @b
+@item Check Syntax
+Check the syntax of the current source file. Display an error message in
+the @i{Messages} window if no file is currently selected.
+This option is currently only supported for Ada files.
+
+@item Compile File
+Compile the current file. Display an error message in the @i{Messages} window if
+no file is selected.
+This option is currently only supported for Ada files.
+
+@item Make
+   @table @i
+   @item main
+   For each main source file defined in your top level project, an entry
+   is listed to build (compile, bind, link) this source file.
+   Similarly the @code{Build} contextual menu accessible from a project
+   entity contains the same entries.
+
+   @item <current file>
+   Consider the currently selected file as a main file, and build it.
+
+   @item All main subprograms
+   Build all main files defined in your top level project.
+
+   @item Custom...
+   Display a text entry where you can enter any external command. This menu
+   is very useful when you already have existing build scripts, make files,
+   @dots{} and want to invoke them from GPS.
+
+   @end table
+
+@item Recompute C/C++ Xref info
+@cindex C
+@cindex C++
+Recompute the cross reference information for C and C++ source files.
+@xref{Support for Cross References}.
+
+@item Run
+   @table @i
+   @item main
+   For each main source file defined in your top level project, an entry
+   is listed to run the executable associated with this main file.
+   Running an application will first open a dialog where you can specify
+   command line arguments to your application, if needed. You can also
+   specify whether the application should be run within GPS (the default),
+   or using an external terminal.
+
+   When running an application from GPS, a new execution window is added in the
+   bottom area where input and output of the application is handled. This
+   window is never closed automatically, even when the application terminates,
+   so that you can still have access to the application's output. If you
+   explicitely close an execution window while an application is still running,
+   a dialog window will be displayed to confirm whether the application should
+   be terminated.
+
+   When using an external terminal, GPS launches an external terminal
+   utility that will take care of the execution and input/output of your
+   application. This external utility can be configured in the preferences
+   dialog (@i{Helpers->Execute command}).
+
+   Similarly, the @code{Run} contextual menu accessible from a project
+   entity contains the same entries.
+
+   @item Custom...
+   Similar to the entry above, except that you can run any arbitrary executable.
+   @end table
+
+@item Interrupt
+Interrupt the current compilation or build.
+
+@end table
+
+@c @node Multi-language Build
+@c @section Multi-language Build
+@c @noindent
+
+@c ??? missing doc for multi language builds: explain how the generated
+@c make files work, ...
 
 @node Integrating existing build procedures with the GPS build system
 @section Integrating existing build procedures with the GPS build system
 @noindent
+@i{Note that this capability is not fully supported yet.}
+
 Since the multi-language build system provided by GPS is based on makefiles,
 it is possible to integrate existing build scripts and makefiles. In the
 following section, we will call such projects that integrate with existing
@@ -4243,6 +4316,9 @@ The list of active items includes:
 @node Visual Comparison
 @section Visual Comparison
 @noindent
+@i{Note that this tool is in a preliminary stage. More capabilities will
+be added in the future}.
+
 @i{This section is incomplete}
 @c ??? incomplete
 
@@ -4289,6 +4365,12 @@ configuration. You will set the @i{Ada compiler} to
 @code{powerpc-wrs-vxworks-gnatmake}; @i{Gnatls} to
 @code{powerpc-wrs-vxworks-gnatls} and @i{Debugger} to
 @code{powerpc-wrs-vxworks-gdb}.
+
+If you are using an alternative run time, e.g. a @i{soft float} run time,
+you need to add the option @code{--RTS=soft-float} to the @i{Gnatls}
+property, e.g: @code{powerpc-wrs-vxworks-gnatls --RTS=soft-float}, and
+add this same option to the @i{Make} switches in the switch editor.
+See @ref{Switches} for more details on the switch editor.
 
 To modify your project to support configurations such as multiple targets,
 or multiple hosts, you can create scenario variables, and modify the setting
