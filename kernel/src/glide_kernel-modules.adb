@@ -1090,6 +1090,25 @@ package body Glide_Kernel.Modules is
       General_Line_Information (Kernel, File, Identifier, Info);
    end Add_Line_Information;
 
+   ------------------------
+   -- Clear_Highlighting --
+   ------------------------
+
+   procedure Clear_Highlighting
+     (Kernel   : access Kernel_Handle_Record'Class;
+      Filename : String)
+   is
+   begin
+      if Is_Open (Kernel, Filename) then
+         Open_File_Editor
+           (Kernel,
+            Filename,
+            0, 0,
+            Highlight_Line => False,
+            Enable_Navigation => False);
+      end if;
+   end Clear_Highlighting;
+
    ----------------------
    -- Open_File_Editor --
    ----------------------
@@ -1873,7 +1892,12 @@ package body Glide_Kernel.Modules is
          R : constant String := Result.all;
       begin
          Free (Result);
-         return R;
+
+         if R = "" then
+            return -"Command not recognized";
+         else
+            return R;
+         end if;
       end;
    end Interpret_Command;
 
