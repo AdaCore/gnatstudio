@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                    Copyright (C) 2003 - 2004                      --
---                            ACT-Europe                             --
+--                    Copyright (C) 2003 - 2005                      --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -83,11 +83,15 @@ package body Src_Editor_Module.Line_Highlighting is
                Box := Source_Box (Get_Widget (Child));
                if Command = "highlight" then
                   Add_Line_Highlighting
-                    (Box.Editor, Editable_Line_Type (Line), Category,
+                    (Get_Buffer (Box.Editor),
+                     Editable_Line_Type (Line),
+                     Category,
                      Highlight_In => (others => True));
                else
                   Remove_Line_Highlighting
-                    (Box.Editor, Editable_Line_Type (Line), Category);
+                    (Get_Buffer (Box.Editor),
+                     Editable_Line_Type (Line),
+                     Category);
                end if;
             else
                Set_Error_Msg
@@ -151,7 +155,8 @@ package body Src_Editor_Module.Line_Highlighting is
                       Module_Id.Categories (Category_Index).Mark_In_Speedbar
                   then
                      Add_Line_Highlighting
-                       (Box.Editor, Editable_Line_Type (Line), Category,
+                       (Get_Buffer (Box.Editor),
+                        Editable_Line_Type (Line), Category,
                         Highlight_In => (Highlight_Speedbar => True,
                                          others             => False));
                   end if;
@@ -166,7 +171,9 @@ package body Src_Editor_Module.Line_Highlighting is
                       Module_Id.Categories (Category_Index).Mark_In_Speedbar
                   then
                      Remove_Line_Highlighting
-                       (Box.Editor, Editable_Line_Type (Line), Category);
+                       (Get_Buffer (Box.Editor),
+                        Editable_Line_Type (Line),
+                        Category);
                   end if;
                end if;
             else
