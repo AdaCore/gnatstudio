@@ -32,6 +32,7 @@ package Commands.External is
      function (Kernel : Kernel_Handle;
                Head   : String_List.List;
                List   : String_List.List) return Boolean;
+   --  ??? Where are the params of handlers freed ?
 
    procedure Create
      (Item         : out External_Command_Access;
@@ -40,8 +41,12 @@ package Commands.External is
       Dir          : String_List.List;
       Args         : String_List.List;
       Head         : String_List.List;
-      Handler      : String_List_Handler;
-      Next_Command : Command_Access := null);
+      Handler      : String_List_Handler);
+
+   procedure Add_Consequence_Action
+     (Item   : External_Command_Access;
+      Action : Command_Access);
+   --  Add an action that will be enqueued if Item executes successfully.
 
    function Execute (Command : access External_Command) return Boolean;
 
@@ -58,9 +63,10 @@ private
       Args    : String_List.List;
       Head    : String_List.List;
       Handler : String_List_Handler;
-      Next_Command : Command_Access;
 
       Output  : String_List.List;
+
+      Next_Commands : Command_Queues.List;
    end record;
 
 end Commands.External;
