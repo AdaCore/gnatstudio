@@ -5,10 +5,10 @@
   <name>aunit_make_harness</name>
   <program_name>aunit_make_harness</program_name>
   <directory></directory>
-  <source_directory>aunit_make_harness</source_directory>
+  <source_directory>make_harness</source_directory>
   <pixmaps_directory>pixmaps</pixmaps_directory>
   <language>Ada 95</language>
-  <gnome_support>True</gnome_support>
+  <gnome_support>False</gnome_support>
   <gettext_support>True</gettext_support>
 </project>
 
