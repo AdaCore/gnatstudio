@@ -26,8 +26,12 @@ with Gdk.Font;                use Gdk.Font;
 with Gdk.Pixmap;              use Gdk.Pixmap;
 with Gdk.Types;               use Gdk.Types;
 with Gdk.Types.Keysyms;       use Gdk.Types.Keysyms;
+with Gdk.Window;              use Gdk.Window;
 with Gtk.Bin;                 use Gtk.Bin;
+with Gtk.Box;                 use Gtk.Box;
+with Gtk.Dialog;              use Gtk.Dialog;
 with Gtk.Enums;               use Gtk.Enums;
+with Gtk.GEntry;              use Gtk.GEntry;
 with Gtk.Handlers;            use Gtk.Handlers;
 with Gtk.Label;               use Gtk.Label;
 with Gtk.Main;                use Gtk.Main;
@@ -36,6 +40,7 @@ with Gtk.Menu_Item;           use Gtk.Menu_Item;
 with Gtk.Pixmap;              use Gtk.Pixmap;
 with Gtk.Scrolled_Window;     use Gtk.Scrolled_Window;
 with Gtk.Stock;               use Gtk.Stock;
+with Gtk.Table;               use Gtk.Table;
 with Gtk.Toolbar;             use Gtk.Toolbar;
 with Gtk.Widget;              use Gtk.Widget;
 with Gtk.Window;              use Gtk.Window;
@@ -47,8 +52,10 @@ with Display_Items;           use Display_Items;
 with Dock_Paned;              use Dock_Paned;
 with Items;                   use Items;
 with GVD.Canvas;              use GVD.Canvas;
-with GVD.Dialogs;             use GVD.Dialogs;
+with GVD.Code_Editors;        use GVD.Code_Editors;
+with GVD.Memory_View;         use GVD.Memory_View;
 with GVD.Menu;                use GVD.Menu;
+with GVD.Text_Box.Asm_Editor; use GVD.Text_Box.Asm_Editor;
 with GVD.Types;               use GVD.Types;
 with GVD.Toolbar;             use GVD.Toolbar;
 with GVD.Process;             use GVD.Process;
@@ -268,6 +275,10 @@ package body GVD_Module is
      Generic_Debug_Command (GVD.Menu.On_Command_History);
    --  Debug->Session->Command History
 
+   procedure On_Call_Stack is new
+     Generic_Debug_Command (GVD.Menu.On_Call_Stack);
+   --  Debug->Data->Call Stack
+
    procedure On_Threads is new
      Generic_Debug_Command (GVD.Menu.On_Threads);
    --  Debug->Data->Threads
@@ -276,9 +287,9 @@ package body GVD_Module is
      Generic_Debug_Command (GVD.Menu.On_Tasks);
    --  Debug->Data->Tasks
 
-   procedure On_Assembly is new
-     Generic_Debug_Command (GVD.Menu.On_Tasks);
-   --  ??? Debug->Data->Assembly
+   procedure On_Assembly
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   --  Debug->Data->Assembly
 
    procedure On_Edit_Breakpoints is new
      Generic_Debug_Command (GVD.Menu.On_Edit_Breakpoints);
@@ -414,6 +425,45 @@ package body GVD_Module is
    function Idle_Reveal_Lines return Boolean;
    --  Idle/Timeout function to query the line information from the debugger.
 
+   -----------------
+   -- On_Assembly --
+   -----------------
+
+   procedure On_Assembly
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   is
+      pragma Unreferenced (Widget);
+
+      Top     : constant Glide_Window :=
+        Glide_Window (Get_Main_Window (Kernel));
+      Process : constant Debugger_Process_Tab := Get_Current_Process (Top);
+      Editor  : constant Code_Editor := Process.Editor_Text;
+      Address : constant String      := Get_Asm_Address (Editor);
+      Asm     : constant Asm_Editor  := Get_Asm (Editor);
+      Child   : MDI_Child;
+
+   begin
+      if Get_Mode (Editor) = Source_Asm then
+         return;
+      end if;
+
+      Set_Mode (Editor, Source_Asm);
+      --  ??? Connect to delete_event signal to reset editor mode
+
+      Child := Put (Process.Process_Mdi, Asm);
+      Set_Title (Child, -"Assembly View");
+
+      if Address /= "" then
+         Set_Address (Asm, Address);
+      end if;
+
+      Highlight_Address_Range (Asm, Get_Line (Editor));
+
+      if Process.Breakpoints /= null then
+         Update_Breakpoints (Asm, Process.Breakpoints.all);
+      end if;
+   end On_Assembly;
+
    -------------------------
    -- On_Connect_To_Board --
    -------------------------
@@ -423,9 +473,17 @@ package body GVD_Module is
    is
       pragma Unreferenced (Widget);
 
-      Top  : constant Glide_Window := Glide_Window (Get_Main_Window (Kernel));
-      Page : constant Glide_Page.Glide_Page :=
+      Top          : constant Glide_Window :=
+        Glide_Window (Get_Main_Window (Kernel));
+      Page         : constant Glide_Page.Glide_Page :=
         Glide_Page.Glide_Page (Get_Current_Process (Top));
+      Dialog       : Gtk_Dialog;
+      Table        : Gtk_Table;
+      Ent_Protocol : Gtk_Entry;
+      Ent_Target   : Gtk_Entry;
+      Label        : Gtk_Label;
+      Button       : Gtk_Widget;
+
       use Debugger;
 
    begin
@@ -433,37 +491,54 @@ package body GVD_Module is
          return;
       end if;
 
-      --  ??? Should open a single dialog to set both target and protocol
+      Gtk_New
+        (Dialog,
+         Title  => -"Connect to board",
+         Parent => Get_Main_Window (Kernel),
+         Flags  => Modal or Destroy_With_Parent);
+      Set_Position (Dialog, Win_Pos_Mouse);
+      Set_Default_Size (Dialog, 300, 100);
 
-      declare
-         Target : constant String := Simple_Entry_Dialog
-           (Top, -"Selection", -"Enter target name:",
-            Win_Pos_Mouse, "Debug_Target");
+      Gtk_New (Table, 2, 2, False);
+      Pack_Start (Get_Vbox (Dialog), Table, Expand => False);
 
-      begin
-         if Target = ASCII.NUL & "" then
-            return;
-         end if;
+      Gtk_New (Label, -"Target name:");
+      Set_Alignment (Label, 0.0, 0.0);
+      Attach (Table, Label, 0, 1, 0, 1, Xpadding => 3, Ypadding => 3);
 
-         declare
-            Protocol : constant String := Simple_Entry_Dialog
-              (Top, -"Selection", -"Enter protocol:",
-               Win_Pos_Mouse, "Debug_Protocol");
+      Gtk_New (Ent_Target);
+      Set_Width_Chars (Ent_Target, 20);
+      Attach (Table, Ent_Target, 1, 2, 0, 1);
+      Grab_Focus (Ent_Target);
+      Set_Activates_Default (Ent_Target, True);
 
-         begin
-            if Protocol = ASCII.NUL & "" then
-               return;
-            end if;
+      Gtk_New (Label, -"Protocol:");
+      Set_Alignment (Label, 0.0, 0.0);
+      Attach (Table, Label, 0, 1, 1, 2, Xpadding => 3, Ypadding => 3);
 
-            Page.Descriptor.Remote_Target := new String' (Target);
-            Page.Descriptor.Protocol := new String' (Protocol);
-            Connect_To_Target
-              (Page.Debugger,
-               Page.Descriptor.Remote_Target.all,
-               Page.Descriptor.Protocol.all,
-               GVD.Types.Visible);
-         end;
-      end;
+      Gtk_New (Ent_Protocol);
+      Set_Width_Chars (Ent_Protocol, 20);
+      Attach (Table, Ent_Protocol, 1, 2, 1, 2);
+
+      Button := Add_Button (Dialog, Stock_Ok, Gtk_Response_OK);
+      Button := Add_Button (Dialog, Stock_Cancel, Gtk_Response_Cancel);
+      Set_Default_Response (Dialog, Gtk_Response_OK);
+
+      Show_All (Dialog);
+
+      if Run (Dialog) = Gtk_Response_OK then
+         Page.Descriptor.Remote_Target :=
+           new String' (Get_Text (Ent_Target));
+         Page.Descriptor.Protocol :=
+           new String' (Get_Text (Ent_Protocol));
+         Connect_To_Target
+           (Page.Debugger,
+            Page.Descriptor.Remote_Target.all,
+            Page.Descriptor.Protocol.all,
+            GVD.Types.Visible);
+      end if;
+
+      Destroy (Dialog);
 
    exception
       when E : others =>
@@ -1068,11 +1143,18 @@ package body GVD_Module is
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access)
    is
-      pragma Unreferenced (Widget, Context);
+      Top     : constant Glide_Window :=
+        Glide_Window (Get_Main_Window (Get_Kernel (Context)));
+      Name    : constant String :=
+        Get_Text (Gtk_Label (Get_Child (Gtk_Bin (Widget))));
+      View    : constant String := -"View Memory at &";
 
    begin
-      --  ???
-      null;
+      Show_All (Top.Memory_View);
+      Display_Memory
+        (Top.Memory_View,
+         Name (Name'First + View'Length .. Name'Last));
+      Gdk_Raise (Get_Window (Top.Memory_View));
 
    exception
       when E : others =>
@@ -1400,8 +1482,12 @@ package body GVD_Module is
       Register_Menu (Kernel, Session_Sub, -"Command History", Stock_Index,
                      On_Command_History'Access, Sensitive => False);
 
-      Set_Sensitive (Find_Menu_Item
-        (Kernel, Data_Sub & (-"Call Stack")), False);
+      Mitem := Find_Menu_Item (Kernel, Data_Sub & (-"Call Stack"));
+      Set_Sensitive (Mitem, False);
+      Kernel_Callback.Connect
+        (Mitem, "activate",
+         Kernel_Callback.To_Marshaller (On_Call_Stack'Access),
+         User_Data => Kernel_Handle (Kernel));
 
       Register_Menu (Kernel, Data_Sub, -"Threads", "",
                      On_Threads'Access, Sensitive => False);
