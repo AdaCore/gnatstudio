@@ -236,6 +236,7 @@ package body Projects.Editor is
    procedure Move_From_Common_To_Case_Construct
      (Project            : Project_Node_Id;
       Pkg_Name           : String;
+      Case_Construct     : in out Project_Node_Id;
       Scenario_Variables : Scenario_Variable_Array;
       Attribute_Name     : Types.Name_Id;
       Attribute_Index    : String := "");
@@ -770,6 +771,7 @@ package body Projects.Editor is
         String (Attribute (Attribute'First .. Sep - 1));
       Attribute_Name  : constant String :=
         String (Attribute (Sep + 1 .. Attribute'Last));
+      Case_Construct  : Project_Node_Id;
 
       procedure Add_Or_Replace (Case_Item : Project_Node_Id);
       --  Add or replace the attribute Attribute_Name in the declarative list
@@ -848,8 +850,9 @@ package body Projects.Editor is
          Pkg := Empty_Node;
       end if;
 
+      Case_Construct := Find_Or_Create_Case_Statement (Rename_Prj, Pkg);
       Move_From_Common_To_Case_Construct
-        (Rename_Prj, Pkg_Name, Scenario_Variables, Attribute_N,
+        (Rename_Prj, Pkg_Name, Case_Construct, Scenario_Variables, Attribute_N,
          Attribute_Index);
 
       --  Create the string list for the new values.
@@ -867,7 +870,7 @@ package body Projects.Editor is
       end loop;
 
       For_Each_Scenario_Case_Item
-        (Rename_Prj, Pkg, Scenario_Variables,
+        (Rename_Prj, Pkg, Case_Construct, Scenario_Variables,
          Add_Or_Replace'Unrestricted_Access);
    end Update_Attribute_Value_In_Scenario;
 
@@ -917,6 +920,7 @@ package body Projects.Editor is
         String (Attribute (Sep + 1 .. Attribute'Last));
       Pkg_Name       : constant String :=
         String (Attribute (Attribute'First .. Sep - 1));
+      Case_Construct : Project_Node_Id;
 
       procedure Add_Or_Replace (Case_Item : Project_Node_Id);
       --  Add or replace the attribute Attribute_Name in the declarative list
@@ -964,8 +968,9 @@ package body Projects.Editor is
          Pkg := Empty_Node;
       end if;
 
+      Case_Construct := Find_Or_Create_Case_Statement (Rename_Prj, Pkg);
       Move_From_Common_To_Case_Construct
-        (Rename_Prj, Pkg_Name, Scenario_Variables,
+        (Rename_Prj, Pkg_Name, Case_Construct, Scenario_Variables,
          Attribute_N, Attribute_Index);
 
       --  Create the node for the new value
@@ -975,7 +980,7 @@ package body Projects.Editor is
       Val := Create_Literal_String (End_String);
 
       For_Each_Scenario_Case_Item
-        (Rename_Prj, Pkg, Scenario_Variables,
+        (Rename_Prj, Pkg, Case_Construct, Scenario_Variables,
          Add_Or_Replace'Unrestricted_Access);
    end Update_Attribute_Value_In_Scenario;
 
@@ -1012,6 +1017,7 @@ package body Projects.Editor is
    procedure Move_From_Common_To_Case_Construct
      (Project            : Project_Node_Id;
       Pkg_Name           : String;
+      Case_Construct     : in out Project_Node_Id;
       Scenario_Variables : Scenario_Variable_Array;
       Attribute_Name     : Types.Name_Id;
       Attribute_Index    : String := "")
@@ -1043,9 +1049,11 @@ package body Projects.Editor is
       --  First, create the nested case for the scenario, and memorize each of
       --  them. This will easily allow to keep the order of all the
       --  declarations for this attribute that are currently in the common part
-      For_Each_Scenario_Case_Item (Project, Pkg, Scenario_Variables, null);
+      For_Each_Scenario_Case_Item
+        (Project, Pkg, Case_Construct, Scenario_Variables, null);
       For_Each_Matching_Case_Item
-        (Project, Pkg, All_Case_Items, Add_Item'Unrestricted_Access);
+        (Project, Pkg, Case_Construct,
+         All_Case_Items, Add_Item'Unrestricted_Access);
 
       --  Nothing to do if there are no case items
       if Case_Items_Last > Case_Items'First then
@@ -1175,6 +1183,7 @@ package body Projects.Editor is
       Pkg : Project_Node_Id;
       Pkg_Prj : constant Project_Type :=
         Find_Project_Of_Package (Project, Pkg_Name);
+      Case_Construct : Project_Node_Id;
 
       procedure Delete_Attr (Case_Item : Project_Node_Id);
       --  Remove all definitions for the attribute in the case item
@@ -1204,12 +1213,13 @@ package body Projects.Editor is
          Pkg := Empty_Node;
       end if;
 
+      Case_Construct := Find_Or_Create_Case_Statement (Pkg_Prj.Node, Pkg);
       Move_From_Common_To_Case_Construct
-        (Pkg_Prj.Node, Pkg_Name, Scenario_Variables, Attribute_N,
-         Attribute_Index);
+        (Pkg_Prj.Node, Pkg_Name, Case_Construct, Scenario_Variables,
+         Attribute_N, Attribute_Index);
 
       For_Each_Scenario_Case_Item
-        (Pkg_Prj.Node, Pkg, Scenario_Variables,
+        (Pkg_Prj.Node, Pkg, Case_Construct, Scenario_Variables,
          Delete_Attr'Unrestricted_Access);
 
       Set_Project_Modified (Pkg_Prj, True);
@@ -1820,7 +1830,6 @@ package body Projects.Editor is
       end Callback;
 
    begin
-      Projects.Editor.Normalize.Normalize (Root_Project);
       For_Each_Environment_Variable
         (Root_Project, Ext_Variable_Name, "",
          Callback'Unrestricted_Access);
