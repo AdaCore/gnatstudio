@@ -24,6 +24,7 @@ with HTables;
 with SN; use SN;
 with GNAT.OS_Lib;
 with SN.DB_Structures; use SN.DB_Structures;
+with VFS;
 
 package Src_Info.Type_Utils is
 
@@ -45,9 +46,9 @@ package Src_Info.Type_Utils is
       Is_Const          : Boolean := False;
       Is_Template       : Boolean := False;
       Parent_Point      : Point   := Invalid_Point;
-      Parent_Filename   : GNAT.OS_Lib.String_Access;
+      Parent_Filename   : VFS.Virtual_File := VFS.No_File;
       Ancestor_Point    : Point   := Invalid_Point;
-      Ancestor_Filename : GNAT.OS_Lib.String_Access;
+      Ancestor_Filename : VFS.Virtual_File := VFS.No_File;
       Builtin_Name      : GNAT.OS_Lib.String_Access;
       Is_Typedef        : Boolean := False;
    end record;
