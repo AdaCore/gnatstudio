@@ -41,8 +41,8 @@ package Debugger.Jdb.Java is
    function Is_Simple_Type
      (Lang : access Jdb_Java_Language; Str : String) return Boolean;
 
-   function Keywords (Lang : access Jdb_Java_Language)
-     return GNAT.Regpat.Pattern_Matcher;
+   function Keywords
+     (Lang : access Jdb_Java_Language) return Pattern_Matcher_Access;
 
    function Get_Language_Context
      (Lang : access Jdb_Java_Language) return Language.Language_Context_Access;

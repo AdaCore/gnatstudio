@@ -41,7 +41,7 @@ package Debugger.Gdb.Cpp is
      (Lang : access Gdb_Cpp_Language; Str : String) return Boolean;
 
    function Keywords
-     (Lang : access Gdb_Cpp_Language) return GNAT.Regpat.Pattern_Matcher;
+     (Lang : access Gdb_Cpp_Language) return Pattern_Matcher_Access;
 
    function Get_Language_Context
      (Lang : access Gdb_Cpp_Language) return Language.Language_Context_Access;

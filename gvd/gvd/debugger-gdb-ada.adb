@@ -56,7 +56,7 @@ package body Debugger.Gdb.Ada is
    --------------
 
    function Keywords
-     (Lang : access Gdb_Ada_Language) return GNAT.Regpat.Pattern_Matcher
+     (Lang : access Gdb_Ada_Language) return Pattern_Matcher_Access
    is
       pragma Unreferenced (Lang);
    begin

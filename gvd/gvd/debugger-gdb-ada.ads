@@ -42,7 +42,7 @@ package Debugger.Gdb.Ada is
      (Lang : access Gdb_Ada_Language; Str : String) return Boolean;
 
    function Keywords
-     (Lang : access Gdb_Ada_Language) return GNAT.Regpat.Pattern_Matcher;
+     (Lang : access Gdb_Ada_Language) return Pattern_Matcher_Access;
 
    function Get_Language_Context
      (Lang : access Gdb_Ada_Language) return Language.Language_Context_Access;

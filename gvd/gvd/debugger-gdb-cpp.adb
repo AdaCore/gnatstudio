@@ -88,7 +88,7 @@ package body Debugger.Gdb.Cpp is
    --------------
 
    function Keywords
-     (Lang : access Gdb_Cpp_Language) return GNAT.Regpat.Pattern_Matcher
+     (Lang : access Gdb_Cpp_Language) return Pattern_Matcher_Access
    is
       pragma Unreferenced (Lang);
    begin

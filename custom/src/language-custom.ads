@@ -49,8 +49,8 @@ package Language.Custom is
    function Is_Simple_Type
      (Lang : access Custom_Language; Str : String) return Boolean;
 
-   function Keywords (Lang : access Custom_Language)
-     return GNAT.Regpat.Pattern_Matcher;
+   function Keywords
+     (Lang : access Custom_Language) return Pattern_Matcher_Access;
 
    function Get_Language_Context
      (Lang : access Custom_Language) return Language_Context_Access;
@@ -127,7 +127,6 @@ package Language.Custom is
 private
 
    type Explorer_Categories_Access is access all Explorer_Categories;
-   type Pattern_Matcher_Access is access all GNAT.Regpat.Pattern_Matcher;
    type Project_Field_Array_Access is access all Project_Field_Array;
 
    -----------------------------------------------

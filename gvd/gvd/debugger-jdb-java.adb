@@ -43,7 +43,7 @@ package body Debugger.Jdb.Java is
    --------------
 
    function Keywords
-     (Lang : access Jdb_Java_Language) return GNAT.Regpat.Pattern_Matcher
+     (Lang : access Jdb_Java_Language) return Pattern_Matcher_Access
    is
       pragma Unreferenced (Lang);
    begin
