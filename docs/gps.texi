@@ -3914,6 +3914,9 @@ window called @code{Locations} (initially found in the bottom dock of
 the GPS window). You can interrupt the search at any time by pressing
 the @code{Stop} button: this will stop when the next occurrence is found.
 
+This button is reset to its default value whenever you modify the searched
+pattern or the replacement text. 
+
 @item @code{"Case Sensitive"}
 @cindex case sensitive
 By default, patterns are case insensitive (upper-case letters and
