@@ -58,21 +58,9 @@
 --  In order to register modules dynamically, the following conditions need
 --  to be met:
 --
---  - compile GPS sources with -fPIC when required by the platform
---  - bind GPS with -shared so that the shared libgnat is used: this is
---    needed so that the same run time is used by all modules, and in
---    particular for proper dispatching (access to a global table).
---  - create libkernel.so and build gps with -lkernel by using the special
---    target 'shared' in the glide directory: make -C glide shared
---    As for libgnat, this step is needed so that global variables (e.g.
---    the debug handlers, the module ids) are shared between modules.
---  - create the dynamic module, including elaboration code that will be
---    called by Dynamic_Register_Module, e.g:
---
---    module/obj> gnat bind -E -P../$module -C -L${module}_module_ \
---                  -o ${module}_init.c *.ali
---    > gcc -c -fPIC ${module}_init.c
---    > gcc -shared -o lib${module}_module.so *.o
+--  - compile the kernel as a shared library, using project files.
+--  - create the dynamic module, as a SAL, including elaboration code that
+--    will be called by Dynamic_Register_Module
 --
 --   To load a module during GPS execution, use the command "insmod":
 --
@@ -113,8 +101,8 @@
 --      - Changing what is displayed in tooltips in the editors
 --      - Adding new attributes to projects, and the corresponding pages in the
 --        project creation wizard or the project properties dialog.
---      - Adding new user-modifiable preferences (see glide_preferences.ads)
---      - Adding new supported languages (see language_handlers-glide.ads)
+--      - Adding new user-modifiable preferences (see gps-preferences.ads)
+--      - Adding new supported languages (see language_handlers-gps.ads)
 --        and the corresponding cross-referencing subprograms (same file)
 --      - Each module can register new commands for the shell interpreter
 --      - Adding key handlers, which have priority over other shortcuts
@@ -150,7 +138,7 @@ package GPS.Kernel.Modules is
    -----------
    -- Types --
    -----------
-   --  See also the types defined in glide_kernel.ads
+   --  See also the types defined in gps-kernel.ads
 
    package Context_Callback is new Gtk.Handlers.User_Callback
      (Glib.Object.GObject_Record, Selection_Context_Access);

@@ -53,7 +53,7 @@ package GPS.Kernel is
 
    type Kernel_Handle_Record is new Glib.Object.GObject_Record with private;
    type Kernel_Handle is access all Kernel_Handle_Record'Class;
-   --  A kernel handle used to share information throughout Glide.
+   --  A kernel handle used to share information throughout GPS.
 
    package Kernel_Desktop is new Gtkada.MDI.Desktop (Kernel_Handle);
 
@@ -61,7 +61,7 @@ package GPS.Kernel is
      (Handle      : out Kernel_Handle;
       Main_Window : Gtk.Window.Gtk_Window;
       Home_Dir    : String);
-   --  Create a new Glide kernel.
+   --  Create a new GPS kernel.
    --  By default, it isn't associated with any project, nor any source editor.
    --  Home_Dir is the directory under which config files can be loaded/saved.
 
@@ -240,7 +240,7 @@ package GPS.Kernel is
    type Module_ID_Information (<>) is private;
    type Module_ID_Record is tagged private;
    type Module_ID is access all Module_ID_Record'Class;
-   --  Module identifier. Each of the registered module in Glide has such a
+   --  Module identifier. Each of the registered module in GPS has such a
    --  identifier, that contains its name and all the callbacks associated with
    --  the module.
 
@@ -270,7 +270,7 @@ package GPS.Kernel is
    type Selection_Context_Access is access all Selection_Context'Class;
    --  This type contains all the information about the selection in any
    --  module. Note that this is a tagged type, so that it can easily be
-   --  extended for modules external to Glide
+   --  extended for modules external to GPS.
 
    function To_Selection_Context_Access is new
      Ada.Unchecked_Conversion (System.Address, Selection_Context_Access);
@@ -514,7 +514,7 @@ package GPS.Kernel is
    -----------
    -- Hooks --
    -----------
-   --  See the package GlidE_Kernel.Hooks for more subprograms applying to
+   --  See the package GPS.Kernel.Hooks for more subprograms applying to
    --  hooks.
 
    type Hook_Function_Record is abstract tagged private;
@@ -811,7 +811,7 @@ private
       --  The list of all the modules that have been registered in this kernel.
 
       Main_Window : Gtk.Window.Gtk_Window;
-      --  The main glide window
+      --  The main GPS window
 
       Tooltips : Gtk.Tooltips.Gtk_Tooltips;
       --  The widget used to register all tooltips
@@ -841,7 +841,7 @@ private
       --  management reasons.
 
       Home_Dir : GNAT.OS_Lib.String_Access;
-      --  The home directory (e.g ~/.glide).
+      --  The home directory (e.g ~/.gps).
 
       Logs_Mapper : Basic_Mapper.File_Mapper_Access;
       --  Mapping between files and logs.

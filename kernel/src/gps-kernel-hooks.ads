@@ -58,7 +58,7 @@
 --    - Calls __run_hook__<hook_name> ("hook_name", arg1, arg2)
 --    - Which is the same as __run_hook__<hook_type> ("hook_name", arg1, arg2)
 --    - Which calls at the Ada level:
---      Glide_kernel.Hooks.Run_Hook ("hook_name", Hooks_Data'(Arg1, Arg2));
+--      GPS.Kernel.Hooks.Run_Hook ("hook_name", Hooks_Data'(Arg1, Arg2));
 --
 --  The reason we need the __run_hook__<hook_type> step is so that the user
 --  can also create new hooks for an existing type directly from the scripting

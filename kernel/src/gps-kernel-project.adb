@@ -185,7 +185,7 @@ package body GPS.Kernel.Project is
       No_Save : Boolean := False)
    is
       procedure Report_Error (S : String);
-      --  Output error messages from the project parser to the glide console.
+      --  Output error messages from the project parser to the console.
 
       procedure Report_Error (S : String) is
       begin

@@ -40,7 +40,6 @@ with Basic_Types;
 with GVD.Types;
 with GVD.Histories;
 pragma Elaborate_All (GVD.Histories);
-with Language_Handlers;
 with Ada.Unchecked_Deallocation;
 
 with GPS.Kernel;
@@ -127,9 +126,6 @@ package GPS.Main_Window is
       Main_Accel_Group    : Gtk_Accel_Group;
       --  The default accelerators for the GVD window.
 
-      Lang_Handler        : Language_Handlers.Language_Handler;
-      --  The type used to convert from a filename to a language
-
       Program_Args        : String_Access;
       --  If non null, name of program to be debugged, and additional
       --  arguments if needed, e.g. "/path/to/hello -h"
@@ -145,9 +141,9 @@ package GPS.Main_Window is
    --  Create a new main window.
    --  Key is a unique string identifying main_window.
    --  Menu_Items is used to create the default menu bar.
-   --  Home_Dir is the home directory (e.g ~/.glide) under which configuration
+   --  Home_Dir is the home directory (e.g ~/.gps) under which configuration
    --  files will be saved.
-   --  Prefix_Directory is the prefix where Glide is installed (e.g /opt/gnu).
+   --  Prefix_Directory is the prefix where GPS is installed (e.g /opt/gps).
 
    procedure Initialize
      (Main_Window      : access GPS_Window_Record'Class;

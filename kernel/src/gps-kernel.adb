@@ -98,7 +98,7 @@ with Ada.Unchecked_Deallocation;
 
 package body GPS.Kernel is
 
-   Me : constant Debug_Handle := Create ("glide_kernel");
+   Me : constant Debug_Handle := Create ("gps_kernel");
 
    History_Max_Length : constant Positive := 10;
    --  <preferences> Maximum number of entries to store in each history
@@ -187,14 +187,10 @@ package body GPS.Kernel is
       Handle.Main_Window  := Main_Window;
       Handle.Home_Dir     := new String'(Dir);
 
-      --  Create the language handler. It is also set for the gvd main window,
-      --  so that the embedded gvd uses the same mechanism as the rest of glide
-      --  to guess the language for a file name.
+      --  Create the language handler.
 
       Gtk_New (Handler);
       Handle.Lang_Handler := Language_Handler (Handler);
-      GPS_Window (Handle.Main_Window).Lang_Handler :=
-        Handle.Lang_Handler;
 
       Handle.Registry := new Project_Registry;
       Load_Default_Project (Handle.Registry.all, Get_Current_Dir);

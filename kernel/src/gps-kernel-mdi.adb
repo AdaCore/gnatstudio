@@ -159,7 +159,7 @@ package body GPS.Kernel.MDI is
       --  that they are the only MDI childs that do so.
       --  ??? We might improve a little by checking the Tag of the child
       --  against that of the source editor module. The ID for that module
-      --  needs to be moved to glide_kernel.ads.
+      --  needs to be moved to gps.kernel.ads.
 
       --  First, try to find the editor using the normalized name of File.
       Child := Find_MDI_Child_By_Name
