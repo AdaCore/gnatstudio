@@ -103,7 +103,9 @@ package body Help_Module is
    --  Handler for the title_changed signal
 
    function Load_Desktop
-     (Node : Node_Ptr; User : Kernel_Handle) return Gtk_Widget;
+     (MDI  : MDI_Window;
+      Node : Node_Ptr;
+      User : Kernel_Handle) return MDI_Child;
    function Save_Desktop
      (Widget : access Gtk.Widget.Gtk_Widget_Record'Class)
       return Node_Ptr;
@@ -668,7 +670,9 @@ package body Help_Module is
    ------------------
 
    function Load_Desktop
-     (Node : Node_Ptr; User : Kernel_Handle) return Gtk_Widget
+     (MDI  : MDI_Window;
+      Node : Node_Ptr;
+      User : Kernel_Handle) return MDI_Child
    is
       Editor : Help_Browser;
       File   : Glib.String_Ptr;
@@ -679,7 +683,7 @@ package body Help_Module is
             Editor := Create_Html_Editor (User, File.all);
          end if;
 
-         return Gtk_Widget (Editor);
+         return Put (MDI, Gtk_Widget (Editor));
       end if;
       return null;
    end Load_Desktop;

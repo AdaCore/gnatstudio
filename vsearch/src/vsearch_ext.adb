@@ -160,7 +160,9 @@ package body Vsearch_Ext is
    --  Return a valid vsearch widget, creating one if necessary.
 
    function Load_Desktop
-     (Node : Node_Ptr; User : Kernel_Handle) return Gtk_Widget;
+     (MDI  : MDI_Window;
+      Node : Node_Ptr;
+      User : Kernel_Handle) return MDI_Child;
    --  Restore the status of the explorer from a saved XML tree.
 
    function Save_Desktop
@@ -235,15 +237,18 @@ package body Vsearch_Ext is
    ------------------
 
    function Load_Desktop
-     (Node : Node_Ptr; User : Kernel_Handle) return Gtk_Widget
+     (MDI  : MDI_Window;
+      Node : Node_Ptr;
+      User : Kernel_Handle) return MDI_Child
    is
       Extended : Vsearch_Extended;
+      pragma Unreferenced (MDI);
    begin
       if Node.Tag.all = "Vsearch" then
          Extended := Get_Or_Create_Vsearch
            (User, Raise_Widget => False, Float_Widget => False);
 
-         return Gtk_Widget (Find_MDI_Child (Get_MDI (User), Extended));
+         return Find_MDI_Child (Get_MDI (User), Extended);
       end if;
 
       return null;

@@ -356,7 +356,9 @@ package body Project_Explorers is
    --  Create the Glide_Kernel.Get_Current_Context.
 
    function Load_Desktop
-     (Node : Node_Ptr; User : Kernel_Handle) return Gtk_Widget;
+     (MDI  : MDI_Window;
+      Node : Node_Ptr;
+      User : Kernel_Handle) return MDI_Child;
    --  Restore the status of the explorer from a saved XML tree.
 
    function Save_Desktop
@@ -588,14 +590,16 @@ package body Project_Explorers is
    ------------------
 
    function Load_Desktop
-     (Node : Node_Ptr; User : Kernel_Handle) return Gtk_Widget
+     (MDI  : MDI_Window;
+      Node : Node_Ptr;
+      User : Kernel_Handle) return MDI_Child
    is
       Explorer : Project_Explorer;
    begin
       if Node.Tag.all = "Project_Explorer_Project" then
          Gtk_New (Explorer, User);
          Refresh (User, GObject (Explorer));
-         return Gtk_Widget (Explorer);
+         return Put (MDI, Explorer);
       end if;
 
       return null;

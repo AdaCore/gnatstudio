@@ -208,7 +208,9 @@ package body Src_Editor_Module is
    --  Emit the File_Edited signal.
 
    function Load_Desktop
-     (Node : Node_Ptr; User : Kernel_Handle) return Gtk_Widget;
+     (MDI  : MDI_Window;
+      Node : Node_Ptr;
+      User : Kernel_Handle) return MDI_Child;
    function Save_Desktop
      (Widget : access Gtk.Widget.Gtk_Widget_Record'Class)
       return Node_Ptr;
@@ -1348,7 +1350,9 @@ package body Src_Editor_Module is
    ------------------
 
    function Load_Desktop
-     (Node : Node_Ptr; User : Kernel_Handle) return Gtk_Widget
+     (MDI  : MDI_Window;
+      Node : Node_Ptr;
+      User : Kernel_Handle) return MDI_Child
    is
       Src    : Source_Box := null;
       File   : Glib.String_Ptr;
@@ -1394,7 +1398,8 @@ package body Src_Editor_Module is
                  (File_Edit_Callback'Access,
                   (Src.Editor, Line, Column, 0, null));
 
-               return Gtk_Widget (Src);
+               return Put (MDI, Src,
+                           Focus_Widget => Gtk_Widget (Get_View (Src.Editor)));
             end if;
          end if;
       end if;

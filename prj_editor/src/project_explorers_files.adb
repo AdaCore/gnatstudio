@@ -170,7 +170,9 @@ package body Project_Explorers_Files is
    --  Refresh the contents of the explorer.
 
    function Load_Desktop
-     (Node : Node_Ptr; User : Kernel_Handle) return Gtk_Widget;
+     (MDI  : MDI_Window;
+      Node : Node_Ptr;
+      User : Kernel_Handle) return MDI_Child;
    --  Restore the status of the explorer from a saved XML tree.
 
    function Save_Desktop
@@ -1091,13 +1093,15 @@ package body Project_Explorers_Files is
    ------------------
 
    function Load_Desktop
-     (Node : Node_Ptr; User : Kernel_Handle) return Gtk_Widget
+     (MDI  : MDI_Window;
+      Node : Node_Ptr;
+      User : Kernel_Handle) return MDI_Child
    is
       Files    : Project_Explorer_Files;
    begin
       if Node.Tag.all = "Project_Explorer_Files" then
          Gtk_New (Files, User);
-         return Gtk_Widget (Files);
+         return Put (MDI, Gtk_Widget (Files));
       end if;
 
       return null;

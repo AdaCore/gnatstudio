@@ -285,7 +285,9 @@ package body Browsers.Entities is
    --  Add the parent package for Entity at the end of Attr_Layout
 
    function Load_Desktop
-     (Node : Node_Ptr; User : Kernel_Handle) return Gtk_Widget;
+     (MDI  : MDI_Window;
+      Node : Node_Ptr;
+      User : Kernel_Handle) return MDI_Child;
    function Save_Desktop
      (Widget : access Gtk.Widget.Gtk_Widget_Record'Class)
       return Node_Ptr;
@@ -1383,10 +1385,12 @@ package body Browsers.Entities is
    ------------------
 
    function Load_Desktop
-     (Node : Node_Ptr; User : Kernel_Handle) return Gtk_Widget is
+     (MDI  : MDI_Window;
+      Node : Node_Ptr;
+      User : Kernel_Handle) return MDI_Child is
    begin
       if Node.Tag.all = "Entities_Browser" then
-         return Gtk_Widget (Open_Type_Browser (User));
+         return Put (MDI, Gtk_Widget (Open_Type_Browser (User)));
       end if;
 
       return null;

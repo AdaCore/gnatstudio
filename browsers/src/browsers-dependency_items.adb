@@ -258,7 +258,9 @@ package body Browsers.Dependency_Items is
    --  Return the name of the project that contains Item.
 
    function Load_Desktop
-     (Node : Node_Ptr; User : Kernel_Handle) return Gtk_Widget;
+     (MDI  : MDI_Window;
+      Node : Node_Ptr;
+      User : Kernel_Handle) return MDI_Child;
    function Save_Desktop
      (Widget : access Gtk.Widget.Gtk_Widget_Record'Class)
       return Node_Ptr;
@@ -1190,10 +1192,12 @@ package body Browsers.Dependency_Items is
    ------------------
 
    function Load_Desktop
-     (Node : Node_Ptr; User : Kernel_Handle) return Gtk_Widget is
+     (MDI  : MDI_Window;
+      Node : Node_Ptr;
+      User : Kernel_Handle) return MDI_Child is
    begin
       if Node.Tag.all = "Dependency_Browser" then
-         return Gtk_Widget (Create_Dependency_Browser (User));
+         return Put (MDI, Gtk_Widget (Create_Dependency_Browser (User)));
       end if;
 
       return null;

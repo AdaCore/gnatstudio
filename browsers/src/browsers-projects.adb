@@ -140,7 +140,9 @@ package body Browsers.Projects is
    --  Return the project associated with Item
 
    function Load_Desktop
-     (Node : Node_Ptr; User : Kernel_Handle) return Gtk_Widget;
+     (MDI  : MDI_Window;
+      Node : Node_Ptr;
+      User : Kernel_Handle) return MDI_Child;
    function Save_Desktop
      (Widget : access Gtk.Widget.Gtk_Widget_Record'Class) return Node_Ptr;
    --  Support functions for the MDI
@@ -671,10 +673,12 @@ package body Browsers.Projects is
    ------------------
 
    function Load_Desktop
-     (Node : Node_Ptr; User : Kernel_Handle) return Gtk_Widget is
+     (MDI  : MDI_Window;
+      Node : Node_Ptr;
+      User : Kernel_Handle) return MDI_Child is
    begin
       if Node.Tag.all = "Project_Browser" then
-         return Gtk_Widget (Create_Project_Browser (User));
+         return Put (MDI, Gtk_Widget (Create_Project_Browser (User)));
       end if;
 
       return null;

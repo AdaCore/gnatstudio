@@ -287,7 +287,9 @@ package body Browsers.Call_Graph is
    --  context (if any)
 
    function Load_Desktop
-     (Node : Node_Ptr; User : Kernel_Handle) return Gtk_Widget;
+     (MDI  : MDI_Window;
+      Node : Node_Ptr;
+      User : Kernel_Handle) return MDI_Child;
    function Save_Desktop
      (Widget : access Gtk.Widget.Gtk_Widget_Record'Class)
       return Node_Ptr;
@@ -1591,10 +1593,12 @@ package body Browsers.Call_Graph is
    ------------------
 
    function Load_Desktop
-     (Node : Node_Ptr; User : Kernel_Handle) return Gtk_Widget is
+     (MDI  : MDI_Window;
+      Node : Node_Ptr;
+      User : Kernel_Handle) return MDI_Child is
    begin
       if Node.Tag.all = "Call_Graph" then
-         return Gtk_Widget (Create_Call_Graph_Browser (User));
+         return Put (MDI, Gtk_Widget (Create_Call_Graph_Browser (User)));
       end if;
 
       return null;
