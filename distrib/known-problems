@@ -1,16 +1,27 @@
 Known Problems fixed in GPS 1.2.0
 
-- C105-001, C127-015, C202-001 Mismatch between files and VCS logs.
-  Problem:    In some cases, the VCS log files do not correspond to the right
-              files, or GPS cannot read the mapping file, and therefore
-              cannot start.
-  Workaround: Remove all the files in the log_files subdirectory in the GPS
-              directory.
+- Crash when searching in files containing CR characters
+  Problem:    When searching in a file containing CR with no corresponding
+              LF characters, GPS sometimes crashes or behaves in an unreliable
+              way.
+  Workaround: Save the file as Unix or Windows format.
 
 - Last line of file not saved properly
   Problem:    In some cases when saving a file, the last character is
               truncated.
   Workaround: Add an extra blank line at the end of the file before saving it.
+
+- C130-023 Crash when opening multiple new files
+  Problem:    When opening new files using the menu File->New or the
+              toolbar icon, opening multiple new files when the line numbers
+              are displayed causes GPS to crash.
+  Workaround: In the preferences dialog, disable the "Display line numbers"
+              preference in the Editor section.
+
+- C117-005 Crash when adding lines in new file
+  Problem:    When editing a new file while the line numbers are displayed,
+              adding a few lines will cause GPS to crash.
+  Workaround: Disable the "Display line numbers" preference.
 
 - C116-002 Current line highlighting sometimes highlights multiple lines.
   Problem:    In some cases, for example when Reverting a file from the disk,
@@ -19,17 +30,12 @@ Known Problems fixed in GPS 1.2.0
   Workaround: Scroll the editor or move the cursor to remove the extra
               highlighting.
 
-- C117-005 Crash when adding lines in new file
-  Problem:    When editing a new file while the line numbers are displayed,
-              adding a few lines will cause GPS to crash.
-  Workaround: Disable the "Display line numbers" preference.
-
-- C130-023 Crash when opening multiple new files
-  Problem:    When opening new files using the menu File->New or the
-              toolbar icon, opening multiple new files when the line numbers
-              are displayed causes GPS to crash.
-  Workaround: In the preferences dialog, disable the "Display line numbers"
-              preference in the Editor section.
+- C105-001 Mismatch between files and VCS logs.
+  Problem:    In some cases, the VCS log files do not correspond to the right
+              files, or GPS cannot read the mapping file, and therefore
+              cannot start.
+  Workaround: Remove all the files in the log_files subdirectory in the GPS
+              directory.
 
 - Bad handling of item icon when saving new file
   Problem:    After saving an untitled file, the icon corresponding to the
