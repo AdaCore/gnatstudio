@@ -602,7 +602,7 @@ package body Browsers.Canvas is
       if Context = null then
          Context := new Selection_Context;
 
-         Gtk_New (Mitem, Label => -"Refresh");
+         Gtk_New (Mitem, Label => -"Refresh Layout");
          Append (Menu, Mitem);
          Widget_Callback.Object_Connect
            (Mitem, "activate",
