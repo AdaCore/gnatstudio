@@ -19,6 +19,7 @@
 -----------------------------------------------------------------------
 
 with Glib.Xml_Int;              use Glib.Xml_Int;
+with XML_Parsers;
 with Gtkada.Dialogs;            use Gtkada.Dialogs;
 with Gtk.Enums;                 use Gtk.Enums;
 with Traces;                    use Traces;
@@ -93,26 +94,20 @@ package body Glide_Kernel.Custom is
 
             declare
                F : constant String := Norm_Dir & File (1 .. Last);
+               Error : String_Access;
             begin
                if File_Extension (F) = XML_Extension
                  and then Is_Regular_File (F)
                then
                   Trace (Me, "Loading " & F);
 
-                  begin
-                     File_Node := Parse (F);
-                  exception
-                     when E : others =>
-                        Trace (Me, "Could not parse XML file: " & F);
-                        Insert (Kernel, -"Could not parse XML file: " & F);
-                        Trace (Exception_Handle, Exception_Information (E));
-                        File_Node := null;
-                  end;
+                  XML_Parsers.Parse (F, File_Node, Error);
 
                   if File_Node = null then
-                     Console.Insert
-                       (Kernel, -"Syntax error in custom file " & F,
-                        Mode => Error);
+                     Trace (Me, "Could not parse XML file: " & F);
+                     Insert (Kernel, Error.all,
+                             Mode => Glide_Kernel.Console.Error);
+                     Free (Error);
                   else
                      Execute_Customization_String
                        (Kernel, Create (F), File_Node.Child, Level);
@@ -124,7 +119,7 @@ package body Glide_Kernel.Custom is
                when Assert_Failure =>
                   Console.Insert
                     (Kernel, -"Could not parse custom file " & F,
-                     Mode => Error);
+                     Mode => Glide_Kernel.Console.Error);
             end;
          end loop;
 

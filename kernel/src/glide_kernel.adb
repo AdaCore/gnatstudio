@@ -20,6 +20,7 @@
 
 with Glib;                        use Glib;
 with Glib.Xml_Int;                use Glib.Xml_Int;
+with XML_Parsers;
 with Glib.Object;                 use Glib.Object;
 with Glib.Properties;             use Glib.Properties;
 with Glib.Values;                 use Glib.Values;
@@ -56,6 +57,7 @@ with File_Utils;                  use File_Utils;
 with Glide_Intl;                  use Glide_Intl;
 with Glide_Main_Window;           use Glide_Main_Window;
 with Default_Preferences;         use Default_Preferences;
+with Glide_Kernel.Console;        use Glide_Kernel.Console;
 with Glide_Kernel.Custom;         use Glide_Kernel.Custom;
 with Glide_Kernel.Contexts;       use Glide_Kernel.Contexts;
 with Glide_Kernel.Hooks;          use Glide_Kernel.Hooks;
@@ -931,6 +933,7 @@ package body Glide_Kernel is
       Old          : Node_Ptr;
       State        : Gdk_Window_State;
       X, Y         : Gint;
+      Err          : String_Access;
 
    begin
       --  Read the previous contents of the file, to save the desktops for
@@ -939,7 +942,11 @@ package body Glide_Kernel is
       Trace (Me, "saving desktop file " & File_Name);
 
       if Is_Regular_File (File_Name) then
-         Old := Parse (File_Name);
+         XML_Parsers.Parse (File_Name, Old, Err);
+         if Err /= null then
+            Insert (Handle, Err.all, Mode => Error);
+            Free (Err);
+         end if;
       end if;
 
       Create (File, Mode => Out_File, Name => File_Name);
@@ -1057,6 +1064,7 @@ package body Glide_Kernel is
         Glide_Window (Handle.Main_Window);
       Desktop_Loaded       : constant Boolean :=
         Main_Window.Desktop_Loaded;
+      Err                  : String_Access;
 
    begin
       Main_Window.Desktop_Loaded := True;
@@ -1064,9 +1072,12 @@ package body Glide_Kernel is
       if Is_Regular_File (File) then
          Trace (Me, "loading desktop file " & File
                 & " Project=" & Project_Name);
-         Node := Parse (File);
+         XML_Parsers.Parse (File, Node, Err);
 
-         if Node /= null then
+         if Node = null then
+            Insert (Handle, Err.all, Mode => Error);
+            Free (Err);
+         else
             Child := Node.Child;
          end if;
 
