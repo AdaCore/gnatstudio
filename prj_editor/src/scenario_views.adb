@@ -37,10 +37,14 @@ with Gtk.Handlers;    use Gtk.Handlers;
 with Gtk.Widget;      use Gtk.Widget;
 with Gtkada.Combo;    use Gtkada.Combo;
 with Gtkada.Dialogs;  use Gtkada.Dialogs;
+with Glib.Xml_Int;    use Glib.Xml_Int;
+with Gtkada.MDI;      use Gtkada.MDI;
 
+with Ada.Exceptions;       use Ada.Exceptions;
 with Projects.Editor;      use Projects, Projects.Editor;
 with GPS.Kernel;         use GPS.Kernel;
 with GPS.Kernel.MDI;     use GPS.Kernel.MDI;
+with GPS.Kernel.Modules; use GPS.Kernel.Modules;
 with GPS.Kernel.Hooks;   use GPS.Kernel.Hooks;
 with GPS.Kernel.Project; use GPS.Kernel.Project;
 with Projects.Registry;  use Projects.Registry;
@@ -94,6 +98,22 @@ package body Scenario_Views is
    --  Callback when some aspect of the project has changed, to refresh the
    --  view.
 
+   function Save_Desktop
+     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
+      User   : Kernel_Handle)
+      return Node_Ptr;
+   function Load_Desktop
+     (MDI  : MDI_Window;
+      Node : Node_Ptr;
+      User : Kernel_Handle) return MDI_Child;
+   --  Handle desktop loading and saving
+
+   procedure On_Open_View
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   --  Open the scenario view if it isn't already open
+
+   Scenario_Module_Id : Module_ID;
+
    -----------
    -- Setup --
    -----------
@@ -124,23 +144,26 @@ package body Scenario_Views is
      (View   : access Scenario_View_Record'Class;
       Kernel : access Kernel_Handle_Record'Class)
    is
-      Hook : constant Refresh_Hook := new Refresh_Hook_Record'
-        (Hook_No_Args_Record with View => Scenario_View (View));
+      Hook : Refresh_Hook;
    begin
       View.Kernel := Kernel_Handle (Kernel);
-      Gtk.Table.Initialize
-        (View,
+      Gtk.Box.Initialize_Vbox (View, Homogeneous => False);
+      Gtk_New
+        (View.Table,
          Rows        => 1,
          Columns     => 4,
          Homogeneous => False);
-      Set_Col_Spacing (View, 0, 0);
-      Set_Col_Spacing (View, 1, 10);
+      Pack_Start (View, View.Table, Expand => False);
+      Set_Col_Spacing (View.Table, 0, 0);
+      Set_Col_Spacing (View.Table, 1, 1);
 
       --  We do not need to connect to "project_changed", since it is always
       --  emitted at the same time as a "project_view_changed", and we do the
       --  same thing in both cases.
+      Hook := new Refresh_Hook_Record'
+           (Hook_No_Args_Record with View => Scenario_View (View));
       Add_Hook
-        (Kernel, Project_View_Changed_Hook, Hook, Watch => GObject (View));
+        (Kernel, Project_View_Changed_Hook,    Hook, Watch => GObject (View));
       Add_Hook (Kernel, Variable_Changed_Hook, Hook, Watch => GObject (View));
 
       --  Update the viewer with the current project
@@ -278,7 +301,7 @@ package body Scenario_Views is
 
       --  Remove all children, except the edit button.
 
-      Child := Children (V);
+      Child := Children (V.Table);
       Tmp := Widget_List.First (Child);
 
       while Tmp /= Widget_List.Null_List loop
@@ -290,15 +313,16 @@ package body Scenario_Views is
 
       --  No project view => Clean up the scenario viewer
       if Get_Project (Kernel) = No_Project then
-         Resize (V, Rows => 1, Columns => 4);
-         Hide_All (V);
+         Resize (V.Table, Rows => 1, Columns => 4);
+         Hide_All (V.Table);
 
       else
          declare
             Scenar_Var : constant Scenario_Variable_Array :=
               Scenario_Variables (Kernel);
          begin
-            Resize (V, Rows => Guint (Scenar_Var'Length) + 1, Columns => 4);
+            Resize (V.Table,
+                    Rows => Guint (Scenar_Var'Length) + 1, Columns => 4);
 
             for J in Scenar_Var'Range loop
                Row := Guint (J - Scenar_Var'First) + 1;
@@ -307,7 +331,8 @@ package body Scenario_Views is
                Gtk_New (Pix, Stock_Properties, Icon_Size_Small_Toolbar);
                Add (Button, Pix);
                Attach
-                 (V, Button, 0, 1, Row, Row + 1, Xoptions => 0, Yoptions => 0);
+                 (V.Table, Button, 0, 1,
+                  Row, Row + 1, Xoptions => 0, Yoptions => 0);
                View_Callback.Connect
                  (Button, "clicked", Edit_Variable'Access,
                   (View => V, Var => Scenar_Var (J)));
@@ -318,7 +343,8 @@ package body Scenario_Views is
                Gtk_New (Pix, Stock_Delete, Icon_Size_Small_Toolbar);
                Add (Button, Pix);
                Attach
-                 (V, Button, 1, 2, Row, Row + 1, Xoptions => 0, Yoptions => 0);
+                 (V.Table, Button, 1, 2,
+                  Row, Row + 1, Xoptions => 0, Yoptions => 0);
                Set_Tip
                  (Get_Tooltips (V.Kernel), Button, -"Delete variable");
                View_Callback.Connect
@@ -328,13 +354,13 @@ package body Scenario_Views is
                Gtk_New (Label, Locale_To_UTF8
                         (External_Reference_Of (Scenar_Var (J))));
                Set_Alignment (Label, 0.0, 0.5);
-               Attach (V, Label, 2, 3, Row, Row + 1, Xoptions => Fill,
+               Attach (V.Table, Label, 2, 3, Row, Row + 1, Xoptions => Fill,
                        Xpadding => 5);
 
                Gtk_New (Combo);
                Set_Editable (Get_Entry (Combo), False);
                Set_Width_Chars (Get_Entry (Combo), 0);
-               Attach (V, Combo, 3, 4, Row, Row + 1);
+               Attach (V.Table, Combo, 3, 4, Row, Row + 1);
 
                Add_Possible_Values (Kernel, Get_List (Combo), Scenar_Var (J));
                Set_Text (Get_Entry (Combo), Value_Of (Scenar_Var (J)));
@@ -347,5 +373,92 @@ package body Scenario_Views is
          Show_All (V);
       end if;
    end Execute;
+
+   ------------------
+   -- On_Open_View --
+   ------------------
+
+   procedure On_Open_View
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   is
+      pragma Unreferenced (Widget);
+      Scenario : Scenario_View;
+      Child    : MDI_Child;
+   begin
+      Child := Find_MDI_Child_By_Tag
+        (Get_MDI (Kernel), Scenario_View_Record'Tag);
+      if Child = null then
+         Gtk_New (Scenario, Kernel);
+         Child := Put
+           (Kernel, Scenario,
+            Default_Width => 215,
+            Position      => Position_Left,
+            Module        => Scenario_Module_Id);
+         Set_Title (Child, -"Scenario View", -"Scenario View");
+      end if;
+
+      Set_Focus_Child (Child);
+      Raise_Child (Child);
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
+   end On_Open_View;
+
+   ------------------
+   -- Load_Desktop --
+   ------------------
+
+   function Load_Desktop
+     (MDI  : MDI_Window;
+      Node : Node_Ptr;
+      User : Kernel_Handle) return MDI_Child is
+   begin
+      if Node.Tag.all = "Scenario_View" then
+         On_Open_View (MDI, User);
+         return Find_MDI_Child_By_Tag (MDI, Scenario_View_Record'Tag);
+      end if;
+      return null;
+   end Load_Desktop;
+
+   ------------------
+   -- Save_Desktop --
+   ------------------
+
+   function Save_Desktop
+     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
+      User   : Kernel_Handle)
+      return Node_Ptr
+   is
+      pragma Unreferenced (User);
+      N : Node_Ptr;
+   begin
+      if Widget.all in Scenario_View_Record'Class then
+         N := new Node;
+         N.Tag := new String'("Scenario_View");
+         return N;
+      end if;
+
+      return null;
+   end Save_Desktop;
+
+   ---------------------
+   -- Register_Module --
+   ---------------------
+
+   procedure Register_Module (Kernel : access Kernel_Handle_Record'Class) is
+   begin
+      Register_Module
+        (Module      => Scenario_Module_Id,
+         Kernel      => Kernel,
+         Module_Name => "Scenario_View");
+      GPS.Kernel.Kernel_Desktop.Register_Desktop_Functions
+        (Save_Desktop'Access, Load_Desktop'Access);
+
+      Register_Menu
+        (Kernel, '/' & (-"Tools"),
+         -"_Scenario View", "", On_Open_View'Access);
+   end Register_Module;
 
 end Scenario_Views;

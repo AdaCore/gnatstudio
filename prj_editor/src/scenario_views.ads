@@ -27,11 +27,16 @@
 --  </description>
 
 with Gtk.Table;
+with Gtk.Box;
 with GPS.Kernel;
 
 package Scenario_Views is
 
-   type Scenario_View_Record is new Gtk.Table.Gtk_Table_Record with private;
+   procedure Register_Module
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
+   --  Initialize the module
+
+   type Scenario_View_Record is new Gtk.Box.Gtk_Box_Record with private;
    type Scenario_View is access all Scenario_View_Record'Class;
 
    procedure Gtk_New
@@ -47,7 +52,8 @@ package Scenario_Views is
    --  Internal function for creating new widgets
 
 private
-   type Scenario_View_Record is new Gtk.Table.Gtk_Table_Record with record
+   type Scenario_View_Record is new Gtk.Box.Gtk_Box_Record with record
+      Table         : Gtk.Table.Gtk_Table;
       Kernel        : GPS.Kernel.Kernel_Handle;
       Combo_Is_Open : Boolean := False;
       --  Flag temporarily set to True when a user is modifying the value of
