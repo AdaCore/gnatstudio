@@ -185,6 +185,8 @@ package body Glide_Kernel.Project is
          return;
       end if;
 
+      Push_State (Kernel_Handle (Kernel), Busy);
+
       Load_Default_Project
         (Kernel.Registry.all,
          Normalize_Pathname (Directory, Resolve_Links => False));
@@ -230,6 +232,8 @@ package body Glide_Kernel.Project is
          Close_All_Children (Kernel);
          Had_Project_Desktop := Load_Desktop (Kernel);
       end if;
+
+      Pop_State (Kernel_Handle (Kernel));
    end Load_Default_Project;
 
    ------------------
@@ -268,6 +272,7 @@ package body Glide_Kernel.Project is
       end if;
 
       if Is_Regular_File (Project) then
+         Push_State (Kernel_Handle (Kernel), Busy);
          Change_Dir (Dir_Name (Project));
 
          --  When loading a new project, we need to reset the cache containing
@@ -280,6 +285,7 @@ package body Glide_Kernel.Project is
                New_Project_Loaded => New_Project_Loaded);
 
          if not New_Project_Loaded then
+            Pop_State (Kernel_Handle (Kernel));
             return;
          end if;
 
@@ -291,6 +297,8 @@ package body Glide_Kernel.Project is
          if not Same_Project then
             Had_Project_Desktop := Load_Desktop (Kernel);
          end if;
+
+         Pop_State (Kernel_Handle (Kernel));
 
       elsif not Same_Project then
          Load_Default_Project (Kernel, Directory => Get_Current_Dir);
@@ -323,9 +331,11 @@ package body Glide_Kernel.Project is
       end Report_Error;
 
    begin
+      Push_State (Kernel_Handle (Handle), Busy);
       Recompute_View (Handle.Registry.all, Report_Error'Unrestricted_Access);
       Compute_Predefined_Paths (Handle);
       Run_Hook (Handle, Project_View_Changed_Hook);
+      Pop_State (Kernel_Handle (Handle));
    end Recompute_View;
 
    ---------------------------------
