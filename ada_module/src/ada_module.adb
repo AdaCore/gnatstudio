@@ -35,7 +35,6 @@ with Naming_Editors;           use Naming_Editors;
 with Ada_Naming_Editors;       use Ada_Naming_Editors;
 with Projects.Registry;        use Projects.Registry;
 with Case_Handling;            use Case_Handling;
-with Traces;                   use Traces;
 
 package body Ada_Module is
 
@@ -215,10 +214,8 @@ package body Ada_Module is
             Nick    => -"Casing policy",
             Blurb   => -"Keywords and Identifiers casing policy",
             Default => End_Of_Line));
-      if Active (On_The_Fly_Casing) then
-         Register_Property
-           (Kernel, Param_Spec (Ada_Casing_Policy), -"Editor:Ada");
-      end if;
+      Register_Property
+        (Kernel, Param_Spec (Ada_Casing_Policy), -"Editor:Ada");
 
       Ada_Reserved_Casing := Param_Spec_Enum
         (Casing_Properties.Gnew_Enum
