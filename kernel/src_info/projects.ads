@@ -327,6 +327,8 @@ package Projects is
      (Project : Project_Type; File : String) return String;
    --  Return the name of the executable, either read from the project or
    --  computed from File
+   --  If Project is No_Project, the default executable name for File is
+   --  returned.
 
    function Is_Main_File
      (Project : Project_Type; File : String) return Boolean;

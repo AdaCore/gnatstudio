@@ -2235,17 +2235,32 @@ package body Projects is
      (Project : Project_Type; File : String) return String
    is
       Base : constant String := Base_Name (File);
-      Default_Exec : constant String := Base
-        (Base'First .. Delete_File_Suffix (Base, Project));
-      From_Project : constant String := Get_Attribute_Value
-        (Project, Executable_Attribute,
-         Index => File, Default => Default_Exec);
    begin
-      --  If the executable name was uninitialized
-      if From_Project = "" then
-         return Default_Exec;
+      if Project = No_Project then
+         --  Simply remove the current extension, since we don't have any
+         --  information on the file itself.
+         for Index in reverse Base'Range loop
+            if Base (Index) = '.' then
+               return Base (Base'First .. Index - 1);
+            end if;
+         end loop;
+
+         return Base;
+      else
+         declare
+            Default_Exec : constant String := Base
+              (Base'First .. Delete_File_Suffix (Base, Project));
+            From_Project : constant String := Get_Attribute_Value
+              (Project, Executable_Attribute,
+               Index => File, Default => Default_Exec);
+         begin
+            --  If the executable name was uninitialized
+            if From_Project = "" then
+               return Default_Exec;
+            end if;
+            return From_Project;
+         end;
       end if;
-      return From_Project;
    end Get_Executable_Name;
 
    ------------------------------
