@@ -792,53 +792,6 @@ package body Src_Editor_Buffer is
             Counter := Counter + 1;
             Forward_Char (Current, Success);
          end loop;
-
-      end if;
-
-      --  Highlight next parenthesis, if necessary.
-
-      Delimiter := -1;
-      C := Get_Char (On_Cursor_Iter);
-
-      for J in Delimiters'Range loop
-         if Delimiters (J, Opening) = C then
-            Delimiter := J;
-            exit;
-         end if;
-      end loop;
-
-      if Delimiter in Delimiters'Range then
-         Counter := 0;
-         Stack := 1;
-         Copy (On_Cursor_Iter, Current);
-         Forward_Char (Current, Success);
-
-         while Success and then Counter < Counter_Max loop
-            C := Get_Char (Current);
-
-            if C = Delimiters (Delimiter, Opening) then
-               Stack := Stack + 1;
-
-            elsif C = Delimiters (Delimiter, Closing) then
-               Stack := Stack - 1;
-
-            end if;
-
-            if Stack = 0 then
-               if not Highlight_Necessary then
-                  Copy (On_Cursor_Iter, First_Highlight_Iter);
-               end if;
-
-               Forward_Char (Current, Success);
-               Copy (Current, Last_Highlight_Iter);
-
-               Highlight_Necessary := True;
-               exit;
-            end if;
-
-            Counter := Counter + 1;
-            Forward_Char (Current, Success);
-         end loop;
       end if;
 
       if Highlight_Necessary then
