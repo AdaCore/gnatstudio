@@ -555,9 +555,6 @@ package body Glide_Kernel.Modules is
                Matches := Filter_Matches (C.Filter, Context);
             end if;
 
-            Trace (Me, "Testing contextual menu " & C.Name.all
-                   & " filter matches=" & Matches'Img);
-
             if Matches then
 
                if C.Label = null then
