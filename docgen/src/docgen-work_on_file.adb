@@ -2,7 +2,7 @@
 --                               G P S                               --
 --                                                                   --
 --                     Copyright (C) 2001-2005                       --
---                            ACT-Europe                             --
+--                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -18,22 +18,70 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
-with GNAT.OS_Lib;               use GNAT.OS_Lib;
-with Entities;                  use Entities;
-with Entities.Queries;          use Entities.Queries;
-with Docgen.Backend;
-with Docgen.Work_On_Source;     use Docgen.Work_On_Source;
-with Traces;                    use Traces;
-with GPS.Kernel;              use GPS.Kernel;
-with VFS;                       use VFS;
-with OS_Utils;                  use OS_Utils;
+with Ada.Exceptions;                use Ada.Exceptions;
+with Ada.Strings.Unbounded;         use Ada.Strings.Unbounded;
+with GNAT.OS_Lib;                   use GNAT.OS_Lib;
+
+with Commands;                      use Commands;
+with Commands.Generic_Asynchronous;
+with Docgen.Backend;                use Docgen.Backend;
+with Docgen.Work_On_Source;         use Docgen.Work_On_Source;
+with Entities;                      use Entities;
+with Entities.Queries;              use Entities.Queries;
+with GPS.Intl;                      use GPS.Intl;
+with GPS.Kernel;                    use GPS.Kernel;
+with GPS.Kernel.Standard_Hooks;     use GPS.Kernel.Standard_Hooks;
+with GPS.Kernel.Task_Manager;       use GPS.Kernel.Task_Manager;
+with OS_Utils;                      use OS_Utils;
+with Traces;                        use Traces;
+with VFS;                           use VFS;
 
 package body Docgen.Work_On_File is
 
    Me : constant Debug_Handle := Create ("Docgen.Work_On_File");
 
    package TEL  renames Type_Entity_List;
+
+   type Process_One_File_Data is record
+      Kernel                        : Kernel_Handle;
+      Backend                       : Docgen.Backend.Backend_Handle;
+      Options                       : Docgen.All_Options;
+      Source_File_List              : Type_Source_File_Table.HTable;
+      Source_File_Node              : Type_Source_File_Table.Iterator;
+      Subprogram_Index_List         : Type_Entity_List.List;
+      Type_Index_List               : Type_Entity_List.List;
+      Tagged_Types_List             : List_Entity_Information.List;
+      Private_Subprogram_Index_List : Type_Entity_List.List;
+      Private_Type_Index_List       : Type_Entity_List.List;
+      Private_Tagged_Types_List     : List_Entity_Information.List;
+   end record;
+
+   procedure Free (D : in out Process_One_File_Data);
+   --  Free memory associated with D.
+
+   procedure Process_One_File_Iterate
+     (Data    : in out Process_One_File_Data;
+      Command : Command_Access;
+      Result  : out Command_Return_Type);
+   --  Perform an atomic one-file processing
+
+   package Process_One_File_Commands is new Commands.Generic_Asynchronous
+     (Data_Type => Process_One_File_Data,
+      Free      => Free);
+   --  Handle the one-file processing commands.
+
+   procedure Find_Next_Package
+     (Kernel           : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Source_File_List : Type_Source_File_Table.HTable;
+      Source_File_Node : in out Type_Source_File_Table.Iterator;
+      Package_Name     : out GNAT.OS_Lib.String_Access);
+   --  Returns the name of the next package in the list
+   --  (body files with the same package name are ignored)
+   --  If next package doesn't exist, "" is returned.
+
+   procedure Finalize_Files_Processing (Data : in out Process_One_File_Data);
+   --  This procedure is in charge of the documentation generation phase
+   --  that comes right after every single file has been processed.
 
    function Is_Operator (Name : String) return Boolean;
    --  Return True is Name is an operator
@@ -548,6 +596,197 @@ package body Docgen.Work_On_File is
       end if;
    end Process_Tagged_Types;
 
+   -----------------------
+   -- Find_Next_Package --
+   -----------------------
+
+   procedure Find_Next_Package
+     (Kernel           : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Source_File_List : Type_Source_File_Table.HTable;
+      Source_File_Node : in out Type_Source_File_Table.Iterator;
+      Package_Name     : out GNAT.OS_Lib.String_Access)
+   is
+      use Type_Source_File_Table;
+   begin
+      if Get_Element (Source_File_Node) = No_Source_File_Information then
+         Package_Name := null;
+
+      else
+         Get_Next (Source_File_List, Source_File_Node);
+         if Get_Element (Source_File_Node) = No_Source_File_Information then
+            Package_Name := null;
+            return;
+         end if;
+
+         if not Is_Spec_File
+           (Kernel, Get_Filename (Get_Key (Source_File_Node)))
+         then
+            Get_Next (Source_File_List, Source_File_Node);
+         end if;
+
+         if Get_Element (Source_File_Node) = No_Source_File_Information then
+            Package_Name := null;
+         else
+            Package_Name := Get_Element (Source_File_Node).Package_Name;
+         end if;
+      end if;
+   end Find_Next_Package;
+
+   -------------------------------
+   -- Finalize_Files_Processing --
+   -------------------------------
+
+   procedure Finalize_Files_Processing (Data : in out Process_One_File_Data) is
+      Level : Natural := 1;
+   begin
+      --  Sort the type index list and the subprogram index list first (both
+      --  for private and public lists)
+      Sort_List_Name (Data.Subprogram_Index_List);
+      Sort_List_Name (Data.Type_Index_List);
+      Sort_List_Name (Data.Private_Subprogram_Index_List);
+      Sort_List_Name (Data.Private_Type_Index_List);
+
+      --  Create the index doc files for the packages
+      Process_Unit_Index
+        (Data.Backend,
+         Data.Kernel,
+         Data.Source_File_List,
+         Data.Options,
+         Level);
+      Process_Subprogram_Index
+        (Data.Backend,
+         Data.Kernel,
+         Data.Subprogram_Index_List,
+         Data.Private_Subprogram_Index_List,
+         Data.Source_File_List,
+         Data.Options);
+      Process_Type_Index
+        (Data.Backend,
+         Data.Kernel,
+         Data.Type_Index_List,
+         Data.Private_Type_Index_List,
+         Data.Source_File_List,
+         Data.Options);
+
+      if Data.Options.Tagged_Types then
+         Sort_List_Name (Data.Tagged_Types_List);
+
+         if Data.Options.Show_Private then
+            Sort_List_Name (Data.Private_Tagged_Types_List);
+         end if;
+
+         Process_Tagged_Type_Index
+           (Data.Backend,
+            Data.Kernel,
+            Data.Tagged_Types_List,
+            Data.Private_Tagged_Types_List,
+            Data.Source_File_List,
+            Data.Options);
+      end if;
+
+      TEL.Free (Data.Subprogram_Index_List);
+      TEL.Free (Data.Type_Index_List);
+      List_Entity_Information.Free (Data.Tagged_Types_List);
+
+      Type_Source_File_Table.Reset (Data.Source_File_List);
+
+      Open_Html
+        (Data.Kernel,
+         Filename => Create
+           (Full_Filename =>
+              Get_Doc_Directory (Data.Backend, Data.Kernel)
+            & "index" & Get_Extension (Data.Backend)));
+
+      Pop_State (Data.Kernel);
+      Free (Data);
+   end Finalize_Files_Processing;
+
+   ------------------------------
+   -- Process_One_File_Iterate --
+   ------------------------------
+
+   procedure Process_One_File_Iterate
+     (Data    : in out Process_One_File_Data;
+      Command : Command_Access;
+      Result  : out Command_Return_Type)
+   is
+      pragma Unreferenced (Command);
+
+      use List_Entity_Information;
+      use Type_Source_File_Table;
+
+      Doc_Directory : constant String :=
+        Docgen.Backend.Get_Doc_Directory (Data.Backend, Data.Kernel);
+
+   begin
+      if Get_Element (Data.Source_File_Node) /= No_Source_File_Information then
+         declare
+            Current_Package : constant GNAT.OS_Lib.String_Access :=
+              Get_Element (Data.Source_File_Node).Package_Name;
+            File            : constant Source_File :=
+              Get_Key (Data.Source_File_Node);
+            Doc_File        : constant File_Descriptor := Create_File
+              (Doc_Directory &
+               Get_Element (Data.Source_File_Node).Doc_File_Name.all,
+               Binary);
+
+            Process_Result  : Unbounded_String;
+            Next_Package    : GNAT.OS_Lib.String_Access;
+         begin
+            Process_One_File
+              (Data.Backend,
+               Data.Kernel,
+               Process_Result,
+               Source_Filename               => File,
+               Package_Name                  => Current_Package.all,
+               Source_File_List              => Data.Source_File_List,
+               Options                       => Data.Options,
+               Subprogram_Index_List         => Data.Subprogram_Index_List,
+               Type_Index_List               => Data.Type_Index_List,
+               Tagged_Types_List             => Data.Tagged_Types_List,
+               Private_Subprogram_Index_List =>
+                 Data.Private_Subprogram_Index_List,
+               Private_Type_Index_List       => Data.Private_Type_Index_List,
+               Private_Tagged_Types_List     =>
+                 Data.Private_Tagged_Types_List);
+
+            --  Write the result to the doc file.
+
+            Put_Line (Doc_File, To_String (Process_Result));
+            Close (Doc_File);
+
+            Find_Next_Package
+              (Data.Kernel,
+               Data.Source_File_List,
+               Data.Source_File_Node,
+               Next_Package);
+         end;
+
+         Result := Execute_Again;
+      else
+         Finalize_Files_Processing (Data);
+         Result := Success;
+      end if;
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
+         Pop_State (Data.Kernel);
+         Result := Failure;
+         return;
+   end Process_One_File_Iterate;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (D : in out Process_One_File_Data) is
+      pragma Unreferenced (D);
+   begin
+      null;
+   end Free;
+
    -------------------
    -- Process_Files --
    -------------------
@@ -561,45 +800,6 @@ package body Docgen.Work_On_File is
       use List_Entity_Information;
       use Type_Source_File_Table;
 
-      procedure Find_Next_Package
-        (Source_File_Node : in out Type_Source_File_Table.Iterator;
-         Package_Name     : out GNAT.OS_Lib.String_Access);
-      --  Returns the name of the next package in the list
-      --  (body files with the same package name are ignored)
-      --  If next package doesn't exist, "" is returned.
-
-      -----------------------
-      -- Find_Next_Package --
-      -----------------------
-
-      procedure Find_Next_Package
-        (Source_File_Node : in out Type_Source_File_Table.Iterator;
-         Package_Name     : out GNAT.OS_Lib.String_Access) is
-      begin
-         if Get_Element (Source_File_Node) = No_Source_File_Information then
-            Package_Name := null;
-
-         else
-            Get_Next (Source_File_List, Source_File_Node);
-            if Get_Element (Source_File_Node) = No_Source_File_Information then
-               Package_Name := null;
-               return;
-            end if;
-
-            if not Is_Spec_File
-              (Kernel, Get_Filename (Get_Key (Source_File_Node)))
-            then
-               Get_Next (Source_File_List, Source_File_Node);
-            end if;
-
-            if Get_Element (Source_File_Node) = No_Source_File_Information then
-               Package_Name := null;
-            else
-               Package_Name := Get_Element (Source_File_Node).Package_Name;
-            end if;
-         end if;
-      end Find_Next_Package;
-
       Source_File_Node              : Type_Source_File_Table.Iterator;
       Subprogram_Index_List         : Type_Entity_List.List;
       Type_Index_List               : Type_Entity_List.List;
@@ -607,79 +807,31 @@ package body Docgen.Work_On_File is
       Private_Subprogram_Index_List : Type_Entity_List.List;
       Private_Type_Index_List       : Type_Entity_List.List;
       Private_Tagged_Types_List     : List_Entity_Information.List;
-      Level                         : Natural := 1;
-      Doc_Directory                 : constant String :=
-        Docgen.Backend.Get_Doc_Directory (B, Kernel);
+
+      C : Process_One_File_Commands.Generic_Asynchronous_Command_Access;
 
    begin
       Get_First (Source_File_List, Source_File_Node);
 
-      while Get_Element (Source_File_Node) /= No_Source_File_Information loop
-         declare
-            Current_Package : constant GNAT.OS_Lib.String_Access :=
-                                Get_Element (Source_File_Node).Package_Name;
-            File         : constant Source_File := Get_Key (Source_File_Node);
-            Doc_File     : File_Descriptor;
-            Result       : Unbounded_String;
-            Next_Package : GNAT.OS_Lib.String_Access;
-         begin
-            Doc_File := Create_File
-              (Doc_Directory
-               & Get_Element (Source_File_Node).Doc_File_Name.all, Binary);
+      Process_One_File_Commands.Create
+        (C,
+         -"Documenting",
+         (Kernel                        => Kernel_Handle (Kernel),
+          Backend                       => Backend.Backend_Handle (B),
+          Options                       => Options,
+          Source_File_List              => Source_File_List,
+          Source_File_Node              => Source_File_Node,
+          Subprogram_Index_List         => Subprogram_Index_List,
+          Type_Index_List               => Type_Index_List,
+          Tagged_Types_List             => Tagged_Types_List,
+          Private_Subprogram_Index_List => Private_Subprogram_Index_List,
+          Private_Type_Index_List       => Private_Type_Index_List,
+          Private_Tagged_Types_List     => Private_Tagged_Types_List),
+         Process_One_File_Iterate'Access);
 
-            Find_Next_Package (Source_File_Node, Next_Package);
-            Process_One_File
-              (B, Kernel, Result,
-               Source_Filename               => File,
-               Package_Name                  => Current_Package.all,
-               Source_File_List              => Source_File_List,
-               Options                       => Options,
-               Subprogram_Index_List         => Subprogram_Index_List,
-               Type_Index_List               => Type_Index_List,
-               Tagged_Types_List             => Tagged_Types_List,
-               Private_Subprogram_Index_List => Private_Subprogram_Index_List,
-               Private_Type_Index_List       => Private_Type_Index_List,
-               Private_Tagged_Types_List     => Private_Tagged_Types_List);
+      Launch_Background_Command
+        (Kernel, Command_Access (C), True, False, "Documenting");
 
-            --  Write result to doc file
-
-            Put_Line (Doc_File, To_String (Result));
-            Close (Doc_File);
-         end;
-      end loop;
-
-      --  Sort the type index list and the subprogram index list first (both
-      --  for private and public lists)
-      Sort_List_Name (Subprogram_Index_List);
-      Sort_List_Name (Type_Index_List);
-      Sort_List_Name (Private_Subprogram_Index_List);
-      Sort_List_Name (Private_Type_Index_List);
-
-      --  Create the index doc files for the packages
-      Process_Unit_Index
-        (B, Kernel, Source_File_List, Options, Level);
-      Process_Subprogram_Index
-        (B, Kernel, Subprogram_Index_List, Private_Subprogram_Index_List,
-         Source_File_List, Options);
-      Process_Type_Index
-        (B, Kernel, Type_Index_List, Private_Type_Index_List,
-         Source_File_List, Options);
-
-      if Options.Tagged_Types then
-         Sort_List_Name (Tagged_Types_List);
-
-         if Options.Show_Private then
-            Sort_List_Name (Private_Tagged_Types_List);
-         end if;
-
-         Process_Tagged_Type_Index
-           (B, Kernel, Tagged_Types_List, Private_Tagged_Types_List,
-            Source_File_List, Options);
-      end if;
-
-      TEL.Free (Subprogram_Index_List);
-      TEL.Free (Type_Index_List);
-      List_Entity_Information.Free (Tagged_Types_List);
    end Process_Files;
 
    ----------------------
@@ -712,8 +864,10 @@ package body Docgen.Work_On_File is
       --  processing types, subprograms...
 
    begin
-      Trace (Me, "Generating doc for "
-             & Full_Name (Get_Filename (Source_Filename)).all);
+      Trace
+        (Me,
+         "Generating doc for "
+         & Full_Name (Get_Filename (Source_Filename)).all);
 
       Update_Xref (Source_Filename);
 
