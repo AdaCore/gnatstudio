@@ -183,7 +183,6 @@ private
       Titles          : GNAT.OS_Lib.String_List_Access;
       Highlight_Style : Gtk.Style.Gtk_Style;
       Normal_Style    : Gtk.Style.Gtk_Style;
-      Has_Toc         : Boolean := False;
    end record;
 
    pragma Inline (Previous_Button);

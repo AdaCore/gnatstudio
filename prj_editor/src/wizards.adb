@@ -25,7 +25,6 @@ with Gtk.Box;            use Gtk.Box;
 with Gtk.Button;         use Gtk.Button;
 with Gtk.Dialog;         use Gtk.Dialog;
 with Gtk.Enums;          use Gtk.Enums;
-with Gtk.Frame;          use Gtk.Frame;
 with Gtk.Label;          use Gtk.Label;
 with Gtk.Stock;          use Gtk.Stock;
 with Gtk.Style;          use Gtk.Style;
@@ -153,6 +152,8 @@ package body Wizards is
         (Wiz.Highlight_Style, State_Normal,
          Get_Pref (Kernel, Wizard_Toc_Highlight_Color));
 
+      Set_Child_Visible (Get_Side_Box (Wiz), False);
+
       Wiz.Toc := new Widget_Array (1 .. Num_Pages);
       Wiz.Toc.all := (others => null);
 
@@ -217,6 +218,8 @@ package body Wizards is
          Unref (Wiz.Toc (Page_Num));
       end if;
 
+      Set_Child_Visible (Get_Side_Box (Wiz), True);
+
       Gtk_New (Gtk_Label (Wiz.Toc (Page_Num)), Toc);
       Set_Justify (Gtk_Label (Wiz.Toc (Page_Num)), Justify_Left);
       Set_Alignment (Gtk_Label (Wiz.Toc (Page_Num)),
@@ -232,8 +235,6 @@ package body Wizards is
       if Req.Width < Min_Toc_Width then
          Set_Size_Request (Wiz.Toc (Page_Num), Min_Toc_Width, Req.Height);
       end if;
-
-      Wiz.Has_Toc := True;
 
       if Page_Num > Wiz.Titles'Length then
          Old := Wiz.Titles;
@@ -321,13 +322,19 @@ package body Wizards is
          Set_Style (Wiz.Toc (Wiz.Current_Page), Wiz.Normal_Style);
       end if;
 
-      if Get_Child (Get_Contents (Wiz)) /= null then
-         Remove (Get_Contents (Wiz), Get_Child (Get_Contents (Wiz)));
+      if Wiz.Pages (Wiz.Current_Page) /= null then
+         Hide (Wiz.Pages (Wiz.Current_Page));
+--         Set_Child_Visible (Wiz.Pages (Wiz.Current_Page), False);
       end if;
 
       Wiz.Current_Page := Num;
-      Add (Get_Contents (Wiz), Wiz.Pages (Wiz.Current_Page));
-      Show (Get_Contents (Wiz));
+
+      if Get_Parent (Wiz.Pages (Wiz.Current_Page)) = null then
+         Pack_Start (Get_Contents (Wiz), Wiz.Pages (Wiz.Current_Page),
+                     Expand => True, Fill => True);
+      end if;
+      Show (Wiz.Pages (Wiz.Current_Page));
+--      Set_Child_Visible (Wiz.Pages (Wiz.Current_Page), True);
 
       --  If the new page is valid, highlight it
 
@@ -378,11 +385,6 @@ package body Wizards is
    procedure Map (Wiz : access Gtk_Widget_Record'Class) is
       W : constant Wizard := Wizard (Wiz);
    begin
-      if not W.Has_Toc then
-         Hide_All (Get_Side_Box (W));
-         Queue_Resize (W);
-      end if;
-
       --  Show the appropriate buttons
       Set_Current_Page (W, W.Current_Page);
    end Map;
