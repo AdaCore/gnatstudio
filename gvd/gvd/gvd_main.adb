@@ -73,16 +73,20 @@ procedure Odd_Main is
       Dir_Created : Boolean := False;
    begin
       Root := Getenv ("GVD_ROOT");
-      Home := Getenv ("HOME");
+      Home := Getenv ("GVD_HOME");
 
-      if Root /= null then
+      if Home.all = "" then
+         Home := Getenv ("HOME");
+      end if;
+
+      if Root.all /= "" then
          Bind_Text_Domain ("GtkAda", Root.all & Directory_Separator & "share" &
            Directory_Separator & "locale");
          Bind_Text_Domain ("Gvd", Root.all & Directory_Separator & "share" &
            Directory_Separator & "locale");
       end if;
 
-      if Home /= null then
+      if Home.all /= "" then
          Dir := new String' (Home.all & Directory_Separator & ".gvd");
 
          begin
