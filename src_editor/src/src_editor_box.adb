@@ -715,7 +715,7 @@ package body Src_Editor_Box is
               & ASCII.LF
               & "Declaration: " & Get_Declaration_File_Of (Entity) & ':'
               & Image (Get_Declaration_Line_Of (Entity)) & ASCII.LF
-              & "Type: " & Kind_To_String (Get_Kind (Entity)) & ASCII.LF
+              & "Kind: " & Kind_To_String (Get_Kind (Entity)) & ASCII.LF
               & "Scope: " & Scope_To_String (Get_Scope (Entity));
          begin
             Create_Pixmap_From_Text
