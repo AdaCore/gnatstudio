@@ -168,7 +168,7 @@ package body Make_Harness_Window_Pkg.Callbacks is
          Top.Procedure_Name := new String' (To_Lower (Procedure_Name));
       end if;
 
-      Destroy (Top);
+      Hide (Top);
       Main_Quit;
    end On_Ok_Clicked;
 
@@ -180,7 +180,7 @@ package body Make_Harness_Window_Pkg.Callbacks is
      (Object : access Gtk_Button_Record'Class)
    is
    begin
-      Destroy (Get_Toplevel (Object));
+      Hide (Get_Toplevel (Object));
       Main_Quit;
    end On_Cancel_Clicked;
 

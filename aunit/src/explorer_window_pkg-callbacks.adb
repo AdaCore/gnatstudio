@@ -46,8 +46,8 @@ package body Explorer_Window_Pkg.Callbacks is
       Params : Gtk.Arguments.Gtk_Args) return Boolean
    is
    begin
-      Hide_All (Get_Toplevel (Object));
-      return True;
+      Hide (Get_Toplevel (Object));
+      return False;
    end On_Explorer_Window_Delete_Event;
 
    -------------------------
@@ -137,7 +137,7 @@ package body Explorer_Window_Pkg.Callbacks is
          Win.Directory.all &
            Directory_Separator &
            Get_Text (Win.Clist, Get_Data (List), 0));
-      Hide_All (Get_Toplevel (Object));
+      Hide (Get_Toplevel (Object));
    end On_Ok_Clicked;
 
    -----------------------
@@ -148,7 +148,7 @@ package body Explorer_Window_Pkg.Callbacks is
      (Object : access Gtk_Button_Record'Class)
    is
    begin
-      Hide_All (Get_Toplevel (Object));
+      Hide (Get_Toplevel (Object));
    end On_Cancel_Clicked;
 
 end Explorer_Window_Pkg.Callbacks;

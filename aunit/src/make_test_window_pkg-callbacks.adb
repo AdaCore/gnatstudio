@@ -49,8 +49,9 @@ package body Make_Test_Window_Pkg.Callbacks is
       Params : Gtk.Arguments.Gtk_Args) return Boolean
    is
    begin
+      Hide (Get_Toplevel (Object));
       Main_Quit;
-      return True;
+      return False;
    end On_Make_Test_Window_Delete_Event;
 
    ----------------------------
@@ -251,7 +252,7 @@ package body Make_Test_Window_Pkg.Callbacks is
          Window.Name := new String' (To_File_Name (Name));
       end if;
 
-      Destroy (Window);
+      Hide (Window);
       Main_Quit;
    end On_Ok_Clicked;
 
@@ -263,7 +264,7 @@ package body Make_Test_Window_Pkg.Callbacks is
      (Object : access Gtk_Button_Record'Class)
    is
    begin
-      Destroy (Get_Toplevel (Object));
+      Hide (Get_Toplevel (Object));
       Main_Quit;
    end On_Cancel_Clicked;
 
