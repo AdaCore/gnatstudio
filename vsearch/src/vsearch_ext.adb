@@ -82,6 +82,7 @@ package body Vsearch_Ext is
    Pattern_Hist_Key   : constant History_Key := "search_patterns";
    Replace_Hist_Key   : constant History_Key := "search_replace";
    Auto_Hide_Hist_Key : constant History_Key := "search_autohide";
+   Select_Window_Hist_Key : constant History_Key := "search_select_window";
    --  The key for the histories.
 
    procedure Free (Data : in out Search_Module_Data);
@@ -429,7 +430,8 @@ package body Vsearch_Ext is
         and then Search
            (Data.Vsearch.Last_Search_Context,
             Data.Vsearch.Kernel,
-            Data.Search_Backward)
+            Data.Search_Backward,
+            Give_Focus => Get_Active (Data.Vsearch.Select_Editor_Check))
       then
          Set_Progress
            (Command,
@@ -473,7 +475,8 @@ package body Vsearch_Ext is
             Data.Vsearch.Kernel,
             Get_Text (Data.Vsearch.Replace_Entry),
             --  ??? The user could change this interactively in the meantime
-            Data.Search_Backward)
+            Data.Search_Backward,
+            Give_Focus => Get_Active (Data.Vsearch.Select_Editor_Check))
       then
          Set_Progress
            (Command,
@@ -601,7 +604,8 @@ package body Vsearch_Ext is
             Has_Next := Search
               (Vsearch.Last_Search_Context,
                Vsearch.Kernel,
-               Search_Backward => False);
+               Search_Backward => False,
+               Give_Focus => Get_Active (Vsearch.Select_Editor_Check));
             Pop_State (Vsearch.Kernel);
 
             --  Give a visual feedback that the search is terminated.
@@ -663,7 +667,8 @@ package body Vsearch_Ext is
               (Vsearch.Last_Search_Context,
                Vsearch.Kernel,
                Get_Text (Vsearch.Replace_Entry),
-               Search_Backward => False);
+               Search_Backward => False,
+               Give_Focus => Get_Active (Vsearch.Select_Editor_Check));
             Pop_State (Vsearch.Kernel);
          end if;
 
@@ -714,7 +719,8 @@ package body Vsearch_Ext is
             Has_Next := Search
               (Vsearch.Last_Search_Context,
                Vsearch.Kernel,
-               Search_Backward => True);
+               Search_Backward => True,
+               Give_Focus => Get_Active (Vsearch.Select_Editor_Check));
             Pop_State (Vsearch.Kernel);
 
             Set_First_Next_Mode (Vsearch, Find_Next => True);
@@ -736,13 +742,23 @@ package body Vsearch_Ext is
       Win : Gtk_Window;
       Child : constant MDI_Child := Find_MDI_Child
         (Get_MDI (Vsearch.Kernel), Vsearch);
+      Req : Gtk_Requisition;
    begin
-      if Child /= null
-        and then Is_Floating (Child)
-      then
-         Win := Gtk_Window (Get_Toplevel (Vsearch));
-         if Win /= null then
-            Resize (Win, -1, -1);
+      if Child /= null then
+         if Is_Floating (Child) then
+            Win := Gtk_Window (Get_Toplevel (Vsearch));
+            if Win /= null then
+               Resize (Win, -1, -1);
+            end if;
+
+         else
+            --  ??? +6 is for the notebook's border on each side
+            --  Never resize in width, only in height
+            Size_Request (Vsearch, Req);
+            Set_Size (Get_MDI (Vsearch.Kernel),
+                      Child => Child,
+                      Width  => 0,
+                      Height => Req.Height + 6);
          end if;
       end if;
    end Resize_If_Needed;
@@ -1229,6 +1245,10 @@ package body Vsearch_Ext is
         (Get_History (Vsearch.Kernel).all,
          Auto_Hide_Hist_Key,
          Vsearch.Auto_Hide_Check);
+      Associate
+        (Get_History (Vsearch.Kernel).all,
+         Select_Window_Hist_Key,
+         Vsearch.Select_Editor_Check);
 
       Add_Hook (Handle, Search_Reset_Hook, Set_First_Next_Mode_Cb'Access);
       Add_Hook (Handle, Search_Functions_Changed_Hook,
@@ -1313,6 +1333,7 @@ package body Vsearch_Ext is
                        or Always_Destroy_Float,
                        Focus_Widget =>
                          Gtk_Widget (Vsearch_Module_Id.Search.Pattern_Combo),
+                       Position => Position_Left,
                        Module => Vsearch_Module_Id,
                        Desktop_Independent => True);
          Float_Vsearch (Child);
