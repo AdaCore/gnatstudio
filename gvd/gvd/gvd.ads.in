@@ -31,6 +31,9 @@ package GVD is
    Version : constant String := "@GVD_VERSION@";
    --  Version number of this software.
 
+   Target  : constant String := "@TARGET@";
+   --  Target for which GVD is built.
+
    Prefix : constant String := "@prefix@";
    --  Default prefix used e.g for finding support files like po files.
    --  Note that this prefix can be overriden by using the GVD_ROOT
