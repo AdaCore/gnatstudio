@@ -78,7 +78,6 @@ with Glide_Kernel.Modules;     use Glide_Kernel.Modules;
 with Glide_Intl;               use Glide_Intl;
 with Language_Handlers.Glide;  use Language_Handlers.Glide;
 with Traces;                   use Traces;
-with File_Utils;               use File_Utils;
 
 with Unchecked_Deallocation;
 with System;
@@ -430,6 +429,10 @@ package body Project_Explorers is
       Directory    : String := "");
    --  Select a specific project, and (if not "") a specific directory
    --  in that project
+
+   function Has_Entries (Project : Project_Id; Directory : String)
+      return Boolean;
+   --  Return True if Directory contains any file in the project.
 
    procedure Refresh
      (Kernel : access GObject_Record'Class; Explorer : GObject);
@@ -1667,6 +1670,37 @@ package body Project_Explorers is
       return N;
    end Add_Project_Node;
 
+   -----------------
+   -- Has_Entries --
+   -----------------
+
+   function Has_Entries (Project : Project_Id; Directory : String)
+      return Boolean
+   is
+      Files : Basic_Types.String_Array_Access;
+      First : Integer;
+   begin
+      --  We check in the project itself whether there are some files in the
+      --  directory.
+      Files := Get_Source_Files
+        (Project, Recursive => False, Full_Path => True);
+
+      for F in Files'Range loop
+         First := Files (F)'First;
+         if Files (F)'Length > Directory'Length
+           and then Files (F)(First .. First + Directory'Length - 1) =
+           Directory
+           and then Files (F)(First + Directory'Length) = Directory_Separator
+         then
+            Free (Files);
+            return True;
+         end if;
+      end loop;
+
+      Free (Files);
+      return False;
+   end Has_Entries;
+
    ------------------------
    -- Add_Directory_Node --
    ------------------------
@@ -1703,7 +1737,8 @@ package body Project_Explorers is
       end if;
 
       Is_Leaf := Node_Type = Obj_Directory_Node
-        or else Subdirectories_Count (Node_Text.all) = 0;
+        or else not Has_Entries
+        (Get_Project_From_Node (Explorer, Parent_Node), Node_Text.all);
 
       N := Insert_Node
         (Ctree         => Explorer.Tree,
