@@ -136,6 +136,7 @@ package body Glide_Kernel.Browsers is
       end if;
 
       Complete_ALI_File_If_Needed (Kernel, Lib_Info);
+      pragma Assert (Lib_Info /= No_LI_File);
 
       Initial := File_Item (Find_File (In_Browser, File));
       if Initial = null then
