@@ -587,6 +587,12 @@ package body Vsearch_Ext is
       Item : Gtk_List_Item;
       Is_Regexp, Case_Sensitive : Boolean;
       Data : Search_User_Data_Record;
+      Options : Search_Options :=
+        (Scope          => Search_Scope'Val
+            (Get_Index_In_List (Search.Scope_Combo)),
+         Case_Sensitive => Get_Active (Search.Case_Check),
+         Whole_Word     => Get_Active (Search.Whole_Word_Check),
+         Regexp         => Get_Active (Search.Regexp_Check));
    begin
       for S in 1 .. Search_Regexps_Count (Kernel) loop
          Item := Add_Unique_Combo_Entry
@@ -602,6 +608,14 @@ package body Vsearch_Ext is
 
          Search_User_Data.Set (Item, Data, Search_User_Data_Quark);
       end loop;
+
+      --  Restore the options as before (they might have changed depending on
+      --  the last predefined regexp we inserted)
+      Select_Item
+        (Get_List (Search.Scope_Combo), Search_Scope'Pos (Options.Scope));
+      Set_Active (Search.Case_Check, Options.Case_Sensitive);
+      Set_Active (Search.Whole_Word_Check, Options.Whole_Word);
+      Set_Active (Search.Regexp_Check, Options.Regexp);
    end New_Predefined_Regexp;
 
    -------------
