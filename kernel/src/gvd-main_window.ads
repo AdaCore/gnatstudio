@@ -22,18 +22,18 @@ with Glib;
 with Glib.Object;
 with Gtk.Accel_Group;  use Gtk.Accel_Group;
 with Gtk.Box; use Gtk.Box;
+with Gtk.Dialog; use Gtk.Dialog;
 with Gtk.Item_Factory; use Gtk.Item_Factory;
 with Gtk.Main;
 with Gtk.Menu_Bar; use Gtk.Menu_Bar;
 with Gtk.Window; use Gtk.Window;
+with GVD.Status_Bar;   use GVD.Status_Bar;
 with Gtkada.MDI; use Gtkada.MDI;
-with Gtk.Dialog; use Gtk.Dialog;
 with GNAT.OS_Lib; use GNAT.OS_Lib;
 with Basic_Types;
 with GVD.Types;
 with GVD.Histories;
 pragma Elaborate_All (GVD.Histories);
-with Main_Debug_Window_Pkg; use Main_Debug_Window_Pkg;
 with Language_Handlers;
 with Ada.Unchecked_Deallocation;
 
@@ -59,10 +59,14 @@ package GVD.Main_Window is
    package String_History is new GVD.Histories (History_Data);
    use String_History;
 
-   type GVD_Main_Window_Record is new Main_Debug_Window_Record with record
+   type GVD_Main_Window_Record is new Gtk_Window_Record with record
       Process_Mdi         : Gtkada.MDI.MDI_Window;
       --  The main widget
 
+      Vbox                : Gtk_Vbox;
+      Factory             : Gtk_Item_Factory;
+      Toolbar_Box         : Gtk_Vbox;
+      Statusbar           : GVD_Status_Bar;
       Menu_Box            : Gtk.Box.Gtk_Hbox;
       Menu_Bar            : Gtk.Menu_Bar.Gtk_Menu_Bar;
       Memory_View         : Gtk.Window.Gtk_Window;

@@ -22,6 +22,7 @@ with Glib;                  use Glib;
 with Gtk;                   use Gtk;
 with Gtk.Accel_Group;       use Gtk.Accel_Group;
 with Gtk.Box;               use Gtk.Box;
+with Gtk.Enums;             use Gtk.Enums;
 with Gtk.Menu_Bar;          use Gtk.Menu_Bar;
 with Gtk.Menu_Item;         use Gtk.Menu_Item;
 with Gtk.Object;            use Gtk.Object;
@@ -68,9 +69,23 @@ package body GVD.Main_Window is
    is
       Menu : Gtk_Widget;
    begin
-      Main_Debug_Window_Pkg.Initialize (Main_Window);
+      Gtk.Window.Initialize (Main_Window, Window_Toplevel);
       Initialize_Class_Record
-        (Main_Window, Signals, Class_Record, Type_Name => "GvdMainWindow");
+        (Main_Window, Signals, Class_Record, Type_Name => "GpsMainWindow");
+
+      Set_Policy (Main_Window, False, True, False);
+      Set_Position (Main_Window, Win_Pos_None);
+      Set_Modal (Main_Window, False);
+      Set_Default_Size (Main_Window, 800, 700);
+
+      Gtk_New_Vbox (Main_Window.Vbox, False, 0);
+      Add (Main_Window, Main_Window.Vbox);
+
+      Gtk_New_Vbox (Main_Window.Toolbar_Box, False, 0);
+      Pack_Start (Main_Window.Vbox, Main_Window.Toolbar_Box, False, False, 0);
+
+      Gtk_New (Main_Window.Statusbar);
+      Pack_End (Main_Window.Vbox, Main_Window.Statusbar, False, False, 0);
 
       Gtk_New (Main_Window.Main_Accel_Group);
       Add_Accel_Group (Main_Window, Main_Window.Main_Accel_Group);
