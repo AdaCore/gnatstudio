@@ -1274,4 +1274,55 @@ package body String_Utils is
       return new Argument_List'(New_Argv (1 .. New_Argc));
    end Argument_String_To_List_With_Triple_Quotes;
 
+   -------------
+   -- Protect --
+   -------------
+
+   function Protect (S : String) return String is
+      S2    : String (1 .. S'Length * 2);
+      Index : Natural := 1;
+   begin
+      for J in S'Range loop
+         if S (J) = '"' or else S (J) = '\' then
+            S2 (Index .. Index + 1) := '\' & S (J);
+            Index := Index + 2;
+         else
+            S2 (Index) := S (J);
+            Index := Index + 1;
+         end if;
+      end loop;
+
+      return S2 (1 .. Index - 1);
+   end Protect;
+
+   ---------------
+   -- Unprotect --
+   ---------------
+
+   function Unprotect (S : String) return String is
+      Result : String (S'Range);
+      Index  : Natural := Result'First;
+      N      : Natural := S'First;
+   begin
+      while N <= S'Last loop
+         if S (N) = '\' then
+            Result (Index) := S (N + 1);
+            N := N + 2;
+         else
+            Result (Index) := S (N);
+            N := N + 1;
+         end if;
+
+         Index := Index + 1;
+      end loop;
+
+      if Result (Result'First) = '"'
+        and then Result (Index - 1) = '"'
+      then
+         return Result (Result'First + 1 .. Index - 2);
+      else
+         return Result (Result'First .. Index - 1);
+      end if;
+   end Unprotect;
+
 end String_Utils;
