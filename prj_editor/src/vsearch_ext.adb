@@ -129,6 +129,10 @@ package body Vsearch_Ext is
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Callback for menu Edit->Search Next
 
+   procedure Search_Previous_Cb
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   --  Callback for menu Edit->Search Previous
+
    procedure New_Predefined_Regexp
      (Vsearch : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Called when a new predefined regexp has been added to the kernel.
@@ -652,10 +656,15 @@ package body Vsearch_Ext is
          Stock_Find, Search_Menu_Cb'Access,
          Ref_Item => Goto_Decl,
          Accel_Key => GDK_F, Accel_Mods => Control_Mask);
+      Register_Menu
+        (Handle, Navigate, -"Find Previous",
+         "", Search_Previous_Cb'Access,
+         Ref_Item => Goto_Decl,
+         Accel_Key => GDK_P, Accel_Mods => Control_Mask);
       Vsearch.Next_Menu_Item := Register_Menu
         (Handle, Navigate, -"Find Next",
          "", Search_Next_Cb'Access,
-         Ref_Item => Goto_Decl,
+         Ref_Item => -"Find Previous",
          Accel_Key => GDK_N, Accel_Mods => Control_Mask);
       Ref (Vsearch.Next_Menu_Item);
 
@@ -700,7 +709,7 @@ package body Vsearch_Ext is
         (Vsearch.Search_Replace_Button, "clicked",
          Widget_Callback.To_Marshaller (On_Search_Replace'Access), Vsearch);
 
-      Gtk_New (Vsearch.Search_Previous_Button, -"Prev.");
+      Gtk_New_With_Mnemonic (Vsearch.Search_Previous_Button, -"_Prev.");
       Pack_Start
         (Vsearch.Buttons_Hbox, Vsearch.Search_Previous_Button,
          False, False, 0);
@@ -816,6 +825,22 @@ package body Vsearch_Ext is
       when E : others =>
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end Search_Next_Cb;
+
+   ------------------------
+   -- Search_Previous_Cb --
+   ------------------------
+
+   procedure Search_Previous_Cb
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   is
+      pragma Unreferenced (Widget);
+   begin
+      On_Search_Previous (Get_Search_Module (Kernel));
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+   end Search_Previous_Cb;
 
    -----------------------------
    -- Register_Default_Search --
