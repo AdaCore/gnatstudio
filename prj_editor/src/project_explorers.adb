@@ -501,9 +501,9 @@ package body Project_Explorers is
    --  in that project
 
    function Has_Entries
-     (Project : Project_Id;
+     (Project   : Project_Id;
       Directory : String;
-      Files : String_Array_Access) return Boolean;
+      Files     : String_Array_Access) return Boolean;
    --  Return True if Directory contains any file among Files.
 
    procedure Refresh
@@ -1939,9 +1939,9 @@ package body Project_Explorers is
    -----------------
 
    function Has_Entries
-     (Project : Project_Id;
+     (Project   : Project_Id;
       Directory : String;
-      Files : String_Array_Access) return Boolean
+      Files     : String_Array_Access) return Boolean
    is
       Dir : constant String := Name_As_Directory (Normalize_Pathname
         (Directory, Dir_Name (Project_Path (Project)),
@@ -1950,6 +1950,7 @@ package body Project_Explorers is
       if Files /= null then
          --  We check in the project itself whether there are some files in the
          --  directory.
+
          for F in Files'Range loop
             if Dir_Name (Files (F).all) = Dir then
                return True;
