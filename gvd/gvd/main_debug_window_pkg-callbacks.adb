@@ -350,7 +350,8 @@ package body Main_Debug_Window_Pkg.Callbacks is
    procedure On_Attach_To_Process1_Activate
      (Object : access Gtk_Widget_Record'Class)
    is
-      Tab : constant Debugger_Process_Tab := Get_Current_Process (Object);
+      Tab           : constant Debugger_Process_Tab :=
+        Get_Current_Process (Object);
       Process_List  : List_Select_Access;
       Command_Index : Integer := Exec_Command'First;
       Args          : Argument_List_Access;
@@ -399,20 +400,22 @@ package body Main_Debug_Window_Pkg.Callbacks is
             Skip_Blanks (S, Index);
             Skip_To_Char (S, Index, ' ');
             Add_Item
-              (Process_List, S (S'First .. Index), S (Index + 1 .. S'Last));
-         end;
+              (Process_List, S (S'First .. Index),
+               Strip_CR (S (Index + 1 .. S'Last - 1)));
+            Expect (P, Match, "\n");
 
-         Expect (P, Match, "\n");
+         exception
+            when Process_Died => exit;
+         end;
       end loop;
 
       Close (P);
 
       declare
-         Arguments : constant String := Show (Process_List);
+         Argument : constant String := Show (Process_List);
       begin
-         if Arguments /= "" then
-            Attach_Process
-              (Tab.Debugger, Arguments, Mode => GVD.Types.Visible);
+         if Argument /= "" then
+            Attach_Process (Tab.Debugger, Argument, Mode => GVD.Types.Visible);
          end if;
       end;
    end On_Attach_To_Process1_Activate;
