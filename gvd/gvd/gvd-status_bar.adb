@@ -28,6 +28,7 @@ with Gtk.Button;      use Gtk.Button;
 with Gtk.Enums;       use Gtk.Enums;
 with Gtk.Frame;       use Gtk.Frame;
 with Gtk.Main;        use Gtk.Main;
+pragma Elaborate_All (Gtk.Main);
 with Gtk.Status_Bar;  use Gtk.Status_Bar;
 with Gtk.Style;       use Gtk.Style;
 with Gtk.Text;        use Gtk.Text;

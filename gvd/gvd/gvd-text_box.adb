@@ -27,6 +27,7 @@ with Gtk.Box;
 with Gtk.Pixmap;          use Gtk.Pixmap;
 with Gtk.Scrollbar;       use Gtk.Scrollbar;
 with Gtk.Handlers;        use Gtk.Handlers;
+pragma Elaborate_All (Gtk.Handlers);
 with Gtk.Layout;          use Gtk.Layout;
 with Gtk.Menu;            use Gtk.Menu;
 with Gtk.Text;            use Gtk.Text;

@@ -30,6 +30,7 @@ with Gdk.Input;
 with Gdk.Types;
 with Gtk.Menu;
 with Gtk.Object; use Gtk.Object;
+pragma Elaborate_All (Gtk.Object);
 with Gtk.Dialog;
 with Gtk.Window;
 with Gtk.Widget;

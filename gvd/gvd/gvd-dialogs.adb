@@ -31,6 +31,7 @@ with Interfaces.C.Strings;
 with GVD.Types;             use GVD.Types;
 with GVD.Process;           use GVD.Process;
 with Odd_Intl;              use Odd_Intl;
+pragma Elaborate_All (Odd_Intl);
 with Gtk.Check_Menu_Item;   use Gtk.Check_Menu_Item;
 with Gtk.GEntry;            use Gtk.GEntry;
 with Gtk.Widget;            use Gtk.Widget;

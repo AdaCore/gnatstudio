@@ -22,6 +22,7 @@ with Glib;                use Glib;
 with Gtk.Extra.Combo_Box; use Gtk.Extra.Combo_Box;
 with Gdk.Color;           use Gdk.Color;
 with Gtk.Handlers;        use Gtk.Handlers;
+pragma Elaborate_All (Gtk.Handlers);
 with Gtk.Color_Selection; use Gtk.Color_Selection;
 with Gtk.Widget;          use Gtk.Widget;
 with Gdk.Drawable;        use Gdk.Drawable;

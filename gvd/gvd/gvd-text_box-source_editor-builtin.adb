@@ -33,6 +33,7 @@ with Gtk.Enums;             use Gtk.Enums;
 with Gtk.Handlers;          use Gtk.Handlers;
 with Gtk.Layout;            use Gtk.Layout;
 with Gtk.Main;              use Gtk.Main;
+pragma Elaborate_All (Gtk.Main);
 with GVD.Memory_View;       use GVD.Memory_View;
 with Gtk.Menu;              use Gtk.Menu;
 with Gtk.Menu_Item;         use Gtk.Menu_Item;
@@ -320,7 +321,7 @@ package body GVD.Text_Box.Source_Editor.Builtin is
    begin
       if Editor.Show_Lines_With_Code then
          Editor.Idle_Id := Editor_Idle.Add
-           (Idle_Compute_Lines'Access, Builtin (Editor));
+           (Idle_Compute_Lines'Access, Editor);
       end if;
    end Activate_Computation;
 

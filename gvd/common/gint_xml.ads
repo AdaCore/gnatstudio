@@ -19,5 +19,6 @@
 -----------------------------------------------------------------------
 
 with Glib.XML;
+pragma Elaborate_All (Glib.XML);
 
 package Gint_Xml is new Glib.XML (Glib.Gint);

@@ -30,6 +30,7 @@
 with Glib; use Glib;
 with Gtk.Widget; use Gtk.Widget;
 with Gtk.Handlers;
+pragma Elaborate_All (Gtk.Handlers);
 
 package body Gtkada.Toolbar is
 

@@ -28,6 +28,7 @@ with Gdk.Pixmap;        use Gdk.Pixmap;
 with Gdk.Window;        use Gdk.Window;
 with Glib;              use Glib;
 with Gtk.Handlers;      use Gtk.Handlers;
+pragma Elaborate_All (Gtk.Handlers);
 with Gtk.Layout;        use Gtk.Layout;
 with Gtk.Menu;          use Gtk.Menu;
 with Gtk.Menu_Item;     use Gtk.Menu_Item;

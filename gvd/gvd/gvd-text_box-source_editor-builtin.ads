@@ -30,6 +30,7 @@ with Gtkada.Types;
 with Language;
 with GVD.Types;
 with GVD.Tooltips;
+pragma Elaborate_All (GVD.Tooltips);
 with Items;
 with Gtk.Text;
 

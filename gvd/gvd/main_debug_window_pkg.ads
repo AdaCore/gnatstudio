@@ -37,6 +37,7 @@ with Gtkada.Toolbar; use Gtkada.Toolbar;
 with GNAT.OS_Lib; use GNAT.OS_Lib;
 with GVD.Types;
 with GVD.Histories;
+pragma Elaborate_All (GVD.Histories);
 with GVD.Memory_View;
 
 package Main_Debug_Window_Pkg is

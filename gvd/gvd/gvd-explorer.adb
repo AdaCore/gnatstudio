@@ -26,6 +26,7 @@ with Gdk.Types;             use Gdk.Types;
 with Gdk.Event;             use Gdk.Event;
 with Gtk.Arguments;         use Gtk.Arguments;
 with Gtk.Ctree;             use Gtk.Ctree;
+pragma Elaborate_All (Gtk.Ctree);
 with Gtk.Enums;             use Gtk.Enums;
 with Gtk.Handlers;          use Gtk.Handlers;
 with Gtk.Menu;              use Gtk.Menu;
