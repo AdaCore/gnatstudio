@@ -1,21 +1,29 @@
 -----------------------------------------------------------------------
---                          G L I D E  I I                           --
 --                                                                   --
---                        Copyright (C) 2001                         --
---                            ACT-Europe                             --
+--                     Copyright (C) 2001                            --
+--                          ACT-Europe                               --
 --                                                                   --
--- GVD is free  software;  you can redistribute it and/or modify  it --
--- under the terms of the GNU General Public License as published by --
--- the Free Software Foundation; either version 2 of the License, or --
--- (at your option) any later version.                               --
+-- This library is free software; you can redistribute it and/or     --
+-- modify it under the terms of the GNU General Public               --
+-- License as published by the Free Software Foundation; either      --
+-- version 2 of the License, or (at your option) any later version.  --
 --                                                                   --
--- This program is  distributed in the hope that it will be  useful, --
--- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
+-- This library is distributed in the hope that it will be useful,   --
+-- but WITHOUT ANY WARRANTY; without even the implied warranty of    --
 -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
--- General Public License for more details. You should have received --
--- a copy of the GNU General Public License along with this library; --
--- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
--- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
+-- General Public License for more details.                          --
+--                                                                   --
+-- You should have received a copy of the GNU General Public         --
+-- License along with this library; if not, write to the             --
+-- Free Software Foundation, Inc., 59 Temple Place - Suite 330,      --
+-- Boston, MA 02111-1307, USA.                                       --
+--                                                                   --
+-- As a special exception, if other files instantiate generics from  --
+-- this unit, or you link this unit with other files to produce an   --
+-- executable, this  unit  does not  by itself cause  the resulting  --
+-- executable to be covered by the GNU General Public License. This  --
+-- exception does not however invalidate any other reasons why the   --
+-- executable file  might be covered by the  GNU Public License.     --
 -----------------------------------------------------------------------
 
 with Glib;                use Glib;
@@ -36,9 +44,9 @@ with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
 with Gtk.Widget;          use Gtk.Widget;
 
 with Glide_Kernel;              use Glide_Kernel;
-with Glide_Kernel.Browsers;     use Glide_Kernel.Browsers;
 with GUI_Utils;                 use GUI_Utils;
 with Browsers.Dependency_Items; use Browsers.Dependency_Items;
+with Browsers.Module;           use Browsers.Module;
 with Layouts;                   use Layouts;
 
 package body Browsers.Canvas is
@@ -346,16 +354,16 @@ package body Browsers.Canvas is
       end if;
    end Open_File;
 
-   ----------------
-   -- To_Browser --
-   ----------------
+   ---------------
+   -- To_Brower --
+   ---------------
 
-   function To_Browser
+   function To_Brower
      (Canvas : access Gtkada.Canvas.Interactive_Canvas_Record'Class)
       return Glide_Browser is
    begin
       return Glide_Browser (Get_Parent (Canvas));
-   end To_Browser;
+   end To_Brower;
 
    -------------------
    -- Selected_Item --
