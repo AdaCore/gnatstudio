@@ -672,7 +672,12 @@ package body External_Editor_Module is
          C => Col_Str (Col_Str'First + 1 .. Col_Str'Last),
          L => Line_Str (Line_Str'First + 1 .. Line_Str'Last),
          E => Extended_Lisp);
-      Path := Locate_Exec_On_Path (Args (Args'First).all);
+
+      if Args'Length /= 0 then
+         Path := Locate_Exec_On_Path (Args (Args'First).all);
+      else
+         return;
+      end if;
 
       if Path = null then
          Insert (Kernel, Args (Args'First).all & " not found on PATH",
