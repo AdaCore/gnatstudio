@@ -38,9 +38,8 @@ with Namet;       use Namet;
 with Stringt;     use Stringt;
 with Types;       use Types;
 with GNAT.OS_Lib; use GNAT.OS_Lib;
+with Ada.Tags;    use Ada.Tags;
 
-with Project_Viewers;    use Project_Viewers;
-with Project_Explorers;  use Project_Explorers;
 with Glide_Main_Window;  use Glide_Main_Window;
 with Gtkada.MDI;         use Gtkada.MDI;
 with Glide_Page;         use Glide_Page;
@@ -53,12 +52,6 @@ with Traces;  use Traces;
 package body Glide_Kernel.Project is
 
    Me : Debug_Handle := Create ("glide_kernel.project");
-
-   --  ??? Preferences
-   Default_Project_Width  : constant := 400;
-   Default_Project_Height : constant := 400;
-
-   Project_Editor_Window_Name : constant String := "Project editor";
 
    ----------------------
    -- Find_Source_File --
@@ -271,43 +264,6 @@ package body Glide_Kernel.Project is
       --  Report the change to every listener
       Project_View_Changed (Handle);
    end Recompute_View;
-
-   -------------------------
-   -- Open_Project_Editor --
-   -------------------------
-
-   procedure Open_Project_Editor
-     (Handle : access Kernel_Handle_Record'Class)
-   is
-      Top        : constant Glide_Window := Glide_Window (Handle.Main_Window);
-      Page       : Glide_Page.Glide_Page :=
-        Glide_Page.Glide_Page (Get_Current_Process (Top));
-      MDI        : constant MDI_Window := Page.Process_Mdi;
-      Child      : MDI_Child;
-      Viewer     : Project_Viewer;
-      Iter       : Child_Iterator := First_Child (MDI);
-   begin
-      if Get_Project (Handle) = Empty_Node then
-         return;
-      end if;
-
-      loop
-         Child := Get (Iter);
-         exit when Child = null
-           or else Get_Title (Child) = Project_Editor_Window_Name;
-         Next (Iter);
-      end loop;
-
-      if Child /= null then
-         Raise_Child (Child);
-         return;
-      end if;
-
-      Gtk_New (Viewer, Handle, Get_Tree (Page.Explorer));
-      Set_Size_Request (Viewer, Default_Project_Width, Default_Project_Height);
-      Child := Put (MDI, Viewer);
-      Set_Title (Child, Project_Editor_Window_Name);
-   end Open_Project_Editor;
 
    ----------------------
    -- Get_Source_Files --
