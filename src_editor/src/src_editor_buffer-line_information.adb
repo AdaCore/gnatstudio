@@ -79,10 +79,6 @@ package body Src_Editor_Buffer.Line_Information is
    --  Return the index of the column corresponding to the identifier.
    --  Create such a column if necessary.
 
-   procedure Side_Column_Changed
-     (Buffer : access Source_Buffer_Record'Class);
-   --  Emit the "side_column_changed" signal.
-
    function Fold_Unfold_Line
      (Buffer : access Source_Buffer_Record'Class;
       Line   : Editable_Line_Type;
@@ -1083,10 +1079,10 @@ package body Src_Editor_Buffer.Line_Information is
 
             Buffer.Last_Editable_Line := Buffer.Last_Editable_Line + EN;
          end if;
-
-         Recalculate_Side_Column_Width (Buffer);
-         Side_Column_Configuration_Changed (Buffer);
       end if;
+
+      Recalculate_Side_Column_Width (Buffer);
+      Side_Column_Configuration_Changed (Buffer);
    end Add_Lines;
 
    ------------------
