@@ -2479,7 +2479,7 @@ package body Debugger.Gdb is
          Mode => Internal);
       Tmp,
       Start_Index,
-      End_Index   : Natural;
+      End_Index   : Integer;
 
    begin
       Start_Index := Disassembled'First;
