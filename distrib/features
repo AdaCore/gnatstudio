@@ -1,5 +1,7 @@
 New features in GPS 1.0.2
 
+- Possibility in the editor to jump to the matching parenthesis/brackets.
+
 - Builds/Run can now be launched on a remote host.
 
 - Goto Spec/Body will now work even if the file was not previously compiled
