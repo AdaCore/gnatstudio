@@ -22,8 +22,13 @@ with Glib.Properties.Creation; use Glib.Properties.Creation;
 with Default_Preferences;      use Default_Preferences;
 with Gdk.Color;
 with Pango.Font;
+with GVD.Preferences;
 
 package Glide_Kernel.Preferences is
+
+   type GPS_Preferences_Record is new GVD.Preferences.GVD_Preferences_Manager
+     with private;
+   type GPS_Preferences is access GPS_Preferences_Record'Class;
 
    procedure Edit_Preferences (Kernel : access Kernel_Handle_Record'Class);
    --  Graphically edit the preferences
@@ -133,43 +138,9 @@ package Glide_Kernel.Preferences is
    VCS_Commit_Log_Check : Param_Spec_String;
    CVS_Command : Param_Spec_String;
 
-   -- Debugger --
-   --  General
-   Break_On_Exception : Param_Spec_Boolean;
+   --  Debugger preferences are registered in GVD.Preferences
 
-   --  Assembly Window
-   Asm_Highlight_Color : Param_Spec_Color;
-   Assembly_Range_Size : Param_Spec_Int;
-
-   --  Data Window
-   Xref_Color               : Param_Spec_Color;
-   Title_Color              : Param_Spec_Color;
-   Change_Color             : Param_Spec_Color;
-   Selection_Color          : Param_Spec_Color;
-   Thaw_Bg_Color            : Param_Spec_Color;
-   Freeze_Bg_Color          : Param_Spec_Color;
-   Debugger_Data_Title_Font : Param_Spec_Font;
-   Value_Font               : Param_Spec_Font;
-   Command_Font             : Param_Spec_Font;
-   Type_Font                : Param_Spec_Font;
-   Hide_Big_Items           : Param_Spec_Boolean;
-   Big_Item_Height          : Param_Spec_Int;
-   Default_Detect_Aliases   : Param_Spec_Boolean;
-
-   --  Command Window
-   Debugger_Highlight_Color : Param_Spec_Color;
-   Debugger_Command_Font : Param_Spec_Font;
-
-   --  Memory Window
-   Memory_View_Font         : Param_Spec_Font;
-   Memory_View_Color        : Param_Spec_Color;
-   Memory_Highlighted_Color : Param_Spec_Color;
-   Memory_Selected_Color    : Param_Spec_Color;
-   Memory_Modified_Color    : Param_Spec_Color;
-
-   -- Helpers --
-   List_Processes  : Param_Spec_String;
-   Remote_Protocol : Param_Spec_String;
-   Remote_Copy     : Param_Spec_String;
-
+private
+   type GPS_Preferences_Record is new GVD.Preferences.GVD_Preferences_Manager
+     with null record;
 end Glide_Kernel.Preferences;
