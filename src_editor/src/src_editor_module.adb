@@ -1045,23 +1045,24 @@ package body Src_Editor_Module is
       File  : constant String := Get_String (Nth (Args, 1));
    begin
       if Id.Display_Line_Numbers then
-         Create_Line_Information_Column
-           (Kernel,
-            File,
-            Src_Editor_Module_Name,
-            Stick_To_Data => False,
-            Every_Line    => True);
+         if File /= "" then
+            Create_Line_Information_Column
+              (Kernel,
+               File,
+               Src_Editor_Module_Name,
+               Stick_To_Data => False,
+               Every_Line    => True);
 
-         Infos := new Line_Information_Array (1 .. 1);
-         Infos (1).Text := new String'("   1");
+            Infos := new Line_Information_Array (1 .. 1);
+            Infos (1).Text := new String'("   1");
 
-         Add_Line_Information
-           (Kernel,
-            File,
-            Src_Editor_Module_Name,
-            Infos);
-
-         Unchecked_Free (Infos);
+            Add_Line_Information
+              (Kernel,
+               File,
+               Src_Editor_Module_Name,
+               Infos);
+            Unchecked_Free (Infos);
+         end if;
       end if;
 
       Fill_Marks (Kernel, File);
