@@ -22,7 +22,6 @@ with Glib; use Glib;
 with Gdk.Input;
 with Gdk.Types;
 with Gdk.Color;    use Gdk.Color;
-with Gdk.Font;     use Gdk.Font;
 with Gtk.Text;     use Gtk.Text;
 with Gtk.Main;     use Gtk.Main;
 with Gtk.Widget;   use Gtk.Widget;
@@ -41,6 +40,7 @@ with Debugger.Jdb;    use Debugger.Jdb;
 with Odd.Strings;     use Odd.Strings;
 with Process_Proxies; use Process_Proxies;
 with Gtkada.Code_Editors; use Gtkada.Code_Editors;
+with Gtk.Extra.PsFont; use Gtk.Extra.PsFont;
 
 with Main_Debug_Window_Pkg;  use Main_Debug_Window_Pkg;
 
@@ -50,11 +50,32 @@ pragma Warnings (Off, Debugger.Jdb);
 
 package body Odd.Process is
 
+   ---------------
+   -- Constants --
+   ---------------
+
    Editor_Font_Size : constant Gint := 10;
    --  Size of the font used in the editor.
 
    Editor_Font : constant String := "Courier";
    --  Font used in the editor.
+
+   Comments_Color : constant String := "red";
+   --  Color used for comments.
+
+   Strings_Color  : constant String := "brown";
+   --  Color used for strings.
+
+   Keywords_Color : constant String := "blue";
+   --  Color used for keywords.
+
+   Debugger_Font_Size : constant Gint := 10;
+   --  Size of the font used in the debugger text window.
+
+   Debugger_Font : constant String := "Courier";
+   --  Font used in the debugger text window.
+
+
 
    function To_Gint is new Unchecked_Conversion (File_Descriptor, Gint);
 
@@ -99,7 +120,7 @@ package body Odd.Process is
             --  function is called.
 
             if Get_Descriptor
-              (Get_Process (Process.Debugger.all)).all = Descriptor
+              (Get_Process (Process.Debugger)).all = Descriptor
             then
                return Process;
             end if;
@@ -118,18 +139,34 @@ package body Odd.Process is
       Str        : String)
    is
       Process    : Debugger_Process_Tab := Convert (Descriptor);
-      Font       : Gdk_Font;
    begin
-      Freeze (Process.Debugger_Text);
-      Load (Font, "-adobe-helvetica-bold-*-*-*-*-140-*-*-*-*-*-*");
-      Insert (Process.Debugger_Text,
-              Font,
-              Black (Get_System),
-              White (Get_System),
-              Str);
-      Process.Edit_Pos := Get_Length (Process.Debugger_Text);
-      Thaw (Process.Debugger_Text);
-      Set_Position (Process.Debugger_Text, Gint (Process.Edit_Pos));
+      --  Do not show the output if we have an internal command
+
+      if not Is_Internal_Command (Get_Process (Process.Debugger)) then
+         Freeze (Process.Debugger_Text);
+
+         --  ??? There seems to be a bug in Gtk_Text, where the newline
+         --  character is ignored if it follows a blank space.
+         --  The following line is a workaround.
+
+--          if Str (Str'Last - 1 .. Str'Last) = " " & ASCII.LF then
+--             Insert (Process.Debugger_Text,
+--                     Get_Gdkfont (Debugger_Font, Debugger_Font_Size),
+--                     Black (Get_System),
+--                     White (Get_System),
+--                     Str & ASCII.LF);
+--          else
+            Insert (Process.Debugger_Text,
+                    Get_Gdkfont (Debugger_Font, Debugger_Font_Size),
+                    Black (Get_System),
+                    White (Get_System),
+                    Str);
+--          end if;
+         Process.Edit_Pos := Get_Length (Process.Debugger_Text);
+         Thaw (Process.Debugger_Text);
+         Set_Point (Process.Debugger_Text, Process.Edit_Pos - 1);
+--         Set_Position (Process.Debugger_Text, Gint (Process.Edit_Pos) - 1);
+      end if;
    end Text_Output_Handler;
 
    ----------------------
@@ -144,11 +181,17 @@ package body Odd.Process is
       Result : Expect_Match;
    begin
       --  Get everything that is available (and transparently call the
-      --  output filters set for Pid). Since this function might be called
-      --  when the process is killed on exit, we have to test whether it is
-      --  still valid.
+      --  output filters set for Pid).
+      --  Nothing should be done if we are already processing a command
+      --  (ie somewhere we are blocked on a Wait call for this Debugger),
+      --  since otherwise that Wait won't see the output and will lose some
+      --  output. We don't have to do that anyway, since the other Wait will
+      --  indirectly call the output filter.
 
-      Wait (Get_Process (Debugger.Debugger.all), Result, ".+", Timeout => 0);
+      if not Command_In_Process (Get_Process (Debugger.Debugger)) then
+         Wait (Get_Process (Debugger.Debugger), Result, ".+",
+               Timeout => 0);
+      end if;
    end Output_Available;
 
    ---------------------
@@ -176,7 +219,7 @@ package body Odd.Process is
       Process.Debugger := new Gdb_Debugger;
       --  Process.Debugger := new Jdb_Debugger;
 
-      Spawn (Process.Debugger.all, Params, new Gui_Process_Proxy, "");
+      Spawn (Process.Debugger, Params, new Gui_Process_Proxy, "");
 
       --  Add a new page to the notebook
 
@@ -199,23 +242,24 @@ package body Odd.Process is
       Process_User_Data.Set (Process.Process_Paned, Process.all'Access);
 
       Add_Output_Filter
-        (Get_Descriptor (Get_Process (Process.Debugger.all)).all,
+        (Get_Descriptor (Get_Process (Process.Debugger)).all,
          Text_Output_Handler'Access);
       Id := My_Input.Add
-        (To_Gint (Get_Output_Fd
-                  (Get_Descriptor (Get_Process (Process.Debugger.all)).all)),
+        (To_Gint
+         (Get_Output_Fd
+          (Get_Descriptor (Get_Process (Process.Debugger)).all)),
          Gdk.Types.Input_Read,
          Output_Available'Access,
          My_Input.Data_Access (Process));
 
       Initialize (Process.Debugger);
 
-      Configure (Process.Editor_Text, Editor_Font, Editor_Font_Size, Stop_Xpm,
-                 Comments_Color => "red",
-                 Strings_Color  => "brown",
-                 Keywords_Color => "blue");
+      Configure (Process.Editor_Text, Editor_Font, Editor_Font_Size, stop_xpm,
+                 Comments_Color => Comments_Color,
+                 Strings_Color  => Strings_Color,
+                 Keywords_Color => Keywords_Color);
       Set_Current_Language (Process.Editor_Text,
-                            Get_Language (Process.Debugger.all));
+                            Get_Language (Process.Debugger));
       Load_File (Process.Editor_Text, "odd_main.adb", Process.Debugger);
 
       return Process;
@@ -233,7 +277,11 @@ package body Odd.Process is
       Command2 : String := To_Lower (Command);
       First    : Natural := Command2'First;
 
+      Result   : Expect_Match;
    begin
+
+      Set_Internal_Command (Get_Process (Debugger.Debugger), False);
+
       --  Command has been converted to lower-cases, but the new version
       --  should be used only to compare with our standard list of commands.
       --  We should pass the original string to the debugger, in case we are
@@ -249,15 +297,18 @@ package body Odd.Process is
          declare
             Var : String := Command (First + 14 .. Command2'Last);
          begin
-            The_Type := Parse_Type (Debugger.Debugger.all, Var);
+            Set_Internal_Command (Get_Process (Debugger.Debugger), True);
+            The_Type := Parse_Type (Debugger.Debugger, Var);
 
             if The_Type /= null then
-               Parse_Value (Debugger.Debugger.all, Var, The_Type);
+               Parse_Value (Debugger.Debugger, Var, The_Type);
 
                Gtk_New (Item, Get_Window (Debugger.Data_Canvas),
                         Var, The_Type, Auto_Refresh => True);
                Put (Debugger.Data_Canvas, Item);
             end if;
+            Set_Internal_Command (Get_Process (Debugger.Debugger), False);
+            --  ??? Problem: this hides the end prompt...
          end;
 
       elsif First + 10 <= Command2'Length
@@ -266,15 +317,18 @@ package body Odd.Process is
          declare
             Var : String := Command (First + 12 .. Command2'Last);
          begin
-            The_Type := Parse_Type (Debugger.Debugger.all, Var);
+            Set_Internal_Command (Get_Process (Debugger.Debugger), True);
+            The_Type := Parse_Type (Debugger.Debugger, Var);
 
             if The_Type /= null then
-               Parse_Value (Debugger.Debugger.all, Var, The_Type);
+               Parse_Value (Debugger.Debugger, Var, The_Type);
 
                Gtk_New (Item, Get_Window (Debugger.Data_Canvas),
                         Var, The_Type, Auto_Refresh => False);
                Put (Debugger.Data_Canvas, Item);
             end if;
+            Set_Internal_Command (Get_Process (Debugger.Debugger), False);
+            --  ??? Problem: this hides the end prompt...
          end;
 
       elsif Command2 = "quit" then
@@ -282,8 +336,14 @@ package body Odd.Process is
 
       else
          --  Regular debugger command, send it.
-         Send (Get_Process (Debugger.Debugger.all), Command);
+         Send (Get_Process (Debugger.Debugger), Command);
+
+         --  ??? We should have a function for this in debugger.ads
+         Wait (Get_Process (Debugger.Debugger), Result, "\(gdb\)",
+               Timeout => -1);
       end if;
+
+      Set_Internal_Command (Get_Process (Debugger.Debugger), True);
    end Process_User_Command;
 
 end Odd.Process;
