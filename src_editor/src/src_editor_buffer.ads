@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                          G L I D E  I I                           --
 --                                                                   --
---                        Copyright (C) 2001                         --
+--                     Copyright (C) 2001 - 2002                     --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GLIDE is free software; you can redistribute it and/or modify  it --
@@ -36,6 +36,8 @@ with Gtkada.Types;
 with Language;
 with Language_Handlers;
 with Src_Highlighting;
+
+with Commands;         use Commands;
 
 package Src_Editor_Buffer is
 
@@ -181,15 +183,34 @@ package Src_Editor_Buffer is
    --  The caller is responsible for freeing the memory (with g_free).
 
    procedure Insert
-     (Buffer  : access Source_Buffer_Record;
-      Line    : Gint;
-      Column  : Gint;
-      Text    : String);
+     (Buffer      : access Source_Buffer_Record;
+      Line        : Gint;
+      Column      : Gint;
+      Text        : String;
+      Enable_Undo : Boolean := True);
    --  Insert the given text in at the specified position.
    --
    --  The validity of the given position must be verified before invoking this
    --  procedure. An incorrect position  will cause an Assertion_Failure when
-   --  compiled with assertion checks, or an undefined behavior otherwise.
+   --  compiled with assertion checks, or an undefined behavior
+   --  otherwise.
+   --  If Enable_Undo is True, then the insertion action will be
+   --  stored in the undo/redo queue.
+
+   procedure Delete
+     (Buffer      : access Source_Buffer_Record;
+      Line        : Gint;
+      Column      : Gint;
+      Length      : Gint;
+      Enable_Undo : Boolean := True);
+   --  Delete Length caracters after the specified position.
+   --
+   --  The validity of the given position must be verified before invoking this
+   --  procedure. An incorrect position  will cause an Assertion_Failure when
+   --  compiled with assertion checks, or an undefined behavior
+   --  otherwise.
+   --  If Enable_Undo is True, then the deletion action will be
+   --  stored in the undo/redo queue.
 
    procedure Replace_Slice
      (Buffer       : access Source_Buffer_Record;
@@ -279,6 +300,17 @@ package Src_Editor_Buffer is
    --  warnings.
    --  ??? Remove this procedure when the problem is fixed.
 
+   procedure End_Action (Buffer : access Source_Buffer_Record);
+   --  This procedure should be called every time that an external
+   --  event should cancel the current user action : focus switching
+   --  to another window, cursor moved, etc.
+
+   procedure Undo (Buffer : access Source_Buffer_Record);
+   --  Undo last user command.
+
+   procedure Redo (Buffer : access Source_Buffer_Record);
+   --  Redo last undone command.
+
 private
 
    type Source_Buffer_Record is new Gtk.Text_Buffer.Gtk_Text_Buffer_Record with
@@ -297,6 +329,13 @@ private
       --  lot of subprograms use it.
 
       Inserting     : Boolean := False;
+      --  Used to avoid recursion, when
+
+      Queue           : Command_Queue;
+      --  Contains the queue of editor commands for this editor.
+
+      Current_Command : Command_Access;
+      --  The current editor command.
    end record;
 
 end Src_Editor_Buffer;
