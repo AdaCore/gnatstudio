@@ -251,19 +251,13 @@ package Main_Debug_Window_Pkg.Callbacks is
    procedure On_Display_1_Activate
      (Object : access Gtk_Menu_Item_Record'Class);
 
-   procedure On_Detect_Aliases1_Activate
-     (Object : access Gtk_Check_Menu_Item_Record'Class);
-
    procedure On_Display_Local_Variables1_Activate
-     (Object : access Gtk_Check_Menu_Item_Record'Class);
+     (Object : access Gtk_Widget_Record'Class);
 
    procedure On_Display_Arguments1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class);
+     (Object : access Gtk_Widget_Record'Class);
 
    procedure On_More_Status_Display1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class);
-
-   procedure On_Align_On_Grid1_Activate
      (Object : access Gtk_Menu_Item_Record'Class);
 
    procedure On_Rotate_Graph1_Activate

@@ -1029,26 +1029,21 @@ package body Main_Debug_Window_Pkg.Callbacks is
       null;
    end On_Display_1_Activate;
 
-   ---------------------------------
-   -- On_Detect_Aliases1_Activate --
-   ---------------------------------
-
-   procedure On_Detect_Aliases1_Activate
-     (Object : access Gtk_Check_Menu_Item_Record'Class)
-   is
-   begin
-      null;
-   end On_Detect_Aliases1_Activate;
-
    ------------------------------------------
    -- On_Display_Local_Variables1_Activate --
    ------------------------------------------
 
    procedure On_Display_Local_Variables1_Activate
-     (Object : access Gtk_Check_Menu_Item_Record'Class)
+     (Object : access Gtk_Widget_Record'Class)
    is
+      Top : Main_Debug_Window_Access := Main_Debug_Window_Access (Object);
+      Process : Debugger_Process_Tab :=
+        Process_User_Data.Get (Get_Child (Get_Cur_Page (Top.Process_Notebook)));
+      S : String :=
+        "graph display `" & Info_Locals (Process.Debugger) & '`';
    begin
-      null;
+      Text_Output_Handler (Process, S & ASCII.LF, Is_Command => True);
+      Process_User_Command (Process, S);
    end On_Display_Local_Variables1_Activate;
 
    ------------------------------------
@@ -1056,10 +1051,16 @@ package body Main_Debug_Window_Pkg.Callbacks is
    ------------------------------------
 
    procedure On_Display_Arguments1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class)
+     (Object : access Gtk_Widget_Record'Class)
    is
+      Top : Main_Debug_Window_Access := Main_Debug_Window_Access (Object);
+      Process : Debugger_Process_Tab :=
+        Process_User_Data.Get (Get_Child (Get_Cur_Page (Top.Process_Notebook)));
+      S : String :=
+        "graph display `" & Info_Args (Process.Debugger) & '`';
    begin
-      null;
+      Text_Output_Handler (Process, S & ASCII.LF, Is_Command => True);
+      Process_User_Command (Process, S);
    end On_Display_Arguments1_Activate;
 
    --------------------------------------
@@ -1072,17 +1073,6 @@ package body Main_Debug_Window_Pkg.Callbacks is
    begin
       null;
    end On_More_Status_Display1_Activate;
-
-   --------------------------------
-   -- On_Align_On_Grid1_Activate --
-   --------------------------------
-
-   procedure On_Align_On_Grid1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class)
-   is
-   begin
-      null;
-   end On_Align_On_Grid1_Activate;
 
    -------------------------------
    -- On_Rotate_Graph1_Activate --
