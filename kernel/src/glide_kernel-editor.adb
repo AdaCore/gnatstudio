@@ -24,6 +24,8 @@ with Glide_Main_Window;    use Glide_Main_Window;
 with Glide_Page;           use Glide_Page;
 with GNAT.OS_Lib;          use GNAT.OS_Lib;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
+with Gint_Xml;             use Gint_Xml;
+with Glib;                 use Glib;
 with Gtk.Box;              use Gtk.Box;
 with Gtk.Main;             use Gtk.Main;
 with Gtk.Widget;           use Gtk.Widget;
@@ -63,6 +65,14 @@ package body Glide_Kernel.Editor is
    --  file does not exist, create an empty editor only if Create_New is True.
    --  ??? Need more comments.
 
+   function Create_File_Editor
+     (Kernel     : access Kernel_Handle_Record'Class;
+      File       : String;
+      Create_New : Boolean := True) return Source_Editor_Box;
+   --  Create a new text editor that edits File.
+   --  No check is done to make sure that File is not already edited
+   --  elsewhere. The resulting editor is not put in the MDI window.
+
    function Get_Current_Editor
      (Kernel : access Kernel_Handle_Record'Class) return Source_Editor_Box;
    --  Return the source editor that has currently the focus in the MDI
@@ -89,6 +99,14 @@ package body Glide_Kernel.Editor is
 
    function Location_Callback (D : Location_Idle_Data) return Boolean;
    --  Idle callback used to scroll the source editors.
+
+   function Load_Desktop
+     (Node : Gint_Xml.Node_Ptr; User : Kernel_Handle)
+      return Gtk_Widget;
+   function Save_Desktop
+     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class)
+      return Node_Ptr;
+   --  Support functions for the MDI
 
    ------------------------
    -- Get_Current_Editor --
@@ -235,6 +253,45 @@ package body Glide_Kernel.Editor is
       end if;
    end New_View;
 
+   ------------------------
+   -- Create_File_Editor --
+   ------------------------
+
+   function Create_File_Editor
+     (Kernel     : access Kernel_Handle_Record'Class;
+      File       : String;
+      Create_New : Boolean := True) return Source_Editor_Box
+   is
+      Success     : Boolean;
+      Editor      : Source_Editor_Box;
+      File_Exists : Boolean;
+   begin
+      if File = "" then
+         return null;
+      end if;
+
+      --  At this point, we know that this file has not been opened yet,
+      --  so we need to open it.
+
+      File_Exists := Is_Regular_File (File);
+
+      --  Create a new editor only if the file exists or we are asked to
+      --  create a new empty one anyway.
+      if File_Exists or else Create_New then
+         Gtk_New (Editor, Kernel_Handle (Kernel));
+      end if;
+
+      if File_Exists then
+         Load_File (Editor, File, Success => Success);
+         if not Success then
+            Destroy (Editor);
+            Editor := null;
+         end if;
+      end if;
+
+      return Editor;
+   end Create_File_Editor;
+
    ---------------
    -- Open_File --
    ---------------
@@ -244,15 +301,11 @@ package body Glide_Kernel.Editor is
       File       : String;
       Create_New : Boolean := True) return Source_Editor_Box
    is
-      Top         : constant Glide_Window := Glide_Window (Kernel.Main_Window);
-      MDI         : constant MDI_Window :=
-        Glide_Page.Glide_Page (Get_Current_Process (Top)).Process_Mdi;
+      MDI         : constant MDI_Window := Get_MDI (Kernel);
       Short_File  : String := Base_Name (File);
-      Success     : Boolean;
       Editor      : Source_Editor_Box;
       Box         : Source_Box;
       Child       : MDI_Child;
-      File_Exists : Boolean;
       Iter        : Child_Iterator := First_Child (MDI);
 
    begin
@@ -274,23 +327,7 @@ package body Glide_Kernel.Editor is
          return Source_Box (Get_Widget (Child)).Editor;
       end if;
 
-      --  At this point, we know that this file has not been opened yet,
-      --  so we need to open it.
-
-      File_Exists := Is_Regular_File (File);
-
-      --  Create a new editor only if the file exists or we are asked to
-      --  create a new empty one anyway.
-      if File_Exists or else Create_New then
-         Gtk_New (Editor, Top.Kernel);
-      end if;
-
-      if File_Exists then
-         Load_File (Editor, File, Success => Success);
-         if not Success then
-            Destroy (Editor);
-         end if;
-      end if;
+      Editor := Create_File_Editor (Kernel, File, Create_New);
 
       --  If we have created an editor, put it into a box, and give it
       --  to the MDI to handle
@@ -646,4 +683,60 @@ package body Glide_Kernel.Editor is
 
    end Find_Dependencies;
 
+   ------------------
+   -- Load_Desktop --
+   ------------------
+
+   function Load_Desktop
+     (Node : Gint_Xml.Node_Ptr; User : Kernel_Handle)
+      return Gtk_Widget
+   is
+      Box : Source_Editor_Box;
+      Src : Source_Box := null;
+      File : Glib.String_Ptr;
+   begin
+      if Node.Tag.all = "Source_Editor" then
+         File := Get_Field (Node, "File");
+         if File /= null then
+            Box := Create_File_Editor (User, File.all, False);
+            Gtk_New (Src, Box);
+            Attach (Box, Src);
+         end if;
+
+         return Gtk_Widget (Src);
+      end if;
+      return null;
+   end Load_Desktop;
+
+   ------------------
+   -- Save_Desktop --
+   ------------------
+
+   function Save_Desktop
+     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class)
+     return Node_Ptr
+   is
+      N, Child : Node_Ptr;
+   begin
+      if Widget.all in Source_Box_Record'Class then
+         N := new Node;
+         N.Tag := new String' ("Source_Editor");
+
+         Child := new Node;
+         Child.Tag := new String' ("File");
+         Child.Value := new String'
+           (Get_Filename (Source_Box (Widget).Editor));
+         Add_Child (N, Child);
+
+         return N;
+      end if;
+
+      return null;
+   end Save_Desktop;
+
+begin
+   --  ??? This should really be in an editor module, but it requires access to
+   --  ??? the type Editor_Box
+   Glide_Kernel.Kernel_Desktop.Register_Desktop_Functions
+     (Save_Desktop'Access, Load_Desktop'Access);
 end Glide_Kernel.Editor;
