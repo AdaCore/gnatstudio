@@ -244,6 +244,10 @@ package body Glide_Kernel.Project is
          return;
       end if;
 
+      --  Close all children before loading the new projet, in case a new
+      --  editor needs to be loaded to display error messages
+      Close_All_Children (Kernel);
+
       Load (Registry           => Kernel.Registry.all,
             Root_Project_Path  => Project,
             Errors             => Report_Error'Unrestricted_Access,
@@ -257,7 +261,6 @@ package body Glide_Kernel.Project is
       Recompute_View (Kernel);
 
       --  Reload the desktop, in case there is a project-specific setup already
-      Close_All_Children (Kernel);
       Had_Project_Desktop := Load_Desktop (Kernel);
 
       Reset_Title (Glide_Window (Kernel.Main_Window));
