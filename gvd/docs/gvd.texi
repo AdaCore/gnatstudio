@@ -1017,6 +1017,10 @@ in the canvas, you can either click on the corresponding icon in the data
 window, or use the contextual menu for the specific item (see
 @ref{The Data Window} for more information).
 
+     @item Print @i{selection}.all
+Dereference the selection (or by default the name pointed by the cursor) and
+print the value in the debugger console.
+
      @item View memory at &@i{selection}
 Bring up the memory view dialog and explore memory at the address of the 
 selection.
