@@ -43,6 +43,16 @@ Known Problems fixed in GPS 1.2.0
   Workaround: Change the current directory the the desired drive before using
               the directory selector, or type the full path directly.
 
+- C216-001 Inconsistent behavior when exiting with unsaved files
+  Problem:    If you have modified files and exit GPS, a confirmation dialog
+              asking whether the files should be saved is displayed. If you
+              cancel this dialog, and later exit GPS again, no dialog will
+              be displayed for saving the modified file, unless the file has
+              been modified again since the last exit. Similarly, the 'All'
+              button will not work.
+  Workaround: Save the file explicitely, or use the menu File->Save...->All
+              before exiting.
+
 - C130-023 Crash when opening multiple new files
   Problem:    When opening new files using the menu File->New or the
               toolbar icon, opening multiple new files when the line numbers
