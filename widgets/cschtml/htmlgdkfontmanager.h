@@ -34,6 +34,11 @@ typedef struct _HTMLGdkFontManager HTMLGdkFontManager;
 HTMLGdkFontManager *html_gdk_font_manager_new  (void);
 void html_gdk_font_manager_destroy (HTMLGdkFontManager *manager);
 
-GdkFont *html_gdk_font_manager_get_font(HTMLGdkFontManager *manager, CscHTMLFontStyle style, const gchar *face);
+/* Return a newly allocated font matching style.
+   FACE might contain several font names, separates by commas. This function
+   will return the first font that can be allocated with style */
+GdkFont *html_gdk_font_manager_get_font
+   (HTMLGdkFontManager *manager, CscHTMLFontStyle style, const gchar *face);
+
 
 #endif /* _HTMLGDKFONTMANAGER_H_ */
