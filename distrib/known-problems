@@ -5,6 +5,12 @@ Known Problems fixed in GPS 1.4.1
               customization file, the command and its output were not visible in              the Messages window
   Workaround: Do an explicit call to "echo" if your custom action
                                                                                 
+- CC16-004 GPS crashes when it is launched by dbl-clicking Ada file on NT
+  Problem:    When GPS is launched by dbl-clicking an Ada source file in
+              Windows Explorer, "inconsistent state" message is displayed and
+              GPS terminates.
+  Workaround: Launch GPS directly
+
 - CC11-011 Key bindings not working when num-lock or caps-lock is turned on.
   Problem:    When using user-configured key shortcuts, the shortcuts do not
               work when caps-lock or num-lock is enabled on the keyboard.
