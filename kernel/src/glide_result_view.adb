@@ -797,8 +797,7 @@ package body Glide_Result_View is
 
       Gtk_New (Scrolled);
       Set_Policy
-        (Scrolled,
-         Gtk.Enums.Policy_Automatic, Gtk.Enums.Policy_Always);
+        (Scrolled, Gtk.Enums.Policy_Automatic, Gtk.Enums.Policy_Always);
       Add (Scrolled, View.Tree);
 
       Add (View, Scrolled);
