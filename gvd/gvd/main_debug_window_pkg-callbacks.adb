@@ -232,7 +232,10 @@ package body Main_Debug_Window_Pkg.Callbacks is
 
       declare
          S : constant String :=
-           To_Unix_Pathname (File_Selection_Dialog ("Select Core File"));
+           To_Unix_Pathname (File_Selection_Dialog (-"Select Core File"));
+         --  ??? To_Unix_Pathname should only be called for debuggers that
+         --  expect unix pathname like gdb.
+
       begin
          if Tab.Descriptor.Remote_Host /= null
            or else Is_Regular_File (S)
@@ -446,7 +449,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
 
       declare
          Dir : constant String := To_Unix_Pathname (File_Selection_Dialog
-           (Title       => "Directory Selection",
+           (Title       => -"Directory Selection",
             Dir_Only    => True,
             Must_Exist  => True));
 
