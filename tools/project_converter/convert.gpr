@@ -13,6 +13,6 @@ project Convert is
    end Compiler;
 
    package Linker is
-      for Default_Switches ("Ada") use ("../../common/obj/update_path.o");
+      for Default_Switches ("Ada") use ("--LINK=../../../glide/obj/gpslink");
    end Linker;
 end Convert;
