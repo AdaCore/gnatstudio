@@ -162,15 +162,17 @@ package body Debugger is
      (Debugger    : access Debugger_Root'Class;
       Entity      : String;
       Value       : in out Items.Generic_Type_Access;
+      Format      : Value_Format := Default_Format;
       Value_Found : out Boolean)
    is
-      Type_Str   : constant String := Value_Of (Debugger, Entity);
+      Type_Str   : constant String := Value_Of (Debugger, Entity, Format);
       Index      : Natural := Type_Str'First;
       Repeat_Num : Positive;
 
    begin
       Reset_Recursive (Value);
       Value_Found := Type_Str'Length /= 0;
+
       if Value_Found then
          Parse_Value
            (Language_Debugger_Access (Debugger.The_Language),
@@ -689,9 +691,11 @@ package body Debugger is
             return;
          end if;
 
-         Button := Message_Dialog
-           (-"The underlying debugger died unexpectedly. Closing it",
-            Error, Button_OK);
+         Button :=
+           Message_Dialog
+             (Expect_Out (Get_Process (Debugger)) & ASCII.LF &
+              (-"The underlying debugger died unexpectedly. Closing it"),
+              Error, Button_OK, Button_OK);
          Set_Command_In_Process (Get_Process (Debugger), False);
          Set_Busy (Process, False);
          Unregister_Dialog (Process);
