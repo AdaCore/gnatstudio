@@ -41,9 +41,11 @@ package Creation_Wizard is
    --  This function is called when the user has pressed Finish in the wizard.
    --  It should update the project's attributes as per the settings in the
    --  page.
-   --  Set the project to No_Project to cancel the generation.
    --  Changed is set to True if some modification was actually done, left
    --  unchanged otherwise.
+   --  Raise Invalid_Project_Page to cancel the generation of the project
+
+   Invalid_Project_Page : exception;
 
    type Project_Wizard_Record is
       new Wizards.Wizard_Record with private;

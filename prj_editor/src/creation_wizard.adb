@@ -286,8 +286,7 @@ package body Creation_Wizard is
             Dialog_Type => Error,
             Buttons     => Button_Yes or Button_No) = Button_No
          then
-            Project := No_Project;
-            return;
+            raise Invalid_Project_Page;
          end if;
 
          if not Is_Directory (Location) then
@@ -348,16 +347,15 @@ package body Creation_Wizard is
             Scenario_Variables => Projects.No_Scenario,
             Project            => Wiz.Project,
             Changed            => Changed);
-         if Wiz.Project = No_Project then
-            Pop_State (Get_Kernel (Wiz));
-            return;
-         end if;
       end loop;
 
       Tmp := Save_Single_Project (Get_Kernel (Wiz), Wiz.Project);
       Pop_State (Get_Kernel (Wiz));
 
    exception
+      when Invalid_Project_Page =>
+         Pop_State (Get_Kernel (Wiz));
+
       when E : others =>
          Trace (Exception_Handle, "Unexpected exception: "
                 & Exception_Information (E));
