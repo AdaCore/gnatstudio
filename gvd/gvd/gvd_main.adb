@@ -230,8 +230,7 @@ procedure GVD_Main is
       if GVD.Can_Output then
          Put_Line (Standard_Error, -"Bug detected in GVD");
          Put_Line (Standard_Error,
-                   -"Please report to gvd-devel@lists.act-europe.fr");
-         Put_Line (Standard_Error, -("with the contents of the file ") &
+                   -"Please report with the contents of the file " &
                    Dir.all & Directory_Separator & "log");
          Put_Line (Standard_Error, -"the following information:");
          Put_Line (Standard_Error, (-"Version: ") & GVD.Version);
@@ -243,8 +242,7 @@ procedure GVD_Main is
       end if;
 
       Button := Message_Dialog
-        (-"Please report to gvd-devel@lists.act-europe.fr" & ASCII.LF &
-         (-"with the contents of the file ") &
+        (-"Please report with the contents of the file " &
          Dir.all & Directory_Separator & "log" & ASCII.LF &
          (-"the following information:") & ASCII.LF &
          (-"Version: ") & GVD.Version & ASCII.LF &
