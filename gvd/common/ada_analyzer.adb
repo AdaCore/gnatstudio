@@ -22,9 +22,11 @@ with Generic_Stack;
 with String_Utils;            use String_Utils;
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 with Glib.Unicode;            use Glib.Unicode;
-with Indent_Stack;            use Indent_Stack;
+with Indent_Stack;
 
 package body Ada_Analyzer is
+
+   use Indent_Stack.Stack;
 
    pragma Suppress (All_Checks);
    --  For efficiency
@@ -219,31 +221,34 @@ package body Ada_Analyzer is
       --  ??? It would be nice to merge the fields Declaration,
       --  Type_Declaration and Package_Declaration at some point.
 
-      Record_Type   : Boolean := False;
+      Record_Type         : Boolean := False;
       --  Is it a record type definition ?
 
-      Tagged_Type   : Boolean := False;
+      Tagged_Type         : Boolean := False;
       --  Is it a tagged type definition ?
 
-      Identifier    : String (1 .. Max_Identifier);
+      Identifier          : String (1 .. Max_Identifier);
       --  Name of the enclosing token
       --  The actual name is Identifier (1 .. Ident_Len)
 
-      Ident_Len     : Natural := 0;
+      Ident_Len           : Natural := 0;
       --  Actual length of Indentifier
 
-      Profile_Start : Natural := 0;
+      Profile_Start       : Natural := 0;
       --  Position in the buffer where the profile of the current subprogram
       --  starts.
 
-      Profile_End   : Natural := 0;
+      Profile_End         : Natural := 0;
       --  Position in the buffer where the profile of the current subprogram
       --  ends.
 
-      Sloc          : Source_Location;
+      Align_Colon         : Natural := 0;
+      --  The column on which to align declarations.
+
+      Sloc                : Source_Location;
       --  Source location for this entity
 
-      Sloc_Name     : Source_Location;
+      Sloc_Name           : Source_Location;
       --  Source location for the name of this entity, if relevant
    end record;
    --  Extended information for a token
@@ -581,6 +586,10 @@ package body Ada_Analyzer is
       Tab_Width          : Natural renames Indent_Params.Tab_Width;
       Format_Operators   : constant Boolean :=
         Format and then Indent_Params.Format_Operators;
+      Align_On_Colons    : constant Boolean :=
+        Format and then Indent_Params.Align_On_Colons;
+      Align_On_Arrows    : constant Boolean :=
+        Format and then Indent_Params.Align_On_Arrows;
 
       Buffer_Last        : constant Natural := Buffer'Last;
 
@@ -606,12 +615,11 @@ package body Ada_Analyzer is
       --  Not used for now, but may be useful in the future.
       pragma Unreferenced (Syntax_Error);
 
-      Started             : Boolean           := False;
       Comments_Skipped    : Boolean           := False;
       Token               : Token_Type;
       Prev_Token          : Token_Type        := No_Token;
       Tokens              : Token_Stack.Simple_Stack;
-      Indents             : Indent_Stack.Simple_Stack;
+      Indents             : Indent_Stack.Stack.Simple_Stack;
       Top_Token           : Token_Stack.Generic_Type_Access;
       Casing              : Casing_Type;
       Terminated          : Boolean := False;
@@ -648,6 +656,9 @@ package body Ada_Analyzer is
       --  Sloc is updated to the first occurrence of Char in Buffer, or
       --  Buffer_Last if not found.
 
+      function Look_For (Index : Natural; S : String) return Boolean;
+      --  Return True if Buffer (Index) contains the word S
+
       procedure New_Line (Count : in out Natural);
       pragma Inline (New_Line);
       --  Increment Count and poll if needed (e.g for graphic events).
@@ -677,6 +688,17 @@ package body Ada_Analyzer is
       function Prev_Char (P : Natural) return Natural;
       --  Return the previous char in buffer. P is the current character.
       pragma Inline (Prev_Char);
+
+      function Compute_Alignment
+        (P                  : Natural;
+         Stop_On_Blank_Line : Boolean    := False;
+         Skip_First_Line    : Boolean    := True;
+         Align_On           : Token_Type := Tok_Colon) return Natural;
+      --  Compute the column number for an alignment on Align_On, starting at P
+      --  Align_On can take one of the following values:
+      --  - Tok_Colon
+      --  - Tok_Arrow
+      --  - Tok_Colon_Equal (not supported yet)
 
       procedure Replace_Text
         (First : Natural;
@@ -753,10 +775,10 @@ package body Ada_Analyzer is
             Index := Index + 1;
          end loop;
 
-         if Top (Indents).all = None then
+         if Top (Indents).Level = None then
             Indentation := Num_Spaces;
          else
-            Indentation := Top (Indents).all;
+            Indentation := Top (Indents).Level;
          end if;
 
          if Continuation then
@@ -795,6 +817,144 @@ package body Ada_Analyzer is
                  Line_Start (Buffer, Top_Token.Profile_Start) + 1);
          end if;
       end Indent_Function_Return;
+
+      -----------------------
+      -- Compute_Alignment --
+      -----------------------
+
+      function Compute_Alignment
+        (P                  : Natural;
+         Stop_On_Blank_Line : Boolean    := False;
+         Skip_First_Line    : Boolean    := True;
+         Align_On           : Token_Type := Tok_Colon) return Natural
+      is
+         Alignment        : Natural := 0;
+         New_Align        : Natural;
+         Found_Align      : Boolean := False;
+         J                : Natural;
+         Non_Blank        : Natural := 0;
+         Local_Num_Parens : Natural := 0;
+
+      begin
+         if Align_On /= Tok_Colon
+           and then Align_On /= Tok_Arrow
+         --  and then Align_On /= Tok_Colon_Equal  ??? not supported yet
+         then
+            return 0;
+         end if;
+
+         --  ??? Need to call Compute_Alignment again after blank line and
+         --  Stop_On_Blank_Line is True
+
+         if Skip_First_Line then
+            J := Next_Line (Buffer, P);
+         else
+            J := P;
+         end if;
+
+         Main_Loop :
+         loop
+            exit Main_Loop when J >= Buffer'Last;
+
+            if Non_Blank = 0
+              and then not Is_Blank (Buffer (J))
+            then
+               Non_Blank := J;
+            end if;
+
+            exit Main_Loop when Look_For (J, "begin")
+              or else Look_For (J, "case")
+              or else Look_For (J, "end")
+              or else Look_For (J, "package")
+              or else Look_For (J, "protected")
+              or else Look_For (J, "task")
+              or else Look_For (J, "type");
+
+            case Buffer (J) is
+               when '"' =>
+                  if Buffer (J - 1) /= ''' then
+                     J := J + 1;
+                     Skip_To_Char (Buffer, J, '"');
+                  end if;
+
+               when '-' =>
+                  if Buffer (J + 1) = '-' then
+                     --  Skip comment
+
+                     J := Next_Line (Buffer, J) - 1;
+                     Found_Align := False;
+                     Non_Blank := 0;
+                  end if;
+
+               when '(' =>
+                  if Buffer (J - 1) /= '''
+                    or else Buffer (J + 1) /= '''
+                  then
+                     Local_Num_Parens := Local_Num_Parens + 1;
+                  end if;
+
+               when ')' =>
+                  if Buffer (J - 1) /= ''' then
+                     exit Main_Loop when Local_Num_Parens = 0;
+
+                     Local_Num_Parens := Local_Num_Parens - 1;
+                  end if;
+
+               when ':' =>
+                  if Align_On = Tok_Colon
+                    and then Local_Num_Parens = 0
+                    and then Buffer (J - 1) /= '''
+                    and then not Found_Align
+                  then
+                     Found_Align := True;
+                     New_Align   := J - Non_Blank + 1;
+
+                     if Format_Operators
+                       and then not Is_Blank (Buffer (J - 1))
+                     then
+                        New_Align := New_Align + 1;
+                     end if;
+
+                     Alignment := Natural'Max (Alignment, New_Align);
+                  end if;
+
+               when '=' =>
+                  if Align_On = Tok_Arrow
+                    and then Buffer (J + 1) = '>'
+                    and then Local_Num_Parens = 0
+                    and then not Found_Align
+                  then
+                     Found_Align := True;
+                     New_Align   := J - Non_Blank + 2;
+
+                     if Format_Operators
+                       and then not Is_Blank (Buffer (J - 1))
+                     then
+                        --  ??? Format_Operators may add more than a single
+                        --  blank inside the expression.
+
+                        New_Align := New_Align + 1;
+                     end if;
+
+                     Alignment := Natural'Max (Alignment, New_Align);
+                  end if;
+
+               when ASCII.LF =>
+                  exit Main_Loop when Stop_On_Blank_Line
+                    and then Non_Blank = 0;
+
+                  Found_Align := False;
+                  Non_Blank  := 0;
+
+               when others =>
+                  null;
+            end case;
+
+            J := J + 1;
+         end loop Main_Loop;
+
+         return Alignment;
+      end Compute_Alignment;
 
       -------------------------
       -- Compute_Indentation --
@@ -862,14 +1022,15 @@ package body Ada_Analyzer is
                            and then Top_Tok /= Tok_When
                            and then Top_Tok /= Tok_Select
                            and then Top_Tok /= Tok_Exception)))
-              or else ((Prev_Token = Tok_Is
-                        or else Prev_Token = Tok_Colon_Equal)
+              or else (Prev_Token = Tok_Is
                        and then (Token = Tok_New
                                  or else Token = Tok_Access
                                  or else Token = Tok_Separate
                                  or else (Top_Tok = Tok_Subtype
                                           and then Token /= Tok_Subtype)))
               or else Token = Tok_Array
+              or else Prev_Token = Tok_Colon_Equal
+              or else Prev_Token = Tok_Access
               or else (Prev_Token = Tok_Exit and then Token = Tok_When)
               or else (Prev_Token = Tok_With and then Token = Tok_Private)
               or else (Prev_Token = Tok_Null and then Token = Tok_Record)
@@ -1035,6 +1196,16 @@ package body Ada_Analyzer is
                Sloc.Column := Sloc.Column + 1;
             end if;
          end loop;
+      end Look_For;
+
+      function Look_For (Index : Natural; S : String) return Boolean is
+      begin
+         return Is_Blank (Buffer (Index - 1))
+           and then Index + S'Length < Buffer'Last
+           and then To_Lower (Buffer (Index .. Index + S'Length - 1)) = S
+           and then (Buffer (Index + S'Length) = ';'
+                     or else Buffer (Index + S'Length) = '-'
+                     or else Is_Blank (Buffer (Index + S'Length)));
       end Look_For;
 
       --------------
@@ -1207,6 +1378,7 @@ package body Ada_Analyzer is
          Temp          : Extended_Token;
          Top_Token     : Token_Stack.Generic_Type_Access := Top (Tokens);
          Start_Of_Line : Natural;
+         Index_Next    : Natural;
 
       begin
          Temp.Token       := Reserved;
@@ -1241,6 +1413,12 @@ package body Ada_Analyzer is
             end if;
 
          elsif Prev_Token /= Tok_End and then Reserved = Tok_Case then
+            if Align_On_Colons
+              and then Top_Token.Token = Tok_Record
+            then
+               Temp.Align_Colon := Compute_Alignment (Prec);
+            end if;
+
             Do_Indent (Prec, Num_Spaces);
             Push (Tokens, Temp);
 
@@ -1296,16 +1474,21 @@ package body Ada_Analyzer is
              or else Reserved = Tok_Abstract
              or else Reserved = Tok_Separate)
          then
-            --  ??? The following code crashes on abstract.adb, but would
-            --  handle indentation of e.g. 'is abstract' constructs.
+            --  Handle indentation of e.g.
+            --
+            --  function Abstract_Func
+            --    return String
+            --    is abstract;
 
-            --  if (Top_Token.Token = Tok_Procedure
-            --      or else Top_Token.Token = Tok_Function)
-            --    and then Start_Of_Line /= Line_Start (Top_Token.Sloc.Index)
-            --  then
-            --     Indent_Done := False;
-            --     Indent_Function_Return (Prec);
-            --  end if;
+            if Top_Token.Token = Tok_Function
+              and then
+                (Reserved = Tok_Abstract
+                 or else
+                   Start_Of_Line /= Line_Start (Buffer, Top_Token.Sloc.Index))
+            then
+               Indent_Function_Return (Prec);
+               Num_Spaces := Num_Spaces + Indent_Level;
+            end if;
 
             --  Nothing to pop if we are inside a generic definition, e.g:
             --  generic
@@ -1395,7 +1578,7 @@ package body Ada_Analyzer is
 
             if Reserved = Tok_End then
                case Top_Token.Token is
-                  when Tok_Exception =>
+                  when Tok_When | Tok_Exception =>
                      --  Undo additional level of indentation, as in:
                      --     ...
                      --  exception
@@ -1459,12 +1642,15 @@ package body Ada_Analyzer is
            or else (Prev_Token /= Tok_Or  and then Reserved = Tok_Else)
            or else (Prev_Token /= Tok_And and then Reserved = Tok_Then)
            or else (Prev_Token /= Tok_End and then Reserved = Tok_Select)
-           or else (Top_Token.Token = Tok_Select and then Reserved = Tok_Or)
+           or else (Reserved = Tok_Or
+                    and then (Top_Token.Token = Tok_Select
+                              or else Top_Token.Token = Tok_When))
            or else (Prev_Token /= Tok_End and then Reserved = Tok_Loop)
            or else (Prev_Token /= Tok_End and then Prev_Token /= Tok_Null
                     and then Reserved = Tok_Record)
            or else ((Top_Token.Token = Tok_Exception
-                     or else Top_Token.Token = Tok_Case)
+                     or else Top_Token.Token = Tok_Case
+                     or else Top_Token.Token = Tok_Select)
                     and then Reserved = Tok_When)
            or else (Top_Token.Declaration
                     and then Reserved = Tok_Private
@@ -1507,6 +1693,11 @@ package body Ada_Analyzer is
                end if;
 
             elsif Reserved = Tok_Declare then
+               if Align_On_Colons then
+                  Temp.Align_Colon :=
+                    Compute_Alignment (Prec, Stop_On_Blank_Line => False);
+               end if;
+
                Temp.Declaration := True;
                Push (Tokens, Temp);
 
@@ -1518,10 +1709,36 @@ package body Ada_Analyzer is
 
                      when Tok_Task | Tok_Protected =>
                         Subprogram_Decl := False;
+
+                        if Align_On_Colons then
+                           Top_Token.Align_Colon := Compute_Alignment
+                             (Prec, Stop_On_Blank_Line => False);
+                        end if;
+
                         Top_Token.Declaration := True;
 
                      when others =>
                         Subprogram_Decl := False;
+
+                        if Top_Token.Token = Tok_Function then
+                           Index_Next := Current + 1;
+
+                           --  Skip blanks on current line
+
+                           while Index_Next < Buffer'Last
+                             and then Buffer (Index_Next) /= ASCII.LF
+                             and then (Buffer (Index_Next) = ' '
+                                       or else Buffer (Index_Next) = ASCII.HT)
+                           loop
+                              Index_Next := Index_Next + 1;
+                           end loop;
+                        end if;
+
+                        if Align_On_Colons then
+                           Top_Token.Align_Colon := Compute_Alignment
+                             (Prec, Stop_On_Blank_Line => False);
+                        end if;
+
                         Top_Token.Declaration := True;
                   end case;
                end if;
@@ -1529,7 +1746,9 @@ package body Ada_Analyzer is
             elsif Reserved = Tok_Begin then
                if Top_Token.Declaration then
                   Num_Spaces := Num_Spaces - Indent_Level;
+                  Top_Token.Align_Colon := 0;
                   Top_Token.Declaration := False;
+
                else
                   Push (Tokens, Temp);
                end if;
@@ -1551,6 +1770,10 @@ package body Ada_Analyzer is
                if Top_Token.Token = Tok_Type then
                   Top_Token.Record_Type := True;
                   Num_Spaces := Num_Spaces + Indent_Level;
+
+                  if Align_On_Colons then
+                     Temp.Align_Colon := Compute_Alignment (Prec);
+                  end if;
                end if;
 
                Push (Tokens, Temp);
@@ -1562,7 +1785,19 @@ package body Ada_Analyzer is
               or else Reserved = Tok_Or
               or else Reserved = Tok_Private
             then
-               Num_Spaces := Num_Spaces - Indent_Level;
+               if (Reserved = Tok_Or or else Reserved = Tok_Else)
+                 and then Top_Token.Token = Tok_When
+               then
+                  Num_Spaces := Num_Spaces - Indent_Level;
+                  Pop (Tokens);
+                  Top_Token := Top (Tokens);
+               end if;
+
+               if Reserved /= Tok_When
+                 or else Top_Token.Token /= Tok_Select
+               then
+                  Num_Spaces := Num_Spaces - Indent_Level;
+               end if;
 
                if Reserved = Tok_When then
                   Push (Tokens, Temp);
@@ -1576,6 +1811,12 @@ package body Ada_Analyzer is
 
             if Top_Token.Token /= Tok_Type
               and then Top_Token.Token /= Tok_Subtype
+              and then (Token /= Tok_Is
+                        or else In_Generic
+                        or else Top_Token.Token /= Tok_Function
+                        or else not Look_For (Index_Next, "abstract"))
+               --  'is abstract' will be indented when handling 'abstract'
+               --  for functions
             then
                Do_Indent (Prec, Num_Spaces);
                Num_Spaces := Num_Spaces + Indent_Level;
@@ -1589,7 +1830,7 @@ package body Ada_Analyzer is
             --  if ...
             --    and then ...
 
-            if Top (Indents).all = None then
+            if Top (Indents).Level = None then
                if Continuation_Val > 0 then
                   Continuation_Val := Continuation_Val - Indent_Continue;
                end if;
@@ -1657,6 +1898,7 @@ package body Ada_Analyzer is
          First           : Natural;
          Last            : Natural;
          Offs            : Natural;
+         Align           : Natural;
          Insert_Spaces   : Boolean;
          Char            : Character;
          Prev_Prev_Token : Token_Type;
@@ -1665,6 +1907,14 @@ package body Ada_Analyzer is
          procedure Close_Parenthesis;
          --  Current buffer contents is a closed parenthesis,
          --  reset stacks and states accordingly.
+
+         procedure Handle_Arrow;
+         --  Current buffer contents is an arrow colon, handle it.
+         --  In particular, align arrows in statements.
+
+         procedure Handle_Colon;
+         --  Current buffer contents is a colon, handle it.
+         --  In particular, align colons in declarations.
 
          procedure Handle_Two_Chars (Second_Char : Character);
          --  Handle a two char operator, whose second char is Second_Char.
@@ -1685,10 +1935,22 @@ package body Ada_Analyzer is
 
          procedure Close_Parenthesis is
          begin
-            if Indents = null or else Top (Indents).all = None then
+            if Indents = null or else Top (Indents).Level = None then
                --  Syntax error
                null;
             else
+               if not Indent_Done then
+                  --  Adjust indentation level for closing parenthesis at the
+                  --  beginning of a line, e.g:
+                  --
+                  --    (x,
+                  --     y
+                  --    );  <-
+
+                  Top (Indents).Level := Top (Indents).Level - 1;
+                  Do_Indent (P, Num_Spaces);
+               end if;
+
                Pop (Indents);
                Num_Parens := Num_Parens - 1;
 
@@ -1700,9 +1962,170 @@ package body Ada_Analyzer is
                  and then Subprogram_Decl
                then
                   Top_Token.Profile_End := P;
+                  Top_Token.Align_Colon := 0;
                end if;
             end if;
          end Close_Parenthesis;
+
+         ------------------
+         -- Handle_Colon --
+         ------------------
+
+         procedure Handle_Colon is
+            Align_Colon  : Natural := 0;
+            Non_Blank    : Natural;
+            Offset_Align : Natural;
+            First_Paren  : Natural;
+
+         begin
+            Prev_Token := Tok_Colon;
+
+            if Top_Token.Declaration
+              and then Top_Token.Token = Tok_Identifier
+            then
+               Pop (Tokens);
+               Top_Token := Top (Tokens);
+
+               declare
+                  Val : Extended_Token;
+               begin
+                  --  Create a dummy token to separate variables
+                  --  declaration from their type.
+
+                  Val.Token := Tok_Colon;
+                  Push (Tokens, Val);
+               end;
+            end if;
+
+            --  Auto align colons in declarations (parameters, variables, ...)
+
+            if Top_Token.Align_Colon = 0
+              or else Num_Parens > 1
+            then
+               return;
+            end if;
+
+            Align_Colon := Top_Token.Align_Colon;
+
+            if Format_Operators then
+               if Buffer (Next_Char (P)) = ' '
+                 or else Last - 1 = End_Of_Line
+               then
+                  Long := 2;
+               else
+                  Long := 3;
+               end if;
+
+               if Buffer (Prev_Char (P)) = ' ' then
+                  Offs := 2;
+                  Long := Long - 1;
+               else
+                  Align_Colon := Align_Colon - 1;
+               end if;
+            else
+               Offs := 2;
+               Long := 1;
+            end if;
+
+            Non_Blank := Start_Of_Line;
+            Skip_Blanks (Buffer, Non_Blank);
+
+            if Num_Parens /= 0 then
+               --  Handle properly alignment of first parameter in the
+               --  following case:
+               --
+               --  procedure F (X : Integer;    <--
+               --               Foo : Integer);
+
+               First_Paren := Non_Blank;
+
+               while First_Paren < P
+                 and then Buffer (First_Paren) /= '('
+               loop
+                  First_Paren := First_Paren + 1;
+               end loop;
+
+               if Buffer (First_Paren) = '(' then
+                  Align_Colon := Align_Colon + First_Paren - Non_Blank + 1;
+               end if;
+            end if;
+
+            --  In case Align_Colon is too small, avoid truncating non blank
+            --  characters by never using a negative offset.
+
+            Offset_Align :=
+              Integer'Max (0, Align_Colon - (P - Non_Blank + 1));
+
+            Replace_Text
+              (First, Last,
+               (1 .. Offset_Align => ' ')
+                & Spaces (Offs .. Offs + Long - 1));
+            Insert_Spaces := False;
+         end Handle_Colon;
+
+         ------------------
+         -- Handle_Arrow --
+         ------------------
+
+         procedure Handle_Arrow is
+            Align_Arrow  : Natural := Top (Indents).Align_Arrow;
+            Non_Blank    : Natural;
+            Offset_Align : Natural;
+            First_Paren  : Natural;
+
+         begin
+            Prev_Token := Tok_Arrow;
+
+            if Top_Token.Token = Tok_When
+              and then (Tokens.Next = null
+                        or else
+                          Tokens.Next.Val.Token /= Tok_Select)
+            then
+               Pop (Tokens);
+            end if;
+
+            Handle_Two_Chars ('>');
+
+            if Align_Arrow = 0 then
+               return;
+            end if;
+
+            if not Is_Blank (Buffer (P - 2)) then
+               Align_Arrow := Align_Arrow - 1;
+            end if;
+
+            Non_Blank := Start_Of_Line;
+            Skip_Blanks (Buffer, Non_Blank);
+
+            --  Handle properly alignment of first parameter in the
+            --  following case:
+            --
+            --  Foo (X => 1,    <--
+            --       Foo => 2);
+
+            First_Paren := Non_Blank;
+
+            while First_Paren < P - 1
+              and then Buffer (First_Paren) /= '('
+            loop
+               First_Paren := First_Paren + 1;
+            end loop;
+
+            if Buffer (First_Paren) = '(' then
+               Align_Arrow := Align_Arrow + First_Paren - Non_Blank + 1;
+            end if;
+
+            --  In case Align_Arrow is too small, avoid truncating non blank
+            --  characters by never using a negative offset.
+
+            Offset_Align := Integer'Max (0, Align_Arrow - (P - Non_Blank + 1));
+
+            Replace_Text
+              (First, Last,
+               (1 .. Offset_Align => ' ')
+                & Spaces (Offs .. Offs + Long - 1));
+            Insert_Spaces := False;
+         end Handle_Arrow;
 
          ----------------------
          -- Handle_Two_Chars --
@@ -1712,7 +2135,7 @@ package body Ada_Analyzer is
          begin
             Last := P + 2;
 
-            if Buffer (Prev_Char (P)) = ' ' then
+            if Is_Blank (Buffer (Prev_Char (P))) then
                Offs := 2;
                Long := 2;
 
@@ -1722,7 +2145,9 @@ package body Ada_Analyzer is
 
             P := Next_Char (P);
 
-            if P < Buffer_Last and then Buffer (Next_Char (P)) /= ' ' then
+            if P < Buffer_Last
+              and then not Is_Blank (Buffer (Next_Char (P)))
+            then
                Long := Long + 1;
             end if;
 
@@ -1885,7 +2310,7 @@ package body Ada_Analyzer is
 
                   if Indent_Done then
                      if Format_Operators
-                       and then Char /= ' '
+                       and then not Is_Blank (Char)
                        and then Char /= '('
                        and then Char /= '''
                      then
@@ -1904,21 +2329,36 @@ package body Ada_Analyzer is
                      end if;
                   end if;
 
-                  if Num_Parens = 0
+                  Num_Parens := Num_Parens + 1;
+                  Align      := 0;
+
+                  if Num_Parens = 1
                     and then Top_Token.Token in Token_Class_Declk
                     and then Top_Token.Profile_Start = 0
-                    and then Subprogram_Decl
                   then
-                     Top_Token.Profile_Start := P;
+                     if Subprogram_Decl then
+                        Top_Token.Profile_Start := P;
+                     end if;
+
+                     if Align_On_Colons then
+                        Top_Token.Align_Colon := Compute_Alignment
+                          (P + 1, Skip_First_Line => False);
+                     end if;
+
+                  else
+                     if Align_On_Arrows then
+                        Align := Compute_Alignment
+                          (P + 1,
+                           Skip_First_Line => False,
+                           Align_On        => Tok_Arrow);
+                     end if;
                   end if;
 
-                  Push (Indents, P - Start_Of_Line + Padding + 1);
+                  Push (Indents, (P - Start_Of_Line + Padding + 1, Align));
 
                   if Continuation_Val > 0 then
                      Continuation_Val := Continuation_Val - Indent_Continue;
                   end if;
-
-                  Num_Parens := Num_Parens + 1;
 
                when ')' =>
                   Prev_Token := Tok_Right_Paren;
@@ -1997,10 +2437,13 @@ package body Ada_Analyzer is
                            Prev_Token := Tok_Plus;
                         end if;
 
-                        if P <= Buffer'First + 1
-                          or else To_Upper (Buffer (Prev_Char (P))) /= 'E'
-                          or else Buffer (Prev_Char (Prev_Char (P)))
-                            not in '0' .. '9'
+                        if (P <= Buffer'First + 1
+                            or else To_Upper (Buffer (P - 1)) /= 'E'
+                            or else Buffer (P - 2) not in '0' .. '9')
+                          and then
+                            (P = Buffer'Last
+                             or else (Buffer (P + 1) /= '"'
+                                      and then Buffer (P + 1) /= '('))
                         then
                            Prev_Token    := Tok_Integer_Literal;
                            Insert_Spaces := True;
@@ -2021,7 +2464,7 @@ package body Ada_Analyzer is
                         Insert_Spaces := True;
 
                         if P < Buffer'Last
-                          and then Buffer (Next_Char (P)) = '='
+                          and then Buffer (P + 1) = '='
                         then
                            Handle_Two_Chars ('=');
 
@@ -2034,23 +2477,7 @@ package body Ada_Analyzer is
                         elsif Buffer (P) = '/' then
                            Prev_Token := Tok_Slash;
                         else
-                           Prev_Token := Tok_Colon;
-
-                           if Top_Token.Declaration
-                             and then Top_Token.Token = Tok_Identifier
-                           then
-                              Pop (Tokens);
-
-                              declare
-                                 Val : Extended_Token;
-                              begin
-                                 --  Create a dummy token to separate variables
-                                 --  declaration from their type.
-
-                                 Val.Token := Tok_Colon;
-                                 Push (Tokens, Val);
-                              end;
-                           end if;
+                           Handle_Colon;
                         end if;
 
                      when '*' =>
@@ -2133,14 +2560,8 @@ package body Ada_Analyzer is
                      when '=' =>
                         Insert_Spaces := True;
 
-                        if Buffer (Next_Char (P)) = '>' then
-                           Prev_Token := Tok_Arrow;
-
-                           if Top_Token.Token = Tok_When then
-                              Pop (Tokens);
-                           end if;
-
-                           Handle_Two_Chars ('>');
+                        if Buffer (P + 1) = '>' then
+                           Handle_Arrow;
                         else
                            Prev_Token := Tok_Equal;
                         end if;
@@ -2149,14 +2570,8 @@ package body Ada_Analyzer is
                         null;
                   end case;
 
-                  if P > Buffer'First
-                    and then Buffer (Prev_Char (P)) = ' '
-                  then
-                     First := First - 1;
-                  end if;
-
                   if Spaces (3) = ' ' then
-                     if Buffer (Next_Char (P)) = ' '
+                     if Is_Blank (Buffer (P + 1))
                        or else Last - 1 = End_Of_Line
                      then
                         Long := 2;
@@ -2165,10 +2580,14 @@ package body Ada_Analyzer is
                      end if;
                   end if;
 
-                  if Format_Operators and then Insert_Spaces and then
-                    (Buffer (Prev_Char (P)) /= ' '
-                      or else Long /= Last - P + 1)
-                  then
+                  if P > Buffer'First and then Is_Blank (Buffer (P - 1)) then
+                     Offs := 2;
+                     Long := Long - 1;
+                  end if;
+
+                  Do_Indent (P, Num_Spaces);
+
+                  if Format_Operators and then Insert_Spaces then
                      Replace_Text
                        (First, Last, Spaces (Offs .. Offs + Long - 1));
                   end if;
@@ -2341,7 +2760,7 @@ package body Ada_Analyzer is
       Push (Tokens, Default_Extended);
 
       --  Push a dummy indentation so that stack will never be empty.
-      Push (Indents, None);
+      Push (Indents, (None, 0));
 
       Next_Word (Prec, Terminated);
 
@@ -2485,10 +2904,10 @@ package body Ada_Analyzer is
                Replace_Text (Prec, Current + 1, Str (1 .. Str_Len));
          end case;
 
-         if Started then
+         --  'is' is handled specially, so nothing is needed here
+
+         if Token /= Tok_Is then
             Compute_Indentation (Token, Prev_Token, Prec, Num_Spaces);
-         else
-            Started := True;
          end if;
 
          Prec       := Current + 1;
