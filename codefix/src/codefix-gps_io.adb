@@ -78,8 +78,7 @@ package body Codefix.GPS_Io is
       Mark         : Mark_Abstr'Class) return File_Cursor'Class
    is
       New_Cursor : File_Cursor;
-      Args : Argument_List (1 .. 1);
-
+      Args       : Argument_List (1 .. 1);
    begin
       Assign (New_Cursor.File_Name, Get_File_Name (Current_Text));
       Args (1) := new String'(GPS_Mark (Mark).Id.all);
@@ -91,8 +90,8 @@ package body Codefix.GPS_Io is
            Execute_GPS_Shell_Command (Current_Text.Kernel, "get_line", Args);
 
       begin
-         New_Cursor.Col := Natural'Value (Column);
-         New_Cursor.Col := Natural'Value (Line);
+         New_Cursor.Col  := Natural'Value (Column);
+         New_Cursor.Line := Natural'Value (Line);
 
       exception
          when Constraint_Error =>
