@@ -97,6 +97,7 @@ package body Glide_Menu is
            Select_File
              (-"Open Project",
               File_Pattern      => "*.gpr",
+              Pattern_Name      => -"Project files",
               Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs));
       begin
          if Filename /= "" then
