@@ -1942,6 +1942,17 @@ If GPS cannot properly initialize the debugger (using the menu
 a shell, it usually means that you are using a wrong version of gdb
 (e.g a version of gdb built for Solaris 8, but run on Solaris 2.6).
 
+@item GPS is frozen during a debugging session
+If GPS is no longer responding while debugging an application you should
+first wait a little bit, since some communications between GPS and gdb
+can take a long time to finish. If GPS is still not responding after a
+few minutes, you can usually get the control back in GPS by either typing
+@key{Ctrl-C} in the shell where you've started GPS: this should unblock it;
+if it does not work, you can kill the gdb process launched by GPS using the
+@code{ps} and @code{kill}, or the @code{top} command under unix,
+and the @code{Task Manager} under Windows: this will terminate your debugging
+session, and will unblock GPS.
+
 @end table
 
 @c @printindex cp
