@@ -398,10 +398,10 @@ package body Glide_Kernel is
       end loop;
 
       if Module = Module_List.Null_Node then
-         Trace (Me, "No module associated with tag "
+         Trace (Me, "Get_Current_Context: No module associated with tag "
                 & External_Tag (Get_Widget (C)'Tag));
       elsif Kernel.Current_Context = null then
-         Trace (Me, "Null context returned bu the module");
+         Trace (Me, "Null context returned by the module");
       end if;
 
       return Kernel.Current_Context;
