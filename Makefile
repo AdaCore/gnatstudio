@@ -1,4 +1,4 @@
-all build compile link ada c c++ clean :
+default build compile link ada c c++ clean :
 	$(MAKE) -s -C glide -f Makefile.glide $@
 
 gvd:
