@@ -26,7 +26,6 @@ with GNAT.OS_Lib;       use GNAT.OS_Lib;
 with GUI_Utils;         use GUI_Utils;
 with Gdk.Event;         use Gdk.Event;
 with Gdk.Types;         use Gdk.Types;
-with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with Glib;              use Glib;
 with Glib.Module;       use Glib.Module;
 with Glib.Object;       use Glib.Object;
@@ -1443,86 +1442,24 @@ package body Glide_Kernel.Modules is
    is
       Value      : GValue_Array (1 .. 7);
       File_Found : Boolean := False;
-      Has_Dir    : Boolean;
 
    begin
       Init (Value (1), Glib.GType_String);
 
-      if Is_Absolute_Path (Filename) then
-         Set_String (Value (1), Normalize_Pathname (Filename));
-         File_Found := True;
+      if From_Path then
+         declare
+            Full : constant String := Find_On_Path
+              (Project   => Get_Project (Kernel),
+               View      => Get_Project_View (Kernel),
+               Filename  => Filename,
+               Recursive => True);
+         begin
+            File_Found := Full /= Filename;
 
-      elsif From_Path then
-         Has_Dir := False;
-
-         for S in Filename'Range loop
-            if Filename (S) = '/'
-              or else Filename (S) = Directory_Separator
-            then
-               Has_Dir := True;
-               exit;
+            if File_Found then
+               Set_String (Value (1), Full);
             end if;
-         end loop;
-
-         --  If we are editing a project file, check in the loaded tree first
-         --  (in case an old copy is kept somewhere in the source or object
-         --  path)
-
-         if GNAT.Directory_Operations.File_Extension (Filename) =
-           Prj.Project_File_Extension
-         then
-            declare
-               Iterator : Imported_Project_Iterator := Start
-                 (Get_Project (Kernel));
-            begin
-               while Current (Iterator) /= No_Project loop
-                  if Project_Name (Current (Iterator)) & Project_File_Extension
-                    = Filename
-                  then
-                     Set_String
-                       (Value (1),
-                        Project_Path (Project_Id'(Current (Iterator))));
-                     File_Found := True;
-                     Has_Dir := True;
-                     exit;
-                  end if;
-
-                  Next (Iterator);
-               end loop;
-            end;
-         end if;
-
-         if not Has_Dir then
-            declare
-               F : GNAT.OS_Lib.String_Access := Locate_Regular_File
-                 (Filename,
-                  Include_Path (Get_Project_View (Kernel), Recursive => True));
-            begin
-               if F /= null then
-                  Set_String (Value (1), Normalize_Pathname (F.all));
-                  File_Found := True;
-                  Free (F);
-                  Has_Dir := True;
-               end if;
-            end;
-         end if;
-
-         --  Check the object directory too, for instance for the
-         --  compiler-generated files (binder files, ...)
-         if not Has_Dir then
-            declare
-               F : GNAT.OS_Lib.String_Access := Locate_Regular_File
-                 (Filename,
-                  Object_Path (Get_Project_View (Kernel), Recursive => True));
-            begin
-               if F /= null then
-                  Set_String (Value (1), Normalize_Pathname (F.all));
-                  File_Found := True;
-                  Free (F);
-                  Has_Dir := True;
-               end if;
-            end;
-         end if;
+         end;
       end if;
 
       if not File_Found then
