@@ -472,7 +472,7 @@ begin
    Set_Submenu (Main_Debug_Window.Data1, Main_Debug_Window.Data1_Menu);
 
    Gtk_New (Main_Debug_Window.Call_Stack, -"Call Stack");
-   Set_Active (Main_Debug_Window.Call_Stack, True);
+   Set_Active (Main_Debug_Window.Call_Stack, False);
    Set_Always_Show_Toggle (Main_Debug_Window.Call_Stack, True);
    Widget_Callback.Object_Connect
      (Main_Debug_Window.Call_Stack, "activate",
