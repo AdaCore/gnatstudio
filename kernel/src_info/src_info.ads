@@ -1,10 +1,10 @@
 -----------------------------------------------------------------------
---                          G L I D E  I I                           --
+--                               G P S                               --
 --                                                                   --
 --                     Copyright (C) 2001-2002                       --
 --                            ACT-Europe                             --
 --                                                                   --
--- GLIDE is free software; you can redistribute it and/or modify  it --
+-- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -13,7 +13,7 @@
 -- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
 -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
 -- General Public License for more details. You should have received --
--- a copy of the GNU General Public License along with this library; --
+-- a copy of the GNU General Public License along with this program; --
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
@@ -23,6 +23,7 @@ with Basic_Types;
 with Types;
 with GNAT.OS_Lib; use GNAT.OS_Lib;
 with Prj;
+with Language;
 with Language_Handlers;
 with Project_Browsers;
 
@@ -258,6 +259,19 @@ package Src_Info is
    --  be called until all the files are processed.
    --  Note that only the database on the disk needs to be regenerated, not the
    --  LI structures themselves, which will be done by Create_Or_Complete_LI.
+
+   ------------------
+   --  Constructs  --
+   ------------------
+
+   procedure Parse_File_Constructs
+     (Handler      : access LI_Handler_Record;
+      Root_Project : Prj.Project_Id;
+      Languages    : access Language_Handlers.Language_Handler_Record'Class;
+      File_Name    : String;
+      Result       : out Language.Construct_List);
+   --  Build a Construct_List, either using the src_info tools (like SN)
+   --  or a language parser.
 
    --------------
    -- Entities --
