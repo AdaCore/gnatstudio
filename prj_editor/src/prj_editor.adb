@@ -29,12 +29,18 @@
 with Prj_Editor_Window; use Prj_Editor_Window;
 with Gtk.Main;          use Gtk.Main;
 with Ada.Command_Line;  use Ada.Command_Line;
+with Glide_Kernel;      use Glide_Kernel;
+with Glide_Kernel.Project; use Glide_Kernel.Project;
 
 procedure Prj_Editor is
    Win : Project_Editor;
+   Kernel : Kernel_Handle;
 begin
    Gtk.Main.Init;
-   Gtk_New (Win, Argument (1));
+   Gtk_New (Kernel);
+   Load_Project (Kernel, Argument (1));
+
+   Gtk_New (Win, Kernel);
    Show_All (Win);
    Main;
 end Prj_Editor;
