@@ -1,4 +1,4 @@
-Known Problems fixes in GVD 1.0.2
+Known Problems fixed in GVD 1.0.2
 
 - Parsing of char* fields in C structs
   Problem:    The value of string fields in C structures was incorrectly parsed,
