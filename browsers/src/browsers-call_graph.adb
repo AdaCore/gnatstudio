@@ -1144,7 +1144,6 @@ package body Browsers.Call_Graph is
       C        : Xref_Commands.Generic_Asynchronous_Command_Access;
 
    begin
-      Push_State (Kernel_Handle (Kernel), Busy);
       if Info /= No_Entity_Information then
          begin
             Remove_Result_Category
@@ -1184,8 +1183,6 @@ package body Browsers.Call_Graph is
                Destroy (Data.Iter);
                raise;
          end;
-      else
-         Pop_State (Kernel_Handle (Kernel));
       end if;
 
    exception
