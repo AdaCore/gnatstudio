@@ -21,8 +21,11 @@
 with String_Utils;              use String_Utils;
 with String_List_Utils;         use String_List_Utils;
 with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
+with Glide_Kernel.Console;      use Glide_Kernel.Console;
+with Glide_Intl;                use Glide_Intl;
 
 with GNAT.OS_Lib;
+with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.Expect;               use GNAT.Expect;
 
 pragma Warnings (Off);
@@ -33,8 +36,7 @@ with VCS_View_Pkg;              use VCS_View_Pkg;
 with VCS_Module;                use VCS_Module;
 
 with Commands;                  use Commands;
-
-with Ada.Text_IO; use Ada.Text_IO;
+with Commands.External;         use Commands.External;
 
 package body VCS.ClearCase is
 
@@ -65,6 +67,47 @@ package body VCS.ClearCase is
      return String_List.List;
    --  Spawn a command until the end of execution, and return its output
    --  as a list.
+
+   procedure Insert
+     (L    : List;
+      Mode : Message_Type := Info);
+   --  Display L in the console with mode Mode, with a small indentation.
+
+   function Checkin_Handler
+     (Kernel : Kernel_Handle;
+      Head   : String_List.List;
+      List   : String_List.List) return Boolean;
+   --  Check that List corresponds to the output of a ClearCase checkin.
+
+   function Checkout_Handler
+     (Kernel : Kernel_Handle;
+      Head   : String_List.List;
+      List   : String_List.List) return Boolean;
+   --  Check that List corresponds to the output of a ClearCase checkout
+   --  or a ClearCase mkelem command.
+
+   ------------
+   -- Insert --
+   ------------
+
+   procedure Insert
+     (L    : List;
+      Mode : Message_Type := Info)
+   is
+      Node   : List_Node := First (L);
+      Kernel : Kernel_Handle
+        renames VCS_ClearCase_Module_ID.ClearCase_Reference.Kernel;
+   begin
+      while Node /= Null_Node loop
+         Insert (Kernel,
+                 "   " & Data (Node),
+                 False,
+                 False,
+                 Mode);
+
+         Node := Next (Node);
+      end loop;
+   end Insert;
 
    -------------
    -- Command --
@@ -164,8 +207,6 @@ package body VCS.ClearCase is
    begin
       --  ??? To be improved.
 
-      Put_Line ("ClearCase : Getting Status");
-
       Display_File_Status
         (Rep.Kernel,
          Local_Get_Status (Rep, Filenames),
@@ -189,6 +230,8 @@ package body VCS.ClearCase is
       Args       : String_List.List;
       List_Temp  : List_Node := First (Filenames);
       Output     : String_List.List;
+      Kernel     : Kernel_Handle
+        renames VCS_ClearCase_Module_ID.ClearCase_Reference.Kernel;
 
    begin
       if Is_Empty (Filenames) then
@@ -204,7 +247,37 @@ package body VCS.ClearCase is
 
       Output := Command ("cleartool", Args);
 
+      Free (Args);
+
       List_Temp := First (Output);
+
+      --  Detect a possible error in the output.
+      if List_Temp /= Null_Node then
+         declare
+            S             : String := Data (List_Temp);
+            Error_Pattern : constant String := "Error";
+            Index         : Integer := S'First;
+         begin
+            Skip_To_String (S, Index, Error_Pattern);
+
+            if Index < S'Last - Error_Pattern'Length then
+               Insert (Kernel,
+                       "ClearCase error :",
+                       Highlight_Sloc => False,
+                       Mode => Error);
+
+               while List_Temp /= Null_Node loop
+                  Insert (Kernel,
+                          "    " & Data (List_Temp),
+                          Highlight_Sloc => False,
+                          Mode => Error);
+
+                  List_Temp := Next (List_Temp);
+               end loop;
+            end if;
+         end;
+      end if;
+
 
       while List_Temp /= Null_Node loop
          declare
@@ -283,22 +356,6 @@ package body VCS.ClearCase is
    -- Open --
    ----------
 
-   function Checkout_Handler
-     (Kernel : Kernel_Handle;
-      Head   : String_List.List;
-      List   : String_List.List) return Boolean;
-   pragma Unreferenced (Checkout_Handler);
-
-   function Checkout_Handler
-     (Kernel : Kernel_Handle;
-      Head   : String_List.List;
-      List   : String_List.List) return Boolean
-   is
-      pragma Unreferenced (Kernel, Head, List);
-   begin
-      return False;
-   end Checkout_Handler;
-
    procedure Open
      (Rep       : access ClearCase_Record;
       Filenames : String_List.List;
@@ -306,7 +363,6 @@ package body VCS.ClearCase is
    is
       pragma Unreferenced (Rep, Filenames, User_Name);
    begin
-      Put_Line ("ClearCase : Open");
       null;
    end Open;
 
@@ -350,6 +406,62 @@ package body VCS.ClearCase is
       null;
    end Merge;
 
+   ---------------------
+   -- Checkin_Handler --
+   ---------------------
+
+   function Checkin_Handler
+     (Kernel : Kernel_Handle;
+      Head   : String_List.List;
+      List   : String_List.List) return Boolean
+   is
+      pragma Unreferenced (Kernel);
+
+      Last_Line : constant String := Data (Last (List));
+      Pattern   : constant String := "Checked in ";
+   begin
+      if Last_Line'Length < Pattern'Length
+        or else Last_Line
+        (Last_Line'First
+           .. Last_Line'First + Pattern'Length - 1) /= Pattern
+      then
+         Insert (Head, Error);
+         Insert (List, Verbose);
+
+         return False;
+      end if;
+
+      return True;
+   end Checkin_Handler;
+
+   ----------------------
+   -- Checkout_Handler --
+   ----------------------
+
+   function Checkout_Handler
+     (Kernel : Kernel_Handle;
+      Head   : String_List.List;
+      List   : String_List.List) return Boolean
+   is
+      pragma Unreferenced (Kernel);
+
+      Last_Line : constant String := Data (Last (List));
+      Pattern   : constant String := "Checked out ";
+   begin
+      if Last_Line'Length < Pattern'Length
+        or else Last_Line
+        (Last_Line'First
+           .. Last_Line'First + Pattern'Length - 1) /= Pattern
+      then
+         Insert (Head, Error);
+         Insert (List, Verbose);
+
+         return False;
+      end if;
+
+      return True;
+   end Checkout_Handler;
+
    ---------
    -- Add --
    ---------
@@ -358,9 +470,128 @@ package body VCS.ClearCase is
      (Rep       : access ClearCase_Record;
       Filenames : String_List.List)
    is
-      pragma Unreferenced (Rep, Filenames);
+      Kernel : Kernel_Handle
+        renames VCS_ClearCase_Module_ID.ClearCase_Reference.Kernel;
+
+      File_Node : List_Node := First (Filenames);
+
    begin
-      null;
+      while File_Node /= Null_Node loop
+         declare
+            Args     : List;
+            Head     : List;
+            File     : constant String := Data (File_Node);
+            Dir      : constant String := Dir_Name (Data (File_Node));
+
+            Checkout_Dir_Command : External_Command_Access;
+            Make_Element_Command : External_Command_Access;
+            Checkin_Element_Command : External_Command_Access;
+            Checkin_Dir_Command  : External_Command_Access;
+
+         begin
+            Insert (Kernel,
+                    -"Clearcase: Adding element: "
+                      & File & " ...",
+                    False, False, Info);
+
+            --  Check out the directory.
+
+            Append (Args, "co");
+            Append (Args, "-c");
+            Append (Args, -"Adding " & File);
+            Append (Args, Dir);
+
+            Append (Head, -"ClearCase error: could not checkout " & Dir);
+
+            Create (Checkout_Dir_Command,
+                    Kernel,
+                    "cleartool",
+                    "",
+                    Args,
+                    Head,
+                    Checkout_Handler'Access);
+
+            Free (Args);
+            Free (Head);
+
+            --  Add the file
+
+            Append (Args, "mkelem");
+            Append (Args, "-c");
+            Append (Args, -"Initial revision");
+            Append (Args, File);
+
+            Append
+              (Head,
+               -"ClearCase error: could not create the repository element "
+                 & File);
+
+            Create (Make_Element_Command,
+                    Kernel,
+                    "cleartool",
+                    "",
+                    Args,
+                    Head,
+                    Checkout_Handler'Access);
+
+            Free (Args);
+            Free (Head);
+
+            --  Check in the file
+
+            Append (Args, "ci");
+            Append (Args, "-c");
+            Append (Args, -"Initial check-in");
+            Append (Args, File);
+
+            Append (Head, -"ClearCase error: could not checkin " & File);
+
+            Create (Checkin_Element_Command,
+                    Kernel,
+                    "cleartool",
+                    "",
+                    Args,
+                    Head,
+                    Checkin_Handler'Access);
+
+            Free (Args);
+            Free (Head);
+
+            --  Check in the directory.
+            Append (Args, "ci");
+            Append (Args, "-c");
+            Append (Args, -"Added element: " & File);
+            Append (Args, Dir);
+
+            Append (Head, -"ClearCase error: could not checkin " & Dir);
+
+            Create (Checkin_Dir_Command,
+                    Kernel,
+                    "cleartool",
+                    "",
+                    Args,
+                    Head,
+                    Checkin_Handler'Access);
+
+            Free (Args);
+            Free (Head);
+
+            --  If the directory checkout was successful, create the element.
+            Add_Consequence_Action
+              (Checkout_Dir_Command,
+               Make_Element_Command);
+
+            --  If the element was successfully created, check it in.
+            Add_Consequence_Action
+              (Make_Element_Command,
+               Checkin_Element_Command);
+
+            Enqueue (Rep.Queue, Checkout_Dir_Command);
+            Enqueue (Rep.Queue, Checkin_Dir_Command);
+         end;
+
+         File_Node := Next (File_Node);
+      end loop;
    end Add;
 
    ------------
