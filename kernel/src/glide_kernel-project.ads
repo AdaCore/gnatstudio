@@ -94,14 +94,6 @@ package Glide_Kernel.Project is
    --  Langs is the list of languages defined for this project, and must be
    --  freed by the caller.
 
-   function Save_Project_Conditional
-     (Kernel    : access Kernel_Handle_Record'Class;
-      Force     : Boolean) return Save_Return_Value;
-   --  Ask the user whether to save the project (if Force is False), or save it
-   --  inconditionnaly if Force is True.
-   --  False is returned if the user has selected the "Cancel" button in the
-   --  popup dialog.
-
    function Get_Project
      (Handle : access Kernel_Handle_Record'Class) return Projects.Project_Type;
    --  Return the current project tree. This tree can be fully manipulated, and

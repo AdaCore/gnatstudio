@@ -29,14 +29,11 @@ with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.Case_Util;            use GNAT.Case_Util;
 
-with Gtkada.Dialogs; use Gtkada.Dialogs;
-
 with Projects;           use Projects;
 with Projects.Registry;  use Projects.Registry;
 with String_Utils;       use String_Utils;
 with Basic_Types;
 
-with Glide_Intl;               use Glide_Intl;
 with Glide_Kernel.Console;     use Glide_Kernel.Console;
 with Glide_Kernel.Timeout;     use Glide_Kernel.Timeout;
 with Glide_Main_Window;        use Glide_Main_Window;
@@ -177,7 +174,7 @@ package body Glide_Kernel.Project is
       --  Save all open children, and close everything. A new desktop will be
       --  open in the end anway
 
-      if not Save_All_MDI_Children (Kernel, Force => False) then
+      if not Save_MDI_Children (Kernel, Force => False) then
          return;
       end if;
 
@@ -223,7 +220,7 @@ package body Glide_Kernel.Project is
       --  Unless we are reloading the same project
 
       if not Same_Project then
-         if not Save_All_MDI_Children (Kernel, Force => False) then
+         if not Save_MDI_Children (Kernel, Force => False) then
             return;
          end if;
 
@@ -440,54 +437,6 @@ package body Glide_Kernel.Project is
          Save_Project (Project, Report_Error'Unrestricted_Access);
       end if;
    end Save_Single_Project;
-
-   ------------------------------
-   -- Save_Project_Conditional --
-   ------------------------------
-
-   function Save_Project_Conditional
-     (Kernel : access Kernel_Handle_Record'Class;
-      Force  : Boolean) return Save_Return_Value
-   is
-      Button : Message_Dialog_Buttons;
-   begin
-      if not Project_Modified (Get_Project (Kernel), Recursive => True) then
-         return Saved;
-      end if;
-
-      if Force then
-         Save_Project (Kernel, Get_Project (Kernel), Recursive => True);
-      else
-         Button := Message_Dialog
-           (Msg            => -"Do you want to save the projects ?",
-            Dialog_Type    => Confirmation,
-            Buttons        =>
-              Button_Yes or Button_All or Button_No or Button_Cancel,
-            Default_Button => Button_Cancel,
-            Parent         => Get_Main_Window (Kernel));
-
-         case Button is
-            when Button_Yes =>
-               Save_Project (Kernel, Get_Project (Kernel), Recursive => True);
-               return Saved;
-
-            when Button_No =>
-               return Not_Saved;
-
-            when Button_All =>
-               Save_Project
-                 (Kernel    => Kernel,
-                  Project   => Get_Project (Kernel),
-                  Recursive => True);
-               return Save_All;
-
-            when others =>
-               return Cancel;
-         end case;
-      end if;
-
-      return Saved;
-   end Save_Project_Conditional;
 
    ------------------
    -- Get_Registry --
