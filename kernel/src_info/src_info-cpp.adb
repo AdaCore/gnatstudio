@@ -70,101 +70,101 @@ package body Src_Info.CPP is
       Module_Type_Defs : Module_Typedefs_List);
 
    procedure Sym_Default_Handler
-     (Sym     : FIL_Table;
-      Handler : access CPP_LI_Handler_Record'Class;
-      File    : in out LI_File_Ptr;
-      List    : in out LI_File_List;
+     (Sym              : FIL_Table;
+      Handler          : access CPP_LI_Handler_Record'Class;
+      File             : in out LI_File_Ptr;
+      List             : in out LI_File_List;
       Project_View     : Prj.Project_Id;
       Module_Type_Defs : Module_Typedefs_List);
    procedure Sym_GV_Handler
-     (Sym     : FIL_Table;
-      Handler : access CPP_LI_Handler_Record'Class;
-      File    : in out LI_File_Ptr;
-      List    : in out LI_File_List;
+     (Sym              : FIL_Table;
+      Handler          : access CPP_LI_Handler_Record'Class;
+      File             : in out LI_File_Ptr;
+      List             : in out LI_File_List;
       Project_View     : Prj.Project_Id;
       Module_Type_Defs : Module_Typedefs_List);
    procedure Sym_CON_Handler
-     (Sym     : FIL_Table;
-      Handler : access CPP_LI_Handler_Record'Class;
-      File    : in out LI_File_Ptr;
-      List    : in out LI_File_List;
+     (Sym              : FIL_Table;
+      Handler          : access CPP_LI_Handler_Record'Class;
+      File             : in out LI_File_Ptr;
+      List             : in out LI_File_List;
       Project_View     : Prj.Project_Id;
       Module_Type_Defs : Module_Typedefs_List);
    procedure Sym_FD_Handler
-     (Sym     : FIL_Table;
-      Handler : access CPP_LI_Handler_Record'Class;
-      File    : in out LI_File_Ptr;
-      List    : in out LI_File_List;
+     (Sym              : FIL_Table;
+      Handler          : access CPP_LI_Handler_Record'Class;
+      File             : in out LI_File_Ptr;
+      List             : in out LI_File_List;
       Project_View     : Prj.Project_Id;
       Module_Type_Defs : Module_Typedefs_List);
    procedure Sym_FU_Handler
-     (Sym     : FIL_Table;
-      Handler : access CPP_LI_Handler_Record'Class;
-      File    : in out LI_File_Ptr;
-      List    : in out LI_File_List;
+     (Sym              : FIL_Table;
+      Handler          : access CPP_LI_Handler_Record'Class;
+      File             : in out LI_File_Ptr;
+      List             : in out LI_File_List;
       Project_View     : Prj.Project_Id;
       Module_Type_Defs : Module_Typedefs_List);
    procedure Sym_E_Handler
-     (Sym     : FIL_Table;
-      Handler : access CPP_LI_Handler_Record'Class;
-      File    : in out LI_File_Ptr;
-      List    : in out LI_File_List;
+     (Sym              : FIL_Table;
+      Handler          : access CPP_LI_Handler_Record'Class;
+      File             : in out LI_File_Ptr;
+      List             : in out LI_File_List;
       Project_View     : Prj.Project_Id;
       Module_Type_Defs : Module_Typedefs_List);
    procedure Sym_EC_Handler
-     (Sym     : FIL_Table;
-      Handler : access CPP_LI_Handler_Record'Class;
-      File    : in out LI_File_Ptr;
-      List    : in out LI_File_List;
+     (Sym              : FIL_Table;
+      Handler          : access CPP_LI_Handler_Record'Class;
+      File             : in out LI_File_Ptr;
+      List             : in out LI_File_List;
       Project_View     : Prj.Project_Id;
       Module_Type_Defs : Module_Typedefs_List);
    procedure Sym_T_Handler
-     (Sym     : FIL_Table;
-      Handler : access CPP_LI_Handler_Record'Class;
-      File    : in out LI_File_Ptr;
-      List    : in out LI_File_List;
+     (Sym              : FIL_Table;
+      Handler          : access CPP_LI_Handler_Record'Class;
+      File             : in out LI_File_Ptr;
+      List             : in out LI_File_List;
       Project_View     : Prj.Project_Id;
       Module_Type_Defs : Module_Typedefs_List);
    procedure Sym_CL_Handler
-     (Sym     : FIL_Table;
-      Handler : access CPP_LI_Handler_Record'Class;
-      File    : in out LI_File_Ptr;
-      List    : in out LI_File_List;
+     (Sym              : FIL_Table;
+      Handler          : access CPP_LI_Handler_Record'Class;
+      File             : in out LI_File_Ptr;
+      List             : in out LI_File_List;
       Project_View     : Prj.Project_Id;
       Module_Type_Defs : Module_Typedefs_List);
    procedure Sym_UN_Handler
-     (Sym     : FIL_Table;
-      Handler : access CPP_LI_Handler_Record'Class;
-      File    : in out LI_File_Ptr;
-      List    : in out LI_File_List;
+     (Sym              : FIL_Table;
+      Handler          : access CPP_LI_Handler_Record'Class;
+      File             : in out LI_File_Ptr;
+      List             : in out LI_File_List;
       Project_View     : Prj.Project_Id;
       Module_Type_Defs : Module_Typedefs_List);
    procedure Sym_IV_Handler
-     (Sym     : FIL_Table;
-      Handler : access CPP_LI_Handler_Record'Class;
-      File    : in out LI_File_Ptr;
-      List    : in out LI_File_List;
+     (Sym              : FIL_Table;
+      Handler          : access CPP_LI_Handler_Record'Class;
+      File             : in out LI_File_Ptr;
+      List             : in out LI_File_List;
       Project_View     : Prj.Project_Id;
       Module_Type_Defs : Module_Typedefs_List);
    procedure Sym_IU_Handler
-     (Sym     : FIL_Table;
-      Handler : access CPP_LI_Handler_Record'Class;
-      File    : in out LI_File_Ptr;
-      List    : in out LI_File_List;
+     (Sym              : FIL_Table;
+      Handler          : access CPP_LI_Handler_Record'Class;
+      File             : in out LI_File_Ptr;
+      List             : in out LI_File_List;
       Project_View     : Prj.Project_Id;
       Module_Type_Defs : Module_Typedefs_List);
    procedure Sym_MA_Handler
-     (Sym     : FIL_Table;
-      Handler : access CPP_LI_Handler_Record'Class;
-      File    : in out LI_File_Ptr;
-      List    : in out LI_File_List;
+     (Sym              : FIL_Table;
+      Handler          : access CPP_LI_Handler_Record'Class;
+      File             : in out LI_File_Ptr;
+      List             : in out LI_File_List;
       Project_View     : Prj.Project_Id;
       Module_Type_Defs : Module_Typedefs_List);
    procedure Sym_MD_Handler
-     (Sym     : FIL_Table;
-      Handler : access CPP_LI_Handler_Record'Class;
-      File    : in out LI_File_Ptr;
-      List    : in out LI_File_List;
+     (Sym              : FIL_Table;
+      Handler          : access CPP_LI_Handler_Record'Class;
+      File             : in out LI_File_Ptr;
+      List             : in out LI_File_List;
       Project_View     : Prj.Project_Id;
       Module_Type_Defs : Module_Typedefs_List);
 
@@ -580,9 +580,12 @@ package body Src_Info.CPP is
       pragma Unreferenced (Root_Project);
       pragma Unreferenced (Handler);
       pragma Unreferenced (Full_Filename);
-      HI : CPP_LI_Handler_Iterator;
+      DB_Dir : constant String := Get_DB_Dir (File_Project);
+
    begin
-      Create_DB_Directory (Get_DB_Dir (File_Project));
+      --  Make sure the database directory exists.
+
+      Create_DB_Directory (DB_Dir);
       HI.State := Done;
       return HI;
    end Generate_LI_For_Source;
@@ -600,14 +603,20 @@ package body Src_Info.CPP is
       Tmp_File         : File_Type;
       Success          : Boolean;
       Xref_File_Name   : String_Access;
+      TO_File_Name     : constant String :=
+        DB_Dir & SN.Browse.DB_File_Name & ".to";
+      Recompute_TO     : Boolean := False;
+
    begin
       --  Skip project if we couldn't find out the object directory
+
       if DB_Dir = "" then
          Iterator.State := Skip_Project;
          return;
       end if;
 
       --  Prepare the list of files
+
       Trace (Info_Stream, "Computing the C and C++ sources list for "
              & Project_Name (Project));
       Compute_Sources
@@ -621,9 +630,12 @@ package body Src_Info.CPP is
 
       if Current_Source_File (Iterator) /= "" then
          Create_DB_Directory (DB_Dir);
+
          --  Create the list of files that need to be analyzed.
+
          Iterator.List_Filename := new String'(DB_Dir & "gps_list");
          Create (Tmp_File, Out_File, Name => Iterator.List_Filename.all);
+
       else
          Iterator.List_Filename := null;
       end if;
@@ -643,10 +655,7 @@ package body Src_Info.CPP is
             --  1. Its xref file is invalid (just created)
             --  2. Source is newer than xref file
 
-            Xref_File_Name := Xref_Filename_For
-              (File,
-               DB_Dir,
-               Pool);
+            Xref_File_Name := Xref_Filename_For (File, DB_Dir, Pool);
 
             if not Is_Xref_Valid (File, Pool)
               or else To_Timestamp (File_Time_Stamp (File)) >
@@ -665,8 +674,14 @@ package body Src_Info.CPP is
 
                Put_Line (Tmp_File, "@" & Xref_File_Name.all);
                Put_Line (Tmp_File, File);
+
+            elsif To_Timestamp (File_Time_Stamp (Xref_File_Name.all)) >
+              To_Timestamp (File_Time_Stamp (TO_File_Name))
+            then
+               Recompute_TO := True;
             end if;
          end;
+
          Next_Source_File (Iterator);
       end loop;
 
@@ -683,12 +698,16 @@ package body Src_Info.CPP is
             DBIMP_Path    => Iterator.Handler.DBIMP_Path.all,
             Cbrowser_Path => Iterator.Handler.CBrowser_Path.all,
             PD            => Iterator.PD);
+         Iterator.Process_Running := True;
+
+      elsif Recompute_TO then
+         Iterator.State := Analyze_Files;
       else
          if Iterator.List_Filename /= null then
             Delete_File (Iterator.List_Filename.all, Success);
             Free (Iterator.List_Filename);
-            Iterator.List_Filename := null;
          end if;
+
          Iterator.State := Skip_Project;
       end if;
    end Browse_Project;
@@ -786,9 +805,12 @@ package body Src_Info.CPP is
 
          when Analyze_Files =>
             --  If we haven't finished the first phase, keep waiting.
-            Browse.Is_Alive (Iterator.PD, Process_Alive);
-            if Process_Alive then
-               return;
+
+            if Iterator.Process_Running then
+               Browse.Is_Alive (Iterator.PD, Process_Alive);
+               if Process_Alive then
+                  return;
+               end if;
             end if;
 
             if Iterator.List_Filename /= null then
@@ -817,11 +839,16 @@ package body Src_Info.CPP is
 
          when Process_Xrefs =>
             --  If we haven't finished the second phase, keep waiting.
-            Browse.Is_Alive (Iterator.PD, Process_Alive);
 
-            if Process_Alive then
-               return;
+            if Iterator.Process_Running then
+               Browse.Is_Alive (Iterator.PD, Process_Alive);
+
+               if Process_Alive then
+                  return;
+               end if;
             end if;
+
+            Iterator.Process_Running := False;
 
             Trace (Info_Stream, "dbimp finished, passing to next project");
 
@@ -856,7 +883,7 @@ package body Src_Info.CPP is
                begin
                   if DB_Dir /= "" then
                      declare
-                        Pool   : constant Xref_Pool := Get_Xref_Pool
+                        Pool : constant Xref_Pool := Get_Xref_Pool
                           (Iterator.Handler.Prj_HTable, DB_Dir);
                      begin
                         if Pool /= Empty_Xref_Pool then
@@ -1155,10 +1182,10 @@ package body Src_Info.CPP is
 
          Init (Handler.Prj_HTable);
          --  Load xref pools and fill Prj_HTable
-         for I in Handler.DB_Dirs.all'Range loop
+         for J in Handler.DB_Dirs'Range loop
             declare
                Pool   : Xref_Pool;
-               DB_Dir : constant String_Access := Handler.DB_Dirs.all (I);
+               DB_Dir : constant String_Access := Handler.DB_Dirs (J);
             begin
                Load (Pool, DB_Dir.all & Browse.Xref_Pool_Filename);
                Set_Xref_Pool (Handler.Prj_HTable, DB_Dir, Pool);
@@ -1168,7 +1195,6 @@ package body Src_Info.CPP is
 
       Close_DB_Files (Handler.SN_Table);
       Open_DB_Files (Handler.DB_Dirs, Handler.SN_Table);
-
    end Reset;
 
    ---------------------------
@@ -1275,7 +1301,7 @@ package body Src_Info.CPP is
    ----------------------------------
 
    function Case_Insensitive_Identifiers
-         (Handler : access CPP_LI_Handler_Record) return Boolean
+     (Handler : access CPP_LI_Handler_Record) return Boolean
    is
       pragma Unreferenced (Handler);
    begin
@@ -1290,8 +1316,7 @@ package body Src_Info.CPP is
      (Handler                : access CPP_LI_Handler_Record;
       Source_Filename        : String;
       Project                : Prj.Project_Id;
-      Predefined_Source_Path : String)
-      return String
+      Predefined_Source_Path : String) return String
    is
       pragma Unreferenced (Predefined_Source_Path);
       Full_Filename : constant String := Find_File
@@ -1991,10 +2016,10 @@ package body Src_Info.CPP is
    -----------------------
 
    procedure Fu_To_Con_Handler
-     (Ref     : TO_Table;
-      Handler : access CPP_LI_Handler_Record'Class;
-      File    : in out LI_File_Ptr;
-      List    : in out LI_File_List;
+     (Ref              : TO_Table;
+      Handler          : access CPP_LI_Handler_Record'Class;
+      File             : in out LI_File_Ptr;
+      List             : in out LI_File_List;
       Project_View     : Prj.Project_Id;
       Module_Type_Defs : Module_Typedefs_List)
    is
@@ -2012,12 +2037,14 @@ package body Src_Info.CPP is
       --              Ref.Referred_Symbol_Name.Last));
 
       --  we need declaration's location
+
       Find (Handler.SN_Table (CON),
             Ref.Buffer (Ref.Referred_Symbol_Name.First ..
                         Ref.Referred_Symbol_Name.Last),
             Tab => Var);
 
       --  Find declaration
+
       if Xref_Filename_For
          (Var.Buffer (Var.File_Name.First .. Var.File_Name.Last),
           Get_DB_Dir (Handler.DB_Dirs, Var.DBI),
@@ -2126,10 +2153,11 @@ package body Src_Info.CPP is
       end if;
 
       Insert_Reference
-        (Declaration_Info        => Decl_Info,
-         File                    => File,
-         Location                => Ref.Position,
-         Kind                    => Ref_Kind);
+        (Declaration_Info => Decl_Info,
+         File             => File,
+         Location         => Ref.Position,
+         Kind             => Ref_Kind);
+
    exception
       when Not_Found  | DB_Error => -- ignore
          Fail ("unable to find constant " &
@@ -2315,10 +2343,10 @@ package body Src_Info.CPP is
       Free (Enum_Const);
 
       Insert_Reference
-        (Declaration_Info        => Decl_Info,
-         File                    => File,
-         Location                => Ref.Position,
-         Kind                    => Reference);
+        (Declaration_Info => Decl_Info,
+         File             => File,
+         Location         => Ref.Position,
+         Kind             => Reference);
 
    exception
       when DB_Error | Not_Found =>
@@ -2503,6 +2531,7 @@ package body Src_Info.CPP is
 
             Free (FDecl);
          end loop;
+
          Release_Cursor (Handler.SN_Table (FD));
       end if;
 
@@ -2580,6 +2609,7 @@ package body Src_Info.CPP is
 
             Free (Fn);
          end loop;
+
          Release_Cursor (Handler.SN_Table (FU));
       end if;
    end Create_Overload_List;
@@ -2609,7 +2639,7 @@ package body Src_Info.CPP is
       FDecl_Tmp      : FD_Table;
       Ref_Id         : constant String := Ref.Buffer
         (Ref.Referred_Symbol_Name.First .. Ref.Referred_Symbol_Name.Last);
-      Buffer   : String_Access;
+      Buffer         : String_Access;
       Return_Type    : Segment;
 
    begin
@@ -2649,6 +2679,7 @@ package body Src_Info.CPP is
          --  Forward declarations may be overloaded by inline implementations
          --  this is what we check here. If no forward declaration was found
          --  above we search for a suitable function body
+
          Set_Cursor (Handler.SN_Table (FU), By_Key, Ref_Id & Field_Sep, False);
 
          loop
@@ -2662,37 +2693,46 @@ package body Src_Info.CPP is
             if not Forward_Declared and No_Body then
                --  No forward decls, but we found the first function
                --  with the same name
+
                Fn      := Fn_Tmp;
                No_Body := False;
+
             elsif not Forward_Declared and not No_Body then
                --  No forward decls and we found one more function body
                --  with the same name
+
                Overloaded := True;
                Free (Fn_Tmp);
+
             elsif Forward_Declared and No_Body then
                --  We have found some forward declaration, but no body
                --  is yet found. Do we have overloading here?
+
                Overloaded := not Cmp_Arg_Types
                   (Fn_Tmp.Buffer,
                    FDecl.Buffer,
                    Fn_Tmp.Arg_Types,
                    FDecl.Arg_Types,
                    Strict => True);
+
                if not Overloaded then -- we found the body!
                   No_Body := False;
                   Fn      := Fn_Tmp;
                else
                   Free (Fn_Tmp); -- it's not our body, but it's overloading
                end if;
+
             else -- Forward_Declared and not No_Body
                --  We have found forward declaration and corresponding body
                --  all other bodies should be overloading functions
+
                Overloaded := True;
                Free (Fn_Tmp);
             end if;
 
             exit when Overloaded;
          end loop;
+
          Release_Cursor (Handler.SN_Table (FU));
       end if;
 
@@ -2702,8 +2742,6 @@ package body Src_Info.CPP is
       end if;
 
       if not Overloaded then
-         Assert (Fail_Stream, Forward_Declared or not No_Body,
-           "Hey, what's up?");
          if Forward_Declared then
             Buffer         := FDecl.Buffer;
             Return_Type    := FDecl.Return_Type;
@@ -2803,7 +2841,6 @@ package body Src_Info.CPP is
    exception
       when Not_Found  | DB_Error => -- ignore
          Fail ("unable to find function " & Ref_Id);
-      return;
    end Fu_To_Fu_Handler;
 
    ----------------------
@@ -2811,10 +2848,10 @@ package body Src_Info.CPP is
    ----------------------
 
    procedure Fu_To_Gv_Handler
-     (Ref     : TO_Table;
-      Handler : access CPP_LI_Handler_Record'Class;
-      File    : in out LI_File_Ptr;
-      List    : in out LI_File_List;
+     (Ref              : TO_Table;
+      Handler          : access CPP_LI_Handler_Record'Class;
+      File             : in out LI_File_Ptr;
+      List             : in out LI_File_List;
       Project_View     : Prj.Project_Id;
       Module_Type_Defs : Module_Typedefs_List)
    is
@@ -2937,12 +2974,11 @@ package body Src_Info.CPP is
          Ref_Kind := Modification;
       end if;
 
-
       Insert_Reference
-        (Declaration_Info        => Decl_Info,
-         File                    => File,
-         Location                => Ref.Position,
-         Kind                    => Ref_Kind);
+        (Declaration_Info => Decl_Info,
+         File             => File,
+         Location         => Ref.Position,
+         Kind             => Ref_Kind);
    exception
       when Not_Found  | DB_Error => -- ignore
          Fail ("unable to find global variable " & Ref_Id);
@@ -2953,10 +2989,10 @@ package body Src_Info.CPP is
    ----------------------
 
    procedure Fu_To_Iv_Handler
-     (Ref     : TO_Table;
-      Handler : access CPP_LI_Handler_Record'Class;
-      File    : in out LI_File_Ptr;
-      List    : in out LI_File_List;
+     (Ref              : TO_Table;
+      Handler          : access CPP_LI_Handler_Record'Class;
+      File             : in out LI_File_Ptr;
+      List             : in out LI_File_List;
       Project_View     : Prj.Project_Id;
       Module_Type_Defs : Module_Typedefs_List)
    is
@@ -3215,10 +3251,10 @@ package body Src_Info.CPP is
       end if;
 
       Insert_Reference
-        (Declaration_Info     => Decl_Info,
-         File                 => File,
-         Location             => Ref.Position,
-         Kind                 => Reference);
+        (Declaration_Info => Decl_Info,
+         File             => File,
+         Location         => Ref.Position,
+         Kind             => Reference);
 
       Free (Macro);
 
@@ -3232,10 +3268,10 @@ package body Src_Info.CPP is
    ----------------------
 
    procedure Fu_To_Mi_Handler
-     (Ref     : TO_Table;
-      Handler : access CPP_LI_Handler_Record'Class;
-      File    : in out LI_File_Ptr;
-      List    : in out LI_File_List;
+     (Ref              : TO_Table;
+      Handler          : access CPP_LI_Handler_Record'Class;
+      File             : in out LI_File_Ptr;
+      List             : in out LI_File_List;
       Project_View     : Prj.Project_Id;
       Module_Type_Defs : Module_Typedefs_List)
    is
@@ -3251,6 +3287,7 @@ package body Src_Info.CPP is
         (Ref.Referred_Symbol_Name.First .. Ref.Referred_Symbol_Name.Last);
       Ref_Class     : constant String := Ref.Buffer
         (Ref.Referred_Class.First .. Ref.Referred_Class.Last);
+
    begin
       --  Info ("Fu_To_Mi_Handler: " & Ref_Id);
 
@@ -3289,6 +3326,7 @@ package body Src_Info.CPP is
 
       --  Once we have found the declaration(s) we may try to look up
       --  implementation as well
+
       if not Overloaded then
          Set_Cursor
            (Handler.SN_Table (MI),
@@ -3327,8 +3365,10 @@ package body Src_Info.CPP is
                Fail ("failed to locate method implementation, but it is not"
                   & " an abstract one: " & Ref_Class & "::" & Ref_Id);
                Free (MDecl);
+
                return;
             end if;
+
          else
             Free (Fn);
          end if;
@@ -3380,6 +3420,7 @@ package body Src_Info.CPP is
             List,
             Project_View,
             Module_Type_Defs);
+
          declare
             Class_Def : CL_Table;
          begin
@@ -3442,10 +3483,10 @@ package body Src_Info.CPP is
    ---------------------
 
    procedure Fu_To_T_Handler
-     (Ref     : TO_Table;
-      Handler : access CPP_LI_Handler_Record'Class;
-      File    : in out LI_File_Ptr;
-      List    : in out LI_File_List;
+     (Ref              : TO_Table;
+      Handler          : access CPP_LI_Handler_Record'Class;
+      File             : in out LI_File_Ptr;
+      List             : in out LI_File_List;
       Project_View     : Prj.Project_Id;
       Module_Type_Defs : Module_Typedefs_List)
    is
@@ -3505,7 +3546,7 @@ package body Src_Info.CPP is
                   Scope             => Global_Scope,
                   Declaration_Info  => Decl_Info);
             elsif Desc.Ancestor_Point = Predefined_Point then
-               --  typedef for builin type
+               --  typedef for builtin type
                Insert_Declaration
                  (File              => File,
                   List              => List,
@@ -3629,10 +3670,10 @@ package body Src_Info.CPP is
    ----------------------
 
    procedure Fu_To_Un_Handler
-     (Ref     : TO_Table;
-      Handler : access CPP_LI_Handler_Record'Class;
-      File    : in out LI_File_Ptr;
-      List    : in out LI_File_List;
+     (Ref              : TO_Table;
+      Handler          : access CPP_LI_Handler_Record'Class;
+      File             : in out LI_File_Ptr;
+      List             : in out LI_File_List;
       Project_View     : Prj.Project_Id;
       Module_Type_Defs : Module_Typedefs_List)
    is
@@ -3731,10 +3772,10 @@ package body Src_Info.CPP is
    --  Note: this handler is called from many different functions
 
    procedure Sym_CL_Handler
-     (Sym     : FIL_Table;
-      Handler : access CPP_LI_Handler_Record'Class;
-      File    : in out LI_File_Ptr;
-      List    : in out LI_File_List;
+     (Sym              : FIL_Table;
+      Handler          : access CPP_LI_Handler_Record'Class;
+      File             : in out LI_File_Ptr;
+      List             : in out LI_File_List;
       Project_View     : Prj.Project_Id;
       Module_Type_Defs : Module_Typedefs_List)
    is
@@ -3856,10 +3897,10 @@ package body Src_Info.CPP is
    --  NOTE: this handler is called from fu-to-con handler as well!!!
 
    procedure Sym_CON_Handler
-     (Sym     : FIL_Table;
-      Handler : access CPP_LI_Handler_Record'Class;
-      File    : in out LI_File_Ptr;
-      List    : in out LI_File_List;
+     (Sym              : FIL_Table;
+      Handler          : access CPP_LI_Handler_Record'Class;
+      File             : in out LI_File_Ptr;
+      List             : in out LI_File_List;
       Project_View     : Prj.Project_Id;
       Module_Type_Defs : Module_Typedefs_List)
    is
@@ -3966,10 +4007,10 @@ package body Src_Info.CPP is
    --  in Symbols_Handlers.
 
    procedure Sym_Default_Handler
-     (Sym     : FIL_Table;
-      Handler : access CPP_LI_Handler_Record'Class;
-      File    : in out LI_File_Ptr;
-      List    : in out LI_File_List;
+     (Sym              : FIL_Table;
+      Handler          : access CPP_LI_Handler_Record'Class;
+      File             : in out LI_File_Ptr;
+      List             : in out LI_File_List;
       Project_View     : Prj.Project_Id;
       Module_Type_Defs : Module_Typedefs_List)
    is
@@ -3987,10 +4028,10 @@ package body Src_Info.CPP is
    --------------------
 
    procedure Sym_E_Handler
-     (Sym     : FIL_Table;
-      Handler : access CPP_LI_Handler_Record'Class;
-      File    : in out LI_File_Ptr;
-      List    : in out LI_File_List;
+     (Sym              : FIL_Table;
+      Handler          : access CPP_LI_Handler_Record'Class;
+      File             : in out LI_File_Ptr;
+      List             : in out LI_File_List;
       Project_View     : Prj.Project_Id;
       Module_Type_Defs : Module_Typedefs_List)
    is
@@ -4020,15 +4061,16 @@ package body Src_Info.CPP is
    --------------------
 
    procedure Sym_EC_Handler
-     (Sym     : FIL_Table;
-      Handler : access CPP_LI_Handler_Record'Class;
-      File    : in out LI_File_Ptr;
-      List    : in out LI_File_List;
+     (Sym              : FIL_Table;
+      Handler          : access CPP_LI_Handler_Record'Class;
+      File             : in out LI_File_Ptr;
+      List             : in out LI_File_List;
       Project_View     : Prj.Project_Id;
       Module_Type_Defs : Module_Typedefs_List)
    is
       pragma Unreferenced (Module_Type_Defs);
       pragma Unreferenced (Project_View);
+
       Decl_Info : E_Declaration_Info_List;
       Ec_Id     : constant String := Sym.Buffer
         (Sym.Identifier.First ..  Sym.Identifier.Last);
@@ -4095,15 +4137,16 @@ package body Src_Info.CPP is
    --------------------
 
    procedure Sym_FD_Handler
-     (Sym     : FIL_Table;
-      Handler : access CPP_LI_Handler_Record'Class;
-      File    : in out LI_File_Ptr;
-      List    : in out LI_File_List;
+     (Sym              : FIL_Table;
+      Handler          : access CPP_LI_Handler_Record'Class;
+      File             : in out LI_File_Ptr;
+      List             : in out LI_File_List;
       Project_View     : Prj.Project_Id;
       Module_Type_Defs : Module_Typedefs_List)
    is
       pragma Unreferenced (Module_Type_Defs);
       pragma Unreferenced (Project_View);
+
       Target_Kind  : E_Kind;
       Decl_Info    : E_Declaration_Info_List;
       P            : Pair_Ptr;
@@ -4115,6 +4158,7 @@ package body Src_Info.CPP is
       Match        : Boolean;
       FU_File      : LI_File_Ptr;
       First_DBI    : Integer;
+
    begin
       --  Info ("Sym_FD_Hanlder: """
       --        & Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last)
@@ -4139,14 +4183,19 @@ package body Src_Info.CPP is
 
       loop
          P := Get_Pair (Handler.SN_Table (FD), Next_By_Key);
+
          exit when P = null;
+
          Parse_Pair (P.all, FD_Tab_Tmp);
          Free (P);
+
          --  Update position of the first forward declaration
          --  We have to compare prototypes of all global functions
          --  if this is a global function, or only local (static)
          --  ones if this is a static function
+
          Match := True;
+
          if Is_Static then
             Match := Match and
                Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last)
@@ -4164,12 +4213,15 @@ package body Src_Info.CPP is
             Strict => True);
 
          if (Match and then First_FD_Pos = Invalid_Point)
-               or else FD_Tab_Tmp.Start_Position < First_FD_Pos then
+           or else FD_Tab_Tmp.Start_Position < First_FD_Pos
+         then
             First_FD_Pos := FD_Tab_Tmp.Start_Position;
             First_DBI    := FD_Tab_Tmp.DBI;
          end if;
+
          Free (FD_Tab_Tmp);
       end loop;
+
       Release_Cursor (Handler.SN_Table (FD));
 
       Assert (Fail_Stream, First_FD_Pos /= Invalid_Point, "DB inconsistency");
@@ -4213,6 +4265,7 @@ package body Src_Info.CPP is
                (Sym.Identifier.First .. Sym.Identifier.Last) & Field_Sep,
             False);
          Match := False;
+
          loop
             P := Get_Pair (Handler.SN_Table (FU), Next_By_Key);
 
@@ -4228,10 +4281,14 @@ package body Src_Info.CPP is
                 FD_Tab.Return_Type,
                 FU_Tab.Return_Type,
                 Strict => True);
+
             exit when Match;
+
             Free (FU_Tab);
          end loop;
+
          Release_Cursor (Handler.SN_Table (FU));
+
          if Match -- we found the body
             and then FU_Tab.Buffer (FU_Tab.File_Name.First ..
                                     FU_Tab.File_Name.Last)
@@ -4243,6 +4300,7 @@ package body Src_Info.CPP is
                (List,
                 FU_Tab.Buffer
                    (FU_Tab.File_Name.First .. FU_Tab.File_Name.Last));
+
             if FU_File = No_LI_File then
                Create_Stub_For_File
                  (LI            => FU_File,
@@ -4253,6 +4311,7 @@ package body Src_Info.CPP is
                   Full_Filename => FU_Tab.Buffer
                      (FU_Tab.File_Name.First .. FU_Tab.File_Name.Last));
             end if;
+
             Insert_Reference
               (Decl_Info,
                FU_File,
@@ -4260,11 +4319,14 @@ package body Src_Info.CPP is
                Body_Entity);
             Set_End_Of_Scope (Decl_Info, FU_File, FU_Tab.End_Position);
          end if;
+
          if Match then
             Free (FU_Tab);
          end if;
       end if;
+
       Free (FD_Tab);
+
    exception
       when DB_Error | Not_Found =>
          Fail ("unable to find function " &
@@ -4283,19 +4345,18 @@ package body Src_Info.CPP is
       Project_View     : Prj.Project_Id;
       Module_Type_Defs : Module_Typedefs_List)
    is
-      Decl_Info      : E_Declaration_Info_List := null;
-      Target_Kind    : E_Kind;
-
-      P              : Pair_Ptr;
-      FU_Tab         : aliased FU_Table;
-      Start_Position : constant Point := Sym.Start_Position;
-      Body_Position  : Point := Invalid_Point;
-      End_Position   : Point;
-      Ref            : TO_Table;
-      Our_Ref        : Boolean;
-      Class_Def      : CL_Table := Invalid_CL_Table;
-
-      Fu_Id          : constant String := Sym.Buffer
+      Decl_Info       : E_Declaration_Info_List := null;
+      Target_Kind     : E_Kind;
+      P               : Pair_Ptr;
+      FU_Tab          : aliased FU_Table;
+      Start_Position  : constant Point := Sym.Start_Position;
+      Body_Position   : Point := Invalid_Point;
+      End_Position    : Point;
+      Ref             : TO_Table;
+      Our_Ref         : Boolean;
+      Class_Def       : CL_Table := Invalid_CL_Table;
+      Class_Decl_Info : E_Declaration_Info_List;
+      Fu_Id           : constant String := Sym.Buffer
         (Sym.Identifier.First .. Sym.Identifier.Last);
 
    begin
@@ -4305,8 +4366,6 @@ package body Src_Info.CPP is
       --        & """");
 
       if Sym.Symbol = MI then
-         declare
-            Class_Decl_Info : E_Declaration_Info_List;
          begin
             Find
               (Handler.SN_Table (MI),
@@ -4335,8 +4394,10 @@ package body Src_Info.CPP is
                    List,
                    Project_View,
                    Module_Type_Defs);
+
                if not (Class_Def.Start_Position < Sym.Start_Position
-                  and Sym.End_Position < Class_Def.End_Position) then
+                       and Sym.End_Position < Class_Def.End_Position)
+               then
                   Insert_Reference
                     (Class_Decl_Info,
                      File,
@@ -4345,10 +4406,12 @@ package body Src_Info.CPP is
                      --  name, so set the column to "anywhere"
                      Reference);
                end if;
+
             exception
                when DB_Error | Not_Found =>
                   null;
             end;
+
             End_Position := FU_Tab.End_Position;
          exception
             when DB_Error | Not_Found =>
@@ -4401,6 +4464,7 @@ package body Src_Info.CPP is
             Module_Type_Defs,
             Decl_Info,
             Strict => True);
+
          if Decl_Info /= null then -- Body_Entity is inserted only w/ fwd decl
             Body_Position := Sym.Start_Position;
          end if;
@@ -4529,19 +4593,20 @@ package body Src_Info.CPP is
    --  NOTE: this handler is called from fu-to-gv handler as well
 
    procedure Sym_GV_Handler
-     (Sym     : FIL_Table;
-      Handler : access CPP_LI_Handler_Record'Class;
-      File    : in out LI_File_Ptr;
-      List    : in out LI_File_List;
+     (Sym              : FIL_Table;
+      Handler          : access CPP_LI_Handler_Record'Class;
+      File             : in out LI_File_Ptr;
+      List             : in out LI_File_List;
       Project_View     : Prj.Project_Id;
       Module_Type_Defs : Module_Typedefs_List)
    is
       pragma Unreferenced (Project_View);
-      Desc              : CType_Description;
-      Var               : GV_Table;
-      Success           : Boolean;
-      Decl_Info         : E_Declaration_Info_List;
-      Scope             : E_Scope := Global_Scope;
+
+      Desc      : CType_Description;
+      Var       : GV_Table;
+      Success   : Boolean;
+      Decl_Info : E_Declaration_Info_List;
+      Scope     : E_Scope := Global_Scope;
 
    begin
       --  Info ("Sym_GV_Handler: """
@@ -4637,10 +4702,10 @@ package body Src_Info.CPP is
    --------------------
 
    procedure Sym_IU_Handler
-     (Sym     : FIL_Table;
-      Handler : access CPP_LI_Handler_Record'Class;
-      File    : in out LI_File_Ptr;
-      List    : in out LI_File_List;
+     (Sym              : FIL_Table;
+      Handler          : access CPP_LI_Handler_Record'Class;
+      File             : in out LI_File_Ptr;
+      List             : in out LI_File_List;
       Project_View     : Prj.Project_Id;
       Module_Type_Defs : Module_Typedefs_List)
    is
@@ -4697,19 +4762,21 @@ package body Src_Info.CPP is
    --------------------
 
    procedure Sym_IV_Handler
-     (Sym     : FIL_Table;
-      Handler : access CPP_LI_Handler_Record'Class;
-      File    : in out LI_File_Ptr;
-      List    : in out LI_File_List;
+     (Sym              : FIL_Table;
+      Handler          : access CPP_LI_Handler_Record'Class;
+      File             : in out LI_File_Ptr;
+      List             : in out LI_File_List;
       Project_View     : Prj.Project_Id;
       Module_Type_Defs : Module_Typedefs_List)
    is
       pragma Unreferenced (Project_View);
-      Inst_Var        : IV_Table;
-      Decl_Info       : E_Declaration_Info_List;
-      Success         : Boolean;
-      Desc            : CType_Description;
-      Class_Def       : CL_Table;
+
+      Inst_Var  : IV_Table;
+      Decl_Info : E_Declaration_Info_List;
+      Success   : Boolean;
+      Desc      : CType_Description;
+      Class_Def : CL_Table;
+
    begin
       --  Info ("Sym_IV_Handler: """
       --        & Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last)
@@ -4779,10 +4846,8 @@ package body Src_Info.CPP is
       Free (Class_Def);
 
       if not Success then
-         Fail ("Failed to determine type of the instance variable"
-            & Sym.Buffer (Sym.Class.First .. Sym.Class.Last)
-            & "."
-            & Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last));
+         --  Cannot determine type of this instance variable
+
          Free (Inst_Var);
          return;
       end if;
@@ -4868,10 +4933,10 @@ package body Src_Info.CPP is
    --------------------
 
    procedure Sym_MD_Handler
-     (Sym     : FIL_Table;
-      Handler : access CPP_LI_Handler_Record'Class;
-      File    : in out LI_File_Ptr;
-      List    : in out LI_File_List;
+     (Sym              : FIL_Table;
+      Handler          : access CPP_LI_Handler_Record'Class;
+      File             : in out LI_File_Ptr;
+      List             : in out LI_File_List;
       Project_View     : Prj.Project_Id;
       Module_Type_Defs : Module_Typedefs_List)
    is
@@ -4914,26 +4979,30 @@ package body Src_Info.CPP is
          exit when P = null;
          Parse_Pair (P.all, MD_Tab_Tmp);
          Free (P);
+
          --  Update position of the first forward declaration
+
          if Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last)
             = MD_Tab_Tmp.Buffer (MD_Tab_Tmp.File_Name.First ..
                                 MD_Tab_Tmp.File_Name.Last)
-            and then Cmp_Prototypes
-              (MD_Tab.Buffer,
-               MD_Tab_Tmp.Buffer,
-               MD_Tab.Arg_Types,
-               MD_Tab_Tmp.Arg_Types,
-               MD_Tab.Return_Type,
-               MD_Tab_Tmp.Return_Type,
-               Strict => True)
-            and then ((First_MD_Pos = Invalid_Point)
-            or else MD_Tab_Tmp.Start_Position < First_MD_Pos) then
+           and then Cmp_Prototypes
+             (MD_Tab.Buffer,
+              MD_Tab_Tmp.Buffer,
+              MD_Tab.Arg_Types,
+              MD_Tab_Tmp.Arg_Types,
+              MD_Tab.Return_Type,
+              MD_Tab_Tmp.Return_Type,
+              Strict => True)
+           and then ((First_MD_Pos = Invalid_Point)
+                     or else MD_Tab_Tmp.Start_Position < First_MD_Pos)
+         then
             First_MD_Pos := MD_Tab_Tmp.Start_Position;
          end if;
+
          Free (MD_Tab_Tmp);
       end loop;
-      Release_Cursor (Handler.SN_Table (MD));
 
+      Release_Cursor (Handler.SN_Table (MD));
       Assert (Fail_Stream, First_MD_Pos /= Invalid_Point, "DB inconsistency");
 
       declare
@@ -4955,6 +5024,7 @@ package body Src_Info.CPP is
             Class_Def,
             Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
             Class_Decl_Info, File, List, Project_View, Module_Type_Defs);
+
          if Class_Decl_Info /= null then
             Insert_Reference
               (Class_Decl_Info,
@@ -4962,7 +5032,9 @@ package body Src_Info.CPP is
                (Sym.Start_Position.Line, Sym.Start_Position.Column),
                Primitive_Operation);
          end if;
+
          Free (Class_Def);
+
       exception
          when DB_Error | Not_Found =>
             null;
@@ -4989,12 +5061,14 @@ package body Src_Info.CPP is
       end if;
 
       --  for all subsequent declarations, add reference to the first decl
+
       if Sym.Start_Position /= First_MD_Pos then
          Insert_Reference
            (Declaration_Info => Decl_Info,
             File             => File,
             Location         => Sym.Start_Position,
             Kind             => Reference);
+
       else -- for the first declaration we lookup body
          Set_Cursor
            (Handler.SN_Table (MI),
@@ -5004,6 +5078,7 @@ package body Src_Info.CPP is
                & Field_Sep,
             False);
          Found := False;
+
          loop
             P := Get_Pair (Handler.SN_Table (MI), Next_By_Key);
 
@@ -5019,21 +5094,26 @@ package body Src_Info.CPP is
                 MD_Tab.Return_Type,
                 MI_Tab.Return_Type,
                 Strict => True);
+
             exit when Found;
+
             Free (MI_Tab);
          end loop;
+
          Release_Cursor (Handler.SN_Table (MI));
+
          if Found -- we found the body
-            and then MI_Tab.Buffer (MI_Tab.File_Name.First ..
-                                    MI_Tab.File_Name.Last)
-               /= MD_Tab.Buffer (MD_Tab.File_Name.First ..
-                                 MD_Tab.File_Name.Last)
-               --  and it is in another file
+           and then MI_Tab.Buffer (MI_Tab.File_Name.First ..
+                                   MI_Tab.File_Name.Last)
+             /= MD_Tab.Buffer (MD_Tab.File_Name.First ..
+                               MD_Tab.File_Name.Last)
+         --  and it is in another file
          then
             MI_File := Locate_From_Source
-               (List,
-                MI_Tab.Buffer
-                   (MI_Tab.File_Name.First .. MI_Tab.File_Name.Last));
+              (List,
+               MI_Tab.Buffer
+                 (MI_Tab.File_Name.First .. MI_Tab.File_Name.Last));
+
             if MI_File = No_LI_File then
                Create_Stub_For_File
                  (LI            => MI_File,
@@ -5044,21 +5124,27 @@ package body Src_Info.CPP is
                   Full_Filename => MI_Tab.Buffer
                      (MI_Tab.File_Name.First .. MI_Tab.File_Name.Last));
             end if;
+
             if MI_File /= File
-               or else MD_Tab.Start_Position /= MI_Tab.Start_Position then
+              or else MD_Tab.Start_Position /= MI_Tab.Start_Position
+            then
                Insert_Reference
                  (Decl_Info,
                   MI_File,
                   MI_Tab.Start_Position,
                   Body_Entity);
             end if;
+
             Set_End_Of_Scope (Decl_Info, MI_File, MI_Tab.End_Position);
          end if;
+
          if Found then
             Free (MI_Tab);
          end if;
       end if;
+
       Free (MD_Tab);
+
    exception
       when DB_Error | Not_Found =>
          Fail ("unable to find method " &
@@ -5070,10 +5156,10 @@ package body Src_Info.CPP is
    --------------------
 
    procedure Sym_T_Handler
-     (Sym     : FIL_Table;
-      Handler : access CPP_LI_Handler_Record'Class;
-      File    : in out LI_File_Ptr;
-      List    : in out LI_File_List;
+     (Sym              : FIL_Table;
+      Handler          : access CPP_LI_Handler_Record'Class;
+      File             : in out LI_File_Ptr;
+      List             : in out LI_File_List;
       Project_View     : Prj.Project_Id;
       Module_Type_Defs : Module_Typedefs_List)
    is
@@ -5164,10 +5250,10 @@ package body Src_Info.CPP is
    --------------------
 
    procedure Sym_UN_Handler
-     (Sym     : FIL_Table;
-      Handler : access CPP_LI_Handler_Record'Class;
-      File    : in out LI_File_Ptr;
-      List    : in out LI_File_List;
+     (Sym              : FIL_Table;
+      Handler          : access CPP_LI_Handler_Record'Class;
+      File             : in out LI_File_Ptr;
+      List             : in out LI_File_List;
       Project_View     : Prj.Project_Id;
       Module_Type_Defs : Module_Typedefs_List)
    is
@@ -5219,15 +5305,14 @@ package body Src_Info.CPP is
    -- Get_DB_Dir --
    ----------------
 
-   function Get_DB_Dir (Project : Prj.Project_Id) return String
-   is
+   function Get_DB_Dir (Project : Prj.Project_Id) return String is
       Obj_Dir : constant String := Prj_API.Object_Path (Project, False);
    begin
       if Obj_Dir = "" then
          return "";
       else
          return Name_As_Directory (Obj_Dir)
-            & Name_As_Directory (SN.Browse.DB_Dir_Name);
+           & Name_As_Directory (SN.Browse.DB_Dir_Name);
       end if;
    end Get_DB_Dir;
 
@@ -5480,26 +5565,32 @@ package body Src_Info.CPP is
            Var_Name &
            Field_Sep & To_String (Referred_Symbol) & Field_Sep,
          Exact_Match => False);
+
       loop
          P := Get_Pair (Handler.SN_Table (TO), Next_By_Key);
+
          exit when P = null;
+
          Parse_Pair (P.all, Ref);
          Free (P);
+
          --  Check if we found the right lv usage: comapre file name
          --  and argument types
-         if Ref.Buffer (Ref.File_Name.First .. Ref.File_Name.Last) =
-            Var_File_Name
-         and then Cmp_Arg_Types
-           (FU_Tab.Buffer,
-            Ref.Buffer,
-            FU_Tab.Arg_Types,
-            Ref.Caller_Argument_Types,
-            Strict => True)
+
+         if Ref.Buffer (Ref.File_Name.First .. Ref.File_Name.Last)
+           = Var_File_Name
+           and then Cmp_Arg_Types
+             (FU_Tab.Buffer,
+              Ref.Buffer,
+              FU_Tab.Arg_Types,
+              Ref.Caller_Argument_Types,
+              Strict => True)
          then
             --  For each declaration of local variable (in .lv table) SN
             --  creates a xref record with the same name and location
             --  (in .to table). Thus, we don't create a reference to local
             --  variable usage with the same location.
+
             if Ref.Position /= Var_Start_Position then
                if Ref.Buffer
                  (Ref.Access_Type.First .. Ref.Access_Type.Last) = "w"
@@ -5508,11 +5599,14 @@ package body Src_Info.CPP is
                else
                   Ref_Kind := Reference;
                end if;
+
                Insert_Reference (Decl_Info, File, Ref.Position, Ref_Kind);
             end if;
          end if;
+
          Free (Ref);
       end loop;
+
       Release_Cursor (Handler.SN_Table (TO));
    end Process_Local_Variable;
 
@@ -5521,11 +5615,11 @@ package body Src_Info.CPP is
    ------------------------------
 
    procedure Process_Class_To_TA_Refs
-     (CL_Tab             : CL_Table;
-      Arg                : TA_Table;
-      Handler            : access CPP_LI_Handler_Record'Class;
-      File               : in out LI_File_Ptr;
-      Decl_Info          : in out E_Declaration_Info_List)
+     (CL_Tab    : CL_Table;
+      Arg       : TA_Table;
+      Handler   : access CPP_LI_Handler_Record'Class;
+      File      : in out LI_File_Ptr;
+      Decl_Info : in out E_Declaration_Info_List)
    is
       P        : Pair_Ptr;
       Ref      : TO_Table;
@@ -5545,20 +5639,27 @@ package body Src_Info.CPP is
            Arg.Buffer (Arg.Name.First .. Arg.Name.Last) &
            Field_Sep & To_String (TA) & Field_Sep,
          Exact_Match => False);
+
       loop
          P := Get_Pair (Handler.SN_Table (TO), Next_By_Key);
+
          exit when P = null;
+
          Parse_Pair (P.all, Ref);
          Free (P);
+
          if Ref.Buffer (Ref.Access_Type.First .. Ref.Access_Type.Last)
-            = "w" then
+           = "w"
+         then
             Ref_Kind := Modification;
          else
             Ref_Kind := Reference;
          end if;
+
          Insert_Reference (Decl_Info, File, Ref.Position, Ref_Kind);
          Free (Ref);
       end loop;
+
       Release_Cursor (Handler.SN_Table (TO));
    end Process_Class_To_TA_Refs;
 
@@ -5620,17 +5721,19 @@ package body Src_Info.CPP is
 
       loop
          P := Get_Pair (TA_File, Next_By_Key);
+
          exit when P = null;
+
          Parse_Pair (P.all, Arg);
          Free (P);
 
          if Buffer (File_Name.First .. File_Name.Last)
-            = Arg.Buffer (Arg.File_Name.First .. Arg.File_Name.Last)
-            and Buffer (Template_Args.First .. Template_Args.Last)
-               = Arg.Buffer (Arg.Template_Parameters.First ..
-                  Arg.Template_Parameters.Last)
-            and Buffer (Class_Name.First .. Class_Name.Last)
-               = Arg.Buffer (Arg.Class_Name.First .. Arg.Class_Name.Last)
+           = Arg.Buffer (Arg.File_Name.First .. Arg.File_Name.Last)
+           and then Buffer (Template_Args.First .. Template_Args.Last)
+             = Arg.Buffer (Arg.Template_Parameters.First ..
+                           Arg.Template_Parameters.Last)
+           and then Buffer (Class_Name.First .. Class_Name.Last)
+             = Arg.Buffer (Arg.Class_Name.First .. Arg.Class_Name.Last)
          then
             if Arg.Attributes = SN_TA_TYPE
               or else Arg.Attributes = SN_TA_TEMPLATE
@@ -5698,11 +5801,13 @@ package body Src_Info.CPP is
                      File,
                      Arg.Type_Position);
                end if;
+
                Free (Desc);
             end if;
 
-            if (Symbol = FU) or (Symbol = FD)
-               or (Symbol = MD) or (Symbol = MI) then
+            if Symbol = FU or else Symbol = FD
+              or else Symbol = MD or else Symbol = MI
+            then
                Process_Local_Variable
                  (Arg.Buffer (Arg.Name.First .. Arg.Name.Last),
                   FU_Tab.Buffer (FU_Tab.File_Name.First ..
@@ -5721,6 +5826,7 @@ package body Src_Info.CPP is
                   Handler,
                   File,
                   Decl_Info);
+
                declare
                   P        : Pair_Ptr;
                   MI_Tab   : FU_Table;
@@ -5737,7 +5843,9 @@ package body Src_Info.CPP is
 
                      loop -- iterate thru all methods of the class
                         P := Get_Pair (MI_File, Next_By_Key);
+
                         exit when P = null;
+
                         Parse_Pair (P.all, MI_Tab);
 
                         Process_Local_Variable
@@ -5754,6 +5862,7 @@ package body Src_Info.CPP is
                         Free (MI_Tab);
                      end loop;
                   end if;
+
                   Release_Cursor (MI_File);
                   Close (MI_File, Success);
                end;
@@ -5791,8 +5900,8 @@ package body Src_Info.CPP is
          return;
       end if;
 
-      for I in Keys.all'Range loop
-         SN_Prj_HTables.Remove (Prj_HTable.all, Keys (I).all);
+      for J in Keys'Range loop
+         SN_Prj_HTables.Remove (Prj_HTable.all, Keys (J).all);
       end loop;
 
       Internal_Free (Prj_HTable);
@@ -5812,11 +5921,14 @@ package body Src_Info.CPP is
       if Prj_HTable = null then
          return Empty_Xref_Pool;
       end if;
+
       Prj_Data := SN_Prj_HTables.Get (Prj_HTable.all, DB_Dir);
+
       if Prj_Data = No_SN_Prj_Data then
          Fail ("Get_Xref_Pool: empty pool for " & DB_Dir);
          return Empty_Xref_Pool;
       end if;
+
       return Prj_Data.Pool;
    end Get_Xref_Pool;
 
@@ -5835,6 +5947,7 @@ package body Src_Info.CPP is
       if Prj_Data /= No_SN_Prj_Data then
          Free (Prj_Data.Pool);
       end if;
+
       Prj_Data.Pool := Pool;
       SN_Prj_HTables.Set (Prj_HTable.all, DB_Dir.all, Prj_Data);
    end Set_Xref_Pool;
@@ -5844,17 +5957,19 @@ package body Src_Info.CPP is
    -----------------------
 
    function Xref_Filename_For
-     (Filename       : String;
-      DB_Dir         : String;
-      Prj_HTable     : SN_Prj_HTable) return GNAT.OS_Lib.String_Access
+     (Filename   : String;
+      DB_Dir     : String;
+      Prj_HTable : SN_Prj_HTable) return GNAT.OS_Lib.String_Access
    is
       Pool : Xref_Pool;
    begin
       Pool := SN_Prj_HTables.Get (Prj_HTable.all, DB_Dir).Pool;
+
       if Pool = Empty_Xref_Pool then
          Fail ("Xref_Filename_For: empty pool for " & DB_Dir);
          return null;
       end if;
+
       return Xref_Filename_For
         (Source_Filename => Filename,
          Directory       => DB_Dir,
@@ -5874,11 +5989,13 @@ package body Src_Info.CPP is
    is
    begin
       Pool := SN_Prj_HTables.Get (Prj_HTable.all, DB_Dir).Pool;
+
       if Pool = Empty_Xref_Pool then
          Fail ("Xref_Filename_For: empty pool for " & DB_Dir);
          Xref_Filename := null;
          return;
       end if;
+
       Xref_Filename := Xref_Filename_For
         (Source_Filename => Filename,
          Directory       => DB_Dir,
@@ -5891,7 +6008,7 @@ package body Src_Info.CPP is
 
    function Get_Prj_HTable
      (Handler : access Src_Info.CPP.CPP_LI_Handler_Record'Class)
-     return SN_Prj_HTable is
+      return SN_Prj_HTable is
    begin
       return Handler.Prj_HTable;
    end Get_Prj_HTable;
@@ -5902,7 +6019,7 @@ package body Src_Info.CPP is
 
    function Get_Root_Project
      (Handler : access Src_Info.CPP.CPP_LI_Handler_Record'Class)
-     return Prj.Project_Id is
+      return Prj.Project_Id is
    begin
       return Handler.Root_Project;
    end Get_Root_Project;
@@ -5915,7 +6032,7 @@ package body Src_Info.CPP is
      (DB_Dirs : String_List_Access;
       DBI     : Integer) return String is
    begin
-      return DB_Dirs.all (DB_Dirs.all'First + DBI).all;
+      return DB_Dirs (DB_Dirs'First + DBI).all;
    end Get_DB_Dir;
 
    ----------------
