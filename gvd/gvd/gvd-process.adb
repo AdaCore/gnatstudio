@@ -835,22 +835,13 @@ package body GVD.Process is
       Gtk_New (Label);
 
       if Window.TTY_Mode then
+         Ref (Process.Process_Paned);
+         Remove (Process.Process_Hbox, Process.Process_Paned);
+
          if Process.Separate_Data then
-            Ref (Process.Command_Scrolledwindow);
-            Remove (Process.Process_Paned, Process.Command_Scrolledwindow);
-            Ref (Process.Editor_Vbox);
-            Remove (Process.Process_Paned, Process.Editor_Vbox);
-            Ref (Process.Process_Paned);
-            Remove (Process.Process_Hbox, Process.Process_Paned);
-            Add (Process.Process_Hbox, Process.Editor_Vbox);
+            Reparent (Process.Editor_Vbox, Process.Process_Hbox);
          else
-            Ref (Process.Command_Scrolledwindow);
-            Remove (Process.Process_Paned, Process.Command_Scrolledwindow);
-            Ref (Process.Data_Editor_Paned);
-            Remove (Process.Process_Paned, Process.Data_Editor_Paned);
-            Ref (Process.Process_Paned);
-            Remove (Process.Process_Hbox, Process.Process_Paned);
-            Add (Process.Process_Hbox, Process.Data_Editor_Paned);
+            Reparent (Process.Data_Editor_Paned, Process.Process_Hbox);
          end if;
       end if;
 
@@ -1692,13 +1683,6 @@ package body GVD.Process is
          if Process.Separate_Data then
             Detach (Get_Source (Process.Editor_Text));
 
-
-            if not Process.Window.TTY_Mode then
-               --  Ref the widget so that it is not destroyed.
-               Ref (Process.Data_Editor_Paned);
-               Remove (Process.Process_Paned, Process.Data_Editor_Paned);
-            end if;
-
             if Get_Active (Main.Call_Stack) then
                Widget := Gtk_Widget (Process.Data_Paned);
             else
@@ -1707,14 +1691,14 @@ package body GVD.Process is
 
             Reparent (Widget, Process);
 
+            --  Ref the widget so that it is not destroyed.
+            Ref (Process.Data_Editor_Paned);
+
             if Process.Window.TTY_Mode then
-               Ref (Process.Editor_Vbox);
-               Remove (Process.Data_Editor_Paned, Process.Editor_Vbox);
-               Ref (Process.Data_Editor_Paned);
                Remove (Process.Process_Hbox, Process.Data_Editor_Paned);
-               Add (Process.Process_Hbox, Process.Editor_Vbox);
-               Unref (Process.Editor_Vbox);
+               Reparent (Process.Editor_Vbox, Process.Process_Hbox);
             else
+               Remove (Process.Process_Paned, Process.Data_Editor_Paned);
                Reparent (Process.Editor_Vbox, Process.Process_Paned);
             end if;
 
@@ -1735,18 +1719,16 @@ package body GVD.Process is
 
             --  Put back the Data into the paned
 
+            Reparent (Widget, Process.Data_Editor_Paned);
+            Reparent (Process.Editor_Vbox, Process.Data_Editor_Paned);
+
             if Process.Window.TTY_Mode then
-               Reparent (Widget, Process.Data_Editor_Paned);
-               Reparent (Process.Editor_Vbox, Process.Data_Editor_Paned);
                Add (Process.Process_Hbox, Process.Data_Editor_Paned);
-               Unref (Process.Data_Editor_Paned);
             else
-               Reparent (Widget, Process.Data_Editor_Paned);
-               Reparent (Process.Editor_Vbox, Process.Data_Editor_Paned);
                Add (Process.Process_Paned, Process.Data_Editor_Paned);
-               Unref (Process.Data_Editor_Paned);
             end if;
 
+            Unref (Process.Data_Editor_Paned);
             Attach
               (Get_Source (Process.Editor_Text),
                Get_Editor_Container (Process.Editor_Text));
