@@ -92,10 +92,7 @@ package body Codefix_Window_Pkg.Callbacks is
       Graphic_Codefix : Graphic_Codefix_Access :=
         Graphic_Codefix_Access (Object);
    begin
-      Validate
-        (Graphic_Codefix.Corrector,
-         Graphic_Codefix.Current_Error,
-         Integer (Get_Current_Page (Graphic_Codefix.Choices_Proposed) + 1));
+      Valid_Current_Solution (Graphic_Codefix);
       Load_Next_Error (Graphic_Codefix);
    end On_Accept_Correction_Clicked;
 
@@ -124,13 +121,10 @@ package body Codefix_Window_Pkg.Callbacks is
    is
       Graphic_Codefix : constant Graphic_Codefix_Access :=
         Graphic_Codefix_Access (Object);
-      Success : Boolean;
    begin
       Commit
         (Graphic_Codefix.Corrector,
-         Success,
-         Graphic_Codefix.Current_Text,
-         null);
+         Graphic_Codefix.Current_Text);
       Quit (Graphic_Codefix);
    end On_Apply_Changes_Clicked;
 

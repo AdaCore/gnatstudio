@@ -33,13 +33,10 @@ package body Final_Window_Pkg.Callbacks is
    is
       Final_Window : constant Final_Window_Access :=
         Final_Window_Access (Object);
-      Success      : Boolean;
    begin
       Commit
         (Final_Window.Graphic_Codefix.Corrector,
-         Success,
-         Final_Window.Graphic_Codefix.Current_Text,
-         null);
+         Final_Window.Graphic_Codefix.Current_Text);
       Destroy (Final_Window);
       Quit (Final_Window.Graphic_Codefix);
    end On_Final_Validation_Clicked;
