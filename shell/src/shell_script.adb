@@ -1322,9 +1322,12 @@ package body Shell_Script is
          Index  : Natural := Result'First;
          S      : Natural := Str'First;
       begin
-         while S < Str'Last loop
+         while S <= Str'Last loop
             if Str (S) = '\' then
-               Result (Index) := Str (S + 1);
+               if S < Str'Last then
+                  Result (Index) := Str (S + 1);
+               end if;
+
                S := S + 2;
             else
                Result (Index) := Str (S);

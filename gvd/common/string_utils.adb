@@ -1304,9 +1304,12 @@ package body String_Utils is
       Index  : Natural := Result'First;
       N      : Natural := S'First;
    begin
-      while N < S'Last loop
+      while N <= S'Last loop
          if S (N) = '\' then
-            Result (Index) := S (N + 1);
+            if N < S'Last then
+               Result (Index) := S (N + 1);
+            end if;
+
             N := N + 2;
          else
             Result (Index) := S (N);
