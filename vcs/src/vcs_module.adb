@@ -119,7 +119,7 @@ package body VCS_Module is
       Explorer := Get_Explorer (Kernel);
 
       Clear (Explorer);
-      Get_Status (Ref, Get_Files_In_Project (Get_Project (Kernel)));
+      Get_Status (Ref, Get_Files_In_Project (Get_Project_View (Kernel)));
 
    exception
       when E : others =>

@@ -33,8 +33,6 @@ with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
 with Glide_Kernel.Console;      use Glide_Kernel.Console;
 with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
 
-with Prj_API;                   use Prj_API;
-
 with String_List_Utils;         use String_List_Utils;
 
 with VCS_Module;                use VCS_Module;
@@ -977,8 +975,7 @@ package body VCS_View_API is
          File_Context := File_Selection_Context_Access (Context);
 
          if Has_Project_Information (File_Context) then
-            Files := Get_Files_In_Project
-              (Get_Project_From_View (Project_Information (File_Context)));
+            Files := Get_Files_In_Project (Project_Information (File_Context));
             Update (Get_Current_Ref (Get_Kernel (Context)), Files);
             Get_Status (Get_Current_Ref (Get_Kernel (Context)), Files);
          end if;
@@ -1012,9 +1009,7 @@ package body VCS_View_API is
          File_Context := File_Selection_Context_Access (Context);
 
          if Has_Project_Information (File_Context) then
-            Files := Get_Files_In_Project
-              (Get_Project_From_View (Project_Information
-                                      (File_Context)));
+            Files := Get_Files_In_Project (Project_Information (File_Context));
 
             Files_Temp := String_List.First (Files);
 
