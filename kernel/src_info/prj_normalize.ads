@@ -121,4 +121,18 @@ package Prj_Normalize is
    --
    --  - ???  "when others" is partially incorrect.
 
+   function Current_Scenario_Case_Item
+     (Project : Prj.Tree.Project_Node_Id;
+      Pkg     : Prj.Tree.Project_Node_Id := Prj.Tree.Empty_Node)
+      return Prj.Tree.Project_Node_Id;
+   --  Return a pointer to the inner case item corresponding to the current
+   --  scenario variables.
+   --  For instance, in the example above, and if the current value for Var1 is
+   --  Value1, and the current value for Var2 is Value_1_1, this returns a
+   --  pointer to the "when Value_1_1 => " case item.
+   --  New statements can be added at the end of the declaration list.
+   --  If there is no case statement in the project, a new one is created.
+   --
+   --  Important: Project must have been normalized first.
+
 end Prj_Normalize;
