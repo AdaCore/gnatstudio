@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                         Copyright (C) 2000                        --
---                 Emmanuel Briot and Arnaud Charlet                 --
+--                      Copyright (C) 2000, 2001                     --
+--                             ACT-Europe                            --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -19,7 +19,7 @@
 -----------------------------------------------------------------------
 
 with Gdk.Window;          use Gdk.Window;
-with Gtk.Widget; use Gtk.Widget;
+with Gtk.Widget;          use Gtk.Widget;
 with Gtk.Main;            use Gtk.Main;
 with Gtk.Handlers;        use Gtk.Handlers;
 with Gtk.Notebook;        use Gtk.Notebook;
