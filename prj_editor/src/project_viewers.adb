@@ -1060,6 +1060,7 @@ package body Project_Viewers is
          Parent => Get_Main_Window (Kernel),
          Flags  => Modal or Destroy_With_Parent);
       Widget := Add_Button (Dialog, Stock_Ok, Gtk_Response_OK);
+      Widget := Add_Button (Dialog, Stock_Cancel, Gtk_Response_Cancel);
 
       Gtk_New (Label, -"Enter name of project:");
       Pack_Start (Get_Vbox (Dialog), Label);
@@ -1098,7 +1099,7 @@ package body Project_Viewers is
    is
       pragma Unreferenced (Widget);
    begin
-      if Is_Default (Get_Project (Kernel)) then
+      if Status (Get_Project (Kernel)) /= From_File then
          Read_Project_Name (Kernel, Get_Project (Kernel));
       end if;
 
@@ -1123,7 +1124,7 @@ package body Project_Viewers is
       Kernel  : constant Kernel_Handle := Get_Kernel (Context);
       Project : constant Project_Type := Project_Information (File);
    begin
-      if Is_Default (Project) then
+      if Status (Project) /= From_File then
          Read_Project_Name (Kernel, Project);
       end if;
 
