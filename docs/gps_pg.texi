@@ -170,7 +170,7 @@ new GUI features in the GPS interface, like menus, toolbar buttons, contextual
 menu entries, new windows,@dots{} As much as possible, a menu shouldn't directly
 depend on any other module, only on the GPS kernel itself.
 
-See the file @file{glide_kernel-modules.ads} for more information on modules.
+See the file @file{gps-kernel-modules.ads} for more information on modules.
 
 
 @c --------------------------------------------------------------------
@@ -207,10 +207,10 @@ In the source directory, we create the file @file{hello_world.ads}, which
 contains the declaration of the @code{Register_Module} subprogram.
 
 @smallexample
-@b{with} Glide_Kernel;
+@b{with} GPS.Kernel;
 @b{package} Hello_World @b{is}
    @b{procedure} Register_Module
-      (Kernel : @b{access} Glide_Kernel.Kernel_Handle_Record'Class);
+      (Kernel : @b{access} GPS.Kernel.Kernel_Handle_Record'Class);
 @b{end} Hello_World;
 @end smallexample
 
@@ -236,7 +236,7 @@ However, after the addition of the two statements in @file{gps.adb}, the file
 @file{hello_world.ads} will not be found automatically by GPS. Therefore,
 you need to create a project file for your new module (we'll call it
 @file{hello_world.gpr}), and add a dependency to it in the root project file
-of GPS (@file{glide/gps.gpr}), as is currently done for all other modules.
+of GPS (@file{gps/gps.gpr}), as is currently done for all other modules.
 
 The project file @file{hello_world.gpr} is best created by copying the
 project file from any other module, for instance the aliases module
@@ -280,15 +280,15 @@ This is done by creating the file @file{hello_world.adb}, with the following
 contents.
 
 @smallexample
-@b{with} Glide_Kernel.Modules;  @b{use} Glide_Kernel, Glide_Kernel.Modules;
+@b{with} GPS.Kernel.Modules;  @b{use} GPS.Kernel, GPS.Kernel.Modules;
 
 @b{package} Hello_World @b{is}
    @b{procedure} Register_Module
-      (Kernel : @b{access} Glide_Kernel.Kernel_Handle_Record'Class)
+      (Kernel : @b{access} GPS.Kernel.Kernel_Handle_Record'Class)
    @b{is}
       Module : Module_ID;
    @b{begin}
-      Glide_Kernel.Modules.Register_Module
+      GPS.Kernel.Modules.Register_Module
          (Module, Kernel, Module_Name => "hello_world");
    @b{end} Register_Module;
 
@@ -314,8 +314,8 @@ rest of GPS.
 
 @noindent
 
-@c glide_kernel.ads
-@c glide_kernel-module.ads
+@c gps-kernel.ads
+@c gps-kernel-module.ads
 @c up-to-date documentation found in the sources themselves
 @c Saving data from one session to the next:
 @c   - adding new preferences
@@ -429,7 +429,7 @@ of the hook. However, if the user didn't wish to use an external editor, this
 module does nothing, so that the callback from the source editor module is
 called in turn, and can thus open the file itself.
 
-See @file{glide_kernel-hooks.ads} for more information on hooks.
+See @file{gps-kernel-hooks.ads} for more information on hooks.
 
 @end itemize
 
