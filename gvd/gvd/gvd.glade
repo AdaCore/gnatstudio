@@ -1427,7 +1427,7 @@
 	      <object>main_debug_window</object>
 	      <last_modification_time>Sat, 08 Jul 2000 05:11:31 GMT</last_modification_time>
 	    </signal>
-	    <label>Print ()</label>
+	    <label>Print...</label>
 	    <right_justify>False</right_justify>
 	  </widget>
 
@@ -1445,7 +1445,7 @@
 	      <object>main_debug_window</object>
 	      <last_modification_time>Sat, 08 Jul 2000 05:11:55 GMT</last_modification_time>
 	    </signal>
-	    <label>Display ()</label>
+	    <label>Display...</label>
 	    <right_justify>False</right_justify>
 	  </widget>
 

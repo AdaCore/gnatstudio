@@ -837,7 +837,7 @@ begin
    Add (Main_Debug_Window.Data1_Menu, Main_Debug_Window.Separator24);
    Set_Right_Justify (Main_Debug_Window.Separator24, False);
 
-   Gtk_New (Main_Debug_Window.Print_1, -"Print ()");
+   Gtk_New (Main_Debug_Window.Print_1, -"Print...");
    Add_Accelerator (Main_Debug_Window.Print_1, "activate",
      The_Accel_Group, GDK_equal, Gdk.Types.Control_Mask, Accel_Visible);
    Widget_Callback.Object_Connect
@@ -846,7 +846,7 @@ begin
    Add (Main_Debug_Window.Data1_Menu, Main_Debug_Window.Print_1);
    Set_Right_Justify (Main_Debug_Window.Print_1, False);
 
-   Gtk_New (Main_Debug_Window.Display_1, -"Display ()");
+   Gtk_New (Main_Debug_Window.Display_1, -"Display...");
    Add_Accelerator (Main_Debug_Window.Display_1, "activate",
      The_Accel_Group, GDK_minus, Gdk.Types.Control_Mask, Accel_Visible);
    Widget_Callback.Object_Connect
