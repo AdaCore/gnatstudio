@@ -1298,6 +1298,10 @@ package body Vsearch_Ext is
    is
       Child   : MDI_Child;
       Success : Boolean;
+
+      Text : constant UTF8_String :=
+        Wait_For_Text (Gtk.Clipboard.Get (Selection_Primary));
+
       pragma Unreferenced (Success);
    begin
       Child := Find_MDI_Child_By_Tag
@@ -1347,18 +1351,12 @@ package body Vsearch_Ext is
       --  Automatically fill the pattern text entry with the selection, if
       --  there is one which does not contain multiple lines.
 
-      declare
-         Text : constant UTF8_String :=
-           Wait_For_Text (Gtk.Clipboard.Get (Selection_Primary));
-      begin
-         if Text /= ""
-           and then Text'Length < 128
-           and then Index (Text, (1 => ASCII.LF)) = 0
-         then
-            Set_Text (Vsearch_Module_Id.Search.Pattern_Entry, Text);
-         end if;
-      end;
-
+      if Text /= ""
+        and then Text'Length < 128
+        and then Index (Text, (1 => ASCII.LF)) = 0
+      then
+         Set_Text (Vsearch_Module_Id.Search.Pattern_Entry, Text);
+      end if;
 
       if Raise_Widget then
          Raise_Child (Child);
