@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2003                       --
+--                     Copyright (C) 2001-2004                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -1480,7 +1480,7 @@ package body Src_Editor_View is
    -- Center_Cursor --
    -------------------
 
-   procedure Center_Cursor (View  : access Source_View_Record) is
+   procedure Center_Cursor (View : access Source_View_Record) is
       Insert_Mark : constant Gtk_Text_Mark := Get_Insert (Get_Buffer (View));
    begin
       Scroll_To_Mark
