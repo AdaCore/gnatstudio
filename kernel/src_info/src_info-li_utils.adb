@@ -63,9 +63,12 @@ package body Src_Info.LI_Utils is
    --  Checks if given position belongs to class body (found in the given
    --  list of declarations)
 
-   procedure Convert_To_Parsed (File : in out LI_File_Ptr);
+   procedure Convert_To_Parsed
+     (File : in out LI_File_Ptr; Update_Timestamp : Boolean := True);
    --  Set File as parsed, ie indicate that the actual database has been parsed
    --  and this is no longer only a stub.
+   --  If Update_Timestamp is True, then the timestamp of the LI file is also
+   --  recomputed.
 
    procedure Create_Stub_For_File
      (LI            : out LI_File_Ptr;
@@ -148,7 +151,8 @@ package body Src_Info.LI_Utils is
    -- Convert_To_Parsed --
    -----------------------
 
-   procedure Convert_To_Parsed (File : in out LI_File_Ptr) is
+   procedure Convert_To_Parsed
+     (File : in out LI_File_Ptr; Update_Timestamp : Boolean := True) is
    begin
       if not File.LI.Parsed then
          File.LI := (Parsed                   => True,
@@ -160,6 +164,13 @@ package body Src_Info.LI_Utils is
                      LI_Timestamp             => File.LI.LI_Timestamp,
                      Compilation_Errors_Found => False,
                      Dependencies_Info        => null);
+
+         if Update_Timestamp
+           and then Is_Regular_File (File.LI.LI_Filename.all)
+         then
+            File.LI.LI_Timestamp := To_Timestamp
+              (File_Time_Stamp (File.LI.LI_Filename.all));
+         end if;
       end if;
    end Convert_To_Parsed;
 
@@ -191,13 +202,7 @@ package body Src_Info.LI_Utils is
          Assert (Me,
                  LI_Handler (Handler) = File.LI.Handler,
                  "Invalid Handler");
-         if File.LI.Parsed = False then
-            Convert_To_Parsed (File);
-            if Is_Regular_File (File.LI.LI_Filename.all) then
-               File.LI.LI_Timestamp := To_Timestamp
-                 (File_Time_Stamp (File.LI.LI_Filename.all));
-            end if;
-         end if;
+         Convert_To_Parsed (File);
       end if;
 
       --  Now we are searching through common list of LI_Files and
@@ -286,10 +291,6 @@ package body Src_Info.LI_Utils is
          pragma Assert (LI_Handler (Handler) = File.LI.Handler,
                         "Invalid Handler");
          Convert_To_Parsed (File);
-         if Is_Regular_File (File.LI.LI_Filename.all) then
-            File.LI.LI_Timestamp := To_Timestamp
-              (File_Time_Stamp (File.LI.LI_Filename.all));
-         end if;
       end if;
       --  Now we are searching through common list of LI_Files and
       --  trying to locate file with given name. If not found or if there
