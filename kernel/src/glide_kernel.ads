@@ -30,6 +30,7 @@ with Glib.Xml_Int;
 with Gdk;
 with Gtk.Handlers;
 with Gtk.Accel_Group;
+with Gtk.Main;
 with Gtk.Menu;
 with Gtk.Toolbar;
 with Gtk.Tooltips;
@@ -476,6 +477,9 @@ package Glide_Kernel is
    package Kernel_Callback is new Gtk.Handlers.User_Callback
      (Glib.Object.GObject_Record, Kernel_Handle);
    --  Generic callback that can be used to connect a signal to a kernel.
+
+   package Object_Idle is new Gtk.Main.Idle (Glib.Object.GObject);
+   --  General Idle loop for a GObject.
 
    type File_Project_Record (Length : Natural) is record
       Project : Prj.Project_Id;
