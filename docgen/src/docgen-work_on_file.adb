@@ -18,6 +18,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with Entities;                  use Entities;
 with Entities.Queries;          use Entities.Queries;
@@ -26,8 +27,7 @@ with Docgen.Work_On_Source;     use Docgen.Work_On_Source;
 with Traces;                    use Traces;
 with GPS.Kernel;              use GPS.Kernel;
 with VFS;                       use VFS;
-with VFS;                       use VFS;
-
+with OS_Utils;                  use OS_Utils;
 
 package body Docgen.Work_On_File is
 
@@ -107,9 +107,9 @@ package body Docgen.Work_On_File is
 
    procedure Process_One_File
      (B                             : access Docgen.Backend.Backend'Class;
-      Doc_File                      : File_Descriptor;
       Kernel                        : access
         GPS.Kernel.Kernel_Handle_Record'Class;
+      Result                        : in out Unbounded_String;
       Source_Filename               : Source_File;
       Package_Name                  : String;
       Source_File_List              : in out Type_Source_File_Table.HTable;
@@ -563,7 +563,7 @@ package body Docgen.Work_On_File is
 
       procedure Find_Next_Package
         (Source_File_Node : in out Type_Source_File_Table.Iterator;
-         Package_Name     : out String_Access);
+         Package_Name     : out GNAT.OS_Lib.String_Access);
       --  Returns the name of the next package in the list
       --  (body files with the same package name are ignored)
       --  If next package doesn't exist, "" is returned.
@@ -574,7 +574,7 @@ package body Docgen.Work_On_File is
 
       procedure Find_Next_Package
         (Source_File_Node : in out Type_Source_File_Table.Iterator;
-         Package_Name     : out String_Access) is
+         Package_Name     : out GNAT.OS_Lib.String_Access) is
       begin
          if Get_Element (Source_File_Node) = No_Source_File_Information then
             Package_Name := null;
@@ -620,16 +620,16 @@ package body Docgen.Work_On_File is
                                 Get_Element (Source_File_Node).Package_Name;
             File         : constant Source_File := Get_Key (Source_File_Node);
             Doc_File     : File_Descriptor;
+            Result       : Unbounded_String;
             Next_Package : GNAT.OS_Lib.String_Access;
          begin
             Doc_File := Create_File
               (Doc_Directory
                & Get_Element (Source_File_Node).Doc_File_Name.all, Binary);
+
             Find_Next_Package (Source_File_Node, Next_Package);
             Process_One_File
-              (B,
-               Doc_File,
-               Kernel,
+              (B, Kernel, Result,
                Source_Filename               => File,
                Package_Name                  => Current_Package.all,
                Source_File_List              => Source_File_List,
@@ -640,6 +640,10 @@ package body Docgen.Work_On_File is
                Private_Subprogram_Index_List => Private_Subprogram_Index_List,
                Private_Type_Index_List       => Private_Type_Index_List,
                Private_Tagged_Types_List     => Private_Tagged_Types_List);
+
+            --  Write result to doc file
+
+            Put_Line (Doc_File, To_String (Result));
             Close (Doc_File);
          end;
       end loop;
@@ -684,9 +688,9 @@ package body Docgen.Work_On_File is
 
    procedure Process_One_File
      (B                             : access Docgen.Backend.Backend'Class;
-      Doc_File                      : File_Descriptor;
       Kernel                        : access
         GPS.Kernel.Kernel_Handle_Record'Class;
+      Result                        : in out Unbounded_String;
       Source_Filename               : Source_File;
       Package_Name                  : String;
       Source_File_List              : in out Type_Source_File_Table.HTable;
@@ -703,7 +707,7 @@ package body Docgen.Work_On_File is
       Is_Spec          : constant Boolean :=
          Is_Spec_File (Kernel, Get_Filename (Source_Filename));
 
-      Level       : Natural := 1;
+      Level : Natural := 1;
       --  Stores the level of the current package in which we are
       --  processing types, subprograms...
 
@@ -728,9 +732,7 @@ package body Docgen.Work_On_File is
          Private_Tagged_Types_List     => Private_Tagged_Types_List);
 
       Process_Source
-        (B,
-         Kernel,
-         Doc_File,
+        (B, Kernel, Result,
          Source_File_List,
          Get_Filename (Source_Filename),
          Is_Spec,

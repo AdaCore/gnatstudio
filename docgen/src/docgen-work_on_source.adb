@@ -26,15 +26,15 @@ with Language;                  use Language;
 with Language_Handlers;         use Language_Handlers;
 with Entities.Queries;          use Entities.Queries;
 with VFS;                       use VFS;
-with GPS.Kernel.Project;        use GPS.Kernel, GPS.Kernel.Project;
+with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with Projects.Registry;         use Projects.Registry;
 with Traces;                    use Traces;
-with Ada.Strings.Unbounded;
 with Ada.Exceptions;            use Ada.Exceptions;
 with Projects;                  use Projects;
 with String_Utils;              use String_Utils;
 with Docgen.Backend;            use Docgen.Backend;
 with Language;                  use Language;
+with OS_Utils;                  use OS_Utils;
 
 package body Docgen.Work_On_Source is
 
@@ -45,7 +45,7 @@ package body Docgen.Work_On_Source is
    procedure Process_Source_Spec
      (B                         : access Docgen.Backend.Backend'Class;
       Kernel                    : access Kernel_Handle_Record'Class;
-      Doc_File                  : File_Descriptor;
+      Result                    : in out Unbounded_String;
       Source_File_List          : in out Type_Source_File_Table.HTable;
       Source_Filename           : VFS.Virtual_File;
       Package_Name              : String;
@@ -82,7 +82,7 @@ package body Docgen.Work_On_Source is
    procedure Process_One_Body_File
      (B                : access Docgen.Backend.Backend'Class;
       Kernel           : access Kernel_Handle_Record'Class;
-      Doc_File         : File_Descriptor;
+      Result           : in out Unbounded_String;
       List_Ref_In_File : in out List_Reference_In_File.List;
       Source_File      : Virtual_File;
       File_Text        : GNAT.OS_Lib.String_Access;
@@ -94,22 +94,22 @@ package body Docgen.Work_On_Source is
    --  of the body source files.
 
    procedure Process_Open_File
-     (B                : access Docgen.Backend.Backend'Class;
-      Kernel           : access Kernel_Handle_Record'Class;
-      Doc_File         : File_Descriptor;
-      Package_Name     : String);
+     (B            : access Docgen.Backend.Backend'Class;
+      Kernel       : access Kernel_Handle_Record'Class;
+      Result       : in out Unbounded_String;
+      Package_Name : String);
    --  Is always the first subprogram to be called, as it creates the
    --  very beginning of the documentation by calling the output
    --  subprogram
 
    procedure Process_Package_Description
-     (B                : access Docgen.Backend.Backend'Class;
-      Kernel           : access Kernel_Handle_Record'Class;
-      Doc_File         : File_Descriptor;
-      Text             : String;
-      Options          : All_Options;
-      Language         : Language_Access;
-      Level            : in out Natural);
+     (B        : access Docgen.Backend.Backend'Class;
+      Kernel   : access Kernel_Handle_Record'Class;
+      Result   : in out Unbounded_String;
+      Text     : String;
+      Options  : All_Options;
+      Language : Language_Access;
+      Level    : in out Natural);
    --  Extracts all the comment lines of the source file which are at the
    --  beginning of it. Empty lines are ignored, the procedure stops when
    --  first command is found. This information will be passed to the
@@ -118,7 +118,7 @@ package body Docgen.Work_On_Source is
    procedure Process_With_Clause
      (B                : access Docgen.Backend.Backend'Class;
       Kernel           : access Kernel_Handle_Record'Class;
-      Doc_File         : File_Descriptor;
+      Result           : in out Unbounded_String;
       Parsed_List      : in out Construct_List;
       List_Ref_In_File : in out List_Reference_In_File.List;
       Source_Filename  : VFS.Virtual_File;
@@ -130,18 +130,18 @@ package body Docgen.Work_On_Source is
    --  starting with "with" and pass them to the output subprogram
 
    procedure Process_Description
-     (B                 : access Docgen.Backend.Backend'Class;
-      Kernel            : access Kernel_Handle_Record'Class;
-      Doc_File          : File_Descriptor;
-      Level             : in out Natural;
-      Comment           : String);
+     (B       : access Docgen.Backend.Backend'Class;
+      Kernel  : access Kernel_Handle_Record'Class;
+      Result  : in out Unbounded_String;
+      Level   : in out Natural;
+      Comment : String);
    --  Processes comments after the source code (or before: it depends on
    --  preferences)
 
    procedure Process_Packages
      (B                         : access Docgen.Backend.Backend'Class;
       Kernel                    : access Kernel_Handle_Record'Class;
-      Doc_File                  : File_Descriptor;
+      Result                    : in out Unbounded_String;
       Parsed_List               : in out Construct_List;
       Entity_List               : in out Type_Entity_List.List;
       List_Ref_In_File          : in out List_Reference_In_File.List;
@@ -165,7 +165,7 @@ package body Docgen.Work_On_Source is
    procedure Process_Vars
      (B                : access Docgen.Backend.Backend'Class;
       Kernel           : access Kernel_Handle_Record'Class;
-      Doc_File         : File_Descriptor;
+      Result           : in out Unbounded_String;
       Parsed_List      : in out Construct_List;
       Entity_List      : in out Type_Entity_List.List;
       List_Ref_In_File : in out List_Reference_In_File.List;
@@ -186,7 +186,7 @@ package body Docgen.Work_On_Source is
    procedure Process_Exceptions
      (B                : access Docgen.Backend.Backend'Class;
       Kernel           : access Kernel_Handle_Record'Class;
-      Doc_File         : File_Descriptor;
+      Result           : in out Unbounded_String;
       Parsed_List      : in out Construct_List;
       Entity_List      : in out Type_Entity_List.List;
       List_Ref_In_File : in out List_Reference_In_File.List;
@@ -205,20 +205,20 @@ package body Docgen.Work_On_Source is
    --  contained in Entity_List.
 
    procedure Process_Entries
-     (B                 : access Docgen.Backend.Backend'Class;
-      Kernel            : access Kernel_Handle_Record'Class;
-      Doc_File          : File_Descriptor;
-      Parsed_List       : in out Construct_List;
-      Entity_List       : in out Type_Entity_List.List;
-      List_Ref_In_File  : in out List_Reference_In_File.List;
-      Source_Filename   : VFS.Virtual_File;
-      Package_Info      : Entity_Information;
-      File_Text         : GNAT.OS_Lib.String_Access;
-      Source_File_List  : in out Type_Source_File_Table.HTable;
-      Options           : All_Options;
-      Private_Entity    : Boolean;
-      Display_Private   : in out Boolean;
-      Level             : in out Natural);
+     (B                : access Docgen.Backend.Backend'Class;
+      Kernel           : access Kernel_Handle_Record'Class;
+      Result           : in out Unbounded_String;
+      Parsed_List      : in out Construct_List;
+      Entity_List      : in out Type_Entity_List.List;
+      List_Ref_In_File : in out List_Reference_In_File.List;
+      Source_Filename  : VFS.Virtual_File;
+      Package_Info     : Entity_Information;
+      File_Text        : GNAT.OS_Lib.String_Access;
+      Source_File_List : in out Type_Source_File_Table.HTable;
+      Options          : All_Options;
+      Private_Entity   : Boolean;
+      Display_Private  : in out Boolean;
+      Level            : in out Natural);
    --  Called by Process_Source to work on the entires and entry
    --  families and pass each of them to the output subprogram
    --  Display_Private : indicate if we print the "Private" header.
@@ -226,39 +226,39 @@ package body Docgen.Work_On_Source is
    --  contained in Entity_List.
 
    procedure Process_Calls_References
-     (B                 : access Docgen.Backend.Backend'Class;
-      Kernel            : access Kernel_Handle_Record'Class;
-      Options           : All_Options;
-      Doc_File          : File_Descriptor;
-      Info              : Entity_Information;
-      Source_File_List  : Type_Source_File_Table.HTable;
-      Level             : in out Natural);
+     (B                : access Docgen.Backend.Backend'Class;
+      Kernel           : access Kernel_Handle_Record'Class;
+      Result           : in out Unbounded_String;
+      Options          : All_Options;
+      Info             : Entity_Information;
+      Source_File_List : Type_Source_File_Table.HTable;
+      Level            : in out Natural);
    procedure Process_Caller_References
-     (B                 : access Docgen.Backend.Backend'Class;
-      Kernel            : access Kernel_Handle_Record'Class;
-      Options           : All_Options;
-      Doc_File          : File_Descriptor;
-      Info              : Entity_Information;
-      Source_File_List  : Type_Source_File_Table.HTable;
-      Level             : in out Natural);
+     (B                : access Docgen.Backend.Backend'Class;
+      Kernel           : access Kernel_Handle_Record'Class;
+      Result           : in out Unbounded_String;
+      Options          : All_Options;
+      Info             : Entity_Information;
+      Source_File_List : Type_Source_File_Table.HTable;
+      Level            : in out Natural);
    --  For one subprogram: processes the output of the callgraph when this
    --  option is choosen.
 
    procedure Process_Subprograms
-     (B                  : access Docgen.Backend.Backend'Class;
-      Kernel             : access Kernel_Handle_Record'Class;
-      Doc_File           : File_Descriptor;
-      Parsed_List        : in out Construct_List;
-      Entity_List        : in out Type_Entity_List.List;
-      List_Ref_In_File   : in out List_Reference_In_File.List;
-      Source_Filename    : VFS.Virtual_File;
-      Package_Info       : Entity_Information;
-      File_Text          : GNAT.OS_Lib.String_Access;
-      Source_File_List   : in out Type_Source_File_Table.HTable;
-      Options            : All_Options;
-      Private_Entity     : Boolean;
-      Display_Private    : in out Boolean;
-      Level              : in out Natural);
+     (B                : access Docgen.Backend.Backend'Class;
+      Kernel           : access Kernel_Handle_Record'Class;
+      Result           : in out Unbounded_String;
+      Parsed_List      : in out Construct_List;
+      Entity_List      : in out Type_Entity_List.List;
+      List_Ref_In_File : in out List_Reference_In_File.List;
+      Source_Filename  : VFS.Virtual_File;
+      Package_Info     : Entity_Information;
+      File_Text        : GNAT.OS_Lib.String_Access;
+      Source_File_List : in out Type_Source_File_Table.HTable;
+      Options          : All_Options;
+      Private_Entity   : Boolean;
+      Display_Private  : in out Boolean;
+      Level            : in out Natural);
    --  Called by Process_Source to work on the subprograms and
    --  pass each of them to the output subprogram
    --  Private_Entity indicates if it must process private or public entites
@@ -268,7 +268,7 @@ package body Docgen.Work_On_Source is
    procedure Process_One_Family
      (B                : access Docgen.Backend.Backend'Class;
       Kernel           : access Kernel_Handle_Record'Class;
-      Doc_File         : File_Descriptor;
+      Result           : in out Unbounded_String;
       Family           : List_Entity_Information.List;
       Source_File_List : in out Type_Source_File_Table.HTable;
       Entity           : Entity_Information;
@@ -278,7 +278,7 @@ package body Docgen.Work_On_Source is
    procedure Process_Types
      (B                         : access Docgen.Backend.Backend'Class;
       Kernel                    : access Kernel_Handle_Record'Class;
-      Doc_File                  : File_Descriptor;
+      Result                    : in out Unbounded_String;
       Parsed_List               : in out Construct_List;
       Entity_List               : in out Type_Entity_List.List;
       List_Ref_In_File          : in out List_Reference_In_File.List;
@@ -299,72 +299,72 @@ package body Docgen.Work_On_Source is
    --  contained in Entity_List.
 
    procedure Process_Header
-     (B                 : access Docgen.Backend.Backend'Class;
-      Kernel            : access Kernel_Handle_Record'Class;
-      Doc_File          : File_Descriptor;
-      Entity_List       : in out Type_Entity_List.List;
-      Source_Filename   : VFS.Virtual_File;
-      Package_Name      : String;
-      Package_File      : VFS.Virtual_File;
-      Options           : All_Options);
+     (B               : access Docgen.Backend.Backend'Class;
+      Kernel          : access Kernel_Handle_Record'Class;
+      Result          : in out Unbounded_String;
+      Entity_List     : in out Type_Entity_List.List;
+      Source_Filename : VFS.Virtual_File;
+      Package_Name    : String;
+      Package_File    : VFS.Virtual_File;
+      Options         : All_Options);
    --  Will call the output subprogram to create the header of
    --  the package. This is NOT the same as Process_Open_File,
    --  if TexInfo doc is created, the file is opened only once,
    --  but the Header has to be set in front of each package.
 
    procedure Process_Header_Private
-     (B                 : access Docgen.Backend.Backend'Class;
-      Kernel            : access Kernel_Handle_Record'Class;
-      Doc_File          : File_Descriptor;
-      Level             : in out Natural);
+     (B      : access Docgen.Backend.Backend'Class;
+      Kernel : access Kernel_Handle_Record'Class;
+      Result : in out Unbounded_String;
+      Level  : in out Natural);
    --  Adds title "Private: " when private entities are required.
 
    procedure Process_Header_Packages
-     (B                 : access Docgen.Backend.Backend'Class;
-      Kernel            : access Kernel_Handle_Record'Class;
-      Doc_File          : File_Descriptor;
-      Level             : in out Natural);
+     (B      : access Docgen.Backend.Backend'Class;
+      Kernel : access Kernel_Handle_Record'Class;
+      Result : in out Unbounded_String;
+      Level  : in out Natural);
    --  Adds title "Packages".
 
    procedure Process_Header_Vars
-     (B                 : access Docgen.Backend.Backend'Class;
-      Kernel            : access Kernel_Handle_Record'Class;
-      Doc_File          : File_Descriptor;
-      Level             : in out Natural);
+     (B      : access Docgen.Backend.Backend'Class;
+      Kernel : access Kernel_Handle_Record'Class;
+      Result : in out Unbounded_String;
+      Level  : in out Natural);
    --  Adds title "Constants and Named Numbers"
 
    procedure Process_Header_Types
-     (B                 : access Docgen.Backend.Backend'Class;
-      Kernel            : access Kernel_Handle_Record'Class;
-      Doc_File          : File_Descriptor;
-      Level             : in out Natural);
+     (B      : access Docgen.Backend.Backend'Class;
+      Kernel : access Kernel_Handle_Record'Class;
+      Result : in out Unbounded_String;
+      Level  : in out Natural);
    --  Adds title "Types"
 
    procedure Process_Header_Entries
-     (B                 : access Docgen.Backend.Backend'Class;
-      Kernel            : access Kernel_Handle_Record'Class;
-      Doc_File          : File_Descriptor;
-      Level             : in out Natural);
+     (B      : access Docgen.Backend.Backend'Class;
+      Kernel : access Kernel_Handle_Record'Class;
+      Result : in out Unbounded_String;
+      Level  : in out Natural);
    --  Adds title "Entries"
 
    procedure Process_Header_Subprograms
-     (B                 : access Docgen.Backend.Backend'Class;
-      Kernel            : access Kernel_Handle_Record'Class;
-      Doc_File          : File_Descriptor;
-      Level             : in out Natural);
+     (B      : access Docgen.Backend.Backend'Class;
+      Kernel : access Kernel_Handle_Record'Class;
+      Result : in out Unbounded_String;
+      Level  : in out Natural);
    --  Adds title "Subprograms"
 
    procedure Process_Header_Exceptions
-     (B                 : access Docgen.Backend.Backend'Class;
-      Kernel            : access Kernel_Handle_Record'Class;
-      Doc_File          : File_Descriptor;
-      Level             : in out Natural);
+     (B      : access Docgen.Backend.Backend'Class;
+      Kernel : access Kernel_Handle_Record'Class;
+      Result : in out Unbounded_String;
+      Level  : in out Natural);
    --  Adds title "Exceptions"
 
    procedure Process_Footer
-     (B                : access Docgen.Backend.Backend'Class;
-      Kernel           : access Kernel_Handle_Record'Class;
-      Doc_File         : File_Descriptor);
+     (B      : access Docgen.Backend.Backend'Class;
+      Kernel : access Kernel_Handle_Record'Class;
+      Result : in out Unbounded_String);
    --  Will call the output subprogram to create the footer of
    --  the package. This is NOT the same as Doc_Close
    --  if TexInfo doc is created, the file is closed only once,
@@ -410,9 +410,8 @@ package body Docgen.Work_On_Source is
 
    procedure Process_Source
      (B                         : access Docgen.Backend.Backend'Class;
-      Kernel                    : access
-        GPS.Kernel.Kernel_Handle_Record'Class;
-      Doc_File                  : File_Descriptor;
+      Kernel                    : access Kernel_Handle_Record'Class;
+      Result                    : in out Unbounded_String;
       Source_File_List          : in out Type_Source_File_Table.HTable;
       Source_Filename           : VFS.Virtual_File;
       Source_Is_Spec            : Boolean;
@@ -441,11 +440,9 @@ package body Docgen.Work_On_Source is
          return;
       end if;
 
-      Process_Open_File (B, Kernel, Doc_File, Package_Name);
+      Process_Open_File (B, Kernel, Result, Package_Name);
       Process_Header
-        (B,
-         Kernel,
-         Doc_File,
+        (B, Kernel, Result,
          Entity_List,
          Source_Filename,
          Package_Name,
@@ -484,15 +481,13 @@ package body Docgen.Work_On_Source is
 
             if Found_Main_Package then
                Process_Package_Description
-                 (B, Kernel, Doc_File,
+                 (B, Kernel, Result,
                   File_Text.all, Options,
                   Get_Language_From_File
                     (Get_Language_Handler (Kernel), Source_Filename),
                   Level);
                Process_With_Clause
-                 (B,
-                  Kernel,
-                  Doc_File,
+                 (B, Kernel, Result,
                   Parsed_List,
                   List_Ref_In_File,
                   Source_Filename,
@@ -505,9 +500,7 @@ package body Docgen.Work_On_Source is
                --  packages (recursive calls for inner packages)
 
                Process_Source_Spec
-                 (B,
-                  Kernel,
-                  Doc_File,
+                 (B, Kernel, Result,
                   Source_File_List,
                   Source_Filename,
                   Package_Name,
@@ -524,11 +517,10 @@ package body Docgen.Work_On_Source is
 
             Free (Parsed_List);
          end if;
+
       else
          Process_One_Body_File
-           (B,
-            Kernel,
-            Doc_File,
+           (B, Kernel, Result,
             List_Ref_In_File,
             Source_Filename,
             File_Text,
@@ -536,8 +528,8 @@ package body Docgen.Work_On_Source is
             Options, Level);
       end if;
 
-      Process_Footer (B, Kernel, Doc_File);
-      Doc_Close (B, Kernel, Doc_File);
+      Process_Footer (B, Kernel, Result);
+      Doc_Close (B, Kernel, Result);
       Free (File_Text);
 
    exception
@@ -553,7 +545,7 @@ package body Docgen.Work_On_Source is
    procedure Process_Source_Spec
      (B                         : access Docgen.Backend.Backend'Class;
       Kernel                    : access Kernel_Handle_Record'Class;
-      Doc_File                  : File_Descriptor;
+      Result                    : in out Unbounded_String;
       Source_File_List          : in out Type_Source_File_Table.HTable;
       Source_Filename           : VFS.Virtual_File;
       Package_Name              : String;
@@ -568,15 +560,13 @@ package body Docgen.Work_On_Source is
       Parsed_List               : in out Construct_List)
    is
       use Type_Entity_List;
-      Display_Private  : Boolean := False;
+      Display_Private : Boolean := False;
    begin
       --  The 6 following calls have the value "False" for the
       --  parameter Private_Entity. So, only public entities are
       --  processed
       Process_Packages
-        (B,
-         Kernel,
-         Doc_File,
+        (B, Kernel, Result,
          Parsed_List,
          Entity_List,
          List_Ref_In_File,
@@ -591,9 +581,7 @@ package body Docgen.Work_On_Source is
          False, Display_Private,
          Level);
       Process_Vars
-        (B,
-         Kernel,
-         Doc_File,
+        (B, Kernel, Result,
          Parsed_List,
          Entity_List,
          List_Ref_In_File,
@@ -605,9 +593,7 @@ package body Docgen.Work_On_Source is
          False, Display_Private,
          Level);
       Process_Exceptions
-        (B,
-         Kernel,
-         Doc_File,
+        (B, Kernel, Result,
          Parsed_List,
          Entity_List,
          List_Ref_In_File,
@@ -619,9 +605,7 @@ package body Docgen.Work_On_Source is
          False, Display_Private,
          Level);
       Process_Types
-        (B,
-         Kernel,
-         Doc_File,
+        (B, Kernel, Result,
          Parsed_List,
          Entity_List,
          List_Ref_In_File,
@@ -635,9 +619,7 @@ package body Docgen.Work_On_Source is
          False, Display_Private,
          Level);
       Process_Entries
-        (B,
-         Kernel,
-         Doc_File,
+        (B, Kernel, Result,
          Parsed_List,
          Entity_List,
          List_Ref_In_File,
@@ -649,9 +631,7 @@ package body Docgen.Work_On_Source is
          False, Display_Private,
          Level);
       Process_Subprograms
-        (B,
-         Kernel,
-         Doc_File,
+        (B, Kernel, Result,
          Parsed_List,
          Entity_List,
          List_Ref_In_File,
@@ -667,9 +647,7 @@ package body Docgen.Work_On_Source is
          --  Private entities are displayed. Hence, the value "True" is
          --  given to the parameter Private_Entity
          Process_Packages
-           (B,
-            Kernel,
-            Doc_File,
+           (B, Kernel, Result,
             Parsed_List,
             Entity_List,
             List_Ref_In_File,
@@ -684,9 +662,7 @@ package body Docgen.Work_On_Source is
             True, Display_Private,
             Level);
          Process_Vars
-           (B,
-            Kernel,
-            Doc_File,
+           (B, Kernel, Result,
             Parsed_List,
             Entity_List,
             List_Ref_In_File,
@@ -698,9 +674,7 @@ package body Docgen.Work_On_Source is
             True, Display_Private,
             Level);
          Process_Exceptions
-           (B,
-            Kernel,
-            Doc_File,
+           (B, Kernel, Result,
             Parsed_List,
             Entity_List,
             List_Ref_In_File,
@@ -712,9 +686,7 @@ package body Docgen.Work_On_Source is
             True, Display_Private,
             Level);
          Process_Types
-           (B,
-            Kernel,
-            Doc_File,
+           (B, Kernel, Result,
             Parsed_List,
             Entity_List,
             List_Ref_In_File,
@@ -728,9 +700,7 @@ package body Docgen.Work_On_Source is
             True, Display_Private,
             Level);
          Process_Entries
-           (B,
-            Kernel,
-            Doc_File,
+           (B, Kernel, Result,
             Parsed_List,
             Entity_List,
             List_Ref_In_File,
@@ -742,9 +712,7 @@ package body Docgen.Work_On_Source is
             True, Display_Private,
             Level);
          Process_Subprograms
-           (B,
-            Kernel,
-            Doc_File,
+           (B, Kernel, Result,
             Parsed_List,
             Entity_List,
             List_Ref_In_File,
@@ -765,10 +733,10 @@ package body Docgen.Work_On_Source is
    procedure Process_Open_File
      (B            : access Docgen.Backend.Backend'Class;
       Kernel       : access Kernel_Handle_Record'Class;
-      Doc_File     : File_Descriptor;
+      Result       : in out Unbounded_String;
       Package_Name : String) is
    begin
-      Doc_Open (B, Kernel, Doc_File, Open_Title => Package_Name);
+      Doc_Open (B, Kernel, Result, Open_Title => Package_Name);
    end Process_Open_File;
 
    ---------------------------
@@ -778,7 +746,7 @@ package body Docgen.Work_On_Source is
    procedure Process_One_Body_File
      (B                : access Docgen.Backend.Backend'Class;
       Kernel           : access Kernel_Handle_Record'Class;
-      Doc_File         : File_Descriptor;
+      Result           : in out Unbounded_String;
       List_Ref_In_File : in out List_Reference_In_File.List;
       Source_File      : Virtual_File;
       File_Text        : GNAT.OS_Lib.String_Access;
@@ -786,10 +754,11 @@ package body Docgen.Work_On_Source is
       Options          : All_Options;
       Level            : in out Natural) is
    begin
-      Doc_Body_Line (B, Kernel, Doc_File, List_Ref_In_File, Source_File_List,
-                     Options, Level,
-                     Body_Text => File_Text.all,
-                     Body_File => Source_File);
+      Doc_Body_Line
+        (B, Kernel, Result, List_Ref_In_File, Source_File_List,
+         Options, Level,
+         Body_Text => File_Text.all,
+         Body_File => Source_File);
    end Process_One_Body_File;
 
    ------------------------
@@ -798,7 +767,7 @@ package body Docgen.Work_On_Source is
 
    procedure Process_Unit_Index
      (B                : access Docgen.Backend.Backend'Class;
-      Kernel           : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Kernel           : access Kernel_Handle_Record'Class;
       Source_File_List : Docgen.Type_Source_File_Table.HTable;
       Options          : Docgen.All_Options;
       Level            : in out Natural)
@@ -811,7 +780,8 @@ package body Docgen.Work_On_Source is
       use Source_File_Arrays;
 
       Sources : Source_File_Arrays.Instance;
-      Info    : Source_File_Information;
+      Info             : Source_File_Information;
+      Result           : Unbounded_String;
 
    begin
       Index_File := Create_File
@@ -828,7 +798,7 @@ package body Docgen.Work_On_Source is
 
       if Length (Sources) /= 0 then
          Doc_Unit_Index
-           (B, Kernel, Index_File,
+           (B, Kernel, Result,
             Source_File_List, Options, Level,
             Doc_Directory => Get_Doc_Directory (B, Kernel));
       end if;
@@ -837,7 +807,7 @@ package body Docgen.Work_On_Source is
          Info := Get (Source_File_List, Sources.Table (S));
 
          if Info.Is_Spec then
-            Doc_Index_Item (B, Kernel, Index_File,
+            Doc_Index_Item (B, Kernel, Result,
                             Name      => Get_Unit_Name (Sources.Table (S)),
                             Item_File => Sources.Table (S),
                             Line      => First_File_Line,
@@ -847,7 +817,11 @@ package body Docgen.Work_On_Source is
 
       Source_File_Arrays.Free (Sources);
 
-      Doc_End_Of_Index (B, Kernel, Index_File);
+      Doc_End_Of_Index (B, Kernel, Result);
+
+      --  Write result to file
+
+      Put_Line (Index_File, To_String (Result));
       Close (Index_File);
    end Process_Unit_Index;
 
@@ -863,8 +837,9 @@ package body Docgen.Work_On_Source is
       Source_File_List              : Type_Source_File_Table.HTable;
       Options                       : All_Options)
    is
-      Index_File    : File_Descriptor;
       Doc_File_Name : constant String := "index_sub";
+      Index_File    : File_Descriptor;
+      Result        : Unbounded_String;
 
       procedure Process_List
         (List : Type_Entity_List.List; Public : Boolean);
@@ -885,10 +860,10 @@ package body Docgen.Work_On_Source is
          if not TEL.Is_Empty (List) then
             if Options.Show_Private then
                if Public then
-                  Doc_Public_Index (B, Kernel, Index_File, Title => "Public:");
+                  Doc_Public_Index (B, Kernel, Result, Title => "Public:");
                else
                   Doc_Private_Index
-                    (B, Kernel, Index_File, Title => "Private:");
+                    (B, Kernel, Result, Title => "Private:");
                end if;
             end if;
 
@@ -899,7 +874,7 @@ package body Docgen.Work_On_Source is
                Source := Get_File (Get_Declaration_Of (Entity.Entity));
                Info   := Type_Source_File_Table.Get (Source_File_List, Source);
                Doc_Index_Item
-                 (B, Kernel, Index_File,
+                 (B, Kernel, Result,
                   Name      => Get_Name (Entity.Entity).all,
                   Item_File => Source,
                   Line      => Get_Line (Get_Declaration_Of (Entity.Entity)),
@@ -911,11 +886,7 @@ package body Docgen.Work_On_Source is
       end Process_List;
 
    begin
-      Index_File := Create_File
-        (Get_Doc_Directory (B, Kernel) & Doc_File_Name & Get_Extension (B),
-         Binary);
-
-      Doc_Subprogram_Index (B, Kernel, Index_File, Options);
+      Doc_Subprogram_Index (B, Kernel, Result, Options);
 
       Process_List (Subprogram_Index_List, Public => True);
 
@@ -923,7 +894,16 @@ package body Docgen.Work_On_Source is
          Process_List (Private_Subprogram_Index_List, Public => False);
       end if;
 
-      Doc_End_Of_Index (B, Kernel, Index_File);
+      Doc_End_Of_Index (B, Kernel, Result);
+
+      --  Write result into index file
+
+      Index_File := Create_File
+        (Get_Doc_Directory (B, Kernel) & Doc_File_Name & Get_Extension (B),
+         Binary);
+
+      Put_Line (Index_File, To_String (Result));
+
       Close (Index_File);
    end Process_Subprogram_Index;
 
@@ -939,7 +919,9 @@ package body Docgen.Work_On_Source is
       Source_File_List        : Type_Source_File_Table.HTable;
       Options                 : All_Options)
    is
-      Index_File      : File_Descriptor;
+      Doc_File_Name : constant String := "index_type";
+      Index_File    : File_Descriptor;
+      Result        : Unbounded_String;
 
       procedure Process_List
         (List : Type_Entity_List.List; Public : Boolean);
@@ -960,9 +942,9 @@ package body Docgen.Work_On_Source is
          if not TEL.Is_Empty (List) then
             if Options.Show_Private then
                if Public then
-                  Doc_Public_Index (B, Kernel, Index_File, Title => "Public:");
+                  Doc_Public_Index (B, Kernel, Result, Title => "Public:");
                else
-                  Doc_Private_Index (B, Kernel, Index_File, "Private:");
+                  Doc_Private_Index (B, Kernel, Result, "Private:");
                end if;
             end if;
          end if;
@@ -975,7 +957,7 @@ package body Docgen.Work_On_Source is
             File := Get_File (Get_Declaration_Of (Entity.Entity));
             Info := Type_Source_File_Table.Get (Source_File_List, File);
             Doc_Index_Item
-              (B, Kernel, Index_File,
+              (B, Kernel, Result,
                Name => Get_Name (Entity.Entity).all,
                Item_File => File,
                Line      => Get_Line (Get_Declaration_Of (Entity.Entity)),
@@ -984,12 +966,8 @@ package body Docgen.Work_On_Source is
          end loop;
       end Process_List;
 
-      Doc_File_Name   : constant String := "index_type";
    begin
-      Index_File := Create_File
-        (Get_Doc_Directory (B, Kernel) & Doc_File_Name & Get_Extension (B),
-         Binary);
-      Doc_Type_Index (B, Kernel, Index_File, Options);
+      Doc_Type_Index (B, Kernel, Result, Options);
 
       Process_List (Type_Index_List, Public => True);
 
@@ -997,7 +975,14 @@ package body Docgen.Work_On_Source is
          Process_List (Private_Type_Index_List, Public => False);
       end if;
 
-      Doc_End_Of_Index (B, Kernel, Index_File);
+      Doc_End_Of_Index (B, Kernel, Result);
+
+      --  Write result into index file
+
+      Index_File := Create_File
+        (Get_Doc_Directory (B, Kernel) & Doc_File_Name & Get_Extension (B),
+         Binary);
+      Put_Line (Index_File, To_String (Result));
       Close (Index_File);
    end Process_Type_Index;
 
@@ -1013,7 +998,9 @@ package body Docgen.Work_On_Source is
       Source_File_List          : in out Type_Source_File_Table.HTable;
       Options                   : All_Options)
    is
-      Index_File : File_Descriptor;
+      Doc_File_Name : constant String := "index_tagged_type";
+      Index_File    : File_Descriptor;
+      Result        : Unbounded_String;
 
       procedure Process_Parents  (Info : Entity_Information);
       procedure Process_Children (Info : Entity_Information);
@@ -1041,19 +1028,19 @@ package body Docgen.Work_On_Source is
                   Get_File (Get_Declaration_Of (Parents (P))))
                then
                   Doc_Index_Tagged_Type
-                    (B, Kernel, Index_File, Source_File_List, Parents (P),
+                    (B, Kernel, Result, Source_File_List, Parents (P),
                      Parent_With_Link);
 
                else
                   Doc_Index_Tagged_Type
-                    (B, Kernel, Index_File, Source_File_List, Parents (P),
+                    (B, Kernel, Result, Source_File_List, Parents (P),
                      Parent_Without_Link);
                end if;
             end loop;
 
          else
             Doc_Index_Tagged_Type
-              (B, Kernel, Index_File, Source_File_List, null, No_Parent);
+              (B, Kernel, Result, Source_File_List, null, No_Parent);
          end if;
       end Process_Parents;
 
@@ -1068,7 +1055,7 @@ package body Docgen.Work_On_Source is
          Get_Child_Types (Iter => Child, Entity => Info);
          if At_End (Child) then
             Doc_Index_Tagged_Type
-              (B, Kernel, Index_File, Source_File_List, null, No_Child);
+              (B, Kernel, Result, Source_File_List, null, No_Child);
          end if;
 
          while not At_End (Child) loop
@@ -1079,16 +1066,17 @@ package body Docgen.Work_On_Source is
                   Get_File (Get_Declaration_Of (Son)))
                then
                   Doc_Index_Tagged_Type
-                    (B, Kernel, Index_File, Source_File_List,
+                    (B, Kernel, Result, Source_File_List,
                      Son, Child_With_Link);
                else
                   Doc_Index_Tagged_Type
-                    (B, Kernel, Index_File, Source_File_List,
+                    (B, Kernel, Result, Source_File_List,
                      Son, Child_Without_Link);
                end if;
             end if;
             Next (Child);
          end loop;
+
          Destroy (Child);
       end Process_Children;
 
@@ -1102,7 +1090,7 @@ package body Docgen.Work_On_Source is
            (Source_File_List, Get_File (Get_Declaration_Of (Entity)))
          then
             Doc_Index_Tagged_Type
-              (B, Kernel, Index_File, Source_File_List, Entity, Main);
+              (B, Kernel, Result, Source_File_List, Entity, Main);
             Process_Parents (Entity);
             Process_Children (Entity);
          end if;
@@ -1121,9 +1109,9 @@ package body Docgen.Work_On_Source is
          if not List_Entity_Information.Is_Empty (List) then
             if Options.Show_Private then
                if Public then
-                  Doc_Public_Index (B, Kernel, Index_File, "Public:");
+                  Doc_Public_Index (B, Kernel, Result, "Public:");
                else
-                  Doc_Private_Index (B, Kernel, Index_File, "Private:");
+                  Doc_Private_Index (B, Kernel, Result, "Private:");
                end if;
             end if;
 
@@ -1135,13 +1123,9 @@ package body Docgen.Work_On_Source is
             end loop;
          end if;
       end Process_List;
-      Doc_File_Name          : constant String := "index_tagged_type";
 
    begin
-      Index_File := Create_File
-        (Get_Doc_Directory (B, Kernel) & Doc_File_Name & Get_Extension (B),
-         Binary);
-      Doc_Tagged_Type_Index (B, Kernel, Index_File);
+      Doc_Tagged_Type_Index (B, Kernel, Result);
 
       Process_List (Tagged_Type_Index_List, Public => True);
 
@@ -1149,7 +1133,14 @@ package body Docgen.Work_On_Source is
          Process_List (Private_Tagged_Types_List, Public => False);
       end if;
 
-      Doc_End_Of_Index (B, Kernel, Index_File);
+      Doc_End_Of_Index (B, Kernel, Result);
+
+      --  Write result to index file
+
+      Index_File := Create_File
+        (Get_Doc_Directory (B, Kernel) & Doc_File_Name & Get_Extension (B),
+         Binary);
+      Put_Line (Index_File, To_String (Result));
       Close (Index_File);
    end Process_Tagged_Type_Index;
 
@@ -1158,14 +1149,14 @@ package body Docgen.Work_On_Source is
    --------------------
 
    procedure Process_Header
-     (B                 : access Docgen.Backend.Backend'Class;
-      Kernel            : access Kernel_Handle_Record'Class;
-      Doc_File          : File_Descriptor;
-      Entity_List       : in out Type_Entity_List.List;
-      Source_Filename   : VFS.Virtual_File;
-      Package_Name      : String;
-      Package_File      : Virtual_File;
-      Options           : All_Options)
+     (B               : access Docgen.Backend.Backend'Class;
+      Kernel          : access Kernel_Handle_Record'Class;
+      Result          : in out Unbounded_String;
+      Entity_List     : in out Type_Entity_List.List;
+      Source_Filename : VFS.Virtual_File;
+      Package_Name    : String;
+      Package_File    : Virtual_File;
+      Options         : All_Options)
    is
       use TEL;
       Declar_Line : Natural := First_File_Line;
@@ -1199,7 +1190,7 @@ package body Docgen.Work_On_Source is
          end loop;
       end if;
 
-      Doc_Header (B, Kernel, Doc_File,
+      Doc_Header (B, Kernel, Result,
                   Header_File    => Package_File,
                   Header_Package => Package_Name,
                   Header_Line    => Declar_Line,
@@ -1216,13 +1207,13 @@ package body Docgen.Work_On_Source is
    ------------------------------
 
    procedure Process_Header_Private
-     (B                 : access Docgen.Backend.Backend'Class;
-      Kernel            : access Kernel_Handle_Record'Class;
-      Doc_File          : File_Descriptor;
-      Level             : in out Natural) is
+     (B      : access Docgen.Backend.Backend'Class;
+      Kernel : access Kernel_Handle_Record'Class;
+      Result : in out Unbounded_String;
+      Level  : in out Natural) is
    begin
       Doc_Header_Private
-        (B, Kernel, Doc_File,
+        (B, Kernel, Result,
          Header_Title => "Private:",
          Level        => Level);
    end Process_Header_Private;
@@ -1232,11 +1223,11 @@ package body Docgen.Work_On_Source is
    --------------------
 
    procedure Process_Footer
-     (B        : access Docgen.Backend.Backend'Class;
-      Kernel   : access Kernel_Handle_Record'Class;
-      Doc_File : File_Descriptor) is
+     (B      : access Docgen.Backend.Backend'Class;
+      Kernel : access Kernel_Handle_Record'Class;
+      Result : in out Unbounded_String) is
    begin
-      Doc_Footer (B, Kernel, Doc_File);
+      Doc_Footer (B, Kernel, Result);
    end Process_Footer;
 
    ---------------------------------
@@ -1246,7 +1237,7 @@ package body Docgen.Work_On_Source is
    procedure Process_Package_Description
      (B        : access Docgen.Backend.Backend'Class;
       Kernel   : access Kernel_Handle_Record'Class;
-      Doc_File : File_Descriptor;
+      Result   : in out Unbounded_String;
       Text     : String;
       Options  : All_Options;
       Language : Language_Access;
@@ -1269,10 +1260,10 @@ package body Docgen.Work_On_Source is
         (Text (Line_Start (Text, Start_Line) .. Line_End (Text, End_Line)));
 
       Doc_Subtitle
-        (B, Kernel, Doc_File, Level, Subtitle_Name => "Description");
+        (B, Kernel, Result, Level, Subtitle_Name => "Description");
 
       Doc_Package_Desc
-        (B, Kernel, Doc_File, Level, Description => Description.all);
+        (B, Kernel, Result, Level, Description => Description.all);
       Free (Description);
    end Process_Package_Description;
 
@@ -1283,7 +1274,7 @@ package body Docgen.Work_On_Source is
    procedure Process_With_Clause
      (B                : access Docgen.Backend.Backend'Class;
       Kernel           : access Kernel_Handle_Record'Class;
-      Doc_File         : File_Descriptor;
+      Result           : in out Unbounded_String;
       Parsed_List      : in out Construct_List;
       List_Ref_In_File : in out List_Reference_In_File.List;
       Source_Filename  : VFS.Virtual_File;
@@ -1329,11 +1320,11 @@ package body Docgen.Work_On_Source is
       end loop;
 
       if New_Line'Length > 0 then
-         Doc_Subtitle (B, Kernel, Doc_File, Level,
+         Doc_Subtitle (B, Kernel, Result, Level,
                        Subtitle_Name => "Dependencies");
-         Doc_With (B, Kernel, Doc_File, List_Ref_In_File, Source_File_List,
-                   Options,
-                   Level,
+         Doc_With (B, Kernel, Result,
+                   List_Ref_In_File, Source_File_List,
+                   Options, Level,
                    With_Header_Line => First_With_Line,
                    With_File        => Source_Filename,
                    With_Header      =>
@@ -1349,12 +1340,12 @@ package body Docgen.Work_On_Source is
    -----------------------------
 
    procedure Process_Header_Packages
-     (B                 : access Docgen.Backend.Backend'Class;
-      Kernel            : access Kernel_Handle_Record'Class;
-      Doc_File          : File_Descriptor;
-      Level             : in out Natural) is
+     (B      : access Docgen.Backend.Backend'Class;
+      Kernel : access Kernel_Handle_Record'Class;
+      Result : in out Unbounded_String;
+      Level  : in out Natural) is
    begin
-      Doc_Subtitle (B, Kernel, Doc_File, Level, Subtitle_Name => "Packages");
+      Doc_Subtitle (B, Kernel, Result, Level, Subtitle_Name => "Packages");
    end Process_Header_Packages;
 
    -------------------------
@@ -1362,13 +1353,13 @@ package body Docgen.Work_On_Source is
    -------------------------
 
    procedure Process_Description
-     (B                 : access Docgen.Backend.Backend'Class;
-      Kernel            : access Kernel_Handle_Record'Class;
-      Doc_File          : File_Descriptor;
-      Level             : in out Natural;
-      Comment           : String) is
+     (B       : access Docgen.Backend.Backend'Class;
+      Kernel  : access Kernel_Handle_Record'Class;
+      Result  : in out Unbounded_String;
+      Level   : in out Natural;
+      Comment : String) is
    begin
-      Doc_Description (B, Kernel, Doc_File, Level, Description => Comment);
+      Doc_Description (B, Kernel, Result, Level, Description => Comment);
    end Process_Description;
 
    ----------------------
@@ -1378,7 +1369,7 @@ package body Docgen.Work_On_Source is
    procedure Process_Packages
      (B                         : access Docgen.Backend.Backend'Class;
       Kernel                    : access Kernel_Handle_Record'Class;
-      Doc_File                  : File_Descriptor;
+      Result                    : in out Unbounded_String;
       Parsed_List               : in out Construct_List;
       Entity_List               : in out Type_Entity_List.List;
       List_Ref_In_File          : in out List_Reference_In_File.List;
@@ -1395,15 +1386,15 @@ package body Docgen.Work_On_Source is
       Level                     : in out Natural)
    is
       use TEL;
-      Entity_Node             : Type_Entity_List.List_Node;
-      Entity_Node_Prec        : Type_Entity_List.List_Node;
-      Description             : GNAT.OS_Lib.String_Access;
-      Header                  : GNAT.OS_Lib.String_Access;
-      Header_Lines            : Natural;
+      Entity_Node              : Type_Entity_List.List_Node;
+      Entity_Node_Prec         : Type_Entity_List.List_Node;
+      Description              : GNAT.OS_Lib.String_Access;
+      Header                   : GNAT.OS_Lib.String_Access;
+      Header_Lines             : Natural;
       Header_Start, Header_End : Natural;
-      First_Already_Set       : Boolean;
-      Entity                  : TEL.Data_Access;
-      Info                    : Entity_Information;
+      First_Already_Set        : Boolean;
+      Entity                   : TEL.Data_Access;
+      Info                     : Entity_Information;
 
    begin
       if not TEL.Is_Empty (Entity_List) then
@@ -1437,7 +1428,7 @@ package body Docgen.Work_On_Source is
 
                      if Entity.Is_Private and then not Display_Private then
                         --  Print title "private" required and not done
-                        Process_Header_Private (B, Kernel, Doc_File, Level);
+                        Process_Header_Private (B, Kernel, Result, Level);
                         Display_Private := True;
                      end if;
 
@@ -1445,7 +1436,7 @@ package body Docgen.Work_On_Source is
                      --  set.
 
                      if not First_Already_Set then
-                        Process_Header_Packages (B, Kernel, Doc_File, Level);
+                        Process_Header_Packages (B, Kernel, Result, Level);
                         First_Already_Set := True;
                      end if;
 
@@ -1465,9 +1456,7 @@ package body Docgen.Work_On_Source is
                         Entity_Node_Prec,
                         Entity_Node);
                      Doc_Package_Open_Close
-                       (B,
-                        Kernel,
-                        Doc_File,
+                       (B, Kernel, Result,
                         List_Ref_In_File,
                         Source_File_List,
                         Options,
@@ -1480,9 +1469,7 @@ package body Docgen.Work_On_Source is
                      --  in the current package.
 
                      Process_Source_Spec
-                       (B,
-                        Kernel,
-                        Doc_File,
+                       (B, Kernel, Result,
                         Source_File_List,
                         Source_Filename,
                         Get_Name (Info).all,
@@ -1498,9 +1485,7 @@ package body Docgen.Work_On_Source is
                      Level := Level - 1;
 
                      Doc_Package_Open_Close
-                       (B,
-                        Kernel,
-                        Doc_File,
+                       (B, Kernel, Result,
                         List_Ref_In_File,
                         Source_File_List,
                         Options,
@@ -1510,9 +1495,7 @@ package body Docgen.Work_On_Source is
 
                      if Description.all /= "" then
                         Process_Description
-                          (B,
-                           Kernel,
-                           Doc_File,
+                          (B, Kernel, Result,
                            Level,
                            Description.all);
                      end if;
@@ -1548,12 +1531,12 @@ package body Docgen.Work_On_Source is
                         Header, Header_Lines);
 
                      if Entity.Is_Private and then not Display_Private then
-                        Process_Header_Private (B, Kernel, Doc_File, Level);
+                        Process_Header_Private (B, Kernel, Result, Level);
                         Display_Private := True;
                      end if;
 
                      if not First_Already_Set then
-                        Process_Header_Packages (B, Kernel, Doc_File, Level);
+                        Process_Header_Packages (B, Kernel, Result, Level);
                         First_Already_Set := True;
                      end if;
 
@@ -1563,14 +1546,14 @@ package body Docgen.Work_On_Source is
                            File_Text.all));
 
                      Doc_Package
-                       (B, Kernel, Doc_File,
+                       (B, Kernel, Result,
                         List_Ref_In_File, Source_File_List, Options, Level,
                         Package_Entity => Entity.Entity,
                         Package_Header => Header.all);
 
                      if Description.all /= "" then
                         Process_Description
-                          (B, Kernel, Doc_File, Level, Description.all);
+                          (B, Kernel, Result, Level, Description.all);
                      end if;
 
                      Free (Header);
@@ -1608,12 +1591,12 @@ package body Docgen.Work_On_Source is
    -------------------------
 
    procedure Process_Header_Vars
-     (B                 : access Docgen.Backend.Backend'Class;
-      Kernel            : access Kernel_Handle_Record'Class;
-      Doc_File          : File_Descriptor;
-      Level             : in out Natural) is
+     (B      : access Docgen.Backend.Backend'Class;
+      Kernel : access Kernel_Handle_Record'Class;
+      Result : in out Unbounded_String;
+      Level  : in out Natural) is
    begin
-      Doc_Subtitle (B, Kernel, Doc_File, Level, Subtitle_Name => "Constants");
+      Doc_Subtitle (B, Kernel, Result, Level, Subtitle_Name => "Constants");
    end Process_Header_Vars;
 
    ------------------
@@ -1623,7 +1606,7 @@ package body Docgen.Work_On_Source is
    procedure Process_Vars
      (B                : access Docgen.Backend.Backend'Class;
       Kernel           : access Kernel_Handle_Record'Class;
-      Doc_File         : File_Descriptor;
+      Result           : in out Unbounded_String;
       Parsed_List      : in out Construct_List;
       Entity_List      : in out Type_Entity_List.List;
       List_Ref_In_File : in out List_Reference_In_File.List;
@@ -1684,7 +1667,7 @@ package body Docgen.Work_On_Source is
                      --  and we work on the private part, so we put the
                      --  title "Private"
 
-                     Process_Header_Private (B, Kernel, Doc_File, Level);
+                     Process_Header_Private (B, Kernel, Result, Level);
                      Display_Private := True;
                   end if;
 
@@ -1692,7 +1675,7 @@ package body Docgen.Work_On_Source is
                   --  has been set already.
 
                   if not First_Already_Set then
-                     Process_Header_Vars (B, Kernel, Doc_File, Level);
+                     Process_Header_Vars (B, Kernel, Result, Level);
                      First_Already_Set := True;
                   end if;
 
@@ -1702,13 +1685,13 @@ package body Docgen.Work_On_Source is
                         File_Text.all));
 
                   Doc_Var
-                    (B, Kernel, Doc_File, List_Ref_In_File,
+                    (B, Kernel, Result, List_Ref_In_File,
                      Source_File_List, Options, Level,
                      Entity => Entity.Entity, Header => Header.all);
 
                   if Description.all /= "" then
                      Process_Description
-                       (B, Kernel, Doc_File, Level, Description.all);
+                       (B, Kernel, Result, Level, Description.all);
                   end if;
 
                   Delete_Node := True;
@@ -1741,12 +1724,12 @@ package body Docgen.Work_On_Source is
    -------------------------------
 
    procedure Process_Header_Exceptions
-     (B                 : access Docgen.Backend.Backend'Class;
-      Kernel            : access Kernel_Handle_Record'Class;
-      Doc_File          : File_Descriptor;
-      Level             : in out Natural) is
+     (B      : access Docgen.Backend.Backend'Class;
+      Kernel : access Kernel_Handle_Record'Class;
+      Result : in out Unbounded_String;
+      Level  : in out Natural) is
    begin
-      Doc_Subtitle (B, Kernel, Doc_File, Level, Subtitle_Name => "Exceptions");
+      Doc_Subtitle (B, Kernel, Result, Level, Subtitle_Name => "Exceptions");
    end Process_Header_Exceptions;
 
    ------------------------
@@ -1756,7 +1739,7 @@ package body Docgen.Work_On_Source is
    procedure Process_Exceptions
      (B                : access Docgen.Backend.Backend'Class;
       Kernel           : access Kernel_Handle_Record'Class;
-      Doc_File         : File_Descriptor;
+      Result           : in out Unbounded_String;
       Parsed_List      : in out Construct_List;
       Entity_List      : in out Type_Entity_List.List;
       List_Ref_In_File : in out List_Reference_In_File.List;
@@ -1812,14 +1795,14 @@ package body Docgen.Work_On_Source is
                      Header, Header_Lines);
 
                   if Entity.Is_Private and then not Display_Private then
-                     Process_Header_Private (B, Kernel, Doc_File, Level);
+                     Process_Header_Private (B, Kernel, Result, Level);
                      Display_Private := True;
                   end if;
 
                   --  Check if the subtitle "Exceptions:" has been set already.
 
                   if not First_Already_Set then
-                     Process_Header_Exceptions (B, Kernel, Doc_File, Level);
+                     Process_Header_Exceptions (B, Kernel, Result, Level);
                      First_Already_Set := True;
                   end if;
 
@@ -1829,14 +1812,14 @@ package body Docgen.Work_On_Source is
                         File_Text.all));
 
                   Doc_Exception
-                    (B, Kernel, Doc_File,
+                    (B, Kernel, Result,
                      List_Ref_In_File, Source_File_List, Options, Level,
                      Entity => Entity.Entity,
                      Header => Header.all);
 
                   if Description.all /= "" then
                      Process_Description
-                       (B, Kernel, Doc_File, Level, Description.all);
+                       (B, Kernel, Result, Level, Description.all);
                   end if;
 
                   Delete_Node := True;
@@ -1869,12 +1852,12 @@ package body Docgen.Work_On_Source is
    --------------------------
 
    procedure Process_Header_Types
-     (B                 : access Docgen.Backend.Backend'Class;
-      Kernel            : access Kernel_Handle_Record'Class;
-      Doc_File          : File_Descriptor;
-      Level             : in out Natural) is
+     (B      : access Docgen.Backend.Backend'Class;
+      Kernel : access Kernel_Handle_Record'Class;
+      Result : in out Unbounded_String;
+      Level  : in out Natural) is
    begin
-      Doc_Subtitle (B, Kernel, Doc_File, Level, Subtitle_Name => "Types");
+      Doc_Subtitle (B, Kernel, Result, Level, Subtitle_Name => "Types");
    end Process_Header_Types;
 
    ------------------------
@@ -1884,15 +1867,15 @@ package body Docgen.Work_On_Source is
    procedure Process_One_Family
      (B                : access Docgen.Backend.Backend'Class;
       Kernel           : access Kernel_Handle_Record'Class;
-      Doc_File         : File_Descriptor;
+      Result           : in out Unbounded_String;
       Family           : List_Entity_Information.List;
       Source_File_List : in out Type_Source_File_Table.HTable;
       Entity           : Entity_Information;
       Level            : in out Natural)
    is
       use List_Entity_Information;
-      Node             : List_Entity_Information.List_Node;
-      Tagged_Entity    : Entity_Information;
+      Node          : List_Entity_Information.List_Node;
+      Tagged_Entity : Entity_Information;
 
    begin
       if not List_Entity_Information.Is_Empty (Family) then
@@ -1906,7 +1889,7 @@ package body Docgen.Work_On_Source is
                 (Source_File_List, Get_File (Get_Declaration_Of (Entity)))
             then
                Doc_Tagged_Type
-                 (B, Kernel, Doc_File, Source_File_List, Level, Entity);
+                 (B, Kernel, Result, Source_File_List, Level, Entity);
                exit;
             end if;
             Node := List_Entity_Information.Next (Node);
@@ -1921,7 +1904,7 @@ package body Docgen.Work_On_Source is
    procedure Process_Types
      (B                         : access Docgen.Backend.Backend'Class;
       Kernel                    : access Kernel_Handle_Record'Class;
-      Doc_File                  : File_Descriptor;
+      Result                    : in out Unbounded_String;
       Parsed_List               : in out Construct_List;
       Entity_List               : in out Type_Entity_List.List;
       List_Ref_In_File          : in out List_Reference_In_File.List;
@@ -1937,17 +1920,17 @@ package body Docgen.Work_On_Source is
       Level                     : in out Natural)
    is
       use TEL;
-      Entity_Node        : Type_Entity_List.List_Node;
-      Entity_Node_Prec   : Type_Entity_List.List_Node;
-      Description        : GNAT.OS_Lib.String_Access;
-      Header             : GNAT.OS_Lib.String_Access;
-      Header_Lines       : Natural;
+      Entity_Node              : Type_Entity_List.List_Node;
+      Entity_Node_Prec         : Type_Entity_List.List_Node;
+      Description              : GNAT.OS_Lib.String_Access;
+      Header                   : GNAT.OS_Lib.String_Access;
+      Header_Lines             : Natural;
       Header_Start, Header_End : Natural;
-      First_Already_Set  : Boolean;
-      Delete_Node        : Boolean;
-      Entity             : TEL.Data_Access;
-      Kind               : E_Kinds;
-      Info               : Entity_Information;
+      First_Already_Set        : Boolean;
+      Delete_Node              : Boolean;
+      Entity                   : TEL.Data_Access;
+      Kind                     : E_Kinds;
+      Info                     : Entity_Information;
 
    begin
       if not TEL.Is_Empty (Entity_List) then
@@ -2002,14 +1985,14 @@ package body Docgen.Work_On_Source is
                      --  and we work on the private part, so we put the
                      --  title "Private"
 
-                     Process_Header_Private (B, Kernel, Doc_File, Level);
+                     Process_Header_Private (B, Kernel, Result, Level);
                      Display_Private := True;
                   end if;
 
                   --  Check if the subtitle "Types:" has to be set.
 
                   if not First_Already_Set then
-                     Process_Header_Types (B, Kernel, Doc_File, Level);
+                     Process_Header_Types (B, Kernel, Result, Level);
                      First_Already_Set := True;
                   end if;
 
@@ -2019,14 +2002,14 @@ package body Docgen.Work_On_Source is
                         File_Text.all));
 
                   Doc_Type
-                    (B, Kernel, Doc_File, List_Ref_In_File, Source_File_List,
-                     Options, Level,
+                    (B, Kernel, Result,
+                     List_Ref_In_File, Source_File_List, Options, Level,
                      Entity => Entity.Entity,
                      Header => Header.all);
 
                   if Description.all /= "" then
                      Process_Description
-                       (B, Kernel, Doc_File, Level, Description.all);
+                       (B, Kernel, Result, Level, Description.all);
                   end if;
 
                   Kind := Get_Kind (Entity.Entity).Kind;
@@ -2045,9 +2028,7 @@ package body Docgen.Work_On_Source is
                         --  List of private tagged types
 
                         Process_One_Family
-                          (B,
-                           Kernel,
-                           Doc_File,
+                          (B, Kernel, Result,
                            Private_Tagged_Types_List,
                            Source_File_List,
                            Entity.Entity,
@@ -2056,9 +2037,7 @@ package body Docgen.Work_On_Source is
                         --  List of public tagged types
 
                         Process_One_Family
-                          (B,
-                           Kernel,
-                           Doc_File,
+                          (B, Kernel, Result,
                            Tagged_Types_List,
                            Source_File_List,
                            Entity.Entity,
@@ -2096,12 +2075,12 @@ package body Docgen.Work_On_Source is
    ----------------------------
 
    procedure Process_Header_Entries
-     (B                 : access Docgen.Backend.Backend'Class;
-      Kernel            : access Kernel_Handle_Record'Class;
-      Doc_File          : File_Descriptor;
-      Level             : in out Natural) is
+     (B      : access Docgen.Backend.Backend'Class;
+      Kernel : access Kernel_Handle_Record'Class;
+      Result : in out Unbounded_String;
+      Level  : in out Natural) is
    begin
-      Doc_Subtitle (B, Kernel, Doc_File, Level,
+      Doc_Subtitle (B, Kernel, Result, Level,
                     Subtitle_Name => "Tasks, Entries and Entry Families");
    end Process_Header_Entries;
 
@@ -2110,31 +2089,31 @@ package body Docgen.Work_On_Source is
    ---------------------
 
    procedure Process_Entries
-     (B                  : access Docgen.Backend.Backend'Class;
-      Kernel             : access Kernel_Handle_Record'Class;
-      Doc_File           : File_Descriptor;
-      Parsed_List        : in out Construct_List;
-      Entity_List        : in out Type_Entity_List.List;
-      List_Ref_In_File   : in out List_Reference_In_File.List;
-      Source_Filename    : VFS.Virtual_File;
-      Package_Info       : Entity_Information;
-      File_Text          : GNAT.OS_Lib.String_Access;
-      Source_File_List   : in out Type_Source_File_Table.HTable;
-      Options            : All_Options;
-      Private_Entity     : Boolean;
-      Display_Private    : in out Boolean;
-      Level              : in out Natural)
+     (B                : access Docgen.Backend.Backend'Class;
+      Kernel           : access Kernel_Handle_Record'Class;
+      Result           : in out Unbounded_String;
+      Parsed_List      : in out Construct_List;
+      Entity_List      : in out Type_Entity_List.List;
+      List_Ref_In_File : in out List_Reference_In_File.List;
+      Source_Filename  : VFS.Virtual_File;
+      Package_Info     : Entity_Information;
+      File_Text        : GNAT.OS_Lib.String_Access;
+      Source_File_List : in out Type_Source_File_Table.HTable;
+      Options          : All_Options;
+      Private_Entity   : Boolean;
+      Display_Private  : in out Boolean;
+      Level            : in out Natural)
    is
       use TEL;
-      Entity_Node       : Type_Entity_List.List_Node;
-      Entity_Node_Prec  : Type_Entity_List.List_Node;
-      Description       : GNAT.OS_Lib.String_Access;
-      Header            : GNAT.OS_Lib.String_Access;
-      Header_Lines      : Natural;
+      Entity_Node              : Type_Entity_List.List_Node;
+      Entity_Node_Prec         : Type_Entity_List.List_Node;
+      Description              : GNAT.OS_Lib.String_Access;
+      Header                   : GNAT.OS_Lib.String_Access;
+      Header_Lines             : Natural;
       Header_Start, Header_End : Natural;
-      First_Already_Set : Boolean;
-      Delete_Node       : Boolean;
-      Entity            : TEL.Data_Access;
+      First_Already_Set        : Boolean;
+      Delete_Node              : Boolean;
+      Entity                   : TEL.Data_Access;
 
    begin
       if not TEL.Is_Empty (Entity_List) then
@@ -2168,31 +2147,30 @@ package body Docgen.Work_On_Source is
                      Header, Header_Lines);
 
                   if Entity.Is_Private and then not Display_Private then
-                     Process_Header_Private (B, Kernel, Doc_File, Level);
+                     Process_Header_Private (B, Kernel, Result, Level);
                      Display_Private := True;
                   end if;
 
                   --  Check if the subtitle has to be set.
 
                   if not First_Already_Set then
-                     Process_Header_Entries (B, Kernel, Doc_File, Level);
+                     Process_Header_Entries (B, Kernel, Result, Level);
                      First_Already_Set := True;
                   end if;
 
                   Description := new String'
                     (Entities.Get_Documentation
-                       (Entity.Entity,
-                        File_Text.all));
+                       (Entity.Entity, File_Text.all));
 
                   Doc_Entry
-                    (B, Kernel, Doc_File, List_Ref_In_File,
+                    (B, Kernel, Result, List_Ref_In_File,
                      Source_File_List, Options, Level,
                      Entity => Entity.Entity,
                      Header => Header.all);
 
                   if Description.all /= "" then
                      Process_Description
-                       (B, Kernel, Doc_File, Level, Description.all);
+                       (B, Kernel, Result, Level, Description.all);
                   end if;
 
                   Delete_Node := True;
@@ -2225,12 +2203,12 @@ package body Docgen.Work_On_Source is
    --------------------------------
 
    procedure Process_Header_Subprograms
-     (B                 : access Docgen.Backend.Backend'Class;
-      Kernel            : access Kernel_Handle_Record'Class;
-      Doc_File          : File_Descriptor;
-      Level             : in out Natural) is
+     (B      : access Docgen.Backend.Backend'Class;
+      Kernel : access Kernel_Handle_Record'Class;
+      Result : in out Unbounded_String;
+      Level  : in out Natural) is
    begin
-      Doc_Subtitle (B, Kernel, Doc_File, Level, Subtitle_Name => "Subprogams");
+      Doc_Subtitle (B, Kernel, Result, Level, Subtitle_Name => "Subprogams");
    end Process_Header_Subprograms;
 
    -------------------------------
@@ -2238,13 +2216,13 @@ package body Docgen.Work_On_Source is
    -------------------------------
 
    procedure Process_Caller_References
-     (B                 : access Docgen.Backend.Backend'Class;
-      Kernel            : access Kernel_Handle_Record'Class;
-      Options           : All_Options;
-      Doc_File          : File_Descriptor;
-      Info              : Entity_Information;
-      Source_File_List  : Type_Source_File_Table.HTable;
-      Level             : in out Natural)
+     (B                : access Docgen.Backend.Backend'Class;
+      Kernel           : access Kernel_Handle_Record'Class;
+      Result           : in out Unbounded_String;
+      Options          : All_Options;
+      Info             : Entity_Information;
+      Source_File_List : Type_Source_File_Table.HTable;
+      Level            : in out Natural)
    is
       Caller         : Entity_Information;
       Reference_Iter : Entity_Reference_Iterator;
@@ -2265,7 +2243,7 @@ package body Docgen.Work_On_Source is
       Doc_Caller_References
         (B,
          Kernel            => Kernel,
-         File              => Doc_File,
+         Result            => Result,
          Options           => Options,
          Level             => Level,
          Callers           => Callers,
@@ -2278,13 +2256,13 @@ package body Docgen.Work_On_Source is
    ------------------------------
 
    procedure Process_Calls_References
-     (B                 : access Docgen.Backend.Backend'Class;
-      Kernel            : access Kernel_Handle_Record'Class;
-      Options           : All_Options;
-      Doc_File          : File_Descriptor;
-      Info              : Entity_Information;
-      Source_File_List  : Type_Source_File_Table.HTable;
-      Level             : in out Natural)
+     (B                : access Docgen.Backend.Backend'Class;
+      Kernel           : access Kernel_Handle_Record'Class;
+      Result           : in out Unbounded_String;
+      Options          : All_Options;
+      Info             : Entity_Information;
+      Source_File_List : Type_Source_File_Table.HTable;
+      Level            : in out Natural)
    is
       Call_Iter      : Calls_Iterator := Get_All_Called_Entities (Info);
       Entity         : Entity_Information;
@@ -2302,7 +2280,7 @@ package body Docgen.Work_On_Source is
       Doc_Calls_References
         (B,
          Kernel            => Kernel,
-         File              => Doc_File,
+         Result            => Result,
          Options           => Options,
          Level             => Level,
          Calls             => Calls,
@@ -2315,20 +2293,20 @@ package body Docgen.Work_On_Source is
    -------------------------
 
    procedure Process_Subprograms
-     (B                  : access Docgen.Backend.Backend'Class;
-      Kernel             : access Kernel_Handle_Record'Class;
-      Doc_File           : File_Descriptor;
-      Parsed_List        : in out Construct_List;
-      Entity_List        : in out Type_Entity_List.List;
-      List_Ref_In_File   : in out List_Reference_In_File.List;
-      Source_Filename    : VFS.Virtual_File;
-      Package_Info       : Entity_Information;
-      File_Text          : GNAT.OS_Lib.String_Access;
-      Source_File_List   : in out Type_Source_File_Table.HTable;
-      Options            : All_Options;
-      Private_Entity     : Boolean;
-      Display_Private    : in out Boolean;
-      Level              : in out Natural)
+     (B                : access Docgen.Backend.Backend'Class;
+      Kernel           : access Kernel_Handle_Record'Class;
+      Result           : in out Unbounded_String;
+      Parsed_List      : in out Construct_List;
+      Entity_List      : in out Type_Entity_List.List;
+      List_Ref_In_File : in out List_Reference_In_File.List;
+      Source_Filename  : VFS.Virtual_File;
+      Package_Info     : Entity_Information;
+      File_Text        : GNAT.OS_Lib.String_Access;
+      Source_File_List : in out Type_Source_File_Table.HTable;
+      Options          : All_Options;
+      Private_Entity   : Boolean;
+      Display_Private  : in out Boolean;
+      Level            : in out Natural)
    is
       use TEL;
       Entity_Node       : Type_Entity_List.List_Node;
@@ -2374,30 +2352,29 @@ package body Docgen.Work_On_Source is
                      Header, Header_Lines);
 
                   if Entity.Is_Private and then not Display_Private then
-                     Process_Header_Private (B, Kernel, Doc_File, Level);
+                     Process_Header_Private (B, Kernel, Result, Level);
                      Display_Private := True;
                   end if;
 
                   --  Check if the subtitle "Subprograms:" has to be set.
 
                   if not First_Already_Set then
-                     Process_Header_Subprograms (B, Kernel, Doc_File, Level);
+                     Process_Header_Subprograms (B, Kernel, Result, Level);
                      First_Already_Set := True;
                   end if;
 
                   Description := new String'
                     (Entities.Get_Documentation
-                       (Entity.Entity,
-                        File_Text.all));
+                       (Entity.Entity, File_Text.all));
 
                   Doc_Subprogram
-                    (B, Kernel, Doc_File,
+                    (B, Kernel, Result,
                      List_Ref_In_File, Source_File_List, Options, Level,
                      Entity => Entity.all, Header => Header.all);
 
                   if Description.all /= "" then
                      Process_Description
-                       (B, Kernel, Doc_File, Level, Description.all);
+                       (B, Kernel, Result, Level, Description.all);
                   end if;
 
                   if Options.References then
@@ -2406,16 +2383,16 @@ package body Docgen.Work_On_Source is
                      Process_Caller_References
                        (B                => B,
                         Kernel           => Kernel,
+                        Result           => Result,
                         Options          => Options,
-                        Doc_File         => Doc_File,
                         Info             => Entity.Entity,
                         Source_File_List => Source_File_List,
                         Level            => Level);
                      Process_Calls_References
                        (B                => B,
                         Kernel           => Kernel,
+                        Result           => Result,
                         Options          => Options,
-                        Doc_File         => Doc_File,
                         Info             => Entity.Entity,
                         Source_File_List => Source_File_List,
                         Level            => Level);
