@@ -341,6 +341,7 @@ package body Src_Info.LI_Utils is
          File_Timestamp    => Time,
          Original_Filename => null,
          Original_Line     => 1,
+         Scope_Tree        => null,
          Declarations      => null);
    end Create_File_Info;
 

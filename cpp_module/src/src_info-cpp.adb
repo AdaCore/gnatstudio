@@ -1698,6 +1698,7 @@ package body Src_Info.CPP is
          --  File is parsed, but not up-to-date. Destroy
          --  internals of the File to make sure we won't get
          --  duplicate references
+         Free (File.LI.Body_Info.Scope_Tree);
          Destroy (File.LI.Body_Info.Declarations);
          File.LI.Body_Info.Declarations := null;
          Destroy (File.LI.Dependencies_Info);
