@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 1.2.0
 
+- Only two desktops can be saved
+  Problem:    If there are already two desktops saved, saving a new one
+              replaces the oldest of the existing two desktops by the new one.
+  Workaround: copy ~/.gps/desktop as needed, and put the right version back
+              just before launching GPS.
+
 - C228-015 Command Make "All main subprograms" fails on Windows
   Problem:    The command make "All main subprograms" fails on Windows. GPS
               just report immediately "process exited with status -1".
