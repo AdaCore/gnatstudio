@@ -29,6 +29,7 @@ with Types;                     use Types;
 with Namet;                     use Namet;
 with Prj;                       use Prj;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
+with GNAT.OS_Lib;               use GNAT.OS_Lib;
 
 package body Language_Handlers.Glide is
 
@@ -292,11 +293,11 @@ package body Language_Handlers.Glide is
 
    function Known_Languages
      (Handler : access Glide_Language_Handler_Record)
-      return Basic_Types.String_Array is
+      return GNAT.OS_Lib.Argument_List is
    begin
       if Handler.Languages /= null then
          declare
-            Result : String_Array (Handler.Languages'Range);
+            Result : Argument_List (Handler.Languages'Range);
          begin
             for Index in Handler.Languages'Range loop
                Result (Index) := new String'
@@ -306,7 +307,7 @@ package body Language_Handlers.Glide is
          end;
       else
          declare
-            Result : String_Array (1 .. 0);
+            Result : Argument_List (1 .. 0);
          begin
             return Result;
          end;

@@ -37,6 +37,7 @@ with Language;
 with Basic_Types;
 with Src_Info;
 with Prj;
+with GNAT.OS_Lib;
 
 package Language_Handlers.Glide is
 
@@ -146,7 +147,7 @@ package Language_Handlers.Glide is
 
    function Known_Languages
      (Handler : access Glide_Language_Handler_Record)
-      return Basic_Types.String_Array;
+      return GNAT.OS_Lib.Argument_List;
 
    procedure Add_Language_Info
      (Handler             : access Glide_Language_Handler_Record;
