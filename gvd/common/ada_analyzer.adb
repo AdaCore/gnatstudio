@@ -1,4 +1,3 @@
-
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
@@ -14,7 +13,7 @@
 -- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
 -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
 -- General Public License for more details. You should have received --
--- a copy of the GNU General Public License along with this library; --
+-- a copy of the GNU General Public License along with this program; --
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
@@ -494,7 +493,7 @@ package body Ada_Analyzer is
 
       function Next_Char (P : Natural) return Natural is
       begin
-         return Utf8_Find_Next_Char (Buffer, P);
+         return UTF8_Find_Next_Char (Buffer, P);
       end Next_Char;
 
       ---------------
@@ -503,7 +502,7 @@ package body Ada_Analyzer is
 
       function Prev_Char (P : Natural) return Natural is
       begin
-         return Utf8_Find_Prev_Char (Buffer, P);
+         return UTF8_Find_Prev_Char (Buffer, P);
       end Prev_Char;
 
       ---------------
@@ -704,19 +703,19 @@ package body Ada_Analyzer is
 
             exit when Tmp >= Buffer_Length
               or else not Is_Entity_Letter
-                (Utf8_Get_Char (Buffer (Next_Char (Tmp) .. Buffer'Last)));
+                (UTF8_Get_Char (Buffer (Next_Char (Tmp) .. Buffer'Last)));
 
             Tmp := Next_Char (Tmp);
 
             exit when Tmp >= Buffer_Length
               or else not Is_Entity_Letter
-                (Utf8_Get_Char (Buffer (Next_Char (Tmp) .. Buffer'Last)));
+                (UTF8_Get_Char (Buffer (Next_Char (Tmp) .. Buffer'Last)));
 
             Tmp := Next_Char (Tmp);
 
             exit when Tmp >= Buffer_Length
               or else not Is_Entity_Letter
-                (Utf8_Get_Char (Buffer (Next_Char (Tmp) .. Buffer'Last)));
+                (UTF8_Get_Char (Buffer (Next_Char (Tmp) .. Buffer'Last)));
 
             Tmp := Next_Char (Tmp);
          end loop;
@@ -1657,7 +1656,7 @@ package body Ada_Analyzer is
                exit when not Skip_Comments
                  or else P >= Buffer_Length
                  or else Is_Entity_Letter
-                   (Utf8_Get_Char (Buffer (P .. Buffer_Length)));
+                   (UTF8_Get_Char (Buffer (P .. Buffer_Length)));
 
                P := Next_Char (P);
             end loop;
@@ -1668,7 +1667,7 @@ package body Ada_Analyzer is
 
             exit when P >= Buffer_Length
               or else Is_Entity_Letter
-                (Utf8_Get_Char (Buffer (P .. Buffer'Last)));
+                (UTF8_Get_Char (Buffer (P .. Buffer_Length)));
 
             Top_Token := Top (Tokens);
             Prev_Prev_Token := Prev_Token;
