@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                          G L I D E  I I                           --
 --                                                                   --
---                        Copyright (C) 2001                         --
+--                     Copyright (C) 2001-2002                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GLIDE is free software; you can redistribute it and/or modify  it --
@@ -25,6 +25,22 @@ with GVD.Process;       use GVD.Process;
 with GNAT.IO;           use GNAT.IO;
 
 package body Glide_Kernel.Console is
+
+   -----------
+   -- Clear --
+   -----------
+
+   procedure Clear (Kernel : access Kernel_Handle_Record'Class) is
+      Top     : constant Glide_Window := Glide_Window (Kernel.Main_Window);
+      Console : Glide_Console;
+   begin
+      if Top /= null
+        and then Get_Current_Process (Top) /= null
+      then
+         Console := Glide_Page.Glide_Page (Get_Current_Process (Top)).Console;
+         Clear (Console);
+      end if;
+   end Clear;
 
    ------------
    -- Insert --
