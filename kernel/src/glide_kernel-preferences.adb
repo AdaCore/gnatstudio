@@ -34,9 +34,6 @@ package body Glide_Kernel.Preferences is
    package Line_Terminators_Properties is new Generic_Enumeration_Property
      ("Line_Terminators", Line_Terminators);
 
-   package Key_Themes_Properties is new Generic_Enumeration_Property
-     ("Key_Themes", Key_Themes);
-
    package Speed_Column_Policy_Properties is new Generic_Enumeration_Property
      ("Speed_Column_Policies", Speed_Column_Policies);
 
@@ -60,14 +57,6 @@ package body Glide_Kernel.Preferences is
       Register_Property
         (Kernel.Preferences, Param_Spec (Default_Font), -"General");
       GVD.Preferences.Default_Font := Default_Font;
-
-      Key_Theme_Name := Param_Spec_Enum (Key_Themes_Properties.Gnew_Enum
-        (Name    => "General-Key-Theme-Name",
-         Nick    => -"Key theme",
-         Blurb   => -"Name of key theme to use",
-         Default => Default));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (Key_Theme_Name), -"General");
 
       Default_Charset := Param_Spec_String (Gnew_String
         (Name    => "General-Charset",

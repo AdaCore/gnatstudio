@@ -139,11 +139,6 @@ package Glide_Kernel.Preferences is
    pragma Convention (C, Line_Terminators);
    --  The list of supported line terminators.
 
-   type Key_Themes is (Default, Emacs);
-   for Key_Themes'Size use Glib.Gint'Size;
-   pragma Convention (C, Key_Themes);
-   --  The list of supported key themes.
-
    type Speed_Column_Policies is (Never, Automatic, Always);
    for Speed_Column_Policies'Size use Glib.Gint'Size;
    pragma Convention (C, Speed_Column_Policies);
@@ -158,7 +153,6 @@ package Glide_Kernel.Preferences is
 
    -- General --
    Default_Font          : Param_Spec_Font;
-   Key_Theme_Name        : Param_Spec_Enum;
    Use_Native_Dialogs    : Param_Spec_Boolean;
    Can_Change_Accels     : Param_Spec_Boolean;
    Default_Charset       : Param_Spec_String;
