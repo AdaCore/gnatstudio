@@ -16,24 +16,21 @@
 
 EXTERNAL_DEPENDENCIES=\
 gtkada \
-gvd \
-aunit
+gvd
 
 DEPENDENCIES= \
-common \
 kernel \
+common \
 src_editor \
 vdiff \
 prj_editor \
 hypergrep \
+aunit \
 glide
-
-
 
 all: ${EXTERNAL_DEPENDENCIES} ${DEPENDENCIES}
 
 clean: ${DEPENDENCIES:%=%_clean}
-
 
 ${DEPENDENCIES:%=%_clean}: force
 	make -C ${@:%_clean=%}/src clean
