@@ -1183,11 +1183,10 @@ package body Projects.Registry is
      (Registry : Project_Registry; Source_Filename : Virtual_File)
       return Types.Name_Id
    is
-      S : constant Source_File_Data := Get
+      S    : constant Source_File_Data := Get
         (Registry.Data.Sources, Base_Name (Source_Filename));
---        Part : Unit_Part;
---        Unit,
       Lang : Name_Id;
+
    begin
       if S = No_Source_File_Data then
          --  This is most probably one of the runtime files.
