@@ -772,11 +772,14 @@ package body Language.Custom is
    -------------------
 
    procedure Format_Buffer
-     (Lang          : access Custom_Language;
-      Buffer        : String;
-      Replace       : Replace_Text_Callback;
-      From, To      : Natural := 0;
-      Indent_Params : Indent_Parameters := Default_Indent_Parameters)
+     (Lang            : access Custom_Language;
+      Buffer          : String;
+      Replace         : Replace_Text_Callback;
+      From, To        : Natural := 0;
+      Indent_Params   : Indent_Parameters := Default_Indent_Parameters;
+      Indent_Offset   : Natural := 0;
+      Case_Exceptions : Case_Handling.Casing_Exceptions :=
+        Case_Handling.No_Casing_Exception)
    is
       procedure Replace_Cb
         (Line, First, Last : Integer;
@@ -796,15 +799,18 @@ package body Language.Custom is
          if Lang.Parent = null then
             Format_Buffer
               (Language_Root (Lang.all)'Access,
-               Buffer, Replace, From, To, Indent_Params);
+               Buffer, Replace, From, To,
+               Indent_Params, Indent_Offset, Case_Exceptions);
          else
             Format_Buffer
-              (Lang.Parent, Buffer, Replace, From, To, Indent_Params);
+              (Lang.Parent, Buffer, Replace, From, To,
+               Indent_Params, Indent_Offset, Case_Exceptions);
          end if;
       else
          Lang.Format_Buffer
            (Buffer,
-            Replace_Cb'Address, From, To, Indent_Params, Buffer'Length);
+            Replace_Cb'Address, From, To,
+            Indent_Params, Buffer'Length);
       end if;
    end Format_Buffer;
 
