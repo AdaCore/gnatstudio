@@ -60,7 +60,7 @@ package body Glide_Page is
       Pack_Start (Box, Page.Scenario, Fill => True, Expand => False);
 
       Gtk_New (Scrolled);
-      Set_USize (Scrolled, 200, -1);
+      Set_USize (Scrolled, 300, -1);
       Pack_Start (Box, Scrolled, Fill => True, Expand => True);
       Gtk_New (Page.Explorer, Window.Kernel);
       Add (Scrolled, Page.Explorer);
