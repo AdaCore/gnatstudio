@@ -683,7 +683,7 @@ private
 
    type Kernel_Handle_Record is new Glib.Object.GObject_Record with record
       Commands_List : Command_List.List;
-      --  The list of all registered command
+      --  The list of all registered commands
 
       Modules_List : Module_List.List;
       --  The list of all the modules that have been registered in this kernel.

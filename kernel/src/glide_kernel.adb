@@ -1326,7 +1326,7 @@ package body Glide_Kernel is
 
       --  ??? Should have the preference for the handling of fuzzy matches:
       --   - consider it as a no match: set Status to Entity_Not_Found;
-      --   - consider it as overloaded entitty: same as below;
+      --   - consider it as overloaded entity: same as below;
       --   - use the closest match: nothing to do.
 
       if Status = Overloaded_Entity_Found then
