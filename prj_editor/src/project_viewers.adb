@@ -54,13 +54,14 @@ with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with Interfaces.C.Strings;      use Interfaces.C.Strings;
 with Interfaces.C;              use Interfaces.C;
 
-with Prj_API;       use Prj_API;
-with Prj_Normalize; use Prj_Normalize;
-with Project_Trees; use Project_Trees;
-with Glide_Kernel;  use Glide_Kernel;
+with Prj_API;              use Prj_API;
+with Prj_Normalize;        use Prj_Normalize;
+with Project_Trees;        use Project_Trees;
+with Glide_Kernel;         use Glide_Kernel;
 with Glide_Kernel.Project; use Glide_Kernel.Project;
 
 with Prj;           use Prj;
+with Prj.Tree;      use Prj.Tree;
 with Stringt;       use Stringt;
 with Types;         use Types;
 with Namet;         use Namet;
@@ -126,6 +127,7 @@ package body Project_Viewers is
 
    type Switch_Editor_User_Data is record
       Viewer    : Project_Viewer;
+      Switches  : Switches_Edit;
       File_Name : String_Id;
       Directory : String_Id;
    end record;
@@ -492,19 +494,77 @@ package body Project_Viewers is
 
    procedure Destroy_Switch_Editor
      (Dialog : access Gtk_Widget_Record'Class;
-      Data   : Switch_Editor_User_Data) is
+      Data   : Switch_Editor_User_Data)
+   is
+      S : Switches_Edit := Data.Switches;
+      Project : Project_Node_Id := Get_Project_From_View
+        (Data.Viewer.Current_Project);
+      Case_Item, Decl, List, Expr : Project_Node_Id;
+      New_Decl : Project_Node_Id;
+
    begin
-      --  ??? Doesn't work the second time, even on different project, since
-      --  ??? Manager believes the whole project has been normalized.
+      --  Normalize the subproject we are currently working on, since we only
+      --  know how to modify normalized subprojects.
+      --  ??? Should check whether the project is already normalized.
 
-      --  ??? Doesn't work on projects other than the top-level
+      Normalize_Project (Project);
 
-      --  ??? Should check whether the project is already normalized
+      --  Create the new instruction to be added to the project
 
-      Normalize_Project (Get_Project (Data.Viewer.Kernel));
-      --  Normalize
-      --    (Data.Viewer.Manager,
-      --     Get_Project_From_View (Data.Viewer.Project_Filter));
+      New_Decl := Default_Project_Node (N_Declarative_Item);
+
+      Decl := Default_Project_Node (N_Attribute_Declaration, Prj.List);
+      Set_Current_Item_Node (New_Decl, Decl);
+
+      Name_Len := 8;
+      Name_Buffer (1 .. Name_Len) := "switches";
+      Set_Name_Of (Decl, Name_Find);
+
+      Set_Associative_Array_Index_Of (Decl, Data.File_Name);
+
+      List := Default_Project_Node (N_Expression, Prj.List);
+      Set_Expression_Of (Decl, List);
+
+      Set_First_Term (List, Default_Project_Node (N_Term));
+      List := First_Term (List);
+
+      Set_Current_Term
+        (List, Default_Project_Node (N_Literal_String_List, Prj.List));
+      List := Current_Term (List);
+
+      declare
+         Args : Argument_List := Get_Switches (S, Compiler);
+      begin
+         for A in Args'Range loop
+            Start_String;
+            Store_String_Chars (Args (A).all);
+            Expr := String_As_Expression (End_String);
+            Set_Next_Expression_In_List
+              (Expr, First_Expression_In_List (List));
+            Set_First_Expression_In_List (List, Expr);
+         end loop;
+
+         Free (Args);
+      end;
+
+      --  Add the instruction to the list of declarative items
+
+      Case_Item := Current_Scenario_Case_Item
+        (Project, Get_Or_Create_Package (Project, "compiler"));
+      Decl := First_Declarative_Item_Of (Case_Item);
+
+      if Decl = Empty_Node then
+         Set_First_Declarative_Item_Of (Case_Item, New_Decl);
+
+      else
+         while Next_Declarative_Item (Decl) /= Empty_Node loop
+            Decl := Next_Declarative_Item (Decl);
+         end loop;
+
+         Set_Next_Declarative_Item (Decl, New_Decl);
+      end if;
+
+      Recompute_View (Data.Viewer.Kernel);
    end Destroy_Switch_Editor;
 
    ----------------------------
@@ -582,7 +642,8 @@ package body Project_Viewers is
       Switch_Callback.Connect
         (Dialog, "destroy",
          Switch_Callback.To_Marshaller (Destroy_Switch_Editor'Access),
-         (Viewer => Project_Viewer (Viewer),
+         (Viewer    => Project_Viewer (Viewer),
+          Switches  => Switches,
           File_Name => File_Name,
           Directory => Directory));
 
@@ -782,14 +843,15 @@ package body Project_Viewers is
      (Viewer : access Gtk_Widget_Record'Class)
    is
       View : Project_Viewer := Project_Viewer (Viewer);
-      Project : Project_Id := Get_Selected_Project (View.Explorer);
       Dir : String_Id;
    begin
+      View.Current_Project := Get_Selected_Project (View.Explorer);
+
       Clear (View);  --  ??? Should delete selectively
 
-      if Project /= No_Project then
+      if View.Current_Project /= No_Project then
          Dir := Get_Selected_Directory (View.Explorer);
-         Show_Project (View, Project, Dir);
+         Show_Project (View, View.Current_Project, Dir);
       end if;
    end Explorer_Selection_Changed;
 

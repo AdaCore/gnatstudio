@@ -96,6 +96,11 @@ private
       Kernel  : Glide_Kernel.Kernel_Handle;
       Explorer : Project_Trees.Project_Tree;
 
+      Current_Project : Prj.Project_Id;
+      --  The project to which the files currently in the viewer belong. This
+      --  indicates which project file should be normalized when a modification
+      --  takes place.
+
       Project_Filter : Prj.Project_Id := Prj.No_Project;
    end record;
 end Project_Viewers;
