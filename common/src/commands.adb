@@ -36,9 +36,8 @@ package body Commands is
    ---------------
 
    function New_Queue return Command_Queue is
-      Q : Command_Queue := new Command_Queue_Record;
    begin
-      return Q;
+      return new Command_Queue_Record;
    end New_Queue;
 
    ----------
