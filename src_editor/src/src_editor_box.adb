@@ -2040,6 +2040,7 @@ package body Src_Editor_Box is
    begin
       if Editor.Modified /= Modified then
          Editor.Modified := Modified;
+         Set_Modified (Editor.Source_Buffer, Modified);
 
          if Modified then
             Set_Text (Editor.Modified_Label, -"Modified");
