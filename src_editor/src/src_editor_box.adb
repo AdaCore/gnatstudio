@@ -287,11 +287,15 @@ package body Src_Editor_Box is
       Buffer : String (1 .. Buffer_Length);
       Characters_Read : Natural;
    begin
-      FD := Open_Read (Filename, Fmode => Text);
+      Success := True;
+
+      FD := Open_Read (Filename & ASCII.NUL, Fmode => Text);
       if FD = Invalid_FD then
          Success := False;
          return;
       end if;
+
+      Clear (Editor.Source_Buffer);
 
       if Lang_Autodetect then
          Set_Language
