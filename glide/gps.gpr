@@ -14,24 +14,24 @@ project Glide is
    for Source_Dirs use ("src");
    for Object_Dir use "obj";
 
-  type OS_Type is ("linux", "windows");
-  OS : OS_Type := External ("OS", "linux");  --  Fail if no default value
+   type OS_Type is ("linux", "windows");
+   OS : OS_Type := External ("OS", "linux");  --  Fail if no default value
 
-  type Build_Type is ("Debug", "Production");
-  Build : Build_Type := External ("Build", "Debug");
+   type Build_Type is ("Debug", "Production");
+   Build : Build_Type := External ("Build", "Debug");
 
-  package Compiler is
-     case Build is
-        when "Debug" => 
-          for Switches ("Ada") use ("-g");
-        when others =>
-          for Switches ("Ada") use ("-O2");
-     end case;
-  end Compiler;
+   package Compiler is
+      case Build is
+         when "Debug" => 
+            for Default_Switches ("Ada") use ("-g");
+         when others =>
+            for Default_Switches ("Ada") use ("-O2");
+      end case;
+   end Compiler;
 
-  package Naming is
-    for Specification_Suffix ("Ada") use ".ads";
-    for Implementation_Suffix ("Ada") use ".adb";
-  end Naming;
+   package Naming is
+      for Specification_Suffix ("Ada") use ".ads";
+      for Implementation_Suffix ("Ada") use ".adb";
+   end Naming;
 
 end Glide;
