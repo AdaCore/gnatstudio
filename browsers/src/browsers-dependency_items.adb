@@ -1,21 +1,29 @@
 -----------------------------------------------------------------------
---                          G L I D E  I I                           --
 --                                                                   --
---                        Copyright (C) 2001                         --
---                            ACT-Europe                             --
+--                     Copyright (C) 2001                            --
+--                          ACT-Europe                               --
 --                                                                   --
--- GVD is free  software;  you can redistribute it and/or modify  it --
--- under the terms of the GNU General Public License as published by --
--- the Free Software Foundation; either version 2 of the License, or --
--- (at your option) any later version.                               --
+-- This library is free software; you can redistribute it and/or     --
+-- modify it under the terms of the GNU General Public               --
+-- License as published by the Free Software Foundation; either      --
+-- version 2 of the License, or (at your option) any later version.  --
 --                                                                   --
--- This program is  distributed in the hope that it will be  useful, --
--- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
+-- This library is distributed in the hope that it will be useful,   --
+-- but WITHOUT ANY WARRANTY; without even the implied warranty of    --
 -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
--- General Public License for more details. You should have received --
--- a copy of the GNU General Public License along with this library; --
--- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
--- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
+-- General Public License for more details.                          --
+--                                                                   --
+-- You should have received a copy of the GNU General Public         --
+-- License along with this library; if not, write to the             --
+-- Free Software Foundation, Inc., 59 Temple Place - Suite 330,      --
+-- Boston, MA 02111-1307, USA.                                       --
+--                                                                   --
+-- As a special exception, if other files instantiate generics from  --
+-- this unit, or you link this unit with other files to produce an   --
+-- executable, this  unit  does not  by itself cause  the resulting  --
+-- executable to be covered by the GNU General Public License. This  --
+-- exception does not however invalidate any other reasons why the   --
+-- executable file  might be covered by the  GNU Public License.     --
 -----------------------------------------------------------------------
 
 with Glib;              use Glib;
@@ -36,10 +44,10 @@ with Pango.Font;        use Pango.Font;
 with Src_Info;                 use Src_Info;
 with Src_Info.ALI;             use Src_Info.ALI;
 with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
-with Glide_Kernel.Browsers;    use Glide_Kernel.Browsers;
 with Glide_Kernel.Project;     use Glide_Kernel.Project;
 with Glide_Kernel;             use Glide_Kernel;
 with Browsers.Canvas;          use Browsers.Canvas;
+with Browsers.Module;          use Browsers.Module;
 
 with GNAT.OS_Lib;              use GNAT.OS_Lib;
 
@@ -337,9 +345,10 @@ package body Browsers.Dependency_Items is
       Link        : access Dependency_Link_Record;
       Window      : Gdk.Window.Gdk_Window;
       Invert_Mode : Boolean;
-      GC          : Gdk.GC.Gdk_GC)
+      GC          : Gdk.GC.Gdk_GC;
+      Edge_Number : Glib.Gint)
    is
-      Browser : Glide_Browser := To_Browser (Canvas);
+      Browser : Glide_Browser := To_Brower (Canvas);
    begin
       if Invert_Mode
         or else
@@ -347,10 +356,12 @@ package body Browsers.Dependency_Items is
          and then Get_Dest (Link) /= Vertex_Access (Selected_Item (Browser)))
       then
          Draw_Link
-           (Canvas, Canvas_Link_Access (Link), Window, Invert_Mode, GC);
+           (Canvas, Canvas_Link_Access (Link), Window,
+            Invert_Mode, GC, Edge_Number);
       else
-         Draw_Link (Canvas, Canvas_Link_Access (Link),
-                    Window, Invert_Mode, Get_Selected_Link_GC (Browser));
+         Draw_Link
+           (Canvas, Canvas_Link_Access (Link),
+            Window, Invert_Mode, Get_Selected_Link_GC (Browser), Edge_Number);
       end if;
    end Draw_Link;
 

@@ -1,23 +1,32 @@
 -----------------------------------------------------------------------
---                          G L I D E  I I                           --
 --                                                                   --
---                        Copyright (C) 2001                         --
---                            ACT-Europe                             --
+--                     Copyright (C) 2001                            --
+--                          ACT-Europe                               --
 --                                                                   --
--- GVD is free  software;  you can redistribute it and/or modify  it --
--- under the terms of the GNU General Public License as published by --
--- the Free Software Foundation; either version 2 of the License, or --
--- (at your option) any later version.                               --
+-- This library is free software; you can redistribute it and/or     --
+-- modify it under the terms of the GNU General Public               --
+-- License as published by the Free Software Foundation; either      --
+-- version 2 of the License, or (at your option) any later version.  --
 --                                                                   --
--- This program is  distributed in the hope that it will be  useful, --
--- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
+-- This library is distributed in the hope that it will be useful,   --
+-- but WITHOUT ANY WARRANTY; without even the implied warranty of    --
 -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
--- General Public License for more details. You should have received --
--- a copy of the GNU General Public License along with this library; --
--- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
--- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
+-- General Public License for more details.                          --
+--                                                                   --
+-- You should have received a copy of the GNU General Public         --
+-- License along with this library; if not, write to the             --
+-- Free Software Foundation, Inc., 59 Temple Place - Suite 330,      --
+-- Boston, MA 02111-1307, USA.                                       --
+--                                                                   --
+-- As a special exception, if other files instantiate generics from  --
+-- this unit, or you link this unit with other files to produce an   --
+-- executable, this  unit  does not  by itself cause  the resulting  --
+-- executable to be covered by the GNU General Public License. This  --
+-- exception does not however invalidate any other reasons why the   --
+-- executable file  might be covered by the  GNU Public License.     --
 -----------------------------------------------------------------------
 
+with Glib;
 with Gdk.Event;
 with Gdk.GC;
 with Gdk.Window;
@@ -64,8 +73,8 @@ package Browsers.Dependency_Items is
       Event : Gdk.Event.Gdk_Event_Button);
    --  Called when the item is clicked on.
 
-   function Get_Source
-     (Item : access File_Item_Record) return Src_Info.Internal_File;
+   function Get_Source (Item : access File_Item_Record)
+      return Src_Info.Internal_File;
    --  Return the source file associated with Item
 
    procedure Destroy (Item : in out File_Item_Record);
@@ -95,14 +104,14 @@ package Browsers.Dependency_Items is
       Link        : access Dependency_Link_Record;
       Window      : Gdk.Window.Gdk_Window;
       Invert_Mode : Boolean;
-      GC          : Gdk.GC.Gdk_GC);
+      GC          : Gdk.GC.Gdk_GC;
+      Edge_Number : Glib.Gint);
    --  Override the drawing of links (so that links can be drawn in different
    --  colors when an item is selected).
 
 private
-   type File_Item_Record is new
-     Gtkada.Canvas.Buffered_Item_Record with
-   record
+   type File_Item_Record is new Gtkada.Canvas.Buffered_Item_Record
+   with record
       Source : Src_Info.Internal_File;
       Kernel : Glide_Kernel.Kernel_Handle;
 
@@ -111,9 +120,8 @@ private
       --  the first time we need to access this browser.
    end record;
 
-   type Dependency_Link_Record is new
-     Gtkada.Canvas.Canvas_Link_Record with
-   record
+   type Dependency_Link_Record is new Gtkada.Canvas.Canvas_Link_Record
+   with record
       Dep : Src_Info.Dependency_Info;
    end record;
 
