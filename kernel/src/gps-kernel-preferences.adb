@@ -514,8 +514,9 @@ package body GPS.Kernel.Preferences is
          Minimum => 0,
          Maximum => 255,
          Default => 80,
-         Blurb   => -"The column number to highlight. 0 if none.",
-         Nick    => -"Column highlight"));
+         Blurb   => -("The right margin to highlight. 0 if none. This value "
+                      & "is also used to implement the Edit->Refill command"),
+         Nick    => -"Right margin"));
       Register_Property
         (Kernel.Preferences, Param_Spec (Highlight_Column), -"Editor");
 
