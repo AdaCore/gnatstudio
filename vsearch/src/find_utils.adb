@@ -190,7 +190,7 @@ package body Find_Utils is
                   Column     => Ref_Column,
                   End_Column => Ref_Column +
                     Integer (UTF8_Strlen
-                      (Buffer (Ref_Column ..
+                      (Buffer (Context.Sub_Matches (0).First ..
                                  Context.Sub_Matches (0).Last))),
                   Text       => Line))
                then
