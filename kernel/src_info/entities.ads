@@ -641,7 +641,6 @@ package Entities is
 
    procedure Parse_File_Constructs
      (Handler      : access LI_Handler_Record;
-      Root_Project : Projects.Project_Type;
       Languages    : access Language_Handlers.Language_Handler_Record'Class;
       File_Name    : VFS.Virtual_File;
       Result       : out Language.Construct_List);
