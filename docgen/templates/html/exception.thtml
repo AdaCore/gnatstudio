@@ -1,12 +1,11 @@
 @@--
-@@-- ???
+@@-- Used for an exception declaration
 @@--
-@@-- INDENT : spaces to be used for the indentation
-@@-- NAME   :
-@@-- LINE   :
-@@-- BLOCK  :
+@@-- INDENT    : spaces to be used for the indentation
+@@-- DECL_LINE : declaration line for this exception
+@@-- BLOCK     : the exception declaration
 @@--
-<A NAME="@_LINE_@"></A><BR>
+<A NAME="@_DECL_LINE_@"></A><BR>
 <TABLE BGCOLOR="WHITE" WIDTH="1%" CELLPADDING="0" CELLSPACING="0">
 <TR><TD><PRE>
 @_INDENT_@
