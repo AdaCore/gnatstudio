@@ -101,6 +101,15 @@ package VCS_View_Pkg is
      return VCS_Access;
    --  Return the VCS reference currently being viewed in Explorer.
 
+   function Get_Current_Context
+     (Explorer : access VCS_View_Record)
+     return Selection_Context_Access;
+
+   procedure Set_Current_Context
+     (Explorer : access VCS_View_Record;
+      Context  : Selection_Context_Access);
+
+
 private
    type VCS_Page_Record is new Gtk_Hbox_Record with record
       Reference : VCS_Access;
@@ -118,6 +127,9 @@ private
    type VCS_View_Record is new Gtk_Hbox_Record with record
       Kernel : Kernel_Handle;
       --  Reference to the Glide kernel that launched the explorer, if any.
+
+      Context : Selection_Context_Access;
+      --  The current context being shown / selected in the explorer.
 
       Notebook   : Gtk_Notebook;
       --  The notebook containing the actual explorer pages.
