@@ -151,11 +151,15 @@ package body Python_Module is
      (Instance : access Python_Class_Instance_Record) return String;
    function Get_Data (Instance : access Python_Class_Instance_Record)
       return System.Address;
+   function Get_Data (Instance : access Python_Class_Instance_Record)
+      return Integer;
    procedure Set_Data
      (Instance : access Python_Class_Instance_Record;
       Value    : access Glib.Object.GObject_Record'Class);
    procedure Set_Data
      (Instance : access Python_Class_Instance_Record; Value : String);
+   procedure Set_Data
+     (Instance : access Python_Class_Instance_Record; Value : Integer);
    procedure Set_Data
      (Instance   : access Python_Class_Instance_Record;
       Value      : System.Address;
@@ -418,7 +422,10 @@ package body Python_Module is
             Self   => User_Data);
       else
          H.Minimum_Args := H.Minimum_Args + 1;
-         H.Maximum_Args := H.Maximum_Args + 1;
+
+         if H.Maximum_Args /= Natural'Last then
+            H.Maximum_Args := H.Maximum_Args + 1;
+         end if;
          Klass := Lookup_Class_Object (Script.GPS_Module, Get_Name (Class));
          Add_Method
            (Class => Klass,
@@ -788,6 +795,22 @@ package body Python_Module is
    -- Get_Data --
    --------------
 
+   function Get_Data (Instance : access Python_Class_Instance_Record)
+      return Integer
+   is
+      Item : constant PyObject := PyObject_GetAttrString
+        (Instance.Data, GPS_Data_Attr);
+   begin
+      if Item = null or else not PyInt_Check (Item) then
+         raise Invalid_Data;
+      end if;
+      return Integer (PyInt_AsLong (Item));
+   end Get_Data;
+
+   --------------
+   -- Get_Data --
+   --------------
+
    function Get_Data
      (Instance : access Python_Class_Instance_Record) return String
    is
@@ -836,6 +859,17 @@ package body Python_Module is
       Set_Data
         (Instance, Convert (GObject (Value)),
          On_Destroy => Unref_Gobject'Access);
+   end Set_Data;
+
+   --------------
+   -- Set_Data --
+   --------------
+
+   procedure Set_Data
+     (Instance : access Python_Class_Instance_Record; Value : Integer) is
+   begin
+      PyObject_SetAttrString
+        (Instance.Data, GPS_Data_Attr, PyInt_FromLong (long (Value)));
    end Set_Data;
 
    --------------

@@ -132,7 +132,7 @@ package body Shell_Script is
    -- Instance_Data --
    -------------------
 
-   type Instance_Data_Type is (Strings, Object, Addresses);
+   type Instance_Data_Type is (Strings, Object, Addresses, Integers);
    type Instance_Data (Data : Instance_Data_Type := Object) is record
       case Data is
          when Strings =>
@@ -142,6 +142,8 @@ package body Shell_Script is
          when Addresses =>
             Addr       : System.Address;
             On_Destroy : Destroy_Handler;
+         when Integers =>
+            Int : Integer;
       end case;
    end record;
 
@@ -166,11 +168,15 @@ package body Shell_Script is
      (Instance : access Shell_Class_Instance_Record) return String;
    function Get_Data (Instance : access Shell_Class_Instance_Record)
       return System.Address;
+   function Get_Data
+     (Instance : access Shell_Class_Instance_Record) return Integer;
    procedure Set_Data
      (Instance : access Shell_Class_Instance_Record;
       Value    : access Glib.Object.GObject_Record'Class);
    procedure Set_Data
      (Instance : access Shell_Class_Instance_Record; Value : String);
+   procedure Set_Data
+     (Instance : access Shell_Class_Instance_Record; Value : Integer);
    procedure Set_Data
      (Instance   : access Shell_Class_Instance_Record;
       Value      : System.Address;
@@ -941,7 +947,7 @@ package body Shell_Script is
    is
       Tmp : String_Access;
    begin
-      if Append then
+      if Append and then Data.Return_Value /= null then
          Tmp := Data.Return_Value;
          Data.Return_Value := new String'(Tmp.all & ASCII.LF & Value);
          Free (Tmp);
@@ -1021,6 +1027,20 @@ package body Shell_Script is
    -- Get_Data --
    --------------
 
+   function Get_Data
+     (Instance : access Shell_Class_Instance_Record) return Integer is
+   begin
+      if Instance.Data.Data /= Integers then
+         raise Invalid_Data;
+      else
+         return Instance.Data.Int;
+      end if;
+   end Get_Data;
+
+   --------------
+   -- Get_Data --
+   --------------
+
    function Get_Data (Instance : access Shell_Class_Instance_Record)
       return System.Address is
    begin
@@ -1064,6 +1084,18 @@ package body Shell_Script is
    --------------
 
    procedure Set_Data
+     (Instance : access Shell_Class_Instance_Record;
+      Value    : Integer) is
+   begin
+      Primitive_Free (Instance.all);
+      Instance.Data := (Data => Integers, Int => Value);
+   end Set_Data;
+
+   --------------
+   -- Set_Data --
+   --------------
+
+   procedure Set_Data
      (Instance   : access Shell_Class_Instance_Record;
       Value      : System.Address;
       On_Destroy : Destroy_Handler := null) is
@@ -1099,6 +1131,9 @@ package body Shell_Script is
 
          when Strings =>
             Free (Instance.Data.Str);
+
+         when Integers =>
+            null;
 
          when Addresses =>
             if Instance.Data.On_Destroy /= null
