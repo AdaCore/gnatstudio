@@ -1,5 +1,12 @@
 Known Problems fixed in GVD 2.0.0
 
+- Infinite loop when displaying the assembly code
+  Problem:    When the application wasn't compiled with debug information,
+              and you chose to display the assembly window, this resulted in
+              an infinite loop.
+  Workaround: Always compile your applications with debugging information.
+              You need this anyway to do anything useful.
+
 - [9125-003] Incorrect parsing of incomplete record types
   Problem:    When trying to display an incomplete record (in some rare cases,
               when the compiler generates partial debug information), GVD will
