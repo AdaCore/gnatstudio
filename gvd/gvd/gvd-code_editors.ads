@@ -162,6 +162,10 @@ package GVD.Code_Editors is
    --  Called when the preferences have changed, and the editor should be
    --  redisplayed with the new setup.
 
+   function Get_Window_Size
+     (Editor : access Code_Editor_Record'Class) return Glib.Gint;
+   --  Return the size of the Asm/source text window.
+
 private
 
    type View_Mode is (Source_Only, Asm_Only, Source_Asm);
