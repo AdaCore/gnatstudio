@@ -1,0 +1,53 @@
+*** configure.old	Tue May 21 21:46:26 2002
+--- configure	Wed Jun 12 18:06:44 2002
+***************
+*** 10212,10218 ****
+      INCLUDED_XFT_MODULES="$INCLUDED_XFT_MODULES \$(top_builddir)/modules/$dir/libpango-$module.la"
+    elif echo $module | grep -- "-ft2\($\|,\)" > /dev/null; then
+      INCLUDED_FT2_MODULES="$INCLUDED_FT2_MODULES \$(top_builddir)/modules/$dir/libpango-$module.la"
+!   elif echo $module | grep -- "-x\($\|,\)" > /dev/null; then
+      INCLUDED_X_MODULES="$INCLUDED_X_MODULES \$(top_builddir)/modules/$dir/libpango-$module.la"
+    elif echo $module | grep -- "-win32\($\|,\)" > /dev/null; then
+      INCLUDED_WIN32_MODULES="$INCLUDED_WIN32_MODULES \$(top_builddir)/modules/$dir/libpango-$module.la"
+--- 10212,10218 ----
+      INCLUDED_XFT_MODULES="$INCLUDED_XFT_MODULES \$(top_builddir)/modules/$dir/libpango-$module.la"
+    elif echo $module | grep -- "-ft2\($\|,\)" > /dev/null; then
+      INCLUDED_FT2_MODULES="$INCLUDED_FT2_MODULES \$(top_builddir)/modules/$dir/libpango-$module.la"
+!   elif echo $module | grep -E -- "-x($|,)" > /dev/null; then
+      INCLUDED_X_MODULES="$INCLUDED_X_MODULES \$(top_builddir)/modules/$dir/libpango-$module.la"
+    elif echo $module | grep -- "-win32\($\|,\)" > /dev/null; then
+      INCLUDED_WIN32_MODULES="$INCLUDED_WIN32_MODULES \$(top_builddir)/modules/$dir/libpango-$module.la"
+***************
+*** 10286,10292 ****
+  fi
+  
+  
+! if echo $included_modules | grep '\(^\|,\)basic-x\($\|,\)' > /dev/null; then
+    INCLUDE_BASIC_X_TRUE=
+    INCLUDE_BASIC_X_FALSE='#'
+  else
+--- 10286,10292 ----
+  fi
+  
+  
+! if echo $included_modules | grep -E -- '(^|,)basic-x($|,)' > /dev/null; then
+    INCLUDE_BASIC_X_TRUE=
+    INCLUDE_BASIC_X_FALSE='#'
+  else
+***************
+*** 12515,12521 ****
+  
+  IFS="${IFS= 	}"; pango_save_ifs="$IFS"; IFS=","
+  for module in $included_modules; do
+!   if echo $module | grep -- "-x\($\|,\)" > /dev/null; then
+      module_c=`echo $module | sed s/-/_/`
+      cat >> pango/module-defs-x.c <<EOTEXT
+   { _pango_${module_c}_script_engine_list, _pango_${module_c}_script_engine_load,_pango_${module_c}_script_engine_unload },
+--- 12515,12521 ----
+  
+  IFS="${IFS= 	}"; pango_save_ifs="$IFS"; IFS=","
+  for module in $included_modules; do
+!   if echo $module | grep -E -- "-x($|,)" > /dev/null; then
+      module_c=`echo $module | sed s/-/_/`
+      cat >> pango/module-defs-x.c <<EOTEXT
+   { _pango_${module_c}_script_engine_list, _pango_${module_c}_script_engine_load,_pango_${module_c}_script_engine_unload },
