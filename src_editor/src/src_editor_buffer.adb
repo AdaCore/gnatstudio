@@ -1416,6 +1416,8 @@ package body Src_Editor_Buffer is
             Buffer.Inserting := True;
             Enqueue (Buffer, Command_Access (Command));
             Buffer.Inserting := False;
+
+            Word_Added (Source_Buffer (Buffer));
          end if;
 
          Add_Text (Command, Text (1 .. Length));
