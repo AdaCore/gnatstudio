@@ -139,7 +139,7 @@ Select the @code{Editor->Fonts & Colors} page by clicking on the cross next to
 the item @code{Editor} and then selecting the @code{Fonts & Colors} item.
 
 As you go over the various lines and labels, you will notice that by
-holding the mouse over a label, a tooltip pops up displaying on-line help
+holding the mouse over a label, a tool tip pops up displaying on-line help
 about the selected item.
 
 Change the background color of the @code{Keywords} by clicking on the last
@@ -213,7 +213,7 @@ Now let's try to understand a little bit about how the program is working by
 looking at the @file{sdc.adb} editor: there's a loop, the main processing is
 done by the functions Process and Next (at line 30).
 
-Click around line 30, move the mouse over @code{Process} and let a tooltip
+Click around line 30, move the mouse over @code{Process} and let a tool tip
 appear (@code{global procedure tokens.process declared at tokens.ads:19}): this
 gives information about the kind of entity and the location (file and line) of
 the declaration of this procedure.
@@ -281,7 +281,7 @@ scroll through the procedure @code{Next}, move the mouse on
 @code{Goto body of Read}.
 
 We've now navigated quite a bit through the application source code,
-which you can verify by clicking on the left arrow in the toolbar, to go
+which you can verify by clicking on the left arrow in the tool bar, to go
 back to the previous locations visited.
 
 Repeat the operation until you're back in @file{sdc.adb}.
@@ -322,7 +322,7 @@ change.
 
 Now select the menu @code{Debug->Initialize->sdc}: two new windows are
 created, a data window and a debugger console.
-You can also look at the various debug menu item and toolbar buttons which are
+You can also look at the various debug menu item and tool bar buttons which are
 now activated.
 
 Use the menu @code{Debug->Data->Call Stack}: this opens a new window on the
@@ -340,9 +340,9 @@ line 49).
 Go up in the call stack by clicking on the @code{tokens.process} line
 (frame number 6).
 
-If you move the mouse over the parameter @code{T} at line 64, a tooltip is
+If you move the mouse over the parameter @code{T} at line 64, a tool tip is
 displayed showing the value of @code{T}. You have probably noticed that
-tooltips, like menus, are contextual: depending on the current session and
+tool tips, like menus, are contextual: depending on the current session and
 on the entity selected, different information is displayed.
 
 Select the contextual menu @code{Debug->Display T}: this displays in the data
@@ -371,7 +371,7 @@ Move the mouse over @code{Last} and let the debugger display its value: 0.
 From the contextual menu, select @code{Goto declaration of Last}: this
 will jump to the line 16 of @file{stack.adb}, where you can see that
 @code{Last} is a @code{Natural}. Now click on the @code{Goto Previous Location}
-button in the toolbar: we're now back at line 49 where we can see that for a
+button in the tool bar: we're now back at line 49 where we can see that for a
 @code{Push} procedure, @code{Last} should be incremented, and not decremented.
 
 Fix the line to @code{Last := Last + 1;}
