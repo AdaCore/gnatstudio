@@ -49,7 +49,7 @@ with Gtkada.Handlers;           use Gtkada.Handlers;
 with Gtkada.MDI;                use Gtkada.MDI;
 with System;                    use System;
 
-with String_Utils;              use String_Utils;
+with File_Utils;                use File_Utils;
 with String_List_Utils;         use String_List_Utils;
 with Glide_Intl;                use Glide_Intl;
 with Glide_Main_Window;         use Glide_Main_Window;
@@ -222,7 +222,7 @@ package body Glide_Kernel is
          3      | 5            => (1 => GType_Pointer),
          6 .. 10               => (1 => GType_String));
       Handler : Glide_Language_Handler;
-      Dir     : constant String := String_Utils.Name_As_Directory (Home_Dir);
+      Dir     : constant String := Name_As_Directory (Home_Dir);
 
    begin
       Handle := new Kernel_Handle_Record;

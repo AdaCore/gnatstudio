@@ -38,6 +38,7 @@ with Glide_Menu;
 with Glide_Main_Window;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
+with File_Utils;
 with String_Utils;
 with Glide_Kernel;              use Glide_Kernel;
 with Glide_Kernel.Console;      use Glide_Kernel.Console;
@@ -338,7 +339,7 @@ procedure GPS is
       Ignored := Log_Set_Handler
         ("Gtk", Log_Level_Mask, Gtk_Log'Unrestricted_Access);
 
-      Dir := new String'(String_Utils.Name_As_Directory (Home.all) & ".gps");
+      Dir := new String'(File_Utils.Name_As_Directory (Home.all) & ".gps");
 
       begin
          User_Directory_Existed := Is_Directory (Dir.all);
@@ -356,7 +357,7 @@ procedure GPS is
 
             Create
               (File,
-               Name => String_Utils.Name_As_Directory (Dir.all)
+               Name => File_Utils.Name_As_Directory (Dir.all)
                  & "traces.cfg");
             Put_Line (File, ">log.$$");
             Put_Line (File, "+");
@@ -374,27 +375,27 @@ procedure GPS is
          end if;
 
          if not
-           Is_Directory (String_Utils.Name_As_Directory (Dir.all) & "sessions")
+           Is_Directory (File_Utils.Name_As_Directory (Dir.all) & "sessions")
          then
-            Make_Dir (String_Utils.Name_As_Directory (Dir.all) & "sessions");
+            Make_Dir (File_Utils.Name_As_Directory (Dir.all) & "sessions");
 
             if not Dir_Created then
                Button := Message_Dialog
                  ((-"Created config directory ")
-                  & String_Utils.Name_As_Directory (Dir.all) & "sessions",
+                  & File_Utils.Name_As_Directory (Dir.all) & "sessions",
                   Information, Button_OK, Justification => Justify_Left);
             end if;
          end if;
 
          if not Is_Directory
-           (String_Utils.Name_As_Directory (Dir.all) & "customize")
+           (File_Utils.Name_As_Directory (Dir.all) & "customize")
          then
-            Make_Dir (String_Utils.Name_As_Directory (Dir.all) & "customize");
+            Make_Dir (File_Utils.Name_As_Directory (Dir.all) & "customize");
 
             if not Dir_Created then
                Button := Message_Dialog
                  ((-"Created config directory ")
-                  & String_Utils.Name_As_Directory (Dir.all) & "customize",
+                  & File_Utils.Name_As_Directory (Dir.all) & "customize",
                   Information, Button_OK, Justification => Justify_Left);
             end if;
          end if;
@@ -412,7 +413,7 @@ procedure GPS is
       --  Initialize the traces
 
       Traces.Parse_Config_File
-        (Default => String_Utils.Name_As_Directory (Dir.all) & "traces.cfg");
+        (Default => File_Utils.Name_As_Directory (Dir.all) & "traces.cfg");
       Trace (Me, "GPS " & GVD.Version & " (" & GVD.Source_Date &
              ") hosted on " & GVD.Target);
 
@@ -749,7 +750,7 @@ procedure GPS is
       System_Rc         : constant String :=
         Format_Pathname (Prefix.all & "/etc/gps/gtkrc");
       Rc                : constant String :=
-        String_Utils.Name_As_Directory (Dir.all) & "gtkrc";
+        File_Utils.Name_As_Directory (Dir.all) & "gtkrc";
       Log               : constant String :=
         Get_Home_Dir (GPS.Kernel) & "debugger.log";
       Key               : constant String :=
@@ -1179,7 +1180,7 @@ procedure GPS is
       end if;
 
       Gtk.Accel_Map.Save
-        (String_Utils.Name_As_Directory (Dir.all) & "custom_key");
+        (File_Utils.Name_As_Directory (Dir.all) & "custom_key");
 
       Free_Modules (Kernel);
 
