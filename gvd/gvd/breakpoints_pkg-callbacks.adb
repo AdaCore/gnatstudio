@@ -100,7 +100,8 @@ package body Breakpoints_Pkg.Callbacks is
    begin
       if Selection /= Null_List then
          Br_Num := Breakpoint_Identifier'Value
-           (Get_Text (Editor.Breakpoint_List, Get_Data (First (Selection)), 0));
+           (Get_Text (Editor.Breakpoint_List,
+                      Get_Data (First (Selection)), 0));
 
          for B in Editor.Process.Breakpoints'Range loop
             if Editor.Process.Breakpoints (B).Num = Br_Num then
@@ -909,18 +910,18 @@ package body Breakpoints_Pkg.Callbacks is
 
          case Br.The_Type is
             when Breakpoint =>
-              Set_Text (Editor.Breakpoint_List, Row, 2, -"break");
+               Set_Text (Editor.Breakpoint_List, Row, 2, -"break");
             when Watchpoint =>
-              Set_Text (Editor.Breakpoint_List, Row, 2, -"watch");
+               Set_Text (Editor.Breakpoint_List, Row, 2, -"watch");
          end case;
 
          case Br.Disposition is
             when Delete =>
-              Set_Text (Editor.Breakpoint_List, Row, 3, -"delete");
+               Set_Text (Editor.Breakpoint_List, Row, 3, -"delete");
             when Disable =>
-              Set_Text (Editor.Breakpoint_List, Row, 3, -"disable");
+               Set_Text (Editor.Breakpoint_List, Row, 3, -"disable");
             when Keep =>
-              Set_Text (Editor.Breakpoint_List, Row, 3, -"keep");
+               Set_Text (Editor.Breakpoint_List, Row, 3, -"keep");
          end case;
 
          if Br.Expression /= null then
