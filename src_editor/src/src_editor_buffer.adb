@@ -1580,6 +1580,8 @@ package body Src_Editor_Buffer is
             return False;
          end if;
 
+         --  ??? Check validity of the position before calling this function
+
          Get_Iter_At_Line_Index
            (Buffer, Entity_Start,
             Gint (Buffer_Line - 1) + Slice_Offset_Line,
