@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
---                   GVD - The GNU Visual Debugger                   --
+--                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2000-2003                      --
---                             ACT-Europe                            --
+--                      Copyright (C) 2000-2005                      --
+--                              AdaCore                              --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -51,6 +51,7 @@ with Gtk.Text_View;
 with Gtk.Tree_Store;
 with Gtk.Tree_Model;
 with Gtk.Tree_View;
+with Gtk.Tree_View_Column;
 with Gtk.Widget;
 with Pango.Font;
 with String_List_Utils;
@@ -198,7 +199,16 @@ package GUI_Utils is
    --  Get the iter in the tree view under the cursor corresponding to Event,
    --  if any.
    --  If Event is null, then the current selection is returned.
-   --  ??? The column is also available, but not returned.
+
+   procedure Coordinates_For_Event
+     (Tree   : access Gtk.Tree_View.Gtk_Tree_View_Record'Class;
+      Model  : access Gtk.Tree_Model.Gtk_Tree_Model_Record'Class;
+      Event  : Gdk.Event.Gdk_Event;
+      Iter   : out Gtk.Tree_Model.Gtk_Tree_Iter;
+      Column : out Gtk.Tree_View_Column.Gtk_Tree_View_Column);
+   --  Get the Iter and Column corresponding to the position under the
+   --  cursor corresponding to Event, if any. Otherwise return the current
+   --  selection.
 
    function Find_Node
      (Model   : Gtk.Tree_Store.Gtk_Tree_Store;
