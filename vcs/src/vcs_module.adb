@@ -640,6 +640,18 @@ package body VCS_Module is
          Minimum_Args => 1,
          Maximum_Args => 1,
          Handler      => VCS_Command_Handler'Access);
+
+      Register_Command
+        (Kernel       => Kernel,
+         Command      => "vcs.log",
+         Params       => "(file, [revision])",
+         Description  =>
+           -("Get the revision changelog for file."
+             & " If revision is specified, query the changelog for this "
+             & "specific revision, otherwise query the entire changelog"),
+         Minimum_Args => 1,
+         Maximum_Args => 2,
+         Handler      => VCS_Command_Handler'Access);
    end Register_Module;
 
    --------------------
