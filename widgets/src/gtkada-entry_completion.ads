@@ -19,11 +19,13 @@
 -----------------------------------------------------------------------
 
 with Basic_Types;
-with Gtk.GEntry;
+with Gtk.Box;
+with Gtk.Combo;
+with Gtk.Tree_Store;
 
 package Gtkada.Entry_Completion is
 
-   type Gtkada_Entry_Record is new Gtk.GEntry.Gtk_Entry_Record with private;
+   type Gtkada_Entry_Record is new Gtk.Box.Gtk_Box_Record with private;
    type Gtkada_Entry is access all Gtkada_Entry_Record'Class;
 
    procedure Gtk_New (The_Entry : out Gtkada_Entry);
@@ -31,6 +33,12 @@ package Gtkada.Entry_Completion is
 
    procedure Initialize (The_Entry : access Gtkada_Entry_Record'Class);
    --  Internal procedure
+
+   function Get_Combo (The_Entry : access Gtkada_Entry_Record)
+      return Gtk.Combo.Gtk_Combo;
+   --  Return the combo box used to store the history of previously selected
+   --  values through this completion entry. It is the responsability of the
+   --  user to add new items in this history list.
 
    procedure Set_Completions
      (The_Entry   : access Gtkada_Entry_Record;
@@ -40,12 +48,16 @@ package Gtkada.Entry_Completion is
    --  this widget.
 
 private
-   type Gtkada_Entry_Record is new Gtk.GEntry.Gtk_Entry_Record with record
+   type Gtkada_Entry_Record is new Gtk.Box.Gtk_Box_Record with record
+      Combo            : Gtk.Combo.Gtk_Combo;
       Completions      : Basic_Types.String_Array_Access;
       Last_Position    : Integer;
       Completion_Index : Integer := Integer'First;
       --  The index, in Completions, of the last string inserted. 0 if no
       --  completion has been attempted yet.
+
+      List             : Gtk.Tree_Store.Gtk_Tree_Store;
+      --  The widget that displays the list of possible completions
    end record;
 
 end Gtkada.Entry_Completion;
