@@ -475,13 +475,8 @@ package body Prj.PP is
 
       procedure Write_Char (C : Character) is
       begin
-         --  if C = ASCII.LF then
-            --  Trace (Handle, Buffer (Buffer'First .. Buffer_Index));
-            --  Buffer_Index := Buffer'First - 1;
-         --  elsif Buffer_Index < Buffer'Last then
-            Buffer_Index := Buffer_Index + 1;
-            Buffer (Buffer_Index) := C;
-         --  end if;
+         Buffer_Index := Buffer_Index + 1;
+         Buffer (Buffer_Index) := C;
       end Write_Char;
 
       ---------------
