@@ -29,8 +29,8 @@ package Docgen.Work_On_File is
 
    procedure Process_Files
      (B                : access Docgen.Backend.Backend'Class;
-      Source_File_List : in out Type_Source_File_Table.HTable;
       Kernel           : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Source_File_List : in out Type_Source_File_Table.HTable;
       Options          : Docgen.All_Options);
    --  Process all files from Source_File_List, and generate their
    --  documentation.
