@@ -811,7 +811,9 @@ package body Src_Editor_Buffer.Line_Information is
             end loop;
          end if;
 
-         if BL.all /= null then
+         if BL.all /= null
+           and then Buffer.Line_Data (Current_Line).Side_Info_Data /= null
+         then
             for Col in BL.all'Range loop
                Line_Info :=
                  Buffer.Line_Data
@@ -819,8 +821,8 @@ package body Src_Editor_Buffer.Line_Information is
 
                Draw_Info
                  (Buffer_Line_Starting_X
-                    + Gint (BL.all (Col).Width - Line_Info.Width)
-                    + Gint (BL.all (Col).Starting_X));
+                  + Gint (BL.all (Col).Width - Line_Info.Width)
+                  + Gint (BL.all (Col).Starting_X));
             end loop;
          end if;
 
