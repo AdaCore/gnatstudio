@@ -46,7 +46,6 @@ with Gtk.Menu;                   use Gtk.Menu;
 with Gtk.Menu_Item;              use Gtk.Menu_Item;
 with Gtk.Scrolled_Window;        use Gtk.Scrolled_Window;
 with Gtk.Text_Iter;              use Gtk.Text_Iter;
-with Gtk.Text_Layout;            use Gtk.Text_Layout;
 with Gtk.Widget;                 use Gtk.Widget;
 with GUI_Utils;                  use GUI_Utils;
 
@@ -920,10 +919,6 @@ package body Src_Editor_Box is
       Line    : Positive) is
    begin
       Highlight_Line (Editor.Source_Buffer, To_Buffer_Line (Line));
-      --  Tell the view that something has changed in the layout, to avoid
-      --  waiting for the next cursor blink to see the highlighting appearing.
-      --  ??? Would that be a bug in Gtk+?
-      Default_Style_Changed (Get_Layout (Editor.Source_View));
    end Highlight_Line;
 
    ----------------------
@@ -935,10 +930,6 @@ package body Src_Editor_Box is
       Line    : Positive) is
    begin
       Unhighlight_Line (Editor.Source_Buffer, To_Buffer_Line (Line));
-      --  Tell the view that something has changed in the layout, to avoid
-      --  waiting for the next cursor blink to see the highlighting appearing.
-      --  ??? Would that be a bug in Gtk+?
-      Default_Style_Changed (Get_Layout (Editor.Source_View));
    end Unhighlight_Line;
 
    ---------------------------
@@ -949,10 +940,6 @@ package body Src_Editor_Box is
      (Editor : access Source_Editor_Box_Record) is
    begin
       Cancel_Highlight_Line (Editor.Source_Buffer);
-      --  Tell the view that something has changed in the layout, to avoid
-      --  waiting for the next cursor blink to see the highlighting appearing.
-      --  ??? Would that be a bug in Gtk+?
-      Default_Style_Changed (Get_Layout (Editor.Source_View));
    end Cancel_Highlight_Line;
 
    ----------------------

@@ -38,10 +38,8 @@ with Gdk.Rectangle;               use Gdk.Rectangle;
 with Gtk;                         use Gtk;
 with Gtk.Enums;                   use Gtk.Enums;
 with Gtk.Handlers;                use Gtk.Handlers;
-with Gtk.Text_Attributes;         use Gtk.Text_Attributes;
 with Gtk.Text_Buffer;             use Gtk.Text_Buffer;
 with Gtk.Text_Iter;               use Gtk.Text_Iter;
-with Gtk.Text_Layout;             use Gtk.Text_Layout;
 with Gtk.Text_Mark;               use Gtk.Text_Mark;
 with Gtk.Widget;                  use Gtk.Widget;
 with Src_Editor_Buffer;           use Src_Editor_Buffer;
@@ -451,8 +449,6 @@ package body Src_Editor_View is
      (View : access Source_View_Record;
       Font : Pango.Font.Pango_Font_Description)
    is
-      View_Layout : Text_Layout.Gtk_Text_Layout;
-      View_Style : Text_Attributes.Gtk_Text_Attributes;
    begin
       View.Pango_Font := Font;
       View.Font := Gdk.Font.From_Description (Font);
@@ -463,10 +459,8 @@ package body Src_Editor_View is
          return;
          --  ??? We should probably log a warning...
       end if;
-      View_Layout := Get_Layout (View);
-      View_Style := Text_Layout.Get_Default_Style (View_Layout);
-      Text_Attributes.Set_Font (Text_Attr => View_Style, Font => Font);
-      Text_Layout.Default_Style_Changed (View_Layout);
+
+      Modify_Font (View, Font);
    end Set_Font;
 
    ---------------------------
