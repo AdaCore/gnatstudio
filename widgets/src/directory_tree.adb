@@ -582,42 +582,42 @@ package body Directory_Tree is
    is
       Iter : Gtk_Tree_Iter;
    begin
-      Iter := Get_First_Selected (Directory_Selector (Selector));
+      loop
+         Iter := Get_First_Selected (Directory_Selector (Selector));
 
-      if Iter = Null_Iter then
-         return;
-      end if;
+         exit when Iter = Null_Iter;
 
-      if Recursive then
-         declare
-            Dir : constant String := Get_String
-              (Selector.List_Model, Iter, Absolute_Name_Column);
-         begin
-            Iter := Get_Iter_First (Selector.List_Model);
+         if Recursive then
+            declare
+               Dir : constant String := Get_String
+                 (Selector.List_Model, Iter, Absolute_Name_Column);
+            begin
+               Iter := Get_Iter_First (Selector.List_Model);
 
-            while Iter /= Null_Iter loop
-               declare
-                  Iter_String : constant String := Get_String
-                    (Selector.List_Model, Iter, Absolute_Name_Column);
-                  Delete_Iter : Gtk_Tree_Iter;
-               begin
-                  if Iter_String'Length >= Dir'Length and then
-                    Iter_String
-                      (Iter_String'First
-                           .. Iter_String'First -  1 + Dir'Length) = Dir
-                  then
-                     Delete_Iter := Iter;
-                     Next (Selector.List_Model, Iter);
-                     Remove (Selector.List_Model, Delete_Iter);
-                  else
-                     Next (Selector.List_Model, Iter);
-                  end if;
-               end;
-            end loop;
-         end;
-      else
-         Remove (Selector.List_Model, Iter);
-      end if;
+               while Iter /= Null_Iter loop
+                  declare
+                     Iter_String : constant String := Get_String
+                       (Selector.List_Model, Iter, Absolute_Name_Column);
+                     Delete_Iter : Gtk_Tree_Iter;
+                  begin
+                     if Iter_String'Length >= Dir'Length and then
+                       Iter_String
+                         (Iter_String'First
+                          .. Iter_String'First -  1 + Dir'Length) = Dir
+                     then
+                        Delete_Iter := Iter;
+                        Next (Selector.List_Model, Iter);
+                        Remove (Selector.List_Model, Delete_Iter);
+                     else
+                        Next (Selector.List_Model, Iter);
+                     end if;
+                  end;
+               end loop;
+            end;
+         else
+            Remove (Selector.List_Model, Iter);
+         end if;
+      end loop;
    end Remove_Directory;
 
    -------------------------
@@ -731,27 +731,46 @@ package body Directory_Tree is
      (Selector : Directory_Selector;
       Event    : Gdk.Event.Gdk_Event) return Gtk_Menu
    is
-      pragma Unreferenced (Event);
       use type Gint_List.Glist;
 
       Item        : Gtk_Menu_Item;
+      Is_Valid    : Boolean := False;
       Menu        : Gtk_Menu;
-   begin
-      Gtk_New (Menu);
-      Gtk_New (Item, -"Remove directory recursive");
-      Widget_Callback.Object_Connect
-        (Item, "activate",
-         Widget_Callback.To_Marshaller (Remove_Directory_Cb'Access),
-         Selector);
-      Append (Menu, Item);
 
-      Gtk_New (Item, -"Remove directory");
-      Widget_Callback.Object_Connect
-        (Item, "activate",
-         Widget_Callback.To_Marshaller
-         (Remove_Single_Directory_Cb'Access),
-         Selector);
-      Append (Menu, Item);
+      Path           : Gtk_Tree_Path;
+      Column         : Gtk_Tree_View_Column;
+      Cell_X, Cell_Y : Gint;
+   begin
+      if Get_Event_Type (Event) in Button_Press .. Button_Release then
+         Get_Path_At_Pos
+           (Selector.List_Tree,
+            Gint (Get_X (Event)), Gint (Get_Y (Event)),
+            Path, Column, Cell_X, Cell_Y, Is_Valid);
+      end if;
+
+      if Is_Valid then
+         if not Path_Is_Selected
+           (Get_Selection (Selector.List_Tree), Path)
+         then
+            Set_Cursor (Selector.List_Tree, Path, null, False);
+         end if;
+
+         Gtk_New (Menu);
+         Gtk_New (Item, -"Remove directory recursive");
+         Widget_Callback.Object_Connect
+           (Item, "activate",
+            Widget_Callback.To_Marshaller (Remove_Directory_Cb'Access),
+            Selector);
+         Append (Menu, Item);
+
+         Gtk_New (Item, -"Remove directory");
+         Widget_Callback.Object_Connect
+           (Item, "activate",
+            Widget_Callback.To_Marshaller
+              (Remove_Single_Directory_Cb'Access),
+            Selector);
+         Append (Menu, Item);
+      end if;
 
       return Menu;
    end List_Contextual_Menu;
