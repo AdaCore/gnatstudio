@@ -235,13 +235,26 @@ begin
       end if;
    else -- overloaded entity
       --  have we already declared it?
+      declare
+         Class_Def : CL_Table;
       begin
+         Class_Def := Find (SN_Table (CL), Ref_Class);
+         --  ??? what to do when several classes with one name are available
+         --  what about unions?
+
          Decl_Info := Find_Declaration
            (File        => Global_LI_File,
             Symbol_Name => Ref_Id,
             Class_Name  => Ref_Class,
-            Kind        => Overloaded_Entity);
+            Kind        => Overloaded_Entity,
+            Location    => Class_Def.Start_Position);
+         Free (Class_Def);
       exception
+         when DB_Error | Not_Found =>
+            Fail ("Failed to lookup class " & Ref_Class
+               & " for method " & Ref_Id);
+            Free (MDecl);
+            return;
          when Declaration_Not_Found =>
             Decl_Info := new E_Declaration_Info_Node'
               (Value =>
@@ -250,7 +263,17 @@ begin
                Next => Global_LI_File.LI.Body_Info.Declarations);
             Decl_Info.Value.Declaration.Name := new String'(Ref_Id);
             Decl_Info.Value.Declaration.Kind := Overloaded_Entity;
+            Decl_Info.Value.Declaration.Location.Line :=
+               Class_Def.Start_Position.Line;
+            Decl_Info.Value.Declaration.Location.File :=
+               (LI              => Global_LI_File,
+                Part            => Unit_Body,
+                Source_Filename =>
+                   new String'(Get_LI_Filename (Global_LI_File)));
+            Decl_Info.Value.Declaration.Location.Column :=
+               Class_Def.Start_Position.Column;
             Global_LI_File.LI.Body_Info.Declarations := Decl_Info;
+            Free (Class_Def);
       end;
    end if;
    Free (MDecl);

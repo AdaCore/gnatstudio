@@ -8,128 +8,126 @@ separate (Src_Info.CPP)
 procedure Fu_To_Fu_Handler (Ref : TO_Table) is
    P              : Pair_Ptr;
    Fn             : FU_Table;
+   Fn_Tmp         : FU_Table;
    Decl_Info      : E_Declaration_Info_List;
    Overloaded     : Boolean := False;
-   Init           : Boolean := True;
+   Forward_Declared : Boolean := False;
    No_Body        : Boolean := True;
    Kind           : E_Kind;
    FDecl          : FD_Table;
    FDecl_Tmp      : FD_Table;
    Ref_Id         : constant String := Ref.Buffer
      (Ref.Referred_Symbol_Name.First .. Ref.Referred_Symbol_Name.Last);
-   Filename_Buf   : SN.String_Access;
+   Buffer   : SN.String_Access;
    Filename       : Segment;
+   Return_Type    : Segment;
    Start_Position : Point;
-
-   function Find_Function (Fn : FU_Table; FD_Tab : FD_Table)
-      return E_Declaration_Info_List;
-   --  searches for forward declaration. if no fwd decl found, searches for
-   --  implementation. If nothing found throws Declaration_Not_Found
-
-   function Find_Function (Fn : FU_Table; FD_Tab : FD_Table)
-      return E_Declaration_Info_List is
-      Decl_Info    : E_Declaration_Info_List;
-   begin
-      Decl_Info := Find_First_Forward_Declaration
-        (FD_Tab.Buffer,
-         FD_Tab.Name,
-         FD_Tab.File_Name,
-         FD_Tab.Return_Type,
-         FD_Tab.Arg_Types);
-      if Decl_Info = null then
-         raise Declaration_Not_Found;
-      end if;
-      return Decl_Info;
-   exception
-      when Declaration_Not_Found =>
-         return Find_Declaration
-           (File        => Global_LI_File,
-            Symbol_Name => Fn.Buffer (Fn.Name.First .. Fn.Name.Last),
-            Location    => Fn.Start_Position);
-   end Find_Function;
-
 begin
 
    Info ("Fu_To_Fu_Handler: " & Ref_Id);
 
-   Set_Cursor
-     (SN_Table (FD),
-      By_Key,
-      Ref_Id,
-      False);
+   if Is_Open (SN_Table (FD)) then
+      Set_Cursor (SN_Table (FD), By_Key, Ref_Id, False);
 
-   loop
-      P := Get_Pair (SN_Table (FD), Next_By_Key);
-      exit when P = null;
-      FDecl_Tmp := Parse_Pair (P.all);
-      Free (P);
-      if Init then
-         FDecl := FDecl_Tmp;
-         Init  := False;
-      else
-         Overloaded := not Cmp_Arg_Types -- skip multiple fwd decls
-            (FDecl.Buffer,
-             FDecl_Tmp.Buffer,
-             FDecl.Arg_Types,
-             FDecl_Tmp.Arg_Types);
-         Free (FDecl_Tmp);
-         exit when Overloaded;
-      end if;
-   end loop;
-
-   if Init then -- referred function not found
-      Fail ("declaration for referred function " & Ref_Id & " not found");
-      return;
+      loop
+         P := Get_Pair (SN_Table (FD), Next_By_Key);
+         exit when P = null;
+         FDecl_Tmp := Parse_Pair (P.all);
+         Free (P);
+         if not Forward_Declared then
+            FDecl := FDecl_Tmp;
+            Forward_Declared := True;
+         else
+            Overloaded := not Cmp_Arg_Types -- skip multiple fwd decls
+               (FDecl.Buffer,
+                FDecl_Tmp.Buffer,
+                FDecl.Arg_Types,
+                FDecl_Tmp.Arg_Types);
+            Free (FDecl_Tmp);
+            exit when Overloaded;
+         end if;
+      end loop;
    end if;
 
    if not Overloaded then
-      Set_Cursor
-        (SN_Table (FU),
-         By_Key,
-         Ref_Id,
-         False);
+      --  Forward declarations may be overloaded by inline implementations
+      --  this is what we check here. If no forward declaration was found
+      --  above we search for a suitable function body
+      Set_Cursor (SN_Table (FU), By_Key, Ref_Id, False);
 
       loop
          P := Get_Pair (SN_Table (FU), Next_By_Key);
          exit when P = null;
-         Fn := Parse_Pair (P.all);
+         Fn_Tmp := Parse_Pair (P.all);
          Free (P);
-         No_Body := False;
-         exit when Cmp_Arg_Types
-            (FDecl.Buffer,
-             Fn.Buffer,
-             FDecl.Arg_Types,
-             Fn.Arg_Types);
-         Free (FDecl);
-         No_Body := True;
+         if not Forward_Declared and No_Body then
+            --  No forward decls, but we found the first function
+            --  with the same name
+            Fn      := Fn_Tmp;
+            No_Body := False;
+         elsif not Forward_Declared and not No_Body then
+            --  No forward decls and we found one more function body
+            --  with the same name
+            Overloaded := True;
+            Free (Fn_Tmp);
+         elsif Forward_Declared and No_Body then
+            --  We have found some forward declaration, but no body
+            --  is yet found. Do we have overloading here?
+            Overloaded := not Cmp_Arg_Types
+               (Fn_Tmp.Buffer,
+                FDecl.Buffer,
+                Fn_Tmp.Arg_Types,
+                FDecl.Arg_Types);
+            if not Overloaded then -- we found the body!
+               No_Body := False;
+               Fn      := Fn_Tmp;
+            else
+               Free (Fn_Tmp); -- it's not our body, but it's overloading
+            end if;
+         else -- Forward_Declared and not No_Body
+            --  We have found forward declaration and corresponding body
+            --  all other bodies should be overloading functions
+            Overloaded := True;
+            Free (Fn_Tmp);
+         end if;
+         exit when Overloaded;
       end loop;
+   end if;
 
+   if not Forward_Declared and No_Body then
+      Fail ("Can't find either forward declaration or body for " & Ref_Id);
+      return;
+   end if;
+
+   if not Overloaded then
+      pragma Assert (Forward_Declared or not No_Body, "Hey, what's up?");
       if No_Body then
-         Filename_Buf   := FDecl.Buffer;
+         Buffer   := FDecl.Buffer;
          Filename       := FDecl.File_Name;
          Start_Position := FDecl.Start_Position;
+         Return_Type    := FDecl.Return_Type;
       else
-         Filename_Buf   := Fn.Buffer;
+         Buffer   := Fn.Buffer;
          Filename       := Fn.File_Name;
          Start_Position := Fn.Start_Position;
+         Return_Type    := Fn.Return_Type;
       end if;
 
-      --  If procedure
-      --    defined in the current file => add reference
-      --    defined in another file => add dep decl and reference it
-      if FDecl.Buffer (FDecl.Return_Type.First .. FDecl.Return_Type.Last)
-            = "void" then
+      if Buffer (Return_Type.First .. Return_Type.Last) = "void" then
          Kind := Non_Generic_Function_Or_Operator;
       else
          Kind := Non_Generic_Procedure;
       end if;
-      if Filename_Buf (Filename.First .. Filename.Last)
+      --  If procedure
+      --    defined in the current file => add reference
+      --    defined in another file => add dep decl and reference it
+      if Buffer (Filename.First .. Filename.Last)
             = Get_LI_Filename (Global_LI_File) then
          begin
             --  this is a function defined in the current file
             --  it may be either forward declared or implemented
             --  right away
-            if No_Body then
+            if Forward_Declared then
                Decl_Info := Find_First_Forward_Declaration
                  (FDecl.Buffer,
                   FDecl.Name,
@@ -139,8 +137,11 @@ begin
                if Decl_Info = null then
                   raise Declaration_Not_Found;
                end if;
-            else
-               Decl_Info := Find_Function (Fn, FDecl);
+            else -- when only body is available
+               Decl_Info := Find_Declaration
+                 (File        => Global_LI_File,
+                  Symbol_Name => Fn.Buffer (Fn.Name.First .. Fn.Name.Last),
+                  Location    => Fn.Start_Position);
             end if;
          exception
             when Declaration_Not_Found =>
@@ -164,7 +165,7 @@ begin
             Decl_Info := Find_Dependency_Declaration
               (File                 => Global_LI_File,
                Symbol_Name          => Ref_Id,
-               Filename             => Filename_Buf
+               Filename             => Buffer
                  (Filename.First .. Filename.Last),
                Location             => Start_Position);
          exception
@@ -179,14 +180,10 @@ begin
                   Location           => Start_Position,
                   Kind               => Kind,
                   Scope              => Global_Scope,
-                  Referred_Filename  => Filename_Buf
+                  Referred_Filename  => Buffer
                     (Filename.First .. Filename.Last),
                   Declaration_Info   => Decl_Info);
          end;
-      end if;
-
-      if not No_Body then
-         Free (Fn);
       end if;
    else -- overloaded entity
       --  have we already declared it?
@@ -207,7 +204,14 @@ begin
             Global_LI_File.LI.Body_Info.Declarations := Decl_Info;
       end;
    end if;
-   Free (FDecl);
+
+   if Forward_Declared then
+      Free (FDecl);
+   end if;
+
+   if not No_Body then
+      Free (Fn);
+   end if;
 
    Insert_Reference
      (Decl_Info,
