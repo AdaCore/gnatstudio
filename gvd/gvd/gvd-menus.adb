@@ -235,12 +235,13 @@ package body Odd.Menus is
       pragma Warnings (Off, Widget);
       S : constant String :=
         Simple_Entry_Dialog
-        (Parent  => Get_Debugger (Item.Item).Window,
-         Title   => "Setting value of " & Item.Component_Name,
-         Message => "Setting value of " & Item.Component_Name & ':',
-         Key     => "odd_set_value_dialog");
+        (Parent   => Get_Debugger (Item.Item).Window,
+         Title    => "Setting value of " & Item.Component_Name,
+         Message  => "Setting value of " & Item.Component_Name & ':',
+         Position => Win_Pos_Mouse,
+         Key      => "odd_set_value_dialog");
    begin
-      if S /= "" then
+      if S /= "" and then S (S'First) /= ASCII.Nul then
          Set_Variable
            (Get_Debugger (Item.Item).Debugger, Item.Component_Name, S);
          Update_Variable (Widget, Item);
