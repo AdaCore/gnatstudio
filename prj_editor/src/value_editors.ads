@@ -71,11 +71,12 @@ package Value_Editors is
    --  If Allow is False, references to other variables are not authorized,
    --  and will be highlighted as such.
 
-   type Validity is (Unterminated_Ref,  --  '${' unterminated
-                     Unexpected_Ref,    --  references not authorized
-                     Type_Mismatch,
-                     --  Variable and editor don't have the same time
-                     Valid);
+   type Validity is
+     (Unterminated_Ref,  --  '${' unterminated
+      Unexpected_Ref,    --  references not authorized
+      Type_Mismatch,     --  Variable and editor don't have the same typ
+      Valid);
+
    function Check_Validity
      (Editor : access Value_Editor_Record) return Validity;
    --  Return True if the value in Editor is valid:
@@ -84,7 +85,7 @@ package Value_Editors is
    --  this editor.
 
    function Get_Value
-     (Editor : access Value_Editor_Record;
+     (Editor  : access Value_Editor_Record;
       Project : Prj.Tree.Project_Node_Id) return Prj.Tree.Project_Node_Id;
    --  Return the N_Expression node representing the contents of the editor.
    --  It is assumed that Check_Validity has been called before.
