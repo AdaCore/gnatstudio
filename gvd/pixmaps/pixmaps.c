@@ -1,5 +1,6 @@
 #include "arrow_xpm"
 #include "box_xpm"
+#include "break_xpm"
 #include "breakat_xpm"
 #include "cancel_xpm"
 #include "cont_xpm"
