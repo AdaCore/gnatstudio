@@ -72,7 +72,7 @@ package body Debugger.Gdb is
    --  Pattern used to detect language changes in the debugger.
 
    Frame_Pattern : constant Pattern_Matcher := Compile
-     ("^#(\d+) +((0x[0-9a-f]+) in )?(.+) at (.+)$", Multiple_Lines);
+     ("^#(\d+) +((0x[0-9a-f]+) in )?(.+?)( at (.+))?$", Multiple_Lines);
 
    procedure Language_Filter
      (Descriptor : GNAT.Expect.Process_Descriptor;
@@ -408,33 +408,6 @@ package body Debugger.Gdb is
       Set_Internal_Command (Get_Process (Debugger), False);
    end Initialize;
 
-   ----------
-   -- Send --
-   ----------
-
-   procedure Send
-     (Debugger         : access Gdb_Debugger;
-      Cmd              : String;
-      Display          : Boolean := False;
-      Empty_Buffer     : Boolean := False;
-      Wait_For_Prompt  : Boolean := True) is
-   begin
-      if Display then
-         Text_Output_Handler
-           (Convert (Debugger.Window, Debugger),
-            Cmd & ASCII.LF, True);
-         Append (Convert (Debugger.Window, Debugger).Command_History, Cmd);
-      end if;
-
-      Send (Get_Process (Debugger), Cmd, Empty_Buffer);
-
-      if Wait_For_Prompt then
-         Wait_Prompt (Debugger);
-      end if;
-
-      --  Postprocessing (e.g handling of auto-update).
-   end Send;
-
    -----------
    -- Close --
    -----------
@@ -500,7 +473,7 @@ package body Debugger.Gdb is
      (Debugger : access Gdb_Debugger;
       Display  : Boolean := False) is
    begin
-      Send (Debugger, "run", Wait_For_Prompt => False, Display => Display);
+      Send (Debugger, "run", Display => Display);
    end Run;
 
    -----------
@@ -572,6 +545,24 @@ package body Debugger.Gdb is
       Interrupt (Get_Descriptor (Get_Process (Debugger)).all);
    end Interrupt;
 
+   --------------------------
+   -- Is_Execution_Command --
+   --------------------------
+
+   function Is_Execution_Command
+     (Debugger : access Gdb_Debugger;
+      Command  : String) return Boolean is
+   begin
+      return    Command = "step"
+        or else Command = "stepi"
+        or else Command = "next"
+        or else Command = "nexti"
+        or else Command = "cont"
+        or else Command = "finish"
+        or else Command = "begin"
+        or else Command = "run";
+   end Is_Execution_Command;
+
    ----------------
    -- Stack_Down --
    ----------------
@@ -620,7 +611,7 @@ package body Debugger.Gdb is
 
       declare
          S       : String := Expect_Out (Get_Process (Debugger));
-         Matched : Match_Array (0 .. 5);
+         Matched : Match_Array (0 .. 6);
          First   : Positive := S'First;
       begin
          Len := 0;
@@ -644,8 +635,14 @@ package body Debugger.Gdb is
 
             Value (Len).Subprogram :=
               new String' (S (Matched (4).First .. Matched (4).Last));
-            Value (Len).Source_Location :=
-              new String' (S (Matched (5).First .. Matched (5).Last));
+
+            if Matched (5) = No_Match then
+               Value (Len).Source_Location := new String' ("");
+            else
+               Value (Len).Source_Location :=
+                 new String' (S (Matched (6).First .. Matched (6).Last));
+            end if;
+
             First := Matched (0).Last;
          end loop;
       end;

@@ -45,13 +45,6 @@ package Debugger.Gdb is
 
    procedure Close (Debugger : access Gdb_Debugger);
 
-   procedure Send
-     (Debugger        : access Gdb_Debugger;
-      Cmd             : String;
-      Display         : Boolean := False;
-      Empty_Buffer    : Boolean := False;
-      Wait_For_Prompt : Boolean := True);
-
    procedure Wait_Prompt (Debugger : access Gdb_Debugger);
 
    function Highlighting_Pattern
@@ -105,6 +98,10 @@ package Debugger.Gdb is
       Display  : Boolean := False);
 
    procedure Interrupt (Debugger : access Gdb_Debugger);
+
+   function Is_Execution_Command
+     (Debugger : access Gdb_Debugger;
+      Command : String) return Boolean;
 
    procedure Stack_Down
      (Debugger : access Gdb_Debugger;

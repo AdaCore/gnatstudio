@@ -38,14 +38,11 @@ package body Debugger.Jdb is
    ---------------
 
    Prompt_Regexp : constant Pattern_Matcher :=
-     Compile ("^> ", Multiple_Lines);
+     Compile ("^(>|\w*\[\d+\]) ", Multiple_Lines);
    --  Regular expressions used to recognize the prompt.
 
-   Prompt_Length : constant := 2;
-   --  Length of the prompt ("> ").
-
    Highlight_Pattern : constant GNAT.Regpat.Pattern_Matcher :=
-     GNAT.Regpat.Compile ("^> ");
+     GNAT.Regpat.Compile ("^(>|\w*\[\d+\]) ");
    --  Match everything that should be highlighted in the debugger window.
 
    Jdb_Command : constant String := "jdb";
@@ -68,7 +65,9 @@ package body Debugger.Jdb is
    function Value_Of
      (Debugger : access Jdb_Debugger;
       Entity   : String;
-      Format   : Value_Format := Decimal) return String is
+      Format   : Value_Format := Decimal) return String
+   is
+      Matches : Match_Array (0 .. 0);
    begin
       Send (Debugger, "print " & Entity, Empty_Buffer => True);
 
@@ -86,7 +85,8 @@ package body Debugger.Jdb is
 
          Index := Index + 1;
 
-         return S (Index + 1 .. S'Last - Prompt_Length);
+         Match (Prompt_Regexp, S, Matches);
+         return S (Index + 1 .. Matches (0).First - 1);
       end;
    end Value_Of;
 
@@ -108,7 +108,8 @@ package body Debugger.Jdb is
       Debugger.Window := Window;
 
       if Debugger_Name = "" then
-         General_Spawn (Debugger, Arguments, Jdb_Command, Proxy, Remote_Host);
+         General_Spawn
+           (Debugger, Arguments, Jdb_Command, Proxy, Remote_Host);
       else
          General_Spawn
            (Debugger, Arguments, Debugger_Name, Proxy, Remote_Host);
@@ -149,30 +150,6 @@ package body Debugger.Jdb is
       Set_Debugger (Language_Debugger_Access (Language), Debugger.all'Access);
       Set_Internal_Command (Get_Process (Debugger), False);
    end Initialize;
-
-   ----------
-   -- Send --
-   ----------
-
-   procedure Send
-     (Debugger        : access Jdb_Debugger;
-      Cmd             : String;
-      Display         : Boolean := False;
-      Empty_Buffer    : Boolean := False;
-      Wait_For_Prompt : Boolean := True) is
-   begin
-      if Display then
-         Text_Output_Handler
-           (Convert (Debugger.Window, Debugger), Cmd & ASCII.LF, True);
-         Append (Convert (Debugger.Window, Debugger).Command_History, Cmd);
-      end if;
-
-      Send (Get_Process (Debugger), Cmd, Empty_Buffer);
-
-      if Wait_For_Prompt then
-         Wait_Prompt (Debugger);
-      end if;
-   end Send;
 
    -----------
    -- Close --
@@ -276,8 +253,22 @@ package body Debugger.Jdb is
 
    procedure Interrupt (Debugger : access Jdb_Debugger) is
    begin
-      Interrupt (Get_Descriptor (Get_Process (Debugger)).all);
+      Send (Debugger, "suspend");
    end Interrupt;
+
+   --------------------------
+   -- Is_Execution_Command --
+   --------------------------
+
+   function Is_Execution_Command
+     (Debugger : access Jdb_Debugger;
+      Command : String) return Boolean is
+   begin
+      return    Command = "step"
+        or else Command = "step up"
+        or else Command = "stepi"
+        or else Command = "next";
+   end Is_Execution_Command;
 
    ----------------
    -- Stack_Down --
@@ -408,10 +399,12 @@ package body Debugger.Jdb is
       Send (Debugger, Thread_List (Get_Language (Debugger)), True);
 
       declare
-         S : String := Expect_Out (Get_Process (Debugger));
+         S       : String := Expect_Out (Get_Process (Debugger));
+         Matches : Match_Array (0 .. 0);
       begin
+         Match (Prompt_Regexp, S, Matches);
          return Parse_Thread_List
-           (Get_Language (Debugger), S (S'First .. S'Last - Prompt_Length));
+           (Get_Language (Debugger), S (S'First .. Matches (0).First - 1));
       end;
    end Info_Threads;
 

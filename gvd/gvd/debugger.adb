@@ -25,8 +25,11 @@ with Process_Proxies;   use Process_Proxies;
 with Language;          use Language;
 with Language.Debugger; use Language.Debugger;
 with Odd.Types;         use Odd.Types;
+with Odd.Process;       use Odd.Process;
 
 package body Debugger is
+
+   use String_History;
 
    Remote_Protocol : constant String := "rsh";
    --  How to run a process on a remote machine ?
@@ -216,5 +219,36 @@ package body Debugger is
    begin
       Send (Debugger, Thread_Switch (Get_Language (Debugger), Thread));
    end Thread_Switch;
+
+   ----------
+   -- Send --
+   ----------
+
+   procedure Send
+     (Debugger         : access Debugger_Root'Class;
+      Cmd              : String;
+      Display          : Boolean := False;
+      Empty_Buffer     : Boolean := False;
+      Wait_For_Prompt  : Boolean := True) is
+   begin
+      if Display then
+         Text_Output_Handler
+           (Convert (Debugger.Window, Debugger),
+            Cmd & ASCII.LF, True);
+         Append (Convert (Debugger.Window, Debugger).Command_History, Cmd);
+      end if;
+
+      Send (Get_Process (Debugger), Cmd, Empty_Buffer);
+
+      if Wait_For_Prompt then
+         Wait_Prompt (Debugger);
+
+         --  Postprocessing (e.g handling of auto-update).
+
+         if Is_Execution_Command (Debugger, Cmd) then
+            Process_Stopped (Convert (Debugger.Window, Debugger));
+         end if;
+      end if;
+   end Send;
 
 end Debugger;

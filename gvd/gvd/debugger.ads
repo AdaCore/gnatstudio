@@ -101,16 +101,16 @@ package Debugger is
    --  Spawn must have been called first.
 
    procedure Send
-     (Debugger        : access Debugger_Root;
+     (Debugger        : access Debugger_Root'Class;
       Cmd             : String;
       Display         : Boolean := False;
       Empty_Buffer    : Boolean := False;
-      Wait_For_Prompt : Boolean := True) is abstract;
+      Wait_For_Prompt : Boolean := True);
    --  Send a command to the underlying process associated with Debugger.
-   --  If Display is True,
+   --  If Display is True, display the command in the debugger window.
    --  If Empty_Buffer is True, any input waiting from the process (or in the
    --  buffer) is first discarded before the command is sent.
-
+   --  Call Wait_Prompt before exiting if Wait_For_Prompt is True.
 
    function Highlighting_Pattern
      (Debugger : access Debugger_Root)
@@ -275,6 +275,12 @@ package Debugger is
 
    procedure Interrupt (Debugger : access Debugger_Root) is abstract;
    --  Interrupt the debugger, or the debuggee if it is running.
+
+   function Is_Execution_Command
+     (Debugger : access Debugger_Root;
+      Command : String) return Boolean is abstract;
+   --  Return True if Command is an execution command for the specified
+   --  debugger (e.g step, next, ... for gdb).
 
    ----------------------
    -- Stack Management --
