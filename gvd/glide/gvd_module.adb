@@ -510,7 +510,8 @@ package body GVD_Module is
          S : constant String :=
            Select_File
              (Title             => -"Select Module",
-              Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs));
+              Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs),
+              History           => Get_History (Kernel));
       begin
          if S = "" then
             return;
@@ -712,7 +713,8 @@ package body GVD_Module is
              (Title             => -"Select File to Debug",
               File_Pattern      => "*" & Exec_Suffix,
               Pattern_Name      => -"Executable files",
-              Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs));
+              Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs),
+              History           => Get_History (Kernel));
       begin
          if S = "" then
             return;
@@ -768,7 +770,8 @@ package body GVD_Module is
              (Title             => -"Select Core File",
               File_Pattern      => "core*",
               Pattern_Name      => -"Core files",
-              Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs));
+              Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs),
+              History           => Get_History (Kernel));
 
       begin
          if S = "" then
@@ -1098,6 +1101,7 @@ package body GVD_Module is
                  Get_Attribute_Value
                    (Project_View, Protocol_Attribute, Ide_Package),
                Debugger_Name   => Args (1).all,
+               History         => Get_History (K),
                Success => Success);
             GNAT.OS_Lib.Free (Args);
             Free (Module);

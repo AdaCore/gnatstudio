@@ -99,7 +99,8 @@ package body Glide_Menu is
              (-"Open Project",
               File_Pattern      => "*.gpr",
               Pattern_Name      => -"Project files",
-              Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs));
+              Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs),
+              History           => Get_History (Kernel));
       begin
          if Filename /= "" then
             Change_Dir (Dir_Name (Filename));
@@ -124,8 +125,9 @@ package body Glide_Menu is
    is
       pragma Unreferenced (Action, Widget);
 
-      Dir    : constant String := Select_Directory (-"Select a directory");
       Kernel : constant Kernel_Handle := Glide_Window (Object).Kernel;
+      Dir    : constant String := Select_Directory
+        (-"Select a directory", History => Get_History (Kernel));
 
    begin
       if Dir /= "" then
