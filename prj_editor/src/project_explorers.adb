@@ -306,6 +306,10 @@ package body Project_Explorers is
    --  automatically adding the children of the current node if they are not
    --  there already.
 
+   procedure Collapse_Tree_Cb
+     (Explorer : access Gtk.Widget.Gtk_Widget_Record'Class; Args : Gtk_Args);
+   --  Called every time a node is collapsed.
+
    procedure Tree_Select_Row_Cb
      (Explorer : access Gtk.Widget.Gtk_Widget_Record'Class; Args : Gtk_Args);
    --  Called every time a node is expanded. It is responsible for
@@ -677,6 +681,8 @@ package body Project_Explorers is
 
       Explorer.Expand_Id := Widget_Callback.Object_Connect
         (Explorer.Tree, "tree_expand", Expand_Tree_Cb'Access, Explorer);
+      Widget_Callback.Object_Connect
+        (Explorer.Tree, "tree_collapse", Collapse_Tree_Cb'Access, Explorer);
       Widget_Callback.Object_Connect
         (Explorer.Tree, "tree_select_row",
          Tree_Select_Row_Cb'Access, Explorer);
@@ -1489,6 +1495,10 @@ package body Project_Explorers is
      (Explorer : access Project_Explorer_Record'Class;
       Node     : Gtk_Ctree_Node)
    is
+      type Boolean_Categories is array (Language_Category) of Boolean;
+      Expansion : Boolean_Categories;
+      N, File   : Gtk_Ctree_Node;
+
       Data : User_Data := Node_Get_Row_Data (Explorer.Tree, Node);
    begin
       --  If the node is not already up-to-date
@@ -1517,10 +1527,47 @@ package body Project_Explorers is
             when File_Node =>
                Expand_File_Node (Explorer, Node);
 
-            when Category_Node | Entity_Node =>
-               --  Work was already done when the file node was open
-               null;
+            when Category_Node =>
+               --  If this is not up-to-date, we need to recompute at the
+               --  file_node level, but keep the other category nodes in their
+               --  expanded state.
 
+               --  Memorize the current expansion state for the categories
+
+               Expansion := (others => False);
+
+               File := Row_Get_Parent (Node_Get_Row (Node));
+
+               N := Row_Get_Children (Node_Get_Row (File));
+               while N /= null loop
+                  Expansion (Node_Get_Row_Data (Explorer.Tree, N).Category) :=
+                    Row_Get_Expanded (Node_Get_Row (N));
+                  N := Row_Get_Sibling (Node_Get_Row (N));
+               end loop;
+
+               --  Recompute the file node (closing and expanding it again will
+               --  generate the appropriate callbacks, and this is taken care
+               --  of automatically)
+
+               Gtk.Ctree.Collapse (Explorer.Tree, File);
+               Gtk.Ctree.Expand   (Explorer.Tree, File);
+
+
+               --  Restore the state of the categories
+
+               N := Row_Get_Children (Node_Get_Row (File));
+               while N /= null loop
+                  if Expansion
+                    (Node_Get_Row_Data (Explorer.Tree, N).Category)
+                  then
+                     Gtk.Ctree.Expand (Explorer.Tree, N);
+                  end if;
+                  N := Row_Get_Sibling (Node_Get_Row (N));
+               end loop;
+
+            when Entity_Node =>
+               --   These are leaf nodes, so don't have children
+               null;
          end case;
 
          Sort_Recursive (Explorer.Tree, Node);
@@ -1548,6 +1595,45 @@ package body Project_Explorers is
       when E : others =>
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end Expand_Tree_Cb;
+
+   ----------------------
+   -- Collapse_Tree_Cb --
+   ----------------------
+
+   procedure Collapse_Tree_Cb
+     (Explorer : access Gtk.Widget.Gtk_Widget_Record'Class; Args : Gtk_Args)
+   is
+      E : constant Project_Explorer := Project_Explorer (Explorer);
+      Node     : constant Gtk_Ctree_Node :=
+        Gtk_Ctree_Node (To_C_Proxy (Args, 1));
+      User     : User_Data := Node_Get_Row_Data (E.Tree, Node);
+      N, N2    : Gtk_Ctree_Node;
+   begin
+      --  We need to reset the contents of files (Entities,...), so that the
+      --  next time the node it is open, the entities are recomputed.
+      --  No need to do so for the contents of projects or directoris, since
+      --  changed only happen when the project is changed, and the
+      --  "project_view_changed" signal will already trigger a refresh
+
+      if User.Node_Type = File_Node
+        or else User.Node_Type = Category_Node
+      then
+         N := Row_Get_Children (Node_Get_Row (Node));
+
+         while N /= null loop
+            N2 := Row_Get_Sibling (Node_Get_Row (N));
+
+            --  Leave at least one node so that the small [+] is left
+            exit when N2 = null;
+
+            Remove_Node (E.Tree, N);
+            N := N2;
+         end loop;
+
+         User.Up_To_Date := False;
+         Node_Set_Row_Data (E.Tree, Node, User);
+      end if;
+   end Collapse_Tree_Cb;
 
    ------------------------
    -- Get_File_From_Node --
