@@ -9,7 +9,7 @@ prefix          = @prefix@
 bindir          = $(prefix)/bin
 
 CFLAGS = -g -O2
-ALL_CFLAGS = $(CFLAGS) -gnatwuwe @GTK_CFLAGS@ @TARGET_CFLAGS@ -I../gnat
+ALL_CFLAGS = $(CFLAGS) -gnata -gnatwuwe @GTK_CFLAGS@ @TARGET_CFLAGS@ -I../gnat
 LINK_FLAGS = ../gnat/gexpect.o ../gnat/gexpect_tty.o ../pixmaps/pixmaps.o @TARGET_LFLAGS@ @GTK_LIBS@
 
 MAIN = gvd_main
