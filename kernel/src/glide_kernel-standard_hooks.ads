@@ -66,6 +66,19 @@ package Glide_Kernel.Standard_Hooks is
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
    --  Register all hooks defined in this package
 
+   -----------------
+   -- Exiting GPS --
+   -----------------
+
+   type Exit_Before_Action_Hooks_Args is new Hooks_Data with null record;
+
+   Before_Exit_Action_Hook : constant String := "before_exit_action_hook";
+
+   procedure Exit_GPS
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
+   --  Run the hook Exit_Before_Action_Hook, and exit GPS if the hook
+   --  terminates.
+
    -----------------------------
    -- Source_File_Action_Hook --
    -----------------------------
@@ -370,5 +383,12 @@ private
       Hook_Name : String;
       Data      : Html_Hooks_Args) return Boolean;
    --  See inherited doc
+
+   function Get_Name (Data : Exit_Before_Action_Hooks_Args) return String;
+   function Execute_Shell
+     (Script    : access Glide_Kernel.Scripts.Scripting_Language_Record'Class;
+      Command   : String;
+      Hook_Name : String;
+      Data      : Exit_Before_Action_Hooks_Args) return Boolean;
 
 end Glide_Kernel.Standard_Hooks;
