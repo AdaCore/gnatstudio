@@ -905,7 +905,7 @@ package body Src_Editor_Buffer.Line_Information is
 
       --  Shift down editable lines.
 
-      for J in Line .. Editor.Editable_Lines'Last loop
+      for J in Line .. Editor.Last_Editable_Line loop
          if Editor.Editable_Lines (J).Where = In_Buffer then
             Editor.Editable_Lines (J).Buffer_Line :=
               Editor.Editable_Lines (J).Buffer_Line
