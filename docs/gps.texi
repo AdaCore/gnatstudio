@@ -6405,7 +6405,8 @@ list the source files.
 
 @item f
 output the list into a file and substitute the parameter with the
-name of that file.
+name of that file. This file is never deleted by GPS, it is your responsability
+to do so.
 @end table
 
 @end table
@@ -7365,6 +7366,8 @@ Both cases are described in an XML customization file, as described previously,
 and both are setup to execute what GPS calls an action, ie a set of commands
 defined by the @code{<action>} tag.
 
+@subsubsection Chaining commands
+
 This action tag, as described previously, executes one or more commands, which
 can either be internal GPS commands (written in any of the scripting language
 supported by GPS), or external commands provided by executables found on the
@@ -7398,6 +7401,38 @@ way when calling external commands.
 </action>
 @end smallexample
 @end ifset
+
+If one of the commands in the action raises an error, the execution of the
+action is stopped immediately, and no further command is performed.
+
+
+@subsubsection Saving open windows
+
+@cindex save_windows
+Before launching the external tool, you might want to force GPS to save all
+open files, the project,@dots{}. This is done using the same command GPS itself
+uses before starting a compilation. This command is called @code{save_windows},
+and takes one optional argument which specifies whether an interactive dialog
+should be displayed for the user.
+
+Since this command raises an exception when the user presses cancel, you can
+simply put it in its own @code{<shell>} command, as in:
+
+@ifset python
+<action name="test save children">
+  <shell lang="python">GPS.save_windows (force=0)</shell>
+  <external> echo Run unless Cancel was pressed </external>
+</action>
+@end ifset
+
+@ifnset python
+@smallexample
+<action name="test save children">
+  <shell>save_windows</shell>
+  <external> echo Run unless Cancel was pressed </external>
+</action>
+@end smallexample
+@end ifnset
 
 
 @subsubsection Querying switches from the project
@@ -8045,6 +8080,7 @@ The possible values of the parameters listed above are:
 
 @menu
 * Scripts::
+* Scripts and GPS actions::
 * The GPS Shell::
 @ifset python
 * The Python Interpreter::
@@ -8123,6 +8159,42 @@ gps --eval=shell:'Entity entity_name file_name; Entity.show %1'
 
 See the section @ref{Customizing the Menu and Tool Bar} on how to bind key
 shortcuts to shell commands.
+
+
+@node Scripts and GPS actions
+@subsection Scripts and GPS actions
+@cindex execute_action
+
+@noindent
+There is a strong relationship between GPS actions, as defined in the
+customization files, and scripting languages.
+
+Actions can be bound to menus and keys through the customization files or
+the @code{Edit->Key shortcuts} window.
+
+These actions can execute any script command, @xref{Defining Actions}. This is
+done through the @code{<shell>} XML tag.
+
+But the opposite is also true. From a script, you can execute any action
+registered in GPS. This can for instance be used to split windows, highlight
+lines in the editor,... when no equivalent shell function exist. This can also
+be used to execute external commands, if your scripting language doesn't
+support this in an easy manner.
+
+Such calls are made through a call to @code{execute_action}, as in the
+following action.
+
+@smallexample
+execute_action "Split horizontally"
+@end smallexample
+
+@ifset python
+GPS.execute_action (action="Split horizontally")
+@end ifset
+
+The list of actions known to GPS can be found through the
+@code{Edit->Key shortcuts} window. Action names are case sensitive.
+
 
 @node The GPS Shell
 @subsection The GPS Shell
