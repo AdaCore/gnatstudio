@@ -19,10 +19,10 @@
 -----------------------------------------------------------------------
 
 with Gtk.Window; use Gtk.Window;
-with Gtk.Frame; use Gtk.Frame;
 with Gtk.Box; use Gtk.Box;
 with Gtk.Table; use Gtk.Table;
 with Gtk.Label; use Gtk.Label;
+with Gtk.Frame; use Gtk.Frame;
 with Gtk.Combo; use Gtk.Combo;
 with Gtk.GEntry; use Gtk.GEntry;
 with Gtk.Tooltips; use Gtk.Tooltips;
@@ -31,7 +31,6 @@ with Gtk.Button; use Gtk.Button;
 package Vsearch_Pkg is
 
    type Vsearch_Record is new Gtk_Window_Record with record
-      Search_Frame : Gtk_Frame;
       Vbox_Search : Gtk_Vbox;
       Table : Gtk_Table;
       Replace_Label : Gtk_Label;

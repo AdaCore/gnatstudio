@@ -33,12 +33,8 @@ begin
    Set_Position (Vsearch, Win_Pos_None);
    Set_Modal (Vsearch, False);
 
-   Gtk_New (Vsearch.Search_Frame);
-   Set_Shadow_Type (Vsearch.Search_Frame, Shadow_Etched_In);
-   Add (Vsearch, Vsearch.Search_Frame);
-
    Gtk_New_Vbox (Vsearch.Vbox_Search, False, 0);
-   Add (Vsearch.Search_Frame, Vsearch.Vbox_Search);
+   Add (Vsearch, Vsearch.Vbox_Search);
 
    Gtk_New (Vsearch.Table, 6, 2, False);
    Set_Row_Spacings (Vsearch.Table, 2);
@@ -180,6 +176,7 @@ begin
    String_List.Append (Context_Combo_Items, -"Project Explorer");
    String_List.Append (Context_Combo_Items, -"Project Files");
    String_List.Append (Context_Combo_Items, -"Files...");
+   String_List.Append (Context_Combo_Items, -"Help");
    Combo.Set_Popdown_Strings (Vsearch.Context_Combo, Context_Combo_Items);
    Free_String_List (Context_Combo_Items);
    Attach (Vsearch.Table, Vsearch.Context_Combo, 1, 2, 2, 3,
