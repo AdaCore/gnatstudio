@@ -3,13 +3,13 @@ with GNAT.Directory_Operations,
      OS_Utils,
      Ada.Strings.Fixed,
      Ada.Unchecked_Deallocation,
-     SN.Xref_Pool,
+     SN.Xref_Pools,
      GNAT.OS_Lib;
 
 use  GNAT.Directory_Operations,
      GNAT.IO_Aux,
      Ada.Strings.Fixed,
-     SN.Xref_Pool,
+     SN.Xref_Pools,
      GNAT.OS_Lib;
 
 package body SN.Browse is
