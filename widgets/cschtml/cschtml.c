@@ -876,45 +876,7 @@ selection_received (GtkWidget *widget,
 		    GtkSelectionData *selection_data,
 		    guint time)
 {
-	g_return_if_fail (widget != NULL);
-	g_return_if_fail (GTK_IS_CSCHTML (widget));
-	g_return_if_fail (selection_data != NULL);
-
-	// printf("got selection from system\n");
-
-#if 0
-	/* **** IMPORTANT **** Check to see if retrieval succeeded  */
-	/* If we have more selection types we can ask for, try the next one,
-	   until there are none left */
-	if (selection_data->length < 0) {
-		struct _zvtprivate *zp = _ZVT_PRIVATE(widget);
-
-		/* now, try again with next selection type */
-		if (csc_html_request_paste(widget, zp->lastselectiontype+1, time)==0)
-			g_print ("Selection retrieval failed\n");
-		return;
-	}
-#endif
-
-	/* we will get a selection type of atom(UTF-8) for utf text,
-	   perhaps that needs to do something different if the terminal
-	   isn't actually in utf8 mode? */
-
-	/* Make sure we got the data in the expected form */
-	if (selection_data->type != GDK_SELECTION_TYPE_STRING) {
-		g_print ("Selection \"STRING\" was not returned as strings!\n");
-		return;
-	}
-
-	if (selection_data->length) {
-		// printf ("selection text \"%.*s\"\n",
-		//	selection_data->length, selection_data->data);
-
-		html_engine_disable_selection (CSC_HTML (widget)->engine);
-		html_engine_insert (CSC_HTML (widget)->engine,
-				    selection_data->data,
-				    selection_data->length);
-	}
+  /* No longer needed, could be removed */
 }
 
 int
