@@ -1923,13 +1923,11 @@ package body GVD_Module is
       Window : constant Gtk_Window := Get_Main_Window (Kernel_Handle (Kernel));
       Top    : constant Glide_Window := Glide_Window (Window);
       Id     : constant GVD_Module  := GVD_Module (GVD_Module_ID);
-
       Prev   : Boolean;
+
    begin
       GVD.Main_Window.Preferences_Changed (Top);
-
       Prev   := Id.Show_Lines_With_Code;
-
       Id.Show_Lines_With_Code :=
         Get_Pref (GVD_Prefs, Editor_Show_Line_With_Code);
 
