@@ -1668,7 +1668,8 @@ package body Builder_Module is
       Register_Menu (Kernel, Build, Mitem);
       Set_Sensitive
         (Register_Menu
-          (Kernel, Build, -"_Interrupt", Stock_Stop, On_Stop_Build'Access),
+           (Kernel, Build, -"_Interrupt", Stock_Stop, On_Stop_Build'Access,
+           null, GDK_C, Control_Mask),
          False);
 
       Kernel_Callback.Connect
