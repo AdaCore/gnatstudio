@@ -3782,4 +3782,21 @@ package body Src_Info.Queries is
       return False;
    end Is_Discriminant;
 
+   ------------------------------
+   -- Create_Predefined_Entity --
+   ------------------------------
+
+   function Create_Predefined_Entity (Name : String; Kind : E_Kind)
+      return Entity_Information
+   is
+   begin
+      return Create
+        (File   => "",
+         Line   => 1,
+         Column => 1,
+         Name   => Name,
+         Scope  => Global_Scope,
+         Kind   => Kind);
+   end Create_Predefined_Entity;
+
 end Src_Info.Queries;

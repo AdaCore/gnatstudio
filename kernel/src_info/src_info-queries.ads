@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2001-2002                    --
+--                        Copyright (C) 2001-2003                    --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free software; you can redistribute it and/or modify  it   --
@@ -132,6 +132,10 @@ package Src_Info.Queries is
    --  the user to free the allocated memory.
    --  If File is the empty string, the entity will be considered as a
    --  predefined entity.
+
+   function Create_Predefined_Entity (Name : String; Kind : E_Kind)
+      return Entity_Information;
+   --  Return a new predefined entity for Name.
 
    procedure Renaming_Of
      (List           : LI_File_List;
