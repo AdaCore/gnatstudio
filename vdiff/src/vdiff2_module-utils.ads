@@ -113,12 +113,12 @@ package Vdiff2_Module.Utils is
 private
 
    Me                   : constant Debug_Handle := Create ("VDiff2_Utils");
-   Default_Style        : constant String       := "Default_diff";
-   Old_Style            : constant String       := "Old_diff";
-   Append_Style         : constant String       := "Append_diff";
-   Remove_Style         : constant String       := "Remove_diff";
-   Change_Style         : constant String       := "Change_diff";
-   Fine_Change_Style    : constant String       := "Fine_Change_diff";
-   Id_Col_Vdiff         : constant String       := "Vdiff2_Col_Merge";
+   Default_Style        : constant String       := "default_diff";
+   Old_Style            : constant String       := "old_diff";
+   Append_Style         : constant String       := "append_diff";
+   Remove_Style         : constant String       := "remove_diff";
+   Change_Style         : constant String       := "change_diff";
+   Fine_Change_Style    : constant String       := "fine_change_diff";
+   Id_Col_Vdiff         : constant String       := "vdiff2_col_merge";
 
 end Vdiff2_Module.Utils;
