@@ -37,6 +37,7 @@ package body Src_Info.Debug is
       Implicit                                 => 'i',
       Label                                    => 'l',
       Primitive_Operation                      => 'p',
+      Overriding_Primitive_Operation           => 'p',
       With_Line                                => 'w',
       Subprogram_In_Parameter                  => '>',
       Subprogram_In_Out_Parameter              => '=',
