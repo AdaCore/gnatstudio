@@ -33,6 +33,7 @@ with Projects;             use Projects;
 with Projects.Registry;    use Projects.Registry;
 with String_Utils;         use String_Utils;
 with VFS;                  use VFS;
+with Interactive_Consoles; use Interactive_Consoles;
 
 with Ada.Exceptions;       use Ada.Exceptions;
 with Ada.Text_IO;          use Ada.Text_IO;
@@ -73,6 +74,15 @@ package body Commands.Custom is
    --  This also checks that the context contains information for possible
    --  %p, %f,.. parameters (Set Context_Is_Valid otherwise).
 
+   procedure Clear_Consoles
+     (Kernel  : access Kernel_Handle_Record'Class;
+      Command : access Custom_Command'Class);
+   --  Clear all existing consoles that Command will use. Consoles that do not
+   --  exist yet are not created.
+   --  This is used so that the new output isn't mix with the output of
+   --  previous run.
+   --  The default GPS console is never cleared.
+
    function Project_From_Param
      (Param : String; Context : Selection_Context_Access) return Project_Type;
    --  Return the project from the parameter. Parameter is the string
@@ -112,6 +122,43 @@ package body Commands.Custom is
       Command.Current_Output := new String'(Old.all & Output);
       Free (Old);
    end Store_Command_Output;
+
+   --------------------
+   -- Clear_Consoles --
+   --------------------
+
+   procedure Clear_Consoles
+     (Kernel  : access Kernel_Handle_Record'Class;
+      Command : access Custom_Command'Class)
+   is
+      N       : Node_Ptr;
+      Console : Interactive_Console;
+   begin
+      if Command.Command = null then
+         N := Command.XML;
+         while N /= null loop
+            declare
+               Console_Name : constant String :=
+                 Get_Attribute (N, "output", Console_Output);
+            begin
+               if Console_Name /= No_Output
+                 and then Console_Name /= Console_Output
+               then
+                  Console := Create_Interactive_Console
+                    (Kernel,
+                     Console_Name,
+                     Create_If_Not_Exist => False);
+
+                  if Console /= null then
+                     Clear (Console);
+                  end if;
+               end if;
+            end;
+
+            N := N.Next;
+         end loop;
+      end if;
+   end Clear_Consoles;
 
    --------------------
    -- Commands_Count --
@@ -338,8 +385,8 @@ package body Commands.Custom is
    is
       pragma Unreferenced (Event);
 
-      Count   : constant Natural := Commands_Count (Command);
-      Success : Boolean := True;
+      Count    : constant Natural := Commands_Count (Command);
+      Success  : Boolean := True;
 
       function Substitution (Param : String) return String;
       --  Substitution function for the various '%...' parameters
@@ -560,22 +607,43 @@ package body Commands.Custom is
          Args           : String_List_Access;
          Errors         : aliased Boolean;
          Callback       : Output_Callback;
+         Console        : Interactive_Console;
 
       begin
+         if Success and then Output_Location /= No_Output then
+            Console := Create_Interactive_Console
+              (Command.Kernel, Output_Location);
+         end if;
+
+         --  Ensure there is at least one new line between two commands
+         if Console /= null then
+            Insert (Console, "", Add_LF => True);
+         end if;
+
          --  If substitution failed
          if not Success then
             null;
+
          elsif Script /= null then
             if Command.Save_Output (Command.Cmd_Index) then
+
+               --  Insert the command explicitely, since Execute_Command
+               --  doesn't do it in this case.
+               if Console /= null then
+                  Insert (Console, Subst_Cmd_Line, Add_LF => True);
+               end if;
+
                Command.Outputs (Command.Cmd_Index) := new String'
                  (Execute_Command
                     (Script, Subst_Cmd_Line,
-                     Display_In_Console => Output_Location /= No_Output,
+                     Hide_Output => Output_Location = No_Output,
+                     Console     => Console,
                      Errors => Errors'Unchecked_Access));
             else
                Execute_Command
                  (Script, Subst_Cmd_Line,
-                  Display_In_Console => Output_Location /= No_Output,
+                  Hide_Output => Output_Location = No_Output,
+                  Console     => Console,
                   Errors => Errors);
             end if;
 
@@ -590,15 +658,15 @@ package body Commands.Custom is
             end if;
 
             Args := Argument_String_To_List (Subst_Cmd_Line);
+
             Launch_Process
               (Command.Kernel,
                Command       => Args (Args'First).all,
                Arguments     => Args (Args'First + 1 .. Args'Last),
-               Title         => Output_Location,
+               Console       => Console,
                Callback      => Callback,
                Exit_Cb       => Exit_Cb'Access,
                Success       => Success,
-               Hide_Output   => Output_Location = No_Output,
                Callback_Data => Convert (Custom_Command_Access (Command)));
             Free (Args);
 
@@ -645,7 +713,8 @@ package body Commands.Custom is
                        (Command.Kernel,
                         Get_Attribute (N, "lang", GPS_Shell_Name)),
                      N.Value.all,
-                     Output_Location => No_Output);
+                     Output_Location =>
+                       Get_Attribute (N, "output", Console_Output));
 
                elsif To_Lower (N.Tag.all) = "external" then
                   Success := Execute_Simple_Command
@@ -714,6 +783,7 @@ package body Commands.Custom is
          Check_Save_Output
            (Command.Kernel, Command, Command.Save_Output.all,
             Command.Context, Success);
+         Clear_Consoles (Command.Kernel, Command);
 
          if not Success then
             return Terminate_Command;
