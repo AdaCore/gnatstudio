@@ -61,6 +61,7 @@ with Basic_Types;  use Basic_Types;
 with String_Utils; use String_Utils;
 with Glide_Kernel; use Glide_Kernel;
 with Glide_Kernel.Project; use Glide_Kernel.Project;
+with Glide_Kernel.Editor;  use Glide_Kernel.Editor;
 
 package body Project_Trees is
 
@@ -113,7 +114,7 @@ package body Project_Trees is
             Subprogram_Spec : Boolean;
 
          when Entity_Node =>
-            null;
+            Sloc_Start, Sloc_End : Source_Location;
 
       end case;
    end record;
@@ -170,7 +171,7 @@ package body Project_Trees is
 
    function Add_Entity_Node
      (Tree : access Project_Tree_Record'Class;
-      Entity_Name : String;
+      Construct : Construct_Information;
       Parent_Node : Gtk_Ctree_Node) return Gtk_Ctree_Node;
    --  Add a new entity node in the tree, for Entity_Name
 
@@ -290,6 +291,11 @@ package body Project_Trees is
    --  This means we need to start up with a completely new tree, no need to
    --  try to keep the current one.
 
+   procedure Node_Selected (Tree : access Gtk_Widget_Record'Class);
+   --  Called when a node is selected.
+   --  It provides the standard behavior when an entity is selected (open the
+   --  appropriate source editor).
+
    -------------
    -- Gtk_New --
    -------------
@@ -353,6 +359,10 @@ package body Project_Trees is
         (Kernel, "project_changed",
          Object_User_Callback.To_Marshaller (Project_Changed'Access),
          GObject (Tree));
+
+      Widget_Callback.Connect
+        (Tree, "tree_select_row",
+         Widget_Callback.To_Marshaller (Node_Selected'Access));
    end Gtk_New;
 
    ---------------------
@@ -600,7 +610,7 @@ package body Project_Trees is
 
    function Add_Entity_Node
      (Tree : access Project_Tree_Record'Class;
-      Entity_Name : String;
+      Construct : Construct_Information;
       Parent_Node : Gtk_Ctree_Node) return Gtk_Ctree_Node
    is
       N : Gtk_Ctree_Node;
@@ -610,7 +620,7 @@ package body Project_Trees is
         (Ctree         => Tree,
          Parent        => Parent_Node,
          Sibling       => null,
-         Text          => Create_Line_Text (Entity_Name),
+         Text          => Create_Line_Text (Construct.Name.all),
          Spacing       => 5,
          Pixmap_Closed => Tree.Close_Pixmaps (Entity_Node),
          Mask_Closed   => Tree.Close_Masks (Entity_Node),
@@ -620,7 +630,10 @@ package body Project_Trees is
          Expanded      => False);
 
       Node_Set_Row_Data
-        (Tree, N, (Entity_Node, Up_To_Date => True));
+        (Tree, N, (Entity_Node,
+                   Sloc_Start => Construct.Sloc_Start,
+                   Sloc_End   => Construct.Sloc_End,
+                   Up_To_Date => True));
       return N;
    end Add_Entity_Node;
 
@@ -774,7 +787,7 @@ package body Project_Trees is
 
                N := Add_Entity_Node
                  (Tree,
-                  Constructs.Current.Name.all,
+                  Constructs.Current.all,
                   Categories (Constructs.Current.Category));
             end if;
 
@@ -1383,7 +1396,7 @@ package body Project_Trees is
 
    function Get_Selected_Directory
      (Tree    : access Project_Tree_Record;
-      Project : Prj.Project_Id) return String_Id
+      Project_Filter : Prj.Project_Id := Prj.No_Project) return String_Id
    is
       use type Node_List.Glist;
       Selection : Node_List.Glist := Get_Selection (Tree);
@@ -1402,7 +1415,9 @@ package body Project_Trees is
                      return No_String;
 
                   when Directory_Node =>
-                     if Get_Parent_Project (Tree, N) /= Project then
+                     if Project_Filter /= No_Project
+                       and then Get_Parent_Project (Tree, N) /= Project_Filter
+                     then
                         return No_String;
                      else
                         return User.Directory;
@@ -1447,6 +1462,57 @@ package body Project_Trees is
       end if;
       return No_String;
    end Get_Selected_File;
+
+   -------------------
+   -- Node_Selected --
+   -------------------
+
+   procedure Node_Selected (Tree : access Gtk_Widget_Record'Class) is
+      use type Node_List.Glist;
+      T : Project_Tree := Project_Tree (Tree);
+      Selection : Node_List.Glist := Get_Selection (T);
+      File : constant String_Id := Get_Selected_File (T);
+      N : Gtk_Ctree_Node;
+   begin
+      if Selection /= Node_List.Null_List then
+         N := Node_List.Get_Data (Selection);
+         declare
+            User : constant User_Data := Node_Get_Row_Data (T, N);
+         begin
+            case User.Node_Type is
+
+               when Entity_Node =>
+                  String_To_Name_Buffer (File);
+                  declare
+                     File_S : constant String := Name_Buffer (1 .. Name_Len);
+                     Dir_S  : constant String :=
+                       Get_Directory_From_Node (T, N);
+                  begin
+                     Go_To (T.Kernel,
+                            Dir_S & File_S,
+                            User.Sloc_Start.Line, User.Sloc_Start.Column);
+                  end;
+                  return;
+
+               when File_Node =>
+                  String_To_Name_Buffer (File);
+                  declare
+                     File_S : constant String := Name_Buffer (1 .. Name_Len);
+                     Dir_S  : constant String :=
+                       Get_Directory_From_Node (T, N);
+                  begin
+                     Open_File (T.Kernel, Dir_S & File_S);
+                  end;
+                  return;
+
+
+               when others =>
+                  null;
+
+            end case;
+         end;
+      end if;
+   end Node_Selected;
 
 begin
    --  ??? Temporaru, this will be done in Glide itself.

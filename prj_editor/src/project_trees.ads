@@ -70,12 +70,14 @@ package Project_Trees is
 
    function Get_Selected_Directory
      (Tree    : access Project_Tree_Record;
-      Project : Prj.Project_Id) return Types.String_Id;
+      Project_Filter : Prj.Project_Id := Prj.No_Project)
+      return Types.String_Id;
    --  Return the name of the selected directory for Project.
    --  It returns No_String if a project node is selected, and the name of the
    --  directory containing the file is a File_Node, Category_Node or
    --  Entity_Node is selected.
-   --  No_Name is also returned if the directory is not in Project.
+   --  No_Name is also returned if the directory is not in Project_Filter (and
+   --  Project_Filter is not null).
 
    function Get_Selected_File
      (Tree    : access Project_Tree_Record) return Types.String_Id;
