@@ -393,43 +393,48 @@ package body VCS_View_Pkg is
 
       use type File_Status_List.List_Node;
    begin
-      --  Free the logs associated to the files that are up-to-date.
+      --  Free the logs associated to the files that are up-to-date, and
+      --  update the vcs label in the editors.
 
-      if Clear_Logs then
-         while Status_Temp /= File_Status_List.Null_Node loop
-            declare
-               S      : constant File_Status_Record :=
-                 File_Status_List.Data (Status_Temp);
-               File   : constant String := String_List.Head (S.File_Name);
-            begin
-               if S.Status = Up_To_Date then
-                  declare
-                     Log   : constant String
-                       := Get_Log_From_File (Kernel, File, False);
-                     Dummy : Boolean;
-                  begin
-                     if Log /= ""
-                       and then GNAT.OS_Lib.Is_Regular_File (Log)
-                     then
-                        GNAT.OS_Lib.Delete_File (Log, Dummy);
-                        Close_File_Editors (Kernel, Log);
-                     end if;
+      while Status_Temp /= File_Status_List.Null_Node loop
+         declare
+            S      : constant File_Status_Record :=
+              File_Status_List.Data (Status_Temp);
+            File   : constant String := String_List.Head (S.File_Name);
+         begin
+            if Clear_Logs
+              and then S.Status = Up_To_Date
+            then
+               declare
+                  Log   : constant String
+                    := Get_Log_From_File (Kernel, File, False);
+                  Dummy : Boolean;
+               begin
+                  if Log /= ""
+                    and then GNAT.OS_Lib.Is_Regular_File (Log)
+                  then
+                     GNAT.OS_Lib.Delete_File (Log, Dummy);
+                     Close_File_Editors (Kernel, Log);
+                  end if;
 
-                     Remove_File_From_Mapping (Kernel, File);
-                  end;
-               end if;
+                  Remove_File_From_Mapping (Kernel, File);
+               end;
+            end if;
 
-            exception
-               when E : others =>
-                  Trace (Me, "Unexpected exception: "
-                         & Exception_Information (E));
-            end;
+            if Is_Open (Kernel, File) then
+               Display_Editor_Status (Kernel, S);
+            end if;
 
-            Status_Temp := File_Status_List.Next (Status_Temp);
-         end loop;
+         exception
+            when E : others =>
+               Trace (Me, "Unexpected exception: "
+                      & Exception_Information (E));
+         end;
 
-         Status_Temp := File_Status_List.First (Status);
-      end if;
+         Status_Temp := File_Status_List.Next (Status_Temp);
+      end loop;
+
+      Status_Temp := File_Status_List.First (Status);
 
       if Child = null then
          return;
