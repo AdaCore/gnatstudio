@@ -18,22 +18,81 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Gtk.Widget; use Gtk.Widget;
+with Glib.Object; use Glib.Object;
+with Generic_List;
 
 package body VCS is
+
+   procedure Free (Identifier : in out VCS_Id_Identifier);
+   --  Dummy function used to instanciate Identifiers list.
+
+   package Identifiers is new Generic_List (VCS_Id_Identifier);
+
+   Identifiers_List : Identifiers.List;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Identifier : in out VCS_Id_Identifier) is
+   begin
+      null;
+   end Free;
+
+   -----------------------------
+   -- Register_VCS_Identifier --
+   -----------------------------
+
+   procedure Register_VCS_Identifier (Identifier : VCS_Id_Identifier) is
+   begin
+      Identifiers.Append (Identifiers_List, Identifier);
+   end Register_VCS_Identifier;
+
+   ---------------------
+   -- Get_VCS_From_Id --
+   ---------------------
+
+   function Get_VCS_From_Id (Id : String) return VCS_Access
+   is
+      Result : VCS_Access := null;
+      Temp   : Identifiers.List := Identifiers_List;
+   begin
+      while not Identifiers.Is_Empty (Temp) loop
+         Result := Identifiers.Head (Temp) (Id);
+
+         if Result /= null then
+            return Result;
+         end if;
+
+         Temp := Identifiers.Next (Temp);
+      end loop;
+
+      return Result;
+   end Get_VCS_From_Id;
 
    -----------------------------
    -- Register_Error_Function --
    -----------------------------
 
    procedure Register_Error_Function
-     (Rep  : access VCS_Record;
-      Func : Error_Function;
-      Data : Gtk.Widget.Gtk_Widget) is
+     (Func : Error_Function;
+      Data : Glib.Object.GObject) is
    begin
-      Rep.User_Data := Data;
-      Rep.Local_Error_Function := Func;
+      Caller_Widget := Data;
+      The_Error_Function := Func;
    end Register_Error_Function;
+
+   ----------------------------
+   -- Register_Idle_Function --
+   ----------------------------
+
+   procedure Register_Idle_Function
+     (Func    : Idle_Function;
+      Timeout : Integer := 200) is
+   begin
+      The_Idle_Function := Func;
+      VCS.Timeout := Timeout;
+   end Register_Idle_Function;
 
    ---------------
    -- Set_Error --
@@ -43,8 +102,8 @@ package body VCS is
      (Rep     : access VCS_Record;
       Message : String) is
    begin
-      if Rep.Local_Error_Function /= null then
-         Rep.Local_Error_Function (Message, Rep.User_Data);
+      if The_Error_Function /= null then
+         The_Error_Function (Message, Caller_Widget);
       end if;
    end Set_Error;
 
