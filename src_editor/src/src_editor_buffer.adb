@@ -2440,30 +2440,15 @@ package body Src_Editor_Buffer is
       Lang_Autodetect : Boolean := True;
       Success         : out Boolean)
    is
-      Contents      : GNAT.OS_Lib.String_Access;
-      UTF8          : Gtkada.Types.Chars_Ptr;
-      Ignore        : aliased Natural;
-      Length        : aliased Natural;
-      Last          : Natural;
-      CR_Found      : Boolean := False;
-      F, L          : Gtk_Text_Iter;
-      Valid         : Boolean;
-      First_Invalid : Natural;
+      procedure Reset_Buffer (Buffer : access Source_Buffer_Record);
+      --  Reset all data associated with Buffer
 
-      File_Is_New : constant Boolean := not Buffer.Original_Text_Inserted;
+      ------------------
+      -- Reset_Buffer --
+      ------------------
 
-   begin
-      Success := True;
-      Contents := Read_File (Filename);
-
-      if Contents = null then
-         Trace (Me, "Load_File: Couldn't read contents of "
-                & Full_Name (Filename).all);
-         Success := False;
-         return;
-      end if;
-
-      if not File_Is_New then
+      procedure Reset_Buffer (Buffer : access Source_Buffer_Record) is
+      begin
          --  Clear the buffer.
 
          Clear (Buffer);
@@ -2527,6 +2512,63 @@ package body Src_Editor_Buffer is
          --  Request the new blocks.
 
          Register_Edit_Timeout (Buffer);
+      end Reset_Buffer;
+
+      Contents      : GNAT.OS_Lib.String_Access;
+      UTF8          : Gtkada.Types.Chars_Ptr;
+      Ignore        : aliased Natural;
+      Length        : aliased Natural;
+      Last          : Natural;
+      CR_Found      : Boolean := False;
+      F, L          : Gtk_Text_Iter;
+      Valid         : Boolean;
+      Recovering    : Boolean := False;
+      First_Invalid : Natural;
+      Buttons       : Message_Dialog_Buttons;
+      File_Is_New   : constant Boolean := not Buffer.Original_Text_Inserted;
+
+   begin
+      Success := True;
+
+      if File_Is_New then
+         if Is_Regular_File (Autosaved_File (Filename)) then
+            Buttons := Message_Dialog
+              (Msg            => -"Found an auto-saved file named "
+                 & Base_Name (Autosaved_File (Filename)) & ASCII.LF
+                 & (-"This usually means that your previous GPS session ")
+                 & ASCII.LF
+                 & (-"terminated unexpectedly with unsaved changes.")
+                 & ASCII.LF & ASCII.LF
+                 & (-"Do you want to recover the contents of ")
+                 & Base_Name (Filename) & ASCII.LF
+                 & (-"from this auto-saved file ?"),
+               Dialog_Type    => Warning,
+               Buttons        => Button_Yes or Button_No,
+               Default_Button => Button_Yes,
+               Title          => -"Found auto-saved file",
+               Justification  => Justify_Left,
+               Parent         => Get_Current_Window (Buffer.Kernel));
+
+            if Buttons = Button_Yes then
+               Contents   := Read_File (Autosaved_File (Filename));
+               Recovering := True;
+            end if;
+         end if;
+      end if;
+
+      if not Recovering then
+         Contents := Read_File (Filename);
+      end if;
+
+      if Contents = null then
+         Trace (Me, "Load_File: Couldn't read contents of "
+                & Full_Name (Filename).all);
+         Success := False;
+         return;
+      end if;
+
+      if not File_Is_New then
+         Reset_Buffer (Buffer);
       end if;
 
       --  Insert the new text.
@@ -2604,6 +2646,7 @@ package body Src_Editor_Buffer is
          File_Closed (Buffer.Kernel, Filename);
          File_Edited (Buffer.Kernel, Filename);
       end if;
+
    exception
       when E : others =>
          Success := False;
