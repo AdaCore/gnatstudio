@@ -47,7 +47,7 @@ package body VCS_Module is
 
    VCS_Module_ID : Module_ID;
 
-   Me : Debug_Handle := Create ("Vcs_Module");
+   Me : Debug_Handle := Create ("VCS_Module");
 
    procedure Initialize_Module
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
@@ -189,7 +189,7 @@ package body VCS_Module is
          Gtk_New (Explorer, Kernel);
          Set_Size_Request (Explorer, 400, 400);
          Child := Put (MDI, Explorer);
-         Set_Title (Child, "VCS Explorer");
+         Set_Title (Child, -"VCS Explorer");
          Show_Files (Explorer, Get_Current_Dir (Kernel));
 
          Widget_Callback.Object_Connect
@@ -235,7 +235,7 @@ package body VCS_Module is
       Register_Menu
         (Kernel, "/_" & VCS, Ref_Item => -"Navigate", Add_Before => False);
 
-      Gtk_New (Menu_Item, -"VCS Explorer");
+      Gtk_New (Menu_Item, -"Explorer");
       Register_Menu (Kernel, "/" & VCS, Menu_Item);
       Kernel_Callback.Connect
         (Menu_Item, "activate",
