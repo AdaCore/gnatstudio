@@ -1,10 +1,10 @@
 -----------------------------------------------------------------------
---                          G L I D E  I I                           --
+--                               G P S                               --
 --                                                                   --
 --                     Copyright (C) 2001-2002                       --
 --                            ACT-Europe                             --
 --                                                                   --
--- GLIDE is free software; you can redistribute it and/or modify  it --
+-- GPS is free software; you can redistribute it and/or modify  it   --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -339,21 +339,23 @@ package body Prj_API is
    begin
       --  Remove the package from the list
       Node := First_Package_Of (Project);
-      if Get_Name_String (Prj.Tree.Name_Of (Node)) = Pkg_Name then
-         Current := First_Package_Of (Project);
-         Set_First_Package_Of (Project, Next_Package_In_Project (Node));
-      else
-         loop
-            Next := Next_Package_In_Project (Node);
-            exit when Next = Empty_Node;
+      if Node /= Empty_Node then
+         if Get_Name_String (Prj.Tree.Name_Of (Node)) = Pkg_Name then
+            Current := First_Package_Of (Project);
+            Set_First_Package_Of (Project, Next_Package_In_Project (Node));
+         else
+            loop
+               Next := Next_Package_In_Project (Node);
+               exit when Next = Empty_Node;
 
-            if Get_Name_String (Prj.Tree.Name_Of (Next)) = Pkg_Name then
-               Current := Next;
-               Set_Next_Package_In_Project
-                 (Node, Next_Package_In_Project (Next));
-            end if;
-            Node := Next;
-         end loop;
+               if Get_Name_String (Prj.Tree.Name_Of (Next)) = Pkg_Name then
+                  Current := Next;
+                  Set_Next_Package_In_Project
+                    (Node, Next_Package_In_Project (Next));
+               end if;
+               Node := Next;
+            end loop;
+         end if;
       end if;
 
       --  Remove the declaration from the list of decl. items
