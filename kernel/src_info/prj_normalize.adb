@@ -121,10 +121,13 @@ package body Prj_Normalize is
       --  ??? Should check that an attribute isn't declared both in a case
       --  ??? construction and in the common part.
 
-      --  ??? Should check that case items have only one choice
-
       --  ??? Should check that all the scenario variables point to different
       --  ??? types, so that they can be modified at will.
+
+      --  ??? Should check that all instances of a scenario variable have the
+      --  ??? same default, or none. This isn't really important, however,
+      --  ??? since default values are used only once at the beginning by
+      --  ??? Glide.
 
       if Kind_Of (Node) = N_Project then
          Decl_List := First_Declarative_Item_Of
@@ -170,6 +173,21 @@ package body Prj_Normalize is
 
                Case_Item := First_Case_Item_Of (Current_Node);
                while Case_Item /= Empty_Node loop
+                  if First_Choice_Of (Case_Item) = Empty_Node then
+                     Trace
+                       (Me, "when others not allowed in normalized projects");
+                     return """when others"" not allowed in normalized"
+                       & "projects";
+                  end if;
+
+                  if Next_Literal_String (First_Choice_Of (Case_Item)) /=
+                    Empty_Node
+                  then
+                     Trace (Me, "case items must have a single choice");
+                     return "Case items must have a single choice in"
+                       & " normalized projects";
+                  end if;
+
                   declare
                      S : constant String := Internal_Is_Normalized
                        (Project, Case_Item, Nested_Case_Names
@@ -271,7 +289,10 @@ package body Prj_Normalize is
    -- Normalize --
    ---------------
 
-   procedure Normalize (Project : Project_Node_Id) is
+   procedure Normalize
+     (Project     : Project_Node_Id;
+      Print_Error : Prj.Put_Line_Access := null)
+   is
       Values       : External_Variable_Value_Array_Access :=
         new External_Variable_Value_Array (1 .. 50);
       Last_Values  : Natural := Values'First - 1;
@@ -320,11 +341,15 @@ package body Prj_Normalize is
 
          procedure Add_Decl_Item (To_Case_Item : Project_Node_Id) is
          begin
-            --  ??? Should be a deep clone
             Add_At_End (To_Case_Item, Clone_Node (Decl_Item, True));
          end Add_Decl_Item;
 
       begin
+         --  Nothing to do if the list of declarative items is empty
+         if From = Empty_Node then
+            return;
+         end if;
+
          pragma Assert (Kind_Of (Decl_Item) = N_Declarative_Item);
 
          while Decl_Item /= Empty_Node loop
@@ -343,9 +368,20 @@ package body Prj_Normalize is
 
                when N_Case_Construction =>
                   Name := External_Variable_Name
-                    (Project_Norm,
-                     Case_Variable_Reference_Of
+                    (Project_Norm, Case_Variable_Reference_Of
                      (Current_Item_Node (Decl_Item)));
+
+                  if Name = No_String then
+                     Trace (Me, "Normalizing a project with a non-scenario "
+                            & "variable in case construction");
+                     if Print_Error /= null then
+                        Print_Error
+                          ("Case constructions referencing non-external"
+                           & " variables can not be modified");
+                     end if;
+                     raise Normalize_Error;
+                  end if;
+
                   Var_Type := String_Type_Of
                     (Case_Variable_Reference_Of
                      (Current_Item_Node (Decl_Item)));
@@ -426,6 +462,14 @@ package body Prj_Normalize is
                   end if;
 
                when N_Typed_Variable_Declaration =>
+                  --  ??? Should make sure that the type declaration is unique
+                  --  ??? for that typed variable, since if we decide to remove
+                  --  ??? the variable we should remove the type as well.
+
+                  --  ??? In fact, we should probably use a copy of the same
+                  --  ??? type for all instances of that variable, to avoid
+                  --  ??? type mismatch.
+
                   --  Scenario variables must be defined at the project level
                   if Current_Pkg /= Empty_Node
                     and then Is_External_Variable
@@ -470,6 +514,7 @@ package body Prj_Normalize is
    begin
       --  The top-level part of the project
       Case_Stmt := Empty_Node;
+
       Process_Declarative_List
         (From => First_Declarative_Item_Of (Project_Declaration_Of (Project)),
          To   => Project_Declaration_Of (Project_Norm),
@@ -671,7 +716,6 @@ package body Prj_Normalize is
       ----------------------------
 
       procedure Process_Case_Recursive (Case_Stmt : Project_Node_Id) is
-         --  ??? External_Variable_Name might not be the most efficient
          Name : constant String_Id := External_Variable_Name
            (Project, Case_Variable_Reference_Of (Case_Stmt));
          Current_Item, New_Case : Project_Node_Id;
@@ -799,6 +843,8 @@ package body Prj_Normalize is
    is
       Construct, Str, S, Item : Project_Node_Id;
       Ref : String_Id;
+      Decl : Project_Node_Id;
+      New_Type : Project_Node_Id;
    begin
       --  Make sure there is a definition for this variable (and its type) at
       --  the top-level of the project (not in a package nor in another
@@ -809,21 +855,23 @@ package body Prj_Normalize is
       --  Check if there is already a definition for the variable, and if not
       --  add it. Note: we do this before testing for the type, since we are
       --  adding in front of the declarative items list.
+      --  We cannot use Project.Variables since the lists are not created
+      --  before the post-processing phase of the normalization.
 
-      Item := First_Variable_Of (Project);
-      while Item /= Empty_Node loop
+      Decl := First_Declarative_Item_Of
+        (Project_Declaration_Of (Project));
+      while Decl /= Empty_Node loop
+         Item := Current_Item_Node (Decl);
          if Kind_Of (Item) = N_Typed_Variable_Declaration then
             Ref := External_Reference_Of (Item);
             exit when Ref /= No_String
               and then String_Equal (Ref, External_Name);
          end if;
-         Item := Next_Variable (Item);
+         Item := Empty_Node;
+         Decl := Next_Declarative_Item (Decl);
       end loop;
 
-      --  If not, add the variable.
-      --  ??? Currently, if the variable was already defined in a package, it
-      --  ??? will be duplicated (once at the beginning of the project, once in
-      --  ??? the package). Doesn't seem critical, though.
+      --  If not, add the variable and its expression
 
       if Item = Empty_Node then
          String_To_Name_Buffer (External_Name);
@@ -832,12 +880,19 @@ package body Prj_Normalize is
             Add_Before_First_Case_Or_Pkg => True);
       end if;
 
-      --  Is there already a definition for type ? if not, add it
-      --  ??? To be implemented
-
       if Expression_Of (Item) = Empty_Node then
          String_To_Name_Buffer (External_Name);
          Set_Value_As_External (Item, Name_Buffer (1 .. Name_Len));
+      end if;
+
+      --  Is there already a definition for type ? if not, add it
+
+      if Find_Type_Declaration (Project, Name_Of (String_Type_Of (Item))) =
+        Empty_Node
+      then
+         New_Type := Clone_Node (Var_Type, True);
+         Add_In_Front (Project, New_Type);
+         Set_String_Type_Of (Item, New_Type);
       end if;
 
       Construct := Default_Project_Node (N_Case_Construction);

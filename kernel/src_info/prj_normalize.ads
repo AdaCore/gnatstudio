@@ -108,12 +108,16 @@ package Prj_Normalize is
    --  Return the empy string if Project is normalized, or an error message if
    --  otherwise.
 
-   procedure Normalize (Project : Prj.Tree.Project_Node_Id);
+   procedure Normalize
+     (Project     : Prj.Tree.Project_Node_Id;
+      Print_Error : Prj.Put_Line_Access := null);
    --  Normalize Project.
    --  For efficiency, no check is done to make sure Project is not already
    --  normalized. Some modifications might still happen.
    --  The exception Normalize_Error is raised if Project uses some features
    --  that cannot currently be normalized.
+   --  If Print_Error is not null, then error messages will be sent to this
+   --  procedure.
 
    Normalize_Error : exception;
    --  Raised when a project could not be normalized.
