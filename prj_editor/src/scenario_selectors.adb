@@ -256,11 +256,12 @@ package body Scenario_Selectors is
      (Selector  : access Gtk_Widget_Record'Class;
       Params    : Glib.Values.GValues)
    is
-      S : Project_Selector := Project_Selector (Selector);
-      Iter   : Gtk_Tree_Iter;
+      S           : constant Project_Selector := Project_Selector (Selector);
+      Iter        : Gtk_Tree_Iter;
       Path_String : constant String := Get_String (Nth (Params, 1));
-      Project : Project_Node_Id;
-      Selected : Boolean;
+      Project     : Project_Node_Id;
+      Selected    : Boolean;
+
    begin
       Iter := Get_Iter_From_String (S.Model, Path_String);
 
@@ -512,20 +513,24 @@ package body Scenario_Selectors is
      (Selector  : access Gtk_Widget_Record'Class;
       Params    : Glib.Values.GValues)
    is
-      S                  : Scenario_Selector := Scenario_Selector (Selector);
+      S                  : constant Scenario_Selector :=
+        Scenario_Selector (Selector);
       It                 : Gtk_Tree_Iter;
       Path_String        : constant String := Get_String (Nth (Params, 1));
-      Iter : constant Gtk_Tree_Iter :=
+      Iter               : constant Gtk_Tree_Iter :=
         Get_Iter_From_String (S.Model, Path_String);
       Selected           : constant Boolean :=
         Get_Boolean (S.Model, Iter, Selected_Column);
       Num_Selected_Child : Natural := 0;
+
    begin
       --  Are we selecting a variable ?
+
       if Children (S.Model, Iter) /= Null_Iter then
          Variable_Selection (S, Iter, not Selected);
 
       --  Are we selecting a variable value ? Unselect the variable
+
       else
          if Selected then
             It := Children (S.Model, Parent (S.Model, Iter));
