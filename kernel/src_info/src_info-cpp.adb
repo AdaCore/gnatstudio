@@ -50,6 +50,7 @@ package body Src_Info.CPP is
    ----------------------
 
    Global_LI_File : LI_File_Ptr;
+   Global_LI_File_List : LI_File_List;
 
    ------------------------
    -- Global_CPP_Handler --
@@ -278,7 +279,6 @@ package body Src_Info.CPP is
       Predefined_Object_Path : String)
    is
       pragma Unreferenced (Handler);
-      pragma Unreferenced (List);
       pragma Unreferenced (Predefined_Source_Path);
       pragma Unreferenced (Predefined_Object_Path);
 
@@ -298,10 +298,13 @@ package body Src_Info.CPP is
         (SN_Dir & Directory_Separator & Browse.DB_File_Name);
 
       Global_LI_File := File;
+      Global_LI_File_List := List;
 
       Process_File (Source_Filename);
 
+      List := Global_LI_File_List;
       File := Global_LI_File;
+
       Global_LI_File := No_LI_File;
 
       Close_DB_Files;
