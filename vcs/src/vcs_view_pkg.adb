@@ -1,29 +1,48 @@
-with Glib; use Glib;
+-----------------------------------------------------------------------
+--                          G L I D E  I I                           --
+--                                                                   --
+--                        Copyright (C) 2001                         --
+--                            ACT-Europe                             --
+--                                                                   --
+-- GVD is free  software;  you can redistribute it and/or modify  it --
+-- under the terms of the GNU General Public License as published by --
+-- the Free Software Foundation; either version 2 of the License, or --
+-- (at your option) any later version.                               --
+--                                                                   --
+-- This program is  distributed in the hope that it will be  useful, --
+-- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
+-- General Public License for more details. You should have received --
+-- a copy of the GNU General Public License along with this library; --
+-- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
+-- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
+-----------------------------------------------------------------------
+
+with Glib;        use Glib;
 with Glib.Values; use Glib.Values;
 with Glib.Object; use Glib.Object;
-with Gtk; use Gtk;
 
-with Gdk.Types;       use Gdk.Types;
-with Gdk.Pixbuf;      use Gdk.Pixbuf;
 
-with Gtk.Widget;      use Gtk.Widget;
-with Gtk.Main; use Gtk.Main;
-with Gtk.Arguments;          use Gtk.Arguments;
-with Gtk.Enums;              use Gtk.Enums;
-with Gtk.Box;                use Gtk.Box;
-with Gtk.Toolbar;            use Gtk.Toolbar;
-with Gtk.Handlers;           use Gtk.Handlers;
-with Gtk.Window;             use Gtk.Window;
-with Gtkada.Handlers;        use Gtkada.Handlers;
+with Gdk.Types;  use Gdk.Types;
+with Gdk.Pixbuf; use Gdk.Pixbuf;
 
-with Vcs_View_Intl;          use Vcs_View_Intl;
-
-with Gtk.Tree_View_Column;   use Gtk.Tree_View_Column;
-with Gtk.Tree_Model;         use Gtk.Tree_Model;
-with Gtk.Tree_Selection;     use Gtk.Tree_Selection;
-with Gtk.Cell_Renderer_Text; use Gtk.Cell_Renderer_Text;
+with Gtk;                      use Gtk;
+with Gtk.Widget;               use Gtk.Widget;
+with Gtk.Main;                 use Gtk.Main;
+with Gtk.Arguments;            use Gtk.Arguments;
+with Gtk.Enums;                use Gtk.Enums;
+with Gtk.Box;                  use Gtk.Box;
+with Gtk.Toolbar;              use Gtk.Toolbar;
+with Gtk.Handlers;             use Gtk.Handlers;
+with Gtk.Window;               use Gtk.Window;
+with Gtk.Tree_View_Column;     use Gtk.Tree_View_Column;
+with Gtk.Tree_Model;           use Gtk.Tree_Model;
+with Gtk.Tree_Selection;       use Gtk.Tree_Selection;
+with Gtk.Cell_Renderer_Text;   use Gtk.Cell_Renderer_Text;
 with Gtk.Cell_Renderer_Pixbuf; use Gtk.Cell_Renderer_Pixbuf;
 with Gtk.Cell_Renderer_Toggle; use Gtk.Cell_Renderer_Toggle;
+
+with Gtkada.Handlers;          use Gtkada.Handlers;
 
 with Ada.Text_IO; use Ada.Text_IO;
 
@@ -40,13 +59,11 @@ with GUI_Utils;    use GUI_Utils;
 with VCS;
 with VCS.CVS;
 
-with Vcs_View_Pixmaps; use Vcs_View_Pixmaps;
+with VCS_View_Pixmaps; use VCS_View_Pixmaps;
 
 with Unchecked_Deallocation;
 
 package body VCS_View_Pkg is
-
-   use VCS.String_List;
 
    ------------------
    --  Local types --
@@ -58,20 +75,33 @@ package body VCS_View_Pkg is
       Paths      : VCS.String_List.List;
    end record;
    type Explorer_And_Path is access all Explorer_And_Path_Record;
+   --  This type is a convenience type used to pass parameters to some
+   --  callbacks.
 
    procedure Free is new Unchecked_Deallocation
      (Explorer_And_Path_Record, Explorer_And_Path);
+   --  Free memory associated with an Explorer_And_Path object.
 
    type Iter_Action is access
      procedure (Explorer : access VCS_View_Record'Class;
                 Iter     : Gtk_Tree_Iter);
+   --  Any action that occurs on one row in the tree view.
+
+   --------------------
+   -- Local packages --
+   --------------------
+
+   package Boolean_Data is new Model_Data (Boolean);
+   package GObject_Data is new Model_Data (GObject);
+
+   package Selection_Callback is
+      new Gtk.Handlers.Callback (Gtk_Tree_Selection_Record);
+
+   use VCS.String_List;
 
    ---------------------
    -- Local constants --
    ---------------------
-
-   package Boolean_Data is new Model_Data (Boolean);
-   package GObject_Data is new Model_Data (GObject);
 
    function Columns_Types return GType_Array;
    --  Returns the types for the columns in the Model.
@@ -112,6 +142,9 @@ package body VCS_View_Pkg is
                           );
    end Columns_Types;
 
+   --  The following list must be synchronized with the array of types
+   --  described above.
+
    Selected_Column           : constant Gint := 0;
    Name_Column               : constant Gint := 1;
    Local_Rev_Column          : constant Gint := 2;
@@ -121,25 +154,35 @@ package body VCS_View_Pkg is
    Log_Column                : constant Gint := 6;
    Log_Editor_Column         : constant Gint := 7;
 
-   function Number_Of_Columns return Gint;
-   --  Return the number of columns in the model.
-
-   function Number_Of_Columns return Gint is
-   begin
-      return Columns_Types'Length;
-   end Number_Of_Columns;
-
    -----------------------
    -- Local subprograms --
    -----------------------
 
    type Message_Type is (Info, Error, Verbose);
+   --  We are dealing with 3 types of messages :
+   --   - Info for general information
+   --   - Error for signaling errors
+   --   - Verbose for detailed information
 
    procedure Idle;
-   --
+   --  This procedure will be called whenever the process in the background is
+   --  waiting for something (command line output, network connection, etc)
 
    procedure Create_Model (VCS_View : access VCS_View_Record'Class);
-   --
+   --  Creates the underlying tree model for VCS_View.
+
+   procedure Set_Column_Types (Explorer : access VCS_View_Record'Class);
+   --  Sets the types of columns to be displayed in the tree_view.
+
+   procedure Fill_Info
+     (Explorer      : access VCS_View_Record'Class;
+      Iter          : Gtk_Tree_Iter;
+      Status_Record : File_Status_Record;
+      Selected      : Boolean := False;
+      Success       : out Boolean);
+   --  Fills the tree info at the given Iter with values from
+   --  Status_Record.
+   --  Success tells whether the information has been filled or not.
 
    procedure Launch_Viewer
      (Explorer : access VCS_View_Record'Class;
@@ -173,6 +216,40 @@ package body VCS_View_Pkg is
    procedure Refresh_Files (Explorer : access VCS_View_Record'Class;
                             Connect  : Boolean := False);
    --  Display the relevant entries in the local directory.
+
+   procedure Set_Directory (Explorer  : access VCS_View_Record'Class;
+                            Directory : String);
+   --  Sets the current directory to Directory.
+   --  Directory must be an absolute directory name ending
+   --  with Directory_Separator. If Directory is invalid, then
+   --  the explorer will be set to the current directory.
+   --  This procedure will also look for an acceptable VCS system for this
+   --  directory.
+
+   function Get_Selected_Files
+     (Explorer : access VCS_View_Record'Class)
+     return VCS.String_List.List;
+   --  Return the list of files that are selected.
+
+   procedure Foreach_Selected_File
+     (Explorer : access VCS_View_Record'Class;
+      Action   : Iter_Action);
+   --  Run the Action for each of the selected file.
+
+   procedure Select_All_Toggled (Explorer : VCS_View_Access);
+   --  Selects all items that are checked.
+
+   function Get_Iter_From_Name
+     (Explorer : access VCS_View_Record'Class;
+      Name     : String)
+     return Gtk_Tree_Iter;
+   --  Return the Iter associated with the given name.
+   --  Name is a base file name.
+   --  Return Null_Iter if no such iter was found.
+
+   ---------------
+   -- Callbacks --
+   ---------------
 
    procedure On_Edit_Log_Button_Clicked
      (Object : access Gtk_Widget_Record'Class;
@@ -210,7 +287,7 @@ package body VCS_View_Pkg is
      (Object : access Gtk_Widget_Record'Class;
       Params : Gtk.Arguments.Gtk_Args);
 
-   procedure On_Revert_Button_Add
+   procedure On_Revert_Button_Clicked
      (Object : access Gtk_Widget_Record'Class;
       Params : Gtk.Arguments.Gtk_Args);
 
@@ -222,23 +299,17 @@ package body VCS_View_Pkg is
      (Object : access Gtk_Widget_Record'Class;
       Params : Gtk.Arguments.Gtk_Args);
 
-   procedure Set_Column_Types (Explorer : access VCS_View_Record'Class);
-   --
-
    procedure Log_Editor_Text_Changed
      (Object      : access Gtk_Widget_Record'Class;
       Params      : Glib.Values.GValues);
-   --  Called when the text of a log_editor has changed.
 
    procedure Log_Editor_Ok_Clicked
      (Object      : access Gtk_Widget_Record'Class;
       Params      : Glib.Values.GValues);
-   --  Called when the "OK" button of a Log_Editor is clicked.
 
    procedure Toggled_Callback
      (Object      : access Gtk_Widget_Record'Class;
       Params      : Glib.Values.GValues);
-   --
 
    procedure Selection_Column_Clicked
      (Object      : access Gtk_Widget_Record'Class;
@@ -248,48 +319,9 @@ package body VCS_View_Pkg is
      (Object      : access Gtk_Widget_Record'Class;
       Params      : Glib.Values.GValues);
 
-   procedure Set_Directory (Explorer  : access VCS_View_Record'Class;
-                            Directory : String);
-   --  Sets the current directory to Directory.
-   --  Directory must be an absolute directory name ending
-   --  with Directory_Separator. If Directory is invalid, then
-   --  the explorer will be set to the current directory.
-   --  This procedure will also look for an acceptable VCS system for this
-   --  directory.
-
-   function Get_Selected_Files
-     (Explorer : access VCS_View_Record'Class)
-     return VCS.String_List.List;
-   --  Return the list of files that are selected.
-
-   procedure Foreach_Selected_File
-     (Explorer : access VCS_View_Record'Class;
-      Action   : Iter_Action);
-   --  Run the Action for each of the selected file.
-
    procedure Selection_Changed
      (Object      : access Gtk_Tree_Selection_Record'Class;
       Params      : Glib.Values.GValues);
-
-   procedure Select_All_Toggled (Explorer : VCS_View_Access);
-
-   function Get_Iter_From_Name
-     (Explorer : access VCS_View_Record'Class;
-      Name     : String)
-     return Gtk_Tree_Iter;
-   --  Return the Iter associated with the given name.
-   --  Name is a base file name.
-   --  Return Null_Iter if no such iter was found.
-
-   procedure Fill_Info
-     (Explorer      : access VCS_View_Record'Class;
-      Iter          : Gtk_Tree_Iter;
-      Status_Record : File_Status_Record;
-      Selected      : Boolean := False;
-      Success       : out Boolean);
-   --  Fills the tree info at the given Iter with values from
-   --  Status_Record.
-   --  Success tells whether the information has been filled or not.
 
    -------------------
    -- Launch_Viewer --
@@ -349,7 +381,6 @@ package body VCS_View_Pkg is
    is
       String_Value : GValue;
       Bool_Value   : GValue;
-      use VCS.String_List;
    begin
       Success := True;
 
@@ -484,9 +515,7 @@ package body VCS_View_Pkg is
       Iter    : Gtk_Tree_Iter;
       Success : Boolean;
       Toggled : Boolean;
-
-      Result : VCS.String_List.List;
-      package Boolean_Data is new Model_Data (Boolean);
+      Result  : List;
    begin
       if Explorer.Current_Directory = null then
          return Result;
@@ -498,7 +527,7 @@ package body VCS_View_Pkg is
          Toggled := Boolean_Data.Get (Explorer.Model, Iter, Selected_Column);
 
          if Toggled then
-            VCS.String_List.Append
+            Append
               (Result,
                Explorer.Current_Directory.all
                & Get_String (Explorer.Model, Iter, Name_Column));
@@ -518,13 +547,12 @@ package body VCS_View_Pkg is
      (Explorer : access VCS_View_Record'Class;
       Connect  : Boolean := False)
    is
-      Iter : Gtk_Tree_Iter;
-      L : File_Status_List.List;
-      Directory_List : VCS.String_List.List;
+      Iter           : Gtk_Tree_Iter;
+      L              : File_Status_List.List;
+      Directory_List : List;
+      Success        : Boolean := True;
 
       use File_Status_List;
-
-      Success : Boolean := True;
    begin
       if Explorer.Current_Directory = null then
          return;
@@ -532,7 +560,7 @@ package body VCS_View_Pkg is
 
       Clear (Explorer.Model);
 
-      VCS.String_List.Append (Directory_List, Explorer.Current_Directory.all);
+      Append (Directory_List, Explorer.Current_Directory.all);
 
       if Connect then
          L := Get_Status (Explorer.VCS_Ref, Directory_List);
@@ -543,9 +571,11 @@ package body VCS_View_Pkg is
       while not Is_Empty (L) loop
          Append (Explorer.Model, Iter, Null_Iter);
          Fill_Info (Explorer, Iter, Head (L), False, Success);
+
          if not Success then
             Remove (Explorer.Model, Iter);
          end if;
+
          Tail (L);
       end loop;
 
@@ -588,7 +618,6 @@ package body VCS_View_Pkg is
    is
       Parameter : Explorer_And_Path := Explorer_And_Path (Object);
       Temp_Path : List := Parameter.Paths;
-
       Value     : GValue;
       Iter      : Gtk_Tree_Iter;
       Success   : Boolean;
@@ -616,11 +645,9 @@ package body VCS_View_Pkg is
       Params      : Glib.Values.GValues)
    is
       Parameter : Explorer_And_Path := Explorer_And_Path (Object);
-
       Value     : GValue;
       Iter      : Gtk_Tree_Iter;
       Success   : Boolean;
-
    begin
       Init (Value, GType_String);
 
@@ -654,18 +681,24 @@ package body VCS_View_Pkg is
    is
       Explorer : VCS_View_Access := VCS_View_Access (Get_Toplevel (Object));
 
+      No_Files_Selected : Boolean := True;
+
       procedure Create_And_Launch_Log_Editor
         (Explorer : access VCS_View_Record'Class;
          Iter     : Gtk_Tree_Iter);
+      --  Creates a log editor for the given row,
+      --  displays it, and connects the necessary callbacks.
 
       procedure Create_And_Launch_Log_Editor
         (Explorer : access VCS_View_Record'Class;
          Iter     : Gtk_Tree_Iter)
       is
-         Stored_Object : GObject;
+         Stored_Object    : GObject;
          Parameter_Object : Explorer_And_Path;
-         Log_Editor : Log_Editor_Window_Access;
+         Log_Editor       : Log_Editor_Window_Access;
       begin
+         No_Files_Selected := False;
+
          Stored_Object :=
            GObject_Data.Get (Explorer.Model, Iter, Log_Editor_Column);
 
@@ -722,9 +755,13 @@ package body VCS_View_Pkg is
          return;
       end if;
 
-      Foreach_Selected_File (Explorer,
-                             Create_And_Launch_Log_Editor'Unrestricted_Access);
+      Foreach_Selected_File
+        (Explorer, Create_And_Launch_Log_Editor'Unrestricted_Access);
 
+      if No_Files_Selected then
+         Push_Message (Explorer, Error, "No files are selected.");
+         return;
+      end if;
    end On_Edit_Log_Button_Clicked;
 
    -----------------------------------------
@@ -737,20 +774,21 @@ package body VCS_View_Pkg is
    is
       Explorer : VCS_View_Access := VCS_View_Access (Get_Toplevel (Object));
 
-      package Boolean_Data is new Model_Data (Boolean);
-      package GObject_Data is new Model_Data (GObject);
-
-      Stub       : Log_Editor_Window_Record;
-      Log_Editor : Log_Editor_Window_Access;
-      Log_Editor_Widget : Gtk_Widget := new Gtk_Widget_Record;
-
-      Parameter_Object : Explorer_And_Path;
-
+      Stub              : Log_Editor_Window_Record;
+      Log_Editor        : Log_Editor_Window_Access;
+      Parameter_Object  : Explorer_And_Path;
       No_Files_Selected : Boolean := True;
 
       procedure Clear_Launch_Log_Editor
         (Explorer : access VCS_View_Record'Class;
          Iter     : Gtk_Tree_Iter);
+      --  Removes any log_editor attached to the given row.
+
+      procedure Fill_Launch_Log_Editor
+        (Explorer : access VCS_View_Record'Class;
+         Iter     : Gtk_Tree_Iter);
+      --  Adds the necessary information to the current
+      --  log_editor.
 
       procedure Clear_Launch_Log_Editor
         (Explorer : access VCS_View_Record'Class;
@@ -771,10 +809,6 @@ package body VCS_View_Pkg is
               (Explorer.Model, Iter, Log_Editor_Column, System.Null_Address);
          end if;
       end Clear_Launch_Log_Editor;
-
-      procedure Fill_Launch_Log_Editor
-        (Explorer : access VCS_View_Record'Class;
-         Iter     : Gtk_Tree_Iter);
 
       procedure Fill_Launch_Log_Editor
         (Explorer : access VCS_View_Record'Class;
@@ -799,10 +833,11 @@ package body VCS_View_Pkg is
          return;
       end if;
 
-      Foreach_Selected_File (Explorer,
-                             Clear_Launch_Log_Editor'Unrestricted_Access);
+      Foreach_Selected_File
+        (Explorer, Clear_Launch_Log_Editor'Unrestricted_Access);
 
       if No_Files_Selected then
+         Push_Message (Explorer, Error, "No files are selected.");
          return;
       end if;
 
@@ -812,14 +847,13 @@ package body VCS_View_Pkg is
       Set_Title (Log_Editor, "Multiple log editor");
       Set_Text (Log_Editor, "");
 
-
       Parameter_Object := new Explorer_And_Path_Record;
       Parameter_Object.Explorer := Explorer;
       Parameter_Object.Log_Editor := Log_Editor;
 
       --  Associate the log editor to all files.
-      Foreach_Selected_File (Explorer,
-                             Fill_Launch_Log_Editor'Unrestricted_Access);
+      Foreach_Selected_File
+        (Explorer, Fill_Launch_Log_Editor'Unrestricted_Access);
 
       Widget_Callback.Object_Connect
         (Log_Editor.Ok_Button,
@@ -846,10 +880,16 @@ package body VCS_View_Pkg is
       Params : Gtk.Arguments.Gtk_Args)
    is
       Explorer : VCS_View_Access := VCS_View_Access (Get_Toplevel (Object));
-      L : VCS.String_List.List := Get_Selected_Files (Explorer);
-      L_Temp : List := L;
+
+      L                : List := Get_Selected_Files (Explorer);
+      L_Temp           : List := L;
       Temp_String_List : List;
    begin
+      if Is_Empty (L) then
+         Push_Message (Explorer, Error, "No files are selected.");
+         return;
+      end if;
+
       Push_Message (Explorer,
                     Verbose,
                     "Viewing diffs for files :");
@@ -858,7 +898,8 @@ package body VCS_View_Pkg is
 
       while not Is_Empty (L_Temp) loop
          Temp_String_List := Diff (Explorer.VCS_Ref, Head (L_Temp));
-         Launch_Viewer (Explorer, Temp_String_List,
+         Launch_Viewer (Explorer,
+                        Temp_String_List,
                         "Diff for current revision of " & Head (L_Temp));
          L_Temp := Next (L_Temp);
       end loop;
@@ -875,11 +916,16 @@ package body VCS_View_Pkg is
       Params : Gtk.Arguments.Gtk_Args)
    is
       Explorer : VCS_View_Access := VCS_View_Access (Get_Toplevel (Object));
-      L : VCS.String_List.List := Get_Selected_Files (Explorer);
-      L_Temp : List := L;
 
+      L                : List := Get_Selected_Files (Explorer);
+      L_Temp           : List := L;
       Temp_String_List : List;
    begin
+      if Is_Empty (L) then
+         Push_Message (Explorer, Error, "No files are selected.");
+         return;
+      end if;
+
       Push_Message (Explorer,
                     Verbose,
                     "Annotating files :");
@@ -888,7 +934,8 @@ package body VCS_View_Pkg is
 
       while not Is_Empty (L_Temp) loop
          Temp_String_List := Annotate (Explorer.VCS_Ref, Head (L_Temp));
-         Launch_Viewer (Explorer, Temp_String_List,
+         Launch_Viewer (Explorer,
+                        Temp_String_List,
                         "Annotating of " & Head (L_Temp));
          L_Temp := Next (L_Temp);
       end loop;
@@ -904,12 +951,17 @@ package body VCS_View_Pkg is
      (Object : access Gtk_Widget_Record'Class;
       Params : Gtk.Arguments.Gtk_Args)
    is
-      Explorer : VCS_View_Access := VCS_View_Access (Get_Toplevel (Object));
-      L : VCS.String_List.List := Get_Selected_Files (Explorer);
-      L_Temp : List := L;
+      Explorer  : VCS_View_Access := VCS_View_Access (Get_Toplevel (Object));
 
+      L                : List := Get_Selected_Files (Explorer);
+      L_Temp           : List := L;
       Temp_String_List : List;
    begin
+      if Is_Empty (L) then
+         Push_Message (Explorer, Error, "No files are selected.");
+         return;
+      end if;
+
       Push_Message (Explorer,
                     Verbose,
                     "Viewing logs of files :");
@@ -934,9 +986,9 @@ package body VCS_View_Pkg is
       Params : Gtk.Arguments.Gtk_Args)
    is
       Explorer : VCS_View_Access := VCS_View_Access (Get_Toplevel (Object));
-      L : VCS.String_List.List := Get_Selected_Files (Explorer);
+      L        : List := Get_Selected_Files (Explorer);
    begin
-      if VCS.String_List.Is_Empty (L) then
+      if Is_Empty (L) then
          if Explorer.Current_Directory = null then
             Explorer.Current_Directory := new String' (Get_Current_Dir);
          end if;
@@ -950,7 +1002,6 @@ package body VCS_View_Pkg is
          Refresh_Files (Explorer, True);
          Set_Busy_Cursor (Get_Window (Explorer), False);
          Push_Message (Explorer, Info, "... done." & ASCII.LF);
-
       else
          Push_Message (Explorer,
                        Verbose,
@@ -964,13 +1015,11 @@ package body VCS_View_Pkg is
               := Get_Status (Explorer.VCS_Ref, L);
             Dummy  : Boolean;
          begin
-
             while not File_Status_List.Is_Empty (Result) loop
                Iter := Get_Iter_From_Name
                  (Explorer,
                   Base_File_Name
-                    (VCS.String_List.Head
-                      (File_Status_List.Head (Result).File_Name)));
+                    (Head (File_Status_List.Head (Result).File_Name)));
 
                if Iter /= Null_Iter then
                   Fill_Info (Explorer,
@@ -986,7 +1035,7 @@ package body VCS_View_Pkg is
          end;
       end if;
 
-      VCS.String_List.Free (L);
+      Free (L);
    end On_Get_Status_Button_Clicked;
 
    ------------------------------
@@ -998,46 +1047,19 @@ package body VCS_View_Pkg is
       Params : Gtk.Arguments.Gtk_Args)
    is
       Explorer : VCS_View_Access := VCS_View_Access (Get_Toplevel (Object));
-      L        : VCS.String_List.List := Get_Selected_Files (Explorer);
+      L        : List := Get_Selected_Files (Explorer);
    begin
-      if not Is_Empty (L) then
-         Push_Message (Explorer,
-                       Verbose,
-                       "Updating files :");
-
-         Display_String_List (Explorer, L, Verbose);
-
-         Update (Explorer.VCS_Ref, L);
-
-         Push_Message (Explorer,
-                       Verbose,
-                       "... done." & ASCII.LF);
-         VCS.String_List.Free (L);
-      else
-         if Explorer.Current_Directory = null then
-            Explorer.Current_Directory := new String' (Get_Current_Dir);
-         end if;
-
-         Push_Message (Explorer,
-                       Verbose,
-                       "Updating files in directory "
-                       & Explorer.Current_Directory.all
-                       & " ... ");
-
-         Set_Busy_Cursor (Get_Window (Explorer), True, True);
-
-         Append (L, Explorer.Current_Directory.all);
-         Update (Explorer.VCS_Ref, L);
-
-         Push_Message (Explorer,
-                       Verbose,
-                       "... done." & ASCII.LF);
-
-         Set_Busy_Cursor (Get_Window (Explorer), False);
+      if Is_Empty (L) then
+         Push_Message (Explorer, Error, "No files are selected.");
+         return;
       end if;
-      On_Get_Status_Button_Clicked (Object, Params);
 
+      Push_Message (Explorer, Verbose, "Updating files :");
+      Display_String_List (Explorer, L, Verbose);
+      Update (Explorer.VCS_Ref, L);
+      Push_Message (Explorer, Verbose, "... done." & ASCII.LF);
       Free (L);
+      On_Get_Status_Button_Clicked (Object, Params);
    end On_Update_Button_Clicked;
 
    ----------------------------
@@ -1049,33 +1071,29 @@ package body VCS_View_Pkg is
       Params : Gtk.Arguments.Gtk_Args)
    is
       Explorer : VCS_View_Access := VCS_View_Access (Get_Toplevel (Object));
-      L        : VCS.String_List.List := Get_Selected_Files (Explorer);
+      L        : List := Get_Selected_Files (Explorer);
    begin
-      if not Is_Empty (L) then
-         Push_Message (Explorer,
-                       Verbose,
-                       "Opening files :");
-
-         Display_String_List (Explorer, L, Verbose);
-
-         Open (Explorer.VCS_Ref, L);
-
-         declare
-            L_Temp : List := L;
-         begin
-            while not Is_Empty (L_Temp) loop
-               Launch_Editor (Explorer, Head (L_Temp));
-               L_Temp := Next (L_Temp);
-            end loop;
-         end;
-
-         Push_Message (Explorer,
-                       Verbose,
-                       "... done." & ASCII.LF);
-         VCS.String_List.Free (L);
-
-         On_Get_Status_Button_Clicked (Object, Params);
+      if Is_Empty (L) then
+         Push_Message (Explorer, Error, "No files are selected.");
+         return;
       end if;
+
+      Push_Message (Explorer, Verbose, "Opening files :");
+      Display_String_List (Explorer, L, Verbose);
+
+      Open (Explorer.VCS_Ref, L);
+
+      declare
+         L_Temp : List := L;
+      begin
+         while not Is_Empty (L_Temp) loop
+            Launch_Editor (Explorer, Head (L_Temp));
+            L_Temp := Next (L_Temp);
+         end loop;
+      end;
+      Push_Message (Explorer, Verbose, "... done." & ASCII.LF);
+      Free (L);
+      On_Get_Status_Button_Clicked (Object, Params);
    end On_Open_Button_Clicked;
 
    ------------------------------
@@ -1086,15 +1104,16 @@ package body VCS_View_Pkg is
      (Object : access Gtk_Widget_Record'Class;
       Params : Gtk.Arguments.Gtk_Args)
    is
-      Explorer : VCS_View_Access := VCS_View_Access (Get_Toplevel (Object));
-      L        : List := Get_Selected_Files (Explorer);
-
+      Explorer   : VCS_View_Access := VCS_View_Access (Get_Toplevel (Object));
+      L          : List := Get_Selected_Files (Explorer);
       Files_List : List;
       Logs_List  : List;
 
       procedure Check_File
         (Explorer : access VCS_View_Record'Class;
          Iter     : Gtk_Tree_Iter);
+      --  Check that a given file has a log associated to it,
+      --  and display an error message if not.
 
       procedure Check_File
         (Explorer : access VCS_View_Record'Class;
@@ -1118,40 +1137,44 @@ package body VCS_View_Pkg is
          return;
       end if;
 
-      if not Is_Empty (L) then
-         Push_Message (Explorer,
-                       Verbose,
-                       "Committing files :");
+      if Is_Empty (L) then
+         Push_Message (Explorer, Error, "No files are selected.");
+         return;
+      end if;
 
-         Display_String_List (Explorer, L, Verbose);
+      Push_Message (Explorer, Verbose, "Committing files :");
 
-         Foreach_Selected_File (Explorer,
-                                Check_File'Unrestricted_Access);
+      Display_String_List (Explorer, L, Verbose);
 
-         if not Is_Empty (Files_List) then
-            Commit (Explorer.VCS_Ref, Files_List, Logs_List);
-         end if;
+      Foreach_Selected_File
+        (Explorer, Check_File'Unrestricted_Access);
 
-         Push_Message (Explorer,
-                       Verbose,
-                       "... done." & ASCII.LF);
-         VCS.String_List.Free (L);
+      if not Is_Empty (Files_List) then
+         Commit (Explorer.VCS_Ref, Files_List, Logs_List);
+      end if;
 
+      Push_Message (Explorer, Verbose, "... done." & ASCII.LF);
+      Free (L);
+
+      if not Is_Empty (Files_List) then
          On_Get_Status_Button_Clicked (Object, Params);
       end if;
+
+      Free (Files_List);
+      Free (Logs_List);
    end On_Commit_Button_Clicked;
 
-   --------------------------
-   -- On_Revert_Button_Add --
-   --------------------------
+   ------------------------------
+   -- On_Revert_Button_Clicked --
+   ------------------------------
 
-   procedure On_Revert_Button_Add
+   procedure On_Revert_Button_Clicked
      (Object : access Gtk_Widget_Record'Class;
       Params : Gtk.Arguments.Gtk_Args)
    is
    begin
       null;
-   end On_Revert_Button_Add;
+   end On_Revert_Button_Clicked;
 
    ---------------------------
    -- On_Add_Button_Clicked --
@@ -1162,24 +1185,19 @@ package body VCS_View_Pkg is
       Params : Gtk.Arguments.Gtk_Args)
    is
       Explorer : VCS_View_Access := VCS_View_Access (Get_Toplevel (Object));
-      L        : VCS.String_List.List := Get_Selected_Files (Explorer);
+      L        : List := Get_Selected_Files (Explorer);
    begin
-      if not Is_Empty (L) then
-         Push_Message (Explorer,
-                       Verbose,
-                       "Adding files :");
-
-         Display_String_List (Explorer, L, Verbose);
-
-         Add (Explorer.VCS_Ref, L);
-
-         Push_Message (Explorer,
-                       Verbose,
-                       "... done." & ASCII.LF);
-         VCS.String_List.Free (L);
-
-         On_Get_Status_Button_Clicked (Object, Params);
+      if Is_Empty (L) then
+         Push_Message (Explorer, Error, "No files are selected.");
+         return;
       end if;
+
+      Push_Message (Explorer, Verbose, "Adding files :");
+      Display_String_List (Explorer, L, Verbose);
+      Add (Explorer.VCS_Ref, L);
+      Push_Message (Explorer, Verbose, "... done." & ASCII.LF);
+      Free (L);
+      On_Get_Status_Button_Clicked (Object, Params);
    end On_Add_Button_Clicked;
 
    ------------------------------
@@ -1191,24 +1209,21 @@ package body VCS_View_Pkg is
       Params : Gtk.Arguments.Gtk_Args)
    is
       Explorer : VCS_View_Access := VCS_View_Access (Get_Toplevel (Object));
-      L        : VCS.String_List.List := Get_Selected_Files (Explorer);
+      L        : List := Get_Selected_Files (Explorer);
    begin
-      if not Is_Empty (L) then
-         Push_Message (Explorer,
-                       Verbose,
-                       "Removing files :");
-
-         Display_String_List (Explorer, L, Verbose);
-
-         Remove (Explorer.VCS_Ref, L);
-
-         Push_Message (Explorer,
-                       Verbose,
-                       "... done." & ASCII.LF);
-         VCS.String_List.Free (L);
-
-         On_Get_Status_Button_Clicked (Object, Params);
+      if Is_Empty (L) then
+         Push_Message (Explorer, Error, "No files are selected.");
+         return;
       end if;
+
+      Push_Message (Explorer, Verbose, "Removing files :");
+      Display_String_List (Explorer, L, Verbose);
+
+      Remove (Explorer.VCS_Ref, L);
+
+      Push_Message (Explorer, Verbose, "... done." & ASCII.LF);
+      Free (L);
+      On_Get_Status_Button_Clicked (Object, Params);
    end On_Remove_Button_Clicked;
 
    ----------
@@ -1242,10 +1257,10 @@ package body VCS_View_Pkg is
    -- Set_Directory --
    -------------------
 
-   procedure Set_Directory (Explorer  : access VCS_View_Record'Class;
-                            Directory : String)
+   procedure Set_Directory
+     (Explorer  : access VCS_View_Record'Class;
+      Directory : String)
    is
-
    begin
       if Explorer.Current_Directory /= null then
          Free (Explorer.Current_Directory);
@@ -1280,8 +1295,9 @@ package body VCS_View_Pkg is
    -- Show_Files --
    ----------------
 
-   procedure Show_Files (Explorer  : VCS_View_Access;
-                         Directory : String)
+   procedure Show_Files
+     (Explorer  : VCS_View_Access;
+      Directory : String)
    is
    begin
       Set_Directory (Explorer, Directory);
@@ -1294,12 +1310,9 @@ package body VCS_View_Pkg is
 
    procedure Select_All_Toggled (Explorer : VCS_View_Access)
    is
-      Iter : Gtk_Tree_Iter;
-      Success : Boolean;
-      Toggled : Boolean;
-
-      package Boolean_Data is new Model_Data (Boolean);
-
+      Iter      : Gtk_Tree_Iter;
+      Success   : Boolean;
+      Toggled   : Boolean;
       Selection : Gtk_Tree_Selection := Get_Selection (Explorer.Tree);
    begin
       Explorer.Model_Sync := True;
@@ -1316,7 +1329,6 @@ package body VCS_View_Pkg is
 
          Tree_Model_Iter_Next (Explorer.Model, Iter, Success);
       end loop;
-
    end Select_All_Toggled;
 
    ---------------------
@@ -1327,20 +1339,15 @@ package body VCS_View_Pkg is
      (Object      : access Gtk_Widget_Record'Class;
       Params      : Glib.Values.GValues)
    is
-      Explorer : VCS_View_Access := VCS_View_Access (Object);
-      Iter : Gtk_Tree_Iter;
-      Path_String : String := Get_String (Nth (Params, 1));
-      Path   : Gtk_Tree_Path;
-      Text_String : String := Get_String (Nth (Params, 2));
-      Text_Value : GValue := Nth (Params, 2);
-      Success : Boolean;
-
-      Stub       : Log_Editor_Window_Record;
-      Log_Editor : Log_Editor_Window_Access := null;
-
-      package Boolean_Data is new Model_Data (Boolean);
-      package GObject_Data is new Model_Data (GObject);
-
+      Explorer      : VCS_View_Access := VCS_View_Access (Object);
+      Iter          : Gtk_Tree_Iter;
+      Path_String   : String := Get_String (Nth (Params, 1));
+      Path          : Gtk_Tree_Path;
+      Text_String   : String := Get_String (Nth (Params, 2));
+      Text_Value    : GValue := Nth (Params, 2);
+      Success       : Boolean;
+      Stub          : Log_Editor_Window_Record;
+      Log_Editor    : Log_Editor_Window_Access := null;
       Stored_Object : GObject;
    begin
       Gtk_New (Path, Path_String);
@@ -1356,7 +1363,6 @@ package body VCS_View_Pkg is
            (Get_User_Data (Stored_Object.all'Address, Stub));
          Set_Text (Log_Editor, Text_String);
       end if;
-
    end Edited_Callback;
 
    ----------------------
@@ -1367,13 +1373,12 @@ package body VCS_View_Pkg is
      (Object      : access Gtk_Widget_Record'Class;
       Params      : Glib.Values.GValues)
    is
-      Explorer : VCS_View_Access := VCS_View_Access (Object);
-      Iter : Gtk_Tree_Iter;
+      Explorer    : VCS_View_Access := VCS_View_Access (Object);
+      Iter        : Gtk_Tree_Iter;
       Path_String : String := Get_String (Nth (Params, 1));
-      Path   : Gtk_Tree_Path;
-      Success : Boolean;
-      Value   : GValue;
-      package Boolean_Data is new Model_Data (Boolean);
+      Path        : Gtk_Tree_Path;
+      Success     : Boolean;
+      Value       : GValue;
    begin
       Gtk_New (Path, Path_String);
       Tree_Model_Get_Iter (Explorer.Model, Iter, Path, Success);
@@ -1381,8 +1386,6 @@ package body VCS_View_Pkg is
       Init (Value, GType_Boolean);
       Set_Boolean (Value, not Success);
       Set_Value (Explorer.Model, Iter, Selected_Column, Value);
-      --  Select_All_Toggled (Explorer);
-
       Explorer.All_Selected := False;
    end Toggled_Callback;
 
@@ -1422,8 +1425,7 @@ package body VCS_View_Pkg is
       Editable_Rend : Gtk_Cell_Renderer_Text;
       Pixbuf_Rend   : Gtk_Cell_Renderer_Pixbuf;
       Toggle_Rend   : Gtk_Cell_Renderer_Toggle;
-
-      Dummy       : Gint;
+      Dummy         : Gint;
    begin
       Gtk_New (Text_Rend);
       Gtk_New (Editable_Rend);
@@ -1484,18 +1486,15 @@ package body VCS_View_Pkg is
          "edited",
          Edited_Callback'Unrestricted_Access,
          Gtk_Widget (Explorer));
-
-      --  Set_Expander_Column (Explorer.Tree, Col);
    end Set_Column_Types;
 
    -------------------
    --  Create_Model --
    -------------------
 
-   procedure Create_Model (VCS_View : access VCS_View_Record'Class)
-   is
+   procedure Create_Model (VCS_View : access VCS_View_Record'Class) is
    begin
-      Gtk_New (VCS_View.Model, Number_Of_Columns, Columns_Types);
+      Gtk_New (VCS_View.Model, Columns_Types'Length, Columns_Types);
    end Create_Model;
 
    -------------
@@ -1505,7 +1504,6 @@ package body VCS_View_Pkg is
    procedure Gtk_New (VCS_View : out VCS_View_Access) is
    begin
       Init_Graphics;
-      --  ??? should the graphics be put at another location ?
 
       VCS_View := new VCS_View_Record;
       VCS_View_Pkg.Initialize (VCS_View);
@@ -1524,6 +1522,8 @@ package body VCS_View_Pkg is
       Explorer : VCS_View_Access :=
         VCS_View_Access (Get_Toplevel (Get_Tree_View (Object)));
       Value    : GValue;
+      Success  : Boolean;
+      Iter     : Gtk_Tree_Iter;
 
       package Toggle_Selected is
          new Gtk.Tree_Selection.Selection_Foreach (VCS_View_Access);
@@ -1542,10 +1542,6 @@ package body VCS_View_Pkg is
          Set_Value (Explorer.Model, Iter, Selected_Column, Value);
       end Toggle;
 
-      Success : Boolean;
-      Iter    : Gtk_Tree_Iter;
-
-      package Boolean_Data is new Model_Data (Boolean);
    begin
       if not Explorer.Model_Sync then
          Init (Value, GType_Boolean);
@@ -1570,30 +1566,24 @@ package body VCS_View_Pkg is
       end if;
    end Selection_Changed;
 
-   package Selection_Callback is
-      new Gtk.Handlers.Callback (Gtk_Tree_Selection_Record);
-
    ----------------
    -- Initialize --
    ----------------
 
    procedure Initialize (VCS_View : access VCS_View_Record'Class) is
-      pragma Suppress (All_Checks);
-
-      Vbox1 : Gtk_Vbox;
-      Hbox1 : Gtk_Hbox;
-      Hbox2 : Gtk_Hbox;
-      Toolbar2 : Gtk_Toolbar;
-      Toolbar1 : Gtk_Toolbar;
+      Vbox1           : Gtk_Vbox;
+      Hbox1           : Gtk_Hbox;
+      Hbox2           : Gtk_Hbox;
+      Toolbar2        : Gtk_Toolbar;
+      Toolbar1        : Gtk_Toolbar;
       Scrolledwindow1 : Gtk_Scrolled_Window;
       Scrolledwindow2 : Gtk_Scrolled_Window;
-
-      Selection : Gtk_Tree_Selection;
+      Selection       : Gtk_Tree_Selection;
    begin
       Gtk.Window.Initialize (VCS_View, Window_Toplevel);
       Set_Default_Size (VCS_View, 600, 600);
 
-      Set_Title (VCS_View, -"");
+      Set_Title (VCS_View, "");
       Set_Policy (VCS_View, False, True, False);
       Set_Position (VCS_View, Win_Pos_None);
       Set_Modal (VCS_View, False);
@@ -1628,30 +1618,27 @@ package body VCS_View_Pkg is
       Set_Column_Types (VCS_View);
 
       Gtk_New (Toolbar2, Orientation_Vertical, Toolbar_Both);
-      --  Set_Space_Size (Toolbar2, 5);
-      --  Set_Space_Style (Toolbar2, Toolbar_Space_Line);
       Set_Tooltips (Toolbar2, True);
-      --  Set_Button_Relief (Toolbar2, Relief_Normal);
       VCS_View.Edit_Log_Button := Append_Element
-        (Toolbar => Toolbar2,
+        (Toolbar  => Toolbar2,
          The_Type => Toolbar_Child_Button,
-         Text => -"Edit Log");
+         Text     => "Edit Log");
       Widget_Callback.Connect
         (VCS_View.Edit_Log_Button, "clicked",
          On_Edit_Log_Button_Clicked'Access);
 
       VCS_View.Edit_Multiple_Log_Button := Append_Element
-        (Toolbar => Toolbar2,
+        (Toolbar  => Toolbar2,
          The_Type => Toolbar_Child_Button,
-         Text => -"Edit multiple Log");
+         Text     => "Edit multiple Log");
       Widget_Callback.Connect
         (VCS_View.Edit_Multiple_Log_Button, "clicked",
          On_Edit_Multiple_Log_Button_Clicked'Access);
 
       VCS_View.View_Diff_Button := Append_Element
-        (Toolbar => Toolbar2,
+        (Toolbar  => Toolbar2,
          The_Type => Toolbar_Child_Button,
-         Text => -"View Diff");
+         Text     => "View Diff");
       Widget_Callback.Connect
         (VCS_View.View_Diff_Button, "clicked",
          On_View_Diff_Button_Clicked'Access);
@@ -1659,15 +1646,15 @@ package body VCS_View_Pkg is
       VCS_View.Annotate_Button := Append_Element
         (Toolbar => Toolbar2,
          The_Type => Toolbar_Child_Button,
-         Text => -"Annotate");
+         Text => "Annotate");
       Widget_Callback.Connect
         (VCS_View.Annotate_Button, "clicked",
          On_Annotate_Button_Clicked'Access);
 
       VCS_View.View_Log_Button := Append_Element
-        (Toolbar => Toolbar2,
+        (Toolbar  => Toolbar2,
          The_Type => Toolbar_Child_Button,
-         Text => -"View Log");
+         Text     => "View Log");
       Widget_Callback.Connect
         (VCS_View.View_Log_Button, "clicked",
          On_View_Log_Button_Clicked'Access);
@@ -1679,47 +1666,47 @@ package body VCS_View_Pkg is
       Set_Tooltips (Toolbar1, True);
       --  Set_Button_Relief (Toolbar1, Relief_Normal);
       VCS_View.Get_Status_Button := Append_Element
-        (Toolbar => Toolbar1,
+        (Toolbar  => Toolbar1,
          The_Type => Toolbar_Child_Button,
-         Text => -"Get status");
+         Text     => "Get status");
       Widget_Callback.Connect
         (VCS_View.Get_Status_Button, "clicked",
          On_Get_Status_Button_Clicked'Access);
       VCS_View.Update_Button := Append_Element
-        (Toolbar => Toolbar1,
+        (Toolbar  => Toolbar1,
          The_Type => Toolbar_Child_Button,
-         Text => -"Update");
+         Text     => "Update");
       Widget_Callback.Connect
         (VCS_View.Update_Button, "clicked",
          On_Update_Button_Clicked'Access);
       VCS_View.Open_Button := Append_Element
-        (Toolbar => Toolbar1,
+        (Toolbar  => Toolbar1,
          The_Type => Toolbar_Child_Button,
-         Text => -"Open");
+         Text     => "Open");
       Widget_Callback.Connect
         (VCS_View.Open_Button, "clicked", On_Open_Button_Clicked'Access);
       VCS_View.Commit_Button := Append_Element
-        (Toolbar => Toolbar1,
+        (Toolbar  => Toolbar1,
          The_Type => Toolbar_Child_Button,
-         Text => -"Commit");
+         Text     => "Commit");
       Widget_Callback.Connect
         (VCS_View.Commit_Button, "clicked", On_Commit_Button_Clicked'Access);
       VCS_View.Revert_Button := Append_Element
-        (Toolbar => Toolbar1,
+        (Toolbar  => Toolbar1,
          The_Type => Toolbar_Child_Button,
-         Text => -"Revert");
+         Text     => "Revert");
       Widget_Callback.Connect
-        (VCS_View.Revert_Button, "add", On_Revert_Button_Add'Access);
+        (VCS_View.Revert_Button, "add", On_Revert_Button_Clicked'Access);
       VCS_View.Add_Button := Append_Element
-        (Toolbar => Toolbar1,
+        (Toolbar  => Toolbar1,
          The_Type => Toolbar_Child_Button,
-         Text => -"Add");
+         Text     => "Add");
       Widget_Callback.Connect
         (VCS_View.Add_Button, "clicked", On_Add_Button_Clicked'Access);
       VCS_View.Remove_Button := Append_Element
-        (Toolbar => Toolbar1,
+        (Toolbar  => Toolbar1,
          The_Type => Toolbar_Child_Button,
-         Text => -"Remove");
+         Text     => "Remove");
       Widget_Callback.Connect
         (VCS_View.Remove_Button, "clicked", On_Remove_Button_Clicked'Access);
       Pack_Start (Hbox1, Toolbar1, False, False, 3);
@@ -1734,7 +1721,6 @@ package body VCS_View_Pkg is
       Gtk_New (VCS_View.Message_Text);
       Set_Editable (VCS_View.Message_Text, False);
       Add (Scrolledwindow2, VCS_View.Message_Text);
-
    end Initialize;
 
 end VCS_View_Pkg;
