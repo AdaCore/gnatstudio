@@ -284,6 +284,18 @@ main(int argc, char *argv[])
             if (!*tmp || *tmp == '#')
                continue;
 
+	    if (*tmp == '@') {
+	      if (cross_ref_fp)
+		fclose(cross_ref_fp);
+	      if (!(cross_ref_fp = fopen(tmp + 1,"a")))
+		{
+		  printf("Error: (open) \"%s, errno: %d\"\n",
+			 tmp + 1,errno);
+		  exit(1);
+		}
+	      continue;
+	    }
+
             if (log_symbol_filename(out_fp,tmp) == 0)
             {
                start_parser(tmp,parse_cplpl,NULL,0);
