@@ -22,6 +22,7 @@ with System;
 with Interfaces.C.Strings;
 with Ada.Unchecked_Deallocation;
 with Ada.Unchecked_Conversion;
+with GNAT.OS_Lib;
 
 package Basic_Types is
 
@@ -58,6 +59,14 @@ package Basic_Types is
    --  Note that these positions are relative to the real contents of the
    --  editor, not necessarily the positions visible to the user (which
    --  might be different because of ASCII.HT handling)
+
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+     (GNAT.OS_Lib.Argument_List, GNAT.OS_Lib.Argument_List_Access);
+   --  Free the memory occupied by the parameter array, but not the strings
+   --  themselves.
+
+   procedure Free (Ar : in out GNAT.OS_Lib.Argument_List);
+   --  Free all the strings in the array.
 
    -----------------
    -- File caches --
