@@ -129,6 +129,16 @@ static char pty_name[24];
 #endif
 
 
+#ifdef AIX
+  /* Now define a symbol for the cpu type, if your compiler
+     does not define it automatically.  */
+  /* Emacs defines this in m/ibmrs6000.h, which is always included for
+     the powerpc/AIX machines (but not for x86/AIX machines) */
+#define IBMR2AIX
+#endif
+
+
+
 
 
 struct Lisp_Process {

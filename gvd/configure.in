@@ -42,6 +42,29 @@ case "${host}" in
     machine=iris4d opsys=irix6-0
   ;;
 
+  ## IBM, AIX machines
+  rs6000-ibm-aix3.1* | powerpc-ibm-aix3.1*  )
+    machine=ibmrs6000 opsys=aix3-1
+  ;;
+  rs6000-ibm-aix3.2.5 | powerpc-ibm-aix3.2.5 )
+    machine=ibmrs6000 opsys=aix3-2-5
+  ;;
+  rs6000-ibm-aix4.1* | powerpc-ibm-aix4.1*  )
+    machine=ibmrs6000 opsys=aix4-1
+  ;;
+  rs6000-ibm-aix4.2* | powerpc-ibm-aix4.2*  )
+    machine=ibmrs6000 opsys=aix4-2
+  ;;
+  rs6000-ibm-aix4.0* | powerpc-ibm-aix4.0*  )
+    machine=ibmrs6000 opsys=aix4
+  ;;
+  rs6000-ibm-aix4* | powerpc-ibm-aix4*  )
+    machine=ibmrs6000 opsys=aix4-1
+  ;;
+  rs6000-ibm-aix* | powerpc-ibm-aix* )
+    machine=ibmrs6000 opsys=aix3-2
+  ;;
+
   ## Suns
   *-auspex-sunos* | *-sun-sunos* | *-sun-bsd* | *-sun-solaris* \
     | i[3456]86-*-solaris2* | i[3456]86-*-sunos5* | powerpc*-*-solaris2* \

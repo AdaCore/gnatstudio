@@ -1455,6 +1455,29 @@ case "${host}" in
     machine=iris4d opsys=irix6-0
   ;;
 
+  ## IBM, AIX machines
+  rs6000-ibm-aix3.1* | powerpc-ibm-aix3.1*  )
+    machine=ibmrs6000 opsys=aix3-1
+  ;;
+  rs6000-ibm-aix3.2.5 | powerpc-ibm-aix3.2.5 )
+    machine=ibmrs6000 opsys=aix3-2-5
+  ;;
+  rs6000-ibm-aix4.1* | powerpc-ibm-aix4.1*  )
+    machine=ibmrs6000 opsys=aix4-1
+  ;;
+  rs6000-ibm-aix4.2* | powerpc-ibm-aix4.2*  )
+    machine=ibmrs6000 opsys=aix4-2
+  ;;
+  rs6000-ibm-aix4.0* | powerpc-ibm-aix4.0*  )
+    machine=ibmrs6000 opsys=aix4
+  ;;
+  rs6000-ibm-aix4* | powerpc-ibm-aix4*  )
+    machine=ibmrs6000 opsys=aix4-1
+  ;;
+  rs6000-ibm-aix* | powerpc-ibm-aix* )
+    machine=ibmrs6000 opsys=aix3-2
+  ;;
+
   ## Suns
   *-auspex-sunos* | *-sun-sunos* | *-sun-bsd* | *-sun-solaris* \
     | i345686-*-solaris2* | i345686-*-sunos5* | powerpc*-*-solaris2* \
@@ -1538,7 +1561,7 @@ opsysfile="'\"system/${opsys}.h\"'"
   # Extract the first word of "gtkada-config", so it can be a program name with args.
 set dummy gtkada-config; ac_word=$2
 echo $ac_n "checking for $ac_word""... $ac_c" 1>&6
-echo "configure:1542: checking for $ac_word" >&5
+echo "configure:1565: checking for $ac_word" >&5
 if eval "test \"`echo '$''{'ac_cv_path_GTK_CONFIG'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
@@ -1573,7 +1596,7 @@ fi
 
   min_gtk_version=1.2.9
   echo $ac_n "checking for GtkAda - version >= $min_gtk_version""... $ac_c" 1>&6
-echo "configure:1577: checking for GtkAda - version >= $min_gtk_version" >&5
+echo "configure:1600: checking for GtkAda - version >= $min_gtk_version" >&5
   no_gtk=""
   if test "$GTK_CONFIG" = "no" ; then
     no_gtk=yes
@@ -1592,7 +1615,7 @@ echo "configure:1577: checking for GtkAda - version >= $min_gtk_version" >&5
   echo $ac_n "cross compiling; assumed OK... $ac_c"
 else
   cat > conftest.$ac_ext <<EOF
-#line 1596 "configure"
+#line 1619 "configure"
 #include "confdefs.h"
 
 #include <stdio.h>
@@ -1636,7 +1659,7 @@ main ()
 }
 
 EOF
-if { (eval echo configure:1640: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext} && (./conftest; exit) 2>/dev/null
+if { (eval echo configure:1663: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext} && (./conftest; exit) 2>/dev/null
 then
   :
 else
