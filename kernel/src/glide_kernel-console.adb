@@ -515,9 +515,9 @@ package body Glide_Kernel.Console is
 
       Child := Put
         (Kernel, Console, Iconify_Button or Maximize_Button,
-         Focus_Widget   => Gtk_Widget (Get_View (Console)),
          Default_Width  => 400,
-         Default_Height => 100,
+         Default_Height => 120,
+         Focus_Widget   => Gtk_Widget (Get_View (Console)),
          Module         => Console_Module_Id,
          Desktop_Independent => True);
       Set_Focus_Child (Child);
@@ -657,7 +657,7 @@ package body Glide_Kernel.Console is
       Add_Default_Desktop_Item
         (Kernel, N,
          10, 10,
-         400, 100,
+         400, 120,
          -"Messages", -"Messages",
          Docked, Bottom,
          Focus => True, Raised => True);
