@@ -36,9 +36,7 @@ with GVD.Process;       use GVD.Process;
 with Gtkada.Canvas;     use Gtkada.Canvas;
 
 with Browsers.Dependency_Items; use Browsers.Dependency_Items;
-with Glide_Kernel.Project;      use Glide_Kernel.Project;
 with Src_Info;                  use Src_Info;
-with Src_Info.Ali;              use Src_Info.Ali;
 with Src_Info.Queries;          use Src_Info.Queries;
 with String_Utils;              use String_Utils;
 
