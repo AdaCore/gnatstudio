@@ -17,7 +17,7 @@ def generate_doc (entity):
      project"""
   obj_dir = GPS.Project.root().object_dirs (recursive=False) [0]
   name = obj_dir + "/" + entity.__name__ + ".html"
-  if os.stat (name).st_mtime < os.stat (GPS.Help().file()).st_mtime:
+  if not os.path.isfile (name) or os.stat (name).st_mtime < os.stat (GPS.Help().file()).st_mtime:
      GPS.set_busy()
      cwd = os.getcwd()
      os.chdir (obj_dir)
