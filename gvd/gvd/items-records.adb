@@ -615,7 +615,7 @@ package body Items.Records is
       W : constant Gint := Width - Item.Gui_Fields_Width - 2 * Border_Spacing -
         Left_Border;
       Iter : Generic_Iterator'Class :=
-        Start (Generic_Type_Access'(Item'Unrestricted_Access));
+        Start (Item'Unrestricted_Access);
       It   : Generic_Type_Access;
    begin
       Item.Width := Width;
