@@ -1656,6 +1656,8 @@ package body Src_Editor_Buffer.Line_Information is
       First_Line : Editable_Line_Type;
       Last_Line  : Editable_Line_Type;
 
+      Start_Iter, End_Iter : Gtk_Text_Iter;
+
       Number_Of_Lines_Unfolded : Natural := 0;
    begin
       Get_Iter_At_Mark (Buffer, Iter, Mark);
@@ -1715,6 +1717,15 @@ package body Src_Editor_Buffer.Line_Information is
               + Buffer_Line_Type (Number_Of_Lines_Unfolded);
          end if;
       end loop;
+
+      --  Highlight the inserted text.
+
+      Get_Iter_At_Line
+        (Buffer, Start_Iter, Gint (Get_Buffer_Line (Buffer, First_Line) - 1));
+      Get_Iter_At_Line
+        (Buffer, End_Iter, Gint (Get_Buffer_Line (Buffer, Last_Line) - 1));
+
+      Highlight_Slice (Buffer, Start_Iter, End_Iter);
 
       --  Redraw the side column.
 
