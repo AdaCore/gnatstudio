@@ -62,6 +62,10 @@ package body Browsers.Call_Graph is
    Call_Graph_Module_Id : Module_ID;
    Call_Graph_Module_Name : constant String := "Call_Graph";
 
+   Unresolved_File : constant String := -"<Unresolved>";
+   --  File location used in case the declaration file for an entity couldn't
+   --  be fully resolved (overloaded entities).
+
    Margin : constant := 2;
 
    type Entity_Idle_Data is record
@@ -219,10 +223,17 @@ package body Browsers.Call_Graph is
 
       Font := Get_Text_Font (Browser);
 
-      Width  := Gint'Max
-        (String_Width (Font, Get_Name (Entity)),
-         String_Width (Font, Get_Declaration_File_Of (Entity)
-                       & ':' & Image (Get_Declaration_Line_Of (Entity))));
+      if Get_Declaration_File_Of (Entity) /= "" then
+         Width  := Gint'Max
+           (String_Width (Font, Get_Name (Entity)),
+            String_Width (Font, Get_Declaration_File_Of (Entity)
+                          & ':' & Image (Get_Declaration_Line_Of (Entity))));
+      else
+         Width  := Gint'Max
+           (String_Width (Font, Get_Name (Entity)),
+            String_Width (Font, Unresolved_File));
+      end if;
+
       Width := Width + 4 * Margin
         + Get_Width (B.Left_Arrow) + Get_Width (B.Right_Arrow);
 
@@ -262,14 +273,27 @@ package body Browsers.Call_Graph is
          X     => Margin + Get_Width (B.Left_Arrow),
          Y     => Margin + Get_Ascent (Font),
          Text  => Get_Name (Item.Entity));
-      Draw_Text
-        (Pixmap (Item),
-         Font  => Font,
-         GC    => Get_Text_GC (Browser),
-         X     => Margin + Get_Width (B.Left_Arrow),
-         Y     => Margin + 2 * Get_Ascent (Font) + Get_Descent (Font),
-         Text  => Get_Declaration_File_Of (Item.Entity)
-           & ':' & Image (Get_Declaration_Line_Of (Item.Entity)));
+
+      --  The file might be the empty string for an unresolved overloaded
+      --  entity.
+      if Get_Declaration_File_Of (Item.Entity) /= "" then
+         Draw_Text
+           (Pixmap (Item),
+            Font  => Font,
+            GC    => Get_Text_GC (Browser),
+            X     => Margin + Get_Width (B.Left_Arrow),
+            Y     => Margin + 2 * Get_Ascent (Font) + Get_Descent (Font),
+            Text  => Get_Declaration_File_Of (Item.Entity)
+            & ':' & Image (Get_Declaration_Line_Of (Item.Entity)));
+      else
+         Draw_Text
+           (Pixmap (Item),
+            Font  => Font,
+            GC    => Get_Text_GC (Browser),
+            X     => Margin + Get_Width (B.Left_Arrow),
+            Y     => Margin + 2 * Get_Ascent (Font) + Get_Descent (Font),
+            Text  => Unresolved_File);
+      end if;
 
       if not Item.From_Parsed then
          Render_To_Drawable_Alpha
@@ -882,6 +906,7 @@ package body Browsers.Call_Graph is
    begin
       Push_State (Get_Kernel (Entity), Busy);
       Info := Get_Entity (Entity);
+
       if Info /= No_Entity_Information then
          Examine_Ancestors_Call_Graph (Get_Kernel (Entity), Info);
       else
@@ -891,6 +916,7 @@ package body Browsers.Call_Graph is
                  Mode => Error);
       end if;
 
+      Destroy (Info);
       Pop_State (Get_Kernel (Entity));
 
    exception
@@ -900,6 +926,7 @@ package body Browsers.Call_Graph is
                  & Entity_Name_Information (Entity),
                  Mode => Error);
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Destroy (Info);
          Pop_State (Get_Kernel (Entity));
    end Edit_Ancestors_Call_Graph_From_Contextual;
 
@@ -1113,16 +1140,22 @@ package body Browsers.Call_Graph is
       pragma Unreferenced (Event);
       Context : constant Selection_Context_Access :=
         new Entity_Selection_Context;
-      Filename : constant String := Find_Source_File
-        (Kernel                     => Get_Kernel (Browser),
-         Short_File_Name            => Get_Declaration_File_Of (Item.Entity),
-         Use_Predefined_Source_Path => True);
       Mitem : Gtk_Menu_Item;
    begin
-      Set_File_Information
-        (File_Selection_Context_Access (Context),
-         Directory    => Dir_Name (Filename),
-         File_Name    => Base_Name (Filename));
+      if Get_Declaration_File_Of (Item.Entity) /= ":" then
+         declare
+            Filename : constant String := Find_Source_File
+              (Kernel                 => Get_Kernel (Browser),
+               Short_File_Name        => Get_Declaration_File_Of (Item.Entity),
+               Use_Predefined_Source_Path => True);
+         begin
+            Set_File_Information
+              (File_Selection_Context_Access (Context),
+               Directory    => Dir_Name (Filename),
+               File_Name    => Base_Name (Filename));
+         end;
+      end if;
+
       Set_Entity_Information
         (Entity_Selection_Context_Access (Context),
          Entity_Name => Get_Name (Item.Entity),
