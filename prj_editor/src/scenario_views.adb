@@ -182,7 +182,7 @@ package body Scenario_Views is
    is
       Edit : New_Var_Edit;
    begin
-      Gtk_New (Edit, Data.View.Kernel, Data.Var);
+      Gtk_New (Edit, Data.View.Kernel, Data.Var, -"Editing a variable");
       Show_All (Edit);
       while Run (Edit) = Gtk_Response_OK
         and then not Update_Variable (Edit)
