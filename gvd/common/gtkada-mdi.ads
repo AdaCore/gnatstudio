@@ -32,11 +32,13 @@ pragma Warnings (Off);
 with Gdk.Cursor;
 with Gdk.Types;
 pragma Warnings (On);
+with Gdk.Window;
 with Gtk.Button;
+with Gtk.Fixed;
 with Gtk.Event_Box;
 with Gtk.Handlers;
-with Gtk.Layout;
 with Gtk.Menu;
+with Gtk.Notebook;
 with Gtk.Check_Menu_Item;
 with Gtk.Radio_Menu_Item;
 with Gtk.Widget;
@@ -137,7 +139,7 @@ package Gtkada.MDI is
    --  child is set to floating state.
 
    function Get_Title (Child : access MDI_Child_Record) return String;
-   --  Return the title of a given child.
+   --  Return the title for a specific child
 
    procedure Raise_Child (Child : access MDI_Child_Record'Class);
    --  Put Child in the foreground.
@@ -202,9 +204,9 @@ package Gtkada.MDI is
    --  Widget must be the exact same one you gave in argument to Put.
 
    function Find_MDI_Child
-     (MDI   : access MDI_Window_Record;
-      Title : String) return MDI_Child;
-   --  Return the first MDI_Child whose titlee matches Title.
+     (MDI  : access MDI_Window_Record;
+      Name : String) return MDI_Child;
+   --  Similar to the above, but do the search based on the name of the child.
 
    -----------------------------------
    -- Floating and docking children --
@@ -269,7 +271,7 @@ package Gtkada.MDI is
    --                     return Boolean;
    --
    --    This signal is emitted for each item in the MDI window before it is
-   --    actually delete. The child is destroyed only if the handler returns
+   --    actually deleted. The child is destroyed only if the handler returns
    --    False.
    --    Note that the Child passed in argument is exactly the one you passed
    --    to Put to insert it in the MDI window.
@@ -278,24 +280,19 @@ package Gtkada.MDI is
    --  </signals>
 
 private
-   type State_Type is (Normal, Iconified, Floating, Docked, Embedded);
+
+   type State_Type is (Normal, Iconified, Floating, Docked);
    --  This type indicates the state of an item in the MDI:
    --  - Normal: the item can be manipulated (moved and resized) by the user.
+   --      It is found either in the middle notebook (maximized items), or
+   --      in the layout.
    --  - Iconified: the item has been minimized, and can only be moved by the
-   --      user. No resized is taken into account
+   --      user. No resize is taken into account. The item is also to be
+   --      found in the middle notebook or layout.
    --  - Floating: the item has its own toplevel window, and is thus managed
-   --      by the window manager. It is not really part of the MDI
-   --  - Docked: This only apply to Gtk_Notebook items that are found on each
-   --      side of the MDI. These items can contain any other number of
-   --      embedded items, but can not be moved. They can be resized only
-   --      on one of their side (depending on their location).
-   --      These can never have the focus. Instead, the embedded child has the
-   --      focus.
-   --  - Embedded: the item is invisible. The widget it normally contains has
-   --      been put into one of the dock items, and is completely managed by
-   --      them. The item itself can not be mainpulated, nor even seen, by the
-   --      user. However, it is kept alive so that its docked contents can
-   --      easily be undocked.
+   --      by the window manager.
+   --  - Docked: The item has been put in one of the notebooks on the sides.
+   --      (the middle notebook only contains Normal items).
 
    type MDI_Child_Record is new Gtk.Event_Box.Gtk_Event_Box_Record with record
       Initial : Gtk.Widget.Gtk_Widget;
@@ -305,6 +302,9 @@ private
       --  just in case.
 
       X, Y : Glib.Gint;
+      --  Note: the coordinates of children are the coordinates inside
+      --  MDI.Layout.
+
       State : State_Type := Normal;
 
       Title : GNAT.OS_Lib.String_Access;
@@ -336,78 +336,89 @@ private
    end record;
 
    procedure Gtk_New (Child : out MDI_Child;
-                      Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
-                      Is_Dock : Boolean := False;
-                      Side : Dock_Side := None);
+                      Widget : access Gtk.Widget.Gtk_Widget_Record'Class);
    --  Create a new MDI child that contains widget.
-   --  If Is_Dock is True, then the child is created as a dock on one of the
-   --  sides of MDI (on Side).
 
    procedure Initialize (Child : access MDI_Child_Record;
-                         Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
-                         Is_Dock : Boolean := False;
-                         Side : Dock_Side := None);
+                         Widget : access Gtk.Widget.Gtk_Widget_Record'Class);
    --  Internal initialization function.
    --  See the section "Creating your own widgets" in the documentation.
 
-   type Notebook_Array is array (Dock_Side) of MDI_Child;
+   type Notebook_Array is array (Dock_Side) of Gtk.Notebook.Gtk_Notebook;
+   type Int_Array is array (Left .. Bottom) of Glib.Gint;
+   type Window_Array is array (Left .. Bottom) of Gdk.Window.Gdk_Window;
 
-   use Gdk.Cursor;
-   use Gdk.Types;
+   type MDI_Window_Record is new Gtk.Fixed.Gtk_Fixed_Record with
+      record
+         Items : Gtk.Widget.Widget_List.Glist :=
+           Gtk.Widget.Widget_List.Null_List;
+         --  The list of all MDI children.
 
-   type MDI_Window_Record is new Gtk.Layout.Gtk_Layout_Record with record
-      X_Root, Y_Root : Glib.Gint;
-      --  Root coordinates of the button_press event that generated a move
+         Docks : Notebook_Array := (others => null);
+         --  The five possible docks (one on each side and one in the middle.
+         --  Note that the one in the middle might not be visible, or even
+         --  created, if it is replaced by a Gtk_Layout.
 
-      Selected_Child : MDI_Child;
-      --  The child being moved
+         Layout : Gtk.Fixed.Gtk_Fixed;
+         --  The layout in the middle. It will be hidden when the items are
+         --  maximized and put in the middle dock.
 
-      Current_Cursor : Gdk_Cursor_Type := Left_Ptr;
+         Docks_Size : Int_Array := (others => 0);
+         --  The size (height or width, depending on the location) of each of
+         --  the docks. The size of the middle dock depends on the size of all
+         --  the others.
 
-      Focus_Child : MDI_Child := null;
-      --  The widget that currently has the focus.
+         Handles : Window_Array;
+         --  The four handles that can be manipulated by the user to resize
+         --  the docks. We use separate windows so as not to handle the events
+         --  ourselves, but rely on the X server for this.
 
-      Initial_Width, Initial_Height : Glib.Gint;
-      --  Size of the item at the beginning of the drag operation.
+         Selected : Dock_Side := None;
+         --  The handle that was selected for the resize operation.
 
-      Current_W, Current_H, Current_X, Current_Y : Glib.Gint;
-      --  Current size and location of the widget that is currently
-      --  resized. This is used for non-opaque resizing.
+         Selected_Child : MDI_Child := null;
+         --  The child that was selected for a resize or move operation
 
-      Back_GC : Gdk.GC.Gdk_GC;
-      GC   : Gdk.GC.Gdk_GC;
-      Resize_GC : Gdk.GC.Gdk_GC;
-      Focus_GC : Gdk.GC.Gdk_GC;
-      Title_GC : Gdk.GC.Gdk_GC;
-      --  The graphic contexts to draw the children.
+         Xor_GC   : Gdk.GC.Gdk_GC;
+         --  GC used while resizing or moving a child
 
-      Docks : Notebook_Array;
-      --  The docks on each side of the MDI, where items can be docked.
-      --  Note that these are also inserted into the list of children of MDI.
+         X_Root, Y_Root : Glib.Gint;
+         Current_X, Current_Y, Current_W, Current_H : Glib.Gint;
+         --  The coordinates of the initial click in a move or resize
+         --  operation.
 
-      Invisible_Items : Gtk.Widget.Widget_List.Glist;
-      --  The widgets that are embedded in one of the dock items, or that
-      --  are floating. In both cases, the child of the item is already
-      --  visible elsewhere, and we want to be sure that the MDI_Child is never
-      --  shown on the canvas.
+         Initial_Width, Initial_Height : Glib.Gint;
+         --  Initial size of the child currently being resized.
 
-      MDI_Width, MDI_Height : Glib.Gint := 0;
-      --  Size of the MDI. This is used to avoid infinite loops in
-      --  size_allocate
+         Focus_GC     : Gdk.GC.Gdk_GC;
+         Non_Focus_GC : Gdk.GC.Gdk_GC;
+         --  The various graphic contexts used to draw the titles of the
+         --  children.
 
-      Priorities : Priorities_Array := (0, 1, 2, 3);
+         Current_Cursor : Gdk.Cursor.Gdk_Cursor_Type;
+         --  The cursor currently used within the MDI. It also indicates which
+         --  kind of operation is processing (moving, resizing a corner, ...)
 
-      Menu_Item_Group : Gtk.Widget.Widget_SList.GSlist;
-      --  The group to which the menu items of the children should belong
+         Focus_Child : MDI_Child := null;
+         --  The child that currently has the focus. Some default actions will
+         --  apply to this child only.
+         --  ??? Keypress events should be redirected to this child.
 
-      Menu : Gtk.Menu.Gtk_Menu;
-      Dock_Menu_Item : Gtk.Check_Menu_Item.Gtk_Check_Menu_Item;
-      Dock_Menu_Item_Id : Gtk.Handlers.Handler_Id;
-      Float_Menu_Item : Gtk.Check_Menu_Item.Gtk_Check_Menu_Item;
-      Float_Menu_Item_Id : Gtk.Handlers.Handler_Id;
-      --  The dynamic menu used to provide access to the most common functions
-      --  of MDI.
-   end record;
+         Priorities : Priorities_Array := (0, 1, 2, 3);
+         --  The order in which the docks should be displayed. See the
+         --  description of Priorities_Array.
+
+         Menu_Item_Group : Gtk.Widget.Widget_SList.GSlist;
+         --  The group to which the menu items of the children should belong
+
+         Menu               : Gtk.Menu.Gtk_Menu;
+         Dock_Menu_Item     : Gtk.Check_Menu_Item.Gtk_Check_Menu_Item;
+         Dock_Menu_Item_Id  : Gtk.Handlers.Handler_Id;
+         Float_Menu_Item    : Gtk.Check_Menu_Item.Gtk_Check_Menu_Item;
+         Float_Menu_Item_Id : Gtk.Handlers.Handler_Id;
+         --  The dynamic menu used to provide access to the most common
+         --  functions of MDI.
+      end record;
 
    pragma Inline (Get_Window);
    pragma Inline (Get_Widget);
