@@ -151,7 +151,7 @@ package body Shell is
          Focus_Widget => Gtk_Widget (Get_View (Interactive)),
          Default_Width => 400,
          Default_Height => 100);
-      Set_Title (Child, -"Shell");
+      Set_Title (Child, -"Old Shell");
       Set_Dock_Side (Child, Bottom);
       Dock_Child (Child);
 
