@@ -570,12 +570,12 @@ package body Project_Properties is
       First : Boolean := True;
    begin
       if Editor.Ent /= null then
-         Put_Line ("For "
+         Put_Line ("for "
                    & Editor.Attribute.Name.all
                    & " use """
                    & Get_Text (Editor.Ent) & """;");
       else
-         Put ("For "
+         Put ("for "
               & Editor.Attribute.Name.all
               & " use (");
 
@@ -616,12 +616,12 @@ package body Project_Properties is
       First : Boolean := True;
    begin
       if Editor.Combo /= null then
-         Put_Line ("For "
+         Put_Line ("for "
                    & Editor.Attribute.Name.all
                    & " use """
                    & Get_Text (Get_Entry (Editor.Combo)) & """;");
       else
-         Put ("For "
+         Put ("for "
               & Editor.Attribute.Name.all
               & " use (");
 
