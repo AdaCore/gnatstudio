@@ -276,10 +276,10 @@ package body Commands is
    ----------------------------
 
    procedure Add_Consequence_Action
-     (Item   : Command_Access;
-      Action : Command_Access) is
+     (Item   : access Root_Command'Class;
+      Action : access Root_Command'Class) is
    begin
-      Prepend (Item.Next_Commands, Action);
+      Prepend (Item.Next_Commands, Command_Access (Action));
    end Add_Consequence_Action;
 
    --------------------------

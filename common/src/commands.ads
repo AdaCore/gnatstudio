@@ -95,8 +95,8 @@ package Commands is
    --  the Queue are empty.
 
    procedure Add_Consequence_Action
-     (Item   : Command_Access;
-      Action : Command_Access);
+     (Item   : access Root_Command'Class;
+      Action : access Root_Command'Class);
    --  Add an action that will be enqueued if Item executes successfully.
 
 private
