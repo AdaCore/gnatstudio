@@ -124,6 +124,8 @@ begin
       end;
    end loop;
 
+   Destroy (Main_Debug_Window);
+
 exception
    when E : others =>
       Button := Message_Dialog
