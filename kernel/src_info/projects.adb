@@ -114,11 +114,14 @@ package body Projects is
    procedure Ensure_Source_Files (Project : Project_Type);
    --  Make sure Project.Data.Files has been initialized
 
-   function Get_View (Name : Name_Id) return Prj.Project_Id;
+   function Get_View
+     (Tree : Prj.Project_Tree_Ref; Name : Name_Id) return Prj.Project_Id;
    --  Return the project view for the project Name
 
    function Check_Full_File
-     (File : Name_Id; List : Array_Element_Id) return Array_Element_Id;
+     (Tree    : Prj.Project_Tree_Ref;
+      File    : Name_Id;
+      List    : Array_Element_Id) return Array_Element_Id;
    --  Check whether File is in the List. Return the index in the list
 
    type External_Variable_Callback is access function
@@ -137,7 +140,8 @@ package body Projects is
    --  Callback is called for each of them.
 
    procedure Check_Suffix_List
-     (Filename : String;
+     (Tree     : Prj.Project_Tree_Ref;
+      Filename : String;
       Langs    : String_List_Id;
       List     : in out Array_Element_Id;
       Len      : out Natural);
@@ -154,6 +158,61 @@ package body Projects is
      (Root_Project : Project_Type; Project : Project_Type);
    --  Compute the list of all projects that import, possibly indirectly,
    --  Project.
+
+   function String_Elements
+     (P : Project_Type) return Prj.String_Element_Table.Table_Ptr;
+   function Projects_Table
+     (P : Project_Type) return Prj.Project_Table.Table_Ptr;
+   function Array_Elements
+     (P : Project_Type) return Prj.Array_Element_Table.Table_Ptr;
+   function Packages
+     (P : Project_Type) return Prj.Package_Table.Table_Ptr;
+   pragma Inline (String_Elements);
+   pragma Inline (Projects_Table);
+   pragma Inline (Array_Elements);
+   pragma Inline (Packages);
+   --  Return access to the various tables that contain information about the
+   --  project
+
+   ---------------------
+   -- String_Elements --
+   ---------------------
+
+   function String_Elements
+     (P : Project_Type) return Prj.String_Element_Table.Table_Ptr is
+   begin
+      return P.View_Tree.String_Elements.Table;
+   end String_Elements;
+
+   --------------------
+   -- Projects_Table --
+   --------------------
+
+   function Projects_Table
+     (P : Project_Type) return Prj.Project_Table.Table_Ptr is
+   begin
+      return P.View_Tree.Projects.Table;
+   end Projects_Table;
+
+   --------------------
+   -- Array_Elements --
+   --------------------
+
+   function Array_Elements
+     (P : Project_Type) return Prj.Array_Element_Table.Table_Ptr is
+   begin
+      return P.View_Tree.Array_Elements.Table;
+   end Array_Elements;
+
+   --------------
+   -- Packages --
+   --------------
+
+   function Packages
+     (P : Project_Type) return Prj.Package_Table.Table_Ptr is
+   begin
+      return P.View_Tree.Packages.Table;
+   end Packages;
 
    ----------------
    -- Do_Nothing --
@@ -281,7 +340,8 @@ package body Projects is
       if Project = No_Project then
          return "default";
       else
-         return Get_String (Prj.Tree.Name_Of (Project.Node));
+         return Get_String
+           (Prj.Tree.Name_Of (Project.Node, Project.Tree));
       end if;
    end Project_Name;
 
@@ -294,7 +354,7 @@ package body Projects is
       if Project = No_Project then
          return Name_Default;
       else
-         return Prj.Tree.Name_Of (Project.Node);
+         return Prj.Tree.Name_Of (Project.Node, Project.Tree);
       end if;
    end Project_Name;
 
@@ -309,10 +369,10 @@ package body Projects is
          return "";
       elsif View = Prj.No_Project then
          --  Still needed for the project wizard
-         return Get_String (Path_Name_Of (Project.Node));
-      else
          return Get_String
-           (Prj.Projects.Table (View).Display_Path_Name);
+           (Path_Name_Of (Project.Node, Project.Tree));
+      else
+         return Get_String (Projects_Table (Project)(View).Display_Path_Name);
       end if;
    end Project_Path;
 
@@ -337,13 +397,14 @@ package body Projects is
 
       else
          declare
-            Src     : String_List_Id := Prj.Projects.Table (View).Source_Dirs;
-            Count   : constant Natural    := Length (Src);
+            Src     : String_List_Id :=
+              Projects_Table (Project)(View).Source_Dirs;
+            Count   : constant Natural    := Length (Project.View_Tree, Src);
             Sources : Name_Id_Array (1 .. Count);
          begin
             for C in Sources'Range loop
-               Sources (C) := String_Elements.Table (Src).Display_Value;
-               Src         := String_Elements.Table (Src).Next;
+               Sources (C) := String_Elements (Project)(Src).Display_Value;
+               Src := String_Elements (Project)(Src).Next;
             end loop;
             return Sources;
          end;
@@ -369,7 +430,8 @@ package body Projects is
          P := Current (Iter);
          exit when P = No_Project;
          Count := Count
-           + Length (Prj.Projects.Table (Get_View (P)).Source_Dirs);
+           + Length (Project.View_Tree,
+                     Projects_Table (Project)(Get_View (P)).Source_Dirs);
          Next (Iter);
       end loop;
 
@@ -380,15 +442,15 @@ package body Projects is
          P := Current (Iter);
          exit when P = No_Project;
 
-         Src := Prj.Projects.Table (Get_View (P)).Source_Dirs;
+         Src := Projects_Table (Project)(Get_View (P)).Source_Dirs;
 
          while Src /= Nil_String loop
             Sources (Index) := new String'
               (Name_As_Directory
                  (Normalize_Pathname
-                    (Get_String (String_Elements.Table (Src).Display_Value))));
+                    (Get_String (String_Elements (P)(Src).Display_Value))));
             Index := Index + 1;
-            Src   := String_Elements.Table (Src).Next;
+            Src   := String_Elements (P)(Src).Next;
          end loop;
 
          Next (Iter);
@@ -408,13 +470,15 @@ package body Projects is
       if not Recursive then
          if Project.Data.Non_Recursive_Include_Path = null then
             Project.Data.Non_Recursive_Include_Path := new String'
-              (Prj.Env.Ada_Include_Path (Get_View (Project), Recursive));
+              (Prj.Env.Ada_Include_Path
+                 (Get_View (Project), Project.View_Tree, Recursive));
          end if;
 
          return Project.Data.Non_Recursive_Include_Path.all;
       end if;
 
-      return Prj.Env.Ada_Include_Path (Get_View (Project), Recursive);
+      return Prj.Env.Ada_Include_Path
+        (Get_View (Project), Project.View_Tree, Recursive);
    end Include_Path;
 
    -----------------
@@ -430,10 +494,10 @@ package body Projects is
          return "";
 
       elsif Recursive then
-         return Prj.Env.Ada_Objects_Path (View).all;
-      elsif Prj.Projects.Table (View).Display_Object_Dir /= No_Name then
+         return Prj.Env.Ada_Objects_Path (View, Project.View_Tree).all;
+      elsif Projects_Table (Project)(View).Display_Object_Dir /= No_Name then
          return Get_String
-           (Prj.Projects.Table (View).Display_Object_Dir);
+           (Projects_Table (Project)(View).Display_Object_Dir);
       else
          return "";
       end if;
@@ -445,7 +509,8 @@ package body Projects is
 
    function Direct_Sources_Count (Project : Project_Type) return Natural is
    begin
-      return Length (Prj.Projects.Table (Get_View (Project)).Sources);
+      return Length (Project.View_Tree,
+                     Projects_Table (Project)(Get_View (Project)).Sources);
    end Direct_Sources_Count;
 
    ------------
@@ -497,10 +562,10 @@ package body Projects is
          Count := Direct_Sources_Count (Project);
          Project.Data.Files := new File_Array (1 .. Count);
 
-         Src  := Prj.Projects.Table (Get_View (Project)).Sources;
+         Src  := Projects_Table (Project)(Get_View (Project)).Sources;
 
          while Src /= Nil_String loop
-            Get_Name_String (String_Elements.Table (Src).Display_Value);
+            Get_Name_String (String_Elements (Project)(Src).Display_Value);
 
             declare
                File : constant String := Name_Buffer (1 .. Name_Len);
@@ -510,7 +575,7 @@ package body Projects is
                Index := Index + 1;
             end;
 
-            Src := String_Elements.Table (Src).Next;
+            Src := String_Elements (Project)(Src).Next;
          end loop;
       end if;
    end Ensure_Source_Files;
@@ -579,7 +644,8 @@ package body Projects is
    -----------------------
 
    procedure Check_Suffix_List
-     (Filename           : String;
+     (Tree               : Prj.Project_Tree_Ref;
+      Filename           : String;
       Langs              : String_List_Id;
       List               : in out Array_Element_Id;
       Len                : out Natural)
@@ -590,7 +656,7 @@ package body Projects is
       L    : String_List_Id;
    begin
       while List /= No_Array_Element loop
-         Lang := Array_Elements.Table (List).Index;
+         Lang := Tree.Array_Elements.Table (List).Index;
 
          --  We first need to check the naming schemes for the supported
          --  languages (in case they redefine some of the predefined naming
@@ -598,22 +664,22 @@ package body Projects is
          --  list of supported languages, then return any match we had
 
          L     := Langs;
-         Get_Name_String (Array_Elements.Table (List).Value.Value);
+         Get_Name_String (Tree.Array_Elements.Table (List).Value.Value);
          if Suffix_Matches (Filename, Name_Buffer (1 .. Name_Len)) then
             while L /= Nil_String loop
-               if String_Elements.Table (L).Value = Lang then
+               if Tree.String_Elements.Table (L).Value = Lang then
                   Len := Name_Len;
                   return;
                end if;
 
-               L := String_Elements.Table (L).Next;
+               L := Tree.String_Elements.Table (L).Next;
             end loop;
 
             Candidate     := List;
             Candidate_Len := Name_Len;
          end if;
 
-         List := Array_Elements.Table (List).Next;
+         List := Tree.Array_Elements.Table (List).Next;
       end loop;
 
       List := Candidate;
@@ -643,7 +709,7 @@ package body Projects is
          Naming := Standard_Naming_Data;
       else
          View := Get_View (Project);
-         Naming := Prj.Projects.Table (View).Naming;
+         Naming := Projects_Table (Project)(View).Naming;
       end if;
 
       Canonical_Case_File_Name (F);
@@ -652,21 +718,21 @@ package body Projects is
 
       File := Get_String (F);
 
-      Arr := Check_Full_File (File, Naming.Bodies);
+      Arr := Check_Full_File (Project.View_Tree, File, Naming.Bodies);
 
       if Arr = No_Array_Element then
-         Arr := Check_Full_File (File, Naming.Specs);
+         Arr := Check_Full_File (Project.View_Tree, File, Naming.Specs);
 
          if Arr /= No_Array_Element then
             Part      := Unit_Spec;
-            Unit_Name := Array_Elements.Table (Arr).Index;
+            Unit_Name := Array_Elements (Project)(Arr).Index;
             Lang      := Name_Ada;
             return;
          end if;
 
       else
          Part      := Unit_Body;
-         Unit_Name := Array_Elements.Table (Arr).Index;
+         Unit_Name := Array_Elements (Project)(Arr).Index;
          Lang      := Name_Ada;
          return;
       end if;
@@ -674,14 +740,16 @@ package body Projects is
       --  Check exceptions for other languages.
       --  No notion of unit here, so no other file name
 
-      Arr := Check_Full_File (File, Naming.Implementation_Exceptions);
+      Arr := Check_Full_File
+        (Project.View_Tree, File, Naming.Implementation_Exceptions);
 
       if Arr = No_Array_Element then
-         Arr := Check_Full_File (File, Naming.Specification_Exceptions);
+         Arr := Check_Full_File
+           (Project.View_Tree, File, Naming.Specification_Exceptions);
 
          if Arr /= No_Array_Element then
             Part      := Unit_Spec;
-            Lang      := Array_Elements.Table (Arr).Index;
+            Lang      := Array_Elements (Project)(Arr).Index;
             Unit_Name := Get_String (F);
             return;
          end if;
@@ -689,7 +757,7 @@ package body Projects is
       else
          Part      := Unit_Body;
          Unit_Name := Get_String (F);
-         Lang      := Array_Elements.Table (Arr).Index;
+         Lang      := Array_Elements (Project)(Arr).Index;
          return;
       end if;
 
@@ -702,20 +770,20 @@ package body Projects is
       end if;
 
       Arr := Naming.Spec_Suffix;
-      Check_Suffix_List (F, Langs, Arr, Len);
+      Check_Suffix_List (Project.View_Tree, F, Langs, Arr, Len);
       if Arr /= No_Array_Element then
          Part      := Unit_Spec;
          Unit_Name := Get_String (F (F'First .. F'Last - Len));
-         Lang      := Array_Elements.Table (Arr).Index;
+         Lang      := Array_Elements (Project)(Arr).Index;
          return;
       end if;
 
       Arr := Naming.Body_Suffix;
-      Check_Suffix_List (F, Langs, Arr, Len);
+      Check_Suffix_List (Project.View_Tree, F, Langs, Arr, Len);
       if Arr /= No_Array_Element then
          Part      := Unit_Body;
          Unit_Name := Get_String (F (F'First .. F'Last - Len));
-         Lang      := Array_Elements.Table (Arr).Index;
+         Lang      := Array_Elements (Project)(Arr).Index;
          return;
       end if;
 
@@ -878,13 +946,15 @@ package body Projects is
          case Part is
             when Unit_Body | Unit_Separate =>
                Value := Value_Of
-                 (Index => Unit,
-                  In_Array => Prj.Projects.Table (View).Naming.Bodies);
+                 (Index    => Unit,
+                  In_Array => Projects_Table (Project)(View).Naming.Bodies,
+                  In_Tree  => Project.View_Tree);
 
             when Unit_Spec =>
                Value := Value_Of
-                 (Index => Unit,
-                  In_Array => Prj.Projects.Table (View).Naming.Specs);
+                 (Index    => Unit,
+                  In_Array => Projects_Table (Project)(View).Naming.Specs,
+                  In_Tree  => Project.View_Tree);
          end case;
 
          if Value /= Nil_Variable_Value then
@@ -895,12 +965,12 @@ package body Projects is
 
          case Part is
             when Unit_Body =>
-               Arr := Prj.Projects.Table (View).Naming.Body_Suffix;
+               Arr := Projects_Table (Project)(View).Naming.Body_Suffix;
 
             when Unit_Separate =>
                declare
                   N : constant String := Unit_Name & Get_String
-                    (Prj.Projects.Table (View).Naming.Separate_Suffix);
+                    (Projects_Table (Project)(View).Naming.Separate_Suffix);
                begin
                   if not File_Must_Exist
                     or else Get_Project_From_File
@@ -913,12 +983,13 @@ package body Projects is
                return "";
 
             when Unit_Spec =>
-               Arr := Prj.Projects.Table (View).Naming.Spec_Suffix;
+               Arr := Projects_Table (Project)(View).Naming.Spec_Suffix;
          end case;
 
          declare
             Dot_Replacement : constant String := Get_String
-              (Prj.Projects.Table (Get_View (Project)).Naming.Dot_Replacement);
+              (Projects_Table
+                 (Project)(Get_View (Project)).Naming.Dot_Replacement);
             Uname           : String := Substitute_Dot
               (Unit_Name, Dot_Replacement);
 
@@ -932,10 +1003,10 @@ package body Projects is
             end if;
 
             while Arr /= No_Array_Element loop
-               if Array_Elements.Table (Arr).Index = Name_Ada then
+               if Array_Elements (Project)(Arr).Index = Name_Ada then
                   declare
                      N : constant String := Uname
-                       & Get_String (Array_Elements.Table (Arr).Value.Value);
+                      & Get_String (Array_Elements (Project)(Arr).Value.Value);
                   begin
                      if not File_Must_Exist
                        or else Get_Project_From_File
@@ -946,7 +1017,7 @@ package body Projects is
                   end;
                end if;
 
-               Arr := Array_Elements.Table (Arr).Next;
+               Arr := Array_Elements (Project)(Arr).Next;
             end loop;
          end;
       end if;
@@ -971,14 +1042,14 @@ package body Projects is
       if View /= Prj.No_Project then
          Langs := Get_Attribute_Value (Project, Languages_Attribute).Values;
 
-         Arr := Prj.Projects.Table (View).Naming.Spec_Suffix;
-         Check_Suffix_List (Filename, Langs, Arr, Len);
+         Arr := Projects_Table (Project)(View).Naming.Spec_Suffix;
+         Check_Suffix_List (Project.View_Tree, Filename, Langs, Arr, Len);
          if Arr /= No_Array_Element then
             return Filename'Last - Len;
          end if;
 
-         Arr := Prj.Projects.Table (View).Naming.Body_Suffix;
-         Check_Suffix_List (Filename, Langs, Arr, Len);
+         Arr := Projects_Table (Project)(View).Naming.Body_Suffix;
+         Check_Suffix_List (Project.View_Tree, Filename, Langs, Arr, Len);
          if Arr /= No_Array_Element then
             return Filename'Last - Len;
          end if;
@@ -1064,31 +1135,37 @@ package body Projects is
       if Attribute = Spec_Suffix_Attribute then
          Value := Value_Of
            (Index    => Get_String (Index),
-            In_Array => Prj.Projects.Table (View).Naming.Spec_Suffix);
+            In_Array => Projects_Table (Project)(View).Naming.Spec_Suffix,
+            In_Tree  => Project.View_Tree);
 
       elsif Attribute = Impl_Suffix_Attribute then
          Value := Value_Of
            (Index    => Get_String (Index),
-            In_Array => Prj.Projects.Table (View).Naming.Body_Suffix);
+            In_Array => Projects_Table (Project)(View).Naming.Body_Suffix,
+            In_Tree  => Project.View_Tree);
 
       elsif Attribute = Specification_Suffix_Attribute then
          Value := Value_Of
            (Index    => Get_String (Index),
-            In_Array => Prj.Projects.Table (View).Naming.Specs);
+            In_Array => Projects_Table (Project)(View).Naming.Specs,
+            In_Tree  => Project.View_Tree);
 
       elsif Attribute = Implementation_Suffix_Attribute then
          Value := Value_Of
            (Index    => Get_String (Index),
-            In_Array => Prj.Projects.Table (View).Naming.Bodies);
+            In_Array => Projects_Table (Project)(View).Naming.Bodies,
+            In_Tree  => Project.View_Tree);
 
       elsif Attribute = Separate_Suffix_Attribute then
-         return Get_String (Prj.Projects.Table (View).Naming.Separate_Suffix);
+         return Get_String
+           (Projects_Table (Project)(View).Naming.Separate_Suffix);
 
       elsif Attribute = Casing_Attribute then
-         return Prj.Image (Prj.Projects.Table (View).Naming.Casing);
+         return Prj.Image (Projects_Table (Project)(View).Naming.Casing);
 
       elsif Attribute = Dot_Replacement_Attribute then
-         return Get_String (Prj.Projects.Table (View).Naming.Dot_Replacement);
+         return Get_String
+           (Projects_Table (Project)(View).Naming.Dot_Replacement);
 
       else
          Value := Get_Attribute_Value (Project, Attribute, Index);
@@ -1131,22 +1208,26 @@ package body Projects is
       if Pkg_Name /= "" then
          Pkg := Value_Of
            (Get_String (Pkg_Name),
-            In_Packages => Prj.Projects.Table (Project_View).Decl.Packages);
+            In_Packages =>
+              Projects_Table (Project)(Project_View).Decl.Packages,
+            In_Tree => Project.View_Tree);
          if Pkg = No_Package then
             return (1 .. 0 => (No_Name, Nil_Variable_Value));
          end if;
-         Arr := Packages.Table (Pkg).Decl.Arrays;
+         Arr := Packages (Project)(Pkg).Decl.Arrays;
       else
-         Arr := Prj.Projects.Table (Project_View).Decl.Arrays;
+         Arr := Projects_Table (Project)(Project_View).Decl.Arrays;
       end if;
 
       N := Get_String (Attribute_Name);
-      Elem := Value_Of (N, In_Arrays => Arr);
+      Elem := Value_Of (N,
+                        In_Arrays => Arr,
+                        In_Tree   => Project.View_Tree);
 
       Elem2 := Elem;
       while Elem2 /= No_Array_Element loop
          Count := Count + 1;
-         Elem2 := Array_Elements.Table (Elem2).Next;
+         Elem2 := Array_Elements (Project)(Elem2).Next;
       end loop;
 
       declare
@@ -1155,10 +1236,10 @@ package body Projects is
          Count := Result'First;
 
          while Elem /= No_Array_Element loop
-            Result (Count) := (Index => Array_Elements.Table (Elem).Index,
-                               Value => Array_Elements.Table (Elem).Value);
+            Result (Count) := (Index => Array_Elements (Project)(Elem).Index,
+                               Value => Array_Elements (Project)(Elem).Value);
             Count := Count + 1;
-            Elem := Array_Elements.Table (Elem).Next;
+            Elem := Array_Elements (Project)(Elem).Next;
          end loop;
 
          return Result;
@@ -1177,7 +1258,7 @@ package body Projects is
       Value    : constant Variable_Value := Get_Attribute_Value
         (Project, Attribute, Index);
    begin
-      return To_Argument_List (Value);
+      return To_Argument_List (Project.View_Tree, Value);
    end Get_Attribute_Value;
 
    -------------------
@@ -1221,7 +1302,8 @@ package body Projects is
          exit when P = No_Project;
 
          Num_Languages := Num_Languages + Length
-           (Get_Attribute_Value (P, Languages_Attribute).Values);
+           (P.View_Tree,
+            Get_Attribute_Value (P, Languages_Attribute).Values);
          Next (Iter);
       end loop;
 
@@ -1247,8 +1329,8 @@ package body Projects is
                while Value /= Nil_String loop
                   Add_Language
                     (Lang, Index,
-                     Get_String (String_Elements.Table (Value).Value));
-                  Value := String_Elements.Table (Value).Next;
+                     Get_String (String_Elements (P)(Value).Value));
+                  Value := String_Elements (P)(Value).Next;
                end loop;
             end if;
 
@@ -1305,7 +1387,7 @@ package body Projects is
       else
          declare
             Exec : constant String := Get_String
-              (Prj.Projects.Table (Get_View (Project)).Display_Exec_Dir);
+              (Projects_Table (Project)(Get_View (Project)).Display_Exec_Dir);
          begin
             if Exec /= "" then
                return Name_As_Directory (Exec);
@@ -1335,7 +1417,7 @@ package body Projects is
 
       if Root_Project.Data.Imported_Projects = null then
          Root_Project.Data.Imported_Projects := new Name_Id_Array'
-           (Topological_Sort (Root_Project.Node));
+           (Topological_Sort (Root_Project.Tree, Root_Project.Node));
          if Active (Debug) then
             Trace (Debug, "Start: compute deps for "
                    & Project_Name (Root_Project));
@@ -1390,23 +1472,25 @@ package body Projects is
          return;
       end if;
 
-      With_Clause := First_With_Clause_Of (Parent.Node);
+      With_Clause := First_With_Clause_Of (Parent.Node, Parent.Tree);
       while With_Clause /= Empty_Node loop
-         if Project_Node_Of (With_Clause) = Child.Node then
+         if Project_Node_Of (With_Clause, Parent.Tree) = Child.Node then
             Imports         := True;
             Is_Limited_With :=
-              Non_Limited_Project_Node_Of (With_Clause) = Empty_Node;
+              Non_Limited_Project_Node_Of (With_Clause, Parent.Tree)
+              = Empty_Node;
             return;
          end if;
 
-         With_Clause := Next_With_Clause_Of (With_Clause);
+         With_Clause := Next_With_Clause_Of (With_Clause, Parent.Tree);
       end loop;
 
       --  Handling for extending projects ?
 
       if Include_Extended then
          Extended := Extended_Project_Of
-           (Project_Declaration_Of (Parent.Node));
+           (Project_Declaration_Of (Parent.Node, Parent.Tree),
+            Parent.Tree);
          if Extended = Child.Node then
             Imports := True;
             Is_Limited_With := False;
@@ -1464,13 +1548,13 @@ package body Projects is
 
       N := Project.Node;
       loop
-         Decl := Project_Declaration_Of (N);
-         exit when Extending_Project_Of (Decl) = Empty_Node;
-         N := Extending_Project_Of (Decl);
+         Decl := Project_Declaration_Of (N, Project.Tree);
+         exit when Extending_Project_Of (Decl, Project.Tree) = Empty_Node;
+         N := Extending_Project_Of (Decl, Project.Tree);
       end loop;
 
       Current := Get_Project_From_Name
-        (Project.Data.Registry.all, Prj.Tree.Name_Of (N));
+        (Project.Data.Registry.all, Prj.Tree.Name_Of (N, Project.Tree));
       Start := Current;
 
       loop
@@ -1480,7 +1564,7 @@ package body Projects is
          --  root project. Note that no project that appears before Project can
          --  import it, so we can save some time.
 
-         Name := Prj.Tree.Name_Of (Current.Node);
+         Name := Prj.Tree.Name_Of (Current.Node, Project.Tree);
          while Index >= Imported'First loop
             exit when Name = Imported (Index);
             Index := Index - 1;
@@ -1583,7 +1667,7 @@ package body Projects is
       if Project.Data.Importing_Projects = null then
          if Root_Project.Data.Imported_Projects = null then
             Root_Project.Data.Imported_Projects := new Name_Id_Array'
-              (Topological_Sort (Root_Project.Node));
+              (Topological_Sort (Root_Project.Tree, Root_Project.Node));
             Trace (Me, "Start: recomputing dependencies for "
                    & Project_Name (Root_Project));
          end if;
@@ -1769,29 +1853,29 @@ package body Projects is
       ----------------------
 
       function External_Default (Var : Project_Node_Id) return Name_Id is
-         Expr : Project_Node_Id := Expression_Of (Var);
+         Expr : Project_Node_Id := Expression_Of (Var, Project.Tree);
       begin
-         Expr := First_Term   (Expr);
-         Expr := Current_Term (Expr);
+         Expr := First_Term   (Expr, Project.Tree);
+         Expr := Current_Term (Expr, Project.Tree);
 
-         if Kind_Of (Expr) = N_External_Value then
-            Expr := External_Default_Of (Expr);
+         if Kind_Of (Expr, Project.Tree) = N_External_Value then
+            Expr := External_Default_Of (Expr, Project.Tree);
 
             if Expr = Empty_Node then
                return No_Name;
             end if;
 
-            if Kind_Of (Expr) /= N_Literal_String then
-               Expr := First_Term (Expr);
-               Assert (Me, Next_Term (Expr) = Empty_Node,
+            if Kind_Of (Expr, Project.Tree) /= N_Literal_String then
+               Expr := First_Term (Expr, Project.Tree);
+               Assert (Me, Next_Term (Expr, Project.Tree) = Empty_Node,
                        "Default value cannot be a concatenation");
 
-               Expr := Current_Term (Expr);
-               Assert (Me, Kind_Of (Expr) = N_Literal_String,
+               Expr := Current_Term (Expr, Project.Tree);
+               Assert (Me, Kind_Of (Expr, Project.Tree) = N_Literal_String,
                        "Default value can only be literal string");
             end if;
 
-            return String_Value_Of (Expr);
+            return String_Value_Of (Expr, Project.Tree);
          else
             return No_Name;
          end if;
@@ -1806,7 +1890,7 @@ package body Projects is
          List    : in out Scenario_Variable_Array;
          Current : in out Positive)
       is
-         V : constant Name_Id := External_Reference_Of (Var);
+         V : constant Name_Id := External_Reference_Of (Var, Project.Tree);
          N : constant String := Get_String (V);
       begin
          for Index in 1 .. Current - 1 loop
@@ -1820,7 +1904,7 @@ package body Projects is
          List (Current) := Scenario_Variable'
            (Name        => Name_Find,
             Default     => External_Default (Var),
-            String_Type => String_Type_Of (Var));
+            String_Type => String_Type_Of (Var, Project.Tree));
          Current := Current + 1;
       end Add_If_Not_In_List;
 
@@ -1880,7 +1964,10 @@ package body Projects is
    -- Ensure_External_Value --
    ---------------------------
 
-   procedure Ensure_External_Value (Var : Scenario_Variable) is
+   procedure Ensure_External_Value
+     (Var     : Scenario_Variable;
+      Tree    : Project_Node_Tree_Ref)
+   is
       N : constant String := External_Reference_Of (Var);
    begin
       if Prj.Ext.Value_Of (Var.Name) = No_Name then
@@ -1888,9 +1975,9 @@ package body Projects is
             Prj.Ext.Add (N, External_Default (Var));
          else
             Get_Name_String
-              (String_Value_Of (First_Literal_String (Var.String_Type)));
-            Prj.Ext.Add
-              (N, Name_Buffer (Name_Buffer'First .. Name_Len));
+              (String_Value_Of
+                 (First_Literal_String (Var.String_Type, Tree), Tree));
+            Prj.Ext.Add (N, Name_Buffer (Name_Buffer'First .. Name_Len));
          end if;
       end if;
    end Ensure_External_Value;
@@ -1969,10 +2056,13 @@ package body Projects is
    -- Get_View --
    --------------
 
-   function Get_View (Name : Name_Id) return Prj.Project_Id is
+   function Get_View
+     (Tree : Prj.Project_Tree_Ref; Name : Name_Id) return Prj.Project_Id is
    begin
-      for J in Prj.Projects.Table'First .. Prj.Projects.Last loop
-         if Prj.Projects.Table (J).Name = Name then
+      for J in
+        Tree.Projects.Table'First .. Project_Table.Last (Tree.Projects)
+      loop
+         if Tree.Projects.Table (J).Name = Name then
             return J;
          end if;
       end loop;
@@ -1989,7 +2079,9 @@ package body Projects is
       if Project.Node = Empty_Node then
          return Prj.No_Project;
       elsif Project.Data.View = Prj.No_Project then
-         Project.Data.View := Get_View (Prj.Tree.Name_Of (Project.Node));
+         Project.Data.View :=
+           Get_View (Project.View_Tree,
+                     Prj.Tree.Name_Of (Project.Node, Project.Tree));
       end if;
 
       if Project.Data.View = Prj.No_Project then
@@ -2004,34 +2096,36 @@ package body Projects is
    ---------------------
 
    function Check_Full_File
-     (File : Name_Id; List : Array_Element_Id) return Array_Element_Id
+     (Tree    : Prj.Project_Tree_Ref;
+      File    : Name_Id;
+      List    : Array_Element_Id) return Array_Element_Id
    is
       Prefix : Array_Element_Id := List;
       Str    : String_List_Id;
    begin
       while Prefix /= No_Array_Element loop
-         case Array_Elements.Table (Prefix).Value.Kind is
+         case Tree.Array_Elements.Table (Prefix).Value.Kind is
             when Undefined =>
                null;
 
             --  Naming exceptions for languages other than Ada
             when Prj.List =>
-               Str := Array_Elements.Table (Prefix).Value.Values;
+               Str := Tree.Array_Elements.Table (Prefix).Value.Values;
                while Str /= Nil_String loop
-                  if String_Elements.Table (Str).Value = File then
+                  if Tree.String_Elements.Table (Str).Value = File then
                      return Prefix;
                   end if;
-                  Str := String_Elements.Table (Str).Next;
+                  Str := Tree.String_Elements.Table (Str).Next;
                end loop;
 
             --  Naming exceptions for Ada
             when Single =>
-               if Array_Elements.Table (Prefix).Value.Value = File then
+               if Tree.Array_Elements.Table (Prefix).Value.Value = File then
                   return Prefix;
                end if;
          end case;
 
-         Prefix := Array_Elements.Table (Prefix).Next;
+         Prefix := Tree.Array_Elements.Table (Prefix).Next;
       end loop;
       return No_Array_Element;
    end Check_Full_File;
@@ -2041,13 +2135,16 @@ package body Projects is
    ----------------------
 
    procedure Create_From_Node
-     (Project  : out Project_Type;
-      Registry : Abstract_Registry'Class;
-      Node     : Prj.Tree.Project_Node_Id) is
+     (Project   : out Project_Type;
+      Registry  : Abstract_Registry'Class;
+      Tree      : Prj.Tree.Project_Node_Tree_Ref;
+      View_Tree : Prj.Project_Tree_Ref;
+      Node      : Prj.Tree.Project_Node_Id) is
    begin
       Assert (Me, Registry in Project_Registry'Class,
               "Invalid type for Registry");
       Project.Node := Node;
+      Project.Tree := Tree;
 
       if Project.Data = null then
          Project.Data := new Project_Type_Data;
@@ -2056,6 +2153,7 @@ package body Projects is
       Project.Data.Registry := new Project_Registry'Class'
         (Project_Registry'Class (Registry));
       Project.Data.View := Prj.No_Project;
+      Project.View_Tree := View_Tree;
 
       Trace (Debug, "Create_From_Node: "  & Project_Name (Project));
    end Create_From_Node;
@@ -2098,22 +2196,22 @@ package body Projects is
       begin
          --  For all the packages and the common section
          while Pkg /= Empty_Node loop
-            Var := First_Variable_Of (Pkg);
+            Var := First_Variable_Of (Pkg, Project.Tree);
             while Var /= Empty_Node loop
-               if Kind_Of (Var) = N_Typed_Variable_Declaration
-                 and then Is_External_Variable (Var)
+               if Kind_Of (Var, Project.Tree) = N_Typed_Variable_Declaration
+                 and then Is_External_Variable (Var, Project.Tree)
                  and then not Callback (Var, Prj)
                then
                   exit;
                end if;
 
-               Var := Next_Variable (Var);
+               Var := Next_Variable (Var, Project.Tree);
             end loop;
 
             if Pkg = Prj then
-               Pkg := First_Package_Of (Prj);
+               Pkg := First_Package_Of (Prj, Project.Tree);
             else
-               Pkg := Next_Package_In_Project (Pkg);
+               Pkg := Next_Package_In_Project (Pkg, Project.Tree);
             end if;
          end loop;
       end Process_Prj;
@@ -2200,9 +2298,13 @@ package body Projects is
    -- Is_External_Variable --
    --------------------------
 
-   function Is_External_Variable (Var : Project_Node_Id) return Boolean is
+   function Is_External_Variable
+     (Var     : Prj.Tree.Project_Node_Id;
+      Tree    : Project_Node_Tree_Ref) return Boolean is
    begin
-      return Kind_Of (Current_Term (First_Term (Expression_Of (Var))))
+      return Kind_Of
+        (Current_Term (First_Term (Expression_Of (Var, Tree), Tree), Tree),
+         Tree)
         = N_External_Value;
    end Is_External_Variable;
 
@@ -2210,16 +2312,18 @@ package body Projects is
    -- External_Reference_Of --
    ---------------------------
 
-   function External_Reference_Of (Var : Project_Node_Id) return Name_Id
+   function External_Reference_Of
+     (Var     : Prj.Tree.Project_Node_Id;
+      Tree    : Project_Node_Tree_Ref) return Types.Name_Id
    is
-      Expr : Project_Node_Id := Expression_Of (Var);
+      Expr : Project_Node_Id := Expression_Of (Var, Tree);
    begin
-      Expr := First_Term   (Expr);
-      Expr := Current_Term (Expr);
+      Expr := First_Term   (Expr, Tree);
+      Expr := Current_Term (Expr, Tree);
 
-      if Kind_Of (Expr) = N_External_Value then
-         Expr := External_Reference_Of (Expr);
-         return String_Value_Of (Expr);
+      if Kind_Of (Expr, Tree) = N_External_Value then
+         Expr := External_Reference_Of (Expr, Tree);
+         return String_Value_Of (Expr, Tree);
       else
          return No_Name;
       end if;
@@ -2289,13 +2393,15 @@ package body Projects is
 
    function Parent_Project (Project : Project_Type) return Project_Type is
       Extend : constant Project_Node_Id := Extended_Project_Of
-        (Project_Declaration_Of (Project.Node));
+        (Project_Declaration_Of (Project.Node, Project.Tree),
+         Project.Tree);
    begin
       if Extend = Empty_Node then
          return No_Project;
       else
          return Get_Project_From_Name
-           (Project.Data.Registry.all, Prj.Tree.Name_Of (Extend));
+           (Project.Data.Registry.all,
+            Prj.Tree.Name_Of (Extend, Project.Tree));
       end if;
    end Parent_Project;
 
@@ -2346,22 +2452,26 @@ package body Projects is
          Extend := Project.Node;
 
          while Extending_Project_Of
-           (Project_Declaration_Of (Extend)) /= Empty_Node
+           (Project_Declaration_Of (Extend, Project.Tree),
+            Project.Tree) /= Empty_Node
          loop
             Extend := Extending_Project_Of
-              (Project_Declaration_Of (Extend));
+              (Project_Declaration_Of (Extend, Project.Tree),
+               Project.Tree);
          end loop;
 
       else
          Extend := Extending_Project_Of
-           (Project_Declaration_Of (Project.Node));
+           (Project_Declaration_Of (Project.Node, Project.Tree),
+           Project.Tree);
       end if;
 
       if Extend = Empty_Node then
          return No_Project;
       else
          return Get_Project_From_Name
-           (Project.Data.Registry.all, Prj.Tree.Name_Of (Extend));
+           (Project.Data.Registry.all,
+            Prj.Tree.Name_Of (Extend, Project.Tree));
       end if;
    end Extending_Project;
 
@@ -2473,5 +2583,14 @@ package body Projects is
    begin
       return Info.Has_Files;
    end Directory_Contains_Files;
+
+   --------------
+   -- Get_Tree --
+   --------------
+
+   function Get_Tree (Project : Project_Type) return Project_Tree_Ref is
+   begin
+      return Project.View_Tree;
+   end Get_Tree;
 
 end Projects;

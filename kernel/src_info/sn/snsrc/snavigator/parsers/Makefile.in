@@ -207,7 +207,7 @@ ac_cv_c_itclsh = @ac_cv_c_itclsh@
 AUTOMAKE_OPTIONS = cygnus
 
 #SUBDIRS = common libjcreuse toolbox assembly cobol cpp fortran java @JAVA_PARSER@ @SENDMAIL_PARSER@ tcl python m4
-SUBDIRS = cpp
+SUBDIRS = cpp libjcreuse java
 mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
 CONFIG_HEADER = ../config.h
 CONFIG_CLEAN_FILES = 

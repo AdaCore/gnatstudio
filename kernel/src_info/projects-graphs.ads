@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               GPS                                 --
 --                                                                   --
---                     Copyright (C) 2001-2002                       --
---                            ACT-Europe                             --
+--                     Copyright (C) 2001-2005                       --
+--                            AdaCore                                --
 --                                                                   --
 -- GPS is  free software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -39,13 +39,16 @@ private package Projects.Graphs is
    --  V2.
 
    function Has_Circular_Dependencies
-     (Root_Project : Prj.Tree.Project_Node_Id;
+     (Tree         : Prj.Tree.Project_Node_Tree_Ref;
+      Root_Project : Prj.Tree.Project_Node_Id;
       Factory      : Vertex_Factory := null;
       E_Factory    : Edge_Factory := null) return Boolean;
    --  Return True if there is a circular dependency for the with clauses in
    --  Root_Project.
 
-   function Topological_Sort (Root_Project : Prj.Tree.Project_Node_Id)
+   function Topological_Sort
+     (Tree : Prj.Tree.Project_Node_Tree_Ref;
+      Root_Project : Prj.Tree.Project_Node_Id)
       return Name_Id_Array;
    --  Return the projects sorted topologically (first the root project, down
    --  to the last project, which doesn't import any of the others).

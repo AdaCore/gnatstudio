@@ -53,6 +53,8 @@ with GPS.Kernel.Project;     use GPS.Kernel.Project;
 with GPS.Intl;               use GPS.Intl;
 with Traces;                   use Traces;
 with Ada.Exceptions;           use Ada.Exceptions;
+with Prj.Tree;                 use Prj.Tree;
+with Projects.Registry;        use Projects.Registry;
 
 package body Variable_Editors is
 
@@ -141,6 +143,8 @@ package body Variable_Editors is
       Iter            : Gtk_Tree_Iter;
       E               : String_List_Iterator;
       Is_Default      : Boolean;
+      Tree : constant Project_Node_Tree_Ref :=
+        Get_Tree (Project_Registry (Get_Registry (Kernel).all));
 
    begin
       Editor := new New_Var_Edit_Record;
@@ -228,10 +232,10 @@ package body Variable_Editors is
 
          Is_Default := True;
 
-         E := Value_Of (Var);
+         E := Value_Of (Tree, Var);
          while not Done (E) loop
             declare
-               S : constant String := Get_String (Data (E));
+               S : constant String := Get_String (Data (Tree, E));
             begin
                Append (Editor.Model, Iter, Null_Iter);
                Is_Default := External_Default (Var) = S;
@@ -243,7 +247,7 @@ package body Variable_Editors is
                   Is_Editable => True);
 
                Is_Default := False;
-               E := Next (E);
+               E := Next (Tree, E);
             end;
          end loop;
       end if;
@@ -326,6 +330,8 @@ package body Variable_Editors is
       Num_Rows : Natural := 0;
       Message  : Message_Dialog_Buttons;
       pragma Unreferenced (Message);
+      Tree : constant Project_Node_Tree_Ref :=
+        Get_Tree (Project_Registry (Get_Registry (Editor.Kernel).all));
 
    begin
       if New_Name = "" then
@@ -452,14 +458,14 @@ package body Variable_Editors is
 
          --  Delete the values that no longer exist
 
-         Val_Iter := Value_Of (Editor.Var);
+         Val_Iter := Value_Of (Tree, Editor.Var);
          while not Done (Val_Iter) loop
             Found := False;
             Iter := Get_Iter_First (Editor.Model);
 
             while Iter /= Null_Iter loop
                if Get_String (Editor.Model, Iter, Value_Column) =
-                 Get_String (Data (Val_Iter))
+                 Get_String (Data (Tree, Val_Iter))
                then
                   Found := True;
                   exit;
@@ -471,11 +477,11 @@ package body Variable_Editors is
             if not Found then
                Remove_Value (Get_Project (Editor.Kernel),
                              External_Reference_Of (Editor.Var),
-                             Get_String (Data (Val_Iter)));
+                             Get_String (Data (Tree, Val_Iter)));
                Changed := True;
             end if;
 
-            Val_Iter := Next (Val_Iter);
+            Val_Iter := Next (Tree, Val_Iter);
          end loop;
       end if;
 
@@ -499,15 +505,15 @@ package body Variable_Editors is
 
             begin
                if Name /= New_Value_Name then
-                  Val_Iter := Value_Of (Editor.Var);
+                  Val_Iter := Value_Of (Tree, Editor.Var);
 
                   while not Done (Val_Iter) loop
-                     if Name = Get_String (Data (Val_Iter)) then
+                     if Name = Get_String (Data (Tree, Val_Iter)) then
                         Found := True;
                         exit;
                      end if;
 
-                     Val_Iter := Next (Val_Iter);
+                     Val_Iter := Next (Tree, Val_Iter);
                   end loop;
 
                   if not Found then

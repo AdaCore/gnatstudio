@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2002-2004                       --
---                            ACT-Europe                             --
+--                     Copyright (C) 2002-2005                       --
+--                               AdaCore                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -303,6 +303,14 @@ package Projects.Registry is
       Source_Filename : VFS.Virtual_File;
       Filter          : Projects.Name_Id_Array) return Boolean;
    --  Return True if Source_Filename's language is in Filter
+
+   --------------
+   -- Internal --
+   --------------
+
+   function Get_Tree
+     (Registry : Project_Registry) return Prj.Tree.Project_Node_Tree_Ref;
+   --  Return the current project tree
 
 private
 

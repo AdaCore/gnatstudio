@@ -1929,7 +1929,7 @@ package body Switches_Editors is
                --  "-O" and "-O1" are the same.
                declare
                   Default_Args : constant Argument_List :=
-                                   To_Argument_List (Value);
+                                  To_Argument_List (Get_Tree (Project), Value);
                   Default_Args_N : Argument_List := Normalize_Compiler_Switches
                     (Page, Default_Args);
                   A : Argument_List :=

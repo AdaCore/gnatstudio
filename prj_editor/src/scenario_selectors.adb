@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2002                            --
---                            ACT-Europe                             --
+--                     Copyright (C) 2002-2005                       --
+--                            AdaCore                                --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -43,6 +43,7 @@ with Projects.Registry;        use Projects.Registry;
 with GNAT.OS_Lib;              use GNAT.OS_Lib;
 with Ada.Unchecked_Deallocation;
 with Histories;                use Histories;
+with Prj.Tree;                 use Prj.Tree;
 
 package body Scenario_Selectors is
 
@@ -482,6 +483,8 @@ package body Scenario_Selectors is
    procedure Show_Variables
      (Selector : access Scenario_Selector_Record'Class)
    is
+      Tree : constant Prj.Tree.Project_Node_Tree_Ref :=
+        Get_Tree (Project_Registry (Get_Registry (Selector.Kernel).all));
       Vars : constant Scenario_Variable_Array := Scenario_Variables
         (Selector.Kernel);
       Iter, Child : Gtk_Tree_Iter;
@@ -501,18 +504,18 @@ package body Scenario_Selectors is
          declare
             Current : constant String := Value_Of (Vars (V));
          begin
-            Value := Value_Of (Vars (V));
+            Value := Value_Of (Tree, Vars (V));
             while not Done (Value) loop
                Append (Selector.Model, Child, Iter);
                Set (Selector.Model,
                     Child,
                     Column => Selected_Column,
-                    Value  => Get_String (Data (Value)) = Current);
+                    Value  => Get_String (Data (Tree, Value)) = Current);
                Set (Selector.Model,
                     Child,
                     Column => Var_Name_Column,
-                    Value  => Get_String (Data (Value)));
-               Value := Next (Value);
+                    Value  => Get_String (Data (Tree, Value)));
+               Value := Next (Tree, Value);
             end loop;
          end;
 

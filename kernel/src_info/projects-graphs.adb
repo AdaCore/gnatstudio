@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2002                         --
---                            ACT-Europe                             --
+--                        Copyright (C) 2002-2005                    --
+--                            AdaCore                                --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -58,7 +58,8 @@ package body Projects.Graphs is
    --  Dummy function, so that Name_Vertex is no longer abstract
 
    function Dependency_Graph
-     (Root_Project : Prj.Tree.Project_Node_Id;
+     (Tree         : Project_Node_Tree_Ref;
+      Root_Project : Prj.Tree.Project_Node_Id;
       Factory      : Vertex_Factory := null;
       E_Factory    : Edge_Factory := null;
       Add_Limited_Withs : Boolean) return Glib.Graphs.Graph;
@@ -122,7 +123,8 @@ package body Projects.Graphs is
    ----------------------
 
    function Dependency_Graph
-     (Root_Project : Project_Node_Id;
+     (Tree         : Project_Node_Tree_Ref;
+      Root_Project : Project_Node_Id;
       Factory      : Vertex_Factory := null;
       E_Factory    : Edge_Factory := null;
       Add_Limited_Withs : Boolean)
@@ -208,7 +210,7 @@ package body Projects.Graphs is
             end if;
          end Add_Project;
 
-         With_Clause : Project_Node_Id := First_With_Clause_Of (Project);
+         With_Clause : Project_Node_Id := First_With_Clause_Of (Project, Tree);
          Extended    : Project_Node_Id;
       begin
          while With_Clause /= Empty_Node loop
@@ -217,21 +219,22 @@ package body Projects.Graphs is
             --  project would not appear first in the topological sort, and
             --  then Projects.Start returns invalid results at least when
             --  its Recursive parameters is set to False.
-            if Project_Node_Of (With_Clause) /= Root_Project then
-               Add_Project (Project_Node_Of (With_Clause),
-                            Prj.Tree.Name_Of (With_Clause),
+            if Project_Node_Of (With_Clause, Tree) /= Root_Project then
+               Add_Project (Project_Node_Of (With_Clause, Tree),
+                            Prj.Tree.Name_Of (With_Clause, Tree),
                             Limited_With =>
-                              Non_Limited_Project_Node_Of (With_Clause) =
+                              Non_Limited_Project_Node_Of (With_Clause, Tree) =
                               Empty_Node);
             end if;
-            With_Clause := Next_With_Clause_Of (With_Clause);
+            With_Clause := Next_With_Clause_Of (With_Clause, Tree);
          end loop;
 
          --  Is this an extending project ?
 
-         Extended := Extended_Project_Of (Project_Declaration_Of (Project));
+         Extended := Extended_Project_Of
+           (Project_Declaration_Of (Project, Tree), Tree);
          if Extended /= Empty_Node then
-            Add_Project (Extended, Prj.Tree.Name_Of (Extended),
+            Add_Project (Extended, Prj.Tree.Name_Of (Extended, Tree),
                          Limited_With => False);
          end if;
       end Process_Project;
@@ -239,7 +242,7 @@ package body Projects.Graphs is
       Origin : Vertex_Access;
    begin
       Set_Directed (G, True);
-      Origin := Create_Project_Vertex (Prj.Tree.Name_Of (Root_Project));
+      Origin := Create_Project_Vertex (Prj.Tree.Name_Of (Root_Project, Tree));
       Process_Project (Root_Project, Origin);
       Reset (Table);
       return G;
@@ -250,13 +253,14 @@ package body Projects.Graphs is
    -------------------------------
 
    function Has_Circular_Dependencies
-     (Root_Project : Project_Node_Id;
+     (Tree         : Project_Node_Tree_Ref;
+      Root_Project : Project_Node_Id;
       Factory      : Vertex_Factory := null;
       E_Factory    : Edge_Factory := null)
       return Boolean
    is
       G : Graph := Dependency_Graph
-        (Root_Project, Factory, E_Factory, Add_Limited_Withs => False);
+        (Tree, Root_Project, Factory, E_Factory, Add_Limited_Withs => False);
       Result : constant Boolean := not Is_Acyclic (G);
    begin
       Destroy (G);
@@ -267,11 +271,13 @@ package body Projects.Graphs is
    -- Topological_Sort --
    ----------------------
 
-   function Topological_Sort (Root_Project : Prj.Tree.Project_Node_Id)
+   function Topological_Sort
+     (Tree : Project_Node_Tree_Ref;
+      Root_Project : Prj.Tree.Project_Node_Id)
       return Name_Id_Array
    is
       G : Graph := Dependency_Graph
-        (Root_Project, null, Add_Limited_Withs => True);
+        (Tree, Root_Project, null, Add_Limited_Withs => True);
       Vertices : constant Depth_Vertices_Array := Depth_First_Search (G);
       List : Name_Id_Array (1 .. Vertices'Length);
    begin

@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                   Copyright (C) 2001-2003                         --
---                            ACT-Europe                             --
+--                   Copyright (C) 2001-2005                         --
+--                            AdaCore                                --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -43,7 +43,9 @@ package body Projects.Editor.Normalize is
    procedure Free is new Unchecked_Deallocation
      (External_Variable_Value_Array, External_Variable_Value_Array_Access);
 
-   function Clone_Project (Project : Project_Node_Id) return Project_Node_Id;
+   function Clone_Project
+     (Tree    : Project_Node_Tree_Ref;
+      Project : Project_Node_Id) return Project_Node_Id;
    --  Return a duplicate of Project and its declarations. We do not duplicate
    --  declarative items.
    --  The new project is not independent of the old one, since most of the
@@ -56,7 +58,8 @@ package body Projects.Editor.Normalize is
    --  Last is the index of the last item that was set in To.
 
    function Create_Case_Construction
-     (Project       : Project_Node_Id;
+     (Tree          : Project_Node_Tree_Ref;
+      Project       : Project_Node_Id;
       External_Name : Name_Id;
       Var_Type      : Project_Node_Id)
       return Project_Node_Id;
@@ -65,26 +68,32 @@ package body Projects.Editor.Normalize is
    --  project if no variable was found that already referenced Name.
 
    function Values_Matches
-     (Var_Name  : Name_Id;
+     (Tree      : Project_Node_Tree_Ref;
+      Var_Name  : Name_Id;
       Case_Item : Project_Node_Id;
       Values    : External_Variable_Value_Array) return Boolean;
    --  Return True if (Var_Name, Var_Value) is valid with regards to Values
 
    procedure Add_To_Case_Items
-     (Case_Construction : Project_Node_Id;
+     (Tree              : Project_Node_Tree_Ref;
+      Case_Construction : Project_Node_Id;
       Decl_List         : Project_Node_Id);
    --  Copy all the declarative items from Decl_List into each of the case
    --  items of Case_Construction (at the beginning of each case item)
 
    procedure Set_Uniq_Type_Name
-     (Project  : Project_Node_Id; Var_Type : Project_Node_Id);
+     (Tree     : Project_Node_Tree_Ref;
+      Project  : Project_Node_Id;
+      Var_Type : Project_Node_Id);
    --  Set the name for the N_String_Type_Declaration Var_Type, so that it is
    --  uniq in the project.
    --  Var_Type shouldn't have been added to the project yet.
 
    function External_Variable_Name
-     (Current_Project : Project_Node_Id; Ref : Project_Node_Id)
-      return Types.Name_Id;
+     (Tree            : Project_Node_Tree_Ref;
+      Current_Project : Project_Node_Id;
+      Ref             : Project_Node_Id)
+      return Name_Id;
    --  Return the name of the external variable referenced by Ref.
    --  The declaration of the variable is looked in Current_Project, unless
    --  another project is specified in the variable reference
@@ -96,19 +105,21 @@ package body Projects.Editor.Normalize is
    ----------------------------
 
    function External_Variable_Name
-     (Current_Project : Project_Node_Id; Ref : Project_Node_Id)
+     (Tree            : Project_Node_Tree_Ref;
+      Current_Project : Project_Node_Id;
+      Ref             : Project_Node_Id)
       return Name_Id
    is
-      N : constant Name_Id := Prj.Tree.Name_Of (Ref);
+      N : constant Name_Id := Prj.Tree.Name_Of (Ref, Tree);
       Pkg : Project_Node_Id;
       Variable : Variable_Node_Id;
       Recurse_In_Pkg : Boolean := False;
 
    begin
-      if Package_Node_Of (Ref) /= Empty_Node then
-         Pkg := Package_Node_Of (Ref);
-      elsif Project_Node_Of (Ref) /= Empty_Node then
-         Pkg := Project_Node_Of (Ref);
+      if Package_Node_Of (Ref, Tree) /= Empty_Node then
+         Pkg := Package_Node_Of (Ref, Tree);
+      elsif Project_Node_Of (Ref, Tree) /= Empty_Node then
+         Pkg := Project_Node_Of (Ref, Tree);
       else
          Pkg := Current_Project;
          Recurse_In_Pkg := True;
@@ -119,23 +130,23 @@ package body Projects.Editor.Normalize is
       --  it is specified in the file itself.
 
       while Pkg /= Empty_Node loop
-         Variable := First_Variable_Of (Pkg);
+         Variable := First_Variable_Of (Pkg, Tree);
          while Variable /= Empty_Node loop
-            if (Kind_Of (Variable) = N_Variable_Declaration
-                or else Kind_Of (Variable) = N_Typed_Variable_Declaration)
-              and then Prj.Tree.Name_Of (Variable) = N
+            if (Kind_Of (Variable, Tree) = N_Variable_Declaration
+               or else Kind_Of (Variable, Tree) = N_Typed_Variable_Declaration)
+              and then Prj.Tree.Name_Of (Variable, Tree) = N
             then
-               return External_Reference_Of (Variable);
+               return External_Reference_Of (Variable, Tree);
             end if;
 
-            Variable := Next_Variable (Variable);
+            Variable := Next_Variable (Variable, Tree);
          end loop;
 
          if Recurse_In_Pkg then
             if Pkg = Current_Project then
-               Pkg := First_Package_Of (Pkg);
+               Pkg := First_Package_Of (Pkg, Tree);
             else
-               Pkg := Next_Package_In_Project (Pkg);
+               Pkg := Next_Package_In_Project (Pkg, Tree);
             end if;
          end if;
       end loop;
@@ -179,6 +190,7 @@ package body Projects.Editor.Normalize is
      (Root_Project       : Project_Type;
       Recurse            : Boolean := False)
    is
+      Tree : constant Project_Node_Tree_Ref := Root_Project.Tree;
       Values       : External_Variable_Value_Array_Access := null;
       Last_Values  : Natural;
       --  Representation of the state of the case construction that is being
@@ -223,14 +235,14 @@ package body Projects.Editor.Normalize is
 
       procedure Check_Index_Sensitivity (Decl_Item : Project_Node_Id) is
          Current : constant Project_Node_Id :=
-           Current_Item_Node (Decl_Item);
+           Current_Item_Node (Decl_Item, Tree);
       begin
-         if Kind_Of (Current) = N_Attribute_Declaration then
-            if Case_Insensitive (Current) then
-               Get_Name_String (Associative_Array_Index_Of (Current));
+         if Kind_Of (Current, Tree) = N_Attribute_Declaration then
+            if Case_Insensitive (Current, Tree) then
+               Get_Name_String (Associative_Array_Index_Of (Current, Tree));
                To_Lower (Name_Buffer (1 .. Name_Len));
 
-               Set_Associative_Array_Index_Of (Current, Name_Find);
+               Set_Associative_Array_Index_Of (Current, Tree, Name_Find);
             end if;
          end if;
       end Check_Index_Sensitivity;
@@ -254,7 +266,8 @@ package body Projects.Editor.Normalize is
 
          procedure Add_Decl_Item (To_Case_Item : Project_Node_Id) is
          begin
-            Add_At_End (To_Case_Item, Clone_Node (Decl_Item, True));
+            Add_At_End
+              (Tree, To_Case_Item, Clone_Node (Tree, Decl_Item, True));
          end Add_Decl_Item;
 
       begin
@@ -263,18 +276,18 @@ package body Projects.Editor.Normalize is
             return;
          end if;
 
-         pragma Assert (Kind_Of (Decl_Item) = N_Declarative_Item);
+         pragma Assert (Kind_Of (Decl_Item, Tree) = N_Declarative_Item);
 
          while Decl_Item /= Empty_Node loop
-            Current := Current_Item_Node (Decl_Item);
+            Current := Current_Item_Node (Decl_Item, Tree);
 
             --  Save the next item, since the current item will be inserted in
             --  a different list, and thus its next field will be modified.
 
-            Next_Item := Next_Declarative_Item (Decl_Item);
-            Set_Next_Declarative_Item (Decl_Item, Empty_Node);
+            Next_Item := Next_Declarative_Item (Decl_Item, Tree);
+            Set_Next_Declarative_Item (Decl_Item, Tree, Empty_Node);
 
-            case Kind_Of (Current) is
+            case Kind_Of (Current, Tree) is
                when N_Package_Declaration =>
                   --  Skip subpackages, since these must appear after every
                   --  other declarative item in the normalized project.
@@ -282,7 +295,9 @@ package body Projects.Editor.Normalize is
 
                when N_Case_Construction =>
                   Name := External_Variable_Name
-                    (Project_Norm, Case_Variable_Reference_Of (Current));
+                    (Tree,
+                     Project_Norm,
+                     Case_Variable_Reference_Of (Current, Tree));
 
                   if Name = No_Name then
                      Trace (Me, "Normalizing a project with a non-scenario "
@@ -290,14 +305,14 @@ package body Projects.Editor.Normalize is
 
                      Raise_Exception
                        (Normalize_Error'Identity,
-                        Get_String (Prj.Tree.Name_Of (Project))
+                        Get_String (Prj.Tree.Name_Of (Project, Tree))
                         & Prj.Project_File_Extension & ": "
                         & (-"Case constructions referencing non-external"
                            & " variables can not be modified"));
                   end if;
 
                   Var_Type := String_Type_Of
-                    (Case_Variable_Reference_Of (Current));
+                    (Case_Variable_Reference_Of (Current, Tree), Tree);
 
                   --  Do we already have this variable in values
                   --  If yes, this means we have something similar to:
@@ -318,7 +333,7 @@ package body Projects.Editor.Normalize is
                      end if;
                   end loop;
 
-                  Case_Item := First_Case_Item_Of (Current);
+                  Case_Item := First_Case_Item_Of (Current, Tree);
 
                   --  For all the case items in the current case construction
 
@@ -327,21 +342,21 @@ package body Projects.Editor.Normalize is
 
                      if Already_Have_Var then
                         Match := Values_Matches
-                          (Name, Case_Item,
+                          (Tree, Name, Case_Item,
                            Values (Values'First .. Last_Values));
 
                      else
                         Match := True;
-                        Choice := First_Choice_Of (Case_Item);
+                        Choice := First_Choice_Of (Case_Item, Tree);
                         while Choice /= Empty_Node loop
                            Add_Value
                              (Values, Last_Values,
                               External_Variable_Value'
                               (Var_Type,
                                Name,
-                               String_Value_Of (Choice),
+                               String_Value_Of (Choice, Tree),
                                False));
-                           Choice := Next_Literal_String (Choice);
+                           Choice := Next_Literal_String (Choice, Tree);
                         end loop;
                      end if;
 
@@ -349,7 +364,7 @@ package body Projects.Editor.Normalize is
                         --  Process the declarative list of items
 
                         Process_Declarative_List
-                          (First_Declarative_Item_Of (Case_Item), To);
+                          (First_Declarative_Item_Of (Case_Item, Tree), To);
 
                         --  Negate all the values
 
@@ -358,7 +373,7 @@ package body Projects.Editor.Normalize is
                         end loop;
                      end if;
 
-                     Case_Item := Next_Case_Item (Case_Item);
+                     Case_Item := Next_Case_Item (Case_Item, Tree);
                   end loop;
 
                   --  Remove all the entries for the variable in the array
@@ -376,35 +391,37 @@ package body Projects.Editor.Normalize is
                when N_Typed_Variable_Declaration =>
                   declare
                      Save_Type : constant Project_Node_Id := String_Type_Of
-                       (Current);
+                       (Current, Tree);
                   begin
                      --  Make sure that the type declaration is unique for that
                      --  typed variable, since if we decide to remove the
                      --  variable we should remove the type as well.
 
-                     Var_Type := Clone_Node (String_Type_Of (Current), True);
-                     Set_Uniq_Type_Name (Project_Norm, Var_Type);
-                     Set_String_Type_Of (Current, Var_Type);
-                     Add_At_End (Project_Norm, Var_Type,
+                     Var_Type := Clone_Node
+                       (Tree, String_Type_Of (Current, Tree), True);
+                     Set_Uniq_Type_Name (Tree, Project_Norm, Var_Type);
+                     Set_String_Type_Of (Current, Tree, Var_Type);
+                     Add_At_End (Tree, Project_Norm, Var_Type,
                                  Add_Before_First_Case_Or_Pkg => True);
 
                      --  Scenario variables must be defined at the project
                      --  level
                      if Current_Pkg /= Empty_Node
-                       and then Is_External_Variable (Current)
+                       and then Is_External_Variable (Current, Tree)
                      then
                         Add_At_End
-                          (Project_Norm,
-                           Clone_Node (Decl_Item, True),
+                          (Tree,
+                           Project_Norm,
+                           Clone_Node (Tree, Decl_Item, True),
                            Add_Before_First_Case_Or_Pkg => True);
                      else
                         For_Each_Matching_Case_Item
-                          (Project_Norm, Current_Pkg, Case_Construct,
+                          (Tree, Project_Norm, Current_Pkg, Case_Construct,
                            Values (Values'First .. Last_Values),
                            Add_Decl_Item'Unrestricted_Access);
                      end if;
 
-                     Set_String_Type_Of (Current, Save_Type);
+                     Set_String_Type_Of (Current, Tree, Save_Type);
                   end;
 
 
@@ -420,7 +437,9 @@ package body Projects.Editor.Normalize is
 
                   Decl_Item2 := Decl_Item;
                   while Next_Item /= Empty_Node loop
-                     case Kind_Of (Current_Item_Node (Next_Item)) is
+                     case Kind_Of
+                       (Current_Item_Node (Next_Item, Tree), Tree)
+                     is
                         when N_Package_Declaration
                           | N_Case_Construction
                           | N_Typed_Variable_Declaration
@@ -431,15 +450,15 @@ package body Projects.Editor.Normalize is
                            Check_Index_Sensitivity (Next_Item);
                      end case;
 
-                     Set_Next_Declarative_Item (Decl_Item2, Next_Item);
+                     Set_Next_Declarative_Item (Decl_Item2, Tree, Next_Item);
                      Decl_Item2 := Next_Item;
-                     Next_Item  := Next_Declarative_Item (Next_Item);
+                     Next_Item  := Next_Declarative_Item (Next_Item, Tree);
                   end loop;
 
-                  Set_Next_Declarative_Item (Decl_Item2, Empty_Node);
+                  Set_Next_Declarative_Item (Decl_Item2, Tree, Empty_Node);
 
                   For_Each_Matching_Case_Item
-                    (Project_Norm, Current_Pkg, Case_Construct,
+                    (Tree, Project_Norm, Current_Pkg, Case_Construct,
                      Values (Values'First .. Last_Values),
                      Add_Decl_Item'Unrestricted_Access);
             end case;
@@ -469,7 +488,7 @@ package body Projects.Editor.Normalize is
               (1 .. Max_Scenario_Variables);
             Last_Values := Values'First - 1;
 
-            Project_Norm := Clone_Project (Project);
+            Project_Norm := Clone_Project (Tree, Project);
             Current_Pkg := Empty_Node;
             Case_Construct := Empty_Node;
 
@@ -478,8 +497,8 @@ package body Projects.Editor.Normalize is
             --  The top-level part of the project
             Process_Declarative_List
               (From => First_Declarative_Item_Of
-               (Project_Declaration_Of (Project)),
-               To   => Project_Declaration_Of (Project_Norm));
+               (Project_Declaration_Of (Project, Tree), Tree),
+               To   => Project_Declaration_Of (Project_Norm, Tree));
 
             if Last_Values /= Values'First - 1 then
                Free (Values);
@@ -490,11 +509,11 @@ package body Projects.Editor.Normalize is
 
             --  All the subpackages
 
-            Current_Pkg := First_Package_Of (Project);
+            Current_Pkg := First_Package_Of (Project, Tree);
 
             while Current_Pkg /= Empty_Node loop
-               Decl := First_Declarative_Item_Of (Current_Pkg);
-               Set_First_Declarative_Item_Of (Current_Pkg, Empty_Node);
+               Decl := First_Declarative_Item_Of (Current_Pkg, Tree);
+               Set_First_Declarative_Item_Of (Current_Pkg, Tree, Empty_Node);
 
                Case_Construct := Empty_Node;
                Process_Declarative_List
@@ -509,21 +528,22 @@ package body Projects.Editor.Normalize is
                end if;
 
                Add_At_End
-                 (Project_Declaration_Of (Project_Norm), Current_Pkg);
-               Current_Pkg := Next_Package_In_Project (Current_Pkg);
+                 (Tree,
+                  Project_Declaration_Of (Project_Norm, Tree), Current_Pkg);
+               Current_Pkg := Next_Package_In_Project (Current_Pkg, Tree);
             end loop;
 
             Free (Values);
 
-            Post_Process_After_Clone (Project_Norm);
+            Post_Process_After_Clone (Tree, Project_Norm);
 
             --  Directly replace in the table, so that all references to this
             --  project are automatically updated. There is a small memory
             --  leak, but since most of the project tree is shared, it doesn't
             --  really matter in the life of the project editor
 
-            Tree_Private_Part.Project_Nodes.Table (Project) :=
-              Tree_Private_Part.Project_Nodes.Table (Project_Norm);
+            Tree.Project_Nodes.Table (Project) :=
+              Tree.Project_Nodes.Table (Project_Norm);
             Trace (Me, "Done normalizing " & Project_Name (Current (Iter)));
          end if;
 
@@ -535,13 +555,16 @@ package body Projects.Editor.Normalize is
    -- Clone_Project --
    -------------------
 
-   function Clone_Project (Project : Project_Node_Id) return Project_Node_Id is
+   function Clone_Project
+     (Tree    : Project_Node_Tree_Ref;
+      Project : Project_Node_Id) return Project_Node_Id
+   is
       Project2, Decl : Project_Node_Id;
    begin
-      Project2 := Clone_Node (Project);
-      Decl     := Clone_Node (Project_Declaration_Of (Project));
-      Set_Project_Declaration_Of    (Project2, Decl);
-      Set_First_Declarative_Item_Of (Decl, Empty_Node);
+      Project2 := Clone_Node (Tree, Project);
+      Decl     := Clone_Node (Tree, Project_Declaration_Of (Project, Tree));
+      Set_Project_Declaration_Of    (Project2, Tree, Decl);
+      Set_First_Declarative_Item_Of (Decl, Tree, Empty_Node);
       return Project2;
    end Clone_Project;
 
@@ -550,7 +573,8 @@ package body Projects.Editor.Normalize is
    ---------------------------------
 
    procedure For_Each_Scenario_Case_Item
-     (Project : Prj.Tree.Project_Node_Id;
+     (Tree    : Project_Node_Tree_Ref;
+      Project : Prj.Tree.Project_Node_Id;
       Pkg     : Prj.Tree.Project_Node_Id := Prj.Tree.Empty_Node;
       Case_Construct : in out Prj.Tree.Project_Node_Id;
       Scenario_Variables : Projects.Scenario_Variable_Array;
@@ -568,7 +592,7 @@ package body Projects.Editor.Normalize is
             Negated        => False);
       end loop;
       For_Each_Matching_Case_Item
-        (Project, Pkg, Case_Construct, Values, Action);
+        (Tree, Project, Pkg, Case_Construct, Values, Action);
    end For_Each_Scenario_Case_Item;
 
    -------------------------
@@ -576,7 +600,8 @@ package body Projects.Editor.Normalize is
    -------------------------
 
    function Find_Case_Statement
-     (Project : Prj.Tree.Project_Node_Id;
+     (Tree    : Project_Node_Tree_Ref;
+      Project : Prj.Tree.Project_Node_Id;
       Pkg     : Prj.Tree.Project_Node_Id := Prj.Tree.Empty_Node)
       return Project_Node_Id
    is
@@ -587,18 +612,18 @@ package body Projects.Editor.Normalize is
       if Pkg /= Empty_Node then
          Top := Pkg;
       else
-         Top := Project_Declaration_Of (Project);
+         Top := Project_Declaration_Of (Project, Tree);
       end if;
 
-      Decl_Item := First_Declarative_Item_Of (Top);
+      Decl_Item := First_Declarative_Item_Of (Top, Tree);
       while Decl_Item /= Empty_Node loop
-         if Kind_Of (Current_Item_Node (Decl_Item)) =
+         if Kind_Of (Current_Item_Node (Decl_Item, Tree), Tree) =
            N_Case_Construction
          then
-            Case_Construct := Current_Item_Node (Decl_Item);
+            Case_Construct := Current_Item_Node (Decl_Item, Tree);
             exit;
          end if;
-         Decl_Item := Next_Declarative_Item (Decl_Item);
+         Decl_Item := Next_Declarative_Item (Decl_Item, Tree);
       end loop;
 
       return Case_Construct;
@@ -609,7 +634,8 @@ package body Projects.Editor.Normalize is
    --------------------
 
    function Values_Matches
-     (Var_Name  : Name_Id;
+     (Tree      : Project_Node_Tree_Ref;
+      Var_Name  : Name_Id;
       Case_Item : Project_Node_Id;
       Values    : External_Variable_Value_Array) return Boolean
    is
@@ -617,7 +643,7 @@ package body Projects.Editor.Normalize is
       --  then we must match at least one of them. If there are none,
       --  then the case item matches if non of the negated item matches
       Match  : Boolean := True;
-      Choice : Project_Node_Id := First_Choice_Of (Case_Item);
+      Choice : Project_Node_Id := First_Choice_Of (Case_Item, Tree);
    begin
       Choice_Loop :
       while Choice /= Empty_Node loop
@@ -626,14 +652,16 @@ package body Projects.Editor.Normalize is
                --  Change the default value if needed
                Match := Values (J).Negated;
 
-               if Values (J).Variable_Value = String_Value_Of (Choice) then
+               if Values (J).Variable_Value =
+                 String_Value_Of (Choice, Tree)
+               then
                   Match := not Values (J).Negated;
                   exit Choice_Loop;
                end if;
             end if;
          end loop;
 
-         Choice := Next_Literal_String (Choice);
+         Choice := Next_Literal_String (Choice, Tree);
       end loop Choice_Loop;
 
       return Match;
@@ -644,7 +672,8 @@ package body Projects.Editor.Normalize is
    ---------------------------------
 
    procedure For_Each_Matching_Case_Item
-     (Project : Prj.Tree.Project_Node_Id;
+     (Tree    : Project_Node_Tree_Ref;
+      Project : Prj.Tree.Project_Node_Id;
       Pkg     : Prj.Tree.Project_Node_Id := Prj.Tree.Empty_Node;
       Case_Construct : in out Prj.Tree.Project_Node_Id;
       Values  : External_Variable_Value_Array;
@@ -684,7 +713,8 @@ package body Projects.Editor.Normalize is
 
             if not Match then
                return Create_Case_Construction
-                 (Project, Values (J).Variable_Name, Values (J).Variable_Type);
+                 (Tree, Project,
+                  Values (J).Variable_Name, Values (J).Variable_Type);
             end if;
          end loop;
          return Empty_Node;
@@ -696,7 +726,7 @@ package body Projects.Editor.Normalize is
 
       procedure Process_Case_Recursive (Case_Stmt : Project_Node_Id) is
          Name : constant Name_Id := External_Variable_Name
-           (Project, Case_Variable_Reference_Of (Case_Stmt));
+           (Tree, Project, Case_Variable_Reference_Of (Case_Stmt, Tree));
          Current_Item, New_Case : Project_Node_Id;
          Handling_Done : Boolean;
 
@@ -711,23 +741,24 @@ package body Projects.Editor.Normalize is
 
          --  For all possible values of the variable
 
-         Current_Item := First_Case_Item_Of (Case_Stmt);
+         Current_Item := First_Case_Item_Of (Case_Stmt, Tree);
          while Current_Item /= Empty_Node loop
-            if Values_Matches (Name, Current_Item, Values) then
+            if Values_Matches (Tree, Name, Current_Item, Values) then
                Handling_Done := False;
-               New_Case := First_Declarative_Item_Of (Current_Item);
+               New_Case := First_Declarative_Item_Of (Current_Item, Tree);
 
                --  Are there any nested case ?
                while New_Case /= Empty_Node loop
-                  if Kind_Of (Current_Item_Node (New_Case))
+                  if Kind_Of (Current_Item_Node (New_Case, Tree), Tree)
                     = N_Case_Construction
                   then
-                     Process_Case_Recursive (Current_Item_Node (New_Case));
+                     Process_Case_Recursive
+                       (Current_Item_Node (New_Case, Tree));
                      Handling_Done := True;
                      exit;
                   end if;
 
-                  New_Case := Next_Declarative_Item (New_Case);
+                  New_Case := Next_Declarative_Item (New_Case, Tree);
                end loop;
 
                if not Handling_Done then
@@ -739,16 +770,18 @@ package body Projects.Editor.Normalize is
                      --  item to the nested case construction, so that we only
                      --  have declarative items in the most-nested case
                      --  constructions.
-                     if First_Declarative_Item_Of (Current_Item) /=
+                     if First_Declarative_Item_Of (Current_Item, Tree) /=
                        Empty_Node
                      then
                         Add_To_Case_Items
-                          (New_Case, First_Declarative_Item_Of (Current_Item));
+                          (Tree,
+                           New_Case,
+                           First_Declarative_Item_Of (Current_Item, Tree));
                         Set_First_Declarative_Item_Of
-                          (Current_Item, Empty_Node);
+                          (Current_Item, Tree, Empty_Node);
                      end if;
 
-                     Add_At_End (Current_Item, New_Case);
+                     Add_At_End (Tree, Current_Item, New_Case);
                      Process_Case_Recursive (New_Case);
                   end if;
                end if;
@@ -759,7 +792,7 @@ package body Projects.Editor.Normalize is
                end if;
             end if;
 
-            Current_Item := Next_Case_Item (Current_Item);
+            Current_Item := Next_Case_Item (Current_Item, Tree);
          end loop;
 
          Last_Var_Seen := Last_Var_Seen - 1;
@@ -770,13 +803,13 @@ package body Projects.Editor.Normalize is
       if Pkg /= Empty_Node then
          Top := Pkg;
       else
-         Top := Project_Declaration_Of (Project);
+         Top := Project_Declaration_Of (Project, Tree);
       end if;
 
       if Case_Construct = Empty_Node then
          Case_Construct := Create_Case_If_Necessary;
          if Case_Construct /= Empty_Node then
-            Add_At_End (Top, Case_Construct);
+            Add_At_End (Tree, Top, Case_Construct);
          end if;
       end if;
 
@@ -796,15 +829,16 @@ package body Projects.Editor.Normalize is
    -----------------------
 
    procedure Add_To_Case_Items
-     (Case_Construction : Project_Node_Id;
+     (Tree              : Project_Node_Tree_Ref;
+      Case_Construction : Project_Node_Id;
       Decl_List         : Project_Node_Id)
    is
       Case_Item : Project_Node_Id;
    begin
-      Case_Item := First_Case_Item_Of (Case_Construction);
+      Case_Item := First_Case_Item_Of (Case_Construction, Tree);
       while Case_Item /= Empty_Node loop
-         Add_In_Front (Case_Item, Clone_Node (Decl_List, True));
-         Case_Item := Next_Case_Item (Case_Item);
+         Add_In_Front (Tree, Case_Item, Clone_Node (Tree, Decl_List, True));
+         Case_Item := Next_Case_Item (Case_Item, Tree);
       end loop;
    end Add_To_Case_Items;
 
@@ -813,26 +847,27 @@ package body Projects.Editor.Normalize is
    ------------------------
 
    procedure Set_Uniq_Type_Name
-     (Project  : Project_Node_Id;
+     (Tree     : Project_Node_Tree_Ref;
+      Project  : Project_Node_Id;
       Var_Type : Project_Node_Id)
    is
       Candidate : Name_Id;
       Attempt   : Natural := 1;
    begin
       --  Check the type itself
-      Candidate := Name_Of (Var_Type);
+      Candidate := Name_Of (Var_Type, Tree);
 
-      while Find_Type_Declaration (Project, Candidate) /= Empty_Node loop
+      while Find_Type_Declaration (Tree, Project, Candidate) /= Empty_Node loop
          Get_Name_String (Candidate);
 
-         Get_Name_String (Name_Of (Var_Type));
+         Get_Name_String (Name_Of (Var_Type, Tree));
          Add_Str_To_Name_Buffer (Image (Attempt));
          Attempt := Attempt + 1;
 
          Candidate := Name_Find;
       end loop;
 
-      Set_Name_Of (Var_Type, Candidate);
+      Set_Name_Of (Var_Type, Tree, Candidate);
    end Set_Uniq_Type_Name;
 
    ------------------------------
@@ -840,7 +875,8 @@ package body Projects.Editor.Normalize is
    ------------------------------
 
    function Create_Case_Construction
-     (Project       : Project_Node_Id;
+     (Tree          : Project_Node_Tree_Ref;
+      Project       : Project_Node_Id;
       External_Name : Name_Id;
       Var_Type      : Project_Node_Id)
       return Project_Node_Id
@@ -863,17 +899,17 @@ package body Projects.Editor.Normalize is
       --  before the post-processing phase of the normalization.
 
       Decl := First_Declarative_Item_Of
-        (Project_Declaration_Of (Project));
+        (Project_Declaration_Of (Project, Tree), Tree);
       while Decl /= Empty_Node loop
-         Item := Current_Item_Node (Decl);
-         if Kind_Of (Item) = N_Typed_Variable_Declaration then
-            Ref := External_Reference_Of (Item);
+         Item := Current_Item_Node (Decl, Tree);
+         if Kind_Of (Item, Tree) = N_Typed_Variable_Declaration then
+            Ref := External_Reference_Of (Item, Tree);
 
             exit when Ref /= No_Name
               and then Ref = External_Name;
          end if;
          Item := Empty_Node;
-         Decl := Next_Declarative_Item (Decl);
+         Decl := Next_Declarative_Item (Decl, Tree);
       end loop;
 
       --  If not, add the variable and its expression
@@ -881,28 +917,28 @@ package body Projects.Editor.Normalize is
       if Item = Empty_Node then
          Get_Name_String (External_Name);
          Item := Create_Typed_Variable
-           (Project, Name_Buffer (1 .. Name_Len), Var_Type,
+           (Tree, Project, Name_Buffer (1 .. Name_Len), Var_Type,
             Add_Before_First_Case_Or_Pkg => True);
-         Set_Value_As_External (Item, Name_Buffer (1 .. Name_Len));
+         Set_Value_As_External (Tree, Item, Name_Buffer (1 .. Name_Len));
 
          --  Make sure the type is only used for that variable, so that is can
          --  be freely modified. If we already have a type by the same name,
          --  find a new name.
 
-         New_Type := Clone_Node (Var_Type, True);
-         Set_Uniq_Type_Name (Project, New_Type);
-         Set_String_Type_Of (Item, New_Type);
-         Add_In_Front (Project, New_Type);
+         New_Type := Clone_Node (Tree, Var_Type, True);
+         Set_Uniq_Type_Name (Tree, Project, New_Type);
+         Set_String_Type_Of (Item, Tree, New_Type);
+         Add_In_Front (Tree, Project, New_Type);
       end if;
 
-      Construct := Default_Project_Node (N_Case_Construction);
+      Construct := Default_Project_Node (Tree, N_Case_Construction);
       Set_Case_Variable_Reference_Of
-        (Construct, Create_Variable_Reference (Item));
+        (Construct, Tree, Create_Variable_Reference (Tree, Item));
 
-      Str := First_Literal_String (Var_Type);
+      Str := First_Literal_String (Var_Type, Tree);
       while Str /= Empty_Node loop
-         Add_Case_Item (Construct, String_Value_Of (Str));
-         Str := Next_Literal_String (Str);
+         Add_Case_Item (Tree, Construct, String_Value_Of (Str, Tree));
+         Str := Next_Literal_String (Str, Tree);
       end loop;
 
       return Construct;

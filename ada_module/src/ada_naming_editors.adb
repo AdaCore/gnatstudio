@@ -340,7 +340,8 @@ package body Ada_Naming_Editors is
          for Elem in List'Range loop
             declare
                U     : constant String := Get_String (List (Elem).Index);
-               Value : constant String := To_String (List (Elem).Value);
+               Value : constant String :=
+                 To_String (Get_Tree (Project), List (Elem).Value);
             begin
                Data := Get (Cache, U);
                if Data = No_Data
@@ -537,7 +538,8 @@ package body Ada_Naming_Editors is
                   Col   => 0,
                   Unit  => Get_String (Specs (S).Index) & ASCII.NUL,
                   Col2  => 1,
-                  Spec  => To_String (Specs (S).Value) & ASCII.NUL);
+                  Spec  => To_String (Get_Tree (Project), Specs (S).Value)
+                           & ASCII.NUL);
             end loop;
 
             for B in Bodies'Range loop
@@ -563,11 +565,13 @@ package body Ada_Naming_Editors is
                      Col   => 0,
                      Unit  => Get_String (Bodies (B).Index) & ASCII.NUL,
                      Col2  => 2,
-                     Spec  => To_String (Bodies (B).Value) & ASCII.NUL);
+                     Spec  => To_String (Get_Tree (Project),
+                                         Bodies (B).Value) & ASCII.NUL);
                else
                   Set (Editor.GUI.Exception_List_Model, Iter,
                        Column => 2,
-                       Value  => To_String (Bodies (B).Value));
+                       Value  => To_String
+                         (Get_Tree (Project), Bodies (B).Value));
                end if;
             end loop;
          end;

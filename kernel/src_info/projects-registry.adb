@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2002-2004                       --
---                            ACT-Europe                             --
+--                     Copyright (C) 2002-2005                       --
+--                            AdaCore                                --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -124,6 +124,10 @@ package body Projects.Registry is
    use Languages_Htable.String_Hash_Table;
 
    type Project_Registry_Data is record
+      Tree      : Prj.Tree.Project_Node_Tree_Ref;
+      View_Tree : Prj.Project_Tree_Ref;
+      --  The description of the trees
+
       Root    : Project_Type := No_Project;
       --  The root of the project hierarchy
 
@@ -208,11 +212,54 @@ package body Projects.Registry is
    --  Canonicalize the file and directory names in the project tree, as
    --  needed.
 
-   procedure Canonicalize_File_Names_In_Project (P : Project_Type);
+   procedure Canonicalize_File_Names_In_Project
+     (Registry : Project_Registry; P : Project_Type);
    --  Canonicalize the file and directory names for a single project
 
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Scenario_Variable_Array, Scenario_Variable_Array_Access);
+
+   function String_Elements
+     (R : Project_Registry) return Prj.String_Element_Table.Table_Ptr;
+   function Projects_Table
+     (R : Project_Registry) return Prj.Project_Table.Table_Ptr;
+   function Array_Elements
+     (R : Project_Registry) return Prj.Array_Element_Table.Table_Ptr;
+   pragma Inline (String_Elements);
+   pragma Inline (Projects_Table);
+   pragma Inline (Array_Elements);
+   --  Return access to the various tables that contain information about the
+   --  project
+
+   --------------------
+   -- Array_Elements --
+   --------------------
+
+   function Array_Elements
+     (R : Project_Registry) return Prj.Array_Element_Table.Table_Ptr is
+   begin
+      return R.Data.View_Tree.Array_Elements.Table;
+   end Array_Elements;
+
+   --------------------
+   -- Projects_Table --
+   --------------------
+
+   function Projects_Table
+     (R : Project_Registry) return Prj.Project_Table.Table_Ptr is
+   begin
+      return R.Data.View_Tree.Projects.Table;
+   end Projects_Table;
+
+   ---------------------
+   -- String_Elements --
+   ---------------------
+
+   function String_Elements
+     (R : Project_Registry) return Prj.String_Element_Table.Table_Ptr is
+   begin
+      return R.Data.View_Tree.String_Elements.Table;
+   end String_Elements;
 
    ----------------
    -- Do_Nothing --
@@ -333,7 +380,9 @@ package body Projects.Registry is
          if not View_Only then
             Reset (Registry.Data.Projects);
             Prj.Ext.Reset;
-            Prj.Tree.Tree_Private_Part.Projects_Htable.Reset;
+            Reset (Registry.Data.View_Tree);
+            Prj.Tree.Tree_Private_Part.Projects_Htable.Reset
+              (Registry.Data.Tree.Projects_HT);
             Registry.Data.Root := No_Project;
          end if;
 
@@ -356,9 +405,14 @@ package body Projects.Registry is
          Unload_Project (Registry, View_Only);
       else
          Registry.Data := new Project_Registry_Data;
+         Registry.Data.Tree := new Project_Node_Tree_Data;
+         Prj.Tree.Initialize (Registry.Data.Tree);
+         Registry.Data.View_Tree := new Project_Tree_Data;
          Reset (Registry.Data.Sources);
          Reset (Registry.Data.Directories);
       end if;
+
+      Prj.Initialize (Registry.Data.View_Tree);
    end Reset;
 
    ------------------
@@ -378,8 +432,10 @@ package body Projects.Registry is
       Name_Buffer (1 .. Name_Len) := Path;
       P := Get_Project_From_Name (Registry, Name_Find);
       if P = No_Project then
-         Prj.Part.Parse (Node, Normalize_Project_Path (Project_Path), True);
-         P := Get_Project_From_Name (Registry, Prj.Tree.Name_Of (Node));
+         Prj.Part.Parse (Registry.Data.Tree,
+                         Node, Normalize_Project_Path (Project_Path), True);
+         P := Get_Project_From_Name
+           (Registry, Prj.Tree.Name_Of (Node, Registry.Data.Tree));
       end if;
 
       return P;
@@ -459,7 +515,9 @@ package body Projects.Registry is
       Reset (Registry, View_Only => False);
 
       Prj.Com.Fail := Fail'Unrestricted_Access;
-      Prj.Part.Parse (Project, Root_Project_Path, True);
+
+      Prj.Part.Parse
+        (Registry.Data.Tree, Project, Root_Project_Path, True);
       Prj.Com.Fail := null;
 
       Opt.Full_Path_Name_For_Brief_Errors := False;
@@ -474,7 +532,7 @@ package body Projects.Registry is
       end if;
 
       Registry.Data.Root := Get_Project_From_Name
-        (Registry, Prj.Tree.Name_Of (Project));
+        (Registry, Prj.Tree.Name_Of (Project, Registry.Data.Tree));
       Unchecked_Free (Registry.Data.Scenario_Variables);
 
       Set_Status (Registry.Data.Root, From_File);
@@ -512,8 +570,10 @@ package body Projects.Registry is
       Directory : String) is
    begin
       Reset (Registry, View_Only => False);
+      Prj.Tree.Initialize (Registry.Data.Tree);
       Load_Custom_Project
-        (Registry, Create_Default_Project (Registry, "default", Directory));
+        (Registry,
+         Create_Default_Project (Registry, "default", Directory));
    end Load_Default_Project;
 
    --------------------
@@ -528,7 +588,8 @@ package body Projects.Registry is
       Language : constant Name_Id :=
         Get_String (String (Languages_Attribute));
 
-      procedure Report_Error (S : String; Project : Project_Id);
+      procedure Report_Error
+        (S : String; Project : Project_Id; Tree : Project_Tree_Ref);
       --  Handler called when the project parser finds an error
 
       procedure Normalize_View (Project : Project_Type);
@@ -536,7 +597,13 @@ package body Projects.Registry is
       --  languages attribute is lower case.
       --  ??? Should this be done directly by the GNAT parser ?
 
-      procedure Report_Error (S : String; Project : Project_Id) is
+      ------------------
+      -- Report_Error --
+      ------------------
+
+      procedure Report_Error
+        (S : String; Project : Project_Id; Tree : Project_Tree_Ref)
+      is
          P    : Project_Type;
       begin
          if Project = Prj.No_Project then
@@ -554,7 +621,7 @@ package body Projects.Registry is
 
          else
             P := Get_Project_From_Name
-              (Registry, Prj.Projects.Table (Project).Name);
+              (Registry, Tree.Projects.Table (Project).Name);
 
             if Set_As_Incomplete_When_Errors then
                Set_View_Is_Complete (P, False);
@@ -581,18 +648,21 @@ package body Projects.Registry is
 
       procedure Normalize_View (Project : Project_Type) is
          Var : constant Variable_Id :=
-           Prj.Projects.Table (Get_View (Project)).Decl.Attributes;
-         Value : constant Variable_Value := Value_Of (Language, Var);
+           Registry.Data.View_Tree.Projects.Table
+             (Get_View (Project)).Decl.Attributes;
+         Value : constant Variable_Value :=
+           Value_Of (Language, Var, Registry.Data.View_Tree);
          Lang : String_List_Id;
       begin
          if Value /= Nil_Variable_Value then
             Lang := Value.Values;
             while Lang /= Nil_String loop
-               Get_Name_String (String_Elements.Table (Lang).Value);
+               Get_Name_String
+                 (String_Elements (Registry)(Lang).Value);
                To_Lower (Name_Buffer (1 .. Name_Len));
-               String_Elements.Table (Lang).Value := Name_Find;
+               String_Elements (Registry)(Lang).Value := Name_Find;
 
-               Lang := String_Elements.Table (Lang).Next;
+               Lang := String_Elements (Registry)(Lang).Next;
             end loop;
          end if;
       end Normalize_View;
@@ -612,10 +682,12 @@ package body Projects.Registry is
 
       Create_Environment_Variables (Registry);
 
-      Prj.Reset;
       Errout.Initialize;
       Prj.Proc.Process
-        (View, Success, Registry.Data.Root.Node,
+        (Registry.Data.View_Tree,
+         View, Success,
+         Registry.Data.Root.Node,
+         Registry.Data.Tree,
          Report_Error'Unrestricted_Access,
          Follow_Links => not Registry.Data.Trusted_Mode);
 
@@ -703,34 +775,37 @@ package body Projects.Registry is
                Errors
                  (-("gnatls attribute is not the same in this project as in"
                     & " the root project. It will be ignored in the"
-                    & " subproject."), Get_View (P));
+                    & " subproject."), Get_View (P),
+                  Registry.Data.View_Tree);
             end if;
          end;
 
          --  Add the directories
 
-         Sources := Prj.Projects.Table (Get_View (P)).Source_Dirs;
+         Sources := Projects_Table (Registry)(Get_View (P)).Source_Dirs;
          while Sources /= Nil_String loop
             Register_Directory
-              (Get_String (String_Elements.Table (Sources).Value));
-            Sources := String_Elements.Table (Sources).Next;
+              (Get_String (String_Elements (Registry)(Sources).Value));
+            Sources := String_Elements (Registry)(Sources).Next;
          end loop;
 
          Register_Directory
-           (Get_String (Prj.Projects.Table (Get_View (P)).Object_Directory));
+           (Get_String (Projects_Table
+                          (Registry)(Get_View (P)).Object_Directory));
          Register_Directory
-           (Get_String (Prj.Projects.Table (Get_View (P)).Exec_Directory));
+           (Get_String (Projects_Table
+                          (Registry)(Get_View (P)).Exec_Directory));
 
          --  Add the Ada sources that are already in the project.
          --  Convert the names to UTF8 for proper handling in GPS
 
-         Sources := Prj.Projects.Table (Get_View (P)).Sources;
+         Sources := Projects_Table (Registry)(Get_View (P)).Sources;
          while Sources /= Nil_String loop
-            Get_Name_String (String_Elements.Table (Sources).Value);
+            Get_Name_String (String_Elements (Registry)(Sources).Value);
 
             declare
                Current_Source : constant Name_Id :=
-                                  String_Elements.Table (Sources).Value;
+                                  String_Elements (Registry)(Sources).Value;
                --  ??? Should avoid function returning unconstrained array
                UTF8 : constant String := Locale_To_UTF8
                  (Name_Buffer (1 .. Name_Len));
@@ -739,9 +814,10 @@ package body Projects.Registry is
             begin
                Name_Len := UTF8'Length;
                Name_Buffer (1 .. Name_Len) := UTF8;
-               String_Elements.Table (Sources).Value := Name_Find;
+               String_Elements (Registry)(Sources).Value := Name_Find;
 
-               Unit := Prj.Com.Files_Htable.Get (Current_Source);
+               Unit := Files_Htable.Get
+                 (Registry.Data.View_Tree.Files_HT, Current_Source);
 
                --  If we are in the fast-project loading mode, then no symbolic
                --  link is resolved, and files are seend through links. We get
@@ -755,12 +831,13 @@ package body Projects.Registry is
                --  being seen in the explorer.
 
                if Registry.Data.Trusted_Mode then
-                  if Unit /= Prj.Com.No_Unit_Project then
-                     for S in Prj.Com.Spec_Or_Body'Range loop
-                        if Units.Table (Unit.Unit).File_Names (S).Name =
+                  if Unit /= No_Unit_Project then
+                     for S in Spec_Or_Body'Range loop
+                        if Registry.Data.View_Tree.Units.Table
+                          (Unit.Unit).File_Names (S).Name =
                           Current_Source
                         then
-                           Directory := Units.Table
+                           Directory := Registry.Data.View_Tree.Units.Table
                              (Unit.Unit).File_Names (S).Display_Path;
                            exit;
                         end if;
@@ -771,7 +848,7 @@ package body Projects.Registry is
                Set (Registry.Data.Sources,
                     K => UTF8,
                     E => (P, Name_Ada, Directory));
-               Sources := String_Elements.Table (Sources).Next;
+               Sources := String_Elements (Registry)(Sources).Next;
             end;
          end loop;
 
@@ -851,7 +928,9 @@ package body Projects.Registry is
    -- Canonicalize_File_Names_In_Project --
    ----------------------------------------
 
-   procedure Canonicalize_File_Names_In_Project (P : Project_Type) is
+   procedure Canonicalize_File_Names_In_Project
+     (Registry : Project_Registry; P : Project_Type)
+   is
       procedure Process_List (List : Array_Element_Id);
       --  Canonicalize all the files in the given list
 
@@ -861,27 +940,27 @@ package body Projects.Registry is
 
       begin
          while Arr /= No_Array_Element loop
-            case Array_Elements.Table (Arr).Value.Kind is
+            case Array_Elements (Registry)(Arr).Value.Kind is
                when Undefined | Single =>
                   null;  --  Unexpected case, but probably not an error
                   Trace (Me, "Canonicalize_File_Names, error in type");
 
                when Prj.List =>
-                  Str := Array_Elements.Table (Arr).Value.Values;
+                  Str := Array_Elements (Registry)(Arr).Value.Values;
                   while Str /= Nil_String loop
-                     Get_Name_String (String_Elements.Table (Str).Value);
+                     Get_Name_String (String_Elements (Registry)(Str).Value);
                      Canonical_Case_File_Name (Name_Buffer (1 .. Name_Len));
-                     String_Elements.Table (Str).Value := Name_Find;
-                     Str := String_Elements.Table (Str).Next;
+                     String_Elements (Registry)(Str).Value := Name_Find;
+                     Str := String_Elements (Registry)(Str).Next;
                   end loop;
             end case;
 
-            Arr := Array_Elements.Table (Arr).Next;
+            Arr := Array_Elements (Registry)(Arr).Next;
          end loop;
       end Process_List;
 
       Naming : constant Naming_Data :=
-        Prj.Projects.Table (Get_View (P)).Naming;
+        Projects_Table (Registry)(Get_View (P)).Naming;
    begin
       Process_List (Naming.Implementation_Exceptions);
       Process_List (Naming.Specification_Exceptions);
@@ -901,7 +980,7 @@ package body Projects.Registry is
          P := Current (Iter);
          exit when P = No_Project;
 
-         Canonicalize_File_Names_In_Project (P);
+         Canonicalize_File_Names_In_Project (Registry, P);
 
          Next (Iter);
       end loop;
@@ -917,7 +996,8 @@ package body Projects.Registry is
       Reset_Environment_Variables (Registry);
 
       for J in Registry.Data.Scenario_Variables'Range loop
-         Ensure_External_Value (Registry.Data.Scenario_Variables (J));
+         Ensure_External_Value (Registry.Data.Scenario_Variables (J),
+                                Registry.Data.Tree);
       end loop;
    end Create_Environment_Variables;
 
@@ -986,10 +1066,12 @@ package body Projects.Registry is
             Errors (-("Warning, duplicate source file ") & F
                     & " (already in "
                     & Project_Name (Src.Project) & ')',
-                    Get_View (Project));
+                    Get_View (Project),
+                   Registry.Data.View_Tree);
          else
             Errors (-("Warning, duplicate source file ")
-                    & F, Get_View (Project));
+                    & F, Get_View (Project),
+                    Registry.Data.View_Tree);
          end if;
       end Process_Explicit_Source;
 
@@ -1002,16 +1084,19 @@ package body Projects.Registry is
       is
          Full_Path : constant Name_Id := Get_String (Dir & Display_File);
       begin
-         String_Elements.Increment_Last;
-         String_Elements.Table (String_Elements.Last) :=
+         String_Element_Table.Increment_Last
+           (Registry.Data.View_Tree.String_Elements);
+         String_Elements (Registry)
+          (String_Element_Table.Last (Registry.Data.View_Tree.String_Elements))
+           :=
            (Value         => Full_Path,
             Display_Value => Get_String (Display_File),
             Flag          => False,  --  Irrelevant for files
             Location      => No_Location,
             Index         => 0,
-            Next          => Prj.Projects.Table (Get_View (Project)).Sources);
-         Prj.Projects.Table (Get_View (Project)).Sources :=
-           String_Elements.Last;
+            Next     => Projects_Table (Registry)(Get_View (Project)).Sources);
+         Projects_Table (Registry)(Get_View (Project)).Sources :=
+           String_Element_Table.Last (Registry.Data.View_Tree.String_Elements);
 
          Set (Registry.Data.Sources, K => File,
               E => (Project, Lang, Full_Path));
@@ -1043,12 +1128,12 @@ package body Projects.Registry is
       --  We already know if the directories contain Ada files. Update the
       --  status accordingly, in case they don't contain any other file
 
-      Dirs_List := Prj.Projects.Table (Get_View (Project)).Source_Dirs;
+      Dirs_List := Projects_Table (Registry)(Get_View (Project)).Source_Dirs;
       while Dirs_List /= Nil_String loop
          Update_Directory_Cache
-           (Project, Get_String (String_Elements.Table (Dirs_List).Value),
-            String_Elements.Table (Dirs_List).Flag);
-         Dirs_List := String_Elements.Table (Dirs_List).Next;
+           (Project, Get_String (String_Elements (Registry)(Dirs_List).Value),
+            String_Elements (Registry)(Dirs_List).Flag);
+         Dirs_List := String_Elements (Registry)(Dirs_List).Next;
       end loop;
 
       --  Nothing to do if the only language is Ada, since this has already
@@ -1067,18 +1152,19 @@ package body Projects.Registry is
 
       declare
          Data : constant Project_Data :=
-           Prj.Projects.Table (Get_View (Project));
+           Projects_Table (Registry)(Get_View (Project));
          Sources : constant Variable_Value :=
-           Prj.Util.Value_Of (Name_Source_Files, Data.Decl.Attributes);
+           Prj.Util.Value_Of (Name_Source_Files, Data.Decl.Attributes,
+                              Registry.Data.View_Tree);
          File : String_List_Id := Sources.Values;
 
       begin
          if not Sources.Default then
             Sources_Specified := True;
             while File /= Nil_String loop
-               Get_Name_String (String_Elements.Table (File).Value);
+               Get_Name_String (String_Elements (Registry)(File).Value);
                Process_Explicit_Source (Name_Buffer (1 .. Name_Len));
-               File := String_Elements.Table (File).Next;
+               File := String_Elements (Registry)(File).Next;
             end loop;
          end if;
       end;
@@ -1088,9 +1174,10 @@ package body Projects.Registry is
 
       declare
          Data : constant Project_Data :=
-           Prj.Projects.Table (Get_View (Project));
+           Projects_Table (Registry)(Get_View (Project));
          Source_List_File : constant Variable_Value :=
-           Prj.Util.Value_Of (Name_Source_List_File, Data.Decl.Attributes);
+           Prj.Util.Value_Of (Name_Source_List_File, Data.Decl.Attributes,
+                              Registry.Data.View_Tree);
          File : Prj.Util.Text_File;
          Line : String (1 .. 2000);
          Last : Natural;
@@ -1244,7 +1331,8 @@ package body Projects.Registry is
                if Errors /= null then
                   Errors (-("Warning, no source files for ")
                           & Error (Error'First .. Error'Last - 2),
-                          Get_View (Project));
+                          Get_View (Project),
+                          Registry.Data.View_Tree);
                end if;
             end;
          end if;
@@ -1294,7 +1382,8 @@ package body Projects.Registry is
          P := Get (Registry.Data.Projects, Name_Buffer (1 .. Name_Len));
 
          if P = No_Project then
-            Node := Prj.Tree.Tree_Private_Part.Projects_Htable.Get (Name).Node;
+            Node := Prj.Tree.Tree_Private_Part.Projects_Htable.Get
+              (Registry.Data.Tree.Projects_HT, Name).Node;
 
             if Node = Empty_Node then
                P := No_Project;
@@ -1302,7 +1391,9 @@ package body Projects.Registry is
                       & Get_String (Name) & " wasn't found");
 
             else
-               Create_From_Node (P, Registry, Node);
+               Create_From_Node
+                 (P, Registry, Registry.Data.Tree,
+                  Registry.Data.View_Tree, Node);
                Set (Registry.Data.Projects, Name_Buffer (1 .. Name_Len), P);
             end if;
          end if;
@@ -1410,7 +1501,8 @@ package body Projects.Registry is
       Prj.Register_Default_Naming_Scheme
         (Language            => Get_String (To_Lower (Language_Name)),
          Default_Spec_Suffix => Get_String (Default_Spec_Suffix),
-         Default_Body_Suffix => Get_String (Default_Body_Suffix));
+         Default_Body_Suffix => Get_String (Default_Body_Suffix),
+         In_Tree             => Registry.Data.View_Tree);
 
       Add_Language_Extension (Registry, Language_Name, Default_Spec_Suffix);
       Add_Language_Extension (Registry, Language_Name, Default_Body_Suffix);
@@ -1525,6 +1617,7 @@ package body Projects.Registry is
    begin
       Pretty_Print
         (Project.Node,
+         Project_Registry (Get_Registry (Project)).Data.Tree,
          Increment,
          False,
          Minimize_Empty_Lines,
@@ -1541,8 +1634,6 @@ package body Projects.Registry is
       Namet.Initialize;
       Csets.Initialize;
       Snames.Initialize;
-      Prj.Initialize;
-      Prj.Tree.Initialize;
 
       Name_C_Plus_Plus := Get_String (Cpp_String);
       Any_Attribute_Name := Get_String (Any_Attribute);
@@ -1555,15 +1646,7 @@ package body Projects.Registry is
 
    procedure Finalize is
    begin
-      Prj.Reset;
       Prj.Ext.Reset;
-      Prj.Tree.Tree_Private_Part.Projects_Htable.Reset;
-
-      --  The following call appears as double-deallocation in gnatmem, but
-      --  this is just because that package uses realloc() internally, which
-      --  is not handled by gnatmem
-      Prj.Tree.Tree_Private_Part.Project_Nodes.Free;
-
       Namet.Finalize;
       Stringt.Initialize;
 
@@ -1994,5 +2077,16 @@ package body Projects.Registry is
          Free (Current);
          Close (Fd);
    end Compute_Predefined_Paths;
+
+   --------------
+   -- Get_Tree --
+   --------------
+
+   function Get_Tree
+     (Registry : Project_Registry) return Project_Node_Tree_Ref
+   is
+   begin
+      return Registry.Data.Tree;
+   end Get_Tree;
 
 end Projects.Registry;

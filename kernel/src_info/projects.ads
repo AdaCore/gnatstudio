@@ -502,7 +502,9 @@ package Projects is
    --  Return the default value for the external variable, computed for the
    --  current view of the project.
 
-   procedure Ensure_External_Value (Var : Scenario_Variable);
+   procedure Ensure_External_Value
+     (Var     : Scenario_Variable;
+      Tree    : Prj.Tree.Project_Node_Tree_Ref);
    --  Make sure that an external value is defined for the variable Var. If
    --  none exists, the default value defined in the project hierarchy is used.
    --  This function can be called before a view has been computed for the
@@ -560,11 +562,17 @@ package Projects is
    --  incomplete, since the user doesn't really have control over the contents
    --  of this project.
 
+   function Get_Tree (Project : Project_Type) return Prj.Project_Tree_Ref;
+   --  The tree to which the project belongs
+
+
 private
    type Project_Type_Data;
    type Project_Type_Data_Access is access Project_Type_Data;
    type Project_Type is record
-      Node : Prj.Tree.Project_Node_Id;
+      Node      : Prj.Tree.Project_Node_Id;
+      Tree      : Prj.Tree.Project_Node_Tree_Ref;
+      View_Tree : Prj.Project_Tree_Ref;
 
       Data : Project_Type_Data_Access;
       --  This is an access type for several reasons:
@@ -586,14 +594,18 @@ private
    --  Return the view of the project
 
    procedure Create_From_Node
-     (Project : out Project_Type;
-      Registry : Abstract_Registry'Class;
-      Node : Prj.Tree.Project_Node_Id);
+     (Project   : out Project_Type;
+      Registry  : Abstract_Registry'Class;
+      Tree      : Prj.Tree.Project_Node_Tree_Ref;
+      View_Tree : Prj.Project_Tree_Ref;
+      Node      : Prj.Tree.Project_Node_Id);
    --  Create a new project type from a tree node.
    --  Registry should really be of type Projects.Registry.Project_Registry.
    --  You should never call this function yourself, since the project also
    --  needs to be registered in the registry. Use Get_Project_From_Name from
    --  name instead.
+   --  (Tree, View_Tree) are used to identify to which of the loaded project
+   --  trees the project belongs. These must have been initialized first.
 
    procedure Update_Directory_Cache
      (Project   : Project_Type;
@@ -611,11 +623,13 @@ private
    --  Indicate whether the view for the project was correctly computed.
 
    function Is_External_Variable
-     (Var : Prj.Tree.Project_Node_Id) return Boolean;
+     (Var     : Prj.Tree.Project_Node_Id;
+      Tree    : Prj.Tree.Project_Node_Tree_Ref) return Boolean;
    --  Return True if Var is a reference to an external variable
 
-   function External_Reference_Of (Var : Prj.Tree.Project_Node_Id)
-      return Types.Name_Id;
+   function External_Reference_Of
+     (Var     : Prj.Tree.Project_Node_Id;
+      Tree    : Prj.Tree.Project_Node_Tree_Ref) return Types.Name_Id;
    --  Returns the name of the external variable referenced by Var.
    --  No_String is returned if Var doesn't reference an external variable.
 
@@ -653,7 +667,7 @@ private
      (others => No_Variable);
 
    No_Project : constant Project_Type :=
-     (Prj.Tree.Empty_Node, null);
+     (Prj.Tree.Empty_Node, null, null, null);
 
    All_Languages : constant Name_Id_Array :=
      (1 .. 0 => Types.No_Name);

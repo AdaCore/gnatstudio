@@ -161,7 +161,8 @@ private package Projects.Editor.Normalize is
    --  Matching all case items.
 
    procedure For_Each_Matching_Case_Item
-     (Project : Prj.Tree.Project_Node_Id;
+     (Tree    : Project_Node_Tree_Ref;
+      Project : Prj.Tree.Project_Node_Id;
       Pkg     : Prj.Tree.Project_Node_Id := Prj.Tree.Empty_Node;
       Case_Construct : in out Prj.Tree.Project_Node_Id;
       Values  : External_Variable_Value_Array;
@@ -187,7 +188,8 @@ private package Projects.Editor.Normalize is
    --  do not already have a case construct.
 
    procedure For_Each_Scenario_Case_Item
-     (Project            : Prj.Tree.Project_Node_Id;
+     (Tree    : Project_Node_Tree_Ref;
+      Project            : Prj.Tree.Project_Node_Id;
       Pkg                : Prj.Tree.Project_Node_Id := Prj.Tree.Empty_Node;
       Case_Construct     : in out Prj.Tree.Project_Node_Id;
       Scenario_Variables : Projects.Scenario_Variable_Array;
@@ -207,7 +209,8 @@ private package Projects.Editor.Normalize is
    --  are empty.
 
    function Find_Case_Statement
-     (Project : Prj.Tree.Project_Node_Id;
+     (Tree    : Project_Node_Tree_Ref;
+      Project : Prj.Tree.Project_Node_Id;
       Pkg     : Prj.Tree.Project_Node_Id := Prj.Tree.Empty_Node)
       return Project_Node_Id;
    --  Return the first case statement in Project/Pkg.

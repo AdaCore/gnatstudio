@@ -512,7 +512,9 @@ package body Project_Viewers is
 
       Internal (Get_Object (Viewer.Model), Iter'Address,
                 Compiler_Switches_Column,
-                Locale_To_UTF8 (To_String (Value)) & ASCII.NUL,
+                Locale_To_UTF8
+                  (To_String (Get_Tree (Viewer.Current_Project), Value))
+                  & ASCII.NUL,
                 Compiler_Color_Column, Color);
    end Project_Viewers_Set;
 

@@ -53,7 +53,8 @@ package Projects.Editor is
    function Get_String (Str : String) return Types.Name_Id;
    --  Convert Str to a name_id
 
-   function Length (List : Prj.String_List_Id) return Natural;
+   function Length
+     (Tree : Prj.Project_Tree_Ref; List : Prj.String_List_Id) return Natural;
    --  Return the number of elements in the list.
 
    --------------
@@ -138,7 +139,8 @@ package Projects.Editor is
    --  does nothing.
 
    function Find_Project_Of_Package
-     (Project : Project_Type; Pkg_Name : String) return Project_Type;
+     (Project  : Project_Type;
+      Pkg_Name : String) return Project_Type;
    --  Return the id of the project that contains Pkg_Name. It will be
    --  different from Project if the package declaration is a renaming of
    --  another package.
@@ -176,16 +178,19 @@ package Projects.Editor is
    --  type is Type_Name.
 
    function Get_Environment
-     (Var_Or_Attribute : Project_Node_Id) return Types.Name_Id;
+     (Tree             : Project_Node_Tree_Ref;
+      Var_Or_Attribute : Project_Node_Id) return Types.Name_Id;
    --  Return the name of the environment variable associated with
    --  Var_Or_Attribute. No_String is returned in case there is no such
    --  variable.
 
-   function To_String (Value : Variable_Value) return String;
+   function To_String
+     (Tree : Prj.Project_Tree_Ref; Value : Variable_Value) return String;
    --  Convert a variable value to a string suitable for insertion in the list.
 
-   function To_Argument_List (Value : Variable_Value)
-      return GNAT.OS_Lib.Argument_List;
+   function To_Argument_List
+     (Tree  : Prj.Project_Tree_Ref;
+      Value : Prj.Variable_Value) return GNAT.OS_Lib.Argument_List;
    --  Convert a variable value to a list of arguments.
 
    procedure Add_Scenario_Variable_Values
@@ -329,22 +334,29 @@ package Projects.Editor is
    function Done (Iter : String_List_Iterator) return Boolean;
    --  Return True if Iter is past the end of the list of strings
 
-   function Next (Iter : String_List_Iterator) return String_List_Iterator;
+   function Next
+     (Tree : Prj.Tree.Project_Node_Tree_Ref;
+      Iter : String_List_Iterator) return String_List_Iterator;
    --  Return the next item in the list
 
    function Data (Iter : String_List_Iterator) return Project_Node_Id;
-   function Data (Iter : String_List_Iterator) return Types.Name_Id;
+   function Data
+     (Tree : Prj.Tree.Project_Node_Tree_Ref;
+      Iter : String_List_Iterator) return Types.Name_Id;
    --  Return the value pointed to by Iter.
    --  This could be either a N_String_Literal or a N_Expression node in the
    --  first case.
    --  The second case only works if Iter points to N_String_Literal.
 
-   function Type_Values (Var_Or_Type : Project_Node_Id)
-      return String_List_Iterator;
+   function Type_Values
+     (Tree        : Project_Node_Tree_Ref;
+      Var_Or_Type : Project_Node_Id) return String_List_Iterator;
    --  Return an iterator over the list of possible values for the
    --  N_Typed_Variable_Declaration or N_String_Type_Declaration Var.
 
-   function Value_Of (Var : Scenario_Variable) return String_List_Iterator;
+   function Value_Of
+     (Tree : Project_Node_Tree_Ref;
+      Var : Scenario_Variable) return String_List_Iterator;
    --  Return an iterator over the possible values of the variable.
 
 private
@@ -358,8 +370,10 @@ private
    -----------
 
    function Clone_Node
-     (Node       : Project_Node_Id;
-      Deep_Clone : Boolean := False) return Project_Node_Id;
+     (Tree       : Project_Node_Tree_Ref;
+      Node       : Project_Node_Id;
+      Deep_Clone : Boolean := False)
+      return Project_Node_Id;
    --  Return a copy of Node. If Deep_Clone is true, then all the children of
    --  node are also copied.
    --  If Deep_Clone is false, then the two nodes will share part of their
@@ -378,7 +392,9 @@ private
    --  N_Attribute_Reference and the package they are referencing
 
    procedure Post_Process_After_Clone
-     (Project : Project_Node_Id; Pkg : Project_Node_Id := Empty_Node);
+     (Tree    : Project_Node_Tree_Ref;
+      Project : Project_Node_Id;
+      Pkg     : Project_Node_Id := Empty_Node);
    --  Post-process a project, and make sure that all the internal lists for
    --  variables, packages, types,... are properly chained up, and that all the
    --  variables reference a type declaration in Project (and not in some other
@@ -387,7 +403,8 @@ private
    --  created from.
 
    procedure Add_At_End
-     (Parent                       : Project_Node_Id;
+     (Tree                         : Project_Node_Tree_Ref;
+      Parent                       : Project_Node_Id;
       Expr                         : Project_Node_Id;
       Add_Before_First_Case_Or_Pkg : Boolean := False);
    --  Add a new declarative item in the list in Parent.
@@ -400,7 +417,8 @@ private
    --  first package
 
    procedure Add_In_Front
-     (Parent : Project_Node_Id;
+     (Tree   : Project_Node_Tree_Ref;
+      Parent : Project_Node_Id;
       Node   : Project_Node_Id);
    --  Add Node at the begining of the list for Parent.
    --  Node can also be a N_Declarative_Item (or a list of them).
@@ -410,7 +428,9 @@ private
    -----------
 
    procedure Add_Case_Item
-     (Case_Node : Project_Node_Id; Choice : Types.Name_Id);
+     (Tree      : Prj.Tree.Project_Node_Tree_Ref;
+      Case_Node : Prj.Tree.Project_Node_Id;
+      Choice    : Types.Name_Id);
    --  Create a new case item in case_node (which is associated with a
    --  "case var is" statement
 
@@ -418,13 +438,17 @@ private
    -- Variables --
    ---------------
 
-   function Create_Variable_Reference (Var : Project_Node_Id)
+   function Create_Variable_Reference
+     (Tree : Project_Node_Tree_Ref; Var : Project_Node_Id)
       return Project_Node_Id;
    --  Create and return a reference to the variable Var.
    --  Var must be a variable declaration
 
    procedure Set_Value_As_External
-     (Var : Project_Node_Id; External_Name : String; Default : String := "");
+     (Tree          : Project_Node_Tree_Ref;
+      Var           : Project_Node_Id;
+      External_Name : String;
+      Default       : String := "");
    --  Set the value of the variable as a reference to the environment variable
    --  External_Name. Var must be a single value, not a string.
    --  If Var is a typed variable, the default value is checked against the
@@ -435,25 +459,31 @@ private
    -----------
 
    function Create_Type
-     (Prj_Or_Pkg : Project_Node_Id;
-      Name : String) return Project_Node_Id;
+     (Tree       : Project_Node_Tree_Ref;
+      Prj_Or_Pkg : Project_Node_Id;
+      Name       : String) return Project_Node_Id;
    --  Create a new type. By default, there is no possible value, you
    --  must add some with Add_Possible_Value.
    --  The new declaration is added at the end of the declarative item list for
    --  Prj_Or_Pkg (but before any package declaration).
 
    function Find_Type_Declaration
-     (Project : Project_Node_Id; Name : Types.Name_Id)
+     (Tree    : Project_Node_Tree_Ref;
+      Project : Project_Node_Id;
+      Name    : Types.Name_Id)
       return Project_Node_Id;
    --  Return the declaration of the type whose name is Name.
 
    procedure Add_Possible_Value
-     (Typ : Project_Node_Id; Choice : Types.Name_Id);
+     (Tree   : Project_Node_Tree_Ref;
+      Typ    : Project_Node_Id;
+      Choice : Types.Name_Id);
    --  Add a new choice in the list of possible values for the type Typ.
    --  If Choice is already available in Typ, then it is not added again.
 
    function Create_Typed_Variable
-     (Prj_Or_Pkg : Project_Node_Id;
+     (Tree                         : Project_Node_Tree_Ref;
+      Prj_Or_Pkg                   : Project_Node_Id;
       Name : String;
       Typ  : Project_Node_Id;
       Add_Before_First_Case_Or_Pkg : Boolean := False)

@@ -43,8 +43,10 @@ with GPS.Kernel;         use GPS.Kernel;
 with GPS.Kernel.MDI;     use GPS.Kernel.MDI;
 with GPS.Kernel.Hooks;   use GPS.Kernel.Hooks;
 with GPS.Kernel.Project; use GPS.Kernel.Project;
+with Projects.Registry;  use Projects.Registry;
 with Variable_Editors;     use Variable_Editors;
 with GPS.Intl;           use GPS.Intl;
+with Prj.Tree;           use Prj.Tree;
 
 with Namet;    use Namet;
 with Traces;   use Traces;
@@ -54,7 +56,8 @@ package body Scenario_Views is
    Me : constant Debug_Handle := Create ("Scenario_Views");
 
    procedure Add_Possible_Values
-     (List : access Gtk_List_Record'Class;
+     (Kernel : access Kernel_Handle_Record'Class;
+      List : access Gtk_List_Record'Class;
       Var  : Scenario_Variable);
    --  Add all the possible values for type Typ into the List.
 
@@ -167,18 +170,22 @@ package body Scenario_Views is
    -------------------------
 
    procedure Add_Possible_Values
-     (List : access Gtk_List_Record'Class; Var : Scenario_Variable)
+     (Kernel : access Kernel_Handle_Record'Class;
+      List : access Gtk_List_Record'Class;
+      Var  : Scenario_Variable)
    is
-      Iter : String_List_Iterator := Value_Of (Var);
+      Tree : constant Prj.Tree.Project_Node_Tree_Ref :=
+        Get_Tree (Project_Registry (Get_Registry (Kernel).all));
+      Iter : String_List_Iterator := Value_Of (Tree, Var);
       Item : Gtk_List_Item;
    begin
       while not Done (Iter) loop
          --  We know this is a list of static strings
-         Get_Name_String (Data (Iter));
+         Get_Name_String (Data (Tree, Iter));
          Gtk_New (Item, Locale_To_UTF8
                     (Name_Buffer (Name_Buffer'First .. Name_Len)));
          Add (List, Item);
-         Iter := Next (Iter);
+         Iter := Next (Tree, Iter);
       end loop;
       Show_All (List);
    end Add_Possible_Values;
@@ -329,7 +336,7 @@ package body Scenario_Views is
                Set_Width_Chars (Get_Entry (Combo), 0);
                Attach (V, Combo, 3, 4, Row, Row + 1);
 
-               Add_Possible_Values (Get_List (Combo), Scenar_Var (J));
+               Add_Possible_Values (Kernel, Get_List (Combo), Scenar_Var (J));
                Set_Text (Get_Entry (Combo), Value_Of (Scenar_Var (J)));
 
                View_Callback.Connect

@@ -20,13 +20,13 @@
 
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
+with Ada.Unchecked_Deallocation;
 
 with Projects;           use Projects;
 with Projects.Editor;    use Projects.Editor;
 with Projects.Registry;  use Projects.Registry;
 with Basic_Types;
 with Prj;
-with Types;                    use Types;
 with Entities;
 
 with GPS.Intl;               use GPS.Intl;
@@ -424,16 +424,12 @@ package body GPS.Kernel.Project is
       use type Prj.Variable_Value;
       Value : Prj.Variable_Value;
       Is_Default : Boolean;
-      L     : Prj.String_List_Id;
-      Name  : Name_Id;
    begin
       Get_Switches
         (Project, In_Pkg, File, Get_String (Index), Value, Is_Default);
 
       --  If no value was found, we might have to return the initial value
       if Value = Prj.Nil_Variable_Value and then Use_Initial_Value then
-         L := Prj.Nil_String;
-
          declare
             Tool_Name : constant String := Get_Tool_Name
               (Handle,
@@ -447,37 +443,25 @@ package body GPS.Kernel.Project is
 
                if Prop.Initial_Cmd_Line /= null then
                   declare
+                     procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+                       (Argument_List, Argument_List_Access);
                      Cmd : Argument_List_Access :=
                        Argument_String_To_List (Prop.Initial_Cmd_Line.all);
+                     Cmd2 : constant Argument_List := Cmd.all;
                   begin
-                     for V in Cmd'Range loop
-                        Name := Get_String (Cmd (V).all);
-                        Prj.String_Elements.Increment_Last;
-                        Prj.String_Elements.Table (Prj.String_Elements.Last) :=
-                          Prj.String_Element'
-                            (Value         => Name,
-                             Display_Value => Name,
-                             Location      => No_Location,
-                             Flag          => False,
-                             Index         => 0,
-                             Next          => L);
-                        L := Prj.String_Elements.Last;
-                     end loop;
-
-                     Value := Prj.Variable_Value'
-                       (Kind     => Prj.List,
-                        Location => No_Location,
-                        Project  => Prj.No_Project,
-                        Default  => True,
-                        Values   => L);
-                     Free (Cmd);
+                     Unchecked_Free (Cmd);
+                     return Cmd2;
                   end;
+               else
+                  return (1 .. 0 => null);
                end if;
+            else
+               return (1 .. 0 => null);
             end if;
          end;
+      else
+         return To_Argument_List (Get_Tree (Project), Value);
       end if;
-
-      return To_Argument_List (Value);
    end Get_Switches;
 
 end GPS.Kernel.Project;
