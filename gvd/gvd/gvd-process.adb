@@ -434,6 +434,8 @@ package body GVD.Process is
       Tmp_Str        : GNAT.OS_Lib.String_Access;
       Current_Filter : Regexp_Filter_List;
       Matched        : Match_Array (0 .. Max_Parenthesis);
+      First, Last    : Natural := 0;
+      Last_Match     : Natural := 0;
 
    begin
       --  Concatenate current output
@@ -461,7 +463,9 @@ package body GVD.Process is
             Matched);
 
          if Matched (0) /= No_Match then
-            Process.Last_Match := Matched (0).Last;
+            if Matched (0).Last > Last_Match then
+               Last_Match := Matched (0).Last;
+            end if;
 
             Current_Filter.Filter
               (Process, Process.Current_Output.all, Matched);
@@ -470,20 +474,41 @@ package body GVD.Process is
          Current_Filter := Current_Filter.Next;
       end loop;
 
+      if Last_Match /= 0 then
+         Process.Last_Match := Last_Match;
+      end if;
+
       --  Do not show the output if we have an internal or hidden command
 
       case Get_Command_Mode (Get_Process (Process.Debugger)) is
          when User | GVD.Types.Visible =>
-            Output_Text (Process, Str, Set_Position => True);
+            --  Strip every line starting with ^Z^Z.
+            --  Note that this is GDB specific ???
 
-            --  Currently we output everything with the new scheme???
-            --  if First = 0 then
-            --     Output_Text (Process, Str, Set_Position => True);
-            --  else
-            --     Output_Text (Process, Str (Str'First .. First - 1));
-            --     Output_Text
-            --     (Process, Str (Last + 1 .. Str'Last), Set_Position => True);
-            --  end if;
+            Outer_Loop:
+            for J in Str'First + 1 .. Str'Last loop
+               if Str (J) = ASCII.SUB and then Str (J - 1) = ASCII.SUB then
+                  First := J - 1;
+
+                  for K in J + 1 .. Str'Last loop
+                     if Str (K) = ASCII.LF then
+                        Last := K;
+                        exit Outer_Loop;
+                     end if;
+                  end loop;
+
+                  Last := Str'Last;
+                  exit Outer_Loop;
+               end if;
+            end loop Outer_Loop;
+
+            if First = 0 then
+               Output_Text (Process, Str, Set_Position => True);
+            else
+               Output_Text (Process, Str (Str'First .. First - 1));
+               Output_Text
+               (Process, Str (Last + 1 .. Str'Last), Set_Position => True);
+            end if;
 
          when Hidden | Internal =>
             null;
