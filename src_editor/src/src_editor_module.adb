@@ -39,7 +39,9 @@ with GVD.Status_Bar;            use GVD.Status_Bar;
 with GVD.Dialogs;               use GVD.Dialogs;
 with Gtk.Box;                   use Gtk.Box;
 with Gtk.Button;                use Gtk.Button;
+with Gtk.Dialog;                use Gtk.Dialog;
 with Gtk.Enums;                 use Gtk.Enums;
+with Gtk.GEntry;                use Gtk.GEntry;
 with Gtk.Label;                 use Gtk.Label;
 with Gtk.Menu;                  use Gtk.Menu;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;
@@ -48,6 +50,7 @@ with Gtk.Stock;                 use Gtk.Stock;
 with Gtk.Toolbar;               use Gtk.Toolbar;
 with Gtk.Widget;                use Gtk.Widget;
 with Gtkada.Dialogs;            use Gtkada.Dialogs;
+with Gtkada.Entry_Completion;   use Gtkada.Entry_Completion;
 with Gtkada.Handlers;           use Gtkada.Handlers;
 with Gtkada.MDI;                use Gtkada.MDI;
 with Gtkada.File_Selector;      use Gtkada.File_Selector;
@@ -57,6 +60,7 @@ with String_Utils;              use String_Utils;
 with GNAT.Expect;               use GNAT.Expect;
 with Traces;                    use Traces;
 with Ada.Text_IO;               use Ada.Text_IO;
+with Prj_API;                   use Prj_API;
 
 package body Src_Editor_Module is
 
@@ -153,6 +157,10 @@ package body Src_Editor_Module is
    procedure On_Open_File
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  File->Open menu
+
+   procedure On_Open_From_Path
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   --  File->Open From Path menu
 
    procedure On_New_View
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
@@ -724,10 +732,12 @@ package body Src_Editor_Module is
 
    function Location_Callback (D : Location_Idle_Data) return Boolean is
    begin
+      Grab_Focus (D.Edit);
+
       if Is_Valid_Location (D.Edit, D.Line, D.Column) then
-         Set_Cursor_Location (D.Edit, D.Line, D.Column, Force_Focus => False);
+         Set_Cursor_Location (D.Edit, D.Line, D.Column, Force_Focus => True);
       elsif Is_Valid_Location (D.Edit, D.Line) then
-         Set_Cursor_Location (D.Edit, D.Line, Force_Focus => False);
+         Set_Cursor_Location (D.Edit, D.Line, Force_Focus => True);
       end if;
 
       return False;
@@ -811,6 +821,56 @@ package body Src_Editor_Module is
       when E : others =>
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Open_File;
+
+   -----------------------
+   -- On_Open_From_Path --
+   -----------------------
+
+   procedure On_Open_From_Path
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   is
+      pragma Unreferenced (Widget);
+      Dialog : Gtk_Dialog;
+      Ent    : Gtkada_Entry;
+      Label  : Gtk_Label;
+      Button : Gtk_Widget;
+
+   begin
+      Gtk_New (Dialog,
+               Title  => -"Open file from project",
+               Parent => Get_Main_Window (Kernel),
+               Flags  => Modal or Destroy_With_Parent);
+      Set_Position (Dialog, Win_Pos_Mouse);
+
+      Gtk_New (Label, -"Enter file name (use <tab> for completion):");
+      Pack_Start (Get_Vbox (Dialog), Label, Fill => True);
+
+      Gtk_New (Ent);
+      Set_Width_Chars (Ent, 20);
+      Set_Completions
+        (Ent, Get_Source_Files
+           (Get_Project_View (Kernel), Recursive => True, Full_Path => False));
+
+      Pack_Start (Get_Vbox (Dialog), Ent, Fill => True, Expand => True);
+      Grab_Focus (Ent);
+      Set_Activates_Default (Ent, True);
+
+      Button := Add_Button (Dialog, -"OK", Gtk_Response_OK);
+      Button := Add_Button (Dialog, -"Cancel", Gtk_Response_Cancel);
+      Set_Default_Response (Dialog, Gtk_Response_OK);
+
+      Show_All (Dialog);
+
+      if Run (Dialog) = Gtk_Response_OK then
+         Open_File_Editor (Kernel, Get_Text (Ent), From_Path => True);
+      end if;
+
+      Destroy (Dialog);
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+   end On_Open_From_Path;
 
    ---------------
    -- On_Reopen --
@@ -1501,10 +1561,13 @@ package body Src_Editor_Module is
 
       Register_Menu (Kernel, File, -"Open...",  Stock_Open,
                      On_Open_File'Access, GDK_F3, Ref_Item => -"Save...");
+      Register_Menu (Kernel, File, -"Open From Project...",  Stock_Open,
+                     On_Open_From_Path'Access,
+                     GDK_F4, Ref_Item => -"Save...");
 
       Source_Editor_Module (Src_Editor_Module_Id).Reopen_Menu_Item :=
         Register_Menu (Kernel, File, -"Reopen", "", null,
-                       Ref_Item   => -"Open...",
+                       Ref_Item   => -"Open From Project...",
                        Add_Before => False);
 
       if not Is_Regular_File (Reopen_File_Name) then
