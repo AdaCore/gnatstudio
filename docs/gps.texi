@@ -361,6 +361,11 @@ the project file specified, instead of displaying the welcome dialog.
 In addition, if you specify source files on the command line, GPS will also
 start immediately, using the default project if no project is specified.
 
+By default, files specified on the command line are taken as is and can
+be absolute or relative pathnames. In addition, if you prepend a filename
+with the @code{=} character, then GPS will look for the file in the source
+search path of the project.
+
 @c --------------------------------------------------------------------
 @node The Menu Bar
 @section The Menu Bar
@@ -8613,7 +8618,9 @@ Options:
    --eval=lang:file    Execute an in-line script written in the
                        language lang
 
-Source files are searched everywhere on the project's source path
+Source files can be absolute or relative pathnames.
+If you prepend a file name with '=', this file will be
+searched anywhere on the project's source path
 @end smallexample
 
 @c --------------------------------------------------------------------
