@@ -1,5 +1,7 @@
 New features in GPS 1.0.2
 
+- Automatic correction of compiler errors and warnings
+
 - Ability to set a source editor read only interactively
 
 - Documentation updates
