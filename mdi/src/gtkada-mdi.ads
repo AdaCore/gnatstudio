@@ -15,6 +15,9 @@ with GNAT.OS_Lib;
 --  - When in a scrolled window, shouldn't constrain the possible coordinates
 --  - When a toplevel window is destroyed, we must remove the child from
 --    the MDI
+--  - Icons should be put at the bottom, and automatically moved when the
+--    MDI window is resized.
+--  - When items are maximized, they should be put in a notebook.
 --
 --  From GNOME MDI documentation:
 --  - GnomeMDI also provides means to create global menus and toolbar that
@@ -77,9 +80,13 @@ package Gtkada.MDI is
    --  All the children are stacked so that the focus widget is on top.
    --  They overlap each other, but all the title bars are left visible
 
+   procedure Tile_Horizontally (MDI : access MDI_Window_Record);
    procedure Tile_Vertically (MDI : access MDI_Window_Record);
    --  The available space in the MDI is shared equally between all children.
    --  They do not overlap each other.
+   --  Tile_Horizontally with put children next to each other, Tile_Vertically
+   --  will put children one below another. This is the same behavior as for
+   --  Gtk_Vbox and Gtk_Hbox
 
    -------------
    -- Signals --

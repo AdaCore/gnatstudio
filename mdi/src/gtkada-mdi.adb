@@ -921,6 +921,43 @@ package body Gtkada.MDI is
       Queue_Resize (MDI);
    end Cascade_Children;
 
+   -----------------------
+   -- Tile_Horizontally --
+   -----------------------
+
+   procedure Tile_Horizontally (MDI : access MDI_Window_Record) is
+      W : constant Gint := Gint (Get_Allocation_Width (MDI));
+      H : constant Gint := Gint (Get_Allocation_Height (MDI));
+      List : Widget_List.Glist := Children (MDI);
+      C : MDI_Child;
+      Tmp : Widget_List.Glist;
+      Level : Gint := 0;
+      Num_Children : Gint := 0;
+   begin
+      Tmp := First (List);
+      while Tmp /= Null_List loop
+         if MDI_Child (Get_Data (Tmp)).State = Normal then
+            Num_Children := Num_Children + 1;
+         end if;
+         Tmp := Next (Tmp);
+      end loop;
+
+      Tmp := First (List);
+      while Tmp /= Null_List loop
+         C := MDI_Child (Get_Data (Tmp));
+         if C.State = Normal then
+            C.X := Level;
+            C.Y := 0;
+            Move (MDI, C, C.X, C.Y);
+            Set_USize (C, W / Num_Children, H);
+            Level := Level + (W / Num_Children);
+         end if;
+         Tmp := Next (Tmp);
+      end loop;
+      Free (List);
+      Queue_Resize (MDI);
+   end Tile_Horizontally;
+
    ---------------------
    -- Tile_Vertically --
    ---------------------
