@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 2.1.1
 
+- DC03-021: Custom project attributes must specify a default value for files
+  Problem:    If you define your own project attributes through XML files, the
+              ones that are of type file or directory must specify a default
+              value.
+  Workaround: Always specify default="." for such attributes
+
 - DC03-019: Popup dialogs in project editors can be hidden by parent window
   Problem:    When you edit the value of some project attributes, like the
               compiler to use for Ada, a popup dialog is displayed. However,
