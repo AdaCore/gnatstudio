@@ -52,10 +52,10 @@ begin
    Add (Main_Debug_Window, Main_Debug_Window.Vbox);
 
    Gtk_New (Main_Debug_Window.Toolbar, Orientation_Horizontal, Toolbar_Icons);
-   Set_Space_Size (Main_Debug_Window.Toolbar, 5);
-   Set_Space_Style (Main_Debug_Window.Toolbar, Toolbar_Space_Empty);
+   --  Set_Space_Size (Main_Debug_Window.Toolbar, 5);
+   --  Set_Space_Style (Main_Debug_Window.Toolbar, Toolbar_Space_Empty);
    Set_Tooltips (Main_Debug_Window.Toolbar, True);
-   Set_Button_Relief (Main_Debug_Window.Toolbar, Relief_Normal);
+   --  Set_Button_Relief (Main_Debug_Window.Toolbar, Relief_Normal);
    Main_Debug_Window.Button49 := Append_Element
      (Toolbar => Main_Debug_Window.Toolbar,
       The_Type => Toolbar_Child_Button,
