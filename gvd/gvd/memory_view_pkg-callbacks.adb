@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2002                      --
+--                      Copyright (C) 2000-2003                      --
 --                              ACT-Europe                           --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -71,6 +71,7 @@ package body Memory_View_Pkg.Callbacks is
 
       View : constant GVD_Memory_View :=
         GVD_Memory_View (Get_Toplevel (Object));
+
    begin
       if Realized_Is_Set (View) then
          Update_Display (View);
@@ -243,6 +244,7 @@ package body Memory_View_Pkg.Callbacks is
             Page_Down (View);
          when others =>
             Emit_Stop_By_Name (View.View, "key_press_event");
+
             if Get_String (Arg1)'Length /= 0 then
                Insert (View, Get_String (Arg1));
             end if;
@@ -253,6 +255,7 @@ package body Memory_View_Pkg.Callbacks is
    exception
       --  On windows, it seems that pressing the control key generates
       --  an event for which Get_String is invalid
+
       when Invalid_Field =>
          return False;
 

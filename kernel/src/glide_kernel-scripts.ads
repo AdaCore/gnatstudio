@@ -583,8 +583,6 @@ package Glide_Kernel.Scripts is
       return Class_Instance;
    --  Create a new context
 
-
-
    function Get_File_Location_Context_Class
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
       return Class_Type;
@@ -600,8 +598,6 @@ package Glide_Kernel.Scripts is
       return Class_Instance;
    --  Create a new context
 
-
-
    function Get_Entity_Context_Class
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
       return Class_Type;
@@ -616,7 +612,6 @@ package Glide_Kernel.Scripts is
       Context : Glide_Kernel.Modules.Entity_Selection_Context_Access)
       return Class_Instance;
    --  Create a new context
-
 
 private
    Constructor_Method : constant String := "<@constructor@>";

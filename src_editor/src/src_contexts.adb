@@ -1048,7 +1048,7 @@ package body Src_Contexts is
       Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
       Search_Backward : Boolean) return Boolean
    is
-      Child   : constant MDI_Child := Find_Current_Editor (Kernel);
+      Child  : constant MDI_Child := Find_Current_Editor (Kernel);
       Editor : Source_Editor_Box;
 
    begin

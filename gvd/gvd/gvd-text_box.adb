@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2002                      --
+--                      Copyright (C) 2000-2003                      --
 --                              ACT-Europe                           --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -449,7 +449,7 @@ package body GVD.Text_Box is
      (Box   : access GVD_Text_Box_Record'Class;
       Event : Gdk.Event.Gdk_Event) return Boolean
    is
-      Line    : Natural := 0;
+      Line : Natural := 0;
    begin
       case Get_Button (Event) is
          when 1 | 3 =>
@@ -471,8 +471,10 @@ package body GVD.Text_Box is
                Get_Value (Get_Vadj (Box.Child)) +
                  Get_Page_Increment (Get_Vadj (Box.Child)) / 2.0);
 
-         when others => return False;
+         when others =>
+            return False;
       end case;
+
       return True;
    end Pixmap_Clicked_Cb;
 
@@ -559,16 +561,21 @@ package body GVD.Text_Box is
 
                Emit_Stop_By_Name (Box.Child, "button_press_event");
             end if;
+
             return True;
+
          when 4 =>
             Set_Value (Get_Vadj (Box.Child), Get_Value (Get_Vadj (Box.Child))
                        - Get_Page_Increment (Get_Vadj (Box.Child)));
             return True;
+
          when  5 =>
             Set_Value (Get_Vadj (Box.Child), Get_Value (Get_Vadj (Box.Child))
                        + Get_Page_Increment  (Get_Vadj (Box.Child)));
             return True;
-         when others => return False;
+
+         when others =>
+            return False;
       end case;
    end Button_Press_Cb;
 
