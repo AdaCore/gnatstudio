@@ -23,7 +23,6 @@ with Ada.Strings.Fixed;       use Ada.Strings.Fixed;
 with GNAT.OS_Lib;             use GNAT.OS_Lib;
 with Ada.Unchecked_Deallocation;
 with Ada.Strings.Unbounded;   use Ada.Strings.Unbounded;
-with GNAT.IO; use GNAT.IO;
 with Glib.Unicode;            use Glib, Glib.Unicode;
 
 package body String_Utils is
@@ -1193,7 +1192,6 @@ package body String_Utils is
       End_With_Triple   : Boolean;
 
    begin
-      Put_Line ("--Arg_String--" & Arg_String & "--");
       Idx := Arg_String'First;
 
       loop
@@ -1283,10 +1281,6 @@ package body String_Utils is
       declare
          Result : constant Argument_List := New_Argv (1 .. New_Argc);
       begin
-         for R in Result'Range loop
-            Put_Line ("   Arg=" & Result (R).all & "--");
-         end loop;
-
          Unchecked_Free (New_Argv);
          return new Argument_List'(Result);
       end;
