@@ -748,7 +748,9 @@ package body Glide_Kernel.Scripts is
          begin
             if Action = null then
                Set_Error_Msg (Data, -"No such registered action");
-            elsif not Filter_Matches (Action.Filter, Context, Kernel) then
+            elsif Context = null
+               or else not Filter_Matches (Action.Filter, Context)
+            then
                Set_Error_Msg (Data, -"Invalid context for the action");
             else
                Args := new String_List (1 .. Number_Of_Arguments (Data) - 1);
