@@ -455,13 +455,9 @@ package body GNAT.Expect is
       Is_Set          : aliased Integer;
       Buffer_Size     : Integer := 8192;
       Buffer          : aliased String (1 .. Buffer_Size);
-
-      procedure Lseek (Fd : Integer;
-                       Offset : Integer;
-                       Whence : Integer);
-      pragma Import (C, Lseek, "lseek");
    begin
       --  Empty the current buffer
+
       Descriptor.Last_Match_End := Descriptor.Buffer_Index;
       Reinitialize_Buffer (Descriptor);
 
