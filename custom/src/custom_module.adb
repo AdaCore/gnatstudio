@@ -21,6 +21,7 @@
 with Glib;                      use Glib;
 with Glib.Xml_Int;              use Glib.Xml_Int;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;
+with Gtk.Icon_Factory;          use Gtk.Icon_Factory;
 with Gtk.Image;                 use Gtk.Image;
 with Gtk.Menu;                  use Gtk.Menu;
 with Gtk.Toolbar;               use Gtk.Toolbar;
@@ -53,6 +54,8 @@ with Commands;                  use Commands;
 with Commands.Interactive;      use Commands.Interactive;
 with Commands.Custom;           use Commands.Custom;
 
+with VFS;                       use VFS;
+
 package body Custom_Module is
 
    type Contextual_Menu_Record;
@@ -75,6 +78,7 @@ package body Custom_Module is
 
    procedure Customize
      (Kernel : access Kernel_Handle_Record'Class;
+      File   : VFS.Virtual_File;
       Node   : Node_Ptr;
       Level  : Customization_Level);
    --  Called when a new customization in parsed
@@ -171,6 +175,7 @@ package body Custom_Module is
 
    procedure Customize
      (Kernel : access Kernel_Handle_Record'Class;
+      File   : VFS.Virtual_File;
       Node   : Node_Ptr;
       Level  : Customization_Level)
    is
@@ -189,6 +194,7 @@ package body Custom_Module is
       procedure Parse_Contextual_Node (Node : Node_Ptr);
       procedure Parse_Button_Node (Node : Node_Ptr);
       procedure Parse_Tool_Node (Node : Node_Ptr);
+      procedure Parse_Stock_Node (Node : Node_Ptr);
       procedure Parse_Menu_Node (Node : Node_Ptr; Parent_Path : UTF8_String);
       function Parse_Filter_Node (Node : Node_Ptr) return Action_Filter;
       --  Parse the various nodes: <action>, <shell>, ...
@@ -593,6 +599,70 @@ package body Custom_Module is
          Free (Title);
       end Parse_Menu_Node;
 
+      ----------------------
+      -- Parse_Stock_Node --
+      ----------------------
+
+      procedure Parse_Stock_Node (Node : Node_Ptr) is
+         Child   : Node_Ptr := Node.Child;
+         Factory : constant Gtk_Icon_Factory := Get_Icon_Factory (Kernel);
+         Source  : Gtk_Icon_Source;
+         Set     : Gtk_Icon_Set;
+      begin
+         while Child /= null loop
+            if To_Lower (Child.Tag.all) = "icon" then
+               declare
+                  Id       : constant String := Get_Attribute (Child, "id");
+                  Filename : constant String := Get_Attribute (Child, "file");
+                  Pic_File : VFS.Virtual_File;
+               begin
+                  if Id = "" then
+                     Insert
+                       (Kernel,
+                        -"No id specified for stock icon.",
+                        Mode => Error);
+
+                  elsif Filename = "" then
+                     Insert
+                       (Kernel,
+                        -"No file specified for stock icon " & Id,
+                        Mode => Error);
+
+                  else
+                     if Is_Absolute_Path (Filename) then
+                        Pic_File := Create (Filename);
+                     else
+                        if File = VFS.No_File then
+                           Pic_File := Create (Get_Current_Dir & Filename);
+                        else
+                           Pic_File := Create (Dir_Name (File).all & Filename);
+                        end if;
+                     end if;
+
+                     if Is_Regular_File (Pic_File) then
+                        Set    := Gtk_New;
+                        Source := Gtk_New;
+                        Set_Filename (Source, Full_Name (Pic_File).all);
+
+                        Add_Source (Set, Source);
+                        Add (Factory, Id, Set);
+
+                        Free (Source);
+                     else
+                        Insert
+                          (Kernel,
+                           -"Error when creating stock icon " & Id
+                           & (-". File not found: ")
+                           & Full_Name (Pic_File).all);
+                     end if;
+                  end if;
+               end;
+            end if;
+
+            Child := Child.Next;
+         end loop;
+      end Parse_Stock_Node;
+
       ---------------
       -- Add_Child --
       ---------------
@@ -682,6 +752,10 @@ package body Custom_Module is
 
          elsif To_Lower (Current_Node.Tag.all) = "tool" then
             Parse_Tool_Node (Current_Node);
+
+         elsif To_Lower (Current_Node.Tag.all) = "stock" then
+            Parse_Stock_Node (Current_Node);
+
          end if;
       end Add_Child;
 
