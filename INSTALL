@@ -10,8 +10,8 @@ GCC >= 3.4).
 You then need to install the Gtk+ 2.2.x suite (e.g 2.2.4).
 To download and build Gtk+, follow the instructions given at www.gtk.org
 
-Once Gtk+ has been installed, you need to install GtkAda 2.2.1.
-See GtkAda-2.2.1/INSTALL for instructions.
+Once Gtk+ has been installed, you need to install the latest GtkAda 2.2.x.
+See GtkAda-2.2.x/INSTALL for instructions.
 
 Then make sure that your PATH and LD_LIBRARY_PATH environment variables point
 to the GtkAda installation
