@@ -638,27 +638,6 @@ package body Glide_Kernel.Preferences is
         (Kernel.Preferences, Param_Spec (Browsers_Vertical_Layout),
          -"Browsers:General");
 
-      Dep_Browser_Show_System_Files := Param_Spec_Boolean (Gnew_Boolean
-        (Name    => "Browsers-System-Files",
-         Default => False,
-         Blurb   => -("Whether the system files (Ada runtime or standard C"
-                      & " include files) should be visible in the browser"),
-         Nick    => -"Show system files"));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (Dep_Browser_Show_System_Files),
-         -"Browsers:File Dependencies");
-
-      Dep_Browser_Show_Implicit_Dep := Param_Spec_Boolean (Gnew_Boolean
-        (Name    => "Browsers-Implicit-Dep",
-         Default => False,
-         Blurb   => -("If False, then only the explicit dependencies"
-                      & " are shown in the browser. Otherwise, all"
-                      & " dependencies, even implicit, are displayed"),
-         Nick    => -"Show implicit dependencies"));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (Dep_Browser_Show_Implicit_Dep),
-         -"Browsers:File Dependencies");
-
       -- Diff_Utils --
 
       Diff_Context_Length := Param_Spec_Int (Gnew_Int

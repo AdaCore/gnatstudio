@@ -213,9 +213,6 @@ package Glide_Kernel.Preferences is
    Selected_Item_Color       : Param_Spec_Color
      renames GVD.Preferences.Selected_Item_Color;
 
-   Dep_Browser_Show_System_Files : Param_Spec_Boolean;
-   Dep_Browser_Show_Implicit_Dep : Param_Spec_Boolean;
-
    -- VCS --
    Hide_Up_To_Date     : Param_Spec_Boolean;
    Hide_Not_Registered : Param_Spec_Boolean;
