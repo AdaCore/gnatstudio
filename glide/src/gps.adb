@@ -407,7 +407,6 @@ procedure GPS is
          Tools    : constant String := '/' & (-"Tools") & '/';
 
       begin
-         Set_Sensitive (Find_Menu_Item (GPS.Kernel, File & (-"Print")), False);
          Set_Sensitive (Find_Menu_Item
            (GPS.Kernel, File & (-"Close All")), False);
          Set_Sensitive (Find_Menu_Item
