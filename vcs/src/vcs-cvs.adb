@@ -18,41 +18,41 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glib.Convert;              use Glib.Convert;
+with Glib.Convert;                use Glib.Convert;
 
 with Gtk.Enums;
 
-with Gtkada.MDI;                use Gtkada.MDI;
+with Gtkada.MDI;                  use Gtkada.MDI;
 
-with Glide_Intl;                use Glide_Intl;
-with Glide_Kernel;              use Glide_Kernel;
-with Glide_Kernel.Console;      use Glide_Kernel.Console;
-with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
-with Glide_Kernel.Scripts;      use Glide_Kernel.Scripts;
-with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
-with Glide_Kernel.Task_Manager; use Glide_Kernel.Task_Manager;
+with Glide_Intl;                  use Glide_Intl;
+with Glide_Kernel;                use Glide_Kernel;
+with Glide_Kernel.Console;        use Glide_Kernel.Console;
+with Glide_Kernel.Modules;        use Glide_Kernel.Modules;
+with Glide_Kernel.Scripts;        use Glide_Kernel.Scripts;
+with Glide_Kernel.Preferences;    use Glide_Kernel.Preferences;
+with Glide_Kernel.Task_Manager;   use Glide_Kernel.Task_Manager;
 with Glide_Kernel.Standard_Hooks; use Glide_Kernel.Standard_Hooks;
 
 with GNAT.OS_Lib;
-with GNAT.Case_Util;            use GNAT.Case_Util;
-with GNAT.Directory_Operations; use GNAT.Directory_Operations;
+with GNAT.Case_Util;              use GNAT.Case_Util;
+with GNAT.Directory_Operations;   use GNAT.Directory_Operations;
 
-with Ada.Calendar;              use Ada.Calendar;
-with Ada.Text_IO;               use Ada.Text_IO;
-with Ada.Strings;               use Ada.Strings;
-with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
+with Ada.Calendar;                use Ada.Calendar;
+with Ada.Text_IO;                 use Ada.Text_IO;
+with Ada.Strings;                 use Ada.Strings;
+with Ada.Strings.Fixed;           use Ada.Strings.Fixed;
 
-with String_Utils;              use String_Utils;
-with OS_Utils;                  use OS_Utils;
+with String_Utils;                use String_Utils;
+with OS_Utils;                    use OS_Utils;
 
-with VCS_View_Pkg;              use VCS_View_Pkg;
-with VCS_Module;                use VCS_Module;
+with VCS_View_Pkg;                use VCS_View_Pkg;
+with VCS_Module;                  use VCS_Module;
 
-with Commands;                  use Commands;
-with Commands.External;         use Commands.External;
-with Commands.Custom;           use Commands.Custom;
-with Traces;                    use Traces;
-with VFS;                       use VFS;
+with Commands;                    use Commands;
+with Commands.External;           use Commands.External;
+with Commands.Custom;             use Commands.Custom;
+with Traces;                      use Traces;
+with VFS;                         use VFS;
 
 package body VCS.CVS is
 
@@ -86,15 +86,15 @@ package body VCS.CVS is
    --  Append S at the end of current message.
 
    procedure Real_Get_Status
-     (Rep         : access CVS_Record;
-      Filenames   : String_List.List;
-      Clear_Logs  : Boolean := False);
+     (Rep        : access CVS_Record;
+      Filenames  : String_List.List;
+      Clear_Logs : Boolean := False);
    --  Just like Get_Status, but assuming that Filenames is not empty
    --  and that all files in Filenames are from the same directory.
 
    function Real_Local_Get_Status
-     (Rep         : access CVS_Record;
-      Filenames   : String_List.List) return File_Status_List.List;
+     (Rep       : access CVS_Record;
+      Filenames : String_List.List) return File_Status_List.List;
    --  Just like Local_Get_Status, but assuming that Filenames is not
    --  empty and that all files in Filenames are from the same directory.
 
