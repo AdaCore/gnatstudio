@@ -449,6 +449,11 @@ package Glide_Kernel is
    procedure Variable_Changed (Handle : access Kernel_Handle_Record);
    --  Emits the "variable_changed" signal
 
+   procedure Source_Lines_Revealed
+     (Handle      : access Kernel_Handle_Record;
+      Context     : access Selection_Context'Class);
+   --  Emits the "source_lines_revealed" signal.
+
    -------------
    -- Signals --
    -------------
@@ -485,12 +490,19 @@ package Glide_Kernel is
    --    Emitted when one of the scenario variables has been renamed, removed,
    --    or when one of its possible values has changed.
    --
+   --  - "source_lines_revealed"
+   --    procedure Handler (Handle     : access Kernel_Handle_Record'Class;
+   --                       File       : String;
+   --                       Start_Line : Natural;
+   --                       End_Line   : Natural);
+   --
    --  </signals>
 
-   Project_Changed_Signal      : constant String := "project_changed";
-   Project_View_Changed_Signal : constant String := "project_view_changed";
-   Context_Changed_Signal      : constant String := "context_changed";
-   Variable_Changed_Signal     : constant String := "variable_changed";
+   Project_Changed_Signal       : constant String := "project_changed";
+   Project_View_Changed_Signal  : constant String := "project_view_changed";
+   Context_Changed_Signal       : constant String := "context_changed";
+   Variable_Changed_Signal      : constant String := "variable_changed";
+   Source_Lines_Revealed_Signal : constant String := "source_lines_revealed";
 
 private
 
