@@ -19,7 +19,6 @@
 -----------------------------------------------------------------------
 
 with Prj;
-with Types;
 
 package Src_Info.ALI is
 
@@ -91,7 +90,6 @@ package Src_Info.ALI is
      (Handler       : access ALI_Handler_Record;
       Root_Project  : Prj.Project_Id;
       Project       : Prj.Project_Id;
-      Language      : Types.Name_Id;
       Recursive     : Boolean := False)
       return LI_Handler_Iterator'Class;
 
