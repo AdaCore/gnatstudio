@@ -3784,7 +3784,7 @@ package body Src_Editor_Module is
          exit when Child = null
            or else Get_Filename (Child) = File
 
-           --  Handling of identifiers
+            --  Handling of file identifiers
            or else Get_Title (Child) = Full_Name (File).all;
 
          Next (Iter);
