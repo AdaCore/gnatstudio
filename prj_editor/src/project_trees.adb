@@ -31,7 +31,6 @@ with GNAT.OS_Lib;          use GNAT.OS_Lib;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with Unchecked_Conversion;
 with System;
-with Text_IO;              use Text_IO;
 
 with Gdk.Bitmap;           use Gdk.Bitmap;
 with Gdk.Color;            use Gdk.Color;
