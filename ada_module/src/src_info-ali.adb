@@ -1104,8 +1104,7 @@ package body Src_Info.ALI is
             Finfo := Get_File_Info (Current_Dep.Value.File);
 
             if Finfo.Source_Filename.all = Withed_File_Name
-            --  Why is the following line commented out ???
-            --         or else Finfo.Source_Filename.all = Krunch_Name
+              or else Finfo.Source_Filename.all = Krunch_Name
             then
                --  Update the unit name if not present
 
