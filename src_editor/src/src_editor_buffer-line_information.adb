@@ -1450,7 +1450,6 @@ package body Src_Editor_Buffer.Line_Information is
       Editable_Lines : Editable_Line_Array_Access renames
         Buffer.Editable_Lines;
 
-
       Real_Number : Buffer_Line_Type := 0;
       Result      : Boolean := True;
       Info_Found  : Boolean := False;
@@ -1474,9 +1473,10 @@ package body Src_Editor_Buffer.Line_Information is
       while Result loop
          Forward_Line (End_Iter, Result);
          Buffer_Line := Buffer_Line + 1;
+         exit when Buffer_Lines (Buffer_Line).Editable_Line /= 0;
+
          Real_Number := Real_Number + 1;
-         exit when Real_Number = Buffer_Line_Type (Number)
-           or else Buffer_Lines (Buffer_Line).Editable_Line /= 0;
+         exit when Real_Number = Buffer_Line_Type (Number);
       end loop;
 
       Buffer.Blank_Lines := Buffer.Blank_Lines - Natural (Real_Number);
@@ -1530,6 +1530,7 @@ package body Src_Editor_Buffer.Line_Information is
       Mark       : Gtk.Text_Mark.Gtk_Text_Mark;
       Number     : Editable_Line_Type)
    is
+      Buffer_Lines   : Line_Data_Array_Access renames Buffer.Line_Data;
       Editable_Lines : Editable_Line_Array_Access renames
         Buffer.Editable_Lines;
       Start_Iter, End_Iter : Gtk_Text_Iter;
@@ -1549,8 +1550,41 @@ package body Src_Editor_Buffer.Line_Information is
       Buffer_Line := Buffer_Line_Type (Get_Line (Iter) + 1);
 
       Line_Start := Get_Editable_Line (Buffer, Buffer_Line);
-
       Line_End := Line_Start + Number;
+
+      --  Remove all blank lines in the block that is to be folded.
+
+      if Buffer.Blank_Lines /= 0 then
+         declare
+            Current_Buffer_Line : Buffer_Line_Type := Buffer_Line;
+            Returned : Command_Return_Type;
+            pragma Unreferenced (Returned);
+            Command  : Command_Access;
+         begin
+            loop
+               Current_Buffer_Line := Current_Buffer_Line + 1;
+               exit when Get_Editable_Line
+                 (Buffer, Current_Buffer_Line) = Line_End;
+
+               if Buffer_Lines (Current_Buffer_Line).Side_Info_Data /= null
+                 and then Buffer_Lines
+                   (Current_Buffer_Line).Side_Info_Data
+                   (Buffer.Block_Highlighting_Column).Info /= null
+               then
+                  Command :=
+                    Buffer_Lines (Current_Buffer_Line).Side_Info_Data
+                    (Buffer.Block_Highlighting_Column).Info.Associated_Command;
+
+                  if Command /= null
+                    and then Command.all in
+                      Remove_Blank_Lines_Command_Type'Class
+                  then
+                     Returned := Execute (Command);
+                  end if;
+               end if;
+            end loop;
+         end;
+      end if;
 
       --  Remove line by line in order to avoid problems when removing lines
       --  that are already removed.
