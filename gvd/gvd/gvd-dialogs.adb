@@ -13,7 +13,7 @@
 -- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
 -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
 -- General Public License for more details. You should have received --
--- a copy of the GNU General Public License along with this library; --
+-- a copy of the GNU General Public License along with this program; --
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
@@ -682,13 +682,6 @@ package body GVD.Dialogs is
         (History_Dialog.Cancel, "clicked",
          Button_Callback.To_Marshaller (On_History_Cancel_Clicked'Access));
       Add (History_Dialog.Hbuttonbox1, History_Dialog.Cancel);
-
-      Gtk_New (History_Dialog.Help, -"Help");
-      Set_Flags (History_Dialog.Help, Can_Default);
-      Button_Callback.Connect
-        (History_Dialog.Help, "clicked",
-         Button_Callback.To_Marshaller (On_History_Help_Clicked'Access));
-      Add (History_Dialog.Hbuttonbox1, History_Dialog.Help);
 
       Return_Callback.Connect
         (History_Dialog, "delete_event",
