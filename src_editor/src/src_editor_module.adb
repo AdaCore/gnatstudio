@@ -996,7 +996,7 @@ package body Src_Editor_Module is
       Register_Menu (Kernel, Gotom, -"Goto Body", "", null,
                      Ref_Item => -"Goto Declaration<->Body");
 
-      --  Toolbars
+      --  Toolbar buttons
 
       Button := Insert_Stock
         (Toolbar, Stock_New, -"Create a New File", Position => 0);
