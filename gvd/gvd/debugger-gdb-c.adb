@@ -613,4 +613,18 @@ package body Debugger.Gdb.C is
               Record_Field        => Record_Field);
    end Get_Language_Context;
 
+   ------------------
+   -- Set_Variable --
+   ------------------
+
+   function Set_Variable
+     (Lang     : access Gdb_C_Language;
+      Var_Name : String;
+      Value    : String)
+     return String
+   is
+   begin
+      return "set variable " & Var_Name & " = " & Value;
+   end Set_Variable;
+
 end Debugger.Gdb.C;

@@ -106,6 +106,14 @@ package Language.Debugger is
    --
    --  The default implementation raises Program_Error (See comment above)
 
+   function Set_Variable
+     (Lang     : access Language_Debugger;
+      Var_Name : String;
+      Value    : String)
+     return String;
+   --  Return the command to use to set a variable, depending on a language
+   --  specific language.
+
    type Language_Context (Record_Field_Length : Positive) is record
       Record_Start : Character;
       --  Character that starts the display of record values

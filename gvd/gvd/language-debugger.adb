@@ -126,4 +126,18 @@ package body Language.Debugger is
       return L;
    end Get_Language_Context;
 
+   ------------------
+   -- Set_Variable --
+   ------------------
+
+   function Set_Variable
+     (Lang     : access Language_Debugger;
+      Var_Name : String;
+      Value    : String)
+     return String
+   is
+   begin
+      return "";
+   end Set_Variable;
+
 end Language.Debugger;

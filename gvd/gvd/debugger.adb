@@ -392,4 +392,22 @@ package body Debugger is
       Debugger.Is_Started := Is_Started;
    end Set_Is_Started;
 
+   ------------------
+   -- Set_Variable --
+   ------------------
+
+   procedure Set_Variable
+     (Debugger : access Debugger_Root;
+      Var_Name : String;
+      Value    : String)
+   is
+      S : constant String :=
+        Set_Variable (Language_Debugger_Access (Get_Language (Debugger)),
+                      Var_Name, Value);
+   begin
+      if S /= "" then
+         Send (Debugger, S, Display => True);
+      end if;
+   end Set_Variable;
+
 end Debugger;

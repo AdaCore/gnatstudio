@@ -242,11 +242,20 @@ package Debugger is
    --  GDB_COMMAND: "print"
 
    procedure Set_Executable
-     (Debugger : access Debugger_Root; Executable : String) is abstract;
+     (Debugger   : access Debugger_Root;
+      Executable : String;
+      Mode       : Command_Type := Internal) is abstract;
    --  Load an executable into the debugger.
    --  Note that this can have a different meaning with some languages like
    --  Java, where Executable should be the name of the main class.
    --  GDB_COMMAND: "file"
+
+   procedure Set_Variable
+     (Debugger : access Debugger_Root;
+      Var_Name : String;
+      Value    : String);
+   --  Set the value of a specific variable.
+   --  Var_Name should contain any needed block information
 
    --------------------------
    -- Sources manipulation --

@@ -85,6 +85,12 @@ package Debugger.Gdb.Ada is
       Index    : in out Natural;
       Result   : in out Items.Arrays.Array_Type_Access);
 
+   function Set_Variable
+     (Lang     : access Gdb_Ada_Language;
+      Var_Name : String;
+      Value    : String)
+     return String;
+
    function Get_Language_Context
      (Lang : access Gdb_Ada_Language)
       return Language.Debugger.Language_Context;
