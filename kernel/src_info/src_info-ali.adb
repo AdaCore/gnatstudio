@@ -1093,8 +1093,8 @@ package body Src_Info.ALI is
       New_Dep :=
         (File              => Sfile,
          File_Timestamp    => Dep.Stamp,
-         Depends_From_Spec => False,
-         Depends_From_Body => False,
+         Dep_Info          => (Depends_From_Spec => False,
+                               Depends_From_Body => False),
          Declarations      => null);
       New_LI_File.Dependencies_Info :=
         new Dependency_File_Info_Node'
@@ -1182,9 +1182,9 @@ package body Src_Info.ALI is
             --  Update the Depends_From_Spec/Body flags
             case U.Utype is
                when Is_Spec | Is_Spec_Only =>
-                  Current_Dep.Value.Depends_From_Spec := True;
+                  Current_Dep.Value.Dep_Info.Depends_From_Spec := True;
                when Is_Body | Is_Body_Only =>
-                  Current_Dep.Value.Depends_From_Body := True;
+                  Current_Dep.Value.Dep_Info.Depends_From_Body := True;
             end case;
             return;
          end if;
