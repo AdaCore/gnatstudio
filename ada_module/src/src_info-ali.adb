@@ -27,7 +27,6 @@ with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with Krunch;
 with Namet;                     use Namet;
 with Projects.Registry;         use Projects, Projects.Registry;
-with Src_Info.Prj_Utils;        use Src_Info.Prj_Utils;
 with Src_Info.LI_Utils;         use Src_Info.LI_Utils;
 with Types;                     use Types;
 with Traces;                    use Traces;
@@ -220,6 +219,16 @@ package body Src_Info.ALI is
    --  Perform the job of Get_Subunit_Source_File knowing the name of the
    --  Source Filename from which the ALI filename is derived.
 
+   function Get_Source_Filename
+     (Unit_Name       : Unit_Name_Type;
+      Project         : Projects.Project_Type) return String;
+   --  Return the base name for the given Unit_Name.
+   --  Project and all its imported projects are tested for possible naming
+   --  schemes.
+   --  Unit_Name must be encoded in the same format as the Unit_Name in the 'W'
+   --  lines of the GNAT ALI files (the encoding is used to determine the unit
+   --  part).
+
    function Load_And_Scan_ALI (ALI_Filename : Virtual_File) return ALI_Id;
    --  Load the given ALI file into a buffer and then scan it, filling in the
    --  information in the tables maintained in ali.ads. The new ID associated
@@ -383,6 +392,60 @@ package body Src_Info.ALI is
          end if;
       end loop;
    end Destroy;
+
+   -------------------------
+   -- Get_Source_Filename --
+   -------------------------
+
+   function Get_Source_Filename
+     (Unit_Name : Unit_Name_Type;
+      Project : Project_Type) return String
+   is
+      Unit : constant String := Locale_To_UTF8 (Get_String (Unit_Name));
+      --  Need to do a copy, since Name_Buffer is modified afterward
+
+      Part_Marker_Len : constant := 2; --  It is either '%s' or '%b'
+      Part        : Unit_Part;
+      Iter : Imported_Project_Iterator := Start (Project, Recursive => True);
+   begin
+      --  Check that the '%' marker is there
+      if Unit'Length < Part_Marker_Len + 1
+        or else Unit (Unit'Last - 1) /= '%'
+      then
+         return "";
+      end if;
+
+      --  Compute the Unit_Part, strip the part marker from the Unit_Name
+      --  in the Name_Buffer, and search the unit name in the associated
+      --  exception list
+      case Unit (Unit'Last) is
+         when 'b'    => Part := Unit_Body;
+         when 's'    => Part := Unit_Spec;
+         when others => return "";  --  Incorrect unit name
+      end case;
+
+      while Current (Iter) /= No_Project loop
+         declare
+            N : constant String := Get_Filename_From_Unit
+              (Current (Iter),
+               Unit (1 .. Unit'Last - Part_Marker_Len),
+               Part);
+         begin
+            if N /= "" then
+               return N;
+            end if;
+         end;
+         Next (Iter);
+      end loop;
+
+      --  We end up here for the runtime files, so we just try to append the
+      --  standard GNAT extensions. The name will be krunched appropriately by
+      --  Process_With anyway
+
+      return Get_Filename_From_Unit
+        (Project, Unit (1 .. Unit'Last - Part_Marker_Len), Part,
+         Check_Predefined_Library => True);
+   end Get_Source_Filename;
 
    --------------------
    -- Char_To_E_Kind --
