@@ -21,7 +21,6 @@
 with Gtk; use Gtk;
 with Gtk.Enums;       use Gtk.Enums;
 with Gtkada.Handlers; use Gtkada.Handlers;
-with Odd_Intl; use Odd_Intl;
 
 with Process_Tab_Pkg.Callbacks; use Process_Tab_Pkg.Callbacks;
 with Interfaces.C.Strings; use Interfaces.C.Strings;
@@ -74,28 +73,8 @@ begin
    Add (Process_Tab.Scrolledwindow9, Process_Tab.Data_Canvas);
    Set_Shadow_Type (Process_Tab.Data_Canvas, Shadow_In);
 
-   Gtk_New (Process_Tab.File_Notebook);
-   Add (Process_Tab.Vpaned6, Process_Tab.File_Notebook);
-   Set_Scrollable (Process_Tab.File_Notebook, True);
-   Set_Show_Border (Process_Tab.File_Notebook, True);
-   Set_Show_Tabs (Process_Tab.File_Notebook, True);
-   Set_Tab_Hborder (Process_Tab.File_Notebook, 2);
-   Set_Tab_Vborder (Process_Tab.File_Notebook, 2);
-   Set_Tab_Pos (Process_Tab.File_Notebook, Pos_Top);
-
-   Gtk_New (Process_Tab.Frame10);
-   Add (Process_Tab.File_Notebook, Process_Tab.Frame10);
-   Set_Shadow_Type (Process_Tab.Frame10, Shadow_Etched_In);
-
    Gtk_New_Hbox (Process_Tab.Editor_Text, Process_Tab);
-   Add (Process_Tab.Frame10, Process_Tab.Editor_Text);
-
-   Gtk_New (Process_Tab.Label52, -("Current Thread"));
-   Set_Alignment (Process_Tab.Label52, 0.5, 0.5);
-   Set_Padding (Process_Tab.Label52, 0, 0);
-   Set_Justify (Process_Tab.Label52, Justify_Center);
-   Set_Line_Wrap (Process_Tab.Label52, False);
-   Set_Tab (Process_Tab.File_Notebook, 0, Process_Tab.Label52);
+   Add (Process_Tab.Vpaned6, Process_Tab.Editor_Text);
 
    Gtk_New (Process_Tab.Scrolledwindow7);
    Add (Process_Tab.Process_Paned, Process_Tab.Scrolledwindow7);
