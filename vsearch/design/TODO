@@ -12,7 +12,7 @@
   * [Yeti] Set case sensitivity of Files_Combo and Directory_Combo accordingly
     with the underlying OS
 
-  * [Yeti] Update sensitivity of "Files" and "Directory" labels
+8 * [Yeti] Update sensitivity of "Files" and "Directory" labels
 
 ------------------
 -- Improvements --
@@ -25,7 +25,7 @@
 
   * [Yeti] Move the abort flag and the callback access in Hyper_Grep_Record.
 
-  * [Yeti] Desactivate Stop when not searching, Start when searching.
+8 * [Yeti] Desactivate Stop when not searching, Start when searching.
 
   * [Yeti] Don't discard syntactic delimiters " /* -- */ in matching ?
 
@@ -38,9 +38,9 @@
 
   * [Yeti] Add a callback reporting failures (opening error, ...)
 
-  * [Yeti] Add a Match_Array parameter to the callback
+7 * [Yeti] Add a Match_Array parameter to the callback
 
-  * [Yeti] When no initial directory, use no explicit one.
+9 * [Yeti] When no initial directory, use no explicit one.
 
   * [Yeti] Whole_Word option unuseful when Regexp ???
 
@@ -48,15 +48,15 @@
 -- Speed --
 -----------
 
-  * [Yeti] Merge Scan_File_With_Context and Scan_Line_With_Context
+7 * [Yeti] Merge Scan_File_With_Context and Scan_Line_With_Context
     Avoids calls to SLWC and re-elaboration of declared items, but add
     indentation levels.
 
-  * [Yeti] Caching Language_Context
+8 * [Yeti] Caching Language_Context
 
-  * [Yeti] Use Boyer-Moore algorithm instead of Index
+9 * [Yeti] Use Boyer-Moore algorithm instead of Index
 
-  * [Yeti] When Whole_Word without Regexp, search for literal text and then
+8 * [Yeti] When Whole_Word without Regexp, search for literal text and then
     verify it's a whole one
 
 ----------
