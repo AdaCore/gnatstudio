@@ -18,31 +18,28 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with String_Utils;            use String_Utils;
 with Ada.Text_IO;             use Ada.Text_IO;
 with Projects;                use Projects;
 with Ada.Characters.Handling; use Ada.Characters.Handling;
+with OS_Utils;                use OS_Utils;
 with String_Utils;            use String_Utils;
 with Language.Ada;            use Language.Ada;
 with Basic_Types;             use Basic_Types;
 with Language;                use Language;
 
 package body Aunit_Filters is
-   subtype String_Access is Basic_Types.String_Access;
 
    ----------------
    -- Suite_Name --
    ----------------
 
    procedure Get_Suite_Name
-     (File_Name    : in String;
+     (File_Name    : String;
       Package_Name : out GNAT.OS_Lib.String_Access;
       Suite_Name   : out GNAT.OS_Lib.String_Access)
    is
       Index             : Integer;
-      F                 : File_Descriptor;
-      Length            : Integer;
-      File_Buffer       : String_Access;
+      File_Buffer       : GNAT.OS_Lib.String_Access;
       Constructs        : aliased Construct_List;
       Current_Construct : Construct_Access;
       Found             : Boolean := False;
@@ -57,12 +54,8 @@ package body Aunit_Filters is
          return;
       end if;
 
-      F           := Open_Read (File_Name, Binary);
-      File_Buffer := new String (1 .. Integer (File_Length (F)));
-      Length      := Read (F, File_Buffer.all'Address, File_Buffer'Length);
-      Close (F);
-
-      Parse_Constructs (Ada_Lang, File_Buffer (1 .. Length), Constructs);
+      File_Buffer := Read_File (File_Name);
+      Parse_Constructs (Ada_Lang, File_Buffer.all, Constructs);
       Current_Construct := Constructs.First;
 
       --  Find the name of the suite or test case.
@@ -134,12 +127,7 @@ package body Aunit_Filters is
       end if;
 
       Free (Constructs);
-
-   exception
-      when Use_Error =>
-         null;
-      when Ada.Text_IO.Device_Error =>
-         Close (F);
+      Free (File_Buffer);
    end Get_Suite_Name;
 
    ---------------------
@@ -254,8 +242,7 @@ package body Aunit_Filters is
                   Skip_To_String (Line, Index_End, " is");
 
                   if Index_End < Line_Last - 1 then
-                     Text :=
-                       new String'(Line (1 .. Index_End - 1));
+                     Text := new String'(Line (1 .. Index_End - 1));
                      Found := True;
                   end if;
                end if;
@@ -263,11 +250,7 @@ package body Aunit_Filters is
 
             Close (File_T);
          exception
-            when Name_Error =>
-               null;
-            when Use_Error =>
-               null;
-            when End_Error =>
+            when Name_Error | Use_Error | End_Error =>
                Close (File_T);
          end;
 
