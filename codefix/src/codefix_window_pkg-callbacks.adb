@@ -159,9 +159,13 @@ package body Codefix_Window_Pkg.Callbacks is
    procedure On_Undo_Clicked
      (Object : access Gtk_Widget_Record'Class)
    is
-      pragma Unreferenced (Object);
+      Graphic_Codefix : constant Graphic_Codefix_Access :=
+        Graphic_Codefix_Access (Object);
    begin
-      null;
+      Undo_Last_Error (Graphic_Codefix);
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Undo_Clicked;
 
    ------------------------
