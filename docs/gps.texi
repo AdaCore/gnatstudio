@@ -2947,8 +2947,14 @@ scenarios.
 All the attributes of a project, except its list of imported projects,
 can be chosen based on the value of external variables, whose value is
 generally coming from the host computer environment, or directly set in
-GPS (using the small area on top of the project explorer, @ref{The
-Project Explorer}).
+GPS. The interface to manipulate these scenarios is the scenario view, which
+can be displayed by selecting the menu @code{Tools/Scenario View}.
+The recommanded use for it is to drag it, and drop it above the project view,
+so that you can see both at the same time.
+
+This area allows you to select new values for the scenario variables defined
+in your project, and thus change dynamically the view GPS has of your project
+and your source files.
 
 @cindex compile
 @cindex debug
@@ -2968,7 +2974,7 @@ appropriate scenario (@ref{The Project Properties Editor}).
 
 @noindent
 Creating a new scenario variable is done through the contextual menu
-(right-click) in the project explorer. Select the menu @code{Add
+(right-click) in the Scenario View. Select the menu @code{Add
 Configuration Variable}. This opens the following dialog:
 
 @iftex
@@ -2985,8 +2991,8 @@ There are two main areas in this dialog: in the top line, you specify
 the name of the variable. This name is used for two purposes:
 
 @itemize @bullet
-@item It is displayed in the project explorer
-@cindex project explorer
+@item It is displayed in the scenario view
+@cindex scenario view
 
 @item This is the name of the environment variable from which the
 initial value is read. When GPS is started, all configuration
@@ -3019,7 +3025,7 @@ click on the value itself to change it.
 
 @noindent
 If at least one configuration variable is defined in your project, the
-area on top of the project explorer will contain something similar to:
+scenario view will contain something similar to:
 
 @iftex
 @cindex screen shot
@@ -3041,7 +3047,6 @@ clicking on the arrow on the right of the value. This will display a
 pop-up window with the list of possible values, from which you select
 the one you wish to use.
 
-@cindex project explorer
 As soon as a new value is selected, GPS will recompute the project
 explorer (in case source directories, object directories or list
 of source files have changed). A number of things will also be updated
