@@ -382,7 +382,6 @@ package body Expect_Interface is
                return Exit_Type'(Timed_Out);
             end if;
 
-            Trace (Me, "MANU Process gtk+ events");
             while Gtk.Main.Events_Pending loop
                Dead := Gtk.Main.Main_Iteration;
             end loop;
