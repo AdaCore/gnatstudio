@@ -58,12 +58,18 @@ package VCS is
    --  Add an identifier to the list of known identifiers.
    --  See Get_VCS_From_Id above.
 
+   procedure Unregister_VCS_Identifier (Identifier : VCS_Id_Identifier);
+   --  Remove from the list of known identifiers the first one that matches
+   --  Identifier.
+
    function Name (Ref : access VCS_Record) return String is abstract;
    --  The name of the VCS system.
 
-   procedure Free (Ref : access VCS_Record);
+   procedure Free (Ref : in out VCS_Record);
    --  Free memory associated with Ref.
-   --  ??? is this the correct way to do it ?
+
+   procedure Free (Ref : in out VCS_Access);
+   --  Free the VCS pointed to by Ref, and Ref itself
 
    type File_Status is
      (Unknown,

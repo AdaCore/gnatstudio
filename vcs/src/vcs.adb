@@ -21,6 +21,8 @@
 with Glide_Kernel;         use Glide_Kernel;
 with Glide_Kernel.Console; use Glide_Kernel.Console;
 with Generic_List;
+with Unchecked_Deallocation;
+with Commands;             use Commands;
 
 package body VCS is
 
@@ -70,6 +72,26 @@ package body VCS is
       Identifiers.Append (Identifiers_List, Identifier);
    end Register_VCS_Identifier;
 
+   -------------------------------
+   -- Unregister_VCS_Identifier --
+   -------------------------------
+
+   procedure Unregister_VCS_Identifier (Identifier : VCS_Id_Identifier) is
+      use Identifiers;
+      Prev, Current : Identifiers.List_Node;
+   begin
+      Current := First (Identifiers_List);
+      while Current /= Null_Node loop
+         if Data (Current) = Identifier then
+            Remove_Nodes (Identifiers_List, Prev, Current);
+            return;
+         end if;
+
+         Prev := Current;
+         Current := Next (Current);
+      end loop;
+   end Unregister_VCS_Identifier;
+
    ---------------------
    -- Get_VCS_From_Id --
    ---------------------
@@ -107,17 +129,28 @@ package body VCS is
          return;
       end if;
 
-      Insert (Rep.Kernel, Message, False, Add_LF, Error);
+      Insert (Rep.Kernel, Message, False, Add_LF, Mode => Error);
    end Set_Error;
 
    ----------
    -- Free --
    ----------
 
-   procedure Free (Ref : access VCS_Record) is
-      pragma Unreferenced (Ref);
+   procedure Free (Ref : in out VCS_Record) is
    begin
-      null;
+      Free_Queue (Ref.Queue);
+   end Free;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Ref : in out VCS_Access) is
+      procedure Unchecked_Free is new Unchecked_Deallocation
+        (VCS_Record'Class, VCS_Access);
+   begin
+      Free (Ref.all);
+      Unchecked_Free (Ref);
    end Free;
 
    ----------
