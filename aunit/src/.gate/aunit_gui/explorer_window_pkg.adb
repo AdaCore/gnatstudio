@@ -4,8 +4,8 @@ with Gdk.Types;       use Gdk.Types;
 with Gtk.Widget;      use Gtk.Widget;
 with Gtk.Enums;       use Gtk.Enums;
 with Gtkada.Handlers; use Gtkada.Handlers;
-with Callbacks_Aunit_Make_Harness; use Callbacks_Aunit_Make_Harness;
-with Aunit_Make_Harness_Intl; use Aunit_Make_Harness_Intl;
+with Callbacks_Aunit_Gui; use Callbacks_Aunit_Gui;
+with Aunit_Gui_Intl; use Aunit_Gui_Intl;
 with Explorer_Window_Pkg.Callbacks; use Explorer_Window_Pkg.Callbacks;
 
 package body Explorer_Window_Pkg is

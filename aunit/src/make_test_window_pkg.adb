@@ -29,8 +29,8 @@ with Gtk; use Gtk;
 with Gtk.Widget;      use Gtk.Widget;
 with Gtk.Enums;       use Gtk.Enums;
 with Gtkada.Handlers; use Gtkada.Handlers;
-with Callbacks_Aunit_Make_Test; use Callbacks_Aunit_Make_Test;
-with Aunit_Make_Test_Intl; use Aunit_Make_Test_Intl;
+with Callbacks_Aunit_Gui; use Callbacks_Aunit_Gui;
+with Aunit_Gui_Intl; use Aunit_Gui_Intl;
 with Make_Test_Window_Pkg.Callbacks; use Make_Test_Window_Pkg.Callbacks;
 
 package body Make_Test_Window_Pkg is

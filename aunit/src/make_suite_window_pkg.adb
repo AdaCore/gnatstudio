@@ -30,8 +30,8 @@ with Gtk.Widget;      use Gtk.Widget;
 with Gtk.Enums;       use Gtk.Enums;
 with Gtk.Clist;       use Gtk.Clist;
 with Gtkada.Handlers; use Gtkada.Handlers;
-with Callbacks_Aunit_Make_Suite; use Callbacks_Aunit_Make_Suite;
-with Aunit_Make_Suite_Intl; use Aunit_Make_Suite_Intl;
+with Callbacks_Aunit_Gui; use Callbacks_Aunit_Gui;
+with Aunit_Gui_Intl; use Aunit_Gui_Intl;
 with Make_Suite_Window_Pkg.Callbacks; use Make_Suite_Window_Pkg.Callbacks;
 
 package body Make_Suite_Window_Pkg is

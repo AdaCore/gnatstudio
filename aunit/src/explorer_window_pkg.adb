@@ -31,8 +31,9 @@ with Gtk.Widget;      use Gtk.Widget;
 with Gtk.Enums;       use Gtk.Enums;
 with Gtk.Clist;       use Gtk.Clist;
 with Gtkada.Handlers; use Gtkada.Handlers;
-with Callbacks_Aunit_Make_Harness; use Callbacks_Aunit_Make_Harness;
-with Aunit_Make_Harness_Intl; use Aunit_Make_Harness_Intl;
+with Callbacks_Aunit_Gui; use Callbacks_Aunit_Gui;
+with Aunit_Gui_Intl; use Aunit_Gui_Intl;
+
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with String_Utils; use String_Utils;
 with Ada.Text_IO; use Ada.Text_IO;

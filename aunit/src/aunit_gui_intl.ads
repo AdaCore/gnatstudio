@@ -1,6 +1,6 @@
-package Aunit_Make_Test_Intl is
+package Aunit_Gui_Intl is
 
    function "-" (Msg : String) return String;
    --  Convenient shortcut to the Gettext function.
 
-end Aunit_Make_Test_Intl;
+end Aunit_Gui_Intl;

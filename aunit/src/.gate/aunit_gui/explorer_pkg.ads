@@ -9,12 +9,12 @@ with Gtk.Object; use Gtk.Object;
 package Explorer_Pkg is
 
    type Explorer_Record is new Gtk_Window_Record with record
-      Vbox5 : Gtk_Vbox;
+      Vbox15 : Gtk_Vbox;
       Scrolledwindow3 : Gtk_Scrolled_Window;
       Clist : Gtk_Clist;
-      Label3 : Gtk_Label;
-      Label4 : Gtk_Label;
-      Hbuttonbox2 : Gtk_Hbutton_Box;
+      Label12 : Gtk_Label;
+      Label13 : Gtk_Label;
+      Hbuttonbox4 : Gtk_Hbutton_Box;
       Ok : Gtk_Button;
       Close : Gtk_Button;
    end record;

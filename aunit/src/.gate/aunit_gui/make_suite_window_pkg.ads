@@ -11,24 +11,24 @@ with Gtk.Hbutton_Box; use Gtk.Hbutton_Box;
 package Make_Suite_Window_Pkg is
 
    type Make_Suite_Window_Record is new Gtk_Window_Record with record
-      Vbox1 : Gtk_Vbox;
-      Hbox1 : Gtk_Hbox;
-      Vbox2 : Gtk_Vbox;
-      Label1 : Gtk_Label;
-      Vbox3 : Gtk_Vbox;
-      Name_Entry : Gtk_Entry;
-      Vbox4 : Gtk_Vbox;
-      Label2 : Gtk_Label;
-      Hbox2 : Gtk_Hbox;
+      Vbox11 : Gtk_Vbox;
+      Hbox5 : Gtk_Hbox;
+      Vbox12 : Gtk_Vbox;
+      Label7 : Gtk_Label;
+      Vbox13 : Gtk_Vbox;
+      Entry1 : Gtk_Entry;
+      Vbox14 : Gtk_Vbox;
+      Label8 : Gtk_Label;
+      Hbox6 : Gtk_Hbox;
       Scrolledwindow2 : Gtk_Scrolled_Window;
       Test_List : Gtk_Clist;
-      Label5 : Gtk_Label;
-      Label6 : Gtk_Label;
-      Label7 : Gtk_Label;
+      Label9 : Gtk_Label;
+      Label10 : Gtk_Label;
+      Label11 : Gtk_Label;
       Vbuttonbox1 : Gtk_Vbutton_Box;
       Add : Gtk_Button;
       Remove : Gtk_Button;
-      Hbuttonbox1 : Gtk_Hbutton_Box;
+      Hbuttonbox3 : Gtk_Hbutton_Box;
       Ok : Gtk_Button;
       Cancel : Gtk_Button;
       Help : Gtk_Button;
