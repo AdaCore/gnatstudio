@@ -603,14 +603,8 @@ package body Src_Editor_Buffer.Line_Information is
 
       procedure Draw_Blank_Line_Info is
       begin
-         Draw_Rectangle
-           (Drawable => Drawable,
-            GC       => Post_It_Note_GC,
-            Filled   => True,
-            X        => 0,
-            Y        => Y_Pix_In_Window,
-            Width    => Gint (Buffer.Total_Column_Width),
-            Height   => Line_Height);
+         --  ??? Should we draw something on the side of blank lines ?
+         null;
       end Draw_Blank_Line_Info;
 
       --------------------
