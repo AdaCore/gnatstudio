@@ -2,7 +2,7 @@
 @input texiplus
 
 @set GPS
-@set GPSVersion 1.3.0
+@set GPSVersion 1.4.0
 
 @c %**start of header
 @setfilename gps_pg.info
@@ -97,7 +97,7 @@ This document will focus on these additions that can only be done
 through programming languages.
 
 At this point, GPS can only be extended by programming in
-@b{Ada95}. However, it is planned for the near future that extensions
+@b{Ada}. In addition, it is planned for the near future that extensions
 in @b{C} or @b{C++} can be done, and that GPS should even have a full
 scripting languages permitting most of the extensions described below.
 
@@ -119,34 +119,23 @@ available on your system, so that you can recompile your new module.
 Most of these external tools and libraries are available from
 @url{http://libre.act-europe.fr}.
 
-@table @bullet
+@table @b
 @item GNAT 3.15 or above
 GNAT is the GNU Ada Compiler, integrated into the gcc tool chain, and
 developed by @b{Ada Core Technologies} and @b{ACT Europe}. GPS will not compile
 with other Ada compilers than GNAT.
 
-You also need to download the sources of GNAT, since GPS uses some of
-these directly.
-
-@item gtk+ 2.0.8 or above
+@item Gtk+ 2.2.0 or above
 gtk+ is a C toolkit used for the graphical interface of GPS. It is
 available on a number of platforms, including most UNIX systems and
 Windows. Available from @url{http://www.gtk.org}.
 
-@item GtkAda 2.0 or above
-GtkAda is the Ada binding to the C library @b{gtk+}. GPS was build
-with gtk+ version 2.0 or above, and therefore GtkAda 2.0 or above is
-also needed. The site @url{http://libre.act-europe.fr} provides
-read-only access to the CVS repository, and therefore to the most
-up-to-date version.
-
-@item GVD
-GVD is the GNU visual debugger, also developed in Ada. You need to
-get the most recent version from the CVS repository.
-
 @item GPS sources
-And of course, you need to get the GPS sources.
-    
+The GPS sources include the corresponding GNAT, GtkAda and GVD sources
+needed to build it. If needed, GNAT, GtkAda and GVD sources can be
+obtained seperately from anonymous cvs access from
+@url{http://libre.act-europe.fr}
+
 @end table
 
 The GPS sources contain an INSTALL file that explains how to recompile
