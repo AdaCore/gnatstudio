@@ -35,6 +35,6 @@ package Docgen.Work_On_File is
    --  Process all files from Source_File_List, and generate their
    --  documentation.
    --
-   --  ??? Doc_Suffix suffix should be an attribute/primitve of the converter
+   --  ??? Doc_Suffix suffix should be an attribute/primitive of the converter
 
 end Docgen.Work_On_File;
