@@ -651,7 +651,7 @@ package body Src_Editor_View is
 
                First         : constant Gint :=
                  Gint (Get_Buffer_Line (Buffer, B.First_Line) - 1);
-               Last          : constant Gint :=
+               Last          : Gint :=
                  Gint (Get_Buffer_Line (Buffer, B.Last_Line) - 1);
 
             begin
@@ -659,6 +659,10 @@ package body Src_Editor_View is
 
                if B.Offset <= 1 then
                   return;
+               end if;
+
+               if Last < First then
+                  Last := First;
                end if;
 
                Get_Iter_At_Line_Offset (Buffer, Iter, First, 0);
