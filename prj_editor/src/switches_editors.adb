@@ -18,61 +18,61 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glib;                 use Glib;
-with Glib.Object;          use Glib.Object;
-with Gtk.Adjustment;       use Gtk.Adjustment;
-with Gtk.Box;              use Gtk.Box;
-with Gtk.Button;           use Gtk.Button;
-with Gtk.Check_Button;     use Gtk.Check_Button;
-with Gtk.Combo;            use Gtk.Combo;
-with Gtk.Dialog;           use Gtk.Dialog;
-with Gtk.Enums;            use Gtk.Enums;
-with Gtk.GEntry;           use Gtk.GEntry;
-with Gtk.Handlers;         use Gtk.Handlers;
-with Gtk.Label;            use Gtk.Label;
-with Gtk.List;             use Gtk.List;
-with Gtk.List_Item;        use Gtk.List_Item;
-with Gtk.Notebook;         use Gtk.Notebook;
-with Gtk.Radio_Button;     use Gtk.Radio_Button;
-with Gtk.Size_Group;       use Gtk.Size_Group;
-with Gtk.Spin_Button;      use Gtk.Spin_Button;
-with Gtk.Stock;            use Gtk.Stock;
-with Gtk.Tooltips;         use Gtk.Tooltips;
-with Gtk.Widget;           use Gtk.Widget;
-with Gtk.Window;           use Gtk.Window;
-with Gtkada.File_Selector; use Gtkada.File_Selector;
-with Gtkada.Handlers;      use Gtkada.Handlers;
+with Glib;                      use Glib;
+with Glib.Object;               use Glib.Object;
+with Gtk.Adjustment;            use Gtk.Adjustment;
+with Gtk.Box;                   use Gtk.Box;
+with Gtk.Button;                use Gtk.Button;
+with Gtk.Check_Button;          use Gtk.Check_Button;
+with Gtk.Combo;                 use Gtk.Combo;
+with Gtk.Dialog;                use Gtk.Dialog;
+with Gtk.Enums;                 use Gtk.Enums;
+with Gtk.GEntry;                use Gtk.GEntry;
+with Gtk.Handlers;              use Gtk.Handlers;
+with Gtk.Label;                 use Gtk.Label;
+with Gtk.List;                  use Gtk.List;
+with Gtk.List_Item;             use Gtk.List_Item;
+with Gtk.Notebook;              use Gtk.Notebook;
+with Gtk.Radio_Button;          use Gtk.Radio_Button;
+with Gtk.Size_Group;            use Gtk.Size_Group;
+with Gtk.Spin_Button;           use Gtk.Spin_Button;
+with Gtk.Stock;                 use Gtk.Stock;
+with Gtk.Tooltips;              use Gtk.Tooltips;
+with Gtk.Widget;                use Gtk.Widget;
+with Gtk.Window;                use Gtk.Window;
+with Gtkada.File_Selector;      use Gtkada.File_Selector;
+with Gtkada.Handlers;           use Gtkada.Handlers;
 
-with GNAT.OS_Lib;          use GNAT.OS_Lib;
-with GNAT.Case_Util;       use GNAT.Case_Util;
+with GNAT.OS_Lib;               use GNAT.OS_Lib;
+with GNAT.Case_Util;            use GNAT.Case_Util;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
-with Ada.Characters.Handling; use Ada.Characters.Handling;
+with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with Ada.Unchecked_Deallocation;
 
 with Prj;
-with Projects.Editor;      use Projects, Projects.Editor;
-with GPS.Kernel;         use GPS.Kernel;
-with GPS.Kernel.Console; use GPS.Kernel.Console;
-with GPS.Kernel.MDI;     use GPS.Kernel.MDI;
-with GPS.Kernel.Project; use GPS.Kernel.Project;
-with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
-with GPS.Kernel.Contexts; use GPS.Kernel.Contexts;
-with GPS.Intl;           use GPS.Intl;
-with Language_Handlers;    use Language_Handlers;
-with String_Utils;         use String_Utils;
-with Basic_Types;          use Basic_Types;
-with Scenario_Selectors;   use Scenario_Selectors;
-with Projects;             use Projects;
-with Project_Viewers;      use Project_Viewers;
-with VFS;                  use VFS;
-with Commands.Interactive; use Commands, Commands.Interactive;
+with Projects.Editor;           use Projects, Projects.Editor;
+with GPS.Kernel;                use GPS.Kernel;
+with GPS.Kernel.Console;        use GPS.Kernel.Console;
+with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
+with GPS.Kernel.Project;        use GPS.Kernel.Project;
+with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
+with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
+with GPS.Intl;                  use GPS.Intl;
+with Language_Handlers;         use Language_Handlers;
+with String_Utils;              use String_Utils;
+with Basic_Types;               use Basic_Types;
+with Scenario_Selectors;        use Scenario_Selectors;
+with Projects;                  use Projects;
+with Project_Viewers;           use Project_Viewers;
+with VFS;                       use VFS;
+with Commands.Interactive;      use Commands, Commands.Interactive;
 
-with Types;                use Types;
-with Snames;               use Snames;
-with Switch.M;             use Switch.M;
+with Types;                     use Types;
+with Snames;                    use Snames;
+with Switch.M;                  use Switch.M;
 
-with Ada.Exceptions;       use Ada.Exceptions;
-with Traces;               use Traces;
+with Ada.Exceptions;            use Ada.Exceptions;
+with Traces;                    use Traces;
 
 package body Switches_Editors is
 
@@ -787,7 +787,7 @@ package body Switches_Editors is
    ------------------
 
    procedure Refresh_Page (Page : access Gtk_Widget_Record'Class) is
-      P : constant Switches_Editor_Page := Switches_Editor_Page (Page);
+      P    : constant Switches_Editor_Page := Switches_Editor_Page (Page);
       Found : Boolean;
    begin
       --  Don't do anything if the callbacks were blocked, to avoid infinite
@@ -1232,8 +1232,8 @@ package body Switches_Editors is
       Box     : access Gtk.Box.Gtk_Box_Record'Class;
       Buttons : Radio_Switch_Array)
    is
-      S, Previous    : Switch_Check_Widget_Access;
-      Last : Gtk_Radio_Button;
+      S, Previous : Switch_Check_Widget_Access;
+      Last        : Gtk_Radio_Button;
    begin
       for B in Buttons'Range loop
          S := new Switch_Check_Widget (Buttons (B).Switch'Length);
@@ -1244,8 +1244,8 @@ package body Switches_Editors is
          Previous := S;
 
          Gtk_New (Last, Group => Last, Label => -Buttons (B).Label.all);
-         S.Check     := Gtk_Check_Button (Last);
-         S.Switch    := Buttons (B).Switch.all;
+         S.Check  := Gtk_Check_Button (Last);
+         S.Switch := Buttons (B).Switch.all;
          Pack_Start (Box, Last, False, False);
          Widget_Callback.Object_Connect
            (Last, "toggled", Refresh_Page'Access, Page);

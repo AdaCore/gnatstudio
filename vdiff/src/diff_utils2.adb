@@ -238,7 +238,7 @@ package body Diff_Utils2 is
    ----------
 
    function Diff
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
+     (Kernel             : access GPS.Kernel.Kernel_Handle_Record'Class;
       Ref_File, New_File : VFS.Virtual_File)
       return Diff_List
    is
@@ -252,7 +252,7 @@ package body Diff_Utils2 is
    ----------
 
    function Diff
-     (Diff_Command  : String;
+     (Diff_Command       : String;
       Ref_File, New_File : VFS.Virtual_File) return Diff_List
    is
       Descriptor   : TTY_Process_Descriptor;
