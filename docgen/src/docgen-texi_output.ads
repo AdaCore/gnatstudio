@@ -112,7 +112,6 @@ private
 
    procedure Format_TEXI
      (File          : Ada.Text_IO.File_Type;
-      Entity_List   : Type_Entity_List.List;
       Text          : String;
       File_Name     : String;
       Entity_Name   : String;

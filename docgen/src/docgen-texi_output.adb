@@ -146,7 +146,7 @@ package body Docgen.Texi_Output is
             else
                --  check if the last spec and body files will be processed:
                --  link to the first body package
-               Node := Type_Source_File_List.First (Info.Open_Package_List);
+               Node := Type_Source_File_List.First (Info.Doc_File_List);
                Ada.Text_IO.Put_Line (File, "@node " &
                                      Info.Open_Title.all & ", Body of " &
                                      Type_Source_File_List.Data
@@ -171,7 +171,7 @@ package body Docgen.Texi_Output is
                                 Info.Open_Package_Prev.all & ", Top");
             else
                --  link to the last spec package
-               Node := Type_Source_File_List.Last (Info.Open_Package_List);
+               Node := Type_Source_File_List.Last (Info.Doc_File_List);
                Ada.Text_IO.Put (File, ", " &
                                 Type_Source_File_List.Data
                                        (Node).Package_Name.all & ", Top");
@@ -379,7 +379,6 @@ package body Docgen.Texi_Output is
       Ada.Text_IO.Put_Line (File, "@code{");
 
       Format_TEXI (File,
-                   Info.Package_List,
                    Info.Package_Header.all,
                    Info.Package_Entity.File_Name.all,
                    Info.Package_Entity.Short_Name.all,
@@ -404,7 +403,6 @@ package body Docgen.Texi_Output is
    begin
       Ada.Text_IO.Put_Line (File, "@code{");
       Format_TEXI (File,
-                   Info.With_List,
                    Info.With_Header.all,
                    Info.With_File.all,
                    "",
@@ -430,7 +428,6 @@ package body Docgen.Texi_Output is
       end if;
       Ada.Text_IO.Put_Line (File, "@code{");
       Format_TEXI (File,
-                   Info.Var_List,
                    Info.Var_Header.all,
                    Info.Var_Entity.File_Name.all,
                    Info.Var_Entity.Short_Name.all,
@@ -457,7 +454,6 @@ package body Docgen.Texi_Output is
       end if;
       Ada.Text_IO.Put_Line (File, "@code{");
       Format_TEXI (File,
-                   Info.Exception_List,
                    Info.Exception_Header.all,
                    Info.Exception_Entity.File_Name.all,
                    Info.Exception_Entity.Short_Name.all,
@@ -485,7 +481,6 @@ package body Docgen.Texi_Output is
       end if;
       Ada.Text_IO.Put_Line (File, "@code{");
       Format_TEXI (File,
-                   Info.Type_List,
                    Info.Type_Header.all,
                    Info.Type_Entity.File_Name.all,
                    Info.Type_Entity.Short_Name.all,
@@ -511,7 +506,6 @@ package body Docgen.Texi_Output is
       end if;
       Ada.Text_IO.Put_Line (File, "@code{");
       Format_TEXI (File,
-                   Info.Entry_List,
                    Info.Entry_Header.all,
                    Info.Entry_Entity.File_Name.all,
                    Info.Entry_Entity.Short_Name.all,
@@ -616,7 +610,6 @@ package body Docgen.Texi_Output is
       end if;
       Ada.Text_IO.Put_Line (File, "@code{");
       Format_TEXI (File,
-                   Info.Subprogram_List,
                    Info.Subprogram_Header.all,
                    Info.Subprogram_Entity.File_Name.all,
                    Info.Subprogram_Entity.Short_Name.all,
@@ -637,7 +630,6 @@ package body Docgen.Texi_Output is
 
    procedure Format_TEXI
      (File          : Ada.Text_IO.File_Type;
-      Entity_List   : Type_Entity_List.List;
       Text          : String;
       File_Name     : String;
       Entity_Name   : String;
@@ -645,7 +637,7 @@ package body Docgen.Texi_Output is
       Is_Body       : Boolean;
       Process_Body  : Boolean;
       Do_Checks     : Boolean) is
-      pragma Unreferenced (Entity_List, File_Name, Entity_Name, Entity_Line,
+      pragma Unreferenced (File_Name, Entity_Name, Entity_Line,
                            Is_Body, Process_Body, Do_Checks);
 
       --  global variables for the callback function
@@ -1035,7 +1027,6 @@ package body Docgen.Texi_Output is
    begin
       Ada.Text_IO.Put_Line (File, "@code{");
       Format_TEXI (File,
-                   Info.Body_Entity_List,
                    Info.Body_Text.all,
                    Info.Body_File.all,
                    "",
