@@ -26,6 +26,7 @@ with Traces;                  use Traces;
 with GNAT.OS_Lib;             use GNAT.OS_Lib;
 with Prj;                     use Prj;
 with Prj.Tree;                use Prj.Tree;
+with Language_Handlers.Glide; use Language_Handlers.Glide;
 
 with Prj_API;                 use Prj_API;
 with Basic_Types;             use Basic_Types;
@@ -1309,8 +1310,9 @@ package body Src_Info.Queries is
    ----------
 
    procedure Next
-     (Iterator : in out Entity_Reference_Iterator;
-      List     : in out LI_File_List)
+     (Lang_Handler : Language_Handlers.Language_Handler;
+      Iterator     : in out Entity_Reference_Iterator;
+      List         : in out LI_File_List)
    is
       function Check_Declarations (Declarations : E_Declaration_Info_List)
          return E_Reference_List;
@@ -1461,13 +1463,13 @@ package body Src_Info.Queries is
          end if;
 
          if not First_Next then
-            Next (Iterator.Decl_Iter, List);
+            Next (Lang_Handler, Iterator.Decl_Iter, List);
          end if;
 
          while Get (Iterator.Decl_Iter) /= null loop
             Iterator.References := Check_LI (Get (Iterator.Decl_Iter));
             exit when Iterator.References /= null;
-            Next (Iterator.Decl_Iter, List);
+            Next (Lang_Handler, Iterator.Decl_Iter, List);
          end loop;
       end if;
    end Next;
@@ -1485,6 +1487,7 @@ package body Src_Info.Queries is
 
    procedure Find_All_References
      (Root_Project : Prj.Tree.Project_Node_Id;
+      Lang_Handler : Language_Handlers.Language_Handler;
       Entity       : Entity_Information;
       List         : in out LI_File_List;
       Iterator     : out Entity_Reference_Iterator;
@@ -1494,9 +1497,9 @@ package body Src_Info.Queries is
       Iterator.Entity := Copy (Entity);
       Iterator.LI_Once := LI_Once;
       Find_Ancestor_Dependencies
-        (Root_Project, Get_Declaration_File_Of (Entity), List,
+        (Root_Project, Lang_Handler, Get_Declaration_File_Of (Entity), List,
          Iterator.Decl_Iter, Project, Include_Self => True);
-      Next (Iterator, List);
+      Next (Lang_Handler, Iterator, List);
    end Find_All_References;
 
    ----------
@@ -1504,7 +1507,8 @@ package body Src_Info.Queries is
    ----------
 
    procedure Next
-     (Iterator : in out Dependency_Iterator;
+     (Lang_Handler : Language_Handlers.Language_Handler;
+      Iterator : in out Dependency_Iterator;
       List     : in out LI_File_List)
    is
       function Check_File return Dependency_File_Info_List;
@@ -1530,9 +1534,10 @@ package body Src_Info.Queries is
          then
             LI := Locate_From_Source
               (List, Iterator.Source_Files (Iterator.Current_File).all);
-            Handler := Handler_From_Filename
-              (Iterator.Importing (Iterator.Current_Project),
-               Iterator.Source_Files (Iterator.Current_File).all);
+            Handler := Get_LI_Handler_From_File
+              (Glide_Language_Handler (Lang_Handler),
+               Iterator.Source_Files (Iterator.Current_File).all,
+               Iterator.Importing (Iterator.Current_Project));
 
             --  Do nothing if the file is not the same language
             if LI = null
@@ -1655,6 +1660,7 @@ package body Src_Info.Queries is
 
    procedure Find_Ancestor_Dependencies
      (Root_Project    : Prj.Tree.Project_Node_Id;
+      Lang_Handler : Language_Handlers.Language_Handler;
       Source_Filename : String;
       List            : in out LI_File_List;
       Iterator        : out Dependency_Iterator;
@@ -1673,8 +1679,9 @@ package body Src_Info.Queries is
       Iterator.LI := No_LI_File;
       Iterator.Decl_LI := Locate_From_Source (List, Source_Filename);
       Create_Or_Complete_LI
-        (Handler                =>
-           Handler_From_Filename (Decl_Project, Source_Filename),
+        (Handler                => Get_LI_Handler_From_File
+           (Glide_Language_Handler (Lang_Handler),
+            Source_Filename, Decl_Project),
          File                   => Iterator.Decl_LI,
          Source_Filename        => Source_Filename,
          List                   => List,
@@ -1698,7 +1705,7 @@ package body Src_Info.Queries is
          Full_Path => False);
       Iterator.Current_File := Iterator.Source_Files'First - 1;
 
-      Next (Iterator, List);
+      Next (Lang_Handler, Iterator, List);
 
    exception
       when Unsupported_Language =>

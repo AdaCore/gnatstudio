@@ -31,6 +31,7 @@
 
 with Traces;
 with Unchecked_Deallocation;
+with Language_Handlers;
 with Prj.Tree;
 with Prj_API;
 with Basic_Types;
@@ -109,6 +110,7 @@ package Src_Info.Queries is
 
    procedure Find_All_References
      (Root_Project : Prj.Tree.Project_Node_Id;
+      Lang_Handler : Language_Handlers.Language_Handler;
       Entity       : Entity_Information;
       List         : in out LI_File_List;
       Iterator     : out Entity_Reference_Iterator;
@@ -131,7 +133,8 @@ package Src_Info.Queries is
    --  leaks.
 
    procedure Next
-     (Iterator : in out Entity_Reference_Iterator;
+     (Lang_Handler : Language_Handlers.Language_Handler;
+      Iterator : in out Entity_Reference_Iterator;
       List     : in out LI_File_List);
    --  Get the next reference to the entity
 
@@ -203,6 +206,7 @@ package Src_Info.Queries is
 
    procedure Find_Ancestor_Dependencies
      (Root_Project    : Prj.Tree.Project_Node_Id;
+      Lang_Handler : Language_Handlers.Language_Handler;
       Source_Filename : String;
       List            : in out LI_File_List;
       Iterator        : out Dependency_Iterator;
@@ -229,7 +233,8 @@ package Src_Info.Queries is
    --  leaks.
 
    procedure Next
-     (Iterator : in out Dependency_Iterator;
+     (Lang_Handler : Language_Handlers.Language_Handler;
+      Iterator : in out Dependency_Iterator;
       List     : in out LI_File_List);
    --  Get the next reference to the entity
 
