@@ -1,10 +1,5 @@
 Known Problems fixed in GPS 1.2.2
 
-- C520-006 Location window raised unexpectedly
-  Problem:    The location window is sometimes raised when manipulating the
-              source editor even though no information is displayed in it.
-  Workaround: Close the location window in such cases
-
 - Infinite loop in search dialog
   Problem:    In some cases, it might happen that looking for a constant string
               results in an infinite loop in GPS.
@@ -24,6 +19,11 @@ Known Problems fixed in GPS 1.2.2
               project properties editor is not properly taken into account
   Workaround: Modify the project manually (package Ide)
                                                                                 
+- C520-006 Location window raised unexpectedly
+  Problem:    The location window is sometimes raised when manipulating the
+              source editor even though no information is displayed in it.
+  Workaround: Close the location window in such cases
+
 - C519-020 GPS installation overrides system libraries under Linux
   Problem:    Under Linux, the GPS installation will incorrectly suggests
               /usr as the default base installation in case a version of
