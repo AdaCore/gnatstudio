@@ -460,7 +460,9 @@ package body String_Utils is
 
    begin
       for J in S'Range loop
-         if S (J) = ASCII.LF or else S (J) = ASCII.HT or else S (J) = ' ' then
+         if S (J) = ASCII.LF or else S (J) = ASCII.CR
+           or else S (J) = ASCII.HT or else S (J) = ' '
+         then
             if not Blank then
                Result (Len) := ' ';
                Len := Len + 1;
