@@ -384,8 +384,7 @@ package body Codefix.Errors_Parser is
       Solutions    : out Solution_List;
       Matches      : Match_Array)
    is
-      pragma Unreferenced (This, Errors_List);
-      pragma Unreferenced (Matches);
+      pragma Unreferenced (This, Errors_List, Matches);
    begin
       Append (Solutions, Should_Be (Current_Text, Message, "or", "\|"));
    end Fix;
@@ -408,10 +407,16 @@ package body Codefix.Errors_Parser is
       Solutions    : out Solution_List;
       Matches      : Match_Array)
    is
-      pragma Unreferenced (This, Errors_List);
-      pragma Unreferenced (Matches);
+      pragma Unreferenced (This, Errors_List, Matches);
    begin
-      Append (Solutions, Should_Be (Current_Text, Message, "'(", "\("));
+      Append
+        (Solutions,
+         Should_Be (Current_Text,
+                    Message,
+                    "'(",
+                    "(",
+                    Text_Ascii,
+                    "Replace conversion by qualification"));
    end Fix;
 
    -----------------
@@ -549,7 +554,8 @@ package body Codefix.Errors_Parser is
    is
       pragma Unreferenced (This, Errors_List);
 
-      Str_Red : Dynamic_String;
+      Str_Red         : Dynamic_String;
+      Position_Chosen : Relative_Position := Specified;
 
    begin
 
@@ -557,8 +563,12 @@ package body Codefix.Errors_Parser is
         (Str_Red,
          Get_Message (Message) (Matches (1).First .. Matches (1).Last));
 
-      if Str_Red.all = "return" then
+      if Str_Red.all = "return" or else Str_Red.all = "RETURN" then
          raise Uncorrectible_Message;
+      end if;
+
+      if Str_Red.all = "begin"  or else Str_Red.all = "BEGIN" then
+         Position_Chosen := Before;
       end if;
 
       Append
@@ -566,7 +576,8 @@ package body Codefix.Errors_Parser is
          Expected
            (Current_Text,
             Message,
-            Get_Message (Message) (Matches (1).First .. Matches (1).Last)));
+            Get_Message (Message) (Matches (1).First .. Matches (1).Last),
+            Position => Position_Chosen));
    end Fix;
 
    -----------------
@@ -689,10 +700,12 @@ package body Codefix.Errors_Parser is
       Solutions    : out Solution_List;
       Matches      : Match_Array)
    is
-      pragma Unreferenced (This, Errors_List);
-      pragma Unreferenced (Matches);
+      pragma Unreferenced (This, Errors_List, Matches);
    begin
-      Append (Solutions, Expected (Current_Text, Message, "null;"));
+      Append
+        (Solutions,
+         Expected
+           (Current_Text, Message, "null;", Position => Before));
    end Fix;
 
    -------------------

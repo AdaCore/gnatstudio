@@ -141,7 +141,8 @@ package body Codefix.Formal_Errors is
       Message      : Error_Message;
       Str_Expected : String;
       Str_Red      : String := "";
-      Format_Red   : String_Mode := Text_Ascii) return Extract
+      Format_Red   : String_Mode := Text_Ascii;
+      Caption      : String := "") return Extract
    is
       New_Extract : Extract;
       Line_Cursor : File_Cursor := File_Cursor (Message);
@@ -156,15 +157,25 @@ package body Codefix.Formal_Errors is
             Str_Expected,
             "^([\w]+)",
             Regular_Expression);
-         Set_Caption
-           (New_Extract,
-            "Replace misspelled word by """ & Str_Expected & """");
+
+         if Caption = "" then
+            Set_Caption
+              (New_Extract,
+               "Replace misspelled word by """ & Str_Expected & """");
+         else
+            Set_Caption (New_Extract, Caption);
+         end if;
       else
          Replace_Word
            (New_Extract, Message, Str_Expected, Str_Red, Format_Red);
-         Set_Caption
-           (New_Extract,
-            "Replace """ & Str_Red & """ by """ & Str_Expected & """");
+
+         if Caption = "" then
+            Set_Caption
+              (New_Extract,
+               "Replace """ & Str_Red & """ by """ & Str_Expected & """");
+         else
+            Set_Caption (New_Extract, Caption);
+         end if;
       end if;
 
       return New_Extract;
@@ -232,7 +243,8 @@ package body Codefix.Formal_Errors is
      (Current_Text    : Text_Navigator_Abstr'Class;
       Message         : Error_Message;
       String_Expected : String;
-      Add_Spaces      : Boolean := True) return Extract
+      Add_Spaces      : Boolean := True;
+      Position        : Relative_Position := Specified) return Extract
    is
       New_Extract  : Extract;
       New_Str      : Dynamic_String;
@@ -240,33 +252,40 @@ package body Codefix.Formal_Errors is
       Space_Cursor : File_Cursor := File_Cursor (Message);
 
    begin
+
       Assign (New_Str, String_Expected);
 
-      Line_Cursor.Col := 1;
-      Get_Line (Current_Text, Line_Cursor, New_Extract);
+      if Position = Specified then
+         Line_Cursor.Col := 1;
+         Get_Line (Current_Text, Line_Cursor, New_Extract);
+         Space_Cursor.Col := Space_Cursor.Col - 1;
 
-      Space_Cursor.Col := Space_Cursor.Col - 1;
+         if Add_Spaces and then
+           Message.Col > 1 and then
+           Get
+             (Current_Text,
+              Space_Cursor,
+              1) /= " "
+         then
+            Assign (New_Str, " " & New_Str.all);
+         end if;
 
-      if Add_Spaces and then
-         Message.Col > 1 and then
-         Get
-          (Current_Text,
-           Space_Cursor,
-           1) /= " "
-      then
-         Assign (New_Str, " " & New_Str.all);
+         Space_Cursor.Col := Space_Cursor.Col + 1;
+
+         if Add_Spaces
+           and then Message.Col < Line_Length (Current_Text, Line_Cursor)
+           and then Get (Current_Text, Space_Cursor, 1) /= " "
+         then
+            Assign (New_Str, New_Str.all & " ");
+         end if;
+
+         Add_Word (New_Extract, Message, New_Str.all);
+      elsif Position = After then
+         Add_Line (New_Extract, Line_Cursor, New_Str.all);
+      elsif Position = Before then
+         Line_Cursor.Line := Line_Cursor.Line - 1;
+         Add_Line (New_Extract, Line_Cursor, New_Str.all);
       end if;
-
-      Space_Cursor.Col := Space_Cursor.Col + 1;
-
-      if Add_Spaces
-        and then Message.Col < Line_Length (Current_Text, Line_Cursor)
-        and then Get (Current_Text, Space_Cursor, 1) /= " "
-      then
-         Assign (New_Str, New_Str.all & " ");
-      end if;
-
-      Add_Word (New_Extract, Message, New_Str.all);
 
       Set_Caption
         (New_Extract,

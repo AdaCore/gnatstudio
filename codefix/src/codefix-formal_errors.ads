@@ -70,7 +70,8 @@ package Codefix.Formal_Errors is
       Message      : Error_Message;
       Str_Expected : String;
       Str_Red      : String := "";
-      Format_Red   : String_Mode := Text_Ascii) return Extract;
+      Format_Red   : String_Mode := Text_Ascii;
+      Caption      : String := "") return Extract;
    --  This fonction replace Str_Red by Str_Expected in the current text by
    --  the position specified in the Message. If there is no Str_Red, it
    --  looks for the first word in the position.
@@ -86,7 +87,8 @@ package Codefix.Formal_Errors is
      (Current_Text    : Text_Navigator_Abstr'Class;
       Message         : Error_Message;
       String_Expected : String;
-      Add_Spaces      : Boolean := True) return Extract;
+      Add_Spaces      : Boolean := True;
+      Position        : Relative_Position := Specified) return Extract;
    --  Add the missing keyword into the text.
 
    function Unexpected
