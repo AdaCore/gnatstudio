@@ -95,13 +95,6 @@ begin
    Add (Main_Debug_Window.File1_Menu, Main_Debug_Window.Open_Core_Dump1);
    Set_Right_Justify (Main_Debug_Window.Open_Core_Dump1, False);
 
-   Gtk_New (Main_Debug_Window.Open_Source1, -"Open Source...");
-   Widget_Callback.Object_Connect
-     (Main_Debug_Window.Open_Source1, "activate",
-      Widget_Callback.To_Marshaller (On_Open_Source1_Activate'Access), Main_Debug_Window);
-   Add (Main_Debug_Window.File1_Menu, Main_Debug_Window.Open_Source1);
-   Set_Right_Justify (Main_Debug_Window.Open_Source1, False);
-
    Gtk_New (Main_Debug_Window.Separator1);
    Add (Main_Debug_Window.File1_Menu, Main_Debug_Window.Separator1);
    Set_Right_Justify (Main_Debug_Window.Separator1, False);

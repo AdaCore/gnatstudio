@@ -67,7 +67,6 @@ package Main_Debug_Window_Pkg is
       Open_Program1 : Gtk_Menu_Item;
       Open_Recent1 : Gtk_Menu_Item;
       Open_Core_Dump1 : Gtk_Menu_Item;
-      Open_Source1 : Gtk_Menu_Item;
       Separator1 : Gtk_Menu_Item;
       Open_Session1 : Gtk_Menu_Item;
       Save_Session_As1 : Gtk_Menu_Item;
