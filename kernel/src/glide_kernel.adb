@@ -725,7 +725,9 @@ package body Glide_Kernel is
       C : constant MDI_Child := Get_Focus_Child (Get_MDI (Kernel));
 
    begin
-      if C = null then
+      if C = null
+        or else Gtk.Object.In_Destruction_Is_Set (Get_MDI (Kernel))
+      then
          return null;
       end if;
 
