@@ -58,6 +58,7 @@ with Gtkada.MDI;                   use Gtkada.MDI;
 with Gtkada.File_Selector;         use Gtkada.File_Selector;
 
 with Ada.Exceptions;            use Ada.Exceptions;
+with GNAT.Case_Util;            use GNAT.Case_Util;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with Ada.Unchecked_Deallocation;
@@ -110,8 +111,9 @@ package body Project_Viewers is
 
    type XML_Switches_Record is new Switches_Page_Creator_Record with record
       XML_Node : Node_Ptr;   --  The <switches> node
-      Tool_Name, Package_Name, Language_Filter : GNAT.OS_Lib.String_Access;
+      Tool_Name, Package_Name : GNAT.OS_Lib.String_Access;
       Index    : GNAT.OS_Lib.String_Access;
+      Languages : GNAT.OS_Lib.Argument_List_Access;
    end record;
    type XML_Switches is access all XML_Switches_Record'Class;
 
@@ -511,6 +513,10 @@ package body Project_Viewers is
 
    procedure Remove_Main_Unit (Editor : access Gtk_Widget_Record'Class);
    --  Remove the selected main units.
+
+   function Get_Languages_From_Tool_Node
+     (N : Node_Ptr) return String_List_Access;
+   --  Return the list of languages for that <tool> node
 
    -------------
    -- Destroy --
@@ -3412,9 +3418,15 @@ package body Project_Viewers is
    begin
       Gtk_New (Page, Creator.Tool_Name.all,
                Creator.Package_Name.all,
-               Creator.Language_Filter.all,
                Creator.Index.all,
                Guint (Lines), Guint (Cols), Get_Tooltips (Kernel));
+
+      if Creator.Languages /= null then
+         for L in Creator.Languages'Range loop
+            Add_Language (Page, Creator.Languages (L).all);
+         end loop;
+      end if;
+
       Parsing_Switches_XML (Kernel, Page, Page, Lines, Cols, Creator.XML_Node);
       return Page;
    end Create;
@@ -3429,8 +3441,29 @@ package body Project_Viewers is
       Free (Creator.Package_Name);
       Free (Creator.Tool_Name);
       Free (Creator.Index);
-      Free (Creator.Language_Filter);
+      Free (Creator.Languages);
    end Destroy;
+
+   ----------------------------------
+   -- Get_Languages_From_Tool_Node --
+   ----------------------------------
+
+   function Get_Languages_From_Tool_Node
+     (N : Node_Ptr) return Argument_List_Access
+   is
+      Result : Argument_List_Access;
+      Child : Node_Ptr := N.Child;
+   begin
+      while Child /= null loop
+         if Child.Tag.all = "language" then
+            Append (Result, (1 => new String'(Child.Value.all)));
+            To_Lower (Result (Result'Last).all);
+         end if;
+         Child := Child.Next;
+      end loop;
+
+      return Result;
+   end Get_Languages_From_Tool_Node;
 
    ---------------
    -- Customize --
@@ -3464,8 +3497,7 @@ package body Project_Viewers is
                            Tool_Name       => new String'(Tool_Name),
                            Index           => new String'
                              (Get_Attribute (N, "index", Tool_Name)),
-                           Language_Filter =>
-                              new String'(Get_Attribute (N, "language")),
+                           Languages       => Get_Languages_From_Tool_Node (N),
                            Package_Name    => new String'
                              (Get_Attribute (N, "package", Ide_Package)));
                         Register_Switches_Page (Kernel, Creator);
