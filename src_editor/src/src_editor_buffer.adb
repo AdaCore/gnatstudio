@@ -4331,9 +4331,10 @@ package body Src_Editor_Buffer is
 
    function Filter_Matches_Primitive
      (Context : access Src_Editor_Action_Context;
+      Ctxt    : Selection_Context_Access;
       Kernel  : access Kernel_Handle_Record'Class) return Boolean
    is
-      pragma Unreferenced (Context);
+      pragma Unreferenced (Context, Ctxt);
       Widget : constant Gtk_Widget := Get_Current_Focus_Widget (Kernel);
    begin
       return Widget /= null

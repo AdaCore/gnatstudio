@@ -687,6 +687,7 @@ package Src_Editor_Buffer is
       with null record;
    function Filter_Matches_Primitive
      (Context : access Src_Editor_Action_Context;
+      Ctxt    : Glide_Kernel.Selection_Context_Access;
       Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class)
      return Boolean;
    --  A key context that matches if the current widget is a source editor

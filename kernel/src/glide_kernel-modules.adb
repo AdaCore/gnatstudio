@@ -985,9 +985,12 @@ package body Glide_Kernel.Modules is
 
    procedure Execute_Command
      (Widget  : access GObject_Record'Class;
-      Command : Non_Interactive_Action) is
+      Command : Non_Interactive_Action)
+   is
+      Context : constant Selection_Context_Access :=
+        Get_Current_Context (Kernel_Handle (Widget));
    begin
-      if Filter_Matches (Command.Filter, Kernel_Handle (Widget)) then
+      if Filter_Matches (Command.Filter, Context, Kernel_Handle (Widget)) then
          Launch_Background_Command
            (Kernel_Handle (Widget), Command.Command, Destroy_On_Exit => False,
             Active => False, Queue_Id => "");
