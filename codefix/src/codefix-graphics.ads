@@ -26,8 +26,8 @@ with Generic_List;
 
 with Codefix;                use Codefix;
 with Codefix.Errors_Manager; use Codefix.Errors_Manager;
-with Codefix.Text_Manager;   use Codefix.Text_Manager;
 with Codefix.Formal_Errors;  use Codefix.Formal_Errors;
+with Codefix_Module;
 use Codefix.Formal_Errors.Command_List;
 
 with Codefix_Window_Pkg;     use Codefix_Window_Pkg;
@@ -51,9 +51,15 @@ package Codefix.Graphics is
    package Error_Id_Lists is new Generic_List (Error_Id, No_Free);
    use Error_Id_Lists;
 
+   type Status_Changed_Action is access procedure
+     (Kernel       : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Session      : access Codefix_Module.Codefix_Session_Record;
+      Error        : Error_Id);
+   --  Called when the status of an error has changed (was fixed or its fix
+   --  was undone)
+
    type Graphic_Codefix_Record is new Codefix_Window_Record with record
-      Current_Text      : Ptr_Text_Navigator;
-      Corrector         : Ptr_Correction_Manager;
+      Session           : Codefix_Module.Codefix_Session;
       Successful_Update : Boolean;
       Nb_Tabs           : Integer := 0;
       Current_Error     : Error_Id := Null_Error_Id;
@@ -61,8 +67,8 @@ package Codefix.Graphics is
       Vdiff_List        : Vdiff_Lists.List;
       Automatic_Skip    : State_List;
       Automatic_Fix     : State_List;
-      Fixed_Cb          : Fix_Action;
-      Unfixed_Cb        : Fix_Action;
+      Fixed_Cb          : Status_Changed_Action;
+      Unfixed_Cb        : Status_Changed_Action;
       Fixes_List        : Error_Id_Lists.List;
    end record;
 
@@ -71,20 +77,18 @@ package Codefix.Graphics is
    procedure Gtk_New
      (Graphic_Codefix : out Graphic_Codefix_Access;
       Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Current_Text    : Ptr_Text_Navigator;
-      Corrector       : Ptr_Correction_Manager;
-      Fixed_Cb        : Fix_Action := null;
-      Unfixed_Cb      : Fix_Action := null);
+      Session         : Codefix_Module.Codefix_Session;
+      Fixed_Cb        : Status_Changed_Action := null;
+      Unfixed_Cb      : Status_Changed_Action := null);
    --  Creates a new Graphic_Codefix. Fixed_Cb will be called after a fix, and
    --  Unfix_Cb after an Undo.
 
    procedure Initialize
      (Graphic_Codefix : access Graphic_Codefix_Record'Class;
       Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Current_Text    : Ptr_Text_Navigator;
-      Corrector       : Ptr_Correction_Manager;
-      Fixed_Cb        : Fix_Action := null;
-      Unfixed_Cb      : Fix_Action := null);
+      Session         : Codefix_Module.Codefix_Session;
+      Fixed_Cb        : Status_Changed_Action := null;
+      Unfixed_Cb      : Status_Changed_Action := null);
    --  Display and load the first error of the Graphic_Codefix. If no error
    --  found, then only open a dialog.
 

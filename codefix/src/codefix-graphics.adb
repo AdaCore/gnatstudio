@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2002                         --
+--                        Copyright (C) 2002-2003                    --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -35,7 +35,7 @@ with Glide_Intl;             use Glide_Intl;
 with Diff_Utils;             use Diff_Utils;
 with Vdiff_Pkg;              use Vdiff_Pkg;
 with Vdiff_Utils;            use Vdiff_Utils;
-with GNAT.OS_Lib;            use GNAT.OS_Lib;
+with VFS;                    use VFS;
 
 with Traces;                 use Traces;
 
@@ -44,6 +44,7 @@ with Codefix.Text_Manager;   use Codefix.Text_Manager;
 with Codefix.Errors_Manager; use Codefix.Errors_Manager;
 with Codefix.Merge_Utils;    use Codefix.Merge_Utils;
 with Codefix.Formal_Errors;  use Codefix.Formal_Errors;
+with Codefix_Module;         use Codefix_Module;
 use Codefix.Formal_Errors.Command_List;
 
 package body Codefix.Graphics is
@@ -57,17 +58,15 @@ package body Codefix.Graphics is
    procedure Gtk_New
      (Graphic_Codefix : out Graphic_Codefix_Access;
       Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Current_Text    : Ptr_Text_Navigator;
-      Corrector       : Ptr_Correction_Manager;
-      Fixed_Cb        : Fix_Action := null;
-      Unfixed_Cb      : Fix_Action := null) is
+      Session         : Codefix_Module.Codefix_Session;
+      Fixed_Cb        : Status_Changed_Action := null;
+      Unfixed_Cb      : Status_Changed_Action := null) is
    begin
       Graphic_Codefix := new Graphic_Codefix_Record;
       Codefix.Graphics.Initialize
         (Graphic_Codefix,
          Kernel,
-         Current_Text,
-         Corrector,
+         Session,
          Fixed_Cb,
          Unfixed_Cb);
    end Gtk_New;
@@ -79,19 +78,17 @@ package body Codefix.Graphics is
    procedure Initialize
      (Graphic_Codefix : access Graphic_Codefix_Record'Class;
       Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Current_Text    : Ptr_Text_Navigator;
-      Corrector       : Ptr_Correction_Manager;
-      Fixed_Cb        : Fix_Action := null;
-      Unfixed_Cb      : Fix_Action := null) is
+      Session         : Codefix_Module.Codefix_Session;
+      Fixed_Cb        : Status_Changed_Action := null;
+      Unfixed_Cb      : Status_Changed_Action := null) is
    begin
       Codefix_Window_Pkg.Initialize (Graphic_Codefix);
 
-      Graphic_Codefix.Kernel := Kernel_Handle (Kernel);
-      Graphic_Codefix.Current_Text := Current_Text;
-      Graphic_Codefix.Corrector := Corrector;
-      Graphic_Codefix.Fixed_Cb := Fixed_Cb;
-      Graphic_Codefix.Unfixed_Cb := Unfixed_Cb;
-      Graphic_Codefix.Fixes_List := Error_Id_Lists.Null_List;
+      Graphic_Codefix.Kernel       := Kernel_Handle (Kernel);
+      Graphic_Codefix.Session      := Session;
+      Graphic_Codefix.Fixed_Cb     := Fixed_Cb;
+      Graphic_Codefix.Unfixed_Cb   := Unfixed_Cb;
+      Graphic_Codefix.Fixes_List   := Error_Id_Lists.Null_List;
 
       Remove_Page (Graphic_Codefix.Choices_Proposed, 0);
 
@@ -172,7 +169,7 @@ package body Codefix.Graphics is
          Graphic_Codefix.Current_Error := Next (Graphic_Codefix.Current_Error);
       else
          Graphic_Codefix.Current_Error :=
-           Get_First_Error (Graphic_Codefix.Corrector.all);
+           Get_First_Error (Graphic_Codefix.Session.Corrector.all);
       end if;
 
       if Graphic_Codefix.Current_Error = Null_Error_Id then
@@ -212,11 +209,14 @@ package body Codefix.Graphics is
          Prepend (Graphic_Codefix.Fixes_List, Graphic_Codefix.Current_Error);
 
          Validate_And_Commit
-           (Graphic_Codefix.Corrector.all,
-            Graphic_Codefix.Current_Text.all,
+           (Graphic_Codefix.Session.Corrector.all,
+            Graphic_Codefix.Session.Current_Text.all,
             Graphic_Codefix.Current_Error,
             1);
-         Graphic_Codefix.Fixed_Cb (Graphic_Codefix.Current_Error);
+         Graphic_Codefix.Fixed_Cb
+           (Graphic_Codefix.Kernel,
+            Graphic_Codefix.Session,
+            Graphic_Codefix.Current_Error);
          Load_Next_Error (Graphic_Codefix);
          return;
       end if;
@@ -273,7 +273,7 @@ package body Codefix.Graphics is
          Current_Line      : Ptr_Extract_Line;
          First_Iterator    : Text_Iterator_Access;
          Current_Iterator  : Text_Iterator_Access;
-         Previous_File     : String_Access := new String'("");
+         Previous_File     : VFS.Virtual_File := VFS.No_File;
          Total_Nb_Files    : constant Natural :=
            Get_Nb_Files (Extended_Extract);
 
@@ -288,14 +288,16 @@ package body Codefix.Graphics is
 
          loop
             if Total_Nb_Files > 1
-              and then Previous_File.all /=
-                Get_Cursor (Current_Line.all).File_Name.all
+              and then Previous_File /=
+                Get_File (Get_Cursor (Current_Line.all))
             then
-               Assign (Previous_File, Get_Cursor (Current_Line.all).File_Name);
-               Current_Iterator.New_Line :=
-                 new String'(Previous_File.all);
-               Current_Iterator.Old_Line :=
-                 new String'(Previous_File.all);
+               Previous_File := Get_File (Get_Cursor (Current_Line.all));
+
+               --  Commented out, since we seem to be mixing lines and files...
+--                 Current_Iterator.New_Line :=
+--                   new String'(Previous_File.all);
+--                 Current_Iterator.Old_Line :=
+--                   new String'(Previous_File.all);
                Current_Iterator.File_Caption := True;
                Current_Iterator.Next := new Text_Iterator;
                Current_Iterator := Current_Iterator.Next;
@@ -308,12 +310,14 @@ package body Codefix.Graphics is
                Current_Iterator.Old_Line := new String'
                  (Current_Iterator.New_Line.all);
             elsif Get_Context (Current_Line.all) /= Unit_Created then
-               Current_Iterator.Old_Line := new String'(Get_Old_Text
-                  (Current_Line.all, Graphic_Codefix.Current_Text.all));
+               Current_Iterator.Old_Line := new String'
+                 (Get_Old_Text
+                    (Current_Line.all,
+                     Graphic_Codefix.Session.Current_Text.all));
             end if;
 
             Current_Iterator.Original_Position :=
-              Get_Cursor (Current_Line.all).Line;
+              Get_Line (Get_Cursor (Current_Line.all));
 
             case Get_Context (Current_Line.all) is
                when Original_Unit =>
@@ -354,8 +358,6 @@ package body Codefix.Graphics is
          Set_Text
            (Proposition.File_Label2,
             Get_Files_Names (Extended_Extract, Label_VDiff_Size_Limit));
-
-         Free (Previous_File);
       end Display_Sol;
 
       ----------------
@@ -404,7 +406,7 @@ package body Codefix.Graphics is
          begin
             Execute
               (Data (Current_Sol),
-               Graphic_Codefix.Current_Text.all,
+               Graphic_Codefix.Session.Current_Text.all,
                Extended_Extract);
          exception
             when E : Codefix_Panic =>
@@ -420,11 +422,11 @@ package body Codefix.Graphics is
 
          Extend_Before
            (Extended_Extract,
-            Graphic_Codefix.Current_Text.all,
+            Graphic_Codefix.Session.Current_Text.all,
             Display_Lines_Before);
          Extend_After
            (Extended_Extract,
-            Graphic_Codefix.Current_Text.all,
+            Graphic_Codefix.Session.Current_Text.all,
             Display_Lines_After);
 
          if Current_Vdiff /= Vdiff_Lists.Null_Node then
@@ -487,12 +489,15 @@ package body Codefix.Graphics is
       Prepend (Graphic_Codefix.Fixes_List, Graphic_Codefix.Current_Error);
 
       Validate_And_Commit
-        (Graphic_Codefix.Corrector.all,
-         Graphic_Codefix.Current_Text.all,
+        (Graphic_Codefix.Session.Corrector.all,
+         Graphic_Codefix.Session.Current_Text.all,
          Graphic_Codefix.Current_Error,
          Data (Current_Command));
 
-      Graphic_Codefix.Fixed_Cb (Graphic_Codefix.Current_Error);
+      Graphic_Codefix.Fixed_Cb
+        (Graphic_Codefix.Kernel,
+         Graphic_Codefix.Session,
+         Graphic_Codefix.Current_Error);
    end Valid_Current_Solution;
 
    ----------------------
@@ -546,9 +551,13 @@ package body Codefix.Graphics is
          Error_Id_Lists.Null_Node,
          First (Graphic_Codefix.Fixes_List));
 
-      Undo (Graphic_Codefix.Current_Error, Graphic_Codefix.Current_Text.all);
+      Undo (Graphic_Codefix.Current_Error,
+            Graphic_Codefix.Session.Current_Text.all);
 
-      Graphic_Codefix.Unfixed_Cb (Graphic_Codefix.Current_Error);
+      Graphic_Codefix.Unfixed_Cb
+        (Graphic_Codefix.Kernel,
+         Graphic_Codefix.Session,
+         Graphic_Codefix.Current_Error);
 
       Load_Error (Graphic_Codefix, Success);
 
@@ -569,8 +578,11 @@ package body Codefix.Graphics is
    begin
       while Node /= Error_Id_Lists.Null_Node loop
          Undo
-           (Data (Node), Graphic_Codefix.Current_Text.all);
-         Graphic_Codefix.Unfixed_Cb (Data (Node));
+           (Data (Node), Graphic_Codefix.Session.Current_Text.all);
+         Graphic_Codefix.Unfixed_Cb
+           (Graphic_Codefix.Kernel,
+            Graphic_Codefix.Session,
+            Data (Node));
          Node := Next (Node);
       end loop;
 
@@ -592,7 +604,7 @@ package body Codefix.Graphics is
    is
       Last_Non_Fixed_Error : Error_Id := Null_Error_Id;
       Current_Id           : Error_Id := Get_First_Error
-        (Graphic_Codefix.Corrector.all);
+        (Graphic_Codefix.Session.Corrector.all);
       Success              : Boolean;
    begin
       while Current_Id /= Graphic_Codefix.Current_Error loop
