@@ -21,6 +21,7 @@
 with Glide_Intl; use Glide_Intl;
 with VFS;        use VFS;
 with Traces;     use Traces;
+with Glide_Kernel.Console; use Glide_Kernel.Console;
 
 package body Commands.VCS is
 
@@ -44,6 +45,12 @@ package body Commands.VCS is
    procedure Free (X : in out Update_Files_Command_Type) is
    begin
       String_List.Free (X.Filenames);
+   end Free;
+
+   procedure Free (X : in out Generic_Kernel_Command) is
+      pragma Unreferenced (X);
+   begin
+      null;
    end Free;
 
    ------------
@@ -125,6 +132,16 @@ package body Commands.VCS is
       Item.Filenames := Copy_String_List (Filenames);
    end Create;
 
+   procedure Create
+     (Item      : out Generic_Kernel_Command_Access;
+      Kernel    : Kernel_Handle;
+      Callback  : Context_Callback.Marshallers.Void_Marshaller.Handler) is
+   begin
+      Item := new Generic_Kernel_Command;
+      Item.Kernel   := Kernel;
+      Item.Callback := Callback;
+   end Create;
+
    -------------
    -- Execute --
    -------------
@@ -153,6 +170,26 @@ package body Commands.VCS is
       return Success;
    end Execute;
 
+   function Execute
+     (Command : access Generic_Kernel_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
+   is
+      The_Context : Selection_Context_Access := Context.Context;
+   begin
+      if The_Context = null then
+         Console.Insert
+           (Command.Kernel, -"VCS: current selection is empty", Mode => Error);
+         return Failure;
+
+      else
+         Ref (The_Context);
+         Command.Callback (Command.Kernel, The_Context);
+         Unref (The_Context);
+      end if;
+
+      return Success;
+   end Execute;
+
    ----------
    -- Name --
    ----------
@@ -173,6 +210,12 @@ package body Commands.VCS is
       pragma Unreferenced (X);
    begin
       return -"Updating files";
+   end Name;
+
+   function Name (X : access Generic_Kernel_Command) return String is
+      pragma Unreferenced (X);
+   begin
+      return -"VCS";
    end Name;
 
 end Commands.VCS;
