@@ -36,7 +36,6 @@ with Gtk.Clist;                use Gtk.Clist;
 with Gtk.Combo;                use Gtk.Combo;
 with Gtk.Container;            use Gtk.Container;
 with Gtk.GEntry;               use Gtk.GEntry;
-with Gtk.Handlers;
 with Gtk.Handlers;             use Gtk.Handlers;
 with Gtk.Item;                 use Gtk.Item;
 with Gtk.Label;                use Gtk.Label;
