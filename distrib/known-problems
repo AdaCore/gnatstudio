@@ -1,5 +1,12 @@
 Known Problems fixed in GPS 1.3.0
 
+- C418-010 Incorrect desktop loading for location window
+  Problem:    If the location window is put in the left dock, and the desktop
+              is saved, then GPS won't be able to restore the desktop on startup
+              and will crash
+  Workaround: Edit the file $HOME/.gps/desktop by hand to remove the location
+              window reference
+
 - gnat stub started with wrong project
   Problem:    When the menu Edit->Generate Body is selected, gnat stub fails
               executing because it cannot found the project
