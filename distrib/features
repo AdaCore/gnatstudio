@@ -1,10 +1,10 @@
 New features in GPS 1.0.2
 
+- New debugger buttons for navigating the call stack
+
 - Better handling of focus in the shell and debugger console
 
 - Menu File->Print implemented
-
-- Automatic correction of compiler errors and warnings
 
 - Ability to set a source editor read only interactively
 
@@ -14,10 +14,9 @@ New features in GPS 1.0.2
 
 - Possibility to add buttons to the toolbar via the custom file
 
-- New editors for the GNAT switches: style warnings, validity tests, and
-  general warnings
+- New editors for the GNAT switches: style checks, validity tests, warnings
 
-- Implement recursive directory operations for version control
+- Recursive directory operations available for version control
 
 - Possibility in the editor to jump to the matching parenthesis/brackets
 
@@ -28,8 +27,6 @@ New features in GPS 1.0.2
 - Desktops are now project specific
   Opening a new project will close all open editors, browsers,... and open
   the desktop associated with the new project
-
-- Improved user interface of the welcome dialog
 
 - The project browser now behaves like all other browsers, with arrows drawn on
   the items to compute dependencies only for specific projects
