@@ -217,7 +217,7 @@ private
    procedure Execute
      (Hook   : Lines_Revealed_Hook_Record;
       Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Data   : Glide_Kernel.Hooks.Hooks_Data'Class);
+      Data   : access Glide_Kernel.Hooks.Hooks_Data'Class);
    --  Hook called when the "source_lines_revealed" hook is run.
 
    type Source_Editor_Module_Record is new Module_ID_Record with record

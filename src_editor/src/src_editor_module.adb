@@ -85,6 +85,7 @@ with VFS;                         use VFS;
 with Casing_Exceptions;           use Casing_Exceptions;
 with Default_Preferences;         use Default_Preferences;
 with Glib.Properties.Creation;    use Glib.Properties.Creation;
+with Entities;                    use Entities;
 
 with Gtkada.Types;                use Gtkada.Types;
 with Gdk.Pixbuf;                  use Gdk.Pixbuf;
@@ -210,17 +211,17 @@ package body Src_Editor_Module is
 
    function Source_File_Hook
      (Kernel : access Kernel_Handle_Record'Class;
-      Data   : Hooks_Data'Class) return Boolean;
+      Data   : access Hooks_Data'Class) return Boolean;
    --  Reacts to the Open_File_Action_Hook
 
    function File_Line_Hook
      (Kernel : access Kernel_Handle_Record'Class;
-      Data   : Hooks_Data'Class) return Boolean;
+      Data   : access Hooks_Data'Class) return Boolean;
    --  Reacts to the File_Line_Action_Hook
 
    procedure Word_Added_Hook
      (Kernel : access Kernel_Handle_Record'Class;
-      Data   : Hooks_Data'Class);
+      Data   : access Hooks_Data'Class);
    --  Reacts to the word_added Hook
 
    procedure Save_To_File
@@ -323,10 +324,6 @@ package body Src_Editor_Module is
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Edit->Insert File... menu
 
-   procedure On_Goto_Line_Current_Editor
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  Navigate->Goto Line... menu
-
    procedure On_Goto_Declaration
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Navigate->Goto Declaration menu
@@ -402,27 +399,27 @@ package body Src_Editor_Module is
 
    procedure File_Edited_Cb
      (Kernel : access Kernel_Handle_Record'Class;
-      Data   : Hooks_Data'Class);
+      Data   : access Hooks_Data'Class);
    --  Callback for the "file_edited" hook.
 
    procedure File_Closed_Cb
      (Kernel : access Kernel_Handle_Record'Class;
-      Data   : Hooks_Data'Class);
+      Data   : access Hooks_Data'Class);
    --  Callback for the "file_closed" hook.
 
    procedure File_Changed_On_Disk_Cb
      (Kernel : access Kernel_Handle_Record'Class;
-      Data   : Hooks_Data'Class);
+      Data   : access Hooks_Data'Class);
    --  Callback for the "file_changed_on_disk" hook.
 
    procedure File_Saved_Cb
      (Kernel : access Kernel_Handle_Record'Class;
-      Data   : Hooks_Data'Class);
+      Data   : access Hooks_Data'Class);
    --  Callback for the "file_saved" hook.
 
    procedure Cursor_Stopped_Cb
      (Kernel : access Kernel_Handle_Record'Class;
-      Data   : Hooks_Data'Class);
+      Data   : access Hooks_Data'Class);
    --  Callback for the "cursor_stopped" hook.
 
    procedure Preferences_Changed
@@ -1804,9 +1801,9 @@ package body Src_Editor_Module is
 
    procedure File_Edited_Cb
      (Kernel : access Kernel_Handle_Record'Class;
-      Data   : Hooks_Data'Class)
+      Data   : access Hooks_Data'Class)
    is
-      D : constant File_Hooks_Args := File_Hooks_Args (Data);
+      D : constant File_Hooks_Args := File_Hooks_Args (Data.all);
    begin
       Fill_Marks (Kernel_Handle (Kernel), D.File);
    exception
@@ -1821,9 +1818,9 @@ package body Src_Editor_Module is
 
    procedure File_Changed_On_Disk_Cb
      (Kernel : access Kernel_Handle_Record'Class;
-      Data   : Hooks_Data'Class)
+      Data   : access Hooks_Data'Class)
    is
-      D     : constant File_Hooks_Args := File_Hooks_Args (Data);
+      D     : constant File_Hooks_Args := File_Hooks_Args (Data.all);
       Iter  : Child_Iterator := First_Child (Get_MDI (Kernel));
       Child : MDI_Child;
       Box   : Source_Box;
@@ -1860,11 +1857,11 @@ package body Src_Editor_Module is
 
    procedure File_Closed_Cb
      (Kernel : access Kernel_Handle_Record'Class;
-      Data   : Hooks_Data'Class)
+      Data   : access Hooks_Data'Class)
    is
       use Mark_Identifier_List;
 
-      D           : constant File_Hooks_Args := File_Hooks_Args (Data);
+      D           : constant File_Hooks_Args := File_Hooks_Args (Data.all);
       Id          : constant Source_Editor_Module :=
                       Source_Editor_Module (Src_Editor_Module_Id);
       Node        : List_Node;
@@ -1931,9 +1928,9 @@ package body Src_Editor_Module is
 
    procedure File_Saved_Cb
      (Kernel : access Kernel_Handle_Record'Class;
-      Data   : Hooks_Data'Class)
+      Data   : access Hooks_Data'Class)
    is
-      D    : constant File_Hooks_Args := File_Hooks_Args (Data);
+      D    : constant File_Hooks_Args := File_Hooks_Args (Data.all);
    begin
       --  Insert the saved file in the Recent menu.
 
@@ -1954,9 +1951,10 @@ package body Src_Editor_Module is
 
    procedure Cursor_Stopped_Cb
      (Kernel : access Kernel_Handle_Record'Class;
-      Data   : Hooks_Data'Class)
+      Data   : access Hooks_Data'Class)
    is
-      D   : constant File_Hooks_Args := File_Hooks_Args (Data);
+      D   : constant File_Location_Hooks_Args_Access :=
+        File_Location_Hooks_Args_Access (Data);
       Box : Source_Editor_Box;
       Id  : constant Source_Editor_Module :=
         Source_Editor_Module (Src_Editor_Module_Id);
@@ -1965,8 +1963,10 @@ package body Src_Editor_Module is
          Box := Get_Source_Box_From_MDI (Find_Editor (Kernel, D.File));
 
          if Box /= null then
-            Show_Subprogram_Name (Box);
+            Show_Subprogram_Name
+              (Box, Get_Name (Compute_Parent_Entity (D)).all);
          end if;
+
       end if;
 
    exception
@@ -2124,10 +2124,10 @@ package body Src_Editor_Module is
    procedure Execute
      (Hook   : Lines_Revealed_Hook_Record;
       Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Data   : Glide_Kernel.Hooks.Hooks_Data'Class)
+      Data   : access Glide_Kernel.Hooks.Hooks_Data'Class)
    is
       pragma Unreferenced (Hook);
-      D : constant Context_Hooks_Args := Context_Hooks_Args (Data);
+      D : constant Context_Hooks_Args := Context_Hooks_Args (Data.all);
       Area_Context : File_Area_Context_Access;
       Infos        : Line_Information_Data;
       Line1, Line2 : Integer;
@@ -2698,7 +2698,8 @@ package body Src_Editor_Module is
 
       --  Do not use a combo box, so that users can easily navigate to the list
       --  of completions through the keyboard (C423-005)
-      Gtk_New (Open_File_Entry, Use_Combo => False,
+      Gtk_New (Open_File_Entry,
+               Use_Combo => False,
                Case_Sensitive => Filenames_Are_Case_Sensitive);
       Set_Activates_Default (Get_Entry (Open_File_Entry), True);
       Pack_Start (Get_Vbox (Open_File_Dialog), Open_File_Entry,
@@ -3061,28 +3062,6 @@ package body Src_Editor_Module is
                 "Unexpected exception: " & Exception_Information (E));
    end On_New_View;
 
-   ---------------------------------
-   -- On_Goto_Line_Current_Editor --
-   ---------------------------------
-
-   procedure On_Goto_Line_Current_Editor
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
-   is
-      pragma Unreferenced (Widget);
-      Editor : constant Source_Editor_Box :=
-        Get_Source_Box_From_MDI (Find_Current_Editor (Kernel));
-
-   begin
-      if Editor /= null then
-         On_Goto_Line (Editor => GObject (Editor), Kernel => Kernel);
-      end if;
-
-   exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
-   end On_Goto_Line_Current_Editor;
-
    -------------------------
    -- On_Goto_Declaration --
    -------------------------
@@ -3365,9 +3344,9 @@ package body Src_Editor_Module is
 
    function Source_File_Hook
      (Kernel : access Kernel_Handle_Record'Class;
-      Data   : Hooks_Data'Class) return Boolean
+      Data   : access Hooks_Data'Class) return Boolean
    is
-      D : constant Source_File_Hooks_Args := Source_File_Hooks_Args (Data);
+      D : constant Source_File_Hooks_Args := Source_File_Hooks_Args (Data.all);
       Iter        : Child_Iterator := First_Child (Get_MDI (Kernel));
       Child       : MDI_Child;
       No_Location : Boolean := False;
@@ -3439,9 +3418,9 @@ package body Src_Editor_Module is
 
    function File_Line_Hook
      (Kernel : access Kernel_Handle_Record'Class;
-      Data   : Hooks_Data'Class) return Boolean
+      Data   : access Hooks_Data'Class) return Boolean
    is
-      D : constant File_Line_Hooks_Args := File_Line_Hooks_Args (Data);
+      D : constant File_Line_Hooks_Args := File_Line_Hooks_Args (Data.all);
 
       procedure Apply_Mime_On_Child (Child : MDI_Child);
       --  Apply the mime information on Child.
@@ -3491,9 +3470,9 @@ package body Src_Editor_Module is
 
    procedure Word_Added_Hook
      (Kernel : access Kernel_Handle_Record'Class;
-      Data   : Hooks_Data'Class)
+      Data   : access Hooks_Data'Class)
    is
-      File_Data : constant File_Hooks_Args := File_Hooks_Args (Data);
+      File_Data : constant File_Hooks_Args := File_Hooks_Args (Data.all);
       Buffer    : Source_Buffer;
    begin
       if File_Data.File = VFS.No_File then
@@ -3638,6 +3617,8 @@ package body Src_Editor_Module is
       Command            : Interactive_Command_Access;
       Editor_Class       : constant Class_Type := New_Class (Kernel, "Editor");
 
+      Line_Numbers_Area_Filter : Action_Filter;
+
       Src_Action_Context : constant Action_Filter :=
         new Src_Editor_Action_Context;
       --  Memory is never freed, but this is needed for the whole life of
@@ -3780,13 +3761,31 @@ package body Src_Editor_Module is
            -"Delete the word preceding the current cursor position",
          Src_Action_Context);
 
+      Line_Numbers_Area_Filter := new In_Line_Numbers_Area_Filter;
+
+      Command := new Goto_Line_Command;
+      Goto_Line_Command (Command.all).Kernel := Kernel_Handle (Kernel);
+      Register_Contextual_Menu
+        (Kernel, -"Goto line...",
+         Action => Command,
+         Filter => Line_Numbers_Area_Filter);
+
+      Command := new Goto_Other_File_Command;
+      Register_Contextual_Menu
+        (Kernel, -"Goto file spec/body",
+         Action => Command,
+         Filter => Line_Numbers_Area_Filter);
+
+
+
       Command := new Edit_File_Command;
       Register_Contextual_Menu
         (Kernel,
          Name   => "Edit file",
          Label  => "Edit %f",
          Action => Command,
-         Filter => Lookup_Filter (Kernel, "File"));
+         Filter => Action_Filter (Lookup_Filter (Kernel, "File")
+            and not Create (Module => Src_Editor_Module_Name)));
 
       Command := new Control_Command;
       Control_Command (Command.all).Kernel := Kernel_Handle (Kernel);
@@ -3963,10 +3962,17 @@ package body Src_Editor_Module is
       Gtk_New (Mitem);
       Register_Menu (Kernel, Edit, Mitem, Ref_Item => -"Preferences");
 
-      Register_Menu (Kernel, Navigate, -"Goto _Line...", Stock_Jump_To,
-                     On_Goto_Line_Current_Editor'Access, null,
-                     GDK_G, Control_Mask,
-                     Ref_Item => -"Goto File Spec<->Body");
+      Command := new Goto_Line_Command;
+      Goto_Line_Command (Command.all).Kernel := Kernel_Handle (Kernel);
+      Register_Menu (Kernel,
+                     Parent_Path => Navigate,
+                     Text        => -"Goto _Line...",
+                     Stock_Image => Stock_Jump_To,
+                     Command     => Command_Access (Command),
+                     Callback    => null,
+                     Accel_Key   => GDK_G,
+                     Accel_Mods  => Control_Mask,
+                     Ref_Item    => -"Goto File Spec<->Body");
       Register_Menu (Kernel, Navigate, -"Goto _Declaration", Stock_Home,
                      On_Goto_Declaration'Access, Ref_Item => -"Goto Line...");
       Register_Menu (Kernel, Navigate, -"Goto _Body", "",
@@ -3977,26 +3983,20 @@ package body Src_Editor_Module is
       Button := Insert_Stock
         (Toolbar, Stock_New, -"Create a New File", Position => 0);
       Kernel_Callback.Connect
-        (Button, "clicked",
-         Kernel_Callback.To_Marshaller (On_New_File'Access),
-         Kernel_Handle (Kernel));
+        (Button, "clicked", On_New_File'Access, Kernel_Handle (Kernel));
 
       Button := Insert_Stock
         (Toolbar, Stock_Open, -"Open a File", Position => 1);
       Kernel_Callback.Connect
-        (Button, "clicked",
-         Kernel_Callback.To_Marshaller (On_Open_File'Access),
-         Kernel_Handle (Kernel));
+        (Button, "clicked", On_Open_File'Access, Kernel_Handle (Kernel));
 
       Button := Insert_Stock
         (Toolbar, Stock_Save, -"Save Current File", Position => 2);
       Kernel_Callback.Connect
-        (Button, "clicked",
-         Kernel_Callback.To_Marshaller (On_Save'Access),
-         Kernel_Handle (Kernel));
+        (Button, "clicked", On_Save'Access, Kernel_Handle (Kernel));
 
       Add_Hook (Kernel, File_Saved_Hook, File_Saved_Cb'Access);
-      Add_Hook (Kernel, Cursor_Stopped_Hook, Cursor_Stopped_Cb'Access);
+      Add_Hook (Kernel, Location_Changed_Hook, Cursor_Stopped_Cb'Access);
 
       Undo_Redo_Data.Set (Kernel, Undo_Redo, Undo_Redo_Id);
 
@@ -4428,9 +4428,7 @@ package body Src_Editor_Module is
 
       if not Mapped_Is_Set (Get_Main_Window (Kernel)) then
          Widget_Callback.Connect
-           (Get_Main_Window (Kernel), "map",
-            Marsh => Widget_Callback.To_Marshaller (Map_Cb'Access),
-            After => True);
+           (Get_Main_Window (Kernel), "map", Map_Cb'Access, After => True);
 
       else
          Map_Cb (Get_Main_Window (Kernel));
@@ -4501,7 +4499,7 @@ package body Src_Editor_Module is
                       (Find_Editor (Kernel, Files (Node)));
                begin
                   if Pref_Display_Subprogram_Names then
-                     Show_Subprogram_Name (Box);
+                     Show_Subprogram_Name (Box, Get_Subprogram_Name (Box));
                   else
                      Clear_Subprogram_Name (Box);
                   end if;
