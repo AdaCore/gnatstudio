@@ -880,16 +880,31 @@ package body VCS_View_API is
          end if;
 
          if Actions (Status) /= null then
-            Gtk_New (Item, Label => Actions (Status).all);
+            Gtk_New
+              (Item, Label => Actions (Status).all & (-" for directory"));
             Append (Submenu, Item);
             Context_Callback.Connect
               (Item, "activate",
                Context_Callback.To_Marshaller
                  (On_Menu_Get_Status_Dir'Access),
                Selection_Context_Access (File_Name));
+         end if;
 
+         if Actions (Update) /= null then
             Gtk_New
-              (Item, Label => Actions (Status).all & (-" (recursively)"));
+              (Item, Label => Actions (Update).all & (-" directory"));
+            Append (Submenu, Item);
+            Context_Callback.Connect
+              (Item, "activate",
+               Context_Callback.To_Marshaller
+                 (On_Menu_Update_Dir'Access),
+               Selection_Context_Access (File_Name));
+         end if;
+
+         if Actions (Status) /= null then
+            Gtk_New
+              (Item, Label => Actions (Status).all
+               & (-" for directory recursively"));
             Append (Submenu, Item);
             Context_Callback.Connect
               (Item, "activate",
@@ -899,16 +914,9 @@ package body VCS_View_API is
          end if;
 
          if Actions (Update) /= null then
-            Gtk_New (Item, Label => Actions (Update).all);
-            Append (Submenu, Item);
-            Context_Callback.Connect
-              (Item, "activate",
-               Context_Callback.To_Marshaller
-                 (On_Menu_Update_Dir'Access),
-               Selection_Context_Access (File_Name));
-
             Gtk_New
-              (Item, Label => Actions (Update).all & (-" (recursively)"));
+              (Item, Label => Actions (Update).all
+               & (-" directory recursively"));
             Append (Submenu, Item);
             Context_Callback.Connect
               (Item, "activate",
@@ -940,7 +948,7 @@ package body VCS_View_API is
             Submenu := Gtk_Menu (Menu);
          end if;
 
-         Gtk_New (Item, Label => -"List all files");
+         Gtk_New (Item, Label => -"List all files in project");
          Append (Submenu, Item);
          Context_Callback.Connect
            (Item, "activate",
@@ -948,7 +956,27 @@ package body VCS_View_API is
             (On_Menu_List_Project_Files'Access),
             Selection_Context_Access (File_Name));
 
-         Gtk_New (Item, Label => -"List all files (recursively)");
+         if Actions (Status) /= null then
+            Gtk_New (Item, Label => Actions (Status).all & (-" for project"));
+            Append (Submenu, Item);
+            Context_Callback.Connect
+              (Item, "activate",
+               Context_Callback.To_Marshaller
+                 (On_Menu_Get_Status_Project'Access),
+               Selection_Context_Access (File_Name));
+         end if;
+
+         if Actions (Update) /= null then
+            Gtk_New (Item, Label => Actions (Update).all & (-" project"));
+            Append (Submenu, Item);
+            Context_Callback.Connect
+              (Item, "activate",
+               Context_Callback.To_Marshaller
+                 (On_Menu_Update_Project'Access),
+               Selection_Context_Access (File_Name));
+         end if;
+
+         Gtk_New (Item, Label => -"List all files in project and subprojects");
          Append (Submenu, Item);
          Context_Callback.Connect
            (Item, "activate",
@@ -957,16 +985,9 @@ package body VCS_View_API is
             Selection_Context_Access (File_Name));
 
          if Actions (Status) /= null then
-            Gtk_New (Item, Label => Actions (Status).all);
-            Append (Submenu, Item);
-            Context_Callback.Connect
-              (Item, "activate",
-               Context_Callback.To_Marshaller
-                 (On_Menu_Get_Status_Project'Access),
-               Selection_Context_Access (File_Name));
-
             Gtk_New
-              (Item, Label => Actions (Status).all & (-" (recursively)"));
+              (Item, Label => Actions (Status).all &
+                 (-" for project and subprojects"));
             Append (Submenu, Item);
             Context_Callback.Connect
               (Item, "activate",
@@ -976,16 +997,9 @@ package body VCS_View_API is
          end if;
 
          if Actions (Update) /= null then
-            Gtk_New (Item, Label => Actions (Update).all);
-            Append (Submenu, Item);
-            Context_Callback.Connect
-              (Item, "activate",
-               Context_Callback.To_Marshaller
-                 (On_Menu_Update_Project'Access),
-               Selection_Context_Access (File_Name));
-
             Gtk_New
-              (Item, Label => Actions (Update).all & (-" (recursively)"));
+              (Item, Label => Actions (Update).all
+               & (-" project and subprojects"));
             Append (Submenu, Item);
             Context_Callback.Connect
               (Item, "activate",
