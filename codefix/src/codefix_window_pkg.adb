@@ -23,6 +23,7 @@ with Gtk; use Gtk;
 with Gdk.Types;       use Gdk.Types;
 with Gtk.Widget;      use Gtk.Widget;
 with Gtk.Enums;       use Gtk.Enums;
+with Gtk.Stock;       use Gtk.Stock;
 with Gtkada.Handlers; use Gtkada.Handlers;
 with Callbacks_Codefix_Interface; use Callbacks_Codefix_Interface;
 with Codefix_Interface_Intl; use Codefix_Interface_Intl;
@@ -122,7 +123,7 @@ begin
       Widget_Callback.To_Marshaller (On_Skip_Correction_Clicked'Access), Codefix_Window);
    Add (Codefix_Window.Alignment1, Codefix_Window.Skip_Correction);
 
-   Gtk_New (Codefix_Window.Accept_Correction, -"Accept");
+   Gtk_New_From_Stock (Codefix_Window.Accept_Correction, Stock_Apply);
    Set_Flags (Codefix_Window.Accept_Correction, Can_Default);
    Widget_Callback.Object_Connect
      (Codefix_Window.Accept_Correction, "clicked",
@@ -136,14 +137,14 @@ begin
    Set_Child_Ipadding (Codefix_Window.Vbuttonbox2, 7, 0);
    Pack_Start (Codefix_Window.Vbox5, Codefix_Window.Vbuttonbox2, True, True, 0);
 
-   Gtk_New (Codefix_Window.Cancel_Changes, -"Cancel");
+   Gtk_New_From_Stock (Codefix_Window.Cancel_Changes, Stock_Cancel);
    Set_Flags (Codefix_Window.Cancel_Changes, Can_Default);
    Widget_Callback.Object_Connect
      (Codefix_Window.Cancel_Changes, "clicked",
       Widget_Callback.To_Marshaller (On_Cancel_Changes_Clicked'Access), Codefix_Window);
    Add (Codefix_Window.Vbuttonbox2, Codefix_Window.Cancel_Changes);
 
-   Gtk_New (Codefix_Window.Apply_Changes, -"Apply");
+   Gtk_New_From_Stock (Codefix_Window.Apply_Changes, Stock_Close);
    Set_Flags (Codefix_Window.Apply_Changes, Can_Default);
    Widget_Callback.Object_Connect
      (Codefix_Window.Apply_Changes, "clicked",
