@@ -27,13 +27,11 @@ with Gtkada.Dialogs; use Gtkada.Dialogs;
 with String_Utils;   use String_Utils;
 
 with Pixmaps_IDE; use Pixmaps_IDE;
-with Gdk.Pixmap; use Gdk.Pixmap;
-with Gdk.Color;  use Gdk.Color;
 
 with Aunit_Filters; use Aunit_Filters;
 with Gtkada.Handlers; use Gtkada.Handlers;
-with Gtkada.Types; use Gtkada.Types;
 
+with Gdk.Pixbuf; use Gdk.Pixbuf;
 with Glide_Intl; use Glide_Intl;
 
 package body Make_Harness_Window_Pkg.Callbacks is
@@ -178,31 +176,12 @@ package body Make_Harness_Window_Pkg.Callbacks is
          Filter_B.Label := new String'(-"Ada files");
          Filter_C.Label := new String'(-"Suite files");
 
-         Create_From_Xpm_D
-           (Filter_C.Suite_Pixmap,
-            Window => null,
-            Colormap => Get_Default_Colormap,
-            Mask => Filter_C.Suite_Bitmap,
-            Transparent => Null_Color,
-            Data => box_xpm);
+         Filter_C.Pixbuf := Gdk_New_From_Xpm_Data (box_xpm);
+         Filter_B.Spec_Pixbuf := Gdk_New_From_Xpm_Data (box_xpm);
+         Filter_B.Body_Pixbuf := Gdk_New_From_Xpm_Data (package_xpm);
 
          Gtk_New (Harness_Window.Explorer, "/", "", -"Select test harness",
                   History => null); --  ??? No history
-         Create_From_Xpm_D
-           (Filter_B.Spec_Pixmap,
-            Window => null,
-            Colormap => Get_Default_Colormap,
-            Mask => Filter_B.Spec_Bitmap,
-            Transparent => Null_Color,
-            Data => box_xpm);
-
-         Create_From_Xpm_D
-           (Filter_B.Body_Pixmap,
-            Window => null,
-            Colormap => Get_Default_Colormap,
-            Mask => Filter_B.Body_Bitmap,
-            Transparent => Null_Color,
-            Data => package_xpm);
 
          Register_Filter (Harness_Window.Explorer, Filter_C);
          Register_Filter (Harness_Window.Explorer, Filter_B);
