@@ -291,7 +291,12 @@ package String_Utils is
       Substitution_Char : Character;
       Callback          : Substitute_Callback;
       Recursive         : Boolean := False) return String;
-   --  Same as Substitute above, except with a callback
+   --  Same as Substitute above, except with a callback.
+   --  Callback will be passed the number or string following the substitution
+   --  character, followed by any '-' or '*' symbol found. As a result, with
+   --  the following input, callback will be called with:
+   --      "a %1bd() "    =>  callback receives "1bd"
+   --      "a %1--   "    =>  callback receives "1--"
 
    Invalid_Substitution : exception;
 
