@@ -333,11 +333,13 @@ package body Src_Editor_View is
    begin
       View.Area := null;
 
-      Unref (View.Side_Column_GC);
-      Unref (View.Side_Background_GC);
-      Unref (View.Default_GC);
-      Unref (View.Current_Line_GC);
-      Unref (View.Current_Block_GC);
+      if View.Side_Column_GC /= null then
+         Unref (View.Side_Column_GC);
+         Unref (View.Side_Background_GC);
+         Unref (View.Default_GC);
+         Unref (View.Current_Line_GC);
+         Unref (View.Current_Block_GC);
+      end if;
 
       if View.Side_Column_Buffer /= null then
          Gdk.Pixmap.Unref (View.Side_Column_Buffer);
