@@ -156,8 +156,7 @@ package body Src_Editor_Buffer is
 
    procedure Insert_Text_Cb
      (Buffer          : access Source_Buffer_Record'Class;
-      End_Insert_Iter : Gtk.Text_Iter.Gtk_Text_Iter;
-      Text            : String);
+      End_Insert_Iter : Gtk.Text_Iter.Gtk_Text_Iter);
    --  This procedure recomputes the syntax-highlighting of the buffer
    --  in a semi-optimized manor, based on syntax-highlighting already
    --  done before the insertion and the text added.
@@ -296,8 +295,10 @@ package body Src_Editor_Buffer is
       Set    : Boolean);
    --  Common function for [Add|Remove]_Line_Highlighting.
 
-   procedure Request_Blocks (Buffer : access Source_Buffer_Record'Class);
-   --  Request that the blocks be recomputed whenever there is time.
+   procedure Register_Edit_Timeout
+     (Buffer : access Source_Buffer_Record'Class);
+   --  Indicate that the text has been edited, and that a timeout should be
+   --  registered to call the corresponding "after-timeout" hook.
 
    function Check_Blocks (Buffer : Source_Buffer) return Boolean;
    --  Timeout that recomputes the blocks if needed.
@@ -421,6 +422,15 @@ package body Src_Editor_Buffer is
    --  otherwise.
    --  If Enable_Undo is True, then the deletion action will be
    --  stored in the undo/redo queue.
+
+   procedure Update_Highlight_Region
+     (Buffer : Source_Buffer;
+      Iter   : Gtk_Text_Iter);
+   --  Update the region to be highlighted in the next highlighting timeout.
+
+   procedure Process_Highlight_Region
+     (Buffer : Source_Buffer);
+   --  Highlight the region marked by the highlight marks in the editor.
 
    ----------------------
    -- Free_Column_Info --
@@ -588,8 +598,16 @@ package body Src_Editor_Buffer is
          return True;
       end if;
 
-      Compute_Blocks (Buffer);
-      Emit_New_Cursor_Position (Buffer);
+      --  Parse the blocks
+
+      if Buffer.Parse_Blocks then
+         Compute_Blocks (Buffer);
+         Emit_New_Cursor_Position (Buffer);
+      end if;
+
+      --  Re-highlight the highlight region if needed.
+
+      Process_Highlight_Region (Buffer);
 
       --  Prototype: perform on-the-fly style check
 
@@ -611,16 +629,13 @@ package body Src_Editor_Buffer is
          return False;
    end Check_Blocks;
 
-   --------------------
-   -- Request_Blocks --
-   --------------------
+   ---------------------------
+   -- Register_Edit_Timeout --
+   ---------------------------
 
-   procedure Request_Blocks (Buffer : access Source_Buffer_Record'Class) is
+   procedure Register_Edit_Timeout
+     (Buffer : access Source_Buffer_Record'Class) is
    begin
-      if not Buffer.Parse_Blocks then
-         return;
-      end if;
-
       Buffer.Blocks_Request_Timestamp := Clock;
 
       if not Buffer.Blocks_Timeout_Registered then
@@ -631,7 +646,7 @@ package body Src_Editor_Buffer is
             Check_Blocks'Access,
             Source_Buffer (Buffer));
       end if;
-   end Request_Blocks;
+   end Register_Edit_Timeout;
 
    ---------------------
    -- Get_Buffer_Line --
@@ -765,7 +780,7 @@ package body Src_Editor_Buffer is
 
       --  Request re-parsing of the blocks.
 
-      Request_Blocks (Buffer);
+      Register_Edit_Timeout (Buffer);
    end User_Edit_Hook;
 
    ------------------
@@ -874,6 +889,9 @@ package body Src_Editor_Buffer is
       Delete_Mark (Buffer, Buffer.Completion.Mark);
       Delete_Mark (Buffer, Buffer.Completion.Previous_Mark);
       Delete_Mark (Buffer, Buffer.Completion.Next_Mark);
+
+      Delete_Mark (Buffer, Buffer.First_Highlight_Mark);
+      Delete_Mark (Buffer, Buffer.Last_Highlight_Mark);
    end Buffer_Destroy;
 
    ---------------------
@@ -943,78 +961,13 @@ package body Src_Editor_Buffer is
 
    procedure Insert_Text_Cb
      (Buffer          : access Source_Buffer_Record'Class;
-      End_Insert_Iter : Gtk.Text_Iter.Gtk_Text_Iter;
-      Text            : String)
-   is
-      Start_Iter  : Gtk_Text_Iter;
-      End_Iter    : Gtk_Text_Iter;
-      Entity_Kind : Language_Entity;
-      Ignored     : Boolean;
-
-      Tags : Highlighting_Tags renames Buffer.Syntax_Tags;
+      End_Insert_Iter : Gtk.Text_Iter.Gtk_Text_Iter) is
    begin
       if not Buffer.Modifying_Editable_Lines then
          return;
       end if;
 
-      --  Set the Start_Iter to the begining of the inserted text,
-      --  and set the End_Iter.
-
-      Copy (Source => End_Insert_Iter, Dest => Start_Iter);
-      Backward_Chars (Start_Iter, Text'Length, Ignored);
-      Copy (Source => End_Insert_Iter, Dest => End_Iter);
-
-      --  Search the initial minimum area to re-highlight...
-
-      Entity_Kind := Normal_Text;
-
-      Entity_Kind_Search_Loop :
-      for Current_Entity in Standout_Language_Entity loop
-         if Has_Tag (Start_Iter, Tags (Current_Entity)) then
-            --  This means that we are in a highlighted region. The minimum
-            --  region to re-highlight starts from the begining of the current
-            --  region to the end of the following region.
-
-            Entity_Kind := Current_Entity;
-
-            Backward_To_Tag_Toggle
-              (Start_Iter, Tags (Current_Entity), Result => Ignored);
-            Forward_To_Tag_Toggle (End_Iter, Tags (Entity_Kind), Ignored);
-            Forward_To_Tag_Toggle (End_Iter, Result => Ignored);
-
-            exit Entity_Kind_Search_Loop;
-
-         elsif Begins_Tag (End_Iter, Tags (Current_Entity))
-           or else Ends_Tag (Start_Iter, Tags (Current_Entity))
-         then
-            --  Case Begins_Tag:
-            --    This means that we inserted right at the begining of
-            --    a highlighted region... The minimum region to re-highlight
-            --    starts from the begining of the previous region to the
-            --    end of the current region.
-            --  Case Ends_Tag:
-            --    This means that we inserted right at the end of a highlighted
-            --    region. In this case, the minimum region to re-highlight
-            --    starts from the begining of the previous region to the end of
-            --    the current region.
-            --  In both cases, the processing is the same...
-
-            Entity_Kind := Current_Entity;
-            Backward_To_Tag_Toggle (Start_Iter, Result => Ignored);
-            Forward_To_Tag_Toggle (End_Iter, Result => Ignored);
-
-            exit Entity_Kind_Search_Loop;
-         end if;
-      end loop Entity_Kind_Search_Loop;
-
-      if Entity_Kind = Normal_Text then
-         --  We are inside a normal text region. Just re-highlight this region.
-
-         Backward_To_Tag_Toggle (Start_Iter, Result => Ignored);
-         Forward_To_Tag_Toggle (End_Iter, Result => Ignored);
-      end if;
-
-      Highlight_Slice (Buffer, Start_Iter, End_Iter);
+      Update_Highlight_Region (Source_Buffer (Buffer), End_Insert_Iter);
 
    exception
       when E : others =>
@@ -1030,30 +983,30 @@ package body Src_Editor_Buffer is
       Params : Glib.Values.GValues)
    is
       Length : constant Gint := Get_Int (Nth (Params, 3));
-      Dummy  : Boolean;
       Start  : Buffer_Line_Type;
       Iter   : Gtk_Text_Iter;
-      Number : Buffer_Line_Type;
+      Number : Buffer_Line_Type := 0;
 
+      Text : constant String :=
+        Get_String (Nth (Params, 2), Length => Length);
    begin
       Get_Text_Iter (Nth (Params, 1), Iter);
 
       if Buffer.Lang /= null
         and then Get_Language_Context (Buffer.Lang).Syntax_Highlighting
       then
-         declare
-            Text : constant String :=
-              Get_String (Nth (Params, 2), Length => Length);
-         begin
-            Insert_Text_Cb (Buffer, Iter, Text);
-         end;
+         Insert_Text_Cb (Buffer, Iter);
       end if;
 
       --  Call Add_Lines, to compute added lines for the side column.
 
       Start := Buffer_Line_Type (Get_Line (Iter) + 1);
-      Backward_Chars (Iter, Length, Dummy);
-      Number := Start - Buffer_Line_Type (Get_Line (Iter) + 1);
+
+      for J in Text'Range loop
+         if Text (J) = ASCII.LF then
+            Number := Number + 1;
+         end if;
+      end loop;
 
       if Number > 0 then
          Lines_Add_Hook (Buffer, Start - Number, Number);
@@ -1150,31 +1103,9 @@ package body Src_Editor_Buffer is
 
    procedure Delete_Range_Cb
      (Buffer : access Source_Buffer_Record'Class;
-      Iter   : Gtk_Text_Iter)
-   is
-      Start_Iter : Gtk_Text_Iter;
-      End_Iter   : Gtk_Text_Iter;
-      Ignored    : Boolean;
-
+      Iter   : Gtk_Text_Iter) is
    begin
-      --  Search the initial minimum area to re-highlight:
-      --    - case Has_Tag:
-      --        This means that we are inside a highlighted region. In that
-      --        case, we just re-highlight this region.
-      --    - case Begins_Tag:
-      --        We are at the begining of a highlighted region. We re-highlight
-      --        from the begining of the previous region to the end of this
-      --        region.
-      --    - case Ends_Tag:
-      --        We are at the end of a highlighted region. We re-highlight from
-      --        the begining of this region to the end of the next region.
-      --  I all three cases, the processing is the same...
-
-      Copy (Source => Iter, Dest => Start_Iter);
-      Copy (Source => Iter, Dest => End_Iter);
-      Backward_To_Tag_Toggle (Start_Iter, Result => Ignored);
-      Forward_To_Tag_Toggle (End_Iter, Result => Ignored);
-      Highlight_Slice (Buffer, Start_Iter, End_Iter);
+      Update_Highlight_Region (Source_Buffer (Buffer), Iter);
    end Delete_Range_Cb;
 
    --------------------------
@@ -1927,6 +1858,11 @@ package body Src_Editor_Buffer is
 
       Buffer.Completion.Buffer := Gtk.Text_Buffer.Gtk_Text_Buffer (Buffer);
 
+      --  Initialize the data for timeout highlighting
+
+      Buffer.First_Highlight_Mark := Create_Mark (Buffer, "", Iter);
+      Buffer.Last_Highlight_Mark  := Create_Mark (Buffer, "", Iter);
+
       --  Initialize the line info.
 
       Buffer.Editable_Lines := new Editable_Line_Array (1 .. 1);
@@ -1943,7 +1879,7 @@ package body Src_Editor_Buffer is
 
       --  Compute the block information.
 
-      Request_Blocks (Buffer);
+      Register_Edit_Timeout (Buffer);
    end Initialize_Hook;
 
    ----------------
@@ -2031,6 +1967,7 @@ package body Src_Editor_Buffer is
       --  time the state of the queue associated to the buffer changes.
 
       Create (Command, Source_Buffer (Buffer), Buffer.Queue);
+
       Add_Queue_Change_Hook
         (Buffer.Queue,
          Command_Access (Command),
@@ -2091,14 +2028,14 @@ package body Src_Editor_Buffer is
       B.Block_Highlighting := Get_Pref (Kernel, Block_Highlighting);
 
       if Prev /= B.Block_Highlighting then
-         Request_Blocks (B);
+         Register_Edit_Timeout (B);
       end if;
 
       Prev := B.Block_Folding;
       B.Block_Folding := Get_Pref (Kernel, Block_Folding);
 
       if Prev /= B.Block_Folding then
-         Request_Blocks (B);
+         Register_Edit_Timeout (B);
       end if;
 
       if not B.Block_Folding and then Prev then
@@ -2114,7 +2051,7 @@ package body Src_Editor_Buffer is
       end if;
 
       if not Prev and then B.Parse_Blocks then
-         Request_Blocks (B);
+         Register_Edit_Timeout (B);
       end if;
    end Preferences_Changed;
 
@@ -2207,7 +2144,7 @@ package body Src_Editor_Buffer is
 
          --  Request the new blocks.
 
-         Request_Blocks (Buffer);
+         Register_Edit_Timeout (Buffer);
       end if;
 
       --  Insert the new text.
@@ -2239,6 +2176,19 @@ package body Src_Editor_Buffer is
       Insert_At_Cursor (Buffer, UTF8, Gint (Length));
 
       g_free (UTF8);
+
+      --  Force a highlight of the newly inserted text.
+
+      declare
+         F, L : Gtk_Text_Iter;
+      begin
+         Get_Bounds (Buffer, F, L);
+         Buffer.Highlight_Needed := True;
+         Move_Mark (Buffer, Buffer.First_Highlight_Mark, F);
+         Move_Mark (Buffer, Buffer.Last_Highlight_Mark, L);
+
+         Process_Highlight_Region (Source_Buffer (Buffer));
+      end;
 
       if CR_Found then
          Buffer.Line_Terminator := CR_LF;
@@ -2552,7 +2502,7 @@ package body Src_Editor_Buffer is
             end if;
          end if;
 
-         Request_Blocks (Buffer);
+         Register_Edit_Timeout (Buffer);
 
          Buffer_Information_Changed (Buffer);
       end if;
@@ -3041,7 +2991,7 @@ package body Src_Editor_Buffer is
          Buffer.Inserting := Previous_Inserting_Value;
       end if;
 
-      Request_Blocks (Buffer);
+      Register_Edit_Timeout (Buffer);
    end Insert;
 
    procedure Insert
@@ -3141,7 +3091,7 @@ package body Src_Editor_Buffer is
          Buffer.Inserting := Previous_Inserting_Value;
       end if;
 
-      Request_Blocks (Buffer);
+      Register_Edit_Timeout (Buffer);
    end Delete;
 
    procedure Delete
@@ -3203,13 +3153,14 @@ package body Src_Editor_Buffer is
       Delete (Buffer, Start_Iter, End_Iter);
 
       Get_Iter_At_Line_Offset (Buffer, Start_Iter, Start_Line, Start_Column);
+
       Insert (Buffer, Start_Iter, Text);
 
       if not Enable_Undo then
          Buffer.Inserting := Previous_Inserting_Value;
       end if;
 
-      Request_Blocks (Buffer);
+      Register_Edit_Timeout (Buffer);
    end Replace_Slice;
 
    procedure Replace_Slice
@@ -3338,7 +3289,7 @@ package body Src_Editor_Buffer is
       Add_Lines (Buffer, Start, Number);
 
       --  Parse the block information.
-      Request_Blocks (Buffer);
+      Register_Edit_Timeout (Buffer);
    end Lines_Add_Hook;
 
    ------------------------------
@@ -3375,7 +3326,7 @@ package body Src_Editor_Buffer is
       pragma Unreferenced (Start_Line, End_Line);
    begin
       --  Parse the block information.
-      Request_Blocks (Buffer);
+      Register_Edit_Timeout (Buffer);
    end Lines_Remove_Hook_After;
 
    ---------------------
@@ -4579,5 +4530,113 @@ package body Src_Editor_Buffer is
    begin
       return not Buffer.Blocks_Need_Parsing;
    end Blocks_Valid;
+
+   -----------------------------
+   -- Update_Highlight_Region --
+   -----------------------------
+
+   procedure Update_Highlight_Region
+     (Buffer : Source_Buffer;
+      Iter   : Gtk_Text_Iter)
+   is
+      First_Mark_Iter : Gtk_Text_Iter;
+   begin
+      if not Buffer.Highlight_Needed then
+         Buffer.Highlight_Needed := True;
+         Move_Mark (Buffer, Buffer.First_Highlight_Mark, Iter);
+         Move_Mark (Buffer, Buffer.Last_Highlight_Mark, Iter);
+
+      else
+         Get_Iter_At_Mark
+           (Buffer, First_Mark_Iter, Buffer.First_Highlight_Mark);
+
+         if Get_Offset (First_Mark_Iter) < Get_Offset (Iter) then
+            Move_Mark (Buffer, Buffer.Last_Highlight_Mark, Iter);
+         else
+            Move_Mark (Buffer, Buffer.First_Highlight_Mark, Iter);
+         end if;
+      end if;
+
+      if not Buffer.Inserting then
+         Process_Highlight_Region (Buffer);
+      end if;
+   end Update_Highlight_Region;
+
+   ------------------------------
+   -- Process_Highlight_Region --
+   ------------------------------
+
+   procedure Process_Highlight_Region (Buffer : Source_Buffer) is
+      Start_Iter : Gtk_Text_Iter;
+      End_Iter   : Gtk_Text_Iter;
+      Ignored    : Boolean;
+
+      Tags : Highlighting_Tags renames Buffer.Syntax_Tags;
+
+      Entity_Kind : Language_Entity;
+   begin
+      if not Buffer.Highlight_Needed then
+         return;
+      end if;
+
+      Get_Iter_At_Mark (Buffer, Start_Iter, Buffer.First_Highlight_Mark);
+      Get_Iter_At_Mark (Buffer, End_Iter, Buffer.Last_Highlight_Mark);
+
+      Backward_To_Tag_Toggle (Start_Iter, Result => Ignored);
+      Forward_To_Tag_Toggle (End_Iter, Result => Ignored);
+
+      --  Search the initial minimum area to re-highlight...
+
+      Entity_Kind := Normal_Text;
+
+      Entity_Kind_Search_Loop :
+      for Current_Entity in Standout_Language_Entity loop
+         if Has_Tag (Start_Iter, Tags (Current_Entity)) then
+            --  This means that we are in a highlighted region. The minimum
+            --  region to re-highlight starts from the begining of the current
+            --  region to the end of the following region.
+
+            Entity_Kind := Current_Entity;
+
+            Backward_To_Tag_Toggle
+              (Start_Iter, Tags (Current_Entity), Result => Ignored);
+            Forward_To_Tag_Toggle (End_Iter, Tags (Entity_Kind), Ignored);
+            Forward_To_Tag_Toggle (End_Iter, Result => Ignored);
+
+            exit Entity_Kind_Search_Loop;
+
+         elsif Begins_Tag (End_Iter, Tags (Current_Entity))
+           or else Ends_Tag (Start_Iter, Tags (Current_Entity))
+         then
+            --  Case Begins_Tag:
+            --    This means that we inserted right at the begining of
+            --    a highlighted region... The minimum region to re-highlight
+            --    starts from the begining of the previous region to the
+            --    end of the current region.
+            --  Case Ends_Tag:
+            --    This means that we inserted right at the end of a highlighted
+            --    region. In this case, the minimum region to re-highlight
+            --    starts from the begining of the previous region to the end of
+            --    the current region.
+            --  In both cases, the processing is the same...
+
+            Entity_Kind := Current_Entity;
+            Backward_To_Tag_Toggle (Start_Iter, Result => Ignored);
+            Forward_To_Tag_Toggle (End_Iter, Result => Ignored);
+
+            exit Entity_Kind_Search_Loop;
+         end if;
+      end loop Entity_Kind_Search_Loop;
+
+      if Entity_Kind = Normal_Text then
+         --  We are inside a normal text region. Just re-highlight this region.
+
+         Backward_To_Tag_Toggle (Start_Iter, Result => Ignored);
+         Forward_To_Tag_Toggle (End_Iter, Result => Ignored);
+      end if;
+
+      Highlight_Slice (Buffer, Start_Iter, End_Iter);
+      Buffer.Highlight_Needed := False;
+   end Process_Highlight_Region;
 
 end Src_Editor_Buffer;
