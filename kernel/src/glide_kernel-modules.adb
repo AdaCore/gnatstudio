@@ -1687,7 +1687,7 @@ package body Glide_Kernel.Modules is
       --  Result must not be set to Null when calling this subprogram.
 
       procedure I (S : String) is
-         R : String := Result.all & S & ASCII.LF;
+         R : constant String := Result.all & S & ASCII.LF;
       begin
          Free (Result);
          Result := new String'(R);
@@ -1720,7 +1720,7 @@ package body Glide_Kernel.Modules is
 
          while Command_Node /= Command_List.Null_Node loop
             declare
-               Data : Command_Information :=
+               Data : constant Command_Information :=
                  Command_List.Data (Command_Node);
             begin
                if Is_Empty (The_Args) then
@@ -1753,7 +1753,7 @@ package body Glide_Kernel.Modules is
 
          while Command_Node /= Command_List.Null_Node loop
             declare
-               Data : Command_Information :=
+               Data : constant Command_Information :=
                  Command_List.Data (Command_Node);
             begin
                if Data.Command.all = The_Command.all then
@@ -1774,10 +1774,9 @@ package body Glide_Kernel.Modules is
       Free (Args);
 
       declare
-         R : String := Result.all;
+         R : constant String := Result.all;
       begin
          Free (Result);
-
          return R;
       end;
    end Interpret_Command;
