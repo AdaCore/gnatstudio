@@ -28,7 +28,8 @@
 @page
 @vskip 0pt plus 1filll
 
-Copyright @copyright{} 2001-2005, AdaCore
+Copyright @copyright{} 2001-2005, AdaCore.
+
 This document may be copied, in whole or in part, in any form or by any
 means, as is or with alterations, provided that (1) alterations are clearly
 marked as alterations and (2) this copyright notice is included
@@ -7060,12 +7061,6 @@ The number of spaces for the default indentation.
 @item @b{Debugger}
 @cindex debugger
 @table @i
-@item General
-
-@table @b
-@item Color highlighting
-@cindex color
-Color used for highlighting in the debugger console.
 
 @item Break on exceptions
 @cindex breakpoint
@@ -7106,60 +7101,45 @@ on each line, allowing breakpoint on any line. Disabling this option provides
 a faster feedback, since GPS does not need to query the debugger about which
 lines contain code.
 
-@end table
-
-@item Assembly
-@cindex assembly
-@table @b
-@item Current assembly line
-Color used to highlight the assembly code for the current line.
-
-@item Range size
-@cindex range size
-Number of assembly lines to display in the initial display of the assembly
-window. If the size is 0, then the whole subprogram is displayed, but this
-can take a very long time on slow machines.
-
-@end table
-
-@item Data
-@cindex data
-Lets you change the preferences of the @i{Data Window}, in particular
-the fonts and colors used to display the data graphically.
-
-@table @b
-@item Click-able item
-Indicates color to be used for the items that are click-able (e.g pointers).
-
-@item Changed data
-Indicates color to be used to highlight fields that have changed since the last update.
-
-@item Item name
-Indicates font to be used for the name of the item.
-
-@item Item type
-Indicates font to be used to display the type of the item.
-
 @item Detect aliases
 @cindex aliases
 If enabled, do not create new items when an item with the same address is
 already present on the canvas.
 
-@end table
+@item Assembly range size
+@cindex range size
+Number of assembly lines to display in the initial display of the assembly
+window. If the size is 0, then the whole subprogram is displayed, but this
+can take a very long time on slow machines.
 
-@item Memory
-@cindex memory view
-@table @b
-@item Default color
-Color used by default in the memory view window.
+@item Current assembly line
+Color used to highlight the assembly code for the current line.
 
 @item Color highlighting
-Color used for highlighted items.
+@cindex color
+Color used for highlighting in the debugger console.
 
-@item Selection
-Color used for selected items.
+@item Clickable item
+Indicates color to be used for the items that are click-able (e.g pointers).
 
-@end table
+@item Changed data
+Indicates color to be used to highlight fields in the data window that have
+changed since the last update.
+
+@item Memory color
+Color used by default in the memory view window.
+
+@item Memory highlighting
+Color used for highlighted items in the memory view.
+
+@item Memory selection
+Color used for selected items in the memory view.
+
+@item Item name
+Indicates the font to be used for the name of the item in the data window.
+
+@item Item type
+Indicates font to be used to display the type of the item in the data window.
 
 @end table
 
