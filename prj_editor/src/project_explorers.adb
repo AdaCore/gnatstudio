@@ -741,6 +741,29 @@ package body Project_Explorers is
 
       use String_List_Utils.String_List;
    begin
+      --  If we are appending at the base, create a node indicating the
+      --  absolute path to the directory.
+
+      if D.Base = Null_Iter then
+         Append (D.Explorer.File_Model, Iter, D.Base);
+
+         Set (D.Explorer.File_Model, Iter, Absolute_Name_Column,
+              D.Norm_Dir.all);
+
+         Set (D.Explorer.File_Model, Iter, Base_Name_Column,
+              D.Norm_Dir.all);
+
+         Set (D.Explorer.File_Model, Iter, Node_Type_Column,
+              Gint (Node_Types'Pos (Directory_Node)));
+
+         Set (D.Explorer.File_Model, Iter, Icon_Column,
+              C_Proxy (D.Explorer.Open_Pixbufs (Directory_Node)));
+
+         D.Base := Iter;
+
+         return Read_Directory (D);
+      end if;
+
       Read (D.D, File, Last);
 
       if D.Depth >= 0 and then Last /= 0 then
@@ -808,20 +831,14 @@ package body Project_Explorers is
                   Path      : Gtk_Tree_Path;
                   Expanding : Boolean := D.Explorer.Expanding;
                begin
-                  if D.Base = Null_Iter then
-                     Path := Gtk_New ("");
-                  else
-                     Path := Get_Path (D.Explorer.File_Model, D.Base);
-                  end if;
+                  Path := Get_Path (D.Explorer.File_Model, D.Base);
 
                   D.Explorer.Expanding := True;
                   Success := Expand_Row (D.Explorer.File_Tree, Path, False);
                   D.Explorer.Expanding := Expanding;
 
-                  if D.Base /= Null_Iter then
-                     Set (D.Explorer.File_Model, D.Base, Icon_Column,
-                          C_Proxy (D.Explorer.Open_Pixbufs (Directory_Node)));
-                  end if;
+                  Set (D.Explorer.File_Model, D.Base, Icon_Column,
+                       C_Proxy (D.Explorer.Open_Pixbufs (Directory_Node)));
 
                   Path_Free (Path);
                end;
