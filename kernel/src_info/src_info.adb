@@ -814,6 +814,7 @@ package body Src_Info is
         (Project_View       => Project_View,
          Recursive          => Recursive,
          Full_Path          => True,
+         Normalized         => True,
          Matching_Languages => Languages);
       Iterator.Current_File := Iterator.Source_Files'First;
    end Compute_Sources;
