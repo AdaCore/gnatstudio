@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2002                      --
+--                      Copyright (C) 2000-2003                      --
 --                              ACT-Europe                           --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -41,19 +41,6 @@ package body GVD.Dialogs.Callbacks is
 
    use GVD;
    use Gtk.Arguments;
-
-   ------------------------------
-   -- On_Stack_Process_Stopped --
-   ------------------------------
-
-   procedure On_Stack_Process_Stopped
-     (Object : access Gtk_Widget_Record'Class;
-      Params : Gtk.Arguments.Gtk_Args)
-   is
-      pragma Unreferenced (Params);
-   begin
-      Update_Call_Stack (Object);
-   end On_Stack_Process_Stopped;
 
    -----------------------------
    -- On_Task_List_Select_Row --
@@ -121,7 +108,7 @@ package body GVD.Dialogs.Callbacks is
 
    exception
       when others =>
-         ---  ??? Should log unexpected exception
+         --  ??? Should log unexpected exception
          null;
    end On_Task_List_Select_Row;
 
