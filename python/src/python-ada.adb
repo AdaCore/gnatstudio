@@ -118,9 +118,11 @@ package body Python.Ada is
       pragma Unreferenced (Result);
    begin
       if Self /= null then
-         C_Func := PyCFunction_New (new PyMethodDef'(Func), Self);
+         C_Func := PyCFunction_New
+           (new PyMethodDef'(Func), Self, PyString_FromString ("GPS"));
       else
-         C_Func := PyCFunction_New (new PyMethodDef'(Func), Module);
+         C_Func := PyCFunction_New
+           (new PyMethodDef'(Func), Module, PyString_FromString ("GPS"));
       end if;
 
       if C_Func /= null then
@@ -163,7 +165,7 @@ package body Python.Ada is
       pragma Unreferenced (Result);
    begin
       Def.Flags := Def.Flags or METH_CLASS;
-      C_Func := PyCFunction_New (Def, Self);
+      C_Func := PyCFunction_New (Def, Self, PyString_FromString ("GPS"));
       if C_Func /= null then
          Result := PyObject_SetAttrString
            (Class, Func.Name, PyStaticMethod_New (C_Func));
@@ -184,7 +186,7 @@ package body Python.Ada is
       pragma Unreferenced (Result);
    begin
       Def.Flags := Def.Flags or METH_STATIC;
-      C_Func := PyCFunction_New (Def, null);
+      C_Func := PyCFunction_New (Def, null, PyString_FromString ("GPS"));
       if C_Func /= null then
          Result := PyObject_SetAttrString
            (Class, Func.Name, PyClassMethod_New (C_Func));
