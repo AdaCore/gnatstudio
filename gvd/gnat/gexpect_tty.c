@@ -802,6 +802,7 @@ static int allocate_pty_the_old_fashioned_way (void);
  **
  *********************************************************/
 
+extern char *ptsname (int);
 
 static int
 allocate_pty (void)
@@ -884,7 +885,7 @@ allocate_pty (void)
  have_master:
 
 #if defined (HAVE_PTSNAME)
-  slave_name = (char *)ptsname (master_fd);
+  slave_name = ptsname (master_fd);
   if (slave_name)
     goto have_slave_name;
 #endif
