@@ -1,9 +1,10 @@
 with Gtk.Arguments;
+with Gtk.Widget; use Gtk.Widget;
 
 package Odd_Preferences_Pkg.Callbacks is
-   procedure On_Odd_Preferences_Delete_Event
-     (Object : access Gtk_Window_Record'Class;
-      Params : Gtk.Arguments.Gtk_Args);
+   function On_Odd_Preferences_Delete_Event
+     (Object : access Gtk_Widget_Record'Class;
+      Params : Gtk.Arguments.Gtk_Args) return Boolean;
 
    procedure On_Ok_Button_Clicked
      (Object : access Gtk_Button_Record'Class);

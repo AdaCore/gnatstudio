@@ -1,8 +1,9 @@
 with Glib; use Glib;
 with Gtk; use Gtk;
-with Gdk.Types; use Gdk.Types;
-with Gtk.Widget; use Gtk.Widget;
-with Gtk.Enums;  use Gtk.Enums;
+with Gdk.Types;       use Gdk.Types;
+with Gtk.Widget;      use Gtk.Widget;
+with Gtk.Enums;       use Gtk.Enums;
+with Gtkada.Handlers; use Gtkada.Handlers;
 with Callbacks_Odd; use Callbacks_Odd;
 with Odd_Intl; use Odd_Intl;
 with Odd_Preferences_Pkg.Callbacks; use Odd_Preferences_Pkg.Callbacks;
@@ -26,7 +27,7 @@ procedure Initialize (Odd_Preferences : access Odd_Preferences_Record'Class) is
 
 begin
    Gtk.Window.Initialize (Odd_Preferences, Window_Dialog);
-   Window_Callback.Connect
+   Return_Callback.Connect
      (Odd_Preferences, "delete_event", On_Odd_Preferences_Delete_Event'Access);
    Set_Title (Odd_Preferences, -"Preferences");
    Set_Policy (Odd_Preferences, False, True, False);

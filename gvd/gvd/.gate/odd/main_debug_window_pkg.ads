@@ -13,6 +13,7 @@ with Gtk.Widget; use Gtk.Widget;
 with Gtk.Label; use Gtk.Label;
 with Gtk.Combo; use Gtk.Combo;
 with Gtk.GEntry; use Gtk.GEntry;
+with Gtk.Frame; use Gtk.Frame;
 with Gtk.Notebook; use Gtk.Notebook;
 with Gtk.Button; use Gtk.Button;
 with Gtk.Arrow; use Gtk.Arrow;
@@ -205,6 +206,7 @@ package Main_Debug_Window_Pkg is
       Button33 : Gtk_Widget;
       Button34 : Gtk_Widget;
       Button35 : Gtk_Widget;
+      Frame7 : Gtk_Frame;
       Process_Notebook : Gtk_Notebook;
       Label49 : Gtk_Label;
       Hbox1 : Gtk_Hbox;

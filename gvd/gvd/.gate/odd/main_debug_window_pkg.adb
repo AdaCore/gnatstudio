@@ -1,8 +1,9 @@
 with Glib; use Glib;
 with Gtk; use Gtk;
-with Gdk.Types; use Gdk.Types;
-with Gtk.Widget; use Gtk.Widget;
-with Gtk.Enums;  use Gtk.Enums;
+with Gdk.Types;       use Gdk.Types;
+with Gtk.Widget;      use Gtk.Widget;
+with Gtk.Enums;       use Gtk.Enums;
+with Gtkada.Handlers; use Gtkada.Handlers;
 with Callbacks_Odd; use Callbacks_Odd;
 with Odd_Intl; use Odd_Intl;
 with Main_Debug_Window_Pkg.Callbacks; use Main_Debug_Window_Pkg.Callbacks;
@@ -21,7 +22,7 @@ procedure Initialize (Main_Debug_Window : access Main_Debug_Window_Record'Class)
 
 begin
    Gtk.Window.Initialize (Main_Debug_Window, Window_Toplevel);
-   Window_Callback.Connect
+   Return_Callback.Connect
      (Main_Debug_Window, "delete_event", On_Main_Debug_Window_Delete_Event'Access);
    Set_Title (Main_Debug_Window, -"The Other Display Debugger");
    Set_Policy (Main_Debug_Window, False, True, False);
@@ -1074,7 +1075,7 @@ begin
    Set_Space_Size (Main_Debug_Window.Toolbar1, 5);
    Set_Space_Style (Main_Debug_Window.Toolbar1, Toolbar_Space_Empty);
    Set_Tooltips (Main_Debug_Window.Toolbar1, True);
-   Set_Button_Relief (Main_Debug_Window.Toolbar1, Relief_None);
+   Set_Button_Relief (Main_Debug_Window.Toolbar1, Relief_Normal);
    Main_Debug_Window.Button12 := Append_Element
      (Toolbar => Main_Debug_Window.Toolbar1,
       The_Type => Toolbar_Child_Button,
@@ -1171,7 +1172,7 @@ begin
    Set_Space_Size (Main_Debug_Window.Toolbar2, 5);
    Set_Space_Style (Main_Debug_Window.Toolbar2, Toolbar_Space_Empty);
    Set_Tooltips (Main_Debug_Window.Toolbar2, True);
-   Set_Button_Relief (Main_Debug_Window.Toolbar2, Relief_None);
+   Set_Button_Relief (Main_Debug_Window.Toolbar2, Relief_Normal);
    Main_Debug_Window.Button23 := Append_Element
      (Toolbar => Main_Debug_Window.Toolbar2,
       The_Type => Toolbar_Child_Button,
@@ -1251,8 +1252,12 @@ begin
       Tooltip_Text => -"Select and print stack frame called by this one",
       Icon => Gtk_Widget (Create_Pixmap ("down.xpm", Main_Debug_Window)));
 
+   Gtk_New (Main_Debug_Window.Frame7);
+   Pack_Start (Main_Debug_Window.Vbox1, Main_Debug_Window.Frame7, True, True, 0);
+   Set_Shadow_Type (Main_Debug_Window.Frame7, Shadow_Etched_In);
+
    Gtk_New (Main_Debug_Window.Process_Notebook);
-   Pack_Start (Main_Debug_Window.Vbox1, Main_Debug_Window.Process_Notebook, True, True, 0);
+   Add (Main_Debug_Window.Frame7, Main_Debug_Window.Process_Notebook);
    Set_Scrollable (Main_Debug_Window.Process_Notebook, True);
    Set_Show_Border (Main_Debug_Window.Process_Notebook, True);
    Set_Show_Tabs (Main_Debug_Window.Process_Notebook, True);

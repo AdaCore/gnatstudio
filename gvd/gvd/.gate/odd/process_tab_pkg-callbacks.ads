@@ -1,4 +1,5 @@
 with Gtk.Arguments;
+with Gtk.Widget; use Gtk.Widget;
 
 package Process_Tab_Pkg.Callbacks is
    procedure On_Debugger_Text_Insert_Text
