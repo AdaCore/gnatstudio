@@ -192,9 +192,9 @@ package body Tries is
    ---------------------
 
    procedure Find_Cell_Child
-     (Tree : Trie_Tree; Index : String; Pointer : out Cell_Pointer)
+     (Tree : in out Trie_Tree; Index : String; Pointer : out Cell_Pointer)
    is
-      Current  : Cell_Child_Access := Tree.Child'Unrestricted_Access;
+      Current  : Cell_Child_Access := Tree.Child'Unchecked_Access;
       Start    : Integer := Index'First;
       Ind      : String_Access;
       Ind_First, Ind_Last : Natural;
@@ -227,7 +227,7 @@ package body Tries is
          end loop;
 
          Pointer.Cell_Parent := Current;
-         Current := Current.Children (Child)'Unrestricted_Access;
+         Current := Current.Children (Child)'Access;
          Ind     := Get_Index (Current.all);
 
          pragma Assert (Ind /= null);
@@ -440,13 +440,13 @@ package body Tries is
                --  data, we can simply remove it.
                elsif Pointer.Cell_Parent.Num_Children = 2
                  and then Pointer.Cell_Parent.Data = No_Data
-                 and then Pointer.Cell_Parent /= Tree.Child'Unrestricted_Access
+                 and then Pointer.Cell_Parent /= Tree.Child'Unchecked_Access
                then
                   declare
                      Tmp : Cell_Child := Pointer.Cell_Parent.all;
                   begin
                      if Pointer.Cell_Parent.Children
-                       (Pointer.Cell_Parent.Children'First)'Unrestricted_Access
+                       (Pointer.Cell_Parent.Children'First)'Access
                        = Pointer.Cell
                      then
                         Pointer.Cell_Parent.all := Pointer.Cell_Parent.Children
@@ -503,10 +503,10 @@ package body Tries is
    -- Get --
    ---------
 
-   function Get (Tree : Trie_Tree; Index : String) return Data_Type is
+   function Get (Tree : access Trie_Tree; Index : String) return Data_Type is
       Pointer : Cell_Pointer;
    begin
-      Find_Cell_Child (Tree, Index, Pointer);
+      Find_Cell_Child (Tree.all, Index, Pointer);
 
       if Pointer.Scenario = 3 then
          return Pointer.Cell.Data;
@@ -531,7 +531,7 @@ package body Tries is
    -- Start --
    -----------
 
-   function Start (Tree : Trie_Tree; Prefix : String) return Iterator is
+   function Start (Tree : access Trie_Tree; Prefix : String) return Iterator is
       Pointer      : Cell_Pointer;
       Iter         : Iterator;
 
@@ -573,7 +573,7 @@ package body Tries is
 
       else
          --  Find the closest cell that matches the prefix
-         Find_Cell_Child (Tree, Prefix, Pointer);
+         Find_Cell_Child (Tree.all, Prefix, Pointer);
 
          --  From there, we need to return the cell and all of its children
          --  recursively
