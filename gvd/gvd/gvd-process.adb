@@ -46,6 +46,7 @@ with Ada.Characters.Handling;  use Ada.Characters.Handling;
 with Ada.Text_IO;              use Ada.Text_IO;
 
 with GNAT.Regpat; use GNAT.Regpat;
+with GNAT.OS_Lib; use GNAT.OS_Lib;
 
 with Process_Tab_Pkg;           use Process_Tab_Pkg;
 with Display_Items;             use Display_Items;
@@ -64,6 +65,7 @@ with Odd.Types;                 use Odd.Types;
 with Odd.Code_Editors;          use Odd.Code_Editors;
 with Odd.Menus;                 use Odd.Menus;
 with Odd.Preferences;           use Odd.Preferences;
+with Odd.Status_Bar;            use Odd.Status_Bar;
 with Odd.Utils;                 use Odd.Utils;
 
 with System;
@@ -615,20 +617,38 @@ package body Odd.Process is
             raise Debugger_Not_Supported;
       end case;
 
-      Spawn
-        (Process.Debugger,
-         Executable,
-         Params,
-         new Gui_Process_Proxy,
-         Window.all'Access,
-         Remote_Host,
-         Remote_Target,
-         Remote_Protocol,
-         Debugger_Name);
+      if Is_Regular_File (Executable)
+        or else Executable = ""
+      then
+         Spawn
+           (Process.Debugger,
+            Executable,
+            Params,
+            new Gui_Process_Proxy,
+            Window.all'Access,
+            Remote_Host,
+            Remote_Target,
+            Remote_Protocol,
+            Debugger_Name);
+      else
+         Spawn
+           (Process.Debugger,
+            "",
+            Params,
+            new Gui_Process_Proxy,
+            Window.all'Access,
+            Remote_Host,
+            Remote_Target,
+            Remote_Protocol,
+            Debugger_Name);
+         Print_Message (Window.Statusbar1,
+                        Error,
+                        " Could not find file : " & Executable);
+      end if;
 
       --  Add a new page to the notebook
 
-      Gtk_New (Label, "");
+       Gtk_New (Label, "");
       Append_Page (Window.Process_Notebook, Process.Process_Paned, Label);
       Show_All (Window.Process_Notebook);
       Set_Page (Window.Process_Notebook, -1);

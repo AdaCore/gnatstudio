@@ -117,8 +117,13 @@ package body Main_Debug_Window_Pkg.Callbacks is
       declare
          S : constant String := To_Unix_Pathname (File_Selection_Dialog);
       begin
-         if S /= "" then
+         if Is_Regular_File (S) then
             Set_Executable (Tab.Debugger, S, Mode => Hidden);
+         else
+            Print_Message
+              (Main_Debug_Window_Access (Get_Toplevel (Object)).Statusbar1,
+               Error,
+               " Could not find file : " & S);
          end if;
       end;
    end On_Open_Program1_Activate;
