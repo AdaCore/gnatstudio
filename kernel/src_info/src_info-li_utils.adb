@@ -110,6 +110,7 @@ package body Src_Info.LI_Utils is
          --  Check that we parsed the correct file.
          Assert (Me, LI_Handler (Handler) = File.LI.Handler,
                  "Invalid Handler");
+         Convert_To_Parsed (File);
       end if;
 
       if File.LI.Body_Info = null then
