@@ -24,6 +24,25 @@ with Basic_Types;          use Basic_Types;
 
 package body Commands.Console is
 
+   ----------
+   -- Copy --
+   ----------
+
+   function Copy
+     (Item : Console_Command_Access)
+     return Console_Command_Access
+   is
+      Result : Console_Command_Access;
+   begin
+      Result := new Console_Command;
+      Result.Kernel         := Item.Kernel;
+      Result.Text           := new String' (Item.Text.all);
+      Result.Highlight_Sloc := Item.Highlight_Sloc;
+      Result.Add_LF         := Item.Add_LF;
+      Result.Mode           := Item.Mode;
+      return Result;
+   end Copy;
+
    ------------
    -- Create --
    ------------
