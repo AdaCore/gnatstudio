@@ -52,7 +52,7 @@ package body Language.Debugger.C is
         Multiple_Lines);
 
    C_Explorer_Categories : constant Explorer_Categories (1 .. 1) :=
-     (1 => (Name           => new String'("Functions"),
+     (1 => (Name           => new String' ("Functions"),
             Regexp         => Subprogram_RE'Access,
             Position_Index => 4,
             Icon           => subprogram_xpm'Access,
@@ -65,13 +65,13 @@ package body Language.Debugger.C is
    function Is_Simple_Type
      (Lang : access C_Language; Str : String) return Boolean is
    begin
-      return Odd.Strings.Looking_At (Str, Str'First, "int")
-        or else Odd.Strings.Looking_At (Str, Str'First, "unsigned")
-        or else Odd.Strings.Looking_At (Str, Str'First, "char")
-        or else Odd.Strings.Looking_At (Str, Str'First, "float")
-        or else Odd.Strings.Looking_At (Str, Str'First, "long")
-        or else Odd.Strings.Looking_At (Str, Str'First, "short")
-        or else Odd.Strings.Looking_At (Str, Str'First, "void");
+      return Str = "int"
+        or else Str = "unsigned int"
+        or else Str = "char"
+        or else Str = "float"
+        or else Str = "long"
+        or else Str = "short"
+        or else Str = "void";
    end Is_Simple_Type;
 
    ----------------
@@ -177,23 +177,21 @@ package body Language.Debugger.C is
    -- Dereference_Name --
    ----------------------
 
-   function Dereference_Name (Lang : access C_Language;
-                              Name : String)
-                             return String
-   is
+   function Dereference_Name
+     (Lang : access C_Language;
+      Name : String) return String is
    begin
-      return "*(" & Name & ")";
+      return "(*" & Name & ")";
    end Dereference_Name;
 
    ---------------------
    -- Array_Item_Name --
    ---------------------
 
-   function Array_Item_Name (Lang  : access C_Language;
-                             Name  : String;
-                             Index : String)
-                            return String
-   is
+   function Array_Item_Name
+     (Lang  : access C_Language;
+      Name  : String;
+      Index : String) return String is
    begin
       return Name & '[' & Index & ']';
    end Array_Item_Name;
@@ -202,11 +200,10 @@ package body Language.Debugger.C is
    -- Record_Field_Name --
    -----------------------
 
-   function Record_Field_Name (Lang  : access C_Language;
-                               Name  : String;
-                               Field : String)
-                              return String
-   is
+   function Record_Field_Name
+     (Lang  : access C_Language;
+      Name  : String;
+      Field : String) return String is
    begin
       return Name & '.' & Field;
    end Record_Field_Name;
@@ -215,10 +212,7 @@ package body Language.Debugger.C is
    -- Start --
    -----------
 
-   function Start
-     (Debugger  : access C_Language)
-     return String
-   is
+   function Start (Debugger  : access C_Language) return String is
    begin
       return "tbreak main" & ASCII.LF & "run";
    end Start;
@@ -227,9 +221,8 @@ package body Language.Debugger.C is
    -- Explorer_Regexps --
    ----------------------
 
-   function Explorer_Regexps (Lang : access C_Language)
-                             return Explorer_Categories
-   is
+   function Explorer_Regexps
+     (Lang : access C_Language) return Explorer_Categories is
    begin
       return C_Explorer_Categories;
    end Explorer_Regexps;
@@ -239,9 +232,9 @@ package body Language.Debugger.C is
    ---------------------------
 
    function Make_Entry_Subprogram
-     (Str : String; Matched : Match_Array; Category : access Category_Index)
-     return String
-   is
+     (Str     : String;
+      Matched : Match_Array;
+      Category : access Category_Index) return String is
    begin
       return Str (Matched (4).First .. Matched (4).Last);
    end Make_Entry_Subprogram;
