@@ -1,5 +1,5 @@
 /* XPM */
-static char * needs_update_xpm[] = {
+char * needs_update_xpm[] = {
 "25 25 68 1",
 " 	c None",
 ".	c #000000",

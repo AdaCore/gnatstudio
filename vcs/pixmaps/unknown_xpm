@@ -1,5 +1,5 @@
 /* XPM */
-char * unknown_xpm[] = {
+char * unknown_file_xpm[] = {
 "25 25 89 1",
 " 	c None",
 ".	c #000000",
