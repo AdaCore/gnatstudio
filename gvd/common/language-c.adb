@@ -49,7 +49,8 @@ package body Language.Debugger.C is
         or else Odd.Strings.Looking_At (Str, Str'First, "char")
         or else Odd.Strings.Looking_At (Str, Str'First, "float")
         or else Odd.Strings.Looking_At (Str, Str'First, "long")
-        or else Odd.Strings.Looking_At (Str, Str'First, "short int");
+        or else Odd.Strings.Looking_At (Str, Str'First, "short int")
+        or else Odd.Strings.Looking_At (Str, Str'First, "void");
    end Is_Simple_Type;
 
    ----------------
@@ -98,8 +99,8 @@ package body Language.Debugger.C is
          Entity := String_Text;
          Next_Char := Buffer'First + 1;
          while Next_Char <= Buffer'Last
-           and then Buffer (Next_Char) /= '"'
-           and then Buffer (Next_Char - 1) /= '\'
+           and then (Buffer (Next_Char) /= '"'
+                     or else Buffer (Next_Char - 1) = '\')
          loop
             Next_Char := Next_Char + 1;
          end loop;
