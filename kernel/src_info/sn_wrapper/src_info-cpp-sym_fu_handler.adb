@@ -63,30 +63,62 @@ begin
       end;
    end if;
 
-   --  Detect forward declaration. If exist any, Start_Position
+   --  Detect forward declaration. If there are many declarations
+   --  we should not try do interpret them, 'cause it may be
+   --  overloading.
+   --  If exist only one, Start_Position
    --  should point to it and we have to add Body_Entity reference
    --  Otherwise Start_Position should point directly to the body
    if Sym.Symbol = MI then
       begin
-         MD_Tab := Find (SN_Table (MD),
-             Sym.Buffer (Sym.Class.First .. Sym.Class.Last),
-             Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last));
-         Body_Position  := Sym.Start_Position;
-         Start_Position := MD_Tab.Start_Position;
-         Free (MD_Tab);
+         Set_Cursor
+           (SN_Table (MD),
+            By_Key,
+            Sym.Buffer (Sym.Class.First .. Sym.Class.Last)
+               & Field_Sep
+               & Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last)
+               & Field_Sep,
+            False);
+         P := Get_Pair (SN_Table (MD), Next_By_Key);
+         if P /= null then
+            MD_Tab := Parse_Pair (P.all);
+            Free (P);
+            P := Get_Pair (SN_Table (MD), Next_By_Key);
+            if P = null then -- not overloaded fwd declaration
+               Body_Position  := Sym.Start_Position;
+               Start_Position := FD_Tab.Start_Position;
+            else -- overloaded or many forward declarations
+               Free (P);
+            end if;
+            Free (MD_Tab);
+         end if;
       exception
-         when DB_Error | Not_Found =>
+         when DB_Error =>
             null;
       end;
    else
       begin
-         FD_Tab := Find (SN_Table (FD),
-             Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last));
-         Body_Position  := Sym.Start_Position;
-         Start_Position := FD_Tab.Start_Position;
-         Free (FD_Tab);
+         Set_Cursor
+           (SN_Table (FD),
+            By_Key,
+            Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last)
+               & Field_Sep,
+            False);
+         P := Get_Pair (SN_Table (FD), Next_By_Key);
+         if P /= null then
+            FD_Tab := Parse_Pair (P.all);
+            Free (P);
+            P := Get_Pair (SN_Table (FD), Next_By_Key);
+            if P = null then -- not overloaded fwd declaration
+               Body_Position  := Sym.Start_Position;
+               Start_Position := FD_Tab.Start_Position;
+            else -- overloaded or many forward declarations
+               Free (P);
+            end if;
+            Free (FD_Tab);
+         end if;
       exception
-         when DB_Error | Not_Found =>
+         when DB_Error =>
             null;
       end;
    end if;
@@ -172,21 +204,3 @@ exception
    when DB_Error => null; -- non-existent table .to
 
 end Sym_FU_Handler;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
