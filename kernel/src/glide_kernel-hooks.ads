@@ -155,7 +155,9 @@ package Glide_Kernel.Hooks is
    --  circularities in the kernel, and it is easier to access non-generic
    --  packages from the various scripting languages
 
-   type Hooks_Data is abstract tagged null record;
+   type Hooks_Data is abstract tagged record
+      Kernel : Glide_Kernel.Kernel_Handle;
+   end record;
 
    function Get_Name (Data : Hooks_Data) return String is abstract;
    --  Return the name of that type. This should be unique in the application,
@@ -165,7 +167,7 @@ package Glide_Kernel.Hooks is
      (Script    : access Glide_Kernel.Scripts.Scripting_Language_Record'Class;
       Command   : Glide_Kernel.Scripts.Subprogram_Type;
       Hook_Name : String;
-      Data      : Hooks_Data) return Boolean is abstract;
+      Data      : access Hooks_Data) return Boolean is abstract;
    --  Execute the shell command Command, passing it the arguments contained
    --  in Data. The idea is to create a Callback_Data, and then call
    --  directly Execute_Command.
@@ -218,12 +220,12 @@ package Glide_Kernel.Hooks is
    procedure Execute
      (Hook   : Hook_Shell_Args_Record;
       Kernel : access Kernel_Handle_Record'Class;
-      Data   : Glide_Kernel.Scripts.Callback_Data'Class) is abstract;
+      Data   : access Glide_Kernel.Scripts.Callback_Data'Class) is abstract;
    --  First argument in Data is the name of the hook
 
    type Shell_Args_Execute is access procedure
      (Kernel : access Kernel_Handle_Record'Class;
-      Data : Glide_Kernel.Scripts.Callback_Data'Class);
+      Data   : access Glide_Kernel.Scripts.Callback_Data'Class);
    --  First argument in Data is the name of the hook
 
    procedure Add_Hook
@@ -248,7 +250,7 @@ package Glide_Kernel.Hooks is
    procedure Run_Hook
      (Kernel   : access Glide_Kernel.Kernel_Handle_Record'Class;
       Name     : String;
-      Data     : Glide_Kernel.Scripts.Callback_Data'Class;
+      Data     : access Glide_Kernel.Scripts.Callback_Data'Class;
       Set_Busy : Boolean := True);
    --  See doc for Run_Hook above
 
@@ -263,10 +265,11 @@ package Glide_Kernel.Hooks is
    procedure Execute
      (Hook   : Hook_Args_Record;
       Kernel : access Kernel_Handle_Record'Class;
-      Data   : Hooks_Data'Class) is abstract;
+      Data   : access Hooks_Data'Class) is abstract;
 
    type Args_Execute is access procedure
-     (Kernel : access Kernel_Handle_Record'Class; Data : Hooks_Data'Class);
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class);
 
    procedure Add_Hook
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
@@ -290,7 +293,7 @@ package Glide_Kernel.Hooks is
    procedure Run_Hook
      (Kernel   : access Glide_Kernel.Kernel_Handle_Record'Class;
       Name     : String;
-      Data     : Hooks_Data'Class;
+      Data     : access Hooks_Data'Class;
       Set_Busy : Boolean := True);
    --  See doc for Run_Hook above
 
@@ -305,10 +308,11 @@ package Glide_Kernel.Hooks is
    function Execute
      (Hook   : Hook_Args_Return_Record;
       Kernel : access Kernel_Handle_Record'Class;
-      Data   : Hooks_Data'Class) return Boolean is abstract;
+      Data   : access Hooks_Data'Class) return Boolean is abstract;
 
    type Args_Return_Execute is access function
-     (Kernel : access Kernel_Handle_Record'Class; Data : Hooks_Data'Class)
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class)
       return Boolean;
 
    procedure Add_Hook
@@ -333,7 +337,7 @@ package Glide_Kernel.Hooks is
    function Run_Hook_Until_Success
      (Kernel   : access Glide_Kernel.Kernel_Handle_Record'Class;
       Name     : String;
-      Data     : Hooks_Data'Class;
+      Data     : access Hooks_Data'Class;
       Set_Busy : Boolean := True) return Boolean;
    --  Same as Run_Doc above, but stops executing the functions as soon
    --  as one of the functions returns True.
@@ -342,7 +346,7 @@ package Glide_Kernel.Hooks is
    function Run_Hook_Until_Failure
      (Kernel   : access Glide_Kernel.Kernel_Handle_Record'Class;
       Name     : String;
-      Data     : Hooks_Data'Class;
+      Data     : access Hooks_Data'Class;
       Set_Busy : Boolean := True) return Boolean;
    --  Same as above except stops as soon as a function returns False.
 

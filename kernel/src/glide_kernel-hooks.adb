@@ -79,7 +79,7 @@ package body Glide_Kernel.Hooks is
    procedure Execute
      (Wrapper : Shell_Wrapper_Record;
       Kernel  : access Kernel_Handle_Record'Class;
-      Data    : Hooks_Data'Class);
+      Data    : access Hooks_Data'Class);
    --  See inherited doc
    --  This wrapper is used to give access to hooks from shell languages.
 
@@ -94,7 +94,7 @@ package body Glide_Kernel.Hooks is
    function Execute
      (Wrapper : Shell_Wrapper_Return_Record;
       Kernel  : access Kernel_Handle_Record'Class;
-      Data    : Hooks_Data'Class) return Boolean;
+      Data    : access Hooks_Data'Class) return Boolean;
    --  See inherited doc
    --  This wrapper is used to give access to hooks from shell languages.
 
@@ -108,7 +108,7 @@ package body Glide_Kernel.Hooks is
    procedure Execute
      (Wrapper : Shell_Wrapper_Shell_Record;
       Kernel  : access Kernel_Handle_Record'Class;
-      Data    : Callback_Data'Class);
+      Data    : access Callback_Data'Class);
    --  See inherited doc
    --  This wrapper is used to give access to hooks defined in shell
    --  languages.
@@ -218,7 +218,7 @@ package body Glide_Kernel.Hooks is
    procedure Execute
      (Hook   : Simple_Args_Wrapper_Record;
       Kernel : access Kernel_Handle_Record'Class;
-      Data   : Hooks_Data'Class);
+      Data   : access Hooks_Data'Class);
    --  See inherited doc
 
    type Simple_Shell_Args_Wrapper_Record
@@ -233,7 +233,7 @@ package body Glide_Kernel.Hooks is
    procedure Execute
      (Hook   : Simple_Shell_Args_Wrapper_Record;
       Kernel : access Kernel_Handle_Record'Class;
-      Data   : Callback_Data'Class);
+      Data   : access Callback_Data'Class);
    --  See inherited doc
 
    type Simple_Return_Wrapper_Record is new Hook_Args_Return_Record with record
@@ -246,7 +246,7 @@ package body Glide_Kernel.Hooks is
    function Execute
      (Hook   : Simple_Return_Wrapper_Record;
       Kernel : access Kernel_Handle_Record'Class;
-      Data   : Hooks_Data'Class) return Boolean;
+      Data   : access Hooks_Data'Class) return Boolean;
    --  See inherited doc
 
    function Get_Data
@@ -735,7 +735,7 @@ package body Glide_Kernel.Hooks is
    procedure Execute
      (Hook   : Simple_Args_Wrapper_Record;
       Kernel : access Kernel_Handle_Record'Class;
-      Data   : Hooks_Data'Class) is
+      Data   : access Hooks_Data'Class) is
    begin
       Hook.Func (Kernel, Data);
    end Execute;
@@ -793,7 +793,7 @@ package body Glide_Kernel.Hooks is
    procedure Run_Hook
      (Kernel   : access Glide_Kernel.Kernel_Handle_Record'Class;
       Name     : String;
-      Data     : Hooks_Data'Class;
+      Data     : access Hooks_Data'Class;
       Set_Busy : Boolean := True)
    is
       Info : constant Hook_Description_Access :=
@@ -878,7 +878,7 @@ package body Glide_Kernel.Hooks is
    procedure Run_Hook
      (Kernel   : access Glide_Kernel.Kernel_Handle_Record'Class;
       Name     : String;
-      Data     : Glide_Kernel.Scripts.Callback_Data'Class;
+      Data     : access Glide_Kernel.Scripts.Callback_Data'Class;
       Set_Busy : Boolean := True)
    is
       Info : constant Hook_Description_Access :=
@@ -917,7 +917,7 @@ package body Glide_Kernel.Hooks is
    procedure Execute
      (Hook   : Simple_Shell_Args_Wrapper_Record;
       Kernel : access Kernel_Handle_Record'Class;
-      Data   : Callback_Data'Class) is
+      Data   : access Callback_Data'Class) is
    begin
       Hook.Func (Kernel, Data);
    end Execute;
@@ -929,7 +929,7 @@ package body Glide_Kernel.Hooks is
    function Execute
      (Hook   : Simple_Return_Wrapper_Record;
       Kernel : access Kernel_Handle_Record'Class;
-      Data   : Hooks_Data'Class) return Boolean is
+      Data   : access Hooks_Data'Class) return Boolean is
    begin
       return Hook.Func (Kernel, Data);
    end Execute;
@@ -989,7 +989,7 @@ package body Glide_Kernel.Hooks is
    function Run_Hook_Until_Success
      (Kernel   : access Glide_Kernel.Kernel_Handle_Record'Class;
       Name     : String;
-      Data     : Hooks_Data'Class;
+      Data     : access Hooks_Data'Class;
       Set_Busy : Boolean := True) return Boolean
    is
       Info : constant Hook_Description_Access :=
@@ -1034,7 +1034,7 @@ package body Glide_Kernel.Hooks is
    function Run_Hook_Until_Failure
      (Kernel   : access Glide_Kernel.Kernel_Handle_Record'Class;
       Name     : String;
-      Data     : Hooks_Data'Class;
+      Data     : access Hooks_Data'Class;
       Set_Busy : Boolean := True) return Boolean
    is
       Info : constant Hook_Description_Access :=
@@ -1225,7 +1225,7 @@ package body Glide_Kernel.Hooks is
    procedure Execute
      (Wrapper : Shell_Wrapper_Record;
       Kernel  : access Kernel_Handle_Record'Class;
-      Data    : Hooks_Data'Class)
+      Data    : access Hooks_Data'Class)
    is
       Tmp : Boolean;
       pragma Unreferenced (Kernel, Tmp);
@@ -1270,12 +1270,12 @@ package body Glide_Kernel.Hooks is
    procedure Execute
      (Wrapper : Shell_Wrapper_Shell_Record;
       Kernel  : access Kernel_Handle_Record'Class;
-      Data    : Callback_Data'Class)
+      Data    : access Callback_Data'Class)
    is
       Tmp : Boolean;
       pragma Unreferenced (Kernel, Tmp);
    begin
-      Tmp := Execute (Wrapper.Func, Data);
+      Tmp := Execute (Wrapper.Func, Data.all);
    end Execute;
 
    -------------
@@ -1285,7 +1285,7 @@ package body Glide_Kernel.Hooks is
    function Execute
      (Wrapper : Shell_Wrapper_Return_Record;
       Kernel  : access Kernel_Handle_Record'Class;
-      Data    : Hooks_Data'Class) return Boolean
+      Data    : access Hooks_Data'Class) return Boolean
    is
       pragma Unreferenced (Kernel);
    begin
@@ -1320,7 +1320,7 @@ package body Glide_Kernel.Hooks is
       pragma Unreferenced (Command);
       Name : constant String := Nth_Arg (Data, 1);
    begin
-      Run_Hook (Get_Kernel (Data), Name, Data);
+      Run_Hook (Get_Kernel (Data), Name, Data'Access);
    end General_Command_Handler;
 
    --------------
