@@ -1066,7 +1066,8 @@ package body GVD.Process is
          GObject (Process),
          Process.Debugger_Text_Font,
          History_List => History,
-         Key          => "gvd_console");
+         Key          => "gvd_console",
+         Empty_Equals_Repeat => True);
       Histories.Set_Max_Length (History.all, 100, "gvd_console");
       Histories.Allow_Duplicates (History.all, "gvd_console", True, True);
 
