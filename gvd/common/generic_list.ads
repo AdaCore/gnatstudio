@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                          G L I D E  I I                           --
 --                                                                   --
---                        Copyright (C) 2001                         --
+--                     Copyright (C) 2001 - 2002                     --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GLIDE is free software; you can redistribute it and/or modify  it --
@@ -120,5 +120,6 @@ private
    pragma Inline (Prepend);
    pragma Inline (Head);
    pragma Inline (Tail);
+   pragma Inline (Is_Empty);
 
 end Generic_List;
