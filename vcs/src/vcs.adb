@@ -132,4 +132,14 @@ package body VCS is
       Free (F.Users);
    end Free;
 
+   ---------------
+   -- Get_Queue --
+   ---------------
+
+   function Get_Queue
+     (VCS : access VCS_Record) return Commands.Command_Queue is
+   begin
+      return VCS.Queue;
+   end Get_Queue;
+
 end VCS;

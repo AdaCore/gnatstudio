@@ -229,10 +229,15 @@ package VCS is
    --  tag
    --  other version
 
+   function Get_Queue (VCS : access VCS_Record) return Commands.Command_Queue;
+
 private
    type VCS_Record is abstract tagged limited record
       Kernel : Glide_Kernel.Kernel_Handle;
       Queue  : Commands.Command_Queue;
+      --  ??? Right now, for testing purposes, the command queue is
+      --  here. It would be better to put it at kernel-level or at least
+      --  at module-level.
    end record;
 
 end VCS;
