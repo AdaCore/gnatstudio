@@ -2393,6 +2393,7 @@ package body Src_Editor_Module is
                        Label             => Name,
                        Factory           => Current_File_Factory'Access,
                        Extra_Information => Gtk_Widget (Selector),
+                       Id                => Src_Editor_Module_Id,
                        Mask              => All_Options
                        and not All_Occurences and not Supports_Replace));
          Register_Search_Function
@@ -2401,6 +2402,7 @@ package body Src_Editor_Module is
                        Label             => Name2,
                        Factory           => Files_From_Project_Factory'Access,
                        Extra_Information => Gtk_Widget (Selector),
+                       Id                => null,
                        Mask              => All_Options
                        and not Search_Backward and not Supports_Replace));
          Register_Search_Function
@@ -2409,6 +2411,7 @@ package body Src_Editor_Module is
                        Label             => Name3,
                        Factory           => Files_Factory'Access,
                        Extra_Information => Gtk_Widget (Extra),
+                       Id                => null,
                        Mask              => All_Options
                        and not Search_Backward and not Supports_Replace));
       end;
