@@ -98,10 +98,12 @@ package body Commands is
          if X.Do_Not_Free then
             X.To_Be_Freed := True;
          else
+            --  Do not free commands registered as actions, except if we are
+            --  freeing the actions themselves
+
             Free (X.Next_Commands);
             Free (X.Alternate_Commands);
             Free (X.all);
-            Unchecked_Free (X);
             Unchecked_Free (X);
          end if;
       end if;
@@ -502,14 +504,14 @@ package body Commands is
    --------------------------------
 
    procedure Launch_Synchronous_Generic
-     (Command : Command_Access;
+     (Command : access Root_Command'Class;
       Wait    : Duration := 0.0)
    is
       Next_Actions : List_Node;
       Result       : Command_Return_Type;
    begin
       loop
-         Result := Execute_Command (Command);
+         Result := Execute_Command (Command_Access (Command));
 
          exit when Result = Success or else Result = Failure;
 
@@ -525,6 +527,7 @@ package body Commands is
          Next_Actions := First (Get_Alternate_Actions (Command));
       end if;
 
+      --  ??? Should we really use a recursive implementation here
       while Next_Actions /= Null_Node loop
          Launch_Synchronous_Generic (Data (Next_Actions), Wait);
          Next_Actions := Next (Next_Actions);
@@ -546,7 +549,7 @@ package body Commands is
    ------------------------
 
    procedure Launch_Synchronous
-     (Command : Command_Access;
+     (Command : access Root_Command'Class;
       Wait    : Duration := 0.0)
    is
       procedure Internal is new Launch_Synchronous_Generic

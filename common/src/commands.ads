@@ -164,7 +164,7 @@ package Commands is
    -------------------------
 
    procedure Launch_Synchronous
-     (Command : Command_Access;
+     (Command : access Root_Command'Class;
       Wait    : Duration := 0.0);
    --  Launch Command and all the consequent/alternate actions recursively,
    --  then return.
@@ -181,7 +181,7 @@ package Commands is
       with function Execute_Command
         (Command : Command_Access) return Command_Return_Type;
    procedure Launch_Synchronous_Generic
-     (Command : Command_Access;
+     (Command : access Root_Command'Class;
       Wait    : Duration := 0.0);
    --  Same above, but you can specify exactly how a command should be
    --  executed.
