@@ -550,7 +550,7 @@ package body GVD.Text_Box.Asm_Editor is
      (Editor  : access Asm_Editor_Record'Class;
       Address : String) return Natural
    is
-      Buffer    : String_Access := Get_Buffer (Editor);
+      Buffer    : constant String_Access := Get_Buffer (Editor);
       Index     : Natural;
 
    begin
@@ -582,7 +582,7 @@ package body GVD.Text_Box.Asm_Editor is
      (Editor  : access Asm_Editor_Record'Class;
       Line    : Natural) return String
    is
-      Buffer  : String_Access := Get_Buffer (Editor);
+      Buffer  : constant String_Access := Get_Buffer (Editor);
       Current : Natural := 1;
       Index   : Natural;
       Matched : Match_Array (0 .. 1);

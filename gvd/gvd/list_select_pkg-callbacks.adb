@@ -88,7 +88,7 @@ package body List_Select_Pkg.Callbacks is
      (Object : access Gtk_Button_Record'Class)
    is
       Dummy       : Message_Dialog_Buttons;
-      List_Select : List_Select_Access :=
+      List_Select : constant List_Select_Access :=
         List_Select_Access (Get_Toplevel (Object));
    begin
       Dummy := Message_Dialog

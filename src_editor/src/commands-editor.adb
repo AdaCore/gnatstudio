@@ -27,7 +27,7 @@ with Src_Editor_Module;                 use Src_Editor_Module;
 
 package body Commands.Editor is
 
-   Me : Debug_Handle := Create ("Commands.Editor");
+   Me : constant Debug_Handle := Create ("Commands.Editor");
 
    ---------------------
    -- Is_Null_Command --
@@ -89,7 +89,7 @@ package body Commands.Editor is
       Start_Line   : Integer := -1;
       Start_Column : Integer := -1)
    is
-      Text_Length : Integer := Text'Length;
+      Text_Length : constant Integer := Text'Length;
       First       : Natural := Item.Current_Text.all'First;
    begin
       while Item.Current_Text_Size + Text_Length

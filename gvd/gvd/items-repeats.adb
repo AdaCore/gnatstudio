@@ -138,7 +138,8 @@ package body Items.Repeats is
       Context : Drawing_Context;
       X, Y    : Gint := 0)
    is
-      Str : String := "<repeat " & Integer'Image (Item.Repeat_Num) & "> ";
+      Str : constant String :=
+        "<repeat" & Integer'Image (Item.Repeat_Num) & "> ";
 
       use Gdk;
 
@@ -202,7 +203,8 @@ package body Items.Repeats is
       Context        : Drawing_Context;
       Hide_Big_Items : Boolean := False)
    is
-      Str : String := "<repeat " & Integer'Image (Item.Repeat_Num) & "> ";
+      Str : constant String :=
+        "<repeat" & Integer'Image (Item.Repeat_Num) & "> ";
    begin
       if not Item.Valid then
          Get_Size (Context.Unknown_Pixmap, Item.Width, Item.Height);

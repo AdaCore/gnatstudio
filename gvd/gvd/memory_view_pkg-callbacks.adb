@@ -60,7 +60,8 @@ package body Memory_View_Pkg.Callbacks is
    is
       pragma Unreferenced (Params);
 
-      View : GVD_Memory_View := GVD_Memory_View (Get_Toplevel (Object));
+      View : constant GVD_Memory_View :=
+        GVD_Memory_View (Get_Toplevel (Object));
    begin
       Update_Display (View);
    end On_Memory_View_Size_Allocate;
@@ -72,7 +73,8 @@ package body Memory_View_Pkg.Callbacks is
    procedure On_Address_Entry_Activate
      (Object : access Gtk_Entry_Record'Class)
    is
-      View : GVD_Memory_View := GVD_Memory_View (Get_Toplevel (Object));
+      View : constant GVD_Memory_View :=
+        GVD_Memory_View (Get_Toplevel (Object));
    begin
       Display_Memory (View, Get_Text (View.Address_Entry));
    end On_Address_Entry_Activate;
@@ -97,7 +99,8 @@ package body Memory_View_Pkg.Callbacks is
    procedure On_Size_Entry_Changed
      (Object : access Gtk_Entry_Record'Class)
    is
-      View : GVD_Memory_View := GVD_Memory_View (Get_Toplevel (Object));
+      View : constant GVD_Memory_View :=
+        GVD_Memory_View (Get_Toplevel (Object));
    begin
       Update_Display (View);
    end On_Size_Entry_Changed;
@@ -109,7 +112,8 @@ package body Memory_View_Pkg.Callbacks is
    procedure On_Data_Entry_Changed
      (Object : access Gtk_Entry_Record'Class)
    is
-      View : GVD_Memory_View := GVD_Memory_View (Get_Toplevel (Object));
+      View : constant GVD_Memory_View :=
+        GVD_Memory_View (Get_Toplevel (Object));
    begin
       Update_Display (View);
    end On_Data_Entry_Changed;
@@ -122,9 +126,11 @@ package body Memory_View_Pkg.Callbacks is
      (Object : access Gtk_Widget_Record'Class;
       Params : GValues) return Boolean
    is
-      View  : GVD_Memory_View := GVD_Memory_View (Get_Toplevel (Object));
+      View  : constant GVD_Memory_View :=
+        GVD_Memory_View (Get_Toplevel (Object));
       Arg1  : Gdk_Event;
-      Proxy : C_Proxy := Get_Proxy (Nth (Params, 1));
+      Proxy : constant C_Proxy := Get_Proxy (Nth (Params, 1));
+
    begin
       if Proxy = null then
          return False;
@@ -218,7 +224,8 @@ package body Memory_View_Pkg.Callbacks is
    is
       pragma Unreferenced (Params);
 
-      View : GVD_Memory_View := GVD_Memory_View (Get_Toplevel (Object));
+      View : constant GVD_Memory_View :=
+        GVD_Memory_View (Get_Toplevel (Object));
       use type Glib.Gint;
       use type Glib.Guint;
    begin
@@ -256,7 +263,8 @@ package body Memory_View_Pkg.Callbacks is
    procedure On_Submit_Clicked
      (Object : access Gtk_Button_Record'Class)
    is
-      View : GVD_Memory_View := GVD_Memory_View (Get_Toplevel (Object));
+      View : constant GVD_Memory_View :=
+        GVD_Memory_View (Get_Toplevel (Object));
    begin
       Apply_Changes (View);
    end On_Submit_Clicked;
@@ -279,7 +287,8 @@ package body Memory_View_Pkg.Callbacks is
    procedure On_Show_Ascii_Toggled
      (Object : access Gtk_Check_Button_Record'Class)
    is
-      View : GVD_Memory_View := GVD_Memory_View (Get_Toplevel (Object));
+      View : constant GVD_Memory_View :=
+        GVD_Memory_View (Get_Toplevel (Object));
    begin
       Update_Display (View);
    end On_Show_Ascii_Toggled;

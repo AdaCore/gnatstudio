@@ -47,7 +47,7 @@ package body Process_Tab_Pkg.Callbacks is
      (Object : access Gtk_Widget_Record'Class;
       Params : Gtk.Arguments.Gtk_Args) return Boolean
    is
-      Arg1 : Gdk_Event := To_Event (Params, 1);
+      Arg1 : constant Gdk_Event := To_Event (Params, 1);
       pragma Unreferenced (Object, Arg1);
    begin
       return False;

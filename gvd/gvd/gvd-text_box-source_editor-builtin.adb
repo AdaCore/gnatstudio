@@ -446,8 +446,9 @@ package body GVD.Text_Box.Source_Editor.Builtin is
       Mitem : Gtk_Menu_Item;
       Check : Gtk_Check_Menu_Item;
 
-      File_Length : Natural := Get_Current_File (Source.Editor)'Length;
-      Data  : Contextual_Data_Record :=
+      File_Length : constant Natural :=
+        Get_Current_File (Source.Editor)'Length;
+      Data        : Contextual_Data_Record :=
         (Name_Length  => Entity'Length,
           File_Length  => File_Length,
           Name         => Entity,
@@ -794,7 +795,7 @@ package body GVD.Text_Box.Source_Editor.Builtin is
       Index    : Gint := Invisible_Column_Width (Edit);
       Col      : Natural := 1;
       Buffer   : constant Basic_Types.String_Access := Get_Buffer (Edit);
-      Tab_Size : Integer := Integer (Get_Tab_Size);
+      Tab_Size : constant Integer := Integer (Get_Tab_Size);
 
    begin
       --  Convert from raw file position to visual buffer position (i.e include
@@ -1365,7 +1366,7 @@ package body GVD.Text_Box.Source_Editor.Builtin is
       Edit     : constant Builtin_Text_Box := Builtin_Text_Box (Editor.Widget);
       Process  : constant Debugger_Process_Tab :=
         Debugger_Process_Tab (Editor.Process);
-      Debug    : Debugger_Access := Process.Debugger;
+      Debug    : constant Debugger_Access := Process.Debugger;
       Line     : Integer;
       Line_Max : Integer;
       Found    : Boolean := False;

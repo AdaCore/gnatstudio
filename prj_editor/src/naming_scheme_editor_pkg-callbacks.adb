@@ -1,10 +1,10 @@
 -----------------------------------------------------------------------
---                          G L I D E  I I                           --
+--                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2001                         --
+--                     Copyright (C) 2001-2002                       --
 --                            ACT-Europe                             --
 --                                                                   --
--- GLIDE is free software; you can redistribute it and/or modify  it --
+-- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -13,7 +13,7 @@
 -- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
 -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
 -- General Public License for more details. You should have received --
--- a copy of the GNU General Public License along with this library; --
+-- a copy of the GNU General Public License along with this program; --
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
@@ -79,7 +79,7 @@ package body Naming_Scheme_Editor_Pkg.Callbacks is
    procedure Customized
      (Object : access Gtk_Widget_Record'Class)
    is
-      E : Ada_Naming_Editor := Ada_Naming_Editor (Object);
+      E : constant Ada_Naming_Editor := Ada_Naming_Editor (Object);
    begin
       Select_Item (Get_List (E.Standard_Scheme), Custom_Scheme);
    end Customized;
@@ -92,12 +92,11 @@ package body Naming_Scheme_Editor_Pkg.Callbacks is
      (Object : access Gtk_Widget_Record'Class;
       Params : Gtk.Arguments.Gtk_Args)
    is
-      E : Ada_Naming_Editor := Ada_Naming_Editor (Object);
-      Row : Gint := To_Gint (Params, 1);
---        Column : Gint := To_Gint (Params, 2);
---        Arg3 : Gdk_Event := To_Event (Params, 3);
+      E         : constant Ada_Naming_Editor := Ada_Naming_Editor (Object);
+      Row       : constant Gint := To_Gint (Params, 1);
       Spec_Name : constant String := Get_Text (E.Exception_List, Row, 1);
       Body_Name : constant String := Get_Text (E.Exception_List, Row, 2);
+
    begin
       Set_Text (E.Unit_Name_Entry, Get_Text (E.Exception_List, Row, 0));
       if Spec_Name = "" then
@@ -120,10 +119,10 @@ package body Naming_Scheme_Editor_Pkg.Callbacks is
      (Object : access Gtk_Widget_Record'Class;
       Params : Gtk.Arguments.Gtk_Args) return Boolean
    is
-      Event : Gdk_Event := To_Event (Params, 1);
+      Event : constant Gdk_Event := To_Event (Params, 1);
       use Gint_List;
-      E : Ada_Naming_Editor := Ada_Naming_Editor (Object);
-      List : constant Gint_List.Glist := Get_Selection (E.Exception_List);
+      E     : constant Ada_Naming_Editor := Ada_Naming_Editor (Object);
+      List  : constant Gint_List.Glist := Get_Selection (E.Exception_List);
    begin
       if Get_Key_Val (Event) = GDK_Delete then
          if List /= Null_List then
@@ -165,8 +164,8 @@ package body Naming_Scheme_Editor_Pkg.Callbacks is
      (Object : access Gtk_Widget_Record'Class;
       Params : Gtk.Arguments.Gtk_Args) return Boolean
    is
-      Arg1 : Gdk_Event := To_Event (Params, 1);
-      E : Ada_Naming_Editor := Ada_Naming_Editor (Object);
+      Arg1 : constant Gdk_Event := To_Event (Params, 1);
+      E    : constant Ada_Naming_Editor := Ada_Naming_Editor (Object);
    begin
       Clear_Unit_Name (E);
       Handle_Key (E, Arg1, E.Unit_Name_Entry);
@@ -181,8 +180,8 @@ package body Naming_Scheme_Editor_Pkg.Callbacks is
      (Object : access Gtk_Widget_Record'Class;
       Params : Gtk.Arguments.Gtk_Args) return Boolean
    is
-      Arg1 : Gdk_Event := To_Event (Params, 1);
-      E : Ada_Naming_Editor := Ada_Naming_Editor (Object);
+      Arg1 : constant Gdk_Event := To_Event (Params, 1);
+      E    : constant Ada_Naming_Editor := Ada_Naming_Editor (Object);
    begin
       Clear_Spec_Name (E);
       Handle_Key (E, Arg1, E.Spec_Filename_Entry);
@@ -197,8 +196,8 @@ package body Naming_Scheme_Editor_Pkg.Callbacks is
      (Object : access Gtk_Widget_Record'Class;
       Params : Gtk.Arguments.Gtk_Args) return Boolean
    is
-      Arg1 : Gdk_Event := To_Event (Params, 1);
-      E : Ada_Naming_Editor := Ada_Naming_Editor (Object);
+      Arg1 : constant Gdk_Event := To_Event (Params, 1);
+      E    : constant Ada_Naming_Editor := Ada_Naming_Editor (Object);
    begin
       Clear_Body_Name (E);
       Handle_Key (E, Arg1, E.Body_Filename_Entry);

@@ -1,12 +1,28 @@
---  with System; use System;
+-----------------------------------------------------------------------
+--                               G P S                               --
+--                                                                   --
+--                     Copyright (C) 2001-2002                       --
+--                            ACT-Europe                             --
+--                                                                   --
+-- GPS is free  software;  you can redistribute it and/or modify  it --
+-- under the terms of the GNU General Public License as published by --
+-- the Free Software Foundation; either version 2 of the License, or --
+-- (at your option) any later version.                               --
+--                                                                   --
+-- This program is  distributed in the hope that it will be  useful, --
+-- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
+-- General Public License for more details. You should have received --
+-- a copy of the GNU General Public License along with this program; --
+-- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
+-- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
+-----------------------------------------------------------------------
+
 with Glib; use Glib;
 with Gdk.Event; use Gdk.Event;
 with Gdk.Types.Keysyms; use Gdk.Types.Keysyms;
 with Gdk.Types; use Gdk.Types;
---  with Gtk.Accel_Group; use Gtk.Accel_Group;
---  with Gtk.Object; use Gtk.Object;
 with Gtk.Enums; use Gtk.Enums;
---  with Gtk.Style; use Gtk.Style;
 with Gtk.Widget; use Gtk.Widget;
 with Gtkada.Types; use Gtkada.Types;
 with Interfaces.C.Strings; use Interfaces.C.Strings;
@@ -17,7 +33,7 @@ package body Foreign_Naming_Scheme_Editor_Pkg.Callbacks is
 
    use Gtk.Arguments;
 
-   Empty_Filename : constant String := -"<filename>";
+   Empty_Filename : constant String := "<filename>";
 
    procedure Handle_Key (E : Foreign_Naming_Editor; Event : Gdk_Event);
    --  Handle a keypress (escape,...) in Field
@@ -30,10 +46,9 @@ package body Foreign_Naming_Scheme_Editor_Pkg.Callbacks is
      (Object : access Gtk_Widget_Record'Class;
       Params : Gtk.Arguments.Gtk_Args)
    is
-      Row : Gint := To_Gint (Params, 1);
-      --  Arg2 : Gint := To_Gint (Params, 2);
-      --  Arg3 : Gdk_Event := To_Event (Params, 3);
-      E : Foreign_Naming_Editor := Foreign_Naming_Editor (Object);
+      Row       : constant Gint := To_Gint (Params, 1);
+      E         : constant Foreign_Naming_Editor :=
+        Foreign_Naming_Editor (Object);
       File_Name : constant String := Get_Text (E.Exception_List, Row, 0);
    begin
       Set_Text (E.Filename_Entry, File_Name);
@@ -47,9 +62,9 @@ package body Foreign_Naming_Scheme_Editor_Pkg.Callbacks is
      (Object : access Gtk_Widget_Record'Class;
       Params : Gtk.Arguments.Gtk_Args) return Boolean
    is
-      Arg1 : Gdk_Event := To_Event (Params, 1);
+      Arg1 : constant Gdk_Event := To_Event (Params, 1);
       use Gint_List;
-      E : Foreign_Naming_Editor := Foreign_Naming_Editor (Object);
+      E    : constant Foreign_Naming_Editor := Foreign_Naming_Editor (Object);
       List : constant Gint_List.Glist := Get_Selection (E.Exception_List);
    begin
       if Get_Key_Val (Arg1) = GDK_Delete then
@@ -68,13 +83,13 @@ package body Foreign_Naming_Scheme_Editor_Pkg.Callbacks is
    procedure On_Update_Clicked
      (Object : access Gtk_Widget_Record'Class)
    is
-      E : Foreign_Naming_Editor := Foreign_Naming_Editor (Object);
+      E    : constant Foreign_Naming_Editor := Foreign_Naming_Editor (Object);
       Text : Gtkada.Types.Chars_Ptr_Array (0 .. 0);
       Num_Rows : constant Gint := Get_Rows (E.Exception_List);
       File : constant String := Get_Text (E.Filename_Entry);
       Row : Gint := -1;
    begin
-      if File /= Empty_Filename then
+      if File /= -Empty_Filename then
          --  Check if there is already an entry for this file
          for J in 0 .. Num_Rows - 1 loop
             declare
@@ -95,7 +110,7 @@ package body Foreign_Naming_Scheme_Editor_Pkg.Callbacks is
          end if;
 
          Moveto (E.Exception_List, Row, 0, 0.0, 0.0);
-         Set_Text (E.Filename_Entry, Empty_Filename);
+         Set_Text (E.Filename_Entry, -Empty_Filename);
          Grab_Focus (E.Filename_Entry);
       end if;
    end On_Update_Clicked;
@@ -107,7 +122,7 @@ package body Foreign_Naming_Scheme_Editor_Pkg.Callbacks is
    procedure Handle_Key (E : Foreign_Naming_Editor; Event : Gdk_Event) is
    begin
       if Get_Key_Val (Event) = GDK_Escape then
-         Set_Text (E.Filename_Entry, Empty_Filename);
+         Set_Text (E.Filename_Entry, -Empty_Filename);
       end if;
    end Handle_Key;
 
@@ -119,10 +134,10 @@ package body Foreign_Naming_Scheme_Editor_Pkg.Callbacks is
      (Object : access Gtk_Widget_Record'Class;
       Params : Gtk.Arguments.Gtk_Args) return Boolean
    is
-      Arg1 : Gdk_Event := To_Event (Params, 1);
-      E : Foreign_Naming_Editor := Foreign_Naming_Editor (Object);
+      Arg1 : constant Gdk_Event := To_Event (Params, 1);
+      E    : constant Foreign_Naming_Editor := Foreign_Naming_Editor (Object);
    begin
-      if Get_Text (E.Filename_Entry) = Empty_Filename then
+      if Get_Text (E.Filename_Entry) = -Empty_Filename then
          Set_Text (E.Filename_Entry, "");
       end if;
       Handle_Key (E, Arg1);
