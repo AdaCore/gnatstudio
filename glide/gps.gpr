@@ -11,6 +11,7 @@ with "../vcs/vcs";
 with "../metrics/metrics";
 with "../builder/builder";
 with "../navigation/navigation";
+with "../shared";
 
 project GPS is
 
@@ -34,7 +35,7 @@ project GPS is
 
    package Compiler is
       case Build is
-         when "Debug" => 
+         when "Debug" =>
             for Default_Switches ("Ada") use
               ("-g", "-O2", "-gnata", "-gnaty", "-gnatwu", "-gnatwe");
          when others =>
@@ -46,5 +47,7 @@ project GPS is
    package Binder is
       for Default_Switches ("Ada") use ("-E", "-static");
    end Binder;
+
+   package IDE renames Shared.IDE;
 
 end GPS;
