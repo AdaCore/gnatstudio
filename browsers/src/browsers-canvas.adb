@@ -19,11 +19,15 @@
 -----------------------------------------------------------------------
 
 with Glib;                use Glib;
+with Glib.Graphs;         use Glib.Graphs;
 with Gdk.Color;           use Gdk.Color;
 with Gdk.GC;              use Gdk.GC;
 with Gtkada.Canvas;       use Gtkada.Canvas;
 with Gtkada.Handlers;     use Gtkada.Handlers;
+with Gdk.Drawable;        use Gdk.Drawable;
 with Gdk.Event;           use Gdk.Event;
+with Gdk.Font;            use Gdk.Font;
+with Gdk.Rectangle;       use Gdk.Rectangle;
 with Gdk.Types.Keysyms;   use Gdk.Types.Keysyms;
 with Gdk.Window;          use Gdk.Window;
 with Gtk.Accel_Group;     use Gtk.Accel_Group;
@@ -33,10 +37,13 @@ with Gtk.Check_Menu_Item; use Gtk.Check_Menu_Item;
 with Gtk.Menu;            use Gtk.Menu;
 with Gtk.Menu_Item;       use Gtk.Menu_Item;
 with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
+with Gtk.Style;           use Gtk.Style;
 with Gtk.Widget;          use Gtk.Widget;
+with Pango.Font;          use Pango.Font;
 
 with Glide_Kernel;              use Glide_Kernel;
 with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
+with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
 with Browsers.Dependency_Items; use Browsers.Dependency_Items;
 with Browsers.Module;           use Browsers.Module;
 with Layouts;                   use Layouts;
@@ -82,9 +89,6 @@ package body Browsers.Canvas is
      (Browser : access Gtk_Widget_Record'Class; Data : Cb_Data);
    --  Zoom directly to a specific level (Data.Zoom)
 
-   procedure Zoomed (Browser : access Gtk_Widget_Record'Class);
-   --  Called when the Canvas has been zoomed. This redraws all the items
-
    procedure Realized (Browser : access Gtk_Widget_Record'Class);
    --  Callback for the "realized" signal.
 
@@ -127,10 +131,6 @@ package body Browsers.Canvas is
       Set_Auto_Layout (Browser.Canvas, False);
 
       Widget_Callback.Object_Connect
-        (Browser.Canvas, "zoomed",
-         Widget_Callback.To_Marshaller (Zoomed'Access), Browser);
-
-      Widget_Callback.Object_Connect
         (Browser.Canvas, "realize",
          Widget_Callback.To_Marshaller (Realized'Access), Browser);
 
@@ -164,6 +164,7 @@ package body Browsers.Canvas is
       use type Gdk.Gdk_GC;
       B : Glide_Browser := Glide_Browser (Browser);
       Color : Gdk_Color;
+      Desc : Pango_Font_Description;
    begin
       if B.Selected_Link_GC = null then
          Gdk_New (B.Selected_Link_GC, Get_Window (B.Canvas));
@@ -180,6 +181,13 @@ package body Browsers.Canvas is
          Color := Parse (Linked_Item_Color);
          Alloc (Get_Default_Colormap, Color);
          Set_Foreground (B.Linked_Item_GC, Color);
+
+         Gdk_New (B.Text_GC, Get_Window (B.Canvas));
+         Set_Foreground (B.Text_GC, Get_Pref (B.Kernel, Browsers_Link_Color));
+
+         Desc := Get_Pref (B.Kernel, Browsers_Link_Font);
+         B.Text_Font := From_Description (Desc);
+         Free (Desc);
       end if;
    end Realized;
 
@@ -234,7 +242,10 @@ package body Browsers.Canvas is
 
       Item := Item_At_Coordinates (B.Canvas, Event);
 
-      if Item /= null then
+      --  ??? Should test whether this is a file-related item
+      if Item /= null
+        and then Item.all in File_Item_Record'Class
+      then
          Context := new File_Selection_Context;
          Src := Get_Source (File_Item (Item));
 
@@ -248,6 +259,7 @@ package body Browsers.Canvas is
 
          Context := new Selection_Context;
 
+         --  ??? Should be set only for browsers related to files
          Gtk_New (Mitem, Label => "Open file...");
          Append (Menu, Mitem);
          Context_Callback.Object_Connect
@@ -350,16 +362,6 @@ package body Browsers.Canvas is
       Zoom (Data.Browser.Canvas, Data.Zoom, 1);
    end Zoom_Level;
 
-   ------------
-   -- Zoomed --
-   ------------
-
-   procedure Zoomed (Browser : access Gtk_Widget_Record'Class) is
-      B : Glide_Browser := Glide_Browser (Browser);
-   begin
-      For_Each_Item (B.Canvas, Refresh_File_Item'Access);
-   end Zoomed;
-
    ---------------
    -- To_Brower --
    ---------------
@@ -381,15 +383,91 @@ package body Browsers.Canvas is
       return Browser.Selected_Item;
    end Selected_Item;
 
+   --------------------------
+   -- Draw_Item_Background --
+   --------------------------
+
+   procedure Draw_Item_Background
+     (Browser : access Glide_Browser_Record;
+      Item    : access Gtkada.Canvas.Buffered_Item_Record'Class)
+   is
+      Bg_GC : Gdk_GC;
+      Coord : Gdk_Rectangle := Get_Coord (Item);
+   begin
+      if Canvas_Item (Item) = Selected_Item (Browser) then
+         Bg_GC := Get_Selected_Item_GC (Browser);
+
+      elsif Selected_Item (Browser) /= null
+        and then (Has_Link (Browser.Canvas,
+                            From => Item, To => Selected_Item (Browser))
+                  or else
+                  Has_Link (Browser.Canvas,
+                            From => Selected_Item (Browser), To => Item))
+      then
+         Bg_GC := Get_Linked_Item_GC (Browser);
+
+      else
+         Bg_GC := Get_White_GC (Get_Style (Browser.Canvas));
+      end if;
+
+      Set_Screen_Size_And_Pixmap
+        (Item, Get_Window (Browser), Gint (Coord.Width), Gint (Coord.Height));
+
+      Draw_Rectangle
+        (Pixmap (Item),
+         GC     => Bg_GC,
+         Filled => True,
+         X      => 0,
+         Y      => 0,
+         Width  => Coord.Width,
+         Height => Coord.Height);
+
+      Draw_Shadow
+        (Style       => Get_Style (Browser.Canvas),
+         Window      => Pixmap (Item),
+         State_Type  => State_Normal,
+         Shadow_Type => Shadow_Out,
+         X           => 0,
+         Y           => 0,
+         Width       => Coord.Width,
+         Height      => Coord.Height);
+   end Draw_Item_Background;
+
    -----------------
    -- Select_Item --
    -----------------
 
    procedure Select_Item
      (Browser : access Glide_Browser_Record;
-      Item    : access Gtkada.Canvas.Canvas_Item_Record'Class) is
+      Item    : access Gtkada.Canvas.Canvas_Item_Record'Class;
+      Refresh : Refresh_Item_Func := null)
+   is
+      function Refresh_Item
+        (Canvas : access Interactive_Canvas_Record'Class;
+         Item   : access Canvas_Item_Record'Class) return Boolean;
+      --  Refresh the display of an item.
+
+      ------------------
+      -- Refresh_Item --
+      ------------------
+
+      function Refresh_Item
+        (Canvas : access Interactive_Canvas_Record'Class;
+         Item   : access Canvas_Item_Record'Class) return Boolean is
+      begin
+         Refresh (Browser, Buffered_Item (Item));
+         return True;
+      end Refresh_Item;
+
    begin
       Browser.Selected_Item := Canvas_Item (Item);
+
+      if Refresh /= null then
+         --  ??? We should redraw only the items that were previously
+         --  ??? highlighted, and the new ones.
+         For_Each_Item (Browser.Canvas, Refresh_Item'Unrestricted_Access);
+         Refresh_Canvas (Browser.Canvas);
+      end if;
    end Select_Item;
 
    --------------------------
@@ -421,5 +499,54 @@ package body Browsers.Canvas is
    begin
       return Browser.Linked_Item_GC;
    end Get_Linked_Item_GC;
+
+   -----------------
+   -- Get_Text_GC --
+   -----------------
+
+   function Get_Text_GC
+     (Browser : access Glide_Browser_Record) return Gdk.GC.Gdk_GC is
+   begin
+      return Browser.Text_GC;
+   end Get_Text_GC;
+
+   -------------------
+   -- Get_Text_Font --
+   -------------------
+
+   function Get_Text_Font
+     (Browser : access Glide_Browser_Record) return Gdk.Font.Gdk_Font is
+   begin
+      return Browser.Text_Font;
+   end Get_Text_Font;
+
+   ---------------
+   -- Draw_Link --
+   ---------------
+
+   procedure Draw_Link
+     (Canvas      : access Interactive_Canvas_Record'Class;
+      Link        : access Glide_Browser_Link_Record;
+      Window      : Gdk.Window.Gdk_Window;
+      Invert_Mode : Boolean;
+      GC          : Gdk.GC.Gdk_GC;
+      Edge_Number : Glib.Gint)
+   is
+      Browser : Glide_Browser := To_Brower (Canvas);
+   begin
+      if Invert_Mode
+        or else
+        (Get_Src (Link) /= Vertex_Access (Selected_Item (Browser))
+         and then Get_Dest (Link) /= Vertex_Access (Selected_Item (Browser)))
+      then
+         Draw_Link
+           (Canvas, Canvas_Link_Access (Link), Window,
+            Invert_Mode, GC, Edge_Number);
+      else
+         Draw_Link
+           (Canvas, Canvas_Link_Access (Link),
+            Window, Invert_Mode, Get_Selected_Link_GC (Browser), Edge_Number);
+      end if;
+   end Draw_Link;
 
 end Browsers.Canvas;

@@ -19,23 +19,14 @@
 -----------------------------------------------------------------------
 
 with Glib;              use Glib;
-with Glib.Graphs;       use Glib.Graphs;
-with Gdk.Color;         use Gdk.Color;
 with Gdk.Drawable;      use Gdk.Drawable;
 with Gdk.Event;         use Gdk.Event;
 with Gdk.Font;          use Gdk.Font;
-with Gdk.GC;            use Gdk.GC;
 with Gdk.Window;        use Gdk.Window;
 with Gtkada.Canvas;     use Gtkada.Canvas;
-with Gtk.Enums;         use Gtk.Enums;
-with Gtk.Style;         use Gtk.Style;
-with Gtk.Widget;        use Gtk.Widget;
-with Gtkada.MDI;        use Gtkada.MDI;
-with Pango.Font;        use Pango.Font;
 
 with Src_Info;                 use Src_Info;
 with Src_Info.ALI;             use Src_Info.ALI;
-with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
 with Glide_Kernel.Project;     use Glide_Kernel.Project;
 with Glide_Kernel;             use Glide_Kernel;
 with Browsers.Canvas;          use Browsers.Canvas;
@@ -45,25 +36,29 @@ with GNAT.OS_Lib;              use GNAT.OS_Lib;
 
 package body Browsers.Dependency_Items is
 
-   procedure Update_Display
-     (Item : access File_Item_Record'Class; Win : Gdk_Window);
-   --  Update the display of the item
+   Display_Unit_Name : constant Boolean := False;
+   --  <preference> True if the unit name should be displayed
 
-   procedure Ensure_Browser_Link (Item : access File_Item_Record'Class);
-   --  Make sure that the link to the parent browser has been initialized.
+   Margin : constant := 2;
+
+   procedure Update_Display
+     (Browser : access Glide_Browser_Record'Class;
+      Item : access Buffered_Item_Record'Class);
+   --  Update the display of the item
 
    -------------
    -- Gtk_New --
    -------------
 
    procedure Gtk_New
-     (Item : out File_Item;
-      Win  : Gdk_Window;
-      Kernel : access Kernel_Handle_Record'Class;
-      File  : Internal_File) is
+     (Item    : out File_Item;
+      Win     : Gdk_Window;
+      Browser : access Glide_Browser_Record'Class;
+      Kernel  : access Kernel_Handle_Record'Class;
+      File    : Internal_File) is
    begin
       Item := new File_Item_Record;
-      Initialize (Item, Win, Kernel, Copy (File));
+      Initialize (Item, Win, Browser, Kernel, Copy (File));
    end Gtk_New;
 
    -------------
@@ -73,6 +68,7 @@ package body Browsers.Dependency_Items is
    procedure Gtk_New
      (Item            : out File_Item;
       Win             : Gdk_Window;
+      Browser         : access Glide_Browser_Record'Class;
       Kernel          : access Kernel_Handle_Record'Class;
       Source_Filename : String)
    is
@@ -81,7 +77,8 @@ package body Browsers.Dependency_Items is
          Get_Predefined_Source_Path (Kernel));
    begin
       Item := new File_Item_Record;
-      Initialize (Item, Win, Kernel, Make_Source_File (Source_Filename, ALI));
+      Initialize (Item, Win, Browser, Kernel,
+                  Make_Source_File (Source_Filename, ALI));
    end Gtk_New;
 
    ----------------
@@ -91,87 +88,26 @@ package body Browsers.Dependency_Items is
    procedure Initialize
      (Item : access File_Item_Record'Class;
       Win  : Gdk_Window;
+      Browser : access Glide_Browser_Record'Class;
       Kernel : access Kernel_Handle_Record'Class;
       File  : Internal_File)
    is
       use type Gdk_Window;
+      Str : constant String := Get_Source_Filename (File);
+      Str2 : String_Access;
+      Font : Gdk_Font;
+      Width, Height : Gint;
+
    begin
       pragma Assert (Win /= null);
       Item.Source := File;
       Item.Kernel := Kernel_Handle (Kernel);
-      Update_Display (Item, Win);
-   end Initialize;
+      Item.Browser := Glide_Browser (Browser);
 
-   -------------------------
-   -- Ensure_Browser_Link --
-   -------------------------
-
-   procedure Ensure_Browser_Link
-     (Item : access File_Item_Record'Class)
-   is
-      Browser : MDI_Child;
-   begin
-      if Item.Browser /= null then
-         return;
-      end if;
-
-      --  Note: We do not need to check (for now) that browser we find is
-      --  indeed the one that contains the item, since there can be only one
-      --  browser that contains Dependency_Items.
-      Browser := Open_Browser (Item.Kernel, Dependency_Browser);
-      pragma Assert (Browser /= null);
-
-      Item.Browser := Glide_Browser (Get_Widget (Browser));
-   end Ensure_Browser_Link;
-
-   --------------------
-   -- Update_Display --
-   --------------------
-
-   procedure Update_Display
-     (Item : access File_Item_Record'Class; Win : Gdk_Window)
-   is
-      use type Gdk.Gdk_GC;
-      Margin : constant := 2;
-      Display_Unit_Name : constant Boolean := False;
-
-      Str : constant String := Get_Source_Filename (Item.Source);
-      Str2 : String_Access;
-      Descr : Pango_Font_Description :=
-        Get_Pref (Item.Kernel, Browsers_Link_Font);
-      Font : Gdk_Font;
-      Bg_GC, GC   : Gdk_GC;
-      Width, Height : Gint;
-
-   begin
-      Ensure_Browser_Link (Item);
-
-      Set_Size
-        (Descr,
-         Get_Size (Descr) * Gint (Get_Zoom (Get_Canvas (Item.Browser))) / 100);
-      Font := From_Description (Descr);
-
-      Gdk_New (GC, Win);
-
-      if Canvas_Item (Item) = Selected_Item (Item.Browser) then
-         Bg_GC := Get_Selected_Item_GC (Item.Browser);
-
-      elsif Selected_Item (Item.Browser) /= null
-        and then (Has_Link (Get_Canvas (Item.Browser),
-                            From => Item, To => Selected_Item (Item.Browser))
-                  or else
-                  Has_Link (Get_Canvas (Item.Browser),
-                            From => Selected_Item (Item.Browser), To => Item))
-      then
-         Bg_GC := Get_Linked_Item_GC (Item.Browser);
-
-      else
-         Set_Foreground (GC, White (Get_Default_Colormap));
-         Bg_GC := GC;
-      end if;
+      Font := Get_Text_Font (Item.Browser);
 
       if Display_Unit_Name then
-         Get_Unit_Name (Item.Kernel, Item.Source, Str2);
+         Get_Unit_Name (Kernel, Item.Source, Str2);
       end if;
 
       Width  := String_Width (Font, Str);
@@ -190,58 +126,55 @@ package body Browsers.Dependency_Items is
       end if;
 
       Width := Width + 4 * Margin;
-      Set_Screen_Size_And_Pixmap (Item, Win, Width, Height);
+      Set_Screen_Size_And_Pixmap
+        (Item, Get_Window (Item.Browser), Width, Height);
 
-      Draw_Rectangle
-        (Pixmap (Item),
-         GC     => Bg_GC,
-         Filled => True,
-         X      => 0,
-         Y      => 0,
-         Width  => Width,
-         Height => Height);
+      Update_Display (Item.Browser, Item);
+   end Initialize;
 
-      Draw_Shadow
-        (Style       => Get_Style (Item.Browser),
-         Window      => Pixmap (Item),
-         State_Type  => State_Normal,
-         Shadow_Type => Shadow_Out,
-         X           => 0,
-         Y           => 0,
-         Width       => Width,
-         Height      => Height);
+   --------------------
+   -- Update_Display --
+   --------------------
 
-      Set_Foreground (GC, Get_Pref (Item.Kernel, Browsers_Link_Color));
+   procedure Update_Display
+     (Browser : access Glide_Browser_Record'Class;
+      Item    : access Buffered_Item_Record'Class)
+   is
+      use type Gdk.Gdk_GC;
+      Font : Gdk_Font := Get_Text_Font (Browser);
+      Str2 : String_Access;
 
+   begin
+      Draw_Item_Background (Browser, Item);
       Draw_Text
         (Pixmap (Item),
          Font  => Font,
-         GC    => GC,
-         X     => 2,
-         Y     => 2 + Get_Ascent (Font),
-         Text  => Str);
+         GC    => Get_Text_GC (Browser),
+         X     => Margin,
+         Y     => Margin + Get_Ascent (Font),
+         Text  => Get_Source_Filename (File_Item (Item).Source));
 
       if Display_Unit_Name then
+         Get_Unit_Name
+           (File_Item (Item).Kernel, File_Item (Item).Source, Str2);
          if Str2 /= null then
             Draw_Text
               (Pixmap (Item),
                Font  => Font,
-               GC    => GC,
-               X     => 2,
-               Y     => 2 + Get_Ascent (Font) * 2 + Get_Descent (Font),
+               GC    => Get_Text_GC (Browser),
+               X     => Margin,
+               Y     => Margin + Get_Ascent (Font) * 2 + Get_Descent (Font),
                Text  => Str2.all);
          else
             Draw_Text
               (Pixmap (Item),
                Font  => Font,
-               GC    => GC,
-               X     => 2,
-               Y     => 2 + Get_Ascent (Font) * 2 + Get_Descent (Font),
+               GC    => Get_Text_GC (Browser),
+               X     => Margin,
+               Y     => Margin + Get_Ascent (Font) * 2 + Get_Descent (Font),
                Text  => "<unknown unit name>");
          end if;
       end if;
-
-      Unref (GC);
    end Update_Display;
 
    ---------------------
@@ -250,39 +183,15 @@ package body Browsers.Dependency_Items is
 
    procedure On_Button_Click
      (Item  : access File_Item_Record;
-      Event : Gdk.Event.Gdk_Event_Button)
-   is
-      function Refresh_Item
-        (Canvas : access Interactive_Canvas_Record'Class;
-         Item   : access Canvas_Item_Record'Class) return Boolean;
-
-      ------------------
-      -- Refresh_Item --
-      ------------------
-
-      function Refresh_Item
-        (Canvas : access Interactive_Canvas_Record'Class;
-         Item   : access Canvas_Item_Record'Class) return Boolean is
-      begin
-         Update_Display (File_Item (Item), Get_Window (Canvas));
-         return True;
-      end Refresh_Item;
-
+      Event : Gdk.Event.Gdk_Event_Button) is
    begin
       if Get_Button (Event) = 1
         and then Get_Event_Type (Event) = Gdk_2button_Press
       then
-         Ensure_Browser_Link (Item);
          Examine_Dependencies
            (Item.Kernel, Item.Browser, Get_Source_Filename (Item.Source));
-
-      else
-         Select_Item (Item.Browser, Item);
-
-         --  ??? The complete refresh should be done elsewhere
-         For_Each_Item
-           (Get_Canvas (Item.Browser), Refresh_Item'Unrestricted_Access);
-         Refresh_Canvas (Get_Canvas (Item.Browser));
+      elsif Get_Event_Type (Event) = Button_Press then
+         Select_Item (Item.Browser, Item, Update_Display'Access);
       end if;
    end On_Button_Click;
 
@@ -316,46 +225,5 @@ package body Browsers.Dependency_Items is
    begin
       Destroy (Item.Source);
    end Destroy;
-
-   -----------------------
-   -- Refresh_File_Item --
-   -----------------------
-
-   function Refresh_File_Item
-     (Canvas : access Interactive_Canvas_Record'Class;
-      Item   : access Canvas_Item_Record'Class) return Boolean is
-   begin
-      Update_Display (File_Item (Item), Get_Window (Canvas));
-      return True;
-   end Refresh_File_Item;
-
-   ---------------
-   -- Draw_Link --
-   ---------------
-
-   procedure Draw_Link
-     (Canvas      : access Interactive_Canvas_Record'Class;
-      Link        : access Dependency_Link_Record;
-      Window      : Gdk.Window.Gdk_Window;
-      Invert_Mode : Boolean;
-      GC          : Gdk.GC.Gdk_GC;
-      Edge_Number : Glib.Gint)
-   is
-      Browser : Glide_Browser := To_Brower (Canvas);
-   begin
-      if Invert_Mode
-        or else
-        (Get_Src (Link) /= Vertex_Access (Selected_Item (Browser))
-         and then Get_Dest (Link) /= Vertex_Access (Selected_Item (Browser)))
-      then
-         Draw_Link
-           (Canvas, Canvas_Link_Access (Link), Window,
-            Invert_Mode, GC, Edge_Number);
-      else
-         Draw_Link
-           (Canvas, Canvas_Link_Access (Link),
-            Window, Invert_Mode, Get_Selected_Link_GC (Browser), Edge_Number);
-      end if;
-   end Draw_Link;
 
 end Browsers.Dependency_Items;

@@ -18,8 +18,11 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Glib;
 with Gdk.Event;
 with Gdk.GC;
+with Gdk.Font;
+with Gdk.Window;
 with Gtkada.Canvas;
 with Glide_Kernel;
 with Glib.Object;
@@ -32,6 +35,12 @@ package Browsers.Canvas is
    type Glide_Browser_Record is new
      Gtk.Scrolled_Window.Gtk_Scrolled_Window_Record with private;
    type Glide_Browser is access all Glide_Browser_Record'Class;
+
+   type Glide_Browser_Link_Record is new Gtkada.Canvas.Canvas_Link_Record
+     with private;
+   type Glide_Browser_Link is access all Glide_Browser_Link_Record'Class;
+   --  The type of links that are put in the canvas. These are automatically
+   --  highlighted if they connect a selected item to another one.
 
    procedure Gtk_New
      (Browser : out Glide_Browser;
@@ -65,14 +74,33 @@ package Browsers.Canvas is
       return Gtkada.Canvas.Canvas_Item;
    --  Return the currently selected item, or null if there is none.
 
+   type Refresh_Item_Func is access procedure
+     (Browser : access Glide_Browser_Record'Class;
+      Item    : access Gtkada.Canvas.Buffered_Item_Record'Class);
+   --  This should refresh the display of the item on the window.
+
    procedure Select_Item
      (Browser : access Glide_Browser_Record;
-      Item    : access Gtkada.Canvas.Canvas_Item_Record'Class);
+      Item    : access Gtkada.Canvas.Canvas_Item_Record'Class;
+      Refresh : Refresh_Item_Func := null);
    --  Select Item.
-   --  Depending on the specific time of Item, this might change its rendering
-   --  and the one of the links to or from it.
-   --  Note: This doesn't redraw the canvas, so you need to call Refresh_Canvas
-   --  if you need to actually redraw it.
+   --  If Refresh is not null, this will redraw all the items in the canvas,
+   --  which might affect there background color if they are linked to the
+   --  selected item.
+
+   -----------
+   -- Links --
+   -----------
+
+   procedure Draw_Link
+     (Canvas      : access Gtkada.Canvas.Interactive_Canvas_Record'Class;
+      Link        : access Glide_Browser_Link_Record;
+      Window      : Gdk.Window.Gdk_Window;
+      Invert_Mode : Boolean;
+      GC          : Gdk.GC.Gdk_GC;
+      Edge_Number : Glib.Gint);
+   --  Override the drawing of links (so that links can be drawn in different
+   --  colors when an item is selected).
 
    ----------------------
    -- Graphic contexts --
@@ -91,6 +119,19 @@ package Browsers.Canvas is
      (Browser : access Glide_Browser_Record) return Gdk.GC.Gdk_GC;
    --  Return the graphic context to use to draw the items that are linked to
    --  the selected item
+
+   function Get_Text_GC
+     (Browser : access Glide_Browser_Record) return Gdk.GC.Gdk_GC;
+   --  Return the graphic context to use to draw the text in the items.
+
+   function Get_Text_Font
+     (Browser : access Glide_Browser_Record) return Gdk.Font.Gdk_Font;
+   --  Return the font to use to draw the text in the items.
+
+   procedure Draw_Item_Background
+     (Browser : access Glide_Browser_Record;
+      Item    : access Gtkada.Canvas.Buffered_Item_Record'Class);
+   --  Draw the background of the item in the appropriate color.
 
    ----------------------
    -- Contextual menus --
@@ -116,9 +157,14 @@ private
          Selected_Link_GC : Gdk.GC.Gdk_GC;
          Selected_Item_GC : Gdk.GC.Gdk_GC;
          Linked_Item_GC   : Gdk.GC.Gdk_GC;
+         Text_GC          : Gdk.GC.Gdk_GC;
+         Text_Font        : Gdk.Font.Gdk_Font;
 
          Selected_Item : Gtkada.Canvas.Canvas_Item;
       end record;
+
+   type Glide_Browser_Link_Record is new Gtkada.Canvas.Canvas_Link_Record
+     with null record;
 
    pragma Inline (Get_Mask);
    pragma Inline (Get_Canvas);
