@@ -63,6 +63,7 @@ with Glide_Kernel;         use Glide_Kernel;
 with GNAT.OS_Lib;          use GNAT.OS_Lib;
 with Glide_Kernel.Scripts; use Glide_Kernel.Scripts;
 with Commands.Interactive; use Commands.Interactive;
+with Glib.Xml_Int;
 
 package Commands.Custom is
 
@@ -79,12 +80,21 @@ package Commands.Custom is
    --  command (Unix or Windows). Otherwise, it is interpreted as a GPS
    --  Internal command in the specific scripting language.
 
+   procedure Create
+     (Item         : out Custom_Command_Access;
+      Kernel       : Kernel_Handle;
+      Command      : Glib.Xml_Int.Node_Ptr);
+   --  Create a new command with a list of <shell> and <external> nodes, as
+   --  done in the customization files.
+   --  Each of the commands is executed in turn. Output from one command is
+   --  made available to the next through %1, %2,...
+
    procedure Free (X : in out Custom_Command);
    --  Free memory associated with X.
 
    function Execute
-     (Command : access Custom_Command;
-      Event   : Gdk.Event.Gdk_Event) return Command_Return_Type;
+     (Command       : access Custom_Command;
+      Event         : Gdk.Event.Gdk_Event) return Command_Return_Type;
    --  Execute Command, and return Success if the command could be launched
    --  successfully.
    --  Context-related arguments (like "%f", "%p" and so on) are converted
@@ -96,8 +106,12 @@ private
 
    type Custom_Command is new Interactive_Command with record
       Kernel      : Kernel_Handle;
+
       Command     : String_Access;
       Script      : Glide_Kernel.Scripts.Scripting_Language;
+      XML         : Glib.Xml_Int.Node_Ptr;
+      --  Only (Command, Script) or XML is defined, depending on what version
+      --  of Create was used.
    end record;
 
 end Commands.Custom;

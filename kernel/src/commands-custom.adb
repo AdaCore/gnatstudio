@@ -26,6 +26,8 @@ with Glide_Kernel.Timeout; use Glide_Kernel.Timeout;
 with Glide_Kernel.Scripts; use Glide_Kernel.Scripts;
 with Glide_Intl;           use Glide_Intl;
 
+with Glib.Xml_Int;         use Glib.Xml_Int;
+
 with Basic_Types;          use Basic_Types;
 with Projects;             use Projects;
 with Projects.Registry;    use Projects.Registry;
@@ -34,12 +36,95 @@ with VFS;                  use VFS;
 
 with Ada.Exceptions;       use Ada.Exceptions;
 with Ada.Text_IO;          use Ada.Text_IO;
+with Ada.Characters.Handling; use Ada.Characters.Handling;
 with Traces;               use Traces;
 with Ada.Unchecked_Deallocation;
 
 package body Commands.Custom is
 
    Me : constant Debug_Handle := Create ("Commands.Custom");
+
+   type Boolean_Array is array (Natural range <>) of Boolean;
+
+   function Commands_Count
+     (Command : access Custom_Command'Class) return Natural;
+   --  Return the number of commands that will be executed as part of Command.
+
+   procedure Check_Save_Output
+     (Command : access Custom_Command'Class;
+      Save_Output : out Boolean_Array);
+   --  Compute whether we should save the output of each commands. This depends
+   --  on whether later commands reference this output through %1, %2,...
+
+   --------------------
+   -- Commands_Count --
+   --------------------
+
+   function Commands_Count
+     (Command : access Custom_Command'Class) return Natural
+   is
+      N : Node_Ptr;
+      Count : Natural := 0;
+   begin
+      if Command.Command /= null then
+         return 1;
+      else
+         N := Command.XML;
+         while N /= null loop
+            Count := Count + 1;
+            N := N.Next;
+         end loop;
+         return Count;
+      end if;
+   end Commands_Count;
+
+   -----------------------
+   -- Check_Save_Output --
+   -----------------------
+
+   procedure Check_Save_Output
+     (Command : access Custom_Command'Class;
+      Save_Output : out Boolean_Array)
+   is
+      N     : Node_Ptr;
+      Index : Natural := 1;
+
+      function Substitution (Param : String) return String;
+      --  Check whether the command has a '%' + digit parameter
+
+      function Substitution (Param : String) return String is
+         Sub_Index : constant Natural := Safe_Value (Param, Default => 0);
+      begin
+         if Sub_Index <= Index - 1
+           and then Sub_Index >= 1
+         then
+            Save_Output (Index - Sub_Index) := True;
+         end if;
+         return "";
+      end Substitution;
+
+   begin
+      Save_Output := (others => False);
+
+      if Command.XML /= null then
+         N := Command.XML;
+         while N /= null loop
+            declare
+               Tmp : constant String := Substitute
+                 (N.Value.all,
+                  Substitution_Char => '%',
+                  Callback          => Substitution'Unrestricted_Access,
+                  Recursive         => False);
+               pragma Unreferenced (Tmp);
+            begin
+               null;
+            end;
+
+            Index := Index + 1;
+            N     := N.Next;
+         end loop;
+      end if;
+   end Check_Save_Output;
 
    ----------
    -- Free --
@@ -48,6 +133,7 @@ package body Commands.Custom is
    procedure Free (X : in out Custom_Command) is
    begin
       Free (X.Command);
+      Free (X.XML);
    end Free;
 
    ------------
@@ -66,31 +152,75 @@ package body Commands.Custom is
       Item.Script := Script;
    end Create;
 
+   ------------
+   -- Create --
+   ------------
+
+   procedure Create
+     (Item         : out Custom_Command_Access;
+      Kernel       : Kernel_Handle;
+      Command      : Glib.Xml_Int.Node_Ptr)
+   is
+      Node, Previous : Node_Ptr;
+   begin
+      Item := new Custom_Command;
+      Item.Kernel := Kernel;
+
+      --  Make a deep copy of the relevant nodes
+      Node := Command;
+      while Node /= null loop
+         if Node.Tag.all = "shell"
+           or else Node.Tag.all = "external"
+         then
+            if Previous = null then
+               Item.XML := Deep_Copy (Node);
+               Previous := Item.XML;
+            else
+               Previous.Next := Deep_Copy (Node);
+               Previous := Previous.Next;
+            end if;
+         end if;
+
+         Node := Node.Next;
+      end loop;
+   end Create;
+
    -------------
    -- Execute --
    -------------
 
    function Execute
-     (Command : access Custom_Command;
-      Event   : Gdk.Event.Gdk_Event) return Command_Return_Type
+     (Command       : access Custom_Command;
+      Event         : Gdk.Event.Gdk_Event) return Command_Return_Type
    is
       pragma Unreferenced (Event);
+
+      Count : constant Natural := Commands_Count (Command);
+      Save_Output : Boolean_Array (1 .. Count);
+      --  Whether we should save the output of the nth-command
+
+      Outputs : Argument_List (1 .. Count);
+      --  The output of the various commands, if it was saved.
+
       Context  : constant Selection_Context_Access :=
         Get_Current_Context (Command.Kernel);
-      Success  : Boolean := True;
-      No_Args  : String_List (1 .. 0);
-      New_Args : Argument_List_Access;
-      Last     : Integer;
-      Index    : Integer;
-
       Recurse  : Boolean;
+      Cmd_Index : Natural;
+      Success   : Boolean;
 
       function Substitution (Param : String) return String;
       --  Substitution function for the various '%...' parameters
+      --  Index is the number of the current command we are executing
 
       function Project_From_Param (Param : String) return Project_Type;
       --  Return the project from the parameter. Parameter is the string
       --  following the '%' sign
+
+      function Execute_Simple_Command
+        (Script       : Scripting_Language;
+         Command_Line : String) return Boolean;
+      --  Execute a single command, and return whether it succeeded.
+      --  Index is the number of the current command we are executing
 
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (Object => String_List, Name => String_List_Access);
@@ -141,8 +271,10 @@ package body Commands.Custom is
       ------------------
 
       function Substitution (Param : String) return String is
-         File : File_Selection_Context_Access;
-         Project  : Project_Type := No_Project;
+         File    : File_Selection_Context_Access;
+         Project : Project_Type := No_Project;
+         Num     : Integer;
+         Index   : Integer;
       begin
          if Param = "f" or else Param = "F" then
             if Context /= null
@@ -250,6 +382,18 @@ package body Commands.Custom is
                   end;
                end if;
             end if;
+
+         else
+            Num := Safe_Value (Param, Default => 0);
+            if Num <= Cmd_Index - 1
+              and then Num >= 1
+            then
+               if Outputs (Cmd_Index - Num) = null then
+                  return "";
+               else
+                  return Outputs (Cmd_Index - Num).all;
+               end if;
+            end if;
          end if;
 
          --  Keep the percent sign, since this might be useful for the shell
@@ -257,82 +401,130 @@ package body Commands.Custom is
          return '%' & Param;
       end Substitution;
 
-      Args : String_List_Access :=
-        Argument_String_To_List (Command.Command.all);
-   begin
-      --  Perform arguments substitutions for the command.
+      ----------------------------
+      -- Execute_Simple_Command --
+      ----------------------------
 
-      if Args'Length > 1 then
-         New_Args := new String_List (Args'First + 1 .. Args'Last);
-         Last := New_Args'First;
+      function Execute_Simple_Command
+        (Script       : Scripting_Language;
+         Command_Line : String) return Boolean
+      is
+         Args : String_List_Access := Argument_String_To_List (Command_Line);
+         No_Args  : String_List (1 .. 0);
+         New_Args : Argument_List_Access;
+         Last     : Integer;
+      begin
+         --  Perform arguments substitutions for the command.
 
-         for J in New_Args'Range loop
-            --  Special case for %prs, since this is a list of files
-            if Args (J).all = "%prs"
-              or else Args (J).all = "%Prs"
-            then
-               declare
-                  Project : constant Project_Type := Project_From_Param
-                    (Args (J) (Args (J)'First + 1 .. Args (J)'Last));
-                  List    : File_Array_Access;
-               begin
-                  if Project = No_Project then
-                     return Failure;
-                  end if;
+         Success := True;
 
-                  List := Get_Source_Files (Project, Recurse);
+         if Args'Length > 1 then
+            New_Args := new String_List (Args'First + 1 .. Args'Last);
+            Last := New_Args'First;
 
+            for J in New_Args'Range loop
+               --  Special case for %prs, since this is a list of files
+               if Args (J).all = "%prs"
+                 or else Args (J).all = "%Prs"
+               then
                   declare
-                     New_New_Args : Argument_List_Access := new String_List
-                       (New_Args'First .. New_Args'Last + List'Length - 1);
+                     Project : constant Project_Type := Project_From_Param
+                       (Args (J) (Args (J)'First + 1 .. Args (J)'Last));
+                     List    : File_Array_Access;
                   begin
-                     New_New_Args (New_Args'First .. Last - 1) :=
-                       New_Args (New_Args'First .. Last - 1);
+                     if Project = No_Project then
+                        return False;
+                     end if;
 
-                     for K in List'Range loop
-                        New_New_Args (Last) :=
-                          new String'(Base_Name (List (K)));
-                        Last := Last + 1;
-                     end loop;
+                     List := Get_Source_Files (Project, Recurse);
 
-                     Unchecked_Free (List);
-                     Unchecked_Free (New_Args);
-                     New_Args := New_New_Args;
+                     declare
+                        New_New_Args : Argument_List_Access := new String_List
+                          (New_Args'First .. New_Args'Last + List'Length - 1);
+                     begin
+                        New_New_Args (New_Args'First .. Last - 1) :=
+                          New_Args (New_Args'First .. Last - 1);
+
+                        for K in List'Range loop
+                           New_New_Args (Last) :=
+                             new String'(Base_Name (List (K)));
+                           Last := Last + 1;
+                        end loop;
+
+                        Unchecked_Free (List);
+                        Unchecked_Free (New_Args);
+                        New_Args := New_New_Args;
+                     end;
                   end;
-               end;
 
+               else
+                  New_Args (Last) := new String'
+                    (Substitute
+                       (Args (J).all,
+                        Substitution_Char => '%',
+                        Callback          => Substitution'Unrestricted_Access,
+                        Recursive         => False));
+               end if;
+
+               Last := Last + 1;
+            end loop;
+
+            --  Arguments have been substituted, launch the command.
+
+            if not Success then
+               null;
+
+            elsif Script /= null then
+               Trace (Me, "Executing internal command " & Command_Line);
+
+               if Save_Output (Cmd_Index) then
+                  Outputs (Cmd_Index) := new String'
+                    (Execute_Command (Script, Args (Args'First).all,
+                                      New_Args.all));
+               else
+                  Execute_Command
+                    (Script,
+                     Args (Args'First).all & ' '
+                     & Argument_List_To_String
+                       (New_Args.all, Protect_Quotes => False),
+                     Display_In_Console => True);
+               end if;
+
+               Success := True;
             else
-               New_Args (Last) := new String'
-                 (Substitute
-                    (Args (J).all,
-                     Substitution_Char => '%',
-                     Callback          => Substitution'Unrestricted_Access,
-                     Recursive         => False));
+               Trace (Me, "Executing external command " & Command_Line);
+
+               --  ??? Should save output
+               Launch_Process
+                 (Command.Kernel,
+                  Args (Args'First).all,
+                  New_Args.all,
+                  "",
+                  null,
+                  null,
+                  "",
+                  Success);
             end if;
 
-            Last := Last + 1;
-         end loop;
+            Free (New_Args);
 
-         --  Arguments have been substituted, launch the command.
-
-         if not Success then
-            null;
-
-         elsif Command.Script /= null then
-            Trace (Me, "Executing internal command " & Command.Command.all);
-            Execute_Command
-              (Command.Script,
-               Args (Args'First).all & ' '
-               & Argument_List_To_String
-                 (New_Args.all, Protect_Quotes => False),
-               Display_In_Console => True);
+         elsif Script /= null then
+            Trace (Me, "Executing internal command " & Command_Line);
+            if Save_Output (Cmd_Index) then
+               Outputs (Cmd_Index) := new String'
+                 (Execute_Command (Script, Command_Line, No_Args));
+            else
+               Execute_Command (Script, Command_Line,
+                                Display_In_Console => True);
+            end if;
             Success := True;
+
          else
-            Trace (Me, "Executing external command " & Command.Command.all);
+            --  ??? Should save the output
             Launch_Process
               (Command.Kernel,
                Args (Args'First).all,
-               New_Args.all,
+               No_Args,
                "",
                null,
                null,
@@ -340,26 +532,50 @@ package body Commands.Custom is
                Success);
          end if;
 
-         Free (New_Args);
+         Free (Args);
+         return Success;
 
-      elsif Command.Script /= null then
-         Execute_Command (Command.Script, Command.Command.all,
-                          Display_In_Console => True);
-         Success := True;
+      exception
+         when E : others =>
+            Insert (Command.Kernel,
+                    -("An unexpected error occured while executing the custom"
+                      & " command. See the log file for more information."),
+                    Mode => Error);
+            Trace (Me, "Unexpected exception: " & Exception_Information (E));
+            return False;
+      end Execute_Simple_Command;
+
+
+      N : Node_Ptr;
+   begin
+      Cmd_Index := 1;
+      Check_Save_Output (Command, Save_Output);
+      if Command.Command /= null then
+         Success := Execute_Simple_Command
+           (Command.Script, Command.Command.all);
 
       else
-         Launch_Process
-           (Command.Kernel,
-            Args (Args'First).all,
-            No_Args,
-            "",
-            null,
-            null,
-            "",
-            Success);
+         N := Command.XML;
+         Success := True;
+         while Success and then N /= null loop
+            if To_Lower (N.Tag.all) = "shell" then
+               Success := Execute_Simple_Command
+                 (Lookup_Scripting_Language
+                    (Command.Kernel,
+                     Get_Attribute (N, "lang", GPS_Shell_Name)),
+                  N.Value.all);
+
+            elsif To_Lower (N.Tag.all) = "external" then
+               Success := Execute_Simple_Command
+                 (null, N.Value.all);
+            end if;
+
+            N := N.Next;
+            Cmd_Index := Cmd_Index + 1;
+         end loop;
       end if;
 
-      Free (Args);
+      Basic_Types.Free (Outputs);
 
       Command_Finished (Command, Success);
 
@@ -368,15 +584,6 @@ package body Commands.Custom is
       else
          return Failure;
       end if;
-
-   exception
-      when E : others =>
-         Insert (Command.Kernel,
-                 -("An unexpected error occured while executing the custom"
-                   & " command. See the log file for more information."),
-                 Mode => Error);
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
-         return Failure;
    end Execute;
 
 end Commands.Custom;
