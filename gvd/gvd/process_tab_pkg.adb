@@ -28,6 +28,7 @@ with Process_Tab_Pkg.Callbacks; use Process_Tab_Pkg.Callbacks;
 with Interfaces.C.Strings; use Interfaces.C.Strings;
 with System;
 with Gtk.Object; use Gtk.Object;
+with Gtkada.Intl;     use Gtkada.Intl;
 
 package body Process_Tab_Pkg is
 
@@ -74,7 +75,7 @@ begin
    Add (Process_Tab.Hpaned1, Process_Tab.Scrolledwindow13);
    Set_Policy (Process_Tab.Scrolledwindow13, Policy_Automatic, Policy_Automatic);
 
-   Gtk_New (Process_Tab.Stack_List, 1);
+   Gtk_New (Process_Tab.Stack_List, 5);
    Set_Events (Process_Tab.Stack_List,
      Button_Press_Mask or
      Button_Release_Mask);
@@ -85,16 +86,48 @@ begin
    Add (Process_Tab.Scrolledwindow13, Process_Tab.Stack_List);
    Set_Selection_Mode (Process_Tab.Stack_List, Selection_Single);
    Set_Shadow_Type (Process_Tab.Stack_List, Shadow_In);
-   Set_Show_Titles (Process_Tab.Stack_List, False);
+   Set_Show_Titles (Process_Tab.Stack_List, True);
    Set_Column_Width (Process_Tab.Stack_List, 0, 80);
    Set_Column_Auto_Resize (Process_Tab.Stack_List, 0, True);
+   Set_Column_Width (Process_Tab.Stack_List, 1, 80);
+   Set_Column_Width (Process_Tab.Stack_List, 2, 80);
+   Set_Column_Width (Process_Tab.Stack_List, 3, 80);
+   Set_Column_Width (Process_Tab.Stack_List, 4, 80);
 
-   Gtk_New (Process_Tab.Label101);
+   Gtk_New (Process_Tab.Label101, -("Num"));
    Set_Alignment (Process_Tab.Label101, 0.5, 0.5);
    Set_Padding (Process_Tab.Label101, 0, 0);
    Set_Justify (Process_Tab.Label101, Justify_Center);
    Set_Line_Wrap (Process_Tab.Label101, False);
    Set_Column_Widget (Process_Tab.Stack_List, 0, Process_Tab.Label101);
+
+   Gtk_New (Process_Tab.Label201, -("Subprogram"));
+   Set_Alignment (Process_Tab.Label201, 0.5, 0.5);
+   Set_Padding (Process_Tab.Label201, 0, 0);
+   Set_Justify (Process_Tab.Label201, Justify_Center);
+   Set_Line_Wrap (Process_Tab.Label201, False);
+   Set_Column_Widget (Process_Tab.Stack_List, 1, Process_Tab.Label201);
+
+   Gtk_New (Process_Tab.Label202, -("Parameters"));
+   Set_Alignment (Process_Tab.Label202, 0.5, 0.5);
+   Set_Padding (Process_Tab.Label202, 0, 0);
+   Set_Justify (Process_Tab.Label202, Justify_Center);
+   Set_Line_Wrap (Process_Tab.Label202, False);
+   Set_Column_Widget (Process_Tab.Stack_List, 2, Process_Tab.Label202);
+
+   Gtk_New (Process_Tab.Label203, -("Location"));
+   Set_Alignment (Process_Tab.Label203, 0.5, 0.5);
+   Set_Padding (Process_Tab.Label203, 0, 0);
+   Set_Justify (Process_Tab.Label203, Justify_Center);
+   Set_Line_Wrap (Process_Tab.Label203, False);
+   Set_Column_Widget (Process_Tab.Stack_List, 3, Process_Tab.Label203);
+
+   Gtk_New (Process_Tab.Label204, -("PC"));
+   Set_Alignment (Process_Tab.Label204, 0.5, 0.5);
+   Set_Padding (Process_Tab.Label204, 0, 0);
+   Set_Justify (Process_Tab.Label204, Justify_Center);
+   Set_Line_Wrap (Process_Tab.Label204, False);
+   Set_Column_Widget (Process_Tab.Stack_List, 4, Process_Tab.Label204);
 
    Gtk_New (Process_Tab.Scrolledwindow12);
    Add (Process_Tab.Hpaned1, Process_Tab.Scrolledwindow12);

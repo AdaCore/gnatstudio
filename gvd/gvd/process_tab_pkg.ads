@@ -39,6 +39,10 @@ package Process_Tab_Pkg is
       Scrolledwindow13 : Gtk_Scrolled_Window;
       Stack_List : Gtk_Clist;
       Label101 : Gtk_Label;
+      Label201 : Gtk_Label;
+      Label202 : Gtk_Label;
+      Label203 : Gtk_Label;
+      Label204 : Gtk_Label;
       Scrolledwindow12 : Gtk_Scrolled_Window;
       Data_Canvas : GVD_Canvas;
       Editor_Text : Code_Editor;
