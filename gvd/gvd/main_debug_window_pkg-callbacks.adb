@@ -697,6 +697,8 @@ package body Main_Debug_Window_Pkg.Callbacks is
       --  Give some visual feedback to the user
       Text_Output_Handler (Tab, "<^C>" & ASCII.LF, Is_Command => True);
 
+      Unregister_Dialog (Tab);
+
       Interrupt
         (Tab.Debugger,
          Wait_For_Prompt =>
