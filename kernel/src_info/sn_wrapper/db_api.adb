@@ -22,7 +22,6 @@ with Interfaces.C;
 with Ada.Exceptions; use Ada.Exceptions;
 with System;
 with Interfaces.C.Strings; use Interfaces.C.Strings;
-with String_Utils;
 
 package body DB_API is
 
@@ -242,49 +241,6 @@ package body DB_API is
    begin
       return Natural (I_Get_Field_Count (The_CSF'Address));
    end Get_Field_Count;
-
-   ---------------
-   -- Get_Field --
-   ---------------
-
-   procedure Get_Field
-     (The_CSF : CSF;
-      Index   : Positive;
-      Field   : out String;
-      Len     : Natural)
-   is
-      function I_Get_Field
-        (The_CSF : System.Address; Index : C.int) return CStrings.chars_ptr;
-      pragma Import (C, I_Get_Field, "csf_get_field");
-
-      R : CStrings.chars_ptr;
-   begin
-      if Len /= 0 then
-         R := I_Get_Field (The_CSF'Address, C.int (Index));
-         if R = CStrings.Null_Ptr then
-            raise Index_Out_Of_Range;
-         else
-            pragma Assert (Len <= Field'Length);
-
-            String_Utils.Copy_String (R, Field, Len);
-         end if;
-      end if;
-   end Get_Field;
-
-   ------------------------
-   --  Get_Field_Length  --
-   ------------------------
-
-   function Get_Field_Length
-     (The_CSF : CSF; Index : Positive) return Integer
-   is
-      function I_Get_Field_Length
-        (The_CSF : System.Address; Index : C.int) return C.int;
-      pragma Import (C, I_Get_Field_Length, "csf_get_field_length");
-
-   begin
-      return Integer (I_Get_Field_Length (The_CSF'Address, C.int (Index)));
-   end Get_Field_Length;
 
    ---------
    -- "=" --

@@ -40,7 +40,13 @@ package DB_API is
    Field_Sep : constant Character := Character'Val (1);
    --  Standard field separator
 
-   type CSF is limited private;
+   type Integer_Array is array (0 .. 15) of Integer;
+
+   type CSF is record
+      Num_Of_Fields : Integer;
+      Fields        : Integer_Array;
+   end record;
+
    --  CSF stands for "Character Separated Fields".
    --  Represents key or data value ("CSF" in term of SN team).
    --  Value can contain 0 or more string fields.
@@ -122,26 +128,9 @@ package DB_API is
    procedure CSF_Init (Str : Interfaces.C.Strings.chars_ptr; Result : out CSF);
    --  Parses the string Str for later analysis through Get_Field
 
-
    function Get_Field_Count (The_CSF : CSF) return Natural;
    pragma Inline (Get_Field_Count);
    --  Returns number of fields in specified CSF.
-
-   procedure Get_Field
-     (The_CSF : CSF;
-      Index   : Positive;
-      Field   : out String;
-      Len     : Natural);
-   pragma Inline (Get_Field);
-   --  Returns field from CSF with specified index.
-   --  Throws Index_Out_Of_Range if incorrect index specified (i.e.
-   --  Index > Get_Field_Count (CSF);
-   --  Len is the length of the field (found using Get_Field_Length).
-
-   function Get_Field_Length
-     (The_CSF : CSF; Index : Positive) return Integer;
-   pragma Inline (Get_Field_Length);
-   --  Returns length of field from CSF with specified index.
 
    DB_Error             : exception;
    DB_Close_Error       : exception;
@@ -154,11 +143,6 @@ private
 
    function Error_Message (DB : DB_File) return String;
    --  Return string describing the last error for given DB
-
-   type CSF is record
-      Num_Of_Fields : Integer;
-      Fields        : Interfaces.C.Strings.chars_ptr_array (0 .. 15);
-   end record;
 
    pragma Convention (C, CSF);
    pragma Convention (C, Pair);
