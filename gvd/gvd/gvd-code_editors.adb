@@ -1044,10 +1044,9 @@ package body Odd.Code_Editors is
             Remove (Editor.Buttons, Editor.Current_Line_Button);
          end if;
       end if;
-      Show (Editor.Buttons);
 
-      Thaw (Editor.Buttons);
       Show_All (Editor.Buttons);
+      Thaw (Editor.Buttons);
 
       --  Scroll the code editor to make sure the line is visible on screen.
 
