@@ -33,6 +33,12 @@ with GVD.Tooltips;
 with Items;
 with Gtk.Text;
 
+--  This package provides an implementation of Source_Editor built-in
+--  GVD, which means that GVD specific features are used, providing a very
+--  tight integration with the debugger.
+--  See GVD.Text_Box.Source_Editor.Socket for another implementation of
+--  a Source_Editor.
+
 package GVD.Text_Box.Source_Editor.Builtin is
 
    type Builtin_Record is new Source_Editor_Record with private;

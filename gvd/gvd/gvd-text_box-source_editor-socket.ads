@@ -23,6 +23,10 @@ with Gtk.Container;
 with Gtk.Window;
 with GVD.Types;
 
+--  This package provides an implementation of Source_Editor based on
+--  the Gtk.Socket mechanism that enables Gtk+ to embed external X windows
+--  as Gtk+ widgets.
+
 package GVD.Text_Box.Source_Editor.Socket is
 
    type Socket_Record is new Source_Editor_Record with private;
@@ -38,6 +42,7 @@ package GVD.Text_Box.Source_Editor.Socket is
      (Editor     : access Socket_Record'Class;
       Socket_XID : Guint32;
       TTY_Mode   : Boolean);
+   --  Internal initialization procedure.
 
    procedure Attach
      (Editor : access Socket_Record;
