@@ -329,7 +329,7 @@ begin
      (Switches_Editor.Ada_Debug, "toggled",
       Widget_Callback.To_Marshaller (Refresh_Ada_Switches'Access), Switches_Editor);
 
-   Gtk_New (Switches_Editor.Ada_Assertions, -"Assertions");
+   Gtk_New (Switches_Editor.Ada_Assertions, -"Enable Assertions");
    Set_Active (Switches_Editor.Ada_Assertions, False);
    Pack_Start (Switches_Editor.Vbox23, Switches_Editor.Ada_Assertions, False, False, 0);
    Widget_Callback.Object_Connect
