@@ -59,6 +59,7 @@ with Traces;                      use Traces;
 with Glide_Kernel;                use Glide_Kernel;
 with Glide_Kernel.Hooks;          use Glide_Kernel.Hooks;
 with Glide_Kernel.Preferences;    use Glide_Kernel.Preferences;
+with Glide_Kernel.Standard_Hooks; use Glide_Kernel.Standard_Hooks;
 with VFS;                         use VFS;
 
 package body Src_Editor_View is
@@ -215,10 +216,14 @@ package body Src_Editor_View is
    --  Called when the preferences have changed, to refresh the editor
    --  appropriately.
 
-   procedure File_Saved
-     (Widget  : access Glib.Object.GObject_Record'Class;
-      Args    : GValues;
-      Kernel  : Kernel_Handle);
+   type File_Hook_Record is new Hook_Args_Record with record
+      View : Source_View;
+   end record;
+   type File_Hook is access all File_Hook_Record'Class;
+   procedure Execute
+     (Hook   : File_Hook_Record;
+      Kernel : access Kernel_Handle_Record'Class;
+      Data   : Hooks_Data'Class);
    --  Callback for "File_Saved_Signal".
 
    procedure Size_Allocated (View : access Gtk_Widget_Record'Class);
@@ -1095,6 +1100,7 @@ package body Src_Editor_View is
    is
       Insert_Iter : Gtk_Text_Iter;
       Hook : Preferences_Hook;
+      F_Hook : File_Hook;
       use GVD;
 
    begin
@@ -1238,11 +1244,9 @@ package body Src_Editor_View is
       Add_Hook
         (Kernel, Preferences_Changed_Hook, Hook, Watch => GObject (View));
 
-      Kernel_Callback.Object_Connect
-        (Kernel, File_Saved_Signal,
-         File_Saved'Access,
-         Slot_Object => View,
-         User_Data   => Kernel_Handle (Kernel));
+      F_Hook := new File_Hook_Record'
+        (Hook_Args_Record with View => Source_View (View));
+      Add_Hook (Kernel, File_Saved_Hook, F_Hook, Watch => GObject (View));
 
       --  Connect in an idle callback, otherwise the lines-with-code in the
       --  debugger are recomputed all at once (before the editor has a size).
@@ -1343,28 +1347,26 @@ package body Src_Editor_View is
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end Execute;
 
-   ----------------
-   -- File_Saved --
-   ----------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure File_Saved
-     (Widget  : access Glib.Object.GObject_Record'Class;
-      Args    : GValues;
-      Kernel  : Kernel_Handle)
+   procedure Execute
+     (Hook   : File_Hook_Record;
+      Kernel : access Kernel_Handle_Record'Class;
+      Data   : Hooks_Data'Class)
    is
       pragma Unreferenced (Kernel);
-      View : constant Source_View := Source_View (Widget);
-      File : constant Virtual_File :=
-        Create (Full_Filename => Get_String (Nth (Args, 1)));
+      D : constant File_Hooks_Args := File_Hooks_Args (Data);
 
    begin
-      if Get_Filename (Source_Buffer (Get_Buffer (View))) = File then
-         Redraw_Columns (View);
+      if Get_Filename (Source_Buffer (Get_Buffer (Hook.View))) = D.File then
+         Redraw_Columns (Hook.View);
       end if;
    exception
       when E : others =>
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
-   end File_Saved;
+   end Execute;
 
    --------------
    -- Set_Font --

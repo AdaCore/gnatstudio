@@ -20,7 +20,6 @@
 
 with Glib;        use Glib;
 with Glib.Object; use Glib.Object;
-with Glib.Values; use Glib.Values;
 
 with Gdk;
 with Gdk.Color;  use Gdk.Color;
@@ -64,6 +63,7 @@ with Log_Utils;                 use Log_Utils;
 with Glide_Kernel;              use Glide_Kernel;
 with Glide_Kernel.Console;      use Glide_Kernel.Console;
 with Glide_Kernel.Contexts;     use Glide_Kernel.Contexts;
+with Glide_Kernel.Hooks;        use Glide_Kernel.Hooks;
 with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
 with Glide_Kernel.Standard_Hooks; use Glide_Kernel.Standard_Hooks;
 with Glide_Intl;                use Glide_Intl;
@@ -202,10 +202,14 @@ package body VCS_View_Pkg is
    procedure On_Destroy (View : access Gtk_Widget_Record'Class);
    --  Callback for the "destroy" signal, connected before.
 
-   procedure File_Edited_Cb
-     (Widget  : access Glib.Object.GObject_Record'Class;
-      Args    : GValues;
-      Kernel  : Kernel_Handle);
+   type File_Hook_Record is new Hook_Args_Record with record
+      Explorer : VCS_View_Access;
+   end record;
+   type File_Hook is access all File_Hook_Record'Class;
+   procedure Execute
+     (Hook   : File_Hook_Record;
+      Kernel : access Kernel_Handle_Record'Class;
+      File_Data   : Hooks_Data'Class);
    --  Callback for the "file_edited" signal.
 
    -----------------
@@ -1122,34 +1126,32 @@ package body VCS_View_Pkg is
          return False;
    end Button_Press;
 
-   --------------------
-   -- File_Edited_Cb --
-   --------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure File_Edited_Cb
-     (Widget  : access Glib.Object.GObject_Record'Class;
-      Args    : GValues;
-      Kernel  : Kernel_Handle)
+   procedure Execute
+     (Hook   : File_Hook_Record;
+      Kernel : access Kernel_Handle_Record'Class;
+      File_Data   : Hooks_Data'Class)
    is
-      Explorer : constant VCS_View_Access := VCS_View_Access (Widget);
-      Log_Name : constant String := Get_String (Nth (Args, 1));
-      Log      : constant Virtual_File := Create (Full_Filename => Log_Name);
-
+      D : constant File_Hooks_Args := File_Hooks_Args (File_Data);
+      Log_Name : constant String := Full_Name (D.File).all;
    begin
       if Log_Name'Length > 4
         and then Log_Name (Log_Name'Last - 3 .. Log_Name'Last) = "$log"
       then
          declare
             File        : constant Virtual_File :=
-              Get_File_From_Log (Kernel, Log);
+              Get_File_From_Log (Kernel, D.File);
             Page        : VCS_Page_Access;
             Cache_Node  : List_Node;
             Stored_Node : List_Node;
          begin
             Browse_Files :
-            for J in 1 .. Explorer.Number_Of_Pages loop
+            for J in 1 .. Hook.Explorer.Number_Of_Pages loop
                Page := VCS_Page_Access
-                 (Get_Nth_Page (Explorer.Notebook, Gint (J - 1)));
+                 (Get_Nth_Page (Hook.Explorer.Notebook, Gint (J - 1)));
 
                Cache_Node := First (Page.Cached_Status);
 
@@ -1168,7 +1170,7 @@ package body VCS_View_Pkg is
                                      (Copy_File_Status
                                         (Data (Stored_Node).Status),
                                       True));
-                           Refresh (Explorer);
+                           Refresh (Hook.Explorer);
                            return;
                         end if;
 
@@ -1187,7 +1189,7 @@ package body VCS_View_Pkg is
    exception
       when E : others =>
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
-   end File_Edited_Cb;
+   end Execute;
 
    ----------------
    -- Initialize --
@@ -1198,6 +1200,7 @@ package body VCS_View_Pkg is
       Kernel   : Kernel_Handle)
    is
       Vbox1 : Gtk_Vbox;
+      Hook  : File_Hook;
       Page  : VCS_Page_Access;
       pragma Unreferenced (Page);
 
@@ -1241,12 +1244,9 @@ package body VCS_View_Pkg is
          end loop;
       end;
 
-      Kernel_Callback.Object_Connect
-        (Kernel,
-         File_Edited_Signal,
-         File_Edited_Cb'Access,
-         VCS_View,
-         Kernel);
+      Hook := new File_Hook_Record'
+        (Hook_Args_Record with Explorer => VCS_View_Access (VCS_View));
+      Add_Hook (Kernel, File_Edited_Hook, Hook, Watch => GObject (VCS_View));
 
       --  Can't do this through the Focus_Widget parameter to Gtkada.MDI.Put,
       --  since the focus child is dynamic.

@@ -19,7 +19,6 @@
 -----------------------------------------------------------------------
 
 with Glib;                      use Glib;
-with Glib.Values;               use Glib.Values;
 with Glib.Object;               use Glib.Object;
 with Glib.Xml_Int;              use Glib.Xml_Int;
 with Gtk.Box;                   use Gtk.Box;
@@ -36,11 +35,13 @@ with Gtk.Tooltips;              use Gtk.Tooltips;
 with Gtk.Widget;                use Gtk.Widget;
 with Gtkada.MDI;                use Gtkada.MDI;
 
-with Glide_Kernel.Contexts;     use Glide_Kernel.Contexts;
-with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
-with Glide_Kernel.Project;      use Glide_Kernel.Project;
-with Glide_Kernel.Scripts;      use Glide_Kernel.Scripts;
-with Glide_Intl;                use Glide_Intl;
+with Glide_Kernel.Contexts;       use Glide_Kernel.Contexts;
+with Glide_Kernel.Hooks;          use Glide_Kernel.Hooks;
+with Glide_Kernel.Modules;        use Glide_Kernel.Modules;
+with Glide_Kernel.Project;        use Glide_Kernel.Project;
+with Glide_Kernel.Scripts;        use Glide_Kernel.Scripts;
+with Glide_Kernel.Standard_Hooks; use Glide_Kernel.Standard_Hooks;
+with Glide_Intl;                  use Glide_Intl;
 
 with Traces;                    use Traces;
 
@@ -105,9 +106,8 @@ package body VCS_Module is
    --  or the project properties editor.
 
    procedure File_Edited_Cb
-     (Widget  : access Glib.Object.GObject_Record'Class;
-      Args    : GValues;
-      Kernel  : Kernel_Handle);
+     (Kernel  : access Kernel_Handle_Record'Class;
+      Data    : Hooks_Data'Class);
    --  Callback for the "file_edited" signal.
 
    function Load_Desktop
@@ -579,11 +579,7 @@ package body VCS_Module is
       Standard.VCS.Unknown_VCS.Register_Module (Kernel);
       Standard.VCS.Generic_VCS.Register_Module (Kernel);
 
-      Kernel_Callback.Connect
-        (Kernel,
-         File_Edited_Signal,
-         File_Edited_Cb'Access,
-         Kernel_Handle (Kernel));
+      Add_Hook (Kernel, File_Edited_Hook, File_Edited_Cb'Access);
 
       --  Register VCS commands.
       --  ??? We should create a Class for VCS.
@@ -795,22 +791,19 @@ package body VCS_Module is
    --------------------
 
    procedure File_Edited_Cb
-     (Widget  : access Glib.Object.GObject_Record'Class;
-      Args    : GValues;
-      Kernel  : Kernel_Handle)
+     (Kernel  : access Kernel_Handle_Record'Class;
+      Data    : Hooks_Data'Class)
    is
-      pragma Unreferenced (Widget);
-      File   : constant Virtual_File :=
-        Create (Full_Filename => Get_String (Nth (Args, 1)));
       use String_List_Utils.String_List;
+      D : constant File_Hooks_Args := File_Hooks_Args (Data);
       Files  : List;
       Status : File_Status_List.List;
       Ref    : VCS_Access;
 
    begin
-      Append (Files, Full_Name (File).all);
+      Append (Files, Full_Name (D.File).all);
       Ref    := Get_Current_Ref
-        (Get_Project_From_File (Get_Registry (Kernel), File, True));
+        (Get_Project_From_File (Get_Registry (Kernel), D.File, True));
 
       --  ??? We could try to retrieve the status from the VCS Explorer cache.
 

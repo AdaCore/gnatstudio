@@ -25,7 +25,6 @@ with Gdk.Color;     use Gdk.Color;
 with Gdk.Pixbuf;    use Gdk.Pixbuf;
 with Gtk.Button;
 with Gtk.Box;       use Gtk.Box;
-with Gtk.Handlers;  use Gtk.Handlers;
 with Gtk.Menu_Item; use Gtk.Menu_Item;
 with Gtk.Text_Mark;   use Gtk.Text_Mark;
 with Gtk.Text_Buffer; use Gtk.Text_Buffer;
@@ -35,6 +34,7 @@ with Gtkada.MDI;                use Gtkada.MDI;
 with Src_Editor_Box;
 
 with Glide_Kernel;      use Glide_Kernel;
+with Glide_Kernel.Hooks; use Glide_Kernel.Hooks;
 with String_List_Utils; use String_List_Utils;
 with VFS;
 
@@ -162,14 +162,19 @@ private
    -- Source_Editor_Module --
    --------------------------
 
-   No_Handler : constant Handler_Id := (Null_Signal_Id, null);
+   type Lines_Revealed_Hook_Record is new Glide_Kernel.Hooks.Hook_Args_Record
+      with null record;
+   type Lines_Revealed_Hook is access Lines_Revealed_Hook_Record'Class;
+   procedure Execute
+     (Hook   : Lines_Revealed_Hook_Record;
+      Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Data   : Glide_Kernel.Hooks.Hooks_Data'Class);
+   --  Hook called when the "source_lines_revealed" hook is run.
 
    type Source_Editor_Module_Record is new Module_ID_Record with record
       Kernel                   : Kernel_Handle;
+      Lines_Hook               : Lines_Revealed_Hook;
 
-      Source_Lines_Revealed_Id : Handler_Id := No_Handler;
-      File_Edited_Id           : Handler_Id := No_Handler;
-      File_Closed_Id           : Handler_Id := No_Handler;
       Display_Line_Numbers     : Boolean    := False;
 
       Stored_Marks             : Mark_Identifier_List.List;
