@@ -47,7 +47,7 @@ package body GNAT.Expect is
    procedure Create_Pipe (Pipe : access Pipe_Type);
    pragma Import (C, Create_Pipe, "pipe");
 
-   function Fork return GNAT.Expect.Process_Id;
+   function Fork return GNAT.OS_Lib.Process_Id;
    pragma Import (C, Fork);
 
    procedure Execvp (File : String; Args : System.Address);
@@ -257,12 +257,15 @@ package body GNAT.Expect is
                                  Pid (J).Buffer
                                    := new String (1 .. Tmp'Length + N);
                                  Pid (J).Buffer (1 .. Tmp'Length) := Tmp.all;
-                                 Pid (J).Buffer (Tmp'Length .. Tmp'Length + N)
+                                 Pid (J).Buffer
+                                   (Tmp'Length + 1 .. Tmp'Length + N)
                                    := Buffer (1 .. N);
                                  Free (Tmp);
+                                 Pid (J).Buffer_Index := Pid (J).Buffer'Last;
                               else
                                  Pid (J).Buffer := new String (1 .. N);
                                  Pid (J).Buffer.all := Buffer (1 .. N);
+                                 Pid (J).Buffer_Index := N;
                               end if;
                            end;
 
@@ -330,8 +333,11 @@ package body GNAT.Expect is
          begin
             Pid.Buffer
               := new String (1 .. Pid.Buffer_Index - Pid.Last_Match_End);
-            Pid.Buffer.all := Tmp (Pid.Last_Match_End + 1 .. Pid.Buffer_Index);
-            Free (Tmp);
+            if Tmp /= null then
+               Pid.Buffer.all
+                 := Tmp (Pid.Last_Match_End + 1 .. Pid.Buffer_Index);
+               Free (Tmp);
+            end if;
          end;
          Pid.Buffer_Index := 0;
       else
@@ -506,16 +512,18 @@ package body GNAT.Expect is
          --  want other tasks to wait for new input to be available before
          --  checking the regexps).
 
-         for J in Regexps'Range loop
-            Match (Regexps (J).all, Pid.Buffer (1 .. Pid.Buffer_Index),
-                   Matched);
-            if Matched (0) /= No_Match then
-               Result := Expect_Match (J);
-               Pid.Last_Match_Start := Matched (0).First;
-               Pid.Last_Match_End := Matched (0).Last;
-               return;
-            end if;
-         end loop;
+         if Pid.Buffer /= null then
+            for J in Regexps'Range loop
+               Match (Regexps (J).all, Pid.Buffer (1 .. Pid.Buffer_Index),
+                      Matched);
+               if Matched (0) /= No_Match then
+                  Result := Expect_Match (J);
+                  Pid.Last_Match_Start := Matched (0).First;
+                  Pid.Last_Match_End := Matched (0).Last;
+                  return;
+               end if;
+            end loop;
+         end if;
 
          Expect_Internal (Pids, N, Timeout, Full_Buffer);
 
@@ -644,13 +652,13 @@ package body GNAT.Expect is
 
       Pid.Pid := Fork;
 
-      if Pid.Pid = Null_Process_Id then
+      if Pid.Pid = Null_Pid then
 
          --  Put the pipes on standard file descriptors
 
-         Dup2 (Pipe1.Input,  0);   --  GNAT.OS_Lib.Standin
-         Dup2 (Pipe2.Output, 1);   --  GNAT.OS_Lib.Standout
-         Dup2 (Pipe3.Output, 2);   --  GNAT.OS_Lib.Standerr
+         Dup2 (Pipe1.Input,  GNAT.OS_Lib.Standin);
+         Dup2 (Pipe2.Output, GNAT.OS_Lib.Standout);
+         Dup2 (Pipe3.Output, GNAT.OS_Lib.Standerr);
 
          --  Close the duplicates
 
