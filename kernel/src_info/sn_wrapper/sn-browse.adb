@@ -1,6 +1,8 @@
 with GNAT.Directory_Operations,
+     GNAT.IO_Aux,
      GNAT.OS_Lib;
 use  GNAT.Directory_Operations,
+     GNAT.IO_Aux,
      GNAT.OS_Lib;
 
 package body SN.Browse is
@@ -8,9 +10,8 @@ package body SN.Browse is
    procedure Browse (File_Name, DB_Directory : in String;
          Browser_Name : in String := "cbrowser";
          DBUtils_Path : in String := "../sn/bin") is
-      Xref_File_Name      : String
-                          := DB_Directory & Directory_Separator
-                          & File_Name & ".xref" & ASCII.Nul;
+      Xref_File_Name      : String := DB_Directory & Directory_Separator
+                             & File_Name & ".xref" & ASCII.Nul;
       Success             : Boolean;
       Args                : Argument_List_Access;
    begin
@@ -28,9 +29,11 @@ package body SN.Browse is
       end;
 
       --  unlink cross reference file, if any
-      Delete_File (Xref_File_Name'Address, Success);
-      if not Success then
-          raise Unlink_Failure;
+      if File_Exists (Xref_File_Name) then
+         Delete_File (Xref_File_Name'Address, Success);
+         if not Success then
+            raise Unlink_Failure;
+         end if;
       end if;
 
       -- Execute browser
