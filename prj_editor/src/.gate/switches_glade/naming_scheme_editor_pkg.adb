@@ -236,6 +236,8 @@ begin
    Set_Column_Width (Naming_Scheme_Editor.Exception_List, 2, 80);
    Widget_Callback.Object_Connect
      (Naming_Scheme_Editor.Exception_List, "select_row", On_Exceptions_List_Select_Row'Access, Naming_Scheme_Editor);
+   Return_Callback.Object_Connect
+     (Naming_Scheme_Editor.Exception_List, "key_press_event", On_Exception_List_Key_Press_Event'Access, Naming_Scheme_Editor);
    Add (Naming_Scheme_Editor.Scrolledwindow1, Naming_Scheme_Editor.Exception_List);
 
    Gtk_New (Naming_Scheme_Editor.Label28, -("Unit name"));

@@ -49,6 +49,19 @@ package body Naming_Scheme_Editor_Pkg.Callbacks is
       null;
    end On_Exceptions_List_Select_Row;
 
+   ---------------------------------------
+   -- On_Exception_List_Key_Press_Event --
+   ---------------------------------------
+
+   function On_Exception_List_Key_Press_Event
+     (Object : access Gtk_Widget_Record'Class;
+      Params : Gtk.Arguments.Gtk_Args) return Boolean
+   is
+      Arg1 : Gdk_Event := To_Event (Params, 1);
+   begin
+      return False;
+   end On_Exception_List_Key_Press_Event;
+
    -----------------------
    -- On_Update_Clicked --
    -----------------------
