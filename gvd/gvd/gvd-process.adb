@@ -1961,6 +1961,8 @@ package body GVD.Process is
       --  and Update_Dialogs would be called with a non-existent debugger.
       Next_Page (Notebook);
 
+      Free (Debugger.Current_File);
+
       Close (Debugger.Debugger);
       Remove_Page (Notebook, Page_Num (Notebook, Debugger.Process_Mdi));
       Destroy (Debugger);
