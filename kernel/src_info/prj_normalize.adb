@@ -28,6 +28,7 @@
 
 with Prj_API; use Prj_API;
 with Traces;  use Traces;
+with String_Utils; use String_Utils;
 
 with Prj;      use Prj;
 with Prj.Ext;  use Prj.Ext;
@@ -861,13 +862,9 @@ package body Prj_Normalize is
       while Find_Type_Declaration (Project, Candidate) /= Empty_Node loop
          Get_Name_String (Candidate);
 
-         declare
-            Num : constant String := Natural'Image (Attempt);
-         begin
-            Get_Name_String (Name_Of (Var_Type));
-            Add_Str_To_Name_Buffer (Num (Num'First + 1 .. Num'Last));
-            Attempt := Attempt + 1;
-         end;
+         Get_Name_String (Name_Of (Var_Type));
+         Add_Str_To_Name_Buffer (Image (Attempt));
+         Attempt := Attempt + 1;
 
          Candidate := Name_Find;
       end loop;
