@@ -40,7 +40,6 @@ package Glide_Main_Window is
       Timeout_Id      : Gtk.Main.Timeout_Handler_Id;
       State_Level     : Integer := 0;
       Busy_Level      : Integer := 0;
-      Interrupted     : Boolean := False;
       Desktop_Loaded  : Boolean := False;
       Public_Version  : Boolean := True;
    end record;
