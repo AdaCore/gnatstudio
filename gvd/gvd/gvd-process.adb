@@ -976,18 +976,15 @@ package body GVD.Process is
 
       --  Last step is to update the breakpoints once all the rest has been
       --  set up correctly.
-      --  If there is no breakpoint defined, we force an update (in fact,
-      --  "start" will always define such a breakpoint, and this is used to
-      --  initialize the list).
+      --  If there is no breakpoint defined, we force an update.
 
       if File_First /= 0 then
-         if Process.Breakpoints /= null
-           and then Process.Breakpoints'Length > 0
-         then
+         if Process.Breakpoints = null then
+            Update_Breakpoints (Process, Force => True);
+
+         elsif Process.Breakpoints'Length > 0 then
             Update_Breakpoints
               (Process.Editor_Text, Process.Breakpoints.all);
-         else
-            Update_Breakpoints (Process, Force => True);
          end if;
       end if;
 
@@ -2094,13 +2091,14 @@ package body GVD.Process is
       --  reaching the line).
 
       if Force or else Process.Has_Temporary_Breakpoint then
-
          Free (Process.Breakpoints);
          Process.Breakpoints := new Breakpoint_Array'
            (List_Breakpoints (Process.Debugger));
 
          --  Check whether there is any temporary breakpoint
+
          Process.Has_Temporary_Breakpoint := False;
+
          for J in Process.Breakpoints'Range loop
             if Process.Breakpoints (J).Disposition /= Keep
               and then Process.Breakpoints (J).Enabled
