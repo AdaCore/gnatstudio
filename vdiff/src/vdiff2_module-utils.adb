@@ -61,7 +61,7 @@ package body Vdiff2_Module.Utils is
    procedure Append
      (Kernel   : access Glide_Kernel.Kernel_Handle_Record'Class;
       VRange   : in out T_VRange;
-      VFile    : T_VStr;
+      VFile    : T_VFile;
       VOffset  : T_VOffset;
       VStyle   : T_VStr;
       Ref      : T_Loc;
@@ -84,7 +84,7 @@ package body Vdiff2_Module.Utils is
 
    function Add_Line
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
-      File   : String;
+      File   : Virtual_File;
       Pos    : Natural;
       Style  : String := "";
       Number : Natural := 1) return String;
@@ -94,7 +94,7 @@ package body Vdiff2_Module.Utils is
 
    procedure Highlight_Line
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
-      File  : String;
+      File  : Virtual_File;
       Pos   : Natural;
       Style : String := "";
       Number : Natural := 1);
@@ -103,14 +103,14 @@ package body Vdiff2_Module.Utils is
 
    procedure Unhighlight_Line
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
-      File  : String;
+      File  : Virtual_File;
       Pos   : Natural;
       Style : String := "");
    --  Remove highlighting of line number Pos in file File
 
    function Mark_Diff_Block
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
-      File  : String;
+      File  : Virtual_File;
       Pos   : Natural) return String;
    --  Return the mark corresponding the beginig of line number Pos
 
@@ -119,7 +119,7 @@ package body Vdiff2_Module.Utils is
 
    function Get_File_Last_Line
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
-      File : String) return Natural;
+      File : Virtual_File) return Natural;
    --  Return the number of line in file File
 
    procedure Put_Button
@@ -128,7 +128,7 @@ package body Vdiff2_Module.Utils is
       Conflict : Boolean;
       Pos      : Positive;
       VRange   : T_VRange;
-      VFile    : T_VStr;
+      VFile    : T_VFile;
       Action   : Handler_Action_Line := null);
    --  Put an icon on the column information
 
@@ -137,7 +137,7 @@ package body Vdiff2_Module.Utils is
    ---------------------
 
    function Is_In_Diff_List
-     (Selected_File : GNAT.OS_Lib.String_Access;
+     (Selected_File : Virtual_File;
       List          : Diff_Head_List.List) return Diff_Head_List.List_Node
    is
       Curr_Node : Diff_Head_List.List_Node := First (List);
@@ -145,12 +145,9 @@ package body Vdiff2_Module.Utils is
    begin
       while Curr_Node /= Diff_Head_List.Null_Node loop
          Diff := Data (Curr_Node);
-         exit when (Diff.File1 /= null
-                    and then Diff.File1.all = Selected_File.all)
-           or else (Diff.File2 /= null
-                    and then Diff.File2.all = Selected_File.all)
-           or else (Diff.File3 /= null
-                    and then Diff.File3.all = Selected_File.all);
+         exit when Diff.File1 = Selected_File
+           or else Diff.File2 = Selected_File
+           or else Diff.File3 = Selected_File;
          Curr_Node := Next (Curr_Node);
       end loop;
 
@@ -167,7 +164,7 @@ package body Vdiff2_Module.Utils is
       Conflict : Boolean;
       Pos      : Positive;
       VRange   : T_VRange;
-      VFile    : T_VStr;
+      VFile    : T_VFile;
       Action   : Handler_Action_Line := null)
    is
       Cmd : Diff_Command_Line_Access;
@@ -289,20 +286,20 @@ package body Vdiff2_Module.Utils is
       Curr_Chunk : Diff_Chunk_Access;
       Offset1   : Natural;
       Offset2   : Natural;
-      Args_edit : Argument_List := (1 => new String'(Item.File1.all));
+      Args_edit : Argument_List := (1 => new String'(Full_Name (Item.File1)));
 
    begin
 
       Execute_GPS_Shell_Command (Kernel, "edit", Args_edit);
       Basic_Types.Free (Args_edit);
-      Args_edit := (1 => new String'(Item.File2.all));
+      Args_edit := (1 => new String'(Full_Name (Item.File2)));
       Execute_GPS_Shell_Command (Kernel, "edit", Args_edit);
       Basic_Types.Free (Args_edit);
 
       Create_Line_Information_Column
-        (Kernel, Item.File1.all, Id_Col_Vdiff, True, True, True);
+        (Kernel, Item.File1, Id_Col_Vdiff, True, True, True);
       Create_Line_Information_Column
-        (Kernel, Item.File2.all, Id_Col_Vdiff, True, True, True);
+        (Kernel, Item.File2, Id_Col_Vdiff, True, True, True);
 
       while Curr_Node /= Diff_Chunk_List.Null_Node loop
          Curr_Chunk := Data (Curr_Node);
@@ -310,61 +307,61 @@ package body Vdiff2_Module.Utils is
             when Append =>
                Curr_Chunk.Range1.Mark := new String'
                  (Add_Line
-                    (Kernel, Item.File1.all,
+                    (Kernel, Item.File1,
                      Curr_Chunk.Range1.First, Append_Style,
                      Curr_Chunk.Range2.Last - Curr_Chunk.Range2.First));
                Curr_Chunk.Range1.Blank_Lines :=
                  new String'(Curr_Chunk.Range1.Mark.all);
                Highlight_Line
-                 (Kernel, Item.File2.all, Curr_Chunk.Range2.First,
+                 (Kernel, Item.File2, Curr_Chunk.Range2.First,
                   Old_Style,
                   Curr_Chunk.Range2.Last - Curr_Chunk.Range2.First);
                Curr_Chunk.Range2.Mark := new String'
-                 (Mark_Diff_Block (Kernel, Item.File2.all,
+                 (Mark_Diff_Block (Kernel, Item.File2,
                                    Curr_Chunk.Range2.First));
 
             when Change =>
                Offset1 := Curr_Chunk.Range1.Last - Curr_Chunk.Range1.First;
                Offset2 := Curr_Chunk.Range2.Last - Curr_Chunk.Range2.First;
-               Highlight_Line (Kernel, Item.File1.all, Curr_Chunk.Range1.First,
+               Highlight_Line (Kernel, Item.File1, Curr_Chunk.Range1.First,
                                Change_Style, Offset1);
-               Highlight_Line (Kernel, Item.File2.all, Curr_Chunk.Range2.First,
+               Highlight_Line (Kernel, Item.File2, Curr_Chunk.Range2.First,
                                Old_Style, Offset2);
 
                if Offset1 < Offset2 then
                   Curr_Chunk.Range2.Blank_Lines :=
                     new String'
-                      (Add_Line (Kernel, Item.File1.all,
+                      (Add_Line (Kernel, Item.File1,
                             Curr_Chunk.Range1.Last, Change_Style,
                             Offset2 - Offset1));
                elsif Offset1 > Offset2 then
                   Curr_Chunk.Range2.Blank_Lines :=
                     new String'
-                      (Add_Line (Kernel, Item.File2.all,
+                      (Add_Line (Kernel, Item.File2,
                                  Curr_Chunk.Range2.Last, Old_Style,
                                  Offset1 - Offset2));
                end if;
 
                Curr_Chunk.Range1.Mark := new String'
-                 (Mark_Diff_Block (Kernel, Item.File1.all,
+                 (Mark_Diff_Block (Kernel, Item.File1,
                                    Curr_Chunk.Range1.First));
                Curr_Chunk.Range2.Mark := new String'
-                 (Mark_Diff_Block (Kernel, Item.File2.all,
+                 (Mark_Diff_Block (Kernel, Item.File2,
                                    Curr_Chunk.Range2.First));
 
             when Delete =>
                Highlight_Line
-                 (Kernel, Item.File1.all,
+                 (Kernel, Item.File1,
                   Curr_Chunk.Range1.First, Remove_Style,
                   Curr_Chunk.Range1.Last - Curr_Chunk.Range1.First);
                Curr_Chunk.Range2.Mark := new String'
-                 (Add_Line (Kernel, Item.File2.all,
+                 (Add_Line (Kernel, Item.File2,
                             Curr_Chunk.Range2.First, Old_Style,
                             Curr_Chunk.Range1.Last - Curr_Chunk.Range1.First));
                Curr_Chunk.Range2.Blank_Lines :=
                  new String'(Curr_Chunk.Range2.Mark.all);
                Curr_Chunk.Range1.Mark := new String'
-                 (Mark_Diff_Block (Kernel, Item.File1.all,
+                 (Mark_Diff_Block (Kernel, Item.File1,
                                    Curr_Chunk.Range1.First));
 
             when others =>
@@ -385,7 +382,7 @@ package body Vdiff2_Module.Utils is
       Item   : Diff_Head)
    is
       Args_edit           : Argument_List
-        := (1 => new String'(Item.File1.all));
+        := (1 => new String'(Full_Name (Item.File1)));
       Res                 : Diff_List;
       Curr_Node           : Diff_List_Node;
       Curr_Chunk          : Diff_Chunk_Access;
@@ -394,7 +391,7 @@ package body Vdiff2_Module.Utils is
    begin
       Register_Highlighting (Kernel);
 
-      if Item.File3 = null then
+      if Item.File3 = VFS.No_File then
          Show_Differences (Kernel, Item);
          return;
       end if;
@@ -402,27 +399,27 @@ package body Vdiff2_Module.Utils is
       Execute_GPS_Shell_Command (Kernel, "edit", Args_edit);
       Basic_Types.Free (Args_edit);
 
-      Args_edit := (1 => new String'(Item.File2.all));
+      Args_edit := (1 => new String'(Full_Name (Item.File2)));
       Execute_GPS_Shell_Command (Kernel, "edit", Args_edit);
       Basic_Types.Free (Args_edit);
 
-      Args_edit := (1 => new String'(Item.File3.all));
+      Args_edit := (1 => new String'(Full_Name (Item.File3)));
       Execute_GPS_Shell_Command (Kernel, "edit", Args_edit);
       Basic_Types.Free (Args_edit);
 
       Info (1) := new Line_Information_Array
-        (1 .. Get_File_Last_Line (Kernel, Item.File1.all));
+        (1 .. Get_File_Last_Line (Kernel, Item.File1));
       Info (2) := new Line_Information_Array
-        (1 .. Get_File_Last_Line (Kernel, Item.File2.all));
+        (1 .. Get_File_Last_Line (Kernel, Item.File2));
       Info (3) := new Line_Information_Array
-        (1 .. Get_File_Last_Line (Kernel, Item.File3.all));
+        (1 .. Get_File_Last_Line (Kernel, Item.File3));
 
       Create_Line_Information_Column
-        (Kernel, Item.File1.all, Id_Col_Vdiff, True, True, True);
+        (Kernel, Item.File1, Id_Col_Vdiff, True, True, True);
       Create_Line_Information_Column
-        (Kernel, Item.File2.all, Id_Col_Vdiff, True, True, True);
+        (Kernel, Item.File2, Id_Col_Vdiff, True, True, True);
       Create_Line_Information_Column
-        (Kernel, Item.File3.all, Id_Col_Vdiff, True, True, True);
+        (Kernel, Item.File3, Id_Col_Vdiff, True, True, True);
 
       Res := Simplify (Item.List, Item.Ref_File);
       Curr_Node := First (Res);
@@ -439,13 +436,13 @@ package body Vdiff2_Module.Utils is
          Unhighlight_Difference'Access);
 
       Add_Line_Information
-        (Kernel, Item.File1.all, Id_Col_Vdiff,
+        (Kernel, Item.File1, Id_Col_Vdiff,
          Info (1));
       Add_Line_Information
-        (Kernel, Item.File2.all, Id_Col_Vdiff,
+        (Kernel, Item.File2, Id_Col_Vdiff,
          Info (2));
       Add_Line_Information
-        (Kernel, Item.File3.all, Id_Col_Vdiff,
+        (Kernel, Item.File3, Id_Col_Vdiff,
          Info (3));
       Move_Mark (Res, Item.List);
       Free_List (Res);
@@ -462,7 +459,7 @@ package body Vdiff2_Module.Utils is
    procedure Append
      (Kernel   : access Glide_Kernel.Kernel_Handle_Record'Class;
       VRange   : in out T_VRange;
-      VFile    : T_VStr;
+      VFile    : T_VFile;
       VOffset  : T_VOffset;
       VStyle   : T_VStr;
       Ref      : T_Loc;
@@ -505,13 +502,13 @@ package body Vdiff2_Module.Utils is
          end if;
 
          Highlight_Line
-           (Kernel, VFile (J).all,
+           (Kernel, VFile (J),
             VRange (J).First,
             VStyle (J).all, VOffset (J));
          if VOffset (J) < Offset_Max then
             Tmp := new String'
               (Add_Line
-                 (Kernel, VFile (J).all,
+                 (Kernel, VFile (J),
                   VRange (J).Last, VStyle (J).all,
                   Offset_Max - VOffset (J)));
             VRange (J).Blank_Lines := new String'(Tmp.all);
@@ -527,13 +524,13 @@ package body Vdiff2_Module.Utils is
 
             else
                VRange (J).Mark := new String'
-                 (Mark_Diff_Block (Kernel, VFile (J).all,
+                 (Mark_Diff_Block (Kernel, VFile (J),
                                    VRange (J).First));
                Free (Tmp);
             end if;
          else
             VRange (J).Mark := new String'
-              (Mark_Diff_Block (Kernel, VFile (J).all,
+              (Mark_Diff_Block (Kernel, VFile (J),
                                 VRange (J).First));
             Free (Tmp);
          end if;
@@ -555,7 +552,7 @@ package body Vdiff2_Module.Utils is
       Ref     : constant T_Loc := Item.Ref_File;
       VRange  : T_VRange :=
         (Curr_Chunk.Range1, Curr_Chunk.Range2, Curr_Chunk.Range3);
-      VFile   : constant T_VStr :=
+      VFile   : constant T_VFile :=
         (Item.File1, Item.File2, Item.File3);
       VOffset : constant T_VOffset :=
         ((Curr_Chunk.Range1.Last - Curr_Chunk.Range1.First),
@@ -732,34 +729,34 @@ package body Vdiff2_Module.Utils is
          Curr_Node := Next (Curr_Node);
       end loop;
 
-      if Item.File1 /= null then
-         Unhighlight_Line (Kernel, Item.File1.all, 0, Default_Style);
-         Unhighlight_Line (Kernel, Item.File1.all, 0, Old_Style);
-         Unhighlight_Line (Kernel, Item.File1.all, 0, Append_Style);
-         Unhighlight_Line (Kernel, Item.File1.all, 0, Remove_Style);
-         Unhighlight_Line (Kernel, Item.File1.all, 0, Change_Style);
+      if Item.File1 /= VFS.No_File then
+         Unhighlight_Line (Kernel, Item.File1, 0, Default_Style);
+         Unhighlight_Line (Kernel, Item.File1, 0, Old_Style);
+         Unhighlight_Line (Kernel, Item.File1, 0, Append_Style);
+         Unhighlight_Line (Kernel, Item.File1, 0, Remove_Style);
+         Unhighlight_Line (Kernel, Item.File1, 0, Change_Style);
          Remove_Line_Information_Column
-           (Kernel, Item.File1.all, Id_Col_Vdiff);
+           (Kernel, Item.File1, Id_Col_Vdiff);
       end if;
 
-      if Item.File2 /= null then
-         Unhighlight_Line (Kernel, Item.File2.all, 0, Default_Style);
-         Unhighlight_Line (Kernel, Item.File2.all, 0, Old_Style);
-         Unhighlight_Line (Kernel, Item.File2.all, 0, Append_Style);
-         Unhighlight_Line (Kernel, Item.File2.all, 0, Remove_Style);
-         Unhighlight_Line (Kernel, Item.File2.all, 0, Change_Style);
+      if Item.File2 /= VFS.No_File then
+         Unhighlight_Line (Kernel, Item.File2, 0, Default_Style);
+         Unhighlight_Line (Kernel, Item.File2, 0, Old_Style);
+         Unhighlight_Line (Kernel, Item.File2, 0, Append_Style);
+         Unhighlight_Line (Kernel, Item.File2, 0, Remove_Style);
+         Unhighlight_Line (Kernel, Item.File2, 0, Change_Style);
          Remove_Line_Information_Column
-           (Kernel, Item.File2.all, Id_Col_Vdiff);
+           (Kernel, Item.File2, Id_Col_Vdiff);
       end if;
 
-      if Item.File3 /= null then
-         Unhighlight_Line (Kernel, Item.File3.all, 0, Default_Style);
-         Unhighlight_Line (Kernel, Item.File3.all, 0, Old_Style);
-         Unhighlight_Line (Kernel, Item.File3.all, 0, Append_Style);
-         Unhighlight_Line (Kernel, Item.File3.all, 0, Remove_Style);
-         Unhighlight_Line (Kernel, Item.File3.all, 0, Change_Style);
+      if Item.File3 /= VFS.No_File then
+         Unhighlight_Line (Kernel, Item.File3, 0, Default_Style);
+         Unhighlight_Line (Kernel, Item.File3, 0, Old_Style);
+         Unhighlight_Line (Kernel, Item.File3, 0, Append_Style);
+         Unhighlight_Line (Kernel, Item.File3, 0, Remove_Style);
+         Unhighlight_Line (Kernel, Item.File3, 0, Change_Style);
          Remove_Line_Information_Column
-           (Kernel, Item.File3.all, Id_Col_Vdiff);
+           (Kernel, Item.File3, Id_Col_Vdiff);
       end if;
 
    end Hide_Differences;
@@ -791,13 +788,13 @@ package body Vdiff2_Module.Utils is
 
    function Add_Line
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
-      File   : String;
+      File   : Virtual_File;
       Pos    : Natural;
       Style  : String := "";
       Number : Natural := 1) return String
    is
       Args_Line : Argument_List :=
-        (1 => new String'(File),
+        (1 => new String'(Full_Name (File)),
          2 => new String'(Image (Pos)),
          3 => new String'(Image (Number)),
          4 => new String'(Style));
@@ -815,27 +812,29 @@ package body Vdiff2_Module.Utils is
 
    function Get_File_Last_Line
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
-      File : String) return Natural
+      File : Virtual_File) return Natural
    is
-      Args_Line : constant Argument_List := (1 => new String'(File));
+      Args_Line : constant Argument_List :=
+        (1 => new String'(Full_Name (File)));
       Res       : constant String :=  Execute_GPS_Shell_Command
         (Kernel, "get_last_line", Args_Line);
    begin
       return Natural'Value (Res);
    end Get_File_Last_Line;
+
    --------------------
    -- Highlight_Line --
    --------------------
 
    procedure Highlight_Line
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
-      File  : String;
+      File  : Virtual_File;
       Pos   : Natural;
       Style : String := "";
       Number : Natural := 1)
    is
       Args_Highlight : Argument_List :=
-        (1 => new String'(File),
+        (1 => new String'(Full_Name (File)),
          2 => new String'(Style),
          3 => null);
 
@@ -854,12 +853,12 @@ package body Vdiff2_Module.Utils is
 
    procedure Unhighlight_Line
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
-      File   : String;
-      Pos    : Natural;
-      Style  : String := "")
+      File  : Virtual_File;
+      Pos   : Natural;
+      Style : String := "")
    is
       Args_Highlight : Argument_List :=
-        (1 => new String'(File),
+        (1 => new String'(Full_Name (File)),
          2 => new String'(Style),
          3 => new String'(Image (Pos)));
 
@@ -874,7 +873,7 @@ package body Vdiff2_Module.Utils is
 
    procedure Unhighlight_Block
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
-      File   : String;
+      File   : Virtual_File;
       Range1 : in out Diff_Range;
       Style  : String := "")
    is
@@ -896,11 +895,11 @@ package body Vdiff2_Module.Utils is
 
    function Mark_Diff_Block
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
-      File  : String;
+      File  : Virtual_File;
       Pos   : Natural) return String
    is
       Args : Argument_List :=
-        (1 => new String'(File),
+        (1 => new String'(Full_Name (File)),
          2 => new String'(Image (Pos)),
          3 => new String'("1"));
       Res : constant String := Execute_GPS_Shell_Command
@@ -997,8 +996,8 @@ package body Vdiff2_Module.Utils is
 
    procedure Move_Block
      (Kernel       : Kernel_Handle;
-      Source_File  : String;
-      Dest_File    : String;
+      Source_File  : Virtual_File;
+      Dest_File    : Virtual_File;
       Source_Range : Diff_Range;
       Dest_Range   : Diff_Range := Null_Range)
    is
@@ -1007,11 +1006,11 @@ package body Vdiff2_Module.Utils is
       Offset_Source     : constant Natural
         := Source_Range.Last - Source_Range.First;
       Args_get_chars    : Argument_List :=
-        (1 => new String'(Source_File),
+        (1 => new String'(Full_Name (Source_File)),
          2 => new String'(Natural'Image (Source_Range.First)),
          3 => new String'(Integer'Image (1)));
       Args_replace_text : Argument_List :=
-        (1 => new String'(Dest_File),
+        (1 => new String'(Full_Name (Dest_File)),
          2 => new String'(Natural'Image (Dest_Range.First)),
          3 => new String'(Integer'Image (1)),
          4 => null);

@@ -24,6 +24,7 @@
 with Diff_Utils2; use Diff_Utils2;
 with GNAT.OS_Lib; use GNAT.OS_Lib;
 with Glide_Kernel;
+with VFS;         use VFS;
 
 package Vdiff2_Module.Utils is
 
@@ -67,21 +68,22 @@ package Vdiff2_Module.Utils is
 
    procedure Unhighlight_Block
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
-      File   : String;
+      File   : Virtual_File;
       Range1 : in out Diff_Range;
       Style  : String := "");
    --  Remove the highlighting on Diff block
 
    procedure Move_Block
      (Kernel       : Kernel_Handle;
-      Source_File  : String;
-      Dest_File    : String;
+      Source_File  : Virtual_File;
+      Dest_File    : Virtual_File;
       Source_Range : Diff_Range;
       Dest_Range   : Diff_Range := Null_Range);
    --  Copy the text in the range Source_Range to Dest_Range in Dest_File
 
+
    function Is_In_Diff_List
-     (Selected_File : String_Access;
+     (Selected_File : VFS.Virtual_File;
       List          : Diff_Head_List.List)
       return Diff_Head_List.List_Node;
    --  ???

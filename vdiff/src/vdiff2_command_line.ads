@@ -23,8 +23,8 @@
 with Glide_Kernel;         use Glide_Kernel;
 with Commands;             use Commands;
 with Diff_Utils2;          use Diff_Utils2;
-with GNAT.OS_Lib;          use GNAT.OS_Lib;
 with Gdk.Event;
+with VFS;                  use VFS;
 
 package Vdiff2_Command_Line is
 
@@ -32,14 +32,14 @@ package Vdiff2_Command_Line is
      (Kernel : Kernel_Handle;
       Diff   : Diff_Head_Access;
       Line   : Natural := 0;
-      File   : String := "");
+      File   : Virtual_File := VFS.No_File);
       --  Is an access for the action executed by an Diff_Command
 
    type Diff_Command_Line is new Root_Command with record
       Kernel    : Kernel_Handle;
       List_Diff : Diff_Head_List_Access;
       Action    : Handler_Action_Line;
-      File : String_Access;
+      File : Virtual_File;
       Line : Natural;
       Head : Diff_Head_List.List_Node;
    end record;
@@ -50,9 +50,9 @@ package Vdiff2_Command_Line is
      (Item      : out Diff_Command_Line_Access;
       Kernel    : Kernel_Handle;
       List_Diff : Diff_Head_List_Access;
-      File      : String_Access;
+      File      : Virtual_File;
       Line      : Natural;
-      Action    : Handler_Action_Line);
+      Action    : Vdiff2_Command_Line.Handler_Action_Line);
 
    function Execute
      (Command : access Diff_Command_Line;
@@ -68,7 +68,7 @@ package Vdiff2_Command_Line is
    --  this
 
    function Is_In_Diff_Chunk_List
-     (Selected_File : String_Access;
+     (Selected_File : Virtual_File;
       Item          : Diff_Head;
       Line          : Natural)
       return Diff_Chunk_List.List_Node;
@@ -78,14 +78,14 @@ package Vdiff2_Command_Line is
      (Kernel : Kernel_Handle;
       Diff   : Diff_Head_Access;
       Line   : Natural := 0;
-      File   : String := "");
+      File   : Virtual_File := VFS.No_File);
    --  Just For Testing
 
    procedure Move_On_Ref_File
      (Kernel : Kernel_Handle;
       Diff   : Diff_Head_Access;
       Line   : Natural := 0;
-      File   : String := "");
+      File   : Virtual_File := VFS.No_File);
    --  Move a diff block to the Ref_File
 
 end Vdiff2_Command_Line;
