@@ -3143,8 +3143,10 @@ package body Src_Editor_Buffer is
       Previous_Inserting_Value : constant Boolean := Buffer.Inserting;
 
    begin
-      pragma Assert (Is_Valid_Position (Buffer, Start_Line, Start_Column));
-      pragma Assert (Is_Valid_Position (Buffer, End_Line, End_Column));
+      Assert (Me, Is_Valid_Position (Buffer, Start_Line, Start_Column),
+              "Invalid start position " & Start_Line'Img & Start_Column'Img);
+      Assert (Me, Is_Valid_Position (Buffer, End_Line, End_Column),
+             "Invalid end position " & End_Line'Img & End_Column'Img);
 
       if not Buffer.Inserting then
          End_Action (Buffer);
