@@ -577,6 +577,16 @@ package Glide_Kernel.Modules is
    --              identifier (use Get_Boolean)
    --  See also the procedure Create_Line_Information_Column.
 
+   Mime_Location_Action : constant String := "gps/location_info";
+   --  There are multiple data associated with this type:
+   --     first   : identifier of the emitter (use Get_String)
+   --     second  : name of the category (use Get_String)
+   --     third   : name of the file (use Get_String)
+   --     fourth  : line (use Get_Int)
+   --     fifth   : column (use Get_Int)
+   --     sixth   : message (use Get_String)
+   --     seventh : action item (use Get_Addess)
+
    Mime_Html_File : constant String := "gps/html";
    --  Request to display a html file
    --  There are multiple data associated with this type:
@@ -677,6 +687,16 @@ package Glide_Kernel.Modules is
    end record;
    --  Text must be a valid Utf8 string.
 
+   type Action_Item is access Line_Information_Record;
+
+   function To_Action_Item is new Ada.Unchecked_Conversion
+     (System.Address, Action_Item);
+   function To_Address is new Ada.Unchecked_Conversion
+     (Action_Item, System.Address);
+
+   procedure Free (X : in out Action_Item);
+   --  Free memory associated to X.
+
    procedure Free (X : in out Line_Information_Record);
    --  Free memory associated with X.
 
@@ -723,6 +743,27 @@ package Glide_Kernel.Modules is
    --  Add line information to File.
    --  The range of Info must correspond to the range of line numbers
    --  that are to be modified.
+
+   procedure Add_Location_Action
+     (Kernel        : access Kernel_Handle_Record'Class;
+      Identifier    : String;
+      Category      : String;
+      File          : String;
+      Line          : Integer;
+      Column        : Integer;
+      Message       : String;
+      Action        : Action_Item);
+   --  Add an action to the location specified.
+
+   procedure Remove_Location_Action
+     (Kernel        : access Kernel_Handle_Record'Class;
+      Identifier    : String;
+      Category      : String;
+      File          : String;
+      Line          : Integer;
+      Column        : Integer;
+      Message       : String);
+   --  Remove action corresponding to Identifier at specified location.
 
    ------------------------
    -- File_Name contexts --
