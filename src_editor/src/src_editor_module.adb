@@ -982,10 +982,12 @@ package body Src_Editor_Module is
             if Source /= null then
                if Command = "cut" then
                   Cut_Clipboard (Source);
+                  External_End_Action (Get_Buffer (Source));
                elsif Command = "copy" then
                   Copy_Clipboard (Source);
                elsif Command = "paste" then
                   Paste_Clipboard (Source);
+                  External_End_Action (Get_Buffer (Source));
                else
                   Select_All (Source);
                end if;
