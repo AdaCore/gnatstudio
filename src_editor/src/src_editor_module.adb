@@ -2154,12 +2154,16 @@ package body Src_Editor_Module is
       if Print_Helper = "" then
          --  Use our internal facility
 
-         Src_Printing.Print
-           (Source,
-            Font_Name  => Source_Font_Name,
-            Font_Size  => Integer (Source_Font_Size),
-            Bold       => False,
-            Italicized => False);
+         if Save_Child
+           (Kernel, Child, Get_Pref (Kernel, Auto_Save)) /= Cancel
+         then
+            Src_Printing.Print
+              (Source,
+               Font_Name  => Source_Font_Name,
+               Font_Size  => Integer (Source_Font_Size),
+               Bold       => False,
+               Italicized => False);
+         end if;
 
       else
          --  Use helper
