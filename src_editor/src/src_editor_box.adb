@@ -18,6 +18,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Ada.Characters.Handling;    use Ada.Characters.Handling;
 with Ada.Exceptions;             use Ada.Exceptions;
 with Glib;                       use Glib;
 with Glib.Convert;
@@ -2005,12 +2006,12 @@ package body Src_Editor_Box is
                if Info.Is_Declaration then
                   New_Name := new String'
                     (Get_Source_Filename
-                       (Info.Name.all & "%s",
+                       (To_Lower (Info.Name.all) & "%s",
                         Get_Project (Editor.Kernel)));
                else
                   New_Name := new String'
                     (Get_Source_Filename
-                       (Info.Name.all & "%b",
+                       (To_Lower (Info.Name.all) & "%b",
                         Get_Project (Editor.Kernel)));
                end if;
             end if;
