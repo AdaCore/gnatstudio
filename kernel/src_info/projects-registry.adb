@@ -1349,8 +1349,6 @@ package body Projects.Registry is
         Get (Registry.Data.Sources, Base_Name);
 
    begin
-      Trace (Me,  "MANU Get_Language_From_File " & Base_Name
-               & " Lang=" & Get_String (S.Lang));
       if S = No_Source_File_Data then
          --  This is most probably one of the runtime files.
          --  For now, we simply consider the standard GNAT extensions, although
