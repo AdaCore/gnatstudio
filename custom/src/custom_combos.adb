@@ -76,6 +76,12 @@ package body Custom_Combos is
    --  Return the text currently being displayed in the
    --  combo entry identified by Id.
 
+   procedure Set_Combo_Text
+     (Kernel : access Kernel_Handle_Record'Class;
+      Id     : String;
+      Text   : String);
+   --  Set the text in combo identified by Id to Text.
+
    procedure Clear_Combo
      (Kernel : access Kernel_Handle_Record'Class;
       Id     : String);
@@ -430,6 +436,27 @@ package body Custom_Combos is
       return Get_Text (Get_Entry (GPS_Combo.Combo));
    end Get_Combo_Text;
 
+   --------------------
+   -- Set_Combo_Text --
+   --------------------
+
+   procedure Set_Combo_Text
+     (Kernel : access Kernel_Handle_Record'Class;
+      Id     : String;
+      Text   : String)
+   is
+      GPS_Combo   : constant GPS_Combo_Access := Lookup_GPS_Combo (Id);
+   begin
+      if GPS_Combo = null then
+         Insert
+           (Kernel, -"Entry not registered: " & Id,
+            Mode => Error);
+         return;
+      end if;
+
+      Set_Text (Get_Entry (GPS_Combo.Combo), Text);
+   end Set_Combo_Text;
+
    --------------------------
    -- Custom_Entry_Handler --
    --------------------------
@@ -455,6 +482,9 @@ package body Custom_Combos is
 
       elsif Command = "entry_get_text" then
          Set_Return_Value (Data, Get_Combo_Text (Kernel, Title));
+
+      elsif Command = "entry_set_text" then
+         Set_Combo_Text (Kernel, Title, Nth_Arg (Data, 2));
       end if;
    end Custom_Entry_Handler;
 
