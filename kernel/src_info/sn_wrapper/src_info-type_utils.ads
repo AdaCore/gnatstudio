@@ -27,10 +27,6 @@ with SN.DB_Structures; use SN.DB_Structures;
 
 package Src_Info.Type_Utils is
 
-   --  This package is private because it is using some declarations
-   --  which are in the private section of Src_Info. This package is
-   --  specific to C and C++ types.
-
    type Module_Typedefs_List is private;
    --  Instances of this type are responsible to store hashed
    --  information about types in one module (file).
