@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                          G L I D E  I I                           --
 --                                                                   --
---                        Copyright (C) 2001                         --
+--                     Copyright (C) 2001-2002                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GLIDE is free software; you can redistribute it and/or modify  it --
@@ -301,7 +301,9 @@ package body Directory_Tree is
    ------------
 
    function Filter
-     (Tree : access Dir_Tree_Record'Class; Dir_Name : String) return Boolean is
+     (Tree : access Dir_Tree_Record'Class; Dir_Name : String) return Boolean
+   is
+      pragma Unreferenced (Tree);
    begin
       return Dir_Name /= "."
         and then Dir_Name /= ".."
@@ -833,8 +835,10 @@ package body Directory_Tree is
 
    function List_Contextual_Menu
      (Selector : Directory_Selector;
-      Event  : Gdk.Event.Gdk_Event) return Gtk_Menu
+      Event    : Gdk.Event.Gdk_Event) return Gtk_Menu
    is
+      pragma Unreferenced (Event);
+
       use type Gint_List.Glist;
 
       Item     : Gtk_Menu_Item;
