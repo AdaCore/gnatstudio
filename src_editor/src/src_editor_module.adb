@@ -3469,4 +3469,30 @@ package body Src_Editor_Module is
       end if;
    end Find_Editor;
 
+   ----------------
+   -- Find_Child --
+   ----------------
+
+   function Find_Child
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Editor : access Src_Editor_Box.Source_Editor_Box_Record'Class)
+      return Gtkada.MDI.MDI_Child
+   is
+      Iter  : Child_Iterator := First_Child (Get_MDI (Kernel));
+      Child : MDI_Child;
+
+   begin
+      loop
+         Child := Get (Iter);
+
+         exit when Child = null
+           or else (Get_Widget (Child).all in Source_Box_Record'Class
+                    and then Source_Box (Get_Widget (Child)).Editor =
+                      Source_Editor_Box (Editor));
+         Next (Iter);
+      end loop;
+
+      return Child;
+   end Find_Child;
+
 end Src_Editor_Module;
