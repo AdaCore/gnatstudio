@@ -211,12 +211,12 @@ package body Entities is
    -- Get_Name --
    --------------
 
-   function Get_Name (D : Entity_Information) return String_Access is
+   function Get_Name (Entity : Entity_Information) return String_Access is
    begin
-      if D = null then
+      if Entity = null then
          return null;
       else
-         return D.Name;
+         return Entity.Name;
       end if;
    end Get_Name;
 
@@ -415,7 +415,7 @@ package body Entities is
 
             if Entity.Is_Valid then
                if E = Entity_Information_Arrays.First then
-                  Remove (File.Entities, Get_Name (Entity).all);
+                  Remove (File.Entities, Entity.Name.all);
                else
                   Remove (EL.all, E);
                end if;
@@ -451,7 +451,7 @@ package body Entities is
               and then Entity.Is_Valid
             then
                if E = Entity_Information_Arrays.First then
-                  Remove (Tree, Get_Name (Entity).all);
+                  Remove (Tree, Entity.Name.all);
                else
                   Remove (EL.all, E);
                end if;
@@ -676,11 +676,11 @@ package body Entities is
                       E : Entity_Information)
    is
       EL : constant Entity_Information_List_Access :=
-        Get (D, Get_Name (E).all);
+        Get (D, E.Name.all);
    begin
       if EL /= null then
          if Length (EL.all) = 1 then
-            Remove (D, Get_Name (E).all);
+            Remove (D, E.Name.all);
          else
             Remove (EL.all, E);
          end if;
@@ -974,22 +974,22 @@ package body Entities is
       Entity           : Entity_Information;
       Check_Duplicates : Boolean)
    is
-      EL : Entity_Information_List_Access :=
-        Get (Entities, Get_Name (Entity).all);
-      Is_Null : constant Boolean := (EL = null);
+      Pointer : Cell_Pointer;
+      EL      : Entity_Information_List_Access;
    begin
-      if Is_Null then
-         EL := new Entity_Information_List'(Null_Entity_Information_List);
-      end if;
+      Find_Cell_Child (Entities, Entity.Name.all, Pointer);
+      EL := Get (Pointer);
 
-      if not Check_Duplicates
+      if EL = null then
+         EL := new Entity_Information_List'(Null_Entity_Information_List);
+         Append (EL.all, Entity);
+
+         Insert (Entity.Name.all, Pointer, EL);
+
+      elsif not Check_Duplicates
         or else Find (EL.all, Entity.Declaration) = null
       then
          Append (EL.all, Entity);
-
-         if Is_Null then
-            Insert (Entities, EL);
-         end if;
       end if;
    end Add;
 
@@ -1211,21 +1211,20 @@ package body Entities is
       Column       : Natural;
       Allow_Create : Boolean := True) return Entity_Information
    is
-      --  Speed up the search by checking in the file itself. However, we'll
-      --  have to add the new entity to the global entities table as well.
       EL  : Entity_Information_List_Access;
       E   : Entity_Information;
-      Is_Null : Boolean;
+      Pointer : Cell_Pointer;
    begin
       Assert (Assert_Me, Name /= "", "No name specified for Get_Or_Create");
 
-      EL := Get (File.Entities, Name);
-      Is_Null := EL = null;
+      Find_Cell_Child (File.Entities, Name, Pointer);
+      EL := Get (Pointer);
 
-      if Is_Null then
+      if EL = null then
          if Allow_Create then
             EL := new Entity_Information_List'
               (Null_Entity_Information_List);
+            Insert (Name, Pointer, EL);
          end if;
       else
          E := Find (EL.all, (File, Line, Column));
@@ -1252,10 +1251,6 @@ package body Entities is
             Ref_Count             => 1);
 
          Append (EL.all, E);
-
-         if Is_Null then
-            Insert (File.Entities, EL);
-         end if;
 
       elsif E /= null then
          E.Is_Valid := True;
@@ -1428,15 +1423,6 @@ package body Entities is
    begin
       return Loc.Column;
    end Get_Column;
-
-   --------------
-   -- Get_Name --
-   --------------
-
-   function Get_Name (Entity : Entity_Information) return String is
-   begin
-      return Entity.Name.all;
-   end Get_Name;
 
    -------------------------
    -- Check_LI_And_Source --
