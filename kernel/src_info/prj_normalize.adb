@@ -35,17 +35,13 @@ with Prj.Tree; use Prj.Tree;
 with Namet;    use Namet;
 with Types;    use Types;
 
-with Text_IO;  use Text_IO;
+with Text_IO; use Text_IO;
 
 package body Prj_Normalize is
 
-   Internal_Project_Prefix : constant String := ".Internal";
+   Internal_Project_Prefix : constant String := "_Internal";
    --  Prefix appended to the name of the root project to create the name of
    --  the internal project that contains the definition of all the scenarios.
-
-   Scenario_Attribute_Name : constant String := "scenario";
-   --  Name of the attribute used to store the name of the current
-   --  configuration.
 
    type Project_Converter is record
       Common_Section : Project_Node_Id := Empty_Node;
@@ -70,13 +66,6 @@ package body Prj_Normalize is
       return Project_Node_Id;
    --  Return the case item in Case_Construction that matches Name.
    --  This case_item is created if it doesn't exist yet.
-
-   function External_Variable_Name
-     (Current_Project : Project_Node_Id; Ref : Project_Node_Id)
-      return String_Id;
-   --  Return the name of the external variable referenced by Ref.
-   --  This subprogram looks at the variabel declaration, possibly in another
-   --  package.
 
    procedure Recursive_Normalize
      (Project          : Project_Node_Id;
@@ -113,47 +102,6 @@ package body Prj_Normalize is
 
       return Case_Item;
    end Get_Or_Create_Case_Item;
-
-   ----------------------------
-   -- External_Variable_Name --
-   ----------------------------
-
-   function External_Variable_Name
-     (Current_Project : Project_Node_Id; Ref : Project_Node_Id)
-      return String_Id
-   is
-      N : constant Name_Id := Name_Of (Ref);
-      Prj : Project_Node_Id := Current_Project;
-      Decl, Item, Pkg : Project_Node_Id;
-   begin
-      if Project_Node_Of (Ref) /= Empty_Node then
-         Prj := Project_Node_Of (Ref);
-      end if;
-
-      if Package_Node_Of (Ref) /= Empty_Node then
-         Pkg := First_Package_Of (Prj);
-         while Pkg /= Package_Node_Of (Ref) loop
-            Pkg := Next_Package_In_Project (Pkg);
-         end loop;
-         Decl := First_Declarative_Item_Of (Pkg);
-      else
-         Decl := First_Declarative_Item_Of (Project_Declaration_Of (Prj));
-      end if;
-
-      while Decl /= Empty_Node loop
-         Item := Current_Item_Node (Decl);
-         if (Kind_Of (Item) = N_Variable_Declaration
-             or else Kind_Of (Item) = N_Typed_Variable_Declaration)
-           and then Name_Of (Item) = N
-         then
-            return External_Reference_Of (Item);
-         end if;
-
-         Decl := Next_Declarative_Item (Decl);
-      end loop;
-
-      return No_String;
-   end External_Variable_Name;
 
    -------------
    -- Recurse --
@@ -251,7 +199,6 @@ package body Prj_Normalize is
 
          for P in Parent_Decl'Range loop
             if Parent_Decl (P) /= Empty_Node then
-               Put_Line (Kind_Of (Parent_Decl (P))'Img);
                Decl_Item_Out (P) :=
                  First_Declarative_Item_Of (Parent_Decl (P));
                if Decl_Item_Out (P) /= Empty_Node then
@@ -283,8 +230,8 @@ package body Prj_Normalize is
                --  N_Variable_Reference
                Var_Index := Variable_Index
                  (Mgr, External_Variable_Name
-                  (Current_Project,
-                   Case_Variable_Reference_Of (Current_Item_Node (Decl_Item))));
+                  (Current_Project, Case_Variable_Reference_Of
+                   (Current_Item_Node (Decl_Item))));
 
                pragma Assert (Var_Index /= 0,
                               "Cannot import projects that have case "
@@ -296,7 +243,8 @@ package body Prj_Normalize is
 
                declare
                   Processed : String_Id_Array
-                    (1 .. Scenarios_Count (Mgr, Values));
+                    (1 .. Scenarios_Count (Mgr, Values)) :=
+                    (others => No_String);
                   --  Array used to keep track of the scenario names already
                   --  processed. This is used to eliminate these cases from the
                   --  "when others" case.
@@ -496,8 +444,6 @@ package body Prj_Normalize is
       end if;
 
       Pretty_Print (Project);
-      New_Line;
-      New_Line;
 
       Item := First_With_Clause_Of (Project);
       while Item /= Empty_Node loop
@@ -519,7 +465,6 @@ package body Prj_Normalize is
       Vars : constant Project_Node_Array := Find_Scenario_Variables (Project);
       Internal_Project : Project_Node_Id;
    begin
-      Put_Line ("Vars'Length= " & Vars'Length'Img);
       Initialize (Mgr, Vars);
       Internal_Project := Create_Project
         (Get_Name_String (Name_Of (Project)) & Internal_Project_Prefix, "");
@@ -528,8 +473,17 @@ package body Prj_Normalize is
 
       Append_Declaration (Mgr, Internal_Project);
 
-
       Pretty_Print (Internal_Project);
+
+      Put_Line ("Testing that we can reread the scenario:");
+      declare
+         P : Project_Node_Id := Create_Project ("SCENARIO_TEST", "");
+         M : Scenario_Manager;
+      begin
+         Initialize (M, Internal_Project);
+         Append_Declaration (M, P);
+         Pretty_Print (P);
+      end;
    end Normalize_Project;
 
 end Prj_Normalize;
