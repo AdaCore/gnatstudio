@@ -2,7 +2,7 @@
 --                               G P S                               --
 --                                                                   --
 --                      Copyright (C) 2002-2005                      --
---                            AdaCore                                --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -33,12 +33,12 @@ with VFS;                       use VFS;
 with Case_Handling;             use Case_Handling;
 with GNAT.Bubble_Sort_G;
 
-package body Language_Handlers.Glide is
+package body Language_Handlers.GPS is
 
    Me : constant Debug_Handle := Create ("Language_Handlers");
 
    function Get_Index_From_Language
-     (Handler       : access Glide_Language_Handler_Record'Class;
+     (Handler       : access GPS_Language_Handler_Record'Class;
       Language_Name : String) return Natural;
    --  Return the index of Language in Handler.Languages, or 0 if no such
    --  language is known.
@@ -49,7 +49,7 @@ package body Language_Handlers.Glide is
      (Handler_Info_Array, Handler_Info_Access);
 
    function Get_LI_Handler_By_Name
-     (Handler : access Glide_Language_Handler_Record;
+     (Handler : access GPS_Language_Handler_Record;
       Name    : String) return Natural;
    --  Return the index of the LI handler Name, or 0 if not found.
 
@@ -57,10 +57,10 @@ package body Language_Handlers.Glide is
    -- Gtk_New --
    -------------
 
-   procedure Gtk_New (Handler : out Glide_Language_Handler) is
+   procedure Gtk_New (Handler : out GPS_Language_Handler) is
    begin
       --  ??? Never freed, but the handler is never destroyed.
-      Handler := new Glide_Language_Handler_Record;
+      Handler := new GPS_Language_Handler_Record;
    end Gtk_New;
 
    ------------------
@@ -68,7 +68,7 @@ package body Language_Handlers.Glide is
    ------------------
 
    procedure Set_Registry
-     (Handler  : access Glide_Language_Handler_Record;
+     (Handler  : access GPS_Language_Handler_Record;
       Registry : access Projects.Abstract_Registry'Class) is
    begin
       Handler.Registry := Abstract_Registry_Access (Registry);
@@ -79,7 +79,7 @@ package body Language_Handlers.Glide is
    -----------------------------
 
    function Get_Index_From_Language
-     (Handler       : access Glide_Language_Handler_Record'Class;
+     (Handler       : access GPS_Language_Handler_Record'Class;
       Language_Name : String) return Natural is
    begin
       Assert (Me, Handler.Languages /= null, "No registered language");
@@ -99,7 +99,7 @@ package body Language_Handlers.Glide is
    ----------------------------
 
    function Get_Language_From_File
-     (Handler         : access Glide_Language_Handler_Record;
+     (Handler         : access GPS_Language_Handler_Record;
       Source_Filename : VFS.Virtual_File) return Language.Language_Access
    is
       Index : Natural;
@@ -115,7 +115,7 @@ package body Language_Handlers.Glide is
    end Get_Language_From_File;
 
    function Get_Language_From_File
-     (Handler : access Glide_Language_Handler_Record;
+     (Handler : access GPS_Language_Handler_Record;
       Source_Filename : VFS.Virtual_File) return String
    is
       Lang : constant Name_Id := Get_Language_From_File
@@ -134,7 +134,7 @@ package body Language_Handlers.Glide is
    --------------------------
 
    function Get_Language_By_Name
-     (Handler : access Glide_Language_Handler_Record;
+     (Handler : access GPS_Language_Handler_Record;
       Name    : String) return Language.Language_Access
    is
       Index : constant Natural := Get_Index_From_Language (Handler, Name);
@@ -151,7 +151,7 @@ package body Language_Handlers.Glide is
    -------------------------
 
    procedure Register_LI_Handler
-     (Handler : access Glide_Language_Handler_Record;
+     (Handler : access GPS_Language_Handler_Record;
       Name    : String;
       LI      : LI_Handler)
    is
@@ -185,7 +185,7 @@ package body Language_Handlers.Glide is
    ----------------------------
 
    function Get_LI_Handler_By_Name
-     (Handler : access Glide_Language_Handler_Record;
+     (Handler : access GPS_Language_Handler_Record;
       Name    : String) return Natural is
    begin
       if Handler.Handlers /= null then
@@ -204,7 +204,7 @@ package body Language_Handlers.Glide is
    ----------------------------
 
    function Get_LI_Handler_By_Name
-     (Handler : access Glide_Language_Handler_Record;
+     (Handler : access GPS_Language_Handler_Record;
       Name    : String) return LI_Handler
    is
       Index : constant Natural := Get_LI_Handler_By_Name
@@ -222,7 +222,7 @@ package body Language_Handlers.Glide is
    -----------------
 
    function Get_LI_Name
-     (Handler : access Glide_Language_Handler_Record;
+     (Handler : access GPS_Language_Handler_Record;
       Nth     : Natural) return String is
    begin
       if Handler.Handlers /= null
@@ -230,6 +230,7 @@ package body Language_Handlers.Glide is
       then
          return Handler.Handlers (Handler.Handlers'First + Nth - 1).Name.all;
       end if;
+
       return "";
    end Get_LI_Name;
 
@@ -238,7 +239,7 @@ package body Language_Handlers.Glide is
    -----------------------
 
    procedure Register_Language
-     (Handler : access Glide_Language_Handler_Record;
+     (Handler : access GPS_Language_Handler_Record;
       Name    : String;
       Lang    : Language.Language_Access)
    is
@@ -248,6 +249,7 @@ package body Language_Handlers.Glide is
    begin
       if Handler.Languages /= null then
          Index := Get_Index_From_Language (Handler, N);
+
          if Index /= 0 then
             Handler.Languages (Index).Lang := Lang;
             return;
@@ -258,6 +260,7 @@ package body Language_Handlers.Glide is
          Tmp (Handler.Languages'Range) := Handler.Languages.all;
          Unchecked_Free (Handler.Languages);
          Handler.Languages := Tmp;
+
       else
          Handler.Languages := new Language_Info_Array (1 .. 1);
       end if;
@@ -273,7 +276,7 @@ package body Language_Handlers.Glide is
    ---------------------
 
    function Known_Languages
-     (Handler : access Glide_Language_Handler_Record;
+     (Handler : access GPS_Language_Handler_Record;
       Sorted  : Boolean := False) return GNAT.OS_Lib.Argument_List is
    begin
       if Handler.Languages /= null then
@@ -330,7 +333,7 @@ package body Language_Handlers.Glide is
    --------------------------
 
    procedure Set_Language_Handler
-     (Handler       : access Glide_Language_Handler_Record;
+     (Handler       : access GPS_Language_Handler_Record;
       Language_Name : String;
       LI            : LI_Handler)
    is
@@ -347,7 +350,7 @@ package body Language_Handlers.Glide is
    ------------------------------
 
    function Get_LI_Handler_From_File
-     (Handler         : access Glide_Language_Handler_Record;
+     (Handler         : access GPS_Language_Handler_Record;
       Source_Filename : VFS.Virtual_File)
       return LI_Handler
    is
@@ -374,7 +377,7 @@ package body Language_Handlers.Glide is
    -- Languages_Count --
    ---------------------
 
-   function Languages_Count (Handler : access Glide_Language_Handler_Record)
+   function Languages_Count (Handler : access GPS_Language_Handler_Record)
       return Natural is
    begin
       if Handler.Languages = null then
@@ -388,7 +391,7 @@ package body Language_Handlers.Glide is
    -- LI_Handlers_Count --
    -----------------------
 
-   function LI_Handlers_Count (Handler : access Glide_Language_Handler_Record)
+   function LI_Handlers_Count (Handler : access GPS_Language_Handler_Record)
       return Natural is
    begin
       if Handler.Handlers = null then
@@ -403,7 +406,7 @@ package body Language_Handlers.Glide is
    ---------------------
 
    function Get_Nth_Handler
-     (Handler : access Glide_Language_Handler_Record;
+     (Handler : access GPS_Language_Handler_Record;
       Num     : Positive) return LI_Handler is
    begin
       if Handler.Handlers = null
@@ -420,7 +423,7 @@ package body Language_Handlers.Glide is
    ----------------------
 
    function Get_Nth_Language
-     (Handler : access Glide_Language_Handler_Record;
+     (Handler : access GPS_Language_Handler_Record;
       Num     : Positive) return String is
    begin
       if Handler.Languages = null
@@ -437,15 +440,16 @@ package body Language_Handlers.Glide is
    -- Destroy --
    -------------
 
-   procedure Destroy (Handler : in out Glide_Language_Handler) is
+   procedure Destroy (Handler : in out GPS_Language_Handler) is
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Glide_Language_Handler_Record'Class, Glide_Language_Handler);
+        (GPS_Language_Handler_Record'Class, GPS_Language_Handler);
    begin
       if Handler.Languages /= null then
          for L in Handler.Languages'Range loop
             Free (Handler.Languages (L).Language_Name);
             Free (Handler.Languages (L).Lang);
          end loop;
+
          Unchecked_Free (Handler.Languages);
       end if;
 
@@ -454,11 +458,14 @@ package body Language_Handlers.Glide is
             if Handler.Handlers (H).Handler /= null then
                Destroy (Handler.Handlers (H).Handler);
             end if;
+
             Free (Handler.Handlers (H).Name);
          end loop;
+
          Unchecked_Free (Handler.Handlers);
       end if;
+
       Unchecked_Free (Handler);
    end Destroy;
 
-end Language_Handlers.Glide;
+end Language_Handlers.GPS;

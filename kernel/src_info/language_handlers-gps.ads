@@ -39,22 +39,22 @@ with Entities;
 with Projects;
 with GNAT.OS_Lib;
 
-package Language_Handlers.Glide is
+package Language_Handlers.GPS is
 
-   type Glide_Language_Handler_Record is new Language_Handler_Record
+   type GPS_Language_Handler_Record is new Language_Handler_Record
      with private;
-   type Glide_Language_Handler is access all
-     Glide_Language_Handler_Record'Class;
+   type GPS_Language_Handler is access all
+     GPS_Language_Handler_Record'Class;
 
-   procedure Gtk_New (Handler : out Glide_Language_Handler);
+   procedure Gtk_New (Handler : out GPS_Language_Handler);
    --  Create a new language handler
 
-   procedure Destroy (Handler : in out Glide_Language_Handler);
+   procedure Destroy (Handler : in out GPS_Language_Handler);
    --  Free the memory occupied by Handler, and removes all the registered LI
    --  handlers. They are destroyed individually.
 
    procedure Set_Registry
-     (Handler  : access Glide_Language_Handler_Record;
+     (Handler  : access GPS_Language_Handler_Record;
       Registry : access Projects.Abstract_Registry'Class);
    --  Set the top-level project for Handler.
 
@@ -66,7 +66,7 @@ package Language_Handlers.Glide is
    --  associated with multiple languages.
 
    procedure Register_LI_Handler
-     (Handler : access Glide_Language_Handler_Record;
+     (Handler : access GPS_Language_Handler_Record;
       Name    : String;
       LI      : Entities.LI_Handler);
    --  Register a new LI handler that can generate xref.
@@ -75,18 +75,18 @@ package Language_Handlers.Glide is
    --  xref database.
 
    function Get_LI_Handler_By_Name
-     (Handler : access Glide_Language_Handler_Record;
+     (Handler : access GPS_Language_Handler_Record;
       Name    : String) return Entities.LI_Handler;
    --  Return the LI handler which name is Name.
    --  Name is case-sensitive.
 
    function Get_LI_Name
-     (Handler : access Glide_Language_Handler_Record;
+     (Handler : access GPS_Language_Handler_Record;
       Nth     : Natural) return String;
    --  Return the name of LI.
 
    function Get_LI_Handler_From_File
-     (Handler         : access Glide_Language_Handler_Record;
+     (Handler         : access GPS_Language_Handler_Record;
       Source_Filename : VFS.Virtual_File)
       return Entities.LI_Handler;
    --  Return the LI handler to use for a specific file name.
@@ -95,13 +95,13 @@ package Language_Handlers.Glide is
    --  it is unknown.
 
    function LI_Handlers_Count
-     (Handler : access Glide_Language_Handler_Record) return Natural;
+     (Handler : access GPS_Language_Handler_Record) return Natural;
    --  Return the number of LI handlers known. This count will generally be
    --  different from the number of supported languages, since some LI handlers
    --  will handle multiple languages.
 
    function Get_Nth_Handler
-     (Handler : access Glide_Language_Handler_Record;
+     (Handler : access GPS_Language_Handler_Record;
       Num     : Positive) return Entities.LI_Handler;
    --  Return the handler for the Num-th language.
    --  The first handler is number 1.
@@ -111,31 +111,31 @@ package Language_Handlers.Glide is
    ---------------
 
    function Get_Language_From_File
-     (Handler : access Glide_Language_Handler_Record;
+     (Handler : access GPS_Language_Handler_Record;
       Source_Filename : VFS.Virtual_File) return Language.Language_Access;
    --  Find the language of a given file.
    --  Return Unknown_Lang if no other language could be found.
 
    function Get_Language_From_File
-     (Handler : access Glide_Language_Handler_Record;
+     (Handler : access GPS_Language_Handler_Record;
       Source_Filename : VFS.Virtual_File) return String;
    --  Return "" if the language is unknown.
 
    function Get_Language_By_Name
-     (Handler : access Glide_Language_Handler_Record;
+     (Handler : access GPS_Language_Handler_Record;
       Name    : String) return Language.Language_Access;
 
    procedure Register_Language
-     (Handler : access Glide_Language_Handler_Record;
+     (Handler : access GPS_Language_Handler_Record;
       Name    : String;
       Lang    : Language.Language_Access);
 
    function Known_Languages
-     (Handler : access Glide_Language_Handler_Record;
+     (Handler : access GPS_Language_Handler_Record;
       Sorted  : Boolean := False) return GNAT.OS_Lib.Argument_List;
 
    procedure Set_Language_Handler
-     (Handler       : access Glide_Language_Handler_Record;
+     (Handler       : access GPS_Language_Handler_Record;
       Language_Name : String;
       LI            : Entities.LI_Handler);
    --  Register some extra information for a specific language.
@@ -143,12 +143,12 @@ package Language_Handlers.Glide is
    --  See also Projects.Registry.Register_Default_Language_Extension and
    --  Projects.Registry.Add_Language_Extension.
 
-   function Languages_Count (Handler : access Glide_Language_Handler_Record)
+   function Languages_Count (Handler : access GPS_Language_Handler_Record)
       return Natural;
    --  Return the number of languages declared in Handler
 
    function Get_Nth_Language
-     (Handler : access Glide_Language_Handler_Record;
+     (Handler : access GPS_Language_Handler_Record;
       Num     : Positive) return String;
    --  Return the name of the Num-th language.
    --  The first handler is number 1.
@@ -171,11 +171,11 @@ private
    type Handler_Info_Array is array (Positive range <>) of Handler_Info;
    type Handler_Info_Access is access Handler_Info_Array;
 
-   type Glide_Language_Handler_Record is new Language_Handler_Record
+   type GPS_Language_Handler_Record is new Language_Handler_Record
    with record
       Languages : Language_Info_Access;
       Handlers  : Handler_Info_Access;
       Registry  : Projects.Abstract_Registry_Access;
    end record;
 
-end Language_Handlers.Glide;
+end Language_Handlers.GPS;
