@@ -259,7 +259,7 @@ package body VCS.Unknown_VCS is
    is
       pragma Unreferenced (Rep);
    begin
-      Error (Full_Name (File));
+      Error (Full_Name (File).all);
    end Log;
 
    --------------
@@ -272,7 +272,7 @@ package body VCS.Unknown_VCS is
    is
       pragma Unreferenced (Rep);
    begin
-      Error (Full_Name (File));
+      Error (Full_Name (File).all);
    end Annotate;
 
    ---------------------

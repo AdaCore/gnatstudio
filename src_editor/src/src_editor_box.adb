@@ -20,6 +20,7 @@
 
 with Ada.Characters.Handling;    use Ada.Characters.Handling;
 with Ada.Exceptions;             use Ada.Exceptions;
+with GNAT.OS_Lib;
 with Glib;                       use Glib;
 with Glib.Object;                use Glib.Object;
 with Glib.Values;                use Glib.Values;
@@ -372,7 +373,7 @@ package body Src_Editor_Box is
          Console.Insert
            (Kernel,
             -"No cross-reference information found for "
-            & Full_Name (Get_Filename (Editor)) & ASCII.LF
+            & Full_Name (Get_Filename (Editor)).all & ASCII.LF
             & (-("Recompile your file or select Build->Recompute Xref"
                  & " Information, depending on the language")),
             Mode           => Error);
@@ -455,11 +456,11 @@ package body Src_Editor_Box is
          C := Get_Column (Location);
 
          Trace (Me, "Goto_Declaration_Or_Body: Opening file "
-                & Full_Name (Get_File (Location)));
+                & Full_Name (Get_File (Location)).all);
          Filename := Get_File (Location);
-         if Dir_Name (Filename) = "" then
+         if Dir_Name (Filename).all = "" then
             Insert (Kernel, -"File not found: "
-                    & Base_Name (Filename), Mode => Error);
+                    & Base_Name (Filename).all, Mode => Error);
          end if;
 
       else
@@ -470,13 +471,13 @@ package body Src_Editor_Box is
          C := Get_Declaration_Column_Of (Entity);
          Filename := Get_Declaration_File_Of (Entity);
 
-         if Dir_Name (Filename) = "" then
+         if Dir_Name (Filename).all = "" then
             Insert (Kernel, -"File not found: "
-                    & Base_Name (Filename), Mode => Error);
+                    & Base_Name (Filename).all, Mode => Error);
          end if;
       end if;
 
-      if Dir_Name (Filename) /= "" then
+      if Dir_Name (Filename).all /= "" then
          Open_File_Editor
            (Kernel, Filename, L, C, C + Length,
             Enable_Navigation => True);
@@ -732,7 +733,7 @@ package body Src_Editor_Box is
                  ".")
               & ASCII.LF
               & (-"declared at ")
-              & Base_Name (Get_Declaration_File_Of (Entity)) & ':'
+              & Base_Name (Get_Declaration_File_Of (Entity)).all & ':'
               & Image (Get_Declaration_Line_Of (Entity));
 
          begin
@@ -1914,7 +1915,7 @@ package body Src_Editor_Box is
         Get_Filename (Editor.Source_Buffer);
       Constructs : Construct_List;
       Info       : Construct_Access;
-      New_Name   : Virtual_File;
+      New_Base_Name : GNAT.OS_Lib.String_Access;
 
       use type Basic_Types.String_Access;
    begin
@@ -1943,20 +1944,20 @@ package body Src_Editor_Box is
               or else Info.Name = null
             then
                --  No unit name found
-               New_Name := VFS.No_File;
+               New_Base_Name := new String'("");
             else
                --  Info.Name is a valid Ada unit name
 
                if Info.Is_Declaration then
-                  New_Name := Get_Source_Filename
-                    (To_Lower (Info.Name.all) & "%s",
-                     Get_Project (Editor.Kernel),
-                     File_Must_Exist => False);
+                  New_Base_Name := new String'
+                    (Get_Source_Filename
+                       (To_Lower (Info.Name.all) & "%s",
+                        Get_Project (Editor.Kernel)));
                else
-                  New_Name := Get_Source_Filename
-                    (To_Lower (Info.Name.all) & "%b",
-                     Get_Project (Editor.Kernel),
-                     File_Must_Exist => False);
+                  New_Base_Name := new String'
+                    (Get_Source_Filename
+                       (To_Lower (Info.Name.all) & "%b",
+                        Get_Project (Editor.Kernel)));
                end if;
             end if;
 
@@ -1967,13 +1968,15 @@ package body Src_Editor_Box is
                  Select_File
                    (Title             => -"Save File As",
                     Parent            => Get_Main_Window (Editor.Kernel),
-                    Default_Name      => Base_Name (New_Name),
+                    Default_Name      => New_Base_Name.all,
                     Use_Native_Dialog =>
                       Get_Pref (Editor.Kernel, Use_Native_Dialogs),
                     Kind              => Save_File,
                     History           => Get_History (Editor.Kernel));
 
             begin
+               GNAT.OS_Lib.Free (New_Base_Name);
+
                if Name = VFS.No_File then
                   Success := False;
                   return;
@@ -1981,7 +1984,7 @@ package body Src_Editor_Box is
 
                if Is_Regular_File (Name) then
                   if Message_Dialog
-                    (Msg => Base_Name (Name)
+                    (Msg => Base_Name (Name).all
                        & (-" already exists. Do you want to overwrite ?"),
                      Dialog_Type => Confirmation,
                      Buttons => Button_OK or Button_Cancel,
@@ -1999,7 +2002,7 @@ package body Src_Editor_Box is
          else
             if not Check_Timestamp (Editor.Source_Buffer, Ask_User => False)
               and then Message_Dialog
-                (Msg => Base_Name (File)
+                (Msg => Base_Name (File).all
                         & (-" changed on disk. Do you want to overwrite ?"),
                  Dialog_Type => Confirmation,
                  Buttons => Button_OK or Button_Cancel,
@@ -2015,7 +2018,7 @@ package body Src_Editor_Box is
       else
          if Is_Regular_File (Filename) then
             if Message_Dialog
-              (Msg => Base_Name (Filename)
+              (Msg => Base_Name (Filename).all
                & (-" already exists. Do you want to overwrite ?"),
                Dialog_Type => Confirmation,
                Buttons => Button_OK or Button_Cancel,

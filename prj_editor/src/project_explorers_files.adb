@@ -273,7 +273,7 @@ package body Project_Explorers_Files is
                      if Get_Project_From_File
                        (Get_Registry (D.Explorer.Kernel),
                         VF, Root_If_Not_Found => False) /= No_Project
-                       and then Dir_Name (VF) = D.Norm_Dir.all
+                       and then Dir_Name (VF).all = D.Norm_Dir.all
                      then
                         Append (D.Files, Name);
                      end if;

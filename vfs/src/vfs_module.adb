@@ -221,7 +221,7 @@ package body VFS_Module is
 
    begin
       Push_State (Get_Kernel (File), Busy);
-      Trace (Me, "deleting " & Full_Name (File_Information (File)));
+      Trace (Me, "deleting " & Full_Name (File_Information (File)).all);
 
       if Has_File_Information (File) then
          Delete (File_Information (File));

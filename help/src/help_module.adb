@@ -366,7 +366,7 @@ package body Help_Module is
       Category  : String;
       Menu_Path : String)
    is
-      Full : constant String := Full_Name (HTML_File);
+      Full : constant String := Full_Name (HTML_File).all;
       Item : String_Menu_Item;
       Node : Help_Category_List.List_Node;
       Cat  : Help_Category_Access;
@@ -425,22 +425,22 @@ package body Help_Module is
 
    begin
       if not Is_Regular_File (File) then
-         Insert (Kernel, Full_Name (File) & (-": File not found"),
+         Insert (Kernel, Full_Name (File).all & (-": File not found"),
                  Mode => Error);
          return False;
       end if;
 
-      Add_To_History (Kernel, Help_History_Key, Full_Name (File));
+      Add_To_History (Kernel, Help_History_Key, Full_Name (File).all);
 
       Push_State (Kernel_Handle (Kernel), Busy);
       Buffer := Read_File (File);
 
       if Buffer /= null then
-         Trace (Me, "loading file: " & Full_Name (File));
+         Trace (Me, "loading file: " & Full_Name (File).all);
          Html.Current_Help_File := File;
          Stream := HTML_Begin (Html.Csc);
 
-         if Base_Name (File) /= Template_Index then
+         if Base_Name (File).all /= Template_Index then
             HTML_Write (Html.Csc, Stream, Buffer.all);
 
          else
@@ -468,7 +468,7 @@ package body Help_Module is
                F := First (Data (Cat).Files);
                while F /= Help_File_List.Null_Node loop
                   Append (Str,
-                          "<tr><td><a href=""" & Full_Name (Data (F).File)
+                          "<tr><td><a href=""" & Full_Name (Data (F).File).all
                           & """>" & Data (F).Descr.all
                           & "</a></td></tr>");
                   F := Next (F);
@@ -489,7 +489,7 @@ package body Help_Module is
          Success := True;
 
       else
-         Trace (Me, "link not found: " & Full_Name (File));
+         Trace (Me, "link not found: " & Full_Name (File).all);
          Success := False;
       end if;
 
@@ -519,7 +519,8 @@ package body Help_Module is
          Buffer := Read_File (Url);
       else
          declare
-            Base_Dir : constant String := Dir_Name (Html.Current_Help_File);
+            Base_Dir : constant String :=
+              Dir_Name (Html.Current_Help_File).all;
          begin
             Buffer := Read_File (Create (Full_Filename => Base_Dir & Url));
             Trace (Me, "url normalized: " & Base_Dir & Url);
@@ -559,12 +560,14 @@ package body Help_Module is
       elsif Url (Url'First) = '#' then
          Open_Html
            (Kernel,
-            Create_Html (Full_Name (Html.Current_Help_File) & Url, Kernel));
+            Create_Html
+              (Full_Name (Html.Current_Help_File).all & Url, Kernel));
 
       else
          Open_Html
            (Kernel,
-            Create_Html (Dir_Name (Html.Current_Help_File) & Url, Kernel));
+            Create_Html
+              (Dir_Name (Html.Current_Help_File).all & Url, Kernel));
       end if;
    exception
       when E : others =>
@@ -806,7 +809,8 @@ package body Help_Module is
    begin
       if not Is_Regular_File (Help_File) then
          Insert (Kernel,
-                 Full_Name (Help_File) & (-": File not found"), Mode => Error);
+                 Full_Name (Help_File).all & (-": File not found"),
+                 Mode => Error);
          return null;
       end if;
 
@@ -890,7 +894,7 @@ package body Help_Module is
          Child.Tag := new String'("File");
 
          Child.Value := new String'
-           (Full_Name (Help_Browser (Widget).Current_Help_File));
+           (Full_Name (Help_Browser (Widget).Current_Help_File).all);
 
          Add_Child (N, Child);
          return N;

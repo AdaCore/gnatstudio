@@ -75,14 +75,14 @@ package body Log_Utils is
       end if;
 
       begin
-         Load_Mapper (Mapper, Full_Name (Mapping));
+         Load_Mapper (Mapper, Full_Name (Mapping).all);
       exception
          when E : others =>
             Trace (Me, "unexpected exception: " & Exception_Information (E));
 
             Button := Message_Dialog
               (Msg     =>
-                 (-"The file") & ASCII.LF & Full_Name (Mapping) & ASCII.LF
+                 (-"The file") & ASCII.LF & Full_Name (Mapping).all & ASCII.LF
                  & (-"is corrupted, and will be deleted."),
                Dialog_Type => Warning,
                Title   => -"Corrupted file.",
@@ -115,7 +115,7 @@ package body Log_Utils is
    is
       Mapper      : File_Mapper_Access := Get_Logs_Mapper (Kernel);
       Real_Name   : constant String :=
-        Full_Name (File_Name, Normalize => True);
+        Full_Name (File_Name, Normalize => True).all;
       Return_Name : constant String := Get_Other_Text (Mapper, Real_Name);
    begin
       --  ??? Right now, we save the mapping every time that we add
@@ -142,7 +142,7 @@ package body Log_Utils is
                Close (File);
                Add_Entry (Mapper,
                           Real_Name,
-                          Full_Name (S, Normalize => True));
+                          Full_Name (S, Normalize => True).all);
                Save_Mapper
                  (Mapper, Normalize_Pathname (Logs_Dir & "/mapping"));
                return S;
@@ -160,7 +160,7 @@ package body Log_Utils is
                      Add_Entry
                        (Mapper,
                         Real_Name,
-                        Full_Name (S, Normalize => True));
+                        Full_Name (S, Normalize => True).all);
                      Save_Mapper
                        (Mapper, Normalize_Pathname (Logs_Dir & "/mapping"));
                      return S;
@@ -190,8 +190,8 @@ package body Log_Utils is
       Mapper : constant File_Mapper_Access := Get_Logs_Mapper (Kernel);
    begin
       return Create
-        (Full_Filename =>
-           Get_Other_Text (Mapper, Full_Name (Log_Name, Normalize => True)));
+        (Full_Filename => Get_Other_Text
+           (Mapper, Full_Name (Log_Name, Normalize => True).all));
    end Get_File_From_Log;
 
    -------------
@@ -233,7 +233,7 @@ package body Log_Utils is
         Name_As_Directory (Get_Home_Dir (Kernel) & "log_files");
       Mapper   : File_Mapper_Access := Get_Logs_Mapper (Kernel);
    begin
-      Remove_Entry (Mapper, Full_Name (File_Name, Normalize => True));
+      Remove_Entry (Mapper, Full_Name (File_Name, Normalize => True).all);
       Save_Mapper (Mapper, Logs_Dir & "mapping");
    end Remove_File_From_Mapping;
 

@@ -332,7 +332,7 @@ package body Glide_Kernel.Modules is
    function Has_Directory_Information
      (Context : access File_Selection_Context) return Boolean is
    begin
-      return Dir_Name (Context.File) /= "";
+      return Dir_Name (Context.File).all /= "";
    end Has_Directory_Information;
 
    ---------------------------
@@ -342,7 +342,7 @@ package body Glide_Kernel.Modules is
    function Directory_Information
      (Context : access File_Selection_Context) return String is
    begin
-      return Dir_Name (Context.File);
+      return Dir_Name (Context.File).all;
    end Directory_Information;
 
    --------------------------
@@ -1218,9 +1218,9 @@ package body Glide_Kernel.Modules is
          Init (Value (1),  Glib.GType_String);
 
          if Normalize then
-            Set_String (Value (1), Full_Name (File, Normalize => True));
+            Set_String (Value (1), Full_Name (File, Normalize => True).all);
          else
-            Set_String (Value (1), Full_Name (File));
+            Set_String (Value (1), Full_Name (File).all);
          end if;
 
          if not Mime_Action
@@ -1367,7 +1367,7 @@ package body Glide_Kernel.Modules is
       Init (Value (7),  Glib.GType_Pointer);
       Set_String (Value (1), Identifier);
       Set_String (Value (2), Category);
-      Set_String (Value (3), Full_Name (File, Normalize => True));
+      Set_String (Value (3), Full_Name (File, Normalize => True).all);
       Set_Int (Value (4), Gint (Line));
       Set_Int (Value (5), Gint (Column));
       Set_String (Value (6), Message);
@@ -1440,7 +1440,7 @@ package body Glide_Kernel.Modules is
             Length : constant Integer := Integer'Max (0, Column_End - Column);
             Args   : Argument_List :=
               (new String'("edit"),
-               new String'(Full_Name (Filename)),
+               new String'(Full_Name (Filename).all),
                new String'(Image (Line)),
                new String'(Image (Column)),
                new String'(Image (Length)));
@@ -1451,7 +1451,7 @@ package body Glide_Kernel.Modules is
       end if;
 
       Init (Value (1), Glib.GType_String);
-      Set_String (Value (1), Full_Name (Filename));
+      Set_String (Value (1), Full_Name (Filename).all);
 
       Init (Value (2), Glib.GType_Int);
       Set_Int (Value (2), Gint (Line));
@@ -1488,7 +1488,7 @@ package body Glide_Kernel.Modules is
       Value : GValue_Array (1 .. 6);
    begin
       Init (Value (1), Glib.GType_String);
-      Set_String (Value (1), Full_Name (Filename));
+      Set_String (Value (1), Full_Name (Filename).all);
 
       Init (Value (2), Glib.GType_Int);
       Set_Int (Value (2), -1);
@@ -1524,7 +1524,7 @@ package body Glide_Kernel.Modules is
       Enable_Navigation : Boolean := True)
    is
       Value  : GValue_Array (1 .. 3);
-      Full   : constant String := Full_Name (Filename);
+      Full   : constant String := Full_Name (Filename).all;
       Anchor : Natural := Index (Full, "#");
    begin
       if Anchor = 0 then
@@ -1570,13 +1570,13 @@ package body Glide_Kernel.Modules is
 
    begin
       Init (Value (1), Glib.GType_String);
-      Set_String (Value (1), Full_Name (Orig_File));
+      Set_String (Value (1), Full_Name (Orig_File).all);
 
       Init (Value (2), Glib.GType_String);
-      Set_String (Value (2), Full_Name (New_File));
+      Set_String (Value (2), Full_Name (New_File).all);
 
       Init (Value (3), Glib.GType_String);
-      Set_String (Value (3), Full_Name (Diff_File));
+      Set_String (Value (3), Full_Name (Diff_File).all);
 
       Success := Mime_Action (Kernel, Mime_Diff_File, Value);
 
@@ -1603,7 +1603,7 @@ package body Glide_Kernel.Modules is
 
          if Lib_Info = No_LI_File then
             Trace (Me, "Couldn't find LI file for "
-                   & Full_Name (File_Information (Context)));
+                   & Full_Name (File_Information (Context)).all);
          else
             Find_Declaration_Or_Overloaded
               (Kernel      => Get_Kernel (Context),

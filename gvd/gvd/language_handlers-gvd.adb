@@ -83,7 +83,7 @@ package body Language_Handlers.GVD is
      (Handler : access GVD_Language_Handler_Record;
       Source_Filename : VFS.Virtual_File) return Language.Language_Access
    is
-      Base : constant String := Base_Name (Source_Filename);
+      Base : constant String := Base_Name (Source_Filename).all;
    begin
       if Handler.Languages /= null then
          for Index in Handler.Languages'Range loop
@@ -107,7 +107,7 @@ package body Language_Handlers.GVD is
      (Handler : access GVD_Language_Handler_Record;
       Source_Filename : VFS.Virtual_File) return String
    is
-      Base : constant String := Base_Name (Source_Filename);
+      Base : constant String := Base_Name (Source_Filename).all;
    begin
       if Handler.Languages /= null then
          for Index in Handler.Languages'Range loop

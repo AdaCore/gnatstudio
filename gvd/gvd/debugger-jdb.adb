@@ -645,7 +645,7 @@ package body Debugger.Jdb is
       pragma Unreferenced (Temporary);
       Str : constant String := Positive'Image (Line);
       Pos : Positive;
-      Base : constant String := Base_Name (File);
+      Base : constant String := Base_Name (File).all;
 
    begin
       Pos := Base'Last;

@@ -632,7 +632,8 @@ package body Src_Editor_Buffer is
         (Buffer,
          Create
            (Full_Filename =>
-              Dir_Name (Buffer.Filename) & ".#" & Base_Name (Buffer.Filename)),
+              Dir_Name (Buffer.Filename).all
+              & ".#" & Base_Name (Buffer.Filename).all),
          True,
          Success);
       Buffer.Modified_Auto := False;
@@ -709,8 +710,8 @@ package body Src_Editor_Buffer is
 
          if Buffer.Filename /= VFS.No_File then
             Delete_File
-              (Dir_Name (Buffer.Filename) & ".#" &
-               Base_Name (Buffer.Filename), Result);
+              (Dir_Name (Buffer.Filename).all & ".#" &
+               Base_Name (Buffer.Filename).all, Result);
          end if;
       end if;
 
@@ -1970,7 +1971,7 @@ package body Src_Editor_Buffer is
 
       if Contents = null then
          Trace (Me, "Load_File: Couldn't read contents of "
-                & Full_Name (Filename));
+                & Full_Name (Filename).all);
          Success := False;
          return;
       end if;
@@ -2151,7 +2152,7 @@ package body Src_Editor_Buffer is
          begin
             Buttons := Message_Dialog
               (Msg            => -"The file "
-                 & Base_Name (Filename) & ASCII.LF
+                 & Base_Name (Filename).all & ASCII.LF
                  & (-"is read-only. Do you want to overwrite it ?"),
                Dialog_Type    => Confirmation,
                Buttons        => Button_Yes or Button_No,
@@ -2171,7 +2172,7 @@ package body Src_Editor_Buffer is
       if FD = Invalid_FD then
          Insert
            (Buffer.Kernel,
-            -"Could not open file for writing: " & Full_Name (Filename),
+            -"Could not open file for writing: " & Full_Name (Filename).all,
             Mode => Error);
          Success := False;
          return;
@@ -2338,8 +2339,8 @@ package body Src_Editor_Buffer is
 
       if Buffer.Filename /= VFS.No_File then
          Delete (Create (Full_Filename =>
-                           Dir_Name (Buffer.Filename)
-                           & ".#" & Base_Name (Buffer.Filename)));
+                           Dir_Name (Buffer.Filename).all
+                           & ".#" & Base_Name (Buffer.Filename).all));
       end if;
 
       Set_Modified (Buffer, False);
@@ -2494,7 +2495,8 @@ package body Src_Editor_Buffer is
    begin
       if not Is_Valid_Position (Buffer, Line, Column) then
          Trace (Me, "invalid position for Set_Cursor_Position "
-                & Full_Name (Get_Filename (Buffer)) & Line'Img & Column'Img);
+                & Full_Name (Get_Filename (Buffer)).all
+                & Line'Img & Column'Img);
          return;
       end if;
 
@@ -2541,7 +2543,7 @@ package body Src_Editor_Buffer is
    begin
       Assert (Me, Is_Valid_Position (Buffer, Line, 0),
               "Invalid position for Set_Screen_Position "
-              & Full_Name (Get_Filename (Buffer)) & Line'Img);
+              & Full_Name (Get_Filename (Buffer)).all & Line'Img);
 
       Get_Iter_At_Line_Offset (Buffer, Iter, Line, 0);
 
@@ -3281,7 +3283,7 @@ package body Src_Editor_Buffer is
                end if;
 
                Dialog := Create_Gtk_Dialog
-                 (Msg         => Base_Name (Buffer.Filename)
+                 (Msg         => Base_Name (Buffer.Filename).all
                   & (-" changed on disk. Really edit ?")
                   & ASCII.LF & ASCII.LF
                   & (-"Clicking on Yes will ignore the file on disk and " &

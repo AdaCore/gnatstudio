@@ -461,7 +461,7 @@ package body VCS_View_Pkg is
          Found := False;
 
          while List_Temp /= Null_Node and then not Found loop
-            if Full_Name (File) = String_List.Head
+            if Full_Name (File).all = String_List.Head
               (Data (List_Temp).Status.File_Name)
             then
                --  The data was found in the list, override it.
@@ -481,7 +481,7 @@ package body VCS_View_Pkg is
             List_Temp := First (Page.Stored_Status);
 
             while List_Temp /= Null_Node loop
-               if Full_Name (File) = String_List.Head
+               if Full_Name (File).all = String_List.Head
                  (Data (List_Temp).Status.File_Name)
                then
                   --  The data was found in the list, override it.
@@ -597,7 +597,7 @@ package body VCS_View_Pkg is
             while not Found
               and then Cache_Temp /= Null_Node
             loop
-               if Full_Name (File) =
+               if Full_Name (File).all =
                  String_List.Head (Data (Cache_Temp).Status.File_Name)
                then
                   --  We have found an entry in the cache with the
@@ -813,7 +813,7 @@ package body VCS_View_Pkg is
    begin
       while Iter /= Null_Iter loop
          if Get_String (Explorer.Model, Iter, Name_Column) =
-           Full_Name (Name)
+           Full_Name (Name).all
          then
             return Iter;
          end if;
@@ -1165,7 +1165,7 @@ package body VCS_View_Pkg is
 
                while Cache_Node /= Null_Node loop
                   if String_List.Head
-                    (Data (Cache_Node).Status.File_Name) = Full_Name (File)
+                    (Data (Cache_Node).Status.File_Name) = Full_Name (File).all
                   then
                      --  The file was found in the cache, update it.
                      Set_Data (Cache_Node,
@@ -1175,7 +1175,7 @@ package body VCS_View_Pkg is
                      Stored_Node := First (Page.Stored_Status);
 
                      while Stored_Node /= Null_Node loop
-                        if Full_Name (File) = String_List.Head
+                        if Full_Name (File).all = String_List.Head
                           (Data (Stored_Node).Status.File_Name)
                         then
                            Set_Data (Stored_Node,
@@ -1470,7 +1470,7 @@ package body VCS_View_Pkg is
               Get_Current_File (Get_Current_Context (Kernel));
          begin
             if File /= VFS.No_File then
-               String_List.Append (Result, Full_Name (File));
+               String_List.Append (Result, Full_Name (File).all);
             end if;
          end;
       end if;

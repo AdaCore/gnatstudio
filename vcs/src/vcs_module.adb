@@ -660,7 +660,7 @@ package body VCS_Module is
       Ref    : VCS_Access;
 
    begin
-      Append (Files, Full_Name (File));
+      Append (Files, Full_Name (File).all);
       Ref    := Get_Current_Ref
         (Get_Project_From_File (Get_Registry (Kernel), File, True));
 

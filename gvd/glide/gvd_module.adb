@@ -328,7 +328,7 @@ package body GVD_Module is
       if Exec /= VFS.No_File then
          Project := Create_Project
            (Project_Registry (Get_Registry (Kernel)),
-            "debugger_" & Base_Name (Exec),
+            "debugger_" & Base_Name (Exec).all,
             GNAT.Directory_Operations.Get_Current_Dir);
       else
          Project := Create_Project
@@ -422,14 +422,14 @@ package body GVD_Module is
               (Project,
                Scenario_Variables => No_Scenario,
                Attribute          => Obj_Dir_Attribute,
-               Value              => Dir_Name (Exec));
+               Value              => Dir_Name (Exec).all);
             Update_Attribute_Value_In_Scenario
               (Project,
                Scenario_Variables => No_Scenario,
                Attribute          => Exec_Dir_Attribute,
-               Value              => Dir_Name (Exec));
+               Value              => Dir_Name (Exec).all);
 
-            Main (Main'First) := new String'(Full_Name (Exec));
+            Main (Main'First) := new String'(Full_Name (Exec).all);
             Update_Attribute_Value_In_Scenario
               (Project,
                Scenario_Variables => No_Scenario,
@@ -815,11 +815,12 @@ package body GVD_Module is
            or else Is_Regular_File (S)
          then
             Add_Symbols
-              (Process.Debugger, Full_Name (S),
+              (Process.Debugger, Full_Name (S).all,
                Mode => GVD.Types.Visible);
          else
-            Console.Insert (Kernel, (-"Could not find file: ") & Full_Name (S),
-                            Mode => Error);
+            Console.Insert
+              (Kernel, (-"Could not find file: ") & Full_Name (S).all,
+               Mode => Error);
          end if;
       end;
 
@@ -1022,7 +1023,7 @@ package body GVD_Module is
          end if;
 
          if not Is_Regular_File (S) then
-            Exec := Locate_Exec_On_Path (Base_Name (S));
+            Exec := Locate_Exec_On_Path (Base_Name (S).all);
 
             if Exec /= null then
                S := Create (Full_Filename => Exec.all);
@@ -1034,21 +1035,22 @@ package body GVD_Module is
                Free (Exec);
             else
                Console.Insert
-                 (Kernel, (-"Could not find file: ") & Base_Name (S),
+                 (Kernel, (-"Could not find file: ") & Base_Name (S).all,
                   Mode => Error);
                S := VFS.No_File;
             end if;
          end if;
 
          if S /= No_File then
-            Set_Executable (Process.Debugger, Full_Name (S), Mode => Hidden);
-            Change_Dir (Dir_Name (S));
+            Set_Executable
+              (Process.Debugger, Full_Name (S).all, Mode => Hidden);
+            Change_Dir (Dir_Name (S).all);
          end if;
 
       exception
          when Executable_Not_Found =>
             Console.Insert
-              (Kernel, (-"Could not find file: ") & Full_Name (S),
+              (Kernel, (-"Could not find file: ") & Full_Name (S).all,
                Mode => Error);
       end;
 
@@ -1092,11 +1094,11 @@ package body GVD_Module is
          if Process.Descriptor.Remote_Host /= null
            or else Is_Regular_File (S)
          then
-            Load_Core_File (Process.Debugger, Full_Name (S),
+            Load_Core_File (Process.Debugger, Full_Name (S).all,
                             Mode => GVD.Types.Visible);
          else
             Console.Insert
-              (Kernel, (-"Could not find core file: ") & Full_Name (S),
+              (Kernel, (-"Could not find core file: ") & Full_Name (S).all,
                Mode => Error);
          end if;
       end;
@@ -1408,7 +1410,7 @@ package body GVD_Module is
 
       if Data.File /= No_File then
          Module := new String'
-           (Full_Name (Data.File));
+           (Full_Name (Data.File).all);
 
       elsif Top.Program_Args /= null then
          Blank_Pos := Ada.Strings.Fixed.Index (Top.Program_Args.all, " ");

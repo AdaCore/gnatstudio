@@ -734,7 +734,7 @@ package body External_Editor_Module is
    begin
       Push_State (Get_Kernel (File), Busy);
       Trace (Me, "Edit file with external editor "
-             & Full_Name (File_Information (File)));
+             & Full_Name (File_Information (File)).all);
 
       if Context.all in Entity_Selection_Context'Class then
          Line := Line_Information (Entity_Selection_Context_Access (Context));
@@ -744,7 +744,7 @@ package body External_Editor_Module is
 
       Client_Command
         (Kernel => Get_Kernel (Context),
-         File   => Full_Name (File_Information (File)),
+         File   => Full_Name (File_Information (File)).all,
          Line   => Line,
          Column => Column);
       Pop_State (Get_Kernel (File));

@@ -144,7 +144,7 @@ package body GVD.Text_Box.Source_Editor.Glide is
 
       declare
          Args : GNAT.OS_Lib.Argument_List (1 .. 2) :=
-           (1 => new String'(Full_Name (Editor.Debugger_Current_File)),
+           (1 => new String'(Full_Name (Editor.Debugger_Current_File).all),
             2 => new String'(Highlight_Category));
       begin
          Execute_GPS_Shell_Command (Kernel, "unhighlight", Args);
@@ -157,7 +157,7 @@ package body GVD.Text_Box.Source_Editor.Glide is
       if Editor.Line /= 0 then
          declare
             Args : GNAT.OS_Lib.Argument_List (1 .. 3) :=
-              (1 => new String'(Full_Name (Editor.Debugger_Current_File)),
+              (1 => new String'(Full_Name (Editor.Debugger_Current_File).all),
                2 => new String'(Highlight_Category),
                3 => new String'(Editor.Line'Img));
          begin
@@ -170,7 +170,8 @@ package body GVD.Text_Box.Source_Editor.Glide is
       end if;
 
       Add_Unique_Sorted
-        (Editor.Highlighted_Files, Full_Name (Editor.Debugger_Current_File));
+        (Editor.Highlighted_Files,
+         Full_Name (Editor.Debugger_Current_File).all);
    end Highlight_Current_Line;
 
    --------------------
@@ -288,7 +289,7 @@ package body GVD.Text_Box.Source_Editor.Glide is
       Open_File_Editor
         (Kernel, Editor.Current_File, Editor.Line, 1, New_File => False);
       Append (Editor.Highlighted_Files,
-              Full_Name (Editor.Debugger_Current_File));
+              Full_Name (Editor.Debugger_Current_File).all);
 
       if Set_Current then
          Add_Line_Information

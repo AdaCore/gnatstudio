@@ -635,7 +635,7 @@ package body VCS_View_API is
       then
          declare
             File_S : constant String :=
-              Full_Name (File_Information (File_Name));
+              Full_Name (File_Information (File_Name)).all;
          begin
             if File_S'Length > 4
               and then File_S (File_S'Last - 3 .. File_S'Last) = "$log"
@@ -652,7 +652,7 @@ package body VCS_View_API is
                           (Get_Registry (Kernel), Original));
 
                      Gtk_New (Item, Label => -"Commit file "
-                              & Locale_To_UTF8 (Base_Name (Original)));
+                              & Locale_To_UTF8 (Base_Name (Original).all));
 
                      Append (Menu, Item);
                      Context_Callback.Connect
@@ -1073,7 +1073,7 @@ package body VCS_View_API is
          else
             if Has_File_Information (File) then
                String_List.Append
-                 (List, Full_Name (File_Information (File)));
+                 (List, Full_Name (File_Information (File)).all);
             end if;
          end if;
       end if;
@@ -1252,7 +1252,7 @@ package body VCS_View_API is
                      Cancel_All := True;
                      Insert (Kernel,
                              (-"File could not be read: ")
-                             & Full_Name (Log_File));
+                             & Full_Name (Log_File).all);
 
                      Free (File_Args);
                      Free (Log_Args);
@@ -1261,7 +1261,7 @@ package body VCS_View_API is
 
                   elsif S.all = "" then
                      if Message_Dialog
-                       ((-"File: ") & Full_Name (File)
+                       ((-"File: ") & Full_Name (File).all
                         & ASCII.LF & ASCII.LF &
                           (-"The revision log for this file is empty,")
                         & ASCII.LF &
@@ -1284,9 +1284,9 @@ package body VCS_View_API is
 
                   GNAT.OS_Lib.Free (S);
 
-                  Append (Log_Args, Full_Name (Log_File));
+                  Append (Log_Args, Full_Name (Log_File).all);
                   Append
-                    (Head_List, -"File: " & Full_Name (File) & ASCII.LF
+                    (Head_List, -"File: " & Full_Name (File).all & ASCII.LF
                      & (-"The revision log does not pass the checks."));
 
                   Create
@@ -1461,7 +1461,7 @@ package body VCS_View_API is
                     Get_File_From_Log (Kernel, Create (Full_Filename => S));
                begin
                   if L /= VFS.No_File then
-                     Append (Files, Full_Name (L));
+                     Append (Files, Full_Name (L).all);
                   end if;
                end;
             else
@@ -2370,7 +2370,7 @@ package body VCS_View_API is
       Files := Get_Source_Files (Project, Recursive);
 
       for J in reverse Files.all'Range loop
-         String_List.Prepend (Result, Full_Name (Files (J)));
+         String_List.Prepend (Result, Full_Name (Files (J)).all);
       end loop;
 
       Unchecked_Free (Files);
@@ -2659,7 +2659,7 @@ package body VCS_View_API is
 
       Full := Create (File, Kernel, Use_Object_Path => False);
 
-      if Dir_Name (Full) = "" then
+      if Dir_Name (Full).all = "" then
          Insert (Kernel, -"Could not find file: " & File, Mode => Error);
          return;
       end if;
@@ -2695,7 +2695,7 @@ package body VCS_View_API is
          return;
       end if;
 
-      String_List.Append (Files, Full_Name (Full));
+      String_List.Append (Files, Full_Name (Full).all);
 
       --  Process the command.
 

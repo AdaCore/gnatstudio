@@ -669,7 +669,7 @@ package body Glide_Kernel.Scripts is
             if Lib_Info = No_LI_File then
                Set_Error_Msg
                  (Data, -"Xref information not found for: """
-                  & Full_Name (Get_File (F)) & '"');
+                  & Full_Name (Get_File (F)).all & '"');
                return;
             end if;
 
@@ -767,7 +767,7 @@ package body Glide_Kernel.Scripts is
 
       elsif Command = "name" then
          Info     := Get_Data (Instance);
-         Set_Return_Value (Data, Full_Name (Info.File));
+         Set_Return_Value (Data, Full_Name (Info.File).all);
 
       elsif Command = "project" then
          Info     := Get_Data (Instance);

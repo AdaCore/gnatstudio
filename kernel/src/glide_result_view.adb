@@ -206,7 +206,7 @@ package body Glide_Result_View is
       Length   : Natural := 0) return String
    is
       Args : GNAT.OS_Lib.Argument_List :=
-        (1 => new String'(Full_Name (Filename)),
+        (1 => new String'(Full_Name (Filename).all),
          2 => new String'(Image (Line)),
          3 => new String'(Image (Column)),
          4 => new String'(Image (Length)));
@@ -229,7 +229,7 @@ package body Glide_Result_View is
       Highlight          : Boolean := True)
    is
       Args    : GNAT.OS_Lib.Argument_List (1 .. 3) :=
-        (1 => new String'(Full_Name (Filename)),
+        (1 => new String'(Full_Name (Filename).all),
          2 => new String'(Highlight_Category),
          3 => new String'(Line'Img));
       Command : GNAT.OS_Lib.String_Access;
@@ -384,12 +384,13 @@ package body Glide_Result_View is
       Model : constant Gtk_Tree_Store := View.Tree.Model;
    begin
       if Base_Name = "" then
-         Set (Model, Iter, Base_Name_Column, VFS.Base_Name (Absolute_Name));
+         Set
+           (Model, Iter, Base_Name_Column, VFS.Base_Name (Absolute_Name).all);
       else
          Set (Model, Iter, Base_Name_Column, Base_Name);
       end if;
 
-      Set (Model, Iter, Absolute_Name_Column, Full_Name (Absolute_Name));
+      Set (Model, Iter, Absolute_Name_Column, Full_Name (Absolute_Name).all);
       Set (Model, Iter, Message_Column,
            Glib.Convert.Locale_To_UTF8 (Message));
       Set (Model, Iter, Mark_Column, Mark);
@@ -556,7 +557,7 @@ package body Glide_Result_View is
 
       while File_Iter /= Null_Iter loop
          if Get_String (View.Tree.Model, File_Iter, Absolute_Name_Column) =
-           Full_Name (File)
+           Full_Name (File).all
          then
             return;
          end if;
@@ -946,7 +947,7 @@ package body Glide_Result_View is
    begin
       --  Transform Source_File in an absolute file name if needed.
 
-      if GNAT.OS_Lib.Is_Absolute_Path (Full_Name (Source_File)) then
+      if Is_Absolute_Path (Source_File) then
          Add_Location
            (View, Identifier, Source_File,
             Source_Line, Source_Column, Length, Highlight, Message);

@@ -222,7 +222,7 @@ package body VCS.ClearCase is
       File         : File_Type;
 
    begin
-      Create (File, Name => Full_Name (Text_File));
+      Create (File, Name => Full_Name (Text_File).all);
 
       while L_Temp /= Null_Node loop
          Put (File, Data (L_Temp));
@@ -271,11 +271,12 @@ package body VCS.ClearCase is
       Current_File : constant Virtual_File :=
         Create (Full_Filename => String_List.Head (Head));
       Patch_File   : constant Virtual_File := Create
-        (Full_Filename => Get_Tmp_Dir & Base_Name (Current_File) & "$difs");
+        (Full_Filename =>
+           Get_Tmp_Dir & Base_Name (Current_File).all & "$difs");
       File         : File_Type;
 
    begin
-      Create (File, Name => Full_Name (Patch_File));
+      Create (File, Name => Full_Name (Patch_File).all);
 
       while L_Temp /= Null_Node loop
          Put (File, Data (L_Temp));
@@ -285,7 +286,8 @@ package body VCS.ClearCase is
       Close (File);
       Insert
         (Kernel,
-           -"ClearCase: Got comparison for file " & Full_Name (Current_File),
+           -"ClearCase: Got comparison for file "
+           & Full_Name (Current_File).all,
          Mode => Verbose);
 
       Display_Differences
@@ -443,9 +445,10 @@ package body VCS.ClearCase is
             begin
                for J in S'Range loop
                   if S (J) /= No_File
-                    and then not GNAT.OS_Lib.Is_Directory (Full_Name (S (J)))
+                    and then not GNAT.OS_Lib.Is_Directory
+                      (Full_Name (S (J)).all)
                   then
-                     Status (Full_Name (S (J)));
+                     Status (Full_Name (S (J)).all);
                   end if;
                end loop;
 
@@ -638,10 +641,11 @@ package body VCS.ClearCase is
             begin
                for J in S'Range loop
                   if S (J) /= No_File
-                    and then not GNAT.OS_Lib.Is_Directory (Full_Name (S (J)))
+                    and then not GNAT.OS_Lib.Is_Directory
+                      (Full_Name (S (J)).all)
                   then
                      File_Status_List.Append
-                       (Result, Status (Full_Name (S (J))));
+                       (Result, Status (Full_Name (S (J)).all));
                   end if;
                end loop;
 
@@ -691,13 +695,13 @@ package body VCS.ClearCase is
          begin
             Insert (Kernel,
                     -"ClearCase: Checking out element: "
-                    & Full_Name (File) & " ...", Mode => Info);
+                    & Full_Name (File).all & " ...", Mode => Info);
 
             --  Create the end of the message.
 
             Create (Fail_Message,
                     Kernel,
-                    -("Checkout of ") & Full_Name (File) & (-" failed."),
+                    -("Checkout of ") & Full_Name (File).all & (-" failed."),
                     False,
                     True,
                     Info);
@@ -714,11 +718,11 @@ package body VCS.ClearCase is
 
             --  ??? Must provide a way for the user to change this
             --  log message !
-            Append (Args, -"GPS checking out " & Full_Name (File));
-            Append (Args, Full_Name (File));
+            Append (Args, -"GPS checking out " & Full_Name (File).all);
+            Append (Args, Full_Name (File).all);
 
             Append (Head, -"ClearCase error: could not checkout "
-                    & Full_Name (File));
+                    & Full_Name (File).all);
 
             Create (Checkout_File_Command,
                     Kernel,
@@ -1474,14 +1478,14 @@ package body VCS.ClearCase is
    begin
       Insert (Kernel,
               -"ClearCase: getting differences for "
-                & Full_Name (File) & " ...", Mode => Info);
+                & Full_Name (File).all & " ...", Mode => Info);
 
       --  Create the end of the message.
 
       Create (Fail_Message,
               Kernel,
               -("ClearCase error: comparison of ")
-              & Full_Name (File) & (-" failed."),
+              & Full_Name (File).all & (-" failed."),
               False,
               True,
               Info);
@@ -1489,7 +1493,7 @@ package body VCS.ClearCase is
       Create (Success_Message,
               Kernel,
               -("ClearCase: comparison of ")
-              & Full_Name (File) & (-" done."),
+              & Full_Name (File).all & (-" done."),
               False,
               True,
               Info);
@@ -1502,24 +1506,24 @@ package body VCS.ClearCase is
       then
          --  If no version is specified, we assume that
          --  we want differences with the latest version.
-         Append (Args, Full_Name (File));
-         Append (Args, Full_Name (File) & "@@/main/LATEST");
+         Append (Args, Full_Name (File).all);
+         Append (Args, Full_Name (File).all & "@@/main/LATEST");
 
       else
          if Version_2 = "" then
-            Append (Args, Full_Name (File));
+            Append (Args, Full_Name (File).all);
          else
-            Append (Args, Full_Name (File) & "@@" & Version_2);
+            Append (Args, Full_Name (File).all & "@@" & Version_2);
          end if;
 
          if Version_1 = "" then
-            Append (Args, Full_Name (File));
+            Append (Args, Full_Name (File).all);
          else
-            Append (Args, Full_Name (File) & "@@" & Version_1);
+            Append (Args, Full_Name (File).all & "@@" & Version_1);
          end if;
       end if;
 
-      Append (Head, Full_Name (File));
+      Append (Head, Full_Name (File).all);
 
       Create (Diff_File_Command,
               Kernel,
@@ -1561,15 +1565,15 @@ package body VCS.ClearCase is
       Args         : List;
    begin
       Append (Args, "lshistory");
-      Append (Args, Full_Name (File));
+      Append (Args, Full_Name (File).all);
 
-      Append (Command_Head, Base_Name (File) & "$changelog");
+      Append (Command_Head, Base_Name (File).all & "$changelog");
 
       Create
         (C,
          Rep.Kernel,
          Get_Pref (Rep.Kernel, ClearCase_Command),
-         Dir_Name (File),
+         Dir_Name (File).all,
          Args,
          Command_Head,
          Text_Output_Handler'Access,
@@ -1607,14 +1611,14 @@ package body VCS.ClearCase is
       Append (Args, "-out");
       Append (Args, "-");
 
-      Append (Args, Full_Name (File));
-      Append (Command_Head, Full_Name (File));
+      Append (Args, Full_Name (File).all);
+      Append (Command_Head, Full_Name (File).all);
 
       Create
         (C,
          Rep.Kernel,
          Get_Pref (Rep.Kernel, ClearCase_Command),
-         Dir_Name (File),
+         Dir_Name (File).all,
          Args,
          Command_Head,
          Annotation_Output_Handler'Access,

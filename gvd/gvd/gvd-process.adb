@@ -2020,7 +2020,7 @@ package body GVD.Process is
          --  Set the label text.
          Set_Title
            (Find_MDI_Child (Process.Window.Process_Mdi, Process.Editor_Text),
-            Base_Name (Get_Current_File (Process.Editor_Text)));
+            Base_Name (Get_Current_File (Process.Editor_Text)).all);
       end if;
    end Update_Editor_Frame;
 

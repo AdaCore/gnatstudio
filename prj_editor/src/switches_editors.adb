@@ -1368,7 +1368,7 @@ package body Switches_Editors is
                      Attribute          =>
                        Build (Page.Pkg.all, Get_String (Name_Switches)),
                      Values             => Args,
-                     Attribute_Index    => Base_Name (File_Name),
+                     Attribute_Index    => Base_Name (File_Name).all,
                      Prepend            => False);
                else
                   Delete_Attribute
@@ -1376,7 +1376,7 @@ package body Switches_Editors is
                      Scenario_Variables => Scenario_Variables,
                      Attribute          =>
                        Build (Page.Pkg.all, Get_String (Name_Switches)),
-                     Attribute_Index    => Base_Name (File_Name));
+                     Attribute_Index    => Base_Name (File_Name).all);
                end if;
 
             elsif Args'Length /= 0 then

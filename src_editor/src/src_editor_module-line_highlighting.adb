@@ -72,7 +72,8 @@ package body Src_Editor_Module.Line_Highlighting is
                end if;
             else
                Set_Error_Msg
-                 (Data, -"File editor not found for file " & Full_Name (File));
+                 (Data, -"File editor not found for file "
+                  & Full_Name (File).all);
             end if;
          end;
 
@@ -128,7 +129,8 @@ package body Src_Editor_Module.Line_Highlighting is
                end if;
             else
                Set_Error_Msg
-                 (Data, -"File editor not found for file " & Full_Name (File));
+                 (Data, -"File editor not found for file "
+                  & Full_Name (File).all);
             end if;
          end;
       end if;

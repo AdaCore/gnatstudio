@@ -1032,13 +1032,14 @@ package body VCS.CVS is
       Current_File : constant Virtual_File :=
         Create (Full_Filename => String_List.Head (Head));
       Patch_File   : constant Virtual_File := Create
-        (Full_Filename => Get_Tmp_Dir & Base_Name (Current_File) & "$difs");
-      Full       : constant String := Full_Name (Current_File);
+        (Full_Filename =>
+           Get_Tmp_Dir & Base_Name (Current_File).all & "$difs");
+      Full       : constant String := Full_Name (Current_File).all;
       Num_Lines    : Natural := 0;
       File         : File_Type;
 
    begin
-      Create (File, Name => Full_Name (Patch_File));
+      Create (File, Name => Full_Name (Patch_File).all);
 
       while L_Temp /= Null_Node loop
          Num_Lines := Num_Lines + 1;
@@ -1138,7 +1139,7 @@ package body VCS.CVS is
             C_2       : External_Command_Access;
             Args_2    : List;
             Orig_File : constant String :=
-              Get_Tmp_Dir & Base_Name (File) & "$orig";
+              Get_Tmp_Dir & Base_Name (File).all & "$orig";
 
          begin
             Append (Command_Head, Orig_File);
@@ -1151,7 +1152,7 @@ package body VCS.CVS is
             Create (C_2,
                     Rep.Kernel,
                     Get_Pref (Rep.Kernel, CVS_Command),
-                    Dir_Name (File),
+                    Dir_Name (File).all,
                     Args_2,
                     Command_Head,
                     Intermediate_Diff_Handler'Access,
@@ -1170,21 +1171,21 @@ package body VCS.CVS is
          Append (Args, "-rHEAD");
       end if;
 
-      Append (Args, Base_Name (File));
+      Append (Args, Base_Name (File).all);
 
       if Is_Empty (Command_Head) then
-         Append (Command_Head, Full_Name (File));
+         Append (Command_Head, Full_Name (File).all);
       end if;
 
       Insert (Rep.Kernel,
               -"CVS: Getting comparison for file "
-              & Full_Name (File) & "...",
+              & Full_Name (File).all & "...",
               Mode => Verbose);
 
       Create (C,
               Rep.Kernel,
               Get_Pref (Rep.Kernel, CVS_Command),
-              Dir_Name (File),
+              Dir_Name (File).all,
               Args,
               Command_Head,
               Diff_Handler'Access,
@@ -1227,7 +1228,7 @@ package body VCS.CVS is
          Insert
            (Kernel,
             -"CVS: No annotations available for file "
-            & Full_Name (Current_File),
+            & Full_Name (Current_File).all,
             Mode => Verbose);
          return False;
       end if;
@@ -1282,11 +1283,11 @@ package body VCS.CVS is
       Current_File : constant Virtual_File :=
         Create (Full_Filename => String_List.Head (Head));
       Text_File    : constant Virtual_File :=
-        Create (Full_Filename => Get_Tmp_Dir & Base_Name (Current_File));
+        Create (Full_Filename => Get_Tmp_Dir & Base_Name (Current_File).all);
       File         : File_Type;
 
    begin
-      Create (File, Name => Full_Name (Text_File));
+      Create (File, Name => Full_Name (Text_File).all);
 
       while L_Temp /= Null_Node loop
          Put (File, Data (L_Temp));
@@ -1317,13 +1318,13 @@ package body VCS.CVS is
    begin
       Append (Args, "log");
       Append (Args, Locale_Base_Name (File));
-      Append (Command_Head, Base_Name (File) & "$changelog");
+      Append (Command_Head, Base_Name (File).all & "$changelog");
 
       Create
         (C,
          Rep.Kernel,
          Get_Pref (Rep.Kernel, CVS_Command),
-         Dir_Name (File),
+         Dir_Name (File).all,
          Args,
          Command_Head,
          Text_Output_Handler'Access,
@@ -1353,13 +1354,13 @@ package body VCS.CVS is
    begin
       Append (Args, "annotate");
       Append (Args, Locale_Base_Name (File));
-      Append (Command_Head, Full_Name (File));
+      Append (Command_Head, Full_Name (File).all);
 
       Create
         (C,
          Rep.Kernel,
          Get_Pref (Rep.Kernel, CVS_Command),
-         Dir_Name (File),
+         Dir_Name (File).all,
          Args,
          Command_Head,
          Annotation_Output_Handler'Access,

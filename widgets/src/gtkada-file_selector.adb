@@ -491,7 +491,7 @@ package body Gtkada.File_Selector is
          begin
             Destroy (File_Selector);
             Free (Last_Directory);
-            Last_Directory := new String'(Dir_Name (File));
+            Last_Directory := new String'(Dir_Name (File).all);
 
             return File;
          end;

@@ -125,8 +125,8 @@ package body Project_Explorers_Common is
    begin
       Append (Model, Iter, Base);
 
-      Set (Model, Iter, Absolute_Name_Column, Full_Name (File));
-      Set (Model, Iter, Base_Name_Column, Base_Name (File));
+      Set (Model, Iter, Absolute_Name_Column, Full_Name (File).all);
+      Set (Model, Iter, Base_Name_Column, Base_Name (File).all);
       Set (Model, Iter, Icon_Column, C_Proxy (Close_Pixbufs (File_Node)));
       Set (Model, Iter, Node_Type_Column, Gint (Node_Types'Pos (File_Node)));
       Set (Model, Iter, Up_To_Date_Column, False);
@@ -350,7 +350,7 @@ package body Project_Explorers_Common is
 
          Free (Constructs);
       else
-         Trace (Me, "No known language for " & Full_Name (File_Name));
+         Trace (Me, "No known language for " & Full_Name (File_Name).all);
       end if;
 
       Pop_State (Kernel);

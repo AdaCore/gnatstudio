@@ -267,11 +267,11 @@ package body Navigation_Module is
             Other_File : constant Virtual_File := Other_File_Name
               (Kernel, File_Information (File));
          begin
-            if Dir_Name (Other_File) /= "" then
+            if Dir_Name (Other_File).all /= "" then
                Open_File_Editor (Kernel, Other_File, Line => 0);
             else
                Trace (Me, "Other file not found for "
-                      & Full_Name (File_Information (File)));
+                      & Full_Name (File_Information (File)).all);
             end if;
          end;
       else
