@@ -662,6 +662,8 @@ package body Glide_Kernel.Modules is
       use type Widget_List.Glist;
       Children, Tmp : Widget_List.Glist;
       Label         : Gtk_Label;
+      New_Name      : String := Name;
+      Last          : Integer := New_Name'First;
 
    begin
       Menu_Item := null;
@@ -670,6 +672,18 @@ package body Glide_Kernel.Modules is
          Index := -1;
          return;
       end if;
+
+      for J in Name'Range loop
+         if Name (J) = '_' then
+            if J - 1 >= Name'First and then Name (J - 1) = '_' then
+               New_Name (Last) := '_';
+               Last := Last + 1;
+            end if;
+         else
+            New_Name (Last) := Name (J);
+            Last := Last + 1;
+         end if;
+      end loop;
 
       if Menu = null then
          Children := Get_Children (Menu_Bar);
@@ -687,7 +701,7 @@ package body Glide_Kernel.Modules is
            and then Get_Child (Menu_Item).all in Gtk_Label_Record'Class
          then
             Label := Gtk_Label (Get_Child (Menu_Item));
-            exit when Get_Text (Label) = Name;
+            exit when Get_Text (Label) = New_Name (New_Name'First .. Last - 1);
          end if;
 
          Index := Index + 1;
