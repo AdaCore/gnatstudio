@@ -67,11 +67,14 @@ begin
          begin
             --  this function is defined somewhere else...
             Decl_Info := Find_Dependency_Declaration
-              (Global_LI_File,
-               Method.Buffer (Method.Name.First .. Method.Name.Last),
-               Method.Buffer (Method.Class.First .. Method.Class.Last),
-               Method.Buffer (Method.File_Name.First .. Method.File_Name.Last),
-               Method.Start_Position);
+              (File              => Global_LI_File,
+               Symbol_Name       => Method.Buffer
+                 (Method.Name.First .. Method.Name.Last),
+               Class_Name        => Method.Buffer
+                 (Method.Class.First .. Method.Class.Last),
+               Filename          => Method.Buffer
+                 (Method.File_Name.First .. Method.File_Name.Last),
+               Location          => Method.Start_Position);
          exception
             when Declaration_Not_Found =>
                if Method.Buffer (Method.Return_Type.First ..

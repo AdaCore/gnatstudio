@@ -104,11 +104,12 @@ begin
          begin
             --  this function is defined somewhere else...
             Decl_Info := Find_Dependency_Declaration
-              (Global_LI_File,
-               Fn.Buffer (Fn.Name.First .. Fn.Name.Last),
-               "",
-               Fn.Buffer (Fn.File_Name.First .. Fn.File_Name.Last),
-               Fn.Start_Position);
+              (File                 => Global_LI_File,
+               Symbol_Name          => Fn.Buffer
+                 (Fn.Name.First .. Fn.Name.Last),
+               Filename             => Fn.Buffer
+                 (Fn.File_Name.First .. Fn.File_Name.Last),
+               Location             => Fn.Start_Position);
          exception
             when Declaration_Not_Found => -- insert dep decl
                Insert_Dependency_Declaration
