@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2003                       --
+--                     Copyright (C) 2001-2004                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
@@ -1065,7 +1065,7 @@ package body Help_Module is
            (-") hosted on ") & GVD.Target & LF &
          (-"GNAT ") & GNAT_Version (Kernel) & LF & LF &
          (-"the GNAT Programming System") & LF & Contents.all & LF &
-         "(c) 2001-2003 ACT-Europe",
+         "(c) 2001-2004 ACT-Europe",
          Buttons => Button_OK,
          Title   => -"About...",
          Parent  => Get_Main_Window (Kernel));
