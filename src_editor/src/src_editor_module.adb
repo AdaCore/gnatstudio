@@ -1332,7 +1332,7 @@ package body Src_Editor_Module is
         Get_Kernel (Source_Box (Widget).Editor);
    begin
       return Get_Ref_Count (Source_Box (Widget).Editor) = 1
-        and then Save_MDI_Children
+        and then not Save_MDI_Children
           (Kernel,
            Children => (1 => Find_MDI_Child (Get_MDI (Kernel), Widget)),
            Force => False);
