@@ -1231,7 +1231,6 @@ package body Main_Debug_Window_Pkg.Callbacks is
      (Object : access Gtk_Widget_Record'Class;
       Params : Gtk.Arguments.Gtk_Args)
    is
-      Print_Dialog : Print_Dialog_Access;
       Top : Main_Debug_Window_Access := Main_Debug_Window_Access (Object);
       Tab : Debugger_Process_Tab;
 
@@ -1240,10 +1239,14 @@ package body Main_Debug_Window_Pkg.Callbacks is
    begin
       Tab := Process_User_Data.Get
         (Get_Child (Get_Cur_Page (Top.Process_Notebook)));
-      Gtk_New (Print_Dialog);
+
+      if Top.Print_Dialog = null then
+         Gtk_New (Print_Dialog);
+      end if;
+
       Show_All (Print_Dialog);
       Main;
-      Destroy (Print_Dialog);
+      Hide (Print_Dialog);
 
       if Print_Dialog.Variable /= null then
          Process_User_Command
