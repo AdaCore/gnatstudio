@@ -6501,6 +6501,7 @@ or from the selected project recursively.
 
 You will find the list of all documentation options in
 @ref{The Preferences Dialog}.
+@end table
 
 @c --------------------------------------------------------------------
 @node Working in a Cross Environment
