@@ -278,7 +278,7 @@ package body Src_Info.CPP is
    begin
       if not Is_Open (Env.SN_Table (FIL)) then
          --  .fil table does not exist, no data available
-         Warn (".fil table does not exist, no data available");
+         Fail (".fil table does not exist: is SN DB generated already?");
          return;
       end if;
 
@@ -320,29 +320,67 @@ package body Src_Info.CPP is
          raise;
    end Process_File;
 
-   -----------------------
-   -- Generate_Database --
-   -----------------------
+   ------------------
+   -- Browse_Files --
+   ------------------
 
-   procedure Generate_Database
+   procedure Browse_Files
      (File_List              : String_List_Access;
       Project                : Prj.Project_Id;
       Predefined_Source_Path : String;
-      Predefined_Object_Path : String)
+      Predefined_Object_Path : String;
+      Regenerate             : Boolean := False)
    is
       pragma Unreferenced (Predefined_Source_Path);
       pragma Unreferenced (Predefined_Object_Path);
-      pragma Unreferenced (File_List);
-      pragma Unreferenced (Project);
 
-      --  SN_Dir      : constant String :=
-      --  Prj_API.Object_Path (Project, Recursive => False)
-      --  & Browse.DB_Dir_Name;
+      Xrefs : Xref_Pool := Empty_Xref_Pool;
+
+      SN_Dir      : constant String :=
+        Prj_API.Object_Path (Project, Recursive => False)
+        & Browse.DB_Dir_Name;
       --  SN project directory
 
+      Full_Filename : GNAT.OS_Lib.String_Access;
    begin
-      null;
-   end Generate_Database;
+      --  try to load xref pool
+      Load (Xrefs,
+        SN_Dir & Directory_Separator & Browse.Xref_Pool_Filename);
+
+      if Regenerate then
+         Browse.Delete_Database (SN_Dir);
+      end if;
+
+      for F in File_List.all'Range loop -- iterate thru files in list
+         Full_Filename := Locate_Regular_File
+           (File_List (F).all, Include_Path (Project, Recursive => True));
+
+         if Full_Filename = null then
+            Warn ("File not found: " & File_List (F).all);
+         else
+            declare
+               Real_Filename : String :=
+                 Normalize_Pathname (Full_Filename.all);
+            begin
+               if Real_Filename = "" then
+                  Warn ("Could not normalize file name " & Full_Filename.all);
+               else
+                  --  run cbrowser
+                  Browse.Browse (Full_Filename.all, SN_Dir, "cbrowser", Xrefs);
+               end if;
+            end;
+            Free (Full_Filename);
+         end if;
+
+      end loop;
+
+      --  save xref pool to file
+      Save (Xrefs, SN_Dir & Directory_Separator & Browse.Xref_Pool_Filename);
+
+      --  update .to and .by tables
+      Browse.Generate_Xrefs (SN_Dir);
+      Free (Xrefs);
+   end Browse_Files;
 
    ---------------------------
    -- Create_Or_Complete_LI --
@@ -373,18 +411,12 @@ package body Src_Info.CPP is
 
    begin
       if Full_Filename = null then
-         Trace (Warn_Stream, "File not found: " & Source_Filename);
+         Warn ("File not found: " & Source_Filename);
          return;
       end if;
 
-      Env.Xrefs  := Empty_Xref_Pool;
-      Env.DB_Dir := new String'(SN_Dir);
-
-      --  run cbrowser
-      Browse.Browse (Full_Filename.all, SN_Dir, "cbrowser", Env.Xrefs);
-
-      --  update .to and .by tables
-      Browse.Generate_Xrefs (SN_Dir);
+      Load (Env.Xrefs,
+        SN_Dir & Directory_Separator & Browse.Xref_Pool_Filename);
 
       Open_DB_Files
         (SN_Dir & Directory_Separator & Browse.DB_File_Name,
@@ -392,6 +424,7 @@ package body Src_Info.CPP is
 
       Env.File := File;
       Env.List_Of_Files := List;
+      Env.DB_Dir := new String' (SN_Dir);
 
       Process_File (Source_Filename, Full_Filename.all, Env);
 

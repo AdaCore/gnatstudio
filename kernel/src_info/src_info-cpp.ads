@@ -65,12 +65,14 @@ package Src_Info.CPP is
    --  ??? In current implementation for C/C++ this function always
    --  returns Xref_Filename for Source_Filename
 
-   procedure Generate_Database
+   procedure Browse_Files
      (File_List              : String_List_Access;
       Project                : Prj.Project_Id;
       Predefined_Source_Path : String;
-      Predefined_Object_Path : String);
-   --  Regenerates SN database for given file list.
+      Predefined_Object_Path : String;
+      Regenerate             : Boolean := False);
+   --  Creates/Updates SN database for given file list.
+   --  Creates new database if Regenerate = True.
    --  Predefined_Source_Path and Predefined_Object_Path are ignored.
 
    procedure Add

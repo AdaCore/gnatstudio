@@ -27,5 +27,8 @@ package SN.Browse is
    --  does the same as  "cat *.xref | dbimp" so that generated cross
    --  reference tables should lie in the DB_Directory.
 
+   procedure Delete_Database (DB_Directory : in String);
+   --  Removes all files from SN DB directory except xref pool
+
 end SN.Browse;
 

@@ -13,6 +13,7 @@ use  GNAT.Directory_Operations,
      Ada.Exceptions;
 
 with GNAT.OS_Lib; use GNAT.OS_Lib;
+--  with Ada.Text_IO; use Ada.Text_IO;
 
 package body SN.Browse is
 
@@ -54,6 +55,7 @@ package body SN.Browse is
       pragma Unreferenced (Str);
       pragma Unreferenced (User_Data);
    begin
+      --  Put ("dbimp: " & Str);
       null;
    end Output_Filter;
 
@@ -71,6 +73,7 @@ package body SN.Browse is
       DBUtil_Path         : String_Access;
       PD                  : GNAT.Expect.Process_Descriptor;
       Result              : GNAT.Expect.Expect_Match;
+--    Pid                 : GNAT.OS_Lib.Process_Id;
    begin
       --  check DB_Directory exists
       if not Is_Directory (DB_Directory) then
@@ -78,18 +81,7 @@ package body SN.Browse is
          Make_Dir (DB_Directory);
       end if;
 
-      --  check if xref pool is already initialized (otherwise initialize
-      --  it right now)
-      if Xrefs = Empty_Xref_Pool then -- not initialized
-         Load (Xrefs,
-           DB_Directory & Directory_Separator & Xref_Pool_Filename);
-      end if;
-
       Xref_File_Name := Xref_Filename_For (File_Name, DB_Directory, Xrefs);
-
-      --  save xref pool to file
-      Save (Xrefs,
-        DB_Directory & Directory_Separator & Xref_Pool_Filename);
 
       --  unlink cross reference file, if any
       if File_Exists (DB_Directory & Directory_Separator
@@ -130,7 +122,7 @@ package body SN.Browse is
       GNAT.Expect.Add_Filter (PD, Output_Filter'Access, GNAT.Expect.Output);
       loop
          begin
-            GNAT.Expect.Expect (PD, Result, "", 0);
+            GNAT.Expect.Expect (PD, Result, "", -1);
          exception
             when GNAT.Expect.Process_Died => exit;
          end;
@@ -160,8 +152,8 @@ package body SN.Browse is
       Temp_File    : File_Descriptor;
       Temp_Name    : Temp_File_Name;
       PD           : GNAT.Expect.Process_Descriptor;
---      Result       : GNAT.Expect.Expect_Match;
-      Pid          : GNAT.OS_Lib.Process_Id;
+      Result       : GNAT.Expect.Expect_Match;
+--      Pid          : GNAT.OS_Lib.Process_Id;
    begin
 
       --  remove .to and .by tables
@@ -210,6 +202,7 @@ package body SN.Browse is
          Read (Dir, Dir_Entry, Last); -- read next directory entry
       end loop;
       Close (Dir);
+      Close (Temp_File);
 
       Args := Argument_String_To_List (
           DB_Directory & Directory_Separator & DB_File_Name
@@ -223,17 +216,16 @@ package body SN.Browse is
 
       GNAT.Expect.Non_Blocking_Spawn (PD, DBIMP_Path.all, Args.all,
          Err_To_Out => True);
-      Delete (Args);
       GNAT.Expect.Add_Filter (PD, Output_Filter'Access, GNAT.Expect.Output);
-      Wait_Process (Pid, Success);
---      loop
---         begin
---            GNAT.Expect.Expect (PD, Result, "", 0);
---            Put_Line ("DBimp returned");
---         exception
---            when GNAT.Expect.Process_Died => exit;
---         end;
---      end loop;
+--      Wait_Process (Pid, Success);
+      loop
+         begin
+            GNAT.Expect.Expect (PD, Result, "", -1);
+         exception
+            when GNAT.Expect.Process_Died => exit;
+         end;
+      end loop;
+      Delete (Args);
       GNAT.Expect.Close (PD);
 
       Delete_File (Temp_Name'Address, Success);
@@ -241,6 +233,42 @@ package body SN.Browse is
          raise Unlink_Failure;
       end if;
    end Generate_Xrefs;
+
+   ---------------------
+   -- Delete_Database --
+   ---------------------
+
+   procedure Delete_Database (DB_Directory : in String) is
+      Dir          : Dir_Type;
+      Last         : Natural;
+      Dir_Entry    : String (1 .. 1024);
+      --  1024 is the value of FILENAME_MAX in stdio.h (see
+      --  GNAT.Directory_Operations)
+   begin
+      if not Is_Directory (DB_Directory) then
+         --  ignore if dir does not exist
+         return;
+      end if;
+
+      --  enumerate all files in the target directory
+      Open (Dir, DB_Directory);
+      if not Is_Open (Dir) then
+         raise Directory_Error;
+      end if;
+
+      Read (Dir, Dir_Entry, Last); -- read first directory entry
+      while Last /= 0 loop --  delete all files in directory
+         declare
+            F : String := DB_Directory
+              & Directory_Separator & Dir_Entry (1 .. Last) & ASCII.NUL;
+            Success : Boolean;
+         begin
+            Delete_File (F'Address, Success);
+         end;
+         Read (Dir, Dir_Entry, Last); -- read next directory entry
+      end loop;
+      Close (Dir);
+   end Delete_Database;
 
 begin
    --  locate dbimp utility in PATH
