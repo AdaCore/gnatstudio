@@ -87,7 +87,8 @@ package body GVD.Text_Box.Source_Editor.Glide is
    begin
       pragma Assert (Editor.Current_File /= null);
       Open_File_Editor (Kernel, Editor.Current_File.all,
-                        Editor.Line, 1);
+                        Editor.Line, 1,
+                        Enable_Navigation => False);
    end Highlight_Current_Line;
 
    --------------------
@@ -133,7 +134,8 @@ package body GVD.Text_Box.Source_Editor.Glide is
    begin
       Free (Editor.Current_File);
       Editor.Current_File := new String' (File_Name);
-      Open_File_Editor (Kernel, Editor.Current_File.all, New_File => False);
+      Open_File_Editor (Kernel, Editor.Current_File.all, New_File => False,
+                        Enable_Navigation => False);
    end Load_File;
 
    -------------------------
@@ -173,8 +175,8 @@ package body GVD.Text_Box.Source_Editor.Glide is
          Add_Line_Information
            (Kernel,
             Prev_File,
-            "Editor",
-            --  ??? maybe we should get that from elsewhere.
+            "Current Line",
+            --  ??? we should get that from elsewhere.
             new Line_Information_Array'
             (Prev_Current_Line => Line_Information_Record'
                (Text  => null,
@@ -190,8 +192,8 @@ package body GVD.Text_Box.Source_Editor.Glide is
          Add_Line_Information
            (Kernel,
             Editor.Current_File.all,
-            "Editor",
-            --  ??? maybe we should get that from elsewhere.
+            "Current Line",
+            --  ??? we should get that from elsewhere.
             new Line_Information_Array'
             (Line => Line_Information_Record' (Text  => null,
                                                Image => Current_Line_Pixbuf,
