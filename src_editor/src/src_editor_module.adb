@@ -43,6 +43,7 @@ with Gtk.Button;                use Gtk.Button;
 with Gtk.Dialog;                use Gtk.Dialog;
 with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.GEntry;                use Gtk.GEntry;
+with Gtk.Handlers;              use Gtk.Handlers;
 with Gtk.Label;                 use Gtk.Label;
 with Gtk.Menu;                  use Gtk.Menu;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;
@@ -66,9 +67,13 @@ package body Src_Editor_Module is
 
    Me : constant Debug_Handle := Create ("Src_Editor_Module");
 
+   No_Handler : constant Handler_Id := (Null_Signal_Id, null);
+
    type Source_Editor_Module_Record is new Module_ID_Record with record
-      Reopen_Menu_Item : Gtk_Menu_Item;
-      List             : String_List_Utils.String_List.List;
+      Reopen_Menu_Item         : Gtk_Menu_Item;
+      List                     : String_List_Utils.String_List.List;
+      Source_Lines_Revealed_Id : Handler_Id := No_Handler;
+      File_Edited_Id           : Handler_Id := No_Handler;
    end record;
    type Source_Editor_Module is access all Source_Editor_Module_Record'Class;
 
@@ -292,6 +297,10 @@ package body Src_Editor_Module is
       Args    : GValues;
       Kernel  : Kernel_Handle);
    --  Callback for the "file_edited" signal.
+
+   procedure Preferences_Changed
+     (K : access GObject_Record'Class; Kernel : Kernel_Handle);
+   --  Called when the preferences have changed.
 
    --------------------
    -- File_Edited_Cb --
@@ -1742,21 +1751,50 @@ package body Src_Editor_Module is
 
       Undo_Redo_Data.Set (Kernel, Undo_Redo, Undo_Redo_Id);
 
-      --  Connect necessary signal to display line numbers.
+      Preferences_Changed (Kernel, Kernel_Handle (Kernel));
 
-      if Get_Pref (Kernel, Display_Line_Numbers) then
-         Kernel_Callback.Connect
-           (Kernel,
-            Source_Lines_Revealed_Signal,
-            On_Lines_Revealed'Access,
-            Kernel_Handle (Kernel));
-         Kernel_Callback.Connect
-           (Kernel,
-            File_Edited_Signal,
-            File_Edited_Cb'Access,
-            Kernel_Handle (Kernel));
-      end if;
+      Kernel_Callback.Connect
+        (Kernel, Preferences_Changed_Signal,
+         Kernel_Callback.To_Marshaller (Preferences_Changed'Access),
+         User_Data   => Kernel_Handle (Kernel));
    end Register_Module;
+
+   -------------------------
+   -- Preferences_Changed --
+   -------------------------
+
+   procedure Preferences_Changed
+     (K : access GObject_Record'Class; Kernel : Kernel_Handle)
+   is
+      pragma Unreferenced (K);
+      Id : Source_Editor_Module := Source_Editor_Module (Src_Editor_Module_Id);
+   begin
+      --  Connect necessary signal to display line numbers.
+      if Get_Pref (Kernel, Display_Line_Numbers) then
+         if Id.Source_Lines_Revealed_Id = No_Handler then
+            Id.Source_Lines_Revealed_Id :=
+              Kernel_Callback.Connect
+                (Kernel,
+                 Source_Lines_Revealed_Signal,
+                 On_Lines_Revealed'Access,
+                 Kernel_Handle (Kernel));
+            Id.File_Edited_Id :=
+              Kernel_Callback.Connect
+                (Kernel,
+                 File_Edited_Signal,
+                 File_Edited_Cb'Access,
+                 Kernel_Handle (Kernel));
+         end if;
+
+      elsif Id.Source_Lines_Revealed_Id /= No_Handler then
+         Gtk.Handlers.Disconnect
+           (Kernel,  Id.Source_Lines_Revealed_Id);
+         Gtk.Handlers.Disconnect
+           (Kernel,  Id.File_Edited_Id);
+         Id.Source_Lines_Revealed_Id := No_Handler;
+         Id.File_Edited_Id := No_Handler;
+      end if;
+   end Preferences_Changed;
 
    -------------------------
    -- Refresh_Reopen_Menu --
