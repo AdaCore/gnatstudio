@@ -1,5 +1,10 @@
 Known Problems fixed in GPS 2.0.0
 
+- CC11-011 Key bindings not working when num-lock or caps-lock is turned on.
+  Problem:    When using user-configured key shortcuts, the shortcuts do not
+              work when caps-lock or num-lock is enabled on the keyboard.
+  Workaround: Switch off caps-lock and num-lock when using GPS.
+
 - Duplicate new file names
   Problem:    Creating several new files, and closing one that is not the last
               one, and creating a new one again result in a name duplication,
