@@ -85,6 +85,10 @@ package Main_Debug_Window_Pkg is
       Sessions_Dir        : String_Access;
       --  The directory containing session files.
 
+      Gvd_Home_Dir        : String_Access;
+      --  The location of the ~/.gvd directory.
+      --  The preferences file is found in Gvd_Home_Dir/"preferences"
+
       First_Debugger      : Debugger_List_Link;
       --  The pointer to the list of debuggers.
 

@@ -314,6 +314,8 @@ begin
    Init;
    Gtk_New (Main_Debug_Window);
 
+   Main_Debug_Window.Gvd_Home_Dir := new String' (Dir.all);
+
    --  ??? Should have a cleaner way of initializing Log_File
 
    declare
