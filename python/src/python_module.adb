@@ -149,10 +149,12 @@ package body Python_Module is
       Subprogram : PyObject;
    end record;
 
-   procedure Execute
+   function Execute
      (Subprogram : access Python_Subprogram_Record;
-      Args       : Callback_Data'Class);
+      Args       : Callback_Data'Class) return Boolean;
    procedure Free (Subprogram : in out Python_Subprogram_Record);
+   function Get_Name
+     (Subprogram : access Python_Subprogram_Record) return String;
    --  See doc from inherited subprograms
 
    --------------------------
@@ -2204,16 +2206,16 @@ package body Python_Module is
    -- Execute --
    -------------
 
-   procedure Execute
+   function Execute
      (Subprogram : access Python_Subprogram_Record;
-      Args       : Callback_Data'Class)
+      Args       : Callback_Data'Class) return Boolean
    is
       Tmp : Boolean;
-      pragma Unreferenced (Tmp);
    begin
       Tmp := Execute_Command
         (Command => Subprogram.Subprogram,
          Args    => Args);
+      return Tmp;
    end Execute;
 
    ----------
@@ -2224,5 +2226,19 @@ package body Python_Module is
    begin
       Py_DECREF (Subprogram.Subprogram);
    end Free;
+
+   --------------
+   -- Get_Name --
+   --------------
+
+   function Get_Name
+     (Subprogram : access Python_Subprogram_Record) return String
+   is
+      S    : constant PyObject := PyObject_Str (Subprogram.Subprogram);
+      Name : constant String := PyString_AsString (S);
+   begin
+      Py_DECREF (S);
+      return Name;
+   end Get_Name;
 
 end Python_Module;
