@@ -194,6 +194,7 @@ package body Debugger.Jdb is
       Language := new Jdb_Java_Language;
       Set_Language (Debugger, Language);
       Set_Debugger (Language_Debugger_Access (Language), Debugger.all'Access);
+      Display_Prompt (Debugger);
    end Initialize;
 
    -----------

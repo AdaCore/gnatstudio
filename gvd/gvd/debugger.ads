@@ -94,6 +94,8 @@ package Debugger is
    procedure Initialize (Debugger : access Debugger_Root) is abstract;
    --  Initialize the debugger.
    --  Spawn must have been called first.
+   --  The initial prompt of the debugger will be displayed on the debugger
+   --  console, if any.
 
    procedure Send
      (Debugger        : access Debugger_Root'Class;

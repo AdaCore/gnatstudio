@@ -657,11 +657,18 @@ package body Debugger.Gdb is
          Set_Args (Debugger, Debugger.Executable_Args.all, Mode => Visible);
       end if;
 
+      if Debugger.Window /= null and then Debugger.Executable = null then
+         Display_Prompt (Debugger);
+      end if;
+
    exception
-      --  If the executable was not found, nothing to be done, we simply
-      --  start with an empty debugger
+      --  If the executable was not found, simply display the prompt before
+      --  leaving, nothing else needs to be done.
+
       when Executable_Not_Found =>
-         null;
+         if Debugger.Window /= null then
+            Display_Prompt (Debugger);
+         end if;
    end Initialize;
 
    -----------
@@ -744,7 +751,10 @@ package body Debugger.Gdb is
                raise Executable_Not_Found;
             end if;
 
-            Output_Text (Convert (Debugger.Window, Debugger), S & ASCII.LF);
+            Output_Text
+              (Convert (Debugger.Window, Debugger),
+               ASCII.LF & S & ASCII.LF,
+               Set_Position => True);
          end;
 
       else
@@ -757,9 +767,15 @@ package body Debugger.Gdb is
                raise Executable_Not_Found;
             end if;
 
-            Output_Text (Convert (Debugger.Window, Debugger), S & ASCII.LF);
+            Output_Text
+              (Convert (Debugger.Window, Debugger),
+               ASCII.LF & S & ASCII.LF,
+               Set_Position => True);
          end;
+      end if;
 
+      if Debugger.Window /= null then
+         Display_Prompt (Debugger);
       end if;
 
       Set_Is_Started (Debugger, False);

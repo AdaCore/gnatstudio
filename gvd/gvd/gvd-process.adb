@@ -1055,10 +1055,6 @@ package body GVD.Process is
       --  file.
 
       Initialize (Process.Debugger);
-
-      --  Display the initial prompt
-
-      Display_Prompt (Process.Debugger);
    end Configure;
 
    ---------------------
