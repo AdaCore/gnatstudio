@@ -175,6 +175,10 @@ package body Shell_Script is
       Console            : Interactive_Consoles.Interactive_Console := null;
       Hide_Output        : Boolean := False;
       Errors             : access Boolean) return Boolean;
+   function Execute_Command
+     (Script  : access Shell_Scripting_Record;
+      Command : String;
+      Args    : Callback_Data'Class) return Boolean;
    function Execute_Command_With_Args
      (Script             : access Shell_Scripting_Record;
       Command            : String;
@@ -985,6 +989,26 @@ package body Shell_Script is
       return Execute_GPS_Shell_Command
         (Script.Kernel, Command, Args, Errors'Unchecked_Access);
    end Execute_Command_With_Args;
+
+   ---------------------
+   -- Execute_Command --
+   ---------------------
+
+   function Execute_Command
+     (Script  : access Shell_Scripting_Record;
+      Command : String;
+      Args    : Callback_Data'Class) return Boolean
+   is
+      Errors : aliased Boolean;
+      Result : constant String := Trim
+        (Reduce
+           (Execute_GPS_Shell_Command
+              (Script.Kernel, Command, Shell_Callback_Data (Args).Args.all,
+               Errors'Unchecked_Access)),
+         Ada.Strings.Both);
+   begin
+      return Result = "1" or else Case_Insensitive_Equal (Result, "true");
+   end Execute_Command;
 
    ------------------
    -- Execute_File --
