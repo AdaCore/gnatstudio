@@ -66,7 +66,7 @@ package body Python.Ada is
          Doc : String;
          Self : PyObject := null;
          Apiver : Integer := Python_API_Version) return PyObject;
-      pragma Import (C, Internal, "Py_InitModule4");
+      pragma Import (C, Internal, "ada_Py_InitModule4");
 
       M : constant Methods_Access := new PyMethodDef_Array'
         (Methods & No_Method_Def);
