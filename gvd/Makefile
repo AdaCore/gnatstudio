@@ -42,3 +42,4 @@ ${maintainer_clean_subdirs}: force
 	${MAKE} -C ${@:maintainer_clean_%=%} maintainer_clean
 
 force:
+
