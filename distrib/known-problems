@@ -37,6 +37,14 @@ Known Problems fixed in GPS 2.2.0
   Workaround: Write commands in python when possible, or surround parameters
               in triple quotes
 
+- DA08-004 Cannot run GtkAda applications from GPS
+  Problem:    When you are spawning applications from GPS, the environment has
+              been modified by GPS to include its own library directory. Thus,
+              the GtkAda libraries that are seen are the GPS ones, not the one
+              you had defined in your environment.
+  Workaround: Execute your program through a script that sets the proper PATH
+              and LD_LIBRARY_PATH variables
+
 - D713-012 Improper substitution in XML files
   Problem:    When chaining multiple shell commands in an XML action, the
               second command can refer to the output of the first by using %1.
