@@ -46,7 +46,6 @@ with Pixmaps_IDE;            use Pixmaps_IDE;
 
 with GPS.Intl;               use GPS.Intl;
 with GPS.Main_Window;        use GPS.Main_Window;
-with GVD_Module;             use GVD_Module;
 with GVD.Menu;               use GVD.Menu;
 with GVD.Memory_View;        use GVD.Memory_View;
 with Default_Preferences;    use Default_Preferences;
@@ -1063,16 +1062,12 @@ package body GVD.Canvas is
 
       Top  : constant GPS_Window :=
         GPS_Window (Visual_Debugger (Item.Canvas.Process).Window);
-      View : constant GVD_Memory_View :=
-        GVD_Memory_View (GVD_Module.Get_Or_Create_Memory_View (Top.Kernel));
+      View : GVD_Memory_View;
 
    begin
-      if not Visible_Is_Set (View) then
-         Show_All (View);
-      end if;
-
+      Gtk_New (View, Gtk_Widget (Top));
+      Show_All (View);
       Display_Memory (View, Item.Component_Name);
-      Gdk_Raise (Get_Window (View));
 
    exception
       when E : others =>
