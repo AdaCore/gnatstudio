@@ -37,7 +37,6 @@ with Main_Debug_Window_Pkg; use Main_Debug_Window_Pkg;
 with Debugger; use Debugger;
 with Process_Proxies; use Process_Proxies;
 with GVD.Types; use GVD.Types;
-with GVD.Menus; use GVD.Menus;
 
 package body Process_Tab_Pkg.Callbacks is
 
