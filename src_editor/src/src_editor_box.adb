@@ -49,6 +49,7 @@ with Gtkada.Dialogs;             use Gtkada.Dialogs;
 with GUI_Utils;                  use GUI_Utils;
 with Glide_Intl;                 use Glide_Intl;
 with GNAT.Directory_Operations;  use GNAT.Directory_Operations;
+with GNAT.OS_Lib;                use GNAT.OS_Lib;
 
 with Commands.Controls;          use Commands.Controls;
 with Language;                   use Language;
@@ -510,6 +511,7 @@ package body Src_Editor_Box is
       Context          : aliased Entity_Selection_Context;
       Location         : Gdk_Rectangle;
       File             : String_Access;
+      Filename         : constant String := Get_Filename (Data.Box);
 
    begin
       Width  := 0;
@@ -564,8 +566,8 @@ package body Src_Editor_Box is
            (Context'Unchecked_Access, Data.Box.Kernel, Src_Editor_Module_Id);
          Set_File_Information
            (Context      => Context'Unchecked_Access,
-            Directory    => Dir_Name (Data.Box.Filename.all),
-            File_Name    => Base_Name (Data.Box.Filename.all));
+            Directory    => Dir_Name (Filename),
+            File_Name    => Base_Name (Filename));
          Set_Entity_Information
            (Context     => Context'Unchecked_Access,
             Entity_Name => Entity_Name,
@@ -739,7 +741,7 @@ package body Src_Editor_Box is
       Add (Frame, Scrolling_Area);
 
       if Source = null then
-         Gtk_New (Box.Source_Buffer, Lang => Lang);
+         Gtk_New (Box.Source_Buffer, Kernel, Lang => Lang);
       else
          Box.Source_Buffer := Source;
          Set_Language (Box.Source_Buffer, Lang => Lang);
@@ -832,13 +834,14 @@ package body Src_Editor_Box is
       B             : Source_Editor_Box := Source_Editor_Box (Box);
       New_Timestamp : Timestamp;
       Undo_Redo     : Undo_Redo_Information;
+      Filename      : String := Get_Filename (B.Source_Buffer);
    begin
-      if B.Filename /= null then
-         New_Timestamp := To_Timestamp (File_Time_Stamp (B.Filename.all));
+      if Filename /= "" then
+         New_Timestamp := To_Timestamp (File_Time_Stamp (Filename));
 
          if New_Timestamp > B.Timestamp then
             if Message_Dialog
-              (Msg         => Base_Name (B.Filename.all)
+              (Msg         => Base_Name (Filename)
                & (-" changed on disk. Really edit ?"),
                Dialog_Type => Confirmation,
                Buttons     => Button_Yes or Button_No,
@@ -946,6 +949,7 @@ package body Src_Editor_Box is
       Start_Iter : Gtk_Text_Iter;
       End_Iter   : Gtk_Text_Iter;
       Context    : Entity_Selection_Context_Access;
+      Filename   : String := Get_Filename (Editor.Source_Buffer);
       Result     : Boolean;
 
    begin
@@ -956,8 +960,8 @@ package body Src_Editor_Box is
          Creator => Src_Editor_Module_Id);
       Set_File_Information
         (Context,
-         Directory => Dir_Name (Editor.Filename.all),
-         File_Name => Base_Name (Editor.Filename.all));
+         Directory => Dir_Name (Filename),
+         File_Name => Base_Name (Filename));
 
       if Event /= null
         and then Get_Window (Event) = Get_Window (V, Text_Window_Left)
@@ -1243,9 +1247,7 @@ package body Src_Editor_Box is
       Box.Writable := Source.Writable;
       Box.Modified := Source.Modified;
 
-      if Source.Filename /= null then
-         Box.Filename := new String' (Source.Filename.all);
-      end if;
+      Set_Filename (Box, Get_Filename (Source));
 
       Set_Text (Box.Modified_Label, Get_Text (Source.Modified_Label));
 
@@ -1265,7 +1267,6 @@ package body Src_Editor_Box is
    begin
       Editor_Tooltips.Destroy_Tooltip (Box.Tooltip);
       Unref (Box.Root_Container);
-      Free (Box.Filename);
       Box := null;
    end Destroy;
 
@@ -1337,8 +1338,7 @@ package body Src_Editor_Box is
      (Editor   : access Source_Editor_Box_Record;
       Filename : String) is
    begin
-      Free (Editor.Filename);
-      Editor.Filename := new String'(Filename);
+      Set_Filename (Editor.Source_Buffer, Filename);
    end Set_Filename;
 
    ------------------
@@ -1348,11 +1348,7 @@ package body Src_Editor_Box is
    function Get_Filename
      (Editor : access Source_Editor_Box_Record) return String is
    begin
-      if Editor.Filename = null then
-         return "";
-      end if;
-
-      return Editor.Filename.all;
+      return Get_Filename (Editor.Source_Buffer);
    end Get_Filename;
 
    ---------------
@@ -1366,13 +1362,12 @@ package body Src_Editor_Box is
       Lang_Autodetect : Boolean := True;
       Success         : out Boolean) is
    begin
-      Free (Editor.Filename);
       Load_File (Editor.Source_Buffer, Filename, Lang_Handler,
                  Lang_Autodetect, Success);
       Set_Cursor_Location (Editor, 1, 1);
 
       if Success then
-         Editor.Filename := new String' (Filename);
+         Set_Filename (Editor.Source_Buffer, Filename);
          Editor.Timestamp := To_Timestamp (File_Time_Stamp (Filename));
          Set_Text (Editor.Modified_Label, -"Unmodified");
          Editor.Modified := False;
@@ -1397,8 +1392,6 @@ package body Src_Editor_Box is
       Lang_Handler    : Language_Handlers.Language_Handler;
       Lang_Autodetect : Boolean := True) is
    begin
-      Free (Editor.Filename);
-
       if Lang_Autodetect then
          Set_Language
            (Editor.Source_Buffer,
@@ -1406,7 +1399,7 @@ package body Src_Editor_Box is
       end if;
 
       Set_Cursor_Location (Editor, 1, 1);
-      Editor.Filename := new String' (Filename);
+      Set_Filename (Editor.Source_Buffer, Filename);
       Set_Text (Editor.Modified_Label, -"Unmodified");
       Editor.Modified := False;
       Editor.Writable := True;
@@ -1420,7 +1413,9 @@ package body Src_Editor_Box is
    procedure Save_To_File
      (Editor   : access Source_Editor_Box_Record;
       Filename : String := "";
-      Success  : out Boolean) is
+      Success  : out Boolean)
+   is
+      File : String := Get_Filename (Editor.Source_Buffer);
    begin
       if not Editor.Writable then
          Success := False;
@@ -1430,13 +1425,13 @@ package body Src_Editor_Box is
       Success := True;
 
       if Filename = "" then
-         if Editor.Filename = null then
+         if File = "" then
             Success := False;
          else
-            if To_Timestamp (File_Time_Stamp (Editor.Filename.all)) >
+            if To_Timestamp (File_Time_Stamp (File)) >
               Editor.Timestamp
               and then Message_Dialog
-                (Msg => Base_Name (Editor.Filename.all)
+                (Msg => Base_Name (File)
                         & (-" changed on disk. Do you want to overwrite ?"),
                  Dialog_Type => Confirmation,
                  Buttons => Button_OK or Button_Cancel,
@@ -1446,7 +1441,7 @@ package body Src_Editor_Box is
                Success := False;
             else
                Save_To_File
-                 (Editor.Source_Buffer, Editor.Filename.all, Success);
+                 (Editor.Source_Buffer, File, Success);
             end if;
          end if;
 
@@ -1466,8 +1461,7 @@ package body Src_Editor_Box is
 
          if Success then
             Save_To_File (Editor.Source_Buffer, Filename, Success);
-            Free (Editor.Filename);
-            Editor.Filename := new String' (Filename);
+            Set_Filename (Editor.Source_Buffer, Filename);
          end if;
       end if;
 
@@ -1475,7 +1469,7 @@ package body Src_Editor_Box is
          Set_Text (Editor.Modified_Label, -"Saved");
          Editor.Modified := False;
          Editor.Timestamp := To_Timestamp
-           (File_Time_Stamp (Editor.Filename.all));
+           (File_Time_Stamp (Get_Filename (Editor.Source_Buffer)));
       end if;
    end Save_To_File;
 
@@ -1784,5 +1778,21 @@ package body Src_Editor_Box is
    begin
       return Get_Show_Line_Numbers (Editor.Source_View);
    end Get_Show_Line_Numbers;
+
+   --------------------------
+   -- Add_File_Information --
+   --------------------------
+
+   procedure Add_File_Information
+     (Editor        : access Source_Editor_Box_Record;
+      Identifier    : String;
+      Width         : Integer;
+      Info          : Glide_Kernel.Modules.Line_Information_Data;
+      Stick_To_Data : Boolean := True)
+   is
+   begin
+      Add_File_Information
+        (Editor.Source_View, Identifier, Width, Info, Stick_To_Data);
+   end Add_File_Information;
 
 end Src_Editor_Box;
