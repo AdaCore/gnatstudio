@@ -315,8 +315,10 @@ package String_Utils is
    --  character is ignored till the closing triple quotes. This is the same
    --  behavior as in Python, and is needed for easier quoting of string.
 
-   function Protect (S : String) return String;
-   --  Escape all quotes and special characters in S and return result
+   function Protect
+     (S : String; Protect_Quotes : Boolean := True) return String;
+   --  Escape special characters in S.
+   --  Quotes are only escaped with Protect_Quotes is true
 
    function Unprotect (S : String) return String;
    --  Unprotect an argument: remove the leading and ending '"',
