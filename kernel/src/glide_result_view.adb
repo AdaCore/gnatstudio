@@ -685,6 +685,7 @@ package body Glide_Result_View is
       Success  : Boolean;
    begin
       Initialize_Hbox (View);
+
       View.Kernel := Kernel;
 
       View.Non_Leaf_Color := Parse (Non_Leaf_Color_Name);
@@ -956,6 +957,7 @@ package body Glide_Result_View is
                   Unset (Value);
                end if;
             end if;
+
             Next (View.Model, Line_Iter);
          end loop;
       end if;
