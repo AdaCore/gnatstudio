@@ -1936,12 +1936,7 @@ package body Src_Editor_Buffer.Line_Information is
       The_Line : Gint;
       Tag      : Gtk_Text_Tag;
    begin
-      The_Line :=
-        Gint (Get_Buffer_Line (Buffer, Editable_Line_Type (Line)) - 1);
-
-      if The_Line < 0 then
-         return;
-      end if;
+      --  Get the text tag, create it if necessary.
 
       Tag := Lookup (Get_Tag_Table (Buffer), Category);
 
@@ -1959,20 +1954,36 @@ package body Src_Editor_Buffer.Line_Information is
          end if;
       end if;
 
-      if Start_Col <= 0 then
-         Get_Iter_At_Line (Buffer, Start_Iter, The_Line);
+      --  Get the boundaries of text to (un)highlight
+
+      if Line = 0 then
+         Get_Bounds (Buffer, Start_Iter, End_Iter);
+
       else
-         Get_Iter_At_Line_Offset
-           (Buffer, Start_Iter, The_Line, Gint (Start_Col - 1));
+         The_Line :=
+           Gint (Get_Buffer_Line (Buffer, Editable_Line_Type (Line)) - 1);
+
+         if The_Line < 0 then
+            return;
+         end if;
+
+         if Start_Col <= 0 then
+            Get_Iter_At_Line (Buffer, Start_Iter, The_Line);
+         else
+            Get_Iter_At_Line_Offset
+              (Buffer, Start_Iter, The_Line, Gint (Start_Col - 1));
+         end if;
+
+         if End_Col <= 0 then
+            Copy (Start_Iter, End_Iter);
+            Forward_To_Line_End (End_Iter);
+         else
+            Get_Iter_At_Line_Offset
+              (Buffer, End_Iter, The_Line, Gint (End_Col - 1));
+         end if;
       end if;
 
-      if End_Col <= 0 then
-         Copy (Start_Iter, End_Iter);
-         Forward_To_Line_End (End_Iter);
-      else
-         Get_Iter_At_Line_Offset
-           (Buffer, End_Iter, The_Line, Gint (End_Col - 1));
-      end if;
+      --  Highlight/Unhighlight the text.
 
       if Remove then
          Remove_Tag (Buffer, Tag, Start_Iter, End_Iter);
