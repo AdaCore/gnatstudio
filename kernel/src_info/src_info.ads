@@ -193,6 +193,7 @@ package Src_Info is
 
    type File_Location is private;
    Null_File_Location : constant File_Location;
+   Predefined_Entity_Location : constant File_Location;
 
    function Get_Location (Ref  : E_Reference) return File_Location;
    --  Return the location for a declaration or a reference.
@@ -253,8 +254,8 @@ private
    --  or in one of its include files.
 
 
-   --  Renaming entities and typedef
-   --  =============================
+   --  Renaming entities
+   --  =================
    --
    --  Some languages, like Ada, have the capacity to provide name aliases for
    --  other entities, possibly entities defined in other packages or
@@ -275,11 +276,93 @@ private
    --     the location of the declaration of Bar (file, line, column).
 
 
+   --  C's typedef and Ada subtypes
+   --  ============================
+   --
+   --  Typedefs in C are equivalent to Ada subtypes. Therefore, they should be
+   --  implemented by using the Parent_Location field of E_Declaration, to
+   --  point to the declaration of the old type.
+   --
+   --        typedef old_type new_type;   //  line 10 in "current_file"
+   --
+   --  would result in two E_Declaration records created for the current file:
+   --
+   --       Old_Type_Decl : E_Declaration'(Name => "old_type",
+   --                                      Location => ("current_file", 10, 9),
+   --                                      Kind => ...);
+   --       New_Type_Decl : E_Declaration'
+   --                          (Name => "new_type",
+   --                           Parent_Location => ("current_file", 10, 9),
+   --                           ...);
+   --
+   --   When a predefined type is derived from (for instance
+   --   "typdef int my_int"), then the Parent_Location should be
+   --   Predefined_Entity_Location. We lose the information for the name of the
+   --   parent type, but this isn't required currently by GPS. If needed, a new
+   --   field will be added to E_Declaration to store the name of the
+   --   predefined parent type.
+
+
+   --  Ada records and C structs
+   --  =========================
+   --
+   --  These types, along with several others like Ada enumerations or C
+   --  unions, group several fields into one single type. Therefore, GPS needs
+   --  to be able to know what the various field components are, for instance
+   --  to display them in the class browser.
+   --
+   --  To save space, no explicit list is saved in the E_Declaration
+   --  structure. But the information can easily be recreated from the Location
+   --  and the End_Of_Scope fields, since all the type declarations that appear
+   --  between these two locations belong to the record.
+   --
+   --  For instance, given the following C code:
+   --       struct S {    // line 1
+   --          int f;     // line 2
+   --       }             // line 3
+   --
+   --  The E_Declaration for "S" would be:
+   --       E_Declaration'
+   --           (Name         => "S",
+   --            Kind         => Record_Type,
+   --            Location     => ("current_file", 1, 8),
+   --            End_Of_Scope => (("current_file", 3, 1), End_Of_Spec),
+   --            ...)
+   --
+   --  and then one for "f" is:
+   --       E_Declaration'
+   --           (Name     => "f",
+   --            Kind     => Modular_Integer_Type,
+   --            Location => ("current_file", 2, 8),
+   --            ...);
+
+
+   --  C++ classes and Ada tagged types
+   --  ================================
+   --
+   --  Such types are associated with a Record_Type E_Kind (at least in Java,
+   --  C++ and Ada). However, some extra information is needed to find the
+   --  attributes and the methods of such a type.
+   --
+   --  The attributes are found with the same attribute used for Ada records
+   --  and C structs.
+   --
+   --  The primitive operations are stored in E_Declaration in a field
+   --  Primitive_Operations.
+
+
+
    type E_Kind is
      (Overloaded_Entity,
       --  This special kind of entity is used for overloaded symbols that
       --  couldn't be resolved by the parser. See the comment above for a more
       --  complete explanation.
+
+      Unresolved_Entity,
+      --  This special kind indicates that we do not know the exact kind of
+      --  entity. This can happen for instance in C, in the following case:
+      --     typedef old_type new_type;
+      --  but old_type is defined nowhere in the closure of the include files.
 
       Access_Object,
       Access_Type,
@@ -472,6 +555,15 @@ private
    --  check is to verify that File_Location.File.LI is not null.
    --  See function Is_File_Location which performs this check.
 
+   Predefined_Entity_Location : constant File_Location :=
+     (File   => No_Source_File,
+      Line   => 2,
+      Column => 2);
+   --  This location is used to represent the declaration of predefined
+   --  entities ("Integer" in Ada, "int" in C, ...).
+   --  The fields Line and Column are chosen so that this constant is different
+   --  from Null_File_Location.
+
    function "=" (Left, Right : File_Location) return Boolean;
    --  A redefined equality function that compares uses the redefined equality
    --  for the source file field.
@@ -504,10 +596,13 @@ private
 
       Location        : File_Location;
       Kind            : E_Kind;
+
       Parent_Location : File_Location;
       --  Point to various information about the entity:
       --   - The type we derive from for a type
       --   - The type of a variable
+      --  This field can be set to Predefined_Entity_Location, for instance
+      --  for a C's typedef that redefined int ("typedef int myint;").
 
       Scope           : E_Scope;
       End_Of_Scope    : E_Reference := No_Reference;
@@ -518,6 +613,17 @@ private
       Rename          : File_Location := Null_File_Location;
       --  Location of the declaration that this one renames. See the
       --  explanation about renaming above.
+
+      Primitive_Subprograms : E_Reference_List;
+      --  <specific to Ada tagged types or C++ classes>
+      --  This fields points to the list of methods or primitive subprograms
+      --  for a class, possibly in other LI files if the operation was
+      --  inherited and not overloaded. The Kind of the reference should be
+      --  Primitive_Operation.
+      --  This list should be empty in most cases, except in the file that
+      --  contains the declaration of the tagged type (other files that simply
+      --  reference the type do not need to set this field, since they do not
+      --  necessarily have all the necessary information anyway).
    end record;
    --  All the information about an entity declaration.
    --  ??? Note that, in order to save a little bit of memory space,
@@ -528,13 +634,14 @@ private
    --  complexity to the implementation (in terms of memory management).
 
    No_Declaration : constant E_Declaration :=
-     (Name            => null,
-      Location        => Null_File_Location,
-      Kind            => E_Kind'First,
-      Parent_Location => Null_File_Location,
-      Scope           => Local_Scope,
-      End_Of_Scope    => No_Reference,
-      Rename          => Null_File_Location);
+     (Name                  => null,
+      Location              => Null_File_Location,
+      Kind                  => E_Kind'First,
+      Parent_Location       => Null_File_Location,
+      Scope                 => Local_Scope,
+      End_Of_Scope          => No_Reference,
+      Rename                => Null_File_Location,
+      Primitive_Subprograms => null);
 
    type E_Declaration_Access is access all E_Declaration;
 
