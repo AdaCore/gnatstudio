@@ -768,15 +768,17 @@ package body Prj_API is
       Is_Default_Value : out Boolean) is
    begin
       --  Do we have some file-specific switches ?
-      Value := Get_Attribute_Value
-        (Project_View   => Project,
-         Attribute_Name => Get_Name_String (Name_Switches),
-         Package_Name   => In_Pkg,
-         Index          => File);
+      if File /= "" then
+         Value := Get_Attribute_Value
+           (Project_View   => Project,
+            Attribute_Name => Get_Name_String (Name_Switches),
+            Package_Name   => In_Pkg,
+            Index          => File);
 
-      if Value /= Nil_Variable_Value then
-         Is_Default_Value := False;
-         return;
+         if Value /= Nil_Variable_Value then
+            Is_Default_Value := False;
+            return;
+         end if;
       end if;
 
       Value := Get_Attribute_Value
@@ -3148,6 +3150,16 @@ package body Prj_API is
          Scenario_Variables => No_Scenario,
          Attribute_Name     => "object_dir",
          Value              => ".");
+
+      Values := (1 => new String' ("-g"));
+      Update_Attribute_Value_In_Scenario
+        (Project,
+         Scenario_Variables => No_Scenario,
+         Attribute_Name     => "default_switches",
+         Values             => Values,
+         Attribute_Index    => Ada_String,
+         Pkg_Name           => "builder");
+      Free (Values (1));
 
       return Project;
    end Create_Default_Project;
