@@ -2,7 +2,7 @@
 --                              G P S                                --
 --                                                                   --
 --                    Copyright (C) 2003 - 2005                      --
---                            ACT-Europe                             --
+--                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -191,5 +191,9 @@ package Src_Editor_Buffer.Line_Information is
    procedure Side_Column_Configuration_Changed
      (Buffer : access Source_Buffer_Record'Class);
    --  Emit the "side_column_configuration_changed" signal.
+
+   procedure Side_Column_Changed
+     (Buffer : access Source_Buffer_Record'Class);
+   --  Emit the "side_column_changed" signal.
 
 end Src_Editor_Buffer.Line_Information;
