@@ -30,7 +30,7 @@ package Process_Proxies is
    --  This type acts as a proxy to an external process as found in
    --  GNAT.Expect. This implements a set of common subprograms that
    --  can not be implemented in GNAT.Expect itself, but that we don't
-   --  want to duplicate in all the debugger implementation.
+   --  want to duplicate in all the debugger implementations.
 
    procedure Free (Proxy : in out Process_Proxy_Access);
    --  Free the space occupied by the proxy and its pipe_id.
