@@ -21,8 +21,8 @@
 --  This package provides visual utilities to handle differences between
 --  files.
 
-with Diff_Utils;   use Diff_Utils;
-with Basic_Types;  use Basic_Types;
+with Diff_Utils;  use Diff_Utils;
+with GNAT.OS_Lib;              use GNAT.OS_Lib;
 with Glide_Kernel;
 
 package Vdiff2_Utils is
@@ -47,9 +47,9 @@ package Vdiff2_Utils is
    procedure Hide_Differences
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
       Diff   : Diff_Occurrence_Link;
-      File1  : String;
-      File2  : String;
-      File3  : String := "");
+      File1  : String_Access;
+      File2  : String_Access;
+      File3  : String_Access := null);
    --  hide the hightlighting.
    type Text_Iterator;
 
