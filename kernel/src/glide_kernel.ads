@@ -100,6 +100,12 @@ package Glide_Kernel is
       return Src_Info.LI_File_Ptr;
    --  Find the ALI file for Source_Filename, and return a handle to it.
 
+   procedure Get_Unit_Name
+     (Handle    : access Kernel_Handle_Record;
+      File      : in out Src_Info.Internal_File;
+      Unit_Name : out GNAT.OS_Lib.String_Access);
+   --  Return the unit name for the given file
+
    procedure Save_Desktop
      (Handle : access Kernel_Handle_Record);
    --  Save the current desktop.
