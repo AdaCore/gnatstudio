@@ -6,19 +6,11 @@ INSTALLING
 The quick way to install GPS is to run the script 'doinstall' contained
 in this directory and then follow the instructions.
 
-USE
+USING
 
 GPS comes with a user's guide and a tutorial available in HTML format using
 the help menu under GPS itself, or by following the links from the welcome
 page displayed when launching GPS, or directly in the directory
 $base/doc/gps/html, where $base is the base directory chosen when installing
 GPS (using doinstall).
-
-The GPS user's guide is a work in progress at this stage; the tutorial is
-pretty complete, so it is recommended to get familiar with most of the
-functionalities.
-
-You can optionally install the GNAT documentation in HTML format
-(user's guide, reference manual, gvd, gdb, gcc, Ada reference manual) in the
-directory $base/doc/gps/html. This will be automatically detected by GPS.
 
