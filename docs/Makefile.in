@@ -15,7 +15,7 @@ IMAGES = gps_title.jpg *.gif
 TEXI2HTML_FLAGS=-split_chapter -menu
 TEXI=gps.texi ../gvd/docs/gvd_contents.texi
 
-all: cp_gvd stamp-eps doc tutorial clean-temp-files
+all: cp_gvd stamp-eps doc tutorial gps_pg clean-temp-files
 non-ps: common clean-temp-files
 static:
 
@@ -26,47 +26,31 @@ cp_gvd:
 	done
 
 stamp-eps: $(IMAGES)
+	@echo "Converting images to Encapsulated postscript"
 	@-for img in [^g]*.gif; do \
 	  $(CONVERT) $${img} `basename $${img} .gif`.eps; \
 	done
 	touch stamp-eps
 
 tutorial: gps-tutorial.html
+doc:      gps.txt gps.html gps.info gps.ps
+gps_pg:   gps_pg.ps gps_pg.html
 
-doc: gps.txt gps.html gps.info gps.ps
+gps-tutorial.html:                tutorial.texi
+gps_pg.html gps_pg.ps:            gps_pg.texi
+gps.html gps.ps gps.info gps.txt: ${TEXI}
 
-gps-tutorial.html: tutorial.texi
-	perl ./texi2html tutorial.texi -out_file gps-tutorial.html
+%.html::
+	perl ./texi2html $< ${TEXI2HTML_FLAGS} -out_file $@
 
-gps.html: ${TEXI}
-	perl ./texi2html ${TEXI2HTML_FLAGS} gps.texi
-
-gps.info: ${TEXI}
-ifneq (${MAKEINFO},)
-	${MAKEINFO} --force -o gps.info gps.texi
-else
-	@echo "----------------------------------------------------"
-	@echo "makeinfo not found, cannot build INFO documentation"
-	@echo "----------------------------------------------------"
-endif
-
-gps.txt: ${TEXI}
-ifneq (${MAKEINFO},)
-	${MAKEINFO} --force --no-headers --no-split -o gps.txt gps.texi
-else
-	@echo "----------------------------------------------------"
-	@echo "makeinfo not found, cannot build TXT documentation"
-	@echo "----------------------------------------------------"
-endif
-
-gps.ps: ${TEXI}
+%.ps::
 ifneq (${TEX},)
-	echo x | ${TEX} gps.texi
-	texindex gps.cp
-	${TEX} gps.texi
-	${TEX} gps.texi
+	echo x | ${TEX} $<
+	texindex ${<:.texi=.cp}
+	${TEX} $<
+	${TEX} $<
 ifneq (${DVIPS},)
-	${DVIPS} gps.dvi -o gps.ps
+	${DVIPS} ${<:.texi=.dvi} -o $@
 else
 	@echo "------------------------------------------------------"
 	@echo "dvips not found, cannot build POSTSCRIPT documentation"
@@ -77,6 +61,25 @@ else
 	@echo "tex not found, cannot build DVI or PS documentation"
 	@echo "----------------------------------------------------"
 endif
+
+%.info: ${TEXI}
+ifneq (${MAKEINFO},)
+	${MAKEINFO} --force -o $@ $<
+else
+	@echo "----------------------------------------------------"
+	@echo "makeinfo not found, cannot build INFO documentation"
+	@echo "----------------------------------------------------"
+endif
+
+%.txt: ${TEXI}
+ifneq (${MAKEINFO},)
+	${MAKEINFO} --force --no-headers --no-split -o $@ $<
+else
+	@echo "----------------------------------------------------"
+	@echo "makeinfo not found, cannot build TXT documentation"
+	@echo "----------------------------------------------------"
+endif
+
 
 install:
 	$(MKDIR) $(docdir)
