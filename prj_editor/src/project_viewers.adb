@@ -2608,7 +2608,6 @@ package body Project_Viewers is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       Project : constant String := '/' & (-"Project");
---        Reopen_Menu : Gtk.Menu_Item.Gtk_Menu_Item;
       Filter : Action_Filter;
       Command : Interactive_Command_Access;
       Mitem   : Gtk_Menu_Item;
