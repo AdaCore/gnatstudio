@@ -901,6 +901,8 @@ package body Src_Editor_View is
             Button_X, Button_Y : Gint;
             X, Y               : Gint;
             Dummy_Boolean      : Boolean;
+            pragma Unreferenced (Dummy_Boolean);
+
             Info               : Line_Info_Width;
 
          begin

@@ -1299,7 +1299,9 @@ package body Project_Explorers is
       Prj_List    : Project_List;
       Project     : constant Project_Id :=
         Get_Project_View_From_Name (Data.Name);
-      N           : Gtk_Ctree_Node := null;
+      N           : Gtk_Ctree_Node;
+      pragma Unreferenced (N);
+
       Dir         : String_List_Id;
       Files       : String_Array_Access := Get_Source_Files
         (Project, Recursive => False, Full_Path => True, Normalized => True);
@@ -1328,6 +1330,7 @@ package body Project_Explorers is
          --  ??? Should show only first-level directories
 
          Dir := Projects.Table (Project).Source_Dirs;
+
          while Dir /= Nil_String loop
             String_To_Name_Buffer (String_Elements.Table (Dir).Value);
             N := Add_Directory_Node
@@ -1380,15 +1383,18 @@ package body Project_Explorers is
    is
       Project_View : constant Project_Id :=
         Get_Project_From_Node (Explorer, Node);
-      Src : String_List_Id;
-      N : Gtk_Ctree_Node;
-      Dir : constant String :=
+      Src          : String_List_Id;
+      N            : Gtk_Ctree_Node;
+      pragma Unreferenced (N);
+
+      Dir          : constant String :=
         Name_As_Directory (Get_String (Data.Directory));
 
    begin
       Push_State (Explorer.Kernel, Busy);
       Freeze (Explorer.Tree);
       Src := Projects.Table (Project_View).Sources;
+
       while Src /= Nil_String loop
          if Is_Regular_File
            (Dir & Get_String (String_Elements.Table (Src).Value))
@@ -1400,6 +1406,7 @@ package body Project_Explorers is
          end if;
          Src := String_Elements.Table (Src).Next;
       end loop;
+
       Thaw (Explorer.Tree);
       Pop_State (Explorer.Kernel);
    end Expand_Directory_Node;
@@ -1417,6 +1424,8 @@ package body Project_Explorers is
       File_Name  : constant String :=
         Get_File_From_Node (Explorer, Node, Full_Path => True);
       N          : Gtk_Ctree_Node;
+      pragma Unreferenced (N);
+
       Lang       : Language_Access;
       Constructs : Construct_List;
       Category   : Language_Category;
@@ -1805,6 +1814,8 @@ package body Project_Explorers is
 
       Index : Natural;
       N, N2, Tmp : Gtk_Ctree_Node;
+      pragma Unreferenced (Tmp);
+
       Project : constant Project_Id := Get_Project_From_Node (Explorer, Node);
       Sources : String_Id_Array := Source_Dirs (Project);
       Imported : Project_Id_Array := Imported_Projects (Project);
@@ -2391,8 +2402,9 @@ package body Project_Explorers is
    procedure On_Open_Explorer
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
-      pragma Unreferenced (Widget);
       Explorer : Project_Explorer;
+      pragma Unreferenced (Widget, Explorer);
+
    begin
       Explorer := Get_Or_Create_Project_View (Kernel);
 

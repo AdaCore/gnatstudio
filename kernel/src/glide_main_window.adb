@@ -292,6 +292,7 @@ package body Glide_Main_Window is
 
    procedure Load_Desktop (Window : access Glide_Window_Record'Class) is
       Was_Loaded : Boolean;
+      pragma Unreferenced (Was_Loaded);
    begin
       Was_Loaded := Load_Desktop (Window.Kernel);
    end Load_Desktop;

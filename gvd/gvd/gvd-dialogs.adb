@@ -167,6 +167,7 @@ package body GVD.Dialogs is
    is
       Num_Columns : Thread_Fields;
       Row         : Gint;
+      pragma Unreferenced (Row);
 
    begin
       if Dialog.List = null and then Info'Length > 0 then
@@ -327,14 +328,16 @@ package body GVD.Dialogs is
      (Debugger : access Glib.Object.GObject_Record'Class)
    is
       Temp     : Chars_Ptr_Array (0 .. 4);
-      Row      : Gint;
       Bt       : Backtrace_Array (1 .. Max_Frame);
       Len      : Natural;
       Tab      : constant Visual_Debugger :=
         Visual_Debugger (Debugger);
       Process  : constant Process_Proxy_Access := Get_Process (Tab.Debugger);
       List     : constant Gtk_Clist := Tab.Stack_List;
+      Row      : Gint;
       Columns  : Gint;
+      pragma Unreferenced (Row, Columns);
+
       Index    : Integer;
       Subp     : String_Access;
       Widget   : Gtk_Widget;
@@ -596,6 +599,8 @@ package body GVD.Dialogs is
    is
       Temp      : Chars_Ptr_Array (0 .. 1);
       Row       : Gint;
+      pragma Unreferenced (Row);
+
       Width     : Gint;
       OK_Button : Gtk_Button;
       Label     : Gtk_Label;
@@ -777,6 +782,8 @@ package body GVD.Dialogs is
    is
       use Widget_List;
       Button   : Gtk_Widget;
+      pragma Unreferenced (Button);
+
       Box      : Gtk_Box;
       Vbox     : Gtk_Box;
 

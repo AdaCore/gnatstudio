@@ -1144,6 +1144,7 @@ package body Browsers.Call_Graph is
       Data     : Entity_Idle_Data;
       Info     : Entity_Information;
       Idle_Id  : Idle_Handler_Id;
+      pragma Unreferenced (Idle_Id);
 
    begin
       Push_State (Get_Kernel (Entity), Busy);
@@ -1505,8 +1506,9 @@ package body Browsers.Call_Graph is
    procedure On_Call_Graph
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
-      pragma Unreferenced (Widget);
       Child       : MDI_Child;
+      pragma Unreferenced (Widget, Child);
+
       Context     : constant Selection_Context_Access :=
         Get_Current_Context (Kernel);
       Entity      : Entity_Selection_Context_Access;
@@ -1519,6 +1521,7 @@ package body Browsers.Call_Graph is
       then
          Entity := Entity_Selection_Context_Access (Context);
          Node_Entity := Get_Entity (Entity);
+
          if Node_Entity /= No_Entity_Information then
             Examine_Entity_Call_Graph (Kernel, Node_Entity);
          end if;

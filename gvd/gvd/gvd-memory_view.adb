@@ -871,6 +871,8 @@ package body GVD.Memory_View is
    is
       Prefix      : String (1 .. 3);
       Success     : Boolean;
+      pragma Unreferenced (Success);
+
       Background  : constant Gdk_Color := Null_Color;
       Value_Index : Integer;
       Position    : constant Gint := Get_Position (View.View);

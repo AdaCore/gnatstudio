@@ -63,7 +63,6 @@ package body Vdiff_Module is
    procedure On_Compare_Two_Files
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
-      pragma Unreferenced (Widget);
       Vdiff  : Vdiff_Access;
       Result : Diff_Occurrence_Link;
       File1  : constant String :=
@@ -74,6 +73,7 @@ package body Vdiff_Module is
 
       Child  : MDI_Child;
       Button : Message_Dialog_Buttons;
+      pragma Unreferenced (Widget, Button);
 
    begin
       if File1 = "" then
@@ -133,12 +133,12 @@ package body Vdiff_Module is
       Data      : GValue_Array;
       Mode      : Mime_Mode := Read_Write) return Boolean
    is
-      pragma Unreferenced (Mode);
       Vdiff   : Vdiff_Access;
       Result  : Diff_Occurrence_Link;
       Child   : MDI_Child;
       Success : Boolean;
       Button  : Message_Dialog_Buttons;
+      pragma Unreferenced (Mode, Button);
 
    begin
       if Mime_Type = Mime_Diff_File then

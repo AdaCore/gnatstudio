@@ -1141,7 +1141,10 @@ package body Project_Viewers is
       Label  : Gtk_Label;
       Text   : Gtk_Entry;
       Widget : Gtk_Widget;
+      pragma Unreferenced (Widget);
+
       View   : constant Project_Id := Get_Project_View_From_Project (Project);
+
    begin
       Gtk_New
         (Dialog,
@@ -1760,13 +1763,14 @@ package body Project_Viewers is
       Kernel : access Kernel_Handle_Record'Class)
       return Gtk_Widget
    is
-      pragma Unreferenced (Page, Full_Project);
       Box      : Executables_Editor;
       Hbox     : Gtk_Box;
       Label    : Gtk_Label;
       Column   : Gtk_Tree_View_Column;
       Renderer : Gtk_Cell_Renderer_Text;
       Col      : Gint;
+      pragma Unreferenced (Page, Full_Project, Col);
+
       Scrolled : Gtk_Scrolled_Window;
       Bbox     : Gtk_Vbutton_Box;
       Button2  : Gtk_Button;

@@ -44,6 +44,8 @@ package body List_Select_Pkg is
       Comment     : String)
    is
       Index : Gint;
+      pragma Unreferenced (Index);
+
       Text  : Chars_Ptr_Array := Label + Comment;
    begin
       Index := Append (List_Select.List, Text);
@@ -65,6 +67,7 @@ package body List_Select_Pkg is
 
    function Show (List_Select : List_Select_Access) return String is
       Dummy : Gint;
+      pragma Unreferenced (Dummy);
    begin
       Dummy := Columns_Autosize (List_Select.List);
       Show_All (List_Select);

@@ -1032,6 +1032,7 @@ package body Glide_Kernel.Modules is
       Sensitive   : Boolean := True)
    is
       Item  : Gtk_Menu_Item;
+      pragma Unreferenced (Item);
    begin
       Item := Register_Menu
         (Kernel, Parent_Path, Text, Stock_Image, Callback, Command,
@@ -1046,9 +1047,8 @@ package body Glide_Kernel.Modules is
      (Widget  : access GObject_Record'Class;
       Command : Command_Access)
    is
-      pragma Unreferenced (Widget);
-
       Dummy : Boolean;
+      pragma Unreferenced (Widget, Dummy);
    begin
       Dummy := Execute (Command);
    end Execute_Command;
@@ -1647,6 +1647,8 @@ package body Glide_Kernel.Modules is
    is
       Value   : GValue_Array (1 .. 3);
       Success : Boolean;
+      pragma Unreferenced (Success);
+
    begin
       Init (Value (1), Glib.GType_String);
       Set_String (Value (1), Orig_File);

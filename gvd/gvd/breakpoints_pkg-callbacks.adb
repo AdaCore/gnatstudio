@@ -177,6 +177,7 @@ package body Breakpoints_Pkg.Callbacks is
      (Object : access Gtk_Widget_Record'Class)
    is
       B : Breakpoint_Identifier;
+      pragma Unreferenced (B);
    begin
       B := Set_Location_Breakpoint (Breakpoint_Editor_Access (Object));
    end On_Add_Location_Clicked;
@@ -337,6 +338,8 @@ package body Breakpoints_Pkg.Callbacks is
      (Object : access Gtk_Widget_Record'Class)
    is
       B      : Breakpoint_Identifier;
+      pragma Unreferenced (B);
+
       Editor : constant Breakpoint_Editor_Access :=
         Breakpoint_Editor_Access (Object);
 

@@ -136,6 +136,8 @@ package body Commands.External is
       use String_List;
 
       Id        : Timeout_Handler_Id;
+      pragma Unreferenced (Id);
+
       Args      : GNAT.OS_Lib.Argument_List
         (1 .. String_List.Length (Command.Args));
       Temp_Args : List_Node := First (Command.Args);

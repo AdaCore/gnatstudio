@@ -118,6 +118,7 @@ package body GVD.Status_Bar is
       Msg     : String)
    is
       Id : Message_Id;
+      pragma Unreferenced (Id);
    begin
       if Status.Is_Blank then
          Pop (Status.Status, Status.Ids (Help));
@@ -143,6 +144,7 @@ package body GVD.Status_Bar is
 
    function Hide_Callback (Status : GVD_Status_Bar) return Boolean is
       Id : Message_Id;
+      pragma Unreferenced (Id);
    begin
       if not Status.Is_Blank then
          Status.Is_Blank := True;
@@ -163,6 +165,8 @@ package body GVD.Status_Bar is
       X, Y, W : Gint;
       Success : Boolean;
       Grab    : Gdk_Grab_Status;
+      pragma Unreferenced (Grab);
+
       Text    : Gtk_Text;
       List    : Messages_List.GSlist := Get_Messages (Status.Status);
       use type Messages_List.GSlist;

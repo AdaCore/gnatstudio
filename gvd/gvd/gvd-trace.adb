@@ -66,6 +66,8 @@ package body GVD.Trace is
 
    procedure Output_Line (Window : GVD_Main_Window; Str : String) is
       N  : Integer;
+      pragma Unreferenced (N);
+
       LF : aliased constant String := (1 => ASCII.LF);
 
    begin
@@ -84,6 +86,8 @@ package body GVD.Trace is
       Kind    : IO_Kind := Input_Kind)
    is
       N      : Integer;
+      pragma Unreferenced (N);
+
       File   : File_Descriptor renames Process.Window.Log_File;
       Num    : constant String := Integer'Image (Process.Debugger_Num);
       Prefix : aliased constant String := '[' & Num (2 .. Num'Last) & "] ";

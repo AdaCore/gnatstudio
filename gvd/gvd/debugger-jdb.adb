@@ -350,6 +350,7 @@ package body Debugger.Jdb is
 
    procedure Wait_Prompt (Debugger : access Jdb_Debugger) is
       Result : Boolean;
+      pragma Unreferenced (Result);
    begin
       Result := Wait_Prompt (Debugger, -1);
    end Wait_Prompt;

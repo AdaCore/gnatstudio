@@ -227,6 +227,7 @@ package body Directory_Tree is
      (Tree : access Dir_Tree_Record'Class; Root : String)
    is
       N : Gtk_Ctree_Node;
+      pragma Unreferenced (N);
    begin
       Gtk.Ctree.Initialize (Tree, Columns => 1);
 
@@ -491,6 +492,8 @@ package body Directory_Tree is
       File    : String (1 .. 1024);
       Last    : Natural;
       N2      : Gtk_Ctree_Node;
+      pragma Unreferenced (N2);
+
       Num_Dir : Natural := 0;
       Num_Subdirectories : Integer;
       Has_Dummy_Node : Boolean;
@@ -610,6 +613,8 @@ package body Directory_Tree is
       procedure Add_Dummy_Node (N : Gtk_Ctree_Node) is
          Strings    : Gtkada.Types.Chars_Ptr_Array (1 .. 1);
          Dummy_Node : Gtk_Ctree_Node;
+         pragma Unreferenced (Dummy_Node);
+
       begin
          Strings (1) := New_String (".");
          Dummy_Node := Insert_Node
@@ -1136,13 +1141,16 @@ package body Directory_Tree is
    procedure Create_Directory_Cb
      (W : access Gtk_Widget_Record'Class)
    is
-      Selector : constant Directory_Selector := Directory_Selector (W);
+      Selector    : constant Directory_Selector := Directory_Selector (W);
       Current_Dir : constant String := Get_Selection (Selector.Directory);
-      Dialog : Gtk_Dialog;
-      Label : Gtk_Label;
-      Ent : Gtk_Entry;
-      Widget : Gtk_Widget;
+      Dialog      : Gtk_Dialog;
+      Label       : Gtk_Label;
+      Ent         : Gtk_Entry;
+      Widget      : Gtk_Widget;
+      pragma Unreferenced (Widget);
+
       N, Parent : Gtk_Ctree_Node;
+
    begin
       Gtk_New (Dialog,
                Title  => -"Create directory",

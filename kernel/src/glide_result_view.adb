@@ -434,6 +434,8 @@ package body Glide_Result_View is
       Iter             : Gtk_Tree_Iter;
       Category_Created : Boolean;
       Dummy            : Boolean;
+      pragma Unreferenced (Dummy);
+
       Path             : Gtk_Tree_Path;
    begin
       Get_Category_File
@@ -489,6 +491,7 @@ package body Glide_Result_View is
       Pixbuf_Rend   : Gtk_Cell_Renderer_Pixbuf;
 
       Dummy         : Gint;
+      pragma Unreferenced (Dummy);
 
    begin
       Gtk_New (Pixbuf_Rend);
@@ -817,6 +820,8 @@ package body Glide_Result_View is
       end Get_Path_At_Event;
 
       Success : Boolean;
+      pragma Unreferenced (Success);
+
    begin
       if Get_Button (Event) = 1 then
          Get_Path_At_Event;
@@ -836,6 +841,8 @@ package body Glide_Result_View is
                      Iter    : Gtk_Tree_Iter;
                      Action  : Action_Item;
                      Success : Boolean;
+                     pragma Unreferenced (Success);
+
                   begin
                      Iter := Get_Iter (Explorer.Model, Path);
 

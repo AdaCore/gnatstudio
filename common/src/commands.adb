@@ -162,6 +162,8 @@ package body Commands is
       declare
          Action  : constant Command_Access := Head (Queue.The_Queue);
          Success : Boolean;
+         pragma Unreferenced (Success);
+
       begin
          Next (Queue.The_Queue, Free_Data => False);
 
@@ -294,6 +296,7 @@ package body Commands is
 
    procedure Execute (Command : access Root_Command) is
       Success : Boolean;
+      pragma Unreferenced (Success);
    begin
       Success := Execute (Command_Access (Command));
    end Execute;

@@ -948,6 +948,7 @@ package body VCS_View_API is
 
       Child              : MDI_Child;
       Success            : Boolean;
+      pragma Unreferenced (Success);
 
       Log_Checks         : External_Command_Access;
       File_Checks        : External_Command_Access;

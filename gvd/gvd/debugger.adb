@@ -244,6 +244,7 @@ package body Debugger is
          else
             declare
                Buttons : Message_Dialog_Buttons;
+               pragma Unreferenced (Buttons);
             begin
                Buttons :=
                  Message_Dialog
@@ -288,6 +289,7 @@ package body Debugger is
             when Invalid_Process =>
                declare
                   Buttons : Message_Dialog_Buttons;
+                  pragma Unreferenced (Buttons);
                begin
                   Buttons := Message_Dialog
                     ((-"Could not spawn the remote process: ") & ASCII.LF
@@ -417,7 +419,9 @@ package body Debugger is
          declare
             Current_Command : constant String := Process.Current_Command.all;
             Result          : Boolean;
+            pragma Unreferenced (Result);
             Pos             : Positive;
+
          begin
             Free (Process.Current_Command);
 
@@ -545,6 +549,7 @@ package body Debugger is
    is
       Process : Visual_Debugger;
       Result  : Boolean;
+      pragma Unreferenced (Result);
 
    begin
       --  See also Output_Available for similar handling.
@@ -603,6 +608,7 @@ package body Debugger is
    is
       Process : Visual_Debugger;
       Button  : Message_Dialog_Buttons;
+      pragma Unreferenced (Button);
       Last    : Positive := Cmd'First;
       First   : Positive;
 
@@ -815,6 +821,8 @@ package body Debugger is
    procedure Wait_User_Command (Debugger : access Debugger_Root) is
       Current_Process : Process_Proxy_Access;
       Tmp             : Boolean;
+      pragma Unreferenced (Tmp);
+
       Num_Events      : Positive;
       Max_Events      : constant := 30;
       --  Limit the number of events to process in one iteration

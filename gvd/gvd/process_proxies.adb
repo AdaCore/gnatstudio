@@ -196,6 +196,7 @@ package body Process_Proxies is
       --  Limit the number of events to process in one iteration
 
       No_Main_Loop : Boolean;
+      pragma Unreferenced (No_Main_Loop);
 
    begin
       --  Reset the interrupted flag before processing.

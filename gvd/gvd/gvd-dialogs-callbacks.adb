@@ -207,8 +207,6 @@ package body GVD.Dialogs.Callbacks is
      (Object : access Gtk_Widget_Record'Class;
       Params : Gtk.Arguments.Gtk_Args)
    is
-      pragma Unreferenced (Params);
-
       use type Gint_List.Glist;
 
       Dialog    : constant Question_Dialog_Access :=
@@ -218,6 +216,8 @@ package body GVD.Dialogs.Callbacks is
       S         : Unbounded_String;
       Tmp       : Gint_List.Glist := Gint_List.First (Selection);
       Button    : Message_Dialog_Buttons;
+      pragma Unreferenced (Params, Button);
+
       Debugger  : constant Debugger_Access := Dialog.Debugger;
       Process   : constant Visual_Debugger :=
         Convert (Dialog.Main_Window, Debugger);

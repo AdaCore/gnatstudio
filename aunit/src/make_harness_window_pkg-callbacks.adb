@@ -113,6 +113,7 @@ package body Make_Harness_Window_Pkg.Callbacks is
       Id             : constant Context_Id :=
         Get_Context_Id (Harness_Window.Statusbar, "messages");
       Message        : Message_Id;
+      pragma Unreferenced (Message);
 
    begin
       Hide (Harness_Window.Explorer);

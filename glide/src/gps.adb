@@ -100,13 +100,16 @@ procedure GPS is
    Project_Name   : String_Access;
    Prj            : String_Access;
    Button         : Message_Dialog_Buttons;
+   pragma Unreferenced (Button);
    Home           : String_Access;
    Prefix         : String_Access;
    Dir            : String_Access;
    File_Opened    : Boolean := False;
    Splash         : Gtk_Window;
    Timeout_Id     : Timeout_Handler_Id;
+   pragma Unreferenced (Timeout_Id);
    Result         : Boolean;
+   pragma Unreferenced (Result);
 
    procedure Init_Settings;
    --  Set up environment for GPS.

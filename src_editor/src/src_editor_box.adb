@@ -1071,8 +1071,8 @@ package body Src_Editor_Box is
      (Adj : access Glib.Object.GObject_Record'Class;
       Box : Source_Editor_Box)
    is
-      pragma Unreferenced (Adj);
       Tmp : Boolean;
+      pragma Unreferenced (Adj, Tmp);
    begin
       Tmp := Place_Cursor_Onscreen (Box.Source_View);
    end Box_Scrolled;
@@ -1129,6 +1129,8 @@ package body Src_Editor_Box is
 
    function Focus_In (Box : access GObject_Record'Class) return Boolean is
       Id        : Idle_Handler_Id;
+      pragma Unreferenced (Id);
+
       Undo_Redo : Undo_Redo_Information;
       B         : constant Source_Editor_Box := Source_Editor_Box (Box);
    begin

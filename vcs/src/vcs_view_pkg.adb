@@ -745,6 +745,7 @@ package body VCS_View_Pkg is
       Text_Rend   : Gtk_Cell_Renderer_Text;
       Pixbuf_Rend : Gtk_Cell_Renderer_Pixbuf;
       Dummy       : Gint;
+      pragma Unreferenced (Dummy);
 
    begin
       Gtk_New (Text_Rend);
@@ -1058,8 +1059,9 @@ package body VCS_View_Pkg is
      (VCS_View : access VCS_View_Record'Class;
       Kernel   : Kernel_Handle)
    is
-      Vbox1           : Gtk_Vbox;
-      Dummy_Page      : VCS_Page_Access;
+      Vbox1      : Gtk_Vbox;
+      Dummy_Page : VCS_Page_Access;
+      pragma Unreferenced (Dummy_Page);
 
    begin
       Init_Graphics;

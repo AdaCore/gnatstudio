@@ -445,6 +445,8 @@ package body Builder_Module is
       Cmd          : String_Access;
       Args         : Argument_List_Access;
       Id           : Timeout_Handler_Id;
+      pragma Unreferenced (Id);
+
       Context      : Selection_Context_Access;
       Prj          : Project_Id;
       Project_View : constant Project_Id := Get_Project_View (K);
@@ -609,6 +611,8 @@ package body Builder_Module is
          Fd   : Process_Descriptor_Access;
          Args : Argument_List_Access;
          Id   : Timeout_Handler_Id;
+         pragma Unreferenced (Id);
+
          Lang : String := Get_Language_From_File
            (Get_Language_Handler (Kernel), File);
 
@@ -687,6 +691,8 @@ package body Builder_Module is
       Fd           : Process_Descriptor_Access;
       Args         : Argument_List_Access;
       Id           : Timeout_Handler_Id;
+      pragma Unreferenced (Id);
+
       Lang         : String := Get_Language_From_File
         (Get_Language_Handler (Kernel), File);
 
@@ -872,6 +878,7 @@ package body Builder_Module is
          Fd      : Process_Descriptor_Access;
          Args    : Argument_List_Access;
          Id      : Timeout_Handler_Id;
+         pragma Unreferenced (Id);
 
       begin
          if Save_All_MDI_Children (Kernel, Force => False) = False then
@@ -988,6 +995,7 @@ package body Builder_Module is
    is
       pragma Unreferenced (Object);
       Id      : Timeout_Handler_Id;
+      pragma Unreferenced (Id);
 
    begin
       Push_State (Kernel, Processing);

@@ -136,9 +136,12 @@ package body Variable_Editors is
       Index           : Natural := 0;
       S               : chars_ptr;
       Col             : Gtk_Tree_View_Column;
-      Col_Number      : Gint;
       Toggle_Renderer : Gtk_Cell_Renderer_Toggle;
+
+      Col_Number      : Gint;
       Button          : Gtk_Widget;
+      pragma Unreferenced (Col_Number, Button);
+
       Iter            : Gtk_Tree_Iter;
       E               : String_List_Iterator;
       Expr            : Project_Node_Id;
@@ -339,6 +342,7 @@ package body Variable_Editors is
       Found    : Boolean;
       Num_Rows : Natural := 0;
       Message  : Message_Dialog_Buttons;
+      pragma Unreferenced (Message);
 
    begin
       if New_Name = "" then

@@ -123,11 +123,10 @@ package body Navigation_Module is
       Data      : GValue_Array;
       Mode      : Mime_Mode := Read_Write) return Boolean
    is
-      pragma Unreferenced (Mode);
-
       N_Data : constant Navigation_Module :=
         Navigation_Module (Navigation_Module_ID);
       Success : Boolean;
+      pragma Unreferenced (Mode, Success);
 
    begin
       if Mime_Type = Mime_Source_File then
@@ -264,10 +263,11 @@ package body Navigation_Module is
    procedure On_Back
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
-      pragma Unreferenced (Widget);
       Data    : Navigation_Module :=
         Navigation_Module (Navigation_Module_ID);
       Success : Boolean;
+      pragma Unreferenced (Widget, Success);
+
    begin
       if not Is_Empty (Data.Back) then
 
@@ -294,10 +294,11 @@ package body Navigation_Module is
    procedure On_Forward
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
-      pragma Unreferenced (Widget);
       Data    : Navigation_Module :=
         Navigation_Module (Navigation_Module_ID);
       Success : Boolean;
+      pragma Unreferenced (Widget, Success);
+
    begin
       if not Is_Empty (Data.Forward) then
          if Data.Current_Location /= null then

@@ -667,8 +667,6 @@ package body GVD_Module is
    procedure On_Connect_To_Board
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
-      pragma Unreferenced (Widget);
-
       Top          : constant Glide_Window :=
         Glide_Window (Get_Main_Window (Kernel));
       Process      : constant Visual_Debugger :=
@@ -679,6 +677,7 @@ package body GVD_Module is
       Ent_Target   : Gtk_Entry;
       Label        : Gtk_Label;
       Button       : Gtk_Widget;
+      pragma Unreferenced (Widget, Button);
 
       use Debugger;
 
@@ -996,11 +995,12 @@ package body GVD_Module is
       Width       : out Gint;
       Height      : out Gint)
    is
-      Selection      : Entity_Selection_Context_Access;
-      Debugger       : Visual_Debugger;
-      Kernel         : Kernel_Handle;
-      Value          : Basic_Types.String_Access;
-      Context        : Items.Drawing_Context;
+      Selection : Entity_Selection_Context_Access;
+      Debugger  : Visual_Debugger;
+      Kernel    : Kernel_Handle;
+      Value     : Basic_Types.String_Access;
+      Context   : Items.Drawing_Context;
+      pragma Unreferenced (Context);
 
    begin
       Pixmap := null;
@@ -1328,13 +1328,12 @@ package body GVD_Module is
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access)
    is
-      pragma Unreferenced (Widget);
-
       Entity    : constant Entity_Selection_Context_Access :=
         Entity_Selection_Context_Access (Context);
       Debugger : constant Debugger_Access :=
         Get_Current_Process (Get_Main_Window (Get_Kernel (Context))).Debugger;
       Num      : Breakpoint_Identifier;
+      pragma Unreferenced (Widget, Num);
 
    begin
       Num := Break_Source
@@ -1356,13 +1355,12 @@ package body GVD_Module is
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access)
    is
-      pragma Unreferenced (Widget);
-
       Entity    : constant Entity_Selection_Context_Access :=
         Entity_Selection_Context_Access (Context);
       Debugger : constant Debugger_Access :=
         Get_Current_Process (Get_Main_Window (Get_Kernel (Context))).Debugger;
       Num      : Breakpoint_Identifier;
+      pragma Unreferenced (Widget, Num);
 
    begin
       Num := Break_Subprogram
@@ -1383,13 +1381,12 @@ package body GVD_Module is
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access)
    is
-      pragma Unreferenced (Widget);
-
       Entity    : constant Entity_Selection_Context_Access :=
         Entity_Selection_Context_Access (Context);
       Debugger : constant Debugger_Access :=
         Get_Current_Process (Get_Main_Window (Get_Kernel (Context))).Debugger;
       Num      : Breakpoint_Identifier;
+      pragma Unreferenced (Widget, Num);
 
    begin
       Num := Break_Source
@@ -1591,6 +1588,8 @@ package body GVD_Module is
       C          : Set_Breakpoint_Command_Access;
       File_Line  : File_Line_Record;
       Timeout_Id : Timeout_Handler_Id;
+      pragma Unreferenced (Timeout_Id);
+
       Tab        : constant Visual_Debugger :=
         Get_Current_Process
           (Get_Main_Window (GVD_Module (GVD_Module_ID).Kernel));
@@ -1774,6 +1773,8 @@ package body GVD_Module is
         To_Selection_Context_Access (Get_Address (Nth (Args, 1)));
       Area_Context : File_Area_Context_Access;
       Timeout_Id   : Timeout_Handler_Id;
+      pragma Unreferenced (Timeout_Id);
+
       Process      : constant Visual_Debugger :=
         Get_Current_Process (Get_Main_Window (Get_Kernel (Context)));
 

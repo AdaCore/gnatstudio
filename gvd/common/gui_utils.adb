@@ -130,6 +130,7 @@ package body GUI_Utils is
       Text : String)
    is
       Item : Gtk_List_Item;
+      pragma Unreferenced (Item);
    begin
       Item := Add_Unique_List_Entry (List, Text);
    end Add_Unique_List_Entry;
@@ -145,6 +146,8 @@ package body GUI_Utils is
       Use_Item_String : Boolean := False)
    is
       Item : Gtk_List_Item;
+      pragma Unreferenced (Item);
+
    begin
       Item := Add_Unique_Combo_Entry
         (Combo, Text, Item_String, Use_Item_String);

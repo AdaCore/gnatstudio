@@ -186,10 +186,13 @@ package body Foreign_Naming_Editors is
    is
       Naming : constant String := Get_String (Name_Naming);
       Lang   : constant String := Get_String (Editor.Language);
-      Row  : Gint;
-      Text : Gtkada.Types.Chars_Ptr_Array (0 .. 0);
-      Ext  : Name_Id;
-      View : Project_Id := Project_View;
+      Row    : Gint;
+      pragma Unreferenced (Row);
+
+      Text   : Gtkada.Types.Chars_Ptr_Array (0 .. 0);
+      Ext    : Name_Id;
+      View   : Project_Id := Project_View;
+
    begin
       --  If the view is null, we get the default values from the current
       --  top-level project. It will automatically have the default extensions

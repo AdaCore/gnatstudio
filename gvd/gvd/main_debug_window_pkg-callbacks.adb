@@ -70,6 +70,8 @@ package body Main_Debug_Window_Pkg.Callbacks is
 
       --  Arg1 : Gdk_Event := To_Event (Params, 1);
       Id         : Idle_Handler_Id;
+      pragma Unreferenced (Id);
+
       GVD_Window : constant GVD_Main_Window := GVD_Main_Window (Object);
 
    begin

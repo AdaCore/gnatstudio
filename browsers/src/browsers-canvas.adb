@@ -648,6 +648,8 @@ package body Browsers.Canvas is
       end Refresh_Item_Conditional;
 
       Tmp : Boolean;
+      pragma Unreferenced (Tmp);
+
    begin
       Browser.Selected_Item := Item;
 

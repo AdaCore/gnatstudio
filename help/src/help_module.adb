@@ -505,6 +505,8 @@ package body Help_Module is
    is
       Html   : Help_Browser;
       Result : Boolean;
+      pragma Unreferenced (Result);
+
    begin
       Html := new Help_Browser_Record;
       Html.Kernel := Kernel_Handle (Kernel);
@@ -553,6 +555,7 @@ package body Help_Module is
       Scrolled : Help_Browser;
       Child    : MDI_Child;
       Result   : Boolean;
+      pragma Unreferenced (Result);
 
    begin
       if not Is_Regular_File (Help_File) then
@@ -678,8 +681,8 @@ package body Help_Module is
    procedure On_About
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
-      pragma Unreferenced (Widget, Kernel);
       Button : Message_Dialog_Buttons;
+      pragma Unreferenced (Widget, Kernel, Button);
    begin
       Button := Message_Dialog
         ("GPS " & GVD.Version & " (" & GVD.Source_Date &

@@ -835,10 +835,11 @@ package body Default_Preferences is
    procedure Key_Grab
      (Ent  : access GObject_Record'Class; Data : Nodes)
    is
-      pragma Unreferenced (Data);
-      Tmp : Gdk_Grab_Status;
-      Id  : Handler_Id;
-      E   : constant Gtk_Entry := Gtk_Entry (Ent);
+      Tmp    : Gdk_Grab_Status;
+      pragma Unreferenced (Data, Tmp);
+
+      Id     : Handler_Id;
+      E      : constant Gtk_Entry := Gtk_Entry (Ent);
       Cursor : Gdk.Cursor.Gdk_Cursor;
    begin
       Tmp := Keyboard_Grab
@@ -944,11 +945,13 @@ package body Default_Preferences is
      (Ent : access GObject_Record'Class;
       Data : Nodes)
    is
-      E : constant Gtk_Entry := Gtk_Entry (Ent);
-      F : Gtk_Font_Selection;
+      E      : constant Gtk_Entry := Gtk_Entry (Ent);
+      F      : Gtk_Font_Selection;
       Dialog : Gtk_Dialog;
-      Tmp : Gtk_Widget;
       Result : Boolean;
+      Tmp    : Gtk_Widget;
+      pragma Unreferenced (Result, Tmp);
+
    begin
       Gtk_New (Dialog,
                Title  => -"Select font",
@@ -1242,6 +1245,8 @@ package body Default_Preferences is
       Note       : Gtk_Notebook;
       Main_Note  : Gtk_Notebook;
       Tmp        : Gtk_Widget;
+      pragma Unreferenced (Tmp);
+
       Prefs      : Preference_Information_Access := Manager.Default;
       Saved_Pref : Node_Ptr := Deep_Copy (Manager.Preferences);
       Had_Apply  : Boolean := False;

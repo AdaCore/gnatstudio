@@ -1355,6 +1355,8 @@ package body Src_Editor_Buffer is
            Get_Text (Buffer, Start_Iter, End_Iter, True);
          Contents       : GNAT.OS_Lib.String_Access;
          Bytes_Written  : Integer;
+         pragma Unreferenced (Bytes_Written);
+
          First, Current : Natural := 1;
          Blanks         : Natural := 0;
          Ignore, Length : Natural;
@@ -2330,6 +2332,8 @@ package body Src_Editor_Buffer is
       New_Timestamp : Timestamp;
       Dialog : Gtk_Dialog;
       Button : Gtk_Widget;
+      pragma Unreferenced (Button);
+
       Success : Boolean;
       Line, Column : Gint;
    begin

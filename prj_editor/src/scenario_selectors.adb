@@ -140,6 +140,8 @@ package body Scenario_Selectors is
       Toggle_Render : Gtk_Cell_Renderer_Toggle;
       Text_Render   : Gtk_Cell_Renderer_Text;
       Num           : Gint;
+      pragma Unreferenced (Num);
+
    begin
       Gtk.Scrolled_Window.Initialize (Selector);
       Set_Policy (Selector, Policy_Never, Policy_Automatic);
@@ -376,6 +378,8 @@ package body Scenario_Selectors is
       Toggle_Render : Gtk_Cell_Renderer_Toggle;
       Text_Render   : Gtk_Cell_Renderer_Text;
       Num           : Gint;
+      pragma Unreferenced (Num);
+
    begin
       Gtk.Scrolled_Window.Initialize (Selector);
       Set_Policy (Selector, Policy_Never, Policy_Automatic);

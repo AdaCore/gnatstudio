@@ -460,6 +460,8 @@ package body Vsearch_Ext is
       Vsearch : constant Vsearch_Extended := Vsearch_Extended (Object);
       Has_Next       : Boolean;
       Button         : Message_Dialog_Buttons;
+      pragma Unreferenced (Button);
+
       All_Occurences : constant Boolean := Get_Active
         (Vsearch.Search_All_Check);
       Pattern        : constant String := Get_Text (Vsearch.Pattern_Entry);
@@ -532,6 +534,8 @@ package body Vsearch_Ext is
    procedure On_Search_Replace (Object : access Gtk_Widget_Record'Class) is
       Vsearch     : constant Vsearch_Extended := Vsearch_Extended (Object);
       Has_Next    : Boolean;
+      pragma Unreferenced (Has_Next);
+
       All_Occurences : constant Boolean := Get_Active
         (Vsearch.Search_All_Check);
    begin
@@ -576,6 +580,7 @@ package body Vsearch_Ext is
       All_Occurences : constant Boolean := Get_Active
         (Vsearch.Search_All_Check);
       Has_Next : Boolean;
+      pragma Unreferenced (Has_Next);
 
    begin
       if Vsearch.Search_Idle_Handler /= 0 then

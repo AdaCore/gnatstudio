@@ -71,6 +71,8 @@ package body Gtkada.Entry_Completion is
       Renderer : Gtk_Cell_Renderer_Text;
       Col      : Gtk_Tree_View_Column;
       Num      : Gint;
+      pragma Unreferenced (Num);
+
       Scrolled : Gtk_Scrolled_Window;
       Frame    : Gtk_Frame;
    begin

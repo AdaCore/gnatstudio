@@ -37,11 +37,8 @@ end Gtk_New;
 procedure Initialize
   (Vsearch : access Vsearch_Record'Class;
    Handle  : access Glide_Kernel.Kernel_Handle_Record'Class) is
-pragma Suppress (All_Checks);
-   Replace_Combo_Items : String_List.Glist;
+   pragma Suppress (All_Checks);
    Tooltips : Gtk_Tooltips;
-   Context_Combo_Items : String_List.Glist;
-   Pattern_Combo_Items : String_List.Glist;
 
 begin
    --  Gtk.Window.Initialize (Vsearch, Window_Toplevel);
@@ -131,7 +128,7 @@ begin
    Set_Use_Arrows_Always (Vsearch.Pattern_Combo, False);
    --  String_List.Append (Pattern_Combo_Items, -"");
    --  Combo.Set_Popdown_Strings (Vsearch.Pattern_Combo, Pattern_Combo_Items);
-   Free_String_List (Pattern_Combo_Items);
+   --  Free_String_List (Pattern_Combo_Items);
    Attach (Vsearch.Table, Vsearch.Pattern_Combo, 1, 2, 0, 1,
      Expand or Fill, 0,
      2, 0);

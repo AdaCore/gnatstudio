@@ -206,6 +206,7 @@ package body GVD.Menu is
       Success       : Boolean;
       Info          : Process_Info;
       Button        : Message_Dialog_Buttons;
+      pragma Unreferenced (Button);
 
    begin
       if Tab = null then
@@ -254,10 +255,9 @@ package body GVD.Menu is
       Action : Guint;
       Widget : Limited_Widget)
    is
-      pragma Unreferenced (Action, Widget);
-
       Tab    : constant Visual_Debugger := Get_Current_Process (Object);
       Button : Message_Dialog_Buttons;
+      pragma Unreferenced (Action, Widget, Button);
 
    begin
       if Tab /= null then
@@ -284,10 +284,9 @@ package body GVD.Menu is
       Action : Guint;
       Widget : Limited_Widget)
    is
-      pragma Unreferenced (Action, Widget);
-
       Tab    : constant Visual_Debugger := Get_Current_Process (Object);
       Button : Message_Dialog_Buttons;
+      pragma Unreferenced (Action, Widget, Button);
 
    begin
       if Tab = null then
@@ -327,11 +326,11 @@ package body GVD.Menu is
       Action : Guint;
       Widget : Limited_Widget)
    is
-      pragma Unreferenced (Action, Widget);
-
       Tab         : constant Visual_Debugger :=
         Get_Current_Process (Object);
       Button      : Message_Dialog_Buttons;
+      pragma Unreferenced (Action, Widget, Button);
+
       Button2     : Boolean_Access := null;
       Multitasks  : aliased Boolean := False;
       Multi_Msg   : aliased String := -"Enable VxWorks multi-tasks mode";
@@ -626,11 +625,11 @@ package body GVD.Menu is
       Action : Guint;
       Widget : Limited_Widget)
    is
-      pragma Unreferenced (Action, Widget);
-
       Top       : constant GVD_Main_Window := GVD_Main_Window (Object);
       Process   : Visual_Debugger;
       Button    : Message_Dialog_Buttons;
+      pragma Unreferenced (Action, Widget, Button);
+
       Item      : Gtk_Widget;
       List      : Debugger_List_Link := Top.First_Debugger;
 
@@ -685,11 +684,10 @@ package body GVD.Menu is
       Action : Guint;
       Widget : Limited_Widget)
    is
-      pragma Unreferenced (Action, Widget);
-
       Top    : constant GVD_Main_Window := GVD_Main_Window (Object);
       Tab    : constant Visual_Debugger := Get_Current_Process (Object);
       Button : Message_Dialog_Buttons;
+      pragma Unreferenced (Action, Widget, Button);
 
    begin
       if Tab /= null then
@@ -718,11 +716,10 @@ package body GVD.Menu is
       Action : Guint;
       Widget : Limited_Widget)
    is
-      pragma Unreferenced (Action, Widget);
-
       Top    : constant GVD_Main_Window := GVD_Main_Window (Object);
       Tab    : constant Visual_Debugger := Get_Current_Process (Object);
       Button : Message_Dialog_Buttons;
+      pragma Unreferenced (Action, Widget, Button);
 
    begin
       if Tab /= null then
@@ -751,11 +748,10 @@ package body GVD.Menu is
       Action : Guint;
       Widget : Limited_Widget)
    is
-      pragma Unreferenced (Action, Widget);
-
       Top    : constant GVD_Main_Window := GVD_Main_Window (Object);
       Tab    : constant Visual_Debugger := Get_Current_Process (Object);
       Button : Message_Dialog_Buttons;
+      pragma Unreferenced (Action, Widget, Button);
 
    begin
       if Tab /= null then
@@ -785,11 +781,10 @@ package body GVD.Menu is
       Action : Guint;
       Widget : Limited_Widget)
    is
-      pragma Unreferenced (Action, Widget);
-
       Top     : constant GVD_Main_Window := GVD_Main_Window (Object);
       Process : constant Visual_Debugger := Get_Current_Process (Object);
       Button  : Message_Dialog_Buttons;
+      pragma Unreferenced (Action, Widget, Button);
 
    begin
       if Process /= null then

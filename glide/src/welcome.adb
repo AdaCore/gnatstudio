@@ -80,6 +80,8 @@ package body Welcome is
       Button    : Gtk_Button;
       Size      : Gtk_Size_Group;
       Quit      : Gtk_Widget;
+      pragma Unreferenced (Quit);
+
    begin
       Screen := new Welcome_Screen_Record;
 

@@ -287,10 +287,10 @@ package body Glide_Kernel.Console is
    procedure On_Save_Console_As
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
-      pragma Unreferenced (Widget);
       Console : constant Interactive_Console := Get_Console (Kernel);
       FD      : File_Descriptor;
       Len     : Integer;
+      pragma Unreferenced (Widget, Len);
 
    begin
       declare
