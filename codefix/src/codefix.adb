@@ -99,6 +99,10 @@ package body Codefix is
       Put_Line (File, This.all);
    end Put_Line;
 
+   -----------
+   -- Clone --
+   -----------
+
    function Clone (This : Dynamic_String) return Dynamic_String is
    begin
       if This = null then
