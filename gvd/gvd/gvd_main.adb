@@ -24,6 +24,10 @@ with Gdk.Types;             use Gdk.Types;
 with Gtk.Main;
 with Gtk;                   use Gtk;
 with Gtk.Enums;             use Gtk.Enums;
+with Gtk.List;              use Gtk.List;
+with Gtk.List_Item;         use Gtk.List_Item;
+with Gtk.Combo;             use Gtk.Combo;
+with Gtk.GEntry;            use Gtk.GEntry;
 with Gtk.Widget;            use Gtk.Widget;
 with Gtk.Notebook;          use Gtk.Notebook;
 with Gtkada.Intl;           use Gtkada.Intl;
@@ -39,6 +43,8 @@ with GVD.Trace;             use GVD.Trace;
 with GVD.Types;             use GVD.Types;
 with GVD.Preferences;       use GVD.Preferences;
 with GVD.Window_Settings;   use GVD.Window_Settings;
+
+with GVD.Open_Program_Dialog; use GVD.Open_Program_Dialog;
 
 with GNAT.OS_Lib;           use GNAT.OS_Lib;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
@@ -311,6 +317,23 @@ begin
                   Free (Debugger_Name);
                   Debugger_Name := new String' (Clean_Parameter);
 
+                  if Main_Debug_Window.Open_Program = null then
+                     Gtk_New (Main_Debug_Window.Open_Program);
+                  end if;
+
+                  declare
+                     Item : Gtk_List_Item;
+                  begin
+                     Gtk_New (Item, Clean_Parameter);
+                     Add (Get_List
+                           (Main_Debug_Window.Open_Program.Debugger_Combo),
+                          Item);
+                     Set_Text
+                       (Get_Entry
+                         (Main_Debug_Window.Open_Program.Debugger_Combo),
+                        Clean_Parameter);
+                  end;
+
                when 'e' =>
                   -- --editor-window --
                   Main_Debug_Window.External_XID :=
@@ -389,6 +412,29 @@ begin
                           new String '(Param (Param'First .. Column - 1));
                         Protocol :=
                           new String '(Param (Column + 1 .. Param'Last));
+
+                        if Main_Debug_Window.Open_Program = null then
+                           Gtk_New (Main_Debug_Window.Open_Program);
+                        end if;
+
+                        Set_Text
+                          (Get_Entry
+                            (Main_Debug_Window.Open_Program.Protocol_Combo),
+                           Protocol.all);
+
+                        declare
+                           Item : Gtk_List_Item;
+                        begin
+                           Gtk_New (Item, Target.all);
+                           Add (Get_List
+                                 (Main_Debug_Window.
+                                    Open_Program.Program_Host_Combo),
+                                Item);
+                        end;
+
+                        Set_Text
+                          (Main_Debug_Window.Open_Program.Target_Entry,
+                           Target.all);
                      end;
                   end if;
 
@@ -418,6 +464,23 @@ begin
                   elsif Full_Switch = "-host" then
                      Free (Remote_Host);
                      Remote_Host := new String' (Clean_Parameter);
+
+                     if Main_Debug_Window.Open_Program = null then
+                        Gtk_New (Main_Debug_Window.Open_Program);
+                     end if;
+
+                     declare
+                        Item : Gtk_List_Item;
+                     begin
+                        Gtk_New (Item, Clean_Parameter);
+                        Add (Get_List
+                             (Main_Debug_Window.Open_Program.Host_Combo),
+                             Item);
+                        Set_Text
+                          (Get_Entry
+                           (Main_Debug_Window.Open_Program.Host_Combo),
+                           Clean_Parameter);
+                     end;
                   end if;
 
                when others =>
@@ -435,6 +498,25 @@ begin
    --  Do we have an executable on the command line (this is the first
    --  non-switch argument found on the command line)
    Debuggee_Name := new String' (GNAT.Command_Line.Get_Argument);
+
+   if Debuggee_Name.all /= "" then
+      if Main_Debug_Window.Open_Program = null then
+         Gtk_New (Main_Debug_Window.Open_Program);
+      end if;
+
+      declare
+         Item : Gtk_List_Item;
+      begin
+         Gtk_New (Item, Debuggee_Name.all);
+         Add (Get_List
+                (Main_Debug_Window.Open_Program.Program_Combo),
+              Item);
+         Set_Text
+           (Get_Entry
+              (Main_Debug_Window.Open_Program.Program_Combo),
+            Debuggee_Name.all);
+      end;
+   end if;
 
    --  Debugger args
    Goto_Section ("-dargs");

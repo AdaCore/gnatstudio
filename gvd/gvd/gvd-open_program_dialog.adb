@@ -26,6 +26,17 @@ with Basic_Types;       use Basic_Types;
 
 package body GVD.Open_Program_Dialog is
 
+   -------------
+   -- Gtk_New --
+   -------------
+
+   procedure Gtk_New (Open : out GVD_Open_Program)
+   is
+   begin
+      Open := new GVD_Open_Program_Record;
+      Open_Program_Pkg.Initialize (Open);
+   end Gtk_New;
+
    ----------
    -- Free --
    ----------
@@ -48,8 +59,7 @@ package body GVD.Open_Program_Dialog is
       Descriptor : out Program_Descriptor) is
    begin
       if Open = null then
-         Open := new GVD_Open_Program_Record;
-         Open_Program_Pkg.Initialize (Open);
+         Gtk_New (Open);
       end if;
 
       Show_All (Open);
