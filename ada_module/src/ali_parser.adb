@@ -1298,7 +1298,7 @@ package body ALI_Parser is
                   Project   => Project);
                if LI = null then
                   return VFS.No_File;
-               elsif not Update_ALI (Handler, LI, Reset_ALI => False)
+               elsif not Update_ALI (Handler, LI, Reset_ALI => True)
                  or else not Check_LI_And_Source (LI, Source_Filename)
                then
                   return VFS.No_File;
