@@ -275,6 +275,7 @@ package body Project_Explorers_Files is
            C_Proxy (Explorer.Close_Pixbufs (Category_Node)));
       Set (Explorer.File_Model, N, Node_Type_Column,
            Gint (Node_Types'Pos (Category_Node)));
+
       return N;
    end File_Append_Category_Node;
 
@@ -448,7 +449,6 @@ package body Project_Explorers_Files is
 
       Set (Explorer.File_Model, Iter, Icon_Column,
            C_Proxy (Explorer.Close_Pixbufs (File_Node)));
-
       Set (Explorer.File_Model, Iter, Node_Type_Column,
            Gint (Node_Types'Pos (File_Node)));
 
@@ -494,6 +494,7 @@ package body Project_Explorers_Files is
               Gint (Node_Types'Pos (Directory_Node)));
          Set (D.Explorer.File_Model, Iter, Icon_Column,
               C_Proxy (D.Explorer.Open_Pixbufs (Directory_Node)));
+
          D.Base := Iter;
 
          return Read_Directory (D);
@@ -622,6 +623,7 @@ package body Project_Explorers_Files is
 
                Set (D.Explorer.File_Model, Iter, Icon_Column,
                     C_Proxy (D.Explorer.Close_Pixbufs (Directory_Node)));
+
             end if;
 
             Next (D.Dirs);
@@ -756,6 +758,9 @@ package body Project_Explorers_Files is
 
       Gtk_New (Explorer.File_Model, Columns_Types);
       Gtk_New (Explorer.File_Tree, Explorer.File_Model);
+
+      --  The model should be destroyed as soon as the tree view is destroyed
+      Unref (Explorer.File_Model);
 
       Explorer.Kernel := Kernel_Handle (Kernel);
 
@@ -903,8 +908,18 @@ package body Project_Explorers_Files is
       Params : Glib.Values.GValues)
    is
       pragma Unreferenced (Params);
+      E : constant Project_Explorer_Files :=
+        Project_Explorer_Files (Explorer);
    begin
-      File_Remove_Idle_Calls (Project_Explorer_Files (Explorer));
+      File_Remove_Idle_Calls (E);
+
+      for P in E.Open_Pixbufs'Range loop
+         Unref (E.Open_Pixbufs (P));
+      end loop;
+
+      for P in E.Close_Pixbufs'Range loop
+         Unref (E.Close_Pixbufs (P));
+      end loop;
    end On_File_Destroy;
 
    -------------------------------
