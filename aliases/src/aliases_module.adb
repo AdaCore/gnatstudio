@@ -1863,8 +1863,10 @@ package body Aliases_Module is
             Use_Align => False,
             Row_Align => 0.0,
             Col_Align => 0.0);
+         Set_Cursor
+           (Editor.Aliases, Path,
+            Get_Column (Editor.Aliases, 0), Start_Editing => True);
          Path_Free (Path);
-         Select_Iter (Get_Selection (Editor.Aliases), Alias_Iter);
       end if;
    end Add_New_Alias;
 
