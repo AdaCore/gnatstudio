@@ -306,14 +306,15 @@ package body Entities.Queries is
       Check_Decl_Only : Boolean := False)
    is
       Handler  : constant LI_Handler := Get_LI_Handler (Db, File_Name);
-      Source   : constant Source_File := Get_Source_Info (Handler, File_Name);
+      Source   : Source_File;
    begin
-      if Source = null then
+      if Handler = null then
          Trace (Me, "No such file registered: "
                 & Full_Name (File_Name).all);
          Status := Entity_Not_Found;
          Entity := null;
       else
+         Source := Get_Source_Info (Handler, File_Name);
          Find_Declaration
            (Db, Source, Entity_Name, Line, Column, Entity, Status,
             Check_Decl_Only, Handler);
@@ -364,6 +365,9 @@ package body Entities.Queries is
             Find (Source, Entity_Name, Line, Column, Check_Decl_Only,
                   Entity, Status);
          end if;
+      else
+         Status := Entity_Not_Found;
+         Entity := null;
       end if;
    end Find_Declaration;
 
