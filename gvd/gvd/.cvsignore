@@ -1,0 +1,8 @@
+.cvsignore
+*_xpm
+*.xpm
+gvd
+Makefile
+odd.adp
+save
+backup
