@@ -93,7 +93,6 @@ __gnat_uninstall_int_handler ()
 
 #elif defined (__MINGW32__)
 
-#include "mingw32.h"
 #include <windows.h>
 
 void (*sigint_intercepted) () = NULL;
