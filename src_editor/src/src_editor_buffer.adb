@@ -45,6 +45,7 @@ with Interfaces.C.Strings;      use Interfaces.C.Strings;
 with System;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with OS_Utils;                  use OS_Utils;
+with File_Utils;                use File_Utils;
 with Src_Info;                  use Src_Info;
 with Glide_Intl;                use Glide_Intl;
 
@@ -53,6 +54,7 @@ with Commands.Editor;           use Commands.Editor;
 with Commands.Controls;         use Commands.Controls;
 with Src_Editor_Module;         use Src_Editor_Module;
 with Glide_Kernel;              use Glide_Kernel;
+with Glide_Kernel.Console;      use Glide_Kernel.Console;
 with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
 with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
 with Glide_Kernel.Project;      use Glide_Kernel.Project;
@@ -1736,6 +1738,9 @@ package body Src_Editor_Buffer is
       End_Iter   : Gtk_Text_Iter;
       Terminator : Line_Terminator_Style := Buffer.Line_Terminator;
 
+      Force_Write : Boolean := False;
+      --  Whether the file mode has been forced to writable.
+
       procedure New_Line (FD : File_Descriptor);
       --  Write a new line on FD.
 
@@ -1760,7 +1765,38 @@ package body Src_Editor_Buffer is
 
       FD := Create_File (Filename, Fmode => Binary);
 
+      --  The file could not be opened, check whether it is read-only.
+
+      if FD = Invalid_FD
+        and then Is_Regular_File (Filename)
+        and then not Is_Writable_File (Filename)
+      then
+         declare
+            Buttons : Message_Dialog_Buttons;
+         begin
+            Buttons := Message_Dialog
+              (Msg            => -"The file " & Filename & ASCII.LF
+                 & (-"is read-only. Do you want to overwrite it ?"),
+               Dialog_Type    => Confirmation,
+               Buttons        => Button_Yes or Button_No,
+               Default_Button => Button_No,
+               Title          => -"File is read-only",
+               Justification  => Justify_Left,
+               Parent         => Get_Main_Window (Buffer.Kernel));
+
+            if Buttons = Button_Yes then
+               Force_Write := True;
+               Set_Writable (Filename, True);
+               FD := Create_File (Filename, Fmode => Binary);
+            end if;
+         end;
+      end if;
+
       if FD = Invalid_FD then
+         Insert
+           (Buffer.Kernel,
+            -"Could not open file for writing: " & Filename,
+            Mode => Error);
          Success := False;
          return;
       end if;
@@ -1913,6 +1949,12 @@ package body Src_Editor_Buffer is
          end if;
 
          File_Edited (Buffer.Kernel, Filename);
+      end if;
+
+      --  If the file mode was forced to writable, reset it to read-only.
+
+      if Force_Write then
+         Set_Writable (Filename, False);
       end if;
 
    exception
