@@ -18,7 +18,7 @@
   <title>Switches</title>
   <type>GTK_WINDOW_TOPLEVEL</type>
   <position>GTK_WIN_POS_NONE</position>
-  <modal>True</modal>
+  <modal>False</modal>
   <default_width>400</default_width>
   <default_height>300</default_height>
   <allow_shrink>False</allow_shrink>
