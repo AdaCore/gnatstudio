@@ -3346,7 +3346,7 @@ package body Prj_API is
         (Project,
          Scenario_Variables => No_Scenario,
          Attribute_Name     => "default_switches",
-         Values             => Values (1 .. 2),
+         Values             => Values (1 .. 1),
          Attribute_Index    => Ada_String,
          Pkg_Name           => "builder");
       Free (Values (1));
