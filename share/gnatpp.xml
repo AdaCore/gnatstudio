@@ -3,9 +3,6 @@
       This is a pretty printer for Ada files -->
 
 <gnatpp>
-   <!--  Missing in this implementation: If no project exists for the current
-         file, run "gnat pretty" on that file directly -->
-
    <action name="Pretty print" output="none" >
       <!-- This action only applies to Ada files -->
       <filter language="ada"
