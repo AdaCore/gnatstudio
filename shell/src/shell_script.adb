@@ -928,7 +928,7 @@ package body Shell_Script is
          return;
       end if;
 
-      if Class = No_Class then
+      if Class = No_Class or else Static_Method then
          U := new String'(Params & Ret_Val);
       else
          if Params = "" then
