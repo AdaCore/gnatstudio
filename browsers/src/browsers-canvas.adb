@@ -28,6 +28,7 @@ with Gtkada.Canvas;       use Gtkada.Canvas;
 with Gtkada.Handlers;     use Gtkada.Handlers;
 with Gdk.Drawable;        use Gdk.Drawable;
 with Gdk.Event;           use Gdk.Event;
+with Gdk.Pixbuf;          use Gdk.Pixbuf;
 with Gdk.Rectangle;       use Gdk.Rectangle;
 with Gdk.Types.Keysyms;   use Gdk.Types.Keysyms;
 with Gdk.Window;          use Gdk.Window;
@@ -38,8 +39,10 @@ with Gtk.Handlers;        use Gtk.Handlers;
 with Gtk.Menu;            use Gtk.Menu;
 with Gtk.Menu_Item;       use Gtk.Menu_Item;
 with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
+with Gtk.Stock;           use Gtk.Stock;
 with Gtk.Style;           use Gtk.Style;
 with Gtk.Widget;          use Gtk.Widget;
+with Pango.Layout;        use Pango.Layout;
 
 with Ada.Exceptions;      use Ada.Exceptions;
 
@@ -138,6 +141,11 @@ package body Browsers.Canvas is
       Set_Layout_Algorithm (Browser.Canvas, Layer_Layout'Access);
       Set_Auto_Layout (Browser.Canvas, True);
 
+      Browser.Left_Arrow := Render_Icon
+        (Browser, Stock_Go_Back, Icon_Size_Menu);
+      Browser.Right_Arrow := Render_Icon
+        (Browser, Stock_Go_Forward, Icon_Size_Menu);
+
       Widget_Callback.Object_Connect
         (Browser.Canvas, "realize",
          Widget_Callback.To_Marshaller (Realized'Access), Browser);
@@ -154,6 +162,11 @@ package body Browsers.Canvas is
       Widget_Callback.Object_Connect
         (Browser.Canvas, "background_click",
          Widget_Callback.To_Marshaller (On_Background_Click'Access), Browser);
+
+      Set_Size_Request
+        (Browser,
+         Get_Pref (Kernel, Default_Widget_Width),
+         Get_Pref (Kernel, Default_Widget_Height));
    end Initialize;
 
    ------------------
@@ -410,6 +423,8 @@ package body Browsers.Canvas is
 
       For_Each_Item (Get_Canvas (Data.Browser),
                      Remove_Item'Unrestricted_Access);
+      Glide_Browser_Item (Data.Item).Left_Arrow  := True;
+      Glide_Browser_Item (Data.Item).Right_Arrow := True;
       Reset (Data.Browser, Glide_Browser_Item (Data.Item));
       Refresh (Data.Browser, Glide_Browser_Item (Data.Item));
 
@@ -593,6 +608,36 @@ package body Browsers.Canvas is
          Y           => 0,
          Width       => Coord.Width,
          Height      => Coord.Height);
+
+      if Glide_Browser_Item (Item).Left_Arrow then
+         Render_To_Drawable_Alpha
+           (Pixbuf          => Browser.Left_Arrow,
+            Drawable        => Pixmap (Item),
+            Src_X           => 0,
+            Src_Y           => 0,
+            Dest_X          => Margin,
+            Dest_Y          => Margin,
+            Width           => -1,
+            Height          => -1,
+            Alpha           => Alpha_Full,
+            Alpha_Threshold => 128);
+      end if;
+
+      if Glide_Browser_Item (Item).Right_Arrow then
+         Render_To_Drawable_Alpha
+           (Pixbuf          => Browser.Right_Arrow,
+            Drawable        => Pixmap (Item),
+            Src_X           => 0,
+            Src_Y           => 0,
+            Dest_X          => Gint (Get_Coord (Item).Width)
+              - Margin - Get_Width (Browser.Right_Arrow),
+            Dest_Y          => Margin,
+            Width           => -1,
+            Height          => -1,
+            Alpha           => Alpha_Full,
+            Alpha_Threshold => 128);
+      end if;
+
    end Draw_Item_Background;
 
    ---------------------
@@ -778,5 +823,132 @@ package body Browsers.Canvas is
    begin
       null;
    end Reset;
+
+   --------------------
+   -- Get_Left_Arrow --
+   --------------------
+
+   function Get_Left_Arrow (Item : access Glide_Browser_Item_Record)
+      return Boolean is
+   begin
+      return Item.Left_Arrow;
+   end Get_Left_Arrow;
+
+   ---------------------
+   -- Get_Right_Arrow --
+   ---------------------
+
+   function Get_Right_Arrow (Item : access Glide_Browser_Item_Record)
+      return Boolean is
+   begin
+      return Item.Right_Arrow;
+   end Get_Right_Arrow;
+
+   --------------------
+   -- Set_Left_Arrow --
+   --------------------
+
+   procedure Set_Left_Arrow
+     (Item : access Glide_Browser_Item_Record; Display : Boolean) is
+   begin
+      Item.Left_Arrow := Display;
+   end Set_Left_Arrow;
+
+   ---------------------
+   -- Set_Right_Arrow --
+   ---------------------
+
+   procedure Set_Right_Arrow
+     (Item : access Glide_Browser_Item_Record; Display : Boolean) is
+   begin
+      Item.Right_Arrow := Display;
+   end Set_Right_Arrow;
+
+   ----------------
+   -- Initialize --
+   ----------------
+
+   procedure Initialize
+     (Item    : access Glide_Browser_Text_Item_Record'Class;
+      Browser : access Glide_Browser_Record'Class;
+      Text    : String)
+   is
+      Width, Height : Gint;
+   begin
+      Item.Browser := Glide_Browser (Browser);
+      Item.Layout := Create_Pango_Layout (Browser, Text);
+      Set_Font_Description
+        (Item.Layout, Get_Pref (Get_Kernel (Browser), Browsers_Link_Font));
+
+      Get_Pixel_Size (Item.Layout, Width, Height);
+      Width := Width + 2 * Margin + 2 * Get_Width (Browser.Left_Arrow);
+      Set_Screen_Size_And_Pixmap
+        (Item, Get_Window (Browser), Width, Height + 2 * Margin);
+   end Initialize;
+
+   -------------
+   -- Refresh --
+   -------------
+
+   procedure Refresh
+     (Browser : access Glide_Browser_Record'Class;
+      Item    : access Glide_Browser_Text_Item_Record) is
+   begin
+      Draw_Item_Background (Browser, Item);
+      Draw_Layout
+        (Drawable => Pixmap (Item),
+         GC       => Get_Text_GC (Browser),
+         X        => Margin + Get_Width (Browser.Left_Arrow),
+         Y        => Margin,
+         Layout   => Item.Layout);
+   end Refresh;
+
+   -------------
+   -- Destroy --
+   -------------
+
+   procedure Destroy (Item : in out Glide_Browser_Text_Item_Record) is
+   begin
+      Unref (Item.Layout);
+   end Destroy;
+
+   ---------------------
+   -- On_Button_Click --
+   ---------------------
+
+   procedure On_Button_Click
+     (Item  : access Glide_Browser_Item_Record;
+      Event : Gdk.Event.Gdk_Event_Button) is
+   begin
+      if Get_Button (Event) = 1
+        and then Get_Event_Type (Event) = Gdk_2button_Press
+      then
+         if Gint (Get_X (Event)) < Get_Coord (Item).Width / 2 then
+            Button_Click_On_Left (Glide_Browser_Item (Item));
+         else
+            Button_Click_On_Right (Glide_Browser_Item (Item));
+         end if;
+
+         --  Make sure that the item we clicked on is still visible
+         Show_Item (Get_Canvas (Item.Browser), Item);
+
+      elsif Get_Event_Type (Event) = Button_Press then
+         Select_Item (Item.Browser, Item, True);
+      end if;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+   end On_Button_Click;
+
+   -----------------
+   -- Get_Browser --
+   -----------------
+
+   function Get_Browser (Item : access Glide_Browser_Item_Record'Class)
+      return Glide_Browser is
+   begin
+      return Item.Browser;
+   end Get_Browser;
 
 end Browsers.Canvas;

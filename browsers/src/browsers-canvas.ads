@@ -22,6 +22,7 @@ with Glib;
 with Gdk.Color;
 with Gdk.Event;
 with Gdk.GC;
+with Gdk.Pixbuf;
 with Gdk.Window;
 with Gtkada.Canvas;
 with Glide_Kernel;
@@ -29,6 +30,7 @@ with Glib.Object;
 with Gtk.Menu;
 with Gtk.Scrolled_Window;
 with Gtk.Widget;
+with Pango.Layout;
 
 package Browsers.Canvas is
 
@@ -78,8 +80,8 @@ package Browsers.Canvas is
    -- Items --
    -----------
 
-   type Glide_Browser_Item_Record is new Gtkada.Canvas.Buffered_Item_Record
-     with private;
+   type Glide_Browser_Item_Record is abstract new
+     Gtkada.Canvas.Buffered_Item_Record with private;
    type Glide_Browser_Item is access all Glide_Browser_Item_Record'Class;
    --  The type of items that are put in the canvas. They are associated with
    --  contextual menus, and also allows hiding the links to and from this
@@ -113,7 +115,62 @@ package Browsers.Canvas is
    --  Reset the internal state of the item, as if it had never been expanded,
    --  analyzed,... This is called for instance after the item has been defined
    --  as the root of the canvas (and thus all other items have been removed).
-   --  It doesn't need to redraw the item, however.
+   --  It doesn't need to redraw the item, however, nor to reset the arrows.
+
+   function Get_Browser (Item : access Glide_Browser_Item_Record'Class)
+      return Glide_Browser;
+   --  Return the browser associated with this item
+
+   function Get_Left_Arrow (Item : access Glide_Browser_Item_Record)
+      return Boolean;
+   --  Return True if the left arrow is displayed for this item
+
+   function Get_Right_Arrow (Item : access Glide_Browser_Item_Record)
+      return Boolean;
+   --  Return True if the right arrow is displayed for this item
+
+   procedure Set_Left_Arrow
+     (Item : access Glide_Browser_Item_Record; Display : Boolean);
+   --  Change the status of the left arrow
+
+   procedure Set_Right_Arrow
+     (Item : access Glide_Browser_Item_Record; Display : Boolean);
+   --  Change the status of the right arrow
+
+   procedure Button_Click_On_Left (Item : access Glide_Browser_Item_Record)
+      is abstract;
+   --  Handles button clicks on the left arrow.
+   --  This is not called if you override On_Button_Click
+
+   procedure Button_Click_On_Right (Item : access Glide_Browser_Item_Record)
+      is abstract;
+   --  Handles button clicks on the right arrow
+   --  This is not called if you override On_Button_Click
+
+   ---------------
+   -- Text_Item --
+   ---------------
+
+   type Glide_Browser_Text_Item_Record is abstract new
+     Glide_Browser_Item_Record with private;
+   type Glide_Browser_Text_Item is access all
+     Glide_Browser_Text_Item_Record'Class;
+   --  A special kind of item that only displays text
+
+   procedure Initialize
+     (Item    : access Glide_Browser_Text_Item_Record'Class;
+      Browser : access Glide_Browser_Record'Class;
+      Text    : String);
+   --  Initialize a new item, that displays Text. Text can be a multi-line text
+
+   procedure Refresh
+     (Browser : access Glide_Browser_Record'Class;
+      Item    : access Glide_Browser_Text_Item_Record);
+   --  Redraw the item to its double buffer
+
+   procedure Destroy (Item : in out Glide_Browser_Text_Item_Record);
+   --  Free the memory associated with this item. This needs to be called if
+   --  you derive from Glide_Browser_Text_Item_Record
 
    -----------
    -- Links --
@@ -133,6 +190,10 @@ package Browsers.Canvas is
    -- Graphic contexts --
    ----------------------
 
+   Margin : constant := 2;
+   --  Margin used when drawing the items, to leave space around the arrows and
+   --  the actual contents of the item
+
    function Get_Text_GC
      (Browser : access Glide_Browser_Record) return Gdk.GC.Gdk_GC;
    --  Return the graphic context to use to draw the text in the items.
@@ -141,6 +202,7 @@ package Browsers.Canvas is
      (Browser : access Glide_Browser_Record;
       Item    : access Gtkada.Canvas.Buffered_Item_Record'Class);
    --  Draw the background of the item in the appropriate color.
+   --  This also draw the arrows if needed
 
    ----------------------
    -- Contextual menus --
@@ -172,14 +234,30 @@ private
          Text_GC               : Gdk.GC.Gdk_GC;
 
          Selected_Item : Gtkada.Canvas.Canvas_Item;
+
+         Left_Arrow, Right_Arrow : Gdk.Pixbuf.Gdk_Pixbuf;
       end record;
 
    type Glide_Browser_Link_Record is new Gtkada.Canvas.Canvas_Link_Record
      with null record;
 
-   type Glide_Browser_Item_Record is new Gtkada.Canvas.Buffered_Item_Record
+   type Glide_Browser_Item_Record is abstract new
+     Gtkada.Canvas.Buffered_Item_Record
    with record
       Hide_Links : Boolean := False;
+      Left_Arrow, Right_Arrow : Boolean := True;
+      Browser     : Glide_Browser;
+   end record;
+
+   procedure On_Button_Click
+     (Item  : access Glide_Browser_Item_Record;
+      Event : Gdk.Event.Gdk_Event_Button);
+   --  Handles button clicks on the item
+
+   type Glide_Browser_Text_Item_Record is abstract new
+     Glide_Browser_Item_Record
+   with record
+      Layout : Pango.Layout.Pango_Layout;
    end record;
 
    pragma Inline (Get_Canvas);
