@@ -1,5 +1,11 @@
 Known Problems fixed in GVD 2.0.0
 
+- Assembly window raises CE in some cases
+  Problem:    When the assembly window is displayed, some race condition may
+              occur and gvd is not able to get a new range of addresses. This
+              results in a Constraint_Error.
+  Workaround: Try hiding the assembly window temporarily.
+
 - Tab key does not work properly for non trivial commands
   Problem:    When using the tab key in the debugger console to complete
               a command that contains spaces (e.g 'print p'), gvd replaces
