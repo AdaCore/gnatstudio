@@ -29,6 +29,7 @@ with Glib.Object;               use Glib.Object;
 with Glib.Values;               use Glib.Values;
 with Glib.Xml_Int;              use Glib.Xml_Int;
 with Gdk.Event;                 use Gdk.Event;
+with Gtk.Check_Menu_Item;       use Gtk.Check_Menu_Item;
 with Gtk.Handlers;              use Gtk.Handlers;
 with Gtk.Main;                  use Gtk.Main;
 with Gtk.Tree_View;             use Gtk.Tree_View;
@@ -56,11 +57,13 @@ with Glide_Kernel;             use Glide_Kernel;
 with Glide_Intl;               use Glide_Intl;
 with Project_Explorers;        use Project_Explorers;
 with Projects;                 use Projects;
+with Projects.Registry;        use Projects.Registry;
 with String_List_Utils;        use String_List_Utils;
 with String_Utils;             use String_Utils;
 with File_Utils;               use File_Utils;
 with GUI_Utils;                use GUI_Utils;
 with Traces;                   use Traces;
+with Histories;                use Histories;
 
 with Project_Explorers_Common; use Project_Explorers_Common;
 
@@ -69,6 +72,9 @@ package body Project_Explorers_Files is
    Me : constant Debug_Handle := Create ("Project_Files");
 
    Explorer_Files_Module_Id   : Glide_Kernel.Module_ID := null;
+
+   File_View_Shows_Only_Project : constant History_Key :=
+     "explorers-file-show-project-only";
 
    type Append_Directory_Idle_Data is record
       Explorer      : Project_Explorer_Files;
@@ -167,9 +173,7 @@ package body Project_Explorers_Files is
      (L : String_List_Utils.String_List.List) return String;
    --  Return the greatest common path to a list of directories.
 
-   procedure Refresh
-     (Kernel   : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Explorer : access Project_Explorer_Files_Record'Class);
+   procedure Refresh (Files : access Gtk.Widget.Gtk_Widget_Record'Class);
    --  Refresh the contents of the explorer.
 
    function Load_Desktop
@@ -242,11 +246,41 @@ package body Project_Explorers_Files is
          if not (Last = 1 and then File (1) = '.')
            and then not (Last = 2 and then File (1 .. 2) = "..")
          then
-            if Is_Directory (D.Norm_Dir.all & File (File'First .. Last)) then
-               Append (D.Dirs, File (File'First .. Last));
-            else
-               Append (D.Files, File (File'First .. Last));
-            end if;
+            declare
+               Name : constant String := File (File'First .. Last);
+            begin
+               if Get_History
+                 (Get_History (D.Explorer.Kernel).all,
+                  File_View_Shows_Only_Project)
+               then
+                  if Is_Directory (D.Norm_Dir.all & Name) then
+                     if Directory_Belongs_To_Project
+                       (Get_Registry (D.Explorer.Kernel),
+                        D.Norm_Dir.all & Name,
+                        Direct_Only => False)
+                     then
+                        Append (D.Dirs, Name);
+                     end if;
+
+                  --  If the file belongs to the project hierarchy, we also
+                  --  need to check that it is the one that really belongs to
+                  --  the project, not a homonym in some other directory
+                  elsif Get_Project_From_File
+                    (Get_Registry (D.Explorer.Kernel), Name,
+                     Root_If_Not_Found => False) /= No_Project
+                    and then Dir_Name (Get_Full_Path_From_File
+                    (Get_Registry (D.Explorer.Kernel), Name, True, True)) =
+                    D.Norm_Dir.all
+                  then
+                     Append (D.Files, Name);
+                  end if;
+
+               elsif Is_Directory (D.Norm_Dir.all & Name) then
+                  Append (D.Dirs, Name);
+               else
+                  Append (D.Files, Name);
+               end if;
+            end;
 
             if D.Depth = 0 then
                D.Depth := -1;
@@ -282,7 +316,8 @@ package body Project_Explorers_Files is
          begin
             Append (D.Explorer.File_Model, Iter, D.Base);
             Set (D.Explorer.File_Model, Iter, Absolute_Name_Column,
-                 Locale_To_UTF8 (D.Norm_Dir.all & Dir & Directory_Separator));
+                 Locale_To_UTF8
+                 (D.Norm_Dir.all & Dir & Directory_Separator));
             Set (D.Explorer.File_Model, Iter, Base_Name_Column,
                  Locale_To_UTF8 (Dir));
             Set (D.Explorer.File_Model, Iter, Node_Type_Column,
@@ -295,9 +330,9 @@ package body Project_Explorers_Files is
             --  Are we on the path to the target directory ?
 
             if not Path_Found
-              and then D.Norm_Dir'Length + Dir'Length <= D.Norm_Dest'Length
-                and then
-                  ((Filenames_Are_Case_Sensitive
+               and then D.Norm_Dir'Length + Dir'Length <= D.Norm_Dest'Length
+               and then
+                 ((Filenames_Are_Case_Sensitive
                     and then (D.Norm_Dest
                                (D.Norm_Dest'First
                                 .. D.Norm_Dest'First
@@ -349,8 +384,7 @@ package body Project_Explorers_Files is
 
                      File_Append_Directory
                        (D.Explorer, D.Norm_Dir.all & Dir & Directory_Separator,
-                        Iter, D.Depth, D.Norm_Dest.all,
-                        False);
+                        Iter, D.Depth, D.Norm_Dest.all, False);
 
                      D.Explorer.Expanding := True;
                      Success := Expand_Row
@@ -565,7 +599,7 @@ package body Project_Explorers_Files is
 
       Init_Graphics;
 
-      Refresh (Kernel, Explorer);
+      Refresh (Explorer);
 
       Widget_Callback.Object_Connect
         (Explorer.File_Tree, "row_expanded",
@@ -591,7 +625,7 @@ package body Project_Explorers_Files is
       Event        : Gdk.Event.Gdk_Event;
       Menu         : Gtk_Menu) return Selection_Context_Access
    is
-      pragma Unreferenced (Kernel, Event_Widget, Menu);
+      pragma Unreferenced (Event_Widget);
 
       T         : constant Project_Explorer_Files :=
         Project_Explorer_Files (Object);
@@ -600,6 +634,7 @@ package body Project_Explorers_Files is
         Find_Iter_For_Event (T.File_Tree, T.File_Model, Event);
       File      : GNAT.OS_Lib.String_Access := null;
       Node_Type : Node_Types;
+      Check     : Gtk_Check_Menu_Item;
    begin
       if Iter /= Null_Iter then
          Select_Iter (Get_Selection (T.File_Tree), Iter);
@@ -627,6 +662,17 @@ package body Project_Explorers_Files is
             Directory => Dir_Name (File.all),
             File_Name => Base_Name (File.all));
          Free (File);
+      end if;
+
+      if Menu /= null then
+         Gtk_New (Check, Label => -"Show files from project only");
+         Associate
+           (Get_History (Kernel).all, File_View_Shows_Only_Project, Check);
+         Append (Menu, Check);
+         Widget_Callback.Object_Connect
+           (Check, "toggled",
+            Widget_Callback.To_Marshaller (Refresh'Access),
+            T);
       end if;
 
       return Context;
@@ -852,10 +898,9 @@ package body Project_Explorers_Files is
    -- Refresh --
    -------------
 
-   procedure Refresh
-     (Kernel   : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Explorer : access Project_Explorer_Files_Record'Class)
-   is
+   procedure Refresh (Files : access Gtk.Widget.Gtk_Widget_Record'Class) is
+      Explorer     : constant Project_Explorer_Files :=
+        Project_Explorer_Files (Files);
       Buffer       : aliased String (1 .. 1024);
       Last, Len    : Integer;
       Cur_Dir      : constant String := Get_Current_Dir;
@@ -865,13 +910,17 @@ package body Project_Explorers_Files is
       Clear (Explorer.File_Model);
       File_Remove_Idle_Calls (Explorer);
 
-      if Get_Pref (Kernel, File_View_Shows_Only_Project) then
+      if Get_History
+        (Get_History (Explorer.Kernel).all, File_View_Shows_Only_Project)
+      then
          declare
             Inc : String_List_Utils.String_List.List;
             Obj : String_List_Utils.String_List.List;
          begin
-            Inc := Parse_Path (Include_Path (Get_Project (Kernel), True));
-            Obj := Parse_Path (Object_Path (Get_Project (Kernel), True));
+            Inc := Parse_Path
+              (Include_Path (Get_Project (Explorer.Kernel), True));
+            Obj := Parse_Path
+              (Object_Path (Get_Project (Explorer.Kernel), True));
             String_List_Utils.String_List.Concat (Inc, Obj);
             File_Append_Directory
               (Explorer,
@@ -988,7 +1037,6 @@ package body Project_Explorers_Files is
 
       declare
          Greatest_Prefix        : constant String  := Data (N);
-         Greatest_Prefix_First  : constant Natural := Greatest_Prefix'First;
          Greatest_Prefix_Length : Natural := Greatest_Prefix'Length;
       begin
          N := Next (N);
@@ -1005,12 +1053,12 @@ package body Project_Explorers_Files is
                  and then
                    ((Filenames_Are_Case_Sensitive
                      and then Challenger (First + Index)
-                       = Greatest_Prefix (Greatest_Prefix_First + Index))
+                       = Greatest_Prefix (Greatest_Prefix'First + Index))
                     or else
                       (not Filenames_Are_Case_Sensitive
                        and then To_Lower (Challenger (First + Index))
                          = To_Lower (Greatest_Prefix
-                                       (Greatest_Prefix_First + Index))))
+                                       (Greatest_Prefix'First + Index))))
                loop
                   Index := Index + 1;
                end loop;
@@ -1037,8 +1085,8 @@ package body Project_Explorers_Files is
          end loop;
 
          return Greatest_Prefix
-           (Greatest_Prefix_First
-            .. Greatest_Prefix_First + Greatest_Prefix_Length - 1);
+           (Greatest_Prefix'First
+            .. Greatest_Prefix'First + Greatest_Prefix_Length - 1);
       end;
    end Greatest_Common_Path;
 
