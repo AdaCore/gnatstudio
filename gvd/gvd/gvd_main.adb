@@ -38,6 +38,7 @@ with Ada.Text_IO; use Ada.Text_IO;
 with Language.Debugger.Ada; use Language.Debugger.Ada;
 with Language.Debugger.C;   use Language.Debugger.C;
 with Language;              use Language;
+with Display_Items;         use Display_Items;
 
 procedure Odd_Main is
    Process_Tab       : Debugger_Process_Tab;
@@ -290,6 +291,7 @@ begin
    end if;
 
    Show_All (Main_Debug_Window);
+   Init_Graphics (Get_Window (Main_Debug_Window));
 
    loop
       begin
