@@ -50,6 +50,7 @@ with GNAT.OS_Lib;
 with GNAT.Regpat;              use GNAT.Regpat;
 
 with String_Utils;             use String_Utils;
+with String_List_Utils;        use String_List_Utils;
 with Glide_Kernel.Contexts;    use Glide_Kernel.Contexts;
 with Glide_Kernel.Hooks;       use Glide_Kernel.Hooks;
 with Glide_Kernel.Modules;     use Glide_Kernel.Modules;
@@ -175,8 +176,8 @@ package body Glide_Result_View is
       Absolute_Name      : VFS.Virtual_File;
       Message            : String;
       Mark               : String;
-      Line               : String;
-      Column             : String;
+      Line               : Integer;
+      Column             : Integer;
       Length             : Integer;
       Highlighting       : Boolean;
       Highlight_Category : String;
@@ -184,6 +185,7 @@ package body Glide_Result_View is
    --  Fill information in Iter.
    --  Base_Name can be left to the empty string, it will then be computed
    --  automatically from Absolute_Name.
+   --  If Line is 0, consider the item as a non-leaf item.
 
    procedure Add_Location
      (View               : access Result_View_Record'Class;
@@ -195,13 +197,16 @@ package body Glide_Result_View is
       Highlight          : Boolean;
       Message            : String;
       Highlight_Category : String;
-      Quiet              : Boolean);
+      Quiet              : Boolean;
+      Remove_Duplicates  : Boolean);
    --  Add a file locaton in Category.
    --  File is an absolute file name. If File is not currently open, do not
    --  create marks for File, but add it to the list of unresolved files
    --  instead.
    --  If Quiet is True, do not raise the locations window and do not jump
    --  on the first item.
+   --  If Remove_Duplicates is True, do not insert the entry if it is a
+   --  duplicate.
 
    function Button_Press
      (View     : access Gtk_Widget_Record'Class;
@@ -414,6 +419,9 @@ package body Glide_Result_View is
 
       Removing_Category : Boolean := False;
       --  Indicates whether we are removing a whole category or just a file.
+
+      use String_List;
+      Categories : String_List.List;
    begin
       --  Unhighight all the lines and remove all marks in children of the
       --  category / file.
@@ -462,17 +470,25 @@ package body Glide_Result_View is
                end if;
             end;
 
+            Add_Unique_Sorted
+              (Categories,
+               Get_String
+                 (View.Tree.Model, Loc_Iter, Highlight_Category_Column));
+
+            Next (View.Tree.Model, Loc_Iter);
+         end loop;
+
+         while not Is_Empty (Categories) loop
+            Trace (Me, "cat: " & Head (Categories));
             Highlight_Line
               (View.Kernel,
                Create
                  (Full_Filename => Get_String
                     (View.Tree.Model, File_Iter, Absolute_Name_Column)),
-               0, 0, 0,
-               Get_String
-                 (View.Tree.Model, Loc_Iter, Highlight_Category_Column),
+               0, 0, 0, Head (Categories),
                False);
 
-            Next (View.Tree.Model, Loc_Iter);
+            Next (Categories);
          end loop;
 
          exit when not Removing_Category;
@@ -509,8 +525,8 @@ package body Glide_Result_View is
       Absolute_Name      : VFS.Virtual_File;
       Message            : String;
       Mark               : String;
-      Line               : String;
-      Column             : String;
+      Line               : Integer;
+      Column             : Integer;
       Length             : Integer;
       Highlighting       : Boolean;
       Highlight_Category : String;
@@ -532,14 +548,14 @@ package body Glide_Result_View is
       Set (Model, Iter, Message_Column,
            Glib.Convert.Locale_To_UTF8 (Message));
       Set (Model, Iter, Mark_Column, Mark);
-      Set (Model, Iter, Line_Column, Line);
-      Set (Model, Iter, Column_Column, Column);
+      Set (Model, Iter, Line_Column, Gint (Line));
+      Set (Model, Iter, Column_Column, Gint (Column));
       Set (Model, Iter, Length_Column, Gint (Length));
       Set (Model, Iter, Icon_Column, C_Proxy (Pixbuf));
       Set (Model, Iter, Highlight_Column, Highlighting);
       Set (Model, Iter, Highlight_Category_Column, Highlight_Category);
 
-      if Line = "" then
+      if Line = 0 then
          Set (Model, Iter, Weight_Column, 400);
 
          --  We can safely take the address of the colors, since they have the
@@ -682,7 +698,7 @@ package body Glide_Result_View is
          if Create then
             Append (View.Tree.Model, Category_Iter, Null_Iter);
             Fill_Iter (View, Category_Iter, Category_UTF8, VFS.No_File,
-                       "", "", "", "", 0, False,
+                       "", "", 0, 0, 0, False,
                        H_Category, View.Category_Pixbuf);
             New_Category := True;
          else
@@ -711,7 +727,7 @@ package body Glide_Result_View is
       if Create then
          Append (View.Tree.Model, File_Iter, Category_Iter);
          Fill_Iter
-           (View, File_Iter, "", File, "", "", "", "", 0,
+           (View, File_Iter, "", File, "", "", 0, 0, 0,
             False, H_Category, View.File_Pixbuf);
       end if;
 
@@ -732,7 +748,8 @@ package body Glide_Result_View is
       Highlight          : Boolean;
       Message            : String;
       Highlight_Category : String;
-      Quiet              : Boolean)
+      Quiet              : Boolean;
+      Remove_Duplicates  : Boolean)
    is
       Category_Iter    : Gtk_Tree_Iter;
       File_Iter        : Gtk_Tree_Iter;
@@ -743,29 +760,35 @@ package body Glide_Result_View is
 
       Path               : Gtk_Tree_Path;
    begin
+      if not Is_Absolute_Path (File) then
+         return;
+      end if;
+
       Get_Category_File
         (View, Category, Highlight_Category,
          File, Category_Iter, File_Iter, Category_Created);
 
       --  Check whether the same item already exists.
 
-      if Category_Iter /= Null_Iter
-        and then File_Iter /= Null_Iter
-      then
-         Iter := Children (View.Tree.Model, File_Iter);
+      if Remove_Duplicates then
+         if Category_Iter /= Null_Iter
+           and then File_Iter /= Null_Iter
+         then
+            Iter := Children (View.Tree.Model, File_Iter);
 
-         while Iter /= Null_Iter loop
-            if Get_String (View.Tree.Model, Iter, Line_Column) = Image (Line)
-              and then Get_String
-                (View.Tree.Model, Iter, Column_Column) = Image (Column)
-              and then Get_String
-                (View.Tree.Model, Iter, Message_Column) = Message
-            then
-               return;
-            end if;
+            while Iter /= Null_Iter loop
+               if Get_Int (View.Tree.Model, Iter, Line_Column) = Gint (Line)
+                 and then Get_Int
+                   (View.Tree.Model, Iter, Column_Column) = Gint (Column)
+                 and then Get_String
+                   (View.Tree.Model, Iter, Message_Column) = Message
+               then
+                  return;
+               end if;
 
-            Next (View.Tree.Model, Iter);
-         end loop;
+               Next (View.Tree.Model, Iter);
+            end loop;
+         end if;
       end if;
 
       Append (View.Tree.Model, Iter, File_Iter);
@@ -783,7 +806,7 @@ package body Glide_Result_View is
            (View, Iter,
             Image (Line) & ":" & Image (Column), File,
             Message, Output,
-            Image (Line), Image (Column), Length, Highlight,
+            Line, Column, Length, Highlight,
             Highlight_Category);
       end;
 
@@ -792,17 +815,17 @@ package body Glide_Result_View is
          Dummy := Expand_Row (View.Tree, Path, False);
          Path_Free (Path);
 
-         declare
-            MDI   : constant MDI_Window := Get_MDI (View.Kernel);
-            Child : constant MDI_Child :=
-              Find_MDI_Child_By_Tag (MDI, Result_View_Record'Tag);
-         begin
-            if Child /= null then
-               if not Quiet then
+         if not Quiet then
+            declare
+               MDI   : constant MDI_Window := Get_MDI (View.Kernel);
+               Child : constant MDI_Child :=
+                 Find_MDI_Child_By_Tag (MDI, Result_View_Record'Tag);
+            begin
+               if Child /= null then
                   Raise_Child (Child, Give_Focus => False);
                end if;
-            end if;
-         end;
+            end;
+         end if;
 
          Path := Get_Path (View.Tree.Model, File_Iter);
          Dummy := Expand_Row (View.Tree, Path, False);
@@ -811,14 +834,13 @@ package body Glide_Result_View is
          Path := Get_Path (View.Tree.Model, Iter);
          Select_Path (Get_Selection (View.Tree), Path);
          Scroll_To_Cell (View.Tree, Path, null, True, 0.1, 0.1);
+         Path_Free (Path);
 
          if not Quiet
            and then Get_Pref (View.Kernel, Auto_Jump_To_First)
          then
             Goto_Location (View);
          end if;
-
-         Path_Free (Path);
       end if;
    end Add_Location;
 
@@ -878,8 +900,8 @@ package body Glide_Result_View is
          Message_Column            => GType_String,
          Base_Name_Column          => GType_String,
          Mark_Column               => GType_String,
-         Line_Column               => GType_String,
-         Column_Column             => GType_String,
+         Line_Column               => GType_Int,
+         Column_Column             => GType_Int,
          Length_Column             => GType_Int,
          Node_Type_Column          => GType_Int,
          Weight_Column             => GType_Int,
@@ -943,7 +965,6 @@ package body Glide_Result_View is
       Path     : Gtk_Tree_Path;
       Iter     : Gtk_Tree_Iter;
       Model    : Gtk_Tree_Model;
-
       Result   : Message_Context_Access := null;
 
    begin
@@ -998,10 +1019,10 @@ package body Glide_Result_View is
          Append (Menu, Mitem);
 
          declare
-            Line   : constant Positive := Positive'Value
-              (Get_String (Model, Iter, Line_Column));
-            Column : constant Positive := Positive'Value
-              (Get_String (Model, Iter, Column_Column));
+            Line   : constant Positive := Positive
+              (Get_Int (Model, Iter, Line_Column));
+            Column : constant Positive := Positive
+              (Get_Int (Model, Iter, Column_Column));
             Par    : constant Gtk_Tree_Iter := Parent (Model, Iter);
             Granpa : constant Gtk_Tree_Iter := Parent (Model, Par);
             File   : constant Virtual_File := Create
@@ -1100,32 +1121,6 @@ package body Glide_Result_View is
         (Tree, Get_Path (Get_Model (Tree), Iter), null, True, 0.1, 0.1);
    end On_Row_Expanded;
 
-   ------------
-   -- Insert --
-   ------------
-
-   procedure Insert
-     (View               : access Result_View_Record'Class;
-      Identifier         : String;
-      Source_File        : VFS.Virtual_File;
-      Source_Line        : Positive;
-      Source_Column      : Positive;
-      Message            : String;
-      Length             : Natural;
-      Highlight          : Boolean := False;
-      Highlight_Category : String := "";
-      Quiet              : Boolean := False) is
-   begin
-      --  Transform Source_File in an absolute file name if needed.
-
-      if Is_Absolute_Path (Source_File) then
-         Add_Location
-           (View, Identifier, Source_File,
-            Source_Line, Source_Column, Length, Highlight, Message,
-            Highlight_Category, Quiet => Quiet);
-      end if;
-   end Insert;
-
    -------------------
    -- Insert_Result --
    -------------------
@@ -1145,11 +1140,13 @@ package body Glide_Result_View is
       View : constant Result_View := Get_Or_Create_Result_View (Kernel);
    begin
       if View /= null then
-         Insert
-           (View, Category, File, Line, Column, Text, Length,
-            Highlight, Highlight_Category,
-            Quiet => Quiet);
-         Highlight_Child (Find_MDI_Child (Get_MDI (Kernel), View));
+         Add_Location
+           (View, Category, File, Line, Column, Length,
+            Highlight, Text, Highlight_Category,
+            Quiet             => Quiet,
+            Remove_Duplicates => True);
+
+         Gtkada.MDI.Highlight_Child (Find_MDI_Child (Get_MDI (Kernel), View));
       end if;
    end Insert_Result;
 
@@ -1336,10 +1333,10 @@ package body Glide_Result_View is
          while Line_Iter /= Null_Iter loop
             if Get_String
               (View.Tree.Model, Line_Iter, Message_Column) = Message
-              and then Get_String
-                (View.Tree.Model, Line_Iter, Line_Column) = Image (Line)
-              and then Get_String
-                (View.Tree.Model, Line_Iter, Column_Column) = Image (Column)
+              and then Get_Int
+                (View.Tree.Model, Line_Iter, Line_Column) = Gint (Line)
+              and then Get_Int
+                (View.Tree.Model, Line_Iter, Column_Column) = Gint (Column)
             then
                if Action = null then
                   Set (View.Tree.Model, Line_Iter,
@@ -1645,6 +1642,8 @@ package body Glide_Result_View is
       Warning_Index_In_Regexp : Integer := -1;
       Quiet                   : Boolean := False)
    is
+      View : constant Result_View := Get_Or_Create_Result_View (Kernel);
+
       function Get_File_Location return Pattern_Matcher;
       --  Return the pattern matcher for the file location
 
@@ -1774,22 +1773,26 @@ package body Glide_Result_View is
                C := Category'Unrestricted_Access;
             end if;
 
-            Insert_Result
-              (Kernel,
+            Add_Location
+              (View,
                Category,
                Create
                  (Text (Matched
                           (File_Index).First .. Matched (File_Index).Last),
                   Kernel),
-               Get_Message (Last),
-               Positive (Line), Positive (Column), Length,
+               Positive (Line), Positive (Column),
+               Length,
                Highlight,
+               Get_Message (Last),
                C.all,
-               Quiet => Quiet);
+               Quiet             => Quiet,
+               Remove_Duplicates => False);
          end if;
 
          Start := Real_Last + 1;
       end loop;
+
+      Highlight_Child (Find_MDI_Child (Get_MDI (Kernel), View));
    end Parse_File_Locations;
 
 end Glide_Result_View;
