@@ -36,6 +36,8 @@ with Gtk.Tree_Store;         use Gtk.Tree_Store;
 with Gtk.Cell_Renderer_Text; use Gtk.Cell_Renderer_Text;
 with Gtk.Tree_View_Column;   use Gtk.Tree_View_Column;
 with Gtk.Widget;             use Gtk.Widget;
+with Gtk.Window;             use Gtk.Window;
+with Gtkada.Handlers;        use Gtkada.Handlers;
 with Gtkada.Handlers;        use Gtkada.Handlers;
 with Glide_Intl;             use Glide_Intl;
 with String_Utils;           use String_Utils;
@@ -53,6 +55,11 @@ package body Gtkada.Entry_Completion is
    procedure Selection_Changed (The_Entry : access Gtk_Widget_Record'Class);
    --  Called when a line has been selected in the list of possible
    --  completions.
+
+   function On_Button_Press
+     (The_Entry : access Gtk_Widget_Record'Class;
+      Event     : Gdk_Event) return Boolean;
+   --  Called when the user clicked in the list
 
    -------------
    -- Gtk_New --
@@ -115,6 +122,9 @@ package body Gtkada.Entry_Completion is
 
       Gtk_New (The_Entry.List, (0 .. 0 => GType_String));
       Set_Model (The_Entry.View, Gtk_Tree_Model (The_Entry.List));
+      Return_Callback.Object_Connect
+        (The_Entry.View, "button_press_event",
+         Return_Callback.To_Marshaller (On_Button_Press'Access), The_Entry);
 
       Gtk_New (Renderer);
 
@@ -143,6 +153,23 @@ package body Gtkada.Entry_Completion is
         (Get_Entry (The_Entry), "key_press_event",
          Return_Callback.To_Marshaller (On_Entry_Tab'Access), The_Entry);
    end Initialize;
+
+   ---------------------
+   -- On_Button_Press --
+   ---------------------
+
+   function On_Button_Press
+     (The_Entry : access Gtk_Widget_Record'Class;
+      Event     : Gdk_Event) return Boolean
+   is
+      Window : Gtk_Window;
+   begin
+      if Get_Event_Type (Event) = Gdk_2button_Press then
+         Window := Gtk_Window (Get_Toplevel (The_Entry));
+         return Activate_Default (Window);
+      end if;
+      return False;
+   end On_Button_Press;
 
    ---------------
    -- Get_Entry --
