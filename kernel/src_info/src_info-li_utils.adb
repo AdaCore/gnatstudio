@@ -779,7 +779,8 @@ package body Src_Info.LI_Utils is
    begin
       loop
          exit when D_Ptr = null;
-         if D_Ptr.Value.Declaration.Kind = Record_Type
+         if (D_Ptr.Value.Declaration.Kind = Record_Type or
+             D_Ptr.Value.Declaration.Kind = Generic_Class)
            and then D_Ptr.Value.Declaration.Name.all = Class_Name
            and then (
              D_Ptr.Value.Declaration.Location.Line < Position.Line
