@@ -164,7 +164,6 @@ package Glide_Kernel.Modules is
       Kernel                  : access Kernel_Handle_Record'Class;
       Module_Name             : String;
       Priority                : Module_Priority := Default_Priority;
-      Contextual_Menu_Handler : Module_Menu_Handler := null;
       Default_Context_Factory : Module_Default_Context_Factory := null;
       Save_Function           : Module_Save_Function := null;
       Tooltip_Handler         : Module_Tooltip_Handler := null;
@@ -176,8 +175,6 @@ package Glide_Kernel.Modules is
    --
    --  Module_Name can be used by other modules to check whether they want to
    --  interact with this module.
-   --  See the general description for this package for explanation on
-   --  Initializer and Contextual_Menu_Handler.
    --
    --  Save_Function is an optional callback that will handle the saving of
    --  the given module.

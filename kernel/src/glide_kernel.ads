@@ -789,7 +789,6 @@ private
    type Module_ID_Information (Name_Length : Natural) is record
       Name                  : String (1 .. Name_Length);
       Priority              : Module_Priority;
-      Contextual_Menu       : Module_Menu_Handler;
       Default_Factory       : Module_Default_Context_Factory;
       Save_Function         : Module_Save_Function;
       Tooltip_Handler       : Module_Tooltip_Handler;

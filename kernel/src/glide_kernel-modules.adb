@@ -360,7 +360,6 @@ package body Glide_Kernel.Modules is
       Kernel                  : access Kernel_Handle_Record'Class;
       Module_Name             : String;
       Priority                : Module_Priority     := Default_Priority;
-      Contextual_Menu_Handler : Module_Menu_Handler := null;
       Default_Context_Factory : Module_Default_Context_Factory := null;
       Save_Function           : Module_Save_Function := null;
       Tooltip_Handler         : Module_Tooltip_Handler := null;
@@ -380,7 +379,6 @@ package body Glide_Kernel.Modules is
         (Name_Length           => Module_Name'Length,
          Name                  => Module_Name,
          Priority              => Priority,
-         Contextual_Menu       => Contextual_Menu_Handler,
          Default_Factory       => Default_Context_Factory,
          Save_Function         => Save_Function,
          Tooltip_Handler       => Tooltip_Handler,
@@ -529,11 +527,6 @@ package body Glide_Kernel.Modules is
    is
       use type Gtk.Widget.Widget_List.Glist;
 
-      procedure Insert_Hard_Coded_Entries
-        (Context : Selection_Context_Access;
-         Menu    : Gtk_Menu);
-      --  Insert the entries that hard coded in the GPS code
-
       function Menu_Is_Visible
         (C : Contextual_Menu_Access;
          Context : Selection_Context_Access) return Boolean;
@@ -546,31 +539,6 @@ package body Glide_Kernel.Modules is
          Full_Name : out GNAT.OS_Lib.String_Access);
       --  Create the menu item to use when displaying C.
       --  Full_Name is the label of the menu
-
-      -------------------------------
-      -- Insert_Hard_Coded_Entries --
-      -------------------------------
-
-      procedure Insert_Hard_Coded_Entries
-        (Context : Selection_Context_Access;
-         Menu    : Gtk_Menu)
-      is
-         use type Module_List.List_Node;
-         Current : Module_List.List_Node :=
-           Module_List.First (User.Kernel.Modules_List);
-      begin
-         while Current /= Module_List.Null_Node loop
-            if Module_List.Data (Current) /= User.ID
-              and then Module_List.Data (Current).Info.Contextual_Menu /= null
-            then
-               Module_List.Data (Current).Info.Contextual_Menu
-                 (Object  => User.Object,
-                  Context => Context,
-                  Menu    => Menu);
-            end if;
-            Current := Module_List.Next (Current);
-         end loop;
-      end Insert_Hard_Coded_Entries;
 
       ---------------------
       -- Menu_Is_Visible --
@@ -654,7 +622,6 @@ package body Glide_Kernel.Modules is
 
          if C.Action = null and then C.Command = null then
             if C.Is_Submenu then
-               Gtk_New (Item, Base_Name (Full_Name.all));
                if C.Submenu /= null then
                   Gtk_New (Menu);
                   C.Submenu
@@ -664,9 +631,13 @@ package body Glide_Kernel.Modules is
 
                   if Children (Menu) = Gtk.Widget.Widget_List.Null_List then
                      Destroy (Menu);
+                     Item := null;
                   else
+                     Gtk_New (Item, Base_Name (Full_Name.all));
                      Set_Submenu (Item, Menu);
                   end if;
+               else
+                  Gtk_New (Item, Base_Name (Full_Name.all));
                end if;
 
             else
@@ -725,8 +696,6 @@ package body Glide_Kernel.Modules is
            (Context,
             Kernel  => User.Kernel,
             Creator => User.ID);
-
-         Insert_Hard_Coded_Entries (Context, Menu);
 
          --  Compute what items should be made visible, except for separators
          --  for the moment
