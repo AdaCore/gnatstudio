@@ -1365,14 +1365,49 @@ package body Src_Editor_Box is
             Get_Selection_Bounds
               (Editor.Source_Buffer, Start_Iter, End_Iter, Result);
 
-            if not Result
-              or else Get_Line (Start_Iter) /= Get_Line (End_Iter)
-              or else Line /= Get_Line (Start_Iter)
+            if Result
+              and then Get_Line (Start_Iter) /= Get_Line (End_Iter)
+            then
+               --  Multiple-line selection: return an area context.
+
+               Free (Selection_Context_Access (Context));
+
+               declare
+                  Area       : File_Area_Context_Access;
+                  Start_Line : Integer;
+                  End_Line   : Integer;
+               begin
+                  Area := new File_Area_Context;
+
+                  Set_Context_Information
+                    (Context => Area,
+                     Kernel  => Kernel,
+                     Creator => Src_Editor_Module_Id);
+                  Set_File_Information
+                    (Area,
+                     Directory => Dir_Name (Filename),
+                     File_Name => Base_Name (Filename));
+
+                  Start_Line := To_Box_Line (Get_Line (Start_Iter));
+                  End_Line   := To_Box_Line (Get_Line (End_Iter));
+
+                  --  Do not consider the first line selected unless the first
+                  --  character is selected.
+
+                  if Get_Line_Offset (Start_Iter) /= 0 then
+                     Start_Line := Start_Line + 1;
+                  end if;
+
+                  Set_Area_Information (Area, Start_Line, End_Line);
+
+                  return Selection_Context_Access (Area);
+               end;
+
+            elsif Line /= Get_Line (Start_Iter)
               or else Column < Get_Line_Offset (Start_Iter) - 1
               or else Column > Get_Line_Offset (End_Iter) + 1
             then
-               --  No selection, or multi-line selection: get the entity under
-               --  the cursor instead.
+               --  No selection, get the entity under the cursor.
 
                Get_Iter_At_Line_Offset
                  (Editor.Source_Buffer, Start_Iter, Line, Column);
