@@ -180,6 +180,10 @@ package body Outline_View is
       if Get_Pref (Kernel, Outline_View_Link_Editor)
         and then Child /= null
       then
+         Outline := Outline_View_Access (Get_Widget (Child));
+         Model   := Gtk_Tree_Store (Get_Model (Outline.Tree));
+         Unselect_All (Get_Selection (Outline.Tree));
+
          Subprogram := Compute_Parent_Entity
            (File_Location_Hooks_Args_Access (Data));
 
@@ -187,10 +191,6 @@ package body Outline_View is
             declare
                Subprogram_Name : constant String := Get_Name (Subprogram).all;
             begin
-               Outline := Outline_View_Access (Get_Widget (Child));
-               Model   := Gtk_Tree_Store (Get_Model (Outline.Tree));
-               Unselect_All (Get_Selection (Outline.Tree));
-
                Iter := Children (Model, Get_Iter_First (Model));
                while Iter /= Null_Iter loop
                   if Get_String (Model, Iter, 1) = Subprogram_Name then
