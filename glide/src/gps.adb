@@ -517,6 +517,7 @@ procedure GPS is
       Auto_Load_Project : Boolean := True;
       File_Opened       : Boolean := False;
       Project           : Projects.Project_Type;
+      Contents          : GNAT.OS_Lib.String_Access;
       Screen            : Welcome_Screen;
       pragma Unreferenced (Data);
 
@@ -652,12 +653,20 @@ procedure GPS is
       --  Print a welcome message in the console, but before parsing the error
       --  messages, so that these are visible
 
+      Contents := Read_File
+        (Format_Pathname (GPS.Prefix_Directory.all & "/share/gps/about.txt"));
+
+      if Contents = null then
+         Contents := new String'("");
+      end if;
+
       Console.Insert
         (GPS.Kernel,
          -"Welcome to GPS " & GVD.Version & " (" & GVD.Source_Date &
          (-") hosted on ") & GVD.Target & ASCII.LF &
-         (-"the GNAT Programming System") & ASCII.LF &
+         (-"the GNAT Programming System") & ASCII.LF & Contents.all &
          "(c) 2001-2003 ACT-Europe");
+      Free (Contents);
 
       --  We now make sure we have a project loaded, so that opening editors
       --  will work correctly.
