@@ -29,6 +29,8 @@ with VFS;               use VFS;
 
 with Src_Editor_Box;    use Src_Editor_Box;
 with Src_Editor_Buffer; use Src_Editor_Buffer;
+with Src_Editor_Buffer.Line_Information;
+use Src_Editor_Buffer.Line_Information;
 
 package body Src_Editor_Module.Line_Highlighting is
 
@@ -70,8 +72,7 @@ package body Src_Editor_Module.Line_Highlighting is
                end if;
             else
                Set_Error_Msg
-                 (Data, -"File editor not found for file "
-                  & Full_Name (File));
+                 (Data, -"File editor not found for file " & Full_Name (File));
             end if;
          end;
 
@@ -96,7 +97,39 @@ package body Src_Editor_Module.Line_Highlighting is
 
             Alloc_Color (Get_Default_Colormap, Color, False, True, Success);
             Set_Foreground (GC, Color);
-            Add_Category (Category, GC);
+            Add_Category (Category, GC, Color);
+         end;
+
+      elsif Command = "highlight_range"
+        or else Command = "unhighlight_range"
+      then
+         declare
+            File      : constant Virtual_File  :=
+              Create (Nth_Arg (Data, 1), Kernel);
+            Category  : constant String  := Nth_Arg (Data, 2);
+            Line      : constant Integer := Nth_Arg (Data, 3, Default => 0);
+            Start_Col : constant Integer := Nth_Arg (Data, 4, Default => 0);
+            End_Col   : constant Integer := Nth_Arg (Data, 5, Default => -1);
+            Box       : Source_Box;
+            Child     : MDI_Child;
+         begin
+            Child := Find_Editor (Kernel, File);
+
+            if Child /= null then
+               Box := Source_Box (Get_Widget (Child));
+               if Command = "highlight_range" then
+                  Highlight_Range
+                    (Get_Buffer (Box.Editor), Category, Line,
+                     Start_Col, End_Col);
+               else
+                  Highlight_Range
+                    (Get_Buffer (Box.Editor), Category, Line,
+                     Start_Col, End_Col, Remove => True);
+               end if;
+            else
+               Set_Error_Msg
+                 (Data, -"File editor not found for file " & Full_Name (File));
+            end if;
          end;
       end if;
    end Edit_Command_Handler;
@@ -106,8 +139,9 @@ package body Src_Editor_Module.Line_Highlighting is
    ------------------
 
    procedure Add_Category
-     (Id : String;
-      GC : Gdk_GC)
+     (Id    : String;
+      GC    : Gdk_GC;
+      Color : Gdk_Color)
    is
       Module_Id : constant Source_Editor_Module :=
         Source_Editor_Module (Src_Editor_Module_Id);
@@ -130,7 +164,8 @@ package body Src_Editor_Module.Line_Highlighting is
          Module_Id.Categories (1) :=
            new Highlighting_Category_Record'(L  => Id'Length,
                                              Id => Id,
-                                             GC => GC);
+                                             GC => GC,
+                                             Color => Color);
 
       else
          A := new Highlighting_Category_Array
@@ -143,7 +178,8 @@ package body Src_Editor_Module.Line_Highlighting is
          A (A'Last) := new Highlighting_Category_Record'
            (L  => Id'Length,
             Id => Id,
-            GC => GC);
+            GC => GC,
+            Color => Color);
 
          Module_Id.Categories := A;
       end if;
@@ -183,6 +219,22 @@ package body Src_Editor_Module.Line_Highlighting is
          return null;
       end if;
    end Get_GC;
+
+   ---------------
+   -- Get_Color --
+   ---------------
+
+   function Get_Color (Index : Natural) return Gdk_Color is
+      Module_Id : constant Source_Editor_Module :=
+        Source_Editor_Module (Src_Editor_Module_Id);
+   begin
+      if Index > 0 and then Index <= Module_Id.Categories'Last then
+         return Module_Id.Categories (Index).Color;
+      else
+         Trace (Me, -"Wrong category Id when getting color");
+         return Null_Color;
+      end if;
+   end Get_Color;
 
    --------------------
    -- Get_Last_Index --
