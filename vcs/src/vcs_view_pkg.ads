@@ -25,7 +25,6 @@ with Gtk.Tree_Store;           use Gtk.Tree_Store;
 with Glide_Kernel;             use Glide_Kernel;
 with Glide_Kernel.Console;     use Glide_Kernel.Console;
 
-with Prj;
 with String_List_Utils;        use String_List_Utils;
 
 with VCS;                      use VCS;
@@ -104,11 +103,6 @@ package VCS_View_Pkg is
    function Get_Current_File (Kernel : Kernel_Handle) return String;
    --  Convenience function to get the current file.
 
-   function Get_Current_Ref
-     (Kernel : access Kernel_Handle_Record'Class)
-     return VCS_Access;
-   --  Convenience function to get the current file.
-
    function Get_Selected_Files
      (Kernel : Kernel_Handle) return String_List.List;
    --  Return the currently selected files, as a list.
@@ -116,12 +110,5 @@ package VCS_View_Pkg is
 
    function Get_Explorer (Kernel : Kernel_Handle) return VCS_View_Access;
    --  Return the vcs explorer, if created, null otherwise.
-
-   function Get_Files_In_Project
-     (Project_View : Prj.Project_Id;
-      Recursive    : Boolean := True) return String_List.List;
-
-   function Get_Dirs_In_Project
-     (Kernel : Kernel_Handle) return String_List.List;
 
 end VCS_View_Pkg;
