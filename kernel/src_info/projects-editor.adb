@@ -2478,6 +2478,12 @@ package body Projects.Editor is
                Set_First_Declarative_Item_Of
                  (New_Node,
                   Clone_Node (First_Declarative_Item_Of (Node), True));
+
+            when N_Comment_Zones =>
+               null;
+
+            when N_Comment =>
+               null;
          end case;
       end if;
 
