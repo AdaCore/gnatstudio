@@ -174,7 +174,7 @@ package body Navigation_Module is
    is
       S_Line : constant String :=
         Execute_GPS_Shell_Command
-          (Kernel, "cursor_get_line",
+          (Kernel, "Editor.cursor_get_line",
            (1 => Full_Name (File).all'Unrestricted_Access));
 
    begin
@@ -197,7 +197,7 @@ package body Navigation_Module is
       S_Line   : constant String :=
         Execute_GPS_Shell_Command
           (Kernel,
-           "cursor_set_position",
+           "Editor.cursor_set_position",
            (Full_Name (File).all'Unrestricted_Access,
             Line_Img'Unchecked_Access));
       pragma Unreferenced (S_Line);
@@ -216,7 +216,7 @@ package body Navigation_Module is
    is
       S_Line : constant String :=
         Execute_GPS_Shell_Command
-          (Kernel, "get_last_line",
+          (Kernel, "Editor.get_last_line",
            (1 => Full_Name (File).all'Unrestricted_Access));
 
    begin
@@ -239,7 +239,7 @@ package body Navigation_Module is
       S_Line   : constant String :=
         Execute_GPS_Shell_Command
           (Kernel,
-           "block_get_end",
+           "Editor.block_get_end",
            (Full_Name (File).all'Unrestricted_Access,
             Line_Img'Unchecked_Access));
 
@@ -263,7 +263,7 @@ package body Navigation_Module is
       S_Line   : constant String :=
         Execute_GPS_Shell_Command
           (Kernel,
-           "block_get_start",
+           "Editor.block_get_start",
            (Full_Name (File).all'Unrestricted_Access,
             Line_Img'Unchecked_Access));
 
@@ -287,7 +287,7 @@ package body Navigation_Module is
       B_Type   : constant String :=
         Execute_GPS_Shell_Command
           (Kernel,
-           "block_get_type",
+           "Editor.block_get_type",
            (Full_Name (File).all'Unrestricted_Access,
             Line_Img'Unchecked_Access));
 
@@ -714,8 +714,12 @@ package body Navigation_Module is
         (Kernel,
          Command      => "add_location_command",
          Params       => "(command, arg1, [arg2...])",
-         Description  => -("Register a command to be associated with"
-                           &" navigation buttons."),
+         Description  =>
+         -("Add a command to the navigation buttons in the toolbar. When the"
+           & " user presses the back button, this command will be executed,"
+           & " and should put GPS in a previous state. This is for instance"
+           & " used while navigating in the HTML browsers to handle the back"
+           & " button."),
          Minimum_Args => 1,
          Maximum_Args => Natural'Last,
          Handler      => Command_Handler'Access);
