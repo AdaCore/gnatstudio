@@ -18,36 +18,37 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glib;                   use Glib;
-with Glib.Convert;           use Glib.Convert;
-with Glib.Object;            use Glib.Object;
-with Glib.Values;            use Glib.Values;
-with Gtk;                    use Gtk;
-with Gtk.Handlers;           use Gtk.Handlers;
-with Gtk.Text_Iter;          use Gtk.Text_Iter;
-with Gtk.Text_Mark;          use Gtk.Text_Mark;
-with Gtk.Text_Tag_Table;     use Gtk.Text_Tag_Table;
-with Gtkada.Dialogs;         use Gtkada.Dialogs;
-with Gtkada.Types;           use Gtkada.Types;
+with Glib;                      use Glib;
+with Glib.Convert;              use Glib.Convert;
+with Glib.Object;               use Glib.Object;
+with Glib.Values;               use Glib.Values;
+with Gtk;                       use Gtk;
+with Gtk.Handlers;              use Gtk.Handlers;
+with Gtk.Text_Iter;             use Gtk.Text_Iter;
+with Gtk.Text_Mark;             use Gtk.Text_Mark;
+with Gtk.Text_Tag_Table;        use Gtk.Text_Tag_Table;
+with Gtkada.Dialogs;            use Gtkada.Dialogs;
+with Gtkada.Types;              use Gtkada.Types;
 with Pango.Enums;
 
-with Basic_Types;            use Basic_Types;
-with Language;               use Language;
-with Language_Handlers;      use Language_Handlers;
-with Src_Highlighting;       use Src_Highlighting;
+with Basic_Types;               use Basic_Types;
+with Language;                  use Language;
+with Language_Handlers;         use Language_Handlers;
+with Src_Highlighting;          use Src_Highlighting;
 
-with Interfaces.C.Strings;   use Interfaces.C.Strings;
+with Interfaces.C.Strings;      use Interfaces.C.Strings;
 with System;
-with String_Utils;           use String_Utils;
+with String_Utils;              use String_Utils;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
-with OS_Utils;               use OS_Utils;
-with Src_Info;               use Src_Info;
-with Glide_Intl;             use Glide_Intl;
+with OS_Utils;                  use OS_Utils;
+with Src_Info;                  use Src_Info;
+with Glide_Intl;                use Glide_Intl;
 
-with Commands.Editor;        use Commands.Editor;
-with Src_Editor_Module;      use Src_Editor_Module;
-with Glide_Kernel;           use Glide_Kernel;
-with Glide_Kernel.Modules;   use Glide_Kernel.Modules;
+with Commands.Editor;           use Commands.Editor;
+with Src_Editor_Module;         use Src_Editor_Module;
+with Glide_Kernel;              use Glide_Kernel;
+with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
+with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
 
 package body Src_Editor_Buffer is
 
@@ -57,12 +58,6 @@ package body Src_Editor_Buffer is
    -- Preferences --
    -----------------
 
-   Default_Keyword_Color   : constant String := "";
-   Default_Comment_Color   : constant String := "blue";
-   Default_String_Color    : constant String := "brown";
-   Default_Character_Color : constant String := "brown";
-   --  <preferences>
-
    Default_Keyword_Font_Attr : constant Font_Attributes :=
      To_Font_Attributes (Weight => Pango.Enums.Pango_Weight_Bold);
    Default_Comment_Font_Attr : constant Font_Attributes :=
@@ -70,10 +65,6 @@ package body Src_Editor_Buffer is
    Default_String_Font_Attr  : constant Font_Attributes := To_Font_Attributes;
    Default_Character_Font_Attr : constant Font_Attributes :=
      To_Font_Attributes;
-
-   Default_HL_Line_Color   : constant String := "green";
-   Default_HL_Region_Color : constant String := "cyan";
-   Automatic_Indentation   : constant Boolean := True;
    --  <preferences>
 
    --------------------
@@ -374,16 +365,40 @@ package body Src_Editor_Buffer is
 
       Get_Text_Iter (Nth (Params, 1), Pos);
 
-      if Automatic_Indentation and then Buffer.Lang /= null then
+      if Get_Pref (Buffer.Kernel, Automatic_Indentation)
+        and then Buffer.Lang /= null
+      then
          declare
-            Indent      : Natural;
-            Next_Indent : Natural;
-            Line, Col   : Gint;
-            C_Str       : Gtkada.Types.Chars_Ptr;
+            Indent       : Natural;
+            Next_Indent  : Natural;
+            Line, Col    : Gint;
+            Offset       : Natural;
+            --  Offset between cursor and end of line
+
+            C_Str        : Gtkada.Types.Chars_Ptr;
+            Iter         : Gtk_Text_Iter;
+            Line_Ends    : Boolean;
+            Result       : Boolean;
+            Slice_Length : Natural;
+            Slice        : Unchecked_String_Access;
+            pragma Suppress (Access_Check, Slice);
+            Index        : Integer;
+            Start        : Integer;
+            Command      : Editor_Replace_Slice;
 
          begin
             if Length = 1 and then Text (1) = ASCII.LF then
-               Get_Cursor_Position (Buffer, Line, Col);
+               Copy (Pos, Iter);
+
+               --  Go to last char of the line pointed by Pos
+               Forward_Line (Iter, Line_Ends);
+               if Line_Ends then
+                  Backward_Char (Iter, Result);
+               end if;
+
+               Line   := Get_Line (Iter);
+               Col    := Get_Line_Offset (Iter);
+               Offset := Natural (Col - Get_Line_Offset (Pos));
 
                --  We're spending most of our time getting this string.
                --  Consider saving the current line, indentation level and
@@ -391,102 +406,106 @@ package body Src_Editor_Buffer is
                --  the buffer from scratch each time.
 
                C_Str := Get_Slice (Buffer, 0, 0, Line, Col);
+               Slice := To_Unchecked_String (C_Str);
+               Slice_Length := Natural (Strlen (C_Str));
 
-               declare
-                  Slice        : Unchecked_String_Access :=
-                    To_Unchecked_String (C_Str);
-                  pragma Suppress (Access_Check, Slice);
-                  Start        : Integer;
-                  Slice_Length : constant Natural :=
-                    Natural (Strlen (C_Str)) + 1;
-                  Index        : Integer := Slice_Length - 1;
-
-                  Command : Editor_Replace_Slice;
-                  Result  : Boolean;
-               begin
+               if Line_Ends then
+                  Slice_Length := Slice_Length + 1;
                   Slice (Slice_Length) := ASCII.LF;
-                  Next_Indentation
-                    (Buffer.Lang, Slice (1 .. Slice_Length),
-                     Indent, Next_Indent);
+               end if;
 
-                  --  Stop propagation of this signal, since we will completely
-                  --  replace the current line in the call to Replace_Slice
-                  --  below.
+               Index := Slice_Length - 1;
+               Next_Indentation
+                 (Buffer.Lang, Slice (1 .. Slice_Length),
+                  Indent, Next_Indent);
 
-                  Emit_Stop_By_Name (Buffer, "insert_text");
+               --  Stop propagation of this signal, since we will completely
+               --  replace the current line in the call to Replace_Slice
+               --  below.
 
-                  Skip_To_Char (Slice.all, Index, ASCII.LF, -1);
+               Emit_Stop_By_Name (Buffer, "insert_text");
+               Skip_To_Char (Slice.all, Index, ASCII.LF, -1);
 
-                  if Index < Slice'First then
-                     Index := Slice'First;
-                  end if;
+               if Index < Slice'First then
+                  Index := Slice'First;
+               end if;
 
-                  Start := Index;
+               Start := Index;
 
-                  while Index <= Slice_Length
-                    and then (Slice (Index) = ' '
-                              or else Slice (Index) = ASCII.HT
-                              or else Slice (Index) = ASCII.LF
-                              or else Slice (Index) = ASCII.CR)
-                  loop
-                     Index := Index + 1;
-                  end loop;
+               while Index <= Slice_Length
+                 and then (Slice (Index) = ' '
+                           or else Slice (Index) = ASCII.HT
+                           or else Slice (Index) = ASCII.LF
+                           or else Slice (Index) = ASCII.CR)
+               loop
+                  Index := Index + 1;
+               end loop;
 
-                  if Index > Slice_Length then
-                     Index := Slice_Length;
-                  end if;
+               if Index > Slice_Length then
+                  Index := Slice_Length;
+               end if;
 
-                  --  Prevent recursion
-                  Buffer.Inserting := True;
+               --  Prevent recursion
+               Buffer.Inserting := True;
 
-                  --  Replace everything at once, important for efficiency
-                  --  and also because otherwise, some marks will no longer be
-                  --  valid.
+               --  Replace everything at once, important for efficiency
+               --  and also because otherwise, some marks will no longer be
+               --  valid.
 
+               if Line_Ends then
+                  Slice_Length := Slice_Length - 1;
+               end if;
 
-                  Create (Command,
-                          Source_Buffer (Buffer),
-                          Integer (Line), 0,
-                          Integer (Line), Integer (Col),
-                          Spaces (1 .. Indent)
-                          & Slice (Index .. Slice_Length)
-                          & Spaces (1 .. Next_Indent));
+               Create
+                 (Command,
+                  Source_Buffer (Buffer),
+                  Integer (Line), 0,
+                  Integer (Line), Integer (Col),
+                  Spaces (1 .. Indent) &
+                  Slice (Index .. Slice_Length - Offset) & ASCII.LF &
+                  Spaces (1 .. Next_Indent) &
+                  Slice (Slice_Length - Offset + 1 .. Slice_Length));
 
-                  Enqueue (Buffer.Queue, Command);
-                  Indented := True;
+               Enqueue (Buffer.Queue, Command);
+               Indented := True;
 
-                  Get_Iter_At_Line_Offset (Buffer, Pos, Line, 0);
-                  Forward_Chars
-                    (Pos,
-                     Gint
-                       (Indent + Next_Indent + Slice_Length - Index + 1),
-                     Result);
+               --  Need to recompute iter, since the slice replacement that
+               --  we just did has invalidated iter.
 
-                  Buffer.Inserting := False;
-                  g_free (C_Str);
+               Get_Iter_At_Line_Offset (Buffer, Pos, Line, 0);
+               Forward_Chars
+                 (Pos,
+                  Gint (Indent + Next_Indent +
+                        Slice_Length - Offset - Index + 2),
+                  Result);
+               Place_Cursor (Buffer, Pos);
 
-               exception
-                  when others =>
-                     --  Stop propagation of exception, since doing nothing
-                     --  in this callback is harmless.
-
-                     null;
-               end;
+               Buffer.Inserting := False;
+               g_free (C_Str);
             end if;
+
+         exception
+            when others =>
+               --  Stop propagation of exception, since doing nothing
+               --  in this callback is harmless.
+
+               null;
          end;
       end if;
 
       if Is_Null_Command (Command) then
          --  If indentation has just been done, the text has already been
          --  taken into account.
+         --  ??? If Indented is True, how can Command be null
 
          if not Indented then
-            Create (Command,
-                    Insertion,
-                    Source_Buffer (Buffer),
-                    False,
-                    Natural (Get_Line (Pos)),
-                    Natural (Get_Line_Offset (Pos)));
+            Create
+              (Command,
+               Insertion,
+               Source_Buffer (Buffer),
+               False,
+               Natural (Get_Line (Pos)),
+               Natural (Get_Line_Offset (Pos)));
             Enqueue (Buffer.Queue, Command);
             Add_Text (Command, Text);
             Buffer.Current_Command := Command_Access (Command);
@@ -495,19 +514,20 @@ package body Src_Editor_Buffer is
       else
          if Get_Mode (Command) = Insertion then
             if Length = 1
-              and then (Text (1) = ASCII.LF
-                        or else Text (1) = ' ')
+              and then (Text (1) = ASCII.LF or else Text (1) = ' ')
             then
                End_Action (Buffer);
-               Create (Command,
-                       Insertion,
-                       Source_Buffer (Buffer),
-                       False,
-                       Natural (Get_Line (Pos)),
-                       Natural (Get_Line_Offset (Pos)));
+               Create
+                 (Command,
+                  Insertion,
+                  Source_Buffer (Buffer),
+                  False,
+                  Natural (Get_Line (Pos)),
+                  Natural (Get_Line_Offset (Pos)));
                Enqueue (Buffer.Queue, Command);
                Add_Text (Command, Text);
                Buffer.Current_Command := Command_Access (Command);
+
             else
                Add_Text (Command, Text);
                Buffer.Current_Command := Command_Access (Command);
@@ -515,12 +535,13 @@ package body Src_Editor_Buffer is
 
          else
             End_Action (Buffer);
-            Create (Command,
-                    Insertion,
-                    Source_Buffer (Buffer),
-                    False,
-                    Natural (Get_Line (Pos)),
-                    Natural (Get_Line_Offset (Pos)));
+            Create
+              (Command,
+               Insertion,
+               Source_Buffer (Buffer),
+               False,
+               Natural (Get_Line (Pos)),
+               Natural (Get_Line_Offset (Pos)));
             Enqueue (Buffer.Queue, Command);
             Add_Text (Command, Text);
             Buffer.Current_Command := Command_Access (Command);
@@ -871,15 +892,15 @@ package body Src_Editor_Buffer is
 
       Buffer.Syntax_Tags :=
         Create_Syntax_Tags
-          (Keyword_Color       => Default_Keyword_Color,
+          (Keyword_Color       => Get_Pref (Kernel, Default_Keyword_Color),
            Keyword_Font_Attr   => Default_Keyword_Font_Attr,
-           Comment_Color       => Default_Comment_Color,
+           Comment_Color       => Get_Pref (Kernel, Default_Comment_Color),
            Comment_Font_Attr   => Default_Comment_Font_Attr,
-           Character_Color     => Default_Character_Color,
+           Character_Color     => Get_Pref (Kernel, Default_Character_Color),
            Character_Font_Attr => Default_Character_Font_Attr,
-           String_Color        => Default_String_Color,
+           String_Color        => Get_Pref (Kernel, Default_String_Color),
            String_Font_Attr    => Default_String_Font_Attr);
-      --  ??? Use preferences for the colors and font attributes...
+      --  ??? Use preferences for the font attributes...
 
       --  Save the newly created highlighting tags into the source buffer
       --  tag table.
@@ -891,12 +912,13 @@ package body Src_Editor_Buffer is
       end loop;
 
       --  Create HL_Line_Tag and save it into the source buffer tag table.
-      Create_Highlight_Line_Tag (Buffer.HL_Line_Tag, Default_HL_Line_Color);
+      Create_Highlight_Line_Tag
+        (Buffer.HL_Line_Tag, Get_Pref (Kernel, Default_HL_Line_Color));
       Text_Tag_Table.Add (Tags, Buffer.HL_Line_Tag);
 
       --  Create HL_Region_Tag and save it into the source buffer tag table.
       Create_Highlight_Region_Tag
-        (Buffer.HL_Region_Tag, Default_HL_Region_Color);
+        (Buffer.HL_Region_Tag, Get_Pref (Kernel, Default_HL_Region_Color));
       Text_Tag_Table.Add (Tags, Buffer.HL_Region_Tag);
 
       --  Save the insert mark for fast retrievals, since we will need to
@@ -1023,29 +1045,33 @@ package body Src_Editor_Buffer is
          Blanks         : Natural := 0;
 
       begin
-         while Current <= File_Buffer'Last loop
-            case File_Buffer (Current) is
-               when ASCII.LF | ASCII.CR =>
-                  if Blanks /= 0 then
-                     Bytes_Written :=
-                       Write (FD, File_Buffer (First)'Address, Blanks - First);
-                     Bytes_Written :=
-                       Write (FD, New_Line'Address, New_Line'Length);
+         if Get_Pref (Buffer.Kernel, Strip_Blanks) then
+            Current := File_Buffer'Last + 1;
+         else
+            while Current <= File_Buffer'Last loop
+               case File_Buffer (Current) is
+                  when ASCII.LF | ASCII.CR =>
+                     if Blanks /= 0 then
+                        Bytes_Written := Write
+                          (FD, File_Buffer (First)'Address, Blanks - First);
+                        Bytes_Written := Write
+                          (FD, New_Line'Address, New_Line'Length);
+                        Blanks := 0;
+                        First := Current + 1;
+                     end if;
+
+                  when ' ' | ASCII.HT =>
+                     if Blanks = 0 then
+                        Blanks := Current;
+                     end if;
+
+                  when others =>
                      Blanks := 0;
-                     First := Current + 1;
-                  end if;
+               end case;
 
-               when ' ' | ASCII.HT =>
-                  if Blanks = 0 then
-                     Blanks := Current;
-                  end if;
-
-               when others =>
-                  Blanks := 0;
-            end case;
-
-            Current := Current + 1;
-         end loop;
+               Current := Current + 1;
+            end loop;
+         end if;
 
          if First < File_Buffer'Last then
             if Blanks /= 0 then
