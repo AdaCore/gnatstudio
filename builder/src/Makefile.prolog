@@ -66,3 +66,10 @@ EXEC_DIR.saved:=$(EXEC_DIR)
 MAIN.saved:=$(MAIN)
 PROJECT_FILE.saved:=$(PROJECT_FILE)
 DEPS_PROJECTS.saved:=$(DEPS_PROJECTS)
+
+# Default target is to build (compile/bind/link)
+# Target build is defined in Makefile.generic
+
+default: build
+
+
