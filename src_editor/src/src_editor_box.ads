@@ -402,6 +402,15 @@ package Src_Editor_Box is
       Identifier     : String);
    --  See Glide_Kernel.Modules for more information.
 
+   function Get_Saved_Position
+     (Editor : access Source_Editor_Box_Record) return Integer;
+   --  Accessor to the Saved_Position field.
+
+   procedure Set_Modified_State
+     (Editor   : access Source_Editor_Box_Record;
+      Modified : Boolean);
+   --  Change the state of the
+
 private
 
    ----------------------
@@ -458,6 +467,8 @@ private
 
       Modified             : Boolean := False;
       Writable             : Boolean := True;
+
+      Saved_Position       : Integer := 0;
 
       Default_GC, Bg_GC    : Gdk.Gdk_GC;
       Tooltip_Font         : Gdk.Font.Gdk_Font;
