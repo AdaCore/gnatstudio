@@ -31,12 +31,12 @@ with Src_Info.Queries;          use Src_Info.Queries;
 with VFS;                       use VFS;
 with Glide_Kernel.Project;      use Glide_Kernel, Glide_Kernel.Project;
 with Projects.Registry;         use Projects.Registry;
-with Traces;                   use Traces;
-with Ada.Exceptions;           use Ada.Exceptions;
+with Traces;                    use Traces;
+with Ada.Exceptions;            use Ada.Exceptions;
 
 package body Docgen.Work_On_Source is
 
-   Me : constant Debug_Handle := Create ("Docgen--work_on_source");
+   Me : constant Debug_Handle := Create ("Docgen-work_on_source");
 
    package TSFL renames Type_Source_File_List;
    package TEL renames Type_Entity_List;
