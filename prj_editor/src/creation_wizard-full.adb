@@ -32,8 +32,9 @@ package body Creation_Wizard.Full is
 
    type Project_Editor_Page_Wrapper is new Project_Wizard_Page_Record with
       record
-         Page : Project_Editor_Page;
-         Wiz  : Wizard;
+         Page         : Project_Editor_Page;
+         Name_And_Loc : Name_And_Location_Page_Access;
+         Wiz          : Wizard;
       end record;
    function Create_Content
      (Page : access Project_Editor_Page_Wrapper;
@@ -61,9 +62,8 @@ package body Creation_Wizard.Full is
          Project      => Projects.No_Project,
          Full_Project =>
            Name_As_Directory (Get_Text
-             (Get_Path_Widget (Project_Wizard (Wiz).Name_And_Location)))
-           & Get_Text (Get_Name_Widget
-                       (Project_Wizard (Wiz).Name_And_Location)),
+             (Get_Path_Widget (Page.Name_And_Loc)))
+           & Get_Text (Get_Name_Widget (Page.Name_And_Loc)),
          Kernel       => Get_Kernel (Wiz));
    end Create_Content;
 
@@ -116,7 +116,8 @@ package body Creation_Wizard.Full is
    ---------------------------
 
    procedure Add_Full_Wizard_Pages
-     (Wiz : access Project_Wizard_Record'Class)
+     (Wiz          : access Project_Wizard_Record'Class;
+      Name_And_Loc : access Creation_Wizard.Name_And_Location_Page'Class)
    is
       P          : Project_Editor_Page;
       Attr_Count : constant Natural := Attribute_Editors_Page_Count;
@@ -132,7 +133,7 @@ package body Creation_Wizard.Full is
          Page := Attribute_Editors_Page_Box
            (Kernel            => Get_Kernel (Wiz),
             Project           => No_Project,
-            Path_Widget       => Get_Path_Widget (Wiz.Name_And_Location),
+            Path_Widget       => Get_Path_Widget (Name_And_Loc),
             Nth_Page          => E,
             Context           => "wizard");
          if Page /= null then
@@ -147,8 +148,9 @@ package body Creation_Wizard.Full is
          P := Get_Nth_Project_Editor_Page (Get_Kernel (Wiz), E);
          Page := new Project_Editor_Page_Wrapper'
            (Project_Wizard_Page_Record with
-            Page => P,
-            Wiz  => Wizard (Wiz));
+            Page         => P,
+            Name_And_Loc => Name_And_Location_Page_Access (Name_And_Loc),
+            Wiz          => Wizard (Wiz));
          Add_Page (Wiz,
                    Page        => Page,
                    Description => Get_Title (P),

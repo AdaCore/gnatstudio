@@ -28,16 +28,13 @@ with Gtk.Cell_Renderer_Text;   use Gtk.Cell_Renderer_Text;
 with Gtk.Cell_Renderer_Toggle; use Gtk.Cell_Renderer_Toggle;
 with Gtk.Enums;                use Gtk.Enums;
 with Gtk.Paned;                use Gtk.Paned;
-with Gtk.Stock;                use Gtk.Stock;
-with Gtk.Dialog;               use Gtk.Dialog;
+with Glib.Object;              use Glib.Object;
 with Gtk.Widget;               use Gtk.Widget;
 with Gtk.Box;                  use Gtk.Box;
 with Glib;                     use Glib;
 with Glib.Object;              use Glib.Object;
 with Gtk.Text_View;            use Gtk.Text_View;
 with Gtk.Text_Buffer;          use Gtk.Text_Buffer;
-with Gtk.Label;                use Gtk.Label;
-with Gtkada.Handlers;          use Gtkada.Handlers;
 
 with Ada.Exceptions;           use Ada.Exceptions;
 with GNAT.OS_Lib;              use GNAT.OS_Lib;
@@ -48,8 +45,14 @@ with Creation_Wizard.Simple;   use Creation_Wizard.Simple;
 with Glide_Kernel;             use Glide_Kernel;
 with Glide_Kernel.Project;     use Glide_Kernel.Project;
 with Traces;                   use Traces;
+with Wizards;                  use Wizards;
+with Creation_Wizard;          use Creation_Wizard;
 
 package body Creation_Wizard.Selector is
+
+   From_Sources_Label : constant String := "From existing Ada sources";
+   From_Scratch_Label : constant String := "From scratch";
+   From_Adp_Label     : constant String := "From .adp file";
 
    function Create_Tree_View
      (Column_Types   : Glib.GType_Array;
@@ -73,13 +76,30 @@ package body Creation_Wizard.Selector is
    --     Columns are not editable. Radio buttons not supported,
    --     Columns are not sortable
 
-   type Wizard_Selector_Record is new Gtk_Dialog_Record with record
-      View        : Gtk_Tree_View;
-      Description : Gtk_Text_View;
+   type Wizard_Selector_Page is new Project_Wizard_Page_Record with record
+      View          : Gtk_Tree_View;
+      Description   : Gtk_Text_View;
+      Last_Selected : Integer := -1;
+      Name_And_Loc  : Name_And_Location_Page_Access;
    end record;
-   type Wizard_Selector is access all Wizard_Selector_Record'Class;
+   type Wizard_Selector_Page_Access is access all Wizard_Selector_Page'Class;
+   function Create_Content
+     (Page : access Wizard_Selector_Page;
+      Wiz  : access Wizard_Record'Class) return Gtk.Widget.Gtk_Widget;
+   procedure Generate_Project
+     (Page    : access Wizard_Selector_Page;
+      Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Scenario_Variables : Projects.Scenario_Variable_Array;
+      Project : in out Projects.Project_Type;
+      Changed : in out Boolean);
+   function Next_Page
+     (Page : access Wizard_Selector_Page;
+      Wiz  : access Wizard_Record'Class) return Wizard_Page;
+   --  See inherited documentation
 
-   procedure Selection_Changed (Selector : access Gtk_Widget_Record'Class);
+   procedure Selection_Changed
+     (Selection : access Gtk_Widget_Record'Class;
+      Page      : Project_Wizard_Page);
    --  Called when a new type of project is selected
 
    ----------------------
@@ -141,20 +161,81 @@ package body Creation_Wizard.Selector is
       return View;
    end Create_Tree_View;
 
+   ---------------
+   -- Next_Page --
+   ---------------
+
+   function Next_Page
+     (Page : access Wizard_Selector_Page;
+      Wiz  : access Wizard_Record'Class) return Wizard_Page
+   is
+      Iter  : Gtk_Tree_Iter;
+      Model : Gtk_Tree_Model;
+      Selected : Integer;
+   begin
+      Get_Selected (Get_Selection (Page.View), Model, Iter);
+
+      declare
+         Project_T : constant String :=
+           Get_String (Gtk_Tree_Store (Model), Iter, 0);
+      begin
+         if Project_T = -From_Sources_Label then
+            Selected := 1;
+         elsif Project_T = -From_Adp_Label then
+            Selected := 2;
+         else
+            Selected := 3;
+         end if;
+      end;
+
+      if Page.Last_Selected /= Selected then
+         Page.Last_Selected := Selected;
+         Remove_Pages (Wiz, After => Page.Name_And_Loc);
+         case Selected is
+            when 1 => Add_Simple_Wizard_Pages (Project_Wizard (Wiz));
+            when 2 => Add_Adp_Wizard_Pages (Project_Wizard (Wiz));
+            when others => Add_Full_Wizard_Pages
+                 (Project_Wizard (Wiz), Page.Name_And_Loc);
+         end case;
+      end if;
+
+      return null;
+   end Next_Page;
+
+   ----------------------
+   -- Generate_Project --
+   ----------------------
+
+   procedure Generate_Project
+     (Page    : access Wizard_Selector_Page;
+      Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Scenario_Variables : Projects.Scenario_Variable_Array;
+      Project : in out Projects.Project_Type;
+      Changed : in out Boolean)
+   is
+      pragma Unreferenced (Page, Kernel, Scenario_Variables, Project, Changed);
+   begin
+      null;
+   end Generate_Project;
+
    -----------------------
    -- Selection_Changed --
    -----------------------
 
-   procedure Selection_Changed (Selector : access Gtk_Widget_Record'Class) is
-      Sel           : constant Wizard_Selector := Wizard_Selector (Selector);
-      Buffer        : constant Gtk_Text_Buffer := Get_Buffer (Sel.Description);
-      Selected      : Gtk_Tree_Iter;
+   procedure Selection_Changed
+     (Selection : access Gtk_Widget_Record'Class;
+      Page      : Project_Wizard_Page)
+   is
+      pragma Unreferenced (Selection);
+      P              : constant Wizard_Selector_Page_Access :=
+        Wizard_Selector_Page_Access (Page);
+      Buffer         : constant Gtk_Text_Buffer := Get_Buffer (P.Description);
+      Selected       : Gtk_Tree_Iter;
       Selected_Model : Gtk_Tree_Model;
    begin
-      Get_Selected
-        (Get_Selection (Sel.View), Selected_Model, Selected);
+      Get_Selected (Get_Selection (P.View), Selected_Model, Selected);
       Set_Text (Buffer,
-                Get_String (Gtk_Tree_Store (Get_Model (Sel.View)),
+                Get_String (Gtk_Tree_Store (Get_Model (P.View)),
                             Selected, 1));
    end Selection_Changed;
 
@@ -165,40 +246,69 @@ package body Creation_Wizard.Selector is
    function Create_New_Project
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class) return Boolean
    is
+      Wiz  : Project_Wizard;
+      P    : Wizard_Selector_Page_Access;
+   begin
+      Gtk_New (Wiz, Kernel);
+      P := new Wizard_Selector_Page;
+      Add_Page (Wiz,
+                Page        => P,
+                Description => -"Select the type of project to create",
+                Toc         => -"Select project type");
+
+      P.Name_And_Loc := Add_Name_And_Location_Page (Wiz);
+
+      declare
+         Name : constant String := Run (Wiz);
+      begin
+         if Name /= "" then
+            Load_Project (Kernel, Name);
+            return True;
+         end if;
+      end;
+
+      return False;
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception " & Exception_Information (E));
+         return False;
+   end Create_New_Project;
+
+   --------------------
+   -- Create_Content --
+   --------------------
+
+   function Create_Content
+     (Page : access Wizard_Selector_Page;
+      Wiz  : access Wizard_Record'Class) return Gtk.Widget.Gtk_Widget
+   is
+      pragma Unreferenced (Wiz);
       Project_Type_Cst : aliased String := -"Project type";
-      Dialog : Wizard_Selector;
       Model  : Gtk_Tree_Store;
       From_Sources_Iter   : Gtk_Tree_Iter;
       From_Scratch_Iter   : Gtk_Tree_Iter;
       From_Adp_Iter       : Gtk_Tree_Iter;
       Paned  : Gtk_Paned;
       Button : Gtk_Widget;
-      Wizard : Creation_Wizard.Project_Wizard;
-      Label  : Gtk_Label;
+      Box    : Gtk_Box;
       pragma Unreferenced (Button);
    begin
-      Dialog := new Wizard_Selector_Record;
-      Gtk.Dialog.Initialize (Dialog,
-                             Title  => -"Project creation",
-                             Parent => Glide_Kernel.Get_Main_Window (Kernel),
-                             Flags  => Destroy_With_Parent);
-      Set_Default_Size (Dialog, 500, 300);
-
-      Gtk_New (Label, "Choose a project type");
-      Pack_Start (Get_Vbox (Dialog), Label, Expand => False, Padding => 5);
+      Gtk_New_Vbox (Box, Homogeneous => False);
 
       Gtk_New_Hpaned (Paned);
-      Pack_Start (Get_Vbox (Dialog), Paned);
+      Pack_Start (Box, Paned);
 
-      Dialog.View := Create_Tree_View
+      Page.View := Create_Tree_View
         (Column_Types  => (1 => GType_String, 2 => GType_String),
          Column_Names  => (1 => Project_Type_Cst'Unchecked_Access),
          Show_Column_Titles => False);
-      Add1 (Paned, Dialog.View);
-      Model := Gtk_Tree_Store (Get_Model (Dialog.View));
+      Add1 (Paned, Page.View);
+      Model := Gtk_Tree_Store (Get_Model (Page.View));
 
       Append (Model, From_Sources_Iter, Null_Iter);
-      Set (Model, From_Sources_Iter, 0, -"From existing Ada sources");
+      Set (Model, From_Sources_Iter, 0, -From_Sources_Label);
       Set (Model, From_Sources_Iter, 1,
            -("Create a new set of projects given a set of source directories"
              & " and a set of object directories. GPS will try to create"
@@ -207,14 +317,14 @@ package body Creation_Wizard.Selector is
              & " files as it was when you build it previously."));
 
       Append (Model, From_Scratch_Iter, Null_Iter);
-      Set (Model, From_Scratch_Iter, 0, -"From scratch");
+      Set (Model, From_Scratch_Iter, 0, -From_Scratch_Label);
       Set (Model, From_Scratch_Iter, 1,
            -("Create a new project file, where you can specify each of its"
              & " properties, like the set of source directories, its object"
              & " directory, compiler switches,..."));
 
       Append (Model, From_Adp_Iter, Null_Iter);
-      Set (Model, From_Adp_Iter, 0, -"From .adp file");
+      Set (Model, From_Adp_Iter, 0, -From_Adp_Label);
       Set (Model, From_Adp_Iter, 1,
            -(".adp files are the project files used in the AdaCore's Glide"
              & " environment, based on Emacs. It is a very simple project."
@@ -222,62 +332,21 @@ package body Creation_Wizard.Selector is
              & "This wizard will allow you to easily convert such a file to"
              & " GPS's own format"));
 
-      Gtk_New (Dialog.Description);
-      Add2 (Paned, Dialog.Description);
-      Set_Cursor_Visible (Dialog.Description, False);
-      Set_Wrap_Mode (Dialog.Description, Wrap_Word);
-      Set_Editable (Dialog.Description, False);
+      Gtk_New (Page.Description);
+      Add2 (Paned, Page.Description);
+      Set_Cursor_Visible (Page.Description, False);
+      Set_Wrap_Mode (Page.Description, Wrap_Word);
+      Set_Editable (Page.Description, False);
 
-      Widget_Callback.Object_Connect
-        (Get_Selection (Dialog.View), "changed",
-         Widget_Callback.To_Marshaller (Selection_Changed'Access),
-         Slot_Object => Dialog);
-      Select_Iter (Get_Selection (Dialog.View), From_Scratch_Iter);
+      Page_Handlers.Object_Connect
+        (Get_Selection (Page.View), "changed",
+         Page_Handlers.To_Marshaller (Selection_Changed'Access),
+         Slot_Object => Page.View,
+         User_Data => Project_Wizard_Page (Page));
+      Select_Iter (Get_Selection (Page.View), From_Scratch_Iter);
 
-      Button := Add_Button (Dialog, Stock_Ok, Gtk_Response_OK);
-      Button := Add_Button (Dialog, Stock_Cancel, Gtk_Response_Cancel);
-
-      Show_All (Dialog);
-
-      if Run (Dialog) = Gtk_Response_OK then
-         Gtk_New (Wizard, Kernel, Show_Toc => True);
-
-         if Iter_Is_Selected
-           (Get_Selection (Dialog.View), From_Sources_Iter)
-         then
-            Add_Simple_Wizard_Pages (Wizard);
-
-         elsif Iter_Is_Selected
-           (Get_Selection (Dialog.View), From_Adp_Iter)
-         then
-            Add_Adp_Wizard_Pages (Wizard);
-
-         else
-            Add_Full_Wizard_Pages (Wizard);
-         end if;
-
-         Destroy (Dialog);
-         declare
-            Name : constant String := Run (Wizard);
-         begin
-            if Name /= "" then
-               Load_Project (Kernel, Name);
-               return True;
-            end if;
-         end;
-
-         return False;
-      else
-         Destroy (Dialog);
-         return False;
-      end if;
-
-   exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception " & Exception_Information (E));
-         return False;
-   end Create_New_Project;
+      return Gtk_Widget (Box);
+   end Create_Content;
 
    --------------------
    -- On_New_Project --

@@ -94,7 +94,8 @@ package Wizards is
    --  The default is to do nothing.
 
    function Next_Page
-     (Page : access Wizard_Page_Record) return Wizard_Page;
+     (Page : access Wizard_Page_Record;
+      Wiz  : access Wizard_Record'Class) return Wizard_Page;
    --  Return the page to display when the user presses "Next" after this one.
    --  The new page must have been added to the wizard.
    --  The default behavior is to return null, which lets the wizard compute
@@ -185,6 +186,11 @@ package Wizards is
    --  be performed.
    --  Pressing Finish will in any case close the wizard after this function
    --  has been called.
+
+   procedure Remove_Pages
+     (Wiz   : access Wizard_Record;
+      After : access Wizard_Page_Record'Class);
+   --  Remove all pages after, but not including, After.
 
    function Get_Pages
      (Wiz : access Wizard_Record) return Wizard_Pages_Array_Access;

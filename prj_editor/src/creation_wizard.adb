@@ -69,6 +69,28 @@ package body Creation_Wizard is
       Initialize (Wiz, Kernel, Show_Toc);
    end Gtk_New;
 
+   --------------------------------
+   -- Add_Name_And_Location_Page --
+   --------------------------------
+
+   function Add_Name_And_Location_Page
+     (Wiz                 : access Project_Wizard_Record'Class;
+      Force_Relative_Dirs : Boolean := False)
+      return Name_And_Location_Page_Access
+   is
+      Page : Name_And_Location_Page_Access;
+   begin
+      Page := new Name_And_Location_Page;
+      Page.Kernel := Get_Kernel (Wiz);
+      Page.Force_Relative_Dirs := Force_Relative_Dirs;
+      Add_Page
+        (Wiz,
+         Page         => Page,
+         Description => -"Enter the project name and location",
+         Toc         => -"Naming the project");
+      return Page;
+   end Add_Name_And_Location_Page;
+
    ----------------
    -- Initialize --
    ----------------
@@ -78,19 +100,11 @@ package body Creation_Wizard is
       Kernel              : access Glide_Kernel.Kernel_Handle_Record'Class;
       Show_Toc            : Boolean := True) is
    begin
-      Wiz.Kernel := Kernel_Handle (Kernel);
       Wizards.Initialize
         (Wiz,
          Kernel   => Kernel,
          Title    => -"Project setup",
          Show_Toc => Show_Toc);
-      Wiz.Name_And_Location := Create_Name_And_Location_Page
-        (Kernel, Force_Relative_Dirs => False);
-      Add_Page
-        (Wiz,
-         Page         => Wiz.Name_And_Location,
-         Description => -"Enter the project name and location",
-         Toc         => -"Naming the project");
    end Initialize;
 
    -----------------
@@ -142,23 +156,6 @@ package body Creation_Wizard is
 
       return True;
    end Is_Complete;
-
-   -----------------------------------
-   -- Create_Name_And_Location_Page --
-   -----------------------------------
-
-   function Create_Name_And_Location_Page
-     (Kernel              : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Force_Relative_Dirs : Boolean := False)
-      return Name_And_Location_Page_Access
-   is
-      Page   : Name_And_Location_Page_Access;
-   begin
-      Page := new Name_And_Location_Page;
-      Page.Kernel := Kernel_Handle (Kernel);
-      Page.Force_Relative_Dirs := Force_Relative_Dirs;
-      return Page;
-   end Create_Name_And_Location_Page;
 
    --------------------
    -- Create_Content --
@@ -228,7 +225,7 @@ package body Creation_Wizard is
 
          Gtk_New (Page.Relative_Paths, -"Use relative paths in the projects");
          Set_Active (Page.Relative_Paths,
-                     Get_Pref (Page.Kernel, Generate_Relative_Paths));
+                     Get_Pref (Get_Kernel (Wiz), Generate_Relative_Paths));
          Pack_Start (Box, Page.Relative_Paths, Expand => False);
       else
          Page.Relative_Paths := null;
@@ -341,7 +338,7 @@ package body Creation_Wizard is
       Tmp     : Boolean;
       pragma Unreferenced (Tmp);
    begin
-      Push_State (Wiz.Kernel, Processing);
+      Push_State (Get_Kernel (Wiz), Processing);
 
       for P in Pages'Range loop
          --  The first page will create the project (Name_And_Location_Page)
@@ -352,13 +349,13 @@ package body Creation_Wizard is
             Project            => Wiz.Project,
             Changed            => Changed);
          if Wiz.Project = No_Project then
-            Pop_State (Wiz.Kernel);
+            Pop_State (Get_Kernel (Wiz));
             return;
          end if;
       end loop;
 
-      Tmp := Save_Single_Project (Wiz.Kernel, Wiz.Project);
-      Pop_State (Wiz.Kernel);
+      Tmp := Save_Single_Project (Get_Kernel (Wiz), Wiz.Project);
+      Pop_State (Get_Kernel (Wiz));
 
    exception
       when E : others =>

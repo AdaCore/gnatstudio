@@ -70,7 +70,7 @@ package body Creation_Wizard.Adp is
    is
       Adp_Page : constant Adp_Selection_Page_Access := new Adp_Selection_Page;
    begin
-      Adp_Page.Kernel := Kernel_Handle (Wiz.Kernel);
+      Adp_Page.Kernel := Get_Kernel (Wiz);
       Add_Page (Wiz, Adp_Page,
                 Toc         => -".adp file selection",
                 Description => -"Select .adp file name");

@@ -1222,7 +1222,8 @@ package body Project_Viewers is
       Wiz  : Creation_Wizard.Project_Wizard;
    begin
       Creation_Wizard.Gtk_New (Wiz, Get_Kernel (File));
-      Add_Full_Wizard_Pages (Wiz);
+      Add_Full_Wizard_Pages
+        (Wiz, Creation_Wizard.Add_Name_And_Location_Page (Wiz));
 
       declare
          Name : constant String := Creation_Wizard.Run (Wiz);

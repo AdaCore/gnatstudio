@@ -20,8 +20,10 @@
 
 package Creation_Wizard.Full is
    procedure Add_Full_Wizard_Pages
-     (Wiz : access Project_Wizard_Record'Class);
+     (Wiz          : access Project_Wizard_Record'Class;
+      Name_And_Loc : access Creation_Wizard.Name_And_Location_Page'Class);
    --  Add the required pages to allow wizard to edit all the properties of
    --  a project.
    --  New pages can be registered through XML pages.
+
 end Creation_Wizard.Full;

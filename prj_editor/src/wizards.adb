@@ -65,12 +65,18 @@ package body Wizards is
    procedure On_Finish (Wiz : access Gtk_Widget_Record'Class);
    --  Callback for the "finish" button
 
+   procedure Destroy_Page (Wiz : access Wizard_Record'Class; Page : Integer);
+   --  Destroy a specific page in the wizard
+
    ---------------
    -- Next_Page --
    ---------------
 
-   function Next_Page (Page : access Wizard_Page_Record) return Wizard_Page is
-      pragma Unreferenced (Page);
+   function Next_Page
+     (Page : access Wizard_Page_Record;
+      Wiz  : access Wizard_Record'Class) return Wizard_Page
+   is
+      pragma Unreferenced (Page, Wiz);
    begin
       return null;
    end Next_Page;
@@ -205,6 +211,7 @@ package body Wizards is
       else
          Gtk_New (Page.Toc, Toc);
       end if;
+      Show_All (Page.Toc);
       Set_Justify (Page.Toc, Justify_Left);
       Set_Alignment (Page.Toc, 0.0, 0.0);
       Pack_Start (Get_Side_Box (Wiz), Page.Toc, Expand => False);
@@ -251,6 +258,19 @@ package body Wizards is
       end if;
    end Add_Page;
 
+   ------------------
+   -- Destroy_Page --
+   ------------------
+
+   procedure Destroy_Page (Wiz : access Wizard_Record'Class; Page : Integer) is
+   begin
+      On_Destroy (Wiz.Pages (Page));
+      Free (Wiz.Pages (Page).Title);
+      Destroy (Wiz.Pages (Page).Toc);
+      Destroy (Wiz.Pages (Page).Content);
+      Unchecked_Free (Wiz.Pages (Page));
+   end Destroy_Page;
+
    ----------------
    -- On_Destroy --
    ----------------
@@ -260,9 +280,7 @@ package body Wizards is
    begin
       if W.Pages /= null then
          for P in W.Pages'Range loop
-            On_Destroy (W.Pages (P));
-            Free (W.Pages (P).Title);
-            Unchecked_Free (W.Pages (P));
+            Destroy_Page (W, P);
          end loop;
          Unchecked_Free (W.Pages);
       end if;
@@ -315,10 +333,34 @@ package body Wizards is
       Set_Sensitive (W.Next, W.Pages (W.Current_Page).Was_Complete
                      and then W.Current_Page < W.Pages'Last);
       Set_Sensitive (W.Finish, Can_Complete (W));
-      Set_Sensitive (W.Previous, W.Current_Page > 1
-                     and then W.Pages (W.Current_Page).Was_Complete);
+      Set_Sensitive (W.Previous, W.Current_Page > 1);
       Grab_Default (W.Finish);
    end Update_Buttons_Sensitivity;
+
+   ------------------
+   -- Remove_Pages --
+   ------------------
+
+   procedure Remove_Pages
+     (Wiz   : access Wizard_Record;
+      After : access Wizard_Page_Record'Class)
+   is
+      Tmp : Wizard_Pages_Array_Access;
+   begin
+      for P in Wiz.Pages'Range loop
+         if Wiz.Pages (P) = Wizard_Page (After) then
+            for P2 in P + 1 .. Wiz.Pages'Last loop
+               Destroy_Page (Wiz, P2);
+            end loop;
+
+            Tmp := new Wizard_Pages_Array (1 .. P);
+            Tmp (1 .. P) := Wiz.Pages (1 .. P);
+            Unchecked_Free (Wiz.Pages);
+            Wiz.Pages := Tmp;
+            exit;
+         end if;
+      end loop;
+   end Remove_Pages;
 
    ----------------------
    -- Set_Current_Page --
@@ -390,7 +432,7 @@ package body Wizards is
 
    procedure Next_Page (Wiz : access Gtk_Widget_Record'Class) is
       W    : constant Wizard := Wizard (Wiz);
-      Next : constant Wizard_Page := Next_Page (W.Pages (W.Current_Page));
+      Next : constant Wizard_Page := Next_Page (W.Pages (W.Current_Page), W);
    begin
       if Next /= null then
          for P in W.Pages'Range loop
