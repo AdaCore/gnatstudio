@@ -51,6 +51,10 @@ with String_List_Utils;
 
 package GUI_Utils is
 
+   function Query_Password (Prompt : String) return String;
+   --  Open a new Dialog to query a password.
+   --  Return "" if the user hasn't entered a password
+
    ----------------------
    -- Combos and lists --
    ----------------------

@@ -36,10 +36,12 @@ with Glib;                     use Glib;
 with Gtk.Accel_Group;          use Gtk.Accel_Group;
 with Gtk.Accel_Map;            use Gtk.Accel_Map;
 with Gtk.Bin;                  use Gtk.Bin;
+with Gtk.Box;                  use Gtk.Box;
 with Gtk.Cell_Renderer_Toggle; use Gtk.Cell_Renderer_Toggle;
 with Gtk.Clist;                use Gtk.Clist;
 with Gtk.Combo;                use Gtk.Combo;
 with Gtk.Container;            use Gtk.Container;
+with Gtk.Dialog;               use Gtk.Dialog;
 with Gtk.GEntry;               use Gtk.GEntry;
 with Gtk.Handlers;             use Gtk.Handlers;
 with Gtk.Item;                 use Gtk.Item;
@@ -49,6 +51,7 @@ with Gtk.List_Item;            use Gtk.List_Item;
 with Gtk.Main;                 use Gtk.Main;
 with Gtk.Menu;                 use Gtk.Menu;
 with Gtk.Menu_Item;            use Gtk.Menu_Item;
+with Gtk.Stock;                use Gtk.Stock;
 with Gtk.Text_Iter;            use Gtk.Text_Iter;
 with Gtk.Text_Buffer;          use Gtk.Text_Buffer;
 with Gtk.Text_Mark;            use Gtk.Text_Mark;
@@ -1197,5 +1200,48 @@ package body GUI_Utils is
         (System.Null_Address, Save_Dynamic_Key'Unrestricted_Access);
       Close (File);
    end Save_Accel_Map;
+
+   --------------------
+   -- Query_Password --
+   --------------------
+
+   function Query_Password (Prompt : String) return String is
+      Dialog : Gtk_Dialog;
+      Button : Gtk_Widget;
+      Label  : Gtk_Label;
+      Passwd : Gtk_Entry;
+   begin
+      Gtk_New (Dialog,
+               Title => Prompt,
+               Parent => null,
+               Flags => Destroy_With_Parent or Modal);
+
+      Gtk_New (Label, Prompt);
+      Set_Alignment (Label, 0.0, 0.5);
+      Pack_Start (Get_Vbox (Dialog), Label, Expand => False);
+
+      Gtk_New (Passwd);
+      Pack_Start (Get_Vbox (Dialog), Passwd, Expand => False);
+      Set_Activates_Default (Passwd, True);
+      Set_Visibility (Passwd, Visible => False);
+
+      Button := Add_Button (Dialog, Stock_Ok, Gtk_Response_OK);
+      Grab_Default (Button);
+      Button := Add_Button (Dialog, Stock_Cancel, Gtk_Response_Cancel);
+
+      Show_All (Dialog);
+
+      if Run (Dialog) = Gtk_Response_OK then
+         declare
+            Pass : constant String := Get_Text (Passwd);
+         begin
+            Destroy (Dialog);
+            return Pass;
+         end;
+      else
+         Destroy (Dialog);
+         return "";
+      end if;
+   end Query_Password;
 
 end GUI_Utils;
