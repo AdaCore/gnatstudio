@@ -1803,24 +1803,12 @@ package body Switches_Editors is
       begin
          Rename_Prj := Find_Project_Of_Package (Project, Page.Pkg.all);
 
-         --  Language not supported => Remove the attribute
+         --  Language not supported => Ignore the attribute.
+         --  We shouldn't remove it, since it might have been added by another
+         --  page for a different language (Compiler'Switches is modified by
+         --  several pages, for instance).
 
          if not Has_Supported_Language (Page, Languages) then
-            if File_Name /= VFS.No_File then
-               Delete_Attribute
-                 (Project            => Rename_Prj,
-                  Scenario_Variables => Scenario_Variables,
-                  Attribute          =>
-                    Build (Page.Pkg.all, Get_String (Name_Switches)),
-                  Attribute_Index    => Base_Name (File_Name));
-            else
-               Delete_Attribute
-                 (Project            => Rename_Prj,
-                  Scenario_Variables => Scenario_Variables,
-                  Attribute          =>
-                    Build (Page.Pkg.all, Get_String (Name_Default_Switches)),
-                  Attribute_Index    => Page.Attribute_Index.all);
-            end if;
             return;
          end if;
 
@@ -1945,6 +1933,7 @@ package body Switches_Editors is
       Modified : Boolean := False;
       Languages : Argument_List := Get_Languages (Project);
    begin
+      --  No scenario variables ?
       while not At_End (Scenar) loop
          declare
             Cur : Argument_List := Current (Scenar);
@@ -1967,11 +1956,12 @@ package body Switches_Editors is
       Set_Environment (Scenario_Variables (Switches.Kernel), Saved);
       Free (Saved);
 
-      return Modified;
+      --  ??? Need this to update the icon in the project explorer...
+      if Modified then
+         Recompute_View (Switches.Kernel);
+      end if;
 
-      --  if Modified then
-      --     Recompute_View (Switches.Kernel);
-      --  end if;
+      return Modified;
    end Close_Switch_Editor;
 
    ------------------
