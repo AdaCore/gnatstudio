@@ -160,6 +160,7 @@ package body DB_API is
         (DB          : DB_File;
          Pos         : Cursor_Position;
          Key         : System.Address;
+         Size        : Integer;
          Exact_Match : Integer);
       pragma Import (C, I_Set_Cursor, "ada_db_set_cursor");
 
@@ -172,10 +173,12 @@ package body DB_API is
       else
          if Position = By_Key then
             I_Set_Cursor
-              (DB, Position, I_Key'Address, Boolean'Pos (Exact_Match));
+              (DB, Position, I_Key'Address, I_Key'Length,
+               Boolean'Pos (Exact_Match));
          else
             I_Set_Cursor
-              (DB, Position, System.Null_Address, Boolean'Pos (Exact_Match));
+              (DB, Position, System.Null_Address, 0,
+               Boolean'Pos (Exact_Match));
          end if;
 
          if Last_ErrNo (DB) /= 0 then
