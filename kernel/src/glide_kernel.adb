@@ -46,15 +46,13 @@ with String_Utils;              use String_Utils;
 with String_List_Utils;         use String_List_Utils;
 with Glide_Intl;                use Glide_Intl;
 with Glide_Main_Window;         use Glide_Main_Window;
-with Glide_Interactive_Consoles; use Glide_Interactive_Consoles;
+with Interactive_Consoles;      use Interactive_Consoles;
 with Default_Preferences;       use Default_Preferences;
 with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
 with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
 with Glide_Kernel.Project;      use Glide_Kernel.Project;
 with Glide_Kernel.Console;      use Glide_Kernel.Console;
-with Glide_Page;                use Glide_Page;
 with GVD.Preferences;           use GVD.Preferences;
-with GVD.Process;               use GVD.Process;
 with GVD.Main_Window;           use GVD.Main_Window;
 with Interfaces.C.Strings;      use Interfaces.C.Strings;
 with Interfaces.C;              use Interfaces.C;
@@ -821,12 +819,11 @@ package body Glide_Kernel is
    procedure Save_Desktop
      (Handle : access Kernel_Handle_Record)
    is
-      MDI  : constant MDI_Window :=
-        Get_Current_Process (Handle.Main_Window).Process_Mdi;
+      MDI  : constant MDI_Window := Get_MDI (Handle);
       File : File_Type;
+      N    : Node_Ptr;
+      M    : Node_Ptr;
 
-      N     : Node_Ptr;
-      M     : Node_Ptr;
    begin
       Create
         (File,
@@ -898,12 +895,10 @@ package body Glide_Kernel is
    function Load_Desktop
      (Handle : access Kernel_Handle_Record) return Boolean
    is
-      MDI  : constant MDI_Window := Glide_Page.Glide_Page
-        (Get_Current_Process (Handle.Main_Window)).Process_Mdi;
-      Node : Node_Ptr;
-      File : constant String :=
+      MDI    : constant MDI_Window := Get_MDI (Handle);
+      Node   : Node_Ptr;
+      File   : constant String :=
         String_Utils.Name_As_Directory (Handle.Home_Dir.all) & "desktop";
-
       Child  : Node_Ptr;
       Desktop_Node : Node_Ptr;
       Width  : Gint := 640;
@@ -1040,11 +1035,9 @@ package body Glide_Kernel is
    function Get_MDI
      (Handle : access Kernel_Handle_Record) return Gtkada.MDI.MDI_Window
    is
-      Top  : constant Glide_Window := Glide_Window (Handle.Main_Window);
-      Page : constant Glide_Page.Glide_Page :=
-        Glide_Page.Glide_Page (Get_Current_Process (Top));
+      Top : constant Glide_Window := Glide_Window (Handle.Main_Window);
    begin
-      return Page.Process_Mdi;
+      return Top.Process_Mdi;
    end Get_MDI;
 
    -------------
@@ -1152,7 +1145,7 @@ package body Glide_Kernel is
 
    procedure Pop_State (Handle : Kernel_Handle) is
       Window  : Glide_Window;
-      Console : Glide_Interactive_Console;
+      Console : Interactive_Console;
    begin
       if Handle = null then
          return;
