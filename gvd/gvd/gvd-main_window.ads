@@ -37,6 +37,7 @@ pragma Elaborate_All (GVD.Histories);
 with GVD.Memory_View;
 with Main_Debug_Window_Pkg; use Main_Debug_Window_Pkg;
 with Language_Handlers;
+with Ada.Unchecked_Deallocation;
 
 package GVD.Main_Window is
 
@@ -53,6 +54,9 @@ package GVD.Main_Window is
       Debugger : Glib.Object.GObject;
       Next     : Debugger_List_Link;
    end record;
+
+   procedure Free is new
+     Ada.Unchecked_Deallocation (Debugger_List_Node, Debugger_List_Link);
 
    package String_History is new GVD.Histories (History_Data);
    use String_History;
@@ -169,5 +173,11 @@ package GVD.Main_Window is
 
    procedure Cleanup_Debuggers (Window : access GVD_Main_Window_Record'Class);
    --  Close all the debuggers associated with a given main debug window.
+
+   procedure Switch_Debugger
+     (Window   : access GVD_Main_Window_Record'Class;
+      Debugger : Glib.Object.GObject);
+   --  Set the current debugger associated with Window to Debugger.
+   --  Update any associated dialogs (e.g. Task window) accordingly.
 
 end GVD.Main_Window;
