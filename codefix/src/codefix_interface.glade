@@ -160,7 +160,7 @@
 	<child_ipad_x>7</child_ipad_x>
 	<child_ipad_y>0</child_ipad_y>
 	<child>
-	  <padding>0</padding>
+	  <padding>5</padding>
 	  <expand>True</expand>
 	  <fill>True</fill>
 	</child>
@@ -199,7 +199,63 @@
 	    <object>Codefix_Window</object>
 	    <last_modification_time>Mon, 06 May 2002 15:45:17 GMT</last_modification_time>
 	  </signal>
-	  <label>Accept</label>
+	  <stock_button>GNOME_STOCK_BUTTON_APPLY</stock_button>
+	</widget>
+
+	<widget>
+	  <class>GtkButton</class>
+	  <name>Skip_All_Corrections</name>
+	  <can_default>True</can_default>
+	  <can_focus>True</can_focus>
+	  <signal>
+	    <name>clicked</name>
+	    <handler>on_Skip_All_Corrections_clicked</handler>
+	    <object>Codefix_Window</object>
+	    <last_modification_time>Wed, 21 Aug 2002 12:19:49 GMT</last_modification_time>
+	  </signal>
+	  <label>Skip all</label>
+	</widget>
+
+	<widget>
+	  <class>GtkButton</class>
+	  <name>Accept_All_Corrections</name>
+	  <can_default>True</can_default>
+	  <can_focus>True</can_focus>
+	  <signal>
+	    <name>clicked</name>
+	    <handler>on_Accept_All_Corrections_clicked</handler>
+	    <object>Codefix_Window</object>
+	    <last_modification_time>Wed, 21 Aug 2002 12:20:31 GMT</last_modification_time>
+	  </signal>
+	  <label>Apply all</label>
+	</widget>
+
+	<widget>
+	  <class>GtkButton</class>
+	  <name>Undo</name>
+	  <can_default>True</can_default>
+	  <can_focus>True</can_focus>
+	  <signal>
+	    <name>clicked</name>
+	    <handler>on_Undo_clicked</handler>
+	    <object>Codefix_Window</object>
+	    <last_modification_time>Wed, 21 Aug 2002 12:21:56 GMT</last_modification_time>
+	  </signal>
+	  <stock_button>GNOME_STOCK_BUTTON_PREV</stock_button>
+	</widget>
+
+	<widget>
+	  <class>GtkButton</class>
+	  <name>Refresh</name>
+	  <can_default>True</can_default>
+	  <can_focus>True</can_focus>
+	  <signal>
+	    <name>clicked</name>
+	    <handler>on_Refresh_clicked</handler>
+	    <object>Codefix_Window</object>
+	    <last_modification_time>Wed, 21 Aug 2002 12:33:37 GMT</last_modification_time>
+	  </signal>
+	  <label>Refresh</label>
 	</widget>
       </widget>
 
@@ -213,7 +269,7 @@
 	<child_ipad_x>7</child_ipad_x>
 	<child_ipad_y>0</child_ipad_y>
 	<child>
-	  <padding>0</padding>
+	  <padding>5</padding>
 	  <expand>True</expand>
 	  <fill>True</fill>
 	</child>
@@ -229,7 +285,7 @@
 	    <object>Codefix_Window</object>
 	    <last_modification_time>Mon, 06 May 2002 15:44:55 GMT</last_modification_time>
 	  </signal>
-	  <label>Cancel</label>
+	  <stock_button>GNOME_STOCK_BUTTON_CANCEL</stock_button>
 	</widget>
 
 	<widget>
@@ -243,7 +299,7 @@
 	    <object>Codefix_Window</object>
 	    <last_modification_time>Mon, 06 May 2002 15:46:06 GMT</last_modification_time>
 	  </signal>
-	  <label>Apply</label>
+	  <stock_button>GNOME_STOCK_BUTTON_CLOSE</stock_button>
 	</widget>
       </widget>
     </widget>
@@ -256,7 +312,7 @@
   <title>No more errors</title>
   <type>GTK_WINDOW_TOPLEVEL</type>
   <position>GTK_WIN_POS_NONE</position>
-  <modal>False</modal>
+  <modal>True</modal>
   <allow_shrink>True</allow_shrink>
   <allow_grow>True</allow_grow>
   <auto_shrink>False</auto_shrink>
