@@ -803,6 +803,7 @@ package body VCS_View_Pkg is
       Pack_Start (VCS_View, Vbox1);
 
       Gtk_New (VCS_View.Notebook);
+      Set_Show_Tabs (VCS_View.Notebook, False);
       Pack_Start (Vbox1, VCS_View.Notebook);
 
       Gtkada.Handlers.Return_Callback.Object_Connect
