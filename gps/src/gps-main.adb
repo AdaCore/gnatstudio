@@ -905,6 +905,11 @@ procedure GPS.Main is
    begin
       Run_Hook (GPS_Main.Kernel, GPS_Started_Hook);
       return False;
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
+         return False;
    end On_GPS_Started;
 
    ------------------
