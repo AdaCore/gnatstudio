@@ -1,5 +1,11 @@
 Known Problems fixed in GVD 1.1.0
 
+- [8524-008] Cannot call the editor under NT
+  Problem:    When using the File->Edit Current Source menu under NT, GVD
+              launches the external editor using forward slashes instead of
+              backslashes.
+  Workaround: Use an editor that understands forward slashes.
+
 - Loading a non existant executable generates a bug box
   Problem:    When using the File->Open Program... menu and specifying
               a non existant file, GVD generates a bug box instead of
