@@ -96,17 +96,20 @@ package body Debugger.Gdb is
    pragma Inline (Is_Simple_Ada_Type);
 
 
-   generic
-      Array_Item_Separator : Character := ',';
-      --  Item separate in an array value (ie "5, 2, 3")
-      End_Of_Array         : Character := ')';
-      --  End of array value (ie "((1, 2), (3, 4))")
-      Repeat_Item_Start    : Character := '<';
-      --  Start of repeat statements (ie "<repeats .. times>")
-   procedure Skip_Simple_Value (Type_Str : in String;
-                                Index    : in out Natural);
+   procedure Skip_Simple_Value
+     (Type_Str             : in String;
+      Index                : in out Natural;
+      Array_Item_Separator : in Character := ',';
+      End_Of_Array         : in Character := ')';
+      Repeat_Item_Start    : in Character := '<');
    --  Skip the value of a simple value ("65 'A'" for instance).
    --  This stops at the first special character.
+   --
+   --  Array_Item_Separator is the separator in an array value (ie "5, 2, 3").
+   --  End_Of_Array is the array that indicates the end of an array value, as
+   --  in "((1, 2), (3, 4))".
+   --  Repeat_Item_Start if the character that starts a repeat statements, as
+   --  in "<repeats .. times>"
 
 
    procedure Parse_Array_Value
@@ -375,8 +378,12 @@ package body Debugger.Gdb is
    -----------------------
 
    procedure Skip_Simple_Value
-     (Type_Str : in String;
-      Index    : in out Natural) is
+     (Type_Str             : in String;
+      Index                : in out Natural;
+      Array_Item_Separator : in Character := ',';
+      End_Of_Array         : in Character := ')';
+      Repeat_Item_Start    : in Character := '<')
+   is
    begin
       while Index <= Type_Str'Last
         and then Type_Str (Index) /= Array_Item_Separator
@@ -621,11 +628,6 @@ package body Debugger.Gdb is
       Result     : in out Generic_Values.Generic_Type_Access;
       Repeat_Num : out Positive)
    is
-      procedure Ada_Skip_Simple_Value is new Skip_Simple_Value
-        (Array_Item_Separator => ',',
-         End_Of_Array         => ')',
-         Repeat_Item_Start    => '<');
-
    begin
       Repeat_Num := 1;
 
@@ -642,7 +644,7 @@ package body Debugger.Gdb is
             declare
                Int : constant Natural := Index;
             begin
-               Ada_Skip_Simple_Value (Type_Str, Index);
+               Skip_Simple_Value (Type_Str, Index);
                Set_Value (Simple_Type (Result.all),
                           Type_Str (Int .. Index - 1));
 
