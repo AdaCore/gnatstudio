@@ -1491,12 +1491,18 @@ package body Src_Editor_Module is
       Add     : Boolean) return Source_Box
    is
       MDI     : constant MDI_Window := Get_MDI (Kernel);
-      Title   : constant String := Get_Filename (Current);
       Editor  : Source_Editor_Box;
       Box     : Source_Box;
       Child   : MDI_Child;
+
    begin
-      if Current /= null then
+      if Current = null then
+         return null;
+      end if;
+
+      declare
+         Title : constant String := Get_Filename (Current);
+      begin
          Create_New_View (Editor, Kernel, Current);
          Gtk_New (Box, Editor);
          Set_Size_Request
@@ -1509,8 +1515,7 @@ package body Src_Editor_Module is
             Child := Put (MDI, Box);
 
             declare
-               Im : constant String :=
-                 Image (Get_Ref_Count (Editor));
+               Im : constant String := Image (Get_Ref_Count (Editor));
             begin
                Set_Title
                  (Child,
@@ -1525,8 +1530,7 @@ package body Src_Editor_Module is
             Delete_Callback'Access,
             Gtk_Widget (Box),
             After => False);
-
-      end if;
+      end;
 
       return Box;
    end New_View;
@@ -1538,8 +1542,11 @@ package body Src_Editor_Module is
         Get_Source_Box_From_MDI (Find_Current_Editor (Kernel));
       Box     : Source_Box;
       pragma Unreferenced (Box);
+
    begin
-      Box := New_View (Kernel, Current, Add => True);
+      if Current /= null then
+         Box := New_View (Kernel, Current, Add => True);
+      end if;
    end New_View;
 
    -------------------
@@ -1588,6 +1595,7 @@ package body Src_Editor_Module is
 
          end case;
       end if;
+
       return Saved;
    end Save_Function;
 
@@ -1850,6 +1858,7 @@ package body Src_Editor_Module is
            Select_File
              (Title             => -"Open File",
               Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs),
+              Kind              => Open_File,
               History           => Get_History (Kernel));
 
       begin
@@ -2009,6 +2018,7 @@ package body Src_Editor_Module is
               Select_File
                 (Title             => -"Save File As",
                  Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs),
+                 Kind              => Save_File,
                  History           => Get_History (Kernel));
 
          begin
