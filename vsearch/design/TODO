@@ -6,12 +6,54 @@
   * [Yeti] Handling context
     Ensure basic extensions are recognized to select a context (*.ad?, *.[ch]).
 
+-------------------
+-- User friendly --
+-------------------
+
+  * [Yeti] Browse initial directory
+    Should be "." if Directory_Entry is empty, its content otherwise.
+
+  * [Yeti] Dialog box when Pattern_Entry is empty. Also for Files_Pattern, when
+    not searching in project files.
+
+  * [Yeti] Set case sensitivity of Files_Combo and Directory_Combo accordingly
+    with the underlying OS
+
+------------------
+-- Improvements --
+------------------
+
+  * [Yeti] Obtaining the project file list
+
+  * [Yeti] Don't scan empty comments /**/ and empty string "" for the pattern ?
+    Incompatible for patterns matching empty string.
+
+  * [Yeti] Scan empty lines ?
+    Only useful when pattern matches empty string.
+
+  * [Yeti] Speed
+    Searching in all recognized lexical elements is quite as searching with no
+    context. Difference is that syntactic delimiters ( /* " -- */ ) can't be
+    matched in current context-with implementation.
+
+  * [Yeti] Move the abort flag and the callback access in HG_Window_Record.
+
+  * [Yeti] Desactivate Stop when not searching, Start when searching.
+
 ----------
 -- Bugs --
 ----------
 
-  * [Yeti] Storage_Error with Browse
+  * [Yeti] Storage_Error with Browse and Directory_Entry
     Found a scenario: when Hypergrep is just started, unselect the checkbox
-    "Scan Only Project Files", click Browse button, select a dir with mouse
-    (don't type a directory !), click OK, select the directory with the mouse
-    in the combobox, overwrite it by typing "f", click Start.
+    "Scan Only Project Files"; click Browse button; select any dir with mouse
+    but don't type a directory; click OK; change the directory entry by typing
+    something anywhere or overwriting the selection or deleting/retyping;
+    click Start.
+    SE is raised by the compilation of the empty Files pattern: the good
+    behavior is to compile fine and raise Find_Utils.Search_Error by
+    Init_Search.
+    Note that the good behavior sometimes happens with this scenario.
+
+  * [Yeti] GNAT.Regexp.Match is said to raise CE when the pattern isn't
+    initialized.
