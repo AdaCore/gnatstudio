@@ -57,6 +57,7 @@ package body Commands.External is
       Free (D.Command);
       Free (D.Dir);
       Free (D.Output);
+      Free (D.Description);
    end Free;
 
    ------------
@@ -70,7 +71,8 @@ package body Commands.External is
       Dir          : String;
       Args         : String_List.List;
       Head         : String_List.List;
-      Handler      : String_List_Handler) is
+      Handler      : String_List_Handler;
+      Description  : String) is
    begin
       Item := new External_Command;
       Item.Kernel  := Kernel;
@@ -85,14 +87,15 @@ package body Commands.External is
       Item.Args    := Copy_String_List (Args);
       Item.Head    := Copy_String_List (Head);
       Item.Handler := Handler;
+
+      Item.Description := new String'(Description);
    end Create;
 
    --------------------
    -- Atomic_Command --
    --------------------
 
-   function Atomic_Command
-     (D : External_Command_Access) return Boolean
+   function Atomic_Command (D : External_Command_Access) return Boolean
    is
       Match : Expect_Match := 1;
    begin
@@ -110,8 +113,7 @@ package body Commands.External is
    exception
       when Process_Died =>
          declare
-            S       : constant String := Strip_CR (Expect_Out (D.Fd));
-            Success : Boolean := True;
+            S : constant String := Strip_CR (Expect_Out (D.Fd));
          begin
             if S /= "" then
                String_List.Append (D.Output, S);
@@ -120,11 +122,11 @@ package body Commands.External is
             Close (D.Fd);
 
             if D.Handler /= null then
-               Success := D.Handler (D.Kernel, D.Head, D.Output);
+               D.Handler_Success := D.Handler (D.Kernel, D.Head, D.Output);
             end if;
 
             Pop_State (D.Kernel);
-            Command_Finished (D, Success);
+            Command_Finished (D, D.Handler_Success);
 
          exception
             when E : others =>
@@ -143,121 +145,149 @@ package body Commands.External is
    -- Execute --
    -------------
 
-   function Execute (Command : access External_Command) return Boolean is
+   function Execute
+     (Command : access External_Command) return Command_Return_Type
+   is
       use String_List;
-
-      Id        : Timeout_Handler_Id;
-      pragma Unreferenced (Id);
-
-      Args      : GNAT.OS_Lib.Argument_List (1 .. Length (Command.Args));
-      Real_Args : GNAT.OS_Lib.Argument_List_Access;
-
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (GNAT.OS_Lib.Argument_List, GNAT.OS_Lib.Argument_List_Access);
-
-      Exec_Command_Args : GNAT.OS_Lib.Argument_List_Access;
-      Temp_Args : List_Node := First (Command.Args);
-
-      Old_Dir   : constant Dir_Name_Str := Get_Current_Dir;
 
       use type GNAT.Strings.String_List;
 
+      Execute : Boolean;
    begin
-      --  ??? Must add many checks for empty lists, etc.
+      if Command.Running then
+         Execute := Atomic_Command (External_Command_Access (Command));
 
-      if Command.Dir'Length > 0 then
-         Change_Dir (Command.Dir.all);
-      end if;
+         if Execute then
+            return Execute_Again;
 
-      for J in Args'Range loop
-         Args (J) := new String'(Data (Temp_Args));
-         Temp_Args := Next (Temp_Args);
-      end loop;
-
-      if Command.Dir'Length > 0 then
-         Trace
-           (Me,
-            "spawn from " & Command.Dir.all & ": " &
-            Command.Command.all & " " & Argument_List_To_String (Args));
-
+         else
+            if Command.Handler_Success then
+               return Success;
+            else
+               return Failure;
+            end if;
+         end if;
       else
-         Trace (Me, "spawn: " &
+         declare
+            Args      : GNAT.OS_Lib.Argument_List (1 .. Length (Command.Args));
+            Real_Args : GNAT.OS_Lib.Argument_List_Access;
+
+            procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+              (GNAT.OS_Lib.Argument_List, GNAT.OS_Lib.Argument_List_Access);
+
+            Exec_Command_Args : GNAT.OS_Lib.Argument_List_Access;
+            Temp_Args : List_Node := First (Command.Args);
+
+            Old_Dir   : constant Dir_Name_Str := Get_Current_Dir;
+         begin
+            --  ??? Must add many checks for empty lists, etc.
+
+            if Command.Dir'Length > 0 then
+               Change_Dir (Command.Dir.all);
+            end if;
+
+            for J in Args'Range loop
+               Args (J) := new String'(Data (Temp_Args));
+               Temp_Args := Next (Temp_Args);
+            end loop;
+
+            if Command.Dir'Length > 0 then
+               Trace
+                 (Me,
+                  "spawn from " & Command.Dir.all & ": " &
+                  Command.Command.all & " " & Argument_List_To_String (Args));
+
+            else
+               Trace (Me, "spawn: " &
                 Command.Command.all & " " & Argument_List_To_String (Args));
+            end if;
+
+            --  If we are under Windows, spawn the command using "cmd /c".
+            --  Otherwise spawn it directly.
+            --  ??? This implementation is temporary, a general way of spawning
+            --  commands should not be system-dependant
+
+            if Host = Windows then
+               Exec_Command_Args :=
+                 GNAT.OS_Lib.Argument_String_To_List (Exec_Command);
+
+               Real_Args := new GNAT.OS_Lib.Argument_List (1 .. 1);
+
+               Real_Args (1) := new String'(Command.Command.all);
+
+               Non_Blocking_Spawn
+                 (Command.Fd,
+                  Exec_Command_Args (Exec_Command_Args'First).all,
+                  Exec_Command_Args
+                    (Exec_Command_Args'First + 1 .. Exec_Command_Args'Last)
+                  & Real_Args.all
+                  & Args,
+                  Err_To_Out => True,
+                  Buffer_Size => 0);
+
+               for J in Real_Args'Range loop
+                  GNAT.OS_Lib.Free (Real_Args (J));
+               end loop;
+
+               Unchecked_Free (Real_Args);
+
+               for J in Exec_Command_Args'Range loop
+                  GNAT.OS_Lib.Free (Exec_Command_Args (J));
+               end loop;
+
+               Unchecked_Free (Exec_Command_Args);
+
+            else
+               Non_Blocking_Spawn
+                 (Command.Fd,
+                  Command.Command.all,
+                  Args,
+                  Err_To_Out => True,
+                  Buffer_Size => 0);
+            end if;
+
+            for J in Args'Range loop
+               GNAT.OS_Lib.Free (Args (J));
+            end loop;
+
+            String_List.Free (Command.Args);
+
+            if Command.Dir.all /= ""  then
+               Change_Dir (Old_Dir);
+            end if;
+
+            Push_State (Command.Kernel, Processing);
+         end;
+
+         Command.Running := True;
+
+         Command.Progress.Activity := Running;
+
+         return Execute_Again;
       end if;
-
-      --  If we are under Windows, spawn the command using "cmd /c".
-      --  Otherwise spawn it directly.
-      --  ??? This implementation is temporary, a general way of spawning
-      --  commands should not be system-dependant
-
-      if Host = Windows then
-         Exec_Command_Args :=
-           GNAT.OS_Lib.Argument_String_To_List (Exec_Command);
-
-         Real_Args := new GNAT.OS_Lib.Argument_List (1 .. 1);
-
-         Real_Args (1) := new String'(Command.Command.all);
-
-         Non_Blocking_Spawn
-           (Command.Fd,
-            Exec_Command_Args (Exec_Command_Args'First).all,
-            Exec_Command_Args
-              (Exec_Command_Args'First + 1 .. Exec_Command_Args'Last)
-            & Real_Args.all
-            & Args,
-            Err_To_Out => True,
-            Buffer_Size => 0);
-
-         for J in Real_Args'Range loop
-            GNAT.OS_Lib.Free (Real_Args (J));
-         end loop;
-
-         Unchecked_Free (Real_Args);
-
-         for J in Exec_Command_Args'Range loop
-            GNAT.OS_Lib.Free (Exec_Command_Args (J));
-         end loop;
-
-         Unchecked_Free (Exec_Command_Args);
-
-      else
-         Non_Blocking_Spawn
-           (Command.Fd,
-            Command.Command.all,
-            Args,
-            Err_To_Out => True,
-            Buffer_Size => 0);
-      end if;
-
-      for J in Args'Range loop
-         GNAT.OS_Lib.Free (Args (J));
-      end loop;
-
-      String_List.Free (Command.Args);
-
-      if Command.Dir.all /= ""  then
-         Change_Dir (Old_Dir);
-      end if;
-
-      Id := String_List_Idle.Add
-        (50, Atomic_Command'Access, External_Command_Access (Command));
-
-      Push_State (Command.Kernel, Processing);
-      return True;
 
    exception
       when Directory_Error =>
          Insert (Command.Kernel,
                  -"Directory error: cannot access "
                    & Command.Dir.all, Mode => Error);
-         return False;
+         return Failure;
 
       when Invalid_Process =>
          Insert (Command.Kernel,
                  -"Could not launch command "
                    & Command.Command.all, Mode => Error);
-         return False;
+         return Failure;
 
    end Execute;
+
+   ----------
+   -- Name --
+   ----------
+
+   function Name (Command : access External_Command) return String is
+   begin
+      return Command.Description.all;
+   end Name;
 
 end Commands.External;
