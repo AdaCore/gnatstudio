@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2003                         --
+--                     Copyright (C) 2003-2004                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -29,6 +29,7 @@ with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with Glide_Kernel.Console;      use Glide_Kernel.Console;
 with Glide_Intl;                use Glide_Intl;
 with File_Utils;                use File_Utils;
+with VFS;                       use VFS;
 
 package body Glide_Kernel.Custom is
 
@@ -49,6 +50,7 @@ package body Glide_Kernel.Custom is
 
    procedure Execute_Customization_String
      (Kernel : access Kernel_Handle_Record'Class;
+      File   : VFS.Virtual_File;
       Node   : Node_Ptr;
       Level  : Customization_Level)
    is
@@ -60,7 +62,7 @@ package body Glide_Kernel.Custom is
       while Current /= Module_List.Null_Node loop
          if Module_List.Data (Current).Info.Customization_Handler /= null then
             Module_List.Data (Current).Info.Customization_Handler
-              (Kernel, Node, Level);
+              (Kernel, File, Node, Level);
          end if;
 
          Current := Module_List.Next (Current);
@@ -113,7 +115,7 @@ package body Glide_Kernel.Custom is
                         Mode => Error);
                   else
                      Execute_Customization_String
-                       (Kernel, File_Node.Child, Level);
+                       (Kernel, Create (F), File_Node.Child, Level);
                      Free (File_Node);
                   end if;
                end if;
@@ -177,7 +179,10 @@ package body Glide_Kernel.Custom is
 
       if Kernel.Customization_Strings /= null then
          Execute_Customization_String
-           (Kernel, Kernel.Customization_Strings, Hard_Coded);
+           (Kernel,
+            No_File,
+            Kernel.Customization_Strings,
+            Hard_Coded);
 
          --  Can't call Free itself, since it doesn't free the siblings
          while Kernel.Customization_Strings /= null loop
@@ -248,7 +253,8 @@ package body Glide_Kernel.Custom is
 
       if Node /= null then
          if Kernel.Custom_Files_Loaded then
-            Execute_Customization_String (Kernel, Node.Child, Hard_Coded);
+            Execute_Customization_String
+              (Kernel, No_File, Node.Child, Hard_Coded);
             Free (Node);
          else
             N := Kernel.Customization_Strings;

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2003                         --
+--                     Copyright (C) 2003-2004                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -78,6 +78,7 @@ package Glide_Kernel.Custom is
 
    procedure Execute_Customization_String
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+      File   : VFS.Virtual_File;
       Node   : Glib.Xml_Int.Node_Ptr;
       Level  : Glide_Kernel.Customization_Level);
    --  Send a signal to all registered modules to indicate a new customization
