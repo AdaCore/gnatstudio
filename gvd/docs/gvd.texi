@@ -1151,6 +1151,8 @@ and can send commands (you need to refer to the underlying debugger's
 documentation, but usually typing @i{help} will give you an overview of
 the commands available).
 
+If the underlying debugger allows it, pressing the TAB key in this 
+window will provide completions for the command that is being typed.
 @c --------------------------------------------------------------------
 @node The Status Line
 @section The Status Line
