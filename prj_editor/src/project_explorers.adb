@@ -1552,7 +1552,6 @@ package body Project_Explorers is
                Gtk.Ctree.Collapse (Explorer.Tree, File);
                Gtk.Ctree.Expand   (Explorer.Tree, File);
 
-
                --  Restore the state of the categories
 
                N := Row_Get_Children (Node_Get_Row (File));
@@ -1603,16 +1602,17 @@ package body Project_Explorers is
    procedure Collapse_Tree_Cb
      (Explorer : access Gtk.Widget.Gtk_Widget_Record'Class; Args : Gtk_Args)
    is
-      E : constant Project_Explorer := Project_Explorer (Explorer);
-      Node     : constant Gtk_Ctree_Node :=
+      E     : constant Project_Explorer := Project_Explorer (Explorer);
+      Node  : constant Gtk_Ctree_Node :=
         Gtk_Ctree_Node (To_C_Proxy (Args, 1));
-      User     : User_Data := Node_Get_Row_Data (E.Tree, Node);
-      N, N2    : Gtk_Ctree_Node;
+      User  : User_Data := Node_Get_Row_Data (E.Tree, Node);
+      N, N2 : Gtk_Ctree_Node;
+
    begin
       --  We need to reset the contents of files (Entities,...), so that the
-      --  next time the node it is open, the entities are recomputed.
-      --  No need to do so for the contents of projects or directoris, since
-      --  changed only happen when the project is changed, and the
+      --  next time the node is open, the entities are recomputed.
+      --  No need to do so for the contents of projects or directories, since
+      --  this will only happen when the project is changed, and the
       --  "project_view_changed" signal will already trigger a refresh
 
       if User.Node_Type = File_Node
