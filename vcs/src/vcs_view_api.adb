@@ -127,7 +127,7 @@ package body VCS_View_API is
       Ref   : VCS_Access := Get_Current_Ref (Kernel);
    begin
       Update (Ref, Files);
-      Get_Status (Ref, Files);
+      Get_Status (Ref, Copy_String_List (Files));
    end Update;
 
    ----------------
