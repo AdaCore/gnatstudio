@@ -713,7 +713,8 @@ package Codefix.Text_Manager is
    procedure Erase
      (This        : in out Extract;
       Start, Stop : File_Cursor'Class);
-   --  Erase the text from Start to Stop.
+   --  Erase the text from Start to Stop. If a line, after the deletion, is
+   --  empty, then this line will be deleted.
 
    function Get_Files_Names (This : Extract) return String;
    --  Return a string containing all the files names of the extract separate
@@ -758,6 +759,10 @@ package Codefix.Text_Manager is
    procedure Free (This : in out Word_Mark);
    --  Free the memory associated to a Word_Mark.
 
+   procedure Unchecked_Free (This : in out Word_Mark);
+   --  Initialize all fields of This to default values, but do not free any
+   --  memory.
+
    procedure Free (This : in out Word_Cursor);
    --  Free the memory associated to a Word_Cursor.
 
@@ -793,8 +798,12 @@ package Codefix.Text_Manager is
    --  If New_Extract is already containing information, they should be merged
    --  with new ones.
 
-   procedure Free (This : in out Text_Command) is abstract;
+   procedure Free (This : in out Text_Command);
    --  Free the memory associated to a Text_Command.
+
+   procedure Unchecked_Free (This : in out Text_Command);
+   --  Initialize all fields of This to default values, but do not free any
+   --  memory.
 
    procedure Free_Data (This : in out Text_Command'Class);
    --  Free the memory associated to a Text_Command.
@@ -822,6 +831,10 @@ package Codefix.Text_Manager is
    procedure Free (This : in out Remove_Word_Cmd);
    --  Free the memory associated to a Remove_Word_Cmd.
 
+   procedure Unchecked_Free (This : in out Remove_Word_Cmd);
+   --  Initialize all fields of This to default values, but do not free any
+   --  memory.
+
    procedure Execute
      (This         : Remove_Word_Cmd;
       Current_Text : Text_Navigator_Abstr'Class;
@@ -845,6 +858,10 @@ package Codefix.Text_Manager is
    procedure Free (This : in out Insert_Word_Cmd);
    --  Fre the memory associated to an Insert_Word_Cmd.
 
+   procedure Unchecked_Free (This : in out Insert_Word_Cmd);
+   --  Initialize all fields of This to default values, but do not free any
+   --  memory.
+
    procedure Execute
      (This         : Insert_Word_Cmd;
       Current_Text : Text_Navigator_Abstr'Class;
@@ -866,6 +883,10 @@ package Codefix.Text_Manager is
 
    procedure Free (This : in out Move_Word_Cmd);
    --  Free the memory associated to a Move_Word_Cmd.
+
+   procedure Unchecked_Free (This : in out Move_Word_Cmd);
+   --  Initialize all fields of This to default values, but do not free any
+   --  memory.
 
    procedure Execute
      (This         : Move_Word_Cmd;
@@ -889,6 +910,10 @@ package Codefix.Text_Manager is
    procedure Free (This : in out Replace_Word_Cmd);
    --  Free the memory associated to a Replace_Word_Cmd.
 
+   procedure Unchecked_Free (This : in out Replace_Word_Cmd);
+   --  Initialize all fields of This to default values, but do not free any
+   --  memory.
+
    procedure Execute
      (This         : Replace_Word_Cmd;
       Current_Text : Text_Navigator_Abstr'Class;
@@ -909,6 +934,10 @@ package Codefix.Text_Manager is
 
    procedure Free (This : in out Invert_Words_Cmd);
    --  Free the memory associated to an Invert_Word_Cmd.
+
+   procedure Unchecked_Free (This : in out Invert_Words_Cmd);
+   --  Initialize all fields of This to default values, but do not free any
+   --  memory.
 
    procedure Execute
      (This         : Invert_Words_Cmd;
