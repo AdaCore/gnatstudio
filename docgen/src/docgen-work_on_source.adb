@@ -462,7 +462,7 @@ package body Docgen.Work_On_Source is
                File_Text.all,
                Parsed_List);
 
-            --  Research of the entity of the main package
+            --  Find the the main package entity
 
             Found_Main_Package := False;
             Entity_Node := TEL.First (Entity_List);
@@ -471,7 +471,7 @@ package body Docgen.Work_On_Source is
                Entity := TEL.Data_Ref (Entity_Node);
 
                if Entity.Kind = Package_Entity
-                 and then Get_Name (Entity.Entity).all = Package_Name
+                 and then Get_Full_Name (Entity.Entity) = Package_Name
                then
                   Found_Main_Package := True;
                   exit;
