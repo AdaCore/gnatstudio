@@ -757,7 +757,7 @@ package body Gtkada.MDI is
          Alloc.Height := Allocation_Int (MDI_Height - Alloc.Y);
 
          if M.Priorities (Bottom) <= M.Priorities (Left)
-           and then M.Priorities (Bottom) /= 0
+           and then M.Docks_Size (Bottom) /= 0
          then
             Alloc.Height := Alloc.Height
               - Allocation_Int (M.Docks_Size (Bottom) + Handle_Size);
@@ -786,7 +786,7 @@ package body Gtkada.MDI is
          Alloc.Height := Allocation_Int (MDI_Height - Alloc.Y);
 
          if M.Priorities (Bottom) <= M.Priorities (Right)
-           and then M.Priorities (Bottom) /= 0
+           and then M.Docks_Size (Bottom) /= 0
          then
             Alloc.Height := Alloc.Height
               - Allocation_Int (M.Docks_Size (Bottom) + Handle_Size);
@@ -2605,6 +2605,7 @@ package body Gtkada.MDI is
 
          if Side /= None then
             Child.MDI.Docks_Size (Side) := 0;
+            Reposition_Handles (Child.MDI);
          end if;
       else
          Set_Show_Tabs (Note, Get_Nth_Page (Note, 1) /= null);
