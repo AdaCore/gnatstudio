@@ -52,7 +52,7 @@ package body Process_Tab_Pkg.Callbacks is
          Emit_Stop_By_Name (Top.Debugger_Text, "insert_text");
       else
          if Arg1 (Arg1'First) = ASCII.LF then
-            Send_Command
+            Process_User_Command
               (Top, Get_Chars (Top.Debugger_Text, Gint (Top.Edit_Pos)));
          end if;
       end if;

@@ -232,13 +232,13 @@ package body Odd.Process is
       return Process;
    end Create_Debugger;
 
-   ------------------
-   -- Send_Command --
-   ------------------
+   --------------------------
+   -- Process_User_Command --
+   --------------------------
 
-   procedure Send_Command (Debugger : Debugger_Process_Tab;
-                           Command  : String) is
-
+   procedure Process_User_Command (Debugger : Debugger_Process_Tab;
+                                   Command  : String)
+   is
       The_Type : Generic_Type_Access;
       Item   : Display_Item;
       Command2 : String := To_Lower (Command);
@@ -295,6 +295,6 @@ package body Odd.Process is
          --  Regular debugger command, send it.
          Send (Get_Process (Debugger.Debugger.all).all, Command);
       end if;
-   end Send_Command;
+   end Process_User_Command;
 
 end Odd.Process;

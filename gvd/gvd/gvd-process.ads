@@ -79,11 +79,13 @@ package Odd.Process is
    --  Return the debugger_descriptor associated with a pipes_id.
    --  If no such page is found, an exception Debugger_Not_Found is raised.
 
-   procedure Send_Command (Debugger : Debugger_Process_Tab; Command : String);
-   --  Send a given command to the debugger.
-   --  If Command is internal, execute it without actually sending it.
+   procedure Process_User_Command (Debugger : Debugger_Process_Tab;
+                                   Command : String);
+   --  Process a command entered by the user.
+   --  In most cases, the command is simply transfered asynchronously to the
+   --  debugger process. However, commands internal to odd are filtered and
+   --  are not transmitted to the debugger.
 
-   --   - Asynchronous: do not wait for an answer
 
    --  procedure Send_Command
    --    (Debugger : Debugger_Descriptor;
