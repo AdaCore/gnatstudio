@@ -148,7 +148,7 @@ case "${host}" in
 	CAN_OUTPUT=False
 	LINK_SIZE=11
 	FONT_SIZE=14
-	TARGET_LFLAGS="-mwindows"
+	TARGET_LFLAGS="-luser32 -mwindows"
 	TARGET=pentium-mingw32msv
 	;;
       ## Otherwise, we'll fall through to the generic opsys code at the bottom.
