@@ -1,5 +1,12 @@
 Known Problems fixed in GPS 2.1.0
 
+- DA15-003 XML files: action not found when defined outside of theme
+  Problem:    If a theme defines a menu which references an action defined
+              outside of <theme>, the action is reported as not found
+  Workaround: Define the action inside the <theme>, or at least a new action
+              that just executes the first one through a call to the shell
+              command GPS.execute_action
+
 - DA11-015 The auto-saved files can confuse some building mechanisms
   Problem:    When GPS is configured to automatically save the contents of the
               editors, the files created have the same extension as the
