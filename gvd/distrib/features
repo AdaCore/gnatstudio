@@ -12,6 +12,8 @@ New features in GVD 1.1.0
 - Scrolling of assembly window outside of displayed range is now possible
 - The Data window can now be separated from the main window (Edit->Preferences,
   Data/Separate Window)
+- The Memory View now handles editing in non-Hex mode, and possibility of 
+  displaying ASCII and another format at the same time.
 
 New features in GVD 1.0.2
 
