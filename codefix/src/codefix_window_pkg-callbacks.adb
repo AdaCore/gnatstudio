@@ -162,7 +162,7 @@ package body Codefix_Window_Pkg.Callbacks is
       Graphic_Codefix : constant Graphic_Codefix_Access :=
         Graphic_Codefix_Access (Object);
    begin
-      Undo_Last_Error (Graphic_Codefix);
+      Undo_Last_Fix (Graphic_Codefix);
    exception
       when E : others =>
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
@@ -196,6 +196,7 @@ package body Codefix_Window_Pkg.Callbacks is
       Graphic_Codefix : constant Graphic_Codefix_Access :=
         Graphic_Codefix_Access (Object);
    begin
+      Cancel_All_Fixes (Graphic_Codefix);
       Quit (Graphic_Codefix);
 
    exception
