@@ -544,7 +544,7 @@ package body Src_Contexts is
          Insert_Result
            (Kernel,
             -"Search Results",
-            Full_Name (File_Name),
+            File_Name,
             Match.Text,
             To_Positive (Match.Line), To_Positive (Match.Column),
             Match.End_Column - Match.Column);
