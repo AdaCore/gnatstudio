@@ -66,42 +66,37 @@ package body Src_Contexts is
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Match_Result_Array, Match_Result_Array_Access);
 
-   type Recognized_Lexical_States is
-     (Statements, Strings, Mono_Comments, Multi_Comments);
-   --  Current lexical state of the currently parsed file.
-   --
-   --  Statements      all but comments and strings
-   --  Strings         string literals
-   --  Mono_Comments   end of line terminated comments
-   --  Multi_Comments  (possibly) multi-line comments
-
    procedure Scan_Buffer
-     (Buffer     : String;
-      Context    : access Search_Context'Class;
-      Callback   : Scan_Callback;
-      Scope      : Search_Scope;
-      Lang       : Language_Access := null;
-      Ref_Line   : Natural := 1;
-      Ref_Column : Natural := 1);
+     (Buffer        : String;
+      Context       : access Search_Context'Class;
+      Callback      : Scan_Callback;
+      Scope         : Search_Scope;
+      Lexical_State : in out Recognized_Lexical_States;
+      Lang          : Language_Access := null;
+      Ref_Line      : Natural         := 1;
+      Ref_Column    : Natural         := 1);
    --  Search Context in buffer, searching only in the appropriate scope.
    --  Buffer is assumed to contain complete contexts (e.g the contents of
    --  a whole file).
    --  (Ref_Line, Ref_Column) is the position in the actual file that Buffer
    --  starts at
+   --  Lexical_State is the scope at the first character in Buffer.
 
    procedure Scan_File
-     (Context      : access Search_Context'Class;
-      Kernel       : access Kernel_Handle_Record'Class;
-      Name         : String;
-      Callback     : Scan_Callback;
-      Scope        : Search_Scope;
-      Start_Line   : Natural := 1;
-      Start_Column : Natural := 1);
+     (Context       : access Search_Context'Class;
+      Kernel        : access Kernel_Handle_Record'Class;
+      Name          : String;
+      Callback      : Scan_Callback;
+      Scope         : Search_Scope;
+      Lexical_State : in out Recognized_Lexical_States;
+      Start_Line    : Natural := 1;
+      Start_Column  : Natural := 1);
    --  Search Context in the file Name, searching only in the appropriate
    --  scope.
    --  If there is already an opened editor for this file, its contents will be
    --  used, otherwise the file is read from the disk.
    --  The search will start at position (Start_Line, Start_Column)
+   --  Lexical_State is the scope at current_line, current_column.
 
    function Scan_And_Store
      (Context  : access Search_Context'Class;
@@ -118,15 +113,17 @@ package body Src_Contexts is
    --  no match was found. It is the responsability of the caller to free the
    --  returned array.
 
-   function Scan_Next
+   procedure Scan_Next
      (Context        : access Search_Context'Class;
       Kernel         : access Kernel_Handle_Record'Class;
       Editor         : access Source_Editor_Box_Record'Class;
       Scope          : Search_Scope;
+      Lexical_State  : in out Recognized_Lexical_States;
       Lang           : Language_Access;
       Current_Line   : Integer;
       Current_Column : Integer;
-      Backward       : Boolean) return Match_Result_Access;
+      Backward       : Boolean;
+      Result         : out Match_Result_Access);
    --  Return the next occurrence of Context in Editor, just before or just
    --  after Current_Line, Current_Column. If no match is found after the
    --  current position, for a forward search, return the first occurrence from
@@ -134,17 +131,21 @@ package body Src_Contexts is
    --  Note that the index in the result might be incorrect, although the line
    --  and column will always be correct.
    --  null is returned if there is no match.
+   --  Current_Scope is the scope at current_line, current_column.
 
-   function First_Match
-     (Context      : access Search_Context'Class;
-      Kernel       : access Kernel_Handle_Record'Class;
-      Name         : String;
-      Scope        : Search_Scope;
-      Start_Line   : Natural := 1;
-      Start_Column : Natural := 1) return Match_Result_Access;
+   procedure First_Match
+     (Context       : access Search_Context'Class;
+      Kernel        : access Kernel_Handle_Record'Class;
+      Name          : String;
+      Scope         : Search_Scope;
+      Lexical_State : in out Recognized_Lexical_States;
+      Start_Line    : Natural := 1;
+      Start_Column  : Natural := 1;
+      Result        : out Match_Result_Access);
    --  Lightweight interface that returns the first occurence of Context in the
    --  file Name.
    --  The returned value must be freed by the caller
+   --  Current_Scope is the scope at (Start_Line, Start_Column)
 
    procedure Highlight_Result
      (Kernel      : access Kernel_Handle_Record'Class;
@@ -188,13 +189,14 @@ package body Src_Contexts is
    -----------------
 
    procedure Scan_Buffer
-     (Buffer     : String;
-      Context    : access Search_Context'Class;
-      Callback   : Scan_Callback;
-      Scope      : Search_Scope;
-      Lang       : Language_Access := null;
-      Ref_Line   : Natural := 1;
-      Ref_Column : Natural := 1)
+     (Buffer        : String;
+      Context       : access Search_Context'Class;
+      Callback      : Scan_Callback;
+      Scope         : Search_Scope;
+      Lexical_State : in out Recognized_Lexical_States;
+      Lang          : Language_Access := null;
+      Ref_Line      : Natural         := 1;
+      Ref_Column    : Natural         := 1)
    is
       Scanning_Allowed : constant array (Recognized_Lexical_States) of Boolean
         := (Statements     => Scope = Whole or else Scope = All_But_Comments,
@@ -348,8 +350,8 @@ package body Src_Contexts is
       Column        : Natural := Ref_Column;
       Last_Index    : Positive := Buffer'First;
       Section_End   : Integer;
-      Lexical_State : Recognized_Lexical_States := Statements;
       Old_State     : Recognized_Lexical_States;
+      Was_Partial   : Boolean;
 
    begin  --  Scan_Buffer
       if Buffer'Length = 0 then
@@ -363,7 +365,7 @@ package body Src_Contexts is
            (Context,
             Buffer,
             Callback,
-            Pos, Line, Column);
+            Pos, Line, Column, Was_Partial);
          return;
       end if;
 
@@ -384,7 +386,12 @@ package body Src_Contexts is
             if Scanning_Allowed (Old_State) then
                Scan_Buffer_No_Scope
                  (Context, Buffer (Line_Start .. Section_End),
-                  Callback, Last_Index, Line, Column);
+                  Callback, Last_Index, Line, Column, Was_Partial);
+
+               if Was_Partial then
+                  Lexical_State := Old_State;
+                  return;
+               end if;
             end if;
 
             for J in Last_Index .. Pos - 1 loop
@@ -399,6 +406,10 @@ package body Src_Contexts is
             Last_Index := Pos;
          end loop;
       end;
+
+      --  Memorize the lexical state when we found the last match, so that next
+      --  time we look for the context we find it correctly.
+      Lexical_State := Old_State;
    end Scan_Buffer;
 
    ---------------
@@ -406,13 +417,14 @@ package body Src_Contexts is
    ---------------
 
    procedure Scan_File
-     (Context      : access Search_Context'Class;
-      Kernel       : access Kernel_Handle_Record'Class;
-      Name         : String;
-      Callback     : Scan_Callback;
-      Scope        : Search_Scope;
-      Start_Line   : Natural := 1;
-      Start_Column : Natural := 1)
+     (Context       : access Search_Context'Class;
+      Kernel        : access Kernel_Handle_Record'Class;
+      Name          : String;
+      Callback      : Scan_Callback;
+      Scope         : Search_Scope;
+      Lexical_State : in out Recognized_Lexical_States;
+      Start_Line    : Natural := 1;
+      Start_Column  : Natural := 1)
    is
       Lang          : Language_Access;
       Buffer        : GNAT.OS_Lib.String_Access;
@@ -468,8 +480,8 @@ package body Src_Contexts is
 
       if Start <= Buffer'Last then
          Scan_Buffer
-           (Buffer (Start .. Buffer'Last), Context, Callback, Scope, Lang,
-            Start_Line, Start_Column);
+           (Buffer (Start .. Buffer'Last), Context, Callback, Scope,
+            Lexical_State, Lang, Start_Line, Start_Column);
       end if;
 
       Free (Buffer);
@@ -523,17 +535,18 @@ package body Src_Contexts is
    -- Scan_Next --
    ---------------
 
-   function Scan_Next
+   procedure Scan_Next
      (Context        : access Search_Context'Class;
       Kernel         : access Kernel_Handle_Record'Class;
       Editor         : access Source_Editor_Box_Record'Class;
       Scope          : Search_Scope;
+      Lexical_State  : in out Recognized_Lexical_States;
       Lang           : Language_Access;
       Current_Line   : Integer;
       Current_Column : Integer;
-      Backward       : Boolean) return Match_Result_Access
+      Backward       : Boolean;
+      Result         : out Match_Result_Access)
    is
-      Result : Match_Result_Access := null;
       Continue_Till_End : Boolean := False;
 
       function Stop_At_First_Callback (Match : Match_Result) return Boolean;
@@ -573,27 +586,31 @@ package body Src_Contexts is
       end Backward_Callback;
 
    begin
+      Result := null;
+
       if Backward then
          Scan_Buffer
            (Get_Slice (Editor, 1, 1), Context,
-            Backward_Callback'Unrestricted_Access, Scope, Lang);
+            Backward_Callback'Unrestricted_Access, Scope,
+            Lexical_State, Lang);
       else
          Scan_Buffer
            (Get_Slice (Editor, Current_Line, Current_Column), Context,
-            Stop_At_First_Callback'Unrestricted_Access, Scope, Lang,
-            Current_Line, Current_Column);
+            Stop_At_First_Callback'Unrestricted_Access, Scope,
+            Lexical_State, Lang, Current_Line, Current_Column);
 
          --  Start from the beginning if necessary
          if Result = null then
             Raise_Console (Kernel);
             Insert (Kernel, -"No more matches, starting from beginning");
+
+            Lexical_State := Statements;
             Scan_Buffer
               (Get_Slice (Editor, 1, 1), Context,
-               Stop_At_First_Callback'Unrestricted_Access, Scope, Lang);
+               Stop_At_First_Callback'Unrestricted_Access, Scope,
+               Lexical_State, Lang);
          end if;
       end if;
-
-      return Result;
    end Scan_Next;
 
    --------------------
@@ -632,11 +649,15 @@ package body Src_Contexts is
          return True;
       end Callback;
 
+      State : Recognized_Lexical_States := Statements;
    begin
       if Is_File then
-         Scan_File (Context, Kernel, Str, Callback'Unrestricted_Access, Scope);
+         Scan_File (Context, Kernel, Str, Callback'Unrestricted_Access, Scope,
+                    Lexical_State => State);
       else
-         Scan_Buffer (Str, Context, Callback'Unrestricted_Access, Scope, Lang);
+         Scan_Buffer (Str, Context, Callback'Unrestricted_Access, Scope,
+                      Lexical_State => State,
+                      Lang          => Lang);
       end if;
 
       return Result;
@@ -646,16 +667,16 @@ package body Src_Contexts is
    -- First_Match --
    -----------------
 
-   function First_Match
-     (Context      : access Search_Context'Class;
-      Kernel       : access Kernel_Handle_Record'Class;
-      Name         : String;
-      Scope        : Search_Scope;
-      Start_Line   : Natural := 1;
-      Start_Column : Natural := 1) return Match_Result_Access
+   procedure First_Match
+     (Context       : access Search_Context'Class;
+      Kernel        : access Kernel_Handle_Record'Class;
+      Name          : String;
+      Scope         : Search_Scope;
+      Lexical_State : in out Recognized_Lexical_States;
+      Start_Line    : Natural := 1;
+      Start_Column  : Natural := 1;
+      Result        : out Match_Result_Access)
    is
-      Result : Match_Result_Access;
-
       function Callback (Match : Match_Result) return Boolean;
       --  Save Match in the result array.
 
@@ -667,8 +688,7 @@ package body Src_Contexts is
 
    begin
       Scan_File (Context, Kernel, Name, Callback'Unrestricted_Access, Scope,
-                 Start_Line, Start_Column);
-      return Result;
+                 Lexical_State, Start_Line, Start_Column);
    end First_Match;
 
    ----------
@@ -773,8 +793,7 @@ package body Src_Contexts is
       else
          Context := new Current_File_Context;
          Context.All_Occurrences := False;
-         Context.Scope := Search_Scope'Val
-           (Get_Index_In_List (Scope.Combo));
+         Context.Scope := Search_Scope'Val (Get_Index_In_List (Scope.Combo));
          return Search_Context_Access (Context);
       end if;
    end Current_File_Factory;
@@ -870,14 +889,16 @@ package body Src_Contexts is
         (Get_Language_Handler (Kernel), Get_Filename (Editor));
       Get_Cursor_Location (Editor, Line, Column);
 
-      Match := Scan_Next
+      Scan_Next
         (Context, Kernel,
          Editor         => Editor,
          Scope          => Context.Scope,
+         Lexical_State  => Context.Current_Lexical,
          Lang           => Lang,
          Current_Line   => Line,
          Current_Column => Column,
-         Backward       => Search_Backward);
+         Backward       => Search_Backward,
+         Result         => Match);
 
       if Match /= null then
          Context.Begin_Line   := Match.Line;
@@ -1017,13 +1038,15 @@ package body Src_Contexts is
          --  opened when the first match was seen)
 
          if Context.Begin_Line /= 0 then
-            Match := First_Match
-              (Context      => Context,
-               Kernel       => Kernel,
-               Name         => Current_File (C),
-               Scope        => Context.Scope,
-               Start_Line   => Context.Begin_Line,
-               Start_Column => Context.Begin_Column + 1);
+            First_Match
+              (Context       => Context,
+               Kernel        => Kernel,
+               Name          => Current_File (C),
+               Scope         => Context.Scope,
+               Lexical_State => Context.Current_Lexical,
+               Start_Line    => Context.Begin_Line,
+               Start_Column  => Context.Begin_Column + 1,
+               Result        => Match);
 
             if Match /= null then
                Context.Begin_Line   := Match.Line;
@@ -1048,11 +1071,13 @@ package body Src_Contexts is
                return False;
             end if;
 
-            Match := First_Match
-              (Context  => Context,
-               Kernel   => Kernel,
-               Name     => Current_File (C),
-               Scope    => Context.Scope);
+            First_Match
+              (Context       => Context,
+               Kernel        => Kernel,
+               Name          => Current_File (C),
+               Scope         => Context.Scope,
+               Lexical_State => Context.Current_Lexical,
+               Result        => Match);
 
             if Match /= null then
                Context.Begin_Line   := Match.Line;
@@ -1276,7 +1301,8 @@ package body Src_Contexts is
 
    procedure Move_To_Next_File (Context : access Files_Project_Context) is
    begin
-      Context.Current_File := Context.Current_File + 1;
+      Context.Current_File    := Context.Current_File + 1;
+      Context.Current_Lexical := Statements;
    end Move_To_Next_File;
 
    ------------------
@@ -1303,6 +1329,8 @@ package body Src_Contexts is
 
    begin
       Free (Context.Current_File);
+
+      Context.Current_Lexical := Statements;
 
       --  If not at the end
       if Context.Directory = null then
