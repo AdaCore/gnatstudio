@@ -13,9 +13,9 @@
 /*
  * NativeFileSelection
  *
- * opens a common file open dialog
+ * open a common file open dialog
  *
- * returns the selected file
+ * return the selected file
  * user shall free the result
  */
 
