@@ -16,3 +16,22 @@ Some of the tools need additional sources to compile:
 
 All the tools need access to an installed version of GtkAda. Make sure that
 gtkada-config is found in your PATH.
+
+Building Glide 2
+=================
+
+You need to execute the following command in the directory that contains this
+README file:
+    ./configure --prefix=<prefix_dir>
+
+This is needed to automatically generate some of the required sources and
+Makefiles.
+For best compatibility with GNAT, <prefix_dir> should be the value
+returned by `gnatls -v`, minus the "adainclude" at the end.
+
+Then go to the directory of the tool you want to build and execute the
+following commands:
+     make
+     make install
+
+
