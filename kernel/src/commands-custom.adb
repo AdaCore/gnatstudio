@@ -28,6 +28,12 @@ with Glide_Intl;           use Glide_Intl;
 
 with Glib.Xml_Int;         use Glib.Xml_Int;
 with Gtkada.MDI;           use Gtkada.MDI;
+with Gtk.Widget;           use Gtk.Widget;
+with Gtk.Check_Button;     use Gtk.Check_Button;
+with Gtk.Tooltips;         use Gtk.Tooltips;
+with Gtk.Box;              use Gtk.Box;
+with Gtk.GEntry;           use Gtk.GEntry;
+with Gtk.Label;            use Gtk.Label;
 
 with Basic_Types;          use Basic_Types;
 with Projects;             use Projects;
@@ -56,30 +62,33 @@ package body Commands.Custom is
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (GNAT.Regpat.Pattern_Matcher, GNAT.Expect.Pattern_Matcher_Access);
 
-   function Commands_Count
-     (Command : access Custom_Command'Class) return Natural;
-   --  Return the number of commands that will be executed as part of Command.
-   --  If there are commands in an <on-failure> tag, these commands are taken
-   --  into account. Here's an example of command counting
-   --  <shell>bla</shell>             1
-   --  <external>hop</external>       2
-   --  <on-failure>
-   --     <shell>coin</shell>         3
-   --     <external>pouet</external>  4
-   --  </on-failure>
-   --  <shell>bar</shell>             5
-   --  <shell>foo</shell>             6
+   type Custom_Component_Iterator is new Component_Iterator_Record with record
+      Command    : Custom_Command_Access;
+      Current    : Integer;
+      On_Failure : Integer;
+   end record;
+   function Get
+     (Iter : access Custom_Component_Iterator)
+      return Command_Component;
+   procedure Next (Iter : access Custom_Component_Iterator);
+   procedure Free (Iter : in out Custom_Component_Iterator);
+   function On_Failure
+     (Iter : access Custom_Component_Iterator) return Component_Iterator;
+   --  See doc from inherited subprograms
 
-   function Next_Command (N : Node_Ptr) return Node_Ptr;
-   --  Return the next command in the order described above
-   --  (see Commands_Count).
-   --  Return null if no next command was found.
+   type Command_Editor_Record is new Gtk_Box_Record with record
+      Show_Command : Gtk_Check_Button;
+      Show_Output  : Gtk_Check_Button;
+      Output       : Gtk_Entry;
+   end record;
+   type Command_Editor_Widget is access all Command_Editor_Record'Class;
+   --  This widget is used to graphically edit a custom command
+
 
    procedure Check_Save_Output
      (Kernel           : access Kernel_Handle_Record'Class;
       Command          : access Custom_Command'Class;
       Save_Output      : out Boolean_Array;
-      Is_Failure       : out Boolean_Array;
       Context          : Selection_Context_Access;
       Context_Is_Valid : out Boolean);
    --  Compute whether we should save the output of each commands. This depends
@@ -135,6 +144,29 @@ package body Commands.Custom is
 
    procedure Free (Execution : in out Custom_Command_Execution);
    --  Free Execution and its contents
+
+   function External_From_XML
+     (Command : Glib.Xml_Int.Node_Ptr) return Custom_Component;
+   function Shell_From_XML
+     (Kernel  : access Kernel_Handle_Record'Class;
+      Command : Glib.Xml_Int.Node_Ptr) return Custom_Component;
+   --  Create a command component from an XML node
+
+   function From_XML
+     (Kernel  : access Kernel_Handle_Record'Class;
+      Command : Glib.Xml_Int.Node_Ptr) return Components_Array_Access;
+   --  Create a list of components from an XML node
+
+   function Output_Substitution
+     (Command   : access Custom_Command'Class;
+      Component : Integer;
+      Ref       : Integer) return Integer;
+   --  Return the index of the component to which a ${REF} in Component
+   --  refers. For instance, if the 3rd component contains a $1, the result
+   --  will be 2.
+   --  This properly takes into account the on-failure components.
+   --  Return -1 if no Ref is invalid.
+
 
    ------------------------------
    -- Filter_Matches_Primitive --
@@ -375,91 +407,66 @@ package body Commands.Custom is
      (Kernel  : access Kernel_Handle_Record'Class;
       Command : access Custom_Command'Class)
    is
-      N       : Node_Ptr;
-      Console : Interactive_Console;
+      procedure Clear_Console (Name : GNAT.OS_Lib.String_Access);
+      --  Clear a specific console
+
+      procedure Clear_Console (Name : GNAT.OS_Lib.String_Access) is
+         Console : Interactive_Console;
+      begin
+         if Name /= null
+           and then Name.all /= No_Output
+           and then Name.all /= Console_Output
+         then
+            Console := Create_Interactive_Console
+              (Kernel, Name.all, Create_If_Not_Exist => False);
+            if Console /= null then
+               Clear (Console);
+            end if;
+         end if;
+      end Clear_Console;
+
    begin
-      if Command.Command = null then
-         N := Command.XML;
-         while N /= null loop
-            declare
-               Console_Name : constant String :=
-                 Get_Attribute (N, "output", Console_Output);
-            begin
-               if Console_Name /= No_Output
-                 and then Console_Name /= Console_Output
-               then
-                  Console := Create_Interactive_Console
-                    (Kernel,
-                     Console_Name,
-                     Create_If_Not_Exist => False);
-
-                  if Console /= null then
-                     Clear (Console);
-                  end if;
-               end if;
-            end;
-
-            N := N.Next;
-         end loop;
-      end if;
+      Clear_Console (Command.Default_Output_Destination);
+      for C in Command.Components'Range loop
+         Clear_Console (Command.Components (C).Component.Output);
+      end loop;
    end Clear_Consoles;
 
-   ------------------
-   -- Next_Command --
-   ------------------
+   -------------------------
+   -- Output_Substitution --
+   -------------------------
 
-   function Next_Command (N : Node_Ptr) return Node_Ptr is
+   function Output_Substitution
+     (Command   : access Custom_Command'Class;
+      Component : Integer;
+      Ref       : Integer) return Integer
+   is
+      Ref_Index : Integer := Component - 1;
+      Sub_Index : Integer := Ref;
+      Failure   : Integer := Command.Components (Component).On_Failure_For;
    begin
-      if N = null then
-         return null;
-      end if;
-
-      if N.Next /= null then
-         if N.Next.Tag.all = "on-failure" then
-            if N.Next.Child = null then
-               return Next_Command (N.Next);
-
-            else
-               return N.Next.Child;
+      if Ref > 0 then
+         while Ref_Index >= Command.Components'First loop
+            --  Handling of recursive on-failure blocks
+            if Ref_Index = Failure then
+               Failure := Command.Components (Ref_Index).On_Failure_For;
             end if;
 
-         else
-            return N.Next;
-         end if;
-      else
-         if N.Parent /= null
-           and then N.Parent.Tag.all = "on-failure"
-         then
-            return N.Parent.Next;
-         else
-            return null;
-         end if;
-      end if;
-   end Next_Command;
+            if Command.Components (Ref_Index).On_Failure_For = Failure then
+               Sub_Index := Sub_Index - 1;
+               exit when Sub_Index = 0;
+            end if;
 
-   --------------------
-   -- Commands_Count --
-   --------------------
-
-   function Commands_Count
-     (Command : access Custom_Command'Class) return Natural
-   is
-      N     : Node_Ptr;
-      Count : Natural := 0;
-   begin
-      if Command.Command /= null then
-         return 1;
-      else
-         N := Command.XML;
-
-         while N /= null loop
-            Count := Count + 1;
-            N := Next_Command (N);
+            Ref_Index := Ref_Index - 1;
          end loop;
-
-         return Count;
       end if;
-   end Commands_Count;
+
+      if Ref_Index >= Command.Components'First then
+         return Ref_Index;
+      else
+         return -1;
+      end if;
+   end Output_Substitution;
 
    -----------------------
    -- Check_Save_Output --
@@ -469,16 +476,10 @@ package body Commands.Custom is
      (Kernel           : access Kernel_Handle_Record'Class;
       Command          : access Custom_Command'Class;
       Save_Output      : out Boolean_Array;
-      Is_Failure       : out Boolean_Array;
       Context          : Selection_Context_Access;
       Context_Is_Valid : out Boolean)
    is
-      N, M  : Node_Ptr;
-      Index : Natural := 1;
-
-      In_Loop_Commands : Natural := 0;
-      --  The number of command in the previous "on-failure" block, if the
-      --  previous block is indeed an "on-failure" block.
+      Index : Natural;
 
       function Substitution
         (Param  : String;
@@ -490,7 +491,7 @@ package body Commands.Custom is
          Quoted : Boolean) return String
       is
          pragma Unreferenced (Quoted);
-         Sub_Index : Natural;
+         Sub_Index, Ref_Index : Integer;
       begin
          if Param = "f" or else Param = "F" then
             if Context = null
@@ -531,73 +532,36 @@ package body Commands.Custom is
 
          else
             Sub_Index := Safe_Value (Param, Default => 0);
-            if Sub_Index <= Index - 1
-              and then Sub_Index >= 1
-            then
-               Save_Output (Index - Sub_Index - In_Loop_Commands) := True;
+            Ref_Index := Output_Substitution
+              (Command, Index, Sub_Index);
+
+            if Ref_Index >= Command.Components'First then
+               Save_Output (Ref_Index) := True;
             end if;
          end if;
 
          return "";
       end Substitution;
 
-      procedure Substitute_Node (N : Node_Ptr);
-      --  Substitute the strings corresponding to node N.
-
-      procedure Substitute_Node (N : Node_Ptr) is
-         Tmp : constant String := Substitute
-           (N.Value.all,
-            Substitution_Char => '%',
-            Callback          => Substitution'Unrestricted_Access,
-            Recursive         => False);
-         pragma Unreferenced (Tmp);
-      begin
-         null;
-      end Substitute_Node;
-
-      Count : Natural;
    begin
       Context_Is_Valid := True;
       Save_Output := (others => False);
 
-      if Command.XML /= null then
-         N := Command.XML;
-         while N /= null and then Context_Is_Valid loop
+      Index := Command.Components'First;
+      while Index <= Command.Components'Last loop
+         declare
+            S : constant String := String_Utils.Substitute
+              (Command.Components (Index).Component.Command.all,
+               Substitution_Char => '%',
+               Callback          => Substitution'Unrestricted_Access,
+               Recursive         => False);
+            pragma Unreferenced (S);
+         begin
+            exit when not Context_Is_Valid;
+         end;
 
-            if N.Tag.all = "on-failure" then
-               M := N.Child;
-               Count := 0;
-
-               while M /= null and then Context_Is_Valid loop
-                  Substitute_Node (M);
-                  Is_Failure (Index) := True;
-                  Index := Index + 1;
-                  Count := Count + 1;
-                  M := M.Next;
-               end loop;
-
-               Index := Index - 1;
-               In_Loop_Commands := Count;
-            else
-               Substitute_Node (N);
-               Is_Failure (Index) := False;
-               In_Loop_Commands := 0;
-            end if;
-
-            if N.Tag.all = "external"
-              and then Get_Attribute
-                (N, "on-failure") /= ""
-            then
-               Insert
-                 (Kernel,
-                  -"Warning: ""on-failure"" attribute is ignored. " &
-                  "Use the ""on-failure"" tag instead");
-            end if;
-
-            Index := Index + 1;
-            N     := N.Next;
-         end loop;
-      end if;
+         Index := Index + 1;
+      end loop;
    end Check_Save_Output;
 
    ----------
@@ -612,7 +576,6 @@ package body Commands.Custom is
          Free             (Execution.Current_Output);
          GNAT.OS_Lib.Free (Execution.Outputs);
          Unchecked_Free   (Execution.Save_Output);
-         Unchecked_Free   (Execution.Is_Failure);
          Unchecked_Free   (Execution.Progress_Matcher);
          Unref            (Execution.Context);
          Unchecked_Free (Execution);
@@ -623,13 +586,37 @@ package body Commands.Custom is
    -- Free --
    ----------
 
-   procedure Free (X : in out Custom_Command) is
+   procedure Free (Component : in out Custom_Component_Record) is
    begin
-      Free (X.Command);
-      Free (X.XML);
+      Free (Component.Output);
+      Free (Component.Command);
+   end Free;
+
+   procedure Free (Component : in out External_Component_Record) is
+   begin
+      Free (Component.Progress_Regexp);
+      Free (Custom_Component_Record (Component));
+   end Free;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (X : in out Custom_Command) is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Custom_Component_Record'Class, Custom_Component);
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Components_Array, Components_Array_Access);
+   begin
       Free (X.Default_Output_Destination);
       Free (X.Name);
       Free (X.Execution);
+
+      for C in X.Components'Range loop
+         Free (X.Components (C).Component.all);
+         Unchecked_Free (X.Components (C).Component);
+      end loop;
+      Unchecked_Free (X.Components);
    end Free;
 
    ------------
@@ -645,10 +632,180 @@ package body Commands.Custom is
    begin
       Item := new Custom_Command;
       Item.Kernel := Kernel;
-      Item.Command := new String'(Command);
-      Item.Script := Script;
       Item.Name   := new String'(Name);
+      Item.Components := new Components_Array'
+        (1 => (Component => new Shell_Component_Record'
+                 (Command_Component_Record with
+                  Show_Command => False,
+                  Output       => new String'(No_Output),
+                  Command      => new String'(Command),
+                  Script       => Script),
+               On_Failure_For => -1));
    end Create;
+
+   --------------------
+   -- Shell_From_XML --
+   --------------------
+
+   function Shell_From_XML
+     (Kernel  : access Kernel_Handle_Record'Class;
+      Command : Glib.Xml_Int.Node_Ptr) return Custom_Component
+   is
+      Output : constant String := Get_Attribute (Command, "output", "@@");
+      Outp   : GNAT.OS_Lib.String_Access := null;
+      Show_Command : constant Boolean :=
+        Get_Attribute (Command, "show-command", "true") = "true";
+      Script : constant String :=
+        Get_Attribute (Command, "lang", GPS_Shell_Name);
+   begin
+      if Output /= "@@" then
+         Outp := new String'(Output);
+      end if;
+
+      return new Shell_Component_Record'
+        (Command_Component_Record with
+         Show_Command => Show_Command,
+         Output       => Outp,
+         Command      => new String'(Command.Value.all),
+         Script       => Lookup_Scripting_Language (Kernel, Script));
+   end Shell_From_XML;
+
+   -----------------------
+   -- External_From_XML --
+   -----------------------
+
+   function External_From_XML
+     (Command : Glib.Xml_Int.Node_Ptr) return Custom_Component
+   is
+      Output : constant String := Get_Attribute (Command, "output", "@@");
+      Outp   : GNAT.OS_Lib.String_Access := null;
+      Show_Command : constant Boolean :=
+        Get_Attribute (Command, "show-command", "true") = "true";
+      Progress_Regexp : constant String :=
+        Get_Attribute (Command, "progress-regexp", "");
+      Progress_Current : constant Integer :=
+        Safe_Value (Get_Attribute (Command, "progress-current", "0"));
+      Progress_Final : constant Integer :=
+        Safe_Value (Get_Attribute (Command, "progress-final", "0"));
+      Progress_Hide : constant Boolean :=
+        Get_Attribute (Command, "progress-hide", "true") = "true";
+
+   begin
+      if Output /= "@@" then
+         Outp := new String'(Output);
+      end if;
+
+      return new External_Component_Record'
+        (Command_Component_Record with
+         Show_Command     => Show_Command,
+         Output           => Outp,
+         Command          => new String'(Command.Value.all),
+         Progress_Regexp  => new String'(Progress_Regexp),
+         Progress_Current => Progress_Current,
+         Progress_Final   => Progress_Final,
+         Progress_Hide    => Progress_Hide);
+   end External_From_XML;
+
+   --------------
+   -- From_XML --
+   --------------
+
+   function From_XML
+     (Kernel  : access Kernel_Handle_Record'Class;
+      Command : Glib.Xml_Int.Node_Ptr) return Components_Array_Access
+   is
+      N, M   : Node_Ptr := Command;
+      Count  : Natural := 0;
+      Result : Components_Array_Access;
+      On_Failure : Integer := -1;
+   begin
+      while N /= null loop
+         if N.Tag.all = "shell"
+           or else N.Tag.all = "external"
+         then
+            Count := Count + 1;
+
+         elsif N.Tag.all = "on-failure" then
+            M := N.Child;
+            while M /= null loop
+               if M.Tag.all = "shell"
+                 or else M.Tag.all = "external"
+               then
+                  Count := Count + 1;
+               elsif M.Tag.all = "on-failure" then
+                  Insert (Kernel,
+                          "Nested <on-failure> nodes not supported",
+                          Mode => Error);
+                  return new Components_Array (1 .. 0);
+               else
+                  Insert (Kernel,
+                          "Unknown tag in action definition: " & M.Tag.all,
+                          Mode => Error);
+                  return new Components_Array (1 .. 0);
+               end if;
+
+               M := M.Next;
+            end loop;
+
+         elsif N.Tag.all = "filter"
+           or else N.Tag.all = "filter_and"
+           or else N.Tag.all = "filter_or"
+           or else N.Tag.all = "description"
+         then
+            --  Taken care of in custom_module.adb
+            null;
+
+         else
+            Insert (Kernel,
+                    "Unknown tag in action definition: " & N.Tag.all,
+                    Mode => Error);
+            return new Components_Array (1 .. 0);
+         end if;
+         N := N.Next;
+      end loop;
+
+      Result := new Components_Array (1 .. Count);
+      Count := Result'First;
+      N := Command;
+
+      while N /= null loop
+         if N.Tag.all = "shell" then
+            Result (Count) := (Shell_From_XML (Kernel, N), -1);
+            Count := Count + 1;
+         elsif N.Tag.all = "external" then
+            Result (Count) := (External_From_XML (N), -1);
+            Count := Count + 1;
+         elsif N.Tag.all = "on-failure" then
+            if Count = Result'First
+              or else Result (Count - 1).Component.all not in
+                External_Component_Record'Class
+            then
+               Insert (Kernel,
+                       "<on-failure> can only follow an <external> node",
+                       Mode => Error);
+               return new Components_Array (1 .. 0);
+            end if;
+
+            On_Failure := Count - 1;
+
+            M := N.Child;
+            while M /= null loop
+               if M.Tag.all = "shell" then
+                  Result (Count) := (Shell_From_XML (Kernel, M), On_Failure);
+                  Count := Count + 1;
+               elsif M.Tag.all = "external" then
+                  Result (Count) := (External_From_XML (M), On_Failure);
+                  Count := Count + 1;
+               end if;
+
+               M := M.Next;
+            end loop;
+         end if;
+
+         N := N.Next;
+      end loop;
+      return Result;
+   end From_XML;
 
    ------------
    -- Create --
@@ -660,34 +817,14 @@ package body Commands.Custom is
       Kernel         : Kernel_Handle;
       Command        : Glib.Xml_Int.Node_Ptr;
       Default_Output : String := Console_Output;
-      Show_Command   : Boolean := True)
-   is
-      Node, Previous : Node_Ptr;
+      Show_Command   : Boolean := True) is
    begin
       Item := new Custom_Command;
       Item.Kernel := Kernel;
       Item.Default_Output_Destination := new String'(Default_Output);
       Item.Default_Show_Command := Show_Command;
-      Item.Name   := new String'(Name);
-
-      --  Make a deep copy of the relevant nodes
-      Node := Command;
-      while Node /= null loop
-         if Node.Tag.all = "shell"
-           or else Node.Tag.all = "external"
-           or else Node.Tag.all = "on-failure"
-         then
-            if Previous = null then
-               Item.XML := Deep_Copy (Node);
-               Previous := Item.XML;
-            else
-               Previous.Next := Deep_Copy (Node);
-               Previous := Previous.Next;
-            end if;
-         end if;
-
-         Node := Node.Next;
-      end loop;
+      Item.Name := new String'(Name);
+      Item.Components := From_XML (Kernel, Command);
    end Create;
 
    ------------------------
@@ -751,21 +888,8 @@ package body Commands.Custom is
       --  Substitution function for the "$1" .. "$N", "$*", "$@" parameters.
 
       function Execute_Simple_Command
-        (Script          : Scripting_Language;
-         Command_Line    : String;
-         Output_Location : String := No_Output;
-         Show_Command    : Boolean := True;
-         Progress_Regexp : String := "";
-         Current_In_Regexp : Integer := -1;
-         Total_In_Regexp   : Integer := -1;
-         Hide_Progress     : Boolean := True) return Boolean;
+        (Component : Custom_Component) return Boolean;
       --  Execute a single command, and return whether it succeeded.
-      --  Index is the number of the current command we are executing.
-      --  Output_Location is the console where the output of the command should
-      --  be displayed:
-      --    "none"  => not displayed
-      --    ""      => Messages window
-      --    others  => A process-specific console.
 
       function Terminate_Command return Command_Return_Type;
       --  Terminate the command and free associated memory
@@ -773,9 +897,6 @@ package body Commands.Custom is
       function Execute_Next_Command return Boolean;
       --  Execute the following commands, until the next external one.
       --  Return True if there are still commands to executed after that one.
-
-      function Get_Show_Command (N : Node_Ptr) return Boolean;
-      --  Return True if the command should be shown for N
 
       -------------------------
       -- Dollar_Substitution --
@@ -899,40 +1020,6 @@ package body Commands.Custom is
          Num     : Integer;
          Index   : Integer;
          Recurse, List_Dirs, List_Sources : Boolean;
-
-         function Get_Previous_Output (N : Integer) return String;
-         --  Return the output of the Nth command before the current command.
-
-         function Get_Previous_Output (N : Integer) return String is
-            Avoid_On_Failure : Boolean := False;
-            Count            : Integer := 0;
-            Current          : Integer renames Command.Execution.Cmd_Index;
-            Potential        : Integer;
-         begin
-            Avoid_On_Failure := Avoid_On_Failure
-              or else not Command.Execution.Is_Failure (Current - Count);
-
-            Potential := Current;
-
-            while Count < N loop
-               Potential := Potential - 1;
-
-               while Avoid_On_Failure
-                 and then Command.Execution.Is_Failure (Potential)
-               loop
-                  Potential := Potential - 1;
-               end loop;
-
-               Count := Count + 1;
-            end loop;
-
-            if Command.Execution.Outputs (Potential) = null then
-               return "";
-            else
-               return Command.Execution.Outputs (Potential).all;
-            end if;
-         end Get_Previous_Output;
-
       begin
          if Param = "f" or else Param = "F" then
             --  We know from Check_Save_Output that the context is valid
@@ -1069,50 +1156,55 @@ package body Commands.Custom is
 
          else
             Num := Safe_Value (Param, Default => 0);
-            if Num <= Command.Execution.Cmd_Index - 1
-              and then Num >= 1
-            then
-               --  Remove surrounding quotes if any. This is needed so that
-               --  for instance of the function get_attributes_as_string
-               --  from Python can be used to call an external tool with
-               --  switches propertly interpreted.
 
-               declare
-                  Output : constant String := Get_Previous_Output (Num);
-                  Last   : Integer;
-               begin
-                  if Output = "" then
-                     return Output;
-                  end if;
+            --  Remove surrounding quotes if any. This is needed so that
+            --  for instance of the function get_attributes_as_string
+            --  from Python can be used to call an external tool with
+            --  switches propertly interpreted.
 
-                  Last := Output'Last;
-                  while Last >= Output'First
-                    and then Output (Last) = ASCII.LF
-                  loop
-                     Last := Last - 1;
-                  end loop;
+            declare
+               Output_Index : constant Integer := Output_Substitution
+                 (Command, Command.Execution.Cmd_Index, Num);
+               Output  : GNAT.OS_Lib.String_Access;
+               Last   : Integer;
+            begin
+               if Output_Index = -1 then
+                  return "";
+               end if;
 
-                  if Output (Output'First) = '''
-                    and then Output (Last) = '''
-                  then
-                     return String_Utils.Protect
-                       (Output (Output'First + 1 .. Last - 1),
-                        Protect_Quotes => Quoted);
+               Output := Command.Execution.Outputs (Output_Index);
 
-                  elsif Output (Output'First) = '"'
-                    and then Output (Output'Last) = '"'
-                  then
-                     return String_Utils.Protect
-                       (Output (Output'First + 1 .. Last - 1),
-                        Protect_Quotes => Quoted);
+               if Output = null or else Output.all = "" then
+                  return "";
+               end if;
 
-                  else
-                     return String_Utils.Protect
-                       (Output (Output'First .. Last),
-                        Protect_Quotes => Quoted);
-                  end if;
-               end;
-            end if;
+               Last := Output'Last;
+               while Last >= Output'First
+                 and then Output (Last) = ASCII.LF
+               loop
+                  Last := Last - 1;
+               end loop;
+
+               if Output (Output'First) = '''
+                 and then Output (Last) = '''
+               then
+                  return String_Utils.Protect
+                    (Output (Output'First + 1 .. Last - 1),
+                     Protect_Quotes => Quoted);
+
+               elsif Output (Output'First) = '"'
+                 and then Output (Output'Last) = '"'
+               then
+                  return String_Utils.Protect
+                    (Output (Output'First + 1 .. Last - 1),
+                     Protect_Quotes => Quoted);
+
+               else
+                  return String_Utils.Protect
+                    (Output (Output'First .. Last),
+                     Protect_Quotes => Quoted);
+               end if;
+            end;
          end if;
 
          --  Keep the percent sign, since this might be useful for the shell
@@ -1125,37 +1217,32 @@ package body Commands.Custom is
       ----------------------------
 
       function Execute_Simple_Command
-        (Script          : Scripting_Language;
-         Command_Line    : String;
-         Output_Location : String := No_Output;
-         Show_Command    : Boolean := True;
-         Progress_Regexp : String := "";
-         Current_In_Regexp : Integer := -1;
-         Total_In_Regexp   : Integer := -1;
-         Hide_Progress     : Boolean := True) return Boolean
+        (Component : Custom_Component) return Boolean
       is
          --  Perform arguments substitutions for the command.
 
          Subst_Percent  : constant String := Substitute
-           (Command_Line,
+           (Component.Command.all,
             Substitution_Char => '$',
             Callback          => Dollar_Substitution'Unrestricted_Access,
             Recursive         => False);
-
          Subst_Cmd_Line : constant String := Substitute
            (Subst_Percent,
             Substitution_Char => '%',
             Callback          => Substitution'Unrestricted_Access,
             Recursive         => False);
-
-         Args           : String_List_Access;
-         Errors         : aliased Boolean;
          Console        : Interactive_Console;
-         Tmp            : GNAT.OS_Lib.String_Access;
-         Old_Dir        : GNAT.OS_Lib.String_Access;
+         Output_Location : GNAT.OS_Lib.String_Access;
 
          function To_String (P : in GNAT.OS_Lib.String_Access) return String;
          --  Return the contents of P, or the empty string if P is null.
+
+         function Execute_Shell
+           (Component : Shell_Component_Record'Class) return Boolean;
+         function Execute_External
+           (Component : External_Component_Record'Class) return Boolean;
+         --  Execute a shell or an external component. Return the success
+         --  status.
 
          function To_String (P : in GNAT.OS_Lib.String_Access) return String is
          begin
@@ -1166,70 +1253,57 @@ package body Commands.Custom is
             end if;
          end To_String;
 
-      begin
-         if Success and then Output_Location /= No_Output then
-            Console := Create_Interactive_Console
-              (Command.Kernel, Output_Location);
-         end if;
-
-         --  If substitution failed
-         if not Success then
-            null;
-
-         elsif Script /= null then
-            if Context.Dir /= null then
-               Old_Dir := new String'(Get_Current_Dir);
-               Change_Dir (Context.Dir.all);
-            end if;
-
+         function Execute_Shell
+           (Component : Shell_Component_Record'Class) return Boolean
+         is
+            Errors : aliased Boolean;
+         begin
             if Command.Execution.Save_Output (Command.Execution.Cmd_Index) then
-
-               --  Insert the command explicitely, since Execute_Command
-               --  doesn't do it in this case.
-               if Console /= null and then Show_Command then
+               if Console /= null and then Component.Show_Command then
                   Insert (Console, Subst_Cmd_Line, Add_LF => True);
                end if;
 
                Command.Execution.Outputs (Command.Execution.Cmd_Index) :=
                  new String'
                    (Execute_Command
-                        (Script, Subst_Cmd_Line,
-                         Hide_Output  => Output_Location = No_Output,
-                         Show_Command => Show_Command,
+                        (Component.Script, Subst_Cmd_Line,
+                         Hide_Output  => Output_Location.all = No_Output,
+                         Show_Command => Component.Show_Command,
                          Console      => Console,
                          Errors       => Errors'Unchecked_Access));
             else
                Execute_Command
-                 (Script, Subst_Cmd_Line,
-                  Hide_Output  => Output_Location = No_Output,
-                  Show_Command => Show_Command,
+                 (Component.Script, Subst_Cmd_Line,
+                  Hide_Output  => Output_Location.all = No_Output,
+                  Show_Command => Component.Show_Command,
                   Console      => Console,
                   Errors => Errors);
             end if;
 
-            if Context.Dir /= null then
-               Change_Dir (Old_Dir.all);
-               Free (Old_Dir);
-            end if;
+            return not Errors;
+         end Execute_Shell;
 
-            Success := not Errors;
-
-         else
-            Trace (Me, "Executing external command " & Command_Line);
+         function Execute_External
+           (Component : External_Component_Record'Class) return Boolean
+         is
+            Tmp  : GNAT.OS_Lib.String_Access;
+            Args : String_List_Access;
+         begin
+            Trace (Me, "Executing external command " & Component.Command.all);
 
             Free (Command.Execution.Current_Output);
             Command.Execution.Current_Output := new String'("");
 
             Unchecked_Free (Command.Execution.Progress_Matcher);
             Command.Execution.Current_In_Regexp :=
-              Integer'Max (0, Current_In_Regexp);
+              Integer'Max (0, Component.Progress_Current);
             Command.Execution.Total_In_Regexp   :=
-              Integer'Max (0, Total_In_Regexp);
-            Command.Execution.Hide_Progress := Hide_Progress;
+              Integer'Max (0, Component.Progress_Final);
+            Command.Execution.Hide_Progress := Component.Progress_Hide;
 
-            if Progress_Regexp /= "" then
+            if Component.Progress_Regexp.all /= "" then
                Command.Execution.Progress_Matcher := new Pattern_Matcher'
-                 (Compile (Progress_Regexp, Multiple_Lines));
+                 (Compile (Component.Progress_Regexp.all, Multiple_Lines));
             end if;
 
             Args := Argument_String_To_List (Subst_Cmd_Line);
@@ -1248,7 +1322,7 @@ package body Commands.Custom is
                Callback      => Store_Command_Output'Access,
                Exit_Cb       => Exit_Cb'Access,
                Success       => Success,
-               Show_Command  => Show_Command,
+               Show_Command  => Component.Show_Command,
                Callback_Data => Convert (Custom_Command_Access (Command)),
                Line_By_Line  => False,
                Directory     => To_String (Context.Dir));
@@ -1256,6 +1330,34 @@ package body Commands.Custom is
 
             Command.Execution.External_Process_Console := Console;
             Command.Execution.External_Process_In_Progress := True;
+            return Success;
+         end Execute_External;
+
+      begin
+         if Component.Output = null then
+            Output_Location := Command.Default_Output_Destination;
+         else
+            Output_Location := Component.Output;
+         end if;
+
+         if Success and then Output_Location.all /= No_Output then
+            Console := Create_Interactive_Console
+              (Command.Kernel, Output_Location.all);
+         end if;
+
+         --  If substitution failed
+         --  ??? Should write message to console
+         if not Success then
+            return False;
+         end if;
+
+         --  ??? Should use dispatching
+         if Component.all in Shell_Component_Record'Class then
+            Success := Execute_Shell
+              (Shell_Component_Record'Class (Component.all));
+         else
+            Success := Execute_External
+              (External_Component_Record'Class (Component.all));
          end if;
 
          return Success;
@@ -1271,105 +1373,38 @@ package body Commands.Custom is
             return False;
       end Execute_Simple_Command;
 
-      ----------------------
-      -- Get_Show_Command --
-      ----------------------
-
-      function Get_Show_Command (N : Node_Ptr) return Boolean is
-         Att : constant String := Get_Attribute (N, "show-command");
-      begin
-         if Att /= "" then
-            return To_Lower (Att) = "true";
-         end if;
-
-         return Command.Default_Show_Command;
-      end Get_Show_Command;
-
       --------------------------
       -- Execute_Next_Command --
       --------------------------
 
       function Execute_Next_Command return Boolean is
-         Show_Command : Boolean;
+         Current : Command_Component_Description;
       begin
-         if Command.Command /= null then
-            Success := Execute_Simple_Command
-              (Command.Script, Command.Command.all);
-            return False;
+         while Success
+           and then Command.Execution.Cmd_Index <= Command.Components'Last
+         loop
+            Set_Progress
+              (Command,
+               Progress_Record'
+                 (Activity => Running,
+                  Current  => Command.Execution.Cmd_Index,
+                  Total    => Command.Execution.Outputs'Length));
 
-         else
-            while Success
-              and then Command.Execution.Current_Command /= null
-            loop
-               Set_Progress
-                 (Command,
-                  Progress_Record'
-                    (Activity => Running,
-                     Current  => Command.Execution.Cmd_Index,
-                     Total    => Command.Execution.Outputs'Length));
+            Current := Command.Components (Command.Execution.Cmd_Index);
+            if Current.On_Failure_For = Command.Execution.Current_Failure then
+               Success := Execute_Simple_Command (Current.Component);
 
-               Show_Command := Get_Show_Command
-                 (Command.Execution.Current_Command);
-
-               if To_Lower (Command.Execution.Current_Command.Tag.all) =
-                 "shell"
-               then
-                  Success := Execute_Simple_Command
-                    (Lookup_Scripting_Language
-                       (Command.Kernel,
-                        Get_Attribute
-                          (Command.Execution.Current_Command,
-                           "lang",
-                           GPS_Shell_Name)),
-                     Command.Execution.Current_Command.Value.all,
-                     Output_Location =>
-                       Get_Attribute
-                         (Command.Execution.Current_Command, "output",
-                          Command.Default_Output_Destination.all),
-                     Show_Command => Show_Command);
-
-               elsif To_Lower (Command.Execution.Current_Command.Tag.all) =
-                 "external"
-               then
-                  Success := Execute_Simple_Command
-                    (null,
-                     Command.Execution.Current_Command.Value.all,
-                     Output_Location =>
-                       Get_Attribute
-                         (Command.Execution.Current_Command, "output",
-                          Command.Default_Output_Destination.all),
-                     Show_Command => Show_Command,
-                     Progress_Regexp   =>
-                       Get_Attribute
-                         (Command.Execution.Current_Command,
-                          "progress-regexp"),
-                     Current_In_Regexp =>
-                       Safe_Value
-                         (Get_Attribute
-                              (Command.Execution.Current_Command,
-                               "progress-current")),
-                     Total_In_Regexp   =>
-                       Safe_Value
-                         (Get_Attribute
-                              (Command.Execution.Current_Command,
-                               "progress-final")),
-                     Hide_Progress     => Case_Insensitive_Equal
-                       (Get_Attribute
-                          (Command.Execution.Current_Command,
-                           "progress-hide", "true"), "true"));
-
+               if Current.Component.all in External_Component_Record'Class then
                   --  We'll have to run again to check for completion
                   return True;
                end if;
+            end if;
 
-               Command.Execution.Current_Command :=
-                 Command.Execution.Current_Command.Next;
-               Command.Execution.Cmd_Index := Command.Execution.Cmd_Index + 1;
-            end loop;
+            Command.Execution.Cmd_Index := Command.Execution.Cmd_Index + 1;
+         end loop;
 
-            --  No more command to execute
-            return False;
-         end if;
+         --  No more command to execute
+         return False;
       end Execute_Next_Command;
 
       -----------------------
@@ -1389,7 +1424,8 @@ package body Commands.Custom is
       end Terminate_Command;
 
       use type Glib.String_Ptr;
-   begin
+      Old_Dir        : GNAT.OS_Lib.String_Access;
+   begin  --  Execute
       --  If there was an external command executing:
       if Command.Execution /= null then
          if Command.Execution.External_Process_In_Progress then
@@ -1398,78 +1434,46 @@ package body Commands.Custom is
 
          Command.Execution.Outputs (Command.Execution.Cmd_Index) :=
            Command.Execution.Current_Output;
-
          Command.Execution.Current_Output := null;
-         Command.Execution.Cmd_Index := Command.Execution.Cmd_Index + 1;
-
-         Command.Execution.Current_Command :=
-           Command.Execution.Current_Command.Next;
 
          if Command.Execution.Process_Exit_Status /= 0 then
-
-            if Command.Execution.Current_Command /= null
-              and then Command.Execution.Current_Command.Tag /= null
-              and then Command.Execution.Current_Command.Tag.all = "on-failure"
-            then
-               Command.Execution.Current_Command :=
-                 Command.Execution.Current_Command.Child;
-
-               --  Reset the exit status.
-               Command.Execution.Process_Exit_Status := 0;
-            else
-               Success := False;
-               return Terminate_Command;
-            end if;
-         else
-            --  Skip the "on-failure" commands if needed and increase the
-            --  counter accordingly.
-
-            if Command.Execution.Current_Command /= null
-              and then Command.Execution.Current_Command.Tag /= null
-              and then Command.Execution.Current_Command.Tag.all = "on-failure"
-            then
-               declare
-                  N : Node_Ptr := Command.Execution.Current_Command.Child;
-               begin
-                  while N /= null loop
-                     Command.Execution.Cmd_Index :=
-                       Command.Execution.Cmd_Index + 1;
-                     N := N.Next;
-                  end loop;
-               end;
-
-               Command.Execution.Current_Command :=
-                 Command.Execution.Current_Command.Next;
-            end if;
+            Command.Execution.Current_Failure := Command.Execution.Cmd_Index;
+            Command.Execution.Process_Exit_Status := 0;
          end if;
 
+         Command.Execution.Cmd_Index := Command.Execution.Cmd_Index + 1;
+
       else
-         declare
-            Count : constant Natural := Commands_Count (Command);
-         begin
-            Command.Execution := new Custom_Command_Execution_Record;
-            Command.Execution.Outputs     := new Argument_List (1 .. Count);
-            Command.Execution.Save_Output := new Boolean_Array (1 .. Count);
-            Command.Execution.Is_Failure  := new Boolean_Array (1 .. Count);
+         if Context.Dir /= null then
+            Old_Dir := new String'(Get_Current_Dir);
+            Change_Dir (Context.Dir.all);
+         end if;
 
-            if Context.Context = null then
-               Command.Execution.Context :=
-                 Get_Current_Context (Command.Kernel);
-            else
-               Command.Execution.Context := Context.Context;
-            end if;
+         Command.Execution := new Custom_Command_Execution_Record;
+         Command.Execution.Outputs     :=
+           new Argument_List (Command.Components'Range);
+         Command.Execution.Save_Output :=
+           new Boolean_Array (Command.Components'Range);
 
-            Command.Execution.Cmd_Index   := 1;
-            Command.Execution.Current_Command := Command.XML;
-            Ref (Command.Execution.Context);
-         end;
+         if Context.Context = null then
+            Command.Execution.Context := Get_Current_Context (Command.Kernel);
+         else
+            Command.Execution.Context := Context.Context;
+         end if;
+
+         Command.Execution.Cmd_Index   := Command.Components'First;
+         Ref (Command.Execution.Context);
 
          Check_Save_Output
            (Command.Kernel, Command,
             Command.Execution.Save_Output.all,
-            Command.Execution.Is_Failure.all,
             Command.Execution.Context, Success);
          Clear_Consoles (Command.Kernel, Command);
+
+         if Context.Dir /= null then
+            Change_Dir (Old_Dir.all);
+            Free (Old_Dir);
+         end if;
 
          if not Success then
             return Terminate_Command;
@@ -1491,5 +1495,199 @@ package body Commands.Custom is
    begin
       return Command.Name.all;
    end Name;
+
+   ---------
+   -- Get --
+   ---------
+
+   function Get
+     (Iter : access Custom_Component_Iterator) return Command_Component is
+   begin
+      if Iter.Current <= Iter.Command.Components'Last then
+         return Command_Component
+           (Iter.Command.Components (Iter.Current).Component);
+      else
+         return null;
+      end if;
+   end Get;
+
+   ----------------
+   -- On_Failure --
+   ----------------
+
+   function On_Failure
+     (Iter : access Custom_Component_Iterator) return Component_Iterator
+   is
+      Component : constant Command_Component := Get (Iter);
+   begin
+      if Component = null
+        or else Component.all in Shell_Component_Record'Class
+        or else Iter.Current = Iter.Command.Components'Last
+        or else Iter.Command.Components (Iter.Current + 1).On_Failure_For /=
+           Iter.Current
+      then
+         return null;
+      end if;
+
+      return new Custom_Component_Iterator'
+        (Component_Iterator_Record with
+         Command    => Iter.Command,
+         Current    => Iter.Current + 1,
+         On_Failure => Iter.Current);
+   end On_Failure;
+
+   ----------
+   -- Next --
+   ----------
+
+   procedure Next (Iter : access Custom_Component_Iterator) is
+   begin
+      loop
+         Iter.Current := Iter.Current + 1;
+         exit when Iter.Current > Iter.Command.Components'Last
+           or else Iter.Command.Components (Iter.Current).On_Failure_For =
+           Iter.On_Failure;
+      end loop;
+   end Next;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Iter : in out Custom_Component_Iterator) is
+      pragma Unreferenced (Iter);
+   begin
+      null;
+   end Free;
+
+   --------------------
+   -- Command_Editor --
+   --------------------
+
+   function Command_Editor
+     (Command : access Custom_Command) return Gtk.Widget.Gtk_Widget
+   is
+      Box   : constant Command_Editor_Widget := new Command_Editor_Record;
+      Hbox  : Gtk_Box;
+      Label : Gtk_Label;
+   begin
+      Initialize_Vbox (Box, Homogeneous => False);
+
+      Gtk_New (Box.Show_Command, -"Show command (default)");
+      Set_Tip (Get_Tooltips (Command.Kernel), Box.Show_Command,
+               -("Whether the text of the command should be displayed along"
+                 & " with the actual output of the command. If the output is"
+                 & " hidden, the text will not be shown."));
+      Set_Active (Box.Show_Command, Command.Default_Show_Command);
+      Pack_Start (Box, Box.Show_Command, Expand => False);
+
+      Gtk_New (Box.Show_Output, -"Show command output (default)");
+      Set_Tip (Get_Tooltips (Command.Kernel), Box.Show_Output,
+               -("Whether the output of the command should be displayed"));
+      Set_Active (Box.Show_Output, Command.Default_Output_Destination /= null
+                 and then Command.Default_Output_Destination.all /= "none");
+      Pack_Start (Box, Box.Show_Output, Expand => False);
+
+      Gtk_New_Hbox (Hbox, Homogeneous => False);
+      Pack_Start (Box, Hbox, Expand => False);
+
+      Gtk_New (Label, -"Output in:");
+      Pack_Start (Hbox, Label, Expand => False);
+
+      Gtk_New (Box.Output);
+      if Command.Default_Output_Destination = null
+        or else Command.Default_Output_Destination.all = ""
+      then
+         Set_Text (Box.Output, "Messages");
+      else
+         Set_Text (Box.Output, Command.Default_Output_Destination.all);
+      end if;
+      Set_Tip (Get_Tooltips (Command.Kernel), Box.Output,
+               -("Name of the window in which the output will be displayed."
+                 & " New windows are created as appropriate."));
+      Pack_Start (Hbox, Box.Output, Expand => True);
+
+      return Gtk.Widget.Gtk_Widget (Box);
+   end Command_Editor;
+
+   ------------------------
+   -- Update_From_Editor --
+   ------------------------
+
+   procedure Update_From_Editor
+     (Command : access Custom_Command; Editor : Gtk.Widget.Gtk_Widget)
+   is
+      pragma Unreferenced (Command, Editor);
+   begin
+      null;
+   end Update_From_Editor;
+
+   -----------
+   -- Start --
+   -----------
+
+   function Start
+     (Command : access Custom_Command) return Component_Iterator is
+   begin
+      --  ??? Case where we don't have an XML, but a simple command
+      return new Custom_Component_Iterator'
+        (Component_Iterator_Record with
+         Command    => Custom_Command_Access (Command),
+         Current    => Command.Components'First,
+         On_Failure => -1);
+   end Start;
+
+   ----------------------
+   -- Component_Editor --
+   ----------------------
+
+   function Component_Editor
+     (Component : access Shell_Component_Record) return Gtk.Widget.Gtk_Widget
+   is
+      Label : Gtk_Label;
+   begin
+      Gtk_New (Label, -"Shell: " & Component.Command.all);
+      return Gtk.Widget.Gtk_Widget (Label);
+   end Component_Editor;
+
+   ------------------------
+   -- Update_From_Editor --
+   ------------------------
+
+   procedure Update_From_Editor
+     (Component : access Shell_Component_Record;
+      Editor    : access Gtk.Widget.Gtk_Widget_Record'Class)
+   is
+      pragma Unreferenced (Component, Editor);
+   begin
+      null;
+   end Update_From_Editor;
+
+   ----------------------
+   -- Component_Editor --
+   ----------------------
+
+   function Component_Editor
+     (Component : access External_Component_Record)
+      return Gtk.Widget.Gtk_Widget
+   is
+      Label : Gtk_Label;
+   begin
+      Gtk_New (Label, -"External: " & Component.Command.all);
+      return Gtk.Widget.Gtk_Widget (Label);
+   end Component_Editor;
+
+   ------------------------
+   -- Update_From_Editor --
+   ------------------------
+
+   procedure Update_From_Editor
+     (Component : access External_Component_Record;
+      Editor    : access Gtk.Widget.Gtk_Widget_Record'Class)
+   is
+      pragma Unreferenced (Component, Editor);
+   begin
+      null;
+   end Update_From_Editor;
 
 end Commands.Custom;

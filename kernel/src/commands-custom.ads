@@ -64,6 +64,7 @@ with GNAT.OS_Lib;          use GNAT.OS_Lib;
 with Glide_Kernel.Scripts; use Glide_Kernel.Scripts;
 with Commands.Interactive; use Commands.Interactive;
 with Glib.Xml_Int;
+with Gtk.Widget;
 with Interactive_Consoles;
 
 package Commands.Custom is
@@ -135,6 +136,13 @@ package Commands.Custom is
    --  since they launch external processes in background mode and must wait
    --  for their output.
 
+   function Start (Command : access Custom_Command) return Component_Iterator;
+   function Command_Editor
+     (Command : access Custom_Command) return Gtk.Widget.Gtk_Widget;
+   procedure Update_From_Editor
+     (Command : access Custom_Command; Editor : Gtk.Widget.Gtk_Widget);
+   --  See doc from inherited subprograms
+
 private
    type Boolean_Array is array (Natural range <>) of Boolean;
    type Boolean_Array_Access is access Boolean_Array;
@@ -150,8 +158,8 @@ private
       Cmd_Index   : Natural;
       --  The current command we are executing
 
-      Current_Command : Glib.Xml_Int.Node_Ptr;
-      --  The current command we are executing.
+      Current_Failure : Integer := -1;
+      --  Whether we are processing some on-failure command
 
       Progress_Matcher  : GNAT.Expect.Pattern_Matcher_Access;
       Current_In_Regexp : Natural;
@@ -175,9 +183,6 @@ private
       Save_Output : Boolean_Array_Access;
       --  Whether we should save the output of the nth-command
 
-      Is_Failure  : Boolean_Array_Access;
-      --  Whether the Nth command is an "on-failure" command.
-
       Context  : Selection_Context_Access;
       --  The context we had at the beginning of the executing
    end record;
@@ -185,13 +190,69 @@ private
    --  Stores information relevant only while a command is executing, to
    --  limit the memory footprint when storing a command.
 
+
+   type Custom_Component_Record is abstract new Command_Component_Record with
+      record
+         Show_Command : Boolean;
+         Output       : String_Access;  --  use Default if this is null
+         Command      : String_Access;
+      end record;
+   type Custom_Component is access all Custom_Component_Record'Class;
+
+   procedure Free (Component : in out Custom_Component_Record);
+   --  Free the memory occupied by Component
+
+   type Shell_Component_Record is new Custom_Component_Record with record
+      Script       : Glide_Kernel.Scripts.Scripting_Language;
+   end record;
+   --  A component that executes a shell command
+
+   type External_Component_Record is new Custom_Component_Record with record
+      Progress_Regexp  : String_Access;
+      Progress_Current : Natural;
+      Progress_Final   : Natural;
+      Progress_Hide    : Boolean;
+   end record;
+
+   function Component_Editor
+     (Component : access Shell_Component_Record) return Gtk.Widget.Gtk_Widget;
+   procedure Update_From_Editor
+     (Component : access Shell_Component_Record;
+      Editor    : access Gtk.Widget.Gtk_Widget_Record'Class);
+   function Component_Editor
+     (Component : access External_Component_Record)
+      return Gtk.Widget.Gtk_Widget;
+   procedure Update_From_Editor
+     (Component : access External_Component_Record;
+      Editor    : access Gtk.Widget.Gtk_Widget_Record'Class);
+   procedure Free (Component : in out External_Component_Record);
+   --  See doc for inherited subprograms
+
+
+   type Command_Component_Description is record
+      Component : Custom_Component;
+      On_Failure_For : Integer := -1;
+      --  Index of the command for which is component is part of the on-failure
+      --  group. For instance, with the following XML file:
+      --      1-   <external />
+      --           <on-failure>
+      --      2-       <script />
+      --      3-       <script />
+      --           </on-failure>
+      --  then both commands 2 and 3 will have On_Failure_For set to 1
+   end record;
+
+   type Components_Array is array (Natural range <>)
+      of Command_Component_Description;
+   type Components_Array_Access is access Components_Array;
+
+
+
    type Custom_Command is new Interactive_Command with record
       Kernel      : Kernel_Handle;
-      Command     : String_Access;
-      Script      : Glide_Kernel.Scripts.Scripting_Language;
-      XML         : Glib.Xml_Int.Node_Ptr;
-      --  Only (Command, Script) or XML is defined, depending on what version
-      --  of Create was used.
+
+      Components  : Components_Array_Access;
+      --  The various components of the command
 
       Default_Output_Destination : String_Access;
       --  The default location for the XML tree
@@ -202,7 +263,7 @@ private
       --  be shown
 
       Name : GNAT.OS_Lib.String_Access;
-      --  The name of the command to execute
+      --  The name of the command
 
       Execution : Custom_Command_Execution;
       --  The current context for the execution of the command. If this is
