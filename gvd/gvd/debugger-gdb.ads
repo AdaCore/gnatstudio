@@ -299,6 +299,11 @@ package Debugger.Gdb is
       Thread   : Natural;
       Mode     : GVD.Types.Command_Type := GVD.Types.Hidden);
 
+   procedure PD_Switch
+     (Debugger : access Gdb_Debugger;
+      PD       : Natural;
+      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden);
+
    procedure Info_Tasks
      (Debugger : access Gdb_Debugger;
       Info     : out Thread_Information_Array;
@@ -308,6 +313,15 @@ package Debugger.Gdb is
      (Debugger : access Gdb_Debugger;
       Info     : out Thread_Information_Array;
       Len      : out Natural);
+
+   procedure Info_PD
+     (Debugger : access Gdb_Debugger;
+      Info     : out PD_Information_Array;
+      Len      : out Natural);
+
+   procedure Info_WTX
+     (Debugger : access Gdb_Debugger;
+      Version  : out Natural);
 
    function Line_Contains_Code
      (Debugger : access Gdb_Debugger;

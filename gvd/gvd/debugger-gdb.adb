@@ -1730,6 +1730,18 @@ package body Debugger.Gdb is
       Send (Debugger, "thread" & Natural'Image (Thread), Mode => Mode);
    end Thread_Switch;
 
+   ---------------
+   -- PD_Switch --
+   ---------------
+
+   procedure PD_Switch
+     (Debugger : access Gdb_Debugger;
+      PD       : Natural;
+      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden) is
+   begin
+      Send (Debugger, "pd" & Natural'Image (PD), Mode => Mode);
+   end PD_Switch;
+
    ----------------
    -- Info_Tasks --
    ----------------
@@ -1819,6 +1831,73 @@ package body Debugger.Gdb is
          Index := EOL - 1;
       end loop;
    end Info_Threads;
+
+   --------------
+   -- Info_PD --
+   --------------
+
+   procedure Info_PD
+     (Debugger : access Gdb_Debugger;
+      Info     : out PD_Information_Array;
+      Len      : out Natural)
+   is
+      EOL         : Positive;
+      Output      : constant String :=
+        Send (Debugger, "info pds", Mode => Internal);
+      Index       : Positive := Output'First;
+
+   begin
+      Len := 0;
+
+      if Output = "The program is not being run." then
+         return;
+      end if;
+
+      while Index < Output'Last loop
+         Len := Len + 1;
+         EOL := Index;
+
+         while EOL <= Output'Last and then Output (EOL) /= ASCII.LF loop
+            EOL := EOL + 1;
+         end loop;
+
+         Info (Len) :=
+           (Num_Fields => 2,
+            Information =>
+              (New_String       (Output (Index     .. Index + 9)),
+               New_String (Trim (Output (Index + 12  .. EOL - 1), Left))
+               ));
+         Index := EOL + 1;
+      end loop;
+
+   exception
+      when Constraint_Error =>
+         --  A parsing error occured when filling Info (Len)
+
+         if Len > 0 then
+            Len := Len - 1;
+         end if;
+   end Info_PD;
+
+   --------------
+   -- Info_WTX --
+   --------------
+
+   procedure Info_WTX
+     (Debugger : access Gdb_Debugger;
+      Version  : out Natural)
+   is
+      Output : constant String :=
+        Send (Debugger, "info wtx", Mode => Internal);
+   begin
+      if Output = "WTX protocol version 2" then
+         Version := 2;
+      elsif Output = "WTX protocol version 3" then
+         Version := 3;
+      else
+         Version := 0;
+      end if;
+   end Info_WTX;
 
    ------------------------
    -- Line_Contains_Code --
