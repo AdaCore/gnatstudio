@@ -1,5 +1,12 @@
 Known Problems fixed in GPS 2.1.0
 
+- D715-006 Drag-and-drop a window on another floating window fails
+  Problem:    If you are trying to make a window floating by dragging it
+              and dropping over an already floating window, GPS will in
+              fact put the new window in one of its docks instead of
+              floating it.
+  Workaround: Drop the window outside any GPS window, floating or not
+
 - D715-005 Regular expression search fails sometimes
   Problem:    When you search for a regular expression in a source editor,
               it happens that GPS highlights the first line of the editor
