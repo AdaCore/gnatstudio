@@ -201,6 +201,12 @@ package body GVD.Process is
       Cmd     : String);
    --  Parse and process a "graph print" or "graph display" command
 
+   procedure Process_View_Cmd
+     (Process : access Debugger_Process_Tab_Record'Class;
+      Cmd     : String);
+   --  Parse and process a "view".
+   --  Syntax recognized: view (source|asm|source_asm)
+
    procedure Preferences_Changed
      (Editor : access Gtk.Widget.Gtk_Widget_Record'Class);
    --  Called when the preferences have changed, and the editor should be
@@ -1287,6 +1293,34 @@ package body GVD.Process is
       end if;
    end Process_Graph_Cmd;
 
+   ----------------------
+   -- Process_View_Cmd --
+   ----------------------
+
+   procedure Process_View_Cmd
+     (Process : access Debugger_Process_Tab_Record'Class;
+      Cmd     : String)
+   is
+      Mode : View_Mode;
+   begin
+      Mode := View_Mode'Value (Cmd (Cmd'First + 5 .. Cmd'Last));
+
+      if Mode /= Source
+        and then Command_In_Process (Get_Process (Process.Debugger))
+      then
+         return;
+      end if;
+
+      if Get_Mode (Process.Editor_Text) /= Mode then
+         Apply_Mode (Process.Editor_Text, Mode);
+      end if;
+
+   exception
+      when Constraint_Error =>
+         Print_Message
+           (Process.Window.Statusbar1, Error, (-" Invalid command: ") & Cmd);
+   end Process_View_Cmd;
+
    --------------------
    -- Close_Debugger --
    --------------------
@@ -1340,6 +1374,20 @@ package body GVD.Process is
       Data            : History_Data;
       use String_History;
 
+      procedure Pre_User_Command;
+      --  handle all the set up for a user command (logs, history, ...)
+
+      procedure Pre_User_Command is
+      begin
+         Output_Message (Debugger, Command, Mode);
+         Data.Mode := Mode;
+         Data.Debugger_Num := Integer (Get_Num (Debugger));
+         Skip_Blanks (Command, First);
+         Data.Command := new String' (Command);
+         Append (Debugger.Window.Command_History, Data);
+         Set_Busy_Cursor (Debugger);
+      end Pre_User_Command;
+
    begin
       if Output_Command then
          Output_Text (Debugger, Command & ASCII.LF, Is_Command => True);
@@ -1359,14 +1407,13 @@ package body GVD.Process is
       Skip_Blanks (Lowered_Command, First);
 
       if Looking_At (Lowered_Command, First, "graph") then
-         Output_Message (Debugger, Command, Mode);
-         Data.Mode := Mode;
-         Data.Debugger_Num := Integer (Get_Num (Debugger));
-         Skip_Blanks (Command, First);
-         Data.Command := new String'(Command);
-         Append (Debugger.Window.Command_History, Data);
-         Set_Busy_Cursor (Debugger);
+         Pre_User_Command;
          Process_Graph_Cmd (Debugger, Command);
+         Display_Prompt (Debugger.Debugger);
+
+      elsif Looking_At (Lowered_Command, First, "view ") then
+         Pre_User_Command;
+         Process_View_Cmd (Debugger, Command);
          Display_Prompt (Debugger.Debugger);
 
       elsif Lowered_Command = "quit" then
