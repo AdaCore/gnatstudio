@@ -1341,6 +1341,11 @@ package body Src_Editor_View is
                Get_Iter_At_Mark (Buffer, Last, Get_Insert (Buffer));
                Copy (Last, Dest => Start);
                Backward_Line (Start, Result);
+
+               if not Ends_Line (Last) then
+                  Forward_To_Line_End (Last, Result);
+               end if;
+
                Result := Do_Indentation (Buffer, Start, Last);
                return True;
             end if;
