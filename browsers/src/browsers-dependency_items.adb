@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                          G L I D E  I I                           --
 --                                                                   --
---                        Copyright (C) 2001                         --
+--                        Copyright (C) 2001-2002                    --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GLIDE is free software; you can redistribute it and/or modify  it --
@@ -92,8 +92,7 @@ package body Browsers.Dependency_Items is
    --  is not already displayed in the canvas.
 
    function Filter
-     (Kernel : access Kernel_Handle_Record'Class;
-      Part   : Unit_Part;
+     (Part   : Unit_Part;
       Dep : Dependency)
       return Boolean;
    --  A filter function that decides whether Dep should be displayed in the
@@ -103,9 +102,7 @@ package body Browsers.Dependency_Items is
    --
    --  ??? This obviously needs to be modifiable from the browser itself.
 
-   function Is_System_File
-     (Kernel : access Kernel_Handle_Record'Class;
-      Source : Internal_File) return Boolean;
+   function Is_System_File (Source : Internal_File) return Boolean;
    --  Return True if Source is a system file (runtime file for Ada).
    --  ??? This should be moved to a more general location, and perhaps be
    --  implemented with support from the project files.
@@ -313,7 +310,7 @@ package body Browsers.Dependency_Items is
          Dep := List;
 
          while Dep /= null loop
-            if Filter (Kernel, Part, Dep.Value) then
+            if Filter (Part, Dep.Value) then
                Intern := File_Information (Dep.Value);
                Item := File_Item
                  (Find_File (In_Browser, Get_Source_Filename (Intern)));
@@ -367,10 +364,7 @@ package body Browsers.Dependency_Items is
    -- Is_System_File --
    --------------------
 
-   function Is_System_File
-     (Kernel : access Kernel_Handle_Record'Class;
-      Source : Internal_File) return Boolean
-   is
+   function Is_System_File (Source : Internal_File) return Boolean is
       Name : constant String := Get_Source_Filename (Source);
    begin
       Name_Len := Name'Length;
@@ -384,8 +378,7 @@ package body Browsers.Dependency_Items is
    ------------
 
    function Filter
-     (Kernel : access Kernel_Handle_Record'Class;
-      Part   : Unit_Part;
+     (Part   : Unit_Part;
       Dep    : Dependency) return Boolean
    is
       Explicit_Dependency : Boolean;
@@ -404,7 +397,7 @@ package body Browsers.Dependency_Items is
       --  Do not display dependencies on runtime files
 
       return Explicit_Dependency
-        and then not Is_System_File (Kernel, File_Information (Dep));
+        and then not Is_System_File (File_Information (Dep));
    end Filter;
 
    ---------------
@@ -428,7 +421,9 @@ package body Browsers.Dependency_Items is
 
       function Check_Item
         (Canvas : access Interactive_Canvas_Record'Class;
-         Item   : access Canvas_Item_Record'Class) return Boolean is
+         Item   : access Canvas_Item_Record'Class) return Boolean
+      is
+         pragma Unreferenced (Canvas);
       begin
          if Item.all in File_Item_Record'Class
            and then Get_Source_Filename (Get_Source (File_Item (Item))) =
@@ -453,6 +448,7 @@ package body Browsers.Dependency_Items is
    procedure On_Dependency_Browser
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
+      pragma Unreferenced (Widget);
       Child : MDI_Child;
    begin
       Child := Open_Dependency_Browser (Kernel);
@@ -471,6 +467,7 @@ package body Browsers.Dependency_Items is
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access)
    is
+      pragma Unreferenced (Widget);
       Browser : MDI_Child;
    begin
       Browser := Open_Dependency_Browser (Get_Kernel (Context));
@@ -529,6 +526,7 @@ package body Browsers.Dependency_Items is
       Context : access Selection_Context'Class;
       Menu    : access Gtk.Menu.Gtk_Menu_Record'Class)
    is
+      pragma Unreferenced (Object);
       Item         : Gtk_Menu_Item;
       File_Context : File_Selection_Context_Access;
    begin
@@ -789,6 +787,7 @@ package body Browsers.Dependency_Items is
       Event : Gdk.Event.Gdk_Event;
       Menu  : Gtk.Menu.Gtk_Menu) return Selection_Context_Access
    is
+      pragma Unreferenced (Event, Menu);
       Context : Selection_Context_Access := new File_Selection_Context;
       Src     : Src_Info.Internal_File := Get_Source (Item);
       Filename : constant String := Get_Full_Source_Filename
