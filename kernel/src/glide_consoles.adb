@@ -20,7 +20,6 @@
 
 with Glib;                 use Glib;
 with Gdk.Color;            use Gdk.Color;
-with Gdk.Event;            use Gdk.Event;
 with Gtk.Enums;            use Gtk.Enums;
 with Gtk.Scrolled_Window;  use Gtk.Scrolled_Window;
 with Gtk.Text;             use Gtk.Text;
@@ -44,8 +43,7 @@ package body Glide_Consoles is
    --  <preference>
 
    function On_Button_Release
-     (Widget : access Gtk_Widget_Record'Class;
-      Event  : Gdk_Event) return Boolean;
+     (Widget : access Gtk_Widget_Record'Class) return Boolean;
    --  Handler for "button_press_event" signal
 
    function Load_Desktop
@@ -179,8 +177,7 @@ package body Glide_Consoles is
    -----------------------
 
    function On_Button_Release
-     (Widget : access Gtk_Widget_Record'Class;
-      Event  : Gdk_Event) return Boolean
+     (Widget : access Gtk_Widget_Record'Class) return Boolean
    is
       Console     : Glide_Console := Glide_Console (Widget);
       Position    : constant Gint := Get_Position (Console.Text);
