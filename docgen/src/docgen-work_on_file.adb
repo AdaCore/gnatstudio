@@ -31,6 +31,7 @@ with Glide_Kernel.Project;      use Glide_Kernel.Project;
 with VFS;                       use VFS;
 with Projects.Registry;         use Projects.Registry;
 with Glide_Kernel.Console;      use Glide_Kernel.Console;
+with Glide_Intl;                use Glide_Intl;
 
 package body Docgen.Work_On_File is
 
@@ -41,23 +42,23 @@ package body Docgen.Work_On_File is
    package TRL  renames Type_Reference_List;
 
    procedure Process_One_File
-     (B                  : Backend_Handle;
-      Doc_File           : File_Type;
-      Kernel             : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Source_Filename    : Virtual_File;
-      Package_Name       : String;
-      Next_Package       : GNAT.OS_Lib.String_Access;
-      Prev_Package       : GNAT.OS_Lib.String_Access;
-      Source_File_List   : in out Type_Source_File_List.List;
-      Options            : All_Options;
-      Process_Body_File  : Boolean;
+     (B                     : Backend_Handle;
+      Doc_File              : File_Type;
+      Kernel                : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Source_Filename       : Virtual_File;
+      Package_Name          : String;
+      Next_Package          : GNAT.OS_Lib.String_Access;
+      Prev_Package          : GNAT.OS_Lib.String_Access;
+      Source_File_List      : in out Type_Source_File_List.List;
+      Options               : All_Options;
+      Process_Body_File     : Boolean;
       Subprogram_Index_List : in out Type_Entity_List.List;
       Type_Index_List       : in out Type_Entity_List.List;
       Tagged_Types_List     : in out Type_List_Tagged_Element.List;
       All_Tagged_Types_List : in out List_Entity_Handle.List;
-      Converter          : Docgen.Doc_Subprogram_Type;
-      Doc_Directory      : String;
-      Doc_Suffix         : String);
+      Converter             : Docgen.Doc_Subprogram_Type;
+      Doc_Directory         : String;
+      Doc_Suffix            : String);
    --  Called by Process_Files for each file from the given list
    --  will examine that file and call the function Work_On_Source
    --  from Docgen.Work_On_File.
@@ -121,7 +122,8 @@ package body Docgen.Work_On_File is
       -----------------------
 
       function Find_Next_Package
-        (Package_Nr : Natural) return String is
+        (Package_Nr : Natural) return String
+      is
          Local_Node : Type_Source_File_List.List_Node;
          use TSFL;
       begin
@@ -130,11 +132,13 @@ package body Docgen.Work_On_File is
          else
             Local_Node := Source_File_Node;
             Local_Node := Next (Source_File_Node);
+
             if not Is_Spec_File (Kernel, Data (Local_Node).File_Name) then
                Local_Node := Next (Local_Node);
             end if;
+
             if Local_Node = Type_Source_File_List.Null_Node then
-               --  don't change this return, needed in Docgen-Texi_Output
+               --  don't change this return, needed in Docgen.Texi_Output
                --  in Write_Not_Regular_Beginning!
                return "";
             else
@@ -263,23 +267,23 @@ package body Docgen.Work_On_File is
    ----------------------
 
    procedure Process_One_File
-     (B                  : Backend_Handle;
-      Doc_File           : File_Type;
-      Kernel             : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Source_Filename    : Virtual_File;
-      Package_Name       : String;
-      Next_Package       : GNAT.OS_Lib.String_Access;
-      Prev_Package       : GNAT.OS_Lib.String_Access;
-      Source_File_List   : in out Type_Source_File_List.List;
-      Options            : All_Options;
-      Process_Body_File  : Boolean;
+     (B                     : Backend_Handle;
+      Doc_File              : File_Type;
+      Kernel                : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Source_Filename       : Virtual_File;
+      Package_Name          : String;
+      Next_Package          : GNAT.OS_Lib.String_Access;
+      Prev_Package          : GNAT.OS_Lib.String_Access;
+      Source_File_List      : in out Type_Source_File_List.List;
+      Options               : All_Options;
+      Process_Body_File     : Boolean;
       Subprogram_Index_List : in out Type_Entity_List.List;
       Type_Index_List       : in out Type_Entity_List.List;
       Tagged_Types_List     : in out Type_List_Tagged_Element.List;
       All_Tagged_Types_List : in out List_Entity_Handle.List;
       Converter             : Docgen.Doc_Subprogram_Type;
-      Doc_Directory      : String;
-      Doc_Suffix         : String)
+      Doc_Directory         : String;
+      Doc_Suffix            : String)
    is
       LI_Unit          : LI_File_Ptr;
       Tree             : Scope_Tree;
@@ -294,7 +298,10 @@ package body Docgen.Work_On_File is
       --  pointed by the field Entity of the record Reference_In_File
       Ent_Handle       : Entity_Handle := null;
       Status           : Find_Decl_Or_Body_Query_Status;
---  Waiting that bug in compiler is fixed
+
+--  ??? Why can't we enable this code now, even if it won't work exactly as
+--  expected
+--  ??? Waiting that bug in compiler is fixed
 --        Field            : Entity_Information;
 --        Entity_Complete  : Entity_List_Information;
 --        Found_Private    : Boolean;
@@ -581,7 +588,7 @@ package body Docgen.Work_On_File is
                   List_Reference_In_File.Append
                     (List_Ref_In_File,
                      (Name   =>
-                      new String'(Get_Name (Get (Entity_Iter))),
+                        new String'(Get_Name (Get (Entity_Iter))),
                       Line   => Get_Line (Get_Location (Ref_In_File)),
                       Column => Get_Column (Get_Location (Ref_In_File)),
                       Entity => Ent_Handle));
@@ -623,12 +630,15 @@ package body Docgen.Work_On_File is
             Entity_Iter :=
               Find_All_References_In_File (LI_Unit, Source_Filename);
             Tree := Create_Tree (LI_Unit);
+
             loop
                Ref_In_File := Get (Entity_Iter);
 
                if Ref_In_File = No_Reference then
                   --  New entity
+
                   Info := Get (Entity_Iter);
+
                   exit when Info = No_Entity_Information;
 
                   Ent_Handle := new Entity_Information'(Info);
@@ -639,13 +649,17 @@ package body Docgen.Work_On_File is
                   Find_Next_Body
                     (Kernel, LI_Unit,
                      Info, Entity_Node.Line_In_Body, Status);
+
                   if Status /= Success then
                      Entity_Node.Line_In_Body := Null_File_Location;
-                     Insert
+
+                     --  ??? Should only generate this message once
+
+                     Console.Insert
                        (Kernel,
-                        "Somes files should be recompiled",
-                        True,
-                        Verbose);
+                        -("Docgen: xref information is not up-to-date, " &
+                          "output may not be accurate"),
+                        Mode => Verbose);
                   end if;
 
                   --  Check if the declaration of the entity is in one of the
@@ -703,11 +717,13 @@ package body Docgen.Work_On_File is
                                 (Source_Filename,
                                  Get_Declaration_File_Of (Info));
 
-                              --  Code before will be possible when bug in
+                              --  ??? Traces, even temporary, should be written
+                              --  in english, not in french.
+                              --  ??? Enable code below when bug in
                               --  compiler about private field marked as
                               --  public is fixed
 
---                                Trace (Me, "Nom type:: " & Get_Name (Info));
+--                                Trace (Me, "Type name: " & Get_Name (Info));
 --
 --                                Get_Scope_Tree (Kernel,
 --                                                Info,
@@ -723,9 +739,9 @@ package body Docgen.Work_On_File is
 --
 --                                   if not Is_Discriminant
 --                                     (Field, LI_Unit, Info) then
---                                      Trace (Me, "Trouve 1 field ::");
+--                                      Trace (Me, "Trouve 1 field :");
 --                                      Trace (Me, "Nom " & Get_Name (Field));
---                                      Trace (Me, "Prive :: "
+--                                      Trace (Me, "Prive : "
 --                                          & Boolean'Image
 --                                            (Get_Scope (Field)
 --                                               /= Global_Scope));
@@ -768,7 +784,7 @@ package body Docgen.Work_On_File is
 --
 --                                   Type_Entity_List.Append
 --                                     (Entity_List, Entity_Complete);
---                                   Trace (Me, "Ajout ds Entity_List :: "
+--                                   Trace (Me, "Ajout ds Entity_List : "
 --                                          & Entity_Complete.Name.all);
 --                                   Trace (Me, "Rencontre ligne: "
 --                                          & Natural'Image
@@ -801,17 +817,16 @@ package body Docgen.Work_On_File is
                      end case;
 
                      if (Options.Tagged_Types
+                         and then Get_Kind (Info).Is_Type
                          and then
-                           Get_Kind (Info).Is_Type
-                         and then
-                           (Get_Kind (Info).Kind = Record_Kind or else
-                     --  In Ada, tagged type are classified as Record
-                     --  The only way to distinguish them to classic
-                     --  record is to search for parent and children.
-                     --  ??? tagged types without child and without
-                     --  parent don't appear in the list
-                              Get_Kind (Info).Kind = Class or else
-                              Get_Kind (Info).Kind = Class_Wide))
+                           (Get_Kind (Info).Kind = Record_Kind
+                        --  In Ada, tagged type are classified as Record
+                        --  The only way to distinguish them to classic
+                        --  record is to search for parent and children.
+                        --  ??? tagged types without child and without
+                        --  parent don't appear in the list
+                            or else Get_Kind (Info).Kind = Class
+                            or else Get_Kind (Info).Kind = Class_Wide))
                      then
                         if Get (Get_Parent_Types (LI_Unit, Info))
                           /= No_Entity_Information
@@ -824,8 +839,8 @@ package body Docgen.Work_On_File is
                              (All_Tagged_Types_List, Info);
                            if Me_Pointer = null then
                               --  tagged type seen for the first time
-                              Me_Pointer
-                                := new Entity_Information'(Copy (Info));
+                              Me_Pointer :=
+                                new Entity_Information'(Copy (Info));
                               List_Entity_Handle.Append
                                 (All_Tagged_Types_List, Me_Pointer);
                            end if;
@@ -833,20 +848,24 @@ package body Docgen.Work_On_File is
                            Tag_Elem_Me.Number_Of_Children := 0;
 
                            --  Parent of the tagged type
-                           --  ??? for c++ multiple parents are not processed
-                           Parent
-                             := Get_Parent_Types (LI_Unit, Me_Pointer.all);
+                           --  ??? for C++ multiple parents are not processed
+                           Parent :=
+                             Get_Parent_Types (LI_Unit, Me_Pointer.all);
                            Father := Get (Parent);
+
                            if Father /= No_Entity_Information then
                               Parent_Pointer := Find_In_List
                                 (All_Tagged_Types_List, Father);
+
                               if Parent_Pointer = null then
-                                 --  tagged type seen for the first time
-                                 Parent_Pointer
-                                   := new Entity_Information'(Father);
+                                 --  Tagged type seen for the first time
+
+                                 Parent_Pointer :=
+                                   new Entity_Information'(Father);
                                  List_Entity_Handle.Append
                                    (All_Tagged_Types_List, Parent_Pointer);
                               end if;
+
                               Tag_Elem_Me.My_Parent := Parent_Pointer;
                            else
                               --  This tagged type has no parent
@@ -854,23 +873,28 @@ package body Docgen.Work_On_File is
                            end if;
 
                            --  Children of the tagged type
-                           Child
-                             := Get_Children_Types (LI_Unit, Me_Pointer.all);
+                           Child :=
+                             Get_Children_Types (LI_Unit, Me_Pointer.all);
+
                            loop
                               Son := Get (Child);
+
                               exit when Son = No_Entity_Information;
-                              Child_Pointer
-                                := Find_In_List (All_Tagged_Types_List, Son);
+
+                              Child_Pointer :=
+                                Find_In_List (All_Tagged_Types_List, Son);
+
                               if Child_Pointer = null then
-                                 --  tagged type seen for the first time
+                                 --  Tagged type seen for the first time
                                  Child_Pointer := new Entity_Information'(Son);
                                  List_Entity_Handle.Append
                                    (All_Tagged_Types_List, Child_Pointer);
                               end if;
+
                               List_Entity_Handle.Append
                                 (Tag_Elem_Me.My_Children, Child_Pointer);
-                              Tag_Elem_Me.Number_Of_Children
-                                := Tag_Elem_Me.Number_Of_Children + 1;
+                              Tag_Elem_Me.Number_Of_Children :=
+                                Tag_Elem_Me.Number_Of_Children + 1;
                               Next (Child);
                            end loop;
 
@@ -885,15 +909,18 @@ package body Docgen.Work_On_File is
                   end if;
                else
                   --  New reference on the current entity
+
                   List_Reference_In_File.Append
                     (List_Ref_In_File,
                      (Name   =>
-                      new String'(Get_Name (Get (Entity_Iter))),
+                        new String'(Get_Name (Get (Entity_Iter))),
                       Line   => Get_Line (Get_Location (Ref_In_File)),
                       Column => Get_Column (Get_Location (Ref_In_File)),
                       Entity => Ent_Handle));
                end if;
+
                --  Get next entity (or reference) in this file
+
                Next (Entity_Iter);
             end loop;
 
@@ -901,6 +928,7 @@ package body Docgen.Work_On_File is
             Free (Tree);
 
             --  Process the documentation of this file
+
             Process_Source
               (B,
                Kernel,
@@ -920,7 +948,7 @@ package body Docgen.Work_On_File is
                Doc_Suffix);
 
          else
-            Trace (Me, "LI file not found -- File :: "
+            Trace (Me, "LI file not found: "
                    & Base_Name (Source_Filename));  --  later Exception?
          end if;
 
