@@ -1,20 +1,322 @@
+-----------------------------------------------------------------------
+--                                                                   --
+--                     Copyright (C) 2001                            --
+--                          ACT-Europe                               --
+--                                                                   --
+-- This library is free software; you can redistribute it and/or     --
+-- modify it under the terms of the GNU General Public               --
+-- License as published by the Free Software Foundation; either      --
+-- version 2 of the License, or (at your option) any later version.  --
+--                                                                   --
+-- This library is distributed in the hope that it will be useful,   --
+-- but WITHOUT ANY WARRANTY; without even the implied warranty of    --
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
+-- General Public License for more details.                          --
+--                                                                   --
+-- You should have received a copy of the GNU General Public         --
+-- License along with this library; if not, write to the             --
+-- Free Software Foundation, Inc., 59 Temple Place - Suite 330,      --
+-- Boston, MA 02111-1307, USA.                                       --
+--                                                                   --
+-- As a special exception, if other files instantiate generics from  --
+-- this unit, or you link this unit with other files to produce an   --
+-- executable, this  unit  does not  by itself cause  the resulting  --
+-- executable to be covered by the GNU General Public License. This  --
+-- exception does not however invalidate any other reasons why the   --
+-- executable file  might be covered by the  GNU Public License.     --
+-----------------------------------------------------------------------
 
 --  Gnat sources dependencies
 with Prj;       use Prj;
-with Prj.Env;   use Prj.Env;
 with Prj.Util;  use Prj.Util;
 with Prj.Pars;  use Prj.Pars;
+with Prj.Tree;  use Prj.Tree;
 with Snames;    use Snames;
 with Namet;     use Namet;
 with Types;     use Types;
 with Csets;     use Csets;
 with Stringt;   use Stringt;
 with Sinput;
-with Ada.Text_IO; use Ada.Text_IO;
 with GNAT.OS_Lib; use GNAT.OS_Lib;
 with Unchecked_Deallocation;
 
 package body Prj_API is
+
+   --------------------
+   -- Create_Project --
+   --------------------
+
+   function Create_Project (Name, Path : String) return Project_Node_Id is
+      Project : Project_Node_Id;
+   begin
+      Project_Nodes.Append (Default_Project_Node (N_Project));
+      Project := Project_Nodes.Last;
+      pragma Assert (Project /= Empty_Node);
+
+      --  Adding the name of the project
+      Name_Len := Name'Length;
+      Name_Buffer (1 .. Name_Len) := Name;
+      Project_Nodes.Table (Project).Name := Name_Enter;
+
+      --  Adding the project path
+      Name_Len := Path'Length;
+      Name_Buffer (1 .. Name_Len) := Path;
+      Project_Nodes.Table (Project).Path_Name := Name_Enter;
+      return Project;
+   end Create_Project;
+
+   -------------------------------
+   -- Get_Or_Create_Declaration --
+   -------------------------------
+
+   function Get_Or_Create_Declaration (Project : Project_Node_Id)
+      return Project_Node_Id
+   is
+      Decl : Project_Node_Id := Project_Nodes.Table (Project).Field2;
+   begin
+      if Decl = Empty_Node then
+         Project_Nodes.Append (Default_Project_Node (N_Project_Declaration));
+         Decl := Project_Nodes.Last;
+         Project_Nodes.Table (Project).Field2 := Decl;
+      end if;
+      return Decl;
+   end Get_Or_Create_Declaration;
+
+   ----------------------------
+   -- Get_Or_Create_Variable --
+   ----------------------------
+
+   function Get_Or_Create_Variable
+     (Prj_Or_Pkg : Project_Node_Id;
+      Name : String;
+      Kind : Variable_Kind := List)
+      return Project_Node_Id
+   is
+      Decl, Decl_Item, Var : Project_Node_Id;
+      N : Name_Id;
+   begin
+      pragma Assert
+        (Project_Nodes.Table (Prj_Or_Pkg).Kind = N_Package_Declaration
+         or else Project_Nodes.Table (Prj_Or_Pkg).Kind = N_Project);
+
+      Name_Len := Name'Length;
+      Name_Buffer (1 .. Name_Len) := Name;
+      N := Name_Find;
+
+      --  First step is to create the declarative item that will contain the
+      --  variable. This is dependent on the kind of node for Prj_Or_Pkg
+
+      case Project_Nodes.Table (Prj_Or_Pkg).Kind is
+         when N_Project =>
+            Decl := Get_Or_Create_Declaration (Prj_Or_Pkg);
+            Decl_Item := Project_Nodes.Table (Decl).Field1;
+
+         when N_Package_Declaration =>
+            Decl := Empty_Node;
+            Decl_Item := Project_Nodes.Table (Prj_Or_Pkg).Field2;
+
+         when others =>
+            null;
+      end case;
+
+      --  Check if the variable already exists.
+      --  If it does, nothing to do, and we just exit.
+
+      while Decl_Item /= Empty_Node loop
+         Var := Project_Nodes.Table (Decl_Item).Field1;
+         if Project_Nodes.Table (Var).Kind = N_Variable_Declaration
+           and then Project_Nodes.Table (Var).Name = N
+         then
+            return Var;
+         end if;
+         Decl_Item := Project_Nodes.Table (Decl_Item).Field2;
+      end loop;
+
+      --  Otherwise create the declarative item
+
+      Project_Nodes.Append (Default_Project_Node (N_Declarative_Item));
+      Decl_Item := Project_Nodes.Last;
+
+      --  Insert it in the appropriate list
+
+      case Project_Nodes.Table (Prj_Or_Pkg).Kind is
+         when N_Project =>
+            Project_Nodes.Table (Decl_Item).Field2 :=
+              Project_Nodes.Table (Decl).Field1;
+            Project_Nodes.Table (Decl).Field1 := Decl_Item;
+
+         when N_Package_Declaration =>
+            Project_Nodes.Table (Decl_Item).Field2 :=
+              Project_Nodes.Table (Prj_Or_Pkg).Field2;
+            Project_Nodes.Table (Prj_Or_Pkg).Field2 := Decl_Item;
+
+         when others =>
+            null;
+      end case;
+
+      --  Create the variable
+
+      Project_Nodes.Append
+        (Default_Project_Node (N_Variable_Declaration, Kind));
+      Var := Project_Nodes.Last;
+      Project_Nodes.Table (Decl_Item).Field1 := Var;
+
+      Project_Nodes.Table (Var).Name := N;
+
+      if Kind = Prj.List then
+         Project_Nodes.Append
+           (Default_Project_Node (N_Literal_String_List, List));
+         Project_Nodes.Table (Var).Field1 := Project_Nodes.Last;
+      end if;
+      return Var;
+   end Get_Or_Create_Variable;
+
+   ---------------------------
+   -- Get_Or_Create_Package --
+   ---------------------------
+
+   function Get_Or_Create_Package
+     (Project : Project_Node_Id; Pkg : String) return Project_Node_Id
+   is
+      Decl : constant Project_Node_Id := Get_Or_Create_Declaration (Project);
+      Decl_Item : Project_Node_Id;
+      Pack : Project_Node_Id;
+      N : Name_Id;
+   begin
+      Name_Len := Pkg'Length;
+      Name_Buffer (1 .. Name_Len) := Pkg;
+      N := Name_Find;
+
+      --  Check if the package already exists
+      --  ??? It seems that packages and variables should be stored in
+      --  different lists
+      Decl_Item := Project_Nodes.Table (Decl).Field1;
+      while Decl_Item /= Empty_Node loop
+         Pack := Project_Nodes.Table (Decl_Item).Field1;
+         if Project_Nodes.Table (Pack).Kind = N_Package_Declaration
+           and then Project_Nodes.Table (Pack).Name = N
+         then
+            return Pack;
+         end if;
+         Decl_Item := Project_Nodes.Table (Decl_Item).Field2;
+      end loop;
+
+      --  Otherwise create the declarative item
+      Project_Nodes.Append (Default_Project_Node (N_Declarative_Item));
+      Decl_Item := Project_Nodes.Last;
+      Project_Nodes.Table (Decl_Item).Field2 :=
+        Project_Nodes.Table (Decl).Field1;
+      Project_Nodes.Table (Decl).Field1 := Decl_Item;
+
+      --  Create the variable
+      Project_Nodes.Append
+        (Default_Project_Node (N_Package_Declaration, Undefined));
+      Pack := Project_Nodes.Last;
+      Project_Nodes.Table (Pack).Field3 := Project_Nodes.Table (Decl).Field1;
+      Project_Nodes.Table (Decl_Item).Field1 := Pack;
+
+      Project_Nodes.Table (Pack).Name := N;
+
+      return Pack;
+   end Get_Or_Create_Package;
+
+   --------------------
+   -- Append_To_List --
+   --------------------
+
+   procedure Append_To_List (Var : Project_Node_Id; Value : String) is
+      List, Expr, Term, Str : Project_Node_Id;
+   begin
+      pragma Assert (Var /= Empty_Node);
+      pragma Assert (Project_Nodes.Table (Var).Expr_Kind = Prj.List);
+
+      List := Project_Nodes.Table (Var).Field1;
+
+      pragma Assert (List /= Empty_Node);
+      pragma Assert (Project_Nodes.Table (List).Kind = N_Literal_String_List);
+
+      --  Create a new expression
+      Project_Nodes.Append (Default_Project_Node (N_Expression));
+      Term := Project_Nodes.Last;
+
+      --  Create a new list if required
+      Expr := Project_Nodes.Table (List).Field1;
+      if Expr = Empty_Node then
+         Project_Nodes.Table (List).Field1 := Term;
+
+      --  Else append at the end of list
+      else
+         while Project_Nodes.Table (Expr).Field2 /= Empty_Node loop
+            Expr := Project_Nodes.Table (Expr).Field2;
+         end loop;
+
+         Project_Nodes.Table (Expr).Field2 := Term;
+      end if;
+      Expr := Term;
+
+      Project_Nodes.Append (Default_Project_Node (N_Term));
+      Term := Project_Nodes.Last;
+      Project_Nodes.Table (Expr).Field1 := Term;
+
+      Project_Nodes.Append (Default_Project_Node (N_Literal_String));
+      Str := Project_Nodes.Last;
+      Project_Nodes.Table (Term).Field1 := Str;
+
+      Start_String;
+      Store_String_Chars (Value);
+      Project_Nodes.Table (Str).Value := End_String;
+   end Append_To_List;
+
+   ---------------
+   -- Set_Value --
+   ---------------
+
+   procedure Set_Value (Var : Project_Node_Id; Value : String) is
+      Expr, Term, Str : Project_Node_Id;
+   begin
+      pragma Assert (Var /= Empty_Node);
+      pragma Assert (Project_Nodes.Table (Var).Expr_Kind = Prj.Single);
+
+      --  Create the expression if required
+      Expr := Project_Nodes.Table (Var).Field1;
+      if Expr = Empty_Node then
+         Project_Nodes.Append (Default_Project_Node (N_Expression));
+         Expr := Project_Nodes.Last;
+         Project_Nodes.Table (Var).Field1 := Expr;
+      else
+         pragma Assert (Project_Nodes.Table (Expr).Kind = N_Expression);
+         null;
+      end if;
+
+      Project_Nodes.Table (Expr).Field2 := Empty_Node; --  No next in the list
+
+      --  Create the term
+      Term := Project_Nodes.Table (Expr).Field1;
+      if Term = Empty_Node then
+         Project_Nodes.Append (Default_Project_Node (N_Term));
+         Term := Project_Nodes.Last;
+         Project_Nodes.Table (Expr).Field1 := Term;
+      else
+         pragma Assert (Project_Nodes.Table (Term).Kind = N_Term);
+         null;
+      end if;
+
+      Project_Nodes.Append (Default_Project_Node (N_Literal_String));
+      Str := Project_Nodes.Last;
+      Project_Nodes.Table (Term).Field1 := Str;
+      Project_Nodes.Table (Term).Field2 := Empty_Node;
+
+      Start_String;
+      Store_String_Chars (Value);
+      Project_Nodes.Table (Str).Value := End_String;
+   end Set_Value;
+
+
+
+   --  To be removed below --
+
+
+
 
    type Prj_Action is access procedure (Project : Project_Id);
    procedure For_All_Imported (Root : Project_Id; Action : Prj_Action);
@@ -526,149 +828,6 @@ package body Prj_API is
          Split  => False);
    end Add_To_Value_Of;
 
-   -------------------
-   -- Write_Project --
-   -------------------
-
-   procedure Write_Project (Project : Prj.Project_Id) is
-
-      procedure Write_With (Prj : Project_Id);
-      procedure Write_Prj  (Prj : Project_Id);
-      procedure Print_String_List (List : String_List_Id; Indent : String);
-      procedure Print_Decl (Decl : Declarations; Indent : String := "  ");
-      procedure Print_Variable_Value
-        (Value : Variable_Value; Indent : String);
-
-      ----------------
-      -- Write_With --
-      ----------------
-
-      procedure Write_With (Prj : Project_Id) is
-      begin
-         Put_Line
-           ("with """ & Get_Name_String (Projects.Table (Prj).Name) & """;");
-      end Write_With;
-
-      -----------------------
-      -- Print_String_List --
-      -----------------------
-
-      procedure Print_String_List (List : String_List_Id; Indent : String) is
-         Str  : String_List_Id := List;
-         Elem : String_Element;
-      begin
-         Put_Line ("(");
-         while Str /= Nil_String loop
-            Elem := String_Elements.Table (Str);
-            String_To_Name_Buffer (Elem.Value);
-            if Str /= List then
-               Put_Line (", ");
-            end if;
-            Put (Indent & "  """ & Name_Buffer (1 .. Name_Len) & """");
-            Str := Elem.Next;
-         end loop;
-         Put_Line (");");
-      end Print_String_List;
-
-      --------------------------
-      -- Print_Variable_Value --
-      --------------------------
-
-      procedure Print_Variable_Value
-        (Value : Variable_Value; Indent : String) is
-      begin
-         case Value.Kind is
-            when Undefined =>
-               null;
-
-            when Single =>
-               String_To_Name_Buffer (Value.Value);
-               Put_Line ('"' & Name_Buffer (1 .. Name_Len) & """;");
-
-            when List =>
-               Print_String_List (Value.Values, Indent);
-         end case;
-      end Print_Variable_Value;
-
-      ----------------
-      -- Print_Decl --
-      ----------------
-
-      procedure Print_Decl (Decl : Declarations; Indent : String := "  ") is
-         Pkg  : Package_Id;
-         Var  : Variable_Id;
-         Arr  : Array_Id;
-         Elem : Array_Element_Id;
-      begin
-         --  Print Variables
-
-         Var := Decl.Variables;
-         while Var /= No_Variable loop
-            Put (Indent & Get_Name_String (Variable_Elements.Table (Var).Name)
-                 & " := ");
-            Print_Variable_Value (Variable_Elements.Table (Var).Value, Indent);
-            Var := Variable_Elements.Table (Var).Next;
-         end loop;
-
-         --  Print Arrays
-
-         Arr := Decl.Arrays;
-         while Arr /= No_Array loop
-            Elem := Arrays.Table (Arr).Value;
-            while Elem /= No_Array_Element loop
-               Put
-                 (Indent & Get_Name_String (Arrays.Table (Arr).Name) & " (""");
-               Put (Get_Name_String (Array_Elements.Table (Elem).Index)
-                    & """) := ");
-               Print_Variable_Value
-                 (Array_Elements.Table (Elem).Value, Indent);
-               Elem := Array_Elements.Table (Elem).Next;
-            end loop;
-            Arr := Arrays.Table (Arr).Next;
-         end loop;
-
-         --  Print Packages
-
-         Pkg := Decl.Packages;
-         while Pkg /= No_Package loop
-            Put_Line
-              (Indent & "package "
-               & Get_Name_String (Packages.Table (Pkg).Name) & " is ");
-            Print_Decl (Packages.Table (Pkg).Decl, Indent & "  ");
-            Put_Line
-              (Indent & "end " & Get_Name_String (Packages.Table (Pkg).Name)
-               & ';');
-            Pkg := Packages.Table (Pkg).Next;
-         end loop;
-      end Print_Decl;
-
-      ---------------
-      -- Write_Prj --
-      ---------------
-
-      procedure Write_Prj (Prj : Project_Id) is
-      begin
-         For_All_Imported (Prj, Write_With'Unrestricted_Access);
-         Put
-           ("project " & Get_Name_String (Projects.Table (Prj).Name));
-         if Projects.Table (Prj).Modifies /= No_Project then
-            Put (" modifying "
-                 & Get_Name_String
-                 (Projects.Table (Projects.Table (Prj).Modifies).Name));
-         end if;
-
-         Put_Line (" is");
-         Print_Decl (Projects.Table (Prj).Decl);
-         Put_Line ("end " & Get_Name_String (Projects.Table (Prj).Name) & ';');
-         New_Line;
-      end Write_Prj;
-
-   begin
-      for J in Projects.Table'First .. Projects.Last loop
-         Write_Prj (J);
-      end loop;
-   end Write_Project;
-
    --------------------
    -- Create_Project --
    --------------------
@@ -735,5 +894,5 @@ begin
    Csets.Initialize;
    Snames.Initialize;
    Prj.Initialize;
-   Prj.Env.Initialize;
+   Project_Nodes.Set_Last (Empty_Node);
 end Prj_API;
