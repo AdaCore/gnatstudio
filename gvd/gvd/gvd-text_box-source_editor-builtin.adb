@@ -1505,7 +1505,7 @@ package body GVD.Source_Editors is
                    Force => False);
       Load_File (Editor, File_Name);
       Set_Value (Get_Vadj (Get_Child (Editor)), Value);
-      Set_Line (Editor, 1, False);
+      Set_Line (Editor, Get_Line (Editor), False);
 
       Highlight_Current_Line (Editor);
 
