@@ -1,4 +1,4 @@
-Known Problems fixed in GPS 2.1.1
+Known Problems fixed in GPS 2.1.2
 
 - E217-011 Imported project not seen in project body
   Problem:    In some circumstances, when "limited with" is used,
@@ -6,6 +6,8 @@ Known Problems fixed in GPS 2.1.1
               in the project body.
   Workaround: Restructure the projects and their sources to avoid
               limited withs.
+
+Known Problems fixed in GPS 2.1.1
 
 - E104-006 Theme activation status improperly restored
   Problem:    When editing the list of themes that are loaded by GPS from the
