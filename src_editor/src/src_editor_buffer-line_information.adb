@@ -1393,6 +1393,10 @@ package body Src_Editor_Buffer.Line_Information is
                     (UTF8, Length,
                      Get_Pref (Buffer.Kernel, Default_Charset), "UTF-8",
                      Ignore, Bytes, Result => Line_Data.Text.all);
+
+                  --  ??? Should not ignore Bytes, otherwise Line_Data.Text
+                  --  will contain garbage
+
                   g_free (UTF8);
                end;
 
