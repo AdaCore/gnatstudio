@@ -6472,8 +6472,8 @@ Usage:
 Options:
    --help              Show this help message and exit
    --version           Show the GPS version and exit
-   --debug [program]   Start a debug session and load the program with
-                       the given arguments
+   --debug[=program]   Start a debug session and optionally load the
+                       program with the given arguments
    --debugger debugger Specify the debugger's command line
    --target=TARG:PRO   Load program on machine TARG using protocol PRO
 
