@@ -512,4 +512,32 @@ package body Commands.Editor is
       return Success;
    end Execute;
 
+   -------------
+   -- Execute --
+   -------------
+
+   function Execute
+     (Command : access Hide_Editable_Lines_Type)
+      return Command_Return_Type is
+   begin
+      Hide_Lines (Command.Buffer, Command.Mark, Command.Number);
+
+      return Success;
+   end Execute;
+
+   -------------
+   -- Execute --
+   -------------
+
+   function Execute
+     (Command : access Unhide_Editable_Lines_Type)
+      return Command_Return_Type is
+   begin
+      Unhide_Lines
+        (Command.Buffer, Command.Mark,
+         Command.First_Line, Command.Last_Line);
+
+      return Success;
+   end Execute;
+
 end Commands.Editor;
