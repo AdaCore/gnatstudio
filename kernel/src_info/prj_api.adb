@@ -1054,6 +1054,8 @@ package body Prj_API is
             end if;
             Index := Index + 1;
          end loop;
+      else
+         return False;
       end if;
       return True;
    end Is_Equal;
