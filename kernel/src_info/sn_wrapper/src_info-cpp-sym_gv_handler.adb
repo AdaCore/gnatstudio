@@ -70,12 +70,22 @@ begin
          Declaration_Info  => Decl_Info);
 
       --  add reference to the type of this variable
-      Refer_Type
-         (Var.Buffer
-            (Var.Value_Type.First .. Var.Value_Type.Last),
-          Desc.Parent_Point,
-          Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
-          Sym.Start_Position);
+      if Desc.IsTemplate then
+         --  template specialization
+         Refer_Type
+           (Var.Buffer (Var.Value_Type.First .. Var.Value_Type.Last),
+            Desc.Parent_Point,
+            Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
+            Sym.Start_Position,
+            Instantiation_Reference);
+      else
+         --  default reference kind
+         Refer_Type
+           (Var.Buffer (Var.Value_Type.First .. Var.Value_Type.Last),
+            Desc.Parent_Point,
+            Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
+            Sym.Start_Position);
+      end if;
    end if;
 
    Free (Var);

@@ -914,7 +914,8 @@ package body Src_Info.CPP is
      (Type_Name          : in String;
       Type_Decl          : in Point;
       Reference_Filename : in String;
-      Reference_Point    : in Point);
+      Reference_Point    : in Point;
+      Kind               : in Reference_Kind := Reference);
    --  Adds reference object into Global_LI_File if
    --  type Type_Name already exists in the tree.
    --
@@ -922,6 +923,8 @@ package body Src_Info.CPP is
    --  the type declared in the Global_LI_File
    --  Reference_Filename and Reference_Point are
    --  location that refers to the type
+   --
+   --  Kind is a kind of a reference.
 
    ----------------
    -- Refer_Type --
@@ -930,7 +933,9 @@ package body Src_Info.CPP is
      (Type_Name          : in String;
       Type_Decl          : in Point;
       Reference_Filename : in String;
-      Reference_Point    : in Point) is
+      Reference_Point    : in Point;
+      Kind               : in Reference_Kind := Reference)
+   is
       Type_Decl_Info     : E_Declaration_Info_List;
    begin
       Type_Decl_Info := Find_Declaration
@@ -941,7 +946,7 @@ package body Src_Info.CPP is
          File                 => Global_LI_File,
          Source_Filename      => Reference_Filename,
          Location             => Reference_Point,
-         Kind                 => Reference);
+         Kind                 => Kind);
    exception
       when Declaration_Not_Found => -- ignore
          null;
