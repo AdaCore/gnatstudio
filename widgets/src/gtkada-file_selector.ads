@@ -107,7 +107,7 @@ package Gtkada.File_Selector is
      access all File_Selector_Window_Record'Class;
    --  A file selector window.
 
-   function Select_File (File_Selector : access File_Selector_Window_Record)
+   function Select_File (File_Selector : File_Selector_Window_Access)
       return String;
    --  Display File_Selector on the screen, and wait until the user selects a
    --  file. The absolute file name is returned, or the empty string if the
@@ -135,9 +135,9 @@ package Gtkada.File_Selector is
    --  The callbacks on this button should simply close the dialog, but should
    --  ignore the file selected by the user.
 
-   type File_Filter_Record
-     (Label : String_Access)
-      is abstract tagged null record;
+   type File_Filter_Record is abstract tagged record
+      Label : String_Access;
+   end record;
    type File_Filter is access all File_Filter_Record'Class;
    --  The basic type for file filters.
 
@@ -188,8 +188,7 @@ package Gtkada.File_Selector is
       Dialog_Title         : String);
    --  Internal initialization function.
 
-   type Filter_Show_All is new File_Filter_Record (new String'("All files"))
-     with null record;
+   type Filter_Show_All is new File_Filter_Record with null record;
    type Filter_Show_All_Access is access all Filter_Show_All;
    --  This provides a basic filter that shows all files.
 
@@ -264,6 +263,9 @@ private
 
       Moving_Through_History : Boolean := True;
       --  Set to true in case we are navigating using the back/forward buttons.
+
+      Own_Main_Loop : Boolean := False;
+      --  Whether the file selector is running in its own main loop or not.
 
       Home_Directory : String_Access := new String'("");
 
