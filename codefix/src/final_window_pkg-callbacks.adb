@@ -61,7 +61,7 @@ package body Final_Window_Pkg.Callbacks is
       Final_Window : constant Final_Window_Access :=
         Final_Window_Access (Object);
    begin
-      Unref (Final_Window);
+      Destroy (Final_Window);
       Quit (Final_Window.Graphic_Codefix);
 
    exception
