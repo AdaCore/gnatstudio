@@ -18,6 +18,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with GNAT.OS_Lib;       use GNAT.OS_Lib;
 with GNAT.Regpat;       use GNAT.Regpat;
 with Pixmaps_IDE;       use Pixmaps_IDE;
 with Ada.Strings.Fixed; use Ada.Strings.Fixed;
@@ -260,11 +261,12 @@ package body Language.C is
    function Comment_Line
      (Lang    : access C_Language;
       Line    : String;
-      Comment : Boolean := True) return String
+      Comment : Boolean := True;
+      Clean   : Boolean := False) return String
    is
-      Index_Last : Integer;
-
       pragma Unreferenced (Lang);
+      Index_Start : Natural;
+      Index_Last  : Natural;
    begin
       if Line = "" then
          return "";
@@ -307,21 +309,114 @@ package body Language.C is
             end if;
          end;
       else
-         if Line'Length > 6
-           and then Line (Line'First .. Line'First + 2) = "/* "
-         then
-            Index_Last := Line'First + 2;
-            Skip_To_String (Line, Index_Last, " */");
+         for Index in Line'First .. Line'Last - 1 loop
+            if Line (Index .. Index + 1) = "//" then
+               if Index + 3 <= Line'Last and then
+                 Line (Index .. Index + 3) = "//  "
+               then
+                  if Clean then
+                     Index_Start := Index + 4;
+                     Skip_Blanks (Line, Index_Start);
+                     return Line (Index_Start .. Line'Last);
+                  end if;
+                  return Line (Line'First .. Index - 1)
+                    & Line (Index + 4 .. Line'Last);
+               elsif Index + 2 <= Line'Last
+                 and then Line (Index .. Index + 2) = "// "
+               then
+                  if Clean then
+                     Index_Start := Index + 3;
+                     Skip_Blanks (Line, Index_Start);
+                     return Line (Index_Start .. Line'Last);
+                  end if;
+                  return Line (Line'First .. Index - 1)
+                    & Line (Index + 3 .. Line'Last);
+               else
+                  if Clean then
+                     Index_Start := Index + 2;
+                     Skip_Blanks (Line, Index_Start);
+                     return Line (Index_Start .. Line'Last);
+                  end if;
+                  return Line (Line'First .. Index - 1)
+                    & Line (Index + 2 .. Line'Last);
+               end if;
+            elsif Line (Index .. Index + 1) = "/*" then
+               Index_Last := Index;
+               Skip_To_String (Line, Index_Last, "*/");
 
-            if Index_Last + 2 <= Line'Last then
-               return Line (Line'First + 3 .. Index_Last - 1)
-                 & Line (Index_Last + 3 .. Line'Last);
+               if Index_Last < Line'Last
+                 and then Line (Index_Last .. Index_Last + 1) = "*/"
+               then
+                  Index_Last := Index_Last - 1;
+               end if;
+
+               if Clean then
+                  Index_Start := Index + 2;
+                  Skip_Blanks (Line, Index_Start);
+                  return Line (Index_Start .. Index_Last);
+               end if;
+               return Line (Line'First .. Index - 1)
+                 & Line (Index + 3 .. Index_Last);
             end if;
+
+            exit when not (Line (Index) = ' ' or else Line (Index) = ASCII.HT);
+         end loop;
+
+         Index_Last := Line'First;
+         Skip_To_String (Line, Index_Last, "*/");
+         if Index_Last < Line'Last
+           and then Line (Index_Last .. Index_Last + 1) = "*/"
+         then
+            Index_Last := Index_Last - 1;
          end if;
 
-         return Line;
+         Index_Start := Line'First;
+         if Clean then
+            Skip_Blanks (Line, Index_Start);
+         end if;
+
+         return Line (Index_Start .. Index_Last);
       end if;
    end Comment_Line;
+
+   -------------------
+   -- Comment_Block --
+   -------------------
+
+   function Comment_Block
+     (Lang    : access C_Language;
+      Block   : String;
+      Comment : Boolean := True;
+      Clean   : Boolean := False) return String
+   is
+      Start_Of_Line : Natural := Block'First;
+      End_Of_Line   : Natural := Line_End (Block, Start_Of_Line);
+
+      New_Block     : GNAT.OS_Lib.String_Access := new String'
+        (Comment_Line
+           (Lang, Block (Start_Of_Line .. End_Of_Line), Comment, Clean));
+      Tmp           : String_Access;
+   begin
+      loop
+         Start_Of_Line := Next_Line (Block, Start_Of_Line);
+         exit when Start_Of_Line = Block'Last;
+         End_Of_Line := Line_End (Block, Start_Of_Line);
+
+         Tmp       := New_Block;
+         New_Block := new String'
+           (New_Block.all & ASCII.LF &
+            Comment_Line
+              (Lang, Block (Start_Of_Line .. End_Of_Line), Comment, Clean));
+         Free (Tmp);
+      end loop;
+
+      declare
+         Result : constant String := New_Block.all;
+      begin
+         Free (New_Block);
+         return Result;
+      end;
+   end Comment_Block;
 
    ------------------------
    -- Get_Project_Fields --
