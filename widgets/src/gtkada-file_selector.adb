@@ -392,6 +392,7 @@ package body Gtkada.File_Selector is
       Set_Busy_Cursor (Get_Window (Win), True, True);
       Clear (Win.File_List);
       Free (Win.Files);
+      Win.Remaining_Files := String_List.Null_List;
 
       --  Find out which filter to use.
 
