@@ -24,6 +24,7 @@
 --  See package VCS for a complete spec of this package.
 
 with GNAT.Expect;               use GNAT.Expect;
+with GNAT.Expect.TTY;           use GNAT.Expect.TTY;
 with Gtk.Main;                  use Gtk.Main;
 with Generic_List;
 with Unchecked_Deallocation;
@@ -130,7 +131,7 @@ private
    type CVS_Record is new VCS_Record with record
       Command_In_Progress : Boolean := False;
       Command_Queue       : Command_List.List;
-      Fd                  : Process_Descriptor;
+      Fd                  : TTY_Process_Descriptor;
    end record;
 
 end VCS.CVS;
