@@ -4644,7 +4644,7 @@ This capability is integrated with the @i{Locations tree} (see
 @ref{The Locations Tree}): when GPS can take advantage of a compiler message,
 an icon is added on the left side of the line.
 
-For a simple fix, an icon showing a simple tool is displayed. If you click with
+For a simple fix, a wrench icon is displayed. If you click with
 the left button on this icon, the code will be fixed automatically, and you
 will see the change in the corresponding source editor. An example of a simple
 fix, is the addition of a missing semicolon.
