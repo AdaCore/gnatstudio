@@ -216,6 +216,11 @@ package body Browsers.Canvas is
          Color := Get_Pref (Kernel, Selected_Item_Color);
          Set_Foreground (B.Selected_Item_GC, Color);
 
+         Gdk_New (B.Default_Item_GC, Get_Window (B.Canvas));
+         Color := Parse ("#FEFEFE");
+         Alloc (Get_Default_Colormap, Color);
+         Set_Foreground (B.Default_Item_GC, Color);
+
          Gdk_New (B.Parent_Linked_Item_GC, Get_Window (B.Canvas));
          Color := Get_Pref (Kernel, Parent_Linked_Item_Color);
          Set_Foreground (B.Parent_Linked_Item_GC, Color);
@@ -569,7 +574,7 @@ package body Browsers.Canvas is
          Bg_GC := Browser.Child_Linked_Item_GC;
 
       else
-         Bg_GC := Get_White_GC (Get_Style (Browser.Canvas));
+         Bg_GC := Browser.Default_Item_GC;
       end if;
 
       Set_Screen_Size_And_Pixmap

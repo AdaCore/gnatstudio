@@ -170,6 +170,7 @@ private
          Kernel    : Glide_Kernel.Kernel_Handle;
 
          Selected_Link_Color   : Gdk.Color.Gdk_Color;
+         Default_Item_GC       : Gdk.GC.Gdk_GC;
          Selected_Item_GC      : Gdk.GC.Gdk_GC;
          Parent_Linked_Item_GC : Gdk.GC.Gdk_GC;
          Child_Linked_Item_GC  : Gdk.GC.Gdk_GC;
