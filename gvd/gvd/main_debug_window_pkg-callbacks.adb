@@ -751,26 +751,27 @@ package body Main_Debug_Window_Pkg.Callbacks is
    ----------------------------
 
    procedure On_Call_Stack_Activate
-     (Object : access Gtk_Check_Menu_Item_Record'Class;
-      Window : Gtk_Window)
+     (Object : access Gtk_Widget_Record'Class)
    is
-      Process : Debugger_Process_Tab;
+      Top       : constant Main_Debug_Window_Access :=
+        Main_Debug_Window_Access (Object);
+      Process   : Debugger_Process_Tab;
       Page      : Gtk_Widget;
       Num_Pages : constant Gint :=
-        Gint (Page_List.Length (Get_Children
-          (Main_Debug_Window_Access (Window).Process_Notebook)));
+        Gint (Page_List.Length (Get_Children (Top.Process_Notebook)));
+
    begin
       --  ??? Is there a memory leak here ? Hpaned1 might be ref'd, but
       --  not actually in a parent, and this means that it isn't destroyed
       --  when the process_tab is destroyed.
 
       for Page_Num in 0 .. Num_Pages - 1 loop
-         Page := Get_Nth_Page
-           (Main_Debug_Window_Access (Window).Process_Notebook, Page_Num);
+         Page := Get_Nth_Page (Top.Process_Notebook, Page_Num);
+
          if Page /= null then
             Process := Process_User_Data.Get (Page);
 
-            if Get_Active (Object) then
+            if Get_Active (Top.Call_Stack) then
                --  Put back the canvas into the hpaned.
                Ref (Process.Scrolledwindow12);
                Remove (Process.Vpaned6, Process.Scrolledwindow12);

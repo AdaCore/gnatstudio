@@ -436,10 +436,10 @@ begin
    Gtk_New (Main_Debug_Window.Data1_Menu);
    Set_Submenu (Main_Debug_Window.Data1, Main_Debug_Window.Data1_Menu);
 
-   Gtk_New (Main_Debug_Window.Call_Stack, -"Call Stack...");
-   Check_Menu_Item_Callback.Connect
+   Gtk_New (Main_Debug_Window.Call_Stack, -"Call Stack");
+   Widget_Callback.Object_Connect
      (Main_Debug_Window.Call_Stack, "activate",
-      Check_Menu_Item_Callback.To_Marshaller (On_Call_Stack_Activate'Access));
+      Widget_Callback.To_Marshaller (On_Call_Stack_Activate'Access), Main_Debug_Window);
    Add (Main_Debug_Window.Data1_Menu, Main_Debug_Window.Call_Stack);
    Set_Active (Main_Debug_Window.Call_Stack, True);
    Set_Always_Show_Toggle (Main_Debug_Window.Call_Stack, True);

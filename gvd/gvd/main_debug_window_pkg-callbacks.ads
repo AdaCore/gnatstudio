@@ -135,8 +135,7 @@ package Main_Debug_Window_Pkg.Callbacks is
      (Object : access Gtk_Widget_Record'Class);
 
    procedure On_Call_Stack_Activate
-     (Object : access Gtk_Check_Menu_Item_Record'Class;
-      Window : Gtk_Window);
+     (Object : access Gtk_Widget_Record'Class);
 
    procedure On_Threads1_Activate
      (Object : access Gtk_Widget_Record'Class);
