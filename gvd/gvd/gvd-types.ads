@@ -18,6 +18,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Glib;
 with Gtkada.Types;
 with Unchecked_Deallocation;
 
@@ -153,10 +154,6 @@ package GVD.Types is
 
       Line_Has_Code : Packed_Boolean_Access := null;
       Line_Parsed   : Packed_Boolean_Access := null;
-
-      Current_Line  : Natural := 0;
-      --  Last line that was parsed. No line before that one will be tested
-      --  any more.
 
       File_Contents : String_Access := null;
       --  The contents of the file. To save some memory, this is not allocated

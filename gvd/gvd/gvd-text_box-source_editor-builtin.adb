@@ -172,6 +172,10 @@ package body GVD.Source_Editors is
    --  Free the memory occupied by the editor and the buttons layout, as well
    --  as all the associated pixmaps.
 
+   procedure Activate_Computation (Editor : access Source_Editor_Record'Class);
+   --  Reactivate the computation of lines with code, after the text was
+   --  scrolled.
+
    -------------
    -- Gtk_New --
    -------------
@@ -206,7 +210,30 @@ package body GVD.Source_Editors is
 
       Editor.Highlight_Color := Parse (Editor_Highlight_Color);
       Alloc (Get_System, Editor.Highlight_Color);
+
+      Editor_Cb.Object_Connect
+        (Get_Vadj (Get_Child (Editor)), "value_changed",
+         Editor_Cb.To_Marshaller (Activate_Computation'Access),
+         Slot_Object => Editor);
+      Editor_Cb.Object_Connect
+        (Get_Vadj (Get_Child (Editor)), "changed",
+         Editor_Cb.To_Marshaller (Activate_Computation'Access),
+         Slot_Object => Editor);
    end Initialize;
+
+   --------------------------
+   -- Activate_Computation --
+   --------------------------
+
+   procedure Activate_Computation
+     (Editor : access Source_Editor_Record'Class)
+   is
+   begin
+      if Editor.Show_Lines_With_Code then
+         Editor.Idle_Id := Editor_Idle.Add
+           (Idle_Compute_Lines'Access, Source_Editor (Editor));
+      end if;
+   end Activate_Computation;
 
    -------------------
    -- Is_Breakpoint --
@@ -907,8 +934,7 @@ package body GVD.Source_Editors is
       end if;
 
       if Editor.Show_Lines_With_Code then
-         Editor.Idle_Id := Editor_Idle.Add
-           (Idle_Compute_Lines'Access, Source_Editor (Editor));
+         Activate_Computation (Editor);
 
          --  Show the breakpoints we already know about
          if Editor.Current_File_Cache.Line_Has_Code /= null then
@@ -923,9 +949,7 @@ package body GVD.Source_Editors is
          end if;
 
          --  Allocate the arrays if required
-         if Editor.Current_File_Cache.Current_Line = 0
-           and then Editor.Current_File_Cache.Line_Has_Code = null
-         then
+         if Editor.Current_File_Cache.Line_Has_Code = null then
             Num_Lines := Lines_Count (Editor);
 
             Editor.Current_File_Cache.Line_Has_Code :=
@@ -1062,14 +1086,12 @@ package body GVD.Source_Editors is
       Found    : Boolean := False;
 
    begin
-      if Get_Process (Debug) = null then
-         Editor.Idle_Id := 0;
-         return False;
-      end if;
+      --  If we already reached the end, or the process died,
+      --  cancel the Idle loop
 
-      --  If we already reached the end, cancel the Idle loop
-
-      if Editor.Current_File_Cache.Line_Parsed = null then
+      if Get_Process (Debug) = null
+        or else Editor.Current_File_Cache.Line_Parsed = null
+      then
          Editor.Idle_Id := 0;
          return False;
       end if;
@@ -1078,11 +1100,8 @@ package body GVD.Source_Editors is
          return True;
       end if;
 
-      --  Priority is given to computing the visible lines on the screen.
-
       Line := Line_From_Pixels
-        (Editor,
-         Gint (Get_Value (Get_Vadj (Get_Child (Editor)))));
+        (Editor, Gint (Get_Value (Get_Vadj (Get_Child (Editor)))));
 
       if Line <= Editor.Current_File_Cache.Line_Parsed'First then
          Line := Editor.Current_File_Cache.Line_Parsed'First;
@@ -1091,11 +1110,9 @@ package body GVD.Source_Editors is
       Line_Max := Line + Line_From_Pixels
         (Editor, Gint (Get_Allocation_Height (Editor)));
 
-      while Line <= Line_Max loop
-         if Line > Editor.Current_File_Cache.Line_Parsed'Last then
-            exit;
-         end if;
-
+      while Line <= Line_Max
+        and Line <= Editor.Current_File_Cache.Line_Parsed'Last
+      loop
          if not Editor.Current_File_Cache.Line_Parsed (Line) then
             Found := True;
             exit;
@@ -1104,36 +1121,16 @@ package body GVD.Source_Editors is
          Line := Line + 1;
       end loop;
 
-      --  Else find the first line we did not parse
+      --  If the currently displayed area has been fully computed, give up
+      --  until this is reactived by a scrolling
+
       if not Found then
-         loop
-            Editor.Current_File_Cache.Current_Line :=
-              Editor.Current_File_Cache.Current_Line + 1;
-
-            if Editor.Current_File_Cache.Current_Line >
-              Editor.Current_File_Cache.Line_Has_Code'Last
-            then
-               Free (Editor.Current_File_Cache.Line_Parsed);
-               Editor.Idle_Id := 0;
-               return False;
-            end if;
-
-            exit when not Editor.Current_File_Cache.Line_Parsed
-              (Editor.Current_File_Cache.Current_Line);
-         end loop;
-
-         Line := Editor.Current_File_Cache.Current_Line;
-      end if;
-
-      --  Check whether the line contains some code
-
-      if not Check_Single_Line (Editor, Line)
-        and then Line = Editor.Current_File_Cache.Current_Line
-      then
-         Free (Editor.Current_File_Cache.Line_Parsed);
          Editor.Idle_Id := 0;
          return False;
       end if;
+
+      --  Check whether the line contains some code
+      Found := Check_Single_Line (Editor, Line);
 
       return True;
    end Idle_Compute_Lines;
