@@ -400,4 +400,18 @@ package body Odd.Strings is
       return To (1 .. Index_To - 1);
    end Strip_Control_M;
 
+   --------------------
+   -- File_Extension --
+   --------------------
+
+   function File_Extension (File_Name : String) return String is
+   begin
+      for J in reverse File_Name'Range loop
+         if File_Name (J) = '.' then
+            return File_Name (J + 1 .. File_Name'Last);
+         end if;
+      end loop;
+      return "";
+   end File_Extension;
+
 end Odd.Strings;
