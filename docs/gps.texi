@@ -630,6 +630,25 @@ and @file{custom menu number 2}. The first one contains a menu item named
 @file{item 1}, which is associated to the shell command @file{shell command
 1}, and a submenu named @file{other menu}, and so on.
 
+As well as shell commands, you can use custom menu item to invoke GPS
+shell commands. The following example shows how to create menus to
+invoke the @file{help} interactive command and to open the file
+@file{main.c}.
+
+@smallexample
+<Submenu>
+   <Title>Edit</Title>
+     <Menuitem>
+           <Title>List GPS commands</Title>
+           <GPS_Action>help</GPS_Action>
+     </Menuitem>
+     <Menuitem>
+           <Title>Edit main.c</Title>
+           <GPS_Action>edit main.c</GPS_Action>
+     </Menuitem>
+</Submenu>
+@end smallexample
+
 You can define the accelerator keys for your menus, using underscores
 in the titles. Thus, if you want an accelerator on the first letter in
 a menu named @file{File}, set its title as @file{_File}.
@@ -716,7 +735,6 @@ Replaced by the name of a file that contains a list of source
 directories in the current project, and all imported subprojects,
 recursively.
 @end table
-
 
 @node Customizing the Tool Bar
 @section Customizing the Tool Bar
