@@ -25,6 +25,9 @@ with Unchecked_Deallocation;
 generic
    type Data_Type (<>) is private;
 
+   with procedure Free (Data : in out Data_Type) is <>;
+   --  Free any dynamic memory allocated to Data.
+
 package Generic_List is
 
    type List is private;

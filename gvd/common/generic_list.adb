@@ -292,6 +292,10 @@ package body Generic_List is
 
       while Current /= null loop
          if Previous /= null then
+            if Previous.Element /= null then
+               Free (Previous.Element.all);
+            end if;
+
             Free_Element (Previous.Element);
          end if;
 
@@ -300,6 +304,11 @@ package body Generic_List is
          Previous := Current;
          Current := Current.Next;
       end loop;
+
+      if Previous.Element /= null then
+         Free (Previous.Element.all);
+      end if;
+
       Free_Element (Previous.Element);
       Free_Node (Previous);
 
