@@ -20,11 +20,18 @@
 
 package Glide_Kernel.Console is
 
+   type Message_Type is (Info, Error, Verbose);
+   --  We are dealing with 3 types of messages :
+   --   - Info for general information
+   --   - Error for signaling errors
+   --   - Verbose for detailed information
+
    procedure Insert
      (Kernel         : access Kernel_Handle_Record'Class;
       Text           : String;
       Highlight_Sloc : Boolean := True;
-      Add_LF         : Boolean := True);
+      Add_LF         : Boolean := True;
+      Mode           : Message_Type := Info);
    --  Insert Text in the Glide's console.
    --  Highlight parts of Text that match a source location (the color is set
    --  using the preferences) if Highlight_Sloc is True.

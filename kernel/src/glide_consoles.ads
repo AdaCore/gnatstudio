@@ -24,6 +24,7 @@
 with Gtk.Scrolled_Window;
 with Gtk.Text;
 with Glide_Kernel;
+with Glide_Kernel.Console; use Glide_Kernel.Console;
 
 package Glide_Consoles is
 
@@ -45,7 +46,8 @@ package Glide_Consoles is
      (Console        : access Glide_Console_Record;
       Text           : String;
       Highlight_Sloc : Boolean := True;
-      Add_LF         : Boolean := True);
+      Add_LF         : Boolean := True;
+      Mode           : Message_Type := Info);
    --  Insert Text in the Glide's console.
    --  Highlight parts of Text that match a source location (the color is set
    --  using the preferences) if Highlight_Sloc is True.

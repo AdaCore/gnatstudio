@@ -30,6 +30,7 @@ with Gtkada.Handlers;      use Gtkada.Handlers;
 with Gint_Xml;             use Gint_Xml;
 with Glide_Kernel;         use Glide_Kernel;
 with Glide_Kernel.Editor;  use Glide_Kernel.Editor;
+with Glide_Kernel.Console; use Glide_Kernel.Console;
 
 with GNAT.Regpat;          use GNAT.Regpat;
 with GNAT.OS_Lib;          use GNAT.OS_Lib;
@@ -38,6 +39,9 @@ with GNAT.OS_Lib;          use GNAT.OS_Lib;
 package body Glide_Consoles is
 
    Highlight_File : constant String := "#FF0000000000";
+   --  <preference>
+
+   Highlight_Error : constant String := "#FF0000000000";
    --  <preference>
 
    function On_Button_Release
@@ -98,11 +102,19 @@ package body Glide_Consoles is
      (Console        : access Glide_Console_Record;
       Text           : String;
       Highlight_Sloc : Boolean := True;
-      Add_LF         : Boolean := True)
+      Add_LF         : Boolean := True;
+      Mode           : Glide_Kernel.Console.Message_Type := Info)
    is
       New_Text  : String_Access;
+      Color     : Gdk_Color;
 
    begin
+      if Mode = Error then
+         Color := Parse (Highlight_Error);
+      else
+         Color := Null_Color;
+      end if;
+
       if Add_LF then
          New_Text := new String' (Text & ASCII.LF);
       else
@@ -126,6 +138,7 @@ package body Glide_Consoles is
 
                Insert
                  (Console.Text,
+                  Fore  => Color,
                   Chars => New_Text (New_Text'First .. Matched (1).First - 1));
 
                if Matched (3) = No_Match then
@@ -139,7 +152,9 @@ package body Glide_Consoles is
                   Fore => Highlight,
                   Chars => New_Text (Matched (1).First .. Last));
                Insert
-                 (Console.Text, Chars => New_Text (Last + 1 .. New_Text'Last));
+                 (Console.Text,
+                  Fore  => Color,
+                  Chars => New_Text (Last + 1 .. New_Text'Last));
 
                Free (New_Text);
                return;
@@ -147,7 +162,9 @@ package body Glide_Consoles is
          end;
       end if;
 
-      Insert (Console.Text, Chars => New_Text.all);
+      Insert (Console.Text,
+              Fore  => Color,
+              Chars => New_Text.all);
       Free (New_Text);
    end Insert;
 

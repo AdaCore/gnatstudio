@@ -33,13 +33,14 @@ package body Glide_Kernel.Console is
      (Kernel         : access Kernel_Handle_Record'Class;
       Text           : String;
       Highlight_Sloc : Boolean := True;
-      Add_LF         : Boolean := True)
+      Add_LF         : Boolean := True;
+      Mode           : Message_Type := Info)
    is
       Top       : constant Glide_Window := Glide_Window (Kernel.Main_Window);
       Console   : constant Glide_Console :=
         Glide_Page.Glide_Page (Get_Current_Process (Top)).Console;
    begin
-      Insert (Console, Text, Highlight_Sloc, Add_LF);
+      Insert (Console, Text, Highlight_Sloc, Add_LF, Mode);
    end Insert;
 
 end Glide_Kernel.Console;
