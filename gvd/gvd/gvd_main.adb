@@ -22,8 +22,10 @@ with Glib;
 with Gdk.Types; use Gdk.Types;
 with Gtk; use Gtk;
 with Gtk.Main;
+with Gtk.Enums; use Gtk.Enums;
 with Main_Debug_Window_Pkg; use Main_Debug_Window_Pkg;
 with Gtkada.Intl; use Gtkada.Intl;
+with Gtkada.Dialogs; use Gtkada.Dialogs;
 with Odd.Process; use Odd.Process;
 with Debugger;
 with GNAT.OS_Lib; use GNAT.OS_Lib;
@@ -38,6 +40,40 @@ procedure Odd_Main is
    Id                : Glib.Gint;
    Index             : Natural := 0;
    Debug_Type        : Debugger.Debugger_Type := Debugger.Gdb_Type;
+   Button            : Message_Dialog_Buttons;
+
+   function Format (Str : String; Columns : Positive) return String;
+   --  Cut Str in lines of no more than Columns columns by replacing spaces
+   --  by ASCII.LF characters at the most appropriate place.
+
+   function Format (Str : String; Columns : Positive) return String is
+      S     : String (Str'Range);
+      Blank : Natural := 0;
+      Count : Natural := 0;
+
+   begin
+      for J in Str'Range loop
+         S (J) := Str (J);
+
+         if Str (J) = ASCII.LF then
+            Count := 0;
+         else
+            Count := Count + 1;
+
+            if Str (J) = ' ' then
+               Blank := J;
+            end if;
+
+            if Count = Columns and Blank /= 0 then
+               S (Blank) := ASCII.LF;
+               Count := 0;
+               Blank := 0;
+            end if;
+         end if;
+      end loop;
+
+      return S;
+   end Format;
 
 begin
    Bind_Text_Domain ("GtkAda", "/usr/local/share/locale");
@@ -68,9 +104,28 @@ begin
    Process_Tab := Create_Debugger
      (Main_Debug_Window, Debug_Type, "", List (1 .. Index));
    Show_All (Main_Debug_Window);
-   Gtk.Main.Main;
+
+   loop
+      begin
+         Gtk.Main.Main;
+         exit;
+      exception
+         when E : others =>
+            Button := Message_Dialog
+              ("Please report with the following information:" & ASCII.LF &
+               Format (Exception_Information (E), Columns => 80),
+               Error, Button_OK,
+               Title => "Bug detected in odd",
+               Justification => Justify_Left);
+      end;
+   end loop;
+
 exception
    when E : others =>
-      Put_Line ("Bug detected in odd");
-      Put_Line ("Exception Information: " & Exception_Information (E));
+      Button := Message_Dialog
+        ("Please report with the following information:" & ASCII.LF &
+         Format (Exception_Information (E), Columns => 80),
+         Error, Button_OK,
+         Title => "Bug detected in odd",
+         Justification => Justify_Left);
 end Odd_Main;
