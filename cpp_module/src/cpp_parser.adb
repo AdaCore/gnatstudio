@@ -2642,7 +2642,7 @@ package body CPP_Parser is
         or else Get_LI (Source) = null
         or else Database_Timestamp
           (Get_Project_From_File (Handler.Registry, Source_Filename)) /=
-          Get_Timestamp (Get_LI (Source))
+        Get_Timestamp (Get_LI (Source))
       then
          Parse_File (Handler, Source);
       end if;
@@ -3056,7 +3056,6 @@ package body CPP_Parser is
 
          Release_Cursor (Table);
       end if;
-
       return Success;
    end File_Up_To_Date_In_DB;
 
@@ -3084,16 +3083,15 @@ package body CPP_Parser is
    begin
       --  This call is just to check whether we know anything of the file from
       --  the in-memory database
-      Source := Get_Or_Create
-        (Db           => Handler.Db,
-         File         => File_Name,
-         Allow_Create => False);
+      Source := Get_Source_Info
+        (Handler         => Handler,
+         Source_Filename => File_Name);
 
-      --  Recreate the database on the disk if the database doesn't contain
-      --  up-to-date information for the file.
       if Source = null
         or else not File_Up_To_Date_In_DB (Project, File_Name)
       then
+         --  If we do not have any LI information, parse the database for the
+         --  project. Otherwise, do nothing to save time.
          declare
             Iter : LI_Handler_Iterator'Class := Generate_LI_For_Project
               (Handler,
