@@ -2081,7 +2081,7 @@ package body GVD_Module is
                      On_Continue'Access, null, GDK_F8, Sensitive => False);
       Register_Menu (Kernel, Debug, -"_Interrupt", Stock_Stop,
                      On_Interrupt'Access, null,
-                     GDK_Escape, Sensitive => False);
+                     GDK_backslash, Control_Mask, Sensitive => False);
       Gtk_New (Mitem);
       Register_Menu (Kernel, Debug, Mitem);
       Register_Menu (Kernel, Debug, -"Ter_minate", "",
