@@ -19,6 +19,7 @@ package Source_Analyzer is
       Indent_Continue : Natural;
       Indent_Decl     : Natural;
       Indent_Return   : Natural;
+      Indent_Renames  : Natural;
       Indent_With     : Natural;
       Indent_Use      : Natural;
       Indent_Record   : Natural;
@@ -27,6 +28,8 @@ package Source_Analyzer is
    --  Indent_Continue is the number of spaces for a continuation line.
    --  Indent_Decl     is the number of extra spaces for variables declaration.
    --  Indent_Return   is the number of extra spaces for the return line in a
+   --                  function declaration.
+   --  Indent_Renames  is the number of extra spaces for the renames line in a
    --                  function declaration.
    --  Indent_With     is the number of spaces when indenting a with clause
    --  Indent_Use      is the number of spaces when indenting a use clause (top
@@ -38,7 +41,8 @@ package Source_Analyzer is
      (Indent_Level    => 3,
       Indent_Continue => 2,
       Indent_Decl     => 0,
-      Indent_Return   => 0,
+      Indent_Return   => 2,
+      Indent_Renames  => 2,
       Indent_With     => 5,
       Indent_Use      => 4,
       Indent_Record   => 3);
