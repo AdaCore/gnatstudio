@@ -5,10 +5,16 @@ Known Problems fixed in GPS 1.0.1
               separate unit, it crashes.
   Workaround: <none found>
 
+- B627-003 GPS crashes when ran locally under Solaris
+  Problem:    When ran locally under some Solaris configurations, GPS crashes
+              with a message similar to
+              (g_string_append): assertion 'VAL != NULL' failed.
+  Workaround: Set the environment variable CHARSET to ISO-8859-1.
+
 - The highlighting from the debugger stayed after the debugger ends.
   Problem:    When the debugger highlights lines of code, the highlighting
               remains after the debugger terminates.
-  Workaround: Close the concerned files and re-open them.
+  Workaround: Close the related files and re-open them.
 
 - Incorrect project file set when spawning external Emacs editor
   Problem:    It might happen that the project file used in the external Emacs
