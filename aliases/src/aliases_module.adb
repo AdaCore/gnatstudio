@@ -32,6 +32,7 @@ with Gdk.Event;                use Gdk.Event;
 with Glib.Values;              use Glib.Values;
 with Glib.Xml_Int;             use Glib.Xml_Int;
 with Glib;                     use Glib;
+with Glib.Unicode;             use Glib.Unicode;
 with Glide_Kernel.Console;     use Glide_Kernel.Console;
 with Glide_Kernel.Modules;     use Glide_Kernel.Modules;
 with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
@@ -654,30 +655,33 @@ package body Aliases_Module is
 
       Last := Current_Pos;
       while Last <= Text'Last
-        and then Is_Entity_Letter (Text (Last))
+        and then Is_Entity_Letter (Utf8_Get_Char (Text (Last .. Text'Last)))
       loop
-         Last := Last + 1;
+         Last := Utf8_Find_Next_Char (Text, Last);
       end loop;
 
       First := Current_Pos;
       loop
          while First >= Text'First
-           and then Is_Entity_Letter (Text (First))
+           and then Is_Entity_Letter
+             (Utf8_Get_Char (Text (First .. Text'Last)))
          loop
-            First := First - 1;
+            First := Utf8_Find_Prev_Char (Text, First);
          end loop;
 
          if First < Text'First then
             exit;
          end if;
 
-         exit when Get (Aliases_Module_Id.Aliases,
-                        Text (First + 1 .. Last - 1)) /= No_Alias;
+         exit when Get
+           (Aliases_Module_Id.Aliases,
+            Text (Utf8_Find_Next_Char (Text, First) .. Last - 1)) /= No_Alias;
 
          while First >= Text'First
-           and then not Is_Entity_Letter (Text (First))
+           and then not Is_Entity_Letter
+             (Utf8_Get_Char (Text (First .. Text'Last)))
          loop
-            First := First - 1;
+            First := Utf8_Find_Prev_Char (Text, First);
          end loop;
       end loop;
    end Find_Current_Entity;
@@ -912,7 +916,7 @@ package body Aliases_Module is
                   Cursor : aliased Integer;
                   Replace : constant String := Expand_Alias
                     (Command.Kernel,
-                     Text (First + 1 .. Last - 1),
+                     Text (Utf8_Find_Next_Char (Text, First) .. Last - 1),
                      Cursor'Unchecked_Access, 0);
                begin
                   if Replace /= "" then
@@ -1136,7 +1140,8 @@ package body Aliases_Module is
                Alias : constant Alias_Record := Get_Value (Ed, Old);
             begin
                if Name'Length = 0
-                 or else not Is_Entity_Letter (Name (Name'First))
+                 or else not Is_Entity_Letter
+                   (Utf8_Get_Char (Name (Name'First .. Name'Last)))
                then
                   Set (Ed.Aliases_Model, Iter, 0, Old);
                   Message := Message_Dialog
