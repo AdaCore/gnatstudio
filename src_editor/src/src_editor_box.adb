@@ -2698,4 +2698,22 @@ package body Src_Editor_Box is
       return Get_Text (Begin_Iter, End_Iter);
    end Get_Buffer;
 
+   ----------
+   -- Undo --
+   ----------
+
+   procedure Undo (Editor : access Source_Editor_Box_Record) is
+   begin
+      Undo (Editor.Source_Buffer);
+   end Undo;
+
+   ----------
+   -- Redo --
+   ----------
+
+   procedure Redo (Editor : access Source_Editor_Box_Record) is
+   begin
+      Redo (Editor.Source_Buffer);
+   end Redo;
+
 end Src_Editor_Box;

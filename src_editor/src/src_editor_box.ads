@@ -505,7 +505,11 @@ package Src_Editor_Box is
    procedure Set_Modified_State
      (Editor   : access Source_Editor_Box_Record;
       Modified : Boolean);
-   --  Change the state of the
+   --  Change the "modified" flag.
+
+   procedure Undo (Editor : access Source_Editor_Box_Record);
+   procedure Redo (Editor : access Source_Editor_Box_Record);
+   --  Undo/Redo last edit command.
 
 private
 
