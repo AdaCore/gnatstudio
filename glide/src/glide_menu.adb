@@ -299,8 +299,8 @@ package body Glide_Menu is
       Button : Message_Dialog_Buttons;
    begin
       Button := Message_Dialog
-        ("GPS " & GVD.Version &
-         (-" hosted on ") & GVD.Target & ASCII.LF & ASCII.LF &
+        ("GPS " & GVD.Version & " (" & GVD.Source_Date &
+         (-") hosted on ") & GVD.Target & ASCII.LF & ASCII.LF &
          (-"The GNAT Programming System") & ASCII.LF & ASCII.LF &
          "(c) 2001-2002 ACT-Europe",
          Buttons => Button_OK,
