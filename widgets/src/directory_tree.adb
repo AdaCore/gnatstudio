@@ -36,14 +36,9 @@ with Gtk.Ctree;                 use Gtk.Ctree;
 with Gtk.Widget;                use Gtk.Widget;
 with Gtkada.Handlers;           use Gtkada.Handlers;
 with Gtkada.Types;              use Gtkada.Types;
+with Pixmaps_IDE;               use Pixmaps_IDE;
 
 package body Directory_Tree is
-
-   folder_xpm : aliased Chars_Ptr_Array (0 .. 0);
-   pragma Import (C, folder_xpm, "mini_folder_xpm");
-
-   ofolder_xpm : aliased Chars_Ptr_Array (0 .. 0);
-   pragma Import (C, ofolder_xpm, "mini_ofolder_xpm");
 
    --  Each node is associated with a single boolean that indicates whether
    --  the subdirectories where parsed or not.
@@ -117,14 +112,14 @@ package body Directory_Tree is
          Colormap    => Get_System,
          Mask        => Tree.Ofolder_Mask,
          Transparent => Null_Color,
-         Data        => ofolder_xpm);
+         Data        => mini_ofolder_xpm);
       Create_From_Xpm_D
         (Tree.Folder_Pix,
          Window      => null,
          Colormap    => Get_System,
          Mask        => Tree.Folder_Mask,
          Transparent => Null_Color,
-         Data        => folder_xpm);
+         Data        => mini_folder_xpm);
 
       Add_Directory (Tree, Root);
       Widget_Callback.Connect (Tree, "tree_expand", Expand_Tree_Cb'Access);
