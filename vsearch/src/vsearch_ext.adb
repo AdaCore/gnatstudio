@@ -1,3 +1,4 @@
+with Ada.Text_IO; use Ada.Text_IO;
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
@@ -145,8 +146,9 @@ package body Vsearch_Ext is
    --  No_Search is returned if no such module was found.
 
    function Get_Or_Create_Vsearch
-     (Kernel : access Kernel_Handle_Record'Class;
-      Raise_Widget : Boolean := False) return Vsearch_Extended;
+     (Kernel       : access Kernel_Handle_Record'Class;
+      Raise_Widget : Boolean := False;
+      Float_Widget : Boolean := True) return Vsearch_Extended;
    --  Return a valid vsearch widget, creating one if necessary.
 
    function Load_Desktop
@@ -222,7 +224,8 @@ package body Vsearch_Ext is
       Extended : Vsearch_Extended;
    begin
       if Node.Tag.all = "Vsearch" then
-         Extended := Get_Or_Create_Vsearch (User, Raise_Widget => False);
+         Extended := Get_Or_Create_Vsearch
+           (User, Raise_Widget => False, Float_Widget => False);
 
          return Gtk_Widget (Find_MDI_Child (Get_MDI (User), Extended));
       end if;
@@ -275,6 +278,7 @@ package body Vsearch_Ext is
    procedure Unfloat_Vsearch (Search_Child : access Gtk_Widget_Record'Class) is
       Child : constant MDI_Child := MDI_Child (Search_Child);
    begin
+      Put_Line ("Unfloat_Vsearch");
       Hide_All (Vsearch_Extended (Get_Initial_Window (Child)).Close_Button);
    end Unfloat_Vsearch;
 
@@ -945,7 +949,8 @@ package body Vsearch_Ext is
 
    function Get_Or_Create_Vsearch
      (Kernel       : access Kernel_Handle_Record'Class;
-      Raise_Widget : Boolean := False) return Vsearch_Extended
+      Raise_Widget : Boolean := False;
+      Float_Widget : Boolean := True) return Vsearch_Extended
    is
       Child  : MDI_Child;
    begin
@@ -974,7 +979,12 @@ package body Vsearch_Ext is
          Child := Put (Get_MDI (Kernel), Vsearch_Module_Id.Search);
          Set_Title (Child, -"Search");
          Set_Dock_Side (Child, Left);
-         Float_Child (Child, True);
+
+         if Float_Widget then
+            Float_Child (Child, True);
+         else
+            Unfloat_Vsearch (Child);
+         end if;
 
          --  Put back the options frame under control
          Pack_Start
