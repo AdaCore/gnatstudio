@@ -697,115 +697,56 @@ package body Codefix_Module is
       Add_Hook
         (Kernel, Compilation_Finished_Hook, Compilation_Finished_Cb'Access);
 
-      Codefix_Module_ID.Codefix_Class := New_Class
-        (Kernel, "Codefix", "Automatically fixes errors in source files");
+      Codefix_Module_ID.Codefix_Class := New_Class (Kernel, "Codefix");
       Codefix_Module_ID.Codefix_Error_Class := New_Class
-        (Kernel, "CodefixError", "A fixable error in a source file");
+        (Kernel, "CodefixError");
 
       Register_Command
-        (Kernel,
-         Command       => "parse",
-         Params        => Parameter_Names_To_Usage (Parse_Cmd_Parameters, 7),
-         Description   =>
-           -("Parse the output of a tool, and suggests auto-fix possibilities"
-             & " whenever possible. This adds small icons in the location"
-             & " window, so that the user can click on it to fix compilation"
-             & " errors. You should call Locations.parse with the same output"
-             & " prior to calling this command."
-             & ASCII.LF
-             & "The regular expression specifies how locations are recognized."
-             & " By default, it matches file:line:column. The various indexes"
-             & " indicate the index of the opening parenthesis that contains"
-             & " the relevant information in the regular expression. Set it"
-             & " to 0 if that information is not available."
-             & ASCII.LF
-             & "Access the various suggested fixes through the methods of"
-             & " the Codefix class"),
+        (Kernel, "parse",
          Minimum_Args  => 2,
          Maximum_Args  => Parse_Cmd_Parameters'Length,
          Class         => Codefix_Module_ID.Codefix_Class,
          Static_Method => True,
          Handler       => Default_Command_Handler'Access);
-
       Register_Command
-        (Kernel,
-         Command     => Constructor_Method,
-         Params      => Parameter_Names_To_Usage (Codefix_Cmd_Parameters),
-         Description =>
-          -"Return the instance of codefix associated with the given category",
+        (Kernel, Constructor_Method,
          Minimum_Args => Codefix_Cmd_Parameters'Length,
          Maximum_Args => Codefix_Cmd_Parameters'Length,
          Class        => Codefix_Module_ID.Codefix_Class,
          Handler      => Default_Command_Handler'Access);
-
       Register_Command
-        (Kernel,
-         Command     => Constructor_Method,
-         Params      => Parameter_Names_To_Usage (Error_Cmd_Parameters, 1),
-         Description =>
-         -("Describe a new fixable error. If the message is not specified,"
-           & " the first error at that location is returned"),
+        (Kernel, Constructor_Method,
          Minimum_Args => Error_Cmd_Parameters'Length - 1,
          Maximum_Args => Error_Cmd_Parameters'Length,
          Class        => Codefix_Module_ID.Codefix_Error_Class,
          Handler      => Error_Command_Handler'Access);
-
       Register_Command
-        (Kernel,
-         Command      => "errors",
-         Return_Value => "list",
-         Description  => -"List the fixable errors in that session",
+        (Kernel, "errors",
          Class        => Codefix_Module_ID.Codefix_Class,
          Handler      => Default_Command_Handler'Access);
-
       Register_Command
-        (Kernel,
-         Command       => "sessions",
-         Return_Value  => "list",
-         Description   =>
-           -("List all the existing Codefix sessions. The returned values"
-             & " can all be used to create a new instance of Codefix through"
-             & " its constructor."),
+        (Kernel, "sessions",
          Class         => Codefix_Module_ID.Codefix_Class,
          Static_Method => True,
          Handler       => Default_Command_Handler'Access);
-
       Register_Command
-        (Kernel,
-         Command     => "possible_fixes",
-         Description => -"List the possible fixes for the specific error",
-         Return_Value => "list",
+        (Kernel, "possible_fixes",
          Class        => Codefix_Module_ID.Codefix_Error_Class,
          Handler      => Error_Command_Handler'Access);
-
       Register_Command
-        (Kernel,
-         Command     => "fix",
-         Params      => Parameter_Names_To_Usage (Fix_Cmd_Parameters, 1),
-         Description =>
-           -("Fix the error, using one of the possible fixes. The index"
-             & " given in parameter is the index in the list returned by "
-             & "possible_fixes. By default, the first choice is taken. Choices"
-             & " start at index 0."),
+        (Kernel, "fix",
          Minimum_Args => Fix_Cmd_Parameters'Length - 1,
          Maximum_Args => Fix_Cmd_Parameters'Length,
          Class        => Codefix_Module_ID.Codefix_Error_Class,
          Handler      => Error_Command_Handler'Access);
       Register_Command
-        (Kernel,
-         Command      => "message",
-         Return_Value => "string",
-         Description  => -"Return the error message, as issues by the tool",
+        (Kernel, "message",
          Class        => Codefix_Module_ID.Codefix_Error_Class,
          Handler      => Error_Command_Handler'Access);
       Register_Command
-        (Kernel,
-         Command      => "location",
-         Return_Value => "FileLocation",
-         Description  => -"Return the location of the error",
+        (Kernel, "location",
          Class        => Codefix_Module_ID.Codefix_Error_Class,
          Handler      => Error_Command_Handler'Access);
-
 
    exception
       when E : others =>
