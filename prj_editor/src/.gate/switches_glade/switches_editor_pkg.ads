@@ -40,6 +40,7 @@ package Switches_Editor_Pkg is
       Optimization_Level_Entry : Gtk_Entry;
       Compile_No_Inline : Gtk_Check_Button;
       Compile_Interunit_Inlining : Gtk_Check_Button;
+      Compile_Unroll_Loops : Gtk_Check_Button;
       Frame22 : Gtk_Frame;
       Vbox20 : Gtk_Vbox;
       Compile_Overflow_Checking : Gtk_Check_Button;
@@ -87,7 +88,5 @@ package Switches_Editor_Pkg is
 
    procedure Gtk_New (Switches_Editor : out Switches_Editor_Access);
    procedure Initialize (Switches_Editor : access Switches_Editor_Record'Class);
-
-   Switches_Editor : Switches_Editor_Access;
 
 end Switches_Editor_Pkg;

@@ -166,9 +166,9 @@ begin
    Set_Use_Arrows (Switches_Editor.Optimization_Level, True);
    Set_Use_Arrows_Always (Switches_Editor.Optimization_Level, False);
    String_List.Append (Optimization_Level_Items, -"No optimization");
-   String_List.Append (Optimization_Level_Items, -"Minimal optimization");
-   String_List.Append (Optimization_Level_Items, -"Medium optimization");
-   String_List.Append (Optimization_Level_Items, -"Maximal optimization");
+   String_List.Append (Optimization_Level_Items, -"Some optimization");
+   String_List.Append (Optimization_Level_Items, -"Full optimization");
+   String_List.Append (Optimization_Level_Items, -"Full + Automatic inlining");
    Combo.Set_Popdown_Strings (Switches_Editor.Optimization_Level, Optimization_Level_Items);
    Free_String_List (Optimization_Level_Items);
    Pack_Start (Switches_Editor.Vbox19, Switches_Editor.Optimization_Level, False, False, 0);
@@ -194,6 +194,13 @@ begin
    Pack_Start (Switches_Editor.Vbox19, Switches_Editor.Compile_Interunit_Inlining, False, False, 0);
    Widget_Callback.Object_Connect
      (Switches_Editor.Compile_Interunit_Inlining, "toggled",
+      Widget_Callback.To_Marshaller (Refresh_Comp_Switches'Access), Switches_Editor);
+
+   Gtk_New (Switches_Editor.Compile_Unroll_Loops, -"Unroll loops");
+   Set_Active (Switches_Editor.Compile_Unroll_Loops, False);
+   Pack_Start (Switches_Editor.Vbox19, Switches_Editor.Compile_Unroll_Loops, False, False, 0);
+   Widget_Callback.Object_Connect
+     (Switches_Editor.Compile_Unroll_Loops, "toggled",
       Widget_Callback.To_Marshaller (Refresh_Comp_Switches'Access), Switches_Editor);
 
    Gtk_New (Switches_Editor.Frame22, -"Run time checks");

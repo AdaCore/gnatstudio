@@ -52,6 +52,4 @@ package Naming_Scheme_Editor_Pkg is
    procedure Gtk_New (Naming_Scheme_Editor : out Naming_Scheme_Editor_Access);
    procedure Initialize (Naming_Scheme_Editor : access Naming_Scheme_Editor_Record'Class);
 
-   Naming_Scheme_Editor : Naming_Scheme_Editor_Access;
-
 end Naming_Scheme_Editor_Pkg;

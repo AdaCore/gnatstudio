@@ -56,6 +56,4 @@ package New_Variable_Editor_Pkg is
    procedure Gtk_New (New_Variable_Editor : out New_Variable_Editor_Access);
    procedure Initialize (New_Variable_Editor : access New_Variable_Editor_Record'Class);
 
-   New_Variable_Editor : New_Variable_Editor_Access;
-
 end New_Variable_Editor_Pkg;
