@@ -41,6 +41,7 @@ package SN is
          Column : Integer;
       end record;
    --  Position between symbols in source
+   Invalid_Point : constant Point := (-1, -1);
 
    function "<" (P1, P2 : Point) return Boolean;
    --  LessThan operation in the terms
