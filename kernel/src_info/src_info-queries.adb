@@ -299,28 +299,21 @@ package body Src_Info.Queries is
       Prox         : Integer;
    begin
       --  Search the entity in the list of declarations
+
       Decl_Loop :
       while Current_Decl /= null loop
          --  Check the entity name to limit a bit the search in the
          --  Xref lists
+
          if Entity_Name = ""
            or else Current_Decl.Value.Declaration.Name.all = Entity_Name
          then
             --  Check if the location corresponds to the declaration,
             --  in which case we need to jump to the first body.
+
             Prox := Location_Matches
               (Current_Decl.Value.Declaration.Location,
                File_Name, Line, Column);
-
-            Trace (Me, "Find_Spec_Or_Body: Location_Matches at "
-                   & ASCII.LF
-                   & "  line=" & Line'Img
-                   & Current_Decl.Value.Declaration.Location.Line'Img
-                   & ASCII.LF
-                   & "  col=" & Column'Img
-                   & Current_Decl.Value.Declaration.Location.Column'Img
-                   & ASCII.LF
-                   & "  prox=" & Prox'Img & Proximity'Img);
 
             if Prox = 0 then
                Entity_Decl := Current_Decl.Value;
@@ -336,9 +329,11 @@ package body Src_Info.Queries is
                Proximity   := Prox;
             end if;
 
-            --  Search in the list of references.
+            --  Search in the list of references
+
             if Check_References then
                Current_Ref := Current_Decl.Value.References;
+
                Ref_Loop :
                while Current_Ref /= null loop
                   Prox := Location_Matches
