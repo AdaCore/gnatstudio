@@ -995,67 +995,70 @@ package body Default_Preferences is
       Pack_Start (Get_Vbox (Dialog), Main_Note);
 
       while Prefs /= null loop
-         declare
-            Page_Name : constant String := Get_Page (Manager, Prefs.Param);
-            Last : Natural := Page_Name'First;
-         begin
-            while Last <= Page_Name'Last
-              and then Page_Name (Last) /= ':'
-            loop
-               Last := Last + 1;
-            end loop;
+         if (Flags (Prefs.Param) and Param_Writable) /= 0 then
+            declare
+               Page_Name : constant String := Get_Page (Manager, Prefs.Param);
+               Last : Natural := Page_Name'First;
+            begin
+               while Last <= Page_Name'Last
+                 and then Page_Name (Last) /= ':'
+               loop
+                  Last := Last + 1;
+               end loop;
 
-            --  Find the appropriate page for that module
-            Note := Gtk_Notebook
-              (Find_Page (Main_Note, Page_Name (Page_Name'First .. Last - 1)));
-            if Note = null then
-               Gtk_New (Note);
-               Set_Scrollable (Note, True);
-               Gtk_New (Label, Page_Name (Page_Name'First .. Last - 1));
-               Set_Show_Tabs (Note, False);
-               Append_Page (Main_Note, Note, Label);
-               Set_Show_Tabs (Main_Note, Get_Nth_Page (Main_Note, 1) /= null);
-            end if;
-
-            --  Find the appropriate page in the module specific notebook
-            if Last < Page_Name'Last then
-               Table := Gtk_Table
-                 (Find_Page (Note, Page_Name (Last + 1 .. Page_Name'Last)));
-            else
-               Table := Gtk_Table (Find_Page (Note, -"General"));
-            end if;
-
-            if Table = null then
-               Gtk_New (Table, Rows => 1, Columns => 2,
-                        Homogeneous => False);
-               Set_Row_Spacings (Table, 1);
-               Set_Col_Spacings (Table, 5);
-
-               if Last < Page_Name'Last then
-                  Gtk_New (Label, Page_Name (Last + 1 .. Page_Name'Last));
-               else
-                  Gtk_New (Label, -"General");
+               --  Find the appropriate page for that module
+               Note := Gtk_Notebook (Find_Page
+                 (Main_Note, Page_Name (Page_Name'First .. Last - 1)));
+               if Note = null then
+                  Gtk_New (Note);
+                  Set_Scrollable (Note, True);
+                  Gtk_New (Label, Page_Name (Page_Name'First .. Last - 1));
+                  Set_Show_Tabs (Note, False);
+                  Append_Page (Main_Note, Note, Label);
+                  Set_Show_Tabs
+                    (Main_Note, Get_Nth_Page (Main_Note, 1) /= null);
                end if;
-               Append_Page (Note, Table, Label);
-               Set_Show_Tabs (Note, Get_Nth_Page (Note, 1) /= null);
-               Row := 0;
-            else
-               Row := Get_Property (Table, N_Rows_Property);
-               Resize (Table, Rows =>  Row + 1, Columns => 2);
+
+               --  Find the appropriate page in the module specific notebook
+               if Last < Page_Name'Last then
+                  Table := Gtk_Table
+                    (Find_Page (Note, Page_Name (Last + 1 .. Page_Name'Last)));
+               else
+                  Table := Gtk_Table (Find_Page (Note, -"General"));
+               end if;
+
+               if Table = null then
+                  Gtk_New (Table, Rows => 1, Columns => 2,
+                           Homogeneous => False);
+                  Set_Row_Spacings (Table, 1);
+                  Set_Col_Spacings (Table, 5);
+
+                  if Last < Page_Name'Last then
+                     Gtk_New (Label, Page_Name (Last + 1 .. Page_Name'Last));
+                  else
+                     Gtk_New (Label, -"General");
+                  end if;
+                  Append_Page (Note, Table, Label);
+                  Set_Show_Tabs (Note, Get_Nth_Page (Note, 1) /= null);
+                  Row := 0;
+               else
+                  Row := Get_Property (Table, N_Rows_Property);
+                  Resize (Table, Rows =>  Row + 1, Columns => 2);
+               end if;
+            end;
+
+            Gtk_New (Event);
+            Gtk_New (Label, Nick_Name (Prefs.Param));
+            Add (Event, Label);
+            Set_Tip (Tips, Event, Description (Prefs.Param));
+            Set_Alignment (Label, 0.0, 0.5);
+            Attach (Table, Event, 0, 1, Row, Row + 1,
+                    Xoptions => Fill, Yoptions => 0);
+
+            Widget := Editor_Widget (Manager, Prefs.Param);
+            if Widget /= null then
+               Attach (Table, Widget, 1, 2, Row, Row + 1, Yoptions => 0);
             end if;
-         end;
-
-         Gtk_New (Event);
-         Gtk_New (Label, Nick_Name (Prefs.Param));
-         Add (Event, Label);
-         Set_Tip (Tips, Event, Description (Prefs.Param));
-         Set_Alignment (Label, 0.0, 0.5);
-         Attach (Table, Event, 0, 1, Row, Row + 1,
-                 Xoptions => Fill, Yoptions => 0);
-
-         Widget := Editor_Widget (Manager, Prefs.Param);
-         if Widget /= null then
-            Attach (Table, Widget, 1, 2, Row, Row + 1, Yoptions => 0);
          end if;
 
          Prefs := Prefs.Next;
