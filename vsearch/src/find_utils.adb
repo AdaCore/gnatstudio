@@ -19,31 +19,32 @@
 -----------------------------------------------------------------------
 
 with Ada.Unchecked_Deallocation;
-with Ada.Exceptions;          use Ada.Exceptions;
-with Ada.Characters.Handling; use Ada.Characters.Handling;
-with Gtk.GEntry;              use Gtk.GEntry;
-with Gtk.Check_Button;        use Gtk.Check_Button;
-with Gtk.Widget;              use Gtk.Widget;
-with Files_Extra_Info_Pkg;    use Files_Extra_Info_Pkg;
-with Osint;                   use Osint;
-with Prj_API;                 use Prj_API;
-with Basic_Types;             use Basic_Types;
-with Boyer_Moore;             use Boyer_Moore;
-with Glide_Kernel;            use Glide_Kernel;
-with Glide_Kernel.Project;    use Glide_Kernel.Project;
-with Glide_Kernel.Console;    use Glide_Kernel.Console;
-with String_Utils;            use String_Utils;
-with Traces;                  use Traces;
-with GNAT.Regpat;             use GNAT.Regpat;
-with GNAT.Regexp;             use GNAT.Regexp;
-with GNAT.OS_Lib;             use GNAT.OS_Lib;
+with Ada.Exceptions;            use Ada.Exceptions;
+with Ada.Characters.Handling;   use Ada.Characters.Handling;
+with Gtk.GEntry;                use Gtk.GEntry;
+with Gtk.Check_Button;          use Gtk.Check_Button;
+with Gtk.Widget;                use Gtk.Widget;
+with Files_Extra_Info_Pkg;      use Files_Extra_Info_Pkg;
+with Osint;                     use Osint;
+with Prj_API;                   use Prj_API;
+with Basic_Types;               use Basic_Types;
+with Boyer_Moore;               use Boyer_Moore;
+with Glide_Kernel;              use Glide_Kernel;
+with Glide_Kernel.Project;      use Glide_Kernel.Project;
+with Glide_Kernel.Console;      use Glide_Kernel.Console;
+with File_Utils;                use File_Utils;
+with String_Utils;              use String_Utils;
+with Traces;                    use Traces;
+with GNAT.Regpat;               use GNAT.Regpat;
+with GNAT.Regexp;               use GNAT.Regexp;
+with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
-with Language;                use Language;
-with Language_Handlers;       use Language_Handlers;
-with OS_Utils;                use OS_Utils;
+with Language;                  use Language;
+with Language_Handlers;         use Language_Handlers;
+with OS_Utils;                  use OS_Utils;
 
-with Src_Editor_Box;          use Src_Editor_Box;
-with Src_Editor_Module;       use Src_Editor_Module;
+with Src_Editor_Box;            use Src_Editor_Box;
+with Src_Editor_Module;         use Src_Editor_Module;
 
 package body Find_Utils is
 
@@ -1104,6 +1105,9 @@ package body Find_Utils is
                   if Context.Recurse
                     and then File_Name (1 .. Last) /= "."
                     and then File_Name (1 .. Last) /= ".."
+                    and then not Is_Symbolic_Link (File_Name (1 .. Last))
+                  --  ??? Do not try to follow symbolic links for now,
+                  --  so that we avoid infinite recursions.
                   then
                      Prepend (Context.Dirs, new Dir_Data);
                      Head (Context.Dirs).Name := new String'
