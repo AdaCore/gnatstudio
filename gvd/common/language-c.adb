@@ -789,4 +789,37 @@ package body Language.C is
       return True;
    end Is_Case_Sensitive;
 
+   ------------------
+   -- Comment_Line --
+   ------------------
+
+   function Comment_Line
+     (Lang : access C_Language;
+      Line : String) return String
+   is
+      pragma Unreferenced (Lang);
+   begin
+      return "/* " & Line & " */";
+   end Comment_Line;
+
+   --------------------
+   -- Uncomment_Line --
+   --------------------
+
+   function Uncomment_Line
+     (Lang : access C_Language;
+      Line : String) return String
+   is
+      pragma Unreferenced (Lang);
+   begin
+      if Line'Length > 6
+        and then Line (Line'First .. Line'First + 2) = "/* "
+        and then Line (Line'Last - 2 .. Line'Last) = " */"
+      then
+         return Line (Line'First + 3 .. Line'Last - 3);
+      end if;
+
+      return Line;
+   end Uncomment_Line;
+
 end Language.C;

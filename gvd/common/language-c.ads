@@ -110,6 +110,14 @@ package Language.C is
    --  contents other than closing curlys and parentheses.
    --  If Callback is not null, it will be called for each entity.
 
+   function Comment_Line
+     (Lang : access C_Language;
+      Line : String) return String;
+
+   function Uncomment_Line
+     (Lang : access C_Language;
+      Line : String) return String;
+
 private
    type C_Language is new Language_Root with null record;
 

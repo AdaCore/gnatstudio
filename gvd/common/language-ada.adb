@@ -381,6 +381,48 @@ package body Language.Ada is
       Free (New_Buffer);
    end Format_Source;
 
+   ------------------
+   -- Comment_Line --
+   ------------------
+
+   function Comment_Line
+     (Lang : access Ada_Language;
+      Line : String) return String
+   is
+      pragma Unreferenced (Lang);
+   begin
+      return "--  " & Line;
+   end Comment_Line;
+
+   --------------------
+   -- Uncomment_Line --
+   --------------------
+
+   function Uncomment_Line
+     (Lang : access Ada_Language;
+      Line : String) return String
+   is
+      pragma Unreferenced (Lang);
+   begin
+      if Line'Length > 4
+        and then Line (Line'First .. Line'First + 3) = "--  "
+      then
+         return Line (Line'First + 4 .. Line'Last);
+
+      elsif Line'Length > 1
+        and then Line (Line'First .. Line'First + 1) = "--"
+      then
+         if Line'Length > 2 then
+            return Line (Line'First + 2 .. Line'Last);
+
+         else
+            return "";
+         end if;
+      end if;
+
+      return Line;
+   end Uncomment_Line;
+
    ----------------------
    -- Parse_Constructs --
    ----------------------

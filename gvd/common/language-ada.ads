@@ -83,6 +83,14 @@ package Language.Ada is
       Ident_Casing     : Casing_Type       := Mixed;
       Format_Operators : Boolean           := True);
 
+   function Comment_Line
+     (Lang : access Ada_Language;
+      Line : String) return String;
+
+   function Uncomment_Line
+     (Lang : access Ada_Language;
+      Line : String) return String;
+
    procedure Parse_Constructs
      (Lang   : access Ada_Language;
       Buffer : String;

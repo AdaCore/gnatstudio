@@ -292,6 +292,32 @@ package body Language is
       Put (Buffer);
    end Format_Source;
 
+   ------------------
+   -- Comment_Line --
+   ------------------
+
+   function Comment_Line
+     (Lang : access Language_Root;
+      Line : String) return String
+   is
+      pragma Unreferenced (Lang);
+   begin
+      return Line;
+   end Comment_Line;
+
+   --------------------
+   -- Uncomment_Line --
+   --------------------
+
+   function Uncomment_Line
+     (Lang : access Language_Root;
+      Line : String) return String
+   is
+      pragma Unreferenced (Lang);
+   begin
+      return Line;
+   end Uncomment_Line;
+
    ----------------------
    -- Parse_Constructs --
    ----------------------

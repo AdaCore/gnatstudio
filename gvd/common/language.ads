@@ -330,6 +330,19 @@ package Language is
    --  If Format_Operators is True, spaces are added when appropriate around
    --  operators (e.g a space after commas, before left paren, etc...).
 
+   function Comment_Line
+     (Lang : access Language_Root;
+      Line : String) return String;
+   --  Comment one line of code.
+   --  See Uncomment_Line below.
+
+   function Uncomment_Line
+     (Lang : access Language_Root;
+      Line : String) return String;
+   --  Uncomment one line of code.
+   --  Does nothing on a non-commented line.
+   --  Uncomment_Line (Comment_Line (A)) should return A.
+
    procedure Parse_Constructs
      (Lang   : access Language_Root;
       Buffer : String;
