@@ -21,7 +21,7 @@
 with Ada.Text_IO; use Ada.Text_IO;
 
 with GNAT.Regpat; use GNAT.Regpat;
-with Language; use Language;
+with Language;    use Language;
 
 package body Codefix.Errors_Parser is
 
@@ -1102,7 +1102,7 @@ package body Codefix.Errors_Parser is
       Solutions    : out Solution_List;
       Matches      : Match_Array)
    is
-      First_Word : String := Get_Message (Message)
+      First_Word : constant String := Get_Message (Message)
         (Matches (1).First .. Matches (1).Last);
       Category   : Language_Category;
 
@@ -1128,6 +1128,7 @@ package body Codefix.Errors_Parser is
             Message,
             Category,
             Get_Message (Message) (Matches (2).First .. Matches (2).Last)));
+
    end Fix;
 
    ------------------------
