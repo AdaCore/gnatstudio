@@ -33,6 +33,7 @@ with Glib.Values;            use Glib.Values;
 with Glide_Kernel;           use Glide_Kernel;
 with Glide_Kernel.Modules;   use Glide_Kernel.Modules;
 with Glide_Kernel.Console;   use Glide_Kernel.Console;
+with Glide_Kernel.Scripts;   use Glide_Kernel.Scripts;
 with Glide_Intl;             use Glide_Intl;
 
 with Traces;                 use Traces;
@@ -59,6 +60,11 @@ package body Codefix_Module is
    pragma Import (C, Codefix_Ambiguous_Xpm, "codefix_ambiguous_xpm");
 
    Me : constant Debug_Handle := Create ("Codefix_Module");
+
+   Output_Cst : aliased String := "output";
+   Category_Cst : aliased String := "category";
+   Parse_Cmd_Parameters : constant Cst_Argument_List :=
+     (1 => Output_Cst'Access, 2 => Category_Cst'Access);
 
    procedure On_Fix
      (Widget  : access GObject_Record'Class;
@@ -97,6 +103,20 @@ package body Codefix_Module is
      (This : GPS_Navigator;
       File : in out Text_Interface'Class);
    --  Set the value of the Text_Interface's kernel
+
+   procedure Activate_Codefix
+     (Kernel   : Kernel_Handle;
+      Output   : String;
+      Category : String := -Compilation_Category);
+   --  Activate postfix for a given compilation output
+
+   procedure Create_Pixmap_And_Category
+     (Error : Error_Id; Category : String := -Compilation_Category);
+   --  Same as Create_Pixmap, but the category is specified
+
+   procedure Default_Command_Handler
+     (Data : in out Callback_Data'Class; Command : String);
+   --  Handles shell commands for this module
 
    ----------------------
    -- Get_Body_Or_Spec --
@@ -142,19 +162,16 @@ package body Codefix_Module is
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Fix;
 
-   -----------------------------
-   -- Compilation_Finished_Cb --
-   -----------------------------
+   ----------------------
+   -- Activate_Codefix --
+   ----------------------
 
-   procedure Compilation_Finished_Cb
-     (Widget  : access Glib.Object.GObject_Record'Class;
-      Args    : GValues;
-      Kernel  : Kernel_Handle)
+   procedure Activate_Codefix
+     (Kernel   : Kernel_Handle;
+      Output   : String;
+      Category : String := -Compilation_Category)
    is
-      pragma Unreferenced (Widget, Args);
-
       Current_Error : Error_Id;
-
    begin
       Free (Codefix_Module_ID.Errors_Found);
       Free (Codefix_Module_ID.Corrector);
@@ -168,9 +185,10 @@ package body Codefix_Module is
       Set_Error_Cb
         (Codefix_Module_ID.Corrector.all, Execute_Corrupted_Cb'Access);
 
-      Get_Last_Output
-        (Compilation_Output
-           (Codefix_Module_ID.Errors_Found.all), Kernel);
+      Set_Last_Output
+        (Compilation_Output (Codefix_Module_ID.Errors_Found.all),
+         Kernel,
+         Output);
 
       Analyze
         (Codefix_Module_ID.Corrector.all,
@@ -178,13 +196,32 @@ package body Codefix_Module is
          Codefix_Module_ID.Errors_Found.all,
          null);
 
-      Current_Error := Get_First_Error (Codefix_Module_ID.Corrector.all);
+      --  Update the location window to show which errors can be fixed
 
+      Current_Error := Get_First_Error (Codefix_Module_ID.Corrector.all);
       while Current_Error /= Null_Error_Id loop
-         Create_Pixmap (Current_Error);
+         Create_Pixmap_And_Category (Current_Error, Category);
          Current_Error := Next (Current_Error);
       end loop;
 
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+   end Activate_Codefix;
+
+   -----------------------------
+   -- Compilation_Finished_Cb --
+   -----------------------------
+
+   procedure Compilation_Finished_Cb
+     (Widget  : access Glib.Object.GObject_Record'Class;
+      Args    : GValues;
+      Kernel  : Kernel_Handle)
+   is
+      pragma Unreferenced (Widget, Args);
+   begin
+      Activate_Codefix
+        (Kernel, Execute_GPS_Shell_Command (Kernel, "get_build_output"));
    exception
       when E : others =>
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
@@ -308,6 +345,17 @@ package body Codefix_Module is
    -------------------
 
    procedure Create_Pixmap (Error : Error_Id) is
+   begin
+      Create_Pixmap_And_Category (Error, -Compilation_Category);
+   end Create_Pixmap;
+
+   --------------------------------
+   -- Create_Pixmap_And_Category --
+   --------------------------------
+
+   procedure Create_Pixmap_And_Category
+     (Error : Error_Id; Category : String := -Compilation_Category)
+   is
       New_Action    : Action_Item;
    begin
       New_Action := new Line_Information_Record;
@@ -332,7 +380,7 @@ package body Codefix_Module is
       Add_Location_Action
         (Kernel        => Codefix_Module_ID.Kernel,
          Identifier    => Location_Button_Name,
-         Category      => -Compilation_Category,
+         Category      => Category,
          File          => Create
            (Get_Error_Message (Error).File_Name.all,
             Codefix_Module_ID.Kernel),
@@ -341,7 +389,7 @@ package body Codefix_Module is
          Message       =>
            Cut_Message (Get_Message (Get_Error_Message (Error))),
          Action        => New_Action);
-   end Create_Pixmap;
+   end Create_Pixmap_And_Category;
 
    ---------------------
    -- Register_Module --
@@ -382,10 +430,38 @@ package body Codefix_Module is
          Compilation_Finished_Cb'Access,
          Kernel_Handle (Kernel));
 
+      Register_Command
+        (Kernel,
+         Command      => "codefix_parse",
+         Params       => Parameter_Names_To_Usage (Parse_Cmd_Parameters),
+         Description  =>
+           -("Parse the output of a tool, and suggests auto-fix possibilities"
+             & " whenever possible. This adds small icons in the location"
+             & " window, so that the user can click on it to fix compilation"
+             & " errors. You should call locations_parse with the same output"
+             & " prior to calling this command."),
+         Minimum_Args => Parse_Cmd_Parameters'Length,
+         Maximum_Args => Parse_Cmd_Parameters'Length,
+         Handler      => Default_Command_Handler'Access);
+
    exception
       when E : others =>
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end Register_Module;
+
+   -----------------------------
+   -- Default_Command_Handler --
+   -----------------------------
+
+   procedure Default_Command_Handler
+     (Data : in out Callback_Data'Class; Command : String) is
+   begin
+      if Command = "codefix_parse" then
+         Name_Parameters (Data, Parse_Cmd_Parameters);
+         Activate_Codefix (Get_Kernel (Data), Nth_Arg (Data, 1),
+                           Category => Nth_Arg (Data, 2));
+      end if;
+   end Default_Command_Handler;
 
    ------------------------
    -- New_Text_Interface --
