@@ -229,6 +229,7 @@ Python FAQ
 * Reloading a python file in GPS::
 * Printing the GPS Python documentation::
 * Automatically loading python files at startup::
+* Launching external processes::
 @end ifset
 
 Environment
@@ -10443,6 +10444,7 @@ Python inside GPS. This is not a general Python discussion.
 * Reloading a python file in GPS::
 * Printing the GPS Python documentation::
 * Automatically loading python files at startup::
+* Launching external processes::
 @end menu
 
 @c -------------------------------------------
@@ -10747,6 +10749,21 @@ you can also do the following using a windows @file{.bat} file
   export LD_LIBRARY_PATH=/dir/support:$LD_LIBRARY_PATH
   gps --eval=python:'import support_autoexec.py' $*
 @end smallexample
+
+@c -------------------------------------------
+@node Launching external processes
+@subsubsection Launching external processes
+
+If there is a need to spawn a process from GPS and to interact with it, the use
+of an expect library may be a good solution. There are various python expect
+libraries that already exist, but the prefered solution is to use the API
+provided by GPS (see the documentation of the class Process in the integrated
+python help).
+
+However, should someone need to use an external python expect library, note
+that these libraries generally try to copy the parameters of the standard IOs,
+and that they may fail doing so, as GPS does not provide the complete set of
+primitives of the IOs. 
 
 
 @c --------------------------------------------------------------------
