@@ -711,24 +711,29 @@ package body Src_Editor_Module is
       Name    : String := "";
       Success : out Boolean)
    is
-      Child  : MDI_Child := Find_Current_Editor (Kernel);
-      Source : Source_Editor_Box;
-      Old_Name : constant String := Get_Filename (Source);
+      Child    : MDI_Child := Find_Current_Editor (Kernel);
+      Source   : Source_Editor_Box;
+
    begin
       if Child = null then
          return;
       end if;
 
       Source := Source_Box (Get_Widget (Child)).Editor;
-      Save_To_File (Source, Name, Success);
 
-      --  Update the title, in case "save as..." was used.
-      if Old_Name /= Get_Filename (Source) then
-         Set_Title
-           (Child, Get_Filename (Source),
-            Base_Name (Get_Filename (Source)));
-         Recompute_View (Kernel);
-      end if;
+      declare
+         Old_Name : constant String := Get_Filename (Source);
+      begin
+         Save_To_File (Source, Name, Success);
+
+         --  Update the title, in case "save as..." was used.
+         if Old_Name /= Get_Filename (Source) then
+            Set_Title
+              (Child, Get_Filename (Source),
+               Base_Name (Get_Filename (Source)));
+            Recompute_View (Kernel);
+         end if;
+      end;
    end Save_To_File;
 
    -------------------------
