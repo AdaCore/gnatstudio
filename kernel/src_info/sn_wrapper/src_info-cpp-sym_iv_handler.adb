@@ -52,6 +52,7 @@ begin
       Insert_Declaration
         (Handler           => LI_Handler (Global_CPP_Handler),
          File              => Global_LI_File,
+         List              => Global_LI_File_List,
          Symbol_Name       =>
            Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last),
          Source_Filename   =>
@@ -64,6 +65,7 @@ begin
       Insert_Declaration
         (Handler           => LI_Handler (Global_CPP_Handler),
          File              => Global_LI_File,
+         List              => Global_LI_File_List,
          Symbol_Name       =>
            Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last),
          Source_Filename   =>
