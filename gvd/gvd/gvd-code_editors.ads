@@ -32,16 +32,15 @@ with Gdk.Color;
 with Gdk.Font;
 with Gdk.Pixmap;
 with Gtk.Box;
-with Gtk.Ctree;
 with Gtk.Layout;
 with Gtk.Pixmap;
 with Gtk.Scrolled_Window;
 with Gtk.Text;
-with Gtk.Style;
 with Gtk.Widget;
 with Gtkada.Types;
 with Language;
 with Odd.Types;
+with Odd.Explorer;
 
 package Odd.Code_Editors is
 
@@ -50,6 +49,7 @@ package Odd.Code_Editors is
 
    procedure Gtk_New_Hbox
      (Editor      : out Code_Editor;
+      Process     : access Gtk.Widget.Gtk_Widget_Record'Class;
       Homogeneous : Boolean := False;
       Spacing     : Glib.Gint := 0);
    --  Create a new editor window.
@@ -58,6 +58,7 @@ package Odd.Code_Editors is
 
    procedure Initialize
      (Editor      : access Code_Editor_Record'Class;
+      Process     : access Gtk.Widget.Gtk_Widget_Record'Class;
       Homogeneous : Boolean := False;
       Spacing     : Glib.Gint := 0);
    --  Internal procedure.
@@ -141,6 +142,17 @@ package Odd.Code_Editors is
    --  and replaced by the new ones.
    --  The breakpoints that do not apply to the current file are ignored.
 
+   procedure Highlight_Word
+     (Editor   : access Code_Editor_Record;
+      Position : Odd.Explorer.Position_Type);
+   --  Highlight the word that starts at the given position in the file
+   --  associated with the editor (ie ignoring the line numbers that could
+   --  be displayed).
+
+   function Get_Process (Editor : access Code_Editor_Record'Class)
+                        return Gtk.Widget.Gtk_Widget;
+   --  Return the process tab in which the editor is inserted.
+
 private
 
    type Color_Array is array (Language.Language_Entity'Range) of
@@ -149,39 +161,36 @@ private
    type String_Access is access String;
 
    type Code_Editor_Record is new Gtk.Box.Gtk_Box_Record with record
-      Text            : Gtk.Text.Gtk_Text;
-      Buttons         : Gtk.Layout.Gtk_Layout;
+      Text    : Gtk.Text.Gtk_Text;
+      Buttons : Gtk.Layout.Gtk_Layout;
 
-      Explorer        : Gtk.Ctree.Gtk_Ctree;
+      Process : Gtk.Widget.Gtk_Widget;
+      --  The process tab in which the editor is found.
+
+      Explorer        : Odd.Explorer.Explorer_Access;
       Explorer_Scroll : Gtk.Scrolled_Window.Gtk_Scrolled_Window;
 
-      Explorer_Root        : Gtk.Ctree.Gtk_Ctree_Node;
-      Explorer_Is_Computed : Boolean := False;
-      Explorer_Dummy_Node  : Gtk.Ctree.Gtk_Ctree_Node;
-      --  Dummy node put in the explorer before it is computed
+      Current_File : String_Access;
+      Buffer       : String_Access;
 
-      Current_File    : String_Access;
-      Buffer          : String_Access;
+      Lang           : Language.Language_Access;
+      Font           : Gdk.Font.Gdk_Font;
+      Default_Pixmap : Gdk.Pixmap.Gdk_Pixmap := Gdk.Pixmap.Null_Pixmap;
+      Default_Mask   : Gdk.Bitmap.Gdk_Bitmap := Gdk.Bitmap.Null_Bitmap;
+      Stop_Pixmap    : Gdk.Pixmap.Gdk_Pixmap := Gdk.Pixmap.Null_Pixmap;
+      Stop_Mask      : Gdk.Bitmap.Gdk_Bitmap := Gdk.Bitmap.Null_Bitmap;
+      Colors         : Color_Array := (others => Gdk.Color.Null_Color);
 
-      Lang            : Language.Language_Access;
-      Font            : Gdk.Font.Gdk_Font;
-      Default_Pixmap  : Gdk.Pixmap.Gdk_Pixmap := Gdk.Pixmap.Null_Pixmap;
-      Default_Mask    : Gdk.Bitmap.Gdk_Bitmap := Gdk.Bitmap.Null_Bitmap;
-      Stop_Pixmap     : Gdk.Pixmap.Gdk_Pixmap := Gdk.Pixmap.Null_Pixmap;
-      Stop_Mask       : Gdk.Bitmap.Gdk_Bitmap := Gdk.Bitmap.Null_Bitmap;
-      Colors          : Color_Array := (others => Gdk.Color.Null_Color);
-      File_Name_Style : Gtk.Style.Gtk_Style;
-
-      Current_Line_Button  : Gtk.Pixmap.Gtk_Pixmap;
-      Current_Line         : Natural := 0;
-      Show_Line_Nums       : Boolean := False;
+      Current_Line_Button : Gtk.Pixmap.Gtk_Pixmap;
+      Current_Line        : Natural := 0;
+      Show_Line_Nums      : Boolean := False;
 
       Show_Lines_With_Code : Boolean := True;
-      --  Whether the lines where one can set a breakpoint have a small dot
-      --  on the side.
+ --  Whether the lines where one can set a breakpoint have a small dot
+ --  on the side.
 
-      Breakpoint_Buttons   : Gtk.Widget.Widget_List.Glist;
-      --  The pixmaps for each of the breakpoints
+      Breakpoint_Buttons : Gtk.Widget.Widget_List.Glist;
+ --  The pixmaps for each of the breakpoints
 
       Possible_Breakpoint_Buttons : Gtk.Widget.Widget_List.Glist;
       --  The pixmaps for each of the possible breakpoints location

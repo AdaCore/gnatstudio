@@ -27,7 +27,6 @@ with Gdk.Event;           use Gdk.Event;
 with Gdk.Types;           use Gdk.Types;
 with Gtk.Adjustment;      use Gtk.Adjustment;
 with Gtk.Box;             use Gtk.Box;
-with Gtk.Ctree;           use Gtk.Ctree;
 with Gtk.Enums;           use Gtk.Enums;
 with Gtk.Extra.PsFont;    use Gtk.Extra.PsFont;
 with Gtk.Layout;          use Gtk.Layout;
@@ -38,10 +37,7 @@ with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
 with Gtk.Text;            use Gtk.Text;
 with Gtk.Widget;          use Gtk.Widget;
 with Gtk.Menu;            use Gtk.Menu;
-with Gtk.Style;           use Gtk.Style;
 with Gtkada.Types;        use Gtkada.Types;
-with Gtkada.Handlers;     use Gtkada.Handlers;
-with Gtk.Arguments;       use Gtk.Arguments;
 with Language;            use Language;
 with Debugger;            use Debugger;
 with GNAT.OS_Lib;         use GNAT.OS_Lib;
@@ -75,7 +71,7 @@ package body Odd.Code_Editors is
    Display_Explorer : constant Boolean := True;
    --  True if we should associate an explorer tree to each editor.
 
-   Explorer_Width : constant := 150;
+   Explorer_Width : constant := 200;
    --  Width for the area reserved for the explorer.
 
    Layout_Width : constant := 20;
@@ -83,9 +79,6 @@ package body Odd.Code_Editors is
 
    Line_Numbers_Width : constant Positive := 5;
    --  Number of characters reserved on the left for line numbers.
-
-   File_Name_Bg_Color : constant String := "#BEBEBE";
-   --  Color used for the background of the file name in the editor (grey).
 
    No_Breakpoint : Breakpoint_Array (1 .. 0);
    --  Array used to reset the breakpoint list
@@ -107,11 +100,6 @@ package body Odd.Code_Editors is
 
    procedure Free is new Unchecked_Deallocation (String, String_Access);
 
-   procedure Jump_To
-     (Widget : access Gtk_Widget_Record'Class; Position : Position_Type);
-   --  Called by Explorer when an item in the buffer is selected.
-   --  This will select the word starting at Index.
-
    function Button_Press_Cb
      (Editor : access Code_Editor_Record'Class;
       Event  : Gdk.Event.Gdk_Event) return Boolean;
@@ -126,12 +114,6 @@ package body Odd.Code_Editors is
    --  Update the display of line-breaks buttons.
    --  If this feature is disabled for the editor, then they are all removed.
 
-   procedure Expand_Explorer_Tree
-     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Args   : Gtk_Args);
-   --  Compute the contents of the explorer if needed. This is not done
-   --  systematically, so as to speed things up.
-
    procedure Scroll_Layout (Editor : access Code_Editor_Record'Class);
    --  Synchronize the new position of the buttons layout after the user has
    --  scrolled the editor.
@@ -144,51 +126,6 @@ package body Odd.Code_Editors is
    procedure Destroy_Cb (Editor : access Code_Editor_Record'Class);
    --  Free the memory occupied by the editor and the buttons layout, as well
    --  as all the associated pixmaps.
-
-   -------------
-   -- Jump_To --
-   -------------
-
-   procedure Jump_To
-     (Widget : access Gtk_Widget_Record'Class; Position : Position_Type)
-   is
-      Editor : Code_Editor := Code_Editor (Widget);
-      Last   : Positive;
-      Pos    : Positive :=
-        Position.Index + (Position.Line + 1) * (Line_Numbers_Width + 1) - 1;
-      Buffer : String := Get_Chars (Editor.Text, Gint (Pos));
-
-   begin
-      Last := Buffer'First;
-
-      while Last < Buffer'Last
-        and then Buffer (Last) /= ' '
-        and then Buffer (Last) /= '('
-        and then Buffer (Last) /= ';'
-      loop
-         Last := Last + 1;
-      end loop;
-
-      Freeze (Editor.Text);
-
-      --  Set the adjustment directly, so that the text is not scrolled
-      --  on the screen (which is too slow for big files)
-      Set_Value
-        (Get_Vadj (Editor.Text),
-         Gfloat (Position.Line + 1) *
-         Gfloat ((Get_Ascent (Editor.Font) + Get_Descent (Editor.Font))));
-      Changed (Get_Vadj (Editor.Text));
-
-      --  Change the cursor position, and highlight the entity.
-      --  We claim the selection so that the selected entity always has the
-      --  same color (if we don't, the first selection has a different color
-      --  than the following ones).
-      Claim_Selection (Editor.Text, True, 0);
-      Set_Position (Editor.Text, Gint (Pos));
-      Select_Region
-        (Editor.Text, Gint (Pos), Gint (Last + Pos - Buffer'First));
-      Thaw (Editor.Text);
-   end Jump_To;
 
    -------------------
    -- Scroll_Layout --
@@ -259,11 +196,12 @@ package body Odd.Code_Editors is
 
    procedure Gtk_New_Hbox
      (Editor      : out Code_Editor;
+      Process     : access Gtk.Widget.Gtk_Widget_Record'Class;
       Homogeneous : Boolean := False;
       Spacing     : Glib.Gint := 0) is
    begin
       Editor := new Code_Editor_Record;
-      Initialize (Editor, Homogeneous, Spacing);
+      Initialize (Editor, Process, Homogeneous, Spacing);
    end Gtk_New_Hbox;
 
    ----------------
@@ -272,6 +210,7 @@ package body Odd.Code_Editors is
 
    procedure Initialize
      (Editor      : access Code_Editor_Record'Class;
+      Process     : access Gtk.Widget.Gtk_Widget_Record'Class;
       Homogeneous : in Boolean := False;
       Spacing     : in Gint := 0)
    is
@@ -281,6 +220,7 @@ package body Odd.Code_Editors is
 
    begin
       Gtk.Box.Initialize_Hbox (Editor, Homogeneous => False);
+      Editor.Process := Gtk_Widget (Process);
 
       Gtk_New_Hpaned (Paned);
       Gtk_New_Hbox (Box, Homogeneous => False);
@@ -300,6 +240,9 @@ package body Odd.Code_Editors is
       Gtk_New (Editor.Explorer_Scroll);
       Set_Policy (Editor.Explorer_Scroll, Policy_Automatic, Policy_Automatic);
       Set_USize (Editor.Explorer_Scroll, Explorer_Width, -1);
+
+      Gtk_New (Editor.Explorer, Editor);
+      Add (Editor.Explorer_Scroll, Editor.Explorer);
 
       Editor_Cb.Object_Connect
         (Get_Vadj (Editor.Text), "value_changed",
@@ -344,7 +287,6 @@ package body Odd.Code_Editors is
    is
       Current_Line_Pixmap : Gdk.Pixmap.Gdk_Pixmap;
       Current_Line_Mask   : Gdk.Bitmap.Gdk_Bitmap;
-      Color               : Gdk.Color.Gdk_Color;
    begin
       Editor.Font := Get_Gdkfont (Ps_Font_Name, Font_Size);
 
@@ -379,14 +321,6 @@ package body Odd.Code_Editors is
       Alloc (Get_System, Editor.Colors (String_Text));
       Editor.Colors (Keyword_Text) := Parse (Keywords_Color);
       Alloc (Get_System, Editor.Colors (Keyword_Text));
-
-      Color := Parse (File_Name_Bg_Color);
-      Alloc (Get_System, Color);
-      Editor.File_Name_Style := Copy (Get_Style (Editor.Text));
-      Set_Base (Editor.File_Name_Style, State_Normal, Color);
-      Set_Base (Editor.File_Name_Style, State_Selected, Color);
-      Set_Foreground (Editor.File_Name_Style, State_Active,
-                      Black (Get_System));
 
       --  ???Unfortunately, it is not possible currently to specify the
       --  step_increment for the adjustments, since this is overriden in
@@ -747,32 +681,6 @@ package body Odd.Code_Editors is
       Thaw (Editor.Buttons);
    end Update_Buttons;
 
-   --------------------------
-   -- Expand_Explorer_Tree --
-   --------------------------
-
-   procedure Expand_Explorer_Tree
-     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Args   : Gtk_Args)
-   is
-      Editor : Code_Editor := Code_Editor (Widget);
-      Node   : Gtk_Ctree_Node := Gtk_Ctree_Node (To_C_Proxy (Args, 1));
-   begin
-      if Node = Editor.Explorer_Root
-        and then not Editor.Explorer_Is_Computed
-      then
-         Remove_Node (Editor.Explorer, Editor.Explorer_Dummy_Node);
-
-         Editor.Explorer_Is_Computed := True;
-         Explore
-           (Editor.Explorer, Editor.Explorer_Root,
-            Editor, Editor.Buffer.all, Editor.Lang,
-            Base_File_Name (Editor.Current_File.all), Jump_To'Access);
-         Show_All (Editor.Explorer);
-         Gtk.Ctree.Expand (Editor.Explorer, Editor.Explorer_Root);
-      end if;
-   end Expand_Explorer_Tree;
-
    --------------------
    -- File_Not_Found --
    --------------------
@@ -802,9 +710,9 @@ package body Odd.Code_Editors is
      (Editor    : access Code_Editor_Record;
       File_Name : String)
    is
-      F           : File_Descriptor;
-      Length      : Positive;
-      Name        : aliased String := File_Name & ASCII.NUL;
+      F      : File_Descriptor;
+      Length : Positive;
+      Name   : aliased String := File_Name & ASCII.NUL;
    begin
       --  Avoid reloading a file twice.
       --  This also solve the problem of recursive loops ("info line" in gdb,
@@ -843,37 +751,7 @@ package body Odd.Code_Editors is
 
       --  Create the explorer tree.
 
-      if Display_Explorer then
-         if Editor.Explorer /= null then
-            Remove (Editor.Explorer_Scroll, Editor.Explorer);
-         end if;
-
-         Gtk_New (Editor.Explorer, 1);
-
-         Editor.Explorer_Root := Insert_Node
-           (Editor.Explorer, null, null,
-            Null_Array + Base_File_Name (File_Name),
-            5, Null_Pixmap, Null_Bitmap,
-            Null_Pixmap, Null_Bitmap, False, False);
-         Editor.Explorer_Is_Computed := False;
-
-         --  Insert a dummy node so that the ctree displays a [+] button on
-         --  the left side.
-         Editor.Explorer_Dummy_Node := Insert_Node
-           (Editor.Explorer, Editor.Explorer_Root, null,
-            Null_Array + "",
-            5, Null_Pixmap, Null_Bitmap, null, null, True, False);
-
-         Widget_Callback.Object_Connect
-           (Editor.Explorer, "tree_expand",
-            Expand_Explorer_Tree'Access, Editor);
-
-         Set_Cell_Style (Editor.Explorer, 0, 0, Editor.File_Name_Style);
-         Set_Column_Auto_Resize (Editor.Explorer, 0, True);
-
-         Show_All (Editor.Explorer);
-         Add (Editor.Explorer_Scroll, Editor.Explorer);
-      end if;
+      Set_Current_File (Editor.Explorer, File_Name);
 
       Print_Buffer (Editor);
       Update_Buttons (Editor);
@@ -884,6 +762,10 @@ package body Odd.Code_Editors is
 
       Hide (Editor.Buttons);
       Show_All (Editor.Buttons);
+
+      if not Display_Explorer then
+         Hide (Editor.Explorer_Scroll);
+      end if;
 
    exception
 
@@ -1059,5 +941,61 @@ package body Odd.Code_Editors is
          Thaw (Editor.Buttons);
       end;
    end Update_Breakpoints;
+
+   --------------------
+   -- Highlight_Word --
+   --------------------
+
+   procedure Highlight_Word
+     (Editor   : access Code_Editor_Record;
+      Position : Odd.Explorer.Position_Type)
+   is
+     Last   : Positive;
+     Pos    : Positive :=
+       Position.Index + (Position.Line + 1) * (Line_Numbers_Width + 1) - 1;
+     Buffer : String := Get_Chars (Editor.Text, Gint (Pos));
+
+  begin
+     Last := Buffer'First;
+
+     while Last < Buffer'Last
+       and then Buffer (Last) /= ' '
+       and then Buffer (Last) /= '('
+       and then Buffer (Last) /= ';'
+     loop
+        Last := Last + 1;
+     end loop;
+
+     Freeze (Editor.Text);
+
+     --  Set the adjustment directly, so that the text is not scrolled
+     --  on the screen (which is too slow for big files)
+     Set_Value
+       (Get_Vadj (Editor.Text),
+        Gfloat (Position.Line + 1) *
+        Gfloat ((Get_Ascent (Editor.Font) + Get_Descent (Editor.Font))));
+     Changed (Get_Vadj (Editor.Text));
+
+     --  Change the cursor position, and highlight the entity.
+     --  We claim the selection so that the selected entity always has the
+     --  same color (if we don't, the first selection has a different color
+     --  than the following ones).
+     Claim_Selection (Editor.Text, True, 0);
+     Set_Position (Editor.Text, Gint (Pos));
+     Select_Region
+       (Editor.Text, Gint (Pos), Gint (Last + Pos - Buffer'First));
+     Thaw (Editor.Text);
+   end Highlight_Word;
+
+   -----------------
+   -- Get_Process --
+   -----------------
+
+   function Get_Process (Editor : access Code_Editor_Record'Class)
+                        return Gtk.Widget.Gtk_Widget
+   is
+   begin
+      return Editor.Process;
+   end Get_Process;
 
 end Odd.Code_Editors;
