@@ -171,11 +171,11 @@ package body Glide_Kernel.Preferences is
 
    function Get_Pref
      (Kernel : access Kernel_Handle_Record'Class;
-      Pref   : Property_Font) return Gdk.Font.Gdk_Font
+      Pref   : Property_Font) return Pango.Font.Pango_Font_Description
    is
       Name : constant String := Get_Node (Kernel, Property (Pref)).Value.all;
    begin
-      return From_Description (From_String (Name));
+      return From_String (Name);
    end Get_Pref;
 
 end Glide_Kernel.Preferences;
