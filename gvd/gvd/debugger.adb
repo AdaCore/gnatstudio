@@ -57,6 +57,7 @@ package body Debugger is
    --  output of the debugger, but it doesn't read it.
    --  This should be called only if we are currently waiting for the next
    --  prompt, ie processing the output
+   --  Note that this function will do nothing if Mode is Internal.
 
    ----------
    -- Free --
@@ -315,8 +316,9 @@ package body Debugger is
       Wait_For_Prompt  : Boolean;
       Mode             : Command_Type := Hidden) is
    begin
-      --  Not in text mode (for testing purposes...)
-      if Debugger.Window /= null then
+      --  Not an internal command, not in text mode (for testing purposes...)
+
+      if Mode /= Internal and then Debugger.Window /= null then
 
          --  Postprocessing (e.g handling of auto-update).
 
@@ -326,13 +328,9 @@ package body Debugger is
             Process_Stopped (Convert (Debugger.Window, Debugger));
          end if;
 
-         --  Should we update the list of breakpoints => No if we are in
-         --  an internal command, since that would be too costly
-         if Mode /= Internal then
-            Update_Breakpoints
-              (Convert (Debugger.Window, Debugger),
-               Force => Is_Break_Command (Debugger, Cmd));
-         end if;
+         Update_Breakpoints
+           (Convert (Debugger.Window, Debugger),
+            Force => Is_Break_Command (Debugger, Cmd));
       end if;
    end Send_Internal_Post;
 
