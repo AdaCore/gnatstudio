@@ -773,7 +773,7 @@ package body VCS.ClearCase is
             Success_Message      : Console_Command_Access;
             Log_File             : constant String := Get_Tmp_Dir &
               "clearcase_log_" & Base_Name (File);
-            Ft                   : File_Type;
+            Fd                   : GNAT.OS_Lib.File_Descriptor;
 
          begin
             Insert
@@ -802,9 +802,18 @@ package body VCS.ClearCase is
             Append (Args, "ci");
             Append (Args, "-cfile");
 
-            Create (Ft, Out_File, Log_File);
-            Put (Ft, Data (Logs_Node));
-            Close (Ft);
+            Fd := GNAT.OS_Lib.Create_File (Log_File, GNAT.OS_Lib.Binary);
+
+            declare
+               Log           : aliased constant String := Data (Logs_Node);
+               Bytes_Written : Integer;
+               pragma Unreferenced (Bytes_Written);
+            begin
+               Bytes_Written :=
+                 GNAT.OS_Lib.Write (Fd, Log (Log'First)'Address, Log'Length);
+            end;
+
+            GNAT.OS_Lib.Close (Fd);
 
             Append (Args, Log_File);
 
