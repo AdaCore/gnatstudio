@@ -2433,6 +2433,9 @@ package body Src_Editor_Module is
       pragma Unreferenced (Dummy);
 
    begin
+      Trace (Me, "Open file " & Full_Name (File).all
+             & " Focus=" & Focus'Img);
+
       if File /= VFS.No_File then
          Child := Find_Editor (Kernel, File);
 
