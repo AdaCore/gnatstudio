@@ -1228,13 +1228,13 @@ This feature requires at least two windows (text editors, browsers,...)
 to be superimposed in the central area. Selecting either the
 @code{Window->Split Horizontally} or @code{Window->Split Vertically} menus
 will then split the selected window in two. In the left (resp. top) pane,
-the currently selected window will be left on its won. The rest of the
+the currently selected window will be left on its own. The rest of the
 previously superimposed windows will be put in the right (resp. bottom)
 pane. You can then in turn split these remaining windows to achieve any
 layout you want.
 
 All split windows can be resized interactively by dragging the handles that
-separate them, just as is done for docked windows. A preferences (menu
+separate them, just as is done for docked windows. A preference (menu
 @code{Edit->Preferences} controls whether this resizing is done in opaque
 mode or border mode. In the latter case, only the new handle position will
 be displayed while the mouse is dragged.
@@ -1247,11 +1247,11 @@ you have split the central area in two, with one editor only on each side,
 closing any editor will result in an unsplit central area.
 
 You can bind key shortcuts to the menus @code{Window->Split Horizontally}
-and @code{Window->Split Vertically} as usual, providing the preference
-@code{Dynamic Key Binding} has been activated. However, if you want to
-achieve an effect similar to the standard Emacs behavior (where
+and @code{Window->Split Vertically} as usual, assuming the preference
+@code{Dynamic Key Binding} has been activated. In addition, if you want to
+achieve an effect similar to e.g. the standard Emacs behavior (where
 @key{control-x 2} splits a window horizontally, and @key{control-x 3} splits
-a window vertically), you should use the key manager
+a window vertically), you can use the key manager
 (@pxref{The Key Manager Dialog}).
 
 @c --------------------------------------------------------------------
@@ -5764,6 +5764,10 @@ such key bindings, you need to press the @code{Grab} button as usual, and then
 type the shortcut. The recording of the key binding will stop a short while
 after the last key stroke.
 
+If you want to define a key binding for an action not currently associated
+with any key, you can click on the @code{Add} button and choose the action
+from the list displayed.
+
 This facility for creating complex shortcuts is not available for menu
 items yet.
 
@@ -5814,7 +5818,7 @@ is provided that will automatically convert all files in the customization
 directory to the new format. This conversion tool is called
 @file{gps_convert_custom}, and must be run manually.
 
-This files must be utf8-encoded by default. However, you can specify any
+These files must be utf8-encoded by default. However, you can specify any
 encoding you wish through the standard @code{<?xml encoding="..." ?>}
 declaration, as in the following example:
 
