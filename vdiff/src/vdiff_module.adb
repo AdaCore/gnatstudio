@@ -37,10 +37,10 @@ with Vdiff_Pkg;                 use Vdiff_Pkg;
 with Vdiff_Utils;               use Vdiff_Utils;
 with OS_Utils;                  use OS_Utils;
 
-with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with Ada.Exceptions;            use Ada.Exceptions;
 with Traces;                    use Traces;
+with VFS;                       use VFS;
 
 package body Vdiff_Module is
 
@@ -80,6 +80,7 @@ package body Vdiff_Module is
            History           => Get_History (Kernel));
 
       Child  : MDI_Child;
+      F1, F2 : Virtual_File;
       Button : Message_Dialog_Buttons;
       pragma Unreferenced (Widget, Button);
 
@@ -102,7 +103,10 @@ package body Vdiff_Module is
             return;
          end if;
 
-         Result := Diff (Kernel, File1, File2);
+         F1 := Create (Full_Filename => File1);
+         F2 := Create (Full_Filename => File2);
+
+         Result := Diff (Kernel, F1, F2);
 
          if Result = null then
             Button := Message_Dialog
@@ -116,7 +120,7 @@ package body Vdiff_Module is
          Set_Text (Vdiff.File_Label1, File1);
          Set_Text (Vdiff.File_Label2, File2);
          Fill_Diff_Lists
-           (Kernel, Vdiff.Clist1, Vdiff.Clist2, File1, File2, Result);
+           (Kernel, Vdiff.Clist1, Vdiff.Clist2, F1, F2, Result);
          Show_All (Vdiff);
          Child := Put
            (Kernel, Vdiff,
@@ -147,7 +151,6 @@ package body Vdiff_Module is
       Vdiff   : Vdiff_Access;
       Result  : Diff_Occurrence_Link;
       Child   : MDI_Child;
-      Success : Boolean;
       Button  : Message_Dialog_Buttons;
       pragma Unreferenced (Mode, Button);
 
@@ -157,6 +160,7 @@ package body Vdiff_Module is
             Orig_File : constant String := Get_String (Data (Data'First));
             New_File  : constant String := Get_String (Data (Data'First + 1));
             Diff_File : constant String := Get_String (Data (Data'First + 2));
+            New_F, Orig_F, Diff_F : Virtual_File;
 
          begin
             if Orig_File = "" then
@@ -164,13 +168,17 @@ package body Vdiff_Module is
                   return False;
                end if;
 
+               New_F  := Create (Full_Filename => New_File);
+               Diff_F := Create (Full_Filename => Diff_File);
+
                declare
                   Base     : constant String := Base_Name (New_File);
-                  Ref_File : constant String := Get_Tmp_Dir & Base & "$ref";
+                  Ref_File : constant Virtual_File :=
+                    Create (Full_Filename => Get_Tmp_Dir & Base & "$ref");
 
                begin
                   Result := Diff
-                    (Kernel, Ref_File, New_File, Diff_File, Revert => True);
+                    (Kernel, Ref_File, New_F, Diff_F, Revert => True);
 
                   if Result = null then
                      Button := Message_Dialog
@@ -185,8 +193,8 @@ package body Vdiff_Module is
                   Set_Text (Vdiff.File_Label2, New_File);
                   Fill_Diff_Lists
                     (Kernel, Vdiff.Clist1, Vdiff.Clist2, Ref_File,
-                     New_File, Result);
-                  Delete_File (Ref_File, Success);
+                     New_F, Result);
+                  Delete (Ref_File);
                   Free (Result);
                end;
 
@@ -195,12 +203,16 @@ package body Vdiff_Module is
                   return False;
                end if;
 
+               Orig_F := Create (Full_Filename => Orig_File);
+               Diff_F := Create (Full_Filename => Diff_File);
+
                declare
                   Base     : constant String := Base_Name (Orig_File);
-                  Ref_File : constant String := Get_Tmp_Dir & Base & "$ref";
+                  Ref_File : constant Virtual_File :=
+                    Create (Full_Filename => Get_Tmp_Dir & Base & "$ref");
 
                begin
-                  Result := Diff (Kernel, Orig_File, Ref_File, Diff_File);
+                  Result := Diff (Kernel, Orig_F, Ref_File, Diff_F);
 
                   if Result = null then
                      Button := Message_Dialog
@@ -214,16 +226,20 @@ package body Vdiff_Module is
                   Set_Text (Vdiff.File_Label1, Orig_File);
                   Set_Text (Vdiff.File_Label2, Base & (-" <reference>"));
                   Fill_Diff_Lists
-                    (Kernel, Vdiff.Clist1, Vdiff.Clist2, Orig_File,
+                    (Kernel, Vdiff.Clist1, Vdiff.Clist2, Orig_F,
                      Ref_File, Result);
-                  Delete_File (Ref_File, Success);
+                  Delete (Ref_File);
                   Free (Result);
                end;
 
             else
                --  All arguments are specified
 
-               Result := Diff (Kernel, Orig_File, New_File, Diff_File);
+               Orig_F := Create (Full_Filename => Orig_File);
+               Diff_F := Create (Full_Filename => Diff_File);
+               New_F  := Create (Full_Filename => New_File);
+
+               Result := Diff (Kernel, Orig_F, New_F, Diff_F);
 
                if Result = null then
                   Button := Message_Dialog
@@ -237,8 +253,7 @@ package body Vdiff_Module is
                Set_Text (Vdiff.File_Label1, Orig_File);
                Set_Text (Vdiff.File_Label2, New_File);
                Fill_Diff_Lists
-                 (Kernel, Vdiff.Clist1, Vdiff.Clist2, Orig_File,
-                  New_File, Result);
+                 (Kernel, Vdiff.Clist1, Vdiff.Clist2, Orig_F, New_F, Result);
                Free (Result);
             end if;
 
@@ -274,8 +289,10 @@ package body Vdiff_Module is
       end if;
 
       declare
-         Label_1 : constant String := Get_Text (Vdiff.File_Label1);
-         Label_2 : constant String := Get_Text (Vdiff.File_Label2);
+         Label_1 : constant Virtual_File :=
+           Create (Full_Filename => Get_Text (Vdiff.File_Label1));
+         Label_2 : constant Virtual_File :=
+           Create (Full_Filename => Get_Text (Vdiff.File_Label2));
       begin
          Context := new File_Selection_Context;
 
@@ -285,15 +302,9 @@ package body Vdiff_Module is
             Creator => Vdiff_Module_ID);
 
          if Is_Regular_File (Label_1) then
-            Set_File_Information
-              (Context,
-               Directory => Dir_Name (Label_1),
-               File_Name => Base_Name (Label_1));
+            Set_File_Information (Context, File => Label_1);
          elsif Is_Regular_File (Label_2) then
-            Set_File_Information
-              (Context,
-               Directory => Dir_Name (Label_2),
-               File_Name => Base_Name (Label_2));
+            Set_File_Information (Context, File => Label_2);
          end if;
 
          return Selection_Context_Access (Context);

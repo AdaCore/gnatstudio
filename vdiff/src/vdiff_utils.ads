@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2002                         --
+--                        Copyright (C) 2002-2003                    --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -26,6 +26,7 @@ with Gtk.Clist;    use Gtk.Clist;
 with Diff_Utils;   use Diff_Utils;
 with Basic_Types;  use Basic_Types;
 with Glide_Kernel;
+with VFS;          use VFS;
 
 package Vdiff_Utils is
 
@@ -33,8 +34,8 @@ package Vdiff_Utils is
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
       List1  : access Gtk_Clist_Record'Class;
       List2  : access Gtk_Clist_Record'Class;
-      File1  : String;
-      File2  : String;
+      File1  : VFS.Virtual_File;
+      File2  : VFS.Virtual_File;
       Diff   : Diff_Occurrence_Link);
    --  Fill List1 and List2 with lines of File given a result of diff Diff.
 

@@ -32,6 +32,7 @@ with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
 with String_Utils;             use String_Utils;
 with Traces;                   use Traces;
 with Generic_List;
+with VFS;                      use VFS;
 
 package body Diff_Utils is
    use Diff_Occurrence_List;
@@ -116,7 +117,7 @@ package body Diff_Utils is
 
    function Diff
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
-      File1, File2 : String) return Diff_Occurrence_Link
+      File1, File2 : VFS.Virtual_File) return Diff_Occurrence_Link
    is
       Descriptor   : TTY_Process_Descriptor;
       Pattern      : constant Pattern_Matcher :=
@@ -134,10 +135,11 @@ package body Diff_Utils is
    begin
       Cmd_Args := Argument_String_To_List (Diff_Command);
       Cmd := Locate_Exec_On_Path (Cmd_Args (Cmd_Args'First).all);
-      Args (1) := new String'(File1);
-      Args (2) := new String'(File2);
+      Args (1) := new String'(Full_Name (File1));
+      Args (2) := new String'(Full_Name (File2));
 
-      Trace (Me, "spawn: " & Diff_Command & " " & File1 & " " & File2);
+      Trace (Me, "spawn: " & Diff_Command & " "
+             & Full_Name (File1) & " " & Full_Name (File2));
 
       Non_Blocking_Spawn
         (Descriptor, Cmd.all,
@@ -174,9 +176,9 @@ package body Diff_Utils is
 
    function Diff
      (Kernel    : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Orig_File : String;
-      New_File  : String;
-      Diff_File : String;
+      Orig_File : VFS.Virtual_File;
+      New_File  : VFS.Virtual_File;
+      Diff_File : VFS.Virtual_File;
       Revert    : Boolean := False) return Diff_Occurrence_Link
    is
       Args       : Argument_List (1 .. 6);
@@ -199,18 +201,18 @@ package body Diff_Utils is
       Args (2) := new String'("-o");
 
       if Revert then
-         Args (3) := new String'(Orig_File);
+         Args (3) := new String'(Full_Name (Orig_File));
          Args (4) := new String'("-R");
-         Args (5) := new String'(New_File);
+         Args (5) := new String'(Full_Name (New_File));
          Num_Args := 6;
 
       else
-         Args (3) := new String'(New_File);
-         Args (4) := new String'(Orig_File);
+         Args (3) := new String'(Full_Name (New_File));
+         Args (4) := new String'(Full_Name (Orig_File));
          Num_Args := 5;
       end if;
 
-      Args (Num_Args) := new String'(Diff_File);
+      Args (Num_Args) := new String'(Full_Name (Diff_File));
 
       Trace (Me, "spawn: " &
              Argument_List_To_String (Cmd_Args.all & Args (1 .. Num_Args)));
@@ -224,7 +226,7 @@ package body Diff_Utils is
          Free (Args (J));
       end loop;
 
-      Open (File, In_File, Diff_File);
+      Open (File, In_File, Locale_Full_Name (Diff_File));
 
       while not End_Of_File (File) loop
          Get_Line (File, Buffer, Last);
@@ -284,9 +286,10 @@ package body Diff_Utils is
    -----------
    -- Diff3 --
    -----------
+
    function Diff3
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
-      File1, File2, File3 : String) return Diff_Pair
+      File1, File2, File3 : VFS.Virtual_File) return Diff_Pair
    is
       Result : Diff_Pair;
    begin
@@ -298,6 +301,7 @@ package body Diff_Utils is
    ----------
    -- Free --
    ----------
+
    procedure Free (Link : in out Diff_Occurrence_Link) is
       First, Tmp : Diff_Occurrence_Link;
 
@@ -320,6 +324,7 @@ package body Diff_Utils is
    --------------
    -- Free_All --
    --------------
+
    procedure Free_All (Link : in out Diff_List_Head) is
 
    begin
@@ -328,9 +333,11 @@ package body Diff_Utils is
       Free (Link.File2);
       Free (Link.File3);
    end Free_All;
+
    ---------------
    -- Free_List --
    ---------------
+
    procedure Free_List (List : in out Diff_Occurrence_List.List) is
       CurrNode : Diff_Occurrence_List.List_Node :=
         First (List);
@@ -344,9 +351,11 @@ package body Diff_Utils is
          CurrNode := Next (CurrNode);
       end loop;
    end Free_List;
+
    ----------
    -- Free --
    ----------
+
    procedure Free (Link : in out Diff_List_Head) is
    pragma Unreferenced (Link);
 

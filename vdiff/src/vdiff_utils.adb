@@ -39,9 +39,9 @@ with String_Utils;              use String_Utils;
 with Traces;                    use Traces;
 with Gtkada.Handlers;           use Gtkada.Handlers;
 
-with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with Ada.Exceptions;            use Ada.Exceptions;
 with Basic_Types;               use Basic_Types;
+with VFS;                       use VFS;
 
 with Gtk.Widget;                use Gtk.Widget;
 with Gtk.Menu;
@@ -55,7 +55,7 @@ package body Vdiff_Utils is
 
    type Vdiff_Info is new GObject_Record with record
       Kernel : Kernel_Handle;
-      File   : String_Access;
+      File   : VFS.Virtual_File;
    end record;
    type Vdiff_Info_Access is access all Vdiff_Info'Class;
 
@@ -70,13 +70,13 @@ package body Vdiff_Utils is
    procedure Gtk_New
      (Vdiff  : out Vdiff_Info_Access;
       Kernel : Kernel_Handle;
-      File   : String);
+      File   : VFS.Virtual_File);
    --  Create a new Vdiff_Info.
 
    procedure Initialize
      (Vdiff  : access Vdiff_Info'Class;
       Kernel : Kernel_Handle;
-      File   : String);
+      File   : VFS.Virtual_File);
    --  Internal initialization function.
 
    procedure On_Destroy
@@ -141,8 +141,7 @@ package body Vdiff_Utils is
 
       Set_File_Information
         (Context,
-         Dir_Name (Vdiff.File.all),
-         Base_Name (Vdiff.File.all),
+         Vdiff.File,
          Line   => L,
          Column => C);
 
@@ -161,7 +160,7 @@ package body Vdiff_Utils is
    procedure Gtk_New
      (Vdiff  : out Vdiff_Info_Access;
       Kernel : Kernel_Handle;
-      File   : String) is
+      File   : VFS.Virtual_File) is
    begin
       Vdiff := new Vdiff_Info;
       Initialize (Vdiff, Kernel, File);
@@ -176,9 +175,8 @@ package body Vdiff_Utils is
       Params : Glib.Values.GValues)
    is
       pragma Unreferenced (Params);
-      Vdiff   : Vdiff_Info_Access := Vdiff_Info_Access (Object);
+      Vdiff : constant Vdiff_Info_Access := Vdiff_Info_Access (Object);
    begin
-      Free (Vdiff.File);
       Unref (Vdiff);
    end On_Destroy;
 
@@ -189,11 +187,11 @@ package body Vdiff_Utils is
    procedure Initialize
      (Vdiff  : access Vdiff_Info'Class;
       Kernel : Kernel_Handle;
-      File   : String) is
+      File   : VFS.Virtual_File) is
    begin
       Initialize (Vdiff);
       Vdiff.Kernel := Kernel;
-      Vdiff.File := new String'(File);
+      Vdiff.File := File;
    end Initialize;
 
    ---------------------
@@ -204,8 +202,8 @@ package body Vdiff_Utils is
      (Kernel : access Kernel_Handle_Record'Class;
       List1  : access Gtk_Clist_Record'Class;
       List2  : access Gtk_Clist_Record'Class;
-      File1  : String;
-      File2  : String;
+      File1  : VFS.Virtual_File;
+      File2  : VFS.Virtual_File;
       Diff   : Diff_Occurrence_Link)
    is
       Context_Len     : Integer :=
@@ -334,14 +332,14 @@ package body Vdiff_Utils is
       Set_Base (Change_Style, State_Normal, Color);
 
       begin
-         Open (Infile1, In_File, File1);
+         Open (Infile1, In_File, Locale_Full_Name (File1));
       exception
          when Name_Error =>
             return;
       end;
 
       begin
-         Open (Infile2, In_File, File2);
+         Open (Infile2, In_File, Locale_Full_Name (File2));
       exception
          when Name_Error =>
             Close (Infile1);
@@ -564,8 +562,8 @@ package body Vdiff_Utils is
       end Add_Line;
 
    begin
-      Gtk_New (Info_1, Kernel_Handle (Kernel), "");
-      Gtk_New (Info_2, Kernel_Handle (Kernel), "");
+      Gtk_New (Info_1, Kernel_Handle (Kernel), VFS.No_File);
+      Gtk_New (Info_2, Kernel_Handle (Kernel), VFS.No_File);
 
       Object_Callback.Object_Connect
         (List1, "destroy",

@@ -24,6 +24,7 @@ with Generic_List;
 with Glide_Kernel;
 with Ada.Unchecked_Deallocation;
 with GNAT.OS_Lib;              use GNAT.OS_Lib;
+with VFS;
 
 package Diff_Utils is
 
@@ -67,14 +68,14 @@ package Diff_Utils is
 
    function Diff
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
-      File1, File2 : String) return Diff_Occurrence_Link;
+      File1, File2 : VFS.Virtual_File) return Diff_Occurrence_Link;
    --  Execute diff on File1 and File2 and return a list of differences.
 
    function Diff
      (Kernel    : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Orig_File : String;
-      New_File  : String;
-      Diff_File : String;
+      Orig_File : VFS.Virtual_File;
+      New_File  : VFS.Virtual_File;
+      Diff_File : VFS.Virtual_File;
       Revert    : Boolean := False) return Diff_Occurrence_Link;
    --  Compute the differences from Diff_File.
    --  If Revert is False, create New_File from Orig_File and Diff_File.
@@ -82,7 +83,7 @@ package Diff_Utils is
 
    function Diff3
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
-      File1, File2, File3 : String) return Diff_Pair;
+      File1, File2, File3 : VFS.Virtual_File) return Diff_Pair;
    --  Execute diff on File1, File2 and File3 and return a list of differences.
 
    procedure Free (Link : in out Diff_Occurrence_Link);
