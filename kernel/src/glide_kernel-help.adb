@@ -792,19 +792,20 @@ package body Glide_Kernel.Help is
       --  Add help menus
 
       Register_Menu
-        (Kernel, Help, -"Open HTML File...", "", On_Open_HTML'Access);
+        (Kernel, Help, -"_Open HTML File...", "", On_Open_HTML'Access);
 
-      On_Welcome.Register_Menu (Kernel, -"Welcome");
+      On_Welcome.Register_Menu (Kernel, -"_Welcome");
       On_GPS_Tutorial.Register_Menu
-        (Kernel, -"GNAT Programming System Tutorial");
-      On_GPS_Help.Register_Menu (Kernel, -"Using the GNAT Programming System");
-      On_GVD_Help.Register_Menu (Kernel, -"Using the GNU Visual Debugger");
-      On_GNAT_UG_Help.Register_Menu (Kernel, -"GNAT User's Guide");
-      On_GNAT_RM_Help.Register_Menu (Kernel, -"GNAT Reference Manual");
-      On_ARM95_Help.Register_Menu (Kernel, -"Ada 95 Reference Manual");
-      On_GDB_Help.Register_Menu (Kernel, -"Using the GNU Debugger");
-      On_GCC_Help.Register_Menu (Kernel, -"Using GCC");
-      Register_Menu (Kernel, Help, -"About...", "", On_About'Access);
+        (Kernel, -"GNAT Programming System _Tutorial");
+      On_GPS_Help.Register_Menu
+        (Kernel, -"Using the GNAT _Programming System");
+      On_GVD_Help.Register_Menu (Kernel, -"Using the GNU _Visual Debugger");
+      On_GNAT_UG_Help.Register_Menu (Kernel, -"GNAT _User's Guide");
+      On_GNAT_RM_Help.Register_Menu (Kernel, -"GNAT _Reference Manual");
+      On_ARM95_Help.Register_Menu (Kernel, -"_Ada 95 Reference Manual");
+      On_GDB_Help.Register_Menu (Kernel, -"Using the GNU _Debugger");
+      On_GCC_Help.Register_Menu (Kernel, -"Using _GCC");
+      Register_Menu (Kernel, Help, -"A_bout...", "", On_About'Access);
    end Register_Module;
 
 end Glide_Kernel.Help;

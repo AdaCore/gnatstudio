@@ -361,7 +361,7 @@ package body Glide_Kernel.Console is
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
    is
       File    : constant String := '/' & (-"File");
-      Console : constant String := File & '/' & (-"Messages");
+      Console : constant String := File & '/' & (-"_Messages");
       Mitem   : Gtk_Menu_Item;
 
    begin
@@ -373,11 +373,11 @@ package body Glide_Kernel.Console is
 
       Register_Menu (Kernel, Console, Ref_Item => -"Close");
       Register_Menu
-        (Kernel, Console, -"Clear", "", On_Clear_Console'Access);
+        (Kernel, Console, -"_Clear", "", On_Clear_Console'Access);
       Register_Menu
-        (Kernel, Console, -"Save As...", "", On_Save_Console_As'Access);
+        (Kernel, Console, -"_Save As...", "", On_Save_Console_As'Access);
       Register_Menu
-        (Kernel, Console, -"Load Contents...", "", On_Load_To_Console'Access);
+        (Kernel, Console, -"_Load Contents...", "", On_Load_To_Console'Access);
       Gtk_New (Mitem);
       Register_Menu (Kernel, File, Mitem, Ref_Item => -"Close");
    end Register_Module;

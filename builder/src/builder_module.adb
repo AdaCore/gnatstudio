@@ -1203,23 +1203,23 @@ package body Builder_Module is
          Priority     => Default_Priority);
 
       Register_Menu (Kernel, "/_" & (-"Build"), Ref_Item => -"Debug");
-      Register_Menu (Kernel, Build, -"Check Syntax", "",
+      Register_Menu (Kernel, Build, -"Check _Syntax", "",
                      On_Check_Syntax'Access);
-      Register_Menu (Kernel, Build, -"Compile File", "",
+      Register_Menu (Kernel, Build, -"_Compile File", "",
                      On_Compile'Access, null, GDK_F4, Shift_Mask);
 
       --  Dynamic make menu
 
-      Mitem := Register_Menu (Kernel, Build, -"Make", "", null);
+      Mitem := Register_Menu (Kernel, Build, -"_Make", "", null);
       Gtk_New (Menu);
       Builder_Module_ID_Record (Builder_Module_ID.all).Make_Menu := Menu;
       Set_Submenu (Mitem, Menu);
 
       Register_Menu
-        (Kernel, Make, -"Custom...", "", On_Custom'Access, null, GDK_F9);
+        (Kernel, Make, -"C_ustom...", "", On_Custom'Access, null, GDK_F9);
 
       Register_Menu
-        (Kernel, Build, -"Recompute C/C++ Xref info", "",
+        (Kernel, Build, -"Recompute C/C++ _Xref info", "",
          On_Compute_Xref'Access);
 
       Gtk_New (Mitem);
@@ -1227,7 +1227,7 @@ package body Builder_Module is
 
       --  Dynamic run menu
       Mitem := Register_Menu
-        (Kernel, Build, -"Run", Stock_Execute, null);
+        (Kernel, Build, -"_Run", Stock_Execute, null);
       Gtk_New (Menu);
       Builder_Module_ID_Record (Builder_Module_ID.all).Run_Menu := Menu;
       Set_Submenu (Mitem, Menu);
@@ -1236,7 +1236,7 @@ package body Builder_Module is
       Register_Menu (Kernel, Build, Mitem);
       Set_Sensitive
         (Register_Menu
-          (Kernel, Build, -"Interrupt", Stock_Stop, On_Stop_Build'Access),
+          (Kernel, Build, -"_Interrupt", Stock_Stop, On_Stop_Build'Access),
          False);
 
       Kernel_Callback.Connect

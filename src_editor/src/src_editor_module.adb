@@ -1898,15 +1898,15 @@ package body Src_Editor_Module is
 
       --  Menus
 
-      Register_Menu (Kernel, File, -"Open...",  Stock_Open,
+      Register_Menu (Kernel, File, -"_Open...",  Stock_Open,
                      On_Open_File'Access, null,
                      GDK_F3, Ref_Item => -"Save...");
-      Register_Menu (Kernel, File, -"Open From Project...",  Stock_Open,
+      Register_Menu (Kernel, File, -"Open _From Project...",  Stock_Open,
                      On_Open_From_Path'Access, null,
                      GDK_F3, Shift_Mask, Ref_Item => -"Save...");
 
       Source_Editor_Module (Src_Editor_Module_Id).Reopen_Menu_Item :=
-        Register_Menu (Kernel, File, -"Reopen", "", null,
+        Register_Menu (Kernel, File, -"_Reopen", "", null,
                        Ref_Item   => -"Open From Project...",
                        Add_Before => False);
 
@@ -1934,32 +1934,32 @@ package body Src_Editor_Module is
       Close (Reopen_File);
       Refresh_Reopen_Menu (Kernel);
 
-      Register_Menu (Kernel, File, -"New", Stock_New, On_New_File'Access,
+      Register_Menu (Kernel, File, -"_New", Stock_New, On_New_File'Access,
                      Ref_Item => -"Open...");
-      Register_Menu (Kernel, File, -"New View", "", On_New_View'Access,
+      Register_Menu (Kernel, File, -"New _View", "", On_New_View'Access,
                      Ref_Item => -"Open...");
 
-      Register_Menu (Kernel, File, -"Save", Stock_Save,
+      Register_Menu (Kernel, File, -"_Save", Stock_Save,
                      On_Save'Access, null,
                      GDK_S, Control_Mask, Ref_Item => -"Save...");
-      Register_Menu (Kernel, Save, -"File As...", Stock_Save_As,
+      Register_Menu (Kernel, Save, -"_File As...", Stock_Save_As,
                      On_Save_As'Access, Ref_Item => -"Desktop");
-      Register_Menu (Kernel, Save, -"All Editors", "",
+      Register_Menu (Kernel, Save, -"All _Editors", "",
                      On_Save_All_Editors'Access, Sensitive => False,
                      Ref_Item => -"Desktop");
-      Register_Menu (Kernel, Save, -"All", "",
+      Register_Menu (Kernel, Save, -"_All", "",
                      On_Save_All'Access, Ref_Item => -"Desktop");
 
       --  Note: callbacks for the Undo/Redo menu items will be added later
       --  by each source editor.
 
       Undo_Redo.Undo_Menu_Item :=
-        Register_Menu (Kernel, Edit, -"Undo", Stock_Undo,
+        Register_Menu (Kernel, Edit, -"_Undo", Stock_Undo,
                        null, null,
                        GDK_Z, Control_Mask, Ref_Item => -"Preferences",
                        Sensitive => False);
       Undo_Redo.Redo_Menu_Item :=
-        Register_Menu (Kernel, Edit, -"Redo", Stock_Redo,
+        Register_Menu (Kernel, Edit, -"_Redo", Stock_Redo,
                        null, null,
                        GDK_R, Control_Mask, Ref_Item => -"Preferences",
                        Sensitive => False);
@@ -1968,39 +1968,39 @@ package body Src_Editor_Module is
       Register_Menu
         (Kernel, Edit, Mitem, Ref_Item => "Redo", Add_Before => False);
 
-      Register_Menu (Kernel, Edit, -"Cut",  Stock_Cut,
+      Register_Menu (Kernel, Edit, -"_Cut",  Stock_Cut,
                      On_Cut'Access, null,
                      GDK_Delete, Shift_Mask,
                      Ref_Item => -"Preferences");
-      Register_Menu (Kernel, Edit, -"Copy",  Stock_Copy,
+      Register_Menu (Kernel, Edit, -"C_opy",  Stock_Copy,
                      On_Copy'Access, null,
                      GDK_Insert, Control_Mask,
                      Ref_Item => -"Preferences");
-      Register_Menu (Kernel, Edit, -"Paste",  Stock_Paste,
+      Register_Menu (Kernel, Edit, -"P_aste",  Stock_Paste,
                      On_Paste'Access, null,
                      GDK_Insert, Shift_Mask,
                      Ref_Item => -"Preferences");
 
       --  ??? This should be bound to Ctrl-A, except this would interfer with
       --  Emacs keybindings for people who want to use them.
-      Register_Menu (Kernel, Edit, -"Select All",  "",
+      Register_Menu (Kernel, Edit, -"_Select All",  "",
                      On_Select_All'Access, Ref_Item => -"Preferences");
 
       Gtk_New (Mitem);
       Register_Menu (Kernel, Edit, Mitem, Ref_Item => -"Preferences");
 
-      Register_Menu (Kernel, Edit, -"Generate Body", "",
+      Register_Menu (Kernel, Edit, -"_Generate Body", "",
                      On_Generate_Body'Access, Ref_Item => -"Preferences");
-      Register_Menu (Kernel, Edit, -"Pretty Print", "",
+      Register_Menu (Kernel, Edit, -"P_retty Print", "",
                      On_Pretty_Print'Access, Ref_Item => -"Preferences");
 
-      Register_Menu (Kernel, Navigate, -"Goto Line...", Stock_Jump_To,
+      Register_Menu (Kernel, Navigate, -"Goto _Line...", Stock_Jump_To,
                      On_Goto_Line'Access, null,
                      GDK_G, Control_Mask,
                      Ref_Item => -"Goto File Spec<->Body");
-      Register_Menu (Kernel, Navigate, -"Goto Declaration", Stock_Home,
+      Register_Menu (Kernel, Navigate, -"Goto _Declaration", Stock_Home,
                      On_Goto_Declaration'Access, Ref_Item => -"Goto Line...");
-      Register_Menu (Kernel, Navigate, -"Goto Body", "",
+      Register_Menu (Kernel, Navigate, -"Goto _Body", "",
                      On_Goto_Body'Access, Ref_Item => -"Goto Line...");
 
       --  Toolbar buttons

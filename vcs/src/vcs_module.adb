@@ -439,26 +439,26 @@ package body VCS_Module is
          Ref_Item => -"Navigate",
          Add_Before => False);
 
-      Register_Menu (Kernel, VCS, -"Explorer", "", On_Open_Interface'Access);
-      Register_Menu (Kernel, VCS, -"Update project", "", Update_All'Access);
+      Register_Menu (Kernel, VCS, -"_Explorer", "", On_Open_Interface'Access);
+      Register_Menu (Kernel, VCS, -"Update _project", "", Update_All'Access);
       Register_Menu
-        (Kernel, VCS, -"Query status for project", "",
+        (Kernel, VCS, -"_Query status for project", "",
          Query_Status_For_Project'Access);
       Gtk_New (Menu_Item);
       Register_Menu (Kernel, VCS, Menu_Item);
-      Register_Menu (Kernel, VCS, -"Update", "", Update'Access);
-      Register_Menu (Kernel, VCS, -"Start Editing", "", Open'Access);
-      Register_Menu (Kernel, VCS, -"Compare against head", "",
+      Register_Menu (Kernel, VCS, -"_Update", "", Update'Access);
+      Register_Menu (Kernel, VCS, -"Start _Editing", "", Open'Access);
+      Register_Menu (Kernel, VCS, -"_Compare against head", "",
                      View_Diff'Access);
-      Register_Menu (Kernel, VCS, -"Edit log", "", Edit_Log'Access);
-      Register_Menu (Kernel, VCS, -"Commit", "", Commit'Access);
-      Register_Menu (Kernel, VCS, -"Annotate", "", View_Annotate'Access);
-      Register_Menu (Kernel, VCS, -"View Changelog", "", View_Log'Access);
-      Register_Menu (Kernel, VCS, -"Revert", "", Revert'Access,
+      Register_Menu (Kernel, VCS, -"Edit _log", "", Edit_Log'Access);
+      Register_Menu (Kernel, VCS, -"_Commit", "", Commit'Access);
+      Register_Menu (Kernel, VCS, -"_Annotate", "", View_Annotate'Access);
+      Register_Menu (Kernel, VCS, -"_View Changelog", "", View_Log'Access);
+      Register_Menu (Kernel, VCS, -"_Revert", "", Revert'Access,
                      Sensitive => False);
-      Register_Menu (Kernel, VCS, -"Add to repository", "", Add'Access);
+      Register_Menu (Kernel, VCS, -"A_dd to repository", "", Add'Access);
       Register_Menu
-        (Kernel, VCS, -"Remove from repository", "", Remove'Access);
+        (Kernel, VCS, -"R_emove from repository", "", Remove'Access);
 
       Log_Utils.Initialize (Kernel);
 

@@ -1694,9 +1694,9 @@ package body GVD_Module is
       Window       : constant Gtk_Window  := Get_Main_Window (Kernel);
       Top          : constant Glide_Window := Glide_Window (Window);
       Debug        : constant String := '/' & (-"Debug") & '/';
-      Debug_Sub    : constant String := Debug & (-"Debug") & '/';
-      Data_Sub     : constant String := Debug & (-"Data") & '/';
-      Session_Sub  : constant String := Debug & (-"Session") & '/';
+      Debug_Sub    : constant String := Debug & (-"_Debug") & '/';
+      Data_Sub     : constant String := Debug & (-"D_ata") & '/';
+      Session_Sub  : constant String := Debug & (-"_Session") & '/';
       Mitem        : Gtk_Menu_Item;
       Menu         : Gtk_Menu;
       --  ??? Should get the right process
@@ -1727,27 +1727,27 @@ package body GVD_Module is
       --  Add debugger menus
 
       Register_Menu (Kernel, Debug_Sub, Ref_Item => -"Data");
-      Register_Menu (Kernel, Debug_Sub, -"Connect to Board...", "",
+      Register_Menu (Kernel, Debug_Sub, -"_Connect to Board...", "",
                      On_Connect_To_Board'Access);
-      Register_Menu (Kernel, Debug_Sub, -"Load File...", "",
+      Register_Menu (Kernel, Debug_Sub, -"_Load File...", "",
                      On_Debug_Executable'Access);
-      Register_Menu (Kernel, Debug_Sub, -"Add Symbols...", "",
+      Register_Menu (Kernel, Debug_Sub, -"Add _Symbols...", "",
                      On_Add_Symbols'Access);
-      Register_Menu (Kernel, Debug_Sub, -"Attach...", "",
+      Register_Menu (Kernel, Debug_Sub, -"_Attach...", "",
                      On_Attach'Access);
-      Register_Menu (Kernel, Debug_Sub, -"Detach", "",
+      Register_Menu (Kernel, Debug_Sub, -"_Detach", "",
                      On_Detach'Access);
-      Register_Menu (Kernel, Debug_Sub, -"Debug Core File...", "",
+      Register_Menu (Kernel, Debug_Sub, -"Debug _Core File...", "",
                      On_Load_Core'Access);
-      Register_Menu (Kernel, Debug_Sub, -"Kill", "",
+      Register_Menu (Kernel, Debug_Sub, -"_Kill", "",
                      On_Kill'Access);
 
       --  ???
-      Register_Menu (Kernel, Session_Sub, -"Open...", Stock_Open,
+      Register_Menu (Kernel, Session_Sub, -"_Open...", Stock_Open,
                      null, Sensitive => False);
-      Register_Menu (Kernel, Session_Sub, -"Save As...", Stock_Save_As,
+      Register_Menu (Kernel, Session_Sub, -"_Save As...", Stock_Save_As,
                      null, Sensitive => False);
-      Register_Menu (Kernel, Session_Sub, -"Command History", Stock_Index,
+      Register_Menu (Kernel, Session_Sub, -"_Command History", Stock_Index,
                      On_Command_History'Access);
 
       Mitem := Find_Menu_Item (Kernel, Data_Sub & (-"Call Stack"));
@@ -1756,9 +1756,9 @@ package body GVD_Module is
          Kernel_Callback.To_Marshaller (On_Call_Stack'Access),
          User_Data => Kernel_Handle (Kernel));
 
-      Register_Menu (Kernel, Data_Sub, -"Threads", "",
+      Register_Menu (Kernel, Data_Sub, -"_Threads", "",
                      On_Threads'Access, Ref_Item => -"Protection Domains");
-      Register_Menu (Kernel, Data_Sub, -"Tasks", "",
+      Register_Menu (Kernel, Data_Sub, -"T_asks", "",
                      On_Tasks'Access, Ref_Item => -"Protection Domains");
       Mitem := Find_Menu_Item (Kernel, Data_Sub & (-"Protection Domains"));
       Set_Sensitive (Mitem, False);
@@ -1766,56 +1766,56 @@ package body GVD_Module is
         (Mitem, "activate",
          Kernel_Callback.To_Marshaller (On_PD'Access),
          User_Data => Kernel_Handle (Kernel));
-      Register_Menu (Kernel, Data_Sub, -"Assembly", "", On_Assembly'Access);
+      Register_Menu (Kernel, Data_Sub, -"A_ssembly", "", On_Assembly'Access);
       Gtk_New (Mitem);
       Register_Menu (Kernel, Data_Sub, Mitem);
-      Register_Menu (Kernel, Data_Sub, -"Edit Breakpoints", "",
+      Register_Menu (Kernel, Data_Sub, -"Edit _Breakpoints", "",
                      On_Edit_Breakpoints'Access);
-      Register_Menu (Kernel, Data_Sub, -"Examine Memory", "",
+      Register_Menu (Kernel, Data_Sub, -"Examine _Memory", "",
                      On_Examine_Memory'Access);
       Gtk_New (Mitem);
       Register_Menu (Kernel, Data_Sub, Mitem);
-      Register_Menu (Kernel, Data_Sub, -"Display Local Variables", "",
+      Register_Menu (Kernel, Data_Sub, -"Display _Local Variables", "",
                      On_Display_Locals'Access, null,
                      GDK_L, Mod1_Mask);
-      Register_Menu (Kernel, Data_Sub, -"Display Arguments", "",
+      Register_Menu (Kernel, Data_Sub, -"Display _Arguments", "",
                      On_Display_Args'Access, null,
                      GDK_U, Mod1_Mask);
-      Register_Menu (Kernel, Data_Sub, -"Display Registers", "",
+      Register_Menu (Kernel, Data_Sub, -"Display _Registers", "",
                      On_Display_Regs'Access);
-      Register_Menu (Kernel, Data_Sub, -"Display Any Expression...", "",
+      Register_Menu (Kernel, Data_Sub, -"Display Any _Expression...", "",
                      On_Display_Expression'Access);
       Gtk_New (Mitem);
       Register_Menu (Kernel, Data_Sub, Mitem);
-      Register_Menu (Kernel, Data_Sub, -"Refresh", Stock_Refresh,
+      Register_Menu (Kernel, Data_Sub, -"R_efresh", Stock_Refresh,
                      On_Data_Refresh'Access, null,
                      GDK_L, Control_Mask);
 
       Gtk_New (Mitem);
       Register_Menu (Kernel, Debug, Mitem);
 
-      Register_Menu (Kernel, Debug, -"Run...", "",
+      Register_Menu (Kernel, Debug, -"_Run...", "",
                      On_Start'Access, null, GDK_F2, Sensitive => False);
-      Register_Menu (Kernel, Debug, -"Step", "",
+      Register_Menu (Kernel, Debug, -"S_tep", "",
                      On_Step'Access, null,  GDK_F5, Sensitive => False);
-      Register_Menu (Kernel, Debug, -"Step Instruction", "",
+      Register_Menu (Kernel, Debug, -"Step _Instruction", "",
                      On_Step_Instruction'Access, null,
                      GDK_F5, Shift_Mask, Sensitive => False);
-      Register_Menu (Kernel, Debug, -"Next", "",
+      Register_Menu (Kernel, Debug, -"_Next", "",
                      On_Next'Access, null, GDK_F6, Sensitive => False);
-      Register_Menu (Kernel, Debug, -"Next Instruction", "",
+      Register_Menu (Kernel, Debug, -"N_ext Instruction", "",
                      On_Next_Instruction'Access, null,
                      GDK_F6, Shift_Mask, Sensitive => False);
-      Register_Menu (Kernel, Debug, -"Finish", "",
+      Register_Menu (Kernel, Debug, -"_Finish", "",
                      On_Finish'Access, null, GDK_F7, Sensitive => False);
-      Register_Menu (Kernel, Debug, -"Continue", "",
+      Register_Menu (Kernel, Debug, -"_Continue", "",
                      On_Continue'Access, null, GDK_F8, Sensitive => False);
-      Register_Menu (Kernel, Debug, -"Interrupt", Stock_Stop,
+      Register_Menu (Kernel, Debug, -"_Interrupt", Stock_Stop,
                      On_Interrupt'Access, null,
                      GDK_Escape, Sensitive => False);
       Gtk_New (Mitem);
       Register_Menu (Kernel, Debug, Mitem);
-      Register_Menu (Kernel, Debug, -"Terminate", "",
+      Register_Menu (Kernel, Debug, -"Ter_minate", "",
                      On_Debug_Terminate'Access, Sensitive => False);
 
       --  Add debugger buttons in the toolbar

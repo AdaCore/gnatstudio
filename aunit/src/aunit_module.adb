@@ -170,15 +170,16 @@ package body Aunit_Module is
          Priority                => Default_Priority,
          Contextual_Menu_Handler => null);
 
-      Register_Menu (Kernel, Edit & Unit_Testing, Ref_Item => -"Preferences");
+      Register_Menu (Kernel, Edit & '_' & Unit_Testing,
+                     Ref_Item => -"Preferences");
       Register_Menu (Kernel, Edit & Unit_Testing,
-                     -"New Test Case...", "", On_New_Test_Case'Access);
+                     -"New Test _Case...", "", On_New_Test_Case'Access);
       Register_Menu (Kernel, Edit & Unit_Testing,
-                     -"Add Routine...", "", null, Sensitive => False);
+                     -"_Add Routine...", "", null, Sensitive => False);
       Register_Menu (Kernel, Edit & Unit_Testing,
-                     -"New Test Suite...", "", On_New_Test_Suite'Access);
+                     -"New Test _Suite...", "", On_New_Test_Suite'Access);
       Register_Menu (Kernel, Edit & Unit_Testing,
-                     -"New Test Harness...", "", On_New_Test_Harness'Access);
+                     -"New Test _Harness...", "", On_New_Test_Harness'Access);
       Gtk_New (Menu_Item);
       Register_Menu (Kernel, Edit, Menu_Item, Ref_Item => -"Preferences");
    end Register_Module;
