@@ -194,6 +194,22 @@ package body Project_Explorers_Files is
       Kernel       : Kernel_Handle);
    --  Raise the existing explorer, or open a new one.
 
+   function Default_Factory
+     (Kernel : access Kernel_Handle_Record'Class;
+      Child  : Gtk.Widget.Gtk_Widget) return Selection_Context_Access;
+   --  Create the Context.
+
+   ---------------------
+   -- Default_Factory --
+   ---------------------
+
+   function Default_Factory
+     (Kernel : access Kernel_Handle_Record'Class;
+      Child  : Gtk.Widget.Gtk_Widget) return Selection_Context_Access is
+   begin
+      return Explorer_Context_Factory (Kernel, Child, Child, null, null);
+   end Default_Factory;
+
    --------------------
    -- Read_Directory --
    --------------------
@@ -1222,7 +1238,8 @@ package body Project_Explorers_Files is
          Kernel                  => Kernel,
          Module_Name             => "Files_View",
          Priority                => Default_Priority,
-         Contextual_Menu_Handler => null);
+         Contextual_Menu_Handler => null,
+         Default_Context_Factory => Default_Factory'Access);
       Glide_Kernel.Kernel_Desktop.Register_Desktop_Functions
         (Save_Desktop'Access, Load_Desktop'Access);
 
