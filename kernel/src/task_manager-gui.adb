@@ -482,12 +482,6 @@ package body Task_Manager.GUI is
       if Manager.Queues = null
         or else Manager.Queues'Length = 0
       then
-         if View /= null
-           and then View.Dialog /= null
-         then
-            Widget_Callback.Emit_By_Name (View.Dialog, "response");
-         end if;
-
          return;
       end if;
 
