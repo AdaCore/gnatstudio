@@ -372,8 +372,7 @@ package body Browsers.Dependency_Items is
                   Must_Add_Link := True;
 
                   if New_Item then
-                     Gtk_New
-                       (Item, Get_Window (Browser), Browser, Intern);
+                     Gtk_New (Item, Get_Window (Browser), Browser, Intern);
 
                   else
                      --  If the item already existed, chances are that the link
@@ -401,7 +400,7 @@ package body Browsers.Dependency_Items is
             end loop;
 
             --  Center the initial item
-            Show_Item (Get_Canvas (Browser), Item);
+            Show_Item (Get_Canvas (Browser), Initial);
 
             Destroy (List);
             Set_Auto_Layout (Get_Canvas (Browser), True);
