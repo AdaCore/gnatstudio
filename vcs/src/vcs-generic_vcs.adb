@@ -70,7 +70,6 @@ package body VCS.Generic_VCS is
 
    type VCS_Generic_Module_ID_Record is new Module_ID_Record with record
       VCS_List : VCS_Info_List.List;
-      Kernel   : Kernel_Handle;
    end record;
 
    procedure Destroy (Id : in out VCS_Generic_Module_ID_Record);
@@ -1444,8 +1443,6 @@ package body VCS.Generic_VCS is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) is
    begin
       VCS_Generic_Module_ID := new VCS_Generic_Module_ID_Record;
-      VCS_Generic_Module_ID.Kernel := Kernel_Handle (Kernel);
-
       Register_VCS_Identifier (Identify_VCS'Access);
       Register_Module
         (Module                  => Module_ID (VCS_Generic_Module_ID),
