@@ -22,10 +22,7 @@ with Glide_Kernel;             use Glide_Kernel;
 with Gtk.Tree_View;            use Gtk.Tree_View;
 with Gtk.Tree_Model;           use Gtk.Tree_Model;
 with Gtk.Tree_Store;           use Gtk.Tree_Store;
-with Gtk.Tree_View_Column;     use Gtk.Tree_View_Column;
 with Gtk.Tree_Selection;       use Gtk.Tree_Selection;
-with Gtk.Cell_Renderer_Text;   use Gtk.Cell_Renderer_Text;
-with Gtk.Cell_Renderer_Toggle; use Gtk.Cell_Renderer_Toggle;
 with Gtk.Enums;                use Gtk.Enums;
 with Gtk.Paned;                use Gtk.Paned;
 with Glib.Object;              use Glib.Object;
@@ -36,6 +33,7 @@ with Glib.Object;              use Glib.Object;
 with Gtk.Text_View;            use Gtk.Text_View;
 with Gtk.Text_Buffer;          use Gtk.Text_Buffer;
 
+with GUI_Utils;                use GUI_Utils;
 with Ada.Exceptions;           use Ada.Exceptions;
 with GNAT.OS_Lib;              use GNAT.OS_Lib;
 with Glide_Intl;               use Glide_Intl;
@@ -53,28 +51,6 @@ package body Creation_Wizard.Selector is
    From_Sources_Label : constant String := "From existing Ada sources";
    From_Scratch_Label : constant String := "From scratch";
    From_Adp_Label     : constant String := "From .adp file";
-
-   function Create_Tree_View
-     (Column_Types   : Glib.GType_Array;
-      Column_Names   : GNAT.OS_Lib.String_List;
-      Show_Column_Titles : Boolean := True;
-      Selection_Mode : Gtk.Enums.Gtk_Selection_Mode :=
-        Gtk.Enums.Selection_Single)
-      return Gtk.Tree_View.Gtk_Tree_View;
-   --  Create a new simple tree view, where each column in the view is
-   --  associated with a column in the model.
-   --  Column_Names'Length is the number of columns in the view. If there are
-   --  less columns in the view than in the model, then the matching columns
-   --  in the model will not be visible on screen. There can't be more columns
-   --  in the view than in the model, extra columns will simply be ignored.
-   --  The caller is responsible for freeing Column_Names.
-   --
-   --  Columns associated with a boolean value will be rendered as a toggle
-   --  button.
-   --
-   --  Limitations:
-   --     Columns are not editable. Radio buttons not supported,
-   --     Columns are not sortable
 
    type Wizard_Selector_Page is new Project_Wizard_Page_Record with record
       View          : Gtk_Tree_View;
@@ -101,65 +77,6 @@ package body Creation_Wizard.Selector is
      (Selection : access Gtk_Widget_Record'Class;
       Page      : Project_Wizard_Page);
    --  Called when a new type of project is selected
-
-   ----------------------
-   -- Create_Tree_View --
-   ----------------------
-
-   function Create_Tree_View
-     (Column_Types   : Glib.GType_Array;
-      Column_Names   : GNAT.OS_Lib.String_List;
-      Show_Column_Titles : Boolean := True;
-      Selection_Mode : Gtk.Enums.Gtk_Selection_Mode :=
-        Gtk.Enums.Selection_Single)
-      return Gtk.Tree_View.Gtk_Tree_View
-   is
-      View            : Gtk_Tree_View;
-      Col             : Gtk_Tree_View_Column;
-      Col_Number      : Gint;
-      Model           : Gtk_Tree_Store;
-      Text_Render     : Gtk_Cell_Renderer_Text;
-      Toggle_Render   : Gtk_Cell_Renderer_Toggle;
-      pragma Unreferenced (Col_Number);
-   begin
-      Gtk_New (Model, Column_Types);
-      Gtk_New (View, Model);
-      Set_Mode (Get_Selection (View), Selection_Mode);
-      Set_Headers_Visible (View, Show_Column_Titles);
-
-      for N in 0
-        .. Integer'Min (Column_Names'Length, Column_Types'Length) - 1
-      loop
-         Gtk_New           (Col);
-         Set_Resizable     (Col, True);
-         Set_Reorderable   (Col, True);
-
-         Col_Number := Append_Column (View, Col);
-         Set_Title (Col, Column_Names (Column_Names'First + N).all);
-
-         case Column_Types (Column_Types'First + Guint (N)) is
-            when GType_Boolean =>
-               if Toggle_Render = null then
-                  Gtk_New (Toggle_Render);
-                  Set_Radio (Toggle_Render, False);
-               end if;
-               Pack_Start (Col, Toggle_Render, False);
-               Add_Attribute (Col, Toggle_Render, "active", Gint (N));
-
-            when GType_String =>
-               if Text_Render = null then
-                  Gtk_New (Text_Render);
-               end if;
-               Pack_Start (Col, Text_Render, False);
-               Add_Attribute (Col, Text_Render, "text", Gint (N));
-
-            when others =>
-               raise Program_Error;
-         end case;
-
-      end loop;
-      return View;
-   end Create_Tree_View;
 
    ---------------
    -- Next_Page --
