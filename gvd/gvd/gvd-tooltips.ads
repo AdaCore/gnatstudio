@@ -50,9 +50,15 @@ generic
    type User_Type (<>) is private;
    type Widget_Type is new Gtk.Widget.Gtk_Widget_Record with private;
    with procedure Draw_Tooltip (Widget : access Widget_Type'Class;
-                                Data   : in User_Type;
+                                Data   : in out User_Type;
                                 Pixmap : out Gdk.Pixmap.Gdk_Pixmap;
                                 Width, Height : out Glib.Gint) is <>;
+   --  Subprogram called every time a tooltip needs to be drawn.
+   --  Width and Height should either contain the size of the pixmap on exit,
+   --  or (0, 0) if no tooltip could be displayed.
+   --  It is the responsability of this function to get the coordinates of
+   --  the pointer, using Gdk.Window.Get_Pointer.
+
 package Odd.Tooltips is
 
    Default_Timeout : constant Glib.Guint32 := 600;
@@ -68,9 +74,9 @@ package Odd.Tooltips is
    --  Set a new delay for the tooltips.
 
    procedure New_Tooltip
-     (Widget  : access Widget_Type'Class;
-      Data    : in User_Type;
-      Tooltip : out Tooltips);
+     (Widget        : access Widget_Type'Class;
+      Data          : in User_Type;
+      Tooltip       : out Tooltips);
    --  Create tooltips information for the widget.
    --  The widget must have a window.
 

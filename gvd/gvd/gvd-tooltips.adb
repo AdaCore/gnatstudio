@@ -49,13 +49,7 @@ package body Odd.Tooltips is
                              Tooltip : Tooltips)
    is
    begin
-      --  Handler_Block (Widget, Data.Handler_Id);
-      --  ??? Would this be useful ?
-
       Set_Tooltip (Tooltip);
-
-      --  Handler_Unblock (Widget, Data.Handler_Id);
-      --  ??? Is this useful ?
    end Mouse_Moved_Cb;
 
    --------------------
@@ -98,11 +92,12 @@ package body Odd.Tooltips is
    -- New_Tooltip --
    -----------------
 
-   procedure New_Tooltip (Widget  : access Widget_Type'Class;
-                          Data    : in User_Type;
-                          Tooltip : out Tooltips)
+   procedure New_Tooltip
+     (Widget        : access Widget_Type'Class;
+      Data          : in User_Type;
+      Tooltip       : out Tooltips)
    is
-      use Gdk;
+      use type Gdk.Window.Gdk_Window;
    begin
       Add_Events (Widget, Pointer_Motion_Mask or Enter_Notify_Mask);
       Tooltip := new Tooltips_Record'
@@ -133,17 +128,24 @@ package body Odd.Tooltips is
 
    function Display_Tooltip (Tooltip : in Tooltips) return Boolean
    is
+      use type Gdk_Window;
       Pixmap      : Gdk_Pixmap;
       Visual      : Gdk_Visual;
       Window_Attr : Gdk_Window_Attr;
       Mask        : Gdk_Modifier_Type;
-      X, Y        : Gint;
       Window      : Gdk_Window;
       Width, Height : Gint;
-      use Gdk;
+      X, Y        : Gint;
    begin
       if not Tooltip.Active then
          return False;
+      end if;
+
+      --  To avoid overlapping windows when the user moves the mouse while
+      --  a tooltip is being prepared and is about to be displayed.
+      if Tooltip.Display_Window /= Null_Window then
+         Destroy (Tooltip.Display_Window);
+         Tooltip.Display_Window := Null_Window;
       end if;
 
       Draw_Tooltip (Tooltip.Widget,
@@ -189,11 +191,11 @@ package body Odd.Tooltips is
       if Tooltip.Active = True then
          Remove_Tooltip (Tooltip);
       end if;
+      Tooltip.Active := True;
       Tooltip.Handler_Id := Odd_Tooltips_Timeout.Add
         (Tooltip.Timeout,
          Display_Tooltip'Access,
          Tooltip);
-      Tooltip.Active := True;
    end Set_Tooltip;
 
    --------------------
@@ -201,12 +203,13 @@ package body Odd.Tooltips is
    --------------------
 
    procedure Remove_Tooltip (Tooltip : Tooltips) is
-      use Gdk;
+      use type Gdk_Window;
    begin
       if Tooltip.Active = True then
          Timeout_Remove (Tooltip.Handler_Id);
          if Tooltip.Display_Window /= Null_Window then
             Destroy (Tooltip.Display_Window);
+            Tooltip.Display_Window := Null_Window;
          end if;
          Tooltip.Active := False;
       end if;
