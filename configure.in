@@ -39,6 +39,10 @@ AC_ARG_WITH(python,
 [PYTHON_PATH_WITH=$withval],
 PYTHON_PATH_WITH="no")
 
+
+AC_CHECK_PROG(XMLADA_GPR, xmlada.gpr, "with_xmlada", "no_xmlada", $ADA_PROJECT_PATH)
+IFS=' '
+
 ######## checking for local tools ###
 AC_PROG_CC
 AC_ISC_POSIX
@@ -241,6 +245,9 @@ AC_CONFIG_SUBDIRS(kernel/src_info/sn/snsrc)
 echo ""
 echo "--------- Summary --------------"
 echo "       python: $PYTHON_BASE"
+echo "       xmlada: $XMLADA_GPR"
 echo ""
 
 AC_OUTPUT(Makefile Makefile.common widgets/Makefile.widgets gnat/sdefault/sdefault.adb docs/Makefile po/Makefile gvd/Makefile.gvd_common gvd/common/gvd.ads python/Makefile.python python/python.gpr gtkada/gtkada.gpr)
+
+AC_OUTPUT(gvd/gvd_common.gpr:gvd/gvd_common_${XMLADA_GPR}.gpr.in)
