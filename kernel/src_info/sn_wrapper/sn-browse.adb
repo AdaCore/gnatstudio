@@ -172,7 +172,7 @@ package body SN.Browse is
 
       for I in DB_Directories.all'Range loop
          Args (4 + I - DB_Directories.all'First)
-            := new String' (DB_Directories (I).all);
+            := new String' (DB_Directories (I).all & DB_File_Name);
       end loop;
 
       GNAT.Expect.Non_Blocking_Spawn
