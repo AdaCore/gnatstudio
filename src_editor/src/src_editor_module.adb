@@ -3424,16 +3424,9 @@ package body Src_Editor_Module is
       Data   : access Hooks_Data'Class) return Boolean
    is
       D : constant File_Line_Hooks_Args := File_Line_Hooks_Args (Data.all);
-
-      procedure Apply_Mime_On_Child (Child : MDI_Child);
-      --  Apply the mime information on Child.
-
-      -------------------------
-      -- Apply_Mime_On_Child --
-      -------------------------
-
-      procedure Apply_Mime_On_Child (Child : MDI_Child) is
-      begin
+      Child : constant MDI_Child := Find_Editor (Kernel, D.File);
+   begin
+      if Child /= null then
          if D.Info'First = 0 then
             Create_Line_Information_Column
               (Source_Box (Get_Widget (Child)).Editor,
@@ -3448,13 +3441,6 @@ package body Src_Editor_Module is
             Add_File_Information
               (Source_Box (Get_Widget (Child)).Editor, D.Identifier, D.Info);
          end if;
-      end Apply_Mime_On_Child;
-
-      Child : constant MDI_Child := Find_Editor (Kernel, D.File);
-
-   begin
-      if Child /= null then
-         Apply_Mime_On_Child (Child);
          return True;
       end if;
 
