@@ -29,21 +29,27 @@
 with Gtk.Clist;
 with Gtk.GEntry;
 with Gtk.Menu;
+with Gtk.Check_Button;
 
 with Wizards;
 with Directory_Tree;
 with Switches_Editors;
 with Naming_Editors;
+with Glide_Kernel;
 
 package Creation_Wizard is
 
    type Prj_Wizard_Record is new Wizards.Wizard_Record with private;
    type Prj_Wizard is access all Prj_Wizard_Record'Class;
 
-   procedure Gtk_New (Wiz : out Prj_Wizard);
+   procedure Gtk_New
+     (Wiz : out Prj_Wizard;
+      Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
    --  Create a new project wizard
 
-   procedure Initialize (Wiz : access Prj_Wizard_Record'Class);
+   procedure Initialize
+     (Wiz : out Prj_Wizard;
+      Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
    --  Internal function for the creation of a new wizard
 
 private
@@ -55,6 +61,9 @@ private
       Obj_Dir_Selection : Directory_Tree.Dir_Tree;
       Switches          : Switches_Editors.Switches_Edit;
       Naming            : Naming_Editors.Naming_Editor;
+      Load_Project      : Gtk.Check_Button.Gtk_Check_Button;
+
+      Kernel            : Glide_Kernel.Kernel_Handle;
 
       Dir_Contextual_Menu : Gtk.Menu.Gtk_Menu;
       Src_Dir_Contextual_Menu : Gtk.Menu.Gtk_Menu;
