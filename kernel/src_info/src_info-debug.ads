@@ -22,7 +22,7 @@ package Src_Info.Debug is
 
    procedure Dump_LI_File_From_Name
      (LIFL : LI_File_List; Unit_Name : String);
-   --  Print to Stdout a text representation of the LI_File which
+   --  Print to Stdout a text representation of the LI_File whose
    --  unit name is Unit_Name. Print "Unknown unit 'xyz'" if no such
    --  Unit_Name was found.
 
