@@ -498,6 +498,8 @@ package body Source_Analyzer is
       Indent_Continue : Natural renames Indent_Params.Indent_Continue;
       Indent_Decl     : Natural renames Indent_Params.Indent_Decl;
       Indent_Return   : Natural renames Indent_Params.Indent_Return;
+      Indent_With     : Natural renames Indent_Params.Indent_With;
+      Indent_Use      : Natural renames Indent_Params.Indent_Use;
 
       ---------------
       -- Variables --
@@ -829,6 +831,13 @@ package body Source_Analyzer is
                Syntax_Error := True;
             end if;
 
+         elsif Top (Tokens).Token = No_Token
+           and then (Reserved = Tok_With or else Reserved = Tok_Use)
+         then
+            --  Close the context
+
+            Push (Tokens, Temp);
+
          elsif     Reserved = Tok_Is
            or else Reserved = Tok_Declare
            or else Reserved = Tok_Begin
@@ -1049,6 +1058,11 @@ package body Source_Analyzer is
             while Buffer (P) = '-'
               and then Buffer (Next_Char (P)) = '-'
             loop
+               --  Following line comment because it is too disruptive, e.g:
+               --  procedure F  --  multiline
+               --               --  comment should be aligned properly
+               --  ??? Do_Indent (P, Num_Spaces);
+
                P             := Next_Line (Buffer, P);
                Start_Of_Line := P;
                End_Of_Line   := Line_End (Buffer, P);
@@ -1294,6 +1308,11 @@ package body Source_Analyzer is
                         end if;
 
                         Subprogram_Decl := False;
+
+                     elsif Top (Tokens).Token = Tok_With
+                       or else Top (Tokens).Token = Tok_Use
+                     then
+                        Pop (Tokens);
                      end if;
 
                   else
@@ -1415,16 +1434,36 @@ package body Source_Analyzer is
          end case;
 
          if Started then
-            --  Inside a declare block, indent broken lines specially
-            --  declare
-            --     A,
-            --         B : Integer;
+            if Prev_Token = Tok_Comma then
+               if Top (Tokens).Token = Tok_Declare then
+                  --  Inside a declare block, indent broken lines specially
+                  --  declare
+                  --     A,
+                  --         B : Integer;
 
-            if Top (Tokens).Token = Tok_Declare
-               and then Prev_Token = Tok_Comma
-            then
-               Do_Indent (Prec, Num_Spaces + Indent_Decl);
+                  Do_Indent (Prec, Num_Spaces + Indent_Decl);
+
+               elsif Top (Tokens).Token = Tok_With then
+                  --  Indent continuation lines in with clauses:
+                  --  with Package1,
+                  --     Package2;  --  from Indent_With
+
+                  Do_Indent (Prec, Num_Spaces + Indent_With);
+
+               elsif Top (Tokens).Token = Tok_Use then
+                  --  Ditto for use clauses:
+                  --  use Package1,
+                  --     Package2;  --  from Indent_Use
+
+                  Do_Indent (Prec, Num_Spaces + Indent_Use);
+               else
+                  --  Default case, simply use Num_Spaces
+
+                  Do_Indent (Prec, Num_Spaces);
+               end if;
             else
+               --  Default case, simply use Num_Spaces
+
                Do_Indent (Prec, Num_Spaces);
             end if;
 
