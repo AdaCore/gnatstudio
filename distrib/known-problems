@@ -1,5 +1,15 @@
 Known Problems fixed in GPS 1.4.1
 
+- CC10-009 cross-references with Ada units with non-GNAT naming scheme
+  Problem:    Cross-references might fail for Ada files that use non-GNAT
+              naming schemes (like .1.ada and .2.ada), depending on the order
+              in which cross-references are performed and the dependencies
+              between files.
+  Workaround: Copy all <file>.1.ali files into <file>.ali and then all
+              <file>.2.ali files into <file>.ali (overwritting as needed).
+              This needs to be done after each compilation (or create soft
+              links on Unix systems)
+
 - D114-006 Indentation in read-only editors
   Problem:    When pressing the 'indent' key in a read-only editor, the
               current line is wrongly indented, modyfing the contents of the
