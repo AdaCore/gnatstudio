@@ -60,7 +60,7 @@ package body Codefix.Ada_Tools is
    ---------------------
 
    --  ??? WARNING ! This function is not yet terminated, it doesn't work on
-   --  instantiated packages.
+   --  instantiated packages, but only if the with appears !
 
    function Get_Use_Clauses
      (Clause_Name  : String;
@@ -290,7 +290,7 @@ package body Codefix.Ada_Tools is
    -- Is_In_Escape_Part --
    -----------------------
 
-   --  ??? Add checks for 'x'
+   --  ??? Add checks for simple cotes '
    function Is_In_Escape_Part
      (This     : Ada_Escape_Str;
       Text     : String;
