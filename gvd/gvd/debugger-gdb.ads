@@ -154,6 +154,11 @@ package Debugger.Gdb is
       Value    : out Backtrace_Array;
       Len      : out Natural);
 
+   function Variable_Name_With_Frame
+     (Debugger : access Gdb_Debugger;
+      Var      : String)
+     return String;
+
    function Info_Threads
      (Debugger : access Gdb_Debugger)
       return Language.Thread_Information_Array;

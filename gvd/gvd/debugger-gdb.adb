@@ -104,6 +104,17 @@ package body Debugger.Gdb is
       Window     : System.Address);
    --  Filter used to detect questions from gdb.
 
+   procedure Parse_Backtrace_Info
+     (S     : String;
+      Value : out Backtrace_Array;
+      Len   : out Natural);
+   --  Parse all the lines in S.
+   --  These lines should contain the info returned either by "where"
+   --  or "frame".
+   --  Value'First will contain the value described in the first line, and
+   --  so on.
+
+
    function To_Main_Debug_Window is new
      Unchecked_Conversion (System.Address, Main_Debug_Window_Access);
 
@@ -652,6 +663,50 @@ package body Debugger.Gdb is
       Send (Debugger, Str, Display => Display);
    end Stack_Frame;
 
+   --------------------------
+   -- Parse_Backtrace_Info --
+   --------------------------
+
+   procedure Parse_Backtrace_Info
+     (S     : String;
+      Value : out Backtrace_Array;
+      Len   : out Natural)
+   is
+      Matched : Match_Array (0 .. 6);
+      First   : Positive := S'First;
+   begin
+      Len := Value'First - 1;
+
+      while Len /= Value'Last loop
+         Match (Frame_Pattern, S (First .. S'Last - Prompt_Length), Matched);
+
+         exit when Matched (0) = No_Match;
+
+         Len := Len + 1;
+         Value (Len).Frame_Id :=
+           Natural'Value (S (Matched (1).First .. Matched (1).Last));
+
+         if Matched (2) = No_Match then
+            Value (Len).Program_Counter := new String' ("");
+         else
+            Value (Len).Program_Counter :=
+              new String' (S (Matched (3).First .. Matched (3).Last));
+         end if;
+
+         Value (Len).Subprogram :=
+           new String' (S (Matched (4).First .. Matched (4).Last));
+
+         if Matched (5) = No_Match then
+            Value (Len).Source_Location := new String' ("");
+         else
+            Value (Len).Source_Location :=
+              new String' (S (Matched (6).First .. Matched (6).Last));
+         end if;
+
+         First := Matched (0).Last;
+      end loop;
+   end Parse_Backtrace_Info;
+
    ---------------
    -- Backtrace --
    ---------------
@@ -663,44 +718,9 @@ package body Debugger.Gdb is
    is
    begin
       Send (Debugger, "where");
-
-      declare
-         S       : String := Expect_Out (Get_Process (Debugger));
-         Matched : Match_Array (0 .. 6);
-         First   : Positive := S'First;
-      begin
-         Len := 0;
-
-         while Len /= Value'Length loop
-            Match
-              (Frame_Pattern, S (First .. S'Last - Prompt_Length), Matched);
-
-            exit when Matched (0) = No_Match;
-
-            Len := Len + 1;
-            Value (Len).Frame_Id :=
-              Natural'Value (S (Matched (1).First .. Matched (1).Last));
-
-            if Matched (2) = No_Match then
-               Value (Len).Program_Counter := new String' ("");
-            else
-               Value (Len).Program_Counter :=
-                 new String' (S (Matched (3).First .. Matched (3).Last));
-            end if;
-
-            Value (Len).Subprogram :=
-              new String' (S (Matched (4).First .. Matched (4).Last));
-
-            if Matched (5) = No_Match then
-               Value (Len).Source_Location := new String' ("");
-            else
-               Value (Len).Source_Location :=
-                 new String' (S (Matched (6).First .. Matched (6).Last));
-            end if;
-
-            First := Matched (0).Last;
-         end loop;
-      end;
+      Parse_Backtrace_Info
+        (Expect_Out (Get_Process (Debugger)),
+         Value, Len);
    end Backtrace;
 
    ----------------------
@@ -1301,5 +1321,52 @@ package body Debugger.Gdb is
          end;
       end;
    end List_Breakpoints;
+
+   ------------------------------
+   -- Variable_Name_With_Frame --
+   ------------------------------
+
+   function Variable_Name_With_Frame
+     (Debugger : access Gdb_Debugger;
+      Var      : String)
+     return String
+   is
+      Bt  : Backtrace_Array (1 .. 1);
+      Len : Natural;
+      Name_Last : Natural;
+   begin
+      Name_Last := Var'First;
+      Skip_To_Char (Var, Name_Last, ':');
+
+      --  Is there already a block indication ? If yes, do nothing
+
+      if Name_Last < Var'Last
+        and then Var (Name_Last + 1) = ':'
+      then
+         return Var;
+      end if;
+
+      --  Else, extract the name of the block from the backtrace.
+      --  ??? This should be done directly from the sources, since this would
+      --  be closer to what the user would expect.
+
+      Push_Internal_Command_Status (Get_Process (Debugger), True);
+      Set_Parse_File_Name (Get_Process (Debugger), False);
+      Send (Debugger, "frame");
+      Parse_Backtrace_Info (Expect_Out (Get_Process (Debugger)), Bt, Len);
+      Set_Parse_File_Name (Get_Process (Debugger), True);
+      Pop_Internal_Command_Status (Get_Process (Debugger));
+
+      if Len >= 1 then
+         Name_Last := Bt (1).Subprogram'First;
+         Skip_To_Blank (Bt (1).Subprogram.all, Name_Last);
+         Name_Last := Name_Last - 1;
+
+         return Bt (1).Subprogram (Bt (1).Subprogram'First .. Name_Last)
+           & "::" & Var;
+      else
+         return Var;
+      end if;
+   end Variable_Name_With_Frame;
 
 end Debugger.Gdb;
