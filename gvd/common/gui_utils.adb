@@ -774,7 +774,9 @@ package body GUI_Utils is
       Iter      : Gtk_Tree_Iter := Null_Iter;
       N_Model   : Gtk_Tree_Model;
    begin
-      if Event /= null then
+      if Event /= null
+        and then Get_Event_Type (Event) in Button_Press .. Button_Release
+      then
          X := Get_X (Event);
          Y := Get_Y (Event);
          Path := Gtk_New;
@@ -795,9 +797,7 @@ package body GUI_Utils is
          Iter := Get_Iter (Model, Path);
          Path_Free (Path);
       else
-         Get_Selected (Get_Selection (Tree),
-                       N_Model,
-                       Iter);
+         Get_Selected (Get_Selection (Tree), N_Model, Iter);
       end if;
 
       return Iter;
