@@ -1654,7 +1654,8 @@ package body Switches_Editors is
       Current : Gint := Get_Current_Page (Editor);
    begin
       for P in Editor.Pages'Range loop
-         if Has_Supported_Language (Editor.Pages (P), Languages)
+         if (Editor.Pages (P).Lang_Filter = null
+             or else Has_Supported_Language (Editor.Pages (P), Languages))
            and then (not File_Specific
                      or else Editor.Pages (P).Pkg.all /= Ide_Package)
          then
