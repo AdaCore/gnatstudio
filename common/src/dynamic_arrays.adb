@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2003                         --
+--                     Copyright (C) 2003-2004                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -25,10 +25,13 @@ package body Dynamic_Arrays is
 
    pragma Suppress (All_Checks);
 
+   pragma Warnings (Off);
+   --  This UC is safe aliasing-wise, so kill warning
    function Convert is new Ada.Unchecked_Conversion
      (System.Address, Table_Ptr);
    function Convert is new Ada.Unchecked_Conversion
      (Table_Ptr, System.Address);
+   pragma Warnings (On);
 
    Component_Size : constant size_t :=
      Table_Type'Component_Size / System.Storage_Unit;

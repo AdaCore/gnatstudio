@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2002-2003                      --
+--                      Copyright (C) 2002-2004                      --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
@@ -27,6 +27,8 @@ package body Tries is
 
    Me : constant Debug_Handle := Create ("Tries");
 
+   pragma Warnings (Off);
+   --  These 4 UCs are safe aliasing-wise, so kill warning
    function Convert is new Ada.Unchecked_Conversion
      (Cell_Child_Array_Access, System.Address);
    function Convert is new Ada.Unchecked_Conversion
@@ -35,6 +37,7 @@ package body Tries is
      (Data_Type_Array_Access, System.Address);
    function Convert is new Ada.Unchecked_Conversion
      (System.Address, Data_Type_Array_Access);
+   pragma Warnings (On);
 
    Component_Size : constant size_t :=
      Cell_Child_Array'Component_Size / System.Storage_Unit;
