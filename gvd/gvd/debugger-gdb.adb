@@ -2199,7 +2199,19 @@ package body Debugger.Gdb is
       S_Index      : Integer := S'First + 2;
       Result_Index : Integer := 1;
    begin
+      --  Detect "Cannot access memory at ..."
+      Skip_To_String (S, S_Index, "Cannot access memory at");
+      if S_Index < S'Last - 24 then
+         while Result_Index <= Result'Last loop
+            Result (Result_Index) := '-';
+            Result_Index := Result_Index + 1;
+         end loop;
+         return Result;
+      end if;
+
+      S_Index := S'First + 2;
       while S_Index <= S'Last loop
+
          --  Detect actual data : 0xXX right after an ASCII.HT.
          if S (S_Index) = '0' then
             if S (S_Index - 1) = ASCII.HT then
@@ -2207,15 +2219,6 @@ package body Debugger.Gdb is
                  := S (S_Index + 2 .. S_Index + 3);
                Result_Index := Result_Index + 2;
             end if;
-         end if;
-
-         --  Detect "Cannot access memory at ..."
-         if S (S_Index) = 'n' then
-            while Result_Index <= Result'Last loop
-               Result (Result_Index) := '-';
-               Result_Index := Result_Index + 1;
-            end loop;
-            S_Index := S'Last;
          end if;
 
          S_Index := S_Index + 1;
