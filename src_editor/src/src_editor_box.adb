@@ -1934,6 +1934,22 @@ package body Src_Editor_Box is
       return Get_Filename (Editor.Source_Buffer);
    end Get_Filename;
 
+   --------------------
+   -- Check_Writable --
+   --------------------
+
+   procedure Check_Writable (Editor : access Source_Editor_Box_Record) is
+   begin
+      Editor.Writable := Is_Writable (Get_Filename (Editor.Source_Buffer));
+
+      if Editor.Writable then
+         Set_Text (Editor.Read_Only_Label, -"Writable");
+      else
+         Set_Text (Editor.Read_Only_Label, -"Read Only");
+         Set_Editable (Editor.Source_View, False);
+      end if;
+   end Check_Writable;
+
    ---------------
    -- Load_File --
    ---------------
@@ -1952,14 +1968,7 @@ package body Src_Editor_Box is
          Set_Filename (Editor.Source_Buffer, Filename);
          Set_Text (Editor.Modified_Label, -"Unmodified");
 
-         Editor.Writable := Is_Writable (Filename);
-
-         if Editor.Writable then
-            Set_Text (Editor.Read_Only_Label, -"Writable");
-         else
-            Set_Text (Editor.Read_Only_Label, -"Read Only");
-            Set_Editable (Editor.Source_View, False);
-         end if;
+         Check_Writable (Editor);
       end if;
    end Load_File;
 
