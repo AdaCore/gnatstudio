@@ -48,6 +48,8 @@ with Pango.Font;                  use Pango.Font;
 
 with Commands.Editor;             use Commands.Editor;
 with Language;                    use Language;
+with Language.C;                  use Language.C;
+with Language.Ada;                use Language.Ada;
 with Interfaces.C.Strings;        use Interfaces.C.Strings;
 with Ada.Exceptions;              use Ada.Exceptions;
 with Traces;                      use Traces;
@@ -912,6 +914,9 @@ package body Src_Editor_View is
       New_Line : Boolean := True) return Boolean
    is
       Kernel        : constant Kernel_Handle := Get_Kernel (Buffer);
+      Tab_Len       : constant Integer :=
+        Integer (Get_Pref (Kernel, Tab_Width));
+
       Start         : Gtk_Text_Iter;
       Pos           : Gtk_Text_Iter;
       Iter          : Gtk_Text_Iter;
@@ -934,14 +939,35 @@ package body Src_Editor_View is
       pragma Suppress (Access_Check, Slice);
       Index         : Integer;
       Replace_Cmd   : Editor_Replace_Slice;
-      Use_Tabs      : Boolean := False;
+      Tabs_Used     : Boolean := False;
       Indented      : Boolean := False;
       Char          : Character;
       Indent_Params : Indent_Parameters;
+      Use_Tabs      : Boolean := False;
+
+      function Blank_Slice (Count : Natural; Use_Tabs : Boolean) return String;
+      --  Return a string representing count blanks.
+      --  If Use_Tabs is True, use ASCII.HT characters as much as possible,
+      --  otherwise use only spaces.
 
       procedure Find_Non_Blank (Last : Natural);
       --  Set Index to the first non blank character in Slice (Index .. Last)
-      --  Also set Use_Tabs to True if any tab character is found.
+      --  Also set Tabs_Used to True if any tab character is found.
+
+      -----------------
+      -- Blank_Slice --
+      -----------------
+
+      function Blank_Slice
+        (Count : Natural; Use_Tabs : Boolean) return String is
+      begin
+         if Use_Tabs then
+            return (1 .. Count / Tab_Len => ASCII.HT) &
+              (1 .. Count mod Tab_Len => ' ');
+         else
+            return (1 .. Count => ' ');
+         end if;
+      end Blank_Slice;
 
       ---------------------
       -- First_Non_Blank --
@@ -954,7 +980,7 @@ package body Src_Editor_View is
                      or else Slice (Index) = ASCII.HT)
          loop
             if Slice (Index) = ASCII.HT then
-               Use_Tabs := True;
+               Tabs_Used := True;
             end if;
 
             Index := Index + 1;
@@ -963,16 +989,43 @@ package body Src_Editor_View is
 
    begin
       if Lang = null
-        or else not Get_Pref (Kernel, Automatic_Indentation)
         or else not Can_Indent (Lang)
       then
          return False;
       end if;
 
-      Indent_Params :=
-        (Indent_Level    => Integer (Get_Pref (Kernel, Indentation_Level)),
-         Indent_Continue => Integer (Get_Pref (Kernel, Continuation_Level)),
-         Indent_Decl     => Integer (Get_Pref (Kernel, Declaration_Level)));
+      if Lang.all in Ada_Language'Class then
+         if not Get_Pref (Kernel, Ada_Automatic_Indentation) then
+            return False;
+         end if;
+
+         Use_Tabs := Get_Pref (Kernel, Ada_Use_Tabs);
+         Indent_Params :=
+           (Indent_Level    =>
+              Integer (Get_Pref (Kernel, Ada_Indentation_Level)),
+            Indent_Continue =>
+              Integer (Get_Pref (Kernel, Ada_Continuation_Level)),
+            Indent_Decl     =>
+              Integer (Get_Pref (Kernel, Ada_Declaration_Level)),
+            Tab_Width       => Tab_Len);
+
+      elsif Lang.all in C_Language'Class then
+         if not Get_Pref (Kernel, C_Automatic_Indentation) then
+            return False;
+         end if;
+
+         Use_Tabs := Get_Pref (Kernel, C_Use_Tabs);
+         Indent_Params :=
+           (Indent_Level    =>
+              Integer (Get_Pref (Kernel, C_Indentation_Level)),
+            Indent_Continue => 0,
+            Indent_Decl     => 0,
+            Tab_Width       => Tab_Len);
+
+      else
+         return False;
+      end if;
+
       Get_Selection_Bounds (Buffer, Start, Pos, Result);
       Copy (Pos, Iter);
 
@@ -1052,17 +1105,20 @@ package body Src_Editor_View is
             Buffer,
             Integer (Line), 0,
             Integer (Line), Integer (Col),
-            (1 .. Indent => ' ') &
+            Blank_Slice (Indent, Use_Tabs) &
             Slice (Index .. Slice_Length - Offset) & ASCII.LF &
-            (1 .. Next_Indent => ' ') &
+            Blank_Slice (Next_Indent, Use_Tabs) &
             Slice (Blanks .. Slice_Length));
          Enqueue (Get_Queue (Buffer), Replace_Cmd);
 
          --  Need to recompute iter, since the slice replacement that
          --  we just did has invalidated iter.
 
-         Get_Iter_At_Line_Offset (Buffer, Pos, Line + 1, Gint (Next_Indent));
-         Place_Cursor (Buffer, Pos);
+         if Is_Valid_Position (Buffer, Line + 1, Gint (Next_Indent)) then
+            Get_Iter_At_Line_Offset
+              (Buffer, Pos, Line + 1, Gint (Next_Indent));
+            Place_Cursor (Buffer, Pos);
+         end if;
 
       else
          Current_Line := Get_Line (Start);
@@ -1088,7 +1144,7 @@ package body Src_Editor_View is
             Find_Non_Blank (Line_End);
             Offset := Index - Line_Start;
 
-            if Use_Tabs or else Offset /= Indent then
+            if Tabs_Used or else Offset /= Indent then
                --  Only indent if the current indentation is wrong
                --  ??? Would be nice to indent the whole selection at once,
                --  this would make the undo/redo behavior more intuitive.
@@ -1099,7 +1155,7 @@ package body Src_Editor_View is
                   Buffer,
                   Integer (Current_Line), 0,
                   Integer (Current_Line), Offset,
-                  (1 .. Indent => ' '));
+                  Blank_Slice (Indent, Use_Tabs));
                Enqueue (Get_Queue (Buffer), Replace_Cmd);
                Global_Offset := Global_Offset - Offset + Indent;
             end if;
