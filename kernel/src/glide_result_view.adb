@@ -514,13 +514,14 @@ package body Glide_Result_View is
             end if;
          end;
 
+         Path := Get_Path (View.Model, File_Iter);
+         Dummy := Expand_Row (View.Tree, Path, True);
+         Path_Free (Path);
+
          Path := Get_Path (View.Model, Iter);
          Select_Path (Get_Selection (View.Tree), Path);
          Scroll_To_Cell (View.Tree, Path, null, True, 0.1, 0.1);
-         Path_Free (Path);
-
-         Path := Get_Path (View.Model, File_Iter);
-         Dummy := Expand_Row (View.Tree, Path, True);
+         Goto_Location (View);
          Path_Free (Path);
       end if;
    end Add_Location;
