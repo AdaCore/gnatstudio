@@ -1785,6 +1785,12 @@ gvd_interrupt_process (struct GVD_Process* p)
   process_send_signal (p, SIGINT, 1);
 }
 
+int
+gvd_interrupt_pid (int pid)
+{
+  kill (-pid, SIGINT);
+}
+
 /* kill a process. */
 
 int
@@ -1954,6 +1960,15 @@ gvd_interrupt_process (struct GVD_Process* p)
   return rc;
 }
 
+int
+gvd_interrupt_pid (int pid)
+{
+  struct GVD_Process process;
+
+  process.procinfo.dwProcessId = pid;
+  gvd_interrupt_process (&process);
+}
+
 /* kill a process, as this implementation use CreateProcess on Win32 we need
    to use Win32 TerminateProcess API */
 int
@@ -2029,7 +2044,7 @@ gvd_new_tty ()
   return handle;
 
 #else
-  return (struct TTY_Handle*)0;
+  return (TTY_Handle*)0;
 #endif
 }
 
