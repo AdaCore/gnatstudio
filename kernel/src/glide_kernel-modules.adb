@@ -38,6 +38,7 @@ with Gtk.Window;        use Gtk.Window;
 with Prj;               use Prj;
 with String_Utils;      use String_Utils;
 with Traces;            use Traces;
+with Glide_Intl;        use Glide_Intl;
 
 package body Glide_Kernel.Modules is
 
@@ -90,7 +91,7 @@ package body Glide_Kernel.Modules is
 
    function Register_Module
      (Module_Name             : String;
-      Priority                : Module_Priority := Default_Priority;
+      Priority                : Module_Priority     := Default_Priority;
       Initializer             : Module_Initializer  := null;
       Contextual_Menu_Handler : Module_Menu_Handler := null)
       return Module_ID
@@ -456,7 +457,7 @@ package body Glide_Kernel.Modules is
 
          if Get_Submenu (Menu_Item) = null then
             Trace (Me, Parent_Path (First .. Last - 1)
-                   & " doesn't have a submenu, can't create item in"
+                   & (-" doesn't have a submenu, can't create item in")
                    & Parent_Path);
             return;
          end if;
@@ -472,7 +473,7 @@ package body Glide_Kernel.Modules is
          Skip_To_Char (Parent_Path, Last, '/');
 
          Gtk_New (Menu);
-         Gtk_New (Menu_Item, Parent_Path (First .. Last - 1));
+         Gtk_New_With_Mnemonic (Menu_Item, Parent_Path (First .. Last - 1));
          Set_Submenu (Menu_Item, Menu);
 
          if Item = null
