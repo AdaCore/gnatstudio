@@ -179,8 +179,8 @@ package Glide_Kernel is
       Source_Filename   : String)
       return Src_Info.LI_File_Ptr;
    --  Find the ALI file for Source_Filename, and return a handle to it.
-   --  null is returned if the LI file couldn't be parsed. It is garanteed that
-   --  the returned LI file has been fully parsed.
+   --  null is returned if the LI file couldn't be parsed. It is guaranteed
+   --  that the returned LI file has been fully parsed.
 
    function Get_Other_File_Of
      (Kernel          : access Kernel_Handle_Record;
