@@ -102,7 +102,9 @@ package body Src_Editor_Buffer.Text_Handling is
          end if;
 
          Forward_Char (Iter, Result);
-         Line_End := Line_End + 1;
+         if Result then
+            Line_End := Line_End + 1;
+         end if;
 
          Column_End := Natural (Get_Line_Offset (Iter)) + 1;
 
