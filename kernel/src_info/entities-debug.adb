@@ -68,6 +68,9 @@ package body Entities.Debug is
    procedure Dump_Entities_From_Files (Files : Source_File_Array);
    --  Dump various parts of the system
 
+   function Image (Col : Column_Type) return String;
+   --  Image of the column number
+
    procedure Low_Level_Dump is new Entities_Tries.Dump (GNAT.IO.Put, Dump);
    pragma Unreferenced (Low_Level_Dump);
 
@@ -93,6 +96,16 @@ package body Entities.Debug is
       Parent_Package                           => 'k',
       End_Of_Spec                              => 'e',
       End_Of_Body                              => 't');
+
+   -----------
+   -- Image --
+   -----------
+
+   function Image (Col : Column_Type) return String is
+      C : constant String := Column_Type'Image (Col);
+   begin
+      return C (C'First + 1 .. C'Last);
+   end Image;
 
    ------------------------
    -- Set_Show_Timestamp --
