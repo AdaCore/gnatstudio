@@ -450,7 +450,8 @@ package body VCS_Module is
       Register_Menu (Kernel, VCS, -"Commit", "", Commit'Access);
       Register_Menu (Kernel, VCS, -"Annotate", "", View_Annotate'Access);
       Register_Menu (Kernel, VCS, -"View Changelog", "", View_Log'Access);
-      Register_Menu (Kernel, VCS, -"Revert", "", Revert'Access);
+      Register_Menu (Kernel, VCS, -"Revert", "", Revert'Access,
+                     Sensitive => False);
       Register_Menu (Kernel, VCS, -"Add to repository", "", Add'Access);
       Register_Menu
         (Kernel, VCS, -"Remove from repository", "", Remove'Access);
