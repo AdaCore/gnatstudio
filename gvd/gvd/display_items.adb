@@ -101,6 +101,10 @@ package body Display_Items is
    Hide_Big_Items : constant Boolean := True;
    --  If True, items higher than a given limit will start in a hidden state.
 
+   Item_Name_In_Link : constant String := "@";
+   --  Shortcut used to represent the derefenced item when generating a new
+   --  item.
+
    --  ??? Should get rid of these global variables.
    --  This could be done in a global initialization file, for all the
    --  graphic contexts we use in Odd.
@@ -849,14 +853,33 @@ package body Display_Items is
         (Get_Language (Item.Debugger.Debugger),
          Get_Component_Name
            (Item.Entity,
-            Get_Language (Item.Debugger.Debugger), "@", X, Y));
+            Get_Language (Item.Debugger.Debugger), Item_Name_In_Link, X, Y));
       New_Name : constant String := Dereference_Name
         (Get_Language (Item.Debugger.Debugger), Name);
-      Cmd : String := "graph display " & New_Name & " dependent on "
-        & Integer'Image (Item.Num) & " link_name " & Link_Name;
+
    begin
-      Text_Output_Handler (Item.Debugger, Cmd & ASCII.LF, Is_Command => True);
-      Process_User_Command (Item.Debugger, Cmd);
+      --  The newly created item should have the same auto-refresh state as
+      --  the one we are dereferencing
+      if Item.Auto_Refresh then
+         declare
+            Cmd : String := "graph display " & New_Name & " dependent on "
+              & Integer'Image (Item.Num) & " link_name " & Link_Name;
+         begin
+            Text_Output_Handler (Item.Debugger, Cmd & ASCII.LF,
+                                 Is_Command => True);
+            Process_User_Command (Item.Debugger, Cmd);
+        end;
+
+      else
+         declare
+            Cmd : String := "graph print " & New_Name & " dependent on "
+              & Integer'Image (Item.Num) & " link_name " & Link_Name;
+        begin
+           Text_Output_Handler (Item.Debugger, Cmd & ASCII.LF,
+                                Is_Command => True);
+           Process_User_Command (Item.Debugger, Cmd);
+        end;
+      end if;
    end Dereference_Item;
 
    -----------------
