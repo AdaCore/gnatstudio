@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003-2004                       --
---                            ACT-Europe                             --
+--                     Copyright (C) 2003-2005                       --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -1941,6 +1941,7 @@ package body Entities.Queries is
       Iter.Iter := Start (File.Entities, Prefix);
       Iter.Prefix := new String'(Prefix);
       Iter.File := File;
+      Iter.Index_In_EL := Entity_Information_Arrays.First;
 
       Iter.EL := Get (Iter.Iter);
 
@@ -1948,7 +1949,6 @@ package body Entities.Queries is
          Iter.Processing_Entities := False;
          Next (Iter);
       else
-         Iter.Index_In_EL := Entity_Information_Arrays.First;
          Iter.Processing_Entities := True;
       end if;
    end Find_All_Entities_In_File;
