@@ -1279,15 +1279,6 @@ package body Project_Viewers is
            and then not Has_Directory_Information (File_Context)
            and then not Has_File_Information (File_Context)
          then
-            Gtk_New (Item, Label => -"Save the project "
-                     & Project_Name (Project_Information (File_Context)));
-            Append (Menu, Item);
-            Context_Callback.Connect
-              (Item, "activate",
-               Context_Callback.To_Marshaller
-               (Save_Specific_Project'Access),
-               Selection_Context_Access (Context));
-
             Gtk_New (Item, Label => -"Edit project properties");
             Append (Menu, Item);
             Context_Callback.Connect
@@ -1302,7 +1293,7 @@ package body Project_Viewers is
             Context_Callback.Connect
               (Item, "activate",
                Context_Callback.To_Marshaller
-               (Save_Specific_Project'Access),
+                 (Save_Specific_Project'Access),
                Selection_Context_Access (Context));
 
             Gtk_New (Item, Label => -"Edit project source file");
