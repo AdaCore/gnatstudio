@@ -4,7 +4,7 @@
 --                        Copyright (C) 2001                         --
 --                            ACT-Europe                             --
 --                                                                   --
--- GVD is free  software;  you can redistribute it and/or modify  it --
+-- GLIDE is free software; you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -23,7 +23,6 @@ with Gtk.Widget;              use Gtk.Widget;
 with Gtk.Menu_Item;           use Gtk.Menu_Item;
 with Glide_Kernel;            use Glide_Kernel;
 with Glide_Kernel.Modules;    use Glide_Kernel.Modules;
---  with Glide_Kernel.Editor;     use Glide_Kernel.Editor;
 with Glide_Intl;              use Glide_Intl;
 
 with Traces;                  use Traces;
@@ -45,7 +44,7 @@ package body VCS_Module is
    procedure On_Open_Interface
      (Widget : access GObject_Record'Class;
       Kernel : Kernel_Handle);
-   --
+   --  ???
 
    -----------------------
    -- On_Open_Interface --
@@ -60,8 +59,7 @@ package body VCS_Module is
       Child    : MDI_Child;
 
    begin
-      Child := Find_MDI_Child_By_Tag (Get_MDI (Kernel),
-                                      VCS_View_Record'Tag);
+      Child := Find_MDI_Child_By_Tag (Get_MDI (Kernel), VCS_View_Record'Tag);
 
       if Child = null then
          Gtk_New (Explorer);
@@ -69,6 +67,7 @@ package body VCS_Module is
          Child := Put (MDI, Explorer);
          Set_Title (Child, "VCS Explorer");
          Show_Files (Explorer, "");
+
       else
          Set_Focus_Child (Child);
       end if;
@@ -81,8 +80,9 @@ package body VCS_Module is
    procedure Initialize_Module
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
    is
-      Menu_Item    : Gtk_Menu_Item;
-      VCS          : constant String := '/' & (-"VCS");
+      Menu_Item : Gtk_Menu_Item;
+      VCS       : constant String := '/' & (-"VCS");
+
    begin
       Register_Menu (Kernel, VCS);
       Gtk_New (Menu_Item, -"Open VCS Interface");
@@ -91,7 +91,6 @@ package body VCS_Module is
         (Menu_Item, "activate",
          Kernel_Callback.To_Marshaller (On_Open_Interface'Access),
          Kernel_Handle (Kernel));
-
    end Initialize_Module;
 
 begin
@@ -100,6 +99,5 @@ begin
       Priority                => Default_Priority,
       Initializer             => Initialize_Module'Access,
       Contextual_Menu_Handler => null);
-
 end VCS_Module;
 
