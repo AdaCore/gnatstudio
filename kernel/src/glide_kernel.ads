@@ -30,7 +30,6 @@ with Gtk.Accel_Group;
 with Gtk.Menu;
 with Gtk.Toolbar;
 with Gtk.Tooltips;
-with Gtk.Widget;
 with Gtk.Window;
 with Gtkada.MDI;
 with Prj.Tree;
@@ -382,12 +381,6 @@ private
       --  The last context emitted by the explorer.
       --  This implies knowledge of the explorer (at least to check the module
       --  ID, but there is no way around that).
-
-      HTML_Widget : Gtk.Widget.Gtk_Widget;
-      --  The HTML renderer used to display help pages.
-
-      Current_Help_File : GNAT.OS_Lib.String_Access;
-      --  The current help file displayed. Used to find relative (hyper) links.
    end record;
 
 end Glide_Kernel;
