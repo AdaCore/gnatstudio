@@ -1589,6 +1589,23 @@ package body VCS.ClearCase is
       Insert (Kernel, -"Function not implemented");
    end Diff_Base_Head;
 
+   ------------------
+   -- Diff_Working --
+   ------------------
+
+   procedure Diff_Working
+     (Rep  : access ClearCase_Record;
+      File : VFS.Virtual_File)
+
+   is
+      Kernel : Kernel_Handle
+        renames VCS_ClearCase_Module_ID.ClearCase_Reference.Kernel;
+
+      pragma Unreferenced (Rep, File);
+   begin
+      Insert (Kernel, -"Function not implemented");
+   end Diff_Working;
+
    ---------
    -- Log --
    ---------
@@ -1724,6 +1741,7 @@ package body VCS.ClearCase is
          History_Revision => null,
          Annotate     => new String'(-"Annotate"),
          Diff_Head    => new String'(-"Diff against head rev."),
+         Diff_Working => null,
          Diff_Base_Head => null,
          Diff         => new String'(-"Diff against specific rev."),
          Diff2        => new String'(-"Diff between two revisions"),
