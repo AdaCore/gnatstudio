@@ -672,7 +672,7 @@ the following commands. Failing to do so will result in blank windows.
 
 @iftex
 @cindex screen shot
-@image{tasks, 12.7cm}
+@image{tasks, 10.7cm}
 @end iftex
 
 @ifhtml
@@ -1135,7 +1135,7 @@ again).
 
 @iftex
 @cindex screen shot
-@image{breakpoints, 12.7cm}
+@image{breakpoints, 11.7cm}
 @end iftex
 
 @ifhtml
@@ -1153,12 +1153,23 @@ The top area provides an interface to easily create the different kinds of
 breakpoints, while the bottom area lists the existing breakpoints and
 their characteristics.
 
-It is possible to access to advanced breakpoint characteristics by clicking
-on the @i{Advanced} button, which will display a new area on the right of the
-window, where you can specify commands to run automatically after a breakpoint
+It is possible to access to advanced breakpoint characteristics for a given
+breakpoint, by first selecting a breakpoint in the list, and then by clicking
+on the @i{Advanced} button, which will display a new dialog window
+where you can specify commands to run automatically after a breakpoint
 is hit, or specify how many times a selected breakpoint will be ignored.
 If running VxWorks AE, you can also change the Scope and Action
 of breakpoints.
+
+@iftex
+@cindex screen shot
+@image{bp-advanced, 8.7cm}
+@end iftex
+
+@ifhtml
+@cindex screen shot
+@image{bp-advanced}
+@end ifhtml
 
 @subsection Scope/Action Settings for VxWorks AE
 @cindex VxWorks AE
