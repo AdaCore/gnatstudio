@@ -781,26 +781,25 @@ package body Project_Properties is
    -- Get_Languages --
    -------------------
 
-   function Get_Languages (Editor : access Properties_Editor_Record'Class)
-      return Argument_List
+   function Get_Languages
+     (Editor : access Properties_Editor_Record'Class) return Argument_List
    is
       New_Languages : Argument_List (Editor.Languages'Range);
       Num_Languages : Natural := New_Languages'First;
       Check         : Gtk_Check_Button;
-      Ent           : Gtk_Entry;
       Languages     : Argument_List := Known_Languages
         (Get_Language_Handler (Editor.Kernel));
 
    begin
       for J in Editor.Languages'Range loop
          Check := Gtk_Check_Button (Editor.Languages (J));
-         Ent   := Gtk_GEntry (Editor.Compilers (J));
 
          if Get_Active (Check) then
             New_Languages (Num_Languages) := new String'(Languages (J).all);
             Num_Languages := Num_Languages + 1;
          end if;
       end loop;
+
       Free (Languages);
       return New_Languages (New_Languages'First .. Num_Languages - 1);
    end Get_Languages;
