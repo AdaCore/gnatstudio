@@ -1,5 +1,10 @@
 Known Problems fixed in GPS 1.3.0
 
+- C504-003 Alias file not saved properly under Windows
+  Problem:    In some cases, extra CR character are improperly printed when
+              saved the aliases under Windows.
+  Workaround: Remove the extra CR characters in the file %HOME%\.gps\aliases
+
 - C501-006 Child projects cannot be edited graphically
   Problem:    When a child project (ie whose name has a '.') is edited through
               the project properties editor, it cannot be saved afterwards.
