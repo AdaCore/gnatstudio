@@ -1511,7 +1511,7 @@ package body Src_Editor_Box is
 
       if Filename = "" then
          if File = ""
-           or else not Is_Regular_File (File)
+           or else Base_Name (File) = File
          then
             declare
                Name : constant String := Select_File (-"Save File As");
