@@ -24,7 +24,7 @@ package body Variable_Editor_Pkg.Callbacks is
       Editor : Variable_Edit := Variable_Edit (Object);
       Edit : New_Var_Edit;
    begin
-      Gtk_New (Edit, Editor);
+      Gtk_New (Edit, Editor, Scenario_Variable_Only => True);
       Show_All (Edit);
    end On_Add_Clicked;
 
