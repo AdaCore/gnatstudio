@@ -1,5 +1,24 @@
-with Ada.Unchecked_Deallocation,
-     GNAT.OS_Lib;
+-----------------------------------------------------------------------
+--                               G P S                               --
+--                                                                   --
+--                     Copyright (C) 2002                            --
+--                            ACT-Europe                             --
+--                                                                   --
+-- GPS is free  software;  you can redistribute it and/or modify  it --
+-- under the terms of the GNU General Public License as published by --
+-- the Free Software Foundation; either version 2 of the License, or --
+-- (at your option) any later version.                               --
+--                                                                   --
+-- This program is  distributed in the hope that it will be  useful, --
+-- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
+-- General Public License for more details. You should have received --
+-- a copy of the GNU General Public License along with this program; --
+-- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
+-- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
+-----------------------------------------------------------------------
+
+with GNAT.OS_Lib;
 
 package SN is
    --  Types and constants specific to Source Navigator.
@@ -59,11 +78,8 @@ package SN is
 
    function Length (s : Segment) return Integer;
 
-   subtype String_Access is GNAT.OS_Lib.String_Access;
-   procedure Free_String is
-         new Ada.Unchecked_Deallocation (String, String_Access);
-
-   function To_String (Buffer : String_Access; Seg : Segment) return String;
+   function To_String
+     (Buffer : GNAT.OS_Lib.String_Access; Seg : Segment) return String;
 
    type SN_Attributes is mod 2**32;
 

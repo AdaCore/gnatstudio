@@ -1,4 +1,10 @@
+with GNAT.OS_Lib; use GNAT.OS_Lib;
+
 package body SN is
+
+   ---------
+   -- "<" --
+   ---------
 
    function "<" (P1, P2 : Point) return Boolean is
    begin
@@ -9,10 +15,18 @@ package body SN is
       end if;
    end "<";
 
+   ------------
+   -- Length --
+   ------------
+
    function Length (s : Segment) return Integer is
    begin
       return (s.Last - s.First + 1);
    end Length;
+
+   ---------------
+   -- To_String --
+   ---------------
 
    function To_String (Buffer : String_Access; Seg : Segment) return String is
    begin
