@@ -79,7 +79,6 @@ GNAT_SOURCES= \
   prj-attr.ads \
   prj-attr.adb \
   prj-com.ads \
-  prj-com.adb \
   prj-dect.ads \
   prj-dect.adb \
   prj-env.ads \
