@@ -84,8 +84,9 @@ with a tight integration between the tools.
 @noindent
 
 Start GPS in the directory containing the tutorial files, or if the directory
-is read-only, copy the tutorial directory and its subdirectories, and start
-GPS from the tutorial directory, so that GPS will load the right context.
+is read-only, copy the @file{tutorial} directory and its subdirectories in a
+local (writable) area, and start GPS from the @file{tutorial} directory, so
+that GPS will load the right context.
 
 By default, the tutorial sources can be found under
 @code{<prefix>/doc/gps/examples/tutorial}, where @code{<prefix>} is the
@@ -93,6 +94,13 @@ prefix directory of the GPS installation.
 
 Alternatively, if you have already started GPS in another directory, you
 can load the project @code{sdc.gpr} by using the menu @code{Project->Open...}
+
+If you are reading this document from GPS itself, we recommend that you
+select the window displaying this document by cliking on it: the title
+bar should be displayed in @i{blue}; then select the menu item
+@code{Window->Floating}: this will move the @i{Help} window outside GPS
+itself, allowing you to easily read this document while following the
+tutorial steps in the main window of GPS.
 
 Having launched GPS, you should now have access to a main window composed of
 several areas:
@@ -196,7 +204,7 @@ You can then fix all the remaining errors by selecting the whole block
 (from line 28 to line 40) and pressing @key{Ctrl-Tab}.
 
 Press the @key{F4} key to build again. You will be asked to save the file
-@file{gps.adb} before the build starts. Confirm by clicking on @code{Yes}.
+@file{sdc.adb} before the build starts. Confirm by clicking on @code{Yes}.
 This should now report a successful build.
 
 @c --------------------------------------------------------------------
@@ -216,7 +224,8 @@ procedure specification.
 
 Do the same for @code{Next} (@file{tokens.ads:15}).
 
-Display the contextual menu by clicking on the right mouse button,
+Keeping the mouse over @code{Next}, display the contextual menu by clicking on
+the right mouse button,
 then click on @code{Goto declaration of Next}: we're now in the package
 @code{Tokens}, in file @file{tokens.ads}; but where is this file in the project?
 
@@ -361,15 +370,20 @@ Now go back to the file @file{sdc.adb}, move the mouse over the procedure
 @code{References->Sdc calls...}: this will open a new window titled
 @i{Call graph browser}.
 
-Double click on the right arrow of code{process} (the first item on the
-right). Also double click on the right arrow of @code{error_msg}
-(the fourth item).
+Double click on the right arrow of @code{Process} (one the first items on the
+right). Also double click on the right arrow of @code{error_msg}.
 
 Select @code{Orthogonal links} in contextual menu of the graph to change the
 way links are displayed in the graph.
 Click on the canvas, then play with the zoom (@key{=} and @key{-} keys).
 
-Hide/Show links from @code{error_msg} contextual menu.
+Now, if you select @code{Hide links} from @code{error_msg} contextual menu, this
+will hide all the links that are related to this item: the link between the
+callers and callees of @code{error_msg} are no longer displayed. This can
+be useful when the graph becomes complex, to hide some parts. If you go back to
+the contextualmenu, you can now select @code{Show links} to show the links
+again.
+
 Double click on right arrow of @code{process} (@file{instructions.ads:12},
 the item at the top right of the graph).
 
@@ -480,17 +494,19 @@ Select @code{CVS}.
 Click on @code{Forward}: this is the source directories selection,
 used to specify the project's sources.
 
-Open @i{sdc}, click on @code{common}, and add it by clicking on the left arrow.
+Open @file{tutorial}, click on @code{common}, and add it by clicking on the
+left arrow.
 
-Select the sdc directory in the bottom area, and remove it by clicking
-on the right arrow.
+Select the @file{tutorial} directory in the bottom area, and remove it by
+clicking on the right arrow.
 
 As for common, add @code{struct} directory.
 
 Click on @code{Forward}: this is the @code{Build} and @code{Exec} directory
 selection, used to store object, ali files, ...
 
-Click on @code{Browse}, open @i{sdc}, click on @code{obj}, click on @code{OK}.
+Click on @code{Browse}, open @file{tutorial}, click on @code{obj}, click on
+@code{OK}.
 
 Click on @code{Forward}: this is the main units selection, used mainly for
 building executables and debugging.
@@ -531,7 +547,7 @@ In the project explorer, on the project @i{sdc}, use the contextual menu
 All the properties set in the project wizard can be found here as well.
 You can also switch between pages by clicking on the tabs.
 
-Once you're done exploring the property pages, click on the @code{Close}
+Once you're done exploring the property pages, click on the @code{Cancel}
 button to close the properties window.
 
 @node Variable editor
@@ -553,7 +569,7 @@ the two values defined.
 
 Now click on the button at the left (@code{Edit variable properties}): this
 is the variable editor, where values can be added, renamed.
-Close the variable editor by clicking on the @code{Close} button.
+Close the variable editor by clicking on the @code{Cancel} button.
 
 Now, let's take a look at the switches set in the project.
 
@@ -581,7 +597,7 @@ Select @file{sdc.adb} in the explorer, then the contextual menu item
 the dependencies between sources of the project.
 
 Double click on the right arrow of @file{tokens.ads} to display the files that
-@filetokens.ads} depends on. Similarly, double click on the right arrow of
+@file{tokens.ads} depends on. Similarly, double click on the right arrow of
 @file{stack.ads}.
 
 @node Project dependencies
@@ -589,13 +605,18 @@ Double click on the right arrow of @file{tokens.ads} to display the files that
 @noindent
 
 On the @i{sdc} project, select the contextual menu
-@code{Add dependency->From file...}, then open the @i{sdc} directory and click
+@code{Add dependency->From project file...}, then open the @i{sdc} directory and click
 on the @code{projects} subdirectory. Select the file @code{prj1.gpr}.
 
 You can see the new dependencies added in the project explorer, as a tree of
-projects. In particular, project dependencies are duplicated.
+projects. In particular, project dependencies are duplicated: if you open
+the @code{prj1} icon by clicking on the @code{[+]} sign, and then
+similarly open the @code{prj2} icon, you will notice that the project
+@file{prj4} is displayed twice: one as as depenency of @code{prj2}, and
+once as a dependency of @file{prj1}.
 
-On @i{sdc} project, use the contextual menu
+GPS can also display the graph of dependencies between projects: on @i{sdc}
+project, use the contextual menu
 @code{Examine project hierarchy for sdc}: this will open a project hierarchy
 browser.
 
@@ -618,8 +639,18 @@ On @i{prj1} project, select the contextual menu
 @noindent
 This terminates our tour of GPS, the GNAT Programming System.
 We hope this tutorial gave you a good overview of the general capabilities
-available with GPS. For more information, please look at the
-@i{User's Guide}.
+available with GPS. A non exhaustive list of the features not mentioned in
+this document include:
+
+@itemize @bullet
+@item Automatic generation of body files
+@item Pretty printing
+@item Visual comparison of files
+@item Version control
+@item Flexible multiple document interface
+@end itemize
+
+For more information, please look at the @i{User's Guide}.
 
 @c @printindex cp
 
