@@ -8559,7 +8559,8 @@ file:line: message
 file:line:column: message
 @end smallexample
 
-Please refer to the online help for this command to get more information.
+Please refer to the online help for this command to get more information
+(by e.g. typing @code{help Locations.parse} in the GPS Shell).
 
 Here is a small example on how to run a make command and send the errors to the
 location window afterward.
