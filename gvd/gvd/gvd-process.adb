@@ -470,13 +470,19 @@ package body Odd.Process is
       --  Add a new page to the notebook
 
       if Title = "" then
-         if Params'Length > 0 then
-            Gtk_New (Label, "Gdb - " & Params (Params'First).all);
-         else
-            Gtk_New (Label, "Gdb -" &
-              Guint'Image (Page_List.Length (Get_Children
-                (Window.Process_Notebook)) + 1));
-         end if;
+         declare
+            Debug : constant String := Debugger_Type'Image (Kind);
+         begin
+            if Executable'Length > 0 then
+               Gtk_New
+                 (Label, Debug (1 .. Debug'Last - 5) & " - " & Executable);
+            else
+               Gtk_New
+                 (Label, Debug (1 .. Debug'Last - 5) & " -" &
+                  Guint'Image (Page_List.Length (Get_Children
+                    (Window.Process_Notebook)) + 1));
+            end if;
+         end;
       else
          Gtk_New (Label, Title);
       end if;
