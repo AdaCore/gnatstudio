@@ -243,6 +243,7 @@ package body Src_Info.CPP is
       MD     => Ext ("md"),
       SN_IN  => Ext ("in"),
       UN     => Ext ("un"),
+      CON    => Ext ("con"),
       others => Ext (""));
 
    type Type_To_Object_Array is array (E_Kind) of E_Kind;
