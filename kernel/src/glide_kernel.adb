@@ -681,6 +681,19 @@ package body Glide_Kernel is
       Close (File);
    end Save_Desktop;
 
+   ----------------------
+   -- Has_User_Desktop --
+   ----------------------
+
+   function Has_User_Desktop
+     (Handle : access Kernel_Handle_Record) return Boolean
+   is
+      File : constant String :=
+        String_Utils.Name_As_Directory (Handle.Home_Dir.all) & "desktop";
+   begin
+      return Is_Regular_File (File);
+   end Has_User_Desktop;
+
    ------------------
    -- Load_Desktop --
    ------------------
