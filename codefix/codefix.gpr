@@ -1,17 +1,12 @@
-with "../gvd/gvd_common.gpr";
-with "../common/common.gpr";
+with "../gvd/gvd_common";
+with "../common/common";
+with "../shared";
 
 project Codefix is
 
-   for Source_Dirs use ("src/");
-   for Object_Dir use "obj/";
-   for Languages use ("ada");
+   for Source_Dirs use ("src");
+   for Object_Dir use "obj";
 
-   package Naming is
-   end Naming;
-
-   package IDE is
-      for VCS_Kind use "cvs";
-   end IDE;
+   package IDE renames Shared.IDE;
 
 end Codefix;
