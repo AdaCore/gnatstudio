@@ -35,6 +35,7 @@ with GNAT.OS_Lib;
 with Gtk.Handlers;
 with Gtk.Window;
 with Src_Info;
+with Gint_Xml;
 
 package Glide_Kernel is
 
@@ -156,6 +157,9 @@ private
       Source_Info_List : Src_Info.LI_File_List;
       --  The semantic information associated to the files for the current
       --  project.
+
+      Preferences : Gint_Xml.Node_Ptr;
+      --  The XML tree that contains the current preferences
    end record;
 
 end Glide_Kernel;
