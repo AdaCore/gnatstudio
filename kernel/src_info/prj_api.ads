@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                          G L I D E  I I                           --
 --                                                                   --
---                        Copyright (C) 2001                         --
+--                     Copyright (C) 2001-2002                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GLIDE is free software; you can redistribute it and/or modify  it --
@@ -65,8 +65,8 @@ package Prj_API is
    --  Note that this returns an entry in the processed project, not in the
    --  tree itself.
 
-   function Get_Project_From_Name (Name : Types.Name_Id)
-      return Project_Node_Id;
+   function Get_Project_From_Name
+     (Name : Types.Name_Id) return Project_Node_Id;
    --  Return the project, from its name
 
    function Get_Project_From_File
@@ -289,10 +289,10 @@ package Prj_API is
    procedure Reset (Iterator : in out Imported_Project_Iterator);
    --  Reset the iterator to point to the first project node in the list
 
-   function Current (Iterator : Imported_Project_Iterator)
-      return Project_Id;
-   function Current (Iterator : Imported_Project_Iterator)
-      return Project_Node_Id;
+   function Current
+     (Iterator : Imported_Project_Iterator) return Project_Id;
+   function Current
+     (Iterator : Imported_Project_Iterator) return Project_Node_Id;
    --  Return the project currently pointed to by the iterator.
    --  Empty_Node is returned if there are no more projects to process.
 
@@ -332,8 +332,9 @@ package Prj_API is
    -- Node cloning --
    ------------------
 
-   function Clone_Node (Node : Project_Node_Id; Deep_Clone : Boolean := False)
-      return Project_Node_Id;
+   function Clone_Node
+     (Node       : Project_Node_Id;
+      Deep_Clone : Boolean := False) return Project_Node_Id;
    --  Return a copy of Node. If Deep_Clone is true, then all the children of
    --  node are also copied.
    --  If Deep_Clone is false, then the two nodes will share part of their
@@ -364,8 +365,8 @@ package Prj_API is
    -- Variable values --
    ---------------------
 
-   function String_As_Expression (Value : Types.String_Id)
-      return Project_Node_Id;
+   function String_As_Expression
+     (Value : Types.String_Id) return Project_Node_Id;
    --  Return an N_Expression node that represents the static string Value.
    --  ??? Could be implemented in terms of Concatenate.
 
@@ -388,14 +389,14 @@ package Prj_API is
    --  If Var is a typed variable, the default value is checked against the
    --  list of possible values (Invalid_Value raised if not).
 
-   function Get_Environment (Var_Or_Attribute : Project_Node_Id)
-      return Types.String_Id;
+   function Get_Environment
+     (Var_Or_Attribute : Project_Node_Id) return Types.String_Id;
    --  Return the name of the environment variable associated with
    --  Var_Or_Attribute. No_String is returned in case there is no such
    --  variable.
 
-   function Typed_Values_Count (Var_Or_Attribute : Project_Node_Id)
-      return Positive;
+   function Typed_Values_Count
+     (Var_Or_Attribute : Project_Node_Id) return Positive;
    --  Return the number of possible values Var_Or_Attribute can take.
    --  For a typed variable, this is the number of items in the type
    --  declaration. For other variables or attributes, this is Positive'Last.
