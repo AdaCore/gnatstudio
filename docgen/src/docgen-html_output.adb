@@ -282,10 +282,10 @@ package body Docgen.Html_Output is
       Put_Line (File, "<HTML>");
       Put_Line (File, "<HEAD>");
       Put_Line (File, "<TITLE>" & Info.Open_Title.all & "</TITLE>");
-      Put_Line (File, "<META name=""generator"" CONTENT=""DocGen ");
+      Put_Line (File, "<META NAME=""generator"" CONTENT=""DocGen"">");
       Put_Line
-        (File, "<META http-equiv=""Content-" &
-         "Type"" content="" text/html; charset=ISO-8859-1"">");
+        (File, "<META HTTP-EQUIV=""Content-" &
+         "Type"" CONTENT=""text/html; CHARSET=ISO-8859-1"">");
       Put_Line (File, "</HEAD>");
       Put_Line (File, "<BODY bgcolor=""white"">");
    end Doc_HTML_Open;
