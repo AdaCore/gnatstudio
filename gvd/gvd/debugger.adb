@@ -29,10 +29,13 @@ with Odd.Process;       use Odd.Process;
 with Main_Debug_Window_Pkg; use Main_Debug_Window_Pkg;
 with Ada.Strings;       use Ada.Strings;
 with Ada.Strings.Fixed; use Ada.Strings.Fixed;
+with Ada.Text_IO;       use Ada.Text_IO;
 with Gtk.Window;        use Gtk.Window;
 with Odd.Preferences;
 
 with GNAT.Expect.TTY;   use GNAT.Expect.TTY;
+
+with Gtkada.Dialogs;     use Gtkada.Dialogs;
 
 package body Debugger is
 
@@ -180,10 +183,24 @@ package body Debugger is
       Debugger.Process := Proxy;
 
       if Remote_Machine = "" then
-         Non_Blocking_Spawn
-           (Descriptor.all, Debugger_Name, Arguments,
-            Buffer_Size => 0,
-            Err_To_Out => True);
+         if Locate_Exec_On_Path (Debugger_Name) /= null then
+            Non_Blocking_Spawn
+              (Descriptor.all, Debugger_Name, Arguments,
+               Buffer_Size => 0,
+               Err_To_Out => True);
+         else
+            declare
+               Buttons :  Message_Dialog_Buttons;
+            begin
+               Buttons := Message_Dialog ("GVD could not find executable "
+                                          & '"' & Debugger_Name & '"'
+                                          & " in path.",
+                                          Error,
+                                          Button_OK,
+                                          Button_OK);
+               OS_Exit (1);
+            end;
+         end if;
       else
          declare
             Real_Arguments : Argument_List (1 .. Arguments'Length + 2);
@@ -200,6 +217,21 @@ package body Debugger is
                Err_To_Out => True);
             Free (Real_Arguments (1));
             Free (Real_Arguments (2));
+         exception
+            when Invalid_Process =>
+               declare
+                  Buttons :  Message_Dialog_Buttons;
+               begin
+                  Buttons := Message_Dialog
+                    ("GVD could not spawn the remote process : " & ASCII.LF
+                     & "  debugger : " & Debugger_Name & ASCII.LF
+                     & "  machine : " & Remote_Machine & ASCII.LF
+                     & "  using protocol : " & Remote_Protocol,
+                     Error,
+                     Button_OK,
+                     Button_OK);
+                  OS_Exit (1);
+               end;
          end;
       end if;
 
