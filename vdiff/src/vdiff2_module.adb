@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2001-2003                    --
---                            ACT-Europe                             --
+--                     Copyright (C) 2001-2005                       --
+--                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -21,7 +21,6 @@
 with Glib;                      use Glib;
 
 with Glide_Kernel;              use Glide_Kernel;
-with Glide_Kernel.Actions;      use Glide_Kernel.Actions;
 with Glide_Kernel.Contexts;     use Glide_Kernel.Contexts;
 with Glide_Kernel.Hooks;        use Glide_Kernel.Hooks;
 with Glide_Kernel.Scripts;      use Glide_Kernel.Scripts;
@@ -32,19 +31,10 @@ with Glide_Intl;                use Glide_Intl;
 with Commands;                  use Commands;
 with Commands.Interactive;      use Commands.Interactive;
 
-with Pixmaps_Vdiff2;            use Pixmaps_Vdiff2;
 with Diff_Utils2;               use Diff_Utils2;
-with Vdiff2_Command_Block;      use Vdiff2_Command_Block;
 with Vdiff2_Module.Callback;    use Vdiff2_Module.Callback;
 with Vdiff2_Module.Utils;       use Vdiff2_Module.Utils;
 
-with Gdk.Bitmap;                use Gdk.Bitmap;
-with Gdk.Color;                 use Gdk.Color;
-with Gdk.Pixmap;                use Gdk.Pixmap;
-
-with Gtk.Toolbar;               use Gtk.Toolbar;
-with Gtk.Window;                use Gtk.Window;
-with Gtk.Image;                 use Gtk.Image;
 with Gtk.Handlers;              use Gtk.Handlers;
 
 package body Vdiff2_Module is
@@ -77,26 +67,6 @@ package body Vdiff2_Module is
         new Diff_Head_List.List;
 
       Add_Hook (Kernel, File_Closed_Hook, File_Closed_Cb'Access);
-
-      Create (VDiff2_Module (Vdiff_Module_ID).Command_Last,
-                VDiff2_Module (Vdiff_Module_ID).Kernel,
-                VDiff2_Module (Vdiff_Module_ID).List_Diff,
-                Last_Difference'Access);
-
-      Create (VDiff2_Module (Vdiff_Module_ID).Command_First,
-                VDiff2_Module (Vdiff_Module_ID).Kernel,
-                VDiff2_Module (Vdiff_Module_ID).List_Diff,
-                First_Difference'Access);
-
-      Create (VDiff2_Module (Vdiff_Module_ID).Command_Next,
-                VDiff2_Module (Vdiff_Module_ID).Kernel,
-                VDiff2_Module (Vdiff_Module_ID).List_Diff,
-                Next_Difference'Access);
-
-      Create (VDiff2_Module (Vdiff_Module_ID).Command_Prev,
-                VDiff2_Module (Vdiff_Module_ID).Kernel,
-                VDiff2_Module (Vdiff_Module_ID).List_Diff,
-                Prev_Difference'Access);
 
       Register_Module
         (Module                  => Vdiff_Module_ID,
@@ -215,66 +185,12 @@ package body Vdiff2_Module is
         (Kernel, Tools, -"Merge Three Files...", "",
          On_Merge_Three_Files'Access);
 
-      Register_Action
-        (Kernel,
-         "First difference",
-         Interactive_Command_Access
-           (VDiff2_Module (Vdiff_Module_ID).Command_First),
-         -"Go to the first difference");
-      Register_Action
-        (Kernel,
-         "Last difference",
-         Interactive_Command_Access
-           (VDiff2_Module (Vdiff_Module_ID).Command_Last),
-         -"Go to the last difference");
-      Register_Action
-        (Kernel,
-         "Prev difference",
-         Interactive_Command_Access
-           (VDiff2_Module (Vdiff_Module_ID).Command_Prev),
-         -"Go to the previous difference");
-      Register_Action
-        (Kernel,
-         "Next difference",
-         Interactive_Command_Access
-           (VDiff2_Module (Vdiff_Module_ID).Command_Next),
-         -"Go to the next difference");
-
-      Bind_Default_Key
-        (Kernel      => Kernel,
-         Action      => "Next difference",
-         Default_Key => "control-2");
-      Bind_Default_Key
-        (Kernel      => Kernel,
-         Action      => "Prev difference",
-         Default_Key => "control-1");
-      Bind_Default_Key
-        (Kernel      => Kernel,
-         Action      => "First difference",
-         Default_Key => "control-4");
-      Bind_Default_Key
-        (Kernel      => Kernel,
-         Action      => "Last difference",
-         Default_Key => "control-3");
-
       Register_Command
         (Kernel, "visual_diff",
          Minimum_Args => 2,
          Maximum_Args => 3,
          Handler      => Diff_Command_Handler'Access);
    end Register_Module;
-
-   ------------------------
-   -- Init_Prev_Diff_Cmd --
-   ------------------------
-
-   procedure Init_Prev_Diff_Cmd (Diff : Diff_Head) is
-   begin
-      VDiff2_Module (Vdiff_Module_ID).Command_Prev.Last_Active_Diff  := Diff;
-      VDiff2_Module (Vdiff_Module_ID).Command_Next.Last_Active_Diff  := Diff;
-      VDiff2_Module (Vdiff_Module_ID).Command_First.Last_Active_Diff := Diff;
-      VDiff2_Module (Vdiff_Module_ID).Command_Last.Last_Active_Diff  := Diff;
-   end Init_Prev_Diff_Cmd;
 
    -------------
    -- Destroy --
@@ -284,10 +200,6 @@ package body Vdiff2_Module is
    begin
       Free_List (Id.List_Diff.all);
       Free (Id.List_Diff.all);
-      Free (Root_Command (Id.Command_Prev.all));
-      Free (Root_Command (Id.Command_Next.all));
-      Free (Root_Command (Id.Command_First.all));
-      Free (Root_Command (Id.Command_Last.all));
       Vdiff_Module_ID := null;
    end Destroy;
 
@@ -314,69 +226,4 @@ package body Vdiff2_Module is
       return False;
    end Filter_Matches_Primitive;
 
-   -------------------
-   -- VDiff_Toolbar --
-   -------------------
-
-   procedure VDiff_Toolbar
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
-   is
-      Toolbar : constant Gtk_Toolbar := Get_Toolbar (Kernel);
-      Window  : constant Gtk_Window  := Get_Main_Window (Kernel);
-      Image   : Gtk_Image;
-      Mask    : Gdk_Bitmap;
-      PixMap  : Gdk_Pixmap;
-
-   begin
-      VDiff2_Module (Vdiff_Module_ID).Is_Active := True;
-
-      Append_Space (Toolbar);
-
-      Create_From_Xpm_D
-        (PixMap, Get_Window (Window), Mask, Null_Color, down_diff_xpm);
-      Gtk_New (Image, PixMap, Mask);
-      Register_Button
-        (Kernel, -"Next difference",
-         Command_Access
-           (VDiff2_Module (Vdiff_Module_ID).Command_Next),
-         Image, -"Go to the next difference");
-
-      Create_From_Xpm_D
-        (PixMap, Get_Window (Window), Mask, Null_Color, up_diff_xpm);
-      Gtk_New (Image, PixMap, Mask);
-      Register_Button
-        (Kernel, -"Previous difference",
-         Command_Access (VDiff2_Module (Vdiff_Module_ID).Command_Prev),
-         Image, -"Go to the previous difference");
-
-      Create_From_Xpm_D
-        (PixMap, Get_Window (Window), Mask, Null_Color, last_diff_xpm);
-      Gtk_New (Image, PixMap, Mask);
-      Register_Button
-        (Kernel, -"Last difference",
-         Command_Access
-           (VDiff2_Module (Vdiff_Module_ID).Command_Last),
-         Image, -"Go to the last difference");
-
-      Create_From_Xpm_D
-        (PixMap, Get_Window (Window), Mask, Null_Color, first_diff_xpm);
-      Gtk_New (Image, PixMap, Mask);
-      Register_Button
-        (Kernel, -"First difference",
-         Command_Access
-           (VDiff2_Module (Vdiff_Module_ID).Command_First),
-         Image, -"Go to the first difference");
-   end VDiff_Toolbar;
-
-   --------------------------
-   -- Remove_VDiff_Toolbar --
-   --------------------------
-
-   procedure Remove_VDiff_Toolbar
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class) is
-      pragma Unreferenced (Kernel);
-   begin
-      null;
-      --  VDiff2_Module (Vdiff_Module_ID).Is_Active := false;
-   end Remove_VDiff_Toolbar;
 end Vdiff2_Module;
