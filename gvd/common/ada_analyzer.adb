@@ -2239,7 +2239,7 @@ package body Ada_Analyzer is
                New_Line (Line_Count);
 
                if P < Buffer_Last or else Buffer (P) = ASCII.LF then
-                  Last := Prev_Char (P);
+                  Last := P - 1;
                else
                   Last := P;
                end if;
