@@ -18,11 +18,12 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Exceptions; use Ada.Exceptions;
+with Ada.Exceptions;        use Ada.Exceptions;
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
-with GNAT.Regpat;    use GNAT.Regpat;
-with Basic_Types;    use Basic_Types;
-with String_Utils;   use String_Utils;
+with GNAT.Regpat;           use GNAT.Regpat;
+with Basic_Types;           use Basic_Types;
+with String_Utils;          use String_Utils;
 
 package body Codefix.Text_Manager is
 
@@ -45,6 +46,16 @@ package body Codefix.Text_Manager is
            (Pkg_1'Last - Pkg_2'Length + 1 .. Pkg_1'Last);
       end if;
    end Compare_Pkg;
+
+   --------------
+   -- Is_Blank --
+   --------------
+
+   function Is_Blank (Str : String) return Boolean is
+      Blank_Str : constant String (Str'First .. Str'Last) := (others => ' ');
+   begin
+      return Str = Blank_Str;
+   end Is_Blank;
 
    ----------------------------------------------------------------------------
    --  type Text_Cursor
@@ -511,7 +522,7 @@ package body Codefix.Text_Manager is
      (Current_Text : Text_Interface;
       Spec         : Construct_Information) return Construct_Information
    is
-      function Normalize (Str : String_Access) return String;
+      function Normalize (Str : Basic_Types.String_Access) return String;
       --  Change the string in order to make comparaisons between lists of
       --  parameters.
 
@@ -527,7 +538,7 @@ package body Codefix.Text_Manager is
       -- Normalize --
       ---------------
 
-      function Normalize (Str : String_Access) return String is
+      function Normalize (Str : Basic_Types.String_Access) return String is
       begin
          if Str /= null then
             return Reduce (Str.all);
@@ -707,7 +718,7 @@ package body Codefix.Text_Manager is
 
       while Current_Info /= null loop
          if Current_Info.Category = Category
-           and then Current_Info.Name.all = Name
+           and then Compare_Pkg (Current_Info.Name.all, Name)
          then
             return Current_Info.all;
          end if;
@@ -1876,5 +1887,459 @@ package body Codefix.Text_Manager is
    begin
       Extend_After (This.First, Current_Text, Size);
    end Extend_After;
+
+   ----------------------------------------------------------------------------
+   --  Merge functions and uilities
+   ----------------------------------------------------------------------------
+
+   type Char_Context is (Original, Added, Modified, Removed);
+
+   type Merge_Array is array (Positive range <>) of Char_Context;
+
+   procedure Merge_Tree
+     (Original_Str, New_Str          : String;
+      Original_It, New_It, Result_It : Positive;
+      Offset_Char                    : Integer;
+      Result                         : out Merge_Array);
+
+   function Get_Merge_Array (Original_Str, New_Str : String)
+     return Merge_Array;
+
+   ---------------------
+   -- Get_Merge_Array --
+   ---------------------
+
+   function Get_Merge_Array (Original_Str, New_Str : String)
+     return Merge_Array is
+
+      Offset       : Integer;
+      Array_Length : Natural;
+
+   begin
+
+      Offset := New_Str'Length - Original_Str'Length;
+
+      if Offset > 0 then
+         Array_Length := New_Str'Length;
+      else
+         Array_Length := Original_Str'Length;
+      end if;
+
+      declare
+         Result : Merge_Array (1 .. Array_Length);
+      begin
+         Merge_Tree
+           (Original_Str,
+            New_Str,
+            Original_Str'First,
+            New_Str'First,
+            1,
+            Offset,
+            Result);
+         return Result;
+      end;
+
+   end Get_Merge_Array;
+
+   ----------------
+   -- Merge_Tree --
+   ----------------
+
+   procedure Merge_Tree
+     (Original_Str, New_Str           : String;
+      Original_It, New_It, Result_It  : Positive;
+      Offset_Char                     : Integer;
+      Result                          : out Merge_Array) is
+   begin
+
+      if Result_It > Result'Last then
+         return;
+      end if;
+
+      if Original_It <= Original_Str'Last
+        and then New_It <= New_Str'Last
+        and then Original_Str (Original_It) = New_Str (New_It)
+      then
+         Result (Result_It) := Original;
+         Merge_Tree
+           (Original_Str,
+            New_Str,
+            Original_It + 1,
+            New_It + 1,
+            Result_It + 1,
+            Offset_Char,
+            Result);
+      else
+         if Offset_Char > 0 then
+            Result (Result_It) := Added;
+            Merge_Tree
+              (Original_Str,
+               New_Str,
+               Original_It,
+               New_It + 1,
+               Result_It + 1,
+               Offset_Char - 1,
+               Result);
+         elsif Offset_Char < 0 then
+            Result (Result_It) := Removed;
+            Merge_Tree
+              (Original_Str,
+               New_Str,
+               Original_It + 1,
+               New_It,
+               Result_It + 1,
+               Offset_Char + 1,
+               Result);
+         else
+            Result (Result_It) := Modified;
+            Merge_Tree
+              (Original_Str,
+               New_Str,
+               Original_It + 1,
+               New_It + 1,
+               Result_It + 1,
+               Offset_Char,
+               Result);
+         end if;
+      end if;
+
+   end Merge_Tree;
+
+   -----------
+   -- Merge --
+   -----------
+
+
+   procedure Merge
+     (New_Str : out Dynamic_String;
+      Original_Str, Str_1, Str_2 : String;
+      Success : out Boolean) is
+
+      procedure Loop_Add (Num : Integer);
+      procedure Merge_1_Original;
+      procedure Merge_1_Modified;
+      procedure Merge_1_Removed;
+      procedure Merge_1_Added;
+
+      Merge_1                : constant Merge_Array :=
+        Get_Merge_Array (Original_Str, Str_1);
+      Merge_2                : constant Merge_Array :=
+        Get_Merge_Array (Original_Str, Str_2);
+      It_Merge_1, It_Merge_2 : Integer := 1;
+      It_Str_1, It_Str_2     : Integer;
+      Result                 : Unbounded_String;
+
+      procedure Loop_Add (Num : Integer) is
+      begin
+         case Num is
+            when 1 =>
+               while Merge_1 (It_Merge_1) = Added loop
+                  Result := Result & Str_1 (It_Str_1);
+                  It_Str_1 := It_Str_1 + 1;
+                  It_Merge_1 := It_Merge_1 + 1;
+               end loop;
+            when 2 =>
+               while Merge_2 (It_Merge_2) = Added loop
+                  Result := Result & Str_2 (It_Str_2);
+                  It_Str_2 := It_Str_2 + 1;
+                  It_Merge_2 := It_Merge_2 + 1;
+               end loop;
+            when others =>
+               null;
+         end case;
+      end Loop_Add;
+
+      procedure Merge_1_Original is
+      begin
+         case Merge_2 (It_Merge_2) is
+            when Original =>
+               Result := Result & Str_1 (It_Str_1);
+               It_Str_1 := It_Str_1 + 1;
+               It_Str_2 := It_Str_2 + 1;
+               It_Merge_1 := It_Merge_1 + 1;
+               It_Merge_2 := It_Merge_2 + 1;
+            when Modified =>
+               Result := Result & Str_2 (It_Str_2);
+               It_Str_1 := It_Str_1 + 1;
+               It_Str_2 := It_Str_2 + 1;
+               It_Merge_1 := It_Merge_1 + 1;
+               It_Merge_2 := It_Merge_2 + 1;
+            when Removed =>
+               It_Str_1 := It_Str_1 + 1;
+               It_Merge_1 := It_Merge_1 + 1;
+               It_Merge_2 := It_Merge_2 + 1;
+            when Added =>
+               Loop_Add (2);
+         end case;
+      end Merge_1_Original;
+
+      procedure Merge_1_Modified is
+      begin
+         case Merge_2 (It_Merge_2) is
+            when Original =>
+               Result := Result & Str_2 (It_Str_2);
+               It_Str_1 := It_Str_1 + 1;
+               It_Str_2 := It_Str_2 + 1;
+               It_Merge_1 := It_Merge_1 + 1;
+               It_Merge_2 := It_Merge_2 + 1;
+            when Modified =>
+               if Str_1 (It_Str_1) /= Str_2 (It_Str_2) then
+                  Success := False;
+                  return;
+               end if;
+               Result := Result & Str_2 (It_Str_2);
+               It_Str_1 := It_Str_1 + 1;
+               It_Str_2 := It_Str_2 + 1;
+               It_Merge_1 := It_Merge_1 + 1;
+               It_Merge_2 := It_Merge_2 + 1;
+            when Removed =>
+               Success := False;
+            when Added =>
+               Loop_Add (2);
+         end case;
+      end Merge_1_Modified;
+
+      procedure Merge_1_Removed is
+      begin
+         case Merge_2 (It_Merge_2) is
+            when Original =>
+               It_Str_2 := It_Str_2 + 1;
+               It_Merge_1 := It_Merge_1 + 1;
+               It_Merge_2 := It_Merge_2 + 1;
+            when Modified =>
+               Success := False;
+            when Removed =>
+               It_Merge_1 := It_Merge_1 + 1;
+               It_Merge_2 := It_Merge_2 + 1;
+            when Added =>
+               Loop_Add (2);
+         end case;
+      end Merge_1_Removed;
+
+      procedure Merge_1_Added is
+      begin
+         case Merge_2 (It_Merge_2) is
+            when Original =>
+               Loop_Add (1);
+            when Modified =>
+               Loop_Add (1);
+            when Removed =>
+               Loop_Add (1);
+            when Added =>
+               Loop_Add (1);
+               Loop_Add (2);
+         end case;
+      end Merge_1_Added;
+
+   begin
+      Success := True;
+
+      It_Str_1 := Str_1'First;
+      It_Str_2 := Str_2'First;
+
+      loop
+         case Merge_1 (It_Merge_1) is
+            when Original =>
+               Merge_1_Original;
+            when Modified =>
+               Merge_1_Modified;
+            when Removed =>
+               Merge_1_Removed;
+            when Added =>
+               Merge_1_Added;
+         end case;
+
+         if Success = False then
+            return;
+         end if;
+
+         exit when Merge_1'Last <  It_Merge_1;
+      end loop;
+
+      if It_Merge_2 <= Merge_2'Last then
+         if Merge_2 (It_Merge_2) = Added then
+            Loop_Add (2);
+         else
+            Raise_Exception
+              (Codefix_Panic'Identity,
+               "Merge_2 (It_Merge_2) supposed to be Added");
+         end if;
+      end if;
+
+      Assign (New_Str, To_String (Result));
+
+   end Merge;
+
+   -----------
+   -- Merge --
+   -----------
+
+   procedure Merge
+     (This                 : out Extract;
+      Extract_1, Extract_2 : Extract'Class;
+      Current_Text         : Text_Navigator_Abstr'Class;
+      Success              : out Boolean) is
+
+      Line_1, Line_2, New_Line : Ptr_Extract_Line;
+
+      procedure Loop_Add (Num : Integer);
+      procedure Line_1_Original;
+      procedure Line_1_Modified;
+      procedure Line_1_Deleted;
+      procedure Line_1_Created;
+
+      procedure Loop_Add (Num : Integer) is
+      begin
+         case Num is
+            when 1 =>
+               while Line_1.Context = Line_Created loop
+                  Add_Element (This, new Extract_Line'(Clone (Line_1.all)));
+                  Line_1 := Next (Line_1.all);
+
+                  if Line_1 = null then
+                     return;
+                  end if;
+               end loop;
+            when 2 =>
+               while Line_2.Context = Line_Created loop
+                  Add_Element (This, new Extract_Line'(Clone (Line_2.all)));
+                  Line_2 := Next (Line_2.all);
+
+                  if Line_2 = null then
+                     return;
+                  end if;
+               end loop;
+            when others =>
+               null;
+         end case;
+      end Loop_Add;
+
+      procedure Line_1_Original is
+      begin
+         case Line_2.Context is
+            when Original_Line =>
+               Add_Element (This, new Extract_Line'(Clone (Line_1.all)));
+               Line_1 := Next (Line_1.all);
+               Line_2 := Next (Line_2.all);
+            when Line_Modified =>
+               Add_Element (This, new Extract_Line'(Clone (Line_2.all)));
+               Line_1 := Next (Line_1.all);
+               Line_2 := Next (Line_2.all);
+            when Line_Deleted =>
+               Add_Element (This, new Extract_Line'(Clone (Line_2.all)));
+               Line_1 := Next (Line_1.all);
+               Line_2 := Next (Line_2.all);
+            when Line_Created =>
+               Loop_Add (2);
+         end case;
+      end Line_1_Original;
+
+      procedure Line_1_Modified is
+      begin
+         case Line_2.Context is
+            when Original_Line =>
+               Add_Element (This, new Extract_Line'(Clone (Line_1.all)));
+               Line_1 := Next (Line_1.all);
+               Line_2 := Next (Line_2.all);
+            when Line_Modified =>
+               New_Line := new Extract_Line'(Clone (Line_1.all));
+               Merge
+                 (New_Line.Content,
+                  Get_Old_Text (Line_1.all, Current_Text),
+                  Line_1.Content.all,
+                  Line_2.Content.all,
+                  Success);
+
+               if Is_Blank (New_Line.Content.all) then
+                  New_Line.Context := Line_Deleted;
+               end if;
+
+               Add_Element (This, New_Line);
+               Line_1 := Next (Line_1.all);
+               Line_2 := Next (Line_2.all);
+            when Line_Deleted =>
+               Success := False;
+            when Line_Created =>
+               Loop_Add (2);
+         end case;
+      end Line_1_Modified;
+
+      procedure Line_1_Deleted is
+      begin
+         case Line_2.Context is
+            when Original_Line =>
+               Add_Element (This, new Extract_Line'(Clone (Line_1.all)));
+               Line_1 := Next (Line_1.all);
+               Line_2 := Next (Line_2.all);
+            when Line_Modified =>
+               Success := False;
+            when Line_Deleted =>
+               Add_Element (This, new Extract_Line'(Clone (Line_1.all)));
+               Line_1 := Next (Line_1.all);
+               Line_2 := Next (Line_2.all);
+            when Line_Created =>
+               Loop_Add (2);
+         end case;
+      end Line_1_Deleted;
+
+      procedure Line_1_Created is
+      begin
+         case Line_2.Context is
+            when Original_Line =>
+               Loop_Add (1);
+            when Line_Modified =>
+               Loop_Add (1);
+            when Line_Deleted =>
+               Loop_Add (1);
+            when Line_Created =>
+               Loop_Add (1);
+               Loop_Add (2);
+         end case;
+      end Line_1_Created;
+
+
+   begin
+      Line_1 := Get_First_Line (Extract_1);
+      Line_2 := Get_First_Line (Extract_2);
+      Success := True;
+
+      while Line_1 /= null and then Line_2 /= null loop
+         if Line_1.Cursor < Line_2.Cursor then
+            Add_Element (This, new Extract_Line'(Clone (Line_1.all)));
+            Line_1 := Next (Line_1.all);
+         elsif Line_2.Cursor < Line_1.Cursor then
+            Add_Element (This, new Extract_Line'(Clone (Line_2.all)));
+            Line_2 := Next (Line_2.all);
+         else
+            case Line_1.Context is
+               when Original_Line =>
+                  Line_1_Original;
+               when Line_Modified =>
+                  Line_1_Modified;
+               when Line_Created =>
+                  Line_1_Created;
+               when Line_Deleted =>
+                  Line_1_Deleted;
+            end case;
+         end if;
+
+         if not Success then
+            return;
+         end if;
+      end loop;
+
+      if Line_1 /= null then
+         while Line_1 /= null loop
+            Add_Element (This, new Extract_Line'(Clone (Line_1.all)));
+            Line_1 := Next (Line_1.all);
+         end loop;
+      elsif Line_2 /= null then
+         while Line_2 /= null loop
+            Add_Element (This, new Extract_Line'(Clone (Line_2.all)));
+            Line_2 := Next (Line_2.all);
+         end loop;
+      end if;
+
+   end Merge;
 
 end Codefix.Text_Manager;
