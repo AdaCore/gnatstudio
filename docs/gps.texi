@@ -2727,7 +2727,15 @@ naming schemes for other compilers are available in the first combo box on
 the page. You can also create your own customized scheme by entering a
 free text in the text entries.
 
-@c ??? Insert here screenshot for naming scheme page
+@iftex
+@cindex screen shot
+@image{naming-scheme, 10.7cm}
+@end iftex
+
+@ifhtml
+@cindex screen shot
+@image{naming-scheme}
+@end ifhtml
 
 For all languages, GPS accepts exceptions to this standard naming
 scheme. For instance, this let you specify that in addition to using
@@ -2767,12 +2775,20 @@ The last page of the project wizard is used to select the
 default switches to be used by the various tools that GPS calls (compiler,
 linker, binder, pretty printer, @dots{}).
 
-@c ??? Insert screenshot for the switches editor
+@iftex
+@cindex screen shot
+@image{switch-editor, 10.7cm}
+@end iftex
+
+@ifhtml
+@cindex screen shot
+@image{switch-editor}
+@end ifhtml
 
 This page appears as a notebook, where each page is associated with a
 specific tool. All these pages have the same structure:
 
-@itemize @bullet
+@table @b
 @item Graphical selection of switches
 The top part of each page contains a set of buttons, combo boxes,
 entry fields, @dots{} which give fast and intuitive access to the most
@@ -2782,8 +2798,7 @@ commonly used switches for that tool.
 The bottom part is an editable entry field, where you can directly
 type the switches. This makes it easier to move from
 an older setup (e.g. Makefile, script) to GPS, by copy-pasting switches.
-
-@end itemize
+@end table
 
 The two parts of the pages are kept synchronized at any time: clicking
 on a button will edit the entry field to show the new switch; adding a
@@ -2819,8 +2834,8 @@ View or the Project Browser.
 
 This editor is divided into three parts:
 
-@itemize @bullet
-@item the attributes editor
+@table @b
+@item The attributes editor
 The contents of this editor is very similar to that of the project
 wizard (@pxref{The Project Wizard}). In fact, all pages but the
 @code{General} page are exactly the same, and you should therefore
@@ -2831,7 +2846,7 @@ of the project wizard does. In addtion, you can select the name of all the
 external tools that GPS uses (compilers for the various languages,
 linker, pretty-printer, @dots{}).
 
-@item the project selector
+@item The project selector
 This area, in the top-right corner of the properties editor, contains
 a list of all the projects in the hierarchy. The value in the
 attributes editor is applied to all the selected projects in this
@@ -2849,7 +2864,7 @@ toggle button on top: you can either get a sorted list of all the
 projects, each one appearing only once. Or you can have the same
 project hierarchy as displayed in the project explorer.
 
-@item the scenario selector
+@item The scenario selector
 This area, in the bottom-right corner of the properties editor, lists
 all the scenario variables declared for the project hierarchy. By
 selecting some or all of their values, you can chose to which scenario
@@ -2861,7 +2876,7 @@ label) will select all values of all variables.
 To select all values of a given variable, click on the corresponding check
 button.
 
-@end itemize
+@end table
 
 @c -------------------------------------------------------------------
 @node The Switches Editor
