@@ -37,6 +37,8 @@ doc:      gps.txt gps.html gps.info gps.ps
 gps_pg:   gps_pg.ps gps_pg.html
 
 gps-tutorial.html:                tutorial.texi
+	perl ./texi2html $< -menu
+
 gps_pg.html gps_pg.ps:            gps_pg.texi
 gps.html gps.ps gps.info gps.txt: ${TEXI}
 
