@@ -142,7 +142,7 @@ package body Debugger.Gdb is
    --  How to get the range of addresses for a given line
 
    GNAT_Binder_File_Pattern : constant Pattern_Matcher := Compile
-     ("b(~|_).*\.(adb|c)");
+     ("(b~.+\.adb)|(b_.+\.c)");
 
    procedure Language_Filter
      (Process : access Debugger_Process_Tab_Record'Class;
