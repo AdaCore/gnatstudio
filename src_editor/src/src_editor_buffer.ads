@@ -654,9 +654,11 @@ package Src_Editor_Buffer is
       Indentation_Level : Integer := 0;
       --  Represent the indentation level of the block.
 
-      Offset            : Integer := 0;
-      --  The indentation offset, of the block (ie typically the column of the
-      --  starting entity).
+      Offset_Start      : Integer := 0;
+      --  The indentation offset of the first line of the block, in characters.
+
+      Offset_End        : Integer := 0;
+      --  The indentation offset of the last line of the block, in characters.
 
       First_Line        : Editable_Line_Type := 0;
       Last_Line         : Editable_Line_Type := 0;
@@ -787,7 +789,7 @@ private
      (Boolean_Array, Boolean_Array_Access);
 
    New_Block : constant Block_Record :=
-     (0, 0, 0, 0, Language.Cat_Unknown, null);
+     (0, 0, 0, 0, 0, Language.Cat_Unknown, null);
 
    procedure Create_Side_Info
      (Buffer : access Source_Buffer_Record;
