@@ -724,7 +724,7 @@ package body Ada_Analyzer is
 
       function Next_Char (P : Natural) return Natural is
       begin
-         return UTF8_Find_Next_Char (Buffer, P);
+         return UTF8_Next_Char (Buffer, P);
       end Next_Char;
 
       ---------------
@@ -969,6 +969,50 @@ package body Ada_Analyzer is
          Num_Spaces : Integer)
       is
          Top_Tok : constant Token_Type := Top (Tokens).Token;
+
+         function Is_Continuation_Line return Boolean;
+         --  Return True is we are indenting a continuation line.
+
+         --------------------------
+         -- Is_Continuation_Line --
+         --------------------------
+
+         function Is_Continuation_Line return Boolean is
+         begin
+            return Top_Tok /= No_Token
+              and then
+                ((Token not in Reserved_Token_Type
+                  and then Prev_Token not in Token_Class_No_Cont
+                  and then
+                    (Prev_Token /= Tok_Arrow
+                     or else (Top_Tok /= Tok_Case
+                              and then Top_Tok /= Tok_When
+                              and then Top_Tok /= Tok_Select
+                              and then Top_Tok /= Tok_Exception)))
+                 or else (Prev_Token = Tok_Is
+                          and then (Token = Tok_New
+                                    or else Token = Tok_Access
+                                    or else Token = Tok_Separate
+                                    or else (Top_Tok = Tok_Subtype
+                                             and then Token /= Tok_Subtype)))
+                 or else Token = Tok_Array
+                 or else Prev_Token = Tok_Colon_Equal
+                 or else Prev_Token = Tok_Access
+                 or else (Prev_Token = Tok_Exit and then Token = Tok_When)
+                 or else (Prev_Token = Tok_With and then Token = Tok_Private)
+                 or else (Prev_Token = Tok_Null and then Token = Tok_Record)
+                 or else
+                   (Top_Tok = Tok_If
+                    and then Token /= Tok_If
+                    and then
+                      (Prev_Token = Tok_Then or else Prev_Token = Tok_Else))
+                 or else
+                   (Top_Tok = Tok_Type
+                    and then (Token = Tok_Null or else Token = Tok_Tagged))
+                 or else
+                   (Token = Tok_When and then Top_Tok = Tok_Entry));
+         end Is_Continuation_Line;
+
       begin
          if Prev_Token = Tok_Vertical_Bar then
             if Top_Tok = Tok_When then
@@ -1014,46 +1058,9 @@ package body Ada_Analyzer is
                Do_Indent (Prec, Num_Spaces);
             end if;
 
-         elsif Top_Tok /= No_Token
-           and then
-             ((Token not in Reserved_Token_Type
-               and then Prev_Token not in Token_Class_No_Cont
-               and then
-                 (Prev_Token /= Tok_Arrow
-                  or else (Top_Tok /= Tok_Case
-                           and then Top_Tok /= Tok_When
-                           and then Top_Tok /= Tok_Select
-                           and then Top_Tok /= Tok_Exception)))
-              or else (Prev_Token = Tok_Is
-                       and then (Token = Tok_New
-                                 or else Token = Tok_Access
-                                 or else Token = Tok_Separate
-                                 or else (Top_Tok = Tok_Subtype
-                                          and then Token /= Tok_Subtype)))
-              or else Token = Tok_Array
-              or else Prev_Token = Tok_Colon_Equal
-              or else Prev_Token = Tok_Access
-              or else (Prev_Token = Tok_Exit and then Token = Tok_When)
-              or else (Prev_Token = Tok_With and then Token = Tok_Private)
-              or else (Prev_Token = Tok_Null and then Token = Tok_Record)
-              or else
-                (Top_Tok = Tok_If
-                 and then Token /= Tok_If
-                 and then
-                   (Prev_Token = Tok_Then or else Prev_Token = Tok_Else))
-              or else
-                (Top_Tok = Tok_Type
-                 and then (Token = Tok_Null or else Token = Tok_Tagged))
-              or else
-                (Token = Tok_When and then Top_Tok = Tok_Entry))
-         then
-            --  This is a continuation line, add extra indentation
-
+         elsif Is_Continuation_Line then
             Do_Indent (Prec, Num_Spaces, Continuation => True);
-
          else
-            --  Default case, simply use Num_Spaces
-
             Do_Indent (Prec, Num_Spaces);
          end if;
       end Compute_Indentation;
@@ -2232,7 +2239,7 @@ package body Ada_Analyzer is
                New_Line (Line_Count);
 
                if P < Buffer_Last or else Buffer (P) = ASCII.LF then
-                  Last := P - 1;
+                  Last := Prev_Char (P);
                else
                   Last := P;
                end if;
