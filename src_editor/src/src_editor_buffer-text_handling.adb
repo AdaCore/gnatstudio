@@ -67,7 +67,7 @@ package body Src_Editor_Buffer.Text_Handling is
       Column_End   : out Natural)
    is
       Iter   : Gtk_Text_Iter;
-      Result : Boolean;
+      Result : Boolean := True;
    begin
       Get_Iter (Buffer, Iter, Line, Col);
       Line_Begin := Line;
