@@ -49,7 +49,6 @@ package SN.Find_Fns is
    --  Point. Where is left to the first character following this
    --  representation.
 
-   --  Find functions for Referred by table
    function Find
      (DB              : DB_File;
       Ref_Class       : String      := Invalid_String;
@@ -61,63 +60,63 @@ package SN.Find_Fns is
       Access_Type     : String      := Invalid_String;
       Position        : Point       := Invalid_Point;
       Filename        : String      := Invalid_String) return BY_Table;
+   --  Find functions for Referred by table
 
-   --  Find functions for Classes table
    function Find
      (DB             : DB_File;
       Name           : String := Invalid_String;
       Start_Position : Point  := Invalid_Point;
       Filename       : String := Invalid_String) return CL_Table;
+   --  Find functions for Classes table
 
-   --  Find functions for Common blocks table
    function Find
      (DB             : DB_File;
       Name           : String := Invalid_String;
       Start_Position : Point  := Invalid_Point;
       Filename       : String := Invalid_String) return COM_Table;
+   --  Find functions for Common blocks table
 
-   --  Find functions for Constants table
    function Find
      (DB             : DB_File;
       Name           : String := Invalid_String;
       Start_Position : Point  := Invalid_Point;
       Filename       : String := Invalid_String) return CON_Table;
+   --  Find functions for Constants table
 
-   --  Find functions for Common value table
    function Find
      (DB             : DB_File;
       Common_Block   : String := Invalid_String;
       Name           : String := Invalid_String;
       Start_Position : Point  := Invalid_Point;
       Filename       : String := Invalid_String) return COV_Table;
+   --  Find functions for Common value table
 
-   --  Find functions for Enumerations table
    function Find
      (DB             : DB_File;
       Name           : String := Invalid_String;
       Start_Position : Point  := Invalid_Point;
       Filename       : String := Invalid_String) return E_Table;
+   --  Find functions for Enumerations table
 
-   --  Find functions for Enum-constants table
    function Find
      (DB             : DB_File;
       Name           : String := Invalid_String;
       Start_Position : Point  := Invalid_Point;
       Filename       : String := Invalid_String) return EC_Table;
+   --  Find functions for Enum-constants table
 
-   --  Find functions for Project files table
    function Find
      (DB   : DB_File;
       Name : String := Invalid_String) return F_Table;
+   --  Find functions for Project files table
 
-   --  Find functions for Function table
    function Find
      (DB             : DB_File;
       Name           : String := Invalid_String;
       Start_Position : Point  := Invalid_Point;
       Filename       : String := Invalid_String) return FD_Table;
+   --  Find functions for Function table
 
-   --  Find functions for Symbols of files table
    function Find
      (DB             : DB_File;
       Filename       : String      := Invalid_String;
@@ -125,113 +124,113 @@ package SN.Find_Fns is
       Class          : String      := Invalid_String;
       Identifier     : String      := Invalid_String;
       Sym_Type       : Symbol_Type := Undef) return FIL_Table;
+   --  Find functions for Symbols of files table
 
-   --  Find functions for Friends table
    function Find
      (DB             : DB_File;
       Name           : String := Invalid_String;
       Start_Position : Point  := Invalid_Point;
       Filename       : String := Invalid_String) return FR_Table;
+   --  Find functions for Friends table
 
-   --  Find functions for Functions table
    function Find
      (DB             : DB_File;
       Name           : String := Invalid_String;
       Start_Position : Point  := Invalid_Point;
       Filename       : String := Invalid_String) return FU_Table;
+   --  Find functions for Functions table
 
-   --  Find functions for Variables table
    function Find
      (DB       : DB_File;
       Name     : String := Invalid_String;
       Position : Point  := Invalid_Point;
       Filename : String := Invalid_String) return GV_Table;
+   --  Find functions for Variables table
 
-   --  Find functions for Inheritances table
    function Find
      (DB             : DB_File;
       Class          : String := Invalid_String;
       Base_Class     : String := Invalid_String;
       Start_Position : Point  := Invalid_Point;
       Filename       : String := Invalid_String) return IN_Table;
+   --  Find functions for Inheritances table
 
-   --  Find functions for Include table
    function Find
      (DB                : DB_File;
       Included_File     : String := Invalid_String;
       Start_Position    : Point  := Invalid_Point;
       Include_From_File : String := Invalid_String) return IU_Table;
+   --  Find functions for Include table
 
-   --  Find functions for Instance variables table
    function Find
      (DB             : DB_File;
       Class          : String := Invalid_String;
       Variable_Name  : String := Invalid_String;
       Start_Position : Point  := Invalid_Point;
       Filename       : String := Invalid_String) return IV_Table;
+   --  Find functions for Instance variables table
 
-   --  Find functions for Local variables table
    function Find
      (DB             : DB_File;
       Function_Name  : String := Invalid_String;
       Variable_Name  : String := Invalid_String;
       Start_Position : Point  := Invalid_Point;
       Filename       : String := Invalid_String) return LV_Table;
+   --  Find functions for Local variables table
 
-   --  Find functions for Macros table
    function Find
      (DB             : DB_File;
       Name           : String := Invalid_String;
       Start_Position : Point  := Invalid_Point;
       Filename       : String := Invalid_String) return MA_Table;
+   --  Find functions for Macros table
 
-   --  Find functions for Method definitions table
    function Find
      (DB             : DB_File;
       Class          : String := Invalid_String;
       Name           : String := Invalid_String;
       Start_Position : Point  := Invalid_Point;
       Filename       : String := Invalid_String) return MD_Table;
+   --  Find functions for Method definitions table
 
-   --  Find functions for Method implementations table
    function Find
      (DB             : DB_File;
       Class          : String := Invalid_String;
       Name           : String := Invalid_String;
       Start_Position : Point  := Invalid_Point;
       Filename       : String := Invalid_String) return FU_Table;
+   --  Find functions for Method implementations table
 
-   --  Find functions for Remarks table
    function Find
      (DB                 : DB_File;
       Filename           : String := Invalid_String;
       Position           : Point  := Invalid_Point;
       Class              : String := Invalid_String;
       Method_Or_Function : String := Invalid_String) return REM_Table;
+   --  Find functions for Remarks table
 
-   --  Find functions for Subroutines table
    function Find
      (DB       : DB_File;
       Name     : String := Invalid_String;
       Position : Point  := Invalid_Point;
       Filename : String := Invalid_String) return SU_Table;
+   --  Find functions for Subroutines table
 
-   --  Find functions for Typedefs table
    function Find
      (DB       : DB_File;
       Name     : String := Invalid_String;
       Position : Point  := Invalid_Point;
       Filename : String := Invalid_String) return T_Table;
+   --  Find functions for Typedefs table
 
-   --  Find functions for Templates arguments table
    function Find
      (DB             : DB_File;
       Scope          : String := Invalid_String;
       Name           : String := Invalid_String;
       Start_Position : Point  := Invalid_Point;
       Filename       : String := Invalid_String) return TA_Table;
+   --  Find functions for Templates arguments table
 
-   --  Find functions for Refers to table
    function Find
      (DB          : DB_File;
       Class       : String      := Invalid_String;
@@ -243,6 +242,6 @@ package SN.Find_Fns is
       Access_Type : String      := Invalid_String;
       Position    : Point       := Invalid_Point;
       Filename    : String      := Invalid_String) return TO_Table;
+   --  Find functions for Refers to table
 
 end SN.Find_Fns;
-
