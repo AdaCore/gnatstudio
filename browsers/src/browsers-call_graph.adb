@@ -62,10 +62,6 @@ package body Browsers.Call_Graph is
    Call_Graph_Module_Id : Module_ID;
    Call_Graph_Module_Name : constant String := "Call_Graph";
 
-   Unresolved_File : constant String := -"<Unresolved>";
-   --  File location used in case the declaration file for an entity couldn't
-   --  be fully resolved (overloaded entities).
-
    Margin : constant := 2;
 
    type Entity_Idle_Data is record
@@ -231,7 +227,7 @@ package body Browsers.Call_Graph is
       else
          Width  := Gint'Max
            (String_Width (Font, Get_Name (Entity)),
-            String_Width (Font, Unresolved_File));
+            String_Width (Font, -"<Unresolved>"));
       end if;
 
       Width := Width + 4 * Margin
@@ -292,7 +288,7 @@ package body Browsers.Call_Graph is
             GC    => Get_Text_GC (Browser),
             X     => Margin + Get_Width (B.Left_Arrow),
             Y     => Margin + 2 * Get_Ascent (Font) + Get_Descent (Font),
-            Text  => Unresolved_File);
+            Text  => -"<Unresolved>");
       end if;
 
       if not Item.From_Parsed then
