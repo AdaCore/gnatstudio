@@ -770,11 +770,12 @@ char	*what,                  /* referenced member */
 char	*arg_types,		/* referenced function/method argument types */
 char	*file,
 int	lineno,
+int	charno,
 int	acc)
 {
 	LongString	key_value;
 	LongString	data_value;
-	char	lineno_buf[10];
+	char	lineno_buf[11];
 
 	if ((!cross_ref_fp && !Paf_dbimp_running) || !fnc || *fnc == '\0' ||
 		(scope_lev == PAF_REF_SCOPE_LOCAL && !report_local_vars))
@@ -850,7 +851,7 @@ int	acc)
 	if (type == PAF_MBR_FUNC_DCL)
 		type = PAF_MBR_FUNC_DEF;
 
-	sprintf(lineno_buf,"%06d",lineno);
+	sprintf(lineno_buf,"%06d.%03d",lineno, charno);
 	key_value.copystrings(&key_value,
 		fnc_cls ? fnc_cls : "#",            DB_FLDSEP_STR,
 		fnc,                                DB_FLDSEP_STR,

@@ -122,7 +122,7 @@ extern int get_class_or_typedef( char *name, char *type )
 
 extern int put_cross_ref ( int type,int scope_type,int scope_lev,
    char *fnc_cls,char *fnc,char *fnc_arg_types,char *scope,char *what,
-   char *arg_types,char *file,int lineno,int acc)
+   char *arg_types,char *file,int lineno,int charno,int acc)
 {
 #ifdef PRINT
    printf( "crossref: %d %d %d %s %s %s %s %s %s %s %d %d\n"

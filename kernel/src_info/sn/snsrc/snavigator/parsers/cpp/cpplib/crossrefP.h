@@ -160,7 +160,7 @@ struct sDeclaration
    Class_t Class;
    Enum_t Enum;
    List_t ListDeclarator;
-   int lineno;
+   int lineno, charno;
 };
 
 struct sDeclarationSpecial
@@ -563,17 +563,17 @@ extern void f_ExprProcess( Expr_t Expr );
 
 extern char *Strdup( char *pc, int leng );
 
-extern void Put_cross_class_or_typedef_ref( int type, int scope_type, int scope_lev, char *fnc_cls, char *fnc, char *fnc_arg_types, char *scope, char *what, char *arg_types, char *file, int lineno, int acc );
+extern void Put_cross_class_or_typedef_ref( int type, int scope_type, int scope_lev, char *fnc_cls, char *fnc, char *fnc_arg_types, char *scope, char *what, char *arg_types, char *file, int lineno, int charno, int acc );
 
 extern int Get_symbol( char *scope_global, char *scope, char *name, char *arg_list, char *scope_ret, char *type_ret, char *define_ret, int exact );
 
-extern void Put_cross_ref( int type, int scope_type, int scope_lev, char *fnc_cls, char *fnc, char *fnc_arg_types, char *scope, char *what, char *arg_types, char *file, int lineno, int acc );
+extern void Put_cross_ref( int type, int scope_type, int scope_lev, char *fnc_cls, char *fnc, char *fnc_arg_types, char *scope, char *what, char *arg_types, char *file, int lineno, int charno, int acc );
 
 extern char *f_NameFromType( Type_t Type );
 extern char *f_NameFromDeclaration( Declaration_t Declaration );
-extern void f_PutConstructor( Type_t Type, int lineno, int mode );
-extern void f_PutConstructorByNewOrDelete( Type_t Type, int lineno, int mode );
-extern Type_t f_TypeBasic( Type_t Type, int lineno );
+extern void f_PutConstructor( Type_t Type, int lineno, int charno, int mode );
+extern void f_PutConstructorByNewOrDelete( Type_t Type, int lineno, int charno, int mode );
+extern Type_t f_TypeBasic( Type_t Type, int lineno, int charno );
 extern void Abort( void );
 
 

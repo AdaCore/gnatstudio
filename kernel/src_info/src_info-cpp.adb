@@ -17,7 +17,6 @@
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
-with GNAT.Regpat;          use GNAT.Regpat;
 with Ada.Exceptions;       use Ada.Exceptions;
 with GNAT.OS_Lib;          use GNAT.OS_Lib;
 
@@ -35,8 +34,6 @@ with SN.Find_Fns;       use SN.Find_Fns;
 with SN.Browse;
 with SN.Xref_Pools;     use SN.Xref_Pools;
 
-with File_Buffer;
-with String_Utils;      use String_Utils;
 with Traces;  use Traces;
 with Prj_API;
 
@@ -344,8 +341,8 @@ package body Src_Info.CPP is
 
    function Get_SN_Dir (Project : Prj.Project_Id) return String is
    begin
-      return Name_As_Directory (Prj_API.Object_Path
-        (Project, Recursive => False)) & Browse.DB_Dir_Name;
+      return Prj_API.Object_Path (Project, Recursive => False)
+        & Browse.DB_Dir_Name;
    end Get_SN_Dir;
 
    ----------------------------------
@@ -426,7 +423,6 @@ package body Src_Info.CPP is
          return;
       end if;
 
-      File_Buffer.Init (Full_Filename);
       Init (Env.Module_Typedefs);
       Set_Cursor (Env.SN_Table (FIL),
                   Position => By_Key,
@@ -451,12 +447,10 @@ package body Src_Info.CPP is
 
          Free (P);
       end loop;
-      File_Buffer.Done;
       Free (Env.Module_Typedefs);
    exception
       when others   => -- unexpected exception
          Free (P);
-         File_Buffer.Done;
          Free (Env.Module_Typedefs);
          --  ??? Here we probably want to report the unexpected exception
          --  and continue to work further, but currently we reraise that
@@ -698,10 +692,6 @@ package body Src_Info.CPP is
    --  forward declaration is in another file which
    --  has not been yet processed
 
-   function Normalized_Compare (Path1, Path2 : String) return Boolean;
-   pragma Inline (Normalized_Compare);
-   --  Normalizes the paths and compares them
-
    ------------------------------------
    -- Find_First_Forward_Declaration --
    ------------------------------------
@@ -907,12 +897,6 @@ package body Src_Info.CPP is
    begin
       Add (HT.Table, LIFP, Success);
    end Add;
-
-   function Normalized_Compare (Path1, Path2 : String) return Boolean
-   is
-   begin
-      return Normalize_Pathname (Path1) = Normalize_Pathname (Path2);
-   end Normalized_Compare;
 
    ------------------------
    --  Fu_To_Cl_Handler  --
@@ -1215,10 +1199,9 @@ package body Src_Info.CPP is
          return;
       end if;
 
-      if not Normalized_Compare
-         (Ref.Buffer (Ref.File_Name.First .. Ref.File_Name.Last),
-          Enum_Def.Buffer (Enum_Def.File_Name.First ..
-                           Enum_Def.File_Name.Last))
+      if not (Ref.Buffer (Ref.File_Name.First .. Ref.File_Name.Last)
+         = Enum_Def.Buffer (Enum_Def.File_Name.First ..
+                            Enum_Def.File_Name.Last))
       then
          begin
             Decl_Info :=
@@ -1669,6 +1652,7 @@ package body Src_Info.CPP is
                Location                => Var.Start_Position);
          exception
             when Declaration_Not_Found =>
+               Info ("Forward reference to the variable: " & Ref_Id);
                declare
                   Sym : FIL_Table;
                begin
@@ -2466,10 +2450,9 @@ package body Src_Info.CPP is
          return;
       end if;
 
-      if not Normalized_Compare
-         (Ref.Buffer (Ref.File_Name.First .. Ref.File_Name.Last),
-          Union_Def.Buffer (Union_Def.File_Name.First ..
-                            Union_Def.File_Name.Last))
+      if not (Ref.Buffer (Ref.File_Name.First .. Ref.File_Name.Last)
+         = Union_Def.Buffer (Union_Def.File_Name.First ..
+                             Union_Def.File_Name.Last))
       then
          begin
             Decl_Info :=
@@ -2948,10 +2931,10 @@ package body Src_Info.CPP is
          --  ones if this is a static function
          Match := True;
          if IsStatic then
-            Match := Match and Normalized_Compare
-               (Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
-                FD_Tab_Tmp.Buffer (FD_Tab_Tmp.File_Name.First ..
-                                   FD_Tab_Tmp.File_Name.Last));
+            Match := Match and
+               Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last)
+               = FD_Tab_Tmp.Buffer (FD_Tab_Tmp.File_Name.First ..
+                                   FD_Tab_Tmp.File_Name.Last);
          end if;
 
          Match := Match and Cmp_Prototypes
@@ -3034,6 +3017,8 @@ package body Src_Info.CPP is
       Body_Position  : Point := Invalid_Point;
       End_Position   : Point;
       IsTemplate     : Boolean := False;
+      Ref            : TO_Table;
+      Our_Ref        : Boolean;
 
       Fu_Id          : constant String := Sym.Buffer
         (Sym.Identifier.First .. Sym.Identifier.Last);
@@ -3189,24 +3174,8 @@ package body Src_Info.CPP is
             P := Get_Pair (Env.SN_Table (TO), Next_By_Key);
             exit when P = null;
 
-            declare
-               --  ???:
-               --  SN has only line number in .to table. So, to get exact
-               --  position we are getting that line from source file and
-               --  calling corresponding handler for EVERY
-               --  occurrence of that symbol in that line.
-               Ref      : TO_Table := Parse_Pair (P.all);
-               Buffer   : SN.String_Access;
-               Slice    : Segment;
-               PRef     : TO_Table;  -- Ref with exact position
-               P        : Integer;
-               S        : String  :=
-                     Ref.Buffer (Ref.Referred_Symbol_Name.First
-                                       .. Ref.Referred_Symbol_Name.Last);
-               Matches  : Match_Array (0 .. 0);
-               Pat      : Pattern_Matcher := Compile ("\b" & S & "\b");
-               Our_Ref  : Boolean;
             begin
+               Ref := Parse_Pair (P.all);
                if Sym.Symbol = MI then
                   Our_Ref := Cmp_Arg_Types
                     (Ref.Buffer,
@@ -3221,21 +3190,9 @@ package body Src_Info.CPP is
                      FU_Tab.Arg_Types);
                end if;
 
-               if Our_Ref then
-                  File_Buffer.Get_Line (Ref.Position.Line, Buffer, Slice);
-                  P := Slice.First;
-                  loop
-                     Match (Pat, Buffer.all (P .. Slice.Last), Matches);
-                     exit when Matches (0) = No_Match or Ref.Symbol = Undef;
-                     P := Matches (0).Last + 1;
-                     PRef := Ref;
-                     --  conversion to column
-                     PRef.Position.Column :=
-                       Matches (0).First - Slice.First + 1;
-                     if (Fu_To_Handlers (Ref.Referred_Symbol) /= null) then
-                        Fu_To_Handlers (Ref.Referred_Symbol)(PRef, Env);
-                     end if;
-                  end loop;
+               if Our_Ref
+                  and then Fu_To_Handlers (Ref.Referred_Symbol) /= null then
+                  Fu_To_Handlers (Ref.Referred_Symbol) (Ref, Env);
                end if;
                Free (Ref);
             exception
@@ -3594,10 +3551,9 @@ package body Src_Info.CPP is
          MD_Tab_Tmp := Parse_Pair (P.all);
          Free (P);
          --  Update position of the first forward declaration
-         if Normalized_Compare
-            (Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
-             MD_Tab_Tmp.Buffer (MD_Tab_Tmp.File_Name.First ..
-                                MD_Tab_Tmp.File_Name.Last))
+         if Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last)
+            = MD_Tab_Tmp.Buffer (MD_Tab_Tmp.File_Name.First ..
+                                MD_Tab_Tmp.File_Name.Last)
             and then Cmp_Prototypes
               (MD_Tab.Buffer,
                MD_Tab_Tmp.Buffer,

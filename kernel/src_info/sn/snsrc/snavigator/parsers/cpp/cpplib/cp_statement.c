@@ -142,7 +142,7 @@ extern Boolean_t f_CompoundStatement( char *types, char *names )
             }
 
             /* felodjuk az esetleges typedef-eket */
-            Type = f_TypeBasic( Type, start_lineno_g - 1 );
+            Type = f_TypeBasic( Type, start_lineno_g - 1, 0 );
 
             if( SymtabInsert( SymtabVariable
                             , Type->Declarator->Name->pcName

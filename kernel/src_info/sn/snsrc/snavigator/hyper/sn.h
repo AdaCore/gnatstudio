@@ -182,7 +182,7 @@ extern int get_class_or_typedef _ANSI_ARGS_((char *name,char *origin));
 
 extern int put_cross_ref _ANSI_ARGS_((int type,int scope_type,int scope_lev,
    char *fnc_cls,char *fnc,char *fnc_arg_types,char *scope,char *what,
-   char *arg_types,char *file,int lineno,int acc));
+   char *arg_types,char *file,int lineno,int charno,int acc));
 
 extern int put_file _ANSI_ARGS_((char *file_name,char *group, char *highlight_file));
 

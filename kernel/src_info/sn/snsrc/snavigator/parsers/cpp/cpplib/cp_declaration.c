@@ -817,6 +817,7 @@ extern Declaration_t f_DeclarationCreate( int iType )
    memset((void *) Declaration, 0, sizeof( Declaration[0] ));
    Declaration->iType = iType;
    Declaration->lineno = f_lineno( 0 );
+   Declaration->charno = f_charno( 0 );
    Declaration->iCheck = DECLARATION_CHECK;
 
    return Declaration;
@@ -869,6 +870,7 @@ extern Declaration_t f_DeclarationDuplicate( Declaration_t Declaration )
                               , (Elem_t(*)(Elem_t)) f_DeclaratorDuplicate );
 
    DeclarationDuplicate->lineno          = Declaration->lineno;
+   DeclarationDuplicate->charno          = Declaration->charno;
 
    return DeclarationDuplicate;
 }
@@ -1503,7 +1505,7 @@ static void _DeclarationProcess( Declaration_t Declaration, int record )
    TypeBasic = f_TypeFromDeclaration( Declaration );
 
    /* feloldjuk az esetleges typedef-eket */
-   TypeBasic = f_TypeBasic( TypeBasic, Declaration->lineno );
+   TypeBasic = f_TypeBasic( TypeBasic, Declaration->lineno, Declaration->charno );
 
    for( Declarator = (Declarator_t) d_ElemFirst( Declaration->ListDeclarator )
       ; Declarator
@@ -1517,7 +1519,7 @@ static void _DeclarationProcess( Declaration_t Declaration, int record )
 
          Type = f_TypeDeclaratorConcat( TypeBasic, Declarator );
 
-         f_PutConstructor( Type, Declaration->lineno, CONSTRUCTOR | DESTRUCTOR );
+         f_PutConstructor( Type, Declaration->lineno, Declaration->charno, CONSTRUCTOR | DESTRUCTOR );
 
          if( test_fp )
          {
@@ -1577,7 +1579,8 @@ static void _DeclarationProcess( Declaration_t Declaration, int record )
                         , Declarator->Name->pcName
                         , 0
                         , filename_g
-                        , Declaration->lineno
+                        , Declarator->lineno_beg
+                        , Declarator->charno_beg
                         , PAF_REF_WRITE
                         );
          }
@@ -1660,7 +1663,7 @@ extern void f_DeclarationPrint( Declaration_t Declaration )
    }
 }
 
-extern void Put_cross_class_or_typedef_ref( int type, int scope_type, int scope_lev, char *fnc_cls, char *fnc, char *fnc_arg_types, char *scope, char *what, char *arg_types, char *file, int lineno, int acc )
+extern void Put_cross_class_or_typedef_ref( int type, int scope_type, int scope_lev, char *fnc_cls, char *fnc, char *fnc_arg_types, char *scope, char *what, char *arg_types, char *file, int lineno, int charno, int acc )
 {
    if( type )
    {
@@ -1675,6 +1678,7 @@ extern void Put_cross_class_or_typedef_ref( int type, int scope_type, int scope_
                    , arg_types
                    , file
                    , lineno
+                   , charno
                    , acc
                    );
 
@@ -1710,6 +1714,7 @@ extern void Put_cross_class_or_typedef_ref( int type, int scope_type, int scope_
                          , arg_types
                          , file
                          , lineno
+			 , charno
                          , acc
                          );
          }
@@ -1738,6 +1743,7 @@ extern void Put_cross_class_or_typedef_ref( int type, int scope_type, int scope_
                          , arg_types
                          , file
                          , lineno
+			 , charno
                          , acc
                          );
          }
@@ -1750,7 +1756,7 @@ extern void Put_cross_class_or_typedef_ref( int type, int scope_type, int scope_
 ** Az osszes kozbulso lepest lejelentjuk.
 */
 
-extern Type_t f_TypeBasic( Type_t Type, int lineno )
+extern Type_t f_TypeBasic( Type_t Type, int lineno, int charno )
 {
    Type_t TypeBasic = Type;
    Type_t TypeTempo = 0;
@@ -1807,6 +1813,7 @@ extern Type_t f_TypeBasic( Type_t Type, int lineno )
                    , 0
                    , filename_g
                    , lineno
+		   , charno
                    , PAF_REF_READ
                    );
 
@@ -1908,7 +1915,7 @@ static Type_t f_TypeDeclaratorConcat( Type_t Type_a, Declarator_t Declarator )
 ** alapjan CONSTRUCTOR es/vagy DESTRUCTOR jelentes
 */
 
-extern void f_PutConstructor( Type_t Type, int lineno, int mode )
+extern void f_PutConstructor( Type_t Type, int lineno, int charno, int mode )
 {
    if( Type && Type->Declarator )
    {
@@ -1951,6 +1958,7 @@ extern void f_PutConstructor( Type_t Type, int lineno, int mode )
                                   , 0
                                   , filename_g
                                   , lineno
+				  , charno
                                   , PAF_REF_READ
                                   );
                   }
@@ -1982,6 +1990,7 @@ extern void f_PutConstructor( Type_t Type, int lineno, int mode )
                                   , 0
                                   , filename_g
                                   , lineno
+				  , charno
                                   , PAF_REF_READ
                                   );
                   }
@@ -1997,7 +2006,7 @@ extern void f_PutConstructor( Type_t Type, int lineno, int mode )
 ** a mode alapjan CONSTRUCTOR es/vagy DESTRUCTOR jelentes
 */
 
-extern void f_PutConstructorByNewOrDelete( Type_t Type, int lineno, int mode )
+extern void f_PutConstructorByNewOrDelete( Type_t Type, int lineno, int charno, int mode )
 {
    if( Type )
    {
@@ -2037,6 +2046,7 @@ extern void f_PutConstructorByNewOrDelete( Type_t Type, int lineno, int mode )
                                , 0
                                , filename_g
                                , lineno
+			       , charno
                                , PAF_REF_READ
                                );
                }
@@ -2068,6 +2078,7 @@ extern void f_PutConstructorByNewOrDelete( Type_t Type, int lineno, int mode )
                                , 0
                                , filename_g
                                , lineno
+			       , charno
                                , PAF_REF_READ
                                );
                }

@@ -78,7 +78,7 @@ static char *get_scope( char *name );
 static char *get_name( char *name );
 static int my_Get_symbol( char *scope_global, char *scope, char *name, char *arg_list, char *scope_ret, char *type_ret, char *define_ret, int exact );
 static char *paf_type_to_string( int paf_type );
-static Type_t f_OperatorCall2( char *pcOperator, Type_t Type1, Type_t Type2, int access, int lineno );
+static Type_t f_OperatorCall2( char *pcOperator, Type_t Type1, Type_t Type2, int access, int lineno, int charno );
 
 static int tab;
 
@@ -157,7 +157,7 @@ static Proc_t f_expr( Expr_t Expr, int access, char *scope, int call, int pass )
    case OPERATOR_KOMMA            :
       Proc1 = f_expr( Expr->Expr1, READ, scope, 0, pass );
       Proc2 = f_expr( Expr->Expr2, READ, scope, 0, pass );
-      Proc.Type = f_OperatorCall2( ",", Proc1.Type, Proc2.Type, access, 0 );
+      Proc.Type = f_OperatorCall2( ",", Proc1.Type, Proc2.Type, access, 0, 0 );
       if( Proc.Type == 0 )
       {
          ProcTypeAssign( Proc, Proc2 );
@@ -185,7 +185,7 @@ static Proc_t f_expr( Expr_t Expr, int access, char *scope, int call, int pass )
 label1:
       Proc1 = f_expr( Expr->Expr1, WRITE, scope, 0, pass );
       Proc2 = f_expr( Expr->Expr2, READ , scope, 0, pass );
-      Proc.Type = f_OperatorCall2( pcOperator, Proc1.Type, Proc2.Type, access, 0 );
+      Proc.Type = f_OperatorCall2( pcOperator, Proc1.Type, Proc2.Type, access, 0, 0 );
       if( Proc.Type == 0 )
       {
          ProcTypeAssign( Proc, Proc1 );
@@ -217,7 +217,7 @@ label1:
    case OPERATOR_OROR             :
       Proc1 = f_expr( Expr->Expr1, READ, scope, 0, pass );
       Proc2 = f_expr( Expr->Expr2, READ, scope, 0, pass );
-      Proc.Type = f_OperatorCall2( "||", Proc1.Type, Proc2.Type, access, 0 );
+      Proc.Type = f_OperatorCall2( "||", Proc1.Type, Proc2.Type, access, 0, 0 );
       if( Proc.Type == 0 )
       {
          Proc.Type = f_TypeCreateInt();
@@ -234,7 +234,7 @@ label1:
    case OPERATOR_ANDAND           :
       Proc1 = f_expr( Expr->Expr1, READ, scope, 0, pass );
       Proc2 = f_expr( Expr->Expr2, READ, scope, 0, pass );
-      Proc.Type = f_OperatorCall2( "&&", Proc1.Type, Proc2.Type, access, 0 );
+      Proc.Type = f_OperatorCall2( "&&", Proc1.Type, Proc2.Type, access, 0, 0 );
       if( Proc.Type == 0 )
       {
          Proc.Type = f_TypeCreateInt();
@@ -251,7 +251,7 @@ label1:
    case OPERATOR_OR               :
       Proc1 = f_expr( Expr->Expr1, READ, scope, 0, pass );
       Proc2 = f_expr( Expr->Expr2, READ, scope, 0, pass );
-      Proc.Type = f_OperatorCall2( "|", Proc1.Type, Proc2.Type, access, 0 );
+      Proc.Type = f_OperatorCall2( "|", Proc1.Type, Proc2.Type, access, 0, 0 );
       if( Proc.Type == 0 )
       {
          ProcTypeAssign( Proc, Proc1 );
@@ -268,7 +268,7 @@ label1:
    case OPERATOR_ER               :
       Proc1 = f_expr( Expr->Expr1, READ, scope, 0, pass );
       Proc2 = f_expr( Expr->Expr2, READ, scope, 0, pass );
-      Proc.Type = f_OperatorCall2( "'", Proc1.Type, Proc2.Type, access, 0 );
+      Proc.Type = f_OperatorCall2( "'", Proc1.Type, Proc2.Type, access, 0, 0 );
       if( Proc.Type == 0 )
       {
          ProcTypeAssign( Proc, Proc1 );
@@ -285,7 +285,7 @@ label1:
    case OPERATOR_AND              :
       Proc1 = f_expr( Expr->Expr1, READ, scope, 0, pass );
       Proc2 = f_expr( Expr->Expr2, READ, scope, 0, pass );
-      Proc.Type = f_OperatorCall2( "&", Proc1.Type, Proc2.Type, access, 0 );
+      Proc.Type = f_OperatorCall2( "&", Proc1.Type, Proc2.Type, access, 0, 0 );
       if( Proc.Type == 0 )
       {
          ProcTypeAssign( Proc, Proc1 );
@@ -308,7 +308,7 @@ label1:
 label2:
       Proc1 = f_expr( Expr->Expr1, READ, scope, 0, pass );
       Proc2 = f_expr( Expr->Expr2, READ, scope, 0, pass );
-      Proc.Type = f_OperatorCall2( pcOperator, Proc1.Type, Proc2.Type, access, 0 );
+      Proc.Type = f_OperatorCall2( pcOperator, Proc1.Type, Proc2.Type, access, 0, 0 );
       if( Proc.Type == 0 )
       {
          Proc.Type = f_TypeCreateInt();
@@ -325,7 +325,7 @@ label2:
    case OPERATOR_LS               :
       Proc1 = f_expr( Expr->Expr1, READ, scope, 0, pass );
       Proc2 = f_expr( Expr->Expr2, READ, scope, 0, pass );
-      Proc.Type = f_OperatorCall2( "<<", Proc1.Type, Proc2.Type, access, 0 );
+      Proc.Type = f_OperatorCall2( "<<", Proc1.Type, Proc2.Type, access, 0, 0 );
       if( Proc.Type == 0 )
       {
          ProcTypeAssign( Proc, Proc1 );
@@ -342,7 +342,7 @@ label2:
    case OPERATOR_RS               :
       Proc1 = f_expr( Expr->Expr1, READ, scope, 0, pass );
       Proc2 = f_expr( Expr->Expr2, READ, scope, 0, pass );
-      Proc.Type = f_OperatorCall2( ">>", Proc1.Type, Proc2.Type, access, 0 );
+      Proc.Type = f_OperatorCall2( ">>", Proc1.Type, Proc2.Type, access, 0, 0 );
       if( Proc.Type == 0 )
       {
          ProcTypeAssign( Proc, Proc1 );
@@ -363,7 +363,7 @@ label2:
 label3:
       Proc1 = f_expr( Expr->Expr1, READ, scope, 0, pass );
       Proc2 = f_expr( Expr->Expr2, READ, scope, 0, pass );
-      Proc.Type = f_OperatorCall2( pcOperator, Proc1.Type, Proc2.Type, access, 0 );
+      Proc.Type = f_OperatorCall2( pcOperator, Proc1.Type, Proc2.Type, access, 0, 0 );
       if( Proc.Type == 0 )
       {
          ProcTypeAssign( Proc, Proc1 );
@@ -380,7 +380,7 @@ label3:
    case OPERATOR_MOD              :
       Proc1 = f_expr( Expr->Expr1, READ, scope, 0, pass );
       Proc2 = f_expr( Expr->Expr2, READ, scope, 0, pass );
-      Proc.Type = f_OperatorCall2( "%", Proc1.Type, Proc2.Type, access, 0 );
+      Proc.Type = f_OperatorCall2( "%", Proc1.Type, Proc2.Type, access, 0, 0 );
       if( Proc.Type == 0 )
       {
          Proc.Type = f_TypeCreateInt();
@@ -399,7 +399,7 @@ label3:
 label4:
       Proc1 = f_expr( Expr->Expr1, READ, scope, 0, pass );
       Proc2 = f_expr( Expr->Expr2, READ, f_TypeToScope( Proc1.Type ), 0, pass );
-      Proc.Type = f_OperatorCall2( pcOperator, Proc1.Type, Proc2.Type, access, 0 );
+      Proc.Type = f_OperatorCall2( pcOperator, Proc1.Type, Proc2.Type, access, 0, 0 );
       if( Proc.Type == 0 )
       {
          ProcTypeAssign( Proc, Proc2 );
@@ -682,6 +682,7 @@ label4:
                          , acArglist    /* 22.01.98 rigo */
                          , filename_g
                          , Proc1.lineno_beg
+                         , Proc1.charno_beg
                          , paf_access
                          );
                   }
@@ -718,6 +719,7 @@ label4:
                          , acArglist    /* 22.01.98 rigo */
                          , filename_g
                          , Proc1.lineno_beg
+                         , Proc1.charno_beg
                          , paf_access
                          );
          }
@@ -743,6 +745,7 @@ label4:
                          , acArglist    /* 22.01.98 rigo */
                          , filename_g
                          , Proc1.lineno_beg
+                         , Proc1.charno_beg
                          , paf_access
                          );
          }
@@ -796,7 +799,8 @@ label5:
       Proc1 = f_expr( Expr->Expr1, READ, scope, 0, pass );
 /*    Proc2 = f_exprlist( Expr->ListExpr, READ, scope, arglist, 1 );    15.01.98 rigo */
       Proc2 = f_exprlist( Expr->ListExpr, READ, scope, 0      , 1 ); /* 15.01.98 rigo */
-      f_PutConstructorByNewOrDelete( Proc1.Type, Expr->Expr1->lineno_beg, CONSTRUCTOR );
+      f_PutConstructorByNewOrDelete( Proc1.Type, Expr->Expr1->lineno_beg, Expr->Expr1->charno_beg,
+		      CONSTRUCTOR );
       if( Expr->Init ) f_InitProcess( Expr->Init );
       ProcTypeAssign( Proc, Proc1 );
       Proc.name = 0;
@@ -810,7 +814,7 @@ label5:
 
    case OPERATOR_DELETE           :
       Proc1 = f_expr( Expr->Expr1, READ, scope, 0, pass );
-      f_PutConstructorByNewOrDelete( Proc1.Type, 0 /* Expr->Expr1->lineno_beg */, DESTRUCTOR );
+      f_PutConstructorByNewOrDelete( Proc1.Type, 0 /* Expr->Expr1->lineno_beg */, 0, DESTRUCTOR );
       Proc.Type = f_TypeCreateInt();   /* esetleg void ? */
       Proc.name = 0;
       Proc.scope = 0;
@@ -919,6 +923,7 @@ label5:
                          , 0
                          , filename_g
                          , Expr->lineno_beg
+                         , Expr->charno_beg
                          , paf_access
                          );
                   }
@@ -961,6 +966,7 @@ label5:
                          , 0
                          , filename_g
                          , Expr->lineno_beg
+                         , Expr->charno_beg
                          , paf_access
                          );
          }
@@ -986,6 +992,7 @@ label5:
                          , 0
                          , filename_g
                          , Expr->lineno_beg
+                         , Expr->charno_beg
                          , paf_access
                          );
          }
@@ -1014,7 +1021,7 @@ label5:
       f_TypeToString( Expr->Type, Proc.ac, 1 );
 #endif
       /* feloldjuk a typedef-eket */
-      Expr->Type = f_TypeBasic( Expr->Type, Expr->lineno_beg );
+      Expr->Type = f_TypeBasic( Expr->Type, Expr->lineno_beg, Expr->charno_beg );
       /* a Type-ban megbuvo kifejezeseket feldolgozzuk */
       f_TypeProcess( Expr->Type );
       if( Expr->lineno_beg != 0 )
@@ -1218,7 +1225,7 @@ static Type_t get_variable_type( char *scope_global, char *scope, char *name, in
       if( TypeReturn )
       {
          /* leasunk a typedef-eken keresztul az igazi tipusig */
-         TypeReturn = f_TypeBasic( TypeReturn, lineno_beg );
+         TypeReturn = f_TypeBasic( TypeReturn, lineno_beg, charno_beg );
       }
       else
       {
@@ -1486,7 +1493,7 @@ extern int Get_class_or_typedef( char *name, char *type_ret )
    return retval;
 }
 
-extern void Put_cross_ref( int type, int scope_type, int scope_lev, char *fnc_cls, char *fnc, char *fnc_arg_types, char *scope, char *what, char *arg_types, char *file, int lineno, int acc )
+extern void Put_cross_ref( int type, int scope_type, int scope_lev, char *fnc_cls, char *fnc, char *fnc_arg_types, char *scope, char *what, char *arg_types, char *file, int lineno, int charno, int acc )
 {
 
     put_cross_ref( type
@@ -1500,9 +1507,10 @@ extern void Put_cross_ref( int type, int scope_type, int scope_lev, char *fnc_cl
                  , arg_types
                  , file
                  , lineno
+		 , charno
                  , acc );
 #ifdef TEST
-     printf( "put_cross  : |%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%d|%d|\n"
+     printf( "put_cross  : |%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%d|%d|%d|\n"
                , paf_type_to_string( type )
                , paf_type_to_string( scope_type )
                , paf_type_to_string( scope_lev )
@@ -1514,12 +1522,13 @@ extern void Put_cross_ref( int type, int scope_type, int scope_lev, char *fnc_cl
                , null_safe( arg_types )
                , null_safe( file )
                , lineno
+               , charno
                , acc
                );
 #endif /*TEST*/
    if( pf )
    {
-      fprintf( pf, "put_cross  : |%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%d|%d|\n"
+      fprintf( pf, "put_cross  : |%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%d|%d|%d|\n"
                , paf_type_to_string( type )
                , paf_type_to_string( scope_type )
                , paf_type_to_string( scope_lev )
@@ -1531,6 +1540,7 @@ extern void Put_cross_ref( int type, int scope_type, int scope_lev, char *fnc_cl
                , null_safe( arg_types )
                , null_safe( file )
                , lineno
+               , charno
                , acc
                );
    }
@@ -1653,7 +1663,8 @@ extern char *f_NameFromDeclaration( Declaration_t Declaration )
 }
 
 
-static Type_t f_OperatorCall2( char *pcOperator, Type_t Type1, Type_t Type2, int access, int lineno )
+static Type_t f_OperatorCall2( char *pcOperator, Type_t Type1, Type_t Type2, int access, int lineno,
+	          int charno )
 {
    Type_t TypeReturn;
    char acName[10000];  /* old: 1000 */
@@ -1697,6 +1708,7 @@ static Type_t f_OperatorCall2( char *pcOperator, Type_t Type1, Type_t Type2, int
                    , acArglist
                    , filename_g
                    , lineno
+		   , charno
                    , paf_access
                    );
 
