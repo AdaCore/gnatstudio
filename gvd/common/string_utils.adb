@@ -87,7 +87,8 @@ package body String_Utils is
 
    function Is_Blank (C : Character) return Boolean is
    begin
-      return C = ' ' or else C = ASCII.LF or else C = ASCII.HT;
+      return C = ' ' or else C = ASCII.LF
+        or else C = ASCII.CR or else C = ASCII.HT;
    end Is_Blank;
 
    ----------------

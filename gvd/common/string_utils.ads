@@ -81,7 +81,7 @@ package String_Utils is
    --  otherwise use only spaces.
 
    function Is_Blank (C : Character) return Boolean;
-   --  Return True if C is a blank character: LF, HT or ' '
+   --  Return True if C is a blank character: CR, LF, HT or ' '
 
    function Line_Start (Buffer : String; P : Natural) return Natural;
    --  Return the start of the line pointed by P.
