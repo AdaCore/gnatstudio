@@ -159,6 +159,7 @@ package body Src_Info.CPP is
       Signed_Integer_Type       => Signed_Integer_Object,
       String_Type               => String_Object,
       Task_Type                 => Task_Object,
+      Private_Type              => Private_Type, -- ??? what kind for object?
       others                    => Overloaded_Entity);
    --  This array establishes relation between E_Kind type entities
    --  and object entities
@@ -185,14 +186,18 @@ package body Src_Info.CPP is
          Parent_Filename   : SN.String_Access;
          Ancestor_Point    : Point;
          Ancestor_Filename : SN.String_Access;
-         Builtin_Name       : SN.String_Access;
+         Builtin_Name      : SN.String_Access;
       end record;
    --  Contains C type description. Used in these procedures:
    --    Type_Name_To_Kind
    --    Original_Type
    --    Find_Class
    --
-   --  Parent_xxx: FIXME Taras
+   --  Parent_xxx: For typedefs Parent_xxx is the location of the
+   --  last type definition in the chain.
+   --  For enum, class definitions it is the location of the
+   --  declaration itself.
+   --  For builtin types this location is empty (invalid)
    --
    --  Ancestor_xxx: location of the closest typedef in the chain of
    --  typedefs.
@@ -371,7 +376,8 @@ package body Src_Info.CPP is
 
    procedure Builtin_Type_To_Kind
      (Type_Name : in String;
-      Desc : out CType_Description; Success : out Boolean) is
+      Desc      : out CType_Description;
+      Success   : out Boolean) is
    begin
       if Type_Name = "char"          or Type_Name = "signed char"
          or Type_Name = "int"        or Type_Name = "signed int"
@@ -684,6 +690,44 @@ package body Src_Info.CPP is
    begin
       Put_Line ("[E] " & Msg);
    end Fail;
+
+   procedure Refer_Type
+     (Type_Name          : in String;
+      Type_Decl          : in Point;
+      Reference_Filename : in String;
+      Reference_Point    : in Point);
+   --  Adds reference object into Global_LI_File if
+   --  type Type_Name already exists in the tree.
+   --
+   --  Type_Name, Type_Decl - name and position of
+   --  the type declared in the Global_LI_File
+   --  Reference_Filename and Reference_Point are
+   --  location that refers to the type
+
+   ----------------
+   -- Refer_Type --
+   ----------------
+   procedure Refer_Type
+     (Type_Name          : in String;
+      Type_Decl          : in Point;
+      Reference_Filename : in String;
+      Reference_Point    : in Point) is
+      Type_Decl_Info     : E_Declaration_Info_List;
+   begin
+      Type_Decl_Info := Find_Declaration
+        (Global_LI_File, Type_Name, "", Type_Decl);
+
+      Insert_Reference
+        (Declaration_Info     => Type_Decl_Info,
+         File                 => Global_LI_File,
+         Source_Filename      => Reference_Filename,
+         Location             => Reference_Point,
+         Kind                 => Reference);
+   exception
+      when Declaration_Not_Found => -- ignore
+         null;
+   end Refer_Type;
+
 
    --------------
    -- Handlers --

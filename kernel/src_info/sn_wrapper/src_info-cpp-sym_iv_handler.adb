@@ -8,7 +8,6 @@ procedure Sym_IV_Handler (Sym : FIL_Table)
 is
    Inst_Var        : IV_Table;
    Decl_Info       : E_Declaration_Info_List;
-   Type_Decl_Info  : E_Declaration_Info_List;
    Success         : Boolean;
    Desc            : CType_Description;
 begin
@@ -35,8 +34,18 @@ begin
       Success);
 
    if not Success then -- failed to determine type
-      Free (Inst_Var);
-      return;
+      --  if the variable belongs to a template, the unknown type
+      --  may be template parameter. Check it.
+      --  TODO Here we should parse class template arguments and
+      --  locate the type in question. Not implemented yet
+      Desc.Kind           := Private_Type;
+      Desc.IsVolatile     := False;
+      Desc.IsConst        := False;
+      Desc.Parent_Point   := Invalid_Point;
+      Desc.Ancestor_Point := Invalid_Point;
+      Desc.Builtin_Name   := null;
+      --  Free (Inst_Var);
+      --  return;
    end if;
 
    if Desc.Parent_Point = Invalid_Point then
@@ -67,24 +76,12 @@ begin
          Declaration_Info  => Decl_Info);
 
       --  add reference to the type of this field
-      begin
-         Type_Decl_Info := Find_Declaration
-           (File        => Global_LI_File,
-            Symbol_Name => Inst_Var.Buffer
-               (Inst_Var.Value_Type.First .. Inst_Var.Value_Type.Last),
-            Location    => Desc.Parent_Point);
-
-         Insert_Reference
-           (Declaration_Info     => Type_Decl_Info,
-            File                 => Global_LI_File,
-            Source_Filename      =>
-               Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
-            Location             => Sym.Start_Position,
-            Kind                 => Reference);
-      exception
-         when Declaration_Not_Found => -- ignore
-            null;
-      end;
+      Refer_Type
+        (Inst_Var.Buffer
+           (Inst_Var.Value_Type.First .. Inst_Var.Value_Type.Last),
+         Desc.Parent_Point,
+         Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
+         Sym.Start_Position);
    end if;
 
    Free (Desc);

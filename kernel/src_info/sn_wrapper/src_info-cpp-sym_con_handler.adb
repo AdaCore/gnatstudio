@@ -10,7 +10,6 @@ is
    Var               : GV_Table;
    Success           : Boolean;
    tmp_ptr           : E_Declaration_Info_List;
-   Type_Decl_Info    : E_Declaration_Info_List;
    Attributes        : SN_Attributes;
    Scope             : E_Scope := Global_Scope;
 begin
@@ -69,23 +68,11 @@ begin
          Declaration_Info  => tmp_ptr);
 
       --  add reference to the type of this variable
-      begin
-         Type_Decl_Info := Find_Declaration
-           (Global_LI_File,
-            Var.Buffer (Var.Value_Type.First .. Var.Value_Type.Last),
-            Desc.Parent_Point);
-
-         Insert_Reference
-           (Declaration_Info     => Type_Decl_Info,
-            File                 => Global_LI_File,
-            Source_Filename      =>
-               Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
-            Location             => Sym.Start_Position,
-            Kind                 => Reference);
-      exception
-         when Declaration_Not_Found => -- ignore
-            null;
-      end;
+      Refer_Type
+        (Var.Buffer (Var.Value_Type.First .. Var.Value_Type.Last),
+         Desc.Parent_Point,
+         Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
+         Sym.Start_Position);
    end if;
 
    Free (Var);
