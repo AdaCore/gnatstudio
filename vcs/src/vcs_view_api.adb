@@ -2413,14 +2413,14 @@ package body VCS_View_API is
            (Execute_GPS_Shell_Command
               (Kernel,
                "MDI.input_dialog"
-               & " ""Compare against revison:"""
+               & " ""Compare against revision:"""
                & " ""Revision=" & Revision_1.all & """"));
       else
          Str := new String'
            (Execute_GPS_Shell_Command
               (Kernel,
                "MDI.input_dialog"
-               & " ""Compare between two revisons:"""
+               & " ""Compare between two revisions:"""
                & " ""Revision 1=" & Revision_1.all & """"
                & " ""Revision 2=" & Revision_2.all & """"));
       end if;
