@@ -497,7 +497,7 @@ package body Gtkada.File_Selector is
          --  in the Explorer_Tree, then update the Explorer_Tree.
 
          if Dir /= Get_Selection (Win.Explorer_Tree) then
-            Show_Directory (Win.Explorer_Tree, Dir);
+            Show_Directory (Win.Explorer_Tree, Dir, Get_Window (Win));
          end if;
 
          Refresh_Files (Win);
@@ -1185,9 +1185,11 @@ package body Gtkada.File_Selector is
       Set_Flags (File_Selector_Window.Cancel_Button, Can_Default);
       Add (Hbuttonbox1, File_Selector_Window.Cancel_Button);
 
+      Realize (File_Selector_Window);
       Show_Directory
         (File_Selector_Window.Explorer_Tree,
-         File_Selector_Window.Home_Directory.all);
+         File_Selector_Window.Home_Directory.all,
+         Get_Window (File_Selector_Window));
 
       Widget_Callback.Connect
         (File_Selector_Window, "realize", Realize'Access);
