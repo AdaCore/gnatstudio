@@ -27,7 +27,7 @@ with Gtk.Text; use Gtk.Text;
 with Gtk.Label; use Gtk.Label;
 with Gtk.Button; use Gtk.Button;
 with Gtkada.Canvas; use Gtkada.Canvas;
-with Odd_Tools.Process;
+with Odd.Process;
 with Glib;
 
 package Process_Tab_Pkg is
@@ -37,7 +37,7 @@ package Process_Tab_Pkg is
       --  Additional fields  --
       -------------------------
 
-      Debugger : aliased Odd_Tools.Process.Debugger_Descriptor;
+      Debugger : aliased Odd.Process.Debugger_Descriptor;
       Edit_Pos : Glib.Guint;
 
       -------------------------

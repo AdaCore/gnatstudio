@@ -29,7 +29,7 @@ with Odd_Intl; use Odd_Intl;
 with Main_Debug_Window_Pkg.Callbacks; use Main_Debug_Window_Pkg.Callbacks;
 with Process_Tab_Pkg; use Process_Tab_Pkg;
 with GNAT.OS_Lib; use GNAT.OS_Lib;
-with Odd_Tools.Process; use Odd_Tools.Process;
+with Odd.Process; use Odd.Process;
 with Odd.Pixmaps; use Odd.Pixmaps;
 
 package body Main_Debug_Window_Pkg is

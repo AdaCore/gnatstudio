@@ -44,7 +44,7 @@ package body Process_Tab_Pkg.Callbacks is
 
       type Guint_Ptr is access all Guint;
       function To_Guint_Ptr is new Unchecked_Conversion (Address, Guint_Ptr);
-      use Odd_Tools.Process;
+      use Odd.Process;
 
    begin
       if To_Guint_Ptr (Arg3).all < Top.Edit_Pos then

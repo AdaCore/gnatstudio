@@ -24,7 +24,7 @@ with Odd_Preferences_Pkg; use Odd_Preferences_Pkg;
 with Process_Tab_Pkg;     use Process_Tab_Pkg;
 with Gtkada.Dialogs;      use Gtkada.Dialogs;
 with Odd_Intl;            use Odd_Intl;
-with Odd_Tools.Process;   use Odd_Tools.Process;
+with Odd.Process;         use Odd.Process;
 with GNAT.OS_Lib;         use GNAT.OS_Lib;
 with Glib;                use Glib;
 
