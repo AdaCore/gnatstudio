@@ -2755,7 +2755,9 @@ package body Src_Editor_Module is
                Open_File_Editor
                  (Kernel, Full,
                   Enable_Navigation => True,
-                  New_File          => False);
+                  New_File          => False,
+                  Line              => 0,
+                  Column            => 0);
 
             else
                Insert
