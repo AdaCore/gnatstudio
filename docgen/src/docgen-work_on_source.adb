@@ -927,7 +927,6 @@ package body Docgen.Work_On_Source is
          Entity_Node := TEL.First (Entity_List);
 
          for J in 1 .. TEL.Length (Entity_List) loop
-            --  If not a renamed exception... ??? change this later
 
             --  Check if the entity is an exception
 
@@ -1267,23 +1266,17 @@ package body Docgen.Work_On_Source is
    ---------------------
 
    function Line_Is_Comment (Line : String) return Boolean is
-      Min_Comment_Length : constant Natural := 4;
-      Comment_String     : constant String := "--";
    begin
-      if Line'Length > Min_Comment_Length then
-         for J in Line'First .. Line'Last - (Comment_String'Length + 1) loop
-            if Line (J) = '-' and Line (J + 1) = '-' then
-               return True;
-            elsif Line (J) /= ' '
-              and Line (J) /= ASCII.HT
-              and Line (J) /= ASCII.LF
-              and Line (J) /= ASCII.CR
-            then
-               return False;
-            end if;
-         end loop;
-      end if;
-
+      for J in Line'First .. Line'Last - 1 loop
+         if Line (J) = '-' and Line (J + 1) = '-' then
+            return True;
+         elsif Line (J) /= ' '
+           and Line (J) /= ASCII.HT
+           and Line (J) /= ASCII.LF
+           and Line (J) /= ASCII.CR
+         then return False;
+         end if;
+      end loop;
       return False;
    end Line_Is_Comment;
 
@@ -1311,17 +1304,13 @@ package body Docgen.Work_On_Source is
    --------------------------
 
    function Is_Ignorable_Comment (Comment_Line : String) return Boolean is
-      Min_Comment_Length : constant Natural := 4;
-      Comment_String     : constant String := "--";
    begin
-      if Comment_Line'Length > Min_Comment_Length then
+      if Comment_Line'Length > 2 then
          for J in Comment_Line'First ..
-           Comment_Line'Last - (Comment_String'Length + 1)
+           Comment_Line'Last - 2
          loop
-            if Comment_Line (J .. J + Comment_String'Length - 1) =
-              Comment_String
-            then
-               return Comment_Line (J + Comment_String'Length) = '!';
+            if Comment_Line (J .. J + 1) = "--" then
+               return Comment_Line (J + 2) = '!';
             end if;
          end loop;
       end if;
@@ -1365,7 +1354,7 @@ package body Docgen.Work_On_Source is
 
       --  The comments are under the header of the entity
 
-      if Options.Comments_Under or else Package_Description then
+      if (not Options.Comments_Above) or else Package_Description then
          J := Line + Header_Lines;
 
          --  The comments are above the header of the entity
@@ -1378,7 +1367,7 @@ package body Docgen.Work_On_Source is
         (Get_Line_From_String (File_Text, J));
 
       while Line_Is_Comment (New_Line.all) loop
-         if Options.Comments_Under or Package_Description then
+         if (not Options.Comments_Above) or Package_Description then
             J := J + 1;
 
             if not (Options.Ignorable_Comments and then
