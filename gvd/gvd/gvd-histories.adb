@@ -37,13 +37,6 @@ package body Odd.Histories is
       --  Index of the last item entered in the list.
 
    begin
-      --  Free the previous item, if any
-
-      if History.Last = History.First then
-         Free (History.Contents (History.Last + 1).Data);
-         History.First := (History.First + 1) mod History.Max_Items;
-      end if;
-
       if History.Collapse_Duplicates
         and then History.Last /= -1
         and then Data = History.Contents (Prev_Last + 1).Data.all
@@ -52,6 +45,13 @@ package body Odd.Histories is
            History.Contents (History.Last).Repeat_Num + 1;
 
       else
+         --  Free the previous item, if any
+
+         if History.Last = History.First then
+            Free (History.Contents (History.Last + 1).Data);
+            History.First := (History.First + 1) mod History.Max_Items;
+         end if;
+
          if History.Last = -1 then
             History.Last := History.First;
          end if;
@@ -112,5 +112,43 @@ package body Odd.Histories is
          History.Current := (History.Current + 1) mod History.Max_Items;
       end if;
    end Move_To_Next;
+
+   ------------
+   -- Rewind --
+   ------------
+
+   procedure Rewind  (History : in out History_List) is
+   begin
+      History.Current := History.First;
+   end Rewind;
+
+   ------------
+   -- Length --
+   ------------
+
+   function Length (History : in History_List) return Integer
+   is
+   begin
+      --  What about Collapse_Duplicates ???
+      if History.Last = -1 then
+         return 0;
+      elsif History.Last > History.First then
+         return History.Last - History.First;
+      else
+         return History.Max_Items + History.Last - History.First;
+      end if;
+   end Length;
+
+   ----------------------------
+   -- Get_Current_Repeat_Num --
+   ----------------------------
+
+   function Get_Current_Repeat_Num (History : History_List) return Natural is
+   begin
+      if History.Current = -1 then
+         raise No_Such_Item;
+      end if;
+      return History.Contents (History.Current + 1).Repeat_Num;
+   end Get_Current_Repeat_Num;
 
 end Odd.Histories;

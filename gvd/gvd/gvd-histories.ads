@@ -57,6 +57,12 @@ package Odd.Histories is
    --  Return the item currently pointed to.
    --  No_Such_Item is raised if the list is empty.
 
+   function Get_Current_Repeat_Num (History : History_List) return Natural;
+   --  Return the number of times the current item was repeated consequently
+   --  in the history.
+   --  If Collapse_Duplicates is False, this will always be 1.
+   --  No_Such_Item is raised if the list is empty.
+
    procedure Move_To_Previous (History : in out History_List);
    --  Move the pointer to the value preceding the current one.
    --  Calling this function multiple times will traverse the whole list.
@@ -67,6 +73,12 @@ package Odd.Histories is
    --  Calling this function multiple times will traverse the whole list.
    --  If you are trying to move after the last item, No_Such_Item is
    --  raised.
+
+   procedure Rewind  (History : in out History_List);
+   --  Move to the beginning of the history.
+
+   function Length (History : in History_List) return Integer;
+   --  Return the length of the history.
 
    No_Such_Item : exception;
 
