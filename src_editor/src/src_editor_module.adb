@@ -18,6 +18,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Ada.Strings.Unbounded;       use Ada.Strings.Unbounded;
 with Ada.Characters.Handling;     use Ada.Characters.Handling;
 with Ada.Exceptions;              use Ada.Exceptions;
 
@@ -3525,10 +3526,7 @@ package body Src_Editor_Module is
          declare
             Lang   : Language_Access;
             File   : constant Virtual_File := File_Information (File_Context);
-            Block  : GNAT.OS_Lib.String_Access := new String'("");
-            Tmp    : GNAT.OS_Lib.String_Access;
-            Length : Integer := 0;
-
+            Block  : Unbounded_String := Null_Unbounded_String;
          begin
             if Context.all in File_Area_Context'Class then
                Area := File_Area_Context_Access (Context);
@@ -3561,30 +3559,25 @@ package body Src_Editor_Module is
                     (Kernel, "Editor.get_chars", Args);
                begin
                   Free (Args);
-                  Length := Length + Line'Length;
-
-                  Tmp := Block;
-                  Block := new String'(Block.all & Line);
-                  Free (Tmp);
+                  Append (Block, Line);
                end;
             end loop;
 
-            --  Comment/Uncomment the block
-
-            Tmp := Block;
-            Block := new String'(Comment_Block (Lang, Block.all, Comment));
-            Free (Tmp);
-
             --  Create a String containing the modified lines.
+
+            Trace (Me, "Block:" & ASCII.LF & To_String (Block) & "***");
+            Trace (Me, "Commented Block:" & ASCII.LF &
+                   Comment_Block (Lang, To_String (Block), Comment) & "***");
 
             declare
                Args : Argument_List :=
                  (1 => new String'(Full_Name (File).all),
                   2 => new String'(Image (Start_Line)),
                   3 => new String'("1"), --  column
-                  4 => Block,
+                  4 => new String'
+                    (Comment_Block (Lang, To_String (Block), Comment)),
                   5 => new String'("0"), --  before
-                  6 => new String'(Image (Length - 1))); --  after
+                  6 => new String'(Image (To_String (Block)'Length))); -- after
             begin
                Execute_GPS_Shell_Command
                     (Kernel, "Editor.replace_text", Args);
