@@ -236,4 +236,26 @@ package body Process_Proxies is
       Proxy.Internal_Command := Is_Internal;
    end Set_Internal_Command;
 
+   -------------------------
+   -- Set_Parse_File_Name --
+   -------------------------
+
+   procedure Set_Parse_File_Name (Proxy : access Process_Proxy;
+                                  Parse : Boolean)
+   is
+   begin
+      Proxy.Parse_File_Name := Parse;
+   end Set_Parse_File_Name;
+
+   -------------------------
+   -- Get_Parse_File_Name --
+   -------------------------
+
+   function Get_Parse_File_Name (Proxy : access Process_Proxy)
+                                return Boolean
+   is
+   begin
+      return Proxy.Parse_File_Name;
+   end Get_Parse_File_Name;
+
 end Process_Proxies;

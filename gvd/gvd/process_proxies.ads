@@ -52,6 +52,16 @@ package Process_Proxies is
    --  every callback in our application, but only set it to False for
    --  explicit user commands.
 
+   procedure Set_Parse_File_Name (Proxy : access Process_Proxy;
+                                  Parse : Boolean);
+   --  Indicate whether we should parse file names/line pattern in the output
+   --  of the debugger.
+
+   function Get_Parse_File_Name (Proxy : access Process_Proxy)
+                                return Boolean;
+   --  Indicate whether we should parse file names/line pattern in the output
+   --  of the debugger.
+
    function Get_Descriptor
      (Proxy : access Process_Proxy)
      return GNAT.Expect.Process_Descriptor_Access;
@@ -126,6 +136,11 @@ private
       Internal_Command   : Boolean := False;
       --  True if we are processing a set of commands that were not sent by
       --  the user, and whose output should be hidden.
+
+      Parse_File_Name    : Boolean := True;
+      --  True if file name/lines patterns should be recognized in the output
+      --  of the debugger. If set to False, the text displayed in the code
+      --  editor will not be changed.
    end record;
 
    type Gui_Process_Proxy is new Process_Proxy with null record;
