@@ -7,7 +7,7 @@
 @syncodeindex fn cp
 
 @set GPS
-@set GPSVersion 1.3.0
+@set GPSVersion 1.4.0
 
 @titlepage
 
@@ -5411,6 +5411,26 @@ when others =>
    null;
 end case;
 @end smallexample
+
+@item Reserved word casing
+How the editor should handle reserved words casing.
+The 4 possible values are: @code{Unchanged, Upper, Lower, Mixed}.
+@code{Unchanged} will keep the casing as-is;
+@code{Upper} will change the casing of all reserved words to upper case;
+@code{Lower} will change the casing to lower case;
+@code{Mixed} will change the casing to mixed case.
+
+@item Identifier casing
+How the editor should handle identifiers casing.
+The values are the same as for the @i{Reserved word casing} preference.
+
+@item Format operators/delimiters
+Whether the editor should add extra spaces around operators and delimiters
+if needed.
+If enabled, an extra space will be added when needed in the following cases:
+before an opening parenthesis;
+after a closing parenthesis, comma, semicolon;
+around all Ada operators (e.g. @code{<=}, @code{:=}, @code{=>}, @dots{})
 
 @end table
 
