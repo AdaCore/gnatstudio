@@ -929,7 +929,23 @@ package body Project_Properties is
       Project_Changed    : in out Boolean)
    is
       Iter  : Gtk_Tree_Iter := Get_Iter_First (Editor.Model);
+      Attr  : constant Attribute_Pkg :=
+        Build
+          (Package_Name   => Editor.Attribute.Pkg.all,
+           Attribute_Name => Editor.Attribute.Name.all);
+      Assoc : constant Projects.Associative_Array := Get_Attribute_Value
+        (Project, Attr);
    begin
+      --  Remove all the values that were previously set
+      for A in Assoc'Range loop
+         Delete_Attribute
+           (Project            => Project,
+            Scenario_Variables => Scenario_Variables,
+            Attribute          => Attr,
+            Attribute_Index    => Get_String (Assoc (A).Index));
+      end loop;
+
+      --  Now set the proper value
       while Iter /= Null_Iter loop
          declare
             Index : String := Get_String (Editor.Model, Iter, 0);
