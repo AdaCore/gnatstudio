@@ -37,7 +37,7 @@ with Glide_Kernel.Custom;  use Glide_Kernel.Custom;
 with Glide_Kernel.Modules; use Glide_Kernel.Modules;
 with Glide_Kernel.Project; use Glide_Kernel.Project;
 with Glide_Main_Window;    use Glide_Main_Window;
-with Commands;             use Commands;
+with Glide_Kernel.Task_Manager; use Glide_Kernel.Task_Manager;
 with Src_Info.Queries;     use Src_Info, Src_Info.Queries;
 with String_Hash;
 with System;               use System;
@@ -169,6 +169,7 @@ package body Glide_Kernel.Scripts is
    Tool_Cst       : aliased constant String := "tool";
    Force_Cst      : aliased constant String := "force";
    Action_Cst     : aliased constant String := "action";
+   Prefix_Cst     : aliased constant String := "prefix";
    Project_Cmd_Parameters : constant Cst_Argument_List :=
      (1 => Name_Cst'Access);
    Insmod_Cmd_Parameters  : constant Cst_Argument_List :=
@@ -199,6 +200,8 @@ package body Glide_Kernel.Scripts is
      (1 => Force_Cst'Access);
    Exec_Action_Parameters : constant Cst_Argument_List :=
      (1 => Action_Cst'Access);
+   Scenar_Var_Parameters : constant Cst_Argument_List :=
+     (1 => Prefix_Cst'Access);
 
    ----------
    -- Free --
@@ -663,16 +666,37 @@ package body Glide_Kernel.Scripts is
             if Action = No_Action then
                Set_Error_Msg (Data, -"No such registered action");
 
-            elsif Action.Context /= null
-              and then not Context_Matches (Action.Context, Kernel)
-            then
+            elsif not Filter_Matches (Action.Filter, Kernel) then
                Set_Error_Msg (Data, -"Invalid context for the action");
 
             else
                --  Have a small delay, since custom actions would launch
                --  external commands in background
-               Launch_Synchronous (Action.Command, Wait => 0.1);
+               Launch_Background_Command
+                 (Kernel, Action.Command, Destroy_On_Exit => False,
+                  Active => False, Queue_Id => "");
             end if;
+         end;
+
+      elsif Command = "scenario_variables" then
+         declare
+            Vars : constant Scenario_Variable_Array :=
+              Scenario_Variables (Kernel);
+         begin
+            for V in Vars'Range loop
+               Set_Return_Value (Data, Value_Of (Vars (V)));
+               Set_Return_Value_Key
+                 (Data, External_Reference_Of (Vars (V)));
+            end loop;
+         end;
+
+      elsif Command = "scenario_variables_cmd_line" then
+         Name_Parameters (Data, Scenar_Var_Parameters);
+         declare
+            Prefix : constant String := Nth_Arg (Data, 1, "");
+         begin
+            Set_Return_Value
+              (Data, Scenario_Variables_Cmd_Line (Kernel, Prefix));
          end;
 
       elsif Command = "input_dialog" then
@@ -1352,11 +1376,12 @@ package body Glide_Kernel.Scripts is
              & " bindings can be assigned through the keymanager. They are"
              & " either exported by GPS itself, or created through XML"
              & " customization files. The action is not executed if the"
-             & " current context is not appropriate for the action"),
+             & " current context is not appropriate for the action. This"
+             & " function is asynchronous, ie will return immediately before"
+             & " the action is completed."),
          Minimum_Args => 1,
          Maximum_Args => 1,
          Handler      => Default_Command_Handler'Access);
-
       Register_Command
         (Kernel,
          Command      => "parse_xml",
@@ -1369,6 +1394,28 @@ package body Glide_Kernel.Scripts is
              & "Optionally you can also pass the full contents of an XML file,"
              & " starting from the <?xml?> header"),
          Minimum_Args => 1,
+         Maximum_Args => 1,
+         Handler      => Default_Command_Handler'Access);
+      Register_Command
+        (Kernel,
+         Command      => "scenario_variables",
+         Return_Value => "hash",
+         Description  =>
+           -("Return the list of scenario variables for the current project "
+             & " hierarchy, and their current value"),
+         Minimum_Args => 0,
+         Maximum_Args => 0,
+         Handler      => Default_Command_Handler'Access);
+      Register_Command
+        (Kernel,
+         Command      => "scenario_variables_cmd_line",
+         Params       => Parameter_Names_To_Usage (Scenar_Var_Parameters, 1),
+         Return_Value => "string",
+         Description  =>
+           -("Return a concatenation of VARIABLE=VALUE, each preceded by the"
+             & " given prefix. This string will generally be used when calling"
+             & " external tool, for instance make or GNAT"),
+         Minimum_Args => 0,
          Maximum_Args => 1,
          Handler      => Default_Command_Handler'Access);
 
