@@ -86,7 +86,7 @@ package body Docgen.Work_On_Source is
       List_Ref_In_File : in out List_Reference_In_File.List;
       Source_File      : Virtual_File;
       File_Text        : GNAT.OS_Lib.String_Access;
-      Source_File_List : in out Type_Source_File_Table.HTable;
+      Source_File_List : Type_Source_File_Table.HTable;
       Options          : All_Options;
       Level            : in out Natural);
    --  Will pass the information about the body file to the output
@@ -158,9 +158,10 @@ package body Docgen.Work_On_Source is
       Level                     : in out Natural);
    --  Will process renamed and instantiated packages and pass
    --  them to the output subprogram.
-   --  Display_Private : indicate if we print the "Private" header.
-   --  Private_Entity  : indicate if it must process private/public entities
-   --  contained in Entity_List.
+   --  Display_Private : indicates whether the "Private" header should be
+   --                    displayed
+   --  Private_Entity  : indicates whether private/public entities
+   --                    contained in Entity_List must be processed
 
    procedure Process_Vars
      (B                : access Docgen.Backend.Backend'Class;
@@ -302,7 +303,7 @@ package body Docgen.Work_On_Source is
      (B               : access Docgen.Backend.Backend'Class;
       Kernel          : access Kernel_Handle_Record'Class;
       Result          : in out Unbounded_String;
-      Entity_List     : in out Type_Entity_List.List;
+      Entity_List     : Type_Entity_List.List;
       Source_Filename : VFS.Virtual_File;
       Package_Name    : String;
       Package_File    : VFS.Virtual_File;
@@ -372,13 +373,16 @@ package body Docgen.Work_On_Source is
 
    function Entity_Defined_In_Package
      (Entity_Info       : Entity_Information;
-      Package_Container : Entity_Information) return Boolean;
-   --  Determines if an entity is defined in a package.
+      Package_Container : Entity_Information)
+      return Boolean;
+   --  Determine whether an entity is defined in a package.
 
    function Package_Contain_Entity
      (Package_Entity : Entity_Information;
-      Entity_List    : Type_Entity_List.List) return Boolean;
-   --  Determines if there's entities defined in a the package
+      Entity_List    : Type_Entity_List.List)
+      return Boolean;
+   --  Determine whether at least one entity from a list is defined in
+   --  a package.
 
 --     function Is_Ignorable_Comment
 --       (Comment_Line : String) return Boolean;
@@ -452,6 +456,10 @@ package body Docgen.Work_On_Source is
       --  Different processing for spec and body files
 
       if Source_Is_Spec then
+
+         --  ??? Entity_List is always for files not compiled (no ALI file
+         --  generated). This is true for glu_h.ads for example.
+
          if not TEL.Is_Empty (Entity_List) then
             --  Parse the source file and create the Parsed_List
 
@@ -750,7 +758,7 @@ package body Docgen.Work_On_Source is
       List_Ref_In_File : in out List_Reference_In_File.List;
       Source_File      : Virtual_File;
       File_Text        : GNAT.OS_Lib.String_Access;
-      Source_File_List : in out Type_Source_File_Table.HTable;
+      Source_File_List : Type_Source_File_Table.HTable;
       Options          : All_Options;
       Level            : in out Natural) is
    begin
@@ -807,11 +815,12 @@ package body Docgen.Work_On_Source is
          Info := Get (Source_File_List, Sources.Table (S));
 
          if Info.Is_Spec then
-            Doc_Index_Item (B, Kernel, Result,
-                            Name      => Get_Unit_Name (Sources.Table (S)),
-                            Item_File => Sources.Table (S),
-                            Line      => First_File_Line,
-                            Doc_File  => Info.Doc_File_Name.all);
+            Doc_Index_Item
+              (B, Kernel, Result,
+               Name      => Get_Unit_Name (Sources.Table (S)),
+               Item_File => Sources.Table (S),
+               Line      => First_File_Line,
+               Doc_File  => Info.Doc_File_Name.all);
          end if;
       end loop;
 
@@ -833,7 +842,7 @@ package body Docgen.Work_On_Source is
      (B                             : access Docgen.Backend.Backend'Class;
       Kernel                        : access Kernel_Handle_Record'Class;
       Subprogram_Index_List         : Type_Entity_List.List;
-      Private_Subprogram_Index_List : in out Type_Entity_List.List;
+      Private_Subprogram_Index_List : Type_Entity_List.List;
       Source_File_List              : Type_Source_File_Table.HTable;
       Options                       : All_Options)
    is
@@ -842,14 +851,16 @@ package body Docgen.Work_On_Source is
       Result        : Unbounded_String;
 
       procedure Process_List
-        (List : Type_Entity_List.List; Public : Boolean);
+        (List   : Type_Entity_List.List;
+         Public : Boolean);
 
       ------------------
       -- Process_List --
       ------------------
 
       procedure Process_List
-        (List : Type_Entity_List.List; Public : Boolean)
+        (List   : Type_Entity_List.List;
+         Public : Boolean)
       is
          use TEL;
          Source                : Source_File;
@@ -915,7 +926,7 @@ package body Docgen.Work_On_Source is
      (B                       : access Docgen.Backend.Backend'Class;
       Kernel                  : access Kernel_Handle_Record'Class;
       Type_Index_List         : Docgen.Type_Entity_List.List;
-      Private_Type_Index_List : in out Type_Entity_List.List;
+      Private_Type_Index_List : Type_Entity_List.List;
       Source_File_List        : Type_Source_File_Table.HTable;
       Options                 : All_Options)
    is
@@ -931,7 +942,8 @@ package body Docgen.Work_On_Source is
       ------------------
 
       procedure Process_List
-        (List : Type_Entity_List.List; Public : Boolean)
+        (List   : Type_Entity_List.List;
+         Public : Boolean)
       is
          Type_Index_Node : Type_Entity_List.List_Node;
          Entity          : TEL.Data_Access;
@@ -994,8 +1006,8 @@ package body Docgen.Work_On_Source is
      (B                         : access Docgen.Backend.Backend'Class;
       Kernel                    : access Kernel_Handle_Record'Class;
       Tagged_Type_Index_List    : Docgen.List_Entity_Information.List;
-      Private_Tagged_Types_List : in out List_Entity_Information.List;
-      Source_File_List          : in out Type_Source_File_Table.HTable;
+      Private_Tagged_Types_List : List_Entity_Information.List;
+      Source_File_List          : Type_Source_File_Table.HTable;
       Options                   : All_Options)
    is
       Doc_File_Name : constant String := "index_tagged_type";
@@ -1010,16 +1022,18 @@ package body Docgen.Work_On_Source is
       --  Process a tagged type itself
 
       procedure Process_List
-        (List : List_Entity_Information.List; Public : Boolean);
+        (List   : List_Entity_Information.List;
+         Public : Boolean);
       --  Process a list of tagged types
 
       ---------------------
       -- Process_Parents --
       ---------------------
 
-      procedure Process_Parents (Info : Entity_Information) is
-         Parents   : constant Entity_Information_Array :=
-                     Get_Parent_Types (Info);
+      procedure Process_Parents (Info : Entity_Information)
+      is
+         Parents : constant Entity_Information_Array :=
+           Get_Parent_Types (Info);
       begin
          if Parents'Length /= 0 then
             for P in Parents'Range loop
@@ -1104,7 +1118,7 @@ package body Docgen.Work_On_Source is
         (List : List_Entity_Information.List; Public : Boolean)
       is
          use List_Entity_Information;
-         Node         : List_Entity_Information.List_Node;
+         Node : List_Entity_Information.List_Node;
       begin
          if not List_Entity_Information.Is_Empty (List) then
             if Options.Show_Private then
@@ -1152,7 +1166,7 @@ package body Docgen.Work_On_Source is
      (B               : access Docgen.Backend.Backend'Class;
       Kernel          : access Kernel_Handle_Record'Class;
       Result          : in out Unbounded_String;
-      Entity_List     : in out Type_Entity_List.List;
+      Entity_List     : Type_Entity_List.List;
       Source_Filename : VFS.Virtual_File;
       Package_Name    : String;
       Package_File    : Virtual_File;
@@ -1396,7 +1410,9 @@ package body Docgen.Work_On_Source is
       Info                     : Entity_Information;
 
    begin
-      if not TEL.Is_Empty (Entity_List) then
+      if Entity_List /= TEL.Null_List
+        and then not TEL.Is_Empty (Entity_List)
+      then
          First_Already_Set := False;
          Entity_Node := TEL.First (Entity_List);
          Entity_Node_Prec := TEL.Null_Node;
@@ -1434,7 +1450,7 @@ package body Docgen.Work_On_Source is
                      --  Check if the subtitle "Packages" has already been
                      --  set.
 
-                     if not First_Already_Set then
+                     if not First_Already_Set then -- ??? To be renamed.
                         Process_Header_Packages (B, Kernel, Result, Level);
                         First_Already_Set := True;
                      end if;
@@ -1462,6 +1478,8 @@ package body Docgen.Work_On_Source is
                         Level,
                         Entity => Info,
                         Header => "package " & Get_Name (Info).all & " is");
+                     --  ??? This does not work for generic packages...
+
                      Level := Level + 1;
 
                      --  Recursive call in order to deal with entity defined
@@ -1507,14 +1525,15 @@ package body Docgen.Work_On_Source is
                      else
                         Entity_Node := Next (Entity_Node_Prec);
                      end if;
+
                   else
                      Entity_Node_Prec := Entity_Node;
-                     Entity_Node := TEL.Next (Entity_Node);
+                     Entity_Node      := TEL.Next (Entity_Node);
                   end if;
 
                else
-                  --  The current package doesn't contain any declarations of
-                  --  entities.
+                  --  The current package doesn't contain declaration of any
+                  --  entity from the list.
 
                   Get_Whole_Header
                     (File_Text.all,
@@ -1583,6 +1602,9 @@ package body Docgen.Work_On_Source is
    exception
       when TEL.List_Empty =>
          Trace (Me, "Empty_List caught");
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Process_Packages;
 
    -------------------------
