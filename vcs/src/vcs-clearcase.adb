@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2003                       --
+--                     Copyright (C) 2001-2004                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -62,6 +62,9 @@ package body VCS.ClearCase is
    VCS_ClearCase_Module_Name : constant String := "ClearCase_Connectivity";
    VCS_ClearCase_Module_ID   : VCS_ClearCase_Module_ID_Access;
    ClearCase_Identifier      : constant String := "ClearCase";
+
+   Actions : Action_Array;
+   --  The label for ClearCase actions.
 
    -----------------------
    -- Local Subprograms --
@@ -778,13 +781,14 @@ package body VCS.ClearCase is
    procedure Commit
      (Rep       : access ClearCase_Record;
       Filenames : String_List.List;
-      Logs      : String_List.List)
+      Log       : String)
    is
       Kernel : Kernel_Handle
         renames VCS_ClearCase_Module_ID.ClearCase_Reference.Kernel;
 
       File_Node : List_Node := First (Filenames);
-      Logs_Node : List_Node := First (Logs);
+
+      --  ??? This checks-in every file with the same log.
 
    begin
       while File_Node /= Null_Node loop
@@ -795,8 +799,7 @@ package body VCS.ClearCase is
             Checkin_File_Command : External_Command_Access;
             Fail_Message         : Console_Command_Access;
             Success_Message      : Console_Command_Access;
-            Log_File             : constant String := Get_Tmp_Dir &
-              "clearcase_log_" & Base_Name (File);
+            Log_File             : constant String := Create_Tmp_File;
             Fd                   : GNAT.OS_Lib.File_Descriptor;
 
          begin
@@ -829,12 +832,13 @@ package body VCS.ClearCase is
             Fd := GNAT.OS_Lib.Create_File (Log_File, GNAT.OS_Lib.Binary);
 
             declare
-               Log           : aliased constant String := Data (Logs_Node);
+               The_Log       : aliased constant String := Log;
                Bytes_Written : Integer;
                pragma Unreferenced (Bytes_Written);
             begin
                Bytes_Written :=
-                 GNAT.OS_Lib.Write (Fd, Log (Log'First)'Address, Log'Length);
+                 GNAT.OS_Lib.Write
+                   (Fd, The_Log (The_Log'First)'Address, The_Log'Length);
             end;
 
             GNAT.OS_Lib.Close (Fd);
@@ -878,7 +882,6 @@ package body VCS.ClearCase is
          end;
 
          File_Node := Next (File_Node);
-         Logs_Node := Next (Logs_Node);
       end loop;
    end Commit;
 
@@ -1687,6 +1690,34 @@ package body VCS.ClearCase is
       VCS_ClearCase_Module_ID.ClearCase_Reference.Queue  := New_Queue;
 
       Register_VCS (VCS_Module_ID, ClearCase_Identifier);
+
+      --  ??? Need to adapt this to the ClearCase terminology.
+      Actions :=
+        (Status       => new String'(-"Query status"),
+         Open         => new String'(-"Start editing"),
+         Update       => new String'(-"Update"),
+         Commit       => new String'(-"Commit"),
+         History      => new String'(-"View revision history"),
+         Annotate     => new String'(-"Annotate"),
+         Diff_Head    => new String'(-"Diff against head rev."),
+         Diff_Working => new String'(-"Diff against working rev."),
+         Diff         => new String'(-"Diff against specific rev."),
+         Diff2        => new String'(-"Diff between two revisions"),
+         Add          => new String'(-"Add to repository"),
+         Remove       => new String'(-"Remove from repository"),
+         Revert       => new String'(-"Revert to repository revision"));
    end Register_Module;
+
+   ----------------------------
+   -- Get_Identified_Actions --
+   ----------------------------
+
+   function Get_Identified_Actions
+     (Rep : access ClearCase_Record) return Action_Array
+   is
+      pragma Unreferenced (Rep);
+   begin
+      return Actions;
+   end Get_Identified_Actions;
 
 end VCS.ClearCase;
