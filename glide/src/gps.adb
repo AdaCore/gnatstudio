@@ -121,14 +121,15 @@ procedure GPS is
 
    procedure Display_Splash_Screen is
       File   : constant String := Format_Pathname
-        (GPS.Prefix_Directory.all & "/share/gps/" &
-         Get_Pref (GPS.Kernel, Splash_Screen));
+        (GPS.Prefix_Directory.all & "/share/gps/gps-splash.jpg");
       Image  : Gtk_Image;
       Pixbuf : Gdk_Pixbuf;
       Error  : GError;
 
    begin
-      if Is_Regular_File (File) then
+      if Get_Pref (GPS.Kernel, Splash_Screen)
+        and then Is_Regular_File (File)
+      then
          Gtk_New (Splash, Window_Popup);
          Set_Policy (Splash,
                      Allow_Shrink => False,
