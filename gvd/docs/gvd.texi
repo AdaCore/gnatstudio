@@ -99,8 +99,7 @@ Limitations
 
 @noindent
 IMPORTANT Notice: this document is still very much a work in progress.
-Most sections are present, but many of them are empty of incomplete, and many
-cross references are also missing.
+Most sections are present, but many of them are still incomplete.
 
 GVD is a graphical front-end for text based debuggers such as GDB.
 A knowledge of the basics of the underlying debugger used by GVD will help
@@ -207,8 +206,8 @@ debuggers of a specific session in order to replay one, some or all of them.
 To select the debuggers, either click on the check box on the left of each
 item, or use the @i{Select All} and @i{Unselect All} buttons.
 If you confirm by clicking on the @i{OK} button, GVD will open a new
-debugger (???xref see New Debugger) for each sub session selected and will
-replay all the commands automatically.
+debugger for each sub session selected and will replay all the commands
+automatically.
 
 ???image
 
@@ -479,7 +478,9 @@ of breakpoints is recommended instead to stop programs.
 
 @subsection Data
 @itemize @bullet
-   @item Call Stack
+   @item Call Stack.
+      Display/Hide the Call Stack window inside the Data window.
+      See @ref{The Call Stack Window} for more details.
    @item Threads...
       Opens a new window containing the list of threads or tasks (depending on
       the current language) currently present in the executable. For each
@@ -536,12 +537,39 @@ of breakpoints is recommended instead to stop programs.
    To move it back to the main window, double click on the left area.
 
 @itemize @bullet
-  @item Run
+  @item Run.
+Run the program using the arguments set previousely (e.g on the command
+line).
   @item Start
-  @item Step/Stepi/Next/Nexti/Finish/Cont
+Same as @i{Run}, but stops at the beginning of the main subprogram.
+
+  @item Step.
+Step the program until it reaches a different source line.
+
+  @item Stepi.
+Step the program by one machine instruction exactly.
+
+  @item Next.
+Step the program, proceeding through subroutine calls.
+
+  @item Nexti.
+Step the program by one machine instruction but proceed through subroutine
+calls.
+
+  @item Finish.
+Continue until selected stack frame returns.
+
+  @item Cont.
+Continue the program being debugged.
+
   @item Up
   @item Down
   @item Interrupt
+Interrupt asynchronously the program being debugged. Note that depending on
+the state of the program, you may stop it in a low level system code that do
+not have debug information, or even in some cases, a coherent state. Use
+of breakpoints is recommended instead to stop programs.
+
 @end itemize
 
 @c --------------------------------------------------------------------
@@ -694,7 +722,7 @@ of breakpoints is recommended instead to stop programs.
    The source window is composed of two main areas: a small column on the left
    containing the following information:
    @itemize @bullet
-     @item lines with code
+     @item Lines with code.
 In this area, blue dots are shown that represent lines for which the debugger
 has debug information, in other words, lines that have been compiled with
 debug information and for which the compiler has generated some code.
@@ -703,8 +731,8 @@ line or not, and will blindly send to the underlying debugger the breakpoint
 command. This will usually (e.g in the case of gdb) result in setting a
 breakpoint in the closest location that matches the file and line that you
 specified.
-     @item current line executed
-     @item lines with breakpoints
+     @item Current line executed.
+     @item Lines with breakpoints.
    @end itemize
 
 @iftex
@@ -716,8 +744,17 @@ specified.
 
    Contextual menu:
    @itemize @bullet
-     @item Print @i{selection}
+     @item Print @i{selection}.
+Print the selection (or by default the name pointed by the cursor) in the
+debugger console.
+
      @item Display @i{selection}
+Display the selection (or by default the name pointed by the cursor) in the
+data window. The value will be automatically refreshed each time the process
+state changes (e.g after a step or a next command). To freeze the display
+in the canvas, you can either click on the corresponding icon in the data
+window, or use the contextual menu for the specific item (@ref{The Data Window}
+for more information).
 
      @item Set Breakpoint on Line @i{xx}
      @item Continue Until Line @i{xx}
@@ -794,6 +831,11 @@ time the value of the register (in this case eax) changes.
 @c --------------------------------------------------------------------
 
 @noindent
+This is the text window located at the bottom of the main window.
+In this console, you have direct access to the underlying debugger,
+and can send commands (you need to refer to the underlying debugger's
+documentation, but usually typing @i{help} will give you an overview of
+the commands available).
 
 @c --------------------------------------------------------------------
 @node The Status Line
@@ -801,6 +843,11 @@ time the value of the register (in this case eax) changes.
 @c --------------------------------------------------------------------
 
 @noindent
+This is the line located at the bottom of the main window. This area
+will contain information about events, and errors such as parsing errors.
+After a time out (that can be changed in the preferences menu), each
+message disappears and is added to the history of messages that can be
+accessed using the arrow located at the left of the status line.
 
 @c --------------------------------------------------------------------
 @node Integrating GVD
