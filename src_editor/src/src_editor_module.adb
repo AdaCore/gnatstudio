@@ -3982,8 +3982,6 @@ package body Src_Editor_Module is
       Editor_Class       : constant Class_Type := New_Class (Kernel, "Editor");
       Filter             : Action_Filter;
       Label              : Contextual_Menu_Label_Creator;
-      pragma Unreferenced (Label);
-
       Line_Numbers_Area_Filter : Action_Filter;
 
       Src_Action_Context : constant Action_Filter :=
@@ -4151,7 +4149,7 @@ package body Src_Editor_Module is
       Register_Contextual_Menu
         (Kernel, "Goto body of entity",
          Action     => Command,
-         Label      => -"Goto body of %e",
+         Label      => Label,
          Ref_Item   => "Goto declaration of entity",
          Add_Before => False,
          Filter     => Filter);
