@@ -1225,7 +1225,18 @@ package body Vsearch_Ext is
       end if;
 
       Grab_Focus (Vsearch.Pattern_Entry);
-      Present (Gtk_Window (Get_Toplevel (Vsearch)));
+
+      --  Under windows, Present has the undesirable effect of un-maximizing
+      --  the window. Therefore we do not call it when the child is docked.
+
+      declare
+         Child : constant MDI_Child := Find_MDI_Child
+           (Get_MDI (Vsearch.Kernel), Vsearch);
+      begin
+         if Is_Floating (Child) then
+            Present (Gtk_Window (Get_Toplevel (Vsearch)));
+         end if;
+      end;
 
    exception
       when E : others =>
