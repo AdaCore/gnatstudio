@@ -33,6 +33,8 @@ with Gtkada.Intl;               use Gtkada.Intl;
 with Gtkada.Dialogs;            use Gtkada.Dialogs;
 with Gtkada.Toolbar;            use Gtkada.Toolbar;
 
+with GUI_Utils;                 use GUI_Utils;
+
 with GVD.Main_Window;           use GVD.Main_Window;
 with GVD.Menu.Standalone;       use GVD.Menu.Standalone;
 with Debugger;
@@ -568,6 +570,12 @@ begin
       Free (Tmp_String);
    end loop;
 
+   --  Show the main window ASAP, and then set the cursor to busy while we
+   --  call Create_Debugger. Unset the busy cursor right after the call.
+
+   Show_All (Main_Debug_Window);
+   Set_Busy_Cursor (Get_Window (Main_Debug_Window), True);
+
    Process := Create_Debugger
      (Window          => Main_Debug_Window,
       Kind            => Debug_Type,
@@ -578,6 +586,7 @@ begin
       Remote_Target   => Target.all,
       Remote_Protocol => Protocol.all,
       Debugger_Name   => Debugger_Name.all);
+   Set_Busy_Cursor (Get_Window (Main_Debug_Window), False);
 
    Free (Program_Args);
 
