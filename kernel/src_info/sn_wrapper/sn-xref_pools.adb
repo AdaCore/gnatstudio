@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2002-2004                    --
---                            ACT-Europe                             --
+--                      Copyright (C) 2002-2005                      --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -346,9 +346,9 @@ package body SN.Xref_Pools is
      (Source_Filename : VFS.Virtual_File;
       Pool            : Xref_Pool) return Boolean
    is
-      Full : aliased constant String := Full_Name (Source_Filename).all;
+      Full      : aliased String := Full_Name (Source_Filename).all;
       Xref_Elmt : constant Xref_Elmt_Ptr :=
-        STable.Get (Pool.HTable, Full'Unrestricted_Access);
+        STable.Get (Pool.HTable, Full'Unchecked_Access);
    begin
       return Xref_Elmt /= null and then Xref_Elmt.Valid;
    end Is_Xref_Valid;
@@ -362,9 +362,9 @@ package body SN.Xref_Pools is
       Valid           : Boolean;
       Pool            : Xref_Pool)
    is
-      Full : aliased constant String := Full_Name (Source_Filename).all;
+      Full      : aliased String := Full_Name (Source_Filename).all;
       Xref_Elmt : constant Xref_Elmt_Ptr :=
-        STable.Get (Pool.HTable, Full'Unrestricted_Access);
+        STable.Get (Pool.HTable, Full'Unchecked_Access);
    begin
       if Xref_Elmt /= null then
          if Xref_Elmt.Valid /= Valid then

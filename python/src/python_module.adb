@@ -19,25 +19,25 @@
 -----------------------------------------------------------------------
 
 with Glib.Object;              use Glib.Object;
-with GPS.Kernel;             use GPS.Kernel;
-with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
-with GPS.Kernel.Modules;     use GPS.Kernel.Modules;
+with GPS.Kernel;               use GPS.Kernel;
+with GPS.Kernel.MDI;           use GPS.Kernel.MDI;
+with GPS.Kernel.Modules;       use GPS.Kernel.Modules;
 with Gtk.Text_View;            use Gtk.Text_View;
 with Gtk.Widget;               use Gtk.Widget;
 with Gtkada.MDI;               use Gtkada.MDI;
 with Glib.Xml_Int;             use Glib.Xml_Int;
-with GPS.Kernel.Console;     use GPS.Kernel.Console;
+with GPS.Kernel.Console;       use GPS.Kernel.Console;
 with Histories;                use Histories;
 with Python.GUI;               use Python, Python.GUI;
 with Python.Ada;               use Python.Ada;
-with GPS.Intl;               use GPS.Intl;
+with GPS.Intl;                 use GPS.Intl;
 with Interfaces.C.Strings;     use Interfaces.C, Interfaces.C.Strings;
 with Interactive_Consoles;     use Interactive_Consoles;
 with GNAT.OS_Lib;              use GNAT.OS_Lib;
 with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
 with Ada.Exceptions;           use Ada.Exceptions;
-with GPS.Kernel.Scripts;     use GPS.Kernel.Scripts;
+with GPS.Kernel.Scripts;       use GPS.Kernel.Scripts;
 with System;                   use System;
 with Traces;                   use Traces;
 with String_Utils;             use String_Utils;
@@ -488,7 +488,7 @@ package body Python_Module is
          Console      => null,
          Show_Command => False,
          Hide_Output  => False,
-         Errors       => Errors'Unrestricted_Access);
+         Errors       => Errors'Unchecked_Access);
 
       --  Preserve the focus on the console after interactive execution
       Grab_Focus (Get_View (Console));
@@ -530,7 +530,7 @@ package body Python_Module is
          Obj := Run_Command
            (Python_Module_Id.Script.Interpreter,
             "__builtins__.dir(" & Input (Start + 1 .. Last - 1) & ")",
-            Hide_Output => True, Errors => Errors'Unrestricted_Access);
+            Hide_Output => True, Errors => Errors'Unchecked_Access);
 
          if Obj = null then
             return Null_List;
@@ -732,7 +732,7 @@ package body Python_Module is
       Result := Run_Command
         (Python_Module_Id.Script.Interpreter,
          "import GPS", Hide_Output => True,
-         Errors => Errors'Unrestricted_Access);
+         Errors => Errors'Unchecked_Access);
 
       Python_Module_Id.Script.GPS_Unexpected_Exception := PyErr_NewException
         (GPS_Module_Name & ".Unexpected_Exception", null, null);
@@ -891,7 +891,7 @@ package body Python_Module is
            (Python_Module_Id.Script.Interpreter,
             "sys.path=[r'" & Dir & "']+sys.path",
             Hide_Output => True,
-            Errors      => Errors'Unrestricted_Access);
+            Errors      => Errors'Unchecked_Access);
 
          Open (D, Dir);
 
@@ -1481,7 +1481,7 @@ package body Python_Module is
             Console      => Console,
             Hide_Output  => Hide_Output,
             Show_Command => Show_Command,
-            Errors       => E'Unrestricted_Access);
+            Errors       => E'Unchecked_Access);
          Errors := E;
       end if;
    end Execute_Command;
@@ -1562,7 +1562,7 @@ package body Python_Module is
            (Script.Interpreter,
             Command     => Command,
             Hide_Output => True,
-            Errors      => Errors'Unrestricted_Access);
+            Errors      => Errors'Unchecked_Access);
 
          if Obj /= null and then PyFunction_Check (Obj) then
             return Execute_Command (Script, Obj, Args);
