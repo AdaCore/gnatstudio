@@ -86,6 +86,14 @@ Here is a first list of required data:
     A lot of general flags are needed (can the widget have the focus for
     keyboard events, default event mask,...). These will be integrated as
     we go along.
+  - "default children"
+    List of the children that are pre-created when a container is instantiated.
+    For instance, a file selection widget has several such widgets. When such
+    a widget is selected, the GUI builder first identifies the parent (widget
+    with a name), and then find which of its children was selected by comparing
+    the actual widgets with the fields of the container structure.
+    Note that these default children might depend on which constructor was
+    used.
 
 Format of the database file
 ===========================
@@ -109,11 +117,6 @@ fields, any order, ... And its syntax can be described in XML itself.
 
 See Annex A for technical description of the database, and Annex B for
 an example of its use.
-
-??? Remaining issues: Should provide a possibility to have a general
-    algorithm to convert subprogram names from one language to another, even
-    if it is possible to explicitly give them in the database file.
-
 
 Interface between the database and the GUI builder
 ==================================================
@@ -177,9 +180,11 @@ The format below is described in XMLSchema.
     the child becomes a box with both the child and the icon.
     The problem is to describe this in this database file...
 
-??? We are in fact missing information about all the default children that
-    are already there (Gtk_File_Selection), or that are automatically created
-    when using certain constructors (gtk_button_new_with_label).
+Some properties can not be changed dynamically (according to Glade): number
+of columns in the ctree for instance. In that case, we should transparently
+destroy the ctree and recreate a new one (and put back all the children
+if needed). These properties are identified with a special attribute
+"recreate" set to true.
 
 
 <schema xmlns="http://www.w3.org/2000/08/XMLSchema">
@@ -198,6 +203,29 @@ The format below is described in XMLSchema.
     </restriction></simpleType>
  </attribute>
 
+<!--  The format used for constructors. In some languages, the constructors
+      return the type that was just created. In other languages, this is the
+      first argument, that is set to the value of the new object -->
+
+<element name="constructors_format">
+    <simpleType><restriction base="string">
+        <enumeration value="return" />
+        <enumeration value="out" />
+    </restriction></simpleType>
+</element>
+
+<!--  Name conversion algorithm. This function is called to convert function
+      names from a language to another one. They are called every time no
+      other specific translation is given for an item. -->
+<element name="name_convert">
+    <complexType><simpleContent>
+        <extension base="string">
+            <attribute ref="src" use="default" value="C">
+            <attribute ref="dest" use="required">
+        </extension>
+    </simpleContent></complexType>
+ </element>
+
  <!--  Type used to describe the arguments to signal handlers or of
        properties. -->
 
@@ -210,6 +238,8 @@ The format below is described in XMLSchema.
  <element name="library">
     <complexType><sequence>
        <element ref="requires"    minOccurs="0" maxOccurs="unbounded" />
+       <element ref="constructors_format" minOccurs="0" maxOccurs="unbounded"/>
+       <element ref="name_convert" minOccurs="0" maxOccurs="unbounded" />
        <element ref="widget-type" minOccurs="1" maxOccurs="unbounded" />
     </sequence></complexType>
  </element>
@@ -316,7 +346,12 @@ Here is an example for a gtk+ database
    <!--  List of required libraries for this module -->
    <requires>  <name>gtk+</name>  <version>1.2.8</version>  </requires>
 
-   <constructors_format lang="Ada">in_out</constructors_format>
+   <!--  Indicate how constructors work in each language -->
+   <constructors_format lang="Ada">out</constructors_format>
+   <constructors_format lang="C">return</constructors_format>
+
+   <!--  Default name conversion function -->
+   <name_convert src="C" dest="Ada">convert_name</name_convert>
 
    <!--  First widget defined: Gtk_Button -->
 
@@ -348,7 +383,16 @@ Here is an example for a gtk+ database
       <new default="yes">
           <subprogram lang="C">   gtk_button_new_with_label  </subprogram>
           <subprogram lang="Ada"> Gtk_New                    </subprogram>
-          <extra_arg field="label" type="string" />
+          <extra_arg type="string"><field_value name="label"/></extra_arg>
+
+          <!--  This constructor builds default children -->
+          <default-child name="child1" type="gtkbutton"
+             <get lang="C"> $1->child </get>
+             <get lang="Ada"> Get_Child </get>
+             <property-value name="label"><field_value name="label"/>
+               </property-value> 
+        </default-child>
+
       </new>
 
       <!--  List of new signals defined in this class -->
@@ -375,7 +419,8 @@ Here is an example for a gtk+ database
       <child_type>gtkwidget</child_type>
 
       <!--  Public properties for that widget -->
-      <property name="in_button" read-only="true" type="boolean">
+      <property name="in_button" read-only="true" type="boolean"
+            default="false">
          <documentation>True if the cursor is inside the button</documentation>
          <get lang="C"> $1->in_button </get>
          <get lang="Ada"> Get_In_Button($1) </get>
@@ -384,7 +429,7 @@ Here is an example for a gtk+ database
       <!-- ??? Needs much more work: the C macro is still unclear. It also
            needs to remove the previous child, in case we go from text to
            icon for instance... -->
-      <property name="label" type="string">
+      <property name="label" type="string" default="">
          <documentation>The text displayed in the button</documentation>
          <set lang="C"> gtk_label_set_text (GTK_BIN ($1)->child, $2) </set>
          <get lang="C"> gtk_label_get (GTK_BIN ($1)->child, &$2) </get>
@@ -396,5 +441,40 @@ Here is an example for a gtk+ database
       <!--  Flags -->
       <flag name="eventmask">0x0000000000</flag>
    </widget_type>
+
+
+   <!--  File selection widget. This one has default children -->
+
+   <widget_type id="gtkfileselection"
+                page="dialogs"
+                min_children="0"
+                max_children="0"
+                parent="gtkwindow"
+                icon="fileselection.xpm">
+
+          ....
+
+        <!--  Declare one of the default children, and override one of its
+              properties -->
+
+        <default-child name="OK button" type="gtkbutton"
+             <get lang="C"> $1->ok_button </get>
+             <get lang="Ada"> Get_Ok_Button </get>
+             <property-value name="label">OK</property-value>
+        </default-child>
+
+   </widget_type>
+
+
+   <!--  Columned Tree. This widget has a property that can only be changed
+         by recreating the widget -->
+
+   <widget_type id="gtkctree"  ... >
+      <property name="columns" type="integer" default="3"
+                recreate="true">
+         <documentation>Number of columns in the widget</documentation>
+      </property>
+   </widget_type>
+
 
 </library>
