@@ -220,6 +220,12 @@ package body Glide_Menu is
       Widget : Limited_Widget);
    --  Build->Run menu
 
+   procedure On_Stop_Build
+     (Object : Data_Type_Access;
+      Action : Guint;
+      Widget : Limited_Widget);
+   --  Build->Stop Build menu
+
    procedure On_Debug_Executable
      (Object : Data_Type_Access;
       Action : Guint;
@@ -706,6 +712,7 @@ package body Glide_Menu is
          Console.Insert (Top.Kernel, Cmd, False);
       end if;
 
+      Top.Interrupted := False;
       Non_Blocking_Spawn
         (Fd, Args (Args'First).all, Args (Args'First + 1 .. Args'Last),
          Err_To_Out  => True);
@@ -713,10 +720,10 @@ package body Glide_Menu is
       loop
          Refresh;
 
-         --  ??? if Top.Terminated then
-         --     Interrupt (Fd);
-         --     return;
-         --  end if;
+         if Top.Interrupted then
+            Interrupt (Fd);
+            Console.Insert (Top.Kernel, "<^C>");
+         end if;
 
          Expect (Fd, Result, ".+", Timeout => 50);
 
@@ -736,7 +743,15 @@ package body Glide_Menu is
    exception
       when Process_Died =>
          Console.Insert (Top.Kernel, Expect_Out (Fd), Add_LF => False);
-         Print_Message (Top.Statusbar, Help, -"completed.");
+         --  ??? Check returned status.
+
+         if Top.Interrupted then
+            Top.Interrupted := False;
+            Print_Message (Top.Statusbar, Help, -"build interrupted.");
+         else
+            Print_Message (Top.Statusbar, Help, -"build completed.");
+         end if;
+
          Close (Fd);
 
       when E : others =>
@@ -770,6 +785,20 @@ package body Glide_Menu is
       when E : others =>
          Log_Exception (E);
    end On_Run;
+
+   -------------------
+   -- On_Stop_Build --
+   -------------------
+
+   procedure On_Stop_Build
+     (Object : Data_Type_Access;
+      Action : Guint;
+      Widget : Limited_Widget)
+   is
+      Top : constant Glide_Window := Glide_Window (Object);
+   begin
+      Top.Interrupted := True;
+   end On_Stop_Build;
 
    -------------------------
    -- On_Debug_Executable --
@@ -1314,7 +1343,7 @@ package body Glide_Menu is
          Gtk_New (-"/_Build/sep1", Item_Type => Separator),
          Gtk_New (-"/_Build/Execute...", "", Stock_Execute, On_Run'Access),
          Gtk_New (-"/_Build/sep2", Item_Type => Separator),
-         Gtk_New (-"/_Build/Stop Build", "", Stock_Stop, null),
+         Gtk_New (-"/_Build/Stop Build", "", Stock_Stop, On_Stop_Build'Access),
 
          Gtk_New (-"/_Debug", Item_Type => Branch),
          Gtk_New (-"/_Debug/Start", "", On_Run'Access),
