@@ -814,6 +814,7 @@ package body Src_Info.Queries is
          while R /= null loop
             --  Do not add labels to the scope tree, since these only bring
             --  syntactic information, and do not impact the code.
+
             if R.Value.Kind /= Label
               and then R.Value.Location /= Decl_Start
               and then R.Value.Location /=
@@ -854,6 +855,7 @@ package body Src_Info.Queries is
             --  Try to insert the declaration in the tree. Note that this might
             --  actually delete New_Item if the declaration doesn't fit in the
             --  tree.
+
             Add_Single_Entity (New_Item, L);
 
             Add_References (List.Value, L, Start_Of_Scope);
@@ -861,10 +863,11 @@ package body Src_Info.Queries is
          end loop;
       end Add_Declarations;
 
-      T : Scope_Tree;
-      L : Scope_List;
+      T         : Scope_Tree;
+      L         : Scope_List;
       File_List : File_Info_Ptr_List;
-      Dep : Dependency_File_Info_List;
+      Dep       : Dependency_File_Info_List;
+
    begin
       Assert
         (Me, Lib_Info.LI.Parsed, "Create_Tree: LI file hasn't been parsed");
@@ -896,7 +899,7 @@ package body Src_Info.Queries is
       return T;
 
    exception
-      when Assert_Failure =>
+      when Constraint_Error | Assert_Failure =>
          return Null_Scope_Tree;
    end Create_Tree;
 
