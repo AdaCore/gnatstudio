@@ -22,6 +22,8 @@ pragma Warnings (Off);
 with GNAT.Expect.TTY;
 pragma Warnings (On);
 
+with GNAT.OS_Lib;
+
 package SN.Browse is
    Unlink_Failure    : exception;
    Spawn_Failure     : exception;
