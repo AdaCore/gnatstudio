@@ -1635,7 +1635,6 @@ package body Display_Items is
    begin
       if GVD_Link (Link).Alias_Link then
          Remove_Link (Canvas, Link);
-         Destroy (Link);
       end if;
 
       return True;
