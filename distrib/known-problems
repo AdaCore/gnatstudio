@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 2.1.0
 
+- D817-008 Closing the Run window does not always terminate execution.
+  Problem:    In particular under Windows, and with multi-threaded programs,
+              closing the Run window does not terminate the execution.
+  Workaround: Terminate the program using "kill" (under UNIX) or the Windows
+              task manager.
+
 - D816-007 Double-clicking does not select identifiers containing digits
   Problem:    When an identifier contain digits, double-clicking on it does not
               select the entire word.
