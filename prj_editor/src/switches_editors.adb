@@ -1648,6 +1648,9 @@ package body Switches_Editors is
       pragma Unreferenced (Item);
    begin
       Edit_Switches_For_Context (Context, False);
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end Edit_Switches;
 
    -----------------------------
