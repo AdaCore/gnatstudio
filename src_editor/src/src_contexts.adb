@@ -390,7 +390,7 @@ package body Src_Contexts is
             for J in Last_Index .. Pos - 1 loop
                if Buffer (J) = ASCII.LF then
                   Line := Line + 1;
-                  Column := 0;
+                  Column := 1;
                else
                   Column := Column + 1;
                end if;
