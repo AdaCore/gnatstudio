@@ -10,7 +10,7 @@
 ##  # Main file(s) to compile
 ##   MAIN=
 ##
-##  # List of modules we depend on (supported are "gnat", "gvd", "gtkada")
+##  # List of modules we depend on
 ##  MODULES=
 ##
 ##  # List of files that shouldn't be compiled with style checks on.
@@ -47,7 +47,7 @@ OBJ_DIR?=../obj
 # style checks on.
 NO_STYLE_FILES+=${wildcard *_pkg.adb}
 
-CFLAGS+=-g
+CFLAGS+=-O2 -g
 GNATBIND_FLAGS+=-bargs -E
 GNATLINK_FLAGS+=
 GNATMAKE_FLAGS=-gnataQ -m ${CFLAGS}
@@ -87,6 +87,24 @@ endif
 check_gnat: force
 	@[ -f ${GNAT_SRC}/prj.ads ] || \
 	   (echo "GNAT sources not found in ${GNAT_SRC}, see README"; false)
+
+############################
+## DEBUGGER_COMMON module ##
+############################
+
+ifneq (,$(findstring debugger_common,$(MODULES)))
+
+# Location of GVD sources. See the README file at the top-level for
+# information on how to setup the required links
+GVDCOMMON_SRC=../../gvd
+
+MODULE_INCLUDE+=-I${GVDCOMMON_SRC}/common -I${GVDCOMMON_SRC}/pixmaps -I${GVDCOMMON_SRC}/gnat -aO${GVDCOMMON_SRC}/gvd
+endif
+
+.PHONY: check_debugger_common
+check_debugger_common: force
+	@[ -f ${GVDCOMMON_SRC}/common/language.ads ] || \
+	   (echo "GVD common sources not found in ${GVDCOMMON_SRC}, see README"; false)
 
 ################
 ## GVD module ##
@@ -249,24 +267,6 @@ endif
 check_kernel: force
 	@[ -f ${KERNEL_SRC}/src/glide_kernel.ads ] || \
 	   (echo "kernel sources not found in ${KERNEL_SRC}, see README"; false)
-
-###################
-## syntax module ##
-###################
-
-ifneq (,$(findstring syntax,$(MODULES)))
-
-# Location of syntax sources. See the README file at the top-level for
-# information on how to setup the required links
-SYNTAX_SRC=../../syntax
-
-MODULE_INCLUDE+=-aI${SYNTAX_SRC}/src -aO${SYNTAX_SRC}/obj
-endif
-
-.PHONY: check_syntax
-check_syntax: force
-	@[ -f ${SYNTAX_SRC}/src/source_analyzer.adb ] || \
-	   (echo "syntax sources not found in ${SYNTAX_SRC}, see README"; false)
 
 ##################
 ## glide module ##
