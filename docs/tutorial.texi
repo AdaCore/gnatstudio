@@ -76,13 +76,6 @@ experiment are available on multiple platforms, using the same user
 interface and capabilities, providing a user-friendly environment
 with a tight integration between the tools.
 
-@c --------------------------------------------------------------------
-@node Quick overview of the GPS areas
-@chapter Quick overview of the GPS areas
-@c --------------------------------------------------------------------
-
-@noindent
-
 Start GPS in the directory containing the tutorial files, or if the directory
 is read-only, copy the @file{tutorial} directory and its subdirectories in a
 local (writable) area, and start GPS from the @file{tutorial} directory, so
@@ -101,6 +94,13 @@ bar should be displayed in @i{blue}; then select the menu item
 @code{Window->Floating}: this will move the @i{Help} window outside GPS
 itself, allowing you to easily read this document while following the
 tutorial steps in the main window of GPS.
+
+@c --------------------------------------------------------------------
+@node Quick overview of the GPS areas
+@chapter Quick overview of the GPS areas
+@c --------------------------------------------------------------------
+
+@noindent
 
 Having launched GPS, you should now have access to a main window composed of
 several areas:
