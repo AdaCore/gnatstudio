@@ -120,7 +120,7 @@ package Python.Ada is
      (Module : PyObject; Func : PyMethodDef; Self : PyObject := null);
    --  Add a new function to Module.
    --  Do not free Func while this function is registered.
-   --  The first parameter to Func will be Self (defaults to Module is Self is
+   --  The first parameter to Func will be Self (defaults to Module if Self is
    --  null).
 
    ------------------
@@ -165,7 +165,7 @@ package Python.Ada is
    --       (Dict, "__module__", PyString_FromString ("mymodule"));
    --     Klass := PyClass_New
    --       (Create_Tuple ((1 => Lookup_Class_Object ("__builtin__", "file"))),
-   ---       Dict,
+   --        Dict,
    --        PyString_FromString ("Myclass"));
    --     Add_Method (Dict, Create_Method_Def (...), Klass);
    --     Add_Method (Dict, Create_Method_Def (...), Klass);
