@@ -42,7 +42,10 @@ package Commands.External is
       Args         : String_List.List;
       Head         : String_List.List;
       Handler      : String_List_Handler);
-   --  ???
+   --  Copies of Command, Dir, Args and Head are made internally.
+   --  Commands in Command are executed one after the other if the previous one
+   --  succeeded.
+   --  ??? Missing comments
 
    function Execute (Command : access External_Command) return Boolean;
 
