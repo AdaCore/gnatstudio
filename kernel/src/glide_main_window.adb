@@ -25,20 +25,15 @@ with Glib.Object;               use Glib.Object;
 with Glide_Kernel;              use Glide_Kernel;
 with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
 with Gtk.Box;                   use Gtk.Box;
-with Gtk.Check_Button;          use Gtk.Check_Button;
-with Gtk.Dialog;                use Gtk.Dialog;
 with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Frame;                 use Gtk.Frame;
 with Gtk.Image;                 use Gtk.Image;
 with Gtk.Main;                  use Gtk.Main;
 with Gtk.Rc;                    use Gtk.Rc;
-with Gtk.Stock;                 use Gtk.Stock;
 with Gtk.Window;                use Gtk.Window;
 with Gtk.Widget;                use Gtk.Widget;
-with Gtkada.Dialogs;            use Gtkada.Dialogs;
 with Gtkada.Handlers;           use Gtkada.Handlers;
 with Gtkada.MDI;                use Gtkada.MDI;
-with Glide_Intl;                use Glide_Intl;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with String_Utils;              use String_Utils;
@@ -109,51 +104,16 @@ package body Glide_Main_Window is
    -- Confirm_And_Quit --
    ----------------------
 
-   procedure Confirm_And_Quit
-     (Main_Window : access Glide_Window_Record'Class)
-   is
-      Dialog : constant Gtk_Dialog := Create_Gtk_Dialog
-        (Msg            => -"Are you sure you want to quit ?",
-         Dialog_Type    => Confirmation,
-         Title          => -"Exit GPS",
-         Parent         => Gtk_Window (Main_Window));
-      Button : Gtk_Widget;
-      Check  : Gtk_Check_Button;
-      Frame  : Gtk_Frame;
-
+   procedure Quit (Main_Window : access Glide_Window_Record'Class) is
    begin
-      Gtk_New (Frame, -"Actions before exiting");
-
-      Gtk_New (Check, -"Save current desktop and show next time");
-      Add (Frame, Check);
-      Pack_Start (Get_Vbox (Dialog), Frame);
-
-      Set_Active (Check, Get_Pref (Main_Window.Kernel, Save_Desktop_On_Exit));
-
-      Button := Add_Button (Dialog, Stock_Yes, Gtk_Response_Yes);
-      Grab_Default (Button);
-      Grab_Focus (Button);
-      Button := Add_Button (Dialog, Stock_No,  Gtk_Response_No);
-
-      Show_All (Dialog);
-
-      if Run (Dialog) = Gtk_Response_Yes
-        and then Save_All_MDI_Children (Main_Window.Kernel)
-      then
-         --  Save the status for the next time GPS is run
-         Set_Pref
-           (Main_Window.Kernel, Save_Desktop_On_Exit, Get_Active (Check));
-
-         if Get_Active (Check) then
+      if Save_All_MDI_Children (Main_Window.Kernel) then
+         if Get_Pref (Main_Window.Kernel, Save_Desktop_On_Exit) then
             Save_Desktop (Main_Window.Kernel);
          end if;
 
-         Destroy (Dialog);
          Main_Quit;
-      else
-         Destroy (Dialog);
       end if;
-   end Confirm_And_Quit;
+   end Quit;
 
 
    ---------------------
@@ -166,9 +126,7 @@ package body Glide_Main_Window is
    is
       pragma Unreferenced (Params);
    begin
-      if Save_All_MDI_Children (Glide_Window (Widget).Kernel) then
-         Main_Quit;
-      end if;
+      Quit (Glide_Window (Widget));
 
       return True;
    end Delete_Callback;
