@@ -34,9 +34,10 @@ with Glide_Kernel.Console;      use Glide_Kernel.Console;
 with Glide_Intl;                use Glide_Intl;
 with VFS;                       use VFS;
 
+
 package body Docgen.Work_On_File is
 
-   Me : constant Debug_Handle := Create ("Docgen");
+   Me : constant Debug_Handle := Create ("Docgen.Work_On_File");
 
    package TSFL renames Type_Source_File_List;
    package TEL  renames Type_Entity_List;
@@ -757,7 +758,10 @@ package body Docgen.Work_On_File is
       --  ??? This procedure is huge and contains too many nested ifs and
       --  loops. It should be split into smaller subprograms for clarity.
 
-      Trace (Me, "File name: " & Base_Name (Source_Filename));
+      if Full_Name (Source_Filename) /= null then
+         Trace (Me, "File name: " & Full_Name (Source_Filename).all);
+      end if;
+
       LI_Unit := Locate_From_Source_And_Complete
         (Kernel, Source_Filename, Check_Timestamp => False);
       LI_List := Get_LI_File_List (Kernel);
