@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2002                       --
+--                     Copyright (C) 2001-2003                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free software; you can redistribute it and/or modify  it   --
@@ -25,12 +25,15 @@ with Gdk.Window;                use Gdk.Window;
 with Gdk.Event;                 use Gdk.Event;
 with Gdk.Pixbuf;                use Gdk.Pixbuf;
 with Gtk.Box;                   use Gtk.Box;
+with Gtk.Combo;                 use Gtk.Combo;
+with Gtk.Container;             use Gtk.Container;
 with Gtk.Dialog;                use Gtk.Dialog;
 with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Handlers;              use Gtk.Handlers;
 with Gtk.Label;                 use Gtk.Label;
 with Gtk.Main;                  use Gtk.Main;
 with Gtk.Cell_Renderer_Text;    use Gtk.Cell_Renderer_Text;
+with Gtk.Object;
 with Gtk.Stock;                 use Gtk.Stock;
 with Gtk.Tree_Model;            use Gtk.Tree_Model;
 with Gtk.Tree_Selection;        use Gtk.Tree_Selection;
@@ -48,7 +51,6 @@ with String_Utils;              use String_Utils;
 with String_List_Utils;         use String_List_Utils;
 with Glide_Intl;                use Glide_Intl;
 with Glide_Main_Window;         use Glide_Main_Window;
-with Interactive_Consoles;      use Interactive_Consoles;
 with Default_Preferences;       use Default_Preferences;
 with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
 with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
@@ -113,6 +115,11 @@ package body Glide_Kernel is
    package Object_Callback is new Gtk.Handlers.Callback
      (Glib.Object.GObject_Record);
 
+   function Convert is new Ada.Unchecked_Conversion
+     (System.Address, Kernel_Handle);
+   function Convert is new Ada.Unchecked_Conversion
+     (Kernel_Handle, System.Address);
+
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Project_Registry'Class, Project_Registry_Access);
 
@@ -134,8 +141,10 @@ package body Glide_Kernel is
    --  Decl is set to No_Entity_Information and Status to Entity_Not_Found if
    --  the user didn't select any declaration.
 
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (Kernel_Module_Data_Record'Class, Kernel_Module_Data);
+   procedure General_Event_Handler
+     (Event : Gdk_Event; Kernel : System.Address);
+   --  Event handler called before even gtk can do its dispatching. This
+   --  intercepts all events going through the application
 
    --------------------------
    -- Get_Language_Handler --
@@ -162,6 +171,28 @@ package body Glide_Kernel is
       end if;
    end GNAT_Version;
 
+   ---------------------------
+   -- General_Event_Handler --
+   ---------------------------
+
+   procedure General_Event_Handler
+     (Event : Gdk_Event; Kernel : System.Address)
+   is
+      K : constant Kernel_Handle := Convert (Kernel);
+   begin
+      if Get_Event_Type (Event) = Key_Press
+        or else Get_Event_Type (Event) = Key_Release
+      then
+         --  If this is a special key, no need to further dispatch the event.
+         if Check_Key_Handlers (K, Event) then
+            return;
+         end if;
+      end if;
+
+      --  Dispatch the event in the standard gtk+ main loop
+      Gtk.Main.Do_Event (Event);
+   end General_Event_Handler;
+
    -------------
    -- Gtk_New --
    -------------
@@ -184,7 +215,6 @@ package body Glide_Kernel is
       Initialize_Class_Record
         (Handle, Signals, Kernel_Class, "GlideKernel", Signal_Parameters);
 
-      Glide_Kernel.Modules.Initialize (Handle);
       Handle.Main_Window  := Main_Window;
       Handle.Home_Dir     := new String'(Home_Dir);
 
@@ -224,6 +254,8 @@ package body Glide_Kernel is
       Handle.History := new History_Record;
       Load (Handle.History.all, Dir & "history");
       Set_Max_Length (Handle.History.all, History_Max_Length);
+
+      Event_Handler_Set (General_Event_Handler'Access, Convert (Handle));
    end Gtk_New;
 
    ------------------------------
@@ -957,13 +989,6 @@ package body Glide_Kernel is
    -- Free --
    ----------
 
-   procedure Free (X : in out Command_Information) is
-   begin
-      Free (X.Command);
-      Free (X.Usage);
-      Free (X.Description);
-   end Free;
-
    procedure Free (Module : in out Module_ID) is
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (Module_ID_Record'Class, Module_ID);
@@ -1155,7 +1180,6 @@ package body Glide_Kernel is
 
    procedure Pop_State (Handle : Kernel_Handle) is
       Window  : Glide_Window;
-      Console : Interactive_Console;
    begin
       if Handle = null then
          return;
@@ -1174,19 +1198,13 @@ package body Glide_Kernel is
             end if;
          end if;
 
-         if Window.State_Level = 0 then
-            Console := Get_Interactive_Console (Handle);
-
-            --  If console is null, it means we're exiting, so avoid accessing
-            --  fields that may have been deleted already
-
-            if Console /= null then
-               if Window.Timeout_Id /= 0 then
-                  Timeout_Remove (Window.Timeout_Id);
-                  Window.Timeout_Id := 0;
-                  Display_Default_Image (Handle);
-               end if;
-            end if;
+         if Window.State_Level = 0
+           and then not Gtk.Object.Destroyed_Is_Set (Get_Main_Window (Handle))
+           and then Window.Timeout_Id /= 0
+         then
+            Timeout_Remove (Window.Timeout_Id);
+            Window.Timeout_Id := 0;
+            Display_Default_Image (Handle);
          end if;
       end if;
    end Pop_State;
@@ -1514,6 +1532,8 @@ package body Glide_Kernel is
    is
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (History_Record, History);
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Key_Handler_List_Record, Key_Handler_List_Access);
       Dir : constant String := String_Utils.Name_As_Directory (Home_Dir);
    begin
       Trace (Me, "Saving preferences in " & Dir & "preferences");
@@ -1530,6 +1550,17 @@ package body Glide_Kernel is
       Destroy (Handle.Registry.all);
       Unchecked_Free (Handle.Registry);
 
+      declare
+         Tmp : Key_Handler_List_Access;
+      begin
+         while Handle.Key_Handler_List /= null loop
+            Tmp := Handle.Key_Handler_List.Next;
+            Unchecked_Free (Tmp);
+            Handle.Key_Handler_List := Tmp;
+         end loop;
+      end;
+
+
       if Handle.Current_Context /= null then
          Unref (Handle.Current_Context);
       end if;
@@ -1537,11 +1568,6 @@ package body Glide_Kernel is
       if Handle.Last_Context_For_Contextual /= null then
          Unref (Handle.Last_Context_For_Contextual);
       end if;
-
-      Command_List.Free (Handle.Commands_List);
-
-      Destroy (Handle.Modules_Data.all);
-      Unchecked_Free (Handle.Modules_Data);
 
       Destroy (Glide_Language_Handler (Handle.Lang_Handler));
       Reset (Handle.Source_Info_List);
@@ -1695,5 +1721,104 @@ package body Glide_Kernel is
    begin
       return Handle.Source_Info_List;
    end Get_LI_File_List;
+
+   ------------------------
+   -- Check_Key_Handlers --
+   ------------------------
+
+   function Check_Key_Handlers
+     (Kernel : access Kernel_Handle_Record;
+      Event  : Gdk.Event.Gdk_Event) return Boolean
+   is
+      Tmp    : Key_Handler_List_Access := Kernel.Key_Handler_List;
+      Result : Boolean := False;
+      Data   : aliased Event_Data_Record :=
+        (Kernel => Kernel_Handle (Kernel),
+         Event  => Event,
+         Widget => null);
+   begin
+      while Tmp /= null and then not Result loop
+         Result := Tmp.Handler (Data'Unchecked_Access);
+         Tmp := Tmp.Next;
+      end loop;
+      return Result;
+   end Check_Key_Handlers;
+
+   ---------------------------
+   -- Register_Key_Handlers --
+   ---------------------------
+
+   procedure Register_Key_Handlers
+     (Kernel  : access Kernel_Handle_Record;
+      Handler : General_Key_Handler)
+   is
+      Tmp : Key_Handler_List_Access;
+   begin
+      if Kernel.Key_Handler_List = null then
+         Kernel.Key_Handler_List := new Key_Handler_List_Record'
+           (Handler => Handler,
+            Next    => null);
+
+      else
+         Tmp := Kernel.Key_Handler_List;
+         while Tmp.Next /= null loop
+            Tmp := Tmp.Next;
+         end loop;
+
+         Tmp.Next := new Key_Handler_List_Record'
+           (Handler => Handler,
+            Next    => null);
+      end if;
+   end Register_Key_Handlers;
+
+   ----------------
+   -- Get_Widget --
+   ----------------
+
+   function Get_Widget (Data : Event_Data) return Gtk.Widget.Gtk_Widget is
+      W, W2 : Gtk_Widget;
+   begin
+      if Data.Widget = null then
+         W := Get_Event_Widget (Data.Event);
+         if W /= null then
+            W2 := W;
+
+            while W2 /= null and then W2.all in Gtk_Container_Record'Class loop
+               W  := W2;
+               W2 := Get_Focus_Child (Gtk_Container (W));
+            end loop;
+
+            if W2 /= null then
+               W := W2;
+            end if;
+
+            if W.all in Gtk_Combo_Record'Class then
+               W := Gtk_Widget (Get_Entry (Gtk_Combo (W)));
+            end if;
+         end if;
+
+         Data.Widget := W;
+      end if;
+
+      return Data.Widget;
+   end Get_Widget;
+
+   ---------------
+   -- Get_Event --
+   ---------------
+
+   function Get_Event (Data : Event_Data) return Gdk.Event.Gdk_Event is
+   begin
+      return Data.Event;
+   end Get_Event;
+
+   ----------------
+   -- Get_Kernel --
+   ----------------
+
+   function Get_Kernel (Data : Event_Data) return Kernel_Handle is
+   begin
+      return Data.Kernel;
+   end Get_Kernel;
 
 end Glide_Kernel;

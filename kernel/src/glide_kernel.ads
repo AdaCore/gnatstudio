@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2002                       --
+--                     Copyright (C) 2001-2003                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software; you  can redistribute it and/or modify  it --
@@ -28,6 +28,7 @@ with Glib.Object;
 with Glib.Values;
 with Glib.Xml_Int;
 with Gdk;
+with Gdk.Event;
 with Gtk.Handlers;
 with Gtk.Accel_Group;
 with Gtk.Main;
@@ -246,9 +247,9 @@ package Glide_Kernel is
       Filename : String) return Boolean;
    --  Whether Filename is currently opened in an editor.
 
-   --------------
-   -- Contexts --
-   --------------
+   ---------------
+   -- Module ID --
+   ---------------
 
    type Module_ID_Information (<>) is private;
    type Module_ID_Record is tagged private;
@@ -260,6 +261,21 @@ package Glide_Kernel is
    procedure Destroy (Id : in out Module_ID_Record);
    --  Free the memory associated with the module. By default, this does
    --  nothing.
+
+   function Get_Current_Module
+     (Kernel : access Kernel_Handle_Record) return Module_ID;
+   --  Return the module the currently selected MDI child belongs to.
+   --  null might be returned if there is either no selected child or GPS
+   --  couldn't find its module
+
+   procedure Free (Module : in out Module_ID);
+   --  Free memory associated to a Module_ID.
+
+   package Module_List is new Generic_List (Module_ID);
+
+   --------------
+   -- Contexts --
+   --------------
 
    type Selection_Context is tagged private;
    type Selection_Context_Access is access all Selection_Context'Class;
@@ -308,12 +324,6 @@ package Glide_Kernel is
    --  selection contexts.
    --  This function is mostly intended to be called for the callbacks in the
    --  menu bar.
-
-   function Get_Current_Module
-     (Kernel : access Kernel_Handle_Record) return Module_ID;
-   --  Return the module the currently selected MDI child belongs to.
-   --  null might be returned if there is either no selected child or GPS
-   --  couldn't find its module
 
    -------------
    -- Modules --
@@ -395,14 +405,6 @@ package Glide_Kernel is
    --  otherwise return True.
    --  Child is the widget that put directly in the MDI.
 
-   type Module_Command_Function is access function
-     (Kernel  : access Kernel_Handle_Record'Class;
-      Command : String;
-      Args    : GNAT.OS_Lib.Argument_List) return String;
-   --  A function called when an interactive command is issued.
-   --  Command is the command to be issued with parameters Args.
-   --  This function must NOT modify of free the contents of Args.
-
    type Module_Tooltip_Handler is access procedure
      (Context : access Selection_Context'Class;
       Pixmap  : out Gdk.Gdk_Pixmap;
@@ -421,6 +423,38 @@ package Glide_Kernel is
    --
    --  See the function GUI_Utils.Create_Pixmap_From_Text for an easy way to
    --  create a tooltip that only contains text
+
+   ------------------
+   -- Key handlers --
+   ------------------
+
+   type Event_Data is limited private;
+
+   type General_Key_Handler is access
+     function (Data : Event_Data) return Boolean;
+   --  Called when a key is pressed or released in GPS, before it is handled
+   --  by any of the widgets. Propagation to other handlers is stopped if True
+   --  is returned.
+
+   function Get_Widget (Data : Event_Data) return Gtk.Widget.Gtk_Widget;
+   --  Get the widget that would have received the key event
+
+   function Get_Event (Data : Event_Data) return Gdk.Event.Gdk_Event;
+   --  Get the event itself. It is a Key_Press or Key_Release
+
+   function Get_Kernel (Data : Event_Data) return Kernel_Handle;
+   --  Return the kernel
+
+   function Check_Key_Handlers
+     (Kernel : access Kernel_Handle_Record;
+      Event  : Gdk.Event.Gdk_Event) return Boolean;
+   --  Check all key handlers for the key event Event. True is returned if the
+   --  event was processed.
+
+   procedure Register_Key_Handlers
+     (Kernel  : access Kernel_Handle_Record;
+      Handler : General_Key_Handler);
+   --  Add a new key handler to the list of registered handlers
 
    ------------
    -- Saving --
@@ -680,20 +714,6 @@ package Glide_Kernel is
 
 private
 
-   type Command_Information is record
-      Command         : GNAT.OS_Lib.String_Access;
-      Usage           : GNAT.OS_Lib.String_Access;
-      Description     : GNAT.OS_Lib.String_Access;
-      Minimum_Args    : Natural;
-      Maximum_Args    : Natural;
-      Command_Handler : Module_Command_Function;
-   end record;
-
-   procedure Free (X : in out Command_Information);
-   --  Free memory associated with X.
-
-   package Command_List is new Generic_List (Command_Information);
-
    type Module_ID_Information (Name_Length : Natural) is record
       Name            : String (1 .. Name_Length);
       Priority        : Module_Priority;
@@ -717,20 +737,23 @@ private
       Ref_Count : Natural := 1;
    end record;
 
-   procedure Free (Module : in out Module_ID);
-   --  Free memory associated to a Module_ID.
+   type Key_Handler_List_Record;
+   type Key_Handler_List_Access is access Key_Handler_List_Record;
+   type Key_Handler_List_Record is record
+      Handler : General_Key_Handler;
+      Next    : Key_Handler_List_Access;
+   end record;
 
-   package Module_List is new Generic_List (Module_ID);
-
-   type Kernel_Module_Data_Record is abstract tagged null record;
-   type Kernel_Module_Data is access all Kernel_Module_Data_Record'Class;
-
-   procedure Destroy (Data : in out Kernel_Module_Data_Record) is abstract;
-   --  Destroy the data stored in Data.
+   type Event_Data_Record is record
+      Widget : Gtk.Widget.Gtk_Widget;
+      Event  : Gdk.Event.Gdk_Event;
+      Kernel : Kernel_Handle;
+   end record;
+   type Event_Data is access all Event_Data_Record;
 
    type Kernel_Handle_Record is new Glib.Object.GObject_Record with record
-      Commands_List : Command_List.List;
-      --  The list of all registered commands
+      Key_Handler_List : Key_Handler_List_Access;
+      --   The list of handlers for general key bindings
 
       Modules_List : Module_List.List;
       --  The list of all the modules that have been registered in this kernel.
@@ -752,7 +775,7 @@ private
       --  path.
 
       Source_Info_List : Src_Info.LI_File_List;
-      --  The semantic information associated to the files for the current
+      --  The semantic information associated with the files for the current
       --  project.
 
       Preferences : Default_Preferences.Preferences_Manager;
@@ -777,10 +800,6 @@ private
 
       Default_Desktop : Glib.Xml_Int.Node_Ptr;
       --  The tree describing the default desktop.
-
-      Modules_Data : Kernel_Module_Data;
-      --  The user data associated with glide_kernel-modules.ads.
-      --  This is really of type Glide_Kernel.Modules.Real_Module_Data.
 
       Open_Files : String_List_Utils.String_List.List;
       --  The list of currently open files.
