@@ -626,8 +626,8 @@ package body Src_Editor_Module is
          end if;
 
       elsif Command = "close"
-        or else Command = "edit_undo"
-        or else Command = "edit_redo"
+        or else Command = "edit.undo"
+        or else Command = "edit.redo"
       then
          Filename := Args (Args'First);
 
@@ -646,9 +646,9 @@ package body Src_Editor_Module is
 
                Box := Source_Box (Get_Widget (Child));
 
-               if Command = "edit_redo" then
+               if Command = "edit.redo" then
                   Redo (Box.Editor);
-               elsif Command = "edit_undo" then
+               elsif Command = "edit.undo" then
                   Undo (Box.Editor);
                end if;
             end;
@@ -3289,8 +3289,8 @@ package body Src_Editor_Module is
 
       Register_Command
         (Kernel,
-         Command      => "edit_undo",
-         Usage        => "edit_undo file",
+         Command      => "edit.undo",
+         Usage        => "edit.undo file",
          Description  => -"Undo the last edition command for file.",
          Minimum_Args => 1,
          Maximum_Args => 1,
@@ -3298,8 +3298,8 @@ package body Src_Editor_Module is
 
       Register_Command
         (Kernel,
-         Command      => "edit_redo",
-         Usage        => "edit_redo file",
+         Command      => "edit.redo",
+         Usage        => "edit.redo file",
          Description  => -"Redo the last edition command for file.",
          Minimum_Args => 1,
          Maximum_Args => 1,
