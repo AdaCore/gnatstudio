@@ -75,6 +75,15 @@ package Default_Preferences is
       Flags             : Param_Flags := Param_Readable or Param_Writable)
       return Param_Spec_Key;
 
+   type Param_Spec_Style is new Glib.Properties.Creation.Param_Spec_String;
+   function Gnew_Style
+     (Name, Nick, Blurb : String;
+      Default_Font      : String;
+      Default_Fg        : String;
+      Default_Bg        : String;
+      Flags             : Param_Flags := Param_Readable or Param_Writable)
+      return Param_Spec_Style;
+
    procedure Register_Property
      (Manager : access Preferences_Manager_Record;
       Param   : Glib.Param_Spec;
@@ -117,6 +126,15 @@ package Default_Preferences is
       Pref     : Param_Spec_Key;
       Modifier : out Gdk.Types.Gdk_Modifier_Type;
       Key      : out Gdk.Types.Gdk_Key_Type);
+   function Get_Pref_Font
+     (Manager  : access Preferences_Manager_Record;
+      Pref     : Param_Spec_Style) return Pango.Font.Pango_Font_Description;
+   function Get_Pref_Fg
+     (Manager  : access Preferences_Manager_Record;
+      Pref     : Param_Spec_Style) return Gdk.Color.Gdk_Color;
+   function Get_Pref_Bg
+     (Manager  : access Preferences_Manager_Record;
+      Pref     : Param_Spec_Style) return Gdk.Color.Gdk_Color;
    --  Get the value for a preference. The default value is returned if the
    --  user hasn't explicitely overriden it.
    --  Colors have already been allocated when they are returned.
@@ -140,6 +158,10 @@ package Default_Preferences is
       Name     : String;
       Modifier : Gdk.Types.Gdk_Modifier_Type;
       Key      : Gdk.Types.Gdk_Key_Type);
+   procedure Set_Pref
+     (Manager      : access Preferences_Manager_Record;
+      Name         : String;
+      Font, Fg, Bg : String);
    --  Change the value of a preference. This overrides the default value if
    --  this preference is set for the first time.
    --  Checks are made to make sure the type of Name is valid.

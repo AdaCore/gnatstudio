@@ -77,8 +77,8 @@ package body Default_Preferences is
      (Preference_Information, Preference_Information_Access);
 
    type Nodes is record
-      Top   : Node_Ptr;
-      Param : Param_Spec;
+      Top     : Node_Ptr;
+      Param   : Param_Spec;
    end record;
    package Param_Handlers is new Gtk.Handlers.User_Callback
      (Glib.Object.GObject_Record, Nodes);
@@ -153,6 +153,14 @@ package body Default_Preferences is
       Data  : Nodes);
    --  Called when a color has changed.
 
+   procedure Bg_Color_Changed
+     (Combo : access GObject_Record'Class; Data  : Nodes);
+   --  Called when the background color of a style has changed.
+
+   procedure Fg_Color_Changed
+     (Combo : access GObject_Record'Class; Data  : Nodes);
+   --  Called when the foreground color of a style has changed.
+
    function Value (S : String) return String;
    --  Return the string as is (used for instantiation of Generic_Get_Pref)
 
@@ -179,6 +187,23 @@ package body Default_Preferences is
    procedure From_String
      (Descr : String; Modif : out Gdk_Modifier_Type; Key : out Gdk_Key_Type);
    --  Convert a modifier to or from a string
+
+   function To_String (Font, Fg, Bg : String) return String;
+   function Style_Token (Value : String; Num : Positive) return String;
+   --  Handling of Param_Spec_Style
+
+   procedure Get_Font
+     (Manager : access Preferences_Manager_Record'Class;
+      Pref    : Param_Spec;
+      N       : in out Node_Ptr;
+      Desc    : in out Pango_Font_Description);
+   --  Check that Desc is a valid font, and associate it with the node N.
+
+   function Create_Box_For_Font
+     (N            : Nodes;
+      Desc         : Pango_Font_Description;
+      Button_Label : String) return Gtk_Box;
+   --  Create a box suitable for editing fonts
 
    -------------------
    -- Destroy_Cache --
@@ -285,6 +310,27 @@ package body Default_Preferences is
       Set_Value_Type (Param_Spec (P), Gdk.Keyval.Get_Type);
       return P;
    end Gnew_Key;
+
+   ----------------
+   -- Gnew_Style --
+   ----------------
+
+   function Gnew_Style
+     (Name, Nick, Blurb : String;
+      Default_Font      : String;
+      Default_Fg        : String;
+      Default_Bg        : String;
+      Flags             : Param_Flags := Param_Readable or Param_Writable)
+      return Param_Spec_Style
+   is
+      P : constant Param_Spec_Style := Param_Spec_Style
+        (Gnew_String (Name, Nick, Blurb,
+                      To_String (Default_Font, Default_Fg, Default_Bg),
+                      Flags));
+   begin
+      Set_Value_Type (Param_Spec (P), Gtk.Style.Get_Type);
+      return P;
+   end Gnew_Style;
 
    -----------------------
    -- Register_Property --
@@ -491,6 +537,115 @@ package body Default_Preferences is
       From_String (Default (Param_Spec_String (Pref)), Modifier, Key);
    end Get_Pref;
 
+   -------------------
+   -- Get_Pref_Font --
+   -------------------
+
+   function Get_Pref_Font
+     (Manager  : access Preferences_Manager_Record;
+      Pref     : Param_Spec_Style) return Pango_Font_Description
+   is
+      N    : Node_Ptr := Find_Node_By_Spec (Manager, Param_Spec (Pref));
+      Desc : Pango_Font_Description;
+   begin
+      if N /= null and then N.Value.all /= "" then
+         if N.Specific_Data.Descr /= null then
+            return N.Specific_Data.Descr;
+         end if;
+
+         Desc := From_String (Style_Token (N.Value.all, 1));
+      else
+         Desc := From_String
+           (Style_Token (Default (Param_Spec_String (Pref)), 1));
+      end if;
+
+      Get_Font (Manager, Param_Spec (Pref), N, Desc);
+      return Desc;
+   end Get_Pref_Font;
+
+   --------------
+   -- Get_Font --
+   --------------
+
+   procedure Get_Font
+     (Manager : access Preferences_Manager_Record'Class;
+      Pref    : Param_Spec;
+      N       : in out Node_Ptr;
+      Desc    : in out Pango_Font_Description)
+   is
+      use type Gdk.Gdk_Font;
+   begin
+      --  Check that the font exists, or use a default, to avoid crashes
+      if From_Description (Desc) = null then
+         Free (Desc);
+         Desc := From_String (Fallback_Font);
+      end if;
+
+      --  We must have a node to store the cached font description and avoid
+      --  memory leaks.
+      if N = null then
+         if Value_Type (Pref) = Pango.Font.Get_Type then
+            Set_Pref (Manager, Pspec_Name (Pref), To_String (Desc));
+         else
+            Set_Pref
+              (Manager, Pspec_Name (Pref),
+               To_String
+               (Font => To_String (Desc),
+                Fg   => Style_Token (Default (Param_Spec_String (Pref)), 2),
+                Bg   => Style_Token (Default (Param_Spec_String (Pref)), 3)));
+         end if;
+         N := Find_Node_By_Spec (Manager, Pref);
+      end if;
+
+      N.Specific_Data.Descr := Desc;
+   end Get_Font;
+
+   -----------------
+   -- Get_Pref_Fg --
+   -----------------
+
+   function Get_Pref_Fg
+     (Manager  : access Preferences_Manager_Record;
+      Pref     : Param_Spec_Style) return Gdk.Color.Gdk_Color
+   is
+      N : Node_Ptr := Find_Node_By_Spec (Manager, Param_Spec (Pref));
+      Color : Gdk_Color;
+   begin
+      if N = null then
+         Set_Pref
+           (Manager, Pspec_Name (Param_Spec (Pref)),
+            Default (Param_Spec_String (Pref)));
+         N := Find_Node_By_Spec (Manager, Param_Spec (Pref));
+      end if;
+
+      Color := Parse (Style_Token (N.Value.all, 2));
+      Alloc (Gtk.Widget.Get_Default_Colormap, Color);
+      return Color;
+   end Get_Pref_Fg;
+
+   -----------------
+   -- Get_Pref_Bg --
+   -----------------
+
+   function Get_Pref_Bg
+     (Manager  : access Preferences_Manager_Record;
+      Pref     : Param_Spec_Style) return Gdk.Color.Gdk_Color
+   is
+      N : Node_Ptr := Find_Node_By_Spec (Manager, Param_Spec (Pref));
+      Color : Gdk_Color;
+   begin
+      if N = null then
+         Set_Pref
+           (Manager, Pspec_Name (Param_Spec (Pref)),
+            Default (Param_Spec_String (Pref)));
+         N := Find_Node_By_Spec (Manager, Param_Spec (Pref));
+      end if;
+
+      Color := Parse (Style_Token (N.Value.all, 3));
+      Alloc (Gtk.Widget.Get_Default_Colormap, Color);
+      return Color;
+   end Get_Pref_Bg;
+
    --------------
    -- Get_Pref --
    --------------
@@ -499,7 +654,6 @@ package body Default_Preferences is
      (Manager : access Preferences_Manager_Record;
       Pref    : Param_Spec_Font) return Pango.Font.Pango_Font_Description
    is
-      use type Gdk.Gdk_Font;
       N : Node_Ptr := Find_Node_By_Spec (Manager, Param_Spec (Pref));
       Desc : Pango_Font_Description;
    begin
@@ -515,21 +669,7 @@ package body Default_Preferences is
          Desc := From_String (Default (Pref));
       end if;
 
-      --  Check that the font exists, or use a default, to avoid crashes
-      if From_Description (Desc) = null then
-         Free (Desc);
-         Desc := From_String (Fallback_Font);
-      end if;
-
-      --  We must have a node to store the cached font description and avoid
-      --  memory leaks.
-      if N = null then
-         Set_Pref (Manager, Pspec_Name (Param_Spec (Pref)), To_String (Desc));
-         N := Find_Node_By_Spec (Manager, Param_Spec (Pref));
-      end if;
-
-      N.Specific_Data.Descr := Desc;
-
+      Get_Font (Manager, Param_Spec (Pref), N, Desc);
       return Desc;
    end Get_Pref;
 
@@ -587,6 +727,18 @@ package body Default_Preferences is
       Set_Pref
         (Manager.Preferences, Name,
          To_String (Modifier) & Gdk.Keyval.Name (Key));
+   end Set_Pref;
+
+   --------------
+   -- Set_Pref --
+   --------------
+
+   procedure Set_Pref
+     (Manager      : access Preferences_Manager_Record;
+      Name         : String;
+      Font, Fg, Bg : String) is
+   begin
+      Set_Pref (Manager.Preferences, Name, To_String (Font, Fg, Bg));
    end Set_Pref;
 
    --------------
@@ -660,15 +812,9 @@ package body Default_Preferences is
                N2.Value := new String'
                  (Boolean'Image (Default (Param_Spec_Boolean (N.Param))));
 
-            elsif Value_Type (N.Param) = GType_String
-              or else Value_Type (N.Param) = Gdk_Color_Type
-              or else Value_Type (N.Param) = Pango.Font.Get_Type
-            then
+            else
                N2.Value := new String'
                  (Default (Param_Spec_String (N.Param)));
-
-            else
-               N2.Value := new String'("");
             end if;
 
             Add_Child (Manager.Preferences, N2);
@@ -878,6 +1024,66 @@ package body Default_Preferences is
       Set_Pref (Data.Top, Pspec_Name (Data.Param), Get_Color (C));
    end Color_Changed;
 
+   ----------------------
+   -- Fg_Color_Changed --
+   ----------------------
+
+   procedure Fg_Color_Changed
+     (Combo : access GObject_Record'Class;
+      Data  : Nodes)
+   is
+      C : constant Gvd_Color_Combo := Gvd_Color_Combo (Combo);
+      N : constant Node_Ptr := Find_Node_By_Name
+        (Data.Top, Pspec_Name (Data.Param));
+   begin
+      if N.Value = null then
+         declare
+            V : constant String := Default (Param_Spec_String (Data.Param));
+         begin
+            Set_Pref (Data.Top, Pspec_Name (Data.Param),
+                      To_String (Font => Style_Token (V, 1),
+                                 Fg   => Get_Color (C),
+                                 Bg   => Style_Token (V, 3)));
+         end;
+
+      else
+         Set_Pref (Data.Top, Pspec_Name (Data.Param),
+                   To_String (Font => Style_Token (N.Value.all, 1),
+                              Fg   => Get_Color (C),
+                              Bg   => Style_Token (N.Value.all, 3)));
+      end if;
+   end Fg_Color_Changed;
+
+   ----------------------
+   -- Bg_Color_Changed --
+   ----------------------
+
+   procedure Bg_Color_Changed
+     (Combo : access GObject_Record'Class;
+      Data  : Nodes)
+   is
+      C : constant Gvd_Color_Combo := Gvd_Color_Combo (Combo);
+      N : constant Node_Ptr := Find_Node_By_Name
+        (Data.Top, Pspec_Name (Data.Param));
+   begin
+      if N.Value = null then
+         declare
+            V : constant String := Default (Param_Spec_String (Data.Param));
+         begin
+            Set_Pref (Data.Top, Pspec_Name (Data.Param),
+                      To_String (Font => Style_Token (V, 1),
+                                 Fg   => Style_Token (V, 2),
+                                 Bg   => Get_Color (C)));
+         end;
+
+      else
+         Set_Pref (Data.Top, Pspec_Name (Data.Param),
+                   To_String (Font => Style_Token (N.Value.all, 1),
+                              Fg   => Style_Token (N.Value.all, 2),
+                              Bg   => Get_Color (C)));
+      end if;
+   end Bg_Color_Changed;
+
    ---------------
    -- To_String --
    ---------------
@@ -934,6 +1140,42 @@ package body Default_Preferences is
       Key := From_Name (Descr (Start .. Descr'Last));
    end From_String;
 
+   ---------------
+   -- To_String --
+   ---------------
+
+   function To_String (Font, Fg, Bg : String) return String is
+   begin
+      return Font & '@' & Fg & '@' & Bg;
+   end To_String;
+
+   -----------------
+   -- Style_Token --
+   -----------------
+
+   function Style_Token (Value : String; Num : Positive) return String is
+      Start, Last : Natural := Value'First;
+      N : Natural := Num;
+   begin
+      loop
+         if Last > Value'Last then
+            return Value (Start .. Last - 1);
+
+         elsif Value (Last) = '@' then
+            N := N - 1;
+            if N = 0 then
+               return Value (Start .. Last - 1);
+            end if;
+
+            Start := Last + 1;
+         end if;
+
+         Last := Last + 1;
+      end loop;
+
+      return "";
+   end Style_Token;
+
    -----------------
    -- Select_Font --
    -----------------
@@ -948,6 +1190,7 @@ package body Default_Preferences is
       Result : Boolean;
       Tmp    : Gtk_Widget;
       pragma Unreferenced (Result, Tmp);
+      N      : Node_Ptr;
 
    begin
       Gtk_New (Dialog,
@@ -966,12 +1209,70 @@ package body Default_Preferences is
 
       if Run (Dialog) = Gtk_Response_OK then
          Set_Text (E, Get_Font_Name (F));
-         Set_Pref (Data.Top, Pspec_Name (Data.Param), Get_Text (E));
+
+         if Value_Type (Data.Param) = Pango.Font.Get_Type then
+            Set_Pref (Data.Top, Pspec_Name (Data.Param), Get_Text (E));
+         else
+            N := Find_Node_By_Name (Data.Top, Pspec_Name (Data.Param));
+
+            if N.Value /= null then
+               Set_Pref
+                 (Data.Top, Pspec_Name (Data.Param),
+                  To_String (Font => Get_Text (E),
+                             Fg   => Style_Token (N.Value.all, 2),
+                             Bg   => Style_Token (N.Value.all, 3)));
+            else
+               Set_Pref
+                 (Data.Top, Pspec_Name (Data.Param),
+                  To_String (Font => Get_Text (E),
+                             Fg   => Style_Token
+                               (Default (Param_Spec_String (Data.Param)), 2),
+                             Bg   => Style_Token
+                               (Default (Param_Spec_String (Data.Param)), 3)));
+            end if;
+         end if;
          Reset_Font (E);
       end if;
 
       Destroy (Dialog);
    end Select_Font;
+
+   -------------------------
+   -- Create_Box_For_Font --
+   -------------------------
+
+   function Create_Box_For_Font
+     (N            : Nodes;
+      Desc         : Pango_Font_Description;
+      Button_Label : String) return Gtk_Box
+   is
+      Box : Gtk_Box;
+      Ent : Gtk_Entry;
+      Button : Gtk_Button;
+   begin
+      Gtk_New_Hbox (Box, Homogeneous => False);
+      Gtk_New (Ent);
+      Pack_Start (Box, Ent, Expand => True, Fill => True);
+
+      Gtk_New (Button, Button_Label);
+      Pack_Start (Box, Button, Expand => False, Fill => False);
+      Param_Handlers.Object_Connect
+        (Button, "clicked",
+         Param_Handlers.To_Marshaller (Select_Font'Access),
+         Slot_Object => Ent,
+         User_Data => N);
+
+      Return_Param_Handlers.Connect
+        (Ent, "focus_out_event",
+         Return_Param_Handlers.To_Marshaller (Font_Entry_Changed'Access),
+         User_Data   => N);
+
+      Set_Style (Ent, Copy (Get_Style (Ent)));
+      Set_Font_Description (Get_Style (Ent), Desc);
+      Set_Text (Ent, To_String (Desc));
+      Reset_Font (Ent);
+      return Box;
+   end Create_Box_For_Font;
 
    -------------------
    -- Editor_Widget --
@@ -1086,6 +1387,37 @@ package body Default_Preferences is
             return Gtk_Widget (Ent);
          end;
 
+      elsif Typ = Gtk.Style.Get_Type then
+         declare
+            Prop : constant Param_Spec_Style := Param_Spec_Style (Param);
+            Box : Gtk_Box;
+            F   : constant Gtk_Box := Create_Box_For_Font
+              (N, Get_Pref_Font (Manager, Prop), "...");
+            Combo : Gvd_Color_Combo;
+         begin
+            Gtk_New_Hbox (Box, Homogeneous => False);
+            Pack_Start (Box, F, Expand => True, Fill => True);
+
+            Gtk_New (Combo);
+            Pack_Start (Box, Combo, Expand => False);
+            Set_Color (Combo, Get_Pref_Fg (Manager, Prop));
+            Param_Handlers.Connect
+              (Combo, "color_changed",
+               Param_Handlers.To_Marshaller (Fg_Color_Changed'Access),
+               User_Data   => N);
+
+            Gtk_New (Combo);
+            Pack_Start (Box, Combo, Expand => False);
+            Set_Color (Combo, Get_Pref_Bg (Manager, Prop));
+            Param_Handlers.Connect
+              (Combo, "color_changed",
+               Param_Handlers.To_Marshaller (Bg_Color_Changed'Access),
+               User_Data   => N);
+
+            return Gtk_Widget (Box);
+         end;
+
+
       elsif Typ = Gdk.Color.Gdk_Color_Type then
          declare
             Prop : constant Param_Spec_Color := Param_Spec_Color (Param);
@@ -1105,33 +1437,9 @@ package body Default_Preferences is
       elsif Typ = Pango.Font.Get_Type then
          declare
             Prop : constant Param_Spec_Font := Param_Spec_Font (Param);
-            Box : Gtk_Box;
-            Ent : Gtk_Entry;
-            Button : Gtk_Button;
          begin
-            Gtk_New_Hbox (Box, Homogeneous => False);
-            Gtk_New (Ent);
-            Pack_Start (Box, Ent, Expand => True, Fill => True);
-
-            Gtk_New (Button, -"Browse");
-            Pack_Start (Box, Button, Expand => False, Fill => False);
-            Param_Handlers.Object_Connect
-              (Button, "clicked",
-               Param_Handlers.To_Marshaller (Select_Font'Access),
-               Slot_Object => Ent,
-               User_Data => N);
-
-            Return_Param_Handlers.Connect
-              (Ent, "focus_out_event",
-               Return_Param_Handlers.To_Marshaller (Font_Entry_Changed'Access),
-               User_Data   => N);
-
-            Set_Style (Ent, Copy (Get_Style (Ent)));
-            Set_Font_Description (Get_Style (Ent), Get_Pref (Manager, Prop));
-            Set_Text (Ent, To_String (Get_Pref (Manager, Prop)));
-            Reset_Font (Ent);
-
-            return Gtk_Widget (Box);
+            return Gtk_Widget
+              (Create_Box_For_Font (N, Get_Pref (Manager, Prop), -"Browse"));
          end;
 
       elsif Fundamental (Typ) = GType_Enum then
