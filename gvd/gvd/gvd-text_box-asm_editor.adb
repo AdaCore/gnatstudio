@@ -482,31 +482,33 @@ package body GVD.Text_Box.Asm_Editor is
         (Debugger_Process_Tab (Editor.Process).Debugger,
          Source_Line, Range_Start, Range_End, Range_Start_Len, Range_End_Len);
 
-      while Pos_Start = 0 or else Pos_End = 0 loop
+      if Range_Start_Len /= 0 and then Range_End_Len /=0 then
+         while Pos_Start = 0 or else Pos_End = 0 loop
 
-         Pos_Start := Pos_From_Address
-           (Editor, Range_Start (1 .. Range_Start_Len));
+            Pos_Start := Pos_From_Address
+              (Editor, Range_Start (1 .. Range_Start_Len));
 
-         --  No need to get the end address if we could not even find the
-         --  starting line.
-         if Pos_Start /= 0 then
-            Pos_End := Pos_From_Address
-              (Editor, Range_End (1 .. Range_End_Len));
-         end if;
+            --  No need to get the end address if we could not even find the
+            --  starting line.
+            if Pos_Start /= 0 then
+               Pos_End := Pos_From_Address
+                 (Editor, Range_End (1 .. Range_End_Len));
+            end if;
 
-         --  If part of the range is not visible, update the contents of the
-         --  buffer.
-         if Pos_Start = 0 or else Pos_End = 0 then
-            On_Frame_Changed
-              (Editor,
-               Range_Start (1 .. Range_Start_Len),
-               Range_End (1 .. Range_End_Len));
-         end if;
-      end loop;
+            --  If part of the range is not visible, update the contents of the
+            --  buffer.
+            if Pos_Start = 0 or else Pos_End = 0 then
+               On_Frame_Changed
+                 (Editor,
+                  Range_Start (1 .. Range_Start_Len),
+                  Range_End (1 .. Range_End_Len));
+            end if;
+         end loop;
 
-      Highlight_Range
-        (Editor, Gint (Pos_Start), Gint (Pos_End),
-         Gint (Pos_Start - 1), Fore => Editor.Highlight_Color);
+         Highlight_Range
+           (Editor, Gint (Pos_Start), Gint (Pos_End),
+            Gint (Pos_Start - 1), Fore => Editor.Highlight_Color);
+      end if;
 
       Thaw (Get_Buttons (Editor));
    end Highlight_Address_Range;
