@@ -469,4 +469,15 @@ package body Python is
       end if;
    end PyDict_Next;
 
+   --------------------
+   -- Print_Refcount --
+   --------------------
+
+   procedure Print_Refcount (Obj : PyObject; Msg : String) is
+      procedure Internal (Obj : PyObject; Msg : String);
+      pragma Import (C, Internal, "ada_py_print_refcount");
+   begin
+      Internal (Obj, Msg & ASCII.NUL);
+   end Print_Refcount;
+
 end Python;
