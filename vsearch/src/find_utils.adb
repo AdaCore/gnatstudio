@@ -869,8 +869,10 @@ package body Find_Utils is
       pragma Unreferenced (Child);
    begin
       --  No more search, since the editor has been killed
+
       Search_Reset (Kernel);
-      --  Current_File_Context_Access (Context).Child := null;
+
+      --  ??? Current_File_Context_Access (Context).Child := null;
    end Cancel_Search;
 
    --------------------------
@@ -885,7 +887,7 @@ package body Find_Utils is
    is
       pragma Unreferenced (Extra_Information);
       Context : Current_File_Context_Access;
-      Child : MDI_Child := Find_Current_Editor (Kernel);
+      Child   : constant MDI_Child := Find_Current_Editor (Kernel);
 
    begin
       if Child = null then

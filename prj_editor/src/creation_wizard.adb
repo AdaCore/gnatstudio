@@ -384,7 +384,7 @@ package body Creation_Wizard is
       Relative_Paths : constant Boolean := Get_Active (Wiz.Relative_Paths);
       Changed        : Boolean := False;
       Languages      : Argument_List := Get_Languages (Wiz);
-      Project        : Project_Node_Id := Create_Project
+      Project        : constant Project_Node_Id := Create_Project
         (Name => Name, Path => Dir);
 
    begin
