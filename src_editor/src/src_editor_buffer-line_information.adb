@@ -50,7 +50,6 @@ with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
 with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
 
 with Pango.Layout;              use Pango.Layout;
-with Pango.Enums;               use Pango.Enums;
 with Gdk.Pixbuf;                use Gdk.Pixbuf;
 
 with Traces; use Traces;
