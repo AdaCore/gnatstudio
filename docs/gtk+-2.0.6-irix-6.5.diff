@@ -1,0 +1,90 @@
+--- demos/gtk-demo/textview.c.orig	Fri Nov 23 16:46:29 2001
++++ demos/gtk-demo/textview.c	Thu Aug 29 16:34:16 2002
+@@ -332,10 +332,10 @@ insert_text (GtkTextBuffer *buffer)
+ 					    "heading", NULL);
+ 	  
+   gtk_text_buffer_insert (buffer, &iter,
+-			  "You can put all sorts of Unicode text in the buffer.\n\nGerman (Deutsch Süd) Grüß Gott\nGreek (Ελληνικά) Γειά σας\nHebrew	שלום\nJapanese (日本語)\n\nThe widget properly handles bidirectional text, word wrapping, DOS/UNIX/Unicode paragraph separators, grapheme boundaries, and so on using the Pango internationalization framework.\n", -1);  
++			  "You can put all sorts of Unicode text in the buffer.\n\nGerman (Deutsch Süd) Grü�\x9F Gott\nGreek (�\x95λληνικά) �\x93ειά �\x83α�\x82\nHebrew	ש�\x9C�\x95�\x9D\nJapanese (�\x97��\x9C��\x9E)\n\nThe widget properly handles bidirectional text, word wrapping, DOS/UNIX/Unicode paragraph separators, grapheme boundaries, and so on using the Pango internationalization framework.\n", -1);  
+ 
+   gtk_text_buffer_insert (buffer, &iter, "Here's a word-wrapped quote in a right-to-left language:\n", -1);
+-  gtk_text_buffer_insert_with_tags_by_name (buffer, &iter, "وقد بدأ ثلاث من أكثر المؤسسات تقدما في شبكة اكسيون برامجها كمنظمات لا تسعى للربح، ثم تحولت في السنوات الخمس الماضية إلى مؤسسات مالية منظمة، وباتت جزءا من النظام المالي في بلدانها، ولكنها تتخصص في خدمة قطاع المشروعات الصغيرة. وأحد أكثر هذه المؤسسات نجاحا هو »بانكوسول« في بوليفيا.\n\n", -1,
++  gtk_text_buffer_insert_with_tags_by_name (buffer, &iter, "�\x88�\x82د بدأ ث�\x84اث �\x85�\x86 أ�\x83ثر ا�\x84�\x85ؤسسات ت�\x82د�\x85ا �\x81�\x8A شب�\x83ة ا�\x83س�\x8A�\x88�\x86 برا�\x85ج�\x87ا �\x83�\x85�\x86ظ�\x85ات �\x84ا تسع�\x89 �\x84�\x84ربح�\x8C ث�\x85 تح�\x88�\x84ت �\x81�\x8A ا�\x84س�\x86�\x88ات ا�\x84خ�\x85س ا�\x84�\x85اض�\x8Aة إ�\x84�\x89 �\x85ؤسسات �\x85ا�\x84�\x8Aة �\x85�\x86ظ�\x85ة�\x8C �\x88باتت جزءا �\x85�\x86 ا�\x84�\x86ظا�\x85 ا�\x84�\x85ا�\x84�\x8A �\x81�\x8A ب�\x84دا�\x86�\x87ا�\x8C �\x88�\x84�\x83�\x86�\x87ا تتخصص �\x81�\x8A خد�\x85ة �\x82طاع ا�\x84�\x85شر�\x88عات ا�\x84صغ�\x8Aرة. �\x88أحد أ�\x83ثر �\x87ذ�\x87 ا�\x84�\x85ؤسسات �\x86جاحا �\x87�\x88 »با�\x86�\x83�\x88س�\x88�\x84« �\x81�\x8A ب�\x88�\x84�\x8A�\x81�\x8Aا.\n\n", -1,
+ 						"rtl_quote", NULL);
+       
+   gtk_text_buffer_insert (buffer, &iter, "You can put widgets in the buffer: Here's a button: ", -1);
+--- tests/testgtk.c.orig	Tue Jul 30 16:39:10 2002
++++ tests/testgtk.c	Thu Aug 29 16:36:51 2002
+@@ -2488,18 +2488,18 @@ void create_labels (void)
+       label = gtk_label_new (NULL);
+       gtk_label_set_markup (GTK_LABEL (label),
+ 			    "French (Français) Bonjour, Salut\n"
+-			    "Korean (한글)   안녕하세요, 안녕하십니까\n"
+-			    "Russian (Русский) Здравствуйте!\n"
+-			    "Chinese (Simplified) <span lang=\"zh-cn\">元气	开发</span>\n"
+-			    "Chinese (Traditional) <span lang=\"zh-tw\">元氣	開發</span>\n"
+-			    "Japanese <span lang=\"ja\">元気	開発</span>");
++			    "Korean (�\x95\x9C�\x80)   �\x95\x88�\x85\x95�\x95\x98�\x84��\x9A\x94, �\x95\x88�\x85\x95�\x95\x98�\x8B��\x8B\x88�\x8C\n"
++			    "Russian (Р�\x83�\x81�\x81кий) �\x97д�\x80ав�\x81�\x82в�\x83й�\x82е!\n"
++			    "Chinese (Simplified) <span lang=\"zh-cn\">�\x85\x83�\x94	�\x80�\x8F\x91</span>\n"
++			    "Chinese (Traditional) <span lang=\"zh-tw\">�\x85\x83氣	�\x96\x8B�\x99�</span>\n"
++			    "Japanese <span lang=\"ja\">�\x85\x83�\x97	�\x96\x8B�\x99�</span>");
+       gtk_label_set_justify (GTK_LABEL (label), GTK_JUSTIFY_LEFT);
+       gtk_container_add (GTK_CONTAINER (frame), label);
+       gtk_box_pack_start (GTK_BOX (vbox), frame, FALSE, FALSE, 0);
+ 
+       frame = gtk_frame_new ("Bidirection Label");
+-      label = gtk_label_new ("Arabic	السلام عليكم\n"
+-			     "Hebrew	שלום");
++      label = gtk_label_new ("Arabic	ا�\x84س�\x84ا�\x85 ع�\x84�\x8A�\x83�\x85\n"
++			     "Hebrew	ש�\x9C�\x95�\x9D");
+       gtk_widget_set_direction (label, GTK_TEXT_DIR_RTL);
+       gtk_label_set_justify (GTK_LABEL (label), GTK_JUSTIFY_RIGHT);
+       gtk_container_add (GTK_CONTAINER (frame), label);
+@@ -2535,7 +2535,7 @@ void create_labels (void)
+ 
+       frame = gtk_frame_new ("Underlined label");
+       label = gtk_label_new ("This label is underlined!\n"
+-			     "This one is underlined (こんにちは) in quite a funky fashion");
++			     "This one is underlined (�\x81\x93�\x82\x93�\x81��\x81��\x81�) in quite a funky fashion");
+       gtk_label_set_justify (GTK_LABEL (label), GTK_JUSTIFY_LEFT);
+       gtk_label_set_pattern (GTK_LABEL (label), "_________________________ _ _________ _ _____ _ __ __  ___ ____ _____");
+       gtk_container_add (GTK_CONTAINER (frame), label);
+@@ -3666,7 +3666,7 @@ create_key_lookup (void)
+       gtk_box_pack_start (GTK_BOX (GTK_DIALOG (window)->vbox), button, FALSE, FALSE, 0);
+       button = gtk_button_new_with_mnemonic ("Button 2 (_A)");
+       gtk_box_pack_start (GTK_BOX (GTK_DIALOG (window)->vbox), button, FALSE, FALSE, 0);
+-      button = gtk_button_new_with_mnemonic ("Button 3 (_ф)");
++      button = gtk_button_new_with_mnemonic ("Button 3 (_�\x84)");
+       gtk_box_pack_start (GTK_BOX (GTK_DIALOG (window)->vbox), button, FALSE, FALSE, 0);
+       button = gtk_button_new_with_mnemonic ("Button 4 (_Ф)");
+       gtk_box_pack_start (GTK_BOX (GTK_DIALOG (window)->vbox), button, FALSE, FALSE, 0);
+@@ -4091,7 +4091,7 @@ create_entry (void)
+       gtk_box_pack_start (GTK_BOX (box2), hbox, TRUE, TRUE, 0);
+       
+       entry = gtk_entry_new ();
+-      gtk_entry_set_text (GTK_ENTRY (entry), "hello world السلام عليكم");
++      gtk_entry_set_text (GTK_ENTRY (entry), "hello world ا�\x84س�\x84ا�\x85 ع�\x84�\x8A�\x83�\x85");
+       gtk_editable_select_region (GTK_EDITABLE (entry), 0, 5);
+       gtk_box_pack_start (GTK_BOX (hbox), entry, TRUE, TRUE, 0);
+ 
+--- tests/testtext.c.orig	Sat Mar  2 23:16:30 2002
++++ tests/testtext.c	Thu Aug 29 16:40:00 2002
+@@ -558,7 +558,7 @@ fill_example_buffer (GtkTextBuffer *buff
+ 			     "(Hello World!)\nfoo foo Hello this is some text we are using to text word wrap. It has punctuation! gee; blah - hmm, great.\nnew line with a significant quantity of text on it. This line really does contain some text. More text! More text! More text!\n"
+ 			     /* This is UTF8 stuff, Emacs doesn't
+ 				really know how to display it */
+-			     "German (Deutsch Süd) Grüß Gott Greek (Ελληνικά) Γειά σας Hebrew(שלום) Hebrew punctuation(\xd6\xbfש\xd6\xbb\xd6\xbc\xd6\xbb\xd6\xbfל\xd6\xbcו\xd6\xbc\xd6\xbb\xd6\xbb\xd6\xbfם\xd6\xbc\xd6\xbb\xd6\xbf) Japanese (日本語) Thai (สวัสดีครับ) Thai wrong spelling (คำต่อไปนื่สะกดผิด พัั้ัั่งโกะ)\n", -1);
++			     "German (Deutsch Süd) Grü�\x9F Gott Greek (�\x95λληνικά) �\x93ειά �\x83α�\x82 Hebrew(ש�\x9C�\x95�\x9D) Hebrew punctuation(\xd6\xbfש\xd6\xbb\xd6\xbc\xd6\xbb\xd6\xbf�\x9C\xd6\xbc�\x95\xd6\xbc\xd6\xbb\xd6\xbb\xd6\xbf�\x9D\xd6\xbc\xd6\xbb\xd6\xbf) Japanese (�\x97��\x9C��\x9E) Thai (สวัส�\x94ี�\x84รั�\x9A) Thai wrong spelling (�\x84ำ�\x95�\x88อ�\x84�\x9B�\x99ื�\x88สะ�\x81�\x94�\x9Cิ�\x94 �\x9Eัั�\x89ัั�\x88�\x87�\x82�\x81ะ)\n", -1);
+ 
+       temp_mark =
+         gtk_text_buffer_create_mark (buffer, "tmp_mark", &iter, TRUE);
+@@ -603,7 +603,7 @@ fill_example_buffer (GtkTextBuffer *buff
+ 
+       gtk_text_buffer_move_mark (buffer, temp_mark, &iter);
+       gtk_text_buffer_insert (buffer, &iter, "Word wrapped, Right-to-left Quote\n", -1);
+-      gtk_text_buffer_insert (buffer, &iter, "وقد بدأ ثلاث من أكثر المؤسسات تقدما في شبكة اكسيون برامجها كمنظمات لا تسعى للربح، ثم تحولت في السنوات الخمس الماضية إلى مؤسسات مالية منظمة، وباتت جزءا من النظام المالي في بلدانها، ولكنها تتخصص في خدمة قطاع المشروعات الصغيرة. وأحد أكثر هذه المؤسسات نجاحا هو »بانكوسول« في بوليفيا.\n", -1);
++      gtk_text_buffer_insert (buffer, &iter, "�\x88�\x82د بدأ ث�\x84اث �\x85�\x86 أ�\x83ثر ا�\x84�\x85ؤسسات ت�\x82د�\x85ا �\x81�\x8A شب�\x83ة ا�\x83س�\x8A�\x88�\x86 برا�\x85ج�\x87ا �\x83�\x85�\x86ظ�\x85ات �\x84ا تسع�\x89 �\x84�\x84ربح�\x8C ث�\x85 تح�\x88�\x84ت �\x81�\x8A ا�\x84س�\x86�\x88ات ا�\x84خ�\x85س ا�\x84�\x85اض�\x8Aة إ�\x84�\x89 �\x85ؤسسات �\x85ا�\x84�\x8Aة �\x85�\x86ظ�\x85ة�\x8C �\x88باتت جزءا �\x85�\x86 ا�\x84�\x86ظا�\x85 ا�\x84�\x85ا�\x84�\x8A �\x81�\x8A ب�\x84دا�\x86�\x87ا�\x8C �\x88�\x84�\x83�\x86�\x87ا تتخصص �\x81�\x8A خد�\x85ة �\x82طاع ا�\x84�\x85شر�\x88عات ا�\x84صغ�\x8Aرة. �\x88أحد أ�\x83ثر �\x87ذ�\x87 ا�\x84�\x85ؤسسات �\x86جاحا �\x87�\x88 »با�\x86�\x83�\x88س�\x88�\x84« �\x81�\x8A ب�\x88�\x84�\x8A�\x81�\x8Aا.\n", -1);
+       gtk_text_buffer_get_iter_at_mark (buffer, &iter2, temp_mark);
+       gtk_text_buffer_apply_tag_by_name (buffer, "rtl_quote", &iter2, &iter);
+ 
