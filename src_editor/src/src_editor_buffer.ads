@@ -62,6 +62,7 @@ package Src_Editor_Buffer is
       Lang   : Language.Language_Access := null);
    --  Create a new Source_Buffer with the given Language.
 
+   --  ??? missing comments for the following type definitions:
    type Editable_Line_Type is new Natural;
    type Buffer_Line_Type is new Natural;
    type File_Line_Type is new Natural;
