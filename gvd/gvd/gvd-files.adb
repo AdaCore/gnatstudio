@@ -19,6 +19,7 @@
 -----------------------------------------------------------------------
 
 with GVD.Types;             use GVD.Types;
+with GVD.Preferences;       use GVD.Preferences;
 with Main_Debug_Window_Pkg; use Main_Debug_Window_Pkg;
 with GNAT.OS_Lib;           use GNAT.OS_Lib;
 with GVD.Strings;           use GVD.Strings;
@@ -29,9 +30,6 @@ with GNAT.Expect;           use GNAT.Expect;
 pragma Warnings (On);
 
 package body GVD.Files is
-
-   Remote_Copy : constant String := "rcp";
-   --  Program used to copy a file from a remote host.
 
    -------------------
    -- Find_In_Cache --
