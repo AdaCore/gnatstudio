@@ -78,15 +78,13 @@ package body Projects.Registry is
       Null_Ptr  => None);
    use Directory_Htable.String_Hash_Table;
 
-
    type Source_File_Data is record
-      Project : Project_Type;
-      Lang    : Name_Id;
-
-      --  ??? Should we cache directories as well
+      Project   : Project_Type;
+      Lang      : Name_Id;
+      Directory : Name_Id;
    end record;
    No_Source_File_Data : constant Source_File_Data :=
-     (No_Project, No_Name);
+     (No_Project, No_Name, No_Name);
 
    procedure Do_Nothing (Data : in out Source_File_Data);
 
@@ -391,6 +389,8 @@ package body Projects.Registry is
       Set_Is_Default (Registry.Data.Root, False);
       Output.Set_Special_Output (null);
 
+      Trace (Me, "End of Load project");
+
    exception
       when E : others =>
          Trace (Me, "Load: unexpected exception: "
@@ -490,6 +490,7 @@ package body Projects.Registry is
       --  given language. Otherwise, a dialog is displayed when editing the
       --  project properties, and this might be confusing for the user.
       Set_As_Incomplete_When_Errors := False;
+
       Parse_Source_Files (Registry, Report_Error'Unrestricted_Access);
    end Recompute_View;
 
@@ -572,16 +573,17 @@ package body Projects.Registry is
          Register_Directory
            (Get_String (Prj.Projects.Table (Get_View (P)).Exec_Directory));
 
-         --  Add the Ada sources that are already in the project. The foreign
-         --  files
+         --  Add the Ada sources that are already in the project.
 
          Sources := Prj.Projects.Table (Get_View (P)).Sources;
          while Sources /= Nil_String loop
             Set (Registry.Data.Sources,
                  K => Get_String (String_Elements.Table (Sources).Value),
-                 E => (P, Name_Ada));
+                 E => (P, Name_Ada, No_Name));
             Sources := String_Elements.Table (Sources).Next;
          end loop;
+
+         --  Add the other languages' files
 
          Add_Foreign_Source_Files (Registry, P, Errors);
 
@@ -641,7 +643,7 @@ package body Projects.Registry is
          Prj.Projects.Table (Get_View (Project)).Sources :=
            String_Elements.Last;
 
-         Set (Registry.Data.Sources, K => File, E => (Project, Lang));
+         Set (Registry.Data.Sources, K => File, E => (Project, Lang, No_Name));
       end Record_Source;
 
       Languages : Argument_List                := Get_Languages (Project);
@@ -1049,20 +1051,38 @@ package body Projects.Registry is
    -- Get_Full_Path_From_File --
    -----------------------------
 
-   function Get_Full_Path_From_File
+   procedure Get_Full_Path_From_File
      (Registry        : Project_Registry;
       Filename        : String;
       Use_Source_Path : Boolean;
-      Use_Object_Path : Boolean) return String
+      Use_Object_Path : Boolean)
    is
       Project : Project_Type;
       Path : GNAT.OS_Lib.String_Access;
       Iterator : Imported_Project_Iterator;
+      Info : Source_File_Data;
 
    begin
       if Is_Absolute_Path (Filename) then
-         return Normalize_Pathname (Filename);
+         declare
+            S : constant String := Normalize_Pathname (Filename);
+         begin
+            Name_Len := S'Length;
+            Name_Buffer (1 .. Name_Len) := S;
+            return;
+         end;
+
       else
+
+         --  First check the cache
+
+         Info := Get (Registry.Data.Sources, Filename);
+
+         if Info.Directory /= No_Name then
+            Get_Name_String (Info.Directory);
+            return;
+         end if;
+
          --  If we are editing a project file, check in the loaded tree first
          --  (in case an old copy is kept somewhere in the source or object
          --  path)
@@ -1080,7 +1100,13 @@ package body Projects.Registry is
                if Project_Name (Project) & Project_File_Extension =
                  Filename
                then
-                  return Project_Path (Project);
+                  declare
+                     S : constant String := Project_Path (Project);
+                  begin
+                     Name_Len := S'Length;
+                     Name_Buffer (1 .. Name_Len) := S;
+                     return;
+                  end;
                end if;
 
                Next (Iterator);
@@ -1088,7 +1114,8 @@ package body Projects.Registry is
          end if;
 
          --  Otherwise we have a source file
-         --  ??? Results could be cached for better efficiency
+         --  ??? Seems Prj.Nmsc is already computing and storing the path
+         --  somewhere, unfortunately it requires a Unit_Name.
 
          Project := Get_Project_From_File (Registry, Filename);
 
@@ -1129,12 +1156,39 @@ package body Projects.Registry is
                  (Path.all, Resolve_Links => False);
             begin
                Free (Path);
-               return Full;
+               Name_Len := Full'Length;
+               Name_Buffer (1 .. Name_Len) := Full;
+
+               --  If this is one of the source files, we cache the
+               --  directory. This significantly speeds up the explorer. If
+               --  this is not a source file, not need to cache it, it is a
+               --  one-time request most probably.
+
+               if Info /= No_Source_File_Data then
+                  Info.Directory := Name_Find;
+
+                  Set (Registry.Data.Sources, Filename, Info);
+               end if;
             end;
          else
-            return "";
+            Name_Len := 0;
          end if;
       end if;
+   end Get_Full_Path_From_File;
+
+   -----------------------------
+   -- Get_Full_Path_From_File --
+   -----------------------------
+
+   function Get_Full_Path_From_File
+     (Registry        : Project_Registry;
+      Filename        : String;
+      Use_Source_Path : Boolean;
+      Use_Object_Path : Boolean) return String is
+   begin
+      Get_Full_Path_From_File
+        (Registry, Filename, Use_Source_Path, Use_Object_Path);
+      return Name_Buffer (1 .. Name_Len);
    end Get_Full_Path_From_File;
 
    ----------------------------------

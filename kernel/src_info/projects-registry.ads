@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2002                            --
+--                     Copyright (C) 2002-2003                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -185,6 +185,15 @@ package Projects.Registry is
    --  path.
    --  This function also works for project files, which are looked among the
    --  loaded project tree.
+
+   procedure Get_Full_Path_From_File
+     (Registry        : Project_Registry;
+      Filename        : String;
+      Use_Source_Path : Boolean;
+      Use_Object_Path : Boolean);
+   --  Internal version of Get_Full_Path_From_File, which returns its result in
+   --  Name_Buffer (1 .. Name_Len) for efficiency.
+   --  Do not use outside of the projects.* hierarchy
 
    function Get_Language_From_File
      (Registry : Project_Registry; Source_Filename : String)
