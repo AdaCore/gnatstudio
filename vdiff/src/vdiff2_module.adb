@@ -774,13 +774,11 @@ package body Vdiff2_Module is
                          Image);
    end Register_Module;
 
-
    -------------
    -- Destroy --
    -------------
 
-   procedure Destroy (Id : in out VDiff2_Module_Record)
-   is
+   procedure Destroy (Id : in out VDiff2_Module_Record) is
    begin
       Free_List (Id.List_Diff.all);
       Free (Id.List_Diff.all);
@@ -809,14 +807,11 @@ package body Vdiff2_Module is
       pragma Unreferenced (Widget);
 
    begin
-      while CurrNode /= Diff_Head_List.Null_Node
-      loop
+      while CurrNode /= Diff_Head_List.Null_Node loop
          Diff.all := Data (CurrNode);
-         exit when ((Diff.File1 /= null and then Diff.File1.all = File)
-                       or else
-                         (Diff.File2 /= null and then Diff.File2.all = File)
-                       or else
-                         (Diff.File3 /= null and then Diff.File3.all = File));
+         exit when (Diff.File1 /= null and then Diff.File1.all = File)
+           or else (Diff.File2 /= null and then Diff.File2.all = File)
+           or else (Diff.File3 /= null and then Diff.File3.all = File);
          CurrNode := Next (CurrNode);
       end loop;
 
@@ -845,11 +840,3 @@ package body Vdiff2_Module is
    end On_Preferences_Changed;
 
 end Vdiff2_Module;
-
-
-
-
-
-
-
-
