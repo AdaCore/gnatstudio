@@ -3,7 +3,7 @@
 @@--
 @@-- Before:
 @@--
-@@-- INDENT      : spaces to be used in front of the entity
+@@-- INDENT      : number of spaces to be used in front of the entity
 @@-- NAME        : the name of the entity
 @@-- REF_FILE    : file where the entity is declared using the rendering
 @@--               convention, this reference can be used in an href
@@ -12,10 +12,13 @@
 @@-- DECL_FILE   : file where the entity is declared
 @@--
 <TR><TD><PRE>
-@@IF@@ @_REF_FILE_@
-@_INDENT_@<A HREF="@_REF_FILE_@#@_DECL_LINE_@">@_NAME_@</a>
-@@ELSE@@
-@_INDENT_@@_NAME_@
-@@END_IF@@
-@_INDENT_@declared at&nbsp;@_DECL_FILE_@&nbsp;@_DECL_LINE_@:@_DECL_COLUMN_@
+@@INLINE@@
+   @_REPEAT(" "):INDENT_@
+   @@IF@@ @_REF_FILE_@
+      <A HREF="@_REF_FILE_@#@_DECL_LINE_@">@_NAME_@</a>
+   @@ELSE@@
+      @_NAME_@
+   @@END_IF@@
+   declared at&nbsp;@_DECL_FILE_@&nbsp;@_DECL_LINE_@:@_DECL_COLUMN_@
+@@END_INLINE@@
 </PRE></TD><TR>

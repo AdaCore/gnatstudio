@@ -14,13 +14,15 @@
 <H1>Package
 <I>
 <A NAME="@_FIRST_FILE_LINE_@"></A><A NAME="@_HEADER_LINE_@"></A>
-@@IF@@ @_HEADER_LINK_@
-<A HREF="@_HEADER_LINK_@">
-@@END_IF@@
-@_HEADER_PACKAGE_@
-@@IF@@ @_HEADER_LINK_@
-</A>
-@@END_IF@@
+@@INLINE@@
+   @@IF@@ @_HEADER_LINK_@
+      <A HREF="@_HEADER_LINK_@">
+   @@END_IF@@
+   @_HEADER_PACKAGE_@
+   @@IF@@ @_HEADER_LINK_@
+      </A>
+   @@END_IF@@
+@@END_INLINE@@
 </I></H1>
 </TD></TR></TABLE>
 <PRE>
