@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                          G L I D E  I I                           --
 --                                                                   --
---                        Copyright (C) 2001                         --
+--                     Copyright (C) 2001-2002                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GLIDE is free software; you can redistribute it and/or modify  it --
@@ -293,11 +293,11 @@ package body Switches_Editors is
 
    begin  --  Get_Switches_From_GUI
       case Tool is
-         when Gnatmake     => Num_Switches :=  6 + 1;  --  +1 is for arg to -j
+         when Gnatmake     => Num_Switches :=  7 + 1;  --  +1 is for arg to -j
          when Ada_Compiler => Num_Switches := 22;
-         when C_Compiler   => Num_Switches := 10;
-         when Cpp_Compiler => Num_Switches := 10;
-         when Binder       => Num_Switches :=  3;
+         when C_Compiler   => Num_Switches := 11;
+         when Cpp_Compiler => Num_Switches := 14;
+         when Binder       => Num_Switches :=  4;
          when Linker       => Num_Switches :=  3;
       end case;
 
@@ -314,6 +314,7 @@ package body Switches_Editors is
                Check_Toggle (Editor.Make_Minimal_Recompile, "-m", Arr, Index);
                Check_Toggle (Editor.Make_Keep_Going, "-k", Arr, Index);
                Check_Toggle (Editor.Make_Debug, "-g", Arr, Index);
+               Check_Toggle (Editor.Make_Mapping_File, "-C", Arr, Index);
                Active := Get_Active (Editor.Make_Debug);
 
                if Active /= Editor.Prev_Make_Debug then
@@ -354,6 +355,7 @@ package body Switches_Editors is
                  (Editor.Ada_Interunit_Inlining, "-gnatN", Arr, Index);
                Check_Toggle
                  (Editor.Ada_Unroll_Loops, "-funroll-loops", Arr, Index);
+               Check_Toggle (Editor.Ada_Pic, "-fPIC", Arr, Index);
                Check_Toggle
                  (Editor.Ada_Code_Coverage, "-ftest-coverage", Arr, Index);
                Set_Active
@@ -394,6 +396,7 @@ package body Switches_Editors is
                Check_Toggle (Editor.C_No_Inline, "-fno-inline", Arr, Index);
                Check_Toggle
                  (Editor.C_Unroll_Loops, "-funroll-loops", Arr, Index);
+               Check_Toggle (Editor.C_Pic, "-fPIC", Arr, Index);
                Check_Toggle (Editor.C_Profile, "-pg", Arr, Index);
                Set_Active
                  (Editor.Linker_Profile,
@@ -417,6 +420,7 @@ package body Switches_Editors is
                Check_Toggle (Editor.Cpp_No_Inline, "-fno-inline", Arr, Index);
                Check_Toggle
                  (Editor.Cpp_Unroll_Loops, "-funroll-loops", Arr, Index);
+               Check_Toggle (Editor.Cpp_Pic, "-fPIC", Arr, Index);
                Check_Toggle (Editor.Cpp_Profile, "-pg", Arr, Index);
                Set_Active
                  (Editor.Linker_Profile,
@@ -432,12 +436,21 @@ package body Switches_Editors is
                  (Editor.Cpp_Instrument_Arcs, "-fprofile-arcs", Arr, Index);
                Check_Toggle
                  (Editor.Cpp_Exceptions, "-fexceptions", Arr, Index);
+               Check_Toggle
+                 (Editor.Cpp_Elide_Constructor, "-felide-constructor",
+                  Arr, Index);
+               Check_Toggle
+                 (Editor.Cpp_Conserve_Space, "-fconserve-space", Arr, Index);
                Check_Toggle (Editor.Cpp_Debug, "-g", Arr, Index);
                Check_Toggle (Editor.Cpp_All_Warnings, "-Wall", Arr, Index);
                Check_Toggle (Editor.Cpp_No_Warnings, "-w", Arr, Index);
+               Check_Toggle
+                 (Editor.Cpp_Overloaded_Virtual, "-Woverloaded-virtual",
+                  Arr, Index);
 
             when Binder =>
                Check_Toggle (Editor.Binder_Tracebacks, "-E", Arr, Index);
+               Check_Toggle (Editor.Binder_Restrictions, "-r", Arr, Index);
 
                if Get_Active (Editor.Binder_Static_Gnat) then
                   Arr (Index) := new String' ("-static");
@@ -558,6 +571,7 @@ package body Switches_Editors is
             Set_Active (Editor.Make_Minimal_Recompile, Is_Set ("-m"));
             Set_Active (Editor.Make_Keep_Going, Is_Set ("-k"));
             Set_Active (Editor.Make_Debug, Is_Set ("-g"));
+            Set_Active (Editor.Make_Mapping_File, Is_Set ("-C"));
             Set_Active (Editor.Make_Multiprocessing, False);
 
             for J in Switches'Range loop
@@ -592,6 +606,7 @@ package body Switches_Editors is
             Set_Active (Editor.Ada_No_Inline, Is_Set ("-fno-inline"));
             Set_Active (Editor.Ada_Interunit_Inlining, Is_Set ("-gnatN"));
             Set_Active (Editor.Ada_Unroll_Loops, Is_Set ("-funroll-loops"));
+            Set_Active (Editor.Ada_Pic, Is_Set ("-fPIC"));
             Set_Active (Editor.Ada_Code_Coverage, Is_Set ("-ftest-coverage"));
             Set_Active (Editor.Ada_Instrument_Arcs, Is_Set ("-fprofile-arcs"));
             Set_Active (Editor.Ada_Full_Errors, Is_Set ("-gnatf"));
@@ -616,6 +631,7 @@ package body Switches_Editors is
             Set_Combo (Editor.C_Optimization_Level, "-O");
             Set_Active (Editor.C_No_Inline, Is_Set ("-fno-inline"));
             Set_Active (Editor.C_Unroll_Loops, Is_Set ("-funroll-loops"));
+            Set_Active (Editor.C_Pic, Is_Set ("-fPIC"));
             Set_Active (Editor.C_Profile, Is_Set ("-pg"));
             Set_Active (Editor.C_Code_Coverage, Is_Set ("-ftest-coverage"));
             Set_Active (Editor.C_Instrument_Arcs, Is_Set ("-fprofile-arcs"));
@@ -630,18 +646,26 @@ package body Switches_Editors is
             Set_Combo (Editor.Cpp_Optimization_Level, "-O");
             Set_Active (Editor.Cpp_No_Inline, Is_Set ("-fno-inline"));
             Set_Active (Editor.Cpp_Unroll_Loops, Is_Set ("-funroll-loops"));
+            Set_Active (Editor.Cpp_Pic, Is_Set ("-fPIC"));
             Set_Active (Editor.Cpp_Profile, Is_Set ("-pg"));
             Set_Active (Editor.Cpp_Code_Coverage, Is_Set ("-ftest-coverage"));
             Set_Active (Editor.Cpp_Instrument_Arcs, Is_Set ("-fprofile-arcs"));
             Set_Active (Editor.Cpp_Exceptions, Is_Set ("-fexceptions"));
+            Set_Active
+              (Editor.Cpp_Elide_Constructor, Is_Set ("-felide-constructor"));
+            Set_Active
+              (Editor.Cpp_Conserve_Space, Is_Set ("-fconserve-space"));
             Set_Active (Editor.Cpp_Debug, Is_Set ("-g"));
             Set_Active (Editor.Cpp_All_Warnings, Is_Set ("-Wall"));
             Set_Active (Editor.Cpp_No_Warnings, Is_Set ("-w"));
+            Set_Active
+              (Editor.Cpp_Overloaded_Virtual, Is_Set ("-Woverloaded-virtual"));
 
             Cmd_Line := Editor.Cpp_Switches_Entry;
 
          when Binder =>
             Set_Active (Editor.Binder_Tracebacks, Is_Set ("-E"));
+            Set_Active (Editor.Binder_Restrictions, Is_Set ("-r"));
             Set_Active (Editor.Binder_Static_Gnat, Is_Set ("-static"));
             Set_Active (Editor.Binder_Shared_Gnat, Is_Set ("-shared"));
 
@@ -693,6 +717,7 @@ package body Switches_Editors is
                      or else Switches (J).all = "-m"
                      or else Switches (J).all = "-k"
                      or else Switches (J).all = "-g"
+                     or else Switches (J).all = "-C"
                      or else (Switches (J)'Length >= 2 and then
                        Switches (J) (Switches (J)'First ..
                                      Switches (J)'First + 1) = "-j"))
@@ -712,6 +737,7 @@ package body Switches_Editors is
                      or else Switches (J).all = "-fno-inline"
                      or else Switches (J).all = "-gnatN"
                      or else Switches (J).all = "-funroll-loops"
+                     or else Switches (J).all = "-fPIC"
                      or else Switches (J).all = "-ftest-coverage"
                      or else Switches (J).all = "-fprofile-arcs"
                      or else Switches (J).all = "-gnatf"
@@ -744,6 +770,7 @@ package body Switches_Editors is
                                              Switches (J)'First + 1) = "-O")
                      or else Switches (J).all = "-fno-inline"
                      or else Switches (J).all = "-funroll-loops"
+                     or else Switches (J).all = "-fPIC"
                      or else Switches (J).all = "-pg"
                      or else Switches (J).all = "-ftest-coverage"
                      or else Switches (J).all = "-fprofile-arcs"
@@ -766,13 +793,17 @@ package body Switches_Editors is
                                              Switches (J)'First + 1) = "-O")
                      or else Switches (J).all = "-fno-inline"
                      or else Switches (J).all = "-funroll-loops"
+                     or else Switches (J).all = "-fPIC"
                      or else Switches (J).all = "-pg"
                      or else Switches (J).all = "-ftest-coverage"
                      or else Switches (J).all = "-fprofile-arcs"
                      or else Switches (J).all = "-fexceptions"
+                     or else Switches (J).all = "-felide-constructor"
+                     or else Switches (J).all = "-fconserve-space"
                      or else Switches (J).all = "-g"
                      or else Switches (J).all = "-Wall"
-                     or else Switches (J).all = "-w")
+                     or else Switches (J).all = "-w"
+                     or else Switches (J).all = "-Woverloaded-virtual")
                   then
                      Free (Switches (J));
                   end if;
@@ -784,6 +815,7 @@ package body Switches_Editors is
                for J in Switches'Range loop
                   if Switches (J) /= null and then
                     (Switches (J).all = "-E"
+                     or else Switches (J).all = "-r"
                      or else Switches (J).all = "-static"
                      or else Switches (J).all = "-shared")
                   then
