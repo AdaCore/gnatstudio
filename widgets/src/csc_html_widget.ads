@@ -220,6 +220,7 @@ package Csc_HTML_Widget is
    ---------------
 
    function Get_Selection (HTML : access Csc_HTML_Record) return String;
+   --  Return the currently selected text.
 
    -------------
    -- Anchors --
