@@ -606,7 +606,7 @@ package body Src_Info.CPP is
          Free (Iterator.List_Filename);
       end if;
 
-      Iterator.List_Filename := new String' (DB_Dir & "gps_list");
+      Iterator.List_Filename := new String'(DB_Dir & "gps_list");
 
       --  If there is at least one source file, make sure the database
       --  directory exists.
@@ -713,8 +713,9 @@ package body Src_Info.CPP is
       Process_Alive  : Boolean := False;
       Success        : Boolean;
       DB_Dirs        : GNAT.OS_Lib.String_List_Access;
+
       procedure Free is new Ada.Unchecked_Deallocation
-         (Imported_Project_Iterator, Imp_Prj_Iterator_Access);
+        (Imported_Project_Iterator, Imp_Prj_Iterator_Access);
 
       procedure Next_Project;
       --  Promotes iterator to the next project and runs Browse_Project
@@ -722,30 +723,35 @@ package body Src_Info.CPP is
       --  is changed to Done and DB files are opened
 
       procedure Next_Project is
-         DB_Dirs        : GNAT.OS_Lib.String_List_Access;
+         DB_Dirs : GNAT.OS_Lib.String_List_Access;
       begin
-            --  Proceed with cparser on next project directories
-            Prj_API.Next (Iterator.Prj_Iterator.all);
+         --  Proceed with cparser on next project directories
+         Prj_API.Next (Iterator.Prj_Iterator.all);
 
-            if Prj_API.Current (Iterator.Prj_Iterator.all)
-               = Prj.No_Project then
-               --  iterations finished
-               Iterator.State := Done;
-               DB_Dirs := Get_SN_Dirs (Iterator.Project);
+         if Prj_API.Current (Iterator.Prj_Iterator.all)
+           = Prj.No_Project
+         then
+            --  iterations finished
 
-               if DB_Dirs = null then
-                  return;
-               end if;
+            Iterator.State := Done;
+            DB_Dirs := Get_SN_Dirs (Iterator.Project);
 
-               Open_DB_Files (DB_Dirs, Iterator.Handler.SN_Table);
-               Free (DB_Dirs);
-            else
-               --  go on with other projects
-               Browse_Project
-                 (Prj_API.Current (Iterator.Prj_Iterator.all),
-                  Iterator);
+            if DB_Dirs = null then
+               return;
             end if;
+
+            Open_DB_Files (DB_Dirs, Iterator.Handler.SN_Table);
+            Free (DB_Dirs);
+
+         else
+            --  go on with other projects
+
+            Browse_Project
+              (Prj_API.Current (Iterator.Prj_Iterator.all),
+               Iterator);
+         end if;
       end Next_Project;
+
    begin
       Finished := False;
 
@@ -787,6 +793,7 @@ package body Src_Info.CPP is
          when Process_Xrefs =>
             --  If we haven't finished the second phase, keep waiting.
             Browse.Is_Alive (Iterator.PD, Process_Alive);
+
             if Process_Alive then
                return;
             end if;
@@ -803,6 +810,7 @@ package body Src_Info.CPP is
          if Iterator.List_Filename /= null then
             Delete_File (Iterator.List_Filename.all, Success);
          end if;
+
          Free (Iterator.List_Filename);
          Free (Iterator.Prj_Iterator);
          Finished := True;
@@ -822,6 +830,7 @@ package body Src_Info.CPP is
               (Get_Project_From_View (Iterator.Root_Project),
                Recursive => True);
             P    : Prj.Project_Id := Current (I);
+
          begin
             while P /= Prj.No_Project loop
                declare
@@ -839,6 +848,7 @@ package body Src_Info.CPP is
             end loop;
          end;
       end if;
+
       Destroy (LI_Handler_Iterator (Iterator));
    end Destroy;
 
@@ -854,19 +864,23 @@ package body Src_Info.CPP is
       CDirs    : Integer := 0;
    begin
       --  Check if every new DB dir (from DB_Dirs) is in Prj_HTable
-      for I in DB_Dirs.all'Range loop
+      for J in DB_Dirs'Range loop
          Prj_Data := SN_Prj_HTables.Get
-           (Handler.Prj_HTable.all, DB_Dirs.all (I));
+           (Handler.Prj_HTable.all, DB_Dirs (J));
+
          if Prj_Data = No_SN_Prj_Data then
             return True;
          end if;
       end loop;
+
       SN_Prj_HTables.Get_First (Handler.Prj_HTable.all, Prj_Data);
+
       while Prj_Data /= No_SN_Prj_Data loop
          CDirs := CDirs + 1;
          SN_Prj_HTables.Get_Next (Handler.Prj_HTable.all, Prj_Data);
       end loop;
-      if CDirs = DB_Dirs.all'Length then
+
+      if CDirs = DB_Dirs'Length then
          return False;
       else
          return True;
@@ -880,14 +894,14 @@ package body Src_Info.CPP is
    function Get_SN_Dirs
      (Project : Prj.Project_Id) return GNAT.OS_Lib.String_List_Access
    is
-      N             : Integer := 0;
-      Dirs          : GNAT.OS_Lib.String_List_Access;
-      Path          : constant String := Prj_API.Object_Path (Project, True);
-      Main_Dir      : constant String := Prj_API.Object_Path (Project, False)
-               & Name_As_Directory (Browse.DB_Dir_Name);
-      J             : Integer := Path'First;
-      K             : Integer;
-      Tmp           : GNAT.OS_Lib.String_Access;
+      N        : Integer := 0;
+      Dirs     : GNAT.OS_Lib.String_List_Access;
+      Path     : constant String := Prj_API.Object_Path (Project, True);
+      Main_Dir : constant String := Prj_API.Object_Path (Project, False)
+        & Name_As_Directory (Browse.DB_Dir_Name);
+      J        : Integer := Path'First;
+      K        : Integer;
+      Tmp      : GNAT.OS_Lib.String_Access;
 
    begin
       if Path = "" then
@@ -898,7 +912,9 @@ package body Src_Info.CPP is
          J := Ada.Strings.Fixed.Index
            (Path (J .. Path'Last),
             "" & GNAT.OS_Lib.Path_Separator);
+
          exit when J = 0;
+
          N := N + 1;
          J := J + 1;
       end loop;
@@ -907,6 +923,7 @@ package body Src_Info.CPP is
 
       J := Path'First;
       N := 1;
+
       loop
          K := J;
          J := Ada.Strings.Fixed.Index
@@ -914,17 +931,15 @@ package body Src_Info.CPP is
             (1 => GNAT.OS_Lib.Path_Separator));
 
          if J = 0 then
-            Dirs (N) := new String'(
-               Name_As_Directory (Path (K .. Path'Last))
-               & Name_As_Directory (Browse.DB_Dir_Name)
-            );
+            Dirs (N) := new String'
+              (Name_As_Directory (Path (K .. Path'Last))
+                 & Name_As_Directory (Browse.DB_Dir_Name));
             exit;
          end if;
 
-         Dirs (N) := new String'(
-            Name_As_Directory (Path (K .. J - 1))
-            & Name_As_Directory (Browse.DB_Dir_Name)
-         );
+         Dirs (N) := new String'
+           (Name_As_Directory (Path (K .. J - 1))
+              & Name_As_Directory (Browse.DB_Dir_Name));
 
          if Dirs (N).all = Main_Dir then -- should swap
             Tmp      := Dirs (1);
@@ -935,6 +950,7 @@ package body Src_Info.CPP is
          N := N + 1;
          J := J + 1;
       end loop;
+
       return Dirs;
    end Get_SN_Dirs;
 
@@ -949,13 +965,13 @@ package body Src_Info.CPP is
       for Table in Table_Type loop
          declare
             Ext   : constant String := Table_Extension (Table);
-            Files : String_List_Access
-               := new String_List (1 .. DB_Dirs'Length);
+            Files : String_List_Access :=
+              new String_List (1 .. DB_Dirs'Length);
+
          begin
             for J in DB_Dirs'Range loop
-               Files (J) := new String'(
-                  DB_Dirs (J).all & Browse.DB_File_Name & Ext
-               );
+               Files (J) := new String'
+                 (DB_Dirs (J).all & Browse.DB_File_Name & Ext);
             end loop;
 
             if Ext /= "" then
@@ -5558,7 +5574,7 @@ package body Src_Info.CPP is
       DB_Dir     : String;
       Pool       : Xref_Pool)
    is
-      Key      : String_Access := new String' (DB_Dir);
+      Key      : String_Access := new String'(DB_Dir);
       Prj_Data : SN_Prj_Data :=
          SN_Prj_HTables.Get (Prj_HTable.all, Key);
    begin
