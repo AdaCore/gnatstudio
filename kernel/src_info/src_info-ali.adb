@@ -2006,7 +2006,6 @@ package body Src_Info.ALI is
    exception
       when Directory_Error =>
          Trace (Me, "Couldn't open the directory " & In_Directory);
-         null;
    end Parse_All_LI_Information;
 
    ----------------------------
@@ -2030,11 +2029,10 @@ package body Src_Info.ALI is
    -----------------------------
 
    function Generate_LI_For_Project
-     (Handler       : access ALI_Handler_Record;
-      Root_Project  : Prj.Project_Id;
-      Project       : Prj.Project_Id;
-      Recursive     : Boolean := False)
-      return LI_Handler_Iterator'Class
+     (Handler      : access ALI_Handler_Record;
+      Root_Project : Prj.Project_Id;
+      Project      : Prj.Project_Id;
+      Recursive    : Boolean := False) return LI_Handler_Iterator'Class
    is
       pragma Unreferenced
         (Handler, Root_Project, Project, Recursive);
@@ -2057,4 +2055,3 @@ package body Src_Info.ALI is
    end Continue;
 
 end Src_Info.ALI;
-
