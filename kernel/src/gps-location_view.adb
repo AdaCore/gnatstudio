@@ -2,7 +2,7 @@
 --                               G P S                               --
 --                                                                   --
 --                     Copyright (C) 2001-2005                       --
---                              AdaCore                              --
+--                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -71,9 +71,9 @@ with System;
 with Ada.Exceptions;           use Ada.Exceptions;
 with Ada.Unchecked_Conversion;
 
-package body Glide_Result_View is
+package body GPS.Location_View is
 
-   Me : constant Debug_Handle := Create ("Glide_Result_View");
+   Me : constant Debug_Handle := Create ("GPS_Location_View");
 
    Non_Leaf_Color_Name : constant String := "blue";
    --  <preference> color to use for category and file names
@@ -81,9 +81,9 @@ package body Glide_Result_View is
    Auto_Jump_To_First : Param_Spec_Boolean;
    --  Preferences local to this module
 
-   Result_View_Module_Id : Module_ID;
+   Location_View_Module_Id : Module_ID;
 
-   package View_Idle is new Gtk.Main.Timeout (Result_View);
+   package View_Idle is new Gtk.Main.Timeout (Location_View);
 
    ---------------------
    -- Local constants --
@@ -166,17 +166,17 @@ package body Glide_Result_View is
    -----------------------
 
    procedure Remove_Category
-     (View       : access Result_View_Record'Class;
+     (View       : access Location_View_Record'Class;
       Identifier : String;
       File       : VFS.Virtual_File);
    --  Remove category Identifier from the view. All corresponding marks
    --  are deleted.
 
-   procedure Set_Column_Types (View : access Result_View_Record'Class);
+   procedure Set_Column_Types (View : access Location_View_Record'Class);
    --  Sets the types of columns to be displayed in the tree_view.
 
    procedure Get_Category_File
-     (View          : access Result_View_Record'Class;
+     (View          : access Location_View_Record'Class;
       Model         : Gtk_Tree_Store;
       Category      : String;
       H_Category    : String;
@@ -191,7 +191,7 @@ package body Glide_Result_View is
    --  If the category was created, New_Category is set to True.
 
    procedure Fill_Iter
-     (View               : access Result_View_Record'Class;
+     (View               : access Location_View_Record'Class;
       Model              : Gtk_Tree_Store;
       Iter               : Gtk_Tree_Iter;
       Base_Name          : String;
@@ -210,7 +210,7 @@ package body Glide_Result_View is
    --  If Line is 0, consider the item as a non-leaf item.
 
    procedure Add_Location
-     (View               : access Result_View_Record'Class;
+     (View               : access Location_View_Record'Class;
       Model              : Gtk_Tree_Store;
       Category           : String;
       File               : VFS.Virtual_File;
@@ -244,15 +244,15 @@ package body Glide_Result_View is
    --  Callback for the "button_press" event.
 
    procedure Goto_Location (Object   : access Gtk_Widget_Record'Class);
-   --  Goto the selected location in the Result_View.
+   --  Goto the selected location in the Location_View.
 
    procedure Remove_Category_Or_File_Iter
-     (View : Result_View;
+     (View : Location_View;
       Iter : in out Gtk_Tree_Iter);
    --  Clear all the marks and highlightings in file or category.
 
    procedure Remove_Category (Object   : access Gtk_Widget_Record'Class);
-   --  Remove the selected category in the Result_View.
+   --  Remove the selected category in the Location_View.
 
    procedure On_Destroy (View : access Gtk_Widget_Record'Class);
    --  Callback for the "destroy" signal
@@ -293,11 +293,11 @@ package body Glide_Result_View is
       Params : Glib.Values.GValues);
    --  Callback for the "row_expanded" signal.
 
-   function Get_Or_Create_Result_View_MDI
+   function Get_Or_Create_Location_View_MDI
      (Kernel         : access Kernel_Handle_Record'Class;
       Allow_Creation : Boolean := True)
       return MDI_Child;
-   --  Internal version of Get_Or_Create_Result_View
+   --  Internal version of Get_Or_Create_Location_View
 
    function Location_Hook
      (Kernel    : access Kernel_Handle_Record'Class;
@@ -321,10 +321,10 @@ package body Glide_Result_View is
    --  Interactive shell command handler.
 
    procedure Redraw_Totals
-     (View : access Result_View_Record'Class);
+     (View : access Location_View_Record'Class);
    --  Reset the columns corresponding to the "total" items.
 
-   function Idle_Redraw (View : Result_View) return Boolean;
+   function Idle_Redraw (View : Location_View) return Boolean;
    --  Redraw the "total" items.
 
    procedure Toggle_Sort
@@ -341,7 +341,7 @@ package body Glide_Result_View is
    -----------
 
    type File_Edited_Hook_Record is new Hook_Args_Record with record
-      View : Result_View;
+      View : Location_View;
    end record;
    type File_Edited_Hook is access File_Edited_Hook_Record'Class;
    procedure Execute
@@ -359,7 +359,7 @@ package body Glide_Result_View is
       Kernel : access Kernel_Handle_Record'Class;
       Data   : access Hooks_Data'Class)
    is
-      View : Result_View renames Hook.View;
+      View : Location_View renames Hook.View;
       File : constant VFS.Virtual_File := File_Hooks_Args (Data.all).File;
 
       Category_Iter : Gtk_Tree_Iter;
@@ -420,7 +420,7 @@ package body Glide_Result_View is
    -- Idle_Redraw --
    -----------------
 
-   function Idle_Redraw (View : Result_View) return Boolean is
+   function Idle_Redraw (View : Location_View) return Boolean is
       Category_Iter : Gtk_Tree_Iter;
       File_Iter     : Gtk_Tree_Iter;
 
@@ -476,14 +476,14 @@ package body Glide_Result_View is
    -------------------
 
    procedure Redraw_Totals
-     (View : access Result_View_Record'Class) is
+     (View : access Location_View_Record'Class) is
    begin
       if View.Idle_Registered then
          return;
       end if;
 
       View.Idle_Handler := View_Idle.Add
-        (500, Idle_Redraw'Access, Result_View (View));
+        (500, Idle_Redraw'Access, Location_View (View));
       View.Idle_Registered := True;
    end Redraw_Totals;
 
@@ -503,11 +503,11 @@ package body Glide_Result_View is
          2 => new String'(Image (Line)),
          3 => new String'(Image (Column)),
          4 => new String'(Image (Length)));
-      Result : constant String :=
+      Location : constant String :=
         Execute_GPS_Shell_Command (Kernel, "Editor.create_mark", Args);
    begin
       Basic_Types.Free (Args);
-      return Result;
+      return Location;
    end Create_Mark;
 
    --------------------
@@ -568,7 +568,7 @@ package body Glide_Result_View is
    -------------------
 
    procedure Goto_Location (Object   : access Gtk_Widget_Record'Class) is
-      View  : constant Result_View := Result_View (Object);
+      View  : constant Location_View := Location_View (Object);
       Iter  : Gtk_Tree_Iter;
       Model : Gtk_Tree_Model;
       Path  : Gtk_Tree_Path;
@@ -616,7 +616,7 @@ package body Glide_Result_View is
    ----------------------------------
 
    procedure Remove_Category_Or_File_Iter
-     (View : Result_View;
+     (View : Location_View;
       Iter : in out Gtk_Tree_Iter)
    is
       File_Iter : Gtk_Tree_Iter;
@@ -716,7 +716,7 @@ package body Glide_Result_View is
    ---------------------
 
    procedure Remove_Category (Object   : access Gtk_Widget_Record'Class) is
-      View  : constant Result_View := Result_View (Object);
+      View  : constant Location_View := Location_View (Object);
       Iter  : Gtk_Tree_Iter;
       Model : Gtk_Tree_Model;
 
@@ -735,7 +735,7 @@ package body Glide_Result_View is
    ---------------
 
    procedure Fill_Iter
-     (View               : access Result_View_Record'Class;
+     (View               : access Location_View_Record'Class;
       Model              : Gtk_Tree_Store;
       Iter               : Gtk_Tree_Iter;
       Base_Name          : String;
@@ -803,7 +803,7 @@ package body Glide_Result_View is
    ---------------
 
    procedure Next_Item
-     (View      : access Result_View_Record'Class;
+     (View      : access Location_View_Record'Class;
       Backwards : Boolean := False)
    is
       Iter          : Gtk_Tree_Iter;
@@ -908,7 +908,7 @@ package body Glide_Result_View is
    -----------------------
 
    procedure Get_Category_File
-     (View          : access Result_View_Record'Class;
+     (View          : access Location_View_Record'Class;
       Model         : Gtk_Tree_Store;
       Category      : String;
       H_Category    : String;
@@ -978,7 +978,7 @@ package body Glide_Result_View is
    ------------------
 
    procedure Add_Location
-     (View               : access Result_View_Record'Class;
+     (View               : access Location_View_Record'Class;
       Model              : Gtk_Tree_Store;
       Category           : String;
       File               : VFS.Virtual_File;
@@ -1073,7 +1073,7 @@ package body Glide_Result_View is
                declare
                   MDI   : constant MDI_Window := Get_MDI (View.Kernel);
                   Child : constant MDI_Child :=
-                    Find_MDI_Child_By_Tag (MDI, Result_View_Record'Tag);
+                    Find_MDI_Child_By_Tag (MDI, Location_View_Record'Tag);
                begin
                   if Child /= null then
                      Raise_Child (Child, Give_Focus => False);
@@ -1103,7 +1103,7 @@ package body Glide_Result_View is
    -- Set_Column_Types --
    ----------------------
 
-   procedure Set_Column_Types (View : access Result_View_Record'Class) is
+   procedure Set_Column_Types (View : access Location_View_Record'Class) is
       Tree          : constant Tree_View := View.Tree;
       Col           : Gtk_Tree_View_Column;
       Text_Rend     : Gtk_Cell_Renderer_Text;
@@ -1182,7 +1182,7 @@ package body Glide_Result_View is
    ----------------
 
    procedure On_Destroy (View : access Gtk_Widget_Record'Class) is
-      V    : constant Result_View := Result_View (View);
+      V    : constant Location_View := Location_View (View);
       Iter : Gtk_Tree_Iter;
    begin
       --  Remove all categories.
@@ -1213,12 +1213,12 @@ package body Glide_Result_View is
    -------------
 
    procedure Gtk_New
-     (View   : out Result_View;
+     (View   : out Location_View;
       Kernel : Kernel_Handle;
       Module : Module_ID)
    is
    begin
-      View := new Result_View_Record;
+      View := new Location_View_Record;
       Initialize (View, Kernel, Module);
    end Gtk_New;
 
@@ -1236,11 +1236,11 @@ package body Glide_Result_View is
       pragma Unreferenced (Kernel, Event_Widget, Event);
       Mitem    : Gtk_Menu_Item;
 
-      Explorer : constant Result_View := Result_View (Object);
+      Explorer : constant Location_View := Location_View (Object);
       Path     : Gtk_Tree_Path;
       Iter     : Gtk_Tree_Iter;
       Model    : Gtk_Tree_Model;
-      Result   : Message_Context_Access := null;
+      Location   : Message_Context_Access := null;
       Check    : Gtk_Check_Menu_Item;
 
    begin
@@ -1304,21 +1304,21 @@ package body Glide_Result_View is
             File   : constant Virtual_File := Create
               (Full_Filename => Get_String (Model, Par, Absolute_Name_Column));
          begin
-            Result := new Message_Context;
+            Location := new Message_Context;
             Set_File_Information
-              (Result,
+              (Location,
                File,
                Line => Line,
                Column => Column);
             Set_Message_Information
-              (Result,
+              (Location,
                Category => Get_String (Model, Granpa, Base_Name_Column),
                Message  => Get_String (Model, Iter, Message_Column));
          end;
       end if;
 
       Path_Free (Path);
-      return Selection_Context_Access (Result);
+      return Selection_Context_Access (Location);
    end Context_Func;
 
    -----------------
@@ -1328,7 +1328,7 @@ package body Glide_Result_View is
    procedure Toggle_Sort
      (Widget : access Gtk_Widget_Record'Class)
    is
-      Explorer : constant Result_View := Result_View (Widget);
+      Explorer : constant Location_View := Location_View (Widget);
    begin
       Explorer.Sort_By_Category := not Explorer.Sort_By_Category;
 
@@ -1350,7 +1350,7 @@ package body Glide_Result_View is
    ----------------
 
    procedure Initialize
-     (View   : access Result_View_Record'Class;
+     (View   : access Location_View_Record'Class;
       Kernel : Kernel_Handle;
       Module : Module_ID)
    is
@@ -1404,7 +1404,7 @@ package body Glide_Result_View is
          Context_Func'Access);
 
       File_Hook := new File_Edited_Hook_Record;
-      File_Hook.View := Result_View (View);
+      File_Hook.View := Location_View (View);
       Add_Hook
         (View.Kernel,
          Glide_Kernel.File_Edited_Hook,
@@ -1433,11 +1433,11 @@ package body Glide_Result_View is
                 "Unexpected exception: " & Exception_Information (E));
    end On_Row_Expanded;
 
-   -------------------
-   -- Insert_Result --
-   -------------------
+   ---------------------
+   -- Insert_Location --
+   ---------------------
 
-   procedure Insert_Result
+   procedure Insert_Location
      (Kernel             : access Kernel_Handle_Record'Class;
       Category           : String;
       File               : VFS.Virtual_File;
@@ -1451,7 +1451,7 @@ package body Glide_Result_View is
       Remove_Duplicates  : Boolean := True;
       Enable_Counter     : Boolean := True)
    is
-      View : constant Result_View := Get_Or_Create_Result_View (Kernel);
+      View : constant Location_View := Get_Or_Create_Location_View (Kernel);
    begin
       if View /= null then
          Add_Location
@@ -1463,7 +1463,7 @@ package body Glide_Result_View is
 
          Gtkada.MDI.Highlight_Child (Find_MDI_Child (Get_MDI (Kernel), View));
       end if;
-   end Insert_Result;
+   end Insert_Location;
 
    ----------------------
    -- Recount_Category --
@@ -1473,8 +1473,8 @@ package body Glide_Result_View is
      (Kernel   : access Kernel_Handle_Record'Class;
       Category : String)
    is
-      View : constant Result_View :=
-               Get_Or_Create_Result_View (Kernel, Allow_Creation => False);
+      View : constant Location_View :=
+               Get_Or_Create_Location_View (Kernel, Allow_Creation => False);
       Cat   : Gtk_Tree_Iter;
       Iter  : Gtk_Tree_Iter;
       Dummy : Boolean;
@@ -1509,29 +1509,29 @@ package body Glide_Result_View is
       Redraw_Totals (View);
    end Recount_Category;
 
-   ----------------------------
-   -- Remove_Result_Category --
-   ----------------------------
+   ------------------------------
+   -- Remove_Location_Category --
+   ------------------------------
 
-   procedure Remove_Result_Category
+   procedure Remove_Location_Category
      (Kernel   : access Kernel_Handle_Record'Class;
       Category : String;
       File     : VFS.Virtual_File := VFS.No_File)
    is
-      View : constant Result_View :=
-        Get_Or_Create_Result_View (Kernel, Allow_Creation => False);
+      View : constant Location_View :=
+        Get_Or_Create_Location_View (Kernel, Allow_Creation => False);
    begin
       if View /= null then
          Remove_Category (View, Category, File);
       end if;
-   end Remove_Result_Category;
+   end Remove_Location_Category;
 
    ---------------------
    -- Remove_Category --
    ---------------------
 
    procedure Remove_Category
-     (View       : access Result_View_Record'Class;
+     (View       : access Location_View_Record'Class;
       Identifier : String;
       File       : VFS.Virtual_File)
    is
@@ -1545,12 +1545,12 @@ package body Glide_Result_View is
          Identifier, "", File, Iter, File_Iter, Dummy);
 
       if File_Iter = Null_Iter then
-         Remove_Category_Or_File_Iter (Result_View (View), Iter);
+         Remove_Category_Or_File_Iter (Location_View (View), Iter);
       else
-         Remove_Category_Or_File_Iter (Result_View (View), File_Iter);
+         Remove_Category_Or_File_Iter (Location_View (View), File_Iter);
 
          if Children (View.Tree.Model, Iter) = Null_Iter then
-            Remove_Category_Or_File_Iter (Result_View (View), Iter);
+            Remove_Category_Or_File_Iter (Location_View (View), Iter);
          end if;
       end if;
    end Remove_Category;
@@ -1563,7 +1563,7 @@ package body Glide_Result_View is
      (View     : access Gtk_Widget_Record'Class;
       Event    : Gdk_Event) return Boolean
    is
-      Explorer : constant Result_View := Result_View (View);
+      Explorer : constant Location_View := Location_View (View);
       X         : constant Gdouble := Get_X (Event);
       Y         : constant Gdouble := Get_Y (Event);
       Path      : Gtk_Tree_Path;
@@ -1660,7 +1660,7 @@ package body Glide_Result_View is
    ---------------------
 
    procedure Add_Action_Item
-     (View          : access Result_View_Record'Class;
+     (View          : access Location_View_Record'Class;
       Identifier    : String;
       Category      : String;
       H_Category    : String;
@@ -1747,48 +1747,48 @@ package body Glide_Result_View is
       Trace (Me, "Add_Action_Item: entry not found");
    end Add_Action_Item;
 
-   -------------------------------
-   -- Get_Or_Create_Result_View --
-   -------------------------------
+   ---------------------------------
+   -- Get_Or_Create_Location_View --
+   ---------------------------------
 
-   function Get_Or_Create_Result_View
+   function Get_Or_Create_Location_View
      (Kernel         : access Kernel_Handle_Record'Class;
       Allow_Creation : Boolean := True)
-      return Result_View
+      return Location_View
    is
       Child : MDI_Child;
    begin
-      Child := Get_Or_Create_Result_View_MDI (Kernel, Allow_Creation);
+      Child := Get_Or_Create_Location_View_MDI (Kernel, Allow_Creation);
 
       if Child = null then
          return null;
       else
-         return Result_View (Get_Widget (Child));
+         return Location_View (Get_Widget (Child));
       end if;
-   end Get_Or_Create_Result_View;
+   end Get_Or_Create_Location_View;
 
-   -----------------------------------
-   -- Get_Or_Create_Result_View_MDI --
-   -----------------------------------
+   -------------------------------------
+   -- Get_Or_Create_Location_View_MDI --
+   -------------------------------------
 
-   function Get_Or_Create_Result_View_MDI
+   function Get_Or_Create_Location_View_MDI
      (Kernel         : access Kernel_Handle_Record'Class;
       Allow_Creation : Boolean := True)
       return MDI_Child
    is
       Child   : MDI_Child := Find_MDI_Child_By_Tag
-        (Get_MDI (Kernel), Result_View_Record'Tag);
-      Results : Result_View;
+        (Get_MDI (Kernel), Location_View_Record'Tag);
+      Locations : Location_View;
    begin
       if Child = null then
          if not Allow_Creation then
             return null;
          end if;
 
-         Gtk_New (Results, Kernel_Handle (Kernel), Result_View_Module_Id);
+         Gtk_New (Locations, Kernel_Handle (Kernel), Location_View_Module_Id);
          Child := Put
-           (Kernel, Results,
-            Module              => Result_View_Module_Id,
+           (Kernel, Locations,
+            Module              => Location_View_Module_Id,
             Default_Width       => Get_Pref (Kernel, Default_Widget_Width),
             Default_Height      => Get_Pref (Kernel, Default_Widget_Height),
             Position            => Position_Bottom,
@@ -1798,7 +1798,7 @@ package body Glide_Result_View is
       end if;
 
       return Child;
-   end Get_Or_Create_Result_View_MDI;
+   end Get_Or_Create_Location_View_MDI;
 
    -------------------
    -- Location_Hook --
@@ -1808,7 +1808,8 @@ package body Glide_Result_View is
      (Kernel    : access Kernel_Handle_Record'Class;
       Data      : access Hooks_Data'Class) return Boolean
    is
-      View : constant Result_View := Get_Or_Create_Result_View (Kernel, False);
+      View : constant Location_View := Get_Or_Create_Location_View
+        (Kernel, False);
       D : Location_Hooks_Args := Location_Hooks_Args (Data.all);
    begin
       Add_Action_Item
@@ -1828,12 +1829,13 @@ package body Glide_Result_View is
    is
       pragma Unreferenced (MDI);
       Child : MDI_Child;
-      View : Result_View;
+      View : Location_View;
       Category, File, Location : Node_Ptr;
    begin
-      if Node.Tag.all = "Result_View_Record" then
-         Child := Get_Or_Create_Result_View_MDI (User, Allow_Creation => True);
-         View := Result_View (Get_Widget (Child));
+      if Node.Tag.all = "Location_View_Record" then
+         Child := Get_Or_Create_Location_View_MDI
+           (User, Allow_Creation => True);
+         View := Location_View (Get_Widget (Child));
          Category := Node.Child;
          while Category /= null loop
             declare
@@ -1889,22 +1891,22 @@ package body Glide_Result_View is
 
    function Save_Desktop
      (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
-      User   : Kernel_Handle)
-     return Node_Ptr
+      User   : Kernel_Handle) return Node_Ptr
    is
       pragma Unreferenced (User);
       N : Node_Ptr;
-      View : Result_View;
+      View : Location_View;
       Category, File, Location : Node_Ptr;
       Category_Iter : Gtk_Tree_Iter;
       File_Iter     : Gtk_Tree_Iter;
       Location_Iter : Gtk_Tree_Iter;
-   begin
-      if Widget.all in Result_View_Record'Class then
-         N := new Node;
-         N.Tag := new String'("Result_View_Record");
 
-         View := Result_View (Widget);
+   begin
+      if Widget.all in Location_View_Record'Class then
+         N := new Node;
+         N.Tag := new String'("Location_View_Record");
+
+         View := Location_View (Widget);
          Category_Iter := Get_Iter_First (View.Tree.Model);
          while Category_Iter /= Null_Iter loop
             Category := new Node;
@@ -1976,9 +1978,9 @@ package body Glide_Result_View is
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class) is
    begin
       Register_Module
-        (Module      => Result_View_Module_Id,
+        (Module      => Location_View_Module_Id,
          Kernel      => Kernel,
-         Module_Name => "Result View");
+         Module_Name => "Location View");
 
       Auto_Jump_To_First := Param_Spec_Boolean
         (Gnew_Boolean
@@ -2062,7 +2064,7 @@ package body Glide_Result_View is
 
       elsif Command = "remove_category" then
          Name_Parameters (Data, Remove_Category_Parameters);
-         Remove_Result_Category
+         Remove_Location_Category
            (Get_Kernel (Data),
             Category => Nth_Arg (Data, 1));
 
@@ -2071,7 +2073,7 @@ package body Glide_Result_View is
          declare
             Highlight : constant String  := Nth_Arg (Data, 6, "");
          begin
-            Insert_Result
+            Insert_Location
               (Get_Kernel (Data),
                Category           => Nth_Arg (Data, 1),
                File               => Get_File (Get_Data
@@ -2108,7 +2110,8 @@ package body Glide_Result_View is
       Warning_Index_In_Regexp : Integer := -1;
       Quiet                   : Boolean := False)
    is
-      View      : constant Result_View := Get_Or_Create_Result_View (Kernel);
+      View      : constant Location_View :=
+        Get_Or_Create_Location_View (Kernel);
       Model     : Gtk_Tree_Store;
       Expand    : Boolean := Quiet;
 
@@ -2147,16 +2150,16 @@ package body Glide_Result_View is
       function Get_Index
         (Pref : Param_Spec_Int; Value : Integer) return Integer
       is
-         Result : Integer;
+         Location : Integer;
       begin
          if Value = -1 then
-            Result := Integer (Get_Pref (Kernel, Pref));
+            Location := Integer (Get_Pref (Kernel, Pref));
          else
-            Result := Value;
+            Location := Value;
          end if;
 
-         Max := Integer'Max (Max, Result);
-         return Result;
+         Max := Integer'Max (Max, Location);
+         return Location;
       end Get_Index;
 
       File_Location : constant Pattern_Matcher := Get_File_Location;
@@ -2294,4 +2297,4 @@ package body Glide_Result_View is
       end if;
    end Parse_File_Locations;
 
-end Glide_Result_View;
+end GPS.Location_View;

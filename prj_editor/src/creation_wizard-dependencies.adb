@@ -24,7 +24,7 @@ with Glide_Kernel.Contexts;    use Glide_Kernel.Contexts;
 with Glide_Kernel.MDI;         use Glide_Kernel.MDI;
 with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
 with Glide_Kernel.Project;     use Glide_Kernel.Project;
-with Glide_Result_View;        use Glide_Result_View;
+with GPS.Location_View;        use GPS.Location_View;
 with Projects;                 use Projects;
 with Projects.Editor;          use Projects.Editor;
 with Projects.Registry;        use Projects.Registry;

@@ -45,7 +45,7 @@ with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
 with Glide_Kernel.Project;      use Glide_Kernel.Project;
 with Glide_Kernel.Timeout;      use Glide_Kernel.Timeout;
 with Glide_Kernel.Task_Manager; use Glide_Kernel.Task_Manager;
-with Glide_Result_View;         use Glide_Result_View;
+with GPS.Location_View;         use GPS.Location_View;
 with VFS;                       use VFS;
 with Projects;                  use Projects;
 
@@ -339,10 +339,10 @@ package body Builder_Module is
       Shadow : Boolean) is
    begin
       if Shadow then
-         Remove_Result_Category (Kernel, -Shadow_Category);
+         Remove_Location_Category (Kernel, -Shadow_Category);
       else
          Console.Clear (Kernel);
-         Remove_Result_Category (Kernel, -Error_Category);
+         Remove_Location_Category (Kernel, -Error_Category);
 
          --  We do not need to remove Warning/Style_Category since these
          --  are located under the Error_Category hierarchy in the locations

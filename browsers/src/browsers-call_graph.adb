@@ -2,7 +2,7 @@
 --                               G P S                               --
 --                                                                   --
 --                      Copyright (C) 2001-2005                      --
---                            AdaCore                                --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -53,7 +53,7 @@ with Glide_Kernel.Console;          use Glide_Kernel.Console;
 with Glide_Kernel.Contexts;         use Glide_Kernel.Contexts;
 with Glide_Kernel.Preferences;      use Glide_Kernel.Preferences;
 with Glide_Kernel.Task_Manager;     use Glide_Kernel.Task_Manager;
-with Glide_Result_View;             use Glide_Result_View;
+with GPS.Location_View;             use GPS.Location_View;
 with Glide_Kernel.Standard_Hooks;   use Glide_Kernel.Standard_Hooks;
 with Commands.Generic_Asynchronous; use Commands;
 with String_Utils;                  use String_Utils;
@@ -1200,7 +1200,7 @@ package body Browsers.Call_Graph is
       end if;
 
       if Show_Caller and then Get_Caller (Ref) /= null then
-         Insert_Result
+         Insert_Location
            (Kernel,
             Category  => Category,
             File      => File,
@@ -1216,7 +1216,7 @@ package body Browsers.Call_Graph is
             Enable_Counter    => False);
 
       else
-         Insert_Result
+         Insert_Location
            (Kernel,
             Category  => Category,
             File      => File,
@@ -1308,7 +1308,7 @@ package body Browsers.Call_Graph is
    begin
       if Info /= null then
          begin
-            Remove_Result_Category (Kernel, Category_Title);
+            Remove_Location_Category (Kernel, Category_Title);
 
             Ref (Info);
             Data := (Kernel           => Kernel_Handle (Kernel),
@@ -1781,7 +1781,7 @@ package body Browsers.Call_Graph is
             --  Print the declaration of the entity, but only if it is in the
             --  current file, as expected by users.
 
-            Remove_Result_Category (Kernel, Title);
+            Remove_Location_Category (Kernel, Title);
             Find_All_References
               (Iter    => Iter,
                Entity  => Entity,

@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2002-2004                       --
---                            ACT-Europe                             --
+--                     Copyright (C) 2002-2005                       --
+--                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -35,7 +35,7 @@ with Glide_Kernel.Contexts;       use Glide_Kernel.Contexts;
 with Glide_Kernel.Modules;        use Glide_Kernel.Modules;
 with Glide_Kernel.Scripts;        use Glide_Kernel.Scripts;
 with Glide_Kernel.Standard_Hooks; use Glide_Kernel.Standard_Hooks;
-with Glide_Result_View;           use Glide_Result_View;
+with GPS.Location_View;           use GPS.Location_View;
 with Glide_Intl;                  use Glide_Intl;
 
 with Commands;                    use Commands;
@@ -567,8 +567,8 @@ package body Navigation_Module is
    is
       pragma Unreferenced (Widget);
 
-      Results : constant Result_View :=
-        Get_Or_Create_Result_View (Kernel, False);
+      Results : constant Location_View :=
+        Get_Or_Create_Location_View (Kernel, False);
    begin
       if Results /= null then
          Next_Item (Results);
@@ -643,8 +643,8 @@ package body Navigation_Module is
    is
       pragma Unreferenced (Widget);
 
-      Results : constant Result_View :=
-        Get_Or_Create_Result_View (Kernel, False);
+      Results : constant Location_View :=
+        Get_Or_Create_Location_View (Kernel, False);
    begin
       if Results /= null then
          Next_Item (Results, Backwards => True);

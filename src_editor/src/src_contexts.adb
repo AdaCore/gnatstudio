@@ -43,7 +43,7 @@ with Glide_Kernel.Contexts;     use Glide_Kernel.Contexts;
 with Glide_Kernel.MDI;          use Glide_Kernel.MDI;
 with Glide_Kernel.Project;      use Glide_Kernel.Project;
 with Glide_Kernel.Standard_Hooks; use Glide_Kernel.Standard_Hooks;
-with Glide_Result_View;         use Glide_Result_View;
+with GPS.Location_View;         use GPS.Location_View;
 with File_Utils;                use File_Utils;
 with Traces;                    use Traces;
 with GNAT.Regpat;               use GNAT.Regpat;
@@ -631,7 +631,7 @@ package body Src_Contexts is
             To_Positive (Match.End_Column),
             Focus => Give_Focus);
       else
-         Insert_Result
+         Insert_Location
            (Kernel,
             Category  => -"Search for: " & Look_For,
             File      => File_Name,

@@ -33,7 +33,7 @@ with VFS;
 
 with Gtkada.Tree_View;         use Gtkada.Tree_View;
 
-package Glide_Result_View is
+package GPS.Location_View is
 
    procedure Register_Module
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
@@ -44,28 +44,28 @@ package Glide_Result_View is
    --  subprogram, since the console is loaded before all other modules,
    --  including the scripting languages
 
-   type Result_View_Record is new Gtk_Hbox_Record with private;
-   type Result_View is access all Result_View_Record'Class;
+   type Location_View_Record is new Gtk_Hbox_Record with private;
+   type Location_View is access all Location_View_Record'Class;
 
    procedure Gtk_New
-     (View        : out Result_View;
+     (View        : out Location_View;
       Kernel      : Kernel_Handle;
       Module      : Module_ID);
    --  Create a new Location_View.
 
    procedure Initialize
-     (View   : access Result_View_Record'Class;
+     (View   : access Location_View_Record'Class;
       Kernel : Kernel_Handle;
       Module : Module_ID);
    --  Internal initialization procedure.
 
-   function Get_Or_Create_Result_View
+   function Get_Or_Create_Location_View
      (Kernel         : access Kernel_Handle_Record'Class;
-      Allow_Creation : Boolean := True) return Result_View;
+      Allow_Creation : Boolean := True) return Location_View;
    --  Return the results view widget. Create it if it doesn't exist and
    --  Allow_Creation is true.
 
-   procedure Insert_Result
+   procedure Insert_Location
      (Kernel             : access Kernel_Handle_Record'Class;
       Category           : String;
       File               : VFS.Virtual_File;
@@ -93,7 +93,7 @@ package Glide_Result_View is
       Category : String);
    --  Update the counters for Category.
 
-   procedure Remove_Result_Category
+   procedure Remove_Location_Category
      (Kernel   : access Kernel_Handle_Record'Class;
       Category : String;
       File     : VFS.Virtual_File := VFS.No_File);
@@ -102,14 +102,14 @@ package Glide_Result_View is
    --  the category.
 
    procedure Next_Item
-     (View      : access Result_View_Record'Class;
+     (View      : access Location_View_Record'Class;
       Backwards : Boolean := False);
    --  If an item if selected, jump to the location pointed to by the iter
    --  immediately following it in the same category. If there is none, jump
    --  to the first item in the category.
 
    procedure Add_Action_Item
-     (View          : access Result_View_Record'Class;
+     (View          : access Location_View_Record'Class;
       Identifier    : String;
       Category      : String;
       H_Category    : String;
@@ -150,7 +150,7 @@ package Glide_Result_View is
 
 private
 
-   type Result_View_Record is new Gtk_Hbox_Record with record
+   type Location_View_Record is new Gtk_Hbox_Record with record
       Kernel : Kernel_Handle;
       Tree   : Tree_View;
 
@@ -172,4 +172,4 @@ private
       Sorting_Column   : Gtk_Tree_View_Column;
    end record;
 
-end Glide_Result_View;
+end GPS.Location_View;

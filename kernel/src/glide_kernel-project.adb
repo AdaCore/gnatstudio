@@ -31,7 +31,7 @@ with Entities;
 
 with Glide_Intl;               use Glide_Intl;
 with Glide_Kernel.Console;     use Glide_Kernel.Console;
-with Glide_Result_View;        use Glide_Result_View;
+with GPS.Location_View;        use GPS.Location_View;
 with Glide_Kernel.Hooks;       use Glide_Kernel.Hooks;
 with Glide_Kernel.MDI;         use Glide_Kernel.MDI;
 
