@@ -30,17 +30,13 @@ with GVD.Color_Combo; use GVD.Color_Combo;
 
 package body General_Preferences_Pkg is
 
-procedure Gtk_New
-  (General_Preferences : out General_Preferences_Access;
-   Main_Window         : access Gtk.Window.Gtk_Window_Record'Class) is
+procedure Gtk_New (General_Preferences : out General_Preferences_Access) is
 begin
    General_Preferences := new General_Preferences_Record;
-   General_Preferences_Pkg.Initialize (General_Preferences, Main_Window);
+   General_Preferences_Pkg.Initialize (General_Preferences);
 end Gtk_New;
 
-procedure Initialize
-  (General_Preferences : access General_Preferences_Record'Class;
-   Main_Window         : access Gtk.Window.Gtk_Window_Record'Class) is
+procedure Initialize (General_Preferences : access General_Preferences_Record'Class) is
    pragma Suppress (All_Checks);
    Big_Item_Spin_Adj : Gtk_Adjustment;
 
@@ -777,8 +773,6 @@ begin
      (General_Preferences.Cancel_Button, "clicked",
       Widget_Callback.To_Marshaller (On_Cancel_Button_Clicked'Access), General_Preferences);
    Add (General_Preferences.Hbuttonbox6, General_Preferences.Cancel_Button);
-
-   General_Preferences.Main_Window := Gtk_Window (Main_Window);
 end Initialize;
 
 end General_Preferences_Pkg;

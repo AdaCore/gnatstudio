@@ -36,11 +36,6 @@ with GVD.Color_Combo;
 package General_Preferences_Pkg is
 
    type General_Preferences_Record is new Gtk_Window_Record with record
-      --  Additional fields
-
-      Main_Window : Gtk.Window.Gtk_Window;
-      --  The main window to which this preferences dialog belongs
-
       Vbox2 : Gtk_Vbox;
       Notebook1 : Gtk_Notebook;
       Frame1 : Gtk_Frame;
@@ -154,13 +149,7 @@ package General_Preferences_Pkg is
    end record;
    type General_Preferences_Access is access all General_Preferences_Record'Class;
 
-   procedure Gtk_New
-     (General_Preferences : out General_Preferences_Access;
-      Main_Window         : access Gtk.Window.Gtk_Window_Record'Class);
-   procedure Initialize
-     (General_Preferences : access General_Preferences_Record'Class;
-      Main_Window         : access Gtk.Window.Gtk_Window_Record'Class);
-
-   General_Preferences : General_Preferences_Access;
+   procedure Gtk_New (General_Preferences : out General_Preferences_Access);
+   procedure Initialize (General_Preferences : access General_Preferences_Record'Class);
 
 end General_Preferences_Pkg;
