@@ -434,7 +434,9 @@ package SN.DB_Structures is
       Tab           : out FR_Table);
    --  Procedure for parsing FR_Table key-data pair
 
-   function Parse_Pair (Key_Data_Pair : Pair) return FU_Table;
+   procedure Parse_Pair
+     (Key_Data_Pair : Pair;
+      Tab           : out FU_Table);
    --  Procedure for parsing FU_Table key-data pair
 
    procedure Parse_Pair

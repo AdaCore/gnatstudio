@@ -519,7 +519,7 @@ package body SN.DB_Structures is
       Tab.Identifier.Last := Cur_Pos + Len - 1;
       Cur_Pos := Cur_Pos + Len;
       Tab.Symbol :=
-         Parse_Symbol (Get_Field (Key_Data_Pair.Key, 5));
+        Parse_Symbol (Get_Field (Key_Data_Pair.Key, 5));
 
       Len := Get_Field_Length (Key_Data_Pair.Data, 1);
       Get_Field (Key_Data_Pair.Data, 1, Buffer, Len);
@@ -589,13 +589,16 @@ package body SN.DB_Structures is
       Number_Of_Allocated_Buffers := Number_Of_Allocated_Buffers + 1;
    end Parse_Pair;
 
-   function Parse_Pair (Key_Data_Pair : Pair) return FU_Table is
-      Tab            : FU_Table;
+   procedure Parse_Pair
+     (Key_Data_Pair : Pair;
+      Tab           : out FU_Table)
+   is
       Cur_Pos        : Integer;
       Len            : Integer;
       Total_Len      : Integer;
       Num_Of_Fields  : constant Integer := Get_Field_Count (Key_Data_Pair.Key);
       Field_Offset   : Integer := 0;
+      Buffer         : String (1 .. 4096);
 
    begin
       Tab.DBI := Key_Data_Pair.DBI;
@@ -640,37 +643,30 @@ package body SN.DB_Structures is
       Tab.File_Name.Last := Cur_Pos + Len - 1;
       Cur_Pos := Cur_Pos + Len;
 
-      --  ??? if we add a call to Get_Field here, it breaks things (see
-      --  regression suite), which is worrisome.
-      --  Put_Line ("val1=" & Get_Field (Key_Data_Pair.Key, Field_Offset + 2));
+      Len := Get_Field_Length (Key_Data_Pair.Key, Field_Offset + 2);
+      Get_Field (Key_Data_Pair.Key, Field_Offset + 2, Buffer, Len);
+      Parse_Position (Buffer (1 .. Len), Tab.Start_Position);
 
-      Parse_Position
-       (Get_Field (Key_Data_Pair.Key, Field_Offset + 2),
-        Tab.Start_Position);
-      Parse_Position (Get_Field (Key_Data_Pair.Data, 1), Tab.End_Position);
+      Len := Get_Field_Length (Key_Data_Pair.Data, 1);
+      Get_Field (Key_Data_Pair.Data, 1, Buffer, Len);
+      Parse_Position (Buffer (1 .. Len), Tab.End_Position);
 
       Tab.Attributes := Parse_Hex (Get_Field (Key_Data_Pair.Data, 2));
 
+      Len := Get_Field_Length (Key_Data_Pair.Data, 3);
+      Get_Field (Key_Data_Pair.Data, 3, Buffer, Len);
       Remove_Brackets
-        (Get_Field (Key_Data_Pair.Data, 3),
-         Tab.Buffer,
-         Cur_Pos,
-         Tab.Return_Type);
-      Remove_Brackets
-        (Get_Field (Key_Data_Pair.Data, 4),
-         Tab.Buffer,
-         Cur_Pos,
-         Tab.Arg_Types);
-      Remove_Brackets
-        (Get_Field (Key_Data_Pair.Data, 6),
-         Tab.Buffer,
-         Cur_Pos,
-         Tab.Comments);
+        (Buffer (1 .. Len), Tab.Buffer, Cur_Pos, Tab.Return_Type);
+      Len := Get_Field_Length (Key_Data_Pair.Data, 4);
+      Get_Field (Key_Data_Pair.Data, 4, Buffer, Len);
+      Remove_Brackets (Buffer (1 .. Len), Tab.Buffer, Cur_Pos, Tab.Arg_Types);
+      Len := Get_Field_Length (Key_Data_Pair.Data, 6);
+      Get_Field (Key_Data_Pair.Data, 6, Buffer, Len);
+      Remove_Brackets (Buffer (1 .. Len), Tab.Buffer, Cur_Pos, Tab.Comments);
 
       Tab.Template_Parameters :=
         Get_Segment_From_Comment (Tab.Comments, Tab.Buffer, "template_args=");
       Number_Of_Allocated_Buffers := Number_Of_Allocated_Buffers + 1;
-      return Tab;
    end Parse_Pair;
 
    procedure Parse_Pair
