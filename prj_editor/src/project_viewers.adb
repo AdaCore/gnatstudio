@@ -83,7 +83,6 @@ with Switches_Editors;         use Switches_Editors;
 with Traces;                   use Traces;
 with Variable_Editors;         use Variable_Editors;
 with Project_Properties;       use Project_Properties;
-with Histories;                use Histories;
 with GUI_Utils;                use GUI_Utils;
 with String_Utils;             use String_Utils;
 with VFS;                      use VFS;
@@ -281,11 +280,6 @@ package body Project_Viewers is
       Kernel : Kernel_Handle);
    --  Callback for the Project->Edit Project Properties menu
 
-   procedure On_Project_Recompute
-     (Widget : access GObject_Record'Class;
-      Kernel : Kernel_Handle);
-   --  Callback for the Project->Recompute Project menu
-
    procedure Save_All_Projects
      (Widget : access GObject_Record'Class;
       Kernel : Kernel_Handle);
@@ -322,10 +316,6 @@ package body Project_Viewers is
    --  Set the contents of the line Iter in the model. It is assumed the file
    --  name has already been set on that line
 
-   procedure On_Project_Changed
-     (Kernel : access Kernel_Handle_Record'Class);
-   --  Called when the project has just changed
-
    procedure On_File_Edited
      (Object : access GObject_Record'Class;
       Args   : Gtk_Args;
@@ -334,11 +324,6 @@ package body Project_Viewers is
    --  See comments in the body of this function explaining the use of this
    --  pragma.
    --  Called when a new file is edited
-
-   type On_Reopen is new Menu_Callback_Record with record
-      Kernel : Kernel_Handle;
-   end record;
-   procedure Activate (Callback : access On_Reopen; Item : String);
 
    procedure Customize
      (Kernel : access Kernel_Handle_Record'Class;
@@ -487,20 +472,6 @@ package body Project_Viewers is
 
       Destroy (Module_ID_Record (Module));
    end Destroy;
-
-   --------------
-   -- Activate --
-   --------------
-
-   procedure Activate (Callback : access On_Reopen; Item : String) is
-   begin
-      Load_Project (Callback.Kernel, Item);
-
-   exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
-   end Activate;
 
    -------------------------
    -- Project_Viewers_Set --
@@ -927,19 +898,6 @@ package body Project_Viewers is
                 "Unexpected exception " & Exception_Information (E));
          Unref (Context);
    end On_Edit_Switches;
-
-   --------------------------
-   -- On_Project_Recompute --
-   --------------------------
-
-   procedure On_Project_Recompute
-     (Widget : access GObject_Record'Class;
-      Kernel : Kernel_Handle)
-   is
-      pragma Unreferenced (Widget);
-   begin
-      Recompute_View (Kernel);
-   end On_Project_Recompute;
 
    ---------------------------
    -- On_Project_Properties --
@@ -1594,24 +1552,6 @@ package body Project_Viewers is
 
       end if;
    end Project_Command_Handler;
-
-   ------------------------
-   -- On_Project_Changed --
-   ------------------------
-
-   procedure On_Project_Changed (Kernel : access Kernel_Handle_Record'Class) is
-      Filename : constant String := Normalize_Pathname
-        (Project_Path (Get_Project (Kernel)), Resolve_Links => False);
-   begin
-      if Filename /= "" then
-         Add_To_History (Kernel, Project_History_Key, Filename);
-      end if;
-
-   exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception " & Exception_Information (E));
-   end On_Project_Changed;
 
    -------------
    -- Destroy --
@@ -2666,7 +2606,7 @@ package body Project_Viewers is
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
    is
       Project : constant String := '/' & (-"Project");
-      Reopen_Menu : Gtk.Menu_Item.Gtk_Menu_Item;
+--        Reopen_Menu : Gtk.Menu_Item.Gtk_Menu_Item;
       Filter : Action_Filter;
       Command : Interactive_Command_Access;
       Mitem   : Gtk_Menu_Item;
@@ -2684,14 +2624,6 @@ package body Project_Viewers is
       Register_Menu (Kernel, Project, -"_New...", "",
                      Creation_Wizard.Selector.On_New_Project'Access,
                      Ref_Item => -"Open...", Add_Before => False);
-      Reopen_Menu := Register_Menu
-        (Kernel, Project, -"_Recent", "",
-         null, Ref_Item => -"New...", Add_Before => False);
-      Associate (Get_History (Kernel).all,
-                 Project_History_Key,
-                 Reopen_Menu,
-                 new On_Reopen'(Menu_Callback_Record with
-                                Kernel => Kernel_Handle (Kernel)));
 
       Register_Menu
         (Kernel, Project, -"Edit File _Switches", "",
@@ -2704,16 +2636,10 @@ package body Project_Viewers is
         (Kernel, Project, -"Save _All", "",
          Save_All_Projects'Access, Ref_Item => -"Edit Project Properties",
          Add_Before => False);
-      Register_Menu
-        (Kernel, Project, -"R_ecompute Project", "",
-         On_Project_Recompute'Access, Ref_Item => -"Edit File Switches",
-         Add_Before => False);
 
       Gtk_New (Mitem);
       Register_Menu (Kernel, Project, Mitem, Ref_Item => "Recent",
                      Add_Before => False);
-
-      Add_Hook (Kernel, Project_Changed_Hook, On_Project_Changed'Access);
 
       --  ??? Disabled for now, pending resolution of related problems
       --  encountered during testing

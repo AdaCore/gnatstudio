@@ -21,16 +21,11 @@
 with GNAT.OS_Lib;
 with Glide_Kernel;
 with Gtk.Widget;
-with Histories;
 with Projects;
 with Switches_Editors;
 with Naming_Editors;
 
 package Project_Viewers is
-
-   Project_History_Key : constant Histories.History_Key := "project_files";
-   --  Key to use in the kernel histories to store the most recently opened
-   --  files.
 
    procedure Register_Module
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
