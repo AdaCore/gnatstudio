@@ -344,5 +344,4 @@ package body Src_Editor_Buffer.Buffer_Commands is
       return Commands.Success;
    end Execute;
 
-
 end Src_Editor_Buffer.Buffer_Commands;
