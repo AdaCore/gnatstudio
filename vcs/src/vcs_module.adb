@@ -21,17 +21,8 @@
 with Glib;                        use Glib;
 with Glib.Xml_Int;                use Glib.Xml_Int;
 with Glib.Object;                 use Glib.Object;
-with Gtk.Box;                     use Gtk.Box;
-with Gtk.Enums;                   use Gtk.Enums;
-with Gtk.Event_Box;               use Gtk.Event_Box;
-with Gtk.GEntry;                  use Gtk.GEntry;
-with Gtk.Frame;                   use Gtk.Frame;
-with Gtk.Label;                   use Gtk.Label;
 with Gtk.Menu;                    use Gtk.Menu;
 with Gtk.Menu_Item;               use Gtk.Menu_Item;
-with Gtk.Radio_Button;            use Gtk.Radio_Button;
-with Gtk.Table;                   use Gtk.Table;
-with Gtk.Tooltips;                use Gtk.Tooltips;
 with Gtk.Widget;                  use Gtk.Widget;
 with Gtkada.MDI;                  use Gtkada.MDI;
 
@@ -57,20 +48,15 @@ with Commands.VCS;                use Commands.VCS;
 with VCS.Unknown_VCS;             use VCS.Unknown_VCS;
 with VCS.Generic_VCS;             use VCS.Generic_VCS;
 with Ada.Exceptions;              use Ada.Exceptions;
-with Ada.Characters.Handling;     use Ada.Characters.Handling;
 with GNAT.OS_Lib;                 use GNAT.OS_Lib;
 with Projects;                    use Projects;
-with Projects.Editor;             use Projects.Editor;
 with Projects.Registry;           use Projects.Registry;
 with VFS;                         use VFS;
-with Project_Viewers;             use Project_Viewers;
 
 with String_List_Utils;
 with Log_Utils;
 
 package body VCS_Module is
-
-   Me : constant Debug_Handle := Create (VCS_Module_Name);
 
    Auto_Detect  : constant String := "None";
 
@@ -89,13 +75,6 @@ package body VCS_Module is
    procedure Destroy (Module : in out VCS_Module_ID_Record);
    --  Free the memory occupied by Module.
 
-   type VCS_Selector_Record is new Gtk_Box_Record with record
-      Selected     : Gtk_Radio_Button;
-      Log_Checker  : Gtk.GEntry.Gtk_Entry;
-      File_Checker : Gtk.GEntry.Gtk_Entry;
-   end record;
-   type VCS_Selector is access all VCS_Selector_Record'Class;
-
    procedure VCS_Contextual_Menu
      (Object  : access Glib.Object.GObject_Record'Class;
       Context : access Selection_Context'Class;
@@ -107,12 +86,6 @@ package body VCS_Module is
      (Widget : access GObject_Record'Class;
       Kernel : Kernel_Handle);
    --  Display the VCS explorer
-
-   procedure Toggled
-     (Radio    : access Glib.Object.GObject_Record'Class;
-      Selector : Glib.Object.GObject);
-   --  Called when a new VCS has been selector in the project creation wizard
-   --  or the project properties editor.
 
    procedure File_Edited_Cb
      (Kernel  : access Kernel_Handle_Record'Class;
@@ -129,24 +102,6 @@ package body VCS_Module is
      (Widget : access Gtk.Widget.Gtk_Widget_Record'Class)
       return Node_Ptr;
    --  Save the status of the project explorer to an XML tree
-
-   type VCS_Editor_Record is new Project_Editor_Page_Record
-     with null record;
-   function Widget_Factory
-     (Page         : access VCS_Editor_Record;
-      Project      : Project_Type;
-      Full_Project : String;
-      Kernel       : access Kernel_Handle_Record'Class)
-      return Gtk_Widget;
-   function Project_Editor
-     (Page               : access VCS_Editor_Record;
-      Project            : Project_Type;
-      Kernel             : access Kernel_Handle_Record'Class;
-      Widget             : access Gtk_Widget_Record'Class;
-      Languages          : Argument_List;
-      Scenario_Variables : Scenario_Variable_Array;
-      Ref_Project        : Project_Type)
-      return Boolean;
 
    procedure Status_Parse_Handler
      (Data    : in out Glide_Kernel.Scripts.Callback_Data'Class;
@@ -302,21 +257,6 @@ package body VCS_Module is
       end if;
    end Register_VCS;
 
-   -------------
-   -- Toggled --
-   -------------
-
-   procedure Toggled
-     (Radio    : access Glib.Object.GObject_Record'Class;
-      Selector : Glib.Object.GObject)
-   is
-      R : constant Gtk_Radio_Button := Gtk_Radio_Button (Radio);
-   begin
-      if Get_Active (R) then
-         VCS_Selector (Selector).Selected := R;
-      end if;
-   end Toggled;
-
    ----------------------------------
    -- VCS_Command_Handler_No_Param --
    ----------------------------------
@@ -340,206 +280,6 @@ package body VCS_Module is
          end;
       end if;
    end VCS_Command_Handler_No_Param;
-
-   --------------------
-   -- Widget_Factory --
-   --------------------
-
-   function Widget_Factory
-     (Page         : access VCS_Editor_Record;
-      Project      : Project_Type;
-      Full_Project : String;
-      Kernel       : access Kernel_Handle_Record'Class)
-      return Gtk_Widget
-   is
-      pragma Unreferenced (Page, Full_Project);
-      Systems : constant Argument_List := Get_VCS_List (VCS_Module_ID);
-      Radio   : Gtk_Radio_Button;
-      Main    : VCS_Selector;
-      Frame   : Gtk_Frame;
-      Box     : Gtk_Box;
-      Table   : Gtk_Table;
-      Label   : Gtk_Label;
-      Event   : Gtk_Event_Box;
-
-   begin
-      Main := new VCS_Selector_Record;
-      Initialize_Vbox (Main, Homogeneous => False);
-
-      --  System frame
-
-      Gtk_New (Frame, -"System");
-      Set_Border_Width (Frame, 5);
-      Pack_Start (Main, Frame, Expand => False);
-
-      Gtk_New_Vbox (Box, Homogeneous => True);
-      Add (Frame, Box);
-
-      for S in Systems'Range loop
-         if Systems (S).all = "" then
-            Gtk_New (Radio, Group => Radio, Label => -Auto_Detect);
-         else
-            Gtk_New (Radio, Group => Radio, Label => Systems (S).all);
-         end if;
-
-         if Project /= No_Project
-           and then To_Lower (Systems (S).all) = To_Lower
-             (Get_Attribute_Value (Project, Vcs_Kind_Attribute))
-         then
-            Set_Active (Radio, True);
-            Main.Selected := Radio;
-         elsif S = Systems'First then
-            Main.Selected := Radio;
-            Set_Active (Radio, True);
-         else
-            Set_Active (Radio, False);
-         end if;
-         Pack_Start (Box, Radio);
-
-         Object_User_Callback.Connect
-           (Radio, "toggled",
-            Object_User_Callback.To_Marshaller (Toggled'Access),
-            User_Data => GObject (Main));
-      end loop;
-
-      --  Actions frame
-
-      Gtk_New (Frame, -"Actions");
-      Set_Border_Width (Frame, 5);
-      Pack_Start (Main, Frame, Expand => False);
-
-      Gtk_New (Table, Rows => 2, Columns => 2, Homogeneous => False);
-      Add (Frame, Table);
-
-      Gtk_New (Event);
-      Attach (Table, Event, 0, 1, 0, 1, Xoptions => Fill);
-      Gtk_New (Label, -"Log checker:");
-      Add (Event, Label);
-      Set_Alignment (Label, 0.0, 0.5);
-      Set_Tip (Get_Tooltips (Kernel), Event,
-               -("Application run on the log file/revision history just before"
-                 & " commiting a file. If it returns anything other than 0,"
-                 & " the commit will not be performed. The only parameter to"
-                 & " this script is the name of a log file"));
-
-      Gtk_New (Main.Log_Checker);
-      Attach (Table, Main.Log_Checker, 1, 2, 0, 1);
-
-      Gtk_New (Event);
-      Attach (Table, Event, 0, 1, 1, 2, Xoptions => Fill);
-      Gtk_New (Label, -"File checker:");
-      Add (Event, Label);
-      Set_Alignment (Label, 0.0, 0.5);
-      Set_Tip (Get_Tooltips (Kernel), Event,
-               -("Application run on the source file just before"
-                 & " commiting a file. If it returns anything other than 0,"
-                 & " the commit will not be performed. The only parameter to"
-                 & " this script is a file name"));
-
-      Gtk_New (Main.File_Checker);
-      Attach (Table, Main.File_Checker, 1, 2, 1, 2);
-
-      if Project /= No_Project then
-         Set_Text
-           (Main.Log_Checker,
-            Get_Attribute_Value (Project, Vcs_Log_Check));
-         Set_Text
-           (Main.File_Checker,
-            Get_Attribute_Value (Project, Vcs_File_Check));
-      end if;
-
-      Show_All (Main);
-      return Gtk_Widget (Main);
-   end Widget_Factory;
-
-   --------------------
-   -- Project_Editor --
-   --------------------
-
-   function Project_Editor
-     (Page         : access VCS_Editor_Record;
-      Project      : Project_Type;
-      Kernel       : access Kernel_Handle_Record'Class;
-      Widget       : access Gtk_Widget_Record'Class;
-      Languages    : Argument_List;
-      Scenario_Variables : Scenario_Variable_Array;
-      Ref_Project  : Project_Type)
-      return Boolean
-   is
-      pragma Unreferenced (Page, Kernel, Ref_Project, Languages);
-      Selector : constant VCS_Selector := VCS_Selector (Widget);
-      Changed  : Boolean := False;
-      VCS_Kind : constant String := To_Lower (Get_Attribute_Value
-        (Project, Vcs_Kind_Attribute));
-
-   begin
-      if (Project = No_Project
-          and then Get_Label (Selector.Selected) /= -Auto_Detect)
-        or else
-          (Project /= No_Project
-           and then To_Lower (Get_Label (Selector.Selected)) /= VCS_Kind
-           and then (VCS_Kind /= ""
-                     or else Get_Label (Selector.Selected) /= -Auto_Detect))
-      then
-         if Get_Label (Selector.Selected) /= -Auto_Detect then
-            Update_Attribute_Value_In_Scenario
-              (Project            => Project,
-               Scenario_Variables => Scenario_Variables,
-               Attribute          => Vcs_Kind_Attribute,
-               Value              => Get_Label (Selector.Selected));
-         else
-            Delete_Attribute
-              (Project            => Project,
-               Scenario_Variables => Scenario_Variables,
-               Attribute          => Vcs_Kind_Attribute);
-         end if;
-
-         Trace (Me, "Vcs_Kind is different");
-         Changed := True;
-      end if;
-
-      if Project = No_Project
-        or else Get_Text (Selector.Log_Checker) /=
-        Get_Attribute_Value (Project, Vcs_Log_Check)
-      then
-         if Get_Text (Selector.Log_Checker) /= "" then
-            Update_Attribute_Value_In_Scenario
-              (Project            => Project,
-               Scenario_Variables => Scenario_Variables,
-               Attribute          => Vcs_Log_Check,
-               Value              => Get_Text (Selector.Log_Checker));
-         else
-            Delete_Attribute
-              (Project            => Project,
-               Scenario_Variables => Scenario_Variables,
-               Attribute          => Vcs_Log_Check);
-         end if;
-         Trace (Me, "Vcs_Log_Check is different");
-         Changed := True;
-      end if;
-
-      if Project = No_Project
-        or else Get_Text (Selector.File_Checker) /= Get_Attribute_Value
-          (Project, Vcs_File_Check)
-      then
-         if Get_Text (Selector.File_Checker) /= "" then
-            Update_Attribute_Value_In_Scenario
-              (Project            => Project,
-               Scenario_Variables => Scenario_Variables,
-               Attribute          => Vcs_File_Check,
-               Value              => Get_Text (Selector.File_Checker));
-         else
-            Delete_Attribute
-              (Project            => Project,
-               Scenario_Variables => Scenario_Variables,
-               Attribute          => Vcs_File_Check);
-         end if;
-         Trace (Me, "Vcs_File_Check is different");
-         Changed := True;
-      end if;
-
-      return Changed;
-   end Project_Editor;
 
    -------------
    -- Destroy --
@@ -622,15 +362,6 @@ package body VCS_Module is
         (Save_Desktop'Access, Load_Desktop'Access);
 
       Log_Utils.Initialize (Kernel);
-
-      Register_Project_Editor_Page
-        (Kernel,
-         Page      => new VCS_Editor_Record,
-         Label     => -"VCS",
-         Toc       => -"Select VCS",
-         Title     => -"Version Control System Configuration",
-         Ref_Page  => -"Sources",
-         Add_After => False);
 
       Standard.VCS.Unknown_VCS.Register_Module (Kernel);
       Standard.VCS.Generic_VCS.Register_Module (Kernel);
