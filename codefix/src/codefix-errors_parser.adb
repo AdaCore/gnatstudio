@@ -1,3 +1,23 @@
+-----------------------------------------------------------------------
+--                               G P S                               --
+--                                                                   --
+--                        Copyright (C) 2002                         --
+--                            ACT-Europe                             --
+--                                                                   --
+-- GPS is free  software;  you can redistribute it and/or modify  it --
+-- under the terms of the GNU General Public License as published by --
+-- the Free Software Foundation; either version 2 of the License, or --
+-- (at your option) any later version.                               --
+--                                                                   --
+-- This program is  distributed in the hope that it will be  useful, --
+-- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
+-- General Public License for more details. You should have received --
+-- a copy of the GNU General Public License along with this program; --
+-- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
+-- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
+-----------------------------------------------------------------------
+
 with Ada.Text_IO; use Ada.Text_IO;
 
 with GNAT.Regpat; use GNAT.Regpat;
@@ -31,15 +51,15 @@ package body Codefix.Errors_Parser is
 
    function Get_Solutions
      (Current_Text : Text_Navigator_Abstr'Class;
-      Message      : Error_Message) return Solution_List is
-
+      Message      : Error_Message) return Solution_List
+   is
       Current_Node : Parser_List.List_Node;
       Success      : Boolean;
       Solutions    : Solution_List := Extract_List.Null_List;
 
    begin
-
       Current_Node := First (General_Parse_List);
+
       while Current_Node /= Parser_List.Null_Node loop
          if Get_Error_State (Data (Current_Node).Subcategorie) = Enabled then
             Correct
@@ -50,10 +70,11 @@ package body Codefix.Errors_Parser is
                Success);
             Current_Node := Next (Current_Node);
          end if;
+
          exit when Success;
       end loop;
-      return Solutions;
 
+      return Solutions;
    end Get_Solutions;
 
    ----------------
@@ -92,9 +113,9 @@ package body Codefix.Errors_Parser is
 
    procedure Initialize_Parsers is
       Current_Node : Parser_List.List_Node;
-
    begin
       Current_Node := First (General_Parse_List);
+
       while Current_Node /= Parser_List.Null_Node loop
          Initialize (Data (Current_Node).all);
          Current_Node := Next (Current_Node);
@@ -143,6 +164,7 @@ package body Codefix.Errors_Parser is
    procedure Free (This : in out Error_Parser) is
    begin
       Free (This.Current_It);
+
       for J in This.Matcher'Range loop
          Free (This.Matcher (J));
       end loop;
@@ -158,7 +180,7 @@ package body Codefix.Errors_Parser is
    procedure Initialize (This : in out Agregate_Misspelling) is
    begin
       This.Matcher := (1 => new Pattern_Matcher'
-         (Compile ("misspelling of ""=>""")));
+        (Compile ("misspelling of ""=>""")));
    end Initialize;
 
    procedure Correct
@@ -169,11 +191,7 @@ package body Codefix.Errors_Parser is
       Matches      : Match_Array) is
 
    begin
-      Append (Solutions,
-              Should_Be (Current_Text,
-                         Message,
-                         "=>",
-                         "="));
+      Append (Solutions, Should_Be (Current_Text, Message, "=>", "="));
    end Correct;
 
    -----------------------
@@ -183,7 +201,7 @@ package body Codefix.Errors_Parser is
    procedure Initialize (This : in out Ligth_Misspelling) is
    begin
       This.Matcher := (1 => new Pattern_Matcher'
-         (Compile ("misspelling of ""([^""]+)""$")));
+        (Compile ("misspelling of ""([^""]+)""$")));
    end Initialize;
 
    procedure Correct
@@ -192,13 +210,13 @@ package body Codefix.Errors_Parser is
       Message      : Error_Message;
       Solutions    : out Solution_List;
       Matches      : Match_Array) is
-
    begin
-      Append (Solutions,
-              Should_Be (Current_Text,
-                         Message,
-                         Get_Message (Message)
-                            (Matches (1).First .. Matches (1).Last)));
+      Append
+        (Solutions,
+         Should_Be
+           (Current_Text,
+            Message,
+            Get_Message (Message) (Matches (1).First .. Matches (1).Last)));
    end Correct;
 
    ------------------------
@@ -208,7 +226,7 @@ package body Codefix.Errors_Parser is
    procedure Initialize (This : in out Double_Misspelling) is
    begin
       This.Matcher := (1 => new Pattern_Matcher'
-         (Compile ("misspelling of ""([^""]+)"" or ""([^""]+)""")));
+        (Compile ("misspelling of ""([^""]+)"" or ""([^""]+)""")));
    end Initialize;
 
    procedure Correct
@@ -217,19 +235,20 @@ package body Codefix.Errors_Parser is
       Message      : Error_Message;
       Solutions    : out Solution_List;
       Matches      : Match_Array) is
-
    begin
-      Append (Solutions,
-              Should_Be (Current_Text,
-                         Message,
-                         Get_Message (Message)
-                            (Matches (1).First .. Matches (1).Last)));
+      Append
+        (Solutions,
+         Should_Be
+           (Current_Text,
+            Message,
+            Get_Message (Message) (Matches (1).First .. Matches (1).Last)));
 
-      Append (Solutions,
-              Should_Be (Current_Text,
-                         Message,
-                         Get_Message (Message)
-                            (Matches (2).First .. Matches (2).Last)));
+      Append
+        (Solutions,
+         Should_Be
+           (Current_Text,
+            Message,
+            Get_Message (Message) (Matches (2).First .. Matches (2).Last)));
    end Correct;
 
    ---------------------
@@ -239,7 +258,7 @@ package body Codefix.Errors_Parser is
    procedure Initialize (This : in out Goto_Misspelling) is
    begin
       This.Matcher := (1 => new Pattern_Matcher'
-         (Compile ("goto is one word")));
+        (Compile ("goto is one word")));
    end Initialize;
 
    procedure Correct
@@ -248,13 +267,9 @@ package body Codefix.Errors_Parser is
       Message      : Error_Message;
       Solutions    : out Solution_List;
       Matches      : Match_Array) is
-
    begin
-      Append (Solutions,
-              Should_Be (Current_Text,
-                         Message,
-                         "goto",
-                         "go[\s]*to"));
+      Append
+        (Solutions, Should_Be (Current_Text, Message, "goto", "go[\s]*to"));
    end Correct;
 
    -----------------------
@@ -264,7 +279,7 @@ package body Codefix.Errors_Parser is
    procedure Initialize (This : in out Sth_Should_Be_Sth) is
    begin
       This.Matcher := (1 => new Pattern_Matcher'
-         (Compile ("""([^""]+)"" should be ""([^""]+)""")));
+        (Compile ("""([^""]+)"" should be ""([^""]+)""")));
    end Initialize;
 
    procedure Correct
@@ -273,15 +288,15 @@ package body Codefix.Errors_Parser is
       Message      : Error_Message;
       Solutions    : out Solution_List;
       Matches      : Match_Array) is
-
    begin
-      Append (Solutions,
-              Should_Be (Current_Text,
-                         Message,
-                         Get_Message (Message)
-                            (Matches (2).First .. Matches (2).Last),
-                         Quote (Get_Message (Message)
-                                (Matches (1).First .. Matches (1).Last))));
+      Append
+        (Solutions,
+         Should_Be
+           (Current_Text,
+            Message,
+            Get_Message (Message) (Matches (2).First .. Matches (2).Last),
+            Quote (Get_Message
+              (Message) (Matches (1).First .. Matches (1).Last))));
    end Correct;
 
    -------------------------
@@ -291,7 +306,7 @@ package body Codefix.Errors_Parser is
    procedure Initialize (This : in out Should_Be_Semicolon) is
    begin
       This.Matcher := (1 => new Pattern_Matcher'
-         (Compile ("period should probably be semicolon")));
+        (Compile ("period should probably be semicolon")));
    end Initialize;
 
    procedure Correct
@@ -300,13 +315,8 @@ package body Codefix.Errors_Parser is
       Message      : Error_Message;
       Solutions    : out Solution_List;
       Matches      : Match_Array) is
-
    begin
-      Append (Solutions,
-              Should_Be (Current_Text,
-                         Message,
-                         ";",
-                         "\."));
+      Append (Solutions, Should_Be (Current_Text, Message, ";", "\."));
    end Correct;
 
    ---------------
@@ -316,7 +326,7 @@ package body Codefix.Errors_Parser is
    procedure Initialize (This : in out And_Meant) is
    begin
       This.Matcher := (1 => new Pattern_Matcher'
-         (Compile ("maybe ""and"" was meant")));
+        (Compile ("maybe ""and"" was meant")));
    end Initialize;
 
    procedure Correct
@@ -325,13 +335,8 @@ package body Codefix.Errors_Parser is
       Message      : Error_Message;
       Solutions    : out Solution_List;
       Matches      : Match_Array) is
-
    begin
-      Append (Solutions,
-              Should_Be (Current_Text,
-                         Message,
-                         "and",
-                         "&"));
+      Append (Solutions, Should_Be (Current_Text, Message, "and", "&"));
    end Correct;
 
    --------------
@@ -341,7 +346,7 @@ package body Codefix.Errors_Parser is
    procedure Initialize (This : in out Or_Meant) is
    begin
       This.Matcher := (1 => new Pattern_Matcher'
-         (Compile ("did you mean ""or""")));
+        (Compile ("did you mean ""or""")));
    end Initialize;
 
    procedure Correct
@@ -350,13 +355,8 @@ package body Codefix.Errors_Parser is
       Message      : Error_Message;
       Solutions    : out Solution_List;
       Matches      : Match_Array) is
-
    begin
-      Append (Solutions,
-              Should_Be (Current_Text,
-                         Message,
-                         "or",
-                         "\|"));
+      Append (Solutions, Should_Be (Current_Text, Message, "or", "\|"));
    end Correct;
 
    ----------------------------
@@ -366,7 +366,7 @@ package body Codefix.Errors_Parser is
    procedure Initialize (This : in out Unqualified_Expression) is
    begin
       This.Matcher := (1 => new Pattern_Matcher'
-         (Compile ("if qualified expression was meant")));
+        (Compile ("if qualified expression was meant")));
    end Initialize;
 
    procedure Correct
@@ -375,13 +375,8 @@ package body Codefix.Errors_Parser is
       Message      : Error_Message;
       Solutions    : out Solution_List;
       Matches      : Match_Array) is
-
    begin
-      Append (Solutions,
-              Should_Be (Current_Text,
-                         Message,
-                         "'(",
-                         "\("));
+      Append (Solutions, Should_Be (Current_Text, Message, "'(", "\("));
    end Correct;
 
    -----------------
@@ -392,13 +387,13 @@ package body Codefix.Errors_Parser is
    begin
       This.Matcher :=
         (new Pattern_Matcher'
-         (Compile ("""([\w]+)"" goes before ""([\w]+)""")),
+           (Compile ("""([\w]+)"" goes before ""([\w]+)""")),
          new Pattern_Matcher'
-         (Compile ("""([\w]+)"" must come before ""([\w]+)""")),
+           (Compile ("""([\w]+)"" must come before ""([\w]+)""")),
          new Pattern_Matcher'
-         (Compile ("""([\w]+)"" should be before ""([\w]+)""")),
+           (Compile ("""([\w]+)"" should be before ""([\w]+)""")),
          new Pattern_Matcher'
-         (Compile ("""([\w]+)"" must preceed ""([\w]+)""")));
+           (Compile ("""([\w]+)"" must preceed ""([\w]+)""")));
    end Initialize;
 
    procedure Correct
@@ -407,17 +402,15 @@ package body Codefix.Errors_Parser is
       Message      : Error_Message;
       Solutions    : out Solution_List;
       Matches      : Match_Array) is
-
    begin
-      Append (Solutions,
-              Wrong_Order (Current_Text,
-                           Message,
-                           Get_Message (Message)
-                              (Matches (1).First .. Matches (1).Last),
-                           Get_Message (Message)
-                              (Matches (2).First .. Matches (2).Last)));
+      Append
+        (Solutions,
+         Wrong_Order
+           (Current_Text,
+            Message,
+            Get_Message (Message) (Matches (1).First .. Matches (1).Last),
+            Get_Message (Message) (Matches (2).First .. Matches (2).Last)));
    end Correct;
-
 
    --------------------
    -- Sth_Expected_3 --
@@ -426,7 +419,7 @@ package body Codefix.Errors_Parser is
    procedure Initialize (This : in out Sth_Expected_3) is
    begin
       This.Matcher := (1 => new Pattern_Matcher'
-         (Compile ("""function"", ""procedure"" or ""package"" expected")));
+        (Compile ("""function"", ""procedure"" or ""package"" expected")));
    end Initialize;
 
    procedure Correct
@@ -435,22 +428,10 @@ package body Codefix.Errors_Parser is
       Message      : Error_Message;
       Solutions    : out Solution_List;
       Matches      : Match_Array) is
-
    begin
-      Append (Solutions,
-              Expected (Current_Text,
-                        Message,
-                        "function"));
-
-      Append (Solutions,
-              Expected (Current_Text,
-                        Message,
-                        "procedure"));
-
-      Append (Solutions,
-              Expected (Current_Text,
-                        Message,
-                        "package"));
+      Append (Solutions, Expected (Current_Text, Message, "function"));
+      Append (Solutions, Expected (Current_Text, Message, "procedure"));
+      Append (Solutions, Expected (Current_Text, Message, "package"));
    end Correct;
 
    --------------------
@@ -460,7 +441,7 @@ package body Codefix.Errors_Parser is
    procedure Initialize (This : in out Sth_Expected_2) is
    begin
       This.Matcher := (1 => new Pattern_Matcher'
-         (Compile ("""function"" or ""procedure"" expected")));
+        (Compile ("""function"" or ""procedure"" expected")));
    end Initialize;
 
    procedure Correct
@@ -469,17 +450,9 @@ package body Codefix.Errors_Parser is
       Message      : Error_Message;
       Solutions    : out Solution_List;
       Matches      : Match_Array) is
-
    begin
-      Append (Solutions,
-              Expected (Current_Text,
-                        Message,
-                        "function"));
-
-      Append (Solutions,
-              Expected (Current_Text,
-                        Message,
-                        "procedure"));
+      Append (Solutions, Expected (Current_Text, Message, "function"));
+      Append (Solutions, Expected (Current_Text, Message, "procedure"));
    end Correct;
 
    ------------------
@@ -489,7 +462,7 @@ package body Codefix.Errors_Parser is
    procedure Initialize (This : in out Sth_Expected) is
    begin
       This.Matcher := (1 => new Pattern_Matcher'
-         (Compile ("""([\w]+)"" expected")));
+        (Compile ("""([\w]+)"" expected")));
    end Initialize;
 
    procedure Correct
@@ -498,13 +471,13 @@ package body Codefix.Errors_Parser is
       Message      : Error_Message;
       Solutions    : out Solution_List;
       Matches      : Match_Array) is
-
    begin
-      Append (Solutions,
-              Expected (Current_Text,
-                        Message,
-                        Get_Message (Message)
-                           (Matches (1).First .. Matches (1).Last)));
+      Append
+        (Solutions,
+         Expected
+           (Current_Text,
+            Message,
+            Get_Message (Message) (Matches (1).First .. Matches (1).Last)));
    end Correct;
 
    ----------------
@@ -514,7 +487,7 @@ package body Codefix.Errors_Parser is
    procedure Initialize (This : in out Missing_Kw) is
    begin
       This.Matcher := (1 => new Pattern_Matcher'
-         (Compile ("missing ""(\w+)""")));
+        (Compile ("missing ""(\w+)""")));
    end Initialize;
 
    procedure Correct
@@ -523,14 +496,13 @@ package body Codefix.Errors_Parser is
       Message      : Error_Message;
       Solutions    : out Solution_List;
       Matches      : Match_Array) is
-
-
    begin
-      Append (Solutions,
-              Expected (Current_Text,
-                        Message,
-                        Get_Message (Message)
-                           (Matches (1).First .. Matches (1).Last)));
+      Append
+        (Solutions,
+         Expected
+           (Current_Text,
+            Message,
+            Get_Message (Message) (Matches (1).First .. Matches (1).Last)));
    end Correct;
 
    -----------------
@@ -546,7 +518,7 @@ package body Codefix.Errors_Parser is
    procedure Initialize (This : in out Missing_Sep) is
    begin
       This.Matcher := (1 => new Pattern_Matcher'
-         (Compile ("missing ""([^""]+)""")));
+        (Compile ("missing ""([^""]+)""")));
    end Initialize;
 
    procedure Correct
@@ -554,10 +526,9 @@ package body Codefix.Errors_Parser is
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Solutions    : out Solution_List;
-      Matches      : Match_Array) is
-
+      Matches      : Match_Array)
+   is
       Wrong_Matches : Match_Array (0 .. 1);
-
    begin
       Match
         (This.Wrong_Form.all,
@@ -568,12 +539,13 @@ package body Codefix.Errors_Parser is
          raise Uncorrectible_Message;
       end if;
 
-      Append (Solutions,
-              Expected (Current_Text,
-                        Message,
-                        Get_Message (Message)
-                           (Matches (1).First .. Matches (1).Last),
-                        False));
+      Append
+        (Solutions,
+         Expected
+           (Current_Text,
+            Message,
+            Get_Message (Message) (Matches (1).First .. Matches (1).Last),
+            False));
    end Correct;
 
    -----------------
@@ -590,7 +562,7 @@ package body Codefix.Errors_Parser is
    procedure Initialize (This : in out Missing_All) is
    begin
       This.Matcher := (1 => new Pattern_Matcher'
-         (Compile ("add ""all"" to type ""[\w]+"" defined at line ([0-9]+)")));
+        (Compile ("add ""all"" to type ""[\w]+"" defined at line ([0-9]+)")));
    end Initialize;
 
    procedure Correct
@@ -598,8 +570,8 @@ package body Codefix.Errors_Parser is
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Solutions    : out Solution_List;
-      Matches      : Match_Array) is
-
+      Matches      : Match_Array)
+   is
       Col_Matches        : Match_Array (0 .. 1);
       New_Message        : Error_Message;
       Declaration_Line   : Positive;
@@ -607,18 +579,15 @@ package body Codefix.Errors_Parser is
       Declaration_Cursor : File_Cursor := File_Cursor (Message);
 
    begin
-      Declaration_Line := Positive'Value
-                           (Get_Message (Message)
-                            (Matches (1).First .. Matches (1).Last));
+      Declaration_Line :=
+        Positive'Value
+          (Get_Message (Message) (Matches (1).First .. Matches (1).Last));
 
       Declaration_Cursor.Line := Declaration_Line;
       Declaration_Cursor.Col := 1;
       Affect (Line_Red, Get_Line (Current_Text, Declaration_Cursor));
 
-      Match
-        (This.Col_Matcher.all,
-         Line_Red.all,
-         Col_Matches);
+      Match (This.Col_Matcher.all, Line_Red.all, Col_Matches);
 
       Initialize
         (New_Message,
@@ -640,7 +609,7 @@ package body Codefix.Errors_Parser is
    procedure Initialize (This : in out Statement_Missing) is
    begin
       This.Matcher := (1 => new Pattern_Matcher'
-         (Compile ("statement expected")));
+        (Compile ("statement expected")));
    end Initialize;
 
    procedure Correct
@@ -649,14 +618,9 @@ package body Codefix.Errors_Parser is
       Message      : Error_Message;
       Solutions    : out Solution_List;
       Matches      : Match_Array) is
-
    begin
-      Append (Solutions,
-              Expected (Current_Text,
-                        Message,
-                        "null;"));
+      Append (Solutions, Expected (Current_Text, Message, "null;"));
    end Correct;
-
 
    -------------------
    -- Space_Missing --
@@ -664,8 +628,7 @@ package body Codefix.Errors_Parser is
 
    procedure Initialize (This : in out Space_Missing) is
    begin
-      This.Matcher := (1 => new Pattern_Matcher'
-         (Compile ("space required")));
+      This.Matcher := (1 => new Pattern_Matcher' (Compile ("space required")));
    end Initialize;
 
    procedure Correct
@@ -674,15 +637,9 @@ package body Codefix.Errors_Parser is
       Message      : Error_Message;
       Solutions    : out Solution_List;
       Matches      : Match_Array) is
-
    begin
-      Append (Solutions,
-              Expected (Current_Text,
-                        Message,
-                        " ",
-                        False));
+      Append (Solutions, Expected (Current_Text, Message, " ", False));
    end Correct;
-
 
    ------------------
    -- Name_Missing --
@@ -693,18 +650,18 @@ package body Codefix.Errors_Parser is
       for J in This.Matcher_Aux'Range loop
          Free (This.Matcher_Aux (J));
       end loop;
+
       Free (Error_Parser (This));
    end Free;
 
    procedure Initialize (This : in out Name_Missing) is
    begin
       This.Matcher :=
-        (new Pattern_Matcher'
-         (Compile ("\(style\) ""end ([\w]+)"" required")),
+        (new Pattern_Matcher' (Compile ("\(style\) ""end ([\w]+)"" required")),
          new Pattern_Matcher'
-         (Compile ("\(style\) ""exit ([\w]+)"" required")),
+           (Compile ("\(style\) ""exit ([\w]+)"" required")),
          new Pattern_Matcher'
-         (Compile ("\(style\) ""end record ([\w]+)"" required")));
+           (Compile ("\(style\) ""end record ([\w]+)"" required")));
    end Initialize;
 
    procedure Correct
@@ -712,26 +669,24 @@ package body Codefix.Errors_Parser is
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Solutions    : out Solution_List;
-      Matches      : Match_Array) is
-
+      Matches      : Match_Array)
+   is
       Col_Matches : Match_Array (0 .. 1);
-      New_Message          : Error_Message := Message;
-      Line_Cursor          : File_Cursor := File_Cursor (Message);
+      New_Message : Error_Message := Message;
+      Line_Cursor : File_Cursor := File_Cursor (Message);
 
    begin
       Line_Cursor.Col := 1;
-
       Match (This.Matcher_Aux (This.Current_It.all).all,
              Get_Line (Current_Text, Line_Cursor),
              Col_Matches);
-
       New_Message.Col := Col_Matches (1).Last + 1;
-
-      Append (Solutions,
-              Expected (Current_Text,
-                           New_Message,
-                           Get_Message (Message)
-                              (Matches (1).First .. Matches (1).Last)));
+      Append
+        (Solutions,
+         Expected
+           (Current_Text,
+            New_Message,
+            Get_Message (Message) (Matches (1).First .. Matches (1).Last)));
    end Correct;
 
    --------------------
@@ -741,7 +696,7 @@ package body Codefix.Errors_Parser is
    procedure Initialize (This : in out Double_Keyword) is
    begin
       This.Matcher := (1 => new Pattern_Matcher'
-         (Compile ("extra ""([^""])"" ignored")));
+        (Compile ("extra ""([^""])"" ignored")));
    end Initialize;
 
    procedure Correct
@@ -750,13 +705,13 @@ package body Codefix.Errors_Parser is
       Message      : Error_Message;
       Solutions    : out Solution_List;
       Matches      : Match_Array) is
-
    begin
-      Append (Solutions,
-              Unexpected (Current_Text,
-                        Message,
-                        Get_Message (Message)
-                        (Matches (1).First .. Matches (1).Last)));
+      Append
+        (Solutions,
+         Unexpected
+           (Current_Text,
+            Message,
+            Get_Message (Message) (Matches (1).First .. Matches (1).Last)));
    end Correct;
 
    -----------------
@@ -766,7 +721,7 @@ package body Codefix.Errors_Parser is
    procedure Initialize (This : in out Extra_Paren) is
    begin
       This.Matcher := (1 => new Pattern_Matcher'
-         (Compile ("extra right paren")));
+        (Compile ("extra right paren")));
    end Initialize;
 
    procedure Correct
@@ -775,14 +730,9 @@ package body Codefix.Errors_Parser is
       Message      : Error_Message;
       Solutions    : out Solution_List;
       Matches      : Match_Array) is
-
    begin
-      Append (Solutions,
-              Unexpected (Current_Text,
-                          Message,
-                          ")"));
+      Append (Solutions, Unexpected (Current_Text, Message, ")"));
    end Correct;
-
 
    -----------------------
    -- Redundant_Keyword --
@@ -791,7 +741,7 @@ package body Codefix.Errors_Parser is
    procedure Initialize (This : in out Redundant_Keyword) is
    begin
       This.Matcher := (1 => new Pattern_Matcher'
-         (Compile ("redundant (["" \w]+)")));
+        (Compile ("redundant (["" \w]+)")));
    end Initialize;
 
    procedure Correct
@@ -799,31 +749,23 @@ package body Codefix.Errors_Parser is
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Solutions    : out Solution_List;
-      Matches      : Match_Array) is
-
+      Matches      : Match_Array)
+   is
       Str_Red : Dynamic_String;
-
    begin
-      Str_Red := new String'(Get_Message (Message)
+      Str_Red := new String' (Get_Message (Message)
                    (Matches (1).First .. Matches (1).Last));
 
       if Str_Red.all = "colon" then
-         Append (Solutions,
-                 Unexpected (Current_Text,
-                             Message,
-                             ":"));
+         Append (Solutions, Unexpected (Current_Text, Message, ":"));
       elsif Str_Red.all = """then""" then
-         Append (Solutions,
-                 Unexpected (Current_Text,
-                             Message,
-                             "then"));
+         Append (Solutions, Unexpected (Current_Text, Message, "then"));
       else
          Free (Str_Red);
          raise Uncorrectible_Message;
       end if;
 
       Free (Str_Red);
-
    end Correct;
 
    --------------------
@@ -833,7 +775,7 @@ package body Codefix.Errors_Parser is
    procedure Initialize (This : in out Unexpected_Sep) is
    begin
       This.Matcher := (1 => new Pattern_Matcher'
-         (Compile ("unexpected ""([^""]+)"" ignored")));
+        (Compile ("unexpected ""([^""]+)"" ignored")));
    end Initialize;
 
    procedure Correct
@@ -842,13 +784,13 @@ package body Codefix.Errors_Parser is
       Message      : Error_Message;
       Solutions    : out Solution_List;
       Matches      : Match_Array) is
-
    begin
-      Append (Solutions,
-              Unexpected (Current_Text,
-                          Message,
-                          Get_Message (Message)
-                          (Matches (1).First .. Matches (1).Last)));
+      Append
+        (Solutions,
+         Unexpected
+           (Current_Text,
+            Message,
+            Get_Message (Message) (Matches (1).First .. Matches (1).Last)));
    end Correct;
 
    ---------------------
@@ -858,7 +800,7 @@ package body Codefix.Errors_Parser is
    procedure Initialize (This : in out Unexpected_Word) is
    begin
       This.Matcher := (1 => new Pattern_Matcher'
-         (Compile ("unexpected ([\w]+) ([\w]+)")));
+        (Compile ("unexpected ([\w]+) ([\w]+)")));
    end Initialize;
 
    procedure Correct
@@ -866,16 +808,15 @@ package body Codefix.Errors_Parser is
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Solutions    : out Solution_List;
-      Matches      : Match_Array) is
-
+      Matches      : Match_Array)
+   is
       Str_Red_1, Str_Red_2 : Dynamic_String;
-
    begin
-      Str_Red_1 := new String'(Get_Message (Message)
-                               (Matches (1).First .. Matches (1).Last));
+      Str_Red_1 := new String' (Get_Message (Message)
+                                 (Matches (1).First .. Matches (1).Last));
 
-      Str_Red_2 := new String'(Get_Message (Message)
-                               (Matches (2).First .. Matches (2).Last));
+      Str_Red_2 := new String' (Get_Message (Message)
+                                 (Matches (2).First .. Matches (2).Last));
 
       if Str_Red_1.all = "semicolon" and then Str_Red_2.all = "ignored" then
          Append (Solutions, Unexpected (Current_Text, Message, ";"));
@@ -889,7 +830,6 @@ package body Codefix.Errors_Parser is
 
       Free (Str_Red_1);
       Free (Str_Red_2);
-
    end Correct;
 
    --------------------
@@ -899,12 +839,10 @@ package body Codefix.Errors_Parser is
    procedure Initialize (This : in out Kw_Not_Allowed) is
    begin
       This.Matcher :=
-        (new Pattern_Matcher'
-         (Compile ("""([\w]+)"" not allowed")),
+        (new Pattern_Matcher' (Compile ("""([\w]+)"" not allowed")),
+         new Pattern_Matcher' (Compile ("""([\w]+)"" keyword not allowed")),
          new Pattern_Matcher'
-         (Compile ("""([\w]+)"" keyword not allowed")),
-         new Pattern_Matcher'
-         (Compile ("""([\w]+)"" ignored \(only allowed in")));
+           (Compile ("""([\w]+)"" ignored \(only allowed in")));
    end Initialize;
 
    procedure Correct
@@ -913,45 +851,41 @@ package body Codefix.Errors_Parser is
       Message      : Error_Message;
       Solutions    : out Solution_List;
       Matches      : Match_Array) is
-
    begin
-      Append (Solutions,
-              Unexpected (Current_Text,
-                          Message,
-                          Get_Message (Message)
-                             (Matches (1).First .. Matches (1).Last)));
+      Append
+        (Solutions,
+         Unexpected
+           (Current_Text,
+            Message,
+            Get_Message (Message) (Matches (1).First .. Matches (1).Last)));
    end Correct;
 
    ---------------------
    -- Sep_Not_Allowed --
    ---------------------
 
-
    procedure Initialize (This : in out Sep_Not_Allowed) is
    begin
       This.Matcher :=
-         (new Pattern_Matcher'
-          (Compile ("(form feed) not allowed")),
-          new Pattern_Matcher'
-          (Compile ("(vertical tab) not allowed")),
-          new Pattern_Matcher'
-          (Compile ("(trailing spaces) not permitted")),
-          new Pattern_Matcher'
-          (Compile ("(space) not allowed")));
+        (new Pattern_Matcher'
+           (Compile ("(form feed) not allowed")),
+         new Pattern_Matcher'
+           (Compile ("(vertical tab) not allowed")),
+         new Pattern_Matcher'
+           (Compile ("(trailing spaces) not permitted")),
+         new Pattern_Matcher'
+           (Compile ("(space) not allowed")));
    end Initialize;
-
 
    procedure Correct
      (This         : Sep_Not_Allowed;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Solutions    : out Solution_List;
-      Matches      : Match_Array) is
-
+      Matches      : Match_Array)
+   is
       Word_Read           : Dynamic_String;
       Unallowed_Character : String (1 .. 1);
-
-
    begin
       Affect
         (Word_Read,
@@ -961,18 +895,18 @@ package body Codefix.Errors_Parser is
          Unallowed_Character := (1 => ASCII.FF);
       elsif Word_Read.all = "vertical tab" then
          Unallowed_Character := (1 => ASCII.HT);
-      elsif Word_Read.all = "trailling spaces" then
-         Unallowed_Character := (1 => ' '); --  Essayer ASCII.EOT
+      elsif Word_Read.all = "trailing spaces" then
+         Unallowed_Character := (1 => ' ');  --  ??? Try ASCII.EOT
       elsif Word_Read.all = "space" then
          Unallowed_Character := " ";
       end if;
 
-      Append (Solutions,
-              Unexpected (Current_Text,
-                          Message,
-                          Get_Message (Message)
-                          (Matches (1).First .. Matches (1).Last)));
-
+      Append
+        (Solutions,
+         Unexpected
+           (Current_Text,
+            Message,
+            Get_Message (Message) (Matches (1).First .. Matches (1).Last)));
       Free (Word_Read);
    end Correct;
 
@@ -992,13 +926,14 @@ package body Codefix.Errors_Parser is
       Message      : Error_Message;
       Solutions    : out Solution_List;
       Matches      : Match_Array) is
-
    begin
-      Append (Solutions,
-              Wrong_Column (Current_Text,
-                            Message,
-                            Integer'Value (Get_Message (Message)
-                               (Matches (1).First .. Matches (1).Last))));
+      Append
+        (Solutions,
+         Wrong_Column
+           (Current_Text,
+            Message,
+            Integer'Value (Get_Message (Message)
+                             (Matches (1).First .. Matches (1).Last))));
    end Correct;
 
    ----------------
@@ -1008,12 +943,9 @@ package body Codefix.Errors_Parser is
    procedure Initialize (This : in out Bad_Column) is
    begin
       This.Matcher :=
-        (new Pattern_Matcher'
-         (Compile ("bad column")),
-         new Pattern_Matcher'
-         (Compile ("incorrect layout")),
-         new Pattern_Matcher'
-         (Compile ("bad indentation")));
+        (new Pattern_Matcher' (Compile ("bad column")),
+         new Pattern_Matcher' (Compile ("incorrect layout")),
+         new Pattern_Matcher' (Compile ("bad indentation")));
    end Initialize;
 
    procedure Correct
@@ -1022,7 +954,6 @@ package body Codefix.Errors_Parser is
       Message      : Error_Message;
       Solutions    : out Solution_List;
       Matches      : Match_Array) is
-
    begin
       Append (Solutions, Wrong_Column (Current_Text, Message));
    end Correct;
@@ -1035,11 +966,11 @@ package body Codefix.Errors_Parser is
    begin
       This.Matcher :=
         (new Pattern_Matcher'
-         (Compile ("missing with for ""([^""]+)""")),
+           (Compile ("missing with for ""([^""]+)""")),
          new Pattern_Matcher'
-         (Compile ("possible missing with of ([\w]+)")),
+           (Compile ("possible missing with of ([\w]+)")),
          new Pattern_Matcher'
-         (Compile ("missing with_clause on ""([^""])""")));
+           (Compile ("missing with_clause on ""([^""])""")));
    end Initialize;
 
    procedure Correct
@@ -1048,14 +979,13 @@ package body Codefix.Errors_Parser is
       Message      : Error_Message;
       Solutions    : out Solution_List;
       Matches      : Match_Array) is
-
    begin
-      Append (Solutions,
-              With_Clause_Missing
-                (Current_Text,
-                 Message,
-                 Get_Message (Message)
-                   (Matches (1).First .. Matches (1).Last)));
+      Append
+        (Solutions,
+         With_Clause_Missing
+           (Current_Text,
+            Message,
+            Get_Message (Message) (Matches (1).First .. Matches (1).Last)));
    end Correct;
 
    -------------------------
@@ -1066,9 +996,9 @@ package body Codefix.Errors_Parser is
    begin
       This.Matcher :=
         (new Pattern_Matcher'
-         (Compile ("bad casing for entity in Standard")),
+           (Compile ("bad casing for entity in Standard")),
          new Pattern_Matcher'
-         (Compile ("bad capitalization, mixed case required")));
+           (Compile ("bad capitalization, mixed case required")));
    end Initialize;
 
    procedure Correct
@@ -1077,7 +1007,6 @@ package body Codefix.Errors_Parser is
       Message      : Error_Message;
       Solutions    : out Solution_List;
       Matches      : Match_Array) is
-
    begin
       Append (Solutions, Bad_Casing (Current_Text, Message));
    end Correct;
@@ -1089,7 +1018,7 @@ package body Codefix.Errors_Parser is
    procedure Initialize (This : in out Bad_Casing_Declared) is
    begin
       This.Matcher := (1 => new Pattern_Matcher'
-         (Compile ("bad casing of ""([^""]+)"" declared")));
+        (Compile ("bad casing of ""([^""]+)"" declared")));
    end Initialize;
 
    procedure Correct
@@ -1098,13 +1027,13 @@ package body Codefix.Errors_Parser is
       Message      : Error_Message;
       Solutions    : out Solution_List;
       Matches      : Match_Array) is
-
    begin
-      Append (Solutions,
-              Bad_Casing (Current_Text,
-                          Message,
-                          Get_Message (Message)
-                            (Matches (1).First .. Matches (1).Last)));
+      Append
+        (Solutions,
+         Bad_Casing
+           (Current_Text,
+            Message,
+            Get_Message (Message) (Matches (1).First .. Matches (1).Last)));
    end Correct;
 
    ------------------------
@@ -1114,7 +1043,7 @@ package body Codefix.Errors_Parser is
    procedure Initialize (This : in out Bad_Casing_Keyword) is
    begin
       This.Matcher := (1 => new Pattern_Matcher'
-         (Compile ("reserved words must be all lower case")));
+        (Compile ("reserved words must be all lower case")));
    end Initialize;
 
    procedure Correct
@@ -1123,13 +1052,10 @@ package body Codefix.Errors_Parser is
       Message      : Error_Message;
       Solutions    : out Solution_List;
       Matches      : Match_Array) is
-
    begin
-      Append (Solutions,
-              Bad_Casing (Current_Text,
-                          Message,
-                          "",
-                          Lower));
+      Append
+        (Solutions,
+         Bad_Casing (Current_Text, Message, "", Lower));
    end Correct;
 
    -------------------------
@@ -1140,17 +1066,17 @@ package body Codefix.Errors_Parser is
    begin
       This.Matcher :=
         (new Pattern_Matcher'
-         (Compile ("(procedure) ""([\w]+)"" is not referenced")),
+           (Compile ("(procedure) ""([\w]+)"" is not referenced")),
          new Pattern_Matcher'
-         (Compile ("(function) ""([\w]+)"" is not referenced")),
+           (Compile ("(function) ""([\w]+)"" is not referenced")),
          new Pattern_Matcher'
-         (Compile ("(variable) ""([\w]+)"" is not referenced")),
+           (Compile ("(variable) ""([\w]+)"" is not referenced")),
          new Pattern_Matcher'
-         (Compile ("(constant) ""([\w]+)"" is not referenced")),
+           (Compile ("(constant) ""([\w]+)"" is not referenced")),
          new Pattern_Matcher'
-         (Compile ("(parameter) ""([\w]+)"" is not referenced")),
+           (Compile ("(parameter) ""([\w]+)"" is not referenced")),
          new Pattern_Matcher'
-         (Compile ("(type) ""([\w]+)"" is not referenced")));
+           (Compile ("(type) ""([\w]+)"" is not referenced")));
    end Initialize;
 
    procedure Correct
@@ -1158,14 +1084,13 @@ package body Codefix.Errors_Parser is
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Solutions    : out Solution_List;
-      Matches      : Match_Array) is
-
+      Matches      : Match_Array)
+   is
       First_Word : String := Get_Message (Message)
         (Matches (1).First .. Matches (1).Last);
       Category   : Language_Category;
 
    begin
-
       if First_Word = "procedure" then
          Category := Cat_Procedure;
       elsif First_Word = "function" then
@@ -1180,13 +1105,13 @@ package body Codefix.Errors_Parser is
          Category := Cat_Type;
       end if;
 
-
-      Concat (Solutions,
-              Not_Referenced (Current_Text,
-                              Message,
-                              Category,
-                              Get_Message (Message)
-                                (Matches (1).First .. Matches (1).Last)));
+      Concat
+        (Solutions,
+         Not_Referenced
+           (Current_Text,
+            Message,
+            Category,
+            Get_Message (Message) (Matches (1).First .. Matches (1).Last)));
    end Correct;
 
    -----------------------
@@ -1206,9 +1131,7 @@ package body Codefix.Errors_Parser is
       Solutions    : out Solution_List;
       Matches      : Match_Array) is
    begin
-      Append (Solutions,
-              First_Line_Pragma (Current_Text,
-                                 Message));
+      Append (Solutions, First_Line_Pragma (Current_Text, Message));
    end Correct;
 
 begin

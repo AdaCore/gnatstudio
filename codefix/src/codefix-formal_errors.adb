@@ -1,5 +1,26 @@
+-----------------------------------------------------------------------
+--                               G P S                               --
+--                                                                   --
+--                        Copyright (C) 2002                         --
+--                            ACT-Europe                             --
+--                                                                   --
+-- GPS is free  software;  you can redistribute it and/or modify  it --
+-- under the terms of the GNU General Public License as published by --
+-- the Free Software Foundation; either version 2 of the License, or --
+-- (at your option) any later version.                               --
+--                                                                   --
+-- This program is  distributed in the hope that it will be  useful, --
+-- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
+-- General Public License for more details. You should have received --
+-- a copy of the GNU General Public License along with this program; --
+-- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
+-- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
+-----------------------------------------------------------------------
+
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 with Ada.Exceptions; use Ada.Exceptions;
+with String_Utils; use String_Utils;
 
 with GNAT.Regpat; use GNAT.Regpat;
 
@@ -64,6 +85,7 @@ package body Codefix.Formal_Errors is
             (Message (Matches (2).First .. Matches (2).Last));
          This.Col := Positive'Value
             (Message (Matches (3).First .. Matches (3).Last));
+
       exception
          when Constraint_Error => -- et tester No_Match
             null; -- Lever une exception due au 'Value
@@ -78,7 +100,7 @@ package body Codefix.Formal_Errors is
       New_Message : Error_Message;
    begin
       New_Message := (Clone (File_Cursor (This)) with
-                         new String'(This.Message.all));
+                        new String'(This.Message.all));
       return New_Message;
    end Clone;
 
@@ -88,13 +110,10 @@ package body Codefix.Formal_Errors is
 
    function Get_Extract
      (This     : Solution_List;
-      Position : Positive)
-     return Extract is
-
+      Position : Positive) return Extract
+   is
       Current_Node : Extract_List.List_Node;
-
    begin
-
       Current_Node := First (This);
 
       for J in 1 .. Position - 1 loop
@@ -102,7 +121,6 @@ package body Codefix.Formal_Errors is
       end loop;
 
       return Data (Current_Node);
-
    end Get_Extract;
 
    ----------
@@ -122,27 +140,19 @@ package body Codefix.Formal_Errors is
      (Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Str_Expected : String;
-      Str_Red      : String := "")
-      return Extract is
-
+      Str_Red      : String := "") return Extract
+   is
       New_Extract : Extract;
       Line_Cursor : File_Cursor := File_Cursor (Message);
-
    begin
       Line_Cursor.Col := 1;
-      Get_Line (Current_Text,
-                Line_Cursor,
-                New_Extract);
+      Get_Line (Current_Text, Line_Cursor, New_Extract);
+
       if Str_Red = "" then
-         Replace_Word
-           (New_Extract,
-            Message,
-            Str_Expected);
+         Replace_Word (New_Extract, Message, Str_Expected);
       else
          Replace_Word
-           (New_Extract,
-            Message,
-            Str_Expected, "^(" & Str_Red & ")");
+           (New_Extract, Message, Str_Expected, "^(" & Str_Red & ")");
       end if;
 
       return New_Extract;
@@ -153,21 +163,21 @@ package body Codefix.Formal_Errors is
    -----------------
 
    function Wrong_Order
-     (Current_Text                 : Text_Navigator_Abstr'Class;
-      Message                      : Error_Message;
-      First_String, Second_String  : String)
-      return Extract is
-
-      New_Extract               : Extract;
-      Matches                   : Match_Array (1 .. 1);
-      Matcher                   : constant Pattern_Matcher :=
-      Compile ("(" & Second_String & ") ", Case_Insensitive);
-
+     (Current_Text  : Text_Navigator_Abstr'Class;
+      Message       : Error_Message;
+      First_String  : String;
+      Second_String : String) return Extract
+   is
+      New_Extract   : Extract;
+      Matches       : Match_Array (1 .. 1);
+      Matcher       : constant Pattern_Matcher :=
+        Compile ("(" & Second_String & ") ", Case_Insensitive);
       Second_Cursor : File_Cursor := File_Cursor (Message);
       Line_Cursor   : File_Cursor := File_Cursor (Message);
 
    begin
       Second_Cursor.Col := 1;
+
       loop
          Match (Matcher, Get_Line (Current_Text, Second_Cursor), Matches);
          exit when Matches (1) /= No_Match;
@@ -196,33 +206,31 @@ package body Codefix.Formal_Errors is
          "^(" & Second_String & ")");
 
       return New_Extract;
-
    end Wrong_Order;
 
-   -----------------
+   --------------
    -- Expected --
-   -----------------
+   --------------
 
    function Expected
      (Current_Text    : Text_Navigator_Abstr'Class;
       Message         : Error_Message;
       String_Expected : String;
-      Add_Spaces      : Boolean := True)
-     return Extract is
-
+      Add_Spaces      : Boolean := True) return Extract
+   is
       New_Extract  : Extract;
       New_Str      : Dynamic_String;
       Line_Cursor  : File_Cursor := File_Cursor (Message);
       Space_Cursor : File_Cursor := File_Cursor (Message);
 
    begin
-
       Affect (New_Str, String_Expected);
 
       Line_Cursor.Col := 1;
       Get_Line (Current_Text, Line_Cursor, New_Extract);
 
       Space_Cursor.Col := Space_Cursor.Col - 1;
+
       if Add_Spaces and then
          Message.Col > 1 and then
          Get
@@ -234,26 +242,18 @@ package body Codefix.Formal_Errors is
       end if;
 
       Space_Cursor.Col := Space_Cursor.Col + 1;
+
       if Add_Spaces
-        and then Message.Col < Line_Length
-          (Current_Text, Line_Cursor)
-        and then Get
-                   (Current_Text,
-                    Space_Cursor,
-                    1) /= " "
+        and then Message.Col < Line_Length (Current_Text, Line_Cursor)
+        and then Get (Current_Text, Space_Cursor, 1) /= " "
       then
          Affect (New_Str, New_Str.all & " ");
       end if;
 
-      Add_Word
-        (New_Extract,
-         Message,
-         New_Str.all);
-
+      Add_Word (New_Extract, Message, New_Str.all);
       Free (New_Str);
 
       return New_Extract;
-
    end Expected;
 
    ----------------
@@ -264,9 +264,8 @@ package body Codefix.Formal_Errors is
      (Current_Text      : Text_Navigator_Abstr'Class;
       Message           : Error_Message;
       String_Unexpected : String;
-      Mode              : String_Mode := Text_Ascii)
-     return Extract is
-
+      Mode              : String_Mode := Text_Ascii) return Extract
+   is
       New_Extract : Extract;
       New_Str     : Dynamic_String;
       Line_Cursor : File_Cursor := File_Cursor (Message);
@@ -275,26 +274,28 @@ package body Codefix.Formal_Errors is
       Line_Cursor.Col := 1;
       Get_Line (Current_Text, Line_Cursor, New_Extract);
 
-      New_Str := new String'(Get_String (New_Extract));
+      New_Str := new String' (Get_String (New_Extract));
 
       case Mode is
          when Text_Ascii =>
-            Set_String (New_Extract, New_Str.all (1 .. Message.Col - 1) &
-                        New_Str.all (Message.Col +
-                           String_Unexpected'Length
-                              .. New_Str.all'Length));
+            Set_String
+              (New_Extract, New_Str (1 .. Message.Col - 1) &
+                 New_Str (Message.Col + String_Unexpected'Length
+                          .. New_Str.all'Length));
+
          when Regular_Expression =>
-            Set_String (New_Extract, New_Str.all (1 .. Message.Col - 1) &
-                        New_Str.all (Message.Col +
-                                     Get_Word_Length (New_Extract,
-                                                      Message,
-                                                      String_Unexpected)
-                                     ..  New_Str.all'Length));
+            Set_String
+              (New_Extract, New_Str (1 .. Message.Col - 1) &
+                 New_Str
+                   (Message.Col +
+                      Get_Word_Length (New_Extract, Message, String_Unexpected)
+                    .. New_Str'Length));
       end case;
 
-      Set_String (New_Extract, New_Str.all (1 .. Message.Col - 1) &
-                  New_Str.all (Message.Col + String_Unexpected'Length ..
-                     New_Str.all'Length));
+      Set_String
+        (New_Extract,
+         New_Str (1 .. Message.Col - 1) &
+           New_Str (Message.Col + String_Unexpected'Length .. New_Str'Length));
       Free (New_Str);
 
       return New_Extract;
@@ -307,10 +308,10 @@ package body Codefix.Formal_Errors is
    function Wrong_Column
      (Current_Text    : Text_Navigator_Abstr'Class;
       Message         : Error_Message;
-      Column_Expected : Natural := 0)
-      return Extract is
-
+      Column_Expected : Natural := 0) return Extract
+   is
       function Most_Close (Size_Red : Positive) return Positive;
+      --  ???
 
       function Most_Close (Size_Red : Positive) return Positive is
       begin
@@ -340,19 +341,20 @@ package body Codefix.Formal_Errors is
       Str_Red := new String'(Get_String (New_Extract));
 
       if Column_Expected = 0 then
-         Set_String (New_Extract,
-                     White_String (1 .. Most_Close (Message.Col)) &
-                     Str_Red (Message.Col .. Str_Red'Length));
+         Set_String
+           (New_Extract,
+            White_String (1 .. Most_Close (Message.Col)) &
+              Str_Red (Message.Col .. Str_Red'Length));
+
       else
-         Set_String (New_Extract,
-                     White_String (1 .. Column_Expected - 1) &
-                     Str_Red (Message.Col .. Str_Red'Length));
+         Set_String
+           (New_Extract,
+            White_String (1 .. Column_Expected - 1) &
+              Str_Red (Message.Col .. Str_Red'Length));
       end if;
 
       Free (Str_Red);
-
       return New_Extract;
-
    end Wrong_Column;
 
    -------------------------
@@ -362,12 +364,10 @@ package body Codefix.Formal_Errors is
    function With_Clause_Missing
      (Current_Text   : Text_Navigator_Abstr'Class;
       Cursor         : File_Cursor'Class;
-      Missing_Clause : String)
-     return Extract is
-
+      Missing_Clause : String) return Extract
+   is
       New_Cursor  : File_Cursor := (0, 1, Cursor.File_Name);
       New_Extract : Extract;
-
    begin
       Add_Line
         (New_Extract,
@@ -384,38 +384,30 @@ package body Codefix.Formal_Errors is
      (Current_Text : Text_Navigator_Abstr'Class;
       Cursor       : File_Cursor'Class;
       Correct_Word : String := "";
-      Word_Case    : Case_Type := Mixed)
-     return Extract is
-
+      Word_Case    : Case_Type := Mixed) return Extract
+   is
       function To_Correct_Case (Str : String) return String;
+      --  ???
 
       function To_Correct_Case (Str : String) return String is
-         Maj        : Boolean := True;
          New_String : String (Str'Range);
       begin
          case Word_Case is
             when Mixed =>
-               for J in Str'Range loop
-                  if Maj then
-                     New_String (J) := To_Upper (Str (J));
-                  else
-                     New_String (J) := To_Lower (Str (J));
-                  end if;
-                  if Str (J) = '_' or else Str (J) = '.' then
-                     Maj := True;
-                  else
-                     Maj := False;
-                  end if;
-               end loop;
+               New_String := Str;
+               Mixed_Case (New_String);
+
             when Upper =>
                for J in Str'Range loop
                   New_String (J) := To_Upper (Str (J));
                end loop;
+
             when Lower =>
                for J in Str'Range loop
                   New_String (J) := To_Lower (Str (J));
                end loop;
          end case;
+
          return New_String;
       end To_Correct_Case;
 
@@ -458,13 +450,20 @@ package body Codefix.Formal_Errors is
      (Current_Text : Text_Navigator_Abstr'Class;
       Cursor       : File_Cursor'Class;
       Category     : Language_Category;
-      Name         : String)
-     return Solution_List is
-
+      Name         : String) return Solution_List
+   is
       function Delete_Var return Extract;
-      function Delete_Entity return Extract;
-      function Add_Pragma return Extract;
+      --  ???
 
+      function Delete_Entity return Extract;
+      --  ???
+
+      function Add_Pragma return Extract;
+      --  ???
+
+      ----------------
+      -- Delete_Var --
+      ----------------
 
       function Delete_Var return Extract is
          New_Extract : Extract;
@@ -476,6 +475,10 @@ package body Codefix.Formal_Errors is
          return New_Extract;
       end Delete_Var;
 
+      -------------------
+      -- Delete_Entity --
+      -------------------
+
       function Delete_Entity return Extract is
          New_Extract : Extract;
       begin
@@ -483,6 +486,10 @@ package body Codefix.Formal_Errors is
          Delete_All_Lines (New_Extract);
          return New_Extract;
       end Delete_Entity;
+
+      ----------------
+      -- Add_Pragma --
+      ----------------
 
       function Add_Pragma return Extract is
          New_Extract  : Extract;
@@ -510,8 +517,7 @@ package body Codefix.Formal_Errors is
          when others =>
             Raise_Exception
               (Codefix_Panic'Identity,
-               "Wrong categorie given : "
-                  & Language_Category'Image (Category));
+               "Wrong category given : " & Language_Category'Image (Category));
       end case;
 
       return New_Solutions;
@@ -523,12 +529,10 @@ package body Codefix.Formal_Errors is
 
    function First_Line_Pragma
      (Current_Text : Text_Navigator_Abstr'Class;
-      Cursor       : File_Cursor'Class)
-     return Extract is
-
+      Cursor       : File_Cursor'Class) return Extract
+   is
       Line_Cursor, Begin_Cursor : File_Cursor := File_Cursor (Cursor);
       New_Extract               : Extract;
-
    begin
       Line_Cursor.Col := 1;
       Begin_Cursor.Line := 0;

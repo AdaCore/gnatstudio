@@ -1,3 +1,23 @@
+-----------------------------------------------------------------------
+--                               G P S                               --
+--                                                                   --
+--                        Copyright (C) 2002                         --
+--                            ACT-Europe                             --
+--                                                                   --
+-- GPS is free  software;  you can redistribute it and/or modify  it --
+-- under the terms of the GNU General Public License as published by --
+-- the Free Software Foundation; either version 2 of the License, or --
+-- (at your option) any later version.                               --
+--                                                                   --
+-- This program is  distributed in the hope that it will be  useful, --
+-- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
+-- General Public License for more details. You should have received --
+-- a copy of the GNU General Public License along with this program; --
+-- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
+-- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
+-----------------------------------------------------------------------
+
 with GNAT.Regpat; use GNAT.Regpat;
 
 package body Codefix.Errors_Manager is
@@ -53,8 +73,8 @@ package body Codefix.Errors_Manager is
      (This        : in out Correction_Manager;
       Source_Text : Text_Navigator_Abstr'Class;
       Errors_List : in out Errors_Interface'Class;
-      Callback    : Error_Callback := null) is
-
+      Callback    : Error_Callback := null)
+   is
       Current_Message : Error_Message;
       Solutions       : Solution_List;
       New_Error       : Error_Id;
@@ -62,8 +82,10 @@ package body Codefix.Errors_Manager is
    begin
       while not No_More_Messages (Errors_List) loop
          Get_Message (Errors_List, Source_Text, Current_Message);
+
          if Current_Message /= Invalid_Error_Message then
             Solutions := Get_Solutions (Source_Text, Current_Message);
+
             if Length (Solutions) > 0 then
                Add_Error (This, Solutions, New_Error);
                Callback
@@ -86,7 +108,6 @@ package body Codefix.Errors_Manager is
       Error        : Error_Id;
       Choice       : Natural;
       Later_Update : Boolean := True) is
-
    begin
       if Choice /= 0 then
          Append
@@ -105,35 +126,31 @@ package body Codefix.Errors_Manager is
      (This         : in out Correction_Manager;
       Success      : out Boolean;
       Current_Text : in out Text_Navigator_Abstr'Class;
-      Callback     : Ambiguous_Callback := null) is
-
+      Callback     : Ambiguous_Callback := null)
+   is
       Current_Node     : Line_List.List_Node;
       Modifs_List      : Line_List.List;
       Offset_Line      : Integer := 0;
       No_More_Problems : Boolean;
 
    begin
-
       Success := False;
       Check_Ambiguities (This.Valid_Corrections, Callback, No_More_Problems);
 
-      if not No_More_Problems then return; end if;
+      if not No_More_Problems then
+         return;
+      end if;
 
       Modifs_List := Sort (This.Valid_Corrections);
-
       Current_Node := First (Modifs_List);
 
       while Current_Node /= Line_List.Null_Node loop
-         Update (Data (Current_Node),
-                 Current_Text,
-                 Offset_Line);
+         Update (Data (Current_Node), Current_Text, Offset_Line);
          Current_Node := Next (Current_Node);
       end loop;
 
       Free (Modifs_List);
-
       Update (Current_Text);
-
       Success := True;
    end Update;
 
@@ -154,20 +171,22 @@ package body Codefix.Errors_Manager is
    procedure Check_Ambiguities
      (Solutions        : in out Solution_List;
       Callback         : Ambiguous_Callback;
-      No_More_Problems : out Boolean) is
+      No_More_Problems : out Boolean)
+   is
+      function Delete_And_Next
+        (Node : Extract_List.List_Node) return Extract_List.List_Node;
+      --  ???
 
-      function Delete_And_Next (Node : Extract_List.List_Node)
-        return Extract_List.List_Node;
-
-      function Conflict (Extract_1, Extract_2 : Extract)
-         return Boolean;
+      function Conflict (Extract_1, Extract_2 : Extract) return Boolean;
+      --  ???
 
       Node_I, Node_J     : Extract_List.List_Node;
       Delete_I, Delete_J : Boolean;
       Choice             : Alternative_Choice;
 
-      function Delete_And_Next (Node : Extract_List.List_Node)
-        return Extract_List.List_Node is
+      function Delete_And_Next
+        (Node : Extract_List.List_Node) return Extract_List.List_Node
+      is
          Garbage, Next_Node : Extract_List.List_Node;
       begin
          Garbage := Node;
@@ -176,9 +195,7 @@ package body Codefix.Errors_Manager is
          return Next_Node;
       end Delete_And_Next;
 
-      function Conflict (Extract_1, Extract_2 : Extract)
-        return Boolean is
-
+      function Conflict (Extract_1, Extract_2 : Extract) return Boolean is
          Num_1, Num_2   : Natural;
          Line_1, Line_2 : Extract_Line;
 
@@ -202,17 +219,21 @@ package body Codefix.Errors_Manager is
    begin
       No_More_Problems := True;
       Node_I := First (Solutions);
+
       while Node_I /= Extract_List.Null_Node loop
          Node_J := Next (Node_I);
          Delete_I := False;
+
          while Node_J /= Extract_List.Null_Node loop
             Delete_J := False;
+
             if Conflict (Data (Node_I), Data (Node_J))then
                if Callback = null then
                   No_More_Problems := False;
                   return;
                else
                   Callback (Data (Node_I), Data (Node_J), Choice);
+
                   case Choice is
                      when 0 =>
                         No_More_Problems := False;
@@ -224,12 +245,14 @@ package body Codefix.Errors_Manager is
                   end case;
                end if;
             end if;
+
             if Delete_J then
                Node_J := Delete_And_Next (Node_J);
             else
                Node_J := Next (Node_J);
             end if;
          end loop;
+
          if Delete_I then
             Node_I := Delete_And_Next (Node_I);
          else
@@ -250,6 +273,7 @@ package body Codefix.Errors_Manager is
 
    begin
       Node_Solution := First (List);
+
       while Node_Solution /= Extract_List.Null_Node loop
          for J in 1 .. Get_Number_Lines (Data (Node_Solution)) loop
             Node_Line := First (Result_List);
@@ -261,14 +285,15 @@ package body Codefix.Errors_Manager is
                then
                   Prepend (Result_List, Node_Line, Line_Temp);
                end if;
+
                Node_Line := Next (Node_Line);
             end loop;
 
             if Node_Line = Line_List.Null_Node then
                Append (Result_List, Line_Temp);
             end if;
-
          end loop;
+
          Node_Solution := Next (Node_Solution);
       end loop;
 

@@ -1,3 +1,23 @@
+-----------------------------------------------------------------------
+--                               G P S                               --
+--                                                                   --
+--                        Copyright (C) 2002                         --
+--                            ACT-Europe                             --
+--                                                                   --
+-- GPS is free  software;  you can redistribute it and/or modify  it --
+-- under the terms of the GNU General Public License as published by --
+-- the Free Software Foundation; either version 2 of the License, or --
+-- (at your option) any later version.                               --
+--                                                                   --
+-- This program is  distributed in the hope that it will be  useful, --
+-- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
+-- General Public License for more details. You should have received --
+-- a copy of the GNU General Public License along with this program; --
+-- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
+-- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
+-----------------------------------------------------------------------
+
 with Ada.Text_IO; use Ada.Text_IO;
 with Ada.Unchecked_Deallocation;
 
@@ -21,9 +41,7 @@ package body Codefix.File_Io is
    function Get
      (This   : File_Interface;
       Cursor : Text_Cursor'Class;
-      Len    : Natural)
-     return String is
-
+      Len    : Natural) return String is
    begin
       return Data (Get_Line_Node (This, Cursor.Line)).all
         (Cursor.Col .. Cursor.Col + Len - 1);
@@ -35,11 +53,9 @@ package body Codefix.File_Io is
 
    function Get_Line
      (This   : File_Interface;
-      Cursor : Text_Cursor'Class)
-      return String is
-
+      Cursor : Text_Cursor'Class) return String
+   is
       Element : Dynamic_String;
-
    begin
       Element := Data (Get_Line_Node (This, Cursor.Line));
       return Element.all (Cursor.Col .. Element.all'Length);
@@ -53,19 +69,16 @@ package body Codefix.File_Io is
      (This      : in out File_Interface;
       Cursor    : Text_Cursor'Class;
       Len       : Natural;
-      New_Value : String) is
-
+      New_Value : String)
+   is
       Element  : Dynamic_String;
-
    begin
       Element := Data (Get_Line_Node (This, Cursor.Line));
-
       Set_Data
        (Get_Line_Node (This, Cursor.Line),
         new String '(Element.all (1 .. Cursor.Col - 1) &
                      New_Value &
                      Element.all (Cursor.Col + Len .. Element.all'Length)));
-
    end Replace;
 
    --------------
@@ -77,8 +90,6 @@ package body Codefix.File_Io is
       Cursor      : Text_Cursor'Class;
       New_Line    : String) is
    begin
-
-
       if Cursor.Line = 0 then
          Prepend (This.Content, new String'(New_Line));
       else
@@ -87,7 +98,6 @@ package body Codefix.File_Io is
             Get_Line_Node (This, Cursor.Line),
             new String'(New_Line));
       end if;
-
    end Add_Line;
 
    -----------------
@@ -96,10 +106,9 @@ package body Codefix.File_Io is
 
    procedure Delete_Line
      (This   : in out File_Interface;
-      Cursor : Text_Cursor'Class) is
-
+      Cursor : Text_Cursor'Class)
+   is
       Delete_Node : List_Node;
-
    begin
       Delete_Node := Get_Line_Node (This, Cursor.Line);
       Remove_Nodes
@@ -114,12 +123,12 @@ package body Codefix.File_Io is
 
    function Get_Line_Node
      (This : File_Interface;
-      Line : Positive) return List_Str.List_Node is
-
+      Line : Positive) return List_Str.List_Node
+   is
       Current_Node : List_Str.List_Node;
-
    begin
       Current_Node := First (This.Content);
+
       for J in 1 .. Line - 1 loop
          Current_Node := Next (Current_Node);
       end loop;
@@ -127,25 +136,25 @@ package body Codefix.File_Io is
       return Current_Node;
    end Get_Line_Node;
 
-
    ----------------
    -- Initialize --
    ----------------
 
    procedure Initialize
      (This : in out File_Interface;
-      Path : String) is
-
+      Path : String)
+   is
       File     : File_Type;
       Line_Red : Dynamic_String;
-
    begin
       Open (File, In_File, Path);
+
       while not End_Of_File (File) loop
          Line_Red := null; --  to not to erase the line red before
          Get_Line (File, Line_Red);
          Append (This.Content, Line_Red);
       end loop;
+
       Close (File);
    end Initialize;
 
@@ -153,9 +162,7 @@ package body Codefix.File_Io is
    -- Read_File --
    ---------------
 
-   function Read_File
-     (This : File_Interface)
-     return Dynamic_String is
+   function Read_File (This : File_Interface) return Dynamic_String is
    begin
       return Dynamic_String (Read_File (Get_File_Name (This)));
    end Read_File;
@@ -167,7 +174,6 @@ package body Codefix.File_Io is
    procedure Update (This : File_Interface) is
       Current_Node : List_Str.List_Node := First (This.Content);
       Current_File : File_Type;
-
    begin
       Open (Current_File, Out_File, Get_File_Name (This));
 
@@ -185,14 +191,14 @@ package body Codefix.File_Io is
 
    procedure Get_Direct_Message
      (This    : in out Errors_File;
-      Current : out Error_Message) is
-
-      Buffer         : String (1 .. 255);
+      Current : out Error_Message)
+   is
+      Buffer        : String (1 .. 255);
       Buffer_Length : Natural;
-
    begin
       Get_Line (This.File.all, Buffer, Buffer_Length);
       Initialize (Current, Buffer (1 .. Buffer_Length));
+
       if End_Of_File (This.File.all) then
          Close (This.File.all);
          This.Is_Open := False;

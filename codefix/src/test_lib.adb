@@ -1,3 +1,23 @@
+-----------------------------------------------------------------------
+--                               G P S                               --
+--                                                                   --
+--                        Copyright (C) 2002                         --
+--                            ACT-Europe                             --
+--                                                                   --
+-- GPS is free  software;  you can redistribute it and/or modify  it --
+-- under the terms of the GNU General Public License as published by --
+-- the Free Software Foundation; either version 2 of the License, or --
+-- (at your option) any later version.                               --
+--                                                                   --
+-- This program is  distributed in the hope that it will be  useful, --
+-- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
+-- General Public License for more details. You should have received --
+-- a copy of the GNU General Public License along with this program; --
+-- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
+-- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
+-----------------------------------------------------------------------
+
 package body Test_Lib is
 
    procedure Corrections_Proposed
@@ -5,31 +25,34 @@ package body Test_Lib is
       Id           : Error_Id;
       Solutions    : Solution_List;
       Current_Text : Text_Navigator_Abstr'Class;
-      Corrector    : in out Correction_Manager) is
-
+      Corrector    : in out Correction_Manager)
+   is
       Current_Solution : Extract_List.List_Node;
       Num_Sol          : Integer;
-
    begin
-      Put_Line ("Message : ");
+      Put_Line ("Message: ");
       Put_Line (Get_Message (Message));
       Current_Solution := First (Solutions);
-      Put_Line ("Old text : ");
+      Put_Line ("Old text: ");
       Put_Line_Original
         (Data (Current_Solution),
          Current_Text);
       Num_Sol := 0;
+
       while Current_Solution /= Extract_List.Null_Node loop
          Num_Sol := Num_Sol + 1;
          Put_Line ("Proposition" & Integer'Image (Num_Sol) & " : ");
          Put_Line (Data (Current_Solution));
          Current_Solution := Next (Current_Solution);
       end loop;
+
       Put_Line ("What correction do you want ? (0 means none)");
       Num_Sol := Get_Number (0, Num_Sol);
+
       if Num_Sol /= 0 then
          Validate (Corrector, Id, Num_Sol, True);
       end if;
+
       New_Line;
    end Corrections_Proposed;
 
@@ -69,6 +92,5 @@ package body Test_Lib is
       Put_Line (Alternative_2);
       Delete_Choice := 0;
    end Ambiguity;
-
 
 end Test_Lib;
