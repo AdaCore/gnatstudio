@@ -65,13 +65,13 @@ package body Task_Manager is
      (Manager : in Task_Manager_Access) return Boolean
    is
       Result : Boolean;
+      pragma Unreferenced (Result);
    begin
       Result := Execute_Incremental (Manager, True);
 
       --  The active loop ends when there are no more active queues left.
 
-      if Result
-        and then Manager.Queues /= null
+      if Manager.Queues /= null
         and then Manager.Passive_Index > Manager.Queues'First
       then
          return True;
@@ -123,6 +123,7 @@ package body Task_Manager is
       Last    : Integer;
 
       Command : Command_Access;
+
    begin
       if Manager.Queues = null then
          return False;
@@ -152,17 +153,21 @@ package body Task_Manager is
                --  Current_Priority > Integer'Last !
             end if;
 
+            Manager.Queues (Q).Current_Priority :=
+              Manager.Queues (Q).Current_Priority
+              + Manager.Queues (Q).Priority;
+
             if Manager.Queues (Current).Status = Paused then
                exit;
+            end if;
+
+            if Command_Queues.Is_Empty (Manager.Queues (Current).Queue) then
+               return False;
             end if;
 
             Command := Command_Queues.Head (Manager.Queues (Current).Queue);
 
             Result := Execute (Command);
-
-            Manager.Queues (Q).Current_Priority :=
-              Manager.Queues (Q).Current_Priority
-              + Manager.Queues (Q).Priority;
 
             Manager.Queues (Q).Need_Refresh := True;
 
