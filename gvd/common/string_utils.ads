@@ -319,6 +319,17 @@ package String_Utils is
       Len  : Natural);
    --  Copy Len characters from Item to Str
 
+   ----------------------------
+   -- Arguments manipulation --
+   ----------------------------
+
+   function Argument_List_To_Quoted_String
+     (Args  : GNAT.OS_Lib.Argument_List;
+      Quote : Character := '"') return String;
+   --  Return the arguments as a full string.
+   --  Arguments that contain spaces but do not already contain quotes
+   --  will be put into quotes.
+
 private
    pragma Inline (Looking_At);
    pragma Inline (Skip_Blanks);
