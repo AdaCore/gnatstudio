@@ -610,9 +610,13 @@ package body Debugger.Gdb is
    begin
       return Is_Execution_Command (Debugger, Command)
         or else (Command'Length >= 5
-          and then Command (Command'First .. Command'First + 4) = "break")
+           and then Command (Command'First .. Command'First + 4) = "break")
         or else (Command'Length >= 2
-          and then Command (Command'First .. Command'First + 1) = "b ");
+           and then Command (Command'First .. Command'First + 1) = "b ")
+        or else (Command'Length >= 6
+           and then Command (Command'First .. Command'First + 5) = "delete")
+        or else (Command'Length >= 4
+           and then Command (Command'First .. Command'First + 3) = "del ");
    end Is_Break_Command;
 
    ----------------
