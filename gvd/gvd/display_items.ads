@@ -94,6 +94,10 @@ package Display_Items is
    --  If Update_Value is True, then the value of the item is recomputed
    --  if necessary.
 
+   function Get_Auto_Refresh
+     (Item : access Display_Item_Record) return Boolean;
+   --  Return Item.Auto_Refresh;
+
    procedure On_Background_Click
      (The_Canvas : access Gtk.Widget.Gtk_Widget_Record'Class;
       Event      : Gdk.Event.Gdk_Event);
@@ -137,6 +141,9 @@ package Display_Items is
 
    function Get_Name (Item : access Display_Item_Record) return String;
    --  Return the name of Item, or "" if there is no such name.
+
+   function Get_Num (Item : access Display_Item_Record) return Integer;
+   --  Return the number of Item.
 
    function Get_Debugger
      (Item : access Display_Item_Record'Class)

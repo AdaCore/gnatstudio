@@ -1205,6 +1205,16 @@ package body Display_Items is
       end if;
    end Set_Auto_Refresh;
 
+   ----------------------
+   -- Get_Auto_Refresh --
+   ----------------------
+
+   function Get_Auto_Refresh
+     (Item : access Display_Item_Record) return Boolean is
+   begin
+      return Item.Auto_Refresh;
+   end Get_Auto_Refresh;
+
    ----------
    -- Free --
    ----------
@@ -1655,6 +1665,15 @@ package body Display_Items is
 
       return Item.Name.all;
    end Get_Name;
+
+   -------------
+   -- Get_Num --
+   -------------
+
+   function Get_Num (Item : access Display_Item_Record) return Integer is
+   begin
+      return Item.Num;
+   end Get_Num;
 
    ------------------
    -- Get_Debugger --
