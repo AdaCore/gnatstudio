@@ -50,7 +50,12 @@ package Language is
    --------------------------------
 
    type Language_Entity is
-     (Normal_Text, Keyword_Text, Comment_Text, String_Text);
+     (Normal_Text,
+      Identifier_Text,
+      Keyword_Text,
+      Comment_Text,
+      Character_Text,
+      String_Text);
    --  The entities found in a language, and that can have a different scheme
    --  for colors highlighting.
 
@@ -373,13 +378,6 @@ package Language is
    subtype Construct_Category is Language_Category
      range Cat_Loop_Statement .. Cat_Exception_Handler;
 
-   type Source_Entity_Kind is
-     (Ent_Reserved_Word,
-      Ent_Identifier,
-      Ent_String,
-      Ent_Character,
-      Ent_Comment);
-
    type Construct_Information;
    type Construct_Access is access Construct_Information;
 
@@ -453,11 +451,12 @@ package Language is
    --  Given a Buffer, return the indentation level for the last character
    --  in the buffer and for the next line.
 
-   type Entity_Callback is access procedure
-     (Entity     : Source_Entity_Kind;
+   type Entity_Callback is access function
+     (Entity     : Language_Entity;
       Sloc_Start : Source_Location;
-      Sloc_End   : Source_Location);
+      Sloc_End   : Source_Location) return Boolean;
    --  Callback during parsing of entities.
+   --  If Callback returns True, the parsing should be stopped.
 
    procedure Parse_Entities
      (Lang          : access Language_Root;
@@ -465,7 +464,8 @@ package Language is
       Buffer_Length : Natural;
       Callback      : Entity_Callback);
    --  Parse entities (as defined by Source_Entity_Kind) contained in buffer.
-   --  For each match, call Callback. Stops at the end of Buffer.
+   --  For each match, call Callback. Stops at the end of Buffer or when
+   --  callback returns True.
 
 private
    type Language_Root is abstract tagged null record;
