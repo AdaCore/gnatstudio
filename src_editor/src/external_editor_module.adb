@@ -779,6 +779,7 @@ package body External_Editor_Module is
       pragma Unreferenced (Mode);
    begin
       if External_Editor_Module_Id.Client /= Auto
+        and then Get_Pref (Kernel, Always_Use_External_Editor)
         and then Mime_Type = Mime_Source_File
       then
          declare
@@ -812,17 +813,7 @@ package body External_Editor_Module is
      (K : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
       pragma Unreferenced (K);
-      Priority : Module_Priority := Default_Priority;
-
    begin
-      if Get_Pref (Kernel, Always_Use_External_Editor) then
-         Priority := Priority + 1;
-      end if;
-
-      if Priority /= Get_Priority (External_Editor_Module_Id) then
-         Set_Priority (Kernel, External_Editor_Module_Id, Priority);
-      end if;
-
       Select_Client (Kernel);
    end Preferences_Changed;
 
@@ -863,7 +854,7 @@ package body External_Editor_Module is
         (Module                  => Module_ID (External_Editor_Module_Id),
          Kernel                  => Kernel,
          Module_Name             => External_Editor_Module_Name,
-         Priority                => Default_Priority,
+         Priority                => Default_Priority + 1,
          Contextual_Menu_Handler => External_Editor_Contextual'Access,
          Mime_Handler            => Mime_Action'Access);
 
