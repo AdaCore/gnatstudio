@@ -31,8 +31,8 @@ package Language.Debugger.Cpp is
    -- Highlighting --
    ------------------
 
-   function Keywords (Lang : access Cpp_Language)
-                     return GNAT.Regpat.Pattern_Matcher;
+   function Keywords
+     (Lang : access Cpp_Language) return GNAT.Regpat.Pattern_Matcher;
 
    function Get_Language_Context
      (Lang : access Cpp_Language) return Language_Context;
