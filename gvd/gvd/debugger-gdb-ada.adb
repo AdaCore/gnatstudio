@@ -831,6 +831,10 @@ package body Debugger.Gdb.Ada is
          Tmp        : Generic_Type_Access;
          Repeat_Num : Integer;
       begin
+         if Dim = 0 then
+            return;
+         end if;
+
          --  Does gdb indicate the number of the item (as in '24 =>')
          --  We search the first character that does not belong to the item
          --  value.
