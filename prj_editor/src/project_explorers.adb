@@ -537,6 +537,13 @@ package body Project_Explorers is
 
       Gtkada.Handlers.Return_Callback.Object_Connect
         (Explorer.Tree,
+         "button_release_event",
+         Gtkada.Handlers.Return_Callback.To_Marshaller
+           (Button_Press'Access),
+         Slot_Object => Explorer,
+         After       => False);
+      Gtkada.Handlers.Return_Callback.Object_Connect
+        (Explorer.Tree,
          "button_press_event",
          Gtkada.Handlers.Return_Callback.To_Marshaller
            (Button_Press'Access),
@@ -562,7 +569,7 @@ package body Project_Explorers is
 
       Widget_Callback.Object_Connect
         (Get_MDI (Kernel), "child_selected",
-         Child_Selected'Unrestricted_Access, Explorer, After => True);
+         Child_Selected'Access, Explorer, After => True);
    end Initialize;
 
    --------------------
