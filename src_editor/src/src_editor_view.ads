@@ -108,6 +108,9 @@ package Src_Editor_View is
    --  Add the line information to the view.
    --  User must not free Info.
 
+   procedure Delete (View : access Source_View_Record);
+   --  Free memory associated to View.
+
 private
 
    type Line_Information_Access is access Line_Information_Record;
