@@ -18,10 +18,12 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glib; use Glib;
 with GNAT.OS_Lib; use GNAT.OS_Lib;
 with Main_Debug_Window_Pkg; use Main_Debug_Window_Pkg;
-with Gtk.Notebook; use Gtk.Notebook;
+with Odd.Process; use Odd.Process;
+with Odd.Types; use Odd.Types;
+with Process_Proxies; use Process_Proxies;
+with Debugger; use Debugger;
 with System;
 with Unchecked_Conversion;
 
@@ -53,6 +55,7 @@ package body Odd.Trace is
                   N := Write (File, Quote_EOL'Address, Quote_EOL'Length);
                   N := Write (File, Quote_SOL'Address, Quote_SOL'Length);
                end if;
+
             when ASCII.HT =>
                N := Write (File, Verbose_HT'Address, Verbose_HT'Length);
             when others =>
@@ -72,15 +75,18 @@ package body Odd.Trace is
    is
       Window : constant Main_Debug_Window_Access := To_Main_Window (User_Data);
       N      : Integer;
-      Page   : constant String :=
-        Gint'Image (Get_Current_Page (Window.Process_Notebook) + 1);
-      Prefix : aliased constant String := '[' & Page (2 .. Page'Last) & "] ";
+      Tab    : constant Debugger_Process_Tab := Convert (Window, Descriptor);
+      Num    : constant String := Integer'Image (Tab.Debugger_Num);
+      Prefix : aliased constant String := '[' & Num (2 .. Num'Last) & "] ";
 
    begin
-      N := Write (Window.Log_File, Prefix'Address, Prefix'Length);
-      N := Write (Window.Log_File, Input_String'Address, Input_String'Length);
-      Output_Message (Window.Log_File, Str);
-      N := Write (Window.Log_File, Quote_EOL'Address, Quote_EOL'Length);
+      if Get_Command_Mode (Get_Process (Tab.Debugger)) >= Window.Log_Level then
+         N := Write (Window.Log_File, Prefix'Address, Prefix'Length);
+         N := Write
+           (Window.Log_File, Input_String'Address, Input_String'Length);
+         Output_Message (Window.Log_File, Str);
+         N := Write (Window.Log_File, Quote_EOL'Address, Quote_EOL'Length);
+      end if;
    end Input_Filter;
 
    -------------------
@@ -94,16 +100,18 @@ package body Odd.Trace is
    is
       Window : constant Main_Debug_Window_Access := To_Main_Window (User_Data);
       N      : Integer;
-      Page   : constant String :=
-        Gint'Image (Get_Current_Page (Window.Process_Notebook) + 1);
-      Prefix : aliased constant String := '[' & Page (2 .. Page'Last) & "] ";
+      Tab    : constant Debugger_Process_Tab := Convert (Window, Descriptor);
+      Num    : constant String := Integer'Image (Tab.Debugger_Num);
+      Prefix : aliased constant String := '[' & Num (2 .. Num'Last) & "] ";
 
    begin
-      N := Write (Window.Log_File, Prefix'Address, Prefix'Length);
-      N := Write
-        (Window.Log_File, Output_String'Address, Output_String'Length);
-      Output_Message (Window.Log_File, Str);
-      N := Write (Window.Log_File, Quote_EOL'Address, Quote_EOL'Length);
+      if Get_Command_Mode (Get_Process (Tab.Debugger)) >= Window.Log_Level then
+         N := Write (Window.Log_File, Prefix'Address, Prefix'Length);
+         N := Write
+           (Window.Log_File, Output_String'Address, Output_String'Length);
+         Output_Message (Window.Log_File, Str);
+         N := Write (Window.Log_File, Quote_EOL'Address, Quote_EOL'Length);
+      end if;
    end Output_Filter;
 
 end Odd.Trace;
