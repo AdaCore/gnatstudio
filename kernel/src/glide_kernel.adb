@@ -45,6 +45,8 @@ with OS_Utils;                  use OS_Utils;
 with Src_Info;                  use Src_Info;
 with Src_Info.ALI;
 
+with Prj_API;                  use Prj_API;
+
 with Language;                 use Language;
 with Language.Ada;             use Language.Ada;
 with Language.C;               use Language.C;
@@ -94,84 +96,22 @@ package body Glide_Kernel is
    procedure Create_Default_Project
      (Kernel : access Kernel_Handle_Record'Class)
    is
-      Prj_Decl, Decl, Item, L, Term, Expr, Str2 : Project_Node_Id;
-      Current_Dir : constant String := Get_Current_Dir;
-      Current_Dir_Name : Name_Id;
+      Values : Argument_List (1 .. 1);
    begin
-      Kernel.Project := Default_Project_Node (N_Project);
       Kernel.Project_Is_Default := True;
+      Kernel.Project := Create_Project ("default", Get_Current_Dir);
 
-      --  Adding the name of the project
-      Name_Len := 7;
-      Name_Buffer (1 .. Name_Len) := "default";
-      Set_Name_Of (Kernel.Project, Name_Find);
+      Values := (1 => new String' ("."));
+      Update_Attribute_Value_In_Scenario
+        (Kernel.project,
+         Attribute_Name => "source_dirs",
+         Values         => Values);
+      Free (Values (1));
 
-      --  Adding the project path
-      Name_Len := Current_Dir'Length;
-      Name_Buffer (1 .. Name_Len) := Current_Dir;
-      Current_Dir_Name := Name_Find;
-      Set_Path_Name_Of (Kernel.Project, Current_Dir_Name);
-      Set_Directory_Of (Kernel.Project, Current_Dir_Name);
-
-      --  The project declaration
-      Prj_Decl := Default_Project_Node (N_Project_Declaration);
-      Set_Project_Declaration_Of (Kernel.Project, Prj_Decl);
-
-      --  Source dirs => only the current directory
-      Decl := Default_Project_Node (N_Declarative_Item);
-      Set_First_Declarative_Item_Of (Prj_Decl, Decl);
-      Item := Default_Project_Node (N_Attribute_Declaration, Prj.List);
-      Set_Current_Item_Node (Decl, Item);
-      Set_Name_Of (Item, Name_Source_Dirs);
-
-      Expr := Default_Project_Node (N_Expression, Prj.List);
-      Term := Default_Project_Node (N_Term, Prj.List);
-      Set_First_Term (Expr, Term);
-      L := Default_Project_Node (N_Literal_String_List, Prj.List);
-      Set_Current_Term (Term, L);
-
-      Str2 := Default_Project_Node (N_Expression, Prj.Single);
-      Set_First_Expression_In_List (L, Str2);
-      L := Default_Project_Node (N_Term, Prj.Single);
-      Set_First_Term (Str2, L);
-
-      Start_String;
-      Store_String_Chars (".");
-      Str2 := Default_Project_Node (N_Literal_String, Prj.Single);
-      Set_String_Value_Of (Str2, End_String);
-      Set_Current_Term (L, Str2);
-
-      Set_Expression_Of (Item, Expr);
-
-      --  Obj dirs => the current directory
-      Set_Next_Declarative_Item
-        (Decl, Default_Project_Node (N_Declarative_Item));
-      Decl := Next_Declarative_Item (Decl);
-      Item := Default_Project_Node (N_Attribute_Declaration, Prj.Single);
-      Set_Current_Item_Node (Decl, Item);
-      Set_Name_Of (Item, Name_Object_Dir);
-
-      Expr := Default_Project_Node (N_Expression, Prj.Single);
-      Term := Default_Project_Node (N_Term, Prj.Single);
-      Set_First_Term (Expr, Term);
-      L := Default_Project_Node (N_Literal_String, Prj.Single);
-      Set_Current_Term (Term, L);
-      Start_String;
-      Store_String_Chars (".");
-      Set_String_Value_Of (L, End_String);
-
-      Set_Expression_Of (Item, Expr);
-
-      --  Register the name of the project so that we can retrieve it from one
-      --  of its views
-
-      Prj.Tree.Tree_Private_Part.Projects_Htable.Set
-        (Prj.Tree.Name_Of (Kernel.Project),
-         Prj.Tree.Tree_Private_Part.Project_Name_And_Node'
-         (Name => Prj.Tree.Name_Of (Kernel.Project),
-          Node => Kernel.Project,
-          Modified => False));
-
+      Update_Attribute_Value_In_Scenario
+        (Kernel.project,
+         Attribute_Name => "object_dir",
+         Value          => ".");
       Recompute_View (Kernel);
    end Create_Default_Project;
 
