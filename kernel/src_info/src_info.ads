@@ -8,12 +8,29 @@ package Src_Info is
    --  A handle to a structure containing all the semantic information
    --  concerning a given unit.
 
+   No_LI_File : constant LI_File_Ptr;
+   --  A null LI_File_Ptr.
+
    type LI_File_List is private;
    --  A list of LI_File_Ptr.
 
    procedure Reset (LIFL : in out LI_File_List);
    --  Reset the given list of LI_File_Ptr and deallocate all the
    --  memory allocated for this list. The new list becomes empty.
+
+   function Locate
+     (List : LI_File_List;
+      LI_Filename : String)
+      return LI_File_Ptr;
+   --  Return a pointer to the LI_File which filename is LI_Filename.
+   --  Return No_LI_File if no such LI_File is found.
+
+   function Locate_From_Source
+     (List            : LI_File_List;
+      Source_Filename : String)
+      return LI_File_Ptr;
+   --  Return a pointer to the LI_File which has a source file named
+   --  Source_Filename. Return No_LI_File if not found.
 
 private
 
@@ -124,6 +141,8 @@ private
 
    type LI_File;
    type LI_File_Ptr is access LI_File;
+
+   No_LI_File : constant LI_File_Ptr := null;
 
    type Source_File is record
       LI        : LI_File_Ptr;
@@ -382,18 +401,18 @@ private
    function Get
      (HT : LI_File_HTable.HTable; LI_Filename : String) return LI_File_Ptr;
    --  Return a pointer to the LI_File which filename is LI_Filename.
-   --  Return null if no such LI_File is found.
+   --  Return No_LI_File if no such LI_File is found.
 
    procedure Get_First
      (HT : in out LI_File_HTable.HTable; Result : out LI_File_Ptr);
-   --  Returns null if the hash-table is empty, otherwise returns one
+   --  Returns No_LI_File if the hash-table is empty, otherwise returns one
    --  non specified LI_File_Ptr. There is no guarantee that 2 calls to
    --  this function will return the same element.
 
    procedure Get_Next
      (HT : in out LI_File_HTable.HTable; Result : out LI_File_Ptr);
    --  Returns a non-specified LI_File_Ptr that has not been returned
-   --  by the same function since the last call to Get_First or null if
+   --  by the same function since the last call to Get_First or No_LI_File if
    --  there is no such element. If there is no call to 'Set' in between
    --  Get_Next calls, all the elements of the Htable will be traversed.
 
