@@ -12,7 +12,7 @@ static:
 $(LANGS):
 	-msgfmt -o $@.gmo $@.po
 	$(MKDIR) $(localedir)/$@/LC_MESSAGES
-	-$(INSTALL_DATA) $@.gmo $(localedir)/$@/LC_MESSAGES/glide2.mo
+	-$(INSTALL_DATA) $@.gmo $(localedir)/$@/LC_MESSAGES/gps.mo
 
 install: $(LANGS)
 
