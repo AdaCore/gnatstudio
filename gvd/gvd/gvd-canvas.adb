@@ -280,9 +280,11 @@ package body GVD.Canvas is
       end Refresh_Item;
 
       C   : GVD_Canvas := GVD_Canvas (Canvas);
-      Win : Gdk.Window.Gdk_Window := Get_Window (C);
+      Win : Gdk.Window.Gdk_Window;
 
    begin
+      Realize (C);
+      Win := Get_Window (C);
       Align_On_Grid (C, Get_Pref (Align_Items_On_Grid));
       Set_Detect_Aliases (C, Get_Pref (Default_Detect_Aliases));
       Recompute_All_Aliases (C);
