@@ -23,6 +23,8 @@ with Gdk.Pixmap;          use Gdk.Pixmap;
 with Gdk.Bitmap;          use Gdk.Bitmap;
 with Gdk.Color;           use Gdk.Color;
 with Gdk.Font;            use Gdk.Font;
+with Gdk.Event;           use Gdk.Event;
+with Gdk.Types;           use Gdk.Types;
 with Gtk.Adjustment;      use Gtk.Adjustment;
 with Gtk.Box;             use Gtk.Box;
 with Gtk.Ctree;           use Gtk.Ctree;
@@ -35,14 +37,20 @@ with Gtk.Scrollbar;       use Gtk.Scrollbar;
 with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
 with Gtk.Text;            use Gtk.Text;
 with Gtk.Widget;          use Gtk.Widget;
+with Gtk.Menu;            use Gtk.Menu;
 with Gtkada.Types;        use Gtkada.Types;
 with Language;            use Language;
 with Debugger;            use Debugger;
-with Odd.Explorer;        use Odd.Explorer;
 with GNAT.OS_Lib;         use GNAT.OS_Lib;
 with Ada.Direct_IO;
 
+with Odd.Explorer;        use Odd.Explorer;
+with Odd.Menus;           use Odd.Menus;
+with Odd.Process;         use Odd.Process;
+with Process_Proxies;     use Process_Proxies;
+
 with Unchecked_Deallocation;
+with Ada.Characters.Handling; use Ada.Characters.Handling;
 
 with Gtk.Handlers; use Gtk.Handlers;
 
@@ -71,6 +79,8 @@ package body Gtkada.Code_Editors is
    --  Type of strings used to display line numbers.
 
    package Editor_Cb is new Callback (Code_Editor_Record);
+   package Editor_Event_Cb is new Return_Callback
+     (Code_Editor_Record, Boolean);
 
    procedure Free is new Unchecked_Deallocation (String, String_Access);
 
@@ -78,6 +88,20 @@ package body Gtkada.Code_Editors is
      (Widget : access Gtk_Widget_Record'Class; Position : Position_Type);
    --  Called by Explorer when an item in the buffer is selected.
    --  This will select the word starting at Index.
+
+   function Button_Press_Cb (Editor : access Code_Editor_Record'Class;
+                             Event  : Gdk.Event.Gdk_Event)
+                            return Boolean;
+   --  Handle button press events in the text editor.
+
+   procedure Print_Buffer (Editor : access Code_Editor_Record'Class);
+   --  Insert the contents of the buffer in the editor. Color highlighting is
+   --  provided, and line numbers may or may not be added.
+   --  ??? Need some caching for lines with breakpoints.
+
+   procedure Update_Buttons (Editor : access Code_Editor_Record'Class);
+   --  Update the display of line-breaks buttons.
+   --  If this feature is disabled for the editor, then they are all removed.
 
    -------------
    -- Jump_To --
@@ -181,6 +205,7 @@ package body Gtkada.Code_Editors is
 
    procedure Destroy_Cb (Editor : access Code_Editor_Record'Class) is
    begin
+      Free (Editor.Buffer);
       Unref (Editor.Font);
       Gdk.Pixmap.Unref (Editor.Default_Pixmap);
       Gdk.Bitmap.Unref (Editor.Default_Mask);
@@ -222,6 +247,8 @@ package body Gtkada.Code_Editors is
       Set_Editable (Editor.Text, False);
       Set_Line_Wrap (Editor.Text, False);
 
+      Add_Events (Editor.Text, Button_Press_Mask or Button_Release_Mask);
+
       --  Set a minimal size for the layout, so that the buttons are visible.
       --  Note that this widget is resized vertically dynamically if needed,
       --  so we can just set a size of 0.
@@ -243,6 +270,10 @@ package body Gtkada.Code_Editors is
       Editor_Cb.Object_Connect
         (Get_Vadj (Editor.Text), "destroy",
          Editor_Cb.To_Marshaller (Destroy_Cb'Access),
+         Slot_Object => Editor);
+      Editor_Event_Cb.Object_Connect
+        (Editor.Text, "button_press_event",
+         Editor_Event_Cb.To_Marshaller (Button_Press_Cb'Access),
          Slot_Object => Editor);
 
       Pack_Start (Editor, Paned, Expand => True, Fill => True);
@@ -266,14 +297,12 @@ package body Gtkada.Code_Editors is
       Current_Line_Icon : Chars_Ptr_Array;
       Comments_Color : String;
       Strings_Color  : String;
-      Keywords_Color : String;
-      Show_Line_Numbers : Boolean := False)
+      Keywords_Color : String)
    is
       Current_Line_Pixmap : Gdk.Pixmap.Gdk_Pixmap;
       Current_Line_Mask   : Gdk.Bitmap.Gdk_Bitmap;
    begin
       Editor.Font := Get_Gdkfont (Ps_Font_Name, Font_Size);
-      Editor.Show_Line_Nums := Show_Line_Numbers;
 
       Realize (Editor.Text);
       Create_From_Xpm_D
@@ -322,6 +351,110 @@ package body Gtkada.Code_Editors is
       Editor.Lang := new Language_Root'Class'(Lang.all);
    end Set_Current_Language;
 
+   ---------------------
+   -- Button_Press_Cb --
+   ---------------------
+
+   function Button_Press_Cb (Editor : access Code_Editor_Record'Class;
+                             Event  : Gdk.Event.Gdk_Event)
+                            return Boolean
+   is
+      Menu    : Gtk_Menu;
+      X, Y    : Gint;
+      Line    : Gint := 0;
+      Index   : Integer;
+      Current_Line : Gint := 1;
+      Start_Index : Integer;
+      Min : Gint := Gint (Guint'Min (Get_Selection_Start_Pos (Editor.Text),
+                                     Get_Selection_End_Pos (Editor.Text)));
+      Max : Gint := Gint (Guint'Max (Get_Selection_Start_Pos (Editor.Text),
+                                     Get_Selection_End_Pos (Editor.Text)));
+
+   begin
+      if Get_Button (Event) = 3
+        and then Get_Event_Type (Event) = Button_Press
+        and then Editor.Buffer /= null
+      then
+         Index := Editor.Buffer'First;
+
+         --  Take advantage of the fact that all lines and characters have the
+         --  same size.
+         Y := Gint (Get_Y (Event)) + Gint (Get_Value (Get_Vadj (Editor.Text)));
+         Line := Y / (Get_Ascent (Editor.Font) + Get_Descent (Editor.Font))
+           + 1;
+         X := Gint (Get_X (Event)) / Char_Width (Editor.Font, Character'('m'));
+
+         --  Do not count the space used for line numbers
+         if Editor.Show_Line_Nums then
+            X := X - Gint (Line_Numbers_Width);
+         end if;
+
+
+
+         --  Only take the selection into account if it is under the cursor.
+         --  Otherwise, the behavior is somewhat unexpected.
+
+         if Get_Has_Selection (Editor.Text)
+           and then Min <= X
+           and then X <= Max
+         then
+            --  Use the selection...
+            Menu := Editor_Contextual_Menu
+              (Editor, Line, Get_Chars (Editor.Text, Min, Max));
+         else
+            if X < 0 then
+               Menu := Editor_Contextual_Menu (Editor, Line, "");
+            else
+               while Index <= Editor.Buffer'Last
+                 and then Current_Line < Line
+               loop
+                  if Editor.Buffer (Index) = ASCII.LF then
+                     Current_Line := Current_Line + 1;
+                  end if;
+                  Index := Index + 1;
+               end loop;
+               Index := Index + Integer (X) - Editor.Buffer'First;
+
+               --  Find the beginning of the entity
+               Start_Index := Index;
+               while Start_Index >= Editor.Buffer'First
+                 and then (Is_Letter (Editor.Buffer (Start_Index))
+                           or else
+                           Is_Digit (Editor.Buffer (Start_Index))
+                           or else
+                           Editor.Buffer (Start_Index) = '_')
+               loop
+                  Start_Index := Start_Index - 1;
+               end loop;
+
+               --  Find the end of the entity
+               while Index <= Editor.Buffer'Last
+                 and then (Is_Letter (Editor.Buffer (Index))
+                           or else
+                           Is_Digit (Editor.Buffer (Index))
+                           or else
+                           Editor.Buffer (Index) = '_')
+               loop
+                  Index := Index + 1;
+               end loop;
+
+               Menu := Editor_Contextual_Menu
+                 (Editor, Line, Editor.Buffer (Start_Index + 1 .. Index - 1));
+            end if;
+         end if;
+
+         Popup (Menu,
+                Button            => Gdk.Event.Get_Button (Event),
+                Activate_Time     => Gdk.Event.Get_Time (Event));
+         --  Stop the event so that the contextual menu is handled correctly
+         --  (ie hidden when the mouse button is releases, and the selection
+         --  is not unselected).
+         Emit_Stop_By_Name (Editor.Text, "button_press_event");
+         return True;
+      end if;
+      return False;
+   end Button_Press_Cb;
+
    -----------
    -- Clear --
    -----------
@@ -331,45 +464,11 @@ package body Gtkada.Code_Editors is
       Delete_Text (Editor.Text);
    end Clear;
 
-   ---------------
-   -- Load_File --
-   ---------------
+   ------------------
+   -- Print_Buffer --
+   ------------------
 
-   procedure Load_File
-     (Editor    : access Code_Editor_Record;
-      File_Name : String;
-      Debug     : access Debugger.Debugger_Root'Class)
-   is
-      function Func (File : String; Line : Positive) return Boolean;
-      --  Local wrapper for Line_Contains_Code.
-
-      ----------
-      -- Func --
-      ----------
-
-      function Func (File : String; Line : Positive) return Boolean is
-      begin
-         return Editor_Show_Line_With_Code
-           and then Line_Contains_Code (Debug, File, Line);
-      end Func;
-
-   begin
-      Load_File
-        (Editor, File_Name, Func'Unrestricted_Access,
-         Editor.Default_Pixmap, Editor.Default_Mask);
-   end Load_File;
-
-   ---------------
-   -- Load_File --
-   ---------------
-
-   procedure Load_File
-     (Editor    : access Code_Editor_Record;
-      File_Name : String;
-      Icon_Func : Icon_Function;
-      Pixmap    : Gdk.Pixmap.Gdk_Pixmap;
-      Mask      : Gdk.Bitmap.Gdk_Bitmap)
-   is
+   procedure Print_Buffer (Editor : access Code_Editor_Record'Class) is
       function Line_Number_String (Line : Positive) return String;
       --  Return a string that contains the line number.
       --  The number is aligned to the right, and the string as a length of
@@ -384,74 +483,21 @@ package body Gtkada.Code_Editors is
          return N & " ";
       end Line_Number_String;
 
-      F           : File_Descriptor;
-      Length      : Positive;
-      Buffer      : String_Access;
-      Line        : Positive := 1;
       Index       : Positive := 1;
+      Line        : Positive := 1;
       Line_Height : Gint;
       Line_Start  : Positive := 1;
       Entity      : Language_Entity;
       Next_Char   : Positive;
-      Name        : aliased String := File_Name & ASCII.NUL;
-
    begin
-      --  Avoid reloading a file twice.
-      --  This also solve the problem of recursive loops ("info line" in gdb,
-      --  with annotation level set to 1 will print a file reference as well).
-
-      if Editor.Current_File /= null
-        and then Editor.Current_File.all = File_Name
-      then
+      if Editor.Buffer = null then
          return;
-      else
-         Free (Editor.Current_File);
-         Editor.Current_File := new String' (File_Name);
       end if;
 
-      --  Clear the old file and the old icons.
-      Freeze (Editor.Buttons);
-
-      if Get_Parent (Editor.Current_Line_Button) /= null then
-         Remove (Editor.Buttons, Editor.Current_Line_Button);
-      end if;
-
-      Forall (Editor.Buttons, Gtk.Widget.Destroy_Cb'Access);
-      Thaw (Editor.Buttons);
-
+      --  Clear the old file
       Freeze (Editor.Text);
       Delete_Text (Editor.Text);
       Thaw (Editor.Text);
-
-      --  Read the size of the file
-      F      := Open_Read (Name'Address, Text);
-      Length := Positive (File_Length (F));
-      Close (F);
-
-      --  Allocate the buffer
-      Buffer := new String (1 .. Length);
-
-      declare
-         type Fixed_String is new String (1 .. Positive (Length));
-         package String_Direct_IO is new Ada.Direct_IO (Fixed_String);
-         F : String_Direct_IO.File_Type;
-      begin
-         String_Direct_IO.Open (F, String_Direct_IO.In_File, File_Name);
-         String_Direct_IO.Read (F, Fixed_String (Buffer.all));
-         String_Direct_IO.Close (F);
-      end;
-
-      --  Create the explorer tree.
-
-      if Display_Explorer then
-         if Editor.Explorer /= null then
-            Remove (Editor.Explorer_Scroll, Editor.Explorer);
-         end if;
-
-         Editor.Explorer := Explore (Editor, Buffer.all, Jump_To'Access);
-         Show_All (Editor.Explorer);
-         Add (Editor.Explorer_Scroll, Editor.Explorer);
-      end if;
 
       --  Insert the contents of the buffer in the text area.
 
@@ -464,9 +510,9 @@ package body Gtkada.Code_Editors is
          Insert (Editor.Text, Editor.Font, Chars => Line_Number_String (1));
       end if;
 
-      while Index <= Buffer'Last loop
+      while Index <= Editor.Buffer'Last loop
 
-         case Buffer (Index) is
+         case Editor.Buffer (Index) is
 
             when ASCII.CR =>  --  ignore, this is processed as ASCII.LF
                Index := Index + 1;
@@ -474,21 +520,10 @@ package body Gtkada.Code_Editors is
             when ASCII.LF =>
                if Do_Color_Highlighting then
                   Insert (Editor.Text, Editor.Font, Null_Color, Null_Color,
-                          Buffer (Index .. Index));
+                          Editor.Buffer (Index .. Index));
                else
                   Insert (Editor.Text, Editor.Font, Null_Color, Null_Color,
-                          Buffer (Line_Start .. Index));
-               end if;
-
-               if Icon_Func (File_Name, Line) then
-                  declare
-                     Pix : Gtk_Pixmap;
-                  begin
-                     Gtk_New (Pix, Pixmap, Mask);
-                     Put (Editor.Buttons, Pix,
-                          X => 0,
-                          Y => Gint (Line - 1) * Line_Height + 3);
-                  end;
+                          Editor.Buffer (Line_Start .. Index));
                end if;
 
                Line := Line + 1;
@@ -503,7 +538,8 @@ package body Gtkada.Code_Editors is
             when others =>
                if Do_Color_Highlighting then
                   if Editor.Lang /= null then
-                     Looking_At (Editor.Lang, Buffer (Index .. Buffer'Last),
+                     Looking_At (Editor.Lang,
+                                 Editor.Buffer (Index .. Editor.Buffer'Last),
                                  Entity, Next_Char);
                   else
                      Next_Char := Index + 1;
@@ -518,11 +554,11 @@ package body Gtkada.Code_Editors is
                      Line_Start : Positive := Index;
                   begin
                      while J < Next_Char loop
-                        if Buffer (J) = ASCII.LF then
+                        if Editor.Buffer (J) = ASCII.LF then
                            Insert (Editor.Text, Editor.Font,
                                    Editor.Colors (Entity),
                                    Null_Color,
-                                   Buffer (Line_Start .. J));
+                                   Editor.Buffer (Line_Start .. J));
                            Line := Line + 1;
                            if Editor.Show_Line_Nums then
                               Insert (Editor.Text, Editor.Font,
@@ -535,7 +571,7 @@ package body Gtkada.Code_Editors is
                      Insert (Editor.Text, Editor.Font,
                              Editor.Colors (Entity),
                              Null_Color,
-                             Buffer (Line_Start .. Next_Char - 1));
+                             Editor.Buffer (Line_Start .. Next_Char - 1));
                   end;
                   Index := Next_Char;
                else
@@ -545,15 +581,133 @@ package body Gtkada.Code_Editors is
       end loop;
 
       Thaw (Editor.Text);
+      Thaw (Editor.Buttons);
+   end Print_Buffer;
+
+   --------------------
+   -- Update_Buttons --
+   --------------------
+
+   procedure Update_Buttons (Editor : access Code_Editor_Record'Class) is
+      Line_Height : constant Gint :=
+        Get_Ascent (Editor.Font) + Get_Descent (Editor.Font);
+      Index : Positive;
+      Line  : Positive := 1;
+      Pix   : Gtk_Pixmap;
+      Debug : Debugger_Access;
+   begin
+      if Editor.Buffer = null then
+         return;
+      end if;
+
+      --  Clear the existing buttons.
+
+      Freeze (Editor.Buttons);
+
+      if Get_Parent (Editor.Current_Line_Button) /= null then
+         Hide (Editor.Current_Line_Button);
+         Remove (Editor.Buttons, Editor.Current_Line_Button);
+      end if;
+      Forall (Editor.Buttons, Gtk.Widget.Destroy_Cb'Access);
+
+      --  Display the breakpoint icons
+
+      if Editor.Show_Lines_With_Code then
+         Index := Editor.Buffer'First;
+         Debug := Convert (Editor).Debugger;
+
+         --  Do not emit the debugger output, and do not parse for file
+         --  patterns, so as to avoid scrolling.
+
+         Set_Internal_Command (Get_Process (Debug), True);
+         Set_Parse_File_Name (Get_Process (Debug), False);
+         while Index <= Editor.Buffer'Last loop
+            if Editor.Buffer (Index) = ASCII.LF then
+               if Line_Contains_Code
+                 (Debug, Editor.Current_File.all, Line)
+               then
+                  Gtk_New (Pix, Editor.Default_Pixmap, Editor.Default_Mask);
+                  Put (Editor.Buttons, Pix,
+                       X => 0,
+                       Y => Gint (Line - 1) * Line_Height + 3);
+               end if;
+               Line := Line + 1;
+            end if;
+            Index := Index + 1;
+         end loop;
+         Set_Parse_File_Name (Get_Process (Debug), True);
+         Set_Internal_Command (Get_Process (Debug), False);
+      end if;
+
+      Set_Line (Editor, Editor.Current_Line);
+      Thaw (Editor.Buttons);
+   end Update_Buttons;
+
+   ---------------
+   -- Load_File --
+   ---------------
+
+   procedure Load_File
+     (Editor    : access Code_Editor_Record;
+      File_Name : String)
+   is
+      F           : File_Descriptor;
+      Length      : Positive;
+      Name        : aliased String := File_Name & ASCII.NUL;
+   begin
+      --  Avoid reloading a file twice.
+      --  This also solve the problem of recursive loops ("info line" in gdb,
+      --  with annotation level set to 1 will print a file reference as well).
+
+      if Editor.Current_File /= null
+        and then Editor.Current_File.all = File_Name
+      then
+         return;
+      else
+         Free (Editor.Current_File);
+         Editor.Current_File := new String' (File_Name);
+      end if;
+
+      --  Read the size of the file
+      F      := Open_Read (Name'Address, Text);
+      Length := Positive (File_Length (F));
+      Close (F);
+
+      --  Allocate the buffer
+      Free (Editor.Buffer);
+      Editor.Buffer := new String (1 .. Length);
+
+      declare
+         type Fixed_String is new String (1 .. Positive (Length));
+         package String_Direct_IO is new Ada.Direct_IO (Fixed_String);
+         F : String_Direct_IO.File_Type;
+      begin
+         String_Direct_IO.Open (F, String_Direct_IO.In_File, File_Name);
+         String_Direct_IO.Read (F, Fixed_String (Editor.Buffer.all));
+         String_Direct_IO.Close (F);
+      end;
+
+      --  Create the explorer tree.
+
+      if Display_Explorer then
+         if Editor.Explorer /= null then
+            Remove (Editor.Explorer_Scroll, Editor.Explorer);
+         end if;
+
+         Editor.Explorer :=
+           Explore (Editor, Editor.Buffer.all, Jump_To'Access);
+         Show_All (Editor.Explorer);
+         Add (Editor.Explorer_Scroll, Editor.Explorer);
+      end if;
+
+      Print_Buffer (Editor);
+      Update_Buttons (Editor);
 
       --  For the buttons to become visible again, we have to hide the layout,
       --  and then show it again... Don't know why !
 
       Hide (Editor.Buttons);
       Show_All (Editor.Buttons);
-      Thaw (Editor.Buttons);
-
-      Free (Buffer);
 
    exception
 
@@ -577,8 +731,6 @@ package body Gtkada.Code_Editors is
       Y := Gint (Line - 1) * Line_Height + 3;
 
       --  Display the current line icon
-      --  ??? Would be nice if it was replacing (or at least displayed above)
-      --  the breakpoint icon.
       --  Note that we start by hiding everything, and then show everything
       --  at the end, so that the layout is correctly refreshed. This is not
       --  done otherwise.
@@ -593,6 +745,7 @@ package body Gtkada.Code_Editors is
          Put (Editor.Buttons, Editor.Current_Line_Button,
               X => 10, Y => Y);
       end if;
+      Show (Editor.Buttons);
 
       Thaw (Editor.Buttons);
       Show_All (Editor.Buttons);
@@ -603,6 +756,75 @@ package body Gtkada.Code_Editors is
                   Lower => Gfloat (Y - Line_Height),
                   Upper => Gfloat (Y + 4 * Line_Height));
 
+      Editor.Current_Line := Line;
+
+      --  Make sure the arrow that indicated the previous line is no longer
+      --  visible.
+      Queue_Draw (Editor.Buttons);
    end Set_Line;
+
+   ------------------------
+   -- Set_Show_Line_Nums --
+   ------------------------
+
+   procedure Set_Show_Line_Nums (Editor : access Code_Editor_Record;
+                                 Show   : Boolean := False)
+   is
+      --  Save the currently displayed line
+      Value : constant Gfloat := Get_Value (Get_Vadj (Editor.Text));
+   begin
+      if Show /= Editor.Show_Line_Nums then
+         Editor.Show_Line_Nums := Show;
+         Print_Buffer (Editor);
+         Set_Value (Get_Vadj (Editor.Text), Value);
+      end if;
+   end Set_Show_Line_Nums;
+
+   ------------------------
+   -- Get_Show_Line_Nums --
+   ------------------------
+
+   function Get_Show_Line_Nums (Editor : access Code_Editor_Record)
+                               return Boolean
+   is
+   begin
+      return Editor.Show_Line_Nums;
+   end Get_Show_Line_Nums;
+
+   ----------------------
+   -- Get_Current_File --
+   ----------------------
+
+   function Get_Current_File (Editor : access Code_Editor_Record)
+                             return String
+   is
+   begin
+      return Editor.Current_File.all;
+   end Get_Current_File;
+
+   ------------------------------
+   -- Set_Show_Lines_With_Code --
+   ------------------------------
+
+   procedure Set_Show_Lines_With_Code (Editor : access Code_Editor_Record;
+                                       Show   : Boolean)
+   is
+   begin
+      if Show /= Editor.Show_Lines_With_Code then
+         Editor.Show_Lines_With_Code := Show;
+         Update_Buttons (Editor);
+      end if;
+   end Set_Show_Lines_With_Code;
+
+   ------------------------------
+   -- Get_Show_Lines_With_Code --
+   ------------------------------
+
+   function Get_Show_Lines_With_Code (Editor : access Code_Editor_Record)
+                                     return Boolean
+   is
+   begin
+      return Editor.Show_Lines_With_Code;
+   end Get_Show_Lines_With_Code;
 
 end Gtkada.Code_Editors;

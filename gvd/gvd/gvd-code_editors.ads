@@ -39,7 +39,6 @@ with Gtk.Scrolled_Window;
 with Gtk.Text;
 with Gtkada.Types;
 with Language;
-with Debugger;
 
 package Gtkada.Code_Editors is
 
@@ -68,8 +67,7 @@ package Gtkada.Code_Editors is
       Current_Line_Icon : Gtkada.Types.Chars_Ptr_Array;
       Comments_Color    : String;
       Strings_Color     : String;
-      Keywords_Color    : String;
-      Show_Line_Numbers : Boolean := False);
+      Keywords_Color    : String);
    --  Set the various settings of an editor.
    --  Ps_Font_Name is the name of the postscript font that will be used to
    --  display the text. It should be a fixed-width font, which is nice for
@@ -81,6 +79,25 @@ package Gtkada.Code_Editors is
    --
    --  The editor will automatically free its allocated memory when it is
    --  destroyed.
+
+   procedure Set_Show_Line_Nums (Editor : access Code_Editor_Record;
+                                 Show   : Boolean := False);
+   --  Indicate whether line numbers should be displayed or not.
+
+   function Get_Show_Line_Nums (Editor : access Code_Editor_Record)
+                               return Boolean;
+   --  Return the state of line numbers in the editor
+
+   procedure Set_Show_Lines_With_Code (Editor : access Code_Editor_Record;
+                                       Show   : Boolean);
+   function Get_Show_Lines_With_Code (Editor : access Code_Editor_Record)
+                                     return Boolean;
+   --  Indicate whether lines where a user can set a breakpoint have a small
+   --  dot displayed on the side.
+
+   function Get_Current_File (Editor : access Code_Editor_Record)
+                             return String;
+   --  Return the name of the currently edited file.
 
    procedure Set_Current_Language
      (Editor : access Code_Editor_Record;
@@ -94,25 +111,11 @@ package Gtkada.Code_Editors is
 
    procedure Load_File
      (Editor    : access Code_Editor_Record;
-      File_Name : String;
-      Debug     : access Debugger.Debugger_Root'Class);
+      File_Name : String);
    --  Load and append a file in the editor.
    --  The contents is highlighted based on the current language.
    --  Debugger is used to calculate which lines should get icons on the side,
    --  through calls to Line_Contains_Code.
-
-   type Icon_Function is access
-     function (File : String; Line : Positive) return Boolean;
-   --  Return True if the given line in File should get an icon on the side.
-
-   procedure Load_File
-     (Editor    : access Code_Editor_Record;
-      File_Name : String;
-      Icon_Func : Icon_Function;
-      Pixmap    : Gdk.Pixmap.Gdk_Pixmap;
-      Mask      : Gdk.Bitmap.Gdk_Bitmap);
-   --  More general version of Load_File above, where you can choose your own
-   --  pixmap and decide where to put it.
 
    procedure Set_Line
      (Editor    : access Code_Editor_Record;
@@ -133,6 +136,7 @@ private
       Explorer_Scroll : Gtk.Scrolled_Window.Gtk_Scrolled_Window;
 
       Current_File    : String_Access;
+      Buffer          : String_Access;
 
       Lang            : Language.Language_Access;
       Font            : Gdk.Font.Gdk_Font;
@@ -140,8 +144,13 @@ private
       Default_Mask    : Gdk.Bitmap.Gdk_Bitmap := Gdk.Bitmap.Null_Bitmap;
       Colors          : Color_Array := (others => Gdk.Color.Null_Color);
 
-      Current_Line_Button : Gtk.Pixmap.Gtk_Pixmap;
-      Show_Line_Nums : Boolean := False;
+      Current_Line_Button  : Gtk.Pixmap.Gtk_Pixmap;
+      Current_Line         : Natural := 0;
+      Show_Line_Nums       : Boolean := False;
+
+      Show_Lines_With_Code : Boolean := True;
+      --  Whether the lines where one can set a breakpoint have a small dot
+      --  on the side.
    end record;
 
 end Gtkada.Code_Editors;
