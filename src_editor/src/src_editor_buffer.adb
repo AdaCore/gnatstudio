@@ -54,7 +54,7 @@ with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
 with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
 with Glide_Kernel.Project;      use Glide_Kernel.Project;
 with Ada.Exceptions;            use Ada.Exceptions;
-with Ada.Characters.Handling;   use Ada.Characters.Handling;
+with String_Utils;              use String_Utils;
 with Traces;                    use Traces;
 
 with String_List_Utils;         use String_List_Utils;
@@ -475,11 +475,11 @@ package body Src_Editor_Buffer is
      (Buffer : access Source_Buffer_Record'Class;
       Params : Glib.Values.GValues)
    is
-      Pos         : Gtk_Text_Iter;
-      Length      : constant Gint := Get_Int (Nth (Params, 3));
-      Text        : constant String :=
+      Pos     : Gtk_Text_Iter;
+      Length  : constant Gint := Get_Int (Nth (Params, 3));
+      Text    : constant String :=
         Get_String (Nth (Params, 2), Length => Length);
-      Command     : Editor_Command := Editor_Command (Buffer.Current_Command);
+      Command : Editor_Command := Editor_Command (Buffer.Current_Command);
 
    begin
       if Buffer.Inserting then
@@ -625,6 +625,8 @@ package body Src_Editor_Buffer is
          then
             End_Action (Buffer);
             Command := Editor_Command (Buffer.Current_Command);
+
+            pragma Assert (Is_Null_Command (Command));
          end if;
 
          Line_Start   := Get_Line (Start_Iter);
@@ -2608,12 +2610,9 @@ package body Src_Editor_Buffer is
             return;
          end if;
 
-         --  ??? Src_Editor_Box.Is_Entity_Letter should be used here.
-
-         while Is_Alphanumeric (Get_Char (Prev))
-           or else Get_Char (Prev) = '_'
-         loop
+         while Is_Entity_Letter (Get_Char (Prev)) loop
             Backward_Char (Prev, Success);
+
             exit when not Success;
          end loop;
 
@@ -2649,9 +2648,7 @@ package body Src_Editor_Buffer is
       end if;
 
       Get_Iter_At_Mark (Buffer, Iter, Buffer.Completion.Mark);
-
       Buffer.Inserting := True;
-
       Command := Editor_Command (Buffer.Current_Command);
 
       if Command = null then
@@ -2665,12 +2662,10 @@ package body Src_Editor_Buffer is
 
          Enqueue (Buffer.Queue, Command);
          Add_Text (Command, Text.all);
-
          Insert (Buffer,
                  Get_Line (Iter),
                  Get_Line_Offset (Iter),
                  Text.all, False);
-
          Buffer.Current_Command := Command_Access (Command);
 
       else
@@ -2695,7 +2690,6 @@ package body Src_Editor_Buffer is
          end if;
 
          Set_Text (Command, Text.all);
-
          Buffer.Current_Command := Command_Access (Command);
       end if;
 
