@@ -266,6 +266,7 @@ package Python is
    --  integer, ... Do not Py_DECREF Object afterward, this is only a borrowed
    --  reference.
    --  Return 0 in case of success, -1 in case of error.
+   --  Name can be freed immediately by the caller
 
    function PyModule_AddObject
      (Module : PyObject; Name : String;  Object : PyObject) return Integer;
