@@ -28,7 +28,6 @@ with Src_Info;          use Src_Info;
 with Ada.Text_IO;       use Ada.Text_IO;
 with Src_Info.Queries;  use Src_Info.Queries;
 with Glide_Kernel;      use Glide_Kernel;
-with Basic_Types;       use Basic_Types;
 
 package Docgen_Backend_HTML is
 
@@ -54,11 +53,11 @@ package Docgen_Backend_HTML is
      (B                : access Backend_HTML;
       Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
       File             : in Ada.Text_IO.File_Type;
-      Entity_List      : in out Type_Entity_List.List;
       List_Ref_In_File : in out List_Reference_In_File.List;
       Info             : in out Docgen.Doc_Info;
       Doc_Directory    : String;
-      Doc_Suffix       : String);
+      Doc_Suffix       : String;
+      Level            : Natural);
    --  Start the process producing the documentation for one file.
    --  Use the html language.
 
@@ -108,7 +107,6 @@ package Docgen_Backend_HTML is
 
    procedure Format_Identifier
      (B                   : access Backend_HTML;
-      Entity_List         : in out Type_Entity_List.List;
       List_Ref_In_File    :  in out List_Reference_In_File.List;
       Start_Index         : Natural;
       Start_Line          : Natural;
@@ -125,41 +123,8 @@ package Docgen_Backend_HTML is
       Source_File_List    : Type_Source_File_List.List;
       Link_All            : Boolean;
       Is_Body             : Boolean;
-      Process_Body        : Boolean;
-      Info                : Doc_Info;
-      Call_Graph_Entities : in out Type_Entity_List.List);
+      Process_Body        : Boolean);
    --  Generate an identifier in html format.
-
-   procedure Print_Ref_List
-     (B           : access Backend_HTML;
-      Kernel      : access Kernel_Handle_Record'Class;
-      File        : in Ada.Text_IO.File_Type;
-      Name_Entity : String_Access;
-      Local_List  : Type_Reference_List.List;
-      Called_Subp : Boolean);
-   --  Processes the Ref_List to the output file.
-   --  If Called_Subp is True, the list of the subprograms
-   --  calling the current subprogram will be printed,
-   --  if False, the list of the subprograms called within it.
-
-   procedure  Call_Graph_Packages_Header
-     (B      : access Backend_HTML;
-      Kernel : access Kernel_Handle_Record'Class;
-      File   : in Ada.Text_IO.File_Type;
-      Info   : Doc_Info);
-   --  Adds some tags in the output of the inner package just
-   --  before all the call graphs of the declared subprograms
-   --  in this package.
-   --  All the call graphs are put at the end of the inner package because
-   --  docgen print it in one piece.
-
-   procedure  Call_Graph_Packages_Footer
-     (B      : access Backend_HTML;
-      Kernel : access Kernel_Handle_Record'Class;
-      File   : in Ada.Text_IO.File_Type;
-      Info   : Doc_Info);
-   --  Adds some tags in the output of the inner package after all the call
-   --  graphs of the declared subprograms in this package.
 
    procedure Format_Link
      (B                : access Backend_HTML;
