@@ -1960,8 +1960,8 @@ package body VCS_View_API is
          if Ref = Unknown_VCS_Reference then
             Insert
               (Kernel,
-               -"Warning: could not determine the VCS system for project: "
-                 & Project_Name (The_Project));
+               -"Warning: no VCS set in project properties for project "
+               & Project_Name (The_Project));
          else
             Dirs := Get_Dirs_In_Project (The_Project);
 
