@@ -157,9 +157,15 @@ package body Project_Viewers is
 
    Full_Path_Cst : aliased constant String := "full_path";
    Recursive_Cst : aliased constant String := "recursive";
+   Directory_Cst : aliased constant String := "directory";
    Sources_Cmd_Parameters : constant Glide_Kernel.Scripts.Cst_Argument_List :=
      (1 => Full_Path_Cst'Access,
       2 => Recursive_Cst'Access);
+   Source_Dirs_Cmd_Parameters : constant Glide_Kernel.Scripts.Cst_Argument_List
+     := (1 => Recursive_Cst'Access);
+   Add_Source_Dir_Cmd_Parameters :
+     constant Glide_Kernel.Scripts.Cst_Argument_List :=
+     (1 => Directory_Cst'Access);
 
    File_Name_Column         : constant := 0;
    Compiler_Switches_Column : constant := 1;
@@ -2561,6 +2567,78 @@ package body Project_Viewers is
             Unchecked_Free (Sources);
          end;
 
+      elsif Command = "source_dirs" then
+         Name_Parameters (Data, Source_Dirs_Cmd_Parameters);
+         declare
+            Recursive : constant Boolean := Nth_Arg (Data, 2, False);
+            Dirs      : String_Array_Access := Source_Dirs
+              (Project, Recursive => Recursive);
+         begin
+            Set_Return_Value_As_List (Data);
+
+            for D in Dirs'Range loop
+               Set_Return_Value (Data, Dirs (D).all);
+            end loop;
+
+            Free (Dirs);
+         end;
+
+      elsif Command = "object_dirs" then
+         Name_Parameters (Data, Source_Dirs_Cmd_Parameters);
+         declare
+            Recursive : constant Boolean := Nth_Arg (Data, 2, False);
+            Object    : constant String := Object_Path (Project, Recursive);
+            Iter      : Path_Iterator := Start (Object);
+         begin
+            Set_Return_Value_As_List (Data);
+
+            while not At_End (Object, Iter) loop
+               Set_Return_Value (Data, Current (Object, Iter));
+               Iter := Next (Object, Iter);
+            end loop;
+         end;
+
+      elsif Command = "add_source_dir" then
+         Name_Parameters (Data, Add_Source_Dir_Cmd_Parameters);
+         declare
+            Dir : constant String := Nth_Arg (Data, 2);
+            Dirs : Argument_List := (1 => new String'(Dir));
+         begin
+            Update_Attribute_Value_In_Scenario
+              (Project            => Project,
+               Scenario_Variables => Scenario_Variables (Get_Kernel (Data)),
+               Attribute          => Source_Dirs_Attribute,
+               Values             => Dirs,
+               Attribute_Index    => "",
+               Prepend            => True);
+            Free (Dirs);
+         end;
+
+      elsif Command = "remove_source_dir" then
+         Name_Parameters (Data, Add_Source_Dir_Cmd_Parameters);
+         declare
+            Dir : constant String := Nth_Arg (Data, 2);
+            Dirs : Argument_List := Get_Attribute_Value
+              (Project, Source_Dirs_Attribute);
+            Index : Natural := Dirs'Last;
+         begin
+            for D in Dirs'Range loop
+               if File_Equal (Dirs (D).all, Dir) then
+                  Free (Dirs (D));
+                  Dirs (D .. Dirs'Last - 1) := Dirs (D + 1 .. Dirs'Last);
+                  Index := Index - 1;
+               end if;
+            end loop;
+
+            Update_Attribute_Value_In_Scenario
+              (Project            => Project,
+               Scenario_Variables => Scenario_Variables (Get_Kernel (Data)),
+               Attribute          => Source_Dirs_Attribute,
+               Values             => Dirs (Dirs'First .. Index),
+               Attribute_Index    => "");
+            Free (Dirs);
+         end;
+
       end if;
    end Project_Command_Handler;
 
@@ -3639,6 +3717,66 @@ package body Project_Viewers is
          Maximum_Args => Sources_Cmd_Parameters'Length,
          Class        => Get_Project_Class (Kernel),
          Handler      => Project_Command_Handler'Access);
+      Register_Command
+        (Kernel,
+         Command      => "source_dirs",
+         Params       =>
+           Parameter_Names_To_Usage (Source_Dirs_Cmd_Parameters, 1),
+         Return_Value => "list",
+         Description  =>
+           -("Return the list of source directories for this project."
+             & " If Recursive is True, the source directories of imported"
+             & " projects is also returned. There might be duplicate"
+             & " directories in the returned list"),
+         Minimum_Args => Source_Dirs_Cmd_Parameters'Length - 1,
+         Maximum_Args => Source_Dirs_Cmd_Parameters'Length,
+         Class        => Get_Project_Class (Kernel),
+         Handler      => Project_Command_Handler'Access);
+      Register_Command
+        (Kernel,
+         Command      => "object_dirs",
+         Params       =>
+           Parameter_Names_To_Usage (Source_Dirs_Cmd_Parameters, 1),
+         Return_Value => "list",
+         Description  =>
+           -("Return the list of object directories for this project."
+             & " If Recursive is True, the source directories of imported"
+             & " projects is also returned. There might be duplicate"
+             & " directories in the returned list"),
+         Minimum_Args => Source_Dirs_Cmd_Parameters'Length - 1,
+         Maximum_Args => Source_Dirs_Cmd_Parameters'Length,
+         Class        => Get_Project_Class (Kernel),
+         Handler      => Project_Command_Handler'Access);
+      Register_Command
+        (Kernel,
+         Params       =>
+           Parameter_Names_To_Usage (Add_Source_Dir_Cmd_Parameters),
+         Command      => "add_source_dir",
+         Description  =>
+            -("Add a new source directory to the project. The new directory"
+              & " is added in front of the source path. You should call"
+              & " recompute() after calling this method, to recompute the list"
+              & " of source files. The directory is added for the current"
+              & " value of the scenario variables only"),
+         Minimum_Args => Add_Source_Dir_Cmd_Parameters'Length,
+         Maximum_Args => Add_Source_Dir_Cmd_Parameters'Length,
+         Class        => Get_Project_Class (Kernel),
+         Handler      => Project_Command_Handler'Access);
+      Register_Command
+        (Kernel,
+         Params       =>
+           Parameter_Names_To_Usage (Add_Source_Dir_Cmd_Parameters),
+         Command      => "remove_source_dir",
+         Description  =>
+            -("Remove a source directory from the project. You should call"
+              & " recompute() after calling this method, to recompute the list"
+              & " of source files. The directory is added for the current"
+              & " value of the scenario variables only"),
+         Minimum_Args => Add_Source_Dir_Cmd_Parameters'Length,
+         Maximum_Args => Add_Source_Dir_Cmd_Parameters'Length,
+         Class        => Get_Project_Class (Kernel),
+         Handler      => Project_Command_Handler'Access);
+
    end Register_Module;
 
 end Project_Viewers;
