@@ -111,9 +111,10 @@ package body Browsers.Call_Graph is
       Context : Interactive_Command_Context) return Command_Return_Type;
 
    type Find_All_Refs_Command is new Interactive_Command with record
-      Locals_Only : Boolean := False;
-      Writes_Only : Boolean := False;
-      Reads_Only  : Boolean := False;
+      Locals_Only      : Boolean := False;
+      Writes_Only      : Boolean := False;
+      Reads_Only       : Boolean := False;
+      Include_Implicit : Boolean := False;
    end record;
    function Execute
      (Command : access Find_All_Refs_Command;
@@ -216,13 +217,14 @@ package body Browsers.Call_Graph is
    ----------
 
    type Entity_Idle_Data is record
-      Kernel         : Kernel_Handle;
-      Iter           : Entity_Reference_Iterator_Access;
-      Entity         : Entity_Information;
-      Include_Writes : Boolean;
-      Include_Reads  : Boolean;
-      Iter_Started   : Boolean;
-      Category       : String_Access;
+      Kernel           : Kernel_Handle;
+      Iter             : Entity_Reference_Iterator_Access;
+      Entity           : Entity_Information;
+      Include_Writes   : Boolean;
+      Include_Reads    : Boolean;
+      Include_Implicit : Boolean;
+      Iter_Started     : Boolean;
+      Category         : String_Access;
    end record;
 
    type Examine_Callback is record
@@ -307,13 +309,16 @@ package body Browsers.Call_Graph is
    --  Create a new call graph browser.
 
    procedure Find_All_References_Internal
-     (Kernel         : access Kernel_Handle_Record'Class;
-      Info           : Entity_Information;
-      Category_Title : String;
-      Include_Writes : Boolean;
-      Include_Reads  : Boolean);
+     (Kernel           : access Kernel_Handle_Record'Class;
+      Info             : Entity_Information;
+      Category_Title   : String;
+      Include_Writes   : Boolean;
+      Include_Reads    : Boolean;
+      Include_Implicit : Boolean);
    --  Internal implementation for Find_All_References_From_Contextual,
    --  Find_All_Writes_From_Contextual and Find_All_Reads_From_Contextual.
+   --  If Include_Implicit is true, then implicit references will also be
+   --  listed.
 
    procedure Find_Next_Reference
      (Data    : in out Entity_Idle_Data;
@@ -373,6 +378,7 @@ package body Browsers.Call_Graph is
    procedure Print_Ref
      (Kernel   : access Kernel_Handle_Record'Class;
       Location : File_Location;
+      Kind     : Reference_Kind;
       Name     : String;
       Category : String);
    --  Display a reference in the locations tree, after looking for the
@@ -1141,6 +1147,7 @@ package body Browsers.Call_Graph is
    procedure Print_Ref
      (Kernel   : access Kernel_Handle_Record'Class;
       Location : File_Location;
+      Kind     : Reference_Kind;
       Name     : String;
       Category : String)
    is
@@ -1156,7 +1163,7 @@ package body Browsers.Call_Graph is
         (Kernel,
          Category  => Category,
          File      => Get_Filename (Get_File (Location)),
-         Text      => Name,
+         Text      => Name & " [" & Kind_To_String (Kind) & "]",
          Line      => Get_Line (Location),
          Column    => Col,
          Length    => Name'Length,
@@ -1177,13 +1184,23 @@ package body Browsers.Call_Graph is
    is
       Location : File_Location;
       Count    : Integer := 0;
+      Kind     : Reference_Kind;
    begin
       Result := Execute_Again;
 
       if not Data.Iter_Started then
-         Find_All_References
-           (Iter   => Data.Iter.all,
-            Entity => Data.Entity);
+         declare
+            Filter   : Reference_Kind_Filter := Real_References_Filter;
+         begin
+            if Data.Include_Implicit then
+               Filter (Implicit) := True;
+            end if;
+            Find_All_References
+              (Iter   => Data.Iter.all,
+               Entity => Data.Entity,
+               Filter => Filter);
+         end;
+
          Data.Iter_Started := True;
          Set_Progress
            (Command,
@@ -1205,17 +1222,16 @@ package body Browsers.Call_Graph is
             exit;
 
          else
-            if (Data.Include_Writes
-                and then Is_Write_Reference
-                  (Get_Kind (Get (Data.Iter.all))))
-              or else
-                (Data.Include_Reads
-                 and then Is_Read_Reference
-                   (Get_Kind (Get (Data.Iter.all))))
+            Kind := Get_Kind (Get (Data.Iter.all));
+
+            if (Data.Include_Writes and then Is_Write_Reference (Kind))
+              or else (Data.Include_Reads and then Is_Read_Reference (Kind))
+              or else (Data.Include_Implicit and then Kind = Implicit)
             then
                Location := Get_Location (Get (Data.Iter.all));
                Print_Ref
                  (Data.Kernel, Location,
+                  Kind,
                   Get_Name (Data.Entity).all,
                   Data.Category.all);
             end if;
@@ -1238,28 +1254,35 @@ package body Browsers.Call_Graph is
    ----------------------------------
 
    procedure Find_All_References_Internal
-     (Kernel         : access Kernel_Handle_Record'Class;
-      Info           : Entity_Information;
-      Category_Title : String;
-      Include_Writes : Boolean;
-      Include_Reads  : Boolean)
+     (Kernel           : access Kernel_Handle_Record'Class;
+      Info             : Entity_Information;
+      Category_Title   : String;
+      Include_Writes   : Boolean;
+      Include_Reads    : Boolean;
+      Include_Implicit : Boolean)
    is
       Data : Entity_Idle_Data;
       C    : Xref_Commands.Generic_Asynchronous_Command_Access;
 
    begin
+      Trace (Me, "Find_All_References_Internal Writes="
+             & Include_Writes'Img
+             & " Reads=" & Include_Reads'Img
+             & " Implicit=" & Include_Implicit'Img);
+
       if Info /= null then
          begin
             Remove_Result_Category (Kernel, Category_Title);
 
             Ref (Info);
-            Data := (Kernel         => Kernel_Handle (Kernel),
-                     Iter           => new Entity_Reference_Iterator,
-                     Include_Writes => Include_Writes,
-                     Include_Reads  => Include_Reads,
-                     Category       => new String'(Category_Title),
-                     Iter_Started   => False,
-                     Entity         => Info);
+            Data := (Kernel           => Kernel_Handle (Kernel),
+                     Iter             => new Entity_Reference_Iterator,
+                     Include_Writes   => Include_Writes,
+                     Include_Reads    => Include_Reads,
+                     Include_Implicit => Include_Implicit,
+                     Category         => new String'(Category_Title),
+                     Iter_Started     => False,
+                     Entity           => Info);
 
             Xref_Commands.Create
               (C, -"Find all refs", Data, Find_Next_Reference'Access);
@@ -1394,9 +1417,10 @@ package body Browsers.Call_Graph is
          Find_All_References_Internal
            (Kernel,
             Entity,
-            Category_Title => All_Refs_Category (Entity),
-            Include_Writes => True,
-            Include_Reads  => True);
+            Category_Title   => All_Refs_Category (Entity),
+            Include_Writes   => True,
+            Include_Reads    => True,
+            Include_Implicit => False);
 
       else
          Console.Insert
@@ -1487,9 +1511,10 @@ package body Browsers.Call_Graph is
       if Command = "find_all_refs" then
          Find_All_References_Internal
            (Kernel, Entity,
-            Category_Title => All_Refs_Category (Entity),
-            Include_Writes => True,
-            Include_Reads  => True);
+            Category_Title   => All_Refs_Category (Entity),
+            Include_Writes   => True,
+            Include_Reads    => True,
+            Include_Implicit => False);
 
       elsif Command = "references" then
          declare
@@ -1715,14 +1740,26 @@ package body Browsers.Call_Graph is
             --  current file, as expected by users.
 
             Remove_Result_Category (Kernel, Title);
-            Find_All_References
-              (Iter    => Iter,
-               Entity  => Entity,
-               In_File => Get_Or_Create (Get_Database (Kernel), File));
+            declare
+               Filter : Reference_Kind_Filter := Real_References_Filter;
+            begin
+               if Command.Include_Implicit then
+                  Filter (Implicit) := True;
+               end if;
+
+               Find_All_References
+                 (Iter    => Iter,
+                  Entity  => Entity,
+                  Filter  => Filter,
+                  In_File => Get_Or_Create (Get_Database (Kernel), File));
+            end;
+
             while not At_End (Iter) loop
                if Get (Iter) /= No_Entity_Reference then
                   Location := Get_Location (Get (Iter));
-                  Print_Ref (Kernel, Location, Get_Name (Entity).all, Title);
+                  Print_Ref (Kernel, Location,
+                             Get_Kind (Get (Iter)),
+                             Get_Name (Entity).all, Title);
                end if;
                Next (Iter);
             end loop;
@@ -1737,25 +1774,28 @@ package body Browsers.Call_Graph is
          Find_All_References_Internal
            (Kernel,
             Entity,
-            Category_Title => -"Modifications of: ",
-            Include_Writes => True,
-            Include_Reads  => False);
+            Category_Title   => -"Modifications of: ",
+            Include_Writes   => True,
+            Include_Reads    => False,
+            Include_Implicit => Command.Include_Implicit);
 
       elsif Command.Reads_Only then
          Find_All_References_Internal
            (Kernel,
             Entity,
-            Category_Title => -"Read-Only references for: ",
-            Include_Writes => False,
-            Include_Reads  => True);
+            Category_Title   => -"Read-Only references for: ",
+            Include_Writes   => False,
+            Include_Reads    => True,
+            Include_Implicit => Command.Include_Implicit);
 
       else
          Find_All_References_Internal
            (Kernel,
             Entity,
-            Category_Title => All_Refs_Category (Entity),
-            Include_Writes => True,
-            Include_Reads  => True);
+            Category_Title   => All_Refs_Category (Entity),
+            Include_Writes   => True,
+            Include_Reads    => True,
+            Include_Implicit => Command.Include_Implicit);
       end if;
       return Commands.Success;
    end Execute;
@@ -1802,6 +1842,13 @@ package body Browsers.Call_Graph is
       Register_Contextual_Menu
         (Kernel, "Find all references",
          Label  => "References/Find all references to %e",
+         Action => Command);
+
+      Command := new Find_All_Refs_Command;
+      Find_All_Refs_Command (Command.all).Include_Implicit := True;
+      Register_Contextual_Menu
+        (Kernel, "Find all references and implicit",
+         Label  => "References/Find all references (and implicit refs) to %e",
          Action => Command);
 
       Command := new Find_All_Refs_Command;
