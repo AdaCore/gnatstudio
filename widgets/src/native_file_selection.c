@@ -141,7 +141,7 @@ NativeWin32FileSelection
 
   ofn.nFileOffset       = 0;
   ofn.nFileExtension    = 0;
-  ofn.lpstrDefExt       = "ads";
+  ofn.lpstrDefExt       = "";
   ofn.lCustData         = (LPARAM) &position;
   ofn.lpfnHook          = (LPOFNHOOKPROC) FileSelectionHook;
   ofn.lpTemplateName    = NULL;
@@ -181,7 +181,7 @@ NativeFileSelection
    int          kind)
 {
   return NativeWin32FileSelection
-    (title, basedir, filepattern, patternname, defaultname, style, kind);
+    (title, basedir, filepattern, patternname, defaultname, 0, kind);
 }
 
 int
