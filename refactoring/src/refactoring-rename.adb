@@ -43,28 +43,33 @@ with Gtk.Widget;            use Gtk.Widget;
 
 package body Refactoring.Rename is
 
+   use File_Arrays;
+   use Location_Arrays;
+
    Me : constant Debug_Handle := Create ("Refactor");
    Auto_Save_Hist         : constant History_Key := "refactor_auto_save";
+   Auto_Compile_Hist      : constant History_Key := "refactor_auto_compile";
    Rename_Primitives_Hist : constant History_Key := "refactor_primitives";
 
    type Renaming_Performer_Record (New_Name_Length : Natural)
      is new Refactor_Performer_Record with record
-       Auto_Save : Boolean;
-       New_Name  : String (1 .. New_Name_Length);
+       Auto_Save   : Boolean;
+       New_Name    : String (1 .. New_Name_Length);
      end record;
    type Renaming_Performer is access all Renaming_Performer_Record'Class;
    procedure Execute
      (Factory       : access Renaming_Performer_Record;
       Kernel        : access Kernel_Handle_Record'Class;
       Entity        : Entity_Information;
-      Refs          : Location_Array;
-      No_LI_List    : File_Array;
-      Stale_LI_List : File_Array);
+      Refs          : Location_Arrays.Instance;
+      No_LI_List    : File_Arrays.Instance;
+      Stale_LI_List : File_Arrays.Instance);
    --  Implements the "Renaming entity" refactoring.
 
    type Entity_Renaming_Dialog_Record is new Gtk_Dialog_Record with record
       New_Name          : Gtk_GEntry;
       Auto_Save         : Gtk_Check_Button;
+      Auto_Compile      : Gtk_Check_Button;
       Rename_Primitives : Gtk_Check_Button;
    end record;
    type Entity_Renaming_Dialog is access all
@@ -120,6 +125,14 @@ package body Refactoring.Rename is
       Associate (Get_History (Kernel).all, Auto_Save_Hist, Dialog.Auto_Save);
       Pack_Start (Get_Vbox (Dialog), Dialog.Auto_Save, Expand => False);
 
+      Gtk_New
+        (Dialog.Auto_Compile,
+         -"Automatically recompile files (not implemented)");
+      Associate (Get_History (Kernel).all,
+                 Auto_Compile_Hist,
+                 Dialog.Auto_Compile);
+      Pack_Start (Get_Vbox (Dialog), Dialog.Auto_Compile, Expand => False);
+
       Gtk_New (Dialog.Rename_Primitives,
                -"Rename overriding and overridden entities (not implemented)");
       Set_Sensitive (Dialog.Rename_Primitives, False);
@@ -140,31 +153,32 @@ package body Refactoring.Rename is
      (Factory       : access Renaming_Performer_Record;
       Kernel        : access Kernel_Handle_Record'Class;
       Entity        : Entity_Information;
-      Refs          : Location_Array;
-      No_LI_List    : File_Array;
-      Stale_LI_List : File_Array)
+      Refs          : Location_Arrays.Instance;
+      No_LI_List    : File_Arrays.Instance;
+      Stale_LI_List : File_Arrays.Instance)
    is
       pragma Unreferenced (No_LI_List, Stale_LI_List);
       Name : constant String := Get_Name (Entity);
    begin
       --  Replace first the last occurrences since we are about to modify
       --  the file, and the locations would become invalid
-      for L in reverse Refs'Range loop
+      for L in reverse Location_Arrays.First .. Last (Refs) loop
          Execute_GPS_Shell_Command
            (Kernel  => Kernel,
             Command => "Editor.replace_text "
-              & Full_Name (Refs (L).File).all
-              & Integer'Image (Refs (L).Line)
-              & Integer'Image (Refs (L).Column)
+              & Full_Name (Refs.Table (L).File).all
+              & Integer'Image (Refs.Table (L).Line)
+              & Integer'Image (Refs.Table (L).Column)
               & ' ' & Factory.New_Name
               & " 0 " & Integer'Image (Name'Length));
 
          if Factory.Auto_Save
-           and then (L = Refs'First or else Refs (L).File /= Refs (L - 1).File)
+           and then (L = Location_Arrays.First
+                     or else Refs.Table (L).File /= Refs.Table (L - 1).File)
          then
             Execute_GPS_Shell_Command
               (Kernel, "Editor.save_buffer """
-               & Full_Name (Refs (L).File).all & '"');
+               & Full_Name (Refs.Table (L).File).all & '"');
          end if;
       end loop;
    end Execute;
@@ -201,7 +215,11 @@ package body Refactoring.Rename is
                     New_Name        => New_Name,
                     Auto_Save       => Get_Active (Dialog.Auto_Save));
             begin
-               Get_All_Locations (Get_Kernel (Context), Entity, Refactor);
+               Get_All_Locations
+                 (Get_Kernel (Context),
+                  Entity,
+                  Refactor,
+                  Auto_Compile => Get_Active (Dialog.Auto_Compile));
             end;
          end if;
 

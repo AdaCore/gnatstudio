@@ -18,8 +18,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Unchecked_Deallocation;
-with Basic_Types;
 with Glide_Kernel;           use Glide_Kernel;
 with Glide_Intl;             use Glide_Intl;
 with VFS;                    use VFS;
@@ -41,14 +39,17 @@ with Gtk.Widget;            use Gtk.Widget;
 
 package body Refactoring is
 
+   use File_Arrays;
+   use Location_Arrays;
+
    -------------------
    -- Confirm_Files --
    -------------------
 
    function Confirm_Files
      (Kernel        : access Kernel_Handle_Record'Class;
-      No_LI_List    : File_Array;
-      Stale_LI_List : File_Array) return Boolean
+      No_LI_List    : File_Arrays.Instance;
+      Stale_LI_List : File_Arrays.Instance) return Boolean
    is
       Dialog : Gtk_Dialog;
       Button : Gtk_Widget;
@@ -56,7 +57,7 @@ package body Refactoring is
       Result : Boolean;
 
    begin
-      if No_LI_List'Length = 0 and then Stale_LI_List'Length = 0 then
+      if Length (No_LI_List) = 0 and then Length (Stale_LI_List) = 0 then
          return True;
       end if;
 
@@ -71,7 +72,7 @@ package body Refactoring is
       Set_Alignment (Label, 0.0, 0.0);
       Pack_Start (Get_Vbox (Dialog), Label, Expand => False, Padding => 10);
 
-      if No_LI_List'Length /= 0 then
+      if Length (No_LI_List) /= 0 then
          Gtk_New
            (Label,
             (-"The following files might contain references to the entity,"
@@ -82,7 +83,7 @@ package body Refactoring is
          Pack_Start (Get_Vbox (Dialog), Create_File_List (No_LI_List));
       end if;
 
-      if Stale_LI_List'Length /= 0 then
+      if Length (Stale_LI_List) /= 0 then
          Gtk_New
            (Label,
             (-"The following files contain references to the entity, but the"
@@ -110,7 +111,9 @@ package body Refactoring is
    -- Create_File_List --
    ----------------------
 
-   function Create_File_List (List : File_Array) return Gtk_Scrolled_Window is
+   function Create_File_List
+     (List : File_Arrays.Instance) return Gtk_Scrolled_Window
+   is
       Col        : Gtk_Tree_View_Column;
       Render     : Gtk_Cell_Renderer_Text;
       Col_Number : Gint;
@@ -145,10 +148,10 @@ package body Refactoring is
       Pack_Start (Col, Render, True);
       Add_Attribute (Col, Render, "text", 1);
 
-      for F in List'Range loop
+      for F in File_Arrays.First .. Last (List) loop
          Append (Model, Iter, Null_Iter);
-         Set (Model, Iter, 0, Base_Name (List (F)));
-         Set (Model, Iter, 1, Dir_Name (List (F)).all);
+         Set (Model, Iter, 0, Base_Name (List.Table (F)));
+         Set (Model, Iter, 1, Dir_Name (List.Table (F)).all);
       end loop;
 
       return Scrolled;

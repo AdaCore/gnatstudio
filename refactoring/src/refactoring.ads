@@ -18,8 +18,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Unchecked_Deallocation;
-with Basic_Types;
+with Dynamic_Arrays;
 with Glide_Kernel;
 with Gtk.Scrolled_Window;
 with VFS;
@@ -34,26 +33,29 @@ package Refactoring is
    --  A location in a file. This is light-weight compared to E_Reference,
    --  and can be used for declarations as well.
 
-   type Location_Array is array (Natural range <>) of Location_Type;
-   type Location_Array_Access is access Location_Array;
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (Location_Array, Location_Array_Access);
-
-   procedure Add is new Basic_Types.Add_And_Grow
-     (Location_Type, Natural, Location_Array, Location_Array_Access);
-   procedure Add is new Basic_Types.Add_And_Grow
-     (VFS.Virtual_File, Natural, VFS.File_Array, VFS.File_Array_Access);
+   package Location_Arrays is new Dynamic_Arrays
+     (Data                    => Location_Type,
+      Table_Multiplier        => 2,
+      Table_Minimum_Increment => 10,
+      Table_Initial_Size      => 100);
+   package File_Arrays is new Dynamic_Arrays
+     (Data                    => VFS.Virtual_File,
+      Table_Multiplier        => 2,
+      Table_Minimum_Increment => 10,
+      Table_Initial_Size      => 10,
+      "="                     => VFS."=");
    --  Handling of dynamic arrays
 
    function Confirm_Files
      (Kernel        : access Glide_Kernel.Kernel_Handle_Record'Class;
-      No_LI_List    : VFS.File_Array;
-      Stale_LI_List : VFS.File_Array) return Boolean;
+      No_LI_List    : File_Arrays.Instance;
+      Stale_LI_List : File_Arrays.Instance) return Boolean;
    --  Whether the user wants to perform the refactoring even though there are
    --  some errors in the LI files.
 
    function Create_File_List
-     (List : VFS.File_Array) return Gtk.Scrolled_Window.Gtk_Scrolled_Window;
+     (List : File_Arrays.Instance)
+      return Gtk.Scrolled_Window.Gtk_Scrolled_Window;
    --  Create a list showing all the files in List.
 
 end Refactoring;

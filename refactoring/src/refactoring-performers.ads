@@ -20,7 +20,6 @@
 
 with Glide_Kernel;
 with Src_Info.Queries;
-with VFS;
 
 package Refactoring.Performers is
 
@@ -31,9 +30,9 @@ package Refactoring.Performers is
      (Factory       : access Refactor_Performer_Record;
       Kernel        : access Glide_Kernel.Kernel_Handle_Record'Class;
       Entity        : Src_Info.Queries.Entity_Information;
-      Refs          : Location_Array;
-      No_LI_List    : VFS.File_Array;
-      Stale_LI_List : VFS.File_Array) is abstract;
+      Refs          : Location_Arrays.Instance;
+      No_LI_List    : File_Arrays.Instance;
+      Stale_LI_List : File_Arrays.Instance) is abstract;
    --  Called after we have found all the references to an entity, to perform
    --  some actual refactoring. Refs is the list of all known references to the
    --  entity. No_LI_List is the list of source files for which no LI file
@@ -50,7 +49,8 @@ package Refactoring.Performers is
    procedure Get_All_Locations
      (Kernel                : access Glide_Kernel.Kernel_Handle_Record'Class;
       Entity                : Src_Info.Queries.Entity_Information;
-      On_Completion         : access Refactor_Performer_Record'Class);
+      On_Completion         : access Refactor_Performer_Record'Class;
+      Auto_Compile          : Boolean := False);
    --  Get all the locations in which Entity is referenced.
    --  In Errors, this procedure returns the list of files that are not
    --  up-to-date in the LI structure. References inside these files are still
