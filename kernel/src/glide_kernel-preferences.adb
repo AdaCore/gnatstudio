@@ -369,7 +369,7 @@ package body Glide_Kernel.Preferences is
 
       Default_HL_Line_Color := Param_Spec_Color (Gnew_Color
         (Name    => "Src-Editor-Highlight-Line-Color",
-         Default => "green",
+         Default => "cyan",
          Blurb   => -"Color for highlighting lines",
          Nick    => -"Line highlighting color"));
       Register_Property
