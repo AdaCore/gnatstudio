@@ -48,6 +48,7 @@ with Gtkada.Handlers;      use Gtkada.Handlers;
 with Gtkada.Types;         use Gtkada.Types;
 
 with Prj;                  use Prj;
+with Prj.PP;               use Prj.PP;
 with Namet;                use Namet;
 with Stringt;              use Stringt;
 with Types;                use Types;
@@ -68,6 +69,7 @@ with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
 with Switches_Editors;     use Switches_Editors;
 with Variable_Editors; use Variable_Editors;
 with GUI_Utils;    use GUI_Utils;
+with Directory_Tree;  use Directory_Tree;
 
 package body Project_Trees is
 
@@ -325,6 +327,11 @@ package body Project_Trees is
    procedure On_Add_Variable (Tree : access Gtk_Widget_Record'Class);
    --  Callback for the "Add variable" contextual menu item
 
+   procedure Add_Directory_From_Contextual
+     (Item : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Data : Contextual_User_Data);
+   --  Callback for the contextual menu item to add some source directories
+
    ---------------------
    -- On_Add_Variable --
    ---------------------
@@ -336,6 +343,31 @@ package body Project_Trees is
       Gtk_New (Edit, T.Kernel, Scenario_Variable_Only => True);
       Show_All (Edit);
    end On_Add_Variable;
+
+   -----------------------------------
+   -- Add_Directory_From_Contextual --
+   -----------------------------------
+
+   procedure Add_Directory_From_Contextual
+     (Item : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Data : Contextual_User_Data)
+   is
+      Dirs : Argument_List :=
+        Multiple_Directories_Selector_Dialog (Get_Current_Dir);
+   begin
+      if Dirs'Length /= 0 then
+         Update_Attribute_Value_In_Scenario
+           (Project         => Get_Project_From_View (Data.Project),
+            Pkg_Name        => "",
+            Attribute_Name  => "source_dirs",
+            Values          => Dirs,
+            Attribute_Index => No_String,
+            Prepend         => True);
+         Free (Dirs);
+         Pretty_Print (Get_Project_From_View (Data.Project));
+         Recompute_View (Data.Kernel);
+      end if;
+   end Add_Directory_From_Contextual;
 
    --------------------------
    -- Tree_Contextual_Menu --
@@ -375,16 +407,15 @@ package body Project_Trees is
       if Prj /= No_Project then
          Gtk_New (Item, Label => "Add Directory to "
                   & Get_Name_String (Projects.Table (Prj).Name));
-         Set_Sensitive (Item, False);
          Append (T.Contextual_Menu, Item);
-         --  Contextual_Callback.Connect
-         --    (Item, "activate",
-         --     Contextual_Callback.To_Marshaller
-         --     (Add_Directory_From_Contextual'Access),
-         --     (Kernel    => T.Kernel,
-         --      Project   => Prj,
-         --      File_Name => No_String,
-         --      Directory => No_String));
+         Contextual_Callback.Connect
+           (Item, "activate",
+            Contextual_Callback.To_Marshaller
+            (Add_Directory_From_Contextual'Access),
+            (Kernel    => T.Kernel,
+             Project   => Prj,
+             File_Name => No_String,
+             Directory => No_String));
 
          Gtk_New (Item, Label => "Change Object Directory for "
                   & Get_Name_String (Projects.Table (Prj).Name));
