@@ -1096,6 +1096,8 @@ package body Prj_API is
      (Root_Project_View : Prj.Project_Id; Source_Filename : String)
       return Prj.Project_Id
    is
+      Source : constant String := Base_Name (Source_Filename);
+
       procedure Source_Belongs_To_Project
         (Project : Project_Id; With_State : in out Project_Id);
       --  Check if Source_Filename belongs to Project
@@ -1110,7 +1112,7 @@ package body Prj_API is
          --  ??? Should first test the directories, it might be more
          --  efficient.
          if With_State = No_Project
-           and then Is_Direct_Source (Source_Filename, Project)
+           and then Is_Direct_Source (Source, Project)
          then
             With_State := Project;
          end if;
