@@ -6,8 +6,13 @@
 --  with Gtk.Object; use Gtk.Object;
 --  with Gtk.Enums; use Gtk.Enums;
 --  with Gtk.Style; use Gtk.Style;
+with Glib;       use Glib;
 with Gtk.Widget; use Gtk.Widget;
+with Gtk.List;   use Gtk.List;
+with Gtk.List_Item;  use Gtk.List_Item;
+with Glib.Values; use Glib.Values;
 with Variable_Editors; use Variable_Editors;
+with Text_IO; use Text_IO;
 
 package body New_Variable_Editor_Pkg.Callbacks is
 
@@ -44,6 +49,20 @@ package body New_Variable_Editor_Pkg.Callbacks is
       end if;
    end On_Get_Environment_Toggled;
 
+   ------------------------------------
+   -- On_Env_Must_Be_Defined_Toggled --
+   ------------------------------------
+
+   procedure On_Env_Must_Be_Defined_Toggled
+     (Object : access Gtk_Widget_Record'Class)
+   is
+      E : New_Var_Edit := New_Var_Edit (Object);
+      Must : constant Boolean := Get_Active (E.Env_Must_Be_Defined);
+   begin
+      Set_Sensitive (E.Default_Value_Label, not Must);
+      Set_Sensitive (E.Default_Env_Variable, not Must);
+   end On_Env_Must_Be_Defined_Toggled;
+
    -------------------------------
    -- On_Typed_Variable_Toggled --
    -------------------------------
@@ -69,8 +88,30 @@ package body New_Variable_Editor_Pkg.Callbacks is
    procedure On_Enumeration_Value_Changed
      (Object : access Gtk_Widget_Record'Class)
    is
+      E : New_Var_Edit := New_Var_Edit (Object);
+      List : Gtk_List := Get_List (E.Default_Env_Variable);
+      Text : constant String := Get_Chars (E.Enumeration_Value);
+      Label : Gtk_List_Item;
+      Index : Natural := Text'First;
+      Index_End : Natural;
    begin
-      null;
+      Clear_Items (List, 0, -1);
+
+      while Index <= Text'Last loop
+         Index_End := Index;
+         while Index_End <= Text'Last
+           and then Text (Index_End) /= ASCII.LF
+         loop
+            Index_End := Index_End + 1;
+         end loop;
+
+         if Index_End > Index then
+            Gtk_New (Label, Text (Index .. Index_End - 1));
+            Add (List, Label);
+            Show (Label);
+         end if;
+         Index := Index_End + 1;
+      end loop;
    end On_Enumeration_Value_Changed;
 
    --------------------
