@@ -28,8 +28,6 @@ with Gtk.Menu_Bar; use Gtk.Menu_Bar;
 with Gtk.Window; use Gtk.Window;
 with Gtk.Widget; use Gtk.Widget;
 with Gtkada.MDI; use Gtkada.MDI;
-with GVD.Open_Program_Dialog; use GVD.Open_Program_Dialog;
---  with GVD.Dialogs; use GVD.Dialogs;
 with Gtk.Dialog; use Gtk.Dialog;
 with GNAT.OS_Lib; use GNAT.OS_Lib;
 with Basic_Types;
@@ -70,8 +68,6 @@ package GVD.Main_Window is
       Menu_Box            : Gtk.Box.Gtk_Hbox;
       Menu_Bar            : Gtk.Menu_Bar.Gtk_Menu_Bar;
       Memory_View         : GVD.Memory_View.GVD_Memory_View;
-      Open_Program        : GVD_Open_Program;
-      Open_Session        : Gtk.Window.Gtk_Window;
       History_Dialog      : Gtk.Dialog.Gtk_Dialog;
       Thread_Dialog       : Gtk.Dialog.Gtk_Dialog;
       Task_Dialog         : Gtk.Dialog.Gtk_Dialog;
