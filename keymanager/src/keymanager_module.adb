@@ -772,6 +772,7 @@ package body KeyManager_Module is
       Any_Context_Command : Action_Record := No_Action;
       Has_Secondary : constant Boolean := Handler.Secondary_Keymap /= null;
       Context : Selection_Context_Access;
+      Custom  : Command_Access;
 
    begin
       if Handler.Active
@@ -810,10 +811,16 @@ package body KeyManager_Module is
 
                   elsif Filter_Matches (Command.Filter, Context, Kernel) then
                      Trace (Me, "Executing action " & Binding.Action.all);
+
                      Launch_Background_Command
                        (Kernel,
                         Create_Proxy
-                          (Command.Command, (Event, Context, null, null)),
+                          (Command.Command,
+                            (Event,
+                             Context,
+                             null,
+                             null,
+                             new String'(Binding.Action.all))),
                         Destroy_On_Exit => False,
                         Active          => False,
                         Show_Bar        => False,
@@ -828,10 +835,25 @@ package body KeyManager_Module is
 
          if Any_Context_Command /= No_Action then
             Trace (Me, "Executing any context action");
+
+            if Any_Context_Command.Description = null then
+               Custom :=
+                 Create_Proxy
+                   (Any_Context_Command.Command,
+                    (Event, Context, null, null, null));
+            else
+               Custom :=
+                 Create_Proxy
+                   (Any_Context_Command.Command,
+                    (Event,
+                     Context,
+                     null,
+                     null,
+                     new String'(Any_Context_Command.Description.all)));
+            end if;
+
             Launch_Background_Command
-              (Kernel,
-               Create_Proxy
-                 (Any_Context_Command.Command, (Event, Context, null, null)),
+              (Kernel, Custom,
                Destroy_On_Exit => False,
                Active          => False,
                Show_Bar        => False,
