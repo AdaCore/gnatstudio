@@ -646,6 +646,12 @@ package body Aliases_Module is
       Current_Pos : Integer;
       First, Last : out Integer) is
    begin
+      if Current_Pos < Text'First then
+         First := Current_Pos;
+         Last  := Current_Pos;
+         return;
+      end if;
+
       Last := Current_Pos;
       while Last <= Text'Last
         and then Is_Entity_Letter (Text (Last))
