@@ -22,7 +22,6 @@ install:
 	$(INSTALL_DATA) gvd.html $(docdir)
 	$(INSTALL_DATA) gvd.info $(docdir)
 	$(INSTALL_DATA) gvd.ps   $(docdir)
-	$(INSTALL_DATA) gvd.texi $(docdir)
 	$(INSTALL_DATA) gvd.txt  $(docdir)
 	for img in $(IMAGES); do \
 	  $(INSTALL_DATA) $$img $(docdir); \
