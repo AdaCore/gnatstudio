@@ -1,0 +1,444 @@
+diff -u Objects/old/boolobject.c Objects/boolobject.c
+--- Objects/old/boolobject.c	2003-11-19 10:16:16.000000000 +0100
++++ Objects/boolobject.c	2003-11-19 10:25:13.000000000 +0100
+@@ -145,7 +145,7 @@
+ 
+ /* The type object for bool.  Note that this cannot be subclassed! */
+ 
+-PyTypeObject PyBool_Type = {
++PyAPI_DATA(PyTypeObject) PyBool_Type = {
+ 	PyObject_HEAD_INIT(&PyType_Type)
+ 	0,
+ 	"bool",
+@@ -190,12 +190,12 @@
+ /* The objects representing bool values False and True */
+ 
+ /* Named Zero for link-level compatibility */
+-PyIntObject _Py_ZeroStruct = {
++PyAPI_DATA(PyIntObject) _Py_ZeroStruct = {
+ 	PyObject_HEAD_INIT(&PyBool_Type)
+ 	0
+ };
+ 
+-PyIntObject _Py_TrueStruct = {
++PyAPI_DATA(PyIntObject) _Py_TrueStruct = {
+ 	PyObject_HEAD_INIT(&PyBool_Type)
+ 	1
+ };
+diff -u Objects/old/bufferobject.c Objects/bufferobject.c
+--- Objects/old/bufferobject.c	2003-11-19 10:16:16.000000000 +0100
++++ Objects/bufferobject.c	2003-11-19 10:17:40.000000000 +0100
+@@ -525,7 +525,7 @@
+ 	(getcharbufferproc)buffer_getcharbuf,
+ };
+ 
+-PyTypeObject PyBuffer_Type = {
++PyAPI_DATA(PyTypeObject) PyBuffer_Type = {
+ 	PyObject_HEAD_INIT(&PyType_Type)
+ 	0,
+ 	"buffer",
+diff -u Objects/old/cellobject.c Objects/cellobject.c
+--- Objects/old/cellobject.c	2003-11-19 10:16:16.000000000 +0100
++++ Objects/cellobject.c	2003-11-19 10:17:44.000000000 +0100
+@@ -86,7 +86,7 @@
+ 	return 0;
+ }
+ 
+-PyTypeObject PyCell_Type = {
++PyAPI_DATA(PyTypeObject) PyCell_Type = {
+ 	PyObject_HEAD_INIT(&PyType_Type)
+ 	0,
+ 	"cell",
+diff -u Objects/old/classobject.c Objects/classobject.c
+--- Objects/old/classobject.c	2003-11-19 10:16:16.000000000 +0100
++++ Objects/classobject.c	2003-11-19 10:18:00.000000000 +0100
+@@ -438,7 +438,7 @@
+ 	return 0;
+ }
+ 
+-PyTypeObject PyClass_Type = {
++PyAPI_DATA(PyTypeObject) PyClass_Type = {
+ 	PyObject_HEAD_INIT(&PyType_Type)
+ 	0,
+ 	"classobj",
+@@ -2044,7 +2044,7 @@
+ 	(binaryfunc)instance_itruediv,		/* nb_inplace_true_divide */
+ };
+ 
+-PyTypeObject PyInstance_Type = {
++PyAPI_DATA(PyTypeObject) PyInstance_Type = {
+ 	PyObject_HEAD_INIT(&PyType_Type)
+ 	0,
+ 	"instance",
+@@ -2461,7 +2461,7 @@
+ 	return PyMethod_New(PyMethod_GET_FUNCTION(meth), obj, cls);
+ }
+ 
+-PyTypeObject PyMethod_Type = {
++PyAPI_DATA(PyTypeObject) PyMethod_Type = {
+ 	PyObject_HEAD_INIT(&PyType_Type)
+ 	0,
+ 	"instancemethod",
+diff -u Objects/old/cobject.c Objects/cobject.c
+--- Objects/old/cobject.c	2003-11-19 10:16:16.000000000 +0100
++++ Objects/cobject.c	2003-11-19 10:18:06.000000000 +0100
+@@ -120,7 +120,7 @@
+ extension modules, so that extension modules can use the Python import\n\
+ mechanism to link to one another.");
+ 
+-PyTypeObject PyCObject_Type = {
++PyAPI_DATA(PyTypeObject) PyCObject_Type = {
+     PyObject_HEAD_INIT(&PyType_Type)
+     0,					/*ob_size*/
+     "PyCObject",			/*tp_name*/
+diff -u Objects/old/complexobject.c Objects/complexobject.c
+--- Objects/old/complexobject.c	2003-11-19 10:16:16.000000000 +0100
++++ Objects/complexobject.c	2003-11-19 10:18:28.000000000 +0100
+@@ -976,7 +976,7 @@
+ 	0,					/* nb_inplace_true_divide */
+ };
+ 
+-PyTypeObject PyComplex_Type = {
++PyAPI_DATA(PyTypeObject) PyComplex_Type = {
+ 	PyObject_HEAD_INIT(&PyType_Type)
+ 	0,
+ 	"complex",
+diff -u Objects/old/descrobject.c Objects/descrobject.c
+--- Objects/old/descrobject.c	2003-11-19 10:16:16.000000000 +0100
++++ Objects/descrobject.c	2003-11-19 10:18:33.000000000 +0100
+@@ -540,7 +540,7 @@
+ 	(descrsetfunc)getset_set,		/* tp_descr_set */
+ };
+ 
+-PyTypeObject PyWrapperDescr_Type = {
++PyAPI_DATA(PyTypeObject) PyWrapperDescr_Type = {
+ 	PyObject_HEAD_INIT(&PyType_Type)
+ 	0,
+ 	"wrapper_descriptor",
+@@ -1206,7 +1206,7 @@
+ 	return 0;
+ }
+ 
+-PyTypeObject PyProperty_Type = {
++PyAPI_DATA(PyTypeObject) PyProperty_Type = {
+ 	PyObject_HEAD_INIT(&PyType_Type)
+ 	0,					/* ob_size */
+ 	"property",				/* tp_name */
+diff -u Objects/old/dictobject.c Objects/dictobject.c
+--- Objects/old/dictobject.c	2003-11-19 10:16:16.000000000 +0100
++++ Objects/dictobject.c	2003-11-19 10:18:40.000000000 +0100
+@@ -1906,7 +1906,7 @@
+ "dict(**kwargs) -> new dictionary initialized with the name=value pairs\n"
+ "    in the keyword argument list.  For example:  dict(one=1, two=2)");
+ 
+-PyTypeObject PyDict_Type = {
++PyAPI_DATA(PyTypeObject) PyDict_Type = {
+ 	PyObject_HEAD_INIT(&PyType_Type)
+ 	0,
+ 	"dict",
+@@ -2046,7 +2046,7 @@
+ 	return NULL;
+ }
+ 
+-PyTypeObject PyDictIter_Type = {
++PyAPI_DATA(PyTypeObject) PyDictIter_Type = {
+ 	PyObject_HEAD_INIT(&PyType_Type)
+ 	0,					/* ob_size */
+ 	"dictionary-iterator",			/* tp_name */
+diff -u Objects/old/fileobject.c Objects/fileobject.c
+--- Objects/old/fileobject.c	2003-11-19 10:16:16.000000000 +0100
++++ Objects/fileobject.c	2003-11-19 10:19:42.000000000 +0100
+@@ -1981,7 +1981,7 @@
+ "Note:  open() is an alias for file()."
+ );
+ 
+-PyTypeObject PyFile_Type = {
++PyAPI_DATA(PyTypeObject) PyFile_Type = {
+ 	PyObject_HEAD_INIT(&PyType_Type)
+ 	0,
+ 	"file",
+diff -u Objects/old/floatobject.c Objects/floatobject.c
+--- Objects/old/floatobject.c	2003-11-19 10:16:16.000000000 +0100
++++ Objects/floatobject.c	2003-11-19 10:19:53.000000000 +0100
+@@ -818,7 +818,7 @@
+ 	0,		/* nb_inplace_true_divide */
+ };
+ 
+-PyTypeObject PyFloat_Type = {
++PyAPI_DATA(PyTypeObject) PyFloat_Type = {
+ 	PyObject_HEAD_INIT(&PyType_Type)
+ 	0,
+ 	"float",
+diff -u Objects/old/frameobject.c Objects/frameobject.c
+--- Objects/old/frameobject.c	2003-11-19 10:16:16.000000000 +0100
++++ Objects/frameobject.c	2003-11-19 10:19:56.000000000 +0100
+@@ -489,7 +489,7 @@
+ }
+ 
+ 
+-PyTypeObject PyFrame_Type = {
++PyAPI_DATA(PyTypeObject) PyFrame_Type = {
+ 	PyObject_HEAD_INIT(&PyType_Type)
+ 	0,
+ 	"frame",
+diff -u Objects/old/funcobject.c Objects/funcobject.c
+--- Objects/old/funcobject.c	2003-11-19 10:16:16.000000000 +0100
++++ Objects/funcobject.c	2003-11-19 10:17:06.000000000 +0100
+@@ -523,7 +523,7 @@
+ 	return PyMethod_New(func, obj, type);
+ }
+ 
+-PyTypeObject PyFunction_Type = {
++PyAPI_DATA(PyTypeObject) PyFunction_Type = {
+ 	PyObject_HEAD_INIT(&PyType_Type)
+ 	0,
+ 	"function",
+@@ -672,7 +672,7 @@
+ Class methods are different than C++ or Java static methods.\n\
+ If you want those, see the staticmethod builtin.");
+ 
+-PyTypeObject PyClassMethod_Type = {
++PyAPI_DATA(PyTypeObject) PyClassMethod_Type = {
+ 	PyObject_HEAD_INIT(&PyType_Type)
+ 	0,
+ 	"classmethod",
+@@ -819,7 +819,7 @@
+ Static methods in Python are similar to those found in Java or C++.\n\
+ For a more advanced concept, see the classmethod builtin.");
+ 
+-PyTypeObject PyStaticMethod_Type = {
++PyAPI_DATA(PyTypeObject) PyStaticMethod_Type = {
+ 	PyObject_HEAD_INIT(&PyType_Type)
+ 	0,
+ 	"staticmethod",
+diff -u Objects/old/intobject.c Objects/intobject.c
+--- Objects/old/intobject.c	2003-11-19 10:15:33.000000000 +0100
++++ Objects/intobject.c	2003-11-19 10:15:54.000000000 +0100
+@@ -1029,7 +1029,7 @@
+ 	0,			/* nb_inplace_true_divide */
+ };
+ 
+-PyTypeObject PyInt_Type = {
++PyAPI_DATA(PyTypeObject) PyInt_Type = {
+ 	PyObject_HEAD_INIT(&PyType_Type)
+ 	0,
+ 	"int",
+diff -u Objects/old/iterobject.c Objects/iterobject.c
+--- Objects/old/iterobject.c	2003-11-19 10:16:16.000000000 +0100
++++ Objects/iterobject.c	2003-11-19 10:20:02.000000000 +0100
+@@ -71,7 +71,7 @@
+ 	return NULL;
+ }
+ 
+-PyTypeObject PySeqIter_Type = {
++PyAPI_DATA(PyTypeObject) PySeqIter_Type = {
+ 	PyObject_HEAD_INIT(&PyType_Type)
+ 	0,					/* ob_size */
+ 	"iterator",				/* tp_name */
+@@ -188,7 +188,7 @@
+ 	return NULL;
+ }
+ 
+-PyTypeObject PyCallIter_Type = {
++PyAPI_DATA(PyTypeObject) PyCallIter_Type = {
+ 	PyObject_HEAD_INIT(&PyType_Type)
+ 	0,					/* ob_size */
+ 	"callable-iterator",			/* tp_name */
+diff -u Objects/old/listobject.c Objects/listobject.c
+--- Objects/old/listobject.c	2003-11-19 10:16:16.000000000 +0100
++++ Objects/listobject.c	2003-11-19 10:20:13.000000000 +0100
+@@ -2347,7 +2347,7 @@
+ 	(objobjargproc)list_ass_subscript
+ };
+ 
+-PyTypeObject PyList_Type = {
++PyAPI_DATA(PyTypeObject) PyList_Type = {
+ 	PyObject_HEAD_INIT(&PyType_Type)
+ 	0,
+ 	"list",
+diff -u Objects/old/longobject.c Objects/longobject.c
+--- Objects/old/longobject.c	2003-11-19 10:16:16.000000000 +0100
++++ Objects/longobject.c	2003-11-19 10:20:17.000000000 +0100
+@@ -2867,7 +2867,7 @@
+ 	0,				/* nb_inplace_true_divide */
+ };
+ 
+-PyTypeObject PyLong_Type = {
++PyAPI_DATA(PyTypeObject) PyLong_Type = {
+ 	PyObject_HEAD_INIT(&PyType_Type)
+ 	0,					/* ob_size */
+ 	"long",					/* tp_name */
+diff -u Objects/old/methodobject.c Objects/methodobject.c
+--- Objects/old/methodobject.c	2003-11-19 10:16:16.000000000 +0100
++++ Objects/methodobject.c	2003-11-19 10:20:26.000000000 +0100
+@@ -239,7 +239,7 @@
+ }
+ 
+ 
+-PyTypeObject PyCFunction_Type = {
++PyAPI_DATA(PyTypeObject) PyCFunction_Type = {
+ 	PyObject_HEAD_INIT(&PyType_Type)
+ 	0,
+ 	"builtin_function_or_method",
+diff -u Objects/old/moduleobject.c Objects/moduleobject.c
+--- Objects/old/moduleobject.c	2003-11-19 10:16:16.000000000 +0100
++++ Objects/moduleobject.c	2003-11-19 10:20:40.000000000 +0100
+@@ -215,7 +215,7 @@
+ Create a module object.\n\
+ The name must be a string; the optional doc argument can have any type.");
+ 
+-PyTypeObject PyModule_Type = {
++PyAPI_DATA(PyTypeObject) PyModule_Type = {
+ 	PyObject_HEAD_INIT(&PyType_Type)
+ 	0,					/* ob_size */
+ 	"module",				/* tp_name */
+diff -u Objects/old/object.c Objects/object.c
+--- Objects/old/object.c	2003-11-19 10:16:16.000000000 +0100
++++ Objects/object.c	2003-11-19 10:24:16.000000000 +0100
+@@ -1920,7 +1920,7 @@
+ 	0,		/*tp_hash */
+ };
+ 
+-PyObject _Py_NoneStruct = {
++PyAPI_DATA(PyObject) _Py_NoneStruct = {
+ 	PyObject_HEAD_INIT(&PyNone_Type)
+ };
+ 
+@@ -1951,7 +1951,7 @@
+ 	0,		/*tp_hash */
+ };
+ 
+-PyObject _Py_NotImplementedStruct = {
++PyAPI_DATA(PyObject) _Py_NotImplementedStruct = {
+ 	PyObject_HEAD_INIT(&PyNotImplemented_Type)
+ };
+ 
+diff -u Objects/old/rangeobject.c Objects/rangeobject.c
+--- Objects/old/rangeobject.c	2003-11-19 10:16:16.000000000 +0100
++++ Objects/rangeobject.c	2003-11-19 10:20:51.000000000 +0100
+@@ -172,7 +172,7 @@
+ 
+ static PyObject * range_iter(PyObject *seq);
+ 
+-PyTypeObject PyRange_Type = {
++PyAPI_DATA(PyTypeObject) PyRange_Type = {
+ 	PyObject_HEAD_INIT(&PyType_Type)
+ 	0,				/* Number of items for varobject */
+ 	"xrange",			/* Name of this type */
+diff -u Objects/old/sliceobject.c Objects/sliceobject.c
+--- Objects/old/sliceobject.c	2003-11-19 10:16:16.000000000 +0100
++++ Objects/sliceobject.c	2003-11-19 10:20:54.000000000 +0100
+@@ -285,7 +285,7 @@
+ 	return -1L;
+ }
+ 
+-PyTypeObject PySlice_Type = {
++PyAPI_DATA(PyTypeObject) PySlice_Type = {
+ 	PyObject_HEAD_INIT(&PyType_Type)
+ 	0,			/* Number of items for varobject */
+ 	"slice",		/* Name of this type */
+diff -u Objects/old/stringobject.c Objects/stringobject.c
+--- Objects/old/stringobject.c	2003-11-19 10:09:34.000000000 +0100
++++ Objects/stringobject.c	2003-11-19 10:15:17.000000000 +0100
+@@ -3172,7 +3172,7 @@
+ };
+ 
+ 
+-PyTypeObject PyBaseString_Type = {
++PyAPI_DATA(PyTypeObject) PyBaseString_Type = {
+ 	PyObject_HEAD_INIT(&PyType_Type)
+ 	0,
+ 	"basestring",
+@@ -3221,7 +3221,7 @@
+ Return a nice string representation of the object.\n\
+ If the argument is a string, the return value is the same object.");
+ 
+-PyTypeObject PyString_Type = {
++PyAPI_DATA(PyTypeObject) PyString_Type = {
+ 	PyObject_HEAD_INIT(&PyType_Type)
+ 	0,
+ 	"str",
+diff -u Objects/old/tupleobject.c Objects/tupleobject.c
+--- Objects/old/tupleobject.c	2003-11-19 10:16:16.000000000 +0100
++++ Objects/tupleobject.c	2003-11-19 10:20:59.000000000 +0100
+@@ -607,7 +607,7 @@
+ 
+ static PyObject *tuple_iter(PyObject *seq);
+ 
+-PyTypeObject PyTuple_Type = {
++PyAPI_DATA(PyTypeObject) PyTuple_Type = {
+ 	PyObject_HEAD_INIT(&PyType_Type)
+ 	0,
+ 	"tuple",
+diff -u Objects/old/typeobject.c Objects/typeobject.c
+--- Objects/old/typeobject.c	2003-11-19 10:16:16.000000000 +0100
++++ Objects/typeobject.c	2003-11-19 10:21:29.000000000 +0100
+@@ -2208,7 +2208,7 @@
+ 	return type->tp_flags & Py_TPFLAGS_HEAPTYPE;
+ }
+ 
+-PyTypeObject PyType_Type = {
++PyAPI_DATA(PyTypeObject) PyType_Type = {
+ 	PyObject_HEAD_INIT(&PyType_Type)
+ 	0,					/* ob_size */
+ 	"type",					/* tp_name */
+@@ -2709,7 +2709,7 @@
+ };
+ 
+ 
+-PyTypeObject PyBaseObject_Type = {
++PyAPI_DATA(PyTypeObject) PyBaseObject_Type = {
+ 	PyObject_HEAD_INIT(&PyType_Type)
+  	0,					/* ob_size */
+ 	"object",				/* tp_name */
+@@ -5629,7 +5629,7 @@
+ 	return 0;
+ }
+ 
+-PyTypeObject PySuper_Type = {
++PyAPI_DATA(PyTypeObject) PySuper_Type = {
+ 	PyObject_HEAD_INIT(&PyType_Type)
+ 	0,					/* ob_size */
+ 	"super",				/* tp_name */
+diff -u Objects/old/unicodeobject.c Objects/unicodeobject.c
+--- Objects/old/unicodeobject.c	2003-11-19 10:16:16.000000000 +0100
++++ Objects/unicodeobject.c	2003-11-19 10:21:39.000000000 +0100
+@@ -6753,7 +6753,7 @@
+ encoding defaults to the current default string encoding.\n\
+ errors can be 'strict', 'replace' or 'ignore' and defaults to 'strict'.");
+ 
+-PyTypeObject PyUnicode_Type = {
++PyAPI_DATA(PyTypeObject) PyUnicode_Type = {
+     PyObject_HEAD_INIT(&PyType_Type)
+     0, 					/* ob_size */
+     "unicode", 				/* tp_name */
+diff -u Objects/old/weakrefobject.c Objects/weakrefobject.c
+--- Objects/old/weakrefobject.c	2003-11-19 10:16:16.000000000 +0100
++++ Objects/weakrefobject.c	2003-11-19 10:22:18.000000000 +0100
+@@ -168,7 +168,7 @@
+ }
+ 
+ 
+-PyTypeObject
++PyAPI_DATA(PyTypeObject)
+ _PyWeakref_RefType = {
+     PyObject_HEAD_INIT(&PyType_Type)
+     0,
+@@ -462,7 +462,7 @@
+ };
+ 
+ 
+-PyTypeObject
++PyAPI_DATA(PyTypeObject)
+ _PyWeakref_ProxyType = {
+     PyObject_HEAD_INIT(&PyType_Type)
+     0,
+@@ -497,7 +497,7 @@
+ };
+ 
+ 
+-PyTypeObject
++PyAPI_DATA(PyTypeObject)
+ _PyWeakref_CallableProxyType = {
+     PyObject_HEAD_INIT(&PyType_Type)
+     0,
