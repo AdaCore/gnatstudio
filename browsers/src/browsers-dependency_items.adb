@@ -784,7 +784,7 @@ package body Browsers.Dependency_Items is
 
    function Is_System_File (Source : Internal_File) return Boolean is
       Name : constant String :=
-        Full_Name (Get_Source_Filename (Source)).all;
+        Base_Name (Get_Source_Filename (Source));
    begin
       Name_Len := Name'Length;
       Name_Buffer (1 .. Name_Len) := Name;
