@@ -357,11 +357,12 @@ package body Src_Editor_Box is
       Set_Context
         (Context'Access,
          Look_For => Entity,
-         Options  => (Case_Sensitive =>
-                        Get_Language_Context
-                          (Get_Language (Source)).Case_Sensitive,
-                      Whole_Word     => True,
-                      Regexp         => False));
+         Options  =>
+           (Case_Sensitive =>
+              Get_Language_Context
+                (Get_Language (Source.Source_Buffer)).Case_Sensitive,
+            Whole_Word     => True,
+            Regexp         => False));
 
       Scan_Buffer_No_Scope
         (Context     => Context'Access,
@@ -1839,11 +1840,11 @@ package body Src_Editor_Box is
       Box := new Source_Editor_Box_Record;
       Initialize_Box
         (Box, Kernel_Handle (Kernel), Source.Source_Buffer,
-         Get_Language (Source));
+         Get_Language (Source.Source_Buffer));
       Box.Writable := Source.Writable;
 
       --  ??? Is this really useful ?
-      Set_Filename (Box, Get_Filename (Source));
+      Set_Filename (Box.Source_Buffer, Get_Filename (Source));
 
       Set_Text (Box.Modified_Label, Get_Text (Source.Modified_Label));
 
@@ -1933,28 +1934,6 @@ package body Src_Editor_Box is
    begin
       return Editor.Primary and then Needs_To_Be_Saved (Editor.Source_Buffer);
    end Needs_To_Be_Saved;
-
-   ------------------
-   -- Set_Filename --
-   ------------------
-
-   procedure Set_Filename
-     (Editor   : access Source_Editor_Box_Record;
-      Filename : VFS.Virtual_File) is
-   begin
-      Set_Filename (Editor.Source_Buffer, Filename);
-   end Set_Filename;
-
-   -------------------------
-   -- Set_File_Identifier --
-   -------------------------
-
-   procedure Set_File_Identifier
-     (Editor   : access Source_Editor_Box_Record;
-      Filename : VFS.Virtual_File) is
-   begin
-      Set_File_Identifier (Editor.Source_Buffer, Filename);
-   end Set_File_Identifier;
 
    ------------------
    -- Get_Filename --
@@ -2184,28 +2163,6 @@ package body Src_Editor_Box is
       end if;
    end Save_To_File;
 
-   ------------------
-   -- Set_Language --
-   ------------------
-
-   procedure Set_Language
-     (Editor : access Source_Editor_Box_Record;
-      Lang   : Language.Language_Access := null) is
-   begin
-      Set_Language (Editor.Source_Buffer, Lang);
-   end Set_Language;
-
-   ------------------
-   -- Get_Language --
-   ------------------
-
-   function Get_Language
-     (Editor : access Source_Editor_Box_Record)
-      return Language.Language_Access is
-   begin
-      return Get_Language (Editor.Source_Buffer);
-   end Get_Language;
-
    --------------------------------
    -- Check_Timestamp_And_Reload --
    --------------------------------
@@ -2341,16 +2298,6 @@ package body Src_Editor_Box is
       Column := To_Box_Column (Buffer_Col);
    end Get_Cursor_Location;
 
-   -------------------------------
-   -- Scroll_To_Cursor_Location --
-   -------------------------------
-
-   procedure Scroll_To_Cursor_Location
-     (Editor : access Source_Editor_Box_Record) is
-   begin
-      Scroll_To_Cursor_Location (Editor.Source_View);
-   end Scroll_To_Cursor_Location;
-
    -------------------
    -- Replace_Slice --
    -------------------
@@ -2377,15 +2324,6 @@ package body Src_Editor_Box is
       External_End_Action (Editor.Source_Buffer);
       Enqueue (Editor.Source_Buffer, Command_Access (C));
    end Replace_Slice;
-
-   ----------------
-   -- Select_All --
-   ----------------
-
-   procedure Select_All (Editor : access Source_Editor_Box_Record) is
-   begin
-      Select_All (Editor.Source_Buffer);
-   end Select_All;
 
    -------------------
    -- Cut_Clipboard --
@@ -2484,18 +2422,6 @@ package body Src_Editor_Box is
       return Add_Blank_Lines (Editor.Source_Buffer, Line,
                               Highlight_Category, Text, Number);
    end Add_Blank_Lines;
-
-   ------------------
-   --  Create_Mark --
-   ------------------
-
-   function Create_Mark
-     (Editor : access Source_Editor_Box_Record;
-      Line   : Src_Editor_Buffer.Editable_Line_Type;
-      Column : Positive) return Gtk.Text_Mark.Gtk_Text_Mark is
-   begin
-      return Create_Mark (Editor.Source_Buffer, Line, Column);
-   end Create_Mark;
 
    ---------------------------
    -- Add_Line_Highlighting --

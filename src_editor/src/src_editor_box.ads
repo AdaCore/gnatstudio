@@ -119,22 +119,10 @@ package Src_Editor_Box is
       return Boolean;
    --  Tell if the Editor's buffer is in a non-saved state.
 
-   procedure Set_Filename
-     (Editor   : access Source_Editor_Box_Record;
-      Filename : VFS.Virtual_File);
-   --  Change the filename of the given editor to be Filename.
-   --  This doesn't change the file itself, just the name under which it is
-   --  referenced.
-
    function Get_Filename
      (Editor : access Source_Editor_Box_Record) return VFS.Virtual_File;
    --  Return the filename associated the given Editor. Return the empty
    --  string if Editor does not have any filename.
-
-   procedure Set_File_Identifier
-     (Editor   : access Source_Editor_Box_Record;
-      Filename : VFS.Virtual_File);
-   --  Change the file identifier of the given editor to be Filename.
 
    procedure Load_File
      (Editor          : access Source_Editor_Box_Record;
@@ -179,17 +167,6 @@ package Src_Editor_Box is
    --    if Interactive is False, reload the file without asking.
    --  In Always_Reload, then the file will always be reloaded.
 
-   procedure Set_Language
-     (Editor : access Source_Editor_Box_Record;
-      Lang   : Language.Language_Access := null);
-   --  Change the language of the source editor. If the new language is
-   --  not null, then causes the syntax-highlighting to be recomputed.
-
-   function Get_Language
-     (Editor : access Source_Editor_Box_Record)
-      return Language.Language_Access;
-   --  Return the current language.
-
    procedure Set_Cursor_Location
      (Editor      : access Source_Editor_Box_Record;
       Line        : Editable_Line_Type;
@@ -206,10 +183,6 @@ package Src_Editor_Box is
       Column  : out Positive);
    --  Get the current cursor position.
 
-   procedure Scroll_To_Cursor_Location
-     (Editor : access Source_Editor_Box_Record);
-   --  Scroll the view so that the given position is visible on the screen.
-
    procedure Replace_Slice
      (Editor       : access Source_Editor_Box_Record;
       Start_Line   : Positive;
@@ -222,9 +195,6 @@ package Src_Editor_Box is
    --  The validity of the given locations must be verified before invoking
    --  this procedure. An incorrect location  will cause an Assertion_Failure
    --  when compiled with assertion checks, or an undefined behavior otherwise.
-
-   procedure Select_All (Editor : access Source_Editor_Box_Record);
-   --  Set the selection bounds from the begining to the end of the buffer.
 
    procedure Cut_Clipboard (Editor : access Source_Editor_Box_Record);
    --  Copy the currently-selected text to the clipboard and then delete it.
@@ -282,14 +252,6 @@ package Src_Editor_Box is
      (Box              : Source_Editor_Box;
       Subprogram_Name : String);
    --  Show the name of the current subprogram.
-
-   function Create_Mark
-     (Editor : access Source_Editor_Box_Record;
-      Line   : Src_Editor_Buffer.Editable_Line_Type;
-      Column : Positive) return Gtk.Text_Mark.Gtk_Text_Mark;
-   --  Create a mark at Line, Column in the Editor buffer.
-   --  If the position specified by Line, Column, the mark is created
-   --  at the beginning of the buffer.
 
    procedure Scroll_To_Mark
      (Editor : access Source_Editor_Box_Record;
