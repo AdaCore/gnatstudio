@@ -193,6 +193,7 @@ package body Odd.Dialogs is
               (Task_Dialog.List,
                Gint (Num_Columns),
                Info (Info'First).Information);
+            Show_All (Task_Dialog.List);
             Widget_Callback.Connect
               (Task_Dialog.List,
                "select_row",
@@ -248,7 +249,6 @@ package body Odd.Dialogs is
       --  Update the contents of the window
 
       if Len > 0 then
-
          for J in 1 .. Len loop
             Temp (0) := Strings.New_String (Bt (J).Program_Counter.all);
             Temp (1) := Strings.New_String (Bt (J).Subprogram.all);
