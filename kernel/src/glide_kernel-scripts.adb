@@ -1894,10 +1894,12 @@ package body Glide_Kernel.Scripts is
    is
       Inst : constant Class_Instance := Nth_Arg
         (Callback_Data'Class (Data), N, Class, Allow_Null);
-      Result : System.Address;
+      Result : System.Address := System.Null_Address;
    begin
-      Result := Get_Data (Inst, Class);
-      Free (Inst);
+      if Inst /= null then
+         Result := Get_Data (Inst, Class);
+         Free (Inst);
+      end if;
       return Result;
    end Nth_Arg_Data;
 
