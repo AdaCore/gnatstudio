@@ -1121,8 +1121,11 @@ package body Entities is
       Tmp : String_Access;
    begin
       if Entity /= null then
-         Assert (Assert_Me, Entity.Ref_Count > 0,
-                 "too many calls to unref for " & Entity.Name.all);
+         if Active (Assert_Me) then
+            Assert (Assert_Me, Entity.Ref_Count > 0,
+                    "too many calls to unref for " & Entity.Name.all);
+         end if;
+
          Entity.Ref_Count := Entity.Ref_Count - 1;
          if Entity.Ref_Count = 0 then
             --  Temporarily fool the system, otherwise we cannot remove the
