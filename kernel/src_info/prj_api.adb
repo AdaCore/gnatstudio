@@ -3264,10 +3264,13 @@ package body Prj_API is
       Iter : Imported_Project_Iterator := Start (Project, Recursive);
    begin
       while Current (Iter) /= Empty_Node loop
-         if Project_Modified (Projects_Data, Current (Iter)) then
+         if not Is_Regular_File (Get_Name_String
+              (Prj.Tree.Path_Name_Of (Current (Iter))))
+           or else Project_Modified (Projects_Data, Current (Iter))
+         then
             Create (File, Mode => Out_File,
                     Name => Get_Name_String
-                      (Prj.Tree.Path_Name_Of (Current (Iter))));
+                    (Prj.Tree.Path_Name_Of (Current (Iter))));
             Pretty_Print
               (Project => Current (Iter),
                Eliminate_Empty_Case_Constructions => True,
