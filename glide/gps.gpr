@@ -8,6 +8,7 @@ with "../src_editor/src_editor";
 with "../aunit/aunit";
 with "../vdiff/vdiff";
 with "../browsers/browsers";
+with "../vcs/vcs";
 
 project Glide is
 
