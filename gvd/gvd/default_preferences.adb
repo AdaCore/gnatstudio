@@ -221,7 +221,7 @@ package body Default_Preferences is
       Flags             : Param_Flags := Param_Readable or Param_Writable)
       return Param_Spec_Color
    is
-      P : Param_Spec_Color := Param_Spec_Color
+      P : constant Param_Spec_Color := Param_Spec_Color
         (Gnew_String (Name, Nick, Blurb, Default, Flags));
    begin
       Set_Value_Type (Param_Spec (P), Gdk.Color.Gdk_Color_Type);
@@ -238,7 +238,7 @@ package body Default_Preferences is
       Flags             : Param_Flags := Param_Readable or Param_Writable)
       return Param_Spec_Font
    is
-      P : Param_Spec_Font := Param_Spec_Font
+      P : constant Param_Spec_Font := Param_Spec_Font
         (Gnew_String (Name, Nick, Blurb, Default, Flags));
    begin
       Set_Value_Type (Param_Spec (P), Gdk.Font.Get_Type);
@@ -612,7 +612,7 @@ package body Default_Preferences is
    ---------------------
 
    procedure Toggled_Boolean (Toggle : access Gtk_Widget_Record'Class) is
-      T : Gtk_Toggle_Button := Gtk_Toggle_Button (Toggle);
+      T : constant Gtk_Toggle_Button := Gtk_Toggle_Button (Toggle);
    begin
       if Get_Active (T) then
          Set_Text (Gtk_Label (Get_Child (T)), -"True");
@@ -629,7 +629,7 @@ package body Default_Preferences is
      (Combo : access GObject_Record'Class;
       Data  : Nodes)
    is
-      C : Gtk_Combo := Gtk_Combo (Combo);
+      C : constant Gtk_Combo := Gtk_Combo (Combo);
    begin
       Set_Pref (Data.Top, Data.Node, Pspec_Name (Data.Param),
                 Integer'Image (Get_Index_In_List (C)));
@@ -643,7 +643,7 @@ package body Default_Preferences is
      (Adj  : access GObject_Record'Class;
       Data : Nodes)
    is
-      A : Gtk_Adjustment := Gtk_Adjustment (Adj);
+      A : constant Gtk_Adjustment := Gtk_Adjustment (Adj);
    begin
       Set_Pref (Data.Top, Data.Node, Pspec_Name (Data.Param),
                 Gint'Image (Gint (Get_Value (A))));
@@ -657,7 +657,7 @@ package body Default_Preferences is
      (Toggle : access GObject_Record'Class;
       Data   : Nodes)
    is
-      T : Gtk_Toggle_Button := Gtk_Toggle_Button (Toggle);
+      T : constant Gtk_Toggle_Button := Gtk_Toggle_Button (Toggle);
    begin
       Set_Pref (Data.Top, Data.Node, Pspec_Name (Data.Param),
                 Boolean'Image (Get_Active (T)));
@@ -671,7 +671,7 @@ package body Default_Preferences is
      (Ent  : access GObject_Record'Class;
       Data : Nodes)
    is
-      E : Gtk_Entry := Gtk_Entry (Ent);
+      E : constant Gtk_Entry := Gtk_Entry (Ent);
    begin
       Set_Pref (Data.Top, Data.Node, Pspec_Name (Data.Param), Get_Text (E));
    end Entry_Changed;
@@ -681,8 +681,8 @@ package body Default_Preferences is
    ----------------
 
    procedure Reset_Font (Ent : access Gtk_Widget_Record'Class) is
-      E : Gtk_Entry := Gtk_Entry (Ent);
-      Desc : Pango_Font_Description := From_String (Get_Text (E));
+      E : constant Gtk_Entry := Gtk_Entry (Ent);
+      Desc : constant Pango_Font_Description := From_String (Get_Text (E));
    begin
       --  Also set the context, so that every time the pango layout is
       --  recreated by the entry (key press,...), we still use the correct
@@ -699,7 +699,7 @@ package body Default_Preferences is
      (Ent  : access GObject_Record'Class;
       Data : Nodes) return Boolean
    is
-      E : Gtk_Entry := Gtk_Entry (Ent);
+      E : constant Gtk_Entry := Gtk_Entry (Ent);
    begin
       Set_Pref (Data.Top, Data.Node, Pspec_Name (Data.Param), Get_Text (E));
       Reset_Font (E);
@@ -714,7 +714,7 @@ package body Default_Preferences is
      (Combo : access GObject_Record'Class;
       Data  : Nodes)
    is
-      C : Gvd_Color_Combo := Gvd_Color_Combo (Combo);
+      C : constant Gvd_Color_Combo := Gvd_Color_Combo (Combo);
    begin
       Set_Pref (Data.Top, Data.Node, Pspec_Name (Data.Param), Get_Color (C));
    end Color_Changed;
@@ -727,7 +727,7 @@ package body Default_Preferences is
      (Ent : access GObject_Record'Class;
       Data : Nodes)
    is
-      E : Gtk_Entry := Gtk_Entry (Ent);
+      E : constant Gtk_Entry := Gtk_Entry (Ent);
       F : Gtk_Font_Selection;
       Dialog : Gtk_Dialog;
       Tmp : Gtk_Widget;
@@ -765,7 +765,7 @@ package body Default_Preferences is
       return Gtk.Widget.Gtk_Widget
    is
       Typ : constant GType := Value_Type (Param);
-      N   : Nodes :=
+      N   : constant Nodes :=
         (Manager.Preferences, Find_Node_By_Spec (Manager, Param), Param);
    begin
       if Typ = GType_Int then
@@ -888,7 +888,7 @@ package body Default_Preferences is
             Prop : constant Param_Spec_Enum := Param_Spec_Enum (Param);
             V : constant Gint := Get_Pref (Manager, Prop);
             Combo   : Gtk_Combo;
-            E_Klass : Enum_Class := Enumeration (Prop);
+            E_Klass : constant Enum_Class := Enumeration (Prop);
             Val     : Enum_Value;
             K       : Guint := 0;
             Item    : Gtk_List_Item;
