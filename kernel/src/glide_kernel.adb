@@ -200,7 +200,7 @@ package body Glide_Kernel is
       --  is more efficient in case the current directory has lots of source
       --  files.
 
-      Reset (Handle.Source_Info_List);
+      Reset_LI_File_List (Handle);
 
       Gtk_New (Handle.Tooltips);
       Ref (Handle.Tooltips);
@@ -650,7 +650,6 @@ package body Glide_Kernel is
            (Handler         => Handler,
             File            => File,
             Source_Filename => Source_Filename,
-            List            => Handle.Source_Info_List,
             Project         => Project,
             Check_Timestamp => Check_Timestamp);
          return File;
@@ -1425,7 +1424,6 @@ package body Glide_Kernel is
          if LI /= null then
             Parse_All_LI_Information
               (LI,
-               Kernel.Source_Info_List,
                In_Directory,
                Get_Project (Kernel));
          end if;
@@ -1477,7 +1475,6 @@ package body Glide_Kernel is
         (Lib_Info, File_Name, Entity_Name, Line, Column,
          Get_LI_Handler_From_File
            (Glide_Language_Handler (Kernel.Lang_Handler), File_Name),
-         Kernel.Source_Info_List,
          Project,
          Location, Status);
 
@@ -1753,7 +1750,7 @@ package body Glide_Kernel is
       Glide_Kernel.Scripts.Finalize (Handle);
 
       Destroy (Glide_Language_Handler (Handle.Lang_Handler));
-      Reset (Handle.Source_Info_List);
+      Reset_LI_File_List (Handle);
       Free (Handle.Logs_Mapper);
       Free_Modules (Handle);
       Unref (Handle.Tooltips);
@@ -1894,16 +1891,6 @@ package body Glide_Kernel is
 
       return F;
    end Other_File_Name;
-
-   ----------------------
-   -- Get_LI_File_List --
-   ----------------------
-
-   function Get_LI_File_List (Handle : access Kernel_Handle_Record)
-      return Src_Info.LI_File_List is
-   begin
-      return Handle.Source_Info_List;
-   end Get_LI_File_List;
 
    ---------
    -- Put --
@@ -2471,8 +2458,22 @@ package body Glide_Kernel is
    ------------------------
 
    procedure Reset_LI_File_List (Handle : access Kernel_Handle_Record) is
+      Handler : constant Glide_Language_Handler :=
+        Glide_Language_Handler (Get_Language_Handler (Handle));
+      Num     : Natural;
+      LI      : LI_Handler;
    begin
-      Reset (Handle.Source_Info_List);
+      if Handler /= null then
+         Num := LI_Handlers_Count (Handler);
+
+         for L in 1 .. Num loop
+            LI := Get_Nth_Handler (Handler, L);
+
+            if LI /= null then
+               Reset (LI);
+            end if;
+         end loop;
+      end if;
    end Reset_LI_File_List;
 
    ----------
