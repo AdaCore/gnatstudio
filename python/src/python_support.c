@@ -24,5 +24,7 @@ PyTypeObject* ada_gettypeobject (PyObject* obj) {
   return (PyTypeObject*)(obj->ob_type);
 }
 
-int ada_python_api_version = PYTHON_API_VERSION;
+int ada_python_api_version () {
+  return PYTHON_API_VERSION;
+}
 

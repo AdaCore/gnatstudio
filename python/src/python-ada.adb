@@ -28,7 +28,7 @@ package body Python.Ada is
 
    No_Method_Def : constant PyMethodDef := (Null_Ptr, null, 0, Null_Ptr);
 
-   Python_API_Version : Integer;
+   function Python_API_Version return Integer;
    pragma Import (C, Python_API_Version, "ada_python_api_version");
 
    PyInstance_Type_Record : aliased PyTypeObject_Record;
