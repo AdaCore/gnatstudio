@@ -1,5 +1,16 @@
 New features in GPS 1.1.0
 
+- Background colors in the text editor can be chosen
+
+- System files and implicit dependencies can be seen in the file dependency
+  browser
+
+- Enhanced support for extending projects: extended projects are now visible
+  and browsable in the project explorer and the project browser, ALI files
+  are correctly looked for first in the children projects.
+
+- Enhanced support for non-ASCII file names, entity names,...
+
 - Tooltips available in the switch editor
 
 - Documentation updates
