@@ -171,6 +171,7 @@ package body Process_Proxies is
    procedure Wait (Proxy   : access Gui_Process_Proxy;
                    Result  : out GNAT.Expect.Expect_Match;
                    Pattern : GNAT.Regpat.Pattern_Matcher;
+                   Matched : out GNAT.Regpat.Match_Array;
                    Timeout : Integer := 20)
    is
       Tmp   : Boolean;
@@ -190,7 +191,8 @@ package body Process_Proxies is
             exit;
          end if;
 
-         Expect (Proxy.Descriptor.all, Result, Pattern, Timeout => 50);
+         Expect
+           (Proxy.Descriptor.all, Result, Pattern, Matched,  Timeout => 10);
 
          exit when Num = Timeout;
 
@@ -220,8 +222,6 @@ package body Process_Proxies is
                   Num_Events := Num_Events + 1;
                end loop;
 
-               --  While (G_Main_Iteration (False)); is recommended in C ?
-
             when others =>
                --  It matched, we can simply return.
                exit;
@@ -229,6 +229,20 @@ package body Process_Proxies is
       end loop;
 
       Proxy.Command_In_Process.all := False;
+   end Wait;
+
+   ----------
+   -- Wait --
+   ----------
+
+   procedure Wait (Proxy   : access Gui_Process_Proxy;
+                   Result  : out GNAT.Expect.Expect_Match;
+                   Pattern : GNAT.Regpat.Pattern_Matcher;
+                   Timeout : Integer := 20)
+   is
+      Matched : Match_Array (0 .. 0);
+   begin
+      Wait (Proxy, Result, Pattern, Matched, Timeout);
    end Wait;
 
    -------------------------

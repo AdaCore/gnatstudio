@@ -144,6 +144,14 @@ package Process_Proxies is
       Timeout : Integer := 20);
    --  In GUI mode, this processes the graphic events between each iteration.
 
+   procedure Wait
+     (Proxy   : access Gui_Process_Proxy;
+      Result  : out GNAT.Expect.Expect_Match;
+      Pattern : GNAT.Regpat.Pattern_Matcher;
+      Matched : out GNAT.Regpat.Match_Array;
+      Timeout : Integer := 20);
+   --  In GUI mode, this processes the graphic events between each iteration.
+
    -------------
    -- Filters --
    -------------
