@@ -315,9 +315,7 @@ package body Codefix.Formal_Errors is
 
       function Closest (Size_Red : Positive) return Positive is
       begin
-         Put_Line (Integer'Image (Size_Red));
-
-         case Size_Red - 1 mod Indentation_Width is
+         case (Size_Red - 1) mod Indentation_Width is
             when 0 =>
                return Size_Red + Indentation_Width;
                --  not - Identation_Width because of the case where
@@ -329,7 +327,7 @@ package body Codefix.Formal_Errors is
             when others =>
                Raise_Exception
                  (Codefix_Panic'Identity,
-                  "Indentation_With changed, please update Wrong_Column");
+                  "Indentation_With changed, please update Wrong_Column.");
          end case;
       end Closest;
 
@@ -346,7 +344,7 @@ package body Codefix.Formal_Errors is
       if Column_Expected = 0 then
          Set_String
            (New_Extract,
-            White_String (1 .. Closest (Message.Col)) &
+            White_String (1 .. Closest (Message.Col) - 1) &
               Str_Red (Message.Col .. Str_Red'Length));
 
       else
@@ -470,6 +468,8 @@ package body Codefix.Formal_Errors is
       --  after the body.
 
       function Add_Parameter_Pragma return Extract;
+
+      function Delete_With return Extract;
 
       ----------------
       -- Delete_Var --
@@ -621,9 +621,143 @@ package body Codefix.Formal_Errors is
          return New_Extract;
       end Add_Parameter_Pragma;
 
+      -----------------
+      -- Delete_With --
+      -----------------
+
+      function Delete_With return Extract is
+
+         New_Extract         : Extract;
+         With_Info, Use_Info : Construct_Information;
+
+         function Is_First_With
+           (Position : File_Cursor;
+            Context  : String) return Boolean;
+
+         function Is_Last_With (Position : File_Cursor) return Boolean;
+
+         function End_Declaration (Position : File_Cursor) return File_Cursor;
+
+         procedure Delete
+           (Info    : Construct_Information;
+            Context : String);
+
+         -------------------
+         -- Is_First_With --
+         -------------------
+
+         function Is_First_With
+           (Position : File_Cursor;
+            Context : String) return Boolean is
+            C_Coma, C_With : File_Cursor;
+
+         begin
+
+            C_Coma := File_Cursor
+              (Search_String (Current_Text, Position, ",", Reverse_Step));
+            C_With := File_Cursor
+              (Search_String (Current_Text, Position, Context, Reverse_Step));
+
+            return C_Coma < C_With or else C_Coma = Null_File_Cursor;
+         end Is_First_With;
+
+         ------------------
+         -- Is_Last_With --
+         ------------------
+
+         function Is_Last_With (Position : File_Cursor) return Boolean is
+            C_Coma, C_Semicolon : File_Cursor;
+
+         begin
+
+            C_Coma := File_Cursor
+              (Search_String (Current_Text, Position, ","));
+            C_Semicolon := File_Cursor
+              (Search_String (Current_Text, Position, ";"));
+
+            return C_Coma > C_Semicolon or else C_Coma = Null_File_Cursor;
+         end Is_Last_With;
+
+         ---------------------
+         -- End_Declaration --
+         ---------------------
+
+         function End_Declaration (Position : File_Cursor)
+           return File_Cursor is
+
+         begin
+
+            return File_Cursor (Search_String (Current_Text, Position, ";"));
+         end End_Declaration;
+
+         ------------
+         -- Delete --
+         ------------
+
+         procedure Delete
+           (Info    : Construct_Information;
+            Context : String) is
+
+            Position    : File_Cursor := File_Cursor (Cursor);
+            Line_Cursor : File_Cursor;
+
+         begin
+
+            Position.Line := Info.Sloc_Entity.Line;
+            Position.Col := Info.Sloc_Entity.Column;
+
+            Line_Cursor := Position;
+            Line_Cursor.Col := 1;
+
+
+            if Is_First_With (Position, Context)
+              and then Is_Last_With (Position)
+            then
+               for I in Info.Sloc_Start.Line ..
+                 End_Declaration (Position).Line
+               loop
+                  Line_Cursor.Line := I;
+                  Get_Line (Current_Text, Line_Cursor, New_Extract);
+               end loop;
+               Delete_All_Lines (New_Extract);
+            else
+               Get_Line (Current_Text, Line_Cursor, New_Extract);
+               if File_Cursor
+                 (Search_String (New_Extract, Position, ",", Reverse_Step)) =
+                 Null_File_Cursor
+                 and then
+               File_Cursor (Search_String (New_Extract, Position, ",")) =
+                 Null_File_Cursor
+               then
+                  Delete_All_Lines (New_Extract);
+               else
+                  Replace_Word
+                    (New_Extract, Position, "", "([\w|\.]+[\s]*,?)");
+               end if;
+            end if;
+         end Delete;
+
+         --  begin of Delete_With
+
+      begin
+
+         With_Info := Get_Unit (Current_Text, Cursor, Before);
+         Use_Info := Search_Unit
+           (Current_Text, Cursor.File_Name.all, Cat_Use, Name);
+
+         Delete (With_Info, "with");
+         if Use_Info.Category /= Cat_Unknown then
+            Delete (Use_Info, "use");
+         end if;
+
+         return New_Extract;
+
+      end Delete_With;
+
+      --  begin of Not_Referenced
+
       New_Solutions : Solution_List;
 
-   --  begin of Not_Referenced
 
    begin
       case Category is
@@ -634,6 +768,8 @@ package body Codefix.Formal_Errors is
             Append (New_Solutions, Add_Pragma);
          when Cat_Local_Variable =>
             Append (New_Solutions, Add_Parameter_Pragma);
+         when Cat_With =>
+            Append (New_Solutions, Delete_With);
          when others =>
             Raise_Exception
               (Codefix_Panic'Identity,
