@@ -218,7 +218,8 @@ package Src_Editor_Buffer is
       Start_Column : Gint;
       End_Line     : Gint;
       End_Column   : Gint;
-      Text         : String);
+      Text         : String;
+      Enable_Undo  : Boolean := True);
    --  Replace the text between the start and end positions by Text.
    --
    --  The validity of the given positions must be verified before invoking
