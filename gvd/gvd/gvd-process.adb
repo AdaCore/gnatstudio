@@ -322,7 +322,8 @@ package body GVD.Process is
       --  time for the text widget to scroll smoothly otherwise (lots of
       --  events...)
       Set_Value (Get_Vadj (Process.Debugger_Text),
-           Get_Upper (Get_Vadj (Process.Debugger_Text)));
+                 Get_Upper (Get_Vadj (Process.Debugger_Text))
+                 - Get_Page_Size (Get_Vadj (Process.Debugger_Text)));
 
       --  Note: we can not systematically modify Process.Edit_Pos in this
       --  function, since otherwise the history (up and down keys in the
