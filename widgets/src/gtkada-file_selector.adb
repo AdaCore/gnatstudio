@@ -52,8 +52,6 @@ with GUI_Utils; use GUI_Utils;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
 
---  with Unchecked_Deallocation;
-
 package body Gtkada.File_Selector is
 
    -----------------------
@@ -556,18 +554,19 @@ package body Gtkada.File_Selector is
 
    procedure Change_Directory
      (Win : access File_Selector_Window_Record'Class;
-      Dir : String) is
+      Dir : String)
+   is
+      New_Dir : String := Normalize_Pathname (Dir);
    begin
       --  If the new directory is not the one currently shown in the File_List,
       --  then update the File_List.
-      Set_Text (Win.Selection_Entry, "");
 
-      if Dir /= ""
-        and then Dir (Dir'First) = Directory_Separator
-        and then Win.Current_Directory.all /= Dir
+      if New_Dir /= ""
+        and then New_Dir (New_Dir'First) = Directory_Separator
+        and then Win.Current_Directory.all /= New_Dir
       then
          Free (Win.Current_Directory);
-         Win.Current_Directory := new String' (Dir);
+         Win.Current_Directory := new String' (New_Dir);
 
          --  If we are currently moving through the history,
          --  do not append items to the Location_Combo.
@@ -582,22 +581,22 @@ package body Gtkada.File_Selector is
             Set_Sensitive (Win.Forward_Button, False);
 
             Add_Unique_Combo_Entry
-              (Win.Location_Combo, Dir);
+              (Win.Location_Combo, New_Dir);
          end if;
 
-         if Get_Text (Win.Location_Combo_Entry) /= Dir then
-            Set_Text (Win.Location_Combo_Entry, Dir);
+         if Get_Text (Win.Location_Combo_Entry) /= New_Dir then
+            Set_Text (Win.Location_Combo_Entry, New_Dir);
          end if;
 
          --  If the new directory is not the one currently shown
          --  in the Explorer_Tree, then update the Explorer_Tree.
 
-         if Dir /= Get_Selection (Win.Explorer_Tree) then
-            Show_Directory (Win.Explorer_Tree, Dir, Get_Window (Win));
+         if New_Dir /= Get_Selection (Win.Explorer_Tree) then
+            Show_Directory (Win.Explorer_Tree, New_Dir, Get_Window (Win));
          end if;
 
          if Win.File_List = null then
-            Set_Text (Win.Selection_Entry, Dir);
+            Set_Text (Win.Selection_Entry, New_Dir);
          else
             Refresh_Files (Win);
          end if;
@@ -952,44 +951,138 @@ package body Gtkada.File_Selector is
             --  The length of the biggest common matching prefix.
 
             Best_Match : String (1 .. 1024);
-         begin
-            for J in 0 .. Get_Rows (Win.File_List) - 1 loop
-               declare
-                  T : String := Get_Text (Win.File_List, J, 1);
-                  K : Natural := 0;
-               begin
-                  while K < T'Length
-                    and then K < S'Length
-                    and then T (T'First + K) = S (S'First + K) loop
-                     K := K + 1;
-                  end loop;
+            Best_File_Match : String (1 .. 1024);
 
-                  --  Does the prefix match S ?
-                  if K = S'Length then
-                     if Suffix_Length = -1 then
-                        First_Match := J;
-                        Best_Match (1 .. T'Length) := T;
-                        Suffix_Length := T'Length;
-                     else
-                        --  If there is already a biggest match, try to
-                        --  get it.
-                        while K < Suffix_Length
-                          and then K < T'Length
-                          and then T (T'First + K) = Best_Match (K + 1)
-                        loop
-                           K := K + 1;
-                        end loop;
+            procedure Matcher
+              (T        : String;
+               Position : Gint := -1);
 
-                        Suffix_Length := K;
-                     end if;
+            -------------
+            -- Matcher --
+            -------------
+
+            procedure Matcher
+              (T        : String;
+               Position : Gint := -1)
+            is
+               K : Natural := 0;
+            begin
+
+               while K < T'Length
+                 and then K < S'Length
+                 and then T (T'First + K) = S (S'First + K) loop
+                  K := K + 1;
+               end loop;
+
+               --  Does the prefix match S ?
+               if K = S'Length then
+                  if Suffix_Length = -1 then
+                     First_Match := Position;
+                     Best_Match (1 .. T'Length) := T;
+                     Suffix_Length := T'Length;
+                  else
+                     --  If there is already a biggest match, try to
+                     --  get it.
+                     while K < Suffix_Length
+                       and then K < T'Length
+                       and then T (T'First + K) = Best_Match (K + 1)
+                     loop
+                        K := K + 1;
+                     end loop;
+
+                     Suffix_Length := K;
                   end if;
-               end;
+               end if;
+            end Matcher;
+
+         begin
+            if S = ".." or else S = ".." & Directory_Separator then
+               Set_Text (Win.Selection_Entry, "");
+               On_Up_Button_Clicked (Object);
+               return True;
+            end if;
+
+            if S'Length >= 1 and then S (S'First) = Directory_Separator then
+               Change_Directory (Win, "" & Directory_Separator);
+               Set_Text (Win.Selection_Entry, S (S'First + 1 .. S'Last));
+               Set_Position (Win.Selection_Entry, Gint (S'Last - S'First));
+               return On_Selection_Entry_Key_Press_Event (Object, Params);
+            end if;
+
+            declare
+               Last : Natural := S'Last;
+            begin
+               while Last > S'First
+                 and then S (Last) /= Directory_Separator loop
+                  Last := Last - 1;
+               end loop;
+
+               if Is_Directory (Win.Current_Directory.all
+                                & S (S'First .. Last))
+               then
+                  Change_Directory (Win, Win.Current_Directory.all
+                                    & S (S'First .. Last));
+                  if Last /= S'Last then
+                     Set_Text (Win.Selection_Entry, S (Last + 1 .. S'Last));
+                     Set_Position (Win.Selection_Entry, Gint (S'Last - Last));
+                     return On_Selection_Entry_Key_Press_Event
+                       (Object, Params);
+                  end if;
+               end if;
+            end;
+
+            for J in 0 .. Get_Rows (Win.File_List) - 1 loop
+               Matcher (Get_Text (Win.File_List, J, 1), J);
             end loop;
 
-            Select_Row (Win.File_List, First_Match, 1);
-            Moveto (Win.File_List, First_Match, 1, 0.0, 0.0);
-            Set_Text (Win.Selection_Entry, Best_Match (1 .. Suffix_Length));
-            Set_Position (Win.Selection_Entry, Gint (Suffix_Length));
+            Best_File_Match := Best_Match;
+
+            declare
+               D    : Dir_Type;
+               File : String (1 .. 255);
+               Last : Natural;
+
+            begin
+               Open (D, Win.Current_Directory.all);
+
+               loop
+                  Read (D, File, Last);
+                  exit when Last = 0;
+
+                  Matcher (File (File'First .. Last));
+               end loop;
+            end;
+
+            if First_Match /= -1 then
+               --  The best match is a file.
+               if Suffix_Length > 0 then
+                  Select_Row (Win.File_List, First_Match, 1);
+                  Moveto (Win.File_List, First_Match, 1, 0.0, 0.0);
+                  Set_Text (Win.Selection_Entry,
+                            Best_Match (1 .. Suffix_Length));
+                  Set_Position (Win.Selection_Entry, Gint (Suffix_Length));
+               end if;
+
+            else
+               --  The best match is a directory.
+               if Suffix_Length > 0 then
+                  Set_Text (Win.Selection_Entry,
+                            Best_Match (1 .. Suffix_Length));
+                  Set_Position (Win.Selection_Entry, Gint (Suffix_Length));
+               end if;
+
+               if Is_Directory (Win.Current_Directory.all
+                                & Best_Match (1 .. Suffix_Length))
+                 and then Normalize_Pathname (Win.Current_Directory.all)
+                 /= Normalize_Pathname (Win.Current_Directory.all
+                                        & Best_Match (1 .. Suffix_Length))
+               then
+                  Set_Text (Win.Selection_Entry, "");
+                  Change_Directory (Win,
+                                    Win.Current_Directory.all
+                                    & Best_Match (1 .. Suffix_Length));
+               end if;
+            end if;
          end;
 
          return True;
