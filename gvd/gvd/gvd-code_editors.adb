@@ -504,6 +504,7 @@ package body GVD.Code_Editors is
             Ref (Edit.Explorer_Scroll);
             Remove (Edit, Edit.Explorer_Scroll);
          end if;
+         Set_Position (Edit, 0);
       else
          if Get_Parent (Edit.Explorer_Scroll) = null then
             Add1 (Edit, Edit.Explorer_Scroll);
@@ -512,6 +513,7 @@ package body GVD.Code_Editors is
          end if;
          GVD.Explorer.Preferences_Changed (Edit.Explorer);
          Set_Current_File (Edit.Explorer, Get_Current_File (Edit.Source));
+         Set_Position (Edit, 200);
       end if;
 
    end Preferences_Changed;
