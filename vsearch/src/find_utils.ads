@@ -182,17 +182,20 @@ package Find_Utils is
    function Search
      (Context         : access Search_Context;
       Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Search_Backward : Boolean) return Boolean is abstract;
+      Search_Backward : Boolean;
+      Interactive     : Boolean) return Boolean is abstract;
    --  This subprogram should search for the next occurrence of Context.
    --  It should return False if there is no other search to be performed, True
    --  if a call to this function might lead to another occurrence of the
    --  search string.
+   --  Interactive indi
 
    function Replace
      (Context         : access Search_Context;
       Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
       Replace_String  : String;
-      Search_Backward : Boolean) return Boolean;
+      Search_Backward : Boolean;
+      Interactive     : Boolean) return Boolean;
    --  This subprogram should search for the next occurrence of Context. If
    --  Is_First_Search, the search should start from the beginning
    --  It should set Context to null when there is nothing more to replace.
@@ -234,7 +237,7 @@ package Find_Utils is
       Mask              : Search_Options_Mask;
       Factory           : Module_Search_Context_Factory;
       Extra_Information : Gtk.Widget.Gtk_Widget;
-      Id                : Glide_Kernel.Module_Id;
+      Id                : Glide_Kernel.Module_ID;
    end record;
    --  If Extra_Information is not null, then it will be displayed every time
    --  this label is selected. It can be used for instance to ask for more
