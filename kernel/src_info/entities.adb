@@ -394,7 +394,7 @@ package body Entities is
       Clear (File.Entities);
       Free (File.Depends_On);
       Free (File.Depended_On);
-      Destroy (File.Scope);
+      File.Scope_Tree_Computed := False;
       File.Is_Valid := False;
    end Reset;
 
@@ -404,11 +404,12 @@ package body Entities is
 
    procedure Isolate (Entity : in out Entity_Information) is
    begin
-      Entity.End_Of_Scope    := No_Entity_Reference;
+      Entity.End_Of_Scope    := No_E_Reference;
       Entity.Pointed_Type    := null;
       Entity.Returned_Type   := null;
       Entity.Primitive_Op_Of := null;
       Entity.Rename          := null;
+      Clear (Entity.Called_Entities);
       Free (Entity.Parent_Types);
       Free (Entity.Primitive_Subprograms);
       Free (Entity.Child_Types);
@@ -423,7 +424,8 @@ package body Entities is
       procedure Check_And_Remove (E : in out Entity_Information);
       procedure Check_And_Remove (E : in out Entity_Information_List);
       procedure Check_And_Remove (E : in out Entity_Reference_List);
-      procedure Check_And_Remove (E : in out Entity_Reference);
+      procedure Check_And_Remove (E : in out E_Reference);
+      procedure Check_And_Remove (E : in out Entities_Tries.Trie_Tree);
       --  Remove all references to File in E
 
       procedure Check_And_Remove (E : in out Entity_Information) is
@@ -446,10 +448,23 @@ package body Entities is
          end loop;
       end Check_And_Remove;
 
-      procedure Check_And_Remove (E : in out Entity_Reference) is
+      procedure Check_And_Remove (E : in out Entities_Tries.Trie_Tree) is
+         Iter : Entities_Tries.Iterator := Start (E, "");
+         EL   : Entity_Information_List_Access;
+      begin
+         loop
+            EL := Get (Iter);
+            exit when EL = null;
+
+            Check_And_Remove (EL.all);
+            Next (Iter);
+         end loop;
+      end Check_And_Remove;
+
+      procedure Check_And_Remove (E : in out E_Reference) is
       begin
          if E.Location.File = File then
-            E := No_Entity_Reference;
+            E := No_E_Reference;
          end if;
       end Check_And_Remove;
 
@@ -458,6 +473,11 @@ package body Entities is
          for R in reverse Entity_Reference_Arrays.First .. Last (E) loop
             if E.Table (R).Location.File = File then
                Remove (E, R);
+
+            elsif E.Table (R).Caller /= null
+              and then E.Table (R).Caller.Declaration.File = File
+            then
+               E.Table (R).Caller := null;
             end if;
          end loop;
       end Check_And_Remove;
@@ -466,11 +486,13 @@ package body Entities is
       Assert (Assert_Me, Entity.Declaration.File /= File,
               "Entity should have been on .Entities list, not .All_Entities");
 
+      Check_And_Remove (Entity.Caller_At_Declaration);
       Check_And_Remove (Entity.End_Of_Scope);
       Check_And_Remove (Entity.Parent_Types);
       Check_And_Remove (Entity.Pointed_Type);
       Check_And_Remove (Entity.Returned_Type);
       Check_And_Remove (Entity.Primitive_Op_Of);
+      Check_And_Remove (Entity.Called_Entities);
       Check_And_Remove (Entity.Rename);
       Check_And_Remove (Entity.Primitive_Subprograms);
       Check_And_Remove (Entity.Child_Types);
@@ -706,7 +728,7 @@ package body Entities is
             Depends_On     => Null_Dependency_List,
             Depended_On    => Null_Dependency_List,
             All_Entities   => Empty_Trie_Tree,
-            Scope          => null,
+            Scope_Tree_Computed => False,
             LI             => LI,
             Is_Valid       => True,
             Ref_Count      => 1);
@@ -866,7 +888,7 @@ package body Entities is
    is
    begin
       Assert (Assert_Me, Location.File /= null, "Invalid End_Of_Scope");
-      Entity.End_Of_Scope := (Location, Kind);
+      Entity.End_Of_Scope := (Location, null, Kind);
       Add_All_Entities (Location.File, Entity);
    end Set_End_Of_Scope;
 
@@ -905,7 +927,7 @@ package body Entities is
       Kind     : Reference_Kind) is
    begin
       Assert (Assert_Me, Location.File /= null, "Invalid file in reference");
-      Append (Entity.References, (Location, Kind));
+      Append (Entity.References, (Location, null, Kind));
       Add_All_Entities (Location.File, Entity);
    end Add_Reference;
 
@@ -1026,12 +1048,14 @@ package body Entities is
            (Name                  => new String'(Name),
             Kind                  => Unresolved_Entity_Kind,
             Declaration           => (File, Line, Column),
-            End_Of_Scope          => No_Entity_Reference,
+            Caller_At_Declaration => null,
+            End_Of_Scope          => No_E_Reference,
             Parent_Types          => Null_Entity_Information_List,
             Pointed_Type          => null,
             Returned_Type         => null,
             Primitive_Op_Of       => null,
             Rename                => null,
+            Called_Entities       => Empty_Trie_Tree,
             Primitive_Subprograms => Null_Entity_Information_List,
             Child_Types           => Null_Entity_Information_List,
             References            => Null_Entity_Reference_List,
@@ -1292,5 +1316,25 @@ package body Entities is
    begin
       return Entity.Kind;
    end Get_Kind;
+
+   ------------------
+   -- Get_Location --
+   ------------------
+
+   function Get_Location (Ref : Entity_Reference) return File_Location is
+   begin
+      if Ref.Entity /= null
+        and then Ref.Entity.References /= Null_Entity_Reference_List
+        and then Ref.Index <= Last (Ref.Entity.References)
+      then
+         return Ref.Entity.References.Table (Ref.Index).Location;
+
+      elsif Ref.Index = Entity_Reference_Arrays.Index_Type'Last then
+         return Ref.Entity.Declaration;
+
+      else
+         return No_File_Location;
+      end if;
+   end Get_Location;
 
 end Entities;
