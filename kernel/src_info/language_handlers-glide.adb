@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2002-2004                      --
---                            ACT-Europe                             --
+--                      Copyright (C) 2002-2005                      --
+--                            AdaCore                                --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -363,7 +363,7 @@ package body Language_Handlers.Glide is
          if Index /= 0 then
             Trace (Me, "No LI_Handler for language "
                    & Full_Name (Source_Filename).all
-                   & " Index=" & Index'Img);
+                   & " Index=" & Index'Img & " lang=" & Lang);
          end if;
 
          return null;
