@@ -4,8 +4,8 @@ docdir = $(prefix)/doc/gvd
 MKDIR = mkdir -p
 INSTALL = @INSTALL@
 INSTALL_DATA = @INSTALL_DATA@
-IMAGES = "assembly.gif canvas.gif explorer.gif memory-view.gif tasks.gif \
-breakpoints.gif colors.gif main-window.gif process.gif tooltips.gif"
+IMAGES = assembly.gif canvas.gif explorer.gif memory-view.gif tasks.gif \
+breakpoints.gif colors.gif main-window.gif process.gif tooltips.gif
 
 all: doc clean-temp-files
 static:
