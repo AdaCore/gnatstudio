@@ -171,6 +171,12 @@ package body Display_Items is
    --  Add a new link between two items.
    --  The link is not created if there is already a similar one.
 
+   function Recompute_Address
+     (Canvas : access Interactive_Canvas_Record'Class;
+      Item   : access Canvas_Item_Record'Class) return Boolean;
+   --  Recompute the address of the item, and make it an alias of other
+   --  items if required.
+
    -------------
    -- Gtk_New --
    -------------
@@ -185,7 +191,6 @@ package body Display_Items is
    is
       Entity : Generic_Type_Access;
       Value_Found : Boolean := False;
-      Alias_Item : Display_Item;
    begin
       Push_Internal_Command_Status (Get_Process (Debugger.Debugger), True);
 
@@ -194,19 +199,6 @@ package body Display_Items is
          declare
             Id : String := Get_Uniq_Id (Debugger.Debugger, Variable_Name);
          begin
-
-         --  Do not create a new item if the Id is the same, and Detect_Aliases
-         --  is True.
-            Item := null;
-
-            Alias_Item := Search_Item (Debugger.Data_Canvas, Id);
-
-            if Alias_Item /= null then
-               Select_Item (Alias_Item, Alias_Item.Entity);
-               Show_Item (Debugger.Data_Canvas, Alias_Item);
-               Pop_Internal_Command_Status (Get_Process (Debugger.Debugger));
-               return;
-            end if;
 
             --  Parse the type and value of the variable. If we have an error
             --  at this level, this means that the variable is unknown, and we
@@ -275,6 +267,10 @@ package body Display_Items is
    begin
       Item.Name         := new String'(Variable_Name);
       Item.Auto_Refresh := Auto_Refresh;
+
+      if not Is_Visible (Item) then
+         return;
+      end if;
 
       if White_GC = null then
          Gdk_New (White_GC, Win);
@@ -543,7 +539,7 @@ package body Display_Items is
          pragma Warnings (Off, Canvas);
       begin
          if Display_Item (Item).Id /= null
-           and then Alias_Item = null
+           and then Display_Item (Item).Auto_Refresh
            and then Display_Item (Item).Id.all = Id
          then
             Alias_Item := Display_Item (Item);
@@ -569,7 +565,11 @@ package body Display_Items is
       Item   : access Canvas_Item_Record'Class) return Boolean
    is
    begin
-      if Display_Item (Item).Auto_Refresh then
+      --  Only update when the item is not an alias of something else (and thus
+      --  is hidden).
+      if Display_Item (Item).Auto_Refresh
+        and then Display_Item (Item).Is_Alias_Of = null
+      then
          Update (Odd_Canvas (Canvas), Display_Item (Item));
       end if;
 
@@ -607,16 +607,18 @@ package body Display_Items is
 
       --  Update the address as well, so that aliases are still correctly
       --  detected.
+      --  ??? This is not done at this level, since it has been done before
+      --  when we were detecting aliases.
 
-      Free (Item.Id);
+--        Free (Item.Id);
 
-      declare
-         Id : String := Get_Uniq_Id (Item.Debugger.Debugger, Item.Name.all);
-      begin
-         if Id /= "" then
-            Item.Id := new String'(Id);
-         end if;
-      end;
+--        declare
+--        Id : String := Get_Uniq_Id (Item.Debugger.Debugger, Item.Name.all);
+--        begin
+--           if Id /= "" then
+--              Item.Id := new String'(Id);
+--           end if;
+--        end;
 
       --  Update graphically.
       --  Note that we should not change the visibility status of item
@@ -697,29 +699,42 @@ package body Display_Items is
          Get_Component_Name
            (Item.Entity,
             Get_Language (Item.Debugger.Debugger), "@", X, Y));
+      Alias_Item : Display_Item;
       New_Item : Display_Item;
 
    begin
-      --  Do we have an existing item that matches this ?
 
-      New_Item := Search_Item
+      Gtk_New (New_Item,
+               Get_Window (Item.Debugger.Data_Canvas),
+               Variable_Name => New_Name,
+               Debugger      => Item.Debugger,
+               Auto_Refresh  => Item.Auto_Refresh);
+      Create_Link (Item.Debugger.Data_Canvas, Item, New_Item, Link_Name);
+      New_Item.Is_Dereference := True;
+
+      --  Do we have an existing item that matches this ? (same address as
+      --  in the current access type itself)
+
+      Alias_Item := Search_Item
         (Item.Debugger.Data_Canvas,
          Get_Value (Access_Type (Component.all)).all);
 
-      if New_Item = null then
-         Gtk_New (New_Item,
-                  Get_Window (Item.Debugger.Data_Canvas),
-                  Variable_Name => New_Name,
-                  Debugger      => Item.Debugger,
-                  Auto_Refresh  => Item.Auto_Refresh);
-         if New_Item /= null then
-            Create_Link (Item.Debugger.Data_Canvas, Item, New_Item, Link_Name);
-            Put (Item.Debugger.Data_Canvas, New_Item);
-         end if;
+      if Alias_Item = null then
+         Put (Item.Debugger.Data_Canvas, New_Item);
       else
-         Create_Link (Item.Debugger.Data_Canvas, Item, New_Item, Link_Name);
-         --  Force a redraw.
-         Item_Resized (Item.Debugger.Data_Canvas, Item);
+         --  Resize and move the item, so that the links are correctly
+         --  displayed.
+         Put (Item.Debugger.Data_Canvas, New_Item,
+              Get_Coord (Alias_Item).X, Get_Coord (Alias_Item).Y);
+         Gtkada.Canvas.Initialize
+           (New_Item, Get_Window (Item.Debugger.Data_Canvas),
+            Gint (Get_Coord (Alias_Item).Width),
+            Gint (Get_Coord (Alias_Item).Height));
+
+         --  Hide the item so as not to interfer with another one.
+         Set_Visibility (New_Item, False);
+
+         New_Item.Is_Alias_Of := Alias_Item;
       end if;
    end Dereference_Item;
 
@@ -992,6 +1007,102 @@ package body Display_Items is
       end if;
    end On_Background_Click;
 
+   -----------------------
+   -- Recompute_Address --
+   -----------------------
+
+   function Recompute_Address
+     (Canvas : access Interactive_Canvas_Record'Class;
+      Item   : access Canvas_Item_Record'Class) return Boolean
+   is
+      It : Display_Item := Display_Item (Item);
+
+      function Has_Alias
+        (Canvas : access Interactive_Canvas_Record'Class;
+         Item   : access Canvas_Item_Record'Class) return Boolean;
+      --  True if Item is a possible alias of It.
+      --  We only check the items before It in the list of items
+
+      ---------------
+      -- Has_Alias --
+      ---------------
+
+      function Has_Alias
+        (Canvas : access Interactive_Canvas_Record'Class;
+         Item   : access Canvas_Item_Record'Class) return Boolean
+      is
+         It2 : Display_Item := Display_Item (Item);
+      begin
+         --  Stop iterating when we saw It, since we only want to check the
+         --  items before it.
+         if It2 = It then
+            return False;
+         end if;
+
+         --  Do we have an alias ?
+         if It2.Id /= null
+           and then It.Id /= null
+           and then It2.Id.all = It.Id.all
+         then
+            --  Keep only one of them:
+            --   - if none are the result of a dereference, keep them both
+            --   - if only one is the result of a dereference, keep the other
+            --   - otherwise keep the first one
+
+            if It2.Is_Dereference or else It.Is_Dereference then
+
+               if It.Is_Dereference then
+                  It.Is_Alias_Of := It2;
+                  Set_Visibility (It, False);
+                  Gtkada.Canvas.Initialize
+                    (It, Get_Window (It.Debugger.Data_Canvas),
+                     Gint (Get_Coord (It2).Width),
+                     Gint (Get_Coord (It2).Height));
+                  Move_To (Canvas, It, Get_Coord (It2).X, Get_Coord (It2).Y);
+
+               else
+                  It2.Is_Alias_Of := It;
+                  Set_Visibility (It2, False);
+                  Gtkada.Canvas.Initialize
+                    (It2, Get_Window (It2.Debugger.Data_Canvas),
+                     Gint (Get_Coord (It).Width),
+                     Gint (Get_Coord (It).Height));
+                  Move_To (Canvas, It2, Get_Coord (It).X, Get_Coord (It).Y);
+               end if;
+               return False;
+            end if;
+         end if;
+
+         return True;
+      end Has_Alias;
+
+      Was_Alias : Display_Item := It.Is_Alias_Of;
+   begin
+      It.Is_Alias_Of := null;
+      Set_Visibility (It, True);
+
+      Free (It.Id);
+
+      declare
+         Id : String := Get_Uniq_Id (It.Debugger.Debugger, It.Name.all);
+      begin
+         if Id /= "" then
+            It.Id := new String'(Id);
+         end if;
+      end;
+
+      For_Each_Item (Canvas, Has_Alias'Unrestricted_Access);
+
+      --  If we broke the alias, move the item back to some new coordinates
+      if It.Is_Alias_Of = null
+        and then Was_Alias /= null
+      then
+         Move_To (Canvas, It);
+      end if;
+
+      return True;
+   end Recompute_Address;
+
    -------------------------------
    -- On_Canvas_Process_Stopped --
    -------------------------------
@@ -1000,10 +1111,13 @@ package body Display_Items is
      (Object : access Gtk.Widget.Gtk_Widget_Record'Class)
    is
       Canvas : Odd_Canvas := Debugger_Process_Tab (Object).Data_Canvas;
+
+
    begin
-      --  ??? Should first update all the addresses, and then merge (or
-      --  cross-reference the items at the same coordinates, and avoid to
-      --  update them twice.
+      --  First: Recompile all the addresses, and merge the aliases.
+      For_Each_Item (Canvas, Recompute_Address'Access);
+
+      --  Then re-parse the value of each item and display them again.
       For_Each_Item (Canvas, Update_On_Auto_Refresh'Access);
    end On_Canvas_Process_Stopped;
 
@@ -1015,5 +1129,16 @@ package body Display_Items is
    begin
       Reset_Recursive (Item.Entity);
    end Reset_Recursive;
+
+   -----------------
+   -- Is_Alias_Of --
+   -----------------
+
+   function Is_Alias_Of (Item : access Display_Item_Record)
+                        return Display_Item
+   is
+   begin
+      return Item.Is_Alias_Of;
+   end Is_Alias_Of;
 
 end Display_Items;

@@ -91,6 +91,10 @@ package Display_Items is
    procedure Reset_Recursive (Item : access Display_Item_Record'Class);
    --  Calls Reset_Recursive for the entity represented by the item.
 
+   function Is_Alias_Of (Item : access Display_Item_Record)
+                        return Display_Item;
+   --  Return the item for which Item is an alias, or null if there is none.
+
 private
    type Display_Item_Record is new Gtkada.Canvas.Canvas_Item_Record with
       record
@@ -107,5 +111,14 @@ private
          --  variable (in Ada or C), or simply the name of the variable (in
          --  Java) when no overloading exists and addresses don't have any
          --  meaning.  This is used to detect aliases.
+
+         Is_Alias_Of  : Display_Item := null;
+         --  Item for which we are an alias.
+         --  This is used so that the current item is moved at the same time
+         --  as the other one.
+
+         Is_Dereference : Boolean := False;
+         --  True if the item was created as a result of a derefence of an
+         --  access type.
       end record;
 end Display_Items;
