@@ -440,10 +440,18 @@ package body Language is
    is
       pragma Unreferenced (Lang, Indent_Params);
 
-      Index  : Natural := Buffer'Last - 1;
+      Index  : Natural;
       Blanks : Natural;
 
    begin
+      if Buffer'Length = 0 then
+         Indent := 0;
+         Next_Indent := 0;
+         return;
+      end if;
+
+      Index := Buffer'Last - 1;
+
       while Index > 1 and then Buffer (Index - 1) /= ASCII.LF loop
          Index := Index - 1;
       end loop;
