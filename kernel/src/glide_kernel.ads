@@ -634,6 +634,11 @@ package Glide_Kernel is
    --  Destroy the memory associated with Hook.
    --  By default, this does nothing.
 
+   function Get_Name (Hook : Hook_Function_Record) return String;
+   --  Return the name to use for that function when listing all functions
+   --  attached to a hook.
+   --  The default is to use <internal>
+
    -----------
    -- Tools --
    -----------

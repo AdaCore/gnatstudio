@@ -2508,4 +2508,14 @@ package body Glide_Kernel is
       null;
    end Destroy;
 
+   --------------
+   -- Get_Name --
+   --------------
+
+   function Get_Name (Hook : Hook_Function_Record) return String is
+      pragma Unreferenced (Hook);
+   begin
+      return -"<internal>";
+   end Get_Name;
+
 end Glide_Kernel;
