@@ -174,4 +174,23 @@ package body Docgen is
       end if;
    end Get_String_Index;
 
+   -----------------------
+   -- Get_Doc_File_Name --
+   -----------------------
+
+   function Get_Doc_File_Name
+     (Source_Filename : String;
+      Source_Path     : String;
+      Doc_Suffix      : String) return String is
+      --  returns the complete name of the doc file
+      Doc_File : constant String := Base_Name (Source_Filename);
+      Extens   : constant String := File_Extension (Source_Filename);
+   begin
+      return Source_Path &
+      Doc_File (Doc_File'First .. Doc_File'Last - 4)
+      & "_"
+      & Extens (Extens'First + 1 .. Extens'Last)
+      & Doc_Suffix;
+   end Get_Doc_File_Name;
+
 end Docgen;
