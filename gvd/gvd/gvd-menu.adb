@@ -887,6 +887,50 @@ package body GVD.Menu is
       end if;
    end On_Display_Registers;
 
+   ------------------------
+   -- Display_Expression --
+   ------------------------
+
+   procedure Display_Expression (Debugger : Visual_Debugger) is
+   begin
+      --  ??? Should be able to remove this test at some point
+      if Debugger = null
+        or else Debugger.Debugger = null
+        or else Command_In_Process (Get_Process (Debugger.Debugger))
+      then
+         return;
+      end if;
+
+      declare
+         Is_Func : aliased Boolean;
+         Expression : constant String := Display_Entry_Dialog
+           (Parent  => Debugger.Window,
+            Title   => -"Expression Selection",
+            Message => -"Enter an expression to display:",
+            Key     => "gvd_display_expression_dialog",
+            Check_Msg => -"Expression is a subprogram call",
+            History   => Debugger.History,
+            Key_Check => "expression_subprogram_debugger",
+            Button_Active => Is_Func'Access);
+      begin
+         if Expression /= ""
+           and then Expression (Expression'First) /= ASCII.NUL
+         then
+            if Is_Func then
+               Process_User_Command
+                 (Debugger,
+                  "graph print `" & Expression & '`',
+                  Output_Command => True);
+            else
+               Process_User_Command
+                 (Debugger,
+                  "graph display " & Expression,
+                  Output_Command => True);
+            end if;
+         end if;
+      end;
+   end Display_Expression;
+
    ---------------------------
    -- On_Display_Expression --
    ---------------------------
@@ -897,45 +941,8 @@ package body GVD.Menu is
       Widget : Limited_Widget)
    is
       pragma Unreferenced (Action, Widget);
-
-      Tab : constant Visual_Debugger := Get_Current_Process (Object);
    begin
-      --  ??? Should be able to remove this test at some point
-      if Tab = null
-        or else Tab.Debugger = null
-        or else Command_In_Process (Get_Process (Tab.Debugger))
-      then
-         return;
-      end if;
-
-      declare
-         Is_Func : aliased Boolean;
-         Expression : constant String := Display_Entry_Dialog
-           (Parent  => Tab.Window,
-            Title   => -"Expression Selection",
-            Message => -"Enter an expression to display:",
-            Key     => "gvd_display_expression_dialog",
-            Check_Msg => -"Expression is a subprogram call",
-            History   => Tab.History,
-            Key_Check => "expression_subprogram_debugger",
-            Button_Active => Is_Func'Access);
-      begin
-         if Expression /= ""
-           and then Expression (Expression'First) /= ASCII.NUL
-         then
-            if Is_Func then
-               Process_User_Command
-                 (Tab,
-                  "graph print `" & Expression & '`',
-                  Output_Command => True);
-            else
-               Process_User_Command
-                 (Tab,
-                  "graph display " & Expression,
-                  Output_Command => True);
-            end if;
-         end if;
-      end;
+      Display_Expression (Get_Current_Process (Object));
    end On_Display_Expression;
 
    ----------------
