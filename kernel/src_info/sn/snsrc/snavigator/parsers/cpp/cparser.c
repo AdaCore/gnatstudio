@@ -5231,18 +5231,20 @@ extern void function_argument_declaration( LongString *types, LongString *names,
    {
       LongStringMyAppend( types, "int" );
       LongStringIdAppend( names, ident( 0 ));
+      sDeclarator.lineno_end = sDeclarator.lineno_beg;
+      sDeclarator.charno_end = sDeclarator.charno_beg + identleng (0);
       step( 1 );
-      niveau--;
-      return;
+      goto type_end;
    }
 
    if( t == SN_FLOATINGconstant )
    {
       LongStringMyAppend( types, "double" );
       LongStringIdAppend( names, ident( 0 ));
+      sDeclarator.lineno_end = sDeclarator.lineno_beg;
+      sDeclarator.charno_end = sDeclarator.charno_beg + identleng (0);
       step( 1 );
-      niveau--;
-      return;
+      goto type_end;
    }
 
    if( t == SN_STRINGliteral )
@@ -5254,11 +5256,12 @@ extern void function_argument_declaration( LongString *types, LongString *names,
 #if 0 /* Zsolt Koppany, 2-apr-1998; We have to skip strings! */
          LongStringIdAppend( names, ident( 0 ));
 #endif
+         sDeclarator.lineno_end = f_lineno (0);
+         sDeclarator.charno_end = f_charno (0) + identleng (0);
          step( 1 );
       } while( token( 0 ) == SN_STRINGliteral );
 
-      niveau--;
-      return;
+      goto type_end;
    }
 
    if( t == SN_CHARACTERconstant )
@@ -5267,27 +5270,30 @@ extern void function_argument_declaration( LongString *types, LongString *names,
 #if 0 /* Zsolt Koppany, 2-apr-1998; We have to skip strings! */
       LongStringIdAppend( names, ident( 0 ));
 #endif
+      sDeclarator.lineno_end = sDeclarator.lineno_beg;
+      sDeclarator.charno_end = sDeclarator.charno_beg + identleng (0);
       step( 1 );
-      niveau--;
-      return;
+      goto type_end;
    }
 
    if( t == SN_LONGconstant )
    {
       LongStringMyAppend( types, "char" );
       LongStringIdAppend( names, ident( 0 ));
+      sDeclarator.lineno_end = sDeclarator.lineno_beg;
+      sDeclarator.charno_end = sDeclarator.charno_beg + identleng (0);
       step( 1 );
-      niveau--;
-      return;
+      goto type_end;
    }
 
    if( t == SN_ELLIPSIS )
    {
       LongStringMyAppend( types, "..." );
       LongStringIdAppend( names, ident( 0 ));
+      sDeclarator.lineno_end = sDeclarator.lineno_beg;
+      sDeclarator.charno_end = sDeclarator.charno_beg + identleng (0);
       step( 1 );
-      niveau--;
-      return;
+      goto type_end;
    }
 
    while( True )
@@ -5441,6 +5447,7 @@ end:
    create_type_argument_list( types, &sDeclaration, &sDeclarator );
 #endif
    LongStringsMyAppend( names, &sDeclarator.name );
+type_end:
    {
       char pos[32];
       sprintf (pos, "%06d.%03d:%06d.%03d",
