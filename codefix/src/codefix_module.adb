@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2003                       --
+--                     Copyright (C) 2001-2004                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -42,6 +42,7 @@ with Glide_Kernel.Console;     use Glide_Kernel.Console;
 with Glide_Kernel.Contexts;    use Glide_Kernel.Contexts;
 with Glide_Kernel.Scripts;     use Glide_Kernel.Scripts;
 with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
+with Glide_Kernel.Task_Manager; use Glide_Kernel.Task_Manager;
 with Glide_Intl;               use Glide_Intl;
 with Glide_Kernel.Standard_Hooks; use Glide_Kernel.Standard_Hooks;
 
@@ -58,6 +59,7 @@ with Codefix.Formal_Errors;  use Codefix.Formal_Errors;
 use Codefix.Formal_Errors.Command_List;
 with VFS;                    use VFS;
 
+with Commands;               use Commands;
 with Commands.Codefix;       use Commands.Codefix;
 
 package body Codefix_Module is
@@ -319,10 +321,11 @@ package body Codefix_Module is
       Style_Index          : Integer := -1;
       Warning_Index        : Integer := -1)
    is
-      Current_Error : Error_Id;
       Errors_Found : Compilation_Output;
       Session      : Codefix_Session;
       Fi, Li, Ci, Mi, Si, Wi : Integer;
+
+      Command : Command_Access;
    begin
       if Codefix_Module_ID.Sessions /= null then
          for S in Codefix_Module_ID.Sessions'Range loop
@@ -425,15 +428,20 @@ package body Codefix_Module is
 
       --  Update the location window to show which errors can be fixed
 
-      Current_Error := Get_First_Error (Session.Corrector.all);
-      while Current_Error /= Null_Error_Id loop
-         Trace (Me, "Activate_Codefix: Error found at "
-                & Full_Name (Get_File (Get_Error_Message (Current_Error))).all
-                & Get_Line (Get_Error_Message (Current_Error))'Img
-                & Get_Column (Get_Error_Message (Current_Error))'Img);
-         Create_Pixmap_And_Category (Kernel, Session, Current_Error);
-         Current_Error := Next (Current_Error);
-      end loop;
+      Command := new Codefix_Add_Command;
+      Codefix_Add_Command (Command.all).Kernel := Kernel;
+      Codefix_Add_Command (Command.all).Session := Session;
+      Codefix_Add_Command (Command.all).Current_Error :=
+        Get_First_Error (Session.Corrector.all);
+      Codefix_Add_Command (Command.all).Errors_Num :=
+        Get_Number_Of_Errors (Session.Corrector.all);
+
+      Launch_Background_Command
+        (Kernel,
+         Command,
+         Active   => True,
+         Show_Bar => True,
+         Queue_Id => Codefix_Module_Name);
 
       Free (Errors_Found);
 
