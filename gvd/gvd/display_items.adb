@@ -267,7 +267,9 @@ package body Display_Items is
          begin
             Entity := Parse_Type (Debugger.Debugger, Variable_Name);
          exception
-            when Language.Unexpected_Type | Constraint_Error =>
+            when E : Language.Unexpected_Type | Constraint_Error =>
+               Trace (Me, "Exception when getting type of entity: "
+                      & Exception_Information (E));
                Output_Error
                  (Debugger.Window,
                   (-"Could not parse type for ") & Variable_Name);
@@ -276,6 +278,7 @@ package body Display_Items is
          end;
 
          if Entity = null then
+            Trace (Me, "Result of Parse_Type is null");
             Output_Error
               (Debugger.Window,
                (-"Could not get the type of ") & Variable_Name);
