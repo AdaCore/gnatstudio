@@ -51,13 +51,21 @@ package body Commands.External is
    procedure Free (D : in out External_Command) is
       use String_List;
 
+      Fd      : TTY_Process_Descriptor renames D.Fd;
+      PID     : GNAT.Expect.Process_Id;
    begin
       Free (D.Args);
       Free (D.Head);
       Free (D.Command);
       Free (D.Dir);
       Free (D.Output);
-      Free (D.Description);
+
+      PID := Get_Pid (Fd);
+
+      if PID /= Null_Pid and then PID /= GNAT.Expect.Invalid_Pid then
+         Interrupt (Fd);
+         Close (Fd);
+      end if;
    end Free;
 
    ------------
@@ -125,7 +133,6 @@ package body Commands.External is
                D.Handler_Success := D.Handler (D.Kernel, D.Head, D.Output);
             end if;
 
-            Pop_State (D.Kernel);
             Command_Finished (D, D.Handler_Success);
 
          exception
@@ -258,8 +265,6 @@ package body Commands.External is
             if Command.Dir.all /= ""  then
                Change_Dir (Old_Dir);
             end if;
-
-            Push_State (Command.Kernel, Processing);
          end;
 
          Command.Running := True;
