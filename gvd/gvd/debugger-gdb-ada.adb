@@ -212,6 +212,7 @@ package body Debugger.Gdb.Ada is
                                   End_On => "}>");
 
             --  A reference (e.g for some "in out" parameters)
+            --  (<ref> array (...) of character) @0x300000: "The")
             --  ??? For now ignore that fact, and parse the type...
 
             elsif Looking_At (Type_Str, Index, "<ref>") then
