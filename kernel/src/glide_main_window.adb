@@ -264,6 +264,7 @@ package body Glide_Main_Window is
       Gtk_New (Main_Window.Kernel, Gtk_Window (Main_Window), Home_Dir);
       GVD.Main_Window.Initialize (Main_Window, Key, Menu_Items);
       Set_Priorities (Main_Window.Process_Mdi, (Left, Top, Bottom, Right));
+      Setup_Toplevel_Window (Main_Window.Process_Mdi, Main_Window);
       Main_Window.Home_Dir := new String'(Home_Dir);
       Main_Window.Prefix_Directory := new String'(Prefix_Directory);
       Main_Window.Standalone := False;
