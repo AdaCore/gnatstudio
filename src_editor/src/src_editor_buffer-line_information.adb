@@ -962,7 +962,7 @@ package body Src_Editor_Buffer.Line_Information is
 
       Command := new Remove_Blank_Lines_Command_Type;
       Command.Buffer := Source_Buffer (Editor);
-      Command.Mark   := Mark;
+      Command.Mark   := Create_Mark (Editor, "", Iter);
       Command.Number := Natural (Number);
 
       Add_Block_Command (Editor, Buffer_Line, Command_Access (Command),
@@ -1606,7 +1606,6 @@ package body Src_Editor_Buffer.Line_Information is
       end loop;
 
       --  Add an icon to unhide the lines.
-      --  ???  Where are the marks freed ?
 
       Command := new Unhide_Editable_Lines_Type;
       Command.Buffer := Source_Buffer (Buffer);
