@@ -1,4 +1,3 @@
-with Ada.Text_IO; use Ada.Text_IO;
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
@@ -278,7 +277,6 @@ package body Vsearch_Ext is
    procedure Unfloat_Vsearch (Search_Child : access Gtk_Widget_Record'Class) is
       Child : constant MDI_Child := MDI_Child (Search_Child);
    begin
-      Put_Line ("Unfloat_Vsearch");
       Hide_All (Vsearch_Extended (Get_Initial_Window (Child)).Close_Button);
    end Unfloat_Vsearch;
 
