@@ -272,7 +272,9 @@ package Prj_API is
    --  The declaration of the variable is looked in Current_Project, unless
    --  another project is specified in the variable reference
    --
-   --  Ref should a N_Variable_Reference.
+   --  Ref should be a N_Variable_Reference.
+   --
+   --  ??? Can this be merged with External_Reference_Of
 
    Invalid_Value : exception;
 
