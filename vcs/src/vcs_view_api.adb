@@ -216,6 +216,10 @@ package body VCS_View_API is
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access);
 
+   procedure On_Menu_Edit_ChangeLog
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context_Access);
+
    procedure On_Menu_Edit_Log
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access);
@@ -621,6 +625,26 @@ package body VCS_View_API is
       end if;
    end Remove_Annotations;
 
+   --------------------
+   -- Edit_ChangeLog --
+   --------------------
+
+   procedure Edit_ChangeLog
+     (Widget : access GObject_Record'Class;
+      Kernel : Kernel_Handle)
+   is
+      Context : constant Selection_Context_Access :=
+        Get_Current_Context (Kernel);
+   begin
+      if Context = null then
+         Console.Insert
+           (Kernel, -"VCS: No file selected, cannot edit ChangeLog",
+            Mode => Error);
+      else
+         On_Menu_Edit_ChangeLog (Widget, Context);
+      end if;
+   end Edit_ChangeLog;
+
    --------------
    -- Edit_Log --
    --------------
@@ -806,6 +830,14 @@ package body VCS_View_API is
                  (Item, "activate",
                   Context_Callback.To_Marshaller
                     (On_Menu_Edit_Log'Access),
+                  Selection_Context_Access (Context));
+
+               Gtk_New (Item, Label => -"Edit global ChangeLog");
+               Append (Menu, Item);
+               Context_Callback.Connect
+                 (Item, "activate",
+                  Context_Callback.To_Marshaller
+                    (On_Menu_Edit_ChangeLog'Access),
                   Selection_Context_Access (Context));
 
                Gtk_New (Item, Label => -"Remove revision log");
@@ -1121,6 +1153,47 @@ package body VCS_View_API is
       return List;
    end Get_Selected_Files;
 
+   ----------------------------
+   -- On_Menu_Edit_ChangeLog --
+   ----------------------------
+
+   procedure On_Menu_Edit_ChangeLog
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context_Access)
+   is
+      pragma Unreferenced (Widget);
+      List   : String_List.List;
+      Kernel : Kernel_Handle;
+
+   begin
+      Kernel := Get_Kernel (Context);
+      List   := Get_Selected_Files (Context);
+
+      while not String_List.Is_Empty (List) loop
+         declare
+            File               : constant Virtual_File :=
+              Create (String_List.Head (List));
+            ChangeLog_File     : constant Virtual_File :=
+              Get_ChangeLog_From_File (File);
+            Already_Open       : Boolean;
+         begin
+            Already_Open := Is_Open (Kernel, ChangeLog_File);
+            Open_File_Editor (Kernel, ChangeLog_File);
+
+            if not Already_Open then
+               Split (Get_MDI (Kernel), Gtk.Enums.Orientation_Vertical,
+                      Reuse_If_Possible => True, After => True);
+            end if;
+         end;
+
+         String_List.Next (List);
+      end loop;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+   end On_Menu_Edit_ChangeLog;
+
    ----------------------
    -- On_Menu_Edit_Log --
    ----------------------
@@ -1139,19 +1212,24 @@ package body VCS_View_API is
 
       while not String_List.Is_Empty (List) loop
          declare
-            Log_File     : constant Virtual_File :=
-              Get_Log_From_File
-                (Kernel,
-                 Create (Full_Filename => String_List.Head (List)), True);
-            Already_Open : Boolean;
+            File : constant Virtual_File :=
+              Create (String_List.Head (List));
          begin
-            Already_Open := Is_Open (Kernel, Log_File);
-            Open_File_Editor (Kernel, Log_File);
+            Get_Log_From_ChangeLog (Kernel, File);
 
-            if not Already_Open then
-               Split (Get_MDI (Kernel), Gtk.Enums.Orientation_Vertical,
-                      Reuse_If_Possible => True, After => True);
-            end if;
+            declare
+               Log_File     : constant Virtual_File :=
+                 Get_Log_From_File (Kernel, File, True);
+               Already_Open : Boolean;
+            begin
+               Already_Open := Is_Open (Kernel, Log_File);
+               Open_File_Editor (Kernel, Log_File);
+
+               if not Already_Open then
+                  Split (Get_MDI (Kernel), Gtk.Enums.Orientation_Vertical,
+                         Reuse_If_Possible => True, After => True);
+               end if;
+            end;
          end;
 
          String_List.Next (List);
@@ -1536,6 +1614,7 @@ package body VCS_View_API is
          File := Create (Full_Filename => String_List.Data (Files_Temp));
 
          if Get_Log_From_File (Kernel, File, False) = VFS.No_File then
+            Get_Log_From_ChangeLog (Kernel, File);
             All_Logs_Exist := False;
 
             declare
