@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2001-2003                    --
+--                       Copyright (C) 2001-2004                     --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free software; you can redistribute it and/or modify  it   --
@@ -49,7 +49,7 @@ package Src_Info.Queries is
    --  tree itself, and thus can be kept independently in a browser.
 
    type Entity_Information is private;
-   No_Entity_Information         : constant Entity_Information;
+   No_Entity_Information : constant Entity_Information;
 
    type Entity_Information_Array is array (Natural range <>)
      of Entity_Information;
@@ -177,13 +177,13 @@ package Src_Info.Queries is
    --  matched.
 
    procedure Find_Declaration
-     (Lib_Info      : LI_File_Ptr;
-      File_Name     : VFS.Virtual_File;
-      Entity_Name   : String;
-      Line          : Positive;
-      Column        : Positive;
-      Entity        : out Entity_Information;
-      Status        : out Find_Decl_Or_Body_Query_Status);
+     (Lib_Info    : LI_File_Ptr;
+      File_Name   : VFS.Virtual_File;
+      Entity_Name : String;
+      Line        : Positive;
+      Column      : Positive;
+      Entity      : out Entity_Information;
+      Status      : out Find_Decl_Or_Body_Query_Status);
    --  Find the location of the location of the declaration for the given
    --  entity.
    --
@@ -197,15 +197,15 @@ package Src_Info.Queries is
    --  The memory occupied by Entity must be freed by the caller.
 
    procedure Find_Next_Body
-     (Lib_Info               : LI_File_Ptr;
-      File_Name              : VFS.Virtual_File;
-      Entity_Name            : String;
-      Line                   : Positive;
-      Column                 : Positive;
-      Handler                : access LI_Handler_Record'Class;
-      Project                : Projects.Project_Type;
-      Location               : out File_Location;
-      Status                 : out Find_Decl_Or_Body_Query_Status);
+     (Lib_Info    : LI_File_Ptr;
+      File_Name   : VFS.Virtual_File;
+      Entity_Name : String;
+      Line        : Positive;
+      Column      : Positive;
+      Handler     : access LI_Handler_Record'Class;
+      Project     : Projects.Project_Type;
+      Location    : out File_Location;
+      Status      : out Find_Decl_Or_Body_Query_Status);
    --  Find the location of the body for the entity. If the entity has multiple
    --  bodies (as is the case for instance for separates in Ada), and
    --  (Line,Column) is already the location of one of the bodies, then this
@@ -295,14 +295,14 @@ package Src_Info.Queries is
    --  Used to report errors while parsing files
 
    procedure Find_All_References
-     (Root_Project           : Projects.Project_Type;
-      Lang_Handler           : Language_Handlers.Language_Handler;
-      Entity                 : Entity_Information;
-      Iterator               : out Entity_Reference_Iterator;
-      Project                : Projects.Project_Type := Projects.No_Project;
-      LI_Once                : Boolean := False;
-      File_Has_No_LI_Report  : File_Error_Reporter := null;
-      In_File                : VFS.Virtual_File := VFS.No_File);
+     (Root_Project          : Projects.Project_Type;
+      Lang_Handler          : Language_Handlers.Language_Handler;
+      Entity                : Entity_Information;
+      Iterator              : out Entity_Reference_Iterator;
+      Project               : Projects.Project_Type := Projects.No_Project;
+      LI_Once               : Boolean := False;
+      File_Has_No_LI_Report : File_Error_Reporter := null;
+      In_File               : VFS.Virtual_File := VFS.No_File);
    --  Find all the references to the entity described in Decl. It doesn't
    --  return the declaration location for the entity however.
    --
@@ -508,7 +508,7 @@ package Src_Info.Queries is
    --  Is_Predefined_Entity returning true.
 
    function Pointed_Type
-     (Lib_Info   : LI_File_Ptr;
+     (Lib_Info    : LI_File_Ptr;
       Access_Type : Entity_Information) return Entity_Information;
    --  Return the type of data pointed to by a pointer type.
 
@@ -628,7 +628,7 @@ package Src_Info.Queries is
 
    procedure Next
      (Lang_Handler : Language_Handlers.Language_Handler;
-      Iterator : in out Dependency_Iterator);
+      Iterator     : in out Dependency_Iterator);
    --  Get the next reference to the entity
 
    function Get (Iterator : Dependency_Iterator) return Dependency;
@@ -803,7 +803,7 @@ private
    --  Return the location of the declaration of Entity
 
    function Get_Declaration
-     (List : E_Declaration_Info_List;
+     (List                   : E_Declaration_Info_List;
       Decl_Line, Decl_Column : Natural; Entity_Name : String := "")
       return E_Declaration_Info_List;
    --  Return the declaration in List that matches entity.
@@ -891,30 +891,30 @@ private
    end record;
 
    type Local_Entities_Iterator is record
-      Current_Decl : E_Declaration_Info_List;
-      Reference : E_Reference_List;
-      File      : VFS.Virtual_File;
-      New_Decl  : Boolean;
-      LI        : LI_File_Ptr;
+      Current_Decl     : E_Declaration_Info_List;
+      Reference        : E_Reference_List;
+      File             : VFS.Virtual_File;
+      New_Decl         : Boolean;
+      LI               : LI_File_Ptr;
 
-      Part               : Analyzed_Part := None;
-      Current_Separate   : File_Info_Ptr_List;
-      Current_Dep        : Dependency_File_Info_List;
+      Part             : Analyzed_Part := None;
+      Current_Separate : File_Info_Ptr_List;
+      Current_Dep      : Dependency_File_Info_List;
    end record;
 
 
    type Entity_Reference_Iterator is record
-      Entity    : Entity_Information;
-      Decl_Iter : Dependency_Iterator;
+      Entity             : Entity_Information;
+      Decl_Iter          : Dependency_Iterator;
 
-      References : E_Reference_List;
+      References         : E_Reference_List;
       --  The current list of references we are processing.
 
-      LI_Once : Boolean;
+      LI_Once            : Boolean;
       --  True if we should return only one reference per LI file
 
-      Part : Analyzed_Part := None;
-      Current_Separate : File_Info_Ptr_List;
+      Part               : Analyzed_Part := None;
+      Current_Separate   : File_Info_Ptr_List;
       Current_Dependency : Dependency_File_Info_List;
       --  If the LI file we are examining is the file in which the entity was
       --  declared, we need to examine the body, spec, and separates, and part
@@ -944,36 +944,36 @@ private
    end record;
 
    type Subprogram_Iterator is record
-      Lib_Info    : LI_File_Ptr;
-      Current     : E_Reference_List;
+      Lib_Info : LI_File_Ptr;
+      Current  : E_Reference_List;
    end record;
 
    type File_Location_Array is array (Natural range <>) of File_Location_List;
    type File_Location_Array_Access is access File_Location_Array;
 
    type Parent_Iterator is record
-      Lib_Info    : LI_File_Ptr;
-      Parents     : File_Location_Array_Access;
-      Current     : Natural;
+      Lib_Info : LI_File_Ptr;
+      Parents  : File_Location_Array_Access;
+      Current  : Natural;
    end record;
 
    No_Parent_Iterator : constant Parent_Iterator := (null, null, 0);
 
    type Child_Type_Iterator is record
-      Lib_Info    : LI_File_Ptr;
-      Part        : Projects.Unit_Part;
-      File        : File_Info_Ptr_List;
-      Entity      : Entity_Information;
-      Current     : E_Declaration_Info_List;
+      Lib_Info : LI_File_Ptr;
+      Part     : Projects.Unit_Part;
+      File     : File_Info_Ptr_List;
+      Entity   : Entity_Information;
+      Current  : E_Declaration_Info_List;
    end record;
 
    type Special_Iterator is record
-      Kind        : Reference_Kind;
-      Lib_Info    : LI_File_Ptr;
-      Current     : E_Reference_List;
+      Kind               : Reference_Kind;
+      Lib_Info           : LI_File_Ptr;
+      Current            : E_Reference_List;
 
       Processing_Parents : Boolean;
-      Parent_Iter       : Parent_Iterator;
+      Parent_Iter        : Parent_Iterator;
       --  The parent entities to examine. This is No_Parent_Iterator if we are
       --  not returning the inherited subprograms
    end record;
