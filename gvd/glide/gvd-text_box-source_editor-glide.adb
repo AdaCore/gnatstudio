@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2002                       --
+--                     Copyright (C) 2001-2003                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -35,6 +35,7 @@ with Commands.Debugger;    use Commands.Debugger;
 
 with Ada.Unchecked_Deallocation;
 with GNAT.OS_Lib;
+with GVD.Preferences;      use GVD.Preferences;
 
 package body GVD.Text_Box.Source_Editor.Glide is
 
@@ -460,7 +461,12 @@ package body GVD.Text_Box.Source_Editor.Glide is
                      Editor.Current_Breakpoints (J).File.all,
                      Editor.Current_Breakpoints (J).Line);
 
-                  A (L).Image := Line_Has_Code_Pixbuf;
+                  if Get_Pref (GVD_Prefs, Editor_Show_Line_With_Code) then
+                     A (L).Image := Line_Has_Code_Pixbuf;
+                  else
+                     A (L).Image := Line_Might_Have_Code_Pixbuf;
+                  end if;
+
                   A (L).Associated_Command := Command_Access (Other_Command);
                   Add_Line_Information
                     (Kernel,
