@@ -35,11 +35,14 @@ with Glib.Values;               use Glib.Values;
 with Glide_Intl;                use Glide_Intl;
 with Glide_Kernel;              use Glide_Kernel;
 with Glide_Kernel.Console;      use Glide_Kernel.Console;
+with Glide_Kernel.Contexts;     use Glide_Kernel.Contexts;
+with Glide_Kernel.Hooks;        use Glide_Kernel.Hooks;
 with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
 with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
 with Glide_Kernel.Project;      use Glide_Kernel.Project;
 with Glide_Kernel.Scripts;      use Glide_Kernel.Scripts;
 with Glide_Kernel.Timeout;      use Glide_Kernel.Timeout;
+with Glide_Kernel.Standard_Hooks; use Glide_Kernel.Standard_Hooks;
 with Language;                  use Language;
 with Language_Handlers;         use Language_Handlers;
 with Basic_Types;               use Basic_Types;
@@ -176,12 +179,15 @@ package body Src_Editor_Module is
      (Box : access Source_Box_Record'Class; Editor : Source_Editor_Box);
    --  Internal initialization function.
 
-   function Mime_Action
-     (Kernel    : access Kernel_Handle_Record'Class;
-      Mime_Type : String;
-      Data      : GValue_Array;
-      Mode      : Mime_Mode := Read_Write) return Boolean;
-   --  Process, if possible, the data sent by the kernel
+   function Source_File_Hook
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : Hooks_Data'Class) return Boolean;
+   --  Reacts to the Open_File_Action_Hook
+
+   function File_Line_Hook
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : Hooks_Data'Class) return Boolean;
+   --  Reacts to the File_Line_Action_Hook
 
    procedure Save_To_File
      (Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class;
@@ -387,7 +393,7 @@ package body Src_Editor_Module is
    --  Callback for the "file_saved" signal.
 
    procedure Preferences_Changed
-     (K : access GObject_Record'Class; Kernel : Kernel_Handle);
+     (Kernel : access Kernel_Handle_Record'Class);
    --  Called when the preferences have changed.
 
    procedure Edit_Command_Handler
@@ -2723,7 +2729,7 @@ package body Src_Editor_Module is
               and then Has_Line_Information
                 (Entity_Selection_Context_Access (Context))
             then
-               Start_Line := Modules.Line_Information
+               Start_Line := Contexts.Line_Information
                  (Entity_Selection_Context_Access (Context));
 
                End_Line := Start_Line;
@@ -2873,144 +2879,117 @@ package body Src_Editor_Module is
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Uncomment_Lines;
 
-   -----------------
-   -- Mime_Action --
-   -----------------
+   ----------------------
+   -- Source_File_Hook --
+   ----------------------
 
-   function Mime_Action
-     (Kernel    : access Kernel_Handle_Record'Class;
-      Mime_Type : String;
-      Data      : GValue_Array;
-      Mode      : Mime_Mode := Read_Write) return Boolean
+   function Source_File_Hook
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : Hooks_Data'Class) return Boolean
    is
-      pragma Unreferenced (Mode);
-
-      Source    : Source_Box;
-      Edit      : Source_Editor_Box;
-      MDI       : constant MDI_Window := Get_MDI (Kernel);
-      Tmp       : Boolean;
+      D : constant Source_File_Hooks_Args := Source_File_Hooks_Args (Data);
+      Iter        : Child_Iterator := First_Child (Get_MDI (Kernel));
+      Child       : MDI_Child;
+      No_Location : Boolean := False;
+      Column      : Integer := D.Column;
+      Source      : Source_Box;
+      Edit        : Source_Editor_Box;
+      Tmp         : Boolean;
       pragma Unreferenced (Tmp);
+   begin
+      if D.Line = -1 then
+         --  Close all file editors corresponding to File.
+
+         loop
+            Child := Get (Iter);
+
+            exit when Child = null;
+
+            if Get_Widget (Child).all in Source_Box_Record'Class
+              and then Get_Filename (Child) = D.File
+            then
+               Close_Child (Child);
+            end if;
+
+            Next (Iter);
+         end loop;
+
+         return True;
+
+      else
+         if D.Line = 0 and then D.Column = 0 then
+            No_Location := True;
+         end if;
+
+         Source := Open_File
+           (Kernel, D.File,
+            Create_New => D.New_File,
+            Focus      => not No_Location,
+            Force      => D.Force_Reload);
+
+         if Source /= null then
+            Edit := Source.Editor;
+         end if;
+
+         if Column = 0 then
+            Column := 1;
+         end if;
+
+         if Edit /= null
+           and then not No_Location
+         then
+            Trace (Me, "Setup editor to go to line,col="
+                   & D.Line'Img & Column'Img);
+            Tmp := Location_Callback
+              ((Edit,
+                Editable_Line_Type (D.Line),
+                Natural (Column),
+                Natural (D.Column_End),
+                Kernel_Handle (Kernel)));
+         end if;
+
+         return Edit /= null;
+      end if;
+   end Source_File_Hook;
+
+   --------------------
+   -- File_Line_Hook --
+   --------------------
+
+   function File_Line_Hook
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : Hooks_Data'Class) return Boolean
+   is
+      D : constant File_Line_Hooks_Args := File_Line_Hooks_Args (Data);
+
+      procedure Apply_Mime_On_Child (Child : MDI_Child);
+      --  Apply the mime information on Child.
+
+      procedure Apply_Mime_On_Child (Child : MDI_Child) is
+      begin
+         if D.Info'First = 0 then
+            Create_Line_Information_Column
+              (Source_Box (Get_Widget (Child)).Editor,
+               D.Identifier,
+               D.Stick_To_Data,
+               D.Every_Line);
+
+         elsif D.Info'Length = 0 then
+            Remove_Line_Information_Column
+              (Source_Box (Get_Widget (Child)).Editor, D.Identifier);
+
+         else
+            Add_File_Information
+              (Source_Box (Get_Widget (Child)).Editor, D.Identifier, D.Info);
+         end if;
+      end Apply_Mime_On_Child;
+
+      Child : constant MDI_Child := Find_Editor (Kernel, D.File);
 
    begin
-      if Mime_Type = Mime_Source_File then
-         declare
-            File        : constant Virtual_File :=
-              Get_File (Data (Data'First));
-            Line        : constant Gint    := Get_Int (Data (Data'First + 1));
-            Column      : Gint             := Get_Int (Data (Data'First + 2));
-            Column_End  : constant Gint    := Get_Int (Data (Data'First + 3));
-            New_File    : constant Boolean :=
-              Get_Boolean (Data (Data'First + 5));
-            Force       : constant Boolean :=
-              Get_Boolean (Data (Data'First + 6));
-            Iter        : Child_Iterator := First_Child (MDI);
-            Child       : MDI_Child;
-            No_Location : Boolean := False;
-
-         begin
-            if Line = -1 then
-               --  Close all file editors corresponding to File.
-
-               loop
-                  Child := Get (Iter);
-
-                  exit when Child = null;
-
-                  if Get_Widget (Child).all in Source_Box_Record'Class
-                    and then Get_Filename (Child) = File
-                  then
-                     Close_Child (Child);
-                  end if;
-
-                  Next (Iter);
-               end loop;
-
-               return True;
-
-            else
-               if Line = 0 and then Column = 0 then
-                  No_Location := True;
-               end if;
-
-               Source := Open_File
-                 (Kernel, File,
-                  Create_New => New_File,
-                  Focus      => not No_Location,
-                  Force      => Force);
-
-               if Source /= null then
-                  Edit := Source.Editor;
-               end if;
-
-               if Column = 0 then
-                  Column := 1;
-               end if;
-
-               if Edit /= null
-                 and then not No_Location
-               then
-                  Trace (Me, "Setup editor to go to line,col="
-                         & Line'Img & Column'Img);
-                  Tmp := Location_Callback
-                    ((Edit,
-                      Editable_Line_Type (Line),
-                      Natural (Column),
-                      Natural (Column_End),
-                      Kernel_Handle (Kernel)));
-               end if;
-
-               return Edit /= null;
-            end if;
-         end;
-
-      elsif Mime_Type = Mime_File_Line_Info then
-         declare
-            File  : constant Virtual_File :=
-              Create (Full_Filename => Get_String (Data (Data'First)));
-            Id    : constant String  := Get_String (Data (Data'First + 1));
-            Info  : constant Line_Information_Data :=
-              To_Line_Information (Get_Address (Data (Data'First + 2)));
-            Stick_To_Data : constant Boolean :=
-              Get_Boolean (Data (Data'First + 3));
-            Every_Line : constant Boolean :=
-              Get_Boolean (Data (Data'First + 4));
-            Child : MDI_Child;
-
-            procedure Apply_Mime_On_Child (Child : MDI_Child);
-            --  Apply the mime information on Child.
-
-            procedure Apply_Mime_On_Child (Child : MDI_Child) is
-            begin
-               if Info'First = 0 then
-                  Create_Line_Information_Column
-                    (Source_Box (Get_Widget (Child)).Editor,
-                     Id,
-                     Stick_To_Data,
-                     Every_Line);
-
-               elsif Info'Length = 0 then
-                  Remove_Line_Information_Column
-                    (Source_Box (Get_Widget (Child)).Editor, Id);
-
-               else
-                  Add_File_Information
-                    (Source_Box (Get_Widget (Child)).Editor,
-                     Id, Info);
-               end if;
-            end Apply_Mime_On_Child;
-
-         begin
-            --  Look for the corresponding file editor.
-
-            Child := Find_Editor (Kernel, File);
-
-            if Child /= null then
-               --  The editor was found.
-               Apply_Mime_On_Child (Child);
-
-               return True;
-            end if;
-         end;
+      if Child /= null then
+         Apply_Mime_On_Child (Child);
+         return True;
       end if;
 
       return False;
@@ -3019,7 +2998,7 @@ package body Src_Editor_Module is
       when E : others =>
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
          return False;
-   end Mime_Action;
+   end File_Line_Hook;
 
    ------------------
    -- On_Edit_File --
@@ -3039,7 +3018,7 @@ package body Src_Editor_Module is
       Trace (Me, "On_Edit_File: " & Full_Name (File_Information (File)).all);
 
       if Has_Line_Information (File) then
-         Line := Modules.Line_Information (File);
+         Line := Contexts.Line_Information (File);
       else
          Line := 1;
       end if;
@@ -3302,11 +3281,13 @@ package body Src_Editor_Module is
          Module_Name             => Src_Editor_Module_Name,
          Priority                => Default_Priority,
          Contextual_Menu_Handler => Source_Editor_Contextual'Access,
-         Mime_Handler            => Mime_Action'Access,
          Default_Context_Factory => Default_Factory'Access,
          Save_Function           => Save_Function'Access);
       Glide_Kernel.Kernel_Desktop.Register_Desktop_Functions
         (Save_Desktop'Access, Load_Desktop'Access);
+
+      Add_Hook (Kernel, Open_File_Action_Hook, Source_File_Hook'Access);
+      Add_Hook (Kernel, File_Line_Action_Hook, File_Line_Hook'Access);
 
       --  Menus
 
@@ -3485,10 +3466,7 @@ package body Src_Editor_Module is
 
       Undo_Redo_Data.Set (Kernel, Undo_Redo, Undo_Redo_Id);
 
-      Kernel_Callback.Connect
-        (Kernel, Preferences_Changed_Signal,
-         Kernel_Callback.To_Marshaller (Preferences_Changed'Access),
-         User_Data   => Kernel_Handle (Kernel));
+      Add_Hook (Kernel, Preferences_Changed_Hook, Preferences_Changed'Access);
 
       Source_Editor_Module (Src_Editor_Module_Id).File_Closed_Id :=
         Kernel_Callback.Connect
@@ -4016,9 +3994,8 @@ package body Src_Editor_Module is
    -------------------------
 
    procedure Preferences_Changed
-     (K : access GObject_Record'Class; Kernel : Kernel_Handle)
+     (Kernel : access Kernel_Handle_Record'Class)
    is
-      pragma Unreferenced (K);
       Id                        : Source_Editor_Module :=
         Source_Editor_Module (Src_Editor_Module_Id);
       Pref_Display_Line_Numbers : constant Boolean :=
@@ -4055,7 +4032,7 @@ package body Src_Editor_Module is
                 (Kernel,
                  Source_Lines_Revealed_Signal,
                  On_Lines_Revealed'Access,
-                 Kernel);
+                 Kernel_Handle (Kernel));
 
             declare
                Files : constant VFS.File_Array := Open_Files (Kernel);
