@@ -95,7 +95,11 @@ package body Histories is
          end loop;
 
          Value.Max_Length := -1;
-         Value.List := new String_List (1 .. Num);
+         if Num /= 0 then
+            Value.List := new String_List (1 .. Num);
+         else
+            Value.List := null;
+         end if;
          N := Key.Child;
          Num := 1;
 
