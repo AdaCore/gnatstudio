@@ -663,7 +663,8 @@ package body Browsers.Call_Graph is
                while not At_End (Refs) loop
                   Ref := Get (Refs);
 
-                  if Show_In_Call_Graph (Get_Kind (Ref))
+                  if Ref /= No_Entity_Reference
+                    and then Show_In_Call_Graph (Get_Kind (Ref))
                     and then Get_Caller (Ref) = Entity
                     and then Is_Subprogram (Get_Entity (Refs))
                     and then Get_Declaration_Of (Rename) /= Get_Location (Ref)
