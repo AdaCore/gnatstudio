@@ -37,8 +37,6 @@
 --  handle to the kernel), so that it can eventually be integrated directly
 --  into the sources of Gnat and its tools.
 
-with Prj;
-
 package Src_Info.Queries is
 
    --------------------------------------
@@ -70,52 +68,14 @@ package Src_Info.Queries is
    ---------------------------
    -- Dependencies requests --
    ---------------------------
-
-   type Dependency is private;
-   --  This type contains the following information:
+   --  The following subprogram can be used to retrieve information about the
+   --  dependency between files and units in the current project.
    --    - the name of the unit on which another unit depends
    --    - the name of the file on which this other unit depends
    --    - whether the dependency comes from the spec and/or from the body,
    --      or is implicit.
    --  In the context of Ada, the Unit_Name represents the package name, and
    --  the explicit dependencies represent "with" statements.
-
-   procedure Get_Unit_Name
-     (Source_Info_List : in out Src_Info.LI_File_List;
-      Project          : Prj.Project_Id;
-      Source_Path      : String;
-      Object_Path      : String;
-      Dep              : in out Dependency;
-      Unit_Name        : out String_Access);
-   --  Return the Unit Name from the given Dep. The returned string must not be
-   --  freed by the caller.
-   --
-   --  Note that, for implicit dependencies, the unit name is sometimes
-   --  computed in a lazy manor, that is only when read for the first time. In
-   --  cases where computing the unit_name fails, null is returned.
-
-   function Get_Filename (Dep : Dependency) return String;
-   --  Return the Filename for the given Dep.
-
-   function Get_Depends_From_Spec (Dep : Dependency) return Boolean;
-   --  Return True if the given Dep is an explicit dependency from the
-   --  specificiations part.
-
-   function Get_Depends_From_Body (Dep : Dependency) return Boolean;
-   --  Return True if the given Dep is an explicit dependency from the
-   --  implementation part.
-
-   type Dependency_Node;
-   type Dependency_List is access Dependency_Node;
-   type Dependency_Node is record
-      Value : Dependency;
-      Next  : Dependency_List;
-   end record;
-   --  A chained list of Dependency objects.
-
-   procedure Destroy (List : in out Dependency_List);
-   --  Destroy the given list, and deallocates all the memory associated.
-   --  Has no effect if List is null.
 
    type Dependencies_Query_Status is
      (Failure,
@@ -125,20 +85,11 @@ package Src_Info.Queries is
 
    procedure Find_Dependencies
      (Lib_Info     : LI_File_Ptr;
-      Dependencies : out Dependency_List;
+      Dependencies : out Dependency_File_Info_List;
       Status       : out Dependencies_Query_Status);
    --  Return the list of units on which the units associated to the given
    --  LI_File depend.
    --
-   --  The list returned by this procedure should be deallocated after use.
-
-private
-
-   type Dependency is record
-      Unit_Name         : String_Access;
-      Filename          : String_Access;
-      Depends_From_Spec : Boolean;
-      Depends_From_Body : Boolean;
-   end record;
+   --  You shouldn't deallocate the list returned by this procedure.
 
 end Src_Info.Queries;
