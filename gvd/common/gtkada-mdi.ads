@@ -30,11 +30,7 @@ with Ada.Tags;
 with Glib;
 with Gint_Xml;
 with Gdk.GC;
-pragma Warnings (Off);
---  Need to use a use_clause for compatibility with gtk+1.2 and gtk+2.0
 with Gdk.Cursor;  use Gdk.Cursor;
-with Gdk.Types;   use Gdk.Types;
-pragma Warnings (On);
 with Gdk.Window;
 with Gtk.Button;
 with Gtk.Fixed;
@@ -46,7 +42,6 @@ with Gtk.Check_Menu_Item;
 with Gtk.Radio_Menu_Item;
 with Gtk.Widget;
 with Gtk.Window;
-with GNAT.OS_Lib;
 
 --  TODO:
 --  - handles multiple views of the MDI (through several top-level windows)
@@ -433,6 +428,8 @@ private
    --  - Docked: The item has been put in one of the notebooks on the sides.
    --      (the middle notebook only contains Normal items).
 
+   type String_Access is access all String;
+
    type MDI_Child_Record is new Gtk.Event_Box.Gtk_Event_Box_Record with record
       Initial : Gtk.Widget.Gtk_Widget;
       Initial_Child : Gtk.Widget.Gtk_Widget;
@@ -446,8 +443,8 @@ private
 
       State : State_Type := Normal;
 
-      Title : GNAT.OS_Lib.String_Access;
-      Short_Title : GNAT.OS_Lib.String_Access;
+      Title       : String_Access;
+      Short_Title : String_Access;
       --  Title of the item, as it appears in the title bar
 
       Dock : Dock_Side := None;
