@@ -694,6 +694,8 @@ package body GVD.Text_Box.Source_Editor.Builtin is
 
    procedure Highlight_Word
      (Editor   : access Builtin_Record;
+      Line     : Natural;
+      Column   : Natural;
       Position : GVD.Types.Position_Type)
    is
       Last     : Positive;
@@ -703,7 +705,6 @@ package body GVD.Text_Box.Source_Editor.Builtin is
       Index    : Gint := Invisible_Column_Width (Edit);
       Col      : Natural := 1;
       Buffer   : constant GVD.Types.String_Access := Get_Buffer (Edit);
-      Line     : Natural := 1;
       Tab_Size : Integer := Integer (Get_Tab_Size);
 
    begin
@@ -714,7 +715,6 @@ package body GVD.Text_Box.Source_Editor.Builtin is
          if Buffer (Text_Pos) = ASCII.LF then
             Col := 1;
             Index := Index + Invisible_Column_Width (Edit) + 1;
-            Line := Line + 1;
 
          elsif Buffer (Text_Pos) = ASCII.HT
            and then Col mod Tab_Size /= 0
