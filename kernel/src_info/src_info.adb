@@ -289,7 +289,7 @@ package body Src_Info is
    function Get
      (HT : LI_File_HTable.HTable; LI_Filename : String) return LI_File_Ptr
    is
-      Name : aliased String := LI_Filename;
+      Name : aliased String := Base_File_Name (LI_Filename);
       Node : constant LI_File_Node_Ptr :=
         LI_File_HTable.Get (HT, Name'Unchecked_Access);
    begin
@@ -655,8 +655,7 @@ package body Src_Info is
       return Source_File
    is
       Source : constant String := Get_Source_Filename (File);
-      LI : LI_File_Ptr :=
-        Get (Source_Info_List.Table, Base_File_Name (File.LI_Name.all));
+      LI : LI_File_Ptr := Get (Source_Info_List.Table, File.LI_Name.all);
       Current_Node : File_Info_Ptr_List;
    begin
       --  We must have found an LI file. However, it might still be
