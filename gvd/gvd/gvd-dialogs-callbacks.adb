@@ -83,9 +83,9 @@ package body Odd.Dialogs.Callbacks is
       if Visible_Is_Set (Dialog) then
          Process := Get_Process (Debugger_Process_Tab (Object).Debugger);
          Internal := Is_Internal_Command (Process);
-         Set_Internal_Command (Process, True);
+         Push_Internal_Command_Status (Process, True);
          Backtrace (Debugger_Process_Tab (Object).Debugger, Bt, Len);
-         Set_Internal_Command (Process, Internal);
+         Pop_Internal_Command_Status (Process);
          Update (Dialog, Bt (1 .. Len));
          Free  (Bt (1 .. Len));
       end if;
@@ -171,7 +171,7 @@ package body Odd.Dialogs.Callbacks is
       if Visible_Is_Set (Dialog) then
          Process := Get_Process (Debugger_Process_Tab (Object).Debugger);
          Internal := Is_Internal_Command (Process);
-         Set_Internal_Command (Process, True);
+         Push_Internal_Command_Status (Process, True);
 
          declare
             Info : Thread_Information_Array :=
@@ -181,7 +181,7 @@ package body Odd.Dialogs.Callbacks is
             Free (Info);
          end;
 
-         Set_Internal_Command (Process, Internal);
+         Pop_Internal_Command_Status (Process);
       end if;
    end On_Task_Process_Stopped;
 

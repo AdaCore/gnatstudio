@@ -644,7 +644,7 @@ package body Odd.Code_Editors is
          --  Do not emit the debugger output, and do not parse for file
          --  patterns, so as to avoid scrolling.
 
-         Set_Internal_Command (Get_Process (Debug), True);
+         Push_Internal_Command_Status (Get_Process (Debug), True);
          Set_Parse_File_Name (Get_Process (Debug), False);
          while Index <= Editor.Buffer'Last loop
             if Editor.Buffer (Index) = ASCII.LF then
@@ -661,7 +661,7 @@ package body Odd.Code_Editors is
             Index := Index + 1;
          end loop;
          Set_Parse_File_Name (Get_Process (Debug), True);
-         Set_Internal_Command (Get_Process (Debug), False);
+         Pop_Internal_Command_Status (Get_Process (Debug));
       end if;
 
       Set_Line (Editor, Editor.Current_Line);

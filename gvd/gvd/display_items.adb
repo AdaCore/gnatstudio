@@ -182,7 +182,7 @@ package body Display_Items is
       Value_Found : Boolean := False;
       Alias_Item : Display_Item;
    begin
-      Set_Internal_Command (Get_Process (Debugger.Debugger), True);
+      Push_Internal_Command_Status (Get_Process (Debugger.Debugger), True);
 
       declare
          Id : String := Get_Uniq_Id (Debugger.Debugger, Variable_Name);
@@ -197,7 +197,7 @@ package body Display_Items is
          if Alias_Item /= null then
             Select_Item (Alias_Item, Alias_Item.Entity);
             Show_Item (Debugger.Data_Canvas, Alias_Item);
-            Set_Internal_Command (Get_Process (Debugger.Debugger), False);
+            Pop_Internal_Command_Status (Get_Process (Debugger.Debugger));
             return;
          end if;
 
@@ -209,7 +209,7 @@ package body Display_Items is
             Entity := Parse_Type (Debugger.Debugger, Variable_Name);
 
             if Entity = null then
-               Set_Internal_Command (Get_Process (Debugger.Debugger), False);
+               Pop_Internal_Command_Status (Get_Process (Debugger.Debugger));
                return;
             else
                Parse_Value
@@ -237,7 +237,7 @@ package body Display_Items is
          end if;
 
          Item.Debugger := Debugger;
-         Set_Internal_Command (Get_Process (Debugger.Debugger), False);
+         Pop_Internal_Command_Status (Get_Process (Debugger.Debugger));
          Display_Items.Initialize (Item, Win, Variable_Name, Auto_Refresh);
       end;
    end Gtk_New;
@@ -546,7 +546,8 @@ package body Display_Items is
    begin
       --  Parse the value
 
-      Set_Internal_Command (Get_Process (Item.Debugger.Debugger), True);
+      Push_Internal_Command_Status
+        (Get_Process (Item.Debugger.Debugger), True);
 
       Parse_Value (Item.Debugger.Debugger, Item.Name.all,
                    Item.Entity, Value_Found);
@@ -567,14 +568,14 @@ package body Display_Items is
       Update_Display (Item);
       Item_Resized (Canvas, Item);
 
-      Set_Internal_Command (Get_Process (Item.Debugger.Debugger), False);
+      Pop_Internal_Command_Status (Get_Process (Item.Debugger.Debugger));
 
       --  If we got an exception while parsing the value, we register the new
       --  value as being incorrect.
    exception
       when Language.Unexpected_Type | Constraint_Error =>
          Set_Valid (Item.Entity, False);
-         Set_Internal_Command (Get_Process (Item.debugger.Debugger), False);
+         Pop_Internal_Command_Status (Get_Process (Item.Debugger.Debugger));
    end Update;
 
    -----------------

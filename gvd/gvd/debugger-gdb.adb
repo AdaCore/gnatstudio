@@ -368,9 +368,8 @@ package body Debugger.Gdb is
    procedure Initialize (Debugger : access Gdb_Debugger) is
    begin
       --  Wait for initial prompt (and display it in the window)
-      Set_Internal_Command (Get_Process (Debugger), False);
       Wait_Prompt (Debugger);
-      Set_Internal_Command (Get_Process (Debugger), True);
+      Push_Internal_Command_Status (Get_Process (Debugger), True);
 
       Send (Debugger, "set prompt (gdb) ");
       Send (Debugger, "set width 0");
@@ -404,8 +403,7 @@ package body Debugger.Gdb is
          Send (Debugger, "list");
          Send (Debugger, "info line");
       end if;
-
-      Set_Internal_Command (Get_Process (Debugger), False);
+      Pop_Internal_Command_Status (Get_Process (Debugger));
    end Initialize;
 
    -----------
@@ -448,11 +446,11 @@ package body Debugger.Gdb is
 
       --  Detect the current language, and get the name and line of the
       --  initial file.
-      Set_Internal_Command (Get_Process (Debugger), True);
+      Push_Internal_Command_Status (Get_Process (Debugger), True);
       Send (Debugger, "show lang");
       Send (Debugger, "list");
       Send (Debugger, "info line");
-      Set_Internal_Command (Get_Process (Debugger), False);
+      Pop_Internal_Command_Status (Get_Process (Debugger));
    end Set_Executable;
 
    -----------------

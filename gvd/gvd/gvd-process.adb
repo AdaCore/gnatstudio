@@ -249,7 +249,6 @@ package body Odd.Process is
       File_Last   : Positive;
       Line        : Natural := 0;
       First, Last : Natural;
-      Initial_Internal_Command : Boolean;
 
    begin
       if Get_Parse_File_Name (Get_Process (Process.Debugger)) then
@@ -260,9 +259,7 @@ package body Odd.Process is
 
       --  Do not show the output if we have an internal command
 
-      Initial_Internal_Command :=
-        Is_Internal_Command (Get_Process (Process.Debugger));
-      if not Initial_Internal_Command then
+      if not Is_Internal_Command (Get_Process (Process.Debugger))  then
          if First = 0 then
             Text_Output_Handler (Process, Str);
          else
@@ -292,18 +289,11 @@ package body Odd.Process is
 
          --  Display the file
 
-         Set_Internal_Command (Get_Process (Process.Debugger), True);
+         Push_Internal_Command_Status (Get_Process (Process.Debugger), True);
          Load_File
            (Process.Editor_Text,
             Str (File_First .. File_Last));
-
-         --  Restore the initial status of the process. We can not force it to
-         --  False, since, at least with gdb, the "info line" command used in
-         --  Load_File will also output a file reference, and thus we have a
-         --  recursive call to Text_Output_Handler.
-         Set_Internal_Command
-           (Get_Process (Process.Debugger),
-            Initial_Internal_Command);
+         Pop_Internal_Command_Status (Get_Process (Process.Debugger));
       end if;
 
       if Line /= 0 then
@@ -536,8 +526,6 @@ package body Odd.Process is
       --  ??? Should forbid commands that modify the configuration of the
       --  debugger, like "set annotate" for gdb, otherwise we can't be sure
       --  what to expect from the debugger.
-
-      Set_Internal_Command (Get_Process (Debugger.Debugger), False);
 
       --  Command has been converted to lower-cases, but the new version
       --  should be used only to compare with our standard list of commands.

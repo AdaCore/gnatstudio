@@ -769,9 +769,9 @@ package body Main_Debug_Window_Pkg.Callbacks is
         (Get_Child (Get_Cur_Page (Top.Process_Notebook)));
 
       Internal := Is_Internal_Command (Get_Process (Tab.Debugger));
-      Set_Internal_Command (Get_Process (Tab.Debugger), True);
+      Push_Internal_Command_Status (Get_Process (Tab.Debugger), True);
       Backtrace (Tab.Debugger, Bt, Len);
-      Set_Internal_Command (Get_Process (Tab.Debugger), Internal);
+      Pop_Internal_Command_Status (Get_Process (Tab.Debugger));
 
       if Top.Backtrace_Dialog = null then
          Gtk_New (Top.Backtrace_Dialog, Gtk_Window (Object), Bt (1 .. Len));
@@ -813,7 +813,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
         (Get_Child (Get_Cur_Page (Top.Process_Notebook)));
 
       Internal := Is_Internal_Command (Get_Process (Tab.Debugger));
-      Set_Internal_Command (Get_Process (Tab.Debugger), True);
+      Push_Internal_Command_Status (Get_Process (Tab.Debugger), True);
 
       declare
          Info : Thread_Information_Array := Info_Threads (Tab.Debugger);
@@ -830,7 +830,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
          Free (Info);
       end;
 
-      Set_Internal_Command (Get_Process (Tab.Debugger), Internal);
+      Pop_Internal_Command_Status (Get_Process (Tab.Debugger));
       Show_All (Top.Task_Dialog);
    end On_Threads1_Activate;
 

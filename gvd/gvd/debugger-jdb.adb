@@ -137,9 +137,8 @@ package body Debugger.Jdb is
       Language   : Language_Access;
    begin
       --  Wait for initial prompt
-      Set_Internal_Command (Get_Process (Debugger), False);
       Wait_Prompt (Debugger);
-      Set_Internal_Command (Get_Process (Debugger), True);
+      Push_Internal_Command_Status (Get_Process (Debugger), True);
 
       if Debugger.Main_Class /= null then
          Set_Executable (Debugger, Debugger.Main_Class.all);
@@ -148,7 +147,7 @@ package body Debugger.Jdb is
       Language := new Jdb_Java_Language;
       Set_Language (Debugger, Language);
       Set_Debugger (Language_Debugger_Access (Language), Debugger.all'Access);
-      Set_Internal_Command (Get_Process (Debugger), False);
+      Pop_Internal_Command_Status (Get_Process (Debugger));
    end Initialize;
 
    -----------
