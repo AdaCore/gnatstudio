@@ -259,7 +259,7 @@ package body VCS_View_API is
    begin
       --  ??? maybe we could cache this information.
       return Get_VCS_From_Id
-        (Get_Attribute_Value (Project, Vcs_Kind_Attribute, Ide_Package));
+        (Get_Attribute_Value (Project, Vcs_Kind_Attribute));
    end Get_Current_Ref;
 
    ---------------------
@@ -1170,9 +1170,9 @@ package body VCS_View_API is
          if Project /= No_Project then
             declare
                File_Check_Script : constant String := Get_Attribute_Value
-                 (Project, Vcs_File_Check, Ide_Package);
+                 (Project, Vcs_File_Check);
                Log_Check_Script  : constant String := Get_Attribute_Value
-                 (Project, Vcs_Log_Check, Ide_Package);
+                 (Project, Vcs_Log_Check);
                Log_File  : constant String :=
                  Get_Log_From_File (Kernel, Data (Files_Temp), True);
                File_Args         : String_List.List;

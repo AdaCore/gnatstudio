@@ -255,7 +255,7 @@ package body VCS_Module is
 
          if Project /= No_Project
            and then To_Lower (Systems (S).all) = To_Lower
-             (Get_Attribute_Value (Project, Vcs_Kind_Attribute, Ide_Package))
+             (Get_Attribute_Value (Project, Vcs_Kind_Attribute))
          then
             Set_Active (Radio, True);
             Main.Selected := Radio;
@@ -313,10 +313,10 @@ package body VCS_Module is
       if Project /= No_Project then
          Set_Text
            (Main.Log_Checker,
-            Get_Attribute_Value (Project, Vcs_Log_Check, Ide_Package));
+            Get_Attribute_Value (Project, Vcs_Log_Check));
          Set_Text
            (Main.File_Checker,
-            Get_Attribute_Value (Project, Vcs_File_Check, Ide_Package));
+            Get_Attribute_Value (Project, Vcs_File_Check));
       end if;
 
       Show_All (Main);
@@ -340,7 +340,7 @@ package body VCS_Module is
       Selector : constant VCS_Selector := VCS_Selector (Widget);
       Changed  : Boolean := False;
       VCS_Kind : constant String := To_Lower (Get_Attribute_Value
-        (Project, Vcs_Kind_Attribute, Ide_Package));
+        (Project, Vcs_Kind_Attribute));
 
    begin
       if (Project = No_Project
@@ -354,16 +354,14 @@ package body VCS_Module is
          if Get_Label (Selector.Selected) /= -Auto_Detect then
             Update_Attribute_Value_In_Scenario
               (Project            => Project,
-               Pkg_Name           => Ide_Package,
                Scenario_Variables => Scenario_Variables,
-               Attribute_Name     => Vcs_Kind_Attribute,
+               Attribute          => Vcs_Kind_Attribute,
                Value              => Get_Label (Selector.Selected));
          else
             Delete_Attribute
               (Project            => Project,
-               Pkg_Name           => Ide_Package,
                Scenario_Variables => Scenario_Variables,
-               Attribute_Name     => Vcs_Kind_Attribute);
+               Attribute          => Vcs_Kind_Attribute);
          end if;
 
          Trace (Me, "Vcs_Kind is different");
@@ -372,21 +370,19 @@ package body VCS_Module is
 
       if Project = No_Project
         or else Get_Text (Selector.Log_Checker) /=
-        Get_Attribute_Value (Project, Vcs_Log_Check, Ide_Package)
+        Get_Attribute_Value (Project, Vcs_Log_Check)
       then
          if Get_Text (Selector.Log_Checker) /= "" then
             Update_Attribute_Value_In_Scenario
               (Project            => Project,
-               Pkg_Name           => Ide_Package,
                Scenario_Variables => Scenario_Variables,
-               Attribute_Name     => Vcs_Log_Check,
+               Attribute          => Vcs_Log_Check,
                Value              => Get_Text (Selector.Log_Checker));
          else
             Delete_Attribute
               (Project            => Project,
-               Pkg_Name           => Ide_Package,
                Scenario_Variables => Scenario_Variables,
-               Attribute_Name     => Vcs_Log_Check);
+               Attribute          => Vcs_Log_Check);
          end if;
          Trace (Me, "Vcs_Log_Check is different");
          Changed := True;
@@ -394,21 +390,19 @@ package body VCS_Module is
 
       if Project = No_Project
         or else Get_Text (Selector.File_Checker) /= Get_Attribute_Value
-          (Project, Vcs_File_Check, Ide_Package)
+          (Project, Vcs_File_Check)
       then
          if Get_Text (Selector.File_Checker) /= "" then
             Update_Attribute_Value_In_Scenario
               (Project            => Project,
-               Pkg_Name           => Ide_Package,
                Scenario_Variables => Scenario_Variables,
-               Attribute_Name     => Vcs_File_Check,
+               Attribute          => Vcs_File_Check,
                Value              => Get_Text (Selector.File_Checker));
          else
             Delete_Attribute
               (Project            => Project,
-               Pkg_Name           => Ide_Package,
                Scenario_Variables => Scenario_Variables,
-               Attribute_Name     => Vcs_File_Check);
+               Attribute          => Vcs_File_Check);
          end if;
          Trace (Me, "Vcs_File_Check is different");
          Changed := True;
