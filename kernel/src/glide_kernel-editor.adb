@@ -26,14 +26,19 @@
 -- executable file  might be covered by the  GNU Public License.     --
 -----------------------------------------------------------------------
 
-with Glide_Main_Window; use Glide_Main_Window;
-with Glide_Page;        use Glide_Page;
-with Gtk.Box;           use Gtk.Box;
-with Gtk.Widget;        use Gtk.Widget;
-with Gtkada.MDI;        use Gtkada.MDI;
-with Src_Editor_Box;    use Src_Editor_Box;
-with GVD.Process;       use GVD.Process;
-with String_Utils;      use String_Utils;
+with Glide_Kernel.Console; use Glide_Kernel.Console;
+with Glide_Kernel.Project; use Glide_Kernel.Project;
+with Glide_Main_Window;    use Glide_Main_Window;
+with Glide_Page;           use Glide_Page;
+with GNAT.OS_Lib;          use GNAT.OS_Lib;
+with Gtk.Box;              use Gtk.Box;
+with Gtk.Widget;           use Gtk.Widget;
+with Gtkada.MDI;           use Gtkada.MDI;
+with Src_Editor_Box;       use Src_Editor_Box;
+with Src_Info;             use Src_Info;
+with Src_Info.ALI;         use Src_Info.ALI;
+with GVD.Process;          use GVD.Process;
+with String_Utils;         use String_Utils;
 
 package body Glide_Kernel.Editor is
 
@@ -66,6 +71,14 @@ package body Glide_Kernel.Editor is
    --  Return the source editor that has currently the focus in the MDI
    --  window associated with Top, null the focus child is not an editor.
 
+   function Tmp_Get_ALI_Filename
+     (Kernel          : access Kernel_Handle_Record'Class;
+      Source_Filename : String)
+      return String;
+   --  ??? Return the full path to the ALI file associated to the given source
+   --  ??? file. Over simplistic algorithm applied: replaces the extension by
+   --  ??? ".ali". That'll do it until the demo.
+
    ------------------------
    -- Get_Current_Editor --
    ------------------------
@@ -82,6 +95,41 @@ package body Glide_Kernel.Editor is
          return null;
       end if;
    end Get_Current_Editor;
+
+   --------------------------
+   -- Tmp_Get_ALI_Filename --
+   --------------------------
+
+   function Tmp_Get_ALI_Filename
+     (Kernel          : access Kernel_Handle_Record'Class;
+      Source_Filename : String)
+      return String
+   is
+      Short_Source : constant String := Base_File_Name (Source_Filename);
+      Last_Dot     : Integer := Short_Source'Last;
+      ALI_Ext      : constant String := ".ali";
+   begin
+      while Last_Dot >= Short_Source'First loop
+         exit when Short_Source (Last_Dot) = '.';
+         Last_Dot := Last_Dot - 1;
+      end loop;
+      if Last_Dot < Short_Source'First then
+         Last_Dot := Short_Source'Last + 1;
+      end if;
+
+      declare
+         Short_Result : constant String :=
+           Short_Source (Short_Source'First .. Last_Dot - 1) & ALI_Ext;
+         Path : constant String :=
+           Find_Object_File (Kernel, Short_Result, Use_Object_Path => True);
+      begin
+         if Path = "" then
+            return Short_Result;
+         else
+            return Path;
+         end if;
+      end;
+   end Tmp_Get_ALI_Filename;
 
    -------------
    -- Gtk_New --
@@ -335,5 +383,67 @@ package body Glide_Kernel.Editor is
    begin
       return Get_Title (Get_Focus_Child (MDI));
    end Get_Focus_Title;
+
+   ------------------------------
+   -- Goto_Declaration_Or_Body --
+   ------------------------------
+
+   procedure Goto_Declaration_Or_Body
+     (Kernel : access Kernel_Handle_Record'Class)
+   is
+      Top         : constant Glide_Window := Glide_Window (Kernel.Main_Window);
+      Source      : Source_Editor_Box := Get_Current_Editor (Top);
+      Source_Info : LI_File_Ptr :=
+        Locate_From_Source
+          (Get_Source_Info_List (Kernel), Get_Filename (Source));
+
+      Filename     : String_Access;
+      Start_Line   : Positive;
+      Start_Column : Positive;
+      End_Line     : Positive;
+      End_Column   : Positive;
+   begin
+      if Source_Info = No_LI_File or else Is_Incomplete (Source_Info) then
+         declare
+            ALI_Filename : constant String :=
+              Tmp_Get_ALI_Filename (Kernel, Get_Filename (Source));
+            Success : Boolean;
+         begin
+            Parse_ALI_File
+              (ALI_Filename, Get_Project_View (Kernel), Kernel.Source_Path.all,
+               Kernel.Source_Info_List, Source_Info, Success);
+            if not Success then
+               Console.Insert
+                 (Kernel, "Could not find associated ALI file",
+                  Highlight_Sloc => False);
+               return;
+            end if;
+         end;
+      end if;
+
+      Find_Declaration_Or_Body
+        (Editor => Source, Lib_Info => Source_Info, Filename => Filename,
+         Start_Line => Start_Line, Start_Column => Start_Column,
+         End_Line => End_Line, End_Column => End_Column);
+
+      if Filename = null then
+         --  Means the query failed.
+         Console.Insert
+           (Kernel, "Cross-reference failed", Highlight_Sloc => False);
+         --  ??? A more elaborate error message, with intl support will be
+         --  ??? done later.
+         return;
+      end if;
+
+      --  Open the file, and reset Source to the new editor in order to
+      --  highlight the region returned by the Xref query.
+      Go_To
+        (Kernel, Filename.all, Start_Line, Start_Column, Highlight => False);
+      Source := Get_Current_Editor (Top);
+      Unhighlight_All (Source);
+      Highlight_Region
+        (Source, Start_Line, Start_Column, End_Line, End_Column);
+
+   end Goto_Declaration_Or_Body;
 
 end Glide_Kernel.Editor;
