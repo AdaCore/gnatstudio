@@ -1,7 +1,7 @@
 with "shared";
 project GNAT is
 
-   for Source_Dirs use ("gnat");
+   for Source_Dirs use ("gnat", "gnat/sdefault");
    for Object_Dir use "obj";
 
    package Compiler is
