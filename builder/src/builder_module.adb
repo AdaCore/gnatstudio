@@ -187,6 +187,13 @@ package body Builder_Module is
    --  If Menu is null, a new one is created if there are any entries
    --  If Set_Shortcut is true, the F4 shortcut is set for the first entry.
 
+   procedure Add_Root_Project_Build_Menu
+     (Menu         : in out Gtk_Menu;
+      Kernel       : access Kernel_Handle_Record'Class;
+      Set_Shortcut : Boolean);
+   --  Add default entries in the Build menu
+   --  (build "all", "compile all sources")
+
    procedure Add_Run_Menu
      (Menu         : in out Gtk_Menu;
       Project      : Project_Type;
@@ -1581,7 +1588,20 @@ package body Builder_Module is
             end if;
          end;
       end loop;
+   end Add_Build_Menu;
 
+   ---------------------------------
+   -- Add_Root_Project_Build_Menu --
+   ---------------------------------
+
+   procedure Add_Root_Project_Build_Menu
+     (Menu         : in out Gtk_Menu;
+      Kernel       : access Kernel_Handle_Record'Class;
+      Set_Shortcut : Boolean)
+   is
+      Mitem : Dynamic_Menu_Item;
+      Group : constant Gtk_Accel_Group := Get_Default_Accelerators (Kernel);
+   begin
       Mitem := new Dynamic_Menu_Item_Record;
       Gtk.Menu_Item.Initialize (Mitem, -Project_Make_Suffix);
       Append (Menu, Mitem);
@@ -1615,7 +1635,7 @@ package body Builder_Module is
          User_Data => File_Project_Record'
            (Project => Get_Project (Kernel),
             File    => VFS.No_File));
-   end Add_Build_Menu;
+   end Add_Root_Project_Build_Menu;
 
    ------------------
    -- Add_Run_Menu --
@@ -1781,6 +1801,8 @@ package body Builder_Module is
             end;
          end loop;
       end;
+
+      Add_Root_Project_Build_Menu (Builder_Module.Make_Menu, Kernel, True);
 
       --  No main program ?
 
