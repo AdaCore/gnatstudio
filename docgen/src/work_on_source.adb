@@ -23,6 +23,7 @@ with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
+with Language.Ada;              use Language.Ada;
 with Doc_Types;                 use Doc_Types;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with OS_Utils;                  use OS_Utils;
@@ -51,7 +52,15 @@ package body Work_On_Source is
       Entity_List       : in out Type_Entity_List.List;
       Process_Body_File : Boolean;
       Options           : All_Options) is
+
+      File_Text         : GNAT.OS_Lib.String_Access;
+      Parsed_List       : Construct_List;
+
    begin
+
+      --  parse the source file and create the Parsed_List
+      File_Text := Read_File (Source_Filename);
+
       if not Options.Doc_One_File or First_File then
          Process_Open_File (Doc_File,
                             Package_Name,
@@ -71,6 +80,10 @@ package body Work_On_Source is
       --  different ways of process for .ads and .adb files
       if File_Extension (File_Name (Source_Filename)) = ".ads" then
 
+         Parse_Constructs (Ada_Lang,
+                           File_Text.all,
+                           Parsed_List);
+
          Sort_List_Name (Entity_List);
 
          --  the order of the following procedure calls can't be changed
@@ -79,54 +92,68 @@ package body Work_On_Source is
          Process_Package_Description (Doc_File,
                                       Source_Filename,
                                       Package_Name,
+                                      File_Text.all,
                                       Options);
          Process_With_Clause (Doc_File,
                               Entity_List,
                               Source_Filename,
                               Package_Name,
+                              Parsed_List,
+                              File_Text,
                               Options);
          Process_Packages     (Doc_File,
                                Entity_List,
                                Source_Filename,
                                Package_Name,
+                               Parsed_List,
+                               File_Text,
                                Options);
          Process_Vars        (Doc_File,
                               Entity_List,
                               Source_Filename,
                               Package_Name,
+                              Parsed_List,
+                              File_Text,
                               Options);
          Process_Exceptions  (Doc_File,
                               Entity_List,
                               Source_Filename,
                               Package_Name,
+                              Parsed_List,
+                              File_Text,
                               Options);
          Process_Types       (Doc_File,
                               Entity_List,
                               Source_Filename,
                               Package_Name,
+                              Parsed_List,
+                              File_Text,
                               Options);
          Process_Subprograms (Doc_File,
                               Entity_List,
                               Source_Filename,
                               Process_Body_File,
                               Package_Name,
+                              Parsed_List,
+                              File_Text,
                               Options);
+         Free (Parsed_List);
+
       else
-
-
          Process_One_Body_File (Doc_File,
                                 Source_Filename,
                                 Entity_List,
+                                File_Text,
                                 Options);
       end if;
-
       Process_Footer (Doc_File,
                      Source_Filename,
                      Options);
-
       if not Options.Doc_One_File or Last_File then
-         Process_Close_File (Doc_File, Package_Name, Options);
+         Process_Close_File (Doc_File, Options);
       end if;
+
+      Free (File_Text);
    end Process_Source;
 
    -----------------------
@@ -158,16 +185,10 @@ package body Work_On_Source is
 
    procedure Process_Close_File
      (Doc_File      : File_Type;
-      Package_File  : String;
       Options       : All_Options) is
 
       Data_Close    : Doc_Info (Info_Type => Close_Info);
    begin
-
-      if false then                --  just to avoid the warning
-         Put_Line (Package_File);
-      end if;
-
       Data_Close := Doc_Info'(Close_Info,
                               Close_Title => new String'("End documentation"));
 
@@ -184,16 +205,17 @@ package body Work_On_Source is
      (Doc_File           : File_Type;
       Source_File        : String;
       Entity_List        : Type_Entity_List.List;
+      File_Text          : GNAT.OS_Lib.String_Access;
       Options            : All_Options)
    is
       Data_Line          : Doc_Info (Info_Type => Body_Line_Info);
    begin
       --  initialise the Doc_Info data
       Data_Line := Doc_Info'(Body_Line_Info,
-                             Body_Text      => Read_File (Source_File),
+                             Body_Text      => File_Text,
                              Body_File      =>
                              new String'(Source_File),
-                             Body_List      => Entity_List);
+                             Body_Entity_List => Entity_List);
 
       --  call the documentation procedure
       Options.Doc_Subprogram (Doc_File, Data_Line);
@@ -494,37 +516,35 @@ package body Work_On_Source is
      (Doc_File        : File_Type;
       Source_Filename : String;
       Package_Name    : String;
+      Text            : String;
       Options         : All_Options) is
 
       Data_Subtitle    : Doc_Info (Info_Type => Subtitle_Info);
       Data_Package     : Doc_Info (Info_Type => Package_Desc_Info);
 
       Description_Found, Start_Found : Boolean;
-      File                           : File_Type;
-      Last, Line                     : Natural;
-      Line_From_File                 : String (1 .. Max_Line_Length);
+      Line                           : Natural;
+      Max_Lines                      : constant Natural :=
+        Count_Lines (Text);
       Description                    : GNAT.OS_Lib.String_Access;
 
    begin
-
       --  tries to find the first line of the description of the package
       --  if something else is found than a comment line => no description
       Description_Found := False;
       Start_Found       := False;
       Line              := 1;
-      Open (File, In_File, Source_Filename);
-      while not Start_Found and not End_Of_File (File) loop
-         Ada.Text_IO.Get_Line (File, Line_From_File, Last);
-         if Line_Is_Comment (Line_From_File (1 .. Last)) then
+      while not Start_Found and Line < Max_Lines + 1 loop
+         if Line_Is_Comment (Get_Line_From_String (Text, Line)) then
             Description_Found := True;
             Start_Found       := True;
-         elsif not Line_Is_Empty (Line_From_File (1 .. Last)) then
+         elsif not Line_Is_Empty
+           (Get_Line_From_String (Text, Line)) then
             Start_Found       := True;
          else
             Line := Line + 1;
          end if;
       end loop;
-      Close (File);
 
       --  if package description found
       if Description_Found then
@@ -549,7 +569,6 @@ package body Work_On_Source is
                                      => Description);
          Options.Doc_Subprogram (Doc_File, Data_Package);
       end if;
-
    end Process_Package_Description;
 
    --------------------------
@@ -561,96 +580,42 @@ package body Work_On_Source is
       Entity_List     : in out Type_Entity_List.List;
       Source_Filename : String;
       Package_Name    : String;
+      Parsed_List     : Construct_List;
+      File_Text       : GNAT.OS_Lib.String_Access;
       Options         : All_Options) is
-      --  the part will search for all the lines
-      --  containing a with and put them all
-      --  together to one string. After the first
-      --  package or subprogram definition is
-      --  found, the search will be stopped. Comment
-      --  lines will be ignored
 
       Data_Subtitle   : Doc_Info (Info_Type => Subtitle_Info);
       Data_With       : Doc_Info (Info_Type => With_Info);
 
-      End_Of_With        : Boolean;
-      File               : File_Type;
-      Last               : Natural;
-      Line_From_File     : String (1 .. Max_Line_Length);
-      New_Line, Old_Line : GNAT.OS_Lib.String_Access;
-
-      --  to store the positions of within the strings
-      --  to avoid too much calculation and for more visibility
-      Procedure_In, Function_In, Package_In : Integer;
-      Type_In, With_In, Comment_In, Semi_In : Integer;
-
+      Old_Line, New_Line : GNAT.OS_Lib.String_Access;
+      Parse_Node         : Construct_Access;
+      Parsed_List_End    : Boolean;
    begin
-      End_Of_With := False;
-      Old_Line    := new String'("");
+      New_Line        := new String'("  ");
+      Parse_Node      := Parsed_List.First;
+      Parsed_List_End := False;
 
-      Open (File, In_File, Source_Filename);
+      --  exception if no paresed entities found: later
 
-      while not End_Of_With and not End_Of_File (File) loop
-         Ada.Text_IO.Get_Line (File, Line_From_File, Last);
+      while not Parsed_List_End loop
 
-         Procedure_In := Get_String_Index
-           (To_Lower (Line_From_File (1 .. Last)),
-            1, "procedure ");
-         Function_In := Get_String_Index
-           (To_Lower (Line_From_File (1 .. Last)),
-            1, "function ");
-         Type_In := Get_String_Index
-           (To_Lower (Line_From_File (1 .. Last)),
-            1, "type ");
-         Package_In := Get_String_Index
-           (To_Lower (Line_From_File (1 .. Last)),
-            1, "package ");
-         With_In := Get_String_Index
-           (To_Lower (Line_From_File (1 .. Last)),
-            1, "with ");
-         Comment_In := Get_String_Index
-           (Line_From_File (1 .. Last),
-            1, "--");
-         Semi_In := Get_String_Index
-           (Line_From_File (1 .. Last),
-            1, ";");
+         if Parse_Node.Category = Cat_With then
+            Old_Line := New_Line;
+            New_Line := new String '(New_Line.all & ASCII.LF &
+                                     File_Text.all
+                                       (Parse_Node.Sloc_Start.Index ..
+                                          Parse_Node.Sloc_End.Index));
+            Free (Old_Line);
+         end if;
 
-         if Last > 1 then
-            if With_In > 0 and
-              (Comment_In = 0 or With_In < Comment_In) and
-              Semi_In > 0 and
-              Function_In = 0 and      --  against "with function..."
-              Procedure_In = 0
-            then
-               New_Line :=
-                 new String'(Old_Line.all &
-                                ASCII.LF &
-                                  Line_From_File
-                                    (1 .. Get_String_Index (Line_From_File,
-                                                          1, ";")));
-
-               Old_Line := new String'(New_Line.all & " ");
-               Free (New_Line);
-            elsif  (Comment_In = 0  and
-                      (Package_In > 0 or
-                         Procedure_In > 0 or
-                           Function_In > 0 or
-                             Type_In > 0))
-                  or (Comment_In > 0 and
-                            ((Package_In > 0 and
-                                  Comment_In > Package_In) or
-                                   (Procedure_In > 0 and
-                                          Comment_In > Procedure_In) or
-                                     (Function_In > 0 and
-                                              Comment_In > Function_In) or
-                                       (Type_In > 0 and
-                                                  Comment_In > Type_In))) then
-               End_Of_With := True;
-            end if;
+         if Parse_Node = Parsed_List.Last then
+            Parsed_List_End := True;
+         else
+            Parse_Node := Parse_Node.Next;
          end if;
       end loop;
-      Close (File);
 
-      if Old_Line.all'Length > 0 then
+      if New_Line.all'Length > 0 then
 
          Data_Subtitle := Doc_Info'(Subtitle_Info,
                                     Subtitle_Name =>
@@ -658,19 +623,17 @@ package body Work_On_Source is
                                     Subtitle_Kind => With_Info,
                                     Subtitle_Package =>
                                     new String'(Package_Name));
-
          Options.Doc_Subprogram (Doc_File, Data_Subtitle);
       end if;
-
       Data_With := Doc_Info'(With_Info,
-                             With_Lines => Old_Line,
                              With_List  => Entity_List,
-                             With_File  => new String '(Source_Filename));
+                             With_File  => new String '(Source_Filename),
+                             With_Header => New_Line);
       Options.Doc_Subprogram (Doc_File, Data_With);
 
       Free (Data_Subtitle.Subtitle_Name);
       Free (Data_Subtitle.Subtitle_Package);
-      Free (Old_Line);
+      Free (New_Line);
    end Process_With_Clause;
 
    ----------------------
@@ -682,10 +645,13 @@ package body Work_On_Source is
       Entity_List     : in out Type_Entity_List.List;
       Source_Filename : String;
       Package_Name    : String;
+      Parsed_List     : Construct_List;
+      File_Text       : GNAT.OS_Lib.String_Access;
       Options         : All_Options) is
 
       Entity_Node     : Type_Entity_List.List_Node;
       Description     : GNAT.OS_Lib.String_Access;
+      Header          : GNAT.OS_Lib.String_Access;
       Data_Subtitle   : Doc_Info (Info_Type => Subtitle_Info);
       Data_Package    : Doc_Info (Info_Type => Package_Info);
 
@@ -712,29 +678,37 @@ package body Work_On_Source is
             and TEL.Data (Entity_Node).File_Name.all = Source_Filename
             then
 
-               --  check if the subtitle "Constand and Named Numbers:"
-               --  has been set already.
+               --  check if the subtitle has been set already.
                --  Can't be set before the "if"
                if not First_Already_Set then
                   Options.Doc_Subprogram (Doc_File, Data_Subtitle);
                   First_Already_Set := True;
                end if;
 
+               Header :=
+                 Get_Whole_Header (File_Text.all,
+                                   Parsed_List,
+                                   TEL.Data (Entity_Node).Short_Name.all,
+                                   TEL.Data (Entity_Node).Line);
+
                Description := new String'
                  (Extract_Comment (TEL.Data (Entity_Node).File_Name.all,
                                    TEL.Data (Entity_Node).Line,
-                                   TEL.Data (Entity_Node).Header_Lines,
+                                   Count_Lines (Header.all),
                                    False,
                                    Options));
                Data_Package := Doc_Info'(Package_Info,
                                          Package_Entity      =>
                                            TEL.Data (Entity_Node),
                                          Package_Description => Description,
-                                         Package_List        => Entity_List);
+                                         Package_List        => Entity_List,
+                                         Package_Header => Header);
                Options.Doc_Subprogram (Doc_File, Data_Package);
             end if;
             Entity_Node := TEL.Next (Entity_Node);
             Free (Description);
+            Free (Header);
+            Free (Data_Package.Package_Header);
          end loop;
          Free (Data_Subtitle.Subtitle_Name);
          Free (Data_Subtitle.Subtitle_Package);
@@ -750,10 +724,13 @@ package body Work_On_Source is
       Entity_List     : in out Type_Entity_List.List;
       Source_Filename : String;
       Package_Name    : String;
+      Parsed_List     : Construct_List;
+      File_Text       : GNAT.OS_Lib.String_Access;
       Options         : All_Options) is
 
       Entity_Node     : Type_Entity_List.List_Node;
       Description     : GNAT.OS_Lib.String_Access;
+      Header          : GNAT.OS_Lib.String_Access;
       Data_Subtitle   : Doc_Info (Info_Type => Subtitle_Info);
       Data_Var        : Doc_Info (Info_Type => Var_Info);
 
@@ -786,21 +763,30 @@ package body Work_On_Source is
                   First_Already_Set := True;
                end if;
 
+               Header :=
+                 Get_Whole_Header (File_Text.all,
+                                   Parsed_List,
+                                   TEL.Data (Entity_Node).Short_Name.all,
+                                   TEL.Data (Entity_Node).Line);
+
                Description := new String'
                  (Extract_Comment (TEL.Data (Entity_Node).File_Name.all,
                                    TEL.Data (Entity_Node).Line,
-                                   TEL.Data (Entity_Node).Header_Lines,
+                                   Count_Lines (Header.all),
                                    False,
                                    Options));
 
                Data_Var := Doc_Info'(Var_Info,
                                      Var_Entity      => TEL.Data (Entity_Node),
                                      Var_Description => Description,
-                                     Var_List        => Entity_List);
+                                     Var_List        => Entity_List,
+                                     Var_Header     => Header);
                Options.Doc_Subprogram (Doc_File, Data_Var);
             end if;
             Entity_Node := TEL.Next (Entity_Node);
             Free (Description);
+            Free (Header);
+            Free (Data_Var.Var_Header);
          end loop;
          Free (Data_Subtitle.Subtitle_Name);
          Free (Data_Subtitle.Subtitle_Package);
@@ -816,10 +802,13 @@ package body Work_On_Source is
       Entity_List     : in out Type_Entity_List.List;
       Source_Filename : String;
       Package_Name    : String;
+      Parsed_List     : Construct_List;
+      File_Text       : GNAT.OS_Lib.String_Access;
       Options         : All_Options) is
 
       Entity_Node     : Type_Entity_List.List_Node;
       Description     : GNAT.OS_Lib.String_Access;
+      Header          : GNAT.OS_Lib.String_Access;
       Data_Subtitle   : Doc_Info (Info_Type => Subtitle_Info);
       Data_Exception  : Doc_Info (Info_Type => Exception_Info);
 
@@ -852,10 +841,16 @@ package body Work_On_Source is
                   First_Already_Set := True;
                end if;
 
+               Header :=
+                 Get_Whole_Header (File_Text.all,
+                                   Parsed_List,
+                                   TEL.Data (Entity_Node).Short_Name.all,
+                                   TEL.Data (Entity_Node).Line);
+
                Description := new String'
                  (Extract_Comment (TEL.Data (Entity_Node).File_Name.all,
                                    TEL.Data (Entity_Node).Line,
-                                   TEL.Data (Entity_Node).Header_Lines,
+                                   Count_Lines (Header.all),
                                    False,
                                    Options));
 
@@ -865,11 +860,15 @@ package body Work_On_Source is
                                            Exception_Description =>
                                              Description,
                                            Exception_List        =>
-                                             Entity_List);
+                                             Entity_List,
+                                           Exception_Header   =>
+                                             Header);
                Options.Doc_Subprogram (Doc_File, Data_Exception);
             end if;
             Entity_Node := TEL.Next (Entity_Node);
             Free (Description);
+            Free (Header);
+            Free (Data_Exception.Exception_Header);
          end loop;
          Free (Data_Subtitle.Subtitle_Name);
          Free (Data_Subtitle.Subtitle_Package);
@@ -885,10 +884,13 @@ package body Work_On_Source is
       Entity_List     : in out Type_Entity_List.List;
       Source_Filename : String;
       Package_Name    : String;
+      Parsed_List     : Construct_List;
+      File_Text       : GNAT.OS_Lib.String_Access;
       Options         : All_Options) is
 
       Entity_Node     : Type_Entity_List.List_Node;
       Description     : GNAT.OS_Lib.String_Access;
+      Header          : GNAT.OS_Lib.String_Access;
       Data_Subtitle   : Doc_Info (Info_Type => Subtitle_Info);
       Data_Type       : Doc_Info (Info_Type => Type_Info);
 
@@ -913,23 +915,6 @@ package body Work_On_Source is
             --  check if defined in this file (the rest of entities
             --  only for the body documentation)
               and TEL.Data (Entity_Node).File_Name.all = Source_Filename
-            --  search for the word "type" to avoid pure subprograms
-            --  identified as access types
-              and  Get_String_Index
-                (To_Lower
-                     (TEL.Data (Entity_Node).Header.all), 1, "type") > 0
-            --  and check if really the word "type" was found and not
-            --  only as a part within
-            --  another word, which would be in the header of the subprogram
-              and  (Get_String_Index
-                      (To_Lower
-                         (TEL.Data (Entity_Node).Header.all), 1, "type") <
-                      Get_String_Index
-                        (To_Lower
-                             (TEL.Data (Entity_Node).Header.all), 1, "(") or
-                      Get_String_Index
-                        (To_Lower
-                             (TEL.Data (Entity_Node).Header.all), 1, "(") = 0)
             then
 
                --  check if still the subtitle "Types:" has to be set.
@@ -939,10 +924,16 @@ package body Work_On_Source is
                   First_Already_Set := True;
                end if;
 
-               Description := new String '
+               Header :=
+                 Get_Whole_Header (File_Text.all,
+                                   Parsed_List,
+                                   TEL.Data (Entity_Node).Short_Name.all,
+                                   TEL.Data (Entity_Node).Line);
+
+               Description := new String'
                  (Extract_Comment (TEL.Data (Entity_Node).File_Name.all,
                                    TEL.Data (Entity_Node).Line,
-                                   TEL.Data (Entity_Node).Header_Lines,
+                                   Count_Lines (Header.all),
                                    False,
                                    Options));
 
@@ -950,12 +941,15 @@ package body Work_On_Source is
                                       Type_Entity      =>
                                         TEL.Data (Entity_Node),
                                       Type_Description => Description,
-                                      Type_List        => Entity_List);
+                                      Type_List        => Entity_List,
+                                      Type_Header => Header);
                Options.Doc_Subprogram (Doc_File, Data_Type);
 
             end if;
             Entity_Node := TEL.Next (Entity_Node);
             Free (Description);
+            Free (Header);
+            Free (Data_Type.Type_Header);
          end loop;
       end if;
       Free (Data_Subtitle.Subtitle_Name);
@@ -972,10 +966,13 @@ package body Work_On_Source is
       Source_Filename    : String;
       Process_Body_File  : Boolean;
       Package_Name       : String;
+      Parsed_List        : Construct_List;
+      File_Text          : GNAT.OS_Lib.String_Access;
       Options            : All_Options) is
 
       Entity_Node             : Type_Entity_List.List_Node;
       Description             : GNAT.OS_Lib.String_Access;
+      Header                  : GNAT.OS_Lib.String_Access;
       Data_Subtitle           : Doc_Info (Info_Type => Subtitle_Info);
       Data_Subprogram         : Doc_Info (Info_Type => Subprogram_Info);
 
@@ -1008,12 +1005,19 @@ package body Work_On_Source is
                   First_Already_Set := True;
                end if;
 
+               Header :=
+                 Get_Whole_Header (File_Text.all,
+                                   Parsed_List,
+                                   TEL.Data (Entity_Node).Short_Name.all,
+                                   TEL.Data (Entity_Node).Line);
+
                Description := new String'
                  (Extract_Comment (TEL.Data (Entity_Node).File_Name.all,
                                    TEL.Data (Entity_Node).Line,
-                                   TEL.Data (Entity_Node).Header_Lines,
+                                   Count_Lines (Header.all),
                                    False,
                                    Options));
+
                Data_Subprogram := Doc_Info'(Subprogram_Info,
                                             Subprogram_Entity      =>
                                               TEL.Data (Entity_Node),
@@ -1022,20 +1026,24 @@ package body Work_On_Source is
                                             Subprogram_Link        =>
                                               Process_Body_File,
                                             Subprogram_List        =>
-                                              Entity_List);
+                                              Entity_List,
+                                            Subprogram_Header =>
+                                            Header);
                Options.Doc_Subprogram (Doc_File, Data_Subprogram);
             end if;
             Entity_Node := TEL.Next (Entity_Node);
             Free (Description);
+            Free (Header);
+            Free (Data_Subprogram.Subprogram_Header);
          end loop;
       end if;
       Free (Data_Subtitle.Subtitle_Name);
       Free (Data_Subtitle.Subtitle_Package);
    end Process_Subprograms;
 
-   ----------------
-   -- Go_To_Line --
-   ----------------
+   ------------------
+   --  Go_To_Line  --   !!! needed?
+   ------------------
 
    procedure Go_To_Line
      (File : File_Type;
@@ -1049,9 +1057,9 @@ package body Work_On_Source is
       --  how convert Natural->Count in order to use Skip?
    end Go_To_Line;
 
-   ------------------------
-   -- Get_Line_From_File --
-   ------------------------
+   --------------------------
+   --  Get_Line_From_File  --   !!!needed?
+   --------------------------
 
    function Get_Line_From_File
      (File_Name : String;
@@ -1146,9 +1154,9 @@ package body Work_On_Source is
       return Comment_Line (J + 3 .. Comment_Line'Last);
    end Kill_Prefix;
 
-   ---------------------
-   -- Extract_Comment --
-   ---------------------
+   -----------------------
+   --  Extract_Comment  --
+   -----------------------
 
    function Extract_Comment
      (File_Name           : String;
@@ -1211,9 +1219,9 @@ package body Work_On_Source is
       return ASU.To_String (Old_Line);
    end Extract_Comment;
 
-   -----------------------
-   -- Exception_Renames --
-   -----------------------
+   -------------------------
+   --  Exception_Renames  --   !!! needed?
+   -------------------------
 
    function Exception_Renames
      (File_Name : String;
@@ -1264,5 +1272,69 @@ package body Work_On_Source is
                                 ASU.Index (Doc_File, "."), "_")))
               & Doc_Suffix;
    end Get_Doc_File_Name;
+
+   --------------------------
+   -- Get_Line_From_String --
+   --------------------------
+
+   function Get_Line_From_String
+     (Text    : String;
+      Line_Nr : Natural) return String is
+      Lines, Index_Start, Index_End : Natural;
+   begin
+      Lines       := 1;
+      Index_Start := 1;
+      if Line_Nr > 1 then
+         while Index_Start < Text'Length and Lines < Line_Nr loop
+            if Text (Index_Start) = ASCII.LF then
+               Lines := Lines + 1;
+            end if;
+            Index_Start := Index_Start + 1;
+         end loop;
+      end if;
+      Index_End := Index_Start + 1;
+      while Index_End < Text'Length and Text (Index_End) /=  ASCII.LF loop
+         Index_End := Index_End + 1;
+      end loop;
+      return Text (Index_Start .. Index_End);
+   end Get_Line_From_String;
+
+   ------------------------
+   --  Get_Whole_Header  --
+   ------------------------
+
+   function Get_Whole_Header
+     (File_Text   : String;
+      Parsed_List : Construct_List;
+      Entity_Name : String;
+      Entity_Line : Natural) return GNAT.OS_Lib.String_Access is
+
+      Parse_Node         : Construct_Access;
+      Parsed_List_End    : Boolean;
+      Result             : GNAT.OS_Lib.String_Access;
+   begin
+      Parse_Node      := Parsed_List.First;
+      Parsed_List_End := False;
+
+      --  exception if no paresed entities found: later
+
+      while not Parsed_List_End loop
+         if To_Lower (Parse_Node.Name.all) =
+           To_Lower (Entity_Name) and
+           Parse_Node.Sloc_Start.Line = Entity_Line then
+            Result := new String (1 .. Parse_Node.Sloc_End.Index -
+                                    Parse_Node.Sloc_Start.Index + 1);
+            Result.all := File_Text (Parse_Node.Sloc_Start.Index ..
+                                             Parse_Node.Sloc_End.Index);
+            return Result;
+         end if;
+         if Parse_Node = Parsed_List.Last then
+            Parsed_List_End := True;
+         else
+            Parse_Node := Parse_Node.Next;
+         end if;
+      end loop;
+      return new String'("No Entity found by parser!");
+   end Get_Whole_Header;
 
 end Work_On_Source;

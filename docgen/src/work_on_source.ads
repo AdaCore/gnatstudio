@@ -22,6 +22,7 @@ with Ada.Text_IO;               use Ada.Text_IO;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 with Doc_Types;                 use Doc_Types;
+with Language;                  use Language;
 
 package Work_On_Source is
 
@@ -66,6 +67,7 @@ package Work_On_Source is
       Line      : Natural) return String;
    --  returns the Line in the file
 
+
    function Get_Doc_File_Name
      (Source_Filename : String;
       Source_Path     : String;
@@ -77,37 +79,39 @@ package Work_On_Source is
 
 private
 
-   procedure Process_Open_File
-     (Doc_File          : File_Type;
-      Package_File      : String;
-      Source_File_List  : in out Type_Source_File_List.List;
-      Options           : All_Options);
-
-   procedure Process_Close_File
-     (Doc_File      : File_Type;
-      Package_File  : String;
-      Options       : All_Options);
-
    procedure Process_One_Body_File
      (Doc_File           : File_Type;
       Source_File        : String;
       Entity_List        : Type_Entity_List.List;
+      File_Text          : GNAT.OS_Lib.String_Access;
       Options            : All_Options);
-   --  processes a body file: will take each line from the source file
-   --  and give it to the output procedure
+
+   procedure Process_Open_File
+     (Doc_File         : File_Type;
+      Package_File     : String;
+      Source_File_List : in out Type_Source_File_List.List;
+      Options          : All_Options);
+
+   procedure Process_Close_File
+     (Doc_File      : File_Type;
+      Options       : All_Options);
 
    procedure Process_Package_Description
      (Doc_File        : File_Type;
       Source_Filename : String;
       Package_Name    : String;
+      Text            : String;
       Options         : All_Options);
-   --  will process the comment lines at the beginning of the file
+   --  processes a body file: will take each line from the source file
+   --  and give it to the output procedure
 
    procedure Process_With_Clause
      (Doc_File        : File_Type;
       Entity_List     : in out Type_Entity_List.List;
       Source_Filename : String;
       Package_Name    : String;
+      Parsed_List     : Construct_List;
+      File_Text       : GNAT.OS_Lib.String_Access;
       Options         : All_Options);
    --  will process the lines at the beginning of the file
    --  starting with "with"
@@ -117,6 +121,8 @@ private
       Entity_List     : in out Type_Entity_List.List;
       Source_Filename : String;
       Package_Name    : String;
+      Parsed_List     : Construct_List;
+      File_Text       : GNAT.OS_Lib.String_Access;
       Options         : All_Options);
    --  well process renamed and instantiated packages
 
@@ -125,6 +131,8 @@ private
       Entity_List     : in out Type_Entity_List.List;
       Source_Filename : String;
       Package_Name    : String;
+      Parsed_List     : Construct_List;
+      File_Text       : GNAT.OS_Lib.String_Access;
       Options         : All_Options);
    --  called by Process_Source to work on the constants
    --  and named numbers
@@ -134,6 +142,8 @@ private
       Entity_List     : in out Type_Entity_List.List;
       Source_Filename : String;
       Package_Name    : String;
+      Parsed_List     : Construct_List;
+      File_Text       : GNAT.OS_Lib.String_Access;
       Options         : All_Options);
    --  called by Process_Source to work on the exceptions
 
@@ -143,6 +153,8 @@ private
       Source_Filename    : String;
       Process_Body_File  : Boolean;
       Package_Name       : String;
+      Parsed_List        : Construct_List;
+      File_Text          : GNAT.OS_Lib.String_Access;
       Options            : All_Options);
    --  called by Process_Source to work on the subprograms
 
@@ -151,6 +163,8 @@ private
       Entity_List     : in out Type_Entity_List.List;
       Source_Filename : String;
       Package_Name    : String;
+      Parsed_List     : Construct_List;
+      File_Text       : GNAT.OS_Lib.String_Access;
       Options         : All_Options);
    --  called by Process_Source to work on the types
 
@@ -203,5 +217,17 @@ private
    function Kill_Prefix
      (Comment_Line : String) return String;
    --  returns the comment line without the "--" in front
+
+   function Get_Whole_Header
+     (File_Text   : String;
+      Parsed_List : Construct_List;
+      Entity_Name : String;
+      Entity_Line : Natural) return GNAT.OS_Lib.String_Access;
+   --  returns the Header of the entity
+
+   function Get_Line_From_String
+     (Text    : String;
+      Line_Nr : Natural) return String;
+   --  returns the Line from the String consisting of several lines
 
 end Work_On_Source;
