@@ -137,19 +137,60 @@ package Odd.Types is
      (Packed_Boolean_Array, Packed_Boolean_Access);
 
    type File_Cache;
-   type File_Cache_Access is access File_Cache;
+   type File_Cache_List is access File_Cache;
    type File_Cache is record
+      File_Name     : String_Access := null;
+      --  The full name (including directory) for the file associated with
+      --  this record.
+
       Line_Has_Code : Packed_Boolean_Access := null;
       Line_Parsed   : Packed_Boolean_Access := null;
 
       Current_Line  : Natural := 0;
       --  Last line that was parsed. No line before that one will be tested
       --  any more.
+
+      File_Contents : String_Access := null;
+      --  The contents of the file. To save some memory, this is not allocated
+      --  for files that can be found on the local disk. However, it is used
+      --  for files that had to be downloaded from a remote machine.
+
+      Next : File_Cache_List := null;
+      --  Next file in the cache list
    end record;
    --  Data associated with each file, and that contain cached data for the
    --  file.
    --  Line_Parsed indicates whether the line at a given index has been parsed.
    --  This array is freed once the parsing has been finished (and in the
    --  case Current_Line points to the last line with a breakpoint.
+
+   ------------------------
+   -- Program_Descriptor --
+   ------------------------
+
+   type Launch_Method is (None, Current_Debugger, New_Debugger);
+
+   type Debugger_Type is
+     (Gdb_Type,
+      Dbx_Type,
+      Xdb_Type,
+      Jdb_Type,
+      Pydb_Type,
+      Perl_Type,
+      Ladebug_Type);
+   --  Type of debugger handled.
+   --  Beware that some debuggers might not be available.
+
+   type Program_Descriptor is record
+      Program       : String_Access;
+      Debugger      : Debugger_Type;
+      Debugger_Name : String_Access;
+      Remote_Host   : String_Access;
+      Remote_Target : String_Access;
+      Protocol      : String_Access;
+      Launch        : Launch_Method;
+   end record;
+   --  This record contains all the information about how a debugger was
+   --  started.
 
 end Odd.Types;

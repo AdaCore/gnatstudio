@@ -29,7 +29,7 @@ with Gtk.Button; use Gtk.Button;
 with Gtk.Label; use Gtk.Label;
 with Gtk.Hbutton_Box; use Gtk.Hbutton_Box;
 with GNAT.OS_Lib; use GNAT.OS_Lib;
-with Debugger; use Debugger;
+with Odd.Types; use Odd.Types;
 
 package Open_Program_Pkg is
 
@@ -67,18 +67,6 @@ package Open_Program_Pkg is
       Valid : Boolean;
    end record;
    type Open_Program_Access is access all Open_Program_Record'Class;
-
-   type Launch_Method is (None, Current_Debugger, New_Debugger);
-
-   type Program_Descriptor is record
-      Program       : String_Access;
-      Debugger      : Debugger_Type;
-      Debugger_Name : String_Access;
-      Remote_Host   : String_Access;
-      Remote_Target : String_Access;
-      Protocol      : String_Access;
-      Launch        : Launch_Method;
-   end record;
 
    procedure Open_Program
      (Open       : in out Open_Program_Access;

@@ -28,7 +28,6 @@ with Gtkada.Intl; use Gtkada.Intl;
 with Gtkada.Dialogs; use Gtkada.Dialogs;
 with Odd.Process; use Odd.Process;
 with Odd.Types;
-with Debugger;
 with GNAT.OS_Lib; use GNAT.OS_Lib;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.Expect; use GNAT.Expect;
@@ -49,7 +48,7 @@ procedure Odd_Main is
    Id                : Glib.Gint;
    Index             : Natural := 0;
    Level             : Integer;
-   Debug_Type        : Debugger.Debugger_Type := Debugger.Gdb_Type;
+   Debug_Type        : Odd.Types.Debugger_Type := Odd.Types.Gdb_Type;
    Button            : Message_Dialog_Buttons;
    Root              : String_Access;
    Home              : String_Access;
@@ -257,7 +256,7 @@ begin
                   --  compatibility with Emacs' gdb mode
 
                -- --jdb --
-               when 'j' => Debug_Type := Debugger.Jdb_Type;
+               when 'j' => Debug_Type := Odd.Types.Jdb_Type;
 
                -- --log-level --
                when 'l' =>

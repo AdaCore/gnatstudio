@@ -35,7 +35,6 @@ with Ada.Text_IO; use Ada.Text_IO;
 with Debugger; use Debugger;
 with Odd.Process; use Odd.Process;
 with Odd.Strings; use Odd.Strings;
-with Open_Program_Pkg; use Open_Program_Pkg;
 with Main_Debug_Window_Pkg; use Main_Debug_Window_Pkg;
 
 with Unchecked_Deallocation;
@@ -200,7 +199,7 @@ is
    Buffer        : String (1 .. 256);
    Last          : Natural;
    Item          : Gtk_List_Item;
-   Program       : GNAT.OS_Lib.String_Access;
+   Program       : Odd.Types.String_Access;
    Debugger_List : Debugger_List_Link := Top.First_Debugger;
    Num_Debuggers : Natural := 0;
    use String_History;
