@@ -2,7 +2,7 @@
    Adapted from process.c in GNU Emacs.
    Copyright (C) 1985, 86, 87, 88, 93, 94, 95, 96, 1998
       Free Software Foundation, Inc.
-   Copyright (C) 2000, 2002 ACT-Europe.
+   Copyright (C) 2000, 2002, 2003 ACT-Europe.
 
 This file is part of GVD.
 
@@ -134,8 +134,8 @@ static int Vw32_start_process_share_console = 0;
 static int Vw32_start_process_inherit_error_mode = 1;
 
 /* Control whether create_child causes the process' window to be
-   hidden.  The default is 0. */
-static int Vw32_start_process_show_window = 0;
+   hidden.  The default is 1. */
+static int Vw32_start_process_show_window = 1;
 
 /* Control whether spawnve quotes arguments as necessary to ensure
    correct parsing by child process.  Because not all uses of spawnve
@@ -782,7 +782,7 @@ setup_pty (fd)
   /* Beeing able to trap exceptional conditions like a "close" on the
      slave side is useful and requires an explicit ioctl call to be enabled on
      HPUX.  */
-#ifdef HPUX 
+#ifdef HPUX
   ioctl (fd, TIOCTRAP, &on);
 #endif
 }
