@@ -828,8 +828,15 @@ package body Glide_Kernel is
    ------------------
 
    function Process_Anim (Data : Process_Data) return Boolean is
+      Window : constant Glide_Window := Glide_Window (Data.Kernel.Main_Window);
    begin
-      return Anim_Cb (Data.Kernel);
+      if Anim_Cb (Data.Kernel) then
+         Window.Timeout_Id := Process_Timeout.Add
+           (Guint32 (Get_Delay_Time (Window.Animation_Iter)),
+            Process_Anim'Access, Data);
+      end if;
+
+      return False;
    end Process_Anim;
 
    ----------------
@@ -936,8 +943,7 @@ package body Glide_Kernel is
 
    function Get_Logs_Mapper
      (Handle : access Kernel_Handle_Record)
-     return Basic_Mapper.File_Mapper_Access
-   is
+      return Basic_Mapper.File_Mapper_Access is
    begin
       return Handle.Logs_Mapper;
    end Get_Logs_Mapper;
@@ -948,8 +954,7 @@ package body Glide_Kernel is
 
    procedure Set_Logs_Mapper
      (Handle : access Kernel_Handle_Record;
-      Mapper : Basic_Mapper.File_Mapper_Access)
-   is
+      Mapper : Basic_Mapper.File_Mapper_Access) is
    begin
       Handle.Logs_Mapper := Mapper;
    end Set_Logs_Mapper;
@@ -966,6 +971,7 @@ package body Glide_Kernel is
       Lib_Info : LI_File_Ptr;
    begin
       Lib_Info := Locate_From_Source_And_Complete (Kernel, Source_Filename);
+
       if Lib_Info /= No_LI_File then
          declare
             Other_File : constant String := Get_Other_File_Of
@@ -980,18 +986,21 @@ package body Glide_Kernel is
                      if Full_Name /= "" then
                         return Full_Name;
                      else
-                        Insert
-                          (Kernel, "Path for " & Other_File & " not found");
+                        Console.Insert
+                          (Kernel,
+                           (-"Path for ") & Other_File & (-" not found"),
+                           Mode => Error);
                      end if;
                   end;
                else
                   return Other_File;
                end if;
             else
-               Insert (Kernel, "No other file found", Mode => Error);
+               Console.Insert (Kernel, -"No other file found", Mode => Error);
             end if;
          end;
       end if;
+
       return "";
    end Get_Other_File_Of;
 
@@ -1005,8 +1014,9 @@ package body Glide_Kernel is
    is
       Handler : constant Glide_Language_Handler :=
         Glide_Language_Handler (Get_Language_Handler (Kernel));
-      Num : constant Natural := LI_Handlers_Count (Handler);
-      LI  : LI_Handler;
+      Num     : constant Natural := LI_Handlers_Count (Handler);
+      LI      : LI_Handler;
+
    begin
       for L in 1 .. Num loop
          LI := Get_Nth_Handler (Handler, L);
