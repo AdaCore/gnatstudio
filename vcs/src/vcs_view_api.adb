@@ -1478,6 +1478,7 @@ package body VCS_View_API is
 
       while Files_Temp /= String_List.Null_Node loop
          File := Create (Full_Filename => String_List.Data (Files_Temp));
+
          if Get_Log_From_File (Kernel, File, False) = VFS.No_File then
             All_Logs_Exist := False;
             Open_File_Editor
@@ -2655,6 +2656,7 @@ package body VCS_View_API is
       end if;
 
       Full := Create (File, Kernel, Use_Object_Path => False);
+
       if Dir_Name (Full) = "" then
          Insert (Kernel, -"Could not find file: " & File, Mode => Error);
          return;

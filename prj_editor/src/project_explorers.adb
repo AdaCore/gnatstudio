@@ -18,63 +18,63 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glide_Kernel;            use Glide_Kernel;
-with Scenario_Views;          use Scenario_Views;
-with Gtk.Box;                 use Gtk.Box;
-with Gtk.Scrolled_Window;     use Gtk.Scrolled_Window;
+with Glide_Kernel;              use Glide_Kernel;
+with Scenario_Views;            use Scenario_Views;
+with Gtk.Box;                   use Gtk.Box;
+with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with Ada.Exceptions;            use Ada.Exceptions;
 
-with Glib;                     use Glib;
-with Glib.Convert;             use Glib.Convert;
-with Glib.Object;              use Glib.Object;
-with Glib.Values;              use Glib.Values;
-with Glib.Xml_Int;             use Glib.Xml_Int;
+with Glib;                      use Glib;
+with Glib.Convert;              use Glib.Convert;
+with Glib.Object;               use Glib.Object;
+with Glib.Values;               use Glib.Values;
+with Glib.Xml_Int;              use Glib.Xml_Int;
 
-with Gdk.Event;                use Gdk.Event;
-with Gdk.Rectangle;            use Gdk.Rectangle;
+with Gdk.Event;                 use Gdk.Event;
+with Gdk.Rectangle;             use Gdk.Rectangle;
 
-with Gtk.Enums;                use Gtk.Enums;
-with Gtk.Arguments;            use Gtk.Arguments;
-with Gtk.Check_Button;         use Gtk.Check_Button;
-with Gtk.Check_Menu_Item;      use Gtk.Check_Menu_Item;
-with Gtk.Frame;                use Gtk.Frame;
-with Gtk.Tree_Model;           use Gtk.Tree_Model;
-with Gtk.Tree_View;            use Gtk.Tree_View;
-with Gtk.Tree_Store;           use Gtk.Tree_Store;
-with Gtk.Tree_Selection;       use Gtk.Tree_Selection;
-with Gtk.Menu;                 use Gtk.Menu;
-with Gtk.Menu_Item;            use Gtk.Menu_Item;
-with Gtk.Widget;               use Gtk.Widget;
-with Gtk.Label;                use Gtk.Label;
-with Gtk.Cell_Renderer_Text;   use Gtk.Cell_Renderer_Text;
-with Gtk.Cell_Renderer_Pixbuf; use Gtk.Cell_Renderer_Pixbuf;
-with Gtk.Tree_View_Column;     use Gtk.Tree_View_Column;
-with Gtkada.MDI;               use Gtkada.MDI;
-with Gtkada.Tree_View;         use Gtkada.Tree_View;
-with Gtkada.Handlers;          use Gtkada.Handlers;
+with Gtk.Enums;                 use Gtk.Enums;
+with Gtk.Arguments;             use Gtk.Arguments;
+with Gtk.Check_Button;          use Gtk.Check_Button;
+with Gtk.Check_Menu_Item;       use Gtk.Check_Menu_Item;
+with Gtk.Frame;                 use Gtk.Frame;
+with Gtk.Tree_Model;            use Gtk.Tree_Model;
+with Gtk.Tree_View;             use Gtk.Tree_View;
+with Gtk.Tree_Store;            use Gtk.Tree_Store;
+with Gtk.Tree_Selection;        use Gtk.Tree_Selection;
+with Gtk.Menu;                  use Gtk.Menu;
+with Gtk.Menu_Item;             use Gtk.Menu_Item;
+with Gtk.Widget;                use Gtk.Widget;
+with Gtk.Label;                 use Gtk.Label;
+with Gtk.Cell_Renderer_Text;    use Gtk.Cell_Renderer_Text;
+with Gtk.Cell_Renderer_Pixbuf;  use Gtk.Cell_Renderer_Pixbuf;
+with Gtk.Tree_View_Column;      use Gtk.Tree_View_Column;
+with Gtkada.MDI;                use Gtkada.MDI;
+with Gtkada.Tree_View;          use Gtkada.Tree_View;
+with Gtkada.Handlers;           use Gtkada.Handlers;
 
-with Namet;                    use Namet;
+with Namet;                     use Namet;
 
-with Types;                    use Types;
+with Types;                     use Types;
 
-with Projects;                 use Projects;
-with Language;                 use Language;
-with String_Utils;             use String_Utils;
-with Glide_Kernel;             use Glide_Kernel;
-with Glide_Kernel.Console;     use Glide_Kernel.Console;
-with Glide_Kernel.Project;     use Glide_Kernel.Project;
-with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
-with Glide_Kernel.Modules;     use Glide_Kernel.Modules;
-with Glide_Intl;               use Glide_Intl;
-with Language_Handlers.Glide;  use Language_Handlers.Glide;
-with Traces;                   use Traces;
-with Find_Utils;               use Find_Utils;
-with File_Utils;               use File_Utils;
-with GUI_Utils;                use GUI_Utils;
+with Projects;                  use Projects;
+with Language;                  use Language;
+with String_Utils;              use String_Utils;
+with Glide_Kernel;              use Glide_Kernel;
+with Glide_Kernel.Console;      use Glide_Kernel.Console;
+with Glide_Kernel.Project;      use Glide_Kernel.Project;
+with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
+with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
+with Glide_Intl;                use Glide_Intl;
+with Language_Handlers.Glide;   use Language_Handlers.Glide;
+with Traces;                    use Traces;
+with Find_Utils;                use Find_Utils;
+with File_Utils;                use File_Utils;
+with GUI_Utils;                 use GUI_Utils;
 with String_List_Utils;
-with Histories;                use Histories;
+with Histories;                 use Histories;
 with VFS;                       use VFS;
 
 with Src_Info;

@@ -156,15 +156,14 @@ package body Vdiff2_Utils is
       Curr_Chunk : Diff_Chunk_Access;
       Offset1   : Natural;
       Offset2   : Natural;
-      Args_edit : Argument_List := (1 => new String'(Full_Name (Item.File1)));
+      Args_Edit : Argument_List := (1 => new String'(Full_Name (Item.File1)));
 
    begin
-
-      Execute_GPS_Shell_Command (Kernel, "edit", Args_edit);
-      Basic_Types.Free (Args_edit);
-      Args_edit := (1 => new String'(Full_Name (Item.File2)));
-      Execute_GPS_Shell_Command (Kernel, "edit", Args_edit);
-      Basic_Types.Free (Args_edit);
+      Execute_GPS_Shell_Command (Kernel, "edit", Args_Edit);
+      Basic_Types.Free (Args_Edit);
+      Args_Edit := (1 => new String'(Full_Name (Item.File2)));
+      Execute_GPS_Shell_Command (Kernel, "edit", Args_Edit);
+      Basic_Types.Free (Args_Edit);
       Register_Highlighting (Kernel);
 
       while Curr_Node /= Diff_Chunk_List.Null_Node loop

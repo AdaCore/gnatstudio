@@ -541,9 +541,9 @@ package body Src_Info is
    ----------------------
 
    function Make_Source_File
-     (Source_Filename        : VFS.Virtual_File;
+     (Source_Filename : VFS.Virtual_File;
       Handler         : access Language_Handlers.Language_Handler_Record'Class;
-      Project                : Projects.Project_Type) return Internal_File
+      Project         : Projects.Project_Type) return Internal_File
    is
       LI : constant Virtual_File := LI_Filename_From_Source
         (Handler                => Get_LI_Handler_From_File
@@ -552,8 +552,7 @@ package body Src_Info is
          Project                => Project);
 
    begin
-      return (File_Name => Source_Filename,
-              LI_Name   => LI);
+      return (File_Name => Source_Filename, LI_Name => LI);
    end Make_Source_File;
 
    -------------------------
@@ -575,6 +574,7 @@ package body Src_Info is
       if File = No_Source_File then
          return VFS.No_File;
       end if;
+
       return Create
         (Get_File_Info (File).Source_Filename.all,
          File.LI.LI.Project, Use_Object_Path => False);

@@ -89,7 +89,7 @@ package body Language_Handlers.GVD is
          for Index in Handler.Languages'Range loop
             if Handler.Languages (Index).Pattern /= null
               and then Match
-              (Handler.Languages (Index).Pattern.all, Base)
+                (Handler.Languages (Index).Pattern.all, Base)
             then
                return Handler.Languages (Index).Lang;
             end if;
@@ -136,7 +136,7 @@ package body Language_Handlers.GVD is
          for Index in Handler.Languages'Range loop
             if Handler.Languages (Index).Language_Name /= null
               and then Case_Insensitive_Equal
-              (Handler.Languages (Index).Language_Name.all, Name)
+                (Handler.Languages (Index).Language_Name.all, Name)
             then
                return Handler.Languages (Index).Lang;
             end if;

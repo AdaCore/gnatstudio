@@ -47,7 +47,11 @@ package body Vdiff2_Command is
       Item           := new Diff_Command;
       Item.Kernel    := Kernel;
       Item.List_Diff := List_Diff;
-      if Id = null then Id := List_Diff; end if;
+
+      if Id = null then
+         Id := List_Diff;
+      end if;
+
       Item.Action    := Action;
    end Create;
 
@@ -65,6 +69,7 @@ package body Vdiff2_Command is
          Tmp.all := Data (Diff);
          Command.Action (Command.Kernel, Tmp);
       end if;
+
       Free (Tmp);
    end Unchecked_Execute;
 
