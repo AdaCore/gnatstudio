@@ -198,7 +198,7 @@ package SN.Find_Fns is
             Name : String := Invalid_String;
             Start_position : Point := Invalid_Point;
             Filename : String := Invalid_String)
-      return MI_Table;
+      return FU_Table;
 
       --  Find functions for Remarks table
       function Find (DB : DB_File;

@@ -45,7 +45,7 @@ iv	"Instance variables"	class?variable-name?start_position?filename; \
 	end_position?attributes?{variable-type}?{}?{}?{comment}
  
 lv	"Local variables"	function-name?variable-name?start_position?filename; \
-	end_position?attributes?{}?{variable-type}?{}?{comment}
+	end_position?attributes?{class}?{variable-type}?{arg_types}?{}
  
 ma	"Macros"	name?start_position?filename; \
 	end_position?attributes?{}?{}?{}?{comment}

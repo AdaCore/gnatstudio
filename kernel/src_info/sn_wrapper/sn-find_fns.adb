@@ -1825,9 +1825,9 @@ package body SN.Find_Fns is
                   Name : String := Invalid_String;
                   Start_position : Point := Invalid_Point;
                   Filename : String := Invalid_String)
-      return MI_Table is
+      return FU_Table is
       P    : Pair_Ptr;
-      Tab  : MI_Table;
+      Tab  : FU_Table;
       Key  : String_Access;
       Fall : Boolean := False;
       Len  : Integer := 0;

@@ -524,49 +524,76 @@ package body SN.DB_Structures is
    end Parse_Pair;
 
    function Parse_Pair (Key_Data_Pair : Pair) return FU_Table is
-      tab : FU_Table;
-      cur_pos : Integer;
-      Len : Integer;
+      tab            : FU_Table;
+      cur_pos        : Integer;
+      Len            : Integer;
+      Num_Of_Fileds  : Integer := Get_Field_Count (Key_Data_Pair.Key);
+      Field_Offset   : Integer := 0;
    begin
       Len := Get_Total_Length (Key_Data_Pair.Key) +
          Get_Total_Length (Key_Data_Pair.Data);
       tab.Buffer := new String (1 .. Len);
-      cur_pos := tab.Buffer'First;
-      Len := Get_Field_Length (Key_Data_Pair.Key, 1);
+
+      case Num_Of_Fileds is
+         when 3      => -- .fu table
+            tab.Buffer (1) := '#';
+            cur_pos := 2;
+         when 4      => -- .mi table
+            Len := Get_Field_Length (Key_Data_Pair.Key, 1);
+            tab.Buffer (1 .. Len) :=
+               Get_Field (Key_Data_Pair.Key, 1);
+            tab.Class.First := 1;
+            tab.Class.Last := Len;
+            cur_pos := 1 + Len;
+            Field_Offset := 1;
+         when others =>
+            raise Bad_Input;
+      end case;
+
+      Len := Get_Field_Length (Key_Data_Pair.Key, Field_Offset + 1);
       tab.Buffer (cur_pos .. (cur_pos + Len - 1)) :=
-         Get_Field (Key_Data_Pair.Key, 1);
+         Get_Field (Key_Data_Pair.Key, Field_Offset + 1);
       tab.Name.First := cur_pos;
       tab.Name.Last := cur_pos + Len - 1;
       cur_pos := cur_pos + Len;
-      Len := Get_Field_Length (Key_Data_Pair.Key, 3);
+
+      Len := Get_Field_Length (Key_Data_Pair.Key, Field_Offset + 3);
       tab.Buffer (cur_pos .. (cur_pos + Len - 1)) :=
-         Get_Field (Key_Data_Pair.Key, 3);
+         Get_Field (Key_Data_Pair.Key, Field_Offset + 3);
       tab.File_Name.First := cur_pos;
       tab.File_Name.Last := cur_pos + Len - 1;
       cur_pos := cur_pos + Len;
+
       Parse_Position (
-         Get_Field (Key_Data_Pair.Key, 2), tab.Start_Position);
+         Get_Field (Key_Data_Pair.Key, Field_Offset + 2), tab.Start_Position);
+
       Parse_Position (
          Get_Field (Key_Data_Pair.Data, 1), tab.End_Position);
+
       tab.Attributes := Parse_Hex (Get_Field (Key_Data_Pair.Data, 2));
+
       Len := Get_Field_Length (Key_Data_Pair.Data, 3) - 2;
       tab.Buffer (cur_pos .. (cur_pos + Len - 1)) :=
          Remove_Brackets (Get_Field (Key_Data_Pair.Data, 3));
       tab.Return_Type.First := cur_pos;
       tab.Return_Type.Last := cur_pos + Len - 1;
       cur_pos := cur_pos + Len;
+
       Make_Vector_From_String (
             Remove_Brackets (Get_Field (Key_Data_Pair.Data, 4)),
             tab.Buffer, cur_pos, tab.Arg_Types);
+
       Make_Vector_From_String (
             Remove_Brackets (Get_Field (Key_Data_Pair.Data, 5)),
             tab.Buffer, cur_pos, tab.Arg_Names);
+
       Len := Get_Field_Length (Key_Data_Pair.Data, 6) - 2;
       tab.Buffer (cur_pos .. (cur_pos + Len - 1)) :=
          Remove_Brackets (Get_Field (Key_Data_Pair.Data, 6));
       tab.Comments.First := cur_pos;
       tab.Comments.Last := cur_pos + Len - 1;
       cur_pos := cur_pos + Len;
+
       Number_Of_Allocated_Buffers := Number_Of_Allocated_Buffers + 1;
       return tab;
    end Parse_Pair;
@@ -757,12 +784,8 @@ package body SN.DB_Structures is
       tab.File_Name.First := cur_pos;
       tab.File_Name.Last := cur_pos + Len - 1;
       cur_pos := cur_pos + Len;
-      Len := Get_Field_Length (Key_Data_Pair.Key, 3);
-      tab.Buffer (cur_pos .. (cur_pos + Len - 1)) :=
-         Get_Field (Key_Data_Pair.Key, 3);
-      tab.Start_Position.First := cur_pos;
-      tab.Start_Position.Last := cur_pos + Len - 1;
-      cur_pos := cur_pos + Len;
+      Parse_Position (
+         Get_Field (Key_Data_Pair.Key, 3), tab.Start_Position);
       Parse_Position (
          Get_Field (Key_Data_Pair.Data, 1), tab.End_Position);
       tab.Attributes := Parse_Hex (Get_Field (Key_Data_Pair.Data, 2));
@@ -772,12 +795,15 @@ package body SN.DB_Structures is
       tab.Value_Type.First := cur_pos;
       tab.Value_Type.Last := cur_pos + Len - 1;
       cur_pos := cur_pos + Len;
-      Len := Get_Field_Length (Key_Data_Pair.Data, 6) - 2;
+      Len := Get_Field_Length (Key_Data_Pair.Data, 3) - 2;
       tab.Buffer (cur_pos .. (cur_pos + Len - 1)) :=
-         Remove_Brackets (Get_Field (Key_Data_Pair.Data, 6));
-      tab.Comments.First := cur_pos;
-      tab.Comments.Last := cur_pos + Len - 1;
+         Remove_Brackets (Get_Field (Key_Data_Pair.Data, 3));
+      tab.Class.First := cur_pos;
+      tab.Class.Last := cur_pos + Len - 1;
       cur_pos := cur_pos + Len;
+      Make_Vector_From_String (
+            Remove_Brackets (Get_Field (Key_Data_Pair.Data, 5)),
+            tab.Buffer, cur_pos, tab.Arg_Types);
       Number_Of_Allocated_Buffers := Number_Of_Allocated_Buffers + 1;
       return tab;
    end Parse_Pair;
@@ -820,60 +846,6 @@ package body SN.DB_Structures is
 
    function Parse_Pair (Key_Data_Pair : Pair) return MD_Table is
       tab : MD_Table;
-      cur_pos : Integer;
-      Len : Integer;
-   begin
-      Len := Get_Total_Length (Key_Data_Pair.Key) +
-         Get_Total_Length (Key_Data_Pair.Data);
-      tab.Buffer := new String (1 .. Len);
-      cur_pos := tab.Buffer'First;
-      Len := Get_Field_Length (Key_Data_Pair.Key, 1);
-      tab.Buffer (cur_pos .. (cur_pos + Len - 1)) :=
-         Get_Field (Key_Data_Pair.Key, 1);
-      tab.Class.First := cur_pos;
-      tab.Class.Last := cur_pos + Len - 1;
-      cur_pos := cur_pos + Len;
-      Len := Get_Field_Length (Key_Data_Pair.Key, 2);
-      tab.Buffer (cur_pos .. (cur_pos + Len - 1)) :=
-         Get_Field (Key_Data_Pair.Key, 2);
-      tab.Name.First := cur_pos;
-      tab.Name.Last := cur_pos + Len - 1;
-      cur_pos := cur_pos + Len;
-      Len := Get_Field_Length (Key_Data_Pair.Key, 4);
-      tab.Buffer (cur_pos .. (cur_pos + Len - 1)) :=
-         Get_Field (Key_Data_Pair.Key, 4);
-      tab.File_Name.First := cur_pos;
-      tab.File_Name.Last := cur_pos + Len - 1;
-      cur_pos := cur_pos + Len;
-      Parse_Position (
-         Get_Field (Key_Data_Pair.Key, 3), tab.Start_Position);
-      Parse_Position (
-         Get_Field (Key_Data_Pair.Data, 1), tab.End_Position);
-      tab.Attributes := Parse_Hex (Get_Field (Key_Data_Pair.Data, 2));
-      Len := Get_Field_Length (Key_Data_Pair.Data, 3) - 2;
-      tab.Buffer (cur_pos .. (cur_pos + Len - 1)) :=
-         Remove_Brackets (Get_Field (Key_Data_Pair.Data, 3));
-      tab.Return_Type.First := cur_pos;
-      tab.Return_Type.Last := cur_pos + Len - 1;
-      cur_pos := cur_pos + Len;
-      Make_Vector_From_String (
-            Remove_Brackets (Get_Field (Key_Data_Pair.Data, 4)),
-            tab.Buffer, cur_pos, tab.Arg_Types);
-      Make_Vector_From_String (
-            Remove_Brackets (Get_Field (Key_Data_Pair.Data, 5)),
-            tab.Buffer, cur_pos, tab.Arg_Names);
-      Len := Get_Field_Length (Key_Data_Pair.Data, 6) - 2;
-      tab.Buffer (cur_pos .. (cur_pos + Len - 1)) :=
-         Remove_Brackets (Get_Field (Key_Data_Pair.Data, 6));
-      tab.Comments.First := cur_pos;
-      tab.Comments.Last := cur_pos + Len - 1;
-      cur_pos := cur_pos + Len;
-      Number_Of_Allocated_Buffers := Number_Of_Allocated_Buffers + 1;
-      return tab;
-   end Parse_Pair;
-
-   function Parse_Pair (Key_Data_Pair : Pair) return MI_Table is
-      tab : MI_Table;
       cur_pos : Integer;
       Len : Integer;
    begin
@@ -1251,12 +1223,6 @@ package body SN.DB_Structures is
    end Free;
 
    procedure Free (target : in out MD_Table) is
-   begin
-      Free (target.Buffer);
-      Number_Of_Allocated_Buffers := Number_Of_Allocated_Buffers - 1;
-   end Free;
-
-   procedure Free (target : in out MI_Table) is
    begin
       Free (target.Buffer);
       Number_Of_Allocated_Buffers := Number_Of_Allocated_Buffers - 1;

@@ -164,6 +164,7 @@ package SN.DB_Structures is
 
    type FU_Table is
       record
+         Class : Segment;
          Name : Segment;
          File_Name : Segment;
          Start_Position : Point;
@@ -176,6 +177,8 @@ package SN.DB_Structures is
          Buffer : GNAT.OS_Lib.String_Access;
       end record;
    --  Function implementations
+   --  The same structure used for method implementations (MI)
+   --  Field 'Class' for functions contains '#'
 
    type GV_Table is
       record
@@ -231,11 +234,12 @@ package SN.DB_Structures is
          Function_Name : Segment;
          Name : Segment;
          File_Name : Segment;
-         Start_Position : Segment;
+         Start_Position : Point;
          End_Position : Point;
          Attributes : Integer;
+         Class : Segment;
          Value_Type : Segment;
-         Comments : Segment;
+         Arg_Types : Segment_Vector.Node_Access;
          Buffer : GNAT.OS_Lib.String_Access;
       end record;
    --  Local variables
@@ -267,22 +271,6 @@ package SN.DB_Structures is
          Buffer : GNAT.OS_Lib.String_Access;
       end record;
    --  Method definitions
-
-   type MI_Table is
-      record
-         Class : Segment;
-         Name : Segment;
-         File_Name : Segment;
-         Start_Position : Point;
-         End_Position : Point;
-         Attributes : Integer;
-         Return_Type : Segment;
-         Arg_Types : Segment_Vector.Node_Access;
-         Arg_Names : Segment_Vector.Node_Access;
-         Comments : Segment;
-         Buffer : GNAT.OS_Lib.String_Access;
-      end record;
-   --  Method implementations
 
    type REM_Table is
       record
@@ -409,9 +397,6 @@ package SN.DB_Structures is
    function Parse_Pair (Key_Data_Pair : Pair) return MD_Table;
    --  Function for parsing MD_Table key-data pair
 
-   function Parse_Pair (Key_Data_Pair : Pair) return MI_Table;
-   --  Function for parsing MI_Table key-data pair
-
    function Parse_Pair (Key_Data_Pair : Pair) return REM_Table;
    --  Function for parsing REM_Table key-data pair
 
@@ -485,9 +470,6 @@ package SN.DB_Structures is
 
    procedure Free (target : in out MD_Table);
    --  frees resources allocated by MD_Table
-
-   procedure Free (target : in out MI_Table);
-   --  frees resources allocated by MI_Table
 
    procedure Free (target : in out REM_Table);
    --  frees resources allocated by REM_Table
