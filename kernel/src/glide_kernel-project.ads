@@ -89,6 +89,8 @@ package Glide_Kernel.Project is
      (Kernel : access Kernel_Handle_Record'Class; Project : String);
    --  Load project Project as the current project.
    --  This emits the "project_changed" and "project_view_changed" signals.
+   --
+   --  ??? What do we do if the project couldn't be loaded.
 
    function Get_Project (Handle : access Kernel_Handle_Record'Class)
       return Prj.Tree.Project_Node_Id;
@@ -125,5 +127,18 @@ package Glide_Kernel.Project is
       return String;
    --  Return the command line to use to set up the scenario variables when
    --  calling an external tool that handles project files
+
+   function Directory_In_Source_Path
+     (Handle         : access Kernel_Handle_Record'Class;
+      Directory_Name : String) return Boolean;
+   --  Return True if Directory_name belongs to the source path defined for the
+   --  current view of the project.
+
+   function File_In_Project_View
+     (Handle          : access Kernel_Handle_Record'Class;
+      Short_File_Name : String) return Boolean;
+   --  Return True if Short_File_Name belongs to the current view of the
+   --  project.
+   --  Short_File_Name shouldn't include any directory specification.
 
 end Glide_Kernel.Project;
