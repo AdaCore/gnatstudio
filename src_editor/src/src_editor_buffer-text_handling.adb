@@ -328,9 +328,10 @@ package body Src_Editor_Buffer.Text_Handling is
          if Indent_Params.Casing_Policy /= On_The_Fly
            or else Get_Language_Context (Lang).Case_Sensitive
            or else Is_In_Comment (Source_Buffer (Buffer), W_End)
+           or else Is_In_String (Source_Buffer (Buffer), W_End)
          then
             --  On-the-fly casing not activated, the language is case sensitive
-            --  or we are in a comment.
+            --  or we are in a comment or a string.
             return;
          end if;
       end if;
