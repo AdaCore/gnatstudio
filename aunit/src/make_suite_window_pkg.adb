@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2002                       --
+--                     Copyright (C) 2001-2004                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -32,25 +32,39 @@ with Gtk.Hbutton_Box;     use Gtk.Hbutton_Box;
 with Gtkada.Handlers;     use Gtkada.Handlers;
 with Callbacks_Aunit_Gui; use Callbacks_Aunit_Gui;
 with Glide_Intl;          use Glide_Intl;
+with Aunit_Utils;         use Aunit_Utils;
+
 with Make_Suite_Window_Pkg.Callbacks; use Make_Suite_Window_Pkg.Callbacks;
 
 package body Make_Suite_Window_Pkg is
    --  "AUnit_Make_Suite" main window definition.
 
-   procedure Gtk_New (Make_Suite_Window : out Make_Suite_Window_Access) is
+   -------------
+   -- Gtk_New --
+   -------------
+
+   procedure Gtk_New
+     (Make_Suite_Window : out Make_Suite_Window_Access;
+      Handle            : Glide_Kernel.Kernel_Handle) is
    begin
       Make_Suite_Window := new Make_Suite_Window_Record;
-      Make_Suite_Window_Pkg.Initialize (Make_Suite_Window);
+      Make_Suite_Window_Pkg.Initialize (Make_Suite_Window, Handle);
    end Gtk_New;
 
+   ----------------
+   -- Initialize --
+   ----------------
+
    procedure Initialize
-     (Make_Suite_Window : access Make_Suite_Window_Record'Class)
+     (Make_Suite_Window : access Make_Suite_Window_Record'Class;
+      Handle            : Glide_Kernel.Kernel_Handle)
    is
       pragma Suppress (All_Checks);
 
       Hbox1 : Gtk_Hbox;
       Hbox2 : Gtk_Hbox;
       Hbox3 : Gtk_Hbox;
+      Hbox4 : Gtk_Hbox;
 
       Vbox1 : Gtk_Vbox;
       Vbox2 : Gtk_Vbox;
@@ -59,11 +73,13 @@ package body Make_Suite_Window_Pkg is
 
       Label : Gtk_Label;
 
-      Vbuttonbox1 : Gtk_Vbutton_Box;
-      Hbuttonbox1 : Gtk_Hbutton_Box;
+      Vbuttonbox1     : Gtk_Vbutton_Box;
+      Hbuttonbox1     : Gtk_Hbutton_Box;
       Scrolledwindow2 : Gtk_Scrolled_Window;
 
    begin
+      Make_Suite_Window.Kernel := Handle;
+
       Gtk.Window.Initialize (Make_Suite_Window, Window_Toplevel);
       Set_Title (Make_Suite_Window, -"Make new suite");
       Set_Policy (Make_Suite_Window, False, True, False);
@@ -84,11 +100,33 @@ package body Make_Suite_Window_Pkg is
       Gtk_New_Vbox (Vbox2, True, 0);
       Pack_Start (Hbox1, Vbox2, False, False, 5);
 
+      Gtk_New (Label, -"Save in: ");
+      Pack_Start (Vbox2, Label, False, False, 3);
+
       Gtk_New (Label, -"Suite name:");
       Pack_Start (Vbox2, Label, False, False, 0);
 
       Gtk_New_Vbox (Vbox3, True, 0);
       Pack_Start (Hbox1, Vbox3, True, True, 3);
+
+      Gtk_New_Hbox (Hbox4, False, 0);
+      Pack_Start (Vbox3, Hbox4, False, False, 3);
+
+      Gtk_New (Make_Suite_Window.Directory_Entry);
+      Set_Editable (Make_Suite_Window.Directory_Entry, True);
+      Set_Max_Length (Make_Suite_Window.Directory_Entry, 0);
+      Set_Text (Make_Suite_Window.Directory_Entry,
+                Get_Context_Directory (Handle));
+      Set_Visibility (Make_Suite_Window.Directory_Entry, True);
+      Pack_Start (Hbox4, Make_Suite_Window.Directory_Entry, True, True, 3);
+
+      Gtk_New (Make_Suite_Window.Browse_Directory, -"Browse...");
+      Set_Relief (Make_Suite_Window.Browse_Directory, Relief_Normal);
+      Pack_Start
+        (Hbox4, Make_Suite_Window.Browse_Directory, False, False, 3);
+      Button_Callback.Connect
+        (Make_Suite_Window.Browse_Directory, "clicked",
+         Button_Callback.To_Marshaller (On_Browse_Directory_Clicked'Access));
 
       Gtk_New (Make_Suite_Window.Name_Entry);
       Set_Editable (Make_Suite_Window.Name_Entry, True);

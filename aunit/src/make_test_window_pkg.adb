@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2002                       --
+--                     Copyright (C) 2001-2004                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -29,18 +29,31 @@ with Gtk.Stock;           use Gtk.Stock;
 with Gtkada.Handlers;     use Gtkada.Handlers;
 with Callbacks_Aunit_Gui; use Callbacks_Aunit_Gui;
 with Glide_Intl;          use Glide_Intl;
+with Aunit_Utils;         use Aunit_Utils;
+
 with Make_Test_Window_Pkg.Callbacks; use Make_Test_Window_Pkg.Callbacks;
 
 package body Make_Test_Window_Pkg is
 
-   procedure Gtk_New (Make_Test_Window : out Make_Test_Window_Access) is
+   -------------
+   -- Gtk_New --
+   -------------
+
+   procedure Gtk_New
+     (Make_Test_Window : out Make_Test_Window_Access;
+      Handle           : Glide_Kernel.Kernel_Handle) is
    begin
       Make_Test_Window := new Make_Test_Window_Record;
-      Make_Test_Window_Pkg.Initialize (Make_Test_Window);
+      Make_Test_Window_Pkg.Initialize (Make_Test_Window, Handle);
    end Gtk_New;
 
+   ----------------
+   -- Initialize --
+   ----------------
+
    procedure Initialize
-     (Make_Test_Window : access Make_Test_Window_Record'Class)
+     (Make_Test_Window : access Make_Test_Window_Record'Class;
+      Handle           : Glide_Kernel.Kernel_Handle)
    is
       pragma Suppress (All_Checks);
 
@@ -48,12 +61,15 @@ package body Make_Test_Window_Pkg is
       Vbox2 : Gtk_Vbox;
 
       Hbox1 : Gtk_Hbox;
+      Hbox2 : Gtk_Hbox;
       Vbox1 : Gtk_Vbox;
       Label : Gtk_Label;
 
       Hbuttonbox1 : Gtk_Hbutton_Box;
 
    begin
+      Make_Test_Window.Kernel := Handle;
+
       Gtk.Window.Initialize (Make_Test_Window, Window_Toplevel);
       Set_Title (Make_Test_Window, -"New test unit");
       Set_Policy (Make_Test_Window, False, True, False);
@@ -72,6 +88,9 @@ package body Make_Test_Window_Pkg is
       Gtk_New_Vbox (Vbox1, True, 0);
       Pack_Start (Hbox1, Vbox1, False, False, 5);
 
+      Gtk_New (Label, -"Save in: ");
+      Pack_Start (Vbox1, Label, False, False, 3);
+
       Gtk_New (Label, -"Unit name: ");
       Pack_Start (Vbox1, Label, False, False, 3);
 
@@ -86,6 +105,26 @@ package body Make_Test_Window_Pkg is
 
       Gtk_New_Vbox (Vbox2, True, 0);
       Pack_Start (Hbox1, Vbox2, True, True, 3);
+
+      Gtk_New_Hbox (Hbox2, False, 0);
+      Pack_Start (Vbox2, Hbox2, False, False, 3);
+
+      Gtk_New (Make_Test_Window.Directory_Entry);
+      Set_Editable (Make_Test_Window.Directory_Entry, True);
+      Set_Width_Chars (Make_Test_Window.Directory_Entry, 50);
+      Set_Max_Length (Make_Test_Window.Directory_Entry, 0);
+      Set_Text (Make_Test_Window.Directory_Entry,
+                Get_Context_Directory (Handle));
+      Set_Visibility (Make_Test_Window.Directory_Entry, True);
+      Pack_Start (Hbox2, Make_Test_Window.Directory_Entry, True, True, 3);
+
+      Gtk_New (Make_Test_Window.Browse_Directory, -"Browse...");
+      Set_Relief (Make_Test_Window.Browse_Directory, Relief_Normal);
+      Pack_Start
+        (Hbox2, Make_Test_Window.Browse_Directory, False, False, 3);
+      Button_Callback.Connect
+        (Make_Test_Window.Browse_Directory, "clicked",
+         Button_Callback.To_Marshaller (On_Browse_Directory_Clicked'Access));
 
       Gtk_New (Make_Test_Window.Name_Entry);
       Set_Editable (Make_Test_Window.Name_Entry, True);
