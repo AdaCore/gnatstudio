@@ -227,6 +227,11 @@ package Python.Ada is
    function PyMethod_Check (Obj : PyObject) return Boolean;
    --  Whether Obj is a method of a class
 
+   function PyMethod_Self (Obj : PyObject) return PyObject;
+   --  Return the instance with which the method is bound. This might be null
+   --  if we have an unbound class method (Class.method), or non-null if we
+   --  have a bound class method (the result of self.method)
+
    function PyMethod_Function (Obj : PyObject) return PyObject;
    --  Return the function object associated with the method. That is the code
    --  that is actually executed when the method is called
@@ -315,4 +320,5 @@ private
    pragma Import (C, PyInstance_NewRaw, "PyInstance_NewRaw");
    pragma Import (C, PyMethod_Function, "PyMethod_Function");
    pragma Import (C, PyClass_Name, "ada_pyclass_name");
+   pragma Import (C, PyMethod_Self, "PyMethod_Self");
 end Python.Ada;
