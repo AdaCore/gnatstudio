@@ -479,18 +479,17 @@ package body GVD.Text_Box.Source_Editor.Glide is
          if Result then
             declare
                Other_Command : Set_Breakpoint_Command_Access;
-               L : constant Integer := Br (J).Line;
-               A : Line_Information_Array (L .. L);
+               L             : constant Integer := Br (J).Line;
+               A             : Line_Information_Array (L .. L);
+
             begin
                Create
                  (Other_Command,
                   Kernel,
-                  Tab.Debugger,
+                  Tab,
                   Unset,
                   Br (J).File.all,
-                  Br (J).Line,
-                  Br (J).Num);
-
+                  Br (J).Line);
                A (L).Image := Line_Has_Breakpoint_Pixbuf;
                A (L).Associated_Command := Command_Access (Other_Command);
                Add_Line_Information
@@ -535,7 +534,7 @@ package body GVD.Text_Box.Source_Editor.Glide is
                   Create
                     (Other_Command,
                      Kernel,
-                     Tab.Debugger,
+                     Tab,
                      Set,
                      Editor.Current_Breakpoints (J).File.all,
                      Editor.Current_Breakpoints (J).Line);
