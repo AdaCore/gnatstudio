@@ -10,7 +10,6 @@
 import GPS, pydoc, os, inspect, pydoc
 from string import rstrip, lstrip
 
-
 def generate_doc (entity):
   """Generate the documentation for a python entity dynamically.
      Return the name of the HTML file that was created.
@@ -49,26 +48,27 @@ GPS.parse_xml("""
 ## entity
 
 class XMLTextDoc (pydoc.TextDoc):
-   def docroutine (self, object, name=None, mod=None, cl=None):
-       try:
-          XMLGetDoc_Wrapper.current_class = object.im_class.__name__
-       except:
-          XMLGetDoc_Wrapper.current_class = ""
-       return pydoc.TextDoc.docroutine (self, object, name, mod, cl)
+   def document(self, object, name=None, *args):
+       Help_Wrapper.set_current_class (object)
+       return pydoc.TextDoc.document(self, object, name, *args)
 
 class XMLHtmlDoc (pydoc.HTMLDoc):
-    def docroutine(self, object, name=None, mod=None,
-                   funcs={}, classes={}, methods={}, cl=None):
-       try:
-          XMLGetDoc_Wrapper.current_class = object.im_class.__name__
-       except:
-          XMLGetDoc_Wrapper.current_class = ""
-       return pydoc.HTMLDoc.docroutine (self, object, name, mod, funcs, classes, methods, cl)
+    def document(self, object, name=None, *args):
+       Help_Wrapper.set_current_class (object)
+       return pydoc.HTMLDoc.document (self, object, name, *args)
 
-class XMLGetDoc_Wrapper:
+class Help_Wrapper:
    current_class = ""
    def __init__(self):
       self.doc = GPS.Help()
+
+   def set_current_class(object):
+      try:
+         Help_Wrapper.current_class = object.im_class.__name__ + "."
+      except:
+         Help_Wrapper.current_class = ""
+   set_current_class = staticmethod (set_current_class)
+
    def getdoc (self, object): 
       try:
          try:
@@ -83,12 +83,13 @@ class XMLGetDoc_Wrapper:
          except:
             module=""
 
-         if XMLGetDoc_Wrapper.current_class == "":
-            klass = ""
+         ## Special case for classes
+         if object.__name__ + '.' == Help_Wrapper.current_class:
+            name = module + object.__name__
          else:
-            klass = XMLGetDoc_Wrapper.current_class + '.'
+            name = module + Help_Wrapper.current_class + object.__name__
 
-         return self.doc.getdoc (module+klass+object.__name__)
+         return self.doc.getdoc (name)
       except:
          return __oldgetdoc__(object)
 
@@ -98,14 +99,14 @@ class XMLGetDoc_Wrapper:
 def writedoc(thing, forceload=0):
    """Wrapper around pydoc.writedoc to limit the number of times an XML file
       is parsed"""
-   inspect.getdoc = XMLGetDoc_Wrapper().getdoc
+   inspect.getdoc = Help_Wrapper().getdoc
    __oldwritedoc__ (thing, forceload)
    inspect.getdoc = __oldgetdoc__
 
 def help (request=None):
    """Wrapper around pydoc.help to limit the number of times an XML file
       is parsed"""
-   inspect.getdoc = XMLGetDoc_Wrapper().getdoc
+   inspect.getdoc = Help_Wrapper().getdoc
    __oldhelp__(request)
    inspect.getdoc = __oldgetdoc__
 
