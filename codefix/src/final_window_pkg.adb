@@ -20,6 +20,7 @@
 
 with Glib; use Glib;
 with Gtk; use Gtk;
+with Gtk.Stock;       use Gtk.Stock;
 with Gdk.Types;       use Gdk.Types;
 with Gtk.Widget;      use Gtk.Widget;
 with Gtk.Enums;       use Gtk.Enums;
@@ -61,21 +62,21 @@ begin
    Set_Child_Ipadding (Final_Window.Hbuttonbox1, 7, 0);
    Pack_Start (Final_Window.Dialog_Action_Area1, Final_Window.Hbuttonbox1, True, True, 0);
 
-   Gtk_New (Final_Window.Final_Validation, -"Yes");
+   Gtk_New_From_Stock (Final_Window.Final_Validation, Stock_Yes);
    Set_Flags (Final_Window.Final_Validation, Can_Default);
    Widget_Callback.Object_Connect
      (Final_Window.Final_Validation, "clicked",
       Widget_Callback.To_Marshaller (On_Final_Validation_Clicked'Access), Final_Window);
    Add (Final_Window.Hbuttonbox1, Final_Window.Final_Validation);
 
-   Gtk_New (Final_Window.Final_Cancel, -"No");
+   Gtk_New_From_Stock (Final_Window.Final_Cancel, Stock_No);
    Set_Flags (Final_Window.Final_Cancel, Can_Default);
    Widget_Callback.Object_Connect
      (Final_Window.Final_Cancel, "clicked",
       Widget_Callback.To_Marshaller (On_Final_Cancel_Clicked'Access), Final_Window);
    Add (Final_Window.Hbuttonbox1, Final_Window.Final_Cancel);
 
-   Gtk_New (Final_Window.Label4, -("All fixable errors have been scan. Are you shure to update changes ?"));
+   Gtk_New (Final_Window.Label4, -("All fixable errors have been scanned. Confirm changes ?"));
    Set_Alignment (Final_Window.Label4, 0.5, 0.5);
    Set_Padding (Final_Window.Label4, 0, 0);
    Set_Justify (Final_Window.Label4, Justify_Center);
