@@ -910,7 +910,7 @@ package body Gtkada.MDI is
       while List /= Null_List loop
          C := MDI_Child (Get_Data (List));
          if C.Uniconified_Width = -1 or else C.Uniconified_Height = -1 then
-            Size_Request (C, Req);
+            Req := Get_Child_Requisition (C);
             C.Uniconified_Width := Req.Width;
             C.Uniconified_Height := Req.Height;
             Alloc := (C.X, C.Y, Allocation_Int (C.Uniconified_Width),
@@ -2499,7 +2499,12 @@ package body Gtkada.MDI is
          Set_Show_Tabs (MDI.Docks (Side), False);
          Set_Show_Border (MDI.Docks (Side), False);
          Set_Border_Width (MDI.Docks (Side), 0);
-         Set_Scrollable (MDI.Docks (Side));
+
+         --  ??? Do not use scrollable notebooks for now, since if the tabs are
+         --  ??? hidden then some blank windows are displayed in the middle of
+         --  ??? the screen with gtk+1.3.7
+         --  Set_Scrollable (MDI.Docks (Side));
+
          --  Coordinates don't matter, they are set in Size_Allocate_MDI.
          Put (MDI, MDI.Docks (Side), 0, 0);
          Widget_Callback.Connect
