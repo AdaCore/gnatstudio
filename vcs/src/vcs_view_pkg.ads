@@ -68,6 +68,7 @@ package VCS_View_Pkg is
       Remove_Button              : Gtk_Widget;
 
       Message_Text               : Gtk_Text;
+      --  When in independant mode, this acts as a console for displaying text.
 
       Kernel                     : Kernel_Handle;
       --  Reference to the Glide kernel that launched the explorer, if any.
