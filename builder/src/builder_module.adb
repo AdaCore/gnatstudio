@@ -1666,7 +1666,7 @@ package body Builder_Module is
         (Kernel,
          Command      => "compile",
          Description  =>
-           -("Compile the file. This call will return only once the"
+           -("Compile current file. This call will return only once the"
              & " compilation is completed"),
          Minimum_Args => 0,
          Maximum_Args => 0,
