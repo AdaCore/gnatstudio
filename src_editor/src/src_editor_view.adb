@@ -281,13 +281,19 @@ package body Src_Editor_View is
 
       Delete_Mark (Get_Buffer (View), View.Saved_Cursor_Mark);
 
-      if View.Connect_Expose_Id /= 0 then
+      if View.Connect_Expose_Registered then
          Idle_Remove (View.Connect_Expose_Id);
       end if;
 
-      if View.Idle_Redraw_Id /= 0 then
+      if View.Idle_Redraw_Registered then
          Idle_Remove (View.Idle_Redraw_Id);
       end if;
+
+      --  Mark the idle loops as registered, so that they can no longer be
+      --  registered once the view has been destroyed.
+
+      View.Idle_Redraw_Registered := True;
+      View.Connect_Expose_Registered := True;
    end Delete;
 
    ---------------------
@@ -436,7 +442,8 @@ package body Src_Editor_View is
 
       User.Buffer_Top_Line := 0;
 
-      if User.Idle_Redraw_Id = 0 then
+      if not User.Idle_Redraw_Registered then
+         User.Idle_Redraw_Registered := True;
          User.Idle_Redraw_Id := Source_View_Idle.Add
            (Idle_Column_Redraw'Access, User);
       end if;
@@ -457,7 +464,7 @@ package body Src_Editor_View is
          Redraw_Columns (View);
       end if;
 
-      View.Idle_Redraw_Id := 0;
+      View.Idle_Redraw_Registered := False;
       return False;
    end Idle_Column_Redraw;
 
@@ -1018,6 +1025,7 @@ package body Src_Editor_View is
       --  Connect in an idle callback, otherwise the lines-with-code in the
       --  debugger are recomputed all at once (before the editor has a size).
 
+      View.Connect_Expose_Registered := True;
       View.Connect_Expose_Id := Source_View_Idle.Add
         (Connect_Expose'Access,
          Source_View (View));
@@ -1047,7 +1055,8 @@ package body Src_Editor_View is
       Clear_Area_E (Win, X, Y, W, H);
 
       Clear_Text_Window (View);
-      View.Connect_Expose_Id := 0;
+
+      View.Connect_Expose_Registered := False;
       return False;
    end Connect_Expose;
 
