@@ -1349,10 +1349,12 @@ package body Project_Explorers is
      (Explorer : access Project_Explorer_Record'Class; Node : Gtk_Ctree_Node)
    is
       Count : Natural := 0;
+      Count_Import : Natural := 0;
       Src   : String_List_Id;
       Index : Natural;
       N, N2, Tmp : Gtk_Ctree_Node;
       Current_Dir : constant String := String (Get_Current_Dir);
+      Import : Project_List;
    begin
       --  The goal here is to keep the directories if their current state
       --  (expanded or not), while doing the update.
@@ -1365,8 +1367,16 @@ package body Project_Explorers is
          Src := String_Elements.Table (Src).Next;
       end loop;
 
+      Import :=
+        Projects.Table (Get_Project_View (Explorer.Kernel)).Imported_Projects;
+      while Import /= Empty_Project_List loop
+         Count_Import := Count_Import + 1;
+         Import := Project_Lists.Table (Import).Next;
+      end loop;
+
       declare
-         Sources : array (1 .. Count) of String_Id;
+         Sources : String_Id_Array (1 .. Count);
+         Imported : array (1 .. Count_Import) of Project_Id;
       begin
          --  Store the directories
          Index := Sources'First;
@@ -1376,6 +1386,16 @@ package body Project_Explorers is
             Sources (Index) := String_Elements.Table (Src).Value;
             Index := Index + 1;
             Src := String_Elements.Table (Src).Next;
+         end loop;
+
+         --  Store the imported projects
+         Count_Import := 1;
+         Import := Projects.Table
+           (Get_Project_View (Explorer.Kernel)).Imported_Projects;
+         while Import /= Empty_Project_List loop
+            Imported (Count_Import) := Project_Lists.Table (Import).Project;
+            Count_Import := Count_Import + 1;
+            Import := Project_Lists.Table (Import).Next;
          end loop;
 
          --  Remove from the tree all the directories that are no longer in the
@@ -1424,7 +1444,26 @@ package body Project_Explorers is
                   when Project_Node =>
                      --  The list of imported project files cannot change with
                      --  the scenario, so there is nothing to be done here
-                     null;
+                     declare
+                        Prj_Name : constant String :=
+                          Get_Name_String (User.Name);
+                     begin
+                        Index := Imported'First;
+                        while Index <= Imported'Last loop
+                           if Imported (Index) /= No_Project
+                             and then Project_Name (Imported (Index)) =
+                             Prj_Name
+                           then
+                              Imported (Index) := No_Project;
+                              exit;
+                           end if;
+                           Index := Index + 1;
+                        end loop;
+
+                        if Index > Imported'Last then
+                           Remove_Node (Explorer.Tree, N);
+                        end if;
+                     end;
 
                   when others =>
                      --  No other node type is possible
@@ -1432,6 +1471,14 @@ package body Project_Explorers is
                end case;
             end;
             N := N2;
+         end loop;
+
+         --  Then add all imported projects
+         for J in Imported'Range loop
+            if Imported (J) /= No_Project then
+               N := Add_Project_Node
+                 (Explorer, Project => Imported (J),  Parent_Node => Node);
+            end if;
          end loop;
 
          --  Then add all the new directories
@@ -1611,7 +1658,6 @@ package body Project_Explorers is
       if Node_Nth (T.Tree, 0) = null then
          Gtk.Ctree.Expand
            (T.Tree, Add_Project_Node (T, Get_Project_View (T.Kernel)));
-
 
       --  If we are displaying a new view of the tree that was there before, we
       --  want to keep the project nodes, and most important their open/close
