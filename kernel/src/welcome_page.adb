@@ -144,7 +144,12 @@ package body Welcome_Page is
 
       Gtk_New (Label,
         -("GPS is a complete integrated development environment that gives"
-          & " access to a wide range of tools and integrates them smoothly."));
+          & " access to a wide range of tools and integrates them smoothly.")
+        & ASCII.LF &
+        (-(" For more information, click on one of the buttons below, which"
+          & " will launch an HTML browser. To configure the HTML browser,"
+          & " you can go to the menu Help->Preferences and select the"
+          & " 'Helpers' section.")));
       Set_Line_Wrap (Label, True);
       Pack_Start (Hbox, Label);
 
