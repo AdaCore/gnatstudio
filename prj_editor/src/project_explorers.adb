@@ -100,6 +100,8 @@ package body Project_Explorers is
          when Directory_Node =>
             Directory : String_Id;
             --  The name of the directory associated with that node
+            --  ??? We String_Id might be reset if we ever decide to reset the
+            --  ??? tables. We should keep a Name_Id instead.
 
          when Obj_Directory_Node =>
             null;
@@ -538,6 +540,7 @@ package body Project_Explorers is
       end if;
 
       Node := Node_Nth (T.Tree, Guint (Row));
+      Gtk_Select (T.Tree, Node);
 
       Set_File_Information
         (Context      => File_Selection_Context_Access (Context),
