@@ -112,6 +112,7 @@ package body Builder_Module is
    procedure Free (Ar : in out String_List_Access) is
       procedure Free is new
         Ada.Unchecked_Deallocation (String_List, String_List_Access);
+
    begin
       if Ar /= null then
          Free (Ar.all);
