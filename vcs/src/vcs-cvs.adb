@@ -969,7 +969,7 @@ package body VCS.CVS is
       Create (File, Name => Text_File);
 
       while L_Temp /= Null_Node loop
-         Put_Line (File, Data (L_Temp));
+         Put (File, Data (L_Temp));
          L_Temp := Next (L_Temp);
       end loop;
 
