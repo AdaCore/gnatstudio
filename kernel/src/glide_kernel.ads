@@ -301,11 +301,9 @@ package Glide_Kernel is
      (Kernel : access Kernel_Handle_Record) return Selection_Context_Access;
    --  Return the context associated with the current MDI child.
    --  The caller should not free the returned value, this is taken care of by
-   --  the kernel automatically. However, if the caller needs to keep the
-   --  context valid throughout its executing, it should first call Ref, and
-   --  then Unref on the context. However, any subprogram it calls might be
-   --  calling Get_Current_Context as well, and thus raise a Storage_Error
-   --  later on.
+   --  the kernel automatically. If the caller needs to keep the context valid
+   --  throughout its execution, it should first call Ref, and then Unref on
+   --  the context, similarly for any caller that need to keep a valid context.
    --  The returned value might be null, if the current child doesn't support
    --  selection contexts.
    --  This function is mostly intended to be called for the callbacks in the
