@@ -24,6 +24,7 @@ with Types;
 with GNAT.OS_Lib; use GNAT.OS_Lib;
 with Prj;
 with Language_Handlers;
+with Project_Browsers;
 
 package Src_Info is
 
@@ -241,7 +242,6 @@ package Src_Info is
      (Handler       : access LI_Handler_Record;
       Root_Project  : Prj.Project_Id;
       Project       : Prj.Project_Id;
-      Language      : Types.Name_Id;
       Recursive     : Boolean := False)
       return LI_Handler_Iterator'Class is abstract;
    --  Generate the LI information for all the source files in Project (and all
@@ -250,9 +250,6 @@ package Src_Info is
    --  be called until all the files are processed.
    --  Note that only the database on the disk needs to be regenerated, not the
    --  LI structures themselves, which will be done by Create_Or_Complete_LI.
-   --
-   --  Language is the name of the language to parse, since a given handler
-   --  might be shared by multiple languages.
 
    --------------
    -- Entities --
@@ -947,7 +944,7 @@ private
      (Iterator     : in out LI_Handler_Iterator'Class;
       Project_View : Prj.Project_Id;
       Recursive    : Boolean;
-      Language     : Types.Name_Id);
+      Languages    : Project_Browsers.Name_Id_Array);
    --  Compute the list of source files that will need to be analyzed by the
    --  iterator. Elements from this list can be read using
    --  Current_Source_File. Only the files belonging to Language will be
