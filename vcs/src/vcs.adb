@@ -18,7 +18,8 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glib.Object; use Glib.Object;
+with Glide_Kernel;         use Glide_Kernel;
+with Glide_Kernel.Console; use Glide_Kernel.Console;
 with Generic_List;
 
 package body VCS is
@@ -29,6 +30,7 @@ package body VCS is
    package Identifiers is new Generic_List (VCS_Id_Identifier);
 
    Identifiers_List : Identifiers.List;
+   --  Global variable to store all the registered handlers.
 
    ----------
    -- Free --
@@ -70,30 +72,6 @@ package body VCS is
       return Result;
    end Get_VCS_From_Id;
 
-   -----------------------------
-   -- Register_Error_Function --
-   -----------------------------
-
-   procedure Register_Error_Function
-     (Func : Error_Function;
-      Data : Glib.Object.GObject) is
-   begin
-      Caller_Widget := Data;
-      The_Error_Function := Func;
-   end Register_Error_Function;
-
-   ----------------------------
-   -- Register_Idle_Function --
-   ----------------------------
-
-   procedure Register_Idle_Function
-     (Func    : Idle_Function;
-      Timeout : Integer := 200) is
-   begin
-      The_Idle_Function := Func;
-      VCS.Timeout := Timeout;
-   end Register_Idle_Function;
-
    ---------------
    -- Set_Error --
    ---------------
@@ -102,9 +80,14 @@ package body VCS is
      (Rep     : access VCS_Record;
       Message : String) is
    begin
-      if The_Error_Function /= null then
-         The_Error_Function (Message, Caller_Widget);
+      if Rep.Kernel = null then
+         return;
       end if;
+
+      Insert (Rep.Kernel,
+              Message,
+              Highlight_Sloc => False,
+              Mode => Error);
    end Set_Error;
 
    ----------
