@@ -18,33 +18,33 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Calendar;         use Ada.Calendar;
-with GNAT.Calendar;        use GNAT.Calendar;
-with GNAT.Calendar.Time_IO; use GNAT.Calendar.Time_IO;
-with Glib;                 use Glib;
-with Glib.Object;          use Glib.Object;
-with Glib.Values;          use Glib.Values;
+with Ada.Calendar;             use Ada.Calendar;
+with GNAT.Calendar;            use GNAT.Calendar;
+with GNAT.Calendar.Time_IO;    use GNAT.Calendar.Time_IO;
+with Glib;                     use Glib;
+with Glib.Object;              use Glib.Object;
+with Glib.Values;              use Glib.Values;
 with Glib.Xml_Int;             use Glib.Xml_Int;
 
-with Interactive_Consoles; use Interactive_Consoles;
-with Glide_Intl;           use Glide_Intl;
-with Glide_Kernel.Modules; use Glide_Kernel.Modules;
+with Interactive_Consoles;     use Interactive_Consoles;
+with Glide_Intl;               use Glide_Intl;
+with Glide_Kernel.Modules;     use Glide_Kernel.Modules;
 with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
-with GNAT.IO;              use GNAT.IO;
-with GNAT.OS_Lib;          use GNAT.OS_Lib;
-with GNAT.Regpat;          use GNAT.Regpat;
-with Gtk.Enums;            use Gtk.Enums;
-with Gtk.Menu_Item;        use Gtk.Menu_Item;
-with Gtkada.File_Selector; use Gtkada.File_Selector;
-with Gtkada.MDI;           use Gtkada.MDI;
-with OS_Utils;             use OS_Utils;
-with String_Utils;         use String_Utils;
-with Traces;               use Traces;
-with Ada.Exceptions;       use Ada.Exceptions;
-with Glide_Result_View;    use Glide_Result_View;
-with Gtkada.Handlers;      use Gtkada.Handlers;
-with Histories;            use Histories;
-with Gtk.Widget;           use Gtk.Widget;
+with GNAT.IO;                  use GNAT.IO;
+with GNAT.OS_Lib;              use GNAT.OS_Lib;
+with GNAT.Regpat;              use GNAT.Regpat;
+with Gtk.Enums;                use Gtk.Enums;
+with Gtk.Menu_Item;            use Gtk.Menu_Item;
+with Gtkada.File_Selector;     use Gtkada.File_Selector;
+with Gtkada.MDI;               use Gtkada.MDI;
+with OS_Utils;                 use OS_Utils;
+with String_Utils;             use String_Utils;
+with Traces;                   use Traces;
+with Ada.Exceptions;           use Ada.Exceptions;
+with Glide_Result_View;        use Glide_Result_View;
+with Gtkada.Handlers;          use Gtkada.Handlers;
+with Histories;                use Histories;
+with Gtk.Widget;               use Gtk.Widget;
 
 package body Glide_Kernel.Console is
 

@@ -983,8 +983,9 @@ package body Browsers.Entities is
             --  Variable declarations and variable references will all
             --  represent variables declared in the record.
             --  ??? Problem with a case statement in an Ada record
+
             if Is_Declaration (Node)
---  or else not Get_Kind (Node).Is_Type
+            --  or else not Get_Kind (Node).Is_Type
             then
                Field := Get_Entity (Node);
 
