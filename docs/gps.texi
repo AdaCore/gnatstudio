@@ -3490,7 +3490,7 @@ want to remove, and then press the @key{Del} key.
 The contents of the lines can be edited interactively, by
 double-clicking on the line and column you want to edit.
 
-To add new entries to this list, use the three fields at the bottom of
+To add new entries to this list, use the fields at the bottom of
 the window, and press the update button.
 
 @c ------------------------------------------------------------------
@@ -5719,8 +5719,8 @@ indented:
 @cindex example
 @smallexample
 variable1,
-    variable2,
-    variable3 : Integer;
+variable2,
+variable3 : Integer;
 @end smallexample
 
 @item RM style case indentation
@@ -5731,8 +5731,8 @@ Ada Reference Manual, e.g:
 @cindex example
 @smallexample
 case Value is
-   when others =>
-      null;
+when others =>
+null;
 end case;
 @end smallexample
 
@@ -5742,7 +5742,7 @@ If this preference is set to @code{False}, this would be indented as:
 @smallexample
 case Value is
 when others =>
-   null;
+null;
 end case;
 @end smallexample
 
@@ -6244,7 +6244,7 @@ declaration, as in the following example:
 @smallexample
 <?xml version="1.0" encoding="iso-8859-1">
 <submenu>
-  <title>encoded text/title>
+<title>encoded text/title>
 </submenu>
 @end smallexample
 
@@ -6259,7 +6259,7 @@ left to your consideration. The general format is therefore
 @smallexample
 <?xml version="1.0" ?>
 <root_node>
-  ...
+...
 </root_node>
 @end smallexample
 
@@ -6270,13 +6270,13 @@ described in later sections. This includes:
 
 @table @code
 @item <action>
-  (@pxref{Defining Actions})
+(@pxref{Defining Actions})
 @item <key>
-  (@pxref{Binding actions to keys})
+(@pxref{Binding actions to keys})
 @item <submenu>
-  (@pxref{Adding new menus})
+(@pxref{Adding new menus})
 @item <alias>
-  (@pxref{Defining Text Aliases})
+(@pxref{Defining Text Aliases})
 @item <language>
   (@pxref{Adding Support for New Languages})
 @item <button>
@@ -7164,10 +7164,18 @@ will override the inherited settings.
 @item Spec_Suffix
 A string describing the suffix of spec/definition files for this language.
 If the language does not have the notion of spec or definition file, you
-can ignore this value.
+can ignore this value, and consider using the @code{Extensions} tag instead.
+This tag must be unique.
 
 @item Body_Suffix
 A string describing the suffix of body/implementation files for this language.
+This tag works in coordination with the @code{Spec_Suffix}, so that the user
+can choose to easily go from one file to the other.
+This tag must be unique.
+
+@item Extensions
+A string describing one of the valid extensions for this language. There can
+be several such children. The extension must start with a '.' character
 
 @item Keywords
 A V7 style regular expression for recognizing and highlighting keywords.
