@@ -244,7 +244,7 @@ package body GVD.Text_Box.Source_Editor.GPS is
      (Editor : access GEdit_Record'Class;
       Window : access GVD.Main_Window.GVD_Main_Window_Record'Class)
    is
-      Kernel : constant Kernel_Handle := GPS_Window (Editor.Window).Kernel;
+      Kernel : constant Kernel_Handle := GPS_Window (Window).Kernel;
       Args   : GNAT.OS_Lib.Argument_List :=
         (new String'(Highlight_Category), new String'("True"));
 
