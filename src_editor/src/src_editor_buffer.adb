@@ -24,6 +24,7 @@ with Glib.Object;               use Glib.Object;
 with Glib.Values;               use Glib.Values;
 with Gtk;                       use Gtk;
 with Gtk.Handlers;              use Gtk.Handlers;
+with Gtk.Main;                  use Gtk.Main;
 with Gtk.Text_Iter;             use Gtk.Text_Iter;
 with Gtk.Text_Mark;             use Gtk.Text_Mark;
 with Gtk.Text_Tag_Table;        use Gtk.Text_Tag_Table;
@@ -59,6 +60,8 @@ package body Src_Editor_Buffer is
    use type System.Address;
 
    Me : constant Debug_Handle := Create ("Source_Editor_Buffer");
+
+   package Buffer_Timeout is new Gtk.Main.Timeout (Source_Buffer);
 
    -----------------
    -- Preferences --
@@ -194,12 +197,47 @@ package body Src_Editor_Buffer is
    procedure Buffer_Destroy (Buffer : access Source_Buffer_Record'Class);
    --  Free memory associated to Buffer.
 
+   function Automatic_Save (Buffer : Source_Buffer) return Boolean;
+   --  Handle automatic save of the buffer, using a timeout.
+
+   procedure Internal_Save_To_File
+     (Buffer   : Source_Buffer;
+      Filename : String;
+      Success  : out Boolean);
+   --  Low level save function. Only writes the buffer contents on disk,
+   --  with no modification on the buffer's settings.
+
+   --------------------
+   -- Automatic_Save --
+   --------------------
+
+   function Automatic_Save (Buffer : Source_Buffer) return Boolean is
+      Success : Boolean;
+   begin
+      if not Buffer.Modified_Auto then
+         return True;
+      end if;
+
+      Internal_Save_To_File
+        (Buffer,
+         Dir_Name (Buffer.Filename.all) & ".#" &
+         Base_Name (Buffer.Filename.all), Success);
+      Buffer.Modified_Auto := False;
+
+      return True;
+   end Automatic_Save;
+
    --------------------
    -- Buffer_Destroy --
    --------------------
 
    procedure Buffer_Destroy (Buffer : access Source_Buffer_Record'Class) is
    begin
+      if Buffer.Timeout_Id /= 0 then
+         Timeout_Remove (Buffer.Timeout_Id);
+         Buffer.Timeout_Id := 0;
+      end if;
+
       Free_Queue (Buffer.Queue);
 
       if Buffer.Current_Command /= null then
@@ -219,6 +257,7 @@ package body Src_Editor_Buffer is
    begin
       Get_Cursor_Position (Buffer, Line => Line, Column => Col);
       Emit_New_Cursor_Position (Buffer, Line => Line, Column => Col);
+      Buffer.Modified_Auto := True;
 
    exception
       when E : others =>
@@ -790,7 +829,8 @@ package body Src_Editor_Buffer is
       Kernel : Glide_Kernel.Kernel_Handle;
       Lang   : Language.Language_Access := null)
    is
-      Tags      : Gtk_Text_Tag_Table;
+      Tags    : Gtk_Text_Tag_Table;
+      Timeout : Gint;
    begin
       Gtk.Text_Buffer.Initialize (Buffer);
       Glib.Object.Initialize_Class_Record
@@ -839,7 +879,18 @@ package body Src_Editor_Buffer is
 
       Buffer.Queue := New_Queue;
 
-      --  And finally, connect ourselves to the interestings signals
+      --  Connect timeout, to handle automatic saving of buffer
+
+      Timeout := Get_Pref (Kernel, Periodic_Save);
+
+      if Timeout > 0 then
+         Buffer.Timeout_Id := Buffer_Timeout.Add
+           (Guint32 (Timeout) * 1000,
+            Automatic_Save'Access,
+            Buffer.all'Access);
+      end if;
+
+      --  And finally, connect ourselves to the interesting signals
 
       Buffer_Callback.Connect
         (Buffer, "changed",
@@ -917,6 +968,7 @@ package body Src_Editor_Buffer is
       Strip_Ending_Line_Terminator (Buffer);
       Set_Modified (Buffer, False);
       Buffer.Inserting := False;
+      Buffer.Modified_Auto := False;
 
       Buffer.Timestamp := To_Timestamp (File_Time_Stamp (Filename));
 
@@ -925,19 +977,18 @@ package body Src_Editor_Buffer is
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end Load_File;
 
-   ------------------
-   -- Save_To_File --
-   ------------------
+   ---------------------------
+   -- Internal_Save_To_File --
+   ---------------------------
 
-   procedure Save_To_File
-     (Buffer   : access Source_Buffer_Record;
+   procedure Internal_Save_To_File
+     (Buffer   : Source_Buffer;
       Filename : String;
       Success  : out Boolean)
    is
       FD         : File_Descriptor := Invalid_FD;
       Start_Iter : Gtk_Text_Iter;
       End_Iter   : Gtk_Text_Iter;
-      Name_Changed : Boolean;
 
    begin
       Success := True;
@@ -1009,9 +1060,40 @@ package body Src_Editor_Buffer is
          end if;
       end;
 
-      Set_Modified (Buffer, False);
-      Close (FD);
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
 
+         --  To avoid consuming up all File Descriptors, we catch all
+         --  exceptions here, and close the current file descriptor.
+
+         if FD /= Invalid_FD then
+            Close (FD);
+         end if;
+   end Internal_Save_To_File;
+
+   ------------------
+   -- Save_To_File --
+   ------------------
+
+   procedure Save_To_File
+     (Buffer   : access Source_Buffer_Record;
+      Filename : String;
+      Success  : out Boolean)
+   is
+      Name_Changed : Boolean;
+   begin
+      Internal_Save_To_File (Buffer.all'Access, Filename, Success);
+
+      if not Success then
+         return;
+      end if;
+
+      Delete_File
+        (Dir_Name (Buffer.Filename.all) & ".#" &
+         Base_Name (Buffer.Filename.all), Success);
+      Set_Modified (Buffer, False);
+      Buffer.Modified_Auto := False;
       Name_Changed := Buffer.Filename = null
         or else Buffer.Filename.all /= Filename;
 
@@ -1025,9 +1107,10 @@ package body Src_Editor_Buffer is
 
       if Name_Changed then
          Set_Language
-           (Buffer, Get_Language_From_File
-            (Glide_Language_Handler (Get_Language_Handler (Buffer.Kernel)),
-             Buffer.Filename.all));
+           (Buffer,
+            Get_Language_From_File
+              (Glide_Language_Handler (Get_Language_Handler (Buffer.Kernel)),
+               Buffer.Filename.all));
 
          --  ??? The following is expensive, it would be nice to have a
          --  simpler way to report a possible change in the list of sources
@@ -1038,13 +1121,6 @@ package body Src_Editor_Buffer is
    exception
       when E : others =>
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
-
-         --  To avoid consuming up all File Descriptors, we catch all
-         --  exceptions here, and close the current file descriptor.
-
-         if FD /= Invalid_FD then
-            Close (FD);
-         end if;
    end Save_To_File;
 
    -----------
