@@ -30,6 +30,8 @@ with Gtk.Clist;                    use Gtk.Clist;
 with Gtk.Dialog;                   use Gtk.Dialog;
 with Gtk.Enums;                    use Gtk.Enums;
 with Gtk.Frame;                    use Gtk.Frame;
+with Gtk.GEntry;                   use Gtk.GEntry;
+with Gtk.Label;                    use Gtk.Label;
 with Gtk.Menu;                     use Gtk.Menu;
 with Gtk.Menu_Item;                use Gtk.Menu_Item;
 with Gtk.Scrolled_Window;          use Gtk.Scrolled_Window;
@@ -265,6 +267,10 @@ package body Project_Viewers is
 
    procedure Project_View_Changed (Viewer  : access Gtk_Widget_Record'Class);
    --  Called when the project view has changed.
+
+   procedure Read_Project_Name
+     (Kernel : access Kernel_Handle_Record'Class; Project : Project_Node_Id);
+   --  Open a popup dialog to select a new name for Project.
 
    -------------------------
    -- Find_In_Source_Dirs --
@@ -861,6 +867,58 @@ package body Project_Viewers is
    end On_Edit_Switches;
 
    -----------------------
+   -- Read_Project_Name --
+   -----------------------
+
+   procedure Read_Project_Name
+     (Kernel : access Kernel_Handle_Record'Class; Project : Project_Node_Id)
+   is
+      Dialog : Gtk_Dialog;
+      Label  : Gtk_Label;
+      Text   : Gtk_Entry;
+      Widget : Gtk_Widget;
+      View   : Project_Id := Get_Project_View_From_Project (Project);
+   begin
+      Gtk_New (Dialog,
+               Title  => -"Select name for project",
+               Parent => Get_Main_Window (Kernel),
+               Flags  => Modal or Destroy_With_Parent);
+      Widget := Add_Button (Dialog, -"OK", Gtk_Response_OK);
+
+      Gtk_New (Label, -"Enter name of project:");
+      Pack_Start (Get_Vbox (Dialog), Label);
+
+      Gtk_New (Text, 40);
+      Set_Width_Chars (Text, 20);
+      Set_Text (Text, Project_Name (View));
+      Pack_Start (Get_Vbox (Dialog), Text);
+
+      Show_All (Dialog);
+      if Run (Dialog) = Gtk_Response_OK then
+         Rename_And_Move
+           (Root_Project => Project,
+            Project      => Project,
+            New_Name     => Get_Text (Text),
+            New_Path     => Dir_Name (Project_Path (View)));
+         Project_Changed (Kernel);
+         Recompute_View (Kernel);
+      end if;
+
+      Destroy (Dialog);
+
+   exception
+      when Project_Error =>
+         Insert (Kernel,
+                 -"Couldn't rename the project to " & Get_Text (Text)
+                 & ASCII.LF & (-"Project already exists"),
+                 Mode => Glide_Kernel.Console.Error);
+
+      when E : others =>
+         Trace (Me, "Unexpected exception "
+                & Exception_Information (E));
+   end Read_Project_Name;
+
+   -----------------------
    -- Save_All_Projects --
    -----------------------
 
@@ -870,7 +928,12 @@ package body Project_Viewers is
    is
       pragma Unreferenced (Widget);
    begin
-      Save_Project (Get_Project (Kernel), Recursive => True);
+      --  Are we still using the default project ?
+      if Get_Project_File_Name (Kernel) = "" then
+         Read_Project_Name (Kernel, Get_Project (Kernel));
+      end if;
+
+      Save_Project (Kernel, Get_Project (Kernel), Recursive => True);
    end Save_All_Projects;
 
    ---------------------------
@@ -882,10 +945,21 @@ package body Project_Viewers is
       Context : Selection_Context_Access)
    is
       pragma Unreferenced (Widget);
+      File : constant File_Selection_Context_Access :=
+        File_Selection_Context_Access (Context);
+      Kernel : Kernel_Handle := Get_Kernel (Context);
+      Project : Project_Node_Id;
    begin
-      Save_Project
-        (Get_Project_From_View
-         (Project_Information (File_Selection_Context_Access (Context))));
+      Project := Get_Project_From_View (Project_Information (File));
+
+      --  Are we still using the default project ?
+      if Get_Project_File_Name (Kernel) = ""
+        and then Project_Information (File) = Get_Project_View (Kernel)
+      then
+         Read_Project_Name (Kernel, Project);
+      end if;
+
+      Save_Project (Kernel, Project);
    end Save_Specific_Project;
 
    ---------------------------
@@ -903,7 +977,7 @@ package body Project_Viewers is
       if Has_Project_Information (File)
         and then Edit_Naming_Scheme
         (Get_Main_Window (Get_Kernel (Context)),
-         Get_Project_From_View (Project_Information (File)),
+         Get_Kernel (Context),
          Project_Information (File))
       then
          Recompute_View (Get_Kernel (Context));
