@@ -55,7 +55,7 @@ package body General_Preferences_Pkg.Callbacks is
       Hide (Get_Toplevel (Object));
       Preferences_Changed (GVD_Main_Window (Pref.Main_Window));
       Save_Preferences
-        (GVD_Main_Window (Pref.Main_Window).Gvd_Home_Dir.all
+        (GVD_Main_Window (Pref.Main_Window).Home_Dir.all
          & Directory_Separator & "preferences");
    end On_Ok_Button_Clicked;
 
