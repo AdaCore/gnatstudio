@@ -19,6 +19,7 @@
 -----------------------------------------------------------------------
 
 with Ada.Characters.Handling;  use Ada.Characters.Handling;
+with Ada.Exceptions;           use Ada.Exceptions;
 with Interfaces.C.Strings;     use Interfaces.C, Interfaces.C.Strings;
 
 with Gdk.Color;                use Gdk.Color;
@@ -38,6 +39,7 @@ with Glide_Kernel.Modules;     use Glide_Kernel.Modules;
 with Glide_Kernel.Scripts;     use Glide_Kernel.Scripts;
 with Default_Preferences;      use Default_Preferences;
 with Case_Handling;            use Case_Handling;
+with Traces;                   use Traces;
 
 package body Glide_Kernel.Preferences is
 
@@ -219,25 +221,25 @@ package body Glide_Kernel.Preferences is
                Set_Pref
                  (Kernel.Preferences,
                   Pref,
-                  Gint'Image (Gint (Integer'(Nth_Arg (Data, 1)))));
+                  Gint'Image (Gint (Integer'(Nth_Arg (Data, 2)))));
 
             elsif Typ = GType_String
               or else Typ = Pango.Font.Get_Type
               or else Typ = Gdk_Color_Type
             then
                Set_Pref
-                 (Kernel.Preferences, Pref, String'(Nth_Arg (Data, 1)));
+                 (Kernel.Preferences, Pref, String'(Nth_Arg (Data, 2)));
 
             elsif Typ = GType_Boolean then
                Set_Pref
-                 (Kernel.Preferences, Pref, Boolean'Image (Nth_Arg (Data, 1)));
+                 (Kernel.Preferences, Pref, Boolean'Image (Nth_Arg (Data, 2)));
 
             elsif Fundamental (Typ) = GType_Enum then
                Set_Pref
                  (Kernel.Preferences,
                   Pref,
                   Get_Index
-                    (Param_Spec_Enum (Param), String'(Nth_Arg (Data, 1))));
+                    (Param_Spec_Enum (Param), String'(Nth_Arg (Data, 2))));
             else
                Done := False;
                Set_Error_Msg (Data, -"Preference not supported");
@@ -248,8 +250,11 @@ package body Glide_Kernel.Preferences is
             end if;
 
          exception
-            when others =>
-               Set_Error_Msg (Data, -"Wrong parameters");
+            when E : Invalid_Parameter =>
+               Set_Error_Msg (Data, Exception_Message (E));
+            when E : others =>
+               Trace (Exception_Handle, "Unexpected exception "
+                      & Exception_Information (E));
          end;
       end if;
 
