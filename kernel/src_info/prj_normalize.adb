@@ -205,7 +205,7 @@ package body Prj_Normalize is
    function Find_Scenario_Variables (Project : Project_Node_Id)
       return Variable_Ref_Array
    is
-      Vars : Variable_Decl_Array := Find_Scenario_Variables
+      Vars : Project_Node_Array := Find_Scenario_Variables
         (Project, Parse_Imported => False);
       Ref  : Variable_Ref_Array (Vars'Range);
    begin
