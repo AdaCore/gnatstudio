@@ -553,8 +553,7 @@ package body Docgen.Work_On_File is
                  Info,
                  Reference_Iter,
                  No_Project,
-                 True,
-                 VFS.No_File);
+                 True);
 
             --  1. Find all subprograms called in the subprogram processed
 
@@ -586,6 +585,8 @@ package body Docgen.Work_On_File is
             Entity_Node.Called_List := Local_Ref_List;
             Remove_Double_Nodes (Local_Calls_List);
             Entity_Node.Calls_List  := Local_Calls_List;
+
+            Destroy (Reference_Iter);
          end if;
 
          --  If defined in a spec file, add entity to the
@@ -648,8 +649,7 @@ package body Docgen.Work_On_File is
             Info,
             Iter,
             No_Project,
-            True,
-            VFS.No_File);
+            True);
 
          if Get (Iter) = No_Reference then
             Found := False;
@@ -1811,6 +1811,8 @@ package body Docgen.Work_On_File is
                --  Get next entity (or reference) in this file
                Next (Entity_Iter);
             end loop;
+
+            Destroy (Children_Iter);
 
             Sort_List_By_Line_And_Column (List_Ref_In_File);
 
