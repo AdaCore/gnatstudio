@@ -23,8 +23,6 @@ with Glib.Graphs;   use Glib.Graphs;
 with Gtkada.Canvas; use Gtkada.Canvas;
 with Line_Sweep;    use Line_Sweep;
 
-with Text_IO; use Text_IO;
-
 package body Layouts is
 
    Max_Iterations : constant Natural := 21;
@@ -73,6 +71,7 @@ package body Layouts is
    procedure Position_Nodes
      (G               : Graph;
       Lines           : Node_Matrix;
+      Max_Width       : Natural;
       X               : out Integer_Array;
       Num_Per_Line    : Natural_Array;
       Vertical_Layout : Boolean);
@@ -729,6 +728,7 @@ package body Layouts is
    procedure Position_Nodes
      (G               : Graph;
       Lines           : Node_Matrix;
+      Max_Width       : Natural;
       X               : out Integer_Array;
       Num_Per_Line    : Natural_Array;
       Vertical_Layout : Boolean)
@@ -737,8 +737,21 @@ package body Layouts is
       Iteration : Natural := 0;
       X1, X2, Min, Dist : Integer;
       C1, C2 : Natural;
+      Min_D : array (Lines'Range (1)) of Integer;
 
    begin
+      for Row in Lines'Range (1) loop
+         Min_D (Row) := Max_Width;
+         for Column in 0 .. Num_Per_Line (Row) - 1 loop
+            Min_D (Row) := Min_D (Row)
+              - Width (Lines (Row, Column), Vertical_Layout);
+         end loop;
+
+         Min_D (Row) := Integer'Max
+           (Min_Dist, Min_D (Row) / Num_Per_Line (Row));
+      end loop;
+
+
       --  While the stability of the graph is not satisfactory
       while Iteration < Max_Position_Iteration loop
 
@@ -774,7 +787,7 @@ package body Layouts is
                            - X (Get_Index (Lines (Row, C2 - 1))))
                  = (Width (Lines (Row, C2), Vertical_Layout)
                     + Width (Lines (Row, C2 - 1), Vertical_Layout)) / 2
-                 + Min_Dist
+                 + Min_D (Row)
                loop
                   C2 := C2 + 1;
                end loop;
@@ -798,7 +811,7 @@ package body Layouts is
                        + Width (Lines (Row, C1 - 1), Vertical_Layout) / 2;
                      Min := (Width (Lines (Row, C1 - 1), Vertical_Layout)
                              + Width (Lines (Row, C1), Vertical_Layout)) / 2;
-                     Dist := -Integer'Min (-Dist, X1 - X2 - Min - Min_Dist);
+                     Dist := -Integer'Min (-Dist, X1 - X2 - Min - Min_D (Row));
                   end if;
                else
                   if C2 < Num_Per_Line (Row) then
@@ -808,7 +821,7 @@ package body Layouts is
                        + Width (Lines (Row, C2), Vertical_Layout) / 2;
                      Min := (Width (Lines (Row, C2), Vertical_Layout)
                        + Width (Lines (Row, C2 - 1), Vertical_Layout)) / 2;
-                     Dist := Integer'Min (Dist, X2 - X1 - Min - Min_Dist);
+                     Dist := Integer'Min (Dist, X2 - X1 - Min - Min_D (Row));
                   end if;
                end if;
 
@@ -920,7 +933,16 @@ package body Layouts is
 
          Sort_Layers
            (Graph, Lines, Layers, X, Y, Num_Per_Line, Vertical_Layout);
-         Position_Nodes (Graph, Lines, X, Num_Per_Line, Vertical_Layout);
+
+         if Vertical_Layout then
+            Position_Nodes
+              (Graph, Lines, Natural (Get_Allocation_Height (Canvas)),
+               X, Num_Per_Line, Vertical_Layout);
+         else
+            Position_Nodes
+              (Graph, Lines, Natural (Get_Allocation_Width (Canvas)),
+               X, Num_Per_Line, Vertical_Layout);
+         end if;
       end;
 
       Iter := First (Graph);
@@ -939,31 +961,33 @@ package body Layouts is
          Next (Iter);
       end loop;
 
+      --  Debug traces, to compare with the layout provided by dot. Will be
+      --  removed eventually.
 
-      declare
-         Iter : Edge_Iterator := First (Graph);
-         E    : Edge_Access;
-         File : File_Type;
-      begin
-         Create (File, Out_File, "layout.dot");
+      --  declare
+      --     Iter : Edge_Iterator := First (Graph);
+      --     E    : Edge_Access;
+      --     File : File_Type;
+      --  begin
+      --     Create (File, Out_File, "layout.dot");
 
-         Put_Line (File, "digraph layouts {");
-         Put_Line (File, "   rankdir=LR;");
-         Put_Line (File, "   node [shape=box];");
+      --     Put_Line (File, "digraph layouts {");
+      --     Put_Line (File, "   rankdir=LR;");
+      --     Put_Line (File, "   node [shape=box];");
 
 
-         while not At_End (Iter) loop
-            E := Get (Iter);
-            Put_Line (File, Natural'Image (Get_Index (Get_Src (E)))
-                      & " ->"
-                      & Natural'Image (Get_Index (Get_Dest (E)))
-                      & ";");
-            Next (Iter);
-         end loop;
+      --     while not At_End (Iter) loop
+      --        E := Get (Iter);
+      --        Put_Line (File, Natural'Image (Get_Index (Get_Src (E)))
+      --                  & " ->"
+      --                  & Natural'Image (Get_Index (Get_Dest (E)))
+      --                  & ";");
+      --        Next (Iter);
+      --     end loop;
 
-         Put_Line (File, "}");
-         Close (File);
-      end;
+      --     Put_Line (File, "}");
+      --     Close (File);
+      --  end;
 
    end Layer_Layout;
 
