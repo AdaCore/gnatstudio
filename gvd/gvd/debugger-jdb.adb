@@ -44,14 +44,15 @@ package body Debugger.Jdb is
      GNAT.Regpat.Compile ("^> ");
    --  Match everything that should be highlighted in the debugger window.
 
+   Jdb_Command : constant String := "jdb";
+   --  The default Jdb executable name.
+
    -------------
    -- Type_Of --
    -------------
 
-   function Type_Of (Debugger : access Jdb_Debugger;
-                     Entity : String)
-                    return String
-   is
+   function Type_Of
+     (Debugger : access Jdb_Debugger; Entity : String) return String is
    begin
       return "";
    end Type_Of;
@@ -63,8 +64,7 @@ package body Debugger.Jdb is
    function Value_Of
      (Debugger : access Jdb_Debugger;
       Entity   : String;
-      Format   : Value_Format := Decimal) return String
-   is
+      Format   : Value_Format := Decimal) return String is
    begin
       --  Empty the buffer.
       Empty_Buffer (Get_Process (Debugger));
@@ -93,16 +93,36 @@ package body Debugger.Jdb is
    -- Spawn --
    -----------
 
-   procedure Spawn (Debugger       : access Jdb_Debugger;
-                    Arguments      : Argument_List;
-                    Proxy          : Process_Proxies.Process_Proxy_Access;
-                    Remote_Machine : String := "") is
+   procedure Spawn
+     (Debugger        : access Jdb_Debugger;
+      Executable      : String;
+      Arguments       : GNAT.OS_Lib.Argument_List;
+      Proxy           : Process_Proxies.Process_Proxy_Access;
+      Window          : Main_Debug_Window_Pkg.Main_Debug_Window_Access;
+      Remote_Host     : String := "";
+      Remote_Target   : String := "";
+      Remote_Protocol : String := "";
+      Debugger_Name   : String := "") is
    begin
-      General_Spawn (Debugger, Arguments, "jdb", Proxy, Remote_Machine);
-      Add_Output_Filter (Get_Descriptor (Debugger.Process).all,
-                         Trace_Filter'Access);
-      Add_Input_Filter (Get_Descriptor (Debugger.Process).all,
-                        Trace_Filter'Access);
+      if Debugger_Name = "" then
+         General_Spawn (Debugger, Arguments, Jdb_Command, Proxy, Remote_Host);
+      else
+         General_Spawn
+           (Debugger, Arguments, Debugger_Name, Proxy, Remote_Host);
+      end if;
+
+      Free (Debugger.Main_Class);
+
+      if Executable /= "" then
+         Debugger.Main_Class := new String' (Executable);
+      end if;
+
+      Add_Output_Filter
+        (Get_Descriptor (Debugger.Process).all,
+         Trace_Filter'Access);
+      Add_Input_Filter
+        (Get_Descriptor (Debugger.Process).all,
+         Trace_Filter'Access);
    end Spawn;
 
    ----------------
@@ -116,6 +136,10 @@ package body Debugger.Jdb is
       Set_Internal_Command (Get_Process (Debugger), False);
       Wait_Prompt (Debugger);
       Set_Internal_Command (Get_Process (Debugger), True);
+
+      if Debugger.Main_Class /= null then
+         Set_Executable (Debugger, Debugger.Main_Class.all);
+      end if;
 
       Language := new Jdb_Java_Language;
       Set_Language (Debugger, Language);
@@ -143,9 +167,9 @@ package body Debugger.Jdb is
    -- Set_Executable --
    --------------------
 
-   procedure Set_Executable (Debugger : access Jdb_Debugger;
-                             Executable : String)
-   is
+   procedure Set_Executable
+     (Debugger : access Jdb_Debugger;
+      Executable : String) is
    begin
       Send (Get_Process (Debugger), "load " & Executable);
       Wait_Prompt (Debugger);
@@ -168,7 +192,6 @@ package body Debugger.Jdb is
    procedure Run (Debugger : access Jdb_Debugger) is
    begin
       Send (Get_Process (Debugger), "run");
-      Wait_Prompt (Debugger);
    end Run;
 
    -----------
@@ -201,13 +224,44 @@ package body Debugger.Jdb is
       Wait_Prompt (Debugger);
    end Step_Over;
 
+   --------------
+   -- Continue --
+   --------------
+
+   procedure Continue (Debugger : access Jdb_Debugger) is
+   begin
+      Send (Get_Process (Debugger), "cont");
+      Wait_Prompt (Debugger);
+   end Continue;
+
+   ----------------
+   -- Stack_Down --
+   ----------------
+
+   procedure Stack_Down (Debugger : access Jdb_Debugger) is
+   begin
+      Send (Get_Process (Debugger), "down");
+      Wait_Prompt (Debugger);
+   end Stack_Down;
+
+   --------------
+   -- Stack_Up --
+   --------------
+
+   procedure Stack_Up (Debugger : access Jdb_Debugger) is
+   begin
+      Send (Get_Process (Debugger), "up");
+      Wait_Prompt (Debugger);
+   end Stack_Up;
+
    ---------------------
    -- Break_Exception --
    ---------------------
 
-   procedure Break_Exception (Debugger  : access Jdb_Debugger;
-                              Name      : String  := "";
-                              Unhandled : Boolean := False) is
+   procedure Break_Exception
+     (Debugger  : access Jdb_Debugger;
+      Name      : String  := "";
+      Unhandled : Boolean := False) is
    begin
       if Unhandled then
          raise Unknown_Command;
@@ -259,9 +313,8 @@ package body Debugger.Jdb is
    -- Highlighting_Pattern --
    --------------------------
 
-   function Highlighting_Pattern (Debugger : access Jdb_Debugger)
-                                 return GNAT.Regpat.Pattern_Matcher
-   is
+   function Highlighting_Pattern
+     (Debugger : access Jdb_Debugger) return GNAT.Regpat.Pattern_Matcher is
    begin
       return Highlight_Pattern;
    end Highlighting_Pattern;

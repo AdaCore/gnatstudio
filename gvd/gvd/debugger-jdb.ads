@@ -29,23 +29,31 @@ package Debugger.Jdb is
 
    type Jdb_Debugger is new Debugger.Debugger_Root with private;
 
-   procedure Spawn (Debugger       : access Jdb_Debugger;
-                    Arguments      : GNAT.OS_Lib.Argument_List;
-                    Proxy          : Process_Proxies.Process_Proxy_Access;
-                    Remote_Machine : String := "");
+   procedure Spawn
+     (Debugger        : access Jdb_Debugger;
+      Executable      : String;
+      Arguments       : GNAT.OS_Lib.Argument_List;
+      Proxy           : Process_Proxies.Process_Proxy_Access;
+      Window          : Main_Debug_Window_Pkg.Main_Debug_Window_Access;
+      Remote_Host     : String := "";
+      Remote_Target   : String := "";
+      Remote_Protocol : String := "";
+      Debugger_Name   : String := "");
+
    procedure Initialize (Debugger : access Jdb_Debugger);
 
    procedure Close (Debugger : access Jdb_Debugger);
 
    procedure Wait_Prompt (Debugger : access Jdb_Debugger);
 
-   function Highlighting_Pattern (Debugger : access Jdb_Debugger)
-                                 return GNAT.Regpat.Pattern_Matcher;
+   function Highlighting_Pattern
+     (Debugger : access Jdb_Debugger) return GNAT.Regpat.Pattern_Matcher;
+
    procedure Display_Prompt (Debugger : access Jdb_Debugger);
 
    function Type_Of
      (Debugger : access Jdb_Debugger;
-      Entity : String) return String;
+      Entity   : String) return String;
 
    function Value_Of
      (Debugger : access Jdb_Debugger;
@@ -53,7 +61,7 @@ package Debugger.Jdb is
       Format   : Value_Format := Decimal) return String;
 
    procedure Set_Executable
-     (Debugger : access Jdb_Debugger;
+     (Debugger   : access Jdb_Debugger;
       Executable : String);
 
    procedure Run (Debugger : access Jdb_Debugger);
@@ -63,6 +71,12 @@ package Debugger.Jdb is
    procedure Step_Into (Debugger : access Jdb_Debugger);
 
    procedure Step_Over (Debugger : access Jdb_Debugger);
+
+   procedure Continue (Debugger : access Jdb_Debugger);
+
+   procedure Stack_Down (Debugger : access Jdb_Debugger);
+
+   procedure Stack_Up (Debugger : access Jdb_Debugger);
 
    procedure Break_Exception
      (Debugger  : access Jdb_Debugger;
@@ -83,5 +97,8 @@ package Debugger.Jdb is
       Line     : Positive) return Boolean;
 
 private
-   type Jdb_Debugger is new Debugger.Debugger_Root with null record;
+   type Jdb_Debugger is new Debugger.Debugger_Root with record
+      Main_Class : GNAT.OS_Lib.String_Access;
+   end record;
+
 end Debugger.Jdb;
