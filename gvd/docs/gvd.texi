@@ -382,6 +382,7 @@ Whether the grid should be displayed in the canvas.
 Should items be aligned on the grid.
 
 @item Show Call Stack.
+@anchor{Show Call Stack}
 Whether the Call Stack view should be shown in the data window.
 @end itemize
 
@@ -495,7 +496,9 @@ You can select any number of items in this list and replay the selection
 automatically.
 
    @item Clear Window.
-Clear the debugger console window.
+Clear the debugger console window. This removes all the input and output
+exchanged between GVD and the underlying debugger, and reset the scrollbar
+accordingly.
 
 @end itemize
 
@@ -503,17 +506,27 @@ Clear the debugger console window.
 @itemize @bullet
    @item Call Stack.
       Display/Hide the Call Stack window inside the Data window.
-      See @ref{The Call Stack Window} for more details.
+      See @ref{The Call Stack Window} for more details. Note that you can
+      also display or hide the call stack at the preferences level, see
+      @ref{Show Call Stack}.
+
    @item Threads...
-      Opens a new window containing the list of threads or tasks (depending on
-      the current language) currently present in the executable. For each
-      thread, it will give information such as internal identifier, name,
-      status. This information is language and debugger dependent. You should
-      refer to the underlying debugger's documentation for more details.
+      Open a new window containing the list of threads currently present in
+      the executable as reported by the underlying debugger. For each thread,
+      it will give information such as internal identifier, name, status. This
+      information is language and debugger dependent. You should refer to the
+      underlying debugger's documentation for more details.
 
       When supported by the underlying debugger, clicking on a thread will
       change the context (variables, call stack, source file) displayed by GVD,
       allowing you to inspect other thread's stacks.
+
+   @item Tasks...
+      For GDB only, this will open a new window containing the list of Ada
+      tasks currently present in the executable. Similarly to the thread
+      window, you can switch to the task context by clicking on it, assuming
+      that GDB supports it. See the GDB documentation for the list of
+      items displayed for each task.
 
 @iftex
 @image{tasks, 12.7cm}
@@ -1246,20 +1259,63 @@ GVD, GDB and the debugged program each on a different machine.
 @chapter Command Line Options
 @c --------------------------------------------------------------------
 
-@noindent
 @smallexample
 Usage:
    gvd [options...] executable-file
        [--dargs [debugger options]] [--pargs [program options]]
+@end smallexample
 
-Options:
-   --debugger DEBUG  use DEBUG as the underlying debugger.
-   --jdb             assume a Java debugger.
-   --host HOST       Run inferior debugger on HOST.
-   --target TARG:PRO Load program on machine TARG using protocol PRO.
-   --log-level [0-4] Set level of logging (Default is 3).
-   --tty             Use controlling tty as additional debugger console.
-   --version         Show the GVD version and exit.
+@noindent
+The options recognized by GVD are:
+
+@itemize @bullet
+@item --debugger DEBUG    use DEBUG as the underlying debugger.
+
+@item --jdb               assume a Java debugger. This option is currently
+not fully supported.
+
+@item --host HOST         Run inferior debugger on HOST. See
+@ref{Using GVD with a Remote Debugger} for more information.
+
+@item --target TARG:PRO   Load program on machine TARG using protocol PRO.
+See @ref{Using GVD with a Remote Program} for more information.
+
+@item --log-level [0-4]   Set level of logging (Default is 3).
+This option can be useful when reporting bugs in GVD, in which case the
+maximum level of logs (4) gives more details, but will also generate
+more disk activity, which can slow down GVD significantly if the
+log file is located through a network disk.
+
+@item --editor-window=xid Use xid as the editor X window id.
+GVD takes advantage of this option by integrating the specified window
+as the source editor.
+This option is not currently supported under Windows.
+
+@item --tty               Use controlling tty as the debugger console.
+This option is very useful for integrating GVD in other debugger front-ends
+(e.g Emacs), since in this mode, GVD appears as the underlying debugger to
+the caller. See @ref{Integrating GVD} for more details.
+This option is not currently supported under Windows.
+
+@item --version           Show the GVD version and exit.
+
+@end itemize
+
+@noindent
+The @code{--dargs} section let you specify an arbitrary number of options
+to pass to the underlying debugger.
+
+@noindent
+Similarly, the @code{--pargs} section let you specify options to pass to the
+debugged program.
+
+@noindent
+For example, if you want to pass the @code{--nx} option to gdb, and the
+options @code{--file foo --version} to the debugged program @code{my_code}
+you will launch GVD as follows:
+
+@smallexample
+gvd my_code --dargs --nx --pargs --file foo --version
 @end smallexample
 
 @c --------------------------------------------------------------------
