@@ -5,11 +5,6 @@ Known Problems fixed in GPS 2.0.0
               from the %HOME%\.gps\log_files directory under Windows.
   Workaround: Remove the file manually after exiting GPS.
 
-- CC10-007 Opaque resizing of windows on Windows doesn't work
-  Problem:    If you have set the opaque mode in the preferences, and try to
-              resize the windows, then GPS moves them instead.
-  Workaround: Select the non-opaque mode
-
 - D108-007 Main files listed in the project file must end with source extension
   Problem:    If the list of main units listed in the project file is the name
               of an executable instead of a source file, GPS doesn't recognize
@@ -34,6 +29,11 @@ Known Problems fixed in GPS 2.0.0
   Workaround: Save the files as soon as possible. Added benefit is a proper
               recognition of the language
 
+- CC10-007 Opaque resizing of windows on Windows doesn't work
+  Problem:    If you have set the opaque mode in the preferences, and try to
+              resize the windows, then GPS moves them instead.
+  Workaround: Select the non-opaque mode
+
 - CB18-012 Different behavior between VCS global and contextual menus.
   Problem:    When you use the global menu VCS->Query status for all projects,
               only the status for project source files are queried, whereas
@@ -42,6 +42,11 @@ Known Problems fixed in GPS 2.0.0
               are queried.
 - Workaround: Use the contextual menu if you want to query status for
               non-source files.
+
+- CB06-006 Wrong file name suggested when saving a.b unit
+  Problem:    When creating an Ada unit called e.g. "a.b", GPS suggests the
+              name a-b.adb instead of a~b.adb.
+  Workaround: Fix the name manually when saving it.
 
 - Block folding not compatible with extended character sets
   Problem:    When a block contains extended characters, folding this block
