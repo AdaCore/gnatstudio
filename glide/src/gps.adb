@@ -296,7 +296,7 @@ begin
       Default_Spec_Suffix => ".ads",
       Default_Body_Suffix => ".adb");
 
-   Register_Language (Handler, "c",   C_Lang);
+   Register_Language (Handler, "c", C_Lang);
    Add_Language_Info
      (Handler, "c",
       LI                  => null,
