@@ -633,7 +633,7 @@ package body Browsers.Call_Graph is
       Callback : Examine_Callback;
       Execute  : Execute_Callback)
    is
-      Rename      : Entity_Information;
+      Rename : Entity_Information;
       Iter : Calls_Iterator;
       Refs : Entity_Reference_Iterator;
       Ref  : Entity_Reference;
@@ -661,8 +661,10 @@ package body Browsers.Call_Graph is
 
                while not At_End (Refs) loop
                   Ref := Get (Refs);
+
                   if Show_In_Call_Graph (Get_Kind (Ref))
                     and then Get_Caller (Ref) = Entity
+                    and then Is_Subprogram (Get_Entity (Refs))
                     and then Get_Declaration_Of (Rename) /= Get_Location (Ref)
                   then
                      Execute (Callback, Rename, Ref, Is_Renaming => False);
@@ -789,6 +791,7 @@ package body Browsers.Call_Graph is
       begin
          if Parent /= null
            and then Show_In_Call_Graph (Get_Kind (Refs))
+           and then Is_Subprogram (Parent)
          then
             Data.Execute (Data.Callback, Parent, Refs, False);
          end if;
