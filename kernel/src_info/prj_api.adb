@@ -3140,12 +3140,12 @@ package body Prj_API is
          Put (File, S);
       end Internal_Write_Str;
 
-      Name : constant String := Get_Name_String (Path_Name_Of (Project));
       Iter : Imported_Project_Iterator := Start (Project, Recursive);
-
    begin
       while Current (Iter) /= Empty_Node loop
-         Create (File, Mode => Out_File, Name => Name);
+         Create (File, Mode => Out_File,
+                 Name => Get_Name_String
+                 (Projects.Table (Current (Iter)).Path_Name));
          Pretty_Print
            (Project => Current (Iter),
             Eliminate_Null_Statements => True,
