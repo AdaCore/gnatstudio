@@ -4,6 +4,7 @@ with GNAT.Regpat;   use GNAT.Regpat;
 with System;        use System;
 with Unchecked_Conversion;
 with Unchecked_Deallocation;
+with Ada.Calendar;  use Ada.Calendar;
 
 package body GNAT.Expect is
 
@@ -280,148 +281,221 @@ package body GNAT.Expect is
       Full_Buffer : Boolean)
    is
       Num_Descriptors : Integer;
-      Buffer_Size     : Integer;
+      Buffer_Size     : Integer := 0;
 
       N               : Integer;
       Current_Filter  : Filter_List;
 
       type File_Descriptor_Array is
         array (Descriptors'Range) of File_Descriptor;
-      Fds : File_Descriptor_Array;
+      Fds : aliased File_Descriptor_Array;
 
       type Integer_Array is array (Descriptors'Range) of Integer;
-      Is_Set : Integer_Array;
+      Is_Set : aliased Integer_Array;
 
    begin
       for J in Descriptors'Range loop
          Fds (J) := Descriptors (J).Output_Fd;
+         if Descriptors (J).Buffer_Size = 0 then
+            Buffer_Size := Integer'Max (Buffer_Size, 4096);
+         else
+            Buffer_Size :=
+              Integer'Max (Buffer_Size, Descriptors (J).Buffer_Size);
+         end if;
       end loop;
 
-      --  Until we match or we have a timeout
+      declare
+         Buffer : aliased String (1 .. Buffer_Size);
+         --  Buffer used for input. This is allocated only once, not for
+         --  every iteration of the loop
+      begin
+
+         --  Until we match or we have a timeout
+
+         loop
+            Num_Descriptors :=
+              Poll (Fds'Address, Fds'Length, Timeout, Is_Set'Address);
+
+            case Num_Descriptors is
+
+               --  Error ?
+               when -1 =>
+                  raise Process_Died;
+
+                  --  Timeout ?
+               when 0  =>
+                  Result := Expect_Timeout;
+                  return;
+
+                  --  some input
+               when others =>
+                  for J in Descriptors'Range loop
+                     if Is_Set (J) = 1 then
+
+                        Buffer_Size := Descriptors (J).Buffer_Size;
+                        if Buffer_Size = 0 then
+                           Buffer_Size := 4096;
+                        end if;
+
+                        N := Read (Descriptors (J).Output_Fd, Buffer'Address,
+                                   Buffer_Size);
+
+                        --  error ?
+                        if N = -1 then
+                           raise Process_Died;
+                        end if;
+
+                        --  End of file.
+                        if N = 0 then
+                           Result := Expect_Timeout;
+                           return;
+
+                        else
+
+                           --  If there is no limit to the buffer size
+
+                           if Descriptors (J).Buffer_Size = 0 then
+
+                              declare
+                                 Tmp : String_Access := Descriptors (J).Buffer;
+                              begin
+                                 if Tmp /= null then
+                                    Descriptors (J).Buffer :=
+                                      new String (1 .. Tmp'Length + N);
+                                    Descriptors (J).Buffer (1 .. Tmp'Length) :=
+                                      Tmp.all;
+                                    Descriptors (J).Buffer
+                                      (Tmp'Length + 1 .. Tmp'Length + N) :=
+                                      Buffer (1 .. N);
+                                    Free (Tmp);
+                                    Descriptors (J).Buffer_Index :=
+                                      Descriptors (J).Buffer'Last;
+
+                                 else
+                                    Descriptors (J).Buffer :=
+                                      new String (1 .. N);
+                                    Descriptors (J).Buffer.all :=
+                                      Buffer (1 .. N);
+                                    Descriptors (J).Buffer_Index := N;
+                                 end if;
+                              end;
+
+                           else
+                              --  Add what we read to the buffer
+
+                              if Descriptors (J).Buffer_Index + N - 1 >
+                                Descriptors (J).Buffer_Size
+                              then
+
+                                 --  If the user wants to know when we have
+                                 --  read more than the buffer can contain.
+
+                                 if Full_Buffer then
+                                    Result := Expect_Full_Buffer;
+                                    return;
+                                 end if;
+
+                                 --  Keep as much as possible from the buffer,
+                                 --  and forget old characters.
+
+                                 Descriptors (J).Buffer
+                                   (1 .. Descriptors (J).Buffer_Size - N) :=
+                                  Descriptors (J).Buffer
+                                   (N - Descriptors (J).Buffer_Size +
+                                    Descriptors (J).Buffer_Index + 1 ..
+                                    Descriptors (J).Buffer_Index);
+                                 Descriptors (J).Buffer_Index :=
+                                   Descriptors (J).Buffer_Size - N;
+                              end if;
+
+                              --  Keep what we read in the buffer.
+
+                              Descriptors (J).Buffer
+                                (Descriptors (J).Buffer_Index + 1 ..
+                                 Descriptors (J).Buffer_Index + N) :=
+                                Buffer (1 .. N);
+                              Descriptors (J).Buffer_Index :=
+                                Descriptors (J).Buffer_Index + N;
+                           end if;
+
+                           --  Call each of the output filter with what we
+                           --  read.
+
+                           if Descriptors (J).Filters_Lock = 0 then
+                              Current_Filter := Descriptors (J).Out_Filters;
+
+                              while Current_Filter /= null loop
+                                 Current_Filter.Filter
+                                   (Descriptors (J).all, Buffer (1 .. N),
+                                    Current_Filter.User_Data);
+                                 Current_Filter := Current_Filter.Next;
+                              end loop;
+                           end if;
+
+                           Result := Expect_Match (N);
+                           return;
+                        end if;
+                     end if;
+                  end loop;
+            end case;
+         end loop;
+      end;
+   end Expect_Internal;
+
+   -----------
+   -- Flush --
+   -----------
+
+   procedure Flush
+     (Descriptor : in out Process_Descriptor;
+      Timeout    : Integer := 0)
+   is
+      Num_Descriptors : Integer;
+      N               : Integer;
+      Is_Set          : aliased Integer;
+      Buffer_Size     : Integer := 8192;
+      Buffer          : aliased String (1 .. Buffer_Size);
+
+      procedure Lseek (Fd : Integer;
+                       Offset : Integer;
+                       Whence : Integer);
+      pragma Import (C, Lseek, "lseek");
+   begin
+      --  Empty the current buffer
+      Descriptor.Last_Match_End := Descriptor.Buffer_Index;
+      Reinitialize_Buffer (Descriptor);
+
+      --  Read everything from the process to flush its output.
 
       loop
          Num_Descriptors :=
-           Poll (Fds'Address, Fds'Length, Timeout, Is_Set'Address);
+           Poll (Descriptor.Output_Fd'Address, 1, Timeout, Is_Set'Address);
 
          case Num_Descriptors is
 
             --  Error ?
-            when -1 => raise Process_Died;
+            when -1 =>
+               raise Process_Died;
 
-            --  Timeout ?
+            --  Timeout => End of flush
             when 0  =>
-               Result := Expect_Timeout;
                return;
 
             --  some input
             when others =>
-               for J in Descriptors'Range loop
-                  if Is_Set (J) = 1 then
-
-                     Buffer_Size := Descriptors (J).Buffer_Size;
-                     if Buffer_Size = 0 then
-                        Buffer_Size := 4096;
-                     end if;
-
-                     declare
-                        Buffer : aliased String (1 .. Buffer_Size);
-                        --  No point in reading more than we can process, so
-                        --  we limit we size of the buffer.
-
-                     begin
-                        N := Read (Descriptors (J).Output_Fd, Buffer'Address,
-                                   Buffer'Length);
-
-                        --  If N is null it means that the external process
-                        --  died.
-
-                        if N = 0 then
-                           raise Process_Died;
-                        end if;
-
-                        --  If there is no limit to the buffer size
-
-                        if Descriptors (J).Buffer_Size = 0 then
-
-                           declare
-                              Tmp : String_Access := Descriptors (J).Buffer;
-                           begin
-                              if Tmp /= null then
-                                 Descriptors (J).Buffer :=
-                                   new String (1 .. Tmp'Length + N);
-                                 Descriptors (J).Buffer (1 .. Tmp'Length) :=
-                                   Tmp.all;
-                                 Descriptors (J).Buffer
-                                   (Tmp'Length + 1 .. Tmp'Length + N) :=
-                                     Buffer (1 .. N);
-                                 Free (Tmp);
-                                 Descriptors (J).Buffer_Index :=
-                                   Descriptors (J).Buffer'Last;
-
-                              else
-                                 Descriptors (J).Buffer := new String (1 .. N);
-                                 Descriptors (J).Buffer.all := Buffer (1 .. N);
-                                 Descriptors (J).Buffer_Index := N;
-                              end if;
-                           end;
-
-                        else
-                           --  Add what we read to the buffer
-
-                           if Descriptors (J).Buffer_Index + N - 1 >
-                             Descriptors (J).Buffer_Size
-                           then
-
-                              --  If the user wants to know when we have read
-                              --  more than the buffer can contain.
-
-                              if Full_Buffer then
-                                 Result := Expect_Full_Buffer;
-                                 return;
-                              end if;
-
-                              --  Keep as much as possible from the buffer,
-                              --  and forget old characters.
-
-                              Descriptors (J).Buffer
-                                (1 .. Descriptors (J).Buffer_Size - N) :=
-                                  Descriptors (J).Buffer
-                                    (N - Descriptors (J).Buffer_Size +
-                                       Descriptors (J).Buffer_Index + 1 ..
-                                     Descriptors (J).Buffer_Index);
-                              Descriptors (J).Buffer_Index :=
-                                Descriptors (J).Buffer_Size - N;
-                           end if;
-
-                           --  Keep what we read in the buffer.
-
-                           Descriptors (J).Buffer
-                             (Descriptors (J).Buffer_Index + 1 ..
-                              Descriptors (J).Buffer_Index + N) :=
-                                Buffer (1 .. N);
-                           Descriptors (J).Buffer_Index :=
-                             Descriptors (J).Buffer_Index + N;
-                        end if;
-
-                        --  Call each of the output filter with what we read.
-
-                        Current_Filter := Descriptors (J).Out_Filters;
-
-                        while Current_Filter /= null loop
-                           Current_Filter.Filter
-                             (Descriptors (J).all, Buffer (1 .. N),
-                              Current_Filter.User_Data);
-                           Current_Filter := Current_Filter.Next;
-                        end loop;
-
-                        Result := Expect_Match (N);
-                        return;
-                     end;
+               if Is_Set = 1 then
+                  N := Read (Descriptor.Output_Fd, Buffer'Address,
+                             Buffer_Size);
+                  if N = -1 then
+                     raise Process_Died;
+                  elsif N = 0 then
+                     return;
                   end if;
-               end loop;
+               end if;
          end case;
       end loop;
-   end Expect_Internal;
+
+   end Flush;
 
    ------------------
    -- Get_Input_Fd --
@@ -566,6 +640,8 @@ package body GNAT.Expect is
    is
       N           : Expect_Match;
       Descriptors : Array_Of_Pd := (1 => Descriptor'Unrestricted_Access);
+      Try_Until   : Time := Clock + Duration (Timeout) / 1000.0;
+      Timeout_Tmp : Integer := Timeout;
 
    begin
       pragma Assert (Matched'First = 0);
@@ -591,11 +667,24 @@ package body GNAT.Expect is
 
          --  Else try to read new input
 
-         Expect_Internal (Descriptors, N, Timeout, Full_Buffer);
+         Expect_Internal (Descriptors, N, Timeout_Tmp, Full_Buffer);
 
          if N = Expect_Timeout or else N = Expect_Full_Buffer then
             Result := N;
             return;
+         end if;
+
+         --  Calculate the timeout for the next turn.
+         --  Note that Timeout is, from the caller's perspective, the maximum
+         --  time until a match, not the maximum time until some output is
+         --  read, and thus can not be reused as is for Expect_Internal.
+
+         if Timeout /= -1 then
+            Timeout_Tmp := Integer (Try_Until - Clock) * 1000;
+            if Timeout_Tmp < 0 then
+               Result := Expect_Timeout;
+               return;
+            end if;
          end if;
       end loop;
    end Expect;
@@ -922,12 +1011,14 @@ package body GNAT.Expect is
          Last := Full_Str'Last - 1;
       end if;
 
-      while Current /= null loop
-         Current.Filter
-           (Descriptor, Full_Str (Full_Str'First .. Last),
-            Current.User_Data);
-         Current := Current.Next;
-      end loop;
+      if Descriptor.Filters_Lock = 0 then
+         while Current /= null loop
+            Current.Filter
+              (Descriptor, Full_Str (Full_Str'First .. Last),
+               Current.User_Data);
+            Current := Current.Next;
+         end loop;
+      end if;
 
       N := Write
         (Descriptor.Input_Fd, Full_Str'Address, Last - Full_Str'First + 1);
@@ -944,5 +1035,25 @@ package body GNAT.Expect is
    begin
       GNAT.IO.Put (Str);
    end Trace_Filter;
+
+   ------------------
+   -- Lock_Filters --
+   ------------------
+
+   procedure Lock_Filters (Descriptor : in out Process_Descriptor) is
+   begin
+      Descriptor.Filters_Lock := Descriptor.Filters_Lock + 1;
+   end Lock_Filters;
+
+   --------------------
+   -- Unlock_Filters --
+   --------------------
+
+   procedure Unlock_Filters (Descriptor : in out Process_Descriptor) is
+   begin
+      if Descriptor.Filters_Lock > 0 then
+         Descriptor.Filters_Lock := Descriptor.Filters_Lock - 1;
+      end if;
+   end Unlock_Filters;
 
 end GNAT.Expect;
