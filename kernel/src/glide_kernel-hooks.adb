@@ -1513,7 +1513,7 @@ package body Glide_Kernel.Hooks is
             Wrapper4 : Shell_Wrapper_Shell;
          begin
             if Info = null then
-               Set_Error_Msg (Data, "Unknown hook: " & Info.Name.all);
+               Set_Error_Msg (Data, "Unknown hook");
 
             elsif Info.Profile = Hook_Without_Args then
                Wrapper2        := new Shell_Wrapper_No_Args_Record;
