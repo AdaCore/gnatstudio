@@ -130,20 +130,6 @@ package Browsers.Canvas is
    -- Graphic contexts --
    ----------------------
 
-   function Get_Selected_Link_GC (Browser : access Glide_Browser_Record)
-      return Gdk.GC.Gdk_GC;
-   --  Return the graphic context to use to draw the links when one of their
-   --  ends is selected.
-
-   function Get_Selected_Item_GC (Browser : access Glide_Browser_Record)
-      return Gdk.GC.Gdk_GC;
-   --  Return the graphic context to use to draw the selected item
-
-   function Get_Linked_Item_GC
-     (Browser : access Glide_Browser_Record) return Gdk.GC.Gdk_GC;
-   --  Return the graphic context to use to draw the items that are linked to
-   --  the selected item
-
    function Get_Text_GC
      (Browser : access Glide_Browser_Record) return Gdk.GC.Gdk_GC;
    --  Return the graphic context to use to draw the text in the items.
@@ -178,11 +164,12 @@ private
          Kernel    : Glide_Kernel.Kernel_Handle;
          Mask      : Browser_Type_Mask;
 
-         Selected_Link_GC : Gdk.GC.Gdk_GC;
-         Selected_Item_GC : Gdk.GC.Gdk_GC;
-         Linked_Item_GC   : Gdk.GC.Gdk_GC;
-         Text_GC          : Gdk.GC.Gdk_GC;
-         Text_Font        : Gdk.Font.Gdk_Font;
+         Selected_Link_GC      : Gdk.GC.Gdk_GC;
+         Selected_Item_GC      : Gdk.GC.Gdk_GC;
+         Parent_Linked_Item_GC : Gdk.GC.Gdk_GC;
+         Child_Linked_Item_GC  : Gdk.GC.Gdk_GC;
+         Text_GC               : Gdk.GC.Gdk_GC;
+         Text_Font             : Gdk.Font.Gdk_Font;
 
          Selected_Item : Gtkada.Canvas.Canvas_Item;
       end record;
@@ -197,7 +184,4 @@ private
 
    pragma Inline (Get_Mask);
    pragma Inline (Get_Canvas);
-   pragma Inline (Get_Selected_Link_GC);
-   pragma Inline (Get_Selected_Item_GC);
-   pragma Inline (Get_Linked_Item_GC);
 end Browsers.Canvas;

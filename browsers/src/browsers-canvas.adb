@@ -57,7 +57,8 @@ package body Browsers.Canvas is
    Selected_Item_Color : constant String := "#888888";
    --  <preference> Color to use to draw the selected item.
 
-   Linked_Item_Color : constant String := "#BBBBBB";
+   Parent_Linked_Item_Color : constant String := "#BBBBBB";
+   Child_Linked_Item_Color : constant String := "#DDDDDD";
    --  <preference> Color to use to draw the items that are linked to the
    --  selected item.
 
@@ -185,10 +186,15 @@ package body Browsers.Canvas is
          Alloc (Get_Default_Colormap, Color);
          Set_Foreground (B.Selected_Item_GC, Color);
 
-         Gdk_New (B.Linked_Item_GC, Get_Window (B.Canvas));
-         Color := Parse (Linked_Item_Color);
+         Gdk_New (B.Parent_Linked_Item_GC, Get_Window (B.Canvas));
+         Color := Parse (Parent_Linked_Item_Color);
          Alloc (Get_Default_Colormap, Color);
-         Set_Foreground (B.Linked_Item_GC, Color);
+         Set_Foreground (B.Parent_Linked_Item_GC, Color);
+
+         Gdk_New (B.Child_Linked_Item_GC, Get_Window (B.Canvas));
+         Color := Parse (Child_Linked_Item_Color);
+         Alloc (Get_Default_Colormap, Color);
+         Set_Foreground (B.Child_Linked_Item_GC, Color);
 
          Gdk_New (B.Text_GC, Get_Window (B.Canvas));
          Set_Foreground (B.Text_GC, Get_Pref (B.Kernel, Browsers_Link_Color));
@@ -459,16 +465,19 @@ package body Browsers.Canvas is
       Coord : Gdk_Rectangle := Get_Coord (Item);
    begin
       if Canvas_Item (Item) = Selected_Item (Browser) then
-         Bg_GC := Get_Selected_Item_GC (Browser);
+         Bg_GC := Browser.Selected_Item_GC;
 
       elsif Selected_Item (Browser) /= null
-        and then (Has_Link (Browser.Canvas,
-                            From => Item, To => Selected_Item (Browser))
-                  or else
-                  Has_Link (Browser.Canvas,
-                            From => Selected_Item (Browser), To => Item))
+        and then Has_Link (Browser.Canvas,
+                           From => Item, To => Selected_Item (Browser))
       then
-         Bg_GC := Get_Linked_Item_GC (Browser);
+         Bg_GC := Browser.Parent_Linked_Item_GC;
+
+      elsif Selected_Item (Browser) /= null
+        and then Has_Link (Browser.Canvas,
+                           From => Selected_Item (Browser), To => Item)
+      then
+         Bg_GC := Browser.Child_Linked_Item_GC;
 
       else
          Bg_GC := Get_White_GC (Get_Style (Browser.Canvas));
@@ -534,36 +543,6 @@ package body Browsers.Canvas is
       end if;
    end Select_Item;
 
-   --------------------------
-   -- Get_Selected_Link_GC --
-   --------------------------
-
-   function Get_Selected_Link_GC (Browser : access Glide_Browser_Record)
-      return Gdk.GC.Gdk_GC is
-   begin
-      return Browser.Selected_Link_GC;
-   end Get_Selected_Link_GC;
-
-   --------------------------
-   -- Get_Selected_Item_GC --
-   --------------------------
-
-   function Get_Selected_Item_GC (Browser : access Glide_Browser_Record)
-      return Gdk.GC.Gdk_GC is
-   begin
-      return Browser.Selected_Item_GC;
-   end Get_Selected_Item_GC;
-
-   ------------------------
-   -- Get_Linked_Item_GC --
-   ------------------------
-
-   function Get_Linked_Item_GC
-     (Browser : access Glide_Browser_Record) return Gdk.GC.Gdk_GC is
-   begin
-      return Browser.Linked_Item_GC;
-   end Get_Linked_Item_GC;
-
    -----------------
    -- Get_Text_GC --
    -----------------
@@ -613,7 +592,7 @@ package body Browsers.Canvas is
          else
             Draw_Link
               (Canvas, Canvas_Link_Access (Link),
-               Window, Invert_Mode, Get_Selected_Link_GC (Browser),
+               Window, Invert_Mode, Browser.Selected_Link_GC,
                Edge_Number);
          end if;
       end if;
