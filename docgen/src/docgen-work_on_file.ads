@@ -27,7 +27,8 @@ with Glide_Kernel;
 package Docgen.Work_On_File is
 
    procedure Process_Files
-     (Source_File_List : in out Docgen.Type_Source_File_List.List;
+     (B                : Backend_Handle;
+      Source_File_List : in out Docgen.Type_Source_File_List.List;
       Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
       Options          : Docgen.All_Options;
       Doc_Suffix       : String;
