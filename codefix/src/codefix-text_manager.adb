@@ -77,18 +77,6 @@ package body Codefix.Text_Manager is
       return Char = ' ' or else Char = ASCII.HT;
    end Is_Blank;
 
-   -------------------
-   -- Is_In_Comment --
-   -------------------
-
-   --  ??? Check if -- are in a string
-   function Is_In_Comment (Str : String; J : Natural) return Boolean is
-      Index_Found : Natural := Str'First;
-   begin
-      Skip_To_String (Str, Index_Found, "--");
-      return J > Index_Found;
-   end Is_In_Comment;
-
    ---------------
    -- Normalize --
    ---------------
@@ -1887,9 +1875,6 @@ package body Codefix.Text_Manager is
    begin
       case This.Context is
          when Original_Unit | Unit_Modified =>
-            --  ??? Simplify call to Get to have only a line instead of an
-            --  extract
-
             Get (Current_Text, This.Cursor, This.Original_Length, Old_Extract);
 
             declare
@@ -2110,7 +2095,6 @@ package body Codefix.Text_Manager is
       Start : Natural;
       Value : String) is
    begin
-      --  ??? May be optimize by a function replace_to_end for Mergable_Strings
       Replace (This, Start, To_String (This.Content)'Last, Value);
    end Replace_To_End;
 
@@ -2920,7 +2904,7 @@ package body Codefix.Text_Manager is
       Step           : Step_Way := Normal_Step)
      return File_Cursor'Class is
 
-      Current                 : Ptr_Extract_Line;
+      Current, Last_Line      : Ptr_Extract_Line;
       Result, Current_Cursor  : File_Cursor := Null_File_Cursor;
 
    begin
@@ -2932,7 +2916,9 @@ package body Codefix.Text_Manager is
             Current_Cursor :=
               File_Cursor (Get_Cursor (Get_First_Line (This).all));
          else
-            null; --  ??? Soon programmed
+            Last_Line := Get_Last_Line (This);
+            Current_Cursor := File_Cursor (Get_Cursor (Last_Line.all));
+            Current_Cursor.Col := Get_String (Last_Line.all)'Last;
          end if;
       end if;
 
@@ -3002,6 +2988,20 @@ package body Codefix.Text_Manager is
    begin
       return This.First;
    end Get_First_Line;
+
+   -------------------
+   -- Get_Last_Line --
+   -------------------
+
+   function Get_Last_Line (This : Extract) return Ptr_Extract_Line is
+      Result : Ptr_Extract_Line := This.First;
+   begin
+      while Result.Next /= null loop
+         Result := Result.Next;
+      end loop;
+
+      return Result;
+   end Get_Last_Line;
 
    -------------------
    -- Extend_Before --
@@ -3470,10 +3470,12 @@ package body Codefix.Text_Manager is
 
          Add_Word (New_Extract, Word, New_Str.all);
       elsif This.Position = After then
-         Add_Line (New_Extract, Line_Cursor, New_Str.all);
+         Add_Indented_Line
+           (New_Extract, Line_Cursor, New_Str.all, Current_Text);
       elsif This.Position = Before then
          Line_Cursor.Line := Line_Cursor.Line - 1;
-         Add_Line (New_Extract, Line_Cursor, New_Str.all);
+         Add_Indented_Line
+           (New_Extract, Line_Cursor, New_Str.all, Current_Text);
       end if;
 
       Free (New_Str);
