@@ -192,6 +192,8 @@ package Codefix.Text_Manager is
       Destination : in out Extract);
 
    function Get_String (This : Extract; Position : Natural := 1) return String;
+   --  Get the string of the line of an extract. Strings are ordonned in the
+   --  order where they are recorded.
 
    procedure Set_String
      (This     : Extract;
