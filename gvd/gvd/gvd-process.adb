@@ -35,6 +35,8 @@ with Gtk.Widget;   use Gtk.Widget;
 with Gtk.Notebook; use Gtk.Notebook;
 with Gtk.Label;    use Gtk.Label;
 
+with Gtk.Extra.PsFont; use Gtk.Extra.PsFont;
+
 with Ada.Characters.Handling;  use Ada.Characters.Handling;
 with Ada.Text_IO;     use Ada.Text_IO;
 with Process_Tab_Pkg; use Process_Tab_Pkg;
@@ -46,7 +48,6 @@ with Debugger.Jdb;    use Debugger.Jdb;
 with Odd.Strings;     use Odd.Strings;
 with Process_Proxies; use Process_Proxies;
 with Gtkada.Code_Editors; use Gtkada.Code_Editors;
-with Gtk.Extra.PsFont; use Gtk.Extra.PsFont;
 with GNAT.Regpat;     use GNAT.Regpat;
 
 with Main_Debug_Window_Pkg;  use Main_Debug_Window_Pkg;
