@@ -426,6 +426,17 @@ private
       --  Whether the buffer has been modified since last auto save.
 
       Timeout_Id     : Gtk.Main.Timeout_Handler_Id := 0;
+
+      Setting_Mark   : Boolean := False;
+      --  Used to prevent recursion when creating text marks.
+
+      Has_Delimiters_Highlight   : Boolean := False;
+      --  Whether delimiters are currently highlighted
+
+      Start_Delimiters_Highlight : Gtk.Text_Mark.Gtk_Text_Mark;
+      End_Delimiters_Highlight   : Gtk.Text_Mark.Gtk_Text_Mark;
+      --  Bounds for the parenthesis highlighting.
+
    end record;
 
 end Src_Editor_Buffer;
