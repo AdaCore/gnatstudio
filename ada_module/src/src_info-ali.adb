@@ -1235,7 +1235,7 @@ package body Src_Info.ALI is
             Kind  => Tref_Kind_To_Parent_Kind (Xref_Ent.Tref),
             Predefined_Entity_Name => Xref_Ent.Tref_Standard_Entity,
             Next  => Decl.Parent_Location);
-         
+
          if Decl.Kind.Kind = Function_Or_Operator
            or else Decl.Kind.Kind = Procedure_Kind
            or else Decl.Kind.Kind = Entry_Or_Entry_Family
