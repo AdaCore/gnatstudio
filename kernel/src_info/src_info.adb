@@ -544,7 +544,7 @@ package body Src_Info is
          Parse_ALI_File
            (Find_Object_File
             (Project, Source.LI.LI.LI_Filename.all, Extra_Object_Path),
-            Project, Extra_Source_Path,
+            Project, Extra_Source_Path, Extra_Object_Path,
             Source_Info_List, Unit, Success);
          if Success then
             Source.LI := Unit;
