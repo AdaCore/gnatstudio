@@ -613,7 +613,9 @@ package body Src_Contexts is
             File_Name,
             Match.Text,
             To_Positive (Match.Line), To_Positive (Match.Column),
-            Match.End_Column - Match.Column);
+            Match.End_Column - Match.Column,
+            True,
+            Search_Result_Highlighting);
       end if;
    end Highlight_Result;
 
