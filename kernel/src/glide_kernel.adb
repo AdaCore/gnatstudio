@@ -18,63 +18,63 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glib;                      use Glib;
-with Glib.Xml_Int;              use Glib.Xml_Int;
-with Glib.Object;               use Glib.Object;
-with Glib.Properties;           use Glib.Properties;
-with Glib.Values;               use Glib.Values;
-with Gdk.Window;                use Gdk.Window;
-with Gdk.Event;                 use Gdk.Event;
-with Gdk.Pixbuf;                use Gdk.Pixbuf;
-with Gtk.Box;                   use Gtk.Box;
-with Gtk.Combo;                 use Gtk.Combo;
-with Gtk.Container;             use Gtk.Container;
-with Gtk.Dialog;                use Gtk.Dialog;
-with Gtk.Enums;                 use Gtk.Enums;
-with Gtk.Handlers;              use Gtk.Handlers;
-with Gtk.Icon_Factory;          use Gtk.Icon_Factory;
-with Gtk.Label;                 use Gtk.Label;
-with Gtk.Main;                  use Gtk.Main;
-with Gtk.Cell_Renderer_Text;    use Gtk.Cell_Renderer_Text;
-with Gtk.Cell_Renderer_Toggle;  use Gtk.Cell_Renderer_Toggle;
+with Glib;                        use Glib;
+with Glib.Xml_Int;                use Glib.Xml_Int;
+with Glib.Object;                 use Glib.Object;
+with Glib.Properties;             use Glib.Properties;
+with Glib.Values;                 use Glib.Values;
+with Gdk.Window;                  use Gdk.Window;
+with Gdk.Event;                   use Gdk.Event;
+with Gdk.Pixbuf;                  use Gdk.Pixbuf;
+with Gtk.Box;                     use Gtk.Box;
+with Gtk.Combo;                   use Gtk.Combo;
+with Gtk.Container;               use Gtk.Container;
+with Gtk.Dialog;                  use Gtk.Dialog;
+with Gtk.Enums;                   use Gtk.Enums;
+with Gtk.Handlers;                use Gtk.Handlers;
+with Gtk.Icon_Factory;            use Gtk.Icon_Factory;
+with Gtk.Label;                   use Gtk.Label;
+with Gtk.Main;                    use Gtk.Main;
+with Gtk.Cell_Renderer_Text;      use Gtk.Cell_Renderer_Text;
+with Gtk.Cell_Renderer_Toggle;    use Gtk.Cell_Renderer_Toggle;
 with Gtk.Object;
-with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
-with Gtk.Stock;                 use Gtk.Stock;
-with Gtk.Tree_Model;            use Gtk.Tree_Model;
-with Gtk.Tree_Selection;        use Gtk.Tree_Selection;
-with Gtk.Tree_Store;            use Gtk.Tree_Store;
-with Gtk.Tree_View;             use Gtk.Tree_View;
-with Gtk.Tree_View_Column;      use Gtk.Tree_View_Column;
-with Gtk.Widget;                use Gtk.Widget;
-with Gtk.Window;                use Gtk.Window;
-with Gtk.Tooltips;              use Gtk.Tooltips;
-with Gtkada.Handlers;           use Gtkada.Handlers;
-with Gtkada.MDI;                use Gtkada.MDI;
-with System;                    use System;
+with Gtk.Scrolled_Window;         use Gtk.Scrolled_Window;
+with Gtk.Stock;                   use Gtk.Stock;
+with Gtk.Tree_Model;              use Gtk.Tree_Model;
+with Gtk.Tree_Selection;          use Gtk.Tree_Selection;
+with Gtk.Tree_Store;              use Gtk.Tree_Store;
+with Gtk.Tree_View;               use Gtk.Tree_View;
+with Gtk.Tree_View_Column;        use Gtk.Tree_View_Column;
+with Gtk.Widget;                  use Gtk.Widget;
+with Gtk.Window;                  use Gtk.Window;
+with Gtk.Tooltips;                use Gtk.Tooltips;
+with Gtkada.Handlers;             use Gtkada.Handlers;
+with Gtkada.MDI;                  use Gtkada.MDI;
+with System;                      use System;
 
-with File_Utils;                use File_Utils;
-with Glide_Intl;                use Glide_Intl;
-with Glide_Main_Window;         use Glide_Main_Window;
-with Default_Preferences;       use Default_Preferences;
-with Glide_Kernel.Custom;       use Glide_Kernel.Custom;
-with Glide_Kernel.Contexts;     use Glide_Kernel.Contexts;
-with Glide_Kernel.Hooks;        use Glide_Kernel.Hooks;
-with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
-with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
-with Glide_Kernel.Project;      use Glide_Kernel.Project;
-with Glide_Kernel.Scripts;      use Glide_Kernel.Scripts;
+with File_Utils;                  use File_Utils;
+with Glide_Intl;                  use Glide_Intl;
+with Glide_Main_Window;           use Glide_Main_Window;
+with Default_Preferences;         use Default_Preferences;
+with Glide_Kernel.Custom;         use Glide_Kernel.Custom;
+with Glide_Kernel.Contexts;       use Glide_Kernel.Contexts;
+with Glide_Kernel.Hooks;          use Glide_Kernel.Hooks;
+with Glide_Kernel.Modules;        use Glide_Kernel.Modules;
+with Glide_Kernel.Preferences;    use Glide_Kernel.Preferences;
+with Glide_Kernel.Project;        use Glide_Kernel.Project;
+with Glide_Kernel.Scripts;        use Glide_Kernel.Scripts;
 with Glide_Kernel.Standard_Hooks; use Glide_Kernel.Standard_Hooks;
-with GVD.Preferences;           use GVD.Preferences;
-with GVD.Main_Window;           use GVD.Main_Window;
-with GUI_Utils;                 use GUI_Utils;
-with String_Utils;              use String_Utils;
-with Entities;                  use Entities;
-with Entities.Queries;          use Entities.Queries;
-with Basic_Mapper;              use Basic_Mapper;
-with Histories;                 use Histories;
-with VFS;                       use VFS;
+with GVD.Preferences;             use GVD.Preferences;
+with GVD.Main_Window;             use GVD.Main_Window;
+with GUI_Utils;                   use GUI_Utils;
+with String_Utils;                use String_Utils;
+with Entities;                    use Entities;
+with Entities.Queries;            use Entities.Queries;
+with Basic_Mapper;                use Basic_Mapper;
+with Histories;                   use Histories;
+with VFS;                         use VFS;
 
-with Projects.Registry;         use Projects, Projects.Registry;
+with Projects.Registry;           use Projects, Projects.Registry;
 
 with Glide_Kernel.Timeout;      use Glide_Kernel.Timeout;
 with Generic_List;
@@ -112,11 +112,11 @@ package body Glide_Kernel is
    --  overloaded entities dialog.
 
    procedure Select_Entity_Declaration
-     (Kernel        : access Kernel_Handle_Record'Class;
-      File          : Source_File;
-      Entity_Name   : String;
-      Decl          : out Entity_Information;
-      Status        : out Entities.Queries.Find_Decl_Or_Body_Query_Status);
+     (Kernel      : access Kernel_Handle_Record'Class;
+      File        : Source_File;
+      Entity_Name : String;
+      Decl        : out Entity_Information;
+      Status      : out Entities.Queries.Find_Decl_Or_Body_Query_Status);
    --  Open a dialog to ask the user to select among multiple declaration for
    --  the entity with name Entity_Name.
    --  Decl is set to No_Entity_Information and Status to Entity_Not_Found if
@@ -713,8 +713,8 @@ package body Glide_Kernel is
    ----------------
 
    procedure File_Saved
-     (Handle  : access Kernel_Handle_Record;
-      File    : VFS.Virtual_File) is
+     (Handle : access Kernel_Handle_Record;
+      File   : VFS.Virtual_File) is
    begin
       Run_Hook (Handle, File_Saved_Hook,
                 File_Hooks_Args'(Hooks_Data with File => File));
@@ -725,8 +725,8 @@ package body Glide_Kernel is
    -----------------
 
    procedure File_Closed
-     (Handle  : access Kernel_Handle_Record;
-      File    : VFS.Virtual_File)
+     (Handle : access Kernel_Handle_Record;
+      File   : VFS.Virtual_File)
    is
       Files : File_Array_Access := Handle.Open_Files;
    begin
@@ -754,8 +754,8 @@ package body Glide_Kernel is
    --------------------------
 
    procedure File_Changed_On_Disk
-     (Handle  : access Kernel_Handle_Record;
-      File    : VFS.Virtual_File) is
+     (Handle : access Kernel_Handle_Record;
+      File   : VFS.Virtual_File) is
    begin
       Run_Hook (Handle, File_Changed_On_Disk_Hook,
                 File_Hooks_Args'(Hooks_Data with File => File));
@@ -837,7 +837,6 @@ package body Glide_Kernel is
      (Kernel : access Kernel_Handle_Record) return Module_ID
    is
       C : constant MDI_Child := Get_Focus_Child (Get_MDI (Kernel));
-
    begin
       if C = null
         or else Gtk.Object.In_Destruction_Is_Set (Get_MDI (Kernel))
@@ -1344,7 +1343,7 @@ package body Glide_Kernel is
    ---------------
 
    procedure Pop_State (Handle : Kernel_Handle) is
-      Window  : Glide_Window;
+      Window : Glide_Window;
    begin
       if Handle = null then
          return;
@@ -1426,9 +1425,9 @@ package body Glide_Kernel is
    ------------------------------
 
    procedure Parse_All_LI_Information
-     (Kernel       : access Kernel_Handle_Record;
-      Project      : Project_Type;
-      Recursive    : Boolean)
+     (Kernel    : access Kernel_Handle_Record;
+      Project   : Project_Type;
+      Recursive : Boolean)
    is
       Handler : constant Glide_Language_Handler :=
         Glide_Language_Handler (Get_Language_Handler (Kernel));
@@ -1460,11 +1459,11 @@ package body Glide_Kernel is
    -------------------------------
 
    procedure Select_Entity_Declaration
-     (Kernel        : access Kernel_Handle_Record'Class;
-      File          : Source_File;
-      Entity_Name   : String;
-      Decl          : out Entity_Information;
-      Status        : out Entities.Queries.Find_Decl_Or_Body_Query_Status)
+     (Kernel      : access Kernel_Handle_Record'Class;
+      File        : Source_File;
+      Entity_Name : String;
+      Decl        : out Entity_Information;
+      Status      : out Entities.Queries.Find_Decl_Or_Body_Query_Status)
    is
       procedure Set
         (Tree, Iter : System.Address;
@@ -1626,13 +1625,13 @@ package body Glide_Kernel is
    ------------------------------------
 
    procedure Find_Declaration_Or_Overloaded
-     (Kernel        : access Kernel_Handle_Record;
-      File          : Source_File;
-      Entity_Name   : String;
-      Line          : Natural;
-      Column        : Natural;
-      Entity        : out Entities.Entity_Information;
-      Status        : out Entities.Queries.Find_Decl_Or_Body_Query_Status) is
+     (Kernel      : access Kernel_Handle_Record;
+      File        : Source_File;
+      Entity_Name : String;
+      Line        : Natural;
+      Column      : Natural;
+      Entity      : out Entities.Entity_Information;
+      Status      : out Entities.Queries.Find_Decl_Or_Body_Query_Status) is
    begin
       Find_Declaration
         (Kernel.Database, File, Entity_Name,
@@ -1726,12 +1725,12 @@ package body Glide_Kernel is
    ---------
 
    function Put
-     (Handle : access Kernel_Handle_Record;
-      Child : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Flags : Child_Flags := All_Buttons;
-      Focus_Widget : Gtk.Widget.Gtk_Widget := null;
+     (Handle              : access Kernel_Handle_Record;
+      Child               : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Flags               : Child_Flags := All_Buttons;
+      Focus_Widget        : Gtk.Widget.Gtk_Widget := null;
       Default_Width, Default_Height : Gint := -1;
-      Module : access Module_ID_Record'Class;
+      Module              : access Module_ID_Record'Class;
       Desktop_Independent : Boolean := False) return MDI_Child
    is
       C : GPS_MDI_Child;
@@ -1758,9 +1757,9 @@ package body Glide_Kernel is
    ----------------------
 
    procedure Bind_Default_Key
-     (Kernel         : access Kernel_Handle_Record;
-      Action         : String;
-      Default_Key    : String) is
+     (Kernel      : access Kernel_Handle_Record;
+      Action      : String;
+      Default_Key : String) is
    begin
       Add_Customization_String
       (Kernel, "<key action=""" & Action & """>" & Default_Key & "</key>");
@@ -1775,8 +1774,8 @@ package body Glide_Kernel is
    is
       pragma Unreferenced (Kernel);
       use Widget_List;
-      W, W2 : Gtk_Widget;
-      Toplevel : Gtk_Window;
+      W, W2       : Gtk_Widget;
+      Toplevel    : Gtk_Window;
       List, List2 : Widget_List.Glist;
    begin
       --  First check if a window currently has a grab
@@ -1890,15 +1889,13 @@ package body Glide_Kernel is
    ---------------------
 
    procedure Register_Filter
-     (Kernel  : access Kernel_Handle_Record;
-      Filter  : access Action_Filter_Record'Class;
-      Name    : String) is
+     (Kernel : access Kernel_Handle_Record;
+      Filter : access Action_Filter_Record'Class;
+      Name   : String) is
    begin
       Free (Filter.Name);
       Filter.Name := new String'(Name);
-      Set (Kernel.Action_Filters,
-           Name,
-           Action_Filter (Filter));
+      Set (Kernel.Action_Filters, Name, Action_Filter (Filter));
    end Register_Filter;
 
    ------------
@@ -1992,8 +1989,8 @@ package body Glide_Kernel is
    ------------
 
    function Create
-     (Language : String := "";
-      Shell    : String := "";
+     (Language   : String := "";
+      Shell      : String := "";
       Shell_Lang : String := "Shell";
       Module     : String := "") return Base_Action_Filter
    is
@@ -2087,7 +2084,7 @@ package body Glide_Kernel is
       Context : Selection_Context_Access;
       Kernel  : access Kernel_Handle_Record'Class) return Boolean
    is
-      Result  : Boolean := True;
+      Result : Boolean := True;
    begin
       case Filter.Kind is
          when Standard_Filter =>

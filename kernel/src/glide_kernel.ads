@@ -212,9 +212,9 @@ package Glide_Kernel is
    -------------
 
    procedure Parse_All_LI_Information
-     (Kernel       : access Kernel_Handle_Record;
-      Project      : Projects.Project_Type;
-      Recursive    : Boolean);
+     (Kernel    : access Kernel_Handle_Record;
+      Project   : Projects.Project_Type;
+      Recursive : Boolean);
    --  Parse all the LI information in Project, for all the supported
    --  languages. This can be used in cases where there is no obvious way to
    --  find the LI file matching a given source file (for instance, with a
@@ -225,13 +225,13 @@ package Glide_Kernel is
    --  Return the database used for cross-references
 
    procedure Find_Declaration_Or_Overloaded
-     (Kernel        : access Kernel_Handle_Record;
-      File          : Entities.Source_File;
-      Entity_Name   : String;
-      Line          : Natural;
-      Column        : Natural;
-      Entity        : out Entities.Entity_Information;
-      Status        : out Entities.Queries.Find_Decl_Or_Body_Query_Status);
+     (Kernel      : access Kernel_Handle_Record;
+      File        : Entities.Source_File;
+      Entity_Name : String;
+      Line        : Natural;
+      Column      : Natural;
+      Entity      : out Entities.Entity_Information;
+      Status      : out Entities.Queries.Find_Decl_Or_Body_Query_Status);
    --  Find the declaration of the given entity in the file. If multiple
    --  entities match, an interactive dialog is open for the user
 
@@ -485,9 +485,9 @@ package Glide_Kernel is
 
 
    procedure Register_Filter
-     (Kernel  : access Kernel_Handle_Record;
-      Filter  : access Action_Filter_Record'Class;
-      Name    : String);
+     (Kernel : access Kernel_Handle_Record;
+      Filter : access Action_Filter_Record'Class;
+      Name   : String);
    --  Record the filter in the kernel, so that it is can be referenced in
    --  other places.
 
@@ -585,9 +585,9 @@ package Glide_Kernel is
    ------------------
 
    procedure Bind_Default_Key
-     (Kernel         : access Kernel_Handle_Record;
-      Action         : String;
-      Default_Key    : String);
+     (Kernel      : access Kernel_Handle_Record;
+      Action      : String;
+      Default_Key : String);
    --  Associate a default key binding with an action.
    --  Default_Key is ignored if the key was previously overriden by the user.
    --  Its format is something like "control-o" or "control-x control-k", the
@@ -609,12 +609,12 @@ package Glide_Kernel is
    --  associated a widget with a GPS module
 
    function Put
-     (Handle       : access Kernel_Handle_Record;
-      Child        : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Flags        : Gtkada.MDI.Child_Flags := Gtkada.MDI.All_Buttons;
-      Focus_Widget : Gtk.Widget.Gtk_Widget := null;
+     (Handle              : access Kernel_Handle_Record;
+      Child               : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Flags               : Gtkada.MDI.Child_Flags := Gtkada.MDI.All_Buttons;
+      Focus_Widget        : Gtk.Widget.Gtk_Widget := null;
       Default_Width, Default_Height : Glib.Gint := -1;
-      Module       : access Module_ID_Record'Class;
+      Module              : access Module_ID_Record'Class;
       Desktop_Independent : Boolean := False) return Gtkada.MDI.MDI_Child;
    --  Recommended version of Put to use, instead of the one in
    --  GtkAda.MDI. This version has several new parameters:
@@ -624,7 +624,7 @@ package Glide_Kernel is
    --               closed  when a new desktop is loaded.
 
    function Get_Module_From_Child
-     (Child  : Gtkada.MDI.MDI_Child) return Module_ID;
+     (Child : Gtkada.MDI.MDI_Child) return Module_ID;
    --  Return the module that created Child, or null if no module was found.
 
    function Get_File_Editor
@@ -820,7 +820,6 @@ private
 
    procedure Reset (X : access Root_Table) is abstract;
    --  Reset the table.
-
 
    procedure Do_Nothing (Filter : in out Action_Filter);
    --  Do nothing
