@@ -172,7 +172,7 @@ package body Make_Harness_Window_Pkg.Callbacks is
             Transparent => Null_Color,
             Data => box_xpm);
 
-         Gtk_New (Harness_Window.Explorer, "", "Select test harness");
+         Gtk_New (Harness_Window.Explorer, "/", "", "Select test harness");
          Create_From_Xpm_D
            (Filter_B.Spec_Pixmap,
             Window => null,
