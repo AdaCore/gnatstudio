@@ -56,6 +56,9 @@ package Codefix.Errors_Manager is
      (This : Errors_Interface) return Boolean is abstract;
    --  Is true where all the messages are got fron Get_Message.
 
+   procedure Skip_Message (This : in out Errors_Interface'Class);
+   --  Skip the next message.
+
    ----------------------------------------------------------------------------
    --  type Error_Id
    ----------------------------------------------------------------------------
