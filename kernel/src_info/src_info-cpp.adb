@@ -574,20 +574,22 @@ package body Src_Info.CPP is
    is
       pragma Unreferenced (Handler);
       pragma Unreferenced (Predefined_Source_Path);
-      Xrefs              : Xref_Pool;
       DB_Dir             : constant String :=
          Prj_API.Object_Path (Project, False) & Browse.DB_Dir_Name;
-      Xref_Pool_Filename : constant String :=
-         DB_Dir & Directory_Separator & SN.Browse.Xref_Pool_Filename;
       Full_Filename : SN.String_Access :=
         Get_Full_Filename_In_Project (Project, Source_Filename);
+      Xref_Pool_Filename : constant String :=
+        DB_Dir & Directory_Separator & Browse.Xref_Pool_Filename;
    begin
 
       if Full_Filename = null then
          return "";
       end if;
 
-      Load (Xrefs, Xref_Pool_Filename);
+      if Xrefs = Empty_Xref_Pool then
+         Load (Xrefs, Xref_Pool_Filename);
+      end if;
+
       declare
          Xref_Filename : String := Xref_Filename_For
             (Full_Filename.all, DB_Dir, Xrefs).all;
