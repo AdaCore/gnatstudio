@@ -1,5 +1,5 @@
 ADC_REVISION($Revision$)
-AC_INIT(glide/src/gps.adb)
+AC_INIT(glide/src/gps-main.adb)
 
 AC_CANONICAL_SYSTEM
 

@@ -270,7 +270,7 @@ PACKAGE_VERSION=
 PACKAGE_STRING=
 PACKAGE_BUGREPORT=
 
-ac_unique_file="glide/src/gps.adb"
+ac_unique_file="glide/src/gps-main.adb"
 # Factoring default headers for most tests.
 ac_includes_default="\
 #include <stdio.h>
