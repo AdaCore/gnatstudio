@@ -19,7 +19,8 @@ begin
    Buffer := new String (1 .. Integer (File_Length (F)));
    Length := Read (F, Buffer.all'Address, Buffer'Length);
    Close (F);
-   Parse_Ada_Constructs (Buffer.all, Constructs, Indent, Next_Indent);
+   Parse_Ada_Constructs
+     (Buffer (1 .. Length), Constructs, Indent, Next_Indent);
    Free (Buffer);
    Put_Line ("Indent = " & Image (Indent));
    Put_Line ("Next Indent = " & Image (Next_Indent));
