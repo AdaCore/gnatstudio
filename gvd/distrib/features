@@ -14,7 +14,8 @@ New features in GVD 1.2.0
   commands has also been put in place giving better user feedback on slow
   machines.
 - New item in the source editor contextual menu: display dereferenced variable
-
+- The option "break on exceptions" has been implemented
+- The Tab key is now supported in the debugger window.
 New features in GVD 1.1.0
 
 - Complete documentation now available.
