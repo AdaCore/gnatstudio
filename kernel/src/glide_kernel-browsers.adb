@@ -122,7 +122,6 @@ package body Glide_Kernel.Browsers is
       Lib_Info      : LI_File_Ptr;
       Status        : Dependencies_Query_Status;
       Intern        : Internal_File;
-      Parse_Success : Boolean;
       New_Item      : Boolean;
 
    begin
@@ -136,24 +135,7 @@ package body Glide_Kernel.Browsers is
          return;
       end if;
 
-      if Is_Incomplete (Lib_Info) then
-         declare
-            LI_Name : constant String :=
-              Find_Object_File (Kernel, Get_Li_Filename (Lib_Info));
-         begin
-            --  ??? Should we have another version of Parse_ALI_File that takes
-            --  ??? directly a LI_File_Ptr that needs to be completed.
-            Parse_ALI_File
-              (Handle       => Kernel,
-               ALI_Filename => LI_Name,
-               Unit         => Lib_Info,
-               Success      => Parse_Success);
-
-            if not Parse_Success then
-               return;
-            end if;
-         end;
-      end if;
+      Complete_ALI_File_If_Needed (Kernel, Lib_Info);
 
       Initial := File_Item (Find_File (In_Browser, File));
       if Initial = null then
