@@ -39,6 +39,11 @@ Process:
   and generate calls to underlying tools to handle the compilation, bind and
   link process.
 
+- sources files are recompiled when
+  - no dependency info is available for this file
+  - one of the dependencies has a timestamp more recent than the corresponding
+    object file
+
 - We do not want to get too deep in the handling of extra build processes (e.g.
   build of documentation, automatic code generation tools, extra preprocessing,
   ...), so this is intentionally left outside the control of this tool, to
@@ -171,6 +176,9 @@ Input needed from gprmake:
       Defaults to:
       (Compiler_Driver (<language>), "-M") & Default_Switches (<language>)
 
+      If set and Compiler'Dependency_Option isn't, this command is called right
+      after a source file has been recompiled.
+
     -> If Dependency_Option and Compute_Dependency are both undefined or set
        to the empty value, gprmake will consider that sources for this language
        have no dependencies and will only compare the timestamp of the object
@@ -196,21 +204,21 @@ Input needed from gprmake:
     Java. Using 'ant' is in line with the Builder'Builder_Driver attribute
     proposed.
 
-  - dependency kind supported:
-    - through ALI files
-    - through Makefile fragments
+  - for simplicity, gprmake will, at least in a first step, only understand
+    Makefile fragments.
+    In the future, it would probably make sense to handle other formats
+    directly, in particular ALI files, so that compilation of Ada files is
+    handled without using gnatmake.
 
     Note: if some compiler (e.g. proprietary Ada compiler) does not provide
     one of the capabilities listed above, the idea would be to provide a
     helper tool (a wrapper) that would extract the proprietary information
     (from e.g. the Ada 83 library) and generate the information in one of the
-    supported formats (typically a Makefile fragment).
-
-  ??? Alternatively, only support Makefile fragments, and add support for
-  using a third-party make-like tool that knows how to handle dependencies
-  for a given language (such as gnatmake).
-
-  -> in this case, use Builder'Builder_Driver (<language>)
+    supported formats (typically a Makefile fragment). Another approach
+    would be to use gcc -c -gnatc to generate .ali files, and gnatmake -M
+    to generate corresponding Makefile fragments. In this case,
+    Compiler'Compute_Dependency would be set to a wrapper that would
+    first call gcc -c -gnatc, and then gnatmake -M on the resulting ali file.
 
   - switch added to the compiler to generate the dependency (optional)
 
@@ -221,6 +229,9 @@ Input needed from gprmake:
   instead, and have other gpr-related tools such as GPS still be able to
   take advantage of the source list associated to a given project (for
   instance, to provide source navigation in GPS).
+
+  -> This can be achieved by specifying an empty or special value to
+  Builder'Builder_Driver (e.g. "null").
 
 - Specify how to handle bind phase between languages
   TBC
