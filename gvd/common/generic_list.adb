@@ -28,7 +28,7 @@ package body Generic_List is
      (L    : in out List;
       Item : Data_Type)
    is
-      L2 : List_Node := L.First;
+      L2 : constant List_Node := L.First;
    begin
       L.First := new List_Node_Record'
         (Element => new Data_Type' (Item),
