@@ -18,10 +18,12 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Ada.Calendar;             use Ada.Calendar;
 with Ada.Exceptions;           use Ada.Exceptions;
 with Ada.IO_Exceptions;        use Ada.IO_Exceptions;
 with Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
+with GNAT.Calendar.Time_IO;    use GNAT.Calendar.Time_IO;
 with GNAT.OS_Lib;              use GNAT.OS_Lib;
 with GUI_Utils;                use GUI_Utils;
 with Gdk.Color;                use Gdk.Color;
@@ -314,6 +316,10 @@ package body Aliases_Module is
 
    procedure Insert_Special (Item : access Gtk_Widget_Record'Class);
    --  Insert the special entity associated with Item
+
+   function Special_Entities (Data : Event_Data; Special : Character)
+      return String;
+   --  Provide expansion for some of the special entities
 
    ------------------
    -- Set_Variable --
@@ -1727,6 +1733,22 @@ package body Aliases_Module is
            Next   => Aliases_Module_Id.Module_Funcs (Entity));
    end Register_Special_Alias_Entity;
 
+   ----------------------
+   -- Special_Entities --
+   ----------------------
+
+   function Special_Entities (Data : Event_Data; Special : Character)
+      return String
+   is
+      pragma Unreferenced (Data);
+   begin
+      case Special is
+         when 'D'    => return Image (Ada.Calendar.Clock, ISO_Date);
+         when 'H'    => return Image (Ada.Calendar.Clock, "%T");
+         when others => return Invalid_Expansion;
+      end case;
+   end Special_Entities;
+
    ---------------------
    -- Register_Module --
    ---------------------
@@ -1767,8 +1789,12 @@ package body Aliases_Module is
 
       On_Preferences_Changed (Kernel, Kernel_Handle (Kernel));
 
-      Register_Key_Handlers
-        (Kernel, Key_Handler'Access);
+      Register_Key_Handlers (Kernel, Key_Handler'Access);
+
+      Register_Special_Alias_Entity
+        (Kernel, "Current Date", 'D', Special_Entities'Access);
+      Register_Special_Alias_Entity
+        (Kernel, "Current Hour", 'H', Special_Entities'Access);
    end Register_Module;
 
 end Aliases_Module;
