@@ -30,6 +30,7 @@ with HTables;                  use HTables;
 with GNAT.OS_Lib;              use GNAT.OS_Lib;
 with GUI_Utils;                use GUI_Utils;
 with System;                   use System;
+with System.Assertions;        use System.Assertions;
 with Ada.Exceptions;           use Ada.Exceptions;
 with Gdk.Color;                use Gdk.Color;
 with Gtk.Cell_Renderer_Text;   use Gtk.Cell_Renderer_Text;
@@ -243,6 +244,12 @@ package body KeyManager_Module is
      (Model : Gtk_Tree_Store; Context : String) return Gtk_Tree_Iter;
    --  Find the parent node for Context.
    --  Returns null if there is no such node
+
+   procedure Customize
+     (Kernel : access Kernel_Handle_Record'Class;
+      Node   : Node_Ptr;
+      Level  : Customization_Level);
+   --  Called when new customization files are parsed
 
 
    Action_Column  : constant := 0;
@@ -1276,6 +1283,54 @@ package body KeyManager_Module is
       Destroy (Editor);
    end On_Edit_Keys;
 
+   ---------------
+   -- Customize --
+   ---------------
+
+   procedure Customize
+     (Kernel : access Kernel_Handle_Record'Class;
+      Node   : Node_Ptr;
+      Level  : Customization_Level)
+   is
+      pragma Unreferenced (Level);
+      N : Node_Ptr := Node;
+   begin
+      while N /= null loop
+         if N.Tag.all = "key" then
+            declare
+               Action : constant String := Get_Attribute (N, "action");
+            begin
+               if Action = "" then
+                  Insert (Kernel, -"<key> nodes must have an action attribute",
+                          Mode => Error);
+                  raise Assert_Failure;
+               end if;
+
+               if N.Value = null then
+                  Insert (Kernel,
+                            -"Invalid key binding for action " & Action,
+                          Mode => Error);
+                  raise Assert_Failure;
+               end if;
+
+               if N.Child /= null then
+                  Insert
+                    (Kernel,
+                     -"Invalid child node for <key> tag", Mode => Error);
+                  raise Assert_Failure;
+               end if;
+
+               Bind_Default_Key
+                 (Get_Key_Handler (Kernel),
+                  Action      => Action,
+                  Default_Key => N.Value.all);
+            end;
+         end if;
+
+         N := N.Next;
+      end loop;
+   end Customize;
+
    ---------------------
    -- Register_Module --
    ---------------------
@@ -1285,10 +1340,15 @@ package body KeyManager_Module is
    is
       Manager : constant Key_Manager_Access := new Key_Manager_Record;
       Edit    : constant String := "/" & (-"Edit");
+      Module  : Module_ID;
    begin
       Manager.Kernel := Kernel_Handle (Kernel);
       Load_Custom_Keys (Kernel, Manager);
       Set_Key_Handler (Kernel, Manager);
+
+      Register_Module
+        (Module, Kernel, "keymanager",
+         Customization_Handler => Customize'Access);
 
       Register_Menu
         (Kernel, Edit, -"_Key shortcuts",
