@@ -773,7 +773,7 @@ package body Browsers.Canvas is
          Name   : constant Virtual_File :=
            Select_File
              (Title             => -"Export Browser As PNG Image",
-              Parent            => Get_Main_Window (Kernel),
+              Parent            => Get_Current_Window (Kernel),
               Default_Name      => "noname.png",
               Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs),
               Kind              => Save_File,

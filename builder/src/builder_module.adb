@@ -1202,7 +1202,7 @@ package body Builder_Module is
       pragma Unreferenced (Widget);
 
       Cmd : constant String := Simple_Entry_Dialog
-        (Parent   => Get_Main_Window (Kernel),
+        (Parent   => Get_Current_Window (Kernel),
          Title    => -"Custom Execution",
          Message  => -"Enter the command to execute:",
          Position => Gtk.Enums.Win_Pos_Mouse,
@@ -1422,7 +1422,7 @@ package body Builder_Module is
       if Data.File = VFS.No_File then
          declare
             Command : constant String := Display_Entry_Dialog
-              (Parent        => Get_Main_Window (K),
+              (Parent        => Get_Current_Window (K),
                Title         => -"Run Command",
                Message       => -"Enter the command to run:",
                Check_Msg     => -"Use external terminal",
@@ -1456,7 +1456,7 @@ package body Builder_Module is
       else
          declare
             Arguments : constant String := Display_Entry_Dialog
-              (Parent        => Get_Main_Window (K),
+              (Parent        => Get_Current_Window (K),
                Title         => -"Arguments Selection",
                Message       => -"Enter the arguments to your application:",
                Check_Msg     => -"Use external terminal",
