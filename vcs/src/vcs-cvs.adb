@@ -31,6 +31,7 @@ with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
 with Glide_Kernel.Scripts;      use Glide_Kernel.Scripts;
 with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
 with Glide_Kernel.Task_Manager; use Glide_Kernel.Task_Manager;
+with Glide_Kernel.Standard_Hooks; use Glide_Kernel.Standard_Hooks;
 
 with GNAT.OS_Lib;
 with GNAT.Case_Util;            use GNAT.Case_Util;
