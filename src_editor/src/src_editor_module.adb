@@ -192,7 +192,6 @@ package body Src_Editor_Module is
    type Location_Idle_Data is record
       Edit  : Source_Editor_Box;
       Line, Column, Column_End : Natural;
-      Focus : Boolean;
       Child : MDI_Child;
    end record;
 
@@ -1350,7 +1349,7 @@ package body Src_Editor_Module is
                   Data.Edit := Src.Editor;
                   Id := Location_Idle.Add
                     (File_Edit_Callback'Access,
-                     (Src.Editor, 1, 1, 0, True, null));
+                     (Src.Editor, 1, 1, 0, null));
 
                   return Gtk_Widget (Src);
                end if;
@@ -1772,14 +1771,14 @@ package body Src_Editor_Module is
 
    function Location_Callback (D : Location_Idle_Data) return Boolean is
    begin
-      if D.Focus then
-         Grab_Focus (D.Edit);
-      elsif D.Child /= null then
+      Grab_Focus (D.Edit);
+
+      if D.Child /= null then
          Set_Focus_Child (D.Child);
       end if;
 
-      if Is_Valid_Location (D.Edit, D.Line) then
-         Set_Screen_Location (D.Edit, D.Line, D.Column, D.Focus);
+      if D.Line /= 0 and then Is_Valid_Location (D.Edit, D.Line) then
+         Set_Screen_Location (D.Edit, D.Line, D.Column, D.Child = null);
 
          if D.Column_End /= 0
            and then Is_Valid_Location (D.Edit, D.Line, D.Column_End)
@@ -2658,7 +2657,6 @@ package body Src_Editor_Module is
             Iter        : Child_Iterator := First_Child (MDI);
             Child       : MDI_Child;
             No_Location : Boolean := False;
-            Get_Focus   : Boolean;
 
          begin
             if Line = -1 then
@@ -2685,24 +2683,22 @@ package body Src_Editor_Module is
                   Idle_Remove (The_Data.Location_Open_Id);
                end if;
 
-               if Line = 0 then
+               if Line = 0 and then Column = 0 then
                   No_Location := True;
                end if;
 
-               Get_Focus := not Console_Has_Focus (Kernel);
-               Child := Get_Focus_Child (Get_MDI (Kernel));
+               if Console_Has_Focus (Kernel) then
+                  --  Only grab again the focus on Child (in Location_Callback)
+                  --  if the focus was changed by Open_File, and an interactive
+                  --  console had the focus previousely.
+
+                  Child := Get_Focus_Child (Get_MDI (Kernel));
+               end if;
+
                Source := Open_File
                  (Kernel, File,
                   Create_New => New_File,
-                  Focus      => Get_Focus);
-
-               --  Only grab again the focus on Child (in Location_Callback)
-               --  if the focus was changed by Open_File, and an interactive
-               --  console had the focus previousely.
-
-               if Get_Focus_Child (Get_MDI (Kernel)) = Child then
-                  Child := null;
-               end if;
+                  Focus      => not No_Location);
 
                if Source /= null then
                   Edit := Source.Editor;
@@ -2726,7 +2722,6 @@ package body Src_Editor_Module is
                       Natural (Line),
                       Natural (Column),
                       Natural (Column_End),
-                      Get_Focus,
                       Child),
                      Destroy => Location_Destroy'Access);
 
