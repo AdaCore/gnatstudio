@@ -578,6 +578,51 @@ package Src_Editor_Buffer is
    --  Return the current highlighting for Line, or null if no highlighting
    --  is set.
 
+   type Block_Record is record
+      Indentation_Level : Integer := 0;
+      --  Represent the block-indentation level of the current line.
+      --  Lines that start a block have a positive indentation level,
+      --  Lines that end a block have a negative indentation level.
+      --  Lines that don't modifiy the block indentation have a null
+      --  indentation level.
+      --  The absolute value represents the number of blocks started/ended.
+      --
+      --  Example of indentation levels :
+      --
+      --  void main (void)            0
+      --  {                          +1
+      --      int a,b;                0
+      --                              0
+      --      if (a)                  0
+      --      {                      +1
+      --         if (a) {  }          0
+      --         if (a) {            +1
+      --         }}                  -2
+      --  }                          -1
+
+      Offset            : Integer := 0;
+      --  The indentation offset, of the block (ie typically the column of the
+      --  starting entity).
+
+      Other_Line        : Integer := 0;
+      --  Indicates the other line that corresponds to the beginning/end of
+      --  the block. For example, if the current block is a line end, indicates
+      --  the starting line of the corresponding block.
+      --  Only valid if Indentation_Level /= 0.
+
+      Block_Type        : Language.Language_Category := Language.Cat_Unknown;
+      --  Indicates the type of the block, if Indentation_Level /= 0.
+
+      GC                : Gdk_GC := null;
+      --  The color to use when highlighting this block.
+   end record;
+
+   function Get_Block
+     (Editor : access Source_Buffer_Record;
+      Line   : Positive) return Block_Record;
+   pragma Inline (Get_Block);
+   --  Return the block information associated with Line.
+
    --------------
    --  Signals --
    --------------
@@ -617,7 +662,9 @@ private
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Boolean_Array, Boolean_Array_Access);
 
-   type Highlighting_Record is record
+   New_Block : constant Block_Record := (0, 0, 0, Language.Cat_Unknown, null);
+
+   type Line_Data_Record is record
       --  The following corresponds to line highlighting.
       Current_Highlight  : Gdk_GC;
 
@@ -627,13 +674,21 @@ private
       --  enabled for that categories.
       --  For simplicity, the range of this array should match the range of
       --  the array of categories in the cache.
+
+      Block              : Block_Record;
+      --  Data relative to possible block start/end.
+
+      Collapsed          : Boolean := False;
+      --  Whether the line is currently collapsed.
    end record;
 
-   type Highlighting_Array is array (Natural range <>) of Highlighting_Record;
-   type Highlighting_Array_Access is access Highlighting_Array;
+   New_Line_Data : constant Line_Data_Record := (null, null, New_Block, False);
+
+   type Line_Data_Array is array (Natural range <>) of Line_Data_Record;
+   type Line_Data_Array_Access is access Line_Data_Array;
 
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (Highlighting_Array, Highlighting_Array_Access);
+     (Line_Data_Array, Line_Data_Array_Access);
 
    ----------------
    -- Completion --
@@ -766,9 +821,9 @@ private
       --  in the view the last time it was saved) with lines in the current
       --  view.
 
-      Highlightings       : Highlighting_Array_Access;
-      --  Associates line numbers in the buffer with highlighting information.
-      --  ??? This could be merged with Real_Lines.
+      Line_Data           : Line_Data_Array_Access;
+      --  This array contains all data that are relative to lines: current
+      --  highlighting, indentation, collapsing, etc.
 
       Original_Lines_Number : Natural := 1;
       --  The number of lines in the file on disk.
@@ -780,6 +835,13 @@ private
 
       Extra_Information : Extra_Information_Array_Access;
       --  Extra information concerning the buffer.
+
+      First_Removed_Line, Last_Removed_Line : Integer;
+      --  These line indicate the lines that have just been removed in the
+      --  editor. If First_Removed_Line <= 0, then no lines have been removed.
+
+      Parse_Blocks : Boolean := False;
+      --  Whether the block information should be parsed.
    end record;
 
 end Src_Editor_Buffer;
