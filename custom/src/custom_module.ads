@@ -93,6 +93,7 @@
 --       (right now it's very case-sensitive, and so on)
 --    -> Use GPS commands as well as shell commands
 --    -> implement a GUI to create those menus graphically
+--    -> give access to the contextual menu factories
 
 with Glide_Kernel;
 
