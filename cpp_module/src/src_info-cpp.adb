@@ -2186,9 +2186,9 @@ package body Src_Info.CPP is
                Symbol_Name        => CL_Tab.Buffer
                  (CL_Tab.Name.First .. CL_Tab.Name.Last),
                      --  ??? Do we really have a full name here ?
-                  Referred_Filename  => Create
-                    (Full_Filename => CL_Tab.Buffer
-                       (CL_Tab.File_Name.First .. CL_Tab.File_Name.Last)),
+               Referred_Filename  => Create
+                 (Full_Filename => CL_Tab.Buffer
+                    (CL_Tab.File_Name.First .. CL_Tab.File_Name.Last)),
                Location           => CL_Tab.Start_Position,
                Kind               => Class_Kind,
                Scope              => Global_Scope,
