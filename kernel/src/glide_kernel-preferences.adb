@@ -574,6 +574,14 @@ package body Glide_Kernel.Preferences is
       Register_Property
         (Kernel.Preferences, Param_Spec (Message_Highlight), -"Messages");
 
+      Message_Src_Highlight := Param_Spec_Color (Gnew_Color
+        (Name    => "Messages-Src-Highlight-Color",
+         Nick    => -"Errors highlighting",
+         Blurb   => -"Color used to highlight errors in the source editors",
+         Default => "#FFE0E0"));
+      Register_Property
+        (Kernel.Preferences, Param_Spec (Message_Src_Highlight), -"Messages");
+
       Show_Build_Progress := Param_Spec_Boolean
         (Gnew_Boolean
            (Name    => "Messages-Show-Build-Progress",
