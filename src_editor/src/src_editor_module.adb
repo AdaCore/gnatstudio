@@ -1421,34 +1421,42 @@ package body Src_Editor_Module is
 
    begin
       if Widget.all in Source_Box_Record'Class then
-         N := new Node;
-         N.Tag := new String'("Source_Editor");
-
          Editor := Source_Box (Widget).Editor;
 
-         Child := new Node;
-         Child.Tag := new String'("File");
-         Child.Value := new String'(Full_Name (Get_Filename (Editor)));
-         Add_Child (N, Child);
+         declare
+            Filename : constant String := Full_Name (Get_Filename (Editor));
+         begin
+            if Filename = "" then
+               return null;
+            end if;
 
-         Get_Cursor_Location (Editor, Line, Column);
+            N := new Node;
+            N.Tag := new String'("Source_Editor");
 
-         Child := new Node;
-         Child.Tag := new String'("Line");
-         Child.Value := new String'(Image (Line));
-         Add_Child (N, Child);
+            Child := new Node;
+            Child.Tag := new String'("File");
+            Child.Value := new String'(Filename);
+            Add_Child (N, Child);
 
-         Child := new Node;
-         Child.Tag := new String'("Column");
-         Child.Value := new String'(Image (Column));
-         Add_Child (N, Child);
+            Get_Cursor_Location (Editor, Line, Column);
 
-         Child := new Node;
-         Child.Tag := new String'("Column_End");
-         Child.Value := new String'(Image (Column));
-         Add_Child (N, Child);
+            Child := new Node;
+            Child.Tag := new String'("Line");
+            Child.Value := new String'(Image (Line));
+            Add_Child (N, Child);
 
-         return N;
+            Child := new Node;
+            Child.Tag := new String'("Column");
+            Child.Value := new String'(Image (Column));
+            Add_Child (N, Child);
+
+            Child := new Node;
+            Child.Tag := new String'("Column_End");
+            Child.Value := new String'(Image (Column));
+            Add_Child (N, Child);
+
+            return N;
+         end;
       end if;
 
       return null;
