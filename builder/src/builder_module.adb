@@ -660,7 +660,7 @@ package body Builder_Module is
       Free (Cmd);
       Free (Args);
 
-      Create (C, (Kernel, Fd, null, null, null, System.Null_Address));
+      Create (C, (Kernel, Fd, null, null, System.Null_Address));
 
       if Synchronous then
          Launch_Synchronous (Command_Access (C), 0.1);
@@ -838,7 +838,7 @@ package body Builder_Module is
 
       Basic_Types.Unchecked_Free (Common_Args);
       Free (Cmd);
-      Create (C, (Kernel, Fd, null, null, null, System.Null_Address));
+      Create (C, (Kernel, Fd, null, null, System.Null_Address));
 
       if Synchronous then
          Launch_Synchronous (Command_Access (C), 0.1);
@@ -1003,7 +1003,7 @@ package body Builder_Module is
             Cmd_Line         => Cmd,
             Fd               => Fd);
 
-         Create (C, (Kernel, Fd, null, null, null, System.Null_Address));
+         Create (C, (Kernel, Fd, null, null, System.Null_Address));
 
          Launch_Background_Command
            (Kernel, Command_Access (C), Active => False, Queue_Id => "");
@@ -1143,8 +1143,11 @@ package body Builder_Module is
                Insert (K, -"Could not locate executable on path: " & Command);
             else
                Launch_Process
-                 (K, Exec.all, Arguments,
-                  Title, null, null, "", Success, True);
+                 (K,
+                  Command   => Exec.all,
+                  Arguments => Arguments,
+                  Title     => Title,
+                  Success   => Success);
             end if;
 
             Free (Exec);
@@ -1158,9 +1161,12 @@ package body Builder_Module is
                Last_Arg     : String_Access := new String'(Full_Command);
             begin
                Launch_Process
-                 (K, New_Args (New_Args'First).all,
-                  New_Args (New_Args'First + 1 .. New_Args'Last) & Last_Arg,
-                  Title, null, null, "", Success, True);
+                 (K,
+                  Command   => New_Args (New_Args'First).all,
+                  Arguments =>
+                    New_Args (New_Args'First + 1 .. New_Args'Last) & Last_Arg,
+                  Title     => Title,
+                  Success   => Success);
 
                Free (Last_Arg);
                Free (New_Args);

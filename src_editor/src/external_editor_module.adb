@@ -526,8 +526,7 @@ package body External_Editor_Module is
            (Interval => Timeout,
             Func     => External_Timeout'Access,
             D        => Process_Data'
-              (Kernel_Handle (Kernel), null, null, null, null,
-               System.Null_Address),
+              (Kernel_Handle (Kernel), null, null, null, System.Null_Address),
            Destroy   => External_Timeout_Destroy'Access);
       end if;
 

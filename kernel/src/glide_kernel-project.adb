@@ -422,8 +422,10 @@ package body Glide_Kernel.Project is
                   Free (Args (2));
                   Args (2) := new String'(Name);
                   Launch_Process
-                    (Kernel_Handle (Kernel), "gpr2make",
-                     Args, "", null, null, "", Success);
+                    (Kernel_Handle (Kernel),
+                     Command   => "gpr2make",
+                     Arguments => Args,
+                     Success   => Success);
                end if;
             end;
 
