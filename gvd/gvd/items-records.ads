@@ -105,7 +105,7 @@ package Items.Records is
    --  Same as above, but for a specific field index.
 
    procedure Propagate_Width
-     (Item  : in out Record_Type;
+     (Item  : access Record_Type;
       Width : Glib.Gint);
 
    procedure Draw_Border

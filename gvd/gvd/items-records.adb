@@ -641,12 +641,12 @@ package body Items.Records is
    ---------------------
 
    procedure Propagate_Width
-     (Item  : in out Record_Type;
+     (Item  : access Record_Type;
       Width : Glib.Gint)
    is
       W : constant Gint := Width - Item.Gui_Fields_Width - Left_Border
         - 2 * Item.Border_Spacing;
-      Iter : Generic_Iterator'Class := Start (Item'Unrestricted_Access);
+      Iter : Generic_Iterator'Class := Start (Item);
       It   : Generic_Type_Access;
    begin
       Item.Width := Width;
