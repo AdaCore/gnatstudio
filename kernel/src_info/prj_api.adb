@@ -3352,11 +3352,11 @@ package body Prj_API is
       Iterator.Current := Iterator.List'Last;
    end Reset;
 
-   ----------------------
-   -- Ada_Include_Path --
-   ----------------------
+   ------------------
+   -- Include_Path --
+   ------------------
 
-   function Ada_Include_Path
+   function Include_Path
      (Project_View : Prj.Project_Id; Recursive : Boolean) return String
    is
       Current : String_List_Id;
@@ -3390,7 +3390,23 @@ package body Prj_API is
             return Path;
          end;
       end if;
-   end Ada_Include_Path;
+   end Include_Path;
+
+   -----------------
+   -- Object_Path --
+   -----------------
+
+   function Object_Path
+     (Project_View : Prj.Project_Id; Recursive : Boolean) return String
+   is
+   begin
+      if Recursive then
+         return Prj.Env.Ada_Objects_Path (Project_View).all;
+      else
+         return Get_Name_String
+           (Projects.Table (Project_View).Object_Directory);
+      end if;
+   end Object_Path;
 
    ----------------------
    -- Get_Source_Files --
@@ -3430,7 +3446,7 @@ package body Prj_API is
          View := Get_Project_View_From_Name
            (Prj.Tree.Name_Of (Current (Iter)));
          declare
-            Path : constant String := Ada_Include_Path (View, False);
+            Path : constant String := Include_Path (View, False);
          begin
             Src := Projects.Table (View).Sources;
 

@@ -132,10 +132,15 @@ package Prj_API is
    --  Save the project to the corresponding file.
    --  If Recursive is True, all the imported projects are saved as well.
 
-   function Ada_Include_Path
+   function Include_Path
      (Project_View : Prj.Project_Id; Recursive : Boolean) return String;
    --  Return the source path for this project. If Recursive is True, it also
    --  includes the source path for all imported projects.
+
+   function Object_Path
+     (Project_View : Prj.Project_Id; Recursive : Boolean) return String;
+   --  Return the object path for this project. If Recursive is True, it also
+   --  includes the object path for all imported projects.
 
    function Get_Source_Files
      (Project : Prj.Tree.Project_Node_Id;
