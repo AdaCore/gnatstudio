@@ -1,6 +1,6 @@
 prefix = @prefix@
-docdir = $(prefix)/doc/glide2
-sharedir = $(prefix)/share/glide
+docdir = $(prefix)/doc/gps
+sharedir = $(prefix)/share/gps
 
 DVIPS= @DVIPS@
 MAKEINFO= @MAKEINFO@
@@ -17,43 +17,43 @@ all: doc clean-temp-files
 non-ps: common clean-temp-files
 static:
 
-doc: glide2.txt glide2.html glide2.info glide2.ps
+doc: gps.txt gps.html gps.info gps.ps
 
-glide2.html: glide2.texi
+gps.html: gps.texi
 ifneq (${TEXI2HTML},)
-	perl ${TEXI2HTML} ${TEXI2HTML_FLAGS} glide2.texi
+	perl ${TEXI2HTML} ${TEXI2HTML_FLAGS} gps.texi
 else
 	@echo "----------------------------------------------------"
 	@echo "texi2html not found, cannot build HTML documentation"
 	@echo "----------------------------------------------------"
 endif
 
-glide2.info: glide2.texi
+gps.info: gps.texi
 ifneq (${MAKEINFO},)
-	${MAKEINFO} --force -o glide2.info glide2.texi
+	${MAKEINFO} --force -o gps.info gps.texi
 else
 	@echo "----------------------------------------------------"
 	@echo "makeinfo not found, cannot build INFO documentation"
 	@echo "----------------------------------------------------"
 endif
 
-glide2.txt: glide2.texi
+gps.txt: gps.texi
 ifneq (${MAKEINFO},)
-	${MAKEINFO} --force --no-headers --no-split -o glide2.txt glide2.texi
+	${MAKEINFO} --force --no-headers --no-split -o gps.txt gps.texi
 else
 	@echo "----------------------------------------------------"
 	@echo "makeinfo not found, cannot build TXT documentation"
 	@echo "----------------------------------------------------"
 endif
 
-glide2.ps: glide2.texi
+gps.ps: gps.texi
 ifneq (${TEX},)
-	echo x | ${TEX} glide2.texi
-	texindex glide2.cp
-	${TEX} glide2.texi
-	${TEX} glide2.texi
+	echo x | ${TEX} gps.texi
+	texindex gps.cp
+	${TEX} gps.texi
+	${TEX} gps.texi
 ifneq (${DVIPS},)
-	${DVIPS} glide2.dvi -o glide2.ps
+	${DVIPS} gps.dvi -o gps.ps
 else
 	@echo "------------------------------------------------------"
 	@echo "dvips not found, cannot build POSTSCRIPT documentation"
@@ -72,17 +72,17 @@ install:
 	$(MKDIR) $(docdir)/info
 	$(MKDIR) $(docdir)/ps
 	$(MKDIR) $(docdir)/txt
-	-$(INSTALL_DATA) glide-welcome.html $(docdir)/html
-	-for file in glide2.html $(wildcard glide2_*.html); do \
+	-$(INSTALL_DATA) gps-welcome.html $(docdir)/html
+	-for file in gps.html $(wildcard gps_*.html); do \
 	  $(INSTALL_DATA) $$file $(docdir)/html; \
 	done
-	-$(INSTALL_DATA) glide2.info $(docdir)/info
-	-$(INSTALL_DATA) glide2.ps  $(docdir)/ps
-	-$(INSTALL_DATA) glide2.txt  $(docdir)/txt
+	-$(INSTALL_DATA) gps.info $(docdir)/info
+	-$(INSTALL_DATA) gps.ps  $(docdir)/ps
+	-$(INSTALL_DATA) gps.txt  $(docdir)/txt
 	-for img in $(IMAGES); do \
 	  $(INSTALL_DATA) $$img $(docdir)/html; \
 	done
-	-$(INSTALL_DATA) glide-animation.gif $(sharedir)
+	-$(INSTALL_DATA) gps-animation.gif $(sharedir)
 
 clean-temp-files:
 	-$(RM) *.aux
@@ -98,8 +98,8 @@ clean-temp-files:
 	-$(RM) *.vr
 
 clean: clean-temp-files
-	-$(RM) glide2.info*
-	-$(RM) glide2_*.html glide2.ps glide2.txt
+	-$(RM) gps.info*
+	-$(RM) gps_*.html gps.ps gps.txt
 
 mostlyclean: clean
 
