@@ -1,9 +1,14 @@
 Known Problems fixed in GPS 1.4.1
 
+- Duplicated entries in the project properties editor
+  Problem:    In the project properties, 'General' page, 'Tools' section,
+              duplicated entries for 'Ada compiler' and 'Gnatls' are displayed.
+  Workaround: Ignore the duplicated (second) entries
+
 - Output of external commands not visible
   Problem:    If you specify an external command to be executed through a
               customization file, the command and its output are not visible
-              in the Messages window
+              in the Messages window.
   Workaround: Do an explicit call to "echo" in your custom action
 
 - CC16-004 GPS crashes when it is launched by dbl-clicking Ada file on NT
