@@ -375,8 +375,11 @@ package Src_Editor_Box is
 
    procedure Scroll_To_Mark
      (Editor : access Source_Editor_Box_Record;
-      Mark   : Gtk.Text_Mark.Gtk_Text_Mark);
+      Mark   : Gtk.Text_Mark.Gtk_Text_Mark;
+      Length : Natural := 0);
    --  Scroll Mark onscreen, and place the cursor on Mark.
+   --  Lenght is the length of text that should be selected after
+   --  Mark.
 
    ---------------------
    -- Contextual menu --

@@ -2266,14 +2266,34 @@ package body Src_Editor_Box is
 
    procedure Scroll_To_Mark
      (Editor : access Source_Editor_Box_Record;
-      Mark   : Gtk.Text_Mark.Gtk_Text_Mark)
+      Mark   : Gtk.Text_Mark.Gtk_Text_Mark;
+      Length : Natural := 0)
    is
-      Iter : Gtk_Text_Iter;
+      Iter           : Gtk_Text_Iter;
+      Mark_Iter      : Gtk_Text_Iter;
+      Success        : Boolean;
 
    begin
       Scroll_To_Mark (Editor.Source_View, Mark, 0.0,  True, 1.0, 0.8);
       Get_Iter_At_Mark (Editor.Source_Buffer, Iter, Mark);
+
       Place_Cursor (Editor.Source_Buffer, Iter);
+
+      if Length /= 0 then
+         Get_Iter_At_Mark (Editor.Source_Buffer, Mark_Iter, Mark);
+         Copy (Mark_Iter, Iter);
+
+         Forward_Chars (Iter, Gint (Length), Success);
+
+         if Success then
+            Select_Region
+              (Editor.Source_Buffer,
+               Get_Line (Mark_Iter),
+               Get_Line_Offset (Mark_Iter),
+               Get_Line (Iter),
+               Get_Line_Offset (Iter));
+         end if;
+      end if;
    end Scroll_To_Mark;
 
 end Src_Editor_Box;
