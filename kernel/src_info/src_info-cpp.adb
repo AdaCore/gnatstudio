@@ -540,7 +540,9 @@ package body Src_Info.CPP is
    --  Compares list of DB directories (saved in Handler.Prj_HTable) and
    --  specified list of directories. Returns True if lists are different.
 
-   function Get_DB_Dir (DB : DB_File; DBI : Integer) return String;
+   function Get_DB_Dir
+     (DB_Dirs : String_List_Access;
+      DBI     : Integer) return String;
    pragma Inline (Get_DB_Dir);
    --  Return the directory that contains the source navigator files
    --  for specified index
@@ -1095,7 +1097,7 @@ package body Src_Info.CPP is
    procedure Destroy (Handler : in out CPP_LI_Handler_Record) is
    begin
       --  Free xref pools and project hash table
-      Free (Handler.Prj_HTable);
+      Free (Handler.DB_Dirs, Handler.Prj_HTable);
 
       Free (Handler.DBIMP_Path);
       Free (Handler.CBrowser_Path);
@@ -1110,45 +1112,43 @@ package body Src_Info.CPP is
       Project : Prj.Project_Id)
    is
       use type Prj.Project_Id;
-      DB_Dirs : GNAT.OS_Lib.String_List_Access := Get_SN_Dirs (Project);
    begin
-      if DB_Dirs = null then
-         Free (Handler.Prj_HTable);
+      Handler.Root_Project := Project;
+      Handler.DB_Dirs := Get_SN_Dirs (Project);
+
+      if Handler.DB_Dirs = null then
+         Free (Handler.DB_Dirs, Handler.Prj_HTable);
          return;
       end if;
 
       --  Reset the previous contents (if necessary)
 
       if Handler.Prj_HTable = Empty_SN_Prj_HTable
-        or else DB_Dirs_Changed (Handler, DB_Dirs)
+        or else DB_Dirs_Changed (Handler, Handler.DB_Dirs)
       then
          if Handler.Prj_HTable /= Empty_SN_Prj_HTable then
-            Free (Handler.Prj_HTable);
+            Free (Handler.DB_Dirs, Handler.Prj_HTable);
+            --  Handler.DB_Dirs released by previous function,
+            --  so we need to get it again
+            Handler.DB_Dirs := Get_SN_Dirs (Project);
          end if;
 
          Init (Handler.Prj_HTable);
-         --  Load xref pools
-         declare
-            Iterator : Imported_Project_Iterator := Start
-              (Get_Project_From_View (Project), Recursive => True);
-            Pool     : Xref_Pool;
-         begin
-            while Current (Iterator) /= Prj.No_Project loop
-               declare
-                  DB_Dir : constant String := Get_DB_Dir (Current (Iterator));
-               begin
-                  Load (Pool, DB_Dir & Browse.Xref_Pool_Filename);
-                  Set_Xref_Pool (Handler.Prj_HTable, DB_Dir, Pool);
-                  Next (Iterator);
-               end;
-            end loop;
-         end;
+         --  Load xref pools and fill Prj_HTable
+         for I in Handler.DB_Dirs.all'Range loop
+            declare
+               Pool   : Xref_Pool;
+               DB_Dir : constant String_Access := Handler.DB_Dirs.all (I);
+            begin
+               Load (Pool, DB_Dir.all & Browse.Xref_Pool_Filename);
+               Set_Xref_Pool (Handler.Prj_HTable, DB_Dir, Pool);
+            end;
+         end loop;
       end if;
 
       Close_DB_Files (Handler.SN_Table);
-      Open_DB_Files (DB_Dirs, Handler.SN_Table);
+      Open_DB_Files (Handler.DB_Dirs, Handler.SN_Table);
 
-      Free (DB_Dirs);
    end Reset;
 
    ---------------------------
@@ -1434,7 +1434,7 @@ package body Src_Info.CPP is
             Insert_Dependency_Declaration
               (Handler            => Handler,
                DB_Dir             => Get_DB_Dir
-                 (Handler.SN_Table (CL), CL_Tab.DBI),
+                 (Handler.DB_Dirs, CL_Tab.DBI),
                File               => File,
                List               => List,
                Symbol_Name        => CL_Tab.Buffer
@@ -1670,7 +1670,7 @@ package body Src_Info.CPP is
             Insert_Dependency_Declaration
               (Handler            => Handler,
                DB_Dir             => Get_DB_Dir
-                 (Handler.SN_Table (MD), MD_Tab.DBI),
+                 (Handler.DB_Dirs, MD_Tab.DBI),
                File               => File,
                List               => List,
                Symbol_Name        => Buffer (Name.First .. Name.Last),
@@ -1834,7 +1834,7 @@ package body Src_Info.CPP is
             Insert_Dependency_Declaration
               (Handler            => Handler,
                DB_Dir             => Get_DB_Dir
-                 (Handler.SN_Table (FD), FD_Tab.DBI),
+                 (Handler.DB_Dirs, FD_Tab.DBI),
                File               => File,
                List               => List,
                Symbol_Name        => Buffer (Name.First .. Name.Last),
@@ -1920,7 +1920,7 @@ package body Src_Info.CPP is
             Insert_Dependency_Declaration
               (Handler            => Handler,
                DB_Dir             => Get_DB_Dir
-                 (Handler.SN_Table (CL), Class_Def.DBI),
+                 (Handler.DB_Dirs, Class_Def.DBI),
                File               => File,
                List               => List,
                Symbol_Name        => Class_Def.Buffer
@@ -1946,7 +1946,7 @@ package body Src_Info.CPP is
               (File               => File,
                List               => List,
                DB_Dir             => Get_DB_Dir
-                 (Handler.SN_Table (CL), Class_Def.DBI),
+                 (Handler.DB_Dirs, Class_Def.DBI),
                Symbol_Name        => Class_Def.Buffer
                  (Class_Def.Name.First .. Class_Def.Name.Last),
                Location           => Class_Def.Start_Position,
@@ -1998,7 +1998,7 @@ package body Src_Info.CPP is
       --  Find declaration
       if Xref_Filename_For
          (Var.Buffer (Var.File_Name.First .. Var.File_Name.Last),
-          Get_DB_Dir (Handler.SN_Table (CON), Var.DBI),
+          Get_DB_Dir (Handler.DB_Dirs, Var.DBI),
           Handler.Prj_HTable).all = Get_LI_Filename (File)
       then
          Decl_Info := Find_Declaration
@@ -2062,7 +2062,7 @@ package body Src_Info.CPP is
                Insert_Dependency_Declaration
                  (Handler           => Handler,
                   DB_Dir            => Get_DB_Dir
-                     (Handler.SN_Table (CON), Var.DBI),
+                     (Handler.DB_Dirs, Var.DBI),
                   File              => File,
                   List              => List,
                   Symbol_Name       =>
@@ -2077,7 +2077,7 @@ package body Src_Info.CPP is
                Insert_Dependency_Declaration
                  (Handler           => Handler,
                   DB_Dir            => Get_DB_Dir
-                     (Handler.SN_Table (CON), Var.DBI),
+                     (Handler.DB_Dirs, Var.DBI),
                   File              => File,
                   List              => List,
                   Symbol_Name       =>
@@ -2168,7 +2168,7 @@ package body Src_Info.CPP is
             Insert_Dependency_Declaration
               (Handler            => Handler,
                DB_Dir             => Get_DB_Dir
-                 (Handler.SN_Table (E), Enum_Def.DBI),
+                 (Handler.DB_Dirs, Enum_Def.DBI),
                File               => File,
                List               => List,
                Symbol_Name        => Enum_Def.Buffer
@@ -2194,7 +2194,7 @@ package body Src_Info.CPP is
               (File               => File,
                List               => List,
                DB_Dir             => Get_DB_Dir
-                 (Handler.SN_Table (E), Enum_Def.DBI),
+                 (Handler.DB_Dirs, Enum_Def.DBI),
                Symbol_Name        => Enum_Def.Buffer
                  (Enum_Def.Name.First .. Enum_Def.Name.Last),
                Location           => Enum_Def.Start_Position,
@@ -2241,7 +2241,7 @@ package body Src_Info.CPP is
       if Xref_Filename_For
          (Enum_Const.Buffer
             (Enum_Const.File_Name.First .. Enum_Const.File_Name.Last),
-          Get_DB_Dir (Handler.SN_Table (EC), Enum_Const.DBI),
+          Get_DB_Dir (Handler.DB_Dirs, Enum_Const.DBI),
           Handler.Prj_HTable).all = Get_LI_Filename (File)
       then
          Decl_Info := Find_Declaration
@@ -2254,7 +2254,7 @@ package body Src_Info.CPP is
               (File              => File,
                List              => List,
                DB_Dir            => Get_DB_Dir
-                 (Handler.SN_Table (EC), Enum_Const.DBI),
+                 (Handler.DB_Dirs, Enum_Const.DBI),
                Symbol_Name       => Ref_Id,
                Location          => Enum_Const.Start_Position,
                Kind              => Enumeration_Literal,
@@ -2274,7 +2274,7 @@ package body Src_Info.CPP is
             Insert_Dependency_Declaration
               (Handler           => Handler,
                DB_Dir            => Get_DB_Dir
-                 (Handler.SN_Table (EC), Enum_Const.DBI),
+                 (Handler.DB_Dirs, Enum_Const.DBI),
                File              => File,
                List              => List,
                Symbol_Name       => Ref_Id,
@@ -2405,7 +2405,7 @@ package body Src_Info.CPP is
                        (LI            => MI_File,
                         Handler       => Handler,
                         DB_Dir        => Get_DB_Dir
-                          (Handler.SN_Table (MI), MBody.DBI),
+                          (Handler.DB_Dirs, MBody.DBI),
                         List          => List,
                         Full_Filename => MBody.Buffer
                            (MBody.File_Name.First .. MBody.File_Name.Last));
@@ -2515,7 +2515,7 @@ package body Src_Info.CPP is
                   Insert_Dependency_Declaration
                     (Handler            => Handler,
                      DB_Dir             => Get_DB_Dir
-                       (Handler.SN_Table (FU), Fn.DBI),
+                       (Handler.DB_Dirs, Fn.DBI),
                      File               => File,
                      List               => List,
                      Symbol_Name        => Name,
@@ -2537,7 +2537,7 @@ package body Src_Info.CPP is
                        (LI            => Fn_File,
                         Handler       => Handler,
                         DB_Dir        => Get_DB_Dir
-                          (Handler.SN_Table (FU), Fn.DBI),
+                          (Handler.DB_Dirs, Fn.DBI),
                         List          => List,
                         Full_Filename => Fn.Buffer
                            (Fn.File_Name.First .. Fn.File_Name.Last));
@@ -2728,7 +2728,7 @@ package body Src_Info.CPP is
               (File               => File,
                List               => List,
                DB_Dir             => Get_DB_Dir
-                 (Handler.SN_Table (TO), Ref.DBI),
+                 (Handler.DB_Dirs, Ref.DBI),
                Symbol_Name        => Ref_Id,
                Location           => Ref.Position,
                Kind               => Kind,
@@ -2816,7 +2816,7 @@ package body Src_Info.CPP is
       --  Find declaration
       if Xref_Filename_For
          (Var.Buffer (Var.File_Name.First .. Var.File_Name.Last),
-          Get_DB_Dir (Handler.SN_Table (GV), Var.DBI),
+          Get_DB_Dir (Handler.DB_Dirs, Var.DBI),
           Handler.Prj_HTable).all = Get_LI_Filename (File)
       then
          Decl_Info := Find_Declaration
@@ -2877,7 +2877,7 @@ package body Src_Info.CPP is
                Insert_Dependency_Declaration
                  (Handler           => Handler,
                   DB_Dir             => Get_DB_Dir
-                    (Handler.SN_Table (GV), Var.DBI),
+                    (Handler.DB_Dirs, Var.DBI),
                   File              => File,
                   List              => List,
                   Symbol_Name       =>
@@ -2892,7 +2892,7 @@ package body Src_Info.CPP is
                Insert_Dependency_Declaration
                  (Handler           => Handler,
                   DB_Dir             => Get_DB_Dir
-                    (Handler.SN_Table (GV), Var.DBI),
+                    (Handler.DB_Dirs, Var.DBI),
                   File              => File,
                   List              => List,
                   Symbol_Name       =>
@@ -2965,7 +2965,7 @@ package body Src_Info.CPP is
       --  Find declaration
       if Xref_Filename_For
          (Var.Buffer (Var.File_Name.First .. Var.File_Name.Last),
-          Get_DB_Dir (Handler.SN_Table (IV), Var.DBI),
+          Get_DB_Dir (Handler.DB_Dirs, Var.DBI),
           Handler.Prj_HTable).all = Get_LI_Filename (File)
       then
          Decl_Info := Find_Declaration
@@ -3067,7 +3067,7 @@ package body Src_Info.CPP is
                Insert_Dependency_Declaration
                  (Handler           => Handler,
                   DB_Dir             => Get_DB_Dir
-                    (Handler.SN_Table (IV), Var.DBI),
+                    (Handler.DB_Dirs, Var.DBI),
                   File              => File,
                   List              => List,
                   Symbol_Name       => Ref_Id,
@@ -3081,7 +3081,7 @@ package body Src_Info.CPP is
                Insert_Dependency_Declaration
                  (Handler           => Handler,
                   DB_Dir             => Get_DB_Dir
-                    (Handler.SN_Table (IV), Var.DBI),
+                    (Handler.DB_Dirs, Var.DBI),
                   File              => File,
                   List              => List,
                   Symbol_Name       => Ref_Id,
@@ -3146,7 +3146,7 @@ package body Src_Info.CPP is
 
       if Xref_Filename_For
          (Macro.Buffer (Macro.File_Name.First .. Macro.File_Name.Last),
-          Get_DB_Dir (Handler.SN_Table (MA), Macro.DBI),
+          Get_DB_Dir (Handler.DB_Dirs, Macro.DBI),
           Handler.Prj_HTable).all = Get_LI_Filename (File)
       then
          --  look for declaration in current file
@@ -3160,7 +3160,7 @@ package body Src_Info.CPP is
               (File               => File,
                List               => List,
                DB_Dir             => Get_DB_Dir
-                 (Handler.SN_Table (MA), Macro.DBI),
+                 (Handler.DB_Dirs, Macro.DBI),
                Symbol_Name        => Ref_Id,
                Location           => Macro.Start_Position,
                Kind               => Unresolved_Entity,
@@ -3181,7 +3181,7 @@ package body Src_Info.CPP is
             Insert_Dependency_Declaration
               (Handler           => Handler,
                DB_Dir             => Get_DB_Dir
-                 (Handler.SN_Table (MA), Macro.DBI),
+                 (Handler.DB_Dirs, Macro.DBI),
                File              => File,
                List              => List,
                Symbol_Name       => Ref_Id,
@@ -3336,7 +3336,7 @@ package body Src_Info.CPP is
               (File               => File,
                List               => List,
                DB_Dir             => Get_DB_Dir
-                 (Handler.SN_Table (TO), Ref.DBI),
+                 (Handler.DB_Dirs, Ref.DBI),
                Symbol_Name        => Ref_Id,
                Location           => Ref.Position,
                Kind               => Kind,
@@ -3443,7 +3443,7 @@ package body Src_Info.CPP is
 
       if Xref_Filename_For
          (Typedef.Buffer (Typedef.File_Name.First .. Typedef.File_Name.Last),
-          Get_DB_Dir (Handler.SN_Table (T), Typedef.DBI),
+          Get_DB_Dir (Handler.DB_Dirs, Typedef.DBI),
           Handler.Prj_HTable).all = Get_LI_Filename (File)
       then
          --  look for declaration in current file
@@ -3473,7 +3473,7 @@ package body Src_Info.CPP is
                  (File              => File,
                   List              => List,
                   DB_Dir             => Get_DB_Dir
-                    (Handler.SN_Table (T), Typedef.DBI),
+                    (Handler.DB_Dirs, Typedef.DBI),
                   Symbol_Name       => Ref_Id,
                   Location          => Typedef.Start_Position,
                   Kind              => Desc.Kind,
@@ -3485,7 +3485,7 @@ package body Src_Info.CPP is
                  (File              => File,
                   List              => List,
                   DB_Dir             => Get_DB_Dir
-                    (Handler.SN_Table (T), Typedef.DBI),
+                    (Handler.DB_Dirs, Typedef.DBI),
                   Symbol_Name       => Ref_Id,
                   Location          => Typedef.Start_Position,
                   Parent_Location   => Predefined_Point,
@@ -3498,7 +3498,7 @@ package body Src_Info.CPP is
                  (File              => File,
                   List              => List,
                   DB_Dir             => Get_DB_Dir
-                    (Handler.SN_Table (T), Typedef.DBI),
+                    (Handler.DB_Dirs, Typedef.DBI),
                   Symbol_Name       => Ref_Id,
                   Location          => Typedef.Start_Position,
                   Parent_Location   => Desc.Ancestor_Point,
@@ -3538,7 +3538,7 @@ package body Src_Info.CPP is
                Insert_Dependency_Declaration
                  (Handler           => Handler,
                   DB_Dir             => Get_DB_Dir
-                    (Handler.SN_Table (T), Typedef.DBI),
+                    (Handler.DB_Dirs, Typedef.DBI),
                   File              => File,
                   List              => List,
                   Symbol_Name       => Ref_Id,
@@ -3553,7 +3553,7 @@ package body Src_Info.CPP is
                Insert_Dependency_Declaration
                  (Handler           => Handler,
                   DB_Dir             => Get_DB_Dir
-                    (Handler.SN_Table (T), Typedef.DBI),
+                    (Handler.DB_Dirs, Typedef.DBI),
                   File              => File,
                   List              => List,
                   Symbol_Name       => Ref_Id,
@@ -3569,7 +3569,7 @@ package body Src_Info.CPP is
                Insert_Dependency_Declaration
                  (Handler           => Handler,
                   DB_Dir             => Get_DB_Dir
-                    (Handler.SN_Table (T), Typedef.DBI),
+                    (Handler.DB_Dirs, Typedef.DBI),
                   File              => File,
                   List              => List,
                   Symbol_Name       => Ref_Id,
@@ -3652,7 +3652,7 @@ package body Src_Info.CPP is
             Insert_Dependency_Declaration
               (Handler            => Handler,
                DB_Dir             => Get_DB_Dir
-                 (Handler.SN_Table (UN), Union_Def.DBI),
+                 (Handler.DB_Dirs, Union_Def.DBI),
                File               => File,
                List               => List,
                Symbol_Name        => Union_Def.Buffer
@@ -3678,7 +3678,7 @@ package body Src_Info.CPP is
               (File               => File,
                List               => List,
                DB_Dir             => Get_DB_Dir
-                 (Handler.SN_Table (UN), Union_Def.DBI),
+                 (Handler.DB_Dirs, Union_Def.DBI),
                Symbol_Name        => Union_Def.Buffer
                  (Union_Def.Name.First .. Union_Def.Name.Last),
                Location           => Union_Def.Start_Position,
@@ -3740,7 +3740,7 @@ package body Src_Info.CPP is
         (File                  => File,
          List                  => List,
          DB_Dir                => Get_DB_Dir
-           (Handler.SN_Table (CL), Class_Def.DBI),
+           (Handler.DB_Dirs, Class_Def.DBI),
          Symbol_Name           =>
            Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last),
          Location              => Sym.Start_Position,
@@ -3793,7 +3793,7 @@ package body Src_Info.CPP is
                     (Decl_Info,
                      Handler => CPP_LI_Handler (Handler),
                      DB_Dir  => Get_DB_Dir
-                       (Handler.SN_Table (CL), Super_Def.DBI),
+                       (Handler.DB_Dirs, Super_Def.DBI),
                      List => List,
                      Parent_Filename => Super_Def.Buffer
                        (Super_Def.File_Name.First .. Super_Def.File_Name.Last),
@@ -3873,7 +3873,7 @@ package body Src_Info.CPP is
            (File              => File,
             List              => List,
             DB_Dir            => Get_DB_Dir
-              (Handler.SN_Table (CON), Var.DBI),
+              (Handler.DB_Dirs, Var.DBI),
             Symbol_Name       =>
               Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last),
             Location          => Sym.Start_Position,
@@ -3885,7 +3885,7 @@ package body Src_Info.CPP is
            (File              => File,
             List              => List,
             DB_Dir            => Get_DB_Dir
-              (Handler.SN_Table (CON), Var.DBI),
+              (Handler.DB_Dirs, Var.DBI),
             Symbol_Name       =>
               Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last),
             Location          => Sym.Start_Position,
@@ -3971,7 +3971,7 @@ package body Src_Info.CPP is
         (File              => File,
          List              => List,
          DB_Dir            => Get_DB_Dir
-           (Handler.SN_Table (FIL), Sym.DBI),
+           (Handler.DB_Dirs, Sym.DBI),
          Symbol_Name       => E_Id,
          Location          => Sym.Start_Position,
          Kind              => Enumeration_Type,
@@ -4030,7 +4030,7 @@ package body Src_Info.CPP is
            (File              => File,
             List              => List,
             DB_Dir            => Get_DB_Dir
-              (Handler.SN_Table (FIL), Sym.DBI),
+              (Handler.DB_Dirs, Sym.DBI),
             Symbol_Name       => Ec_Id,
             Location          => Sym.Start_Position,
             Kind              => Enumeration_Literal,
@@ -4044,7 +4044,7 @@ package body Src_Info.CPP is
            (File              => File,
             List              => List,
             DB_Dir            => Get_DB_Dir
-              (Handler.SN_Table (FIL), Sym.DBI),
+              (Handler.DB_Dirs, Sym.DBI),
             Symbol_Name       => Ec_Id,
             Location          => Sym.Start_Position,
             Kind              => Enumeration_Literal,
@@ -4151,7 +4151,7 @@ package body Src_Info.CPP is
            (File              => File,
             List              => List,
             DB_Dir            => Get_DB_Dir
-              (Handler.SN_Table (FD), First_DBI),
+              (Handler.DB_Dirs, First_DBI),
             Symbol_Name       =>
               Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last),
             Location          => First_FD_Pos,
@@ -4208,7 +4208,7 @@ package body Src_Info.CPP is
                  (LI            => FU_File,
                   Handler       => Handler,
                   DB_Dir             => Get_DB_Dir
-                    (Handler.SN_Table (FU), FU_Tab.DBI),
+                    (Handler.DB_Dirs, FU_Tab.DBI),
                   List          => List,
                   Full_Filename => FU_Tab.Buffer
                      (FU_Tab.File_Name.First .. FU_Tab.File_Name.Last));
@@ -4382,7 +4382,7 @@ package body Src_Info.CPP is
            (File                  => File,
             List                  => List,
             DB_Dir                => Get_DB_Dir
-              (Handler.SN_Table (FIL), Sym.DBI),
+              (Handler.DB_Dirs, Sym.DBI),
             Symbol_Name           => Fu_Id,
             Location              => Start_Position,
             Kind                  => Target_Kind,
@@ -4534,7 +4534,7 @@ package body Src_Info.CPP is
            (File              => File,
             List              => List,
             DB_Dir             => Get_DB_Dir
-              (Handler.SN_Table (GV), Var.DBI),
+              (Handler.DB_Dirs, Var.DBI),
             Symbol_Name       =>
               Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last),
             Location          => Sym.Start_Position,
@@ -4546,7 +4546,7 @@ package body Src_Info.CPP is
            (File              => File,
             List              => List,
             DB_Dir             => Get_DB_Dir
-              (Handler.SN_Table (GV), Var.DBI),
+              (Handler.DB_Dirs, Var.DBI),
             Symbol_Name       =>
               Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last),
             Location          => Sym.Start_Position,
@@ -4598,8 +4598,6 @@ package body Src_Info.CPP is
    is
       pragma Unreferenced (Module_Type_Defs);
 
-      Prj_Data : SN_Prj_Data;
-
       --  ??? We shouldn't use Base_Name below, but should allow find file to
       --  recognize directories in the name.
       Full_Included : constant String := Find_File
@@ -4613,31 +4611,34 @@ package body Src_Info.CPP is
       --        & " depends on " & Full_Included
       --        & """");
 
-      SN_Prj_HTables.Get_First (Handler.Prj_HTable.all, Prj_Data);
-      if Prj_Data = No_SN_Prj_Data then
-         Fail ("Failed to select directory for includes' xref files");
-      else
-         Info ("All includes go into " & Prj_Data.Key.all);
-      end if;
-
       if Full_Included = "" then
          Info ("File not found on path: "
                & Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last));
 
-         Insert_Dependency
-           (Handler           => Handler,
-            DB_Dir            => Prj_Data.Key.all,
-            File              => File,
-            List              => List,
-            Referred_Filename => Sym.Buffer
-              (Sym.Identifier.First .. Sym.Identifier.Last));
+         declare
+            --  Put xref files for missing includes to the root project DB dir
+            DB_Dir : constant String := Get_DB_Dir (Handler.Root_Project);
+         begin
+            Insert_Dependency
+              (Handler           => Handler,
+               DB_Dir            => DB_Dir,
+               File              => File,
+               List              => List,
+               Referred_Filename => Sym.Buffer
+                 (Sym.Identifier.First .. Sym.Identifier.Last));
+         end;
       else
-         Insert_Dependency
-           (Handler           => Handler,
-            DB_Dir            => Prj_Data.Key.all,
-            File              => File,
-            List              => List,
-            Referred_Filename => Full_Included);
+         declare
+            DB_Dir : constant String := Get_DB_Dir
+              (Get_Project_From_File (Handler.Root_Project, Full_Included));
+         begin
+            Insert_Dependency
+              (Handler           => Handler,
+               DB_Dir            => DB_Dir,
+               File              => File,
+               List              => List,
+               Referred_Filename => Full_Included);
+         end;
       end if;
    end Sym_IU_Handler;
 
@@ -4740,7 +4741,7 @@ package body Src_Info.CPP is
            (File              => File,
             List              => List,
             DB_Dir            => Get_DB_Dir
-              (Handler.SN_Table (FIL), Sym.DBI),
+              (Handler.DB_Dirs, Sym.DBI),
             Symbol_Name       =>
               Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last),
             Location          => Sym.Start_Position,
@@ -4752,7 +4753,7 @@ package body Src_Info.CPP is
            (File              => File,
             List              => List,
             DB_Dir            => Get_DB_Dir
-              (Handler.SN_Table (FIL), Sym.DBI),
+              (Handler.DB_Dirs, Sym.DBI),
             Symbol_Name       =>
               Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last),
             Location          => Sym.Start_Position,
@@ -4802,7 +4803,7 @@ package body Src_Info.CPP is
         (File              => File,
          List              => List,
          DB_Dir             => Get_DB_Dir
-           (Handler.SN_Table (FIL), Sym.DBI),
+           (Handler.DB_Dirs, Sym.DBI),
          Symbol_Name       =>
            Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last),
          Location          => Sym.Start_Position,
@@ -4925,7 +4926,7 @@ package body Src_Info.CPP is
            (File              => File,
             List              => List,
             DB_Dir             => Get_DB_Dir
-              (Handler.SN_Table (MD), MD_Tab.DBI),
+              (Handler.DB_Dirs, MD_Tab.DBI),
             Symbol_Name       =>
                Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last),
             Location          => First_MD_Pos,
@@ -4983,7 +4984,7 @@ package body Src_Info.CPP is
                  (LI            => MI_File,
                   Handler       => Handler,
                   DB_Dir        => Get_DB_Dir
-                    (Handler.SN_Table (MI), MI_Tab.DBI),
+                    (Handler.DB_Dirs, MI_Tab.DBI),
                   List          => List,
                   Full_Filename => MI_Tab.Buffer
                      (MI_Tab.File_Name.First .. MI_Tab.File_Name.Last));
@@ -5055,7 +5056,7 @@ package body Src_Info.CPP is
               (File              => File,
                List              => List,
                DB_Dir            => Get_DB_Dir
-                 (Handler.SN_Table (T), Sym.DBI),
+                 (Handler.DB_Dirs, Sym.DBI),
                Symbol_Name       => Identifier,
                Location          => Sym.Start_Position,
                Kind              => Desc.Kind,
@@ -5070,7 +5071,7 @@ package body Src_Info.CPP is
               (File              => File,
                List              => List,
                DB_Dir            => Get_DB_Dir
-                 (Handler.SN_Table (T), Sym.DBI),
+                 (Handler.DB_Dirs, Sym.DBI),
                Symbol_Name       => Identifier,
                Location          => Sym.Start_Position,
                Parent_Location   => Predefined_Point,
@@ -5084,7 +5085,7 @@ package body Src_Info.CPP is
               (File              => File,
                List              => List,
                DB_Dir            => Get_DB_Dir
-                 (Handler.SN_Table (T), Sym.DBI),
+                 (Handler.DB_Dirs, Sym.DBI),
                Symbol_Name       => Identifier,
                Location          => Sym.Start_Position,
                Parent_Filename   => Desc.Ancestor_Filename.all,
@@ -5139,7 +5140,7 @@ package body Src_Info.CPP is
            (File                  => File,
             List                  => List,
             DB_Dir                => Get_DB_Dir
-              (Handler.SN_Table (UN), Union_Def.DBI),
+              (Handler.DB_Dirs, Union_Def.DBI),
             Symbol_Name           =>
               Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last),
             Location              => Sym.Start_Position,
@@ -5308,7 +5309,7 @@ package body Src_Info.CPP is
                     (File              => File,
                      List              => List,
                      DB_Dir            => Get_DB_Dir
-                       (Handler.SN_Table (LV), Var.DBI),
+                       (Handler.DB_Dirs, Var.DBI),
                      Symbol_Name       => Var.Buffer
                        (Var.Name.First .. Var.Name.Last),
                      Location          => Var.Start_Position,
@@ -5320,7 +5321,7 @@ package body Src_Info.CPP is
                     (File              => File,
                      List              => List,
                      DB_Dir            => Get_DB_Dir
-                       (Handler.SN_Table (LV), Var.DBI),
+                       (Handler.DB_Dirs, Var.DBI),
                      Symbol_Name       => Var.Buffer
                        (Var.Name.First .. Var.Name.Last),
                      Location          => Var.Start_Position,
@@ -5537,7 +5538,7 @@ package body Src_Info.CPP is
                  (File             => File,
                   List             => List,
                   DB_Dir           => Get_DB_Dir
-                    (Handler.SN_Table (TA), Arg.DBI),
+                    (Handler.DB_Dirs, Arg.DBI),
                   Symbol_Name      =>
                      Arg.Buffer (Arg.Name.First .. Arg.Name.Last),
                   Location         => Arg.Start_Position,
@@ -5566,7 +5567,7 @@ package body Src_Info.CPP is
                     (File             => File,
                      List             => List,
                      DB_Dir           => Get_DB_Dir
-                       (Handler.SN_Table (TA), Arg.DBI),
+                       (Handler.DB_Dirs, Arg.DBI),
                      Symbol_Name      =>
                         Arg.Buffer (Arg.Name.First .. Arg.Name.Last),
                      Location         => Arg.Start_Position,
@@ -5578,7 +5579,7 @@ package body Src_Info.CPP is
                     (File             => File,
                      List             => List,
                      DB_Dir           => Get_DB_Dir
-                       (Handler.SN_Table (TA), Arg.DBI),
+                       (Handler.DB_Dirs, Arg.DBI),
                      Symbol_Name      =>
                         Arg.Buffer (Arg.Name.First .. Arg.Name.Last),
                      Location         => Arg.Start_Position,
@@ -5687,24 +5688,25 @@ package body Src_Info.CPP is
    -- Free --
    ----------
 
-   procedure Free (Prj_HTable : in out SN_Prj_HTable) is
+   procedure Free
+     (Keys       : in out String_List_Access;
+      Prj_HTable : in out SN_Prj_HTable)
+   is
       procedure Internal_Free is new Ada.Unchecked_Deallocation
         (SN_Prj_HTable_Record, SN_Prj_HTable);
       Prj_Data : SN_Prj_Data;
-      Key      : String_Access;
    begin
-      if Prj_HTable = null then
+      if Prj_HTable = null or Keys = null then
          return;
       end if;
-      SN_Prj_HTables.Get_First (Prj_HTable.all, Prj_Data);
-      while Prj_Data /= No_SN_Prj_Data loop
-         Key := Prj_Data.Key;
-         Free (Prj_Data.Pool);
-         SN_Prj_HTables.Remove (Prj_HTable.all, Key);
-         SN_Prj_HTables.Get_Next (Prj_HTable.all, Prj_Data);
-         Free (Key);
+
+      for I in Keys.all'Range loop
+         Prj_Data := SN_Prj_HTables.Get (Prj_HTable.all, Keys.all (I));
+         SN_Prj_HTables.Remove (Prj_HTable.all, Keys.all (I));
       end loop;
+
       Internal_Free (Prj_HTable);
+      Free (Keys);
    end Free;
 
    -------------------
@@ -5736,21 +5738,19 @@ package body Src_Info.CPP is
 
    procedure Set_Xref_Pool
      (Prj_HTable : SN_Prj_HTable;
-      DB_Dir     : String;
+      DB_Dir     : String_Access;
       Pool       : Xref_Pool)
    is
-      Key      : constant String_Access := new String'(DB_Dir);
       Prj_Data : SN_Prj_Data :=
-         SN_Prj_HTables.Get (Prj_HTable.all, Key);
+         SN_Prj_HTables.Get (Prj_HTable.all, DB_Dir);
    begin
       if Prj_Data /= No_SN_Prj_Data then
          Free (Prj_Data.Pool);
       end if;
-      Prj_Data.Key  := Key;
       Prj_Data.Pool := Pool;
       SN_Prj_HTables.Set
         (Prj_HTable.all,
-         Key,
+         DB_Dir,
          Prj_Data);
    end Set_Xref_Pool;
 
@@ -5815,13 +5815,26 @@ package body Src_Info.CPP is
       return Handler.Prj_HTable;
    end Get_Prj_HTable;
 
+   ----------------------
+   -- Get_Root_Project --
+   ----------------------
+
+   function Get_Root_Project
+     (Handler : access Src_Info.CPP.CPP_LI_Handler_Record'Class)
+     return Prj.Project_Id is
+   begin
+      return Handler.Root_Project;
+   end Get_Root_Project;
+
    ----------------
    -- Get_DB_Dir --
    ----------------
 
-   function Get_DB_Dir (DB : DB_File; DBI : Integer) return String is
+   function Get_DB_Dir
+     (DB_Dirs : String_List_Access;
+      DBI     : Integer) return String is
    begin
-      return Dir_Name (Get_Table_Name (DB, DBI));
+      return DB_Dirs.all (DB_Dirs.all'First + DBI).all;
    end Get_DB_Dir;
 
 end Src_Info.CPP;

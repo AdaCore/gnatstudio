@@ -124,19 +124,20 @@ package Src_Info.CPP is
    Empty_SN_Prj_HTable : constant SN_Prj_HTable;
 
    type SN_Prj_Data is record
-      Key    : String_Access; -- used in Free
       Pool   : Xref_Pool    := Empty_Xref_Pool;
    end record;
 
    No_SN_Prj_Data : constant SN_Prj_Data :=
-     (Key => null, Pool   => Empty_Xref_Pool);
+     (Pool   => Empty_Xref_Pool);
       --  Xref pool associated with project
 
    procedure Init (Prj_HTable : out SN_Prj_HTable);
    --  Creates new SN project hash table.
 
-   procedure Free (Prj_HTable : in out SN_Prj_HTable);
-   --  Releases table from memory.
+   procedure Free
+     (Keys       : in out GNAT.OS_Lib.String_List_Access;
+      Prj_HTable : in out SN_Prj_HTable);
+   --  Releases table from memory (using given keys).
 
    function Get_Xref_Pool
      (Prj_HTable : SN_Prj_HTable;
@@ -147,7 +148,7 @@ package Src_Info.CPP is
 
    procedure Set_Xref_Pool
      (Prj_HTable : SN_Prj_HTable;
-      DB_Dir     : String;
+      DB_Dir     : String_Access;
       Pool       : Xref_Pool);
    --  Sets xref pool for specified directory. If pool was already set
    --  the old one is released from memory and replaced by the new one.
@@ -172,8 +173,15 @@ package Src_Info.CPP is
      (Handler : access Src_Info.CPP.CPP_LI_Handler_Record'Class)
      return SN_Prj_HTable;
    pragma Inline (Get_Prj_HTable);
-   --  Returns Prj_HTable filed from CPP_LI_Handler. This function is used
+   --  Returns Prj_HTable field from CPP_LI_Handler. This function is used
    --  outside Src_Info.CPP package to get this field.
+
+   function Get_Root_Project
+     (Handler : access Src_Info.CPP.CPP_LI_Handler_Record'Class)
+     return Prj.Project_Id;
+   pragma Inline (Get_Root_Project);
+   --  Returns root project for given Handler. This functions is used
+   --  outside Src_Info.CPP package to get Root_Project field.
 
 private
 
@@ -184,6 +192,8 @@ private
       Done);         -- updating done
 
    type CPP_LI_Handler_Record is new LI_Handler_Record with record
+      DB_Dirs        : GNAT.OS_Lib.String_List_Access;
+      --  list of DB dirs, they are used as keys in Prj_HTable
       Prj_HTable     : SN_Prj_HTable := Empty_SN_Prj_HTable;
       SN_Table       : Src_Info.Type_Utils.SN_Table_Array;
       DBIMP_Path     : GNAT.OS_Lib.String_Access := null;
@@ -191,6 +201,8 @@ private
       CBrowser_Path  : GNAT.OS_Lib.String_Access := null;
       --  full path to CBrowser (found in PATH) or null, if CBrowser is not in
       --  PATH
+      Root_Project   : Prj.Project_Id;
+      --  root projects for lookups of includes (see Sym_IU_Handler)
    end record;
    --  The fields above are always initialized after calling Reset.
 

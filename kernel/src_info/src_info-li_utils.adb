@@ -24,6 +24,8 @@ with GNAT.OS_Lib; use GNAT.OS_Lib;
 with Traces; use Traces;
 with SN; use SN;
 with Src_Info.CPP;  use Src_Info.CPP;
+with Prj;
+with Prj_API; use Prj_API;
 
 package body Src_Info.LI_Utils is
 
@@ -585,11 +587,26 @@ package body Src_Info.LI_Utils is
       List          : in out LI_File_List;
       Full_Filename : String)
    is
-      Xref_Name : constant String_Access := Xref_Filename_For
-        (Full_Filename,
-         DB_Dir,
-         Get_Prj_HTable (Handler));
+      use type Prj.Project_Id;
+      Xref_Name : String_Access;
+      Project   : constant Prj.Project_Id :=
+        Get_Project_From_File (Get_Root_Project (Handler), Full_Filename);
+
+      pragma Unreferenced (DB_Dir);
+      --  ??? DB_Dir is unreferenced, but it should be used to avoid
+      --  call to Get_Project_From_File. See also Sym_IU handler.
    begin
+      if Project = Prj.No_Project then
+         Xref_Name := Xref_Filename_For
+           (Full_Filename,
+            Get_DB_Dir (Get_Root_Project (Handler)),
+            Get_Prj_HTable (Handler));
+      else
+         Xref_Name := Xref_Filename_For
+           (Full_Filename,
+            Get_DB_Dir (Project),
+            Get_Prj_HTable (Handler));
+      end if;
 
       LI := Locate (List, Xref_Name.all);
 
