@@ -32,7 +32,6 @@ with Prj.Part;    use Prj.Part;
 with Prj.Proc;    use Prj.Proc;
 with Prj.Env;     use Prj.Env;
 with Prj.Ext;     use Prj.Ext;
-with Prj.PP;      use Prj.PP;
 with Prj.Util;    use Prj.Util;
 with Prj.Tree;    use Prj.Tree;
 with Errout;      use Errout;
@@ -281,8 +280,6 @@ package body Glide_Kernel.Project is
             end if;
          end;
       end loop;
-
-      Pretty_Print (Handle.Project);
 
       --  ??? In fact, we should also cache the list of scenario variables
       --  ??? here, so that all the prj_editor packages do not need to
