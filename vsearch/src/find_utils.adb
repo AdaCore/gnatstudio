@@ -27,6 +27,7 @@ with GNAT.Regpat;               use GNAT.Regpat;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with Gtk.Widget;                use Gtk.Widget;
 with Vsearch_Ext;               use Vsearch_Ext;
+with Glide_Kernel.Hooks;        use Glide_Kernel.Hooks;
 
 package body Find_Utils is
 
@@ -448,7 +449,7 @@ package body Find_Utils is
    is
       pragma Unreferenced (Object);
    begin
-      Search_Reset (Kernel);
+      Run_Hook (Kernel, Search_Reset_Hook);
    end Reset_Search;
 
    -----------------
