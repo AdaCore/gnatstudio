@@ -4,7 +4,7 @@
 --                     Copyright (C) 2001-2002                       --
 --                            ACT-Europe                             --
 --                                                                   --
--- GPS is free  software; you can  redistribute it and/or modify  it --
+-- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -13,7 +13,7 @@
 -- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
 -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
 -- General Public License for more details. You should have received --
--- a copy of the GNU General Public License along with this library; --
+-- a copy of the GNU General Public License along with this program; --
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
@@ -34,6 +34,7 @@ with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
 with GNAT.Expect;               use GNAT.Expect;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
+with GNAT.Case_Util;            use GNAT.Case_Util;
 
 with Gtkada.Dialogs; use Gtkada.Dialogs;
 
@@ -42,10 +43,11 @@ with Src_Info.Prj_Utils; use Src_Info.Prj_Utils;
 with Prj_Normalize;      use Prj_Normalize;
 with Project_Hash;       use Project_Hash;
 
-with Glide_Intl; use Glide_Intl;
-with Glide_Kernel.Console; use Glide_Kernel.Console;
+with Glide_Intl;               use Glide_Intl;
+with Glide_Kernel.Console;     use Glide_Kernel.Console;
 with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
-with Language_Handlers.Glide; use Language_Handlers.Glide;
+with Glide_Kernel.Timeout;     use Glide_Kernel.Timeout;
+with Language_Handlers.Glide;  use Language_Handlers.Glide;
 
 package body Glide_Kernel.Project is
 
@@ -366,7 +368,7 @@ package body Glide_Kernel.Project is
    begin
       --  To avoid any problem with invalid variable values, we need to provide
       --  a current value when no default value is provided by the user
-      --  ??? Is this really needed, when Glide should always have a value for
+      --  ??? Is this really needed, when GPS should always have a value for
       --  the variable, set through the combo boxes.
 
       for J in Scenario_Vars'Range loop
@@ -595,13 +597,64 @@ package body Glide_Kernel.Project is
    procedure Save_Project
      (Kernel    : access Kernel_Handle_Record'Class;
       Project   : Project_Node_Id;
-      Recursive : Boolean := False) is
+      Recursive : Boolean := False)
+   is
+      Iter    : Imported_Project_Iterator := Start (Project, Recursive);
+      View    : constant Project_Id := Get_Project_View_From_Project (Project);
+      Langs   : Argument_List := Get_Languages (View);
+      Args    : Argument_List (1 .. 2);
+      Success : Boolean;
+
    begin
       Kernel.Project_Is_Default := False;
+
+      --  If the project is multi-language or non Ada, generate Makefiles
+      --  using gpr2make
+
+      To_Lower (Langs (Langs'First).all);
+
+      if Langs'Length > 1 or else Langs (Langs'First).all /= "ada" then
+         Args (1) := new String'("-R");
+
+         while Current (Iter) /= Empty_Node loop
+            declare
+               Name : constant String := Get_String
+                 (Prj.Tree.Path_Name_Of (Current (Iter)));
+            begin
+               if not Is_Regular_File (Name)
+                 or else (Project_Modified
+                            (Kernel.Projects_Data, Current (Iter))
+                          and then Is_Writable_File (Name))
+               then
+                  Save_Project (Project, Kernel.Projects_Data, False);
+
+                  --  call gpr2make -R Name
+
+                  Free (Args (2));
+                  Args (2) := new String'(Name);
+                  Launch_Process
+                    (Kernel_Handle (Kernel), "gpr2make",
+                     Args, null, null, "", Success);
+               end if;
+            end;
+
+            Next (Iter);
+         end loop;
+
+         for J in Args'Range loop
+            Free (Args (J));
+         end loop;
+      end if;
+
+      for J in Langs'Range loop
+         Free (Langs (J));
+      end loop;
+
       Save_Project (Project, Kernel.Projects_Data, Recursive);
 
       --  Force a change in the icons in the explorer.
       --  ??? Probably not very efficient, however.
+
       Project_View_Changed (Kernel);
    end Save_Project;
 
