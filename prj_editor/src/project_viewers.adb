@@ -244,6 +244,11 @@ package body Project_Viewers is
       Kernel : Kernel_Handle);
    --  Callback for the Project->Edit properties menu
 
+   procedure On_Project_Recompute
+     (Widget : access GObject_Record'Class;
+      Kernel : Kernel_Handle);
+   --  Callback for the Project->Recompute Project menu
+
    procedure On_Add_Dependency_From_Wizard
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access);
@@ -389,7 +394,9 @@ package body Project_Viewers is
       Languages    : GNAT.OS_Lib.Argument_List);
 
    type Naming_Editor_Record is new Project_Editor_Page_Record
-     with null record;
+     with record
+        Kernel : Kernel_Handle;
+     end record;
    function Widget_Factory
      (Page         : access Naming_Editor_Record;
       Project_View : Project_Id;
@@ -968,6 +975,19 @@ package body Project_Viewers is
       when E : others =>
          Trace (Me, "Unexpected exception " & Exception_Message (E));
    end On_Edit_Switches;
+
+   --------------------------
+   -- On_Project_Recompute --
+   --------------------------
+
+   procedure On_Project_Recompute
+     (Widget : access GObject_Record'Class;
+      Kernel : Kernel_Handle)
+   is
+      pragma Unreferenced (Widget);
+   begin
+      Recompute_View (Kernel);
+   end On_Project_Recompute;
 
    ---------------------------
    -- On_Project_Properties --
@@ -2243,18 +2263,20 @@ package body Project_Viewers is
       Full_Project : String;
       Kernel       : access Kernel_Handle_Record'Class) return Gtk_Widget
    is
-      pragma Unreferenced (Page, Full_Project);
+      pragma Unreferenced (Full_Project);
       Editor : Naming_Editor;
    begin
       if Project_View /= No_Project then
-         Gtk_New (Editor, Project_View);
+         Gtk_New (Editor, Kernel, Project_View);
          Show (Editor);
-         Show_Project_Settings (Editor, Project_View);
+         Show_Project_Settings (Editor, Kernel, Project_View);
       else
-         Gtk_New (Editor, Known_Languages (Get_Language_Handler (Kernel)));
+         Gtk_New (Editor, Kernel,
+                  Known_Languages (Get_Language_Handler (Kernel)));
          Show (Editor);
       end if;
 
+      Page.Kernel := Kernel_Handle (Kernel);
       return Gtk_Widget (Editor);
    end Widget_Factory;
 
@@ -2295,11 +2317,10 @@ package body Project_Viewers is
      (Page         : access Naming_Editor_Record;
       Widget       : access Gtk.Widget.Gtk_Widget_Record'Class;
       Project_View : Prj.Project_Id := Prj.No_Project;
-      Languages    : GNAT.OS_Lib.Argument_List)
-   is
-      pragma Unreferenced (Page);
+      Languages    : GNAT.OS_Lib.Argument_List) is
    begin
-      Set_Visible_Pages (Naming_Editor (Widget), Languages, Project_View);
+      Set_Visible_Pages
+        (Naming_Editor (Widget), Page.Kernel, Languages, Project_View);
    end Refresh;
 
    ---------------------
@@ -2332,6 +2353,15 @@ package body Project_Viewers is
         (Kernel, Project, -"Save All", "",
          Save_All_Projects'Access, Ref_Item => -"Edit Properties",
          Add_Before => False);
+      Set_Tip
+        (Get_Tooltips (Kernel),
+         Register_Menu
+         (Kernel, Project, -"Recompute Project", "",
+          On_Project_Recompute'Access, Ref_Item => -"Edit Switches",
+          Add_Before => False),
+         Tip_Text => -("Recompute the contents of the project after"
+                       & " modifications outside of GPS. This isn't needed"
+                       & " for modifications through GPS."));
 
       Register_Project_Editor_Page
         (Kernel,
