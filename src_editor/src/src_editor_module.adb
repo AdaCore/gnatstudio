@@ -596,8 +596,7 @@ package body Src_Editor_Module is
       end if;
 
       if File_Exists then
-         Load_File (Editor, File, Get_Language_Handler (Kernel),
-                    Success => Success);
+         Load_File (Editor, File, Success => Success);
 
          if not Success then
             Destroy (Editor);
@@ -787,7 +786,6 @@ package body Src_Editor_Module is
             Set_Title
               (Child, Get_Filename (Source),
                Base_Name (Get_Filename (Source)));
-            Recompute_View (Kernel);
          end if;
       end;
    end Save_To_File;
