@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2003                       --
+--                     Copyright (C) 2001-2004                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -50,7 +50,7 @@ package VCS.CVS is
    procedure Commit
      (Rep       : access CVS_Record;
       Filenames : String_List.List;
-      Logs      : String_List.List);
+      Log       : String);
 
    procedure Update
      (Rep       : access CVS_Record;
@@ -90,6 +90,9 @@ package VCS.CVS is
    procedure Register_Module
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
    --  Register the VCS.CVS module
+
+   function Get_Identified_Actions
+     (Rep : access CVS_Record) return Action_Array;
 
 private
    type CVS_Record is new VCS_Record with null record;
