@@ -8791,6 +8791,19 @@ in an XML file. These tags are generally found in the @file{gps_index.xml}
 files, as documented in @pxref{Adding New Help Files}, but you can in fact
 add them in any of your customization files.
 
+The documentation files you display can contain the usual type of html links.
+In addition, GPS will treat specially links starting with '%', and consider
+them as script commands to execute instead of file to display. The following
+example show how to insert a link that will in effect open a file in GPS when
+clicked by the user
+
+@smallexample
+<a href="%shell:Editor.editor g-os_lib.ads">Open runtime file</a>
+@end smallexample
+
+The first word after '%' is the name of the language, and the command to
+execute is found after the ':' character.
+
 The @code{<documentation_file>} tag accepts no attribute. It accepts a
 number of child nodes:
 

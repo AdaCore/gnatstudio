@@ -1430,7 +1430,16 @@ If the line and column are not specified, then the current selection is returned
 
   <shell_doc name="GPS.Help">
      <description>This class gives access to the external documentation for shell commands. This external documentation is stored in the file shell_commands.xml, part of the GPS installation, and is what you are currently seeing.
-You almost never need to use this class yourself, since it is used implicitly by Python when you call the help(object) command at the GPS prompt</description>
+You almost never need to use this class yourself, since it is used implicitly by Python when you call the help(object) command at the GPS prompt.
+
+The help browser understands the standard http urls, with links to specific parts of the document. For instance:
+     "http://remote.com/my_document"
+ or  "#link"
+
+As a special case, it also supports links starting with '%'. These are shell commands to execute within GPS, instead of a standard html file. For instance:
+    &lt;a href="%shell:Editor.edit g-os_lib.ads"&gt;GNAT.OS_Lib%lt;/a%gt;
+
+The first word after '%' is the language of the shell command, the rest of the text is the command to execute</description>
       <see_also name="GPS.Help.__init__()" />
   </shell_doc>
 
