@@ -38,17 +38,20 @@ end Gtk_New;
 procedure Initialize (Vdiff : access Vdiff_Record'Class) is
    pragma Suppress (All_Checks);
 begin
-   Gtk.Window.Initialize (Vdiff, Window_Toplevel);
-   Set_Title (Vdiff, -"Visual Comparison");
-   Set_Policy (Vdiff, False, True, False);
-   Set_Position (Vdiff, Win_Pos_None);
-   Set_Modal (Vdiff, False);
+   --  Gtk.Window.Initialize (Vdiff, Window_Toplevel);
+   --  Set_Title (Vdiff, -"Visual Comparison");
+   --  Set_Policy (Vdiff, False, True, False);
+   --  Set_Position (Vdiff, Win_Pos_None);
+   --  Set_Modal (Vdiff, False);
 
-   Gtk_New_Hbox (Vdiff.Main_Box, True, 2);
-   Add (Vdiff, Vdiff.Main_Box);
+   --  Gtk_New_Hbox (Vdiff.Main_Box, True, 2);
+   --  Add (Vdiff, Vdiff.Main_Box);
+
+   Initialize_Hbox (Vdiff, True, 2);
 
    Gtk_New_Vbox (Vdiff.Vbox1, False, 0);
-   Pack_Start (Vdiff.Main_Box, Vdiff.Vbox1, True, True, 0);
+   --  Pack_Start (Vdiff.Main_Box, Vdiff.Vbox1, True, True, 0);
+   Pack_Start (Vdiff, Vdiff.Vbox1, True, True, 0);
 
    Gtk_New_Hbox (Vdiff.File_Hbox1, False, 0);
    Pack_Start (Vdiff.Vbox1, Vdiff.File_Hbox1, False, False, 0);
@@ -109,7 +112,8 @@ begin
    Set_Column_Widget (Vdiff.Clist1, 1, Vdiff.Label9);
 
    Gtk_New_Vbox (Vdiff.Vbox2, False, 0);
-   Pack_Start (Vdiff.Main_Box, Vdiff.Vbox2, True, True, 0);
+   --  Pack_Start (Vdiff.Main_Box, Vdiff.Vbox2, True, True, 0);
+   Pack_Start (Vdiff, Vdiff.Vbox2, True, True, 0);
 
    Gtk_New_Hbox (Vdiff.File_Hbox2, False, 0);
    Pack_Start (Vdiff.Vbox2, Vdiff.File_Hbox2, False, False, 0);

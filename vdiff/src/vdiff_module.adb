@@ -21,7 +21,6 @@
 with Glib;                      use Glib;
 with Glib.Object;               use Glib.Object;
 with Glib.Values;               use Glib.Values;
-with Gtk.Box;                   use Gtk.Box;
 with Gtk.Label;                 use Gtk.Label;
 
 with Gtkada.MDI;                use Gtkada.MDI;
@@ -110,7 +109,7 @@ package body Vdiff_Module is
          Set_Text (Vdiff.File_Label2, File2);
          Fill_Diff_Lists
            (Kernel, Vdiff.Clist1, Vdiff.Clist2, File1, File2, Result);
-         Show_All (Vdiff.Main_Box);
+         Show_All (Vdiff);
          Child := Put (Get_MDI (Kernel), Vdiff);
          Free (Result);
       end;
@@ -236,7 +235,7 @@ package body Vdiff_Module is
               (Vdiff,
                Get_Pref (Kernel, Default_Widget_Width),
                Get_Pref (Kernel, Default_Widget_Height));
-            Show_All (Vdiff.Main_Box);
+            Show_All (Vdiff);
             Child := Put (Get_MDI (Kernel), Vdiff);
             return True;
          end;

@@ -27,9 +27,10 @@ with Gtk.Clist; use Gtk.Clist;
 
 package Vdiff_Pkg is
 
-   type Vdiff_Record is new Gtk_Window_Record with record
+   --  type Vdiff_Record is new Gtk_Window_Record with record
+   type Vdiff_Record is new Gtk_Box_Record with record
       Ignore_Value_Changed : Boolean := False;
-      Main_Box : Gtk_Hbox;
+      --  Main_Box : Gtk_Hbox;
       Vbox1 : Gtk_Vbox;
       File_Hbox1 : Gtk_Hbox;
       Label1 : Gtk_Label;
