@@ -45,24 +45,24 @@ with Glide_Kernel;
 package Docgen.Work_On_Source is
 
    procedure Process_Source
-     (B                 : Docgen_Backend.Backend_Handle;
-      Kernel            : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Doc_File          : File_Descriptor;
-      Next_Package      : GNAT.OS_Lib.String_Access;
-      Prev_Package      : GNAT.OS_Lib.String_Access;
-      Source_File_List  : in out Type_Source_File_List.List;
-      Source_Filename   : VFS.Virtual_File;
-      Package_Name      : String;
-      Entity_List       : in out Type_Entity_List.List;
-      List_Ref_In_File  : in out List_Reference_In_File.List;
-      Tagged_Types_List : in out Type_List_Tagged_Element.List;
+     (B                         : Docgen_Backend.Backend_Handle;
+      Kernel                    : access
+        Glide_Kernel.Kernel_Handle_Record'Class;
+      Doc_File                  : File_Descriptor;
+      Next_Package              : GNAT.OS_Lib.String_Access;
+      Prev_Package              : GNAT.OS_Lib.String_Access;
+      Source_File_List          : in out Type_Source_File_List.List;
+      Source_Filename           : VFS.Virtual_File;
+      Package_Name              : String;
+      Entity_List               : in out Type_Entity_List.List;
+      List_Ref_In_File          : in out List_Reference_In_File.List;
+      Tagged_Types_List         : in out Type_List_Tagged_Element.List;
       Private_Tagged_Types_List : in out Type_List_Tagged_Element.List;
-      Process_Body_File : Boolean;
-      LI_Unit           : LI_File_Ptr;
-      Options           : All_Options;
-      Doc_Directory     : String;
-      Doc_Suffix        : String;
-      Level             : in out Natural);
+      LI_Unit                   : LI_File_Ptr;
+      Options                   : All_Options;
+      Doc_Directory             : String;
+      Doc_Suffix                : String;
+      Level                     : in out Natural);
    --  With the data from the lists, the source file and the config file,
    --  create the Strings for the output.
    --  The order of the procedure calls can't be changed here
