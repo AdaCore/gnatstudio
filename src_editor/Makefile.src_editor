@@ -17,6 +17,8 @@ BASE_DIR=$(SRC_EDITOR_BASE_DIR)/../kernel
 include $(BASE_DIR)/Makefile.kernel
 BASE_DIR=$(SRC_EDITOR_BASE_DIR)/../gvd
 include $(BASE_DIR)/Makefile.gvd_common
+BASE_DIR=$(SRC_EDITOR_BASE_DIR)/../vsearch
+include $(BASE_DIR)/Makefile.vsearch
 
 SRC_EDITOR_SRC_DIRS = $(SRC_EDITOR_BASE_DIR)/src
 SRC_DIRS += $(SRC_EDITOR_SRC_DIRS)
