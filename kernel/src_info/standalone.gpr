@@ -21,7 +21,7 @@ project Standalone is
    end Binder;
 
    package Linker is
-      for Default_Switches ("Ada") use ("--LINK=../../../glide/obj/gpslink");
+      for Default_Switches ("Ada") use ("--LINK=../../../gps/obj/gpslink");
    end Linker;
 
 end Standalone;

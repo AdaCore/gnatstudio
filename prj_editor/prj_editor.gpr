@@ -39,7 +39,7 @@ project Prj_Editor is
    end Binder;
 
    package Linker is
-      for Default_Switches ("Ada") use ("--LINK=../../glide/obj/gpslink");
+      for Default_Switches ("Ada") use ("--LINK=../../gps/obj/gpslink");
    end Linker;
 
    package IDE renames Shared.IDE;
