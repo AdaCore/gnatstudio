@@ -3437,12 +3437,6 @@
       <class>GtkNotebook</class>
       <name>notebook1</name>
       <can_focus>True</can_focus>
-      <signal>
-	<name>switch_page</name>
-	<handler>on_notebook1_switch_page</handler>
-	<object>Breakpoints</object>
-	<last_modification_time>Tue, 04 Jul 2000 20:06:48 GMT</last_modification_time>
-      </signal>
       <show_tabs>True</show_tabs>
       <show_border>True</show_border>
       <tab_pos>GTK_POS_TOP</tab_pos>
@@ -4075,30 +4069,59 @@ read or written
 	  </widget>
 
 	  <widget>
-	    <class>GtkCombo</class>
-	    <name>exception_name</name>
-	    <value_in_list>False</value_in_list>
-	    <ok_if_empty>False</ok_if_empty>
-	    <case_sensitive>False</case_sensitive>
-	    <use_arrows>True</use_arrows>
-	    <use_arrows_always>False</use_arrows_always>
-	    <items>
-</items>
+	    <class>GtkHBox</class>
+	    <name>hbox14</name>
+	    <homogeneous>False</homogeneous>
+	    <spacing>8</spacing>
 	    <child>
 	      <padding>0</padding>
 	      <expand>False</expand>
-	      <fill>False</fill>
+	      <fill>True</fill>
 	    </child>
 
 	    <widget>
-	      <class>GtkEntry</class>
-	      <child_name>GtkCombo:entry</child_name>
-	      <name>combo-entry4</name>
+	      <class>GtkCombo</class>
+	      <name>exception_name</name>
+	      <value_in_list>False</value_in_list>
+	      <ok_if_empty>True</ok_if_empty>
+	      <case_sensitive>False</case_sensitive>
+	      <use_arrows>True</use_arrows>
+	      <use_arrows_always>False</use_arrows_always>
+	      <items></items>
+	      <child>
+		<padding>0</padding>
+		<expand>True</expand>
+		<fill>True</fill>
+	      </child>
+
+	      <widget>
+		<class>GtkEntry</class>
+		<child_name>GtkCombo:entry</child_name>
+		<name>combo-entry25</name>
+		<can_focus>True</can_focus>
+		<editable>True</editable>
+		<text_visible>True</text_visible>
+		<text_max_length>0</text_max_length>
+		<text>All exceptions</text>
+	      </widget>
+	    </widget>
+
+	    <widget>
+	      <class>GtkButton</class>
+	      <name>load_exception_list</name>
 	      <can_focus>True</can_focus>
-	      <editable>True</editable>
-	      <text_visible>True</text_visible>
-	      <text_max_length>0</text_max_length>
-	      <text></text>
+	      <signal>
+		<name>clicked</name>
+		<handler>on_load_exception_list_clicked</handler>
+		<object>Breakpoints</object>
+		<last_modification_time>Sun, 08 Oct 2000 15:52:12 GMT</last_modification_time>
+	      </signal>
+	      <label>Load List</label>
+	      <child>
+		<padding>0</padding>
+		<expand>False</expand>
+		<fill>False</fill>
+	      </child>
 	    </widget>
 	  </widget>
 

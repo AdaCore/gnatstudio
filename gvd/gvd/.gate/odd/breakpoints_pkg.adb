@@ -42,8 +42,6 @@ begin
 
    Gtk_New (Breakpoints.Notebook1);
    Pack_Start (Breakpoints.Vbox1, Breakpoints.Notebook1, False, True, 0);
-   Widget_Callback.Object_Connect
-     (Breakpoints.Notebook1, "switch_page", On_Notebook1_Switch_Page'Access, Breakpoints);
    Set_Scrollable (Breakpoints.Notebook1, False);
    Set_Show_Border (Breakpoints.Notebook1, True);
    Set_Show_Tabs (Breakpoints.Notebook1, True);
@@ -332,8 +330,11 @@ begin
    Set_Justify (Breakpoints.Label11, Justify_Left);
    Set_Line_Wrap (Breakpoints.Label11, False);
 
+   Gtk_New_Hbox (Breakpoints.Hbox14, False, 8);
+   Pack_Start (Breakpoints.Vbox8, Breakpoints.Hbox14, False, True, 0);
+
    Gtk_New (Breakpoints.Exception_Name);
-   Pack_Start (Breakpoints.Vbox8, Breakpoints.Exception_Name, False, False, 0);
+   Pack_Start (Breakpoints.Hbox14, Breakpoints.Exception_Name, True, True, 0);
    Set_Case_Sensitive (Breakpoints.Exception_Name, False);
    Set_Use_Arrows (Breakpoints.Exception_Name, True);
    Set_Use_Arrows_Always (Breakpoints.Exception_Name, False);
@@ -341,11 +342,17 @@ begin
    Combo.Set_Popdown_Strings (Breakpoints.Exception_Name, Exception_Name_Items);
    Free_String_List (Exception_Name_Items);
 
-   Breakpoints.Combo_Entry4 := Get_Entry (Breakpoints.Exception_Name);
-   Set_Editable (Breakpoints.Combo_Entry4, True);
-   Set_Max_Length (Breakpoints.Combo_Entry4, 0);
-   Set_Text (Breakpoints.Combo_Entry4, -"");
-   Set_Visibility (Breakpoints.Combo_Entry4, True);
+   Breakpoints.Combo_Entry25 := Get_Entry (Breakpoints.Exception_Name);
+   Set_Editable (Breakpoints.Combo_Entry25, True);
+   Set_Max_Length (Breakpoints.Combo_Entry25, 0);
+   Set_Text (Breakpoints.Combo_Entry25, -"All exceptions");
+   Set_Visibility (Breakpoints.Combo_Entry25, True);
+
+   Gtk_New (Breakpoints.Load_Exception_List, -"Load List");
+   Pack_Start (Breakpoints.Hbox14, Breakpoints.Load_Exception_List, False, False, 0);
+   Widget_Callback.Object_Connect
+     (Breakpoints.Load_Exception_List, "clicked",
+      Widget_Callback.To_Marshaller (On_Load_Exception_List_Clicked'Access), Breakpoints);
 
    Gtk_New (Breakpoints.Temporary_Exception, -"Temporary breakpoint");
    Pack_Start (Breakpoints.Vbox8, Breakpoints.Temporary_Exception, False, False, 0);

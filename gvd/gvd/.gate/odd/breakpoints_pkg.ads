@@ -68,8 +68,10 @@ package Breakpoints_Pkg is
       Hbox4 : Gtk_Hbox;
       Vbox8 : Gtk_Vbox;
       Label11 : Gtk_Label;
+      Hbox14 : Gtk_Hbox;
       Exception_Name : Gtk_Combo;
-      Combo_Entry4 : Gtk_Entry;
+      Combo_Entry25 : Gtk_Entry;
+      Load_Exception_List : Gtk_Button;
       Temporary_Exception : Gtk_Check_Button;
       Frame4 : Gtk_Frame;
       Vbox9 : Gtk_Vbox;
