@@ -35,21 +35,29 @@ package body Language.Debugger.Ada is
      (Str      : String;
       Matched  : Match_Array;
       Category : access Category_Index) return String;
+   --  Function used to create an entry in the explorer, for subprograms.
+   --  See the description of Explorer_Categories for more information.
 
    function Make_Entry_Package
      (Str      : String;
       Matched  : Match_Array;
       Category : access Category_Index) return String;
+   --  Function used to create an entry in the explorer, for packages.
+   --  See the description of Explorer_Categories for more information.
 
    function Make_Entry_Type
      (Str      : String;
       Matched  : Match_Array;
       Category : access Category_Index) return String;
+   --  Function used to create an entry in the explorer, for types.
+   --  See the description of Explorer_Categories for more information.
 
    function Make_Entry_Task
      (Str      : String;
       Matched  : Match_Array;
       Category : access Category_Index) return String;
+   --  Function used to create an entry in the explorer, for tasks.
+   --  See the description of Explorer_Categories for more information.
 
    Subprogram_RE : aliased Pattern_Matcher :=
      Compile

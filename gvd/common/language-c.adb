@@ -26,9 +26,6 @@ package body Language.Debugger.C is
 
    Keywords : Pattern_Matcher := Compile
      ("^(do|e(lse|xtern)|for|if|s(t(atic|ruct)|witch)|union|while)\W");
-   --  ???The size is hard-coded to save a little bit on the compilation time
-   --  for the regular expression (we need to compile the regexp only once).
-   --
    --  List of words: ("struct" "union" "extern" "for" "if" "do" "else"
    --  "while" "switch" "static")
    --
@@ -42,7 +39,8 @@ package body Language.Debugger.C is
    function Make_Entry_Subprogram
      (Str : String; Matched : Match_Array;
       Category : access Category_Index) return String;
-   --  Spec needed ???
+   --  Function used to create an entry in the explorer, for subprograms.
+   --  See the description of Explorer_Categories for more information.
 
    Subprogram_RE : aliased Pattern_Matcher :=
      Compile

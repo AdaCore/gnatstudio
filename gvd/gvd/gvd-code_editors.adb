@@ -133,14 +133,17 @@ package body Odd.Code_Editors is
    --  systematically, so as to speed things up.
 
    procedure Scroll_Layout (Editor : access Code_Editor_Record'Class);
-   --  Spec needed ???
+   --  Synchronize the new position of the buttons layout after the user has
+   --  scrolled the editor.
 
    procedure Scroll_Layout_Changed
      (Editor : access Code_Editor_Record'Class);
-   --  Spec needed ???
+   --  Synchronize the new values of the buttons layout after the user has
+   --  scrolled the editor. This procedure is mainly called on resize events.
 
    procedure Destroy_Cb (Editor : access Code_Editor_Record'Class);
-   --  Spec needed ???
+   --  Free the memory occupied by the editor and the buttons layout, as well
+   --  as all the associated pixmaps.
 
    -------------
    -- Jump_To --

@@ -112,32 +112,33 @@ package body Odd.Menus is
    procedure Change_Align_On_Grid
      (Item   : access Gtk_Check_Menu_Item_Record'Class;
       Canvas : Interactive_Canvas);
-   --  Spec needed ???
+   --  Callback for the "align on grid" contextual menu item.
 
    procedure Change_Line_Nums
      (Item   : access Gtk_Check_Menu_Item_Record'Class;
       Editor : Code_Editor);
-   --  Spec needed ???
+   --  Callback for the "show line numbers" contextual menu item.
 
    procedure Print_Locals
      (Widget : access Gtk_Widget_Record'Class;
       Var    : Variable_Record);
-   --  Spec needed ???
+   --  Callback for the "display locals" contextual menu item.
 
    procedure Print_Variable
      (Widget : access Gtk_Widget_Record'Class;
       Var    : Variable_Record);
-   --  Spec needed ???
+   --  Callback for the "print variable" or "display variable" contextual menu
+   --  items.
 
    procedure Update_Variable
      (Widget : access Gtk_Widget_Record'Class;
       Item   : Item_Record);
-   --  Spec needed ???
+   --  Callback for the "update value" contextual menu item.
 
    procedure Change_Lines_With_Code
      (Item   : access Gtk_Check_Menu_Item_Record'Class;
       Editor : Code_Editor);
-   --  Spec needed ???
+   --  Callback for the "show lines with code" contextual menu item.
 
    --------------------------
    -- Change_Align_On_Grid --

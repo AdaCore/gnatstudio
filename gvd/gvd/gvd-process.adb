@@ -117,7 +117,8 @@ package body Odd.Process is
    function Debugger_Button_Press
      (Process : access Debugger_Process_Tab_Record'Class;
       Event    : Gdk.Event.Gdk_Event) return Boolean;
-   --  Spec needed ???
+   --  Callbacks for all the button press events in the debugger command window.
+   --  This is used to display the contexual menu.
 
    -------------
    -- Convert --

@@ -926,7 +926,7 @@ package body Display_Items is
       function Unselect
         (Canvas : access Interactive_Canvas_Record'Class;
          Item   : access Canvas_Item_Record'Class) return Boolean;
-      --  Spec needed ???
+      --  Unselect the currently selected canvas item.
 
       function Unselect
         (Canvas : access Interactive_Canvas_Record'Class;

@@ -23,28 +23,6 @@ with Gtkada.Types; use Gtkada.Types;
 
 package body Language is
 
-   -----------------------
-   -- Local subprograms --
-   -----------------------
-
-   function Dereference
-     (Lang     : access Language_Root;
-      Variable : String) return String;
-   --  Spec needed ???
-
-   -----------------
-   -- Dereference --
-   -----------------
-
-   function Dereference
-     (Lang     : access Language_Root;
-      Variable : String) return String
-   is
-      pragma Warnings (Off, Lang);
-   begin
-      return Variable;
-   end Dereference;
-
    ---------------------
    -- Break_Exception --
    ---------------------
