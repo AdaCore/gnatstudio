@@ -115,7 +115,6 @@ package GVD.Process is
 
       Delete_Text_Handler_Id  : Gtk.Handlers.Handler_Id;
       Stack_List_Select_Id    : Gtk.Handlers.Handler_Id;
-      Destroy_Id              : Gtk.Handlers.Handler_Id;
 
       Stack                   : GVD.Call_Stack.Call_Stack;
 
