@@ -25,8 +25,8 @@
   <type>GTK_WINDOW_TOPLEVEL</type>
   <position>GTK_WIN_POS_NONE</position>
   <modal>False</modal>
-  <default_width>750</default_width>
-  <default_height>600</default_height>
+  <default_width>700</default_width>
+  <default_height>700</default_height>
   <allow_shrink>False</allow_shrink>
   <allow_grow>True</allow_grow>
   <auto_shrink>False</auto_shrink>
@@ -68,6 +68,7 @@
 	    <signal>
 	      <name>activate</name>
 	      <handler>on_open_program1_activate</handler>
+	      <object>main_debug_window</object>
 	      <last_modification_time>Tue, 28 Mar 2000 02:13:50 GMT</last_modification_time>
 	    </signal>
 	    <label>Open Program...</label>
@@ -704,6 +705,7 @@
 	    <signal>
 	      <name>activate</name>
 	      <handler>on_step1_activate</handler>
+	      <object>main_debug_window</object>
 	      <last_modification_time>Tue, 28 Mar 2000 02:32:07 GMT</last_modification_time>
 	    </signal>
 	    <label>Step</label>
@@ -721,6 +723,7 @@
 	    <signal>
 	      <name>activate</name>
 	      <handler>on_step_instruction1_activate</handler>
+	      <object>main_debug_window</object>
 	      <last_modification_time>Tue, 28 Mar 2000 02:32:28 GMT</last_modification_time>
 	    </signal>
 	    <label>Step Instruction</label>
@@ -738,6 +741,7 @@
 	    <signal>
 	      <name>activate</name>
 	      <handler>on_next1_activate</handler>
+	      <object>main_debug_window</object>
 	      <last_modification_time>Tue, 28 Mar 2000 02:32:47 GMT</last_modification_time>
 	    </signal>
 	    <label>Next</label>
@@ -755,6 +759,7 @@
 	    <signal>
 	      <name>activate</name>
 	      <handler>on_next_instruction1_activate</handler>
+	      <object>main_debug_window</object>
 	      <last_modification_time>Tue, 28 Mar 2000 02:32:55 GMT</last_modification_time>
 	    </signal>
 	    <label>Next Instruction</label>
@@ -772,6 +777,7 @@
 	    <signal>
 	      <name>activate</name>
 	      <handler>on_until1_activate</handler>
+	      <object>main_debug_window</object>
 	      <last_modification_time>Tue, 28 Mar 2000 02:33:05 GMT</last_modification_time>
 	    </signal>
 	    <label>Until</label>
@@ -789,6 +795,7 @@
 	    <signal>
 	      <name>activate</name>
 	      <handler>on_finish1_activate</handler>
+	      <object>main_debug_window</object>
 	      <last_modification_time>Tue, 28 Mar 2000 02:33:16 GMT</last_modification_time>
 	    </signal>
 	    <label>Finish</label>
@@ -812,6 +819,7 @@
 	    <signal>
 	      <name>activate</name>
 	      <handler>on_continue1_activate</handler>
+	      <object>main_debug_window</object>
 	      <last_modification_time>Tue, 28 Mar 2000 02:33:29 GMT</last_modification_time>
 	    </signal>
 	    <label>Continue</label>
@@ -869,6 +877,7 @@
 	    <signal>
 	      <name>activate</name>
 	      <handler>on_interrupt1_activate</handler>
+	      <object>main_debug_window</object>
 	      <last_modification_time>Tue, 28 Mar 2000 02:34:16 GMT</last_modification_time>
 	    </signal>
 	    <label>Interrupt</label>
@@ -1224,6 +1233,7 @@
 	    <signal>
 	      <name>activate</name>
 	      <handler>on_up1_activate</handler>
+	      <object>main_debug_window</object>
 	      <last_modification_time>Tue, 28 Mar 2000 02:38:42 GMT</last_modification_time>
 	    </signal>
 	    <label>Up</label>
@@ -1241,6 +1251,7 @@
 	    <signal>
 	      <name>activate</name>
 	      <handler>on_down1_activate</handler>
+	      <object>main_debug_window</object>
 	      <last_modification_time>Tue, 28 Mar 2000 02:38:54 GMT</last_modification_time>
 	    </signal>
 	    <label>Down</label>
@@ -1267,7 +1278,7 @@
 	      <handler>on_edit_breakpoints1_activate</handler>
 	      <last_modification_time>Tue, 28 Mar 2000 02:39:22 GMT</last_modification_time>
 	    </signal>
-	    <label>Edit Breakpoints</label>
+	    <label>Edit Breakpoints...</label>
 	    <right_justify>False</right_justify>
 	  </widget>
 
@@ -1883,13 +1894,13 @@
       <orientation>GTK_ORIENTATION_HORIZONTAL</orientation>
       <type>GTK_TOOLBAR_ICONS</type>
       <space_size>5</space_size>
-      <space_style>GTK_TOOLBAR_SPACE_EMPTY</space_style>
-      <relief>GTK_RELIEF_NORMAL</relief>
+      <space_style>GTK_TOOLBAR_SPACE_LINE</space_style>
+      <relief>GTK_RELIEF_NONE</relief>
       <tooltips>True</tooltips>
       <child>
 	<padding>0</padding>
 	<expand>False</expand>
-	<fill>False</fill>
+	<fill>True</fill>
       </child>
 
       <widget>
@@ -1932,7 +1943,7 @@
 	<name>button62</name>
 	<tooltip>Lookup () in the source</tooltip>
 	<label></label>
-	<icon>lookup.xpm</icon>
+	<icon>lookup_xpm</icon>
       </widget>
 
       <widget>
@@ -1940,7 +1951,7 @@
 	<child_name>Toolbar:button</child_name>
 	<name>button63</name>
 	<label></label>
-	<icon>findfwd.xpm</icon>
+	<icon>findfwd_xpm</icon>
       </widget>
 
       <widget>
@@ -1949,7 +1960,7 @@
 	<name>button64</name>
 	<tooltip>Set/Delete breakpoint at ()</tooltip>
 	<label></label>
-	<icon>breakat.xpm</icon>
+	<icon>breakat_xpm</icon>
       </widget>
 
       <widget>
@@ -1958,7 +1969,7 @@
 	<name>button65</name>
 	<tooltip>Stop whenever () changes</tooltip>
 	<label></label>
-	<icon>watch.xpm</icon>
+	<icon>watch_xpm</icon>
       </widget>
 
       <widget>
@@ -1966,8 +1977,14 @@
 	<child_name>Toolbar:button</child_name>
 	<name>button66</name>
 	<tooltip>Print ()</tooltip>
+	<signal>
+	  <name>clicked</name>
+	  <handler>on_print1_activate</handler>
+	  <object>main_debug_window</object>
+	  <last_modification_time>Wed, 31 May 2000 06:24:56 GMT</last_modification_time>
+	</signal>
 	<label></label>
-	<icon>print.xpm</icon>
+	<icon>print_xpm</icon>
       </widget>
 
       <widget>
@@ -1976,7 +1993,7 @@
 	<name>button67</name>
 	<tooltip>Display ()</tooltip>
 	<label></label>
-	<icon>display.xpm</icon>
+	<icon>display_xpm</icon>
       </widget>
 
       <widget>
@@ -1985,7 +2002,7 @@
 	<name>button68</name>
 	<tooltip>Plot ()</tooltip>
 	<label></label>
-	<icon>plot.xpm</icon>
+	<icon>plot_xpm</icon>
       </widget>
 
       <widget>
@@ -1993,7 +2010,7 @@
 	<child_name>Toolbar:button</child_name>
 	<name>button69</name>
 	<label></label>
-	<icon>show.xpm</icon>
+	<icon>show_xpm</icon>
       </widget>
 
       <widget>
@@ -2001,7 +2018,7 @@
 	<child_name>Toolbar:button</child_name>
 	<name>button70</name>
 	<label></label>
-	<icon>rotate.xpm</icon>
+	<icon>rotate_xpm</icon>
       </widget>
 
       <widget>
@@ -2010,7 +2027,7 @@
 	<name>button71</name>
 	<tooltip>Set the value of ()</tooltip>
 	<label></label>
-	<icon>set.xpm</icon>
+	<icon>set_xpm</icon>
       </widget>
 
       <widget>
@@ -2018,7 +2035,7 @@
 	<child_name>Toolbar:button</child_name>
 	<name>button72</name>
 	<label></label>
-	<icon>undisplay.xpm</icon>
+	<icon>undisplay_xpm</icon>
       </widget>
     </widget>
 
@@ -2049,7 +2066,7 @@
 	  <last_modification_time>Tue, 23 May 2000 15:10:48 GMT</last_modification_time>
 	</signal>
 	<label></label>
-	<icon>run.xpm</icon>
+	<icon>run_xpm</icon>
       </widget>
 
       <widget>
@@ -2064,7 +2081,7 @@
 	  <last_modification_time>Tue, 23 May 2000 15:11:18 GMT</last_modification_time>
 	</signal>
 	<label></label>
-	<icon>start.xpm</icon>
+	<icon>start_xpm</icon>
       </widget>
 
       <widget>
@@ -2072,8 +2089,14 @@
 	<child_name>Toolbar:button</child_name>
 	<name>button52</name>
 	<tooltip>Step program until it reaches a different source line</tooltip>
+	<signal>
+	  <name>clicked</name>
+	  <handler>on_step1_activate</handler>
+	  <object>main_debug_window</object>
+	  <last_modification_time>Sun, 28 May 2000 22:24:01 GMT</last_modification_time>
+	</signal>
 	<label></label>
-	<icon>step.xpm</icon>
+	<icon>step_xpm</icon>
       </widget>
 
       <widget>
@@ -2081,8 +2104,14 @@
 	<child_name>Toolbar:button</child_name>
 	<name>button53</name>
 	<tooltip>Step one instruction exactly</tooltip>
+	<signal>
+	  <name>clicked</name>
+	  <handler>on_step_instruction1_activate</handler>
+	  <object>main_debug_window</object>
+	  <last_modification_time>Sun, 28 May 2000 22:24:29 GMT</last_modification_time>
+	</signal>
 	<label></label>
-	<icon>stepi.xpm</icon>
+	<icon>stepi_xpm</icon>
       </widget>
 
       <widget>
@@ -2090,8 +2119,14 @@
 	<child_name>Toolbar:button</child_name>
 	<name>button54</name>
 	<tooltip>Step program, proceeding through subroutine calls</tooltip>
+	<signal>
+	  <name>clicked</name>
+	  <handler>on_next1_activate</handler>
+	  <object>main_debug_window</object>
+	  <last_modification_time>Sun, 28 May 2000 22:24:42 GMT</last_modification_time>
+	</signal>
 	<label></label>
-	<icon>next.xpm</icon>
+	<icon>next_xpm</icon>
       </widget>
 
       <widget>
@@ -2099,8 +2134,14 @@
 	<child_name>Toolbar:button</child_name>
 	<name>button55</name>
 	<tooltip>Step one instruction, but proceed through subroutine calls</tooltip>
+	<signal>
+	  <name>clicked</name>
+	  <handler>on_next_instruction1_activate</handler>
+	  <object>main_debug_window</object>
+	  <last_modification_time>Sun, 28 May 2000 22:24:57 GMT</last_modification_time>
+	</signal>
 	<label></label>
-	<icon>nexti.xpm</icon>
+	<icon>nexti_xpm</icon>
       </widget>
 
       <widget>
@@ -2108,8 +2149,14 @@
 	<child_name>Toolbar:button</child_name>
 	<name>button56</name>
 	<tooltip>Execute until the program reaches a source line greater than the current</tooltip>
+	<signal>
+	  <name>clicked</name>
+	  <handler>on_until1_activate</handler>
+	  <object>main_debug_window</object>
+	  <last_modification_time>Sun, 28 May 2000 22:25:18 GMT</last_modification_time>
+	</signal>
 	<label></label>
-	<icon>until.xpm</icon>
+	<icon>until_xpm</icon>
       </widget>
 
       <widget>
@@ -2117,8 +2164,14 @@
 	<child_name>Toolbar:button</child_name>
 	<name>button58</name>
 	<tooltip>Continue program being debugged, after signal or breakpoint</tooltip>
+	<signal>
+	  <name>clicked</name>
+	  <handler>on_continue1_activate</handler>
+	  <object>main_debug_window</object>
+	  <last_modification_time>Sun, 28 May 2000 22:25:44 GMT</last_modification_time>
+	</signal>
 	<label></label>
-	<icon>cont.xpm</icon>
+	<icon>cont_xpm</icon>
       </widget>
 
       <widget>
@@ -2126,8 +2179,14 @@
 	<child_name>Toolbar:button</child_name>
 	<name>button60</name>
 	<tooltip>Select and print stack frame that called this one</tooltip>
+	<signal>
+	  <name>clicked</name>
+	  <handler>on_up1_activate</handler>
+	  <object>main_debug_window</object>
+	  <last_modification_time>Wed, 31 May 2000 13:07:23 GMT</last_modification_time>
+	</signal>
 	<label></label>
-	<icon>up.xpm</icon>
+	<icon>up_xpm</icon>
       </widget>
 
       <widget>
@@ -2135,8 +2194,14 @@
 	<child_name>Toolbar:button</child_name>
 	<name>button61</name>
 	<tooltip>Select and print stack frame called by this one</tooltip>
+	<signal>
+	  <name>clicked</name>
+	  <handler>on_down1_activate</handler>
+	  <object>main_debug_window</object>
+	  <last_modification_time>Wed, 31 May 2000 13:07:33 GMT</last_modification_time>
+	</signal>
 	<label></label>
-	<icon>down.xpm</icon>
+	<icon>down_xpm</icon>
       </widget>
 
       <widget>
@@ -2144,8 +2209,14 @@
 	<child_name>Toolbar:button</child_name>
 	<name>button57</name>
 	<tooltip>Execute until selected stack frame returns</tooltip>
+	<signal>
+	  <name>clicked</name>
+	  <handler>on_finish1_activate</handler>
+	  <object>main_debug_window</object>
+	  <last_modification_time>Mon, 29 May 2000 14:01:54 GMT</last_modification_time>
+	</signal>
 	<label></label>
-	<icon>finish.xpm</icon>
+	<icon>finish_xpm</icon>
       </widget>
 
       <widget>
@@ -2153,17 +2224,14 @@
 	<child_name>Toolbar:button</child_name>
 	<name>button51</name>
 	<tooltip>Interrupt debugged program</tooltip>
+	<signal>
+	  <name>clicked</name>
+	  <handler>on_interrupt1_activate</handler>
+	  <object>main_debug_window</object>
+	  <last_modification_time>Mon, 29 May 2000 13:59:38 GMT</last_modification_time>
+	</signal>
 	<label></label>
-	<icon>interrupt.xpm</icon>
-      </widget>
-
-      <widget>
-	<class>GtkButton</class>
-	<child_name>Toolbar:button</child_name>
-	<name>button59</name>
-	<tooltip>Kill execution of program being debugged</tooltip>
-	<label></label>
-	<icon>kill.xpm</icon>
+	<icon>interrupt_xpm</icon>
       </widget>
     </widget>
 
@@ -2279,7 +2347,7 @@
   <title>Preferences</title>
   <type>GTK_WINDOW_DIALOG</type>
   <position>GTK_WIN_POS_CENTER</position>
-  <modal>False</modal>
+  <modal>True</modal>
   <allow_shrink>False</allow_shrink>
   <allow_grow>True</allow_grow>
   <auto_shrink>False</auto_shrink>
@@ -5445,8 +5513,8 @@
   <name>breakpoints</name>
   <title>Breakpoints</title>
   <type>GTK_WINDOW_TOPLEVEL</type>
-  <position>GTK_WIN_POS_NONE</position>
-  <modal>False</modal>
+  <position>GTK_WIN_POS_CENTER</position>
+  <modal>True</modal>
   <default_width>175</default_width>
   <allow_shrink>True</allow_shrink>
   <allow_grow>True</allow_grow>
@@ -5681,7 +5749,7 @@ read or written
 	<widget>
 	  <class>GtkCombo</class>
 	  <name>combo4</name>
-	  <value_in_list>True</value_in_list>
+	  <value_in_list>False</value_in_list>
 	  <ok_if_empty>False</ok_if_empty>
 	  <case_sensitive>False</case_sensitive>
 	  <use_arrows>True</use_arrows>
@@ -5855,6 +5923,11 @@ Assert failure
       <name>advanced_button</name>
       <border_width>6</border_width>
       <can_focus>True</can_focus>
+      <signal>
+	<name>clicked</name>
+	<handler>on_advanced_bp_clicked</handler>
+	<last_modification_time>Sun, 04 Jun 2000 13:49:23 GMT</last_modification_time>
+      </signal>
       <label>Advanced properties...</label>
       <child>
 	<padding>0</padding>
@@ -5946,6 +6019,11 @@ Assert failure
 	  <name>add_button</name>
 	  <can_default>True</can_default>
 	  <can_focus>True</can_focus>
+	  <signal>
+	    <name>clicked</name>
+	    <handler>on_add_bp_clicked</handler>
+	    <last_modification_time>Sun, 04 Jun 2000 13:49:56 GMT</last_modification_time>
+	  </signal>
 	  <label>Add</label>
 	</widget>
 
@@ -5954,6 +6032,11 @@ Assert failure
 	  <name>remove_button</name>
 	  <can_default>True</can_default>
 	  <can_focus>True</can_focus>
+	  <signal>
+	    <name>clicked</name>
+	    <handler>on_remove_bp_clicked</handler>
+	    <last_modification_time>Sun, 04 Jun 2000 13:50:04 GMT</last_modification_time>
+	  </signal>
 	  <label>Remove</label>
 	</widget>
 
@@ -5962,6 +6045,11 @@ Assert failure
 	  <name>remove_all_button</name>
 	  <can_default>True</can_default>
 	  <can_focus>True</can_focus>
+	  <signal>
+	    <name>clicked</name>
+	    <handler>on_remove_all_bp_clicked</handler>
+	    <last_modification_time>Sun, 04 Jun 2000 13:50:13 GMT</last_modification_time>
+	  </signal>
 	  <label>Remove All</label>
 	</widget>
       </widget>
@@ -5997,6 +6085,11 @@ Assert failure
 	<name>ok_button</name>
 	<can_default>True</can_default>
 	<can_focus>True</can_focus>
+	<signal>
+	  <name>clicked</name>
+	  <handler>on_ok_bp_clicked</handler>
+	  <last_modification_time>Sun, 04 Jun 2000 13:48:33 GMT</last_modification_time>
+	</signal>
 	<label>OK</label>
       </widget>
 
@@ -6005,6 +6098,11 @@ Assert failure
 	<name>cancel_button</name>
 	<can_default>True</can_default>
 	<can_focus>True</can_focus>
+	<signal>
+	  <name>clicked</name>
+	  <handler>on_cancel_bp_clicked</handler>
+	  <last_modification_time>Sun, 04 Jun 2000 13:48:44 GMT</last_modification_time>
+	</signal>
 	<label>Cancel</label>
       </widget>
     </widget>
@@ -6016,8 +6114,8 @@ Assert failure
   <name>advanced_breakpoint</name>
   <title>Advanced Breakpoint Settings</title>
   <type>GTK_WINDOW_TOPLEVEL</type>
-  <position>GTK_WIN_POS_NONE</position>
-  <modal>False</modal>
+  <position>GTK_WIN_POS_CENTER</position>
+  <modal>True</modal>
   <allow_shrink>False</allow_shrink>
   <allow_grow>True</allow_grow>
   <auto_shrink>False</auto_shrink>
@@ -6232,6 +6330,11 @@ Assert failure
 	    <name>record_button</name>
 	    <can_default>True</can_default>
 	    <can_focus>True</can_focus>
+	    <signal>
+	      <name>clicked</name>
+	      <handler>on_start_record_clicked</handler>
+	      <last_modification_time>Sun, 04 Jun 2000 13:52:41 GMT</last_modification_time>
+	    </signal>
 	    <label>Record</label>
 	  </widget>
 
@@ -6240,6 +6343,11 @@ Assert failure
 	    <name>end_button</name>
 	    <can_default>True</can_default>
 	    <can_focus>True</can_focus>
+	    <signal>
+	      <name>clicked</name>
+	      <handler>on_stop_record_clicked</handler>
+	      <last_modification_time>Sun, 04 Jun 2000 13:52:24 GMT</last_modification_time>
+	    </signal>
 	    <label>Stop recording</label>
 	  </widget>
 	</widget>
@@ -6266,6 +6374,11 @@ Assert failure
 	<name>ok_button</name>
 	<can_default>True</can_default>
 	<can_focus>True</can_focus>
+	<signal>
+	  <name>clicked</name>
+	  <handler>on_ok_advanced_bp_clicked</handler>
+	  <last_modification_time>Sun, 04 Jun 2000 13:53:05 GMT</last_modification_time>
+	</signal>
 	<label>OK</label>
       </widget>
 
@@ -6274,7 +6387,633 @@ Assert failure
 	<name>cancel_button</name>
 	<can_default>True</can_default>
 	<can_focus>True</can_focus>
+	<signal>
+	  <name>clicked</name>
+	  <handler>on_cancel_advanced_bp_clicked</handler>
+	  <last_modification_time>Sun, 04 Jun 2000 13:53:19 GMT</last_modification_time>
+	</signal>
 	<label>Cancel</label>
+      </widget>
+    </widget>
+  </widget>
+</widget>
+
+<widget>
+  <class>GtkWindow</class>
+  <name>open_program</name>
+  <title>Open Program</title>
+  <type>GTK_WINDOW_TOPLEVEL</type>
+  <position>GTK_WIN_POS_CENTER</position>
+  <modal>True</modal>
+  <allow_shrink>False</allow_shrink>
+  <allow_grow>True</allow_grow>
+  <auto_shrink>False</auto_shrink>
+
+  <widget>
+    <class>GtkVBox</class>
+    <name>vbox13</name>
+    <homogeneous>False</homogeneous>
+    <spacing>0</spacing>
+
+    <widget>
+      <class>GtkFrame</class>
+      <name>frame8</name>
+      <label_xalign>0</label_xalign>
+      <shadow_type>GTK_SHADOW_ETCHED_IN</shadow_type>
+      <child>
+	<padding>0</padding>
+	<expand>True</expand>
+	<fill>True</fill>
+      </child>
+
+      <widget>
+	<class>GtkTable</class>
+	<name>table7</name>
+	<rows>5</rows>
+	<columns>7</columns>
+	<homogeneous>False</homogeneous>
+	<row_spacing>3</row_spacing>
+	<column_spacing>3</column_spacing>
+
+	<widget>
+	  <class>GtkRadioButton</class>
+	  <name>gdb_button</name>
+	  <can_focus>True</can_focus>
+	  <signal>
+	    <name>toggled</name>
+	    <handler>on_radio_button_toggled</handler>
+	    <last_modification_time>Sat, 27 May 2000 15:51:46 GMT</last_modification_time>
+	  </signal>
+	  <label>GDB</label>
+	  <active>False</active>
+	  <draw_indicator>True</draw_indicator>
+	  <child>
+	    <left_attach>1</left_attach>
+	    <right_attach>2</right_attach>
+	    <top_attach>3</top_attach>
+	    <bottom_attach>4</bottom_attach>
+	    <xpad>0</xpad>
+	    <ypad>0</ypad>
+	    <xexpand>False</xexpand>
+	    <yexpand>False</yexpand>
+	    <xshrink>False</xshrink>
+	    <yshrink>False</yshrink>
+	    <xfill>False</xfill>
+	    <yfill>False</yfill>
+	  </child>
+	</widget>
+
+	<widget>
+	  <class>GtkRadioButton</class>
+	  <name>dbx_button</name>
+	  <sensitive>False</sensitive>
+	  <can_focus>True</can_focus>
+	  <signal>
+	    <name>toggled</name>
+	    <handler>on_radio_button_toggled</handler>
+	    <last_modification_time>Sat, 27 May 2000 15:51:56 GMT</last_modification_time>
+	  </signal>
+	  <label>DBX</label>
+	  <active>False</active>
+	  <draw_indicator>True</draw_indicator>
+	  <child>
+	    <left_attach>2</left_attach>
+	    <right_attach>3</right_attach>
+	    <top_attach>3</top_attach>
+	    <bottom_attach>4</bottom_attach>
+	    <xpad>0</xpad>
+	    <ypad>0</ypad>
+	    <xexpand>False</xexpand>
+	    <yexpand>False</yexpand>
+	    <xshrink>False</xshrink>
+	    <yshrink>False</yshrink>
+	    <xfill>False</xfill>
+	    <yfill>False</yfill>
+	  </child>
+	</widget>
+
+	<widget>
+	  <class>GtkRadioButton</class>
+	  <name>xdb_button</name>
+	  <sensitive>False</sensitive>
+	  <can_focus>True</can_focus>
+	  <signal>
+	    <name>toggled</name>
+	    <handler>on_radio_button_toggled</handler>
+	    <last_modification_time>Sat, 27 May 2000 15:52:03 GMT</last_modification_time>
+	  </signal>
+	  <label>XDB</label>
+	  <active>False</active>
+	  <draw_indicator>True</draw_indicator>
+	  <child>
+	    <left_attach>3</left_attach>
+	    <right_attach>4</right_attach>
+	    <top_attach>3</top_attach>
+	    <bottom_attach>4</bottom_attach>
+	    <xpad>0</xpad>
+	    <ypad>0</ypad>
+	    <xexpand>False</xexpand>
+	    <yexpand>False</yexpand>
+	    <xshrink>False</xshrink>
+	    <yshrink>False</yshrink>
+	    <xfill>False</xfill>
+	    <yfill>False</yfill>
+	  </child>
+	</widget>
+
+	<widget>
+	  <class>GtkRadioButton</class>
+	  <name>jdb_button</name>
+	  <can_focus>True</can_focus>
+	  <signal>
+	    <name>toggled</name>
+	    <handler>on_radio_button_toggled</handler>
+	    <last_modification_time>Sat, 27 May 2000 15:52:13 GMT</last_modification_time>
+	  </signal>
+	  <label>JDB</label>
+	  <active>False</active>
+	  <draw_indicator>True</draw_indicator>
+	  <child>
+	    <left_attach>4</left_attach>
+	    <right_attach>5</right_attach>
+	    <top_attach>3</top_attach>
+	    <bottom_attach>4</bottom_attach>
+	    <xpad>0</xpad>
+	    <ypad>0</ypad>
+	    <xexpand>False</xexpand>
+	    <yexpand>False</yexpand>
+	    <xshrink>False</xshrink>
+	    <yshrink>False</yshrink>
+	    <xfill>False</xfill>
+	    <yfill>False</yfill>
+	  </child>
+	</widget>
+
+	<widget>
+	  <class>GtkRadioButton</class>
+	  <name>pydb_button</name>
+	  <sensitive>False</sensitive>
+	  <can_focus>True</can_focus>
+	  <signal>
+	    <name>toggled</name>
+	    <handler>on_radio_button_toggled</handler>
+	    <last_modification_time>Sat, 27 May 2000 15:52:22 GMT</last_modification_time>
+	  </signal>
+	  <label>PYDB</label>
+	  <active>False</active>
+	  <draw_indicator>True</draw_indicator>
+	  <child>
+	    <left_attach>5</left_attach>
+	    <right_attach>6</right_attach>
+	    <top_attach>3</top_attach>
+	    <bottom_attach>4</bottom_attach>
+	    <xpad>0</xpad>
+	    <ypad>0</ypad>
+	    <xexpand>False</xexpand>
+	    <yexpand>False</yexpand>
+	    <xshrink>False</xshrink>
+	    <yshrink>False</yshrink>
+	    <xfill>False</xfill>
+	    <yfill>False</yfill>
+	  </child>
+	</widget>
+
+	<widget>
+	  <class>GtkRadioButton</class>
+	  <name>perl_button</name>
+	  <sensitive>False</sensitive>
+	  <can_focus>True</can_focus>
+	  <signal>
+	    <name>toggled</name>
+	    <handler>on_radio_button_toggled</handler>
+	    <last_modification_time>Sat, 27 May 2000 15:52:32 GMT</last_modification_time>
+	  </signal>
+	  <label>Perl</label>
+	  <active>False</active>
+	  <draw_indicator>True</draw_indicator>
+	  <child>
+	    <left_attach>6</left_attach>
+	    <right_attach>7</right_attach>
+	    <top_attach>3</top_attach>
+	    <bottom_attach>4</bottom_attach>
+	    <xpad>0</xpad>
+	    <ypad>0</ypad>
+	    <xexpand>False</xexpand>
+	    <yexpand>False</yexpand>
+	    <xshrink>False</xshrink>
+	    <yshrink>False</yshrink>
+	    <xfill>False</xfill>
+	    <yfill>False</yfill>
+	  </child>
+	</widget>
+
+	<widget>
+	  <class>GtkCombo</class>
+	  <name>program_combo</name>
+	  <value_in_list>False</value_in_list>
+	  <ok_if_empty>True</ok_if_empty>
+	  <case_sensitive>False</case_sensitive>
+	  <use_arrows>True</use_arrows>
+	  <use_arrows_always>False</use_arrows_always>
+	  <items></items>
+	  <child>
+	    <left_attach>1</left_attach>
+	    <right_attach>6</right_attach>
+	    <top_attach>0</top_attach>
+	    <bottom_attach>1</bottom_attach>
+	    <xpad>0</xpad>
+	    <ypad>0</ypad>
+	    <xexpand>True</xexpand>
+	    <yexpand>False</yexpand>
+	    <xshrink>False</xshrink>
+	    <yshrink>False</yshrink>
+	    <xfill>True</xfill>
+	    <yfill>False</yfill>
+	  </child>
+
+	  <widget>
+	    <class>GtkEntry</class>
+	    <child_name>GtkCombo:entry</child_name>
+	    <name>program_entry</name>
+	    <can_focus>True</can_focus>
+	    <editable>True</editable>
+	    <text_visible>True</text_visible>
+	    <text_max_length>0</text_max_length>
+	    <text></text>
+	  </widget>
+	</widget>
+
+	<widget>
+	  <class>GtkButton</class>
+	  <name>open_button</name>
+	  <can_focus>True</can_focus>
+	  <signal>
+	    <name>clicked</name>
+	    <handler>on_open_button_clicked</handler>
+	    <last_modification_time>Sat, 27 May 2000 15:51:14 GMT</last_modification_time>
+	  </signal>
+	  <label>...</label>
+	  <child>
+	    <left_attach>6</left_attach>
+	    <right_attach>7</right_attach>
+	    <top_attach>0</top_attach>
+	    <bottom_attach>1</bottom_attach>
+	    <xpad>0</xpad>
+	    <ypad>0</ypad>
+	    <xexpand>False</xexpand>
+	    <yexpand>False</yexpand>
+	    <xshrink>False</xshrink>
+	    <yshrink>False</yshrink>
+	    <xfill>False</xfill>
+	    <yfill>False</yfill>
+	  </child>
+	</widget>
+
+	<widget>
+	  <class>GtkCombo</class>
+	  <name>host_combo</name>
+	  <value_in_list>False</value_in_list>
+	  <ok_if_empty>True</ok_if_empty>
+	  <case_sensitive>False</case_sensitive>
+	  <use_arrows>True</use_arrows>
+	  <use_arrows_always>False</use_arrows_always>
+	  <items></items>
+	  <child>
+	    <left_attach>1</left_attach>
+	    <right_attach>6</right_attach>
+	    <top_attach>1</top_attach>
+	    <bottom_attach>2</bottom_attach>
+	    <xpad>0</xpad>
+	    <ypad>0</ypad>
+	    <xexpand>True</xexpand>
+	    <yexpand>False</yexpand>
+	    <xshrink>False</xshrink>
+	    <yshrink>False</yshrink>
+	    <xfill>True</xfill>
+	    <yfill>False</yfill>
+	  </child>
+
+	  <widget>
+	    <class>GtkEntry</class>
+	    <child_name>GtkCombo:entry</child_name>
+	    <name>host_entry</name>
+	    <can_focus>True</can_focus>
+	    <editable>True</editable>
+	    <text_visible>True</text_visible>
+	    <text_max_length>0</text_max_length>
+	    <text></text>
+	  </widget>
+	</widget>
+
+	<widget>
+	  <class>GtkLabel</class>
+	  <name>label57</name>
+	  <label>Debugger</label>
+	  <justify>GTK_JUSTIFY_CENTER</justify>
+	  <wrap>False</wrap>
+	  <xalign>0</xalign>
+	  <yalign>0.5</yalign>
+	  <xpad>0</xpad>
+	  <ypad>0</ypad>
+	  <child>
+	    <left_attach>0</left_attach>
+	    <right_attach>1</right_attach>
+	    <top_attach>3</top_attach>
+	    <bottom_attach>4</bottom_attach>
+	    <xpad>0</xpad>
+	    <ypad>0</ypad>
+	    <xexpand>False</xexpand>
+	    <yexpand>False</yexpand>
+	    <xshrink>False</xshrink>
+	    <yshrink>False</yshrink>
+	    <xfill>True</xfill>
+	    <yfill>False</yfill>
+	  </child>
+	</widget>
+
+	<widget>
+	  <class>GtkLabel</class>
+	  <name>label55</name>
+	  <label>Program File</label>
+	  <justify>GTK_JUSTIFY_CENTER</justify>
+	  <wrap>False</wrap>
+	  <xalign>7.45058e-09</xalign>
+	  <yalign>0.5</yalign>
+	  <xpad>0</xpad>
+	  <ypad>0</ypad>
+	  <child>
+	    <left_attach>0</left_attach>
+	    <right_attach>1</right_attach>
+	    <top_attach>0</top_attach>
+	    <bottom_attach>1</bottom_attach>
+	    <xpad>0</xpad>
+	    <ypad>0</ypad>
+	    <xexpand>False</xexpand>
+	    <yexpand>False</yexpand>
+	    <xshrink>False</xshrink>
+	    <yshrink>False</yshrink>
+	    <xfill>True</xfill>
+	    <yfill>False</yfill>
+	  </child>
+	</widget>
+
+	<widget>
+	  <class>GtkLabel</class>
+	  <name>label56</name>
+	  <label>Remote Host</label>
+	  <justify>GTK_JUSTIFY_CENTER</justify>
+	  <wrap>False</wrap>
+	  <xalign>7.45058e-09</xalign>
+	  <yalign>0.5</yalign>
+	  <xpad>0</xpad>
+	  <ypad>0</ypad>
+	  <child>
+	    <left_attach>0</left_attach>
+	    <right_attach>1</right_attach>
+	    <top_attach>1</top_attach>
+	    <bottom_attach>2</bottom_attach>
+	    <xpad>0</xpad>
+	    <ypad>0</ypad>
+	    <xexpand>False</xexpand>
+	    <yexpand>False</yexpand>
+	    <xshrink>False</xshrink>
+	    <yshrink>False</yshrink>
+	    <xfill>True</xfill>
+	    <yfill>False</yfill>
+	  </child>
+	</widget>
+
+	<widget>
+	  <class>GtkLabel</class>
+	  <name>label58</name>
+	  <label>Launch</label>
+	  <justify>GTK_JUSTIFY_CENTER</justify>
+	  <wrap>False</wrap>
+	  <xalign>7.45058e-09</xalign>
+	  <yalign>0.5</yalign>
+	  <xpad>0</xpad>
+	  <ypad>0</ypad>
+	  <child>
+	    <left_attach>0</left_attach>
+	    <right_attach>1</right_attach>
+	    <top_attach>4</top_attach>
+	    <bottom_attach>5</bottom_attach>
+	    <xpad>0</xpad>
+	    <ypad>0</ypad>
+	    <xexpand>False</xexpand>
+	    <yexpand>False</yexpand>
+	    <xshrink>False</xshrink>
+	    <yshrink>False</yshrink>
+	    <xfill>True</xfill>
+	    <yfill>False</yfill>
+	  </child>
+	</widget>
+
+	<widget>
+	  <class>GtkOptionMenu</class>
+	  <name>launch_menu</name>
+	  <can_focus>True</can_focus>
+	  <items>in the current debugger
+in a new debugger
+</items>
+	  <initial_choice>0</initial_choice>
+	  <child>
+	    <left_attach>1</left_attach>
+	    <right_attach>6</right_attach>
+	    <top_attach>4</top_attach>
+	    <bottom_attach>5</bottom_attach>
+	    <xpad>0</xpad>
+	    <ypad>0</ypad>
+	    <xexpand>False</xexpand>
+	    <yexpand>False</yexpand>
+	    <xshrink>False</xshrink>
+	    <yshrink>False</yshrink>
+	    <xfill>True</xfill>
+	    <yfill>False</yfill>
+	  </child>
+	</widget>
+
+	<widget>
+	  <class>GtkLabel</class>
+	  <name>label59</name>
+	  <label>Remote Target</label>
+	  <justify>GTK_JUSTIFY_CENTER</justify>
+	  <wrap>False</wrap>
+	  <xalign>7.45058e-09</xalign>
+	  <yalign>0.5</yalign>
+	  <xpad>0</xpad>
+	  <ypad>0</ypad>
+	  <child>
+	    <left_attach>0</left_attach>
+	    <right_attach>1</right_attach>
+	    <top_attach>2</top_attach>
+	    <bottom_attach>3</bottom_attach>
+	    <xpad>0</xpad>
+	    <ypad>0</ypad>
+	    <xexpand>False</xexpand>
+	    <yexpand>False</yexpand>
+	    <xshrink>False</xshrink>
+	    <yshrink>True</yshrink>
+	    <xfill>False</xfill>
+	    <yfill>False</yfill>
+	  </child>
+	</widget>
+
+	<widget>
+	  <class>GtkCombo</class>
+	  <name>combo8</name>
+	  <value_in_list>False</value_in_list>
+	  <ok_if_empty>True</ok_if_empty>
+	  <case_sensitive>False</case_sensitive>
+	  <use_arrows>True</use_arrows>
+	  <use_arrows_always>False</use_arrows_always>
+	  <items>wtx
+vxworks
+remote
+</items>
+	  <child>
+	    <left_attach>4</left_attach>
+	    <right_attach>6</right_attach>
+	    <top_attach>2</top_attach>
+	    <bottom_attach>3</bottom_attach>
+	    <xpad>0</xpad>
+	    <ypad>0</ypad>
+	    <xexpand>True</xexpand>
+	    <yexpand>False</yexpand>
+	    <xshrink>False</xshrink>
+	    <yshrink>False</yshrink>
+	    <xfill>True</xfill>
+	    <yfill>False</yfill>
+	  </child>
+
+	  <widget>
+	    <class>GtkEntry</class>
+	    <child_name>GtkCombo:entry</child_name>
+	    <name>protocol_entry</name>
+	    <can_focus>True</can_focus>
+	    <editable>True</editable>
+	    <text_visible>True</text_visible>
+	    <text_max_length>0</text_max_length>
+	    <text></text>
+	  </widget>
+	</widget>
+
+	<widget>
+	  <class>GtkLabel</class>
+	  <name>label60</name>
+	  <label>Protocol</label>
+	  <justify>GTK_JUSTIFY_CENTER</justify>
+	  <wrap>False</wrap>
+	  <xalign>0.5</xalign>
+	  <yalign>0.5</yalign>
+	  <xpad>0</xpad>
+	  <ypad>0</ypad>
+	  <child>
+	    <left_attach>3</left_attach>
+	    <right_attach>4</right_attach>
+	    <top_attach>2</top_attach>
+	    <bottom_attach>3</bottom_attach>
+	    <xpad>0</xpad>
+	    <ypad>0</ypad>
+	    <xexpand>False</xexpand>
+	    <yexpand>False</yexpand>
+	    <xshrink>False</xshrink>
+	    <yshrink>False</yshrink>
+	    <xfill>False</xfill>
+	    <yfill>False</yfill>
+	  </child>
+	</widget>
+
+	<widget>
+	  <class>GtkCombo</class>
+	  <name>combo7</name>
+	  <value_in_list>False</value_in_list>
+	  <ok_if_empty>True</ok_if_empty>
+	  <case_sensitive>False</case_sensitive>
+	  <use_arrows>True</use_arrows>
+	  <use_arrows_always>False</use_arrows_always>
+	  <items></items>
+	  <child>
+	    <left_attach>1</left_attach>
+	    <right_attach>3</right_attach>
+	    <top_attach>2</top_attach>
+	    <bottom_attach>3</bottom_attach>
+	    <xpad>0</xpad>
+	    <ypad>0</ypad>
+	    <xexpand>True</xexpand>
+	    <yexpand>False</yexpand>
+	    <xshrink>False</xshrink>
+	    <yshrink>False</yshrink>
+	    <xfill>True</xfill>
+	    <yfill>False</yfill>
+	  </child>
+
+	  <widget>
+	    <class>GtkEntry</class>
+	    <child_name>GtkCombo:entry</child_name>
+	    <name>target_entry</name>
+	    <can_focus>True</can_focus>
+	    <editable>True</editable>
+	    <text_visible>True</text_visible>
+	    <text_max_length>0</text_max_length>
+	    <text></text>
+	  </widget>
+	</widget>
+      </widget>
+    </widget>
+
+    <widget>
+      <class>GtkHButtonBox</class>
+      <name>hbuttonbox7</name>
+      <layout_style>GTK_BUTTONBOX_SPREAD</layout_style>
+      <spacing>30</spacing>
+      <child_min_width>85</child_min_width>
+      <child_min_height>27</child_min_height>
+      <child_ipad_x>7</child_ipad_x>
+      <child_ipad_y>0</child_ipad_y>
+      <child>
+	<padding>0</padding>
+	<expand>False</expand>
+	<fill>True</fill>
+      </child>
+
+      <widget>
+	<class>GtkButton</class>
+	<name>ok_button</name>
+	<can_default>True</can_default>
+	<can_focus>True</can_focus>
+	<signal>
+	  <name>clicked</name>
+	  <handler>on_ok_open_clicked</handler>
+	  <last_modification_time>Sat, 27 May 2000 16:05:36 GMT</last_modification_time>
+	</signal>
+	<label>OK</label>
+      </widget>
+
+      <widget>
+	<class>GtkButton</class>
+	<name>cancel_button</name>
+	<can_default>True</can_default>
+	<can_focus>True</can_focus>
+	<signal>
+	  <name>clicked</name>
+	  <handler>on_cancel_open_clicked</handler>
+	  <last_modification_time>Sat, 27 May 2000 16:05:47 GMT</last_modification_time>
+	</signal>
+	<label>Cancel</label>
+      </widget>
+
+      <widget>
+	<class>GtkButton</class>
+	<name>help_button</name>
+	<can_default>True</can_default>
+	<can_focus>True</can_focus>
+	<signal>
+	  <name>clicked</name>
+	  <handler>on_help_open_clicked</handler>
+	  <last_modification_time>Sat, 27 May 2000 16:05:56 GMT</last_modification_time>
+	</signal>
+	<label>Help</label>
       </widget>
     </widget>
   </widget>
