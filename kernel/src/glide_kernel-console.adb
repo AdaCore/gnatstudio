@@ -241,37 +241,39 @@ package body Glide_Kernel.Console is
       pragma Unreferenced (Widget);
       Console  : constant Interactive_Console := Get_Console (Kernel);
       Contents : String_Access;
+      Last     : Natural;
+      CR_Found : Boolean;
+      Args     : Argument_List (1 .. 2);
+      File     : Virtual_File;
 
    begin
-      declare
-         File : constant Virtual_File :=
-           Select_File
-             (Title => -"Select file to load in the messages window",
-              Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs),
-              Kind              => Open_File,
-              Parent            => Get_Main_Window (Kernel),
-              History           => Get_History (Kernel));
-      begin
-         if File = VFS.No_File then
-            return;
-         end if;
+      File := Select_File
+        (Title             => -"Select file to load in the messages window",
+         Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs),
+         Kind              => Open_File,
+         Parent            => Get_Main_Window (Kernel),
+         History           => Get_History (Kernel));
 
-         Contents := Read_File (File);
+      if File = VFS.No_File then
+         return;
+      end if;
 
-         declare
-            S : constant String := Strip_CR (Contents.all);
-            Args : Argument_List :=
-              (1 => new String'(S),
-               2 => new String'(-"Loaded contents"));
-         begin
-            Insert (Console, S);
-            Highlight_Child (Find_MDI_Child (Get_MDI (Kernel), Console));
-            Execute_GPS_Shell_Command (Kernel, "Locations.parse", Args);
-            Basic_Types.Free (Args);
-         end;
+      Contents := Read_File (File);
+      Strip_CR (Contents.all, Last, CR_Found);
 
-         Free (Contents);
-      end;
+      if CR_Found then
+         Args (1) := new String'(Contents (Contents'First .. Last));
+      else
+         Args (1) := Contents;
+         Contents := null;
+      end if;
+
+      Args (2) := new String'(-"Loaded contents");
+      Insert (Console, Args (1).all);
+      Highlight_Child (Find_MDI_Child (Get_MDI (Kernel), Console));
+      Execute_GPS_Shell_Command (Kernel, "Locations.parse", Args);
+      Basic_Types.Free (Args);
+      Free (Contents);
 
    exception
       when E : others =>
