@@ -187,6 +187,15 @@ package Find_Utils is
    --  On exit, Was_Partial is set to True if the search was interrupted
    --  because the callback returned False.
 
+   procedure Find_Closest_Match
+     (Buffer         : String;
+      Line           : in out Natural;
+      Column         : in out Natural;
+      Str            : String;
+      Case_Sensitive : Boolean);
+   --  Find the occurence of Str in Buffer closest to (Line, Column).
+   --  The latter are modified to point to the closest location.
+
    procedure To_Line_Column
      (Buffer       : Glib.UTF8_String;
       Pos          : Natural;

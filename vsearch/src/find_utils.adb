@@ -511,4 +511,71 @@ package body Find_Utils is
       return 1;
    end Get_Total_Progress;
 
+   ------------------------
+   -- Find_Closest_Match --
+   ------------------------
+
+   procedure Find_Closest_Match
+     (Buffer         : String;
+      Line           : in out Natural;
+      Column         : in out Natural;
+      Str            : String;
+      Case_Sensitive : Boolean)
+   is
+      Best_Line     : Integer := 0;
+      Best_Column   : Integer := 0;
+
+      function Callback (Match : Match_Result) return Boolean;
+      --  Called every time a reference to the entity is found
+
+      --------------
+      -- Callback --
+      --------------
+
+      function Callback (Match : Match_Result) return Boolean is
+         Line_Diff : constant Integer :=
+           abs (Match.Line - Line) - abs (Best_Line - Line);
+         Col_Diff : constant Integer :=
+           abs (Match.Column - Column) - abs (Best_Column - Column);
+      begin
+         if Line_Diff < 0
+           or else (Line_Diff = 0 and then Col_Diff < 0)
+         then
+            Best_Line := Match.Line;
+            Best_Column := Match.Column;
+         end if;
+
+         return True;
+      end Callback;
+
+      Context : aliased Root_Search_Context;
+      L, C    : Integer := 1;
+      Index   : Integer;
+      Was_Partial : Boolean;
+   begin
+      Index  := Buffer'First;
+
+      Set_Context
+        (Context'Access,
+         Look_For => Str,
+         Options  =>
+           (Case_Sensitive => Case_Sensitive,
+            Whole_Word     => True,
+            Regexp         => False));
+
+      Scan_Buffer_No_Scope
+        (Context     => Context'Access,
+         Buffer      => Buffer,
+         Start_Index => Buffer'First,
+         End_Index   => Buffer'Last,
+         Callback    => Callback'Unrestricted_Access,
+         Ref_Index   => Index,
+         Ref_Line    => L,
+         Ref_Column  => C,
+         Was_Partial => Was_Partial);
+
+      Line   := Best_Line;
+      Column := Best_Column;
+   end Find_Closest_Match;
+
 end Find_Utils;
