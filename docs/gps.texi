@@ -7877,7 +7877,11 @@ the inner procedure will not be expanded.
 
 The indentation as set in the expansion of the alias is preserved when
 the alias is expanded. All the lines will be indented the same amount
-to the right as the alias name.
+to the right as the alias name. You can override this default behavior
+by selecting the check button @code{Indent source editor after expansion}.
+In this case, GPS will replace the name of the alias by its expansion,
+and then automatically recompute the position of each line with its
+internal indentation engine, as if the text had been inserted manually.
 
 The third part of the aliases editor, at the top right corner, lists
 the parameters for the currently selected alias. Any time you insert a
@@ -7943,6 +7947,9 @@ The following tags are available:
 This indicates the start of a new alias. It has one mandatory
 attribute, @code{name}, which the text to type in the source editor
 before pressing @key{control-o}.
+It has one optional attribute, @code{indent}, which, if set to @i{true},
+indicate that GPS should recompute the indentation of the newly inserted
+paragraph after the expansion.
 
 @item param
 These are children of the @code{alias} node. There is one per
