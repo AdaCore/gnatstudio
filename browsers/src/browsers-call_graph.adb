@@ -1522,8 +1522,16 @@ package body Browsers.Call_Graph is
             Category_Title => -All_Refs_Category,
             Include_Writes => True,
             Include_Reads  => True);
-
          Destroy (Entity);
+
+      elsif Command = "entity.calls" then
+         Examine_Entity_Call_Graph (Kernel, Entity);
+         Destroy (Entity);
+
+      elsif Command = "entity.called_by" then
+         Examine_Ancestors_Call_Graph (Kernel, Entity);
+         Destroy (Entity);
+
       end if;
       return "";
    end Call_Graph_Command_Handler;
@@ -1560,6 +1568,20 @@ package body Browsers.Call_Graph is
          & ASCII.LF
          & (-"Display in the location window all the references to the"
             & " entity"),
+         Handler => Call_Graph_Command_Handler'Access);
+      Register_Command
+        (Kernel, "entity.calls",
+         (-"Usage:") & ASCII.LF
+         & "  entity.calls entity_name file_name [line] [column]"
+         & ASCII.LF
+         & (-"Display the list of entities called by the entity."),
+         Handler => Call_Graph_Command_Handler'Access);
+      Register_Command
+        (Kernel, "entity.called_by",
+         (-"Usage:") & ASCII.LF
+         & "  entity.called_by entity_name file_name [line] [column]"
+         & ASCII.LF
+         & (-"Display the list of entities that call the entity."),
          Handler => Call_Graph_Command_Handler'Access);
    end Register_Module;
 
