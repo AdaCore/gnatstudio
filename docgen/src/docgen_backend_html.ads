@@ -1,3 +1,28 @@
+-----------------------------------------------------------------------
+--                               G P S                               --
+--                                                                   --
+--                        Copyright (C) 2003                         --
+--                            ACT-Europe                             --
+--                                                                   --
+-- GPS is free  software;  you can redistribute it and/or modify  it --
+-- under the terms of the GNU General Public License as published by --
+-- the Free Software Foundation; either version 2 of the License, or --
+-- (at your option) any later version.                               --
+--                                                                   --
+-- This program is  distributed in the hope that it will be  useful, --
+-- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
+-- General Public License for more details. You should have received --
+-- a copy of the GNU General Public License along with this program; --
+-- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
+-- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
+-----------------------------------------------------------------------
+
+--  ??? Missing high level description of this package
+--  ??? The comments of each function can simply be moved to the
+--  definition of Backend itself, the duplication is only needed if the
+--  HTML back end has a special behavior 
+
 with Docgen;            use Docgen;
 with VFS;               use VFS;
 with Src_Info;          use Src_Info;
@@ -23,17 +48,17 @@ package Docgen_Backend_HTML is
    type Backend_HTML_Handle is access all Backend_HTML'Class;
 
    procedure Initialize (B : access Backend_HTML; Text : String);
-   --  It initializes the private fields before the documentation process
+   --  Initialize the private fields before the documentation process
 
    procedure Doc_Create
-        (B             : access Backend_HTML;
-         Kernel        : access Glide_Kernel.Kernel_Handle_Record'Class;
-         File          : in Ada.Text_IO.File_Type;
-         Info          : in out Docgen.Doc_Info;
-         Doc_Directory : String;
-         Doc_Suffix    : String);
-   --  Doc_Create starts the process which make the documentation
-   --     for one file. It uses the html language.
+     (B             : access Backend_HTML;
+      Kernel        : access Glide_Kernel.Kernel_Handle_Record'Class;
+      File          : in Ada.Text_IO.File_Type;
+      Info          : in out Docgen.Doc_Info;
+      Doc_Directory : String;
+      Doc_Suffix    : String);
+   --  Start the process producing the documentation for one file.
+   --  Use the html language.
 
    procedure Format_Comment
      (B           : access Backend_HTML;
@@ -44,8 +69,7 @@ package Docgen_Backend_HTML is
       End_Index   : Natural;
       End_Line    : Natural;
       Entity_Line : Natural);
-   --  It's used when the text is a comment in order to write it
-   --     in the html format.
+   --  Generate a comment in html format.
 
    procedure Format_Keyword
      (B           : access Backend_HTML;
@@ -56,8 +80,7 @@ package Docgen_Backend_HTML is
       End_Index   : Natural;
       End_Line    : Natural;
       Entity_Line : Natural);
-   --  It's used when the text is a keyword in order to write it
-   --     in the html format.
+   --  Generate a keyword in html format.
 
    procedure Format_String
      (B           : access Backend_HTML;
@@ -68,8 +91,7 @@ package Docgen_Backend_HTML is
       End_Index   : Natural;
       End_Line    : Natural;
       Entity_Line : Natural);
-   --  It's used when the text is a string (between  two ") in order
-   --     to write it in the html format.
+   --  Generate a string (between two ") in html format.
 
    procedure Format_Character
      (B           : access Backend_HTML;
@@ -80,8 +102,7 @@ package Docgen_Backend_HTML is
       End_Index   : Natural;
       End_Line    : Natural;
       Entity_Line : Natural);
-   --  It's used when the text is a character (between  two ') in order
-   --     to write it in the html format.
+   --  Generate a character (between two ') in html format.
 
    procedure Format_Identifier
      (B                : access Backend_HTML;
@@ -101,8 +122,7 @@ package Docgen_Backend_HTML is
       Link_All         : Boolean;
       Is_Body          : Boolean;
       Process_Body     : Boolean);
-   --  It's used when the text is an identifier in order to write it
-   --     in the html format.
+   --  Generate an identifier in html format.
 
    procedure Format_Link
      (B                : access Backend_HTML;
@@ -124,24 +144,23 @@ package Docgen_Backend_HTML is
       Loc_End          : Natural;
       Loc_Start        : Natural;
       Entity_Info      : Entity_Information);
-   --  This subprogram is used in order to generate a link for the
-   --     element Entity_Info on its declaration.
+   --  Generate a link for the element Entity_Info on its declaration.
 
    procedure Finish
      (B           : access Backend_HTML;
       File        : Ada.Text_IO.File_Type;
       Text        : String;
       Entity_Line : Natural);
-   --  It achieves the process of a bloc of code which has been analysed
-   --     by Parse_Entities() + Callback + Format_xxx
+   --  Terminate the handling of a set of code which has been analysed
+   --  by Parse_Entities + Callback + Format_xxx
 
    function Get_Extension (B : access Backend_HTML) return String;
-   --  It returns the extension of doc files : ".htm"
+   --  Return the extension of doc files: ".htm"
 
    function Get_Doc_Directory
      (B : access Backend_HTML;
       Kernel : Kernel_Handle) return String;
-   --  It returns the path which must contains the documentation :
-   --     "/..../gps/glide/html/"
+   --  Return the path which must contains the documentation, e.g:
+   --  "/..../gps/glide/html/"
 
 end Docgen_Backend_HTML;
