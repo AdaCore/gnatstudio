@@ -231,12 +231,21 @@ package Language is
    end record;
    pragma Convention (C, Source_Location);
 
+   type Indent_Style is (Automatic, RM_Style, Non_RM_Style);
+   for Indent_Style'Size use Integer'Size;
+   pragma Convention (C, Indent_Style);
+   --  Indentation style used by some constructs (e.g. case statements in
+   --  Ada).
+   --  Automatic means that the engine will guess the best value.
+   --  RM_Style means follows the style recommended by the RM, if any
+   --  Non_RM_Style means do not follow the style recommended by the RM.
+
    type Indent_Parameters is record
       Indent_Level      : Natural;
       Indent_Continue   : Natural;
       Indent_Decl       : Natural;
       Tab_Width         : Natural;
-      Indent_Case_Extra : Boolean;
+      Indent_Case_Extra : Indent_Style;
       Reserved_Casing   : Case_Handling.Casing_Type;
       Ident_Casing      : Case_Handling.Casing_Type;
       Format_Operators  : Boolean;
@@ -256,7 +265,7 @@ package Language is
    --  Indent_Continue   number of spaces for a continuation line.
    --  Indent_Decl       number of spaces for multi-line variables declaration.
    --  Tab_Width         number of spaces for a tab character.
-   --  Indent_Case_Extra if true, add extra indent level for case statements
+   --  Indent_Case_Extra Whether to add extra indent level for case statements
    --  Reserved_Casing   casing of reserved words.
    --  Indent_Casing     casing of identifiers.
    --  Format_Operators  whether operators should be reformatted (e.g. spaces
@@ -270,7 +279,7 @@ package Language is
       Indent_Continue   => 2,
       Indent_Decl       => 0,
       Tab_Width         => 8,
-      Indent_Case_Extra => True,
+      Indent_Case_Extra => Automatic,
       Reserved_Casing   => Case_Handling.Unchanged,
       Ident_Casing      => Case_Handling.Unchanged,
       Format_Operators  => False,
