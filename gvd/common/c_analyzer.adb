@@ -181,7 +181,7 @@ package body C_Analyzer is
 
       Paren_Level    : Natural := 0;
       Curly_Level    : Natural := 0;
-      --  Saved paren and curly levels for the current construct.
+      --  Saved paren and curly levels for the current construct
 
       First          : Boolean := True;
       --  Flag used to mark the first use of this construct, e.g. the first
@@ -195,7 +195,7 @@ package body C_Analyzer is
 
       Name_Start     : Natural := 0;
       Name_End       : Natural := 0;
-      --  Location in the buffer of the entity name, if any.
+      --  Location in the buffer of the entity name, if any
    end record;
    --  Extended information for a token
 
@@ -206,21 +206,21 @@ package body C_Analyzer is
    -- Local procedures --
    ----------------------
 
-   procedure Top  --  ??? change name to e.g. Pop_To_Construct
+   procedure Pop_To_Construct
      (Stack : in out Token_Stack.Simple_Stack;
       Item  : out Token_Stack.Generic_Type_Access);
-   --  Return first token from Stack that is not an identifier nor a
+   --  Returns first token from Stack that is not an identifier nor a
    --  type or storage token kind. This Item is not removed from the stack.
    --  Items before the item found are removed from the stack.
 
    function Get_Token (S : String) return Token_Type;
-   --  Return a Token_Type given a string.
+   --  Returns a Token_Type given a string
 
-   ---------
-   -- Top --
-   ---------
+   ----------------------
+   -- Pop_To_Construct --
+   ----------------------
 
-   procedure Top
+   procedure Pop_To_Construct
      (Stack : in out Token_Stack.Simple_Stack;
       Item  : out Token_Stack.Generic_Type_Access) is
    begin
@@ -231,7 +231,7 @@ package body C_Analyzer is
            and then Item.Token not in Storage_Token;
          Pop (Stack);
       end loop;
-   end Top;
+   end Pop_To_Construct;
 
    ---------------
    -- Get_Token --
@@ -644,23 +644,19 @@ package body C_Analyzer is
       is
          Column : Natural;
          Info   : Construct_Access;
+         Item   : Token_Stack.Generic_Type_Access;
 
       begin
          --  Never pop the initial value
 
-         loop
-            if Top (Stack).Token = No_Token then
-               Value := Top (Stack).all;
-               return;
-            end if;
+         Pop_To_Construct (Stack, Item);
 
-            --  ??? Would be nice to use Pop_To_Construct instead
-
+         if Item.Token = No_Token then
+            return;
+         else
+            --  There is an item on the stack, read it now
             Token_Stack.Pop (Stack, Value);
-            exit when Value.Token /= Tok_Identifier
-              and then Value.Token not in Type_Token
-              and then Value.Token not in Storage_Token;
-         end loop;
+         end if;
 
          --  Build next entry of Constructs if needed.
 
@@ -1056,7 +1052,7 @@ package body C_Analyzer is
          Top_Token : Token_Stack.Generic_Type_Access;
 
       begin
-         Top (Tokens, Top_Token);
+         Pop_To_Construct (Tokens, Top_Token);
          First := Index;
          Start_Char := Char_In_Line;
 
@@ -1136,8 +1132,7 @@ package body C_Analyzer is
                if Curly_Level = 0 then
                   Push (Tokens, Temp);
                end if;
-
-               --  ??? Why aren't we calling Do_Indent here
+               Do_Indent (Index, Indent);
 
             when Tok_Identifier =>
                if Curly_Level = 0 then
@@ -1180,7 +1175,7 @@ package body C_Analyzer is
             when '{' =>
                Token := Tok_Left_Bracket;
                Do_Indent (Index, Indent);
-               Top (Tokens, Top_Token);
+               Pop_To_Construct (Tokens, Top_Token);
 
                if Top_Token.Token = No_Token
                  or else Top_Token.Curly_Level /= Curly_Level
@@ -1236,7 +1231,7 @@ package body C_Analyzer is
                Token := Tok_Right_Bracket;
                Curly_Level := Curly_Level - 1;
 
-               Top (Tokens, Top_Token);
+               Pop_To_Construct (Tokens, Top_Token);
                Indent := Indent - Indent_Level;
 
                if Top_Token.Token = Tok_Switch
@@ -1267,13 +1262,13 @@ package body C_Analyzer is
                      exit when Top_Token.Token = Tok_Do;
 
                      Pop (Tokens);
-                     Top (Tokens, Top_Token);
+                     Pop_To_Construct (Tokens, Top_Token);
                   end loop;
                end;
 
             when ';' =>
                Token := Tok_Semicolon;
-               Top (Tokens, Top_Token);
+               Pop_To_Construct (Tokens, Top_Token);
 
                if Top_Token.Token /= No_Token
                  and then Top_Token.Curly_Level = Curly_Level
@@ -1305,7 +1300,7 @@ package body C_Analyzer is
                   Tok_Ident := Token_Stack.Top (Tokens).all;
                end if;
 
-               Top (Tokens, Top_Token);
+               Pop_To_Construct (Tokens, Top_Token);
 
                if (Top_Token.Token = Tok_Enum
                    or else Top_Token.Token = Tok_Struct
