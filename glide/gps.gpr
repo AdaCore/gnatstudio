@@ -36,10 +36,9 @@ project GPS is
               "-gnatwk", "-gnatwr", "-j2");
            for Global_Configuration_Pragmas use "gnat_debug.adc";
 
-         when others =>
+         when "Production" =>
            for Default_Switches ("Ada") use
-             ("-m", "-a", "-g", "-gnatQ", 
-              "-gnatwk", "-gnatwr", "-j2");
+             ("-m", "-a", "-g", "-gnatQ", "-gnatwk", "-gnatwr"");
            for Global_Configuration_Pragmas use "gnat.adc";
       end case;
    end Builder;
@@ -49,9 +48,9 @@ project GPS is
          when "Debug" =>
             for Default_Switches ("Ada") use
               ("-g", "-O2", "-gnata", "-gnaty", "-gnatwu", "-gnatwe");
-         when others =>
+         when "Production" =>
             for Default_Switches ("Ada") use
-              ("-O2", "-gnaty", "-gnata", "-gnatwu", "-gnatwe");
+              ("-O2", "-gnaty", "-gnatwu", "-gnatwe");
       end case;
    end Compiler;
 
