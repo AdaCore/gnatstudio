@@ -12,10 +12,7 @@ project Docgen is
       for Default_Switches ("ada") use ("-g");
    end Builder;
 
-   package Compiler is
-      for Default_Switches ("ada") use ("-O2", "-gnatwe", "-gnatwu", "-gnaty", "-g", "-gnatwr", "-gnatwk");
-   end Compiler;
-
+   package Compiler renames Shared.Compiler;
    package Ide renames Shared.Ide;
 
 end Docgen;

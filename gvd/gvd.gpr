@@ -13,8 +13,7 @@ project GVD is
    end Builder;
 
    package Compiler is
-      for Default_Switches ("Ada") use
-        ("-gnata", "-g", "-O2", "-gnaty", "-gnatwue");
+      for Default_Switches ("Ada") use Shared.Compiler'Default_Switches ("ada");
       for Switches ("advanced_breakpoint_pkg.adb") use ("-g", "-O2");
       for Switches ("breakpoints_pkg.adb") use ("-g", "-O2");
       for Switches ("general_preferences_pkg.adb") use ("-g", "-O2");

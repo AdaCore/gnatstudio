@@ -12,8 +12,7 @@ project GVD_Common is
    end Builder;
 
    package Compiler is
-      for Default_Switches ("Ada") use
-        ("-gnata", "-g", "-O2", "-gnaty", "-gnatwu", "-gnatwe");
+      for Default_Switches ("Ada") use Shared.Compiler'Default_Switches ("Ada");
       for Switches ("g-exptty.adb") use ("-gnatpg", "-g", "-O2");
    end Compiler;
 

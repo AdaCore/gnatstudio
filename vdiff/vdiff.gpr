@@ -9,7 +9,7 @@ project VDiff is
    for Object_Dir use "obj";
 
    package Compiler is
-      for Default_Switches ("Ada") use ("-g", "-O2", "-gnaty", "-gnatwue");
+      for Default_Switches ("Ada") use Shared.Compiler'Default_Switches ("Ada");
       for Switches ("vdiff_pkg.adb") use ("-g", "-O2");
    end Compiler;
 

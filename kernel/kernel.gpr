@@ -11,11 +11,7 @@ project Kernel is
 
    for Object_Dir use "obj";
 
-   package Compiler is
-      for Default_Switches ("Ada") use
-        ("-g", "-gnata", "-O2", "-gnaty", "-gnatwu", "-gnatwe");
-   end Compiler;
-
+   package Compiler renames Shared.Compiler;
    package IDE renames Shared.IDE;
 
 end Kernel;
