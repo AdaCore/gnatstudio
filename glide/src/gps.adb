@@ -529,9 +529,11 @@ begin
    Free (Dir);
    Free (Prefix);
 
+   Glide_Page.Destroy (Page);
    Destroy (GPS);
    Destroy (GPS.Kernel);
    Prj_API.Finalize;
+   Traces.Finalize;
 
 exception
    when Invalid_Switch | Invalid_Parameter =>
