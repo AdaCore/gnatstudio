@@ -741,39 +741,25 @@ package body Project_Viewers is
       Context : Selection_Context_Access)
    is
       pragma Unreferenced (Widget);
-      Selector : Directory_Selector;
       Project : Project_Id :=
         Project_Information (File_Selection_Context_Access (Context));
-   begin
-      Gtk_New
-        (Selector,
-         Initial_Directory => GNAT.OS_Lib.Normalize_Pathname
+      Directory : constant String := Select_Directory
+        (Title => -"Select object directory",
+         Base_Directory => GNAT.OS_Lib.Normalize_Pathname
            (Get_Name_String (Prj.Projects.Table (Project).Object_Directory))
-           & Directory_Separator,
-         Busy_Cursor_On    =>
-           Get_Window (Get_Main_Window (Get_Kernel (Context))));
-
-      if Run (Selector, -"Select object directory",
-              Get_Main_Window (Get_Kernel (Context))) =
-        Gtk_Response_OK
-      then
-         declare
-            Dir : constant String := Get_Single_Selection (Selector);
-         begin
-            if Dir /= "" then
-               Update_Attribute_Value_In_Scenario
-                 (Project            => Get_Project_From_View (Project),
-                  Pkg_Name           => "",
-                  Scenario_Variables =>
-                    Scenario_Variables (Get_Kernel (Context)),
-                  Attribute_Name     => Get_Name_String (Name_Object_Dir),
-                  Value              => Dir,
-                  Attribute_Index    => "");
-               Recompute_View (Get_Kernel (Context));
-            end if;
-         end;
+           & Directory_Separator);
+   begin
+      if Directory /= "" then
+         Update_Attribute_Value_In_Scenario
+           (Project            => Get_Project_From_View (Project),
+            Pkg_Name           => "",
+            Scenario_Variables =>
+              Scenario_Variables (Get_Kernel (Context)),
+            Attribute_Name     => Get_Name_String (Name_Object_Dir),
+            Value              => Directory,
+            Attribute_Index    => "");
+         Recompute_View (Get_Kernel (Context));
       end if;
-      Destroy (Selector);
    end Change_Obj_Directory_From_Contextual;
 
    --------------------
