@@ -103,6 +103,7 @@ package body Odd.Dialogs is
       end if;
 
       if Information'Length > 0 then
+         Set_Default_Size (Task_Dialog, 400, 200);
          Gtk_New (Task_Dialog.Scrolledwindow1);
          Pack_Start
            (Task_Dialog.Vbox1, Task_Dialog.Scrolledwindow1, True, True, 0);
@@ -149,12 +150,14 @@ package body Odd.Dialogs is
       end if;
 
       if Backtrace'Length > 0 then
+         Set_Default_Size (Backtrace_Dialog, 400, 200);
          Gtk_New (Backtrace_Dialog.Scrolledwindow1);
          Pack_Start
            (Backtrace_Dialog.Vbox1, Backtrace_Dialog.Scrolledwindow1,
             True, True, 0);
          Set_Policy
-           (Backtrace_Dialog.Scrolledwindow1, Policy_Never, Policy_Automatic);
+           (Backtrace_Dialog.Scrolledwindow1, Policy_Automatic,
+            Policy_Automatic);
 
          Gtk_New (Backtrace_Dialog.List, 3, Backtrace_Titles);
          Widget_Callback.Connect
