@@ -47,7 +47,7 @@ with Src_Editor_Buffer.Line_Information;
 use Src_Editor_Buffer.Line_Information;
 with Pango.Font;                  use Pango.Font;
 with Pango.Layout;                use Pango.Layout;
-
+with Gtkada.MDI;                  use Gtkada.MDI;
 with GVD;
 with Ada.Exceptions;              use Ada.Exceptions;
 with Traces;                      use Traces;
@@ -1280,6 +1280,8 @@ package body Src_Editor_View is
             Get_Line_At_Y (View, Iter, Y, Dummy_Gint);
             Line := Buffer_Line_Type (Get_Line (Iter) + 1);
 
+            View.Has_Focus := True;
+            Set_Focus_Child (Get_MDI (View.Kernel), View);
             On_Click (Buffer, Line, Button_X);
          end;
       end if;
