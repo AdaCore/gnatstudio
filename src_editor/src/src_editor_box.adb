@@ -195,13 +195,6 @@ package body Src_Editor_Box is
    --  is null, then a new buffer will automatically be created. Otherwise,
    --  the editor creates a new editor for the same Source_Buffer.
 
-   procedure Search_Entity_Bounds
-     (Buffer       : access Source_Buffer_Record'Class;
-      Start_Iter   : in out Gtk_Text_Iter;
-      End_Iter     : out Gtk_Text_Iter);
-   --  Find the position of the begining and the end of the entity pointed to
-   --  by Start_Iter.
-
    function Focus_In (Box : access GObject_Record'Class) return Boolean;
    --  Callback for the focus_in event. This checks whether the physical file
    --  on the disk is more recent than the one that was read for the editor.
@@ -714,8 +707,7 @@ package body Src_Editor_Box is
 
       Get_Iter_At_Line_Offset
         (Data.Box.Source_Buffer, Start_Iter, Line, Col);
-      Search_Entity_Bounds
-        (Data.Box.Source_Buffer, Start_Iter, End_Iter);
+      Search_Entity_Bounds (Start_Iter, End_Iter);
       Get_Screen_Position (Data.Box.Source_Buffer, Start_Iter, Line, Col);
 
       --  Compute the area surrounding the entity, relative to the pointer
@@ -1339,56 +1331,6 @@ package body Src_Editor_Box is
          return False;
    end Focus_Out;
 
-   --------------------------
-   -- Search_Entity_Bounds --
-   --------------------------
-
-   procedure Search_Entity_Bounds
-     (Buffer       : access Source_Buffer_Record'Class;
-      Start_Iter   : in out Gtk_Text_Iter;
-      End_Iter     : out Gtk_Text_Iter)
-   is
-      pragma Unreferenced (Buffer);
-
-      Ignored : Boolean;
-   begin
-      --  Search forward the end of the entity...
-      Copy (Source => Start_Iter, Dest => End_Iter);
-
-      if Is_Operator_Letter (Get_Char (End_Iter)) then
-         while not Is_End (End_Iter) loop
-            exit when not Is_Operator_Letter (Get_Char (End_Iter));
-            Forward_Char (End_Iter, Ignored);
-         end loop;
-
-         --  And search backward the begining of the entity...
-         while not Is_Start (Start_Iter) loop
-            Backward_Char (Start_Iter, Ignored);
-
-            if not Is_Operator_Letter (Get_Char (Start_Iter)) then
-               Forward_Char (Start_Iter, Ignored);
-               exit;
-            end if;
-         end loop;
-
-      else
-         while not Is_End (End_Iter) loop
-            exit when not Is_Entity_Letter (Get_Char (End_Iter));
-            Forward_Char (End_Iter, Ignored);
-         end loop;
-
-         --  And search backward the begining of the entity...
-         while not Is_Start (Start_Iter) loop
-            Backward_Char (Start_Iter, Ignored);
-
-            if not Is_Entity_Letter (Get_Char (Start_Iter)) then
-               Forward_Char (Start_Iter, Ignored);
-               exit;
-            end if;
-         end loop;
-      end if;
-   end Search_Entity_Bounds;
-
    -------------------------
    -- Get_Contextual_Menu --
    -------------------------
@@ -1559,8 +1501,7 @@ package body Src_Editor_Box is
 
                Get_Iter_At_Line_Offset
                  (Editor.Source_Buffer, Start_Iter, Line, Column);
-               Search_Entity_Bounds
-                 (Editor.Source_Buffer, Start_Iter, End_Iter);
+               Search_Entity_Bounds (Start_Iter, End_Iter);
             end if;
 
             --  Expand the tabs
