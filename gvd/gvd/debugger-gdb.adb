@@ -1121,7 +1121,7 @@ package body Debugger.Gdb is
 
    function Is_Execution_Command
      (Debugger : access Gdb_Debugger;
-      Command  : String) return Boolean is
+      Command  : String) return Boolean
    is
       Index : Natural := Command'First;
    begin
