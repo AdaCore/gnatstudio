@@ -32,6 +32,7 @@ package Codefix.Text_Manager is
 
    type Step_Way is (Normal_Step, Reverse_Step);
    type Relative_Position is (Before, After, Specified);
+   type Case_Type is (Lower, Upper, Mixed);
 
    function Is_Blank (Str : String) return Boolean;
    --  Return true if Str is only composed by white characters.
@@ -41,6 +42,10 @@ package Codefix.Text_Manager is
 
    function Is_In_Comment (Str : String; J : Natural) return Boolean;
    --  Return true if the position J in a comment line.
+
+   function Without_Last_Blanks (Str : String) return String;
+
+   function Is_Separator (Char : Character) return Boolean;
 
    ----------------------------------------------------------------------------
    --  type Text_Cursor
@@ -55,6 +60,10 @@ package Codefix.Text_Manager is
 
    function ">" (Left, Right : Text_Cursor'Class) return Boolean;
    --  Return True when Left is after Right.
+
+   function "<=" (Left, Right : Text_Cursor'Class) return Boolean;
+
+   function ">=" (Left, Right : Text_Cursor'Class) return Boolean;
 
    type File_Cursor is new Text_Cursor with record
       File_Name : Dynamic_String;
@@ -79,6 +88,15 @@ package Codefix.Text_Manager is
    --  Duplicate all informations of a File_Cursor, specially informations
    --  memorized in dynamic memory.
 
+   procedure Assign
+     (This : in out File_Cursor'Class; Source : File_Cursor'Class);
+
+   type Mark_Abstr is abstract tagged private;
+   type Ptr_Mark is access all Mark_Abstr'Class;
+
+   procedure Free (This : in out Mark_Abstr) is abstract;
+   procedure Free_Data (This : in out Mark_Abstr'Class);
+
    ----------------------------------------------------------------------------
    --  type Text_Interface
    ----------------------------------------------------------------------------
@@ -93,6 +111,14 @@ package Codefix.Text_Manager is
    --  all modifications, and after the first add / delete, their lines numbers
    --  becomes to be incoherent. The implementation of Text_Interface should
    --  take care of these problems.
+
+   function Get_New_Mark
+     (Current_Text : Text_Interface;
+      Cursor       : Text_Cursor'Class) return Mark_Abstr'Class is abstract;
+
+   function Get_Current_Cursor
+     (Current_Text : Text_Interface;
+      Mark         : Mark_Abstr'Class) return File_Cursor'Class is abstract;
 
    procedure Free (This : in out Ptr_Text);
    --  Free the memory associated to Ptr_Text and the object referenced.
@@ -129,7 +155,7 @@ package Codefix.Text_Manager is
      (This        : in out Text_Interface;
       Cursor      : Text_Cursor'Class;
       New_Line    : String) is abstract;
-   --  Add a line at the cursor specified. To add a line at the
+   --  Add a line AFTER the line specified by the cursor. To add a line at the
    --  begining of the text, set cursor line = 0.
 
    procedure Delete_Line
@@ -193,6 +219,8 @@ package Codefix.Text_Manager is
 
    type Text_Navigator_Abstr is abstract tagged private;
 
+   type Ptr_Text_Navigator is access all Text_Navigator_Abstr'Class;
+
    function New_Text_Interface (This : Text_Navigator_Abstr)
      return Ptr_Text is abstract;
    --  Create and initialise a new Text_Interface used by the text navigator.
@@ -201,6 +229,21 @@ package Codefix.Text_Manager is
      return String is abstract;
    --  When File_Name is a spec file, this function returns the body
    --  corresponding, otherwise it retun the spec.
+
+   procedure Initialize
+     (This : Text_Navigator_Abstr;
+      File : in out Text_Interface'Class);
+   --  This fonction is call after the initialization of a new Text_Interface.
+   --  This one doesn't do anything, but it might be usefull for later
+   --  extentions.
+
+   function Get_New_Mark
+     (Current_Text : Text_Navigator_Abstr'Class;
+      Cursor       : File_Cursor'Class) return Mark_Abstr'Class;
+
+   function Get_Current_Cursor
+     (Current_Text : Text_Navigator_Abstr;
+      Mark         : Mark_Abstr'Class) return File_Cursor'Class is abstract;
 
    procedure Free (This : in out Text_Navigator_Abstr);
 
@@ -251,7 +294,7 @@ package Codefix.Text_Manager is
      (This        : in out Text_Navigator_Abstr;
       Cursor      : File_Cursor'Class;
       New_Line    : String);
-   --  Add a line at the cursor specified. To add a line at the
+   --  Add a line AFTER the line specified by the cursor. To add a line at the
    --  begining of the text, set cursor line = 0.
 
    procedure Delete_Line
@@ -304,6 +347,16 @@ package Codefix.Text_Manager is
       Cursor       : File_Cursor'Class)
      return File_Cursor'Class;
    --  Return the right paren corresponding to the one in the cursor.
+
+   procedure Get_Entity
+     (Current_Text         : Text_Navigator_Abstr'Class;
+      Cursor               : File_Cursor'Class;
+      Spec_Begin, Spec_End : out File_Cursor'Class;
+      Body_Begin, Body_End : out File_Cursor'Class);
+   --  Find the unit speficied at the position of the cursor. If it is a
+   --  spec, find also the body. If it isn't a spec, then only the body
+   --  informations are initialized.
+
 
    ----------------------------------------------------------------------------
    --  type Extract_Line
@@ -449,7 +502,8 @@ package Codefix.Text_Manager is
       Container               : in out Extract);
    --  Add a new line in the line list. The line is always disposed in order
    --  to preserve the internal order of the lines, not just at the end of the
-   --  list.
+   --  list. If a line that already exisis is tried to be added, it is just
+   --  ignored.
 
    procedure Add_Element (This : in out Extract; Element : Ptr_Extract_Line);
    --  Add a new line in the line list. The line is always disposed in order
@@ -461,6 +515,8 @@ package Codefix.Text_Manager is
    function Clone (This : Extract) return Extract;
    --  Duplicate all informations associated to an extract, specially
    --  information referenced in pools.
+
+   procedure Assign (This : in out Extract'Class; Source : Extract'Class);
 
    procedure Get
      (This        : Text_Navigator_Abstr'Class;
@@ -556,9 +612,9 @@ package Codefix.Text_Manager is
    --  Delete all the lines from the extract.
 
    procedure Get_Entity
-     (This : in out Extract;
+     (This         : in out Extract;
       Current_Text : Text_Navigator_Abstr'Class;
-      Cursor : File_Cursor'Class);
+      Cursor       : File_Cursor'Class);
    --  Add in the Extract lines of the Entity witch begins at the position
    --  specified by the cursor (if it is a spec, the body is also got).
 
@@ -632,7 +688,7 @@ package Codefix.Text_Manager is
       Merge_Characters     : Boolean := True);
    --  Merge Extract_1 and Extract_2 into This. If no solution can be found,
    --  then success is false. If Merge_Characters is True then lines modified
-   --  try to be merded. Otherwise, the line from Extract_2 is chosen.
+   --  try to be merged. Otherwise, the line from Extract_2 is chosen.
 
    procedure Merge
      (This                 : out Extract;
@@ -674,7 +730,7 @@ package Codefix.Text_Manager is
    --  'Regular_Expression'. Otherwise, this field is ignored.
 
    type Word_Mark is record
-      Mark_Id      : Dynamic_String;
+      Mark_Id      : Ptr_Mark;
       String_Match : Dynamic_String;
       Mode         : String_Mode := Text_Ascii;
 --      Flags        : Regexp_Flags := No_Flags;
@@ -830,6 +886,10 @@ private
    --  Returns the existent file interface, or create a new one if it
    --  doesn't exists.
 
+   type Mark_Abstr is abstract tagged record
+      null;
+   end record;
+
    ----------------------------------------------------------------------------
    --  type Text_Interface
    ----------------------------------------------------------------------------
@@ -924,8 +984,8 @@ private
    end record;
 
    type Replace_Word_Cmd is new Text_Command with record
-      Step_Remove : Remove_Word_Cmd;
-      Step_Insert : Insert_Word_Cmd;
+      Mark         : Word_Mark;
+      Str_Expected : Dynamic_String;
    end record;
 
    type Invert_Words_Cmd is new Text_Command with record

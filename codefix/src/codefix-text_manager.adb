@@ -99,6 +99,38 @@ package body Codefix.Text_Manager is
       end if;
    end Normalize;
 
+   -------------------------
+   -- Without_Last_Blanks --
+   -------------------------
+
+   function Without_Last_Blanks (Str : String) return String is
+   begin
+      for J in reverse Str'Range loop
+         if not Is_Blank (Str (J)) then
+            return Str (Str'First .. J);
+         end if;
+      end loop;
+
+      return "";
+   end Without_Last_Blanks;
+
+   ------------------
+   -- Is_Separator --
+   ------------------
+
+   function Is_Separator (Char : Character) return Boolean is
+   begin
+      if Is_Blank (Char) then
+         return True;
+      end if;
+
+      case Char is
+         when '.' | ',' | ';' => return True;
+         when others => return False;
+      end case;
+   end Is_Separator;
+
+
    ----------------------------------------------------------------------------
    --  type Text_Cursor
    ----------------------------------------------------------------------------
@@ -121,6 +153,24 @@ package body Codefix.Text_Manager is
    begin
       return not (Left < Right) and then Left /= Right;
    end ">";
+
+   ----------
+   -- "<=" --
+   ----------
+
+   function "<=" (Left, Right : Text_Cursor'Class) return Boolean is
+   begin
+      return not (Left > Right);
+   end "<=";
+
+   ----------
+   -- ">=" --
+   ----------
+
+   function ">=" (Left, Right : Text_Cursor'Class) return Boolean is
+   begin
+      return not (Left < Right);
+   end ">=";
 
    ---------
    -- "=" --
@@ -151,9 +201,26 @@ package body Codefix.Text_Manager is
                  and then Text_Cursor (Left) < Text_Cursor (Right));
    end "<";
 
+   procedure Assign
+     (This : in out File_Cursor'Class; Source : File_Cursor'Class) is
+   begin
+      This.Col := Source.Col;
+      This.Line := Source.Line;
+      Assign (This.File_Name, Source.File_Name);
+   end Assign;
+
    ----------------------------------------------------------------------------
    --  type Text_Navigator
    ----------------------------------------------------------------------------
+
+   ---------------
+   -- Free_Data --
+   ---------------
+
+   procedure Free_Data (This : in out Mark_Abstr'Class) is
+   begin
+      Free (This);
+   end Free_Data;
 
    ----------
    -- Free --
@@ -164,6 +231,32 @@ package body Codefix.Text_Manager is
       Free (This.Files.all);
       Free (This.Files);
    end Free;
+
+   ----------------
+   -- Initialize --
+   ----------------
+
+   procedure Initialize
+     (This : Text_Navigator_Abstr;
+      File : in out Text_Interface'Class)
+   is
+      pragma Unreferenced (This, File);
+   begin
+      null;
+   end Initialize;
+
+   ------------------
+   -- Get_New_Mark --
+   ------------------
+
+   function Get_New_Mark
+     (Current_Text : Text_Navigator_Abstr'Class;
+      Cursor       : File_Cursor'Class) return Mark_Abstr'Class is
+   begin
+      return Get_New_Mark
+        (Get_File (Current_Text, Cursor.File_Name.all).all,
+         Text_Cursor (Cursor));
+   end Get_New_Mark;
 
    --------------
    -- Get_Unit --
@@ -285,6 +378,8 @@ package body Codefix.Text_Manager is
       end loop;
 
       New_Text := New_Text_Interface (This);
+
+      Initialize (This, New_Text.all);
 
       Append (This.Files.all, New_Text);
 
@@ -491,6 +586,53 @@ package body Codefix.Text_Manager is
 
       return Result;
    end Get_Right_Paren;
+
+   ----------------
+   -- Get_Entity --
+   ----------------
+
+   procedure Get_Entity
+     (Current_Text         : Text_Navigator_Abstr'Class;
+      Cursor               : File_Cursor'Class;
+      Spec_Begin, Spec_End : out File_Cursor'Class;
+      Body_Begin, Body_End : out File_Cursor'Class)
+   is
+      Unit_Info, Body_Info : Construct_Information;
+   begin
+      Unit_Info := Get_Unit (Current_Text, Cursor);
+
+      Assign (Body_Begin.File_Name, Cursor.File_Name);
+      Assign (Body_End.File_Name, Cursor.File_Name);
+      Assign (Spec_Begin.File_Name, Cursor.File_Name);
+      Assign (Spec_End.File_Name, Cursor.File_Name);
+
+      if Unit_Info.Is_Declaration then
+         Body_Info := Search_Body
+           (Current_Text,
+            Cursor.File_Name.all,
+            Unit_Info);
+
+         Body_Begin.Col := Body_Info.Sloc_Start.Column;
+         Body_Begin.Line := Body_Info.Sloc_Start.Line;
+         Body_End.Col := Body_Info.Sloc_End.Column;
+         Body_End.Line := Body_Info.Sloc_End.Line;
+
+         Spec_Begin.Col := Unit_Info.Sloc_Start.Column;
+         Spec_Begin.Line := Unit_Info.Sloc_Start.Line;
+         Spec_End.Col := Unit_Info.Sloc_End.Column;
+         Spec_End.Line := Unit_Info.Sloc_End.Line;
+
+      else
+         Spec_Begin.Col := Body_Info.Sloc_Start.Column;
+         Spec_Begin.Line := Body_Info.Sloc_Start.Line;
+         Spec_End.Col := Body_Info.Sloc_End.Column;
+         Spec_End.Line := Body_Info.Sloc_End.Line;
+
+         Assign (Body_Begin, Null_File_Cursor);
+         Assign (Body_End, Null_File_Cursor);
+      end if;
+
+   end Get_Entity;
 
    ----------------------------------------------------------------------------
    --  type Text_Interface
@@ -932,7 +1074,7 @@ package body Codefix.Text_Manager is
       Category : Language_Category := Cat_Unknown)
      return String is
 
-      Unit_Info    : Construct_Information := Get_Unit
+      Unit_Info    : constant Construct_Information := Get_Unit
         (This, Cursor, After, Category_1 => Category);
       --  ??? Is 'after' a good idea ?
 
@@ -1021,7 +1163,7 @@ package body Codefix.Text_Manager is
       Seeker (Current_Info.Sloc_Start);
 
       declare
-         Result_Stack : String := Result_Name.all;
+         Result_Stack : constant String := Result_Name.all;
       begin
          Free (Result_Name);
          return Result_Stack;
@@ -1376,7 +1518,11 @@ package body Codefix.Text_Manager is
    is
       pragma Unreferenced (Detail);
    begin
-      return This.Content.all;
+      if This.Context /= Line_Deleted then
+         return This.Content.all;
+      else
+         return "";
+      end if;
    end Get_New_Text;
 
    ------------------
@@ -1618,7 +1764,8 @@ package body Codefix.Text_Manager is
       Assign
         (This.Content, This.Content (This.Content'First .. First_Used - 1) &
            New_String &
-             This.Content (Last_Used + 1 .. This.Content'Last));
+             This.Content
+               (This.Content'First + Last_Used .. This.Content'Last));
    end Set_String;
 
    --------------------
@@ -1683,7 +1830,6 @@ package body Codefix.Text_Manager is
    procedure Unchecked_Assign (This, Value : in out Extract'Class) is
    begin
       This.First := Value.First;
-      This.Caption := Value.Caption;
    end Unchecked_Assign;
 
    --------------------
@@ -1693,7 +1839,6 @@ package body Codefix.Text_Manager is
    procedure Unchecked_Free (This : in out Extract) is
    begin
       This.First := null;
-      This.Caption := null;
    end Unchecked_Free;
 
    -----------
@@ -1707,10 +1852,18 @@ package body Codefix.Text_Manager is
          New_Extract.First :=
            new Extract_Line'(Clone (New_Extract.First.all, True));
       end if;
-      New_Extract.Caption := Clone (New_Extract.Caption);
 
       return New_Extract;
    end Clone;
+
+   ------------
+   -- Assign --
+   ------------
+
+   procedure Assign (This : in out Extract'Class; Source : Extract'Class) is
+   begin
+      This.First := new Extract_Line'(Clone (Source.First.all, True));
+   end Assign;
 
    ---------
    -- Get --
@@ -1817,8 +1970,6 @@ package body Codefix.Text_Manager is
          Free (This.First.all);
          Free (This.First);
       end if;
-
-      Free (This.Caption);
    end Free;
 
    ---------------
@@ -1849,7 +2000,7 @@ package body Codefix.Text_Manager is
       Extend_After (Extended_Extract, Current_Text, Lines_After);
 
       declare
-         Buffer : String := Get_New_Text (Extended_Extract);
+         Buffer : constant String := Get_New_Text (Extended_Extract);
       begin
          Free (Extended_Extract);
          return Buffer;
@@ -2184,6 +2335,13 @@ package body Codefix.Text_Manager is
             else
                Container.First := Element;
             end if;
+         elsif This.Cursor = Element.Cursor
+           and then (This.Context = Line_Modified
+                     or else This.Context = Original_Line)
+           and then (Element.Context = Line_Modified
+                     or else Element.Context = Original_Line)
+         then
+            return;
          else
             Add_Element (This.Next, This, Element, Container);
          end if;
@@ -2503,7 +2661,7 @@ package body Codefix.Text_Manager is
       end loop;
 
       declare
-         Result_Stack : String := Result.all;
+         Result_Stack : constant String := Result.all;
       begin
          Free (Result);
          return Result_Stack;
@@ -2582,20 +2740,23 @@ package body Codefix.Text_Manager is
      (Word         : Word_Cursor;
       Current_Text : Text_Navigator_Abstr'Class;
       Mark         : out Word_Mark) is
-      pragma Unreferenced (Current_Text);
    begin
       Mark.Mode := Word.Mode;
       Assign (Mark.String_Match, Word.String_Match);
+      Mark.Mark_Id := new Mark_Abstr'Class'(Get_New_Mark (Current_Text, Word));
    end Make_Word_Mark;
 
    procedure Make_Word_Cursor
      (Word         : Word_Mark;
       Current_Text : Text_Navigator_Abstr'Class;
       Cursor       : out Word_Cursor) is
-      pragma Unreferenced (Current_Text);
    begin
+      Cursor := (File_Cursor
+                   (Get_Current_Cursor (Current_Text, Word.Mark_Id.all))
+                 with null, Text_Ascii);
       Cursor.Mode := Word.Mode;
       Assign (Cursor.String_Match, Word.String_Match);
+
    end Make_Word_Cursor;
 
    procedure Free (This : in out Word_Mark) is
@@ -2703,9 +2864,9 @@ package body Codefix.Text_Manager is
          Get_Line (Current_Text, Line_Cursor, New_Extract);
          Space_Cursor.Col := Space_Cursor.Col - 1;
 
-         if This.Add_Spaces and then
-           Word.Col > 1 and then
-           Get (Current_Text, Space_Cursor, 1) /= " "
+         if This.Add_Spaces
+           and then Word.Col > 1
+           and then not Is_Separator (Get (Current_Text, Space_Cursor, 1) (1))
          then
             Assign (New_Str, " " & New_Str.all);
          end if;
@@ -2714,7 +2875,7 @@ package body Codefix.Text_Manager is
 
          if This.Add_Spaces
            and then Word.Col < Line_Length (Current_Text, Line_Cursor)
-           and then Get (Current_Text, Space_Cursor, 1) /= " "
+           and then not Is_Separator (Get (Current_Text, Space_Cursor, 1) (1))
          then
             Assign (New_Str, New_Str.all & " ");
          end if;
@@ -2743,8 +2904,11 @@ package body Codefix.Text_Manager is
       New_Position : File_Cursor'Class)
    is
       New_Word : Word_Cursor;
+      File     : File_Cursor;
    begin
-      New_Word := (Clone (New_Position) with Word.String_Match, Word.Mode);
+      File := Clone (File_Cursor (New_Position));
+      New_Word := (File with
+                   Word.String_Match, Word.Mode);
       Initialize (This.Step_Remove, Current_Text, Word);
       Initialize (This.Step_Insert, Current_Text, New_Word);
    end Initialize;
@@ -2772,28 +2936,38 @@ package body Codefix.Text_Manager is
      (This         : in out Replace_Word_Cmd;
       Current_Text : Text_Navigator_Abstr'Class;
       Word         : Word_Cursor'Class;
-      New_Word     : String)
-   is
-      New_Word : Word_Cursor; -- ...
+      New_Word     : String) is
    begin
-      New_Word := (Clone (Word) with Word.String_Match, Word.Mode);
-      Initialize (This.Step_Remove, Current_Text, Word);
-      Initialize (This.Step_Insert, Current_Text, New_Word);
+      Make_Word_Mark (Word, Current_Text, This.Mark);
+      Assign (This.Str_Expected, New_Word);
    end Initialize;
 
    procedure Free (This : in out Replace_Word_Cmd) is
    begin
-      Free (This.Step_Remove);
-      Free (This.Step_Insert);
+      Free (This.Mark);
+      Free (This.Str_Expected);
    end Free;
 
    procedure Execute
      (This         : Replace_Word_Cmd;
       Current_Text : Text_Navigator_Abstr'Class;
-      New_Extract  : in out Extract'Class) is
+      New_Extract  : in out Extract'Class)
+   is
+      Current_Word : Word_Cursor;
+      Line_Cursor  : File_Cursor;
    begin
-      Execute (Step_Remove, Current_Text, New_Extract);
-      Execute (Step_Insert, Current_Text, New_Extract);
+      Make_Word_Cursor (This.Mark, Current_Text, Current_Word);
+
+      Line_Cursor := File_Cursor (Current_Word);
+      Line_Cursor.Col := 1;
+      Get_Line (Current_Text, Line_Cursor, New_Extract);
+
+      Replace_Word
+        (New_Extract,
+         Current_Word,
+         This.Str_Expected.all,
+         Current_Word.String_Match.all,
+         Current_Word.Mode);
    end Execute;
 
    ---------------------
@@ -2805,8 +2979,10 @@ package body Codefix.Text_Manager is
       Current_Text : Text_Navigator_Abstr'Class;
       Word1, Word2 : Word_Cursor'Class) is
    begin
-      Initialize (Step_Word1, Current_Text, Word1, Word2.String_Match.all);
-      Initialize (Step_Word2, Current_Text, Word2, Word1.String_Match.all);
+      Initialize
+        (This.Step_Word1, Current_Text, Word1, Word2.String_Match.all);
+      Initialize
+        (This.Step_Word2, Current_Text, Word2, Word1.String_Match.all);
    end Initialize;
 
    procedure Free (This : in out Invert_Words_Cmd) is
@@ -2820,8 +2996,8 @@ package body Codefix.Text_Manager is
       Current_Text : Text_Navigator_Abstr'Class;
       New_Extract  : in out Extract'Class) is
    begin
-      Execute (Step_Word1, Current_Text, New_Extract);
-      Execute (Step_Word2, Current_Text, New_Extract);
+      Execute (This.Step_Word1, Current_Text, New_Extract);
+      Execute (This.Step_Word2, Current_Text, New_Extract);
    end Execute;
 
    ----------------------------------------------------------------------------
@@ -3125,6 +3301,10 @@ package body Codefix.Text_Manager is
    function Get_Body_Or_Spec (This : Virtual_Navigator; File_Name : String)
      return String;
 
+   function Get_Current_Cursor
+     (Current_Text : Virtual_Navigator;
+      Mark         : Mark_Abstr'Class) return File_Cursor'Class;
+
    function New_Text_Interface (This : Virtual_Navigator) return Ptr_Text is
       pragma Unreferenced (This);
    begin
@@ -3137,6 +3317,15 @@ package body Codefix.Text_Manager is
    begin
       return "";
    end Get_Body_Or_Spec;
+
+   function Get_Current_Cursor
+     (Current_Text : Virtual_Navigator;
+      Mark         : Mark_Abstr'Class) return File_Cursor'Class
+   is
+      pragma Unreferenced (Current_Text, Mark);
+   begin
+      return Null_File_Cursor;
+   end Get_Current_Cursor;
 
    procedure Merge
      (This                 : out Extract;
