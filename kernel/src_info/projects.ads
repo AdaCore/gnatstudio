@@ -120,8 +120,7 @@ package Projects is
    function Source_Dirs
      (Project : Project_Type; Recursive : Boolean)
       return Basic_Types.String_Array_Access;
-   --  Return the list of source directories. The directories are not
-   --  normalized.
+   --  Return the list of source directories. The directories are normalized.
    --  If Recursive is True, directories from imported projects will also be
    --  returned.
    --  Note that duplicate directories might be returned when directories are
