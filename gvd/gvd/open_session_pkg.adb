@@ -42,14 +42,14 @@ with Unchecked_Deallocation;
 
 package body Open_Session_Pkg is
 
-   ----------------------
-   -- Local procedures --
-   ----------------------
+----------------------
+-- Local procedures --
+----------------------
 
-   procedure Append_Button
-     (Open  : access Open_Session_Record'Class;
-      Label : in String);
-   --  Add a check_button to the layout.
+procedure Append_Button
+  (Open  : access Open_Session_Record'Class;
+   Label : in String);
+--  Add a check_button to the layout.
 
 procedure Gtk_New (Open_Session : out Open_Session_Access) is
 begin
@@ -73,6 +73,13 @@ begin
 
    Gtk_New_Vbox (Open_Session.Vbox18, False, 0);
    Pack_Start (Open_Session.Hbox7, Open_Session.Vbox18, True, True, 0);
+
+   Gtk_New (Open_Session.Label94, -("Session List"));
+   Pack_Start (Open_Session.Vbox18, Open_Session.Label94, False, False, 0);
+   Set_Alignment (Open_Session.Label94, 0.5, 0.5);
+   Set_Padding (Open_Session.Label94, 0, 0);
+   Set_Justify (Open_Session.Label94, Justify_Center);
+   Set_Line_Wrap (Open_Session.Label94, False);
 
    Gtk_New (Open_Session.Scrolledwindow10);
    Pack_Start (Open_Session.Vbox18, Open_Session.Scrolledwindow10, True, True, 0);
@@ -185,16 +192,17 @@ procedure Save_Session
    Open   : in out Open_Session_Access;
    Dir    : in String)
 is
-   File        : File_Type;
-   Top         : constant Main_Debug_Window_Access :=
+   File          : File_Type;
+   Top           : constant Main_Debug_Window_Access :=
      Main_Debug_Window_Access (Window);
-   Tab         : Debugger_Process_Tab;
-   Directory    : Dir_Type;
-   Buffer       : String (1 .. 256);
-   Last         : Natural;
-   Item         : Gtk_List_Item;
+   Tab           : Debugger_Process_Tab;
+   Directory     : Dir_Type;
+   Buffer        : String (1 .. 256);
+   Last          : Natural;
+   Item          : Gtk_List_Item;
+   Program       : GNAT.OS_Lib.String_Access;
    Debugger_List : Debugger_List_Link := Top.First_Debugger;
-   Number_Of_Debuggers : Natural := 0;
+   Num_Debuggers : Natural := 0;
    use String_History;
 
 begin
@@ -204,6 +212,7 @@ begin
    end if;
 
    Set_Title (Open, "Save Session");
+   Grab_Focus (Open.Entry1);
    Open.Lock_Buttons := True;
    Show_All (Open);
    Remove_Items (Open.List, Get_Children (Open.List));
@@ -225,20 +234,25 @@ begin
    Remove_All_Buttons (Open);
 
    while Debugger_List /= null loop
-      Append_Button
-        (Open,
-         Debugger_Process_Tab
-           (Debugger_List.Debugger).Descriptor.Program.all);
+      Program :=
+        Debugger_Process_Tab (Debugger_List.Debugger).Descriptor.Program;
+
+      if Program.all = "" then
+         Append_Button (Open, "<no executable>");
+      else
+         Append_Button (Open, Program.all);
+      end if;
+
       Debugger_List := Debugger_List.Next;
-      Number_Of_Debuggers := Number_Of_Debuggers + 1;
+      Num_Debuggers := Num_Debuggers + 1;
    end loop;
 
    Gtk.Main.Main;
 
    declare
-      Conversion_Table : array (1 .. Number_Of_Debuggers) of Integer;
-      Number_Of_Active_Debuggers : Natural := 0;
-      Current_Button : Button_Link := Open.First_Button;
+      Conversion_Table : array (1 .. Num_Debuggers) of Integer;
+      Active_Debuggers : Natural := 0;
+      Current_Button   : Button_Link := Open.First_Button;
 
    begin
       if Get_Text (Open.Entry1) /= "" then
@@ -247,26 +261,27 @@ begin
             Top.Sessions_Dir.all &
               Directory_Separator & Get_Text (Open.Entry1));
 
-         for J in 1 .. Number_Of_Debuggers loop
+         for J in 1 .. Num_Debuggers loop
             if Get_Active (Current_Button.Button) then
-               Number_Of_Active_Debuggers := Number_Of_Active_Debuggers + 1;
+               Active_Debuggers := Active_Debuggers + 1;
             end if;
+
             Current_Button := Current_Button.Next;
          end loop;
 
          Put_Line (File, "[Session_File Header]");
-         Put_Line (File, Natural'Image (Number_Of_Active_Debuggers));
+         Put_Line (File, Natural'Image (Active_Debuggers));
          Put_Line (File, "---------------------");
 
          Debugger_List := Top.First_Debugger;
          Current_Button := Open.First_Button;
-         Number_Of_Active_Debuggers := 0;
+         Active_Debuggers := 0;
 
-         for J in 1 .. Number_Of_Debuggers loop
+         for J in 1 .. Num_Debuggers loop
             if Get_Active (Current_Button.Button) then
-               Number_Of_Active_Debuggers :=
-                 Number_Of_Active_Debuggers + 1;
-               Conversion_Table (J) := Number_Of_Active_Debuggers;
+               Active_Debuggers :=
+                 Active_Debuggers + 1;
+               Conversion_Table (J) := Active_Debuggers;
                Tab := Debugger_Process_Tab (Debugger_List.Debugger);
 
                Put_Line (File, Tab.Descriptor.Program.all);
@@ -349,6 +364,7 @@ begin
    end if;
 
    Set_Title (Open, "Open Session");
+   Grab_Focus (Open.Entry1);
    Open.Lock_Buttons := False;
    Show_All (Open);
 
@@ -562,18 +578,16 @@ procedure Remove_All_Buttons
   (Open : access Open_Session_Record'Class)
 is
    procedure Free is new Unchecked_Deallocation (Button_Node, Button_Link);
-   Buffer : Button_Link := Open.First_Button;
-   Previous : Button_Link := null;
+   Buffer   : Button_Link := Open.First_Button;
+   Previous : Button_Link;
 
 begin
    while Buffer /= null loop
       Previous := Buffer;
-      Buffer := Buffer.Next;
-      Previous.Next := null;
+      Buffer   := Buffer.Next;
       Destroy (Previous.Button);
       Free (Previous.Label);
       Free (Previous);
-      Previous := null;
    end loop;
 
    Open.First_Button := null;
