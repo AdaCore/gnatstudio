@@ -33,6 +33,7 @@ with Test_Utils;                use Test_Utils;
 with Docgen.Work_On_Source;     use Docgen.Work_On_Source;
 with Language_Handlers.Glide;   use Language_Handlers.Glide;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
+with Glide_Intl;                use Glide_Intl;
 
 package body Docgen.Work_On_File is
 
@@ -61,6 +62,77 @@ package body Docgen.Work_On_File is
       Doc_File         : File_Type;
       Next_Package     : GNAT.OS_Lib.String_Access;
       Prev_Package     : GNAT.OS_Lib.String_Access;
+
+      function Find_Next_Package
+        (Package_Nr : Natural) return String;
+      --  Returns the name of the next package in the list
+      --  (.adb files with the same package name are ignored)
+      --  If next package doesn't exist, a "" ist returned.
+
+      function Find_Prev_Package
+        (Package_Nr : Natural) return String;
+      --  Returns the name of the previous package in the list
+      --  (.adb files with the same package name are ignored)
+      --  If next package doesn't exist, a "" ist returned.
+
+      -----------------------
+      -- Find_Next_Package --
+      -----------------------
+
+      function Find_Next_Package
+        (Package_Nr : Natural) return String is
+         Local_Node : Type_Source_File_List.List_Node;
+         use TSFL;
+      begin
+         if Package_Nr = Type_Source_File_List.Length (Source_File_List) then
+            return "";
+         else
+            Local_Node := Source_File_Node;
+            Local_Node := Next (Source_File_Node);
+            if File_Extension
+              (Data (Local_Node).File_Name.all) = ".adb" then
+               Local_Node := Next (Local_Node);
+            end if;
+            if Local_Node = Null_Node then
+               --  don't change this return, needed in Docgen-Texi_Output
+               --  in Write_Not_Regular_Beginning!
+               return "";
+            else
+               return Data (Local_Node).Package_Name.all;
+            end if;
+         end if;
+      end Find_Next_Package;
+
+      -----------------------
+      -- Find_Prev_Package --
+      -----------------------
+
+      function Find_Prev_Package
+        (Package_Nr : Natural) return String is
+         Local_Node : Type_Source_File_List.List_Node;
+         use TSFL;
+      begin
+         if Package_Nr = 1 or
+           (Package_Nr = 2 and File_Extension
+           (TSFL.Data (Source_File_Node).File_Name.all) = ".adb") then
+            return "";
+         else
+            Local_Node := Prev (Source_File_List,
+                                Source_File_Node);
+            if File_Extension (Data (Local_Node).File_Name.all) = ".ads" and
+               Options.Process_Body_Files then
+               Local_Node := Prev (Source_File_List, Local_Node);
+            end if;
+            if Local_Node = Null_Node then
+               --  don't change this return, needed in Docgen-Texi_Output
+               --  in Write_Not_Regular_Beginning!
+               return "";
+            else
+               return Data (Local_Node).Package_Name.all;
+            end if;
+         end if;
+      end Find_Prev_Package;
+
    begin
 
       --  sort the list of the files first
@@ -76,68 +148,26 @@ package body Docgen.Work_On_File is
                     Handler, Project_Tree, Project_View);
       for J in 1 .. Type_Source_File_List.Length (Source_File_List) loop
 
-         --  create the doc file from the package name for each(!) package
-         if not Options.Doc_One_File then
-            Create (Doc_File,
-                    Out_File,
-                    Get_Doc_File_Name (TSFL.Data
-                                         (Source_File_Node).File_Name.all,
-                                       Options.Doc_Directory.all,
-                                       Options.Doc_Suffix.all));
-            Put_Line ("from file: " &
-                      TSFL.Data (Source_File_Node).File_Name.all);
-            Put_Line ("   create documentation to: " &
-                      Get_Doc_File_Name (TSFL.Data
-                                           (Source_File_Node).File_Name.all,
-                                         Options.Doc_Directory.all,
-                                         Options.Doc_Suffix.all));
-            --  create the doc file from the project file name for
-            --  all(!) packages
-         elsif J = 1 and Options.Doc_One_File then
-            Create (Doc_File,
-                    Out_File,
-                    Get_Doc_File_Name
-                      (TSFL.Data
-                         (Source_File_Node).Prj_File_Name.all,
-                       Options.Doc_Directory.all,
-                       Options.Doc_Suffix.all));
-            Put_Line ("create documentation to: " &
-                      Get_Doc_File_Name
-                        (TSFL.Data
-                           (Source_File_Node).Prj_File_Name.all,
-                         Options.Doc_Directory.all,
-                         Options.Doc_Suffix.all));
-            Put_Line ("   from file: " &
-                      TSFL.Data (Source_File_Node).File_Name.all);
-         else
-            Put_Line ("   from file: " &
-                      TSFL.Data (Source_File_Node).File_Name.all);
-         end if;
+         --  create the doc file from the package name for each package
+         Create (Doc_File,
+                 Out_File,
+                 Get_Doc_File_Name (TSFL.Data
+                                      (Source_File_Node).File_Name.all,
+                                    Options.Doc_Directory.all,
+                                    Options.Doc_Suffix.all));
+         Put_Line (-"from file: " &
+                     TSFL.Data (Source_File_Node).File_Name.all);
+         Put_Line (-"   create documentation to: " &
+                     Get_Doc_File_Name (TSFL.Data
+                                          (Source_File_Node).File_Name.all,
+                                        Options.Doc_Directory.all,
+                                        Options.Doc_Suffix.all));
 
          --  find the next and the previous package name (used for TexInfo)
-         if J = 1 then
-            Prev_Package := new String '(" ");
-         else
-            Source_File_Node := TSFL.Prev (Source_File_List,
-                                           Source_File_Node);
-            Prev_Package :=
-              new String '(TSFL.Data (Source_File_Node).Package_Name.all);
-            Source_File_Node := TSFL.Next (Source_File_Node);
-         end if;
-         if J = Type_Source_File_List.Length (Source_File_List) then
-            Next_Package := new String '(" ");
-         else
-            Source_File_Node := TSFL.Next (Source_File_Node);
-            Next_Package :=
-              new String '(TSFL.Data (Source_File_Node).Package_Name.all);
-            Source_File_Node := TSFL.Prev (Source_File_List,
-                                           Source_File_Node);
-         end if;
+         Next_Package := new String'(Find_Next_Package (J));
+         Prev_Package := new String'(Find_Prev_Package (J));
 
          Process_One_File (Doc_File,
-                           J = 1,
-                           J = Type_Source_File_List.Length
-                             (Source_File_List),
                            TSFL.Data (Source_File_Node).File_Name.all,
                            TSFL.Data (Source_File_Node).Package_Name.all,
                            Next_Package,
@@ -154,25 +184,20 @@ package body Docgen.Work_On_File is
          Source_File_Node := TSFL.Next (Source_File_Node);
 
          --  close the doc file
-         if J = Type_Source_File_List.Length (Source_File_List) or
-         not Options.Doc_One_File then
-            Close (Doc_File);
-         end if;
+         Close (Doc_File);
 
          Free (Next_Package);
          Free (Prev_Package);
       end loop;
 
-      if not Options.Doc_One_File then
-         --  sort the type index list and the subprogram index list first
-         Sort_List_Name (Subprogram_Index_List);
-         Sort_List_Name (Type_Index_List);
+      --  sort the type index list and the subprogram index list first
+      Sort_List_Name (Subprogram_Index_List);
+      Sort_List_Name (Type_Index_List);
 
-         --  create the index doc files for the packages
-         Process_Unit_Index       (Source_File_List, Options);
-         Process_Subprogram_Index (Subprogram_Index_List, Options);
-         Process_Type_Index       (Type_Index_List, Options);
-      end if;
+      --  create the index doc files for the packages
+      Process_Unit_Index       (Source_File_List, Options);
+      Process_Subprogram_Index (Subprogram_Index_List, Options);
+      Process_Type_Index       (Type_Index_List, Options);
 
       TEL.Free (Subprogram_Index_List);
       TEL.Free (Type_Index_List);
@@ -184,8 +209,6 @@ package body Docgen.Work_On_File is
 
    procedure Process_One_File
      (Doc_File           : File_Type;
-      First_File         : Boolean;
-      Last_File          : Boolean;
       Source_Filename    : String;
       Package_Name       : String;
       Next_Package       : GNAT.OS_Lib.String_Access;
@@ -322,8 +345,8 @@ package body Docgen.Work_On_File is
             Source_File_Node := TSFL.Next (Source_File_Node);
          end loop;
          --  exception later!?
-         Put_Line ("!!!Error: File not found in List, cannot return" &
-                   " the name with the path!");
+         Put_Line (-("!!!Error: File not found in List, cannot return" &
+                   " the name with the path!"));
          return "";
       end Get_Full_Entity_Filename;
 
@@ -438,7 +461,7 @@ package body Docgen.Work_On_File is
                    (Get_Declaration_File_Of (Get_Entity (Child_Node)))
                  = ".ads" then
                   if Options.Info_Output then
-                     Put_Line ("Reference found: " &
+                     Put_Line (-"Reference found: " &
                                Get_Name (Get_Entity (Child_Node)));
                   end if;
                   Reference_Node.File_Name := new String'
@@ -475,7 +498,7 @@ package body Docgen.Work_On_File is
             Reference_Node  : Reference_List_Information;
          begin
             if Is_Renaming then
-               Put_Line ("Is_Renaming: ");    --  just for testing later!
+               Put_Line (-"Is_Renaming: ");    --  just for testing later!
             end if;
 
             --  get the name of the subprogram which calls the entity
@@ -652,17 +675,16 @@ package body Docgen.Work_On_File is
       --  spec file can be used.
       if File_Extension (Source_Filename) = ".adb" then
          Process_Source (Doc_File,
-                                    First_File,
-                                    Last_File,
-                                    Next_Package,
-                                    Prev_Package,
-                                    Source_File_List,
-                                    Source_Filename,
-                                    Package_Name,
-                                    Def_In_Line,
-                                    Entity_List,
-                                    Process_Body_File,
-                                    Options);
+                         Next_Package,
+                         Prev_Package,
+                         Source_File_List,
+                         Source_Filename,
+                         Package_Name,
+                         Def_In_Line,
+                         Entity_List,
+                         Process_Body_File,
+                         Options);
+
          --  now free the list
          TEL.Free (Entity_List);
 
@@ -674,14 +696,14 @@ package body Docgen.Work_On_File is
             LI_Unit);
 
          if Options.Info_Output then
-            Put_Line ("Find all possible declarations");
+            Put_Line (-"Find all possible declarations");
          end if;
 
          --  get all entities of the file
          if LI_Unit /= No_LI_File then
             Entity_Iter := Find_All_Possible_Declarations (LI_Unit, "");
          else
-            Put_Line ("LI file not found");  --  later Exception?
+            Put_Line (-"LI file not found");  --  later Exception?
          end if;
 
          --  get next entity from the file
@@ -712,8 +734,8 @@ package body Docgen.Work_On_File is
 
                --  Info_Output is set, if further information are wished
                if Options.Info_Output then
-                  Put_Line ("-----");
-                  Put_Line ("Entity found: "
+                  Put_Line (-"-----");
+                  Put_Line (-("Entity found: "
                               & Get_Full_Name (Info, LI_Unit, ".") &
                               "  in File:  " & Source_Filename &
                               "  defined in  file: " &
@@ -724,7 +746,7 @@ package body Docgen.Work_On_File is
                               (Get_Declaration_Line_Of (Info)) &
                               ", in column: " &
                             Integer'Image
-                              (Get_Declaration_Column_Of (Info)));
+                              (Get_Declaration_Column_Of (Info))));
                end if;
 
                --  get the parameters needed be all entities
@@ -788,13 +810,22 @@ package body Docgen.Work_On_File is
                        Floating_Point_Object |
                        Modular_Integer_Object |  Protected_Object |
                        Record_Object | Signed_Integer_Object |
-                       String_Object | Task_Object |
+                       String_Object |
                        Access_Object | Class_Wide_Object |
                        Ordinary_Fixed_Point_Object =>
                      Entity_Node.Kind := Var_Entity;
+                  when Task_Object =>
+                     Entity_Node.Kind := Entry_Entity;
+                     Process_Subprogram
+                       (Source_Filename,
+                        Get_Full_Entity_Filename
+                          (Get_Declaration_File_Of (Info)),
+                        Info);
                   when Generic_Package  =>
                      Entity_Node.Kind := Package_Entity;
+                     --  Put_Line ("generic:  " & Entity_Node.Name.all);
                   when  Non_Generic_Package =>
+                     --  Put_Line (Entity_Node.Name.all);
                      Entity_Node.Kind := Package_Entity;
                   when others => Entity_Node.Kind := Other_Entity;
                end case;
@@ -812,17 +843,21 @@ package body Docgen.Work_On_File is
 
          --  process the documentation of this file
          Process_Source (Doc_File,
-                                    First_File,
-                                    Last_File,
-                                    Next_Package,
-                                    Prev_Package,
-                                    Source_File_List,
-                                    Source_Filename,
-                                    Package_Name,
-                                    Def_In_Line,
-                                    Entity_List,
-                                    Process_Body_File,
-                                    Options);
+                         Next_Package,
+                         Prev_Package,
+                         Source_File_List,
+                         Source_Filename,
+                         Package_Name,
+                         Def_In_Line,
+                         Entity_List,
+                         Process_Body_File,
+                         Options);
+
+         --  if body files are not being processed, free directly here
+         if not Options.Process_Body_Files   then
+            TEL.Free (Entity_List);
+         end if;
+
       end if;
 
    end Process_One_File;
