@@ -23,7 +23,6 @@ begin
    Set_Policy (Wizard_Window, True, True, True);
    Set_Position (Wizard_Window, Win_Pos_None);
    Set_Modal (Wizard_Window, False);
-   Set_Default_Size (Wizard_Window, 640, 400);
 
    Gtk_New_Vbox (Wizard_Window.Vbox1, False, 0);
    Add (Wizard_Window, Wizard_Window.Vbox1);
