@@ -23,10 +23,10 @@
 
 with Ada.Characters.Handling;  use Ada.Characters.Handling;
 with Ada.Exceptions;           use Ada.Exceptions;
-with Ada.Unchecked_Deallocation;
 with GNAT.Debug_Utilities;     use GNAT.Debug_Utilities;
 with GNAT.OS_Lib;              use GNAT.OS_Lib;
 with Generic_List;
+with Glib.Xml_Int;             use Glib.Xml_Int;
 with Glib.Object;              use Glib.Object;
 with Glide_Intl;               use Glide_Intl;
 with Glide_Kernel.Modules;     use Glide_Kernel.Modules;
@@ -35,7 +35,6 @@ with Glide_Kernel.Scripts;     use Glide_Kernel.Scripts;
 with Glide_Kernel;             use Glide_Kernel;
 with Gtk.Enums;                use Gtk.Enums;
 with Gtk.Widget;               use Gtk.Widget;
-with Gtkada.Handlers;          use Gtkada.Handlers;
 with Gtkada.MDI;               use Gtkada.MDI;
 with Histories;                use Histories;
 with Interactive_Consoles;     use Interactive_Consoles;
@@ -44,13 +43,84 @@ with System.Address_Image;
 with System;                   use System;
 with Traces;                   use Traces;
 with Basic_Types;              use Basic_Types;
+with OS_Utils;                 use OS_Utils;
+with String_Utils;             use String_Utils;
 
 package body Shell_Script is
 
    Me : constant Debug_Handle := Create ("Shell_Script");
 
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (Argument_List, Argument_List_Access);
+   Num_Previous_Returns : constant := 9;
+   --  Number of parameters $1, $2,... which are used to memorize the result of
+   --  previous commands.
+
+   type Shell_Console_Record
+      is new Interactive_Console_Record with null record;
+   type Shell_Console is access all Shell_Console_Record'Class;
+   --  The shell console. This is mostly use to have a unique tag when saving
+   --  the console.
+
+   -------------------
+   -- Instance_Data --
+   -------------------
+
+   type Instance_Data_Type is (Strings, Object, Addresses, Integers);
+   type Instance_Data (Data : Instance_Data_Type := Object) is record
+      case Data is
+         when Strings =>
+            Str : GNAT.OS_Lib.String_Access;
+         when Object =>
+            Obj : Glib.Object.GObject;
+         when Addresses =>
+            Addr       : System.Address;
+            On_Destroy : Destroy_Handler;
+         when Integers =>
+            Int : Integer;
+      end case;
+   end record;
+
+   --------------------------
+   -- Shell_Class_Instance --
+   --------------------------
+
+   type Shell_Class_Instance_Record is new Class_Instance_Record with record
+      Class  : Class_Type;
+      Script : Scripting_Language;
+      Data   : Instance_Data;
+   end record;
+   type Shell_Class_Instance is access all Shell_Class_Instance_Record'Class;
+
+   function Get_Class (Instance : access Shell_Class_Instance_Record)
+      return Class_Type;
+   function Get_Data (Instance : access Shell_Class_Instance_Record)
+      return Glib.Object.GObject;
+   function Get_Data
+     (Instance : access Shell_Class_Instance_Record) return String;
+   function Get_Data (Instance : access Shell_Class_Instance_Record)
+      return System.Address;
+   function Get_Data
+     (Instance : access Shell_Class_Instance_Record) return Integer;
+   procedure Set_Data
+     (Instance : access Shell_Class_Instance_Record;
+      Value    : access Glib.Object.GObject_Record'Class);
+   procedure Set_Data
+     (Instance : access Shell_Class_Instance_Record; Value : String);
+   procedure Set_Data
+     (Instance : access Shell_Class_Instance_Record; Value : Integer);
+   procedure Set_Data
+     (Instance   : access Shell_Class_Instance_Record;
+      Value      : System.Address;
+      On_Destroy : Destroy_Handler := null);
+   function Get_Script (Instance : access Shell_Class_Instance_Record)
+      return Scripting_Language;
+   procedure Primitive_Free (Instance : in out Shell_Class_Instance_Record);
+   --  See doc from inherited subprogram
+
+   procedure Free_Instance (Instance : in out Shell_Class_Instance);
+   package Instances_List is new Generic_List
+     (Shell_Class_Instance, Free_Instance);
+   use Instances_List;
+   --  ??? Would be faster to use a hash-table...
 
    ---------------------
    -- Shell_scripting --
@@ -58,14 +128,20 @@ package body Shell_Script is
 
    type Shell_Scripting_Record is new Scripting_Language_Record with record
       Kernel  : Glide_Kernel.Kernel_Handle;
-      Console : Interactive_Consoles.Interactive_Console;
+      Console : Shell_Console;
+      Instances : Instances_List.List;
+      --  All the instances that were created
+
+      Returns : Argument_List (1 .. Num_Previous_Returns);
+      --  The result of the Num_Previous_Returns previous commands
    end record;
    type Shell_Scripting is access all Shell_Scripting_Record'Class;
 
    procedure Register_Command
      (Script       : access Shell_Scripting_Record;
       Command      : String;
-      Usage        : String;
+      Params       : String := "";
+      Return_Value : String := "";
       Description  : String;
       Minimum_Args : Natural := 0;
       Maximum_Args : Natural := 0;
@@ -97,15 +173,20 @@ package body Shell_Script is
       return Kernel_Handle;
    --  See doc from inherited subprograms
 
+   function New_Instance
+     (Script : access Shell_Scripting_Record; Class : Class_Type)
+      return Class_Instance;
+
    -------------------------
    -- Shell_Callback_Data --
    -------------------------
 
    type Shell_Callback_Data is new Callback_Data with record
-      Script         : Shell_Scripting;
-      Args           : GNAT.OS_Lib.Argument_List_Access;
-      Return_Value   : GNAT.OS_Lib.String_Access;
-      Return_As_List : Boolean := False;
+      Script          : Shell_Scripting;
+      Args            : GNAT.OS_Lib.Argument_List_Access;
+      Return_Value    : GNAT.OS_Lib.String_Access;
+      Return_As_List  : Boolean := False;
+      Return_As_Error : Boolean := False;
    end record;
 
    function Get_Script (Data : Shell_Callback_Data) return Scripting_Language;
@@ -131,65 +212,6 @@ package body Shell_Script is
      (Data   : in out Shell_Callback_Data; Value : System.Address);
    procedure Set_Return_Value
      (Data   : in out Shell_Callback_Data; Value : Class_Instance);
-   --  See doc from inherited subprogram
-
-   -------------------
-   -- Instance_Data --
-   -------------------
-
-   type Instance_Data_Type is (Strings, Object, Addresses, Integers);
-   type Instance_Data (Data : Instance_Data_Type := Object) is record
-      case Data is
-         when Strings =>
-            Str : GNAT.OS_Lib.String_Access;
-         when Object =>
-            Obj : Glib.Object.GObject;
-         when Addresses =>
-            Addr       : System.Address;
-            On_Destroy : Destroy_Handler;
-         when Integers =>
-            Int : Integer;
-      end case;
-   end record;
-
-   --------------------------
-   -- Shell_Class_Instance --
-   --------------------------
-
-   type Shell_Class_Instance_Record is new Class_Instance_Record with record
-      Class  : Class_Type;
-      Script : Shell_Scripting;
-      Data   : Instance_Data;
-   end record;
-   type Shell_Class_Instance is access all Shell_Class_Instance_Record'Class;
-
-   function New_Instance
-     (Script : access Shell_Scripting_Record; Class : Class_Type)
-      return Class_Instance;
-   function Get_Class (Instance : access Shell_Class_Instance_Record)
-      return Class_Type;
-   function Get_Data (Instance : access Shell_Class_Instance_Record)
-      return Glib.Object.GObject;
-   function Get_Data
-     (Instance : access Shell_Class_Instance_Record) return String;
-   function Get_Data (Instance : access Shell_Class_Instance_Record)
-      return System.Address;
-   function Get_Data
-     (Instance : access Shell_Class_Instance_Record) return Integer;
-   procedure Set_Data
-     (Instance : access Shell_Class_Instance_Record;
-      Value    : access Glib.Object.GObject_Record'Class);
-   procedure Set_Data
-     (Instance : access Shell_Class_Instance_Record; Value : String);
-   procedure Set_Data
-     (Instance : access Shell_Class_Instance_Record; Value : Integer);
-   procedure Set_Data
-     (Instance   : access Shell_Class_Instance_Record;
-      Value      : System.Address;
-      On_Destroy : Destroy_Handler := null);
-   function Get_Script (Instance : access Shell_Class_Instance_Record)
-      return Scripting_Language;
-   procedure Primitive_Free (Instance : in out Shell_Class_Instance_Record);
    --  See doc from inherited subprogram
 
    -------------------------
@@ -220,18 +242,9 @@ package body Shell_Script is
    package Command_List is new Generic_List (Command_Information);
    --  ??? Would be faster to use a hash-table...
 
-   procedure Free_Instance (Instance : in out Shell_Class_Instance);
-   package Instances_List is new Generic_List
-     (Shell_Class_Instance, Free_Instance);
-   use Instances_List;
-   --  ??? Would be faster to use a hash-table...
-
    type Shell_Module_Id_Record is new Module_ID_Record with record
       Commands_List : Command_List.List;
       --  The list of all registered commands
-
-      Instances : Instances_List.List;
-      --  All the instances that were created
    end record;
    type Shell_Module_Id_Access is access all Shell_Module_Id_Record;
 
@@ -243,10 +256,6 @@ package body Shell_Script is
    procedure Module_Command_Handler
      (Data : in out Callback_Data'Class; Command : String);
    --  Internal handler for the shell functions defined in this module
-
-   function Console_Delete_Event
-     (Console : access Gtk.Widget.Gtk_Widget_Record'Class) return Boolean;
-   --  Callback for the desctruction of the shell window
 
    function Commands_As_List
      (Prefix : String;
@@ -263,21 +272,51 @@ package body Shell_Script is
      (Instance : access Class_Instance_Record'Class) return String;
    --  Return the string to display to report the instance in the shell
 
-   function Instance_From_Name (Name : String) return Shell_Class_Instance;
+   function Instance_From_Name
+     (Script : access Shell_Scripting_Record'Class;
+      Name : String) return Shell_Class_Instance;
    --  Opposite of Name_From_Instance
 
    function Instance_From_Address
-     (Add : System.Address) return Shell_Class_Instance;
+     (Script : access Shell_Scripting_Record'Class;
+      Add : System.Address) return Shell_Class_Instance;
    --  Return an instance from its address
 
    function Execute_GPS_Shell_Command
      (Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class;
       Command : String) return String;
+   --  Execute a command in the GPS shell and returns its result.
+   --  Command might be a series of commands, separated by semicolons or
+   --  newlines. The return value is the result of the last command.
+
    function Execute_GPS_Shell_Command
      (Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class;
       Command : String;
       Args    : GNAT.OS_Lib.Argument_List) return String;
    --  Execute a command in the GPS shell and returns its result.
+   --  Command must be a single command (no semicolon-separated list).
+
+   function Save_Desktop
+     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class)
+     return Node_Ptr;
+   function Load_Desktop
+     (MDI  : MDI_Window;
+      Node : Node_Ptr;
+      User : Kernel_Handle) return MDI_Child;
+   --  Support functions for saving the desktop
+
+   function Get_Or_Create_Console (Kernel : access Kernel_Handle_Record'Class)
+      return MDI_Child;
+   --  Return a handle to the shell console, or create a new one if necessary
+
+   procedure Open_Shell_Console
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   --  Open a new shell console (if none exists). This is a callback for the
+   --  menu bar items.
+
+   procedure Console_Destroyed
+     (Console : access GObject_Record'Class; Kernel : Kernel_Handle);
+   --  Called when the console is destroyed
 
    ------------------------
    -- Name_From_Instance --
@@ -296,7 +335,8 @@ package body Shell_Script is
    ------------------------
 
    function Instance_From_Name
-     (Name : String) return Shell_Class_Instance
+     (Script : access Shell_Scripting_Record'Class;
+      Name : String) return Shell_Class_Instance
    is
       Index : Natural := Name'First;
    begin
@@ -307,7 +347,7 @@ package body Shell_Script is
       end loop;
 
       return Instance_From_Address
-        (Value ("16#" & Name (Index + 3 .. Name'Last - 1) & "#"));
+        (Script, Value ("16#" & Name (Index + 3 .. Name'Last - 1) & "#"));
 
    exception
       when others =>
@@ -320,9 +360,10 @@ package body Shell_Script is
    ---------------------------
 
    function Instance_From_Address
-     (Add : System.Address) return Shell_Class_Instance
+     (Script : access Shell_Scripting_Record'Class;
+      Add : System.Address) return Shell_Class_Instance
    is
-      L   : List_Node := First (Shell_Module_Id.Instances);
+      L   : List_Node := First (Script.Instances);
    begin
       while L /= Null_Node loop
          if Instances_List.Data (L).all'Address = Add then
@@ -411,17 +452,20 @@ package body Shell_Script is
       return True;
    end Is_Subclass;
 
-   --------------------------
-   -- Console_Delete_Event --
-   --------------------------
+   -----------------------
+   -- Console_Destroyed --
+   -----------------------
 
-   function Console_Delete_Event
-     (Console : access Gtk.Widget.Gtk_Widget_Record'Class) return Boolean
+   procedure Console_Destroyed
+     (Console : access GObject_Record'Class;
+      Kernel  : Kernel_Handle)
    is
       pragma Unreferenced (Console);
+      Script : Shell_Scripting := Shell_Scripting
+        (Lookup_Scripting_Language (Kernel, GPS_Shell_Name));
    begin
-      return True;
-   end Console_Delete_Event;
+      Script.Console := null;
+   end Console_Destroyed;
 
    -------------------------------
    -- Interpret_Command_Handler --
@@ -456,6 +500,100 @@ package body Shell_Script is
       null;
    end Name_Parameters;
 
+   ------------------
+   -- Load_Desktop --
+   ------------------
+
+   function Load_Desktop
+     (MDI  : MDI_Window;
+      Node : Node_Ptr;
+      User : Kernel_Handle) return MDI_Child
+   is
+      pragma Unreferenced (MDI);
+   begin
+      if Node.Tag.all = "Shell_Console" then
+         return Get_Or_Create_Console (User);
+      end if;
+      return null;
+   end Load_Desktop;
+
+   ---------------------------
+   -- Get_Or_Create_Console --
+   ---------------------------
+
+   function Get_Or_Create_Console (Kernel : access Kernel_Handle_Record'Class)
+      return MDI_Child
+   is
+      Child  : MDI_Child;
+      Script : Shell_Scripting := Shell_Scripting
+        (Lookup_Scripting_Language (Kernel, GPS_Shell_Name));
+   begin
+      if Script.Console = null then
+         Script.Console := new Shell_Console_Record;
+         Initialize
+           (Script.Console,
+            "GPS> ",
+            Interpret_Command_Handler'Access,
+            GObject (Kernel),
+            Get_Pref (Kernel, Source_Editor_Font),
+            History_List => Get_History (Kernel),
+            Key          => "shell",
+            Wrap_Mode    => Wrap_Char);
+         Set_Completion_Handler (Script.Console, Commands_As_List'Access);
+         Child := Put
+           (Kernel, Script.Console,
+            Focus_Widget        => Gtk_Widget (Get_View (Script.Console)),
+            Default_Width       => 400,
+            Default_Height      => 100,
+            Module              => Shell_Module_Id,
+            Desktop_Independent => True);
+         Set_Title (Child, -"Shell");
+         Set_Dock_Side (Child, Bottom);
+         Dock_Child (Child);
+
+         Kernel_Callback.Connect
+           (Script.Console, "destroy",
+            Kernel_Callback.To_Marshaller (Console_Destroyed'Access),
+            Kernel_Handle (Kernel));
+      else
+         Child := Find_MDI_Child (Get_MDI (Kernel), Script.Console);
+         Raise_Child (Child);
+      end if;
+
+      return Child;
+   end Get_Or_Create_Console;
+
+   ------------------
+   -- Save_Desktop --
+   ------------------
+
+   function Save_Desktop
+     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class)
+     return Node_Ptr
+   is
+      N : Node_Ptr;
+   begin
+      if Widget.all in Shell_Console_Record'Class then
+         N := new Node;
+         N.Tag := new String'("Shell_Console");
+         return N;
+      end if;
+      return null;
+   end Save_Desktop;
+
+   ------------------------
+   -- Open_Shell_Console --
+   ------------------------
+
+   procedure Open_Shell_Console
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   is
+      Child : MDI_Child;
+      pragma Unreferenced (Widget, Child);
+   begin
+      Child := Get_Or_Create_Console (Kernel);
+   end Open_Shell_Console;
+
    ---------------------
    -- Register_Module --
    ---------------------
@@ -463,8 +601,8 @@ package body Shell_Script is
    procedure Register_Module
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
    is
-      Child : MDI_Child;
       Script : Shell_Scripting;
+      N      : Node_Ptr;
    begin
       Shell_Module_Id := new Shell_Module_Id_Record;
       Register_Module
@@ -472,43 +610,37 @@ package body Shell_Script is
          Kernel                  => Kernel,
          Module_Name             => "Shell script",
          Priority                => Glide_Kernel.Default_Priority);
+      Glide_Kernel.Kernel_Desktop.Register_Desktop_Functions
+        (Save_Desktop'Access, Load_Desktop'Access);
 
       Script := new Shell_Scripting_Record;
       Script.Kernel := Kernel_Handle (Kernel);
       Register_Scripting_Language (Kernel, Script);
 
-      Gtk_New (Script.Console,
-               "GPS> ",
-               Interpret_Command_Handler'Access,
-               GObject (Kernel),
-               Get_Pref (Kernel, Source_Editor_Font),
-               History_List => Get_History (Kernel),
-               Key          => "shell",
-               Wrap_Mode    => Wrap_Char);
-      Set_Completion_Handler (Script.Console, Commands_As_List'Access);
-      Child := Put
-        (Get_MDI (Kernel), Script.Console,
-         Iconify_Button or Maximize_Button,
-         Focus_Widget => Gtk_Widget (Get_View (Script.Console)),
-         Default_Width => 400,
-         Default_Height => 100);
-      Set_Title (Child, -"Shell");
-      Set_Dock_Side (Child, Bottom);
-      Dock_Child (Child);
+      N     := new Node;
+      N.Tag := new String'("Shell_Console");
+      Add_Default_Desktop_Item
+        (Kernel, N,
+         10, 10,
+         400, 100,
+         "Shell", "Shell Console",
+         Docked, Bottom,
+         True, True);
+
+      Register_Menu
+        (Kernel,
+         Parent_Path => "/" & (-"Tools"),
+         Text        => -"Shell console",
+         Callback    => Open_Shell_Console'Access);
 
       --  Only remember the last 100 commands.
       Set_Max_Length (Get_History (Kernel).all, 100, "shell");
       Allow_Duplicates (Get_History (Kernel).all, "shell", True, True);
 
-      Return_Callback.Connect
-        (Script.Console, "delete_event",
-         Return_Callback.To_Marshaller (Console_Delete_Event'Access));
-
       --  The following commands are specific to the GPS shell script.
       Register_Command
         (Script,
          Command      => "help",
-         Usage        => "() -> None",
          Description  => -"List recognized commands.",
          Minimum_Args => 0,
          Maximum_Args => 1,
@@ -517,7 +649,6 @@ package body Shell_Script is
       Register_Command
         (Script,
          Command      => "echo",
-         Usage        => "() -> None",
          Description  => -"Display a line of text.",
          Minimum_Args => 0,
          Maximum_Args => Natural'Last,
@@ -526,7 +657,7 @@ package body Shell_Script is
       Register_Command
         (Script,
          Command      => "load",
-         Usage        => "(filename) -> None",
+         Params       => "(filename)",
          Description  => -"Load and execute a script file.",
          Minimum_Args => 1,
          Maximum_Args => 1,
@@ -535,7 +666,6 @@ package body Shell_Script is
       Register_Command
         (Script,
          Command      => "clear_cache",
-         Usage        => "() -> None",
          Description  => -"Free the internal cache used for return values.",
          Minimum_Args => 0,
          Maximum_Args => 0,
@@ -612,8 +742,18 @@ package body Shell_Script is
          Free (Result);
 
       elsif Command = "load" then
-         --  ??? Should be implemented
-         Set_Error_Msg (Data, -"""load is not implemented yet""");
+         declare
+            Filename : constant String := Nth_Arg (Data, 1);
+            Buffer : GNAT.OS_Lib.String_Access := Read_File (Filename);
+         begin
+            if Buffer /= null then
+               Execute_Command
+                 (Get_Script (Data), Buffer.all, Display_In_Console => True);
+               Free (Buffer);
+            else
+               Set_Error_Msg (Data, -"File not found: """ & Filename & '"');
+            end if;
+         end;
 
       elsif Command = "echo" then
          for A in 2 .. Number_Of_Arguments (Data) loop
@@ -623,7 +763,8 @@ package body Shell_Script is
          Free (Result);
 
       elsif Command = "clear_cache" then
-         Free (Shell_Module_Id.Instances, Free_Data => True);
+         Free (Shell_Scripting (Get_Script (Data)).Instances,
+               Free_Data => True);
       end if;
    end Module_Command_Handler;
 
@@ -634,13 +775,26 @@ package body Shell_Script is
    procedure Register_Command
      (Script         : access Shell_Scripting_Record;
       Command        : String;
-      Usage          : String;
+      Params         : String := "";
+      Return_Value   : String := "";
       Description    : String;
       Minimum_Args   : Natural := 0;
       Maximum_Args   : Natural := 0;
       Handler        : Module_Command_Function;
       Class          : Class_Type := No_Class)
    is
+      function Ret_Val return String;
+      --  Return a printable version of Return_Value
+
+      function Ret_Val return String is
+      begin
+         if Return_Value = "" then
+            return "";
+         else
+            return " return " & Return_Value;
+         end if;
+      end Ret_Val;
+
       pragma Unreferenced (Script);
       use Command_List;
       Node : Command_List.List_Node;
@@ -651,11 +805,6 @@ package body Shell_Script is
    begin
       if Command = "" or else Shell_Module_Id = null then
          return;
-      end if;
-
-      if Usage /= "" and then Usage (Usage'First) /= '(' then
-         Trace (Me, "Invalid usage string for "
-                & Command & ": must start with '('");
       end if;
 
       if Class /= No_Class then
@@ -689,11 +838,18 @@ package body Shell_Script is
          Node := Next (Node);
       end loop;
 
-      if Usage = "" or else Class = No_Class then
-         U := new String'(Usage);
+      if Class = No_Class then
+         U := new String'(Params & Ret_Val);
       else
-         U := new String'('(' & To_Lower (Get_Name (Class))
-                          & ", " & Usage (Usage'First + 1 .. Usage'Last));
+         if Params = "" then
+            U := new String'
+              ('(' & To_Lower (Get_Name (Class))  & ')' & Ret_Val);
+
+         else
+            U := new String'
+              ('(' & To_Lower (Get_Name (Class))
+               & ", " & Params (Params'First + 1 .. Params'Last) & Ret_Val);
+         end if;
       end if;
 
       Info := (Command         => Cmd,
@@ -736,7 +892,7 @@ package body Shell_Script is
       S : constant String := Execute_GPS_Shell_Command
         (Script.Kernel, Command);
    begin
-      if Display_In_Console then
+      if Display_In_Console and then Script.Console /= null then
          Insert (Script.Console, S);
       end if;
    end Execute_Command;
@@ -753,7 +909,7 @@ package body Shell_Script is
       Args : Argument_List := (1 => new String'(Filename));
       S    : constant String := Execute_Command (Script, "load", Args);
    begin
-      if Display_In_Console then
+      if Display_In_Console and then Script.Console /= null then
          Insert (Script.Console, S);
       end if;
 
@@ -799,11 +955,16 @@ package body Shell_Script is
       Callback     : Shell_Callback_Data;
       Instance     : Class_Instance;
       Start        : Natural;
+      Shell        : Shell_Scripting;
 
    begin
       if Shell_Module_Id = null then
          return -"Shell module not initialized";
       end if;
+
+      Trace (Me, "Launching interactive command: "
+             & Command & ' '
+             & Argument_List_To_String (Args));
 
       Command_Node := Command_List.First (Shell_Module_Id.Commands_List);
       while Command_Node /= Command_List.Null_Node loop
@@ -812,8 +973,9 @@ package body Shell_Script is
             if Data.Minimum_Args <= Args'Length
               and then Args'Length <= Data.Maximum_Args
             then
-               Callback.Script := Shell_Scripting
+               Shell := Shell_Scripting
                  (Lookup_Scripting_Language (Kernel, GPS_Shell_Name));
+               Callback.Script := Shell;
 
                if Data.Short_Command.all = Constructor_Method then
                   Instance := New_Instance (Callback.Script, Data.Class);
@@ -827,31 +989,59 @@ package body Shell_Script is
                end if;
 
                for A in Args'Range loop
-                  Callback.Args (A - Args'First + Start) := Args (A);
+                  if Args (A)'Length > 0
+                    and then Args (A) (Args (A)'First) = '$'
+                  then
+                     declare
+                        Num : Integer;
+                     begin
+                        Num := Integer'Value
+                          (Args (A) (Args (A)'First + 1 .. Args (A)'Last));
+                        Callback.Args (A - Args'First + Start) :=
+                          new String'(Shell.Returns
+                                      (Num + Shell.Returns'First - 1).all);
+
+                     exception
+                        when Constraint_Error =>
+                           Callback.Args (A - Args'First + Start) :=
+                             new String'(Args (A).all);
+                     end;
+
+                  else
+                     Callback.Args (A - Args'First + Start) :=
+                       new String'(Args (A).all);
+                  end if;
                end loop;
 
                Data.Command_Handler (Callback, Data.Short_Command.all);
+               Free (Callback.Args);
+
+               if Callback.Return_As_Error then
+                  return Callback.Return_Value.all;
+               end if;
 
                if Data.Short_Command.all = Constructor_Method then
                   Set_Return_Value (Callback, Instance);
                end if;
 
-               Unchecked_Free (Callback.Args);
+               --  Save the return value for the future
+               Free (Shell.Returns (Shell.Returns'Last));
+               Shell.Returns (Shell.Returns'First + 1 .. Shell.Returns'Last) :=
+                 Shell.Returns (Shell.Returns'First .. Shell.Returns'Last - 1);
+
                if Callback.Return_Value = null then
-                  return "";
+                  Shell.Returns (Shell.Returns'First) := new String'("");
                else
-                  declare
-                     S : constant String := Callback.Return_Value.all;
-                  begin
-                     Free (Callback.Return_Value);
-                     return S;
-                  end;
+                  Shell.Returns (Shell.Returns'First) := Callback.Return_Value;
                end if;
+
+               return Shell.Returns (Shell.Returns'First).all;
+
             else
                Trace (Me, "Incorrect number of arguments for " & Command
-                      & " Got " & Args'Length'Img
-                      & " Expecting " & Data.Minimum_Args'Img
-                      & " and " & Data.Maximum_Args'Img);
+                      & " Got" & Args'Length'Img
+                      & " Expecting >=" & Data.Minimum_Args'Img
+                      & " and <=" & Data.Maximum_Args'Img);
                return -"Incorrect number of arguments." & ASCII.LF
                  & Data.Command.all & ' ' & Data.Usage.all;
             end if;
@@ -880,21 +1070,53 @@ package body Shell_Script is
       Command : String) return String
    is
       Args         : Argument_List_Access;
+      First, Last  : Integer;
    begin
       if Command /= "" then
-         Trace (Me, "Launching interactive command: " & Command);
+         First := Command'First;
+         while First <= Command'Last loop
+            while First <= Command'Last
+              and then (Command (First) = ' '
+                        or else Command (First) = ASCII.HT)
+            loop
+               First := First + 1;
+            end loop;
 
-         Args := Argument_String_To_List (Command);
+            if First > Command'Last then
+               exit;
+            end if;
 
-         declare
-            R : constant String := Execute_GPS_Shell_Command
-              (Kernel,
-               Command => Args (Args'First).all,
-               Args    => Args (Args'First + 1 .. Args'Last));
-         begin
-            Free (Args);
-            return R;
-         end;
+            Last := First;
+
+            --  ??? This doesn't allow any embedded semicolon or newline in the
+            --  commands. Probably not major at this point, better use python
+            --  for real scripts.
+            while Last <= Command'Last
+              and then Command (Last) /= ';'
+              and then Command (Last) /= ASCII.LF
+            loop
+               Last := Last + 1;
+            end loop;
+
+            Args := Argument_String_To_List (Command (First .. Last - 1));
+
+            declare
+               R : constant String := Execute_GPS_Shell_Command
+                 (Kernel,
+                  Command => Args (Args'First).all,
+                  Args    => Args (Args'First + 1 .. Args'Last));
+            begin
+               Free (Args);
+
+               if Last > Command'Last then
+                  return R;
+               end if;
+            end;
+
+            First := Last + 1;
+         end loop;
+
+         return "";
       else
          return "";
       end if;
@@ -927,7 +1149,7 @@ package body Shell_Script is
    function Get_Script (Instance : access Shell_Class_Instance_Record)
       return Scripting_Language is
    begin
-      return Scripting_Language (Instance.Script);
+      return Instance.Script;
    end Get_Script;
 
    -------------------------
@@ -1007,7 +1229,7 @@ package body Shell_Script is
       return Class_Instance
    is
       Ins : constant Shell_Class_Instance := Instance_From_Name
-        (Nth_Arg (Data, N));
+        (Data.Script, Nth_Arg (Data, N));
    begin
       if Ins = null
         or else not Is_Subclass (Data.Script, Get_Class (Ins), Class)
@@ -1026,6 +1248,7 @@ package body Shell_Script is
    procedure Set_Error_Msg (Data : in out Shell_Callback_Data; Msg : String) is
    begin
       Free (Data.Return_Value);
+      Data.Return_As_Error := True;
       Data.Return_Value := new String'(Msg);
    end Set_Error_Msg;
 
@@ -1106,10 +1329,10 @@ package body Shell_Script is
    begin
       Instance := new Shell_Class_Instance_Record'
         (Class_Instance_Record
-         with Script => Shell_Scripting (Script),
+         with Script => Scripting_Language (Script),
               Class  => Class,
               Data   => (Data => Strings, Str => null));
-      Instances_List.Prepend (Shell_Module_Id.Instances, Instance);
+      Instances_List.Prepend (Script.Instances, Instance);
       return Class_Instance (Instance);
    end New_Instance;
 
