@@ -1,5 +1,12 @@
 Known Problems fixed in GPS 2.0.0
 
+- CC18-008 GPS does not check the "read-only" state of files when using VCS
+  Problem:    When using CVS in a mode where file are read-only when they are
+              not explicitely opened, or when using ClearCase, GPS does not
+              check the read-only/writable state of the file after operations
+              such as open, check-in, check-out.
+  Workaround: Manually click the "Writable/Read Only" area in the editor.
+
 - The log files in directory log_files/ are not removed on Windows
   Problem:    After editing and committing a file the log file is not removed
               from the %HOME%\.gps\log_files directory under Windows.
@@ -16,7 +23,7 @@ Known Problems fixed in GPS 2.0.0
   Problem:    When a new dependency is added between two projects, an absolute
               path is almost always generated, no matter what the preference
               "Relative project paths" is.
-  Workaround: Edit the project properties, unset the "Paths should be 
+  Workaround: Edit the project properties, unset the "Paths should be
               relative", and press OK. Edit again the properties and set back
               the button.
               You can then save the project, and all absolute paths have been
