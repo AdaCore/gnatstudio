@@ -1601,6 +1601,7 @@ package body GUI_Utils is
    begin
       Gtk_New (Model, Column_Types);
       Gtk_New (View, Model);
+      Unref (Model);
       Set_Mode (Get_Selection (View), Selection_Mode);
       Set_Headers_Visible (View, Show_Column_Titles);
       Set_Enable_Search (View, True);
