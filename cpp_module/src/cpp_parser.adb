@@ -2614,6 +2614,9 @@ package body CPP_Parser is
 
       if Get_Time_Stamp (Source) = VFS.No_Time
         or else Get_Time_Stamp (Source) /= File_Time_Stamp (Source_Filename)
+        or else Name_As_Directory (Object_Path
+          (Get_Project (Get_LI (Source)), Recursive => False)) /=
+        Dir_Name (Get_LI_Filename (Get_LI (Source))).all
       then
          Parse_File (Handler, Source);
       end if;
