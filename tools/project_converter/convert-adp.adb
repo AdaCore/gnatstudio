@@ -6,8 +6,7 @@ with Ada.Unchecked_Deallocation;
 
 package body Convert.Adp is
 
-   Spec_Extension : constant String := ".ads";
-   Body_Extension : constant String := ".adb";
+   Spec_Extension, Body_Extension : String_Access;
    Gpr_Extension  : constant String := ".gpr";
 
    type File_Info is record
@@ -327,8 +326,8 @@ package body Convert.Adp is
       Extension : constant String := File_Extension (Obj_Filename);
       Base      : constant String := Obj_Filename
         (Obj_Filename'First  .. Obj_Filename'Last - Extension'Length);
-      Spec_Name : String_Access := new String'(Base & Spec_Extension);
-      Body_Name : String_Access := new String'(Base & Body_Extension);
+      Spec_Name : String_Access := new String'(Base & Spec_Extension.all);
+      Body_Name : String_Access := new String'(Base & Body_Extension.all);
       File      : File_Info;
    begin
       File := File_Htable.Get (Spec_Name);
@@ -439,8 +438,10 @@ package body Convert.Adp is
                  File_Extension (File (1 .. Last));
                Base      : constant String := File
                  (File'First  .. Last - Extension'Length);
-               Spec_Name : String_Access := new String'(Base & Spec_Extension);
-               Body_Name : String_Access := new String'(Base & Body_Extension);
+               Spec_Name : String_Access :=
+                 new String'(Base & Spec_Extension.all);
+               Body_Name : String_Access :=
+                 new String'(Base & Body_Extension.all);
             begin
                if File_Htable.Get (Spec_Name) /= No_File_Info then
                   if First then
@@ -819,7 +820,10 @@ package body Convert.Adp is
    -- Convert_From_Adp_To_Gpr --
    -----------------------------
 
-   procedure Convert_From_Adp_To_Gpr (Adp_Filename : String) is
+   procedure Convert_From_Adp_To_Gpr
+     (Adp_Filename : String;
+      Spec_Extension, Body_Extension : GNAT.OS_Lib.String_Access)
+   is
       Buffer : String_Access := Read_File (Adp_Filename);
       Short_Name : constant String := Base_Name (Adp_Filename, ".adp");
       Build_Dir : constant String :=
@@ -828,7 +832,11 @@ package body Convert.Adp is
            Get_Current_Dir);
       Object_Files_Count, Object_Dirs_Count : Integer;
       File : File_Type;
+
    begin
+      Convert.Adp.Spec_Extension := Spec_Extension;
+      Convert.Adp.Body_Extension := Body_Extension;
+
       if Build_Dir = "" then
          Put_Line ("Cannot convert project: build_dir must be defined in");
          Put_Line ("the .adp file");
@@ -838,38 +846,6 @@ package body Convert.Adp is
       Parse_Source_Dirs (Buffer, Build_Dir);
       Parse_Object_Dirs (Buffer, Build_Dir, Object_Files_Count);
       Object_Dirs_Count := Count_Object_Directories (Build_Dir);
-
---        declare
---           Dir : Directory_Info := Source_Dirs_Htable.Get_First;
---        begin
---           while Dir /= No_Directory_Info loop
---              Put_Line ("Source_Dir=" & Dir.Name.all);
---
---              if Dir.Related_Dirs /= null then
---                 for D in Dir.Related_Dirs'Range loop
---                    Put_Line ("    => " & Dir.Related_Dirs (D).all);
---                 end loop;
---              end if;
---
---              Dir := Source_Dirs_Htable.Get_Next;
---           end loop;
---        end;
---
---        declare
---           Dir : Directory_Info := Object_Dirs_Htable.Get_First;
---        begin
---           while Dir /= No_Directory_Info loop
---              Put_Line ("Object_Dir=" & Dir.Name.all);
---
---              if Dir.Related_Dirs /= null then
---                 for D in Dir.Related_Dirs'Range loop
---                    Put_Line ("    => " & Dir.Related_Dirs (D).all);
---                 end loop;
---              end if;
---
---              Dir := Object_Dirs_Htable.Get_Next;
---           end loop;
---        end;
 
       if Object_Files_Count = 0 then
          --  Ignore all other object directories but Build_Dir
