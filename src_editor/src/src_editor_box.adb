@@ -301,6 +301,8 @@ package body Src_Editor_Box is
          L := Get_Line (Location);
          C := Get_Column (Location);
 
+         Trace (Me, "Goto_Declaration_Or_Body: Opening file "
+                & Get_File (Location));
          Open_File_Editor
            (Kernel,
             Find_Source_File
@@ -353,7 +355,8 @@ package body Src_Editor_Box is
             return;
          end if;
 
-         Set_Cursor_Position (Source.Source_Buffer, Gint (L), Gint (C));
+         Set_Cursor_Position
+           (Source.Source_Buffer, To_Buffer_Line (L), To_Buffer_Column (C));
          Highlight_Region (Source, L, C, L, C + Length);
       end if;
 
