@@ -18,7 +18,12 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Gtk.Widget;                use Gtk.Widget;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;
+with Gtk.Arguments;             use Gtk.Arguments;
+
+with Gtkada.Handlers;           use Gtkada.Handlers;
+with Gtkada.MDI;                use Gtkada.MDI;
 
 with VCS;                       use VCS;
 with VCS_View_Pkg;              use VCS_View_Pkg;
@@ -46,6 +51,10 @@ package body VCS_View_API is
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access);
 
+   procedure On_Menu_Get_Status
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context_Access);
+
    procedure On_Menu_Edit_Log
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access);
@@ -53,6 +62,19 @@ package body VCS_View_API is
    procedure On_Menu_Commit
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access);
+
+   procedure On_Menu_Get_Status_Dir
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context_Access);
+
+   procedure On_Menu_Update_Dir
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context_Access);
+
+   procedure On_Context_Changed
+     (Object  : access Gtk_Widget_Record'Class;
+      Args    : Gtk_Args);
+   --  ???
 
    ----------
    -- Open --
@@ -91,7 +113,25 @@ package body VCS_View_API is
       Ref   : VCS_Access := Get_Current_Ref (Kernel);
    begin
       Update (Ref, Files);
+      Get_Status (Ref, Files);
    end Update;
+
+   ----------------
+   -- Get_Status --
+   ----------------
+
+   procedure Get_Status
+     (Widget  : access GObject_Record'Class;
+      Kernel  : Kernel_Handle)
+   is
+      pragma Unreferenced (Widget);
+      Files : String_List.List := Get_Selected_Files (Kernel);
+      Ref   : VCS_Access := Get_Current_Ref (Kernel);
+
+   begin
+      Open_Explorer (Kernel);
+      Get_Status (Ref, Files);
+   end Get_Status;
 
    ---------
    -- Add --
@@ -233,55 +273,165 @@ package body VCS_View_API is
    is
       pragma Unreferenced (Object);
       Item : Gtk_Menu_Item;
+
+      File : File_Selection_Context_Access;
+
    begin
-      Gtk_New (Item, Label => -"VCS Update");
-      Append (Menu, Item);
-      Context_Callback.Connect
-        (Item, "activate",
-         Context_Callback.To_Marshaller
-         (On_Menu_Update'Access),
-         Selection_Context_Access (Context));
+      if Context.all in File_Selection_Context'Class then
+         File := File_Selection_Context_Access (Context);
 
-      Gtk_New (Item, Label => -"VCS Open");
-      Append (Menu, Item);
-      Context_Callback.Connect
-        (Item, "activate",
-         Context_Callback.To_Marshaller
-         (On_Menu_Open'Access),
-         Selection_Context_Access (Context));
+         if Has_File_Information (File) then
+            Gtk_New (Item, Label => -"Query Status");
+            Append (Menu, Item);
+            Context_Callback.Connect
+              (Item, "activate",
+               Context_Callback.To_Marshaller
+               (On_Menu_Get_Status'Access),
+               Selection_Context_Access (Context));
 
-      Gtk_New (Item, Label => -"VCS Diff");
-      Append (Menu, Item);
-      Context_Callback.Connect
-        (Item, "activate",
-         Context_Callback.To_Marshaller
-         (On_Menu_Diff'Access),
-         Selection_Context_Access (Context));
+            Gtk_New (Item, Label => -"Update");
+            Append (Menu, Item);
+            Context_Callback.Connect
+              (Item, "activate",
+               Context_Callback.To_Marshaller
+               (On_Menu_Update'Access),
+               Selection_Context_Access (Context));
 
-      Gtk_New (Item, Label => -"VCS Update");
-      Append (Menu, Item);
-      Context_Callback.Connect
-        (Item, "activate",
-         Context_Callback.To_Marshaller
-         (On_Menu_Update'Access),
-         Selection_Context_Access (Context));
+            Gtk_New (Item, Label => -"Open");
+            Append (Menu, Item);
+            Context_Callback.Connect
+              (Item, "activate",
+               Context_Callback.To_Marshaller
+               (On_Menu_Open'Access),
+               Selection_Context_Access (Context));
 
-      Gtk_New (Item, Label => -"VCS Edit log");
-      Append (Menu, Item);
-      Context_Callback.Connect
-        (Item, "activate",
-         Context_Callback.To_Marshaller
-         (On_Menu_Edit_Log'Access),
-         Selection_Context_Access (Context));
+            Gtk_New (Item, Label => -"Diff");
+            Append (Menu, Item);
+            Context_Callback.Connect
+              (Item, "activate",
+               Context_Callback.To_Marshaller
+               (On_Menu_Diff'Access),
+               Selection_Context_Access (Context));
 
-      Gtk_New (Item, Label => -"VCS Commit");
-      Append (Menu, Item);
-      Context_Callback.Connect
-        (Item, "activate",
-         Context_Callback.To_Marshaller
-         (On_Menu_Commit'Access),
-         Selection_Context_Access (Context));
+            Gtk_New (Item, Label => -"Edit changelog");
+            Append (Menu, Item);
+            Context_Callback.Connect
+              (Item, "activate",
+               Context_Callback.To_Marshaller
+               (On_Menu_Edit_Log'Access),
+               Selection_Context_Access (Context));
+
+            Gtk_New (Item, Label => -"Commit");
+            Append (Menu, Item);
+            Context_Callback.Connect
+              (Item, "activate",
+               Context_Callback.To_Marshaller
+               (On_Menu_Commit'Access),
+               Selection_Context_Access (Context));
+         end if;
+
+         if Has_File_Information (File)
+           and then Has_Directory_Information (File)
+         then
+            Gtk_New (Item);
+            Append (Menu, Item);
+         end if;
+
+         if Has_Directory_Information (File) then
+            Gtk_New (Item, Label => -"Query status for directory");
+            Append (Menu, Item);
+            Context_Callback.Connect
+              (Item, "activate",
+               Context_Callback.To_Marshaller
+               (On_Menu_Get_Status_Dir'Access),
+               Selection_Context_Access (Context));
+
+            Gtk_New (Item, Label => -"Update directory");
+            Append (Menu, Item);
+            Context_Callback.Connect
+              (Item, "activate",
+               Context_Callback.To_Marshaller
+               (On_Menu_Update_Dir'Access),
+               Selection_Context_Access (Context));
+         end if;
+      end if;
    end VCS_Contextual_Menu;
+
+   ------------------------
+   -- On_Context_Changed --
+   ------------------------
+
+   procedure On_Context_Changed
+     (Object  : access Gtk_Widget_Record'Class;
+      Args    : Gtk_Args)
+   is
+      pragma Unreferenced (Object);
+      Context      : Selection_Context_Access :=
+        To_Selection_Context_Access (To_Address (Args, 1));
+      File         : File_Selection_Context_Access;
+      Status       : File_Status_List.List;
+      Dirs         : String_List.List;
+      Explorer     : VCS_View_Access := Get_Explorer (Get_Kernel (Context));
+
+      Ref          : VCS_Access := Get_Current_Ref (Get_Kernel (Context));
+   begin
+      if Context = null
+        or else Explorer = null
+      then
+         return;
+      end if;
+
+      if Context.all in File_Selection_Context'Class then
+         File := File_Selection_Context_Access (Context);
+         if Has_Directory_Information (File) then
+            String_List.Append (Dirs, Directory_Information (File));
+            Status :=  Local_Get_Status (Ref, Dirs);
+            String_List.Free (Dirs);
+
+            Clear (Explorer);
+            Display_File_Status (Get_Kernel (Context), Status, False);
+            File_Status_List.Free (Status);
+         end if;
+      end if;
+   end On_Context_Changed;
+
+   -------------------
+   -- Open_Explorer --
+   -------------------
+
+   procedure Open_Explorer
+     (Kernel : Kernel_Handle)
+   is
+      MDI      : MDI_Window := Get_MDI (Kernel);
+      Explorer : VCS_View_Access := Get_Explorer (Kernel);
+      Child    : MDI_Child;
+      Ref      : VCS_Access := Get_Current_Ref (Kernel);
+
+      Dirs     : String_List.List;
+      Status   : File_Status_List.List;
+
+   begin
+      if Explorer = null then
+         Gtk_New (Explorer, Kernel);
+         Set_Size_Request (Explorer, 400, 400);
+         Child := Put (MDI, Explorer);
+         Set_Title (Child, -"VCS Explorer");
+
+         String_List.Append (Dirs, Get_Current_Dir (Kernel));
+         Status :=  Local_Get_Status (Ref, Dirs);
+         String_List.Free (Dirs);
+
+         Clear (Explorer);
+         Display_File_Status (Kernel, Status, False);
+         File_Status_List.Free (Status);
+
+         Widget_Callback.Object_Connect
+           (Kernel,
+            Context_Changed_Signal,
+            On_Context_Changed'Access,
+            Explorer);
+      end if;
+   end Open_Explorer;
 
    ----------------------
    -- On_Menu_Edit_Log --
@@ -326,6 +476,66 @@ package body VCS_View_API is
    begin
       Update (Widget, Get_Kernel (Context));
    end On_Menu_Update;
+
+   ------------------------
+   -- On_Menu_Get_Status --
+   ------------------------
+
+   procedure On_Menu_Get_Status
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context_Access) is
+   begin
+      Get_Status (Widget, Get_Kernel (Context));
+   end On_Menu_Get_Status;
+
+   ------------------------
+   -- On_Menu_Update_Dir --
+   ------------------------
+
+   procedure On_Menu_Update_Dir
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context_Access)
+   is
+      pragma Unreferenced (Widget);
+      Files        : String_List.List;
+      File_Context : File_Selection_Context_Access;
+   begin
+      Open_Explorer (Get_Kernel (Context));
+
+      if Context.all in File_Selection_Context'Class then
+         File_Context := File_Selection_Context_Access (Context);
+
+         if Has_Directory_Information (File_Context) then
+            String_List.Append (Files, Directory_Information (File_Context));
+            Update (Get_Current_Ref (Get_Kernel (Context)), Files);
+            Get_Status (Get_Current_Ref (Get_Kernel (Context)), Files);
+         end if;
+      end if;
+   end On_Menu_Update_Dir;
+
+   ----------------------------
+   -- On_Menu_Get_Status_Dir --
+   ----------------------------
+
+   procedure On_Menu_Get_Status_Dir
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context_Access)
+   is
+      pragma Unreferenced (Widget);
+      Files        : String_List.List;
+      File_Context : File_Selection_Context_Access;
+   begin
+      Open_Explorer (Get_Kernel (Context));
+
+      if Context.all in File_Selection_Context'Class then
+         File_Context := File_Selection_Context_Access (Context);
+
+         if Has_Directory_Information (File_Context) then
+            String_List.Append (Files, Directory_Information (File_Context));
+            Get_Status (Get_Current_Ref (Get_Kernel (Context)), Files);
+         end if;
+      end if;
+   end On_Menu_Get_Status_Dir;
 
    ------------------
    -- On_Menu_Diff --
