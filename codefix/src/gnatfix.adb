@@ -56,7 +56,7 @@ procedure Gnatfix is
    Current_Text       : Text_Navigator;
    Errors_List        : Correction_Manager;
    Errors_Found       : Errors_File;
-   Successfull_Update : Boolean;
+   Successful_Update : Boolean;
 
    ------------------
    -- Free_Objects --
@@ -87,16 +87,17 @@ begin
    end if;
 
    Open (Errors_Found, Argument (1));
+
    Analyze
      (Errors_List,
       Current_Text,
       Errors_Found,
       Corrections_Proposed'Access);
 
-   Update (Errors_List, Successfull_Update, Current_Text, Ambiguity'Access);
+   Update (Errors_List, Successful_Update, Current_Text, Ambiguity'Access);
 
    if Visible then
-      if Successfull_Update then
+      if Successful_Update then
          Put_Line ("Update successful");
       else
          Put_Line ("Update error");
