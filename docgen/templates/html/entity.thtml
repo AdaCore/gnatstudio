@@ -11,11 +11,11 @@
 @@-- DECL_COLUMN : column of the entity declaration
 @@-- DECL_FILE   : file where the entity is declared
 @@--
-<TR><TD><PRE>@_INDENT_@
+<TR><TD><PRE>
 @@IF@@ @_REF_FILE_@
-<A HREF="@_REF_FILE_@#@_DECL_LINE_@">@_NAME_@</a>
+@_INDENT_@<A HREF="@_REF_FILE_@#@_DECL_LINE_@">@_NAME_@</a>
 @@ELSE@@
-@_NAME_@
+@_INDENT_@@_NAME_@
 @@END_IF@@
-declared at&nbsp;@_DECL_FILE_@&nbsp;@_DECL_LINE_@:@_DECL_COLUMN_@
+@_INDENT_@declared at&nbsp;@_DECL_FILE_@&nbsp;@_DECL_LINE_@:@_DECL_COLUMN_@
 </PRE></TD><TR>
