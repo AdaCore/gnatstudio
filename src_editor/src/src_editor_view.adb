@@ -411,7 +411,7 @@ package body Src_Editor_View is
       else
          View.Pango_Font := Font;
       end if;
-      Gdk.Font.From_Description (View.Font, View.Pango_Font);
+      View.Font := Gdk.Font.From_Description (View.Pango_Font);
       View.Show_Line_Numbers := Show_Line_Numbers;
       View.LNA_Width_In_Digits := Minimal_Number_Of_Digits_In_LNA;
 
@@ -458,7 +458,7 @@ package body Src_Editor_View is
       View_Style : Text_Attributes.Gtk_Text_Attributes;
    begin
       View.Pango_Font := Font;
-      Gdk.Font.From_Description (View.Font, Font);
+      View.Font := Gdk.Font.From_Description (Font);
 
       --  Make sure the widget is already realized. Otherwise, the
       --  layout and style are not created yet.
