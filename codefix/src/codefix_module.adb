@@ -1005,8 +1005,12 @@ package body Codefix_Module is
    function Get_Data
      (Instance : access Class_Instance_Record'Class) return Codefix_Session
    is
+      pragma Warnings (Off);
+      --  This UC is safe aliasing-wise, so kill warning
       function Convert is new Ada.Unchecked_Conversion
         (System.Address, Codefix_Session);
+      pragma Warnings (On);
+
    begin
       if not Is_Subclass
         (Get_Script (Instance),
