@@ -258,6 +258,7 @@ package body GVD.Preferences is
          Blurb    => -("True if the carriage return characters should be"
                        & " removed when reading a file. This is for"
                        & " compatibility between unix and windows systems"),
+         Flags    => Source_Flags,
          Default  => Need_To_Strip_CR));
       Register_Property (Prefs, Param_Spec (Should_Strip_CR), Source);
 
