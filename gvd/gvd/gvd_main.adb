@@ -194,7 +194,7 @@ procedure GVD_Main is
          Put_Line (Standard_Error, (-"Version: ") & GVD.Version);
          Put_Line (Standard_Error, Exception_Information (E));
          Put_Line (Standard_Error,
-           -("and a description as complete as possible" &
+           -("and a description as complete as possible " &
              "(including sources) to reproduce the bug"));
       end if;
 
@@ -204,7 +204,7 @@ procedure GVD_Main is
          (-"the following information:") & ASCII.LF &
          (-"Version: ") & GVD.Version & ASCII.LF &
          Format (Exception_Information (E), Columns => 80) & ASCII.LF &
-         (-("and a description as complete as possible" &
+         (-("and a description as complete as possible " &
            "(including sources) to reproduce the bug")),
          Error, Button_OK,
          Title => -"Bug detected in GVD",
