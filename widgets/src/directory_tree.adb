@@ -870,6 +870,7 @@ package body Directory_Tree is
 
          Gtk_New (Selector.List_Model, Columns_Types);
          Gtk_New (Selector.List_Tree, Selector.List_Model);
+         Set_Headers_Visible (Selector.List_Tree, False);
          Set_Column_Types (Selector.List_Tree);
          Add (Scrolled, Selector.List_Tree);
 
@@ -952,10 +953,7 @@ package body Directory_Tree is
       Iter := Get_Iter_First (Selector.List_Model);
 
       while Iter /= Null_Iter loop
-         if Iter_Is_Selected (Get_Selection (Selector.List_Tree), Iter) then
-            Length := Length + 1;
-         end if;
-
+         Length := Length + 1;
          Next (Selector.List_Model, Iter);
       end loop;
 
@@ -966,13 +964,9 @@ package body Directory_Tree is
          Iter := Get_Iter_First (Selector.List_Model);
 
          while Iter /= Null_Iter loop
-            if Iter_Is_Selected (Get_Selection (Selector.List_Tree), Iter) then
-               Args (Current) := new String'
-                 (Get_String
-                    (Selector.List_Model, Iter, Absolute_Name_Column));
-               Current := Current + 1;
-            end if;
-
+            Args (Current) := new String'
+              (Get_String (Selector.List_Model, Iter, Absolute_Name_Column));
+            Current := Current + 1;
             Next (Selector.List_Model, Iter);
          end loop;
 
