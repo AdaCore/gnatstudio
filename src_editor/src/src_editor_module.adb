@@ -313,6 +313,7 @@ package body Src_Editor_Module is
    is
       pragma Unreferenced (Widget);
 
+      Infos : Line_Information_Data;
       File  : constant String := Get_String (Nth (Args, 1));
    begin
       Create_Line_Information_Column
@@ -321,6 +322,17 @@ package body Src_Editor_Module is
          Src_Editor_Module_Name,
          Stick_To_Data => False,
          Every_Line    => True);
+
+      Infos := new Line_Information_Array (1 .. 1);
+      Infos (1).Text := new String' ("   1");
+
+      Add_Line_Information
+        (Kernel,
+         File,
+         Src_Editor_Module_Name,
+         Infos);
+
+      Unchecked_Free (Infos);
    end File_Edited_Cb;
 
    ---------------------
