@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --              GtkAda - Ada95 binding for Gtk+/Gnome                --
 --                                                                   --
---                   Copyright (C) 2001-2002                         --
+--                   Copyright (C) 2001-2004                         --
 --                         ACT-Europe                                --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
@@ -254,22 +254,10 @@ package Csc_HTML_Widget is
      (HTML      : access Csc_HTML_Record;
       Alignment : Paragraph_Alignment);
 
-   procedure Cut (HTML : access Csc_HTML_Record);
-   --  Cut the current selection in HTML.
-
    procedure Copy (HTML : access Csc_HTML_Record);
    --  Copy the current selection in HTML.
    --  ??? This procedure does not work, you should use functions from
    --  Gtk.Clipboard in cunjunction with Get_Selection, see above.
-
-   procedure Paste (HTML : access Csc_HTML_Record);
-   --  Paste the current selection in HTML.
-
-   procedure Undo (HTML : access Csc_HTML_Record);
-   --  Undo the last editing.
-
-   procedure Redo (HTML : access Csc_HTML_Record);
-   --  Redo the last editing.
 
    ----------------
    -- Misc Utils --

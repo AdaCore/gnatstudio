@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --              GtkAda - Ada95 binding for Gtk+/Gnome                --
 --                                                                   --
---                   Copyright (C) 2001-2002                         --
+--                   Copyright (C) 2001-2004                         --
 --                         ACT-Europe                                --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
@@ -98,18 +98,6 @@ package body Csc_HTML_Widget is
    begin
       Internal (Get_Object (HTML));
    end Copy;
-
-   ---------
-   -- Cut --
-   ---------
-
-   procedure Cut (HTML : access Csc_HTML_Record) is
-      procedure Internal (HTML : System.Address);
-      pragma Import (C, Internal, "csc_html_copy");
-
-   begin
-      Internal (Get_Object (HTML));
-   end Cut;
 
    ------------------
    -- Enable_Debug --
@@ -325,30 +313,6 @@ package body Csc_HTML_Widget is
       Internal (Get_Object (HTML));
    end Load_Empty;
 
-   -----------
-   -- Paste --
-   -----------
-
-   procedure Paste (HTML : access Csc_HTML_Record) is
-      procedure Internal (HTML : System.Address);
-      pragma Import (C, Internal, "csc_html_paste");
-
-   begin
-      Internal (Get_Object (HTML));
-   end Paste;
-
-   ----------
-   -- Redo --
-   ----------
-
-   procedure Redo (HTML : access Csc_HTML_Record) is
-      procedure Internal (HTML : System.Address);
-      pragma Import (C, Internal, "csc_html_redo");
-
-   begin
-      Internal (Get_Object (HTML));
-   end Redo;
-
    -------------------
    -- Request_Paste --
    -------------------
@@ -521,17 +485,5 @@ package body Csc_HTML_Widget is
    begin
       Internal (Stream, Buffer'Address, Buffer'Length);
    end Stream_Write;
-
-   ----------
-   -- Undo --
-   ----------
-
-   procedure Undo (HTML : access Csc_HTML_Record) is
-      procedure Internal (HTML : System.Address);
-      pragma Import (C, Internal, "csc_html_undo");
-
-   begin
-      Internal (Get_Object (HTML));
-   end Undo;
 
 end Csc_HTML_Widget;
