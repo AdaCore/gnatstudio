@@ -213,8 +213,8 @@ package body Odd.Dialogs.Callbacks is
          Process_User_Command
            (Tab,
             Get
-            (Gtk_Label
-             (Get_Data (Children (Gtk_Container (Get_Data (Selected)))))));
+              (Gtk_Label
+                (Get_Data (Children (Gtk_Container (Get_Data (Selected)))))));
          Selected := Prev (Selected);
       end loop;
    end On_Replay_Selection_Clicked;
