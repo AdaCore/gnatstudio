@@ -1,0 +1,13 @@
+Overview of the changes since version 0.9.1:
+
+- Shortcut provided to build the current file with the default project
+- Minor debugger bug fixes
+- It is now possible to copy text from the HTML window
+- The main files in the program wizard are now taken into account
+- Menu items File->Messages->Save As... & Load Contents... implemented
+- Menu Build->Run implemented
+- Automatic indentation now configurable through the preferences dialog
+- The search box now contains predefined regexps for the various languages
+- The buttons "Find" and "Next" have been merged in the search box
+- New contextual menu "find all local references" (9905-008)
+
