@@ -120,7 +120,11 @@ package GNAT.Expect is
    --  Terminate the process and close the pipes to it.
    --  (It implicitly does the 'wait' command required to clean up the
    --  process table).
-   --  This also frees the buffer associated with the proces id.
+   --  This also frees the buffer associated with the process id.
+
+   procedure Interrupt (Descriptor : in out Process_Descriptor);
+   --  Interrupt the process (the equivalent of Ctrl-C on unix and windows)
+   --  and call close if the process dies.
 
    function Get_Input_Fd
      (Descriptor : Process_Descriptor) return GNAT.OS_Lib.File_Descriptor;

@@ -248,6 +248,16 @@ package body GNAT.Expect is
       Waitpid (Descriptor.Pid, System.Null_Address, 0);
    end Close;
 
+   ---------------
+   -- Interrupt --
+   ---------------
+
+   procedure Interrupt (Descriptor : in out Process_Descriptor) is
+   begin
+      Kill (Descriptor.Pid, 2);
+      --  ??? Need to check process status here.
+   end Interrupt;
+
    ---------------------
    -- Expect_Internal --
    ---------------------
