@@ -73,13 +73,6 @@ package Vdiff2_Command_Line is
       return Diff_Chunk_List.List_Node;
    --  Search in diff list the node corresponding to Item
 
-   procedure test_button
-     (Kernel : Kernel_Handle;
-      Diff   : Diff_Head_Access;
-      Line   : Natural := 0;
-      File   : Virtual_File := VFS.No_File);
-   --  Just For Testing
-
    procedure Move_On_Ref_File
      (Kernel : Kernel_Handle;
       Diff   : Diff_Head_Access;

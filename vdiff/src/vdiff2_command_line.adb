@@ -23,7 +23,6 @@ with Diff_Utils2;                       use Diff_Utils2;
 with Vdiff2_Module.Utils;               use Vdiff2_Module.Utils;
 with Vdiff2_Module.Utils.Text;          use Vdiff2_Module.Utils.Text;
 with Vdiff2_Module.Utils.Shell_Command; use Vdiff2_Module.Utils.Shell_Command;
-with Text_IO;                           use Text_IO;
 
 package body Vdiff2_Command_Line is
 
@@ -136,22 +135,6 @@ package body Vdiff2_Command_Line is
 
       return Curr_Node;
    end Is_In_Diff_Chunk_List;
-
-   ------------------
-   --  test_button --
-   ------------------
-
-   procedure test_button
-     (Kernel : Kernel_Handle;
-      Diff   : Diff_Head_Access;
-      Line   : Natural := 0;
-      File   : Virtual_File := VFS.No_File) is
-      pragma Unreferenced (Kernel, Diff);
-   begin
-      Put_Line ("j'ai cliquer a la ligne "
-                & Natural'Image (Line) &
-                " dans le fichier " & Full_Name (File).all);
-   end test_button;
 
    ------------------------
    --  Move_On_Ref_File  --
