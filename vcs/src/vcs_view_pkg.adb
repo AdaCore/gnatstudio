@@ -29,7 +29,7 @@ with Gtk;                       use Gtk;
 with Gtk.Box;                   use Gtk.Box;
 with Gtk.Cell_Renderer_Text;    use Gtk.Cell_Renderer_Text;
 with Gtk.Cell_Renderer_Pixbuf;  use Gtk.Cell_Renderer_Pixbuf;
-with Gtk.Enums;                 use Gtk.Enums;
+with Gtk.Enums;
 with Gtk.Handlers;              use Gtk.Handlers;
 with Gtk.Menu;                  use Gtk.Menu;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;
@@ -46,7 +46,7 @@ with Gtkada.MDI;                use Gtkada.MDI;
 
 with Log_Editor_Window_Pkg;     use Log_Editor_Window_Pkg;
 
-with GNAT.OS_Lib;               use GNAT.OS_Lib;
+with GNAT.OS_Lib;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 
 with VCS;
@@ -406,7 +406,8 @@ package body VCS_View_Pkg is
       Success := True;
 
       if String_List.Is_Empty (Status_Record.File_Name)
-        or else Is_Directory (String_List.Head (Status_Record.File_Name))
+        or else GNAT.OS_Lib.Is_Directory
+                 (String_List.Head (Status_Record.File_Name))
       then
          Success := False;
          return;
@@ -997,14 +998,16 @@ package body VCS_View_Pkg is
       Pack_Start (Vbox1, Hbox1, True, True, 3);
 
       Gtk_New (Scrolledwindow1);
-      Set_Policy (Scrolledwindow1, Policy_Automatic, Policy_Automatic);
+      Set_Policy (Scrolledwindow1,
+                  Gtk.Enums.Policy_Automatic,
+                  Gtk.Enums.Policy_Automatic);
       Pack_Start (Hbox1, Scrolledwindow1, True, True, 3);
 
       Create_Model (VCS_View);
 
       Gtk_New (VCS_View.Tree, VCS_View.Model);
       Selection := Get_Selection (VCS_View.Tree);
-      Set_Mode (Selection, Selection_Multiple);
+      Set_Mode (Selection, Gtk.Enums.Selection_Multiple);
       Add (Scrolledwindow1, VCS_View.Tree);
 
       Gtkada.Handlers.Return_Callback.Object_Connect
