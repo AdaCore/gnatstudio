@@ -4092,6 +4092,7 @@ package body Prj_API is
    procedure Finalize is
    begin
       Prj.Reset;
+      Prj.Tree.Tree_Private_Part.Project_Nodes.Free;
       Prj.Tree.Tree_Private_Part.Projects_Htable.Reset;
       Namet.Finalize;
       Stringt.Initialize;
