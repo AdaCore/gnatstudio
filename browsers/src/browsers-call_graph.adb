@@ -1646,6 +1646,7 @@ package body Browsers.Call_Graph is
          else
             Set_Return_Value (Data, -"<renaming>");
          end if;
+
          Set_Return_Value_Key
            (Data, Create_Entity (Get_Script (Data), Entity), Append => True);
       end Add_To_List;
@@ -1655,6 +1656,7 @@ package body Browsers.Call_Graph is
         Nth_Arg (Data, 1, Get_Entity_Class (Kernel));
       Entity     : constant Entity_Information := Get_Data (Instance);
       Cb         : constant Examine_Callback := (null, null, False);
+
    begin
       if Command = "find_all_refs" then
          Find_All_References_Internal
@@ -1662,9 +1664,11 @@ package body Browsers.Call_Graph is
             Category_Title => -All_Refs_Category,
             Include_Writes => True,
                Include_Reads  => True);
+
       elsif Command = "calls" then
          Examine_Entity_Call_Graph_Iterator
            (Kernel, Entity, Cb, Add_To_List'Unrestricted_Access);
+
       elsif Command = "called_by" then
          Examine_Ancestors_Call_Graph_Iterator
            (Kernel, Entity, Cb, Add_To_List'Unrestricted_Access,
