@@ -1738,7 +1738,7 @@ Note that the function_name must include the name of the module, since otherwise
   <shell_doc name="GPS.describe_type" real_name="GPS.Hook.describe_type">
      <param name="name">A string, the name of the hook type</param>
      <return>A string</return>
-     <description>Describe a hook type and what are the expected arguments</description>
+     <description>Describe a hook type and what are the expected arguments. Remember that all hooks get the hook name as the first parameter, in addition to the parameters described by this function.</description>
   </shell_doc>
 
   <!--#################################################################
