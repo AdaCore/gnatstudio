@@ -410,17 +410,22 @@ package body Src_Editor_View is
    procedure Change_Handler
      (Buffer : access Source_Buffer_Record'Class;
       Params : Glib.Values.GValues;
-      User   : Source_View) is
+      User   : Source_View)
+   is
+      Line : constant Gint := Get_Int (Nth (Params, 1));
    begin
       if User.Has_Focus then
          Save_Cursor_Position (User);
          Scroll_To_Cursor_Location (User);
       end if;
 
-      --  If we are doing block highlighting, re-expose the entire view.
+      --  If we are doing block highlighting, re-expose the entire view if the
+      --  current block has changed.
 
-      if User.Highlight_Blocks then
-         Line_Highlight_Change_Handler (Buffer, Params, User);
+      if User.Highlight_Blocks
+        and then User.Current_Block /= Get_Block (Buffer, Integer (Line) + 1)
+      then
+         Clear_Text_Window (User);
       end if;
 
    exception
@@ -571,18 +576,15 @@ package body Src_Editor_View is
             GC               : Gdk.GC.Gdk_GC;
             Buffer           : constant Source_Buffer :=
               Source_Buffer (Get_Buffer (View));
-            Block_Start      : Natural;
-            Block            : Block_Record;
-            Block_Stack      : Integer;
 
-            procedure Draw_Block (L : Integer; B : Block_Record);
+            procedure Draw_Block (B : Block_Record);
             --  Draw block B at line L.
 
             ----------------
             -- Draw_Block --
             ----------------
 
-            procedure Draw_Block (L : Integer; B : Block_Record) is
+            procedure Draw_Block (B : Block_Record) is
                Block_Begin_Y : Gint;
                Y             : Gint;
                Height        : Gint;
@@ -594,13 +596,14 @@ package body Src_Editor_View is
                Bracket_Offset : constant := 2;
                --  The distance between brackets and text.
 
+               First         : constant Gint := Gint (B.First_Line - 1);
+               Last          : constant Gint := Gint (B.Last_Line - 1);
+
             begin
-               Get_Iter_At_Line_Offset
-                 (Buffer, Iter, Gint (L - 1), 0);
+               Get_Iter_At_Line_Offset (Buffer, Iter, First, 0);
                Get_Line_Yrange  (View, Iter, Block_Begin_Y, Dummy);
 
-               Get_Iter_At_Line_Offset
-                 (Buffer, Iter, Gint (B.Other_Line - 1), 0);
+               Get_Iter_At_Line_Offset (Buffer, Iter, Last, 0);
                Get_Line_Yrange (View, Iter, Dummy, Height);
 
                Height := Dummy + Height - Block_Begin_Y;
@@ -609,7 +612,7 @@ package body Src_Editor_View is
                  (View,
                   Text_Window_Text, Dummy, Block_Begin_Y, Dummy, Y);
 
-               X := Gint (Block.Offset - 1) * View.Char_Width - Bracket_Offset;
+               X := Gint (B.Offset - 1) * View.Char_Width - Bracket_Offset;
 
                Draw_Line (Window, View.Current_Block_GC, X, Y, X, Y + Height);
                Draw_Line
@@ -686,22 +689,9 @@ package body Src_Editor_View is
             --  Highlight the current block.
 
             if View.Highlight_Blocks then
-               Block_Start := Natural (Get_Line (Cursor_Iter));
-               Block_Stack := 0;
-
-               while Block_Start > 0 loop
-                  Block := Get_Block (Buffer, Block_Start);
-
-                  Block_Stack := Block_Stack + Block.Indentation_Level;
-
-                  if Block_Stack > 0 then
-                     Draw_Block (Block_Start, Block);
-
-                     exit;
-                  end if;
-
-                  Block_Start := Block_Start - 1;
-               end loop;
+               View.Current_Block := Get_Block
+                 (Buffer, Integer (Get_Line (Cursor_Iter)) + 1);
+               Draw_Block (View.Current_Block);
             end if;
 
             --  Redraw the line showing the nth column if needed
