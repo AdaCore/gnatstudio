@@ -16,6 +16,6 @@
 <A HREF="@_REF_FILE_@#@_DECL_LINE_@">@_NAME_@</a>
 @@ELSE@@
 @_NAME_@
-@@ENDIF@@
+@@END_IF@@
 declared at&nbsp;@_DECL_FILE_@&nbsp;@_DECL_LINE_@:@_DECL_COLUMN_@
 </PRE></TD><TR>
