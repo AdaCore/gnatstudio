@@ -132,4 +132,21 @@ package Glide_Kernel.Project is
    --  For a Makefile, set Prefix to "", for gnatmake set prefix to "-X".
    --  This function returns a concatenation of Prefix & "VAR=VALUE".
 
+   ----------------
+   -- Attributes --
+   ----------------
+
+   function Get_Switches
+     (Handle   : access Kernel_Handle_Record'Class;
+      Project  : Projects.Project_Type;
+      In_Pkg   : String;
+      File     : VFS.Virtual_File := VFS.No_File;
+      Index    : String;
+      Use_Initial_Value : Boolean := False) return GNAT.OS_Lib.Argument_List;
+   --  Same as Projects.Get_Switches.
+   --  If the package or its attribute isn't defined, or Project is No_Project,
+   --  and Use_Initial_Value is True, then the default switches
+   --  registered for that package/language combination are returned. These
+   --  default switches are defined in XML files.
+
 end Glide_Kernel.Project;

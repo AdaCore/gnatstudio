@@ -30,9 +30,12 @@ with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.Case_Util;            use GNAT.Case_Util;
 
 with Projects;           use Projects;
+with Projects.Editor;    use Projects.Editor;
 with Projects.Registry;  use Projects.Registry;
 with String_Utils;       use String_Utils;
 with Basic_Types;
+with Prj;
+with Types;                    use Types;
 
 with Glide_Kernel.Console;     use Glide_Kernel.Console;
 with Glide_Kernel.Timeout;     use Glide_Kernel.Timeout;
@@ -442,5 +445,74 @@ package body Glide_Kernel.Project is
    begin
       return Handle.Registry.all;
    end Get_Registry;
+
+   ------------------
+   -- Get_Switches --
+   ------------------
+
+   function Get_Switches
+     (Handle            : access Kernel_Handle_Record'Class;
+      Project           : Project_Type;
+      In_Pkg            : String;
+      File              : VFS.Virtual_File := VFS.No_File;
+      Index             : String;
+      Use_Initial_Value : Boolean := False) return GNAT.OS_Lib.Argument_List
+   is
+      use type Prj.Variable_Value;
+      Value : Prj.Variable_Value;
+      Is_Default : Boolean;
+      L     : Prj.String_List_Id;
+      Name  : Name_Id;
+   begin
+      Get_Switches
+        (Project, In_Pkg, File, Get_String (Index), Value, Is_Default);
+
+      --  If no value was found, we might have to return the initial value
+      if Value = Prj.Nil_Variable_Value and then Use_Initial_Value then
+         L := Prj.Nil_String;
+
+         declare
+            Tool_Name : constant String := Get_Tool_Name
+              (Handle,
+               Pkg_Name  => In_Pkg,
+               Attribute => "default_switches",
+               Index     => Index);
+            Prop : Tool_Properties_Record;
+         begin
+            if Tool_Name /= "" then
+               Prop := Get_Tool_Properties (Handle, Tool_Name);
+
+               if Prop.Initial_Cmd_Line /= null then
+                  declare
+                     Cmd : Argument_List_Access :=
+                       Argument_String_To_List (Prop.Initial_Cmd_Line.all);
+                  begin
+                     for V in Cmd'Range loop
+                        Name := Get_String (Cmd (V).all);
+                        Prj.String_Elements.Increment_Last;
+                        Prj.String_Elements.Table (Prj.String_Elements.Last) :=
+                          Prj.String_Element'
+                            (Value         => Name,
+                             Display_Value => Name,
+                             Location      => No_Location,
+                             Flag          => False,
+                             Next          => L);
+                        L := Prj.String_Elements.Last;
+                     end loop;
+
+                     Value := Prj.Variable_Value'
+                       (Kind     => Prj.List,
+                        Location => No_Location,
+                        Default  => True,
+                        Values   => L);
+                     Free (Cmd);
+                  end;
+               end if;
+            end if;
+         end;
+      end if;
+
+      return To_Argument_List (Value);
+   end Get_Switches;
 
 end Glide_Kernel.Project;
