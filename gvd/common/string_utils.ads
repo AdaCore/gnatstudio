@@ -24,6 +24,7 @@
 with GNAT.Directory_Operations;
 with GNAT.OS_Lib;
 with Interfaces.C.Strings;
+with Glib;
 
 package String_Utils is
 
@@ -166,11 +167,11 @@ package String_Utils is
    function Number_Of_Digits (N : Integer) return Natural;
    --  Return the number of digits for the given Integer number;
 
-   function Is_Entity_Letter (Char : Character) return Boolean;
+   function Is_Entity_Letter (Char : Glib.Gunichar) return Boolean;
    --  Return True if the given letter is a valid letter for an entity name
    --  (ie if the letter is either alphanumeric or an '_').
 
-   function Is_Operator_Letter (Char : Character) return Boolean;
+   function Is_Operator_Letter (Char : Glib.Gunichar) return Boolean;
    --  Return True if the given letter is a valid operator.
 
    function Case_Insensitive_Equal (S1, S2 : String) return Boolean;

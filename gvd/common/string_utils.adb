@@ -24,6 +24,7 @@ with GNAT.OS_Lib;             use GNAT.OS_Lib;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with Ada.Unchecked_Deallocation;
 with Ada.Strings.Unbounded;   use Ada.Strings.Unbounded;
+with Glib.Unicode;            use Glib, Glib.Unicode;
 
 package body String_Utils is
 
@@ -857,20 +858,27 @@ package body String_Utils is
    -- Is_Entity_Letter --
    ----------------------
 
-   function Is_Entity_Letter (Char : Character) return Boolean is
+   function Is_Entity_Letter (Char : Gunichar) return Boolean is
    begin
-      return Char = '_' or else Is_Alphanumeric (Char);
+      return Char = Character'Pos ('_') or else Is_Alnum (Char);
    end Is_Entity_Letter;
 
    ------------------------
    -- Is_Operator_Letter --
    ------------------------
 
-   function Is_Operator_Letter (Char : Character) return Boolean is
+   function Is_Operator_Letter (Char : Gunichar) return Boolean is
    begin
       case Char is
-         when '<' | '=' | '>' | '+' | '-' | '*' | '/' =>
+         when Character'Pos ('<')
+              | Character'Pos ('=')
+              | Character'Pos ('>')
+              | Character'Pos ('+')
+              | Character'Pos ('-')
+              | Character'Pos ('*')
+              | Character'Pos ('/') =>
             return True;
+
          when others =>
             return False;
       end case;
