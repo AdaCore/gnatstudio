@@ -60,17 +60,11 @@ package body Src_Info.LI_Utils is
       D_Ptr : E_Declaration_Info_List;
    begin
       if File = No_LI_File then
-         File := new LI_File_Constrained'
-               (LI =>  (Parsed => True,
-                        Handler => LI_Handler (Handler),
-                        LI_Filename => new String'(Source_Filename),
-                        Body_Info => new File_Info,
-                        Spec_Info => null,
-                        Dependencies_Info => null,
-                        Compilation_Errors_Found => False,
-                        Separate_Info => null,
-                        LI_Timestamp => 0));
-         File.LI.LI_Filename := new String'(Source_Filename);
+         Create_LI_File
+           (Handler           => Handler,
+            File              => File,
+            Source_Filename   => Source_Filename,
+            Parsed            => True);
          File.LI.Body_Info := new File_Info'
                (Unit_Name => null,
                 Source_Filename => new String'(Source_Filename),
@@ -80,8 +74,6 @@ package body Src_Info.LI_Utils is
                 Original_Filename => null,
                 Original_Line => 1,
                 Declarations => null);
-         File.LI.Spec_Info := null;
-         File.LI.Separate_Info := null;
       else
          pragma Assert (File.LI.LI_Filename.all = Source_Filename,
                      "Invalid Source Filename");
@@ -492,10 +484,14 @@ package body Src_Info.LI_Utils is
                     Column => Location.Column);
       D_Ptr.Value.Declaration.Kind := Kind;
       if Parent_Location = Invalid_Point then
-         D_Ptr.Value.Declaration.Parent_Location := Null_File_Location;
+         D_Ptr.Value.Declaration.Parent_Location := new File_Location_Node;
+         D_Ptr.Value.Declaration.Parent_Location.Value := Null_File_Location;
+         D_Ptr.Value.Declaration.Parent_Location.Next := null;
       elsif Parent_Location = Predefined_Point then
-         D_Ptr.Value.Declaration.Parent_Location :=
-           Predefined_Entity_Location;
+         D_Ptr.Value.Declaration.Parent_Location := new File_Location_Node;
+         D_Ptr.Value.Declaration.Parent_Location.Value :=
+                                                Predefined_Entity_Location;
+         D_Ptr.Value.Declaration.Parent_Location.Next := null;
       else
          --  Processing parent information
          if eq (Source_Filename, Parent_Filename) then
@@ -504,15 +500,19 @@ package body Src_Info.LI_Utils is
             Tmp_LI_File_Ptr := Get (List.Table, Parent_Filename);
             if (Tmp_LI_File_Ptr = No_LI_File) then
                --  ??? What should we do if LI_File for parent does not exists?
-               null;
+               raise Parent_Not_Available;
             end if;
          end if;
-         D_Ptr.Value.Declaration.Parent_Location :=
+         D_Ptr.Value.Declaration.Parent_Location := new File_Location_Node;
+         D_Ptr.Value.Declaration.Parent_Location.Value :=
                (File => (LI => Tmp_LI_File_Ptr,
                          Part => Unit_Body,
                          Source_Filename => new String'(Parent_Filename)),
                 Line => Parent_Location.Line,
                 Column => Parent_Location.Column);
+         D_Ptr.Value.Declaration.Parent_Location.Next := null;
+         --  ??? How does the procedure looks like to support multiply
+         --  inheritance?
       end if;
       D_Ptr.Value.Declaration.Scope := Scope;
       if End_Of_Scope_Location = Invalid_Point then
@@ -624,6 +624,9 @@ package body Src_Info.LI_Utils is
 --   is
 --   begin
 --   end Create_Dependency_File_Info_Node
+
+--   procedure Create_File_Location_Node
+
 
    -------------------------------------------------------------------------
 

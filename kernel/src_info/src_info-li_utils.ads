@@ -104,4 +104,7 @@ private package Src_Info.LI_Utils is
    Declaration_Not_Found : exception;
    --  Thrown by Find_Declaration functions if declaration is not found
 
+   Parent_Not_Available : exception;
+   --  Thrown if information on parent for current symbol is not available
+
 end Src_Info.LI_Utils;
