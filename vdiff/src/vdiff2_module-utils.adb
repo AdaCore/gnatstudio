@@ -769,23 +769,28 @@ package body Vdiff2_Module.Utils is
                if Offset1 < Offset2 then
                   Curr_Chunk.Range2.Blank_Lines :=
                     new String'
-                      (Add_Line (Kernel, Item.File1,
-                            Curr_Chunk.Range1.Last, VStyle (Ref).all,
-                            Offset2 - Offset1));
+                      (Add_Line
+                        (Kernel, Item.File1,
+                         Curr_Chunk.Range1.Last, VStyle (Ref).all,
+                         Offset2 - Offset1));
+
                elsif Offset1 > Offset2 then
                   Curr_Chunk.Range2.Blank_Lines :=
                     new String'
-                      (Add_Line (Kernel, Item.File2,
-                                 Curr_Chunk.Range2.Last, VStyle (Other).all,
-                                 Offset1 - Offset2));
+                      (Add_Line
+                        (Kernel, Item.File2,
+                         Curr_Chunk.Range2.Last, VStyle (Other).all,
+                         Offset1 - Offset2));
                end if;
 
                Curr_Chunk.Range1.Mark := new String'
-                 (Mark_Diff_Block (Kernel, Item.File1,
-                                   Curr_Chunk.Range1.First));
+                 (Mark_Diff_Block
+                   (Kernel, Item.File1,
+                    Curr_Chunk.Range1.First));
                Curr_Chunk.Range2.Mark := new String'
-                 (Mark_Diff_Block (Kernel, Item.File2,
-                                   Curr_Chunk.Range2.First));
+                 (Mark_Diff_Block
+                   (Kernel, Item.File2,
+                    Curr_Chunk.Range2.First));
 
             when Delete =>
                VStyle (Other) := new String'(Remove_Style);
@@ -795,22 +800,24 @@ package body Vdiff2_Module.Utils is
                   Curr_Chunk.Range1.First, VStyle (Ref).all,
                   Curr_Chunk.Range1.Last - Curr_Chunk.Range1.First);
                Curr_Chunk.Range2.Mark := new String'
-                 (Add_Line (Kernel, Item.File2,
-                            Curr_Chunk.Range2.First, VStyle (Other).all,
-                            Curr_Chunk.Range1.Last - Curr_Chunk.Range1.First));
+                 (Add_Line
+                   (Kernel, Item.File2,
+                    Curr_Chunk.Range2.First, VStyle (Other).all,
+                    Curr_Chunk.Range1.Last - Curr_Chunk.Range1.First));
                Curr_Chunk.Range2.Blank_Lines :=
                  new String'(Curr_Chunk.Range2.Mark.all);
                Curr_Chunk.Range1.Mark := new String'
-                 (Mark_Diff_Block (Kernel, Item.File1,
-                                   Curr_Chunk.Range1.First));
+                 (Mark_Diff_Block
+                   (Kernel, Item.File1,
+                    Curr_Chunk.Range1.First));
 
             when others =>
                null;
          end case;
+
          Free (VStyle);
          Curr_Node := Next (Curr_Node);
       end loop;
-
    end Show_Differences;
 
    ------------------------
@@ -821,13 +828,14 @@ package body Vdiff2_Module.Utils is
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
       Item   : in out Diff_Head)
    is
-      Args_edit           : Argument_List
-        := (1 => new String'(Full_Name (Item.File1)));
+      Args_edit           : Argument_List :=
+        (1 => new String'(Full_Name (Item.File1)));
       Res                 : Diff_List;
       Curr_Node           : Diff_List_Node;
       Curr_Chunk          : Diff_Chunk_Access;
       Cmd                 : Diff_Command_Access;
       Info                : T_VLine_Information;
+
    begin
       Register_Highlighting (Kernel);
 
