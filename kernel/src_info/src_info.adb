@@ -526,12 +526,12 @@ package body Src_Info is
    -------------------
 
    procedure Get_Unit_Name
-     (Source            : in out Source_File;
-      Source_Info_List  : in out LI_File_List;
-      Project           : Prj.Project_Id;
-      Extra_Source_Path : String;
-      Extra_Object_Path : String;
-      Unit_Name         : out String_Access)
+     (Source                 : in out Source_File;
+      Source_Info_List       : in out LI_File_List;
+      Project                : Prj.Project_Id;
+      Predefined_Source_Path : String;
+      Predefined_Object_Path : String;
+      Unit_Name              : out String_Access)
    is
       Success : Boolean;
       Unit    : LI_File_Ptr;
@@ -543,8 +543,8 @@ package body Src_Info is
       if Is_Incomplete (Source.LI) then
          Parse_ALI_File
            (Find_Object_File
-            (Project, Source.LI.LI.LI_Filename.all, Extra_Object_Path),
-            Project, Extra_Source_Path, Extra_Object_Path,
+            (Project, Source.LI.LI.LI_Filename.all, Predefined_Object_Path),
+            Project, Predefined_Source_Path, Predefined_Object_Path,
             Source_Info_List, Unit, Success);
          if Success then
             Source.LI := Unit;
@@ -620,8 +620,8 @@ package body Src_Info is
      (File              : in out Internal_File;
       Source_Info_List  : in out Src_Info.LI_File_List;
       Project           : Prj.Project_Id;
-      Extra_Source_Path : String;
-      Extra_Object_Path : String;
+      Predefined_Source_Path : String;
+      Predefined_Object_Path : String;
       Unit_Name         : out String_Access)
    is
       Source : Source_File;
@@ -630,12 +630,12 @@ package body Src_Info is
       pragma Assert (Source /= No_Source_File);
 
       Get_Unit_Name
-        (Source            => Source,
-         Source_Info_List  => Source_Info_List,
-         Project           => Project,
-         Extra_Source_Path => Extra_Source_Path,
-         Extra_Object_Path => Extra_Object_Path,
-         Unit_Name         => Unit_Name);
+        (Source                 => Source,
+         Source_Info_List       => Source_Info_List,
+         Project                => Project,
+         Predefined_Source_Path => Predefined_Source_Path,
+         Predefined_Object_Path => Predefined_Object_Path,
+         Unit_Name              => Unit_Name);
    end Get_Unit_Name;
 
    ----------------------
