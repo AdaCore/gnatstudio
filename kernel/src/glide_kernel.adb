@@ -32,6 +32,7 @@ with Gtk.Container;             use Gtk.Container;
 with Gtk.Dialog;                use Gtk.Dialog;
 with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Handlers;              use Gtk.Handlers;
+with Gtk.Icon_Factory;          use Gtk.Icon_Factory;
 with Gtk.Label;                 use Gtk.Label;
 with Gtk.Main;                  use Gtk.Main;
 with Gtk.Cell_Renderer_Text;    use Gtk.Cell_Renderer_Text;
@@ -142,6 +143,17 @@ package body Glide_Kernel is
       return Handle.Lang_Handler;
    end Get_Language_Handler;
 
+   ----------------------
+   -- Get_Icon_Factory --
+   ----------------------
+
+   function Get_Icon_Factory
+     (Handle : access Kernel_Handle_Record)
+      return Gtk.Icon_Factory.Gtk_Icon_Factory is
+   begin
+      return Handle.Icon_Factory;
+   end Get_Icon_Factory;
+
    ------------------
    -- GNAT_Version --
    ------------------
@@ -198,6 +210,9 @@ package body Glide_Kernel is
       --  files.
 
       Reset_LI_File_List (Handle);
+
+      Gtk_New (Handle.Icon_Factory);
+      Add_Default (Handle.Icon_Factory);
 
       Gtk_New (Handle.Tooltips);
       Ref (Handle.Tooltips);
