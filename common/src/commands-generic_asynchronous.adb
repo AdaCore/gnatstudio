@@ -18,6 +18,8 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Glide_Intl; use Glide_Intl;
+
 package body Commands.Generic_Asynchronous is
 
    ----------
@@ -29,6 +31,7 @@ package body Commands.Generic_Asynchronous is
       if D.Data /= null then
          Free (D.Data.all);
          Unchecked_Free (D.Data);
+         Free (D.Description);
       end if;
    end Free;
 
@@ -37,11 +40,15 @@ package body Commands.Generic_Asynchronous is
    ------------
 
    procedure Create
-     (Command : out Generic_Asynchronous_Command_Access;
-      Data    : in Data_Type) is
+     (Command     : out Generic_Asynchronous_Command_Access;
+      Description : String;
+      Data        : in Data_Type;
+      Iterate     : Iteration_Procedure) is
    begin
       Command := new Generic_Asynchronous_Command;
       Command.Data := new Data_Type'(Data);
+      Command.Iterate := Iterate;
+      Command.Description := new String'(Description);
    end Create;
 
    -------------
@@ -59,7 +66,11 @@ package body Commands.Generic_Asynchronous is
          return Failure;
       end if;
 
-      Iterate (Command.Data.all, Command_Access (Command), Result);
+      if Command.Iterate = null then
+         return Failure;
+      else
+         Command.Iterate (Command.Data.all, Command_Access (Command), Result);
+      end if;
 
       return Result;
    end Execute;
@@ -69,11 +80,13 @@ package body Commands.Generic_Asynchronous is
    ----------
 
    function Name
-     (Command : access Generic_Asynchronous_Command) return String
-   is
-      pragma Unreferenced (Command);
+     (Command : access Generic_Asynchronous_Command) return String is
    begin
-      return Description;
+      if Command.Description = null then
+         return -"Generic asynchronous command";
+      else
+         return Command.Description.all;
+      end if;
    end Name;
 
 end Commands.Generic_Asynchronous;

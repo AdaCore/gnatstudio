@@ -21,32 +21,33 @@
 --  ??? Description of this package
 
 with Ada.Unchecked_Deallocation;
+with Basic_Types; use Basic_Types;
 
 generic
    type Data_Type (<>) is private;
 
-   Description : String;
-
    with procedure Free (Data : in out Data_Type) is <>;
    --  Free memory allocated to Data.
 
-   with procedure Iterate
+package Commands.Generic_Asynchronous is
+
+   type Iteration_Procedure is access procedure
      (Data    : in out Data_Type;
       Command : Command_Access;
-      Result  : out Command_Return_Type) is <>;
+      Result  : out Command_Return_Type);
    --  Do one iteration. Initialize Data at first iteration if needed.
    --  Command points to the current command. Progress fields can be set
    --  accordingly
-
-package Commands.Generic_Asynchronous is
 
    type Generic_Asynchronous_Command is new Root_Command with private;
    type Generic_Asynchronous_Command_Access is
      access all Generic_Asynchronous_Command;
 
    procedure Create
-     (Command : out Generic_Asynchronous_Command_Access;
-      Data    : in Data_Type);
+     (Command     : out Generic_Asynchronous_Command_Access;
+      Description : String;
+      Data        : in Data_Type;
+      Iterate     : Iteration_Procedure);
 
    procedure Free (D : in out Generic_Asynchronous_Command);
    --  Free memory associated to D.
@@ -67,7 +68,9 @@ private
      (Data_Type, Data_Access);
 
    type Generic_Asynchronous_Command is new Root_Command with record
-      Data : Data_Access;
+      Data        : Data_Access;
+      Iterate     : Iteration_Procedure;
+      Description : String_Access;
    end record;
 
 end Commands.Generic_Asynchronous;
