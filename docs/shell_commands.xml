@@ -2416,6 +2416,40 @@ highlight_category, style_category and warning_category reference the colors to 
   </shell_doc>
 
   <!--#################################################################
+    ####   Contextual class
+    ###################################################################-->
+
+  <shell_doc name="GPS.Contextual" >
+     <description>This class is a general interface to the contextual menus in GPS. It gives you control over which menus should be displayed when the user right clicks in parts of GPS</description>
+     <see_also name="GPS.Contextual.__init__()" />
+  </shell_doc>
+
+  <shell_doc name="GPS.Contextual.__init__">
+     <param name="self">The instance of GPS.Contextual</param>
+     <param name="name">A string</param>
+     <description>Initializes a new instance of GPS.Contextual. The name is the name that was given to the contextual menu when it was created, and is a static string independent of the actual label used when the menu is displayed (and which is dynamic, depending on the context). You can get the list of valid names by checking the list of names returned by GPS.Contextual.list</description>
+     <see_also name="GPS.Contextual.list()" />
+  </shell_doc>
+
+  <shell_doc name="GPS.Contextual.list">
+     <description>Return the list of all registered contextual menus. This is a list of strings which are valid names that can be passed to the constructor of GPS.Contextual. These names were created when the contextual menu was registered in GPS.</description>
+     <see_also name="GPS.Contextual.__init__()" />
+  </shell_doc>
+
+  <shell_doc name="GPS.Contextual.show">
+     <param name="self">The instance of GPS.Contextual</param>
+     <description>Make sure the contextual menu will be shown when appropriate. The entry might still be invisible if you right clicked on a context where it doesn't apply, but it will be checked</description>
+     <see_also name="GPS.Contextual.hide" />
+  </shell_doc>
+
+  <shell_doc name="GPS.Contextual.hide">
+     <param name="self">The instance of GPS.Contextual</param>
+     <description>Make sure the contextual menu will never appear when the user right clicks anywhere in GPS. This is the standard way to disable contextual menus</description>
+     <see_also name="GPS.Contextual.show" />
+  </shell_doc>
+
+
+  <!--#################################################################
     ####   Menu class
     ###################################################################-->
 
