@@ -107,7 +107,7 @@ package Codefix.Text_Manager is
    --  Free the memory associated to a Mark_Abstr.
 
    procedure Free (This : in out Ptr_Mark);
-   --  Free the memory associated toa Ptr_Mark.
+   --  Free the memory associated to a Ptr_Mark.
 
    ----------------------------------------------------------------------------
    --  type Text_Interface
