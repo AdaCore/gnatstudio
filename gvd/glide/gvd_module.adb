@@ -2000,8 +2000,11 @@ package body GVD_Module is
                      null, Sensitive => False);
       Register_Menu (Kernel, Session_Sub, -"_Save As...", Stock_Save_As,
                      null, Sensitive => False);
-      Register_Menu (Kernel, Session_Sub, -"_Command History", Stock_Index,
-                     On_Command_History'Access);
+      Mitem := Register_Menu
+        (Kernel, Session_Sub, -"_Command History", Stock_Index,
+         On_Command_History'Access);
+
+      Set_Sensitive (Mitem, False);
 
       Mitem := Find_Menu_Item (Kernel, Data_Sub & (-"Call Stack"));
       Kernel_Callback.Connect
