@@ -906,6 +906,7 @@ package body Glide_Kernel is
       M     : Node_Ptr;
       Old   : Node_Ptr;
       State : Gdk_Window_State;
+      X, Y  : Gint;
 
    begin
       --  Read the previous contents of the file, to save the desktops for
@@ -961,7 +962,7 @@ package body Glide_Kernel is
            (Tag           => new String'("GPS_Width"),
             Value         => new String'
               (Allocation_Int'Image
-                 (Get_Allocation_Width (Gtk_Widget ((Handle.Main_Window))))),
+                 (Get_Allocation_Width (Handle.Main_Window))),
             Child         => null,
             Parent        => null,
             Next          => null,
@@ -973,7 +974,29 @@ package body Glide_Kernel is
            (Tag           => new String'("GPS_Height"),
             Value         => new String'
               (Allocation_Int'Image
-                 (Get_Allocation_Height ((Handle.Main_Window)))),
+                 (Get_Allocation_Height (Handle.Main_Window))),
+            Child         => null,
+            Parent        => null,
+            Next          => null,
+            Specific_Data => 0,
+            Attributes    => null);
+         Add_Child (N, M);
+
+         Get_Root_Origin (Get_Window (Handle.Main_Window), X, Y);
+
+         M := new Node'
+           (Tag           => new String'("GPS_X"),
+            Value         => new String'(Gint'Image (X)),
+            Child         => null,
+            Parent        => null,
+            Next          => null,
+            Specific_Data => 0,
+            Attributes    => null);
+         Add_Child (N, M);
+
+         M := new Node'
+           (Tag           => new String'("GPS_Y"),
+            Value         => new String'(Gint'Image (Y)),
             Child         => null,
             Parent        => null,
             Next          => null,
@@ -1030,6 +1053,7 @@ package body Glide_Kernel is
       Desktop_Node : Node_Ptr;
       Width  : Gint := 640;
       Height : Gint := 480;
+      X, Y   : Gint := -1;
       State  : Gdk_Window_State := 0;
 
    begin
@@ -1047,11 +1071,14 @@ package body Glide_Kernel is
                  and then Get_Attribute (Child, "project") = Project_Name
                then
                   Desktop_Node := Child;
-
                elsif Child.Tag.all = "GPS_Height" then
                   Height := Gint'Value (Child.Value.all);
                elsif Child.Tag.all = "GPS_Width" then
                   Width := Gint'Value (Child.Value.all);
+               elsif Child.Tag.all = "GPS_X" then
+                  X := Gint'Value (Child.Value.all);
+               elsif Child.Tag.all = "GPS_Y" then
+                  Y := Gint'Value (Child.Value.all);
                elsif Child.Tag.all = "GPS_State" then
                   State := Gdk_Window_State'Value (Child.Value.all);
                end if;
@@ -1061,6 +1088,7 @@ package body Glide_Kernel is
          end loop;
 
          Set_Default_Size (Handle.Main_Window, Width, Height);
+         Set_UPosition (Handle.Main_Window, X, Y);
 
          if (State and Window_State_Maximized) /= 0 then
             Maximize (Handle.Main_Window);
