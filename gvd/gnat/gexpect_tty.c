@@ -124,8 +124,8 @@ static int Vprocess_connection_type = 1;
 
 /* Control whether create_child causes the process to inherit GVD'
    console window, or be given a new one of its own.  The default is
-   0, to allow multiple DOS programs to run on Win95.  Having separate
-   consoles also allows Gvd to cleanly terminate process groups.  */
+   0, meaning that there is no console created for the child process. Having
+   separate consoles also allows Gvd to cleanly terminate process groups.  */
 static int Vw32_start_process_share_console = 0;
 
 /* Control whether create_child cause the process to inherit GVD'
@@ -134,16 +134,17 @@ static int Vw32_start_process_share_console = 0;
 static int Vw32_start_process_inherit_error_mode = 1;
 
 /* Control whether create_child causes the process' window to be
-   hidden.  The default is 0.
-   Setting this value to 1 means that -mwindows applications will
-   display a console each time a process is spawned, which is undesirable. */
-static int Vw32_start_process_show_window = 0;
+   hidden.  The default is 1. For GUI processes this affects the main
+   application Window, for console application it affects the application's
+   console. Note that for console processes the console has been desactivated
+   and should not show-up.  */
+static int Vw32_start_process_show_window = 1;
 
 /* Control whether spawnve quotes arguments as necessary to ensure
    correct parsing by child process.  Because not all uses of spawnve
    are careful about constructing argv arrays, we make this behaviour
    conditional (off by default, since a similar operation is already done
-   in g-expect.adb by calling Normalize_Argument). */
+   in g-expect.adb by calling Normalize_Argument).  */
 static int Vw32_quote_process_args = 0;
 
 static int
@@ -331,7 +332,7 @@ nt_spawnve (char *exe, char **argv, char *env, PROCESS_INFORMATION *procinfo)
 
   flags = (!NILP (Vw32_start_process_share_console)
 	   ? CREATE_NEW_PROCESS_GROUP
-	   : CREATE_NEW_CONSOLE);
+	   : CREATE_NO_WINDOW);
   if (NILP (Vw32_start_process_inherit_error_mode))
     flags |= CREATE_DEFAULT_ERROR_MODE;
   if (!CreateProcess (exe, cmdline, &sec_attrs, NULL, TRUE,
