@@ -1441,11 +1441,13 @@ package body Src_Info.ALI is
            (File   => Copy (Sfiles (Xref_Ent.Tref_File_Num)),
             Line   => Positive (Xref_Ent.Tref_Line),
             Column => Positive (Xref_Ent.Tref_Col));
-         Decl.Parent_Kind := Char_To_E_Kind (Xref_Ent.Tref_Type);
+
+         --  This field no longer exists, but we might want it some day.
+         --  Decl.Parent_Kind := Char_To_E_Kind (Xref_Ent.Tref_Type);
 
       else
          Decl.Parent_Location := Null_File_Location;
-         Decl.Parent_Kind := E_Kind'First;
+         --  Decl.Parent_Kind := E_Kind'First;
       end if;
 
       --  ??? Note that in the part of this procedure that follows, we assume

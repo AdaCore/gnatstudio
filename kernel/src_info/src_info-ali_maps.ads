@@ -33,7 +33,8 @@ private package Src_Info.ALI_Maps is
    type E_Kind_To_Char_Map is array (E_Kind) of Character;
 
    E_Kind_To_Char : constant E_Kind_To_Char_Map :=
-     (Access_Object                    => 'p',
+     (Overloaded_Entity                => ASCII.NUL,
+      Access_Object                    => 'p',
       Access_Type                      => 'P',
       Array_Object                     => 'a',
       Array_Type                       => 'A',
@@ -95,6 +96,8 @@ private package Src_Info.ALI_Maps is
 
    E_Scope_To_Char : constant E_Scope_To_Char_Map :=
      (Global_Scope => '*',
-      Local_Scope  => ' ');
+      Local_Scope  => ' ',
+      Class_Static => ASCII.NUL,
+      Static_Local => ASCII.NUL);
 
 end Src_Info.ALI_Maps;

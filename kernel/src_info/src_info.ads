@@ -201,8 +201,52 @@ private
    --    - Library      -> Lib
    --    - Library_Info -> LI
 
+
+   --  The internal structure defined in this package can handle overloaded
+   --  entities that could not be resolved completely by the parser, generally
+   --  for lack of semantic analysis. In that case, it is up to GPS to ask the
+   --  user, when doing a cross-reference for instance, which declaration he
+   --  wants to jump to.
+   --  Given the following C program (in file.c),
+   --       /* line 1 */  void f (int);
+   --       /* line 2 */  void f (char);
+   --       /* line 3 */  f (0);
+   --       /* line 4 */  f ('a');
+   --  and if the parser couldn't resolve the calls on line 3 and 4, the
+   --  following entries need to be generated in the structure:
+   --
+   --    - One E_Declaration_Info in the list of declarations for file.c, with
+   --      the following contents:
+   --          (Declarations => E_Declaration'(Name => "f",
+   --                                          Kind   => Non_Generic_Procedure,
+   --                                          Location =>  <line 1>,
+   --                                          ...),
+   --           References   => <empty list>)
+   --
+   --    - A similar E_Declaration info is generated for the function f on line
+   --      2.
+   --
+   --    - An additional entry is generated for all the references, with the
+   --      following contents:
+   --          (Declarations => E_Declaration'(Name => "f",
+   --                                          Kind => Overloaded_Entity,
+   --                                          <other fields left to default>),
+   --           References => ( (Location => <line 3>),
+   --                           (Location => <line 4>))
+   --
+   --  When processing any query on the structure, GPS will encounter the
+   --  special entity kind Overloaded_Entity. It then has to check all the
+   --  entities with a matching name that are found either in the file file.c
+   --  or in one of its include files.
+
+
    type E_Kind is
-     (Access_Object,
+     (Overloaded_Entity,
+      --  This special kind of entity is used for overloaded symbols that
+      --  couldn't be resolved by the parser. See the comment above for a more
+      --  complete explanation.
+
+      Access_Object,
       Access_Type,
       Array_Object,
       Array_Type,
@@ -337,7 +381,7 @@ private
    --  entity, but only provides more information about the entity).
 
 
-   type E_Scope is (Global_Scope, Local_Scope);
+   type E_Scope is (Global_Scope, Local_Scope, Class_Static, Static_Local);
    --  The scope of an entity. The values have the following meaning:
    --     - Global_Entity: publicly visible entity in a top level library.
    --     - Local_Entity: an entity that does not satisfy the conditions
@@ -430,7 +474,6 @@ private
       --   - The type we derive from for a type
       --   - The type of a variable
 
-      Parent_Kind     : E_Kind;
       Scope           : E_Scope;
       End_Of_Scope    : E_Reference := No_Reference;
       --  The position at which the body of the entity finishes. It doesn't
@@ -449,7 +492,6 @@ private
       Location        => Null_File_Location,
       Kind            => E_Kind'First,
       Parent_Location => Null_File_Location,
-      Parent_Kind     => E_Kind'First,
       Scope           => Local_Scope,
       End_Of_Scope    => No_Reference);
 
