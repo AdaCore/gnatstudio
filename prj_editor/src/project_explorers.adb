@@ -2621,13 +2621,13 @@ package body Project_Explorers is
    is
       pragma Unreferenced (Widget);
       Kernel   : constant Kernel_Handle := Get_Kernel (Context);
-      File_C   : Entity_Selection_Context_Access;
+      File_C   : File_Selection_Context_Access;
       C        : Search_Context_Access;
    begin
       if Context /= null
-        and then Context.all in Entity_Selection_Context'Class
+        and then Context.all in File_Selection_Context'Class
       then
-         File_C := Entity_Selection_Context_Access (Context);
+         File_C := File_Selection_Context_Access (Context);
 
          if Has_File_Information (File_C) then
             C := Explorer_Search_Factory
