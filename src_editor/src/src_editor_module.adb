@@ -2268,6 +2268,8 @@ package body Src_Editor_Module is
 
          Get_Area (Area_Context, Line1, Line2);
 
+         --  ??? This is probably unnecessary if not Has_File_Information
+         --  (Area_Context), see below.
          Infos := new Line_Information_Array (Line1 .. Line2);
 
          for J in Infos'Range loop
