@@ -692,7 +692,7 @@ package body Help_Module is
 
       Args := Argument_String_To_List
         (Get_Pref (Kernel, GVD.Preferences.Html_Browser));
-      File := new String'(Full_Name (Help_File).all);
+      File := new String'(Full_Name (Help_File, True).all);
 
       Launch_Process
         (Kernel_Handle (Kernel),
