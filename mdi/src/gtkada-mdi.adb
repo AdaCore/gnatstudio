@@ -415,7 +415,7 @@ package body Gtkada.MDI is
             Gdk_New (Cursor, Curs);
             Tmp := Pointer_Grab
               (Get_Window (C),
-               True,
+               False,
                Button_Press_Mask or Button_Motion_Mask or Button_Release_Mask,
                Cursor => Cursor,
                Time => 0);
