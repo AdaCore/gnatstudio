@@ -60,6 +60,15 @@ package body Docgen is
          return B.Last_Line;
       end Get_Last_Line;
 
+      ----------------
+      -- Get_Indent --
+      ----------------
+
+      function Get_Indent (B : Backend'Class) return Natural is
+      begin
+         return B.Indent;
+      end Get_Indent;
+
       --------------------
       -- Set_Last_Index --
       --------------------
@@ -86,15 +95,14 @@ package body Docgen is
         (B                : Backend_Handle;
          Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
          File             : in Ada.Text_IO.File_Type;
-         Entity_List      : in out Type_Entity_List.List;
          List_Ref_In_File : in out List_Reference_In_File.List;
          Info             : in out Docgen.Doc_Info;
          Doc_Directory    : String;
-         Doc_Suffix       : String) is
+         Doc_Suffix       : String;
+         Level            : Natural) is
       begin
-         Doc_Create (B, Kernel, File,
-                     Entity_List, List_Ref_In_File,
-                     Info, Doc_Directory, Doc_Suffix);
+         Doc_Create (B, Kernel, File, List_Ref_In_File,
+                     Info, Doc_Directory, Doc_Suffix, Level);
       end Launch_Doc_Create;
 
       -----------------
@@ -105,7 +113,6 @@ package body Docgen is
         (B                : access Backend'Class;
          Kernel           : access Kernel_Handle_Record'Class;
          File             : Ada.Text_IO.File_Type;
-         Entity_List      : in out Type_Entity_List.List;
          List_Ref_In_File : in out List_Reference_In_File.List;
          LI_Unit          : LI_File_Ptr;
          Text             : String;
@@ -118,10 +125,6 @@ package body Docgen is
          Process_Body     : Boolean;
          Info             : Doc_Info)
       is
-         Call_Graph_Entities : Type_Entity_List.List;
-         --  Used to store entities of the callgraph for subprograms
-         --  contained in inner packages
-
          function Is_Operator (Op : String) return Boolean;
          --  Indicates if op is a subprogram which overloads an operator
 
@@ -133,12 +136,6 @@ package body Docgen is
          --  Looks the value of type Language_Entity returned by
          --  Parse_Entities and calls the good subprograms to format
          --  the current entity
-
-         procedure Call_Graph_Packages
-           (Call_Graph_Entities : Type_Entity_List.List);
-         --  Prints the call graph of all subprograms contained in the list
-         --  Call_Graph_Entities. This list is made when we are parsing an
-         --  inner package.
 
          -------------------
          --  Is_Operator  --
@@ -175,7 +172,6 @@ package body Docgen is
 
             return False;
          end Is_Operator;
-
 
          --------------
          -- Callback --
@@ -242,7 +238,6 @@ package body Docgen is
                         --  Function which overrides an operator
                         Format_Identifier
                           (B,
-                           Entity_List,
                            List_Ref_In_File,
                            Sloc_Start.Index + 1,
                            Sloc_Start.Line,
@@ -259,9 +254,7 @@ package body Docgen is
                            Source_File_List,
                            Link_All,
                            Is_Body,
-                           Process_Body,
-                           Info,
-                           Call_Graph_Entities);
+                           Process_Body);
                      else
                         --  Simple string
                         Format_String
@@ -300,7 +293,6 @@ package body Docgen is
                when Identifier_Text =>
                   Format_Identifier
                     (B,
-                     Entity_List,
                      List_Ref_In_File,
                      Sloc_Start.Index,
                      Sloc_Start.Line,
@@ -317,9 +309,7 @@ package body Docgen is
                      Source_File_List,
                      Link_All,
                      Is_Body,
-                     Process_Body,
-                     Info,
-                     Call_Graph_Entities);
+                     Process_Body);
 
                when others =>
                   null;
@@ -328,54 +318,12 @@ package body Docgen is
             return False;
          end Callback;
 
-         ---------------------------
-         --  Call_Graph_Packages  --
-         ---------------------------
-
-         procedure Call_Graph_Packages
-           (Call_Graph_Entities : Type_Entity_List.List)
-         is
-            use Type_Entity_List;
-            Name_Entity       : Basic_Types.String_Access;
-            Entity_Subprogram : Type_Entity_List.List_Node;
-         begin
-            Entity_Subprogram := Type_Entity_List.First (Call_Graph_Entities);
-            while Entity_Subprogram /= Type_Entity_List.Null_Node loop
-               --  For each subprogram of the package, we print its callgraph
-               Name_Entity
-                 := new String'(Get_Name
-                                  (Type_Entity_List.Data
-                                     (Entity_Subprogram).Entity));
-               Print_Ref_List
-                 (B, Kernel, File, Name_Entity,
-                  Data (Entity_Subprogram).Called_List, True);
-               Print_Ref_List
-                 (B, Kernel, File, Name_Entity,
-                  Data (Entity_Subprogram).Calls_List, False);
-               Free (Name_Entity);
-               Entity_Subprogram := Type_Entity_List.Next (Entity_Subprogram);
-            end loop;
-         end Call_Graph_Packages;
-
-
       begin
          Initialize (B, Text);
          Parse_Entities (Get_Language_From_File
                            (Get_Language_Handler (Kernel), File_Name),
                          Text,
                          Callback'Unrestricted_Access);
-
-         if Info.Doc_Info_Options.References
-           and then Info.Info_Type = Package_Info
-           and then not Type_Entity_List.Is_Empty (Call_Graph_Entities)
-         then
-            --  Callgraph for inner package
-            Call_Graph_Packages_Header (B, Kernel, File, Info);
-            Call_Graph_Packages (Call_Graph_Entities);
-            Call_Graph_Packages_Footer (B, Kernel, File, Info);
-            Type_Entity_List.Free (Call_Graph_Entities, True);
-         end if;
-
          Finish (B, File, Text, Entity_Line);
 
       exception
@@ -391,7 +339,6 @@ package body Docgen is
 
    procedure Format_All_Link
      (B                   : access Backend'Class;
-      Entity_List         : in out Type_Entity_List.List;
       List_Ref_In_File    : in out List_Reference_In_File.List;
       Start_Index         : Natural;
       Start_Line          : Natural;
@@ -407,9 +354,7 @@ package body Docgen is
       Source_File_List    : Type_Source_File_List.List;
       Link_All            : Boolean;
       Is_Body             : Boolean;
-      Process_Body        : Boolean;
-      Info                : Doc_Info;
-      Call_Graph_Entities : in out Type_Entity_List.List)
+      Process_Body        : Boolean)
    is
       use type Basic_Types.String_Access;
       use List_Reference_In_File;
@@ -422,11 +367,6 @@ package body Docgen is
       Ref_List_Info_Prec : List_Reference_In_File.List_Node;
       Result             : Boolean;
       Entity_Abstract    : Boolean;
-      Entity_Node      : Type_Entity_List.List_Node;
-      Entity_Node_Succ : Type_Entity_List.List_Node;
-      Exist            : Boolean;
-      --  Used to delete from Entity_List identifiers contained in inner
-      --  packages
 
       procedure Get_Declaration
         (Text             : String;
@@ -455,6 +395,7 @@ package body Docgen is
          --  and then
          --  List_Reference_In_File.Data (E_L_I).Column = Column
          --  ??? perhaps problems with Parse_Entites about columns
+         --  or ali file which are not up to date. Need to be tested.
          then
             Result := True;
             E_I := List_Reference_In_File.Data (E_L_I).Entity.all;
@@ -483,56 +424,6 @@ package body Docgen is
          if LI_Unit /= No_LI_File then
             --  We search the declaration of the entity
             --  (which is an identifier)
-
-            if Is_Spec_File (Kernel, File_Name) and then
-              (Info.Info_Type = Package_Info) then
-               --  Only if we are parsing a package
-               Entity_Node := Type_Entity_List.First (Entity_List);
-               Entity_Node_Succ := Type_Entity_List.Null_Node;
-               Exist := False;
-
-               while Entity_Node /= Type_Entity_List.Null_Node loop
-                  if (Get_Name (Data (Entity_Node).Entity) =
-                        To_Lower (Text (Loc_Start .. Loc_End)))
-                    and then
-                      (Get_Declaration_Line_Of (Data (Entity_Node).Entity) =
-                         Start_Line + Entity_Line - 1)
-                  then
-                     --  This identifier is a declaration.
-                     Exist := True;
-                  end if;
-
-                  if Exist then
-                     --  Identifier removed. It won't be duplicated.
-                     --  Before, Line_In_Body for those inner identifiers must
-                     --  be indicated (currently the value is
-                     --  No_Body_Line_Needed because we deal with a package)
-
-                     Line_In_Body := Get_Line
-                       (Data (Entity_Node).Line_In_Body);
-
-                     if Data (Entity_Node).Kind = Subprogram_Entity
-                       and then Info.Doc_Info_Options.References
-                     then
-                        Type_Entity_List.Append
-                          (Call_Graph_Entities,
-                           Clone (Data (Entity_Node), True));
-                        --  The entity of the subprogram is stored in order to
-                        --  print its callgraph later.
-                     end if;
-
-                     Type_Entity_List.Remove_Nodes
-                       (Entity_List,
-                        Entity_Node_Succ,
-                        Entity_Node);
-                  end if;
-
-                  exit when Exist = True;
-
-                  Entity_Node_Succ := Entity_Node;
-                  Entity_Node := Type_Entity_List.Next (Entity_Node_Succ);
-               end loop;
-            end if;
 
             Result := False;
             Entity_Abstract := False;
@@ -726,9 +617,9 @@ package body Docgen is
       return null;
    end Find_In_List;
 
-   -----------------
-   --  Add_Child  --
-   -----------------
+   ---------------
+   -- Add_Child --
+   ---------------
 
    procedure Add_Child
      (List   : in out Type_List_Tagged_Element.List;
@@ -783,9 +674,9 @@ package body Docgen is
       end if;
    end Add_Child;
 
-   ------------------
-   --  Add_Parent  --
-   ------------------
+   ----------------
+   -- Add_Parent --
+   ----------------
 
    procedure Add_Parent
      (List   : in out Type_List_Tagged_Element.List;
@@ -840,9 +731,9 @@ package body Docgen is
       end if;
    end Add_Parent;
 
-   ------------------------------
-   --  Must_Print_Tagged_Type  --
-   ------------------------------
+   ----------------------------
+   -- Must_Print_Tagged_Type --
+   ----------------------------
 
    procedure Must_Print_Tagged_Type
      (List : in out Type_List_Tagged_Element.List;
@@ -914,6 +805,9 @@ package body Docgen is
    begin
       Free (X.Name);
       Destroy (X.Entity);
+      if X.Public_Declaration /= No_Entity_Information then
+         Destroy (X.Public_Declaration);
+      end if;
 
       if not Type_Reference_List.Is_Empty (X.Calls_List) then
          Type_Reference_List.Free (X.Calls_List);
@@ -1024,15 +918,27 @@ package body Docgen is
          Duplicate (Calls, Entity.Calls_List);
          Duplicate (Called, Entity.Called_List);
       end if;
-
-      return
-        (Kind         => Entity.Kind,
-         Name         => new String'(Entity.Name.all),
-         Entity       => Copy (Entity.Entity),
-         Is_Private   => Entity.Is_Private,
-         Line_In_Body => Entity.Line_In_Body,
-         Calls_List   => Calls,
-         Called_List  => Called);
+      if Entity.Public_Declaration /= No_Entity_Information then
+         return
+           (Kind         => Entity.Kind,
+            Name         => new String'(Entity.Name.all),
+            Entity       => Copy (Entity.Entity),
+            Is_Private   => Entity.Is_Private,
+            Line_In_Body => Entity.Line_In_Body,
+            Calls_List   => Calls,
+            Called_List  => Called,
+            Public_Declaration => Copy (Entity.Public_Declaration));
+      else
+         return
+           (Kind         => Entity.Kind,
+            Name         => new String'(Entity.Name.all),
+            Entity       => Copy (Entity.Entity),
+            Is_Private   => Entity.Is_Private,
+            Line_In_Body => Entity.Line_In_Body,
+            Calls_List   => Calls,
+            Called_List  => Called,
+            Public_Declaration => No_Entity_Information);
+      end if;
    end Clone;
 
    -------------------------
