@@ -305,6 +305,11 @@ package body VCS_View_Pkg is
       Parameter   : Log_Parameter);
    --  ???
 
+   procedure Log_Editor_Close
+     (Object      : access Gtk_Widget_Record'Class;
+      Parameter   : Log_Parameter);
+   --  ???
+
    procedure Edited_Callback
      (Object      : access Gtk_Widget_Record'Class;
       Params      : Glib.Values.GValues);
@@ -658,6 +663,24 @@ package body VCS_View_Pkg is
      (Object      : access Gtk_Widget_Record'Class;
       Parameter   : Log_Parameter)
    is
+   begin
+      Commit (Parameter.Explorer,
+              Parameter.Kernel,
+              Parameter.Log_Editor.Files,
+              Get_Text (Parameter.Log_Editor),
+              Parameter.VCS_Ref);
+
+      Close (Parameter.Log_Editor);
+   end Log_Editor_Ok_Clicked;
+
+   ----------------------
+   -- Log_Editor_Close --
+   ----------------------
+
+   procedure Log_Editor_Close
+     (Object      : access Gtk_Widget_Record'Class;
+      Parameter   : Log_Parameter)
+   is
       Value      : GValue;
       Iter       : Gtk_Tree_Iter;
       Temp_Paths : List := Parameter.Log_Editor.Files;
@@ -682,15 +705,7 @@ package body VCS_View_Pkg is
             Temp_Paths := Next (Temp_Paths);
          end loop;
       end if;
-
-      Commit (Parameter.Explorer,
-              Parameter.Kernel,
-              Parameter.Log_Editor.Files,
-              Get_Text (Parameter.Log_Editor),
-              Parameter.VCS_Ref);
-
-      Close (Parameter.Log_Editor);
-   end Log_Editor_Ok_Clicked;
+   end Log_Editor_Close;
 
    --------------
    -- Edit_Log --
@@ -758,7 +773,7 @@ package body VCS_View_Pkg is
             Explorer_Callback.Connect
               (Log_Editor.Log_Text,
                "destroy",
-               Explorer_Callback.To_Marshaller (Log_Editor_Ok_Clicked'Access),
+               Explorer_Callback.To_Marshaller (Log_Editor_Close'Access),
                Parameter_Object);
 
             if Explorer.Kernel = null then
@@ -928,6 +943,8 @@ package body VCS_View_Pkg is
       Set_Text (Log_Editor, "");
 
       Parameter_Object.Explorer := Explorer;
+      Parameter_Object.Kernel := Explorer.Kernel;
+      Parameter_Object.VCS_Ref := Explorer.VCS_Ref;
       Parameter_Object.Log_Editor := Log_Editor;
 
       --  Associate the log editor to all files.
@@ -1278,36 +1295,40 @@ package body VCS_View_Pkg is
       Temp_Files : List := Files;
       Files_List : List;
       Logs_List  : List;
-
-      procedure Check_File
-        (Explorer : access VCS_View_Record'Class;
-         Iter     : Gtk_Tree_Iter);
-      --  Check that a given file has a log associated to it,
-      --  and display an error message if not.
-
-      procedure Check_File
-        (Explorer : access VCS_View_Record'Class;
-         Iter     : Gtk_Tree_Iter)
-      is
-         F_Log  : String := Get_String (Explorer.Model, Iter, Log_Column);
-         Name   : String := Get_String (Explorer.Model, Iter, Name_Column);
-
-      begin
-         if Log = "" then
-            Push_Message
-              (Explorer, Error,
-               -"You must provide a log before committing file " & Name);
-
-         else
-            Append (Files_List, Explorer.Current_Directory.all & Name);
-            Append (Logs_List, F_Log);
-         end if;
-      end Check_File;
-
+      Iter       : Gtk_Tree_Iter;
    begin
-      if Explorer /= null then
-         Foreach_Selected_File
-           (Explorer, Check_File'Unrestricted_Access);
+      if Is_Empty (Files) then
+         return;
+      end if;
+
+      Push_Message (Explorer, Kernel, Verbose,
+                    -"Committing files :");
+      Display_String_List (Explorer, Kernel, Files_List);
+
+      if Explorer /= null
+        and then Explorer.Current_Directory /= null
+      then
+         while not Is_Empty (Temp_Files) loop
+            Iter := Get_Iter_From_Name
+              (Explorer, Base_Name (Head (Temp_Files)));
+
+            declare
+               F_Log : String := Get_String (Explorer.Model, Iter, Log_Column);
+            begin
+               if F_Log /= "" then
+                  Append (Files_List,
+                          Explorer.Current_Directory.all & Head (Temp_Files));
+                  Append (Logs_List, F_Log);
+               else
+                  Push_Message
+                    (Explorer, Verbose,
+                     -"You must provide a log before committing file "
+                     & Head (Temp_Files));
+               end if;
+            end;
+
+            Temp_Files := Next (Temp_Files);
+         end loop;
       else
          while not Is_Empty (Temp_Files) loop
             Append (Files_List, Head (Temp_Files));
@@ -1316,14 +1337,8 @@ package body VCS_View_Pkg is
          end loop;
       end if;
 
-      if not Is_Empty (Files) then
-         Push_Message (Explorer, Kernel, Verbose,
-                       -"Committing files :");
-         Display_String_List (Explorer, Kernel, Files_List);
-         Commit (Ref, Files_List, Logs_List);
-         Push_Message (Explorer, Kernel, Verbose,
-                       -"...done." & ASCII.LF);
-      end if;
+      Commit (Ref, Files_List, Logs_List);
+      Push_Message (Explorer, Kernel, Verbose, -"...done." & ASCII.LF);
 
       Free (Files_List);
       Free (Logs_List);

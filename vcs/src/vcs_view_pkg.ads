@@ -145,7 +145,7 @@ package VCS_View_Pkg is
      (Explorer : VCS_View_Access;
       Kernel   : Kernel_Handle;
       List     : VCS.String_List.List;
-      M_Type   : Message_Type);
+      M_Type   : Message_Type := Verbose);
    --  Convenience procedure to output a String_List.List.
    --  One of Explorer or Kernel can be Null.
 end VCS_View_Pkg;
