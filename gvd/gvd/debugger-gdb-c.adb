@@ -116,20 +116,38 @@ package body Debugger.Gdb.C is
       --  Skip to the right-most access or array definition
       --  For instance, when looking at 'int* [4]' we should detect an array
       --  type, not an access type.
-      --  However, we should leave Index at the beginning of a
-      --  multi-dimensional array, as in 'int [2][3]'.
 
       Save := Index;
       while Index <= Type_Str'Last loop
+         --  Access type ?
          if Type_Str (Index) = '*' then
             Save := Index;
             Index := Index + 1;
+
+         --  Array type ?
          elsif Type_Str (Index) = '[' then
+            --  Leave Index at the beginning of a multi-dimensional array, as
+            --  in 'int [2][3]'.
             if Type_Str (Save) = '*' then
                Save := Index;
             end if;
             Skip_To_Char (Type_Str, Index, ']');
             Index := Index + 1;
+
+         --  Access to subprogram
+         elsif Type_Str (Index) = '('
+           and then Type_Str (Index + 1) = '*'
+         then
+            --  Skip the field name (if any), as in: "void (*field1[2])();"
+            Index := Index + 1;
+            Save := Index;
+            while Index <= Type_Str'Last
+              and then Type_Str (Index) /= ')'
+              and then Type_Str (Index) /= '['
+            loop
+               Index := Index + 1;
+            end loop;
+
          else
             exit;
          end if;
@@ -227,7 +245,6 @@ package body Debugger.Gdb.C is
          return;
       end if;
 
---      Index := Tmp;
       raise Unexpected_Type;
    end Parse_Type;
 
@@ -295,7 +312,26 @@ package body Debugger.Gdb.C is
 
          --  Skip the parenthesis contents if needed
          if Index <= Type_Str'Last and then Type_Str (Index) = '(' then
-            Skip_To_Char (Type_Str, Index, ')');
+            --  Make sure we skip to the last close parenthesis (there could
+            --  be some open parenthesis in the open, for instance for access
+            --  to subprograms in C: "(void (*)()) 0x804845c <foo>"
+            declare
+               Num_Open : Integer := 0;
+            begin
+               Index := Index + 1;
+               while Index <= Type_Str'Last
+                 and then (Type_Str (Index) /= ')'
+                           or else Num_Open /= 0)
+               loop
+                  if Type_Str (Index) = '(' then
+                     Num_Open := Num_Open + 1;
+                  elsif Type_Str (Index) = ')' then
+                     Num_Open := Num_Open - 1;
+                  end if;
+                  Index := Index + 1;
+               end loop;
+            end;
+            --  Skip_To_Char (Type_Str, Index, ')');
             Index := Index + 2;
          end if;
 
@@ -528,7 +564,8 @@ package body Debugger.Gdb.C is
       R          : Record_Type_Access;
       Field_Value : Generic_Type_Access;
       Tmp,
-      Save       : Natural;
+      Save,
+      End_Of_Name : Natural;
    begin
       --  Count the number of fields
 
@@ -557,16 +594,36 @@ package body Debugger.Gdb.C is
          Skip_Blanks (Type_Str, Index);
 
          --  Get the field name (last word before ;)
+         --  There is a small exception here for access-to-subprograms fields,
+         --  which look like "void (*field1[2])();"
+         --  ??? gdb seems to ignore all the parameters to the function, so
+         --  we take the simplest way and consider there is always '()' for
+         --  the parameter list.
+
          Tmp := Index;
          Skip_To_Char (Type_Str, Index, ';');
          Save := Index;
          Index := Index - 1;
-         Skip_Word (Type_Str, Index, Step => -1);
-         Set_Field_Name (R.all, Field, Type_Str (Index + 1 .. Save - 1),
+
+         if Type_Str (Index) = ')' then
+            Index := Index - 2;
+            Skip_To_Char (Type_Str, Index, '(', Step => -1);
+            Index := Index + 1;
+            End_Of_Name := Index + 2;
+            Skip_Word (Type_Str, End_Of_Name);
+         else
+            End_Of_Name := Save;
+            Skip_Word (Type_Str, Index, Step => -1);
+         end if;
+
+         --  Create the field now that we have all the information.
+
+         Set_Field_Name (R.all, Field, Type_Str (Index + 1 .. End_Of_Name - 1),
                          Variant_Parts => 0);
          Parse_Type
-           (Lang, Type_Str (Tmp .. Index),
-            Record_Field_Name (Lang, Entity, Type_Str (Index + 1 .. Save - 1)),
+           (Lang, Type_Str (Tmp .. Save),
+            Record_Field_Name
+              (Lang, Entity, Type_Str (Index + 1 .. End_Of_Name - 1)),
             Tmp,
             Field_Value);
          Set_Value (R.all, Field_Value, Field);
@@ -636,6 +693,18 @@ package body Debugger.Gdb.C is
 
             when others =>
                Parse_Item;
+
+               --  Since access types can be followed by junk
+               --  ("{0x804845c <foo>, 0x804845c <foo>}"), skip everything
+               --  till the next character we know about.
+               while Index <= Type_Str'Last
+                 and then Type_Str (Index) /= ','
+                 and then Type_Str (Index) /= '{'
+                 and then Type_Str (Index) /= '}'
+               loop
+                  Index := Index + 1;
+               end loop;
+
          end case;
          exit when Dim = 0;
       end loop;
