@@ -4,7 +4,7 @@
     <external>gnatclean "%PPs"</external>
     <shell output="none">Console "Messages"</shell>
     <shell output="none">MDI.get_by_child %1</shell>
-    <shell output="none">MDIWindow.raise %1</shell>
+    <shell output="none">MDIWindow.raise_window %1</shell>
   </action>
   <menu action="build-clean-root-project"
         after="Make">
@@ -14,7 +14,7 @@
     <external>gnatclean -r "%PPs"</external>
     <shell output="none">Console "Messages"</shell>
     <shell output="none">MDI.get_by_child %1</shell>
-    <shell output="none">MDIWindow.raise %1</shell>
+    <shell output="none">MDIWindow.raise_window %1</shell>
   </action>
   <menu action="build-clean-all-root-project"
         after="Clean">
