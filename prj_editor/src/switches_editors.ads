@@ -240,19 +240,14 @@ package Switches_Editors is
    --  empty string, then the default switches for the project are edited,
    --  otherwise the switches for the specific file are edited.
 
-   procedure Edit_Switches_For_Context
-     (Context       : Glide_Kernel.Selection_Context_Access;
-      Force_Default : Boolean := False);
-   --  Same as Edit_Switches, but if Force_Default is True it always edit the
-   --  default switches, even if there is a file information in Context.
-
-   procedure Edit_Switches_For_Files
+   function Edit_Switches_For_Files
      (Kernel       : access Glide_Kernel.Kernel_Handle_Record'Class;
       Project      : Projects.Project_Type;
-      Files        : GNAT.OS_Lib.Argument_List);
+      Files        : GNAT.OS_Lib.Argument_List) return Boolean;
    --  Edit the switches for a list of files. All the files will be assigned
    --  the same switches.
    --  If there are no files in Files, the default switches are edited.
+   --  Return true if the switches were modified.
 
    procedure Set_Switches
      (Editor : access Switches_Edit_Record; Project : Projects.Project_Type);

@@ -267,16 +267,17 @@ package body Switches_Editors is
    --  Fill the editor with the switches information for Files (or the
    --  default switches if Files is empty).
 
-   procedure Close_Switch_Editor
+   function Close_Switch_Editor
      (Switches  : access Switches_Edit_Record'Class;
       Project   : Project_Type;
       Files     : Argument_List;
-      Scenario  : access Scenario_Selector_Record'Class);
+      Scenario  : access Scenario_Selector_Record'Class) return Boolean;
    --  Called when the user has closed a switch editor for a specific file.
    --  This modifies the edited project to reflect the changes done in the
    --  dialog.
    --  File_Name is the name of the file whose switches we are changing, or ""
    --  if we are changing the default switches.
+   --  Return True if the switches were modified
 
    procedure Revert_To_Default (Switches : access Gtk_Widget_Record'Class);
    --  Revert to the default switches in the editor
@@ -2229,11 +2230,11 @@ package body Switches_Editors is
    -- Close_Switch_Editor --
    -------------------------
 
-   procedure Close_Switch_Editor
+   function Close_Switch_Editor
      (Switches     : access Switches_Edit_Record'Class;
       Project      : Project_Type;
       Files        : Argument_List;
-      Scenario     : access Scenario_Selector_Record'Class)
+      Scenario     : access Scenario_Selector_Record'Class) return Boolean
    is
       Saved : Argument_List := Get_Current_Scenario
         (Scenario_Variables (Switches.Kernel));
@@ -2259,9 +2260,11 @@ package body Switches_Editors is
       Set_Environment (Scenario_Variables (Switches.Kernel), Saved);
       Free (Saved);
 
-      if Modified then
-         Recompute_View (Switches.Kernel);
-      end if;
+      return Modified;
+
+      --  if Modified then
+      --     Recompute_View (Switches.Kernel);
+      --  end if;
    end Close_Switch_Editor;
 
    ------------------
@@ -2373,36 +2376,6 @@ package body Switches_Editors is
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end Fill_Editor;
 
-   -------------------------------
-   -- Edit_Switches_For_Context --
-   -------------------------------
-
-   procedure Edit_Switches_For_Context
-     (Context       : Selection_Context_Access;
-      Force_Default : Boolean := False)
-   is
-      File      : constant File_Selection_Context_Access :=
-        File_Selection_Context_Access (Context);
-      File_Name : GNAT.OS_Lib.String_Access;
-   begin
-      Assert (Me, Has_Project_Information (File),
-              "Project unknown when editing switches");
-
-      if not Force_Default and then Has_File_Information (File) then
-         File_Name := new String'(File_Information (File));
-         Edit_Switches_For_Files
-           (Get_Kernel (Context),
-            Project_Information (File),
-            (1 => File_Name));
-         Free (File_Name);
-      else
-         Edit_Switches_For_Files
-           (Get_Kernel (Context),
-            Project_Information (File),
-            (1 .. 0 => null));
-      end if;
-   end Edit_Switches_For_Context;
-
    -------------------
    -- Edit_Switches --
    -------------------
@@ -2411,9 +2384,29 @@ package body Switches_Editors is
      (Item    : access GObject_Record'Class;
       Context : Selection_Context_Access)
    is
-      pragma Unreferenced (Item);
+      File      : constant File_Selection_Context_Access :=
+        File_Selection_Context_Access (Context);
+      File_Name : GNAT.OS_Lib.String_Access;
+      Modified : Boolean;
+      pragma Unreferenced (Item, Modified);
    begin
-      Edit_Switches_For_Context (Context, False);
+      Assert (Me, Has_Project_Information (File),
+              "Project unknown when editing switches");
+
+      if Has_File_Information (File) then
+         File_Name := new String'(File_Information (File));
+         Modified := Edit_Switches_For_Files
+           (Get_Kernel (Context),
+            Project_Information (File),
+            (1 => File_Name));
+         Free (File_Name);
+      else
+         Modified := Edit_Switches_For_Files
+           (Get_Kernel (Context),
+            Project_Information (File),
+            (1 .. 0 => null));
+      end if;
+
    exception
       when E : others =>
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
@@ -2423,10 +2416,10 @@ package body Switches_Editors is
    -- Edit_Switches_For_Files --
    -----------------------------
 
-   procedure Edit_Switches_For_Files
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Project : Project_Type;
-      Files : GNAT.OS_Lib.Argument_List)
+   function Edit_Switches_For_Files
+     (Kernel       : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Project      : Projects.Project_Type;
+      Files        : GNAT.OS_Lib.Argument_List) return Boolean
    is
       Switches  : Switches_Edit;
       Dialog    : Gtk_Dialog;
@@ -2434,6 +2427,7 @@ package body Switches_Editors is
       B         : Gtk_Button;
       Box       : Gtk_Box;
       Selector  : Scenario_Selector;
+      Modified  : Boolean;
 
    begin
       if Files'Length > 1 then
@@ -2496,11 +2490,14 @@ package body Switches_Editors is
       --  of this dialog.
 
       if Run (Dialog) = Gtk_Response_OK then
-         Close_Switch_Editor
+         Modified := Close_Switch_Editor
            (Switches, Project, Files, Selector);
+      else
+         Modified := False;
       end if;
 
       Destroy (Dialog);
+      return Modified;
    end Edit_Switches_For_Files;
 
 end Switches_Editors;
