@@ -68,6 +68,7 @@ package body Odd.Memory_View is
    Data_Separator    : constant String := " ";
    End_Of_Line       : constant String := ASCII.CR & ASCII.LF;
    Hex_Header        : constant String := "16#";
+   Hex_Footer        : constant String := "#";
    Scrollbar_Size    : constant Integer := 25;
    Column_Base_Num   : constant Integer := 16;
 
@@ -193,7 +194,7 @@ package body Odd.Memory_View is
          end if;
       end if;
 
-      Long := Long_Long_Integer'Value ("16#" & S & "#");
+      Long := Long_Long_Integer'Value (Hex_Header & S & Hex_Footer);
 
       case Format is
          when Hex =>
@@ -210,8 +211,9 @@ package body Odd.Memory_View is
                for J in 1 .. Result'Last loop
                   Value :=
                     Integer'Value
-                      ("16#" & S (S'First + 2 * J - 2 .. S'First + 2 * J - 1) &
-                       "#");
+                    (Hex_Header
+                     & S (S'First + 2 * J - 2 .. S'First + 2 * J - 1)
+                     & Hex_Footer);
 
                   if Value > 31 and then Value < 128 then
                      Result (J) := Character'Val (Value);
@@ -272,7 +274,7 @@ package body Odd.Memory_View is
       Mapping : Character_Mapping := To_Mapping ("ABCDEF ", "abcdef0");
    begin
       Put (Result, Address, Base);
-      Skip_To_String (Result, Index, "#");
+      Skip_To_String (Result, Index, Hex_Footer);
       if Index > 3
         and then Index < Result'Length + 1
       then
@@ -475,15 +477,42 @@ package body Odd.Memory_View is
 
    procedure Display_Memory
      (View : access Odd_Memory_View_Record'Class;
-      Address : String) is
+      Address : String)
+   is
+      Real_Address : Long_Long_Integer;
+      Index        : Integer;
+      Process : constant Debugger_Process_Tab :=
+        Get_Current_Process (View.Window);
    begin
       if Address'Length > 2
-        and then Address (1 .. 2) = "0x"
+        and then Address (Address'First .. Address'First + 1) = "0x"
       then
-         Display_Memory
-           (View,
-            Long_Long_Integer'Value
-            (Hex_Header & Address (3 .. Address'Last) & "#"));
+         Index := Address'First + 2;
+         while Index <= Address'Last
+           and then Is_Hexadecimal_Digit (Address (Index))
+         loop
+            Index := Index + 1;
+         end loop;
+
+         Real_Address := Long_Long_Integer'Value
+           (Hex_Header
+            & Address (Address'First + 2 .. Index - 1)
+            & Hex_Footer);
+         Display_Memory (View, Real_Address);
+
+      else
+         declare
+            New_Address : constant String
+              := Get_Variable_Address (Process.Debugger, Address);
+         begin
+            if New_Address
+              (New_Address'First .. New_Address'First + 1) = "0x"
+            then
+               Display_Memory (View, New_Address);
+            else
+               Display_Memory (View, 0);
+            end if;
+         end;
       end if;
    end Display_Memory;
 
@@ -710,7 +739,7 @@ package body Odd.Memory_View is
          View.Flags (Value_Index .. Value_Index + View.Unit_Size - 1) :=
            (To_Standard_Base
              (Long_Long_Integer'Value
-               (Prefix & Current (Index + 1 .. Next_Index - 1) & "#"),
+               (Prefix & Current (Index + 1 .. Next_Index - 1) & Hex_Footer),
               16, View.Unit_Size));
       end;
 
