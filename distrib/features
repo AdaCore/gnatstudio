@@ -1,5 +1,6 @@
 New features in GPS 1.0.1
 
+- The editor now supports automatic completion.
 - The search dialog is now a popup dialog by default, and will automatically
   select the appropriate context when you open it.
 - New powerful mark system to handle e.g compiler messages and search results
