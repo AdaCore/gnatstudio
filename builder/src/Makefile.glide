@@ -21,7 +21,7 @@
 # c:             ditto for C files
 # c++:           ditto for C++ files
 # <ada file>:    compile the specified file if needed.
-# <object file>: compile the corresponding source file if needed.
+# <object file>: compile the corresponding C/C++ source file if needed.
 
 # This Makefile expects the following variables to be set by the caller
 # (typically another Makefile):
@@ -280,7 +280,7 @@ c : $(C_OBJECTS)
 # Compile all C++ files in the project
 c++ : $(CXX_OBJECTS)
 
-.PHONY: clean force ada c c++
+.PHONY: clean force build compile link ada c c++
 
 clean:
 	$(RM) $(OBJ_DIR)/*$(OBJ_EXT)
