@@ -126,6 +126,8 @@ package body GVD.Proc_Utils is
 
          exception
             when Constraint_Error =>
+               --  Parsing failed due to an unexpected ouput.
+               --  Return a null string instead.
                Info :=
                  (Id_Len   => 0,
                   Info_Len => 0,
