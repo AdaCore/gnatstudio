@@ -1192,8 +1192,6 @@ package body Help_Module is
       Register_Menu
         (Kernel, Help, -"_Open HTML File...", "", On_Open_HTML'Access);
 
-      --  Create_New_Key_If_Necessary
-      --    (Get_History (Kernel).all, Help_History_Key, Strings);
       Recent_Menu_Item :=
         Register_Menu (Kernel, Help, -"_Recent", "", null,
                        Ref_Item   => -"Open HTML File...",
