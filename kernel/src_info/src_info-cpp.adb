@@ -2395,7 +2395,7 @@ package body Src_Info.CPP is
 
             exit when P = null;
 
-            MBody := Parse_Pair (P.all);
+            Parse_Pair (P.all, MBody);
             Free (P);
 
             if MBody.Buffer (MBody.File_Name.First .. MBody.File_Name.Last)
@@ -2515,7 +2515,7 @@ package body Src_Info.CPP is
 
             exit when P = null;
 
-            Fn := Parse_Pair (P.all);
+            Parse_Pair (P.all, Fn);
             Free (P);
 
             if Fn.Buffer (Fn.File_Name.First .. Fn.File_Name.Last)
@@ -2659,7 +2659,7 @@ package body Src_Info.CPP is
 
             exit when P = null;
 
-            Fn_Tmp := Parse_Pair (P.all);
+            Parse_Pair (P.all, Fn_Tmp);
             Free (P);
 
             if not Forward_Declared and No_Body then
@@ -3308,9 +3308,10 @@ package body Src_Info.CPP is
 
          loop
             P := Get_Pair (Handler.SN_Table (MI), Next_By_Key);
+
             exit when P = null;
 
-            Fn := Parse_Pair (P.all);
+            Parse_Pair (P.all, Fn);
 
             Free (P);
             Init := False;
@@ -4219,8 +4220,10 @@ package body Src_Info.CPP is
          Match := False;
          loop
             P := Get_Pair (Handler.SN_Table (FU), Next_By_Key);
+
             exit when P = null;
-            FU_Tab := Parse_Pair (P.all);
+
+            Parse_Pair (P.all, FU_Tab);
             Free (P);
             Match := Cmp_Prototypes
                (FD_Tab.Buffer,
@@ -5008,8 +5011,10 @@ package body Src_Info.CPP is
          Found := False;
          loop
             P := Get_Pair (Handler.SN_Table (MI), Next_By_Key);
+
             exit when P = null;
-            MI_Tab := Parse_Pair (P.all);
+
+            Parse_Pair (P.all, MI_Tab);
             Free (P);
             Found := Cmp_Prototypes
                (MD_Tab.Buffer,
@@ -5738,7 +5743,7 @@ package body Src_Info.CPP is
                      loop -- iterate thru all methods of the class
                         P := Get_Pair (MI_File, Next_By_Key);
                         exit when P = null;
-                        MI_Tab := Parse_Pair (P.all);
+                        Parse_Pair (P.all, MI_Tab);
 
                         Process_Local_Variable
                           (Arg.Buffer (Arg.Name.First .. Arg.Name.Last),

@@ -1118,7 +1118,7 @@ package body SN.Find_Fns is
          raise Not_Found;
       end if;
 
-      Tab := Parse_Pair (P.all);
+      Parse_Pair (P.all, Tab);
       Free (P);
    end Find;
 
@@ -2096,6 +2096,7 @@ package body SN.Find_Fns is
             Pos := Pos + 1;
          end if;
       end if;
+
       if not Fall then
          if Filename = Invalid_String then
             Fall := True;
@@ -2105,14 +2106,17 @@ package body SN.Find_Fns is
             Pos := Pos + Filename'Length;
          end if;
       end if;
+
       Set_Cursor (DB, By_Key, Key.all, False);
       Free (Key);
       P   := Get_Pair (DB, Next_By_Key);
       Release_Cursor (DB);
-      if null = P then
+
+      if P = null then
          raise Not_Found;
       end if;
-      Tab := Parse_Pair (P.all);
+
+      Parse_Pair (P.all, Tab);
       Free (P);
    end Find;
 
@@ -2472,4 +2476,3 @@ package body SN.Find_Fns is
    end To_String;
 
 end SN.Find_Fns;
-
