@@ -84,18 +84,18 @@ package GPS.Main_Window is
 
       --  ??? The following fields should be moved to the gvd module
 
-      First_Debugger      : Debugger_List_Link;
+      First_Debugger     : Debugger_List_Link;
       --  Points to the list of debuggers.
 
-      Current_Debugger    : Glib.Object.GObject;
+      Current_Debugger   : Glib.Object.GObject;
       --  The current visual debugger.
 
-      Memory_View         : Gtk.Window.Gtk_Window;
-      History_Dialog      : Gtk.Dialog.Gtk_Dialog;
-      Thread_Dialog       : Gtk.Dialog.Gtk_Dialog;
-      Task_Dialog         : Gtk.Dialog.Gtk_Dialog;
-      PD_Dialog           : Gtk.Dialog.Gtk_Dialog;
-      Breakpoints_Editor  : Gtk.Window.Gtk_Window;
+      Memory_View        : Gtk.Window.Gtk_Window;
+      History_Dialog     : Gtk.Dialog.Gtk_Dialog;
+      Thread_Dialog      : Gtk.Dialog.Gtk_Dialog;
+      Task_Dialog        : Gtk.Dialog.Gtk_Dialog;
+      PD_Dialog          : Gtk.Dialog.Gtk_Dialog;
+      Breakpoints_Editor : Gtk.Window.Gtk_Window;
    end record;
    type GPS_Window is access all GPS_Window_Record'Class;
 
