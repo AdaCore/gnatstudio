@@ -69,15 +69,15 @@ begin
       Analyze_C_Source
         (Buffer.all,
          Indent_Params =>
-           (2, 2, 2, 8, Automatic, Unchanged, Unchanged, False,
-            True, False, False),
+           (2, 2, 2, 8, Automatic, End_Of_Line, Unchanged, Unchanged, False,
+            True, False, False, False),
          Replace => Replace_Cb'Unrestricted_Access);
    else
       Analyze_Ada_Source
         (Buffer.all,
          Indent_Params =>
-           (3, 2, 2, 8, Automatic,
-            Lower, Smart_Mixed, True, False, True, True),
+           (3, 2, 2, 8, Automatic, End_Of_Line,
+            Lower, Smart_Mixed, True, False, True, True, True),
          Replace => Replace_Cb'Unrestricted_Access);
    end if;
 
