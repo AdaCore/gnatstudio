@@ -276,7 +276,6 @@ package body Odd.Explorer is
             Set_Current_Language (Code_Editor (Explorer.Code_Editor), Lang);
             if Node = Explorer.Current_File_Node then
                Line := Explorer.Current_Line;
-               Put_Line ("Line=" & Line'Img);
             end if;
             Load_File (Code_Editor (Explorer.Code_Editor),
                        Find_File (Tab.Debugger, Data.Extension),
@@ -818,11 +817,27 @@ package body Odd.Explorer is
 
    procedure Display_Shared (Explorer : access Explorer_Record'Class) is
       Process : Debugger_Process_Tab := Convert (Explorer);
+      Data    : Node_Data_Access := null;
+      Current : Odd.Types.String_Access;
    begin
       Set_Busy_Cursor (Process, True);
       Freeze (Explorer);
+
+      if Explorer.Current_File_Node /= null then
+         Data := Row_Data_Pkg.Node_Get_Row_Data
+           (Explorer, Explorer.Current_File_Node);
+         Current := new String'(Data.Extension);
+         Explorer.Current_File_Node := null;
+      end if;
+
       Clear (Explorer);
       On_Executable_Changed (Explorer);
+
+      if Current /= null then
+         Set_Current_File (Explorer, Current.all);
+         Free (Current);
+      end if;
+
       Thaw (Explorer);
       Set_Busy_Cursor (Process, False);
    end Display_Shared;
@@ -849,7 +864,7 @@ package body Odd.Explorer is
       Data            : Node_Data_Access;
       Node            : Gtk_Ctree_Node;
       Next            : Gtk_Ctree_Node;
-      Process : Debugger_Process_Tab := Convert (Explorer);
+      Process         : Debugger_Process_Tab := Convert (Explorer);
    begin
       Freeze (Explorer);
       Set_Busy_Cursor (Process, True);
@@ -910,7 +925,11 @@ package body Odd.Explorer is
          return "";
       end if;
       Data := Row_Data_Pkg.Node_Get_Row_Data (Tree, Tree.Current_File_Node);
-      return Data.Extension;
+      if Data = null then
+         return "";
+      else
+         return Data.Extension;
+      end if;
    end Get_Current_File;
 
    -----------------------
