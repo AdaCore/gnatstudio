@@ -221,11 +221,15 @@ package GVD.Dialogs is
       Position       : Gtk.Enums.Gtk_Window_Position :=
         Gtk.Enums.Win_Pos_Mouse;
       Check_Msg      : String;
-      History        : Histories.History := null;
+      History        : Histories.History;
       Key            : Histories.History_Key := "";
+
       Button_Active  : access Boolean;
+      Key_Check      : Histories.History_Key;
+
       Check_Msg2     : String := "";
-      Button2_Active : Boolean_Access := null) return String;
+      Button2_Active : Boolean_Access := null;
+      Key_Check2     : Histories.History_Key := "") return String;
    --  A dialog, like Simple_Entry_Dialog, specifically set up to enter
    --  expressions to display.
 
