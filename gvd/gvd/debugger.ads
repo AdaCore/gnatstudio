@@ -148,7 +148,7 @@ package Debugger is
    --  be highlighted in the debugger text window.
 
    procedure Close (Debugger : access Debugger_Root) is abstract;
-   --  Terminates the external process.
+   --  Terminates the external process and clean up associated data.
 
    function Get_Process
      (Debugger : access Debugger_Root)
