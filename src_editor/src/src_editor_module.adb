@@ -4507,7 +4507,7 @@ package body Src_Editor_Module is
         (Kernel,
          Command       => "select_text",
          Params        =>
-           Parameter_Names_To_Usage (Select_Text_Cmd_Parameters),
+           Parameter_Names_To_Usage (Select_Text_Cmd_Parameters, 2),
          Description   => -"Select a block in the current editor.",
          Minimum_Args  => 2,
          Maximum_Args  => 4,
