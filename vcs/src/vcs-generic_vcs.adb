@@ -637,8 +637,11 @@ package body VCS.Generic_VCS is
       elsif Version_1 /= ""
         and then Version_2 /= ""
       then
-         null;
-         --  ??? to be implemented.
+         Args := new GNAT.OS_Lib.String_List (1 .. 2);
+         Args (1) := new String'(Version_1);
+         Args (2) := new String'(Version_2);
+         Generic_Command (Rep, File, Args, Diff2);
+         GNAT.Strings.Free (Args);
       end if;
    end Diff;
 
