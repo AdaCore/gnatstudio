@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2003                       --
+--                     Copyright (C) 2001-2004                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -66,6 +66,9 @@ package body VCS.CVS is
    CVS_Identifier      : constant String := "CVS";
 
    Me : constant Debug_Handle := Create (CVS_Identifier);
+
+   Actions : Action_Array;
+   --  The label for CVS actions.
 
    -----------------------
    -- Local Subprograms --
@@ -855,7 +858,7 @@ package body VCS.CVS is
    procedure Commit
      (Rep       : access CVS_Record;
       Filenames : String_List.List;
-      Logs      : String_List.List)
+      Log       : String)
    is
       use String_List;
 
@@ -863,66 +866,58 @@ package body VCS.CVS is
 
       Arguments      : String_List.List;
       Filenames_Temp : List_Node := First (Filenames);
-      Logs_Temp      : List_Node := First (Logs);
+      Head           : List;
+
+      Log_File : constant String := Create_Tmp_File;
+      Writable : Writable_File;
 
    begin
+      if Is_Empty (Filenames) then
+         Handle_Error (Rep, -"File list empty");
+      end if;
+
+      --  Copy the log to the log file
+
+      Writable := Write_File (Create (Log_File));
+      Write (Writable, Log);
+      Close (Writable);
+
+      --  Create the arguments
+
+      Append (Arguments, "commit");
+      Append (Arguments, "-F");
+      Append (Arguments, Log_File);
+
       while Filenames_Temp /= Null_Node loop
-         declare
-            File     : constant String :=
-              Locale_From_UTF8 (Data (Filenames_Temp));
-            Head     : List;
-            Log_File : constant String := Get_Tmp_Dir
-              & "cvs_log_" & Base_Name (File);
-            Fd       : GNAT.OS_Lib.File_Descriptor;
-
-         begin
-            Append (Arguments, "commit");
-            Append (Arguments, "-F");
-            Append (Arguments, Log_File);
-
-            Fd := GNAT.OS_Lib.Create_File (Log_File, GNAT.OS_Lib.Binary);
-
-            declare
-               Log           : aliased constant String := Data (Logs_Temp);
-               Bytes_Written : Integer;
-               pragma Unreferenced (Bytes_Written);
-            begin
-               Bytes_Written :=
-                 GNAT.OS_Lib.Write (Fd, Log (Log'First)'Address, Log'Length);
-            end;
-
-            GNAT.OS_Lib.Close (Fd);
-
-            Append (Arguments, Base_Name (File));
-
-            Append (Head, Log_File);
-
-            Create
-              (Checkin_File_Command,
-               Rep.Kernel,
-               Get_Pref (Rep.Kernel, CVS_Command),
-               Dir_Name (File),
-               Arguments,
-               Head,
-               Checkin_Handler'Access,
-               -"CVS: Committing");
-
-            Launch_Background_Command
-              (Rep.Kernel,
-               Command_Access (Checkin_File_Command),
-               False, True, CVS_Identifier);
-
-            Free (Arguments);
-            Free (Head);
-
-            Logs_Temp      := Next (Logs_Temp);
-            Filenames_Temp := Next (Filenames_Temp);
-         end;
+         Append (Arguments, Locale_From_UTF8 (Data (Filenames_Temp)));
+         Filenames_Temp := Next (Filenames_Temp);
       end loop;
 
-   exception
-      when List_Empty =>
-         Handle_Error (Rep, -"Log list incomplete !");
+      --  Create the commit command
+
+      Append (Head, Log_File);
+
+      Create
+        (Checkin_File_Command,
+         Rep.Kernel,
+         Get_Pref (Rep.Kernel, CVS_Command),
+         "",
+         Arguments,
+         Head,
+         Checkin_Handler'Access,
+         -"CVS: Committing");
+
+      --  Launch the commit command
+
+      Launch_Background_Command
+        (Rep.Kernel,
+         Command_Access (Checkin_File_Command),
+         False, True, CVS_Identifier);
+
+      --  Free the local data
+
+      Free (Arguments);
+      Free (Head);
    end Commit;
 
    ------------
@@ -1497,6 +1492,33 @@ package body VCS.CVS is
       VCS_CVS_Module_ID.CVS_Reference.Queue  := New_Queue;
 
       Register_VCS (VCS_Module_ID, CVS_Identifier);
+
+      Actions :=
+        (Status       => new String'(-"Query status"),
+         Open         => new String'(-"Start editing"),
+         Update       => new String'(-"Update"),
+         Commit       => new String'(-"Commit"),
+         History      => new String'(-"View revision history"),
+         Annotate     => new String'(-"Annotate"),
+         Diff_Head    => new String'(-"Diff against head rev."),
+         Diff_Working => new String'(-"Diff against working rev."),
+         Diff         => new String'(-"Diff against specific rev."),
+         Diff2        => new String'(-"Diff between two revisions"),
+         Add          => new String'(-"Add to repository"),
+         Remove       => new String'(-"Remove from repository"),
+         Revert       => new String'(-"Revert to repository revision"));
    end Register_Module;
+
+   ----------------------------
+   -- Get_Identified_Actions --
+   ----------------------------
+
+   function Get_Identified_Actions
+     (Rep : access CVS_Record) return Action_Array
+   is
+      pragma Unreferenced (Rep);
+   begin
+      return Actions;
+   end Get_Identified_Actions;
 
 end VCS.CVS;
