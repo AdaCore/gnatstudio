@@ -260,6 +260,7 @@ package body Language.Custom is
       Parent := Find_Tag (Top.Child, "categories");
 
       if Parent = null then
+         Lang.Categories := new Explorer_Categories (1 .. 0);
          return;
       end if;
 
