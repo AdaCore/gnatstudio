@@ -474,7 +474,7 @@ package body Glide_Result_View is
 
       if Category_Created then
          Path := Get_Path (View.Model, Category_Iter);
-         Dummy := Expand_Row (View.Tree, Path, True);
+         Dummy := Expand_Row (View.Tree, Path, False);
          Path_Free (Path);
 
          declare
@@ -490,11 +490,11 @@ package body Glide_Result_View is
          Path := Get_Path (View.Model, Iter);
          Select_Path (Get_Selection (View.Tree), Path);
          Path_Free (Path);
-      end if;
 
-      Path := Get_Path (View.Model, File_Iter);
-      Dummy := Expand_Row (View.Tree, Path, True);
-      Path_Free (Path);
+         Path := Get_Path (View.Model, File_Iter);
+         Dummy := Expand_Row (View.Tree, Path, True);
+         Path_Free (Path);
+      end if;
    end Add_Location;
 
    ----------------------
