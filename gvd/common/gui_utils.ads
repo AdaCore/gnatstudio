@@ -75,6 +75,12 @@ package GUI_Utils is
    --  Column.
    --  -1 is returned if no such row was found.
 
+   procedure Remove_All_Children
+     (Container : access Gtk.Container.Gtk_Container_Record'Class);
+   --  Remove and destroy all the children from Container.
+   --  If Container is a menu, this empties the menu, thus allowing dynamic
+   --  menus.
+
    ----------------------
    -- Contextual menus --
    ----------------------

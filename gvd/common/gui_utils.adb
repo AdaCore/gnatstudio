@@ -358,4 +358,22 @@ package body GUI_Utils is
       end Register_Contextual_Menu;
    end User_Contextual_Menus;
 
+   -------------------------
+   -- Remove_All_Children --
+   -------------------------
+
+   procedure Remove_All_Children
+     (Container : access Gtk.Container.Gtk_Container_Record'Class)
+   is
+      use Widget_List;
+      Children : Widget_List.Glist := Get_Children (Container);
+      N : Widget_List.Glist;
+   begin
+      while Children /= Null_List loop
+         N := Children;
+         Children := Next (Children);
+         Remove (Container, Widget_List.Get_Data (N));
+      end loop;
+   end Remove_All_Children;
+
 end GUI_Utils;
