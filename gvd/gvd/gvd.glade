@@ -2742,6 +2742,12 @@
     <widget>
       <class>GtkHPaned</class>
       <name>data_paned</name>
+      <signal>
+	<name>delete_event</name>
+	<handler>on_data_paned_delete_event</handler>
+	<object>Process_Tab</object>
+	<last_modification_time>Tue, 26 Jun 2001 14:01:32 GMT</last_modification_time>
+      </signal>
       <handle_size>10</handle_size>
       <gutter_size>6</gutter_size>
       <position>200</position>
@@ -2879,6 +2885,12 @@
     <widget>
       <class>GtkHBox</class>
       <name>editor_text</name>
+      <signal>
+	<name>delete_event</name>
+	<handler>on_editor_text_delete_event</handler>
+	<object>Process_Tab</object>
+	<last_modification_time>Tue, 26 Jun 2001 14:00:33 GMT</last_modification_time>
+      </signal>
       <homogeneous>False</homogeneous>
       <spacing>0</spacing>
       <child>
@@ -2895,6 +2907,12 @@
     <widget>
       <class>GtkScrolledWindow</class>
       <name>command_scrolledwindow</name>
+      <signal>
+	<name>delete_event</name>
+	<handler>on_command_scrolledwindow_delete_event</handler>
+	<object>Process_Tab</object>
+	<last_modification_time>Tue, 26 Jun 2001 14:00:57 GMT</last_modification_time>
+      </signal>
       <hscrollbar_policy>GTK_POLICY_NEVER</hscrollbar_policy>
       <vscrollbar_policy>GTK_POLICY_ALWAYS</vscrollbar_policy>
       <hupdate_policy>GTK_UPDATE_CONTINUOUS</hupdate_policy>

@@ -36,6 +36,8 @@ begin
    Set_Gutter_Size (Process_Tab.Data_Paned, 6);
    Set_Position (Process_Tab.Data_Paned, 200);
    Pack_Start (Process_Tab.Process_Mdi, Process_Tab.Data_Paned, True, True, 0);
+   Return_Callback.Object_Connect
+     (Process_Tab.Data_Paned, "delete_event", On_Data_Paned_Delete_Event'Access, Process_Tab);
 
    Gtk_New (Process_Tab.Stack_Scrolledwindow);
    Set_Policy (Process_Tab.Stack_Scrolledwindow, Policy_Automatic, Policy_Automatic);
@@ -104,10 +106,14 @@ begin
 
    Gtk_New_Hbox (Process_Tab.Editor_Text, False, 0);
    Pack_Start (Process_Tab.Process_Mdi, Process_Tab.Editor_Text, True, True, 0);
+   Return_Callback.Object_Connect
+     (Process_Tab.Editor_Text, "delete_event", On_Editor_Text_Delete_Event'Access, Process_Tab);
 
    Gtk_New (Process_Tab.Command_Scrolledwindow);
    Set_Policy (Process_Tab.Command_Scrolledwindow, Policy_Never, Policy_Always);
    Pack_Start (Process_Tab.Process_Mdi, Process_Tab.Command_Scrolledwindow, True, True, 0);
+   Return_Callback.Object_Connect
+     (Process_Tab.Command_Scrolledwindow, "delete_event", On_Command_Scrolledwindow_Delete_Event'Access, Process_Tab);
 
    Gtk_New (Process_Tab.Debugger_Text);
    Set_Editable (Process_Tab.Debugger_Text, True);
