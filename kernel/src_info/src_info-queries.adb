@@ -1143,9 +1143,9 @@ package body Src_Info.Queries is
             --  We need to find the proper one
 
             if Is_Start_Reference (R.Value.Kind) then
-               if (L.Decl.End_Of_Scope = No_Reference
-                   or else L.Decl.End_Of_Scope.Location.File =
-                     R.Value.Location.File)
+               if L.Decl.End_Of_Scope = No_Reference
+                 or else L.Decl.End_Of_Scope.Location.File =
+                   R.Value.Location.File
                then
                   L.Start_Of_Scope := R.Value.Location;
                   L.End_Of_Scope   := L.Decl.End_Of_Scope;
