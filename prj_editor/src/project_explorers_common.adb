@@ -22,6 +22,7 @@ with Basic_Types;               use Basic_Types;
 with Pixmaps_IDE;               use Pixmaps_IDE;
 with Pixmaps_Prj;               use Pixmaps_Prj;
 with Gdk.Pixbuf;                use Gdk.Pixbuf;
+with Gtk.Tree_Selection;        use Gtk.Tree_Selection;
 with Language.Unknown;          use Language.Unknown;
 with Language;                  use Language;
 with Language_Handlers.Glide;   use Language_Handlers.Glide;
@@ -30,9 +31,8 @@ with Glide_Kernel.Project;      use Glide_Kernel.Project;
 with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
 with String_Utils;              use String_Utils;
 with Src_Info;
-with Gtk.Tree_View_Column;      use Gtk.Tree_View_Column;
-with Gtk.Tree_Selection;        use Gtk.Tree_Selection;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
+with GUI_Utils;                 use GUI_Utils;
 
 package body Project_Explorers_Common is
 
@@ -357,55 +357,6 @@ package body Project_Explorers_Common is
       return Category;
    end Filter_Category;
 
-   -------------------------
-   -- Find_Iter_For_Event --
-   -------------------------
-
-   function Find_Iter_For_Event
-     (Tree  : access Gtk_Tree_View_Record'Class;
-      Model : Gtk_Tree_Store;
-      Event : Gdk_Event) return Gtk_Tree_Iter
-   is
-      X         : Gdouble;
-      Y         : Gdouble;
-      Buffer_X  : Gint;
-      Buffer_Y  : Gint;
-      Row_Found : Boolean;
-      Path      : Gtk_Tree_Path;
-      Column    : Gtk_Tree_View_Column := null;
-      Iter      : Gtk_Tree_Iter := Null_Iter;
-      N_Model   : Gtk_Tree_Model;
-   begin
-      if Event /= null then
-         X := Get_X (Event);
-         Y := Get_Y (Event);
-         Path := Gtk_New;
-         Get_Path_At_Pos
-           (Tree,
-            Gint (X),
-            Gint (Y),
-            Path,
-            Column,
-            Buffer_X,
-            Buffer_Y,
-            Row_Found);
-
-         if Path = null then
-            return Iter;
-         end if;
-
-         Select_Path (Get_Selection (Tree), Path);
-         Iter := Get_Iter (Model, Path);
-         Path_Free (Path);
-      else
-         Get_Selected (Get_Selection (Tree),
-                       N_Model,
-                       Iter);
-      end if;
-
-      return Iter;
-   end Find_Iter_For_Event;
-
    ---------------------
    -- On_Button_Press --
    ---------------------
@@ -424,6 +375,7 @@ package body Project_Explorers_Common is
          Iter := Find_Iter_For_Event (Tree, Model, Event);
 
          if Iter /= Null_Iter then
+            Select_Iter (Get_Selection (Tree), Iter);
             case Node_Types'Val
                  (Integer (Get_Int (Model, Iter, Node_Type_Column))) is
 

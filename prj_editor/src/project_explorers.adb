@@ -71,6 +71,7 @@ with Language_Handlers.Glide;  use Language_Handlers.Glide;
 with Traces;                   use Traces;
 with Find_Utils;               use Find_Utils;
 with File_Utils;               use File_Utils;
+with GUI_Utils;                use GUI_Utils;
 with String_List_Utils;
 
 with Src_Info;
@@ -673,6 +674,7 @@ package body Project_Explorers is
       Node_Type : Node_Types;
    begin
       if Iter /= Null_Iter then
+         Select_Iter (Get_Selection (T.Tree), Iter);
          Node_Type := Get_Node_Type (T.Tree.Model, Iter);
       else
          return Context;

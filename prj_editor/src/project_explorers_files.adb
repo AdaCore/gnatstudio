@@ -37,6 +37,7 @@ with Gtk.Cell_Renderer_Pixbuf;  use Gtk.Cell_Renderer_Pixbuf;
 with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Menu;                  use Gtk.Menu;
 with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
+with Gtk.Tree_Selection;        use Gtk.Tree_Selection;
 with Gtk.Tree_View_Column;      use Gtk.Tree_View_Column;
 with Gtk.Tree_Model;            use Gtk.Tree_Model;
 with Gtk.Widget;                use Gtk.Widget;
@@ -57,6 +58,7 @@ with Projects;                 use Projects;
 with String_List_Utils;        use String_List_Utils;
 with String_Utils;             use String_Utils;
 with File_Utils;               use File_Utils;
+with GUI_Utils;                use GUI_Utils;
 with Traces;                   use Traces;
 
 with Project_Explorers_Common; use Project_Explorers_Common;
@@ -603,6 +605,7 @@ package body Project_Explorers_Files is
       Node_Type : Node_Types;
    begin
       if Iter /= Null_Iter then
+         Select_Iter (Get_Selection (T.File_Tree), Iter);
          Node_Type := Node_Types'Val
            (Integer (Get_Int (T.File_Model, Iter, Node_Type_Column)));
 

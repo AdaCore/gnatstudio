@@ -188,13 +188,6 @@ package Project_Explorers_Common is
    --  This is used to group subprograms (procedures and functions together),
    --  or remove unwanted categories (in which case Cat_Unknown is returned).
 
-   function Find_Iter_For_Event
-     (Tree  : access Gtk_Tree_View_Record'Class;
-      Model : Gtk_Tree_Store;
-      Event : Gdk_Event) return Gtk_Tree_Iter;
-   --  Get the iter in the tree view under the cursor corresponding to Event,
-   --  if any.
-
    function On_Button_Press
      (Kernel    : Kernel_Handle;
       Tree      : access Gtk_Tree_View_Record'Class;
