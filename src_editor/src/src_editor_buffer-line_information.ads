@@ -176,4 +176,13 @@ package Src_Editor_Buffer.Line_Information is
       Position : Gtk.Text_Mark.Gtk_Text_Mark) return Positive;
    --  Return the column of Position.
 
+   function Flatten_Area
+     (Buffer     : access Source_Buffer_Record'Class;
+      Start_Line : Editable_Line_Type;
+      End_Line   : Editable_Line_Type) return Boolean;
+   --  Remove all blank lines between Start_Line and End_Line. Unfold all
+   --  lines between those locations.
+   --  If the area was already flat before calling this function, return
+   --  False. Otherwise, return True.
+
 end Src_Editor_Buffer.Line_Information;
