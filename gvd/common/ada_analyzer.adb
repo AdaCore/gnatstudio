@@ -1590,9 +1590,13 @@ package body Ada_Analyzer is
                   New_Line (Line_Count);
                end loop;
 
-               Last := Prev_Char (P);
+               if P < Buffer_Length then
+                  Last := Prev_Char (P);
+               else
+                  Last := P;
+               end if;
 
-               if P < Buffer_Length and then Buffer (P) = ASCII.LF then
+               if P <= Buffer_Length and then Buffer (P) = ASCII.LF then
                   P := Last;
                end if;
 
