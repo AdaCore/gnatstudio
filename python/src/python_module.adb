@@ -2188,15 +2188,22 @@ package body Python_Module is
      (Data : in out Python_Callback_Data; Value : Class_Instance)
    is
       V   : constant Python_Class_Instance := Python_Class_Instance (Value);
+      Obj : PyObject;
       Num : Integer;
       pragma Unreferenced (Num);
    begin
+      if V /= null then
+         Obj := V.Data;
+      else
+         Obj := Py_None;
+      end if;
+
       if Data.Return_As_List then
-         Num := PyList_Append (Data.Return_Value, V.Data);
+         Num := PyList_Append (Data.Return_Value, Obj);
       else
          Setup_Return_Value (Data);
-         Py_INCREF (V.Data);
-         Data.Return_Value := V.Data;
+         Py_INCREF (Obj);
+         Data.Return_Value := Obj;
       end if;
    end Set_Return_Value;
 
