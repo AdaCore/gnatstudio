@@ -357,9 +357,14 @@ package body GVD.Code_Editors is
 
    procedure Display_Selection (Editor : access Code_Editor_Record)
    is
-      Node : Gtk_Ctree_Node := Node_List.Get_Data
-        (Node_List.First (Get_Selection (Editor.Explorer)));
+      Node : Gtk_Ctree_Node;
+      use Node_List;
    begin
+      if Get_Selection (Editor.Explorer) = Null_List then
+         return;
+      end if;
+      Node := Node_List.Get_Data
+        (Node_List.First (Get_Selection (Editor.Explorer)));
       if Node_Is_Visible (Editor.Explorer, Node) /= Visibility_Full then
          Node_Moveto (Editor.Explorer, Node, 0, 0.1, 0.1);
       end if;
