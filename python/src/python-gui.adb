@@ -135,7 +135,7 @@ package body Python.GUI is
      (Interpreter : access Python_Interpreter_Record'Class;
       Force       : Boolean := False)
    is
-      Dead   : Boolean;
+      Dead : Boolean;
       pragma Unreferenced (Dead);
    begin
       --  Process all gtk+ events, so that the text becomes visible
