@@ -209,9 +209,9 @@ package Glide_Kernel.Contexts is
 private
 
    type File_Selection_Context is new Selection_Context with record
-      File              : VFS.Virtual_File          := VFS.No_File;
-      Project           : Projects.Project_Type     := Projects.No_Project;
-      Importing_Project : Projects.Project_Type     := Projects.No_Project;
+      File              : VFS.Virtual_File      := VFS.No_File;
+      Project           : Projects.Project_Type := Projects.No_Project;
+      Importing_Project : Projects.Project_Type := Projects.No_Project;
       Line, Column      : Integer := 0;
 
       Creator_Provided_Project : Boolean := False;
