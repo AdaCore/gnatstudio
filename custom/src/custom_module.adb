@@ -156,7 +156,6 @@ package body Custom_Module is
                   Action_Callback.To_Marshaller (Contextual_Action'Access),
                   User_Data   => Contextual.Action,
                   Slot_Object => Get_Kernel (Context));
-               exit;
             end if;
          end if;
 
