@@ -566,7 +566,7 @@ package body VCS_View_Pkg is
       Dummy := Append_Column (Explorer.Tree, Col);
 
       Gtk_New (Col);
-      Set_Title (Col, -"Local file name");
+      Set_Title (Col, -"File name");
       Pack_Start (Col, Text_Rend, True);
       Add_Attribute (Col, Text_Rend, "text", Base_Name_Column);
       Set_Clickable (Col, True);
@@ -574,13 +574,13 @@ package body VCS_View_Pkg is
       Dummy := Append_Column (Explorer.Tree, Col);
 
       Gtk_New (Col);
-      Set_Title (Col, -"Local revision");
+      Set_Title (Col, -"Local rev.");
       Pack_Start (Col, Text_Rend, True);
       Add_Attribute (Col, Text_Rend, "text", Local_Rev_Column);
       Dummy := Append_Column (Explorer.Tree, Col);
 
       Gtk_New (Col);
-      Set_Title (Col, -"Repository revision");
+      Set_Title (Col, -"Head rev.");
       Pack_Start (Col, Text_Rend, True);
       Add_Attribute (Col, Text_Rend, "text", Rep_Rev_Column);
       Dummy := Append_Column (Explorer.Tree, Col);
@@ -665,14 +665,14 @@ package body VCS_View_Pkg is
       --  If there is no selection, select the item under the cursor.
       if String_List.Is_Empty (Files) then
          declare
-            X : Gdouble := Get_X (Event);
-            Y : Gdouble := Get_Y (Event);
-            Buffer_X : Gint;
-            Buffer_Y : Gint;
+            X         : Gdouble := Get_X (Event);
+            Y         : Gdouble := Get_Y (Event);
+            Buffer_X  : Gint;
+            Buffer_Y  : Gint;
             Row_Found : Boolean;
-            Path : Gtk_Tree_Path;
-            Column : Gtk_Tree_View_Column := null;
-            Iter : Gtk_Tree_Iter;
+            Path      : Gtk_Tree_Path;
+            Column    : Gtk_Tree_View_Column := null;
+            Iter      : Gtk_Tree_Iter;
          begin
             Path := Gtk_New;
             Get_Path_At_Pos
