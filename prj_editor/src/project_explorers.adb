@@ -571,6 +571,7 @@ package body Project_Explorers is
       Pack_Start (Explorer, Explorer.Scenario, Fill => True, Expand => False);
 
       Gtk_New (Scrolled);
+      Set_Policy (Scrolled, Policy_Automatic, Policy_Automatic);
       Gtk_New (Label, -"Project View");
       Pack_Start (Explorer, Scrolled, Fill => True, Expand => True);
 

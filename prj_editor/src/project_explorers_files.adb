@@ -33,6 +33,7 @@ with Gtk.Tree_View;             use Gtk.Tree_View;
 with Gtk.Tree_Store;            use Gtk.Tree_Store;
 with Gtk.Cell_Renderer_Text;    use Gtk.Cell_Renderer_Text;
 with Gtk.Cell_Renderer_Pixbuf;  use Gtk.Cell_Renderer_Pixbuf;
+with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Menu;                  use Gtk.Menu;
 with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
 with Gtk.Tree_View_Column;      use Gtk.Tree_View_Column;
@@ -745,6 +746,7 @@ package body Project_Explorers_Files is
       Kernel   : access Glide_Kernel.Kernel_Handle_Record'Class) is
    begin
       Gtk.Scrolled_Window.Initialize (Explorer);
+      Set_Policy (Explorer, Policy_Automatic, Policy_Automatic);
 
       Gtk_New (Explorer.File_Model, Columns_Types);
       Gtk_New (Explorer.File_Tree, Explorer.File_Model);
