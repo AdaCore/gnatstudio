@@ -4260,7 +4260,8 @@ package body Src_Editor_Buffer is
       pragma Unreferenced (Context);
       Widget : constant Gtk_Widget := Get_Current_Focus_Widget (Kernel);
    begin
-      return Widget.all in Source_View_Record'Class;
+      return Widget /= null
+        and then Widget.all in Source_View_Record'Class;
    end Context_Matches;
 
    ----------
