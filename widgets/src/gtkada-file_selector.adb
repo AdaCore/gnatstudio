@@ -207,6 +207,20 @@ package body Gtkada.File_Selector is
       return Select_File (File_Selector_Window);
    end Select_File;
 
+   ----------------------
+   -- Select_Directory --
+   ----------------------
+
+   function Select_Directory
+     (Title          : String := "Select a file";
+      Base_Directory : String := "") return String
+   is
+      File_Selector_Window : File_Selector_Window_Access;
+   begin
+      Gtk_New (File_Selector_Window, "/", Base_Directory, Title, False);
+      return Select_Directory (File_Selector_Window);
+   end Select_Directory;
+
    -----------------
    -- Select_File --
    -----------------
@@ -248,6 +262,48 @@ package body Gtkada.File_Selector is
          end;
       end if;
    end Select_File;
+
+   -----------------
+   -- Select_Directory --
+   -----------------
+
+   function Select_Directory
+     (File_Selector : File_Selector_Window_Access) return String
+   is
+      Filter_A : Filter_Show_All_Access := new Filter_Show_All;
+   begin
+      pragma Assert (File_Selector /= null);
+
+      Filter_A.Label := new String' (-"All files");
+
+      Register_Filter (File_Selector, Filter_A);
+      Set_Modal (File_Selector, True);
+
+      Widget_Callback.Object_Connect
+        (File_Selector.Ok_Button, "clicked",
+         Widget_Callback.To_Marshaller (On_Ok_Button_Clicked'Access),
+         File_Selector);
+      Widget_Callback.Object_Connect
+        (File_Selector.Cancel_Button, "clicked",
+         Widget_Callback.To_Marshaller (On_Cancel_Button_Clicked'Access),
+         File_Selector);
+
+      Show_All (File_Selector);
+      File_Selector.Own_Main_Loop := True;
+
+      Gtk.Main.Main;
+
+      if File_Selector.Current_Directory = null then
+         return "";
+      else
+         declare
+            File : constant String := Get_Text (File_Selector.Selection_Entry);
+         begin
+            Destroy (File_Selector);
+            return File;
+         end;
+      end if;
+   end Select_Directory;
 
    --------------
    -- Realized --
@@ -427,7 +483,9 @@ package body Gtkada.File_Selector is
       Id     : Idle_Handler_Id;
 
    begin
-      if Get_Window (Win) = null then
+      if Get_Window (Win) = null
+        or else Win.File_List = null
+      then
          return;
       end if;
 
@@ -528,7 +586,11 @@ package body Gtkada.File_Selector is
             Show_Directory (Win.Explorer_Tree, Dir, Get_Window (Win));
          end if;
 
-         Refresh_Files (Win);
+         if Win.File_List = null then
+            Set_Text (Win.Selection_Entry, Dir);
+         else
+            Refresh_Files (Win);
+         end if;
       end if;
    end Change_Directory;
 
@@ -951,7 +1013,8 @@ package body Gtkada.File_Selector is
      (File_Selector_Window : out File_Selector_Window_Access;
       Root                 : String;
       Initial_Directory    : String;
-      Dialog_Title         : String) is
+      Dialog_Title         : String;
+      Show_Files           : Boolean := True) is
    begin
       File_Selector_Window := new File_Selector_Window_Record;
 
@@ -959,11 +1022,12 @@ package body Gtkada.File_Selector is
         and then Root (Root'Last) = Directory_Separator
       then
          Initialize
-           (File_Selector_Window, Root, Initial_Directory, Dialog_Title);
+           (File_Selector_Window, Root,
+            Initial_Directory, Dialog_Title, Show_Files);
       else
          Initialize
            (File_Selector_Window, Get_Current_Dir,
-            Initial_Directory, Dialog_Title);
+            Initial_Directory, Dialog_Title, Show_Files);
       end if;
    end Gtk_New;
 
@@ -975,7 +1039,8 @@ package body Gtkada.File_Selector is
      (File_Selector_Window : access File_Selector_Window_Record'Class;
       Root                 : String;
       Initial_Directory    : String;
-      Dialog_Title         : String)
+      Dialog_Title         : String;
+      Show_Files           : Boolean := True)
    is
       Toolbar1    : Gtk_Toolbar;
 
@@ -1016,7 +1081,12 @@ package body Gtkada.File_Selector is
 
       Gtk.Window.Initialize (File_Selector_Window, Window_Toplevel);
       Set_Title (File_Selector_Window, Dialog_Title);
-      Set_Default_Size (File_Selector_Window, 600, 500);
+
+      if Show_Files then
+         Set_Default_Size (File_Selector_Window, 600, 500);
+      else
+         Set_Default_Size (File_Selector_Window, 400, 647);
+      end if;
 
       Set_Policy (File_Selector_Window, False, True, False);
       Set_Position (File_Selector_Window, Win_Pos_Center);
@@ -1142,47 +1212,49 @@ package body Gtkada.File_Selector is
       Add (File_Selector_Window.Explorer_Tree_Scrolledwindow,
            File_Selector_Window.Explorer_Tree);
 
-      Gtk_New (File_Selector_Window.Files_Scrolledwindow);
-      Set_Policy
-        (File_Selector_Window.Files_Scrolledwindow,
-         Policy_Automatic, Policy_Always);
-      Add (Hpaned1, File_Selector_Window.Files_Scrolledwindow);
+      if Show_Files then
+         Gtk_New (File_Selector_Window.Files_Scrolledwindow);
+         Set_Policy
+           (File_Selector_Window.Files_Scrolledwindow,
+            Policy_Automatic, Policy_Always);
+         Add (Hpaned1, File_Selector_Window.Files_Scrolledwindow);
 
-      Gtk_New (File_Selector_Window.File_List, 3);
-      Set_Selection_Mode (File_Selector_Window.File_List, Selection_Single);
-      Set_Shadow_Type (File_Selector_Window.File_List, Shadow_In);
-      Set_Show_Titles (File_Selector_Window.File_List, True);
-      Set_Column_Width (File_Selector_Window.File_List, 0, 20);
-      Set_Column_Width (File_Selector_Window.File_List, 1, 180);
-      Set_Column_Width (File_Selector_Window.File_List, 2, 80);
-      Set_Row_Height (File_Selector_Window.File_List, 15);
+         Gtk_New (File_Selector_Window.File_List, 3);
+         Set_Selection_Mode (File_Selector_Window.File_List, Selection_Single);
+         Set_Shadow_Type (File_Selector_Window.File_List, Shadow_In);
+         Set_Show_Titles (File_Selector_Window.File_List, True);
+         Set_Column_Width (File_Selector_Window.File_List, 0, 20);
+         Set_Column_Width (File_Selector_Window.File_List, 1, 180);
+         Set_Column_Width (File_Selector_Window.File_List, 2, 80);
+         Set_Row_Height (File_Selector_Window.File_List, 15);
 
-      Return_Callback.Connect
-        (File_Selector_Window.File_List, "key_press_event",
-         On_File_List_Key_Press_Event'Access);
+         Return_Callback.Connect
+           (File_Selector_Window.File_List, "key_press_event",
+            On_File_List_Key_Press_Event'Access);
 
-      Widget_Callback.Connect
-        (File_Selector_Window.File_List, "select_row",
-         On_File_List_End_Selection'Access);
-      Add (File_Selector_Window.Files_Scrolledwindow,
-           File_Selector_Window.File_List);
+         Widget_Callback.Connect
+           (File_Selector_Window.File_List, "select_row",
+            On_File_List_End_Selection'Access);
+         Add (File_Selector_Window.Files_Scrolledwindow,
+              File_Selector_Window.File_List);
 
-      Gtk_New (File_Selector_Window.File_Icon_Label, -(""));
-      Set_Column_Widget
-        (File_Selector_Window.File_List, 0,
-         File_Selector_Window.File_Icon_Label);
+         Gtk_New (File_Selector_Window.File_Icon_Label, -(""));
+         Set_Column_Widget
+           (File_Selector_Window.File_List, 0,
+            File_Selector_Window.File_Icon_Label);
 
-      Gtk_New (File_Selector_Window.File_Name_Label, -("Name"));
-      Set_Justify (File_Selector_Window.File_Name_Label, Justify_Left);
-      Set_Column_Widget
-        (File_Selector_Window.File_List, 1,
-         File_Selector_Window.File_Name_Label);
+         Gtk_New (File_Selector_Window.File_Name_Label, -("Name"));
+         Set_Justify (File_Selector_Window.File_Name_Label, Justify_Left);
+         Set_Column_Widget
+           (File_Selector_Window.File_List, 1,
+            File_Selector_Window.File_Name_Label);
 
-      Gtk_New (File_Selector_Window.File_Text_Label, -("Info"));
-      Set_Justify (File_Selector_Window.File_Text_Label, Justify_Left);
-      Set_Column_Widget
-        (File_Selector_Window.File_List, 2,
-         File_Selector_Window.File_Text_Label);
+         Gtk_New (File_Selector_Window.File_Text_Label, -("Info"));
+         Set_Justify (File_Selector_Window.File_Text_Label, Justify_Left);
+         Set_Column_Widget
+           (File_Selector_Window.File_List, 2,
+            File_Selector_Window.File_Text_Label);
+      end if;
 
       Gtk_New_Hbox (Hbox4, False, 0);
       Pack_Start
