@@ -90,7 +90,7 @@ __gnat_expect_poll (fd, num_fd, timeout, is_set)
 {
 #define MAX_DELAY 100
 
-  int i, delay;
+  int i, delay, infinite = 0;
   DWORD avail;
   HANDLE handles[num_fd];
 
@@ -102,7 +102,10 @@ __gnat_expect_poll (fd, num_fd, timeout, is_set)
 
   /* Start with small delays, and then increase them, to avoid polling too
      much when waiting a long time */
-  delay = 10;
+  delay = 5;
+
+  if (timeout < 0)
+    infinite = 1;
 
   while (1)
     {
@@ -118,7 +121,7 @@ __gnat_expect_poll (fd, num_fd, timeout, is_set)
 	    }
 	}
 
-      if (timeout <= 0)
+      if (!infinite && timeout <= 0)
 	return 0;
 
       Sleep (delay);
