@@ -55,9 +55,23 @@ package body Codefix.Text_Manager is
    --------------
 
    function Is_Blank (Str : String) return Boolean is
-      Blank_Str : constant String (Str'First .. Str'Last) := (others => ' ');
    begin
-      return Str = Blank_Str;
+      for J in Str'Range loop
+         if not Is_Blank (Str (J)) then
+            return False;
+         end if;
+      end loop;
+
+      return True;
+   end Is_Blank;
+
+   --------------
+   -- Is_Blank --
+   --------------
+
+   function Is_Blank (Char : Character) return Boolean is
+   begin
+      return Char = ' ' or else Char = ASCII.HT;
    end Is_Blank;
 
    -------------------
@@ -458,6 +472,25 @@ package body Codefix.Text_Manager is
         (Get_File (This, Cursor.File_Name.all).all, Cursor, Category);
    end Get_Extended_Unit_Name;
 
+   ---------------------
+   -- Get_Right_Paren --
+   ---------------------
+
+   function Get_Right_Paren
+     (Current_Text : Text_Navigator_Abstr'Class;
+      Cursor       : File_Cursor'Class)
+     return File_Cursor'Class is
+
+      Result : File_Cursor;
+
+   begin
+      Result :=
+        (Text_Cursor (Get_Right_Paren
+           (Get_File (Current_Text, Cursor.File_Name.all).all, Cursor))
+         with File_Name => Result.File_Name);
+
+      return Result;
+   end Get_Right_Paren;
 
    ----------------------------------------------------------------------------
    --  type Text_Interface
@@ -937,8 +970,14 @@ package body Codefix.Text_Manager is
 
 
                --  Is this unit the right one ?
+
                if Current_Info.Is_Declaration = Unit_Info.Is_Declaration
-                 and then Current_Info.Name.all = Unit_Info.Name.all
+                 and then
+                   ((Current_Info.Name = null and then Unit_Info.Name = null)
+                    or else (Current_Info.Name /= null
+                             and then Unit_Info.Name /= null
+                             and then Current_Info.Name.all =
+                               Unit_Info.Name.all))
                  and then Current_Info.Sloc_Start = Unit_Info.Sloc_Start
                  and then Normalize (Current_Info.Profile) =
                    Normalize (Unit_Info.Profile)
@@ -989,6 +1028,32 @@ package body Codefix.Text_Manager is
       end;
    end Get_Extended_Unit_Name;
 
+   ---------------------
+   -- Get_Right_Paren --
+   ---------------------
+
+   function Get_Right_Paren
+     (This   : Text_Interface'Class;
+      Cursor : Text_Cursor'Class)
+     return Text_Cursor'Class
+   is
+      Current_Str : Dynamic_String;
+      Line_Cursor : Text_Cursor := Text_Cursor (Cursor);
+   begin
+      Assign (Current_Str, Get_Line (This, Line_Cursor));
+
+      loop
+         for J in Line_Cursor.Col .. Current_Str'Last loop
+            null;
+         end loop;
+
+         Line_Cursor.Col := 1;
+         Line_Cursor.Line := Line_Cursor.Line + 1;
+      end loop;
+
+      return Text_Cursor'((0, 0));
+   end Get_Right_Paren;
+
    ----------------------------------------------------------------------------
    --  type Text_Cursor
    ----------------------------------------------------------------------------
@@ -1012,6 +1077,15 @@ package body Codefix.Text_Manager is
       New_Cursor.File_Name := Clone (This.File_Name);
       return New_Cursor;
    end Clone;
+
+   --------------------
+   -- Unchecked_Free --
+   --------------------
+
+   procedure Unchecked_Free (This : in out File_Cursor) is
+   begin
+      This.File_Name := null;
+   end Unchecked_Free;
 
    ----------------------------------------------------------------------------
    --  type Extract_Line
@@ -2393,6 +2467,10 @@ package body Codefix.Text_Manager is
               (Current_Line.Content'First .. Start.Col - 1) &
               Current_Line.Content (Stop.Col + 1 ..
                                       Current_Line.Content'Last));
+
+         if Is_Blank (Current_Line.Content.all) then
+            Current_Line.Context := Line_Deleted;
+         end if;
       else
          Current_Line := Get_Line (This, Line_Cursor);
          Set_String
@@ -2400,15 +2478,24 @@ package body Codefix.Text_Manager is
             Current_Line.Content
               (Current_Line.Content'First .. Start.Col - 1));
 
+         if Is_Blank (Current_Line.Content.all) then
+            Current_Line.Context := Line_Deleted;
+         end if;
+
          for J in Start.Line + 1 .. Stop.Line - 1 loop
             Current_Line := Next (Current_Line.all);
             Current_Line.Context := Line_Deleted;
          end loop;
+
          Current_Line := Next (Current_Line.all);
 
          Set_String
            (Current_Line.all,
             Current_Line.Content (Stop.Col + 1 .. Current_Line.Content'Last));
+
+         if Is_Blank (Current_Line.Content.all) then
+            Current_Line.Context := Line_Deleted;
+         end if;
       end if;
    end Erase;
 
@@ -2530,10 +2617,10 @@ package body Codefix.Text_Manager is
    ----------------
 
    procedure Merge_Tree
-     (Original_Str, New_Str           : String;
-      Original_It, New_It, Result_It  : Positive;
-      Offset_Char                     : Integer;
-      Result                          : out Merge_Array) is
+     (Original_Str, New_Str          : String;
+      Original_It, New_It, Result_It : Positive;
+      Offset_Char                    : Integer;
+      Result                         : out Merge_Array) is
    begin
 
       if Result_It > Result'Last then
@@ -2710,8 +2797,16 @@ package body Codefix.Text_Manager is
             when Removed =>
                Loop_Add (1);
             when Added =>
-               Loop_Add (1);
-               Loop_Add (2);
+               if Str_1 (It_Str_1) = Str_2 (It_Str_2) then
+                  Result := Result & Str_1 (It_Str_1);
+                  It_Str_1 := It_Str_1 + 1;
+                  It_Str_2 := It_Str_2 + 1;
+                  It_Merge_1 := It_Merge_1 + 1;
+                  It_Merge_2 := It_Merge_2 + 1;
+               else
+                  Loop_Add (1);
+                  Loop_Add (2);
+               end if;
          end case;
       end Merge_1_Added;
 
