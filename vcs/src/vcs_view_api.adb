@@ -65,6 +65,10 @@ package body VCS_View_API is
 
    Me : constant Debug_Handle := Create ("VCS_Api");
 
+   Max_Rev_Length : constant := 10;
+   --  The maximum length of a revision string, in characters. Revisions longer
+   --  than this will be krunched when displayed in the editors.
+
    -----------------------
    -- Local subprograms --
    -----------------------
@@ -1501,6 +1505,8 @@ package body VCS_View_API is
    is
       pragma Unreferenced (Widget);
       List : String_List.List;
+
+      Ref  : VCS_Access;
    begin
       List := Get_Selected_Files (Context);
 
@@ -1511,7 +1517,10 @@ package body VCS_View_API is
          return;
       end if;
 
-      Open (Get_Current_Ref (Context), List);
+      Ref := Get_Current_Ref (Context);
+
+      Open (Ref, List);
+      Get_Status (Ref, List);
 
       --  ??? The following should be the responsibility of
       --  the VCS modules themselves, due to the possibility
@@ -1562,6 +1571,7 @@ package body VCS_View_API is
    is
       pragma Unreferenced (Widget);
       Files : String_List.List;
+      Ref   : VCS_Access;
    begin
       Files := Get_Selected_Files (Context);
 
@@ -1572,8 +1582,10 @@ package body VCS_View_API is
          return;
       end if;
 
-      Revert (Get_Current_Ref (Context), Files);
-      Get_Status (Get_Current_Ref (Context), Files);
+      Ref := Get_Current_Ref (Context);
+
+      Revert (Ref, Files);
+      Get_Status (Ref, Files);
 
       String_List.Free (Files);
    exception
@@ -2358,7 +2370,7 @@ package body VCS_View_API is
 
       Kernel     : constant Kernel_Handle := Get_Kernel (Context);
       Explorer   : constant VCS_View_Access :=
-        Get_Explorer (Kernel);
+        Get_Explorer (Kernel, False);
       Status     : File_Status_Record;
       Revision_1 : String_Access;
       Revision_2 : String_Access;
@@ -2384,14 +2396,16 @@ package body VCS_View_API is
          if Is_Empty (Status.Repository_Revision) then
             Revision_2 := new String'("");
          else
-            Revision_2 := new String'(Head (Status.Repository_Revision));
+            Revision_2 := new String'
+              (Protect (Head (Status.Repository_Revision)));
          end if;
       end if;
 
       if Is_Empty (Status.Working_Revision) then
          Revision_1 := new String'("");
       else
-         Revision_1 := new String'(Head (Status.Working_Revision));
+         Revision_1 := new String'
+           (Protect (Head (Status.Working_Revision)));
       end if;
 
       if One_Rev then
@@ -2614,6 +2628,19 @@ package body VCS_View_API is
       Status_Label   : String_Access;
       Revision_Label : String_Access;
 
+      function Short_Revision (R : String) return String;
+      --  If R is too long, return only the last digits.
+
+      function Short_Revision (R : String) return String is
+      begin
+         if R'Length <= Max_Rev_Length then
+            return R;
+
+         else
+            return "[...]" & R (R'Last - Max_Rev_Length .. R'Last);
+         end if;
+      end Short_Revision;
+
       use String_List_Utils.String_List;
    begin
       if Ref = null then
@@ -2631,7 +2658,8 @@ package body VCS_View_API is
 
       if not Is_Empty (Status.Working_Revision) then
          Revision_Label := new String'
-           (Name (Ref) & ":" & Head (Status.Working_Revision));
+           (Name (Ref) & ":"
+            & Short_Revision (Head (Status.Working_Revision)));
       else
          Revision_Label := new String'(Name (Ref));
       end if;
