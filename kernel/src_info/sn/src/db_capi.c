@@ -141,7 +141,7 @@ int csf_get_field_length(CSF * csf, int index)
 DB_File *ada_db_open(const int num_of_files, const char **file_names)
 {
     DB_File *file;
-    int i,j;
+    int i,j = 0;
 
     file = (DB_File *) malloc(sizeof(DB_File));
     file->fname = (char **) malloc(sizeof(char *) * num_of_files);
