@@ -978,6 +978,8 @@ package body Project_Explorers is
       Idle          : Boolean := False)
    is
       D : Append_Directory_Idle_Data_Access := new Append_Directory_Idle_Data;
+      --  ??? where is this freed ?
+
       Timeout_Id : Timeout_Handler_Id;
 
    begin
@@ -1267,6 +1269,7 @@ package body Project_Explorers is
    begin
       if Node.Tag.all = "Project_Explorer" then
          Gtk_New (Explorer, User);
+         Refresh (GObject (User), GObject (Explorer));
          return Gtk_Widget (Explorer);
       end if;
 
@@ -3174,9 +3177,10 @@ package body Project_Explorers is
 
       --  If a desktop was loaded, we do not want to force an explorer if none
       --  was saved. However, in the default case we want to open an explorer.
-      if not Has_Saved_Desktop (Kernel) then
-         On_Open_Explorer (Kernel, Kernel_Handle (Kernel));
-      end if;
+
+--        if not Has_Saved_Desktop (Kernel) then
+--           On_Open_Explorer (Kernel, Kernel_Handle (Kernel));
+--        end if;
 
       Register_Menu
         (Kernel, Project, -"Explorer", "", On_Open_Explorer'Access);
