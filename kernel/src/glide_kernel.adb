@@ -55,6 +55,7 @@ with Generic_List;
 with Language_Handlers;         use Language_Handlers;
 with Language_Handlers.Glide;   use Language_Handlers.Glide;
 
+with Prj;                       use Prj;
 with Prj.Tree;                  use Prj.Tree;
 
 with Traces;                    use Traces;
@@ -327,7 +328,10 @@ package body Glide_Kernel is
       Project : Prj.Project_Id := Get_Project_From_File
         (Get_Project_View (Handle), Base_Name (Source_Filename));
    begin
-      pragma Assert (Project /= Prj.No_Project);
+      if Project = Prj.No_Project then
+         Project := Get_Project_View (Handle);
+      end if;
+
       Trace (Me, "Locate_From_Source_And_Complete: " & Source_Filename);
 
       Create_Or_Complete_LI
@@ -341,7 +345,6 @@ package body Glide_Kernel is
          Project                => Project,
          Predefined_Source_Path => Get_Predefined_Source_Path (Handle),
          Predefined_Object_Path => Get_Predefined_Object_Path (Handle));
-
       return File;
    end Locate_From_Source_And_Complete;
 
@@ -360,7 +363,9 @@ package body Glide_Kernel is
         (Get_Project (Kernel),
          Get_Language_Handler (Kernel),
          Entity, Kernel.Source_Info_List,
-         Iterator, Project, LI_Once);
+         Iterator, Project, LI_Once,
+         Get_Predefined_Source_Path (Kernel),
+         Get_Predefined_Object_Path (Kernel));
    end Find_All_References;
 
    ----------
@@ -906,6 +911,10 @@ package body Glide_Kernel is
       Project : Prj.Project_Id := Get_Project_From_File
         (Get_Project_View (Kernel), File_Name);
    begin
+      if Project = Prj.No_Project then
+         Project := Get_Project_View (Kernel);
+      end if;
+
       Find_Next_Body (Lib_Info, File_Name, Entity_Name, Line, Column,
                       Get_LI_Handler_From_File
                         (Glide_Language_Handler (Kernel.Lang_Handler),
