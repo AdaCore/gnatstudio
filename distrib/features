@@ -1,5 +1,7 @@
 New features in GPS 1.0.2
 
+- Possibility to add buttons to the toolbar via the custom file.
+
 - New editors for the GNAT switches: style warnings, validity tests, and
   general warnings.
 
