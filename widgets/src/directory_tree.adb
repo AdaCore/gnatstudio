@@ -21,7 +21,6 @@
 with Ada.Exceptions;            use Ada.Exceptions;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
-with Interfaces.C.Strings;      use Interfaces.C.Strings;
 with Glib;                      use Glib;
 with Glib.Convert;              use Glib.Convert;
 with Glib.Object;               use Glib.Object;
@@ -31,7 +30,6 @@ with Gdk.Pixbuf;                use Gdk.Pixbuf;
 with Gtk.Arrow;                 use Gtk.Arrow;
 with Gtk.Box;                   use Gtk.Box;
 with Gtk.Button;                use Gtk.Button;
-with Gtk.Clist;                 use Gtk.Clist;
 with Gtk.Dialog;                use Gtk.Dialog;
 with Gtk.Enums;                 use Gtk.Enums;
 with Gdk.Event;                 use Gdk.Event;
@@ -54,7 +52,6 @@ with Gtk.Tree_Selection;        use Gtk.Tree_Selection;
 with Gtk.Widget;                use Gtk.Widget;
 with Gtk.Window;                use Gtk.Window;
 with Gtkada.Handlers;           use Gtkada.Handlers;
-with Gtkada.Types;              use Gtkada.Types;
 with Pixmaps_IDE;               use Pixmaps_IDE;
 
 with Glide_Intl;                use Glide_Intl;
@@ -73,14 +70,6 @@ package body Directory_Tree is
    Icon_Column          : constant := 0;
    Base_Name_Column     : constant := 1;
    Absolute_Name_Column : constant := 2;
-   Node_Type_Column     : constant := 3;
-   User_Data_Column     : constant := 4;
-   Line_Column          : constant := 5;
-   Column_Column        : constant := 6;
-   Project_Column       : constant := 7;
-   Category_Column      : constant := 8;
-   Up_To_Date_Column    : constant := 9;
-   Entity_Base_Column   : constant := 10;
 
    --------------
    -- Graphics --
@@ -257,7 +246,7 @@ package body Directory_Tree is
 
    function Find_Directory_In_Selection
      (Selector : access Directory_Selector_Record'Class; Name : String)
-      return Gint;
+      return Gtk_Tree_Iter;
    --  -1 if Name is not a source directory for the project defined in Wiz.
    --  Otherwise, the index of Name in the list is returned.
 
@@ -277,6 +266,10 @@ package body Directory_Tree is
      (Selector : Directory_Selector;
       Event    : Gdk.Event.Gdk_Event) return Gtk_Menu;
    --  Return the contextual menu to use for a single directory selector.
+
+   function Get_First_Selected
+     (Selector : Directory_Selector) return Gtk_Tree_Iter;
+   --  Return the first selected item, or Null_Iter;
 
    function Filter
      (Tree     : access Dir_Tree_Record'Class;
@@ -390,19 +383,23 @@ package body Directory_Tree is
 
    function Find_Directory_In_Selection
      (Selector : access Directory_Selector_Record'Class; Name : String)
-      return Gint
+      return Gtk_Tree_Iter
    is
-      Num_Rows : constant Gint := Get_Rows (Selector.List);
+      Iter : Gtk_Tree_Iter;
    begin
-      --  Check if the directory is already there
+      Iter := Get_Iter_First (Selector.List_Model);
 
-      for J in 0 .. Num_Rows - 1 loop
-         if Get_Text (Selector.List, J, 0) = Name then
-            return J;
+      while Iter /= Null_Iter loop
+         if Get_String (Selector.List_Model, Iter, Absolute_Name_Column) =
+           Name
+         then
+            return Iter;
          end if;
+
+         Next (Selector.List_Model, Iter);
       end loop;
 
-      return -1;
+      return Null_Iter;
    end Find_Directory_In_Selection;
 
    -------------------
@@ -414,25 +411,21 @@ package body Directory_Tree is
       Dir       : String;
       Recursive : Boolean)
    is
-      Row     : Gint;
+      Row     : Gtk_Tree_Iter;
       Handle  : Dir_Type;
       File    : String (1 .. 1024);
       Last    : Natural;
-      Strings : Gtkada.Types.Chars_Ptr_Array (1 .. 1);
 
    begin
-      pragma Assert
-        (Selector.List /= null, "Not a multiple-directory selector");
-
       Row := Find_Directory_In_Selection (Selector, Dir);
 
-      if Row = -1 then
-         Strings (1) := New_String (Dir);
-         Row := Append (Selector.List, Strings);
-         Free (Strings);
+      if Row = Null_Iter then
+         Append (Selector.List_Model, Row, Null_Iter);
+         Set (Selector.List_Model, Row, Absolute_Name_Column, Dir);
+         Set (Selector.List_Model, Row, Base_Name_Column, Dir);
       end if;
 
-      Select_Row (Selector.List, Row, -1);
+      Select_Iter (Get_Selection (Selector.List_Tree), Row);
 
       if Recursive then
          Open (Handle, Dir);
@@ -499,26 +492,25 @@ package body Directory_Tree is
    procedure Add_Directory_Cb (W : access Gtk_Widget_Record'Class) is
       Selector : constant Directory_Selector := Directory_Selector (W);
       Dir      : constant String  := Get_Selection (Selector.Directory);
+      Iter     : Gtk_Tree_Iter;
+      Path     : Gtk_Tree_Path;
    begin
-      pragma Assert
-        (Selector.List /= null, "Not a multiple-directory selector");
-
       if Dir /= "" then
-         Freeze (Selector.List);
-         Unselect_All (Selector.List);
+         Unselect_All (Get_Selection (Selector.List_Tree));
          Add_Directory (Selector, Dir, Recursive => True);
-         Sort (Selector.List);
-         Thaw (Selector.List);
 
          --  Show the first selected item
-         Moveto (Selector.List,
-                 Gint_List.Get_Data (Get_Selection (Selector.List)),
-                 0, 0.0, 0.2);
+         Iter := Get_First_Selected (Selector);
+
+         if Iter /= Null_Iter then
+            Path := Get_Path (Selector.List_Model, Iter);
+            Scroll_To_Cell (Selector.List_Tree, Path, null, True, 0.1, 0.1);
+            Path_Free (Path);
+         end if;
       end if;
 
    exception
       when E : others =>
-         Thaw (Selector.List);
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end Add_Directory_Cb;
 
@@ -529,59 +521,44 @@ package body Directory_Tree is
    procedure Remove_Directory
      (Selector : access Directory_Selector_Record'Class; Recursive : Boolean)
    is
-      use type Gint_List.Glist;
-
-      List    : Gint_List.Glist := Get_Selection (Selector.List);
-      Next    : Gint_List.Glist;
-      Num     : constant Guint := Gint_List.Length (List);
-      Strings : Gtkada.Types.Chars_Ptr_Array (1 .. 1);
-
+      Iter : Gtk_Tree_Iter;
    begin
-      --  Add the directories recursively to the selection (we can't remove
-      --  them right away, since this would cancel the current selection and
-      --  thus we wouldn't be able to remove all the user-selected ones).
+      Iter := Get_First_Selected (Directory_Selector (Selector));
 
-      if Recursive then
-         for J in 1 .. Num loop
-            declare
-               Row : constant Gint := Gint_List.Get_Data (List);
-               Dir : constant String := Get_Text (Selector.List, Row, 0);
-
-            begin
-               for J in 0 .. Get_Rows (Selector.List) - 1 loop
-                  declare
-                     N : constant String := Get_Text (Selector.List, J, 0);
-                  begin
-                     if N'Length > Dir'Length
-                       and then N (N'First .. N'First + Dir'Length - 1) = Dir
-                     then
-                        Select_Row (Selector.List, J, -1);
-                     end if;
-                  end;
-               end loop;
-            end;
-
-            List := Gint_List.Next (List);
-         end loop;
+      if Iter = Null_Iter then
+         return;
       end if;
 
-      --  Now remove the whole selection
+      if Recursive then
+         declare
+            Dir : constant String := Get_String
+              (Selector.List_Model, Iter, Absolute_Name_Column);
+         begin
+            Iter := Get_Iter_First (Selector.List_Model);
 
-      List := Get_Selection (Selector.List);
-
-      while List /= Gint_List.Null_List loop
-         Next := Gint_List.Next (List);
-         Remove (Selector.List, Gint_List.Get_Data (List));
-         List := Next;
-      end loop;
-
-      --  Workaround for a possible bug in gtk+: when all the rows in the
-      --  clist are removed with the loop above, we get a SEGV,
-      --  unless we do the following ???
-
-      Strings (1) := New_String ("");
-      Remove (Selector.List, Append (Selector.List, Strings));
-      Free (Strings);
+            while Iter /= Null_Iter loop
+               declare
+                  Iter_String : constant String := Get_String
+                    (Selector.List_Model, Iter, Absolute_Name_Column);
+                  Delete_Iter : Gtk_Tree_Iter;
+               begin
+                  if Iter_String'Length >= Dir'Length and then
+                    Iter_String
+                      (Iter_String'First
+                           .. Iter_String'First -  1 + Dir'Length) = Dir
+                  then
+                     Delete_Iter := Iter;
+                     Next (Selector.List_Model, Iter);
+                     Remove (Selector.List_Model, Delete_Iter);
+                  else
+                     Next (Selector.List_Model, Iter);
+                  end if;
+               end;
+            end loop;
+         end;
+      else
+         Remove (Selector.List_Model, Iter);
+      end if;
    end Remove_Directory;
 
    -------------------------
@@ -591,13 +568,10 @@ package body Directory_Tree is
    procedure Remove_Directory_Cb (W : access Gtk_Widget_Record'Class) is
       Selector : constant Directory_Selector := Directory_Selector (W);
    begin
-      Freeze (Selector.List);
       Remove_Directory (Selector, Recursive => True);
-      Thaw (Selector.List);
 
    exception
       when E : others =>
-         Thaw (Selector.List);
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end Remove_Directory_Cb;
 
@@ -607,16 +581,21 @@ package body Directory_Tree is
 
    procedure Add_Single_Directory_Cb (W : access Gtk_Widget_Record'Class) is
       Selector : constant Directory_Selector := Directory_Selector (W);
-
+      Path     : Gtk_Tree_Path;
+      Iter     : Gtk_Tree_Iter;
    begin
-      Unselect_All (Selector.List);
+      Unselect_All (Get_Selection (Selector.List_Tree));
       Add_Directory (Selector, Get_Selection (Selector.Directory), False);
-      Sort (Selector.List);
+      --  Sort (Selector.List);
 
       --  Show the first selected item
-      Moveto (Selector.List,
-              Gint_List.Get_Data (Get_Selection (Selector.List)),
-              0, 0.2, 0.0);
+      Iter := Get_First_Selected (Selector);
+
+      if Iter /= Null_Iter then
+         Path := Get_Path (Selector.List_Model, Iter);
+         Scroll_To_Cell (Selector.List_Tree, Path, null, True, 0.1, 0.1);
+         Path_Free (Path);
+      end if;
    end Add_Single_Directory_Cb;
 
    --------------------------
@@ -697,8 +676,6 @@ package body Directory_Tree is
       use type Gint_List.Glist;
 
       Item        : Gtk_Menu_Item;
-      Is_Valid    : constant Boolean :=
-        Get_Selection (Selector.List) /= Gint_List.Null_List;
       Menu        : Gtk_Menu;
    begin
       Gtk_New (Menu);
@@ -707,7 +684,6 @@ package body Directory_Tree is
         (Item, "activate",
          Widget_Callback.To_Marshaller (Remove_Directory_Cb'Access),
          Selector);
-      Set_Sensitive (Item, Is_Valid);
       Append (Menu, Item);
 
       Gtk_New (Item, -"Remove directory");
@@ -716,7 +692,6 @@ package body Directory_Tree is
          Widget_Callback.To_Marshaller
          (Remove_Single_Directory_Cb'Access),
          Selector);
-      Set_Sensitive (Item, Is_Valid);
       Append (Menu, Item);
 
       return Menu;
@@ -845,11 +820,12 @@ package body Directory_Tree is
       Initial_Selection    : GNAT.OS_Lib.Argument_List := No_Selection)
    is
       pragma Unreferenced (Busy_Cursor_On);
-      Scrolled : Gtk_Scrolled_Window;
       Bbox     : Gtk_Hbutton_Box;
       Button   : Gtk_Button;
+      Scrolled : Gtk_Scrolled_Window;
       Arrow    : Gtk_Arrow;
       Vbox     : Gtk_Box;
+      Iter     : Gtk_Tree_Iter;
 
    begin
       Initialize_Vpaned (Selector);
@@ -892,26 +868,27 @@ package body Directory_Tree is
          Set_Policy (Scrolled, Policy_Automatic, Policy_Automatic);
          Pack_Start (Vbox, Scrolled, Expand => True, Fill => True);
 
-         Gtk_New (Selector.List, Columns => 1);
-         Set_Size_Request (Selector.List, -1, 150);
-         Add (Scrolled, Selector.List);
-         Set_Selection_Mode (Selector.List, Selection_Multiple);
+         Gtk_New (Selector.List_Model, Columns_Types);
+         Gtk_New (Selector.List_Tree, Selector.List_Model);
+         Set_Column_Types (Selector.List_Tree);
+         Add (Scrolled, Selector.List_Tree);
+
+         Set_Mode (Get_Selection (Selector.List_Tree), Selection_Multiple);
          Widget_Menus.Register_Contextual_Menu
-           (Selector.List, Directory_Selector (Selector),
+           (Selector.List_Tree, Directory_Selector (Selector),
             List_Contextual_Menu'Access);
 
          for J in Initial_Selection'Range loop
-            Insert (Selector.List, -1,
-                    (1 => New_String (Normalize_Pathname
-                                      (Initial_Selection (J).all,
-                                       Resolve_Links => False))));
+            Append (Selector.List_Model, Iter, Null_Iter);
+            Set (Selector.List_Model, Iter, Absolute_Name_Column,
+                 Normalize_Pathname
+                   (Initial_Selection (J).all,
+                    Resolve_Links => False));
+            Set (Selector.List_Model, Iter, Base_Name_Column,
+                 Normalize_Pathname
+                   (Initial_Selection (J).all,
+                    Resolve_Links => False));
          end loop;
-
-         --  ??? This is a workaround for a horizontal scrollbar problem: When
-         --  the clist is put in a scrolled window, and if this is not called,
-         --  the scrollbar does not allow us to scroll as far right as
-         --  possible...
-         Set_Column_Auto_Resize (Selector.List, 0, True);
 
       else
          Widget_Menus.Register_Contextual_Menu
@@ -920,6 +897,28 @@ package body Directory_Tree is
       end if;
    end Initialize;
 
+   ------------------------
+   -- Get_First_Selected --
+   ------------------------
+
+   function Get_First_Selected
+     (Selector : Directory_Selector) return Gtk_Tree_Iter
+   is
+      Iter : Gtk_Tree_Iter;
+   begin
+      Iter := Get_Iter_First (Selector.List_Model);
+
+      while Iter /= Null_Iter loop
+         if Iter_Is_Selected (Get_Selection (Selector.List_Tree), Iter) then
+            return Iter;
+         end if;
+
+         Next (Selector.List_Model, Iter);
+      end loop;
+
+      return Null_Iter;
+   end Get_First_Selected;
+
    --------------------------
    -- Get_Single_Selection --
    --------------------------
@@ -927,24 +926,16 @@ package body Directory_Tree is
    function Get_Single_Selection
      (Selector  : access Directory_Selector_Record'Class) return String
    is
-      use type Gint_List.Glist;
-
-      List : Gint_List.Glist;
-
+      Iter : Gtk_Tree_Iter;
    begin
-      --  A single directory selector ?
+      Iter := Get_First_Selected (Directory_Selector (Selector));
 
-      if Selector.List = null then
-         return Get_Selection (Selector.Directory);
-      else
-         List := Get_Selection (Selector.List);
-
-         if List /= Gint_List.Null_List then
-            return Get_Text (Selector.List, Gint_List.Get_Data (List), 0);
-         end if;
-
-         return "";
+      if Iter /= Null_Iter then
+         return Get_String
+           (Selector.List_Model, Iter, Absolute_Name_Column);
       end if;
+
+      return "";
    end Get_Single_Selection;
 
    ----------------------------
@@ -953,26 +944,40 @@ package body Directory_Tree is
 
    function Get_Multiple_Selection
      (Selector : access Directory_Selector_Record'Class)
-      return GNAT.OS_Lib.Argument_List is
+      return GNAT.OS_Lib.Argument_List
+   is
+      Iter   : Gtk_Tree_Iter;
+      Length : Integer := 0;
    begin
-      --  A single directory selector ?
+      Iter := Get_Iter_First (Selector.List_Model);
 
-      if Selector.List = null then
-         return (1 => new String'(Get_Selection (Selector.Directory)));
-      else
-         declare
-            Length : constant Gint := Get_Rows (Selector.List);
-            Args   : Argument_List (1 .. Natural (Length));
+      while Iter /= Null_Iter loop
+         if Iter_Is_Selected (Get_Selection (Selector.List_Tree), Iter) then
+            Length := Length + 1;
+         end if;
 
-         begin
-            for A in Args'Range loop
-               Args (A) := new String'
-                 (Get_Text (Selector.List, Gint (A) - 1, 0));
-            end loop;
+         Next (Selector.List_Model, Iter);
+      end loop;
 
-            return Args;
-         end;
-      end if;
+      declare
+         Args    : Argument_List (1 .. Natural (Length));
+         Current : Integer := 1;
+      begin
+         Iter := Get_Iter_First (Selector.List_Model);
+
+         while Iter /= Null_Iter loop
+            if Iter_Is_Selected (Get_Selection (Selector.List_Tree), Iter) then
+               Args (Current) := new String'
+                 (Get_String
+                    (Selector.List_Model, Iter, Absolute_Name_Column));
+               Current := Current + 1;
+            end if;
+
+            Next (Selector.List_Model, Iter);
+         end loop;
+
+         return Args;
+      end;
    end Get_Multiple_Selection;
 
    -----------------------
@@ -1014,8 +1019,6 @@ package body Directory_Tree is
               Locale_To_UTF8 (D.Norm_Dir.all));
          Set (D.Explorer.File_Model, Iter, Base_Name_Column,
               Locale_To_UTF8 (D.Norm_Dir.all));
-         Set (D.Explorer.File_Model, Iter, Node_Type_Column,
-              Gint (Node_Types'Pos (Directory_Node)));
 
          if D.Physical_Read then
             Set (D.Explorer.File_Model, Iter, Icon_Column,
@@ -1091,8 +1094,6 @@ package body Directory_Tree is
                  Locale_To_UTF8 (D.Norm_Dir.all & Dir & Directory_Separator));
             Set (D.Explorer.File_Model, Iter, Base_Name_Column,
                  Locale_To_UTF8 (Dir));
-            Set (D.Explorer.File_Model, Iter, Node_Type_Column,
-                 Gint (Node_Types'Pos (Directory_Node)));
 
             if D.Depth = 0 then
                exit;
@@ -1302,15 +1303,7 @@ package body Directory_Tree is
       return GType_Array'
         (Icon_Column          => Gdk.Pixbuf.Get_Type,
          Absolute_Name_Column => GType_String,
-         Base_Name_Column     => GType_String,
-         Node_Type_Column     => GType_Int,
-         User_Data_Column     => GType_Pointer,
-         Line_Column          => GType_Int,
-         Column_Column        => GType_Int,
-         Project_Column       => GType_Int,
-         Category_Column      => GType_Int,
-         Up_To_Date_Column    => GType_Boolean,
-         Entity_Base_Column   => GType_String);
+         Base_Name_Column     => GType_String);
    end Columns_Types;
 
    -------------
@@ -1525,18 +1518,11 @@ package body Directory_Tree is
          declare
             Iter_Name : constant String :=
               Get_String (T.File_Model, Iter, Absolute_Name_Column);
-            N_Type : constant Node_Types := Node_Types'Val
-              (Integer (Get_Int (T.File_Model, Iter, Node_Type_Column)));
-
          begin
-            case N_Type is
-               when Directory_Node =>
-                  Free_Children (T, Iter);
-                  Set (T.File_Model, Iter, Icon_Column,
+            Free_Children (T, Iter);
+            Set (T.File_Model, Iter, Icon_Column,
                        Glib.C_Proxy (Open_Pixbufs (Directory_Node)));
-                  File_Append_Directory (T, Iter_Name, Iter, 1);
-
-            end case;
+            File_Append_Directory (T, Iter_Name, Iter, 1);
          end;
 
          Success := Expand_Row (T.File_Tree, Path, False);
@@ -1570,38 +1556,32 @@ package body Directory_Tree is
 
          if Iter /= Null_Iter then
             Select_Iter (Get_Selection (Tree), Iter);
-            case Node_Types'Val
-                 (Integer (Get_Int (Model, Iter, Node_Type_Column))) is
 
-               when Directory_Node =>
-                  if Get_Event_Type (Event) = Gdk_2button_Press then
-                     declare
-                        Path    : Gtk_Tree_Path;
-                        Success : Boolean;
-                        pragma Unreferenced (Success);
-                     begin
-                        Path := Get_Path (Model, Iter);
+            if Get_Event_Type (Event) = Gdk_2button_Press then
+               declare
+                  Path    : Gtk_Tree_Path;
+                  Success : Boolean;
+                  pragma Unreferenced (Success);
+               begin
+                  Path := Get_Path (Model, Iter);
 
-                        if Row_Expanded (Tree, Path) then
-                           Success := Collapse_Row (Tree, Path);
-                        else
-                           if Add_Dummy then
-                              Append_Dummy_Iter (Model, Iter);
-                           end if;
+                  if Row_Expanded (Tree, Path) then
+                     Success := Collapse_Row (Tree, Path);
+                  else
+                     if Add_Dummy then
+                        Append_Dummy_Iter (Model, Iter);
+                     end if;
 
-                           Success := Expand_Row
-                             (Tree, Path, False);
-                        end if;
-
-                        Path_Free (Path);
-                     end;
+                     Success := Expand_Row
+                       (Tree, Path, False);
                   end if;
 
-                  return False;
+                  Path_Free (Path);
+               end;
+            end if;
 
-               when others =>
-                  return False;
-            end case;
+            return False;
+
 
          end if;
       end if;
