@@ -124,7 +124,12 @@ package Prj_Scenarios is
    --  the definition of the scenarios.
 
    function Variable_Count (Manager : Scenario_Manager) return Natural;
-   --  return the number of scenario variables in Manager
+   --  Return the number of scenario variables in Manager
+
+   function Scenarios_Count
+     (Manager : Scenario_Manager; Values : String_Id_Array) return Natural;
+   --  Return the number of scenarios matching Values.
+   --  This is the size of the array returned by Get_Scenario_Names.
 
 private
 

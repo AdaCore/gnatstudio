@@ -101,15 +101,8 @@ package body Prj_Scenarios is
       Create  : Boolean := False)
       return String_Id_Array
    is
-      Num : Positive := 1;
+      Num : constant Positive := Scenarios_Count (Manager, Values);
    begin
-      --  Evaluate the number of possible scenarios that match values
-      for V in Values'Range loop
-         if Values (V) = No_String then
-            Num := Num * Typed_Values_Count (Manager.Variables (V));
-         end if;
-      end loop;
-
       if Num = 1 then
          declare
             N : String_Id := Get (Manager.Names.all, Build_Key (Values));
@@ -379,6 +372,23 @@ package body Prj_Scenarios is
          return Manager.Variables'Length;
       end if;
    end Variable_Count;
+
+   ---------------------
+   -- Scenarios_Count --
+   ---------------------
+
+   function Scenarios_Count
+     (Manager : Scenario_Manager; Values : String_Id_Array) return Natural
+   is
+      Num : Positive := 1;
+   begin
+      for V in Values'Range loop
+         if Values (V) = No_String then
+            Num := Num * Typed_Values_Count (Manager.Variables (V));
+         end if;
+      end loop;
+      return Num;
+   end Scenarios_Count;
 
 end Prj_Scenarios;
 
