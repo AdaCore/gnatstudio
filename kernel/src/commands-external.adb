@@ -37,8 +37,6 @@ package body Commands.External is
    -- Local subprograms --
    -----------------------
 
-   pragma Warnings (Off, Destroy);
-
    procedure Free is new Ada.Unchecked_Deallocation
      (External_Command, External_Command_Access);
 
