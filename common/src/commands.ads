@@ -18,6 +18,26 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+--  This package offers a mechanism for defining simple commands and
+--  executing them sequentially.
+--
+--  In order to define new commands, you must override Root_Command
+--  and provide implementation for the function Execute (and for the
+--  function Undo if you want your command to be undoable).
+--
+--  Once the command is created, you can then add it to the command
+--  queue using Enqueue. If a command is already being run, then the
+--  action will be enqueued. When an action finishes, the next action
+--  pending in the queue will be executed.
+--
+--  One very important point : the implementation of the function
+--  Execute must call Command_Finished when the action is completed,
+--  since this is what triggers the execution of the next action in
+--  queue.
+--
+--  Commands can be asynchronous, ie Execute may return even though
+--  the action is not finished.
+
 with Generic_List;
 
 package Commands is
@@ -31,6 +51,9 @@ package Commands is
    function Execute (Command : access Root_Command) return Boolean is abstract;
    --  Executes Command. Return value indicates whether the operation was
    --  successful.
+   --  IMPORTANT : every implementation for Execute must guarantee
+   --  that Command_Finished will be called when the action is
+   --  completed. See comments above.
 
    function Undo (Command : access Root_Command) return Boolean;
    --  Undo a Command. Return value indicates whether the operation was
@@ -39,19 +62,25 @@ package Commands is
    type Command_Queue is private;
 
    function New_Queue return Command_Queue;
+   --  Create a new empty Command_Queue.
 
    procedure Enqueue
      (Queue         : Command_Queue;
       Action        : access Root_Command;
       High_Priority : Boolean := False);
-   --  Appends Action at the end of the Queue.
+   --  Adds Action to the Queue.
+   --  If High_Priority is True, the only thing that is guaranteed is
+   --  that this Action will be executed before all the actions that
+   --  were enqueued with High_Priority set to False.
+
+private
 
    procedure Execute_Next_Action (Queue : Command_Queue);
    --  Execute the next action in the queue, or do nothing if there is none.
 
-private
    procedure Execute (Command : access Root_Command);
-   --  Same as function Execute, but does not return any value.
+   --  Convenience subprogram : same as function Execute, but does not
+   --  return any value.
 
    procedure Command_Finished (Queue : Command_Queue);
    --  This procedure should be called every time the execution of a Command
