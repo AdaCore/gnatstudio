@@ -178,6 +178,7 @@ Working in a Cross Environment
 
 Customizing and Extending GPS
 * The Preferences Dialog::
+* GPS Themes::
 * The Key Manager Dialog::
 * Customizing the Menu and Tool Bar::
 * Adding Support for New Languages::
@@ -195,6 +196,8 @@ Customizing the Menu and Tool Bar
 * Adding contextual menus::
 * Adding tool bar buttons::
 * Binding actions to keys::
+* Setting preferences in custom files::
+* Creating themes::
 * Defining new search patterns::
 * Full example::
 
@@ -5440,6 +5443,7 @@ machine, you can specify the name of this machine by setting the
 
 @menu
 * The Preferences Dialog::
+* GPS Themes::
 * The Key Manager Dialog::
 * Customizing the Menu and Tool Bar::
 * Adding Support for New Languages::
@@ -5487,6 +5491,11 @@ The general preferences are composed of two pages available at the top of the
 right area: @i{General} and @i{Windows}
 
 @table @i
+@item Themes
+This page allows you to quickly change the current settings for GPS, including
+preferences, key bindings, menus@dots{}. @ref{GPS Themes} for more information
+on themes.
+
 @item General
 
 @table @b
@@ -6132,6 +6141,38 @@ Whether paths should be absolute or relative when the projects are modified.
 @end itemize
 
 @c -----------------------------------------------------------------
+@node GPS Themes
+@section GPS Themes
+@cindex themes
+@c -----------------------------------------------------------------
+
+@noindent
+GPS provides an extensive support for themes. Themes are predefined set
+of value for the preferences, for the key bindings, or any other
+configurable aspect of GPS.
+
+For instance, color themes are a convenient way to change all colors in
+GPS at once, according to predefined choices (strongly contrasted colors,
+monochrome,...). It is also possible to have key themes, which set a number
+of key bindings at once to emulate various editors.
+
+Any number of themes can be activated at the same time through the
+preferences dialog (@code{Edit->Preferences}). This dialog contains a list
+of all themes that GPS knows about, organized into categories for convenient
+handling. Just click on the buttons on the left of each theme name to activate
+that theme.
+
+Note that this will immediately change the current preferences settings. For
+instance, if the theme you just selected changes the colors in the editor,
+these are changed immediately in the @code{Editor->Fonts & Colors}. You can
+of course still press @code{Cancel} to keep your previous settings
+
+If multiple themes are active at the same time and try to override the same
+preferences, the last theme which is loaded by GPS will override all previously
+loaded themes. However, there is no predefined order in which the themes are
+loaded.
+
+@c -----------------------------------------------------------------
 @node The Key Manager Dialog
 @section The Key Manager Dialog
 @c -----------------------------------------------------------------
@@ -6186,6 +6227,8 @@ items yet.
 * Adding contextual menus::
 * Adding tool bar buttons::
 * Binding actions to keys::
+* Setting preferences in custom files::
+* Creating themes::
 * Defining new search patterns::
 * Full example::
 @end menu
@@ -6300,6 +6343,8 @@ described in later sections. This includes:
 (@pxref{Binding actions to keys})
 @item <submenu>
 (@pxref{Adding new menus})
+@item <pref>
+ (@pxref{Setting preferences in custom files})
 @item <alias>
 (@pxref{Defining Text Aliases})
 @item <language>
@@ -7090,6 +7135,88 @@ Multiple actions can be bound to the same key binding. The first one with a
 filter valid for the current context is executed. If no action with a filter
 can be executed, then the first action with no filter will be executed.
 
+@c ----------------------------------------------------------------
+@node Setting preferences in custom files
+@subsection Setting preferences in custom files
+@cindex <prefe>
+@c ----------------------------------------------------------------
+
+@noindent
+You can force specific default values for the preferences in the customization
+files through the @code{<pref>} tag. This is the same tag that is used by
+GPS itself when it saves the preferences edited through the preferences
+dialog.
+
+This tag requires on attribute:
+
+@table @code
+@item name
+This is the name of the preference of which you are setting a default value.
+Such names are predefined when the preference is registered in GPS, and can
+be found by looking at the @file{$HOME/.gps/preferences} file for each user,
+or by looking at one of the predefined GPS themes.
+@end table
+
+It accepts no child tag, but the value of the @code{<pref>} tag defines the
+default value of the preference, which will be used unless the user has
+overriden it in his own preferences file.
+
+Any setting that you have defined in the customization files will be
+overriden by the user's preferences file itself, unless the user was still
+using the default value of that preference.
+
+This @code{<pref>} tag is mostly intended for use through the themes (@pxref{
+Creating themes}).
+
+@c ----------------------------------------------------------------
+@node Creating themes
+@subsection Creating themes
+@cindex themes creation
+@c ----------------------------------------------------------------
+
+@noindent
+Although GPS comes with a number of predefined themes, you can create
+your own themes, and distribute them to others. They can then selectively
+chose which themes they want to activate through the preferences dialog
+(@pxref{GPS Themes}).
+
+Creating new themes is done as usual in the customization files, through
+the @code{<theme>} tag.
+
+This tag accepts a number of attributes:
+
+@table @code
+@item name (mandatory)
+This is the name of the theme, as it will appear in the preferences dialog
+
+@item description (optional)
+This text should explain what the text does. It appears in the preferences
+dialog when the user selects that theme.
+
+@item category (optional, default is General)
+This is the name of the category in which the theme should be presented in
+the preferences dialog. Categories are currently only used to organize themes
+graphically. New categories are created automatically if you chose one that
+doesn't exist yet.
+
+@end table
+
+This tag accepts any other customization tag that can be put in the
+customization files. This includes setting preferences (@code{<pref>},
+defining key bindings (@code{<key}), definining menus (@code{<menu>}),@dots{}
+
+If the same theme is defined in multiple locations (multiple times in the
+same customization file or in different files), their effects will be
+cumulated. The first definition of the theme seen by GPS will set the
+description and category for this theme.
+
+All the children tags of the theme will be executed when the theme is activated
+through the preferences dialog. Although there is no strict ordering in which
+order the children will be executed, the global order is the same as for the
+customization files themselves: first the predefined themes of GPS, then the
+ones defined in customization files found through the @code{GPS_CUSTOM_PATH}
+directories, and finally the ones defined in files found in the user's
+own GPS directory.
 
 @c ----------------------------------------------------------------
 @node Defining new search patterns
