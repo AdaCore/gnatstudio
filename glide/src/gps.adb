@@ -63,7 +63,6 @@ with Browsers.Projects;
 with Browsers.Call_Graph;
 with Cpp_Module;
 with External_Editor_Module;
-with Find_Utils;
 with GVD_Module;
 with Metrics_Module;
 with Project_Explorers;
@@ -79,6 +78,7 @@ with Builder_Module;
 with Glide_Kernel.Console;
 with Navigation_Module;
 with Custom_Module;
+with Vsearch_Ext;
 
 procedure GPS is
    use Glide_Main_Window;
@@ -319,7 +319,7 @@ procedure GPS is
 
       --  Register all modules
 
-      Find_Utils.Register_Module (GPS.Kernel);
+      Vsearch_Ext.Register_Module (GPS.Kernel);
       Custom_Module.Register_Module (GPS.Kernel);
       Navigation_Module.Register_Module (GPS.Kernel);
       Metrics_Module.Register_Module (GPS.Kernel);
