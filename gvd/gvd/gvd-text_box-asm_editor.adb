@@ -49,8 +49,12 @@ with Basic_Types;       use Basic_Types;
 with Odd_Intl;          use Odd_Intl;
 
 with GNAT.Regpat;       use GNAT.Regpat;
+with Ada.Exceptions;    use Ada.Exceptions;
+with Traces;            use Traces;
 
 package body GVD.Text_Box.Asm_Editor is
+
+   Me : constant Debug_Handle := Create ("GVD.Text_Box.Asm_Editor");
 
    package Editor_Cb is new Callback (Asm_Editor_Record);
    package Editor_Event_Cb is new Return_Callback (Asm_Editor_Record, Boolean);
@@ -354,7 +358,8 @@ package body GVD.Text_Box.Asm_Editor is
       Set_Busy (Process, False);
 
    exception
-      when others =>
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
          Set_Busy (Process, False);
    end On_Frame_Changed;
 
@@ -384,7 +389,7 @@ package body GVD.Text_Box.Asm_Editor is
                  (Process.Debugger, Num, Mode => GVD.Types.Visible);
             else
                if Addr /= "" then
-                  Num := Break_Address
+                  Break_Address
                     (Process.Debugger, Addr, Mode => GVD.Types.Visible);
                end if;
             end if;
@@ -392,6 +397,11 @@ package body GVD.Text_Box.Asm_Editor is
       end if;
 
       return True;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         return True;
    end On_Pixmap_Clicked;
 
    ---------------------------
@@ -749,6 +759,10 @@ package body GVD.Text_Box.Asm_Editor is
          Free (Editor.Cache.Data);
          Editor.Cache := Tmp;
       end loop;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Executable_Changed;
 
    ----------------------------
@@ -777,6 +791,10 @@ package body GVD.Text_Box.Asm_Editor is
       Highlight_Range
         (Editor, Gint (0), Gint (0),
          Gint (0), Fore => Editor.Highlight_Color);
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end Preferences_Changed;
 
    -----------------
@@ -919,8 +937,8 @@ package body GVD.Text_Box.Asm_Editor is
       return False;
 
    exception
-      when others =>
-         --  ??? Should log an error using Traces
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
          return False;
    end Key_Press;
 
