@@ -18,8 +18,8 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
---  ??? Missing general description
---  It also provides a GUI to monitor these tasks.
+--  This package initializes the GPS Task Manager, and provides menus
+--  to display the Task Manager Interface.
 
 with Commands; use Commands;
 
@@ -38,6 +38,8 @@ package Glide_Kernel.Task_Manager is
    --  Id will be created.
    --  If Active is True, the command will be launched in active mode,
    --  otherwise it will be launched in background mode.
+   --  Memory associated to Command will be freed by the Task Manager
+   --  after execution.
    --  See comments in task_manager.ads for details.
 
    procedure Register_Module
