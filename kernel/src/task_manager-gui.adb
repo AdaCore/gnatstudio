@@ -235,8 +235,32 @@ package body Task_Manager.GUI is
       Menu    : Gtk.Menu.Gtk_Menu)
    is
       pragma Unreferenced (Menu);
+
+      Interface : constant Task_Manager_Interface :=
+        Task_Manager_Interface (Manager.Manager.GUI);
+      Iter      : Gtk_Tree_Iter;
+      Model     : Gtk_Tree_Model;
+      Path      : Gtk_Tree_Path;
    begin
       Manager.Manager.Referenced_Command := -1;
+
+      if Interface /= null then
+         Get_Selected (Get_Selection (Interface.Tree), Model, Iter);
+
+         if Iter = Null_Iter then
+            Interface.Manager.Referenced_Command := -1;
+         else
+            Path := Get_Path (Model, Iter);
+
+            declare
+               A : constant Gint_Array := Get_Indices (Path);
+            begin
+               Manager.Manager.Referenced_Command := Integer (A (A'First)) + 1;
+            end;
+
+            Path_Free (Path);
+         end if;
+      end if;
    end Menu_Destroy;
 
    -------------------
