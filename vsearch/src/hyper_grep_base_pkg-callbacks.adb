@@ -30,9 +30,6 @@ with Gtk.Widget; use Gtk.Widget;
 
 with Find_Utils;            use Find_Utils;
 with Hyper_Grep;            use Hyper_Grep;
-with Glide_Main_Window;     use Glide_Main_Window;
-with Glide_Page;            use Glide_Page;
-with GVD.Process;           use GVD.Process;
 with Search_Callback;
 
 with GNAT.Regpat;           use GNAT.Regpat;
@@ -40,11 +37,9 @@ with GNAT.Regexp;           use GNAT.Regexp;
 with GNAT.OS_Lib;
 with Ada.Text_IO;           use Ada.Text_IO;
 with Ada.Exceptions;        use Ada.Exceptions;
-with Ada.Strings.Fixed;     use Ada.Strings.Fixed;
 
 with Gtkada.File_Selection; use Gtkada.File_Selection;
 with Gdk.Color;             use Gdk.Color;
-with Gtk.Text;              use Gtk.Text;
 with Gtk.Main;
 
 package body Hyper_Grep_Base_Pkg.Callbacks is
@@ -172,6 +167,7 @@ package body Hyper_Grep_Base_Pkg.Callbacks is
 
       Hyper_Grep_Window : constant Hyper_Grep_Access :=
         Hyper_Grep_Access (Get_Toplevel (Object));
+      --  ??? Won't work when grep window is integrated in another window.
 
       Scope : Search_Scope;
 
@@ -211,39 +207,13 @@ package body Hyper_Grep_Base_Pkg.Callbacks is
          Line_Text   : String      := "";
          Sub_Matches : Match_Array := (0 => No_Match)) return Boolean
       is
-         Glide       : constant Glide_Window :=
-           Glide_Window (Hyper_Grep_Window.Glide);
-         Page        : constant Glide_Page.Glide_Page :=
-           Glide_Page.Glide_Page (Get_Current_Process (Glide));
-         Dummy       : Boolean;
-         Parentheses : String (Line_Text'Range);
-
-         use Ada.Strings;
-
-         Location    : constant String :=
-           File & ':' & Fixed.Trim (Positive'Image (Line_Nr), Left);
-
+         Dummy : Boolean;
       begin
          if Match_Found then
-            Insert (Page.Console, Fore => Highlight, Chars => Location);
-            Insert (Page.Console, Chars => ':' & Line_Text & ASCII.LF);
-
-            if Sub_Matches (0) /= No_Match then
-               for K in Sub_Matches'Range loop
-                  Insert (Page.Console, Chars => Natural'Image (K));
-                  --  Natural_IO.Put (K, Width => Location'Length);
-
-                  Parentheses := (others => ' ');
-
-                  if Sub_Matches (K) /= No_Match then
-                     Parentheses
-                       (Sub_Matches (K).First .. Sub_Matches (K).Last) :=
-                         (others => '#');
-                  end if;
-
-                  Insert (Page.Console, Chars => '>' & Parentheses & '<');
-               end loop;
-            end if;
+            --  ??? Console.Insert_Line
+            --    (Kernel, File & ":" & Image (Line_Nr) & ":" &
+            --             Line_Text & ASCII.LF);
+            null;
          end if;
 
          while Gtk.Main.Events_Pending loop
