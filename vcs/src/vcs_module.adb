@@ -46,9 +46,7 @@ with VCS.Unknown_VCS;           use VCS.Unknown_VCS;
 with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
-with Prj;                       use Prj;
-with Prj.Tree;                  use Prj.Tree;
-with Prj_API;                   use Prj_API;
+with Projects.Editor;           use Projects, Projects.Editor;
 
 with Log_Utils;
 
@@ -97,19 +95,18 @@ package body VCS_Module is
      with null record;
    function Widget_Factory
      (Page         : access VCS_Editor_Record;
-      Project_View : Project_Id;
+      Project      : Project_Type;
       Full_Project : String;
       Kernel       : access Kernel_Handle_Record'Class)
       return Gtk_Widget;
    function Project_Editor
      (Page         : access VCS_Editor_Record;
-      Project      : Prj.Tree.Project_Node_Id;
-      Project_View : Prj.Project_Id;
+      Project      : Project_Type;
       Kernel       : access Kernel_Handle_Record'Class;
       Widget       : access Gtk_Widget_Record'Class;
-      Scenario_Variables : Prj_API.Project_Node_Array;
-      Ref_Project  : Prj.Tree.Project_Node_Id)
-      return Project_Node_Array;
+      Scenario_Variables : Scenario_Variable_Array;
+      Ref_Project  : Project_Type)
+      return Boolean;
 
    -----------------------
    -- On_Open_Interface --
@@ -147,6 +144,8 @@ package body VCS_Module is
         and then Get_Current_Ref (Selection_Context_Access (Context)) /=
           Unknown_VCS_Reference
       then
+         --  ??? This is wrong, since it will create a submenu even if it is
+         --  empty (see in the type browser for instance)
          Gtk_New (Menu_Item, Label => -"Version Control");
          Gtk_New (Submenu);
          VCS_View_API.VCS_Contextual_Menu (Object, Context, Submenu);
@@ -206,7 +205,7 @@ package body VCS_Module is
 
    function Widget_Factory
      (Page         : access VCS_Editor_Record;
-      Project_View : Project_Id;
+      Project      : Project_Type;
       Full_Project : String;
       Kernel       : access Kernel_Handle_Record'Class)
       return Gtk_Widget
@@ -241,9 +240,9 @@ package body VCS_Module is
             Gtk_New (Radio, Group => Radio, Label => Systems (S).all);
          end if;
 
-         if Project_View /= No_Project
-           and then To_Lower (Systems (S).all) =
-           To_Lower (Get_Vcs_Kind (Project_View))
+         if Project /= No_Project
+           and then To_Lower (Systems (S).all) = To_Lower
+           (Get_Attribute_Value (Project, Vcs_Kind_Attribute, Ide_Package))
          then
             Set_Active (Radio, True);
             Main.Selected := Radio;
@@ -298,13 +297,13 @@ package body VCS_Module is
       Gtk_New (Main.File_Checker);
       Attach (Table, Main.File_Checker, 1, 2, 1, 2);
 
-      if Project_View /= No_Project then
+      if Project /= No_Project then
          Set_Text
            (Main.Log_Checker,
-            Get_Attribute_Value (Project_View, Vcs_Log_Check, Ide_Package));
+            Get_Attribute_Value (Project, Vcs_Log_Check, Ide_Package));
          Set_Text
            (Main.File_Checker,
-            Get_Attribute_Value (Project_View, Vcs_File_Check, Ide_Package));
+            Get_Attribute_Value (Project, Vcs_File_Check, Ide_Package));
       end if;
 
       Show_All (Main);
@@ -317,26 +316,26 @@ package body VCS_Module is
 
    function Project_Editor
      (Page         : access VCS_Editor_Record;
-      Project      : Prj.Tree.Project_Node_Id;
-      Project_View : Prj.Project_Id;
+      Project      : Project_Type;
       Kernel       : access Kernel_Handle_Record'Class;
       Widget       : access Gtk_Widget_Record'Class;
-      Scenario_Variables : Prj_API.Project_Node_Array;
-      Ref_Project  : Prj.Tree.Project_Node_Id)
-      return Project_Node_Array
+      Scenario_Variables : Scenario_Variable_Array;
+      Ref_Project  : Project_Type)
+      return Boolean
    is
       pragma Unreferenced (Page, Kernel, Ref_Project);
       Selector : constant VCS_Selector := VCS_Selector (Widget);
       Changed  : Boolean := False;
+      VCS_Kind : constant String := To_Lower (Get_Attribute_Value
+        (Project, Vcs_Kind_Attribute, Ide_Package));
 
    begin
-      if (Project_View = No_Project
+      if (Project = No_Project
           and then Get_Label (Selector.Selected) /= -Auto_Detect)
         or else
-        (Project_View /= No_Project
-         and then To_Lower (Get_Label (Selector.Selected)) /=
-           To_Lower (Get_Vcs_Kind (Project_View))
-         and then (Get_Vcs_Kind (Project_View) /= ""
+        (Project /= No_Project
+         and then To_Lower (Get_Label (Selector.Selected)) /= VCS_Kind
+         and then (VCS_Kind /= ""
                    or else Get_Label (Selector.Selected) /= -Auto_Detect))
       then
          if Get_Label (Selector.Selected) /= -Auto_Detect then
@@ -357,9 +356,9 @@ package body VCS_Module is
          Changed := True;
       end if;
 
-      if Project_View = No_Project
+      if Project = No_Project
         or else Get_Text (Selector.Log_Checker) /=
-        Get_Attribute_Value (Project_View, Vcs_Log_Check, Ide_Package)
+        Get_Attribute_Value (Project, Vcs_Log_Check, Ide_Package)
       then
          if Get_Text (Selector.Log_Checker) /= "" then
             Update_Attribute_Value_In_Scenario
@@ -379,9 +378,9 @@ package body VCS_Module is
          Changed := True;
       end if;
 
-      if Project_View = No_Project
+      if Project = No_Project
         or else Get_Text (Selector.File_Checker) /= Get_Attribute_Value
-        (Project_View, Vcs_File_Check, Ide_Package)
+        (Project, Vcs_File_Check, Ide_Package)
       then
          if Get_Text (Selector.File_Checker) /= "" then
             Update_Attribute_Value_In_Scenario
@@ -401,11 +400,7 @@ package body VCS_Module is
          Changed := True;
       end if;
 
-      if Changed then
-         return (1 => Find_Project_Of_Package (Project, Ide_Package));
-      else
-         return (1 .. 0 => Empty_Node);
-      end if;
+      return Changed;
    end Project_Editor;
 
    -------------
