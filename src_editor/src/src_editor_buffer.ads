@@ -361,6 +361,15 @@ package Src_Editor_Buffer is
       Name   : String);
    --  Set the name of the file associated with Buffer to Name.
 
+   function Get_File_Identifier
+     (Buffer : access Source_Buffer_Record) return String;
+   --  Return the identifier of the file associated with Buffer.
+
+   procedure Set_File_Identifier
+     (Buffer : access Source_Buffer_Record;
+      Name   : String);
+   --  Set the file identifier for Buffer.
+
    procedure Source_Lines_Revealed
      (Buffer     : access Source_Buffer_Record;
       Start_Line : Integer;
@@ -743,6 +752,8 @@ private
    record
       Kernel        : Glide_Kernel.Kernel_Handle;
       Filename      : String_Access;
+      File_Identifier : String_Access;
+      --  This identifier is used to identify buffers for untitled files.
 
       Lang          : Language.Language_Access;
       Syntax_Tags   : Src_Highlighting.Highlighting_Tags;
