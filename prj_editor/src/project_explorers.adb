@@ -879,11 +879,7 @@ package body Project_Explorers is
             end if;
          end;
       else
-         if Projects_Before_Directories then
-            Append (Explorer.Tree.Model, N, Parent_Node);
-         else
-            Prepend (Explorer.Tree.Model, N, Parent_Node);
-         end if;
+         Append (Explorer.Tree.Model, N, Parent_Node);
       end if;
 
       Set (Explorer.Tree.Model, N, Base_Name_Column, Text.all);
