@@ -71,8 +71,8 @@
 8 * [Yeti] Caching Language_Context
 
   * [Yeti] Use Boyer-Moore algorithm on whole file instead of every line
-    Get the line number after a match is found, instead of splitting the file
-    in lines and using BM on every line.
+    Get the line number (and lexical state, if needed) after a match is found,
+    instead of splitting the file in lines and using BM on every line.
 
 ----------
 -- Bugs --
