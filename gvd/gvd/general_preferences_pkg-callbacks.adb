@@ -28,14 +28,14 @@ package body Odd_Preferences_Pkg.Callbacks is
    -- On_Odd_Preferences_Delete_Event --
    -------------------------------------
 
-   procedure On_Odd_Preferences_Delete_Event
-     (Object : access Gtk_Window_Record'Class;
-      Params : Gtk.Arguments.Gtk_Args)
+   function On_Odd_Preferences_Delete_Event
+     (Object : access Gtk_Widget_Record'Class;
+      Params : Gtk.Arguments.Gtk_Args) return Boolean
    is
       --  Arg1 : Gdk_Event := To_Event (Params, 1);
    begin
       Hide (Object);
-      --  return False;
+      return False;
    end On_Odd_Preferences_Delete_Event;
 
    --------------------------

@@ -36,13 +36,14 @@ package body Main_Debug_Window_Pkg.Callbacks is
    -- On_Main_Debug_Window_Delete_Event --
    ---------------------------------------
 
-   procedure On_Main_Debug_Window_Delete_Event
-     (Object : access Gtk_Window_Record'Class;
-      Params : Gtk.Arguments.Gtk_Args)
+   function On_Main_Debug_Window_Delete_Event
+     (Object : access Gtk_Widget_Record'Class;
+      Params : Gtk.Arguments.Gtk_Args) return Boolean
    is
       --  Arg1 : Gdk_Event := To_Event (Params, 1);
    begin
       Main_Quit;
+      return False;
    end On_Main_Debug_Window_Delete_Event;
 
    -------------------------------
