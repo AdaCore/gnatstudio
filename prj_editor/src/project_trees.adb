@@ -496,12 +496,13 @@ package body Project_Trees is
          if Selected_Dir /= No_String then
             String_To_Name_Buffer (Selected_Dir);
             declare
-               D : constant String := Name_Buffer (Name_Buffer'First .. Name_Len);
+               D : constant String :=
+                 Name_Buffer (Name_Buffer'First .. Name_Len);
             begin
                Update_Node (Tree, Node_Nth (Tree, 0));
 
-               --  Restore the selection. Note that this also resets the project
-               --  view clist, with the contents of all the files.
+               --  Restore the selection. Note that this also resets the
+               --  project view clist, with the contents of all the files.
 
                if Selected_P /= null then
                   Select_Directory (Tree, Selected_P, D);
