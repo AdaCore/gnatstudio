@@ -1255,7 +1255,6 @@ package body Src_Contexts is
 
       Editor := Get_Source_Box_From_MDI (Child);
       Raise_Child (Child, False);
-      Minimize_Child (Child, False);
       return Auxiliary_Search
         (Context, Editor,
          Get_Language_Handler (Kernel), Kernel, Search_Backward);
@@ -1288,7 +1287,6 @@ package body Src_Contexts is
 
       Editor := Get_Source_Box_From_MDI (Child);
       Raise_Child (Child, False);
-      Minimize_Child (Child, False);
 
       --  Test whether the current context text contains the search string.
       --  Warning: we cannot use selection here, since apparently there can
