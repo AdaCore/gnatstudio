@@ -2,7 +2,7 @@
 ## internal browser
 ## This can be configured through several preferences
 
-import GPS
+import GPS, re
 
 GPS.parse_xml ("""
    <preference name="html-external-browser-name"
@@ -26,7 +26,13 @@ GPS.parse_xml ("""
 def open_html (hook_name, file, enable_navigation, anchor):
    browser = GPS.Preference ("html-external-browser-name").get()
    policy  = GPS.Preference ("html-external-browser-policy").get()
-   protocol, url = file.name().split ("://")
+
+   if re.search ("://", file.name()):
+      protocol, url = file.name().split ("://")
+   else:
+      protocol = "file"
+      url = file.name()
+
    if url == "": protocol, url = "file", protocol
 
    if policy == "Always" \
