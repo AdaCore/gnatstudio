@@ -40,7 +40,8 @@ package body Instructions is
             Stack.Clear;
 
          when Print =>
-            Screen_Output.Msg (" -> ", End_Line => False);
+            Screen_Output.Msg
+              ("Stack contains -> " & ASCII.LF, End_Line => False);
 
             if Stack.Empty then
                Screen_Output.Msg ("stack is empty");
