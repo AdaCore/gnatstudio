@@ -381,21 +381,42 @@ package body Projects.Registry is
       --  Handler called when the project parser finds an error
 
       procedure Report_Error (S : String; Project : Project_Id) is
+         P    : Project_Type;
       begin
+         if Project = Prj.No_Project then
+            declare
+               Iter : Imported_Project_Iterator := Start (Registry.Data.Root);
+            begin
+               while Current (Iter) /= No_Project loop
+                  Set_View_Is_Complete (Current (Iter), False);
+                  Next (Iter);
+               end loop;
+            end;
+
+         else
+            P := Get_Project_From_Name
+              (Registry, Prj.Projects.Table (Project).Name);
+            Set_View_Is_Complete (P, False);
+         end if;
+
          if Errors /= null then
             if Project = Prj.No_Project then
                Errors (S);
             elsif not Is_Default (Registry.Data.Root) then
-               Errors (Get_String (Prj.Projects.Table (Project).Name)
-                       & ": " & S);
+               Errors (Project_Name (P) & ": " & S);
             end if;
          end if;
       end Report_Error;
 
       View    : Project_Id;
       Success : Boolean;
-
+      Iter    : Imported_Project_Iterator := Start (Registry.Data.Root);
    begin
+      while Current (Iter) /= No_Project loop
+         Set_View_Is_Complete (Current (Iter), True);
+         Next (Iter);
+      end loop;
+
       Reset (Registry, View_Only => True);
 
       Unchecked_Free (Registry.Data.Scenario_Variables);
@@ -406,17 +427,7 @@ package body Projects.Registry is
       Prj.Proc.Process
         (View, Success, Registry.Data.Root.Node,
          Report_Error'Unrestricted_Access);
-      --  ??? What to do with Success
-
-      --  Parsing failed ? => revert to the default project
-      if View = Prj.No_Project
-        and then not Is_Default (Registry.Data.Root)
-      then
-         Load_Default_Project (Registry, Get_Current_Dir);
-         Recompute_View (Registry, Errors);
-      else
-         Parse_Source_Files (Registry, Errors);
-      end if;
+      Parse_Source_Files (Registry, Errors);
    end Recompute_View;
 
    ------------------------
