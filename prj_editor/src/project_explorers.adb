@@ -978,7 +978,7 @@ package body Project_Explorers is
 
       if Idle then
          Timeout_Id :=
-           File_Append_Directory_Idle.Add (20, Read_Directory'Access, D);
+           File_Append_Directory_Idle.Add (1, Read_Directory'Access, D);
          Timeout_Id_List.Append (Explorer.Fill_Timeout_Ids, Timeout_Id);
       else
          loop
