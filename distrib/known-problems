@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 2.0.2
 
+- D722-009 Window unmaximized unexpectedly under Windows
+  Problem:   Under windows only, when using a floating and maximized window
+             (e.g. Shell window or source editor), some actions will cause
+             the window to temporarily get unmaximized and maximized again.
+  Workaround: Instead of maximizing the window, make it large. 
+
 - VCS "List all files in projects [and subprojects]" does not work
   Problem:    When using CVS, Native ClearCase or any custom VCS, the menu
               operations to list files from projects do not list any file.
