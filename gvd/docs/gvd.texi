@@ -1329,6 +1329,21 @@ accessed using the arrow located at the left of the status line.
      window, and thus will be a full editor. It also provides cross-references,
      which might help you debug your code.
 
+     If you are not using project files with Glide, you might want to
+     use the following lisp function to automatically start gvd on your
+     executable, with Glide used as the source editor. Just copy the following
+     code to your @file{~/.emacs} configuration file (create it if it doesn't
+     exist).
+
+@smallexample
+   (defun gvd (executable-name)
+     "Start gvd on EXECUTABLE-NAME, with emacs as the source window."
+     (interactive "fExecutable: ")
+     (let ((ada-tight-gvd-integration t)
+	   (ada-prj-default-debugger  "gvd"))
+       (ada-gdb-application nil executable-name)))
+@end smallexample
+
 @node Using GVD with Emacs
 @section Using GVD with Emacs
      Use @i{M-x gdb} to start a debugging session. At the prompt, enter
@@ -1341,7 +1356,6 @@ accessed using the arrow located at the left of the status line.
      that can be used just like the standard @code{gdb} command, but that
      adds some special arguments to the command line so that an Emacs frame
      is automatically swallowed inside GVD and used as the source editor (see
-@c ???                ---------
      description in @ref{Using GVD with Glide}).
 
      Simply load that file in Emacs, with a command like
