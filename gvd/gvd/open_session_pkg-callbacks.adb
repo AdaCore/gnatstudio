@@ -41,10 +41,12 @@ package body Open_Session_Pkg.Callbacks is
      (Object : access Gtk_List_Record'Class;
       Params : Gtk.Arguments.Gtk_Args)
    is
-      Open : Open_Session_Access
-        := Open_Session_Access (Get_Toplevel (Object));
+      Open : Open_Session_Access :=
+        Open_Session_Access (Get_Toplevel (Object));
       Arg1 : Gtk_Widget := Gtk_Widget (To_Object (Params, 1));
       use Widget_List;
+
+      --  ??? We will not get a Gtk_Label without Gtk.Type_Conversion
       Text : String := Get (Gtk_Label
                             (Get_Data
                              (Children
@@ -52,6 +54,7 @@ package body Open_Session_Pkg.Callbacks is
 
    begin
       Set_Text (Open.Entry1, Text);
+
       if not Open.Lock_Buttons then
          Remove_All_Buttons (Open);
          Create_Buttons (Open, Text);
