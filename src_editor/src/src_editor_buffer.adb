@@ -2311,7 +2311,7 @@ package body Src_Editor_Buffer is
 
       C2 := Get_Char (Pos);
 
-      loop
+      while C2 /= ASCII.LF loop
          Backward_Char (Pos, Result);
          exit when not Result;
 
