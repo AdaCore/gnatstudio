@@ -1423,7 +1423,9 @@ package body Project_Viewers is
                Selection_Context_Access (Context));
          end if;
 
-         if Has_File_Information (File_Context) then
+         if Has_Project_Information (File_Context)
+           and then Has_File_Information (File_Context)
+         then
             Gtk_New (Item, Label => "");
             Append (Menu, Item);
 
@@ -1963,7 +1965,7 @@ package body Project_Viewers is
       Pack_Start (Obj_Dir, Box, Expand => False, Padding => 10);
 
       Gtk_New (Event);
-      Pack_Start (Box, Event);
+      Pack_Start (Box, Event, Expand => False);
       Gtk_New (Label, -"Build directory:");
       Set_Alignment (Label, 0.0, 0.5);
       Add (Event, Label);
@@ -1972,7 +1974,7 @@ package body Project_Viewers is
                  & " by the compiler (.o files, .ali files for Ada, ...)"));
 
       Gtk_New (Obj_Dir.Obj_Dir);
-      Set_Width_Chars (Obj_Dir.Obj_Dir, 30);
+      Set_Width_Chars (Obj_Dir.Obj_Dir, 0);
       Pack_Start (Box, Obj_Dir.Obj_Dir, Expand => True);
 
       if Project_View /= No_Project then
@@ -1998,7 +2000,7 @@ package body Project_Viewers is
       Pack_Start (Obj_Dir, Box, Expand => False);
 
       Gtk_New (Event);
-      Pack_Start (Box, Event);
+      Pack_Start (Box, Event, Expand => False);
       Gtk_New (Label, -"Exec directory:");
       Set_Alignment (Label, 0.0, 0.5);
       Add (Event, Label);
@@ -2007,7 +2009,7 @@ package body Project_Viewers is
                  & " the compilation"));
 
       Gtk_New (Obj_Dir.Exec_Dir);
-      Set_Width_Chars (Obj_Dir.Exec_Dir, 30);
+      Set_Width_Chars (Obj_Dir.Exec_Dir, 0);
       Pack_Start (Box, Obj_Dir.Exec_Dir, Expand => True);
 
       if Project_View /= No_Project then
@@ -2170,6 +2172,8 @@ package body Project_Viewers is
 
       if Project_View /= No_Project then
          Set_Switches (Switches, Project_View);
+      else
+         Set_Switches (Switches, Gnatmake, Default_Builder_Switches);
       end if;
 
       return Get_Window (Switches);
