@@ -25,7 +25,7 @@ with Gdk.Color;
 with Gdk.Event;
 with Gdk.Window;
 with Glib.Object;
-with Glib;
+with Glib;                     use Glib;
 with Gtk.Cell_Renderer_Text;   use Gtk.Cell_Renderer_Text;
 with Gtk.Cell_Renderer_Toggle; use Gtk.Cell_Renderer_Toggle;
 with Gtk.Clist;
@@ -122,18 +122,25 @@ package GUI_Utils is
    -- Tooltips --
    --------------
 
+
    procedure Create_Pixmap_From_Text
-     (Text     : String;
-      Font     : Pango.Font.Pango_Font_Description;
-      Bg_Color : Gdk.Color.Gdk_Color;
-      Window   : Gdk.Window.Gdk_Window;
-      Pixmap   : out Gdk.Gdk_Pixmap;
-      Width    : out Glib.Gint;
-      Height   : out Glib.Gint);
+     (Text       : String;
+      Font       : Pango.Font.Pango_Font_Description;
+      Bg_Color   : Gdk.Color.Gdk_Color;
+      Widget     : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Pixmap     : out Gdk.Gdk_Pixmap;
+      Width      : out Glib.Gint;
+      Height     : out Glib.Gint;
+      Wrap_Width : Gint := -1);
    --  Create a new pixmap that contains Text. Bg_Color is used for the
    --  background of the pixmap.
-   --  Window is used to get access to the display (creation of graphic
-   --  contexts and pixmaps with appropriate depth).
+   --  Widget is used to create the graphic context for the pango layout.
+   --
+   --  This procedure handles multi-lines text, as well as alignment of
+   --  tabulations, right-to-left writting, ...
+   --  Text must be a correct Utf8 text, see Glib.Convert
+   --
+   --  The maximal width of the text is Wrap_Width.
 
    ----------------------
    -- Contextual menus --

@@ -22,7 +22,6 @@ with Gdk.Color;                use Gdk.Color;
 with Gdk.Cursor;               use Gdk.Cursor;
 with Gdk.Drawable;             use Gdk.Drawable;
 with Gdk.Event;                use Gdk.Event;
-with Gdk.Font;                 use Gdk.Font;
 with Gdk.GC;                   use Gdk.GC;
 with Gdk.Main;                 use Gdk.Main;
 with Gdk.Pixmap;               use Gdk.Pixmap;
@@ -45,7 +44,9 @@ with Gtk.Menu;                 use Gtk.Menu;
 with Gtk.Tree_Model;           use Gtk.Tree_Model;
 with Gtk.Tree_Store;           use Gtk.Tree_Store;
 with Gtk.Widget;               use Gtk.Widget;
+with Pango.Enums;              use Pango.Enums;
 with Pango.Font;               use Pango.Font;
+with Pango.Layout;             use Pango.Layout;
 
 package body GUI_Utils is
 
@@ -536,42 +537,29 @@ package body GUI_Utils is
      (Text     : String;
       Font     : Pango.Font.Pango_Font_Description;
       Bg_Color : Gdk.Color.Gdk_Color;
-      Window   : Gdk.Window.Gdk_Window;
+      Widget   : access Gtk_Widget_Record'Class;
       Pixmap   : out Gdk.Gdk_Pixmap;
       Width    : out Glib.Gint;
-      Height   : out Glib.Gint)
+      Height   : out Glib.Gint;
+      Wrap_Width : Glib.Gint := -1)
    is
       GC : Gdk_GC;
-      F  : Gdk_Font;
-      Lines_Count : Gint := 1;
-      Start : Natural;
-      H : Gint;
+      Layout : Pango_Layout;
    begin
-      --  ??? Should use a pango_layout instead for proper support of
-      --  internationalization
-
-      Gdk_New (GC, Window);
+      Gdk_New (GC, Get_Window (Widget));
       Set_Foreground (GC, Bg_Color);
 
-      F := From_Description (Font);
-      Width := 0;
-      Start := Text'First;
+      Layout := Create_Pango_Layout (Widget, Text);
+      Set_Font_Description (Layout, Font);
 
-      for Index in Text'Range loop
-         if Text (Index) = ASCII.LF then
-            Lines_Count := Lines_Count + 1;
-            Width  := Gint'Max
-              (Width, String_Width (F, Text (Start .. Index - 1)));
-            Start := Index + 1;
-         end if;
-      end loop;
+      if Wrap_Width /= -1 then
+         Set_Wrap (Layout, Pango_Wrap_Char);
+         Set_Width (Layout, Wrap_Width * Pango_Scale);
+      end if;
 
-      Width  := Gint'Max
-        (Width, String_Width (F, Text (Start .. Text'Last))) + 4;
+      Get_Pixel_Size (Layout, Width, Height);
 
-
-      Height := (Get_Ascent (F) + Get_Descent (F)) * Lines_Count;
-      Gdk.Pixmap.Gdk_New (Pixmap, Window, Width, Height);
+      Gdk.Pixmap.Gdk_New (Pixmap, Get_Window (Widget), Width, Height);
       Draw_Rectangle
         (Pixmap,
          GC,
@@ -591,20 +579,9 @@ package body GUI_Utils is
          Width  => Width - 1,
          Height => Height - 1);
 
-      Start := Text'First;
-      H := Get_Ascent (F);
+      Draw_Layout (Pixmap, GC, 0, 0, Layout);
 
-      for Index in Text'Range loop
-         if Text (Index) = ASCII.LF then
-            Draw_Text (Pixmap, F, GC, 2, H, Text (Start .. Index - 1));
-            H := H + Get_Ascent (F) + Get_Descent (F);
-            Start := Index + 1;
-         end if;
-      end loop;
-
-      Draw_Text (Pixmap, F, GC, 2, H, Text (Start .. Text'Last));
-
-      Unref (F);
+      Unref (Layout);
       Unref (GC);
    end Create_Pixmap_From_Text;
 
