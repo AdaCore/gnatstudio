@@ -2,7 +2,7 @@
 --                               G P S                               --
 --                                                                   --
 --                     Copyright (C) 2001-2005                       --
---                            ACT-Europe                             --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -18,11 +18,11 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with GNAT.OS_Lib;               use GNAT.OS_Lib;
+with GNAT.OS_Lib;        use GNAT.OS_Lib;
 with Generic_List;
-with VFS;                       use VFS;
-with GPS.Kernel.Project;      use GPS.Kernel, GPS.Kernel.Project;
-with Projects.Registry;         use Projects, Projects.Registry;
+with VFS;                use VFS;
+with GPS.Kernel.Project; use GPS.Kernel, GPS.Kernel.Project;
+with Projects.Registry;  use Projects, Projects.Registry;
 
 package body Docgen is
 
@@ -215,7 +215,7 @@ package body Docgen is
    -----------
 
    function Clone
-     (Entity     : Entity_List_Information) return Entity_List_Information is
+     (Entity : Entity_List_Information) return Entity_List_Information is
    begin
       if Entity.Public_Declaration /= null then
          Ref (Entity.Public_Declaration);
