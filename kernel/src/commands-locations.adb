@@ -18,7 +18,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glide_Kernel.Modules; use Glide_Kernel.Modules;
+with Glide_Kernel.Standard_Hooks; use Glide_Kernel.Standard_Hooks;
 with Glide_Kernel.Scripts; use Glide_Kernel.Scripts;
 with VFS;                  use VFS;
 
