@@ -26,7 +26,6 @@
 -- executable file  might be covered by the  GNU Public License.     --
 -----------------------------------------------------------------------
 
-with Ada.Tags;         use Ada.Tags;
 with Glib;             use Glib;
 with Glib.Object;      use Glib.Object;
 with Gint_Xml;         use Gint_Xml;
@@ -57,6 +56,8 @@ with Gtk.Fixed;        use Gtk.Fixed;
 with Gtk.Handlers;
 with Gtk.Label;        use Gtk.Label;
 with Gtk.Main;         use Gtk.Main;
+pragma Elaborate_All (Gtk.Main);
+
 with Gtk.Menu;         use Gtk.Menu;
 with Gtk.Menu_Item;    use Gtk.Menu_Item;
 with Gtk.Notebook;     use Gtk.Notebook;
@@ -69,9 +70,9 @@ with Gtk.Window;       use Gtk.Window;
 with Gtkada.Handlers;  use Gtkada.Handlers;
 with Interfaces.C.Strings; use Interfaces.C.Strings;
 
-with GNAT.OS_Lib;      use GNAT.OS_Lib;
+with Ada.Unchecked_Deallocation;
+with Ada.Tags;         use Ada.Tags;
 with System;           use System;
-with GUI_Utils;        use GUI_Utils;
 
 package body Gtkada.MDI is
 
@@ -183,6 +184,8 @@ package body Gtkada.MDI is
       New_String ("............."));
 
    use Widget_List;
+
+   procedure Free is new Ada.Unchecked_Deallocation (String, String_Access);
 
    function Button_Pressed
      (Child : access Gtk_Widget_Record'Class;
@@ -335,6 +338,13 @@ package body Gtkada.MDI is
    procedure Create_Menu_Entry (Child : access MDI_Child_Record'Class);
    --  Add an entry to the MDI menu that provides easy activation of Child
 
+   procedure Propagate_Expose_Event
+     (Container : access Gtk.Container.Gtk_Container_Record'Class;
+      Event     : Gdk.Event.Gdk_Event_Expose);
+   --  Propagate the expose event Event to all the NO_WINDOW children of
+   --  Container. You must call this when Container has a specific expose
+   --  callback.
+
    procedure Cascade_Cb    (MDI   : access Gtk_Widget_Record'Class);
    procedure Tile_H_Cb     (MDI   : access Gtk_Widget_Record'Class);
    procedure Tile_V_Cb     (MDI   : access Gtk_Widget_Record'Class);
@@ -353,7 +363,7 @@ package body Gtkada.MDI is
    --  used to automatically select its parent MDI_Child.
 
    type Raise_Idle_Data is record
-      MDI : MDI_Window;
+      MDI   : MDI_Window;
       Child : MDI_Child;
    end record;
    --  The data that is used for Raise_Child_Idle. If Child is null, then the
@@ -3359,6 +3369,28 @@ package body Gtkada.MDI is
             Child);
       end if;
    end Create_Menu_Entry;
+
+   ----------------------------
+   -- Propagate_Expose_Event --
+   ----------------------------
+
+   procedure Propagate_Expose_Event
+     (Container : access Gtk.Container.Gtk_Container_Record'Class;
+      Event     : Gdk.Event.Gdk_Event_Expose)
+   is
+      use Widget_List;
+      Children, Tmp : Widget_List.Glist;
+   begin
+      Children := Get_Children (Container);
+      Tmp := Children;
+
+      while Tmp /= Null_List loop
+         Propagate_Expose (Container, Get_Data (Tmp), Event);
+         Tmp := Next (Tmp);
+      end loop;
+
+      Free (Children);
+   end Propagate_Expose_Event;
 
    --------------------
    -- Menu_Destroyed --
