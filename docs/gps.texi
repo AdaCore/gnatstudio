@@ -9057,7 +9057,10 @@ properties page.
 @item separator (default value is "")
 This attribute specifies the default character that should go between a switch
 and its value, to distinguishes cases like "-a 1", "-a1" and "-a=1". This can
-be overridden separately for each switch.
+be overridden separately for each switch. Note that if you want the separator
+to be a space, you must use the value @code{"&#32;"} rather than @code{" "},
+since XML parser must normalize the latter to the empty string when reading
+the XML file.
 @end table
 
 This @code{<switches>} tag can have any number of child tag, among the
