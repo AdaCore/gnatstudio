@@ -211,7 +211,12 @@ package body GPS.Kernel.Project is
             return;
          end if;
 
-         if Get_Pref (Kernel, Save_Desktop_On_Exit) then
+         --  Do not save the desktop for the default project: that breaks the
+         --  loading of GPS, since we always start from a default project,
+
+         if Status (Get_Root_Project (Kernel.Registry.all)) = From_File
+           and then Get_Pref (Kernel, Save_Desktop_On_Exit)
+         then
             Save_Desktop (Kernel);
          end if;
 
