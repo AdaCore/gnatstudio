@@ -1527,7 +1527,7 @@ package body Src_Editor_Module is
             Child := Put (MDI, Box);
 
             if File /= "" then
-               Set_Title (Child, File, Basename (File));
+               Set_Title (Child, File, Base_Name (File));
             else
                --  Determine the number of "Untitled" files open.
 
