@@ -24,11 +24,12 @@
 
 with Glib;          use Glib;
 with GNAT.OS_Lib;
-with Ada.Finalization;
+--  with Ada.Finalization;
 
 package VFS is
 
    subtype UTF8_String_Access is GNAT.OS_Lib.String_Access;
+   type Cst_UTF8_String_Access is access constant Glib.UTF8_String;
 
    type Virtual_File is private;
    No_File : constant Virtual_File;
@@ -58,11 +59,12 @@ package VFS is
 
    function Base_Name
      (File   : Virtual_File;
-      Suffix : String := "") return UTF8_String;
+      Suffix : String := "") return Cst_UTF8_String_Access;
    --  Return the base name of the file.
 
    function Full_Name
-     (File : Virtual_File; Normalize : Boolean := False) return UTF8_String;
+     (File : Virtual_File; Normalize : Boolean := False)
+      return Cst_UTF8_String_Access;
    --  Return the full path to File
    --  If Normalize is True, the file name is first normalized, and links
    --  are resolved on systems where it applies.
@@ -75,7 +77,7 @@ package VFS is
    --  extension. This extension includes the last dot and all the following
    --  characters;
 
-   function Dir_Name (File : Virtual_File) return UTF8_String;
+   function Dir_Name (File : Virtual_File) return Cst_UTF8_String_Access;
    --  Return the directory name for File
 
    function Read_File (File : Virtual_File) return UTF8_String_Access;
@@ -104,9 +106,6 @@ package VFS is
 --     (Host_Dir : String; Remote_Dir : String);
    --  Defines a translation for file names: any occurrence of Host_Dir at
    --  the beginning of the file name will be replaced by Remote_Dir.
-
-   function "=" (File1, File2 : Virtual_File) return Boolean;
-   --  Whether File1 and File2 represent the same physical file on disk.
 
    procedure Sort (Files : in out File_Array);
    --  Sort the array of files, in the order given by the full names.
@@ -159,22 +158,18 @@ private
    --  not work properly, since the functions above cannot modify File
    --  itself, although they do compute some information lazily).
 
-   type Contents_Record;
-   type Contents_Access is access Contents_Record;
-
-   type Virtual_File is new Ada.Finalization.Controlled with record
-      Value : Contents_Access;
+   type Contents_Record is record
+      Full_Name        : Cst_UTF8_String_Access;
+      Normalized_Full  : GNAT.OS_Lib.String_Access;
+      Dir_Name         : Cst_UTF8_String_Access;
+      Base_Name        : Cst_UTF8_String_Access;
    end record;
+   type Virtual_File is access Contents_Record;
 
    type Writable_File is record
       File : Virtual_File;
       FD   : GNAT.OS_Lib.File_Descriptor := GNAT.OS_Lib.Invalid_FD;
    end record;
 
-   procedure Finalize (File : in out Virtual_File);
-   procedure Adjust (File : in out Virtual_File);
-   --  See doc for inherited subprograms
-
-   No_File : constant Virtual_File :=
-     (Ada.Finalization.Controlled with Value => null);
+   No_File : constant Virtual_File := null;
 end VFS;
