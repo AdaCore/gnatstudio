@@ -475,7 +475,7 @@ package body Glide_Kernel.Modules is
       Context : Interactive_Command_Context;
    begin
       Push_State (Kernel_Handle (Kernel), Busy);
-      Context.Context := Get_Current_Context (Kernel_Handle (Kernel));
+      Context.Context := Kernel_Handle (Kernel).Last_Context_For_Contextual;
       Context.Event   := Get_Current_Event;
       Ref (Context.Context);
 
