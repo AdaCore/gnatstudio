@@ -38,7 +38,7 @@ with Gtk.Tree_View_Column;     use Gtk.Tree_View_Column;
 with Gtk.Widget;               use Gtk.Widget;
 with Gtk.Window;               use Gtk.Window;
 with Gtkada.Handlers;          use Gtkada.Handlers;
-with Gui_Support;              use Gui_Support;
+with GUI_Utils;                use GUI_Utils;
 with Gtkada.Dialogs;           use Gtkada.Dialogs;
 
 with Prj.Tree;   use Prj.Tree;
