@@ -55,7 +55,9 @@ with Interfaces.C.Strings;      use Interfaces.C.Strings;
 with Interfaces.C;              use Interfaces.C;
 
 with Prj_API;       use Prj_API;
-with Prj_Manager;   use Prj_Manager;
+with Prj_Normalize; use Prj_Normalize;
+with Glide_Kernel;  use Glide_Kernel;
+with Glide_Kernel.Project; use Glide_Kernel.Project;
 
 with Prj;           use Prj;
 with Stringt;       use Stringt;
@@ -492,9 +494,12 @@ package body Project_Viewers is
 
       --  ??? Doesn't work on projects other than the top-level
 
-      Normalize
-        (Data.Viewer.Manager,
-         Get_Project_From_View (Data.Viewer.Project_Filter));
+      --  ??? Should check whether the project is already normalized
+
+      Normalize_Project (Get_Project (Data.Viewer.Kernel));
+      --  Normalize
+      --    (Data.Viewer.Manager,
+      --     Get_Project_From_View (Data.Viewer.Project_Filter));
    end Destroy_Switch_Editor;
 
    ----------------------------
@@ -650,22 +655,19 @@ package body Project_Viewers is
       Dir_Name := Find_In_Source_Dirs (Project_View, File_N);
       pragma Assert (Dir_Name /= No_String);
 
-      String_To_Name_Buffer (Dir_Name);
-      declare
-         Dir : constant String := Name_Buffer (1 .. Name_Len);
-      begin
-         if Directory_Filter /= No_Filter
-           and then Dir /= Get_Name_String (Directory_Filter)
-         then
-            return;
-         end if;
+      if Directory_Filter /= No_Filter
+        and then String_Equal (Directory_Filter, Dir_Name)
+      then
+         return;
+      end if;
 
-         Project_User_Data.Set
-           (Viewer.Pages (Current_View),
-            Append_Line_With_Full_Name
-               (Viewer, Current_View, Project_View, File_N, Dir),
-            (File_Name => File_Name, Directory => Dir_Name));
-      end;
+      String_To_Name_Buffer (Dir_Name);
+      Project_User_Data.Set
+        (Viewer.Pages (Current_View),
+         Append_Line_With_Full_Name
+           (Viewer, Current_View, Project_View,
+            File_N, Name_Buffer (1 .. Name_Len)),
+         (File_Name => File_Name, Directory => Dir_Name));
    end Append_Line;
 
    -----------------
@@ -773,11 +775,10 @@ package body Project_Viewers is
 
    procedure Gtk_New
      (Viewer  : out Project_Viewer;
-      Manager : access Prj_Manager.Project_Manager_Record'Class)
-   is
+      Kernel  : access Kernel_Handle_Record'Class) is
    begin
       Viewer := new Project_Viewer_Record;
-      Project_Viewers.Initialize (Viewer, Manager);
+      Project_Viewers.Initialize (Viewer, Kernel);
    end Gtk_New;
 
    ----------------
@@ -786,14 +787,14 @@ package body Project_Viewers is
 
    procedure Initialize
      (Viewer : access Project_Viewer_Record'Class;
-      Manager : access Prj_Manager.Project_Manager_Record'Class)
+      Kernel : access Kernel_Handle_Record'Class)
    is
       Label : Gtk_Label;
       Color : Gdk_Color;
       Scrolled : Gtk_Scrolled_Window;
    begin
       Gtk.Notebook.Initialize (Viewer);
-      Viewer.Manager := Project_Manager (Manager);
+      Viewer.Kernel := Kernel_Handle (Kernel);
 
       for View in View_Type'Range loop
          Gtk_New (Scrolled);

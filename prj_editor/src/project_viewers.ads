@@ -33,7 +33,7 @@ with Gtk.Style;
 with Prj;
 with Types;
 
-with Prj_Manager;
+with Glide_Kernel;
 
 package Project_Viewers is
 
@@ -41,17 +41,17 @@ package Project_Viewers is
    type Project_Viewer is access all Project_Viewer_Record'Class;
 
    type View_Type is (System, Version_Control, Switches);
-   subtype Filter is Types.Name_Id;
-   No_Filter : constant Filter := Types.No_Name;
+   subtype Filter is Types.String_Id;
+   No_Filter : constant Filter := Types.No_String;
 
    procedure Gtk_New
      (Viewer  : out Project_Viewer;
-      Manager : access Prj_Manager.Project_Manager_Record'Class);
+      Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class);
    --  Create a new project viewer.
 
    procedure Initialize
      (Viewer : access Project_Viewer_Record'Class;
-      Manager : access Prj_Manager.Project_Manager_Record'Class);
+      Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class);
    --  Internal subprogram for creating widgets
 
    procedure Show_Project
@@ -88,7 +88,7 @@ private
       --  Style to use when displaying switches that are set at the project
       --  level, rather than file specific
 
-      Manager : Prj_Manager.Project_Manager;
+      Kernel  : Glide_Kernel.Kernel_Handle;
 
       Project_Filter : Prj.Project_Id := Prj.No_Project;
    end record;
