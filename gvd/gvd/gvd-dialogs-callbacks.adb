@@ -10,6 +10,7 @@ with Odd.Pixmaps; use Odd.Pixmaps;
 with Odd.Process; use Odd.Process;
 with Debugger; use Debugger;
 with Gtkada.Code_Editors; use Gtkada.Code_Editors;
+with Main_Debug_Window_Pkg; use Main_Debug_Window_Pkg;
 
 package body Task_Dialog_Pkg.Callbacks is
 
@@ -31,8 +32,9 @@ package body Task_Dialog_Pkg.Callbacks is
       --  Get the process notebook from the main window which is associated
       --  with the task dialog (toplevel (object)).
 
-      Notebook      : Gtk_Notebook := Task_Dialog_Access
-        (Get_Toplevel (Object)).Main_Window.Process_Notebook;
+      Notebook      : Gtk_Notebook :=
+        Main_Debug_Window_Access (Task_Dialog_Access
+        (Get_Toplevel (Object)).Main_Window).Process_Notebook;
 
       --  Get the current page in the process notebook.
 
