@@ -69,6 +69,7 @@ package body Src_Info.CPP is
    procedure Sym_FU_Handler      (Sym : FIL_Table);
    procedure Sym_E_Handler       (Sym : FIL_Table);
    procedure Sym_EC_Handler      (Sym : FIL_Table);
+   procedure Sym_CL_Handler      (Sym : FIL_Table);
 
    ---------------------
    -- Symbol_Handlers --
@@ -79,6 +80,7 @@ package body Src_Info.CPP is
       FU     => Sym_FU_Handler'Access,
       E      => Sym_E_Handler'Access,
       EC     => Sym_EC_Handler'Access,
+      CL     => Sym_CL_Handler'Access,
       others => Sym_Default_Handler'Access);
 
    ------------------
@@ -387,6 +389,15 @@ package body Src_Info.CPP is
    --  Sets Success to True if type found and fills Desc structure
    --  with appropriate information.
 
+   procedure Find_Class
+     (Type_Name : in String;
+      Desc      : in out CType_Description;
+      Class_Def : out CL_Table;
+      Success   : out Boolean);
+   --  Finds class and stores information about it in the
+   --  Desc and Class_Def arguments
+   --  Success returns error status
+
    -----------------------
    -- Type_Name_To_Kind --
    -----------------------
@@ -479,27 +490,11 @@ package body Src_Info.CPP is
          declare
             Class_Def  : CL_Table;
          begin
-            Match (Template_Type_Pat, Type_Name, Matches);
-            if Matches (1) /= No_Match then
-               Class_Def := Find (SN_Table (CL), Type_Name
-                  (Matches (1).First .. Matches (1).Last));
-               Desc.IsTemplate := True;
-            else
-               Class_Def := Find (SN_Table (CL), Type_Name);
+            Find_Class (Type_Name, Desc, Class_Def, Success);
+            if Success then
+               Free (Class_Def);
+               return;
             end if;
-
-            Desc.Parent_Point    := Class_Def.Start_Position;
-            Desc.Parent_Filename := new String'(Class_Def.Buffer (
-                    Class_Def.File_Name.First .. Class_Def.File_Name.Last));
-
-            Free (Class_Def);
-            Desc.Kind := Record_Type;
-            Success := True;
-            return;
-         exception
-            when  DB_Error |   -- non-existent table
-                  Not_Found => -- missed, fall thru'
-               null;
          end;
       end if;
 
@@ -570,6 +565,39 @@ package body Src_Info.CPP is
          null;
    end Original_Type;
 
+   ----------------
+   -- Find_Class --
+   ----------------
+   procedure Find_Class
+     (Type_Name : in String;
+      Desc      : in out CType_Description;
+      Class_Def : out CL_Table;
+      Success   : out Boolean)
+   is
+      Matches      : Match_Array (1 .. 1);
+   begin
+      Success := False;
+      Match (Template_Type_Pat, Type_Name, Matches);
+      if Matches (1) /= No_Match then
+         Class_Def := Find (SN_Table (CL), Type_Name
+            (Matches (1).First .. Matches (1).Last));
+         Desc.IsTemplate := True;
+      else
+         Class_Def := Find (SN_Table (CL), Type_Name);
+      end if;
+
+      Desc.Parent_Point    := Class_Def.Start_Position;
+      Desc.Parent_Filename := new String'(Class_Def.Buffer (
+                    Class_Def.File_Name.First .. Class_Def.File_Name.Last));
+
+      Desc.Kind := Record_Type;
+      Success := True;
+   exception
+      when  DB_Error |   -- non-existent table
+            Not_Found => -- missed, fall thru'
+         null;
+   end Find_Class;
+
    ----------
    -- Free --
    ----------
@@ -606,6 +634,7 @@ package body Src_Info.CPP is
    procedure Sym_FU_Handler      (Sym : FIL_Table) is separate;
    procedure Sym_E_Handler       (Sym : FIL_Table) is separate;
    procedure Sym_EC_Handler      (Sym : FIL_Table) is separate;
+   procedure Sym_CL_Handler      (Sym : FIL_Table) is separate;
 
    --  procedure Fu_To_Gv_Handler    (Ref : TO_Table) is separate;
 
