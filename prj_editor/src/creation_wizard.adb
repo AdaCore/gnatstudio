@@ -380,8 +380,7 @@ package body Creation_Wizard is
       Wiz            : constant Prj_Wizard := Prj_Wizard (W);
       Dir            : constant String := Name_As_Directory
         (Get_Text (Wiz.Project_Location));
-      Name           : constant String := Base_Name
-        (Get_Text (Wiz.Project_Name), Prj.Project_File_Extension);
+      Name           : constant String := Get_Text (Wiz.Project_Name);
       Relative_Paths : constant Boolean := Get_Active (Wiz.Relative_Paths);
       Changed        : Boolean := False;
       Languages      : Argument_List := Get_Languages (Wiz);
