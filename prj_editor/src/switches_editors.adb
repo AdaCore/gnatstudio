@@ -599,6 +599,12 @@ package body Switches_Editors is
                               + Switch.Switch'Length - 1) = Switch.Switch
          then
             Free (List (L));
+            if L < List'Last
+              and then Switch.Separator'Length > 0
+              and then Switch.Separator (Switch.Separator'First) = ' '
+            then
+               Free (List (L + 1));
+            end if;
          end if;
       end loop;
    end Filter_Switch;
@@ -713,6 +719,12 @@ package body Switches_Editors is
                               + Switch.Switch'Length - 1) = Switch.Switch
          then
             Free (List (L));
+            if L < List'Last
+              and then Switch.Separator'Length > 0
+              and then Switch.Separator (Switch.Separator'First) = ' '
+            then
+               Free (List (L + 1));
+            end if;
          end if;
       end loop;
    end Filter_Switch;
@@ -1311,6 +1323,7 @@ package body Switches_Editors is
       end if;
 
       Gtk_New (S.Combo);
+
       Pack_Start (Hbox, S.Combo, Expand => True, Fill => True);
       S.Separator         := Separator;
       S.Default_No_Switch := Default_No_Switch;
