@@ -515,10 +515,7 @@ package body External_Editor_Module is
            (Interval => Timeout,
             Func     => External_Timeout'Access,
             D        => Process_Data'
-              (Kernel     => Kernel_Handle (Kernel),
-               Descriptor => null,
-               Name       => null,
-               Callback   => null),
+              (Kernel_Handle (Kernel), null, null, null, null),
            Destroy   => External_Timeout_Destroy'Access);
       end if;
 
@@ -536,11 +533,11 @@ package body External_Editor_Module is
    ------------------
 
    procedure Spawn_Server
-     (Kernel         : access Kernel_Handle_Record'Class;
-      Success        : out Boolean)
+     (Kernel  : access Kernel_Handle_Record'Class;
+      Success : out Boolean)
    is
-      Args    : Argument_List_Access;
-      Path    : GNAT.OS_Lib.String_Access;
+      Args : Argument_List_Access;
+      Path : GNAT.OS_Lib.String_Access;
 
    begin
       Success := False;
