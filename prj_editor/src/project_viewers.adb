@@ -818,8 +818,8 @@ package body Project_Viewers is
    procedure Preferences_Changed
      (Viewer : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
-      V : Project_Viewer := Project_Viewer (Viewer);
-      Color    : Gdk_Color;
+      V     : constant Project_Viewer := Project_Viewer (Viewer);
+      Color : Gdk_Color;
    begin
       Color := Get_Pref (Kernel, Default_Switches_Color);
       Set_Foreground (V.Default_Switches_Style, State_Normal, Color);
@@ -1465,7 +1465,7 @@ package body Project_Viewers is
    -------------------
 
    procedure Add_Main_Unit (Editor : access Gtk_Widget_Record'Class) is
-      Ed : Executables_Editor := Executables_Editor (Editor);
+      Ed : constant Executables_Editor := Executables_Editor (Editor);
    begin
       if Ed.Project_View /= No_Project then
          declare
@@ -1512,11 +1512,13 @@ package body Project_Viewers is
    ----------------------
 
    procedure Remove_Main_Unit (Editor : access Gtk_Widget_Record'Class) is
-      Ed : Executables_Editor := Executables_Editor (Editor);
+      Ed        : constant Executables_Editor := Executables_Editor (Editor);
       Iter, Tmp : Gtk_Tree_Iter;
       Selection : constant Gtk_Tree_Selection := Get_Selection (Ed.Tree_View);
+
    begin
       Iter := Get_Iter_First (Ed.Executables);
+
       while Iter /= Null_Iter loop
          Tmp := Iter;
          Next (Ed.Executables, Iter);
@@ -1629,7 +1631,8 @@ package body Project_Viewers is
       return Project_Node_Array
    is
       pragma Unreferenced (Page, Kernel);
-      Editor       : Executables_Editor := Executables_Editor (Widget);
+      Editor       : constant Executables_Editor :=
+        Executables_Editor (Widget);
       Num_Children : constant Gint := N_Children (Editor.Executables);
       New_Mains    : Argument_List (1 .. Integer (Num_Children));
       Iter         : Gtk_Tree_Iter := Get_Iter_First (Editor.Executables);
@@ -1976,9 +1979,10 @@ package body Project_Viewers is
       return Project_Node_Array
    is
       pragma Unreferenced (Page);
-      Obj_Dir : Object_Editor_Widget := Object_Editor_Widget (Widget);
+      Obj_Dir : constant Object_Editor_Widget := Object_Editor_Widget (Widget);
       New_Dir, Exec_Dir : GNAT.OS_Lib.String_Access;
       Changed : Boolean := False;
+
    begin
       Assert (Me, Project = Ref_Project,
               "Invalid project when modifying main files");

@@ -1516,7 +1516,8 @@ package body Switches_Editors is
 
       if (Get_Pages (Switches) and Ada_Page) /= 0 then
          declare
-            List : Argument_List := Get_Switches ("compiler", Snames.Name_Ada);
+            List : constant Argument_List :=
+              Get_Switches ("compiler", Snames.Name_Ada);
             L2   : Argument_List := Normalize_Compiler_Switches
               (Ada_Compiler, List);
          begin

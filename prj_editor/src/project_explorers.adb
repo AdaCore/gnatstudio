@@ -3269,8 +3269,9 @@ package body Project_Explorers is
    is
       pragma Unreferenced (Kernel, All_Occurences);
       Context : Explorer_Search_Context_Access;
-      Extra : Explorer_Search_Extra :=
+      Extra   : constant Explorer_Search_Extra :=
         Explorer_Search_Extra (Extra_Information);
+
    begin
       Context := new Explorer_Search_Context;
       Context.Include_Entities := Get_Active (Extra.Include_Entities);
@@ -3287,7 +3288,7 @@ package body Project_Explorers is
       Search_Backward : Boolean) return Boolean
    is
       pragma Unreferenced (Search_Backward);
-      C : Explorer_Search_Context_Access :=
+      C        : constant Explorer_Search_Context_Access :=
         Explorer_Search_Context_Access (Context);
       Explorer : Project_Explorer;
 
@@ -3330,7 +3331,8 @@ package body Project_Explorers is
       end Next;
 
       Child : MDI_Child;
-      Tmp : Gtk_Ctree_Node;
+      Tmp   : Gtk_Ctree_Node;
+
    begin
       --  ??? Problem: this algorithm will analyze the same files multiple
       --  times if they appear multiple times in the explorer. This might not
@@ -3338,12 +3340,14 @@ package body Project_Explorers is
       --  information for all the occurences of this file.
 
       --  Make sure the explorer is visible, and get a handle on it
+
       On_Open_Explorer (Get_MDI (Kernel), Kernel_Handle (Kernel));
       Child := Find_MDI_Child_By_Tag
         (Get_MDI (Kernel), Project_Explorer_Record'Tag);
       Explorer := Project_Explorer (Get_Widget (Child));
 
       --  Find the next matching node
+
       if C.Current = null then
          C.Current := Node_Nth (Explorer.Tree, 0);
       else

@@ -667,10 +667,11 @@ package body Project_Properties is
      (Notebook : access GObject_Record'Class;
       Editor   : GObject)
    is
-      Note : Gtk_Notebook := Gtk_Notebook (Notebook);
-      Ed : Properties_Editor := Properties_Editor (Editor);
-      Page : Integer := Integer (Get_Current_Page (Note));
+      Note  : constant Gtk_Notebook := Gtk_Notebook (Notebook);
+      Ed    : constant Properties_Editor := Properties_Editor (Editor);
+      Page  : constant Integer := Integer (Get_Current_Page (Note));
       Flags : Selector_Flags;
+
    begin
       if Page >= 1
         and then not Gtk.Object.In_Destruction_Is_Set (Ed)
