@@ -185,13 +185,14 @@ package body Docgen_Module is
 
    function Get_Backend
      (Kernel  : Kernel_Handle) return Docgen.Backend.Backend_Handle;
-   --  Return the backend to use given the current options
+   --  Return the backend to use given the current options.
 
    procedure Generate
-     (Kernel  : Kernel_Handle;
-      List    : in out Type_Source_File_Table.HTable;
-      Backend : access Docgen.Backend.Backend'Class);
-   --  With the list of source files, it generates the documentation
+     (Kernel   : Kernel_Handle;
+      List     : in out Type_Source_File_Table.HTable;
+      Nb_Files : Natural;
+      Backend  : access Docgen.Backend.Backend'Class);
+   --  Generate documentation for files in List.
 
    --------------
    -- Commands --
@@ -445,12 +446,13 @@ package body Docgen_Module is
       --  more files be parsed (try generating doc for traces.ads)
       Trace (Me, "Parsing files");
       Parse_All_LI_Information (Kernel, P, Recursive => Recursive);
+
       Trace (Me, "Generating files for " & B.Output_Description.Name.all);
 
       Sources := Get_Source_Files (P, Recursive);
       Array2List (Kernel, Sources, Source_File_List,
                   Docgen.Backend.Get_Extension (B));
-      Generate (Kernel, Source_File_List, B);
+      Generate (Kernel, Source_File_List, Sources'Length, B);
       VFS.Unchecked_Free (Sources);
       --  Type_Source_File_Table.Reset (Source_File_List);
 
@@ -699,7 +701,7 @@ package body Docgen_Module is
          end if;
       end if;
 
-      Generate (Kernel, Source_File_List, B);
+      Generate (Kernel, Source_File_List, 2, B);
 
    exception
       when E : others =>
@@ -758,9 +760,10 @@ package body Docgen_Module is
    --------------
 
    procedure Generate
-     (Kernel  : Kernel_Handle;
-      List    : in out Type_Source_File_Table.HTable;
-      Backend : access Docgen.Backend.Backend'Class)
+     (Kernel   : Kernel_Handle;
+      List     : in out Type_Source_File_Table.HTable;
+      Nb_Files : Natural;
+      Backend  : access Docgen.Backend.Backend'Class)
    is
       use Docgen.Backend;
    begin
@@ -779,6 +782,7 @@ package body Docgen_Module is
       Process_Files
         (Backend, Kernel,
          List,
+         Nb_Files,
          Docgen_Module (Docgen_Module_Id).Options);
 
       Pop_State (Kernel);
