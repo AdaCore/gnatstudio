@@ -29,12 +29,9 @@ with Gtk.Button; use Gtk.Button;
 with Gtk.Label; use Gtk.Label;
 with Gtk.Check_Button; use Gtk.Check_Button;
 with Gtk.Hbutton_Box; use Gtk.Hbutton_Box;
-with GVD.Types; use GVD.Types;
-
 package Open_Program_Pkg is
 
    type Open_Program_Record is new Gtk_Window_Record with record
-      Valid : Boolean;
       Vbox13 : Gtk_Vbox;
       Frame8 : Gtk_Frame;
       Table7 : Gtk_Table;
@@ -67,23 +64,6 @@ package Open_Program_Pkg is
       Cancel_Button : Gtk_Button;
    end record;
    type Open_Program_Access is access all Open_Program_Record'Class;
-
-   procedure Open_Program
-     (Open       : in out Open_Program_Access;
-      Descriptor : out Program_Descriptor);
-   --  Open a program window and launch a main loop until the ok or cancel
-   --  button has been pressed.
-   --  Open if null is set to the created window, that is hidden on return.
-   --  If non null, Open_Program will show it instead of creating a new one.
-   --  Return the program descriptor. If Launch is None,
-   --  this means a cancellation from the user.
-   --  Note that this is your responsibility to free the memory associated with
-   --  Descriptor, using Free below.
-
-   procedure Free (Descriptor : in out Program_Descriptor);
-   --  Free the dynamic memory associated with program.
-
-private
 
    procedure Gtk_New (Open_Program : out Open_Program_Access);
    procedure Initialize (Open_Program : access Open_Program_Record'Class);

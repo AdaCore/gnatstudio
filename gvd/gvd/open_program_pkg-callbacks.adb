@@ -21,6 +21,7 @@
 with Gtk.Main; use Gtk.Main;
 with Gtkada.File_Selection; use Gtkada.File_Selection;
 with String_Utils; use String_Utils;
+with GVD.Open_Program_Dialog; use GVD.Open_Program_Dialog;
 
 package body Open_Program_Pkg.Callbacks is
 
@@ -59,7 +60,7 @@ package body Open_Program_Pkg.Callbacks is
      (Object : access Gtk_Button_Record'Class)
    is
    begin
-      Open_Program_Access (Get_Toplevel (Object)).Valid := True;
+      GVD_Open_Program (Get_Toplevel (Object)).Valid := True;
       Main_Quit;
    end On_Ok_Open_Clicked;
 
@@ -71,7 +72,7 @@ package body Open_Program_Pkg.Callbacks is
      (Object : access Gtk_Button_Record'Class)
    is
    begin
-      Open_Program_Access (Get_Toplevel (Object)).Valid := False;
+      GVD_Open_Program (Get_Toplevel (Object)).Valid := False;
       Main_Quit;
    end On_Cancel_Open_Clicked;
 

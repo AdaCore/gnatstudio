@@ -21,11 +21,9 @@
 with Gtk; use Gtk;
 with Gtk.Widget;      use Gtk.Widget;
 with Gtk.Enums;       use Gtk.Enums;
-with Gtk.Main;
 with Callbacks_Odd; use Callbacks_Odd;
 with Odd_Intl; use Odd_Intl;
 with Open_Program_Pkg.Callbacks; use Open_Program_Pkg.Callbacks;
-with Basic_Types; use Basic_Types;
 
 package body Open_Program_Pkg is
 
@@ -304,61 +302,5 @@ begin
    Add (Open_Program.Hbuttonbox7, Open_Program.Cancel_Button);
 
 end Initialize;
-
-procedure Open_Program
-  (Open       : in out Open_Program_Access;
-   Descriptor : out Program_Descriptor)
-is
-begin
-   if Open = null then
-      Gtk_New (Open);
-   end if;
-
-   Show_All (Open);
-   Gtk.Main.Main;
-
-   if not Open.Valid then
-      Descriptor.Launch := None;
-      Hide (Open);
-      return;
-   end if;
-
-   if Get_Active (Open.Gdb_Button) then
-      Descriptor.Debugger := Gdb_Type;
-   elsif Get_Active (Open.Dbx_Button) then
-      Descriptor.Debugger := Dbx_Type;
-   elsif Get_Active (Open.Xdb_Button) then
-      Descriptor.Debugger := Xdb_Type;
-   elsif Get_Active (Open.Jdb_Button) then
-      Descriptor.Debugger := Jdb_Type;
-   elsif Get_Active (Open.Pydb_Button) then
-      Descriptor.Debugger := Pydb_Type;
-   elsif Get_Active (Open.Perl_Button) then
-      Descriptor.Debugger := Perl_Type;
-   end if;
-
-   Descriptor.Program := new String' (Get_Text (Open.Program_Entry));
-   Descriptor.Remote_Host := new String' (Get_Text (Open.Host_Entry));
-   Descriptor.Remote_Target := new String' (Get_Text (Open.Target_Entry));
-   Descriptor.Protocol := new String' (Get_Text (Open.Protocol_Entry));
-   Descriptor.Debugger_Name := new String' (Get_Text (Open.Debugger_Entry));
-
-   if Get_Active (Open.Replace_Check) then
-      Descriptor.Launch := Current_Debugger;
-   else
-      Descriptor.Launch := New_Debugger;
-   end if;
-
-   Hide (Open);
-end Open_Program;
-
-procedure Free (Descriptor : in out Program_Descriptor) is
-begin
-   Free (Descriptor.Program);
-   Free (Descriptor.Remote_Host);
-   Free (Descriptor.Remote_Target);
-   Free (Descriptor.Protocol);
-   Free (Descriptor.Debugger_Name);
-end Free;
 
 end Open_Program_Pkg;
