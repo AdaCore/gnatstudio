@@ -1,5 +1,12 @@
 Known Problems fixed in GVD 2.0.0
 
+- [9014-013] Run button under VxWorks may raise Constraint_Error
+  Problem:    When using the Run button under VxWorks and no module has been
+              loaded from GVD, a bug box is displayed.
+  Workaround: Load the module from GVD first, or use the menu
+              Program->Run/Start and specify the name of the module to debug
+              in the parameters entry.
+
 - Displaying Ada strings containing backslashes
   Problem:    when a string contains a backslash (Ada mode), the latter is
               not shown in the display.
@@ -25,7 +32,7 @@ Known Problems fixed in GVD 2.0.0
               "print <var>" instead of "display <var>" in the contextual
               menu
 
-- Assembly window raises CE in some cases
+- [9109-004] Assembly window raises Constraint_Error in some cases
   Problem:    When the assembly window is displayed, some race condition may
               occur and gvd is not able to get a new range of addresses. This
               results in a Constraint_Error.
