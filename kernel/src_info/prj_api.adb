@@ -206,7 +206,7 @@ package body Prj_API is
          Prj.Tree.Tree_Private_Part.Project_Name_And_Node'
          (Name => Project_Name,
           Node => Project,
-          Modified => False));
+          Extended => False));
       return Project;
    end Create_Project;
 
@@ -2411,7 +2411,7 @@ package body Prj_API is
          Prj.Tree.Tree_Private_Part.Project_Name_And_Node'
          (Name => Old_Name,
           Node => Empty_Node,
-          Modified => False));
+          Extended => False));
 
       --  Register the new name
       Prj.Tree.Tree_Private_Part.Projects_Htable.Set
@@ -2419,7 +2419,7 @@ package body Prj_API is
          Prj.Tree.Tree_Private_Part.Project_Name_And_Node'
          (Name => Name,
           Node => Project,
-          Modified => False));
+          Extended => False));
 
       --  Replace all the with_clauses in the project hierarchy that points to
       --  Project.
