@@ -36,10 +36,12 @@ with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
 with Glide_Result_View;         use Glide_Result_View;
 with Glide_Intl;                use Glide_Intl;
 
+with Shell;                     use Shell;
 with Commands;                  use Commands;
 with Commands.Locations;        use Commands.Locations;
 with Traces;                    use Traces;
 
+with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with Ada.Exceptions;            use Ada.Exceptions;
 
 package body Navigation_Module is
@@ -100,6 +102,8 @@ package body Navigation_Module is
       Mode      : Mime_Mode := Read_Write) return Boolean;
    --  Process, if possible, the data sent by the kernel
 
+   pragma Unreferenced (Mime_Action);
+
    procedure On_Other_File
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Open the spec if a body or separate is currently selected, and the spec
@@ -112,6 +116,41 @@ package body Navigation_Module is
    procedure On_Previous_Result
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Callback for Navigate->Previous Result menu.
+
+   function Command_Handler
+     (Kernel  : access Kernel_Handle_Record'Class;
+      Command : String;
+      Args    : GNAT.OS_Lib.Argument_List) return String;
+   --  Interactive command handler for the navigation module.
+
+   ---------------------
+   -- Command_Handler --
+   ---------------------
+
+   function Command_Handler
+     (Kernel  : access Kernel_Handle_Record'Class;
+      Command : String;
+      Args    : GNAT.OS_Lib.Argument_List) return String
+   is
+      The_Command : Generic_Location_Command;
+      N_Data : constant Navigation_Module :=
+        Navigation_Module (Navigation_Module_ID);
+   begin
+      if Command = "add_location_command" then
+         Create (The_Command, Kernel_Handle (Kernel), Args (Args'First).all);
+
+         if N_Data.Current_Location /= null then
+            Prepend (N_Data.Back, N_Data.Current_Location);
+         end if;
+
+         N_Data.Current_Location := Command_Access (The_Command);
+         Free (N_Data.Forward);
+
+         Refresh_Location_Buttons (Kernel);
+      end if;
+
+      return "";
+   end Command_Handler;
 
    -----------------
    -- Mime_Action --
@@ -438,14 +477,23 @@ package body Navigation_Module is
          Kernel                  => Kernel,
          Module_Name             => Navigation_Module_Name,
          Priority                => High_Priority,
-         Contextual_Menu_Handler => Navigation_Contextual_Menu'Access,
-         Mime_Handler            => Mime_Action'Access);
+         Contextual_Menu_Handler => Navigation_Contextual_Menu'Access);
 
       Register_Menu
         (Kernel,
          Navigate,
          Ref_Item => -"Edit",
          Add_Before => False);
+
+      Register_Command
+        (Kernel,
+         Command      => "add_location_command",
+         Usage        => "add_location_command ""command arguments""",
+         Description  => -("Register a command to be associated with"
+                           &" navigation buttons."),
+         Minimum_Args => 1,
+         Maximum_Args => 1,
+         Handler      => Command_Handler'Access);
 
       Register_Menu (Kernel, Navigate, -"Goto _File Spec<->Body",
                      Stock_Convert, On_Other_File'Access);
