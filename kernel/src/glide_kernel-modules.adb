@@ -158,7 +158,6 @@ package body Glide_Kernel.Modules is
       Priority                : Module_Priority     := Default_Priority;
       Contextual_Menu_Handler : Module_Menu_Handler := null;
       Mime_Handler            : Module_Mime_Handler := null;
-      MDI_Child_Tag           : Ada.Tags.Tag := Kernel_Handle_Record'Tag;
       Default_Context_Factory : Module_Default_Context_Factory := null;
       Save_Function           : Module_Save_Function := null;
       Tooltip_Handler         : Module_Tooltip_Handler := null)
@@ -181,8 +180,7 @@ package body Glide_Kernel.Modules is
          Mime_Handler    => Mime_Handler,
          Default_Factory => Default_Context_Factory,
          Save_Function   => Save_Function,
-         Tooltip_Handler => Tooltip_Handler,
-         Child_Tag       => MDI_Child_Tag);
+         Tooltip_Handler => Tooltip_Handler);
 
       while Current /= Module_List.Null_Node loop
          if Module_List.Data (Current).Info.Name = Module_Name then

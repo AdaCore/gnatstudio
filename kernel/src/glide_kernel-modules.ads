@@ -172,7 +172,6 @@ package Glide_Kernel.Modules is
       Priority                : Module_Priority := Default_Priority;
       Contextual_Menu_Handler : Module_Menu_Handler := null;
       Mime_Handler            : Module_Mime_Handler := null;
-      MDI_Child_Tag           : Ada.Tags.Tag := Kernel_Handle_Record'Tag;
       Default_Context_Factory : Module_Default_Context_Factory := null;
       Save_Function           : Module_Save_Function := null;
       Tooltip_Handler         : Module_Tooltip_Handler := null);
@@ -185,13 +184,6 @@ package Glide_Kernel.Modules is
    --  interact with this module.
    --  See the general description for this package for explanation on
    --  Initializer and Contextual_Menu_Handler.
-   --
-   --  MDI_Child_Tag is used to associated a given MDI child with a specific
-   --  module. It should be the name of the widget inserted directly in the
-   --  MDI. It is then used in conjunction with Default_Context_Factory to
-   --  generate a selection context that can be used for the menubar items.
-   --  Note that Kernel_Handle_Record'Tag is used as a default, non-significant
-   --  value for MDI_Child_Tag.
    --
    --  Save_Function is an optional callback that will handle the saving of
    --  the given module.
