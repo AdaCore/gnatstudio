@@ -1038,18 +1038,20 @@ package body Src_Info.ALI is
             Source, Dep.Subunit_Name, Project, Sfile);
       end if;
 
-      Assert (Me, not Is_Separate
-              or else (Sfile.LI = New_LI_File),
-              "Invalid handling of separate unit LI is "
-              & Base_Name (Get_LI_Filename (Sfile.LI))
-              & " but should have been "
-              & Base_Name (Get_LI_Filename (New_LI_File)));
+      if Active (Me) then
+         Assert (Me, not Is_Separate
+                 or else (Sfile.LI = New_LI_File),
+                 "Invalid handling of separate unit LI is "
+                 & Base_Name (Get_LI_Filename (Sfile.LI))
+                 & " but should have been "
+                 & Base_Name (Get_LI_Filename (New_LI_File)));
+      end if;
 
       New_Dep :=
-        (File              => Sfile,
-         Dep_Info          => (Depends_From_Spec => False,
-                               Depends_From_Body => False),
-         Declarations      => null);
+        (File         => Sfile,
+         Dep_Info     => (Depends_From_Spec => False,
+                          Depends_From_Body => False),
+         Declarations => null);
 
       if not Is_Separate then
          New_LI_File.LI.Dependencies_Info :=
