@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                          G L I D E  I I                           --
 --                                                                   --
---                        Copyright (C) 2001                         --
+--                     Copyright (C) 2001-2002                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GLIDE is free software; you can redistribute it and/or modify  it --
@@ -18,8 +18,8 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Unchecked_Deallocation;
 with Ada.Text_IO; use Ada.Text_IO;
+with Ada.Unchecked_Deallocation;
 with GNAT.Expect; use GNAT.Expect;
 with GNAT.Regpat; use GNAT.Regpat;
 with GNAT.OS_Lib; use GNAT.OS_Lib;
@@ -29,12 +29,6 @@ package body Diff_Utils is
    Diff_Cmd  : constant String := "diff";
    Patch_Cmd : constant String := "patch";
    --  <preferences>
-
-   procedure Free is new Ada.Unchecked_Deallocation
-     (Argument_List, Argument_List_Access);
-
-   procedure Free is new Ada.Unchecked_Deallocation
-     (Process_Descriptor'Class, Process_Descriptor_Access);
 
    procedure Compute_Occurrence
      (Ret        : in out Diff_Occurrence_Link;
