@@ -65,7 +65,11 @@ with Prj;                       use Prj;
 with Prj_API;                   use Prj_API;
 with Prj.Tree;                  use Prj.Tree;
 
+with Traces; use Traces;
+
 package body VCS_View_Pkg is
+
+   Me : Debug_Handle := Create ("VCS_INTERFACE");
 
    --------------------
    -- Local packages --
@@ -844,18 +848,24 @@ package body VCS_View_Pkg is
      (Kernel : access Kernel_Handle_Record'Class)
      return String
    is
-      Context : Selection_Context_Access :=
-        Get_Current_Explorer_Context (Kernel);
-      File    : File_Selection_Context_Access := null;
+      Context : Selection_Context_Access := Get_Current_Context (Kernel);
+      File    : File_Name_Selection_Context_Access := null;
    begin
       if Context /= null
-        and then Context.all in File_Selection_Context'Class
+        and then Context.all in File_Name_Selection_Context'Class
       then
-         File := File_Selection_Context_Access (Context);
+         File := File_Name_Selection_Context_Access (Context);
 
          if Has_Directory_Information (File) then
+            Trace (Me, "Directory= " & Directory_Information (File));
             return Directory_Information (File);
+         else
+            Trace (Me, "No directory");
          end if;
+      elsif Context = null then
+         Trace (Me, "null context");
+      else
+         Trace (Me, "Invalid context");
       end if;
 
       return Get_Current_Dir;
@@ -866,8 +876,7 @@ package body VCS_View_Pkg is
    ----------------------
 
    function Get_Current_File (Kernel : Kernel_Handle) return String is
-      Context : Selection_Context_Access :=
-        Get_Current_Explorer_Context (Kernel);
+      Context : Selection_Context_Access := Get_Current_Context (Kernel);
       File    : File_Selection_Context_Access := null;
    begin
       if Context /= null
