@@ -1812,9 +1812,7 @@ package body Glide_Kernel is
    procedure Get_Scope_Tree
      (Kernel : access Kernel_Handle_Record;
       Entity : Entity_Information;
-      Tree   : out Src_Info.Queries.Scope_Tree;
-      Node   : out Src_Info.Queries.Scope_Tree_Node;
-      Declarations_Only : Boolean := False)
+      Node   : out Src_Info.Scope_Tree_Node)
    is
       Lib_Info : LI_File_Ptr;
       Location : File_Location;
@@ -1849,32 +1847,20 @@ package body Glide_Kernel is
          Insert (Kernel,
                  -"LI file not found for "
                & Full_Name (Get_Declaration_File_Of (Entity)).all);
-         Tree := Null_Scope_Tree;
          Node := Null_Scope_Tree_Node;
-         return;
-      end if;
 
-      Tree := Create_Tree (Lib_Info, Declarations_Only);
-
-      if Tree = Null_Scope_Tree then
-         Trace (Me, "Couldn't create scope tree for "
-                & Base_Name (Get_LI_Filename (Lib_Info)));
-         Node := Null_Scope_Tree_Node;
-         return;
-      end if;
-
-      Node := Find_Entity_Scope (Tree, Entity);
-
-      if Node = Null_Scope_Tree_Node then
-         Insert (Kernel,
-                 -"Couldn't find the scope tree for " & Get_Name (Entity));
-         Trace (Me, "Couldn't find entity "
-                & Get_Name (Entity) & " in "
-                & Base_Name (Get_LI_Filename (Lib_Info))
-                & " at line" & Get_Declaration_Line_Of (Entity)'Img
-                & " column"  & Get_Declaration_Column_Of (Entity)'Img);
-         Free (Tree);
-         Node := Null_Scope_Tree_Node;
+      else
+         Node := Find_Entity_Scope (Lib_Info, Entity);
+         if Node = Null_Scope_Tree_Node then
+            Insert (Kernel,
+                    -"Couldn't find the scope tree for " & Get_Name (Entity));
+            Trace (Me, "Couldn't find entity "
+                   & Get_Name (Entity) & " in "
+                   & Base_Name (Get_LI_Filename (Lib_Info))
+                   & " at line" & Get_Declaration_Line_Of (Entity)'Img
+                   & " column"  & Get_Declaration_Column_Of (Entity)'Img);
+            Node := Null_Scope_Tree_Node;
+         end if;
       end if;
    end Get_Scope_Tree;
 
