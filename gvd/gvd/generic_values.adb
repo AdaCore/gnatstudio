@@ -1204,7 +1204,7 @@ package body Generic_Values is
 
       if not Item.Valid or else Item.Value = null then
          Display_Pixmap (Pixmap, GC, Unknown_Pixmap, Unknown_Mask,
-                         X + Border_Spacing, Y + Border_Spacing);
+                         X + Border_Spacing, Y);
          return;
       end if;
 
@@ -1248,7 +1248,7 @@ package body Generic_Values is
 
       if not Item.Valid then
          Display_Pixmap (Pixmap, GC, Unknown_Pixmap, Unknown_Mask,
-                         X + Border_Spacing, Y + Border_Spacing);
+                         X + Border_Spacing, Y);
          return;
       end if;
 
@@ -1299,7 +1299,7 @@ package body Generic_Values is
 
       if not Item.Valid then
          Display_Pixmap (Pixmap, GC, Unknown_Pixmap, Unknown_Mask,
-                         X + Left_Border, Current_Y);
+                         X + Left_Border, Y);
          return;
       end if;
 
@@ -1378,7 +1378,7 @@ package body Generic_Values is
 
       if not Item.Valid then
          Display_Pixmap (Pixmap, GC, Unknown_Pixmap, Unknown_Mask,
-                         X + Left_Border, Current_Y);
+                         X + Left_Border, Y);
          return;
       end if;
 
@@ -1476,7 +1476,7 @@ package body Generic_Values is
 
       if not Item.Valid then
          Display_Pixmap (Pixmap, GC, Unknown_Pixmap, Unknown_Mask,
-                         X + Border_Spacing, Y + Border_Spacing);
+                         X + Border_Spacing, Y);
          return;
       end if;
 
