@@ -13,7 +13,7 @@
 -- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
 -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
 -- General Public License for more details. You should have received --
--- a copy of the GNU General Public License along with this library; --
+-- a copy of the GNU General Public License along with this program; --
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
@@ -40,7 +40,6 @@ with Process_Proxies;     use Process_Proxies;
 with Language_Handlers;     use Language_Handlers;
 with Language_Handlers.GVD; use Language_Handlers.GVD;
 
-with System;       use System;
 with Interfaces.C.Strings; use Interfaces.C.Strings;
 
 package body GVD.Main_Window is
