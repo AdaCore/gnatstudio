@@ -1715,7 +1715,6 @@ package body Default_Preferences is
       Tips       : Gtk_Tooltips;
       Event      : Gtk_Event_Box;
       Label      : Gtk_Label;
-      Color      : Gdk_Color;
       Separator  : Gtk_Separator;
 
    begin
@@ -1753,16 +1752,8 @@ package body Default_Preferences is
       Gtk_New (Frame);
       Attach (Main_Table, Frame, 0, 1, 0, 3);
 
-      Gtk_New (Event);
+      Create_Blue_Label (Title, Event);
       Attach (Main_Table, Event, 1, 2, 0, 1, Yoptions => 0);
-      Color := Parse ("#0e79bd");
-      Alloc (Get_Default_Colormap, Color);
-      Set_Style (Event, Copy (Get_Style (Event)));
-      Set_Background (Get_Style (Event), State_Normal, Color);
-
-      Gtk_New (Title, " ");
-      Set_Alignment (Title, 0.1, 0.5);
-      Add (Event, Title);
 
       Gtk_New_Hseparator (Separator);
       Attach (Main_Table, Separator, 1, 2, 1, 2, Yoptions => 0, Ypadding => 1);

@@ -24,6 +24,7 @@ with Glide_Kernel.Console;     use Glide_Kernel.Console;
 with Glide_Kernel.Custom;      use Glide_Kernel.Custom;
 with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
 with Default_Preferences;      use Default_Preferences;
+with GUI_Utils;                use GUI_Utils;
 with Glib.Xml_Int;             use Glib.Xml_Int;
 with Glide_Intl;               use Glide_Intl;
 with Glib;                     use Glib;
@@ -33,7 +34,6 @@ with Glib.Values;              use Glib.Values;
 with Gtk.Box;                  use Gtk.Box;
 with Gtk.Cell_Renderer_Text;   use Gtk.Cell_Renderer_Text;
 with Gtk.Cell_Renderer_Toggle; use Gtk.Cell_Renderer_Toggle;
-with Gdk.Color;                use Gdk.Color;
 with Gtk.Enums;                use Gtk.Enums;
 with Gtk.Event_Box;            use Gtk.Event_Box;
 with Gtk.Frame;                use Gtk.Frame;
@@ -41,7 +41,6 @@ with Gtk.Label;                use Gtk.Label;
 with Gtk.Paned;                use Gtk.Paned;
 with Gtk.Scrolled_Window;      use Gtk.Scrolled_Window;
 with Gtk.Separator;            use Gtk.Separator;
-with Gtk.Style;                use Gtk.Style;
 with Gtk.Text_Buffer;          use Gtk.Text_Buffer;
 with Gtk.Text_View;            use Gtk.Text_View;
 with Gtk.Tree_View;            use Gtk.Tree_View;
@@ -469,7 +468,6 @@ package body Theme_Manager_Module is
       Col      : Gtk_Tree_View_Column;
       Pane     : Theme_Editor_Widget;
       Frame    : Gtk_Frame;
-      Color    : Gdk_Color;
       Box      : Gtk_Box;
       Event    : Gtk_Event_Box;
       Sep      : Gtk_Separator;
@@ -545,18 +543,8 @@ package body Theme_Manager_Module is
       Gtk_New_Vbox (Box, Homogeneous => False);
       Add (Frame, Box);
 
-      Gtk_New (Event);
+      Create_Blue_Label (Pane.Current_Theme, Event);
       Pack_Start (Box, Event, Expand => False);
-      Color := Parse ("#0e79bd");
-      --  ??? Should be shared with the preferences dialog and wizard
-
-      Alloc (Get_Default_Colormap, Color);
-      Set_Style (Event, Copy (Get_Style (Event)));
-      Set_Background (Get_Style (Event), State_Normal, Color);
-
-      Gtk_New (Pane.Current_Theme, "Current theme");
-      Set_Alignment (Pane.Current_Theme, 0.1, 0.5);
-      Add (Event, Pane.Current_Theme);
 
       Gtk_New_Hseparator (Sep);
       Pack_Start (Box, Sep, Expand => False);
