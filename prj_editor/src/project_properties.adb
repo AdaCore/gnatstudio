@@ -36,13 +36,16 @@ with Gtk.Combo;                 use Gtk.Combo;
 with Gtk.Dialog;                use Gtk.Dialog;
 with Gtk.Button;                use Gtk.Button;
 with Gtk.Enums;                 use Gtk.Enums;
+with Gtk.Event_Box;             use Gtk.Event_Box;
+with Gtk.Frame;                 use Gtk.Frame;
 with Gtk.GEntry;                use Gtk.GEntry;
 with Gtk.Handlers;              use Gtk.Handlers;
 with Gtk.Label;                 use Gtk.Label;
 with Gtk.Notebook;              use Gtk.Notebook;
 with Gtk.Object;                use Gtk.Object;
+with Gtk.Size_Group;            use Gtk.Size_Group;
 with Gtk.Stock;                 use Gtk.Stock;
-with Gtk.Table;                 use Gtk.Table;
+with Gtk.Tooltips;              use Gtk.Tooltips;
 with Gtk.Widget;                use Gtk.Widget;
 with Prj;                       use Prj;
 with Prj.Tree;                  use Prj.Tree;
@@ -74,6 +77,9 @@ package body Project_Properties is
       Compilers          : Widget_Array_Access;
       Languages          : Widget_Array_Access;
       Use_Relative_Paths : Gtk.Check_Button.Gtk_Check_Button;
+      Tools_Host         : Gtk.GEntry.Gtk_Entry;
+      Program_Host       : Gtk.GEntry.Gtk_Entry;
+      Protocol           : Gtk.GEntry.Gtk_Entry;
 
       Pages              : Widget_Array_Access;
       --  The pages that have been registered.
@@ -172,7 +178,6 @@ package body Project_Properties is
       Button2      : Gtk_Button;
       Label        : Gtk_Label;
       Check        : Gtk_Check_Button;
-      Table, Lang  : Gtk_Table;
       Languages : Argument_List := Known_Languages
         (Get_Language_Handler (Kernel));
       Project_Languages : Argument_List :=  Get_Languages (Project_View);
@@ -181,121 +186,148 @@ package body Project_Properties is
         (Project_View);
       Combo        : Gtk_Combo;
       Items        : Gtk.Enums.String_List.Glist;
+      Frame        : Gtk_Frame;
+      Group        : Gtk_Size_Group;
+      Vbox, Box, Hbox : Gtk_Box;
+      Ada_Check    : Gtk_Check_Button;
+      Event        : Gtk_Event_Box;
 
       use Gtk.Enums.String_List;
 
    begin
-      Gtk_New (Table, Rows => 6, Columns => 3, Homogeneous => False);
+      Gtk_New_Vbox (Vbox, Homogeneous => False);
 
+      Gtk_New (Group, Both);
+
+      --  Name and location frame
+
+      Gtk_New (Frame, -"Name & Location");
+      Set_Border_Width (Frame, 5);
+      Pack_Start (Vbox, Frame, Expand => False);
+
+      Gtk_New_Vbox (Box, Homogeneous => True);
+      Add (Frame, Box);
+
+      Gtk_New_Hbox (Hbox, Homogeneous => False);
+      Pack_Start (Box, Hbox);
+
+      --  Name
+
+      Gtk_New (Event);
+      Pack_Start (Hbox, Event, Expand => False);
       Gtk_New (Label, -"Name:");
-      Set_Alignment (Label, 0.0, 0.0);
-      Attach (Table, Label, 0, 1, 0, 1, Xoptions => Fill, Yoptions => 0);
+      Set_Alignment (Label, 0.0, 0.5);
+      Add (Event, Label);
+      Add_Widget (Group, Label);
+      Set_Tip (Get_Tooltips (Kernel), Event,
+               -("Name of the project, and name of the file. This field is"
+                 & " case insensitive. This field only applies to the project"
+                 & " you selected initially"));
+
       Gtk_New (Editor.Name);
-      Attach (Table, Editor.Name, 1, 3, 0, 1, Yoptions => 0);
-
       Set_Text (Editor.Name, Project_Name (Project_View));
+      Pack_Start (Hbox, Editor.Name, Expand => True);
 
+      Gtk_New_Hbox (Hbox, Homogeneous => False);
+      Pack_Start (Box, Hbox);
+
+      --  Path
+
+      Gtk_New (Event);
+      Pack_Start (Hbox, Event, Expand => False);
       Gtk_New (Label, -"Path:");
-      Set_Alignment (Label, 0.0, 0.0);
-      Attach (Table, Label, 0, 1, 1, 2, Xoptions => Fill, Yoptions => 0);
+      Set_Alignment (Label, 0.0, 0.5);
+      Add (Event, Label);
+      Add_Widget (Group, Label);
+      Set_Tip (Get_Tooltips (Kernel), Event,
+               -("Directory containing the project file. Changing this field"
+                 & " will move the project file. This field only applies to"
+                 & " the project you selected initially"));
+
       Gtk_New (Editor.Path);
-      Attach (Table, Editor.Path, 1, 2, 1, 2, Yoptions => 0);
-      Set_Width_Chars (Editor.Path, 20);
-      Gtk_New (Button2, -"Browse");
-      Attach (Table, Button2, 2, 3, 1, 2, Xoptions => 0, Yoptions => 0);
-
       Set_Text (Editor.Path, Dir_Name (Project_Path (Project_View)));
+      Pack_Start (Hbox, Editor.Path, Expand => True);
 
+      Gtk_New (Button2, -"Browse");
+      Pack_Start (Hbox, Button2, Expand => False);
       Widget_Callback.Object_Connect
         (Button2, "clicked",
          Widget_Callback.To_Marshaller (Browse_Location'Access),
          Slot_Object => Editor);
 
-      --  ??? Should be a toggle button, with "relative" or "absolute"
       Gtk_New (Editor.Use_Relative_Paths, -"Paths should be relative paths");
       Set_Active
         (Editor.Use_Relative_Paths,
          Project_Uses_Relative_Paths (Kernel, Project));
-      Attach (Table, Editor.Use_Relative_Paths, 1, 2, 2, 3, Yoptions => 0);
+      Pack_Start (Box, Editor.Use_Relative_Paths);
+      Set_Tip (Get_Tooltips (Kernel), Editor.Use_Relative_Paths,
+               -("If this field is activated, then all the path information in"
+                 & " the project (source and build directories, dependencies"
+                 & " between projects,...) will be stored as paths relative"
+                 & " to the location of the project file. It will thus be"
+                 & " easier to move the project file to another directory"));
 
-      Gtk_New (Label, -"Gnatls:");
-      Set_Alignment (Label, 0.0, 0.0);
-      Attach (Table, Label, 0, 1, 3, 4, Xoptions => Fill, Yoptions => 0);
+      --  Languages frame
 
-      Gtk_New (Combo);
+      Gtk_New (Frame, -"Languages");
+      Set_Border_Width (Frame, 5);
+      Pack_Start (Vbox, Frame, Expand => False);
 
-      --  ??? Would be nice to specify the list of available cross compilers
-      --  using a configuration file
+      Gtk_New_Vbox (Box, Homogeneous => True);
+      Add (Frame, Box);
 
-      Append (Items, "gnatls");
-      Append (Items, "powerpc-wrs-vxworks-gnatls");
-      Append (Items, "powerpc-wrs-vxworksae-gnatls");
-      Append (Items, "i386-wrs-vxworks-gnatls");
-      Append (Items, "m68k-wrs-vxworks-gnatls");
-      Append (Items, "mips-wrs-vxworks-gnatls");
-      Append (Items, "sparc-wrs-vxworks-gnatls");
-      Append (Items, "sparc64-wrs-vxworks-gnatls");
-      Append (Items, "strongarm-wrs-vxworks-gnatls");
-      Append (Items, "alpha-dec-vxworks-gnatls");
-      Append (Items, "powerpc-xcoff-lynxos-gnatls");
-      Append (Items, "gnaampls");
-      Append (Items, "jgnatls");
-      Set_Popdown_Strings (Combo, Items);
-      Free_String_List (Items);
-      Attach (Table, Combo, 1, 3, 3, 4, Yoptions => 0);
-      Editor.Gnatls := Get_Entry (Combo);
-      Set_Text
-        (Editor.Gnatls,
-         Get_Attribute_Value
-         (Project_View, Gnatlist_Attribute,
-          Ide_Package, Default => "gnatls"));
-
-      Gtk_New (Label, -"Debugger:");
-      Set_Alignment (Label, 0.0, 0.0);
-      Attach (Table, Label, 0, 1, 4, 5, Xoptions => Fill, Yoptions => 0);
-
-      Gtk_New (Combo);
-      Append (Items, "gdb");
-      Append (Items, "powerpc-wrs-vxworks-gdb");
-      Append (Items, "powerpc-wrs-vxworksae-gdb");
-      Append (Items, "i386-wrs-vxworks-gdb");
-      Append (Items, "m68k-wrs-vxworks-gdb");
-      Append (Items, "mips-wrs-vxworks-gdb");
-      Append (Items, "sparc-wrs-vxworks-gdb");
-      Append (Items, "sparc64-wrs-vxworks-gdb");
-      Append (Items, "strongarm-wrs-vxworks-gdb");
-      Append (Items, "alpha-dec-vxworks-gdb");
-      Append (Items, "powerpc-xcoff-lynxos-gdb");
-      Set_Popdown_Strings (Combo, Items);
-      Free_String_List (Items);
-      Attach (Table, Combo, 1, 3, 4, 5, Yoptions => 0);
-      Editor.Debugger := Get_Entry (Combo);
-      Set_Text
-        (Editor.Debugger,
-         Get_Attribute_Value
-         (Project_View, Debugger_Command_Attribute,
-          Ide_Package, Default => "gdb"));
-
-      Gtk_New (Label, (-"Languages") & " & " & ASCII.LF & (-"Compilers:"));
-      Set_Alignment (Label, 0.0, 0.0);
-      Attach (Table, Label, 0, 1, 5, 6, Xoptions => Fill, Yoptions => 0);
-      Gtk_New (Lang, Rows => Languages'Length, Columns => 2,
-               Homogeneous => False);
-      Attach (Table, Lang, 1, 3, 5, 6, Yoptions => 0);
-
-      Editor.Compilers := new Widget_Array (Languages'Range);
       Editor.Languages := new Widget_Array (Languages'Range);
 
       for L in Languages'Range loop
-         Gtk_New (Check, Languages (L).all);
-         Attach
-           (Lang, Check, 0, 1,
-            Guint (L - Languages'First),
-            Guint (L - Languages'First + 1),
-            Xoptions => Fill);
+         declare
+            S : String := Languages (L).all;
+         begin
+            Mixed_Case (S);
+            Gtk_New (Check, S);
+         end;
+         Pack_Start (Box, Check);
+
+         Editor.Languages (L) := Gtk_Widget (Check);
+         Set_Active
+           (Check, Contains
+            (Project_Languages, Languages (L).all, Case_Sensitive => False));
+      end loop;
+
+      --  Tools frame
+
+      Gtk_New (Frame, -"Tools");
+      Set_Border_Width (Frame, 5);
+      Pack_Start (Vbox, Frame, Expand => False);
+
+      Gtk_New_Vbox (Box, Homogeneous => True);
+      Add (Frame, Box);
+
+      Editor.Compilers := new Widget_Array (Languages'Range);
+
+      for L in Languages'Range loop
+         Gtk_New_Hbox (Hbox, Homogeneous => False);
+         Pack_Start (Box, Hbox);
+
+         declare
+            S : String := Languages (L).all;
+         begin
+            Mixed_Case (S);
+            Gtk_New (Event);
+            Pack_Start (Hbox, Event, Expand => False);
+
+            Gtk_New (Label, S & ' ' & (-"compiler:"));
+            Set_Alignment (Label, 0.0, 0.5);
+            Add (Event, Label);
+            Add_Widget (Group, Label);
+            Set_Tip (Get_Tooltips (Kernel), Event,
+                     -"Name of the compiler to use for the language " & S);
+         end;
 
          if To_Lower (Languages (L).all) = "ada" then
+            Ada_Check := Gtk_Check_Button (Editor.Languages (L));
+
             Gtk_New (Combo);
+            Pack_Start (Hbox, Combo);
             Append (Items, "gnatmake");
             Append (Items, "powerpc-wrs-vxworks-gnatmake");
             Append (Items, "powerpc-wrs-vxworksae-gnatmake");
@@ -311,9 +343,7 @@ package body Project_Properties is
             Append (Items, "jgnatmake");
             Set_Popdown_Strings (Combo, Items);
             Free_String_List (Items);
-            Attach (Lang, Combo, 1, 2,
-                    Guint (L - Languages'First),
-                    Guint (L - Languages'First + 1));
+
             Ent := Get_Entry (Combo);
             Set_Text
               (Ent,
@@ -324,10 +354,7 @@ package body Project_Properties is
 
          else
             Gtk_New (Ent);
-            Set_Sensitive (Ent, False);
-            Attach (Lang, Ent, 1, 2,
-                    Guint (L - Languages'First),
-                    Guint (L - Languages'First + 1));
+            Pack_Start (Hbox, Ent);
             Set_Text
               (Ent,
                Get_Attribute_Value
@@ -336,27 +363,199 @@ package body Project_Properties is
                   Index => Languages (L).all));
          end if;
 
-         Editor.Languages (L) := Gtk_Widget (Check);
          Editor.Compilers (L) := Gtk_Widget (Ent);
 
+         Set_Sensitive
+           (Ent, Get_Active (Gtk_Check_Button (Editor.Languages (L))));
+
          Object_User_Callback.Connect
-           (Check, "toggled",
+           (Editor.Languages (L), "toggled",
             Object_User_Callback.To_Marshaller (Command_Set_Sensitive'Access),
             User_Data => GObject (Ent));
-
-         Set_Active (Check, False);
-
-         for PL in Project_Languages'Range loop
-            if Project_Languages (PL).all = To_Lower (Languages (L).all) then
-               Set_Active (Check, True);
-            end if;
-         end loop;
       end loop;
+
+      --  gnatls
+
+      --  ??? Would be nice to specify the list of available cross compilers
+      --  using a configuration file
+
+      if Ada_Check /= null then
+         Gtk_New_Hbox (Hbox, Homogeneous => False);
+         Pack_Start (Box, Hbox);
+
+         Gtk_New (Event);
+         Pack_Start (Hbox, Event, Expand => False);
+         Gtk_New (Label, -"Gnatls:");
+         Add_Widget (Group, Label);
+         Set_Alignment (Label, 0.0, 0.5);
+         Add (Event, Label);
+         Set_Tip (Get_Tooltips (Kernel), Event,
+                  -("Name of the external tool to use to find the location of"
+                    & " the standard Ada library"));
+
+         Gtk_New (Combo);
+         Pack_Start (Hbox, Combo, Expand => True);
+
+         Append (Items, "gnatls");
+         Append (Items, "powerpc-wrs-vxworks-gnatls");
+         Append (Items, "powerpc-wrs-vxworksae-gnatls");
+         Append (Items, "i386-wrs-vxworks-gnatls");
+         Append (Items, "m68k-wrs-vxworks-gnatls");
+         Append (Items, "mips-wrs-vxworks-gnatls");
+         Append (Items, "sparc-wrs-vxworks-gnatls");
+         Append (Items, "sparc64-wrs-vxworks-gnatls");
+         Append (Items, "strongarm-wrs-vxworks-gnatls");
+         Append (Items, "alpha-dec-vxworks-gnatls");
+         Append (Items, "powerpc-xcoff-lynxos-gnatls");
+         Append (Items, "gnaampls");
+         Append (Items, "jgnatls");
+         Set_Popdown_Strings (Combo, Items);
+         Free_String_List (Items);
+         Editor.Gnatls := Get_Entry (Combo);
+         Set_Text
+           (Editor.Gnatls,
+            Get_Attribute_Value
+            (Project_View, Gnatlist_Attribute,
+             Ide_Package, Default => "gnatls"));
+
+         Set_Sensitive (Editor.Gnatls, Get_Active (Ada_Check));
+         Object_User_Callback.Connect
+           (Ada_Check, "toggled",
+            Object_User_Callback.To_Marshaller (Command_Set_Sensitive'Access),
+            User_Data => GObject (Editor.Gnatls));
+      end if;
+
+      --  Debugger
+
+      Gtk_New_Hbox (Hbox, Homogeneous => False);
+      Pack_Start (Box, Hbox);
+
+      Gtk_New (Event);
+      Pack_Start (Hbox, Event, Expand => False);
+      Gtk_New (Label, -"Debugger:");
+      Add_Widget (Group, Label);
+      Set_Alignment (Label, 0.0, 0.5);
+      Add (Event, Label);
+      Set_Tip (Get_Tooltips (Kernel), Event,
+               -"Name and location of the debugger to use");
+
+      Gtk_New (Combo);
+      Pack_Start (Hbox, Combo, Expand => True);
+
+      Append (Items, "gdb");
+      Append (Items, "powerpc-wrs-vxworks-gdb");
+      Append (Items, "powerpc-wrs-vxworksae-gdb");
+      Append (Items, "i386-wrs-vxworks-gdb");
+      Append (Items, "m68k-wrs-vxworks-gdb");
+      Append (Items, "mips-wrs-vxworks-gdb");
+      Append (Items, "sparc-wrs-vxworks-gdb");
+      Append (Items, "sparc64-wrs-vxworks-gdb");
+      Append (Items, "strongarm-wrs-vxworks-gdb");
+      Append (Items, "alpha-dec-vxworks-gdb");
+      Append (Items, "powerpc-xcoff-lynxos-gdb");
+      Set_Popdown_Strings (Combo, Items);
+      Free_String_List (Items);
+      Editor.Debugger := Get_Entry (Combo);
+      Set_Text
+        (Editor.Debugger,
+         Get_Attribute_Value
+         (Project_View, Debugger_Command_Attribute,
+          Ide_Package, Default => "gdb"));
+
+      --  Cross environment frame
+
+      Gtk_New (Frame, -"Cross environment");
+      Set_Border_Width (Frame, 5);
+      Pack_Start (Vbox, Frame, Expand => False);
+
+      Gtk_New_Vbox (Box, Homogeneous => True);
+      Add (Frame, Box);
+
+      --  Tools host
+
+      Gtk_New_Hbox (Hbox, Homogeneous => False);
+      Pack_Start (Box, Hbox);
+
+      Gtk_New (Event);
+      Pack_Start (Hbox, Event, Expand => False);
+      Gtk_New (Label, -"Tools host:");
+      Add_Widget (Group, Label);
+      Set_Alignment (Label, 0.0, 0.5);
+      Add (Event, Label);
+      Set_Tip (Get_Tooltips (Kernel), Event,
+               -("Name or IP address of the machine on which the application"
+                 & " should be compiled, debugged and run. It is recommended"
+                 & " that you always start GPS locally, and work remotely"
+                 & " on your application. Leave this field blank when working"
+                 & " locally"));
+
+
+      Gtk_New (Editor.Tools_Host);
+      Pack_Start (Hbox, Editor.Tools_Host, Expand => True);
+      Set_Text
+        (Editor.Tools_Host,
+         Get_Attribute_Value
+         (Project_View, Remote_Host_Attribute,
+          Ide_Package, Default => ""));
+
+      --  Program host
+
+      Gtk_New_Hbox (Hbox, Homogeneous => False);
+      Pack_Start (Box, Hbox);
+
+      Gtk_New (Event);
+      Pack_Start (Hbox, Event, Expand => False);
+      Gtk_New (Label, -"Program host:");
+      Add_Widget (Group, Label);
+      Add (Event, Label);
+      Set_Alignment (Label, 0.0, 0.5);
+      Set_Tip (Get_Tooltips (Kernel), Event,
+               -("Name or IP address of the embedded target. This field"
+                 & " should be left blank if you are not working on an"
+                 & " embedded application"));
+
+      Gtk_New (Editor.Program_Host);
+      Pack_Start (Hbox, Editor.Program_Host, Expand => True);
+      Set_Text
+        (Editor.Program_Host,
+         Get_Attribute_Value
+         (Project_View, Program_Host_Attribute,
+          Ide_Package, Default => ""));
+
+      --  Protocol
+
+      Gtk_New_Hbox (Hbox, Homogeneous => False);
+      Pack_Start (Box, Hbox);
+
+      Gtk_New (Event);
+      Pack_Start (Hbox, Event, Expand => False);
+      Gtk_New (Label, -"Protocol:");
+      Add_Widget (Group, Label);
+      Add (Event, Label);
+      Set_Alignment (Label, 0.0, 0.5);
+      Set_Tip (Get_Tooltips (Kernel), Event,
+               -("Protocol used to connect to the embedded target. This"
+                 & " field should be left blank if you are not working"
+                 & " on an embedded application"));
+
+      Gtk_New (Combo);
+      Pack_Start (Hbox, Combo, Expand => True);
+      Append (Items, "wtx");
+      Append (Items, "vxworks");
+      Append (Items, "remote");
+      Set_Popdown_Strings (Combo, Items);
+      Free_String_List (Items);
+      Editor.Protocol := Get_Entry (Combo);
+      Set_Text
+        (Editor.Protocol,
+         Get_Attribute_Value
+         (Project_View, Protocol_Attribute,
+          Ide_Package, Default => ""));
 
       Free (Languages);
       Free (Project_Languages);
 
-      return Gtk_Widget (Table);
+      return Gtk_Widget (Vbox);
    end Create_General_Page;
 
    ----------------
@@ -389,7 +588,6 @@ package body Project_Properties is
          Allow_Shrink => False,
          Allow_Grow   => True,
          Auto_Shrink  => True);
-      Set_Default_Size (Editor, -1, 470);
       Realize (Editor);
 
       Widget_Callback.Connect
@@ -469,7 +667,6 @@ package body Project_Properties is
                Ed.Project_View, Ed.Kernel);
             Pack_Start
               (Gtk_Box (Get_Nth_Page (Note, Gint (Page))), Ed.Pages (Page));
-            Show_All (Ed.Pages (Page));
 
          else
             declare
@@ -690,6 +887,45 @@ package body Project_Properties is
                      Values             => New_Languages);
                end if;
             end;
+
+            if Get_Text (Editor.Tools_Host) /= Get_Attribute_Value
+              (Project_View, Remote_Host_Attribute,
+               Ide_Package, Default => "")
+            then
+               Changed := True;
+               Update_Attribute_Value_In_Scenario
+                 (Project            => Project,
+                  Pkg_Name           => Ide_Package,
+                  Scenario_Variables => Scenario_Variables (Kernel),
+                  Attribute_Name     => Remote_Host_Attribute,
+                  Value              => Get_Text (Editor.Tools_Host));
+            end if;
+
+            if Get_Text (Editor.Program_Host) /= Get_Attribute_Value
+              (Project_View, Program_Host_Attribute,
+               Ide_Package, Default => "")
+            then
+               Changed := True;
+               Update_Attribute_Value_In_Scenario
+                 (Project            => Project,
+                  Pkg_Name           => Ide_Package,
+                  Scenario_Variables => Scenario_Variables (Kernel),
+                  Attribute_Name     => Program_Host_Attribute,
+                  Value              => Get_Text (Editor.Program_Host));
+            end if;
+
+            if Get_Text (Editor.Protocol) /= Get_Attribute_Value
+              (Project_View, Protocol_Attribute,
+               Ide_Package, Default => "")
+            then
+               Changed := True;
+               Update_Attribute_Value_In_Scenario
+                 (Project            => Project,
+                  Pkg_Name           => Ide_Package,
+                  Scenario_Variables => Scenario_Variables (Kernel),
+                  Attribute_Name     => Protocol_Attribute,
+                  Value              => Get_Text (Editor.Protocol));
+            end if;
          end;
 
          for P in Editor.Pages'Range loop
