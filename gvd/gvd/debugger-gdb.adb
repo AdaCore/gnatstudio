@@ -973,12 +973,21 @@ package body Debugger.Gdb is
       --  because gdb does not seem to take into account this variable at all.
       Cmd                 : Basic_Types.String_Access;
       Process             : Visual_Debugger;
+      Exec_Has_Spaces     : constant Boolean := Index (Exec, " ") /= 0;
 
    begin
       if Debugger.Remote_Target = null then
-         Cmd := new String'("file """ & Exec & '"');
+         if Exec_Has_Spaces then
+            Cmd := new String'("file """ & Exec & '"');
+         else
+            Cmd := new String'("file " & Exec);
+         end if;
       else
-         Cmd := new String'("load """ & Exec & '"');
+         if Exec_Has_Spaces then
+            Cmd := new String'("load """ & Exec & '"');
+         else
+            Cmd := new String'("load " & Exec);
+         end if;
       end if;
 
       if Debugger.Window /= null then
