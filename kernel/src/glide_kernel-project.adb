@@ -45,6 +45,7 @@ with Gtkada.MDI;        use Gtkada.MDI;
 with Glide_Page;        use Glide_Page;
 with GVD.Process;       use GVD.Process;
 with Prj_API;           use Prj_API;
+with Src_Info.Queries;  use Src_Info.Queries;
 
 package body Glide_Kernel.Project is
 
@@ -81,7 +82,7 @@ package body Glide_Kernel.Project is
       end if;
 
       --  Fallback, try on the Source_Path (only if Use_Source_Path is set)
-      if Use_Source_Path then
+      if Use_Source_Path and then Kernel.Source_Path /= null then
          Path := Locate_Regular_File (Short_File_Name, Kernel.Source_Path.all);
          if Path /= null then
             declare
@@ -105,39 +106,14 @@ package body Glide_Kernel.Project is
      (Kernel          : access Kernel_Handle_Record'Class;
       Short_File_Name : String;
       Use_Object_Path : Boolean := False)
-      return String
-   is
-      Path : String_Access;
+      return String is
    begin
-      --  First, try on the project object path
-      Path := Locate_Regular_File
-        (Short_File_Name,
-         Ada_Objects_Path (Kernel.Project_View).all);
-
-      if Path /= null then
-         declare
-            Full_Path : constant String := Path.all;
-         begin
-            Free (Path);
-            return Full_Path;
-         end;
+      if Use_Object_Path and then Kernel.Object_Path /= null then
+         return Find_Object_File
+           (Kernel.Project_View, Short_File_Name, Kernel.Object_Path.all);
+      else
+         return Find_Object_File (Kernel.Project_View, Short_File_Name, "");
       end if;
-
-      --  Fallback, try on the Object_Path (only if Use_Object_Path is set)
-      if Use_Object_Path then
-         Path := Locate_Regular_File (Short_File_Name, Kernel.Object_Path.all);
-         if Path /= null then
-            declare
-               Full_Path : constant String := Path.all;
-            begin
-               Free (Path);
-               return Full_Path;
-            end;
-         end if;
-      end if;
-
-      --  Object file not found anywhere, return the empty string
-      return "";
    end Find_Object_File;
 
    ---------------------------
