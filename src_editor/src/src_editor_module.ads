@@ -33,13 +33,15 @@ with Gtkada.MDI;                use Gtkada.MDI;
 
 with Src_Editor_Box;
 
-with Glide_Kernel;      use Glide_Kernel;
+with Glide_Kernel;       use Glide_Kernel;
 with Glide_Kernel.Hooks; use Glide_Kernel.Hooks;
-with String_List_Utils; use String_List_Utils;
-with VFS;
+with String_List_Utils;  use String_List_Utils;
+with VFS;                use VFS;
 
 with Ada.Unchecked_Deallocation;
 with Generic_List;
+
+with HTables;
 
 package Src_Editor_Module is
 
@@ -115,6 +117,29 @@ private
    end record;
    type Source_Box is access all Source_Box_Record'Class;
 
+   ------------------------
+   -- Editors Hash-table --
+   ------------------------
+
+   --  This implements a quick way to retrieve an editor which corresponds to
+   --  a given file.
+
+   type Header_Num is range 1 .. 1_000;
+
+   type Element is record
+      Child : Gtkada.MDI.MDI_Child;
+   end record;
+
+   procedure Free (X : in out Element);
+
+   No_Element : constant Element := (Child => null);
+
+   function Hash (F : Virtual_File) return Header_Num;
+   function Equal (F1, F2 : Virtual_File) return Boolean;
+
+   package Editors_Hash is new HTables.Simple_HTable
+     (Header_Num, Element, Free, No_Element, Virtual_File, Hash, Equal);
+
    -----------
    -- Marks --
    -----------
@@ -189,6 +214,8 @@ private
 
       Blank_Lines_GC           : Gdk.GC.Gdk_GC := null;
       Post_It_Note_GC          : Gdk.GC.Gdk_GC := null;
+
+      Editors                  : Editors_Hash.HTable;
    end record;
    type Source_Editor_Module is access all Source_Editor_Module_Record'Class;
 
