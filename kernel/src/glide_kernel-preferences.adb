@@ -396,20 +396,8 @@ package body Glide_Kernel.Preferences is
         (Kernel.Preferences, Param_Spec (Default_HL_Region_Color),
          -"Editor:Fonts & Colors");
 
-      -- Editor:Languages --
-
-      Auto_Casing := Param_Spec_Boolean
-        (Gnew_Boolean
-          (Name    => "Auto-Casing",
-           Default => True,
-           Blurb   =>
-             -("Whether the editor should do auto casing of words for case"
-               & " insensitive languages"),
-           Nick    => -"Auto Casing"));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (Auto_Casing), -"Editor");
-
       -- Editor:Keys --
+
       Indentation_Key := Gnew_Key
         (Name  => "Src-Editor-Auto-Indent-Key",
          Nick  => -"Auto-indentation",
