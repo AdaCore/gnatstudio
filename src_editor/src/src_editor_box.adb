@@ -242,11 +242,6 @@ package body Src_Editor_Box is
      (Editor : access GObject_Record'Class) return Boolean;
    --  Callback when clicking on the line number in the status bar
 
-   procedure On_Goto_Declaration
-     (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access);
-   --  Callback for the "Goto Declaration" contextual menu
-
    procedure On_Goto_Next_Body
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access);
@@ -1559,14 +1554,6 @@ package body Src_Editor_Box is
 
                begin
                   if Entity /= null then
-                     Gtk_New (Item, -"Goto declaration of " & Name);
-                     Add (Menu, Item);
-                     Context_Callback.Object_Connect
-                       (Item, "activate", On_Goto_Declaration'Access,
-                        User_Data   => Selection_Context_Access (Context),
-                        Slot_Object => Editor,
-                        After       => True);
-
                      Current_Location :=
                        (File   => Get_Or_Create
                           (Db   => Get_Database (Get_Kernel (Context)),
@@ -1706,29 +1693,28 @@ package body Src_Editor_Box is
       return True;
    end On_Goto_Line_Func;
 
-   -------------------------
-   -- On_Goto_Declaration --
-   -------------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure On_Goto_Declaration
-     (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access)
+   function Execute
+     (Command : access Goto_Declaration_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
    is
+      pragma Unreferenced (Command);
       C      : constant Entity_Selection_Context_Access :=
-        Entity_Selection_Context_Access (Context);
-      Kernel : constant Kernel_Handle := Get_Kernel (Context);
+        Entity_Selection_Context_Access (Context.Context);
+      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
+      Box    : constant Source_Editor_Box :=
+        Get_Source_Box_From_MDI (Find_Current_Editor (Kernel));
    begin
       Goto_Declaration_Or_Body
         (Kernel,
          To_Body => False,
-         Editor  => Source_Editor_Box (Widget),
+         Editor  => Box,
          Context => C);
-
-   exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
-   end On_Goto_Declaration;
+      return Commands.Success;
+   end Execute;
 
    -----------------------
    -- On_Goto_Next_Body --

@@ -324,6 +324,11 @@ package Src_Editor_Box is
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Go to the file spec/body, depending on what is currently open
 
+   type Goto_Declaration_Command is new Interactive_Command with null record;
+   function Execute
+     (Command : access Goto_Declaration_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+   --  Go to the declaration of the entity in the context
 
    function Get_Contextual_Menu
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
