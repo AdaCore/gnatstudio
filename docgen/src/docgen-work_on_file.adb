@@ -32,6 +32,7 @@ with Language_Handlers.Glide;   use Language_Handlers.Glide;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with Glide_Intl;                use Glide_Intl;
 with Docgen.ALI_Utils;          use Docgen.ALI_Utils;
+with String_Utils;              use String_Utils;
 
 package body Docgen.Work_On_File is
 
@@ -440,36 +441,37 @@ package body Docgen.Work_On_File is
            (Node        : Scope_Tree_Node;
             Is_Renaming : Boolean)
          is
+            pragma Unreferenced (Is_Renaming);
+
             Local_Tree_Node : Scope_Tree_Node;
             Reference_Node  : Reference_List_Information;
          begin
-            if Is_Renaming then
-               Put_Line (-"Is_Renaming: ");    --  just for testing ???
-            end if;
-
-            --  get the name of the subprogram which calls the entity
+            --  Get the name of the subprogram which calls the entity
 
             Local_Tree_Node := Get_Parent (Node);
 
-            if Local_Tree_Node /= Null_Scope_Tree_Node then
-               while not Is_Subprogram (Local_Tree_Node) loop
-                  Local_Tree_Node := Get_Parent (Local_Tree_Node);
-               end loop;
+            --  ??? A function is not necessarily called from a subprogram
 
-               Reference_Node.File_Name  :=
-                 new String'(Get_File
-                               (Get_Location (Get_Reference (Node))));
-               Reference_Node.Line       :=
+            while Local_Tree_Node /= Null_Scope_Tree_Node
+              and then not Is_Subprogram (Local_Tree_Node)
+            loop
+               Local_Tree_Node := Get_Parent (Local_Tree_Node);
+            end loop;
+
+            if Local_Tree_Node /= Null_Scope_Tree_Node then
+               Reference_Node.File_Name :=
+                 new String'(Get_File (Get_Location (Get_Reference (Node))));
+               Reference_Node.Line :=
                  Get_Line   (Get_Location (Get_Reference (Node)));
-               Reference_Node.Column     :=
+               Reference_Node.Column :=
                  Get_Column (Get_Location (Get_Reference (Node)));
                Reference_Node.Set_Link := Decl_Found;
                Reference_Node.Subprogram_Name :=
                  new String'(Get_Name (Get_Entity (Local_Tree_Node)));
 
-               --  add reference to the local list
-               Type_Reference_List.Append (Local_Ref_List,
-                                           Reference_Node);
+               --  Add reference to the local list
+
+               Type_Reference_List.Append (Local_Ref_List, Reference_Node);
             end if;
          end Tree_Called_Callback;
 
@@ -691,22 +693,18 @@ package body Docgen.Work_On_File is
             then
                --  Info_Output is set, if further information are wished
                if Options.Info_Output then
-                  Put_Line (-"-----");
-                  Put_Line (-("Entity found: "
-                              & Get_Full_Name (Info, LI_Unit, ".") &
-                              "  in File:  " & Source_Filename &
-                              "  defined in  file: " &
-                              Get_Full_Entity_Filename
-                                (Get_Declaration_File_Of (Info)) &
-                              ", in line: " &
-                            Integer'Image
-                              (Get_Declaration_Line_Of (Info)) &
-                              ", in column: " &
-                            Integer'Image
-                              (Get_Declaration_Column_Of (Info))));
+                  Put_Line ("-----");
+                  Put_Line ("Entity found: "
+                            & Get_Full_Name (Info, LI_Unit, ".") &
+                            " in " & Source_Filename &
+                            " defined at " &
+                            Get_Full_Entity_Filename
+                              (Get_Declaration_File_Of (Info)) &
+                            ":" & Image (Get_Declaration_Line_Of (Info)) &
+                            ":" & Image (Get_Declaration_Column_Of (Info)));
                end if;
 
-               --  get the parameters needed be all entities
+               --  get the parameters needed by all entities
                Entity_Node.Name            :=
                  new String'(Get_Full_Name (Info, LI_Unit, "."));
                Entity_Node.Short_Name      :=
