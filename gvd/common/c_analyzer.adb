@@ -742,7 +742,7 @@ package body C_Analyzer is
                      or else Buffer (Index - 1) = '\')
            and then Buffer (Index) /= ASCII.LF
          loop
-            Index := UTF8_Find_Next_Char (Buffer, Index);
+            Index := UTF8_Next_Char (Buffer, Index);
             Char_In_Line := Char_In_Line + 1;
          end loop;
 
@@ -771,7 +771,7 @@ package body C_Analyzer is
                      or else Buffer (Index - 1) = '\')
            and then Buffer (Index) /= ASCII.LF
          loop
-            Index := UTF8_Find_Next_Char (Buffer, Index);
+            Index := UTF8_Next_Char (Buffer, Index);
             Char_In_Line := Char_In_Line + 1;
          end loop;
 
@@ -803,7 +803,7 @@ package body C_Analyzer is
             while Index <= Buffer'Last
               and then Buffer (Index + 1) /= ASCII.LF
             loop
-               Index := UTF8_Find_Next_Char (Buffer, Index);
+               Index := UTF8_Next_Char (Buffer, Index);
                Char_In_Line := Char_In_Line + 1;
             end loop;
 
@@ -843,7 +843,7 @@ package body C_Analyzer is
                   New_Line;
                end if;
 
-               Index := UTF8_Find_Next_Char (Buffer, Index);
+               Index := UTF8_Next_Char (Buffer, Index);
                Char_In_Line := Char_In_Line + 1;
             end loop;
 
@@ -919,7 +919,7 @@ package body C_Analyzer is
                   end if;
                end if;
 
-               Index := UTF8_Find_Next_Char (Buffer, Index);
+               Index := UTF8_Next_Char (Buffer, Index);
                Char_In_Line := Char_In_Line + 1;
             end loop;
 
@@ -949,7 +949,7 @@ package body C_Analyzer is
                  and then Buffer (Index) /= '<'
                  and then Buffer (Index) /= ASCII.LF
                loop
-                  Index := UTF8_Find_Next_Char (Buffer, Index);
+                  Index := UTF8_Next_Char (Buffer, Index);
                   Char_In_Line := Char_In_Line + 1;
                end loop;
 
@@ -968,7 +968,7 @@ package body C_Analyzer is
                   while Index < Buffer'Last
                     and then Buffer (Index) /= Char
                   loop
-                     Index := UTF8_Find_Next_Char (Buffer, Index);
+                     Index := UTF8_Next_Char (Buffer, Index);
                      Char_In_Line := Char_In_Line + 1;
                   end loop;
 
@@ -1026,7 +1026,7 @@ package body C_Analyzer is
              (UTF8_Get_Char (Buffer (Index .. Buffer'Last)))
          loop
             Prev  := Index;
-            Index := UTF8_Find_Next_Char (Buffer, Index);
+            Index := UTF8_Next_Char (Buffer, Index);
             Char_In_Line := Char_In_Line + 1;
          end loop;
 
