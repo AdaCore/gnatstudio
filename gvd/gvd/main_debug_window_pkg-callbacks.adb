@@ -1131,10 +1131,9 @@ package body Main_Debug_Window_Pkg.Callbacks is
    procedure On_Manual_Activate
      (Object : access Gtk_Widget_Record'Class)
    is
-      Tab    : constant Debugger_Process_Tab := Get_Current_Process (Object);
       Browse : constant String :=
         Get_Pref (HTML_Browser) & " " &
-          Main_Debug_Window_Access (Tab.Window).Prefix_Directory.all &
+          Main_Debug_Window_Access (Object).Prefix_Directory.all &
           Directory_Separator & "doc" & Directory_Separator & "gvd" &
           Directory_Separator & "gvd.html";
       Args   : Argument_List_Access;
@@ -1143,7 +1142,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
 
    begin
       Print_Message
-        (Main_Debug_Window_Access (Tab.Window).Statusbar1, Help, Browse);
+        (Main_Debug_Window_Access (Object).Statusbar1, Help, Browse);
 
       Args := Argument_String_To_List (Browse);
       Prog := Locate_Exec_On_Path (Args (Args'First).all);
