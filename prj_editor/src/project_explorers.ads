@@ -105,7 +105,6 @@ private
       --  refresh. It needs to be stored in this record, so that if this node
       --  is removed then we simply do not try to restore the selection
 
-
       --  The following fields are for the File view.
       File_Tree     : Gtk.Tree_View.Gtk_Tree_View;
       File_Model    : Gtk.Tree_Store.Gtk_Tree_Store;
