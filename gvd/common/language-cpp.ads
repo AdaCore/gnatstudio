@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2001                      --
+--                      Copyright (C) 2000-2003                      --
 --                              ACT-Europe                           --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -29,8 +29,6 @@ package Language.Cpp is
 
    Cpp_Lang : constant Language_Access;
    --  Class constant for the C++ language.
-
-   function Is_Case_Sensitive (Lang : access Cpp_Language) return Boolean;
 
    ------------------
    -- Highlighting --

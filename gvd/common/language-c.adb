@@ -507,7 +507,8 @@ package body Language.C is
          Quote_Character               => '\',
          Constant_Character            => ''',
          Can_Indent                    => True,
-         Syntax_Highlighting           => True);
+         Syntax_Highlighting           => True,
+         Case_Sensitive                => True);
    end Get_Language_Context;
 
    ----------------------
@@ -780,16 +781,6 @@ package body Language.C is
          end if;
       end if;
    end Next_Indentation;
-
-   -----------------------
-   -- Is_Case_Sensitive --
-   -----------------------
-
-   function Is_Case_Sensitive (Lang : access C_Language) return Boolean is
-      pragma Unreferenced (Lang);
-   begin
-      return True;
-   end Is_Case_Sensitive;
 
    ------------------
    -- Comment_Line --

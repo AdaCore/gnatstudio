@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2002                      --
+--                      Copyright (C) 2000-2003                      --
 --                              ACT-Europe                           --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -118,7 +118,8 @@ package body Language.Cpp is
          Quote_Character               => '\',
          Constant_Character            => ''',
          Can_Indent                    => True,
-         Syntax_Highlighting           => True);
+         Syntax_Highlighting           => True,
+         Case_Sensitive                => True);
    end Get_Language_Context;
 
    --------------------
@@ -146,15 +147,5 @@ package body Language.Cpp is
          Callback      => Callback,
          Enable_Cpp    => True);
    end Parse_Entities;
-
-   -----------------------
-   -- Is_Case_Sensitive --
-   -----------------------
-
-   function Is_Case_Sensitive (Lang : access Cpp_Language) return Boolean is
-      pragma Unreferenced (Lang);
-   begin
-      return True;
-   end Is_Case_Sensitive;
 
 end Language.Cpp;

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                 Copyright (C) 2000-2002 ACT-Europe                --
+--                 Copyright (C) 2000-2003 ACT-Europe                --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -25,8 +25,6 @@ package Language.Unknown is
 
    Unknown_Lang : constant Language_Access;
    --  Class constant for the Unknown language.
-
-   function Is_Case_Sensitive (Lang : access Unknown_Language) return Boolean;
 
    function Is_Simple_Type
      (Lang : access Unknown_Language;

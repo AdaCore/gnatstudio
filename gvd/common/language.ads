@@ -31,10 +31,6 @@ package Language is
    procedure Free (Lang : in out Language_Access);
    --  Free the memory pointed to by Lang and set it to null.
 
-   function Is_Case_Sensitive (Lang : access Language_Root) return Boolean
-      is abstract;
-   --  Return true if the language is case sensitive
-
    ------------------------
    -- Types manipulation --
    ------------------------
@@ -153,10 +149,13 @@ package Language is
       --  The character that starts and ends constant characters
 
       Can_Indent         : Boolean;
-      --  Whether indentation is supproted by this language.
+      --  Whether indentation is supported by this language.
 
       Syntax_Highlighting : Boolean;
       --  Whether syntax highlighting is relevant to this language.
+
+      Case_Sensitive      : Boolean;
+      --  Whether the language is case sensitive.
    end record;
    --  This record describes the syntax of the language (for color
    --  highlighting purposes). All the fields in this record are language

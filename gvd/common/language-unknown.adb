@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                 Copyright (C) 2000-2002 ACT-Europe                --
+--                 Copyright (C) 2000-2003 ACT-Europe                --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -111,19 +111,8 @@ package body Language.Unknown is
          Quote_Character               => ASCII.NUL,
          Constant_Character            => ASCII.NUL,
          Can_Indent                    => False,
-         Syntax_Highlighting           => False);
+         Syntax_Highlighting           => False,
+         Case_Sensitive                => True);
    end Get_Language_Context;
-
-   -----------------------
-   -- Is_Case_Sensitive --
-   -----------------------
-
-   function Is_Case_Sensitive (Lang : access Unknown_Language)
-      return Boolean
-   is
-      pragma Unreferenced (Lang);
-   begin
-      return True;
-   end Is_Case_Sensitive;
 
 end Language.Unknown;

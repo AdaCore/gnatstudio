@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                 Copyright (C) 2000-2002 ACT-Europe                --
+--                 Copyright (C) 2000-2003 ACT-Europe                --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -26,8 +26,6 @@ package Language.Java is
 
    Java_Lang : constant Language_Access;
    --  Class constant for the Java language.
-
-   function Is_Case_Sensitive (Lang : access Java_Language) return Boolean;
 
    function Is_Simple_Type
      (Lang : access Java_Language;
