@@ -368,13 +368,14 @@ package body GVD.Menu is
       declare
          Is_Start  : aliased Boolean;
          Arguments : constant String := Display_Entry_Dialog
-           (Parent  => Tab.Window,
-            Title   => -"Run/Start",
-            Message => -"Run arguments:",
-            Key     => "gvd_run_arguments",
-            Check_Msg => -"Stop at beginning of main subprogram",
-            Check_Msg2 => Msg.all,
-            Button_Active => Is_Start'Access,
+           (Parent         => Tab.Window,
+            Title          => -"Run/Start",
+            Message        => -"Run arguments:",
+            Key            => "gvd_run_arguments",
+            History        => Tab.History,
+            Check_Msg      => -"Stop at beginning of main subprogram",
+            Check_Msg2     => Msg.all,
+            Button_Active  => Is_Start'Access,
             Button2_Active => Button2);
       begin
          if Arguments = ""
