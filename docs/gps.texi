@@ -9958,6 +9958,64 @@ GPS action. That should generally be 1, except for stderr where it should
 be 0.
 @end itemize
 
+@c -------------------------------------------
+@subsubsection Reloading a python file in GPS
+
+After you have made modification to a python file, you might want to
+reload it in GPS. This requires careful use of python commands.
+
+Here is an example. Lets assume you have a python file (@file{"mymod.py"}) 
+which contains the following:
+
+@smallexample
+GPS.parse_xml ("""
+   <action name="my_action">
+      <shell lang="python">mymod.myfunc()</shell>
+   </action>""")
+
+def myfunc():
+   print "In myfunc\n"
+@end smallexample
+
+As you can guess from this file, it defines an action "my_action", that you
+can for instance associate with a keybinding through the Edit->Key shortcuts
+menu.
+
+If this file has been copied in the @file{$HOME/.gps/python_startup/}
+directory, it will be automatically loaded at startup.
+
+Notice that the function @code{myfunc} is thus found in a separate namespace,
+with the name @code{mymod}, same as the file.
+
+If you decide, during your GPS session, to edit this file and have the
+function print "In myfunc2" instead, you then have to reload the file by
+typing the following command in the Python console:
+
+@smallexample
+> execfile ("HOME/.gps/python_startup/mymod.py", mymod.__dict__)
+@end smallexample
+
+The first parameter is the full path to the file that you want to reload.
+The second argument is less obvious, but indicates that the file should be
+reloaded in the namespace @code{mymod}.
+
+If you omit the optional second parameter, Python will load the file, but
+the function @code{myfunc} will be defined in the global namespace, and thus
+the new definition is accessible through
+
+@smallexample
+> myfunc()
+@end smallexample
+
+Thus, the key shortcut you had set, which still executes @code{mymod.myfunc()}
+will keep executing the old definition.
+
+
+By default, GPS provides a contextual menu when you are editing a Python
+file. This contextual menu (Python->Reload module) will take care of all
+the above details.
+
+
 @end ifset
 
 
