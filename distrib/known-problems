@@ -71,6 +71,14 @@ Known Problems fixed in GPS 2.1.0
               GPS might crash when closing this editor.
   Workaround: There is no workaround for this problem.
 
+- D803-001 It is possible to set breakpoints on lines with no code
+  Problem:    When the debugger preference "Show lines with code" is enabled,
+              it is still possible to set breakpoints on lines that do not
+              contain code.
+  Workaround: This behavior is harmless. The meaning of a breakpoint on a line
+              with no code is that it is set on the first line containing code
+              after this line.
+
 - D802-017 GPS scrolls back to line 1 when opening an already opened file
   Problem:    If you double-click on a file name in the explorer (or
               select it in the Open From Project menu), and the file is
