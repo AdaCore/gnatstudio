@@ -675,7 +675,12 @@ package body Src_Editor_Module is
                                     Mark_Record.Column,
                                     Mark_Record.Column + Mark_Record.Length,
                                     From_Path => True);
-                  Fill_Marks (Kernel_Handle (Kernel), Mark_Record.File.all);
+
+                  --  At this point, Open_File_Editor should have caused the
+                  --  propagation of the File_Edited signal, which provokes a
+                  --  call to Fill_Marks in File_Edited_Cb.
+                  --  Therefore the Mark_Record might not be valid beyond this
+                  --  point.
                end if;
             end if;
 
