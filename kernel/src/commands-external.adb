@@ -18,16 +18,20 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with GNAT.Expect;               use GNAT.Expect;
+with GNAT.Expect;                use GNAT.Expect;
 with GNAT.OS_Lib;
-with GNAT.Directory_Operations; use GNAT.Directory_Operations;
+with GNAT.Directory_Operations;  use GNAT.Directory_Operations;
 
 with Ada.Unchecked_Deallocation;
+with Ada.Exceptions;             use Ada.Exceptions;
 
-with Glide_Intl;           use Glide_Intl;
-with Glide_Kernel.Console; use Glide_Kernel.Console;
+with Traces;                     use Traces;
+with Glide_Intl;                 use Glide_Intl;
+with Glide_Kernel.Console;       use Glide_Kernel.Console;
 
 package body Commands.External is
+
+   Me : constant Debug_Handle := Create ("Commands.External");
 
    -----------------------
    -- Local subprograms --
@@ -109,8 +113,17 @@ package body Commands.External is
             Success := D.Handler (D.Kernel, D.Head, D.Output);
             Pop_State (D.Kernel);
             Command_Finished (D, Success);
+
+         exception
+            when E : others =>
+               Trace
+                 (Me, "Unexpected exception: " & Exception_Information (E));
          end;
 
+         return False;
+
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
          return False;
    end Atomic_Command;
 
