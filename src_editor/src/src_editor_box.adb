@@ -2272,10 +2272,10 @@ package body Src_Editor_Box is
       Create
         (C,
          Editor.Source_Buffer,
-         Integer (To_Buffer_Line (Start_Line)),
-         Integer (To_Buffer_Column (Start_Column)),
-         Integer (To_Buffer_Line (End_Line)),
-         Integer (To_Buffer_Column (End_Column)),
+         Editable_Line_Type (Start_Line),
+         Natural (Start_Column),
+         Editable_Line_Type (End_Line),
+         Natural (End_Column),
          Text);
 
       External_End_Action (Editor.Source_Buffer);
