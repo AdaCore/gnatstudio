@@ -149,6 +149,15 @@ package body Glide_Kernel.Preferences is
       Register_Property
         (Kernel.Preferences, Param_Spec (Toolbar_Show_Text), -"General");
 
+      Auto_Save := Param_Spec_Boolean (Gnew_Boolean
+        (Name    => "General-Auto-Save",
+         Nick    => -"Auto save",
+         Blurb   => -("Whether unsaved files/projects should be saved"
+                      & " automatically before calling external tools"),
+         Default => True));
+      Register_Property
+        (Kernel.Preferences, Param_Spec (Auto_Save), -"General");
+
       Save_Desktop_On_Exit := Param_Spec_Boolean (Gnew_Boolean
         (Name    => "General-Save-Desktop-On-Exit",
          Nick    => -"Save desktop on exit",
@@ -284,6 +293,16 @@ package body Glide_Kernel.Preferences is
          Nick    => -"Autosave delay"));
       Register_Property
         (Kernel.Preferences, Param_Spec (Periodic_Save), -"Editor:General");
+
+      Highlight_Column := Param_Spec_Int (Gnew_Int
+        (Name    => "Src-Editor-Highlight-Column",
+         Minimum => 0,
+         Maximum => 255,
+         Default => 80,
+         Blurb   => -"The column number to highlight. 0 if none.",
+         Nick    => -"Column highlight"));
+      Register_Property
+        (Kernel.Preferences, Param_Spec (Highlight_Column), -"Editor:General");
 
       Tab_Width := Param_Spec_Int (Gnew_Int
         (Name    => "Src-Editor-Tab-Width",

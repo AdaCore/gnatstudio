@@ -115,9 +115,10 @@ package Glide_Kernel.Preferences is
    Default_Widget_Height : Param_Spec_Int;
    Animated_Image        : Param_Spec_String;
    Splash_Screen         : Param_Spec_Boolean;
-   Toolbar_Show_Text     : Param_Spec_Boolean;
-   Save_Desktop_On_Exit  : Param_Spec_Boolean;
    Display_Welcome       : Param_Spec_Boolean;
+   Toolbar_Show_Text     : Param_Spec_Boolean;
+   Auto_Save              : Param_Spec_Boolean;
+   Save_Desktop_On_Exit  : Param_Spec_Boolean;
 
    -- Messages --
    Message_Highlight    : Param_Spec_Color;
@@ -155,6 +156,7 @@ package Glide_Kernel.Preferences is
    Highlight_Delimiters      : Param_Spec_Boolean;
    Periodic_Save             : Param_Spec_Int;
    Tab_Width                 : Param_Spec_Int;
+   Highlight_Column          : Param_Spec_Int;
 
    Indentation_Key           : Param_Spec_Key;
    Completion_Key            : Param_Spec_Key;
