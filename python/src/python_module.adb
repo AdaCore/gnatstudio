@@ -352,6 +352,18 @@ package body Python_Module is
      (Data : in out Callback_Data'Class; Command : String);
    --  Handler for the commands related to the various classes
 
+   function Set_Console (Self : PyObject; Args : PyObject) return PyObject;
+   pragma Convention (C, Set_Console);
+   --  Handler for "set_console" function
+
+   procedure Create_Scrolled_Window
+     (Scrolled : in out Gtk_Scrolled_Window;
+      View     : out Gtk_Text_View;
+      Kernel   : access Kernel_Handle_Record'Class;
+      Title    : String);
+   --  Create a scrolled window suitable for python output, and insert it in
+   --  the MDI.
+
    ----------------
    -- Trace_Dump --
    ----------------
@@ -378,6 +390,46 @@ package body Python_Module is
       Destroy (Script.Interpreter);
    end Destroy;
 
+   ----------------------------
+   -- Create_Scrolled_Window --
+   ----------------------------
+
+   procedure Create_Scrolled_Window
+     (Scrolled : in out Gtk_Scrolled_Window;
+      View     : out Gtk_Text_View;
+      Kernel   : access Kernel_Handle_Record'Class;
+      Title    : String)
+   is
+      Buffer : Gtk_Text_Buffer;
+      Child  : MDI_Child;
+   begin
+      if Scrolled = null then
+         Scrolled := new Gtk_Scrolled_Window_Record;
+      end if;
+
+      Gtk.Scrolled_Window.Initialize (Scrolled);
+      Set_Policy (Scrolled, Policy_Automatic, Policy_Automatic);
+
+      Gtk_New (Buffer);
+      Gtk_New (View, Buffer);
+      Add (Scrolled, View);
+      Modify_Font (View, Get_Pref_Font (Kernel, Default_Style));
+      Set_Wrap_Mode (View, Wrap_Char);
+
+      Child := Put
+        (Kernel, Scrolled,
+         Focus_Widget        => Gtk_Widget (View),
+         Module              => Python_Module_Id,
+         Default_Width       => Get_Pref (Kernel, Default_Widget_Width),
+         Default_Height      => Get_Pref (Kernel, Default_Widget_Height),
+         Desktop_Independent => True);
+      Set_Focus_Child (Child);
+      Set_Title (Child, Title);
+      Set_Dock_Side (Child, Bottom);
+      Dock_Child (Child);
+      Raise_Child (Child);
+   end Create_Scrolled_Window;
+
    ---------------------------
    -- Create_Python_Console --
    ---------------------------
@@ -386,44 +438,23 @@ package body Python_Module is
      (Script : access Python_Scripting_Record'Class;
       Kernel : Kernel_Handle) return MDI_Child
    is
-      Child   : MDI_Child := Find_MDI_Child_By_Tag
+      Child   : constant MDI_Child := Find_MDI_Child_By_Tag
         (Get_MDI (Kernel), Interpreter_View_Record'Tag);
-      Buffer : Gtk_Text_Buffer;
       View   : Gtk_Text_View;
       Console : Interpreter_View;
    begin
       if Child = null then
          Console := new Interpreter_View_Record;
-         Gtk.Scrolled_Window.Initialize (Console);
-         Set_Policy (Console, Policy_Automatic, Policy_Automatic);
-
-         Gtk_New (Buffer);
-         Gtk_New (View, Buffer);
-         Add (Console, View);
-         Modify_Font (View, Get_Pref_Font (Kernel, Default_Style));
-         Set_Wrap_Mode (View, Wrap_Char);
-
-         Set_Console
+         Create_Scrolled_Window
+           (Gtk_Scrolled_Window (Console), View, Kernel, -"Python");
+         Set_Default_Console
            (Script.Interpreter, View, Grab_Widget => Gtk_Widget (Console),
             Display_Prompt => True);
-
-         Child := Put
-           (Kernel, Console,
-            Focus_Widget        => Gtk_Widget (View),
-            Module              => Python_Module_Id,
-            Default_Width       => Get_Pref (Kernel, Default_Widget_Width),
-            Default_Height      => Get_Pref (Kernel, Default_Widget_Height),
-            Desktop_Independent => True);
-         Set_Focus_Child (Child);
-         Set_Title (Child, -"Python");
-         Set_Dock_Side (Child, Bottom);
-         Dock_Child (Child);
-         Raise_Child (Child);
-
       else
          Console := Interpreter_View (Get_Widget (Child));
-         Set_Console (Script.Interpreter, Gtk_Text_View (Get_Child (Console)),
-                      Display_Prompt => True);
+         Set_Default_Console
+           (Script.Interpreter, Gtk_Text_View (Get_Child (Console)),
+            Display_Prompt => True);
          Raise_Child (Child);
       end if;
 
@@ -467,6 +498,48 @@ package body Python_Module is
       return null;
    end Save_Desktop;
 
+   -----------------
+   -- Set_Console --
+   -----------------
+
+   function Set_Console (Self : PyObject; Args : PyObject) return PyObject is
+      pragma Unreferenced (Self);
+      S        : aliased chars_ptr := Null_Ptr;
+      Instance : aliased PyObject;
+      Console  : Gtk_Text_View;
+      Scrolled : Gtk_Scrolled_Window;
+      Child    : MDI_Child;
+   begin
+      if not PyArg_ParseTuple (Args, "O|s", Instance'Address, S'Address) then
+         return null;
+      end if;
+
+      if S = Null_Ptr then
+         Set_Console (Python_Module_Id.Script.Interpreter, Instance, null);
+      else
+         Child := Find_MDI_Child_By_Name
+           (Get_MDI (Python_Module_Id.Script.Kernel), Value (S));
+         if Child = null then
+            Create_Scrolled_Window
+              (Scrolled, Console, Python_Module_Id.Script.Kernel, Value (S));
+         else
+            Scrolled := Gtk_Scrolled_Window (Get_Widget (Child));
+            Console := Gtk_Text_View (Get_Child (Scrolled));
+         end if;
+
+         Set_Console (Python_Module_Id.Script.Interpreter, Instance, Console);
+      end if;
+
+      Py_INCREF (Py_None);
+      return Py_None;
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception " & Exception_Information (E));
+         return null;
+   end Set_Console;
+
    ---------------------
    -- Register_Module --
    ---------------------
@@ -479,6 +552,7 @@ package body Python_Module is
       pragma Unreferenced (Ignored, Result);
       N       : Node_Ptr;
       Errors  : aliased Boolean;
+      Klass   : PyClassObject;
 
    begin
       Python_Module_Id := new Python_Module_Record;
@@ -515,6 +589,9 @@ package body Python_Module is
         (Python_Module_Id.Script.Interpreter,
          "import GPS", Hide_Output => True,
          Errors => Errors'Unrestricted_Access);
+      Initialize_IO (Python_Module_Id.Script.Interpreter,
+                     GPS_Module_Name,
+                     Python_Module_Id.Script.GPS_Module);
 
       Python_Module_Id.Script.GPS_Unexpected_Exception := PyErr_NewException
         (GPS_Module_Name & ".Unexpected_Exception", null, null);
@@ -524,6 +601,20 @@ package body Python_Module is
         (GPS_Module_Name & ".Missing_Arguments", null, null);
       Python_Module_Id.Script.GPS_Invalid_Arg := PyErr_NewException
         (GPS_Module_Name & ".Invalid_Argument", null, null);
+
+      Klass := Lookup_Class_Object
+        (Python_Module_Id.Script.GPS_Module, Console_Class_Name);
+      Add_Method
+        (Klass, Create_Method_Def
+           ("set_console", Set_Console'Access,
+            -("Change the console to which the output of Python is sent. If"
+              & ASCII.LF
+              & "an argument is specified, it should contain the name of"
+              & ASCII.LF
+              & "a console to create. If no argument is specified the Python"
+              & ASCII.LF
+              & "console will be used")));
+
 
       Register_Menu
         (Kernel,
@@ -1162,7 +1253,6 @@ package body Python_Module is
          end if;
       end Profile;
 
-
       H   : constant Handler_Data_Access := new Handler_Data'
         (Length       => Command'Length,
          Command      => Command,
@@ -1260,15 +1350,12 @@ package body Python_Module is
       Result : PyObject;
       pragma Unreferenced (Result);
    begin
-      if not Hide_Output and then Show_Command then
-         Insert_Text (Script.Interpreter, Command & ASCII.LF, Console);
-      end if;
-
       Result := Run_Command
         (Script.Interpreter, Command,
-         Console     => Console,
-         Hide_Output => Hide_Output,
-         Errors      => E'Unrestricted_Access);
+         Console      => Console,
+         Hide_Output  => Hide_Output,
+         Show_Command => Show_Command,
+         Errors       => E'Unrestricted_Access);
       Errors := E;
    end Execute_Command;
 
@@ -1307,7 +1394,7 @@ package body Python_Module is
       Obj : PyObject;
    begin
       Obj := Run_Command
-        (Script.Interpreter, Command, Console, Hide_Output, Errors);
+        (Script.Interpreter, Command, Console, False, Hide_Output, Errors);
       return Obj /= null
         and then ((PyInt_Check (Obj) and then PyInt_AsLong (Obj) = 1)
                   or else
