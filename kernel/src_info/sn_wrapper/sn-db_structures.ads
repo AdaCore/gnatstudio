@@ -36,7 +36,7 @@ with DB_API; use DB_API;
 
 package SN.DB_Structures is
 
-   type Buffer_String_Array is array (Natural) of Character;
+   type Buffer_String_Array is array (Positive) of Character;
    type Buffer_String is access all Buffer_String_Array;
 
    type CL_Table is record
