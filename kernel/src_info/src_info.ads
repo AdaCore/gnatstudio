@@ -202,6 +202,7 @@ package Src_Info is
    --  If an LI file was found in list, but was either incomplete or no longer
    --  up-to-date, it must be parsed again.
    --  Source_Filename should contain the full path to the source file.
+   --  This subprogram garantees that the returned File has been fully parsed.
 
    function LI_Filename_From_Source
      (Handler                : access LI_Handler_Record;

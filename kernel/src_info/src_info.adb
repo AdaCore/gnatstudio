@@ -65,7 +65,7 @@ package body Src_Info is
    --  Hash function for strings.
 
    function Get_Separate_File_Info
-     (LIF : LI_File_Ptr; File_Name : String_Access) return File_Info_Ptr;
+     (LIF : LI_File_Ptr; File_Name : String) return File_Info_Ptr;
    --  Return a pointer to the file info whose File_Name matches
    --  Return null if such unit could not be found.
 
@@ -74,12 +74,12 @@ package body Src_Info is
    ----------------------------
 
    function Get_Separate_File_Info
-     (LIF : LI_File_Ptr; File_Name : String_Access) return File_Info_Ptr
+     (LIF : LI_File_Ptr; File_Name : String) return File_Info_Ptr
    is
       Current_Node : File_Info_Ptr_List := LIF.LI.Separate_Info;
    begin
       while Current_Node /= null loop
-         if Current_Node.Value.Source_Filename.all = File_Name.all then
+         if Current_Node.Value.Source_Filename.all = File_Name then
             return Current_Node.Value;
          end if;
          Current_Node := Current_Node.Next;
@@ -341,7 +341,7 @@ package body Src_Info is
          when Unit_Body =>
             return SF.LI.LI.Body_Info;
          when Unit_Separate =>
-            return Get_Separate_File_Info (SF.LI, SF.Source_Filename);
+            return Get_Separate_File_Info (SF.LI, SF.Source_Filename.all);
       end case;
    end Get_File_Info;
 
