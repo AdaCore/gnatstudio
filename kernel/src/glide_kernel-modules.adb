@@ -1202,7 +1202,6 @@ package body Glide_Kernel.Modules is
    is
       Value         : GValue_Array (1 .. 5);
 
-      use String_List_Utils.String_List;
    begin
       Init (Value (2),  Glib.GType_String);
       Init (Value (3),  Glib.GType_Pointer);
@@ -1235,12 +1234,11 @@ package body Glide_Kernel.Modules is
          end loop;
       else
          declare
-            Files : List := Open_Files (Kernel);
-            Node  : List_Node := First (Files);
+            Files : constant VFS.File_Array := Open_Files (Kernel);
          begin
-            while Node /= Null_Node loop
+            for Node in Files'Range loop
                Init (Value (1),  Glib.GType_String);
-               Set_String (Value (1), Data (Node));
+               Set_String (Value (1), Full_Name (Files (Node)).all);
 
                if not Mime_Action
                  (Kernel, Mime_File_Line_Info, Value, Set_Busy => False)
@@ -1250,14 +1248,11 @@ package body Glide_Kernel.Modules is
                end if;
 
                Unset (Value (1));
-               Node := Next (Node);
             end loop;
 
             for J in 2 .. Value'Last loop
                Unset (Value (J));
             end loop;
-
-            Free (Files);
          end;
       end if;
    end General_Line_Information;
