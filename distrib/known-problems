@@ -3,15 +3,8 @@ Known Problems fixed in GPS 2.0.0
 - D301-004 Invalid references to entities with Ada generics
   Problem:    Find All References will sometimes give incorrect results for
               entities declared in a generic (line and columns are correct,
-              but file names are incorrect)
-  Workaround: None found
-
-- CC18-008 GPS does not check the "read-only" state of files when using VCS
-  Problem:    When using CVS in a mode where file are read-only when they are
-              not explicitely opened, or when using ClearCase, GPS does not
-              check the read-only/writable state of the file after operations
-              such as open, check-in, check-out.
-  Workaround: Manually click the "Writable/Read Only" area in the editor.
+              but file names are incorrect).
+  Workaround: None found.
 
 - The log files in directory log_files/ are not removed on Windows
   Problem:    After editing and committing a file the log file is not removed
@@ -23,7 +16,7 @@ Known Problems fixed in GPS 2.0.0
               of an executable instead of a source file, GPS doesn't recognize
               it.
   Workaround: Specify the list of main source files in your manually edited
-              projects
+              projects.
 
 - D128-002 Absolute paths generated when adding project dependencies
   Problem:    When a new dependency is added between two projects, an absolute
@@ -33,19 +26,26 @@ Known Problems fixed in GPS 2.0.0
               relative", and press OK. Edit again the properties and set back
               the button.
               You can then save the project, and all absolute paths have been
-              converted to absolute
+              converted to absolute.
+
+- CC18-008 GPS does not check the "read-only" state of files when using VCS
+  Problem:    When using CVS in a mode where file are read-only when they are
+              not explicitely opened, or when using ClearCase, GPS does not
+              check the read-only/writable state of the file after operations
+              such as open, check-in, check-out.
+  Workaround: Manually click the "Writable/Read Only" area in the editor.
 
 - Duplicate new file names
   Problem:    Creating several new files, and closing one that is not the last
               one, and creating a new one again result in a name duplication,
-              and gets GPS confused
+              and gets GPS confused.
   Workaround: Save the files as soon as possible. Added benefit is a proper
-              recognition of the language
+              recognition of the language.
 
 - CC10-007 Opaque resizing of windows on Windows doesn't work
   Problem:    If you have set the opaque mode in the preferences, and try to
               resize the windows, then GPS moves them instead.
-  Workaround: Select the non-opaque mode
+  Workaround: Select the non-opaque mode.
 
 - CB18-012 Different behavior between VCS global and contextual menus.
   Problem:    When you use the global menu VCS->Query status for all projects,
@@ -75,8 +75,8 @@ Known Problems fixed in GPS 2.0.0
 - Debugger specified on the command line not used by 'Debug->Initialize'
   Problem:    When launching gps with the --debugger switch, creating
               new debugger using Debug->Initialize will not take this
-              switch into account
-  Workaround: Edit the project properties to change the debugger command
+              switch into account.
+  Workaround: Edit the project properties to change the debugger command.
 
 - The title of windows is not remembered from one session to another
   Problem:    When the Entities Browser, the Project Browser or the Dependency
