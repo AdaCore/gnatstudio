@@ -3316,7 +3316,7 @@ package body Prj_API is
       Project     : Project_Node_Id;
       No_Scenario : constant Project_Node_Array (1 .. 0) :=
         (others => Empty_Node);
-      Values      : Argument_List (1 .. 1);
+      Values      : Argument_List (1 .. 2);
 
    begin
       Project := Create_Project (Name, Path);
@@ -3336,21 +3336,23 @@ package body Prj_API is
          Value              => ".");
 
       Values (1) := new String'("-g");
+      Values (2) := new String'("-gnatQ");
 
       --  ??? gnatmake -s is apparently not fully functionnal, so disable this
       --  default setting for now.
 
-      --  Values (2) := new String'("-s");
+      --  Values (3) := new String'("-s");
 
       Update_Attribute_Value_In_Scenario
         (Project,
          Scenario_Variables => No_Scenario,
          Attribute_Name     => "default_switches",
-         Values             => Values (1 .. 1),
+         Values             => Values (1 .. 2),
          Attribute_Index    => Ada_String,
          Pkg_Name           => "builder");
       Free (Values (1));
-      --  Free (Values (2));
+      Free (Values (2));
+      --  Free (Values (3));
 
       return Project;
    end Create_Default_Project;
