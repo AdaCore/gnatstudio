@@ -310,6 +310,9 @@ package body Glide_Result_View is
       File_Path : Gtk_Tree_Path;
       Loc_Iter  : Gtk_Tree_Iter;
       Category  : GNAT.OS_Lib.String_Access;
+
+      Removing_Category : Boolean := False;
+      --  Indicates whether we are removing a whole category or just a file.
    begin
       --  Unhighight all the lines and remove all marks in children of the
       --  category / file.
@@ -326,6 +329,7 @@ package body Glide_Result_View is
          Category  := new String'
            (Get_String (View.Tree.Model, File_Iter, Base_Name_Column));
          File_Iter := Children (View.Tree.Model, File_Iter);
+         Removing_Category := True;
       elsif Get_Depth (File_Path) = 2 then
          Category := new String'
            (Get_String
@@ -365,6 +369,8 @@ package body Glide_Result_View is
 
             Next (View.Tree.Model, Loc_Iter);
          end loop;
+
+         exit when not Removing_Category;
 
          Next (View.Tree.Model, File_Iter);
       end loop;
