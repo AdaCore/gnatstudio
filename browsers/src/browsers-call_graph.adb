@@ -309,7 +309,7 @@ package body Browsers.Call_Graph is
       --  For efficiency, do not recompute the layout for each item
       Set_Auto_Layout (Get_Canvas (Browser), False);
 
-      Entity := Get_Entity (Tree, Node);
+      Entity := Get_Entity (Node);
       Item := Entity_Item (Find_Entity (Browser, Entity));
       if Item = null then
          Gtk_New (Item, Browser,  Entity => Entity);
@@ -321,7 +321,7 @@ package body Browsers.Call_Graph is
       Iter := Start (Node);
       while Get (Iter) /= Null_Scope_Tree_Node loop
          if Is_Subprogram (Get (Iter)) then
-            Entity := Get_Entity (Tree, Get (Iter));
+            Entity := Get_Entity (Get (Iter));
             Child := Entity_Item (Find_Entity (Browser, Entity));
             if Child = null then
                Gtk_New (Child, Browser, Entity => Entity);
