@@ -29,7 +29,8 @@ with Gtk.Scrolled_Window;
 
 with Glide_Kernel;
 
-with Basic_Types; use Basic_Types;
+with Basic_Types;       use Basic_Types;
+with String_List_Utils; use String_List_Utils;
 
 package Glide_Interactive_Consoles is
 
@@ -64,6 +65,8 @@ package Glide_Interactive_Consoles is
    --  and the console is uneditable by the user.
 
 private
+
+   use String_List;
 
    type Glide_Interactive_Console_Record is new
      Gtk.Scrolled_Window.Gtk_Scrolled_Window_Record with
@@ -103,6 +106,12 @@ private
       Message_Was_Displayed : Boolean := False;
       --  Indicate that a message was displayed, ie the last input point is
       --  not a prompt.
+
+      History : List;
+      --  The command history. The most recent commands are at the beginning.
+
+      Current_Position : List_Node;
+      --  The current position when browsing the command history.
    end record;
 
 end Glide_Interactive_Consoles;
