@@ -22,6 +22,7 @@
 
 with Ada.Tags;
 with Basic_Mapper;
+with Basic_Types;
 with GNAT.OS_Lib;
 with Generic_List;
 with Glib.Object;
@@ -158,6 +159,16 @@ package Glide_Kernel is
      (Handle : access Kernel_Handle_Record) return String;
    --  Return the predefined Source_Path associated to the given Kernel Handle.
    --  Return the current directory if no source path has been set yet.
+
+   function Get_VCS_List
+     (Handle : access Kernel_Handle_Record)
+     return Basic_Types.String_Array_Access;
+   --  Return the list of recognized VCS systems.
+
+   procedure Register_VCS
+     (Handle         : access Kernel_Handle_Record;
+      VCS_Identifier : String);
+   --  Add a VCS identifier to the list of recognized VCS systems.
 
    -------------
    -- Queries --
@@ -659,6 +670,9 @@ private
 
       Lang_Handler : Language_Handlers.Language_Handler;
       --  The type used to convert from file names to languages
+
+      VCS_List : Basic_Types.String_Array_Access;
+      --  The list of all VCS systems recognized by the kernel.
    end record;
 
 end Glide_Kernel;
