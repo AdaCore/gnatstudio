@@ -80,6 +80,12 @@ package Prj_API is
      (Project : Project_Node_Id; Imported_Project : Project_Node_Id);
    --  Add a new with_statement for Imported_Project.
 
+   procedure Remove_Imported_Project
+     (Project : Project_Node_Id; Imported_Project : String);
+   --  Remove a dependency from Project.
+   --  If Imported_Project is not already a dependency, then this subprogram
+   --  does nothing.
+
    procedure Add_At_End
      (Parent                       : Project_Node_Id;
       Expr                         : Project_Node_Id;
@@ -492,7 +498,7 @@ package Prj_API is
    procedure Delete_External_Variable
      (Root_Project      : Project_Node_Id;
       Ext_Variable_Name : String;
-      Keep_Choice       : Types.String_Id;
+      Keep_Choice       : String;
       Delete_Direct_References : Boolean := True);
    --  Remove all scenario variables that reference External_Variable_Name.
    --  All the case constructions where this variable occur are replaced by
@@ -500,6 +506,25 @@ package Prj_API is
    --  If Delete_Direct_References is True, then all direct references (ie
    --  external() statements in the project file) to Ext_Variable_Name are also
    --  removed, in addition to the scenario variables that reference it.
+
+   procedure Rename_Value_For_External_Variable
+     (Root_Project      : Project_Node_Id;
+      Ext_Variable_Name : String;
+      Old_Value_Name    : String;
+      New_Value_Name    : Types.String_Id);
+   --  Rename one of the choices in the list of possible values for the
+   --  scenario variables asociated with Ext_Variable_Name. This also changes
+   --  the default value for external references.
+
+   procedure Remove_Value
+     (Root_Project      : Project_Node_Id;
+      Ext_Variable_Name : String;
+      Value_Name        : String);
+   --  Remove Value_Name from the list of possible values for the scenario
+   --  variables that refer to Ext_Variable_Name. If this is the last possible
+   --  value, then the result is the same as calling Delete_External_Variable.
+   --  Direct N_External_Value nodes that use Value_Name as the default will
+   --  no longer have a default.
 
    Invalid_Value : exception;
 

@@ -106,6 +106,34 @@ package body Prj_API is
    --  Add a new node into the list of nodes To.
    --  To is resized as needed
 
+   type Environment_Variable_Callback is access procedure
+     (Project, Parent, Node, Choice : Project_Node_Id);
+   --  Callback for For_Each_Environment_Variable.
+   --  The various possible combinations are:
+   --    Node                    Parent                 Choice
+   --  N_Variable_Reference      N_Term in expression   Empty_Node
+   --  N_External_Value          N_Term in expression   Empty_Node
+   --  N_Case_Item               N_Declarative_Item of  matching choice
+   --                            case construction      N_Literal_String
+   --  N_String_Type_Declaration Empty_Node             Empty_Node
+   --  N_Typed_Variable_Declaration N_Declarative_Item  Empty_Node
+
+   procedure For_Each_Environment_Variable
+     (Root_Project      : Project_Node_Id;
+      Ext_Variable_Name : String;
+      Specific_Choice   : String;
+      Action            : Environment_Variable_Callback);
+   --  Iterate over all possible references to an external variable. This
+   --  returns N_External_Value, N_Variable_Reference,
+   --  N_Typed_Variable_Declaration and N_String_Type_Declaration (the last
+   --  three are indirect references through a named variable.
+
+   procedure Remove_Node
+     (Parent : Project_Node_Id; Node : Project_Node_Id);
+   --  Remove Node from the declaration list in Parent.
+   --  This doesn't search recursively inside nested packages, case
+   --  constructions, ...
+
    ----------------
    -- Get_String --
    ----------------
@@ -220,7 +248,7 @@ package body Prj_API is
       Set_Name_Of (Node, Name_Find);
       Set_String_Type_Of (Node, Typ);
 
-      Add_At_End (Prj_Or_Pkg, Node);
+      Add_At_End (Prj_Or_Pkg, Node, Add_Before_First_Case_Or_Pkg);
 
       Set_Next_Variable (Node, First_Variable_Of (Prj_Or_Pkg));
       Set_First_Variable_Of (Prj_Or_Pkg, Node);
@@ -1078,6 +1106,53 @@ package body Prj_API is
       Set_String_Value_Of (With_Clause, End_String);
    end Add_Imported_Project;
 
+   -----------------------------
+   -- Remove_Imported_Project --
+   -----------------------------
+
+   procedure Remove_Imported_Project
+     (Project : Project_Node_Id; Imported_Project : String)
+   is
+      With_Clause : Project_Node_Id := First_With_Clause_Of (Project);
+      Next : Project_Node_Id;
+      Name : Name_Id;
+   begin
+      --  Cleanup the name
+
+      declare
+         Clean_Name : String := Base_File_Name (Imported_Project);
+         Ext        : constant String := File_Extension (Clean_Name);
+         Last       : Natural := Clean_Name'Last;
+      begin
+         if Ext /= "" then
+            --  Also remove the final "."
+            Last := Last - Ext'Length - 1;
+         end if;
+         Name_Len := Last - Clean_Name'First + 1;
+         Name_Buffer (1 .. Name_Len) := Clean_Name (Clean_Name'First .. Last);
+         Name := Name_Find;
+      end;
+
+      if With_Clause /= Empty_Node
+        and then Prj.Tree.Name_Of (With_Clause) = Name
+      then
+         Set_First_With_Clause_Of (Project, Next_With_Clause_Of (With_Clause));
+         return;
+      end if;
+
+      loop
+         Next := Next_With_Clause_Of (With_Clause);
+         exit when Next = Empty_Node;
+
+         if Prj.Tree.Name_Of (Next) = Name then
+            Set_Next_With_Clause_Of
+              (With_Clause, Next_With_Clause_Of (Next));
+            return;
+         end if;
+         With_Clause := Next;
+      end loop;
+   end Remove_Imported_Project;
+
    ----------------------------
    -- External_Variable_Name --
    ----------------------------
@@ -1089,24 +1164,42 @@ package body Prj_API is
       N : constant Name_Id := Prj.Tree.Name_Of (Ref);
       Pkg : Project_Node_Id;
       Variable : Variable_Node_Id;
+      Recurse_In_Pkg : Boolean := False;
 
    begin
-      if Project_Node_Of (Ref) /= Empty_Node then
+      if Package_Node_Of (Ref) /= Empty_Node then
+         Pkg := Package_Node_Of (Ref);
+      elsif Project_Node_Of (Ref) /= Empty_Node then
          Pkg := Project_Node_Of (Ref);
       else
          Pkg := Current_Project;
+         Recurse_In_Pkg := True;
       end if;
 
-      Variable := First_Variable_Of (Pkg);
-      while Variable /= Empty_Node loop
-         if (Kind_Of (Variable) = N_Variable_Declaration
-             or else Kind_Of (Variable) = N_Typed_Variable_Declaration)
-           and then Prj.Tree.Name_Of (Variable) = N
-         then
-            return External_Reference_Of (Variable);
-         end if;
+      --  Should the project parser set the package_of field when the variable
+      --  is defined inside a package ? Currently, it only sets this field if
+      --  it is specified in the file itself.
 
-         Variable := Next_Variable (Variable);
+      while Pkg /= Empty_Node loop
+         Variable := First_Variable_Of (Pkg);
+         while Variable /= Empty_Node loop
+            if (Kind_Of (Variable) = N_Variable_Declaration
+                or else Kind_Of (Variable) = N_Typed_Variable_Declaration)
+              and then Prj.Tree.Name_Of (Variable) = N
+            then
+               return External_Reference_Of (Variable);
+            end if;
+
+            Variable := Next_Variable (Variable);
+         end loop;
+
+         if Recurse_In_Pkg then
+            if Pkg = Current_Project then
+               Pkg := First_Package_Of (Pkg);
+            else
+               Pkg := Next_Package_In_Project (Pkg);
+            end if;
+         end if;
       end loop;
 
       return No_String;
@@ -2193,124 +2286,15 @@ package body Prj_API is
       end loop;
    end Add_Scenario_Variable_Values;
 
-   ------------------------------
-   -- Rename_External_Variable --
-   ------------------------------
+   -----------------------------------
+   -- For_Each_Environment_Variable --
+   -----------------------------------
 
-   procedure Rename_External_Variable
-     (Root_Project : Project_Node_Id;
-      Old_Name     : String;
-      New_Name     : Types.String_Id)
-   is
-      Decl : Project_Node_Id := Empty_Node;
-      Expr, Current, Term, With_Clause : Project_Node_Id;
-   begin
-      case Kind_Of (Root_Project) is
-         when N_Project =>
-            Decl := First_Declarative_Item_Of
-              (Project_Declaration_Of (Root_Project));
-
-         when N_Package_Declaration | N_Case_Item =>
-            Decl := First_Declarative_Item_Of (Root_Project);
-
-         when N_Expression =>
-            Expr := Root_Project;
-            while Expr /= Empty_Node loop
-               Term := First_Term (Expr);
-               while Term /= Empty_Node loop
-                  if Kind_Of (Current_Term (Term)) = N_Literal_String_List then
-                     Rename_External_Variable
-                       (First_Expression_In_List (Current_Term (Term)),
-                        Old_Name, New_Name);
-
-                  elsif Kind_Of (Current_Term (Term)) = N_External_Value
-                    and then Get_String (String_Value_Of
-                      (Prj.Tree.External_Reference_Of (Current_Term (Term))))
-                    = Old_Name
-                  then
-                     Set_String_Value_Of
-                       (External_Reference_Of (Current_Term (Term)),
-                        New_Name);
-                  end if;
-
-                  Term := Next_Term (Term);
-               end loop;
-
-               Expr := Next_Expression_In_List (Expr);
-            end loop;
-
-         when others =>
-            null;
-      end case;
-
-      while Decl /= Empty_Node loop
-         Current := Current_Item_Node (Decl);
-         case Kind_Of (Current) is
-            when N_Package_Declaration =>
-               Rename_External_Variable
-                 (Current, Old_Name, New_Name);
-
-            when N_Variable_Declaration
-              |  N_Attribute_Declaration
-              |  N_Typed_Variable_Declaration =>
-               Rename_External_Variable
-                 (Expression_Of (Current), Old_Name, New_Name);
-
-            when N_Case_Construction =>
-               Expr := First_Case_Item_Of (Root_Project);
-               while Expr /= Empty_Node loop
-                  Rename_External_Variable
-                    (Expr, Old_Name, New_Name);
-                  Expr := Next_Case_Item (Expr);
-               end loop;
-
-            when others =>
-               null;
-         end case;
-
-         Decl := Next_Declarative_Item (Decl);
-      end loop;
-
-      if Kind_Of (Root_Project) = N_Project then
-         With_Clause := First_With_Clause_Of (Root_Project);
-         while With_Clause /= Empty_Node loop
-            Rename_External_Variable
-              (Project_Node_Of (With_Clause), Old_Name, New_Name);
-            With_Clause := Next_With_Clause_Of (With_Clause);
-         end loop;
-      end if;
-   end Rename_External_Variable;
-
-   ----------------------
-   -- Add_Node_To_List --
-   ----------------------
-
-   procedure Add_Node_To_List
-     (To   : in out Project_Node_Array_Access;
-      Last : in out Natural;
-      Node : Project_Node_Id)
-   is
-      Old : Project_Node_Array_Access := To;
-   begin
-      if Last = To'Last then
-         To := new Project_Node_Array (1 .. Old'Last * 2);
-         To (1 .. Old'Length) := Old.all;
-         Free (Old);
-      end if;
-
-      Last := Last + 1;
-      To (Last) := Node;
-   end Add_Node_To_List;
-
-   ------------------------------
-   -- Delete_External_Variable --
-   ------------------------------
-
-   procedure Delete_External_Variable
+   procedure For_Each_Environment_Variable
      (Root_Project      : Project_Node_Id;
       Ext_Variable_Name : String;
-      Keep_Choice       : String_Id;
-      Delete_Direct_References : Boolean := True)
+      Specific_Choice   : String;
+      Action            : Environment_Variable_Callback)
    is
       Variable_Nodes : Project_Node_Array_Access :=
         new Project_Node_Array (1 .. 100);
@@ -2318,7 +2302,7 @@ package body Prj_API is
       --  List of all the variables that reference Ext_Variable_Name
       --  in the current project.
 
-      procedure Delete_In_Expression (Expression : Project_Node_Id);
+      procedure Process_Expression (Expression : Project_Node_Id);
       --  Delete all references to the variable in Expr
 
       procedure Recurse_In_Project (Pkg_Or_Case_Item : Project_Node_Id);
@@ -2326,21 +2310,19 @@ package body Prj_API is
       --  (either the project itself, if Pkg_Or_Case_Item is Empty_Node,
       --  or a package or a case item.
 
-      function Is_Reference_To_Ext (Node : Project_Node_Id) return Boolean;
+      function Is_Reference_To_Ext
+        (Node : Project_Node_Id) return Boolean;
       --  Return True if Node is a reference (N_External_Value or
-      --  N_Variable_Reference) to the external variable
-
-      procedure Remove_Node
-        (Parent : Project_Node_Id; Node : Project_Node_Id);
-      --  Remove Node from the declaration list in Parent.
-      --  This doesn't search recursively inside nested packages, case
-      --  constructions, ...
+      --  N_Variable_Reference) to the external variable Ext_Variable_Name.
+      --  Var_Declarations should contain the list of
+      --  N_Typed_Variable_Declaration nodes that refer to Ext_Variable_Name.
 
       -------------------------
       -- Is_Reference_To_Ext --
       -------------------------
 
-      function Is_Reference_To_Ext (Node : Project_Node_Id) return Boolean is
+      function Is_Reference_To_Ext
+        (Node             : Project_Node_Id) return Boolean is
       begin
          case Kind_Of (Node) is
             when N_External_Value =>
@@ -2363,11 +2345,11 @@ package body Prj_API is
          end case;
       end Is_Reference_To_Ext;
 
-      --------------------------
-      -- Delete_In_Expression --
-      --------------------------
+      ------------------------
+      -- Process_Expression --
+      ------------------------
 
-      procedure Delete_In_Expression (Expression : Project_Node_Id) is
+      procedure Process_Expression (Expression : Project_Node_Id) is
          Expr : Project_Node_Id := Expression;
          Term : Project_Node_Id;
       begin
@@ -2378,25 +2360,23 @@ package body Prj_API is
 
                   --  Handles ("-g" & A, "-O2" & external ("A"))
                   when N_Literal_String_List =>
-                     Delete_In_Expression
+                     Process_Expression
                        (First_Expression_In_List (Current_Term (Term)));
 
                   --  Handles "-g" & external ("A")
                   --  Replace A by the constant string representing its value
                   when N_External_Value =>
-                     if Delete_Direct_References
-                       and then Is_Reference_To_Ext (Current_Term (Term))
-                     then
-                        Set_Current_Term
-                          (Term, Create_Literal_String (Keep_Choice));
+                     if Is_Reference_To_Ext (Current_Term (Term)) then
+                        Action (Root_Project, Term, Current_Term (Term),
+                                Empty_Node);
                      end if;
 
                   --  Handles "-g" & Var
                   --  Where Var is a reference to the external variable
                   when N_Variable_Reference =>
                      if Is_Reference_To_Ext (Current_Term (Term)) then
-                        Set_Current_Term
-                          (Term, Create_Literal_String (Keep_Choice));
+                        Action (Root_Project, Term, Current_Term (Term),
+                                Empty_Node);
                      end if;
 
                   when others =>
@@ -2408,42 +2388,7 @@ package body Prj_API is
 
             Expr := Next_Expression_In_List (Expr);
          end loop;
-      end Delete_In_Expression;
-
-      -----------------
-      -- Remove_Node --
-      -----------------
-
-      procedure Remove_Node
-        (Parent : Project_Node_Id; Node : Project_Node_Id)
-      is
-         P    : Project_Node_Id := Parent;
-         Decl, Next : Project_Node_Id;
-      begin
-         if Kind_Of (Parent) = N_Project then
-            P := Project_Declaration_Of (Parent);
-         end if;
-
-         Decl := First_Declarative_Item_Of (P);
-
-         if Current_Item_Node (Decl) = Node then
-            Set_First_Declarative_Item_Of
-              (P, Next_Declarative_Item (Decl));
-         end if;
-
-         while Decl /= Empty_Node loop
-            Next := Next_Declarative_Item (Decl);
-            if Next /= Empty_Node
-              and then Current_Item_Node (Next) = Node
-            then
-               Set_Next_Declarative_Item
-                 (Decl, Next_Declarative_Item (Next));
-               exit;
-            end if;
-
-            Decl := Next;
-         end loop;
-      end Remove_Node;
+      end Process_Expression;
 
       ------------------------
       -- Recurse_In_Project --
@@ -2471,11 +2416,14 @@ package body Prj_API is
                   then
                      Add_Node_To_List
                        (Variable_Nodes, Variable_Nodes_Last, Current);
-                     Remove_Node (Root_Project, String_Type_Of (Current));
-                     Remove_Node (Root_Project, Current);
+
+                     Action
+                       (Root_Project, Empty_Node, String_Type_Of (Current),
+                        Empty_Node);
+                     Action (Root_Project, Decl, Current, Empty_Node);
                   end if;
 
-                  Delete_In_Expression (Expression_Of (Current));
+                  Process_Expression (Expression_Of (Current));
 
                when N_Case_Construction =>
                   if Is_Reference_To_Ext
@@ -2489,27 +2437,27 @@ package body Prj_API is
                         --  If we have reached Empty_Node and nothing matched
                         --  before, then that is the case item we want to keep.
                         --  This corresponds to "when others"
-                        Match := Choice = Empty_Node;
+                        Match := Choice = Empty_Node
+                          or else Specific_Choice = "";
 
-                        while Choice /= Empty_Node loop
-                           if String_Equal
-                             (String_Value_Of (Choice), Keep_Choice)
-                           then
-                              Match := True;
-                              exit;
-                           end if;
+                        if not Match then
+                           while Choice /= Empty_Node loop
+                              if Get_String
+                                (String_Value_Of (Choice)) = Specific_Choice
+                              then
+                                 Match := True;
+                                 exit;
+                              end if;
 
-                           Choice := Next_Literal_String (Choice);
-                        end loop;
-
-                        if Match then
-                           Tree_Private_Part.Project_Nodes.Table (Decl) :=
-                             Tree_Private_Part.Project_Nodes.Table
-                             (First_Declarative_Item_Of (Case_Item));
-                           Recurse_In_Project (Case_Item);
-                           exit;
+                              Choice := Next_Literal_String (Choice);
+                           end loop;
                         end if;
 
+                        if Match then
+                           Action (Root_Project, Decl, Case_Item, Choice);
+                        end if;
+
+                        Recurse_In_Project (Case_Item);
                         Case_Item := Next_Case_Item (Case_Item);
                      end loop;
 
@@ -2526,7 +2474,7 @@ package body Prj_API is
 
                when N_Variable_Declaration
                  |  N_Attribute_Declaration =>
-                  Delete_In_Expression (Expression_Of (Current));
+                  Process_Expression (Expression_Of (Current));
 
                when others =>
                   null;
@@ -2540,23 +2488,291 @@ package body Prj_API is
    begin
       Recurse_In_Project (Empty_Node);
 
-      if Kind_Of (Root_Project) = N_Project then
-         With_Clause := First_With_Clause_Of (Root_Project);
-         while With_Clause /= Empty_Node loop
-            Delete_External_Variable
-              (Project_Node_Of (With_Clause),
-               Ext_Variable_Name,
-               Keep_Choice,
-               Delete_Direct_References);
-            With_Clause := Next_With_Clause_Of (With_Clause);
-         end loop;
-      end if;
+      With_Clause := First_With_Clause_Of (Root_Project);
+      while With_Clause /= Empty_Node loop
+         For_Each_Environment_Variable
+           (Project_Node_Of (With_Clause),
+            Ext_Variable_Name,
+            Specific_Choice,
+            Action);
+         With_Clause := Next_With_Clause_Of (With_Clause);
+      end loop;
 
       Free (Variable_Nodes);
+   end For_Each_Environment_Variable;
 
+   ------------------------------
+   -- Rename_External_Variable --
+   ------------------------------
+
+   procedure Rename_External_Variable
+     (Root_Project : Project_Node_Id;
+      Old_Name     : String;
+      New_Name     : Types.String_Id)
+   is
+      procedure Callback (Project, Parent, Node, Choice : Project_Node_Id);
+      --  Called for each mtching node for the env. variable.
+
+      procedure Callback (Project, Parent, Node, Choice : Project_Node_Id) is
+      begin
+         if Kind_Of (Node) = N_External_Value then
+            Set_String_Value_Of (External_Reference_Of (Node), New_Name);
+         end if;
+      end Callback;
+
+   begin
+      For_Each_Environment_Variable
+        (Root_Project, Old_Name, "", Callback'Unrestricted_Access);
+   end Rename_External_Variable;
+
+   ----------------------
+   -- Add_Node_To_List --
+   ----------------------
+
+   procedure Add_Node_To_List
+     (To   : in out Project_Node_Array_Access;
+      Last : in out Natural;
+      Node : Project_Node_Id)
+   is
+      Old : Project_Node_Array_Access := To;
+   begin
+      if Last = To'Last then
+         To := new Project_Node_Array (1 .. Old'Last * 2);
+         To (1 .. Old'Length) := Old.all;
+         Free (Old);
+      end if;
+
+      Last := Last + 1;
+      To (Last) := Node;
+   end Add_Node_To_List;
+
+   -----------------
+   -- Remove_Node --
+   -----------------
+
+   procedure Remove_Node
+     (Parent : Project_Node_Id; Node : Project_Node_Id)
+   is
+      P    : Project_Node_Id := Parent;
+      Decl, Next : Project_Node_Id;
+   begin
+      --  ??? Should reset the list of Variables and Types if the node matches
+      if Kind_Of (Parent) = N_Project then
+         P := Project_Declaration_Of (Parent);
+      end if;
+
+      Decl := First_Declarative_Item_Of (P);
+
+      if Current_Item_Node (Decl) = Node then
+         Set_First_Declarative_Item_Of
+           (P, Next_Declarative_Item (Decl));
+      end if;
+
+      while Decl /= Empty_Node loop
+         Next := Next_Declarative_Item (Decl);
+         if Next /= Empty_Node
+           and then Current_Item_Node (Next) = Node
+         then
+            Set_Next_Declarative_Item
+              (Decl, Next_Declarative_Item (Next));
+            exit;
+         end if;
+
+         Decl := Next;
+      end loop;
+   end Remove_Node;
+
+   ------------------------------
+   -- Delete_External_Variable --
+   ------------------------------
+
+   procedure Delete_External_Variable
+     (Root_Project      : Project_Node_Id;
+      Ext_Variable_Name : String;
+      Keep_Choice       : String;
+      Delete_Direct_References : Boolean := True)
+   is
+      procedure Callback (Project, Parent, Node, Choice : Project_Node_Id);
+      --  Called for each mtching node for the env. variable.
+
+      procedure Callback (Project, Parent, Node, Choice : Project_Node_Id) is
+      begin
+         case Kind_Of (Node) is
+            when N_External_Value =>
+               if Delete_Direct_References then
+                  Start_String;
+                  Store_String_Chars (Keep_Choice);
+                  Set_Current_Term
+                    (Parent, Create_Literal_String (End_String));
+               end if;
+
+            when N_Variable_Reference =>
+               Start_String;
+               Store_String_Chars (Keep_Choice);
+               Set_Current_Term (Parent, Create_Literal_String (End_String));
+
+            when N_Typed_Variable_Declaration
+              | N_String_Type_Declaration =>
+               Remove_Node (Project, Node);
+
+            when N_Case_Item =>
+               Tree_Private_Part.Project_Nodes.Table (Parent) :=
+                 Tree_Private_Part.Project_Nodes.Table
+                 (First_Declarative_Item_Of (Node));
+
+            when others =>
+               null;
+               pragma Assert (False, "Unexpected node type");
+
+         end case;
+      end Callback;
+
+   begin
+      For_Each_Environment_Variable
+        (Root_Project, Ext_Variable_Name, Keep_Choice,
+         Callback'Unrestricted_Access);
       --  ??? Should update the cached value of scenario variables in the
       --  ??? kernel.
    end Delete_External_Variable;
+
+   ----------------------------------------
+   -- Rename_Value_For_External_Variable --
+   ----------------------------------------
+
+   procedure Rename_Value_For_External_Variable
+     (Root_Project      : Project_Node_Id;
+      Ext_Variable_Name : String;
+      Old_Value_Name    : String;
+      New_Value_Name    : Types.String_Id)
+   is
+      procedure Callback (Project, Parent, Node, Choice : Project_Node_Id);
+      --  Called for each mtching node for the env. variable.
+
+      procedure Callback (Project, Parent, Node, Choice : Project_Node_Id) is
+         C : Project_Node_Id;
+      begin
+         case Kind_Of (Node) is
+            when N_External_Value =>
+               if External_Default_Of (Node) /= Empty_Node
+                 and then Get_String
+                 (String_Value_Of (External_Default_Of (Node))) =
+                 Old_Value_Name
+               then
+                  Set_String_Value_Of
+                    (External_Default_Of (Node), New_Value_Name);
+               end if;
+
+            when N_String_Type_Declaration =>
+               C := First_Literal_String (Node);
+               while C /= Empty_Node loop
+                  if Get_String (String_Value_Of (C)) = Old_Value_Name then
+                     Set_String_Value_Of (C, New_Value_Name);
+                     exit;
+                  end if;
+                  C := Next_Literal_String (C);
+               end loop;
+
+            when N_Case_Item =>
+               Set_String_Value_Of (Choice, New_Value_Name);
+
+            when others =>
+               null;
+         end case;
+      end Callback;
+
+   begin
+      For_Each_Environment_Variable
+        (Root_Project, Ext_Variable_Name, Old_Value_Name,
+         Callback'Unrestricted_Access);
+   end Rename_Value_For_External_Variable;
+
+   ------------------
+   -- Remove_Value --
+   ------------------
+
+   procedure Remove_Value
+     (Root_Project      : Project_Node_Id;
+      Ext_Variable_Name : String;
+      Value_Name        : String)
+   is
+      Delete_Variable : exception;
+
+      procedure Callback (Project, Parent, Node, Choice : Project_Node_Id);
+      --  Called for each mtching node for the env. variable.
+
+      procedure Callback (Project, Parent, Node, Choice : Project_Node_Id) is
+         C, C2 : Project_Node_Id;
+      begin
+         case Kind_Of (Node) is
+            when N_String_Type_Declaration =>
+               C := First_Literal_String (Node);
+
+               if Next_Literal_String (C) = Empty_Node then
+                  raise Delete_Variable;
+               end if;
+
+               if Get_String (String_Value_Of (C)) = Value_Name then
+                  Set_First_Literal_String (Node, Next_Literal_String (C));
+                  return;
+               end if;
+
+               loop
+                  C2 := Next_Literal_String (C);
+                  exit when C2 = Empty_Node;
+
+                  if Get_String (String_Value_Of (C2)) = Value_Name then
+                     Set_Next_Literal_String (C, Next_Literal_String (C2));
+                     exit;
+                  end if;
+                  C := C2;
+               end loop;
+
+            when N_External_Value =>
+               if External_Default_Of (Node) /= Empty_Node
+                 and then Get_String
+                 (String_Value_Of (External_Default_Of (Node))) =
+                 Value_Name
+               then
+                  Set_External_Default_Of (Node, Empty_Node);
+               end if;
+
+            when N_Case_Item =>
+               C := First_Case_Item_Of (Current_Item_Node (Parent));
+               if C = Node then
+                  Set_First_Case_Item_Of
+                    (Current_Item_Node (Parent), Next_Case_Item (C));
+                  return;
+               end if;
+
+               loop
+                  C2 := Next_Case_Item (C);
+                  exit when C2 = Empty_Node;
+
+                  if C2 = Node then
+                     Set_Next_Case_Item (C, Next_Case_Item (C2));
+                  end if;
+
+                  C := C2;
+               end loop;
+
+            when others =>
+               null;
+         end case;
+      end Callback;
+
+   begin
+      For_Each_Environment_Variable
+        (Root_Project, Ext_Variable_Name, Value_Name,
+         Callback'Unrestricted_Access);
+
+   exception
+      when Delete_Variable =>
+         Delete_External_Variable
+           (Root_Project,
+            Ext_Variable_Name        => Ext_Variable_Name,
+            Keep_Choice              => Value_Name,
+            Delete_Direct_References => False);
+   end Remove_Value;
 
 begin
    Namet.Initialize;
