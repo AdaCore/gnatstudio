@@ -622,6 +622,9 @@ package Glide_Kernel is
    -- Saving --
    ------------
 
+   type GPS_MDI_Child_Record is new Gtkada.MDI.MDI_Child_Record with private;
+   --  Base record for all MDI children that go into the MDI
+
    function Get_MDI
      (Handle : access Kernel_Handle_Record) return Gtkada.MDI.MDI_Window;
    --  Return the MDI associated with Handle.
@@ -951,6 +954,12 @@ private
    type Action_Iterator is record
       Iterator : Actions_Htable.String_Hash_Table.Iterator;
    end record;
+
+   type GPS_MDI_Child_Record is new Gtkada.MDI.MDI_Child_Record with record
+      Module              : Module_ID;
+      Desktop_Independent : Boolean;
+   end record;
+   type GPS_MDI_Child is access all GPS_MDI_Child_Record'Class;
 
    type Kernel_Handle_Record is new Glib.Object.GObject_Record with record
       Key_Handler : Key_Handler_Access := new Default_Key_Handler_Record;

@@ -155,12 +155,6 @@ package body Glide_Kernel is
    --  Event handler called before even gtk can do its dispatching. This
    --  intercepts all events going through the application
 
-   type GPS_MDI_Child_Record is new MDI_Child_Record with record
-      Module              : Module_ID;
-      Desktop_Independent : Boolean;
-   end record;
-   type GPS_MDI_Child is access all GPS_MDI_Child_Record'Class;
-
    --------------------------
    -- Get_Language_Handler --
    --------------------------
@@ -1811,9 +1805,18 @@ package body Glide_Kernel is
       Module : access Module_ID_Record'Class;
       Desktop_Independent : Boolean := False) return MDI_Child
    is
-      C : GPS_MDI_Child := new GPS_MDI_Child_Record;
+      C : GPS_MDI_Child;
    begin
-      Initialize (C, Child, Flags);
+      if Child.all in GPS_MDI_Child_Record'Class then
+         C := GPS_MDI_Child (Child);
+      elsif Child.all in MDI_Child_Record'Class then
+         return Put (Get_MDI (Handle), Child, Flags, Focus_Widget,
+                     Default_Width, Default_Height);
+      else
+         C := new GPS_MDI_Child_Record;
+         Initialize (C, Child, Flags);
+      end if;
+
       C.Module := Module_ID (Module);
       C.Desktop_Independent := Desktop_Independent;
       return Put
