@@ -206,6 +206,13 @@ package body Src_Editor_View is
    pragma Inline (Get_Line_Height);
    --  Return the height of the line in the window.
 
+   procedure Remove_Synchronization
+     (View : access Source_View_Record'Class);
+   --  Remove the synchronized scrolling loop related to this editor.
+
+   procedure On_Scroll (View : access Gtk_Widget_Record'Class);
+   --  Callback when the adjustments have changed.
+
    -------------------------
    -- Cursor_Is_On_Screen --
    -------------------------
@@ -294,6 +301,8 @@ package body Src_Editor_View is
 
       View.Idle_Redraw_Registered := True;
       View.Connect_Expose_Registered := True;
+
+      Remove_Synchronization (View);
    end Delete;
 
    ---------------------
@@ -563,6 +572,7 @@ package body Src_Editor_View is
             Iter                       : Gtk_Text_Iter;
             Top_Line                   : Buffer_Line_Type;
             Bottom_Line                : Buffer_Line_Type;
+            Scroll                     : Boolean := False;
 
          begin
             Get_Geometry (Window, X, Y, Width, Height, Depth);
@@ -583,6 +593,10 @@ package body Src_Editor_View is
 
             --  If one of the values hadn't been initialized, display the
             --  whole range of lines.
+
+            if View.Top_Line /= Top_Line then
+               Scroll := True;
+            end if;
 
             View.Top_Line    := Top_Line;
             View.Bottom_Line := Bottom_Line;
@@ -612,6 +626,10 @@ package body Src_Editor_View is
 
             if Bottom_Line >= Top_Line then
                Source_Lines_Revealed (Buffer, Top_Line, Bottom_Line);
+            end if;
+
+            if Scroll then
+               On_Scroll (View);
             end if;
          end;
 
@@ -1492,5 +1510,70 @@ package body Src_Editor_View is
          Unref (Layout);
       end if;
    end Redraw_Columns;
+
+   -----------------------------
+   -- Set_Synchronized_Editor --
+   -----------------------------
+
+   procedure Set_Synchronized_Editor
+     (View  : access Source_View_Record;
+      Other : Source_View) is
+   begin
+      if View.Synchronized_Editor /= null then
+         Remove_Synchronization (View);
+      end if;
+
+      View.Synchronized_Editor := Other;
+   end Set_Synchronized_Editor;
+
+   ----------------------------
+   -- Remove_Synchronization --
+   ----------------------------
+
+   procedure Remove_Synchronization
+     (View : access Source_View_Record'Class) is
+   begin
+      if View.Scrolling then
+         return;
+      end if;
+
+      if View.Synchronized_Editor /= null then
+         View.Scrolling := True;
+         Remove_Synchronization (View.Synchronized_Editor);
+         View.Synchronized_Editor := null;
+         View.Scrolling := False;
+      end if;
+   end Remove_Synchronization;
+
+   ---------------
+   -- On_Scroll --
+   ---------------
+
+   procedure On_Scroll (View : access Gtk_Widget_Record'Class) is
+      Src_View : constant Source_View := Source_View (View);
+      Buf      : Source_Buffer;
+
+      Success  : Boolean;
+      pragma Unreferenced (Success);
+
+      Iter     : Gtk_Text_Iter;
+   begin
+      if Src_View.Scrolling or else Src_View.Synchronized_Editor = null then
+         return;
+      end if;
+
+      Src_View.Scrolling := True;
+
+      Buf := Source_Buffer (Get_Buffer (Src_View.Synchronized_Editor));
+
+      if Is_Valid_Position (Buf, Gint (Src_View.Top_Line - 1), 0) then
+         Get_Iter_At_Line (Buf, Iter, Gint (Src_View.Top_Line - 1));
+
+         Success := Scroll_To_Iter
+           (Src_View.Synchronized_Editor, Iter, 0.0, True, 0.0, 0.0);
+      end if;
+
+      Src_View.Scrolling := False;
+   end On_Scroll;
 
 end Src_Editor_View;
