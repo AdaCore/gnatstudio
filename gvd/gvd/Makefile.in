@@ -9,8 +9,9 @@ prefix          = @prefix@
 bindir          = $(prefix)/bin
 
 CFLAGS = -g -O2
+C_OBJECTS = ../gnat/gexpect.o ../gnat/gexpect_tty.o ../pixmaps/pixmaps.o
 ALL_CFLAGS = $(CFLAGS) -gnata -gnatwuwe @GTK_CFLAGS@ @TARGET_CFLAGS@ -I../gnat
-LINK_FLAGS = ../gnat/gexpect.o ../gnat/gexpect_tty.o ../pixmaps/pixmaps.o @TARGET_LFLAGS@ @GTK_LIBS@
+LINK_FLAGS = $(C_OBJECTS) @TARGET_LFLAGS@ @GTK_LIBS@
 
 MAIN = gvd_main
 EXEC = gvd
@@ -34,11 +35,12 @@ $(EXEC): force
 	  -largs $(LINK_FLAGS)
 
 libgvd:
-	rm $(EXEC)
+	rm -f $(EXEC)
 	gcc -c $(ALL_CFLAGS) gvd-api.adb
 	gnatmake -m $(ALL_CFLAGS) $(MAIN) -o $(EXEC) -bargs -E -n \
 	  -largs --LINK=true
-	ar r libgvd.a *.o ../gnat/*.o ../pixmaps/*.o
+	ar r libgvd.a $(C_OBJECTS) \
+	  `grep '   --   ' b~$(MAIN).adb | grep '\.o$$' | sed 's/   --   //'`
 
 install: $(EXEC)
 	$(MKDIR) $(bindir)
