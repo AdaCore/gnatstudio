@@ -1,20 +1,29 @@
 
-with Glib;            use Glib;
-with Gtk.Notebook;    use Gtk.Notebook;
-with Gtk.Clist;       use Gtk.Clist;
-with Gtkada.Types;    use Gtkada.Types;
-with Gtk.Label;       use Gtk.Label;
-with Gtkada.Handlers; use Gtkada.Handlers;
-with Gtk.Widget;      use Gtk.Widget;
-with Gtk.Arguments;   use Gtk.Arguments;
+with Gdk.Color;       use Gdk.Color;
 with Gdk.Event;       use Gdk.Event;
+with Glib;            use Glib;
+with Gtk.Arguments;   use Gtk.Arguments;
+with Gtk.Box;         use Gtk.Box;
+with Gtk.Button;      use Gtk.Button;
+with Gtk.Clist;       use Gtk.Clist;
+with Gtk.Dialog;      use Gtk.Dialog;
+with Gtk.Enums;       use Gtk.Enums;
+with Gtk.Label;       use Gtk.Label;
+with Gtk.Notebook;    use Gtk.Notebook;
+with Gtk.Style;       use Gtk.Style;
+with Gtk.Widget;      use Gtk.Widget;
+with Gtkada.Handlers; use Gtkada.Handlers;
+with Gtkada.Types;    use Gtkada.Types;
+with Pango.Font;      use Pango.Font;
 
-with GNAT.OS_Lib;               use GNAT.OS_Lib;
-with Interfaces.C.Strings;      use Interfaces.C.Strings;
+with Ada.Calendar;
+with Ada.Text_IO;               use Ada.Text_IO;
 with GNAT.Calendar.Time_IO;     use GNAT.Calendar.Time_IO;
 with GNAT.Calendar;             use GNAT.Calendar;
-with Ada.Calendar;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
+with GNAT.OS_Lib;               use GNAT.OS_Lib;
+with Interfaces.C.Strings;      use Interfaces.C.Strings;
+with Interfaces.C;              use Interfaces.C;
 
 with Prj;          use Prj;
 with Prj_API;      use Prj_API;
@@ -27,19 +36,25 @@ with Switches_Editors; use Switches_Editors;
 package body Project_Viewers is
 
    Timestamp_Picture : constant Picture_String := "%Y/%m/%d %H:%M:%S";
-   --  <preference>Format used to display timestamps
+   --  <preference> Format used to display timestamps
 
-   Show_Default_Switches : constant Boolean := False;
-   --  <preference>Whether we should display the switches for a file when
-   --  they are in fact the default switches defined in the project file.
+   Default_Switches_Color : constant String := "#777777";
+   --  <preference> Color to use when displaying switches that are not file
+   --  specific, but set at the project or package level.
 
-   type View_Display is access function
+   Switches_Editor_Title_Font : constant String := "helvetica bold oblique 14";
+   --  <preference> Font to use for the switches editor dialog
+
+   type View_Display is access procedure
      (Viewer    : access Project_Viewer_Record'Class;
       File_Name : String;
       Directory : String;
-      Fd        : File_Descriptor) return Interfaces.C.Strings.chars_ptr;
-   --  Function used to return the contents of one of the columns.
-   --  The returned string will be freed by the caller.
+      Fd        : File_Descriptor;
+      Line      : out Interfaces.C.Strings.chars_ptr;
+      Style     : out Gtk_Style);
+   --  Procedure used to return the contents of one of the columns.
+   --  The returned string (Line) will be freed by the caller.
+   --  Style is the style to apply to the matching cell in the clist.
 
    type View_Callback is access procedure
      (Viewer    : access Project_Viewer_Record'Class;
@@ -75,54 +90,41 @@ package body Project_Viewers is
    type View_Description_Access is access constant View_Description;
 
 
-   function Name_Display
+   procedure Name_Display
      (Viewer : access Project_Viewer_Record'Class;
       File_Name : String;
       Directory : String;
-      Fd        : File_Descriptor) return Interfaces.C.Strings.chars_ptr;
+      Fd        : File_Descriptor;
+      Line      : out Interfaces.C.Strings.chars_ptr;
+      Style     : out Gtk_Style);
    --  Return the name of the file
 
-   function Size_Display
+   procedure Size_Display
      (Viewer : access Project_Viewer_Record'Class;
       File_Name : String;
       Directory : String;
-      Fd        : File_Descriptor) return Interfaces.C.Strings.chars_ptr;
+      Fd        : File_Descriptor;
+      Line      : out Interfaces.C.Strings.chars_ptr;
+      Style     : out Gtk_Style);
    --  Return the size of the file
 
-   function Timestamp_Display
+   procedure Timestamp_Display
      (Viewer : access Project_Viewer_Record'Class;
       File_Name : String;
       Directory : String;
-      Fd        : File_Descriptor) return Interfaces.C.Strings.chars_ptr;
+      Fd        : File_Descriptor;
+      Line      : out Interfaces.C.Strings.chars_ptr;
+      Style     : out Gtk_Style);
    --  Return the timestamp for the file
 
-   function Make_Switches_Display
+   procedure Compiler_Switches_Display
      (Viewer : access Project_Viewer_Record'Class;
       File_Name : String;
       Directory : String;
-      Fd        : File_Descriptor) return Interfaces.C.Strings.chars_ptr;
-   --  Return the switches used for the gnatmake command
-
-   function Compiler_Switches_Display
-     (Viewer : access Project_Viewer_Record'Class;
-      File_Name : String;
-      Directory : String;
-      Fd        : File_Descriptor) return Interfaces.C.Strings.chars_ptr;
+      Fd        : File_Descriptor;
+      Line      : out Interfaces.C.Strings.chars_ptr;
+      Style     : out Gtk_Style);
    --  Return the switches used for the compiler
-
-   function Binder_Switches_Display
-     (Viewer : access Project_Viewer_Record'Class;
-      File_Name : String;
-      Directory : String;
-      Fd        : File_Descriptor) return Interfaces.C.Strings.chars_ptr;
-   --  Return the switches used for the binder
-
-   function Linker_Switches_Display
-     (Viewer : access Project_Viewer_Record'Class;
-      File_Name : String;
-      Directory : String;
-      Fd        : File_Descriptor) return Interfaces.C.Strings.chars_ptr;
-   --  Return the switches used for the linker
 
    procedure Edit_Switches_Callback
      (Viewer    : access Project_Viewer_Record'Class;
@@ -146,18 +148,12 @@ package body Project_Viewers is
       Display     => (Name_Display'Access, null, null),
       Callbacks   => (null, null, null));
    View_Switches : aliased constant View_Description :=
-     (Num_Columns => 5,
-      Titles      => "File Name" + "Make" + "Compiler" + "Binder" + "Linker",
+     (Num_Columns => 2,
+      Titles      => "File Name" + "Compiler",
       Tab_Title   => new String' ("Switches"),
       Display     => (Name_Display'Access,
-                      Make_Switches_Display'Access,
-                      Compiler_Switches_Display'Access,
-                      Binder_Switches_Display'Access,
-                      Linker_Switches_Display'Access),
+                      Compiler_Switches_Display'Access),
       Callbacks   => (null,
-                      Edit_Switches_Callback'Access,
-                      Edit_Switches_Callback'Access,
-                      Edit_Switches_Callback'Access,
                       Edit_Switches_Callback'Access));
 
    Views : array (View_Type) of View_Description_Access :=
@@ -183,6 +179,12 @@ package body Project_Viewers is
    --  The exact contents inserted depends on the current view.
    --  The file is automatically searched in all the source directories of
    --  Project_View.
+
+   procedure Close_Switch_Editor (Dialog : access Gtk_Widget_Record'Class);
+   procedure Destroy_Switch_Editor (Switches : access Gtk_Widget_Record'Class);
+   --  Called when the user has closed a switch editor for a specific file.
+   --  The first version if the callback for the Close button, the second one
+   --  is for the "destroy".
 
    function Append_Line_With_Full_Name
      (Viewer : access Project_Viewer_Record'Class;
@@ -308,41 +310,17 @@ package body Project_Viewers is
       return S;
    end To_Argument_List;
 
-   ---------------------------
-   -- Make_Switches_Display --
-   ---------------------------
-
-   function Make_Switches_Display
-     (Viewer : access Project_Viewer_Record'Class;
-      File_Name : String;
-      Directory : String;
-      Fd        : File_Descriptor) return Interfaces.C.Strings.chars_ptr
-   is
-      File     : Name_Id;
-      Value    : Variable_Value;
-      Is_Default : Boolean;
-   begin
-      Name_Len := File_Name'Length;
-      Name_Buffer (1 .. Name_Len) := File_Name;
-      File := Name_Find;
-
-      Get_Switches (Viewer.Project_View, "gnatmake", File, Value, Is_Default);
-      if Show_Default_Switches or else not Is_Default then
-         return New_String (To_String (Value));
-      else
-         return New_String ("");
-      end if;
-   end Make_Switches_Display;
-
    -------------------------------
    -- Compiler_Switches_Display --
    -------------------------------
 
-   function Compiler_Switches_Display
+   procedure Compiler_Switches_Display
      (Viewer : access Project_Viewer_Record'Class;
       File_Name : String;
       Directory : String;
-      Fd        : File_Descriptor) return Interfaces.C.Strings.chars_ptr
+      Fd        : File_Descriptor;
+      Line      : out Interfaces.C.Strings.chars_ptr;
+      Style     : out Gtk_Style)
    is
       File     : Name_Id;
       Value    : Variable_Value;
@@ -353,108 +331,63 @@ package body Project_Viewers is
       File := Name_Find;
 
       Get_Switches (Viewer.Project_View, "compiler", File, Value, Is_Default);
-      if Show_Default_Switches or else not Is_Default then
-         return New_String (To_String (Value));
-      else
-         return New_String ("");
+      Line := New_String (To_String (Value));
+      if Is_Default then
+         Style := Viewer.Default_Switches_Style;
       end if;
    end Compiler_Switches_Display;
-
-   -----------------------------
-   -- Binder_Switches_Display --
-   -----------------------------
-
-   function Binder_Switches_Display
-     (Viewer : access Project_Viewer_Record'Class;
-      File_Name : String;
-      Directory : String;
-      Fd        : File_Descriptor) return Interfaces.C.Strings.chars_ptr
-   is
-      File     : Name_Id;
-      Value    : Variable_Value;
-      Is_Default : Boolean;
-   begin
-      Name_Len := File_Name'Length;
-      Name_Buffer (1 .. Name_Len) := File_Name;
-      File := Name_Find;
-
-      Get_Switches (Viewer.Project_View, "gnatbind", File, Value, Is_Default);
-      if Show_Default_Switches or else not Is_Default then
-         return New_String (To_String (Value));
-      else
-         return New_String ("");
-      end if;
-   end Binder_Switches_Display;
-
-   -----------------------------
-   -- Linker_Switches_Display --
-   -----------------------------
-
-   function Linker_Switches_Display
-     (Viewer : access Project_Viewer_Record'Class;
-      File_Name : String;
-      Directory : String;
-      Fd        : File_Descriptor) return Interfaces.C.Strings.chars_ptr
-   is
-      File     : Name_Id;
-      Value    : Variable_Value;
-      Is_Default : Boolean;
-   begin
-      Name_Len := File_Name'Length;
-      Name_Buffer (1 .. Name_Len) := File_Name;
-      File := Name_Find;
-
-      Get_Switches (Viewer.Project_View, "gnatlink", File, Value, Is_Default);
-      if Show_Default_Switches or else not Is_Default then
-         return New_String (To_String (Value));
-      else
-         return New_String ("");
-      end if;
-   end Linker_Switches_Display;
 
    ------------------
    -- Name_Display --
    ------------------
 
-   function Name_Display
+   procedure Name_Display
      (Viewer : access Project_Viewer_Record'Class;
       File_Name : String;
       Directory : String;
-      Fd        : File_Descriptor) return Interfaces.C.Strings.chars_ptr
+      Fd        : File_Descriptor;
+      Line      : out Interfaces.C.Strings.chars_ptr;
+      Style     : out Gtk_Style)
    is
       pragma Warnings (Off, Viewer);
       pragma Warnings (Off, Directory);
       pragma Warnings (Off, Fd);
    begin
-      return New_String (File_Name);
+      Style := null;
+      Line  := New_String (File_Name);
    end Name_Display;
 
    ------------------
    -- Size_Display --
    ------------------
 
-   function Size_Display
+   procedure Size_Display
      (Viewer : access Project_Viewer_Record'Class;
       File_Name : String;
       Directory : String;
-      Fd        : File_Descriptor) return Interfaces.C.Strings.chars_ptr
+      Fd        : File_Descriptor;
+      Line      : out Interfaces.C.Strings.chars_ptr;
+      Style     : out Gtk_Style)
    is
       pragma Warnings (Off, Viewer);
       pragma Warnings (Off, Directory);
       pragma Warnings (Off, File_Name);
    begin
-      return New_String (Long_Integer'Image (File_Length (Fd)));
+      Style := null;
+      Line := New_String (Long_Integer'Image (File_Length (Fd)));
    end Size_Display;
 
    -----------------------
    -- Timestamp_Display --
    -----------------------
 
-   function Timestamp_Display
+   procedure Timestamp_Display
      (Viewer : access Project_Viewer_Record'Class;
       File_Name : String;
       Directory : String;
-      Fd        : File_Descriptor) return Interfaces.C.Strings.chars_ptr
+      Fd        : File_Descriptor;
+      Line      : out Interfaces.C.Strings.chars_ptr;
+      Style     : out Gtk_Style)
    is
       pragma Warnings (Off, Viewer);
       pragma Warnings (Off, Directory);
@@ -485,8 +418,29 @@ package body Project_Viewers is
       localtime_r (O_Time, T);
       A_Time := Time_Of (1900 + T.tm_year, T.tm_mon, T.tm_mday,
                          T.tm_hour, T.tm_min, T.tm_sec);
-      return New_String (Image (A_Time, Timestamp_Picture));
+      Line := New_String (Image (A_Time, Timestamp_Picture));
+      Style := null;
    end Timestamp_Display;
+
+   -------------------------
+   -- Close_Switch_Editor --
+   -------------------------
+
+   procedure Close_Switch_Editor
+     (Dialog : access Gtk_Widget_Record'Class) is
+   begin
+      Destroy (Dialog);
+   end Close_Switch_Editor;
+
+   ---------------------------
+   -- Destroy_Switch_Editor --
+   ---------------------------
+
+   procedure Destroy_Switch_Editor
+     (Switches : access Gtk_Widget_Record'Class) is
+   begin
+      Put_Line ("destroyed");
+   end Destroy_Switch_Editor;
 
    ----------------------------
    -- Edit_Switches_Callback --
@@ -498,29 +452,16 @@ package body Project_Viewers is
       File_Name : String_Id;
       Directory : String_Id)
    is
-      procedure Set (Tool : Tool_Names; Pkg : String);
-      --  Set the switches for one of the tools
-
       File : Name_Id;
       Tool : Tool_Names;
       Switches : Switches_Edit;
-
-      ---------
-      -- Set --
-      ---------
-
-      procedure Set (Tool : Tool_Names; Pkg : String) is
-         Value : Variable_Value;
-         Is_Default : Boolean;
-      begin
-         Get_Switches (Viewer.Project_View, Pkg, File, Value, Is_Default);
-         declare
-            List : Argument_List := To_Argument_List (Value);
-         begin
-            Set_Switches (Switches, Tool, List);
-            Free (List);
-         end;
-      end Set;
+      Dialog : Gtk_Dialog;
+      Button : Gtk_Button;
+      Label  : Gtk_Label;
+      Value : Variable_Value;
+      Is_Default : Boolean;
+      Desc : Pango_Font_Description;
+      Style : Gtk_Style;
 
    begin
       String_To_Name_Buffer (File_Name);
@@ -534,18 +475,45 @@ package body Project_Viewers is
          when others => return;
       end case;
 
-      Gtk_New (Switches);
+      Gtk_New (Dialog);
+
       String_To_Name_Buffer (File_Name);
-      Set_Title
-        (Switches, "Editing switches for " & Name_Buffer (1 .. Name_Len));
+      Gtk_New (Label, "Editing switches for " & Name_Buffer (1 .. Name_Len));
+      Pack_Start (Get_Vbox (Dialog), Label, Padding => 10);
+
+      Style := Copy (Get_Style (Label));
+      Desc := From_String (Switches_Editor_Title_Font);
+      Set_Font_Description (Style, Desc);
+      Set_Style (Label, Style);
+
+
+      Gtk_New (Switches);
+      Pack_Start (Get_Vbox (Dialog),
+                  Get_Window (Switches), Fill => True, Expand => True);
 
       --  Set the switches for all the pages
-      Set (Gnatmake, "gnatmake");
-      Set (Compiler, "compiler");
-      Set (Binder,   "gnatbind");
-      Set (Linker,   "gnatlink");
+      Get_Switches (Viewer.Project_View, "compiler", File, Value, Is_Default);
+      declare
+         List : Argument_List := To_Argument_List (Value);
+      begin
+         Set_Switches (Switches, Compiler, List);
+         Free (List);
+      end;
 
-      Show_All (Switches);
+      Destroy_Pages (Switches, Gnatmake_Page or Binder_Page or Linker_Page);
+
+      Gtk_New (Button, "Close");
+      Pack_Start
+        (Get_Action_Area (Dialog), Button, Fill => False, Expand => False);
+      Widget_Callback.Object_Connect
+        (Button, "clicked",
+         Widget_Callback.To_Marshaller (Close_Switch_Editor'Access), Dialog);
+
+      Widget_Callback.Connect
+        (Dialog, "destroy",
+         Widget_Callback.To_Marshaller (Destroy_Switch_Editor'Access));
+
+      Show_All (Dialog);
       Set_Page (Switches, Tool);
    end Edit_Switches_Callback;
 
@@ -564,6 +532,7 @@ package body Project_Viewers is
         (1 .. Views (Current_View).Num_Columns);
       Row : Gint;
       File_Desc : File_Descriptor;
+      Style : array (1 .. Views (Current_View).Num_Columns) of Gtk_Style;
    begin
       if Is_Absolute_Path (Directory_Name) then
          File_Desc := Open_Read (Directory_Name & Directory_Separator
@@ -574,18 +543,27 @@ package body Project_Viewers is
             & File_Name & ASCII.Nul, Text);
       end if;
 
-      for Column in 1 .. Views (Current_View).Num_Columns loop
+      for Column in Line'Range loop
          if Views (Current_View).Display (Column) /= null then
-            Line (Column) := Views (Current_View).Display (Column)
-              (Viewer, File_Name, Directory_Name, File_Desc);
+            Views (Current_View).Display (Column)
+              (Viewer, File_Name, Directory_Name, File_Desc,
+               Line (Column), Style (Column));
          else
             Line (Column) := New_String ("");
+            Style (Column) := null;
          end if;
       end loop;
 
       Close (File_Desc);
 
       Row := Append (Viewer.Pages (Current_View), Line);
+
+      for S in Style'Range loop
+         Set_Cell_Style
+           (Viewer.Pages (Current_View), Row, Gint (S - Style'First),
+            Style (S));
+      end loop;
+
       Free (Line);
       return Row;
    end Append_Line_With_Full_Name;
@@ -742,6 +720,7 @@ package body Project_Viewers is
 
    procedure Initialize (Viewer : access Project_Viewer_Record'Class) is
       Label : Gtk_Label;
+      Color : Gdk_Color;
    begin
       Gtk.Notebook.Initialize (Viewer);
 
@@ -760,6 +739,11 @@ package body Project_Viewers is
 
       Widget_Callback.Connect (Viewer, "switch_page", Switch_Page'Access);
 
+      Color := Parse (Default_Switches_Color);
+      Alloc (Get_Default_Colormap, Color);
+      Viewer.Default_Switches_Style := Copy (Get_Style (Viewer));
+      Set_Foreground (Viewer.Default_Switches_Style, State_Normal, Color);
+
       Show_All (Viewer);
    end Initialize;
 
@@ -768,9 +752,15 @@ package body Project_Viewers is
    ------------------
 
    function Current_Page (Viewer : access Project_Viewer_Record'Class)
-      return View_Type is
+      return View_Type
+   is
+      P : Gint := Get_Current_Page (Viewer);
    begin
-      return View_Type'Val (Get_Current_Page (Viewer));
+      if P /= -1 then
+         return View_Type'Val (P);
+      else
+         return View_Type'First;
+      end if;
    end Current_Page;
 
    ------------------

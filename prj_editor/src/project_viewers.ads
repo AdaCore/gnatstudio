@@ -2,6 +2,7 @@
 --  Dependencies on GtkAda
 with Gtk.Notebook; use Gtk.Notebook;
 with Gtk.Clist;
+with Gtk.Style;
 
 --  Dependencies on GNAT sources
 with Prj;
@@ -51,6 +52,10 @@ private
 
       Pages : Clist_View_Array;
       --  The contents of all the pages in the viewer
+
+      Default_Switches_Style : Gtk.Style.Gtk_Style;
+      --  Style to use when displaying switches that are set at the project
+      --  level, rather than file specific
 
       Project_View : Prj.Project_Id := Prj.No_Project;
    end record;
