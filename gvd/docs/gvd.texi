@@ -1336,9 +1336,10 @@ accessed using the arrow located at the left of the status line.
      exist).
 
 @smallexample
+   (auto-load 'ada-gdb-application "ada-mode" "" t)
    (defun gvd (executable-name)
      "Start gvd on EXECUTABLE-NAME, with emacs as the source window."
-     (interactive "fExecutable: ")
+     (interactive "FExecutable: ")
      (let ((ada-tight-gvd-integration t)
 	   (ada-prj-default-debugger  "gvd"))
        (ada-gdb-application nil executable-name)))
