@@ -6390,7 +6390,9 @@ This tag accepts the following attributes:
    the @code{<action>} tag.
 
    @item on-failure (optional)
+@iftex
    @cindex on-failure
+@end iftex
    This attribute specifies a shell command to be executed if the external
    command fails. Typically, this is used to parse the output of the command
    and fill the location window appropriately (@pxref{Processing the tool
@@ -6415,7 +6417,9 @@ This tag accepts the following attributes:
    @end smallexample
 
    @item on-failure-lang (optional)
+@iftex
    @cindex on-failure-lang
+@end iftex
    This attribute specifies the shell language in which the above attribute is
    written. By default, this is the GPS shell.
 
