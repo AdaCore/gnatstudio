@@ -52,6 +52,76 @@ package body Src_Info is
       Reset (LIFL.Table);
    end Reset;
 
+   ------------
+   -- Locate --
+   ------------
+
+   function Locate
+     (List : LI_File_List;
+      LI_Filename : String)
+      return LI_File_Ptr is
+   begin
+      return Get (List.Table, LI_Filename);
+   end Locate;
+
+   ------------------------
+   -- Locate_From_Source --
+   ------------------------
+
+   function Locate_From_Source
+     (List            : LI_File_List;
+      Source_Filename : String)
+      return LI_File_Ptr
+   is
+      Current_LI  : LI_File_Ptr;
+      Current_Sep : File_Info_Ptr_List;
+      Table : LI_File_HTable.HTable := List.Table;
+      --  ??? Make a copy of the table since Get_First and Get_Next need
+      --  ??? a Read/Writable HTable. This is temporary since we should stop
+      --  ??? using Get_First/Next soon. See ??? comment below.
+   begin
+      --  ??? The best way of doing this is to convert the filename into the
+      --  ??? Library Info filename, and then use the Htable to retrieve the
+      --  ??? LI_File. This poses a few problems because the conversion is
+      --  ??? language dependent. We might want to play with dispatching
+      --  ??? using Language.* later on. For the moment, we do a brutal
+      --  ??? search; that'll do for now, and it works fast enough on small
+      --  ??? projects.
+      Get_First (Table, Current_LI);
+      LI_File_Loop :
+      while Current_LI /= null loop
+         --  See if the filename matches the spec filename
+         if Current_LI.Spec_Info /= null
+           and then Current_LI.Spec_Info.Source_Filename.all = Source_Filename
+         then
+            return Current_LI;
+         end if;
+
+         --  Check if the filename matches the body filename
+         if Current_LI.Body_Info /= null
+           and then Current_LI.Body_Info.Source_Filename.all = Source_Filename
+         then
+            return Current_LI;
+         end if;
+
+         --  Finally, check the filenames of the separates
+         Current_Sep := Current_LI.Separate_Info;
+         Separate_Loop :
+         while Current_Sep /= null loop
+            if Current_Sep.Value.Source_Filename.all = Source_Filename then
+               return Current_LI;
+            end if;
+            Current_Sep := Current_Sep.Next;
+         end loop Separate_Loop;
+
+         --  This LI_File does not match, try the next one in the table...
+         Get_Next (Table, Current_LI);
+      end loop LI_File_Loop;
+
+      --  If we reach this point, then there is not matching LI_File
+      return null;
+   end Locate_From_Source;
+
    ---------
    -- "=" --
    ---------
@@ -175,7 +245,7 @@ package body Src_Info is
         LI_File_HTable.Get (HT, Name'Unchecked_Access);
    begin
       if Node = null then
-         return null;
+         return No_LI_File;
       else
          return Node.Value;
       end if;
@@ -192,7 +262,7 @@ package body Src_Info is
    begin
       LI_File_HTable.Get_First (HT, Node);
       if Node = null then
-         Result := null;
+         Result := No_LI_File;
       else
          Result := Node.Value;
       end if;
@@ -209,7 +279,7 @@ package body Src_Info is
    begin
       LI_File_HTable.Get_Next (HT, Node);
       if Node = null then
-         Result := null;
+         Result := No_LI_File;
       else
          Result := Node.Value;
       end if;
