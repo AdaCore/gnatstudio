@@ -358,6 +358,13 @@ package Debugger is
    --  Load a core file into the debugger.
    --  GDB_COMMAND: "core"
 
+   procedure Add_Symbols
+     (Debugger : access Debugger_Root;
+      Module   : String;
+      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden) is abstract;
+   --  Load symbols from a specified module into the debugger.
+   --  GDB_COMMAND: "add-symbol-file"
+
    procedure Run
      (Debugger  : access Debugger_Root;
       Arguments : String := "";

@@ -124,6 +124,11 @@ package Debugger.Gdb is
       Core     : String;
       Mode     : GVD.Types.Command_Type := GVD.Types.Hidden);
 
+   procedure Add_Symbols
+     (Debugger : access Gdb_Debugger;
+      Module   : String;
+      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden);
+
    procedure Run
      (Debugger  : access Gdb_Debugger;
       Arguments : String := "";

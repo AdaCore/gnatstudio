@@ -255,6 +255,18 @@ package body Debugger.Jdb is
       null;
    end Load_Core_File;
 
+   -----------------
+   -- Add_Symbols --
+   -----------------
+
+   procedure Add_Symbols
+     (Debugger : access Jdb_Debugger;
+      Module   : String;
+      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden) is
+   begin
+      null;
+   end Add_Symbols;
+
    --------------------
    -- Attach_Process --
    --------------------

@@ -88,6 +88,11 @@ package Debugger.Jdb is
       Core     : String;
       Mode     : GVD.Types.Command_Type := GVD.Types.Hidden);
 
+   procedure Add_Symbols
+     (Debugger : access Jdb_Debugger;
+      Module   : String;
+      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden);
+
    procedure Run
      (Debugger  : access Jdb_Debugger;
       Arguments : String := "";
