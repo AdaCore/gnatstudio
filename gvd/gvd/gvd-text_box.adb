@@ -106,8 +106,12 @@ package body GVD.Text_Box is
       Add (Container => Scrolling_Area, Widget => Box.Child);
 
       --  Set a minimal size for the layout, so that the buttons are visible.
-      --  Note that this widget is resized vertically dynamically if needed,
-      --  so we can just set a size of 0.
+      --  Starting with GtkAda 2.0, the layout is not resized dynamically
+      --  vertically, and if we don't set a big enough size, then the children
+      --  won't be visible.
+      --  However, the size is modified appropriately when adding new children,
+      --  so we can have an initial height of 0 (ie the size actually occupied
+      --  on the screen).
       Gtk_New (Box.Buttons);
       Set_USize (Box.Buttons, Layout_Width, 0);
       Add_Events (Box.Buttons, Button_Press_Mask or Button_Release_Mask);
