@@ -25,7 +25,7 @@
   <type>GTK_WINDOW_TOPLEVEL</type>
   <position>GTK_WIN_POS_NONE</position>
   <modal>False</modal>
-  <default_width>700</default_width>
+  <default_width>800</default_width>
   <default_height>700</default_height>
   <allow_shrink>False</allow_shrink>
   <allow_grow>True</allow_grow>
