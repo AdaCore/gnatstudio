@@ -243,7 +243,7 @@ package GNAT.Expect is
 
    type Expect_Match is new Integer;
    Expect_Full_Buffer : constant Expect_Match := -1;
-   --  If the buffer was fulled and some characters were discarded.
+   --  If the buffer was full and some characters were discarded.
 
    Expect_Timeout     : constant Expect_Match := -2;
    --  If not output matching the regexps was found before the timeout.
