@@ -5609,6 +5609,11 @@ Whether a splash screen should be displayed when starting GPS.
 Whether GPS should display the welcome window for the selection of the project
 to use.
 
+@item Tool bar style
+@cindex tool bar
+How the tool bar should be displayed: not at all, with small icons or with
+large icons
+
 @item Show text in tool bar
 @cindex tool bar
 Whether the tool bar should show both text and icons, or only icons.
