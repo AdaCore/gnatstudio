@@ -156,11 +156,13 @@ package Prj_API is
    --  Return the object path for this project. If Recursive is True, it also
    --  includes the object path for all imported projects.
 
+   All_Languages : constant Project_Browsers.Name_Id_Array;
+
    function Get_Source_Files
-     (Project_View : Prj.Project_Id;
-      Recursive    : Boolean;
-      Full_Path    : Boolean := True;
-      Matching_Language : Types.Name_Id := Types.No_Name)
+     (Project_View       : Prj.Project_Id;
+      Recursive          : Boolean;
+      Full_Path          : Boolean := True;
+      Matching_Languages : Project_Browsers.Name_Id_Array := All_Languages)
       return Basic_Types.String_Array_Access;
    --  Return the list of source files belonging to the project described in
    --  Handle. Only the direct sources of the project are currently returned,
@@ -762,4 +764,8 @@ private
       List    : Project_Browsers.Name_Id_Array (1 .. Number);
       Current : Integer;
    end record;
+
+   All_Languages : constant Project_Browsers.Name_Id_Array :=
+     (1 .. 0 => Types.No_Name);
+
 end Prj_API;

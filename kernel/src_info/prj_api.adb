@@ -3435,10 +3435,10 @@ package body Prj_API is
    ----------------------
 
    function Get_Source_Files
-     (Project_View : Prj.Project_Id;
-      Recursive : Boolean;
-      Full_Path : Boolean := True;
-      Matching_Language : Types.Name_Id := Types.No_Name)
+     (Project_View       : Prj.Project_Id;
+      Recursive          : Boolean;
+      Full_Path          : Boolean := True;
+      Matching_Languages : Project_Browsers.Name_Id_Array := All_Languages)
       return Basic_Types.String_Array_Access
    is
       Src     : String_List_Id;
@@ -3448,6 +3448,8 @@ package body Prj_API is
       Iter    : Imported_Project_Iterator := Start
         (Get_Project_From_View (Project_View), Recursive);
       View    : Project_Id;
+      Matches : Boolean;
+      Lang    : Name_Id;
 
    begin
       while Current (Iter) /= Empty_Node loop
@@ -3479,11 +3481,19 @@ package body Prj_API is
                --  single function to check that a file belongs to a specific
                --  language, it might be more efficient.
 
-               if Matching_Language = No_Name
-                 or else Get_Language_Of (View,
-                           Get_String (String_Elements.Table (Src).Value)) =
-                   Matching_Language
-               then
+               Matches := Matching_Languages'Length = 0;
+               if not Matches then
+                  Lang := Get_Language_Of
+                    (View, Get_String (String_Elements.Table (Src).Value));
+                  for L in Matching_Languages'Range loop
+                     if Matching_Languages (L) = Lang then
+                        Matches := True;
+                        exit;
+                     end if;
+                  end loop;
+               end if;
+
+               if Matches then
                   --  ??? We could avoid calls to Normalize_Pathname here if
                   --  Include_Path included normalized directory names
 
