@@ -252,9 +252,12 @@ package body Switches_Editors is
    procedure Set_Visible_Pages
      (Editor    : access Switches_Edit_Record'Class;
       Languages : Argument_List;
-      Show_Only : Boolean);
+      Show_Only : Boolean;
+      File_Specific : Boolean);
    --  Same as the public version, except that the pages are never hidden, only
-   --  shown depending on the languages
+   --  shown depending on the languages.
+   --  File_Specific should be True if the editor is open for a specific set
+   --  of files, as opposed to a project-wide setting.
 
    procedure Append_Switch
      (Page   : access Switches_Editor_Page_Record'Class;
@@ -1290,7 +1293,8 @@ package body Switches_Editors is
    procedure Set_Visible_Pages
      (Editor : access Switches_Edit_Record; Languages : Argument_List) is
    begin
-      Set_Visible_Pages (Editor, Languages, Show_Only => False);
+      Set_Visible_Pages
+        (Editor, Languages, Show_Only => False, File_Specific => False);
    end Set_Visible_Pages;
 
    -----------------------
@@ -1300,7 +1304,8 @@ package body Switches_Editors is
    procedure Set_Visible_Pages
      (Editor    : access Switches_Edit_Record'Class;
       Languages : Argument_List;
-      Show_Only : Boolean)
+      Show_Only : Boolean;
+      File_Specific : Boolean)
    is
       Visible : Boolean;
       Current : Gint := Get_Current_Page (Editor);
@@ -1317,6 +1322,10 @@ package body Switches_Editors is
                exit;
             end if;
          end loop;
+
+         Visible := Visible
+           and then (not File_Specific
+                     or else Editor.Pages (P).Pkg.all /= Ide_Package);
 
          if Visible then
             Show (Editor.Pages (P));
@@ -1615,7 +1624,8 @@ package body Switches_Editors is
                   Set_Visible_Pages
                     (Editor    => Switches,
                      Languages => (1 => Lang'Unchecked_Access),
-                     Show_Only => F /= Files'First);
+                     Show_Only => F /= Files'First,
+                     File_Specific => True);
                end;
             end loop;
          end if;
