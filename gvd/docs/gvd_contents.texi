@@ -206,11 +206,16 @@ is nevertheless indispensable in some situations, for example when the
 program appears to be in an infinite (or at least very time-consuming) loop.
 
 @ifset GPS
-   @item Terminate
+   @item Terminate Current
 @cindex terminate
-Terminate your debug session, by closing the data window and the debugger
+Terminate the current debug session, by closing the data window and the debugger
 console, as well as terminating the underlying debugger (e.g @code{gdb}) used
 to handle the low level debugging.
+
+   @item Terminate
+@cindex terminate
+Terminate all your debug sessions. Same as @code{Terminate Current} if there
+is only one debugger open.
 @end ifset
 
 @end table
