@@ -437,7 +437,11 @@ package body Src_Editor_Buffer is
          --  inneficient.
 
          Result := new String'(Value (Chars));
+
          C_Free (Chars);
+         --  We need to use the C function to free Chars, since memory was
+         --  allocated in C code.
+
          return Result;
 
       else
@@ -501,6 +505,16 @@ package body Src_Editor_Buffer is
 
       Compute_Blocks (Buffer);
       Emit_New_Cursor_Position (Buffer);
+
+      --  Prototype: perform on-the-fly style check
+
+--        Execute_GPS_Shell_Command
+--          (Buffer.Kernel,
+--           "File " & Full_Name (Buffer.Filename).all);
+--        Execute_GPS_Shell_Command (Buffer.Kernel, "File.check_syntax %1");
+
+      --  end prototype.
+
 
       --  Unregister the timeout.
       Buffer.Blocks_Timeout_Registered := False;
