@@ -511,10 +511,12 @@ begin
 
    if Splash = null then
       Timeout_Id := Process_Timeout.Add
-        (1, Finish_Setup'Unrestricted_Access, (GPS.Kernel, null, null));
+        (1, Finish_Setup'Unrestricted_Access,
+         (GPS.Kernel, null, null, null));
    else
       Timeout_Id := Process_Timeout.Add
-        (1000, Finish_Setup'Unrestricted_Access, (GPS.Kernel, null, null));
+        (1000, Finish_Setup'Unrestricted_Access,
+         (GPS.Kernel, null, null, null));
    end if;
 
    Gtk.Main.Main;

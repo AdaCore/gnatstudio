@@ -247,7 +247,7 @@ package body Builder_Module is
          Err_To_Out  => True);
       Free (Args);
       Id := Process_Timeout.Add
-        (Timeout, Idle_Build'Access, (K, Fd, null));
+        (Timeout, Idle_Build'Access, (K, Fd, null, null));
 
    exception
       when Invalid_Process =>
@@ -316,7 +316,7 @@ package body Builder_Module is
             Err_To_Out  => True);
          Free (Args);
          Id := Process_Timeout.Add
-           (Timeout, Idle_Build'Access, (Kernel, Fd, null));
+           (Timeout, Idle_Build'Access, (Kernel, Fd, null, null));
 
       exception
          when Invalid_Process =>
@@ -405,7 +405,7 @@ package body Builder_Module is
             Err_To_Out  => True);
          Free (Args);
          Id := Process_Timeout.Add
-           (Timeout, Idle_Build'Access, (Kernel, Fd, null));
+           (Timeout, Idle_Build'Access, (Kernel, Fd, null, null));
 
       exception
          when Invalid_Process =>
@@ -466,7 +466,7 @@ package body Builder_Module is
             Err_To_Out  => True);
          Free (Args);
          Id := Process_Timeout.Add
-           (Timeout, Idle_Build'Access, (Kernel, Fd, null));
+           (Timeout, Idle_Build'Access, (Kernel, Fd, null, null));
 
       exception
          when Invalid_Process =>
