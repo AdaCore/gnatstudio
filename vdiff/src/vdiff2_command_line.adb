@@ -18,7 +18,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with GNAT.OS_Lib;          use GNAT.OS_Lib;
 with Diff_Utils2;          use Diff_Utils2;
 with Vdiff2_Module.Utils;  use Vdiff2_Module.Utils;
 with Text_IO;              use Text_IO;
@@ -27,7 +26,6 @@ package body Vdiff2_Command_Line is
 
    use Diff_Head_List;
    use Diff_Chunk_List;
-   type   T_VStr  is array (1 .. 3) of String_Access;
 
    -------------
    -- Execute --
@@ -62,7 +60,7 @@ package body Vdiff2_Command_Line is
 
          if Diff.Current_Node /= Diff_Chunk_List.Null_Node then
             Command.Action (Command.Kernel, Diff,
-                            Command.Line, Command.File.all);
+                            Command.Line, Command.File);
          end if;
       end if;
 
@@ -81,7 +79,7 @@ package body Vdiff2_Command_Line is
      (Item      : out Diff_Command_Line_Access;
       Kernel    : Kernel_Handle;
       List_Diff : Diff_Head_List_Access;
-      File      : GNAT.OS_Lib.String_Access;
+      File      : Virtual_File;
       Line      : Natural;
       Action    : Vdiff2_Command_Line.Handler_Action_Line) is
    begin
@@ -100,7 +98,7 @@ package body Vdiff2_Command_Line is
    ---------------------------
 
    function Is_In_Diff_Chunk_List
-     (Selected_File : String_Access;
+     (Selected_File : Virtual_File;
       Item          : Diff_Head;
       Line          : Natural)
       return Diff_Chunk_List.List_Node
@@ -115,16 +113,16 @@ package body Vdiff2_Command_Line is
       loop
          Diff := Data (Curr_Node);
 
-         if Selected_File.all = Item.File1.all then
+         if Selected_File = Item.File1 then
             exit when Diff.Range1.First <= Line
               and then Diff.Range1.Last >= Line;
 
-         elsif Selected_File.all = Item.File2.all then
+         elsif Selected_File = Item.File2 then
             exit when Diff.Range2.First <= Line
               and then Diff.Range2.Last >= Line;
 
-         elsif Item.File3 /= null
-           and then Selected_File.all = Item.File3.all
+         elsif Item.File3 /= VFS.No_File
+           and then Selected_File = Item.File3
          then
             exit when Diff.Range3.First <= Line
               and then Diff.Range3.Last >= Line;
@@ -144,12 +142,12 @@ package body Vdiff2_Command_Line is
      (Kernel : Kernel_Handle;
       Diff   : Diff_Head_Access;
       Line   : Natural := 0;
-      File   : String := "") is
+      File   : Virtual_File := VFS.No_File) is
       pragma Unreferenced (Kernel, Diff);
    begin
       Put_Line ("j'ai cliquer a la ligne "
                 & Natural'Image (Line) &
-                " dans le fichier " & File);
+                " dans le fichier " & Full_Name (File));
    end test_button;
 
    ------------------------
@@ -160,9 +158,9 @@ package body Vdiff2_Command_Line is
      (Kernel : Kernel_Handle;
       Diff   : Diff_Head_Access;
       Line   : Natural := 0;
-      File   : String := "")
+      File   : Virtual_File := VFS.No_File)
    is
-      VFile    : T_VStr;
+      VFile    : T_VFile;
       VRange   : T_VRange;
       Num_File : T_Loc := 0;
       pragma Unreferenced (Line);
@@ -175,7 +173,7 @@ package body Vdiff2_Command_Line is
       VFile (3) := Diff.File3;
 
       for J in VFile'Range loop
-         if File = VFile (J).all then
+         if File = VFile (J) then
             Num_File := J;
             exit;
          end if;
@@ -185,7 +183,7 @@ package body Vdiff2_Command_Line is
          return;
       end if;
 
-      Move_Block (Kernel, VFile (Num_File).all, VFile (Diff.Ref_File).all,
+      Move_Block (Kernel, VFile (Num_File), VFile (Diff.Ref_File),
                   VRange (Num_File), VRange (Diff.Ref_File));
    end Move_On_Ref_File;
 
