@@ -22,7 +22,7 @@
 
 with Glide_Kernel;         use Glide_Kernel;
 with Commands;             use Commands;
-with Vdiff2_Command2;      use Vdiff2_Command2;
+with Vdiff2_Command;       use Vdiff2_Command;
 with Diff_Utils2;          use Diff_Utils2;
 with Gdk.Event;
 with VFS;                  use VFS;
