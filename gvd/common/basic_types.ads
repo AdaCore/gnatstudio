@@ -32,8 +32,14 @@ package Basic_Types is
    procedure Free is new Ada.Unchecked_Deallocation (String, String_Access);
 
    type String_Array is array (Natural range <>) of String_Access;
+
+   type String_Array_Access is access all String_Array;
+
    procedure Free (Ar : in out String_Array);
    --  Free all the strings in the array.
+
+   procedure Free (Ar : in out String_Array_Access);
+   --  Free all the strings in the array and the array itself.
 
    subtype Unchecked_String is String (Positive);
 
