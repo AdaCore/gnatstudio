@@ -1867,7 +1867,8 @@ package body Src_Editor_Module is
                      On_Pretty_Print'Access, Ref_Item => -"Preferences");
 
       Register_Menu (Kernel, Navigate, -"Goto Line...", Stock_Jump_To,
-                     On_Goto_Line'Access,
+                     On_Goto_Line'Access, null,
+                     GDK_G, Control_Mask,
                      Ref_Item => -"Goto File Spec<->Body");
       Register_Menu (Kernel, Navigate, -"Goto Declaration", Stock_Home,
                      On_Goto_Declaration'Access, Ref_Item => -"Goto Line...");
