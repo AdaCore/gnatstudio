@@ -170,14 +170,18 @@ package body Odd.Menus is
    procedure Print_Variable (Widget : access Gtk_Widget_Record'Class;
                              Var    : Variable_Record)
    is
-      Item     : Display_Item;
+      pragma Warnings (Off, Widget);
    begin
-      Gtk_New (Item, Get_Window (Widget),
-               Variable_Name => Var.Name,
-               Debugger      => Var.Process,
-               Auto_Refresh  => Var.Auto_Refresh);
-      if Item /= null then
-         Put (Var.Process.Data_Canvas, Item);
+      if Var.Auto_Refresh then
+         Text_Output_Handler
+           (Var.Process, "graph display " & Var.Name & ASCII.LF,
+            Is_Command => True);
+         Process_User_Command (Var.Process, "graph display " & Var.Name);
+      else
+         Text_Output_Handler
+           (Var.Process, "graph print " & Var.Name & ASCII.LF,
+            Is_Command => True);
+         Process_User_Command (Var.Process, "graph print " & Var.Name);
       end if;
    end Print_Variable;
 
