@@ -39,8 +39,11 @@ with Gtk.Notebook;     use Gtk.Notebook;
 with Gtk.Radio_Button; use Gtk.Radio_Button;
 with Gtk.Spin_Button;  use Gtk.Spin_Button;
 with Gtk.Style;        use Gtk.Style;
-with Gtk.Text;         use Gtk.Text;
 with Gtk.Widget;       use Gtk.Widget;
+
+with Gtk.Text_View;    use Gtk.Text_View;
+with Gtk.Text_Buffer;  use Gtk.Text_Buffer;
+with Gtk.Text_Iter;    use Gtk.Text_Iter;
 
 with Gtk.Tree_View;        use Gtk.Tree_View;
 with Gtk.Tree_Model;       use Gtk.Tree_Model;
@@ -332,7 +335,8 @@ package body Breakpoints_Editor is
    procedure Fill_Advanced_Dialog
      (Advanced : Advanced_Breakpoint_Access; Br : Breakpoint_Data)
    is
-      Position : Gint := 0;
+      Start, The_End : Gtk_Text_Iter;
+      Buffer         : Gtk_Text_Buffer;
    begin
       if Advanced = null then
          return;
@@ -348,10 +352,13 @@ package body Breakpoints_Editor is
 
       Set_Value (Advanced.Ignore_Count_Combo, Grange_Float (Br.Ignore));
 
-      Delete_Text (Advanced.Command_Descr);
+      Buffer := Get_Buffer (Advanced.Command_Descr);
+
+      Get_Bounds (Buffer, Start, The_End);
+      Delete (Buffer, Start, The_End);
 
       if Br.Commands /= null then
-         Insert_Text (Advanced.Command_Descr, Br.Commands.all, Position);
+         Insert_At_Cursor (Buffer, Br.Commands.all);
       end if;
 
       --  Set the scope and action, if appropriate
@@ -389,15 +396,18 @@ package body Breakpoints_Editor is
       Adv      : constant Advanced_Breakpoint_Access :=
         Editor.Advanced_Breakpoints;
       Modified : Boolean := False;
-
+      Start, The_End : Gtk_Text_Iter;
    begin
       if Visible_Is_Set (Adv.Condition_Box) then
+         Get_Bounds (Get_Buffer (Adv.Command_Descr), Start, The_End);
+
          declare
             S : constant String :=
               Get_Text (Get_Entry (Adv.Condition_Combo));
             C : constant Integer :=
               Integer (Get_Value_As_Int (Adv.Ignore_Count_Combo));
-            T : constant String := Get_Chars (Adv.Command_Descr);
+            T : constant String := Get_Text
+              (Get_Buffer (Adv.Command_Descr), Start, The_End);
 
          begin
             --  Send all these commands in "internal" mode, so that no
