@@ -41,6 +41,8 @@ with Gtk.Widget;                  use Gtk.Widget;
 with Gtkada.Handlers;             use Gtkada.Handlers;
 with Src_Editor_Buffer;           use Src_Editor_Buffer;
 
+with Ada.Exceptions;              use Ada.Exceptions;
+with Traces;                      use Traces;
 with Basic_Types;                 use Basic_Types;
 with Commands;                    use Commands;
 with Glide_Kernel.Modules;        use Glide_Kernel.Modules;
@@ -48,6 +50,8 @@ with Glide_Kernel.Modules;        use Glide_Kernel.Modules;
 with Unchecked_Deallocation;
 
 package body Src_Editor_View is
+
+   Me : Debug_Handle := Create ("Source_View");
 
    use type Pango.Font.Pango_Font_Description;
    package Source_Buffer_Callback is new Gtk.Handlers.User_Callback
@@ -162,6 +166,10 @@ package body Src_Editor_View is
       --  Now that the window is realized, we can set the font and
       --  the size of the left border window size.
       Set_Font (View, View.Pango_Font);
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end Realize_Cb;
 
    --------------------------
@@ -188,6 +196,10 @@ package body Src_Editor_View is
       if Start_Line /= End_Line then
          Remove_Lines (User, Start_Line + 1, End_Line + 1);
       end if;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end Delete_Range_Handler;
 
    -------------------------
@@ -211,6 +223,10 @@ package body Src_Editor_View is
       Start := Integer (Get_Line (Pos));
       Backward_Chars (Pos, Length, Dummy);
       Add_Lines (User, Start, Start - Integer (Get_Line (Pos)));
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end Insert_Text_Handler;
 
    ---------------------
@@ -286,6 +302,11 @@ package body Src_Editor_View is
       --  Return false, so that the signal is not blocked, and other
       --  clients can use it.
       return False;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         return False;
    end Expose_Event_Cb;
 
    ------------------------
@@ -306,6 +327,11 @@ package body Src_Editor_View is
       View.Saved_Insert_Mark := Create_Mark (Buffer, Where => Insert_Iter);
       End_Action (Buffer);
       return False;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         return False;
    end Focus_Out_Event_Cb;
 
    -----------------------
@@ -330,6 +356,11 @@ package body Src_Editor_View is
          View.Saved_Insert_Mark := null;
       end if;
       return False;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         return False;
    end Focus_In_Event_Cb;
 
    ------------
@@ -343,6 +374,10 @@ package body Src_Editor_View is
       Gdk_New
         (Source_View (View).Side_Column_GC,
          Get_Window (Source_View (View), Text_Window_Left));
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end Map_Cb;
 
    -------------
@@ -630,6 +665,11 @@ package body Src_Editor_View is
       end if;
 
       return False;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         return False;
    end Button_Press_Event_Cb;
 
    ------------------------
@@ -655,6 +695,11 @@ package body Src_Editor_View is
       end case;
 
       return False;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         return False;
    end Key_Press_Event_Cb;
 
    ------------------------
