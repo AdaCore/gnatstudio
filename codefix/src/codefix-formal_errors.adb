@@ -395,59 +395,69 @@ package body Codefix.Formal_Errors is
       Message         : File_Cursor'Class;
       Column_Expected : Natural := 0) return Solution_List
    is
-      pragma Unreferenced (Current_Text, Message, Column_Expected);
---      function Closest (Size_Red : Positive) return Positive;
+
+      function Closest (Size_Red : Positive) return Positive;
       --  Return the closest indentation modulo Indentation_Width.
 
---      function Closest (Size_Red : Positive) return Positive is
---      begin
---         case (Size_Red - 1) mod Indentation_Width is
---            when 0 =>
---               return Size_Red + Indentation_Width;
+      function Closest (Size_Red : Positive) return Positive is
+      begin
+         case (Size_Red - 1) mod Indentation_Width is
+            when 0 =>
+               return Size_Red + Indentation_Width;
                --  not - Identation_Width because of the case where
                --  Size_Red = 1
---            when 1 =>
---               return Size_Red - 1;
---            when 2 =>
---               return Size_Red + 1;
---            when others =>
---               Raise_Exception
---                 (Codefix_Panic'Identity,
---                  "Indentation_With changed, please update Wrong_Column.");
---         end case;
---      end Closest;
+            when 1 =>
+               return Size_Red - 1;
+            when 2 =>
+               return Size_Red + 1;
+            when others =>
+               Raise_Exception
+                 (Codefix_Panic'Identity,
+                  "Indentation_With changed, please update Wrong_Column.");
+         end case;
+      end Closest;
 
---      New_Extract   : Extract;
---      Str_Red       : Dynamic_String;
---      White_String  : constant String (1 .. 256) := (others => ' ');
---      Line_Cursor   : File_Cursor := File_Cursor (Message);
---      Column_Chosen : Natural;
-
+      New_Command : Replace_Word_Cmd;
+      Result      : Solution_List;
+      Line_Cursor   : File_Cursor := File_Cursor (Message);
+      Column_Chosen : Natural;
+      Word          : Word_Cursor;
 
    begin
-      return Command_List.Null_List;
---      Line_Cursor.Col := 1;
---      Get_Line (Current_Text, Line_Cursor, New_Extract);
---      Str_Red := new String'(Get_String (New_Extract));
+      Line_Cursor.Col := 1;
 
---      if Column_Expected = 0 then
---         Column_Chosen := Closest (Message.Col);
---      else
---         Column_Chosen := Column_Expected;
---      end if;
+      if Column_Expected = 0 then
+         Column_Chosen := Closest (Message.Col);
+      else
+         Column_Chosen := Column_Expected;
+      end if;
 
---      Set_String
---        (New_Extract,
---         White_String (1 .. Column_Chosen - 1) &
---           Str_Red (Message.Col .. Str_Red'Length));
+      Word :=
+        (Line_Cursor with
+         String_Match => new String'("(^[\s]*)"),
+         Mode         => Regular_Expression);
 
---      Set_Caption
---        (New_Extract,
---         "Move begin of instruction to column " &
---           Integer'Image (Column_Chosen));
+      declare
+         White_String : constant String (1 .. Column_Chosen - 1) :=
+           (others => ' ');
+      begin
+         Initialize
+           (New_Command,
+            Current_Text,
+            Word,
+            White_String);
+      end;
 
---      Free (Str_Red);
---      return New_Extract;
+      Set_Caption
+        (New_Command,
+         "Move begin of instruction to column " &
+           Integer'Image (Column_Chosen));
+
+      --      Free (Str_Red);
+
+      Append (Result, New_Command);
+
+      return Result;
    end Wrong_Column;
 
    -------------------------
