@@ -32,7 +32,7 @@ package body Codefix.Formal_Errors is
 
    procedure Initialize (This : in out Error_Message; Message : String) is
    begin
-      Affect (This.Message, Message);
+      Assign (This.Message, Message);
       Parse_Head (Message, This);
    end Initialize;
 
@@ -42,7 +42,7 @@ package body Codefix.Formal_Errors is
 
    procedure Initialize (This : in out Error_Message; Line, Col : Positive) is
    begin
-      Affect (This.Message, "");
+      Assign (This.Message, "");
       This.Line := Line;
       This.Col := Col;
    end Initialize;
@@ -79,7 +79,7 @@ package body Codefix.Formal_Errors is
       Match (Matcher, Message, Matches);
 
       begin
-         Affect (This.File_Name,
+         Assign (This.File_Name,
                  Message (Matches (1).First .. Matches (1).Last));
          This.Line := Positive'Value
             (Message (Matches (2).First .. Matches (2).Last));
@@ -224,7 +224,7 @@ package body Codefix.Formal_Errors is
       Space_Cursor : File_Cursor := File_Cursor (Message);
 
    begin
-      Affect (New_Str, String_Expected);
+      Assign (New_Str, String_Expected);
 
       Line_Cursor.Col := 1;
       Get_Line (Current_Text, Line_Cursor, New_Extract);
@@ -238,7 +238,7 @@ package body Codefix.Formal_Errors is
            Space_Cursor,
            1) /= " "
       then
-         Affect (New_Str, " " & New_Str.all);
+         Assign (New_Str, " " & New_Str.all);
       end if;
 
       Space_Cursor.Col := Space_Cursor.Col + 1;
@@ -247,7 +247,7 @@ package body Codefix.Formal_Errors is
         and then Message.Col < Line_Length (Current_Text, Line_Cursor)
         and then Get (Current_Text, Space_Cursor, 1) /= " "
       then
-         Affect (New_Str, New_Str.all & " ");
+         Assign (New_Str, New_Str.all & " ");
       end if;
 
       Add_Word (New_Extract, Message, New_Str.all);
@@ -387,7 +387,7 @@ package body Codefix.Formal_Errors is
       Word_Case    : Case_Type := Mixed) return Extract
    is
       function To_Correct_Case (Str : String) return String;
-      --  ???
+      --  Returns the string after having re-cased it (with Word_Case).
 
       function To_Correct_Case (Str : String) return String is
          New_String : String (Str'Range);
@@ -421,7 +421,7 @@ package body Codefix.Formal_Errors is
    begin
       Cursor_Line.Col := 1;
       Get_Line (Current_Text, Cursor_Line, New_Extract);
-      Affect (Line, Get_String (New_Extract));
+      Assign (Line, Get_String (New_Extract));
       Match (Word, Line.all (Cursor.Col .. Line.all'Length), Matches);
 
       Size := Matches (1).Last - Matches (1).First + 1;
@@ -446,6 +446,9 @@ package body Codefix.Formal_Errors is
    -- Not_Referrenced --
    ---------------------
 
+   --  Warning : this function is extremly dependant of the respect of the
+   --  normalisation. Maybe should be re-programmed in order to make a smarter
+   --  one
    function Not_Referenced
      (Current_Text : Text_Navigator_Abstr'Class;
       Cursor       : File_Cursor'Class;
@@ -453,13 +456,15 @@ package body Codefix.Formal_Errors is
       Name         : String) return Solution_List
    is
       function Delete_Var return Extract;
-      --  ???
+      --  Delete a variable, or a constant.
 
       function Delete_Entity return Extract;
-      --  ???
+      --  Delete the body, and if it exisits the declaration, of an unit
+      --  (typically, a subprogram).
 
       function Add_Pragma return Extract;
-      --  ???
+      --  Add a pragma after the declaration or, if there is no declaration,
+      --  after the body.
 
       ----------------
       -- Delete_Var --
@@ -468,9 +473,91 @@ package body Codefix.Formal_Errors is
       function Delete_Var return Extract is
          New_Extract : Extract;
          Line_Cursor : File_Cursor := File_Cursor (Cursor);
+         Info        : Construct_Information;
+
+         function Is_First_Var return Boolean;
+         --  Is true when Cursor is on the first variable of a declaration
+         --  list.
+
+         function Is_Last_Var return Boolean;
+         --  Is true when Cursor is on the last variable of a declaration
+         --  list.
+
+         function End_Declaration return File_Cursor;
+         --  Return the end of the declaration what have a line in common
+         --  with the cursor.
+
+         ------------------
+         -- Is_First_Var --
+         ------------------
+
+         function Is_First_Var return Boolean is
+            C_Coma, C_Is, C_Semicolon : File_Cursor;
+
+         begin
+            C_Coma := File_Cursor
+              (Search_String (Current_Text, Cursor, ",", Reverse_Step));
+            C_Is := File_Cursor
+              (Search_String (Current_Text, Cursor, "is", Reverse_Step));
+            C_Semicolon := File_Cursor
+              (Search_String (Current_Text, Cursor, ";", Reverse_Step));
+
+            return (C_Coma < C_Semicolon and then
+               C_Coma < C_Is) or else C_Coma = Null_File_Cursor;
+         end Is_First_Var;
+
+         -----------------
+         -- Is_Last_Var --
+         -----------------
+
+         function Is_Last_Var return Boolean is
+            C_Coma, C_Semicolon : File_Cursor;
+         begin
+            C_Coma := File_Cursor
+              (Search_String (Current_Text, Cursor, ","));
+            C_Semicolon := File_Cursor
+              (Search_String (Current_Text, Cursor, ";"));
+            return C_Coma > C_Semicolon or else C_Coma = Null_File_Cursor;
+         end Is_Last_Var;
+
+         ---------------------
+         -- End_Declaration --
+         ---------------------
+
+         function End_Declaration return File_Cursor is
+         begin
+            return File_Cursor (Search_String (Current_Text, Cursor, ";"));
+         end End_Declaration;
+
+      --  begin of Delete_Var
+
       begin
          Line_Cursor.Col := 1;
-         Get_Line (Current_Text, Line_Cursor, New_Extract);
+         Info := Get_Unit (Current_Text, Cursor);
+
+         if Is_First_Var and then Is_Last_Var then
+            for I in Info.Sloc_Start.Line .. End_Declaration.Line loop
+               Line_Cursor.Line := I;
+               Get_Line (Current_Text, Line_Cursor, New_Extract);
+            end loop;
+            Delete_All_Lines (New_Extract);
+         else
+            Get_Line (Current_Text, Line_Cursor, New_Extract);
+            if File_Cursor
+              (Search_String (New_Extract, Cursor, ",", Reverse_Step)) =
+                 Null_File_Cursor
+                and then
+              File_Cursor (Search_String (New_Extract, Cursor, ",")) =
+                 Null_File_Cursor
+                and then
+              File_Cursor (Search_String (New_Extract, Cursor, ":")) =
+                 Null_File_Cursor
+            then
+               Delete_All_Lines (New_Extract);
+            else
+               Replace_Word (New_Extract, Cursor, "", "([^,]+)");
+            end if;
+         end if;
 
          return New_Extract;
       end Delete_Var;
@@ -499,13 +586,15 @@ package body Codefix.Formal_Errors is
          Declaration := Get_Unit (Current_Text, Cursor);
          New_Position.Line := Declaration.Sloc_End.Line;
          New_Position.Col  := Declaration.Sloc_End.Column;
-         Affect (New_Position.File_Name, Cursor.File_Name);
+         Assign (New_Position.File_Name, Cursor.File_Name);
          Add_Line (New_Extract, New_Position, "pragma Unreferenced (" &
                                               Name & ");");
          return New_Extract;
       end Add_Pragma;
 
       New_Solutions : Solution_List;
+
+   --  begin of Not_Referenced
 
    begin
       case Category is
