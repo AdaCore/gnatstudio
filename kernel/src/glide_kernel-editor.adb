@@ -32,6 +32,7 @@ with Glide_Main_Window;    use Glide_Main_Window;
 with Glide_Page;           use Glide_Page;
 with GNAT.OS_Lib;          use GNAT.OS_Lib;
 with Gtk.Box;              use Gtk.Box;
+with Gtk.Main;             use Gtk.Main;
 with Gtk.Widget;           use Gtk.Widget;
 with Gtkada.MDI;           use Gtkada.MDI;
 with Src_Editor_Box;       use Src_Editor_Box;
@@ -79,6 +80,16 @@ package body Glide_Kernel.Editor is
    --  ??? Return the full path to the ALI file associated to the given source
    --  ??? file. Over simplistic algorithm applied: replaces the extension by
    --  ??? ".ali". That'll do it until the demo.
+
+   type Location_Idle_Data is record
+      Edit : Source_Editor_Box;
+      Line, Column : Natural;
+   end record;
+
+   package Location_Idle is new Gtk.Main.Idle (Location_Idle_Data);
+
+   function Location_Callback (D : Location_Idle_Data) return Boolean;
+   --  Idle callback used to scroll the source editors.
 
    ------------------------
    -- Get_Current_Editor --
@@ -263,6 +274,16 @@ package body Glide_Kernel.Editor is
       Editor := Open_File (Kernel, File);
    end Open_File;
 
+   -----------------------
+   -- Location_Callback --
+   -----------------------
+
+   function Location_Callback (D : Location_Idle_Data) return Boolean is
+   begin
+      Set_Cursor_Location (D.Edit, D.Line, D.Column);
+      return False;
+   end Location_Callback;
+
    -----------
    -- Go_To --
    -----------
@@ -275,9 +296,16 @@ package body Glide_Kernel.Editor is
       Highlight : Boolean := True)
    is
       Edit : Source_Editor_Box;
+      Id : Idle_Handler_Id;
    begin
       Edit := Open_File (Kernel, File);
-      Set_Cursor_Location (Edit, Line, Column);
+
+      --  For some reason, we can not directly call Set_Cursor_Location, since
+      --  the source editor won't be scrolled the first time the editor is
+      --  displayed. Doing this in an idle callback ensures that all the proper
+      --  events and initializations have taken place before we try to scroll
+      --  the editor.
+      Id := Location_Idle.Add (Location_Callback'Access, (Edit, Line, Column));
 
       if Highlight then
          Highlight_Line (Edit, Line);
