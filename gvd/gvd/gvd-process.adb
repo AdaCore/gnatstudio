@@ -284,7 +284,9 @@ package body GVD.Process is
 
    procedure Change_Mask
      (Widget : access Gtk_Menu_Item_Record'Class;
-      Mask   : Call_Stack_Record) is
+      Mask   : Call_Stack_Record)
+   is
+      pragma Unreferenced (Widget);
    begin
       Mask.Process.Backtrace_Mask :=
         Mask.Process.Backtrace_Mask xor Mask.Mask;
@@ -884,8 +886,7 @@ package body GVD.Process is
          Source,
          Get_Pref (Editor_Font),
          Get_Pref (Editor_Font_Size),
-         dot_xpm, arrow_xpm, stop_xpm,
-         Comments_Color => Get_Pref (Comments_Color),
+         arrow_xpm, stop_xpm,
          Strings_Color  => Get_Pref (Strings_Color),
          Keywords_Color => Get_Pref (Keywords_Color));
 
@@ -1110,6 +1111,7 @@ package body GVD.Process is
       Remote_Protocol : String := "";
       Debugger_Name   : String := "") return Debugger_Process_Tab
    is
+      pragma Unreferenced (Executable_Args);
       Process         : Debugger_Process_Tab;
       Builtin_Source  : Builtin.Builtin;
       External_Source : Socket.Socket;
@@ -1602,6 +1604,7 @@ package body GVD.Process is
       Source    : Gint;
       Condition : Gdk.Types.Gdk_Input_Condition)
    is
+      pragma Unreferenced (Source, Condition);
       Tab       : Debugger_Process_Tab;
       Buffer    : String (1 .. 8192);
       Len       : Natural;
