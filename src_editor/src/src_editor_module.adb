@@ -1108,8 +1108,13 @@ package body Src_Editor_Module is
 
          begin
             if Child /= null then
+               A := Src_Editor_Buffer.Get_String
+                 (Get_Buffer (Source_Box (Get_Widget (Child)).Editor));
+
                Set_Return_Value
-                 (Data, Get_Buffer (Source_Box (Get_Widget (Child)).Editor));
+                 (Data, A.all);
+
+               Free (A);
             else
                --  The buffer is not currently open, read directly from disk.
 
