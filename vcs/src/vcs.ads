@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2003                       --
+--                     Copyright (C) 2001-2004                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -48,7 +48,19 @@ package VCS is
    type VCS_Access is access all VCS_Record'Class;
 
    type VCS_Action is
-     (Status, Open, Update, Commit, History, Annotate, Add, Remove, Revert);
+     (Status,          --  Queries the status of one or more files
+      Open,            --  Open one or more file for writing
+      Update,          --  Update one or more files
+      Commit,          --  Commits one or more files
+      History,         --  Get the entire revision history for one file
+      Annotate,        --  Get the annotations for one file
+      Diff_Head,       --  Diff current against head revision
+      Diff_Working,    --  Diff current against working revision
+      Diff,            --  Diff current against specified revision
+      Diff2,           --  Diff between two specified revisions
+      Add,             --  Add one file or dir to the repository
+      Remove,          --  Remove one file or dir from repository
+      Revert);         --  Revert files or dirs to repository revision
 
    type Action_Array is array (VCS_Action) of String_Access;
 
@@ -194,12 +206,9 @@ package VCS is
    procedure Commit
      (Rep       : access VCS_Record;
       Filenames : String_List.List;
-      Logs      : String_List.List) is abstract;
-   --  Check a file Name in the specified repository.
-   --  Log is used as the revision history.
-   --  The elements in Logs must exactly correspond to the elements in
-   --  Filenames.
-   --  The user must free Filenames and Logs.
+      Log       : String) is abstract;
+   --  Commit Filenames using Log.
+   --  The user must free Filenames.
 
    procedure Update
      (Rep       : access VCS_Record;
@@ -290,6 +299,10 @@ package VCS is
      (Rep  : access VCS_Record;
       Text : String) return File_Status_List.List;
    --  Parse Text and return the list of status obtained.
+
+   function Get_Identified_Actions
+     (Rep : access VCS_Record) return Action_Array;
+   --  Return the labels of the defined actions. User must not free the result.
 
 private
    type VCS_Record is abstract tagged limited record
