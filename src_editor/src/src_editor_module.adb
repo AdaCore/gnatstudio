@@ -1871,6 +1871,7 @@ package body Src_Editor_Module is
             if Old_Name /= New_Name then
                Set_Title (Child, New_Name, Base_Name (New_Name));
                Change_Project_Dir (Kernel, Dir_Name (New_Name));
+               Recompute_View (Kernel);
             end if;
          end;
       end;
