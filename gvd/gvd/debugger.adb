@@ -386,31 +386,37 @@ package body Debugger is
       Mode             : Command_Type)
    is
       use type Gtk.Window.Gtk_Window;
-      Data : History_Data;
+      Data    : History_Data;
+      Process : constant Debugger_Process_Tab :=
+        Convert (Debugger.Window, Debugger);
+
    begin
       Set_Command_In_Process (Get_Process (Debugger));
+
+      if Mode >= Visible then
+         Set_Busy_Cursor (Process);
+      end if;
+
       Set_Command_Mode (Get_Process (Debugger), Mode);
 
       --  Display the command in the output window if necessary
 
       if Mode = Visible and then Debugger.Window /= null then
-         Text_Output_Handler
-           (Convert (Debugger.Window, Debugger), Cmd & ASCII.LF, True);
+         Text_Output_Handler (Process, Cmd & ASCII.LF, True);
       end if;
 
       --  Append the command to the history if necessary
+      --  ??? Will only work if Debugger is the current page in the notebook
 
       if Index_Non_Blank (Cmd) /= 0
         and then Debugger.Window /= null
         and then Mode /= Internal
       then
          Data.Mode := Mode;
-         Data.Debugger_Num :=
-           Integer (Get_Num (Convert (Debugger.Window, Debugger)));
+         Data.Debugger_Num := Integer (Get_Num (Process));
          Data.Command := new String'
            (Cmd (Index_Non_Blank (Cmd) .. Index_Non_Blank (Cmd, Backward)));
-         Append
-           (Convert (Debugger.Window, Debugger).Window.Command_History, Data);
+         Append (Process.Window.Command_History, Data);
       end if;
 
       --  Send the command to the debugger
