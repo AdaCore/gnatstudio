@@ -47,6 +47,7 @@
 with Prj;
 with Prj_API;
 with Prj.Tree;
+with GNAT.OS_Lib;
 
 package Glide_Kernel.Project is
 
@@ -76,6 +77,25 @@ package Glide_Kernel.Project is
    --  Save Project to a file. If Recursive is True, all the imported projects
    --  are saved at the same time.
    --  The kernel registers that it is no longer using the default project.
+   --
+   --  This procedure will also regenerate the Makefiles whenever possible and
+   --  needed.
+   --
+   --  There must be a project_view associated with the project
+
+   procedure Save_Single_Project
+     (Kernel    : access Kernel_Handle_Record'Class;
+      Project   : Prj.Tree.Project_Node_Id;
+      Langs     : GNAT.OS_Lib.Argument_List);
+   --  Save project, but none of its imported projects. As opposed to
+   --  Save_Project, the project doesn't need to have an associated view in
+   --  this procedure.
+   --
+   --  This procedure will also regenerate the Makefiles whenever possible and
+   --  needed.
+   --
+   --  Langs is the list of languages defined for this project, and must be
+   --  freed by the caller.
 
    function Save_Project_Conditional
      (Kernel    : access Kernel_Handle_Record'Class;
