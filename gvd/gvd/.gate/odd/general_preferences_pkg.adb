@@ -40,7 +40,7 @@ begin
    Set_Title (General_Preferences, -"Preferences");
    Set_Policy (General_Preferences, False, True, False);
    Set_Position (General_Preferences, Win_Pos_Center);
-   Set_Modal (General_Preferences, True);
+   Set_Modal (General_Preferences, False);
    Return_Callback.Connect
      (General_Preferences, "delete_event", On_Odd_Preferences_Delete_Event'Access);
 
