@@ -433,9 +433,10 @@ package body GVD.Explorer is
          declare
             F         : File_Descriptor;
             Length    : Positive;
-            Tab         : Debugger_Process_Tab := Convert (Explorer);
+            Tab       : Debugger_Process_Tab := Convert (Explorer);
             Full_Name : String := Find_File (Tab.Debugger, Data.Extension);
             Name      : aliased String := Full_Name & ASCII.NUL;
+
          begin
             F := Open_Read (Name'Address, Binary);
 
@@ -445,9 +446,12 @@ package body GVD.Explorer is
                --  Allocate the buffer
                --  and strip the ^Ms from the string
                declare
-                  S : String (1 .. Length);
+                  S    : String (1 .. Length);
                   Lang : Language_Access;
                begin
+                  --  Should use GVD.Files.Load_File instead to take
+                  --  advantage of caches and remote capabilities ???
+
                   Length := Read (F, S'Address, Length);
 
                   --  Need to read the file independently from the
@@ -455,7 +459,15 @@ package body GVD.Explorer is
                   Lang := Get_Language_From_File (Full_Name);
 
                   if Lang /= null then
-                     Explore (Explorer, Node, Explorer, S, Lang, Full_Name);
+                     if Need_To_Strip_Control_M then
+                        Explore
+                          (Explorer, Node, Explorer,
+                           Strip_Control_M (S), Lang, Full_Name);
+
+                     else
+                        Explore (Explorer, Node, Explorer, S, Lang, Full_Name);
+                     end if;
+
                   else
                      Node := Insert_Node
                        (Explorer,
