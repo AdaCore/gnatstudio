@@ -1631,16 +1631,16 @@ package body Project_Explorers is
 
       if N = Null_Iter then
          declare
-            Str : constant String
-              := Get_String (Explorer.Tree.Model, Node, Base_Name_Column);
+            Str : constant String :=
+              Get_String (Explorer.Tree.Model, Node, Base_Name_Column);
          begin
             if (Node_Type = Directory_Node
                 and then Has_Entries (Prj, Str, Files))
               or else
-              (Node_Type = Project_Node and then Has_Imported_Projects (Prj))
+                (Node_Type = Project_Node and then Has_Imported_Projects (Prj))
               or else
-              (Get_Pref (Explorer.Kernel, Show_Directories)
-               and then Direct_Sources_Count (Prj) /= 0)
+                (Get_Pref (Explorer.Kernel, Show_Directories)
+                 and then Direct_Sources_Count (Prj) /= 0)
             then
                Set_Node_Type (Explorer.Tree.Model, Node, Node_Type, False);
                Set (Explorer.Tree.Model, Node, Project_Column,
