@@ -1,5 +1,5 @@
 -----------------------------------------------------------------------
---                          G L I D E  I I                           --
+--                              G P S                                --
 --                                                                   --
 --                        Copyright (C) 2001                         --
 --                            ACT-Europe                             --
@@ -613,7 +613,6 @@ package body Src_Info is
       return FI.Source_Filename.all;
    end Get_Source_Filename;
 
-   ----------------------
    -------------------
    -- Get_Unit_Part --
    -------------------
