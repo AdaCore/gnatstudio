@@ -1955,7 +1955,8 @@ Remove the comment delimiters from the current selection or line.
 @item Refill
 @cindex refill
 Refill text on the selection or current line according to the right
-margin as defined by the column highlight. @pxref{The Preferences Dialog}.
+margin as defined by the right margin preference.
+@pxref{The Preferences Dialog}.
 
 @item Fold all blocks
 @cindex fold
@@ -6905,9 +6906,10 @@ The period (in seconds) after which an editor is automatically saved,
 Each modified file is saved under a file called @code{.#filename#}, which is
 removed on the next explicit save operation.
 
-@item Column highlight
-@cindex column highlight
-The column number to highlight and draw in the editors. 0 if none.
+@item Right margin
+@cindex right margin
+The right margin to highlight. 0 if none.
+This value is also used to implement the @code{Edit->Refill} command.
 
 @item Block highlighting
 @cindex block highlighting
