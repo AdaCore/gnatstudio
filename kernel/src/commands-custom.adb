@@ -44,6 +44,7 @@ with Traces;               use Traces;
 with Ada.Unchecked_Deallocation;
 with Ada.Unchecked_Conversion;
 with GNAT.Regpat;          use GNAT.Regpat;
+with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with System;
 
 package body Commands.Custom is
@@ -1159,6 +1160,19 @@ package body Commands.Custom is
          Errors         : aliased Boolean;
          Console        : Interactive_Console;
          Tmp            : GNAT.OS_Lib.String_Access;
+         Old_Dir        : GNAT.OS_Lib.String_Access;
+
+         function To_String (P : in GNAT.OS_Lib.String_Access) return String;
+         --  Return the contents of P, or the empty string if P is null.
+
+         function To_String (P : in GNAT.OS_Lib.String_Access) return String is
+         begin
+            if P = null then
+               return "";
+            else
+               return P.all;
+            end if;
+         end To_String;
 
       begin
          if Success and then Output_Location /= No_Output then
@@ -1171,6 +1185,11 @@ package body Commands.Custom is
             null;
 
          elsif Script /= null then
+            if Context.Dir /= null then
+               Old_Dir := new String'(Get_Current_Dir);
+               Change_Dir (Context.Dir.all);
+            end if;
+
             if Command.Execution.Save_Output (Command.Execution.Cmd_Index) then
 
                --  Insert the command explicitely, since Execute_Command
@@ -1194,6 +1213,11 @@ package body Commands.Custom is
                   Show_Command => Show_Command,
                   Console      => Console,
                   Errors => Errors);
+            end if;
+
+            if Context.Dir /= null then
+               Change_Dir (Old_Dir.all);
+               Free (Old_Dir);
             end if;
 
             Success := not Errors;
@@ -1234,7 +1258,8 @@ package body Commands.Custom is
                Success       => Success,
                Show_Command  => Show_Command,
                Callback_Data => Convert (Custom_Command_Access (Command)),
-               Line_By_Line  => False);
+               Line_By_Line  => False,
+               Directory     => To_String (Context.Dir));
             Free (Args);
 
             Command.Execution.External_Process_Console := Console;
