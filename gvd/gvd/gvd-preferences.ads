@@ -72,7 +72,6 @@ package Odd.Preferences is
    --  The types of tooltips that can be displayed in the source window:
    --    None: no tooltips will be displayed.
    --    Simple: the output of gdb is displayed, no post-processing
-   --     Note that this is currently note implemented.
    --    Full: the variable is parsed and the tooltip will contain the
    --     equivalent of the canvas'items.
 
