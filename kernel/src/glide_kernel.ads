@@ -64,8 +64,7 @@ package Glide_Kernel is
    --  By default, it isn't associated with any project, nor any source editor.
    --  Home_Dir is the directory under which config files can be loaded/saved.
 
-   procedure Destroy
-     (Handle : access Kernel_Handle_Record; Home_Dir : String);
+   procedure Destroy (Handle : access Kernel_Handle_Record);
    --  Free the memory occupied by the kernel.
 
    function Get_Default_Accelerators
@@ -145,6 +144,12 @@ package Glide_Kernel is
 
    function Get_Home_Dir (Handle : access Kernel_Handle_Record) return String;
    --  Return the Home directory. (eg ~/.gps).
+   --  The directory ends with a directory separator
+
+   function Get_System_Dir
+     (Handle : access Kernel_Handle_Record) return String;
+   --  Return the installation directory for GPS. This always ends up with a
+   --  directory separator.
 
    function Get_Logs_Mapper
      (Handle : access Kernel_Handle_Record)

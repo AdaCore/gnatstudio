@@ -216,7 +216,7 @@ package body Glide_Kernel is
         (Handle, Signals, Kernel_Class, "GlideKernel", Signal_Parameters);
 
       Handle.Main_Window  := Main_Window;
-      Handle.Home_Dir     := new String'(Home_Dir);
+      Handle.Home_Dir     := new String'(Dir);
 
       --  Create the language handler. It is also set for the gvd main window,
       --  so that the embedded gvd uses the same mechanism as the rest of glide
@@ -778,8 +778,7 @@ package body Glide_Kernel is
      (Handle : access Kernel_Handle_Record)
    is
       MDI   : constant MDI_Window := Get_MDI (Handle);
-      File_Name    : constant String :=
-        String_Utils.Name_As_Directory (Handle.Home_Dir.all) & "desktop";
+      File_Name    : constant String := Handle.Home_Dir.all & "desktop";
       Project_Name : constant String :=
         Project_Path (Get_Project (Handle));
       File  : File_Type;
@@ -883,12 +882,9 @@ package body Glide_Kernel is
    ----------------------
 
    function Has_User_Desktop
-     (Handle : access Kernel_Handle_Record) return Boolean
-   is
-      File : constant String :=
-        String_Utils.Name_As_Directory (Handle.Home_Dir.all) & "desktop";
+     (Handle : access Kernel_Handle_Record) return Boolean is
    begin
-      return Is_Regular_File (File);
+      return Is_Regular_File (Handle.Home_Dir.all & "desktop");
    end Has_User_Desktop;
 
    ------------------
@@ -900,8 +896,7 @@ package body Glide_Kernel is
    is
       MDI    : constant MDI_Window := Get_MDI (Handle);
       Node   : Node_Ptr;
-      File   : constant String :=
-        String_Utils.Name_As_Directory (Handle.Home_Dir.all) & "desktop";
+      File   : constant String := Handle.Home_Dir.all & "desktop";
       Project_Name : constant String :=
         Project_Path (Get_Project (Handle));
       Child  : Node_Ptr;
@@ -1224,6 +1219,18 @@ package body Glide_Kernel is
       return Handle.Home_Dir.all;
    end Get_Home_Dir;
 
+   --------------------
+   -- Get_System_Dir --
+   --------------------
+
+   function Get_System_Dir
+     (Handle : access Kernel_Handle_Record) return String
+   is
+      pragma Unreferenced (Handle);
+   begin
+      return Name_As_Directory (GVD.Prefix);
+   end Get_System_Dir;
+
    ---------------------
    -- Get_Logs_Mapper --
    ---------------------
@@ -1532,19 +1539,17 @@ package body Glide_Kernel is
    -- Destroy --
    -------------
 
-   procedure Destroy
-     (Handle : access Kernel_Handle_Record; Home_Dir : String)
-   is
+   procedure Destroy (Handle : access Kernel_Handle_Record) is
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (History_Record, History);
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (Key_Handler_List_Record, Key_Handler_List_Access);
-      Dir : constant String := String_Utils.Name_As_Directory (Home_Dir);
    begin
-      Trace (Me, "Saving preferences in " & Dir & "preferences");
-      Save_Preferences (Handle, Dir & "preferences");
+      Trace
+        (Me, "Saving preferences in " & Handle.Home_Dir.all & "preferences");
+      Save_Preferences (Handle, Handle.Home_Dir.all & "preferences");
 
-      Save (Handle.History.all, Dir & "history");
+      Save (Handle.History.all, Handle.Home_Dir.all & "history");
       Free (Handle.History.all);
       Unchecked_Free (Handle.History);
 
