@@ -187,7 +187,7 @@ package body GVD.Text_Box.Source_Editor.Builtin is
      (Editor : access Builtin_Record'Class;
       Line   : Integer;
       Result : out Boolean;
-      Num    : out Integer);
+      Num    : out Breakpoint_Identifier);
    --  Tell if a breakpoint is set at a specific line.
    --  If it is the case, return the number of the breakpoint.
 
@@ -349,7 +349,7 @@ package body GVD.Text_Box.Source_Editor.Builtin is
      (Editor : access Builtin_Record'Class;
       Line   : Integer;
       Result : out Boolean;
-      Num    : out Integer)
+      Num    : out Breakpoint_Identifier)
    is
       Process : constant Debugger_Process_Tab :=
         Debugger_Process_Tab (Editor.Process);
@@ -385,7 +385,7 @@ package body GVD.Text_Box.Source_Editor.Builtin is
       Process : constant Debugger_Process_Tab :=
         Debugger_Process_Tab (Editor.Editor.Process);
       Result  : Boolean;
-      Num     : Integer;
+      Num     : Breakpoint_Identifier;
 
    begin
       if Editor.Editor.Current_File /= null and then Button = 1 then
@@ -395,7 +395,7 @@ package body GVD.Text_Box.Source_Editor.Builtin is
             Remove_Breakpoint
               (Process.Debugger, Num, Mode => GVD.Types.Visible);
          else
-            Break_Source
+            Num := Break_Source
               (Process.Debugger, Editor.Editor.Current_File.all,
                Line, Mode => GVD.Types.Visible);
          end if;
@@ -1096,9 +1096,11 @@ package body GVD.Text_Box.Source_Editor.Builtin is
 
    procedure Set_Breakpoint
      (Widget : access Gtk_Widget_Record'Class;
-      Br     : Contextual_Data_Record) is
+      Br     : Contextual_Data_Record)
+   is
+      Num : Breakpoint_Identifier;
    begin
-      Break_Source
+      Num := Break_Source
         (Br.Process.Debugger, Br.File, Br.Line, Mode => GVD.Types.Visible);
    end Set_Breakpoint;
 
@@ -1108,9 +1110,11 @@ package body GVD.Text_Box.Source_Editor.Builtin is
 
    procedure Till_Breakpoint
      (Widget : access Gtk_Widget_Record'Class;
-      Br     : Contextual_Data_Record) is
+      Br     : Contextual_Data_Record)
+   is
+      Num : Breakpoint_Identifier;
    begin
-      Break_Source
+      Num := Break_Source
         (Br.Process.Debugger, Br.File, Br.Line, Temporary => True);
       Continue (Br.Process.Debugger, Mode => GVD.Types.Visible);
    end Till_Breakpoint;

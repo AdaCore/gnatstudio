@@ -75,7 +75,7 @@ package body GVD.Text_Box.Asm_Editor is
      (Editor : access Asm_Editor_Record'Class;
       Addr   : String;
       Result : out Boolean;
-      Num    : out Integer);
+      Num    : out Breakpoint_Identifier);
    --  Result is set to True if a breakpoint is set at address Addr
 
    procedure On_Frame_Changed
@@ -348,7 +348,7 @@ package body GVD.Text_Box.Asm_Editor is
       Line   : Natural) return Boolean
    is
       Result : Boolean;
-      Num    : Integer;
+      Num    : Breakpoint_Identifier;
    begin
       if Button = 1 then
          declare
@@ -364,7 +364,7 @@ package body GVD.Text_Box.Asm_Editor is
                  (Process.Debugger, Num, Mode => GVD.Types.Visible);
             else
                if Addr /= "" then
-                  Break_Address
+                  Num := Break_Address
                     (Process.Debugger, Addr, Mode => GVD.Types.Visible);
                end if;
             end if;
@@ -604,7 +604,7 @@ package body GVD.Text_Box.Asm_Editor is
      (Editor : access Asm_Editor_Record'Class;
       Addr   : String;
       Result : out Boolean;
-      Num    : out Integer)
+      Num    : out Breakpoint_Identifier)
    is
       Process : constant Debugger_Process_Tab :=
         Debugger_Process_Tab (Editor.Process);
