@@ -23,27 +23,6 @@ with Language;    use Language;
 
 package body Codefix.Errors_Parser is
 
-   ---------------------
-   -- Set_Error_State --
-   ---------------------
-
-   procedure Set_Error_State
-     (Error : Errors_Subcategories;
-      State : Error_State) is
-   begin
-      General_Errors_Array (Error) := State;
-   end Set_Error_State;
-
-   ---------------------
-   -- Get_Error_State --
-   ---------------------
-
-   function Get_Error_State
-     (Error : Errors_Subcategories) return Error_State is
-   begin
-      return General_Errors_Array (Error);
-   end Get_Error_State;
-
    -------------------
    -- Get_Solutions --
    -------------------
@@ -52,6 +31,7 @@ package body Codefix.Errors_Parser is
      (Current_Text : Text_Navigator_Abstr'Class;
       Errors_List  : in out Errors_Interface'Class;
       Message      : Error_Message;
+      Category     : out Dynamic_String;
       Solutions    : out Solution_List)
    is
       Current_Node : Parser_List.List_Node;
@@ -60,7 +40,10 @@ package body Codefix.Errors_Parser is
       Current_Node := First (General_Parse_List);
 
       while Current_Node /= Parser_List.Null_Node loop
-         if Get_Error_State (Data (Current_Node).Subcategorie) = Enabled then
+         if Get_Error_State
+           (General_Preferences_List,
+            Data (Current_Node).Category.all) /= Disabled
+         then
             Fix
               (Data (Current_Node).all,
                Errors_List,
@@ -70,7 +53,11 @@ package body Codefix.Errors_Parser is
                Success);
          end if;
          Current_Node := Next (Current_Node);
-         exit when Success;
+
+         if Success then
+            Assign (Category, Data (Current_Node).Category);
+            exit;
+         end if;
       end loop;
 
    end Get_Solutions;
