@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --               GtkAda - Ada95 binding for Gtk+/Gnome               --
 --                                                                   --
---                 Copyright (C) 2001-2004 ACT-Europe                --
+--                   Copyright (C) 2001-2005 AdaCore                 --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -618,63 +618,65 @@ package body Gtkada.File_Selector is
       pragma Import (C, Internal, "gtk_tree_store_set");
 
    begin
-      if Win.Current_Directory = null
-        or else Win.Remaining_Files = String_List.Null_Node
-      then
+      if Win.Current_Directory = null then
          return False;
       end if;
 
-      Use_File_Filter
-        (Win.Current_Filter,
-         Win,
-         Win.Current_Directory.all,
-         Data (Win.Remaining_Files),
-         State,
-         Pixbuf,
-         Text);
+      for J in 1 .. 100 loop
+         exit when Win.Remaining_Files = String_List.Null_Node;
 
-      --  ??? The selectable state should be set here, if possible.
+         Use_File_Filter
+           (Win.Current_Filter,
+            Win,
+            Win.Current_Directory.all,
+            Data (Win.Remaining_Files),
+            State,
+            Pixbuf,
+            Text);
 
-      case State is
-         when Invisible =>
-            null;
+         --  ??? The selectable state should be set here, if possible.
 
-         when Normal =>
-            Append (Win.File_Model, Iter, Null_Iter);
+         case State is
+            when Invisible =>
+               null;
 
-         when Highlighted =>
-            Append (Win.File_Model, Iter, Null_Iter);
-            Color := Win.Highlighted_Color;
+            when Normal =>
+               Append (Win.File_Model, Iter, Null_Iter);
 
-         when Insensitive =>
-            Append (Win.File_Model, Iter, Null_Iter);
-            Color := Win.Insensitive_Color;
+            when Highlighted =>
+               Append (Win.File_Model, Iter, Null_Iter);
+               Color := Win.Highlighted_Color;
 
-      end case;
+            when Insensitive =>
+               Append (Win.File_Model, Iter, Null_Iter);
+               Color := Win.Insensitive_Color;
 
-      if Iter /= Null_Iter then
-         Set (Win.File_Model, Iter, Base_Name_Column,
-              Locale_To_UTF8 (Data (Win.Remaining_Files)));
+         end case;
 
-         if Text /= null then
-            Set (Win.File_Model, Iter, Comment_Column,
-                 Locale_To_UTF8 (Text.all));
-            Free (Text);
+         if Iter /= Null_Iter then
+            Set (Win.File_Model, Iter, Base_Name_Column,
+                 Locale_To_UTF8 (Data (Win.Remaining_Files)));
+
+            if Text /= null then
+               Set (Win.File_Model, Iter, Comment_Column,
+                    Locale_To_UTF8 (Text.all));
+               Free (Text);
+            end if;
+
+            if Color /= Null_Color then
+               Internal
+                 (Get_Object (Win.File_Model), Iter'Address,
+                  Text_Color_Column, Color);
+            end if;
+
+            if Pixbuf /= Null_Pixbuf then
+               Set (Win.File_Model, Iter, Icon_Column,
+                    Gdk.C_Proxy (Pixbuf));
+            end if;
          end if;
 
-         if Color /= Null_Color then
-            Internal
-              (Get_Object (Win.File_Model), Iter'Address,
-               Text_Color_Column, Color);
-         end if;
-
-         if Pixbuf /= Null_Pixbuf then
-            Set (Win.File_Model, Iter, Icon_Column,
-                 Gdk.C_Proxy (Pixbuf));
-         end if;
-      end if;
-
-      Win.Remaining_Files := Next (Win.Remaining_Files);
+         Win.Remaining_Files := Next (Win.Remaining_Files);
+      end loop;
 
       return Win.Remaining_Files /= String_List.Null_Node;
    end Display_File;
