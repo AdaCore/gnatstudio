@@ -2,7 +2,7 @@
 --                               G P S                               --
 --                                                                   --
 --                     Copyright (C) 2001-2005                       --
---                            ACT-Europe                             --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -967,16 +967,6 @@ package body Glide_Kernel.Preferences is
 
 
       -- Wizards --
-
-      Wizard_Toc_Highlight_Color := Param_Spec_Color (Gnew_Color
-        (Name    => "Wizard-Toc-Highlight-Color",
-         Default => "yellow",
-         Blurb   => -"Color to use to highlight strings in the TOC",
-         Nick    => -"Table of contents color",
-         Flags   => Param_Readable));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (Wizard_Toc_Highlight_Color),
-         -"Project wizard");
 
       Wizard_Title_Font := Param_Spec_Font (Gnew_Font
         (Name    => "Wizard-Title-Font",

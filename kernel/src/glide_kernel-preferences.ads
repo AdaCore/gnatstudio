@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2004                      --
---                            ACT-Europe                             --
+--                      Copyright (C) 2001-2005                      --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -234,7 +234,6 @@ package Glide_Kernel.Preferences is
    Trusted_Mode                    : Param_Spec_Boolean;
 
    -- Wizards --
-   Wizard_Toc_Highlight_Color : Param_Spec_Color;
    Wizard_Title_Font : Param_Spec_Font;
 
    -- Help --
