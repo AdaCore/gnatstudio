@@ -250,7 +250,8 @@ private
       Parsed_List : Construct_List;
       Entity_Name : String;
       Entity_Line : Natural) return GNAT.OS_Lib.String_Access;
-   --  returns the Header of the entity
+   --  returns the Header of the entity. If not header was found,
+   --  null will be returned.
 
    function Get_Line_From_String
      (Text    : String;
