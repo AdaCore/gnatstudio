@@ -311,23 +311,34 @@ package body Diff_Utils2 is
       Diff_File : VFS.Virtual_File;
       Revert    : Boolean := False) return Diff_List
    is
-      Args       : Argument_List (1 .. 6);
-      Ret        : Diff_List;
-      Occurrence : Diff_Chunk_Access;
-      Cmd        : String_Access;
-      Pattern    : constant Pattern_Matcher :=
+      Args          : Argument_List (1 .. 6);
+      Patch_Command : constant String := Get_Pref (Kernel, Patch_Cmd);
+      Descriptor    : TTY_Process_Descriptor;
+      Ret           : Diff_List;
+      Occurrence    : Diff_Chunk_Access;
+      Cmd           : String_Access;
+      Pattern_Any   : constant Pattern_Matcher := Compile (".+");
+      Pattern       : constant Pattern_Matcher :=
         Compile ("^([0-9]+)(,[0-9]+)?([acd])([0-9]+)(,[0-9]+)?");
-      Matches    : Match_Array (0 .. 5);
-      File       : File_Type;
-      Success    : Boolean;
-      Num_Args   : Natural;
-      Buffer     : String (1 .. 8192);
-      Last       : Natural;
-      Cmd_Args   : Argument_List_Access;
+      Matches       : Match_Array (0 .. 5);
+      Result        : Expect_Match;
+      File          : File_Type;
+      Num_Args      : Natural;
+      Buffer        : String (1 .. 8192);
+      Last          : Natural;
+      Cmd_Args      : Argument_List_Access;
 
    begin
-      Cmd_Args := Argument_String_To_List (Get_Pref (Kernel, Patch_Cmd));
+      Cmd_Args := Argument_String_To_List (Patch_Command);
       Cmd      := Locate_Exec_On_Path (Cmd_Args (Cmd_Args'First).all);
+
+      if Cmd.all = "" then
+         Trace (Me, "command not found: " & Patch_Command);
+         Free (Cmd);
+         Free (Cmd_Args);
+         return Ret;
+      end if;
+
       Args (1) := new String'("-s");
       Args (2) := new String'("-o");
 
@@ -345,11 +356,24 @@ package body Diff_Utils2 is
       Args (Num_Args) := new String'(Locale_Full_Name (Diff_File));
       Trace (Me, "spawn: " &
              Argument_List_To_String (Cmd_Args.all & Args (1 .. Num_Args)));
-      Spawn (Cmd.all, Cmd_Args (Cmd_Args'First + 1 .. Cmd_Args'Last)
-             & Args (1 .. Num_Args), Success);
-      Free (Cmd);
-      Free (Cmd_Args);
-      Basic_Types.Free (Args);
+
+      begin
+         Non_Blocking_Spawn
+           (Descriptor, Cmd.all,
+            Cmd_Args (Cmd_Args'First + 1 .. Cmd_Args'Last) &
+            Args (1 .. Num_Args));
+         Free (Cmd);
+         Free (Cmd_Args);
+         Basic_Types.Free (Args);
+
+         loop
+            Expect (Descriptor, Result, Pattern_Any, Matches, Timeout => -1);
+         end loop;
+
+      exception
+         when others =>
+            Close (Descriptor);
+      end;
 
       --  ??? Should use VFS.Read_File instead, more efficient
       Open (File, In_File, Locale_Full_Name (Diff_File));
