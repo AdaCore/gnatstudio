@@ -580,29 +580,30 @@ package body Browsers.Entities is
                Lib_Info : constant LI_File_Ptr :=
                  Locate_From_Source_And_Complete
                    (Kernel, Get_Declaration_File_Of (Entity));
-               Tree : Scope_Tree;
                Node : Scope_Tree_Node;
                Iter : Scope_Tree_Node_Iterator;
                Field : Entity_Information;
             begin
                Set_Return_Value_As_List (Data);
-               Get_Scope_Tree (Kernel, Entity, Tree, Node, True);
+               Get_Scope_Tree (Kernel, Entity, Node);
                Iter := Start (Node);
                loop
                   Node := Get (Iter);
                   exit when Node = Null_Scope_Tree_Node;
-                  Field := Get_Entity (Node);
 
-                  if not Is_Discriminant (Field, Lib_Info, Entity) then
-                     Set_Return_Value
-                       (Data, Create_Entity (Get_Script (Data), Field));
+                  if Is_Declaration (Node) then
+                     Field := Get_Entity (Node);
+
+                     if not Is_Discriminant (Field, Lib_Info, Entity) then
+                        Set_Return_Value
+                          (Data, Create_Entity (Get_Script (Data), Field));
+                     end if;
+
+                     Destroy (Field);
                   end if;
 
-                  Destroy (Field);
                   Next (Iter);
                end loop;
-
-               Free (Tree);
             end;
          end if;
       end if;
@@ -1022,8 +1023,6 @@ package body Browsers.Entities is
    is
       Parent : constant Entity_Information :=
         Get_Parent_Package (Lib_Info, Item.Entity);
-
-      Tree : Scope_Tree := Create_Tree (Lib_Info);
       Iter, Iter2 : Scope_Tree_Node_Iterator;
       Count : Natural := 0;
    begin
@@ -1033,7 +1032,7 @@ package body Browsers.Entities is
          --  Do not destroy parent, needed for callbacks
       end if;
 
-      Iter := Start (Find_Entity_Scope (Tree, Item.Entity));
+      Iter := Start (Find_Entity_Scope (Lib_Info, Item.Entity));
       Iter2 := Iter;
 
       while Get (Iter2) /= Null_Scope_Tree_Node loop
@@ -1086,8 +1085,6 @@ package body Browsers.Entities is
             end if;
          end loop;
       end;
-
-      Free (Tree);
    end Add_Package_Contents;
 
    ----------------
@@ -1100,7 +1097,6 @@ package body Browsers.Entities is
       Item        : access Type_Item_Record'Class;
       Lib_Info    : LI_File_Ptr)
    is
-      Tree : Scope_Tree;
       Node : Scope_Tree_Node;
       Iter : Scope_Tree_Node_Iterator;
       Field : Entity_Information;
@@ -1122,31 +1118,33 @@ package body Browsers.Entities is
       end loop;
 
 
-      Get_Scope_Tree (Kernel, Item.Entity, Tree, Node, True);
+      Get_Scope_Tree (Kernel, Item.Entity, Node);
       Iter := Start (Node);
 
       loop
          Node := Get (Iter);
          exit when Node = Null_Scope_Tree_Node;
-         Field := Get_Entity (Node);
 
-         --  Hide discriminants (already displayed) and subprograms (would
-         --  happen in C++, but these are primitive operations in this case)
-         if not Is_Discriminant (Field, Lib_Info, Item.Entity)
-           and then not Is_Subprogram (Field)
-         then
-            if Is_Enum then
-               Add_Line (List, Get_Name (Field));
-            else
-               Add_Type (List, Item, Lib_Info, Field, Get_Name (Field));
+         if Is_Declaration (Node) then
+            Field := Get_Entity (Node);
+
+            --  Hide discriminants (already displayed) and subprograms (would
+            --  happen in C++, but these are primitive operations in this case)
+            if not Is_Discriminant (Field, Lib_Info, Item.Entity)
+              and then not Is_Subprogram (Field)
+            then
+               if Is_Enum then
+                  Add_Line (List, Get_Name (Field));
+               else
+                  Add_Type (List, Item, Lib_Info, Field, Get_Name (Field));
+               end if;
             end if;
+
+            Destroy (Field);
          end if;
 
-         Destroy (Field);
          Next (Iter);
       end loop;
-
-      Free (Tree);
    end Add_Fields;
 
    --------------

@@ -593,7 +593,6 @@ package body Browsers.Call_Graph is
    is
       Child  : Entity_Item;
       May_Have_To_Dependencies : Boolean := True;
-      Tree   : Scope_Tree;
       Node   : Scope_Tree_Node;
       Iter   : Scope_Tree_Node_Iterator;
 
@@ -602,7 +601,7 @@ package body Browsers.Call_Graph is
       if Child = null then
 
          if Automatically_Check_To_Dependencies then
-            Get_Scope_Tree (Get_Kernel (Browser), Entity, Tree, Node);
+            Get_Scope_Tree (Get_Kernel (Browser), Entity, Node);
 
             if Node /= Null_Scope_Tree_Node then
                Iter := Start (Node);
@@ -616,8 +615,6 @@ package body Browsers.Call_Graph is
                   Next (Iter);
                end loop;
             end if;
-
-            Free (Tree);
          end if;
 
          Gtk_New (Child, Browser, Entity, May_Have_To_Dependencies);
@@ -638,7 +635,6 @@ package body Browsers.Call_Graph is
       Callback : Examine_Callback;
       Execute  : Execute_Callback)
    is
-      Tree        : Scope_Tree;
       Node        : Scope_Tree_Node;
       Rename      : Entity_Information;
       Is_Renaming : Boolean;
@@ -674,7 +670,7 @@ package body Browsers.Call_Graph is
    begin
       Push_State (Kernel_Handle (Kernel), Busy);
 
-      Get_Scope_Tree (Kernel, Entity, Tree, Node);
+      Get_Scope_Tree (Kernel, Entity, Node);
       if Node = Null_Scope_Tree_Node then
          return;
       end if;
@@ -698,12 +694,10 @@ package body Browsers.Call_Graph is
       end if;
 
       Pop_State (Kernel_Handle (Kernel));
-      Free (Tree);
 
    exception
       when E : others =>
          Pop_State (Kernel_Handle (Kernel));
-         Free (Tree);
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end Examine_Entity_Call_Graph_Iterator;
 
@@ -831,19 +825,15 @@ package body Browsers.Call_Graph is
          end if;
       end Add_Item;
 
-      Tree : Scope_Tree;
    begin
       if Get (Data.Iter.all) = No_Reference then
          return False;
 
       else
          begin
-            Tree := Create_Tree (Get_LI (Data.Iter.all));
-            if Tree /= Null_Scope_Tree then
-               Find_Entity_References
-                 (Tree, Data.Entity, Add_Item'Unrestricted_Access);
-               Free (Tree);
-            end if;
+            Find_Entity_References
+              (Get_LI (Data.Iter.all), Data.Entity,
+               Add_Item'Unrestricted_Access);
 
             Next (Get_Language_Handler (Data.Kernel), Data.Iter.all);
             return True;
@@ -852,7 +842,6 @@ package body Browsers.Call_Graph is
             when E : others =>
                Trace (Me, "Unexpected exception: " &
                       Exception_Information (E));
-               Free (Tree);
                return False;
          end;
       end if;
