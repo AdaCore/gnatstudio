@@ -25,10 +25,8 @@ with Gtk.Box;            use Gtk.Box;
 with Gtk.Button;         use Gtk.Button;
 with Gtk.Dialog;         use Gtk.Dialog;
 with Gtk.Enums;          use Gtk.Enums;
-with Gtk.Event_Box;      use Gtk.Event_Box;
 with Gtk.Frame;          use Gtk.Frame;
 with Gtk.Label;          use Gtk.Label;
-with Gtk.Pixmap;         use Gtk.Pixmap;
 with Gtk.Stock;          use Gtk.Stock;
 with Gtk.Style;          use Gtk.Style;
 with Gtk.Widget;         use Gtk.Widget;
@@ -36,6 +34,7 @@ with Gtkada.Handlers;    use Gtkada.Handlers;
 with Interfaces.C.Strings; use Interfaces.C.Strings;
 with Unchecked_Deallocation;
 
+with Logo_Boxes;               use Logo_Boxes;
 with Glide_Kernel;             use Glide_Kernel;
 with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
 with GNAT.OS_Lib;              use GNAT.OS_Lib;
@@ -81,11 +80,10 @@ package body Wizards is
      (Wiz : out Wizard;
       Kernel : access Kernel_Handle_Record'Class;
       Title : String;
-      Bg : String;
       Num_Pages : Positive) is
    begin
       Wiz := new Wizard_Record;
-      Wizards.Initialize (Wiz, Kernel, Title, Bg, Num_Pages);
+      Wizards.Initialize (Wiz, Kernel, Title, Num_Pages);
    end Gtk_New;
 
    ----------------
@@ -96,69 +94,22 @@ package body Wizards is
      (Wiz : access Wizard_Record'Class;
       Kernel : access Kernel_Handle_Record'Class;
       Title : String;
-      Bg : String;
       Num_Pages : Positive)
    is
       Signal_Parameters : constant Signal_Parameter_Types :=
         (1 => (1 => GType_Uint, 2 => GType_None));
-      Color : Gdk_Color;
-      Style : Gtk_Style;
-      Event : Gtk_Event_Box;
-      Vbox  : Gtk_Vbox;
-
    begin
-      Gtk.Dialog.Initialize
-        (Dialog  => Wiz,
-         Title   => Title,
-         Parent  => Get_Main_Window (Kernel),
-         Flags   => Modal or Destroy_With_Parent);
+      Logo_Boxes.Initialize
+        (Win        => Wiz,
+         Title      => Title,
+         Parent     => Get_Main_Window (Kernel),
+         Title_Font => Get_Pref (Kernel, Wizard_Title_Font));
+
+      Set_Default_Size (Wiz, 640, 480);
 
       Initialize_Class_Record
         (Wiz, Signals, Wizard_Class_Record,
          "WizardRecord", Signal_Parameters);
-
-      Set_Default_Size (Wiz, 640, 480);
-
-      Color := Parse (Bg);
-      Alloc (Get_Default_Colormap, Color);
-      Style := Copy (Get_Style (Wiz));
-      Set_Background (Style, State_Normal, Color);
-      Set_Font_Description (Style, Get_Pref (Kernel, Wizard_Title_Font));
-
-      Gtk_New_Hbox (Wiz.Page_Box, False, 0);
-      Pack_Start (Get_Vbox (Wiz), Wiz.Page_Box, True, True, 0);
-
-      --  Use an event box around the toc area, so that we can use a different
-      --  color for the labels.
-      Gtk_New (Event);
-      Set_Style (Event, Style);
-      Pack_Start (Wiz.Page_Box, Event, False, True, 0);
-
-      Gtk_New_Vbox (Wiz.Toc_Box, False, 6);
-      Set_Border_Width (Wiz.Toc_Box, 7);
-      Add (Event, Wiz.Toc_Box);
-
-      --  Same thing for the title box
-      Gtk_New_Vbox (Vbox, False, 0);
-      Pack_Start (Wiz.Page_Box, Vbox, True, True, 0);
-
-      Gtk_New (Event);
-      Set_Style (Event, Style);
-      Pack_Start (Vbox, Event, False, False, 0);
-
-      Gtk_New (Wiz.Title, Title);
-      Set_Alignment (Wiz.Title, 0.5, 0.5);
-      Set_Padding (Wiz.Title, 0, 10);
-      Set_Justify (Wiz.Title, Justify_Center);
-      Set_Line_Wrap (Wiz.Title, False);
-      Add (Event, Wiz.Title);
-
-      Set_Style (Wiz.Title, Style);
-
-      --  The actual contents of the wizard is put in a frame
-      Gtk_New (Wiz.Page_Frame);
-      Set_Shadow_Type (Wiz.Page_Frame, Shadow_In);
-      Pack_Start (Vbox, Wiz.Page_Frame, True, True, 0);
 
       --  The Previous button
       Gtk_New_From_Stock (Wiz.Previous, Stock_Go_Back);
@@ -243,7 +194,7 @@ package body Wizards is
 
    procedure Set_Wizard_Title (Wiz : access Wizard_Record; Title : String) is
    begin
-      Set_Text (Wiz.Title, Title);
+      Set_Text (Get_Title_Label (Wiz), Title);
    end Set_Wizard_Title;
 
    -------------
@@ -271,7 +222,7 @@ package body Wizards is
       Set_Alignment (Gtk_Label (Wiz.Toc (Page_Num)),
                      Gfloat (Level - 1) * 0.2, 0.0);
       Pack_Start
-        (Wiz.Toc_Box, Wiz.Toc (Page_Num), Expand => False, Fill => True);
+        (Get_Side_Box (Wiz), Wiz.Toc (Page_Num), Expand => False);
       --  ??? Should use a list instead of a box, so that we can put the item
       --  at a specific location.
 
@@ -346,24 +297,6 @@ package body Wizards is
       Wiz.Titles (Wiz.Titles'Last) := new String'(Title);
    end Add_Page;
 
-   --------------
-   -- Add_Logo --
-   --------------
-
-   procedure Add_Logo
-     (Wiz    : access Wizard_Record;
-      Pixmap : Gdk.Pixmap.Gdk_Pixmap;
-      Mask   : Gdk.Bitmap.Gdk_Bitmap)
-   is
-      Pix : Gtk_Pixmap;
-   begin
-      Gtk_New (Pix, Pixmap, Mask);
-      Pack_Start
-        (Wiz.Toc_Box, Pix, Expand => False, Fill => False, Padding => 10);
-      Reorder_Child (Wiz.Toc_Box, Pix, 0);
-      Show (Pix);
-   end Add_Logo;
-
    ----------------------
    -- Set_Current_Page --
    ----------------------
@@ -388,13 +321,13 @@ package body Wizards is
          Set_Style (Wiz.Toc (Wiz.Current_Page), Wiz.Normal_Style);
       end if;
 
-      if Get_Child (Wiz.Page_Frame) /= null then
-         Remove (Wiz.Page_Frame, Get_Child (Wiz.Page_Frame));
+      if Get_Child (Get_Contents (Wiz)) /= null then
+         Remove (Get_Contents (Wiz), Get_Child (Get_Contents (Wiz)));
       end if;
 
       Wiz.Current_Page := Num;
-      Add (Wiz.Page_Frame, Wiz.Pages (Wiz.Current_Page));
-      Show (Wiz.Page_Frame);
+      Add (Get_Contents (Wiz), Wiz.Pages (Wiz.Current_Page));
+      Show (Get_Contents (Wiz));
 
       --  If the new page is valid, highlight it
 
@@ -446,7 +379,7 @@ package body Wizards is
       W : constant Wizard := Wizard (Wiz);
    begin
       if not W.Has_Toc then
-         Hide_All (W.Toc_Box);
+         Hide_All (Get_Side_Box (W));
          Queue_Resize (W);
       end if;
 

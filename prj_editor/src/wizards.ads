@@ -51,28 +51,23 @@
 --
 --  </description>
 
-with Gtk.Box;
 with Gtk.Button;
-with Gtk.Dialog;
-with Gtk.Frame;
-with Gtk.Label;
 with Gtk.Widget;
 with Gtk.Style;
-with Gdk.Pixmap;
-with Gdk.Bitmap;
 with Glide_Kernel;
 with GNAT.OS_Lib;
 
+with Logo_Boxes;
+
 package Wizards is
 
-   type Wizard_Record is new Gtk.Dialog.Gtk_Dialog_Record with private;
+   type Wizard_Record is new Logo_Boxes.Logo_Box_Record with private;
    type Wizard is access all Wizard_Record'Class;
 
    procedure Gtk_New
      (Wiz : out Wizard;
       Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
       Title : String;
-      Bg : String;
       Num_Pages : Positive);
    --  Create a new wizard.
    --  Bg is the color to use for the background of the table of contents.
@@ -83,7 +78,6 @@ package Wizards is
      (Wiz       : access Wizard_Record'Class;
       Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
       Title     : String;
-      Bg        : String;
       Num_Pages : Positive);
    --  Internal function used to create the new widget
 
@@ -125,12 +119,6 @@ package Wizards is
       return Gtk.Widget.Gtk_Widget;
    --  Return the widget displayed for the Page_Num-th page.
    --  null is return if this widget hasn't been set yet.
-
-   procedure Add_Logo
-     (Wiz    : access Wizard_Record;
-      Pixmap : Gdk.Pixmap.Gdk_Pixmap;
-      Mask   : Gdk.Bitmap.Gdk_Bitmap);
-   --  Add a pixmap in the lower-left corner of the wizard
 
    procedure Set_Current_Page (Wiz : access Wizard_Record; Num : Positive);
    --  Change the page currently displayed.
@@ -183,15 +171,11 @@ private
    type Widget_Array is array (Positive range <>) of Gtk.Widget.Gtk_Widget;
    type Widget_Array_Access is access Widget_Array;
 
-   type Wizard_Record is new Gtk.Dialog.Gtk_Dialog_Record with record
+   type Wizard_Record is new Logo_Boxes.Logo_Box_Record with record
       Cancel          : Gtk.Button.Gtk_Button;
       Finish          : Gtk.Button.Gtk_Button;
       Next            : Gtk.Button.Gtk_Button;
       Previous        : Gtk.Button.Gtk_Button;
-      Toc_Box         : Gtk.Box.Gtk_Vbox;
-      Page_Box        : Gtk.Box.Gtk_Hbox;
-      Title           : Gtk.Label.Gtk_Label;
-      Page_Frame      : Gtk.Frame.Gtk_Frame;
 
       Toc             : Widget_Array_Access;
       Current_Page    : Positive;
