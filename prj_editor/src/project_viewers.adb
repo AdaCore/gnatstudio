@@ -3164,6 +3164,9 @@ package body Project_Viewers is
         (N : Node_Ptr; Line, Col : out Natural);
       --  Get the line and column from N
 
+      function Check_Space_In_Switch (Switch : String) return Boolean;
+      --  Return True if Switch contains a space
+
       procedure Process_Title_Node      (N : Node_Ptr);
       procedure Process_Check_Node      (N : Node_Ptr);
       procedure Process_Spin_Node       (N : Node_Ptr);
@@ -3182,6 +3185,26 @@ package body Project_Viewers is
         (Parent : Node_Ptr) return Combo_Switch_Array;
       --  Return the contents of all the <radio-entry> and
       --  <combo-entry> nodes of Parent
+
+      ---------------------------
+      -- Check_Space_In_Switch --
+      ---------------------------
+
+      function Check_Space_In_Switch (Switch : String) return Boolean is
+      begin
+         for S in Switch'Range loop
+            if Is_Blank (Switch (S)) then
+               Insert
+                 (Kernel,
+                  -("Attribute switch cannot contain spaces. Use the separator"
+                    & " attribute if you need to separate the switch and its"
+                    & " argument"),
+                  Mode => Glide_Kernel.Console.Error);
+               return True;
+            end if;
+         end loop;
+         return False;
+      end Check_Space_In_Switch;
 
       ---------------------------
       -- Coordinates_From_Node --
@@ -3301,6 +3324,10 @@ package body Project_Viewers is
                           -("Invalid <radio-entry> node in custom file,"
                             & " requires a label and a switch attributes"),
                         Mode => Glide_Kernel.Console.Error);
+                     return Buttons (1 .. 0);
+                  end if;
+
+                  if Check_Space_In_Switch (Switch) then
                      return Buttons (1 .. 0);
                   end if;
 
@@ -3435,6 +3462,10 @@ package body Project_Viewers is
             return;
          end if;
 
+         if Check_Space_In_Switch (Switch) then
+            return;
+         end if;
+
          Pack_Start
            (Boxes (Line, Col), Create_Combo
               (Page, Label,
@@ -3474,6 +3505,10 @@ package body Project_Viewers is
             return;
          end if;
 
+         if Check_Space_In_Switch (Switch) then
+            return;
+         end if;
+
          Create_Field
            (Page, Boxes (Line, Col), Label, Switch, Tip,
             As_Directory     => As_Dir and not As_File,
@@ -3510,6 +3545,10 @@ package body Project_Viewers is
             return;
          end if;
 
+         if Check_Space_In_Switch (Switch) then
+            return;
+         end if;
+
          Create_Spin
            (Page, Boxes (Line, Col), Label, Switch, Min, Max, Default, Tip,
             Sizes (Line, Col), Sep);
@@ -3535,6 +3574,10 @@ package body Project_Viewers is
             return;
          end if;
 
+         if Check_Space_In_Switch (Switch) then
+            return;
+         end if;
+
          Create_Check (Page, Boxes (Line, Col), Label, Switch, Tip);
       end Process_Check_Node;
 
@@ -3553,6 +3596,10 @@ package body Project_Viewers is
                       -("Invalid <expansion> node in custom file, requires"
                         & " a switch attributes"),
                     Mode => Glide_Kernel.Console.Error);
+            return;
+         end if;
+
+         if Check_Space_In_Switch (Switch) then
             return;
          end if;
 
