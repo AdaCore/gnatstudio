@@ -117,6 +117,7 @@ package GVD.Process is
 
       Delete_Text_Handler_Id  : Gtk.Handlers.Handler_Id;
       Stack_List_Select_Id    : Gtk.Handlers.Handler_Id;
+      Destroy_Id              : Gtk.Handlers.Handler_Id;
 
       Data_Paned              : Dock_Hpaned;
       Stack_Scrolledwindow    : Gtk_Scrolled_Window;
