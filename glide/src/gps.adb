@@ -42,6 +42,7 @@ with Glide_Kernel.Console;      use Glide_Kernel.Console;
 with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
 with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
 with Glide_Kernel.Project;      use Glide_Kernel.Project;
+with Glide_Kernel.Scripts;      use Glide_Kernel.Scripts;
 with Glide_Kernel.Timeout;      use Glide_Kernel.Timeout;
 with Gtkada.Intl;               use Gtkada.Intl;
 with Gtkada.Dialogs;            use Gtkada.Dialogs;
@@ -73,7 +74,8 @@ with Metrics_Module;
 with Project_Explorers;
 with Project_Explorers_Files;
 with Project_Viewers;
-with Shell;
+with Shell;  --  ??? No longer needed in fact
+--   with Shell_Script;
 with Src_Editor_Module;
 with VCS_Module;
 with VCS.CVS;
@@ -445,12 +447,15 @@ procedure GPS is
 
       Glide_Kernel.Console.Register_Module (GPS.Kernel);
 
-      --  Register all modules
+      --  Register all modules (scripting languages must be registered first)
 
-      Shell.Register_Module (GPS.Kernel);
+      --  Shell_Script.Register_Module (GPS.Kernel);
+      Shell.Register_Module (GPS.Kernel); --  ??? No longer needed
+      Python_Module.Register_Module (GPS.Kernel);
+      Register_Default_Script_Commands (GPS.Kernel);
+
       Vsearch_Ext.Register_Module (GPS.Kernel);
       Help_Module.Register_Module (GPS.Kernel);
-      Python_Module.Register_Module (GPS.Kernel);
 
       Navigation_Module.Register_Module (GPS.Kernel);
       Metrics_Module.Register_Module (GPS.Kernel);
@@ -893,7 +898,7 @@ begin
    Free (Prefix);
 
 exception
-   when Invalid_Switch | Invalid_Parameter =>
+   when Invalid_Switch | GNAT.Command_Line.Invalid_Parameter =>
       if GVD.Can_Output then
          Put_Line ("Invalid command line");
       end if;
