@@ -21,6 +21,7 @@
 with Glib;                use Glib;
 with Gdk.Color;           use Gdk.Color;
 with Gdk.Event;           use Gdk.Event;
+with Gdk.Rectangle;       use Gdk.Rectangle;
 pragma Warnings (Off);
 with Gdk.Types;           use Gdk.Types;
 pragma Warnings (On);
@@ -765,21 +766,21 @@ package body GVD.Text_Box is
                Entity := new String'
                  (Box.Buffer (Start_Index + 1 .. Index - 1));
 
-               Area.X := Gint16
+               Area.X := GRectangle_Coord
                  (Integer (-X) +
                   (Start_Index - Line_Index +
                    Integer (Invisible_Column_Width (Box))) *
                   Integer (Char_Width (Box.Font, Character' ('m'))));
 
-               Area.Width := Guint16
+               Area.Width := GRectangle_Length
                  (Gint ((Index - Start_Index - 1)) *
                   (Char_Width (Box.Font, Character' ('m'))));
 
-               Area.Y := -Gint16
+               Area.Y := -GRectangle_Coord
                  ((Y mod (Get_Ascent (Box.Font) + Get_Descent (Box.Font))));
 
-               Area.Height :=
-                 Guint16 (Get_Ascent (Box.Font) + Get_Descent (Box.Font));
+               Area.Height := GRectangle_Length
+                 (Get_Ascent (Box.Font) + Get_Descent (Box.Font));
             end if;
          end if;
       end if;
