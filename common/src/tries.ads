@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003-2004                       --
+--                     Copyright (C) 2003-2005                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
@@ -96,8 +96,11 @@ package Tries is
 
    procedure Find_Cell_Child
      (Tree : Trie_Tree; Index : String; Pointer : out Cell_Pointer);
+   pragma Convention (C, Find_Cell_Child);
    --  Access a specific cell in the tree. The result value should only be
    --  used before the next write-access to the tree, or it becomes obsolete.
+   --  Pragma convention is used here to force Tree to be passed by reference,
+   --  since we are doing some access on it to set the value of Pointer.
 
    procedure Insert (Index : String; Pointer : Cell_Pointer; Data : Data_Type);
    --  Insert a new entry in the tree.
