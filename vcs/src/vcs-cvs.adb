@@ -59,14 +59,11 @@ package body VCS.CVS is
      (Rep               : access CVS_Record;
       Command           : String;
       Arguments         : Argument_List;
-      Output_To_Message : Boolean := False)
-     return String_List.List;
+      Output_To_Message : Boolean := False) return String_List.List;
    --  Executes command Command with arguments Arguments and returns the result
    --  as a string list with one element per line of output.
 
-   function Get_CVSROOT
-     (Filename : String)
-     return String;
+   function Get_CVSROOT (Filename : String) return String;
    --  Return the CVSROOT corresponding to a file name.
    --  Filename must be an absolute file name.
 
@@ -79,31 +76,29 @@ package body VCS.CVS is
    function Real_Get_Status
      (Rep         : access CVS_Record;
       Filenames   : String_List.List;
-      Get_Status  : Boolean          := True;
-      Get_Version : Boolean          := True;
-      Get_Tags    : Boolean          := False;
-      Get_Users   : Boolean          := False)
-     return File_Status_List.List;
+      Get_Status  : Boolean := True;
+      Get_Version : Boolean := True;
+      Get_Tags    : Boolean := False;
+      Get_Users   : Boolean := False) return File_Status_List.List;
    --  Just like Get_Status, but assuming that Filenames is not empty
    --  and that all files in Filenames are from the same directory.
 
    function Real_Local_Get_Status
      (Rep         : access CVS_Record;
-      Filenames   : String_List.List)
-     return File_Status_List.List;
+      Filenames   : String_List.List) return File_Status_List.List;
    --  Just like Local_Get_Status, but assuming that Filenames is not
    --  empty and that all files in Filenames are from the same directory.
 
    procedure Simple_Action
-     (Rep       : access CVS_Record;
-      Filenames :        String_List.List;
-      Arguments :        String_List.List;
+     (Rep               : access CVS_Record;
+      Filenames         : String_List.List;
+      Arguments         : String_List.List;
       Output_To_Message : Boolean := False);
 
    procedure Real_Simple_Action
-     (Rep       : access CVS_Record;
-      Filenames :        String_List.List;
-      Arguments :        String_List.List;
+     (Rep               : access CVS_Record;
+      Filenames         : String_List.List;
+      Arguments         : String_List.List;
       Output_To_Message : Boolean := False);
    --  Just like Simple_Action, but assuming that Filenames is not
    --  empty and that all files in Filenames are from the same directory.
@@ -112,8 +107,7 @@ package body VCS.CVS is
    -- Get_Path --
    --------------
 
-   function Get_Path (Filename : String) return String
-   is
+   function Get_Path (Filename : String) return String is
    begin
       for J in reverse Filename'First .. Filename'Last loop
          if Filename (J) = Directory_Separator then
@@ -128,13 +122,11 @@ package body VCS.CVS is
    -- Get_CVSROOT --
    -----------------
 
-   function Get_CVSROOT
-     (Filename : String)
-     return String
-   is
+   function Get_CVSROOT (Filename : String) return String is
       File   : File_Type;
       Buffer : String (1 .. 1024);
       Last   : Integer;
+
    begin
       Open (File, In_File,
             Get_Path (Filename)
@@ -160,15 +152,15 @@ package body VCS.CVS is
      (Rep               : access CVS_Record;
       Command           : String;
       Arguments         : Argument_List;
-      Output_To_Message : Boolean := False)
-     return String_List.List
+      Output_To_Message : Boolean := False) return String_List.List
    is
       Result : String_List.List;
       Fd     : Process_Descriptor;
       Match  : Expect_Match := 1;
+
    begin
-      Non_Blocking_Spawn (Fd, Command, Arguments,
-                          Err_To_Out => True);
+      Non_Blocking_Spawn (Fd, Command, Arguments, Err_To_Out => True);
+
       begin
          if Rep.Local_Idle_Function = null then
             while Match = 1 loop
@@ -220,9 +212,9 @@ package body VCS.CVS is
    ------------------------
 
    procedure Real_Simple_Action
-     (Rep       : access CVS_Record;
-      Filenames :        String_List.List;
-      Arguments :        String_List.List;
+     (Rep               : access CVS_Record;
+      Filenames         : String_List.List;
+      Arguments         : String_List.List;
       Output_To_Message : Boolean := False)
    is
       use String_List;
@@ -235,9 +227,9 @@ package body VCS.CVS is
       Filenames_Length : Natural := Length (Filenames);
       Args_Length      : Natural := Length (Arguments);
 
-
       Old_Dir : Dir_Name_Str := Get_Current_Dir;
       New_Dir : Dir_Name_Str := Get_Path (Head (Filenames));
+
    begin
       Change_Dir (New_Dir);
 
@@ -304,8 +296,8 @@ package body VCS.CVS is
 
    procedure Simple_Action
      (Rep               : access CVS_Record;
-      Filenames         :        String_List.List;
-      Arguments         :        String_List.List;
+      Filenames         : String_List.List;
+      Arguments         : String_List.List;
       Output_To_Message : Boolean := False)
    is
       use String_List;
@@ -347,11 +339,10 @@ package body VCS.CVS is
    function Real_Get_Status
      (Rep         : access CVS_Record;
       Filenames   : String_List.List;
-      Get_Status  : Boolean          := True;
-      Get_Version : Boolean          := True;
-      Get_Tags    : Boolean          := False;
-      Get_Users   : Boolean          := False)
-     return File_Status_List.List
+      Get_Status  : Boolean := True;
+      Get_Version : Boolean := True;
+      Get_Tags    : Boolean := False;
+      Get_Users   : Boolean := False) return File_Status_List.List
    is
       use String_List;
 
@@ -547,8 +538,7 @@ package body VCS.CVS is
 
    function Real_Local_Get_Status
      (Rep         : access CVS_Record;
-      Filenames   : String_List.List)
-     return File_Status_List.List
+      Filenames   : String_List.List) return File_Status_List.List
    is
       use String_List;
 
@@ -561,11 +551,12 @@ package body VCS.CVS is
       Current_Status : File_Status_Record := Blank_Status;
 
       File   : File_Type;
-      Buffer : String (1 .. 1024);
+      Buffer : String (1 .. 8192);
       Last   : Integer := 1;
 
       Index  : Natural;
       Next_Index : Natural;
+
    begin
       Change_Dir (New_Dir);
 
@@ -617,11 +608,10 @@ package body VCS.CVS is
    function Get_Status
      (Rep         : access CVS_Record;
       Filenames   : String_List.List;
-      Get_Status  : Boolean          := True;
-      Get_Version : Boolean          := True;
-      Get_Tags    : Boolean          := False;
-      Get_Users   : Boolean          := False)
-     return File_Status_List.List
+      Get_Status  : Boolean := True;
+      Get_Version : Boolean := True;
+      Get_Tags    : Boolean := False;
+      Get_Users   : Boolean := False) return File_Status_List.List
    is
       Result           : File_Status_List.List;
       Current_Filename : String_List.List := Filenames;
@@ -633,11 +623,12 @@ package body VCS.CVS is
       end if;
 
       while not Is_Empty (Current_Filename) loop
-
          --  Extract a list of files that belong to the same directory.
+
          declare
             Current_Directory : String := Get_Path (Head (Current_Filename));
             Current_List      : String_List.List;
+
          begin
             while not Is_Empty (Current_Filename)
               and then Get_Path (Head (Current_Filename)) = Current_Directory
@@ -648,13 +639,16 @@ package body VCS.CVS is
 
             --  At this point, Current_List should not be empty and
             --  all its element are files from Current_Directory.
-            File_Status_List.Concat (Result,
-                                     Real_Get_Status (Rep,
-                                                      Current_List,
-                                                      Get_Status,
-                                                      Get_Version,
-                                                      Get_Tags,
-                                                      Get_Users));
+
+            File_Status_List.Concat
+              (Result,
+               Real_Get_Status
+                 (Rep,
+                  Current_List,
+                  Get_Status,
+                  Get_Version,
+                  Get_Tags,
+                  Get_Users));
 
             Free (Current_List);
          end;
@@ -669,12 +663,13 @@ package body VCS.CVS is
 
    function Local_Get_Status
      (Rep         : access CVS_Record;
-      Filenames   :        String_List.List)
-     return File_Status_List.List is
+      Filenames   : String_List.List) return File_Status_List.List
+   is
       Result           : File_Status_List.List;
       Current_Filename : String_List.List := Filenames;
 
       use String_List;
+
    begin
       if Is_Empty (Current_Filename) then
          return Result;
@@ -686,6 +681,7 @@ package body VCS.CVS is
          declare
             Current_Directory : String := Get_Path (Head (Current_Filename));
             Current_List      : String_List.List;
+
          begin
             while not Is_Empty (Current_Filename)
               and then Get_Path (Head (Current_Filename)) = Current_Directory
@@ -696,9 +692,9 @@ package body VCS.CVS is
 
             --  At this point, Current_List should not be empty and
             --  all its element are files from Current_Directory.
-            File_Status_List.Concat (Result,
-                                     Real_Local_Get_Status (Rep,
-                                                            Current_List));
+
+            File_Status_List.Concat
+              (Result, Real_Local_Get_Status (Rep, Current_List));
             Free (Current_List);
          end;
       end loop;
@@ -712,8 +708,8 @@ package body VCS.CVS is
 
    procedure Open
      (Rep       : access CVS_Record;
-      Filenames :        String_List.List;
-      User_Name :        String           := "")
+      Filenames : String_List.List;
+      User_Name : String           := "")
    is
       Arguments : String_List.List;
    begin
@@ -734,8 +730,8 @@ package body VCS.CVS is
 
    procedure Commit
      (Rep       : access CVS_Record;
-      Filenames :        String_List.List;
-      Logs      :        String_List.List)
+      Filenames : String_List.List;
+      Logs      : String_List.List)
    is
       Arguments      : String_List.List;
       Filenames_Temp : String_List.List := Filenames;
@@ -743,6 +739,7 @@ package body VCS.CVS is
       Single_File    : String_List.List;
 
       use String_List;
+
    begin
       Clear_Message (Rep);
       Rep.Success := True;
@@ -776,7 +773,7 @@ package body VCS.CVS is
 
    procedure Update
      (Rep       : access CVS_Record;
-      Filenames :        String_List.List)
+      Filenames : String_List.List)
    is
       Arguments : String_List.List;
    begin
@@ -796,7 +793,7 @@ package body VCS.CVS is
 
    procedure Merge
      (Rep       : access CVS_Record;
-      Filenames :        String_List.List)
+      Filenames : String_List.List)
    is
       Arguments : String_List.List;
    begin
@@ -816,7 +813,7 @@ package body VCS.CVS is
 
    procedure Add
      (Rep       : access CVS_Record;
-      Filenames :        String_List.List)
+      Filenames : String_List.List)
    is
       Arguments : String_List.List;
    begin
@@ -848,7 +845,7 @@ package body VCS.CVS is
 
    procedure Remove
      (Rep       : access CVS_Record;
-      Filenames :        String_List.List)
+      Filenames : String_List.List)
    is
       Arguments : String_List.List;
    begin
@@ -872,8 +869,7 @@ package body VCS.CVS is
      (Rep       : access CVS_Record;
       File      : String;
       Version_1 : String := "";
-      Version_2 : String := "")
-     return String_List.List
+      Version_2 : String := "") return String_List.List
    is
       Result : String_List.List;
    begin
@@ -900,6 +896,7 @@ package body VCS.CVS is
             end loop;
          end;
       end if;
+
       --  ??? deal with other cases
 
       return Result;
@@ -910,15 +907,14 @@ package body VCS.CVS is
    ---------
 
    function Log
-      (Rep       : access CVS_Record;
-       File      : String)
-      return String_List.List
+     (Rep  : access CVS_Record;
+      File : String) return String_List.List
    is
-      Result : String_List.List;
+      Result  : String_List.List;
       Old_Dir : Dir_Name_Str := Get_Current_Dir;
       New_Dir : Dir_Name_Str := Get_Path (File);
-
       Args    : Argument_List (1 .. 2);
+
    begin
       Change_Dir (New_Dir);
       Args (1) := new String' ("log");
@@ -933,6 +929,7 @@ package body VCS.CVS is
       end loop;
 
       return Result;
+
    exception
       when Directory_Error =>
          Set_Error (Rep, "Directory error : cannot access " & New_Dir);
@@ -944,15 +941,14 @@ package body VCS.CVS is
    --------------
 
    function Annotate
-      (Rep       : access CVS_Record;
-       File      : String)
-      return String_List.List
+     (Rep  : access CVS_Record;
+      File : String) return String_List.List
    is
-      Result : String_List.List;
+      Result  : String_List.List;
       Old_Dir : Dir_Name_Str := Get_Current_Dir;
       New_Dir : Dir_Name_Str := Get_Path (File);
-
       Args    : Argument_List (1 .. 2);
+
    begin
       Change_Dir (New_Dir);
       Args (1) := new String' ("annotate");
@@ -967,6 +963,7 @@ package body VCS.CVS is
       end loop;
 
       return Result;
+
    exception
       when Directory_Error =>
          Set_Error (Rep, "Directory error : cannot access " & New_Dir);
@@ -977,8 +974,7 @@ package body VCS.CVS is
    -- Success --
    -------------
 
-   function Success (Rep : access CVS_Record) return Boolean
-   is
+   function Success (Rep : access CVS_Record) return Boolean is
    begin
       return Rep.Success;
    end Success;
@@ -987,9 +983,7 @@ package body VCS.CVS is
    -- Clear_Message --
    -------------------
 
-   procedure Clear_Message
-     (Rep : access CVS_Record)
-   is
+   procedure Clear_Message (Rep : access CVS_Record) is
    begin
       String_List.Free (Rep.Message);
    end Clear_Message;
@@ -1000,8 +994,7 @@ package body VCS.CVS is
 
    procedure Append_To_Message
      (Rep : access CVS_Record;
-      S   : String)
-   is
+      S   : String) is
    begin
       Set_Error (Rep, S);
    end Append_To_Message;
@@ -1037,12 +1030,12 @@ package body VCS.CVS is
    -- Get_Message --
    -----------------
 
-   function Get_Message (Rep : access CVS_Record) return String
-   is
+   function Get_Message (Rep : access CVS_Record) return String is
       S : Unbounded_String := Null_Unbounded_String;
 
       use String_List;
       Message_Temp : List := Rep.Message;
+
    begin
       while not Is_Empty (Message_Temp) loop
          Append (S, Head (Message_Temp) & ASCII.CR & ASCII.LF);
@@ -1059,8 +1052,7 @@ package body VCS.CVS is
    procedure Register_Idle_Function
      (Rep  : access CVS_Record;
       Func : Idle_Function;
-      Timeout : Integer := 200)
-   is
+      Timeout : Integer := 200) is
    begin
       Rep.Local_Idle_Function := Func;
       Rep.Timeout := Timeout;

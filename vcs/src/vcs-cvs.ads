@@ -33,59 +33,55 @@ package VCS.CVS is
    function Get_Status
      (Rep         : access CVS_Record;
       Filenames   : String_List.List;
-      Get_Status  : Boolean          := True;
-      Get_Version : Boolean          := True;
-      Get_Tags    : Boolean          := False;
-      Get_Users   : Boolean          := False)
-     return File_Status_List.List;
+      Get_Status  : Boolean := True;
+      Get_Version : Boolean := True;
+      Get_Tags    : Boolean := False;
+      Get_Users   : Boolean := False) return File_Status_List.List;
 
    function Local_Get_Status
      (Rep       : access CVS_Record;
-      Filenames :        String_List.List)
+      Filenames : String_List.List)
      return File_Status_List.List;
 
    procedure Open
      (Rep       : access CVS_Record;
-      Filenames :        String_List.List;
-      User_Name :        String           := "");
+      Filenames : String_List.List;
+      User_Name : String := "");
 
    procedure Commit
      (Rep       : access CVS_Record;
-      Filenames :        String_List.List;
-      Logs      :        String_List.List);
+      Filenames : String_List.List;
+      Logs      : String_List.List);
 
    procedure Update
      (Rep       : access CVS_Record;
-      Filenames :        String_List.List);
+      Filenames : String_List.List);
 
    procedure Merge
      (Rep       : access CVS_Record;
-      Filenames :        String_List.List);
+      Filenames : String_List.List);
 
    procedure Add
      (Rep       : access CVS_Record;
-      Filenames :        String_List.List);
+      Filenames : String_List.List);
 
    procedure Remove
      (Rep       : access CVS_Record;
-      Filenames :        String_List.List);
+      Filenames : String_List.List);
 
    function Diff
      (Rep       : access CVS_Record;
-      File      :        String;
-      Version_1 :        String     := "";
-      Version_2 :        String     := "")
-     return String_List.List;
+      File      : String;
+      Version_1 : String := "";
+      Version_2 : String := "") return String_List.List;
 
    function Log
      (Rep  : access CVS_Record;
-      File :        String)
-      return String_List.List;
+      File : String) return String_List.List;
 
    function Annotate
      (Rep  : access CVS_Record;
-      File :        String)
-      return String_List.List;
+      File : String) return String_List.List;
 
    function Success (Rep : access CVS_Record) return Boolean;
 
