@@ -17,7 +17,7 @@
 @page
 @vskip 0pt plus 1filll
 
-Copyright @copyright{} 2000, ACT-Europe.
+Copyright @copyright{} 2000-2001, ACT-Europe.
 This document may be copied, in whole or in part, in any form or by any
 means, as is or with alterations, provided that (1) alterations are clearly
 marked as alterations and (2) this copyright notice is included
@@ -956,7 +956,7 @@ Helpers section.
      Output that confuses GVD includes:
 
      @itemize @bullet
-       @item Primary debugger prompts (e.g '(gvb) ')
+       @item Primary debugger prompts (e.g '(gvd) ')
        @item Secondary debugger prompts (e.g '>')
        @item Confirmation prompts (e.g '(y or n)')
      @end itemize
@@ -979,7 +979,7 @@ Helpers section.
      @item set height 0
      @item set width 0
      @item set verbose off
-     @item set prompt (gvb) 
+     @item set prompt (gvd) 
      @end itemize
 
      GVD sets these values automatically when invoking GDB; if these values
