@@ -255,6 +255,10 @@ package body Src_Editor_Buffer is
          Destroy (Buffer.Current_Command);
       end if;
 
+      if Buffer.Filename /= null then
+         File_Closed (Buffer.Kernel, Buffer.Filename.all);
+      end if;
+
       Free (Buffer.Filename);
    end Buffer_Destroy;
 
