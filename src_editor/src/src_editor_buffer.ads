@@ -62,10 +62,24 @@ package Src_Editor_Buffer is
       Lang   : Language.Language_Access := null);
    --  Create a new Source_Buffer with the given Language.
 
-   --  ??? missing comments for the following type definitions:
+   --  The following types define the different line types that are involved
+   --  in the buffer:
+
    type Editable_Line_Type is new Natural;
+   --  Editable lines are the lines in the buffer that can be edited (ie
+   --  all lines except blank lines, post-it notes, etc), plus lines that
+   --  could be edited but are not displayed in the buffer (hidden lines in
+   --  folded blocks belong to that category).
+   --  The Editable lines are the lines that are saved to disk when the
+   --  Source_Buffer is saved.
+
    type Buffer_Line_Type is new Natural;
+   --  Buffer lines correspond to lines actually in the buffer, ie all lines
+   --  that are visible on the screen.
+
    type File_Line_Type is new Natural;
+   --  File lines identify lines that were in the file the last time that the
+   --  buffer was saved.
 
    procedure Initialize
      (Buffer : access Source_Buffer_Record'Class;
