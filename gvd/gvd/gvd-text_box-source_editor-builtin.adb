@@ -25,7 +25,7 @@ with Glib;                  use Glib;
 with Gdk.Bitmap;            use Gdk.Bitmap;
 with Gdk.Color;             use Gdk.Color;
 with Gdk.Pixmap;            use Gdk.Pixmap;
-with Gdk.Types;             use Gdk.Types;
+with Gdk.Font;              use Gdk.Font;
 with Gdk.Window;            use Gdk.Window;
 with Gtk.Adjustment;        use Gtk.Adjustment;
 with Gtk.Check_Menu_Item;   use Gtk.Check_Menu_Item;
@@ -58,6 +58,7 @@ with Display_Items;         use Display_Items;
 with Items;                 use Items;
 
 with Gdk.Drawable; use Gdk.Drawable;
+with Gdk.Types; use Gdk.Types;
 
 package body Odd.Source_Editors is
 
@@ -77,6 +78,10 @@ package body Odd.Source_Editors is
 
    Editor_Contextual_Menu_Name : constant String := "odd_editor_context";
    --  String used to store the editor contextual menu as a user data
+
+   Max_Tooltip_Width : constant := 400;
+   Max_Tooltip_Height : constant := 300;
+   --  Maximum size to use for the tooltip windows
 
    --------------------
    -- Local packages --
@@ -193,8 +198,7 @@ package body Odd.Source_Editors is
 
       Data.Lang := Editor.Lang;
       Data.Box  := Source_Editor (Editor);
-      Editor_Tooltips.New_Tooltip
-        (Get_Child (Editor), Data, Editor.Tooltip);
+      Editor_Tooltips.New_Tooltip (Get_Child (Editor), Data, Editor.Tooltip);
    end Initialize;
 
    -------------------
@@ -1137,93 +1141,156 @@ package body Odd.Source_Editors is
    ------------------
 
    procedure Draw_Tooltip
-     (Widget        : access Gtk_Text_Record'Class;
-      Data          : in Editor_Tooltip_Data;
-      Pixmap        : out Gdk.Pixmap.Gdk_Pixmap;
+     (Widget : access Gtk_Text_Record'Class;
+      Data : in out Editor_Tooltip_Data;
+      Pixmap : out Gdk.Pixmap.Gdk_Pixmap;
       Width, Height : out Glib.Gint)
    is
       use type Items.Generic_Type_Access;
       Entity        : Items.Generic_Type_Access;
       Value_Found   : Boolean;
+      Value         : Odd.Types.String_Access;
 
       Debugger : constant Debugger_Process_Tab :=
         Debugger_Process_Tab (Data.Box.Process);
 
       Context : Items.Drawing_Context;
-      Mask    : Gdk.Types.Gdk_Modifier_Type;
-      Win     : Gdk_Window;
-      X, Y    : Gint;
+      Chars_Per_Line : Gint;
+      Index : Natural;
+      Line : Gint;
+      Max : Natural;
+      W : Gint;
 
+      Mask2 : Gdk.Types.Gdk_Modifier_Type;
+      Win : Gdk_Window;
+      X, Y : Gint;
    begin
+
       Width := 0;
       Height := 0;
 
       if Tooltips_In_Source = None
         or else not Is_Started (Debugger.Debugger)
+        or else Command_In_Process (Get_Process (Debugger.Debugger))
       then
          return;
       end if;
 
-      Get_Pointer (Get_Window (Data.Box), X, Y, Mask, Win);
+      --  Note that, when getting the coordinates of the pointer, we have to
+      --  get them relative to the actual window where the text is displayed
+      --  (ie ignoring the borders around the Gtk_Text), or there will be a
+      --  small offset.
+      Get_Pointer (Get_Text_Area (Get_Child (Data.Box)), X, Y, Mask2, Win);
 
       declare
-         Variable_Name : constant String :=
-           Get_Entity (Data.Box,
-                       X - Get_Allocation_X (Data.Box)
-                       - Gint (Get_Width (Get_Buttons (Data.Box))) / 4, Y);
+         Variable_Name : constant String := Get_Entity (Data.Box, X, Y);
       begin
+
          if Variable_Name = "" then
             return;
          end if;
 
-         Entity := Parse_Type (Debugger.Debugger, Variable_Name);
+         if Tooltips_In_Source = Full then
+            Entity := Parse_Type (Debugger.Debugger, Variable_Name);
+            if Entity = null then
+               return;
+            else
+               Parse_Value
+                 (Debugger.Debugger, Variable_Name, Entity, Value_Found);
+            end if;
 
-         if Entity = null then
-            return;
+            if Value_Found then
+               Set_Valid (Entity);
+               Size_Request (Entity.all, Create_Drawing_Context (Pixmap));
+
+               Width := Gint'Min
+                 (Max_Tooltip_Width, Get_Width (Entity.all) + 4);
+               Height := Gint'Min
+                 (Max_Tooltip_Height, Get_Height (Entity.all) + 4);
+
+               Propagate_Width (Entity.all, Width - 4);
+            end if;
+
          else
-            Parse_Value
-              (Debugger.Debugger, Variable_Name, Entity, Value_Found);
+            Value := new String'(Value_Of (Debugger.Debugger, Variable_Name));
+            if Value.all = "" then
+               return;
+            end if;
+
+            Context := Create_Drawing_Context (Null_Pixmap);
+            Chars_Per_Line :=
+              Max_Tooltip_Width / Char_Width (Context.Font, Character'('m'));
+
+            Height := Get_Ascent (Context.Font) + Get_Descent (Context.Font);
+            if Value'Length > Chars_Per_Line then
+               Width := Gint'Min
+                 (Max_Tooltip_Width,
+                  Chars_Per_Line * Char_Width (Context.Font, Character'('m'))
+                  + 4);
+               Height := Gint'Min
+                 (Max_Tooltip_Height,
+                  (1 + Value'Length / Chars_Per_Line) * Height + 2);
+            else
+               Width := Gint'Min
+                 (Max_Tooltip_Width, Text_Width (Context.Font, Value.all) + 4);
+            end if;
          end if;
       end;
 
-      if Value_Found then
-         Set_Valid (Entity);
-         Size_Request (Entity.all, Create_Drawing_Context (Pixmap));
+      if Width /= 0 and then Height /= 0 then
 
-         Width := Get_Width (Entity.all) + 4;
-         Height := Get_Height (Entity.all) + 4;
+         Gdk.Pixmap.Gdk_New
+           (Pixmap, Get_Window (Debugger.Window), Width, Height);
+         Context := Create_Drawing_Context (Pixmap);
 
-         Propagate_Width (Entity.all, Width - 4);
+         Draw_Rectangle
+           (Pixmap,
+            Context.Thaw_Bg_Gc,
+            Filled => True,
+            X      => 0,
+            Y      => 0,
+            Width  => Width - 1,
+            Height => Height - 1);
 
-         if Width /= 0 and then Height /= 0 then
-            Gdk.Pixmap.Gdk_New
-              (Pixmap,
-               Get_Window (Debugger.Window),
-               Width,
-               Height);
-            Context := Create_Drawing_Context (Pixmap);
-
-            Draw_Rectangle
-              (Pixmap,
-               Context.Thaw_Bg_Gc,
-               Filled => True,
-               X      => 0,
-               Y      => 0,
-               Width  => Width - 1,
-               Height => Height - 1);
-
-            Draw_Rectangle
-              (Pixmap,
-               Context.GC,
-               Filled => False,
-               X      => 0,
-               Y      => 0,
-               Width  => Width - 1,
-               Height => Height - 1);
-
+         if Tooltips_In_Source = Full then
             Items.Paint (Entity.all, Context, X => 2, Y => 2);
+         else
+            Index := Value'First;
+            Line := 0;
+            W := 0;
+
+            while Index <= Value'Last loop
+               Max := Index + Natural (Chars_Per_Line) - 1;
+               if Max > Value'Last then
+                  Max := Value'Last;
+               end if;
+
+               Draw_Text
+                 (Pixmap, Context.Font, Context.GC,
+                  2, Line *
+                  (Get_Ascent (Context.Font) + Get_Descent (Context.Font))
+                  + Get_Ascent (Context.Font),
+                  Value (Index .. Max));
+               W := Gint'Max
+                 (W, Text_Width (Context.Font, Value (Index .. Max)));
+               Index := Max + 1;
+               Line := Line + 1;
+            end loop;
+
+            Width := W + 4;
          end if;
+
+         Draw_Rectangle
+           (Pixmap,
+            Context.GC,
+            Filled => False,
+            X      => 0,
+            Y      => 0,
+            Width  => Width - 1,
+            Height => Height - 1);
       end if;
+
+      Free (Value);
 
    exception
       when Language.Unexpected_Type | Constraint_Error => null;

@@ -155,11 +155,11 @@ private
       Lang : Language.Language_Access;
    end record;
 
-   procedure Draw_Tooltip (Widget :
-                             access Gtk.Text.Gtk_Text_Record'Class;
-                           Data   : in Editor_Tooltip_Data;
-                           Pixmap : out Gdk.Pixmap.Gdk_Pixmap;
-                           Width, Height : out Glib.Gint);
+   procedure Draw_Tooltip
+     (Widget : access Gtk.Text.Gtk_Text_Record'Class;
+      Data   : in out Editor_Tooltip_Data;
+      Pixmap : out Gdk.Pixmap.Gdk_Pixmap;
+      Width, Height : out Glib.Gint);
 
    package Editor_Tooltips is new Odd.Tooltips
      (Editor_Tooltip_Data, Gtk.Text.Gtk_Text_Record, Draw_Tooltip);
