@@ -79,7 +79,7 @@ package Codefix.File_Io is
    function Read_File (This : File_Interface) return Dynamic_String;
    --  Get the entire file in a Dynamic_String.
 
-   procedure Update (This : File_Interface);
+   procedure Commit (This : File_Interface);
    --  Save the file.
 
    function Line_Max (This : File_Interface) return Natural;

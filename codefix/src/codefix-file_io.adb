@@ -173,7 +173,7 @@ package body Codefix.File_Io is
    -- Update --
    ------------
 
-   procedure Update (This : File_Interface) is
+   procedure Commit (This : File_Interface) is
       Current_Node : List_Str.List_Node := First (This.Content);
       Current_File : File_Type;
    begin
@@ -185,7 +185,7 @@ package body Codefix.File_Io is
       end loop;
 
       Close (Current_File);
-   end Update;
+   end Commit;
 
    --------------
    -- Line_Max --
