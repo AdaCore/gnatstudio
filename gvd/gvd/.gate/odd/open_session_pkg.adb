@@ -57,7 +57,7 @@ begin
    Gtk_New_Hbox (Open_Session.Hbox6, False, 0);
    Pack_Start (Open_Session.Vbox18, Open_Session.Hbox6, False, False, 7);
 
-   Gtk_New (Open_Session.Label73, -("Session :"));
+   Gtk_New (Open_Session.Label73, -("Session:"));
    Pack_Start (Open_Session.Hbox6, Open_Session.Label73, False, False, 7);
    Set_Alignment (Open_Session.Label73, 0.5, 0.5);
    Set_Padding (Open_Session.Label73, 0, 0);

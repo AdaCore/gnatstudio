@@ -133,7 +133,7 @@ package Main_Debug_Window_Pkg.Callbacks is
      (Object : access Gtk_Menu_Item_Record'Class);
 
    procedure On_Examine_Memory1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class);
+     (Object : access Gtk_Widget_Record'Class);
 
    procedure On_Display_Local_Variables1_Activate
      (Object : access Gtk_Widget_Record'Class);

@@ -486,10 +486,9 @@ begin
    Set_Right_Justify (Main_Debug_Window.Edit_Displays1, False);
 
    Gtk_New (Main_Debug_Window.Examine_Memory1, -"Examine Memory...");
-   Set_Sensitive (Main_Debug_Window.Examine_Memory1, False);
-   Menu_Item_Callback.Connect
+   Widget_Callback.Object_Connect
      (Main_Debug_Window.Examine_Memory1, "activate",
-      Menu_Item_Callback.To_Marshaller (On_Examine_Memory1_Activate'Access));
+      Widget_Callback.To_Marshaller (On_Examine_Memory1_Activate'Access), Main_Debug_Window);
    Add (Main_Debug_Window.Data1_Menu, Main_Debug_Window.Examine_Memory1);
    Set_Right_Justify (Main_Debug_Window.Examine_Memory1, False);
 

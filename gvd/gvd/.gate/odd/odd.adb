@@ -8,6 +8,7 @@ with Breakpoints_Pkg; use Breakpoints_Pkg;
 with Advanced_Breakpoint_Pkg; use Advanced_Breakpoint_Pkg;
 with Open_Program_Pkg; use Open_Program_Pkg;
 with Open_Session_Pkg; use Open_Session_Pkg;
+with Memory_View_Pkg; use Memory_View_Pkg;
 
 procedure Odd is
 begin
@@ -27,5 +28,7 @@ begin
    Show_All (Open_Program);
    Gtk_New (Open_Session);
    Show_All (Open_Session);
+   Gtk_New (Memory_View);
+   Show_All (Memory_View);
    Gtk.Main.Main;
 end Odd;

@@ -162,7 +162,7 @@ begin
    Gtk_New_Vseparator (Memory_View.Vseparator5);
    Pack_Start (Memory_View.Hbox12, Memory_View.Vseparator5, True, True, 7);
 
-   Gtk_New (Memory_View.Label99, -("Page size :"));
+   Gtk_New (Memory_View.Label99, -("Page size:"));
    Pack_Start (Memory_View.Hbox12, Memory_View.Label99, True, True, 1);
    Set_Alignment (Memory_View.Label99, 0.5, 0.5);
    Set_Padding (Memory_View.Label99, 0, 0);
@@ -191,7 +191,7 @@ begin
    Gtk_New_Vseparator (Memory_View.Vseparator6);
    Pack_Start (Memory_View.Hbox12, Memory_View.Vseparator6, True, True, 7);
 
-   Gtk_New (Memory_View.Label98, -("Unit size : "));
+   Gtk_New (Memory_View.Label98, -("Unit size: "));
    Pack_Start (Memory_View.Hbox12, Memory_View.Label98, True, True, 0);
    Set_Alignment (Memory_View.Label98, 0.5, 0.5);
    Set_Padding (Memory_View.Label98, 0, 0);
@@ -218,7 +218,7 @@ begin
    Set_Text (Memory_View.Size_Entry, -"Byte");
    Set_Visibility (Memory_View.Size_Entry, True);
 
-   Gtk_New (Memory_View.Label97, -("Format : "));
+   Gtk_New (Memory_View.Label97, -("Format: "));
    Pack_Start (Memory_View.Hbox12, Memory_View.Label97, True, True, 4);
    Set_Alignment (Memory_View.Label97, 0.5, 0.5);
    Set_Padding (Memory_View.Label97, 0, 0);
