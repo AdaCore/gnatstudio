@@ -221,6 +221,29 @@ package body Debugger.Jdb is
       Executable_Changed (Convert (Debugger.Window, Debugger), Executable);
    end Set_Executable;
 
+   --------------------
+   -- Attach_Process --
+   --------------------
+
+   procedure Attach_Process
+     (Debugger : access Jdb_Debugger;
+      Process  : String;
+      Mode     : Command_Type := Hidden) is
+   begin
+      null;
+   end Attach_Process;
+
+   --------------------
+   -- Detach_Process --
+   --------------------
+
+   procedure Detach_Process
+     (Debugger : access Jdb_Debugger;
+      Mode     : Command_Type := Hidden) is
+   begin
+      null;
+   end Detach_Process;
+
    -----------------
    -- Wait_Prompt --
    -----------------
@@ -663,6 +686,22 @@ package body Debugger.Jdb is
    begin
       Send (Debugger, "  ", Wait_For_Prompt => Wait_For_Prompt);
    end Display_Prompt;
+
+   ----------------------
+   -- Change_Directory --
+   ----------------------
+
+   procedure Change_Directory
+     (Debugger    : access Jdb_Debugger;
+      Dir         : String;
+      Mode        : Command_Type := Hidden) is
+   begin
+      Send (Debugger, "cd " & Dir, Mode => Mode);
+   end Change_Directory;
+
+   ---------------------
+   -- Found_File_Name --
+   ---------------------
 
    procedure Found_File_Name
      (Debugger    : access Jdb_Debugger;

@@ -607,6 +607,63 @@ package body Debugger.Gdb is
       Pop_Internal_Command_Status (Get_Process (Debugger));
    end Set_Executable;
 
+   --------------------
+   -- Attach_Process --
+   --------------------
+
+   procedure Attach_Process
+     (Debugger : access Gdb_Debugger;
+      Process  : String;
+      Mode     : Command_Type := Hidden)
+   is
+      File_First  : Natural := 0;
+      File_Last   : Positive;
+      Line        : Natural := 0;
+      First, Last : Natural;
+      Addr_First,
+      Addr_Last   : Natural;
+
+   begin
+      Send (Debugger, "attach " & Process, Mode => Mode);
+      Set_Is_Started (Debugger, True);
+      Push_Internal_Command_Status (Get_Process (Debugger), True);
+
+      loop
+         Set_Parse_File_Name (Get_Process (Debugger), False);
+
+         declare
+            Str : constant String :=
+              Send (Debugger, "up", Mode => Internal);
+         begin
+            Set_Parse_File_Name (Get_Process (Debugger), True);
+
+            exit when Str = "Initial frame selected; you cannot go up.";
+
+            Found_File_Name
+              (Debugger,
+               Str, File_First, File_Last, First, Last, Line,
+               Addr_First, Addr_Last);
+
+            exit when First /= 0;
+         end;
+      end loop;
+
+      Send (Debugger, "frame", Mode => Internal);
+      Pop_Internal_Command_Status (Get_Process (Debugger));
+   end Attach_Process;
+
+   --------------------
+   -- Detach_Process --
+   --------------------
+
+   procedure Detach_Process
+     (Debugger : access Gdb_Debugger;
+      Mode     : Command_Type := Hidden) is
+   begin
+      Send (Debugger, "detach", Mode => Mode);
+      Set_Is_Started (Debugger, False);
+   end Detach_Process;
+
    -----------------
    -- Wait_Prompt --
    -----------------
@@ -1045,6 +1102,18 @@ package body Debugger.Gdb is
    begin
       Send (Debugger, "  ", Wait_For_Prompt => Wait_For_Prompt);
    end Display_Prompt;
+
+   ----------------------
+   -- Change_Directory --
+   ----------------------
+
+   procedure Change_Directory
+     (Debugger    : access Gdb_Debugger;
+      Dir         : String;
+      Mode        : Command_Type := Hidden) is
+   begin
+      Send (Debugger, "cd " & Dir, Mode => Mode);
+   end Change_Directory;
 
    ---------------------
    -- Found_File_Name --

@@ -84,6 +84,15 @@ package Debugger.Jdb is
      (Debugger : access Jdb_Debugger;
       Mode     : Command_Type := Hidden);
 
+   procedure Attach_Process
+     (Debugger : access Jdb_Debugger;
+      Process  : String;
+      Mode     : Command_Type := Hidden);
+
+   procedure Detach_Process
+     (Debugger : access Jdb_Debugger;
+      Mode     : Command_Type := Hidden);
+
    procedure Step_Into
      (Debugger : access Jdb_Debugger;
       Mode     : Command_Type := Hidden);
@@ -182,6 +191,11 @@ package Debugger.Jdb is
      (Debugger : access Jdb_Debugger;
       Value    : out Backtrace_Array;
       Len      : out Natural);
+
+   procedure Change_Directory
+     (Debugger    : access Jdb_Debugger;
+      Dir         : String;
+      Mode        : Command_Type := Hidden);
 
    procedure Found_File_Name
      (Debugger    : access Jdb_Debugger;

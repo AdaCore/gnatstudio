@@ -254,9 +254,16 @@ package Debugger is
    --  Set the value of a specific variable.
    --  Var_Name should contain any needed block information
 
-   --------------------------
-   -- Sources manipulation --
-   --------------------------
+   ------------------------------
+   -- Source/Path manipulation --
+   ------------------------------
+
+   procedure Change_Directory
+     (Debugger    : access Debugger_Root;
+      Dir         : String;
+      Mode        : Command_Type := Hidden) is abstract;
+   --  Change to directory Dir under a specified debugger session.
+   --  See execution commands below for an explanation on the Mode parameter.
 
    procedure Found_File_Name
      (Debugger    : access Debugger_Root;
@@ -294,8 +301,7 @@ package Debugger is
    --  GDB_COMMAND: "info sources"
 
    function Find_File
-     (Debugger : access Debugger_Root; File_Name : String)
-     return String;
+     (Debugger : access Debugger_Root; File_Name : String) return String;
    --  Return the full path name for File_Name.
    --  If File_Name is not found, then it is returned as is.
 
@@ -303,13 +309,13 @@ package Debugger is
    -- Execution Commands --
    ------------------------
 
-   --  Display parameter:
+   --  Mode parameter:
    --  ==================
-   --  In all the following subprograms, display is used to output the command
+   --  In all the following subprograms, mode is used to output the command
    --  in the debugger command window and to add the command to the command
-   --  history. If False is passed for this parameter, the command is not shown
-   --  in the command window associated with the debugger, and the command
-   --  history is not updated.
+   --  history. If Internal or Hidden is passed for this parameter, the command
+   --  is not shown in the command window associated with the debugger.
+   --  Additionally, the command history is not updated for internal commands.
 
    procedure Run
      (Debugger  : access Debugger_Root;
@@ -330,6 +336,19 @@ package Debugger is
    --  The arguments must have been set by a call to Set_Arguments.
    --  See above for details on Display.
    --  GDB_COMMAND: "begin"
+
+   procedure Attach_Process
+     (Debugger : access Debugger_Root;
+      Process  : String;
+      Mode     : Command_Type := Hidden) is abstract;
+   --  Attach a given process into the debugger.
+   --  GDB_COMMAND: "attach"
+
+   procedure Detach_Process
+     (Debugger : access Debugger_Root;
+      Mode     : Command_Type := Hidden) is abstract;
+   --  Detach the current process from the debugger.
+   --  GDB_COMMAND: "detach"
 
    procedure Step_Into
      (Debugger : access Debugger_Root;

@@ -56,6 +56,11 @@ package Debugger.Gdb is
      (Debugger : access Gdb_Debugger;
       Wait_For_Prompt : Boolean := True);
 
+   procedure Change_Directory
+     (Debugger    : access Gdb_Debugger;
+      Dir         : String;
+      Mode        : Command_Type := Hidden);
+
    procedure Found_File_Name
      (Debugger    : access Gdb_Debugger;
       Str         : String;
@@ -107,6 +112,15 @@ package Debugger.Gdb is
       Mode      : Command_Type := Hidden);
 
    procedure Start
+     (Debugger : access Gdb_Debugger;
+      Mode     : Command_Type := Hidden);
+
+   procedure Attach_Process
+     (Debugger : access Gdb_Debugger;
+      Process  : String;
+      Mode     : Command_Type := Hidden);
+
+   procedure Detach_Process
      (Debugger : access Gdb_Debugger;
       Mode     : Command_Type := Hidden);
 
