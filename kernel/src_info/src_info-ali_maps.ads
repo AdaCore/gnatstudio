@@ -87,6 +87,7 @@ private package Src_Info.ALI_Maps is
       Type_Extension                           => 'x',
       Implicit                                 => 'i',
       Label                                    => 'l',
+      Primitive_Operation                      => 'p',
       End_Of_Spec                              => 'e',
       End_Of_Body                              => 't');
 
