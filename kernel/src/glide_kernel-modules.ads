@@ -215,7 +215,17 @@ package Glide_Kernel.Modules is
    --     second : line to display initially (use Get_Int). Ignored if 0
    --     third  : column to display initially (use Get_Int). Ignored if 0
    --     fourth : True if the line should be highlighted (use Get_Boolean)
-   --  See also the procedure Open_Or_Create.
+   --  See also the function Open_File_Editor.
+
+   Mime_Diff_File : constant String := "application/diff";
+   --  There are multiple data associated with this type:
+   --     first  : full name of the original file (use Get_String). Built
+   --              from second and third arguments if null.
+   --     second : full name of the new file (use Get_String). Built from
+   --              first and third arguments if null. First and second cannot
+   --              be both null.
+   --     third  : full name of the diff file (use Get_String).
+   --  See also the function Display_Differences.
 
    function Mime_Action
      (Kernel    : access Kernel_Handle_Record'Class;
@@ -233,6 +243,16 @@ package Glide_Kernel.Modules is
       Column         : Natural := 0;
       Highlight_Line : Boolean := True);
    --  Open, or create, an editor that edits Filename (Mime_Source_File type)
+
+   procedure Display_Differences
+     (Kernel         : access Kernel_Handle_Record'Class;
+      Orig_File      : String := "";
+      New_File       : String := "";
+      Diff_File      : String);
+   --  Display differences between Orig_File and New_File (Mime_Diff_File type)
+   --  Either Orig_File or New_File can be null (but not both), in which
+   --  case, the contents of the file is computed from the other file and the
+   --  diff file.
 
    -------------------
    -- File Contexts --

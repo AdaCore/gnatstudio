@@ -270,7 +270,7 @@ package body Glide_Kernel.Modules is
       --  Create the menu and add all the modules information
       Gtk_New (Menu);
 
-      Set_Busy_Cursor (Get_Window (User.Kernel.Main_Window), True, True);
+      Set_Busy (User.Kernel, True);
       Context := User.Context_Func
         (Kernel       => User.Kernel,
          Event_Widget => User.Event_Widget,
@@ -300,7 +300,7 @@ package body Glide_Kernel.Modules is
          end loop;
       end if;
 
-      Set_Busy_Cursor (Get_Window (User.Kernel.Main_Window), False, True);
+      Set_Busy (User.Kernel, False);
 
       return Menu;
    end Create_Contextual_Menu;
@@ -564,7 +564,7 @@ package body Glide_Kernel.Modules is
       Current : Module_List.List := Global_Modules_List;
       Result  : Boolean := False;
    begin
-      Set_Busy_Cursor (Get_Window (Kernel.Main_Window), True, True);
+      Set_Busy (Kernel_Handle (Kernel), True);
 
       while not Module_List.Is_Empty (Current) loop
          if Module_List.Head (Current).Mime_Handler /= null then
@@ -576,7 +576,7 @@ package body Glide_Kernel.Modules is
          Current := Module_List.Next (Current);
       end loop;
 
-      Set_Busy_Cursor (Get_Window (Kernel.Main_Window), False);
+      Set_Busy (Kernel_Handle (Kernel), False);
 
       return Result;
    end Mime_Action;
@@ -592,7 +592,7 @@ package body Glide_Kernel.Modules is
       Column   : Natural := 0;
       Highlight_Line : Boolean := True)
    is
-      Value : GValue_Array (1 .. 4);
+      Value   : GValue_Array (1 .. 4);
       Success : Boolean;
    begin
       Init (Value (1), Glib.GType_String);
@@ -609,10 +609,39 @@ package body Glide_Kernel.Modules is
 
       Success := Mime_Action (Kernel, Mime_Source_File, Value);
 
-      Unset (Value (1));
-      Unset (Value (2));
-      Unset (Value (3));
-      Unset (Value (4));
+      for J in Value'Range loop
+         Unset (Value (J));
+      end loop;
    end Open_File_Editor;
+
+   -------------------------
+   -- Display_Differences --
+   -------------------------
+
+   procedure Display_Differences
+     (Kernel         : access Kernel_Handle_Record'Class;
+      Orig_File      : String := "";
+      New_File       : String := "";
+      Diff_File      : String)
+   is
+      Value   : GValue_Array (1 .. 3);
+      Success : Boolean;
+   begin
+      Init (Value (1), Glib.GType_String);
+      Set_String (Value (1), Orig_File);
+
+      Init (Value (2), Glib.GType_String);
+      Set_String (Value (2), New_File);
+
+      Init (Value (3), Glib.GType_String);
+      Set_String (Value (3), Diff_File);
+
+      Success := Mime_Action (Kernel, Mime_Diff_File, Value);
+
+      for J in Value'Range loop
+         Unset (Value (J));
+      end loop;
+   end Display_Differences;
+
 
 end Glide_Kernel.Modules;
