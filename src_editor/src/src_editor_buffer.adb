@@ -1673,7 +1673,7 @@ package body Src_Editor_Buffer is
 
       Get_Iter_At_Line_Offset (Buffer, Start_Iter, Start_Line, Start_Column);
       Get_Iter_At_Line_Offset (Buffer, End_Iter, End_Line, End_Column);
-      Move_Mark_By_Name (Buffer, "select_bound", Start_Iter);
+      Move_Mark_By_Name (Buffer, "selection_bound", Start_Iter);
       Move_Mark_By_Name (Buffer, "insert", End_Iter);
    end Select_Region;
 
