@@ -323,7 +323,12 @@ package body Debugger.Gdb.Ada is
                Parse_Num (Type_Str, Index, Last);
             else
                Last := Long_Integer'First;
-               Skip_To_Char (Type_Str, Index, ' ');
+               while Index <= Type_Str'Last
+                 and then Type_Str (Index) /= ','
+                 and then Type_Str (Index) /= ')'
+               loop
+                  Index := Index + 1;
+               end loop;
             end if;
             Index := Index + 2;  --  skips ', ' or ') '
             Set_Dimensions (R.all, Num_Dim, (First, Last));
@@ -371,7 +376,7 @@ package body Debugger.Gdb.Ada is
 
       Index := Index + 3; --  skips 'of '
       Tmp_Index := Index;
-      Skip_To_Char (Type_Str, Index, ' ');
+      Skip_To_Blank (Type_Str, Index);
 
       --  If we have a simple type, no need to ask gdb, for efficiency reasons.
 
