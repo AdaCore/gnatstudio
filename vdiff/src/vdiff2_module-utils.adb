@@ -105,7 +105,7 @@ package body Vdiff2_Module.Utils is
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
       Info     : T_VLine_Information;
       Conflict : Boolean;
-      Pos      : Positive;
+      Pos      : Natural;
       VRange   : T_VRange;
       VFile    : T_VFile;
       Action   : Handler_Action_Line := null);
@@ -623,7 +623,7 @@ package body Vdiff2_Module.Utils is
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
       Info     : T_VLine_Information;
       Conflict : Boolean;
-      Pos      : Positive;
+      Pos      : Natural;
       VRange   : T_VRange;
       VFile    : T_VFile;
       Action   : Handler_Action_Line := null)
