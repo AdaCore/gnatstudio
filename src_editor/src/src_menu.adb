@@ -3,7 +3,10 @@ with Gtk.Accel_Group;          use Gtk.Accel_Group;
 with Gtk.Item_Factory;         use Gtk.Item_Factory;
 with Gtk.Main;
 with Gtk.Menu_Bar;             use Gtk.Menu_Bar;
+with Gtkada.File_Selection;    use Gtkada.File_Selection;
 with Src_Editor_Box;           use Src_Editor_Box;
+
+with Ada.Text_IO;              use Ada.Text_IO;
 
 package body Src_Menu is
 
@@ -40,6 +43,11 @@ package body Src_Menu is
       Callback_Action : Guint;
       Widget          : Factory.Limited_Widget);
 
+   procedure File_Open_Cb
+     (Editor          : Source_Editor_Box_Access;
+      Callback_Action : Guint;
+      Widget          : Factory.Limited_Widget);
+
    procedure Menu_Cb
      (Callback_Data   : Source_Editor_Box_Access;
       Callback_Action : Guint;
@@ -56,6 +64,29 @@ package body Src_Menu is
    begin
       Gtk.Main.Main_Quit;
    end Quit_Cb;
+
+   ------------------
+   -- File_Open_Cb --
+   ------------------
+
+   procedure File_Open_Cb
+     (Editor          : Source_Editor_Box_Access;
+      Callback_Action : Guint;
+      Widget          : Factory.Limited_Widget)
+   is
+      Filename : constant String :=
+        File_Selection_Dialog (Title => "Open file", Must_Exist => True);
+      Success : Boolean;
+   begin
+      if Filename = "" then
+         return;
+      end if;
+
+      Load_File (Editor, Filename, Success => Success);
+      if not Success then
+         Put_Line ("   *** Failed to load file : '" & Filename & "'");
+      end if;
+   end File_Open_Cb;
 
    -------------
    -- Menu_Cb --
@@ -82,7 +113,7 @@ package body Src_Menu is
         ( --  File:
          Factory.Gtk_New (File, Item_Type => Branch),
          Factory.Gtk_New (File_New, "<control>N", Menu_Cb'Access),
-         Factory.Gtk_New (File_Open, "<control>O", Menu_Cb'Access),
+         Factory.Gtk_New (File_Open, "<control>O", File_Open_Cb'Access),
          Factory.Gtk_New (File_Save, "<control>S", Menu_Cb'Access),
          Factory.Gtk_New (File_Save_As, "", Menu_Cb'Access),
          Factory.Gtk_New (File & "/sep1", Item_Type => Separator),
@@ -110,7 +141,6 @@ package body Src_Menu is
       Attach (Accel_Group, Win);
       Factory.Create_Items
         (Menu, Menu_Items, Source_Editor_Box_Access (Box));
-      --  Factory.Create_Items (Menu, Menu_Items, null);
    end Create_Menu;
 
 end Src_Menu;
