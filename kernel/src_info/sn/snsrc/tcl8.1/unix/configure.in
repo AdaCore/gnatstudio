@@ -362,106 +362,6 @@ AC_FUNC_MEMCMP
 AC_CHECK_FUNC(memmove, , AC_DEFINE(NO_MEMMOVE) AC_DEFINE(NO_STRING_H))
 
 #--------------------------------------------------------------------
-#	On some systems strstr is broken: it returns a pointer even
-#	even if the original string is empty.
-#--------------------------------------------------------------------
-
-AC_MSG_CHECKING([proper strstr implementation])
-AC_TRY_RUN([
-extern int strstr();
-int main()
-{
-    exit(strstr("\0test", "test") ? 1 : 0);
-}
-], tcl_ok=yes, tcl_ok=no, tcl_ok=no)
-if test $tcl_ok = yes; then
-    AC_MSG_RESULT(yes)
-else
-    AC_MSG_RESULT([broken, using substitute])
-    LIBOBJS="$LIBOBJS strstr.o"
-fi
-
-#--------------------------------------------------------------------
-#	Check for strtoul function.  This is tricky because under some
-#	versions of AIX strtoul returns an incorrect terminator
-#	pointer for the string "0".
-#--------------------------------------------------------------------
-
-AC_CHECK_FUNC(strtoul, tcl_ok=1, tcl_ok=0)
-AC_TRY_RUN([
-extern int strtoul();
-int main()
-{
-    char *string = "0";
-    char *term;
-    int value;
-    value = strtoul(string, &term, 0);
-    if ((value != 0) || (term != (string+1))) {
-        exit(1);
-    }
-    exit(0);
-}], , tcl_ok=0, tcl_ok=0)
-if test "$tcl_ok" = 0; then
-    test -n "$verbose" && echo "	Adding strtoul.o."
-    LIBOBJS="$LIBOBJS strtoul.o"
-fi
-
-#--------------------------------------------------------------------
-#	Check for the strtod function.  This is tricky because in some
-#	versions of Linux strtod mis-parses strings starting with "+".
-#--------------------------------------------------------------------
-
-AC_CHECK_FUNC(strtod, tcl_ok=1, tcl_ok=0)
-AC_TRY_RUN([
-extern double strtod();
-int main()
-{
-    char *string = " +69";
-    char *term;
-    double value;
-    value = strtod(string, &term);
-    if ((value != 69) || (term != (string+4))) {
-	exit(1);
-    }
-    exit(0);
-}], , tcl_ok=0, tcl_ok=0)
-if test "$tcl_ok" = 0; then
-    test -n "$verbose" && echo "	Adding strtod.o."
-    LIBOBJS="$LIBOBJS strtod.o"
-fi
-
-#--------------------------------------------------------------------
-#	Under Solaris 2.4, strtod returns the wrong value for the
-#	terminating character under some conditions.  Check for this
-#	and if the problem exists use a substitute procedure
-#	"fixstrtod" that corrects the error.
-#--------------------------------------------------------------------
-
-AC_CHECK_FUNC(strtod, tcl_strtod=1, tcl_strtod=0)
-if test "$tcl_strtod" = 1; then
-    AC_MSG_CHECKING([for Solaris strtod bug])
-    AC_TRY_RUN([
-extern double strtod();
-int main()
-{
-    char *string = "NaN";
-    char *term;
-    strtod(string, &term);
-    if ((term != string) && (term[-1] == 0)) {
-	exit(1);
-    }
-    exit(0);
-}], tcl_ok=1, tcl_ok=0, tcl_ok=0)
-    if test $tcl_ok = 1; then
-	AC_MSG_RESULT(ok)
-    else
-	AC_MSG_RESULT(buggy)
-	LIBOBJS="$LIBOBJS fixstrtod.o"
-	AC_DEFINE(strtod, fixstrtod)
-    fi
-fi
-
-#--------------------------------------------------------------------
 #	Check for various typedefs and provide substitutes if
 #	they don't exist.
 #--------------------------------------------------------------------
@@ -562,23 +462,6 @@ fi
 rm -f core
 if test "$tcl_ok" = 0; then
     AC_DEFINE(vfork, fork)
-fi
-
-#--------------------------------------------------------------------
-#	Check whether there is an strncasecmp function on this system.
-#	This is a bit tricky because under SCO it's in -lsocket and
-#	under Sequent Dynix it's in -linet.
-#--------------------------------------------------------------------
-
-AC_CHECK_FUNC(strncasecmp, tcl_ok=1, tcl_ok=0)
-if test "$tcl_ok" = 0; then
-    AC_CHECK_LIB(socket, strncasecmp, tcl_ok=1, tcl_ok=0)
-fi
-if test "$tcl_ok" = 0; then
-    AC_CHECK_LIB(inet, strncasecmp, tcl_ok=1, tcl_ok=0)
-fi
-if test "$tcl_ok" = 0; then
-    LIBOBJS="$LIBOBJS strncasecmp.o"
 fi
 
 #--------------------------------------------------------------------

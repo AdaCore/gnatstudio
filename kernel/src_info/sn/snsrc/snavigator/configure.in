@@ -412,57 +412,13 @@ AC_CONFIG_SUBDIRS(parsers/assembly/$ASSEMBLER_DIRS)
 
 AC_OUTPUT([Makefile
 install/Makefile
-dnl gui/Makefile
-dnl etc/navigato
 hyper/Makefile
 db/Makefile
 dbutils/Makefile
-dnl packages/Makefile
 parsers/Makefile
-dnl parsers/assembly/Makefile
-dnl parsers/chill/Makefile
-dnl parsers/cobol/Makefile
-dnl parsers/common/Makefile
 parsers/cpp/Makefile
 parsers/cpp/cpplib/Makefile
-dnl parsers/fortran/Makefile
-dnl parsers/gcj/Makefile
-dnl parsers/java/Makefile
-dnl parsers/libjcreuse/Makefile
-dnl parsers/m4/Makefile
-dnl parsers/python/Makefile
-dnl parsers/sendmail/Makefile
-dnl parsers/tcl/Makefile
-dnl parsers/toolbox/Makefile
-dnl bitmaps/Makefile
-dnl etc/Makefile
-dnl etc/english.txt
-dnl etc/sn_prop.cfg
-dnl etc/sn_toolchains/Makefile
-dnl snavigator/Makefile
 misc/Makefile
 misc/libutils/Makefile
-dnl sdk/Makefile
-dnl sdk/api/Makefile
-dnl sdk/api/tcl/Makefile
-dnl sdk/api/tcl/misc/Makefile
-dnl sdk/api/tcl/database/Makefile
-dnl sdk/api/tcl/database/examples/Makefile
-dnl sdk/api/c/Makefile
-dnl sdk/api/c/database/Makefile
-dnl sdk/api/c/database/examples/Makefile
-dnl sdk/parsers/Makefile
-dnl sdk/parsers/examples/Makefile
-dnl sdk/parsers/examples/assembly/Makefile
-dnl sdk/parsers/examples/elf/Makefile
-dnl snavigator/unix/Makefile
-dnl snavigator/unix/snavigator
-dnl snavigator/unix/snscenario
-dnl snavigator/win/Makefile
-dnl demo/Makefile
-dnl doc/Makefile
-dnl doc/html/Makefile
-dnl doc/html/generateindex.tcl
 ])
-
 

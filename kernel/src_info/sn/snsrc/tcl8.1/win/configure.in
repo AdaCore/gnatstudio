@@ -52,8 +52,6 @@ AC_SUBST(DLL_LDFLAGS)
 AC_SUBST(DLL_LDLIBS)
 
 # The following variables are just for tclConfig.sh, not for Makefile. 
-LIBOBJS=
-AC_SUBST(LIBOBJS)
 TCL_VERSION=8.1
 TCL_MAJOR_VERSION=8
 TCL_MINOR_VERSION=1
