@@ -428,9 +428,9 @@ package body Language is
    --------------------
 
    procedure Parse_Entities
-     (Lang          : access Language_Root;
-      Buffer        : String;
-      Callback      : Entity_Callback)
+     (Lang     : access Language_Root;
+      Buffer   : String;
+      Callback : Entity_Callback)
    is
       Index     : Natural := Buffer'First;
       Next_Char : Natural;
