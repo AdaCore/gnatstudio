@@ -66,7 +66,7 @@ unmodified in any copy.
 * Scripting GPS::
 * Customization::
 * Environment::
-* Python Commands::
+@c * Python Commands::
 
 @detailmenu
 
@@ -79,7 +79,8 @@ Description of the main windows
 * The Work Space::
 * The Project Explorer::
 * The Messages Window::
-* The Shell and Python Windows::
+@c * The Shell and Python Windows::
+* The Shell Window::
 * The Locations Tree::
 * The Status Line::
 
@@ -157,7 +158,7 @@ Working in a Cross Environment
 Scripting GPS
 * Scripts::
 * The GPS Shell::
-* The Python Interpreter::
+@c * The Python Interpreter::
 
 Customization
 * The Preferences Dialog::
@@ -224,7 +225,8 @@ GPS also integrates with existing editors such as Emacs and Vi, see
 * The Work Space::
 * The Project Explorer::
 * The Messages Window::
-* The Shell and Python Windows::
+@c * The Shell and Python Windows::
+* The Shell Window::
 * The Locations Tree::
 * The Execution Window::
 * The Status Line::
@@ -602,14 +604,17 @@ no input is possible.
 @cindex shell window
 @cindex shell
 For an input/output window, see @ref{The Execution Window} and also
-@ref{The Shell and Python Windows}.
+@c @ref{The Shell and Python Windows}.
+@ref{The Shell Window}
 
 @c --------------------------------------------------------------------
-@node The Shell and Python Windows
-@section The Shell and Python Windows
+@c @node The Shell and Python Windows
+@c @section The Shell and Python Windows
+@node The Shell Window
+@section The Shell Window
 @cindex shell
 @cindex shell window
-@cindex python window
+@c @cindex python window
 @cindex interactive command
 @cindex command
 @c --------------------------------------------------------------------
@@ -619,9 +624,9 @@ These windows give access to the various scripting languages supported
 by GPS, and allow you to type commands such as editing a file or
 compiling without using the menu items or the mouse.
 
-Some of these windows, especially the python window, might not be
-visible in your version of GPS, if GPS wasn't compiled with the
-support for that specific scripting language.
+@c Some of these windows, especially the python window, might not be
+@c visible in your version of GPS, if GPS wasn't compiled with the
+@c support for that specific scripting language.
 
 See the section @ref{Scripting GPS} for more information on using the
 scripting languages within GPS.
@@ -4695,7 +4700,7 @@ debugger.
 @menu
 * Scripts::
 * The GPS Shell::
-* The Python Interpreter::
+@c * The Python Interpreter::
 @end menu
 
 @node Scripts
@@ -4765,72 +4770,72 @@ longer use references obtained from previous commands, although of
 course you can run these commands again to get a new reference.
 
 
-@node The Python Interpreter
-@section The Python Interpreter
-@cindex python
-@noindent
+@c @node The Python Interpreter
+@c @section The Python Interpreter
+@c @cindex python
+@c @noindent
+@c
+@c Python is an interpreted object-oriented language, created by Guido
+@c Van Rossum. It is similar in its capabilities to languages such as
+@c Perl, Tcl or Lisp. This section is not a tutorial on python
+@c programming. See @url{http://www.python.org/doc/current/} to access the
+@c documentation for the current version of python.
+@c
+@c The python shell is accessible through the @code{Python} window at the
+@c bottom of the GPS window. However, GPS might not have been compiled
+@c with support for python, and therefore python might not be available
+@c to you.
+@c
+@c Type @code{help(GPS)} to see the list of functions exported by GPS to
+@c python. This list is also given in @ref{Python Commands} at the end
+@c of this documentation.
+@c
+@c The same example that was used to show the GPS shell is now done
+@c through python. As you can notice, the name of the commands is
+@c similar, although they are not run exactly in the same
+@c way. Specifically, GPS benefits from the object-oriented aspects of
+@c python to create classes and instances of these classes.
+@c
+@c In the first line, a new instance of the class Entity is created
+@c through the @code{create_entity} function. Various methods can then be
+@c applied to that instance, including @code{find_all_refs}, which lists
+@c all references to that entity in the location window
+@c 
+@c @smallexample
+@c >>> e=GPS.create_entity ("entity_name", "file_name.adb")
+@c >>> e.find_all_refs()
+@c @end smallexample
+@c 
+@c Python has extensive introspection capabilities. Continuing the
+@c previous example, one can find what class @code{e} is an instance of
+@c with the following command:
+@c 
+@c @smallexample
+@c >>> help(e)
+@c Help on instance of Entity:
+@c 
+@c <GPS.Entity instance>
+@c @end smallexample
+@c 
+@c It is also possible to find all attributes and methods that can be
+@c applied to @code{e}, as in the following example:
+@c 
+@c @smallexample
+@c >>> dir (e)
+@c ['__doc__', '__gps_data__', '__module__', 'called_by', 'calls',
+@c 'find_all_refs']
+@c @end smallexample
 
-Python is an interpreted object-oriented language, created by Guido
-Van Rossum. It is similar in its capabilities to languages such as
-Perl, Tcl or Lisp. This section is not a tutorial on python
-programming. See @url{http://www.python.org/doc/current/} to access the
-documentation for the current version of python.
+@c Note that the list of methods may vary depending on what modules were
+@c loaded in GPS, since each module can add its own methods to any class.
 
-The python shell is accessible through the @code{Python} window at the
-bottom of the GPS window. However, GPS might not have been compiled
-with support for python, and therefore python might not be available
-to you.
-
-Type @code{help(GPS)} to see the list of functions exported by GPS to
-python. This list is also given in @ref{Python Commands} at the end
-of this documentation.
-
-The same example that was used to show the GPS shell is now done
-through python. As you can notice, the name of the commands is
-similar, although they are not run exactly in the same
-way. Specifically, GPS benefits from the object-oriented aspects of
-python to create classes and instances of these classes.
-
-In the first line, a new instance of the class Entity is created
-through the @code{create_entity} function. Various methods can then be
-applied to that instance, including @code{find_all_refs}, which lists
-all references to that entity in the location window
-
-@smallexample
->>> e=GPS.create_entity ("entity_name", "file_name.adb")
->>> e.find_all_refs()
-@end smallexample
-
-Python has extensive introspection capabilities. Continuing the
-previous example, one can find what class @code{e} is an instance of
-with the following command:
-
-@smallexample
->>> help(e)
-Help on instance of Entity:
-
-<GPS.Entity instance>
-@end smallexample
-
-It is also possible to find all attributes and methods that can be
-applied to @code{e}, as in the following example:
-
-@smallexample
->>> dir (e)
-['__doc__', '__gps_data__', '__module__', 'called_by', 'calls',
-'find_all_refs']
-@end smallexample
-
-Note that the list of methods may vary depending on what modules were
-loaded in GPS, since each module can add its own methods to any class.
-
-Finally, the list of all existing modules and objects currently known
-in the interpreter can be found with the following command:
-
-@smallexample
->>> dir ()
-['GPS', 'GPSStdout', '__builtins__', '__doc__', '__name__', 'e', 'sys']
-@end smallexample
+@c Finally, the list of all existing modules and objects currently known
+@c in the interpreter can be found with the following command:
+@c 
+@c @smallexample
+@c >>> dir ()
+@c ['GPS', 'GPSStdout', '__builtins__', '__doc__', '__name__', 'e', 'sys']
+@c @end smallexample
 
 
 @c --------------------------------------------------------------------
@@ -6934,110 +6939,110 @@ directory (see @ref{Files}) to start from a fresh set up.
 @end table
 
 @c --------------------------------------------------------------------
-@node Python Commands
-@appendix Python Commands
+@c @node Python Commands
+@c @appendix Python Commands
 @c --------------------------------------------------------------------
 
-This section lists all functions that GPS exports to python. This is
-the result of interactively running the following commands in the
-python interpreter:
+@c This section lists all functions that GPS exports to python. This is
+@c the result of interactively running the following commands in the
+@c python interpreter:
 
-@smallexample
->>> e=file("/tmp/foo", "w")
->>> sys.stdout=e
->>> help(GPS)
->>> e.flush()
->>> sys.stdout=sys.__stdout__
-@end smallexample
-
-Here is the list:
-
-@example
-Help on module GPS:
-
-NAME
-    GPS - Interface with the GPS environment
-
-FILE
-    (built-in)
-
-CLASSES
-    Entity
-    
-    class Entity
-     |  Represents an entity from the source, based on the location of its declaration
-     |  
-     |  Methods defined here:
-     |  
-     |  called_by(...)
-     |      called_by () -> None
-     |      
-     |      Display the list of entities that call the entity.
-     |  
-     |  calls(...)
-     |      calls () -> None
-     |      
-     |      Display the list of entities called by the entity.
-     |  
-     |  find_all_refs(...)
-     |      find_all_refs () -> None
-     |      
-     |      Display in the location window all the references to the entity.
-     |  
-     |  ----------------------------------------------------------------------
-     |  Data and non-method functions defined here:
-     |  
-     |  __doc__ = 'Represents an entity from the source, based on the location...
-     |  
-     |  __module__ = 'GPS'
-
-FUNCTIONS
-    cd(...)
-        cd (dir) -> None
-        
-        Change the current directory to dir.
-    
-    create_entity(...)
-        create_entity (entity_name, file_name, [line], [column]) -> Entity
-        
-        Create a new entity, from any of its references.
-    
-    delete(...)
-        delete (name) -> None
-        
-        Delete file/directory name from the file system.
-    
-    dir(...)
-        dir ([pattern]) -> None
-        
-        list files following pattern (all files by default).
-    
-    insmod(...)
-        insmod (shared-lib, module) -> None
-        
-        Dynamically register from shared-lib a new module.
-    
-    ls(...)
-        ls ([pattern]) -> None
-        
-        list files following pattern (all files by default).
-    
-    lsmod(...)
-        lsmod () -> None
-        
-        List modules currently loaded.
-    
-    pwd(...)
-        pwd () -> None
-        
-        Print name of current/working directory.
-
-DATA
-    __name__ = 'GPS'
-
-@end example
-
-
+@c @smallexample
+@c >>> e=file("/tmp/foo", "w")
+@c >>> sys.stdout=e
+@c >>> help(GPS)
+@c >>> e.flush()
+@c >>> sys.stdout=sys.__stdout__
+@c @end smallexample
+@c 
+@c Here is the list:
+@c 
+@c @example
+@c Help on module GPS:
+@c 
+@c NAME
+@c     GPS - Interface with the GPS environment
+@c 
+@c FILE
+@c     (built-in)
+@c 
+@c CLASSES
+@c     Entity
+@c     
+@c     class Entity
+@c      |  Represents an entity from the source, based on the location of its declaration
+@c      |  
+@c      |  Methods defined here:
+@c      |  
+@c      |  called_by(...)
+@c      |      called_by () -> None
+@c      |      
+@c      |      Display the list of entities that call the entity.
+@c      |  
+@c      |  calls(...)
+@c      |      calls () -> None
+@c      |      
+@c      |      Display the list of entities called by the entity.
+@c      |  
+@c      |  find_all_refs(...)
+@c      |      find_all_refs () -> None
+@c      |      
+@c      |      Display in the location window all the references to the entity.
+@c      |  
+@c      |  ----------------------------------------------------------------------
+@c      |  Data and non-method functions defined here:
+@c      |  
+@c      |  __doc__ = 'Represents an entity from the source, based on the location...
+@c      |  
+@c      |  __module__ = 'GPS'
+@c 
+@c FUNCTIONS
+@c     cd(...)
+@c         cd (dir) -> None
+@c         
+@c         Change the current directory to dir.
+@c     
+@c     create_entity(...)
+@c         create_entity (entity_name, file_name, [line], [column]) -> Entity
+@c         
+@c         Create a new entity, from any of its references.
+@c     
+@c     delete(...)
+@c         delete (name) -> None
+@c         
+@c         Delete file/directory name from the file system.
+@c     
+@c     dir(...)
+@c         dir ([pattern]) -> None
+@c         
+@c         list files following pattern (all files by default).
+@c     
+@c     insmod(...)
+@c         insmod (shared-lib, module) -> None
+@c         
+@c         Dynamically register from shared-lib a new module.
+@c     
+@c     ls(...)
+@c         ls ([pattern]) -> None
+@c         
+@c         list files following pattern (all files by default).
+@c     
+@c     lsmod(...)
+@c         lsmod () -> None
+@c         
+@c         List modules currently loaded.
+@c     
+@c     pwd(...)
+@c         pwd () -> None
+@c         
+@c         Print name of current/working directory.
+@c 
+@c DATA
+@c     __name__ = 'GPS'
+@c 
+@c @end example
+@c 
+@c 
 @c --------------------------------------------------------------------
 @unnumbered Index
 @printindex cp
