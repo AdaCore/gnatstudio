@@ -1,10 +1,10 @@
 -----------------------------------------------------------------------
---                          G L I D E  I I                           --
+--                               G P S                               --
 --                                                                   --
 --                      Copyright (C) 2001-2002                      --
 --                            ACT-Europe                             --
 --                                                                   --
--- GLIDE is free software; you can redistribute it and/or modify  it --
+-- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -13,7 +13,7 @@
 -- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
 -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
 -- General Public License for more details. You should have received --
--- a copy of the GNU General Public License along with this library; --
+-- a copy of the GNU General Public License along with this program; --
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
@@ -129,8 +129,8 @@ package Glide_Kernel.Preferences is
 
    Show_Directories : constant Glib.Properties.Property_Boolean :=
      Register_Property ("Explorer:Show_Directories", True);
-   --  Whether directories should be displayed in the tree.  If False, only the
-   --  projects are shown.
+   --  Whether directories should be displayed in the tree.
+   --  If False, only the projects are shown.
 
    Ada_Extensions : constant Glib.Properties.Property_String :=
      Register_Property ("File_Extensions:Ada", ".ads;.adb;.ada;.a;.dg");
@@ -141,6 +141,7 @@ package Glide_Kernel.Preferences is
    --  The file extensions that are recognized for each language.
    --  Each possible extension should be separated from the others by a
    --  semicolon.
+   --  ??? Should be obsolete by now. Verify this.
 
    -------------------
    -- Source Editor --
@@ -171,9 +172,19 @@ package Glide_Kernel.Preferences is
    --  Whether the editor should indent automatically the source
    --  ??? not used
 
+   Strip_Blanks : constant Glib.Properties.Property_Boolean :=
+     Register_Property ("Src_Editor:Strip_Blanks", True);
+   --  Whether the editor should remove trailing blanks when saving a file
+   --  ??? not used
+
    Default_Source_Editor_Font : constant Property_Font :=
      Register_Property ("Src_Editor:Default_Font", "Courier 10");
    --  The font used in the source editor.
+
+   Display_Tooltip : constant Glib.Properties.Property_Boolean :=
+     Register_Property ("Src_Editor:Display_Tooltip", True);
+   --  Whether tooltips should be displayed automatically in the source
+   --  editor.
 
    ---------------------
    -- External editor --
@@ -183,7 +194,7 @@ package Glide_Kernel.Preferences is
      Register_Property ("External_Editor:Default_Editor", "");
    --  The default external editor to use. It should be a value from
    --  External_Editor_Module.Supported_Clients, or the empty string, in which
-   --  case gps will automatically select the first available client
+   --  case GPS will automatically select the first available client
 
    Always_Use_External_Editor : constant Glib.Properties.Property_Boolean :=
      Register_Property ("External_Editor:Always_Use_External_Editor", False);
@@ -284,5 +295,136 @@ package Glide_Kernel.Preferences is
    CVS_Command : constant Glib.Properties.Property_String :=
      Register_Property ("CVS:Command", "cvs");
    --  General CVS command
+
+   --------------
+   -- Debugger --
+   --------------
+
+   --  General
+
+   Break_On_Exception : constant Glib.Properties.Property_Boolean :=
+     Register_Property ("Debugger:Break_On_Exception", False);
+   --  Break on exceptions.
+
+   --  Assembly Window
+
+   Asm_Highlight_Color : constant Property_Color :=
+     Register_Property ("Debugger:Asm_Highlight_Color", "#FF0000");
+   --  Color to use to highlight the assembly code for the current line
+   --  (default is red).
+
+   Assembly_Range_Size : constant Glib.Properties.Property_String :=
+     Register_Property ("Debugger:Assembly_Range_Size", "200");
+   --  Size of the range to display when initially displaying the
+   --  assembly window.
+   --  If this size is "0", then the whole function is displayed, but this
+   --  can potentially take a very long time on slow machines or big
+   --  functions.
+
+   --  Data Window
+
+   Xref_Color : constant Property_Color :=
+     Register_Property ("Debugger:Xref_Color", "#0000FF");
+   --  Color to use for the items that are clickable (blue).
+
+   Title_Color : constant Property_Color :=
+     Register_Property ("Debugger:Title_Color", "#BEBEBE");
+   --  Color to use for the background of the title (grey).
+
+   Change_Color : constant Property_Color :=
+     Register_Property ("Debugger:Change_Color", "#FF0000");
+   --  Color used to highlight fields that have changed since the last
+   --  update (default is red).
+
+   Selection_Color : constant Property_Color :=
+     Register_Property ("Debugger:Selection_Color", "#000000");
+   --  Color used to handle item selections.
+
+   Thaw_Bg_Color : constant Property_Color :=
+     Register_Property ("Debugger:Thaw_Bg_Color", "#FFFFFF");
+   --  Color used for auto-refreshed items (white)
+
+   Freeze_Bg_Color : constant Property_Color :=
+     Register_Property ("Debugger:Freeze_Bg_Color", "#AAAAAA");
+   --  Color used for frozen items (light grey)
+
+   Debugger_Data_Title_Font : constant Glib.Properties.Property_String :=
+     Register_Property ("Debugger:Data_Title_Font", "helvetica bold 10");
+   --  Font used for the name of the item.
+
+   Value_Font : constant Glib.Properties.Property_String :=
+     Register_Property ("Debugger:Data_Value_Font", "helvetica 10");
+   --  Font used to display the value of the item.
+
+   Command_Font : constant Glib.Properties.Property_String :=
+     Register_Property ("Debugger:Data_Command_Font", "courier 10");
+   --  Font used to display the value for the commands
+   --    graph print `...`  or graph display `...`
+
+   Type_Font : constant Glib.Properties.Property_String :=
+     Register_Property ("Debugger:Data_Type_Font", "helvetica oblique 10");
+   --  Font used to display the type of the item.
+
+   Hide_Big_Items : constant Glib.Properties.Property_Boolean :=
+     Register_Property ("Debugger:Hide_Big_Items", True);
+   --  If True, items higher than a given limit will start in a hidden
+   --  state.
+
+   Big_Item_Height : constant Glib.Properties.Property_Int :=
+     Register_Property ("Debugger:Big_Items_Height", 150);
+   --  Items taller than this value will start hidden.
+
+   Default_Detect_Aliases : constant Glib.Properties.Property_Boolean :=
+     Register_Property ("Debugger:Default_Detect_Aliased", True);
+   --  If True, do not create new items when a matching item is already
+   --  present in the canvas.
+
+   --  Command Window
+
+   Debugger_Highlight_Color : constant Property_Color :=
+     Register_Property ("Debugger:Command_Highlight_Color", "#0000FF");
+   --  Color used for highlighting in the debugger window (blue).
+
+   Debugger_Command_Font : constant Glib.Properties.Property_String :=
+     Register_Property ("Debugger:Command_Font", "courier 12");
+   --  Font used in the debugger text window.
+
+   --  Memory Window
+
+   Memory_View_Font : constant Glib.Properties.Property_String :=
+     Register_Property ("Debugger:Memory_View_Font", "courier 12");
+   --  Font use in the memory view window.
+
+   Memory_View_Color : constant Property_Color :=
+     Register_Property ("Debugger:Memory_View_Color", "#333399");
+   --  Color used by default in the memory view window.
+
+   Memory_Highlighted_Color : constant Property_Color :=
+     Register_Property ("Debugger:Memory_Highlighted_Color", "#DDDDDD");
+   --  Color used for highlighted items in the memory view.
+
+   Memory_Selected_Color : constant Property_Color :=
+     Register_Property ("Debugger:Memory_Selected_Color", "#00009C");
+   --  Color used for selected items in the memory view.
+
+   Memory_Modified_Color : constant Property_Color :=
+     Register_Property ("Debugger:Memory_Modified_Color", "#FF0000");
+   --  Color used for modified items in the memory view.
+
+   -------------
+   -- Helpers --
+   -------------
+
+   List_Processes : constant Glib.Properties.Property_String :=
+     Register_Property ("Helpers:List_Processes", "ps x");
+   --  Command to use to list processes running on the machine
+
+   Remote_Protocol : constant Glib.Properties.Property_String :=
+     Register_Property ("Helpers:Remote_Protocol", "rsh");
+   --  How to run a process on a remote machine ?
+
+   Remote_Copy : constant Glib.Properties.Property_String :=
+     Register_Property ("Helpers:Remote_Copy", "rcp");
+   --  Program used to copy a file from a remote host.
 
 end Glide_Kernel.Preferences;
