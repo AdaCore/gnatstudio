@@ -4562,6 +4562,11 @@ The visual comparison, available either from the VCS menus or from the Tools
 menu, provide a way to display graphically differences between two files,
 or two different versions of the same file.
 
+This tool is based on the standard text command @command{diff}, available
+on all Unix systems. Under Windows, you need to provide a proper equivalent,
+by e.g. installing a set of unix tools such as cygwin
+(@url{http://www.cygwin.com}).
+
 The dialog is composed of two main areas: on the left side, the reference
 file is displayed; on the right side, the modified file.
 
@@ -5094,7 +5099,7 @@ when loading a program.
 @cindex tty
 Whether the debugger should create a separate execution window for the
 program debugged.
-If true, a separate console will be created. Under unix systems, this
+If true, a separate console will be created. Under Unix systems, this
 console is another window in the bottom part of the main window; under
 Windows, this is a separate window created by the underlying gdb, since
 Windows does not have the notion of separate terminals (aka ttys).
@@ -5199,7 +5204,7 @@ Program used to execute commands externally.
 @cindex PrintFile
 @anchor{Print Command}
 Program used to print files. By default @code{a2ps}, available under GNU/Linux
-systems. This utility can be used on most unix systems, and can be downloaded
+systems. This utility can be used on most Unix systems, and can be downloaded
 from @url{http://www.inf.enst.fr/~demaille/a2ps}
 
 Under Windows systems, a possible replacement is the PrintFile freeware
