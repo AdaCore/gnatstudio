@@ -240,11 +240,10 @@ package body Debugger.Gdb.C is
       Type_Str   : String;
       Index      : in out Natural;
       Result     : in out Generic_Type_Access;
-      Repeat_Num : out Positive)
-   is
+      Repeat_Num : out Positive) is
    begin
-      Internal_Parse_Value (Lang, Type_Str, Index, Result, Repeat_Num,
-                            Parent => null);
+      Internal_Parse_Value
+        (Lang, Type_Str, Index, Result, Repeat_Num, Parent => null);
    end Parse_Value;
 
    ----------------------

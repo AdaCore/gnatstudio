@@ -78,8 +78,7 @@ package Odd.Strings is
    function Looking_At
      (Type_Str  : String;
       Index     : Natural;
-      Substring : String)
-     return Boolean;
+      Substring : String) return Boolean;
    --  Return True if the characters starting at Index in Type_Str are
    --  equivalent to Substring.
 
