@@ -1442,7 +1442,7 @@ package body Project_Explorers is
          declare
             Prj  : Project_Id;
             Obj  : String_Id;
-            pragma Unreferenced (Obj);
+            pragma Unreferenced (Prj, Obj);
             Dir  : constant String :=
               Get_Directory_From_Node (Explorer.Tree.Model, N);
 
