@@ -171,7 +171,7 @@ package body Glide_Kernel.Preferences is
                       & " not maximized"),
          Nick    => -"Opaque"));
       Register_Property
-        (Kernel.Preferences, Param_Spec (MDI_Opaque), -"General:Windows");
+        (Kernel.Preferences, Param_Spec (MDI_Opaque), -"Windows");
 
       MDI_Destroy_Floats := Param_Spec_Boolean (Gnew_Boolean
         (Name    => "MDI-Destroy-Floats",
@@ -182,8 +182,7 @@ package body Glide_Kernel.Preferences is
                       & " destroyed"),
          Nick    => -"Destroy floats"));
       Register_Property
-        (Kernel.Preferences, Param_Spec (MDI_Destroy_Floats),
-         -"General:Windows");
+        (Kernel.Preferences, Param_Spec (MDI_Destroy_Floats), -"Windows");
 
       MDI_All_Floating := Param_Spec_Boolean (Gnew_Boolean
         (Name    => "MDI-All-Floating",
@@ -193,8 +192,7 @@ package body Glide_Kernel.Preferences is
                       & " multiple document interface is used."),
          Nick    => -"All floating"));
       Register_Property
-        (Kernel.Preferences, Param_Spec (MDI_All_Floating),
-         -"General:Windows");
+        (Kernel.Preferences, Param_Spec (MDI_All_Floating), -"Windows");
 
       MDI_Background_Color := Param_Spec_Color (Gnew_Color
         (Name    => "MDI-Background-Color",
@@ -202,8 +200,7 @@ package body Glide_Kernel.Preferences is
          Blurb   => -"Color to use for the background of the MDI",
          Nick    => -"Background color"));
       Register_Property
-        (Kernel.Preferences, Param_Spec (MDI_Background_Color),
-         -"General:Windows");
+        (Kernel.Preferences, Param_Spec (MDI_Background_Color), -"Windows");
 
       MDI_Title_Bar_Color := Param_Spec_Color (Gnew_Color
         (Name    => "MDI-Title-Bar-Color",
@@ -211,8 +208,7 @@ package body Glide_Kernel.Preferences is
          Blurb   => -"Color to use for the title bar of unselected items",
          Nick    => -"Title bar color"));
       Register_Property
-        (Kernel.Preferences, Param_Spec (MDI_Title_Bar_Color),
-         -"General:Windows");
+        (Kernel.Preferences, Param_Spec (MDI_Title_Bar_Color), -"Windows");
 
       MDI_Focus_Title_Color := Param_Spec_Color (Gnew_Color
         (Name    => "MDI-Focus-Title-Color",
@@ -220,8 +216,7 @@ package body Glide_Kernel.Preferences is
          Blurb   => -"Color to use for the title bar of selected items",
          Nick    => -"Selected title bar color"));
       Register_Property
-        (Kernel.Preferences, Param_Spec (MDI_Focus_Title_Color),
-         -"General:Windows");
+        (Kernel.Preferences, Param_Spec (MDI_Focus_Title_Color), -"Windows");
 
       -- Source Editor --
 
@@ -334,7 +329,8 @@ package body Glide_Kernel.Preferences is
          Default => False,
          Blurb   =>
            -"Enable/Disable automatic syntax check",
-         Nick    => -"Automatic syntax check"));
+         Nick    => -"Automatic syntax check",
+         Flags   => Param_Readable));
       Register_Property
         (Kernel.Preferences, Param_Spec (Automatic_Syntax_Check), -"Editor");
 
@@ -717,9 +713,13 @@ package body Glide_Kernel.Preferences is
          Default => True,
          Blurb   => -("Whether paths should be absolute or relative when the"
                       & " projects are modified"),
-         Nick    => -"Relative paths"));
+         Nick    => -"Relative project paths"));
+
+      --  Register this preference in the 'General' page since the other
+      --  project preferences are currently hidden.
+
       Register_Property
-        (Kernel.Preferences, Param_Spec (Generate_Relative_Paths), -"Project");
+        (Kernel.Preferences, Param_Spec (Generate_Relative_Paths), -"General");
 
       -- Wizards --
 
