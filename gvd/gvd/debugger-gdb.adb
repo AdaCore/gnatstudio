@@ -32,6 +32,7 @@ with GNAT.OS_Lib;         use GNAT.OS_Lib;
 
 with Gtk.Window;          use Gtk.Window;
 
+with GPS.Kernel;          use GPS.Kernel;
 with GPS.Main_Window;     use GPS.Main_Window;
 with OS_Utils;            use OS_Utils;
 with GPS.Intl;            use GPS.Intl;
@@ -3019,9 +3020,10 @@ package body Debugger.Gdb is
 
                Match (File_Name_In_Breakpoint, S (Tmp .. Index - 2), Matched);
                if Matched (0) /= No_Match then
-                  Br (Num).File := Create
-                    (Full_Filename =>
-                       (S (Matched (1).First .. Matched (1).Last)));
+                  Br (Num).File := Create_From_Base
+                    (S (Matched (1).First .. Matched (1).Last),
+                     GPS_Window (Debugger.Window).Kernel);
+
                   Br (Num).Line := Integer'Value
                     (S (Matched (2).First .. Matched (2).Last));
                   M := True;
