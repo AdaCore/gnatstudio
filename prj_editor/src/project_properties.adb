@@ -2808,10 +2808,12 @@ package body Project_Properties is
       Page         : Project_Editor_Page;
       Box          : Gtk_Box;
       Page_Box     : Gtk_Box;
+      General_Page_Box : Gtk_Box;
       Main_Box     : Gtk_Box;
       Event        : Gtk_Event_Box;
       Frame        : Gtk_Frame;
       Size         : Gtk_Size_Group;
+      General_Size : Gtk_Size_Group;
       Expandable   : Boolean;
       W_Expandable : Boolean;
       W            : Gtk_Widget;
@@ -2867,22 +2869,32 @@ package body Project_Properties is
          return;
       end if;
 
+      Gtk_New (Event);
+      Gtk_New_Vbox (General_Page_Box, Homogeneous => False);
+      Add (Event, General_Page_Box);
+      Gtk_New (General_Size);
+      Pack_Start (General_Page_Box,
+                  Create_General_Page (Editor, Project, Kernel),
+                  Expand => False);
       Gtk_New (Label, -"General");
-      Append_Page
-        (Main_Note, Create_General_Page (Editor, Project, Kernel), Label);
+      Show (Event);
+      Append_Page (Main_Note, Event, Label);
 
       for P in Properties_Module_ID.Pages'Range loop
-
          --  We need to put the pages in an event box to workaround a gtk+ bug:
          --  since a notebook is a NO_WINDOW widget, button_press events are
          --  sent to the parent of the notebook. In case of nested notebooks,
          --  this means the event is sent to the parent's of the enclosing
          --  notebook, and thus is improperly handled by the nested notebooks.
-         Gtk_New (Event);
-         Gtk_New_Vbox (Page_Box, Homogeneous => False);
-         Add (Event, Page_Box);
-
-         Gtk_New (Size);
+         if Properties_Module_ID.Pages (P).Name.all = "General" then
+            Page_Box := General_Page_Box;
+            Size     := General_Size;
+         else
+            Gtk_New (Event);
+            Gtk_New_Vbox (Page_Box, Homogeneous => False);
+            Add (Event, Page_Box);
+            Gtk_New (Size);
+         end if;
 
          for S in Properties_Module_ID.Pages (P).Sections'Range loop
             Gtk_New_Vbox (Box, Homogeneous => False, Spacing => 2);
@@ -2920,9 +2932,11 @@ package body Project_Properties is
             end if;
          end loop;
 
-         Gtk_New (Label, Properties_Module_ID.Pages (P).Name.all);
-         Show (Event);
-         Append_Page (Main_Note, Event, Label);
+         if Properties_Module_ID.Pages (P).Name.all /= "General" then
+            Gtk_New (Label, Properties_Module_ID.Pages (P).Name.all);
+            Show (Event);
+            Append_Page (Main_Note, Event, Label);
+         end if;
       end loop;
 
       Show_All (Editor);
