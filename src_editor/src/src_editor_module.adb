@@ -2884,6 +2884,13 @@ package body Src_Editor_Module is
                return Dir_Name (Get_Filename (Box));
 
             when 'p' =>
+               return Project_Name
+                 (Get_Project_From_File
+                  (Get_Registry (Get_Kernel (Data)),
+                   Base_Name (Get_Filename (Box)),
+                   Root_If_Not_Found => True));
+
+            when 'P' =>
                return Project_Path
                  (Get_Project_From_File
                   (Get_Registry (Get_Kernel (Data)),
@@ -3360,7 +3367,10 @@ package body Src_Editor_Module is
       Register_Special_Alias_Entity
         (Kernel, -"Current file",   'f', Expand_Aliases_Entities'Access);
       Register_Special_Alias_Entity
-        (Kernel, -"Project of current file", 'p',
+        (Kernel, -"Project for the current file", 'p',
+         Expand_Aliases_Entities'Access);
+      Register_Special_Alias_Entity
+        (Kernel, -"Full path of project for the current file", 'P',
          Expand_Aliases_Entities'Access);
       Register_Special_Alias_Entity
         (Kernel, -"Directory of current file", 'd',
