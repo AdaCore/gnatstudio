@@ -2073,7 +2073,7 @@ package body Debugger.Gdb is
 
                if not M then
                   --  List of commands:
-                  if Tmp +7 <= S'Last
+                  if Tmp + 7 <= S'Last
                     and then S (Tmp .. Tmp + 7) = "        "
                   then
                      while Index + 7 <= S'Last
