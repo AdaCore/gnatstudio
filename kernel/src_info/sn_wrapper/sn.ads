@@ -18,8 +18,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with GNAT.OS_Lib;
-
 package SN is
    --  Types and constants specific to Source Navigator.
 
@@ -79,9 +77,6 @@ package SN is
    Empty_Segment   : constant Segment := (1, 0);
 
    function Length (S : Segment) return Integer;
-
-   function To_String
-     (Buffer : GNAT.OS_Lib.String_Access; Seg : Segment) return String;
 
    type SN_Attributes is mod 2**32;
 

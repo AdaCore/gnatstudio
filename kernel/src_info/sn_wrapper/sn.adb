@@ -18,8 +18,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with GNAT.OS_Lib; use GNAT.OS_Lib;
-
 package body SN is
 
    ---------
@@ -43,14 +41,5 @@ package body SN is
    begin
       return S.Last - S.First + 1;
    end Length;
-
-   ---------------
-   -- To_String --
-   ---------------
-
-   function To_String (Buffer : String_Access; Seg : Segment) return String is
-   begin
-      return Buffer (Seg.First .. Seg.Last);
-   end To_String;
 
 end SN;
