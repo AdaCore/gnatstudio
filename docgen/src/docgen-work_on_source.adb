@@ -42,7 +42,8 @@ package body Docgen.Work_On_Source is
    package TEL renames Type_Entity_List;
 
    procedure Process_One_Body_File
-     (Kernel           : access Kernel_Handle_Record'Class;
+     (B                : Backend_Handle;
+      Kernel           : access Kernel_Handle_Record'Class;
       Doc_File         : File_Type;
       Source_File      : Virtual_File;
       File_Text        : GNAT.OS_Lib.String_Access;
@@ -57,7 +58,8 @@ package body Docgen.Work_On_Source is
    --  of the body source files.
 
    procedure Process_Open_File
-     (Kernel           : access Kernel_Handle_Record'Class;
+     (B                : Backend_Handle;
+      Kernel           : access Kernel_Handle_Record'Class;
       Doc_File         : File_Type;
       Package_File     : Virtual_File;
       Next_Package     : GNAT.OS_Lib.String_Access;
@@ -73,7 +75,8 @@ package body Docgen.Work_On_Source is
    --  subprogram
 
    procedure Process_Close_File
-     (Kernel        : access Kernel_Handle_Record'Class;
+     (B             : Backend_Handle;
+      Kernel        : access Kernel_Handle_Record'Class;
       Doc_File      : File_Type;
       File_Name     : Virtual_File;
       Options       : All_Options;
@@ -84,7 +87,8 @@ package body Docgen.Work_On_Source is
    --  very end of the documentation by calling the output subprogram
 
    procedure Process_Package_Description
-     (Kernel        : access Kernel_Handle_Record'Class;
+     (B             : Backend_Handle;
+      Kernel        : access Kernel_Handle_Record'Class;
       Doc_File      : File_Type;
       Package_Name  : String;
       Text          : String;
@@ -98,7 +102,8 @@ package body Docgen.Work_On_Source is
    --  output subprogram
 
    procedure Process_With_Clause
-     (Kernel           : access Kernel_Handle_Record'Class;
+     (B                : Backend_Handle;
+      Kernel           : access Kernel_Handle_Record'Class;
       Doc_File         : File_Type;
       Source_Filename  : VFS.Virtual_File;
       Package_Name     : String;
@@ -114,7 +119,8 @@ package body Docgen.Work_On_Source is
    --  starting with "with" and pass them to the output subprogram
 
    procedure Process_Packages
-     (Kernel           : access Kernel_Handle_Record'Class;
+     (B                : Backend_Handle;
+      Kernel           : access Kernel_Handle_Record'Class;
       Doc_File         : File_Type;
       Entity_List      : in out Type_Entity_List.List;
       Source_Filename  : VFS.Virtual_File;
@@ -131,7 +137,8 @@ package body Docgen.Work_On_Source is
    --  them to the output subprogram
 
    procedure Process_Vars
-     (Kernel           : access Kernel_Handle_Record'Class;
+     (B                : Backend_Handle;
+      Kernel           : access Kernel_Handle_Record'Class;
       Doc_File         : File_Type;
       Entity_List      : in out Type_Entity_List.List;
       Source_Filename  : VFS.Virtual_File;
@@ -148,7 +155,8 @@ package body Docgen.Work_On_Source is
    --  and named numbers and pass each of them to the output subprogram
 
    procedure Process_Exceptions
-     (Kernel           : access Kernel_Handle_Record'Class;
+     (B                : Backend_Handle;
+      Kernel           : access Kernel_Handle_Record'Class;
       Doc_File         : File_Type;
       Entity_List      : in out Type_Entity_List.List;
       Source_Filename  : VFS.Virtual_File;
@@ -165,7 +173,8 @@ package body Docgen.Work_On_Source is
    --  pass each of them to the output subprogram
 
    procedure Process_Entries
-     (Kernel             : access Kernel_Handle_Record'Class;
+     (B                  : Backend_Handle;
+      Kernel             : access Kernel_Handle_Record'Class;
       Doc_File           : File_Type;
       Entity_List        : in out Type_Entity_List.List;
       Source_Filename    : VFS.Virtual_File;
@@ -183,7 +192,8 @@ package body Docgen.Work_On_Source is
    --  families and pass each of them to the output subprogram
 
    procedure Process_Subprograms
-     (Kernel             : access Kernel_Handle_Record'Class;
+     (B                  : Backend_Handle;
+      Kernel             : access Kernel_Handle_Record'Class;
       Doc_File           : File_Type;
       Entity_List        : in out Type_Entity_List.List;
       Source_Filename    : VFS.Virtual_File;
@@ -201,7 +211,8 @@ package body Docgen.Work_On_Source is
    --  pass each of them to the output subprogram
 
    procedure Process_Types
-     (Kernel           : access Kernel_Handle_Record'Class;
+     (B                : Backend_Handle;
+      Kernel           : access Kernel_Handle_Record'Class;
       Doc_File         : File_Type;
       Entity_List      : in out Type_Entity_List.List;
       Source_Filename  : VFS.Virtual_File;
@@ -218,7 +229,8 @@ package body Docgen.Work_On_Source is
    --  pass each of them to the output subprogram
 
    procedure Process_Header
-     (Kernel            : access Kernel_Handle_Record'Class;
+     (B                 : Backend_Handle;
+      Kernel            : access Kernel_Handle_Record'Class;
       Doc_File          : File_Type;
       Package_Name      : String;
       Package_File      : VFS.Virtual_File;
@@ -233,7 +245,8 @@ package body Docgen.Work_On_Source is
    --  but the Header has to be set in front of each package.
 
    procedure Process_Footer
-     (Kernel        : access Kernel_Handle_Record'Class;
+     (B             : Backend_Handle;
+      Kernel        : access Kernel_Handle_Record'Class;
       Doc_File      : File_Type;
       Package_File  : Virtual_File;
       Options       : All_Options;
@@ -295,7 +308,8 @@ package body Docgen.Work_On_Source is
    --------------------
 
    procedure Process_Source
-     (Kernel             : access Kernel_Handle_Record'Class;
+     (B                  : Backend_Handle;
+      Kernel             : access Kernel_Handle_Record'Class;
       Doc_File           : File_Type;
       Next_Package       : GNAT.OS_Lib.String_Access;
       Prev_Package       : GNAT.OS_Lib.String_Access;
@@ -324,7 +338,8 @@ package body Docgen.Work_On_Source is
       end if;
 
       Process_Open_File
-        (Kernel,
+        (B,
+         Kernel,
          Doc_File,
          Source_Filename,
          Next_Package,
@@ -336,7 +351,8 @@ package body Docgen.Work_On_Source is
          Doc_Directory,
          Doc_Suffix);
       Process_Header
-        (Kernel,
+        (B,
+         Kernel,
          Doc_File,
          Package_Name,
          Source_Filename,
@@ -360,10 +376,11 @@ package body Docgen.Work_On_Source is
          --  See Doc_TEXI_Subtitle
 
          Process_Package_Description
-           (Kernel, Doc_File, Package_Name, File_Text.all, Options,
+           (B, Kernel, Doc_File, Package_Name, File_Text.all, Options,
             Converter, Doc_Directory, Doc_Suffix);
          Process_With_Clause
-           (Kernel,
+           (B,
+            Kernel,
             Doc_File,
             Source_Filename,
             Package_Name,
@@ -374,7 +391,8 @@ package body Docgen.Work_On_Source is
             Options,
             Converter, Doc_Directory, Doc_Suffix);
          Process_Packages
-           (Kernel,
+           (B,
+            Kernel,
             Doc_File,
             Entity_List,
             Source_Filename,
@@ -386,7 +404,8 @@ package body Docgen.Work_On_Source is
             Options,
             Converter, Doc_Directory, Doc_Suffix);
          Process_Vars
-           (Kernel,
+           (B,
+            Kernel,
             Doc_File,
             Entity_List,
             Source_Filename,
@@ -398,7 +417,8 @@ package body Docgen.Work_On_Source is
             Options,
             Converter, Doc_Directory, Doc_Suffix);
          Process_Exceptions
-           (Kernel,
+           (B,
+            Kernel,
             Doc_File,
             Entity_List,
             Source_Filename,
@@ -410,7 +430,8 @@ package body Docgen.Work_On_Source is
             Options,
             Converter, Doc_Directory, Doc_Suffix);
          Process_Types
-           (Kernel,
+           (B,
+            Kernel,
             Doc_File,
             Entity_List,
             Source_Filename,
@@ -422,7 +443,8 @@ package body Docgen.Work_On_Source is
             Options,
             Converter, Doc_Directory, Doc_Suffix);
          Process_Entries
-           (Kernel,
+           (B,
+            Kernel,
             Doc_File,
             Entity_List,
             Source_Filename,
@@ -435,7 +457,8 @@ package body Docgen.Work_On_Source is
             Options,
             Converter, Doc_Directory, Doc_Suffix);
          Process_Subprograms
-           (Kernel,
+           (B,
+            Kernel,
             Doc_File,
             Entity_List,
             Source_Filename,
@@ -451,7 +474,8 @@ package body Docgen.Work_On_Source is
 
       else
          Process_One_Body_File
-           (Kernel,
+           (B,
+            Kernel,
             Doc_File,
             Source_Filename,
             File_Text,
@@ -462,10 +486,10 @@ package body Docgen.Work_On_Source is
       end if;
 
       Process_Footer
-        (Kernel, Doc_File, Source_Filename, Options,
+        (B, Kernel, Doc_File, Source_Filename, Options,
          Converter, Doc_Directory, Doc_Suffix);
       Process_Close_File
-        (Kernel, Doc_File, Source_Filename, Options,
+        (B, Kernel, Doc_File, Source_Filename, Options,
          Converter, Doc_Directory, Doc_Suffix);
       Free (File_Text);
 
@@ -479,7 +503,8 @@ package body Docgen.Work_On_Source is
    -----------------------
 
    procedure Process_Open_File
-     (Kernel           : access Kernel_Handle_Record'Class;
+     (B                : Backend_Handle;
+      Kernel           : access Kernel_Handle_Record'Class;
       Doc_File         : File_Type;
       Package_File     : Virtual_File;
       Next_Package     : GNAT.OS_Lib.String_Access;
@@ -501,7 +526,7 @@ package body Docgen.Work_On_Source is
          Open_Package_Prev => Prev_Package,
          Doc_LI_Unit       => No_LI_File);
    begin
-      Converter (Kernel, Doc_File, Data_Open, Doc_Directory, Doc_Suffix);
+      Converter (B, Kernel, Doc_File, Data_Open, Doc_Directory, Doc_Suffix);
       Free (Data_Open.Open_Title);
    end Process_Open_File;
 
@@ -510,7 +535,8 @@ package body Docgen.Work_On_Source is
    ------------------------
 
    procedure Process_Close_File
-     (Kernel        : access Kernel_Handle_Record'Class;
+     (B             : Backend_Handle;
+      Kernel        : access Kernel_Handle_Record'Class;
       Doc_File      : File_Type;
       File_Name     : Virtual_File;
       Options       : All_Options;
@@ -526,7 +552,7 @@ package body Docgen.Work_On_Source is
          Close_File_Name  => File_Name);
 
    begin
-      Converter (Kernel, Doc_File, Data_Close, Doc_Directory, Doc_Suffix);
+      Converter (B, Kernel, Doc_File, Data_Close, Doc_Directory, Doc_Suffix);
    end Process_Close_File;
 
    ---------------------------
@@ -534,7 +560,8 @@ package body Docgen.Work_On_Source is
    ---------------------------
 
    procedure Process_One_Body_File
-     (Kernel           : access Kernel_Handle_Record'Class;
+     (B                : Backend_Handle;
+      Kernel           : access Kernel_Handle_Record'Class;
       Doc_File         : File_Type;
       Source_File      : Virtual_File;
       File_Text        : GNAT.OS_Lib.String_Access;
@@ -554,7 +581,7 @@ package body Docgen.Work_On_Source is
          Doc_File_List    => Source_File_List);
 
    begin
-      Converter (Kernel, Doc_File, Data_Line, Doc_Directory, Doc_Suffix);
+      Converter (B, Kernel, Doc_File, Data_Line, Doc_Directory, Doc_Suffix);
    end Process_One_Body_File;
 
    ------------------------
@@ -562,7 +589,8 @@ package body Docgen.Work_On_Source is
    ------------------------
 
    procedure Process_Unit_Index
-     (Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (B                : Backend_Handle;
+      Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
       Source_File_List : Docgen.Type_Source_File_List.List;
       Options          : Docgen.All_Options;
       Converter        : Docgen.Doc_Subprogram_Type;
@@ -612,7 +640,7 @@ package body Docgen.Work_On_Source is
          --  Create the upper part of the unit index
 
          Converter
-           (Kernel, Index_File, Data_Package, Doc_Directory, Doc_Suffix);
+           (B, Kernel, Index_File, Data_Package, Doc_Directory, Doc_Suffix);
          Free (Data_Package.Unit_Index_File_Name);
 
          for J in 1 .. Type_Source_File_List.Length (Source_File_List) -
@@ -638,7 +666,7 @@ package body Docgen.Work_On_Source is
                        (Get_Doc_File_Name
                           (Source_Filename, Doc_Directory, Doc_Suffix))));
                Converter
-                 (Kernel, Index_File, Data_Item, Doc_Directory, Doc_Suffix);
+                 (B, Kernel, Index_File, Data_Item, Doc_Directory, Doc_Suffix);
                Free (Data_Item.Item_Doc_File);
             end if;
 
@@ -652,7 +680,7 @@ package body Docgen.Work_On_Source is
          Doc_LI_Unit => No_LI_File,
          Doc_File_List => TSFL.Null_List,
          End_index_Title => new String'("End of Index"));
-      Converter (Kernel, Index_File, Data_End, Doc_Directory, Doc_Suffix);
+      Converter (B, Kernel, Index_File, Data_End, Doc_Directory, Doc_Suffix);
 
       Free (Data_End.End_Index_Title);
       Close (Index_File);
@@ -663,7 +691,8 @@ package body Docgen.Work_On_Source is
    ------------------------------
 
    procedure Process_Subprogram_Index
-     (Kernel                : access Kernel_Handle_Record'Class;
+     (B                     : Backend_Handle;
+      Kernel                : access Kernel_Handle_Record'Class;
       Subprogram_Index_List : Type_Entity_List.List;
       Options               : All_Options;
       Converter             : Doc_Subprogram_Type;
@@ -689,7 +718,7 @@ package body Docgen.Work_On_Source is
          Doc_File_List              => TSFL.Null_List,
          Subprogram_Index_File_Name => new String'(Doc_File_Name));
       Converter
-        (Kernel, Index_File, Data_Subprogram, Doc_Directory, Doc_Suffix);
+        (B, Kernel, Index_File, Data_Subprogram, Doc_Directory, Doc_Suffix);
       Free (Data_Subprogram.Subprogram_Index_File_Name);
 
       if not TEL.Is_Empty (Subprogram_Index_List) then
@@ -713,7 +742,7 @@ package body Docgen.Work_On_Source is
                     (Get_Doc_File_Name
                        (Source_Filename, Doc_Directory, Doc_Suffix))));
             Converter
-              (Kernel, Index_File, Data_Item, Doc_Directory, Doc_Suffix);
+              (B, Kernel, Index_File, Data_Item, Doc_Directory, Doc_Suffix);
             Free (Data_Item.Item_Doc_File);
             Free (Data_Item.Item_Name);
 
@@ -728,7 +757,7 @@ package body Docgen.Work_On_Source is
          Doc_LI_Unit => No_LI_File,
          Doc_File_List => TSFL.Null_List,
          End_Index_Title => new String'("End of Index"));
-      Converter (Kernel, Index_File, Data_End, Doc_Directory, Doc_Suffix);
+      Converter (B, Kernel, Index_File, Data_End, Doc_Directory, Doc_Suffix);
 
       Free (Data_End.End_Index_Title);
 
@@ -740,7 +769,8 @@ package body Docgen.Work_On_Source is
    ------------------------
 
    procedure Process_Type_Index
-     (Kernel          : access Kernel_Handle_Record'Class;
+     (B               : Backend_Handle;
+      Kernel          : access Kernel_Handle_Record'Class;
       Type_Index_List : Docgen.Type_Entity_List.List;
       Options         : All_Options;
       Converter       : Doc_Subprogram_Type;
@@ -763,7 +793,7 @@ package body Docgen.Work_On_Source is
          Doc_LI_Unit          => No_LI_File,
          Doc_File_List        => TSFL.Null_List,
          Type_Index_File_Name => new String'(Doc_File_Name));
-      Converter (Kernel, Index_File, Data_Type, Doc_Directory, Doc_Suffix);
+      Converter (B, Kernel, Index_File, Data_Type, Doc_Directory, Doc_Suffix);
       Free (Data_Type.Type_Index_File_Name);
 
       if not TEL.Is_Empty (Type_Index_List) then
@@ -789,7 +819,7 @@ package body Docgen.Work_On_Source is
                         Doc_Directory,
                         Doc_Suffix))));
             Converter
-              (Kernel, Index_File, Data_Item, Doc_Directory, Doc_Suffix);
+              (B, Kernel, Index_File, Data_Item, Doc_Directory, Doc_Suffix);
             Free (Data_Item.Item_Doc_File);
             Free (Data_Item.Item_Name);
 
@@ -803,7 +833,7 @@ package body Docgen.Work_On_Source is
          Doc_LI_Unit      => No_LI_File,
          Doc_File_List    => TSFL.Null_List,
          End_Index_Title  => new String'("End of Index"));
-      Converter (Kernel, Index_File, Data_End, Doc_Directory, Doc_Suffix);
+      Converter (B, Kernel, Index_File, Data_End, Doc_Directory, Doc_Suffix);
 
       Free (Data_End.End_Index_Title);
       Close (Index_File);
@@ -814,7 +844,8 @@ package body Docgen.Work_On_Source is
    --------------------
 
    procedure Process_Header
-     (Kernel            : access Kernel_Handle_Record'Class;
+     (B                 : Backend_Handle;
+      Kernel            : access Kernel_Handle_Record'Class;
       Doc_File          : File_Type;
       Package_Name      : String;
       Package_File      : Virtual_File;
@@ -835,7 +866,7 @@ package body Docgen.Work_On_Source is
          Header_Link    => Process_Body_File);
 
    begin
-      Converter (Kernel, Doc_File, Data_Header, Doc_Directory, Doc_Suffix);
+      Converter (B, Kernel, Doc_File, Data_Header, Doc_Directory, Doc_Suffix);
       Free (Data_Header.Header_Package);
    end Process_Header;
 
@@ -844,7 +875,8 @@ package body Docgen.Work_On_Source is
    --------------------
 
    procedure Process_Footer
-     (Kernel        : access Kernel_Handle_Record'Class;
+     (B             : Backend_Handle;
+      Kernel        : access Kernel_Handle_Record'Class;
       Doc_File      : File_Type;
       Package_File  : Virtual_File;
       Options       : All_Options;
@@ -861,7 +893,7 @@ package body Docgen.Work_On_Source is
          Footer_File  => Package_File);
 
    begin
-      Converter (Kernel, Doc_File, Data_Footer, Doc_Directory, Doc_Suffix);
+      Converter (B, Kernel, Doc_File, Data_Footer, Doc_Directory, Doc_Suffix);
       Free (Data_Footer.Footer_Title);
    end Process_Footer;
 
@@ -870,7 +902,8 @@ package body Docgen.Work_On_Source is
    ---------------------------------
 
    procedure Process_Package_Description
-     (Kernel        : access Kernel_Handle_Record'Class;
+     (B             : Backend_Handle;
+      Kernel        : access Kernel_Handle_Record'Class;
       Doc_File      : File_Type;
       Package_Name  : String;
       Text          : String;
@@ -920,7 +953,7 @@ package body Docgen.Work_On_Source is
             Subtitle_Kind    => Package_Desc_Info,
             Subtitle_Package => new String'(Package_Name));
          Converter
-           (Kernel, Doc_File, Data_Subtitle, Doc_Directory, Doc_Suffix);
+           (B, Kernel, Doc_File, Data_Subtitle, Doc_Directory, Doc_Suffix);
          Description := Extract_Comment (Text, Line, 0, True, Options);
          Data_Package := Doc_Info'
            (Package_Desc_Info,
@@ -928,7 +961,8 @@ package body Docgen.Work_On_Source is
             Doc_LI_Unit      => No_LI_File,
             Doc_File_List    => TSFL.Null_List,
             Package_Desc_Description => Description);
-         Converter (Kernel, Doc_File, Data_Package, Doc_Directory, Doc_Suffix);
+         Converter
+           (B, Kernel, Doc_File, Data_Package, Doc_Directory, Doc_Suffix);
          Free (Description);
       end if;
    end Process_Package_Description;
@@ -938,7 +972,8 @@ package body Docgen.Work_On_Source is
    --------------------------
 
    procedure Process_With_Clause
-     (Kernel           : access Kernel_Handle_Record'Class;
+     (B                  : Backend_Handle;
+      Kernel           : access Kernel_Handle_Record'Class;
       Doc_File         : File_Type;
       Source_Filename  : VFS.Virtual_File;
       Package_Name     : String;
@@ -1001,7 +1036,7 @@ package body Docgen.Work_On_Source is
             Subtitle_Kind    => With_Info,
             Subtitle_Package => new String'(Package_Name));
          Converter
-           (Kernel, Doc_File, Data_Subtitle, Doc_Directory, Doc_Suffix);
+           (B, Kernel, Doc_File, Data_Subtitle, Doc_Directory, Doc_Suffix);
       end if;
 
       Data_With := Doc_Info'
@@ -1012,7 +1047,7 @@ package body Docgen.Work_On_Source is
          With_Header_Line => First_With_Line,
          With_File        => Source_Filename,
          With_Header      => New_Line);
-      Converter (Kernel, Doc_File, Data_With, Doc_Directory, Doc_Suffix);
+      Converter (B, Kernel, Doc_File, Data_With, Doc_Directory, Doc_Suffix);
 
       Free (Data_Subtitle.Subtitle_Name);
       Free (Data_Subtitle.Subtitle_Package);
@@ -1024,7 +1059,8 @@ package body Docgen.Work_On_Source is
    ----------------------
 
    procedure Process_Packages
-     (Kernel           : access Kernel_Handle_Record'Class;
+     (B                : Backend_Handle;
+      Kernel           : access Kernel_Handle_Record'Class;
       Doc_File         : File_Type;
       Entity_List      : in out Type_Entity_List.List;
       Source_Filename  : VFS.Virtual_File;
@@ -1081,7 +1117,7 @@ package body Docgen.Work_On_Source is
                   --  Can't be set before the "if"
 
                   if not First_Already_Set then
-                     Converter (Kernel, Doc_File, Data_Subtitle,
+                     Converter (B, Kernel, Doc_File, Data_Subtitle,
                                 Doc_Directory, Doc_Suffix);
                      First_Already_Set := True;
                   end if;
@@ -1103,7 +1139,7 @@ package body Docgen.Work_On_Source is
                      Package_Header      => Header,
                      Package_Header_Line => Get_Declaration_Line_Of
                        (TEL.Data (Entity_Node).Entity));
-                  Converter (Kernel, Doc_File, Data_Package,
+                  Converter (B, Kernel, Doc_File, Data_Package,
                              Doc_Directory, Doc_Suffix);
                end if;
             end if;
@@ -1123,7 +1159,8 @@ package body Docgen.Work_On_Source is
    ------------------
 
    procedure Process_Vars
-     (Kernel           : access Kernel_Handle_Record'Class;
+     (B                : Backend_Handle;
+      Kernel           : access Kernel_Handle_Record'Class;
       Doc_File         : File_Type;
       Entity_List      : in out Type_Entity_List.List;
       Source_Filename  : VFS.Virtual_File;
@@ -1179,7 +1216,7 @@ package body Docgen.Work_On_Source is
                   --  Can't be set before the "if"
 
                   if not First_Already_Set then
-                     Converter (Kernel, Doc_File, Data_Subtitle,
+                     Converter (B, Kernel, Doc_File, Data_Subtitle,
                                 Doc_Directory, Doc_Suffix);
                      First_Already_Set := True;
                   end if;
@@ -1201,7 +1238,7 @@ package body Docgen.Work_On_Source is
                      Var_Header      => Header,
                      Var_Header_Line => Get_Declaration_Line_Of
                        (TEL.Data (Entity_Node).Entity));
-                  Converter (Kernel, Doc_File, Data_Var,
+                  Converter (B, Kernel, Doc_File, Data_Var,
                              Doc_Directory, Doc_Suffix);
                end if;
             end if;
@@ -1221,7 +1258,8 @@ package body Docgen.Work_On_Source is
    ------------------------
 
    procedure Process_Exceptions
-     (Kernel           : access Kernel_Handle_Record'Class;
+     (B                : Backend_Handle;
+      Kernel           : access Kernel_Handle_Record'Class;
       Doc_File         : File_Type;
       Entity_List      : in out Type_Entity_List.List;
       Source_Filename  : VFS.Virtual_File;
@@ -1277,7 +1315,7 @@ package body Docgen.Work_On_Source is
                   --  Can't be set before the "if"
 
                   if not First_Already_Set then
-                     Converter (Kernel, Doc_File, Data_Subtitle,
+                     Converter (B, Kernel, Doc_File, Data_Subtitle,
                                 Doc_Directory, Doc_Suffix);
                      First_Already_Set := True;
                   end if;
@@ -1299,7 +1337,7 @@ package body Docgen.Work_On_Source is
                      Exception_Header      => Header,
                      Exception_Header_Line => Get_Declaration_Line_Of
                        (TEL.Data (Entity_Node).Entity));
-                  Converter (Kernel, Doc_File, Data_Exception,
+                  Converter (B, Kernel, Doc_File, Data_Exception,
                              Doc_Directory, Doc_Suffix);
                end if;
             end if;
@@ -1319,7 +1357,8 @@ package body Docgen.Work_On_Source is
    -------------------
 
    procedure Process_Types
-     (Kernel           : access Kernel_Handle_Record'Class;
+     (B                : Backend_Handle;
+      Kernel           : access Kernel_Handle_Record'Class;
       Doc_File         : File_Type;
       Entity_List      : in out Type_Entity_List.List;
       Source_Filename  : VFS.Virtual_File;
@@ -1376,7 +1415,7 @@ package body Docgen.Work_On_Source is
                   --  Can't be set before the "if"
 
                   if not First_Already_Set then
-                     Converter (Kernel, Doc_File, Data_Subtitle,
+                     Converter (B, Kernel, Doc_File, Data_Subtitle,
                                 Doc_Directory, Doc_Suffix);
                      First_Already_Set := True;
                   end if;
@@ -1398,7 +1437,7 @@ package body Docgen.Work_On_Source is
                      Type_Header => Header,
                      Type_Header_Line => Get_Declaration_Line_Of
                        (TEL.Data (Entity_Node).Entity));
-                  Converter (Kernel, Doc_File, Data_Type,
+                  Converter (B, Kernel, Doc_File, Data_Type,
                              Doc_Directory, Doc_Suffix);
                end if;
             end if;
@@ -1418,7 +1457,8 @@ package body Docgen.Work_On_Source is
    ---------------------
 
    procedure Process_Entries
-     (Kernel             : access Kernel_Handle_Record'Class;
+     (B                  : Backend_Handle;
+      Kernel             : access Kernel_Handle_Record'Class;
       Doc_File           : File_Type;
       Entity_List        : in out Type_Entity_List.List;
       Source_Filename    : VFS.Virtual_File;
@@ -1475,7 +1515,7 @@ package body Docgen.Work_On_Source is
                   --  Can be set before the "if"
 
                   if not First_Already_Set then
-                     Converter (Kernel, Doc_File, Data_Subtitle,
+                     Converter (B, Kernel, Doc_File, Data_Subtitle,
                                 Doc_Directory, Doc_Suffix);
                      First_Already_Set := True;
                   end if;
@@ -1498,7 +1538,7 @@ package body Docgen.Work_On_Source is
                      Entry_Header      => Header,
                      Entry_Header_Line => Get_Declaration_Line_Of
                        (TEL.Data (Entity_Node).Entity));
-                  Converter (Kernel, Doc_File, Data_Entry,
+                  Converter (B, Kernel, Doc_File, Data_Entry,
                              Doc_Directory, Doc_Suffix);
                end if;
             end if;
@@ -1518,7 +1558,8 @@ package body Docgen.Work_On_Source is
    -------------------------
 
    procedure Process_Subprograms
-     (Kernel             : access Kernel_Handle_Record'Class;
+     (B                  : Backend_Handle;
+      Kernel             : access Kernel_Handle_Record'Class;
       Doc_File           : File_Type;
       Entity_List        : in out Type_Entity_List.List;
       Source_Filename    : VFS.Virtual_File;
@@ -1567,7 +1608,7 @@ package body Docgen.Work_On_Source is
 
                if not First_Already_Set then
                   Converter
-                    (Kernel, Doc_File, Data_Subtitle,
+                    (B, Kernel, Doc_File, Data_Subtitle,
                      Doc_Directory, Doc_Suffix);
                   First_Already_Set := True;
                end if;
@@ -1599,9 +1640,10 @@ package body Docgen.Work_On_Source is
                      Subprogram_List        => Entity_List,
                      Subprogram_Header      => Header,
                      Subprogram_Header_Line =>
-                      Get_Declaration_Line_Of (TEL.Data (Entity_Node).Entity));
+                       Get_Declaration_Line_Of
+                         (TEL.Data (Entity_Node).Entity));
 
-                  Converter (Kernel, Doc_File, Data_Subprogram,
+                  Converter (B, Kernel, Doc_File, Data_Subprogram,
                              Doc_Directory, Doc_Suffix);
                end if;
             end if;
