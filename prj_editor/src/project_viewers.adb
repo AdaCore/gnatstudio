@@ -454,7 +454,8 @@ package body Project_Viewers is
      (Kernel : access Kernel_Handle_Record'Class;
       Filename : String) is
    begin
-      Add_To_History (Kernel, Project_History_Key, Filename);
+      Add_To_History (Kernel, Project_History_Key,
+                      Normalize_Pathname (Filename, Resolve_Links => False));
       Refresh_Reopen_Menu (Kernel);
    end Add_To_Reopen;
 
@@ -588,10 +589,7 @@ package body Project_Viewers is
 
    begin
       Child := Find_MDI_Child (Get_MDI (Viewer.Kernel), Viewer);
-      if Child = null then
-         Trace (Me, "No MDI window visiting the project viewer");
-         return;
-      end if;
+      Assert (Me, Child /= null, "No MDI window visiting the project viewer");
 
       --  If the context is invalid, keep the currently displayed lines, so
       --  that when a new MDI child is selected, the contents of the viewer is
@@ -659,11 +657,20 @@ package body Project_Viewers is
 
    procedure Explorer_Selection_Changed
      (Viewer  : access Gtk_Widget_Record'Class;
-      Args    : Gtk_Args) is
+      Args    : Gtk_Args)
+   is
+      V     : constant Project_Viewer := Project_Viewer (Viewer);
+      Child : constant MDI_Child := Get_Focus_Child (Get_MDI (V.Kernel));
    begin
-      Explorer_Selection_Changed
-        (Project_Viewer (Viewer),
-         To_Selection_Context_Access (To_Address (Args, 1)));
+      --  Do nothing if we forced the selection change ourselves. For instance,
+      --  when a new switch editor is created in On_Edit_Switches, to avoid
+      --  doing extra work.
+      if Child = null
+        or else Get_Widget (Child) /= Gtk_Widget (Viewer)
+      then
+         Explorer_Selection_Changed
+           (V, To_Selection_Context_Access (To_Address (Args, 1)));
+      end if;
    end Explorer_Selection_Changed;
 
    -------------
@@ -841,6 +848,7 @@ package body Project_Viewers is
            and then Get_Active (Load_Project)
          then
             Glide_Kernel.Project.Load_Project (Kernel, Name);
+            Add_To_Reopen (Kernel, Name);
          end if;
       end;
 
@@ -863,11 +871,11 @@ package body Project_Viewers is
       pragma Unreferenced (Widget);
       Child   : MDI_Child;
       Viewer  : Project_Viewer;
-      Context : Selection_Context_Access :=
-        Get_Current_Context (Kernel);
+      Context : Selection_Context_Access := Get_Current_Context (Kernel);
 
    begin
       Ref (Context);
+
       Child := Find_MDI_Child_By_Tag
         (Get_MDI (Kernel), Project_Viewer_Record'Tag);
 
@@ -880,6 +888,7 @@ package body Project_Viewers is
            (Get_MDI (Kernel), Viewer,
             Default_Width  => Get_Pref (Kernel, Default_Widget_Width),
             Default_Height => Get_Pref (Kernel, Default_Widget_Height));
+         Set_Title (Child, -"Switches editor");
       end if;
 
       --  The initial contents of the viewer should be read immediately from
@@ -891,7 +900,6 @@ package body Project_Viewers is
          Update_Contents (Viewer, Get_Project (Kernel));
       end if;
 
-      --  Set the focus child only afterward, otherwise Context becomes invalid
       Set_Focus_Child (Child);
 
       Unref (Context);
@@ -1099,6 +1107,7 @@ package body Project_Viewers is
                  (Get_Kernel (File),
                   Project_Information (File),
                   Name);
+               Add_To_Reopen (Get_Kernel (File), Name);
             end if;
          end;
 
@@ -1811,14 +1820,16 @@ package body Project_Viewers is
       Scenario_Variables : Scenario_Variable_Array;
       Ref_Project        : Project_Type) return Boolean
    is
-      pragma Unreferenced (Kernel, Page);
+      pragma Unreferenced (Page);
       Dirs     : Argument_List := Get_Multiple_Selection
         (Directory_Selector (Widget));
       Equal    : Boolean := False;
       Prj_Dir  : constant String := Project_Directory (Project);
       Tmp      : GNAT.OS_Lib.String_Access;
       Relative : constant Boolean :=
-        Get_Paths_Type (Project) = Projects.Relative;
+        Get_Paths_Type (Project) = Projects.Relative
+        or else (Get_Paths_Type (Project) = From_Pref
+                 and then Get_Pref (Kernel, Generate_Relative_Paths));
       Initial_Dirs_Id : constant String_Id_Array := Source_Dirs (Project);
       Initial_Dirs : Argument_List (Initial_Dirs_Id'Range);
 
@@ -2005,12 +2016,14 @@ package body Project_Viewers is
       Ref_Project  : Project_Type)
       return Boolean
    is
-      pragma Unreferenced (Kernel, Page);
+      pragma Unreferenced (Page);
       Obj_Dir : constant Object_Editor_Widget := Object_Editor_Widget (Widget);
       New_Dir, Exec_Dir : GNAT.OS_Lib.String_Access;
       Changed : Boolean := False;
       Project_Uses_Relative_Paths : constant Boolean :=
-        Get_Paths_Type (Project) = Relative;
+        Get_Paths_Type (Project) = Relative
+        or else (Get_Paths_Type (Project) = From_Pref
+                 and then Get_Pref (Kernel, Generate_Relative_Paths));
       Exec : constant String := Name_As_Directory
         (Normalize_Pathname (Executables_Directory (Project)));
 
@@ -2020,7 +2033,7 @@ package body Project_Viewers is
 
       if Project_Uses_Relative_Paths then
          New_Dir := new String'(Relative_Path_Name
-           (Get_Text (Obj_Dir.Obj_Dir), Project_Directory (Project)));
+            (Get_Text (Obj_Dir.Obj_Dir), Project_Directory (Project)));
       else
          New_Dir := new String'(Name_As_Directory
            (Normalize_Pathname (Get_Text (Obj_Dir.Obj_Dir))));
@@ -2269,6 +2282,7 @@ package body Project_Viewers is
          Kernel                  => Kernel,
          Module_Name             => Project_Editor_Module_Name,
          Priority                => Default_Priority,
+         MDI_Child_Tag           => Project_Viewer_Record'Tag,
          Contextual_Menu_Handler => Project_Editor_Contextual'Access);
 
       Register_Menu (Kernel, Project, null, Ref_Item => -"Edit",
