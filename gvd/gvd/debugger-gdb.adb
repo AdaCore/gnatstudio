@@ -654,9 +654,14 @@ package body Debugger.Gdb is
          --  This is particularly important in case of cross environments.
 
          if Get_Language (Debugger).all in Gdb_Ada_Language'Class then
+            --  Switch to C language to avoid possible ambiguities
+
+            Switch_Language (Debugger, "c");
             Send (Debugger, "list adainit", Mode => Internal);
+            Restore_Language (Debugger);
+
          else
-            Send (Debugger, "list", Mode => Internal);
+            Send (Debugger, "list main,main", Mode => Internal);
          end if;
 
          Send (Debugger, "info line", Mode => Internal);
@@ -809,9 +814,11 @@ package body Debugger.Gdb is
       Send (Debugger, "show lang", Mode => Internal);
 
       if Get_Language (Debugger).all in Gdb_Ada_Language'Class then
+         Switch_Language (Debugger, "c");
          Send (Debugger, "list adainit", Mode => Internal);
+         Restore_Language (Debugger);
       else
-         Send (Debugger, "list", Mode => Internal);
+         Send (Debugger, "list main,main", Mode => Internal);
       end if;
 
       if Get_Pref (Break_On_Exception) then
@@ -880,13 +887,6 @@ package body Debugger.Gdb is
       --  current file.
 
       Send (Debugger, "show lang", Mode => Internal);
-
-      if Get_Language (Debugger).all in Gdb_Ada_Language'Class then
-         Send (Debugger, "list adainit", Mode => Internal);
-      else
-         Send (Debugger, "list", Mode => Internal);
-      end if;
-
       Send (Debugger, "info line", Mode => Internal);
    end Load_Core_File;
 
