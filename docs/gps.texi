@@ -1648,6 +1648,11 @@ automatically when you modify your sources and are always kept up to date.
 
 This capability is currently implemented for Ada, C and C++ languages.
 
+@item Automatic syntax checking
+@cindex automatic syntax checking
+When enabled, the editor will perform on-the-fly syntax checks, and will
+underline the errors in you file as you type.
+
 @item Auto save
 @cindex auto save
 You can configure the editor to periodically save modified files.
@@ -5679,6 +5684,11 @@ e.g. procedures, loops, if statements, @dots{}
 @cindex block folding
 Whether the editor should provide the ability to fold/unfold blocks.
 
+@item Automatic syntax check
+@cindex automatic syntax
+Whether GPS should perform on-the-fly syntax checks for the sources files
+that are being edited.
+
 @item Speed Column Policy
 @cindex speed column policy
 When the Speed Column should be shown on the side of the editors:
@@ -5745,8 +5755,9 @@ needs to be explicitly called by the user.
 @cindex color
 
 @table @b
-@item Default font
-The font used in the source editor.
+@item Default
+The default font, default foreground and default background colors used
+in the source editor.
 
 @item Keywords
 Font and colors used to highlight keywords.
