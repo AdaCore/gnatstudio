@@ -22,6 +22,7 @@ with Glib;                      use Glib;
 with Glib.Convert;              use Glib.Convert;
 with Glib.Object;               use Glib.Object;
 with Glib.Properties;           use Glib.Properties;
+with Glib.Unicode;              use Glib.Unicode;
 with Glib.Values;               use Glib.Values;
 with Gdk.Color;                 use Gdk.Color;
 with Gtk;                       use Gtk;
@@ -3785,7 +3786,7 @@ package body Src_Editor_Buffer is
       Result    : Boolean;
       Ending    : Boolean;
       Success   : Boolean := True;
-      Count     : Natural := 0;
+      Count     : Gint := 0;
    begin
       Get_Iter_At_Mark (Buffer, Iter, Buffer.Insert_Mark);
       Ending := Ends_Line (Iter);
@@ -3794,38 +3795,35 @@ package body Src_Editor_Buffer is
          Copy (Iter, Pos);
 
          Set_Line_Offset (Pos, 0);
-         while Success and then Get_Char (Pos) = ' ' loop
+         while Success and then Is_Space (Get_Char (Pos)) loop
             Forward_Char (Pos, Success);
          end loop;
 
-         Success := True;
-         while Success and then not Equal (Iter, Pos) loop
-            Forward_Char (Pos, Success);
-            Count := Count + 1;
-         end loop;
+         if Compare (Iter, Pos) > 0 then
+            Count := Get_Offset (Iter) - Get_Offset (Pos);
+         end if;
       end if;
 
       Result := Do_Indentation (Buffer, Lang, Iter, New_Line);
 
-      --  If the cursor was set in the middle of a line, restore its position
-      --  within the line. Otherwise, restore it at the first non-blank
-      --  character.
-
+      --  Special case if we were at the end of the line, otherwise the cursor
+      --  is left on the first non-blank character of the line after the newly
+      --  inserted one.
       if not Ending then
+         --  If the cursor was set in the middle of a line, restore its
+         --  position
+         --  within the line. Otherwise, restore it at the first non-blank
+         --  character.
+
          Get_Iter_At_Mark (Buffer, Iter, Buffer.Insert_Mark);
          Set_Line_Offset (Iter, 0);
 
          Success := True;
-         while Success and then Get_Char (Iter) = ' ' loop
+         while Success and then Is_Space (Get_Char (Iter)) loop
             Forward_Char (Iter, Success);
          end loop;
 
-         if not New_Line then
-            while Success and then Count > 0 loop
-               Forward_Char (Iter, Success);
-               Count := Count - 1;
-            end loop;
-         end if;
+         Forward_Chars (Iter, Count, Success);
          Place_Cursor (Buffer, Iter);
       end if;
 
@@ -4024,6 +4022,7 @@ package body Src_Editor_Buffer is
             Slice (Slice_Length) := ASCII.LF;
          end if;
 
+         --  ??? We should use Is_Space instead
          while Blanks <= Slice_Length
            and then (Slice (Blanks) = ' ' or else Slice (Blanks) = ASCII.HT)
          loop
