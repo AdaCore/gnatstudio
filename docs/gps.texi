@@ -4964,7 +4964,12 @@ through the integration of version control systems (VCS). Each project can be
 associated to a VCS, through the @code{VCS} tab in the Project property
 editor. @xref{The Project Properties Editor}.
 
-The systems that are currently supported in GPS are CVS and ClearCase.
+The systems that are currently supported in GPS are CVS and ClearCase. There
+are two interfaces to ClearCase: the standard ClearCase interface, which is
+built-in and uses a generic GPS terminology for VCS operations, and the Native
+ClearCase interface, which is fully customizable and uses by default the
+terminology specific to ClearCase.
+
 It is recommended that you first get familiar with the version control
 system that you intend to use in GPS first, since many concepts used in GPS
 assume basic knowledge of the underlying system.
