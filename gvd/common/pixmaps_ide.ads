@@ -47,6 +47,7 @@ package GVD.Pixmaps is
    next_xpm          : aliased Chars_Ptr_Array (0 .. 0);
    nexti_xpm         : aliased Chars_Ptr_Array (0 .. 0);
    package_xpm       : aliased Chars_Ptr_Array (0 .. 0);
+   paint_xpm         : aliased Chars_Ptr_Array (0 .. 0);
    plot_xpm          : aliased Chars_Ptr_Array (0 .. 0);
    print_xpm         : aliased Chars_Ptr_Array (0 .. 0);
    rotate_xpm        : aliased Chars_Ptr_Array (0 .. 0);
@@ -86,6 +87,7 @@ private
    pragma Import (C, next_xpm, "next_xpm");
    pragma Import (C, nexti_xpm, "nexti_xpm");
    pragma Import (C, package_xpm, "package_xpm");
+   pragma Import (C, paint_xpm, "paint_xpm");
    pragma Import (C, plot_xpm, "plot_xpm");
    pragma Import (C, print_xpm, "print_xpm");
    pragma Import (C, rotate_xpm, "rotate_xpm");
