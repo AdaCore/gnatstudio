@@ -87,7 +87,6 @@ with Gdk.Pixbuf;                use Gdk.Pixbuf;
 
 with Generic_List;
 with GVD.Preferences; use GVD.Preferences;
-with Pixmaps_IDE;     use Pixmaps_IDE;
 
 with Src_Editor_Module.Line_Highlighting;
 with Src_Editor_Buffer.Buffer_Commands; use Src_Editor_Buffer. Buffer_Commands;
@@ -107,6 +106,12 @@ package body Src_Editor_Module is
 
    editor_xpm : aliased Chars_Ptr_Array (0 .. 0);
    pragma Import (C, editor_xpm, "mini_page_xpm");
+   fold_block_xpm : aliased Chars_Ptr_Array (0 .. 0);
+   pragma Import (C, fold_block_xpm, "fold_block_xpm");
+   unfold_block_xpm  : aliased Chars_Ptr_Array (0 .. 0);
+   pragma Import (C, unfold_block_xpm, "unfold_block_xpm");
+   close_block_xpm  : aliased Chars_Ptr_Array (0 .. 0);
+   pragma Import (C, close_block_xpm, "close_block_xpm");
 
    Filename_Cst  : aliased constant String := "filename";
    Line_Cst      : aliased constant String := "line";
@@ -3679,12 +3684,9 @@ package body Src_Editor_Module is
          Map_Cb (Get_Main_Window (Kernel));
       end if;
 
-      --  Initialize graphics
-      --  ??? We should use a smaller and more adequate pixbuf than trash_xpm.
-      Remove_Blank_Lines_Pixbuf := Gdk_New_From_Xpm_Data (trash_xpm);
-
-      Hide_Block_Pixbuf   := Gdk_New_From_Xpm_Data (grey_dot_xpm);
-      Unhide_Block_Pixbuf := Gdk_New_From_Xpm_Data (dot_xpm);
+      Remove_Blank_Lines_Pixbuf := Gdk_New_From_Xpm_Data (close_block_xpm);
+      Hide_Block_Pixbuf   := Gdk_New_From_Xpm_Data (fold_block_xpm);
+      Unhide_Block_Pixbuf := Gdk_New_From_Xpm_Data (unfold_block_xpm);
    end Register_Module;
 
    -------------------------
