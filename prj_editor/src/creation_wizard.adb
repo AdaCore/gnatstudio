@@ -204,6 +204,28 @@ package body Creation_Wizard is
 
             Gtk.Handlers.Emit_Stop_By_Name (Next_Button (W), "clicked");
          end if;
+
+         declare
+            Name : constant String := Base_Name
+              (Get_Text (W.Project_Name), Prj.Project_File_Extension);
+         begin
+            if Is_Regular_File
+              (Dir_Name (Get_Text (W.Project_Location))
+               & Name & Prj.Project_File_Extension)
+            then
+               Result := Message_Dialog
+                 (Msg => Dir_Name (Get_Text (W.Project_Location))
+                  & Name & Prj.Project_File_Extension
+                  & (-" already exists. Do you want to overwrite ?"),
+                  Title => -"File exists",
+                  Dialog_Type => Error,
+                  Buttons => Button_Yes or Button_No);
+
+               if Result = Button_No then
+                  Gtk.Handlers.Emit_Stop_By_Name (Next_Button (W), "clicked");
+               end if;
+            end if;
+         end;
       end if;
    end Page_Checker;
 
@@ -383,6 +405,10 @@ package body Creation_Wizard is
             Changed := True;
          end if;
       end loop;
+
+      --  Mark the project as modified, otherwise it won't actually be saved
+      --  in case we are overwritting an existing file.
+      Set_Project_Modified (Wiz.Kernel, Project, True);
 
       Save_Project (Wiz.Kernel, Project, Recursive => False);
 
