@@ -82,7 +82,6 @@ private
 
    subtype Real_Node_Types is Node_Types range Project_Node .. Entity_Node;
 
-
    type Append_Directory_Idle_Data;
    type Append_Directory_Idle_Data_Access is access Append_Directory_Idle_Data;
    --  Custom data for the asynchronous fill function.
