@@ -1407,7 +1407,7 @@ package body Project_Explorers is
          Current := Child_Iter;
 
          while Current /= Null_Iter loop
-            --  ??? There might be a problem here : we must free children
+            --  ??? There might be a problem here: we must free children
             --  recursively, this frees only one level.
 
             if Node_Types'Val
