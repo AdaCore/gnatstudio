@@ -954,8 +954,13 @@ package body Help_Module is
             Anchor   : constant String := Get_String (Data (Data'First + 2));
             Navigate : constant Boolean := Get_Boolean (Data (Data'First + 1));
             Args     : Argument_List (1 .. 3);
+            Html     : Virtual_File := Create_Html (File, Kernel);
          begin
-            Open_HTML_File (Kernel, Create_Html (File, Kernel), Anchor);
+            if Html = VFS.No_File then
+               return True;
+            else
+               Open_HTML_File (Kernel, Html, Anchor);
+            end if;
 
             if Navigate then
                Args (1) := new String'("html_browse");
