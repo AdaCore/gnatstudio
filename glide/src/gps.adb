@@ -75,6 +75,7 @@ with Vdiff_Module;
 with Builder_Module;
 with Glide_Kernel.Console;
 with Navigation_Module;
+with Custom_Module;
 
 --  The LI parsers
 with Src_Info.ALI;
@@ -302,6 +303,7 @@ procedure GPS is
 
       --  Register all modules
 
+      Custom_Module.Register_Module (GPS.Kernel);
       Navigation_Module.Register_Module (GPS.Kernel);
       Metrics_Module.Register_Module (GPS.Kernel);
       Browsers.Call_Graph.Register_Module (GPS.Kernel);
