@@ -67,6 +67,8 @@ with OS_Utils;                 use OS_Utils;
 with Traces;                   use Traces;
 with Histories;                use Histories;
 
+with Namet;                    use Namet;
+
 with Project_Explorers_Common; use Project_Explorers_Common;
 
 package body Project_Explorers_Files is
@@ -220,7 +222,6 @@ package body Project_Explorers_Files is
       Path_Found : Boolean := False;
       Iter       : Gtk_Tree_Iter;
       New_D      : Append_Directory_Idle_Data_Access;
-      VF         : Virtual_File;
 
       use String_List_Utils.String_List;
 
@@ -265,6 +266,7 @@ package body Project_Explorers_Files is
          then
             declare
                Name : constant String := File (File'First .. Last);
+               P    : Project_Type;
             begin
                if Get_History
                  (Get_History (D.Explorer.Kernel).all,
@@ -276,19 +278,27 @@ package body Project_Explorers_Files is
                         D.Norm_Dir.all & Name,
                         Direct_Only => False)
                      then
-                        Append (D.Dirs, Name);
+                        Append (D.Dirs, Locale_To_UTF8 (Name));
                      end if;
 
                   --  If the file belongs to the project hierarchy, we also
                   --  need to check that it is the one that really belongs to
                   --  the project, not a homonym in some other directory
                   else
-                     VF := Create (Name, D.Explorer.Kernel);
-
-                     if Get_Project_From_File
+                     P := Get_Project_From_File
                        (Get_Registry (D.Explorer.Kernel),
-                        VF, Root_If_Not_Found => False) /= No_Project
-                       and then File_Equal (Dir_Name (VF).all, D.Norm_Dir.all)
+                        Name, Root_If_Not_Found => False);
+                     Get_Full_Path_From_File
+                       (Registry => Get_Registry (D.Explorer.Kernel),
+                        Filename => Name,
+                        Use_Source_Path => True,
+                        Use_Object_Path => True,
+                        Project => P);
+
+                     if P /= No_Project
+                       and then File_Equal
+                         (Dir_Name (Name_Buffer (1 .. Name_Len)),
+                          D.Norm_Dir.all)
                      then
                         Append (D.Files, Name);
                      end if;
@@ -959,6 +969,7 @@ package body Project_Explorers_Files is
             Obj := Parse_Path
               (Object_Path (Get_Project (Explorer.Kernel), True));
             String_List_Utils.String_List.Concat (Inc, Obj);
+
             File_Append_Directory
               (Explorer,
                Greatest_Common_Path (Inc),
@@ -1114,13 +1125,6 @@ package body Project_Explorers_Files is
          if Greatest_Prefix_Length = 0 then
             return (1 => Directory_Separator);
          end if;
-
-         while not Is_Directory_Separator
-           (Greatest_Prefix (Greatest_Prefix'First
-                               + Greatest_Prefix_Length - 1))
-         loop
-            Greatest_Prefix_Length := Greatest_Prefix_Length - 1;
-         end loop;
 
          return Greatest_Prefix
            (Greatest_Prefix'First
