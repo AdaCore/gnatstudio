@@ -29,7 +29,9 @@ pragma Warnings (Off);
 with Gdk.Types;        use Gdk.Types;
 pragma Warnings (On);
 with Gdk.Event;        use Gdk.Event;
+with Gtk.Enums;        use Gtk.Enums;
 with Gtk.Menu;         use Gtk.Menu;
+with Gtk.Style;        use Gtk.Style;
 with Gtkada.Canvas;    use Gtkada.Canvas;
 
 with Debugger;         use Debugger;
@@ -256,6 +258,8 @@ package body Display_Items is
       --  this means that the variable is unknown, and we don't create an item
       --  in that case.
 
+      Set_Busy_Cursor (Debugger, True, Force_Refresh => True);
+
       if Default_Entity = null then
          begin
             Entity := Parse_Type (Debugger.Debugger, Variable_Name);
@@ -264,6 +268,7 @@ package body Display_Items is
                Output_Error
                  (Debugger.Window,
                   (-"Could not parse type for ") & Variable_Name);
+               Set_Busy_Cursor (Debugger, False);
                return;
          end;
 
@@ -271,6 +276,7 @@ package body Display_Items is
             Output_Error
               (Debugger.Window,
                (-"Could not get the type of ") & Variable_Name);
+            Set_Busy_Cursor (Debugger, False);
             return;
          end if;
       end if;
@@ -309,6 +315,7 @@ package body Display_Items is
                Refresh_Canvas (Debugger.Data_Canvas);
             end if;
 
+            Set_Busy_Cursor (Debugger, False);
             return;
          end if;
       end if;
@@ -333,6 +340,7 @@ package body Display_Items is
                Output_Error
                  (Debugger.Window,
                   (-"Could not parse the value for ") & Variable_Name);
+               Set_Busy_Cursor (Debugger, False);
                return;
          end;
 
@@ -357,6 +365,13 @@ package body Display_Items is
          Create_Link (Debugger.Data_Canvas, Link_From, Item, Link_Name);
          Put (Debugger.Data_Canvas, Item);
       end if;
+
+      Set_Busy_Cursor (Debugger, False);
+
+   exception
+      when others =>
+         Set_Busy_Cursor (Debugger, False);
+         raise;
    end Gtk_New;
 
    ----------------
@@ -467,45 +482,38 @@ package body Display_Items is
       Alloc_Height : Gint;
       Title_Height, Title_Width : Gint;
       Num_Width    : Gint;
-
       Context : constant Box_Drawing_Context :=
         Get_Box_Context (GVD_Canvas (Item.Debugger.Data_Canvas));
-      Zoom_Spacing : constant Gint :=
-        To_Canvas_Coordinates (Item.Debugger.Data_Canvas, Spacing);
-      Zoom_Buttons : constant Gint :=
-        To_Canvas_Coordinates (Item.Debugger.Data_Canvas, Buttons_Size);
-      Zoom_Border : constant Gint :=
-        To_Canvas_Coordinates (Item.Debugger.Data_Canvas, Border_Spacing);
       W, H : Gint;
+      Shadow : Gtk_Shadow_Type;
 
       use Gdk;
 
    begin
       --  Compute the required size for the value itself.
 
-      Alloc_Width  := Get_Width  (Item.Entity.all) + 2 * Zoom_Border;
-      Alloc_Height := Get_Height (Item.Entity.all) + 2 * Zoom_Border;
+      Alloc_Width  := Get_Width  (Item.Entity.all) + 2 * Border_Spacing;
+      Alloc_Height := Get_Height (Item.Entity.all) + 2 * Border_Spacing;
 
       --  Compute the width and height of the title bar
 
       Num_Width := GVD_Text_Width
         (Context.Title_Font, Integer'Image (Item.Num) & ": ");
-      Title_Width := (5 + Num_Buttons) * Zoom_Spacing
+      Title_Width := (5 + Num_Buttons) * Spacing
         + GVD_Text_Width (Context.Title_Font, Item.Name.all)
-        + Num_Buttons * Zoom_Buttons + Num_Width;
+        + Num_Buttons * Buttons_Size + Num_Width;
       Title_Height := Gint'Max
-        (GVD_Font_Height (Context.Title_Font), Zoom_Buttons)
-        + 2 * Zoom_Spacing;
+        (GVD_Font_Height (Context.Title_Font), Buttons_Size)
+        + 2 * Spacing;
       Item.Title_Height := Title_Height;
 
       --  Finally, we can find the total size for the display item.
 
       Alloc_Width := Gint'Max (Alloc_Width, Title_Width);
-      Alloc_Width := Gint'Max
-        (Alloc_Width, To_Canvas_Coordinates (Item.Debugger.Data_Canvas, 40));
+      Alloc_Width := Gint'Max (Alloc_Width, 40);
       Alloc_Height := Title_Height + Alloc_Height;
 
-      Propagate_Width (Item.Entity.all, Alloc_Width - 2 * Zoom_Border);
+      Propagate_Width (Item.Entity.all, Alloc_Width - 2 * Border_Spacing);
 
       --  3D Look ? If yes, keep some space for the shadow.
 
@@ -550,31 +558,21 @@ package body Display_Items is
          Width  => Alloc_Width - 1,
          Height => Title_Height);
 
-      Draw_Rectangle
-        (Pixmap (Item),
-         GC     => Context.Black_GC,
-         Filled => False,
-         X      => 0,
-         Y      => 0,
-         Width  => Alloc_Width - 1,
-         Height => Alloc_Height - 1);
-
       if Get_Pref (Look_3d) then
-         Draw_Line
-           (Pixmap (Item),
-            GC   => Context.Black_GC,
-            X1   => Alloc_Width,
-            Y1   => 2,
-            X2   => Alloc_Width,
-            Y2   => Alloc_Height);
-         Draw_Line
-           (Pixmap (Item),
-            GC   => Context.Black_GC,
-            X1   => 1,
-            Y1   => Alloc_Height,
-            X2   => Alloc_Width,
-            Y2   => Alloc_Height);
+         Shadow := Shadow_Out;
+      else
+         Shadow := Shadow_Etched_Out;
       end if;
+
+      Draw_Shadow
+        (Style       => Get_Style (Item.Debugger.Data_Canvas),
+         Window      => Pixmap (Item),
+         State_Type  => State_Normal,
+         Shadow_Type => Shadow,
+         X           => 0,
+         Y           => 0,
+         Width       => Alloc_Width + 1,
+         Height      => Alloc_Height + 1);
 
       Draw_Line
         (Pixmap (Item),
@@ -589,16 +587,16 @@ package body Display_Items is
            (Pixmap (Item),
             Font   => Context.Title_Font,
             GC     => Context.Black_GC,
-            X      => Zoom_Spacing,
-            Y      => Zoom_Spacing + Get_Ascent (Context.Title_Font),
+            X      => Spacing,
+            Y      => Spacing + Get_Ascent (Context.Title_Font),
             Text   => Integer'Image (Item.Num) & ":");
 
          Draw_Text
            (Pixmap (Item),
             Font   => Context.Title_Font,
             GC     => Context.Black_GC,
-            X      => Zoom_Spacing + Num_Width,
-            Y      => Zoom_Spacing + Get_Ascent (Context.Title_Font),
+            X      => Spacing + Num_Width,
+            Y      => Spacing + Get_Ascent (Context.Title_Font),
             Text   => Item.Name.all);
       end if;
 
@@ -611,9 +609,7 @@ package body Display_Items is
 
       Set_Clip_Mask (Context.Black_GC, Context.Close_Mask);
       Set_Clip_Origin
-        (Context.Black_GC,
-         Alloc_Width - Zoom_Buttons - Zoom_Spacing,
-         Zoom_Spacing);
+        (Context.Black_GC, Alloc_Width - Buttons_Size - Spacing, Spacing);
       Get_Size (Context.Close_Pixmap, W, H);
       Draw_Pixmap
         (Pixmap (Item),
@@ -621,10 +617,10 @@ package body Display_Items is
          Src    => Context.Close_Pixmap,
          Xsrc   => 0,
          Ysrc   => 0,
-         Xdest  => Alloc_Width - Zoom_Buttons - Zoom_Spacing,
-         Ydest  => Zoom_Spacing,
-         Width  => To_Canvas_Coordinates (Item.Debugger.Data_Canvas, W),
-         Height => To_Canvas_Coordinates (Item.Debugger.Data_Canvas, H));
+         Xdest  => Alloc_Width - Buttons_Size - Spacing,
+         Ydest  => Spacing,
+         Width  => W,
+         Height => H);
       Set_Clip_Mask (Context.Black_GC, Null_Pixmap);
       Set_Clip_Origin (Context.Black_GC, 0, 0);
 
@@ -632,8 +628,8 @@ package body Display_Items is
          Paint
            (Item.Entity.all,
             Create_Drawing_Context (Item),
-            X => Zoom_Border,
-            Y => Title_Height + Zoom_Border);
+            X => Border_Spacing,
+            Y => Title_Height + Border_Spacing);
       end if;
    end Update_Display;
 
@@ -940,7 +936,11 @@ package body Display_Items is
 
    procedure Select_Item
      (Item      : access Display_Item_Record'Class;
-      Component : Generic_Type_Access) is
+      Component : Generic_Type_Access)
+   is
+      Has_New_Selection : constant Boolean :=
+        Item.Debugger.Selected_Item /= Canvas_Item (Item) or else
+        Item.Debugger.Selected_Component /= Component;
    begin
       --  Unselect the current selection
 
@@ -962,7 +962,7 @@ package body Display_Items is
 
       --  Select the new one
 
-      if Component /= null then
+      if Has_New_Selection and then Component /= null then
          Set_Selected (Component, not Get_Selected (Component));
          Update_Component (Item, Component);
          Item_Updated (Item.Debugger.Data_Canvas, Item);
@@ -986,18 +986,9 @@ package body Display_Items is
      (Item   : access Display_Item_Record;
       Event  : Gdk.Event.Gdk_Event_Button)
    is
-      Zoom_Spacing : constant Gint :=
-        To_Canvas_Coordinates (Item.Debugger.Data_Canvas, Spacing);
-      Zoom_Buttons : constant Gint :=
-        To_Canvas_Coordinates (Item.Debugger.Data_Canvas, Buttons_Size);
-      Zoom_Buttons_Size : constant Gint :=
-        Gint'Min (Buttons_Size, Zoom_Buttons);
-      Zoom_Border  : constant Gint :=
-        To_Canvas_Coordinates (Item.Debugger.Data_Canvas, Border_Spacing);
-
       Buttons_Start : Gint :=
-        Gint (Get_Coord (Item).Width) - Num_Buttons * Zoom_Buttons -
-          Num_Buttons * Zoom_Spacing + 1;
+        Gint (Get_Coord (Item).Width) - Num_Buttons * Buttons_Size -
+          Num_Buttons * Spacing + 1;
       Component : Generic_Type_Access;
 
    begin
@@ -1005,13 +996,13 @@ package body Display_Items is
 
       if Get_Button (Event) = 1
         and then Get_Event_Type (Event) = Button_Release
-        and then Gint (Get_Y (Event)) > Zoom_Spacing
-        and then Gint (Get_Y (Event)) <= Zoom_Spacing + Zoom_Buttons_Size
+        and then Gint (Get_Y (Event)) > Spacing
+        and then Gint (Get_Y (Event)) <= Spacing + Buttons_Size
       then
          for B in 0 .. Num_Buttons - 1 loop
             if Gint (Get_X (Event)) >= Buttons_Start
               and then Gint (Get_X (Event)) <=
-                Buttons_Start + Zoom_Buttons_Size
+                Buttons_Start + Buttons_Size
             then
                case B is
                   when 0 =>
@@ -1039,7 +1030,7 @@ package body Display_Items is
                return;
             end if;
 
-            Buttons_Start := Buttons_Start + Zoom_Buttons + Zoom_Spacing;
+            Buttons_Start := Buttons_Start + Buttons_Size + Spacing;
          end loop;
 
          return;
@@ -1062,7 +1053,7 @@ package body Display_Items is
 
       Component := Get_Component
         (Item.Entity, Gint (Get_X (Event)),
-         Gint (Get_Y (Event)) - Item.Title_Height - Zoom_Border);
+         Gint (Get_Y (Event)) - Item.Title_Height - Border_Spacing);
 
       --  Contextual menus ?
 
@@ -1079,7 +1070,7 @@ package body Display_Items is
                  Get_Language (Item.Debugger.Debugger),
                  Item.Name.all,
                  Gint (Get_X (Event)),
-                 Gint (Get_Y (Event)) - Item.Title_Height - Zoom_Border)),
+                 Gint (Get_Y (Event)) - Item.Title_Height - Border_Spacing)),
             Button            => Get_Button (Event),
             Activate_Time     => Get_Time (Event));
 
@@ -1087,20 +1078,20 @@ package body Display_Items is
 
       elsif Get_Button (Event) = 1
         and then Get_Event_Type (Event) = Gdk_2button_Press
-        and then Gint (Get_Y (Event)) >= Item.Title_Height + Zoom_Border
+        and then Gint (Get_Y (Event)) >= Item.Title_Height + Border_Spacing
         and then Component.all in Access_Type'Class
       then
          Dereference_Item
            (Item,
             Component,
             Gint (Get_X (Event)),
-            Gint (Get_Y (Event)) - Item.Title_Height - Zoom_Border);
+            Gint (Get_Y (Event)) - Item.Title_Height - Border_Spacing);
 
       --  Hiding a component
 
       elsif Get_Button (Event) = 1
         and then Get_Event_Type (Event) = Gdk_2button_Press
-        and then Gint (Get_Y (Event)) >= Item.Title_Height + Zoom_Border
+        and then Gint (Get_Y (Event)) >= Item.Title_Height + Border_Spacing
       then
          Change_Visibility (Item, Component);
 
@@ -1174,11 +1165,6 @@ package body Display_Items is
       Auto_Refresh : Boolean;
       Update_Value : Boolean := False)
    is
-      Zoom_Spacing : constant Gint :=
-        To_Canvas_Coordinates (Item.Debugger.Data_Canvas, Spacing);
-      Zoom_Buttons : constant Gint :=
-        To_Canvas_Coordinates (Item.Debugger.Data_Canvas, Buttons_Size);
-
       Width : Gint := Gint (Get_Coord (Item).Width);
       Context : constant Box_Drawing_Context :=
         Get_Box_Context (GVD_Canvas (Item.Debugger.Data_Canvas));
@@ -1190,13 +1176,13 @@ package body Display_Items is
         (Pixmap (Item),
          GC     => Context.Grey_GC,
          Filled => True,
-         X      => Width - 2 * Zoom_Buttons - 2 * Zoom_Spacing,
-         Y      => Zoom_Spacing,
-         Width  => Zoom_Buttons,
-         Height => Zoom_Buttons);
+         X      => Width - 2 * Buttons_Size - 2 * Spacing,
+         Y      => Spacing,
+         Width  => Buttons_Size,
+         Height => Buttons_Size);
       Set_Clip_Origin
         (Context.Black_GC,
-         Width - 2 * Zoom_Buttons - 2 * Zoom_Spacing, Zoom_Spacing);
+         Width - 2 * Buttons_Size - 2 * Spacing, Spacing);
 
       if Item.Auto_Refresh then
          Set_Clip_Mask (Context.Black_GC, Context.Auto_Display_Mask);
@@ -1207,10 +1193,10 @@ package body Display_Items is
             Src    => Context.Auto_Display_Pixmap,
             Xsrc   => 0,
             Ysrc   => 0,
-            Xdest  => Width - 2 * Zoom_Buttons - 2 * Zoom_Spacing,
-            Ydest  => Zoom_Spacing,
-            Width  => To_Canvas_Coordinates (Item.Debugger.Data_Canvas, W),
-            Height => To_Canvas_Coordinates (Item.Debugger.Data_Canvas, H));
+            Xdest  => Width - 2 * Buttons_Size - 2 * Spacing,
+            Ydest  => Spacing,
+            Width  => W,
+            Height => H);
 
       else
          Set_Clip_Mask (Context.Black_GC, Context.Locked_Mask);
@@ -1221,10 +1207,10 @@ package body Display_Items is
             Src    => Context.Locked_Pixmap,
             Xsrc   => 0,
             Ysrc   => 0,
-            Xdest  => Width - 2 * Zoom_Buttons - 2 * Zoom_Spacing,
-            Ydest  => Zoom_Spacing,
-            Width  => To_Canvas_Coordinates (Item.Debugger.Data_Canvas, W),
-            Height => To_Canvas_Coordinates (Item.Debugger.Data_Canvas, H));
+            Xdest  => Width - 2 * Buttons_Size - 2 * Spacing,
+            Ydest  => Spacing,
+            Width  => W,
+            Height => H);
       end if;
 
       Set_Clip_Mask (Context.Black_GC, Null_Pixmap);

@@ -76,7 +76,7 @@ package body GVD.Canvas is
    --  would appear in the computation and make zoom_in not the reverse of
    --  zoom_out.
 
-   Zoom_Steps : constant := 7;
+   Zoom_Steps : constant := 12;
    --  Number of steps while zooming in or out.
 
    --------------------
@@ -127,9 +127,6 @@ package body GVD.Canvas is
      (Canvas : access Gtk_Widget_Record'Class;
       Item   : Item_Record);
    --  Zoom directly to a specific level (Item.Zoom)
-
-   procedure Zoomed (Canvas : access Gtk_Widget_Record'Class);
-   --  Called when the Canvas has been zoomed. This redraws all the items
 
    procedure Hide_All
      (Widget  : access Gtk_Widget_Record'Class;
@@ -250,9 +247,6 @@ package body GVD.Canvas is
       Canvas.Detect_Aliases := Get_Pref (Default_Detect_Aliases);
       Initialize (Canvas);
 
-      Widget_Callback.Connect
-        (Canvas, "zoomed", Widget_Callback.To_Marshaller (Zoomed'Access));
-
       --  Create the  background contextual menu now, so that the key shortcuts
       --  are activated
       Menu := Contextual_Background_Menu (Canvas);
@@ -348,14 +342,14 @@ package body GVD.Canvas is
          Unref (Canvas.Item_Context.Font);
       end if;
 
-      Size := To_Canvas_Coordinates (Canvas, Get_Pref (Value_Font_Size));
+      Size := Get_Pref (Value_Font_Size);
       Canvas.Item_Context.Font := Get_Gdkfont (Get_Pref (Value_Font), Size);
 
       if Canvas.Item_Context.Type_Font /= null then
          Unref (Canvas.Item_Context.Type_Font);
       end if;
 
-      Size := To_Canvas_Coordinates (Canvas, Get_Pref (Type_Font_Size));
+      Size := Get_Pref (Type_Font_Size);
       Canvas.Item_Context.Type_Font :=
         Get_Gdkfont (Get_Pref (Type_Font), Size);
 
@@ -363,7 +357,7 @@ package body GVD.Canvas is
          Unref (Canvas.Item_Context.Command_Font);
       end if;
 
-      Size := To_Canvas_Coordinates (Canvas, Get_Pref (Value_Font_Size));
+      Size := Get_Pref (Value_Font_Size);
       Canvas.Item_Context.Command_Font :=
         Get_Gdkfont (Get_Pref (Command_Font), Size);
 
@@ -397,7 +391,7 @@ package body GVD.Canvas is
          Unref (Canvas.Box_Context.Title_Font);
       end if;
 
-      Size := To_Canvas_Coordinates (Canvas, Get_Pref (Title_Font_Size));
+      Size := Get_Pref (Title_Font_Size);
       Canvas.Box_Context.Title_Font :=
         Get_Gdkfont (Get_Pref (Title_Font), Size);
 
@@ -1022,14 +1016,5 @@ package body GVD.Canvas is
    begin
       Zoom (Item.Canvas, Item.Zoom, 1);
    end Zoom_Level;
-
-   ------------
-   -- Zoomed --
-   ------------
-
-   procedure Zoomed (Canvas : access Gtk_Widget_Record'Class) is
-   begin
-      Allocate_Fonts (GVD_Canvas (Canvas));
-   end Zoomed;
 
 end GVD.Canvas;
