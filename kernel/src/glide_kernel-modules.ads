@@ -351,7 +351,6 @@ package Glide_Kernel.Modules is
    --  diff file.
 
    type Line_Information_Record is record
-      Line               : Integer;
       Text               : String_Access := null;
       Image              : Gdk.Pixbuf.Gdk_Pixbuf := Gdk.Pixbuf.Null_Pixbuf;
       Associated_Command : Command_Access := null;
@@ -377,6 +376,9 @@ package Glide_Kernel.Modules is
       Identifier     : String;
       Info           : Line_Information_Data;
       Stick_To_Data  : Boolean := True);
+   --  Add line information to File.
+   --  The range of Info must correspond to the range of line numbers
+   --  that are to be modified.
 
    ------------------------
    -- File_Name contexts --
