@@ -73,6 +73,11 @@ package body Browsers.Projects is
      (Widget : access Gtk.Widget.Gtk_Widget_Record'Class) return Node_Ptr;
    --  Support functions for the MDI
 
+   function Default_Factory
+     (Kernel : access Kernel_Handle_Record'Class;
+      Child  : Gtk.Widget.Gtk_Widget) return Selection_Context_Access;
+   --  Create a current kernel context, based on the currently selected item
+
    ---------------------
    -- On_Button_Click --
    ---------------------
@@ -327,6 +332,28 @@ package body Browsers.Projects is
    end Save_Desktop;
 
    ---------------------
+   -- Default_Factory --
+   ---------------------
+
+   function Default_Factory
+     (Kernel : access Kernel_Handle_Record'Class;
+      Child  : Gtk.Widget.Gtk_Widget) return Selection_Context_Access
+   is
+      pragma Unreferenced (Kernel);
+      Browser : Project_Browser := Project_Browser (Child);
+   begin
+      if Selected_Item (Browser) = null then
+         return null;
+      end if;
+
+      return Contextual_Factory
+        (Item    => Glide_Browser_Item (Selected_Item (Browser)),
+         Browser => Browser,
+         Event   => null,
+         Menu    => null);
+   end Default_Factory;
+
+   ---------------------
    -- Register_Module --
    ---------------------
 
@@ -338,7 +365,9 @@ package body Browsers.Projects is
          Module_Name             => Project_Browser_Module_Name,
          Priority                => Default_Priority,
          Initializer             => null,
-         Contextual_Menu_Handler => Browser_Contextual_Menu'Access);
+         Contextual_Menu_Handler => Browser_Contextual_Menu'Access,
+         MDI_Child_Tag           => Project_Browser_Record'Tag,
+         Default_Context_Factory => Default_Factory'Access);
       Glide_Kernel.Kernel_Desktop.Register_Desktop_Functions
         (Save_Desktop'Access, Load_Desktop'Access);
    end Register_Module;
