@@ -22,6 +22,7 @@ with Gtk.Object;          use Gtk.Object;
 with Gtk.Menu;            use Gtk.Menu;
 with Gtk.Menu_Item;       use Gtk.Menu_Item;
 with Gtk.Check_Menu_Item; use Gtk.Check_Menu_Item;
+with Gtk.Radio_Menu_Item; use Gtk.Radio_Menu_Item;
 with Gtkada.Types;        use Gtkada.Types;
 with Odd.Canvas;          use Odd.Canvas;
 with Gtk.Handlers;        use Gtk.Handlers;
@@ -78,6 +79,7 @@ package body Odd.Menus is
       Item           : Display_Item;
       Component      : Items.Generic_Type_Access;
       Component_Name : String (1 .. Name_Length);
+      Mode           : Display_Mode;
    end record;
 
    --------------------
@@ -147,16 +149,10 @@ package body Odd.Menus is
       Item    : Item_Record);
    --  Clone the item or its selected component.
 
-   procedure Change_Value_Mode
+   procedure Change_Display_Mode
      (Widget  : access Gtk_Widget_Record'Class;
       Item    : Item_Record);
    --  Change the mode of a specific item to indicate whether the value of the
-   --  item should be displayed
-
-   procedure Change_Type_Mode
-     (Widget  : access Gtk_Widget_Record'Class;
-      Item    : Item_Record);
-   --  Change the mode of a specific item to indicate whether the type of the
    --  item should be displayed
 
    --------------------------
@@ -243,57 +239,21 @@ package body Odd.Menus is
       Display_Items.Update (Item.Canvas, Item.Item);
    end Update_Variable;
 
-   -----------------------
-   -- Change_Value_Mode --
-   -----------------------
+   -------------------------
+   -- Change_Display_Mode --
+   -------------------------
 
-   procedure Change_Value_Mode
+   procedure Change_Display_Mode
      (Widget  : access Gtk_Widget_Record'Class;
       Item    : Item_Record)
    is
    begin
-      if Show_Type (Get_Display_Mode (Item.Item)) then
-         if Get_Active (Gtk_Check_Menu_Item (Widget)) then
-            Set_Display_Mode (Item.Item, Type_Value);
-         else
-            Set_Display_Mode (Item.Item, Type_Only);
-         end if;
-      else
-         if Get_Active (Gtk_Check_Menu_Item (Widget)) then
-            Set_Display_Mode (Item.Item, Value);
-         else
-            --  This mode is not authorized
-            Set_Active (Gtk_Check_Menu_Item (Widget), True);
-            return;
-         end if;
+      if Get_active (Gtk_Radio_Menu_Item (Widget))
+        and then Get_Display_Mode (Item.Item) /= Item.Mode
+      then
+         Set_Display_Mode (Item.Item, Item.Mode);
       end if;
-   end Change_Value_Mode;
-
-   ----------------------
-   -- Change_Type_Mode --
-   ----------------------
-
-   procedure Change_Type_Mode
-     (Widget  : access Gtk_Widget_Record'Class;
-      Item    : Item_Record)
-   is
-   begin
-      if Show_Value (Get_Display_Mode (Item.Item)) then
-         if Get_Active (Gtk_Check_Menu_Item (Widget)) then
-            Set_Display_Mode (Item.Item, Type_Value);
-         else
-            Set_Display_Mode (Item.Item, Value);
-         end if;
-      else
-         if Get_Active (Gtk_Check_Menu_Item (Widget)) then
-            Set_Display_Mode (Item.Item, Type_Only);
-         else
-            --  This mode is not authorized
-            Set_Active (Gtk_Check_Menu_Item (Widget), True);
-            return;
-         end if;
-      end if;
-   end Change_Type_Mode;
+   end Change_Display_Mode;
 
    ---------------------
    -- Clone_Component --
@@ -393,7 +353,7 @@ package body Odd.Menus is
    is
       Menu  : Gtk_Menu;
       Mitem : Gtk_Menu_Item;
-      Check : Gtk_Check_Menu_Item;
+      Radio : Gtk_Radio_Menu_Item;
 
    begin
 
@@ -432,7 +392,8 @@ package body Odd.Menus is
                       Canvas         => Odd_Canvas (Canvas),
                       Item           => Display_Item (Item),
                       Component      => Component,
-                      Component_Name => Component_Name));
+                      Component_Name => Component_Name,
+                      Mode           => Value));
       Append (Menu, Mitem);
 
       Gtk_New (Mitem, Label => -"Update Value");
@@ -443,39 +404,55 @@ package body Odd.Menus is
                       Canvas         => Odd_Canvas (Canvas),
                       Item           => Display_Item (Item),
                       Component      => Component,
-                      Component_Name => Component_Name));
+                      Component_Name => Component_Name,
+                      Mode           => Value));
       Append (Menu, Mitem);
 
       --  Display a separator
       Gtk_New (Mitem);
       Append (Menu, Mitem);
 
-
-      Gtk_New (Check, Label => -"Show Value");
-      Set_Active (Check, Show_Value (Get_Display_Mode (Item)));
+      Gtk_New (Radio, Widget_Slist.Null_List, -"Show Value");
+      Set_Active (Radio, Get_Display_Mode (Item) = Value);
       Item_Handler.Connect
-        (Check, "activate",
-         Item_Handler.To_Marshaller (Change_Value_Mode'Access),
+        (Radio, "activate",
+         Item_Handler.To_Marshaller (Change_Display_Mode'Access),
          Item_Record'(Name_Length    => Component_Name'Length,
                       Canvas         => Odd_Canvas (Canvas),
                       Item           => Display_Item (Item),
                       Component      => Component,
-                      Component_Name => Component_Name));
-      Append (Menu, Check);
-      Set_Always_Show_Toggle (Check, True);
+                      Component_Name => Component_Name,
+                      Mode           => Value));
+      Append (Menu, Radio);
+      Set_Always_Show_Toggle (Radio, True);
 
-      Gtk_New (Check, Label => -"Show Type");
-      Set_Active (Check, Show_Type (Get_Display_Mode (Item)));
+      Gtk_New (Radio, Group (Radio), -"Show Type");
+      Set_Active (Radio, Get_Display_Mode (Item) = Type_Only);
       Item_Handler.Connect
-        (Check, "activate",
-         Item_Handler.To_Marshaller (Change_Type_Mode'Access),
+        (Radio, "activate",
+         Item_Handler.To_Marshaller (Change_Display_Mode'Access),
          Item_Record'(Name_Length    => Component_Name'Length,
                       Canvas         => Odd_Canvas (Canvas),
                       Item           => Display_Item (Item),
                       Component      => Component,
-                      Component_Name => Component_Name));
-      Append (Menu, Check);
-      Set_Always_Show_Toggle (Check, True);
+                      Component_Name => Component_Name,
+                      Mode           => Type_Only));
+      Append (Menu, Radio);
+      Set_Always_Show_Toggle (Radio, True);
+
+      Gtk_New (Radio, Group (Radio), -"Show Value + Type");
+      Set_Active (Radio, Get_Display_Mode (Item) = Type_Value);
+      Item_Handler.Connect
+        (Radio, "activate",
+         Item_Handler.To_Marshaller (Change_Display_Mode'Access),
+         Item_Record'(Name_Length    => Component_Name'Length,
+                      Canvas         => Odd_Canvas (Canvas),
+                      Item           => Display_Item (Item),
+                      Component      => Component,
+                      Component_Name => Component_Name,
+                      Mode           => Type_Value));
+      Append (Menu, Radio);
+      Set_Always_Show_Toggle (Radio, True);
 
       Show_All (Menu);
       Menu_User_Data.Set (Canvas, Menu, Item_Contextual_Menu_Name);
