@@ -462,7 +462,6 @@ package body Glide_Main_Window is
       Setup_Toplevel_Window (Main_Window.Process_Mdi, Main_Window);
       Main_Window.Home_Dir := new String'(Home_Dir);
       Main_Window.Prefix_Directory := new String'(Prefix_Directory);
-      Main_Window.Standalone := False;
 
       Gtk_New_Hbox (Box1);
       Pack_Start (Main_Window.Toolbar_Box, Box1);
