@@ -77,6 +77,7 @@ with Src_Editor_View;           use Src_Editor_View;
 with Src_Editor_Buffer.Blocks;
 with Src_Editor_Buffer.Line_Information;
 with Src_Editor_Buffer.Hooks;   use Src_Editor_Buffer.Hooks;
+with Src_Editor_Buffer.Text_Handling; use Src_Editor_Buffer.Text_Handling;
 
 package body Src_Editor_Buffer is
 
@@ -1221,8 +1222,6 @@ package body Src_Editor_Buffer is
 
       Unchecked_Free (Buffer.Line_Data);
 
-      Block_List.Free (Buffer.Blocks);
-
       Delete_Mark (Buffer, Buffer.Completion.Mark);
       Delete_Mark (Buffer, Buffer.Completion.Previous_Mark);
       Delete_Mark (Buffer, Buffer.Completion.Next_Mark);
@@ -1500,6 +1499,8 @@ package body Src_Editor_Buffer is
       Column_Start : Gint;
       Line_End     : Gint;
       Column_End   : Gint;
+      Editable_Line_Start : Editable_Line_Type;
+      Editable_Line_End   : Editable_Line_Type;
 
    begin
       Get_Text_Iter (Nth (Params, 1), Start_Iter);
@@ -1526,45 +1527,57 @@ package body Src_Editor_Buffer is
          Direction := Forward;
       end if;
 
-      --  If we are removing folded lines, stop the propagation of the handler.
+      Editable_Line_Start :=
+        Get_Editable_Line (Buffer, Buffer_Line_Type (Line_Start + 1));
+
+      Editable_Line_End :=
+        Get_Editable_Line (Buffer, Buffer_Line_Type (Line_End + 1));
+
+      --  If we are removing lines in a non-editable block, stop propagation
+      --  of the handler.
 
       if not Lines_Are_Real (Buffer)
         and then not Buffer.Inserting
       then
-         declare
-            Editable_Line_Start : Editable_Line_Type;
-            Editable_Line_End   : Editable_Line_Type;
-
-         begin
-            Editable_Line_Start :=
-              Get_Editable_Line
-                (Buffer, Buffer_Line_Type (Line_Start + 1));
-
-            Editable_Line_End :=
-              Get_Editable_Line
-                (Buffer, Buffer_Line_Type (Line_End + 1));
-
-            for J in Editable_Line_Start + 1 .. Editable_Line_End - 1 loop
-               case Buffer.Editable_Lines (J).Where is
-                  when In_Buffer =>
-                     null;
-
-                  when In_Mark =>
-                     Insert
-                       (Buffer.Kernel,
-                        -"Deleting a folded block is not permitted",
-                        Mode => Error);
-
-                     Emit_Stop_By_Name (Buffer, "delete_range");
-                     return;
-               end case;
-            end loop;
-         end;
+         if Editable_Line_Start = 0
+           or else Editable_Line_End = 0
+         then
+            Insert
+              (Buffer.Kernel,
+               -"Trying to delete a blank line",
+               Mode => Error);
+            Emit_Stop_By_Name (Buffer, "delete_range");
+            return;
+         end if;
       end if;
 
       --  Remove the lines in the side information column.
 
       if Line_Start /= Line_End then
+         --  Unfold all lines, remove blank lines before deleting multiple
+         --  lines.
+         if not Lines_Are_Real (Buffer)
+           and then not Buffer.Inserting
+         then
+            if Flatten_Area
+              (Buffer, Editable_Line_Start, Editable_Line_End)
+            then
+               --  We have modified the area. Stop propagation of this signal,
+               --  and delete the new area.
+
+               Emit_Stop_By_Name (Buffer, "delete_range");
+
+               Replace_Slice
+                 (Buffer,
+                  "",
+                  Editable_Line_Start,
+                  Natural (Column_Start + 1),
+                  Editable_Line_End,
+                  Natural (Column_End + 1));
+               return;
+            end if;
+         end if;
+
          Lines_Remove_Hook_Before
            (Buffer,
             Buffer_Line_Type (Line_Start + 1),
@@ -1596,10 +1609,10 @@ package body Src_Editor_Buffer is
             Deletion,
             Source_Buffer (Buffer),
             True,
-            Get_Editable_Line (Buffer, Buffer_Line_Type (Line_Start + 1)),
+            Editable_Line_Start,
             Natural (Column_Start + 1),
             Direction,
-            Get_Editable_Line (Buffer, Buffer_Line_Type (Line + 1)),
+            Editable_Line_End,
             Natural (Column + 1));
 
          Buffer.Inserting := True;
@@ -1834,7 +1847,7 @@ package body Src_Editor_Buffer is
          if Line in Buffer.Editable_Lines'Range
            and then Buffer.Editable_Lines (Line).Where = In_Mark
            and then Buffer.Editable_Lines (Line).Text /= null
-           and then Buffer.Editable_Lines (Line).Text'Length >= Column
+           and then Buffer.Editable_Lines (Line).Text'Length >= Column - 1
          then
             return True;
 
@@ -2381,8 +2394,6 @@ package body Src_Editor_Buffer is
          Buffer.Line_Data := new Line_Data_Array (1 .. 1);
          Buffer.Line_Data (1) := New_Line_Data;
          Buffer.Line_Data (1).Editable_Line := 1;
-
-         Block_List.Free (Buffer.Blocks);
 
          Buffer.First_Removed_Line := 0;
          Buffer.Last_Removed_Line  := 0;
