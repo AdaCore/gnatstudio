@@ -336,10 +336,11 @@ package body Src_Info.CPP is
    procedure Open_DB_Files
      (DB_Dirs     : in GNAT.OS_Lib.String_List_Access;
       SN_Table    : out SN_Table_Array);
-   --  ???
+   --  Opens all existing DB files, located in specified directories list.
+   --  Returns array of DB_Files (indexed by Symbol_Type).
 
    procedure Close_DB_Files (SN_Table : in out SN_Table_Array);
-   --  ???
+   --  Close all DB files.
 
    procedure Browse_Project
      (Project    : Prj.Project_Id;
