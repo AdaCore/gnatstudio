@@ -710,7 +710,7 @@ package body Glide_Kernel.Scripts is
          end;
 
       elsif Command = "set_busy" then
-         Push_State (Kernel, Busy);
+         Push_State (Kernel, Processing);
 
       elsif Command = "unset_busy" then
          Pop_State (Kernel);
