@@ -451,30 +451,41 @@ package body Language.Ada is
    is
       pragma Unreferenced (Lang);
    begin
-      if Line'Length > 4
-        and then Line (Line'First .. Line'First + 3) = "--  "
-      then
-         return Line (Line'First + 4 .. Line'Last);
+      --  Skip all the spaces and HT up to the first occurrence of "--",
+      --  then do the following transformations
+      --  1  |  --  blabla
+      --  => |  blabla
+      --
+      --  2  |  -- blabla
+      --  => |  blabla
+      --
+      --  3  |  --blabla
+      --  => |  blabla
+      --
+      --  We do the first transformation in priority, so that
+      --  Uncomment_Line un-does the effects of Comment_Line, and to keep
+      --  close to the GNAT coding style.
 
-      elsif Line'Length > 1
-        and then Line (Line'First .. Line'First + 1) = "--"
-      then
-         if Line'Length > 2 then
-            return Line (Line'First + 2 .. Line'Last);
-
-         else
-            return "";
+      for Index in Line'First .. Line'Last - 1 loop
+         if Line (Index .. Index + 1) = "--" then
+            if Index + 3 <= Line'Last and then
+              Line (Index .. Index + 3) = "--  "
+            then
+               return Line (Line'First .. Index - 1) &
+                 Line (Index + 4 .. Line'Last);
+            elsif Index + 2 <= Line'Last and then
+              Line (Index .. Index + 2) = "-- "
+            then
+               return Line (Line'First .. Index - 1) &
+                 Line (Index + 3 .. Line'Last);
+            else
+               return Line (Line'First .. Index - 1) &
+                 Line (Index + 2 .. Line'Last);
+            end if;
          end if;
 
-      elsif Line'Length > 4 then
-         for J in Line'First .. Line'Last - 4 loop
-            if Line (J .. J + 3) = "--  " then
-               return Line (Line'First .. J - 1) & Line (J + 4 .. Line'Last);
-            end if;
-
-            exit when Line (J) /= ' ';
-         end loop;
-      end if;
+         exit when not (Line (Index) = ' ' or else Line (Index) = ASCII.HT);
+      end loop;
 
       return Line;
    end Uncomment_Line;
