@@ -285,4 +285,74 @@ package body Python is
       return Internal (Cmd & ASCII.NUL, Name & ASCII.NUL, State);
    end Py_CompileString;
 
+   --------------------------
+   -- PyDict_SetItemString --
+   --------------------------
+
+   procedure PyDict_SetItemString
+     (Dict : PyDictObject; Key : String; Obj : PyObject)
+   is
+      S : chars_ptr := New_String (Key);
+      Result : constant Integer := PyDict_SetItemString (Dict, S, Obj);
+      pragma Unreferenced (Result);
+   begin
+      Free (S);
+   end PyDict_SetItemString;
+
+   ------------------------
+   -- PyModule_AddObject --
+   ------------------------
+
+   function PyModule_AddObject
+     (Module : PyObject; Name : String;  Object : PyObject) return Integer
+   is
+      S : chars_ptr := New_String (Name);
+      Result : Integer;
+   begin
+      Result := PyModule_AddObject (Module, S, Object);
+      Free (S);
+      return Result;
+   end PyModule_AddObject;
+
+   --------------------------
+   -- PyDict_GetItemString --
+   --------------------------
+
+   function PyDict_GetItemString
+     (Dict : PyDictObject; Key : String) return PyObject
+   is
+      S : chars_ptr := New_String (Key);
+      Result : constant PyObject := PyDict_GetItemString (Dict, S);
+   begin
+      Free (S);
+      return Result;
+   end PyDict_GetItemString;
+
+   ------------------
+   -- Create_Tuple --
+   ------------------
+
+   function Create_Tuple (Objects : PyObject_Array) return PyObject is
+      Tuple : constant PyObject := PyTuple_New (Objects'Length);
+   begin
+      for O in Objects'Range loop
+         PyTuple_SetItem (Tuple, O - Objects'First, Objects (O));
+      end loop;
+      return Tuple;
+   end Create_Tuple;
+
+   ----------------------------
+   -- PyObject_GetAttrString --
+   ----------------------------
+
+   function PyObject_GetAttrString
+     (Object : PyObject; Name : String) return PyObject
+   is
+      S : chars_ptr := New_String (Name);
+      Result : constant PyObject := PyObject_GetAttrString (Object, S);
+   begin
+      Free (S);
+      return Result;
+   end PyObject_GetAttrString;
+
 end Python;

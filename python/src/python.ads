@@ -40,6 +40,13 @@ package Python is
    type PyObject is access Dummy;
    pragma Convention (C, PyObject);
 
+   type PyObject_Array is array (Natural range <>) of PyObject;
+
+   function Py_None return PyObject;
+   --  Return the python's variable Py_None, which should be returned by
+   --  procedures. Generally, one need to call Py_INCREF before returning this
+   --  value.
+
    type PyCodeObject is new PyObject;
 
    procedure Py_INCREF (Obj : PyObject);
@@ -93,6 +100,21 @@ package Python is
    --  Note: there is *no* type safety in these functions, but then neither is
    --  there in C.
 
+   subtype PyTuple is PyObject;
+
+   function PyTuple_New (Size : Integer) return PyObject;
+   --  Create a new tuple that contains Size elements.
+
+   function PyTuple_GetItem (Tuple : PyTuple; Index : Integer) return PyObject;
+   --  Get the item at a specific location in the tuple, starting at index 0.
+
+   procedure PyTuple_SetItem
+     (Tuple : PyTuple; Index : Integer; Value : PyObject);
+   --  Set an item in the tuple.
+
+   function Create_Tuple (Objects : PyObject_Array) return PyObject;
+   --  Return a new tuple made of Objects.
+
    -------------
    -- Strings --
    -------------
@@ -143,10 +165,15 @@ package Python is
      (Module : PyObject;
       Name   : Interfaces.C.Strings.chars_ptr;
       Object : PyObject) return Integer;
+   pragma Import (C, PyModule_AddObject, "PyModule_AddObject");
    --  Add a new object to the module's directory. Object can be a subprogram,
    --  integer, ... Do not Py_DECREF Object afterward, this is only a borrowed
    --  reference.
    --  Return 0 in case of success, -1 in case of error.
+
+   function PyModule_AddObject
+     (Module : PyObject; Name : String;  Object : PyObject) return Integer;
+   --  Same as above
 
    ------------------
    -- Dictionaries --
@@ -165,9 +192,24 @@ package Python is
       Key  : Interfaces.C.Strings.chars_ptr;
       Obj  : PyObject)
       return Integer;
+   pragma Import (C, PyDict_SetItemString, "PyDict_SetItemString");
    --  Store a new object in Dict. Obj should be Py_DECREF after the call.
    --  Return 0 if all went well, -1 otherwise
    --  Key should be deallocated.
+
+   procedure PyDict_SetItemString
+     (Dict : PyDictObject; Key : String; Obj : PyObject);
+   --  Same as above
+
+   function PyDict_GetItemString
+     (Dict : PyDictObject;
+      Key  : Interfaces.C.Strings.chars_ptr) return PyObject;
+   pragma Import (C, PyDict_GetItemString, "PyDict_GetItemString");
+   --  Get an object from a dictionary
+
+   function PyDict_GetItemString
+     (Dict : PyDictObject; Key  : String) return PyObject;
+   --  Same as above
 
    ----------------
    -- Exceptions --
@@ -181,6 +223,21 @@ package Python is
    procedure PyErr_SetInterrupt;
    --  Interrupt the current command in the interpreter. This is the equivalent
    --  of Control-C in a terminal executing python.
+
+   procedure PyErr_Fetch
+     (EType      : out PyObject;
+      Occurrence : out PyObject;
+      Traceback  : out PyObject);
+   --  Get the current exception information.
+   --  Occurrence is a tuple, made of the following information:
+   --    (msg, ('input_stream_name', line, column, input_text))
+   --    where msg is the exception's message, and the second tuple is the
+   --    location where the exception occurred.
+   --  EType is the type of the exception, like "exceptions.SyntaxError".
+
+   procedure PyErr_Clear;
+   --  Clear the current exception. This must be called at the end of your
+   --  exception handlers, although it is called automatically by PyErr_Print
 
    ------------
    -- Object --
@@ -209,6 +266,16 @@ package Python is
    --  Set the value of the attribute named Name, for Object, to the value
    --  Attr. Returns -1 on failure. This is the equivalent of the Python
    --  statement "Object.Name = Attr".
+
+   function PyObject_GetAttrString
+     (Object : PyObject;
+      Name   : Interfaces.C.Strings.chars_ptr) return PyObject;
+   pragma Import (C, PyObject_GetAttrString, "PyObject_GetAttrString");
+   --  Lookup an attribute in the object's dictionnary
+
+   function PyObject_GetAttrString
+     (Object : PyObject; Name : String) return PyObject;
+   --  Same as above
 
    ---------
    -- Sys --
@@ -326,8 +393,6 @@ private
    pragma Convention (C, Py_Trace_Func);
    pragma Import (C, PyObject_SetAttrString, "PyObject_SetAttrString");
    pragma Import (C, PyDict_New, "PyDict_New");
-   pragma Import (C, PyModule_AddObject, "PyModule_AddObject");
-   pragma Import (C, PyDict_SetItemString, "PyDict_SetItemString");
    pragma Import (C, PyEval_SetProfile, "PyEval_SetProfile");
    pragma Import (C, PyEval_SetTrace, "PyEval_SetTrace");
    pragma Inline (PyImport_AddModule);
@@ -344,4 +409,10 @@ private
    pragma Import (C, PyObject_Str, "PyObject_Str");
    pragma Import (C, PyEval_EvalCode, "PyEval_EvalCode");
    pragma Import (C, PyErr_SetInterrupt, "PyErr_SetInterrupt");
+   pragma Import (C, PyTuple_New, "PyTuple_New");
+   pragma Import (C, PyTuple_GetItem, "PyTuple_GetItem");
+   pragma Import (C, PyTuple_SetItem, "PyTuple_SetItem");
+   pragma Import (C, Py_None, "ada_py_none");
+   pragma Import (C, PyErr_Clear, "PyErr_Clear");
+   pragma Import (C, PyErr_Fetch, "PyErr_Fetch");
 end Python;
