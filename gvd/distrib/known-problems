@@ -4,7 +4,7 @@ Known Problems fixed in GVD 2.0.0
   Problem:    On exit, GVD tries to save the window settings. However, if it
               crashes at that time, the save file is incorrect, and GVD can't
               be started again
-  Workaround: Remove the file ~/.gvd/window_settings or c:\gvd\window_settings
+  Workaround: Remove the file ~/.gvd/window_settings or c:\.gvd\window_settings
 
 - Aliasing detection with first field of a structure
   Problem:    In the data window, a structure (or Ada record) and its first
