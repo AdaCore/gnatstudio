@@ -208,6 +208,8 @@ package body Builder_Module is
       Line      : Natural := 1;
       Column    : Natural := 1;
    begin
+      Insert (Kernel, Output, Add_LF => False);
+
       while Start <= Output'Last loop
          while Start < Output'Last
            and then Output (Start) = ASCII.LF
@@ -258,10 +260,6 @@ package body Builder_Module is
 
          Start := Real_Last + 1;
       end loop;
-
-      if Start <= Output'Last then
-         Insert (Kernel, Output (Start .. Output'Last));
-      end if;
    end Parse_Compiler_Output;
 
    -----------------------
@@ -1016,10 +1014,12 @@ package body Builder_Module is
          Close (Fd.all, Status);
 
          if Status = 0 then
-            Console.Insert (Kernel, -"successful compilation/build");
+            Console.Insert
+              (Kernel, ASCII.LF & (-"successful compilation/build"));
          else
             Console.Insert
-              (Kernel, -"process exited with status " & Image (Status));
+              (Kernel,
+               ASCII.LF & (-"process exited with status ") & Image (Status));
          end if;
 
          Pop_State (Kernel);
