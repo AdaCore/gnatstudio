@@ -146,6 +146,35 @@ package body Glide_Kernel.Project is
       Ext_Ref : String_Id;
 
    begin
+      --  To avoid any problem with invalid variable values, we need to provide
+      --  a current value when no default value is provided by the user
+
+      for J in Scenario_Variables'Range loop
+         if External_Default (Scenario_Variables (J)) = Empty_Node then
+            Ext_Ref := External_Reference_Of (Scenario_Variables (J));
+            pragma Assert
+              (Ext_Ref /= No_String,
+               "Scenario variable is not an external reference");
+            String_To_Name_Buffer (Ext_Ref);
+
+            declare
+               Name : constant String :=
+                 Name_Buffer (Name_Buffer'First .. Name_Len);
+            begin
+               if Prj.Ext.Value_Of (Name_Find) = No_String then
+                  String_To_Name_Buffer
+                    (String_Value_Of (First_Literal_String
+                      (String_Type_Of (Scenario_Variables (J)))));
+                  Prj.Ext.Add
+                    (Name, Name_Buffer (Name_Buffer'First .. Name_Len));
+               end if;
+            end;
+         end if;
+      end loop;
+
+
+      --  Evaluate the current project
+
       Prj.Reset;
       Prj.Proc.Process
         (Handle.Project_View, Handle.Project,
@@ -155,12 +184,12 @@ package body Glide_Kernel.Project is
       --  Check that all the environment variables have values defined through
       --  Prj.Ext. If this is not the case, then their default value should be
       --  put there.
+      --  We need to do this only after evaluation the project view, so that if
+      --  the default value is defined through other variables these are
+      --  already evaluated.
 
       for J in Scenario_Variables'Range loop
          Ext_Ref := External_Reference_Of (Scenario_Variables (J));
-         pragma Assert
-           (Ext_Ref /= No_String,
-            "Scenario variable is not an external reference");
          String_To_Name_Buffer (Ext_Ref);
 
          declare
@@ -182,7 +211,6 @@ package body Glide_Kernel.Project is
             end if;
          end;
       end loop;
-
 
       --  ??? In fact, we should also cache the list of scenario variables
       --  ??? here, so that all the prj_editor packages do not need to
