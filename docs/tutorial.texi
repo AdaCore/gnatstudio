@@ -195,10 +195,15 @@ at the line (28) and column (06) of the error.
 Fix the error by hand, by inserting a space.
 
 Now, you can fix the next error by moving the cursor to the line 30 (press
-the @key{down} arrow twice), and by using @key{<Ctrl>-Tab} (press first the
+the @key{down} arrow twice), and by using @key{Ctrl-Tab} (press first the
 @key{Control} key, and then the @key{Tab} key on your keyboard): this key
 combination asks the source editor to automatically re-indent the current
 line.
+
+Note that on some window managers or desktop environments,
+@key{Ctrl-Tab} is already defined. If this is the case, you can change this
+shortcut from the preferences dialog (menu @code{Edit->Preferences},
+@code{Editor} tab).
 
 You can then fix all the remaining errors by selecting the whole block
 (from line 28 to line 40) and pressing @key{Ctrl-Tab}.
