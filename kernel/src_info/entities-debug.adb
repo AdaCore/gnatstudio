@@ -60,9 +60,10 @@ package body Entities.Debug is
      (Entities  : Entity_Information_List;
       Full      : Boolean;
       Name      : String);
-   procedure Dump (Locs : Entity_Reference_List; Name : String);
+   procedure Dump
+     (Locs : Entity_Reference_List; Name : String; Full : Boolean);
    procedure Dump (Kind : E_Kind);
-   procedure Dump (Ref  : Entity_Reference);
+   procedure Dump (Ref  : E_Reference; Full : Boolean);
    procedure Dump (File : Virtual_File);
    procedure Dump_Entities_From_Files (Files : Source_File_Array);
    --  Dump various parts of the system
@@ -186,21 +187,25 @@ package body Entities.Debug is
    -- Dump --
    ----------
 
-   procedure Dump (Ref : Entity_Reference) is
+   procedure Dump (Ref : E_Reference; Full : Boolean) is
    begin
       Dump (Ref.Location); Put (':' & Reference_Kind_To_Char (Ref.Kind));
+      if Full and then Ref.Caller /= null then
+         Put ('@'); Dump (Ref.Caller, Full => False, Name => "");
+      end if;
    end Dump;
 
    ----------
    -- Dump --
    ----------
 
-   procedure Dump (Locs : Entity_Reference_List; Name : String) is
+   procedure Dump
+     (Locs : Entity_Reference_List; Name : String; Full : Boolean) is
    begin
       if Length (Locs) /= 0 then
          Put ("   " & Name & "= ");
          for L in Entity_Reference_Arrays.First .. Last (Locs) loop
-            Dump (Locs.Table (L)); Put (' ');
+            Dump (Locs.Table (L), Full); Put (' ');
          end loop;
          New_Line;
       end if;
@@ -321,9 +326,10 @@ package body Entities.Debug is
       Dump (Get_Filename (File));
       Put (' ');
       Dump (File.Timestamp);
-      Put_Line (" ref_count=" & Image (File.Ref_Count)
-                & " is_valid=" & Boolean'Image (File.Is_Valid)
-                & " has_scope_tree=" & Boolean'Image (File.Scope /= null));
+      Put_Line
+        (" ref_count=" & Image (File.Ref_Count)
+         & " is_valid=" & Boolean'Image (File.Is_Valid)
+         & " has_scope_tree=" & Boolean'Image (File.Scope_Tree_Computed));
 
       if File.LI /= null then
          Put ("   li=");
@@ -366,7 +372,9 @@ package body Entities.Debug is
                Put ("   kind="); Dump (Entity.Kind); New_Line;
             end if;
             if Entity.End_Of_Scope.Location /= No_File_Location then
-               Put ("   end_of_scope="); Dump (Entity.End_Of_Scope); New_Line;
+               Put ("   end_of_scope=");
+               Dump (Entity.End_Of_Scope, Full => True);
+               New_Line;
             end if;
             Dump (Entity.Rename, False, "renames");
             Dump (Entity.Parent_Types,    False, "parents");
@@ -375,7 +383,8 @@ package body Entities.Debug is
             Dump (Entity.Primitive_Op_Of, False, "primitive_of");
             Dump (Entity.Primitive_Subprograms, False, "primitives");
             Dump (Entity.Child_Types, False, "child_types");
-            Dump (Entity.References, "references");
+            Dump (Entity.Called_Entities, False, "calls");
+            Dump (Entity.References, "references", Full => True);
          elsif Name /= "" then
             New_Line;
          end if;
@@ -415,8 +424,16 @@ package body Entities.Debug is
          end Xchg;
 
          function Lt (Op1, Op2 : Natural) return Boolean is
+            OpF1 : constant Virtual_File := Get_Filename (Sorted (Op1));
+            OpF2 : constant Virtual_File := Get_Filename (Sorted (Op2));
          begin
-            return Get_Filename (Sorted (Op1)) < Get_Filename (Sorted (Op2));
+            if OpF1 = VFS.No_File then
+               return True;
+            elsif OpF2 = VFS.No_File then
+               return False;
+            else
+               return OpF1 < OpF2;
+            end if;
          end Lt;
 
       begin
