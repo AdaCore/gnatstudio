@@ -114,11 +114,13 @@ package Display_Items is
    --  Do nothing if the auto-refresh status of Item is set to false.
    --  The general prototype for this function must be compatible with
    --  Gtkada.Canvas.Item_Processor.
+   --  This does not redraw the canvas or the item on the canvas.
 
    procedure Update
      (Canvas : access Odd.Canvas.Odd_Canvas_Record'Class;
       Item   : access Display_Item_Record'Class);
    --  Unconditionally update the value of Item after parsing the new value.
+   --  This does not redraw the canvas or the item on the canvas.
 
    procedure Reset_Recursive (Item : access Display_Item_Record'Class);
    --  Calls Reset_Recursive for the entity represented by the item.

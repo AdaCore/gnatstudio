@@ -874,7 +874,9 @@ package body Display_Items is
          Set_Valid (Item.Entity, Value_Found);
       end if;
 
-      Update_Resize_Display (Item, Was_Visible, Hide_Big_Items);
+      Update_Resize_Display
+        (Item, Was_Visible, Hide_Big_Items,
+         Redisplay_Canvas => False);
       Pop_Internal_Command_Status (Get_Process (Item.Debugger.Debugger));
 
       --  If we got an exception while parsing the value, we register the new
@@ -1332,6 +1334,7 @@ package body Display_Items is
 
          if Item.Auto_Refresh then
             Update (Item.Debugger.Data_Canvas, Item);
+            Item_Resized (Item.Debugger.Data_Canvas, Item);
          else
             --  Redisplay the item, so that no field is displayed
             --  in red anymore.
@@ -1650,6 +1653,7 @@ package body Display_Items is
       Canvas : Odd_Canvas := Debugger_Process_Tab (Object).Data_Canvas;
    begin
       Recompute_All_Aliases (Canvas);
+      Refresh_Canvas (Canvas);
    end On_Canvas_Process_Stopped;
 
    ---------------------------
