@@ -26,14 +26,14 @@ begin
    Set_Title (Advanced_Breakpoint, -"Advanced Breakpoint Settings");
    Set_Policy (Advanced_Breakpoint, False, True, False);
    Set_Position (Advanced_Breakpoint, Win_Pos_Center);
-   Set_Modal (Advanced_Breakpoint, True);
+   Set_Modal (Advanced_Breakpoint, False);
 
-   Gtk_New_Vbox (Advanced_Breakpoint.Vbox11, False, 0);
-   Add (Advanced_Breakpoint, Advanced_Breakpoint.Vbox11);
+   Gtk_New_Vbox (Advanced_Breakpoint.Main_Box, False, 0);
+   Add (Advanced_Breakpoint, Advanced_Breakpoint.Main_Box);
 
    Gtk_New (Advanced_Breakpoint.Condition_Frame, -"Condition");
    Set_Shadow_Type (Advanced_Breakpoint.Condition_Frame, Shadow_Etched_In);
-   Pack_Start (Advanced_Breakpoint.Vbox11, Advanced_Breakpoint.Condition_Frame, False, False, 0);
+   Pack_Start (Advanced_Breakpoint.Main_Box, Advanced_Breakpoint.Condition_Frame, False, False, 0);
 
    Gtk_New_Vbox (Advanced_Breakpoint.Vbox5, False, 0);
    Set_Border_Width (Advanced_Breakpoint.Vbox5, 7);
@@ -63,7 +63,7 @@ begin
 
    Gtk_New (Advanced_Breakpoint.Ignore_Count_Frame, -"Ignore");
    Set_Shadow_Type (Advanced_Breakpoint.Ignore_Count_Frame, Shadow_Etched_In);
-   Pack_Start (Advanced_Breakpoint.Vbox11, Advanced_Breakpoint.Ignore_Count_Frame, False, False, 0);
+   Pack_Start (Advanced_Breakpoint.Main_Box, Advanced_Breakpoint.Ignore_Count_Frame, False, False, 0);
 
    Gtk_New_Vbox (Advanced_Breakpoint.Vbox6, False, 0);
    Set_Border_Width (Advanced_Breakpoint.Vbox6, 7);
@@ -87,7 +87,7 @@ begin
 
    Gtk_New (Advanced_Breakpoint.Command_Frame, -"Commands");
    Set_Shadow_Type (Advanced_Breakpoint.Command_Frame, Shadow_Etched_In);
-   Pack_Start (Advanced_Breakpoint.Vbox11, Advanced_Breakpoint.Command_Frame, True, True, 0);
+   Pack_Start (Advanced_Breakpoint.Main_Box, Advanced_Breakpoint.Command_Frame, True, True, 0);
 
    Gtk_New_Vbox (Advanced_Breakpoint.Vbox12, False, 0);
    Set_Border_Width (Advanced_Breakpoint.Vbox12, 7);
@@ -105,7 +105,7 @@ begin
    Pack_Start (Advanced_Breakpoint.Vbox12, Advanced_Breakpoint.Scrolledwindow1, False, False, 0);
 
    Gtk_New (Advanced_Breakpoint.Command_Descr);
-   Set_Editable (Advanced_Breakpoint.Command_Descr, False);
+   Set_Editable (Advanced_Breakpoint.Command_Descr, True);
    Add (Advanced_Breakpoint.Scrolledwindow1, Advanced_Breakpoint.Command_Descr);
 
    Gtk_New (Advanced_Breakpoint.Hbuttonbox3);
@@ -128,27 +128,6 @@ begin
      (Advanced_Breakpoint.End_Button, "clicked",
       Button_Callback.To_Marshaller (On_Stop_Record_Clicked'Access));
    Add (Advanced_Breakpoint.Hbuttonbox3, Advanced_Breakpoint.End_Button);
-
-   Gtk_New (Advanced_Breakpoint.Hbuttonbox5);
-   Set_Spacing (Advanced_Breakpoint.Hbuttonbox5, 30);
-   Set_Layout (Advanced_Breakpoint.Hbuttonbox5, Buttonbox_Spread);
-   Set_Child_Size (Advanced_Breakpoint.Hbuttonbox5, 85, 27);
-   Set_Child_Ipadding (Advanced_Breakpoint.Hbuttonbox5, 7, 0);
-   Pack_Start (Advanced_Breakpoint.Vbox11, Advanced_Breakpoint.Hbuttonbox5, False, False, 0);
-
-   Gtk_New (Advanced_Breakpoint.Ok_Button, -"OK");
-   Set_Flags (Advanced_Breakpoint.Ok_Button, Can_Default);
-   Button_Callback.Connect
-     (Advanced_Breakpoint.Ok_Button, "clicked",
-      Button_Callback.To_Marshaller (On_Ok_Advanced_Bp_Clicked'Access));
-   Add (Advanced_Breakpoint.Hbuttonbox5, Advanced_Breakpoint.Ok_Button);
-
-   Gtk_New (Advanced_Breakpoint.Cancel_Button, -"Cancel");
-   Set_Flags (Advanced_Breakpoint.Cancel_Button, Can_Default);
-   Button_Callback.Connect
-     (Advanced_Breakpoint.Cancel_Button, "clicked",
-      Button_Callback.To_Marshaller (On_Cancel_Advanced_Bp_Clicked'Access));
-   Add (Advanced_Breakpoint.Hbuttonbox5, Advanced_Breakpoint.Cancel_Button);
 
 end Initialize;
 

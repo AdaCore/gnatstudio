@@ -34,26 +34,4 @@ package body Advanced_Breakpoint_Pkg.Callbacks is
       null;
    end On_Stop_Record_Clicked;
 
-   -------------------------------
-   -- On_Ok_Advanced_Bp_Clicked --
-   -------------------------------
-
-   procedure On_Ok_Advanced_Bp_Clicked
-     (Object : access Gtk_Button_Record'Class)
-   is
-   begin
-      null;
-   end On_Ok_Advanced_Bp_Clicked;
-
-   -----------------------------------
-   -- On_Cancel_Advanced_Bp_Clicked --
-   -----------------------------------
-
-   procedure On_Cancel_Advanced_Bp_Clicked
-     (Object : access Gtk_Button_Record'Class)
-   is
-   begin
-      null;
-   end On_Cancel_Advanced_Bp_Clicked;
-
 end Advanced_Breakpoint_Pkg.Callbacks;

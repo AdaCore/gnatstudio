@@ -14,7 +14,7 @@ with Gtk.Object; use Gtk.Object;
 package Advanced_Breakpoint_Pkg is
 
    type Advanced_Breakpoint_Record is new Gtk_Window_Record with record
-      Vbox11 : Gtk_Vbox;
+      Main_Box : Gtk_Vbox;
       Condition_Frame : Gtk_Frame;
       Vbox5 : Gtk_Vbox;
       Label7 : Gtk_Label;
@@ -32,9 +32,6 @@ package Advanced_Breakpoint_Pkg is
       Hbuttonbox3 : Gtk_Hbutton_Box;
       Record_Button : Gtk_Button;
       End_Button : Gtk_Button;
-      Hbuttonbox5 : Gtk_Hbutton_Box;
-      Ok_Button : Gtk_Button;
-      Cancel_Button : Gtk_Button;
    end record;
    type Advanced_Breakpoint_Access is access all Advanced_Breakpoint_Record'Class;
 

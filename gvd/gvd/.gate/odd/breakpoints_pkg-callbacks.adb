@@ -80,6 +80,17 @@ package body Breakpoints_Pkg.Callbacks is
       null;
    end On_Add_Location_Clicked;
 
+   --------------------------------
+   -- On_Update_Location_Clicked --
+   --------------------------------
+
+   procedure On_Update_Location_Clicked
+     (Object : access Gtk_Widget_Record'Class)
+   is
+   begin
+      null;
+   end On_Update_Location_Clicked;
+
    ----------------------------------
    -- On_Advanced_Location_Clicked --
    ----------------------------------
@@ -101,6 +112,17 @@ package body Breakpoints_Pkg.Callbacks is
    begin
       null;
    end On_Add_Watchpoint_Clicked;
+
+   ----------------------------------
+   -- On_Update_Watchpoint_Clicked --
+   ----------------------------------
+
+   procedure On_Update_Watchpoint_Clicked
+     (Object : access Gtk_Widget_Record'Class)
+   is
+   begin
+      null;
+   end On_Update_Watchpoint_Clicked;
 
    ------------------------------------
    -- On_Advanced_Watchpoint_Clicked --
@@ -134,6 +156,17 @@ package body Breakpoints_Pkg.Callbacks is
    begin
       null;
    end On_Add_Exception_Clicked;
+
+   ---------------------------------
+   -- On_Update_Exception_Clicked --
+   ---------------------------------
+
+   procedure On_Update_Exception_Clicked
+     (Object : access Gtk_Widget_Record'Class)
+   is
+   begin
+      null;
+   end On_Update_Exception_Clicked;
 
    -----------------------------------
    -- On_Advanced_Exception_Clicked --
