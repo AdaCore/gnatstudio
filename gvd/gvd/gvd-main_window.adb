@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2001                      --
+--                      Copyright (C) 2000-2002                      --
 --                              ACT-Europe                           --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -157,8 +157,7 @@ package body GVD.Main_Window is
       Gtk_New (Main_Window.Thread_Dialog, Gtk_Window (Main_Window));
       Gtk_New (Main_Window.History_Dialog, Gtk_Window (Main_Window));
       Gtk_New (Main_Window.Memory_View, Gtk_Widget (Main_Window));
-      Gtk_New (Main_Window.Main_Accel_Group);
-      Lock (Main_Window.Main_Accel_Group);
+
       Reset_File_Extensions;
       Add_File_Extensions (Ada_Lang, Get_Pref (Ada_Extensions));
       Add_File_Extensions (C_Lang,   Get_Pref (C_Extensions));
