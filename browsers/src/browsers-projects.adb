@@ -21,21 +21,25 @@
 with Browsers.Canvas;          use Browsers.Canvas;
 with Gdk.Event;                use Gdk.Event;
 with Glib;                     use Glib;
-with Glib.Graphs;              use Glib.Graphs;
 with Glib.Object;              use Glib.Object;
 with Glib.Xml_Int;             use Glib.Xml_Int;
 with Glide_Kernel;             use Glide_Kernel;
 with Glide_Kernel.Modules;     use Glide_Kernel.Modules;
+with Glide_Kernel.Project;     use Glide_Kernel.Project;
 with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
 with Glide_Intl;               use Glide_Intl;
+with Gtk.Enums;                use Gtk.Enums;
+with Gtk.Image;                use Gtk.Image;
 with Gtk.Menu;                 use Gtk.Menu;
 with Gtk.Menu_Item;            use Gtk.Menu_Item;
+with Gtk.Image_Menu_Item;      use Gtk.Image_Menu_Item;
+with Gtk.Stock;                use Gtk.Stock;
 with Gtk.Widget;               use Gtk.Widget;
 with Gtkada.Canvas;            use Gtkada.Canvas;
 with Gtkada.MDI;               use Gtkada.MDI;
+with Prj;                      use Prj;
 with Prj.Tree;                 use Prj.Tree;
 with Prj_API;                  use Prj_API;
-with Project_Browsers;         use Project_Browsers;
 with Types;                    use Types;
 with Ada.Exceptions;           use Ada.Exceptions;
 with Traces;                   use Traces;
@@ -50,10 +54,28 @@ package body Browsers.Projects is
    type Browser_Search_Context is new Search_Context with null record;
    type Browser_Search_Context_Access is access all Browser_Search_Context;
 
+   procedure Examine_Project_Hierarchy
+     (Browser : access Project_Browser_Record'Class;
+      Project : Prj.Tree.Project_Node_Id;
+      Recursive : Boolean);
+   --  Display the project hierarchy for Project in the canvas.
+   --  If Recursive is True, then the projects imported indirectly are also
+   --  displayed.
+
    procedure On_Examine_Prj_Hierarchy
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access);
    --  Open the project hierarchy browser for a specific project
+
+   procedure On_Examine_Full_Prj_Hierarchy
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context_Access);
+   --  Same as above, but also display the projects imported indirectly
+
+   procedure On_Examine_Ancestor_From_Contextual
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context_Access);
+   --  Add to the browser all the projects that import the specific project
 
    procedure Browser_Contextual_Menu
      (Object  : access Glib.Object.GObject_Record'Class;
@@ -94,14 +116,34 @@ package body Browsers.Projects is
       Search_Backward : Boolean) return Boolean;
    --  Search the next occurrence in the explorer
 
+   function Find_Project
+     (Browser      : access Project_Browser_Record'Class;
+      Project_Name : Name_Id) return Browser_Project_Vertex_Access;
+   --  Return the first item representing Project_Name
+
+   function Add_Project_If_Not_Present
+     (Browser : access Project_Browser_Record'Class;
+      Project : Project_Node_Id) return Browser_Project_Vertex_Access;
+   --  Add a new item for Project if there is currently none in the browser
+
+   procedure Examine_Ancestor_Project_Hierarchy
+     (Browser          : access Project_Browser_Record'Class;
+      Root_Project     : Prj.Tree.Project_Node_Id;
+      Project          : Prj.Tree.Project_Node_Id);
+   --  Add to the browser all the projects that with Project.
+
    --------------------------
    -- Button_Click_On_Left --
    --------------------------
 
    procedure Button_Click_On_Left (Item : access Browser_Project_Vertex) is
-      pragma Unreferenced (Item);
+      It : constant Browser_Project_Vertex_Access :=
+        Browser_Project_Vertex_Access (Item);
    begin
-      null;
+      Examine_Ancestor_Project_Hierarchy
+        (Browser => Project_Browser (Get_Browser (It)),
+         Root_Project => Get_Project (Get_Kernel (Get_Browser (It))),
+         Project => Get_Project_From_Name (It.Name));
    end Button_Click_On_Left;
 
    ---------------------------
@@ -109,77 +151,232 @@ package body Browsers.Projects is
    ---------------------------
 
    procedure Button_Click_On_Right (Item : access Browser_Project_Vertex) is
-      pragma Unreferenced (Item);
+      It : constant Browser_Project_Vertex_Access :=
+        Browser_Project_Vertex_Access (Item);
    begin
-      null;
+      Examine_Project_Hierarchy
+        (Browser          => Project_Browser (Get_Browser (It)),
+         Project          => Get_Project_From_Name (It.Name),
+         Recursive        => False);
    end Button_Click_On_Right;
+
+   ------------------
+   -- Find_Project --
+   ------------------
+
+   function Find_Project
+     (Browser      : access Project_Browser_Record'Class;
+      Project_Name : Name_Id) return Browser_Project_Vertex_Access
+   is
+      Found : Canvas_Item := null;
+
+      function Check_Item
+        (Canvas : access Interactive_Canvas_Record'Class;
+         Item   : access Canvas_Item_Record'Class) return Boolean;
+      --  Check whether Item contains File
+
+      ----------------
+      -- Check_Item --
+      ----------------
+
+      function Check_Item
+        (Canvas : access Interactive_Canvas_Record'Class;
+         Item   : access Canvas_Item_Record'Class) return Boolean
+      is
+         pragma Unreferenced (Canvas);
+      begin
+         if Item.all in Browser_Project_Vertex'Class
+           and then Browser_Project_Vertex_Access (Item).Name = Project_Name
+         then
+            Found := Canvas_Item (Item);
+            return False;
+         end if;
+
+         return True;
+      end Check_Item;
+
+   begin
+      For_Each_Item (Get_Canvas (Browser), Check_Item'Unrestricted_Access);
+      return Browser_Project_Vertex_Access (Found);
+   end Find_Project;
+
+   --------------------------------
+   -- Add_Project_If_Not_Present --
+   --------------------------------
+
+   function Add_Project_If_Not_Present
+     (Browser : access Project_Browser_Record'Class;
+      Project : Project_Node_Id) return Browser_Project_Vertex_Access
+   is
+      Name : constant Name_Id := Prj.Tree.Name_Of (Project);
+      V : Browser_Project_Vertex_Access := Find_Project (Browser, Name);
+   begin
+      if V = null then
+         V := new Browser_Project_Vertex;
+         Browsers.Canvas.Initialize
+           (V, Browser, Get_String (Name) & Prj.Project_File_Extension);
+         V.Name    := Name;
+
+         Set_Right_Arrow (V, First_With_Clause_Of (Project) /= Empty_Node);
+
+         Put (Get_Canvas (Browser), V);
+         Refresh (Browser, V);
+      end if;
+
+      return V;
+   end Add_Project_If_Not_Present;
 
    -------------------------------
    -- Examine_Project_Hierarchy --
    -------------------------------
 
    procedure Examine_Project_Hierarchy
-     (Kernel     : access Glide_Kernel.Kernel_Handle_Record'Class;
-      In_Browser : access Browsers.Canvas.Glide_Browser_Record'Class;
-      Project    : Prj.Tree.Project_Node_Id)
+     (Browser          : access Project_Browser_Record'Class;
+      Project          : Prj.Tree.Project_Node_Id;
+      Recursive        : Boolean)
    is
-      pragma Unreferenced (Kernel);
+      Kernel : constant Kernel_Handle := Get_Kernel (Browser);
 
-      function Vertex_Factory (Project_Name : Types.Name_Id)
-         return Vertex_Access;
-      --  Return a new project vertex for the project
+      procedure Process_Project
+        (Local : Project_Node_Id; Src : Browser_Project_Vertex_Access);
+      --  Display all the imported projects from Local.
+      --  Src is the item associated with Local
 
-      function Edge_Factory (V1, V2 : access Vertex'Class)
-         return Edge_Access;
-      --  Return a new edge
+      ---------------------
+      -- Process_Project --
+      ---------------------
 
-      ------------------
-      -- Edge_Factory --
-      ------------------
-
-      function Edge_Factory (V1, V2 : access Vertex'Class)
-         return Edge_Access
+      procedure Process_Project
+        (Local : Project_Node_Id; Src : Browser_Project_Vertex_Access)
       is
-         pragma Unreferenced (V1, V2);
-         L : constant Glide_Browser_Link := new Glide_Browser_Link_Record;
+         With_Clause : Project_Node_Id := First_With_Clause_Of (Local);
+         L           : Glide_Browser_Link;
+         Dest        : Browser_Project_Vertex_Access;
       begin
-         return Edge_Access (L);
-      end Edge_Factory;
+         Set_Right_Arrow (Src, False);
 
-      --------------------
-      -- Vertex_Factory --
-      --------------------
+         --  If we are displaying the recursive hierarchy for the root project,
+         --  we know that there won't be remaining ancestor projects, so we can
+         --  make it clear for the user.
+         if Recursive and then Project = Get_Project (Kernel) then
+            Set_Left_Arrow (Src, False);
+         end if;
 
-      function Vertex_Factory (Project_Name : Types.Name_Id)
-         return Vertex_Access
-      is
-         V : Browser_Project_Vertex_Access := new Browser_Project_Vertex;
-      begin
-         Browsers.Canvas.Initialize
-           (V, In_Browser,
-            Get_String (Project_Name) & Prj.Project_File_Extension);
-         V.Name := Project_Name;
-         V.Browser := Glide_Browser (In_Browser);
+         while With_Clause /= Empty_Node loop
+            Dest := Add_Project_If_Not_Present
+              (Browser, Project_Node_Of (With_Clause));
 
-         Set_Left_Arrow (V, False);
-         Set_Right_Arrow (V, False);
-         Refresh (In_Browser, V);
+            if not Has_Link (Get_Canvas (Browser), Src, Dest) then
+               L := new Glide_Browser_Link_Record;
+               Add_Link (Get_Canvas (Browser), L, Src, Dest);
+            end if;
 
-         return Vertex_Access (V);
-      end Vertex_Factory;
+            if Recursive and then Get_Right_Arrow (Dest) then
+               Process_Project (Project_Node_Of (With_Clause), Dest);
+            end if;
 
-      G : Graph;
+            With_Clause := Next_With_Clause_Of (With_Clause);
+         end loop;
 
+         Refresh (Browser, Src);
+      end Process_Project;
+
+      Src : Browser_Project_Vertex_Access;
+      Item_Was_Present : Boolean;
    begin
-      G := Dependency_Graph
-        (Project,
-         Vertex_Factory'Unrestricted_Access,
-         Edge_Factory'Unrestricted_Access);
+      Trace (Me, "Examine_Project_Hierarchy for "
+             & Get_String (Prj.Tree.Name_Of (Project)));
+      Push_State (Kernel, Busy);
 
-      Set_Items (Get_Canvas (In_Browser), G);
-      Layout (Get_Canvas (In_Browser), False, Vertical_Layout => True);
-      Refresh_Canvas (Get_Canvas (In_Browser));
+      Src := Find_Project (Browser, Prj.Tree.Name_Of (Project));
+      Item_Was_Present := Src /= null;
+
+      if Src = null then
+         Src := Add_Project_If_Not_Present (Browser, Project);
+      end if;
+
+      Process_Project (Project, Src);
+
+      Layout
+        (Get_Canvas (Browser), False,
+         Vertical_Layout => Get_Pref (Kernel, Browsers_Vertical_Layout));
+
+      if Item_Was_Present then
+         --  Need to select the item as well: this doesn't impact the
+         --  contextual menus, since the item is already selected anyway, but
+         --  is necessary when displaying the browser from the explorer's
+         --  contextual menu.
+         --
+         --  As a side effect, this also refreshes the canvas
+
+         Select_Item (Browser, Src, Refresh_Items => True);
+         Show_Item (Get_Canvas (Browser), Src);
+      else
+         Refresh_Canvas (Get_Canvas (Browser));
+      end if;
+
+      Pop_State (Kernel);
+
+   exception
+      when E : others =>
+         Pop_State (Kernel);
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end Examine_Project_Hierarchy;
+
+   ----------------------------------------
+   -- Examine_Ancestor_Project_Hierarchy --
+   ----------------------------------------
+
+   procedure Examine_Ancestor_Project_Hierarchy
+     (Browser          : access Project_Browser_Record'Class;
+      Root_Project     : Prj.Tree.Project_Node_Id;
+      Project          : Prj.Tree.Project_Node_Id)
+   is
+      Kernel      : constant Kernel_Handle := Get_Kernel (Browser);
+      With_Clause : Project_Node_Id;
+      Src, Dest   : Browser_Project_Vertex_Access;
+      L           : Glide_Browser_Link;
+      Iter        : Imported_Project_Iterator := Start
+        (Root_Project => Root_Project, Recursive => True);
+   begin
+      Trace (Me, "Examine_Ancestor_Project_Hierarchy for "
+             & Get_String (Prj.Tree.Name_Of (Project)));
+      Push_State (Kernel, Busy);
+
+      Dest := Add_Project_If_Not_Present (Browser, Project);
+      Set_Left_Arrow (Dest, False);
+
+      while Current (Iter) /= No_Project loop
+         With_Clause := First_With_Clause_Of (Current (Iter));
+
+         while With_Clause /= Empty_Node loop
+            if Project_Node_Of (With_Clause) = Project then
+               Src := Add_Project_If_Not_Present (Browser, Current (Iter));
+
+               if not Has_Link (Get_Canvas (Browser), Src, Dest) then
+                  L := new Glide_Browser_Link_Record;
+                  Add_Link (Get_Canvas (Browser), L, Src, Dest);
+               end if;
+            end if;
+
+            With_Clause := Next_With_Clause_Of (With_Clause);
+         end loop;
+
+         Next (Iter);
+      end loop;
+
+      Refresh (Browser, Dest);
+
+      Layout (Get_Canvas (Browser), False,
+              Vertical_Layout => Get_Pref (Kernel, Browsers_Vertical_Layout));
+      Refresh_Canvas (Get_Canvas (Browser));
+      Pop_State (Kernel);
+
+   exception
+      when E : others =>
+         Pop_State (Kernel);
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+   end Examine_Ancestor_Project_Hierarchy;
 
    ------------------------------
    -- On_Examine_Prj_Hierarchy --
@@ -190,22 +387,53 @@ package body Browsers.Projects is
       Context : Selection_Context_Access)
    is
       pragma Unreferenced (Widget);
-      Browser : MDI_Child;
+      Browser : constant MDI_Child :=
+        Open_Project_Browser (Get_Kernel (Context));
    begin
-      Push_State (Get_Kernel (Context), Busy);
-      Browser := Open_Project_Browser (Get_Kernel (Context));
       Examine_Project_Hierarchy
-        (Get_Kernel (Context),
-         Glide_Browser (Get_Widget (Browser)),
+        (Project_Browser (Get_Widget (Browser)),
+         Get_Project_From_View
+         (Project_Information (File_Selection_Context_Access (Context))),
+         Recursive        => False);
+   end On_Examine_Prj_Hierarchy;
+
+   -----------------------------------
+   -- On_Examine_Full_Prj_Hierarchy --
+   -----------------------------------
+
+   procedure On_Examine_Full_Prj_Hierarchy
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context_Access)
+   is
+      pragma Unreferenced (Widget);
+      Browser : constant MDI_Child :=
+        Open_Project_Browser (Get_Kernel (Context));
+   begin
+      Examine_Project_Hierarchy
+        (Project_Browser (Get_Widget (Browser)),
+         Get_Project_From_View
+         (Project_Information (File_Selection_Context_Access (Context))),
+         Recursive        => True);
+   end On_Examine_Full_Prj_Hierarchy;
+
+   -----------------------------------------
+   -- On_Examine_Ancestor_From_Contextual --
+   -----------------------------------------
+
+   procedure On_Examine_Ancestor_From_Contextual
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context_Access)
+   is
+      pragma Unreferenced (Widget);
+      Browser : constant MDI_Child :=
+        Open_Project_Browser (Get_Kernel (Context));
+      B : constant Project_Browser := Project_Browser (Get_Widget (Browser));
+   begin
+      Examine_Ancestor_Project_Hierarchy
+        (B, Get_Project (Get_Kernel (B)),
          Get_Project_From_View
          (Project_Information (File_Selection_Context_Access (Context))));
-      Pop_State (Get_Kernel (Context));
-
-   exception
-      when E : others =>
-         Pop_State (Get_Kernel (Context));
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
-   end On_Examine_Prj_Hierarchy;
+   end On_Examine_Ancestor_From_Contextual;
 
    ------------------------
    -- Contextual_Factory --
@@ -217,13 +445,50 @@ package body Browsers.Projects is
       Event   : Gdk.Event.Gdk_Event;
       Menu    : Gtk.Menu.Gtk_Menu) return Selection_Context_Access
    is
-      pragma Unreferenced (Browser, Event, Menu);
+      pragma Unreferenced (Browser, Event);
       Context : constant Selection_Context_Access :=
         new File_Selection_Context;
+      Name : constant String := Get_String (Item.Name);
+      Mitem : Gtk_Image_Menu_Item;
+      Pix   : Gtk_Image;
    begin
       Set_File_Information
         (File_Selection_Context_Access (Context),
          Project_View => Get_Project_View_From_Name (Item.Name));
+
+      if Menu /= null then
+         Gtk_New (Mitem, Label => (-"Examine dependencies for ") & Name);
+         Gtk_New (Pix, Stock_Go_Forward, Icon_Size_Menu);
+         Set_Image (Mitem, Pix);
+         Append (Menu, Mitem);
+         Context_Callback.Connect
+           (Mitem, "activate",
+            Context_Callback.To_Marshaller (On_Examine_Prj_Hierarchy'Access),
+            Context);
+         Set_Sensitive (Mitem, Get_Right_Arrow (Item));
+
+         Gtk_New (Mitem, Label => (-"Examine recursive dependencies for ")
+                  & Name);
+         Append (Menu, Mitem);
+         Context_Callback.Connect
+           (Mitem, "activate",
+            Context_Callback.To_Marshaller
+              (On_Examine_Full_Prj_Hierarchy'Access),
+            Context);
+
+         Gtk_New
+           (Mitem, Label => (-"Examining projects depending on ") & Name);
+         Gtk_New (Pix, Stock_Go_Back, Icon_Size_Menu);
+         Set_Image (Mitem, Pix);
+         Append (Menu, Mitem);
+         Context_Callback.Connect
+           (Mitem, "activate",
+            Context_Callback.To_Marshaller
+              (On_Examine_Ancestor_From_Contextual'Access),
+            Context);
+         Set_Sensitive (Mitem, Get_Left_Arrow (Item));
+      end if;
+
       return Context;
    end Contextual_Factory;
 
@@ -237,7 +502,9 @@ package body Browsers.Projects is
       Browser : Project_Browser;
    begin
       Browser := new Project_Browser_Record;
-      Initialize (Browser, Kernel);
+      Initialize (Browser, Kernel, Create_Toolbar => False);
+      --  Setup_Default_Toolbar (Browser);
+
       Register_Contextual_Menu
         (Kernel          => Kernel,
          Event_On_Widget => Browser,
@@ -248,6 +515,7 @@ package body Browsers.Projects is
         (Browser,
          Get_Pref (Kernel, Default_Widget_Width),
          Get_Pref (Kernel, Default_Widget_Height));
+      Set_Auto_Layout (Get_Canvas (Browser), False);
       return Browser;
    end Create_Project_Browser;
 
@@ -294,7 +562,7 @@ package body Browsers.Projects is
            and then not Has_File_Information (File_Context)
          then
             Gtk_New (Item, Label =>
-                     -"Examine project hierarchy for "
+                     -"Examine projects imported by "
                      & Project_Name (Project_Information (File_Context)));
             Append (Menu, Item);
             Context_Callback.Connect
