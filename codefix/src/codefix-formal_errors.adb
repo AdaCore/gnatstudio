@@ -517,4 +517,26 @@ package body Codefix.Formal_Errors is
       return New_Solutions;
    end Not_Referenced;
 
+   ------------------------
+   --  First_Line_Pragma --
+   ------------------------
+
+   function First_Line_Pragma
+     (Current_Text : Text_Navigator_Abstr'Class;
+      Cursor       : File_Cursor'Class)
+     return Extract is
+
+      Line_Cursor, Begin_Cursor : File_Cursor := File_Cursor (Cursor);
+      New_Extract               : Extract;
+
+   begin
+      Line_Cursor.Col := 1;
+      Begin_Cursor.Line := 0;
+      Begin_Cursor.Col := 1;
+      Get_Line (Current_Text, Line_Cursor, New_Extract);
+      Add_Line (New_Extract, Begin_Cursor, Get_String (New_Extract, 1));
+      Delete_Line (New_Extract, Line_Cursor);
+      return New_Extract;
+   end First_Line_Pragma;
+
 end Codefix.Formal_Errors;

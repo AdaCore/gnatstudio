@@ -109,6 +109,12 @@ package Codefix.Formal_Errors is
    --  Propose to delete the unit unreferrenced or, in some cases, to add
    --  a pragma 'not referreced'
 
+   function First_Line_Pragma
+     (Current_Text : Text_Navigator_Abstr'Class;
+      Cursor       : File_Cursor'Class)
+   return Extract;
+   --  Move the pragma to the beginning of the file
+
 private
 
    type Error_Message is new File_Cursor with record
