@@ -20,7 +20,6 @@
 
 with Gtk.Menu;              use Gtk.Menu;
 
-with Glide_Kernel.Console;  use Glide_Kernel.Console;
 with Glide_Kernel.Modules;  use Glide_Kernel.Modules;
 
 with Codefix.Formal_Errors; use Codefix.Formal_Errors;
@@ -35,44 +34,29 @@ package body Commands.Codefix is
    -------------
 
    function Execute (Command : access Codefix_Command) return Boolean is
-      Success_Execute : Boolean;
-      Result          : Extract;
-      Menu            : Gtk_Menu;
+      Menu : Gtk_Menu;
    begin
       if Is_Fixed (Command.Error) then
          return True;
       end if;
 
-      if Get_Number_Of_Fixes (Command.Error) = 1 then
-         Secured_Execute
-           (Data (First (Get_Solutions (Command.Error))),
-            Command.Current_Text.all,
-            Result,
-            Success_Execute);
-      else
+      if Get_Number_Of_Fixes (Command.Error) > 1 then
          Menu := Create_Submenu (Command.Error);
          Show_All (Menu);
          Popup (Menu);
          return True;
       end if;
 
-      if Success_Execute then
-         Validate_And_Commit
-           (Command.Corrector.all,
-            Command.Current_Text.all,
-            Command.Error,
-            Data (First (Get_Solutions (Command.Error))));
-      else
-         Insert
-            (Command.Kernel,
-             "No more sense for " & Get_Message
-              (Get_Error_Message (Command.Error)));
-      end if;
+      Validate_And_Commit
+        (Command.Corrector.all,
+         Command.Current_Text.all,
+         Command.Error,
+         Data (First (Get_Solutions (Command.Error))));
 
       Remove_Location_Action
         (Kernel        => Command.Kernel,
          Identifier    => "--  ???",
-         Category      => "Builder Results",
+         Category      => Compilation_Category,
          File          => Get_Error_Message (Command.Error).File_Name.all,
          Line          => Get_Error_Message (Command.Error).Line,
          Column        => Get_Error_Message (Command.Error).Col,
