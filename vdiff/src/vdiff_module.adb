@@ -26,6 +26,7 @@ with Gtk.Label;                 use Gtk.Label;
 
 with Gtkada.MDI;                use Gtkada.MDI;
 with Gtkada.File_Selector;      use Gtkada.File_Selector;
+with Gtkada.Dialogs;            use Gtkada.Dialogs;
 
 with Glide_Kernel;              use Glide_Kernel;
 with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
@@ -68,6 +69,7 @@ package body Vdiff_Module is
       Result : Diff_Occurrence_Link;
       File1  : constant String := Select_File (-"Select First File");
       Child  : MDI_Child;
+      Button : Message_Dialog_Buttons;
 
    begin
       if File1 = "" then
@@ -83,6 +85,15 @@ package body Vdiff_Module is
          end if;
 
          Result := Diff (File1, File2);
+
+         if Result = null then
+            Button := Message_Dialog
+              (Msg         => -"No differences found.",
+               Buttons     => Button_OK,
+               Parent      => Get_Main_Window (Kernel));
+            return;
+         end if;
+
          Gtk_New (Vdiff);
          Set_Text (Vdiff.File_Label1, File1);
          Set_Text (Vdiff.File_Label2, File2);
@@ -90,9 +101,7 @@ package body Vdiff_Module is
            (Kernel, Vdiff.Clist1, Vdiff.Clist2, File1, File2, Result);
          Show_All (Vdiff.Main_Box);
          Child := Put (Get_MDI (Kernel), Vdiff);
-
-         --  ??? Connect to destroy signal so that we can free result:
-         --  Free (Result);
+         Free (Result);
       end;
 
    exception
@@ -115,6 +124,7 @@ package body Vdiff_Module is
       Result  : Diff_Occurrence_Link;
       Child   : MDI_Child;
       Success : Boolean;
+      Button  : Message_Dialog_Buttons;
 
    begin
       if Mime_Type = Mime_Diff_File then
@@ -138,6 +148,15 @@ package body Vdiff_Module is
                begin
                   Result := Diff
                     (Ref_File, New_File, Diff_File, Revert => True);
+
+                  if Result = null then
+                     Button := Message_Dialog
+                       (Msg         => -"No differences found.",
+                        Buttons     => Button_OK,
+                        Parent      => Get_Main_Window (Kernel));
+                     return False;
+                  end if;
+
                   Gtk_New (Vdiff);
                   Set_Text (Vdiff.File_Label1, Base & (-" <reference>"));
                   Set_Text (Vdiff.File_Label2, New_File);
@@ -145,10 +164,8 @@ package body Vdiff_Module is
                     (Kernel, Vdiff.Clist1, Vdiff.Clist2, Ref_File,
                      New_File, Result);
                   Delete_File (Ref_File, Success);
+                  Free (Result);
                end;
-
-               --  ??? Connect to destroy signal so that we can free result:
-               --  Free (Result);
 
             elsif New_File = "" then
                if Orig_File = "" then
@@ -163,6 +180,15 @@ package body Vdiff_Module is
 
                begin
                   Result := Diff (Orig_File, Ref_File, Diff_File);
+
+                  if Result = null then
+                     Button := Message_Dialog
+                       (Msg         => -"No differences found.",
+                        Buttons     => Button_OK,
+                        Parent      => Get_Main_Window (Kernel));
+                     return False;
+                  end if;
+
                   Gtk_New (Vdiff);
                   Set_Text (Vdiff.File_Label1, Orig_File);
                   Set_Text (Vdiff.File_Label2, Base & (-" <reference>"));
@@ -170,24 +196,29 @@ package body Vdiff_Module is
                     (Kernel, Vdiff.Clist1, Vdiff.Clist2, Orig_File,
                      Ref_File, Result);
                   Delete_File (Ref_File, Success);
+                  Free (Result);
                end;
-
-               --  ??? Connect to destroy signal so that we can free result:
-               --  Free (Result);
 
             else
                --  All arguments are specified
 
                Result := Diff (Orig_File, New_File, Diff_File);
+
+               if Result = null then
+                  Button := Message_Dialog
+                    (Msg         => -"No differences found.",
+                     Buttons     => Button_OK,
+                     Parent      => Get_Main_Window (Kernel));
+                  return False;
+               end if;
+
                Gtk_New (Vdiff);
                Set_Text (Vdiff.File_Label1, Orig_File);
                Set_Text (Vdiff.File_Label2, New_File);
                Fill_Diff_Lists
                  (Kernel, Vdiff.Clist1, Vdiff.Clist2, Orig_File,
                   New_File, Result);
-
-               --  ??? Connect to destroy signal so that we can free result:
-               --  Free (Result);
+               Free (Result);
             end if;
 
             Set_Size_Request
