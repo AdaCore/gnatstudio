@@ -18,19 +18,19 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Gtk.Enums;
-with Gtk.Window;
-with Histories;
+with Gtk.Enums;  use Gtk.Enums;
+with Gtk.Window; use Gtk.Window;
+with Histories;  use Histories;
 
 package Std_Dialogs is
 
    function Simple_Entry_Dialog
-     (Parent    : access Gtk.Window.Gtk_Window_Record'Class;
-      Title     : String;
-      Message   : String;
-      Position  : Gtk.Enums.Gtk_Window_Position := Gtk.Enums.Win_Pos_Mouse;
-      History   : Histories.History := null;
-      Key       : Histories.History_Key := "") return String;
+     (Parent   : access Gtk_Window_Record'Class;
+      Title    : String;
+      Message  : String;
+      Position : Gtk_Window_Position := Win_Pos_Mouse;
+      History  : Histories.History := null;
+      Key      : History_Key := "") return String;
    --  Open a simple dialog, with a single entry field, and returns the
    --  contents of this field (or ASCII.NUL) if the user selected cancel).
    --  The dialog is set up as a child of Parent, so that, depending on the
@@ -42,21 +42,20 @@ package Std_Dialogs is
    type Boolean_Access is access all Boolean;
 
    function Display_Entry_Dialog
-     (Parent         : access Gtk.Window.Gtk_Window_Record'Class;
+     (Parent         : access Gtk_Window_Record'Class;
       Title          : String;
       Message        : String;
-      Position       : Gtk.Enums.Gtk_Window_Position :=
-        Gtk.Enums.Win_Pos_Mouse;
+      Position       : Gtk_Window_Position := Win_Pos_Mouse;
       Check_Msg      : String;
       History        : Histories.History;
-      Key            : Histories.History_Key := "";
+      Key            : History_Key := "";
 
       Button_Active  : access Boolean;
-      Key_Check      : Histories.History_Key;
+      Key_Check      : History_Key;
 
       Check_Msg2     : String := "";
       Button2_Active : Boolean_Access := null;
-      Key_Check2     : Histories.History_Key := "") return String;
+      Key_Check2     : History_Key := "") return String;
    --  A dialog, like Simple_Entry_Dialog, specifically set up to enter
    --  expressions to display.
 
