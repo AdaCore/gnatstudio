@@ -51,6 +51,7 @@ with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
 with Gtk.Extra.PsFont;    use Gtk.Extra.PsFont;
 
 with Gtkada.Canvas;       use Gtkada.Canvas;
+with Gtkada.Dialogs;      use Gtkada.Dialogs;
 with Gtkada.Handlers;     use Gtkada.Handlers;
 with Gtkada.MDI;          use Gtkada.MDI;
 with Gtkada.Types;        use Gtkada.Types;
@@ -1462,12 +1463,13 @@ package body GVD.Process is
       Remote_Protocol : String := "";
       Debugger_Name   : String := "")
    is
-      Child      : MDI_Child;
-      Widget     : Gtk_Widget;
-      Call_Stack : Gtk_Check_Menu_Item;
-      Window     : constant GVD_Main_Window :=
+      Child         : MDI_Child;
+      Widget        : Gtk_Widget;
+      Call_Stack    : Gtk_Check_Menu_Item;
+      Window        : constant GVD_Main_Window :=
         GVD_Main_Window (Process.Window);
       Geometry_Info : Process_Tab_Geometry;
+      Buttons       : Message_Dialog_Buttons;
 
    begin
       pragma Assert (Process.Command_Scrolledwindow = null);
@@ -1591,6 +1593,12 @@ package body GVD.Process is
       --  file.
 
       Initialize (Process.Debugger);
+
+   exception
+      when Process_Died =>
+         Buttons :=
+           Message_Dialog
+             (-"Could not launch the debugger", Error, Button_OK, Button_OK);
    end Configure;
 
    ---------------------
