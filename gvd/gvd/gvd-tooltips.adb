@@ -57,18 +57,18 @@ package body Odd.Tooltips is
      (User_Type, User_Type_Access);
    --  Free memory used by user data.
 
-   procedure Free_Tooltips is new Unchecked_Deallocation
-     (Tooltips_Record, Tooltips);
+   procedure Free_Tooltips is new
+     Unchecked_Deallocation (Tooltips_Record, Tooltips);
    --  Free memory used by tooltip.
 
    --------------------
    -- Mouse_Moved_Cb --
    --------------------
 
-   procedure Mouse_Moved_Cb (Widget  : access Widget_Type'Class;
-                             Event   : Gdk.Event.Gdk_Event;
-                             Tooltip : Tooltips)
-   is
+   procedure Mouse_Moved_Cb
+     (Widget  : access Widget_Type'Class;
+      Event   : Gdk.Event.Gdk_Event;
+      Tooltip : Tooltips) is
    begin
       Set_Tooltip (Tooltip);
    end Mouse_Moved_Cb;
@@ -77,10 +77,10 @@ package body Odd.Tooltips is
    -- Mouse_Enter_Cb --
    --------------------
 
-   procedure Mouse_Enter_Cb (Widget  : access Widget_Type'Class;
-                             Event   : Gdk.Event.Gdk_Event;
-                             Tooltip : Tooltips)
-   is
+   procedure Mouse_Enter_Cb
+     (Widget  : access Widget_Type'Class;
+      Event   : Gdk.Event.Gdk_Event;
+      Tooltip : Tooltips) is
    begin
       Set_Tooltip (Tooltip);
    end Mouse_Enter_Cb;
@@ -89,10 +89,10 @@ package body Odd.Tooltips is
    -- Mouse_Leave_Cb --
    --------------------
 
-   procedure Mouse_Leave_Cb (Widget  : access Widget_Type'Class;
-                             Event   : Gdk.Event.Gdk_Event;
-                             Tooltip : Tooltips)
-   is
+   procedure Mouse_Leave_Cb
+     (Widget  : access Widget_Type'Class;
+      Event   : Gdk.Event.Gdk_Event;
+      Tooltip : Tooltips) is
    begin
       Remove_Tooltip (Tooltip);
    end Mouse_Leave_Cb;
@@ -101,10 +101,12 @@ package body Odd.Tooltips is
    -- Set_Timeout --
    -----------------
 
-   procedure Set_Timeout (Tooltip : in out Tooltips;
-                          T       : in Glib.Guint32) is
+   procedure Set_Timeout
+     (Tooltip : in out Tooltips;
+      T       : in Glib.Guint32) is
    begin
       Tooltip.Timeout := T;
+
       --  Reset the tooltip
       Set_Tooltip (Tooltip);
    end Set_Timeout;
@@ -114,12 +116,13 @@ package body Odd.Tooltips is
    -----------------
 
    procedure New_Tooltip
-     (Widget        : access Widget_Type'Class;
-      Data          : in User_Type;
-      Tooltip       : out Tooltips)
+     (Widget  : access Widget_Type'Class;
+      Data    : in User_Type;
+      Tooltip : out Tooltips)
    is
       use type Gdk.Window.Gdk_Window;
       Area : Gdk_Rectangle;
+
    begin
       Area.X := 0;
       Area.Y := 0;
@@ -156,8 +159,7 @@ package body Odd.Tooltips is
    -- Display_Tooltip --
    ---------------------
 
-   function Display_Tooltip (Tooltip : in Tooltips) return Boolean
-   is
+   function Display_Tooltip (Tooltip : in Tooltips) return Boolean is
       use type Gdk_Window;
       Pixmap      : Gdk_Pixmap;
       Visual      : Gdk_Visual;
@@ -166,6 +168,7 @@ package body Odd.Tooltips is
       Window      : Gdk_Window;
       Width, Height : Gint;
       X, Y        : Gint;
+
    begin
       if not Tooltip.Active then
          return False;
@@ -173,20 +176,21 @@ package body Odd.Tooltips is
 
       --  To avoid overlapping windows when the user moves the mouse while
       --  a tooltip is being prepared and is about to be displayed.
+
       if Tooltip.Display_Window /= Null_Window then
          Destroy (Tooltip.Display_Window);
          Tooltip.Display_Window := Null_Window;
       end if;
 
-      Draw_Tooltip (Tooltip.Widget,
-                    Tooltip.Data.all,
-                    Pixmap,
-                    Width,
-                    Height,
-                    Tooltip.Area);
+      Draw_Tooltip
+        (Tooltip.Widget,
+         Tooltip.Data.all,
+         Pixmap,
+         Width,
+         Height,
+         Tooltip.Area);
 
       if Width /= 0 and then Height /= 0 then
-
          Get_Best (Visual);
 
          Gdk_New
@@ -209,8 +213,8 @@ package body Odd.Tooltips is
          Move (Tooltip.Display_Window, X + 10, Y + 10);
          Gdk.Pixmap.Unref (Pixmap);
          Show (Tooltip.Display_Window);
-
       end if;
+
       return False;
    end Display_Tooltip;
 
@@ -218,11 +222,11 @@ package body Odd.Tooltips is
    -- Set_Tooltip --
    -----------------
 
-   procedure Set_Tooltip (Tooltip : Tooltips)
-   is
-      Mask        : Gdk_Modifier_Type;
-      Window      : Gdk_Window;
-      X, Y        : Gint;
+   procedure Set_Tooltip (Tooltip : Tooltips) is
+      Mask   : Gdk_Modifier_Type;
+      Window : Gdk_Window;
+      X, Y   : Gint;
+
    begin
       if Tooltip.Active = True then
          Remove_Tooltip (Tooltip);
@@ -243,10 +247,9 @@ package body Odd.Tooltips is
       Tooltip.Area.Width := 0;
       Tooltip.Area.Height := 0;
       Tooltip.Active := True;
-      Tooltip.Handler_Id := Odd_Tooltips_Timeout.Add
-        (Tooltip.Timeout,
-         Display_Tooltip'Access,
-         Tooltip);
+      Tooltip.Handler_Id :=
+        Odd_Tooltips_Timeout.Add
+          (Tooltip.Timeout, Display_Tooltip'Access, Tooltip);
    end Set_Tooltip;
 
    --------------------
@@ -258,10 +261,12 @@ package body Odd.Tooltips is
    begin
       if Tooltip.Active = True then
          Timeout_Remove (Tooltip.Handler_Id);
+
          if Tooltip.Display_Window /= Null_Window then
             Destroy (Tooltip.Display_Window);
             Tooltip.Display_Window := Null_Window;
          end if;
+
          Tooltip.Active := False;
       end if;
    end Remove_Tooltip;
