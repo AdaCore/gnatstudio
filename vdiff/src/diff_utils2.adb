@@ -652,15 +652,15 @@ package body Diff_Utils2 is
 
    procedure Free_List (List : in out Diff_Head_List.List)
    is
-      CurrNode : Diff_Head_List.List_Node := First (List);
+      Curr_Node : Diff_Head_List.List_Node := First (List);
       Diff : Diff_Head;
    begin
 
-      while CurrNode /= Diff_Head_List.Null_Node
+      while Curr_Node /= Diff_Head_List.Null_Node
       loop
-         Diff := Data (CurrNode);
+         Diff := Data (Curr_Node);
          Free_All (Diff);
-         CurrNode := Next (CurrNode);
+         Curr_Node := Next (Curr_Node);
       end loop;
 
    end Free_List;
