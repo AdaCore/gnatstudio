@@ -20,4 +20,4 @@ distrib:
 	cp ../../gnat/*.ad? gnat
 
 clean:
-	rm -f standalone_obj/*
+	-rm -f standalone_obj/*
