@@ -638,6 +638,15 @@ package body Src_Editor_Buffer.Line_Information is
             Line := Editable_Line_Type (K);
 
             if Line /= 0 then
+               if Editable_Lines
+                 (Line).Side_Info_Data (Column).Info /= null
+               then
+                  Free
+                    (Editable_Lines (Line).Side_Info_Data (Column).Info.all);
+                  Unchecked_Free
+                    (Editable_Lines (Line).Side_Info_Data (Column).Info);
+               end if;
+
                Editable_Lines (Line).Side_Info_Data (Column).Info :=
                  new Line_Information_Record'(Info (K));
                Editable_Lines
