@@ -1294,9 +1294,10 @@ package body Src_Editor_View is
      (Widget : access Gtk_Widget_Record'Class;
       Event  : Gdk_Event) return Boolean
    is
-      View           : constant Source_View   := Source_View (Widget);
-      Buffer         : constant Source_Buffer :=
-        Source_Buffer (Get_Buffer (View));
+      View   : constant Source_View   := Source_View (Widget);
+      Buffer : constant Source_Buffer := Source_Buffer (Get_Buffer (View));
+      Start, Last : Gtk_Text_Iter;
+      Result : Boolean;
 
    begin
       if not Get_Editable (View) then
@@ -1306,12 +1307,15 @@ package body Src_Editor_View is
       case Get_Key_Val (Event) is
          when GDK_Return =>
             External_End_Action (Buffer);
+            Insert_At_Cursor (Buffer, "" & ASCII.LF);
 
             --  ??? COULD BE A KEY HANDLER AS WELL
-            if Do_Indentation (Buffer, Get_Language (Buffer), True) then
-               return True;
-            end if;
-
+            Get_Iter_At_Mark (Buffer, Last, Get_Insert (Buffer));
+            Copy (Last, Dest => Start);
+            Backward_Line (Start, Result);
+            Result :=
+              Do_Indentation (Buffer, Get_Language (Buffer), Start, Last);
+            return True;
 
          when GDK_Linefeed | GDK_Tab |
            GDK_Home | GDK_Page_Up | GDK_Page_Down | GDK_End | GDK_Begin |
