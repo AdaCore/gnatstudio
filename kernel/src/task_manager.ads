@@ -52,6 +52,12 @@ package Task_Manager is
    --  The command will be executed at once.
    --  The progress bar will be shown for this command if Show_Bar is True.
 
+   procedure Interrupt_Queue
+     (Manager : Task_Manager_Access;
+      Command : Command_Access);
+   --  Interrupt the Queue that contains Command. Does nothing if there is no
+   --  such queue.
+
    procedure Set_Progress_Area
      (Manager : Task_Manager_Access;
       Area    : Gtk.Box.Gtk_Hbox);

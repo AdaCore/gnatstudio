@@ -347,6 +347,19 @@ package body Glide_Kernel.Task_Manager is
    end Launch_Background_Command;
 
    ---------------------
+   -- Interrupt_Queue --
+   ---------------------
+
+   procedure Interrupt_Queue
+     (Kernel  : access Kernel_Handle_Record'Class;
+      Command : Command_Access)
+   is
+      Manager : constant Task_Manager_Access := Get_Task_Manager (Kernel);
+   begin
+      Interrupt_Queue (Manager, Command);
+   end Interrupt_Queue;
+
+   ---------------------
    -- Register_Module --
    ---------------------
 

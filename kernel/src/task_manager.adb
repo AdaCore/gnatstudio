@@ -472,6 +472,31 @@ package body Task_Manager is
       Run (Manager, Active);
    end Add_Command;
 
+   ---------------------
+   -- Interrupt_Queue --
+   ---------------------
+
+   procedure Interrupt_Queue
+     (Manager : Task_Manager_Access;
+      Command : Command_Access)
+   is
+      Node : Command_Queues.List_Node;
+      use Command_Queues;
+   begin
+      for J in Manager.Queues'Range loop
+         Node := First (Manager.Queues (J).Queue);
+
+         while Node /= Null_Node loop
+            if Data (Node) = Command then
+               Interrupt_Command (Manager, J);
+               return;
+            end if;
+
+            Node := Next (Node);
+         end loop;
+      end loop;
+   end Interrupt_Queue;
+
    -----------------------
    -- Set_Progress_Area --
    -----------------------
