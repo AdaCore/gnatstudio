@@ -100,6 +100,10 @@ package body GVD.Process is
    function To_Main_Debug_Window is new
      Ada.Unchecked_Conversion (System.Address, GVD_Main_Window);
 
+   Default_Widget_Width  : constant := 200;
+   Default_Widget_Height : constant := 200;
+   --  Default size for the widgets. See Glide_Kernel.Preferences
+
    --  This pointer will keep a pointer to the C 'class record' for
    --  gtk. To avoid allocating memory for each widget, this may be done
    --  only once, and reused
@@ -926,7 +930,11 @@ package body GVD.Process is
 
       Show_All (Process.Stack);
 
-      Child := Put (Process.Window.Process_Mdi, Process.Stack);
+      Child := Put
+        (Process.Window.Process_Mdi,
+         Process.Stack,
+         Default_Width  => Default_Widget_Width,
+         Default_Height => Default_Widget_Height);
       Set_Focus_Child (Child);
 
       if Process.Debugger_Num = 1 then
@@ -986,6 +994,8 @@ package body GVD.Process is
 
       Child := Put
         (Process.Window.Process_Mdi, Process.Data_Scrolledwindow,
+         Default_Width  => Default_Widget_Width,
+         Default_Height => Default_Widget_Height,
          Flags => Iconify_Button or Maximize_Button);
       Set_Focus_Child (Child);
 
@@ -1056,6 +1066,8 @@ package body GVD.Process is
 
       Child := Put
         (Process.Window.Process_Mdi, Process.Debugger_Text,
+         Default_Width  => Default_Widget_Width,
+         Default_Height => Default_Widget_Height,
          Flags => Iconify_Button or Maximize_Button,
          Focus_Widget => Gtk_Widget (Get_View (Process.Debugger_Text)));
       Set_Focus_Child (Child);
@@ -1367,6 +1379,8 @@ package body GVD.Process is
          Child := Put
            (Window.Process_Mdi, Process.Debuggee_Console,
             Flags => Iconify_Button or Maximize_Button,
+            Default_Width  => Default_Widget_Width,
+            Default_Height => Default_Widget_Height,
             Focus_Widget => Gtk_Widget (Get_View (Process.Debuggee_Console)));
 
          if Process.Debugger_Num = 1 then
