@@ -41,7 +41,6 @@ with Src_Highlighting;          use Src_Highlighting;
 
 with Interfaces.C.Strings;      use Interfaces.C.Strings;
 with System;
-with String_Utils;              use String_Utils;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with OS_Utils;                  use OS_Utils;
 with Src_Info;                  use Src_Info;
@@ -255,7 +254,7 @@ package body Src_Editor_Buffer is
       Line : Gint;
       Col  : Gint;
    begin
-      Get_Cursor_Position (Buffer, Line => Line, Column => Col);
+      Get_Screen_Position (Buffer, Line => Line, Column => Col);
       Emit_New_Cursor_Position (Buffer, Line => Line, Column => Col);
       Buffer.Modified_Auto := True;
 
@@ -295,7 +294,7 @@ package body Src_Editor_Buffer is
             end if;
          end;
 
-         Get_Cursor_Position (Buffer, Line, Col);
+         Get_Screen_Position (Buffer, Line, Col);
          Emit_New_Cursor_Position (Buffer, Line => Line, Column => Col);
       end if;
 
@@ -553,6 +552,8 @@ package body Src_Editor_Buffer is
       Command      : Editor_Command := Editor_Command (Buffer.Current_Command);
       Direction    : Direction_Type;
       Line, Column : Gint;
+      Line_Start   : Gint;
+      Column_Start : Gint;
 
    begin
       Get_Text_Iter (Nth (Params, 1), Start_Iter);
@@ -566,24 +567,28 @@ package body Src_Editor_Buffer is
             Command := Editor_Command (Buffer.Current_Command);
          end if;
 
+         Line_Start   := Get_Line (Start_Iter);
+         Column_Start := Get_Line_Offset (Start_Iter);
+
          if Is_Null_Command (Command) then
             Get_Cursor_Position (Buffer, Line, Column);
 
-            if Line = Get_Line (Start_Iter)
-              and then Column = Get_Line_Offset (Start_Iter)
+            if Line = Line_Start
+              and then Column = Column_Start
             then
                Direction := Backward;
             else
                Direction := Forward;
             end if;
 
-            Create (Command,
-                    Deletion,
-                    Source_Buffer (Buffer),
-                    True,
-                    Natural (Get_Line (Start_Iter)),
-                    Natural (Get_Line_Offset (Start_Iter)),
-                    Direction);
+            Create
+              (Command,
+               Deletion,
+               Source_Buffer (Buffer),
+               True,
+               Integer (Line_Start),
+               Integer (Column_Start),
+               Direction);
 
             Buffer.Inserting := True;
             Enqueue (Buffer.Queue, Command);
@@ -593,10 +598,11 @@ package body Src_Editor_Buffer is
             Direction := Get_Direction (Command);
          end if;
 
-         Add_Text (Command,
-                   Get_Slice (Buffer, Start_Iter, End_Iter, True),
-                   Natural (Get_Line (Start_Iter)),
-                   Natural (Get_Line_Offset (Start_Iter)));
+         Add_Text
+           (Command,
+            Get_Slice (Buffer, Start_Iter, End_Iter),
+            Integer (Line_Start),
+            Integer (Column_Start));
          Buffer.Current_Command := Command_Access (Command);
 
          if Direction = Backward then
@@ -696,25 +702,33 @@ package body Src_Editor_Buffer is
       ---------------------
 
       procedure Local_Highlight is
-         C_Str : constant Interfaces.C.Strings.chars_ptr :=
+         UTF8   : constant Interfaces.C.Strings.chars_ptr :=
            Get_Slice (Entity_Start, Entity_End);
-         Len   : constant Natural := Natural (Strlen (C_Str));
+         Ignore : aliased Natural;
+         Length : aliased Natural;
+         C_Str  : constant Interfaces.C.Strings.chars_ptr :=
+           Glib.Convert.Convert
+             (UTF8, Integer (Strlen (UTF8)),
+              Get_Pref (Buffer.Kernel, Default_Charset), "UTF-8",
+              Ignore'Unchecked_Access, Length'Unchecked_Access);
          Slice : constant Unchecked_String_Access :=
            To_Unchecked_String (C_Str);
          pragma Suppress (Access_Check, Slice);
 
       begin
+         g_free (UTF8);
          Highlight_Complete := True;
          Slice_Offset := Get_Offset (Entity_Start);
 
          --  First, un-apply all the style tags...
+
          Kill_Highlighting (Buffer, Entity_Start, Entity_End);
 
          --  Now re-highlight the text...
 
          Parse_Entities
            (Buffer.Lang,
-            Slice (1 .. Len),
+            Slice (1 .. Length),
             Highlight_Cb'Unrestricted_Access);
          g_free (C_Str);
       end Local_Highlight;
@@ -972,12 +986,8 @@ package body Src_Editor_Buffer is
       end if;
 
       UTF8 := Glib.Convert.Convert
-        (Contents.all, "UTF-8", "ISO-8859-1",
+        (Contents.all, "UTF-8", Get_Pref (Buffer.Kernel, Default_Charset),
          Ignore'Unchecked_Access, Length'Unchecked_Access);
-
-      --  --  ??? This does not seem to work, but should
-      --  UTF8 := Locale_To_UTF8
-      --    (Contents.all, Ignore'Unchecked_Access, Length'Unchecked_Access);
 
       if UTF8 = Gtkada.Types.Null_Ptr then
          --  In case conversion failed
@@ -1027,22 +1037,31 @@ package body Src_Editor_Buffer is
 
       declare
          New_Line       : constant String := (1 => ASCII.LF);
-         File_Buffer    : constant String :=
-           Get_Text (Buffer, Start_Iter, End_Iter);
+         UTF8           : constant Gtkada.Types.Chars_Ptr :=
+           Get_Text (Buffer, Start_Iter, End_Iter, True);
+         Contents       : GNAT.OS_Lib.String_Access;
          Bytes_Written  : Integer;
-         First, Current : Natural := File_Buffer'First;
+         First, Current : Natural := 1;
          Blanks         : Natural := 0;
+         Ignore, Length : Natural;
 
       begin
+         Length := Integer (Strlen (UTF8));
+         Contents := new String (1 .. Length);
+         Glib.Convert.Convert
+           (UTF8, Length, Get_Pref (Buffer.Kernel, Default_Charset), "UTF-8",
+            Ignore, Length, Result => Contents.all);
+         g_free (UTF8);
+
          if not Get_Pref (Buffer.Kernel, Strip_Blanks) then
-            Current := File_Buffer'Last + 1;
+            Current := Length + 1;
          else
-            while Current <= File_Buffer'Last loop
-               case File_Buffer (Current) is
+            while Current <= Length loop
+               case Contents (Current) is
                   when ASCII.LF | ASCII.CR =>
                      if Blanks /= 0 then
                         Bytes_Written := Write
-                          (FD, File_Buffer (First)'Address, Blanks - First);
+                          (FD, Contents (First)'Address, Blanks - First);
                         Bytes_Written := Write
                           (FD, New_Line'Address, New_Line'Length);
                         Blanks := 0;
@@ -1062,25 +1081,27 @@ package body Src_Editor_Buffer is
             end loop;
          end if;
 
-         if First < File_Buffer'Last then
+         if First < Length then
             if Blanks /= 0 then
                Bytes_Written :=
-                 Write (FD, File_Buffer (First)'Address, Blanks - First);
+                 Write (FD, Contents (First)'Address, Blanks - First);
                Bytes_Written :=
                  Write (FD, New_Line'Address, New_Line'Length);
 
             else
                Bytes_Written :=
-                 Write (FD, File_Buffer (First)'Address, Current - First);
+                 Write (FD, Contents (First)'Address, Current - First);
 
-               if File_Buffer (File_Buffer'Last) /= ASCII.LF
-                 and then File_Buffer (File_Buffer'Last) /= ASCII.CR
+               if Contents (Length) /= ASCII.LF
+                 and then Contents (Length) /= ASCII.CR
                then
                   Bytes_Written :=
                     Write (FD, New_Line'Address, New_Line'Length);
                end if;
             end if;
          end if;
+
+         Free (Contents);
       end;
 
       Close (FD);
@@ -1285,25 +1306,38 @@ package body Src_Editor_Buffer is
       Line   : out Gint;
       Column : out Gint)
    is
-      Start : Gtk_Text_Iter;
+      Start   : Gtk_Text_Iter;
+      Result  : Boolean;
+      Tab_Len : constant Gint := Get_Pref (Buffer.Kernel, Tab_Width);
+
    begin
-      Line := Get_Line (Iter);
-
-      --  ??? Important: the solution below is definitely not the best one,
-      --  since it will only handle ASCII (7 bits) characters, but not true
-      --  UTF-8 strings. Should use g_convert here, or pango to compute the
-      --  width, but it only seems to return the position in pixels, which
-      --  isn't very useful to us.
-      --  Also, using Do_Tab_Expansion is overkill here.
-
+      Line   := Get_Line (Iter);
+      Column := 0;
       Get_Iter_At_Line_Offset (Buffer, Start, Line, 0);
-      declare
-         S : constant String := Do_Tab_Expansion
-           (Get_Text (Buffer, Start, Iter),
-            Tab_Size => Integer (Get_Pref (Buffer.Kernel, Tab_Width)));
-      begin
-         Column := S'Length;
-      end;
+
+      loop
+         exit when Equal (Start, Iter);
+
+         if Get_Char (Start) = ASCII.HT then
+            Column := Column + Tab_Len - (Column mod Tab_Len);
+         else
+            Column := Column + 1;
+         end if;
+
+         Forward_Char (Start, Result);
+         pragma Assert (Result);
+      end loop;
+   end Get_Screen_Position;
+
+   procedure Get_Screen_Position
+     (Buffer : access Source_Buffer_Record;
+      Line   : out Gint;
+      Column : out Gint)
+   is
+      Iter : Gtk_Text_Iter;
+   begin
+      Get_Iter_At_Mark (Buffer, Iter, Buffer.Insert_Mark);
+      Get_Screen_Position (Buffer, Iter, Line, Column);
    end Get_Screen_Position;
 
    -------------------------
@@ -1366,7 +1400,9 @@ package body Src_Editor_Buffer is
       Get_Selection_Bounds (Buffer, Start_Iter, End_Iter, Found);
 
       if Found then
-         return Get_Slice (Buffer, Start_Iter, End_Iter);
+         return Get_Slice
+           (Buffer, Get_Line (Start_Iter), Get_Line_Offset (Start_Iter),
+            Get_Line (End_Iter), Get_Line_Offset (End_Iter));
       else
          return "";
       end if;
@@ -1416,6 +1452,11 @@ package body Src_Editor_Buffer is
    is
       Start_Iter : Gtk_Text_Iter;
       End_Iter   : Gtk_Text_Iter;
+      UTF8       : Interfaces.C.Strings.chars_ptr;
+      Ignore     : aliased Natural;
+      Length     : aliased Natural;
+      Contents   : Interfaces.C.Strings.chars_ptr;
+
    begin
       pragma Assert (Is_Valid_Position (Buffer, Start_Line, Start_Column));
       Get_Iter_At_Line_Offset (Buffer, Start_Iter, Start_Line, Start_Column);
@@ -1427,7 +1468,14 @@ package body Src_Editor_Buffer is
          Get_Iter_At_Line_Offset (Buffer, End_Iter, End_Line, End_Column);
       end if;
 
-      return Get_Text (Buffer, Start_Iter, End_Iter);
+      UTF8     := Get_Text (Buffer, Start_Iter, End_Iter, True);
+      Length   := Natural (Strlen (UTF8));
+      Contents := Glib.Convert.Convert
+        (UTF8, Length, Get_Pref (Buffer.Kernel, Default_Charset), "UTF-8",
+         Ignore'Unchecked_Access, Length'Unchecked_Access);
+      g_free (UTF8);
+
+      return Contents;
    end Get_Slice;
 
    function Get_Slice
