@@ -129,6 +129,7 @@ package body Codefix.Graphics is
    ----------
 
    procedure Free (This : in out Vdiff_Access) is
+      pragma Unreferenced (This);
    begin
       null;
    end Free;
@@ -169,14 +170,15 @@ package body Codefix.Graphics is
       procedure Add_Tab;
       --  Add a page in the Notebook and initialize its data.
 
-      procedure Update_Fix_List;
-      --  Update the visual list of possibles corrections.
-
-      Current_Sol     : Extract_List.List_Node;
-      Proposition     : Vdiff_Access;
-      Label           : Gtk_Label;
-      Current_Nb_Tabs : Integer;
-      Current_Vdiff   : Vdiff_Lists.List_Node;
+      Current_Sol         : Extract_List.List_Node;
+      Proposition         : Vdiff_Access;
+      Label               : Gtk_Label;
+      Current_Nb_Tabs     : Integer;
+      Current_Vdiff       : Vdiff_Lists.List_Node;
+      Extended_Extract    : Extract;
+      Success_Update      : Boolean;
+      New_Popdown_Str     : String_List.Glist;
+      Possible_Correction : Boolean;
 
       -----------------
       -- Display_Sol --
@@ -184,27 +186,15 @@ package body Codefix.Graphics is
 
       procedure Display_Sol is
          Current_Line     : Ptr_Extract_Line;
-         Extended_Extract : Extract;
          First_Iterator   : Text_Iterator_Access;
          Current_Iterator : Text_Iterator_Access;
-
       begin
-         Extended_Extract := Clone (Data (Current_Sol));
-         Extend_Before
-           (Extended_Extract,
-            Graphic_Codefix.Current_Text,
-            Display_Lines_Before);
-         Extend_After
-           (Extended_Extract,
-            Graphic_Codefix.Current_Text,
-            Display_Lines_After);
 
          Current_Line := Get_First_Line (Extended_Extract);
          First_Iterator := new Text_Iterator;
          Current_Iterator := First_Iterator;
 
          if Current_Line = null then
-            Free (Extended_Extract);
             return;
          end if;
 
@@ -234,6 +224,8 @@ package body Codefix.Graphics is
                   Current_Iterator.Action := Delete;
             end case;
 
+            Current_Iterator.Color_Enabled :=
+              Get_Coloration (Current_Line.all);
             Current_Line := Next (Current_Line.all);
 
             exit when Current_Line = null;
@@ -259,8 +251,6 @@ package body Codefix.Graphics is
          Set_Text (Proposition.File_Label2,
                    Get_Cursor (Get_First_Line
                                  (Extended_Extract).all).File_Name.all);
-
-         Free (Extended_Extract);
       end Display_Sol;
 
       ----------------
@@ -299,26 +289,6 @@ package body Codefix.Graphics is
          Append (Graphic_Codefix.Vdiff_List, Proposition);
       end Add_Tab;
 
-      ---------------------
-      -- Update_Fix_List --
-      ---------------------
-
-      procedure Update_Fix_List is
-         New_Items       : String_List.Glist;
-         Current_Extract : Extract_List.List_Node;
-      begin
-         Current_Extract := First
-           (Get_Solutions (Graphic_Codefix.Current_Error));
-
-         while Current_Extract /= Extract_List.Null_Node loop
-            String_List.Append
-              (New_Items, Get_Caption (Data (Current_Extract)));
-            Current_Extract := Next (Current_Extract);
-         end loop;
-
-         Set_Popdown_Strings (Graphic_Codefix.Fix_Caption_List, New_Items);
-      end Update_Fix_List;
-
       --  begin of Load_Next_Error
 
    begin
@@ -345,18 +315,51 @@ package body Codefix.Graphics is
       Current_Vdiff := First (Graphic_Codefix.Vdiff_List);
 
       Current_Nb_Tabs := 0;
+      Possible_Correction := False;
 
       while Current_Sol /= Extract_List.Null_Node loop
-         if Current_Vdiff /= Vdiff_Lists.Null_Node then
-            Modify_Tab;
-            Current_Vdiff := Next (Current_Vdiff);
-         else
-            Add_Tab;
+         Extended_Extract := Clone (Data (Current_Sol));
+
+         Extend_Before
+           (Extended_Extract,
+            Graphic_Codefix.Current_Text,
+            Display_Lines_Before);
+         Extend_After
+           (Extended_Extract,
+            Graphic_Codefix.Current_Text,
+            Display_Lines_After);
+
+         Update_Changes
+           (Graphic_Codefix.Corrector,
+            Graphic_Codefix.Current_Text,
+            Extended_Extract,
+            Success_Update);
+
+         if Success_Update then
+            Possible_Correction := True;
+
+            if Current_Vdiff /= Vdiff_Lists.Null_Node then
+               Modify_Tab;
+               Current_Vdiff := Next (Current_Vdiff);
+            else
+               Add_Tab;
+            end if;
+
+            Current_Nb_Tabs := Current_Nb_Tabs + 1;
+            String_List.Append
+              (New_Popdown_Str, Get_Caption (Data (Current_Sol)));
          end if;
 
+         Free (Extended_Extract);
          Current_Sol := Next (Current_Sol);
-         Current_Nb_Tabs := Current_Nb_Tabs + 1;
       end loop;
+
+      if not Possible_Correction then
+         Load_Next_Error (Graphic_Codefix);
+         return;
+      end if;
+
+      Set_Popdown_Strings (Graphic_Codefix.Fix_Caption_List, New_Popdown_Str);
 
       if Current_Vdiff /= Vdiff_Lists.Null_Node then
          for J in Current_Nb_Tabs .. Graphic_Codefix.Nb_Tabs - 1 loop
@@ -371,7 +374,6 @@ package body Codefix.Graphics is
       Set_Text
         (Graphic_Codefix.Error_Caption,
          Get_Message (Get_Error_Message (Graphic_Codefix.Current_Error)));
-      Update_Fix_List;
 
       Set_Current_Page (Graphic_Codefix.Choices_Proposed, 0);
 
