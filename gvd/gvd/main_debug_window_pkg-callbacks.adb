@@ -120,6 +120,10 @@ package body Main_Debug_Window_Pkg.Callbacks is
       declare
          S : constant String := To_Unix_Pathname (File_Selection_Dialog);
       begin
+         if S = "" then
+            return;
+         end if;
+
          if Tab.Descriptor.Remote_Host /= null
            or else Is_Regular_File (S)
          then
