@@ -279,7 +279,7 @@ package body Vdiff2_Module is
          Command      => "visual_diff",
          Params       => "(file1, file2, [file3])",
          Description  =>
-           -("Open a Visual Diff between file1 ,file2 and file3"),  --  ???
+           -("Open a Visual Diff between file1, file2 and file3"),  --  ???
          Minimum_Args => 2,
          Maximum_Args => 3,
          Handler      => Diff_Command_Handler'Access);
