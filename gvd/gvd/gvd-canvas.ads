@@ -20,7 +20,6 @@
 
 with Gtkada.Canvas;
 with Gdk.GC;
-with Gdk.Font;
 with Gdk.Pixmap;
 with Gdk.Bitmap;
 with Gtk.Menu;
@@ -82,8 +81,6 @@ package GVD.Canvas is
       Refresh_Button_GC : Gdk.GC.Gdk_GC;
       Thaw_Bg_GC        : Gdk.GC.Gdk_GC;
       Freeze_Bg_GC      : Gdk.GC.Gdk_GC;
-
-      Title_Font        : Gdk.Font.Gdk_Font;
 
       Close_Pixmap        : Gdk.Pixmap.Gdk_Pixmap;
       Close_Mask          : Gdk.Bitmap.Gdk_Bitmap;

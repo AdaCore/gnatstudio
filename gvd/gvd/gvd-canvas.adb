@@ -23,7 +23,6 @@ with Gdk;              use Gdk;
 with Gdk.Window;       use Gdk.Window;
 with Gdk.Color;        use Gdk.Color;
 with Gdk.Event;        use Gdk.Event;
-with Gdk.Font;         use Gdk.Font;
 with Gdk.Pixmap;       use Gdk.Pixmap;
 with Gdk.GC;           use Gdk.GC;
 with Gdk.Bitmap;       use Gdk.Bitmap;
@@ -381,64 +380,6 @@ package body GVD.Canvas is
 
    procedure Allocate_Fonts (Canvas : access GVD_Canvas_Record'Class) is
    begin
-      ------------------
-      -- Item_Context --
-      ------------------
-
-      if Canvas.Item_Context.Font /= null then
-         Unref (Canvas.Item_Context.Font);
-      end if;
-
-      Canvas.Item_Context.Font := From_Description
-        (Get_Pref (GVD_Prefs, Value_Font));
-
-      if Canvas.Item_Context.Type_Font /= null then
-         Unref (Canvas.Item_Context.Type_Font);
-      end if;
-
-      Canvas.Item_Context.Type_Font := From_Description
-        (Get_Pref (GVD_Prefs, Type_Font));
-
-      if Canvas.Item_Context.Command_Font /= null then
-         Unref (Canvas.Item_Context.Command_Font);
-      end if;
-
-      Canvas.Item_Context.Command_Font := From_Description
-        (Get_Pref (GVD_Prefs, Command_Font));
-
-      ---------------------
-      -- Tooltip_Context --
-      ---------------------
-
-      if Canvas.Tooltip_Context.Font /= null then
-         Unref (Canvas.Tooltip_Context.Font);
-      end if;
-      Canvas.Tooltip_Context.Font := From_Description
-        (Get_Pref (GVD_Prefs, Value_Font));
-
-      if Canvas.Tooltip_Context.Type_Font /= null then
-         Unref (Canvas.Tooltip_Context.Type_Font);
-      end if;
-      Canvas.Tooltip_Context.Type_Font := From_Description
-        (Get_Pref (GVD_Prefs, Type_Font));
-
-      if Canvas.Tooltip_Context.Command_Font /= null then
-         Unref (Canvas.Tooltip_Context.Command_Font);
-      end if;
-      Canvas.Tooltip_Context.Command_Font := From_Description
-        (Get_Pref (GVD_Prefs, Command_Font));
-
-      -----------------
-      -- Box_Context --
-      -----------------
-
-      if Canvas.Box_Context.Title_Font /= null then
-         Unref (Canvas.Box_Context.Title_Font);
-      end if;
-
-      Canvas.Box_Context.Title_Font := From_Description
-        (Get_Pref (GVD_Prefs, Title_Font));
-
       For_Each_Item (Canvas, Refresh_Item'Unrestricted_Access);
    end Allocate_Fonts;
 
