@@ -1177,6 +1177,10 @@ package body GVD_Module is
          Close (Page.Process_Mdi, Page.Debugger_Text);
       end if;
 
+      if Page.Debuggee_Console /= null then
+         Close (Page.Process_Mdi, Page.Debuggee_Console);
+      end if;
+
       if Page.Data_Paned /= null then
          Close (Page.Process_Mdi, Page.Data_Paned);
       end if;
