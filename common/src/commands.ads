@@ -101,7 +101,7 @@ package Commands is
    --  IMPORTANT: at the end of undoing, Command_Finished must be
    --  called. See above for details.
 
-   procedure Free (X : in out Root_Command) is abstract;
+   procedure Free (X : in out Root_Command);
    --  Free memory associated to X.
 
    type Command_Queue is private;
