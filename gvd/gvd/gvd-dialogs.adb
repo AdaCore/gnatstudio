@@ -10,8 +10,8 @@ with Interfaces.C;    use Interfaces.C;
 
 package body Task_Dialog_Pkg is
 
-   pragma Suppress (Access_Check);
-   --  Access checks are expensive and not needed in this package.
+   pragma Suppress (All_Checks);
+   --  Checks are expensive (in code size) and not needed in this package.
 
    procedure Gtk_New
      (Task_Dialog : out Task_Dialog_Access;
