@@ -1099,7 +1099,7 @@ package body Glide_Menu is
    begin
       return new Gtk_Item_Factory_Entry_Array'
         (Gtk_New (-"/_File", Item_Type => Branch),
-         Gtk_New (-"/_File/New", "", On_New_File'Access),
+         Gtk_New (-"/_File/New File", "", On_New_File'Access),
          Gtk_New (-"/_File/New Project...", "", On_New_Project'Access),
          Gtk_New (-"/_File/sep1", Item_Type => Separator),
          Gtk_New (-"/_File/Open...", "F3", On_Open_File'Access),
@@ -1208,9 +1208,6 @@ package body Glide_Menu is
          Gtk_New (-"/_Debug/Continue", "F8", On_Continue'Access),
          Gtk_New (-"/_Debug/Interrupt", "ESC", null),
          Gtk_New (-"/_Debug/Detach Process", "", null),
-         Gtk_New (-"/_Debug/sep3", Item_Type => Separator),
-         Gtk_New (-"/_Debug/Profile", "", null),
-         Gtk_New (-"/_Debug/Memory Analyzer", "", null),
 
          Gtk_New (-"/_Tools", Item_Type => Branch),
          Gtk_New (-"/_Tools/Pretty Print", "", null),
@@ -1221,6 +1218,8 @@ package body Glide_Menu is
          Gtk_New (-"/_Tools/Call Graph...", "", null),
          Gtk_New (-"/_Tools/Metrics...", "", null),
          Gtk_New (-"/_Tools/Code Fixing...", "", null),
+         Gtk_New (-"/_Tools/Profile", "", null),
+         Gtk_New (-"/_Tools/Memory Analyzer", "", null),
          Gtk_New (-"/_Tools/Unit Testing", Item_Type => Branch),
          Gtk_New (-"/_Tools/Unit Testing/New Test Case", "",
                   On_New_Test_Case'Access),
