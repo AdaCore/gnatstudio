@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2002                      --
+--                      Copyright (C) 2001-2003                      --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -53,6 +53,7 @@ with Glide_Intl;            use Glide_Intl;
 with Glide_Kernel;          use Glide_Kernel;
 with Glide_Kernel.Console;  use Glide_Kernel.Console;
 with Glide_Kernel.Modules;  use Glide_Kernel.Modules;
+with GNAT.OS_Lib;           use GNAT.OS_Lib;
 
 with Find_Utils;            use Find_Utils;
 with GUI_Utils;             use GUI_Utils;
@@ -60,6 +61,7 @@ with Generic_List;
 with Histories;             use Histories;
 
 with Ada.Exceptions;        use Ada.Exceptions;
+with Ada.Unchecked_Deallocation;
 
 with Traces; use Traces;
 
@@ -92,6 +94,9 @@ package body Vsearch_Ext is
 
       Next_Menu_Item : Gtk.Menu_Item.Gtk_Menu_Item;
       Prev_Menu_Item : Gtk.Menu_Item.Gtk_Menu_Item;
+
+      Search_Regexps : Search_Regexps_Array_Access;
+      --  The list of predefined regexps for the search module.
    end record;
    type Vsearch_Module is access all Vsearch_Module_Record'Class;
 
@@ -116,6 +121,9 @@ package body Vsearch_Ext is
    end record;
 
    package Search_Idle_Pkg is new Gtk.Main.Idle (Idle_Search_Data);
+
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+     (Search_Regexps_Array, Search_Regexps_Array_Access);
 
    function Idle_Search (Data : Idle_Search_Data) return Boolean;
    --  Performs the search in an idle loop, so that the user can still interact
@@ -338,6 +346,15 @@ package body Vsearch_Ext is
 
    procedure Destroy (Module : in out Vsearch_Module_Record) is
    begin
+      if Module.Search_Regexps /= null then
+         for S in Module.Search_Regexps'Range loop
+            Free (Module.Search_Regexps (S).Name);
+            Free (Module.Search_Regexps (S).Regexp);
+         end loop;
+
+         Unchecked_Free (Module.Search_Regexps);
+      end if;
+
       Search_Modules_List.Free (Module.Search_Modules);
       Unref (Module.Next_Menu_Item);
       Unref (Module.Prev_Menu_Item);
@@ -1378,6 +1395,92 @@ package body Vsearch_Ext is
          Case_Sensitive => False,
          Is_Regexp      => True);
    end Register_Default_Search;
+
+   -----------------------------
+   -- Register_Search_Pattern --
+   -----------------------------
+
+   procedure Register_Search_Pattern
+     (Kernel : access Kernel_Handle_Record'Class;
+      Name   : String;
+      Regexp : String;
+      Case_Sensitive : Boolean := False;
+      Is_Regexp : Boolean := True)
+   is
+      Tmp : Search_Regexps_Array_Access := Vsearch_Module_Id.Search_Regexps;
+   begin
+      if Tmp /= null then
+         Vsearch_Module_Id.Search_Regexps :=
+           new Search_Regexps_Array (Tmp'First .. Tmp'Last + 1);
+         Vsearch_Module_Id.Search_Regexps (Tmp'Range) := Tmp.all;
+         Unchecked_Free (Tmp);
+      else
+         Vsearch_Module_Id.Search_Regexps := new Search_Regexps_Array (1 .. 1);
+      end if;
+
+      Tmp := Vsearch_Module_Id.Search_Regexps;
+      Tmp (Tmp'Last) :=
+        (Name           => new String'(Name),
+         Regexp         => new String'(Regexp),
+         Case_Sensitive => Case_Sensitive,
+         Is_Regexp      => Is_Regexp);
+
+      Search_Regexps_Changed (Kernel);
+   end Register_Search_Pattern;
+
+   --------------------------
+   -- Search_Regexps_Count --
+   --------------------------
+
+   function Search_Regexps_Count
+     (Kernel : access Kernel_Handle_Record'Class) return Natural
+   is
+      pragma Unreferenced (Kernel);
+   begin
+      return Vsearch_Module_Id.Search_Regexps'Length;
+   end Search_Regexps_Count;
+
+   -----------------------------------
+   -- Get_Nth_Search_Regexp_Options --
+   -----------------------------------
+
+   procedure Get_Nth_Search_Regexp_Options
+     (Kernel         : access Kernel_Handle_Record'Class;
+      Num            : Natural;
+      Case_Sensitive : out Boolean;
+      Is_Regexp      : out Boolean)
+   is
+      pragma Unreferenced (Kernel);
+   begin
+      Case_Sensitive := Vsearch_Module_Id.Search_Regexps (Num).Case_Sensitive;
+      Is_Regexp      := Vsearch_Module_Id.Search_Regexps (Num).Is_Regexp;
+   end Get_Nth_Search_Regexp_Options;
+
+   --------------------------------
+   -- Get_Nth_Search_Regexp_Name --
+   --------------------------------
+
+   function Get_Nth_Search_Regexp_Name
+     (Kernel : access Kernel_Handle_Record'Class; Num : Natural)
+      return String
+   is
+      pragma Unreferenced (Kernel);
+   begin
+      return Vsearch_Module_Id.Search_Regexps (Num).Name.all;
+   end Get_Nth_Search_Regexp_Name;
+
+   ----------------------------------
+   -- Get_Nth_Search_Regexp_Regexp --
+   ----------------------------------
+
+   function Get_Nth_Search_Regexp
+     (Kernel : access Kernel_Handle_Record'Class; Num : Natural)
+      return String
+   is
+      pragma Unreferenced (Kernel);
+   begin
+      return Vsearch_Module_Id.Search_Regexps (Num).Regexp.all;
+   end Get_Nth_Search_Regexp;
 
    ---------------------
    -- Register_Module --

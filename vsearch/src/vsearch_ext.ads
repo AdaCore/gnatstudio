@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2002                       --
+--                     Copyright (C) 2001-2003                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -25,6 +25,7 @@ with Gtk.Main;
 with Gtk.Toggle_Button;
 with Gtk.Widget;
 with Vsearch_Pkg;
+with GNAT.OS_Lib;
 
 --  This package provides an extended version of the visual search
 --  widget that can be found in module vsearch, so that it can be integrated
@@ -59,6 +60,44 @@ package Vsearch_Ext is
       return Find_Utils.Search_Module_Data;
    --  See Find_Utils.Context_From_Module;
 
+   ---------------------
+   -- Search Patterns --
+   ---------------------
+
+   procedure Register_Search_Pattern
+     (Kernel         : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Name           : String;
+      Regexp         : String;
+      Case_Sensitive : Boolean := False;
+      Is_Regexp      : Boolean := True);
+   --  Register a new template regular expression in the search engine.
+   --  Name will appear in the popdown menu of the combo box, but this will be
+   --  associated with the regular expression Regexp.
+   --  This emits the "search_regexps_changed" signal on Kernel.
+
+   function Search_Regexps_Count
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class) return Natural;
+   --  Return the number of registered predefined patterns
+
+   procedure Get_Nth_Search_Regexp_Options
+     (Kernel         : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Num            : Natural;
+      Case_Sensitive : out Boolean;
+      Is_Regexp      : out Boolean);
+   --  Return the options for the Num-th predefined search regexp
+
+   function Get_Nth_Search_Regexp_Name
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class; Num : Natural)
+      return String;
+   --  Return the name, as it appears in the combo box, for the Num-th regexp.
+   --  The first regexp is number 1.
+
+   function Get_Nth_Search_Regexp
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class; Num : Natural)
+      return String;
+   --  Return the Num-th regular expression
+
+
 private
    type Vsearch_Extended_Record is new Vsearch_Pkg.Vsearch_Record with record
       Kernel                 : Glide_Kernel.Kernel_Handle;
@@ -74,5 +113,15 @@ private
       Last_Search_Context    : Find_Utils.Search_Context_Access;
       Find_Next              : Boolean := False;
    end record;
+
+   type Search_Regexp is record
+      Name           : GNAT.OS_Lib.String_Access;
+      Regexp         : GNAT.OS_Lib.String_Access;
+      Case_Sensitive : Boolean;
+      Is_Regexp      : Boolean;
+   end record;
+
+   type Search_Regexps_Array is array (Natural range <>) of Search_Regexp;
+   type Search_Regexps_Array_Access is access Search_Regexps_Array;
 
 end Vsearch_Ext;
