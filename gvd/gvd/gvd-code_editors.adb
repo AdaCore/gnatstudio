@@ -143,6 +143,9 @@ package body Odd.Code_Editors is
 
          Set_Current_Line (Editor.Explorer, Line);
       end if;
+
+      --  Highlight the background of the current source line
+      Highlight_Current_Line (Editor.Source);
    end Set_Line;
 
    --------------
