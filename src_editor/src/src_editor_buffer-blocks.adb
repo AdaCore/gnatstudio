@@ -41,7 +41,6 @@ package body Src_Editor_Buffer.Blocks is
       Current       : Construct_Access;
       Line_Start    : Editable_Line_Type;
       Line_End      : Editable_Line_Type;
-      Column        : Integer;
       Text          : GNAT.OS_Lib.String_Access;
       Block         : Block_Access;
       Buffer_Line   : Buffer_Line_Type;
@@ -86,12 +85,11 @@ package body Src_Editor_Buffer.Blocks is
          then
             Line_Start := Editable_Line_Type (Current.Sloc_Start.Line);
             Line_End   := Editable_Line_Type (Current.Sloc_End.Line);
-            Column     := Integer'Min
-              (Current.Sloc_Start.Column, Current.Sloc_End.Column);
 
             Block := new Block_Record'
               (Indentation_Level => 0,
-               Offset            => Column,
+               Offset_Start      => Current.Sloc_Start.Column,
+               Offset_End        => Current.Sloc_End.Column,
                First_Line        => Line_Start,
                Last_Line         => Line_End,
                Block_Type        => Current.Category,
@@ -188,7 +186,7 @@ package body Src_Editor_Buffer.Blocks is
         (Buffer,
          Iter,
          Gint (Get_Buffer_Line (Buffer, Block.First_Line) - 1),
-         Gint (Block.Offset));
+         Gint (Block.Offset_Start));
 
       Get_Screen_Position (Buffer, Iter, Line, Col1);
 
@@ -196,7 +194,7 @@ package body Src_Editor_Buffer.Blocks is
         (Buffer,
          Iter,
          Gint (Get_Buffer_Line (Buffer, Block.Last_Line) - 1),
-         Gint (Block.Offset));
+         Gint (Block.Offset_End));
 
       Get_Screen_Position (Buffer, Iter, Line, Col2);
 
