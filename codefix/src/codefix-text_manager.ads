@@ -393,9 +393,16 @@ package Codefix.Text_Manager is
      (This         : in out Extract;
       Cursor       : File_Cursor'Class;
       New_String   : String;
-      Format       : String := "(^[\w]*)");
-   --  Replace a word by another in the extract. Format is a regular expression
-   --  matching the word.
+      Old_String   : String;
+      Format_Old   : String_Mode := Text_Ascii);
+   --  Replace a word by another in the extract.
+
+   procedure Replace_Word
+     (This         : in out Extract;
+      Cursor       : File_Cursor'Class;
+      New_String   : String;
+      Old_Length   : Natural);
+   --  Replace a word by another in the extract.
 
    procedure Add_Word
      (This   : in out Extract;
@@ -450,12 +457,15 @@ package Codefix.Text_Manager is
 
    function Search_String
      (This         : Extract;
-      Cursor       : File_Cursor'Class;
       Searched     : String;
+      Cursor       : File_Cursor'Class := Null_File_Cursor;
       Step         : Step_Way := Normal_Step;
       Jump_String  : Boolean := True) return File_Cursor'Class;
    --  Search a string in the text and returns a cursor at the beginning. If
-   --  noting is found, then the cursor is Null_Cursor.
+   --  noting is found, then the cursor is Null_Cursor. If Cursor is
+   --  Null_File_Cursor,then the research will begin at the begenning of the
+   --  extract if Step is Normal_Step or at the end of the extract if Step is
+   --  Reverse_Step.
 
    function Get_Old_Text
      (This         : Extract;
@@ -518,6 +528,7 @@ private
    use Text_List;
 
    type Ptr_List_Text is access Text_List.List;
+
    procedure Free
      is new Ada.Unchecked_Deallocation (Text_List.List, Ptr_List_Text);
 
