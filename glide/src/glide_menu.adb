@@ -4,7 +4,7 @@
 --                     Copyright (C) 2001-2002                       --
 --                            ACT-Europe                             --
 --                                                                   --
--- GPS is free  software; you can  redistribute it and/or modify  it --
+-- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -13,7 +13,7 @@
 -- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
 -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
 -- General Public License for more details. You should have received --
--- a copy of the GNU General Public License along with this library; --
+-- a copy of the GNU General Public License along with this program; --
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
@@ -24,22 +24,23 @@ with Gtk.Window;                   use Gtk.Window;
 with Gtkada.Dialogs;               use Gtkada.Dialogs;
 with Gtkada.File_Selector;         use Gtkada.File_Selector;
 with Gtkada.File_Selector.Filters; use Gtkada.File_Selector.Filters;
+with Gtkada.MDI;                   use Gtkada.MDI;
 
-with Glide_Intl;              use Glide_Intl;
+with Glide_Intl;                   use Glide_Intl;
 
-with Glide_Kernel;            use Glide_Kernel;
-with Glide_Kernel.Modules;    use Glide_Kernel.Modules;
-with Glide_Kernel.Project;    use Glide_Kernel.Project;
+with Glide_Kernel;                 use Glide_Kernel;
+with Glide_Kernel.Modules;         use Glide_Kernel.Modules;
+with Glide_Kernel.Project;         use Glide_Kernel.Project;
 
-with Glide_Main_Window;       use Glide_Main_Window;
+with Glide_Main_Window;            use Glide_Main_Window;
 with GVD;
 
-with GNAT.Directory_Operations; use GNAT.Directory_Operations;
+with GNAT.Directory_Operations;    use GNAT.Directory_Operations;
 
-with Factory_Data;            use Factory_Data;
+with Factory_Data;                 use Factory_Data;
 
-with Ada.Exceptions;          use Ada.Exceptions;
-with Traces;                  use Traces;
+with Ada.Exceptions;               use Ada.Exceptions;
+with Traces;                       use Traces;
 
 package body Glide_Menu is
 
@@ -139,9 +140,15 @@ package body Glide_Menu is
       Action : Guint;
       Widget : Limited_Widget)
    is
-      pragma Unreferenced (Object, Action, Widget);
+      pragma Unreferenced (Action, Widget);
+
+      MDI   : constant MDI_Window := Get_MDI (Glide_Window (Object).Kernel);
+      Child : MDI_Child := Get_Focus_Child (MDI);
+
    begin
-      null;
+      if Child /= null then
+         Close (MDI, Get_Widget (Child));
+      end if;
 
    exception
       when E : others =>
@@ -318,7 +325,7 @@ package body Glide_Menu is
 
    begin
       return new Gtk_Item_Factory_Entry_Array'
-        (Gtk_New (File & (-"Save") & '/' & (-"Desktop"), "",
+        (Gtk_New (File & (-"Save...") & '/' & (-"Desktop"), "",
                   On_Save_Desktop'Access),
          Gtk_New (File & (-"Close"), "", Stock_Close, On_Close'Access),
          Gtk_New (File & (-"Close All"), "", null),
