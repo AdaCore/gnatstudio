@@ -462,6 +462,10 @@ package body Glide_Kernel.Modules is
          Parent_Menu := null;
       else
          Parent_Menu := Gtk_Menu (Get_Submenu (Parent));
+         if Parent_Menu = null then
+            Gtk_New (Parent_Menu);
+            Set_Submenu (Parent, Parent_Menu);
+         end if;
       end if;
 
       if Item /= null then
