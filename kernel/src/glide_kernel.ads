@@ -391,7 +391,7 @@ package Glide_Kernel is
    type Module_Command_Function is access function
      (Kernel  : access Kernel_Handle_Record'Class;
       Command : String;
-      Args    : String_List_Utils.String_List.List) return String;
+      Args    : GNAT.OS_Lib.Argument_List) return String;
    --  A function called when an interactive command is issued.
    --  Command is the command to be issued with parameters Args.
    --  This function must NOT modify of free the contents of Args.
@@ -675,7 +675,10 @@ private
 
    type Command_Information is record
       Command         : GNAT.OS_Lib.String_Access;
-      Help            : GNAT.OS_Lib.String_Access;
+      Usage           : GNAT.OS_Lib.String_Access;
+      Description     : GNAT.OS_Lib.String_Access;
+      Minimum_Args    : Natural;
+      Maximum_Args    : Natural;
       Command_Handler : Module_Command_Function;
    end record;
 

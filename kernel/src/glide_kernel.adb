@@ -958,7 +958,8 @@ package body Glide_Kernel is
    procedure Free (X : in out Command_Information) is
    begin
       Free (X.Command);
-      Free (X.Help);
+      Free (X.Usage);
+      Free (X.Description);
    end Free;
 
    procedure Free (Module : in out Module_ID) is
