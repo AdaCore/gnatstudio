@@ -1,0 +1,28 @@
+<?xml version="1.0" ?>
+
+<!--  This file adds support for the gnatstub utility.
+      This external tool creates the Ada body from an Ada spec -->
+
+<gnatstub>
+   <action name="Generate body" output="none" >
+      <!-- This action only applies to Ada files -->
+      <filter language="ada" 
+              error="Body generation for non Ada files not yet supported" />
+
+      <!-- Generate and load the body -->
+      <shell>save_windows</shell>
+      <shell>scenario_variables_cmd_line -X</shell>
+      <external output="" >gnat stub -P%pp %1 %F %d</external>
+      <shell>File %F</shell>
+      <shell>File.other_file %1</shell>
+      <shell>File.name %1</shell>
+      <shell>edit %1</shell>
+   </action>
+
+   <Submenu>
+     <Title>Edit</Title>
+     <menu action="Generate body" before="Unit Testing" >
+        <Title>Generate Body</Title>
+     </menu>
+   </Submenu>
+</gnatstub>
