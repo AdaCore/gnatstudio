@@ -661,8 +661,8 @@ package body Debugger is
       declare
          S : constant String := Expect_Out (Get_Process (Debugger));
       begin
-         Send_Internal_Post (Debugger, Cmd, Mode);
          Main.Locked := False;
+         Send_Internal_Post (Debugger, Cmd, Mode);
 
          if Need_To_Strip_CR then
             return Strip_CR (S);
