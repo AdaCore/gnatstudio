@@ -1045,13 +1045,14 @@ package body Src_Editor_Module is
             end if;
          end;
 
-      elsif Command = "cursor_set_line" then
+      elsif Command = "cursor_set_position" then
          declare
-            File  : constant Virtual_File :=
+            File   : constant Virtual_File :=
               Create (Nth_Arg (Data, 1), Kernel);
-            Child : constant MDI_Child := Find_Editor (Kernel, File);
-            Line  : constant Editable_Line_Type :=
+            Child  : constant MDI_Child := Find_Editor (Kernel, File);
+            Line   : constant Editable_Line_Type :=
               Editable_Line_Type (Integer'(Nth_Arg (Data, 2)));
+            Column : Natural := Nth_Arg (Data, 3, Default => 0);
          begin
             if Child = null then
                Set_Error_Msg
@@ -1059,9 +1060,37 @@ package body Src_Editor_Module is
                     -("Attempting to set cursor position for non open file : ")
                   & Base_Name (File));
             else
+               if Column = 0 then
+                  --  Column has not been specified, set it to the first non
+                  --  white space character.
+
+                  declare
+                     Chars : constant String :=
+                       Get_Chars
+                         (Get_Buffer (Source_Box (Get_Widget (Child)).Editor),
+                          Line);
+                  begin
+                     --  Set the column to 1, if line is empty we want to set
+                     --  the cursor on the first column.
+
+                     Column := 1;
+
+                     for K in Chars'Range loop
+                        Column := K;
+                        exit when Chars (K) /= ' '
+                          and then Chars (K) /= ASCII.HT;
+                     end loop;
+
+                     if Column /= 1 then
+                        --  Adjust column number.
+                        Column := Column - Chars'First + 1;
+                     end if;
+                  end;
+               end if;
+
                Set_Cursor_Position
                  (Get_Buffer (Source_Box (Get_Widget (Child)).Editor),
-                  Line, 1);
+                  Line, Column);
             end if;
          end;
 
@@ -3745,12 +3774,13 @@ package body Src_Editor_Module is
 
       Register_Command
         (Kernel,
-         Command      => "cursor_set_line",
-         Params       => "(file, integer)",
+         Command      => "cursor_set_position",
+         Params       => "(file, line, [column])",
          Description  =>
-           -"Set cursor to line in buffer file.",
+           -("Set cursor to position line/column in buffer file. Default "
+             & " column, if not specified, is 1."),
          Minimum_Args => 2,
-         Maximum_Args => 2,
+         Maximum_Args => 3,
          Handler      => Edit_Command_Handler'Access);
 
       Register_Command
