@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
---                   GVD - The GNU Visual Debugger                   --
+--                               G P S                               --
 --                                                                   --
 --                      Copyright (C) 2000-2005                      --
---                             ACT-Europe                            --
+--                              AdaCore                              --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -894,16 +894,34 @@ package body GUI_Utils is
       Model : access Gtk.Tree_Model.Gtk_Tree_Model_Record'Class;
       Event : Gdk_Event) return Gtk_Tree_Iter
    is
+      Iter : Gtk_Tree_Iter;
+      Col  : Gtk_Tree_View_Column;
+   begin
+      Coordinates_For_Event (Tree, Model, Event, Iter, Col);
+      return Iter;
+   end Find_Iter_For_Event;
+
+   ---------------------------
+   -- Coordinates_For_Event --
+   ---------------------------
+
+   procedure Coordinates_For_Event
+     (Tree   : access Gtk.Tree_View.Gtk_Tree_View_Record'Class;
+      Model  : access Gtk.Tree_Model.Gtk_Tree_Model_Record'Class;
+      Event  : Gdk.Event.Gdk_Event;
+      Iter   : out Gtk.Tree_Model.Gtk_Tree_Iter;
+      Column : out Gtk.Tree_View_Column.Gtk_Tree_View_Column)
+   is
       X         : Gdouble;
       Y         : Gdouble;
       Buffer_X  : Gint;
       Buffer_Y  : Gint;
       Row_Found : Boolean;
       Path      : Gtk_Tree_Path;
-      Column    : Gtk_Tree_View_Column := null;
-      Iter      : Gtk_Tree_Iter := Null_Iter;
       N_Model   : Gtk_Tree_Model;
    begin
+      Column := null;
+
       if Event /= null
         and then Get_Event_Type (Event) in Button_Press .. Button_Release
       then
@@ -921,7 +939,7 @@ package body GUI_Utils is
             Row_Found);
 
          if Path = null then
-            return Iter;
+            return;
          end if;
 
          Iter := Get_Iter (Model, Path);
@@ -929,9 +947,7 @@ package body GUI_Utils is
       else
          Get_Selected (Get_Selection (Tree), N_Model, Iter);
       end if;
-
-      return Iter;
-   end Find_Iter_For_Event;
+   end Coordinates_For_Event;
 
    --------------------------
    -- Search_Entity_Bounds --
