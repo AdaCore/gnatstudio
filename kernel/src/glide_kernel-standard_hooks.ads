@@ -30,6 +30,20 @@ with Commands;
 
 package Glide_Kernel.Standard_Hooks is
 
+   -----------
+   -- Hooks --
+   -----------
+
+   type File_Hooks_Args is new Hooks_Data with record
+      File : VFS.Virtual_File := VFS.No_File;
+   end record;
+   --  Base type for hooks that take a single file in parameter
+
+   type Context_Hooks_Args is new Hooks_Data with record
+      Context : Glide_Kernel.Selection_Context_Access;
+   end record;
+   --  Base type for hooks that take a single context in parameter
+
    ------------------
    -- Action hooks --
    ------------------
@@ -70,14 +84,6 @@ package Glide_Kernel.Standard_Hooks is
    --  If New_File is true, new files will be created if needed.
    --  If Force_Reload is True, this forces a reload of the file if there is
    --  already an open editor for it.
-
-   function Get_Name (Data : Source_File_Hooks_Args) return String;
-   function Execute_Shell
-     (Script    : access Glide_Kernel.Scripts.Scripting_Language_Record'Class;
-      Command   : String;
-      Hook_Name : String;
-      Data      : Source_File_Hooks_Args) return Boolean;
-   --  See inherited doc
 
    Open_File_Action_Hook : constant String := "open_file_action_hook";
    --  This hook requests the opening of an editor. This could be either an
@@ -144,14 +150,6 @@ package Glide_Kernel.Standard_Hooks is
    --  signal until all lines for this column are filled.
    --  If File is No_File, then the column will be created for all open files.
    --  If Normalize is True, the file name will be normalized.
-
-   function Get_Name (Data : File_Line_Hooks_Args) return String;
-   function Execute_Shell
-     (Script    : access Glide_Kernel.Scripts.Scripting_Language_Record'Class;
-      Command   : String;
-      Hook_Name : String;
-      Data      : File_Line_Hooks_Args) return Boolean;
-   --  See inherited doc
 
    File_Line_Action_Hook : constant String := "file_line_action_hook";
    --  Requests dealing with the column on the side of the editors
@@ -231,14 +229,6 @@ package Glide_Kernel.Standard_Hooks is
       end record;
    --  Identifier is the identity of the emitted.
 
-   function Get_Name (Data : Location_Hooks_Args) return String;
-   function Execute_Shell
-     (Script    : access Glide_Kernel.Scripts.Scripting_Language_Record'Class;
-      Command   : String;
-      Hook_Name : String;
-      Data      : Location_Hooks_Args) return Boolean;
-   --  See inherited doc
-
    Location_Action_Hook : constant String := "location_action_hook";
 
    procedure Add_Location_Action
@@ -275,14 +265,6 @@ package Glide_Kernel.Standard_Hooks is
       Anchor            : String (1 .. Anchor_Length);
    end record;
 
-   function Get_Name (Data : Html_Hooks_Args) return String;
-   function Execute_Shell
-     (Script    : access Glide_Kernel.Scripts.Scripting_Language_Record'Class;
-      Command   : String;
-      Hook_Name : String;
-      Data      : Html_Hooks_Args) return Boolean;
-   --  See inherited doc
-
    Html_Action_Hook : constant String := "html_action_hook";
 
    procedure Open_Html
@@ -306,14 +288,6 @@ package Glide_Kernel.Standard_Hooks is
       Diff_File : VFS.Virtual_File;
    end record;
 
-   function Get_Name (Data : Diff_Hooks_Args) return String;
-   function Execute_Shell
-     (Script    : access Glide_Kernel.Scripts.Scripting_Language_Record'Class;
-      Command   : String;
-      Hook_Name : String;
-      Data      : Diff_Hooks_Args) return Boolean;
-   --  See inherited doc
-
    Diff_Action_Hook : constant String := "diff_action_hook";
 
    procedure Display_Differences
@@ -325,5 +299,62 @@ package Glide_Kernel.Standard_Hooks is
    --  Either Orig_File or New_File can be null (but not both), in which
    --  case, the contents of the file is computed from the other file and the
    --  diff file.
+
+private
+   function Get_Name (Data : File_Hooks_Args) return String;
+   function Execute_Shell
+     (Script    : access Glide_Kernel.Scripts.Scripting_Language_Record'Class;
+      Command   : String;
+      Hook_Name : String;
+      Data      : File_Hooks_Args) return Boolean;
+   --  See inherited doc
+
+   function Get_Name (Data : Context_Hooks_Args) return String;
+   function Execute_Shell
+     (Script    : access Glide_Kernel.Scripts.Scripting_Language_Record'Class;
+      Command   : String;
+      Hook_Name : String;
+      Data      : Context_Hooks_Args) return Boolean;
+   --  See inherited doc
+
+   function Get_Name (Data : File_Line_Hooks_Args) return String;
+   function Execute_Shell
+     (Script    : access Glide_Kernel.Scripts.Scripting_Language_Record'Class;
+      Command   : String;
+      Hook_Name : String;
+      Data      : File_Line_Hooks_Args) return Boolean;
+   --  See inherited doc
+
+   function Get_Name (Data : Source_File_Hooks_Args) return String;
+   function Execute_Shell
+     (Script    : access Glide_Kernel.Scripts.Scripting_Language_Record'Class;
+      Command   : String;
+      Hook_Name : String;
+      Data      : Source_File_Hooks_Args) return Boolean;
+   --  See inherited doc
+
+   function Get_Name (Data : Location_Hooks_Args) return String;
+   function Execute_Shell
+     (Script    : access Glide_Kernel.Scripts.Scripting_Language_Record'Class;
+      Command   : String;
+      Hook_Name : String;
+      Data      : Location_Hooks_Args) return Boolean;
+   --  See inherited doc
+
+   function Get_Name (Data : Diff_Hooks_Args) return String;
+   function Execute_Shell
+     (Script    : access Glide_Kernel.Scripts.Scripting_Language_Record'Class;
+      Command   : String;
+      Hook_Name : String;
+      Data      : Diff_Hooks_Args) return Boolean;
+   --  See inherited doc
+
+   function Get_Name (Data : Html_Hooks_Args) return String;
+   function Execute_Shell
+     (Script    : access Glide_Kernel.Scripts.Scripting_Language_Record'Class;
+      Command   : String;
+      Hook_Name : String;
+      Data      : Html_Hooks_Args) return Boolean;
+   --  See inherited doc
 
 end Glide_Kernel.Standard_Hooks;
