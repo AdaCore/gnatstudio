@@ -42,6 +42,8 @@ New features in GPS 2.0.0
 
 - Custom languages can specify a regular expression for recognizing comments
 
+- D223-016 better handling of overloaded entities in 'find all references'
+
 - D204-015 Separator between switches and arguments can be specified in the
   XML files
 
