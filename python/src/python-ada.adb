@@ -36,8 +36,10 @@ package body Python.Ada is
    pragma Convention (C, MethodDef_Access);
 
    function PyCFunction_New
-     (MethodDef : MethodDef_Access; Self : PyObject) return PyObject;
-   pragma Import (C, PyCFunction_New, "PyCFunction_New");
+     (MethodDef : MethodDef_Access;
+      Self      : PyObject;
+      Module    : PyObject := null) return PyObject;
+   pragma Import (C, PyCFunction_New, "PyCFunction_NewEx");
    --  Create a new callable object, which, when called from python, will call
    --  the Ada subprogram.
    --  This should be used only for standard functions, not for object methods
@@ -136,7 +138,8 @@ package body Python.Ada is
       Self  : PyObject := null)
    is
       C_Func  : constant PyObject :=
-        PyCFunction_New (new PyMethodDef'(Func), Self);
+        PyCFunction_New (new PyMethodDef'(Func), Self,
+                         PyString_FromString ("GPS"));
       C_Meth  : constant PyObject := PyMethod_New (C_Func, null, Class);
       Ignored : Integer;
       pragma Unreferenced (Ignored);
