@@ -719,7 +719,7 @@ package body Gtkada.MDI is
       end if;
 
       if M.Docks_Size (Left) /= 0 then
-         Alloc.Width := Handle_Size;
+         Alloc.Width := Allocation_Int (Handle_Size);
          Alloc.X := M.Docks_Size (Left);
 
          if M.Priorities (Top) <= M.Priorities (Left)
@@ -736,7 +736,7 @@ package body Gtkada.MDI is
            and then M.Priorities (Bottom) /= 0
          then
             Alloc.Height := Alloc.Height
-              - (M.Docks_Size (Bottom) + Handle_Size);
+              - Allocation_Int (M.Docks_Size (Bottom) + Handle_Size);
          end if;
 
          Show (M.Handles (Left));
@@ -748,7 +748,7 @@ package body Gtkada.MDI is
       end if;
 
       if M.Docks_Size (Right) /= 0 then
-         Alloc.Width := Handle_Size;
+         Alloc.Width := Allocation_Int (Handle_Size);
          Alloc.X := MDI_Width - M.Docks_Size (Right) - Handle_Size;
 
          if M.Priorities (Top) <= M.Priorities (Right)
@@ -765,7 +765,7 @@ package body Gtkada.MDI is
            and then M.Priorities (Bottom) /= 0
          then
             Alloc.Height := Alloc.Height
-              - (M.Docks_Size (Bottom) + Handle_Size);
+              - Allocation_Int (M.Docks_Size (Bottom) + Handle_Size);
          end if;
 
          Show (M.Handles (Right));
@@ -777,7 +777,7 @@ package body Gtkada.MDI is
       end if;
 
       if M.Docks_Size (Top) /= 0 then
-         Alloc.Height := Handle_Size;
+         Alloc.Height := Allocation_Int (Handle_Size);
          Alloc.Y := M.Docks_Size (Top);
 
          if M.Priorities (Top) < M.Priorities (Left)
@@ -794,7 +794,7 @@ package body Gtkada.MDI is
            and then M.Docks_Size (Right) /= 0
          then
             Alloc.Width := Alloc.Width
-              - (M.Docks_Size (Right) + Handle_Size);
+              - Allocation_Int (M.Docks_Size (Right) + Handle_Size);
          end if;
 
          Show (M.Handles (Top));
@@ -806,7 +806,7 @@ package body Gtkada.MDI is
       end if;
 
       if M.Docks_Size (Bottom) /= 0 then
-         Alloc.Height := Handle_Size;
+         Alloc.Height := Allocation_Int (Handle_Size);
          Alloc.Y :=
            Gint (MDI_Height - M.Docks_Size (Bottom) - Handle_Size);
 
@@ -824,7 +824,7 @@ package body Gtkada.MDI is
            and then M.Docks_Size (Right) /= 0
          then
             Alloc.Width := Alloc.Width
-              - (M.Docks_Size (Right) + Handle_Size);
+              - Allocation_Int (M.Docks_Size (Right) + Handle_Size);
          end if;
 
          Show (M.Handles (Bottom));
@@ -932,7 +932,7 @@ package body Gtkada.MDI is
            and then M.Docks_Size (Bottom) /= 0
          then
             Alloc.Height := Alloc.Height
-              - Allocation_Int (M.Docks_Size (Bottom)) - Handle_Size;
+              - Allocation_Int (M.Docks_Size (Bottom) + Handle_Size);
          end if;
 
          Size_Allocate (M.Docks (Left), Alloc);
@@ -957,7 +957,7 @@ package body Gtkada.MDI is
            and then M.Docks_Size (Bottom) /= 0
          then
             Alloc.Height := Alloc.Height
-              - Allocation_Int (M.Docks_Size (Bottom)) - Handle_Size;
+              - Allocation_Int (M.Docks_Size (Bottom) + Handle_Size);
          end if;
 
          Size_Allocate (M.Docks (Right), Alloc);
@@ -982,7 +982,7 @@ package body Gtkada.MDI is
            and then M.Docks_Size (Right) /= 0
          then
             Alloc.Width := Alloc.Width
-              - Allocation_Int (M.Docks_Size (Right)) - Handle_Size;
+              - Allocation_Int (M.Docks_Size (Right) + Handle_Size);
          end if;
 
          Size_Allocate (M.Docks (Top), Alloc);
@@ -1007,7 +1007,7 @@ package body Gtkada.MDI is
            and then M.Docks_Size (Right) /= 0
          then
             Alloc.Width := Alloc.Width
-              - Allocation_Int (M.Docks_Size (Right)) - Handle_Size;
+              - Allocation_Int (M.Docks_Size (Right) + Handle_Size);
          end if;
 
          Size_Allocate (M.Docks (Bottom), Alloc);
