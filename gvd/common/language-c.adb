@@ -89,6 +89,7 @@ package body Language.Debugger.C is
       --  Do we have a keyword ?
 
       Match (Keywords, Buffer, Matched);
+
       if Matched (0) /= No_Match then
          Next_Char := Matched (0).Last + 1;
          Entity := Keyword_Text;
@@ -143,7 +144,7 @@ package body Language.Debugger.C is
          return;
       end if;
 
-      --  If no, skip to the next meaningfull character
+      --  If no, skip to the next meaningful character
 
       Next_Char := Buffer'First + 1;
 
@@ -173,6 +174,7 @@ package body Language.Debugger.C is
             Next_Char := Next_Char + 1;
          end if;
       end if;
+
       Entity := Normal_Text;
    end Looking_At;
 

@@ -179,11 +179,13 @@ package body Language.Debugger.Ada is
       if Buffer (Buffer'First) = '"' then
          Entity := String_Text;
          Next_Char := Buffer'First + 1;
+
          while Next_Char <= Buffer'Last
            and then Buffer (Next_Char) /= '"'
          loop
             Next_Char := Next_Char + 1;
          end loop;
+
          Next_Char := Next_Char + 1;
          return;
       end if;
@@ -207,6 +209,7 @@ package body Language.Debugger.Ada is
       if not Is_Letter (Buffer (Buffer'First)) then
          Entity := Normal_Text;
          Next_Char := Buffer'First + 1;
+
          while Next_Char <= Buffer'Last
            and then Buffer (Next_Char) /= ' '
            and then Buffer (Next_Char) /= ASCII.LF
@@ -218,12 +221,14 @@ package body Language.Debugger.Ada is
          loop
             Next_Char := Next_Char + 1;
          end loop;
+
          return;
       end if;
 
       --  Do we have a keyword ?
 
       Match (Keywords, Buffer, Matched);
+
       if Matched (0) /= No_Match then
          Next_Char := Matched (0).Last + 1;
          Entity := Keyword_Text;
@@ -237,6 +242,7 @@ package body Language.Debugger.Ada is
       Entity := Normal_Text;
 
       --  Skip the current word
+
       while Next_Char <= Buffer'Last
         and then (Is_Letter (Buffer (Next_Char))
                   or else Buffer (Next_Char) = '_')
