@@ -137,7 +137,7 @@ package body VCS.CVS is
       Match  : Expect_Match := 1;
    begin
       loop
-         Expect (D.Rep.Fd, Match, "\n",  1);
+         Expect (D.Rep.Fd, Match, "\n", 1);
 
          case Match is
             when Expect_Timeout =>
@@ -220,7 +220,8 @@ package body VCS.CVS is
          Non_Blocking_Spawn (Rep.Fd,
                              String_List.Head (New_Command.Command),
                              Args,
-                             Err_To_Out => True);
+                             Err_To_Out => True,
+                             Buffer_Size => 0);
 
          for J in Args'Range loop
             Free (Args (J));
@@ -599,20 +600,23 @@ package body VCS.CVS is
         and then not End_Of_File (File)
       loop
          Get_Line (File, Buffer, Last);
-         Index := 2;
-         Skip_To_Char (Buffer (1 .. Last), Index, '/');
-         Next_Index := Index + 1;
-         Skip_To_Char (Buffer (1 .. Last), Next_Index, '/');
+         if Buffer (1) = '/' then
+            Index := 2;
+            Skip_To_Char (Buffer (1 .. Last), Index, '/');
+            Next_Index := Index + 1;
+            Skip_To_Char (Buffer (1 .. Last), Next_Index, '/');
 
-         Append (Current_Status.File_Name, New_Dir & Buffer (2 .. Index - 1));
-         Append (Current_Status.Working_Revision,
-                 Buffer (Index + 1 .. Next_Index - 1));
+            Append (Current_Status.File_Name,
+                    New_Dir & Buffer (2 .. Index - 1));
+            Append (Current_Status.Working_Revision,
+                    Buffer (Index + 1 .. Next_Index - 1));
 
-         if Index + 1 < Next_Index - 1 then
-            File_Status_List.Append (Result, Current_Status);
-         else
-            Free (Current_Status.File_Name);
-            Free (Current_Status.Working_Revision);
+            if Index + 1 < Next_Index - 1 then
+               File_Status_List.Append (Result, Current_Status);
+            else
+               Free (Current_Status.File_Name);
+               Free (Current_Status.Working_Revision);
+            end if;
          end if;
 
          Current_Status := Blank_Status;
