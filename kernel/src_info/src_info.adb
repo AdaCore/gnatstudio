@@ -53,6 +53,8 @@ package body Src_Info is
    procedure Free is new
      Unchecked_Deallocation (File_Info_Ptr_Node, File_Info_Ptr_List);
    procedure Free is new
+     Unchecked_Deallocation (File_Location_Node, File_Location_List);
+   procedure Free is new
      Unchecked_Deallocation
        (Dependency_File_Info_Node, Dependency_File_Info_List);
    --  Memory deallocation routines.
@@ -417,6 +419,18 @@ package body Src_Info is
    procedure Destroy (FL : in out File_Location) is
    begin
       Destroy (FL.File);
+   end Destroy;
+
+   procedure Destroy (FL : in out File_Location_List) is
+      Current_Node : File_Location_List := FL;
+      Next_Node    : File_Location_List;
+   begin
+      while Current_Node /= null loop
+         Next_Node := Current_Node.Next;
+         Destroy (Current_Node.Value);
+         Free (Current_Node);
+         Current_Node := Next_Node;
+      end loop;
    end Destroy;
 
    procedure Destroy (ER : in out E_Reference) is

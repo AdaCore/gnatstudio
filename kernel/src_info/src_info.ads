@@ -564,6 +564,13 @@ private
    --  The fields Line and Column are chosen so that this constant is different
    --  from Null_File_Location.
 
+   type File_Location_Node;
+   type File_Location_List is access File_Location_Node;
+   type File_Location_Node is record
+      Value : File_Location;
+      Next  : File_Location_List;
+   end record;
+
    function "=" (Left, Right : File_Location) return Boolean;
    --  A redefined equality function that compares uses the redefined equality
    --  for the source file field.
@@ -597,12 +604,15 @@ private
       Location        : File_Location;
       Kind            : E_Kind;
 
-      Parent_Location : File_Location;
+      Parent_Location : File_Location_List;
       --  Point to various information about the entity:
       --   - The type we derive from for a type
       --   - The type of a variable
       --  This field can be set to Predefined_Entity_Location, for instance
       --  for a C's typedef that redefined int ("typedef int myint;").
+      --
+      --  Note that multiple parents can be set in the case of C++ classes and
+      --  multiple inheritance.
 
       Scope           : E_Scope;
       End_Of_Scope    : E_Reference := No_Reference;
@@ -637,7 +647,7 @@ private
      (Name                  => null,
       Location              => Null_File_Location,
       Kind                  => E_Kind'First,
-      Parent_Location       => Null_File_Location,
+      Parent_Location       => null,
       Scope                 => Local_Scope,
       End_Of_Scope          => No_Reference,
       Rename                => Null_File_Location,
@@ -936,6 +946,9 @@ private
 
    procedure Destroy (FL : in out File_Location);
    --  Deallocate the memory used by the given File_Location.
+
+   procedure Destroy (FL : in out File_Location_List);
+   --  Deallocate the memory used by the given File_Location_List.
 
    procedure Destroy (ER : in out E_Reference);
    --  Destroy the memory used by the given E_Reference.

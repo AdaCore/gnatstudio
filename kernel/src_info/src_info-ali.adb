@@ -1287,16 +1287,17 @@ package body Src_Info.ALI is
       end if;
 
       if Xref_Ent.Tref_File_Num /= No_Sdep_Id then
-         Decl.Parent_Location :=
-           (File   => Copy (Sfiles (Xref_Ent.Tref_File_Num)),
-            Line   => Positive (Xref_Ent.Tref_Line),
-            Column => Positive (Xref_Ent.Tref_Col));
+         Decl.Parent_Location := new File_Location_Node'
+           (Value => (File   => Copy (Sfiles (Xref_Ent.Tref_File_Num)),
+                      Line   => Positive (Xref_Ent.Tref_Line),
+                      Column => Positive (Xref_Ent.Tref_Col)),
+            Next  => Decl.Parent_Location);
 
          --  This field no longer exists, but we might want it some day.
          --  Decl.Parent_Kind := Char_To_E_Kind (Xref_Ent.Tref_Type);
 
       else
-         Decl.Parent_Location := Null_File_Location;
+         Decl.Parent_Location := null;
          --  Decl.Parent_Kind := E_Kind'First;
       end if;
 

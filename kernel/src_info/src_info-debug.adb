@@ -221,20 +221,27 @@ package body Src_Info.Debug is
    ------------------------
 
    procedure Dump_E_Declaration (ED : E_Declaration) is
+      Fl : File_Location_List;
    begin
       --  Dump declaration position, kind, scope and name
       Dump_Pos_And_E_Kind (ED.Location, ED.Kind);
       Put (E_Scope_To_Char (ED.Scope) & ED.Name.all & ' ');
+
       --  If there is a parent declaration, print it as well
-      if Is_File_Location (ED.Parent_Location) then
-         Put ('<');
-         if ED.Parent_Location.File /= ED.Location.File then
-            Dump_Source_File (ED.Parent_Location.File);
-            Put ('|');
+      Fl := ED.Parent_Location;
+      while Fl /= null loop
+         if Is_File_Location (Fl.Value) then
+            Put ('<');
+            if Fl.Value.File /= ED.Location.File then
+               Dump_Source_File (Fl.Value.File);
+               Put ('|');
+            end if;
+            Dump_Pos_And_E_Kind (Fl.Value);
+            Put ('>');
          end if;
-         Dump_Pos_And_E_Kind (ED.Parent_Location);
-         Put ('>');
-      end if;
+         Fl := Fl.Next;
+      end loop;
+
       --  If there is an end of scope reference, print it too.
       if Is_File_Location (ED.End_Of_Scope.Location) then
          Put (" End=");
