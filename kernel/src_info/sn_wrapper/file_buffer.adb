@@ -73,8 +73,8 @@ package body File_Buffer is
          if FD /= Invalid_FD then
             File_Buffer_Length := Integer (File_Length (FD));
             --  reserve extra (50%) space
-            --  File_Buffer_Length :=
-            --  File_Buffer_Length + File_Buffer_Length / 2;
+            File_Buffer_Length :=
+              File_Buffer_Length + File_Buffer_Length / 2;
             File_Buffer := new String (1 .. File_Buffer_Length);
          end if;
       end;
