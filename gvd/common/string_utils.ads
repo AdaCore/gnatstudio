@@ -135,9 +135,6 @@ package String_Utils is
    --  Return S with a casing matching Ada style: upper case after an
    --  underscore or a dot.
 
-   procedure Lower_Case (S : in out String);
-   --  Return S with all characters lowered.
-
    function Strip_Quotes (S : in String) return String;
    --  Remove the quotes and the spaces at the beginning and end of S.
 
