@@ -30,7 +30,7 @@ package Pixmaps_Vdiff2 is
    unhighlight_diff_xpm : aliased Pixmap_Array;
    close_diff_xpm       : aliased Pixmap_Array;
    red_button_xpm       : aliased Pixmap_Array;
-   green_button_xpm       : aliased Pixmap_Array;
+   green_button_xpm     : aliased Pixmap_Array;
 
 private
    pragma Import (C, up_diff_xpm, "up_diff_xpm");
