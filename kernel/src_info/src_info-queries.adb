@@ -674,8 +674,10 @@ package body Src_Info.Queries is
          if Ref /= null then
             Location := Ref.Value.Location;
          else
-            Location := Null_File_Location;
-            Status   := No_Body_Entity_Found;
+            --  Return the location of the reference, since there is no body.
+            --  It happens with Ada for instance when a subprogram has no
+            --  separate body (BA28-004)
+            Location := Decl.Declaration.Location;
          end if;
       else
          Trace (Me, "Couldn't find a valid xref for " & Entity_Name
