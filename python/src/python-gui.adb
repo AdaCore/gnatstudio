@@ -174,6 +174,7 @@ package body Python.GUI is
       Iter   : Gtk_Text_Iter;
    begin
       Trace (Me_Out, Text);
+
       if not Interpreter.Hide_Output then
          if Console /= null then
             Insert (Console, Text, Add_LF => False, Highlight => Highlight);
