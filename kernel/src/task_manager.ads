@@ -50,7 +50,7 @@ package Task_Manager is
    --  The command will be executed at once.
 
 private
-   type Queue_Status is (Running, Paused, Completed);
+   type Queue_Status is (Not_Started, Running, Paused, Completed);
 
    type Task_Queue_Record is record
       Status   : Queue_Status := Running;
