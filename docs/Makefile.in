@@ -109,7 +109,7 @@ clean-temp-files:
 	-$(RM) *.vr
 
 clean: clean-temp-files
-	-$(RM) gps-tutorial*.html gps.html gps_*.html gps.pdf gps.txt stamp-*
+	-$(RM) gps-tutorial*.html gps.html gps_*.html gps.pdf gps.dvi gps.txt stamp-*
 	-${RM} -rf gps/ gps_pg/
 
 mostlyclean: clean
