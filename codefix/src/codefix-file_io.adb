@@ -1,6 +1,8 @@
 with Ada.Text_IO; use Ada.Text_IO;
 with Ada.Unchecked_Deallocation;
 
+with OS_Utils; use OS_Utils;
+
 package body Codefix.File_Io is
 
    ----------
@@ -9,9 +11,7 @@ package body Codefix.File_Io is
 
    procedure Free (This : in out File_Interface) is
    begin
-      Free (This.Files.all);
-      Free (This.Files);
-      Free (This.Number_Files);
+      Free (This.Content);
    end Free;
 
    ---------
@@ -20,21 +20,12 @@ package body Codefix.File_Io is
 
    function Get
      (This   : File_Interface;
-      Cursor : File_Cursor'Class;
+      Cursor : Text_Cursor'Class;
       Len    : Natural)
      return String is
 
-      File : Ptr_File_Loaded;
-
    begin
-      File := Get_File_Loaded (This, Cursor.File_Name.all);
-
-      if File = null then
-         File := new File_Loaded;
-         Load (This, File, Cursor.File_Name.all);
-      end if;
-
-      return Data (Get_Line_Node (File.all, Cursor.Line)).all
+      return Data (Get_Line_Node (This, Cursor.Line)).all
         (Cursor.Col .. Cursor.Col + Len - 1);
    end Get;
 
@@ -44,21 +35,13 @@ package body Codefix.File_Io is
 
    function Get_Line
      (This   : File_Interface;
-      Cursor : File_Cursor'Class)
+      Cursor : Text_Cursor'Class)
       return String is
 
       Element : Dynamic_String;
-      File    : Ptr_File_Loaded;
 
    begin
-      File := Get_File_Loaded (This, Cursor.File_Name.all);
-
-      if File = null then
-         File := new File_Loaded;
-         Load (This, File, Cursor.File_Name.all);
-      end if;
-
-      Element := Data (Get_Line_Node (File.all, Cursor.Line));
+      Element := Data (Get_Line_Node (This, Cursor.Line));
       return Element.all (Cursor.Col .. Element.all'Length);
    end Get_Line;
 
@@ -68,27 +51,17 @@ package body Codefix.File_Io is
 
    procedure Replace
      (This      : in out File_Interface;
-      Cursor    : File_Cursor'Class;
+      Cursor    : Text_Cursor'Class;
       Len       : Natural;
       New_Value : String) is
 
       Element  : Dynamic_String;
-      File     : Ptr_File_Loaded;
-
-
 
    begin
-
-      File := Get_File_Loaded (This, Cursor.File_Name.all);
-
-      if File = null then
-         File := new File_Loaded;
-         Load (This, File, Cursor.File_Name.all);
-      end if;
-      Element := Data (Get_Line_Node (File.all, Cursor.Line));
+      Element := Data (Get_Line_Node (This, Cursor.Line));
 
       Set_Data
-       (Get_Line_Node (File.all, Cursor.Line),
+       (Get_Line_Node (This, Cursor.Line),
         new String '(Element.all (1 .. Cursor.Col - 1) &
                      New_Value &
                      Element.all (Cursor.Col + Len .. Element.all'Length)));
@@ -101,25 +74,17 @@ package body Codefix.File_Io is
 
    procedure Add_Line
      (This        : in out File_Interface;
-      Cursor      : File_Cursor'Class;
+      Cursor      : Text_Cursor'Class;
       New_Line    : String) is
-
-      File : Ptr_File_Loaded;
-
    begin
-      File := Get_File_Loaded (This, Cursor.File_Name.all);
 
-      if File = null then
-         File := new File_Loaded;
-         Load (This, File, Cursor.File_Name.all);
-      end if;
 
       if Cursor.Line = 0 then
-         Prepend (File.Content, new String'(New_Line));
+         Prepend (This.Content, new String'(New_Line));
       else
          Append
-           (File.Content,
-            Get_Line_Node (File.all, Cursor.Line),
+           (This.Content,
+            Get_Line_Node (This, Cursor.Line),
             new String'(New_Line));
       end if;
 
@@ -130,48 +95,25 @@ package body Codefix.File_Io is
    -----------------
 
    procedure Delete_Line
-     (This : in out File_Interface;
-      Cursor : File_Cursor'Class) is
+     (This   : in out File_Interface;
+      Cursor : Text_Cursor'Class) is
 
-      File        : Ptr_File_Loaded;
       Delete_Node : List_Node;
 
    begin
-      File := Get_File_Loaded (This, Cursor.File_Name.all);
-
-      if File = null then
-         File := new File_Loaded;
-         Load (This, File, Cursor.File_Name.all);
-      end if;
-
-      Delete_Node := Get_Line_Node (File.all, Cursor.Line);
+      Delete_Node := Get_Line_Node (This, Cursor.Line);
       Remove_Nodes
-        (File.Content,
-         Prev (File.Content, Delete_Node),
+        (This.Content,
+         Prev (This.Content, Delete_Node),
          Delete_Node);
-
    end Delete_Line;
-
-   ---------------------
-   -- Get_Declaration --
-   ---------------------
-
-   function Get_Declaration
-     (Current_Text : Text_Interface'Class
-      Cursor       : File_Cursor'Class
-      Category     : Language_Category)
-     return Construct_Information is
-   begin
-
-   end Construct_Information;
-
 
    -------------------
    -- Get_Line_Node --
    -------------------
 
    function Get_Line_Node
-     (This : File_Loaded;
+     (This : File_Interface;
       Line : Positive) return List_Str.List_Node is
 
       Current_Node : List_Str.List_Node;
@@ -186,99 +128,95 @@ package body Codefix.File_Io is
    end Get_Line_Node;
 
 
-   ----------
-   -- Load --
-   ----------
+   ----------------
+   -- Initialize --
+   ----------------
 
-   procedure Load
-     (Container : File_Interface;
-      New_File  : Ptr_File_Loaded;
-      Path      : String) is
+   procedure Initialize
+     (This : in out File_Interface;
+      Path : String) is
 
       File     : File_Type;
       Line_Red : Dynamic_String;
 
    begin
-      Affect (New_File.Path, Path);
-      Free (New_File.Content);
       Open (File, In_File, Path);
       while not End_Of_File (File) loop
          Line_Red := null; --  to not to erase the line red before
          Get_Line (File, Line_Red);
-         Append (New_File.Content, Line_Red);
+         Append (This.Content, Line_Red);
       end loop;
-      Container.Number_Files.all := Container.Number_Files.all + 1;
-      Set_Element (Container.Files.all, New_File, Container.Number_Files.all);
       Close (File);
-   end Load;
+   end Initialize;
 
-   ----------
-   -- Save --
-   ----------
+   ---------------
+   -- Read_File --
+   ---------------
 
-   procedure Save (This : File_Interface) is
+   function Read_File
+     (This : File_Interface)
+     return Dynamic_String is
    begin
-      for J in 1 .. This.Number_Files.all loop
-         Save (Get_Element (This.Files.all, J).all);
-      end loop;
-   end Save;
+      return Dynamic_String (Read_File (Get_File_Name (This)));
+   end Read_File;
 
-   ----------
-   -- Save --
-   ----------
+   ------------
+   -- Update --
+   ------------
 
-   procedure Save (This : in out File_Loaded; Path : String := "") is
-      File         : File_Type;
-      Current_Node : List_Str.List_Node;
+   procedure Update (This : File_Interface) is
+      Current_Node : List_Str.List_Node := First (This.Content);
+      Current_File : File_Type;
 
    begin
-      if Path = "" then
-         Open (File, Out_File, This.Path.all);
-      else
-         Create (File, Out_File, Path);
-      end if;
+      Open (Current_File, Out_File, Get_File_Name (This));
 
-
-      Current_Node := First (This.Content);
-      while Current_Node /= Null_Node loop
-         Put_Line (File, Data (Current_Node));
+      while Current_Node /= List_Str.Null_Node loop
+         Put_Line (Current_File, Data (Current_Node).all);
          Current_Node := Next (Current_Node);
       end loop;
 
-      Close (File);
-   end Save;
+      Close (Current_File);
+   end Update;
 
-   ---------------------
-   -- Get_File_Loaded --
-   ---------------------
+   -----------------
+   -- Get_Message --
+   -----------------
 
-   function Get_File_Loaded
-     (This : File_Interface;
-      File_Name : String)
-     return Ptr_File_Loaded is
+   procedure Get_Message
+     (This    : in out Errors_File;
+      Current : out Error_Message) is
+
+      Buffer         : String (1 .. 255);
+      Buffer_Length : Natural;
+
    begin
-      for J in 1 .. This.Number_Files.all loop
-         if Get_Element (This.Files.all, J).Path.all = File_Name then
-            return Get_Element (This.Files.all, J);
-         end if;
-      end loop;
-      return null;
-   end Get_File_Loaded;
-
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (This : in out Ptr_File_Loaded) is
-      procedure Delete is new Ada.Unchecked_Deallocation
-        (File_Loaded,
-         Ptr_File_Loaded);
-   begin
-      if This /= null then
-         Free (This.Content);
-         Free (This.Path);
-         Delete (This);
+      Get_Line (This.File.all, Buffer, Buffer_Length);
+      Initialize (Current, Buffer (1 .. Buffer_Length));
+      if End_Of_File (This.File.all) then
+         Close (This.File.all);
+         This.Is_Open := False;
       end if;
-   end Free;
+   end Get_Message;
+
+   ----------------------
+   -- No_More_Messages --
+   ----------------------
+
+   function No_More_Messages (This : Errors_File) return Boolean is
+   begin
+      return not This.Is_Open or else End_Of_File (This.File.all);
+   end No_More_Messages;
+
+   ----------
+   -- Open --
+   ----------
+
+   procedure Open (This : in out Errors_File; File_Name : String) is
+   begin
+      This.File := new File_Type;
+      Open (This.File.all, In_File, File_Name);
+      This.Is_Open := True;
+   end Open;
 
 end Codefix.File_Io;
