@@ -68,14 +68,34 @@ package Src_Info.Queries is
    ---------------------------
    -- Dependencies requests --
    ---------------------------
-   --  The following subprogram can be used to retrieve information about the
-   --  dependency between files and units in the current project.
-   --    - the name of the unit on which another unit depends
-   --    - the name of the file on which this other unit depends
-   --    - whether the dependency comes from the spec and/or from the body,
-   --      or is implicit.
-   --  In the context of Ada, the Unit_Name represents the package name, and
-   --  the explicit dependencies represent "with" statements.
+
+   type Dependency is private;
+   --  This type contains the following information:
+   --    - Information on the file on which we depend
+   --    - Information on the dependency itself: whether it comes from the spec
+   --      and/or from the body, or is implicit.
+   --  In the context of Ada, explicit dependencies represent "with" statements
+
+   type Dependency_Node;
+   type Dependency_List is access Dependency_Node;
+   type Dependency_Node is record
+      Value : Dependency;
+      Next  : Dependency_List;
+   end record;
+   --  A list of dependencies.
+
+   procedure Destroy (List : in out Dependency_List);
+   --  Destroy the given list, and deallocates all the memory associated.
+   --  Has no effect if List is null.
+
+   function File_Information (Dep : Dependency) return Internal_File;
+   --  Return the information on the file that Dep depends on.
+   --  You mustn't free the returned value, since it points to internal
+   --  data. However, you must keep a copy if you intend to store it somewhere.
+
+   function Dependency_Information (Dep : Dependency) return Dependency_Info;
+   --  Return the information on the dependency itself. This doesn't contain
+   --  information about the files.
 
    type Dependencies_Query_Status is
      (Failure,
@@ -85,11 +105,20 @@ package Src_Info.Queries is
 
    procedure Find_Dependencies
      (Lib_Info     : LI_File_Ptr;
-      Dependencies : out Dependency_File_Info_List;
+      Dependencies : out Dependency_List;
       Status       : out Dependencies_Query_Status);
    --  Return the list of units on which the units associated to the given
    --  LI_File depend.
    --
-   --  You shouldn't deallocate the list returned by this procedure.
+   --  The list returned by this procedure should be deallocated after use.
 
+private
+
+   type Dependency is record
+      File  : Src_Info.Internal_File;
+      Dep   : Src_Info.Dependency_Info;
+   end record;
+
+   pragma Inline (File_Information);
+   pragma Inline (Dependency_Information);
 end Src_Info.Queries;
