@@ -1,5 +1,7 @@
 New features in GPS 1.2.0
 
+- BC09-010 Filtering of duplicate messages in the Locations Tree.
+
 - BB13-008 Confirmation dialog asking to wrap around during a search
 
 - B820-007 Executable names can be changed in the project properties editor
