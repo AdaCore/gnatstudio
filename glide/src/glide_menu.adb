@@ -222,38 +222,38 @@ package body Glide_Menu is
       Project     : constant String := "/_" & (-"Project")  & '/';
       Tools       : constant String := "/_" & (-"Tools")    & '/';
       Debug       : constant String := "/_" & (-"Debug")    & '/';
-      Data_Sub    : constant String := (-"Data")            & '/';
+      Data_Sub    : constant String := (-"_Data")           & '/';
       Window      : constant String := "/_" & (-"Window");
 
    begin
       return new Gtk_Item_Factory_Entry_Array'
-        (Gtk_New (File & (-"Save...") & '/' & (-"Desktop"), "",
+        (Gtk_New (File & (-"S_ave...") & '/' & (-"Desktop"), "",
                   On_Save_Desktop'Access),
          Gtk_New (File & "sep1", Item_Type => Separator),
-         Gtk_New (File & (-"Change Directory..."), "", "",
+         Gtk_New (File & (-"Change _Directory..."), "", "",
                   On_Change_Dir'Access),
-         Gtk_New (File & (-"Close"), "", Stock_Close, On_Close'Access),
-         Gtk_New (File & (-"Close All"), "", null),
+         Gtk_New (File & (-"_Close"), "", Stock_Close, On_Close'Access),
+         Gtk_New (File & (-"Close _All"), "", null),
          Gtk_New (File & "sep2", Item_Type => Separator),
-         Gtk_New (File & (-"Print"), "", Stock_Print, null),
+         Gtk_New (File & (-"_Print"), "", Stock_Print, null),
          Gtk_New (File & "sep3", Item_Type => Separator),
-         Gtk_New (File & (-"Exit"), "<control>Q",
+         Gtk_New (File & (-"_Exit"), "<control>Q",
                   Stock_Quit, On_Exit'Access),
 
-         Gtk_New (Edit & (-"Preferences"), "",
+         Gtk_New (Edit & (-"_Preferences"), "",
                   Stock_Preferences, On_Preferences'Access),
 
-         Gtk_New (Project & (-"Open..."), "", Stock_Open,
+         Gtk_New (Project & (-"_Open..."), "", Stock_Open,
                   On_Open_Project'Access),
          Gtk_New (Project & "sep1", Item_Type => Separator),
 
-         Gtk_New (Debug & Data_Sub & (-"Call Stack"), "", null, Check_Item),
-         Gtk_New (Debug & Data_Sub & (-"Protection Domains"), "", null),
+         Gtk_New (Debug & Data_Sub & (-"_Call Stack"), "", null, Check_Item),
+         Gtk_New (Debug & Data_Sub & (-"_Protection Domains"), "", null),
 
-         Gtk_New (Tools & (-"Code Fixing"), "", null),
-         Gtk_New (Tools & (-"Profile"), "", null),
-         Gtk_New (Tools & (-"Memory Analyzer"), "", null),
-         Gtk_New (Tools & (-"Generate API doc"), "", null),
+         Gtk_New (Tools & (-"_Code Fixing"), "", null),
+         Gtk_New (Tools & (-"_Profile"), "", null),
+         Gtk_New (Tools & (-"_Memory Analyzer"), "", null),
+         Gtk_New (Tools & (-"_Generate API doc"), "", null),
 
          Gtk_New (Window));
    end Glide_Menu_Items;
