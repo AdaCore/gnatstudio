@@ -27,6 +27,23 @@ GNAT_SOURCES= \
   fmap.adb \
   fname.ads \
   fname.adb \
+  g-comlin.ads \
+  g-comlin.adb \
+  g-dirope.ads \
+  g-dirope.adb \
+  g-expect.ads \
+  g-expect.adb \
+  g-os_lib.ads \
+  g-os_lib.adb \
+  g-string.ads \
+  g-string.adb \
+  gpr2make.ads \
+  gpr2make.adb \
+  gprcmd.adb   \
+  bld.ads      \
+  bld.adb      \
+  bld-io.ads   \
+  bld-io.adb   \
   gnatvsn.ads \
   hostparm.ads \
   krunch.ads \
