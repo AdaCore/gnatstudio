@@ -1,0 +1,66 @@
++
+>&2
+
+--  Configure the traces format
+
+DEBUG.COLORS=no
+DEBUG.ABSOLUTE_TIME=yes
+DEBUG.ELAPSED_TIME=no
+DEBUG.STACK_TRACE=no
+DEBUG.LOCATION=no
+DEBUG.ENCLOSING_ENTITY=no
+DEBUG.COUNT=no
+
+--  Always show unexpected exceptions, no matter what other traces are active
+
+UNEXPECTED_EXCEPTIONS=yes
+
+--  Select the modules that should be loaded
+
+MODULE.DOCGEN             = no
+MODULE.METRICS            = no
+MODULE.REFACTOR           = no
+MODULE.PYTHON             = yes
+MODULE.CALL_GRAPH         = yes
+MODULE.DEPENDENCYi        = yes
+MODULE.PROJECT_BROWSER    = yes
+MODULE.ENTITIES_BROWSER   = yes
+MODULE.ALIASES            = yes
+MODULE.PROJECT_EXPLORER   = yes
+MODULE.FILES_EXPLORER     = yes
+MODULE.EXTERNAL_EDITOR    = yes
+MODULE.VCS                = yes
+MODULE.CUSTOM             = yes
+MODULE.ACTION_EDITOR      = yes
+MODULE.CODEFIX            = yes
+MODULE.GVD                = yes
+MODULE.AUNIT              = yes
+MODULE.VFS                = yes
+MODULE.HELP               = yes
+MODULE.SSH                = yes
+MODULE.PROJECT_PROPERTIES = yes
+MODULE.PROJECT_VIEWER     = yes
+MODULE.CPP                = yes
+
+--  Change behavior of GPS. These debug handle do not add extra logs
+
+EXPLORERS.TOOLTIPS                = no
+ENTITIES.FORCE_UNIQUE_REF         = yes
+ENTITIES.QUERIES_FILE_GRANULARITY = yes
+ENTITIES.ASSERT                   = no
+
+--  Debug handles related to the cross-references database
+
+ALI=no
+ALI.Assert=no
+CPP=no
+ENTITIES.DEBUG=no
+
+--  Debug handles related to scripts
+
+SHELL_SCRIPT=no
+GLIDE_KERNEL.SCRIPTS=no
+PYTHON.OUT=no
+COMMANDS.CUSTOM=no
+HOOKS=no
+EXPECT=no

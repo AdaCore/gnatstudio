@@ -1,0 +1,5 @@
+export TP_TASKING = No_Tasking
+
+default build compile link ada c c++ clean internal-clean :
+	$(MAKE) -s -f Makefile.gps $@
+

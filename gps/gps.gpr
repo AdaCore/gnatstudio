@@ -1,0 +1,88 @@
+with "../gtkada/gtkada";
+with "../gvd/gvd";
+with "../kernel/kernel";
+with "../vsearch/vsearch";
+with "../prj_editor/prj_editor";
+with "../src_editor/src_editor";
+with "../aunit/aunit";
+with "../codefix/codefix";
+with "../vdiff/vdiff";
+with "../browsers/browsers";
+with "../vcs/vcs";
+with "../metrics/metrics";
+with "../builder/builder";
+with "../navigation/navigation";
+with "../custom/custom";
+with "../help/help";
+with "../vfs/vfs";
+with "../docgen/docgen";
+with "../ada_module/ada_module";
+with "../cpp_module/cpp_module";
+with "../aliases/aliases";
+with "../shared";
+with "../python/python";
+with "../shell/shell";
+with "../keymanager/keymanager";
+with "../theme_manager/theme_manager";
+with "../refactoring/refactoring";
+with "../action_editor/action_editor";
+with "../socket/socket";
+
+project GPS is
+
+   for Languages use ("Ada");
+   for Main use ("gps.adb");
+
+   for Source_Dirs use ("src");
+   for Object_Dir use "obj";
+
+   package Builder is
+      for Executable ("gps-main.adb") use "gps";
+
+      case Shared.Build is
+         when "Debug" =>
+           for Default_Switches ("Ada") use ("-m", "-a", "-g");
+           for Global_Configuration_Pragmas use "gnat_debug.adc";
+
+         when "Production" =>
+           for Default_Switches ("Ada") use ("-m", "-a", "-g");
+           for Global_Configuration_Pragmas use "gnat.adc";
+      end case;
+   end Builder;
+
+   package Compiler renames Shared.Compiler;
+
+   package Binder is
+      case Shared.OS is
+         when "unix" =>
+            for Default_Switches ("Ada") use ("-E", "-t");
+         when "Windows_NT" =>
+            for Default_Switches ("Ada") use ("-t");
+      end case;
+   end Binder;
+
+   package Linker is
+      case Shared.OS is
+         when "Windows_NT" =>
+            for Default_Switches ("Ada") use
+              ("--LINK=./gpslink", "obj/gps.res");
+         when "unix" =>
+            for Default_Switches ("Ada") use
+              ("--LINK=./gpslink");
+      end case;
+      --  for Default_Switches ("Ada") use ("-lgmem");
+      --  for Default_Switches ("Ada") use ("-pg");
+   end Linker;
+
+   package Naming is
+      case Shared.OS is
+         when "Windows_NT" =>
+            for Implementation ("dde") use "dde_win32.adb";
+         when "unix" =>
+            for Implementation ("dde") use "dde_default.adb";
+      end case;
+   end Naming;
+
+   package IDE renames Shared.IDE;
+
+end GPS;
