@@ -588,7 +588,7 @@ package body Vsearch_Ext is
                     (-"' found."),
                   Title   => -"Search",
                   Buttons => Button_OK,
-                  Parent  => Get_Main_Window (Vsearch.Kernel));
+                  Parent  => Gtk_Window (Get_Toplevel (Vsearch)));
             end if;
 
             --  We keep the "Next" mode until a new context is created by
