@@ -289,7 +289,8 @@ package body Find_Utils is
       Line, Column : in out Natural;
       Line_Start   : in out Natural)
    is
-      J : Natural := Buffer'First;
+      J         : Natural := Buffer'First;
+      Tab_Width : constant Natural := Get_Tab_Width;
    begin
       loop
          exit when J > Pos - 1;
@@ -302,7 +303,11 @@ package body Find_Utils is
             Column      := 1;
             Line_Start := J + 1;
          else
-            Column := Column + 1;
+            if Buffer (J) = ASCII.HT then
+               Column := Column + Tab_Width - (Column mod Tab_Width) + 1;
+            else
+               Column := Column + 1;
+            end if;
          end if;
 
          J := UTF8_Next_Char (Buffer, J);
