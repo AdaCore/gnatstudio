@@ -24,12 +24,9 @@ with Src_Info;                  use Src_Info;
 with Src_Info.Queries;          use Src_Info.Queries;
 with String_Utils;              use String_Utils;
 with Glide_Kernel;              use Glide_Kernel;
-with Traces;                    use Traces;
 with Docgen;
 
 package body Docgen.Html_Output is
-
-   Me : constant Debug_Handle := Create ("Docgen-html_output");
 
    package TEL renames Type_Entity_List;
 
@@ -52,6 +49,7 @@ package body Docgen.Html_Output is
      (B      : access Backend_HTML;
       Kernel : access Kernel_Handle_Record'Class;
       File   : Ada.Text_IO.File_Type;
+      List_Ref_In_File   : in out List_Reference_In_File.List;
       Info   : Doc_Info);
    --  Add aa entry or entry family to the documentation
 
@@ -59,6 +57,7 @@ package body Docgen.Html_Output is
      (B      : access Backend_HTML;
       Kernel : access Kernel_Handle_Record'Class;
       File   : in Ada.Text_IO.File_Type;
+      List_Ref_In_File   : in out List_Reference_In_File.List;
       Info   : Doc_Info);
    --  Add a subprogram to the documentation
 
@@ -71,6 +70,7 @@ package body Docgen.Html_Output is
      (B      : access Backend_HTML;
       Kernel : access Kernel_Handle_Record'Class;
       File   : Ada.Text_IO.File_Type;
+      List_Ref_In_File   : in out List_Reference_In_File.List;
       Info   : Doc_Info);
    --  Add the renamed and instantiated package to the documentation
 
@@ -78,6 +78,7 @@ package body Docgen.Html_Output is
      (B      : access Backend_HTML;
       Kernel : access Kernel_Handle_Record'Class;
       File   : Ada.Text_IO.File_Type;
+      List_Ref_In_File   : in out List_Reference_In_File.List;
       Info   : Doc_Info);
    --  Add the dependencies to the documentation
 
@@ -85,6 +86,7 @@ package body Docgen.Html_Output is
      (B      : access Backend_HTML;
       Kernel : access Kernel_Handle_Record'Class;
       File   : Ada.Text_IO.File_Type;
+      List_Ref_In_File   : in out List_Reference_In_File.List;
       Info   : Doc_Info);
    --  Add a constant or named number to the documentation
 
@@ -92,6 +94,7 @@ package body Docgen.Html_Output is
      (B      : access Backend_HTML;
       Kernel : access Kernel_Handle_Record'Class;
       File   : Ada.Text_IO.File_Type;
+      List_Ref_In_File   : in out List_Reference_In_File.List;
       Info   : Doc_Info);
    --  Add an exception to the documentation
 
@@ -99,6 +102,7 @@ package body Docgen.Html_Output is
      (B      : access Backend_HTML;
       Kernel : access Kernel_Handle_Record'Class;
       File   : Ada.Text_IO.File_Type;
+      List_Ref_In_File   : in out List_Reference_In_File.List;
       Info   : Doc_Info);
    --  Add a type to the documentation
 
@@ -146,6 +150,7 @@ package body Docgen.Html_Output is
      (B      : access Backend_HTML;
       Kernel : access Kernel_Handle_Record'Class;
       File : in Ada.Text_IO.File_Type;
+      List_Ref_In_File   : in out List_Reference_In_File.List;
       Info : in out Doc_Info);
    --  Format the body by calling Format_HTML for the whole body file
    --  and write it to the doc file
@@ -164,6 +169,7 @@ package body Docgen.Html_Output is
      (B             : access Backend_HTML;
       Kernel        : access Glide_Kernel.Kernel_Handle_Record'Class;
       File          : in Ada.Text_IO.File_Type;
+      List_Ref_In_File   : in out List_Reference_In_File.List;
       Info          : in out Docgen.Doc_Info;
       Doc_Directory : String;
       Doc_Suffix    : String) is
@@ -175,23 +181,29 @@ package body Docgen.Html_Output is
          when Footer_Info           => Doc_HTML_Footer (File, Info, Kernel);
          when Subtitle_Info         => Doc_HTML_Subtitle (File, Info);
          when Package_Desc_Info     => Doc_HTML_Pack_Desc (File, Info);
-         when With_Info             => Doc_HTML_With (B, Kernel, File, Info);
+         when With_Info             => Doc_HTML_With (B, Kernel, File,
+                                                      List_Ref_In_File, Info);
          when Package_Info
-            => Doc_HTML_Package (B, Kernel, File, Info);
-         when Var_Info              => Doc_HTML_Var (B, Kernel, File, Info);
-         when Entry_Info            => Doc_HTML_Entry (B, Kernel, File, Info);
+            => Doc_HTML_Package (B, Kernel, File, List_Ref_In_File, Info);
+         when Var_Info              => Doc_HTML_Var (B, Kernel, File,
+                                                     List_Ref_In_File, Info);
+         when Entry_Info            => Doc_HTML_Entry (B, Kernel, File,
+                                                       List_Ref_In_File,
+                                                       Info);
          when Subprogram_Info
-            => Doc_HTML_Subprogram (B, Kernel, File, Info);
-         when Type_Info             => Doc_HTML_Type (B, Kernel, File, Info);
+            => Doc_HTML_Subprogram (B, Kernel, File, List_Ref_In_File, Info);
+         when Type_Info             => Doc_HTML_Type (B, Kernel, File,
+                                                      List_Ref_In_File, Info);
          when Exception_Info
-            => Doc_HTML_Exception (B, Kernel, File, Info);
+            => Doc_HTML_Exception (B, Kernel, File, List_Ref_In_File, Info);
          when Unit_Index_Info       =>
             Doc_HTML_Unit_Index_Header (File, Info, Doc_Directory, Doc_Suffix);
          when Subprogram_Index_Info => Doc_HTML_Sub_Index_Header  (File, Info);
          when Type_Index_Info       => Doc_HTML_Type_Index_Header (File, Info);
          when Index_Item_Info       => Doc_HTML_Index_Item (File, Info);
          when End_Of_Index_Info     => Doc_HTML_Index_End  (File, Info);
-         when Body_Line_Info        => Doc_HTML_Body (B, Kernel, File, Info);
+         when Body_Line_Info        => Doc_HTML_Body (B, Kernel, File,
+                                                      List_Ref_In_File, Info);
       end case;
    end Doc_HTML_Create;
 
@@ -259,6 +271,7 @@ package body Docgen.Html_Output is
      (B      : access Backend_HTML;
       Kernel : access Kernel_Handle_Record'Class;
       File   : Ada.Text_IO.File_Type;
+      List_Ref_In_File   : in out List_Reference_In_File.List;
       Info   : Doc_Info) is
    begin
       Put_Line
@@ -276,6 +289,7 @@ package body Docgen.Html_Output is
         (B,
          Kernel,
          File,
+         List_Ref_In_File,
          Info.Doc_LI_Unit,
          Info.Package_Header.all,
          Get_Declaration_File_Of (Info.Package_Entity.Entity),
@@ -299,6 +313,7 @@ package body Docgen.Html_Output is
      (B      : access Backend_HTML;
       Kernel : access Kernel_Handle_Record'Class;
       File   : Ada.Text_IO.File_Type;
+      List_Ref_In_File   : in out List_Reference_In_File.List;
       Info   : Doc_Info) is
    begin
       Put_Line
@@ -308,6 +323,7 @@ package body Docgen.Html_Output is
         (B,
          Kernel,
          File,
+         List_Ref_In_File,
          Info.Doc_LI_Unit,
          Info.With_Header.all,
          Info.With_File,
@@ -330,6 +346,7 @@ package body Docgen.Html_Output is
      (B      : access Backend_HTML;
       Kernel : access Kernel_Handle_Record'Class;
       File   : Ada.Text_IO.File_Type;
+      List_Ref_In_File   : in out List_Reference_In_File.List;
       Info   : Doc_Info) is
    begin
       Put_Line
@@ -348,6 +365,7 @@ package body Docgen.Html_Output is
         (B,
          Kernel,
          File,
+         List_Ref_In_File,
          Info.Doc_LI_Unit,
          Info.Var_Header.all,
          Get_Declaration_File_Of (Info.Var_Entity.Entity),
@@ -371,6 +389,7 @@ package body Docgen.Html_Output is
      (B      : access Backend_HTML;
       Kernel : access Kernel_Handle_Record'Class;
       File   : Ada.Text_IO.File_Type;
+      List_Ref_In_File   : in out List_Reference_In_File.List;
       Info   : Doc_Info) is
    begin
       Put_Line
@@ -389,6 +408,7 @@ package body Docgen.Html_Output is
         (B,
          Kernel,
          File,
+         List_Ref_In_File,
          Info.Doc_LI_Unit,
          Info.Exception_Header.all,
          Get_Declaration_File_Of (Info.Exception_Entity.Entity),
@@ -412,6 +432,7 @@ package body Docgen.Html_Output is
      (B      : access Backend_HTML;
       Kernel : access Kernel_Handle_Record'Class;
       File   : Ada.Text_IO.File_Type;
+      List_Ref_In_File   : in out List_Reference_In_File.List;
       Info   : Doc_Info) is
    begin
       Put_Line
@@ -430,6 +451,7 @@ package body Docgen.Html_Output is
         (B,
          Kernel,
          File,
+         List_Ref_In_File,
          Info.Doc_LI_Unit,
          Info.Type_Header.all,
          Get_Declaration_File_Of (Info.Type_Entity.Entity),
@@ -453,6 +475,7 @@ package body Docgen.Html_Output is
      (B      : access Backend_HTML;
       Kernel : access Kernel_Handle_Record'Class;
       File   : Ada.Text_IO.File_Type;
+      List_Ref_In_File   : in out List_Reference_In_File.List;
       Info   : Doc_Info) is
    begin
       Put_Line
@@ -471,6 +494,7 @@ package body Docgen.Html_Output is
         (B,
          Kernel,
          File,
+         List_Ref_In_File,
          Info.Doc_LI_Unit,
          Info.Entry_Header.all,
          Get_Declaration_File_Of (Info.Entry_Entity.Entity),
@@ -494,6 +518,7 @@ package body Docgen.Html_Output is
      (B      : access Backend_HTML;
       Kernel : access Kernel_Handle_Record'Class;
       File   : in Ada.Text_IO.File_Type;
+      List_Ref_In_File   : in out List_Reference_In_File.List;
       Info   : Doc_Info)
    is
       package TRL renames Type_Reference_List;
@@ -590,10 +615,12 @@ package body Docgen.Html_Output is
          Put_Line (File, "<i> private: </i>" & ASCII.LF);
       end if;
 
+
       Format_File
         (B,
          Kernel,
          File,
+         List_Ref_In_File,
          Info.Doc_LI_Unit,
          Info.Subprogram_Header.all,
          Get_Declaration_File_Of (Info.Subprogram_Entity.Entity),
@@ -831,12 +858,14 @@ package body Docgen.Html_Output is
      (B      : access Backend_HTML;
       Kernel : access Kernel_Handle_Record'Class;
       File : in Ada.Text_IO.File_Type;
+      List_Ref_In_File   : in out List_Reference_In_File.List;
       Info : in out Doc_Info) is
    begin
       Format_File
         (B,
          Kernel,
          File,
+         List_Ref_In_File,
          Info.Doc_LI_Unit,
          Info.Body_Text.all,
          Info.Body_File,
@@ -862,7 +891,7 @@ package body Docgen.Html_Output is
         & Ext (Ext'First + 1 .. Ext'Last) & ".htm";
 
    begin
-      Trace (Me, "Get_Html_File_Name: " & Temp);
+      --  Trace (Me, "Get_Html_File_Name: " & Temp);
       return Temp;
    end Get_Html_File_Name;
 
