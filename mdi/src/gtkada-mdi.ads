@@ -16,6 +16,15 @@ with GNAT.OS_Lib;
 --  - Icons should be put at the bottom, and automatically moved when the
 --    MDI window is resized.
 --  - Icons should be placed correctly when there are also docked items
+--  - Add support for groups (children are associated with groups, and groups
+--    can have special colors, can be minimized,...). Groups could be
+--    implemented as special MDI_Children ?
+--  - Manipulation of the title bar for children (adding buttons, adding
+--    pixmaps,...)
+--  - define new signals ("float_child", ...)
+--  - Automatically add a new menu bar when a child is floated (settable
+--    on a per-child basis).
+--  - contextual menu in the title bar of children to dock them, float them,...
 
 package Gtkada.MDI is
 
