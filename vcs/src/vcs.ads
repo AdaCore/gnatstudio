@@ -212,8 +212,9 @@ package VCS is
    --  The result String_List.List with one element for each line.
 
    procedure Set_Error
-     (Rep     : access VCS_Record;
-      Message : String);
+     (Rep            : access VCS_Record;
+      Message        : String;
+      Add_LF         : Boolean := True);
    --  Display message in the glide console.
 
    --  ??? missing:

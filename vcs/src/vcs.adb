@@ -76,13 +76,16 @@ package body VCS is
    -- Set_Error --
    ---------------
 
-   procedure Set_Error (Rep : access VCS_Record; Message : String) is
+   procedure Set_Error
+     (Rep            : access VCS_Record;
+      Message        : String;
+      Add_LF         : Boolean := True) is
    begin
       if Rep.Kernel = null then
          return;
       end if;
 
-      Insert (Rep.Kernel, Message, Highlight_Sloc => False, Mode => Error);
+      Insert (Rep.Kernel, Message, False, Add_LF, Error);
    end Set_Error;
 
    ----------
