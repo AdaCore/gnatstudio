@@ -240,17 +240,6 @@ package body GVD.Code_Editors is
       return Editor.Asm;
    end Get_Asm;
 
-   -------------
-   -- Set_Asm --
-   -------------
-
-   procedure Set_Asm
-     (Editor : access Code_Editor_Record'Class;
-      Asm    : GVD.Text_Box.Asm_Editor.Asm_Editor) is
-   begin
-      Editor.Asm := Asm;
-   end Set_Asm;
-
    ---------------------
    -- Get_Asm_Address --
    ---------------------
