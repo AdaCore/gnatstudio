@@ -991,17 +991,11 @@ package body Project_Viewers is
       File : constant File_Selection_Context_Access :=
         File_Selection_Context_Access (Context);
    begin
-      if Has_Project_Information (File)
-        and then Edit_Naming_Scheme
-        (Get_Main_Window (Get_Kernel (Context)),
-         Get_Kernel (Context),
-         Project_Information (File))
-      then
-         Set_Project_Modified
-           (Get_Kernel (Context),
-            Get_Project_From_View (Project_Information (File)),
-            True);
-         Recompute_View (Get_Kernel (Context));
+      if Has_Project_Information (File) then
+         Edit_Naming_Scheme
+           (Get_Main_Window (Get_Kernel (Context)),
+            Get_Kernel (Context),
+            Project_Information (File));
       end if;
 
    exception
