@@ -33,6 +33,10 @@ package Browsers.Projects is
      with private;
    type Browser_Project_Vertex_Access is access all Browser_Project_Vertex;
 
+   type Project_Browser_Record is new Browsers.Canvas.Glide_Browser_Record with
+     null record;
+   type Project_Browser is access all Project_Browser_Record'Class;
+
    procedure Examine_Project_Hierarchy
      (Kernel     : access Glide_Kernel.Kernel_Handle_Record'Class;
       In_Browser : access Browsers.Canvas.Glide_Browser_Record'Class;
@@ -51,6 +55,9 @@ package Browsers.Projects is
      (Browser : access Browsers.Canvas.Glide_Browser_Record'Class;
       Item    : access Browser_Project_Vertex);
    --  Redraw the item to its double buffer
+
+   procedure Register_Module;
+   --  Register the module in the list
 
 private
    type Browser_Project_Vertex is new Browsers.Canvas.Glide_Browser_Item_Record

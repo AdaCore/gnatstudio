@@ -28,6 +28,13 @@ with Browsers.Canvas;
 
 package Browsers.Dependency_Items is
 
+   type Dependency_Browser_Record is new Browsers.Canvas.Glide_Browser_Record
+     with null record;
+   type Dependency_Browser is access all Dependency_Browser_Record'Class;
+
+   procedure Register_Module;
+   --  Register the module into the list
+
    ----------------
    -- File items --
    ----------------

@@ -19,23 +19,53 @@
 -----------------------------------------------------------------------
 
 with Browsers.Canvas;      use Browsers.Canvas;
+with GUI_Utils;            use GUI_Utils;
 with Gdk.Drawable;         use Gdk.Drawable;
 with Gdk.Event;            use Gdk.Event;
 with Gdk.Font;             use Gdk.Font;
 with Glib.Graphs;          use Glib.Graphs;
 with Glib;                 use Glib;
+with Glib.Object;          use Glib.Object;
 with Glide_Kernel.Modules; use Glide_Kernel.Modules;
 with Glide_Kernel;         use Glide_Kernel;
+with Glide_Intl;           use Glide_Intl;
+with Gtk.Menu;             use Gtk.Menu;
+with Gtk.Menu_Item;        use Gtk.Menu_Item;
+with Gtk.Widget;           use Gtk.Widget;
+with Gtk.Window;           use Gtk.Window;
 with Gtkada.Canvas;        use Gtkada.Canvas;
+with Gtkada.MDI;           use Gtkada.MDI;
 with Namet;                use Namet;
-with Prj_API;              use Prj_API;
 with Prj.Tree;             use Prj.Tree;
+with Prj_API;              use Prj_API;
 with Project_Browsers;     use Project_Browsers;
 with Types;                use Types;
 
 package body Browsers.Projects is
 
    Margin : constant := 2;
+
+   Default_Browser_Width  : constant := 400;
+   Default_Browser_Height : constant := 400;
+   --  <preference> Default size for the browsers
+
+   Project_Browser_Module_ID : Module_ID;
+
+   procedure On_Examine_Prj_Hierarchy
+     (Widget  : access Gtk_Widget_Record'Class;
+      Context : Selection_Context_Access);
+   --  Open the project hierarchy browser for a specific project
+
+   procedure Browser_Contextual_Menu
+     (Object  : access Glib.Object.GObject_Record'Class;
+      Context : access Selection_Context'Class;
+      Menu    : access Gtk.Menu.Gtk_Menu_Record'Class);
+   --  Add entries to the appropriate contextual menus
+
+   function Open_Project_Browser
+     (Kernel       : access Glide_Kernel.Kernel_Handle_Record'Class)
+      return Gtkada.MDI.MDI_Child;
+   --  Find, or create, a project browser
 
    ---------------------
    -- On_Button_Click --
@@ -137,6 +167,28 @@ package body Browsers.Projects is
       Refresh_Canvas (Get_Canvas (In_Browser));
    end Examine_Project_Hierarchy;
 
+   ------------------------------
+   -- On_Examine_Prj_Hierarchy --
+   ------------------------------
+
+   procedure On_Examine_Prj_Hierarchy
+     (Widget  : access Gtk_Widget_Record'Class;
+      Context : Selection_Context_Access)
+   is
+      Browser : MDI_Child;
+   begin
+      Set_Busy_Cursor
+        (Get_Window (Get_Main_Window (Get_Kernel (Context))), True, True);
+      Browser := Open_Project_Browser (Get_Kernel (Context));
+      Examine_Project_Hierarchy
+        (Get_Kernel (Context),
+         Glide_Browser (Get_Widget (Browser)),
+         Get_Project_From_View
+         (Project_Information (File_Selection_Context_Access (Context))));
+      Set_Busy_Cursor
+        (Get_Window (Get_Main_Window (Get_Kernel (Context))), False);
+   end On_Examine_Prj_Hierarchy;
+
    ------------------------
    -- Contextual_Factory --
    ------------------------
@@ -154,5 +206,81 @@ package body Browsers.Projects is
          Project_View => Get_Project_View_From_Name (Item.Name));
       return Context;
    end Contextual_Factory;
+
+   --------------------------
+   -- Open_Project_Browser --
+   --------------------------
+
+   function Open_Project_Browser
+     (Kernel       : access Kernel_Handle_Record'Class)
+      return Gtkada.MDI.MDI_Child
+   is
+      Child   : MDI_Child;
+      Browser : Project_Browser;
+   begin
+      Child := Find_MDI_Child_By_Tag
+        (Get_MDI (Kernel), Project_Browser_Record'Tag);
+
+      if Child /= null then
+         Raise_Child (Child);
+      else
+         Browser := new Project_Browser_Record;
+         Initialize (Browser, Kernel);
+         Register_Contextual_Menu
+           (Kernel          => Kernel,
+            Event_On_Widget => Browser,
+            Object          => Browser,
+            ID              => Project_Browser_Module_ID,
+            Context_Func    => Default_Browser_Context_Factory'Access);
+         Set_Size_Request
+           (Browser, Default_Browser_Width, Default_Browser_Height);
+         Child := Put (Get_MDI (Kernel), Browser);
+         Set_Title (Child, "<project browser>");
+      end if;
+
+      return Child;
+   end Open_Project_Browser;
+
+   -----------------------------
+   -- Browser_Contextual_Menu --
+   -----------------------------
+
+   procedure Browser_Contextual_Menu
+     (Object  : access Glib.Object.GObject_Record'Class;
+      Context : access Selection_Context'Class;
+      Menu    : access Gtk.Menu.Gtk_Menu_Record'Class)
+   is
+      Item         : Gtk_Menu_Item;
+      File_Context : File_Selection_Context_Access;
+   begin
+      if Context.all in File_Selection_Context'Class then
+         File_Context := File_Selection_Context_Access (Context);
+
+         if Has_Project_Information (File_Context) then
+            Gtk_New (Item, Label =>
+                     -"Examine project hierarchy for "
+                     & Project_Name (Project_Information (File_Context)));
+            Append (Menu, Item);
+            Context_Callback.Connect
+              (Item, "activate",
+               Context_Callback.To_Marshaller
+               (On_Examine_Prj_Hierarchy'Access),
+               Selection_Context_Access (Context));
+         end if;
+      end if;
+   end Browser_Contextual_Menu;
+
+   ---------------------
+   -- Register_Module --
+   ---------------------
+
+   procedure Register_Module is
+   begin
+      Project_Browser_Module_ID := Register_Module
+        (Module_Name             => Project_Browser_Module_Name,
+         Priority                => Default_Priority,
+         Initializer             => null,
+         Contextual_Menu_Handler => Browser_Contextual_Menu'Access);
+   end Register_Module;
 
 end Browsers.Projects;
