@@ -3429,7 +3429,8 @@ package body Prj_API is
    procedure Save_Project
      (Project       : Prj.Tree.Project_Node_Id;
       Projects_Data : in out Project_Hash.Project_Htable.HTable;
-      Recursive     : Boolean := False)
+      Recursive     : Boolean := False;
+      Report_Error  : Error_Report := null)
    is
       File : Ada.Text_IO.File_Type;
 
@@ -3471,18 +3472,30 @@ package body Prj_API is
               (Prj.Tree.Path_Name_Of (Current (Iter))))
            or else Project_Modified (Projects_Data, Current (Iter))
          then
-            Create (File, Mode => Out_File,
-                    Name => Get_String
-                      (Prj.Tree.Path_Name_Of (Current (Iter))));
-            Pretty_Print
-              (Project => Current (Iter),
-               Eliminate_Empty_Case_Constructions => True,
-               W_Char => Internal_Write_Char'Unrestricted_Access,
-               W_Eol  => Internal_Write_Eol'Unrestricted_Access,
-               W_Str  => Internal_Write_Str'Unrestricted_Access);
-            Close (File);
+            declare
+               Filename : constant String :=
+                 Get_String (Prj.Tree.Path_Name_Of (Current (Iter)));
+            begin
+               Trace (Me, "Save_Project: Creating new file " & Filename);
+               Create (File, Mode => Out_File, Name => Filename);
+               Pretty_Print
+                 (Project => Current (Iter),
+                  Eliminate_Empty_Case_Constructions => True,
+                  W_Char => Internal_Write_Char'Unrestricted_Access,
+                  W_Eol  => Internal_Write_Eol'Unrestricted_Access,
+                  W_Str  => Internal_Write_Str'Unrestricted_Access);
+               Close (File);
 
-            Set_Project_Modified (Projects_Data, Current (Iter), False);
+               Set_Project_Modified (Projects_Data, Current (Iter), False);
+
+            exception
+               when Ada.Text_IO.Name_Error =>
+                  Trace (Me, "Couldn't create " & Filename);
+
+                  if Report_Error /= null then
+                     Report_Error ("Couldn't create file " & Filename);
+                  end if;
+            end;
          end if;
 
          Next (Iter);

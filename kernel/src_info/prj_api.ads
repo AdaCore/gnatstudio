@@ -47,6 +47,8 @@ package Prj_API is
    type Project_Id_Array is array (Positive range <>) of Project_Id;
    type Project_Id_Array_Access is access Project_Id_Array;
 
+   type Error_Report is access procedure (Msg : String);
+
    Ada_String : constant String := "ada";  --  See also Snames.Name_Ada
    C_String   : constant String := "c";    --  See also Snames.Name_C
    Cpp_String : constant String := "c++";  --  See also Name_C_Plus_Plus.
@@ -170,7 +172,8 @@ package Prj_API is
    procedure Save_Project
      (Project       : Prj.Tree.Project_Node_Id;
       Projects_Data : in out Project_Hash.Project_Htable.HTable;
-      Recursive     : Boolean := False);
+      Recursive     : Boolean := False;
+      Report_Error  : Error_Report := null);
    --  Save the project to the corresponding file.
    --  If Recursive is True, all the imported projects are saved as well.
 
