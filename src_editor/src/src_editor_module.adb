@@ -1068,6 +1068,7 @@ package body Src_Editor_Module is
 
       elsif Command = "block_get_start"
         or else Command = "block_get_end"
+        or else Command = "block_get_name"
         or else Command = "block_get_type"
         or else Command = "block_get_level"
       then
@@ -1094,6 +1095,11 @@ package body Src_Editor_Module is
                   Set_Return_Value
                     (Data,
                      Get_Block_End
+                       (Source_Box (Get_Widget (Child)).Editor, Line));
+               elsif Command = "block_get_name" then
+                  Set_Return_Value
+                    (Data,
+                     Get_Block_Name
                        (Source_Box (Get_Widget (Child)).Editor, Line));
                elsif Command = "block_get_type" then
                   Set_Return_Value
@@ -3578,9 +3584,9 @@ package body Src_Editor_Module is
 
       Register_Command
         (Kernel,
-         Command      => "edit",
-         Params       => Parameter_Names_To_Usage (Edit_Cmd_Parameters, 4),
-         Description  =>
+         Command       => "edit",
+         Params        => Parameter_Names_To_Usage (Edit_Cmd_Parameters, 4),
+         Description   =>
           -("Open a file editor for file_name."
             & "Length is the number of characters to select after the"
             & " cursor. If line and column are set to 0 (the default),"
@@ -3589,190 +3595,190 @@ package body Src_Editor_Module is
             & " a reload is forced in case the file is already open."),
          Class         => Editor_Class,
          Static_Method => True,
-         Minimum_Args => 1,
-         Maximum_Args => 5,
-         Handler      => Edit_Command_Handler'Access);
+         Minimum_Args  => 1,
+         Maximum_Args  => 5,
+         Handler       => Edit_Command_Handler'Access);
 
       Register_Command
         (Kernel,
-         Command      => "create_mark",
-         Params       => Parameter_Names_To_Usage (Create_Mark_Parameters, 3),
-         Return_Value => "identifier",
-         Description  =>
+         Command       => "create_mark",
+         Params        => Parameter_Names_To_Usage (Create_Mark_Parameters, 3),
+         Return_Value  => "identifier",
+         Description   =>
            -("Create a mark for file_name, at position given by line and"
              & " column. Length corresponds to the text length to highlight"
              & " after the mark. The identifier of the mark is returned."
              & " Use the command goto_mark to jump to this mark."),
-         Minimum_Args => 1,
-         Maximum_Args => 4,
-         Class        => Editor_Class,
+         Minimum_Args  => 1,
+         Maximum_Args  => 4,
+         Class         => Editor_Class,
          Static_Method => True,
-         Handler      => Edit_Command_Handler'Access);
+         Handler       => Edit_Command_Handler'Access);
 
       Register_Command
         (Kernel,
-         Command      => "highlight",
-         Params       => "(file, category, [line=0])",
-         Description  =>
+         Command       => "highlight",
+         Params        => "(file, category, [line=0])",
+         Description   =>
            -("Marks a line as belonging to a highlighting category."
              & " If line is not specified, mark all lines in file."),
-         Minimum_Args => 2,
-         Maximum_Args => 3,
-         Class        => Editor_Class,
+         Minimum_Args  => 2,
+         Maximum_Args  => 3,
+         Class         => Editor_Class,
          Static_Method => True,
-         Handler      => Line_Highlighting.Edit_Command_Handler'Access);
+         Handler       => Line_Highlighting.Edit_Command_Handler'Access);
 
       Register_Command
         (Kernel,
-         Command      => "add_blank_lines",
-         Params       => "(file, start_line, number_of_lines, [category])",
-         Return_Value => "string",
-         Description  =>
+         Command       => "add_blank_lines",
+         Params        => "(file, start_line, number_of_lines, [category])",
+         Return_Value  => "string",
+         Description   =>
            -("Adds number_of_lines non-editable lines to the buffer editing"
              & " file, starting at line start_line."
              & " If category is specified, use it for highlighting."
              & " Create a mark at beginning of block and return its ID."),
-         Minimum_Args => 3,
-         Maximum_Args => 4,
-         Class        => Editor_Class,
+         Minimum_Args  => 3,
+         Maximum_Args  => 4,
+         Class         => Editor_Class,
          Static_Method => True,
-         Handler      => Edit_Command_Handler'Access);
+         Handler       => Edit_Command_Handler'Access);
 
       Register_Command
         (Kernel,
-         Command      => "remove_blank_lines",
-         Params       => "(mark, [number])",
-         Return_Value => "string",
-         Description  =>
+         Command       => "remove_blank_lines",
+         Params        => "(mark, [number])",
+         Return_Value  => "string",
+         Description   =>
            -("Remove blank lines located at mark."
              & " If number is specified, remove only the n first lines"),
-         Minimum_Args => 1,
-         Maximum_Args => 2,
-         Class        => Editor_Class,
+         Minimum_Args  => 1,
+         Maximum_Args  => 2,
+         Class         => Editor_Class,
          Static_Method => True,
-         Handler      => Edit_Command_Handler'Access);
+         Handler       => Edit_Command_Handler'Access);
 
       Register_Command
         (Kernel,
-         Command      => "block_fold",
-         Params       => "(file, line)",
-         Return_Value => "string",
-         Description  =>
+         Command       => "block_fold",
+         Params        => "(file, line)",
+         Return_Value  => "string",
+         Description   =>
            -("Fold the block around line."),
-         Minimum_Args => 2,
-         Maximum_Args => 2,
-         Class        => Editor_Class,
+         Minimum_Args  => 2,
+         Maximum_Args  => 2,
+         Class         => Editor_Class,
          Static_Method => True,
-         Handler      => Edit_Command_Handler'Access);
+         Handler       => Edit_Command_Handler'Access);
 
       Register_Command
         (Kernel,
-         Command      => "block_unfold",
-         Params       => "(file, line)",
-         Return_Value => "string",
-         Description  =>
+         Command       => "block_unfold",
+         Params        => "(file, line)",
+         Return_Value  => "string",
+         Description   =>
            -("Unfold the block around line."),
-         Minimum_Args => 2,
-         Maximum_Args => 2,
-         Class        => Editor_Class,
+         Minimum_Args  => 2,
+         Maximum_Args  => 2,
+         Class         => Editor_Class,
          Static_Method => True,
-         Handler      => Edit_Command_Handler'Access);
+         Handler       => Edit_Command_Handler'Access);
 
       Register_Command
         (Kernel,
-         Command      => "unhighlight",
-         Params       => "(file, category, [line=0])",
-         Description  =>
+         Command       => "unhighlight",
+         Params        => "(file, category, [line=0])",
+         Description   =>
            -("Unmarks the line for the specified category."
              & " If line is not specified, unmark all lines in file."),
-         Minimum_Args => 2,
-         Maximum_Args => 3,
-         Class        => Editor_Class,
+         Minimum_Args  => 2,
+         Maximum_Args  => 3,
+         Class         => Editor_Class,
          Static_Method => True,
-         Handler      => Line_Highlighting.Edit_Command_Handler'Access);
+         Handler       => Line_Highlighting.Edit_Command_Handler'Access);
 
       Register_Command
         (Kernel,
-         Command      => "highlight_range",
-         Params       =>
+         Command       => "highlight_range",
+         Params        =>
            "(file, category, [line, [start_column, [end_column]]])",
          Description  =>
            -("Highlights a portion of a line in a file with the given"
              & " category."),
-         Minimum_Args => 2,
-         Maximum_Args => 5,
-         Class        => Editor_Class,
+         Minimum_Args  => 2,
+         Maximum_Args  => 5,
+         Class         => Editor_Class,
          Static_Method => True,
-         Handler      => Line_Highlighting.Edit_Command_Handler'Access);
+         Handler       => Line_Highlighting.Edit_Command_Handler'Access);
 
       Register_Command
         (Kernel,
-         Command      => "unhighlight_range",
-         Params       =>
+         Command       => "unhighlight_range",
+         Params        =>
            "(file, category, [line, [start_column, [end_column]]])",
-         Description  =>
+         Description   =>
            -("Remove highlights for a portion of a line in a file."),
-         Minimum_Args => 2,
-         Maximum_Args => 5,
-         Class        => Editor_Class,
+         Minimum_Args  => 2,
+         Maximum_Args  => 5,
+         Class         => Editor_Class,
          Static_Method => True,
-         Handler      => Line_Highlighting.Edit_Command_Handler'Access);
+         Handler       => Line_Highlighting.Edit_Command_Handler'Access);
 
       Register_Command
         (Kernel,
-         Command      => "register_highlighting",
-         Params       => "(category, color)",
-         Description  =>
+         Command       => "register_highlighting",
+         Params        => "(category, color)",
+         Description   =>
            -("Create a new highlighting category with the given color. The"
              & " format for color is ""#RRGGBB""."),
-         Minimum_Args => 2,
-         Maximum_Args => 2,
-         Class        => Editor_Class,
+         Minimum_Args  => 2,
+         Maximum_Args  => 2,
+         Class         => Editor_Class,
          Static_Method => True,
-         Handler      => Line_Highlighting.Edit_Command_Handler'Access);
+         Handler       => Line_Highlighting.Edit_Command_Handler'Access);
 
       Register_Command
         (Kernel,
-         Command      => "set_background_color",
-         Params       => "(file, color)",
-         Description  =>
+         Command       => "set_background_color",
+         Params        => "(file, color)",
+         Description   =>
            -"Set the background color for the editors for file.",
-         Minimum_Args => 2,
-         Maximum_Args => 2,
-         Class        => Editor_Class,
+         Minimum_Args  => 2,
+         Maximum_Args  => 2,
+         Class         => Editor_Class,
          Static_Method => True,
-         Handler      => Edit_Command_Handler'Access);
+         Handler       => Edit_Command_Handler'Access);
 
       Register_Command
         (Kernel,
-         Command      => "goto_mark",
-         Params       => "(identifier)",
-         Description  =>
+         Command       => "goto_mark",
+         Params        => "(identifier)",
+         Description   =>
            -"Jump to the location of the mark corresponding to identifier.",
-         Minimum_Args => 1,
-         Maximum_Args => 1,
-         Class        => Editor_Class,
+         Minimum_Args  => 1,
+         Maximum_Args  => 1,
+         Class         => Editor_Class,
          Static_Method => True,
-         Handler      => Edit_Command_Handler'Access);
+         Handler       => Edit_Command_Handler'Access);
 
       Register_Command
         (Kernel,
-         Command      => "delete_mark",
-         Params       => "(identifier)",
-         Description  =>
+         Command       => "delete_mark",
+         Params        => "(identifier)",
+         Description   =>
            -"Delete the mark corresponding to identifier.",
-         Minimum_Args => 1,
-         Maximum_Args => 1,
-         Class        => Editor_Class,
+         Minimum_Args  => 1,
+         Maximum_Args  => 1,
+         Class         => Editor_Class,
          Static_Method => True,
-         Handler      => Edit_Command_Handler'Access);
+         Handler       => Edit_Command_Handler'Access);
 
       Register_Command
         (Kernel,
-         Command      => "get_chars",
-         Params       => Parameter_Names_To_Usage (Get_Chars_Args, 4),
-         Return_Value => "string",
-         Description  =>
+         Command       => "get_chars",
+         Params        => Parameter_Names_To_Usage (Get_Chars_Args, 4),
+         Return_Value  => "string",
+         Description   =>
            -("Get the characters around a certain position."
              & " Returns string between <before> characters before the mark"
              & " and <after> characters after the position. If <before> or"
@@ -3781,254 +3787,268 @@ package body Src_Editor_Module is
              & "If the line and column are not specified, then the current"
              & " selection is returned, or the empty string if there is no"
              & " selection."),
-         Minimum_Args => 1,
-         Maximum_Args => 5,
-         Class        => Editor_Class,
+         Minimum_Args  => 1,
+         Maximum_Args  => 5,
+         Class         => Editor_Class,
          Static_Method => True,
-         Handler      => Edit_Command_Handler'Access);
+         Handler       => Edit_Command_Handler'Access);
 
       Register_Command
         (Kernel,
-         Command      => "get_line",
-         Params       => "(mark)",
-         Return_Value => "integer",
-         Description  => -"Returns the current line of mark.",
-         Minimum_Args => 1,
-         Maximum_Args => 1,
-         Class        => Editor_Class,
+         Command       => "get_line",
+         Params        => "(mark)",
+         Return_Value  => "integer",
+         Description   => -"Returns the current line of mark.",
+         Minimum_Args  => 1,
+         Maximum_Args  => 1,
+         Class         => Editor_Class,
          Static_Method => True,
-         Handler      => Edit_Command_Handler'Access);
+         Handler       => Edit_Command_Handler'Access);
 
       Register_Command
         (Kernel,
-         Command      => "get_column",
-         Params       => "(mark)",
-         Return_Value => "integer",
-         Description  => -"Returns the current column of mark.",
-         Minimum_Args => 1,
-         Maximum_Args => 1,
-         Class        => Editor_Class,
+         Command       => "get_column",
+         Params        => "(mark)",
+         Return_Value  => "integer",
+         Description   => -"Returns the current column of mark.",
+         Minimum_Args  => 1,
+         Maximum_Args  => 1,
+         Class         => Editor_Class,
          Static_Method => True,
-         Handler      => Edit_Command_Handler'Access);
+         Handler       => Edit_Command_Handler'Access);
 
       Register_Command
         (Kernel,
-         Command      => "get_file",
-         Params       => "(mark)",
-         Return_Value => "string",
-         Description  => -"Returns the current file of mark.",
-         Minimum_Args => 1,
-         Maximum_Args => 1,
-         Class        => Editor_Class,
+         Command       => "get_file",
+         Params        => "(mark)",
+         Return_Value  => "string",
+         Description   => -"Returns the current file of mark.",
+         Minimum_Args  => 1,
+         Maximum_Args  => 1,
+         Class         => Editor_Class,
          Static_Method => True,
-         Handler      => Edit_Command_Handler'Access);
+         Handler       => Edit_Command_Handler'Access);
 
       Register_Command
         (Kernel,
-         Command      => "get_last_line",
-         Params       => "(file)",
-         Return_Value => "integer",
-         Description  => -"Returns the number of the last line in file.",
-         Minimum_Args => 1,
-         Maximum_Args => 1,
-         Class        => Editor_Class,
+         Command       => "get_last_line",
+         Params        => "(file)",
+         Return_Value  => "integer",
+         Description   => -"Returns the number of the last line in file.",
+         Minimum_Args  => 1,
+         Maximum_Args  => 1,
+         Class         => Editor_Class,
          Static_Method => True,
-         Handler      => Edit_Command_Handler'Access);
+         Handler       => Edit_Command_Handler'Access);
 
       Register_Command
         (Kernel,
-         Command      => "block_get_start",
-         Params       => "(file, line)",
-         Return_Value => "integer",
-         Description  =>
+         Command       => "block_get_start",
+         Params        => "(file, line)",
+         Return_Value  => "integer",
+         Description   =>
            -"Returns starting line number for block enclosing line.",
-         Minimum_Args => 2,
-         Maximum_Args => 2,
-         Class        => Editor_Class,
+         Minimum_Args  => 2,
+         Maximum_Args  => 2,
+         Class         => Editor_Class,
          Static_Method => True,
-         Handler      => Edit_Command_Handler'Access);
+         Handler       => Edit_Command_Handler'Access);
 
       Register_Command
         (Kernel,
-         Command      => "block_get_end",
-         Params       => "(file, line)",
-         Return_Value => "integer",
-         Description  =>
+         Command       => "block_get_end",
+         Params        => "(file, line)",
+         Return_Value  => "integer",
+         Description   =>
            -"Returns ending line number for block enclosing line.",
-         Minimum_Args => 2,
-         Maximum_Args => 2,
-         Class        => Editor_Class,
+         Minimum_Args  => 2,
+         Maximum_Args  => 2,
+         Class         => Editor_Class,
          Static_Method => True,
-         Handler      => Edit_Command_Handler'Access);
+         Handler       => Edit_Command_Handler'Access);
 
       Register_Command
         (Kernel,
-         Command      => "block_get_type",
-         Params       => "(file, line)",
-         Return_Value => "string",
-         Description  =>
+         Command       => "block_get_name",
+         Params        => "(file, line)",
+         Return_Value  => "string",
+         Description   =>
+           -"Returns name for block enclosing line.",
+         Minimum_Args  => 2,
+         Maximum_Args  => 2,
+         Class         => Editor_Class,
+         Static_Method => True,
+         Handler       => Edit_Command_Handler'Access);
+
+      Register_Command
+        (Kernel,
+         Command       => "block_get_type",
+         Params        => "(file, line)",
+         Return_Value  => "string",
+         Description   =>
            -"Returns type for block enclosing line.",
-         Minimum_Args => 2,
-         Maximum_Args => 2,
-         Class        => Editor_Class,
+         Minimum_Args  => 2,
+         Maximum_Args  => 2,
+         Class         => Editor_Class,
          Static_Method => True,
-         Handler      => Edit_Command_Handler'Access);
+         Handler       => Edit_Command_Handler'Access);
 
       Register_Command
         (Kernel,
-         Command      => "block_get_level",
-         Params       => "(file, line)",
-         Return_Value => "integer",
-         Description  =>
+         Command       => "block_get_level",
+         Params        => "(file, line)",
+         Return_Value  => "integer",
+         Description   =>
            -"Returns nested level for block enclosing line.",
-         Minimum_Args => 2,
-         Maximum_Args => 2,
-         Class        => Editor_Class,
+         Minimum_Args  => 2,
+         Maximum_Args  => 2,
+         Class         => Editor_Class,
          Static_Method => True,
-         Handler      => Edit_Command_Handler'Access);
+         Handler       => Edit_Command_Handler'Access);
 
       Register_Command
         (Kernel,
-         Command      => "cursor_get_line",
-         Params       => "(file)",
-         Return_Value => "integer",
-         Description  =>
+         Command       => "cursor_get_line",
+         Params        => "(file)",
+         Return_Value  => "integer",
+         Description   =>
            -"Returns current cursor line number.",
-         Minimum_Args => 1,
-         Maximum_Args => 1,
-         Class        => Editor_Class,
+         Minimum_Args  => 1,
+         Maximum_Args  => 1,
+         Class         => Editor_Class,
          Static_Method => True,
-         Handler      => Edit_Command_Handler'Access);
+         Handler       => Edit_Command_Handler'Access);
 
       Register_Command
         (Kernel,
-         Command      => "cursor_get_column",
-         Params       => "(file)",
-         Return_Value => "integer",
-         Description  =>
+         Command       => "cursor_get_column",
+         Params        => "(file)",
+         Return_Value  => "integer",
+         Description   =>
            -"Returns current cursor column number.",
-         Minimum_Args => 1,
-         Maximum_Args => 1,
-         Class        => Editor_Class,
+         Minimum_Args  => 1,
+         Maximum_Args  => 1,
+         Class         => Editor_Class,
          Static_Method => True,
-         Handler      => Edit_Command_Handler'Access);
+         Handler       => Edit_Command_Handler'Access);
 
       Register_Command
         (Kernel,
-         Command      => "cursor_set_position",
-         Params       => "(file, line, [column])",
-         Description  =>
+         Command       => "cursor_set_position",
+         Params        => "(file, line, [column])",
+         Description   =>
            -("Set cursor to position line/column in buffer file. Default "
              & " column, if not specified, is 1."),
-         Minimum_Args => 2,
-         Maximum_Args => 3,
-         Class        => Editor_Class,
+         Minimum_Args  => 2,
+         Maximum_Args  => 3,
+         Class         => Editor_Class,
          Static_Method => True,
-         Handler      => Edit_Command_Handler'Access);
+         Handler       => Edit_Command_Handler'Access);
 
       Register_Command
         (Kernel,
-         Command      => "get_buffer",
-         Params       => "(file)",
-         Return_Value => "string",
-         Description  =>
+         Command       => "get_buffer",
+         Params        => "(file)",
+         Return_Value  => "string",
+         Description   =>
            -"Returns the text contained in the current buffer for file.",
-         Minimum_Args => 1,
-         Maximum_Args => 1,
-         Class        => Editor_Class,
+         Minimum_Args  => 1,
+         Maximum_Args  => 1,
+         Class         => Editor_Class,
          Static_Method => True,
-         Handler      => Edit_Command_Handler'Access);
+         Handler       => Edit_Command_Handler'Access);
 
       Register_Command
         (Kernel,
-         Command      => "save_buffer",
-         Params       => "(file, [to_file])",
-         Return_Value => "string",
-         Description  =>
+         Command       => "save_buffer",
+         Params        => "(file, [to_file])",
+         Return_Value  => "string",
+         Description   =>
            -("Saves the text contained in the current buffer for file."
              & " If to_file is specified, the file will be saved as to_file,"
              & " and the buffer status will not be modified"),
-         Minimum_Args => 1,
-         Maximum_Args => 2,
-         Class        => Editor_Class,
+         Minimum_Args  => 1,
+         Maximum_Args  => 2,
+         Class         => Editor_Class,
          Static_Method => True,
-         Handler      => Edit_Command_Handler'Access);
+         Handler       => Edit_Command_Handler'Access);
 
       Register_Command
         (Kernel,
-         Command      => "replace_text",
-         Params       => "(file, line, column, text, [before=-1], [after=-1])",
-         Description  =>
+         Command       => "replace_text",
+         Params        =>
+           "(file, line, column, text, [before=-1], [after=-1])",
+         Description   =>
            -("Replace the characters around a certain position."
              & " <before> characters before (line, column), and up to <after>"
              & " characters after are removed, and the new text is inserted"
              & " instead. If <before> or <after> is omitted, the bounds will"
              & " be at the beginning and/or the end of the line."),
-         Minimum_Args => 4,
-         Maximum_Args => 6,
-         Class        => Editor_Class,
+         Minimum_Args  => 4,
+         Maximum_Args  => 6,
+         Class         => Editor_Class,
          Static_Method => True,
-         Handler      => Edit_Command_Handler'Access);
+         Handler       => Edit_Command_Handler'Access);
 
       Register_Command
         (Kernel,
-         Command      => "indent",
-         Params       => Parameter_Names_To_Usage (Indent_Cmd_Parameters, 1),
-         Description  =>
+         Command       => "indent",
+         Params        => Parameter_Names_To_Usage (Indent_Cmd_Parameters, 1),
+         Description   =>
          -("Indent the selection (or the current line only if required) in"
            & " current editor. This command has no effect if the current GPS"
            & " window is not an editor."),
-         Minimum_Args => Indent_Cmd_Parameters'Length - 1,
-         Maximum_Args => Indent_Cmd_Parameters'Length,
-         Class        => Editor_Class,
+         Minimum_Args  => Indent_Cmd_Parameters'Length - 1,
+         Maximum_Args  => Indent_Cmd_Parameters'Length,
+         Class         => Editor_Class,
          Static_Method => True,
-         Handler      => Edit_Command_Handler'Access);
+         Handler       => Edit_Command_Handler'Access);
 
       Register_Command
         (Kernel,
-         Command      => "undo",
-         Params       => "(file)",
-         Description  => -"Undo the last edition command for file.",
-         Minimum_Args => 1,
-         Maximum_Args => 1,
-         Class        => Editor_Class,
+         Command       => "undo",
+         Params        => "(file)",
+         Description   => -"Undo the last edition command for file.",
+         Minimum_Args  => 1,
+         Maximum_Args  => 1,
+         Class         => Editor_Class,
          Static_Method => True,
-         Handler      => Edit_Command_Handler'Access);
+         Handler       => Edit_Command_Handler'Access);
 
       Register_Command
         (Kernel,
-         Command      => "redo",
-         Params       => "(file)",
-         Description  => -"Redo the last edition command for file.",
-         Minimum_Args => 1,
-         Maximum_Args => 1,
-         Class        => Editor_Class,
+         Command       => "redo",
+         Params        => "(file)",
+         Description   => -"Redo the last edition command for file.",
+         Minimum_Args  => 1,
+         Maximum_Args  => 1,
+         Class         => Editor_Class,
          Static_Method => True,
-         Handler      => Edit_Command_Handler'Access);
+         Handler       => Edit_Command_Handler'Access);
 
       Register_Command
         (Kernel,
-         Command      => "close",
-         Params       => "(file)",
-         Description  => -"Close all file editors for file_name.",
-         Minimum_Args => 1,
-         Maximum_Args => 1,
-         Class        => Editor_Class,
+         Command       => "close",
+         Params        => "(file)",
+         Description   => -"Close all file editors for file_name.",
+         Minimum_Args  => 1,
+         Maximum_Args  => 1,
+         Class         => Editor_Class,
          Static_Method => True,
-         Handler      => Edit_Command_Handler'Access);
+         Handler       => Edit_Command_Handler'Access);
 
       Register_Command
         (Kernel,
-         Command      => "save",
-         Params       => "(interactive=true, all=true)",
-         Description  => -("Save current or all files."
+         Command       => "save",
+         Params        => "(interactive=true, all=true)",
+         Description   => -("Save current or all files."
            & " If interactive is true, then prompt before each save."
            & " If all is true, then all files are saved"),
-         Minimum_Args => 0,
-         Maximum_Args => Save_Cmd_Parameters'Length,
-         Class        => Editor_Class,
+         Minimum_Args  => 0,
+         Maximum_Args  => Save_Cmd_Parameters'Length,
+         Class         => Editor_Class,
          Static_Method => True,
-         Handler      => Edit_Command_Handler'Access);
+         Handler       => Edit_Command_Handler'Access);
 
       Register_Command
         (Kernel,
@@ -4046,6 +4066,7 @@ package body Src_Editor_Module is
          Maximum_Args => 3,
          Class        => Get_File_Class (Kernel),
          Handler      => File_Search_Command_Handler'Access);
+
       Register_Command
         (Kernel,
          Command      => "search",
@@ -4066,14 +4087,15 @@ package body Src_Editor_Module is
 
       Register_Command
         (Kernel,
-         Command      => "set_synchronized_scrolling",
-         Params       => "(file1, file2, [file3])",
-         Description  => -"Synchronize the scrolling between multiple editors",
-         Minimum_Args => 2,
-         Maximum_Args => 3,
-         Class        => Editor_Class,
+         Command       => "set_synchronized_scrolling",
+         Params        => "(file1, file2, [file3])",
+         Description   =>
+           -"Synchronize the scrolling between multiple editors",
+         Minimum_Args  => 2,
+         Maximum_Args  => 3,
+         Class         => Editor_Class,
          Static_Method => True,
-         Handler      => Edit_Command_Handler'Access);
+         Handler       => Edit_Command_Handler'Access);
 
       --  Register the search functions
 
