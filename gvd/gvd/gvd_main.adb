@@ -43,6 +43,7 @@ with GVD.Trace;             use GVD.Trace;
 with GVD.Types;             use GVD.Types;
 with GVD.Preferences;       use GVD.Preferences;
 with GVD.Window_Settings;   use GVD.Window_Settings;
+with GVD.Code_Editors;      use GVD.Code_Editors;
 
 with GVD.Open_Program_Dialog; use GVD.Open_Program_Dialog;
 
@@ -571,6 +572,9 @@ begin
    end if;
 
    Show_All (Main_Debug_Window);
+
+   --  Scroll the explorer window to the currently displayed file.
+   Display_Selection (Process.Editor_Text);
 
    loop
       begin

@@ -166,6 +166,10 @@ package GVD.Code_Editors is
    --  Return the name of the currently edited file.
    --  "" is returned if there is no current file.
 
+   procedure Display_Selection (Editor : access Code_Editor_Record);
+   --  Adjust the vertical position of the scrolled window
+   --  so that the current selection is visible.
+
    procedure Set_Current_Language
      (Editor : access Code_Editor_Record;
       Lang   : Language.Language_Access);

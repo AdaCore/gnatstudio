@@ -23,6 +23,7 @@ with Gtk.Box;             use Gtk.Box;
 with Gtk.Enums;           use Gtk.Enums;
 with Gtk.Handlers;        use Gtk.Handlers;
 with Gtk.Menu;            use Gtk.Menu;
+with Gtk.Ctree;           use Gtk.Ctree;
 with Gtk.Menu_Item;       use Gtk.Menu_Item;
 with Gtk.Paned;           use Gtk.Paned;
 with Gtk.Radio_Menu_Item; use Gtk.Radio_Menu_Item;
@@ -349,6 +350,20 @@ package body GVD.Code_Editors is
    begin
       return Get_Current_File (Editor.Source);
    end Get_Current_File;
+
+   -----------------------
+   -- Display_Selection --
+   -----------------------
+
+   procedure Display_Selection (Editor : access Code_Editor_Record)
+   is
+      Node : Gtk_Ctree_Node := Node_List.Get_Data
+        (Node_List.First (Get_Selection (Editor.Explorer)));
+   begin
+      if Node_Is_Visible (Editor.Explorer, Node) /= Visibility_Full then
+         Node_Moveto (Editor.Explorer, Node, 0, 0.1, 0.1);
+      end if;
+   end Display_Selection;
 
    --------------------------
    -- Set_Current_Language --
