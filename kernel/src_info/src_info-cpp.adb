@@ -494,6 +494,14 @@ package body Src_Info.CPP is
          return;
       end if;
 
+      --  check timestamps for the parsed file
+      if File /= No_LI_File and then
+         To_Timestamp (File_Time_Stamp (Full_Filename.all))
+            <= File.LI.LI_Timestamp
+      then
+         return;
+      end if;
+
       if Xrefs = Empty_Xref_Pool then
          Load (Xrefs,
            SN_Dir & Directory_Separator & Browse.Xref_Pool_Filename);
