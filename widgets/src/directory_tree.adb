@@ -4,7 +4,7 @@
 --                     Copyright (C) 2001-2002                       --
 --                            ACT-Europe                             --
 --                                                                   --
--- GPS is free  software; you can  redistribute it and/or modify  it --
+-- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -13,7 +13,7 @@
 -- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
 -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
 -- General Public License for more details. You should have received --
--- a copy of the GNU General Public License along with this library; --
+-- a copy of the GNU General Public License along with this program; --
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
@@ -101,7 +101,7 @@ package body Directory_Tree is
    procedure Expand_Tree_Cb
      (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
       Args   : Gtk_Args);
-   --  called every time a node is expanded. It is responsible for
+   --  Called every time a node is expanded. It is responsible for
    --  automatically adding the children of the current node if they are not
    --  there already.
 
@@ -117,14 +117,15 @@ package body Directory_Tree is
       Dir       : String;
       Recursive : Boolean);
    --  Add Dir in the tree to the list of source directories associated with
-   --  the project.  If recursive is True, then all the subdirectories are also
+   --  the project. If recursive is True, then all the subdirectories are also
    --  added.
+   --  This procedure assumes that Dir have a trailing directory separator.
 
    procedure Add_Directory_Cb (W : access Gtk_Widget_Record'Class);
-   --  Callback for the down button in the directory selector widget
+   --  Callback for the 'Add directory recursive' contextual menu.
 
    procedure Add_Single_Directory_Cb (W : access Gtk_Widget_Record'Class);
-   --  Callback for the up button in the source directory selection.
+   --  Callback for the down button in the directory selector widget
    --  The addition is not recursive.
    --  ??? This could be merged with the above procedure if Object_Connect
    --  could use a User_Data parameter.
@@ -135,7 +136,7 @@ package body Directory_Tree is
    --  If recursive is True, then all the subdirectories are also removed
 
    procedure Remove_Directory_Cb (W : access Gtk_Widget_Record'Class);
-   --  Callback for the up button in the source directory selection
+   --  Callback for 'Remove directory recursive' contextual menu.
 
    procedure Remove_Single_Directory_Cb (W : access Gtk_Widget_Record'Class);
    --  Remove the currently selected directory in the selection list. This
@@ -260,32 +261,14 @@ package body Directory_Tree is
      (Tree : access Dir_Tree_Record'Class; Absolute_Dir : String)
       return Boolean
    is
-      D    : Dir_Type;
-      File : String (1 .. 255);
-      Last : Natural;
+      pragma Unreferenced (Tree, Absolute_Dir);
    begin
-      Open (D, Absolute_Dir);
+      --  ??? Always return True, to avoid heavy requests on the file system
+      --  Particularly useful when using network disks that may not be online,
+      --  But even on local disks, this makes a significant difference in
+      --  usability.
 
-      loop
-         Read (D, File, Last);
-         exit when Last = 0;
-
-         if Is_Directory  (Absolute_Dir & File (File'First .. Last))
-           and then Filter (Tree, File (File'First .. Last))
-         then
-            Close (D);
-            return True;
-         end if;
-      end loop;
-
-      Close (D);
-      return False;
-
-   exception
-      when Directory_Error =>
-         --  The directory couldn't be open, probably because of permissions.
-
-         return False;
+      return True;
    end Has_Subdirectories;
 
    ------------
@@ -330,33 +313,37 @@ package body Directory_Tree is
    procedure Collapse_Tree_Cb
      (Widget : access Gtk.Widget.Gtk_Widget_Record'Class; Args : Gtk_Args)
    is
-      Tree : Dir_Tree := Dir_Tree (Widget);
-      Node : Gtk_Ctree_Node := Gtk_Ctree_Node (To_C_Proxy (Args, 1));
-      Tmp  : Gtk_Ctree_Node;
-      Tmp2 : Gtk_Ctree_Node;
+      Tree    : Dir_Tree := Dir_Tree (Widget);
+      Node    : Gtk_Ctree_Node := Gtk_Ctree_Node (To_C_Proxy (Args, 1));
+      Current : Gtk_Ctree_Node;
+      Sibling : Gtk_Ctree_Node;
 
    begin
-      --  It might happen (because of a problem somewhere else in this widget),
-      --  that this signal is emitted with Node = null, for instance if we are
-      --  expanding a directory that in fact has no children. This test is used
-      --  to prevent a crash in that case.
+      --  It might happen that this signal is emitted with Node = null, for
+      --  instance if we are expanding a directory that has no children. In
+      --  this case, either Node or Current will be null.
 
       if Node = null then
          return;
       end if;
 
-      Tmp := Row_Get_Children (Node_Get_Row (Node));
+      Current := Row_Get_Children (Node_Get_Row (Node));
+
+      if Current = null then
+         return;
+      end if;
+
       Freeze (Tree);
 
       --  Leave only one child, so as to keep the "[+]" visible
 
       loop
-         Tmp2 := Row_Get_Sibling (Node_Get_Row (Tmp));
+         Sibling := Row_Get_Sibling (Node_Get_Row (Current));
 
-         exit when Tmp2 = null;
+         exit when Sibling = null;
 
-         Remove_Node (Tree, Tmp);
-         Tmp := Tmp2;
+         Remove_Node (Tree, Current);
+         Current := Sibling;
       end loop;
 
       Boolean_Data.Node_Set_Row_Data (Tree, Node, False);
@@ -371,10 +358,11 @@ package body Directory_Tree is
      (Tree : access Dir_Tree_Record'Class;
       N    : Gtk_Ctree_Node)
    is
-      D    : Dir_Type;
-      File : String (1 .. 255);
-      Last : Natural;
-      N2   : Gtk_Ctree_Node;
+      D       : Dir_Type;
+      File    : String (1 .. 1024);
+      Last    : Natural;
+      N2      : Gtk_Ctree_Node;
+      Num_Dir : Natural := 0;
 
    begin
       --  Have we already parsed the subdirectories ?
@@ -389,13 +377,16 @@ package body Directory_Tree is
          Absolute : constant String := Directory (Tree, N, Absolute => True);
       begin
          Open (D, Absolute);
+
          loop
             Read (D, File, Last);
+
             exit when Last = 0;
 
             if Is_Directory (Absolute & File (File'First .. Last))
               and then Filter (Tree, File (File'First .. Last))
             then
+               Num_Dir := Num_Dir + 1;
                N2 := Add_Directory_Node
                  (Tree,
                   Absolute,
@@ -403,6 +394,7 @@ package body Directory_Tree is
                   N);
             end if;
          end loop;
+
          Close (D);
       end;
 
@@ -412,9 +404,12 @@ package body Directory_Tree is
       --  inserted.
 
       Remove_Node (Tree, Row_Get_Children (Node_Get_Row (N)));
-
       Boolean_Data.Node_Set_Row_Data (Tree, N, True);
-      Sort_Node (Tree, N);
+
+      if Num_Dir /= 0 then
+         Sort_Node (Tree, N);
+      end if;
+
       Thaw (Tree);
    end Add_Sub_Directories;
 
@@ -428,16 +423,19 @@ package body Directory_Tree is
       Dir        : String;
       Parent     : Gtk_Ctree_Node) return Gtk_Ctree_Node
    is
-      N, N2 : Gtk_Ctree_Node;
+      N, N2   : Gtk_Ctree_Node;
+      Strings : Gtkada.Types.Chars_Ptr_Array (1 .. 1);
+
    begin
       --  Always create a node for directories, in case the user wants to add
       --  some extra information (files, ...) later on
 
+      Strings (1) := New_String (Dir);
       N := Insert_Node
         (Tree,
          Parent        => Parent,
          Sibling       => null,
-         Text          => Null_Array + Dir,
+         Text          => Strings,
          Spacing       => 5,
          Pixmap_Closed => Tree.Folder_Pix,
          Mask_Closed   => Tree.Folder_Mask,
@@ -445,15 +443,19 @@ package body Directory_Tree is
          Mask_Opened   => Tree.Ofolder_Mask,
          Is_Leaf       => False,
          Expanded      => False);
+      Free (Strings);
       Boolean_Data.Node_Set_Row_Data (Tree, N, False);
 
-      --  Should add a dummy node
+      --  Add a dummy node so that it is possible to expand dynamically a
+      --  directory
+
       if Has_Subdirectories (Tree, Parent_Dir & Dir) then
+         Strings (1) := New_String (".");
          N2 := Insert_Node
            (Tree,
             Parent        => N,
             Sibling       => null,
-            Text          => Null_Array + ".",
+            Text          => Strings,
             Spacing       => 5,
             Pixmap_Closed => null,
             Mask_Closed   => null,
@@ -461,6 +463,7 @@ package body Directory_Tree is
             Mask_Opened   => null,
             Is_Leaf       => True,
             Expanded      => False);
+         Free (Strings);
       end if;
 
       return N;
@@ -492,7 +495,8 @@ package body Directory_Tree is
    is
       Root     : constant Gtk_Ctree_Node := Node_Nth (Tree, 0);
       Root_Dir : constant String := Directory (Tree, Root, False);
-      D : constant String := Name_As_Directory (Dir);
+      D        : constant String := Name_As_Directory (Dir);
+
    begin
       if Busy_Cursor_On /= null then
          Set_Busy_Cursor (Busy_Cursor_On, True);
@@ -519,8 +523,9 @@ package body Directory_Tree is
 
    function Select_Directory_Idle (Data : Idle_Data_Access) return Boolean is
       Dir_End : Natural := Data.Index + 1;
-      Tmp : Gtk_Ctree_Node;
-      D : Idle_Data_Access := Data;
+      Tmp     : Gtk_Ctree_Node;
+      D       : Idle_Data_Access := Data;
+
    begin
       --  Parse the directory name
 
@@ -618,10 +623,11 @@ package body Directory_Tree is
       Dir       : String;
       Recursive : Boolean)
    is
-      Row    : Gint;
-      Handle : Dir_Type;
-      File   : String (1 .. 1024);
-      Last   : Natural;
+      Row     : Gint;
+      Handle  : Dir_Type;
+      File    : String (1 .. 1024);
+      Last    : Natural;
+      Strings : Gtkada.Types.Chars_Ptr_Array (1 .. 1);
 
    begin
       pragma Assert
@@ -630,7 +636,9 @@ package body Directory_Tree is
       Row := Find_Directory_In_Selection (Selector, Dir);
 
       if Row = -1 then
-         Row := Append (Selector.List, Null_Array + Dir);
+         Strings (1) := New_String (Dir);
+         Row := Append (Selector.List, Strings);
+         Free (Strings);
       end if;
 
       Select_Row (Selector.List, Row, -1);
@@ -643,10 +651,11 @@ package body Directory_Tree is
 
             exit when Last = 0;
 
-            if Is_Directory (Dir & File (File'First .. Last))
-              and then Filter (Selector.Directory, File (File'First .. Last))
+            if Is_Directory (Dir & File (1 .. Last))
+              and then Filter (Selector.Directory, File (1 .. Last))
             then
-               Add_Directory (Selector, Dir & File (1 .. Last), True);
+               Add_Directory
+                 (Selector, Name_As_Directory (Dir & File (1 .. Last)), True);
             end if;
          end loop;
 
@@ -673,7 +682,7 @@ package body Directory_Tree is
       if Dir /= "" then
          Freeze (Selector.List);
          Unselect_All (Selector.List);
-         Add_Directory (Selector, Dir, True);
+         Add_Directory (Selector, Dir, Recursive => True);
          Sort (Selector.List);
          Thaw (Selector.List);
 
@@ -693,9 +702,10 @@ package body Directory_Tree is
    is
       use type Gint_List.Glist;
 
-      List : Gint_List.Glist := Get_Selection (Selector.List);
-      Next : Gint_List.Glist;
-      Num  : Guint := Gint_List.Length (List);
+      List    : Gint_List.Glist := Get_Selection (Selector.List);
+      Next    : Gint_List.Glist;
+      Num     : Guint := Gint_List.Length (List);
+      Strings : Gtkada.Types.Chars_Ptr_Array (1 .. 1);
 
    begin
       --  Add the directories recursively to the selection (we can't remove
@@ -737,10 +747,12 @@ package body Directory_Tree is
       end loop;
 
       --  Workaround for a possible bug in gtk+: when all the rows in the
-      --  clist are removed with the loop above, we get a STORAGE_ERROR,
-      --  unless we do the following
+      --  clist are removed with the loop above, we get a SEGV,
+      --  unless we do the following ???
 
-      Remove (Selector.List, Append (Selector.List, Null_Array + ""));
+      Strings (1) := New_String ("");
+      Remove (Selector.List, Append (Selector.List, Strings));
+      Free (Strings);
    end Remove_Directory;
 
    -------------------------
