@@ -15,11 +15,9 @@ TCL_MINOR_VERSION=1
 TCL_PATCH_LEVEL=b1
 VERSION=${TCL_VERSION}
 
-prefix=`pwd | sed -e 's/\/snsrc\/tcl.*$//'`
-
-#if test "${prefix}" = "NONE"; then
-#    prefix=/usr/local
-#fi
+if test "${prefix}" = "NONE"; then
+    prefix=/usr/local
+fi
 if test "${exec_prefix}" = "NONE"; then
     exec_prefix=$prefix
 fi

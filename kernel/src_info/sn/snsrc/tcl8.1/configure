@@ -11,7 +11,6 @@
 ac_help=
 ac_default_prefix=/usr/local
 # Any additions from configure.in:
-ac_default_prefix=`pwd | sed -e "s/\/snsrc$//"`
 
 # Initialize some variables set by options.
 # The variables have the same names as the options, with
@@ -523,7 +522,6 @@ fi
 
 
 
-
 ac_aux_dir=
 for ac_dir in $srcdir $srcdir/.. $srcdir/../..; do
   if test -f $ac_dir/install-sh; then
@@ -550,7 +548,7 @@ else { echo "configure: error: can not run $ac_config_sub" 1>&2; exit 1; }
 fi
 
 echo $ac_n "checking host system type""... $ac_c" 1>&6
-echo "configure:554: checking host system type" >&5
+echo "configure:552: checking host system type" >&5
 
 host_alias=$host
 case "$host_alias" in
@@ -602,7 +600,7 @@ ac_configure=$ac_aux_dir/configure # This should be Cygnus configure.
 esac
 
 echo $ac_n "checking whether ${MAKE-make} sets \${MAKE}""... $ac_c" 1>&6
-echo "configure:606: checking whether ${MAKE-make} sets \${MAKE}" >&5
+echo "configure:604: checking whether ${MAKE-make} sets \${MAKE}" >&5
 set dummy ${MAKE-make}; ac_make=`echo "$2" | sed 'y%./+-%__p_%'`
 if eval "test \"`echo '$''{'ac_cv_prog_make_${ac_make}_set'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6

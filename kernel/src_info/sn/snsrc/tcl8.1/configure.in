@@ -7,7 +7,6 @@ dnl Tom Tromey <tromey@cygnus.com>
 AC_PREREQ(2.5)
 
 AC_INIT(generic/tcl.h)
-AC_PREFIX_DEFAULT(`pwd | sed -e "s/\/snsrc$//"`)
 
 AC_CANONICAL_HOST
 
