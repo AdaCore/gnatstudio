@@ -550,7 +550,8 @@ package body Task_Manager is
    --------------------------
 
    function Has_Running_Commands
-     (Manager : Task_Manager_Access) return Boolean is
+     (Manager         : Task_Manager_Access;
+      Consider_Silent : Boolean) return Boolean is
    begin
       if Manager.Queues = null then
          return False;
@@ -558,7 +559,11 @@ package body Task_Manager is
 
       for J in Manager.Queues'Range loop
          if Manager.Queues (J).Status in Running .. Paused then
-            return True;
+            if Consider_Silent
+              or else Manager.Queues (J).Show_Bar
+            then
+               return True;
+            end if;
          end if;
       end loop;
 
