@@ -649,10 +649,7 @@ package body Src_Editor_Module is
      (Data    : in out Callback_Data'Class; Command : String)
    is
       pragma Unreferenced (Command);
-      Kernel    : constant Kernel_Handle := Get_Kernel (Data);
-      Inst      : constant Class_Instance :=
-        Nth_Arg (Data, 1, Get_Project_Class (Kernel));
-      Project   : constant Project_Type := Get_Data (Inst);
+      Project   : constant Project_Type := Get_Data (Data, 1);
       Recursive : Boolean;
    begin
       Name_Parameters (Data, File_Search_Parameters);
