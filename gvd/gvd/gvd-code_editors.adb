@@ -20,6 +20,7 @@
 
 with Ada.Text_IO;         use Ada.Text_IO;
 with Glib;                use Glib;
+with GNAT.OS_Lib;         use GNAT.OS_Lib;
 with Gtk.Enums;           use Gtk.Enums;
 with Gtk.Handlers;        use Gtk.Handlers;
 with Gtk.Menu;            use Gtk.Menu;
@@ -28,11 +29,16 @@ with Gtk.Paned;           use Gtk.Paned;
 with Gtk.Radio_Menu_Item; use Gtk.Radio_Menu_Item;
 with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
 with Gtk.Widget;          use Gtk.Widget;
+with Gtk.Notebook;        use Gtk.Notebook;
 with Odd.Asm_Editors;     use Odd.Asm_Editors;
 with Odd.Explorer;        use Odd.Explorer;
 with Odd.Source_Editors;  use Odd.Source_Editors;
 with Odd.Types;           use Odd.Types;
 with Odd_Intl;            use Odd_Intl;
+with Odd.Process;         use Odd.Process;
+with Main_Debug_Window_Pkg; use Main_Debug_Window_Pkg;
+with Gtk.Label;           use Gtk.Label;
+with Odd.Strings;         use Odd.Strings;
 
 package body Odd.Code_Editors is
 
@@ -371,8 +377,19 @@ package body Odd.Code_Editors is
      (Editor : access Gtk.Widget.Gtk_Widget_Record'Class)
    is
       Edit : Code_Editor := Code_Editor (Editor);
+      Label : Gtk_Label := Gtk_Label
+        (Get_Tab_Label
+         (Get_Cur_Page
+          (Main_Debug_Window_Access
+           (Get_Toplevel (Editor)).Process_Notebook)));
+      Tab : GNAT.OS_Lib.String_Access := Debugger_Process_Tab
+        (Edit.Process).Descriptor.Program;
    begin
       Odd.Explorer.On_Executable_Changed (Edit.Explorer);
+
+      if Tab /= null then
+         Set_Text (Label, Get (Label) (1 .. 6) & Base_File_Name (Tab.all));
+      end if;
 
       --  Always clear the cache for the assembly editor, even if it is not
       --  displayed.
