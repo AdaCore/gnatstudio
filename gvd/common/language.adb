@@ -19,10 +19,13 @@
 -----------------------------------------------------------------------
 
 with Ada.Unchecked_Deallocation;
-with Basic_Types; use Basic_Types;
-with GNAT.Regpat; use GNAT.Regpat;
-with Ada.Characters.Handling; use Ada.Characters.Handling;
-with GNAT.IO; use GNAT.IO;
+with Basic_Types;                 use Basic_Types;
+with GNAT.Regpat;                 use GNAT.Regpat;
+with GNAT.OS_Lib;
+with GNAT.IO;                     use GNAT.IO;
+with OS_Utils;                    use OS_Utils;
+with Ada.Characters.Handling;     use Ada.Characters.Handling;
+with Ada.Exceptions;              use Ada.Exceptions;
 
 package body Language is
 
@@ -393,6 +396,32 @@ package body Language is
          end loop;
       end loop;
    end Parse_Constructs;
+
+   -----------------------------
+   --  Parse_File_Constructs  --
+   -----------------------------
+
+   procedure Parse_File_Constructs
+     (Lang      : access Language_Root;
+      File_Name : String;
+      Result    : out Construct_List)
+   is
+      use GNAT.OS_Lib;
+
+      Buffer : GNAT.OS_Lib.String_Access;
+   begin
+      Buffer := Read_File (File_Name);
+
+      if Buffer /= null then
+         Parse_Constructs (Lang, Buffer.all, Result);
+         Free (Buffer);
+      end if;
+
+   exception
+      when E : others =>
+         Put_Line ("Unexpected exception: " & Exception_Information (E));
+         Free (Buffer);
+   end Parse_File_Constructs;
 
    --------------------
    -- Parse_Entities --

@@ -331,11 +331,17 @@ package Language is
    --  operators (e.g a space after commas, before left paren, etc...).
 
    procedure Parse_Constructs
-     (Lang            : access Language_Root;
-      Buffer          : String;
-      Result          : out Construct_List);
+     (Lang   : access Language_Root;
+      Buffer : String;
+      Result : out Construct_List);
    --  Parse the constructs contained in Buffer and store all the language
    --  constructs with their source location in Result.
+
+   procedure Parse_File_Constructs
+     (Lang      : access Language_Root;
+      File_Name : String;
+      Result    : out Construct_List);
+   --  Same as Parse_Constructs, but works on a given file
 
    function Can_Indent (Lang : access Language_Root) return Boolean;
    --  Return whether the given language supports indentation
