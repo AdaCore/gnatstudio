@@ -122,6 +122,10 @@ package body GVD_Module is
             declare
                Ent  : constant String := Entity_Name_Information (Entity);
                Lang : constant Language_Access := Get_Language (Debugger);
+               --  ??? Should query the project module instead of the debugger
+               --  Lang : constant Language_Access :=
+               --    Get_Language (File_Information (Entity));
+
             begin
                Gtk_New (Mitem);
                Append (Menu, Mitem);
