@@ -1005,13 +1005,13 @@ package body VCS_View_Pkg is
          return;
       end if;
 
-      Set_Busy (Explorer.Kernel);
+      Push_State (Explorer.Kernel, Processing);
       Push_Message (Explorer, Verbose, -"Viewing diffs for files:");
       Display_String_List (Explorer, L, Verbose);
       Diff_Files (Explorer, Explorer.Kernel, L, Explorer.VCS_Ref);
       Push_Message (Explorer, Verbose, -"... done." & ASCII.LF);
       String_List.Free (L);
-      Set_Busy (Explorer.Kernel, False);
+      Pop_State (Explorer.Kernel);
    end On_View_Diff_Button_Clicked;
 
    --------------------------------
@@ -1033,7 +1033,7 @@ package body VCS_View_Pkg is
          return;
       end if;
 
-      Set_Busy (Explorer.Kernel);
+      Push_State (Explorer.Kernel, Processing);
       Push_Message (Explorer, Verbose, -"Annotating files:");
       Display_String_List (Explorer, L, Verbose);
 
@@ -1047,7 +1047,7 @@ package body VCS_View_Pkg is
       end loop;
 
       Push_Message (Explorer, Verbose, -"... done." & ASCII.LF);
-      Set_Busy (Explorer.Kernel, False);
+      Pop_State (Explorer.Kernel);
    end On_Annotate_Button_Clicked;
 
    --------------------------------
@@ -1069,7 +1069,7 @@ package body VCS_View_Pkg is
          return;
       end if;
 
-      Set_Busy (Explorer.Kernel);
+      Push_State (Explorer.Kernel, Processing);
       Push_Message (Explorer, Verbose, -"Viewing logs of files:");
       Display_String_List (Explorer, L, Verbose);
 
@@ -1080,7 +1080,7 @@ package body VCS_View_Pkg is
       end loop;
 
       Push_Message (Explorer, Verbose, -"... done." & ASCII.LF);
-      Set_Busy (Explorer.Kernel, False);
+      Pop_State (Explorer.Kernel);
    end On_View_Log_Button_Clicked;
 
    ----------------------------------
@@ -1095,7 +1095,7 @@ package body VCS_View_Pkg is
       L        : String_List.List := Get_Selected_Files (Explorer);
 
    begin
-      Set_Busy (Explorer.Kernel, True);
+      Push_State (Explorer.Kernel, Processing);
 
       if String_List.Is_Empty (L) then
          if Explorer.Current_Directory = null then
@@ -1114,7 +1114,7 @@ package body VCS_View_Pkg is
       end if;
 
       String_List.Free (L);
-      Set_Busy (Explorer.Kernel, False);
+      Pop_State (Explorer.Kernel);
    end On_Get_Status_Button_Clicked;
 
    ----------------
@@ -1201,10 +1201,10 @@ package body VCS_View_Pkg is
          return;
       end if;
 
-      Set_Busy (Explorer.Kernel);
+      Push_State (Explorer.Kernel, Processing);
       Update_File_List (Explorer, Explorer.Kernel, L, Explorer.VCS_Ref);
       String_List.Free (L);
-      Set_Busy (Explorer.Kernel, False);
+      Pop_State (Explorer.Kernel);
    end On_Update_Button_Clicked;
 
    ----------------
@@ -1248,7 +1248,7 @@ package body VCS_View_Pkg is
          return;
       end if;
 
-      Set_Busy (Explorer.Kernel);
+      Push_State (Explorer.Kernel, Processing);
       Push_Message (Explorer, Verbose, -"Opening files:");
       Display_String_List (Explorer, L, Verbose);
 
@@ -1258,7 +1258,7 @@ package body VCS_View_Pkg is
 
       String_List.Free (L);
       On_Get_Status_Button_Clicked (Object, Params);
-      Set_Busy (Explorer.Kernel, False);
+      Pop_State (Explorer.Kernel);
    end On_Open_Button_Clicked;
 
    ------------
@@ -1349,11 +1349,11 @@ package body VCS_View_Pkg is
          return;
       end if;
 
-      Set_Busy (Explorer.Kernel);
+      Push_State (Explorer.Kernel, Processing);
       Commit (Explorer, Explorer.Kernel, L, "", Explorer.VCS_Ref);
       On_Get_Status_Button_Clicked (Object, Params);
       String_List.Free (L);
-      Set_Busy (Explorer.Kernel, False);
+      Pop_State (Explorer.Kernel);
    end On_Commit_Button_Clicked;
 
    ------------------------------
@@ -1366,8 +1366,8 @@ package body VCS_View_Pkg is
    is
       Explorer : constant VCS_View_Access := VCS_View_Access (Object);
    begin
-      Set_Busy (Explorer.Kernel);
-      Set_Busy (Explorer.Kernel, False);
+      Push_State (Explorer.Kernel, Processing);
+      Pop_State (Explorer.Kernel);
    end On_Revert_Button_Clicked;
 
    ---------------------------
@@ -1387,14 +1387,14 @@ package body VCS_View_Pkg is
          return;
       end if;
 
-      Set_Busy (Explorer.Kernel);
+      Push_State (Explorer.Kernel, Processing);
       Push_Message (Explorer, Verbose, -"Adding files:");
       Display_String_List (Explorer, L, Verbose);
       Add (Explorer.VCS_Ref, L);
       Push_Message (Explorer, Verbose, -"... done." & ASCII.LF);
       String_List.Free (L);
       On_Get_Status_Button_Clicked (Object, Params);
-      Set_Busy (Explorer.Kernel, False);
+      Pop_State (Explorer.Kernel);
    end On_Add_Button_Clicked;
 
    ------------------------------
@@ -1414,7 +1414,7 @@ package body VCS_View_Pkg is
          return;
       end if;
 
-      Set_Busy (Explorer.Kernel);
+      Push_State (Explorer.Kernel, Processing);
       Push_Message (Explorer, Verbose, -"Removing files:");
       Display_String_List (Explorer, L, Verbose);
 
@@ -1423,7 +1423,7 @@ package body VCS_View_Pkg is
       Push_Message (Explorer, Verbose, -"... done." & ASCII.LF);
       String_List.Free (L);
       On_Get_Status_Button_Clicked (Object, Params);
-      Set_Busy (Explorer.Kernel, False);
+      Pop_State (Explorer.Kernel);
    end On_Remove_Button_Clicked;
 
    -------------------
@@ -1466,10 +1466,10 @@ package body VCS_View_Pkg is
          return;
       end if;
 
-      Set_Busy (Explorer.Kernel);
+      Push_State (Explorer.Kernel, Processing);
       Set_Directory (Explorer, Directory, Ref);
       Refresh_Files (Explorer, False);
-      Set_Busy (Explorer.Kernel, False);
+      Pop_State (Explorer.Kernel);
    end Show_Files;
 
    ---------------------
