@@ -35,7 +35,7 @@ with Glide_Kernel.Modules;   use Glide_Kernel.Modules;
 with Codefix;                use Codefix;
 with Codefix.Graphics;       use Codefix.Graphics;
 with Codefix.GPS_Io;         use Codefix.GPS_Io;
-with Codefix_Interface_Intl; use Codefix_Interface_Intl;
+with Glide_Intl;             use Glide_Intl;
 with Codefix.Text_Manager;   use Codefix.Text_Manager;
 with Codefix.Errors_Manager; use Codefix.Errors_Manager;
 with Codefix.Formal_Errors;  use Codefix.Formal_Errors;
