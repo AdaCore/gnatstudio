@@ -69,7 +69,7 @@ with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GVD.Preferences;             use GVD.Preferences;
-with GVD.Main_Window;             use GVD.Main_Window;
+with GPS.Main_Window;             use GPS.Main_Window;
 with GUI_Utils;                   use GUI_Utils;
 with String_Utils;                use String_Utils;
 with Entities;                    use Entities;
@@ -280,7 +280,7 @@ package body GPS.Kernel is
      (Handle : access Kernel_Handle_Record)
       return Gtk.Accel_Group.Gtk_Accel_Group is
    begin
-      return GVD_Main_Window (Handle.Main_Window).Main_Accel_Group;
+      return GPS_Window (Handle.Main_Window).Main_Accel_Group;
    end Get_Default_Accelerators;
 
    -----------

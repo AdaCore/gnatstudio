@@ -22,15 +22,14 @@ with Glib.Values;
 with Pango.Font;                use Pango.Font;
 with Gdk.Dnd;                   use Gdk.Dnd;
 with Glib.Error;                use Glib.Error;
-with GPS.Kernel;              use GPS.Kernel;
-with GPS.Kernel.Hooks;        use GPS.Kernel.Hooks;
-with GPS.Kernel.MDI;          use GPS.Kernel.MDI;
-with GPS.Kernel.Modules;      use GPS.Kernel.Modules;
-with GPS.Kernel.Actions;      use GPS.Kernel.Actions;
-with GPS.Kernel.Preferences;  use GPS.Kernel.Preferences;
-with GPS.Kernel.Scripts;      use GPS.Kernel.Scripts;
-with GPS.Kernel.Standard_Hooks;
-use GPS.Kernel.Standard_Hooks;
+with GPS.Kernel;                use GPS.Kernel;
+with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
+with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
+with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
+with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
+with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
+with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
+with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with Glib;                      use Glib;
 with Gtk.Box;                   use Gtk.Box;
 with Gtk.Dnd;                   use Gtk.Dnd;
@@ -38,6 +37,9 @@ with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Frame;                 use Gtk.Frame;
 with Gtk.Image;                 use Gtk.Image;
 with Gtk.Main;                  use Gtk.Main;
+with Gtk.Menu_Bar;              use Gtk.Menu_Bar;
+with Gtk.Menu_Item;             use Gtk.Menu_Item;
+with Gtk.Object;                use Gtk.Object;
 with Gtk.Rc;                    use Gtk.Rc;
 with Gtk.Window;                use Gtk.Window;
 with Gtk.Widget;                use Gtk.Widget;
@@ -52,16 +54,24 @@ with Gtkada.MDI;                use Gtkada.MDI;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with Traces;                    use Traces;
 with Projects;                  use Projects;
-with GPS.Intl;                use GPS.Intl;
-with GPS.Kernel.Project;      use GPS.Kernel.Project;
+with GPS.Intl;                  use GPS.Intl;
+with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with Glib.Values;               use Glib.Values;
 with Commands.Interactive;      use Commands, Commands.Interactive;
 with Glib.Generic_Properties;   use Glib.Generic_Properties;
 with Glib.Properties.Creation;  use Glib.Properties.Creation;
+with Interfaces.C.Strings;      use Interfaces.C.Strings;
+with GVD.Types;                 use GVD.Types;
+with Gtkada.Types;
+with Factory_Data;
 
 package body GPS.Main_Window is
 
    Me : constant Debug_Handle := Create ("GPS.Main_Window");
+
+   Signals : constant Gtkada.Types.Chars_Ptr_Array :=
+     (1 => New_String ("preferences_changed"));
+   Class_Record : GObject_Class := Uninitialized_Class;
 
    Force_Cst      : aliased constant String := "force";
    Msg_Cst        : aliased constant String := "msg";
@@ -314,7 +324,7 @@ package body GPS.Main_Window is
       end if;
 
       if Is_Regular_File (Throbber) then
-         Trace (Me, "loading gps-animation.png");
+         Trace (Me, "loading gps-animation.gif");
          Gdk_New_From_File (Main_Window.Animation, Throbber, Error);
          Main_Window.Animation_Iter := Get_Iter (Main_Window.Animation);
          Pixbuf := Get_Pixbuf (Main_Window.Animation_Iter);
@@ -414,7 +424,8 @@ package body GPS.Main_Window is
       Home_Dir         : String;
       Prefix_Directory : String)
    is
-      Box1   : Gtk_Hbox;
+      Menu : Gtk_Widget;
+      Box1 : Gtk_Hbox;
    begin
       Gtk_New (Main_Window.Kernel, Gtk_Window (Main_Window), Home_Dir);
 
@@ -457,7 +468,42 @@ package body GPS.Main_Window is
       Register_Property
         (Main_Window.Kernel, Param_Spec (Pref_Toolbar_Style), -"General");
 
-      GVD.Main_Window.Initialize (Main_Window, Key, Menu_Items);
+      Gtk.Window.Initialize (Main_Window, Window_Toplevel);
+      Initialize_Class_Record
+        (Main_Window, Signals, Class_Record, Type_Name => "GpsMainWindow");
+
+      Set_Policy (Main_Window, False, True, False);
+      Set_Position (Main_Window, Win_Pos_None);
+      Set_Modal (Main_Window, False);
+      Set_Default_Size (Main_Window, 800, 700);
+
+      Gtk_New_Vbox (Main_Window.Vbox, False, 0);
+      Add (Main_Window, Main_Window.Vbox);
+
+      Gtk_New_Vbox (Main_Window.Toolbar_Box, False, 0);
+      Pack_Start (Main_Window.Vbox, Main_Window.Toolbar_Box, False, False, 0);
+
+      Gtk_New (Main_Window.Statusbar);
+      Pack_End (Main_Window.Vbox, Main_Window.Statusbar, False, False, 0);
+
+      Gtk_New (Main_Window.Main_Accel_Group);
+      Add_Accel_Group (Main_Window, Main_Window.Main_Accel_Group);
+      Gtk_New (Main_Window.Process_Mdi, Main_Window.Main_Accel_Group);
+      Add (Main_Window.Vbox, Main_Window.Process_Mdi);
+      Gtk_New
+        (Main_Window.Factory, Gtk.Menu_Bar.Get_Type,
+         Key, Main_Window.Main_Accel_Group);
+      Factory_Data.Create_Items
+        (Main_Window.Factory, Menu_Items, Main_Window.all'Access);
+      Menu := Get_Widget (Main_Window.Factory, Key);
+      Main_Window.Menu_Bar := Gtk_Menu_Bar (Menu);
+      Gtk_New_Hbox (Main_Window.Menu_Box, False, 0);
+      Pack_Start (Main_Window.Vbox, Main_Window.Menu_Box, False, False);
+      Pack_Start (Main_Window.Menu_Box, Menu);
+      Reorder_Child (Main_Window.Vbox, Main_Window.Menu_Box, 0);
+      Set_Submenu
+        (Gtk_Menu_Item (Get_Widget (Main_Window.Factory, '/' & (-"Window"))),
+         Create_Menu (Main_Window.Process_Mdi));
 
       Setup_Toplevel_Window (Main_Window.Process_Mdi, Main_Window);
       Main_Window.Home_Dir := new String'(Home_Dir);
@@ -984,6 +1030,27 @@ package body GPS.Main_Window is
    begin
       Free (Win.Home_Dir);
       Free (Win.Prefix_Directory);
+      Unref (Win.Factory);
+
+      if Win.Task_Dialog /= null then
+         Destroy (Win.Task_Dialog);
+      end if;
+
+      if Win.Thread_Dialog /= null then
+         Destroy (Win.Thread_Dialog);
+      end if;
+
+      if Win.PD_Dialog /= null then
+         Destroy (Win.PD_Dialog);
+      end if;
+
+      if Win.History_Dialog /= null then
+         Destroy (Win.History_Dialog);
+      end if;
+
+      if Win.Memory_View /= null then
+         Destroy (Win.Memory_View);
+      end if;
 
       if Win.Animation /= null then
          Unref (Win.Animation);
