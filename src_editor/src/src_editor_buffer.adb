@@ -3759,18 +3759,7 @@ package body Src_Editor_Buffer is
      (Buffer : access Source_Buffer_Record'Class)
       return Boolean is
    begin
-      case Get_Status (Buffer) is
-         when Unmodified | Saved =>
-            return False;
-
-         when Modified =>
-            if Buffer.Last_Saved_Position /= Get_Position (Buffer.Queue) then
-               return True;
-
-            else
-               return False;
-            end if;
-      end case;
+      return Get_Status (Buffer) = Modified;
    end Needs_To_Be_Saved;
 
    ----------------
