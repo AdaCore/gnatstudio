@@ -847,10 +847,6 @@ private
                   Check_Duplicates : Boolean);
    --  Add a new entity, if not already there, to D
 
-   procedure Remove  (D : in out Entities_Tries.Trie_Tree;
-                      E : Entity_Information);
-   --  Remove the information for a specific entity from the table.
-
    ----------------------
    -- Source_File_List --
    ----------------------
@@ -910,8 +906,11 @@ private
       All_Entities : aliased Entities_Tries.Trie_Tree;
       --  The list of all entities referenced by entities in the file, and that
       --  are defined in other files.
-      --  ??? This could be computed by traversing all the files in Depends_On,
-      --  and check whether their entities have references in the current file.
+      --  This list is no longer used for reference counting, and really only
+      --  contain the entities that are actually visible in other source files.
+      --  If an entity of another source file has this one has a child_type,
+      --  for instance, that entity will *not* be added to All_Entities, unless
+      --  it is also explicitly referenced elsewhere
 
       Ref_Count   : Integer := 0;
       --  The reference counter
