@@ -63,7 +63,8 @@ package body GVD.Dialogs is
      all Simple_Entry_Dialog_Record'Class;
 
    type Display_Dialog_Record is new Simple_Entry_Dialog_Record with record
-      Check : Gtk_Check_Button;
+      Check  : Gtk_Check_Button;
+      Check2 : Gtk_Check_Button;
    end record;
    type Display_Dialog_Access is access all Display_Dialog_Record'Class;
 
@@ -97,6 +98,7 @@ package body GVD.Dialogs is
       Must_Initialize : Boolean;
       Parent          : access Gtk.Window.Gtk_Window_Record'Class;
       Extra_Box       : Gtk.Check_Button.Gtk_Check_Button := null;
+      Extra_Box2      : Gtk.Check_Button.Gtk_Check_Button := null;
       Title           : String;
       Message         : String;
       Position        : Gtk_Window_Position := Win_Pos_Center;
@@ -778,6 +780,7 @@ package body GVD.Dialogs is
       Must_Initialize : Boolean;
       Parent          : access Gtk.Window.Gtk_Window_Record'Class;
       Extra_Box       : Gtk.Check_Button.Gtk_Check_Button := null;
+      Extra_Box2      : Gtk.Check_Button.Gtk_Check_Button := null;
       Title           : String;
       Message         : String;
       Position        : Gtk_Window_Position := Win_Pos_Center;
@@ -825,6 +828,12 @@ package body GVD.Dialogs is
             Gtk_New_Hbox (Box);
             Pack_Start (Vbox, Box);
             Pack_Start (Box, Extra_Box, Padding => 10);
+         end if;
+
+         if Extra_Box2 /= null then
+            Gtk_New_Hbox (Box);
+            Pack_Start (Vbox, Box);
+            Pack_Start (Box, Extra_Box2, Padding => 10);
          end if;
 
          Gtk_New (Button, -"OK");
@@ -928,7 +937,8 @@ package body GVD.Dialogs is
       end if;
 
       return Internal_Simple_Entry_Dialog
-        (Dialog, Must_Initialize, Parent, null, Title, Message, Position, Key);
+        (Dialog, Must_Initialize, Parent, null, null, Title,
+         Message, Position, Key);
    end Simple_Entry_Dialog;
 
    -------------------------
@@ -972,13 +982,16 @@ package body GVD.Dialogs is
    --------------------------
 
    function Display_Entry_Dialog
-     (Parent        : access Gtk.Window.Gtk_Window_Record'Class;
-      Title         : String;
-      Message       : String;
-      Position      : Gtk_Window_Position := Win_Pos_Center;
-      Check_Msg     : String;
-      Key           : String := "";
-      Button_Active : access Boolean) return String
+     (Parent         : access Gtk.Window.Gtk_Window_Record'Class;
+      Title          : String;
+      Message        : String;
+      Position       : Gtk.Enums.Gtk_Window_Position :=
+        Gtk.Enums.Win_Pos_Center;
+      Check_Msg      : String;
+      Key            : String := "";
+      Button_Active  : access Boolean;
+      Check_Msg2     : String := "";
+      Button2_Active : Boolean_Access := null) return String
    is
       Dialog          : Display_Dialog_Access;
       Must_Initialize : Boolean := False;
@@ -998,16 +1011,25 @@ package body GVD.Dialogs is
          Initialize (Dialog);
          Must_Initialize := True;
          Gtk_New (Dialog.Check, Check_Msg);
+
+         if Check_Msg2 /= "" then
+            Gtk_New (Dialog.Check2, Check_Msg2);
+         end if;
       end if;
 
       declare
          S : constant String := Internal_Simple_Entry_Dialog
-           (Dialog, Must_Initialize, Parent, Dialog.Check, Title, Message,
-            Position, Key);
+           (Dialog, Must_Initialize, Parent, Dialog.Check, Dialog.Check2,
+            Title, Message, Position, Key);
          R : Boolean;
       begin
          R := Get_Active (Dialog.Check);
          Button_Active.all := R;
+
+         if Dialog.Check2 /= null then
+            Button2_Active.all := Get_Active (Dialog.Check2);
+         end if;
+
          return S;
       end;
    end Display_Entry_Dialog;
