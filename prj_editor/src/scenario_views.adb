@@ -215,7 +215,7 @@ package body Scenario_Views is
               Find_Scenario_Variables (Get_Project (V.Kernel));
          begin
             Set_Sensitive (V.Edit_Button, True);
-            Resize (V, Rows => Guint (Scenar_Var'Length), Columns => 2);
+            Resize (V, Rows => Guint (Scenar_Var'Length) + 1, Columns => 2);
 
             for J in Scenar_Var'Range loop
                Row := Guint (J - Scenar_Var'First) + 1;
