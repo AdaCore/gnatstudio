@@ -637,7 +637,7 @@ package body Shell_Script is
       Register_Menu
         (Kernel,
          Parent_Path => "/" & (-"Tools"),
-         Text        => -"Shell console",
+         Text        => -"Shell Console",
          Callback    => Open_Shell_Console'Access);
 
       --  Only remember the last 100 commands.
