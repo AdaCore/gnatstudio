@@ -20,10 +20,22 @@ package Debugger.Gdb is
                        return Generic_Values.Generic_Type_Access;
    --  Parse the definition of type for Entity.
 
+   procedure Parse_Value
+     (Debugger  : Gdb_Debugger;
+      Entity    : String;
+      Value     : in out Generic_Values.Generic_Type_Access);
+   --  Parse the value for Entity.
+
    function Type_Of (Debugger : Gdb_Debugger;
                      Entity : String)
                     return String;
    --  Return the type of Entity in the current context.
+
+   function Value_Of (Debugger : Gdb_Debugger;
+                      Entity   : String;
+                      Format   : Value_Format := Decimal)
+                     return String;
+   --  Print the value of the entity.
 
    procedure Set_Executable (Debugger : Gdb_Debugger;
                              Executable : String);
@@ -45,6 +57,10 @@ package Debugger.Gdb is
 
    function Backtrace (Debugger : Gdb_Debugger) return String;
 
+   procedure Break_Subprogram (Debugger : Gdb_Debugger;
+                               Name     : String);
+
+   procedure Finish (Debugger : Gdb_Debugger);
 
 private
    type Gdb_Debugger is new Debugger.Debugger_Root with null record;
