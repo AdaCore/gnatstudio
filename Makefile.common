@@ -39,6 +39,7 @@ OBJ_DIR?=../obj
 ## Several targets are available in this Makefile:
 ##    all:       Build all the executables
 ##    profiling: Same, but compile them with profiling switches
+##    gmem:      Build the application with support for gnatmem
 ##    clean:     Remove all object files and executables
 #################################################################
 
@@ -57,6 +58,9 @@ all: ${MAIN}
 profiling: all
 profiling: CFLAGS+=-pg
 profiling: GNATLINK_FLAGS=-largs -pg
+
+gmem: all
+gmem: GNATLINK_FLAGS=-largs -lgmem
 
 #################
 ## GNAT module ##
