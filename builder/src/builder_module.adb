@@ -1549,9 +1549,9 @@ package body Builder_Module is
          Builder_Module.Build_Item := Mitem;
       end if;
 
-      Gtk_New (Mitem, -"All main subprograms");
+      Gtk_New (Mitem, -"All main units");
       Append (Menu1, Mitem);
-      Set_Accel_Path (Mitem, "<gps>/Build/Make/<All main subprograms>", Group);
+      Set_Accel_Path (Mitem, "<gps>/Build/Make/<All main units>", Group);
       File_Project_Cb.Object_Connect
         (Mitem, "activate",
          File_Project_Cb.To_Marshaller (On_Build'Access),
