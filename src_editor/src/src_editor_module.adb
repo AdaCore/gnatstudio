@@ -334,6 +334,10 @@ package body Src_Editor_Module is
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Edit->Unfold all blocks menu
 
+   procedure On_Refill
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   --  Edit->Refill
+
    procedure Comment_Uncomment
      (Kernel : Kernel_Handle; Comment : Boolean);
    --  Comment or uncomment the current selection, if any.
@@ -919,6 +923,23 @@ package body Src_Editor_Module is
                    (Get_Buffer (Box.Editor), From, To)
                then
                   Set_Error_Msg (Data, -"Could not indent buffer");
+               end if;
+            end if;
+         end;
+
+      elsif Command = "refill" then
+         declare
+            Child : constant MDI_Child := Find_Current_Editor (Kernel);
+            Box   : Source_Box;
+
+         begin
+            if Child /= null then
+               Box := Source_Box (Get_Widget (Child));
+
+               if not Get_Editable (Get_View (Box.Editor))
+                 or else not Do_Refill (Get_Buffer (Box.Editor))
+               then
+                  Set_Error_Msg (Data, -"Could not refill buffer");
                end if;
             end if;
          end;
@@ -3243,6 +3264,27 @@ package body Src_Editor_Module is
                 "Unexpected exception: " & Exception_Information (E));
    end On_Uncomment_Lines;
 
+   ---------------
+   -- On_Refill --
+   ---------------
+
+   procedure On_Refill
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   is
+      pragma Unreferenced (Widget);
+      Current : constant Source_Editor_Box :=
+                  Get_Source_Box_From_MDI (Find_Current_Editor (Kernel));
+      Result  : Boolean;
+      pragma Unreferenced (Result);
+   begin
+      Result := Do_Refill (Get_Buffer (Current));
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
+   end On_Refill;
+
    ----------------------
    -- Source_File_Hook --
    ----------------------
@@ -3822,6 +3864,9 @@ package body Src_Editor_Module is
       Register_Menu (Kernel, Edit, -"Uncomment L_ines", "",
                      On_Uncomment_Lines'Access, null,
                      GDK_underscore, Control_Mask, Ref_Item => -"Preferences");
+      Register_Menu (Kernel, Edit, -"R_efill", "",
+                     On_Refill'Access, null,
+                     GDK_equal, Control_Mask, Ref_Item => -"Preferences");
 
       Gtk_New (Mitem);
       Register_Menu (Kernel, Edit, Mitem, Ref_Item => -"Preferences");
@@ -4334,6 +4379,18 @@ package body Src_Editor_Module is
          Description   =>
          -("Indent the current editor. Do nothing if the current GPS"
            & " window is not an editor."),
+         Minimum_Args  => 0,
+         Maximum_Args  => 0,
+         Class         => Editor_Class,
+         Static_Method => True,
+         Handler       => Edit_Command_Handler'Access);
+
+      Register_Command
+        (Kernel,
+         Command       => "refill",
+         Description   =>
+         -("Refill selected (or current) editor lines. Do nothing if the"
+           & " current GPS window is not an editor."),
          Minimum_Args  => 0,
          Maximum_Args  => 0,
          Class         => Editor_Class,
