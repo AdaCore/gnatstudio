@@ -25,7 +25,7 @@
 --  Glide.
 --
 --  All the functionalities provided in Glide are organized into modules. Each
---  of this module can do the following:
+--  module can do the following:
 --     - Add new menus to the standard Glide menu bar
 --     - Add new icons in the Glide toolbar
 --     - Add new entries in the contextual menus.
@@ -36,7 +36,7 @@
 --  never directly. This provides more flexibility, as well as room for future
 --  extensions like dynamic modules.
 --
---  Yhe default modules provided in Glide (source editor, project editor,...)
+--  The default modules provided in Glide (source editor, project editor,...)
 --  are more closely integrated into the kernel than other external
 --  modules. However, even these should ideally be fully replaceable with minor
 --  source modification (for instance if one wants to override the default
@@ -92,8 +92,7 @@ package Glide_Kernel.Modules is
    Project_Editor_Module_Name     : constant String := "Project_Editor";
    Aunit_Module_Name              : constant String := "Unit_Testing";
    VCS_Module_Name                : constant String := "VCS_Interface";
-   Dependency_Browser_Module_Name : constant String :=
-     "dependency_browser";
+   Dependency_Browser_Module_Name : constant String := "Dependency_Browser";
    --  Names for the internal modules
 
    -----------
@@ -112,8 +111,7 @@ package Glide_Kernel.Modules is
      (Module_Name             : String;
       Priority                : Module_Priority := Default_Priority;
       Initializer             : Module_Initializer  := null;
-      Contextual_Menu_Handler : Module_Menu_Handler := null)
-      return Module_ID;
+      Contextual_Menu_Handler : Module_Menu_Handler := null) return Module_ID;
    --  Register a new module into Glide.
    --  Module_Name can be used by other modules to check whether they want to
    --  interact with this module.
