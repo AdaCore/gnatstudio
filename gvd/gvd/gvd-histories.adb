@@ -134,7 +134,8 @@ package body Odd.Histories is
    begin
       if History.Position = Before_Beginning then
          History.Position := Inside_History;
-      elsif History.Current /= null then
+      end if;
+      if History.Current /= null then
          if History.Current.Next = null then
             if History.Position = Inside_History then
                History.Position := After_End;
