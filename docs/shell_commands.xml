@@ -1997,4 +1997,23 @@ The regular expression specifies how locations are recognized. By default, it ma
      <description>Set value for the given preference</description>
   </shell_doc>
 
+  <!--#################################################################
+    ####   GUI class
+    ###################################################################-->
+
+  <shell_doc name="GPS.GUI" >
+     <description>This is an abstract class (ie no instances of it can be created from your code, which represents a graphical element of the GPS interface</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.GUI.__init__">
+     <param name="self">The instance of GPS.GUI</param>
+     <description>Prevents the creation of instances of GPS.GUI</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.GUI.set_sensitive">
+     <param name="self">The instance of GPS.GUI</param>
+     <param name="sensitive" default="True">A boolean</param>
+     <description>Indicate whether the associated graphical element should respond to user interaction or not. If the element is not sensitive, then the user will not be able to click on it</description>
+  </shell_doc>
+
 </docs>
