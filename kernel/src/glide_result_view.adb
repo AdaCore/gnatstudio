@@ -89,14 +89,17 @@ package body Glide_Result_View is
    procedure Set_Column_Types (Tree : Gtk_Tree_View);
    --  Sets the types of columns to be displayed in the tree_view.
 
-   function Get_Category_File
-     (View     : access Result_View_Record'Class;
-      Category : String;
-      File     : String)
-     return Gtk_Tree_Iter;
+   procedure Get_Category_File
+     (View          : access Result_View_Record'Class;
+      Category      : String;
+      File          : String;
+      Category_Iter : out Gtk_Tree_Iter;
+      File_Iter     : out Gtk_Tree_Iter;
+      New_Category  : out Boolean);
    --  Return the iter corresponding to Category, create it if
    --  necessary.
    --  If File is "", then the category iter will be returned.
+   --  If the category was created, New_Category is set to True.
 
    procedure Fill_Iter
      (View          : access Result_View_Record'Class;
@@ -371,52 +374,55 @@ package body Glide_Result_View is
    -- Get_Category_File --
    -----------------------
 
-   function Get_Category_File
-     (View     : access Result_View_Record'Class;
-      Category : String;
-      File     : String)
-     return Gtk_Tree_Iter
-   is
-      Iter  : Gtk_Tree_Iter := Get_Iter_First (View.Model);
-      Child : Gtk_Tree_Iter;
+   procedure Get_Category_File
+     (View          : access Result_View_Record'Class;
+      Category      : String;
+      File          : String;
+      Category_Iter : out Gtk_Tree_Iter;
+      File_Iter     : out Gtk_Tree_Iter;
+      New_Category  : out Boolean) is
    begin
-      while Iter /= Null_Iter loop
+      Category_Iter := Get_Iter_First (View.Model);
+      New_Category := False;
+
+      while Category_Iter /= Null_Iter loop
          if Get_String
-           (View.Model, Iter, Base_Name_Column) = Category
+           (View.Model, Category_Iter, Base_Name_Column) = Category
          then
             exit;
          end if;
 
-         Next (View.Model, Iter);
+         Next (View.Model, Category_Iter);
       end loop;
 
-      if Iter = Null_Iter then
-         Append (View.Model, Iter, Null_Iter);
-         Fill_Iter (View, Iter, Category, "", "", "", "", "");
+      if Category_Iter = Null_Iter then
+         Append (View.Model, Category_Iter, Null_Iter);
+         Fill_Iter (View, Category_Iter, Category, "", "", "", "", "");
+         New_Category := True;
       end if;
 
       if File = "" then
-         return Iter;
+         return;
       end if;
 
-      Child := Children (View.Model, Iter);
+      File_Iter := Children (View.Model, Category_Iter);
 
-      while Child /= Null_Iter loop
+      while File_Iter /= Null_Iter loop
          if Get_String
-           (View.Model, Child, Absolute_Name_Column) = File
+           (View.Model, File_Iter, Absolute_Name_Column) = File
          then
-            return Child;
+            return;
          end if;
 
-         Next (View.Model, Child);
+         Next (View.Model, File_Iter);
       end loop;
 
       --  When we reach this point, we need to create a new sub-category.
 
-      Append (View.Model, Child, Iter);
-      Fill_Iter (View, Child, Base_Name (File), File, "", "", "", "");
+      Append (View.Model, File_Iter, Category_Iter);
+      Fill_Iter (View, File_Iter, Base_Name (File), File, "", "", "", "");
 
-      return Child;
+      return;
    end Get_Category_File;
 
    ------------------
@@ -431,12 +437,17 @@ package body Glide_Result_View is
       Column   : Integer;
       Message  : String)
    is
-      Category_Iter : Gtk_Tree_Iter;
-      Iter          : Gtk_Tree_Iter;
+      Category_Iter    : Gtk_Tree_Iter;
+      File_Iter        : Gtk_Tree_Iter;
+      Iter             : Gtk_Tree_Iter;
+      Category_Created : Boolean;
+      Dummy            : Boolean;
+      Path             : Gtk_Tree_Path;
    begin
-      Category_Iter := Get_Category_File (View, Category, File);
+      Get_Category_File
+        (View, Category, File, Category_Iter, File_Iter, Category_Created);
 
-      Append (View.Model, Iter, Category_Iter);
+      Append (View.Model, Iter, File_Iter);
 
       --  If File is open, create a mark, otherwise add File to the list
       --  of unopened files.
@@ -459,6 +470,16 @@ package body Glide_Result_View is
            (View, Iter, Line'Img & ":" & Column'Img, File, Message, "",
             Line'Img, Column'Img);
       end if;
+
+      if Category_Created then
+         Path := Get_Path (View.Model, Category_Iter);
+         Dummy := Expand_Row (View.Tree, Path, True);
+         Path_Free (Path);
+      end if;
+
+      Path := Get_Path (View.Model, File_Iter);
+      Dummy := Expand_Row (View.Tree, Path, True);
+      Path_Free (Path);
    end Add_Location;
 
    ----------------------
@@ -613,9 +634,11 @@ package body Glide_Result_View is
      (View          : access Result_View_Record'Class;
       Identifier    : String)
    is
-      Iter : Gtk_Tree_Iter;
+      Iter       : Gtk_Tree_Iter;
+      Dummy_Iter : Gtk_Tree_Iter;
+      Dummy      : Boolean;
    begin
-      Iter := Get_Category_File (View, Identifier, "");
+      Get_Category_File (View, Identifier, "", Iter, Dummy_Iter, Dummy);
 
       if Iter /= Null_Iter then
          Remove (View.Model, Iter);
@@ -676,7 +699,7 @@ package body Glide_Result_View is
                if Row_Expanded (Explorer.Tree, Path) then
                   Success := Collapse_Row (Explorer.Tree, Path);
                else
-                  Success := Expand_Row (Explorer.Tree, Path, False);
+                  Success := Expand_Row (Explorer.Tree, Path, True);
                end if;
 
             elsif Get_Depth (Path) = 3 then
