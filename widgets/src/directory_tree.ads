@@ -120,6 +120,7 @@ package Directory_Tree is
    --  selected by the user.
    --  Root_Directory is the directory associated with the root node in the
    --  tree.
+   --  You are responsible for freeing Initialize_Selection.
 
    procedure Initialize
      (Selector             : access Directory_Selector_Record'Class;
