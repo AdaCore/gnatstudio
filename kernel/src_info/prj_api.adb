@@ -41,6 +41,7 @@ with Stringt;                   use Stringt;
 with Osint;                     use Osint;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with String_Utils;              use String_Utils;
+with File_Utils;                use File_Utils;
 with Project_Browsers;          use Project_Browsers;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
@@ -4564,6 +4565,42 @@ package body Prj_API is
 
       return True;
    end Is_Valid_Project_Name;
+
+   ------------------
+   -- Is_Main_File --
+   ------------------
+
+   function Is_Main_File (Project_View : Project_Id; File : String)
+      return Boolean
+   is
+      Value : Argument_List := Get_Attribute_Value
+        (Project_View => Project_View,
+         Attribute_Name => Main_Attribute);
+   begin
+      if Filenames_Are_Case_Sensitive then
+         for V in Value'Range loop
+            if Value (V).all = File then
+               Free (Value);
+               return True;
+            end if;
+         end loop;
+
+      else
+         declare
+            F : constant String := To_Lower (File);
+         begin
+            for V in Value'Range loop
+               if To_Lower (Value (V).all) = F then
+                  Free (Value);
+                  return True;
+               end if;
+            end loop;
+         end;
+      end if;
+
+      Free (Value);
+      return False;
+   end Is_Main_File;
 
    ----------------
    -- Initialize --
