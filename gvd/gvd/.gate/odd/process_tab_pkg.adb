@@ -28,11 +28,13 @@ begin
    Add (Process_Tab, Process_Tab.Process_Paned);
    Set_Handle_Size (Process_Tab.Process_Paned, 10);
    Set_Gutter_Size (Process_Tab.Process_Paned, 6);
+   Set_Position (Process_Tab.Process_Paned, 0);
 
    Gtk_New_Vpaned (Process_Tab.Vpaned6);
    Add (Process_Tab.Process_Paned, Process_Tab.Vpaned6);
    Set_Handle_Size (Process_Tab.Vpaned6, 10);
    Set_Gutter_Size (Process_Tab.Vpaned6, 6);
+   Set_Position (Process_Tab.Vpaned6, 0);
 
    Gtk_New (Process_Tab.Scrolledwindow9);
    Add (Process_Tab.Vpaned6, Process_Tab.Scrolledwindow9);

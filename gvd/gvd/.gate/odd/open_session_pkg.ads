@@ -1,28 +1,23 @@
 with Gtk.Window; use Gtk.Window;
 with Gtk.Box; use Gtk.Box;
-with Gtk.Frame; use Gtk.Frame;
-with Gtk.Table; use Gtk.Table;
-with Gtk.Combo; use Gtk.Combo;
-with Gtk.GEntry; use Gtk.GEntry;
-with Gtk.Button; use Gtk.Button;
-with Gtk.Option_Menu; use Gtk.Option_Menu;
-with Gtk.Menu; use Gtk.Menu;
-with Gtk.Menu_Item; use Gtk.Menu_Item;
+with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
+with Gtk.Viewport; use Gtk.Viewport;
+with Gtk.List; use Gtk.List;
 with Gtk.Label; use Gtk.Label;
+with Gtk.GEntry; use Gtk.GEntry;
 with Gtk.Hbutton_Box; use Gtk.Hbutton_Box;
+with Gtk.Button; use Gtk.Button;
 with Gtk.Object; use Gtk.Object;
 package Open_Session_Pkg is
 
    type Open_Session_Record is new Gtk_Window_Record with record
       Vbox17 : Gtk_Vbox;
-      Frame13 : Gtk_Frame;
-      Table8 : Gtk_Table;
-      Combo12 : Gtk_Combo;
-      Program_Entry : Gtk_Entry;
-      Open_Button : Gtk_Button;
-      Launch_Menu : Gtk_Option_Menu;
-      Label69 : Gtk_Label;
-      Label71 : Gtk_Label;
+      Scrolledwindow10 : Gtk_Scrolled_Window;
+      Viewport1 : Gtk_Viewport;
+      List : Gtk_List;
+      Hbox6 : Gtk_Hbox;
+      Label73 : Gtk_Label;
+      Entry1 : Gtk_Entry;
       Hbuttonbox9 : Gtk_Hbutton_Box;
       Ok_Button : Gtk_Button;
       Cancel_Button : Gtk_Button;
