@@ -20,6 +20,7 @@
 
 with VCS; use VCS;
 with String_List_Utils; use String_List_Utils;
+with Glide_Kernel; use Glide_Kernel;
 
 package Commands.VCS is
 
@@ -29,6 +30,9 @@ package Commands.VCS is
    type Get_Status_Command_Type is new Root_Command with private;
    type Get_Status_Command_Access is access all Get_Status_Command_Type;
 
+   type Update_Files_Command_Type is new Root_Command with private;
+   type Update_Files_Command_Access is access all Update_Files_Command_Type;
+
    procedure Create
      (Item      : out Commit_Command_Access;
       Rep       : VCS_Access;
@@ -36,6 +40,8 @@ package Commands.VCS is
       Logs      : String_List.List);
    --  Create a new Commit_Command.
    --  The user must free Filenames and Logs after calling Create.
+   --  The log files for files that are up-to-date will be erased
+   --  after this command completes.
 
    function Execute (Command : access Commit_Command_Type) return Boolean;
 
@@ -44,19 +50,33 @@ package Commands.VCS is
       Rep       : VCS_Access;
       Filenames : String_List.List);
    --  Create a new Get_Status_Command.
-   --  The user must free Filenames and Logs after calling Create.
-   --  The log files for files that are up-to-date will be erased
-   --  after this command completes.
+   --  The user must free Filenames after calling Create.
+
+   procedure Create
+     (Item      : out Update_Files_Command_Access;
+      Kernel    : Kernel_Handle;
+      Filenames : String_List.List);
+   --  Create a new Update_Files_Command.
+   --  The user must free Filenames after calling Create.
 
    function Execute (Command : access Get_Status_Command_Type) return Boolean;
+   function Execute
+     (Command : access Update_Files_Command_Type)
+      return Boolean;
 
    procedure Free (X : in out Commit_Command_Type);
    procedure Free (X : in out Get_Status_Command_Type);
+   procedure Free (X : in out Update_Files_Command_Type);
    --  Free memory associated to X.
 
 private
    type Get_Status_Command_Type is new Root_Command with record
       Rep       : VCS_Access;
+      Filenames : String_List.List;
+   end record;
+
+   type Update_Files_Command_Type is new Root_Command with record
+      Kernel    : Kernel_Handle;
       Filenames : String_List.List;
    end record;
 

@@ -35,6 +35,11 @@ package body Commands.VCS is
       String_List.Free (X.Filenames);
    end Free;
 
+   procedure Free (X : in out Update_Files_Command_Type) is
+   begin
+      String_List.Free (X.Filenames);
+   end Free;
+
    ------------
    -- Create --
    ------------
@@ -78,6 +83,16 @@ package body Commands.VCS is
       Item.Filenames := Copy_String_List (Filenames);
    end Create;
 
+   procedure Create
+     (Item      : out Update_Files_Command_Access;
+      Kernel    : Kernel_Handle;
+      Filenames : String_List.List) is
+   begin
+      Item := new Update_Files_Command_Type;
+      Item.Kernel    := Kernel;
+      Item.Filenames := Copy_String_List (Filenames);
+   end Create;
+
    -------------
    -- Execute --
    -------------
@@ -86,6 +101,22 @@ package body Commands.VCS is
      (Command : access Get_Status_Command_Type) return Boolean is
    begin
       Get_Status (Command.Rep, Command.Filenames, Clear_Logs => True);
+      Command_Finished (Command, True);
+      return True;
+   end Execute;
+
+   function Execute
+     (Command : access Update_Files_Command_Type)
+      return Boolean
+   is
+      use String_List;
+      L_Temp : List_Node := First (Command.Filenames);
+   begin
+      while L_Temp /= Null_Node loop
+         File_Changed_On_Disk (Command.Kernel, Data (L_Temp));
+         L_Temp := Next (L_Temp);
+      end loop;
+
       Command_Finished (Command, True);
       return True;
    end Execute;
