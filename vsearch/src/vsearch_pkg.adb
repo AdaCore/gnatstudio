@@ -88,6 +88,7 @@ begin
    Set_Case_Sensitive (Vsearch.Replace_Combo, True);
    Set_Use_Arrows (Vsearch.Replace_Combo, True);
    Set_Use_Arrows_Always (Vsearch.Replace_Combo, False);
+   Disable_Activate (Vsearch.Replace_Combo);
    --  String_List.Append (Replace_Combo_Items, -"");
    --  Combo.Set_Popdown_Strings (Vsearch.Replace_Combo, Replace_Combo_Items);
    --  Free_String_List (Replace_Combo_Items);
@@ -126,6 +127,7 @@ begin
    Set_Case_Sensitive (Vsearch.Pattern_Combo, True);
    Set_Use_Arrows (Vsearch.Pattern_Combo, True);
    Set_Use_Arrows_Always (Vsearch.Pattern_Combo, False);
+   Disable_Activate (Vsearch.Pattern_Combo);
    --  String_List.Append (Pattern_Combo_Items, -"");
    --  Combo.Set_Popdown_Strings (Vsearch.Pattern_Combo, Pattern_Combo_Items);
    --  Free_String_List (Pattern_Combo_Items);
