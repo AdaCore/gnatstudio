@@ -173,6 +173,7 @@ package body Prj_API is
    function Create_Project (Name, Path : String) return Project_Node_Id is
       Project : Project_Node_Id := Default_Project_Node (N_Project);
       Project_Name : Name_Id;
+      D : constant String := Path & Name & Project_File_Extension;
    begin
       --  Adding the name of the project
       Name_Len := Name'Length;
@@ -183,8 +184,11 @@ package body Prj_API is
       --  Adding the project path
       Name_Len := Path'Length;
       Name_Buffer (1 .. Name_Len) := Path;
+      Set_Directory_Of (Project, Name_Enter);
+
+      Name_Len := D'Length;
+      Name_Buffer (1 .. Name_Len) := D;
       Set_Path_Name_Of (Project, Name_Enter);
-      Set_Directory_Of (Project, Path_Name_Of (Project));
 
       --  Create the project declaration
       Set_Project_Declaration_Of
@@ -3144,6 +3148,7 @@ package body Prj_API is
 
       procedure Internal_Write_Char (C : Character);
       procedure Internal_Write_Str (S : String);
+      procedure Internal_Write_Eol;
 
       -------------------------
       -- Internal_Write_Char --
@@ -3163,16 +3168,26 @@ package body Prj_API is
          Put (File, S);
       end Internal_Write_Str;
 
+      ------------------------
+      -- Internal_Write_Eol --
+      ------------------------
+
+      procedure Internal_Write_Eol is
+      begin
+         Put (File, ASCII.LF);
+      end Internal_Write_Eol;
+
       Iter : Imported_Project_Iterator := Start (Project, Recursive);
    begin
       while Current (Iter) /= Empty_Node loop
          Create (File, Mode => Out_File,
                  Name => Get_Name_String
-                 (Projects.Table (Current (Iter)).Path_Name));
+                 (Prj.Tree.Path_Name_Of (Current (Iter))));
          Pretty_Print
            (Project => Current (Iter),
-            Eliminate_Null_Statements => True,
+            Eliminate_Empty_Case_Constructions => True,
             W_Char => Internal_Write_Char'Unrestricted_Access,
+            W_Eol  => Internal_Write_Eol'Unrestricted_Access,
             W_Str  => Internal_Write_Str'Unrestricted_Access);
          Close (File);
 
