@@ -18,9 +18,9 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with GNAT.Expect;  use GNAT.Expect;
-with GNAT.Regpat;  use GNAT.Regpat;
-with Gtk.Main;     use Gtk.Main;
+with GNAT.Expect;           use GNAT.Expect;
+with GNAT.Regpat;           use GNAT.Regpat;
+with Gtk.Main;              use Gtk.Main;
 with Unchecked_Deallocation;
 
 package body Process_Proxies is
@@ -45,7 +45,7 @@ package body Process_Proxies is
    --------------------
 
    function Get_Descriptor
-     (Proxy : Process_Proxy) return Process_Descriptor_Access is
+     (Proxy : access Process_Proxy) return Process_Descriptor_Access is
    begin
       return Proxy.Descriptor;
    end Get_Descriptor;
@@ -55,7 +55,7 @@ package body Process_Proxies is
    --------------------
 
    procedure Set_Descriptor
-     (Proxy      : in out Process_Proxy;
+     (Proxy      : access Process_Proxy;
       Descriptor : GNAT.Expect.Process_Descriptor_Access) is
    begin
       Proxy.Descriptor := Descriptor;
@@ -65,7 +65,7 @@ package body Process_Proxies is
    -- Command_In_Process --
    ------------------------
 
-   function Command_In_Process (Proxy : Process_Proxy) return Boolean is
+   function Command_In_Process (Proxy : access Process_Proxy) return Boolean is
    begin
       return Proxy.Command_In_Process.all;
    end Command_In_Process;
@@ -74,12 +74,15 @@ package body Process_Proxies is
    -- Wait --
    ----------
 
-   procedure Wait (Proxy   : Process_Proxy;
+   procedure Wait (Proxy   : access Process_Proxy;
                    Result  : out GNAT.Expect.Expect_Match;
                    Pattern : GNAT.Regpat.Pattern_Matcher;
                    Timeout : Integer := 20) is
    begin
       Proxy.Command_In_Process.all := True;
+
+      --  In text mode, there is no race condition with an output filter,
+      --  so we go for the simple solution.
 
       if Timeout = -1 then
          Expect (Proxy.Descriptor.all, Result, Pattern, Timeout => -1);
@@ -95,7 +98,7 @@ package body Process_Proxies is
    -- Wait --
    ----------
 
-   procedure Wait (Proxy   : Process_Proxy;
+   procedure Wait (Proxy   : access Process_Proxy;
                    Result  : out GNAT.Expect.Expect_Match;
                    Pattern : String;
                    Timeout : Integer := 20) is
@@ -107,16 +110,21 @@ package body Process_Proxies is
    -- Send --
    ----------
 
-   procedure Send (Proxy : Process_Proxy; Cmd : String) is
+   procedure Send (Proxy : access Process_Proxy;
+                   Cmd : String;
+                   Empty_Buffer : Boolean := False)
+   is
    begin
-      Send (Proxy.Descriptor.all, Cmd);
+      Send (Proxy.Descriptor.all, Cmd,
+            Add_LF => True,
+            Empty_Buffer => Empty_Buffer);
    end Send;
 
    ----------------
    -- Expect_Out --
    ----------------
 
-   function Expect_Out (Proxy : Process_Proxy) return String is
+   function Expect_Out (Proxy : access Process_Proxy) return String is
    begin
       return Expect_Out (Proxy.Descriptor.all);
    end Expect_Out;
@@ -125,7 +133,7 @@ package body Process_Proxies is
    -- Wait --
    ----------
 
-   procedure Wait (Proxy   : Gui_Process_Proxy;
+   procedure Wait (Proxy   : access Gui_Process_Proxy;
                    Result  : out GNAT.Expect.Expect_Match;
                    Pattern : GNAT.Regpat.Pattern_Matcher;
                    Timeout : Integer := 20)
@@ -175,5 +183,27 @@ package body Process_Proxies is
 
       Proxy.Command_In_Process.all := False;
    end Wait;
+
+   -------------------------
+   -- Is_Internal_Command --
+   -------------------------
+
+   function Is_Internal_Command (Proxy : access Process_Proxy)
+                                return Boolean
+   is
+   begin
+      return Proxy.Internal_Command;
+   end Is_Internal_Command;
+
+   --------------------------
+   -- Set_Internal_Command --
+   --------------------------
+
+   procedure Set_Internal_Command (Proxy       : access Process_Proxy;
+                                   Is_Internal : Boolean)
+   is
+   begin
+      Proxy.Internal_Command := Is_Internal;
+   end Set_Internal_Command;
 
 end Process_Proxies;

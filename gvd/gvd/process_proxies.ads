@@ -33,26 +33,39 @@ package Process_Proxies is
    procedure Free (Proxy : in out Process_Proxy_Access);
    --  Free the space occupied by the proxy and its pipe_id.
 
-   function Command_In_Process (Proxy : Process_Proxy) return Boolean;
+   function Command_In_Process (Proxy : access Process_Proxy) return Boolean;
    --  Return True if a command is currently being processed for Proxy.
    --  Since, in graphic mode, the main loop events are processed, all the
    --  callbacks have to check whether a command is already executing. Since
    --  the external debugger can process a single command at a time, the
    --  callback should not do anything.
 
+   function Is_Internal_Command (Proxy : access Process_Proxy) return Boolean;
+   --  Return True if the external process is currently process some commands
+   --  internally (ie that was not sent by the user, and whose output should
+   --  be hidden).
+
+   procedure Set_Internal_Command (Proxy       : access Process_Proxy;
+                                   Is_Internal : Boolean);
+   --  Set the internal status for the following commands.
+   --  The default behavior is True, so that we don't have to set this in
+   --  every callback in our application, but only set it to False for
+   --  explicit user commands.
+
    function Get_Descriptor
-     (Proxy : Process_Proxy) return GNAT.Expect.Process_Descriptor_Access;
+     (Proxy : access Process_Proxy)
+     return GNAT.Expect.Process_Descriptor_Access;
    --  Returns the associates Process_Descriptor, so that all the functions of
    --  GNAT.Expect can be applied to it.
    --  You should not use Expect directly, but rather Wait below.
 
    procedure Set_Descriptor
-     (Proxy      : in out Process_Proxy;
+     (Proxy      : access Process_Proxy;
       Descriptor : GNAT.Expect.Process_Descriptor_Access);
    --  Set the external process descriptor.
 
    procedure Wait
-     (Proxy   : Process_Proxy;
+     (Proxy   : access Process_Proxy;
       Result  : out GNAT.Expect.Expect_Match;
       Pattern : GNAT.Regpat.Pattern_Matcher;
       Timeout : Integer := 20);
@@ -65,22 +78,26 @@ package Process_Proxies is
    --  Default Timeout is one second.
 
    procedure Wait
-     (Proxy   : Process_Proxy;
+     (Proxy   : access Process_Proxy;
       Result  : out GNAT.Expect.Expect_Match;
       Pattern : String;
       Timeout : Integer := 20);
    --  Same, but the regular expression is given a string.
 
-   procedure Send (Proxy : Process_Proxy; Cmd : String);
+   procedure Send (Proxy : access Process_Proxy;
+                   Cmd   : String;
+                   Empty_Buffer : Boolean := False);
    --  Send a command to the underlying process.
+   --  If Empty_Buffer is True, any input waiting from the process (or in the
+   --  buffer) is first discarded before the command is sent.
 
-   function Expect_Out (Proxy : Process_Proxy) return String;
+   function Expect_Out (Proxy : access Process_Proxy) return String;
    --  Equivalent to Expect_Out, can be called after a Wait.
 
    type Gui_Process_Proxy is new Process_Proxy with private;
 
    procedure Wait
-     (Proxy   : Gui_Process_Proxy;
+     (Proxy   : access Gui_Process_Proxy;
       Result  : out GNAT.Expect.Expect_Match;
       Pattern : GNAT.Regpat.Pattern_Matcher;
       Timeout : Integer := 20);
@@ -92,11 +109,15 @@ private
 
    type Process_Proxy is tagged record
       Descriptor         : GNAT.Expect.Process_Descriptor_Access;
-      
+
       Command_In_Process : Boolean_Access := new Boolean'(False);
       --  This is implemented as an access type so that Process_Proxy does
       --  not always have to be passed as an "in out" parameter, but simply
       --  an "in" parameter.
+
+      Internal_Command   : Boolean := True;
+      --  True if we are processing a set of commands that were not sent by
+      --  the user, and whose output should be hidden.
    end record;
 
    type Gui_Process_Proxy is new Process_Proxy with null record;
