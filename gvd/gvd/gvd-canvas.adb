@@ -594,8 +594,6 @@ package body GVD.Canvas is
          return Canvas.Contextual_Background_Menu;
       end if;
 
-      Unlock (Accel_Group);
-
       Gtk_New (Canvas.Contextual_Background_Menu);
 
       Gtkada.Handlers.Return_Callback.Object_Connect
@@ -673,7 +671,6 @@ package body GVD.Canvas is
 
       Show_All (Canvas.Contextual_Background_Menu);
 
-      Lock (Accel_Group);
       return Canvas.Contextual_Background_Menu;
    end Contextual_Background_Menu;
 

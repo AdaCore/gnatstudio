@@ -149,7 +149,6 @@ package body GVD.Main_Window is
          Key, Main_Window.Main_Accel_Group);
       Factory_Data.Create_Items
         (Main_Window.Factory, Menu_Items, Main_Window.all'Access);
-      Lock (Main_Window.Main_Accel_Group);
       Menu := Get_Widget (Main_Window.Factory, Key);
       Main_Window.Menu_Bar := Gtk_Menu_Bar (Menu);
       Pack_Start (Main_Window.Vbox, Menu, False, False, 0);
