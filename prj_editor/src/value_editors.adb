@@ -27,7 +27,6 @@
 -----------------------------------------------------------------------
 
 with Gdk.Color;       use Gdk.Color;
-with Gdk.Font;        use Gdk.Font;
 with Glib;            use Glib;
 with Gtk.Arguments;   use Gtk.Arguments;
 with Gtk.Handlers;    use Gtk.Handlers;
@@ -35,6 +34,7 @@ with Gtk.Style;       use Gtk.Style;
 with Gtk.Text;        use Gtk.Text;
 with Gtk.Widget;      use Gtk.Widget;
 with Gtkada.Handlers; use Gtkada.Handlers;
+with Pango.Font;      use Pango.Font;
 
 with System;          use System;
 with Unchecked_Conversion;
@@ -275,15 +275,15 @@ package body Value_Editors is
    procedure Set_Visible_Lines
      (Editor : access Value_Editor_Record; Lines : Natural)
    is
-      F : Gdk_Font;
+      F : Pango_Font_Description;
       Text_Border_Room : constant := 1;  --  See definition in gtktext.c
    begin
       Realize (Editor);
-      F := Get_Font (Get_Style (Editor));
+      F := Get_Font_Description (Get_Style (Editor));
       Set_Size_Request
         (Editor, -1,
-         Gint (Lines) * (Get_Ascent (F) + Get_Descent (F))
-         + 2 * (Y_Thickness (Get_Style (Editor)) + Text_Border_Room));
+         Gint (Lines) * F.Size
+               + 2 * (Y_Thickness (Get_Style (Editor)) + Text_Border_Room));
    end Set_Visible_Lines;
 
    ----------------------------
