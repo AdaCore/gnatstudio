@@ -43,7 +43,7 @@ project GPS is
            for Global_Configuration_Pragmas use "gnat_debug.adc";
 
          when "Production" =>
-           for Default_Switches ("Ada") use ("-a", "-g");
+           for Default_Switches ("Ada") use ("-m", "-a", "-g");
            for Global_Configuration_Pragmas use "gnat.adc";
       end case;
    end Builder;
