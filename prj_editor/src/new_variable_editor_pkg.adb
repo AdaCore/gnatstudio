@@ -21,6 +21,7 @@
 with Gtk; use Gtk;
 with Gtk.Widget;      use Gtk.Widget;
 with Gtk.Enums;       use Gtk.Enums;
+with Gtk.Stock;       use Gtk.Stock;
 with Glide_Intl; use Glide_Intl;
 
 package body New_Variable_Editor_Pkg is
@@ -128,11 +129,11 @@ begin
    Set_Child_Ipadding (New_Variable_Editor.Hbuttonbox4, 7, 0);
    Pack_Start (New_Variable_Editor.Vbox54, New_Variable_Editor.Hbuttonbox4, False, False, 0);
 
-   Gtk_New (New_Variable_Editor.Delete_Variable, -"Delete");
+   Gtk_New_From_Stock (New_Variable_Editor.Delete_Variable, Stock_Remove);
    Set_Flags (New_Variable_Editor.Delete_Variable, Can_Default);
    Add (New_Variable_Editor.Hbuttonbox4, New_Variable_Editor.Delete_Variable);
 
-   Gtk_New (New_Variable_Editor.New_Variable, -"New");
+   Gtk_New_From_Stock (New_Variable_Editor.New_Variable, Stock_New);
    Set_Flags (New_Variable_Editor.New_Variable, Can_Default);
    Add (New_Variable_Editor.Hbuttonbox4, New_Variable_Editor.New_Variable);
 
