@@ -162,9 +162,6 @@ package Glide_Kernel.Modules is
    package Context_Callback is new Gtk.Handlers.User_Callback
      (Glib.Object.GObject_Record, Selection_Context_Access);
 
-   package Command_Callback is new Gtk.Handlers.User_Callback
-     (Glib.Object.GObject_Record, Command_Access);
-
    -------------------------
    -- Module manipulation --
    -------------------------
@@ -354,7 +351,8 @@ package Glide_Kernel.Modules is
       Accel_Mods  : Gdk.Types.Gdk_Modifier_Type := 0;
       Ref_Item    : String := "";
       Add_Before  : Boolean := True;
-      Sensitive   : Boolean := True);
+      Sensitive   : Boolean := True;
+      Action      : Action_Record := No_Action);
    --  Same as the above, but creates the menu item directly, and connects the
    --  appropriate callback.
    --  If Command is not null, then a callback will be created to launch
@@ -373,7 +371,9 @@ package Glide_Kernel.Modules is
       Accel_Mods  : Gdk.Types.Gdk_Modifier_Type := 0;
       Ref_Item    : String := "";
       Add_Before  : Boolean := True;
-      Sensitive   : Boolean := True) return Gtk.Menu_Item.Gtk_Menu_Item;
+      Sensitive   : Boolean := True;
+      Action      : Action_Record := No_Action)
+      return Gtk.Menu_Item.Gtk_Menu_Item;
    --  Same as above, but returns the menu item that was created.
 
    function Find_Menu_Item
@@ -486,7 +486,8 @@ package Glide_Kernel.Modules is
       Column            : Natural := 1;
       Column_End        : Natural := 0;
       Enable_Navigation : Boolean := True;
-      New_File          : Boolean := True);
+      New_File          : Boolean := True;
+      Force_Reload      : Boolean := False);
    --  Open, or create, an editor that edits Filename (Mime_Source_File type)
    --  If Enable_Navigation is True, then the location visited will be
    --  stored in the history for Back/Forward navigation.
@@ -495,6 +496,9 @@ package Glide_Kernel.Modules is
    --  name of the file you want to open
    --
    --  If not found and New_File is True, a new file is edited.
+   --
+   --  If Force_Reload is true, and the file is already open, a reload is
+   --  forced, and no dialog is displayed for the user ("Revert ?")
 
    procedure Clear_Highlighting
      (Kernel   : access Kernel_Handle_Record'Class;

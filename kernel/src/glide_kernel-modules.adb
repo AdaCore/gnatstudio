@@ -108,10 +108,18 @@ package body Glide_Kernel.Modules is
    --  and send it.
    --  If File is an empty string, send the Mime for all open buffers.
 
+   type Non_Interactive_Action is record
+      Command : Command_Access;
+      Filter  : Action_Filter;
+   end record;
+
    procedure Execute_Command
      (Widget  : access GObject_Record'Class;
-      Command : Command_Access);
+      Command : Non_Interactive_Action);
    --  Execute a single command.
+
+   package Command_Callback is new Gtk.Handlers.User_Callback
+     (Glib.Object.GObject_Record, Non_Interactive_Action);
 
    ---------------------
    -- Compute_Tooltip --
@@ -960,14 +968,15 @@ package body Glide_Kernel.Modules is
       Accel_Mods  : Gdk.Types.Gdk_Modifier_Type := 0;
       Ref_Item    : String := "";
       Add_Before  : Boolean := True;
-      Sensitive   : Boolean := True)
+      Sensitive   : Boolean := True;
+      Action      : Action_Record := No_Action)
    is
       Item  : Gtk_Menu_Item;
       pragma Unreferenced (Item);
    begin
       Item := Register_Menu
         (Kernel, Parent_Path, Text, Stock_Image, Callback, Command,
-         Accel_Key, Accel_Mods, Ref_Item, Add_Before, Sensitive);
+         Accel_Key, Accel_Mods, Ref_Item, Add_Before, Sensitive, Action);
    end Register_Menu;
 
    ---------------------
@@ -976,11 +985,19 @@ package body Glide_Kernel.Modules is
 
    procedure Execute_Command
      (Widget  : access GObject_Record'Class;
-      Command : Command_Access) is
+      Command : Non_Interactive_Action) is
    begin
-      Launch_Background_Command
-        (Kernel_Handle (Widget), Command, Destroy_On_Exit => False,
-         Active => False, Queue_Id => "");
+      if Filter_Matches (Command.Filter, Kernel_Handle (Widget)) then
+         Launch_Background_Command
+           (Kernel_Handle (Widget), Command.Command, Destroy_On_Exit => False,
+            Active => False, Queue_Id => "");
+      elsif Get_Error_Message (Command.Filter) /= "" then
+         Insert (Kernel_Handle (Widget), Get_Error_Message (Command.Filter),
+                 Mode => Error);
+      else
+         Insert (Kernel_Handle (Widget),
+                 -"Invalid context for this action", Mode => Error);
+      end if;
 
    exception
       when E : others =>
@@ -1002,7 +1019,8 @@ package body Glide_Kernel.Modules is
       Accel_Mods  : Gdk.Types.Gdk_Modifier_Type := 0;
       Ref_Item    : String := "";
       Add_Before  : Boolean := True;
-      Sensitive   : Boolean := True) return Gtk_Menu_Item
+      Sensitive   : Boolean := True;
+      Action      : Action_Record := No_Action) return Gtk_Menu_Item
    is
       use type Kernel_Callback.Marshallers.Void_Marshaller.Handler;
       function Cleanup (Path : String) return String;
@@ -1069,7 +1087,15 @@ package body Glide_Kernel.Modules is
            (Item, "activate",
             Command_Callback.To_Marshaller (Execute_Command'Access),
             Slot_Object => Kernel_Handle (Kernel),
-            User_Data   => Command);
+            User_Data   => (Command, null));
+      end if;
+
+      if Action /= No_Action then
+         Command_Callback.Object_Connect
+           (Item, "activate",
+            Command_Callback.To_Marshaller (Execute_Command'Access),
+            Slot_Object => Kernel_Handle (Kernel),
+            User_Data   => (Command_Access (Action.Command), Action.Filter));
       end if;
 
       return Item;
@@ -1094,7 +1120,7 @@ package body Glide_Kernel.Modules is
         (Button, "clicked",
          Command_Callback.To_Marshaller (Execute_Command'Access),
          Slot_Object => Kernel_Handle (Kernel),
-         User_Data   => Command);
+         User_Data   => (Command, null));
    end Register_Button;
 
    ---------------------
@@ -1115,7 +1141,7 @@ package body Glide_Kernel.Modules is
         (Button, "clicked",
          Command_Callback.To_Marshaller (Execute_Command'Access),
          Slot_Object => Kernel_Handle (Kernel),
-         User_Data   => Command);
+         User_Data   => (Command, null));
    end Register_Button;
 
    -----------------
@@ -1427,9 +1453,10 @@ package body Glide_Kernel.Modules is
       Column            : Natural := 1;
       Column_End        : Natural := 0;
       Enable_Navigation : Boolean := True;
-      New_File          : Boolean := True)
+      New_File          : Boolean := True;
+      Force_Reload      : Boolean := False)
    is
-      Value      : GValue_Array (1 .. 6);
+      Value      : GValue_Array (1 .. 7);
 
    begin
       if Enable_Navigation then
@@ -1463,6 +1490,9 @@ package body Glide_Kernel.Modules is
 
       Init (Value (6), Glib.GType_Boolean);
       Set_Boolean (Value (6), New_File);
+
+      Init (Value (7), Glib.GType_Boolean);
+      Set_Boolean (Value (7), Force_Reload);
 
       if not Mime_Action (Kernel, Mime_Source_File, Value) then
          Trace (Me, "No file editor was registered");
