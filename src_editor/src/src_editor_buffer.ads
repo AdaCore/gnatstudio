@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2003                       --
+--                     Copyright (C) 2001-2004                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -1007,6 +1007,15 @@ private
 
       Blocks_Request_Timestamp : Ada.Calendar.Time;
       --  The last time the blocks refresh was requested.
+
+      Cursor_Timeout_Registered : Boolean := False;
+      --  Whether the cursor timeout is registered
+
+      Cursor_Timeout : Gtk.Main.Timeout_Handler_Id;
+      --  A timeout handling the refresh of the timeouts.
+
+      Cursor_Timestamp : Ada.Calendar.Time;
+      --  The last time the cursor was moved;
 
       Blank_Lines : Natural := 0;
       --  The number of blank lines in the buffer.
