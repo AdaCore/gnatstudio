@@ -774,6 +774,7 @@ package body Projects.Registry is
       File   : String (1 .. 1024);
       Last   : Natural;
       Directory : Name_Id;
+      Info   : Source_File_Data;
    begin
       while not At_End (Path, Iter) loop
          declare
@@ -791,17 +792,22 @@ package body Projects.Registry is
                     and then (File (Last - 3 .. Last) = ".ads"
                               or else File (Last - 3 .. Last) = ".adb")
                   then
-                     Name_Len  := Curr'Length;
-                     Name_Buffer (1 .. Name_Len) := Curr;
-                     Name_Buffer (Name_Len + 1 .. Name_Len + Last) :=
-                       File (1 .. Last);
-                     Name_Len := Name_Len + Last;
+                     --  Do not override runtime files that are in the
+                     --  current project
+                     Info := Get (Registry.Data.Sources, File (1 .. Last));
+                     if Info.Directory = No_Name then
+                        Name_Len  := Curr'Length;
+                        Name_Buffer (1 .. Name_Len) := Curr;
+                        Name_Buffer (Name_Len + 1 .. Name_Len + Last) :=
+                          File (1 .. Last);
+                        Name_Len := Name_Len + Last;
 
-                     Directory := Name_Find;
+                        Directory := Name_Find;
 
-                     Set (Registry.Data.Sources,
-                          K => File (1 .. Last),
-                          E => (No_Project, Name_Ada, Directory));
+                        Set (Registry.Data.Sources,
+                             K => File (1 .. Last),
+                             E => (No_Project, Name_Ada, Directory));
+                     end if;
                   end if;
                end loop;
 
