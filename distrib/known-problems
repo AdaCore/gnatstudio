@@ -1,3 +1,11 @@
+Known Problems fixed in GPS 1.3.1
+
+- C825-002 Exit when using task manager suspend/resume
+  Problem:    When using the task manager contextual menu with no task
+              listed, GPS will exit with an unexpected error.
+  Workaround: Do not use the task manager contextual menu if there are no
+              tasks listed.
+
 Known Problems fixed in GPS 1.3.0
 
 - C711-002 Find in current file switches editor
