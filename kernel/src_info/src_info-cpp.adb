@@ -659,17 +659,6 @@ package body Src_Info.CPP is
       Add (HT.Table, LIFP, Success);
    end Add;
 
-   ------------------------------
-   --  Convert_Filename_To_LI  --
-   ------------------------------
-
-   function Convert_Filename_To_LI (Filename : String) return String is
-   begin
-      return Src_Info.LI_Utils.Convert_Filename_To_LI (Filename);
-   end Convert_Filename_To_LI;
-
-
-
    ------------------------
    --  Fu_To_Cl_Handler  --
    ------------------------

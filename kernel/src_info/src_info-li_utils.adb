@@ -174,9 +174,7 @@ package body Src_Info.LI_Utils is
       --  Now we are searching through common list of LI_Files and
       --  trying to locate file with given name. If not found we are
       --  inserting new dependency
-      Tmp_LI_File_Ptr := Get (List.Table,
---                              Referred_Filename);
-                              Convert_Filename_To_LI (Referred_Filename));
+      Tmp_LI_File_Ptr := Get (List.Table, Referred_Filename);
       if Tmp_LI_File_Ptr = No_LI_File then
          Create_LI_File
            (File              => Tmp_LI_File_Ptr,
@@ -300,9 +298,7 @@ package body Src_Info.LI_Utils is
       --  trying to locate file with given name. If not found or if there
       --  are no such symbol declared in the found file then
       --  we are inserting new declaration
-      Tmp_LI_File_Ptr := Get (List.Table,
-      --                        Referred_Filename,
-                              Convert_Filename_To_LI (Referred_Filename));
+      Tmp_LI_File_Ptr := Get (List.Table, Referred_Filename);
       if Tmp_LI_File_Ptr = No_LI_File then
          Insert_Declaration
            (Handler            => Handler,
@@ -451,9 +447,7 @@ package body Src_Info.LI_Utils is
             FL_Ptr := FL_Ptr.Next;
          end loop;
       end if;
-      Tmp_LI_File_Ptr := Get (List.Table,
-      --                        Parent_Filename,
-                              Convert_Filename_To_LI (Parent_Filename));
+      Tmp_LI_File_Ptr := Get (List.Table, Parent_Filename);
       if Tmp_LI_File_Ptr = No_LI_File then
          if Parent_Filename = Declaration_Info.Value.Declaration
                                  .Location.File.Source_Filename.all
@@ -663,9 +657,7 @@ package body Src_Info.LI_Utils is
          if Source_Filename = Parent_Filename then
             Tmp_LI_File_Ptr := File;
          else
-            Tmp_LI_File_Ptr := Get (List.Table,
---                                    Parent_Filename);
-                                    Convert_Filename_To_LI (Parent_Filename));
+            Tmp_LI_File_Ptr := Get (List.Table, Parent_Filename);
             if (Tmp_LI_File_Ptr = No_LI_File) then
                --  ??? What should we do if LI_File for parent does not exist?
                raise Parent_Not_Available;
@@ -767,9 +759,7 @@ package body Src_Info.LI_Utils is
          File := new LI_File_Constrained'
                    (LI =>  (Parsed => True,
                            Handler => LI_Handler (Handler),
-                           LI_Filename => new String'
---                                (Source_Filename),
-                              (Convert_Filename_To_LI (Source_Filename)),
+                           LI_Filename => new String' (Source_Filename),
                            Body_Info => null,
                            Spec_Info => null,
                            Dependencies_Info => null,
@@ -783,9 +773,7 @@ package body Src_Info.LI_Utils is
          File := new LI_File_Constrained'
                   (LI =>  (Parsed => False,
                            Handler => LI_Handler (Handler),
-                           LI_Filename => new String'
---                                (Source_Filename),
-                              (Convert_Filename_To_LI (Source_Filename)),
+                           LI_Filename => new String' (Source_Filename),
                            Body_Info => null,
                            Spec_Info => null,
                            Separate_Info => null,
@@ -849,24 +837,5 @@ package body Src_Info.LI_Utils is
       end loop;
       return False;
    end Belongs_To_Class;
-
-   -------------------------------
-   --  Convert_File_Name_To_LI  --
-   -------------------------------
-
-   function Convert_Filename_To_LI (Filename : String) return String is
-      buf : String (Filename'First .. Filename'Last);
-   begin
-      for i in Filename'First .. Filename'Last loop
-         if Filename (i) = '/' or Filename (i) = '\' then
-            buf (i) := '#';
-         else
-            buf (i) := Filename (i);
-         end if;
-      end loop;
-      return buf;
-   end Convert_Filename_To_LI;
-
-   -------------------------------------------------------------------------
 
 end Src_Info.LI_Utils;

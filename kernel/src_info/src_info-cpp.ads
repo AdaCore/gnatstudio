@@ -70,7 +70,4 @@ package Src_Info.CPP is
       Success : out Boolean);
    --  Just wrapper for internal Add to support extended testing
 
-   function Convert_Filename_To_LI (Filename : String) return String;
-   --  Replaces all '/' and '\' symbols with '#'
-
 end Src_Info.CPP;

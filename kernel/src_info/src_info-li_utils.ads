@@ -123,10 +123,6 @@ private package Src_Info.LI_Utils is
    --  affect on searching.
    --  Throws Declaration_Not_Found exception if not found.
 
-   function Convert_Filename_To_LI (Filename : String) return String;
-   --  Converts filename to LI_Filename.
-   --  Now it simply replaces all entries of '/' and '\' symbols with '#'
-
    Declaration_Not_Found : exception;
    --  Thrown by Find_Declaration functions if declaration is not found
 
