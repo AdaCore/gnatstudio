@@ -229,10 +229,10 @@ package body Glide_Kernel is
 
       Set_Source_Path
         (Handle, ".:" &
-         "/usr/local/gnat/lib/gcc-lib/i686-pc-linux-gnu/2.8.1/rts-native/adainclude");
+         "/usr/local/gnat/lib/gcc-lib/i686-pc-linux-gnu/2.8.1/adainclude");
       Set_Object_Path
         (Handle, ".:" &
-         "/usr/local/gnat/lib/gcc-lib/i686-pc-linux-gnu/2.8.1/rts-native/adalib");
+         "/usr/local/gnat/lib/gcc-lib/i686-pc-linux-gnu/2.8.1/adalib");
       --  ??? This is a temporary hack for the demo. We should really compute
       --  ??? these values from the output of gnatls -v...
 
@@ -318,9 +318,9 @@ package body Glide_Kernel is
       Source_Filename   : String)
       return Src_Info.LI_File_Ptr
    is
-      File : Src_Info.Li_File_Ptr;
+      File : Src_Info.LI_File_Ptr;
    begin
-      Src_Info.Ali.Locate_From_Source
+      Src_Info.ALI.Locate_From_Source
         (List              => Handle.Source_Info_List,
          Source_Filename   => Source_Filename,
          Project           => Get_Project_View (Handle),
@@ -439,20 +439,23 @@ package body Glide_Kernel is
    -- Complete_Ali_File_If_Needed --
    ---------------------------------
 
-   procedure Complete_Ali_File_If_Needed
+   procedure Complete_ALI_File_If_Needed
      (Handle      : access Kernel_Handle_Record;
       LI_File     : in out Src_Info.LI_File_Ptr)
    is
       Unit          : Src_Info.LI_File_Ptr;
       Parse_Success : Boolean;
+
    begin
       if Is_Incomplete (LI_File) then
          declare
             LI_Name : constant String :=
-              Find_Object_File (Handle, Get_Li_Filename (LI_File));
+              Find_Object_File (Handle, Get_LI_Filename (LI_File));
+
          begin
             --  ??? Should we have another version of Parse_ALI_File that takes
             --  ??? directly a LI_File_Ptr that needs to be completed.
+
             Parse_ALI_File
               (Handle       => Handle,
                ALI_Filename => LI_Name,
@@ -471,6 +474,6 @@ package body Glide_Kernel is
             end if;
          end;
       end if;
-   end Complete_Ali_File_If_Needed;
+   end Complete_ALI_File_If_Needed;
 
 end Glide_Kernel;
