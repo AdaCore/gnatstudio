@@ -56,6 +56,9 @@ package Glide_Consoles is
    procedure Clear (Console : access Glide_Console_Record);
    --  Clear all the text in the Console.
 
+   function Get_Chars (Console : access Glide_Console_Record) return String;
+   --  Return the contents of the console window.
+
 private
 
    type Glide_Console_Record is new

@@ -55,6 +55,15 @@ package body Glide_Consoles is
       Delete_Text (Console.Text);
    end Clear;
 
+   ---------------
+   -- Get_Chars --
+   ---------------
+
+   function Get_Chars (Console : access Glide_Console_Record) return String is
+   begin
+      return Get_Chars (Console.Text);
+   end Get_Chars;
+
    -------------
    -- Gtk_New --
    -------------
