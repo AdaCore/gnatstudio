@@ -566,7 +566,10 @@ package body Ada_Analyzer is
 
                Tmp := Tmp + 2;
 
-               while Buffer (Tmp) /= '"' loop
+               while Tmp < Buffer_Length
+                 and then Buffer (Tmp) /= '"'
+                 and then Buffer (Tmp) /= ASCII.LF
+               loop
                   Tmp := Tmp + 1;
                end loop;
 
@@ -1180,8 +1183,33 @@ package body Ada_Analyzer is
          Top_Token     : Token_Stack.Generic_Type_Access;
          Previous_Line : constant Natural := Line_Count;
 
+         procedure Close_Parenthesis;
+         --  Current buffer contents is a closed parenthesis,
+         --  reset stacks and states accordingly.
+
          procedure Handle_Two_Chars (Second_Char : Character);
          --  Handle a two char operator, whose second char is Second_Char.
+
+         procedure Close_Parenthesis is
+         begin
+            if Indents = null or else Top (Indents).all = None then
+               --  Syntax error
+               null;
+            else
+               Pop (Indents);
+               Num_Parens := Num_Parens - 1;
+
+               Top_Token := Top (Tokens);
+
+               if Num_Parens = 0
+                 and then Top_Token.Token in Token_Class_Declk
+                 and then Top_Token.Profile_End = 0
+                 and then Subprogram_Decl
+               then
+                  Top_Token.Profile_End := P;
+               end if;
+            end if;
+         end Close_Parenthesis;
 
          procedure Handle_Two_Chars (Second_Char : Character) is
          begin
@@ -1330,24 +1358,7 @@ package body Ada_Analyzer is
 
                when ')' =>
                   Prev_Token := Tok_Right_Paren;
-
-                  if Indents = null or else Top (Indents).all = None then
-                     --  Syntax error
-                     null;
-                  else
-                     Pop (Indents);
-                     Num_Parens := Num_Parens - 1;
-
-                     Top_Token := Top (Tokens);
-
-                     if Num_Parens = 0
-                       and then Top_Token.Token in Token_Class_Declk
-                       and then Top_Token.Profile_End = 0
-                       and then Subprogram_Decl
-                     then
-                        Top_Token.Profile_End := P;
-                     end if;
-                  end if;
+                  Close_Parenthesis;
 
                when '"' =>
                   declare
@@ -1359,6 +1370,14 @@ package body Ada_Analyzer is
                      while P <= End_Of_Line and then Buffer (P) /= '"' loop
                         P := Next_Char (P);
                      end loop;
+
+                     if Buffer (P) /= '"' and then Num_Parens > 0 then
+                        --  Syntax error: the string was not terminated
+                        --  Try to recover properly, and in particular, try
+                        --  to reset the parentheses stack.
+
+                        Close_Parenthesis;
+                     end if;
 
                      Top_Token := Top (Tokens);
 
