@@ -80,7 +80,7 @@ with Src_Info.ALI;
 procedure GPS is
    use Glide_Main_Window;
 
-   Me : Debug_Handle := Create ("GPS");
+   Me : constant Debug_Handle := Create ("GPS");
 
    subtype String_Access is GNAT.OS_Lib.String_Access;
 
