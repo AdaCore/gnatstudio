@@ -1,10 +1,10 @@
 -----------------------------------------------------------------------
---                 Odd - The Other Display Debugger                  --
+--                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
 --                         Copyright (C) 2000                        --
 --                 Emmanuel Briot and Arnaud Charlet                 --
 --                                                                   --
--- Odd is free  software;  you can redistribute it and/or modify  it --
+-- GVD is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -90,7 +90,7 @@ package Odd.Process is
    --    procedure Handler (Widget : access Debugger_Process_Tab_Record'Class);
    --
    --    Generated each time the context of the debuggee is changed (this
-   --    includes thread switching, ...).
+   --    includes thread switching, frame selection, ...).
    --
    --  - "executable_changed"
    --    procedure Handler (Widget : access Debugger_Process_Tab_Record'Class);
@@ -140,6 +140,12 @@ package Odd.Process is
       Descriptor : Odd.Types.Program_Descriptor;
       --  This is used to store the launching method.
       --  (Added to handle sessions)
+
+      Input_Id : Glib.Gint := 0;
+      --  Input callback Id when one has been set up for this process.
+
+      Running_Command : String_Access;
+      --  Command currently running in the underlying debugger.
    end record;
    type Debugger_Process_Tab is access all Debugger_Process_Tab_Record'Class;
 
@@ -241,7 +247,7 @@ package Odd.Process is
      (Debugger       : Debugger_Process_Tab;
       Command        : String;
       Output_Command : Boolean := False;
-      Mode           : Odd.Types.Command_Type := Odd.Types.Visible);
+      Mode           : Odd.Types.Visible_Command := Odd.Types.Visible);
    --  Process a command entered by the user.
    --  In most cases, the command is simply transfered asynchronously to the
    --  debugger process. However, commands internal to odd are filtered and
