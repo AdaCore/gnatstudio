@@ -392,12 +392,14 @@ package body Src_Editor_View is
    is
       pragma Unreferenced (Params, Buffer);
    begin
-      if Realized_Is_Set (User) then
-         --  Clear the side columns cache.
-         User.Buffer_Top_Line := 0;
 
-         --  Redraw the side columns.
-         Redraw_Columns (User);
+      --  Clear the side columns cache.
+      User.Buffer_Top_Line := 0;
+      User.Bottom_Line := User.Bottom_Line + 1;
+
+      if User.Side_Column_Buffer /= null then
+         Gdk.Pixmap.Unref (User.Side_Column_Buffer);
+         User.Side_Column_Buffer := null;
       end if;
    end Side_Columns_Change_Handler;
 
@@ -1312,6 +1314,7 @@ package body Src_Editor_View is
 
          if View.Side_Column_Buffer /= null then
             Gdk.Pixmap.Unref (View.Side_Column_Buffer);
+            View.Side_Column_Buffer := null;
          end if;
 
          View.Buffer_Top_Line    := View.Top_Line;
