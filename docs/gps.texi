@@ -3280,6 +3280,13 @@ This item will open a new dialog, and give access to all the
 attributes of the project: tool switches, naming schemes, source
 directories, @dots{} @xref{The Project Properties Editor}.
 
+@item Edit Project Source File
+@cindex edit project source file
+This menu will load the project file into an editor, so that you can
+manually edit it. This should be used if you need to access some
+features of the project files that are not accessible graphically
+(renames statements, variables, @dots{})
+
 @item Add Dependency...
 @cindex add dependency
 This menu and its two sub-menus are the primary way to change the
@@ -3297,12 +3304,9 @@ dependency between two projects
 This menu item should be used to add new configuration variables, as
 described in @ref{Scenarios and Configuration Variables}.
 
-@item Edit Project Source File
-@cindex edit project source file
-This menu will load the project file into an editor, so that you can
-manually edit it. This should be used if you need to access some
-features of the project files that are not accessible graphically
-(renames statements, variables, @dots{})
+@item Build
+This menu offers the submenu "Clean" which is equivalent to the Clean
+Current Project action in the Build menu.
 
 @end table
 
@@ -4100,12 +4104,6 @@ Tree.
 
 @item Make
    @table @i
-   @item main
-   For each main source file defined in your top level project, an entry
-   is listed to build (compile, bind, link) this source file.
-   Similarly the @code{Build} contextual menu accessible from a project
-   entity contains the same entries.
-
    @item Compile all sources
    Compile all source files defined in the currently selected project, or
    by default the top level project.
@@ -4124,6 +4122,19 @@ Tree.
    Display a text entry where you can enter any external command. This menu
    is very useful when you already have existing build scripts, make files,
    @dots{} and want to invoke them from GPS.
+
+   @end table
+
+@item Clean
+   @table @i
+   @item Current Project
+   Remove all object files and other compilation artifacts associated to the
+   current project. It does not clean objects from other related projects.
+
+   @item all
+   Remove all object files and other compilation artifacts associated to all
+   projects related to the current one. It allows to restart a complete build
+   from scratch.
 
    @end table
 
@@ -4165,16 +4176,6 @@ Recompute the cross-reference information for C and C++ source files.
 
 @item Interrupt
 Interrupt the current compilation or build.
-
-@item Clean
-Remove all object files and other compilation artifacts associated to the root
-project. It will not clean objects from other related projects and thus is
-mostly useful for single projects.
-
-@item Clean all
-Remove all object files and other compilation artifacts associated to all
-related projects. It allows to restart a complete build from scratch.
-
 @end table
 
 @c --------------------------------------------------------------------
@@ -7190,14 +7191,14 @@ files, or only if a source editor is currently selected.
 Such filters can be defined in one of two places in the customization files:
 
 @enumerate
-@item At the toplevel
+@item At the toplevel.
 At the same level as other tags such as @code{<action>}, @code{<menu>} or
 @code{<button>} tags, you can define named filters. These are general filters,
 that can be referenced elsewhere without requiring code duplication. They
 also appear explicitly in the key shortcuts editor if at least one action is
 depending on them.
 
-@item As a child of the @code{<action>} tag
+@item As a child of the @code{<action>} tag.
 Such filters are anonymous, although they provide exactly the same capabilities
 as the ones above. These are mostly meant for simple filters, or filters that
 you use only once, or don't want to appear in the key shortcuts manager.
@@ -10695,15 +10696,15 @@ the current context doesn't contains information on directories (which will
 disable the contextual menu for directories, files and entities). Since the
 command uses @code{%P}, GPS garantees that a project is available.
 
-We'll implement this contextual menu in a Python file, called @file[filters.py
-}.
+We'll implement this contextual menu in a Python file, called
+@file{filters.py}.
 
 @smallexample
 import GPS
 def on_project():
 try:
 GPS.current_context().directory()
-return False 
+return False
 except:
 return True
 
