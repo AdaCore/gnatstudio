@@ -197,7 +197,7 @@ package body Browsers.Call_Graph is
       Category : String);
    --  Print a reference in the console, after looking for the directory
    --  containing File.
-   --  Category corresponds to the puspose of the print. All references
+   --  Category corresponds to the purpose of the print. All references
    --  corresponding to the same category will be printed as a group.
 
    -------------
