@@ -1165,9 +1165,11 @@ package body Odd.Source_Editors is
 
       Get_Pointer (Get_Window (Data.Box), X, Y, Mask, Win);
       declare
-         Variable_Name : constant String := Get_Entity (Data.Box, X, Y);
+         Variable_Name : constant String :=
+           Get_Entity (Data.Box,
+                       X - Get_Allocation_X (Data.Box)
+                       - Gint (Get_Width (Get_Buttons (Data.Box))) / 4, Y);
       begin
-
          if Variable_Name = "" then
             return;
          end if;
