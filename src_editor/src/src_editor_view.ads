@@ -126,9 +126,13 @@ private
 
       Connect_Expose_Id : Gtk.Main.Idle_Handler_Id := 0;
       --  Handler ID for the Connect_Expose idle callback.
+      Connect_Expose_Registered : Boolean := False;
+      --  Whether the Connect_Expose idle callback has been registered.
 
       Idle_Redraw_Id : Gtk.Main.Idle_Handler_Id := 0;
       --  Handler ID for Idle redraw of the side columns.
+      Idle_Redraw_Registered : Boolean := False;
+      --  Whether the Idle_Redraw has been registered.
 
       Has_Focus           : Boolean := False;
       --  Whether the view currently has the focus.
