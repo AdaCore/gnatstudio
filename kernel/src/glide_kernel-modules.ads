@@ -215,7 +215,7 @@ package Glide_Kernel.Modules is
    --     second : line to display initially (use Get_Int). Ignored if 0
    --     third  : column to display initially (use Get_Int). Ignored if 0
    --     fourth : True if the line should be highlighted (use Get_Boolean)
-   --  See also the function Glide_Kernel.Editor.Open_Or_Create.
+   --  See also the procedure Open_Or_Create.
 
    function Mime_Action
      (Kernel    : access Kernel_Handle_Record'Class;
@@ -251,6 +251,8 @@ package Glide_Kernel.Modules is
       File_Name : String := "";
       Importing_Project : Prj.Project_Id := Prj.No_Project);
    --  Set the information in Context.
+   --  File_Name should always be the base file name (no directory
+   --  information), and Directory should always end with a path separator.
 
    function Has_Project_Information (Context : access File_Selection_Context)
       return Boolean;
@@ -278,6 +280,7 @@ package Glide_Kernel.Modules is
       return String;
    --  Return the information about the selected project. This is only relevant
    --  if Has_Directory_Information is True.
+   --  This directory name always ends with a '/'
 
    function Has_File_Information (Context : access File_Selection_Context)
       return Boolean;
@@ -287,6 +290,7 @@ package Glide_Kernel.Modules is
       return String;
    --  Return the information about the selected project. This is only relevant
    --  if Has_File_Information is True.
+   --  This is the base file name for the file
 
    procedure Destroy (Context : in out File_Selection_Context);
    --  Free the memory associated with the context
