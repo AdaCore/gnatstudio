@@ -9,7 +9,8 @@ with GVD.Main_Window;
 procedure Glide2 is
    use GVD.Main_Window;
 
-   Border        : constant := 32;
+   X_Border      : constant := 9;
+   Y_Border      : constant := 86;
    Glide         : GVD_Main_Window;
    Page          : Glide_Page.Glide_Page;
    X, Y          : Gint;
@@ -22,7 +23,7 @@ begin
 
    Get_Geometry (null, X, Y, Width, Height, Depth);
    Gtk_New (Glide, "<glide>", Glide_Menu.Glide_Menu_Items.all);
-   Set_Default_Size (Glide, Width, Height - Border);
+   Set_Default_Size (Glide, Width - X_Border, Height - Y_Border);
    Set_Title (Glide, "Glide - New Generation");
    Glide.Gvd_Home_Dir := new String' ("");
    Glide.Prefix_Directory := new String' ("");
