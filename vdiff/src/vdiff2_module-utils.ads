@@ -36,7 +36,7 @@ package Vdiff2_Module.Utils is
 
    procedure Process_Differences
      (Kernel    : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Item      : in out Diff_Head;
+      Item      : Diff_Head;
       Diff_List : Diff_Head_List_Access);
    --  Verify if Item is  not in Diff_List
    --  then show differences and append Item to diff_List
@@ -72,6 +72,12 @@ package Vdiff2_Module.Utils is
       Range1 : in out Diff_Range;
       Style  : String := "");
    --  Remove the highlighting on Diff block
+
+   procedure Visual_Diff
+     (File1 : Virtual_File;
+      File2 : Virtual_File;
+      File3 : Virtual_File := VFS.No_File);
+   --  Execute Diff and display the result in the editor
 
    procedure Move_Block
      (Kernel       : Kernel_Handle;
