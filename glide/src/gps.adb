@@ -160,8 +160,6 @@ procedure GPS is
      Create ("MODULE.Project_Properties", On);
    CPP_Trace : constant Debug_Handle := Create ("MODULE.CPP", On);
    Outline_View_Trace : constant Debug_Handle := Create ("MODULE.OUTLINE", On);
-   Socket_Trace : constant Debug_Handle := Create ("MODULE.Socket", Off);
-   Server_Mode  : constant Debug_Handle := Create ("Server_Mode", Off);
 
    --  If any of these debug handles is active, the correponding module
    --  is loaded.
@@ -190,6 +188,10 @@ procedure GPS is
    Cleanup_Needed         : Boolean := False;
    Unexpected_Exception   : Boolean := False;
    Splash_Timeout         : Glib.Guint32 := 1000;
+   Server_Mode            : Boolean := False;
+   Port_Number            : Natural := 0;
+   Hide_GPS               : Boolean := False;
+
 
    Started                : Boolean := False;
    --  Whether the main loop is started.
@@ -619,14 +621,14 @@ procedure GPS is
    begin
       Initialize_Option_Scan;
       loop
-         case Getopt ("-version -help P: " &
+         case Getopt ("-version -help P: -server= -hide " &
                       "-debug? -debugger= -host= -target= -load= -eval= " &
                       "-traceoff= -traceon= -tracefile= -tracelist")
          is
             -- long option names --
             when '-' =>
                case Full_Switch (Full_Switch'First + 1) is
-                  -- --version --
+                  --  --version
                   when 'v' =>
                      if GVD.Can_Output then
                         Put_Line (GPS_Name (GPS) & " version " &
@@ -646,19 +648,24 @@ procedure GPS is
 
                   when 'h' =>
                      if Full_Switch = "-help" then
-                        -- --help --
+                        --  --help
                         Help;
                         OS_Exit (0);
-                     else
-                        -- --host --
+
+                     elsif Full_Switch = "-host" then
+                        --  --host
                         Free (Tools_Host);
                         Tools_Host := new String'(Parameter);
+
+                     else
+                        --  --hide
+
+                        Hide_GPS := True;
                      end if;
 
+                  --  --load
 
-                  -- --load --
                   when 'l' =>
-                     --  --load
                      Free (Batch_File);
                      Batch_File := new String'(Parameter);
 
@@ -679,12 +686,22 @@ procedure GPS is
                         end if;
                      end if;
 
+                  --  --eval
+
                   when 'e' =>
-                     --  --eval
                      Free (Batch_Script);
                      Batch_Script := new String'(Parameter);
 
-                  -- --target --
+                  --  --server
+
+                  when 's' =>
+                     begin
+                        Port_Number := Natural'Value (Parameter);
+                        Server_Mode := True;
+                     exception
+                        when Constraint_Error =>
+                           raise Invalid_Switch;
+                     end;
 
                   when 't' =>
                      if Full_Switch = "-target" then
@@ -781,20 +798,23 @@ procedure GPS is
         & (-"   --version           Show the GPS version and exit") & LF
         & (-"   --debug[=program]   Start a debug session") & LF
         & (-"   --debugger debugger Specify the debugger's command line") & LF
+        & (-"   --hide              Hide GPS main window") & LF
         & (-"   --host=tools_host   Use tools_host to launch tools (e.g. gdb)")
         & LF
         & (-("   --target=TARG:PRO   Load program on machine TARG using"
              & " protocol PRO")) & LF
         & (-"   --load=lang:file    Execute an external file written") & LF
-        & (-"                       in the language lang") & Lf
+        & (-"                       in the language lang") & LF
         & (-"   --eval=lang:cmd     Execute a command written in the") & LF
         & (-"                       language lang. This is executed") & LF
         & (-"                       before the --load command") & LF
-        & ("    --traceon=stream    Activate traces for a specific") & LF
-        & ("                        debug stream") & LF
-        & ("    --traceoff=stream   Disable traces for a specific") & LF
-        & ("                        debug stream") & LF
-        & ("    --tracefile=file    Load traces configuration from file");
+        & (-"   --server=port       Start GPS in server mode, opening a") & LF
+        & (-"                       socket on the given port") & LF
+        & (-"   --traceon=stream    Activate traces for a specific") & LF
+        & (-"                       debug stream") & LF
+        & (-"   --traceoff=stream   Disable traces for a specific") & LF
+        & (-"                       debug stream") & LF
+        & (-"   --tracefile=file    Load traces configuration from file");
 
    begin
       if GVD.Can_Output then
@@ -897,8 +917,171 @@ procedure GPS is
       Screen            : Welcome_Screen;
       pragma Unreferenced (Data);
 
+      procedure Setup_Debug;
+      --  Load appropriate debugger project and set up debugger-related
+      --  properties
+
+      function Setup_Project return Boolean;
+      --  When no project has been specified explicitely by the user,
+      --  look for a project on the current directory, or use the welcome
+      --  dialog
+      --  Return False if set up was aborted and GPS should exit.
+
       procedure Load_Sources;
       --  Load all the source files given on the command line.
+
+      -----------------
+      -- Setup_Debug --
+      -----------------
+
+      procedure Setup_Debug is
+      begin
+         File_Opened := True;
+         Auto_Load_Project := False;
+
+         if Project_Name /= null
+           and then Is_Regular_File (Project_Name.all)
+         then
+            Load_Project (GPS.Kernel, Project_Name.all);
+            Project := Get_Project (GPS.Kernel);
+         else
+            Load_Default_Project
+              (GPS.Kernel, Get_Current_Dir, Load_Default_Desktop => True);
+            Project := Get_Project (GPS.Kernel);
+            Set_Status (Project, From_Executable);
+         end if;
+
+         --  Project will be overriden when the executable is loaded.
+         Load_Sources;
+
+         if Debugger_Name /= null then
+            Update_Attribute_Value_In_Scenario
+              (Project            => Project,
+               Scenario_Variables => No_Scenario,
+               Attribute          => Debugger_Command_Attribute,
+               Value              => Debugger_Name.all);
+         end if;
+
+         if Tools_Host /= null then
+            Update_Attribute_Value_In_Scenario
+              (Project            => Project,
+               Scenario_Variables => No_Scenario,
+               Attribute          => Remote_Host_Attribute,
+               Value              => Tools_Host.all);
+         end if;
+
+         if Target /= null then
+            Update_Attribute_Value_In_Scenario
+              (Project            => Project,
+               Scenario_Variables => No_Scenario,
+               Attribute          => Program_Host_Attribute,
+               Value              => Target.all);
+         end if;
+
+         if Protocol /= null then
+            Update_Attribute_Value_In_Scenario
+              (Project            => Project,
+               Scenario_Variables => No_Scenario,
+               Attribute          => Protocol_Attribute,
+               Value              => Protocol.all);
+         end if;
+
+         Update_Attribute_Value_In_Scenario
+           (Project            => Project,
+            Scenario_Variables => No_Scenario,
+            Attribute          => Languages_Attribute,
+            Values             =>
+              (new String'("ada"), new String'("c"), new String'("c++")));
+
+         Set_Project_Modified (Project, False);
+         Recompute_View (GPS.Kernel);
+      end Setup_Debug;
+
+      -------------------
+      -- Setup_Project --
+      -------------------
+
+      function Setup_Project return Boolean is
+      begin
+         Auto_Load_Project := False;
+         Open (Directory, Get_Current_Dir);
+
+         loop
+            Read (Directory, Str, Last);
+
+            exit when Last = 0;
+
+            if File_Extension (Str (1 .. Last)) = Project_File_Extension then
+               if Project_Name = null then
+                  Auto_Load_Project := True;
+                  Project_Name := new String'(Str (1 .. Last));
+               else
+                  Auto_Load_Project := False;
+                  exit;
+               end if;
+            end if;
+         end loop;
+
+         Close (Directory);
+
+         --  If only one project file was found in the current directory, do
+         --  not open the welcome dialog. Likewise if we are loading a script,
+         --  since we consider that the script is responsible for loading the
+         --  appropriate project, or if source files have been specified on
+         --  the command line.
+
+         if Auto_Load_Project then
+            return True;
+         end if;
+
+         if Batch_File /= null then
+            Load_Default_Project (GPS.Kernel, Get_Current_Dir);
+            return True;
+         end if;
+
+         Load_Sources;
+
+         if File_Opened then
+            return True;
+         end if;
+
+         --  Load the project selected by the user
+
+         if Project_Name = null then
+            Gtk_New (Screen, GPS.Kernel, "");
+         else
+            Gtk_New (Screen, GPS.Kernel, Project_Name.all);
+         end if;
+
+         --  Remove the splash screen, since it conflicts with the
+         --  welcome dialog.
+
+         if Splash /= null then
+            Destroy (Splash);
+            Splash := null;
+         end if;
+
+         --  If the user wants to quit immediately, so be it.
+
+         case Run_Welcome (Screen) is
+            when Quit_GPS =>
+               Destroy (Screen);
+               Gtk.Main.Main_Quit;
+               return False;
+
+            when Project_Loaded =>
+               --  Desktop was already loaded when the project itself
+               --  was loaded.
+               null;
+         end case;
+
+         Destroy (Screen);
+         return True;
+      end Setup_Project;
+
+      ------------------
+      -- Load_Sources --
+      ------------------
 
       procedure Load_Sources is
          New_Dir : constant String := Get_Current_Dir;
@@ -1151,8 +1334,8 @@ procedure GPS is
          Action_Editor.Register_Module (GPS.Kernel);
       end if;
 
-      if Active (Socket_Trace) then
-         Socket_Module.Register_Module (GPS.Kernel);
+      if Server_Mode then
+         Socket_Module.Register_Module (GPS.Kernel, Port_Number);
       end if;
 
       --  Load preferences, but only after loading custom files, to make sure
@@ -1203,134 +1386,19 @@ procedure GPS is
 
       if GPS.Program_Args /= null then
          --  --debug has been specified
-         --  Load default project, and set debugger-related project properties
+         --  Load project, and set debugger-related project properties
 
-         File_Opened := True;
-         Auto_Load_Project := False;
-
-         if Project_Name /= null
-           and then Is_Regular_File (Project_Name.all)
-         then
-            Load_Project (GPS.Kernel, Project_Name.all);
-            Project := Get_Project (GPS.Kernel);
-         else
-            Load_Default_Project
-              (GPS.Kernel, Get_Current_Dir, Load_Default_Desktop => True);
-            Project := Get_Project (GPS.Kernel);
-            Set_Status (Project, From_Executable);
-         end if;
-
-         --  Project will be overriden when the executable is loaded.
-         Load_Sources;
-
-         if Debugger_Name /= null then
-            Update_Attribute_Value_In_Scenario
-              (Project            => Project,
-               Scenario_Variables => No_Scenario,
-               Attribute          => Debugger_Command_Attribute,
-               Value              => Debugger_Name.all);
-         end if;
-
-         if Tools_Host /= null then
-            Update_Attribute_Value_In_Scenario
-              (Project            => Project,
-               Scenario_Variables => No_Scenario,
-               Attribute          => Remote_Host_Attribute,
-               Value              => Tools_Host.all);
-         end if;
-
-         if Target /= null then
-            Update_Attribute_Value_In_Scenario
-              (Project            => Project,
-               Scenario_Variables => No_Scenario,
-               Attribute          => Program_Host_Attribute,
-               Value              => Target.all);
-         end if;
-
-         if Protocol /= null then
-            Update_Attribute_Value_In_Scenario
-              (Project            => Project,
-               Scenario_Variables => No_Scenario,
-               Attribute          => Protocol_Attribute,
-               Value              => Protocol.all);
-         end if;
-
-         Update_Attribute_Value_In_Scenario
-           (Project            => Project,
-            Scenario_Variables => No_Scenario,
-            Attribute          => Languages_Attribute,
-            Values             =>
-              (new String'("ada"), new String'("c"), new String'("c++")));
-
-         Set_Project_Modified (Project, False);
-         Recompute_View (GPS.Kernel);
+         Setup_Debug;
 
       elsif Project_Name = null then
-         Auto_Load_Project := False;
-         Open (Directory, Get_Current_Dir);
+         if Server_Mode then
+            Auto_Load_Project := True;
+            Load_Default_Project (GPS.Kernel, Get_Current_Dir);
+            Load_Sources;
 
-         loop
-            Read (Directory, Str, Last);
-
-            exit when Last = 0;
-
-            if File_Extension (Str (1 .. Last)) = Project_File_Extension then
-               if Project_Name = null then
-                  Auto_Load_Project := True;
-                  Project_Name := new String'(Str (1 .. Last));
-               else
-                  Auto_Load_Project := False;
-                  exit;
-               end if;
-            end if;
-         end loop;
-
-         Close (Directory);
-
-         --  If only one project file was found in the current directory, do
-         --  not open the welcome dialog. Likewise if we are loading a script,
-         --  since we consider that the script is responsible for loading the
-         --  appropriate project.
-
-         if not Auto_Load_Project then
-            if Batch_File /= null then
-               Load_Default_Project (GPS.Kernel, Get_Current_Dir);
-            else
-               Load_Sources;
-
-               if not File_Opened then
-                  --  Load the project selected by the user
-
-                  if Project_Name = null then
-                     Gtk_New (Screen, GPS.Kernel, "");
-                  else
-                     Gtk_New (Screen, GPS.Kernel, Project_Name.all);
-                  end if;
-
-                  --  Remove the splash screen, since it conflicts with the
-                  --  welcome dialog.
-
-                  if Splash /= null then
-                     Destroy (Splash);
-                     Splash := null;
-                  end if;
-
-                  --  If the user wants to quit immediately, so be it.
-
-                  case Run_Welcome (Screen) is
-                     when Quit_GPS =>
-                        Destroy (Screen);
-                        Gtk.Main.Main_Quit;
-                        return False;
-
-                     when Project_Loaded =>
-                        --  Desktop was already loaded when the project itself
-                        --  was loaded.
-                        null;
-                  end case;
-
-                  Destroy (Screen);
-               end if;
+         else
+            if not Setup_Project then
+               return False;
             end if;
          end if;
       end if;
@@ -1373,7 +1441,7 @@ procedure GPS is
 
       Run_Hook (GPS.Kernel, Preferences_Changed_Hook);
 
-      if not Active (Server_Mode) then
+      if not Hide_GPS then
          Show (GPS);
       end if;
 
