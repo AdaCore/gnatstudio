@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                          G L I D E  I I                           --
 --                                                                   --
---                        Copyright (C) 2001                         --
+--                     Copyright (C) 2001-2002                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GLIDE is free software; you can redistribute it and/or modify  it --
@@ -416,11 +416,11 @@ private
    end record;
    --  All the information about an entity declaration.
    --  ??? Note that, in order to save a little bit of memory space,
-   --  ??? End_Of_Scope could defined as a pointer to E_Reference instead of
-   --  ??? as an E_Reference structure, because most entities do not have end
-   --  ??? of scope info (because this is not relevant for these entities).
-   --  ??? This has not been done yet because it adds a little bit of
-   --  ??? complexity to the implementation (in terms of memory management).
+   --  End_Of_Scope could be defined as a pointer to E_Reference instead of
+   --  as an E_Reference structure, because most entities do not have end
+   --  of scope info (because this is not relevant for these entities).
+   --  This has not been done yet because it adds a little bit of
+   --  complexity to the implementation (in terms of memory management).
 
    type E_Declaration_Access is access all E_Declaration;
 
@@ -475,11 +475,11 @@ private
    --  looked for the Directory_Name.
    --
    --  ??? It is possible to optimize a bit the memory usage by allocating
-   --  ??? the Source_Filename only when the naming of the unit is not
-   --  ??? following the standard naming scheme. The Source_Filename could
-   --  ??? then be computed from the unit name. This is not done for the
-   --  ??? moment because we would like to avoid language specific notions
-   --  ??? in the data structures defined
+   --  the Source_Filename only when the naming of the unit is not
+   --  following the standard naming scheme. The Source_Filename could
+   --  then be computed from the unit name. This is not done for the
+   --  moment because we would like to avoid language specific notions
+   --  in the data structures defined.
 
    type File_Info_Ptr is access File_Info;
 
@@ -678,7 +678,7 @@ private
    -- Non-exported services --
    ---------------------------
 
-   --  this section defines a set of services that will help in the management
+   --  This section defines a set of services that will help in the management
    --  of a list of LI_File. They are defined as private so that only childs
    --  of this package (which are expected to provide high-level services that
    --  hide the manipulation of such a list) have access to them. All other
