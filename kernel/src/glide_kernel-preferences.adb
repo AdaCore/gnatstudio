@@ -75,7 +75,6 @@ package body Glide_Kernel.Preferences is
       Register_Property
         (Kernel.Preferences, Param_Spec (Splash_Screen), -"General");
 
-
       Tmp_Dir := Param_Spec_String (Gnew_String
         (Name    => "General-Tmp-Dir",
          Nick    => -"Temporary directory",
