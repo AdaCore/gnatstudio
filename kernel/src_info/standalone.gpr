@@ -1,6 +1,7 @@
+with "../../gtkada/gtkada";
 project Standalone is
    for Source_Dirs use
-     ("common", "gtkada", "gvd", "sn_wrapper", "gnat", ".", "tests");
+     ("common", "gvd", "sn_wrapper", "gnat", ".", "tests");
    for Object_Dir use "standalone_obj/";
 
    package Builder is
