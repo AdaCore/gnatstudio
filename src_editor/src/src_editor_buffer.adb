@@ -1545,14 +1545,18 @@ package body Src_Editor_Buffer is
 
       Create_Syntax_Tags
         (B.Syntax_Tags,
-         Keyword_Color       => Get_Pref (Kernel, Default_Keyword_Color),
-         Keyword_Font_Desc   => Get_Pref (Kernel, Keyword_Font),
-         Comment_Color       => Get_Pref (Kernel, Default_Comment_Color),
-         Comment_Font_Desc   => Get_Pref (Kernel, Comment_Font),
-         Character_Color     => Get_Pref (Kernel, Default_String_Color),
-         Character_Font_Desc => Get_Pref (Kernel, String_Font),
-         String_Color        => Get_Pref (Kernel, Default_String_Color),
-         String_Font_Desc    => Get_Pref (Kernel, String_Font));
+         Keyword_Color       => Get_Pref_Fg   (Kernel, Keywords_Style),
+         Keyword_Color_Bg    => Get_Pref_Bg   (Kernel, Keywords_Style),
+         Keyword_Font_Desc   => Get_Pref_Font (Kernel, Keywords_Style),
+         Comment_Color       => Get_Pref_Fg   (Kernel, Comments_Style),
+         Comment_Color_Bg    => Get_Pref_Bg   (Kernel, Comments_Style),
+         Comment_Font_Desc   => Get_Pref_Font (Kernel, Comments_Style),
+         Character_Color     => Get_Pref_Fg   (Kernel, Strings_Style),
+         Character_Color_Bg  => Get_Pref_Bg   (Kernel, Strings_Style),
+         Character_Font_Desc => Get_Pref_Font (Kernel, Strings_Style),
+         String_Color        => Get_Pref_Fg   (Kernel, Strings_Style),
+         String_Color_Bg     => Get_Pref_Bg   (Kernel, Strings_Style),
+         String_Font_Desc    => Get_Pref_Font (Kernel, Strings_Style));
 
       --  Connect timeout, to handle automatic saving of buffer
 
