@@ -362,18 +362,22 @@ package Codefix.Text_Manager is
      (This        : in out Extract_Line;
       New_String  : String;
       First, Last : Natural := 0);
-   --  ???
+   --  Set the value of the string contained in the Extract_Line
 
    procedure Set_Coloration (This : in out Extract_Line; Value : Boolean);
-   --  ???
+   --  Set the boolean used to know if the line has to be colored in the window
+   --  or not.
 
    function Get_Coloration (This : Extract_Line) return Boolean;
-   --  ???
+   --  Return the boolean used to know if the line has to be colored in the
+   --  window or not.
 
    function Get_Line
      (This : Ptr_Extract_Line; Cursor : File_Cursor'Class)
       return Ptr_Extract_Line;
-   --  ???
+   --  If the line is referenced into an extract, this function search the
+   --  first line from this one which is at the position specified by the
+   --  cursor.
 
    ----------------------------------------------------------------------------
    --  type Extract
@@ -504,7 +508,7 @@ package Codefix.Text_Manager is
    --  specified by the cursor.
 
    procedure Delete_All_Lines (This : in out Extract);
-   --  Delete all the lines from the extract
+   --  Delete all the lines from the extract.
 
    procedure Get_Entity
      (This : in out Extract;
@@ -612,18 +616,17 @@ package Codefix.Text_Manager is
    --  Erase the text from Start to Stop.
 
    function Get_Files_Names (This : Extract) return String;
-   --  ???
+   --  Return a string containing all the files names of the extract separate
+   --  by '/'.
 
    function Get_Nb_Files (This : Extract) return Natural;
-   --  ???
+   --  Return the number of different files names contained in the extract.
 
 private
 
-   function Compare_Pkg (Pkg_1, Pkg_2 : String) return Boolean;
-   --  Compare two package names and determine if their are coherent. For
-   --  example, Direct_IO and Ada.Direct_IO are coherent packages names.
-   --  ??? Need a more formal and clearer spec, what does this function do
-   --  exactly ? What does 'coherent' mean ?
+   function Compare_Last (Str_1, Str_2 : String) return Boolean;
+   --  Return true when one of the two strings is equal to the last characters
+   --  of the other one.
 
    ----------------------------------------------------------------------------
    --  type Text_Navigator
