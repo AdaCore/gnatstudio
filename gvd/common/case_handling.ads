@@ -53,7 +53,7 @@ package Case_Handling is
    No_Casing_Exception : constant Casing_Exceptions;
 
    procedure Set_Case
-     (C      : in     Casing_Exceptions;
+     (C      : Casing_Exceptions;
       Word   : in out String;
       Casing : Casing_Type);
    --  Change the case of Str as specified by Casing. This routine also
