@@ -291,6 +291,10 @@ package body Debugger.Gdb.C is
       Tmp     : Natural := Index;
 
    begin
+      if Looking_At (Type_Str, Index, "const ") then
+         Index := Index + 6;
+      end if;
+
       C_Detect_Composite_Type (Lang, Type_Str, Entity, Index, Result);
 
       --  Do we have an access or array type ?

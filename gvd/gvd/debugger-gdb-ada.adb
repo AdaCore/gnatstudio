@@ -183,6 +183,10 @@ package body Debugger.Gdb.Ada is
    is
       Start : constant Natural := Index;
    begin
+      if Looking_At (Type_Str, Index, "const ") then
+         Index := Index + 6;
+      end if;
+
       case Type_Str (Index) is
          when '<' =>
             --  A union type
