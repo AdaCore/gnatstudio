@@ -1220,21 +1220,20 @@ package body VCS_View_Pkg is
 
       Gtk_New (VCS_View.Notebook);
       Set_Show_Tabs (VCS_View.Notebook, False);
+      Set_Show_Border (VCS_View.Notebook, False);
       Pack_Start (Vbox1, VCS_View.Notebook);
 
       Gtkada.Handlers.Return_Callback.Object_Connect
         (VCS_View,
          "delete_event",
-         Gtkada.Handlers.Return_Callback.To_Marshaller
-           (On_Delete'Access),
+         Gtkada.Handlers.Return_Callback.To_Marshaller (On_Delete'Access),
          VCS_View,
          After => False);
 
       Gtkada.Handlers.Widget_Callback.Object_Connect
         (VCS_View,
          "destroy",
-         Gtkada.Handlers.Widget_Callback.To_Marshaller
-           (On_Destroy'Access),
+         Gtkada.Handlers.Widget_Callback.To_Marshaller (On_Destroy'Access),
          VCS_View);
 
       declare
@@ -1301,7 +1300,7 @@ package body VCS_View_Pkg is
       Set_Policy (Scrolledwindow1,
                   Gtk.Enums.Policy_Automatic,
                   Gtk.Enums.Policy_Automatic);
-      Pack_Start (Page, Scrolledwindow1, True, True, 3);
+      Pack_Start (Page, Scrolledwindow1, True, True, 0);
 
       Selection := Get_Selection (Page.Tree);
       Set_Mode (Selection, Gtk.Enums.Selection_Multiple);
