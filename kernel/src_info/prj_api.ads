@@ -204,6 +204,23 @@ package Prj_API is
       return GNAT.OS_Lib.Argument_List;
    --  Convert a variable value to a list of arguments.
 
+   procedure Update_Attribute_Value_In_Scenario
+     (Project         : Project_Node_Id;
+      Pkg_Name        : String := "";
+      Attribute_Name  : String := "";
+      Values          : GNAT.OS_Lib.Argument_List;
+      Attribute_Index : Types.String_Id := Types.No_String;
+      Prepend         : Boolean := False);
+   --  Update the value of the attribute Attribute_Name in Project/Pkg_Name.
+   --  If Pkg_Name is the empty string "", then the value is updated at the
+   --  top-level of the project.
+   --  List is the list of new values for the variable. If Prepend is True,
+   --  these values are the only values for the variable, and they override any
+   --  other value that was there before. If Prepend is False, the values in
+   --  List are prepended to the current value of the attribute.
+   --  Attribute_Index is the associative array index for the attribute (for
+   --  instance the file name when modifying the switches).
+
    -----------------
    -- Expressions --
    -----------------

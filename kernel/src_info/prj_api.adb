@@ -27,21 +27,22 @@
 -----------------------------------------------------------------------
 
 --  Gnat sources dependencies
-with Prj;       use Prj;
+with Prj;           use Prj;
 pragma Elaborate_All (Prj);
-with Prj.Tree;  use Prj.Tree;
-with Prj.Attr;  use Prj.Attr;
-with Prj.Util;  use Prj.Util;
-with Snames;    use Snames;
+with Prj.Tree;      use Prj.Tree;
+with Prj.Attr;      use Prj.Attr;
+with Prj.Util;      use Prj.Util;
+with Prj_Normalize; use Prj_Normalize;
+with Snames;        use Snames;
 pragma Elaborate_All (Snames);
-with Namet;     use Namet;
+with Namet;         use Namet;
 pragma Elaborate_All (Namet);
-with Types;     use Types;
-with Csets;     use Csets;
+with Types;         use Types;
+with Csets;         use Csets;
 pragma Elaborate_All (Csets);
-with Stringt;   use Stringt;
-with Ada.Text_IO; use Ada.Text_IO;
-with GNAT.OS_Lib; use GNAT.OS_Lib;
+with Stringt;       use Stringt;
+with Ada.Text_IO;   use Ada.Text_IO;
+with GNAT.OS_Lib;   use GNAT.OS_Lib;
 
 package body Prj_API is
 
@@ -1209,6 +1210,123 @@ package body Prj_API is
       end case;
       return S;
    end To_Argument_List;
+
+   ----------------------------------------
+   -- Update_Attribute_Value_In_Scenario --
+   ----------------------------------------
+
+   procedure Update_Attribute_Value_In_Scenario
+     (Project         : Project_Node_Id;
+      Pkg_Name        : String := "";
+      Attribute_Name  : String := "";
+      Values          : GNAT.OS_Lib.Argument_List;
+      Attribute_Index : Types.String_Id := Types.No_String;
+      Prepend         : Boolean := False)
+   is
+      Attribute_N : Name_Id;
+      List : Project_Node_Id := Empty_Node;
+      Previous_Decl : Project_Node_Id := Empty_Node;
+      Case_Item, Decl, Expr, Term, Pkg : Project_Node_Id;
+   begin
+      Name_Len := Attribute_Name'Length;
+      Name_Buffer (1 .. Name_Len) := Attribute_Name;
+      Attribute_N := Name_Find;
+
+      --  Create the string list for the new values.
+      --  This can be prepended later on to the existing list of values.
+
+      if Values'Length /= 0 then
+         List := Default_Project_Node (N_Literal_String_List, Prj.List);
+
+         for A in Values'Range loop
+            Start_String;
+            Store_String_Chars (Values (A).all);
+            Expr := String_As_Expression (End_String);
+            Set_Next_Expression_In_List
+              (Expr, First_Expression_In_List (List));
+            Set_First_Expression_In_List (List, Expr);
+         end loop;
+
+      else
+         --  ??? Shouldn't exist if there is already such a package => remove
+         --  ??? the previous declaration.
+         return;
+      end if;
+
+      --  Do we already have some declarations for this variable ? If yes,
+      --  We need to update the last of these declarations (so that the changes
+      --  have an impact, and are not overriden by some other declaration).
+
+      if Pkg_Name /= "" then
+         Pkg := Get_Or_Create_Package (Project, Pkg_Name);
+      else
+         Pkg := Empty_Node;
+      end if;
+      Case_Item := Current_Scenario_Case_Item (Project, Pkg);
+
+      Decl := First_Declarative_Item_Of (Case_Item);
+      while Decl /= Empty_Node loop
+         Expr := Current_Item_Node (Decl);
+
+         if Kind_Of (Expr) = N_Attribute_Declaration
+           and then Prj.Tree.Name_Of (Expr) = Attribute_N
+         then
+            if (Attribute_Index = No_String
+                and then Associative_Array_Index_Of (Expr) = No_String)
+              or else (Attribute_Index /= No_String
+                       and then Associative_Array_Index_Of (Expr) /= No_String
+                       and then
+                       String_Equal (Associative_Array_Index_Of (Expr),
+                                     Attribute_Index))
+            then
+               Previous_Decl := Expression_Of (Expr);
+            end if;
+         end if;
+
+         Decl := Next_Declarative_Item (Decl);
+      end loop;
+
+      --  If we found a previous declaration, update it
+
+      if Previous_Decl /= Empty_Node then
+         if Prepend then
+            Expr := First_Expression_In_List (List);
+            while Next_Expression_In_List (Expr) /= Empty_Node loop
+               Expr := Next_Expression_In_List (Expr);
+            end loop;
+
+            Set_Next_Expression_In_List
+              (Expr, First_Expression_In_List
+               (Current_Term (First_Term (Previous_Decl))));
+         end if;
+
+         Set_Current_Term (First_Term (Previous_Decl), List);
+
+
+      --  Else create the new instruction to be added to the project
+
+      else
+         Decl := Get_Or_Create_Attribute
+           (Case_Item, Attribute_Name, Attribute_Index);
+         Expr := Enclose_In_Expression (List);
+
+         if Prepend then
+            Set_Next_Term
+              (First_Term (Expr),
+               Default_Project_Node (N_Term, Prj.List));
+            Term := Next_Term (First_Term (Expr));
+            Set_Current_Term
+              (Term,
+               Default_Project_Node (N_Attribute_Reference, Prj.List));
+            Term := Current_Term (Term);
+
+            Set_Name_Of (Term, Attribute_N);
+            Set_Project_Node_Of (Term, Project);
+         end if;
+
+         Set_Expression_Of (Decl, Expr);
+      end if;
+   end Update_Attribute_Value_In_Scenario;
 
 begin
    Namet.Initialize;
