@@ -212,6 +212,7 @@ package body GUI_Utils is
       if Data.Destroy /= null then
          Data.Destroy (Data.Widget, Gtk_Menu (Menu));
       end if;
+      Destroy (Menu);
       return False;
    end Unmap_Menu;
 
@@ -298,6 +299,7 @@ package body GUI_Utils is
          if User.Menu_Destroy /= null then
             User.Menu_Destroy (User.User, Gtk_Menu (Menu));
          end if;
+         Destroy (Menu);
          return False;
       end Unmap_User_Menu;
 
