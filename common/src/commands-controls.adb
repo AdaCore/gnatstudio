@@ -190,47 +190,58 @@ package body Commands.Controls is
    --------------------
 
    procedure Unset_Controls (Queue : Command_Queue) is
-      The_Command : Command_Access;
+      The_Command : Command_Access := null;
+      Queue_Node  : Command_Queues.List_Node;
       Command     : Queue_Change_Access;
 
+      use type Command_Queues.List_Node;
    begin
-      The_Command := Get_Queue_Change_Hook (Queue);
+      Queue_Node := Command_Queues.First (Get_Queue_Change_Hook (Queue));
+
+      while Queue_Node /= Command_Queues.Null_Node loop
+         The_Command := Command_Queues.Data (Queue_Node);
+
+         if The_Command /= null
+           and then The_Command.all in Queue_Change_Command'Class
+         then
+            exit;
+         else
+            The_Command := null;
+         end if;
+
+         Queue_Node := Command_Queues.Next (Queue_Node);
+      end loop;
 
       if The_Command = null then
          return;
       end if;
 
-      if The_Command.all in Queue_Change_Command'Class then
-         Command := Queue_Change_Access (The_Command);
+      Command := Queue_Change_Access (The_Command);
 
-         if Command.Undo_Button_Handler_ID.Signal /= Null_Signal_Id then
-            Disconnect (Command.Undo_Button, Command.Undo_Button_Handler_ID);
-            Disconnect (Command.Redo_Button, Command.Redo_Button_Handler_ID);
-            Disconnect
-              (Command.Undo_Menu_Item, Command.Undo_Menu_Item_Handler_ID);
-            Disconnect
-              (Command.Redo_Menu_Item, Command.Redo_Menu_Item_Handler_ID);
-            Command.Undo_Button_Handler_ID.Signal := Null_Signal_Id;
-         end if;
+      if Command.Undo_Button_Handler_ID.Signal /= Null_Signal_Id then
+         Disconnect (Command.Undo_Button, Command.Undo_Button_Handler_ID);
+         Disconnect (Command.Redo_Button, Command.Redo_Button_Handler_ID);
+         Disconnect
+           (Command.Undo_Menu_Item, Command.Undo_Menu_Item_Handler_ID);
+         Disconnect
+           (Command.Redo_Menu_Item, Command.Redo_Menu_Item_Handler_ID);
+         Command.Undo_Button_Handler_ID.Signal := Null_Signal_Id;
+      end if;
 
-         if Command.Undo_Button /= null then
-            Set_Sensitive (Command.Undo_Button, False);
-         end if;
+      if Command.Undo_Button /= null then
+         Set_Sensitive (Command.Undo_Button, False);
+      end if;
 
-         if Command.Redo_Button /= null then
-            Set_Sensitive (Command.Redo_Button, False);
-         end if;
+      if Command.Redo_Button /= null then
+         Set_Sensitive (Command.Redo_Button, False);
+      end if;
 
-         if Command.Undo_Menu_Item /= null then
-            Set_Sensitive (Command.Undo_Menu_Item, False);
-         end if;
+      if Command.Undo_Menu_Item /= null then
+         Set_Sensitive (Command.Undo_Menu_Item, False);
+      end if;
 
-         if Command.Redo_Menu_Item /= null then
-            Set_Sensitive (Command.Redo_Menu_Item, False);
-         end if;
-
-      else
-         raise Program_Error;
+      if Command.Redo_Menu_Item /= null then
+         Set_Sensitive (Command.Redo_Menu_Item, False);
       end if;
    end Unset_Controls;
 
