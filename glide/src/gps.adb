@@ -88,7 +88,6 @@ with Project_Viewers;
 with Shell_Script;
 with Src_Editor_Module;
 with VCS_Module;
-with VCS.CVS;
 with VCS.ClearCase;
 with VFS_Module;
 with Vdiff_Module;
@@ -986,7 +985,6 @@ procedure GPS is
       end if;
 
       VCS_Module.Register_Module (GPS.Kernel);
-      VCS.CVS.Register_Module (GPS.Kernel);
       VCS.ClearCase.Register_Module (GPS.Kernel);
       Aunit_Module.Register_Module (GPS.Kernel);
       VFS_Module.Register_Module (GPS.Kernel);
