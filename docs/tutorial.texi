@@ -618,7 +618,7 @@ Back to our project, let's now examine the dependencies between sources.
 @noindent
 
 Select @file{sdc.adb} in the explorer and then the contextual menu item
-@code{Examine dependencies for sdc.adb}: this will open a new graph showing
+@code{Show dependencies for sdc.adb}: this will open a new graph showing
 the dependencies between sources of the project.
 
 Click on the right arrow of @file{tokens.ads} to display the files that
@@ -643,11 +643,11 @@ once as a dependency of @code{prj1}.
 
 GPS can also display the graph of dependencies between projects: on @i{sdc}
 project, use the contextual menu
-@code{Examine projects imported by sdc}: this will open a project hierarchy
+@code{Show projects imported by sdc}: this will open a project hierarchy
 browser.
 
 On the @code{sdc.gpr} project, select the contextual menu
-@code{Examine recursive dependencies for sdc}.
+@code{Show recursive dependencies for sdc}.
 
 In the browser, you can move the project items, and select them to highlight
 the dependencies.

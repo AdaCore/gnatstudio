@@ -2845,7 +2845,7 @@ switches, naming scheme, @dots{})
 The following entries are available in the contextual menu:
 
 @table @command
-@item Examine Projects Imported by...
+@item Show Projects Imported by...
 This item will open a new window in GPS, the project browser, which
 displays graphically the relationships between each project in the
 hierarchy.
@@ -3346,7 +3346,7 @@ them imports the other.
 
 @cindex examine projects imported by
 It is accessed through the contextual menu in the project explorer, by
-selecting the @code{Examine projects imported by...} item, when
+selecting the @code{Show projects imported by...} item, when
 right-clicking on a project node.
 
 Clicking on the left arrow in the title bar of the items will display
@@ -3370,20 +3370,20 @@ highlight the first project node found that matches the project in the
 browser item. This is a convenient way to get information like the
 list of directories or source files for that project.
 
-@item Examine dependencies
-@cindex examine dependencies
+@item Show dependencies
+@cindex show dependencies
 This item plays the same role as the right arrow in the title bar, and
 display all the projects in the hierarchy that are imported directly
 by the selected project
 
-@item Examine recursive dependencies
-@cindex examine recursive dependencies
+@item Show recursive dependencies
+@cindex show recursive dependencies
 This item will display all the dependencies recursively for the
 project (i.e. the project it imports directly, and the projects that
 are imported by them, and so on).
 
-@item Examine projects depending on
-@cindex examine projects depending on
+@item Show projects depending on
+@cindex show projects depending on
 This item plays the same role as the left arrow in the title bar, and
 display all the projects that import directly the selected project.
 @end table
@@ -3983,15 +3983,15 @@ This browser is accessible through the contextual menu in the
 explorer, by selecting one of the following items:
 
 @table @command
-@item Examine dependencies for @i{file}
-@cindex examine dependencies for
+@item Show dependencies for @i{file}
+@cindex show dependencies for
 
 This has the same effect as clicking on the right arrow for a file
 already in the browser, and will display the direct dependencies for
 that file.
 
-@item Examine files depending on @i{file}
-@cindex examine files depending on
+@item Show files depending on @i{file}
+@cindex show files depending on
 
 This has the same effect as clicking on the left arrow for a file
 already in the browser, and will display the list of files that
@@ -4056,8 +4056,8 @@ clicked on a spec file, or the opposite. In C, it depends on the
 naming conventions you specified in the project properties, but you
 would generally go from a @file{.h} file to a @file{.c} file and back.
 
-@item Examine dependencies for @i{file}
-@item Examine files depending on @i{file}
+@item Show dependencies for @i{file}
+@cindex show files depending on file
 
 These play the same role as in the project explorer contextual menu
 
