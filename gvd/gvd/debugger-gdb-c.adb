@@ -304,6 +304,11 @@ package body Debugger.Gdb.C is
          T : constant String := Type_Of (Get_Debugger (Lang), Ent);
          J : Natural := T'First;
       begin
+         if T = Type_Str then
+            --  We are about to recurse...
+            raise Storage_Error;
+         end if;
+
          --  In some cases, T might have a null length (for instance if we
          --  had a C++ class, since Ent="class" and T="" in that case).
          if T'Length /= 0 then
@@ -311,6 +316,7 @@ package body Debugger.Gdb.C is
          else
             Result := null;
          end if;
+
          Index := Type_Str'Last;
       end;
    end C_Parse_Type;
@@ -324,8 +330,7 @@ package body Debugger.Gdb.C is
       Type_Str : String;
       Entity   : String;
       Index    : in out Natural;
-      Result   : out Generic_Type_Access)
-   is
+      Result   : out Generic_Type_Access) is
    begin
       C_Parse_Type (Lang, Type_Str, Entity, Index, Result);
    end Parse_Type;
