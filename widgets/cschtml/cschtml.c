@@ -741,7 +741,6 @@ button_press_event (GtkWidget *widget,
 			return TRUE;
 			break;
 		case 2:
-			csc_html_request_paste (widget, event->time);
 			return TRUE;
 			break;
 		default:
