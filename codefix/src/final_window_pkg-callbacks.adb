@@ -18,11 +18,17 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Gtk.Widget; use Gtk.Widget;
+with Ada.Exceptions;         use Ada.Exceptions;
+
+with Gtk.Widget;             use Gtk.Widget;
 
 with Codefix.Errors_Manager; use Codefix.Errors_Manager;
 
+with Traces;                 use Traces;
+
 package body Final_Window_Pkg.Callbacks is
+
+   Me : constant Debug_Handle := Create ("Final_Window_Pkg.Callbacks");
 
    ---------------------------------
    -- On_Final_Validation_Clicked --
@@ -36,9 +42,13 @@ package body Final_Window_Pkg.Callbacks is
    begin
       Commit
         (Final_Window.Graphic_Codefix.Corrector,
-         Final_Window.Graphic_Codefix.Current_Text);
+         Final_Window.Graphic_Codefix.Current_Text.all);
       Destroy (Final_Window);
       Quit (Final_Window.Graphic_Codefix);
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Final_Validation_Clicked;
 
    -----------------------------
@@ -53,6 +63,10 @@ package body Final_Window_Pkg.Callbacks is
    begin
       Unref (Final_Window);
       Quit (Final_Window.Graphic_Codefix);
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Final_Cancel_Clicked;
 
 end Final_Window_Pkg.Callbacks;

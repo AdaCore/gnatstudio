@@ -18,6 +18,8 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Ada.Exceptions;              use Ada.Exceptions;
+
 with Glib;                        use Glib;
 with Gtk.Enums;                   use Gtk.Enums;
 with Gtk.Widget;                  use Gtk.Widget;
@@ -27,12 +29,16 @@ use Gtk.Enums.String_List;
 with Codefix;                     use Codefix;
 with Codefix.Errors_Manager;      use Codefix.Errors_Manager;
 with Codefix.Formal_Errors;       use Codefix.Formal_Errors;
-use Codefix.Formal_Errors.Extract_List;
+use Codefix.Formal_Errors.Command_List;
 with Codefix.Graphics; use Codefix.Graphics;
+
+with Traces;                      use Traces;
 
 package body Codefix_Window_Pkg.Callbacks is
 
    use Gtk.Arguments;
+
+   Me : constant Debug_Handle := Create ("Codefix_Window_Pkg.Callbacks");
 
    ------------------------------------
    -- On_Codefix_Window_Delete_Event --
@@ -50,6 +56,10 @@ package body Codefix_Window_Pkg.Callbacks is
    begin
       Quit (Graphic_Codefix);
       return False;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Codefix_Window_Delete_Event;
 
    --------------------------
@@ -67,6 +77,10 @@ package body Codefix_Window_Pkg.Callbacks is
            (Graphic_Codefix.Choices_Proposed,
             Get_Nth_Solution (Graphic_Codefix) - 1);
       end if;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Fix_Entry_Changed;
 
    --------------------------------
@@ -80,6 +94,10 @@ package body Codefix_Window_Pkg.Callbacks is
         Graphic_Codefix_Access (Object);
    begin
       Load_Next_Error (Graphic_Codefix);
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Skip_Correction_Clicked;
 
    ----------------------------------
@@ -89,11 +107,15 @@ package body Codefix_Window_Pkg.Callbacks is
    procedure On_Accept_Correction_Clicked
      (Object : access Gtk_Widget_Record'Class)
    is
-      Graphic_Codefix : Graphic_Codefix_Access :=
+      Graphic_Codefix : constant Graphic_Codefix_Access :=
         Graphic_Codefix_Access (Object);
    begin
       Valid_Current_Solution (Graphic_Codefix);
       Load_Next_Error (Graphic_Codefix);
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Accept_Correction_Clicked;
 
    -------------------------------
@@ -107,6 +129,10 @@ package body Codefix_Window_Pkg.Callbacks is
         Graphic_Codefix_Access (Object);
    begin
       Quit (Graphic_Codefix);
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Cancel_Changes_Clicked;
 
    ------------------------------
@@ -121,8 +147,12 @@ package body Codefix_Window_Pkg.Callbacks is
    begin
       Commit
         (Graphic_Codefix.Corrector,
-         Graphic_Codefix.Current_Text);
+         Graphic_Codefix.Current_Text.all);
       Quit (Graphic_Codefix);
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Apply_Changes_Clicked;
 
 end Codefix_Window_Pkg.Callbacks;
