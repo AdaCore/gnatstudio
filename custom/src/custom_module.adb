@@ -49,6 +49,7 @@ package body Custom_Module is
       File      : constant String :=
         String_Utils.Name_As_Directory (Get_Home_Dir (Kernel)) & "custom";
       Node      : Node_Ptr;
+      File_Node : Node_Ptr;
 
       procedure Add_Child
         (Parent_Path  : String;
@@ -122,6 +123,8 @@ package body Custom_Module is
                         GPS_Command := False;
                      end if;
 
+                     --  ??? This command is never freed anywhere
+                     --  ??? Neither is A
                      Create
                        (C,
                         Kernel_Handle (Kernel),
@@ -165,7 +168,8 @@ package body Custom_Module is
          return;
       end if;
 
-      Node := Parse (File).Child;
+      File_Node := Parse (File).Child;
+      Node := File_Node;
 
       Register_Module
         (Module                  => Custom_Module_ID,
@@ -178,6 +182,8 @@ package body Custom_Module is
          Add_Child ("", Node);
          Node := Node.Next;
       end loop;
+
+      Free (File_Node);
 
    exception
       when E : others =>
