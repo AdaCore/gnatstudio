@@ -452,8 +452,12 @@ package body Project_Explorers is
       Is_Dir2 : constant Boolean :=
         D2.Node_Type in Directory_Node .. Obj_Directory_Node;
 
-      Text1 : constant String := Node_Get_Text (T, N1, 0);
-      Text2 : constant String := Node_Get_Text (T, N2, 0);
+      --  Use basename so that we get proper handling of case-insensitive file
+      --  systems.
+      Text1 : constant String :=
+        Base_Name (Node_Get_Text (T, N1, 0));
+      Text2 : constant String :=
+        Base_Name (Node_Get_Text (T, N2, 0));
 
    begin
       --  At least one of the nodes is a project
