@@ -422,7 +422,7 @@ package body Src_Editor_View is
 
       if User.Highlight_Blocks
         and then User.Current_Block /=
-          Get_Block (Buffer, Buffer_Line_Type (Line) + 1)
+          Get_Block (Buffer, Buffer_Line_Type (Line))
       then
          Clear_Text_Window (User);
       end if;
@@ -1345,7 +1345,6 @@ package body Src_Editor_View is
 
          Unref (Layout);
       end if;
-
    end Redraw_Columns;
 
 end Src_Editor_View;
