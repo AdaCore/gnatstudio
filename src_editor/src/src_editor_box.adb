@@ -2178,12 +2178,14 @@ package body Src_Editor_Box is
       Start_Line   : Positive;
       Start_Column : Positive;
       End_Line     : Positive;
-      End_Column   : Positive) is
+      End_Column   : Positive;
+      Expand_Tabs  : Boolean := True) is
    begin
       Select_Region
         (Editor.Source_Buffer,
          To_Buffer_Line (Start_Line), To_Buffer_Column (Start_Column),
-         To_Buffer_Line (End_Line), To_Buffer_Column (End_Column));
+         To_Buffer_Line (End_Line), To_Buffer_Column (End_Column),
+         Expand_Tabs);
    end Select_Region;
 
    -------------------

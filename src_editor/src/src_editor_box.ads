@@ -257,11 +257,13 @@ package Src_Editor_Box is
       Start_Line   : Positive;
       Start_Column : Positive;
       End_Line     : Positive;
-      End_Column   : Positive);
+      End_Column   : Positive;
+      Expand_Tabs  : Boolean := True);
    --  Select the given region.
    --  Both start and end positions must be verified before calling this
    --  procedure. An incorrect position will cause an Assertion_Failure
    --  when compiled with assertion checks, or an undefined behavior otherwise.
+   --  Takes Tabs into account when Expand_Tabs = True.
 
    procedure Select_All (Editor : access Source_Editor_Box_Record);
    --  Set the selection bounds from the begining to the end of the buffer.
