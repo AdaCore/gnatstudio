@@ -147,7 +147,7 @@ package body Src_Printing is
 
       Initialize_Print_Dialog (PD);
 
-      if PrintDlg_func (PD'Address) /= Win32_Printing_Defs.True then
+      if not PrintDlg_func (PD'Address) then
          return;
       end if;
       --  Note: several of the values within PD may be changed by dialog
