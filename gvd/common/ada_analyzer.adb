@@ -44,8 +44,6 @@ package body Source_Analyzer is
    package Indent_Stack is new Generic_Stack (Integer);
    use Indent_Stack;
 
-   subtype Word is Natural;
-
    --------------------------
    -- Line Buffer Handling --
    --------------------------
@@ -92,7 +90,7 @@ package body Source_Analyzer is
    -- Parsing Routines --
    ----------------------
 
-   function End_Of_Word (Buffer : String; P : Word) return Word;
+   function End_Of_Word (Buffer : String; P : Natural) return Natural;
    --  Return the end of the word pointed by P.
 
    function Get_Token (S : String) return Token_Type;
@@ -103,25 +101,25 @@ package body Source_Analyzer is
    --  Return whether C is a word character (alphanumeric or underscore).
    pragma Inline (Is_Word_Char);
 
-   function Line_Start (Buffer : String; P : Word) return Word;
+   function Line_Start (Buffer : String; P : Natural) return Natural;
    --  Return the start of the line pointed by P.
 
-   function Line_End   (Buffer : String; P : Word) return Word;
+   function Line_End   (Buffer : String; P : Natural) return Natural;
    --  Return the end of the line pointed by P.
 
-   function Next_Line  (Buffer : String; P : Word) return Word;
+   function Next_Line  (Buffer : String; P : Natural) return Natural;
    --  Return the start of the next line.
 
-   function Next_Char  (P : Word) return Word;
+   function Next_Char  (P : Natural) return Natural;
    --  Return the next char in buffer. P is the current character.
    pragma Inline (Next_Char);
 
    procedure Next_Word
      (Buffer          : String;
       New_Buffer      : in out Extended_Line_Buffer;
-      P               : in out Word;
+      P               : in out Natural;
       Num_Parens      : in out Integer;
-      Line_Count      : in out Word;
+      Line_Count      : in out Natural;
       Indents         : in out Indent_Stack.Simple_Stack;
       Num_Spaces      : Integer;
       Indent_Continue : Natural;
@@ -131,21 +129,21 @@ package body Source_Analyzer is
    --  and set P accordingly.
    --  Formatting of operators is performed by this procedure.
 
-   function Prev_Char (P : Word) return Word;
+   function Prev_Char (P : Natural) return Natural;
    --  Return the previous char in buffer. P is the current character.
    pragma Inline (Prev_Char);
 
    procedure Replace_Text
      (Buffer  : in out Extended_Line_Buffer;
-      First   : Word;
-      Last    : Word;
+      First   : Natural;
+      Last    : Natural;
       Replace : String);
    --  Replace the slice First .. Last - 1 in Buffer by Replace.
 
    procedure Do_Indent
      (Buffer      : String;
       New_Buffer  : in out Extended_Line_Buffer;
-      Prec        : Word;
+      Prec        : Natural;
       Indents     : Indent_Stack.Simple_Stack;
       Num_Spaces  : Integer;
       Indent_Done : in out Boolean);
@@ -164,7 +162,7 @@ package body Source_Analyzer is
    -- Next_Char --
    ---------------
 
-   function Next_Char (P : Word) return Word is
+   function Next_Char (P : Natural) return Natural is
    begin
       return P + 1;
    end Next_Char;
@@ -173,8 +171,8 @@ package body Source_Analyzer is
    -- End_Of_Word --
    -----------------
 
-   function End_Of_Word (Buffer : String; P : Word) return Word is
-      Tmp : Word := P;
+   function End_Of_Word (Buffer : String; P : Natural) return Natural is
+      Tmp : Natural := P;
    begin
       while Tmp < Buffer'Last
         and then Is_Word_Char (Buffer (Next_Char (Tmp)))
@@ -436,7 +434,7 @@ package body Source_Analyzer is
    -- Line_Start --
    ----------------
 
-   function Line_Start (Buffer : String; P : Word) return Word is
+   function Line_Start (Buffer : String; P : Natural) return Natural is
    begin
       for J in reverse Buffer'First .. P loop
          if Buffer (J) = ASCII.LF or else Buffer (J) = ASCII.CR then
@@ -451,7 +449,7 @@ package body Source_Analyzer is
    -- Line_End --
    --------------
 
-   function Line_End (Buffer : String; P : Word) return Word is
+   function Line_End (Buffer : String; P : Natural) return Natural is
    begin
       for J in P .. Buffer'Last loop
          if Buffer (J) = ASCII.LF or else Buffer (J) = ASCII.CR then
@@ -466,7 +464,7 @@ package body Source_Analyzer is
    -- Next_Line --
    ---------------
 
-   function Next_Line (Buffer : String; P : Word) return Word is
+   function Next_Line (Buffer : String; P : Natural) return Natural is
    begin
       for J in P .. Buffer'Last - 1 loop
          if Buffer (J) = ASCII.LF then
@@ -484,9 +482,9 @@ package body Source_Analyzer is
    procedure Next_Word
      (Buffer          : String;
       New_Buffer      : in out Extended_Line_Buffer;
-      P               : in out Word;
+      P               : in out Natural;
       Num_Parens      : in out Integer;
-      Line_Count      : in out Word;
+      Line_Count      : in out Natural;
       Indents         : in out Indent_Stack.Simple_Stack;
       Num_Spaces      : Integer;
       Indent_Continue : Natural;
@@ -495,12 +493,12 @@ package body Source_Analyzer is
    is
       Comma         : String := ", ";
       Spaces        : String := "    ";
-      End_Of_Line   : Word;
-      Start_Of_Line : Word;
-      Long          : Word;
-      First         : Word;
-      Last          : Word;
-      Offs          : Word;
+      End_Of_Line   : Natural;
+      Start_Of_Line : Natural;
+      Long          : Natural;
+      First         : Natural;
+      Last          : Natural;
+      Offs          : Natural;
       Insert_Spaces : Boolean;
       Char          : Character;
       Padding       : Integer;
@@ -810,7 +808,7 @@ package body Source_Analyzer is
    -- Prev_Char --
    ---------------
 
-   function Prev_Char (P : Word) return Word is
+   function Prev_Char (P : Natural) return Natural is
    begin
       return P - 1;
    end Prev_Char;
@@ -822,14 +820,14 @@ package body Source_Analyzer is
    procedure Do_Indent
      (Buffer      : String;
       New_Buffer  : in out Extended_Line_Buffer;
-      Prec        : Word;
+      Prec        : Natural;
       Indents     : Indent_Stack.Simple_Stack;
       Num_Spaces  : Integer;
       Indent_Done : in out Boolean)
    is
-      Start       : Word;
+      Start       : Natural;
       Indentation : Integer;
-      Index       : Word;
+      Index       : Natural;
 
    begin
       if not Indent_Done then
@@ -847,7 +845,6 @@ package body Source_Analyzer is
          end if;
 
          Replace_Text (New_Buffer, Start, Index, Spaces (1 .. Indentation));
-         --  Current := End_Of_Word (Buffer, Prec);
          Indent_Done := True;
       end if;
    end Do_Indent;
@@ -864,12 +861,11 @@ package body Source_Analyzer is
       Ident_Casing    : Casing_Type := Mixed)
    is
       New_Buffer          : Extended_Line_Buffer;
-      Word_Count          : Integer           := 0;
       Line_Count          : Integer           := 0;
       Str                 : String (1 .. 1024);
       Str_Len             : Natural           := 0;
-      Current             : Word;
-      Prec, Prec_Last     : Word              := 1;
+      Current             : Natural;
+      Prec, Prec_Last     : Natural           := 1;
       Num_Spaces          : Integer           := 0;
       Indent_Done         : Boolean           := False;
       Num_Parens          : Integer           := 0;
@@ -890,26 +886,26 @@ package body Source_Analyzer is
       Default_Extended    : Extended_Token;
       --  Use default values to initialize this variable/constant.
 
-      procedure Handle_Reserved_Word (Word : Token_Type);
+      procedure Handle_Reserved_Word (Reserved : Token_Type);
       --  Handle reserved words.
 
       --------------------------
       -- Handle_Reserved_Word --
       --------------------------
 
-      procedure Handle_Reserved_Word (Word : Token_Type) is
+      procedure Handle_Reserved_Word (Reserved : Token_Type) is
          Temp : Extended_Token;
       begin
-         Temp.Token := Word;
+         Temp.Token := Reserved;
 
          --  Note: the order of the following conditions is important
 
-         if Word = Tok_Body then
+         if Reserved = Tok_Body then
             Subprogram_Decl := False;
-         elsif Prev_Token /= Tok_End and then Word = Tok_If then
+         elsif Prev_Token /= Tok_End and then Reserved = Tok_If then
             Push (Tokens, Temp);
 
-         elsif Word = Tok_Renames then
+         elsif Reserved = Tok_Renames then
             Val := Top (Tokens);
 
             if not Val.Declaration
@@ -923,9 +919,9 @@ package body Source_Analyzer is
 
          elsif not Was_Type_Decl
            and then Prev_Token = Tok_Is
-           and then (Word = Tok_New
-             or else Word = Tok_Abstract
-             or else Word = Tok_Separate)
+           and then (Reserved = Tok_New
+             or else Reserved = Tok_Abstract
+             or else Reserved = Tok_Separate)
          then
             --  unindent since this is a declaration, e.g:
             --  package ... is new ...;
@@ -941,17 +937,17 @@ package body Source_Analyzer is
 
             Pop (Tokens);
 
-         elsif Word = Tok_Function
-           or else Word = Tok_Procedure
-           or else Word = Tok_Package
-           or else Word = Tok_Task
-           or else Word = Tok_Protected
-           or else Word = Tok_Entry
+         elsif Reserved = Tok_Function
+           or else Reserved = Tok_Procedure
+           or else Reserved = Tok_Package
+           or else Reserved = Tok_Task
+           or else Reserved = Tok_Protected
+           or else Reserved = Tok_Entry
          then
             Type_Decl     := False;
             Was_Type_Decl := False;
 
-            if Word /= Tok_Package then
+            if Reserved /= Tok_Package then
                Subprogram_Decl := True;
                Num_Parens      := 0;
             end if;
@@ -992,7 +988,7 @@ package body Source_Analyzer is
                Push (Tokens, Temp);
             end if;
 
-         elsif Word = Tok_End or else Word = Tok_Elsif then
+         elsif Reserved = Tok_End or else Reserved = Tok_Elsif then
             --  unindent after end of elsif, e.g:
             --
             --  if xxx then
@@ -1001,7 +997,7 @@ package body Source_Analyzer is
             --     xxx
             --  end if;
 
-            if Word = Tok_End then
+            if Reserved = Tok_End then
                case Top (Tokens).Token is
                   when Tok_Exception =>
                      --  Undo additional level of indentation, as in:
@@ -1033,22 +1029,22 @@ package body Source_Analyzer is
                Syntax_Error := True;
             end if;
 
-         elsif     Word = Tok_Is
-           or else Word = Tok_Declare
-           or else Word = Tok_Begin
-           or else Word = Tok_Do
-           or else (Prev_Token /= Tok_Or  and then Word = Tok_Else)
-           or else (Prev_Token /= Tok_And and then Word = Tok_Then)
-           or else (Prev_Token /= Tok_End and then Word = Tok_Select)
-           or else (Top (Tokens).Token = Tok_Select and then Word = Tok_Or)
-           or else (Prev_Token /= Tok_End and then Word = Tok_Loop)
+         elsif     Reserved = Tok_Is
+           or else Reserved = Tok_Declare
+           or else Reserved = Tok_Begin
+           or else Reserved = Tok_Do
+           or else (Prev_Token /= Tok_Or  and then Reserved = Tok_Else)
+           or else (Prev_Token /= Tok_And and then Reserved = Tok_Then)
+           or else (Prev_Token /= Tok_End and then Reserved = Tok_Select)
+           or else (Top (Tokens).Token = Tok_Select and then Reserved = Tok_Or)
+           or else (Prev_Token /= Tok_End and then Reserved = Tok_Loop)
            or else (Prev_Token /= Tok_End and then Prev_Token /= Tok_Null
-                      and then Word = Tok_Record)
+                      and then Reserved = Tok_Record)
            or else ((Top (Tokens).Token = Tok_Exception
                        or else Top (Tokens).Token = Tok_Case)
-                     and then Word = Tok_When)
+                     and then Reserved = Tok_When)
            or else (Top (Tokens).Declaration
-                      and then Word = Tok_Private
+                      and then Reserved = Tok_Private
                       and then Prev_Token /= Tok_Is
                       and then Prev_Token /= Tok_Limited
                       and then Prev_Token /= Tok_With)
@@ -1061,21 +1057,21 @@ package body Source_Analyzer is
             --     ...
 
             if not Type_Decl then
-               if Word = Tok_Select then
+               if Reserved = Tok_Select then
                   --  Start of a select statement
                   Push (Tokens, Temp);
                end if;
 
-               if Word = Tok_Else
+               if Reserved = Tok_Else
                  or else (Top (Tokens).Token = Tok_Select
-                          and then Word = Tok_Then)
-                 or else Word = Tok_Begin
-                 or else Word = Tok_Record
-                 or else Word = Tok_When
-                 or else Word = Tok_Or
-                 or else Word = Tok_Private
+                          and then Reserved = Tok_Then)
+                 or else Reserved = Tok_Begin
+                 or else Reserved = Tok_Record
+                 or else Reserved = Tok_When
+                 or else Reserved = Tok_Or
+                 or else Reserved = Tok_Private
                then
-                  if Word = Tok_Begin then
+                  if Reserved = Tok_Begin then
                      Val := Top (Tokens);
 
                      if Val.Declaration then
@@ -1085,7 +1081,7 @@ package body Source_Analyzer is
                         Push (Tokens, Temp);
                      end if;
 
-                  elsif Word = Tok_Record then
+                  elsif Reserved = Tok_Record then
                      Push (Tokens, Temp);
                   else
                      Num_Spaces := Num_Spaces - Indent_Level;
@@ -1102,16 +1098,16 @@ package body Source_Analyzer is
                Num_Spaces := Num_Spaces + Indent_Level;
             end if;
 
-            if Word = Tok_Do
-              or else Word = Tok_Loop
+            if Reserved = Tok_Do
+              or else Reserved = Tok_Loop
             then
                Push (Tokens, Temp);
-            elsif Word = Tok_Declare then
+            elsif Reserved = Tok_Declare then
                Temp.Declaration := True;
                Push (Tokens, Temp);
             end if;
 
-            if Word = Tok_Is then
+            if Reserved = Tok_Is then
                --  ??? should use the stack instead
 
                if Prev_Reserved = Tok_Case then
@@ -1130,7 +1126,7 @@ package body Source_Analyzer is
                end if;
             end if;
 
-         elsif Word = Tok_Generic then
+         elsif Reserved = Tok_Generic then
             --  Indent before a generic entity, e.g:
             --
             --  generic
@@ -1141,17 +1137,17 @@ package body Source_Analyzer is
             Num_Spaces := Num_Spaces + Indent_Level;
             In_Generic := True;
 
-         elsif (Word = Tok_Type
+         elsif (Reserved = Tok_Type
                 and then Prev_Token /= Tok_Task
                 and then Prev_Token /= Tok_Protected)
-           or else Word = Tok_Subtype
+           or else Reserved = Tok_Subtype
          then
             --  Entering a type declaration/definition.
             --  ??? Should use the stack instead
 
             Type_Decl := True;
 
-         elsif Word = Tok_Exception then
+         elsif Reserved = Tok_Exception then
             Val := Top (Tokens);
 
             if not Val.Declaration then
@@ -1163,7 +1159,7 @@ package body Source_Analyzer is
             end if;
          end if;
 
-         Prev_Reserved := Word;
+         Prev_Reserved := Reserved;
       end Handle_Reserved_Word;
 
    begin  --  Format_Ada
@@ -1285,8 +1281,7 @@ package body Source_Analyzer is
                ", around character" & Current'Img);
          end if;
 
-         Current    := End_Of_Word (Buffer, Prec);
-         Word_Count := Word_Count + 1;
+         Current := End_Of_Word (Buffer, Prec);
 
          --  A new line, reset flags.
 
@@ -1383,12 +1378,12 @@ package body Source_Analyzer is
 
    procedure Replace_Text
      (Buffer  : in out Extended_Line_Buffer;
-      First   : Word;
-      Last    : Word;
+      First   : Natural;
+      Last    : Natural;
       Replace : String)
    is
       S          : String_Access;
-      F, L       : Word;
+      F, L       : Natural;
       Line_First : Natural;
       Line_Last  : Natural;
       Padding    : Integer;
