@@ -91,7 +91,7 @@ Known Problems fixed in GVD 1.0.2
   Workaround: Replace blackslashes by slashes, or use the menu File/Open
               Program instead.
 
-- [8327-009] Highligthing misspelled in the Preferences dialog
+- [8327-009] Highlighting misspelled in the Preferences dialog
   Problem:    Color Highlighting is mispelled in the preferences dialog.
 
   Workaround: None, this is a minor inconvenience with no consequences.
