@@ -852,7 +852,7 @@ package body GVD.Explorer is
       Append (Explorer.Contextual_Menu, Mitem);
       --  Set_Tip (Tips, Check, -"Foo", "");
 
-      Gtk_New (Mitem, Label => -"Display Files In Shared Libraries");
+      Gtk_New (Mitem, Label => -"Reload Files");
       Set_Sensitive (Mitem, Is_Started (Process.Debugger));
       Tree_Cb.Object_Connect
         (Mitem, "activate",
