@@ -1,9 +1,9 @@
-Overview of the changes since version 0.9.2:
+New features in GPS 1.0.0
 
 - Home button in file selector now takes into account the HOME environment
   variable
 
-Overview of the changes since version 0.9.1:
+New features in GPS 0.9.2
 
 - Shortcut provided to build the current file with the default project
 - Minor debugger bug fixes
