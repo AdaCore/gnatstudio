@@ -34,17 +34,17 @@ package body Matrix_Binding is
      (M      : Matrix_Type;
       Row    : Integer;
       Column : Integer;
-      Value  : Float)
+      Value  : Integer)
    is
       procedure C_Set
         (M      : Matrix_Type;
          Row    : Integer;
          Column : Integer;
-         Value  : C_float);
+         Value  : Integer);
 
       pragma Import (C, C_Set, "matrixSet");
    begin
-      C_Set (M, Row, Column, C_float (Value));
+      C_Set (M, Row, Column, Value);
    end Set;
 
    ---------
@@ -54,16 +54,16 @@ package body Matrix_Binding is
    function Get
      (M      : Matrix_Type;
       Row    : Integer;
-      Column : Integer) return Float
+      Column : Integer) return Integer
    is
       function C_Get
         (M      : Matrix_Type;
          Row    : Integer;
-         Column : Integer) return C_float;
+         Column : Integer) return Integer;
 
       pragma Import (C, C_Get, "matrixGet");
    begin
-      return Float (C_Get (M, Row, Column));
+      return C_Get (M, Row, Column);
    end Get;
 
    ----------
@@ -85,8 +85,8 @@ package body Matrix_Binding is
    function "+" (Left, Right : Matrix_Type) return Matrix_Type
    is
       function C_Add (M, N : Matrix_Type) return Matrix_Type;
-
       pragma Import (C, C_Add, "matrixAdd");
+
    begin
       return C_Add (Left, Right);
    end "+";

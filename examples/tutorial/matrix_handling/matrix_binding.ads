@@ -12,13 +12,13 @@ package Matrix_Binding is
      (M      : Matrix_Type;
       Row    : Integer;
       Column : Integer;
-      Value  : Float);
+      Value  : Integer);
    --  Set the value of one cell.
 
    function Get
      (M      : Matrix_Type;
       Row    : Integer;
-      Column : Integer) return Float;
+      Column : Integer) return Integer;
    --  Get the value of one cell.
 
    function Print (M : Matrix_Type) return String;

@@ -10,13 +10,13 @@
 typedef struct matrix
 {
   int rows, columns;
-  float **value;
+  int **value;
   } Matrix;
 
-float matrixGet (const Matrix *matrix, int row, int column);
+int matrixGet (const Matrix *matrix, int row, int column);
 /* Get the value of the element at row, column */
 
-void matrixSet (Matrix *matrix, int row, int column, float value);
+void matrixSet (Matrix *matrix, int row, int column, int value);
 /* Set the value of the element at row, column */
 
 Matrix *matrixAdd (const Matrix *a, const Matrix *b);
