@@ -677,22 +677,12 @@ package body Project_Viewers is
       File_Name : String_Id;
       Directory : String_Id)
    is
-<<<<<<< project_viewers.adb
-      File : Name_Id;
-      Switches : Switches_Edit;
-      Dialog : Gtk_Dialog;
-      Button : Gtk_Button;
-      Label  : Gtk_Label;
-      Value : Variable_Value;
-=======
       File       : Name_Id;
-      Tool       : Tool_Names;
       Switches   : Switches_Edit;
       Dialog     : Gtk_Dialog;
       Button     : Gtk_Button;
       Label      : Gtk_Label;
       Value      : Variable_Value;
->>>>>>> 1.19
       Is_Default : Boolean;
       Desc       : Pango_Font_Description;
       Style      : Gtk_Style;
@@ -1177,21 +1167,13 @@ package body Project_Viewers is
       Event  : Gdk_Event) return Gtk_Menu
    is
       pragma Warnings (Off, Event);
-<<<<<<< project_viewers.adb
       V : Project_Viewer := Project_Viewer (Viewer);
       Current_View : constant View_Type := Current_Page (V);
-=======
-
-      V    : Project_Viewer := Project_Viewer (Viewer);
->>>>>>> 1.19
       Item : Gtk_Menu_Item;
-<<<<<<< project_viewers.adb
       Row, Column : Gint;
       Is_Valid : Boolean;
       User : User_Data;
-=======
 
->>>>>>> 1.19
    begin
       if V.Contextual_Menu /= null then
          Destroy (V.Contextual_Menu);
