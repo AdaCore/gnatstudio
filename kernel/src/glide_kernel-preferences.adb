@@ -743,6 +743,7 @@ package body Glide_Kernel.Preferences is
       Hide_Up_To_Date := Param_Spec_Boolean (Gnew_Boolean
         (Name    => "VCS-Hide-Up-To-Date",
          Default => False,
+         Flags   => Param_Readable,
          Blurb   => -"Whether up to date files should be hidden by default",
          Nick    => -"Hide up-to-date files"));
       Register_Property
@@ -751,6 +752,7 @@ package body Glide_Kernel.Preferences is
       Hide_Not_Registered := Param_Spec_Boolean (Gnew_Boolean
         (Name    => "VCS-Hide-Not-Registered",
          Default => False,
+         Flags   => Param_Readable,
          Blurb   => -"Whether unregistered files should be hidden by default",
          Nick    => -"Hide non registered files"));
       Register_Property
