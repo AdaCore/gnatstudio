@@ -567,11 +567,7 @@ procedure GPS is
       if not File_Opened
         and then not Has_User_Desktop (GPS.Kernel)
       then
-         Open_Html
-           (GPS.Kernel,
-            Format_Pathname
-              (GPS.Prefix_Directory.all &
-               "/doc/gps/html/gps-welcome.html"));
+         Open_Html (GPS.Kernel, "gps-welcome.html");
          Maximize_Children (Get_MDI (GPS.Kernel));
       end if;
 
