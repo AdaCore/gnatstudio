@@ -117,6 +117,9 @@ package Interactive_Consoles is
       return String;
    --  Return the contents of the console window.
 
+   procedure Grab_Focus (Console : access Interactive_Console_Record);
+   --  Grab the focus on the console text view.
+
 private
 
    use String_List;
