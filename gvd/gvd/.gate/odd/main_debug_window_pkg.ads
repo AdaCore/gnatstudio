@@ -79,7 +79,7 @@ package Main_Debug_Window_Pkg is
       Data1_Menu : Gtk_Menu;
       Call_Stack : Gtk_Check_Menu_Item;
       Threads1 : Gtk_Menu_Item;
-      Processes1 : Gtk_Menu_Item;
+      Tasks1 : Gtk_Menu_Item;
       Signals1 : Gtk_Menu_Item;
       Separator17 : Gtk_Menu_Item;
       Edit_Breakpoints1 : Gtk_Menu_Item;
