@@ -58,15 +58,38 @@ package body Glide_Kernel.Custom is
       use type Module_List.List_Node;
       Current : Module_List.List_Node :=
         Module_List.First (Kernel.Modules_List);
+      Tmp  : Node_Ptr := Node;
+      Tmp2 : Node_Ptr;
 
    begin
-      while Current /= Module_List.Null_Node loop
-         if Module_List.Data (Current).Info.Customization_Handler /= null then
-            Module_List.Data (Current).Info.Customization_Handler
-              (Kernel, File, Node, Level);
-         end if;
+      --  Parse the nodes in the XML file one after the other, and for each
+      --  traverse the list of modules for it.
+      --  It is less efficient than passing the whole file to each module, but
+      --  is necessary to properly handle themes:
+      --  If we have    <action>...</action>
+      --                <theme> ... ref to the action ... </theme>
+      --  we need to be sure that the action has been created before processing
+      --  the theme itself, and that would depend on the order in which the
+      --  modules were registered (DA15-003)
 
-         Current := Module_List.Next (Current);
+      while Tmp /= null loop
+         Tmp2 := Tmp.Next;
+         Tmp.Next := null;
+
+         Current := Module_List.First (Kernel.Modules_List);
+         while Current /= Module_List.Null_Node loop
+            if Module_List.Data (Current).Info.Customization_Handler /=
+              null
+            then
+               Module_List.Data (Current).Info.Customization_Handler
+                 (Kernel, File, Tmp, Level);
+            end if;
+
+            Current := Module_List.Next (Current);
+         end loop;
+
+         Tmp.Next := Tmp2;
+         Tmp := Tmp.Next;
       end loop;
    end Execute_Customization_String;
 

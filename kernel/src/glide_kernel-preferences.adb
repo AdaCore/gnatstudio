@@ -1049,194 +1049,189 @@ package body Glide_Kernel.Preferences is
       Level  : Customization_Level)
    is
       pragma Unreferenced (File, Level);
-      Tmp : Glib.Xml_Int.Node_Ptr := Node;
       Child : Glib.Xml_Int.Node_Ptr;
       Child_Count : Natural;
       Flags : Param_Flags;
    begin
-      while Tmp /= null loop
-         if Tmp.Tag.all = "preference" then
-            declare
-               Name    : constant String := Get_Attribute (Tmp, "name", "");
-               Page    : constant String :=
-                 Get_Attribute (Tmp, "page", "General");
-               Default : constant String := Get_Attribute (Tmp, "default", "");
-               Tooltip : constant String := Get_Attribute (Tmp, "tip", "");
-               Label   : constant String := Get_Attribute (Tmp, "label", "");
-               Typ     : constant String := Get_Attribute (Tmp, "type", "");
-               Min   : constant String := Get_Attribute (Tmp, "minimum", "0");
-               Max   : constant String := Get_Attribute (Tmp, "maximum", "10");
-               Pspec   : Param_Spec;
-               Minimum, Maximum, Def : Gint;
-               Bool_Def : Boolean;
-            begin
-               if Name = "" or else Typ = "" or else Label = "" then
+      if Node.Tag.all = "preference" then
+         declare
+            Name    : constant String := Get_Attribute (Node, "name", "");
+            Page    : constant String :=
+              Get_Attribute (Node, "page", "General");
+            Default : constant String := Get_Attribute (Node, "default", "");
+            Tooltip : constant String := Get_Attribute (Node, "tip", "");
+            Label   : constant String := Get_Attribute (Node, "label", "");
+            Typ     : constant String := Get_Attribute (Node, "type", "");
+            Min   : constant String := Get_Attribute (Node, "minimum", "0");
+            Max   : constant String := Get_Attribute (Node, "maximum", "10");
+            Pspec   : Param_Spec;
+            Minimum, Maximum, Def : Gint;
+            Bool_Def : Boolean;
+         begin
+            if Name = "" or else Typ = "" or else Label = "" then
+               Insert
+                 (Kernel,
+                  -("<preference> must have ""name"", ""type"" and"
+                    & " ""label"" attributes"),
+                  Mode => Error);
+               return;
+            end if;
+
+            Flags := Param_Readable or Param_Writable;
+            if Page = "" then
+               Flags := Param_Readable;
+            end if;
+
+            for N in Name'Range loop
+               if Name (N) = '_' or else Name (N) = ' ' then
                   Insert
                     (Kernel,
-                     -("<preference> must have ""name"", ""type"" and"
-                       & " ""label"" attributes"),
+                     -("<preference>: ""name"" attribute mustn't contain"
+                       & " '_' or ' ' characters"),
                      Mode => Error);
                   return;
                end if;
+            end loop;
 
-               Flags := Param_Readable or Param_Writable;
-               if Page = "" then
-                  Flags := Param_Readable;
+            if Typ = "boolean" then
+               if Default = "" then
+                  Bool_Def := True;
+               else
+                  Bool_Def := Boolean'Value (Default);
+               end if;
+               Pspec := Gnew_Boolean
+                 (Name    => Name,
+                  Nick    => Label,
+                  Blurb   => Tooltip,
+                  Default => Bool_Def);
+
+            elsif Typ = "integer" then
+               Minimum := Gint'Value (Min);
+               Maximum := Gint'Value (Max);
+               if Default = "" then
+                  Def := 0;
+               else
+                  Def     := Gint'Value (Default);
                end if;
 
-               for N in Name'Range loop
-                  if Name (N) = '_' or else Name (N) = ' ' then
-                     Insert
-                       (Kernel,
-                        -("<preference>: ""name"" attribute mustn't contain"
-                          & " '_' or ' ' characters"),
-                        Mode => Error);
-                     return;
-                  end if;
+               if Minimum > Maximum then
+                  Insert
+                    (Kernel,
+                     -"Minimum value greater than maximum for preference "
+                     & Name,
+                     Mode => Error);
+                  Maximum := Minimum;
+               end if;
+
+               if Minimum > Def  then
+                  Insert
+                    (Kernel,
+                     -"Minimum value greater than default for preference "
+                     & Name,
+                     Mode => Error);
+                  Minimum := Def;
+               end if;
+
+               if Def > Maximum then
+                  Insert
+                    (Kernel,
+                     -"Default value greater than maximum for preference "
+                     & Name,
+                     Mode => Error);
+                  Maximum := Def;
+               end if;
+
+               Pspec := Gnew_Int
+                 (Name    => Name,
+                  Nick    => Label,
+                  Blurb   => Tooltip,
+                  Minimum => Minimum,
+                  Maximum => Maximum,
+                  Default => Def,
+                  Flags   => Flags);
+            elsif Typ = "string" then
+               Pspec := Gnew_String
+                 (Name    => Name,
+                  Nick    => Label,
+                  Blurb   => Tooltip,
+                  Default => Default,
+                  Flags   => Flags);
+            elsif Typ = "color" then
+               Pspec := Param_Spec (Gnew_Color
+                                      (Name    => Name,
+                                       Nick    => Label,
+                                       Blurb   => Tooltip,
+                                       Default => Default,
+                                       Flags   => Flags));
+            elsif Typ = "font" then
+               Pspec := Param_Spec (Gnew_Font
+                                      (Name    => Name,
+                                       Nick    => Label,
+                                       Blurb   => Tooltip,
+                                       Default => Default,
+                                       Flags   => Flags));
+
+            elsif Typ = "choices" then
+               Child := Node.Child;
+               Child_Count := 0;
+               while Child /= null loop
+                  Child_Count := Child_Count + 1;
+                  Child := Child.Next;
                end loop;
 
-               if Typ = "boolean" then
-                  if Default = "" then
-                     Bool_Def := True;
-                  else
-                     Bool_Def := Boolean'Value (Default);
-                  end if;
-                  Pspec := Gnew_Boolean
-                    (Name    => Name,
-                     Nick    => Label,
-                     Blurb   => Tooltip,
-                     Default => Bool_Def);
-
-               elsif Typ = "integer" then
-                  Minimum := Gint'Value (Min);
-                  Maximum := Gint'Value (Max);
-                  if Default = "" then
-                     Def := 0;
-                  else
-                     Def     := Gint'Value (Default);
-                  end if;
-
-                  if Minimum > Maximum then
-                     Insert
-                       (Kernel,
-                        -"Minimum value greater than maximum for preference "
-                        & Name,
-                        Mode => Error);
-                     Maximum := Minimum;
-                  end if;
-
-                  if Minimum > Def  then
-                     Insert
-                       (Kernel,
-                        -"Minimum value greater than default for preference "
-                        & Name,
-                       Mode => Error);
-                     Minimum := Def;
-                  end if;
-
-                  if Def > Maximum then
-                     Insert
-                       (Kernel,
-                        -"Default value greater than maximum for preference "
-                        & Name,
-                        Mode => Error);
-                     Maximum := Def;
-                  end if;
-
-                  Pspec := Gnew_Int
-                    (Name    => Name,
-                     Nick    => Label,
-                     Blurb   => Tooltip,
-                     Minimum => Minimum,
-                     Maximum => Maximum,
-                     Default => Def,
-                     Flags   => Flags);
-               elsif Typ = "string" then
-                  Pspec := Gnew_String
-                    (Name    => Name,
-                     Nick    => Label,
-                     Blurb   => Tooltip,
-                     Default => Default,
-                     Flags   => Flags);
-               elsif Typ = "color" then
-                  Pspec := Param_Spec (Gnew_Color
-                    (Name    => Name,
-                     Nick    => Label,
-                     Blurb   => Tooltip,
-                     Default => Default,
-                     Flags   => Flags));
-               elsif Typ = "font" then
-                  Pspec := Param_Spec (Gnew_Font
-                    (Name    => Name,
-                     Nick    => Label,
-                     Blurb   => Tooltip,
-                     Default => Default,
-                     Flags   => Flags));
-
-               elsif Typ = "choices" then
-                  Child := Tmp.Child;
-                  Child_Count := 0;
+               declare
+                  Typ : GType;
+                  Val : chars_ptr_array (1 .. size_t (Child_Count));
+               begin
+                  Child := Node.Child;
+                  Child_Count := 1;
                   while Child /= null loop
+                     Val (size_t (Child_Count)) := New_String
+                       (Child.Value.all);
                      Child_Count := Child_Count + 1;
                      Child := Child.Next;
                   end loop;
 
-                  declare
-                     Typ : GType;
-                     Val : chars_ptr_array (1 .. size_t (Child_Count));
-                  begin
-                     Child := Tmp.Child;
-                     Child_Count := 1;
-                     while Child /= null loop
-                        Val (size_t (Child_Count)) := New_String
-                          (Child.Value.all);
-                        Child_Count := Child_Count + 1;
-                        Child := Child.Next;
-                     end loop;
+                  Typ := Register_Static_Enum (Name, Val);
 
-                     Typ := Register_Static_Enum (Name, Val);
+                  for V in Val'Range loop
+                     Free (Val (V));
+                  end loop;
 
-                     for V in Val'Range loop
-                        Free (Val (V));
-                     end loop;
+                  if Default = "" then
+                     Def := 1;
+                  else
+                     Def := Gint'Value (Default);
+                  end if;
 
-                     if Default = "" then
-                        Def := 1;
-                     else
-                        Def := Gint'Value (Default);
-                     end if;
+                  Pspec := Gnew_Enum
+                    (Name      => Name,
+                     Nick      => Label,
+                     Blurb     => Tooltip,
+                     Enum_Type => Typ,
+                     Default   => Def,
+                     Flags     => Flags);
+               end;
 
-                     Pspec := Gnew_Enum
-                       (Name      => Name,
-                        Nick      => Label,
-                        Blurb     => Tooltip,
-                        Enum_Type => Typ,
-                        Default   => Def,
-                        Flags     => Flags);
-                  end;
+            else
+               Insert
+                 (Kernel,
+                  -"Invalid ""type"" attribute for <preference>",
+                  Mode => Error);
+               return;
+            end if;
 
-               else
-                  Insert
-                    (Kernel,
-                     -"Invalid ""type"" attribute for <preference>",
-                     Mode => Error);
-                  return;
-               end if;
+            Register_Property (Kernel.Preferences, Pspec, Page);
 
-               Register_Property (Kernel.Preferences, Pspec, Page);
-
-            exception
-               when Constraint_Error =>
-                  Insert
-                    (Kernel,
-                     -("Invalid attribute value for <preference>, ignoring"
-                       & " preference " & Name),
-                     Mode => Error);
-            end;
-         end if;
-
-         Tmp := Tmp.Next;
-      end loop;
+         exception
+            when Constraint_Error =>
+               Insert
+                 (Kernel,
+                  -("Invalid attribute value for <preference>, ignoring"
+                    & " preference " & Name),
+                  Mode => Error);
+         end;
+      end if;
    end Customize;
 
    ---------------------
