@@ -30,6 +30,7 @@ with Gdk.Color;
 with Gdk.Font;
 with Glib.Properties;
 with Glib;
+with Pango.Font;
 with Default_Preferences; use Default_Preferences;
 
 package Glide_Kernel.Preferences is
@@ -65,7 +66,7 @@ package Glide_Kernel.Preferences is
       Pref   : Property_Color) return Gdk.Color.Gdk_Color;
    function Get_Pref
      (Kernel : access Kernel_Handle_Record'Class;
-      Pref   : Property_Font) return Gdk.Font.Gdk_Font;
+      Pref   : Property_Font) return Pango.Font.Pango_Font_Description;
    --  Return the value for a specific property.
    --  The colors and fonts have already been allocated when they are returned.
 
