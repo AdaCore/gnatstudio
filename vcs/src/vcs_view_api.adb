@@ -400,7 +400,8 @@ package body VCS_View_API is
                      Dir_Name (Original),
                      Base_Name (Original));
 
-                  Gtk_New (Item, Label => -"Commit file " & Original);
+                  Gtk_New (Item, Label => -"Commit file "
+                           & Base_Name (Original));
 
                   Append (Menu, Item);
                   Context_Callback.Connect
