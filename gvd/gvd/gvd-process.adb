@@ -1461,6 +1461,7 @@ package body GVD.Process is
    procedure Configure
      (Process         : access Debugger_Process_Tab_Record'Class;
       Kind            : Debugger_Type;
+      Proxy           : Process_Proxy_Access;
       Executable      : String;
       Debugger_Args   : Argument_List;
       Executable_Args : String;
@@ -1575,7 +1576,7 @@ package body GVD.Process is
             Executable,
             Debugger_Args,
             Executable_Args,
-            new Process_Proxy,
+            Proxy,
             Process.Window.all'Access,
             Remote_Host,
             Remote_Target,
@@ -1584,7 +1585,7 @@ package body GVD.Process is
       else
          Spawn
            (Process.Debugger, "", Debugger_Args, Executable_Args,
-            new Process_Proxy,
+            Proxy,
             Process.Window.all'Access, Remote_Host, Remote_Target,
             Remote_Protocol, Debugger_Name);
 

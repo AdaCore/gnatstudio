@@ -40,6 +40,7 @@ with Gtk.Window;
 with Gtk.Widget;
 with Gtkada.Canvas;       use Gtkada.Canvas;
 
+with Process_Proxies;     use Process_Proxies;
 with Dock_Paned;          use Dock_Paned;
 with Debugger;            use Debugger;
 with GVD.Main_Window;
@@ -223,6 +224,7 @@ package GVD.Process is
    procedure Configure
      (Process         : access Debugger_Process_Tab_Record'Class;
       Kind            : GVD.Types.Debugger_Type;
+      Proxy           : Process_Proxy_Access;
       Executable      : String;
       Debugger_Args   : Argument_List;
       Executable_Args : String;
