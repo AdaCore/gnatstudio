@@ -46,8 +46,7 @@ package body Metrics_Module is
         (Module                  => Metrics_Module_ID,
          Kernel                  => Kernel,
          Module_Name             => Metrics_Module_Name,
-         Priority                => Default_Priority,
-         Contextual_Menu_Handler => null);
+         Priority                => Default_Priority);
 
       Gtk_New (Menu_Item, -"Cyclomatic Complexity");
       Set_Sensitive (Menu_Item, False);
