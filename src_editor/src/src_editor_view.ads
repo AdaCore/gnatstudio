@@ -32,7 +32,13 @@ with Gdk.Font;
 with Gtk.Text_Mark;
 with Gtk.Text_View;
 
+with Glide_Kernel.Modules; use Glide_Kernel.Modules;
 with Src_Editor_Buffer;
+
+with Generic_List;
+with Commands;    use Commands;
+with Basic_Types; use Basic_Types;
+
 
 package Src_Editor_View is
 
@@ -95,7 +101,38 @@ package Src_Editor_View is
    --  -1,-1 if the window coordinates are outside of the area where
    --  some text is written.
 
+   procedure Add_File_Information
+     (View          : access Source_View_Record;
+      Identifier    : String;
+      Width         : Integer;
+      Info          : Glide_Kernel.Modules.Line_Information_Data;
+      Stick_To_Data : Boolean := True);
+   --  Add the line information to the view.
+
 private
+
+   type Line_Information_Access is access Line_Information_Record;
+
+   procedure Free (X : in out Line_Information_Access);
+
+   package Line_Info_List is new Generic_List (Line_Information_Access);
+
+   type Position is (Left, Right);
+
+   type Line_Info_Display_Record is record
+      Identifier          : String_Access;
+      Starting_X          : Integer;
+      Width               : Integer;
+      Column_Info         : Line_Info_List.List;
+      Stick_To_Data       : Boolean;
+   end record;
+
+   type Line_Info_Display_Array is array (Natural range <>)
+     of Line_Info_Display_Record;
+
+   type Line_Info_Display_Access is access Line_Info_Display_Array;
+
+   type List_Access is access Line_Info_List.List;
 
    type Source_View_Record is new Gtk.Text_View.Gtk_Text_View_Record with
    record
@@ -105,6 +142,17 @@ private
       Line_Numbers_GC     : Gdk.GC.Gdk_GC;
       Show_Line_Numbers   : Boolean;
       LNA_Width_In_Digits : Natural;
+
+      Top_Line            : Natural := 0;
+      Bottom_Line         : Natural := 0;
+
+      Min_Top_Line        : Natural := 0;
+      Max_Bottom_Line     : Natural := 0;
+
+      Line_Info           : Line_Info_Display_Access;
+      Total_Column_Width  : Natural := 0;
+
+      Queue               : Command_Queue;
    end record;
 
 end Src_Editor_View;
