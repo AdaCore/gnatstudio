@@ -373,7 +373,6 @@ package body Main_Debug_Window_Pkg.Callbacks is
       Tab           : constant Debugger_Process_Tab :=
         Get_Current_Process (Object);
       Process_List  : List_Select_Access;
-      P             : Process_Handle;
       Success       : Boolean;
       Info          : Process_Info;
 
@@ -384,21 +383,17 @@ package body Main_Debug_Window_Pkg.Callbacks is
 
       Gtk_New (Process_List, Title => -"Process Selection");
 
-      if Tab.Descriptor.Remote_Host.all = "" then
-         Open_Processes (P);
-      else
-         Open_Processes (P, Tab.Descriptor.Remote_Host.all);
-      end if;
+      Open_Processes (Tab.Debugger);
 
       loop
-         Next_Process (P, Info, Success);
+         Next_Process (Tab.Debugger, Info, Success);
 
          exit when not Success;
 
          Add_Item (Process_List, Info.Id, Info.Info);
       end loop;
 
-      Close_Processes (P);
+      Close_Processes (Tab.Debugger);
 
       declare
          Argument : constant String := Show (Process_List);
