@@ -38,7 +38,7 @@ package body Codefix.Errors_Manager is
       Skip_To_Char (Str, Ind, ':');
       Ind := Ind + 1;
       Skip_To_Char (Str, Ind, ':');
-      Ind := Ind + 1;
+      Ind := Ind + 2;
 
       return Str (Ind .. Str'Last);
    end Cut_Message;
