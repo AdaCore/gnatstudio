@@ -280,6 +280,10 @@ package body Welcome is
             elsif Get_Active (Screen.Open_Tutorial_Button) then
                On_Default_Project (Screen);
                return Show_Tutorial;
+
+            else
+               --  A new project was loaded.
+               return Project_Loaded;
             end if;
          end if;
 
