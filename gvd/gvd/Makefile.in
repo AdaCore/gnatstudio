@@ -2,7 +2,7 @@
 
 CFLAGS = -g -O2
 ALL_CFLAGS = $(CFLAGS) @GTK_CFLAGS@ -I../gnat
-LINK_FLAGS = ../gnat/gexpect.o @GTK_LIBS@
+LINK_FLAGS = ../gnat/gexpect.o ../pixmaps/pixmaps.o @GTK_LIBS@
 
 MAIN = odd_main
 EXEC = odd
