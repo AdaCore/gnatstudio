@@ -111,6 +111,11 @@ package body Display_Items is
    --  an item is an alias to a second, which in turn in an alias to a third.
    --  Instead, both the first and the second will refer the same third. It is
    --  thus much easier to deal with aliases.
+   --
+   --  To improve the support for strings in Ada, an extra rule is added:
+   --  X.all can not be an alias of X. It is always considered to be a
+   --  different object. This is needed, otherwise it is mostly impossible to
+   --  properly display a String parameter correctly.
 
    procedure Initialize
      (Item          : access Display_Item_Record'Class;
@@ -154,10 +159,8 @@ package body Display_Items is
    function Search_Item
      (Canvas : access Interactive_Canvas_Record'Class;
       Id     : String;
-      Name   : String := "") return Display_Item;
+      Name   : String) return Display_Item;
    --  Search for an item whose Id is Id in the canvas.
-   --  If Name is not "", then the item returned must also have the same name
-   --  as Name.
 
    procedure Create_Link
      (Canvas     : access Interactive_Canvas_Record'Class;
@@ -196,6 +199,15 @@ package body Display_Items is
      return Drawing_Context;
    --  Return a graphic context that can be used to display the contents of
    --  the item
+
+   function Is_Alias_Of
+     (Item : access Display_Item_Record'Class;
+      Id   : String;
+      Name : String;
+      Deref_Name : String) return Boolean;
+   --  Return True if Item is an alias of the entity with name Name and
+   --  whose Id is Id.
+   --  Deref_Name should be the dereferenced version of Name
 
    -------------
    -- Gtk_New --
@@ -337,7 +349,8 @@ package body Display_Items is
             --  as in the current access type itself)
 
             if Get_Detect_Aliases (GVD_Canvas (Debugger.Data_Canvas)) then
-               Alias_Item := Search_Item (Debugger.Data_Canvas, Id);
+               Alias_Item := Search_Item
+                 (Debugger.Data_Canvas, Id, Variable_Name);
             end if;
 
             Put (Debugger.Data_Canvas, Item);
@@ -398,6 +411,30 @@ package body Display_Items is
       Refresh_Canvas (Item.Debugger.Data_Canvas);
    end Initialize;
 
+   -----------------
+   -- Is_Alias_Of --
+   -----------------
+
+   function Is_Alias_Of
+     (Item : access Display_Item_Record'Class;
+      Id   : String;
+      Name : String;
+      Deref_Name : String) return Boolean is
+   begin
+      --  Do not detect aliases with that are already aliases, so as to
+      --  avoid chains of aliases.
+      --  Note also that X.all can not be an alias of X, so as to properly
+      --  display string parameters in Ada (they appear otherwise as access
+      --  types, which, once dereferenced, would point to themselves).
+
+      return Item.Id /= null
+        and then Item.Auto_Refresh
+        and then Item.Id.all = Id
+        and then Item.Name.all /= Deref_Name
+        and then Name /= Dereference_Name
+        (Get_Language (Item.Debugger.Debugger), Item.Name.all);
+   end Is_Alias_Of;
+
    ---------------
    -- Find_Item --
    ---------------
@@ -450,6 +487,7 @@ package body Display_Items is
       Zoom_Spacing : constant Gint := Spacing * Zoom / 100;
       Zoom_Buttons : constant Gint := Buttons_Size * Zoom / 100;
       Zoom_Border : constant Gint := Border_Spacing * Zoom / 100;
+      W, H : Gint;
 
    begin
       --  Compute the required size for the value itself.
@@ -586,6 +624,7 @@ package body Display_Items is
         (Context.Black_GC,
          Alloc_Width - Zoom_Buttons - Zoom_Spacing,
          Zoom_Spacing);
+      Get_Size (Context.Close_Pixmap, W, H);
       Draw_Pixmap
         (Pixmap (Item),
          GC     => Context.Black_GC,
@@ -593,7 +632,10 @@ package body Display_Items is
          Xsrc   => 0,
          Ysrc   => 0,
          Xdest  => Alloc_Width - Zoom_Buttons - Zoom_Spacing,
-         Ydest  => Zoom_Spacing);
+         Ydest  => Zoom_Spacing,
+         --   ??? Use To_Canvas
+         Width  => W * Gint (Get_Zoom (Item.Debugger.Data_Canvas)) / 100,
+         Height => H * Gint (Get_Zoom (Item.Debugger.Data_Canvas)) / 100);
       Set_Clip_Mask (Context.Black_GC, Null_Pixmap);
       Set_Clip_Origin (Context.Black_GC, 0, 0);
 
@@ -654,9 +696,13 @@ package body Display_Items is
    function Search_Item
      (Canvas : access Interactive_Canvas_Record'Class;
       Id     : String;
-      Name   : String := "") return Display_Item
+      Name   : String) return Display_Item
    is
       Alias_Item : Display_Item := null;
+      Deref_Name : constant String := Dereference_Name
+        (Get_Language
+         (Debugger_Process_Tab (Get_Process (GVD_Canvas (Canvas))).Debugger),
+         Name);
 
       function Alias_Found
         (Canvas : access Interactive_Canvas_Record'Class;
@@ -670,27 +716,14 @@ package body Display_Items is
 
       function Alias_Found
         (Canvas : access Interactive_Canvas_Record'Class;
-         Item   : access Canvas_Item_Record'Class) return Boolean
-      is
-         pragma Warnings (Off, Canvas);
+         Item   : access Canvas_Item_Record'Class) return Boolean is
       begin
-         --  Do not detect aliases with what are already aliases, so as to
-         --  avoid chains of aliases.
-
-         if Display_Item (Item).Id /= null
-           and then Display_Item (Item).Auto_Refresh
-           and then Display_Item (Item).Id.all = Id
-           and then
-           (Name = ""
-            or else (Display_Item (Item).Name /= null
-                     and then Display_Item (Item).Name.all = Name))
-         then
+         if Is_Alias_Of (Display_Item (Item), Id, Name, Deref_Name) then
             if Display_Item (Item).Is_Alias_Of /= null then
                Alias_Item := Display_Item (Item).Is_Alias_Of;
             else
                Alias_Item := Display_Item (Item);
             end if;
-
             return False;
          end if;
 
@@ -981,6 +1014,8 @@ package body Display_Items is
       Zoom : constant Gint := Gint (Get_Zoom (Item.Debugger.Data_Canvas));
       Zoom_Spacing : constant Gint := Spacing * Zoom / 100;
       Zoom_Buttons : constant Gint := Buttons_Size * Zoom / 100;
+      Zoom_Buttons_Size : constant Gint :=
+        Gint'Min (Buttons_Size, Zoom_Buttons);
       Zoom_Border  : constant Gint := Border_Spacing * Zoom / 100;
 
       Buttons_Start : Gint :=
@@ -994,12 +1029,12 @@ package body Display_Items is
       if Get_Button (Event) = 1
         and then Get_Event_Type (Event) = Button_Release
         and then Gint (Get_Y (Event)) > Zoom_Spacing
-        and then Gint (Get_Y (Event)) <= Zoom_Spacing + Zoom_Buttons
+        and then Gint (Get_Y (Event)) <= Zoom_Spacing + Zoom_Buttons_Size
       then
          for B in 0 .. Num_Buttons - 1 loop
             if Gint (Get_X (Event)) >= Buttons_Start
               and then Gint (Get_X (Event)) <=
-                Buttons_Start + Zoom_Buttons + Zoom_Spacing
+                Buttons_Start + Zoom_Buttons_Size
             then
                case B is
                   when 0 =>
@@ -1169,6 +1204,7 @@ package body Display_Items is
       Width : Gint := Gint (Get_Coord (Item).Width);
       Context : constant Box_Drawing_Context :=
         Get_Box_Context (GVD_Canvas (Item.Debugger.Data_Canvas));
+      W, H : Gint;
    begin
       Item.Auto_Refresh := Auto_Refresh;
 
@@ -1186,6 +1222,7 @@ package body Display_Items is
 
       if Item.Auto_Refresh then
          Set_Clip_Mask (Context.Black_GC, Context.Auto_Display_Mask);
+         Get_Size (Context.Auto_Display_Pixmap, W, H);
          Draw_Pixmap
            (Pixmap (Item),
             GC     => Context.Black_GC,
@@ -1193,10 +1230,13 @@ package body Display_Items is
             Xsrc   => 0,
             Ysrc   => 0,
             Xdest  => Width - 2 * Zoom_Buttons - 2 * Zoom_Spacing,
-            Ydest  => Zoom_Spacing);
+            Ydest  => Zoom_Spacing,
+            Width  => W * Gint (Get_Zoom (Item.Debugger.Data_Canvas)) / 100,
+            Height => H * Gint (Get_Zoom (Item.Debugger.Data_Canvas)) / 100);
 
       else
          Set_Clip_Mask (Context.Black_GC, Context.Locked_Mask);
+         Get_Size (Context.Locked_Pixmap, W, H);
          Draw_Pixmap
            (Pixmap (Item),
             GC     => Context.Black_GC,
@@ -1204,7 +1244,9 @@ package body Display_Items is
             Xsrc   => 0,
             Ysrc   => 0,
             Xdest  => Width - 2 * Zoom_Buttons - 2 * Zoom_Spacing,
-            Ydest  => Zoom_Spacing);
+            Ydest  => Zoom_Spacing,
+            Width  => W * Gint (Get_Zoom (Item.Debugger.Data_Canvas)) / 100,
+            Height => H * Gint (Get_Zoom (Item.Debugger.Data_Canvas)) / 100);
       end if;
 
       Set_Clip_Mask (Context.Black_GC, Null_Pixmap);
@@ -1352,6 +1394,8 @@ package body Display_Items is
       Item   : access Canvas_Item_Record'Class) return Boolean
    is
       It : Display_Item := Display_Item (Item);
+      It_Deref_Name : constant String := Dereference_Name
+        (Get_Language (It.Debugger.Debugger), It.Name.all);
 
       function Clean_Alias_Chain
         (Canvas : access Interactive_Canvas_Record'Class;
@@ -1405,14 +1449,8 @@ package body Display_Items is
             return False;
          end if;
 
-         --  Do we have an alias ?
-         --  Do not detect aliases with items that are aliases themselves,
-         --  so as to avoid chains of aliases
-
-         if It2.Id /= null
-           and then It2.Is_Alias_Of = null
-           and then It.Id /= null
-           and then It2.Id.all = It.Id.all
+         if It.Id /= null
+           and then Is_Alias_Of (It2, It.Id.all, It.Name.all, It_Deref_Name)
          then
             --  Keep only one of them:
             --   - if none are the result of a dereference, keep them both
