@@ -1539,16 +1539,52 @@ package body Python_Module is
      (Command : PyObject;
       Args    : Callback_Data'Class) return Boolean
    is
-      Obj : PyObject;
+      Obj   : PyObject;
+      Args2 : PyObject;
+      Size  : Integer;
+      Item, Cmd  : PyObject;
    begin
+      --  Bound methods: we need to explicitly pass the instance as the first
+      --  argument.
+      if PyMethod_Check (Command) then
+         if PyMethod_Self (Command) /= null then
+            Trace (Me, "MANU A bound method in Execute_Command");
+            Size := PyTuple_Size (Python_Callback_Data (Args).Args);
+            Args2 := PyTuple_New (Size => Size + 1);
+            Py_INCREF (PyMethod_Self (Command));
+            PyTuple_SetItem (Args2, 0, PyMethod_Self (Command));
+            for T in 0 .. Size - 1 loop
+               Item := PyTuple_GetItem (Python_Callback_Data (Args).Args, T);
+               PyTuple_SetItem (Args2, T  + 1, Item);
+               Py_INCREF (Item);
+            end loop;
+
+            Cmd := PyMethod_Function (Command);
+
+         else
+            Trace (Me, "MANU An unbounded method");
+            Args2 := Python_Callback_Data (Args).Args;
+            Py_INCREF (Args2);
+            Cmd := PyMethod_Function (Command);
+         end if;
+      else
+         Trace (Me, "MANU A subprogram");
+         Cmd := Command;
+         Args2 := Python_Callback_Data (Args).Args;
+         Py_INCREF (Args2);
+      end if;
+
       Obj := PyEval_EvalCodeEx
-        (PyFunction_Get_Code (Command),
+        (PyFunction_Get_Code (Cmd),
          Globals  => PyFunction_Get_Globals (Command),
          Locals   => null,
-            Args     => Python_Callback_Data (Args).Args,
-            Kwds     => Python_Callback_Data (Args).Kw,
-            Defaults => PyFunction_Get_Defaults (Command),
-            Closure  => PyFunction_Get_Closure (Command));
+         Args     => Args2,
+         Kwds     => Python_Callback_Data (Args).Kw,
+         Defaults => PyFunction_Get_Defaults (Command),
+         Closure  => PyFunction_Get_Closure (Command));
+
+      Py_DECREF (Args2);
+
       if Obj = null then
          PyErr_Print;
       end if;
@@ -2268,22 +2304,32 @@ package body Python_Module is
    function Nth_Arg
      (Data : Python_Callback_Data; N : Positive) return Subprogram_Type
    is
-      Item : PyObject := Get_Param (Data, N);
+      Item : constant PyObject := Get_Param (Data, N);
    begin
-      if Item /= null and then PyFunction_Check (Item) then
+      if Item /= null
+        and then (PyFunction_Check (Item) or else PyMethod_Check (Item))
+      then
          Py_INCREF (Item);
          return new Python_Subprogram_Record'
            (Subprogram_Record with Subprogram => Item);
-
-      elsif Item /= null and then PyMethod_Check (Item) then
-         Item := PyMethod_Function (Item);
-         Py_INCREF (Item);
-         return new Python_Subprogram_Record'
-           (Subprogram_Record with Subprogram => Item);
-
       else
          raise Invalid_Parameter;
       end if;
+--
+--        if Item /= null and then PyFunction_Check (Item) then
+--           Py_INCREF (Item);
+--           return new Python_Subprogram_Record'
+--             (Subprogram_Record with Subprogram => Item);
+--
+--        elsif Item /= null and then PyMethod_Check (Item) then
+--           Item := PyMethod_Function (Item);
+--           Py_INCREF (Item);
+--           return new Python_Subprogram_Record'
+--             (Subprogram_Record with Subprogram => Item);
+
+--        else
+--           raise Invalid_Parameter;
+--        end if;
    end Nth_Arg;
 
    -------------
