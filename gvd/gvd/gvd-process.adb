@@ -43,6 +43,8 @@ with Ada.Characters.Handling;  use Ada.Characters.Handling;
 with Ada.Text_IO;     use Ada.Text_IO;
 with Process_Tab_Pkg; use Process_Tab_Pkg;
 with Gtkada.Canvas;   use Gtkada.Canvas;
+with Gtkada.Types;    use Gtkada.Types;
+with Gtkada.Handlers; use Gtkada.Handlers;
 with Odd.Pixmaps;     use Odd.Pixmaps;
 with Display_Items;   use Display_Items;
 with Debugger.Gdb;    use Debugger.Gdb;
@@ -73,6 +75,14 @@ package body Odd.Process is
 
    function To_Main_Debug_Window is new
      Unchecked_Conversion (System.Address, Main_Debug_Window_Access);
+
+   --  This pointer will keep a pointer to the C 'class record' for
+   --  gtk. To avoid allocating memory for each widget, this may be done
+   --  only once, and reused
+   Class_Record : System.Address := System.Null_Address;
+
+   --  Array of the signals created for this widget
+   Signals : Chars_Ptr_Array := "process_stopped" + "context_changed";
 
    -----------------------
    -- Local Subprograms --
@@ -368,8 +378,9 @@ package body Odd.Process is
 
    begin
       Process := new Debugger_Process_Tab_Record;
-      Process.Window := Window.all'Access;
       Initialize (Process);
+      Initialize_Class_Record (Process, Signals, Class_Record);
+      Process.Window := Window.all'Access;
 
       Canvas_Handler.Connect
         (Process.Data_Canvas, "background_click",
@@ -478,6 +489,16 @@ package body Odd.Process is
 
       return Process;
    end Create_Debugger;
+
+   ---------------------
+   -- Process_Stopped --
+   ---------------------
+
+   procedure Process_Stopped
+     (Debugger : access Debugger_Process_Tab_Record'Class) is
+   begin
+      Widget_Callback.Emit_By_Name (Gtk_Widget (Debugger), "process_stopped");
+   end Process_Stopped;
 
    --------------------------
    -- Process_User_Command --

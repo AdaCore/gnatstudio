@@ -59,7 +59,6 @@ package Odd.Process is
    --  Note that this handler currently assumes that Source is the standard
    --  input file descriptor.
 
-
    Default_Command_History_Size : constant := 100;
    --  Number of items in the command history list.
 
@@ -80,6 +79,14 @@ package Odd.Process is
    --  Note also that the real contents of the notebook page is not the
    --  Debugger_Process_Tab_Record itself, but rather its Process_Paned
    --  field.
+   --
+   --  Signals defined:
+   --
+   --  - "process_stopped"
+   --    procedure Handler (Widget : access Debugger_Process_Tab_Record'Class);
+   --
+   --    Generated each time the process debugged ran and then stopped (e.g
+   --    on a breakpoint, after a next command, ...).
 
    type Debugger_Process_Tab_Record is new
      Process_Tab_Pkg.Process_Tab_Record with
@@ -171,6 +178,10 @@ package Odd.Process is
    --  Conversion function.
    --  Main_Debug_Window should be the window in which the debugger is
    --  displayed.
+
+   procedure Process_Stopped
+     (Debugger : access Debugger_Process_Tab_Record'Class);
+   --  Emit the "process_stopped" signal.
 
    procedure Process_User_Command
      (Debugger : Debugger_Process_Tab;
