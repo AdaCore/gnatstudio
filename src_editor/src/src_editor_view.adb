@@ -496,32 +496,30 @@ package body Src_Editor_View is
          Within_Margin => 0.0, Xalign => 0.5, Yalign => 0.5);
    end Scroll_To_Cursor_Location;
 
-   ----------------------------
-   -- Event_To_Buffer_Coords --
-   ----------------------------
+   -----------------------------
+   -- Window_To_Buffer_Coords --
+   -----------------------------
 
-   procedure Event_To_Buffer_Coords
-     (View     : access Source_View_Record;
-      Event    : Gdk_Event;
-      Line     : out Gint;
-      Column   : out Gint)
+   procedure Window_To_Buffer_Coords
+     (View   : access Source_View_Record;
+      X, Y   : Gint;
+      Line   : out Gint;
+      Column : out Gint)
    is
-      Event_X       : constant Gint := Gint (Get_X (Event));
-      Event_Y       : constant Gint := Gint (Get_Y (Event));
       Buffer_X      : Gint;
       Buffer_Y      : Gint;
-
       Iter          : Gtk_Text_Iter;
       Iter_Location : Gdk_Rectangle;
       Line_Height   : Gint;
       Unused        : Gint;
+
    begin
       Window_To_Buffer_Coords
         (View, Text_Window_Text,
-         Window_X => Event_X, Window_Y => Event_Y,
+         Window_X => X, Window_Y => Y,
          Buffer_X => Buffer_X, Buffer_Y => Buffer_Y);
       Get_Iter_At_Location (View, Iter, Buffer_X, Buffer_Y);
-      Line := Get_Line (Iter);
+      Line   := Get_Line (Iter);
       Column := Get_Line_Offset (Iter);
 
       --  Get_Iter_At_Location does not behave quite exactly like I wished it
@@ -547,12 +545,25 @@ package body Src_Editor_View is
       Get_Line_Yrange (View, Iter, Unused, Line_Height);
 
       if Buffer_X > Iter_Location.X
-       or else Event_Y > Iter_Location.Y + Line_Height
+        or else Buffer_Y > Iter_Location.Y + Line_Height
       then
          Line   := -1;
          Column := -1;
       end if;
+   end Window_To_Buffer_Coords;
 
+   ----------------------------
+   -- Event_To_Buffer_Coords --
+   ----------------------------
+
+   procedure Event_To_Buffer_Coords
+     (View     : access Source_View_Record;
+      Event    : Gdk_Event;
+      Line     : out Gint;
+      Column   : out Gint) is
+   begin
+      Window_To_Buffer_Coords
+        (View, Gint (Get_X (Event)), Gint (Get_Y (Event)), Line, Column);
    end Event_To_Buffer_Coords;
 
 end Src_Editor_View;
