@@ -943,12 +943,17 @@ package body Browsers.Call_Graph is
 
    begin
       --  If the body wasn't found then display the specs
-
-      Open_File_Editor
-        (Get_Kernel (Context),
-         Get_Declaration_File_Of (Entity),
-         Line   => Get_Declaration_Line_Of (Entity),
-         Column => Get_Declaration_Column_Of (Entity));
+      if Entity = No_Entity_Information then
+         Insert (Get_Kernel (Context),
+                 (-"Couldn't find cross-reference information for ")
+                 & '"' & Entity_Name_Information (C) & '"');
+      else
+         Open_File_Editor
+           (Get_Kernel (Context),
+            Get_Declaration_File_Of (Entity),
+            Line   => Get_Declaration_Line_Of (Entity),
+            Column => Get_Declaration_Column_Of (Entity));
+      end if;
 
    exception
       when E : others =>
