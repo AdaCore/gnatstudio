@@ -139,32 +139,37 @@ package body Process_Tab_Pkg.Callbacks is
       Params : Gtk.Arguments.Gtk_Args) return Boolean
    is
       Arg1 : Gdk_Event := To_Event (Params, 1);
+
       Top  : Debugger_Process_Tab := Debugger_Process_Tab (Object);
       use type Gdk.Types.Gdk_Key_Type;
+
    begin
       if Get_Key_Val (Arg1) = Gdk_Up
         or else Get_Key_Val (Arg1) = Gdk_Down
       then
-         Delete_Text (Top.Debugger_Text,
-                      Gint (Top.Edit_Pos),
-                      Gint (Get_Length (Top.Debugger_Text)));
+         Delete_Text
+           (Top.Debugger_Text,
+            Gint (Top.Edit_Pos),
+            Gint (Get_Length (Top.Debugger_Text)));
          begin
             if Get_Key_Val (Arg1) = Gdk_Up then
                Move_To_Previous (Command_History);
             else
                Move_To_Next (Command_History);
             end if;
+
             Set_Point (Top.Debugger_Text, Top.Edit_Pos);
-            Text_Output_Handler (Top, Get_Current (Command_History),
-                                 Is_Command => True);
-            Set_Position (Top.Debugger_Text,
-                          Gint (Get_Length (Top.Debugger_Text)));
+            Text_Output_Handler
+              (Top, Get_Current (Command_History), Is_Command => True);
+            Set_Position
+              (Top.Debugger_Text, Gint (Get_Length (Top.Debugger_Text)));
          exception
             when No_Such_Item =>
                null;
          end;
          Emit_Stop_By_Name (Top.Debugger_Text, "key_press_event");
       end if;
+
       return True;
    end On_Debugger_Text_Key_Press_Event;
 
