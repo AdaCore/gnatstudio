@@ -111,6 +111,9 @@ package Glide_Kernel.Modules is
    package Context_Callback is new Gtk.Handlers.User_Callback
      (Glib.Object.GObject_Record, Selection_Context_Access);
 
+   package Command_Callback is new Gtk.Handlers.User_Callback
+     (Glib.Object.GObject_Record, Command_Access);
+
    -------------------------
    -- Module manipulation --
    -------------------------
@@ -267,6 +270,7 @@ package Glide_Kernel.Modules is
       Text        : String;
       Stock_Image : String := "";
       Callback    : Kernel_Callback.Marshallers.Void_Marshaller.Handler;
+      Command     : Command_Access := null;
       Accel_Key   : Gdk.Types.Gdk_Key_Type := 0;
       Accel_Mods  : Gdk.Types.Gdk_Modifier_Type := 0;
       Ref_Item    : String := "";
@@ -274,6 +278,8 @@ package Glide_Kernel.Modules is
       Sensitive   : Boolean := True);
    --  Same as the above, but creates the menu item directly, and connects the
    --  appropriate callback.
+   --  If Command is not null, then a callback will be created to launch
+   --  this command when the menu is activated.
    --  Sensitive indicates whether the menu item is created sensitive or not.
 
    function Register_Menu
@@ -282,6 +288,7 @@ package Glide_Kernel.Modules is
       Text        : String;
       Stock_Image : String := "";
       Callback    : Kernel_Callback.Marshallers.Void_Marshaller.Handler;
+      Command     : Command_Access := null;
       Accel_Key   : Gdk.Types.Gdk_Key_Type := 0;
       Accel_Mods  : Gdk.Types.Gdk_Modifier_Type := 0;
       Ref_Item    : String := "";
