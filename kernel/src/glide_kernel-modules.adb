@@ -105,8 +105,8 @@ package body Glide_Kernel.Modules is
       Height := 0;
 
       while Current /= Module_List.Null_Node loop
-         if Module_List.Data (Current).Tooltip_Handler /= null then
-            Module_List.Data (Current).Tooltip_Handler
+         if Module_List.Data (Current).Info.Tooltip_Handler /= null then
+            Module_List.Data (Current).Info.Tooltip_Handler
               (Context => Context,
                Pixmap  => Pixmap,
                Width   => Width,
@@ -125,8 +125,9 @@ package body Glide_Kernel.Modules is
    -- Register_Module --
    ---------------------
 
-   function Register_Module
-     (Kernel                  : access Kernel_Handle_Record'Class;
+   procedure Register_Module
+     (Module                  : in out Module_ID;
+      Kernel                  : access Kernel_Handle_Record'Class;
       Module_Name             : String;
       Priority                : Module_Priority     := Default_Priority;
       Contextual_Menu_Handler : Module_Menu_Handler := null;
@@ -135,40 +136,18 @@ package body Glide_Kernel.Modules is
       Default_Context_Factory : Module_Default_Context_Factory := null;
       Save_Function           : Module_Save_Function := null;
       Tooltip_Handler         : Module_Tooltip_Handler := null)
-      return Module_ID
    is
-      ID      : Module_ID;
       Prev    : Module_List.List_Node := Module_List.Null_Node;
       Current : Module_List.List_Node :=
         Module_List.First (Kernel.Modules_List);
 
       use type Module_List.List_Node;
    begin
-      while Current /= Module_List.Null_Node loop
-         if Module_List.Data (Current).Name = Module_Name then
-            return Module_List.Data (Current);
+      if Module = null then
+         Module := new Module_ID_Record;
+      end if;
 
-         elsif Module_List.Data (Current).Priority < Priority then
-            ID := new Module_ID_Information'
-              (Name_Length     => Module_Name'Length,
-               Name            => Module_Name,
-               Priority        => Priority,
-               Contextual_Menu => Contextual_Menu_Handler,
-               Mime_Handler    => Mime_Handler,
-               Default_Factory => Default_Context_Factory,
-               Save_Function   => Save_Function,
-               Tooltip_Handler => Tooltip_Handler,
-               Child_Tag       => MDI_Child_Tag);
-            Module_List.Append (Kernel.Modules_List, Prev, ID);
-
-            return ID;
-         end if;
-
-         Prev    := Current;
-         Current := Module_List.Next (Current);
-      end loop;
-
-      ID := new Module_ID_Information'
+      Module.Info := new Module_ID_Information'
         (Name_Length     => Module_Name'Length,
          Name            => Module_Name,
          Priority        => Priority,
@@ -178,8 +157,22 @@ package body Glide_Kernel.Modules is
          Save_Function   => Save_Function,
          Tooltip_Handler => Tooltip_Handler,
          Child_Tag       => MDI_Child_Tag);
-      Module_List.Append (Kernel.Modules_List, ID);
-      return ID;
+
+      while Current /= Module_List.Null_Node loop
+         if Module_List.Data (Current).Info.Name = Module_Name then
+            Module_List.Set_Data (Current, Module);
+            return;
+
+         elsif Module_List.Data (Current).Info.Priority < Priority then
+            Module_List.Append (Kernel.Modules_List, Prev, Module);
+            return;
+         end if;
+
+         Prev    := Current;
+         Current := Module_List.Next (Current);
+      end loop;
+
+      Module_List.Append (Kernel.Modules_List, Module);
    end Register_Module;
 
    -----------------
@@ -188,7 +181,7 @@ package body Glide_Kernel.Modules is
 
    function Module_Name (ID : Module_ID) return String is
    begin
-      return ID.Name;
+      return ID.Info.Name;
    end Module_Name;
 
    --------------------------
@@ -506,9 +499,9 @@ package body Glide_Kernel.Modules is
 
          while Current /= Module_List.Null_Node loop
             if Module_List.Data (Current) /= User.ID
-              and then Module_List.Data (Current).Contextual_Menu /= null
+              and then Module_List.Data (Current).Info.Contextual_Menu /= null
             then
-               Module_List.Data (Current).Contextual_Menu
+               Module_List.Data (Current).Info.Contextual_Menu
                  (Object  => User.Object,
                   Context => Context,
                   Menu    => Menu);
@@ -866,8 +859,8 @@ package body Glide_Kernel.Modules is
       Push_State (Kernel_Handle (Kernel), Busy);
 
       while Current /= Module_List.Null_Node loop
-         if Module_List.Data (Current).Mime_Handler /= null then
-            Result := Module_List.Data (Current).Mime_Handler
+         if Module_List.Data (Current).Info.Mime_Handler /= null then
+            Result := Module_List.Data (Current).Info.Mime_Handler
               (Kernel, Mime_Type, Data, Mode);
             exit when Result;
          end if;

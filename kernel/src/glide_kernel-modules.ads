@@ -113,8 +113,9 @@ package Glide_Kernel.Modules is
    -- Module manipulation --
    -------------------------
 
-   function Register_Module
-     (Kernel                  : access Kernel_Handle_Record'Class;
+   procedure Register_Module
+     (Module                  : in out Module_ID;
+      Kernel                  : access Kernel_Handle_Record'Class;
       Module_Name             : String;
       Priority                : Module_Priority := Default_Priority;
       Contextual_Menu_Handler : Module_Menu_Handler := null;
@@ -122,9 +123,12 @@ package Glide_Kernel.Modules is
       MDI_Child_Tag           : Ada.Tags.Tag := Kernel_Handle_Record'Tag;
       Default_Context_Factory : Module_Default_Context_Factory := null;
       Save_Function           : Module_Save_Function := null;
-      Tooltip_Handler         : Module_Tooltip_Handler := null)
-      return Module_ID;
+      Tooltip_Handler         : Module_Tooltip_Handler := null);
    --  Register a new module into GPS.
+   --  If Module is null, a new module_id is created. Otherwise, the internal
+   --  information stored in Module is changed. This allows you to store user
+   --  data specific to each module, instead of using global variables.
+   --
    --  Module_Name can be used by other modules to check whether they want to
    --  interact with this module.
    --  See the general description for this package for explanation on
