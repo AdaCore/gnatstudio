@@ -1302,16 +1302,10 @@ package body Src_Editor_Module is
       Editor     : Source_Editor_Box;
       Box        : Source_Box;
       Child      : MDI_Child;
-      Iter       : Child_Iterator := First_Child (MDI);
 
    begin
       if File /= "" then
-         loop
-            Child := Get (Iter);
-            exit when Child = null
-              or else Get_Title (Child) = File;
-            Next (Iter);
-         end loop;
+         Child := Find_Editor (Kernel, File);
 
          if Child /= null then
             if Focus then
@@ -2230,25 +2224,14 @@ package body Src_Editor_Module is
                return True;
 
             else
-               declare
-                  Base : constant String := Base_Name (File);
-               begin
-                  loop
-                     Child := Get (Iter);
+               Child := Find_Editor (Kernel, File);
 
-                     exit when Child = null
-                       or else Get_Title (Child) = File
-                       or else Get_Title (Child) = Base;
-                     Next (Iter);
-                  end loop;
+               if Child /= null then
+                  --  The editor was found.
+                  Apply_Mime_On_Child (Child);
 
-                  if Child /= null then
-                     --  The editor was found.
-                     Apply_Mime_On_Child (Child);
-
-                     return True;
-                  end if;
-               end;
+                  return True;
+               end if;
             end if;
          end;
       end if;
@@ -2793,13 +2776,31 @@ package body Src_Editor_Module is
       Iter  : Child_Iterator := First_Child (Get_MDI (Kernel));
       Child : MDI_Child;
    begin
-      loop
-         Child := Get (Iter);
-         exit when Child = null or else File_Equal (Get_Title (Child), File);
-         Next (Iter);
-      end loop;
+      if File /= Base_Name (File) then
+         loop
+            Child := Get (Iter);
 
-      return Child;
+            exit when Child = null
+              or else (Get_Widget (Child).all in Source_Box_Record'Class
+                       and then File_Equal (Get_Title (Child), File));
+            Next (Iter);
+         end loop;
+
+         return Child;
+
+      else
+         loop
+            Child := Get (Iter);
+
+            exit when Child = null
+              or else (Get_Widget (Child).all in Source_Box_Record'Class
+                       and then File_Equal (Base_Name (Get_Title (Child)),
+                                            File));
+            Next (Iter);
+         end loop;
+
+         return Child;
+      end if;
    end Find_Editor;
 
 end Src_Editor_Module;
