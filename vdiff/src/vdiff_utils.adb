@@ -24,12 +24,16 @@ with Ada.Strings.Fixed; use Ada.Strings.Fixed;
 with Interfaces.C.Strings;
 with Glib; use Glib;
 with Gdk.Color; use Gdk.Color;
+with Pango.Font; use Pango.Font;
 with Gtk.Adjustment; use Gtk.Adjustment;
 with Gtk.Enums; use Gtk.Enums;
 with Gtk.Style; use Gtk.Style;
 with Vdiff_Pkg; use Vdiff_Pkg;
 
 package body Vdiff_Utils is
+
+   Diff_Font : constant String := "courier 12";
+   --  <preferences>
 
    package ICS renames Interfaces.C.Strings;
 
@@ -44,22 +48,24 @@ package body Vdiff_Utils is
       File2 : String;
       Diff  : Diff_Occurrence_Link)
    is
-      S            : String (1 .. 4096);
-      Last         : Natural;
-      Infile1      : Ada.Text_IO.File_Type;
-      Infile2      : Ada.Text_IO.File_Type;
-      Texts        : ICS.chars_ptr_array (0 .. 1);
-      Row          : Gint;
-      Line1        : Natural;
-      Line2        : Natural;
-      Offset1      : Natural;
-      Offset2      : Natural;
-      Link         : Diff_Occurrence_Link;
-      Old_Style    : Gtk_Style;
-      Append_Style : Gtk_Style;
-      Remove_Style : Gtk_Style;
-      Change_Style : Gtk_Style;
-      Color        : Gdk_Color;
+      S             : String (1 .. 8192);
+      Last          : Natural;
+      Infile1       : Ada.Text_IO.File_Type;
+      Infile2       : Ada.Text_IO.File_Type;
+      Texts         : ICS.chars_ptr_array (0 .. 1);
+      Row           : Gint;
+      Line1         : Natural;
+      Line2         : Natural;
+      Offset1       : Natural;
+      Offset2       : Natural;
+      Link          : Diff_Occurrence_Link;
+      Default_Style : Gtk_Style;
+      Old_Style     : Gtk_Style;
+      Append_Style  : Gtk_Style;
+      Remove_Style  : Gtk_Style;
+      Change_Style  : Gtk_Style;
+      Color         : Gdk_Color;
+      Desc          : Pango_Font_Description := From_String (Diff_Font);
 
       procedure Add_Blank_Line
         (List  : access Gtk_Clist_Record'Class;
@@ -102,10 +108,15 @@ package body Vdiff_Utils is
       end Read_Line;
 
    begin
-      Old_Style := Copy (Get_Style (List1));
-      Append_Style := Copy (Get_Style (List1));
-      Remove_Style := Copy (Get_Style (List1));
-      Change_Style := Copy (Get_Style (List1));
+      Default_Style := Copy (Get_Style (List1));
+      Set_Font_Description (Default_Style, Desc);
+
+      Old_Style    := Copy (Default_Style);
+      Append_Style := Copy (Default_Style);
+      Remove_Style := Copy (Default_Style);
+      Change_Style := Copy (Default_Style);
+
+      --  <preferences>
       Set_Rgb (Color, 50000, 50000, 50000);
       Set_Base (Old_Style, State_Normal, Color);
       Set_Rgb (Color, 0, 56000, 0);
@@ -126,11 +137,11 @@ package body Vdiff_Utils is
 
       while Link /= null loop
          for J in Line1 .. Link.Range1.First - 1 loop
-            Read_Line (Infile1, List1, J, Get_Style (List1));
+            Read_Line (Infile1, List1, J, Default_Style);
          end loop;
 
          for J in Line2 .. Link.Range2.First - 1 loop
-            Read_Line (Infile2, List2, J, Get_Style (List2));
+            Read_Line (Infile2, List2, J, Default_Style);
          end loop;
 
          case Link.Action is
@@ -190,12 +201,12 @@ package body Vdiff_Utils is
       --  Complete files with the remaining lines.
 
       while not End_Of_File (Infile1) loop
-         Read_Line (Infile1, List1, Line1, Get_Style (List1));
+         Read_Line (Infile1, List1, Line1, Default_Style);
          Line1 := Line1 + 1;
       end loop;
 
       while not End_Of_File (Infile2) loop
-         Read_Line (Infile2, List2, Line2, Get_Style (List2));
+         Read_Line (Infile2, List2, Line2, Default_Style);
          Line2 := Line2 + 1;
       end loop;
 
