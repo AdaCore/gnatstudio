@@ -70,6 +70,8 @@ package Source_Analyzer is
       Indent_Continue : Natural := 2);
    --  Parse the constructs contained in Buffer and store all the Ada
    --  constructs with their source location in Result.
+   --  As a bonus (since it is computed anyway), store the current and
+   --  next indentation levels.
 
    procedure Next_Ada_Indentation
      (Buffer          : String;
