@@ -23,7 +23,6 @@ with Pixmaps_IDE;               use Pixmaps_IDE;
 with Pixmaps_Prj;               use Pixmaps_Prj;
 with Glib.Convert;              use Glib.Convert;
 with Gdk.Pixbuf;                use Gdk.Pixbuf;
-with Gtk.Tree_Selection;        use Gtk.Tree_Selection;
 with Language.Unknown;          use Language.Unknown;
 with Language;                  use Language;
 with Language_Handlers.Glide;   use Language_Handlers.Glide;
@@ -398,13 +397,17 @@ package body Project_Explorers_Common is
       Add_Dummy : Boolean) return Boolean
    is
       Iter         : Gtk_Tree_Iter;
+      Path         : Gtk_Tree_Path;
       Line, Column : Gint;
    begin
       if Get_Button (Event) = 1 then
          Iter := Find_Iter_For_Event (Tree, Model, Event);
 
          if Iter /= Null_Iter then
-            Select_Iter (Get_Selection (Tree), Iter);
+            Path := Get_Path (Model, Iter);
+            Set_Cursor (Tree, Path, null, False);
+            Path_Free (Path);
+
             case Node_Types'Val
                  (Integer (Get_Int (Model, Iter, Node_Type_Column))) is
 

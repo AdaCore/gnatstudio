@@ -39,7 +39,6 @@ with Gtk.Cell_Renderer_Pixbuf;  use Gtk.Cell_Renderer_Pixbuf;
 with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Menu;                  use Gtk.Menu;
 with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
-with Gtk.Tree_Selection;        use Gtk.Tree_Selection;
 with Gtk.Tree_View_Column;      use Gtk.Tree_View_Column;
 with Gtk.Tree_Model;            use Gtk.Tree_Model;
 with Gtk.Widget;                use Gtk.Widget;
@@ -640,12 +639,16 @@ package body Project_Explorers_Files is
       Context   : Selection_Context_Access;
       Iter      : constant Gtk_Tree_Iter :=
         Find_Iter_For_Event (T.File_Tree, T.File_Model, Event);
+      Path      : Gtk_Tree_Path;
       File      : GNAT.OS_Lib.String_Access := null;
       Node_Type : Node_Types;
       Check     : Gtk_Check_Menu_Item;
    begin
       if Iter /= Null_Iter then
-         Select_Iter (Get_Selection (T.File_Tree), Iter);
+         Path := Get_Path (T.File_Model, Iter);
+         Set_Cursor (T.File_Tree, Path, null, False);
+         Path_Free (Path);
+
          Node_Type := Node_Types'Val
            (Integer (Get_Int (T.File_Model, Iter, Node_Type_Column)));
 

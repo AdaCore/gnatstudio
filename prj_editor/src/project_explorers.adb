@@ -707,10 +707,13 @@ package body Project_Explorers is
 
       Iter    : constant Gtk_Tree_Iter := Find_Iter_For_Event
         (T.Tree, T.Tree.Model, Event);
+      Path    : Gtk_Tree_Path;
       Node_Type : Node_Types;
    begin
       if Iter /= Null_Iter then
-         Select_Iter (Get_Selection (T.Tree), Iter);
+         Path := Get_Path (T.Tree.Model, Iter);
+         Set_Cursor (T.Tree, Path, null, False);
+         Path_Free (Path);
          Node_Type := Get_Node_Type (T.Tree.Model, Iter);
       else
          return Context;
@@ -2580,7 +2583,7 @@ package body Project_Explorers is
       end if;
 
       Path_Free (Parent);
-      Select_Path (Get_Selection (Explorer.Tree), Path);
+      Set_Cursor (Explorer.Tree, Path, null, False);
 
       Scroll_To_Cell
         (Explorer.Tree,
