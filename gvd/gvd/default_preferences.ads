@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2002                       --
+--                     Copyright (C) 2001-2003                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
@@ -34,6 +34,7 @@ with Gdk.Color;
 with Gdk.Types;
 with Pango.Font;
 with Glib.XML;
+with Gtk.Tooltips;
 with Gtk.Widget;
 with Gtk.Window;
 
@@ -182,7 +183,9 @@ package Default_Preferences is
    --  Save the default preferences to File_Name.
 
    function Editor_Widget
-     (Manager : access Preferences_Manager_Record; Param : Param_Spec)
+     (Manager : access Preferences_Manager_Record;
+      Param   : Param_Spec;
+      Tips    : Gtk.Tooltips.Gtk_Tooltips)
       return Gtk.Widget.Gtk_Widget;
    --  Return a widget for graphical editing of Param. The exact type of widget
    --  depends on the type of data in Param.
