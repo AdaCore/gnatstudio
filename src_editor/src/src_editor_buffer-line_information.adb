@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                    Copyright (C) 2003-2004                        --
+--                    Copyright (C) 2003-2005                        --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
@@ -1318,9 +1318,21 @@ package body Src_Editor_Buffer.Line_Information is
                Editable_Lines (J).Side_Info_Data := null;
             end loop;
 
-            Editable_Lines
-              (Buffer.Last_Editable_Line - EN + 1 ..
-                 Buffer.Last_Editable_Line) := Lines_To_Report;
+            for J in 0 .. Lines_To_Report'Length - 1 loop
+               declare
+                  Stored_Side_Info : Line_Info_Width_Array_Access;
+                  K  : constant Editable_Line_Type := Editable_Line_Type (J);
+               begin
+                  Stored_Side_Info := Editable_Lines
+                    (Buffer.Last_Editable_Line - EN + 1 + K).Side_Info_Data;
+                  Editable_Lines
+                    (Buffer.Last_Editable_Line - EN + 1 + K)
+                    := Lines_To_Report (Lines_To_Report'First + K);
+                  Editable_Lines
+                    (Buffer.Last_Editable_Line - EN + 1 + K).Side_Info_Data
+                    := Stored_Side_Info;
+               end;
+            end loop;
          end;
 
          Buffer.Last_Editable_Line := Buffer.Last_Editable_Line - EN;
