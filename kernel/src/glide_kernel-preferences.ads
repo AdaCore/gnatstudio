@@ -111,6 +111,7 @@ package Glide_Kernel.Preferences is
    Strip_Blanks               : Param_Spec_Boolean;
    Display_Line_Numbers       : Param_Spec_Boolean;
    Default_Source_Editor_Font : Param_Spec_Font;
+   Default_Tooltip_Font       : Param_Spec_Font;
    Display_Tooltip            : Param_Spec_Boolean;
    Periodic_Save              : Param_Spec_Int;
    Tab_Width                  : Param_Spec_Int;

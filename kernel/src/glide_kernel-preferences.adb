@@ -160,7 +160,8 @@ package body Glide_Kernel.Preferences is
          Nick    => -"Files from project only",
          Blurb   => -("True if the files view should only show files belonging"
                       & " to the project"),
-         Default => False));
+         Default => False,
+         Flags   => Param_Readable));
       Register_Property
         (Kernel.Preferences, Param_Spec (File_View_Shows_Only_Project),
          -"Explorer");
@@ -251,6 +252,15 @@ package body Glide_Kernel.Preferences is
         (Kernel.Preferences, Param_Spec (Default_Source_Editor_Font),
          -"Editor");
 
+      Default_Tooltip_Font := Param_Spec_Font (Gnew_Font
+        (Name    => "Src-Editor-Tooltip-Font",
+         Default => "Helvetica 10",
+         Blurb   => -"The font used to display tooltips in the source editor",
+         Nick    => -"Tooltip font"));
+      Register_Property
+        (Kernel.Preferences, Param_Spec (Default_Tooltip_Font),
+         -"Editor");
+
       Display_Tooltip := Param_Spec_Boolean (Gnew_Boolean
         (Name    => "Src-Editor-Display-Tooltip",
          Default => True,
@@ -276,7 +286,8 @@ package body Glide_Kernel.Preferences is
          Maximum => 16,
          Default => 8,
          Blurb   => -"The width of a tabulation character, in characters",
-         Nick    => -"Tabulation width"));
+         Nick    => -"Tabulation width",
+         Flags   => Param_Readable));
       Register_Property
         (Kernel.Preferences, Param_Spec (Tab_Width), -"Editor");
 
@@ -287,7 +298,8 @@ package body Glide_Kernel.Preferences is
          Default => "#777777",
          Blurb   => -("Color to use when displaying switches that are set"
                       & " as default for all the files in the project"),
-         Nick    => -"Default switches color"));
+         Nick    => -"Default switches color",
+         Flags   => Param_Readable));
       Register_Property
         (Kernel.Preferences, Param_Spec (Default_Switches_Color), -"Project");
 
@@ -295,7 +307,8 @@ package body Glide_Kernel.Preferences is
         (Name    => "Prj-Editor-Title-Font",
          Default => "helvetica bold oblique 14",
          Blurb   => -"Font to use for the switches editor dialog",
-         Nick    => -"Title font"));
+         Nick    => -"Title font",
+         Flags   => Param_Readable));
       Register_Property
         (Kernel.Preferences, Param_Spec (Switches_Editor_Title_Font),
          -"Project");
@@ -327,7 +340,8 @@ package body Glide_Kernel.Preferences is
         (Name    => "Wizard-Toc-Highlight-Color",
          Default => "yellow",
          Blurb   => -"Color to use to highlight strings in the TOC",
-         Nick    => -"Table of contents color"));
+         Nick    => -"Table of contents color",
+         Flags   => Param_Readable));
       Register_Property
         (Kernel.Preferences, Param_Spec (Wizard_Toc_Highlight_Color),
          -"Project wizard");
@@ -336,7 +350,8 @@ package body Glide_Kernel.Preferences is
         (Name    => "Wizard-Title-Font",
          Default => "helvetica bold oblique 10",
          Blurb   => -"Font to use for the title of the pages in the wizard",
-         Nick    => -"Title font"));
+         Nick    => -"Title font",
+         Flags   => Param_Readable));
       Register_Property
         (Kernel.Preferences, Param_Spec (Wizard_Title_Font),
          -"Project wizard");
