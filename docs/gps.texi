@@ -7382,8 +7382,10 @@ Describes the context used to highlight the syntax of a file.
    A string defining the end of a multiple-line comment.
 
    @item New_Line_Comment_Start
-   A string defining the beginning of a single line comment (ended at the next
-   end of line).
+   A regular expression defining the beginning of a single line comment
+   (ended at the next end of line). This regular expression may contain
+   multiple possible line starts, such as @code{;|#} for comments starting
+   after a semicolon or after the hash sign.
 
    @item String_Delimiter
    A character defining the string delimiter.
