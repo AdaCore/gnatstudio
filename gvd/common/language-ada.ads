@@ -28,6 +28,10 @@ package Language.Debugger.Ada is
    function Is_Simple_Type
      (Lang : access Ada_Language; Str : String) return Boolean;
 
+   function Start
+     (Debugger  : access Ada_Language)
+     return String;
+
    procedure Looking_At
      (Lang      : access Ada_Language;
       Buffer    : String;

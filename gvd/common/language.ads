@@ -91,6 +91,19 @@ package Language is
    --  on exception. If name is null, break should occur on all exceptions.
    --  The default implementation returns a null String.
 
+   ----------------------
+   -- Special commands --
+   ----------------------
+
+   function Start
+     (Debugger  : access Language_Root)
+     return String;
+   --  Return the command used in the current debugger to start the program
+   --  and stop on the first line of user's code.
+   --  The resulting string can be either null (in which case this function
+   --  is not available for the given debugger/language combination), a single
+   --  command, or multiple commands separated by ASCII.LF characters.
+
    ----------------------------
    -- Generic Thread Support --
    ----------------------------

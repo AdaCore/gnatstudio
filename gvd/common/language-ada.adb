@@ -174,6 +174,18 @@ package body Language.Debugger.Ada is
       return Name & '.' & Field;
    end Record_Field_Name;
 
+   -----------
+   -- Start --
+   -----------
+
+   function Start
+     (Debugger  : access Ada_Language)
+     return String
+   is
+   begin
+      return "begin";
+   end Start;
+
 begin
    Compile (Keywords,
             "^(a(b(ort|s(tract)?)|cce(pt|ss)|l(iased|l)|nd|rray|t)|b"

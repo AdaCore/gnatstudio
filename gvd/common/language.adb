@@ -34,6 +34,18 @@ package body Language is
       return "";
    end Break_Exception;
 
+   -----------
+   -- Start --
+   -----------
+
+   function Start
+     (Debugger  : access Language_Root)
+     return String
+   is
+   begin
+      return "";
+   end Start;
+
    ----------
    -- Free --
    ----------

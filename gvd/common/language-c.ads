@@ -34,6 +34,10 @@ package Language.Debugger.C is
       Entity    : out Language_Entity;
       Next_Char : out Positive);
 
+   function Start
+     (Debugger  : access C_Language)
+     return String;
+
    function Dereference_Name (Lang : access C_Language;
                               Name : String)
                              return String;

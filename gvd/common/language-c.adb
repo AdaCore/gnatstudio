@@ -190,4 +190,16 @@ package body Language.Debugger.C is
       return Name & '.' & Field;
    end Record_Field_Name;
 
+   -----------
+   -- Start --
+   -----------
+
+   function Start
+     (Debugger  : access C_Language)
+     return String
+   is
+   begin
+      return "tbreak main" & ASCII.LF & "run";
+   end Start;
+
 end Language.Debugger.C;
