@@ -41,6 +41,7 @@ with Gtk.Tree_Selection;       use Gtk.Tree_Selection;
 with Gtk.Tree_Store;           use Gtk.Tree_Store;
 with Gtk.Tree_View_Column;     use Gtk.Tree_View_Column;
 with Gtk.Main;                 use Gtk.Main;
+with Gtk.Menu_Item;            use Gtk.Menu_Item;
 with Gtk.Paned;                use Gtk.Paned;
 with Gtk.Frame;                use Gtk.Frame;
 with Gtk.Text_Buffer;          use Gtk.Text_Buffer;
@@ -63,8 +64,10 @@ with Gtk.Event_Box;            use Gtk.Event_Box;
 with Gtk.Label;                use Gtk.Label;
 with Gtk.Style;                use Gtk.Style;
 with Gtk.Separator;            use Gtk.Separator;
+with Gtkada.Macro;             use Gtkada.Macro;
 with Traces;                   use Traces;
 with Glide_Kernel.Task_Manager; use Glide_Kernel.Task_Manager;
+with Ada.Calendar;              use Ada.Calendar;
 with Ada.Unchecked_Deallocation;
 with Ada.Unchecked_Conversion;
 
@@ -137,15 +140,33 @@ package body KeyManager_Module is
      (Keymap_Record, Keymap_Access);
 
    type Key_Manager_Record is record
-      Kernel : Kernel_Handle;
-      Table  : Key_Htable.HTable;
+      Kernel           : Kernel_Handle;
+      Table            : Key_Htable.HTable;
 
       Secondary_Keymap : Keymap_Access := null;
       --  The secondary keymap currently in use, or null if using the primary.
 
-      Active : Boolean := True;
+      Active           : Boolean := True;
       --  Whether the key manager should process the key events. This is only
       --  deactivated while editing the key bindings through the GUI.
+
+      Recording        : Boolean := False;
+      --  Whether the key manager is recording key events
+
+      Keys             : Macro_Item_Access;
+      --  Set of keys recorded.
+
+      Last_Key         : Macro_Item_Access;
+      --  Last key recorded.
+
+      Key_Node         : Macro_Item_Access;
+      --  Current key being replayed.
+
+      Start_Clock       : Ada.Calendar.Time;
+      --  Start time of key replay.
+
+      Start_Time       : Guint32;
+      --  Original start time of an event.
    end record;
    type Key_Manager_Access is access all Key_Manager_Record;
 
@@ -199,6 +220,21 @@ package body KeyManager_Module is
    procedure On_Edit_Keys
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Open a GUI to edit the key bindings
+
+   procedure On_Start_Recording
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   --  Start recording all key events for later re-play.
+
+   procedure On_Stop_Recording
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   --  Stop recording key events for later re-play.
+
+   procedure On_Play_Macro
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   --  Play last set of events recorded.
+
+   function Play_Macro_Timer return Boolean;
+   --  Timer used by On_Play_Macro
 
    procedure On_Grab_Key (Editor : access Gtk_Widget_Record'Class);
    procedure On_Remove_Key (Editor : access Gtk_Widget_Record'Class);
@@ -300,11 +336,28 @@ package body KeyManager_Module is
    ---------------------------
 
    procedure General_Event_Handler
-     (Event : Gdk_Event; Kernel : System.Address) is
+     (Event : Gdk_Event; Kernel : System.Address)
+   is
+      Item : Macro_Item_Key_Access;
    begin
       if (Get_Event_Type (Event) = Key_Press
           or else Get_Event_Type (Event) = Key_Release)
       then
+         if Keymanager_Module.Key_Manager.Recording then
+            Item := Create_Item (Event);
+
+            if Item /= null then
+               if Keymanager_Module.Key_Manager.Keys = null then
+                  Keymanager_Module.Key_Manager.Keys := Item.all'Access;
+                  Keymanager_Module.Key_Manager.Last_Key := Item.all'Access;
+               else
+                  Keymanager_Module.Key_Manager.Last_Key.Next :=
+                    Item.all'Access;
+                  Keymanager_Module.Key_Manager.Last_Key := Item.all'Access;
+               end if;
+            end if;
+         end if;
+
          if Process_Event
            (Keymanager_Module.Key_Manager, Convert (Kernel), Event)
          then
@@ -598,6 +651,7 @@ package body KeyManager_Module is
       Command : Action_Record;
       Any_Context_Command : Action_Record := No_Action;
       Has_Secondary : constant Boolean := Handler.Secondary_Keymap /= null;
+
    begin
       if Handler.Active
         and then Get_Event_Type (Event) = Key_Press
@@ -1058,9 +1112,11 @@ package body KeyManager_Module is
    function Cancel_Grab return Boolean is
    begin
       --  If there is a grab pending
+
       if Main_Level > 1 then
          Main_Quit;
       end if;
+
       return False;
    end Cancel_Grab;
 
@@ -1080,6 +1136,7 @@ package body KeyManager_Module is
 
    begin
       Key_Grab (Widget, Key, Modif);
+
       if Key /= GDK_Escape or else Modif /= 0 then
          Grabbed := new String'(Image (Key, Modif));
       else
@@ -1129,6 +1186,7 @@ package body KeyManager_Module is
       Get_Selected (Selection, Model, Iter);
 
       --  Only edit for leaf nodes (otherwise these are contexts)
+
       if Iter /= Null_Iter
         and then Children (Model, Iter) = Null_Iter
       then
@@ -1138,8 +1196,9 @@ package body KeyManager_Module is
             Is_Menu : constant Boolean := Get_String
               (Model, Parent (Model, Iter), Action_Column) =
               -Menu_Context_Name;
-            Key : constant String := Grab_Multiple_Key
+            Key     : constant String := Grab_Multiple_Key
               (Ed.View, Allow_Multiple => not Is_Menu);
+
          begin
             if Key /= "" then
                Set (Ed.Model, Iter, Key_Column, Key);
@@ -1168,6 +1227,7 @@ package body KeyManager_Module is
       Get_Selected (Selection, Model, Iter);
 
       --  Only edit for leaf nodes (otherwise these are contexts)
+
       if Iter /= Null_Iter
         and then Children (Model, Iter) = Null_Iter
       then
@@ -1189,6 +1249,7 @@ package body KeyManager_Module is
       Model     : Gtk_Tree_Model;
       Iter      : Gtk_Tree_Iter;
       Action    : Action_Record;
+
    begin
       Get_Selected (Selection, Model, Iter);
 
@@ -1235,6 +1296,7 @@ package body KeyManager_Module is
       Text     : Gtk_Text_View;
       Action   : Gtk_Widget;
       pragma Unreferenced (Widget, Num, Action);
+
    begin
       Editor := new Keys_Editor_Record;
       Initialize
@@ -1359,7 +1421,136 @@ package body KeyManager_Module is
       end if;
 
       Destroy (Editor);
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception " & Exception_Information (E));
    end On_Edit_Keys;
+
+   ------------------------
+   -- On_Start_Recording --
+   ------------------------
+
+   procedure On_Start_Recording
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   is
+      pragma Unreferenced (Widget);
+      Macro : constant String := '/' & (-"Tools/Macro") & '/';
+   begin
+      if Keymanager_Module.Key_Manager.Keys = null then
+         Set_Sensitive
+           (Find_Menu_Item (Kernel, Macro & (-"Play")), True);
+      end if;
+
+      Set_Sensitive
+        (Find_Menu_Item (Kernel, Macro & (-"Start Recording")), False);
+      Set_Sensitive
+        (Find_Menu_Item (Kernel, Macro & (-"Stop Recording")), True);
+
+      Free_List (Keymanager_Module.Key_Manager.Keys);
+      Keymanager_Module.Key_Manager.Last_Key := null;
+      Keymanager_Module.Key_Manager.Recording := True;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception " & Exception_Information (E));
+   end On_Start_Recording;
+
+   -----------------------
+   -- On_Stop_Recording --
+   -----------------------
+
+   procedure On_Stop_Recording
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   is
+      pragma Unreferenced (Widget);
+      Macro : constant String := '/' & (-"Tools/Macro") & '/';
+   begin
+      Keymanager_Module.Key_Manager.Recording := False;
+      Set_Sensitive
+        (Find_Menu_Item (Kernel, Macro & (-"Start Recording")), True);
+      Set_Sensitive
+        (Find_Menu_Item (Kernel, Macro & (-"Stop Recording")), False);
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception " & Exception_Information (E));
+   end On_Stop_Recording;
+
+   ----------------------
+   -- Play_Macro_Timer --
+   ----------------------
+
+   function Play_Macro_Timer return Boolean is
+      Keys         : Macro_Item_Access renames
+        Keymanager_Module.Key_Manager.Key_Node;
+      Event        : Gdk_Event;
+      Timeout      : Guint32;
+      Wait         : Duration;
+      Id           : Timeout_Handler_Id;
+      pragma Unreferenced (Id);
+
+   begin
+      Event := Create_Event (Keys.all);
+
+      if Event /= null then
+         Put (Event);
+         Free (Event);
+      end if;
+
+      Keys := Keys.Next;
+
+      if Keys /= null then
+         --  Compute proper timeout value, taking into account the time
+         --  spent to handle each event manually.
+
+         Timeout := Keys.Time - Keymanager_Module.Key_Manager.Start_Time;
+         Wait    := Keymanager_Module.Key_Manager.Start_Clock +
+           Duration (Timeout) / 1000.0 - Clock;
+
+         if Wait > 0.0 then
+            Timeout := Guint32 (Wait * 1000.0);
+         else
+            Timeout := 0;
+         end if;
+
+         Id := Gtk.Main.Timeout_Add (Timeout, Play_Macro_Timer'Access);
+      end if;
+
+      return False;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception " & Exception_Information (E));
+         return False;
+   end Play_Macro_Timer;
+
+   -------------------
+   -- On_Play_Macro --
+   -------------------
+
+   procedure On_Play_Macro
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   is
+      pragma Unreferenced (Widget, Kernel);
+      Keys  : Macro_Item_Access renames
+        Keymanager_Module.Key_Manager.Key_Node;
+      Id    : Timeout_Handler_Id;
+      pragma Unreferenced (Id);
+
+   begin
+      Keys := Keymanager_Module.Key_Manager.Keys;
+
+      if Keys /= null then
+         Keymanager_Module.Key_Manager.Start_Clock := Clock;
+         Keymanager_Module.Key_Manager.Start_Time  := Keys.Time;
+         Id := Gtk.Main.Timeout_Add (0, Play_Macro_Timer'Access);
+      end if;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception " & Exception_Information (E));
+   end On_Play_Macro;
 
    ---------------
    -- Customize --
@@ -1416,8 +1607,10 @@ package body KeyManager_Module is
    procedure Register_Module
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
    is
-      Manager : constant Key_Manager_Access := new Key_Manager_Record;
-      Edit    : constant String := "/" & (-"Edit");
+      Manager    : constant Key_Manager_Access := new Key_Manager_Record;
+      Macro_Menu : constant String := "/" & (-"Tools/Macro");
+      Edit_Menu  : constant String := "/" & (-"Edit");
+
    begin
       Manager.Kernel := Kernel_Handle (Kernel);
       Load_Custom_Keys (Kernel, Manager);
@@ -1434,10 +1627,20 @@ package body KeyManager_Module is
                          Convert (Kernel_Handle (Kernel)));
 
       Register_Menu
-        (Kernel, Edit, -"_Key shortcuts",
-         Ref_Item   => -"Preferences",
-         Add_Before => False,
-         Callback   => On_Edit_Keys'Access);
+        (Kernel, Edit_Menu, -"_Key shortcuts",
+         Callback => On_Edit_Keys'Access);
+
+      Register_Menu
+        (Kernel, Macro_Menu, -"_Start Recording",
+         Callback => On_Start_Recording'Access);
+      Register_Menu
+        (Kernel, Macro_Menu, -"S_top Recording",
+         Callback  => On_Stop_Recording'Access,
+         Sensitive => False);
+      Register_Menu
+        (Kernel, Macro_Menu, -"_Play",
+         Callback  => On_Play_Macro'Access,
+         Sensitive => False);
    end Register_Module;
 
 end KeyManager_Module;
