@@ -75,8 +75,8 @@ package Interactive_Consoles is
    --  History_List and Key are used to handle the history of commands entered
    --  by the user in the interactive window. No history is provided if
    --  History_List is null
-   --  If Empty_Equals_Repeat is True, an empty command will provoke the
-   --  execution of the last command.
+   --  If Empty_Equals_Repeat is True, an empty command will execute the last
+   --  command.
 
    procedure Initialize
      (Console   : access Interactive_Console_Record'Class;
