@@ -133,21 +133,34 @@ package body Log_Utils is
          F_Header : constant String :=
            ASCII.HT & "* " & Base_Name & ':' & ASCII.LF & ASCII.HT & ASCII.LF;
 
-         Old : String_Access := CL;
+         Old      : String_Access := CL;
+         New_Size : Natural;
       begin
          if CL = null then
             --  In this case Date_Header is always true
             CL := new String'(Header & ASCII.LF & F_Header);
 
          else
+            New_Size := CL'Length + F_Header'Length + 1;
+
             if Date_Header then
-               CL := new String'(CL (1 .. Pos - 1) &
-                                 Header & ASCII.LF & F_Header &
-                                 CL (Pos .. CL'Last));
+               New_Size := New_Size + Header'Length + 1;
+
+               CL := new String (1 .. New_Size);
+
+               CL (1 .. Pos - 1) := Old (1 .. Pos - 1);
+               CL (Pos .. Pos + Header'Length + F_Header'Length + 1) :=
+                 Header & ASCII.LF & F_Header & ASCII.LF;
+               CL (Pos + Header'Length + F_Header'Length + 2 .. CL'Last) :=
+                 Old (Pos .. Old'Last);
+
             else
-               CL := new String'(CL (1 .. Pos - 1) &
-                                 F_Header & ASCII.LF &
-                                 CL (Pos .. CL'Last));
+               CL := new String (1 .. New_Size);
+
+               CL (1 .. Pos - 1) := Old (1 .. Pos - 1);
+               CL (Pos .. Pos + F_Header'Length) := F_Header & ASCII.LF;
+               CL (Pos + F_Header'Length + 1 .. CL'Last) :=
+                 Old (Pos .. Old'Last);
             end if;
          end if;
 
