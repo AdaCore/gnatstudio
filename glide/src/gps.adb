@@ -454,8 +454,14 @@ procedure GPS is
         (Format_Pathname (GPS.Prefix_Directory.all & "/share/gps/about.txt"));
 
       if About_Contents = null then
-         GPS.Public_Version := False;
          About_Contents := new String'("");
+      end if;
+
+      if Is_Regular_File
+        (Format_Pathname
+           (GPS.Prefix_Directory.all & "/share/gps/gps-pro.txt"))
+      then
+         GPS.Public_Version := False;
       end if;
 
       Reset_Title (GPS);
