@@ -589,6 +589,8 @@ package Src_Editor_Buffer is
       --  this column.
    end record;
    type Line_Info_Display_Access is access Line_Info_Display_Record;
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+     (Line_Info_Display_Record, Line_Info_Display_Access);
 
    type Line_Info_Display_Array is array (Natural range <>)
      of Line_Info_Display_Access;
