@@ -267,10 +267,11 @@ package Src_Editor_Box is
    procedure Paste_Clipboard (Editor : access Source_Editor_Box_Record);
    --  Paste the contents of the clipboard.
 
-   procedure Paste_Primary (Editor : access Source_Editor_Box_Record);
+   --  procedure Paste_Primary (Editor : access Source_Editor_Box_Record);
    --  Paste the contents of the primary selection.
    --  ??? The primary selection is the X11 cut/copy/paste buffer I think.
    --  ??? what is the relationship with the clipboard?
+   --  ??? This function is commented out since it was removed in gtk-1.3.7.
 
    procedure Highlight_Line
      (Editor  : access Source_Editor_Box_Record;

@@ -880,15 +880,6 @@ package body Src_Editor_Box is
       Paste_Clipboard (Editor.Source_Buffer, Default_Editable => True);
    end Paste_Clipboard;
 
-   -------------------
-   -- Paste_Primary --
-   -------------------
-
-   procedure Paste_Primary (Editor : access Source_Editor_Box_Record) is
-   begin
-      Paste_Primary (Editor.Source_Buffer, Default_Editable => True);
-   end Paste_Primary;
-
    --------------------
    -- Highlight_Line --
    --------------------
