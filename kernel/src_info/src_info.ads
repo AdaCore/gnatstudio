@@ -241,6 +241,7 @@ package Src_Info is
      (Handler       : access LI_Handler_Record;
       Root_Project  : Prj.Project_Id;
       Project       : Prj.Project_Id;
+      Language      : Types.Name_Id;
       Recursive     : Boolean := False)
       return LI_Handler_Iterator'Class is abstract;
    --  Generate the LI information for all the source files in Project (and all
@@ -249,6 +250,9 @@ package Src_Info is
    --  be called until all the files are processed.
    --  Note that only the database on the disk needs to be regenerated, not the
    --  LI structures themselves, which will be done by Create_Or_Complete_LI.
+   --
+   --  Language is the name of the language to parse, since a given handler
+   --  might be shared by multiple languages.
 
    --------------
    -- Entities --

@@ -2086,11 +2086,12 @@ package body Src_Info.ALI is
      (Handler       : access ALI_Handler_Record;
       Root_Project  : Prj.Project_Id;
       Project       : Prj.Project_Id;
+      Language      : Types.Name_Id;
       Recursive     : Boolean := False)
       return LI_Handler_Iterator'Class
    is
       pragma Unreferenced
-        (Handler, Root_Project, Project, Recursive);
+        (Handler, Root_Project, Project, Language, Recursive);
       Iterator : ALI_Handler_Iterator;
    begin
       return Iterator;
