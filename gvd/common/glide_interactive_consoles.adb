@@ -154,11 +154,6 @@ package body Glide_Interactive_Consoles is
            (Get_Slice (Console.Buffer, Prompt_Iter, Last_Iter));
       end if;
 
-      if not Console.Message_Was_Displayed then
-         Insert (Console.Buffer, Last_Iter, "" & ASCII.LF);
-         Get_End_Iter (Console.Buffer, Last_Iter);
-      end if;
-
       if Add_LF then
          Insert (Console.Buffer, Last_Iter, Text & ASCII.LF);
       else
@@ -427,7 +422,6 @@ package body Glide_Interactive_Consoles is
 
                   Get_End_Iter (Console.Buffer, Pos);
                   Insert (Console.Buffer, Pos, "" & ASCII.LF);
-
 
                   while Node /= Null_Node loop
                      Get_End_Iter (Console.Buffer, Pos);
