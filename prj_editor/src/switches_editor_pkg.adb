@@ -42,10 +42,10 @@ procedure Initialize (Switches_Editor : access Switches_Editor_Record'Class) is
    Ada_Optimization_Level_Items : String_List.Glist;
    C_Optimization_Level_Items : String_List.Glist;
    Cpp_Optimization_Level_Items : String_List.Glist;
-   Pragma_Casing_Items : String_List.Glist;
-   References_Casing_Items : String_List.Glist;
-   Attribute_Casing_Items : String_List.Glist;
    Keyword_Casing_Items : String_List.Glist;
+   Attribute_Casing_Items : String_List.Glist;
+   References_Casing_Items : String_List.Glist;
+   Pragma_Casing_Items : String_List.Glist;
    Construct_Layout_Items : String_List.Glist;
    Comments_Layout_Items : String_List.Glist;
    Indent_Level_Adj : Gtk_Adjustment;
@@ -808,75 +808,10 @@ begin
      Fill, Expand or Fill,
      0, 0);
 
-   Gtk_New (Switches_Editor.Pp_Casing_Table, 4, 2, False);
+   Gtk_New (Switches_Editor.Pp_Casing_Table, 2, 4, False);
    Set_Row_Spacings (Switches_Editor.Pp_Casing_Table, 0);
    Set_Col_Spacings (Switches_Editor.Pp_Casing_Table, 0);
    Add (Switches_Editor.Pp_Casing_Frame, Switches_Editor.Pp_Casing_Table);
-
-   Gtk_New (Switches_Editor.Pragma_Casing);
-   Set_Case_Sensitive (Switches_Editor.Pragma_Casing, False);
-   Set_Use_Arrows (Switches_Editor.Pragma_Casing, True);
-   Set_Use_Arrows_Always (Switches_Editor.Pragma_Casing, False);
-   String_List.Append (Pragma_Casing_Items, -"Mixed case");
-   String_List.Append (Pragma_Casing_Items, -"Lower case");
-   String_List.Append (Pragma_Casing_Items, -"Upper case");
-   Combo.Set_Popdown_Strings (Switches_Editor.Pragma_Casing, Pragma_Casing_Items);
-   Free_String_List (Pragma_Casing_Items);
-   Attach (Switches_Editor.Pp_Casing_Table, Switches_Editor.Pragma_Casing, 1, 2, 3, 4,
-     Expand or Fill, 0,
-     0, 0);
-
-   Switches_Editor.Pragma_Casing_Entry := Get_Entry (Switches_Editor.Pragma_Casing);
-   Set_Editable (Switches_Editor.Pragma_Casing_Entry, True);
-   Set_Max_Length (Switches_Editor.Pragma_Casing_Entry, 0);
-   Set_Text (Switches_Editor.Pragma_Casing_Entry, -"Mixed case");
-   Set_Visibility (Switches_Editor.Pragma_Casing_Entry, True);
-   Widget_Callback.Object_Connect
-     (Switches_Editor.Pragma_Casing_Entry, "changed",
-      Widget_Callback.To_Marshaller (Refresh_Pp_Switches'Access), Switches_Editor);
-
-   Gtk_New (Switches_Editor.References_Casing);
-   Set_Case_Sensitive (Switches_Editor.References_Casing, False);
-   Set_Use_Arrows (Switches_Editor.References_Casing, True);
-   Set_Use_Arrows_Always (Switches_Editor.References_Casing, False);
-   String_List.Append (References_Casing_Items, -"As declared");
-   String_List.Append (References_Casing_Items, -"Mixed case");
-   Combo.Set_Popdown_Strings (Switches_Editor.References_Casing, References_Casing_Items);
-   Free_String_List (References_Casing_Items);
-   Attach (Switches_Editor.Pp_Casing_Table, Switches_Editor.References_Casing, 1, 2, 2, 3,
-     Expand or Fill, 0,
-     0, 0);
-
-   Switches_Editor.References_Casing_Entry := Get_Entry (Switches_Editor.References_Casing);
-   Set_Editable (Switches_Editor.References_Casing_Entry, True);
-   Set_Max_Length (Switches_Editor.References_Casing_Entry, 0);
-   Set_Text (Switches_Editor.References_Casing_Entry, -"As declared");
-   Set_Visibility (Switches_Editor.References_Casing_Entry, True);
-   Widget_Callback.Object_Connect
-     (Switches_Editor.References_Casing_Entry, "changed",
-      Widget_Callback.To_Marshaller (Refresh_Pp_Switches'Access), Switches_Editor);
-
-   Gtk_New (Switches_Editor.Attribute_Casing);
-   Set_Case_Sensitive (Switches_Editor.Attribute_Casing, False);
-   Set_Use_Arrows (Switches_Editor.Attribute_Casing, True);
-   Set_Use_Arrows_Always (Switches_Editor.Attribute_Casing, False);
-   String_List.Append (Attribute_Casing_Items, -"Mixed case");
-   String_List.Append (Attribute_Casing_Items, -"Lower case");
-   String_List.Append (Attribute_Casing_Items, -"Upper case");
-   Combo.Set_Popdown_Strings (Switches_Editor.Attribute_Casing, Attribute_Casing_Items);
-   Free_String_List (Attribute_Casing_Items);
-   Attach (Switches_Editor.Pp_Casing_Table, Switches_Editor.Attribute_Casing, 1, 2, 1, 2,
-     Expand or Fill, 0,
-     0, 0);
-
-   Switches_Editor.Attribute_Casing_Entry := Get_Entry (Switches_Editor.Attribute_Casing);
-   Set_Editable (Switches_Editor.Attribute_Casing_Entry, True);
-   Set_Max_Length (Switches_Editor.Attribute_Casing_Entry, 0);
-   Set_Text (Switches_Editor.Attribute_Casing_Entry, -"Mixed case");
-   Set_Visibility (Switches_Editor.Attribute_Casing_Entry, True);
-   Widget_Callback.Object_Connect
-     (Switches_Editor.Attribute_Casing_Entry, "changed",
-      Widget_Callback.To_Marshaller (Refresh_Pp_Switches'Access), Switches_Editor);
 
    Gtk_New (Switches_Editor.Keyword_Casing);
    Set_Case_Sensitive (Switches_Editor.Keyword_Casing, False);
@@ -913,27 +848,92 @@ begin
    Set_Padding (Switches_Editor.Label68, 5, 0);
    Set_Justify (Switches_Editor.Label68, Justify_Center);
    Set_Line_Wrap (Switches_Editor.Label68, False);
-   Attach (Switches_Editor.Pp_Casing_Table, Switches_Editor.Label68, 0, 1, 1, 2,
-     Fill, 0,
+   Attach (Switches_Editor.Pp_Casing_Table, Switches_Editor.Label68, 2, 3, 0, 1,
+     0, 0,
      0, 0);
+
+   Gtk_New (Switches_Editor.Attribute_Casing);
+   Set_Case_Sensitive (Switches_Editor.Attribute_Casing, False);
+   Set_Use_Arrows (Switches_Editor.Attribute_Casing, True);
+   Set_Use_Arrows_Always (Switches_Editor.Attribute_Casing, False);
+   String_List.Append (Attribute_Casing_Items, -"Mixed case");
+   String_List.Append (Attribute_Casing_Items, -"Lower case");
+   String_List.Append (Attribute_Casing_Items, -"Upper case");
+   Combo.Set_Popdown_Strings (Switches_Editor.Attribute_Casing, Attribute_Casing_Items);
+   Free_String_List (Attribute_Casing_Items);
+   Attach (Switches_Editor.Pp_Casing_Table, Switches_Editor.Attribute_Casing, 3, 4, 0, 1,
+     Expand or Fill, 0,
+     0, 0);
+
+   Switches_Editor.Attribute_Casing_Entry := Get_Entry (Switches_Editor.Attribute_Casing);
+   Set_Editable (Switches_Editor.Attribute_Casing_Entry, True);
+   Set_Max_Length (Switches_Editor.Attribute_Casing_Entry, 0);
+   Set_Text (Switches_Editor.Attribute_Casing_Entry, -"Mixed case");
+   Set_Visibility (Switches_Editor.Attribute_Casing_Entry, True);
+   Widget_Callback.Object_Connect
+     (Switches_Editor.Attribute_Casing_Entry, "changed",
+      Widget_Callback.To_Marshaller (Refresh_Pp_Switches'Access), Switches_Editor);
 
    Gtk_New (Switches_Editor.Label69, -("Reference:"));
    Set_Alignment (Switches_Editor.Label69, 0.0, 0.5);
    Set_Padding (Switches_Editor.Label69, 5, 0);
    Set_Justify (Switches_Editor.Label69, Justify_Center);
    Set_Line_Wrap (Switches_Editor.Label69, False);
-   Attach (Switches_Editor.Pp_Casing_Table, Switches_Editor.Label69, 0, 1, 2, 3,
-     Fill, 0,
+   Attach (Switches_Editor.Pp_Casing_Table, Switches_Editor.Label69, 0, 1, 1, 2,
+     0, 0,
      0, 0);
+
+   Gtk_New (Switches_Editor.References_Casing);
+   Set_Case_Sensitive (Switches_Editor.References_Casing, False);
+   Set_Use_Arrows (Switches_Editor.References_Casing, True);
+   Set_Use_Arrows_Always (Switches_Editor.References_Casing, False);
+   String_List.Append (References_Casing_Items, -"As declared");
+   String_List.Append (References_Casing_Items, -"Mixed case");
+   Combo.Set_Popdown_Strings (Switches_Editor.References_Casing, References_Casing_Items);
+   Free_String_List (References_Casing_Items);
+   Attach (Switches_Editor.Pp_Casing_Table, Switches_Editor.References_Casing, 1, 2, 1, 2,
+     Expand or Fill, 0,
+     0, 0);
+
+   Switches_Editor.References_Casing_Entry := Get_Entry (Switches_Editor.References_Casing);
+   Set_Editable (Switches_Editor.References_Casing_Entry, True);
+   Set_Max_Length (Switches_Editor.References_Casing_Entry, 0);
+   Set_Text (Switches_Editor.References_Casing_Entry, -"As declared");
+   Set_Visibility (Switches_Editor.References_Casing_Entry, True);
+   Widget_Callback.Object_Connect
+     (Switches_Editor.References_Casing_Entry, "changed",
+      Widget_Callback.To_Marshaller (Refresh_Pp_Switches'Access), Switches_Editor);
 
    Gtk_New (Switches_Editor.Label70, -("Pragma:"));
    Set_Alignment (Switches_Editor.Label70, 0.0, 0.5);
    Set_Padding (Switches_Editor.Label70, 5, 0);
    Set_Justify (Switches_Editor.Label70, Justify_Center);
    Set_Line_Wrap (Switches_Editor.Label70, False);
-   Attach (Switches_Editor.Pp_Casing_Table, Switches_Editor.Label70, 0, 1, 3, 4,
-     Fill, 0,
+   Attach (Switches_Editor.Pp_Casing_Table, Switches_Editor.Label70, 2, 3, 1, 2,
+     0, 0,
      0, 0);
+
+   Gtk_New (Switches_Editor.Pragma_Casing);
+   Set_Case_Sensitive (Switches_Editor.Pragma_Casing, False);
+   Set_Use_Arrows (Switches_Editor.Pragma_Casing, True);
+   Set_Use_Arrows_Always (Switches_Editor.Pragma_Casing, False);
+   String_List.Append (Pragma_Casing_Items, -"Mixed case");
+   String_List.Append (Pragma_Casing_Items, -"Lower case");
+   String_List.Append (Pragma_Casing_Items, -"Upper case");
+   Combo.Set_Popdown_Strings (Switches_Editor.Pragma_Casing, Pragma_Casing_Items);
+   Free_String_List (Pragma_Casing_Items);
+   Attach (Switches_Editor.Pp_Casing_Table, Switches_Editor.Pragma_Casing, 3, 4, 1, 2,
+     Expand or Fill, 0,
+     0, 0);
+
+   Switches_Editor.Pragma_Casing_Entry := Get_Entry (Switches_Editor.Pragma_Casing);
+   Set_Editable (Switches_Editor.Pragma_Casing_Entry, True);
+   Set_Max_Length (Switches_Editor.Pragma_Casing_Entry, 0);
+   Set_Text (Switches_Editor.Pragma_Casing_Entry, -"Mixed case");
+   Set_Visibility (Switches_Editor.Pragma_Casing_Entry, True);
+   Widget_Callback.Object_Connect
+     (Switches_Editor.Pragma_Casing_Entry, "changed",
+      Widget_Callback.To_Marshaller (Refresh_Pp_Switches'Access), Switches_Editor);
 
    Gtk_New (Switches_Editor.Pp_Layout_Frame, -"Layout");
    Set_Border_Width (Switches_Editor.Pp_Layout_Frame, 5);
@@ -942,7 +942,7 @@ begin
      Fill, Expand or Fill,
      0, 0);
 
-   Gtk_New (Switches_Editor.Pp_Layout_Table, 2, 2, False);
+   Gtk_New (Switches_Editor.Pp_Layout_Table, 4, 2, False);
    Set_Row_Spacings (Switches_Editor.Pp_Layout_Table, 0);
    Set_Col_Spacings (Switches_Editor.Pp_Layout_Table, 0);
    Add (Switches_Editor.Pp_Layout_Frame, Switches_Editor.Pp_Layout_Table);
@@ -993,8 +993,6 @@ begin
    Set_Use_Arrows_Always (Switches_Editor.Comments_Layout, False);
    String_List.Append (Comments_Layout_Items, -"GNAT style line indentation");
    String_List.Append (Comments_Layout_Items, -"Standard line indentation");
-   String_List.Append (Comments_Layout_Items, -"GNAT style comment beginning");
-   String_List.Append (Comments_Layout_Items, -"Reformat blocks");
    Combo.Set_Popdown_Strings (Switches_Editor.Comments_Layout, Comments_Layout_Items);
    Free_String_List (Comments_Layout_Items);
    Attach (Switches_Editor.Pp_Layout_Table, Switches_Editor.Comments_Layout, 1, 2, 1, 2,
@@ -1008,6 +1006,24 @@ begin
    Set_Visibility (Switches_Editor.Comments_Layout_Entry, True);
    Widget_Callback.Object_Connect
      (Switches_Editor.Comments_Layout_Entry, "changed",
+      Widget_Callback.To_Marshaller (Refresh_Pp_Switches'Access), Switches_Editor);
+
+   Gtk_New (Switches_Editor.Gnat_Comment_Begin, -"GNAT style beginning");
+   Set_Active (Switches_Editor.Gnat_Comment_Begin, False);
+   Attach (Switches_Editor.Pp_Layout_Table, Switches_Editor.Gnat_Comment_Begin, 1, 2, 2, 3,
+     Expand or Fill, 0,
+     0, 0);
+   Widget_Callback.Object_Connect
+     (Switches_Editor.Gnat_Comment_Begin, "toggled",
+      Widget_Callback.To_Marshaller (Refresh_Pp_Switches'Access), Switches_Editor);
+
+   Gtk_New (Switches_Editor.Reformat_Comment, -"Reformat blocks");
+   Set_Active (Switches_Editor.Reformat_Comment, False);
+   Attach (Switches_Editor.Pp_Layout_Table, Switches_Editor.Reformat_Comment, 1, 2, 3, 4,
+     Expand or Fill, 0,
+     0, 0);
+   Widget_Callback.Object_Connect
+     (Switches_Editor.Reformat_Comment, "toggled",
       Widget_Callback.To_Marshaller (Refresh_Pp_Switches'Access), Switches_Editor);
 
    Gtk_New (Switches_Editor.Pp_Spacing_Frame, -"Spacing");
