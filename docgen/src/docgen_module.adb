@@ -662,8 +662,8 @@ package body Docgen_Module is
            Blurb   =>
              -("Whether Docgen should generate doc in one file (TexInfo"),
            Nick    => -"Single file (for TexInfo)"));
-      Register_Property (Kernel, Param_Spec (One_Document_File),
-                           -"Documentation");
+      Register_Property
+        (Kernel, Param_Spec (One_Document_File), -"Documentation");
 
       Link_All_References := Param_Spec_Boolean
         (Gnew_Boolean
