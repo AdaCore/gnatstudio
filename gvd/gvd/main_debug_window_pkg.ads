@@ -96,6 +96,9 @@ package Main_Debug_Window_Pkg is
       First_Debugger      : Debugger_List_Link;
       --  The pointer to the list of debuggers.
 
+      Locked              : Boolean := False;
+      --  Boolean used to handle global locking between debugger pages.
+
       -------------------------
 
       Vbox1 : Gtk_Vbox;
