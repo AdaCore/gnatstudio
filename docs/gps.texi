@@ -12712,6 +12712,18 @@ This option is enabled by default when running GPS locally (@code{DISPLAY} set
 to @code{":0.0"}) and disabled otherwise. Setting this variable explicitely
 overrides the default behavior.
 
+   @item GPS_STARTUP_PATH
+@cindex GPS_STARTUP_PATH
+Contains the value of the @code{PATH} environment variable just before GPS
+was started. This is used by GPS to restore the proper environment before
+spawning applications, no matter what particular directories it needed to
+set for its own purpose.
+
+   @item GPS_STARTUP_LD_LIBRARY_PATH
+@cindex GPS_STARTUP_LD_LIBRARY_PATH
+Same as @code{GPS_STARTUP_LD_LIBRARY_PATH} but for the @code{LD_LIBRARY_PATH}
+variable.
+
 @end table
 
 @c --------------------------------------------------------------------
