@@ -75,7 +75,7 @@ procedure Glide2 is
 
    subtype String_Access is GNAT.OS_Lib.String_Access;
 
-   Glide          : Glide_Window;
+   GPS            : Glide_Window;
    Page           : Glide_Page.Glide_Page;
    Directory      : Dir_Type;
    Str            : String (1 .. 1024);
@@ -168,9 +168,9 @@ begin
 
    Init_Settings;
    Gtk_New
-     (Glide, "<glide>", Glide_Menu.Glide_Menu_Items.all, Dir.all, Prefix.all);
-   Set_Title (Glide, "Glide - Next Generation");
-   Maximize (Glide);
+     (GPS, "<gps>", Glide_Menu.Glide_Menu_Items.all, Dir.all, Prefix.all);
+   Set_Title (GPS, "GPS - Next Generation");
+   Maximize (GPS);
 
    declare
       System_Rc : constant String :=
@@ -194,26 +194,26 @@ begin
 
    --  Register all modules
 
-   Navigation_Module.Register_Module (Glide.Kernel);
-   Metrics_Module.Register_Module (Glide.Kernel);
-   Browsers.Call_Graph.Register_Module (Glide.Kernel);
-   Browsers.Dependency_Items.Register_Module (Glide.Kernel);
-   Browsers.Projects.Register_Module (Glide.Kernel);
-   Project_Viewers.Register_Module (Glide.Kernel);
-   Project_Explorers.Register_Module (Glide.Kernel);
-   Src_Editor_Module.Register_Module (Glide.Kernel);
-   Glide_Kernel.Help.Register_Module (Glide.Kernel);
-   GVD_Module.Register_Module (Glide.Kernel);
-   Builder_Module.Register_Module (Glide.Kernel);
-   Vdiff_Module.Register_Module (Glide.Kernel);
-   VCS_Module.Register_Module (Glide.Kernel);
-   VCS.CVS.Register_Module (Glide.Kernel);
-   Aunit_Module.Register_Module (Glide.Kernel);
-   Glide_Consoles.Register_Module (Glide.Kernel);
+   Navigation_Module.Register_Module (GPS.Kernel);
+   Metrics_Module.Register_Module (GPS.Kernel);
+   Browsers.Call_Graph.Register_Module (GPS.Kernel);
+   Browsers.Dependency_Items.Register_Module (GPS.Kernel);
+   Browsers.Projects.Register_Module (GPS.Kernel);
+   Project_Viewers.Register_Module (GPS.Kernel);
+   Project_Explorers.Register_Module (GPS.Kernel);
+   Src_Editor_Module.Register_Module (GPS.Kernel);
+   Glide_Kernel.Help.Register_Module (GPS.Kernel);
+   GVD_Module.Register_Module (GPS.Kernel);
+   Builder_Module.Register_Module (GPS.Kernel);
+   Vdiff_Module.Register_Module (GPS.Kernel);
+   VCS_Module.Register_Module (GPS.Kernel);
+   VCS.CVS.Register_Module (GPS.Kernel);
+   Aunit_Module.Register_Module (GPS.Kernel);
+   Glide_Consoles.Register_Module (GPS.Kernel);
 
    --  Register the supported languages
 
-   Handler := Glide_Language_Handler (Get_Language_Handler (Glide.Kernel));
+   Handler := Glide_Language_Handler (Get_Language_Handler (GPS.Kernel));
    Register_Language (Handler, "Ada", Ada_Lang);
    Add_Language_Info
      (Handler, "Ada",
@@ -239,15 +239,15 @@ begin
 
    declare
       Log : constant String :=
-        String_Utils.Name_As_Directory (Glide.Home_Dir.all) & "debugger.log";
+        String_Utils.Name_As_Directory (GPS.Home_Dir.all) & "debugger.log";
    begin
-      Glide.Debug_Mode := True;
-      Glide.Log_Level  := GVD.Types.Hidden;
-      Glide.Log_File   := Create_File (Log, Fmode => Text);
+      GPS.Debug_Mode := True;
+      GPS.Log_Level  := GVD.Types.Hidden;
+      GPS.Log_File   := Create_File (Log, Fmode => Text);
    end;
 
-   Glide_Page.Gtk_New (Page, Glide);
-   Initialize_All_Modules (Glide.Kernel);
+   Glide_Page.Gtk_New (Page, GPS);
+   Initialize_All_Modules (GPS.Kernel);
 
    --  Temporarily disable unimplemented menu items
 
@@ -259,42 +259,42 @@ begin
       Tools    : constant String := '/' & (-"Tools") & '/';
 
    begin
-      Set_Sensitive (Find_Menu_Item (Glide.Kernel, File & (-"Print")), False);
+      Set_Sensitive (Find_Menu_Item (GPS.Kernel, File & (-"Print")), False);
       Set_Sensitive (Find_Menu_Item
-        (Glide.Kernel, File & (-"Close All")), False);
+        (GPS.Kernel, File & (-"Close All")), False);
 
       Set_Sensitive (Find_Menu_Item
-        (Glide.Kernel, Edit & (-"Preferences")), False);
-      Set_Sensitive (Find_Menu_Item (Glide.Kernel, Edit & (-"Undo")), False);
-      Set_Sensitive (Find_Menu_Item (Glide.Kernel, Edit & (-"Redo")), False);
+        (GPS.Kernel, Edit & (-"Preferences")), False);
+      Set_Sensitive (Find_Menu_Item (GPS.Kernel, Edit & (-"Undo")), False);
+      Set_Sensitive (Find_Menu_Item (GPS.Kernel, Edit & (-"Redo")), False);
 
       Set_Sensitive (Find_Menu_Item
-        (Glide.Kernel, Navigate & (-"Goto Parent Unit")), False);
+        (GPS.Kernel, Navigate & (-"Goto Parent Unit")), False);
       Set_Sensitive (Find_Menu_Item
-        (Glide.Kernel, Navigate & (-"Start Of Statement")), False);
+        (GPS.Kernel, Navigate & (-"Start Of Statement")), False);
       Set_Sensitive (Find_Menu_Item
-        (Glide.Kernel, Navigate & (-"End Of Statement")), False);
+        (GPS.Kernel, Navigate & (-"End Of Statement")), False);
       Set_Sensitive (Find_Menu_Item
-        (Glide.Kernel, Navigate & (-"Next Procedure")), False);
+        (GPS.Kernel, Navigate & (-"Next Procedure")), False);
       Set_Sensitive (Find_Menu_Item
-        (Glide.Kernel, Navigate & (-"Previous Procedure")), False);
+        (GPS.Kernel, Navigate & (-"Previous Procedure")), False);
 
       Set_Sensitive (Find_Menu_Item
-        (Glide.Kernel, Project & (-"Generate API doc")), False);
+        (GPS.Kernel, Project & (-"Generate API doc")), False);
       Set_Sensitive (Find_Menu_Item
-        (Glide.Kernel, Tools & (-"Code Fixing")), False);
+        (GPS.Kernel, Tools & (-"Code Fixing")), False);
       Set_Sensitive (Find_Menu_Item
-        (Glide.Kernel, Tools & (-"Profile")), False);
+        (GPS.Kernel, Tools & (-"Profile")), False);
       Set_Sensitive (Find_Menu_Item
-        (Glide.Kernel, Tools & (-"Memory Analyzer")), False);
+        (GPS.Kernel, Tools & (-"Memory Analyzer")), False);
    end;
 
    for J in 1 .. Argument_Count loop
       if File_Extension (Argument (J)) = Project_File_Extension then
-         Load_Project (Glide.Kernel, Normalize_Pathname (Argument (J)));
+         Load_Project (GPS.Kernel, Normalize_Pathname (Argument (J)));
          Project_Loaded := True;
       else
-         Open_File_Editor (Glide.Kernel, Normalize_Pathname (Argument (J)));
+         Open_File_Editor (GPS.Kernel, Normalize_Pathname (Argument (J)));
          File_Opened := True;
       end if;
    end loop;
@@ -311,7 +311,7 @@ begin
          exit when Last = 0;
 
          if File_Extension (Str (1 .. Last)) = Project_File_Extension then
-            Load_Project (Glide.Kernel, Str (1 .. Last));
+            Load_Project (GPS.Kernel, Str (1 .. Last));
             exit;
          end if;
       end loop;
@@ -320,15 +320,15 @@ begin
    --  Call Show_All before displaying the help so that the help window will
    --  have the focus.
 
-   Show_All (Glide);
+   Show_All (GPS);
 
    if not File_Opened then
       Open_Html
-        (Glide.Kernel,
+        (GPS.Kernel,
          Format_Pathname
-           (Glide.Prefix_Directory.all &
+           (GPS.Prefix_Directory.all &
             "/doc/glide2/html/glide-welcome.html"));
-      Maximize_Children (Get_MDI (Glide.Kernel));
+      Maximize_Children (Get_MDI (GPS.Kernel));
    end if;
 
    Gtk.Main.Main;
@@ -336,7 +336,7 @@ begin
    Trace (Me, "Saving preferences in "
           & String_Utils.Name_As_Directory (Dir.all) & "preferences");
    Save_Preferences
-     (Glide.Kernel,
+     (GPS.Kernel,
       String_Utils.Name_As_Directory (Dir.all) & "preferences");
 
    Free (Home);
