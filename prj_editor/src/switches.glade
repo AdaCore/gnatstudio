@@ -2043,7 +2043,7 @@ Full + Automatic inlining
 	      <case_sensitive>False</case_sensitive>
 	      <use_arrows>True</use_arrows>
 	      <use_arrows_always>False</use_arrows_always>
-	      <items>Capitalized
+	      <items>Mixed case
 Lower case
 Upper case
 </items>
@@ -2076,7 +2076,7 @@ Upper case
 		<editable>True</editable>
 		<text_visible>True</text_visible>
 		<text_max_length>0</text_max_length>
-		<text>Capitalized</text>
+		<text>Mixed case</text>
 	      </widget>
 	    </widget>
 
@@ -2089,7 +2089,7 @@ Upper case
 	      <use_arrows>True</use_arrows>
 	      <use_arrows_always>False</use_arrows_always>
 	      <items>As declared
-Capitalized
+Mixed case
 </items>
 	      <child>
 		<left_attach>1</left_attach>
@@ -2132,7 +2132,7 @@ Capitalized
 	      <case_sensitive>False</case_sensitive>
 	      <use_arrows>True</use_arrows>
 	      <use_arrows_always>False</use_arrows_always>
-	      <items>Capitalized
+	      <items>Mixed case
 Lower case
 Upper case
 </items>
@@ -2165,7 +2165,7 @@ Upper case
 		<editable>True</editable>
 		<text_visible>True</text_visible>
 		<text_max_length>0</text_max_length>
-		<text>Capitalized</text>
+		<text>Mixed case</text>
 	      </widget>
 	    </widget>
 
