@@ -1,10 +1,11 @@
 with VFS;      use VFS;
 with Traces;   use Traces;
+with Projects; use Projects;
 
 with Glib.Unicode; use Glib.Unicode;
 
 package body Entities.Queries is
-   Me : constant Debug_Handle := Create ("Entities.Assert");
+   Me : constant Debug_Handle := Create ("Entities.Queries");
 
    Num_Columns_Per_Line : constant := 250;
    --  The number of columns in each line, when computing the proximity of a
@@ -15,6 +16,8 @@ package body Entities.Queries is
    use Entities_Tries;
    use Entity_Information_Arrays;
    use Entity_Reference_Arrays;
+   use Source_File_Arrays;
+   use Dependency_Arrays;
 
    procedure Find
      (EL       : Entity_Information_List_Access;
@@ -166,7 +169,9 @@ package body Entities.Queries is
       Location         : out File_Location)
    is
       Ref     : Entity_Reference;
-      Best    : Entity_Reference := No_Entity_Reference;
+      First   : Entity_Reference_Arrays.Index_Type :=
+        Entity_Reference_Arrays.First - 1;
+      Return_Next : Boolean := Current_Location = No_File_Location;
    begin
       Update_Xref (Entity.Declaration.File);
 
@@ -175,15 +180,302 @@ package body Entities.Queries is
          if Ref.Kind = Body_Entity
            or else Ref.Kind = Completion_Of_Private_Or_Incomplete_Type
          then
-            Best := Ref;
-            exit when Current_Location = No_File_Location;
-         else
-            exit when Best /= No_Entity_Reference
-              and then Ref.Location = Current_Location;
+            if Return_Next then
+               Location := Ref.Location;
+               return;
+            end if;
+
+            if First = Entity_Reference_Arrays.First - 1 then
+               First := R;
+            end if;
+         end if;
+
+         if Ref.Location = Current_Location then
+            Return_Next := True;
          end if;
       end loop;
 
-      Location := Best.Location;
+      if First = Entity_Reference_Arrays.First - 1 then
+         Location := No_File_Location;
+      else
+         Location := Entity.References.Table (First).Location;
+      end if;
    end Find_Next_Body;
+
+   -------------------------
+   -- Find_All_References --
+   -------------------------
+
+   procedure Find_All_References
+     (Iter                  : out Entity_Reference_Iterator;
+      Entity                : Entity_Information;
+      File_Has_No_LI_Report : File_Error_Reporter := null;
+      In_File               : Source_File := null)
+   is
+      pragma Unreferenced (File_Has_No_LI_Report);
+   begin
+      if In_File = null then
+         Update_Xref (Get_File (Get_Declaration_Of (Entity)));
+
+      else
+         Update_Xref (In_File);
+      end if;
+
+      Iter :=
+        (Need_To_Update_Files => In_File = null,
+         Index                => Entity_Reference_Arrays.First,
+         Entity               => Entity,
+         In_File              => In_File);
+   end Find_All_References;
+
+   ------------
+   -- At_End --
+   ------------
+
+   function At_End (Iter : Entity_Reference_Iterator) return Boolean is
+   begin
+      return not Iter.Need_To_Update_Files
+        and then Iter.Index > Last (Iter.Entity.References);
+   end At_End;
+
+   ----------
+   -- Next --
+   ----------
+
+   procedure Next (Iter : in out Entity_Reference_Iterator) is
+   begin
+      if Iter.Need_To_Update_Files then
+         --  Next (Iter.Deps);
+         null;
+      else
+         Iter.Index := Iter.Index + 1;
+      end if;
+   end Next;
+
+   ---------
+   -- Get --
+   ---------
+
+   function Get (Iter : Entity_Reference_Iterator) return File_Location is
+   begin
+      if Iter.Need_To_Update_Files then
+         return No_File_Location;
+      else
+         return Iter.Entity.References.Table (Iter.Index).Location;
+      end if;
+   end Get;
+
+   -------------
+   -- Destroy --
+   -------------
+
+   procedure Destroy (Iter : in out Entity_Reference_Iterator) is
+      pragma Unreferenced (Iter);
+   begin
+      --  Destroy (Iter.Deps);
+      null;
+   end Destroy;
+
+   --------------------------------
+   -- Find_Ancestor_Dependencies --
+   --------------------------------
+
+   procedure Find_Ancestor_Dependencies
+     (Iter                  : out Dependency_Iterator;
+      File                  : Source_File;
+      File_Has_No_LI_Report : File_Error_Reporter := null;
+      Include_Self          : Boolean := False;
+      Single_Source_File    : Boolean := False)
+   is
+      Importing : Imported_Project_Iterator;
+   begin
+      Trace (Me, "Find_Ancestor_Dependencies: "
+             & Full_Name (Get_Filename (File)).all
+             & " Self=" & Boolean'Image (Include_Self)
+             & " Single=" & Boolean'Image (Single_Source_File));
+
+      Update_Xref (File, File_Has_No_LI_Report);
+
+      Assert (Me, File.LI /= null, "No LI file known");
+
+      if Single_Source_File then
+         Iter := (Importing             =>
+                    Start (Get_Project (File.LI), Recursive => False),
+                  Source_Files          =>
+                    new File_Array'(1 => Get_Filename (File)),
+                  Current_File          => 0,
+                  Include_Self          => Include_Self,
+                  File_Has_No_LI_Report => File_Has_No_LI_Report,
+                  Single_Source_File    => Single_Source_File,
+                  Total_Progress        => 1,
+                  Current_Progress      => 0,
+                  Dep_Index             => Dependency_Arrays.First,
+                  File                  => File);
+      else
+         Importing := Find_All_Projects_Importing
+           (Get_Project (File.LI), Include_Self => True);
+         Iter := (Importing             => Importing,
+                  Source_Files          => Get_Source_Files
+                    (Current (Importing), Recursive => False),
+                  Current_File          => 0,
+                  Include_Self          => Include_Self,
+                  File_Has_No_LI_Report => File_Has_No_LI_Report,
+                  Single_Source_File    => Single_Source_File,
+                  Total_Progress        => 0,
+                  Current_Progress      => 0,
+                  Dep_Index             => Dependency_Arrays.First,
+                  File                  => File);
+         Iter.Current_File := Iter.Source_Files'First - 1;
+
+         while Current (Importing) /= No_Project loop
+            Iter.Total_Progress := Iter.Total_Progress
+              + Direct_Sources_Count (Current (Importing));
+            Next (Importing);
+         end loop;
+      end if;
+
+      Next (Iter);
+   end Find_Ancestor_Dependencies;
+
+   ------------
+   -- At_End --
+   ------------
+
+   function At_End (Iter : Dependency_Iterator) return Boolean is
+   begin
+      return Iter.Source_Files = null
+        and then Iter.Dep_Index > Last (Iter.File.Depended_On);
+   end At_End;
+
+   ----------
+   -- Next --
+   ----------
+
+   procedure Next (Iter : in out Dependency_Iterator) is
+      Source : Source_File;
+      pragma Unreferenced (Source);
+   begin
+      if Iter.Source_Files = null then
+         Iter.Dep_Index := Iter.Dep_Index + 1;
+      else
+         loop
+            loop
+               Iter.Current_File := Iter.Current_File + 1;
+               exit when Iter.Current_File > Iter.Source_Files'Last;
+
+               if Iter.Include_Self
+                 or else Iter.Source_Files (Iter.Current_File) /=
+                    Get_Filename (Iter.File)
+               then
+                  Iter.Current_Progress := Iter.Current_Progress + 1;
+                  Source := Get_Source_Info
+                    (Get_LI_Handler
+                       (Iter.File.Db, Iter.Source_Files (Iter.Current_File)),
+                     Iter.Source_Files (Iter.Current_File),
+                     Iter.File_Has_No_LI_Report);
+                  return;
+               end if;
+            end loop;
+
+            Unchecked_Free (Iter.Source_Files);
+            Next (Iter.Importing);
+            if Current (Iter.Importing) = No_Project then
+               return;
+            end if;
+
+            Iter.Source_Files := Get_Source_Files
+              (Current (Iter.Importing), Recursive => False);
+            Iter.Current_File := Iter.Source_Files'First - 1;
+         end loop;
+      end if;
+   end Next;
+
+   ---------
+   -- Get --
+   ---------
+
+   function Get (Iter : Dependency_Iterator) return Source_File is
+   begin
+      if Iter.Source_Files /= null then
+         --  Not available yet
+         return null;
+      else
+         return Iter.File.Depended_On.Table (Iter.Dep_Index).File;
+      end if;
+   end Get;
+
+   -----------------
+   -- Is_Explicit --
+   -----------------
+
+   function Is_Explicit (Iter : Dependency_Iterator) return Boolean is
+   begin
+      if Iter.Source_Files /= null then
+         --  Not available yet
+         return False;
+      else
+         return Iter.File.Depended_On.Table (Iter.Dep_Index).Explicit;
+      end if;
+   end Is_Explicit;
+
+   -------------
+   -- Destroy --
+   -------------
+
+   procedure Destroy (Iter : in out Dependency_Iterator) is
+   begin
+      Unchecked_Free (Iter.Source_Files);
+   end Destroy;
+
+   -----------------------
+   -- Find_Dependencies --
+   -----------------------
+
+   procedure Find_Dependencies
+     (Iter                  : out File_Dependency_Iterator;
+      File                  : Source_File;
+      File_Has_No_LI_Report : File_Error_Reporter := null)
+   is
+   begin
+      Update_Xref (File, File_Has_No_LI_Report);
+      Iter := (Dep_Index             => Dependency_Arrays.First,
+               File                  => File);
+   end Find_Dependencies;
+
+   -----------------
+   -- Is_Explicit --
+   -----------------
+
+   function Is_Explicit (Iter : File_Dependency_Iterator) return Boolean is
+   begin
+      return Iter.File.Depends_On.Table (Iter.Dep_Index).Explicit;
+   end Is_Explicit;
+
+   ----------
+   -- Next --
+   ----------
+
+   procedure Next (Iter : in out File_Dependency_Iterator) is
+   begin
+      Iter.Dep_Index := Iter.Dep_Index + 1;
+   end Next;
+
+   ------------
+   -- At_End --
+   ------------
+
+   function At_End (Iter : File_Dependency_Iterator) return Boolean is
+   begin
+      return Iter.Dep_Index > Last (Iter.File.Depends_On);
+   end At_End;
+
+   ---------
+   -- Get --
+   ---------
+
+   function Get (Iter : File_Dependency_Iterator) return Source_File is
+   begin
+      return Iter.File.Depends_On.Table (Iter.Dep_Index).File;
+   end Get;
 
 end Entities.Queries;
