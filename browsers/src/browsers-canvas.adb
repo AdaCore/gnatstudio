@@ -439,8 +439,7 @@ package body Browsers.Canvas is
    exception
       when E : others =>
          Pop_State (Get_Kernel (Data.Browser));
-         Trace (Me, "Unexpected exception in Set_Root "
-                & Exception_Information (E));
+         Trace (Me, "Unexpected exception " & Exception_Information (E));
    end Set_Root;
 
    ------------------
@@ -464,8 +463,15 @@ package body Browsers.Canvas is
    procedure On_Refresh (Browser : access Gtk_Widget_Record'Class) is
       B : Glide_Browser := Glide_Browser (Browser);
    begin
+      Push_State (Get_Kernel (B), Busy);
       Layout (Get_Canvas (B), Force => True, Vertical_Layout => True);
       Refresh_Canvas (Get_Canvas (B));
+      Pop_State (Get_Kernel (B));
+
+   exception
+      when E : others =>
+         Pop_State (Get_Kernel (B));
+         Trace (Me, "Unexpected exception " & Exception_Information (E));
    end On_Refresh;
 
    -----------------------
