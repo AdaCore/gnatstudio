@@ -159,6 +159,7 @@ dnl
     no_gtk=yes
   else
     GTK_CFLAGS=`$GTK_CONFIG --cflags`
+    GTKADA_SRC=`echo $GTK_CFLAGS | sed -e 's/-I//'`
     GTK_LIBS=`$GTK_CONFIG --libs`
     GTK_STATIC_LIBS=`$GTK_CONFIG --libs --static`
     gtk_major_version=`$GTK_CONFIG --version | \
@@ -234,11 +235,13 @@ main ()
        fi
      fi
      GTK_CFLAGS=""
+     GTKADA_SRC=""
      GTK_LIBS=""
      GTK_STATIC_LIBS=""
      ifelse([$3], , :, [$3])
   fi
   AC_SUBST(GTK_PREFIX)
+  AC_SUBST(GTKADA_SRC)
   AC_SUBST(GTK_CFLAGS)
   AC_SUBST(GTK_LIBS)
   AC_SUBST(GTK_STATIC_LIBS)
