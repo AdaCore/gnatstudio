@@ -166,15 +166,40 @@ package body GVD.Explorer is
    --  calculated lazily only the first time the user wants to see it.
    --  Data is the user_data associated with To_Node.
 
+   procedure Create_Current_File_Style
+     (Explorer : access Explorer_Record'Class);
+   --  Created the style used by the explorer to highlight the current file.
+   --  This needs to be called only once the explorer has been fully
+   --  initialized and its own internal styles have been created, otherwise
+   --  the current file might not have the same font as the other files.
+   --  This does nothing if the style has already been created.
+
+   -------------------------------
+   -- Create_Current_File_Style --
+   -------------------------------
+
+   procedure Create_Current_File_Style
+     (Explorer : access Explorer_Record'Class)
+   is
+      Color : Gdk.Color.Gdk_Color;
+   begin
+      if Explorer.Current_File_Style = null then
+         Color := Get_Pref (File_Name_Bg_Color);
+         Explorer.Current_File_Style := Copy (Get_Style (Explorer));
+         Set_Base (Explorer.Current_File_Style, State_Normal, Color);
+         Set_Base (Explorer.Current_File_Style, State_Selected, Color);
+         Set_Foreground (Explorer.Current_File_Style, State_Active,
+                         Black (Get_System));
+      end if;
+   end Create_Current_File_Style;
+
    -------------
    -- Gtk_New --
    -------------
 
    procedure Gtk_New
      (Explorer    : out Explorer_Access;
-      Code_Editor : access Gtk.Widget.Gtk_Widget_Record'Class)
-   is
-      Color : Gdk.Color.Gdk_Color;
+      Code_Editor : access Gtk.Widget.Gtk_Widget_Record'Class) is
    begin
       Explorer := new Explorer_Record;
       Initialize (Explorer, Columns => 1);
@@ -182,15 +207,6 @@ package body GVD.Explorer is
       Add_Events (Explorer, Button_Press_Mask or Button_Release_Mask);
 
       Explorer.Code_Editor := Gtk_Widget (Code_Editor);
-
-      Color := Get_Pref (File_Name_Bg_Color);
-      Explorer.Current_File_Style := Copy (Get_Style (Code_Editor));
-      Set_Base (Explorer.Current_File_Style, State_Normal, Color);
-      Set_Base (Explorer.Current_File_Style, State_Selected, Color);
-      Set_Foreground (Explorer.Current_File_Style, State_Active,
-                      Black (Get_System));
-
-      Explorer.File_Name_Style := Copy (Get_Style (Code_Editor));
 
       Widget_Callback.Connect
         (Explorer, "tree_expand", Expand_Explorer_Tree'Access);
@@ -796,6 +812,7 @@ package body GVD.Explorer is
       end if;
 
       Tree.Current_File_Node := Node;
+      Create_Current_File_Style (Tree);
       Node_Set_Row_Style
         (Tree, Tree.Current_File_Node, Tree.Current_File_Style);
 
@@ -1176,6 +1193,7 @@ package body GVD.Explorer is
       Color : Gdk_Color;
    begin
       --  Change the highlighting color
+      Create_Current_File_Style (Explorer);
       Color := Get_Pref (File_Name_Bg_Color);
       Set_Base (Explorer.Current_File_Style, State_Normal, Color);
       Set_Base (Explorer.Current_File_Style, State_Selected, Color);

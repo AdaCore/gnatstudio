@@ -87,7 +87,6 @@ private
       Explorer_Root      : Gtk.Ctree.Gtk_Ctree_Node;
       Code_Editor        : Gtk.Widget.Gtk_Widget;
       Current_File_Style : Gtk.Style.Gtk_Style;
-      File_Name_Style    : Gtk.Style.Gtk_Style;
       Current_File_Node  : Gtk.Ctree.Gtk_Ctree_Node;
 
       Current_Line       : Natural := 1;
