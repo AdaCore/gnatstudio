@@ -1115,6 +1115,8 @@ package body GVD_Module is
       Set_Sensitive (Top.Step_Button, Sensitive);
       Set_Sensitive (Top.Next_Button, Sensitive);
       Set_Sensitive (Top.Finish_Button, Sensitive);
+      Set_Sensitive (Top.Up_Button, Sensitive);
+      Set_Sensitive (Top.Down_Button, Sensitive);
    end Set_Sensitive;
 
    -------------------
@@ -1660,17 +1662,19 @@ package body GVD_Module is
             --  set the mode accordingly.
             --  ??? Maybe we could optimize a little bit here.
 
-            for J in Tab.Breakpoints'Range loop
-               if Tab.Breakpoints (J).Line = File_Line.Line
-                 and then Tab.Breakpoints (J).File /= null
-                 and then Tab.Breakpoints (J).File.all = File_Line.File.all
-               then
-                  Mode := Unset;
-                  A (L).Image := Line_Has_Breakpoint_Pixbuf;
-                  Identifier := Tab.Breakpoints (J).Num;
-                  exit;
-               end if;
-            end loop;
+            if Tab.Breakpoints /= null then
+               for J in Tab.Breakpoints'Range loop
+                  if Tab.Breakpoints (J).Line = File_Line.Line
+                    and then Tab.Breakpoints (J).File /= null
+                    and then Tab.Breakpoints (J).File.all = File_Line.File.all
+                  then
+                     Mode := Unset;
+                     A (L).Image := Line_Has_Breakpoint_Pixbuf;
+                     Identifier := Tab.Breakpoints (J).Num;
+                     exit;
+                  end if;
+               end loop;
+            end if;
 
             Create
               (C,
@@ -2117,6 +2121,26 @@ package body GVD_Module is
       Widget_Callback.Object_Connect
         (Top.Finish_Button, "clicked",
          Widget_Callback.To_Marshaller (On_Finish'Access), Window);
+
+      Top.Up_Button := Append_Element
+        (Toolbar => Toolbar,
+         The_Type => Toolbar_Child_Button,
+         Text     => -"Up",
+         Tooltip_Text => -"Select and print stack frame that called this one",
+         Icon     => Gtk_Widget (Create_Pixmap (up_xpm, Window)));
+      Widget_Callback.Object_Connect
+        (Top.Up_Button, "clicked",
+         Widget_Callback.To_Marshaller (On_Up'Access), Window);
+
+      Top.Down_Button := Append_Element
+        (Toolbar => Toolbar,
+         The_Type => Toolbar_Child_Button,
+         Text     => -"Down",
+         Tooltip_Text => -"Select and print stack frame called by this one",
+         Icon     => Gtk_Widget (Create_Pixmap (down_xpm, Window)));
+      Widget_Callback.Object_Connect
+        (Top.Down_Button, "clicked",
+         Widget_Callback.To_Marshaller (On_Down'Access), Window);
 
       Set_Sensitive (Kernel_Handle (Kernel), Debug_None);
 
