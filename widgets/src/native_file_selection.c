@@ -35,9 +35,6 @@ FileSelectionHook
         /* move the window to the proper position */
 
         lpPos = (POINT*) (((OPENFILENAME*) lParam)->lCustData);
-        GetWindowRect ( GetParent (hdlg), &rect);
-        lpPos->x -= (rect.right - rect.left) / 2;
-        lpPos->y -= (rect.bottom - rect.top) / 2;
         SetWindowPos (GetParent (hdlg), HWND_TOP,
                       lpPos->x,
                       lpPos->y,
