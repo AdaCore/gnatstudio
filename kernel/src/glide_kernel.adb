@@ -874,19 +874,14 @@ package body Glide_Kernel is
    -- Context_Changed --
    ---------------------
 
-   procedure Context_Changed
-     (Handle  : access Kernel_Handle_Record)
-   is
-      C : constant Selection_Context_Access := Get_Current_Context (Handle);
-      pragma Unreferenced (C);
+   procedure Context_Changed (Handle  : access Kernel_Handle_Record) is
+      C : Selection_Context_Access := Get_Current_Context (Handle);
    begin
-      Trace (Me, "Context_Changed");
-      Ref (Handle.Current_Context);
+      Ref (C);
       Run_Hook
         (Handle, Context_Changed_Hook,
-         Context_Hooks_Args'
-           (Hooks_Data with Context => Handle.Current_Context));
-      Unref (Handle.Current_Context);
+         Context_Hooks_Args'(Hooks_Data with Context => C));
+      Unref (C);
    end Context_Changed;
 
    ------------------------

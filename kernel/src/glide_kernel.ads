@@ -693,8 +693,7 @@ package Glide_Kernel is
    -- Hooks --
    -----------
 
-   procedure Context_Changed
-     (Handle  : access Kernel_Handle_Record);
+   procedure Context_Changed (Handle : access Kernel_Handle_Record);
    --  Runs the "context_changed" hook
 
    procedure Source_Lines_Revealed
