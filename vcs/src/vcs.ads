@@ -58,6 +58,9 @@ package VCS is
    --  Add an identifier to the list of known identifiers.
    --  See Get_VCS_From_Id above.
 
+   function Name (Ref : access VCS_Record) return String is abstract;
+   --  The name of the VCS system.
+
    procedure Free (Ref : access VCS_Record);
    --  Free memory associated with Ref.
    --  ??? is this the correct way to do it ?
