@@ -1454,33 +1454,42 @@ package body Src_Editor_Box is
    ------------------
 
    procedure On_Goto_Line
-     (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access)
-   is
-      Kernel : constant Kernel_Handle := Get_Kernel (Context);
-      Source : constant Source_Editor_Box := Source_Editor_Box (Widget);
-
+     (Editor : access Source_Editor_Box_Record;
+      Kernel : Glide_Kernel.Kernel_Handle) is
    begin
       declare
          Str : constant String := Simple_Entry_Dialog
            (Get_Main_Window (Kernel), -"Goto Line...", -"Enter line number:",
-            Win_Pos_Mouse, "Goto_Line");
+            Win_Pos_Mouse, Get_History (Kernel), "Goto_Line");
 
       begin
          if Str = "" or else Str (Str'First) = ASCII.NUL then
             return;
          end if;
 
-         Set_Cursor_Location (Source, Positive'Value (Str));
+         Set_Cursor_Location (Editor, Positive'Value (Str));
 
       exception
          when Constraint_Error =>
-            Console.Insert (Kernel, -"Invalid line number: " & Str);
+            Console.Insert
+              (Kernel, -"Invalid line number: " & Str, Mode => Error);
       end;
 
    exception
       when E : others =>
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
+   end On_Goto_Line;
+
+   ------------------
+   -- On_Goto_Line --
+   ------------------
+
+   procedure On_Goto_Line
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context_Access) is
+   begin
+      On_Goto_Line
+        (Editor => Source_Editor_Box (Widget), Kernel => Get_Kernel (Context));
    end On_Goto_Line;
 
    -------------------------
@@ -1753,7 +1762,8 @@ package body Src_Editor_Box is
                  Select_File
                    (Title             => -"Save File As",
                     Use_Native_Dialog =>
-                      Get_Pref (Editor.Kernel, Use_Native_Dialogs));
+                      Get_Pref (Editor.Kernel, Use_Native_Dialogs),
+                    History           => Get_History (Editor.Kernel));
 
             begin
                if Name = "" then

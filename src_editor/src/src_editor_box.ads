@@ -390,6 +390,11 @@ package Src_Editor_Box is
    --  Lenght is the length of text that should be selected after
    --  Mark.
 
+   procedure On_Goto_Line
+     (Editor : access Source_Editor_Box_Record;
+      Kernel : Glide_Kernel.Kernel_Handle);
+   --  Navigate->Goto Line... menu
+
    ---------------------
    -- Contextual menu --
    ---------------------
