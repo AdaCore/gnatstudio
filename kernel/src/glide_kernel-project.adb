@@ -33,6 +33,7 @@ with GNAT.OS_Lib; use GNAT.OS_Lib;
 
 with Prj_API;            use Prj_API;
 with Src_Info.Prj_Utils; use Src_Info.Prj_Utils;
+with Prj_Normalize;      use Prj_Normalize;
 
 with Traces;  use Traces;
 with Glide_Kernel.Console; use Glide_Kernel.Console;
@@ -147,6 +148,8 @@ package body Glide_Kernel.Project is
          Insert
            (Kernel, Text => "Couldn't parse the project " & Project);
       end if;
+
+      Reset_Normalized_Flag (Kernel.Project);
    end Load_Project;
 
    -----------------
