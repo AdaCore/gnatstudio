@@ -118,10 +118,6 @@ package body Browsers.Canvas is
      (Mitem : access Gtk_Widget_Record'Class; Data : Cb_Data);
    --  Remove all items except the one described in Data from the canvas.
 
-   procedure On_Background_Click
-     (Browser : access Gtk_Widget_Record'Class);
-   --  Called when the user clicked in the background of the canvas
-
    procedure Close_Item
      (Event : Gdk.Event.Gdk_Event; User  : access Browser_Item_Record'Class);
    --  Close an item when the user presses on the title bar button.
@@ -158,6 +154,10 @@ package body Browsers.Canvas is
 
    procedure On_Zoom (Canvas : access Gtk_Widget_Record'Class);
    --  Called when the canvas has been zoomed
+
+   procedure On_Selected (Browser : access Gtk_Widget_Record'Class);
+   --  Called when Browser gets the keyboard focus. In fact, we really want to
+   --  give this to the canvas.
 
    -------------
    -- On_Zoom --
@@ -244,6 +244,17 @@ package body Browsers.Canvas is
       end if;
    end Draw_Background;
 
+   -----------------
+   -- On_Selected --
+   -----------------
+
+   procedure On_Selected (Browser : access Gtk_Widget_Record'Class) is
+      Canvas : constant Interactive_Canvas :=
+        Get_Canvas (General_Browser (Browser));
+   begin
+      Grab_Focus (Canvas);
+   end On_Selected;
+
    ----------------
    -- Initialize --
    ----------------
@@ -307,13 +318,14 @@ package body Browsers.Canvas is
          Browser);
 
       Widget_Callback.Object_Connect
-        (Browser.Canvas, "background_click",
-         Widget_Callback.To_Marshaller (On_Background_Click'Access), Browser);
-
-      Widget_Callback.Object_Connect
         (Kernel, "preferences_changed",
          Widget_Callback.To_Marshaller (On_Preferences_Changed'Access),
          Browser);
+
+      Widget_Callback.Connect
+        (Browser, "grab_focus",
+         Widget_Callback.To_Marshaller (On_Selected'Access),
+         After => True);
 
       Set_Size_Request
         (Browser,
@@ -808,20 +820,6 @@ package body Browsers.Canvas is
    begin
       Redraw_Title_Bar (Browser_Item (Item));
    end Highlight;
-
-   -------------------------
-   -- On_Background_Click --
-   -------------------------
-
-   procedure On_Background_Click
-     (Browser : access Gtk_Widget_Record'Class) is
-   begin
-      Grab_Focus (General_Browser (Browser).Canvas);
-
-   exception
-      when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
-   end On_Background_Click;
 
    ---------------
    -- Draw_Link --
