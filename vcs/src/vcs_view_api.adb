@@ -18,6 +18,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Gtk.Accel_Group;             use Gtk.Accel_Group;
 with Gtk.Widget;                  use Gtk.Widget;
 with Gtk.Menu_Item;               use Gtk.Menu_Item;
 with Gtk.Enums;
@@ -66,6 +67,8 @@ package body VCS_View_API is
    Max_Rev_Length : constant := 10;
    --  The maximum length of a revision string, in characters. Revisions longer
    --  than this will be krunched when displayed in the editors.
+
+   VCS_Menu_Prefix : constant String := "<gps>/VCS/";
 
    -----------------------
    -- Local subprograms --
@@ -327,6 +330,8 @@ package body VCS_View_API is
       Section_Active  : Boolean;
       Items_Inserted  : Boolean := False;
 
+      Group : constant Gtk_Accel_Group := Get_Default_Accelerators (Kernel);
+
       procedure Add_Action
         (Action   : VCS_Action;
          Callback : Context_Callback.Marshallers.Void_Marshaller.Handler;
@@ -357,6 +362,11 @@ package body VCS_View_API is
 
             if not Section_Active then
                Set_Sensitive (Item, False);
+            end if;
+
+            if Show_Everything then
+               Set_Accel_Path
+                 (Item, VCS_Menu_Prefix & Actions (Action).all, Group);
             end if;
 
             Items_Inserted := True;
