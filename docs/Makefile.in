@@ -9,9 +9,8 @@ INSTALL = @INSTALL@
 INSTALL_DATA = @INSTALL_DATA@
 CONVERT = convert
 CP = cp -p
-IMAGES = gps_title.jpg *.gif
+IMAGES = gps_title.jpg *.jpg
 
-TEXI2HTML_FLAGS=-split_chapter -menu
 TEXI=gps.texi ../gvd/docs/gvd_contents.texi
 
 all: cp_gvd stamp-pdf doc tutorial gps_pg clean-temp-files
@@ -27,9 +26,13 @@ cp_gvd:
 	done
 
 stamp-pdf: $(IMAGES)
+	@echo "Converting images to JPG"
+	@-for img in [^g]*.gif gps-vcs-*.gif; do \
+	  $(CONVERT) $${img} `basename $${img} .gif`.jpg; \
+	done
 	@echo "Converting images to PDF"
 	@-for img in [^g]*.gif gps-vcs-*.gif; do \
-	  $(CONVERT) $${img} `basename $${img} .gif`.pdf; \
+	  $(CONVERT) -compress none $${img} `basename $${img} .gif`.pdf; \
 	done
 	touch stamp-pdf
 
@@ -38,13 +41,16 @@ doc:      gps.txt gps.html gps.pdf
 gps_pg:   gps_pg.pdf gps_pg.html
 
 gps-tutorial.html:                tutorial.texi
-	perl ./texi2html -out_file $@ $< -menu
+	makeinfo --html --no-validate --no-split --number-sections $< -o $@
 
 gps_pg.html gps_pg.pdf:            gps_pg.texi
 gps.html gps.pdf gps.txt: ${TEXI}
 
+## We generate the documentation twice, in case the version of makeinfo is
+## recent enough to support --css-include
 %.html::
-	perl ./texi2html $< ${TEXI2HTML_FLAGS}
+	makeinfo --html --no-validate --number-sections $<
+	@-makeinfo --html --no-validate --css-include=gps.css --number-sections $< >/dev/null 2>/dev/null
 
 %.pdf::
 ifneq (${TEXI2DVI},)
@@ -73,9 +79,10 @@ install:
 	$(MKDIR) $(docdir)/txt
 	-$(INSTALL_DATA) gps-welcome.html $(docdir)/html
 	-$(INSTALL_DATA) gps-tutorial.html $(docdir)/html
-	-for file in gps.html $(wildcard gps_*.html); do \
-	  $(INSTALL_DATA) $$file $(docdir)/html; \
+	-for file in ${wildcard gps/*}; do \
+	   ${INSTALL_DATA} $${file} $(docdir)/html; \
 	done
+	-$(INSTALL_DATA) gps/index.html $(docdir)/html/gps.html
 	-cd ../design; ./convert.pl > $(docdir)/html/TODO.html
 	-$(INSTALL_DATA) gps.pdf  $(docdir)/pdf
 	-$(INSTALL_DATA) gps.txt  $(docdir)/txt
@@ -103,6 +110,7 @@ clean-temp-files:
 
 clean: clean-temp-files
 	-$(RM) gps-tutorial*.html gps.html gps_*.html gps.pdf gps.txt stamp-*
+	-${RM} -rf gps/ gps_pg/
 
 mostlyclean: clean
 
