@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --               GtkAda - Ada95 binding for Gtk+/Gnome               --
 --                                                                   --
---                 Copyright (C) 2001-2003 ACT-Europe                --
+--                 Copyright (C) 2001-2004 ACT-Europe                --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -141,6 +141,9 @@ package body Gtkada.File_Selector is
       Text      : out GNAT.OS_Lib.String_Access);
    --  See spec for more details on this dispatching routine.
 
+   procedure Set_Busy (W : Gtk_Window; Busy : Boolean);
+   --  Set/Reset the busy cursor on the specified window.
+
    ---------------
    -- Callbacks --
    ---------------
@@ -226,6 +229,17 @@ package body Gtkada.File_Selector is
 
    procedure Name_Selected (File : access Gtk_Widget_Record'Class);
    --  Called when a new file has been selected.
+
+   --------------
+   -- Set_Busy --
+   --------------
+
+   procedure Set_Busy (W : Gtk_Window; Busy : Boolean) is
+   begin
+      if W /= null then
+         Set_Busy_Cursor (Get_Window (W), Busy, Busy);
+      end if;
+   end Set_Busy;
 
    -------------------
    -- Columns_Types --
@@ -429,6 +443,8 @@ package body Gtkada.File_Selector is
          end;
       end if;
 
+      Set_Busy (Parent, True);
+
       if Base_Directory = "" then
          Gtk_New
            (File_Selector, (1 => Directory_Separator), Last_Directory.all,
@@ -448,6 +464,8 @@ package body Gtkada.File_Selector is
            (File_Selector,
             Regexp_File_Filter (File_Pattern, Pattern_Name));
       end if;
+
+      Set_Busy (Parent, False);
 
       return Select_File (File_Selector, Parent);
    end Select_File;
@@ -513,6 +531,8 @@ package body Gtkada.File_Selector is
 
       File_Selector_Window : File_Selector_Window_Access;
    begin
+      Set_Busy (Parent, True);
+
       if Base_Directory = "" then
          Gtk_New
            (File_Selector_Window,
@@ -525,6 +545,7 @@ package body Gtkada.File_Selector is
       end if;
 
       Set_Position (File_Selector_Window, Win_Pos_Mouse);
+      Set_Busy (Parent, False);
 
       return Select_Directory (File_Selector_Window, Parent);
    end Select_Directory;
@@ -689,7 +710,6 @@ package body Gtkada.File_Selector is
             Win.Display_Idle_Handler :=
               Add (Display_File'Access,
                    Win,
-
                    Destroy => On_Display_Idle_Destroy'Access);
          end if;
 
@@ -769,7 +789,7 @@ package body Gtkada.File_Selector is
          return;
       end if;
 
-      Set_Busy_Cursor (Get_Window (Win), True, True);
+      Set_Busy (Gtk_Window (Win), True);
       Clear (Win.File_Model);
       Free (Win.Files);
       Win.Remaining_Files := String_List.Null_Node;
@@ -795,7 +815,7 @@ package body Gtkada.File_Selector is
       end;
 
       if Filter = null then
-         Set_Busy_Cursor (Get_Window (Win), False, False);
+         Set_Busy (Gtk_Window (Win), False);
          return;
       end if;
 
@@ -816,10 +836,10 @@ package body Gtkada.File_Selector is
          Win.Current_Directory_Is_Open := True;
 
          if Win.Read_Idle_Handler = 0 then
-            Win.Read_Idle_Handler
-              := Add (Read_File'Access,
-                      File_Selector_Window_Access (Win),
-                      Destroy => On_Read_Idle_Destroy'Access);
+            Win.Read_Idle_Handler :=
+              Add (Read_File'Access,
+                   File_Selector_Window_Access (Win),
+                   Destroy => On_Read_Idle_Destroy'Access);
          end if;
 
       exception
@@ -830,7 +850,7 @@ package body Gtkada.File_Selector is
                    -"Could not open " & Dir);
       end;
 
-      Set_Busy_Cursor (Get_Window (Win), False, False);
+      Set_Busy (Gtk_Window (Win), False);
    end Refresh_Files;
 
    ----------------------
