@@ -26,7 +26,7 @@ with Language;                  use Language;
 with Language_Handlers;         use Language_Handlers;
 with Entities.Queries;          use Entities.Queries;
 with VFS;                       use VFS;
-with GPS.Kernel.Project;      use GPS.Kernel, GPS.Kernel.Project;
+with GPS.Kernel.Project;        use GPS.Kernel, GPS.Kernel.Project;
 with Projects.Registry;         use Projects.Registry;
 with Traces;                    use Traces;
 with Ada.Strings.Unbounded;
@@ -37,6 +37,8 @@ with Docgen.Backend;            use Docgen.Backend;
 with Language;                  use Language;
 
 package body Docgen.Work_On_Source is
+
+   Me : constant Debug_Handle := Create ("Docgen.Work_On_Source");
 
    package TEL renames Type_Entity_List;
 
@@ -1598,7 +1600,7 @@ package body Docgen.Work_On_Source is
       end if;
    exception
       when TEL.List_Empty =>
-         null;
+         Trace (Me, "Empty_List caught");
    end Process_Packages;
 
    -------------------------
