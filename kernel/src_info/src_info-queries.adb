@@ -1549,8 +1549,8 @@ package body Src_Info.Queries is
    -- Get_Declaration_File_Of --
    -----------------------------
 
-   function Get_Declaration_File_Of (Entity : Entity_Information)
-      return String is
+   function Get_Declaration_File_Of
+     (Entity : Entity_Information) return String is
    begin
       return Entity.Decl_File.all;
    end Get_Declaration_File_Of;
