@@ -119,3 +119,5 @@ GNAT_SOURCES= \
   widechar.ads \
   widechar.adb
 
+list-sources:
+	@echo $(GNAT_SOURCES)
