@@ -421,8 +421,8 @@ package body Glide_Kernel.Standard_Hooks is
    procedure Open_File_Run_Hook_Handler
      (Data : in out Callback_Data'Class; Command : String)
    is
-      Name   : constant String := Nth_Arg (Data, 1);
       Kernel : constant Kernel_Handle := Get_Kernel (Data);
+      Name   : constant String := Get_Hook_Name (Data, 1);
       Args   : Source_File_Hooks_Args;
       pragma Unreferenced (Command);
    begin
@@ -445,7 +445,7 @@ package body Glide_Kernel.Standard_Hooks is
    procedure Line_Information_Run_Hook_Handler
      (Data : in out Callback_Data'Class; Command : String)
    is
-      Name   : constant String := Nth_Arg (Data, 1);
+      Name   : constant String := Get_Hook_Name (Data, 1);
       Kernel : constant Kernel_Handle := Get_Kernel (Data);
       Identifier : constant String := Nth_Arg (Data, 2);
       Args   : constant File_Line_Hooks_Args :=
@@ -470,7 +470,7 @@ package body Glide_Kernel.Standard_Hooks is
    procedure Location_Run_Hook_Handler
      (Data : in out Callback_Data'Class; Command : String)
    is
-      Name   : constant String := Nth_Arg (Data, 1);
+      Name   : constant String := Get_Hook_Name (Data, 1);
       Kernel : constant Kernel_Handle := Get_Kernel (Data);
       Identifier : constant String := Nth_Arg (Data, 2);
       Category   : constant String := Nth_Arg (Data, 3);
@@ -500,7 +500,7 @@ package body Glide_Kernel.Standard_Hooks is
    procedure Html_Run_Hook_Handler
      (Data : in out Callback_Data'Class; Command : String)
    is
-      Name   : constant String := Nth_Arg (Data, 1);
+      Name   : constant String := Get_Hook_Name (Data, 1);
       Kernel : constant Kernel_Handle := Get_Kernel (Data);
       Anchor : constant String := Nth_Arg (Data, 4);
       Args   : constant Html_Hooks_Args :=
@@ -522,7 +522,7 @@ package body Glide_Kernel.Standard_Hooks is
    procedure Diff_Run_Hook_Handler
      (Data : in out Callback_Data'Class; Command : String)
    is
-      Name   : constant String := Nth_Arg (Data, 1);
+      Name   : constant String := Get_Hook_Name (Data, 1);
       Kernel : constant Kernel_Handle := Get_Kernel (Data);
       Args   : Diff_Hooks_Args;
       pragma Unreferenced (Command);
@@ -544,7 +544,7 @@ package body Glide_Kernel.Standard_Hooks is
    procedure File_Run_Hook_Handler
      (Data : in out Callback_Data'Class; Command : String)
    is
-      Name   : constant String := Nth_Arg (Data, 1);
+      Name   : constant String := Get_Hook_Name (Data, 1);
       Kernel : constant Kernel_Handle := Get_Kernel (Data);
       Args   : File_Hooks_Args :=
         (Hooks_Data with
@@ -561,7 +561,7 @@ package body Glide_Kernel.Standard_Hooks is
    procedure Context_Run_Hook_Handler
      (Data : in out Callback_Data'Class; Command : String)
    is
-      Name   : constant String := Nth_Arg (Data, 1);
+      Name   : constant String := Get_Hook_Name (Data, 1);
       Kernel : constant Kernel_Handle := Get_Kernel (Data);
       Args   : Context_Hooks_Args := (Hooks_Data with Get_Data (Data, 2));
       pragma Unreferenced (Command);
