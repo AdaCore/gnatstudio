@@ -30,37 +30,34 @@ package Main_Debug_Window_Pkg.Callbacks is
      (Object : access Gtk_Widget_Record'Class);
 
    procedure On_Open_Core_Dump1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class);
+     (Object : access Gtk_Widget_Record'Class);
 
    procedure On_Open_Source1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class);
+     (Object : access Gtk_Widget_Record'Class);
 
    procedure On_Open_Session1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class);
+     (Object : access Gtk_Widget_Record'Class);
 
    procedure On_Save_Session_As1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class);
+     (Object : access Gtk_Widget_Record'Class);
 
    procedure On_Attach_To_Process1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class);
+     (Object : access Gtk_Widget_Record'Class);
 
    procedure On_Detach_Process1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class);
+     (Object : access Gtk_Widget_Record'Class);
 
    procedure On_Print_Graph1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class);
+     (Object : access Gtk_Widget_Record'Class);
 
    procedure On_Change_Directory1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class);
-
-   procedure On_Make1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class);
+     (Object : access Gtk_Widget_Record'Class);
 
    procedure On_Close1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class);
+     (Object : access Gtk_Widget_Record'Class);
 
    procedure On_Restart1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class);
+     (Object : access Gtk_Widget_Record'Class);
 
    procedure On_Exit1_Activate
      (Object : access Gtk_Widget_Record'Class);
@@ -93,12 +90,9 @@ package Main_Debug_Window_Pkg.Callbacks is
      (Object : access Gtk_Widget_Record'Class);
 
    procedure On_Gdb_Settings1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class);
+     (Object : access Gtk_Widget_Record'Class);
 
    procedure On_Save_Options1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class);
-
-   procedure On_Command_Tool1_Activate
      (Object : access Gtk_Menu_Item_Record'Class);
 
    procedure On_Execution_Window1_Activate
@@ -126,7 +120,7 @@ package Main_Debug_Window_Pkg.Callbacks is
      (Object : access Gtk_Widget_Record'Class);
 
    procedure On_Run_In_Execution_Window1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class);
+     (Object : access Gtk_Widget_Record'Class);
 
    procedure On_Step1_Activate
      (Object : access Gtk_Widget_Record'Class);
@@ -218,9 +212,6 @@ package Main_Debug_Window_Pkg.Callbacks is
    procedure On_Down1_Activate
      (Object : access Gtk_Widget_Record'Class);
 
-   procedure On_Edit_Breakpoints1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class);
-
    procedure On_Lookup_1_Activate
      (Object : access Gtk_Menu_Item_Record'Class);
 
@@ -246,6 +237,9 @@ package Main_Debug_Window_Pkg.Callbacks is
      (Object : access Gtk_Menu_Item_Record'Class);
 
    procedure On_Reload_Source1_Activate
+     (Object : access Gtk_Menu_Item_Record'Class);
+
+   procedure On_Edit_Breakpoints1_Activate
      (Object : access Gtk_Menu_Item_Record'Class);
 
    procedure On_Edit_Displays1_Activate
