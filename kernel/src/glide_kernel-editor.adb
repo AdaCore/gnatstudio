@@ -72,13 +72,11 @@ package body Glide_Kernel.Editor is
    --  ??? Need more comments.
 
    function Get_Current_Editor
-     (Top : Glide_Window) return Source_Editor_Box;
+     (Kernel : access Kernel_Handle_Record'Class) return Source_Editor_Box;
    --  Return the source editor that has currently the focus in the MDI
-   --  window associated with Top, null the focus child is not an editor.
+   --  window associated with Top, null if the focus child is not an editor.
 
-   type LI_File_Update_Status is
-     (Failure,
-      Success);
+   type LI_File_Update_Status is (Failure, Success);
    --  The status returned by the Update_LI_File_If_Necessary routine.
 
    procedure Update_LI_File_If_Necessary
@@ -104,23 +102,13 @@ package body Glide_Kernel.Editor is
    -- Get_Current_Editor --
    ------------------------
 
-   function Get_Current_Editor (Top : Glide_Window) return Source_Editor_Box is
-      MDI         : constant MDI_Window :=
-        Glide_Page.Glide_Page (Get_Current_Process (Top)).Process_Mdi;
-      Focus_Child : constant MDI_Child := Get_Focus_Child (MDI);
-      Source : Gtk_Widget;
-
+   function Get_Current_Editor
+     (Kernel : access Kernel_Handle_Record'Class) return Source_Editor_Box is
    begin
-      if Focus_Child = null then
+      if Kernel.Current_Editor = null then
          return null;
-      end if;
-
-      Source := Get_Widget (Focus_Child);
-
-      if Source.all in Source_Box_Record'Class then
-         return Source_Box (Source).Editor;
       else
-         return null;
+         return Source_Box (Get_Widget (Kernel.Current_Editor)).Editor;
       end if;
    end Get_Current_Editor;
 
@@ -387,9 +375,7 @@ package body Glide_Kernel.Editor is
       Name    : String := "";
       Success : out Boolean)
    is
-      Top     : constant Glide_Window := Glide_Window (Kernel.Main_Window);
-      Source  : constant Source_Editor_Box := Get_Current_Editor (Top);
-
+      Source : constant Source_Editor_Box := Get_Current_Editor (Kernel);
    begin
       if Source = null then
          return;
@@ -403,9 +389,7 @@ package body Glide_Kernel.Editor is
    -------------------
 
    procedure Cut_Clipboard (Kernel : access Kernel_Handle_Record'Class) is
-      Top     : constant Glide_Window := Glide_Window (Kernel.Main_Window);
-      Source  : constant Source_Editor_Box := Get_Current_Editor (Top);
-
+      Source : constant Source_Editor_Box := Get_Current_Editor (Kernel);
    begin
       if Source = null then
          return;
@@ -419,9 +403,7 @@ package body Glide_Kernel.Editor is
    --------------------
 
    procedure Copy_Clipboard (Kernel : access Kernel_Handle_Record'Class) is
-      Top     : constant Glide_Window := Glide_Window (Kernel.Main_Window);
-      Source  : constant Source_Editor_Box := Get_Current_Editor (Top);
-
+      Source : constant Source_Editor_Box := Get_Current_Editor (Kernel);
    begin
       if Source = null then
          return;
@@ -435,9 +417,7 @@ package body Glide_Kernel.Editor is
    ---------------------
 
    procedure Paste_Clipboard (Kernel : access Kernel_Handle_Record'Class) is
-      Top     : constant Glide_Window := Glide_Window (Kernel.Main_Window);
-      Source  : constant Source_Editor_Box := Get_Current_Editor (Top);
-
+      Source : constant Source_Editor_Box := Get_Current_Editor (Kernel);
    begin
       if Source = null then
          return;
@@ -451,9 +431,7 @@ package body Glide_Kernel.Editor is
    ----------------
 
    procedure Select_All (Kernel : access Kernel_Handle_Record'Class) is
-      Top     : constant Glide_Window := Glide_Window (Kernel.Main_Window);
-      Source  : constant Source_Editor_Box := Get_Current_Editor (Top);
-
+      Source : constant Source_Editor_Box := Get_Current_Editor (Kernel);
    begin
       if Source = null then
          return;
@@ -462,30 +440,50 @@ package body Glide_Kernel.Editor is
       Select_All (Source);
    end Select_All;
 
-   ---------------------
-   -- Focus_Is_Editor --
-   ---------------------
+   ----------------------
+   -- Get_Editor_Child --
+   ----------------------
 
-   function Focus_Is_Editor
-     (Kernel : access Kernel_Handle_Record'Class) return Boolean is
+   function Get_Editor_Child
+     (Kernel : access Kernel_Handle_Record'Class) return Gtkada.MDI.MDI_Child
+   is
    begin
-      return Get_Current_Editor (Glide_Window (Kernel.Main_Window)) /= null;
-   end Focus_Is_Editor;
+      return Kernel.Current_Editor;
+   end Get_Editor_Child;
 
-   ---------------------
-   -- Get_Focus_Title --
-   ---------------------
+   ----------------------
+   -- Set_Editor_Child --
+   ----------------------
 
-   function Get_Focus_Title
+   procedure Set_Editor_Child (Kernel : access Kernel_Handle_Record'Class) is
+      Top   : constant Glide_Window := Glide_Window (Kernel.Main_Window);
+      MDI   : constant MDI_Window :=
+        Glide_Page.Glide_Page (Get_Current_Process (Top)).Process_Mdi;
+      Child : constant MDI_Child := Get_Focus_Child (MDI);
+
+   begin
+      if Get_Widget (Child).all in Source_Box_Record'Class then
+         Kernel.Current_Editor := Child;
+      else
+         Kernel.Current_Editor := null;
+      end if;
+   end Set_Editor_Child;
+
+   -------------------------
+   -- Get_Editor_Filename --
+   -------------------------
+
+   function Get_Editor_Filename
      (Kernel : access Kernel_Handle_Record'Class) return String
    is
-      Top    : constant Glide_Window := Glide_Window (Kernel.Main_Window);
-      MDI    : constant MDI_Window   :=
-        Glide_Page.Glide_Page (Get_Current_Process (Top)).Process_Mdi;
-
+      Source : constant Source_Editor_Box := Get_Current_Editor (Kernel);
    begin
-      return Get_Title (Get_Focus_Child (MDI));
-   end Get_Focus_Title;
+      if Source = null then
+         return "";
+      else
+         return Get_Filename (Source);
+      end if;
+   end Get_Editor_Filename;
 
    ------------------------------
    -- Goto_Declaration_Or_Body --
@@ -494,9 +492,8 @@ package body Glide_Kernel.Editor is
    procedure Goto_Declaration_Or_Body
      (Kernel : access Kernel_Handle_Record'Class)
    is
-      Top           : constant Glide_Window :=
-        Glide_Window (Kernel.Main_Window);
-      Source        : Source_Editor_Box := Get_Current_Editor (Top);
+      Source        : constant Source_Editor_Box :=
+        Get_Current_Editor (Kernel);
       Source_Info   : LI_File_Ptr;
       Filename      : String_Access;
       Start_Line    : Positive;
@@ -508,7 +505,7 @@ package body Glide_Kernel.Editor is
       Update_Status : LI_File_Update_Status;
 
    begin
-      if Get_Filename (Source) = "" then
+      if Source = null or else Get_Filename (Source) = "" then
          Console.Insert
            (Kernel, "Cross-references not possible on unamed files!",
             Highlight_Sloc => False);
@@ -516,7 +513,7 @@ package body Glide_Kernel.Editor is
       end if;
 
       Source_Info := Locate_From_Source
-          (Get_Source_Info_List (Kernel), Get_Filename (Source));
+        (Get_Source_Info_List (Kernel), Get_Filename (Source));
       Update_LI_File_If_Necessary
         (Kernel, Source_Info, Get_Filename (Source), Update_Status);
 
@@ -569,7 +566,6 @@ package body Glide_Kernel.Editor is
          return;
       end if;
 
-      Source := Get_Current_Editor (Top);
       Unhighlight_All (Source);
       Highlight_Region
         (Source, Start_Line, Start_Column, End_Line, End_Column);
