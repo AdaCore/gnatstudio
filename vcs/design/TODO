@@ -1,8 +1,0 @@
-
- * [???] Have a way to register changes in a separate file.
-   This file is then automatically used as the default
-   revision history when a file is checked in (a la GNAT)
-
- * [???] Make a backup copy of the latest version checked in,
-   when a file is initially modified. This local copy can then
-   be used for efficient diffs and other operations (a la Emacs)
