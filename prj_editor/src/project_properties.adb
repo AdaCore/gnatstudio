@@ -225,9 +225,8 @@ package body Project_Properties is
       Add (Event, Label);
       Add_Widget (Group, Label);
       Set_Tip (Get_Tooltips (Kernel), Event,
-               -("Name of the project, and name of the file. This field is"
-                 & " case insensitive. This field only applies to the project"
-                 & " you selected initially"));
+               (-"Name of the project. ") &
+               (-"Only applies to the project you selected initially"));
 
       Gtk_New (Editor.Name);
       Set_Width_Chars (Editor.Name, 0);
@@ -1118,8 +1117,8 @@ package body Project_Properties is
 
          if not Is_Valid_Project_Name (Get_Text (Editor.Name)) then
             Response2 := Message_Dialog
-              (Msg     => -("Invalid name for the project (only lower"
-                            & " case letters, digits and underscores)"),
+              (Msg     => (-"Invalid name for the project ") &
+                          (-"(only letters, digits and underscores)"),
                Buttons => Button_OK,
                Dialog_Type => Error,
                Title   => -"Error",
@@ -1138,18 +1137,18 @@ package body Project_Properties is
 
          else
             declare
-               New_Name : constant String := Base_Name
-                 (Get_Text (Editor.Name), Prj.Project_File_Extension);
+               New_Name : constant String := Get_Text (Editor.Name);
+               New_File : constant String := To_File_Name (New_Name);
                New_Path : constant String :=
                  Name_As_Directory (Get_Text (Editor.Path));
             begin
                if (New_Name /= Project_Name (Project_View)
                    or else New_Path /= Dir_Name (Project_Path (Project_View)))
                  and then Is_Regular_File
-                 (New_Path & New_Name & Prj.Project_File_Extension)
+                 (New_Path & New_File & Prj.Project_File_Extension)
                then
                   Response2 := Message_Dialog
-                    (Msg => New_Path & New_Name & Prj.Project_File_Extension
+                    (Msg => New_Path & New_File & Prj.Project_File_Extension
                      & (-" already exists. Do you want to overwrite ?"),
                      Buttons => Button_Yes or Button_No,
                      Dialog_Type => Error,
@@ -1178,12 +1177,14 @@ package body Project_Properties is
             --  We normalize the project automatically. If the project is not
             --  modified after all, it doesn't matter since we are not going to
             --  save the project.
+
             if not Has_Been_Normalized (Project) then
                Normalize (Project, Recurse => False);
             end if;
 
             --  If we are moving the project through the GUI, then we need to
             --  convert the paths to absolute or the semantics changes.
+
             if New_Name /= Project_Name (Project_View)
               or else New_Path /= Dir_Name (Project_Path (Project_View))
             then
@@ -1191,6 +1192,7 @@ package body Project_Properties is
             end if;
 
             --  Convert the paths if necessary
+
             if Relative /= Project_Uses_Relative_Paths (Kernel, Project) then
                Set_Project_Uses_Relative_Paths (Kernel, Project, Relative);
                Changed := Changed
@@ -1228,6 +1230,7 @@ package body Project_Properties is
                --  Since we actually changed the project hierarchy (all modules
                --  that stored the name of the projects are now obsolete), we
                --  act as if a new project had been loaded.
+
                Project_Changed (Kernel);
 
                Changed := True;
