@@ -20,7 +20,7 @@
 ------------------------------------------------------------------------------
 
 with GNAT.IO; use GNAT.IO;
-with Interfaces.C.Strings;
+with Interfaces.C;
 with System;
 
 procedure Winps is
@@ -36,7 +36,6 @@ procedure Winps is
    type BOOL is new Integer;
 
    Null_Handle : constant HANDLE  := HANDLE (System.Null_Address);
-   Null_Module : constant HMODULE := HMODULE (System.Null_Address);
 
    type Handle_Set is array (Positive range <>) of aliased DWORD;
 
@@ -50,7 +49,7 @@ procedure Winps is
      (hProcess  : HANDLE;
       lphModule : access DWORD;
       len       : DWORD;
-      cb        : access DWORD);
+      cb        : access DWORD) return BOOL;
    pragma Import (Stdcall, EnumProcessModules, "EnumProcessModules");
 
    function OpenProcess
