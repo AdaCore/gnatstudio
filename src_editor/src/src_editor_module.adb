@@ -53,6 +53,7 @@ with Gtkada.MDI;                use Gtkada.MDI;
 with Gtkada.File_Selector;      use Gtkada.File_Selector;
 with Src_Editor_Box;            use Src_Editor_Box;
 with String_List_Utils;         use String_List_Utils;
+with String_Utils;              use String_Utils;
 with GNAT.Expect;               use GNAT.Expect;
 with Traces;                    use Traces;
 with Ada.Text_IO;               use Ada.Text_IO;
@@ -328,24 +329,20 @@ package body Src_Editor_Module is
 
          Get_Area (Area_Context, Line1, Line2);
 
-         declare
-            A : Line_Information_Array (Line1 .. Line2);
-         begin
-            for J in A'Range loop
-               A (J).Line := J;
-               A (J).Text := new String' (J'Img);
-            end loop;
+         Infos := new Line_Information_Array (Line1 .. Line2);
 
-            Infos := new Line_Information_Array' (A);
+         for J in Infos'Range loop
+            Infos (J).Line := J;
+            Infos (J).Text := new String' (Image (J));
+         end loop;
 
-            Add_Line_Information
-              (Kernel,
-               Directory_Information (Area_Context) &
-               File_Information (Area_Context),
-               Src_Editor_Module_Name,
-               Infos,
-               False);
-         end;
+         Add_Line_Information
+           (Kernel,
+            Directory_Information (Area_Context) &
+              File_Information (Area_Context),
+            Src_Editor_Module_Name,
+            Infos,
+            False);
       end if;
    end On_Lines_Revealed;
 
