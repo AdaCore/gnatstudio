@@ -299,12 +299,50 @@ Toggle overwrite mode
 @section Indentation
 @noindent
 
+@c --------------------------------------------------------------------------
 @node Cross References
 @section Cross References
+@c --------------------------------------------------------------------------
+
 @noindent
 
+GPS provides cross-references for all the entities defined in your
+application, as well as some advanced browsers like a call graph.
+For this to work, it needs some help from external tools, specific to
+each of the supported languages.
+
+@table @amp
+@item Ada
+The GNAT compiler itself is used to generate the cross-references
+information. This means that you need to compile your application to
+get access to this feature or the call graph. GPS doesn't provide
+automatic recompilation at the moment, although this is a planned
+feature. If your sources have been modified, you should recompile the
+modified files.
+
+There are a few special cases where GPS can not find the external file
+(called @file{ALI file}) that contains the cross-references
+information. Most likely, this is either because you haven't compiled
+your sources first, or because the source code has changed since the
+@file{ALI file} was generated.
+
+It could also be that you haven't included in the project the object
+directories that contain the @file{ALI files}.
+
+In addition, one special case can not be handled automatically. This
+is for separate units, whose file name have been krunched through the
+@file{gnatkr} command. To handle this, you should force GPS to parse
+all the @file{ALI files} in the appropriate object directory. This is
+done by right-clicking on the object directory in the explorer
+(left-side panel on the main window), and selecting the menu "Parse
+all xref information".
+
+
+@c --------------------------------------------------------------------------
 @node Using an External Editor
 @section Using an External Editor
+@c --------------------------------------------------------------------------
+
 @noindent
 
 GPS is fully integrated with a number of external editors, in
