@@ -25,10 +25,10 @@ project Sdc is
    package Builder is
       case Build is
          when "DEBUG" =>
-            for Default_Switches ("ada") use ("-s", "-g");
+            for Default_Switches ("ada") use ("-g");
 
          when "PRODUCTION" =>
-            for Default_Switches ("ada") use ("-s");
+            for Default_Switches ("ada") use ();
       end case;
    end Builder;
 
