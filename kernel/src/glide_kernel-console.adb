@@ -24,6 +24,7 @@ with GNAT.Calendar.Time_IO; use GNAT.Calendar.Time_IO;
 with Glib;                 use Glib;
 with Glib.Object;          use Glib.Object;
 with Glib.Values;          use Glib.Values;
+with Glib.Xml_Int;             use Glib.Xml_Int;
 
 with Interactive_Consoles; use Interactive_Consoles;
 with Glide_Intl;           use Glide_Intl;
@@ -82,6 +83,23 @@ package body Glide_Kernel.Console is
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Callback for File->Messages->Clear menu.
 
+   function Load_Desktop
+     (MDI  : MDI_Window;
+      Node : Node_Ptr;
+      User : Kernel_Handle) return MDI_Child;
+   --  Restore the status of the explorer from a saved XML tree.
+
+   function Save_Desktop
+     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class)
+      return Node_Ptr;
+   --  Save the status of the project explorer to an XML tree
+
+   function Get_Or_Create_Result_View_MDI
+     (Kernel         : access Kernel_Handle_Record'Class;
+      Allow_Creation : Boolean := True)
+      return MDI_Child;
+   --  Internal version of Get_Or_Create_Result_View
+
    -------------------------------
    -- Get_Or_Create_Result_View --
    -------------------------------
@@ -90,6 +108,25 @@ package body Glide_Kernel.Console is
      (Kernel         : access Kernel_Handle_Record'Class;
       Allow_Creation : Boolean := True)
       return Result_View
+   is
+      Child : MDI_Child;
+   begin
+      Child := Get_Or_Create_Result_View_MDI (Kernel, Allow_Creation);
+      if Child = null then
+         return null;
+      else
+         return Result_View (Get_Widget (Child));
+      end if;
+   end Get_Or_Create_Result_View;
+
+   -----------------------------------
+   -- Get_Or_Create_Result_View_MDI --
+   -----------------------------------
+
+   function Get_Or_Create_Result_View_MDI
+     (Kernel         : access Kernel_Handle_Record'Class;
+      Allow_Creation : Boolean := True)
+      return MDI_Child
    is
       Child   : MDI_Child := Find_MDI_Child_By_Tag
         (Get_MDI (Kernel), Result_View_Record'Tag);
@@ -108,11 +145,11 @@ package body Glide_Kernel.Console is
          Set_Title (Child, -"Locations");
          Set_Dock_Side (Child, Bottom);
          Dock_Child (Child);
-         return Results;
+         return Child;
       else
-         return Result_View (Get_Widget (Child));
+         return Child;
       end if;
-   end Get_Or_Create_Result_View;
+   end Get_Or_Create_Result_View_MDI;
 
    -----------------
    -- Get_Console --
@@ -528,6 +565,43 @@ package body Glide_Kernel.Console is
       return False;
    end Mime_Handler;
 
+   ------------------
+   -- Load_Desktop --
+   ------------------
+
+   function Load_Desktop
+     (MDI  : MDI_Window;
+      Node : Node_Ptr;
+      User : Kernel_Handle) return MDI_Child
+   is
+      pragma Unreferenced (MDI);
+   begin
+      if Node.Tag.all = "Result_View_Record" then
+         return Get_Or_Create_Result_View_MDI (User, Allow_Creation => True);
+      end if;
+
+      return null;
+   end Load_Desktop;
+
+   ------------------
+   -- Save_Desktop --
+   ------------------
+
+   function Save_Desktop
+     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class)
+     return Node_Ptr
+   is
+      N : Node_Ptr;
+   begin
+      if Widget.all in Result_View_Record'Class then
+         N := new Node;
+         N.Tag := new String'("Result_View_Record");
+         return N;
+      end if;
+
+      return null;
+   end Save_Desktop;
+
    ---------------------
    -- Register_Module --
    ---------------------
@@ -547,6 +621,8 @@ package body Glide_Kernel.Console is
          Module_Name  => Console_Module_Name,
          Priority     => Default_Priority,
          Mime_Handler => Mime_Handler'Access);
+      Glide_Kernel.Kernel_Desktop.Register_Desktop_Functions
+        (Save_Desktop'Access, Load_Desktop'Access);
 
       Initialize_Console (Kernel);
 

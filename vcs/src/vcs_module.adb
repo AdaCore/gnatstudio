@@ -21,6 +21,7 @@
 with Glib;                      use Glib;
 with Glib.Values;               use Glib.Values;
 with Glib.Object;               use Glib.Object;
+with Glib.Xml_Int;              use Glib.Xml_Int;
 with Gtk.Box;                   use Gtk.Box;
 with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Event_Box;             use Gtk.Event_Box;
@@ -33,6 +34,7 @@ with Gtk.Radio_Button;          use Gtk.Radio_Button;
 with Gtk.Table;                 use Gtk.Table;
 with Gtk.Tooltips;              use Gtk.Tooltips;
 with Gtk.Widget;                use Gtk.Widget;
+with Gtkada.MDI;                use Gtkada.MDI;
 
 with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
 with Glide_Kernel.Project;      use Glide_Kernel.Project;
@@ -103,6 +105,17 @@ package body VCS_Module is
       Args    : GValues;
       Kernel  : Kernel_Handle);
    --  Callback for the "file_edited" signal.
+
+   function Load_Desktop
+     (MDI  : MDI_Window;
+      Node : Node_Ptr;
+      User : Kernel_Handle) return MDI_Child;
+   --  Restore the status of the explorer from a saved XML tree.
+
+   function Save_Desktop
+     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class)
+      return Node_Ptr;
+   --  Save the status of the project explorer to an XML tree
 
    type VCS_Editor_Record is new Project_Editor_Page_Record
      with null record;
@@ -420,6 +433,43 @@ package body VCS_Module is
       Free (Module.VCS_List);
    end Destroy;
 
+   ------------------
+   -- Load_Desktop --
+   ------------------
+
+   function Load_Desktop
+     (MDI  : MDI_Window;
+      Node : Node_Ptr;
+      User : Kernel_Handle) return MDI_Child
+   is
+      pragma Unreferenced (MDI);
+   begin
+      if Node.Tag.all = "VCS_View_Record" then
+         return Open_Explorer (User, Context => null);
+      end if;
+
+      return null;
+   end Load_Desktop;
+
+   ------------------
+   -- Save_Desktop --
+   ------------------
+
+   function Save_Desktop
+     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class)
+     return Node_Ptr
+   is
+      N : Node_Ptr;
+   begin
+      if Widget.all in VCS_View_Record'Class then
+         N := new Node;
+         N.Tag := new String'("VCS_View_Record");
+         return N;
+      end if;
+
+      return null;
+   end Save_Desktop;
+
    ---------------------
    -- Register_Module --
    ---------------------
@@ -443,6 +493,8 @@ package body VCS_Module is
          MDI_Child_Tag           => VCS_View_Record'Tag,
          Contextual_Menu_Handler => VCS_Contextual_Menu'Access,
          Default_Context_Factory => VCS_View_API.Context_Factory'Access);
+      Glide_Kernel.Kernel_Desktop.Register_Desktop_Functions
+        (Save_Desktop'Access, Load_Desktop'Access);
 
       Register_Menu
         (Kernel,
