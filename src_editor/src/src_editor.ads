@@ -39,8 +39,16 @@ package Src_Editor is
    function "-" (Msg : String) return String;
    --  Convenient shortcut to the Gettext function.
 
+   function Image (N : Natural) return String;
+   --  Create a string image of the given Natural.
+
    function Image (N : Gint) return String;
    --  Create a string image of the given Gint.
+
+   function Image (N : Natural; Length : Positive) return String;
+   --  Create a string image of the given Natural. The returned string is
+   --  padded with leading spaces to create a string of at list Length
+   --  characters.
 
    function Image (N : Gint; Length : Positive) return String;
    --  Create a string image of the given Gint. The returned string is padded

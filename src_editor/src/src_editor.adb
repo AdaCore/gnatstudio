@@ -45,9 +45,27 @@ package body Src_Editor is
    -- Image --
    -----------
 
+   function Image (N : Natural) return String is
+   begin
+      return Image (Gint (N));
+   end Image;
+
+   -----------
+   -- Image --
+   -----------
+
    function Image (N : Gint) return String is
    begin
       return Ada.Strings.Fixed.Trim (Gint'Image (N), Ada.Strings.Left);
+   end Image;
+
+   -----------
+   -- Image --
+   -----------
+
+   function Image (N : Natural; Length : Positive) return String is
+   begin
+      return Image (Gint (N), Length);
    end Image;
 
    -----------
