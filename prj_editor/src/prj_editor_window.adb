@@ -29,6 +29,7 @@
 with Prj;          use Prj;
 with Prj.Tree;     use Prj.Tree;
 with Prj.Part;     use Prj.Part;
+with Types;        use Types;
 
 with Gtk.Window;      use Gtk.Window;
 with Gtk.Enums;       use Gtk.Enums;
@@ -57,21 +58,18 @@ package body Prj_Editor_Window is
         Project_Editor (Get_Toplevel (Tree));
       T            : Project_Tree := Project_Tree (Tree);
       Project_View : Project_Id := Get_Selected_Project (T);
+      Dir          : Name_Id;
 
    begin
       Clear (Prj.Viewer);  --  ??? Should delete selectively
 
       if Project_View /= No_Project then
-         declare
-            Dirs : Name_Id_Array :=
-              Get_Selected_Directories (T, Project_View);
-         begin
-            if Dirs'Length = 0 then
-               Show_Project (Prj.Viewer, Project_View);
-            else
-               Show_Project (Prj.Viewer, Project_View, Dirs (Dirs'First));
-            end if;
-         end;
+         Dir := Get_Selected_Directory (T, Project_View);
+         if Dir = No_Name then
+            Show_Project (Prj.Viewer, Project_View);
+         else
+            Show_Project (Prj.Viewer, Project_View, Dir);
+         end if;
       end if;
    end Selection_Changed;
 
