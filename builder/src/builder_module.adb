@@ -4,7 +4,7 @@
 --                     Copyright (C) 2001-2002                       --
 --                            ACT-Europe                             --
 --                                                                   --
--- GLIDE is free software; you can redistribute it and/or modify  it --
+-- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -211,6 +211,11 @@ package body Builder_Module is
         (Timeout, Idle_Build'Access, (Kernel, Fd, null));
 
    exception
+      when Invalid_Process =>
+         Console.Insert (Kernel, -"Invalid command.", False, Mode => Error);
+         Free (Args);
+         Free (Fd);
+
       when E : others =>
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Build;
@@ -265,6 +270,12 @@ package body Builder_Module is
          Free (Args);
          Id := Process_Timeout.Add
            (Timeout, Idle_Build'Access, (Kernel, Fd, null));
+
+      exception
+         when Invalid_Process =>
+            Console.Insert (Kernel, -"Invalid command.", False, Mode => Error);
+            Free (Args);
+            Free (Fd);
       end;
 
    exception
@@ -342,6 +353,12 @@ package body Builder_Module is
          Free (Args);
          Id := Process_Timeout.Add
            (Timeout, Idle_Build'Access, (Kernel, Fd, null));
+
+      exception
+         when Invalid_Process =>
+            Console.Insert (Kernel, -"Invalid command.", False, Mode => Error);
+            Free (Args);
+            Free (Fd);
       end;
 
    exception
@@ -391,6 +408,12 @@ package body Builder_Module is
          Free (Args);
          Id := Process_Timeout.Add
            (Timeout, Idle_Build'Access, (Kernel, Fd, null));
+
+      exception
+         when Invalid_Process =>
+            Console.Insert (Kernel, -"Invalid command.", False, Mode => Error);
+            Free (Args);
+            Free (Fd);
       end;
 
    exception
