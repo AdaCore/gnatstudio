@@ -1,17 +1,7 @@
-include Makefile.common
-include Makefile.gnat
+all build compile link ada c c++ clean :
+	$(MAKE) -s -C glide -f Makefile.glide $@
 
-PROJECT_FILE = glide/glide.gpr
-EXEC         = glide2
-ADA_SOURCES  = glide2.adb
+gvd:
+	$(MAKE) -s -C gvd -f Makefile.gvd EXEC=gvd ADA_SOURCES=gvd_main.adb
 
-LN = ln -fs
-
-default: do_links all
-
-do_links: force
-	-@$(foreach f,$(GNAT_SOURCES), \
-	  $(LN) ../gnat_src/$(f) gnat > /dev/null 2>&1 ;)
-
-include $(ROOT)/builder/src/Makefile.glide
-
+.PHONY: gvd
