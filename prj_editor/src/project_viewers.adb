@@ -8,7 +8,6 @@ with Gtkada.Handlers; use Gtkada.Handlers;
 with Gtk.Widget;      use Gtk.Widget;
 with Gtk.Arguments;   use Gtk.Arguments;
 with Gdk.Event;       use Gdk.Event;
-with Gdk.Types;       use Gdk.Types;
 
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with Interfaces.C.Strings;      use Interfaces.C.Strings;
@@ -16,7 +15,6 @@ with GNAT.Calendar.Time_IO;     use GNAT.Calendar.Time_IO;
 with GNAT.Calendar;             use GNAT.Calendar;
 with Ada.Calendar;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
-with Text_IO;                   use Text_IO;
 
 with Prj;          use Prj;
 with Prj_API;      use Prj_API;
@@ -719,7 +717,7 @@ package body Project_Viewers is
 
    begin
       Callback := Views (Current_View).Callbacks
-        (Interfaces.C.size_t (Column));
+        (Interfaces.C.size_t (Column + 1));
       if Get_Event_Type (Event) = Gdk_2button_Press
         and then Callback /= null
       then
