@@ -99,6 +99,9 @@ package body Scenario_Views is
       Gtk_New (View.Field, 1024);
       Set_Editable (View.Field, False);
       Pack_Start (View, View.Field, Expand => True, Fill => True);
+
+      --  Update the viewer with the current project
+      Refresh (Kernel, GObject (View));
    end Initialize;
 
    ----------------------
@@ -127,39 +130,48 @@ package body Scenario_Views is
 
    procedure Refresh (View : access GObject_Record'Class; Data : GObject) is
       V : Scenario_View := Scenario_View (Data);
-      Vars : Project_Node_Array :=
-        Find_Scenario_Variables (Get_Project (V.Kernel));
       Str : String_Id;
    begin
-      Set_Sensitive (V.Edit_Button, True);
-      Set_Text (V.Field, "");
+      --  No project view => Clean up the tree
+      if Get_Project_View (V.Kernel) = No_Project then
+         Set_Text (V.Field, "");
+         return;
+      end if;
 
-      for Var in Vars'Range loop
-         Str := External_Reference_Of (Vars (Var));
-         if Str /= No_String then
-            String_To_Name_Buffer (Str);
-            Str := Prj.Ext.Value_Of  (External_Name => Name_Find);
-         end if;
+      declare
+         Vars : Project_Node_Array :=
+           Find_Scenario_Variables (Get_Project (V.Kernel));
+      begin
+         Set_Sensitive (V.Edit_Button, True);
+         Set_Text (V.Field, "");
 
-         if Var /= Vars'First then
-            Append_Text (V.Field, ", ");
-         end if;
+         for Var in Vars'Range loop
+            Str := External_Reference_Of (Vars (Var));
+            if Str /= No_String then
+               String_To_Name_Buffer (Str);
+               Str := Prj.Ext.Value_Of  (External_Name => Name_Find);
+            end if;
 
-         if Str = No_String then
-            Append_Text
-              (V.Field,
-               Get_Name_String (Name_Of (Vars (Var))) & "=""");
-            Display_Expr (V.Field, Value_Of (Vars (Var)));
-            Append_Text (V.Field, """");
+            if Var /= Vars'First then
+               Append_Text (V.Field, ", ");
+            end if;
 
-         else
-            String_To_Name_Buffer (Str);
-            Append_Text
-              (V.Field,
-               Get_Name_String (Name_Of (Vars (Var)))
-               & "=""" & Name_Buffer (1 .. Name_Len) & """");
-         end if;
-      end loop;
+            if Str = No_String then
+               Append_Text
+                 (V.Field,
+                  Get_Name_String (Name_Of (Vars (Var))) & "=""");
+               Display_Expr (V.Field, Value_Of (Vars (Var)));
+               Append_Text (V.Field, """");
+
+            else
+               String_To_Name_Buffer (Str);
+               Append_Text
+                 (V.Field,
+                  Get_Name_String (Name_Of (Vars (Var)))
+                  & "=""" & Name_Buffer (1 .. Name_Len) & """");
+            end if;
+         end loop;
+      end;
    end Refresh;
 
 end Scenario_Views;
