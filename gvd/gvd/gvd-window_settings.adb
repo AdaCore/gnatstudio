@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2002                      --
+--                      Copyright (C) 2000-2003                      --
 --                              ACT-Europe                           --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -20,7 +20,6 @@
 
 with Glib.Xml_Int;        use Glib.Xml_Int;
 
-with Gtk.Clist;           use Gtk.Clist;
 with Gtk.Widget;          use Gtk.Widget;
 with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
 
@@ -32,6 +31,7 @@ with GVD.Memory_View;     use GVD.Memory_View;
 with GVD.Dialogs;         use GVD.Dialogs;
 with GVD.Process;         use GVD.Process;
 with GVD.Preferences;     use GVD.Preferences;
+with GVD.Call_Stack;      use GVD.Call_Stack;
 with GVD.Code_Editors;    use GVD.Code_Editors;
 with GVD.Trace;           use GVD.Trace;
 with String_Utils;        use String_Utils;
@@ -144,7 +144,7 @@ package body GVD.Window_Settings is
       Top           : constant GVD_Main_Window :=
         GVD_Main_Window (Main_Debug_Window);
       Process       : Visual_Debugger;
-      A             : Gint;
+
       Debugger_List : Debugger_List_Link := Top.First_Debugger;
       Debugger_Num  : Integer := 0;
 
@@ -221,74 +221,9 @@ package body GVD.Window_Settings is
                   end if;
                end if;
 
-               if Process.Stack_Scrolledwindow /= null then
-                  Set (String_Gint ("Stack_Width" & Img),
-                       Gint (Get_Allocation_Width
-                             (Process.Stack_Scrolledwindow)),
-                       True);
-
-                  if Process.Backtrace_Mask / (2 ** 1) = 0 then
-                     A := 2;
-                  else
-                     A := 1;
-                  end if;
-
-                  Set (String_Gint ("Stack_Num_Width" & Img),
-                       Gint (Get_Allocation_Width
-                             (Get_Column_Widget
-                              (Process.Stack_List, 0))) - A,
-                       True);
-
-                  if Process.Backtrace_Mask / (2 ** 2) = 0 then
-                     A := 2;
-                  else
-                     A := 1;
-                  end if;
-
-                  Set (String_Gint ("Stack_PC_Width" & Img),
-                       Gint (Get_Allocation_Width
-                             (Get_Column_Widget
-                              (Process.Stack_List, 1))) - A,
-                       True);
-
-                  if Process.Backtrace_Mask / (2 ** 3) = 0 then
-                     A := 2;
-                  else
-                     A := 1;
-                  end if;
-
-                  Set (String_Gint ("Stack_Subprogram_Width" & Img),
-                       Gint (Get_Allocation_Width
-                             (Get_Column_Widget
-                              (Process.Stack_List, 2))) - A,
-                       True);
-
-                  if Process.Backtrace_Mask / (2 ** 4) = 0 then
-                     A := 2;
-                  else
-                     A := 1;
-                  end if;
-
-                  Set (String_Gint ("Stack_Parameters_Width" & Img),
-                       Gint (Get_Allocation_Width
-                             (Get_Column_Widget
-                              (Process.Stack_List, 3))) - A,
-                       True);
-
-                  if Process.Backtrace_Mask / (2 ** 5) = 0 then
-                     A := 2;
-                  else
-                     A := 1;
-                  end if;
-
-                  Set (String_Gint ("Stack_Location_Width" & Img),
-                       Gint (Get_Allocation_Width
-                             (Get_Column_Widget
-                              (Process.Stack_List, 4))) - A,
-                       True);
-
+               if Process.Stack /= null then
                   Set (String_Gint ("Stack_Mask" & Img),
-                       Gint (Process.Backtrace_Mask),
+                       Gint (Get_List_Mask (Process.Stack)),
                        True);
                end if;
 
