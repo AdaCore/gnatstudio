@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2002                       --
+--                     Copyright (C) 2001-2003                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -740,7 +740,7 @@ package body Project_Explorers_Files is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Message (E));
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end File_Tree_Collapse_Row_Cb;
 
    ---------------------
@@ -767,7 +767,7 @@ package body Project_Explorers_Files is
       return True;
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Message (E));
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
          return True;
    end Expose_Event_Cb;
 
@@ -839,7 +839,7 @@ package body Project_Explorers_Files is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Message (E));
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end File_Tree_Expand_Row_Cb;
 
    ----------------------------
