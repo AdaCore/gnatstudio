@@ -19,7 +19,9 @@
 -----------------------------------------------------------------------
 
 with Gtk.Widget; use Gtk.Widget;
+with Gtk.List_Item;       use Gtk.List_Item;
 with Gtk.Main;            use Gtk.Main;
+with Gtk.List;            use Gtk.List;
 with Odd_Preferences_Pkg; use Odd_Preferences_Pkg;
 with Gtkada.Dialogs;      use Gtkada.Dialogs;
 with Gtkada.Handlers;     use Gtkada.Handlers;
@@ -32,7 +34,6 @@ with Debugger;            use Debugger;
 with Process_Proxies;     use Process_Proxies;
 with Language;            use Language;
 with Breakpoints_Pkg;     use Breakpoints_Pkg;
-with Odd.Types;
 with Odd.Process;         use Odd.Process;
 with GNAT.Expect;         use GNAT.Expect;
 
@@ -942,17 +943,6 @@ package body Main_Debug_Window_Pkg.Callbacks is
       null;
    end On_Edit_Displays1_Activate;
 
-   -----------------------------------
-   -- On_Edit_Watchpoints1_Activate --
-   -----------------------------------
-
-   procedure On_Edit_Watchpoints1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class)
-   is
-   begin
-      null;
-   end On_Edit_Watchpoints1_Activate;
-
    ---------------------------------
    -- On_Examine_Memory1_Activate --
    ---------------------------------
@@ -963,64 +953,6 @@ package body Main_Debug_Window_Pkg.Callbacks is
    begin
       null;
    end On_Examine_Memory1_Activate;
-
-   ------------------------
-   -- On_Print1_Activate --
-   ------------------------
-
-   procedure On_Print1_Activate
-     (Object : access Gtk_Widget_Record'Class)
-   is
-      Top     : constant Main_Debug_Window_Access :=
-        Main_Debug_Window_Access (Object);
-      Process : constant Debugger_Process_Tab := Get_Current_Process (Top);
-
-      use type Odd.Types.String_Access;
-
-   begin
-      if Top.Print_Dialog = null then
-         Gtk_New (Top.Print_Dialog);
-      end if;
-
-      Show_All (Top.Print_Dialog);
-      Main;
-      Hide (Top.Print_Dialog);
-
-      if Top.Print_Dialog.Variable /= null then
-         Process_User_Command
-           (Process, "graph print " & Top.Print_Dialog.Variable.all,
-            Output_Command => True);
-      end if;
-   end On_Print1_Activate;
-
-   --------------------------
-   -- On_Display1_Activate --
-   --------------------------
-
-   procedure On_Display1_Activate
-     (Object : access Gtk_Widget_Record'Class)
-   is
-      Top     : constant Main_Debug_Window_Access :=
-        Main_Debug_Window_Access (Object);
-      Process : constant Debugger_Process_Tab := Get_Current_Process (Top);
-
-      use type Odd.Types.String_Access;
-
-   begin
-      if Top.Print_Dialog = null then
-         Gtk_New (Top.Print_Dialog);
-      end if;
-
-      Show_All (Top.Print_Dialog);
-      Main;
-      Hide (Top.Print_Dialog);
-
-      if Top.Print_Dialog.Variable /= null then
-         Process_User_Command
-           (Process, "graph display " & Top.Print_Dialog.Variable.all,
-            Output_Command => True);
-      end if;
-   end On_Display1_Activate;
 
    ------------------------------------------
    -- On_Display_Local_Variables1_Activate --
@@ -1254,29 +1186,53 @@ package body Main_Debug_Window_Pkg.Callbacks is
          Title => -"About...");
    end On_About_Odd1_Activate;
 
-   -----------------------
-   -- On_Print1_Clicked --
-   -----------------------
+   ------------------------
+   -- On_Print1_Activate --
+   ------------------------
 
-   procedure On_Print1_Clicked
+   procedure On_Print1_Activate
      (Object : access Gtk_Widget_Record'Class;
       Params : Gtk.Arguments.Gtk_Args)
    is
+      Top       : constant Main_Debug_Window_Access :=
+        Main_Debug_Window_Access (Object);
+      Process   : constant Debugger_Process_Tab := Get_Current_Process (Top);
+      Selection : constant String := Get_Chars (Top.Toolbar_Entry);
+      Label     : Gtk_List_Item;
+
    begin
-      On_Print1_Activate (Object);
-   end On_Print1_Clicked;
+      if Selection'Length /= 0 then
+         Gtk_New (Label, Selection);
+         Show (Label);
+         Add (Get_List (Top.Toolbar_Combo), Label);
+         Process_User_Command
+           (Process, "graph print " & Selection, Output_Command => True);
+      end if;
+   end On_Print1_Activate;
 
-   -------------------------
-   -- On_Display1_Clicked --
-   -------------------------
+   --------------------------
+   -- On_Display1_Activate --
+   --------------------------
 
-   procedure On_Display1_Clicked
+   procedure On_Display1_Activate
      (Object : access Gtk_Widget_Record'Class;
       Params : Gtk.Arguments.Gtk_Args)
    is
+      Top       : constant Main_Debug_Window_Access :=
+        Main_Debug_Window_Access (Object);
+      Process   : constant Debugger_Process_Tab := Get_Current_Process (Top);
+      Selection : constant String := Get_Chars (Top.Toolbar_Entry);
+      Label     : Gtk_List_Item;
+
    begin
-      On_Display1_Activate (Object);
-   end On_Display1_Clicked;
+      if Selection'Length /= 0 then
+         Gtk_New (Label, Selection);
+         Show (Label);
+         Add (Get_List (Top.Toolbar_Combo), Label);
+         Process_User_Command
+           (Process, "graph display " & Selection, Output_Command => True);
+      end if;
+   end On_Display1_Activate;
 
    ---------------------
    -- On_Up1_Activate --

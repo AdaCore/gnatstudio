@@ -36,7 +36,6 @@ with Gtk.Status_Bar; use Gtk.Status_Bar;
 with Odd_Preferences_Pkg; use Odd_Preferences_Pkg;
 with Open_Program_Pkg; use Open_Program_Pkg;
 with Odd.Dialogs; use Odd.Dialogs;
-with Print_Dialog_Pkg; use Print_Dialog_Pkg;
 with Gtkada.Toolbar; use Gtkada.Toolbar;
 
 package Main_Debug_Window_Pkg is
@@ -50,7 +49,6 @@ package Main_Debug_Window_Pkg is
       Open_Program        : Open_Program_Access;
       Task_Dialog         : Task_Dialog_Access;
       Backtrace_Dialog    : Backtrace_Dialog_Access;
-      Print_Dialog        : Print_Dialog_Access;
       Breakpoints_Editor  : Gtk.Window.Gtk_Window;
       TTY_Mode            : Boolean := False;
       Debug_Mode          : Boolean := False;
@@ -161,12 +159,8 @@ package Main_Debug_Window_Pkg is
       Data1_Menu : Gtk_Menu;
       Edit_Breakpoints1 : Gtk_Menu_Item;
       Edit_Displays1 : Gtk_Menu_Item;
-      Edit_Watchpoints1 : Gtk_Menu_Item;
       Examine_Memory1 : Gtk_Menu_Item;
       Separator24 : Gtk_Menu_Item;
-      Print_1 : Gtk_Menu_Item;
-      Display_1 : Gtk_Menu_Item;
-      Separator25 : Gtk_Menu_Item;
       Display_Local_Variables1 : Gtk_Menu_Item;
       Display_Arguments1 : Gtk_Menu_Item;
       Display_Registers1 : Gtk_Menu_Item;
@@ -195,11 +189,10 @@ package Main_Debug_Window_Pkg is
       Separator32 : Gtk_Menu_Item;
       About_Odd1 : Gtk_Menu_Item;
       Toolbar1 : Gtk_Toolbar;
-      Combo6 : Gtk_Combo;
+      Toolbar_Combo : Gtk_Combo;
       Toolbar_Entry : Gtk_Entry;
       Button62 : Gtk_Widget;
       Button63 : Gtk_Widget;
-      Button64 : Gtk_Widget;
       Button65 : Gtk_Widget;
       Button66 : Gtk_Widget;
       Button67 : Gtk_Widget;

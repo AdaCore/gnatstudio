@@ -1383,19 +1383,6 @@
 
 	  <widget>
 	    <class>GtkMenuItem</class>
-	    <name>edit_watchpoints1</name>
-	    <sensitive>False</sensitive>
-	    <signal>
-	      <name>activate</name>
-	      <handler>on_edit_watchpoints1_activate</handler>
-	      <last_modification_time>Tue, 28 Mar 2000 02:42:43 GMT</last_modification_time>
-	    </signal>
-	    <label>Edit Watchpoints...</label>
-	    <right_justify>False</right_justify>
-	  </widget>
-
-	  <widget>
-	    <class>GtkMenuItem</class>
 	    <name>examine_memory1</name>
 	    <sensitive>False</sensitive>
 	    <signal>
@@ -1410,48 +1397,6 @@
 	  <widget>
 	    <class>GtkMenuItem</class>
 	    <name>separator24</name>
-	    <right_justify>False</right_justify>
-	  </widget>
-
-	  <widget>
-	    <class>GtkMenuItem</class>
-	    <name>print_1</name>
-	    <accelerator>
-	      <modifiers>GDK_CONTROL_MASK</modifiers>
-	      <key>GDK_=</key>
-	      <signal>activate</signal>
-	    </accelerator>
-	    <signal>
-	      <name>activate</name>
-	      <handler>on_print1_activate</handler>
-	      <object>main_debug_window</object>
-	      <last_modification_time>Sat, 08 Jul 2000 05:11:31 GMT</last_modification_time>
-	    </signal>
-	    <label>Print...</label>
-	    <right_justify>False</right_justify>
-	  </widget>
-
-	  <widget>
-	    <class>GtkMenuItem</class>
-	    <name>display_1</name>
-	    <accelerator>
-	      <modifiers>GDK_CONTROL_MASK</modifiers>
-	      <key>GDK_-</key>
-	      <signal>activate</signal>
-	    </accelerator>
-	    <signal>
-	      <name>activate</name>
-	      <handler>on_display1_activate</handler>
-	      <object>main_debug_window</object>
-	      <last_modification_time>Sat, 08 Jul 2000 05:11:55 GMT</last_modification_time>
-	    </signal>
-	    <label>Display...</label>
-	    <right_justify>False</right_justify>
-	  </widget>
-
-	  <widget>
-	    <class>GtkMenuItem</class>
-	    <name>separator25</name>
 	    <right_justify>False</right_justify>
 	  </widget>
 
@@ -1809,7 +1754,7 @@
 
       <widget>
 	<class>GtkCombo</class>
-	<name>combo6</name>
+	<name>Toolbar_Combo</name>
 	<value_in_list>False</value_in_list>
 	<ok_if_empty>True</ok_if_empty>
 	<case_sensitive>False</case_sensitive>
@@ -1852,16 +1797,6 @@
       <widget>
 	<class>GtkButton</class>
 	<child_name>Toolbar:button</child_name>
-	<name>button64</name>
-	<sensitive>False</sensitive>
-	<tooltip>Set/Delete breakpoint at selection</tooltip>
-	<label></label>
-	<icon>breakat_xpm</icon>
-      </widget>
-
-      <widget>
-	<class>GtkButton</class>
-	<child_name>Toolbar:button</child_name>
 	<name>button65</name>
 	<sensitive>False</sensitive>
 	<tooltip>Stop whenever selection changes</tooltip>
@@ -1876,9 +1811,9 @@
 	<tooltip>Print Dialog</tooltip>
 	<signal>
 	  <name>clicked</name>
-	  <handler>on_print1_clicked</handler>
+	  <handler>on_print1_activate</handler>
 	  <object>main_debug_window</object>
-	  <last_modification_time>Sat, 08 Jul 2000 05:25:18 GMT</last_modification_time>
+	  <last_modification_time>Mon, 24 Jul 2000 10:46:28 GMT</last_modification_time>
 	</signal>
 	<label></label>
 	<icon>print_xpm</icon>
@@ -1891,9 +1826,9 @@
 	<tooltip>Display Dialog</tooltip>
 	<signal>
 	  <name>clicked</name>
-	  <handler>on_display1_clicked</handler>
+	  <handler>on_display1_activate</handler>
 	  <object>main_debug_window</object>
-	  <last_modification_time>Sat, 08 Jul 2000 05:10:47 GMT</last_modification_time>
+	  <last_modification_time>Mon, 24 Jul 2000 10:46:37 GMT</last_modification_time>
 	</signal>
 	<label></label>
 	<icon>display_xpm</icon>

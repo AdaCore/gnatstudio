@@ -45,7 +45,7 @@ end Gtk_New;
 
 procedure Initialize (Main_Debug_Window : access Main_Debug_Window_Record'Class) is
    The_Accel_Group : Gtk_Accel_Group;
-   Combo6_Items : String_List.Glist;
+   Toolbar_Combo_Items : String_List.Glist;
 
 begin
    Gtk.Window.Initialize (Main_Debug_Window, Window_Toplevel);
@@ -817,14 +817,6 @@ begin
    Add (Main_Debug_Window.Data1_Menu, Main_Debug_Window.Edit_Displays1);
    Set_Right_Justify (Main_Debug_Window.Edit_Displays1, False);
 
-   Gtk_New (Main_Debug_Window.Edit_Watchpoints1, -"Edit Watchpoints...");
-   Set_Sensitive (Main_Debug_Window.Edit_Watchpoints1, False);
-   Menu_Item_Callback.Connect
-     (Main_Debug_Window.Edit_Watchpoints1, "activate",
-      Menu_Item_Callback.To_Marshaller (On_Edit_Watchpoints1_Activate'Access));
-   Add (Main_Debug_Window.Data1_Menu, Main_Debug_Window.Edit_Watchpoints1);
-   Set_Right_Justify (Main_Debug_Window.Edit_Watchpoints1, False);
-
    Gtk_New (Main_Debug_Window.Examine_Memory1, -"Examine Memory...");
    Set_Sensitive (Main_Debug_Window.Examine_Memory1, False);
    Menu_Item_Callback.Connect
@@ -836,28 +828,6 @@ begin
    Gtk_New (Main_Debug_Window.Separator24);
    Add (Main_Debug_Window.Data1_Menu, Main_Debug_Window.Separator24);
    Set_Right_Justify (Main_Debug_Window.Separator24, False);
-
-   Gtk_New (Main_Debug_Window.Print_1, -"Print...");
-   Add_Accelerator (Main_Debug_Window.Print_1, "activate",
-     The_Accel_Group, GDK_equal, Gdk.Types.Control_Mask, Accel_Visible);
-   Widget_Callback.Object_Connect
-     (Main_Debug_Window.Print_1, "activate",
-      Widget_Callback.To_Marshaller (On_Print1_Activate'Access), Main_Debug_Window);
-   Add (Main_Debug_Window.Data1_Menu, Main_Debug_Window.Print_1);
-   Set_Right_Justify (Main_Debug_Window.Print_1, False);
-
-   Gtk_New (Main_Debug_Window.Display_1, -"Display...");
-   Add_Accelerator (Main_Debug_Window.Display_1, "activate",
-     The_Accel_Group, GDK_minus, Gdk.Types.Control_Mask, Accel_Visible);
-   Widget_Callback.Object_Connect
-     (Main_Debug_Window.Display_1, "activate",
-      Widget_Callback.To_Marshaller (On_Display1_Activate'Access), Main_Debug_Window);
-   Add (Main_Debug_Window.Data1_Menu, Main_Debug_Window.Display_1);
-   Set_Right_Justify (Main_Debug_Window.Display_1, False);
-
-   Gtk_New (Main_Debug_Window.Separator25);
-   Add (Main_Debug_Window.Data1_Menu, Main_Debug_Window.Separator25);
-   Set_Right_Justify (Main_Debug_Window.Separator25, False);
 
    Gtk_New (Main_Debug_Window.Display_Local_Variables1, -"Display Local Variables");
    Add_Accelerator (Main_Debug_Window.Display_Local_Variables1, "activate",
@@ -1061,14 +1031,14 @@ begin
    Set_Tooltips (Main_Debug_Window.Toolbar1, True);
    Set_Button_Relief (Main_Debug_Window.Toolbar1, Relief_None);
 
-   Gtk_New (Main_Debug_Window.Combo6);
-   Append_Widget (Main_Debug_Window.Toolbar1, Main_Debug_Window.Combo6);
-   Set_Case_Sensitive (Main_Debug_Window.Combo6, False);
-   Set_Use_Arrows (Main_Debug_Window.Combo6, True);
-   Set_Use_Arrows_Always (Main_Debug_Window.Combo6, False);
-   String_List.Append (Combo6_Items, -"");
-   Combo.Set_Popdown_Strings (Main_Debug_Window.Combo6, Combo6_Items);
-   Free_String_List (Combo6_Items);
+   Gtk_New (Main_Debug_Window.Toolbar_Combo);
+   Append_Widget (Main_Debug_Window.Toolbar1, Main_Debug_Window.Toolbar_Combo);
+   Set_Case_Sensitive (Main_Debug_Window.Toolbar_Combo, False);
+   Set_Use_Arrows (Main_Debug_Window.Toolbar_Combo, True);
+   Set_Use_Arrows_Always (Main_Debug_Window.Toolbar_Combo, False);
+   String_List.Append (Toolbar_Combo_Items, -"");
+   Combo.Set_Popdown_Strings (Main_Debug_Window.Toolbar_Combo, Toolbar_Combo_Items);
+   Free_String_List (Toolbar_Combo_Items);
 
    Main_Debug_Window.Button62 := Append_Element
      (Toolbar => Main_Debug_Window.Toolbar1,
@@ -1082,12 +1052,6 @@ begin
       Text => -"",
       Tooltip_Text => -"Find selection in the source",
       Icon => Gtk_Widget (Create_Pixmap (findfwd_xpm, Main_Debug_Window)));
-   Main_Debug_Window.Button64 := Append_Element
-     (Toolbar => Main_Debug_Window.Toolbar1,
-      The_Type => Toolbar_Child_Button,
-      Text => -"",
-      Tooltip_Text => -"Set/Delete breakpoint at selection",
-      Icon => Gtk_Widget (Create_Pixmap (breakat_xpm, Main_Debug_Window)));
    Main_Debug_Window.Button65 := Append_Element
      (Toolbar => Main_Debug_Window.Toolbar1,
       The_Type => Toolbar_Child_Button,
@@ -1101,7 +1065,7 @@ begin
       Tooltip_Text => -"Print Dialog",
       Icon => Gtk_Widget (Create_Pixmap (print_xpm, Main_Debug_Window)));
    Widget_Callback.Object_Connect
-     (Main_Debug_Window.Button66, "clicked", On_Print1_Clicked'Access, Main_Debug_Window);
+     (Main_Debug_Window.Button66, "clicked", On_Print1_Activate'Access, Main_Debug_Window);
    Main_Debug_Window.Button67 := Append_Element
      (Toolbar => Main_Debug_Window.Toolbar1,
       The_Type => Toolbar_Child_Button,
@@ -1109,7 +1073,7 @@ begin
       Tooltip_Text => -"Display Dialog",
       Icon => Gtk_Widget (Create_Pixmap (display_xpm, Main_Debug_Window)));
    Widget_Callback.Object_Connect
-     (Main_Debug_Window.Button67, "clicked", On_Display1_Clicked'Access, Main_Debug_Window);
+     (Main_Debug_Window.Button67, "clicked", On_Display1_Activate'Access, Main_Debug_Window);
    Main_Debug_Window.Button68 := Append_Element
      (Toolbar => Main_Debug_Window.Toolbar1,
       The_Type => Toolbar_Child_Button,
@@ -1123,7 +1087,7 @@ begin
       Tooltip_Text => -"Set the value of selection",
       Icon => Gtk_Widget (Create_Pixmap (set_xpm, Main_Debug_Window)));
 
-   Main_Debug_Window.Toolbar_Entry := Get_Entry (Main_Debug_Window.Combo6);
+   Main_Debug_Window.Toolbar_Entry := Get_Entry (Main_Debug_Window.Toolbar_Combo);
    Set_Editable (Main_Debug_Window.Toolbar_Entry, True);
    Set_Max_Length (Main_Debug_Window.Toolbar_Entry, 0);
    Set_Text (Main_Debug_Window.Toolbar_Entry, -"");
