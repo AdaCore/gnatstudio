@@ -201,7 +201,7 @@ package Glide_Kernel.Preferences is
    Strip_Blanks              : Param_Spec_Boolean;
    Line_Terminator           : Param_Spec_Enum;
    Display_Line_Numbers      : Param_Spec_Boolean;
-   Display_Subprogram_Name   : Param_Spec_Boolean;
+   Display_Subprogram_Names  : Param_Spec_Boolean;
    Display_Tooltip           : Param_Spec_Boolean;
    Highlight_Delimiters      : Param_Spec_Boolean;
    Periodic_Save             : Param_Spec_Int;
