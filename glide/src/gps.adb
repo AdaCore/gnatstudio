@@ -55,10 +55,6 @@ with Prj_API;
 with Traces;                    use Traces;
 with Ada.Exceptions;            use Ada.Exceptions;
 
-with Interfaces.C.Strings; use Interfaces.C.Strings;
-with Gtk.Rc; use Gtk.Rc;
-with Gtkada.Types; use Gtkada.Types;
-
 --  Modules registered by GPS.
 with Ada_Module;
 with Aunit_Module;
@@ -294,14 +290,6 @@ procedure GPS is
         String_Utils.Name_As_Directory (Dir.all) & "custom_key";
 
    begin
-      declare
-         Files : constant Gtkada.Types.Chars_Ptr_Array := Get_Default_Files;
-      begin
-         for F in Files'Range loop
-            Trace (Me, "Default: " & Value (Files (F)));
-         end loop;
-      end;
-
       --  Parse the system's RC file
       if Is_Regular_File (System_Rc) then
          Trace (Me, "Parsing System RC file " & System_Rc);
