@@ -1838,7 +1838,7 @@ package body Src_Editor_Buffer is
             end if;
 
             if Slice (Sloc_End.Index) /= ASCII.LF then
-               Col := Gint (Sloc_End.Column) + Offset;
+               Col := Gint (Sloc_End.Column) + Offset - 1;
 
                if not Is_Valid_Index (Source_Buffer (Buffer), Line, Col) then
                   Trace (Me, "invalid position");
@@ -1846,6 +1846,7 @@ package body Src_Editor_Buffer is
                end if;
 
                Get_Iter_At_Line_Index (Buffer, Entity_End, Line, Col);
+               Forward_Char (Entity_End, Success);
 
             else
                if not Is_Valid_Index (Source_Buffer (Buffer), Line, 0) then
