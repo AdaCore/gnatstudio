@@ -38,7 +38,7 @@ ada_gdk_move_pointer (gint x, gint y)
 void
 ada_gdk_move_pointer (gint x, gint y)
 {
-  GdkDisplay *display = gdk_display_get_default ();
+  GdkDisplay *display = (GdkDisplay*) gdk_display_get_default ();
   Display *xdisplay = GDK_DISPLAY_XDISPLAY (display);
   Window xroot_window = GDK_WINDOW_XID (gdk_get_default_root_window ());
 
