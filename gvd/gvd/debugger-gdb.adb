@@ -3403,6 +3403,11 @@ package body Debugger.Gdb is
             Skip_To_Blank (Debugger.WTX_List.all, Debugger.WTX_Index);
             Blank := Debugger.WTX_Index;
             Debugger.WTX_Index := Debugger.WTX_Index + 1;
+
+            if Debugger.WTX_List.all (Debugger.WTX_Index) = '{' then
+               Skip_To_Char (Debugger.WTX_List.all, Debugger.WTX_Index, '}');
+            end if;
+
             Skip_To_Blank (Debugger.WTX_List.all, Debugger.WTX_Index);
 
             Info :=
