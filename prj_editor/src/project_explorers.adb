@@ -399,7 +399,7 @@ package body Project_Explorers is
    procedure Child_Selected
      (Explorer : access Gtk_Widget_Record'Class; Args : GValues);
    --  Called every time a new child is selected in the MDI. This makes sure
-   --  that the selected not in the explorer doesn't reflect false information.
+   --  that the selected node in the explorer doesn't reflect false information
 
    procedure On_Parse_Xref (Explorer : access Gtk_Widget_Record'Class);
    --  Parse all the LI information contained in the object directory of the
@@ -612,7 +612,7 @@ package body Project_Explorers is
       if Node = Null_Iter
         or else (Get_Title (Child) = " ")
         or else (Get_Title (Child) =
-                   Base_Name (Get_File_From_Node (E.Tree.Model, Node)))
+                   Full_Name (Get_File_From_Node (E.Tree.Model, Node)).all)
       then
          return;
       end if;
