@@ -730,6 +730,10 @@ package body Debugger.Gdb is
                  (Convert (Debugger.Window, Debugger),
                   Send (Debugger, Cmd, Mode => Internal) & ASCII.LF);
             end if;
+
+            if Debugger.Remote_Protocol.all = "remote" then
+               Set_Is_Started (Debugger, True);
+            end if;
          end;
       end if;
 
