@@ -1,6 +1,6 @@
 project Shared is
 
-   for Source_Files use ();
+   for Source_Dirs use ();
 
    package IDE is
       for VCS_Kind use "cvs";
