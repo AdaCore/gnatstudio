@@ -400,7 +400,7 @@ package body Entities is
    procedure Mark_And_Isolate_Entities (File : Source_File) is
       Iter   : Entities_Tries.Iterator := Start (File.Entities'Access, "");
       EL     : Entity_Information_List_Access;
-      Entity : Entity_Information;
+      Entity, Entity2 : Entity_Information;
    begin
       loop
          EL := Get (Iter);
@@ -469,6 +469,7 @@ package body Entities is
                   end if;
                end loop;
 
+               Entity2 := Entity;  --  In case we need two unref below
                Remove (File.All_Entities, Entity);
                if Active (Assert_Me) then
                   Trace (Assert_Me, "Unref " & Entity.Name.all
@@ -476,11 +477,15 @@ package body Entities is
                          & Base_Name (File.Name));
                end if;
                Unref (Entity);
+               --  Entity.Ref_Count is at least 1 at this point
 
-               if Length (Entity.References) = 0 then
-                  Trace (Assert_Me, "Unref " & Entity.Name.all
+               if Length (Entity2.References) = 0 then
+                  --  The entity still existed in memory because it was
+                  --  referenced from one or more external files, and we just
+                  --  removed it from the last such file => free it
+                  Trace (Assert_Me, "Unref " & Entity2.Name.all
                          & " since it has no more references");
-                  Unref (Entity);
+                  Unref (Entity2);
                end if;
             end if;
          end loop;
@@ -550,6 +555,7 @@ package body Entities is
                else
                   Remove (EL.all, E);
                end if;
+
                Trace (Ref_Me, "Unref " & Entity.Name.all
                       & " from Remove_Marked_Entities");
                Unref (Entity);
@@ -588,7 +594,6 @@ package body Entities is
             then
                if Entity_Information_Arrays.Length (EL.all) = 1 then
                   Remove (Tree.all, Entity.Name.all);
-                  exit;
                else
                   Remove (EL.all, E);
                end if;
@@ -758,7 +763,9 @@ package body Entities is
    -------------
 
    procedure Isolate
-     (Entity : in out Entity_Information; Clear_References : Boolean) is
+     (Entity : in out Entity_Information; Clear_References : Boolean)
+   is
+      Entity2 : Entity_Information;
    begin
       Trace (Ref_Me, "Isolate " & Entity.Name.all);
       if Entity.Caller_At_Declaration /= null then
@@ -813,10 +820,11 @@ package body Entities is
                if Entity.Parent_Types.Table (J).Child_Types.Table (P) =
                  Entity
                then
-                  Remove (Entity.Parent_Types.Table (J).Child_Types, P);
-                  Trace (Assert_Me, "Unref " & Entity.Name.all
+                  Entity2 := Entity; --  Since Unref puts it back to null
+                  Remove (Entity2.Parent_Types.Table (J).Child_Types, P);
+                  Trace (Assert_Me, "Unref " & Entity2.Name.all
                          & " From Isol.Parent_Types.Child_Types");
-                  Unref (Entity);
+                  Unref (Entity2);  --  will never actually free Entity
                end if;
             end loop;
          end loop;
@@ -969,7 +977,9 @@ package body Entities is
 
       if EL /= null then
          if Length (EL.all) = 1 then
-            Remove (D, Pointer);
+            if EL.Table (Entity_Information_Arrays.First) = E then
+               Remove (D, Pointer);
+            end if;
          else
             Remove (EL.all, E);
          end if;
@@ -1073,8 +1083,11 @@ package body Entities is
                Free (Entity.Name);
                Unchecked_Free (Entity);
             end if;
-            Entity := null;
          end if;
+
+         --  This need to be always done, since the caller can no longer depend
+         --  on the entity after doing that.
+         Entity := null;
       end if;
    end Unref;
 
