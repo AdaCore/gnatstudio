@@ -183,6 +183,19 @@ package body Debugger.Gdb is
       return Breakpoint_Identifier;
    --  Get the Id of the last breakpoint created by Debugger.
 
+   procedure Switch_Language
+     (Debugger : access Gdb_Debugger;
+      Language : in String);
+   --  Switch gdb to another language. The possible values for Language are:
+   --  "ada", "c", "c++", "asm", "chill", "fortran", "java", "modula-2",
+   --  "scheme".
+   --  When calling this function, the current language is stored internally
+   --  and can be restored by calling Restore_Language.
+
+   procedure Restore_Language
+     (Debugger : access Gdb_Debugger);
+   --  Restore the language that was active before Switch_Language was called.
+
    function To_Main_Debug_Window is new Standard.Ada.Unchecked_Conversion
      (System.Address, Main_Debug_Window_Access);
 
@@ -499,7 +512,9 @@ package body Debugger.Gdb is
 
       Free (Debugger.Executable);
       Free (Debugger.Executable_Args);
-      Free (Debugger.Target_Command);
+      Free (Debugger.Remote_Host);
+      Free (Debugger.Remote_Target);
+      Free (Debugger.Remote_Protocol);
 
       for J in 1 .. Num_Options loop
          Free (Local_Arguments (J));
@@ -513,12 +528,13 @@ package body Debugger.Gdb is
          Debugger.Executable_Args := new String' (Executable_Args);
       end if;
 
-      if Remote_Target = "" then
-         Debugger.Remote_Target := False;
-      else
-         Debugger.Remote_Target := True;
-         Debugger.Target_Command :=
-           new String' ("target " & Remote_Protocol & " " & Remote_Target);
+      if Remote_Host /= "" then
+         Debugger.Remote_Host := new String' (Remote_Host);
+      end if;
+
+      if Remote_Target /= "" then
+         Debugger.Remote_Target := new String' (Remote_Target);
+         Debugger.Remote_Protocol := new String' (Remote_Protocol);
       end if;
 
       --  Set up an output filter to detect changes of the current language
@@ -585,15 +601,20 @@ package body Debugger.Gdb is
 
       --  Connect to the remote target if needed.
 
-      if Debugger.Target_Command /= null then
-         if Debugger.Window = null then
-            Send (Debugger, Debugger.Target_Command.all, Mode => Internal);
-         else
-            Output_Text
-              (Convert (Debugger.Window, Debugger),
-               Send (Debugger, Debugger.Target_Command.all, Mode => Internal) &
-               ASCII.LF);
-         end if;
+      if Debugger.Remote_Target /= null then
+         declare
+            Cmd : constant String :=
+              "target " & Debugger.Remote_Protocol.all & " " &
+              Debugger.Remote_Target.all;
+         begin
+            if Debugger.Window = null then
+               Send (Debugger, Cmd, Mode => Internal);
+            else
+               Output_Text
+                 (Convert (Debugger.Window, Debugger),
+                  Send (Debugger, Cmd, Mode => Internal) & ASCII.LF);
+            end if;
+         end;
       end if;
 
       --  Load the module to debug, if any.
@@ -708,7 +729,7 @@ package body Debugger.Gdb is
    begin
       Set_Is_Started (Debugger, False);
 
-      if Debugger.Remote_Target then
+      if Debugger.Remote_Target /= null then
          if Match
            (No_Such_File_Regexp,
             Send (Debugger, "load " & Executable, Mode => Mode)) /= 0
@@ -2351,14 +2372,14 @@ package body Debugger.Gdb is
 
       declare
          Str : constant String :=
-           Send (Debugger, "info line " & File_Name & ":1",
-                 Mode => Internal);
+           Send (Debugger, "info line " & File_Name & ":1", Mode => Internal);
       begin
          Set_Parse_File_Name (Get_Process (Debugger), True);
          Found_File_Name
            (Debugger,
             Str, File_First, File_Last, First, Last, Line,
             Addr_First, Addr_Last);
+
          if First = 0 then
             return File_Name;
          else
@@ -2660,6 +2681,80 @@ package body Debugger.Gdb is
       end;
    end Complete;
 
+   use GVD.Proc_Utils;
+
+   --------------------
+   -- Open_Processes --
+   --------------------
+
+   procedure Open_Processes (Debugger : access Gdb_Debugger) is
+   begin
+      if Debugger.Remote_Protocol /= null
+        and then Debugger.Remote_Protocol.all = "wtx"
+      then
+         Debugger.WTX_List :=
+            new String'
+              (Send (Debugger, "tcl activeTaskNameMap", Mode => Internal));
+         Debugger.WTX_Index := Debugger.WTX_List'First;
+
+      elsif Debugger.Remote_Host = null then
+         Open_Processes (Debugger.Handle);
+      else
+         Open_Processes (Debugger.Handle, Debugger.Remote_Host.all);
+      end if;
+   end Open_Processes;
+
+   ------------------
+   -- Next_Process --
+   ------------------
+
+   procedure Next_Process
+     (Debugger : access Gdb_Debugger;
+      Info     : out GVD.Proc_Utils.Process_Info;
+      Success  : out Boolean)
+   is
+      First : Natural;
+      Blank : Natural;
+
+   begin
+      if Debugger.WTX_List /= null then
+         if Debugger.WTX_Index >= Debugger.WTX_List'Last then
+            Success := False;
+         else
+            First := Debugger.WTX_Index;
+            Skip_To_Blank (Debugger.WTX_List.all, Debugger.WTX_Index);
+            Blank := Debugger.WTX_Index;
+            Debugger.WTX_Index := Debugger.WTX_Index + 1;
+            Skip_To_Blank (Debugger.WTX_List.all, Debugger.WTX_Index);
+
+            Info :=
+              (Id_Len   => Blank - First,
+               Info_Len => Debugger.WTX_Index - Blank - 1,
+               Id       => Debugger.WTX_List (First .. Blank - 1),
+               Info     =>
+                 Debugger.WTX_List (Blank + 1 .. Debugger.WTX_Index - 1));
+            Debugger.WTX_Index := Debugger.WTX_Index + 1;
+            Success := True;
+         end if;
+
+      else
+         Next_Process (Debugger.Handle, Info, Success);
+      end if;
+   end Next_Process;
+
+   ---------------------
+   -- Close_Processes --
+   ---------------------
+
+   procedure Close_Processes (Debugger : access Gdb_Debugger) is
+   begin
+      if Debugger.WTX_List /= null then
+         Free (Debugger.WTX_List);
+      else
+         Close_Processes (Debugger.Handle);
+      end if;
+   end Close_Processes;
+
    ---------------------
    -- Switch_Language --
    ---------------------
@@ -2668,9 +2763,11 @@ package body Debugger.Gdb is
      (Debugger : access Gdb_Debugger;
       Language : in String)
    is
-      S           : String := Send (Debugger, "show lang", Mode => Internal);
+      S           : constant String :=
+        Send (Debugger, "show lang", Mode => Internal);
       First_Index : Integer := S'First;
       End_Index   : Integer;
+
    begin
       if Debugger.Stored_Language /= null then
          Free (Debugger.Stored_Language);
@@ -2685,8 +2782,8 @@ package body Debugger.Gdb is
          End_Index := End_Index + 1;
       end loop;
 
-      Debugger.Stored_Language := new String'
-        (S (First_Index + 1 .. End_Index - 1));
+      Debugger.Stored_Language :=
+        new String' (S (First_Index + 1 .. End_Index - 1));
 
       Send (Debugger, "set lang " & Language);
    end Switch_Language;
@@ -2695,9 +2792,7 @@ package body Debugger.Gdb is
    -- Restore_Language --
    ----------------------
 
-   procedure Restore_Language
-     (Debugger : access Gdb_Debugger)
-   is
+   procedure Restore_Language (Debugger : access Gdb_Debugger) is
    begin
       if Debugger.Stored_Language /= null then
          Send (Debugger, "set lang " & Debugger.Stored_Language.all);
