@@ -385,10 +385,10 @@ package body Project_Trees is
 
       Create_Pixmaps (Project_Node, project_xpm, project_closed_xpm);
       Create_Pixmaps
-        (Modified_Project_Node, project_modified_xpm, project_closed_xpm);
+        (Modified_Project_Node, project_modified_xpm, project_modified_xpm);
       Create_Pixmaps (Directory_Node, mini_ofolder_xpm, mini_folder_xpm);
       Create_Pixmaps
-        (Obj_Directory_Node, mini_ofolder_xpm, mini_folder_object_xpm);
+        (Obj_Directory_Node, mini_folder_object_xpm, mini_folder_object_xpm);
       Create_Pixmaps (File_Node, var_xpm, var_xpm);
       Create_Pixmaps (Category_Node, subprogram_xpm, subprogram_xpm);
 
