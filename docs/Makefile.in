@@ -69,7 +69,7 @@ install:
 	-for file in gps.html $(wildcard gps_*.html); do \
 	  $(INSTALL_DATA) $$file $(docdir)/html; \
 	done
-	-$(INSTALL_DATA) ../design/TODO $(docdir)/html/TODO.html
+	-cd ../design; ./convert.pl > $(docdir)/html/TODO.html
 	-$(INSTALL_DATA) gps.info $(docdir)/info
 	-$(INSTALL_DATA) gps.ps  $(docdir)/ps
 	-$(INSTALL_DATA) gps.txt  $(docdir)/txt
