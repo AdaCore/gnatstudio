@@ -55,12 +55,12 @@ package Tries is
    procedure Remove (Tree : in out Trie_Tree; Index : String);
    --  Remove an entry from the tree.
 
-   function Get (Tree : Trie_Tree; Index : String) return Data_Type;
+   function Get (Tree : access Trie_Tree; Index : String) return Data_Type;
    --  Return the data stored at a specific location in the tree
 
    type Iterator is private;
 
-   function Start (Tree : Trie_Tree; Prefix : String) return Iterator;
+   function Start (Tree : access Trie_Tree; Prefix : String) return Iterator;
    --  The iterator will return all entries whose index starts with Prefix.
    --  The iterator must be freed by the caller.
    --  As a special case, if Prefix is the empty string, the whole contents
@@ -95,7 +95,7 @@ package Tries is
    type Cell_Pointer is private;
 
    procedure Find_Cell_Child
-     (Tree : Trie_Tree; Index : String; Pointer : out Cell_Pointer);
+     (Tree : in out Trie_Tree; Index : String; Pointer : out Cell_Pointer);
    --  Access a specific cell in the tree. The result value should only be
    --  used before the next write-access to the tree, or it becomes obsolete.
 
@@ -142,10 +142,10 @@ private
    end record;
    type Cell_Child_Access is access all Cell_Child;
 
-   type Cell_Child_Array is array (Positive) of Cell_Child;
+   type Cell_Child_Array is array (Positive) of aliased Cell_Child;
 
    type Trie_Tree is record
-      Child : Cell_Child;
+      Child : aliased Cell_Child;
    end record;
 
    Empty_Trie_Tree : constant Trie_Tree :=
