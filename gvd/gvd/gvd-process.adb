@@ -22,13 +22,13 @@ with Glib; use Glib;
 with Gdk.Input;
 with Gdk.Types;
 with Gdk.Color;    use Gdk.Color;
+with Gdk.Cursor;   use Gdk.Cursor;
+with Gdk.Window;   use Gdk.Window;
 with Gtk.Text;     use Gtk.Text;
 with Gtk.Main;     use Gtk.Main;
 with Gtk.Widget;   use Gtk.Widget;
 with Gtk.Notebook; use Gtk.Notebook;
 with Gtk.Label;    use Gtk.Label;
-with Gdk.Cursor;   use Gdk.Cursor;
-with Gdk.Window;   use Gdk.Window;
 
 with Ada.Characters.Handling;  use Ada.Characters.Handling;
 with Ada.Text_IO;     use Ada.Text_IO;
@@ -45,7 +45,7 @@ with Gtk.Extra.PsFont; use Gtk.Extra.PsFont;
 with GNAT.Regpat;     use GNAT.Regpat;
 
 with Main_Debug_Window_Pkg;  use Main_Debug_Window_Pkg;
-
+with System;
 with Unchecked_Conversion;
 
 pragma Warnings (Off, Debugger.Jdb);
@@ -56,7 +56,7 @@ package body Odd.Process is
    -- Constants --
    ---------------
 
-   Editor_Font_Size : constant Gint := 10;
+   Editor_Font_Size : constant Gint := 12;
    --  Size of the font used in the editor.
 
    Editor_Font : constant String := "Courier";
@@ -74,7 +74,7 @@ package body Odd.Process is
    Debugger_Highlight_Color : constant String := "blue";
    --  Color used for highlighting in the debugger window.
 
-   Debugger_Font_Size : constant Gint := 10;
+   Debugger_Font_Size : constant Gint := 12;
    --  Size of the font used in the debugger text window.
 
    Debugger_Font : constant String := "Courier";
@@ -83,11 +83,17 @@ package body Odd.Process is
    Editor_Show_Line_Nums : constant Boolean := True;
    --  Whether line numbers should be shown in the code editor
 
-
-
-   function To_Gint is new Unchecked_Conversion (File_Descriptor, Gint);
+   --------------------
+   -- Local Packages --
+   --------------------
 
    package My_Input is new Gdk.Input.Input_Add (Debugger_Process_Tab_Record);
+
+   -----------------------
+   -- Local Subprograms --
+   -----------------------
+
+   function To_Gint is new Unchecked_Conversion (File_Descriptor, Gint);
 
    procedure Output_Available
      (Debugger  : My_Input.Data_Access;
@@ -99,7 +105,8 @@ package body Odd.Process is
 
    procedure Text_Output_Handler
      (Descriptor : GNAT.Expect.Process_Descriptor;
-      Str        : String);
+      Str        : String;
+      Window     : System.Address);
    --  Standard handler to add gdb's input and output to the debugger
    --  window.
 
@@ -108,7 +115,8 @@ package body Odd.Process is
    -------------
 
    function Convert
-     (Descriptor : GNAT.Expect.Process_Descriptor) return Debugger_Process_Tab
+     (Main_Debug_Window : access Main_Debug_Window_Record'Class;
+      Descriptor : GNAT.Expect.Process_Descriptor) return Debugger_Process_Tab
    is
       Page      : Gtk_Widget;
       Num_Pages : Gint :=
@@ -149,6 +157,7 @@ package body Odd.Process is
    is
       Matched : GNAT.Regpat.Match_Array (0 .. 0);
       Start   : Positive := Str'First;
+
    begin
       Freeze (Process.Debugger_Text);
       Set_Point (Process.Debugger_Text, Get_Length (Process.Debugger_Text));
@@ -198,19 +207,21 @@ package body Odd.Process is
       Thaw (Process.Debugger_Text);
    end Text_Output_Handler;
 
-   -------------------------
-   -- Text_Output_Handler --
-   -------------------------
-
    procedure Text_Output_Handler
      (Descriptor : GNAT.Expect.Process_Descriptor;
-      Str        : String)
+      Str        : String;
+      Window     : System.Address)
    is
-      Process : Debugger_Process_Tab := Convert (Descriptor);
+      function To_Main_Debug_Window is new
+        Unchecked_Conversion (System.Address, Main_Debug_Window_Access);
+      Process : Debugger_Process_Tab :=
+        Convert (To_Main_Debug_Window (Window), Descriptor);
+
       File_First : Natural;
       File_Last  : Positive;
       Line       : Natural;
       Initial_Internal_Command : Boolean := True;
+
    begin
       --  Do not show the output if we have an internal command
       if not Is_Internal_Command (Get_Process (Process.Debugger)) then
@@ -235,21 +246,24 @@ package body Odd.Process is
          --  Override the language currently defined in the editor.
          --  Since the text file has been given by the debugger, the language
          --  to use is the one currently defined by the debugger.
-         Set_Current_Language (Process.Editor_Text,
-                               Get_Language (Process.Debugger));
+         Set_Current_Language
+           (Process.Editor_Text, Get_Language (Process.Debugger));
 
          --  Display the file
 
          Set_Internal_Command (Get_Process (Process.Debugger), True);
-         Load_File (Process.Editor_Text, Str (File_First .. File_Last),
-                    Process.Debugger);
+         Load_File
+           (Process.Editor_Text,
+            Str (File_First .. File_Last),
+            Process.Debugger);
 
          --  Restore the initial status of the process. We can not force it to
          --  False, since, at least with gdb, the "info line" command used in
          --  Load_File will also output a file reference, and thus we have a
          --  recursive call to Text_Output_Handler.
-         Set_Internal_Command (Get_Process (Process.Debugger),
-                               Initial_Internal_Command);
+         Set_Internal_Command
+           (Get_Process (Process.Debugger),
+            Initial_Internal_Command);
       end if;
 
       if Line /= 0 then
@@ -276,8 +290,9 @@ package body Odd.Process is
       --  indirectly call the output filter.
 
       if not Command_In_Process (Get_Process (Debugger.Debugger)) then
-         Empty_Buffer (Get_Process (Debugger.Debugger),
-                       At_Least_One => True);
+         Empty_Buffer
+           (Get_Process (Debugger.Debugger),
+            At_Least_One => True);
       end if;
    end Output_Available;
 
@@ -286,45 +301,65 @@ package body Odd.Process is
    ---------------------
 
    function Create_Debugger
-     (Params       : Argument_List;
-      Process_Name : String := "")
-     return Debugger_Process_Tab
+     (Window          : access
+        Main_Debug_Window_Pkg.Main_Debug_Window_Record'Class;
+      Kind            : Debugger_Type;
+      Executable      : String;
+      Params          : Argument_List;
+      Remote_Host     : String := "";
+      Remote_Target   : String := "";
+      Remote_Protocol : String := "";
+      Debugger_Name   : String := "";
+      Title           : String := "") return Debugger_Process_Tab
    is
-      Process  : Debugger_Process_Tab;
-      Id       : Gint;
-      Top      : Main_Debug_Window_Access renames Main_Debug_Window;
-      Label    : Gtk_Label;
+      Process : Debugger_Process_Tab;
+      Id      : Gint;
+      Label   : Gtk_Label;
 
    begin
       Process := new Debugger_Process_Tab_Record;
+      Process.Window := Window.all'Access;
       Initialize (Process);
 
       --  Spawn the debugger
-      --  ??? This should be a parameter
 
-      Process.Debugger := new Gdb_Debugger;
-      --  Process.Debugger := new Jdb_Debugger;
+      case Kind is
+         when Gdb_Type =>
+            Process.Debugger := new Gdb_Debugger;
+         when Jdb_Type =>
+            Process.Debugger := new Jdb_Debugger;
+         when others =>
+            raise Debugger_Not_Supported;
+      end case;
 
-      Spawn (Process.Debugger, Params, new Gui_Process_Proxy, "");
+      Spawn
+        (Process.Debugger,
+         Executable,
+         Params,
+         new Gui_Process_Proxy,
+         Window.all'Access,
+         Remote_Host,
+         Remote_Target,
+         Remote_Protocol,
+         Debugger_Name);
 
       --  Add a new page to the notebook
 
-      if Process_Name = "" then
+      if Title = "" then
          if Params'Length > 0 then
             Gtk_New (Label, "Gdb - " & Params (Params'First).all);
          else
             Gtk_New (Label, "Gdb -" &
               Guint'Image (Page_List.Length (Get_Children
-                (Top.Process_Notebook)) + 1));
+                (Window.Process_Notebook)) + 1));
          end if;
       else
-         Gtk_New (Label, Process_Name);
+         Gtk_New (Label, Title);
       end if;
 
-      Append_Page (Top.Process_Notebook, Process.Process_Paned, Label);
-      Show_All (Top.Process_Notebook);
-      Set_Page (Top.Process_Notebook, -1);
-
+      Append_Page (Window.Process_Notebook, Process.Process_Paned, Label);
+      Show_All (Window.Process_Notebook);
+      Set_Page (Window.Process_Notebook, -1);
       Process_User_Data.Set (Process.Process_Paned, Process.all'Access);
 
       --  Allocate the colors for highlighting. This needs to be done before
@@ -345,7 +380,7 @@ package body Odd.Process is
       --  filter.
 
       Configure (Process.Editor_Text, Editor_Font, Editor_Font_Size,
-                 stop_xpm, current_xpm,
+                 dot_xpm, arrow_xpm,
                  Comments_Color    => Comments_Color,
                  Strings_Color     => Strings_Color,
                  Keywords_Color    => Keywords_Color,
@@ -356,7 +391,7 @@ package body Odd.Process is
 
       Add_Output_Filter
         (Get_Descriptor (Get_Process (Process.Debugger)).all,
-         Text_Output_Handler'Access);
+         Text_Output_Handler'Access, Window.all'Address);
       Id := My_Input.Add
         (To_Gint
          (Get_Output_Fd
@@ -369,6 +404,7 @@ package body Odd.Process is
       --  file.
 
       Initialize (Process.Debugger);
+
       return Process;
    end Create_Debugger;
 
@@ -386,7 +422,7 @@ package body Odd.Process is
    begin
 
       Gdk_New (Cursor, Gdk.Types.Watch);
-      Set_Cursor (Get_Window (Main_Debug_Window), Cursor);
+      Set_Cursor (Get_Window (Debugger.Window), Cursor);
       Destroy (Cursor);
 
       --  ??? Should forbid commands that modify the configuration of the
@@ -452,7 +488,7 @@ package body Odd.Process is
       --  Put back the standard cursor
 
       Gdk_New (Cursor, Gdk.Types.Left_Ptr);
-      Set_Cursor (Get_Window (Main_Debug_Window), Cursor);
+      Set_Cursor (Get_Window (Debugger.Window), Cursor);
       Destroy (Cursor);
    end Process_User_Command;
 
