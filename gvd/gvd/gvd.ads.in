@@ -25,7 +25,7 @@ package GVD is
    -- Constants --
    ---------------
 
-   Version : constant String := "0.7.0";
+   Version : constant String := "@GVD_VERSION@";
    --  Version number of this software.
 
    Max_Frame : constant := 500;
@@ -34,7 +34,21 @@ package GVD is
    Max_Column_Width : constant := 200;
    --  Maximum width (in pixels) for a column in a list.
 
-   Need_To_Strip_Control_M : constant Boolean := False;
+   Need_To_Strip_Control_M : constant Boolean := @STRIP_CR@;
    --  True on systems where lines are separated by both LF and CR.
+
+   Use_Ptys : constant Boolean := @USE_PTYS@;
+   --  True if we should connect to the debugger through pseudo-terminals
+   --  (at least on Unix machines). False if we should use pipes.
+   --  Although the latter is more portable, and should be used for machines
+   --  that don't support ptys, we recommend using the former since this
+   --  provides a better support for remote debuggers and the "interrupt"
+   --  button, among other things.
+
+   Async_Commands : constant Boolean := @ASYNC_COMMANDS@;
+   --  True if user commands are handled asynchronousely, to avoid recursion
+   --  in the event processing. See design/commands.txt for more details.
+   --  This variable is useful for debugging, and also for systems that do
+   --  not fully support the Gdk_Input package (e.g Windows).
 
 end GVD;
