@@ -201,7 +201,8 @@ package body Shell_Script is
    function Nth_Arg
      (Data : Shell_Callback_Data; N : Positive) return System.Address;
    function Nth_Arg
-     (Data : Shell_Callback_Data; N : Positive; Class : Class_Type)
+     (Data : Shell_Callback_Data; N : Positive; Class : Class_Type;
+      Allow_Null : Boolean := False)
       return Class_Instance;
    procedure Set_Error_Msg (Data : in out Shell_Callback_Data; Msg : String);
    procedure Set_Return_Value_As_List
@@ -1261,12 +1262,17 @@ package body Shell_Script is
    -------------
 
    function Nth_Arg
-     (Data : Shell_Callback_Data; N : Positive; Class : Class_Type)
+     (Data : Shell_Callback_Data; N : Positive; Class : Class_Type;
+      Allow_Null : Boolean := False)
       return Class_Instance
    is
       Ins : constant Shell_Class_Instance := Instance_From_Name
         (Data.Script, Nth_Arg (Data, N));
    begin
+      if Ins = null and then Allow_Null then
+         return null;
+      end if;
+
       if Ins = null
         or else not Is_Subclass (Data.Script, Get_Class (Ins), Class)
       then

@@ -147,7 +147,8 @@ package body Python_Module is
    function Nth_Arg
      (Data : Python_Callback_Data; N : Positive) return System.Address;
    function Nth_Arg
-     (Data : Python_Callback_Data; N : Positive; Class : Class_Type)
+     (Data : Python_Callback_Data; N : Positive; Class : Class_Type;
+      Allow_Null : Boolean := False)
       return Class_Instance;
    procedure Set_Error_Msg (Data : in out Python_Callback_Data; Msg : String);
    procedure Set_Return_Value_As_List
@@ -1273,6 +1274,9 @@ package body Python_Module is
 
       if Obj = null then
          raise No_Such_Parameter;
+      elsif Obj = Py_None then
+         Py_DECREF (Obj);
+         raise No_Such_Parameter;
       end if;
       return Obj;
    end Get_Param;
@@ -1349,14 +1353,16 @@ package body Python_Module is
    -------------
 
    function Nth_Arg
-     (Data : Python_Callback_Data; N : Positive; Class : Class_Type)
+     (Data : Python_Callback_Data; N : Positive; Class : Class_Type;
+      Allow_Null : Boolean := False)
       return Class_Instance
    is
-      Item : constant PyObject := Get_Param (Data, N);
+      Item : PyObject;
       C    : constant PyObject := Lookup_Class_Object
         (Data.Script.GPS_Module, Get_Name (Class));
       Item_Class : PyObject;
    begin
+      Item := Get_Param (Data, N);
       if not PyInstance_Check (Item) then
          Trace (Me, "Nth_Arg: Item is not an instance");
          raise Invalid_Parameter;
@@ -1374,6 +1380,14 @@ package body Python_Module is
 
       return new Python_Class_Instance_Record'
         (Class_Instance_Record with Script => Data.Script, Data => Item);
+
+   exception
+      when No_Such_Parameter =>
+         if Allow_Null then
+            return null;
+         else
+            raise;
+         end if;
    end Nth_Arg;
 
    -----------------
