@@ -205,8 +205,9 @@ package body Glide_Kernel is
       Register_Global_Preferences (Handle);
       Load_Preferences (Handle.Preferences, Dir & "preferences");
 
-      Load (Handle.History, Dir & "history");
-      Set_Max_Length (Handle.History, History_Max_Length);
+      Handle.History := new History_Record;
+      Load (Handle.History.all, Dir & "history");
+      Set_Max_Length (Handle.History.all, History_Max_Length);
    end Gtk_New;
 
    ------------------------------
@@ -1476,13 +1477,16 @@ package body Glide_Kernel is
    procedure Destroy
      (Handle : access Kernel_Handle_Record; Home_Dir : String)
    is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (History_Record, History);
       Dir : constant String := String_Utils.Name_As_Directory (Home_Dir);
    begin
       Trace (Me, "Saving preferences in " & Dir & "preferences");
       Save_Preferences (Handle, Dir & "preferences");
 
-      Save (Handle.History, Dir & "history");
-      Free (Handle.History);
+      Save (Handle.History.all, Dir & "history");
+      Free (Handle.History.all);
+      Unchecked_Free (Handle.History);
 
       Destroy (Handle.Preferences);
       Project_Hash.Project_Htable.Reset (Handle.Projects_Data);
@@ -1535,7 +1539,7 @@ package body Glide_Kernel is
       Key       : Histories.History_Key;
       New_Entry : String) is
    begin
-      Add_To_History (Handle.History, Key, New_Entry);
+      Add_To_History (Handle.History.all, Key, New_Entry);
    end Add_To_History;
 
    ---------------------
