@@ -259,6 +259,33 @@ package body Prj_Normalize is
       return Internal_Is_Normalized (Project, Project, No_Names);
    end Is_Normalized;
 
+   -------------------------
+   -- Has_Been_Normalized --
+   -------------------------
+
+   function Has_Been_Normalized (Project : Prj.Tree.Project_Node_Id)
+      return Boolean is
+   begin
+      return Tree_Private_Part.Project_Nodes.Table (Project).Location /=
+        No_Location;
+   end Has_Been_Normalized;
+
+   ---------------------------
+   -- Reset_Normalized_Flag --
+   ---------------------------
+
+   procedure Reset_Normalized_Flag (Project : Prj.Tree.Project_Node_Id) is
+      With_Clause : Project_Node_Id := First_With_Clause_Of (Project);
+   begin
+      Tree_Private_Part.Project_Nodes.Table (Project).Location :=
+        No_Location;
+
+      while With_Clause /= Empty_Node loop
+         Reset_Normalized_Flag (Project_Node_Of (With_Clause));
+         With_Clause := Next_With_Clause_Of (With_Clause);
+      end loop;
+   end Reset_Normalized_Flag;
+
    ---------------
    -- Add_Value --
    ---------------
@@ -291,7 +318,8 @@ package body Prj_Normalize is
 
    procedure Normalize
      (Project     : Project_Node_Id;
-      Print_Error : Prj.Put_Line_Access := null)
+      Print_Error : Prj.Put_Line_Access := null;
+      Recurse     : Boolean := False)
    is
       Values       : External_Variable_Value_Array_Access :=
         new External_Variable_Value_Array (1 .. 50);
@@ -345,7 +373,7 @@ package body Prj_Normalize is
          end Add_Decl_Item;
 
       begin
-         --  Nothing to do if the list of declarative items is empty
+         --  Nothing to do if there is no project
          if From = Empty_Node then
             return;
          end if;
@@ -511,8 +539,31 @@ package body Prj_Normalize is
 
 
       Decl, Case_Stmt : Project_Node_Id;
+      Was_Normalized : constant Boolean := Has_Been_Normalized (Project);
 
    begin
+      --  Memorize the project as normalized, to avoid recursions
+      Tree_Private_Part.Project_Nodes.Table (Project).Location :=
+        Standard_Location;
+
+      if Recurse then
+         declare
+            With_Clause : Project_Node_Id := First_With_Clause_Of (Project);
+         begin
+            while With_Clause /= Empty_Node loop
+               Normalize
+                 (Project_Node_Of (With_Clause), Print_Error, Recurse);
+               With_Clause := Next_With_Clause_Of (With_Clause);
+            end loop;
+         end;
+      end if;
+
+      --  Nothing to do if the list of declarative items is empty, or the
+      --  project has already been normalized
+      if Was_Normalized then
+         return;
+      end if;
+
       --  The top-level part of the project
       Case_Stmt := Empty_Node;
 

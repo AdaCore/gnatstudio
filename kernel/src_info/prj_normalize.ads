@@ -100,9 +100,18 @@ package Prj_Normalize is
    --  Return the empy string if Project is normalized, or an error message if
    --  otherwise.
 
+   function Has_Been_Normalized (Project : Prj.Tree.Project_Node_Id)
+      return Boolean;
+   --  True if the project has already been normalized.
+
+   procedure Reset_Normalized_Flag (Project : Prj.Tree.Project_Node_Id);
+   --  Recursively reset the flag that indicates whether a project has been
+   --  normalized to False.
+
    procedure Normalize
      (Project     : Prj.Tree.Project_Node_Id;
-      Print_Error : Prj.Put_Line_Access := null);
+      Print_Error : Prj.Put_Line_Access := null;
+      Recurse     : Boolean := False);
    --  Normalize Project.
    --  For efficiency, no check is done to make sure Project is not already
    --  normalized. Some modifications might still happen.
@@ -110,6 +119,7 @@ package Prj_Normalize is
    --  that cannot currently be normalized.
    --  If Print_Error is not null, then error messages will be sent to this
    --  procedure.
+   --  If Recurse is true, then imported proejcts area also normalized.
 
    Normalize_Error : exception;
    --  Raised when a project could not be normalized.
