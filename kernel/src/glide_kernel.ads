@@ -28,16 +28,21 @@
 
 --  This package is the root of the glide's kernel API.
 
-with Prj;
-with Prj.Tree;
-with Prj_API;
-with Glib.Object;
+with Ada.Tags;
 with GNAT.OS_Lib;
-with Gtk.Handlers;
-with Gtk.Window;
-with Src_Info;
+with Generic_List;
 with Gint_Xml;
+with Glib.Object;
+with Gtk.Handlers;
+with Gtk.Menu;
+with Gtk.Window;
 with Gtkada.MDI;
+with Prj.Tree;
+with Prj;
+with Prj_API;
+with Src_Info;
+with System;
+with Unchecked_Conversion;
 
 package Glide_Kernel is
 
@@ -52,6 +57,11 @@ package Glide_Kernel is
       Main_Window : Gtk.Window.Gtk_Window);
    --  Create a new Glide kernel.
    --  By default, it isn't associated with any project, nor any source editor.
+
+   procedure Initialize_All_Modules (Handle : access Kernel_Handle_Record);
+   --  Initialize all the modules that are registered. This should be called
+   --  only after the main window and the MDI have been initialized, so that
+   --  the modules can add entries in the menus and the MDI.
 
    procedure Set_Source_Path
      (Handle : access Kernel_Handle_Record;
@@ -111,6 +121,86 @@ package Glide_Kernel is
    --  Reload a saved desktop.
    --  Return False if no desktop could be loaded.
 
+   function Get_MDI (Handle : access Kernel_Handle_Record)
+      return Gtkada.MDI.MDI_Window;
+   --  Return the MDI associated with Handle
+
+   function Find_MDI_Child_By_Tag
+     (Handle : access Kernel_Handle_Record; Tag : Ada.Tags.Tag)
+      return Gtkada.MDI.MDI_Child;
+   --  Return the first child matching Tag
+
+   --------------
+   -- Contexts --
+   --------------
+
+   type Module_ID_Information (<>) is private;
+   type Module_ID is access Module_ID_Information;
+
+   type Selection_Context is abstract tagged private;
+   type Selection_Context_Access is access all Selection_Context'Class;
+   --  This type contains all the information about the selection in any
+   --  module. Note that this is a tagged type, so that it can easily be
+   --  extended for modules external to Glide
+
+   function To_Selection_Context_Access is new Unchecked_Conversion
+     (System.Address, Selection_Context_Access);
+
+   procedure Set_Context_Information
+     (Context : access Selection_Context;
+      Kernel  : access Kernel_Handle_Record'Class;
+      Creator : Module_ID);
+   --  Set the information in the context
+
+   function Get_Kernel (Context : access Selection_Context)
+      return Kernel_Handle;
+   --  Return the kernel associated with the context
+
+   function Get_Creator (Context : access Selection_Context) return Module_ID;
+   --  Return the module ID for the module that created the context
+
+   procedure Destroy (Context : in out Selection_Context) is abstract;
+   --  Destroy the information contained in the context, and free the memory
+
+   procedure Free (Context : in out Selection_Context_Access);
+   --  Free the memory occupied by Context. It automatically calls the
+   --  primitive subprogram Destroy as well
+
+   -------------
+   -- Modules --
+   -------------
+   --  See documentation in Glide_Kernel.Modules
+
+   Kernel_Module : constant Module_ID;
+   --  The kernel itself.
+   --  ??? Should be a Main_Window module instead
+
+   type Module_Priority is new Natural;
+   Low_Priority     : constant Module_Priority := Module_Priority'First;
+   Default_Priority : constant Module_Priority := 500;
+   High_Priority    : constant Module_Priority := Module_Priority'Last;
+   --  The priority of the module.
+   --  Modules with a higher priority are always called before modules with
+   --  lower priority, for instance when computing the contents of a contextual
+   --  menu.
+
+   type Module_Menu_Handler is access procedure
+     (Context   : access Selection_Context'Class;
+      Menu      : access Gtk.Menu.Gtk_Menu_Record'Class);
+   --  Callback used every time some contextual menu event happens in Glide.
+   --  The module that initiated the event (ie the one that is currently
+   --  displaying the contextual menu) can be found by reading Get_Creator for
+   --  the context.
+   --  Context contains all the information about the current selection.
+   --
+   --  The callback should add the relevant items to Menu. It is recommended to
+   --  use Glide_Kernel.Modules.Context_Callback below to connect signals to
+   --  the items.
+
+   type Module_Initializer is access procedure
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
+   --  General type for the module initialization subprograms.
+
    ---------------------
    -- Signal emission --
    ---------------------
@@ -119,11 +209,20 @@ package Glide_Kernel is
      (Glib.Object.GObject_Record, Glib.Object.GObject);
    --  Generic callback that can be used to connect a signal to a kernel.
 
+   package Kernel_Callback is new Gtk.Handlers.User_Callback
+     (Glib.Object.GObject_Record, Kernel_Handle);
+   --  Generic callback that can be used to connect a signal to a kernel.
+
    procedure Project_Changed (Handle : access Kernel_Handle_Record);
    --  Emits the "project_changed" signal
 
    procedure Project_View_Changed (Handle : access Kernel_Handle_Record);
    --  Emits the "project_view_changed" signal
+
+   procedure Context_Changed
+     (Handle  : access Kernel_Handle_Record;
+      Context : access Selection_Context'Class);
+   --  Emits the "context_changed" signal
 
    -------------
    -- Signals --
@@ -148,9 +247,45 @@ package Glide_Kernel is
    --    one of the environment variables has changed). This means that the
    --    list of directories, files or switches might now be different).
    --
+   --  - "context_changed"
+   --    procedure Handler (Handle  : access Kernel_Handle_Record'Class;
+   --                       Context : Selection_Context_Access);
+   --
+   --    Emitted when a context has changed, like a new file/directory/project
+   --    selection.
+   --
    --  </signals>
 
+   Project_Changed_Signal      : constant String := "project_changed";
+   Project_View_Changed_Signal : constant String := "project_view_changed";
+   Context_Changed_Signal      : constant String := "context_changed";
+
 private
+
+   type Module_ID_Information (Name_Length : Natural) is record
+      Name            : String (1 .. Name_Length);
+      Priority        : Module_Priority;
+      Initializer     : Module_Initializer;
+      Contextual_Menu : Module_Menu_Handler;
+   end record;
+
+   type Selection_Context is abstract tagged record
+      Kernel  : Kernel_Handle;
+      Creator : Module_ID;
+   end record;
+
+   Kernel_Module : constant Module_ID := new Module_ID_Information'
+     (Name_Length     => 6,
+      Name            => "Kernel",
+      Priority        => High_Priority,
+      Initializer     => null,
+      Contextual_Menu => null);
+
+   package Module_List is new Generic_List (Module_ID);
+   Global_Modules_List : Module_List.List;
+   --  The list of all the modules that have been loaded in Glide. This has to
+   --  be a global variable for elaboration reasons: when the modules are
+   --  registered, the kernel hasn't necessarily been created yet.
 
    function Get_Source_Info_List
      (Handle : access Kernel_Handle_Record) return Src_Info.LI_File_List;
@@ -194,6 +329,9 @@ private
       --  The (cached) list of scenario variables for the current project. Note
       --  that this list depends on which project was loaded in Glide, and
       --  might change when new dependencies are added.
+
+      Last_Context_For_Contextual : Selection_Context_Access := null;
+      --  The context used in the last selection.
    end record;
 
 end Glide_Kernel;
