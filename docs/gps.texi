@@ -857,7 +857,7 @@ You can edit this file to add your own menu entries in GPS.
    @item $HOME/.gps/custom_key
 Contains all the key bindings defined in GPS. This file is
 automatically created if you have activated the dynamic key bindings feature
-(@xref{Changing Colors Fonts and Key Bindings})
+(@xref{Changing Colors Fonts and Key Bindings}.)
 
    @item $HOME/.gps/preferences
 Contains all the preferences in XML format, as specified in the
@@ -913,9 +913,26 @@ This directory contains the shared libraries used by GPS.
    @item @i{prefix}/doc/gps/html
 GPS will look for all the documentation files under this directory.
 
+   @item @i{prefix}/doc/gps/examples
+This directory contains source code examples.
+
+   @item @i{prefix}/doc/gps/examples/tutorial
+This directory contains the sources used by the GPS tutorial
+(@url{gps-tutorial.html}).
+
    @item @i{prefix}/share/gps/gps-animation.gif
 Animated image displayed in the top right corner of GPS to indicate that
 actions (e.g compilation) are going on.
+
+   @item @i{prefix}/share/gps/gps-splash.jpg
+Splash screen displayed by default when GPS is started.
+
+   @item @i{prefix}/share/themes
+Directory containing the Gtk+ predefined themes.
+
+   @item @i{prefix}/share/make
+Directory containing shared makefiles used by the multi-language build
+system.
 
    @item @i{prefix}/share/locale
 Directory used to retrieve the translation files, when relevant.
