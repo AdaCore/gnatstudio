@@ -72,7 +72,7 @@ package body Vdiff2_Module.Callback is
       if File1 = VFS.No_File then
          return;
       end if;
-      Change_Dir (Dir_Name (File1).all);
+
       declare
          File2 : constant Virtual_File :=
            Select_File
@@ -84,11 +84,12 @@ package body Vdiff2_Module.Callback is
               History           => Get_History (Kernel));
          Dummy : Command_Return_Type;
          pragma Unreferenced (Dummy);
+
       begin
          if File2 = VFS.No_File then
             return;
          end if;
-         Change_Dir (Dir_Name (File2).all);
+
          declare
             File3 : constant Virtual_File :=
               Select_File
@@ -104,7 +105,6 @@ package body Vdiff2_Module.Callback is
                return;
             end if;
 
-            Change_Dir (Dir_Name (File3).all);
             Visual_Diff (File2, File1, File3);
          end;
       end;
@@ -135,7 +135,7 @@ package body Vdiff2_Module.Callback is
       if File1 = VFS.No_File then
          return;
       end if;
-      Change_Dir (Dir_Name (File1).all);
+
       declare
          File2 : constant Virtual_File :=
            Select_File
@@ -150,6 +150,7 @@ package body Vdiff2_Module.Callback is
          if File2 = VFS.No_File then
             return;
          end if;
+
          Visual_Diff (File1, File2);
       end;
 
@@ -181,7 +182,7 @@ package body Vdiff2_Module.Callback is
       if File1 = VFS.No_File then
          return;
       end if;
-      Change_Dir (Dir_Name (File1).all);
+
       declare
          File2 : constant Virtual_File :=
            Select_File
@@ -196,7 +197,7 @@ package body Vdiff2_Module.Callback is
          if File2 = VFS.No_File then
             return;
          end if;
-         Change_Dir (Dir_Name (File2).all);
+
          declare
             File3 : constant Virtual_File :=
               Select_File
@@ -213,7 +214,6 @@ package body Vdiff2_Module.Callback is
                return;
             end if;
 
-            Change_Dir (Dir_Name (File3).all);
             Visual_Diff (File2, File1, File3);
 
             declare
@@ -261,7 +261,7 @@ package body Vdiff2_Module.Callback is
       if File1 = VFS.No_File then
          return;
       end if;
-      Change_Dir (Dir_Name (File1).all);
+
       declare
          File2 : constant Virtual_File :=
            Select_File
@@ -277,7 +277,6 @@ package body Vdiff2_Module.Callback is
             return;
          end if;
 
-         Change_Dir (Dir_Name (File2).all);
          Visual_Diff (File1, File2);
 
          declare
