@@ -104,9 +104,13 @@ package Projects is
    --  Return the project that Project is extending, or No_Project is there are
    --  none.
 
-   function Extending_Project (Project : Project_Type) return Project_Type;
+   function Extending_Project
+     (Project : Project_Type; Recurse : Boolean := False) return Project_Type;
    --  Return the project that extends Project, or No_Project if Project is not
-   --  extended within the hierarchy
+   --  extended within the hierarchy and Recurse is False.
+   --  If Recurse is True, then the lowest possible project is returned, even
+   --  if it is Project itself. This is useful when looking for specific source
+   --  files.
 
    procedure Set_Project_Modified (Project : Project_Type; Modified : Boolean);
    --  Set the modified flag for Project.
@@ -221,7 +225,6 @@ package Projects is
    --  other file.
    --  See also Src_Info.Queries.Get_Other_File_Of
    --
-   --  Source_Filename must be the base name.
    --  The returned name is the base name
 
    function Get_Filename_From_Unit

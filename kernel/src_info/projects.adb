@@ -936,11 +936,13 @@ package body Projects is
    function Other_File_Name
      (Project : Project_Type; Source_Filename : String) return String
    is
+      File       : constant String := Base_Name (Source_Filename);
       Unit, Part : Unit_Part;
       Name, Lang : Name_Id;
+      P          : Project_Type;
    begin
       Get_Unit_Part_And_Name_From_Filename
-        (Source_Filename, Get_View (Project), Unit, Name, Lang);
+        (File, Get_View (Project), Unit, Name, Lang);
 
       case Unit is
          when Unit_Spec                 => Part := Unit_Body;
@@ -950,13 +952,24 @@ package body Projects is
       Get_Name_String (Name);
       declare
          File : constant String := Name_Buffer (1 .. Name_Len);
-         N : constant String := Get_Filename_From_Unit (Project, File, Part);
       begin
-         if N = "" then
-            return Source_Filename;
-         else
-            return N;
-         end if;
+         --  Search in all extended projects as well, since the other file
+         --  might not be redefined in Project itself. Start from the lowest
+         --  project.
+         P := Extending_Project (Project, Recurse => True);
+         while P /= No_Project loop
+            declare
+               N : constant String := Get_Filename_From_Unit (P, File, Part);
+            begin
+               if N /= "" then
+                  return N;
+               end if;
+            end;
+
+            P := Parent_Project (P);
+         end loop;
+
+         return File;
       end;
    end Other_File_Name;
 
@@ -1427,12 +1440,8 @@ package body Projects is
             Index := Index - 1;
          end loop;
 
-         Decl := Project_Declaration_Of (Current.Node);
-         exit when Extended_Project_Of (Decl) = Empty_Node;
-
-         Current := Get_Project_From_Name
-           (Current.Data.Registry.all,
-            Prj.Tree.Name_Of (Extended_Project_Of (Decl)));
+         Current := Parent_Project (Current);
+         exit when Current = No_Project;
       end loop;
 
       --  Done processing everything
@@ -1463,12 +1472,8 @@ package body Projects is
             Start.Data.Importing_Projects := new Name_Id_Array'(Importing.all);
          end if;
 
-         Decl := Project_Declaration_Of (Start.Node);
-         exit when Extended_Project_Of (Decl) = Empty_Node;
-
-         Start := Get_Project_From_Name
-           (Current.Data.Registry.all,
-            Prj.Tree.Name_Of (Extended_Project_Of (Decl)));
+         Start := Parent_Project (Start);
+         exit when Start = No_Project;
       end loop;
 
       --  The code below is used for debugging sessions
@@ -2221,10 +2226,25 @@ package body Projects is
    -- Extending_Project --
    -----------------------
 
-   function Extending_Project (Project : Project_Type) return Project_Type is
-      Extend : constant Project_Node_Id := Extending_Project_Of
-        (Project_Declaration_Of (Project.Node));
+   function Extending_Project
+     (Project : Project_Type; Recurse : Boolean := False)
+      return Project_Type
+   is
+      Extend : Project_Node_Id;
    begin
+      if Recurse then
+         Extend := Project.Node;
+         while Extending_Project_Of
+           (Project_Declaration_Of (Extend)) /= Empty_Node
+         loop
+            Extend := Extending_Project_Of
+              (Project_Declaration_Of (Extend));
+         end loop;
+      else
+         Extend := Extending_Project_Of
+           (Project_Declaration_Of (Project.Node));
+      end if;
+
       if Extend = Empty_Node then
          return No_Project;
       else
