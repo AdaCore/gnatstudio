@@ -772,7 +772,8 @@ package body Help_Module is
          (-"the GNAT Programming System") & LF & LF &
          "(c) 2001-2002 ACT-Europe",
          Buttons => Button_OK,
-         Title   => -"About...");
+         Title   => -"About...",
+         Parent  => Get_Main_Window (Kernel));
 
    exception
       when E : others =>
