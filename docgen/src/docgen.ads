@@ -30,6 +30,7 @@ with List_Utils;                use List_Utils;
 with Src_Info;                  use Src_Info;
 with Src_Info.Queries;          use Src_Info.Queries;
 with Glide_Kernel;              use Glide_Kernel;
+with Basic_Types;
 with VFS;
 with Generic_List;
 with Projects;
@@ -83,6 +84,11 @@ package Docgen is
    procedure Sort_List_Name is
      new Sort (Type_Reference_List, "<" => Compare_Elements_Name);
    --  Sort the list by name
+
+   procedure Duplicate
+     (List_Out : in out Type_Reference_List.List;
+      List_In : in Type_Reference_List.List);
+   --  Makes a deep copy of the list List_In into the list List_Out
 
    type Entity_Handle is access Src_Info.Queries.Entity_Information;
 
@@ -140,9 +146,13 @@ package Docgen is
    --  Description of an entity
 
    function Clone
-     (Entity : Entity_List_Information) return Entity_List_Information;
+     (Entity : Entity_List_Information;
+      Also_Lists : Boolean)
+      return Entity_List_Information;
    --  Return a deep-copy of Entity.
    --  Entity can be freed without impacting the copy
+   --  If Also_List is true, it copies also the lists used for the call graph
+   --  Calls_List and Called_List
 
    procedure Free (X : in out Entity_List_Information);
    --  Free the memory associated with X
@@ -169,15 +179,46 @@ package Docgen is
    --  Sort the entities in alphabetical order by name,
    --  BUT all public entites stand in front of the private
 
+   procedure Free (X : in out Entity_Handle);
+
+   package List_Entity_Handle is new Generic_List (Entity_Handle);
+
+   function Find_In_List
+     (List : List_Entity_Handle.List;
+      Info : Entity_Information) return Entity_Handle;
+   --  Returns a pointer on the element like Info stored in the list (if it
+   --  exists), otherwise it returns null.
+
+   type Tagged_Element is record
+      Me               : Entity_Handle;
+      My_Parent        : Entity_Handle;
+      My_Children          : List_Entity_Handle.List;
+      Number_Of_Children   : Natural;
+   end record;
+   --  Represent a tagged type
+   --  Here, we consider that a tagged type don't have more than one parent
+
+   type Tagged_Element_Handle is access Tagged_Element;
+
+   procedure Free (X : in out Tagged_Element);
+
+   package Type_List_Tagged_Element is new Generic_List (Tagged_Element);
+   --  Contains tagged types which are declared in the list of files we are
+   --  processing
+
+   function Compare_Tagged_Name
+     (X, Y : Tagged_Element) return Boolean;
+
+   procedure Sort_List_Name   is
+     new Sort (Type_List_Tagged_Element, "<" => Compare_Tagged_Name);
+   --  Sort the tagged types in alphabetical order by name,
+
    type Info_Types is
-     (Open_Info, Close_Info,
-      Subtitle_Info, Exception_Info, Type_Info,
-      Subprogram_Info, Header_Info, Footer_Info,
-      With_Info, Package_Desc_Info,
-      Unit_Index_Info, Type_Index_Info,
-      Subprogram_Index_Info, End_Of_Index_Info,
-      Index_Item_Info, Body_Line_Info, Var_Info,
-      Package_Info, Entry_Info);
+     (Open_Info, Close_Info, Subtitle_Info, Exception_Info, Type_Info,
+      Subprogram_Info, Header_Info, Footer_Info, With_Info, Package_Desc_Info,
+      Unit_Index_Info, Type_Index_Info, Tagged_Type_Index_Info,
+      Subprogram_Index_Info, End_Of_Index_Info, Index_Tagged_Type_Item,
+      Index_Item_Info, Body_Line_Info, Var_Info, Package_Info, Entry_Info);
    --  The structure used in the type Doc_Info.
 
    type Type_Api_Doc is (HTML, TEXI);
@@ -204,7 +245,21 @@ package Docgen is
       Link_All             : Boolean := False;
       --  Should links be created to entities whose declaration files
       --  aren't being processed
+      Tagged_Types : Boolean := False;
+      --  Create a list with all tagged types declared in the list of
+      --  files we are processing. For each tagged types we indicate
+      --  his parent and his children (if they exist)
    end record;
+
+   type Family_Type is
+     (Main, No_Parent, No_Child,
+      Parent_With_Link, Parent_Without_Link,
+      Child_With_Link, Child_Without_Link);
+   --  Used when tagged types are listed. It's a field of the record Doc_Info
+   --  (see below) in the case Info_Type=Index_Tagged_Type_Item. It indicates
+   --  which item (the tagged type itself, its parent, one of its child)
+   --  is put in the index and also if we can link this item to its
+   --  declaration
 
    --  The data structure used to pass the information
    --  to the procedure which is defined
@@ -318,11 +373,23 @@ package Docgen is
                --  The name doc file name without the suffix
                Type_Index_File_Name          : GNAT.OS_Lib.String_Access;
 
-               --  Used to finish all 3 kinds of index files
+            when Tagged_Type_Index_Info =>
+               --  The doc file name without the suffix
+               Tagged_Type_Index_File_Name   : GNAT.OS_Lib.String_Access;
+
+               --  Used to finish all 4 kinds of index files
             when End_Of_Index_Info =>
                End_Index_Title               : GNAT.OS_Lib.String_Access;
 
-               --  Used to add items to all 3 kindes of index files
+               --  Used to add items to the tagged types index files
+            when Index_Tagged_Type_Item =>
+               Doc_Tagged_Type               : Entity_Information;
+               Doc_Family                    : Family_Type;
+               Directory                     : GNAT.OS_Lib.String_Access;
+               Suffix                        : GNAT.OS_Lib.String_Access;
+
+               --  Used to add items to 3 kinds of index files (units, types
+               --  and subprograms index)
             when Index_Item_Info =>
                Item_Name                     : GNAT.OS_Lib.String_Access;
                Item_File                     : VFS.Virtual_File;
@@ -442,9 +509,9 @@ package Docgen is
          Link_All         : Boolean;
          Is_Body          : Boolean;
          Process_Body     : Boolean;
-         Info             : Doc_Info) is abstract;
+         Info             : Doc_Info;
+         Call_Graph_Entities : in out Type_Entity_List.List) is abstract;
       --  Format text as an identifier
-
 
       procedure Format_File
         (B                : access Backend'Class;
@@ -472,6 +539,34 @@ package Docgen is
       --  Line_In_Body is used only for subprograms to create not regular
       --  links (in this case it is not the line number of the declaration
       --  which is needed, but the line of the definition in the body.
+
+      procedure Print_Ref_List
+        (B      : access Backend;
+         Kernel : access Kernel_Handle_Record'Class;
+         File   : in Ada.Text_IO.File_Type;
+         Name_Entity : Basic_Types.String_Access;
+         Local_List  : Type_Reference_List.List;
+         Called_Subp : Boolean) is abstract;
+      --  Processes the Ref_List to the output file.
+      --  If Called_Subp is True, the list of the subprograms
+      --  calling the current subprogram will be printed,
+      --  if False, the list of the subprograms called within it.
+
+      procedure  Call_Graph_Packages_Header
+        (B      : access Backend;
+         Kernel : access Kernel_Handle_Record'Class;
+         File   : in Ada.Text_IO.File_Type;
+         Info   : Doc_Info) is abstract;
+      --  Used to add some informations (if necessary) before all the call
+      --  graphs of subprograms contained in inner packages
+
+      procedure  Call_Graph_Packages_Footer
+        (B      : access Backend;
+         Kernel : access Kernel_Handle_Record'Class;
+         File   : in Ada.Text_IO.File_Type;
+         Info   : Doc_Info) is abstract;
+      --  Used to add some informations (if necessary) after all the call
+      --  graphs of subprograms contained in inner packages
 
       procedure Format_Link
         (B                : access Backend;
@@ -565,7 +660,8 @@ package Docgen is
       Link_All         : Boolean;
       Is_Body          : Boolean;
       Process_Body     : Boolean;
-      Info             : Doc_Info);
+      Info             : Doc_Info;
+      Call_Graph_Entities : in out Type_Entity_List.List);
    --  This procedure is used by formats of documentation like html to
    --  create links for each entity of the file File_Name on their
    --  own declaration. It's called by the method Format_Identifier of
@@ -573,6 +669,8 @@ package Docgen is
    --  This process is done in Docgen because for each entity we must search
    --  for its declaration in all concerned files: this work is
    --  independant of the choosen format of documentation.
+   --  Call_Graph_Entities is used to store the declarations of subprograms
+   --  when the current entity is an inner packages.
 
    function Count_Lines (Line : String) return Natural;
    --  Return the number of lines in the String
