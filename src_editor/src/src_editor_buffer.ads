@@ -113,11 +113,35 @@ package Src_Editor_Buffer is
    --
    --  Note that Get_Line_Count (inherited from Gtk_Text_Buffer) is also
    --  available when only the Line number needs to be checked.
+   --  Obsolete, should use Is_Valid_Position below.
+
+   function Is_Valid_Position
+     (Buffer : access Source_Buffer_Record;
+      Line   : Editable_Line_Type;
+      Column : Natural := 1) return Boolean;
+   --  Return True if the given cursor position is valid. If Column is
+   --  set to 0, then this function just verifies the given line number
+   --  (column 0 of a given line always exists).
+   --
+   --  Note that Get_Line_Count (inherited from Gtk_Text_Buffer) is also
+   --  available when only the Line number needs to be checked.
+
 
    procedure Set_Cursor_Position
      (Buffer  : access Source_Buffer_Record;
       Line    : Gint;
       Column  : Gint);
+   --  Move the insert cursor to the given position.
+   --
+   --  The validity of the cursor position must be verified before invoking
+   --  this procedure. An incorrect position will cause an Assertion_Failure
+   --  when compiled with assertion checks, or an undefined behavior otherwise.
+   --  This is obsolete, Set_Cursor_Position below should be called.
+
+   procedure Set_Cursor_Position
+     (Buffer  : access Source_Buffer_Record;
+      Line    : Editable_Line_Type;
+      Column  : Natural);
    --  Move the insert cursor to the given position.
    --
    --  The validity of the cursor position must be verified before invoking
@@ -218,10 +242,43 @@ package Src_Editor_Buffer is
    --  Same as above but return the C pointer directly for efficiency.
    --  The caller is responsible for freeing the memory (with g_free).
 
+   function Get_Text
+     (Buffer       : access Source_Buffer_Record;
+      Start_Line   : Editable_Line_Type;
+      Start_Column : Natural;
+      End_Line     : Editable_Line_Type;
+      End_Column   : Natural) return String;
+   --  Return (as UTF-8) the text in range [Start, end).
+
+   procedure Forward_Position
+     (Buffer       : access Source_Buffer_Record;
+      Start_Line   : Editable_Line_Type;
+      Start_Column : Natural;
+      Length       : Integer;
+      End_Line     : out Editable_Line_Type;
+      End_Column   : out Natural);
+   --  Return the position Length characters after Start_Line/Start_Column.
+
    procedure Insert
      (Buffer      : access Source_Buffer_Record;
       Line        : Gint;
       Column      : Gint;
+      Text        : String;
+      Enable_Undo : Boolean := True);
+   --  Insert the given text in at the specified position.
+   --
+   --  The validity of the given position must be verified before invoking this
+   --  procedure. An incorrect position  will cause an Assertion_Failure when
+   --  compiled with assertion checks, or an undefined behavior
+   --  otherwise.
+   --  If Enable_Undo is True, then the insertion action will be
+   --  stored in the undo/redo queue.
+   --  This is obsolete, we should use Insert below.
+
+   procedure Insert
+     (Buffer      : access Source_Buffer_Record;
+      Line        : Editable_Line_Type;
+      Column      : Natural;
       Text        : String;
       Enable_Undo : Boolean := True);
    --  Insert the given text in at the specified position.
@@ -247,6 +304,22 @@ package Src_Editor_Buffer is
    --  otherwise.
    --  If Enable_Undo is True, then the deletion action will be
    --  stored in the undo/redo queue.
+   --  Obsolete, we should use Delete below.
+
+   procedure Delete
+     (Buffer      : access Source_Buffer_Record;
+      Line        : Editable_Line_Type;
+      Column      : Natural;
+      Length      : Natural;
+      Enable_Undo : Boolean := True);
+   --  Delete Length caracters after the specified position.
+   --
+   --  The validity of the given position must be verified before invoking this
+   --  procedure. An incorrect position  will cause an Assertion_Failure when
+   --  compiled with assertion checks, or an undefined behavior
+   --  otherwise.
+   --  If Enable_Undo is True, then the deletion action will be
+   --  stored in the undo/redo queue.
 
    procedure Replace_Slice
      (Buffer       : access Source_Buffer_Record;
@@ -261,6 +334,22 @@ package Src_Editor_Buffer is
    --  The validity of the given positions must be verified before invoking
    --  this procedure. An incorrect position will cause an Assertion_Failure
    --  when compiled with assertion checks, or an undefined behavior otherwise.
+   --  Obsolete, should call Replace_Slice below.
+
+   procedure Replace_Slice
+     (Buffer       : access Source_Buffer_Record;
+      Start_Line   : Editable_Line_Type;
+      Start_Column : Natural;
+      End_Line     : Editable_Line_Type;
+      End_Column   : Natural;
+      Text         : String;
+      Enable_Undo  : Boolean := True);
+   --  Replace the text between the start and end positions by Text.
+   --
+   --  The validity of the given positions must be verified before invoking
+   --  this procedure. An incorrect position will cause an Assertion_Failure
+   --  when compiled with assertion checks, or an undefined behavior otherwise.
+
 
    procedure Select_All (Buffer : access Source_Buffer_Record);
    --  Set the selection bounds from the begining to the end of the buffer.
@@ -787,6 +876,12 @@ private
      (Buffer : access Source_Buffer_Record;
       Line   : File_Line_Type) return Buffer_Line_Type;
    --  Return the buffer line corresponding to file line Line.
+
+   function Get_Editable_Line
+     (Buffer : access Source_Buffer_Record'Class;
+      Line   : Buffer_Line_Type) return Editable_Line_Type;
+   --  Return the editable line corresponding to Line.
+   --  Return 0 if no editable line was found.
 
    --------------------
    -- Editable lines --
