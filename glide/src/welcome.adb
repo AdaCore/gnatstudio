@@ -146,7 +146,7 @@ package body Welcome is
 
       Gtk_New (Screen.Default_Dir);
       Pack_Start (Hbox, Screen.Default_Dir, Expand => True, Fill => True);
-      Set_Text (Screen.Default_Dir, Get_Current_Dir);
+      Set_Text (Screen.Default_Dir, Normalize_Pathname (Get_Current_Dir));
 
       Gtk_New (Screen.Default_Browse, -"Browse");
       Add_Widget (Size, Screen.Default_Browse);
