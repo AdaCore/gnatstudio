@@ -96,8 +96,8 @@ package Src_Info.Queries is
    --  Return True if Entity is a subprogram (procedure, function,...)
 
    function Is_Container (Entity : Entity_Information) return Boolean;
-   --  Return True if Entity contain calls or declarations of other entities
-   --  (packages, namespaces, subprograms,...)
+   --  Return True if Entity may contain calls or declarations of other
+   --  entities (packages, namespaces, subprograms,...)
 
    function Get_Scope (Entity : Entity_Information) return E_Scope;
    --  Return the scope of the entity.  See glide_kernel.ads on how to convert
@@ -971,7 +971,8 @@ private
    --  If Declarations_Only is true, then only declarations are inserted into
    --  the tree, no reference.
 
-
+   pragma Inline (Is_Container);
+   pragma Inline (Get_Scope);
    pragma Inline (File_Information);
    pragma Inline (Dependency_Information);
    pragma Inline (Is_Label);
