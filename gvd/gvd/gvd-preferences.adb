@@ -327,6 +327,8 @@ package body GVD.Preferences is
          Current_Preferences.Tag := new String' ("GVD_Preferences");
       end if;
 
+      Set (Break_On_Exception, False);
+
       Set (Hide_Delay, Guint' (5000));
       Set (String (Ada_Extensions), ".ads;.adb;.ada;.a;.dg");
       Set (String (C_Extensions), ".c;.h");
@@ -401,7 +403,8 @@ package body GVD.Preferences is
    procedure Fill_Dialog (Dialog : General_Preferences_Access) is
    begin
       --  Break on exception
-      Set_Sensitive (Dialog.Break_Exception_Check, False);
+      Set_Active (Dialog.Break_Exception_Check,
+                  Get_Pref (Break_On_Exception));
 
       --  Status bar timeout
       Set_Text (Dialog.Statusbar_Timeout_Entry,
@@ -566,6 +569,8 @@ package body GVD.Preferences is
    procedure Set_From_Dialog
      (Dialog : General_Preferences_Pkg.General_Preferences_Access) is
    begin
+      Set (Break_On_Exception,
+           Get_Active (Dialog.Break_Exception_Check), True);
       Set (Hide_Delay, Guint'Value (Get_Text (Dialog.Statusbar_Timeout_Entry)),
            True);
       Set (String (Ada_Extensions),

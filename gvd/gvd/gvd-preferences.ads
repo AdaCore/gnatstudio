@@ -107,6 +107,9 @@ package GVD.Preferences is
    -- General Preferences --
    -------------------------
 
+   Break_On_Exception : constant String_Boolean := "Break_On_Exception";
+   --  Break on exceptions.
+
    Hide_Delay : constant String_Guint := "Hide_Delay";
    --  Delay (in ms) after which the current message is hidden
 
