@@ -238,7 +238,8 @@ package body VCS.CVS is
          --  Extract a list of files that belong to the same directory.
 
          declare
-            Current_Directory : String := Dir_Name (Data (Current_Filename));
+            Current_Directory : constant String :=
+              Dir_Name (Data (Current_Filename));
             Current_List      : List;
          begin
             while Current_Filename /= Null_Node
@@ -273,15 +274,15 @@ package body VCS.CVS is
       use String_List;
 
       Output         : List_Node := First (List);
-      New_Dir        : String := String_List.Head (Head);
+      New_Dir        : constant String := String_List.Head (Head);
 
    begin
       while Output /= Null_Node loop
          declare
-            Line       : String := Data (Output);
+            Line       : constant String := Data (Output);
             Index      : Natural;
             Next_Index : Natural;
-            First      : Integer := Line'First;
+            First      : constant Integer := Line'First;
             Last       : Integer := Line'Last;
             Length     : Integer := Line'Length;
          begin
@@ -330,7 +331,8 @@ package body VCS.CVS is
                   Current_Status.Status := Not_Registered;
 
                   declare
-                     S : String := String_List.Head (Current_Status.File_Name);
+                     S : constant String :=
+                       String_List.Head (Current_Status.File_Name);
                   begin
                      if S (S'First + New_Dir'Length
                            .. S'First + New_Dir'Length + 7) = "no file "
@@ -505,8 +507,8 @@ package body VCS.CVS is
 
       Result  : File_Status_List.List;
 
-      Old_Dir : Dir_Name_Str := Get_Current_Dir;
-      New_Dir : Dir_Name_Str := Dir_Name (Head (Filenames));
+      Old_Dir : constant Dir_Name_Str := Get_Current_Dir;
+      New_Dir : constant Dir_Name_Str := Dir_Name (Head (Filenames));
 
       Blank_Status   : File_Status_Record;
       Current_Status : File_Status_Record := Blank_Status;
@@ -635,7 +637,8 @@ package body VCS.CVS is
          --  Extract a list of files that belong to the same directory.
 
          declare
-            Current_Directory : String := Dir_Name (Data (Current_Filename));
+            Current_Directory : constant String :=
+              Dir_Name (Data (Current_Filename));
             Current_List      : String_List.List;
 
          begin
@@ -677,7 +680,8 @@ package body VCS.CVS is
          --  Extract a list of files that belong to the same directory.
 
          declare
-            Current_Directory : String := Dir_Name (Data (Current_Filename));
+            Current_Directory : constant String :=
+              Dir_Name (Data (Current_Filename));
             Current_List      : String_List.List;
 
          begin
@@ -977,7 +981,7 @@ package body VCS.CVS is
       use String_List;
 
       L_Temp       : List_Node := First (List);
-      Length       : Integer := String_List.Length (List) - 2;
+      Length       : constant Integer := String_List.Length (List) - 2;
       Current_File : constant String := String_List.Head (Head);
       A            : Line_Information_Array (1 .. Length);
       Index        : Natural;
@@ -1005,7 +1009,7 @@ package body VCS.CVS is
       L_Temp := Next (Next (L_Temp));
 
       declare
-         S : String := Data (L_Temp);
+         S : constant String := Data (L_Temp);
       begin
          Index := S'First;
          Skip_To_String (S, Index, "): ");
@@ -1014,7 +1018,7 @@ package body VCS.CVS is
 
       for J in 1 .. Length loop
          declare
-            S : String := Data (L_Temp);
+            S : constant String := Data (L_Temp);
          begin
             A (J).Text := new String' (S (S'First .. S'First + Index));
          end;

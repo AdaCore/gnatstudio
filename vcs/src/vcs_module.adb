@@ -41,7 +41,7 @@ with Log_Utils;
 package body VCS_Module is
 
    VCS_Module_Name : constant String := "VCS_Interface";
-   Me : Debug_Handle := Create (VCS_Module_Name);
+   Me : constant Debug_Handle := Create (VCS_Module_Name);
 
    procedure On_Open_Interface
      (Widget : access GObject_Record'Class;
@@ -92,8 +92,8 @@ package body VCS_Module is
    is
       pragma Unreferenced (Widget);
 
-      Dirs : String_List.List := Get_Dirs_In_Project (Kernel);
-      Ref  : VCS_Access := Get_Current_Ref (Kernel);
+      Dirs : constant String_List.List := Get_Dirs_In_Project (Kernel);
+      Ref  : constant VCS_Access := Get_Current_Ref (Kernel);
    begin
       Update (Ref, Dirs);
 
@@ -112,7 +112,7 @@ package body VCS_Module is
    is
       pragma Unreferenced (Widget);
 
-      Ref      : VCS_Access := Get_Current_Ref (Kernel);
+      Ref      : constant VCS_Access := Get_Current_Ref (Kernel);
       Explorer : VCS_View_Access;
    begin
       Open_Explorer (Kernel);

@@ -44,7 +44,7 @@ with Traces;                    use Traces;
 
 package body Vdiff_Module is
 
-   Me : Debug_Handle := Create (Vdiff_Module_Name);
+   Me : constant Debug_Handle := Create (Vdiff_Module_Name);
 
    function Mime_Action
      (Kernel    : access Kernel_Handle_Record'Class;
