@@ -177,16 +177,32 @@ package body Src_Info.CPP is
 
    type CType_Description is
       record
-         Kind            : E_Kind;
-         IsVolatile      : Boolean;
-         IsConst         : Boolean;
-         IsTemplate      : Boolean;
-         Parent_Point    : Point;
-         Parent_Filename : SN.String_Access;
+         Kind              : E_Kind;
+         IsVolatile        : Boolean;
+         IsConst           : Boolean;
+         IsTemplate        : Boolean;
+         Parent_Point      : Point;
+         Parent_Filename   : SN.String_Access;
+         Ancestor_Point    : Point;
+         Ancestor_Filename : SN.String_Access;
+         Builtin_Name       : SN.String_Access;
       end record;
+   --  Contains C type description. Used in these procedures:
+   --    Type_Name_To_Kind
+   --    Original_Type
+   --    Find_Class
+   --
+   --  Parent_xxx: FIXME Taras
+   --
+   --  Ancestor_xxx: location of the closest typedef in the chain of
+   --  typedefs.
+   --
+   --  Builtin_Name is set for builtin type occurences. Also it is used
+   --  (compared with null) in resolving typedef parent type (see
+   --  Sym_T_Handler).
 
    procedure Free (Desc : in out CType_Description);
-   --  Frees Parent_Filename if any
+   --  Frees memory used by access fields in given Desc structure.
 
    --  Debugging utils
    procedure Info (Msg : String); -- print info message
@@ -371,8 +387,9 @@ package body Src_Info.CPP is
          or Type_Name = "unsigned long long"
          or Type_Name = "unsigned short"
       then
-         Desc.Kind := Modular_Integer_Type;
-         Success := True;
+         Desc.Kind         := Modular_Integer_Type;
+         Desc.Builtin_Name := new String' (Type_Name);
+         Success           := True;
       else
          Success := False;
       end if;
@@ -426,11 +443,12 @@ package body Src_Info.CPP is
       Volatile_Str : constant String := "volatile ";
       Const_Str    : constant String := "const ";
    begin
-      Desc.IsVolatile   := False;
-      Desc.IsConst      := False;
-      Desc.IsTemplate   := False;
-      Desc.Parent_Point := Invalid_Point;
-      Success           := False;
+      Desc.IsVolatile     := False;
+      Desc.IsConst        := False;
+      Desc.IsTemplate     := False;
+      Desc.Parent_Point   := Invalid_Point;
+      Desc.Ancestor_Point := Invalid_Point;
+      Success             := False;
 
       --  check for leading volatile/const modifier
       if Type_Name'Length > Volatile_Str'Length
@@ -521,8 +539,15 @@ package body Src_Info.CPP is
             Enum_Def := Find (SN_Table (E), Type_Name);
             Desc.Kind := Enumeration_Type;
             Desc.Parent_Point    := Enum_Def.Start_Position;
-            Desc.Parent_Filename := new String'(Enum_Def.Buffer (
+            Desc.Parent_Filename := new String' (Enum_Def.Buffer (
                     Enum_Def.File_Name.First .. Enum_Def.File_Name.Last));
+
+            if Desc.Ancestor_Point = Invalid_Point then -- was not set yet
+               Desc.Ancestor_Point    := Enum_Def.Start_Position;
+               Desc.Ancestor_Filename := new String' (Enum_Def.Buffer (
+                     Enum_Def.File_Name.First .. Enum_Def.File_Name.Last));
+            end if;
+
             Free (Enum_Def);
             Success := True;
             return;
@@ -550,6 +575,7 @@ package body Src_Info.CPP is
    begin
 
       Success := False;
+      Desc.Ancestor_Point := Invalid_Point;
 
       if not Is_Open (SN_Table (T)) then
          --  typedef table does not exist
@@ -564,6 +590,13 @@ package body Src_Info.CPP is
          Desc.Parent_Point     := Typedef.Start_Position;
          Desc.Parent_Filename := new String'(Typedef.Buffer (
                     Typedef.File_Name.First .. Typedef.File_Name.Last));
+
+         if Desc.Ancestor_Point = Invalid_Point then -- was not set yet
+            Desc.Ancestor_Point    := Typedef.Start_Position;
+            Desc.Ancestor_Filename := new String' (Typedef.Buffer (
+                          Typedef.File_Name.First .. Typedef.File_Name.Last));
+         end if;
+
          Free (Typedef);
          Success := True;
          return;
@@ -602,8 +635,14 @@ package body Src_Info.CPP is
       end if;
 
       Desc.Parent_Point    := Class_Def.Start_Position;
-      Desc.Parent_Filename := new String'(Class_Def.Buffer (
+      Desc.Parent_Filename := new String' (Class_Def.Buffer (
                     Class_Def.File_Name.First .. Class_Def.File_Name.Last));
+
+      if Desc.Ancestor_Point = Invalid_Point then -- was not set yet
+         Desc.Ancestor_Point    := Class_Def.Start_Position;
+         Desc.Ancestor_Filename := new String' (Class_Def.Buffer (
+                       Class_Def.File_Name.First .. Class_Def.File_Name.Last));
+      end if;
 
       Desc.Kind := Record_Type;
       Success := True;
@@ -622,6 +661,12 @@ package body Src_Info.CPP is
    begin
       if Desc.Parent_Point /= Invalid_Point then
          Free (Desc.Parent_Filename);
+      end if;
+      if Desc.Ancestor_Point /= Invalid_Point then
+         Free (Desc.Ancestor_Filename);
+      end if;
+      if Desc.Builtin_Name /= null then
+         Free (Desc.Builtin_Name);
       end if;
    end Free;
 
