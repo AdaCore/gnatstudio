@@ -33,7 +33,7 @@ package GUI_Utils is
 
    procedure Add_Unique_List_Entry
      (List : access Gtk.List.Gtk_List_Record'Class;
-      Text  : String);
+      Text : String);
    --  Add Text to List if it is not already there. Nothing is done if Text
    --  is already visible in the list
 
@@ -53,8 +53,7 @@ package GUI_Utils is
 
    type Contextual_Menu_Create is access function
      (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Event  : Gdk.Event.Gdk_Event)
-     return Gtk.Menu.Gtk_Menu;
+      Event  : Gdk.Event.Gdk_Event) return Gtk.Menu.Gtk_Menu;
    --  Function used to create the contextual menu for Widget.
    --  This function is only called for the right mouse button, so it doesn't
    --  need to check that.
@@ -84,8 +83,7 @@ package GUI_Utils is
 
       type Contextual_Menu_Create is access function
         (User  : User_Data;
-         Event : Gdk.Event.Gdk_Event)
-        return Gtk.Menu.Gtk_Menu;
+         Event : Gdk.Event.Gdk_Event) return Gtk.Menu.Gtk_Menu;
 
       type Contextual_Menu_Destroy is access procedure
         (User : User_Data;
@@ -105,6 +103,7 @@ package GUI_Utils is
          User         : User_Data;
          Menu_Create  : Contextual_Menu_Create := null;
          Menu_Destroy : Contextual_Menu_Destroy := null);
+
    end User_Contextual_Menus;
    --  Same as the procedure Register_Contextual_Menu, but the callbacks for
    --  the menu creation takes any type as input.
