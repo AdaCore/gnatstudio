@@ -337,7 +337,7 @@ package body VCS_View_API is
          Callback : Context_Callback.Marshallers.Void_Marshaller.Handler;
          Via_Log  : Boolean := False);
       --  Add a menu item corresponding to Action.
-      --  If Via_Log is True,
+      --  If Via_Log is True, ???
 
       procedure Add_Separator;
       --  Add a separator in the menu if needed.
