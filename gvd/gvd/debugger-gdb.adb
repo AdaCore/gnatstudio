@@ -28,8 +28,11 @@ with Debugger.Gdb.Ada;  use Debugger.Gdb.Ada;
 with Ada.Strings.Fixed; use Ada.Strings.Fixed;
 with Process_Proxies;   use Process_Proxies;
 with Odd.Process;       use Odd.Process;
+with Unchecked_Conversion;
 
 package body Debugger.Gdb is
+
+   use Main_Debug_Window_Pkg;
 
    ---------------
    -- Constants --
@@ -61,17 +64,24 @@ package body Debugger.Gdb is
      ("^(The current source language is|Current language:) +" &
       """?(auto; currently )?([^""\s]+)", Multiple_Lines);
 
-   procedure Language_Filter (Descriptor : GNAT.Expect.Process_Descriptor;
-                              Str        : String);
+   procedure Language_Filter
+     (Descriptor : GNAT.Expect.Process_Descriptor;
+      Str        : String;
+      Window     : System.Address);
    --  Filter used to detect a change in the current language.
 
    ---------------------
    -- Language_Filter --
    ---------------------
 
-   procedure Language_Filter (Descriptor : GNAT.Expect.Process_Descriptor;
-                              Str        : String)
+   procedure Language_Filter
+     (Descriptor : GNAT.Expect.Process_Descriptor;
+      Str        : String;
+      Window     : System.Address)
    is
+      function To_Main_Debug_Window is new
+        Unchecked_Conversion (System.Address, Main_Debug_Window_Access);
+
       Matched    : GNAT.Regpat.Match_Array (0 .. 3);
       Debugger   : Debugger_Access;
       Language   : Language_Access;
@@ -80,9 +90,10 @@ package body Debugger.Gdb is
       Match (Language_Pattern, Str, Matched);
 
       if Matched (3) /= No_Match then
-         Debugger := Convert (Descriptor).Debugger;
+         Debugger := Convert
+           (To_Main_Debug_Window (Window), Descriptor).Debugger;
          declare
-            Lang     : String := Str (Matched (3).First .. Matched (3).Last);
+            Lang : String := Str (Matched (3).First .. Matched (3).Last);
          begin
             if Lang = "ada" then
                Language := new Gdb_Ada_Language;
@@ -93,7 +104,6 @@ package body Debugger.Gdb is
                raise Program_Error;
             end if;
 
-            --  ??? Should delete the old language...
             Set_Language (Debugger, Language);
             Set_Debugger (Language_Debugger_Access (Language),
                           Debugger.all'Access);
@@ -105,10 +115,8 @@ package body Debugger.Gdb is
    -- Type_Of --
    -------------
 
-   function Type_Of (Debugger : access Gdb_Debugger;
-                     Entity : String)
-                    return String
-   is
+   function Type_Of
+     (Debugger : access Gdb_Debugger; Entity : String) return String is
    begin
       Send (Get_Process (Debugger), "ptype " & Entity, Empty_Buffer => True);
       Wait_Prompt (Debugger);
@@ -136,8 +144,7 @@ package body Debugger.Gdb is
    function Value_Of
      (Debugger : access Gdb_Debugger;
       Entity   : String;
-      Format   : Value_Format := Decimal) return String
-   is
+      Format   : Value_Format := Decimal) return String is
    begin
       --  Empty the buffer.
       Empty_Buffer (Get_Process (Debugger));
@@ -165,10 +172,16 @@ package body Debugger.Gdb is
    -- Spawn --
    -----------
 
-   procedure Spawn (Debugger       : access Gdb_Debugger;
-                    Arguments      : Argument_List;
-                    Proxy          : Process_Proxies.Process_Proxy_Access;
-                    Remote_Machine : String := "")
+   procedure Spawn
+     (Debugger        : access Gdb_Debugger;
+      Executable      : String;
+      Arguments       : GNAT.OS_Lib.Argument_List;
+      Proxy           : Process_Proxies.Process_Proxy_Access;
+      Window          : Main_Debug_Window_Pkg.Main_Debug_Window_Access;
+      Remote_Host     : String := "";
+      Remote_Target   : String := "";
+      Remote_Protocol : String := "";
+      Debugger_Name   : String := "")
    is
       Num_Options     : Natural := Count (Gdb_Options, " ") + 1;
       Local_Arguments : Argument_List (1 .. Arguments'Length + Num_Options);
@@ -183,9 +196,6 @@ package body Debugger.Gdb is
       for J in 1 .. Num_Options - 1 loop
          Last := Index (Gdb_Options (First .. Gdb_Options'Last), " ");
          Local_Arguments (J) := new String' (Gdb_Options (First .. Last - 1));
-
-         --  ???We should also skip all the blanks, there is a CE if there
-         --  are multiple blanks in the string.
          First := Index_Non_Blank (Gdb_Options (Last .. Gdb_Options'Last));
       end loop;
 
@@ -193,18 +203,40 @@ package body Debugger.Gdb is
         new String' (Gdb_Options (First .. Gdb_Options'Last));
       Local_Arguments (Num_Options + 1 .. Local_Arguments'Last) := Arguments;
 
-      General_Spawn
-        (Debugger, Local_Arguments, Gdb_Command, Proxy, Remote_Machine);
+      if Debugger_Name = "" then
+         General_Spawn
+           (Debugger, Local_Arguments, Gdb_Command, Proxy, Remote_Host);
+      else
+         General_Spawn
+           (Debugger, Local_Arguments, Debugger_Name, Proxy, Remote_Host);
+      end if;
+
+      Free (Debugger.Executable);
+      Free (Debugger.Target_Command);
+
+      if Executable /= "" then
+         Debugger.Executable := new String' (Executable);
+      end if;
+
+      if Remote_Target = "" then
+         Debugger.Remote_Target := False;
+      else
+         Debugger.Remote_Target := True;
+         Debugger.Target_Command :=
+           new String' ("target " & Remote_Protocol & " " & Remote_Target);
+      end if;
 
       --  Set up an output filter to detect changes of the current language
 
-      Add_Output_Filter (Get_Descriptor (Debugger.Process).all,
-                         Language_Filter'Access);
+      Add_Output_Filter
+        (Get_Descriptor (Debugger.Process).all,
+         Language_Filter'Access,
+         Window.all'Address);
 
---        Add_Output_Filter (Get_Descriptor (Debugger.Process).all,
---                           Trace_Filter'Access);
---        Add_Input_Filter (Get_Descriptor (Debugger.Process).all,
---                          Trace_Filter'Access);
+   --   Add_Output_Filter (Get_Descriptor (Debugger.Process).all,
+   --                      Trace_Filter'Access);
+   --   Add_Input_Filter (Get_Descriptor (Debugger.Process).all,
+   --                     Trace_Filter'Access);
    end Spawn;
 
    ----------------
@@ -226,6 +258,19 @@ package body Debugger.Gdb is
       Wait_Prompt (Debugger);
       Send (Get_Process (Debugger), "set annotate 1");
       Wait_Prompt (Debugger);
+
+      --  Connect to the remote target if needed.
+
+      if Debugger.Target_Command /= null then
+         Send (Get_Process (Debugger), Debugger.Target_Command.all);
+         Wait_Prompt (Debugger);
+      end if;
+
+      --  Load the module to debug, if any.
+
+      if Debugger.Executable /= null then
+         Set_Executable (Debugger, Debugger.Executable.all);
+      end if;
 
       --  Detect the current language. Note that most of the work is done in
       --  fact directly by Language_Filter.
@@ -265,11 +310,16 @@ package body Debugger.Gdb is
    -- Set_Executable --
    --------------------
 
-   procedure Set_Executable (Debugger : access Gdb_Debugger;
-                             Executable : String)
-   is
+   procedure Set_Executable
+     (Debugger   : access Gdb_Debugger;
+      Executable : String) is
    begin
-      Send (Get_Process (Debugger), "file " & Executable);
+      if Debugger.Remote_Target then
+         Send (Get_Process (Debugger), "load " & Executable);
+      else
+         Send (Get_Process (Debugger), "file " & Executable);
+      end if;
+
       Wait_Prompt (Debugger);
    end Set_Executable;
 
@@ -290,7 +340,6 @@ package body Debugger.Gdb is
    procedure Run (Debugger : access Gdb_Debugger) is
    begin
       Send (Get_Process (Debugger), "run");
-      Wait_Prompt (Debugger);
    end Run;
 
    -----------
@@ -300,6 +349,7 @@ package body Debugger.Gdb is
    procedure Start (Debugger : access Gdb_Debugger) is
    begin
       Send (Get_Process (Debugger), "begin");
+      Wait_Prompt (Debugger);
    end Start;
 
    ---------------
@@ -322,14 +372,44 @@ package body Debugger.Gdb is
       Wait_Prompt (Debugger);
    end Step_Over;
 
+   --------------
+   -- Continue --
+   --------------
+
+   procedure Continue (Debugger : access Gdb_Debugger) is
+   begin
+      Send (Get_Process (Debugger), "cont");
+      Wait_Prompt (Debugger);
+   end Continue;
+
+   ----------------
+   -- Stack_Down --
+   ----------------
+
+   procedure Stack_Down (Debugger : access Gdb_Debugger) is
+   begin
+      Send (Get_Process (Debugger), "down");
+      Wait_Prompt (Debugger);
+   end Stack_Down;
+
+   --------------
+   -- Stack_Up --
+   --------------
+
+   procedure Stack_Up (Debugger : access Gdb_Debugger) is
+   begin
+      Send (Get_Process (Debugger), "up");
+      Wait_Prompt (Debugger);
+   end Stack_Up;
+
    ---------------------
    -- Break_Exception --
    ---------------------
 
-   procedure Break_Exception (Debugger  : access Gdb_Debugger;
-                              Name      : String  := "";
-                              Unhandled : Boolean := False)
-   is
+   procedure Break_Exception
+     (Debugger  : access Gdb_Debugger;
+      Name      : String  := "";
+      Unhandled : Boolean := False) is
    begin
       --  ??? If language = "Ada"
       if Unhandled then
@@ -409,20 +489,16 @@ package body Debugger.Gdb is
             Line_String (Line_String'First + 1 .. Line_String'Last));
       Wait_Prompt (Debugger);
 
-      --  ??? This patterns detects too many matching lines, and should be
-      --  fixed.   Detecting :beg: might do the trick.
-      --  We could also use a more complex pattern for Wait.
       return Index
-        (Expect_Out (Get_Process (Debugger)), "but contains no code") = 0;
+        (Expect_Out (Get_Process (Debugger)), "starts at address") /= 0;
    end Line_Contains_Code;
 
    --------------------------
    -- Highlighting_Pattern --
    --------------------------
 
-   function Highlighting_Pattern (Debugger : access Gdb_Debugger)
-                                 return GNAT.Regpat.Pattern_Matcher
-   is
+   function Highlighting_Pattern
+     (Debugger : access Gdb_Debugger) return GNAT.Regpat.Pattern_Matcher is
    begin
       return Highlight_Pattern;
    end Highlighting_Pattern;
@@ -441,15 +517,17 @@ package body Debugger.Gdb is
    -- Found_File_Name --
    ---------------------
 
-   procedure Found_File_Name (Debugger   : access Gdb_Debugger;
-                              Str        : String;
-                              Name_First : out Natural;
-                              Name_Last  : out Positive;
-                              Line       : out Natural)
+   procedure Found_File_Name
+     (Debugger   : access Gdb_Debugger;
+      Str        : String;
+      Name_First : out Natural;
+      Name_Last  : out Positive;
+      Line       : out Natural)
    is
       Matched : Match_Array (0 .. 2);
    begin
       Match (File_Name_Pattern, Str, Matched);
+
       if Matched (0) = No_Match then
          Name_First := 0;
          Name_Last  := 1;
