@@ -35,7 +35,7 @@ static GtkObjectClass *parent_class = NULL;
 /* GtkObject methods.  */
 
 static void
-finalize (GtkObject *object)
+finalize (GObject *object)
 {
 	HTMLPainter *painter;
 

@@ -78,7 +78,7 @@ free_param(void *key, void *value, void *data)
 }
 
 static void
-csc_html_embedded_finalize (GtkObject *object)
+csc_html_embedded_finalize (GObject *object)
 {
 	CscHTMLEmbedded *eb = CSC_HTML_EMBEDDED(object);
 

@@ -52,7 +52,7 @@ allocate_color_set (HTMLGdkPainter *gdk_painter)
 
 /* GtkObject methods.  */
 
-static void finalize(GtkObject *object) {
+static void finalize(GObject *object) {
 	HTMLGdkPainter *painter;
 
 	painter = HTML_GDK_PAINTER(object);
@@ -251,7 +251,7 @@ static void set_font_face(HTMLPainter *painter, const gchar *font_face) {
 	HTMLGdkPainter *gdk_painter;
 
 	gdk_painter = HTML_GDK_PAINTER(painter);
-	gdk_painter->font_face = font_face;
+	gdk_painter->font_face = (gchar *)font_face;
 }
 
 static CscHTMLFontStyle get_font_style(HTMLPainter *painter) {
@@ -418,7 +418,7 @@ draw_background (HTMLPainter *painter,
 		return;
 
 	if (color && !pixbuf) {
-		gdk_gc_set_foreground (gdk_painter->gc, color);
+		gdk_gc_set_foreground (gdk_painter->gc, (GdkColor *)color);
 		gdk_draw_rectangle (gdk_painter->pixmap, gdk_painter->gc,
 				    TRUE, x - gdk_painter->x1, y - gdk_painter->y1,
 				    width, height);	
@@ -451,7 +451,7 @@ draw_background (HTMLPainter *painter,
 			pixmap = gdk_pixmap_new (gdk_painter->window, dw, dh, -1);		
 			
 			if (color) {
-				gdk_gc_set_foreground (gc, color);
+				gdk_gc_set_foreground (gc, (GdkColor *)color);
 				gdk_draw_rectangle (pixmap, gc,
 						    TRUE, 0, 0,
 						    dw, dh);
@@ -538,7 +538,7 @@ draw_background (HTMLPainter *painter,
 		}
 	} else {
 		if (color && gdk_pixbuf_get_has_alpha (pixbuf)) {
-			gdk_gc_set_foreground (gdk_painter->gc, color);
+			gdk_gc_set_foreground (gdk_painter->gc, (GdkColor *)color);
 			gdk_draw_rectangle (gdk_painter->pixmap, gdk_painter->gc, TRUE,
 					    x - gdk_painter->x1, y - gdk_painter->y1,
 					    width, height);	

@@ -100,7 +100,7 @@ static CscHTMLFontStyle get_font_style(const HTMLText *text) {
 static const gchar *get_font_face(const HTMLText *text) {
 	gchar *font_face;
 
-	font_face = parent_class->get_font_face(text);
+	font_face = parent_class->get_font_face((HTMLText *)text);
 
 	return font_face;
 }
