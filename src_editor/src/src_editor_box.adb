@@ -218,10 +218,6 @@ package body Src_Editor_Box is
    -- The contextual menu handling --
    ----------------------------------
 
-   package CMenu is new GUI_Utils.User_Contextual_Menus
-     (User_Data => Source_Editor_Box);
-   --  Used to register contextual menus with a user data.
-
    procedure On_Goto_Line
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access);
