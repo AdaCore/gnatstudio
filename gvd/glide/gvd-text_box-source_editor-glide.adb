@@ -36,12 +36,12 @@ with String_Utils;         use String_Utils;
 
 with GVD.Text_Box.Asm_Editor; use GVD.Text_Box;
 
-with Commands;             use Commands;
-with Commands.Debugger;    use Commands.Debugger;
+with Commands;                use Commands;
+with Commands.Debugger;       use Commands.Debugger;
 
 with Ada.Unchecked_Deallocation;
 with GNAT.OS_Lib;
-with GVD.Preferences;      use GVD.Preferences;
+with GVD.Preferences;         use GVD.Preferences;
 
 package body GVD.Text_Box.Source_Editor.Glide is
 
