@@ -1,10 +1,10 @@
 -----------------------------------------------------------------------
---                          G L I D E  I I                           --
+--                               G P S                               --
 --                                                                   --
 --                     Copyright (C) 2001-2002                       --
 --                            ACT-Europe                             --
 --                                                                   --
--- GLIDE is free software; you can redistribute it and/or modify  it --
+-- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -301,7 +301,7 @@ package body Variable_Editors is
       --  Add a new entry. This will become the default value if this is also
       --  the first one in the list.
 
-      Iter2 := Get_Iter_Root (E.Model);
+      Iter2 := Get_Iter_First (E.Model);
       Append (E.Model, Iter, Null_Iter);
       Variable_Editor_Set
         (E.Model, Iter,
@@ -353,8 +353,8 @@ package body Variable_Editors is
    -- Update_Variable --
    ---------------------
 
-   function Update_Variable (Editor : access New_Var_Edit_Record)
-     return Boolean
+   function Update_Variable
+     (Editor : access New_Var_Edit_Record) return Boolean
    is
       New_Name : constant String :=
         Get_Text (Get_Entry (Editor.Variable_Name));
@@ -375,7 +375,8 @@ package body Variable_Editors is
          return False;
       end if;
 
-      Iter := Get_Iter_Root (Editor.Model);
+      Iter := Get_Iter_First (Editor.Model);
+
       while Iter /= Null_Iter loop
          if Get_String (Editor.Model, Iter, Value_Column) /=
            New_Value_Name
@@ -428,7 +429,7 @@ package body Variable_Editors is
       --  that the case statements are changed appropriately).
 
       if Editor.Var /= Empty_Node then
-         Iter := Get_Iter_Root (Editor.Model);
+         Iter := Get_Iter_First (Editor.Model);
          while Iter /= Null_Iter loop
             Num_Rows := Num_Rows + 1;
 
@@ -465,8 +466,8 @@ package body Variable_Editors is
          Val_Iter := Type_Values (Var);
          while not Done (Val_Iter) loop
             Found := False;
+            Iter := Get_Iter_First (Editor.Model);
 
-            Iter := Get_Iter_Root (Editor.Model);
             while Iter /= Null_Iter loop
                if Get_String (Editor.Model, Iter, Value_Column) =
                  Get_String (String_Value_Of (Data (Val_Iter)))
@@ -474,6 +475,7 @@ package body Variable_Editors is
                   Found := True;
                   exit;
                end if;
+
                Next (Editor.Model, Iter);
             end loop;
 
@@ -494,7 +496,8 @@ package body Variable_Editors is
          Values : String_Id_Array (1 .. Num_Rows);
             Num_Values : Natural := Values'First - 1;
       begin
-         Iter := Get_Iter_Root (Editor.Model);
+         Iter := Get_Iter_First (Editor.Model);
+
          while Iter /= Null_Iter loop
             Found := False;
 
@@ -582,7 +585,7 @@ package body Variable_Editors is
               (New_Name,
                Get_String (String_Value_Of (External_Default (Var))));
          else
-            Iter := Get_Iter_Root (Editor.Model);
+            Iter := Get_Iter_First (Editor.Model);
             Prj.Ext.Add
               (New_Name, Get_String (Editor.Model, Iter, Value_Column));
          end if;
