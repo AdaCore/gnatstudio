@@ -594,12 +594,23 @@ package body Vdiff2_Module.Utils is
       Edit (Kernel, Item.File2, Ref = 1);
       Edit (Kernel, Item.File1, Ref = 2);
 
+
       --  Synchronize the scrollings.
 
       Synchronize_Scrolling (Kernel, Item.File1, Item.File2);
 
       Split (Get_MDI (Kernel), Orientation_Horizontal,
              Reuse_If_Possible => True);
+
+      --  Note: we need to open the "ref" editor first, so that the focus is
+      --  given to the "real" editor. This way, opening multiple vdiffs on
+      --  unopened editors will not create a cascade of refs.
+
+      if Ref = 1 then
+         Edit (Kernel, Item.File2, True);
+      else
+         Edit (Kernel, Item.File1, True);
+      end if;
 
       Create_Line_Information_Column
         (Kernel, Item.File1, Id_Col_Vdiff, True, True);
