@@ -603,7 +603,7 @@ package body Browsers.Canvas is
    -------------
 
    procedure Refresh (Browser : access Glide_Browser_Record'Class;
-                      Item : access Glide_Browser_Item_Record) is
+                      Item    : access Glide_Browser_Item_Record) is
    begin
       Draw_Item_Background (Browser, Item);
    end Refresh;
