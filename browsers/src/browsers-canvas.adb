@@ -707,6 +707,7 @@ package body Browsers.Canvas is
    procedure On_Background_Click
      (Browser : access Gtk_Widget_Record'Class) is
    begin
+      Grab_Focus (Glide_Browser (Browser).Canvas);
       Internal_Select (Glide_Browser (Browser), null, True);
    end On_Background_Click;
 
