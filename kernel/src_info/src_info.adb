@@ -25,7 +25,6 @@ with Language_Handlers.Glide;   use Language_Handlers.Glide;
 with Basic_Types;
 with Projects;                  use Projects;
 with VFS;                       use VFS;
-with File_Utils;                use File_Utils;
 with GNAT.Calendar;
 with Ada.Calendar;              use Ada.Calendar;
 
@@ -1044,9 +1043,13 @@ package body Src_Info is
 
       function Is_Up_To_Date (File : File_Info_Ptr) return Boolean is
       begin
+         --  ??? Need to use full filename here, but this is costly. It would
+         --  be better stored in the LI structure itself
          return File = null
-           or else File_Utils.File_Time_Stamp (File.Source_Filename.all) <=
-             File.File_Timestamp;
+           or else File_Time_Stamp (Create (File.Source_Filename.all,
+                                            LI.LI.Project,
+                                            Use_Object_Path => False))
+            <= File.File_Timestamp;
       end Is_Up_To_Date;
 
       File : File_Info_Ptr_List;
