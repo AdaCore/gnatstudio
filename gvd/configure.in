@@ -18,6 +18,7 @@ EXEC_COMMAND="sh -c"
 DEFAULT_FONT="sans 9"
 DEFAULT_PS="ps x 2> /dev/null || ps -u \$USER 2> /dev/null || ps"
 HTML_BROWSER="netscape"
+OPAQUE_MDI=False
 
 AC_CANONICAL_SYSTEM
 
@@ -173,6 +174,7 @@ case "${host}" in
 	DEFAULT_PS="winps"
 	DEFAULT_FONT="tahoma 8"
 	HTML_BROWSER="c:\progra~1\intern~1\iexplore"
+	OPAQUE_MDI=True
 	;;
       ## Otherwise, we'll fall through to the generic opsys code at the bottom.
     esac
@@ -211,6 +213,7 @@ AC_SUBST(DVIPS)
 AC_SUBST(MAKEINFO)
 AC_SUBST(TEXI2HTML)
 AC_SUBST(TEX)
+AC_SUBST(OPAQUE_MDI)
 
 EXEC_PREFIX="$prefix"
 AC_SUBST(EXEC_PREFIX)
