@@ -436,9 +436,11 @@ package body Custom_Combos is
    -----------------------
 
    procedure Register_Commands (Kernel : access Kernel_Handle_Record'Class) is
-      Toolbar_Class : constant Class_Type := New_Class (Kernel, "Toolbar");
+      Toolbar_Class : constant Class_Type :=
+        New_Class (Kernel, "Toolbar", Base => Get_GUI_Class (Kernel));
       Toolbar_Entry_Class : constant Class_Type :=
-        New_Class (Kernel, "ToolbarEntry");
+        New_Class (Kernel, "ToolbarEntry",
+                   Base => Get_GUI_Class (Kernel));
    begin
       Register_Command
         (Kernel, "entry",
