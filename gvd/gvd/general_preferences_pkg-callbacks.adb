@@ -35,7 +35,7 @@ package body General_Preferences_Pkg.Callbacks is
       --  Arg1 : Gdk_Event := To_Event (Params, 1);
    begin
       Hide (Object);
-      return False;
+      return True;
    end On_Odd_Preferences_Delete_Event;
 
    --------------------------
