@@ -2193,7 +2193,7 @@ package body Project_Explorers is
       N           : Gtk_Ctree_Node := null;
       Dir         : String_List_Id;
       Files       : String_Array_Access := Get_Source_Files
-        (Project, Recursive => False, Full_Path => True, Normalized => False);
+        (Project, Recursive => False, Full_Path => True, Normalized => True);
 
    begin
       Push_State (Explorer.Kernel, Busy);
