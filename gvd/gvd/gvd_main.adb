@@ -58,6 +58,7 @@ procedure GVD_Main is
    Home              : String_Access;
    Dir               : String_Access;
    Remote_Host       : String_Access := new String' ("");
+   Debugger_Name     : String_Access := new String' ("");
    Debuggee_Name     : String_Access;
 
    procedure Init;
@@ -193,12 +194,12 @@ procedure GVD_Main is
    begin
       Put_Line ("GVD " & GVD.Version);
       Put_Line ("This is a beta release of GVD, the GNU Visual Debugger.");
-      Put_Line ("Please do not redistribute.");
       Put_Line ("Usage:");
       Put_Line ("   gvd [options...] executable-file");
       Put_Line ("Options:");
-      Put_Line ("   --log-level [0-4] Set level of logging (Default is 3).");
+      Put_Line ("   --debugger DEBUG  use DEBUG as the underlying debugger.");
       Put_Line ("   --host HOST       Run inferior debugger on HOST.");
+      Put_Line ("   --log-level [0-4] Set level of logging (Default is 3).");
       Put_Line ("   --tty             Use controlling tty as additional " &
                 "debugger console.");
       Put_Line ("   --version         Show the GVD version and exit.");
@@ -238,16 +239,20 @@ begin
    end;
 
    loop
-      case Getopt ("-tty fullname -version -help -host: -log-level:") is
+      case Getopt ("-debugger: -tty fullname -version -help " &
+        "-host: -log-level:")
+      is
          -- long option names --
          when '-' =>
 
             case Full_Switch (Full_Switch'First + 1) is
-               -- --tty mode --
-               when 't' =>
-                  --  Install input handler to receive commands from an
-                  --  external IDE while handling GtkAda events.
+               -- --debugger --
+               when 'd' =>
+                  Free (Debugger_Name);
+                  Debugger_Name := new String' (Clean_Parameter);
 
+               -- --tty --
+               when 't' =>
                   Main_Debug_Window.TTY_Mode := True;
                   Id := Standard_Input_Package.Add
                     (0, Input_Read, Input_Available'Access,
@@ -326,7 +331,8 @@ begin
       Debug_Type,
       Debuggee_Name.all,
       List (1 .. Index),
-      Remote_Host => Remote_Host.all);
+      Remote_Host   => Remote_Host.all,
+      Debugger_Name => Debugger_Name.all);
 
    if Dir /= null
      and then Is_Directory (Dir.all & Directory_Separator & "sessions")
