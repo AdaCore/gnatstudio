@@ -245,7 +245,7 @@ private
       String_Type,
       Task_Object,
       Task_Type);
-   --  The entity kind (sorted by alphabeticall order).
+   --  The entity kind (sorted by alphabetical order).
    --
    --  Note that Boolean is treated in a special way: it is treated as
    --  Boolean_Type/Object, rather than as an Enumeration_Type/Object.
