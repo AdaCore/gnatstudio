@@ -30,30 +30,24 @@ package body Language.C is
    --  for java: ("finally" "synchronized" "implements" "extends" "throws"
    --  "threadsafe" "transient" "native" "volatile"
 
-   function Make_Entry_Subprogram
-     (Str : String; Matched : Match_Array;
-      Category : access Category_Index) return String;
-   --  Function used to create an entry in the explorer, for subprograms.
-   --  See the description of Explorer_Categories for more information.
-
    Subprogram_RE : aliased Pattern_Matcher :=
      Compile
        ("^\w+\s+"             --  type specs; there can be no
         & "([\w_*]+\s+)?"     --  more than 3 tokens, right?
         & "([\w_*]+\s+)?"
         & "([*&]+\s*)?"       --  pointer
-        & "([\w_*]+)\s*"
-        & "(\s[\w_]+\s*\()?" --  handling of macros, as in
+        & "([\w_*]+)\s*"      --  subprogram name
+        & "(\s[\w_]+\s*\()?"  --  handling of macros, as in
                               --  "void pa_exit PARAMS ((int))"
-        & "\([^(]",           --  Name
+        & "\([^(]",
         Multiple_Lines);
 
    C_Explorer_Categories : constant Explorer_Categories (1 .. 1) :=
-     (1 => (Name           => new String' ("Functions"),
+     (1 => (Category       => Cat_Function,
             Regexp         => Subprogram_RE'Access,
             Position_Index => 4,
             Icon           => subprogram_xpm'Access,
-            Make_Entry     => Make_Entry_Subprogram'Access));
+            Make_Entry     => null));
 
    -----------------
    -- Local types --
@@ -285,20 +279,6 @@ package body Language.C is
       return C_Explorer_Categories;
    end Explorer_Regexps;
 
-   ---------------------------
-   -- Make_Entry_Subprogram --
-   ---------------------------
-
-   function Make_Entry_Subprogram
-     (Str     : String;
-      Matched : Match_Array;
-      Category : access Category_Index) return String
-   is
-      pragma Unreferenced (Category);
-   begin
-      return Str (Matched (4).First .. Matched (4).Last);
-   end Make_Entry_Subprogram;
-
    --------------
    -- Keywords --
    --------------
@@ -501,31 +481,6 @@ package body Language.C is
       when others =>
          null;
    end Analyze_C_Source;
-
-   ----------------------
-   -- Parse_Constructs --
-   ----------------------
-
-   procedure Parse_Constructs
-     (Lang            : access C_Language;
-      Buffer          : String;
-      Result          : out Construct_List)
-   is
-      pragma Unreferenced (Lang);
-
-      Offset      : Integer := 0;
-      No_Contents : Boolean;
-
-   begin
-      Result := (null, null, null);
-
-      Analyze_C_Source
-        (Buffer        => Buffer,
-         Indent        => Offset,
-         Indent_Params => Default_Indent_Parameters,
-         No_Contents   => No_Contents,
-         Callback      => null);
-   end Parse_Constructs;
 
    --------------------
    -- Parse_Entities --

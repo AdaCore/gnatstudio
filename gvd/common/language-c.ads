@@ -82,11 +82,6 @@ package Language.C is
    -- Source Analyzing --
    ----------------------
 
-   procedure Parse_Constructs
-     (Lang   : access C_Language;
-      Buffer : String;
-      Result : out Construct_List);
-
    procedure Parse_Entities
      (Lang     : access C_Language;
       Buffer   : String;
