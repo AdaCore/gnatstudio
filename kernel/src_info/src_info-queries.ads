@@ -597,8 +597,8 @@ private
    --  You must call Entity_Information on the returned entity
 
    type Dependency is record
-      File  : Src_Info.Internal_File;
-      Dep   : Src_Info.Dependency_Info;
+      File : Src_Info.Internal_File;
+      Dep  : Src_Info.Dependency_Info;
    end record;
 
    type Scope_Type is (Declaration, Reference);
