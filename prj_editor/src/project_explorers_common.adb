@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2002                       --
+--                     Copyright (C) 2001-2003                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -424,15 +424,17 @@ package body Project_Explorers_Common is
                   end if;
 
                when Entity_Node =>
-                  Line := Get_Int (Model, Iter, Line_Column);
-                  Column := Get_Int (Model, Iter, Column_Column);
+                  if Get_Event_Type (Event) = Button_Release then
+                     Line := Get_Int (Model, Iter, Line_Column);
+                     Column := Get_Int (Model, Iter, Column_Column);
 
-                  Open_File_Editor
-                    (Kernel,
-                     Get_String (Model, Iter, Absolute_Name_Column),
-                     Line   => Natural (Line),
-                     Column => Natural (Column),
-                     From_Path => False);
+                     Open_File_Editor
+                       (Kernel,
+                        Get_String (Model, Iter, Absolute_Name_Column),
+                        Line   => Natural (Line),
+                        Column => Natural (Column),
+                        From_Path => False);
+                  end if;
                   return False;
 
                when others =>
