@@ -695,11 +695,11 @@ package body Project_Explorers_Common is
          return Name;
       end Entity_Base;
 
-      Iter        : constant Gtk_Tree_Iter := Find_Iter_For_Event
+      Iter      : constant Gtk_Tree_Iter := Find_Iter_For_Event
         (Tree, Model, Event);
-      Context     : Selection_Context_Access;
-      Node_Type   : Node_Types;
-      L           : Integer := 0;
+      Context   : Selection_Context_Access;
+      Node_Type : Node_Types;
+      L         : Integer := 0;
 
    begin
       if Iter /= Null_Iter then

@@ -1616,11 +1616,11 @@ package body Project_Viewers is
    is
       pragma Unreferenced (Event_Widget, Kernel);
 
-      Context     : constant File_Selection_Context_Access :=
+      Context : constant File_Selection_Context_Access :=
         new File_Selection_Context;
-      V           : constant Project_Viewer := Project_Viewer (Object);
-      Item        : Gtk_Menu_Item;
-      Iter        : Gtk_Tree_Iter;
+      V       : constant Project_Viewer := Project_Viewer (Object);
+      Item    : Gtk_Menu_Item;
+      Iter    : Gtk_Tree_Iter;
 
    begin
       --  ??? Should call Project_Editor_Contextual

@@ -417,8 +417,7 @@ package body VCS_View_API is
                   Set_File_Information
                     (File_Name,
                      Original,
-                     Get_Project_From_File
-                       (Get_Registry (Kernel), Original));
+                     Get_Project_From_File (Get_Registry (Kernel), Original));
 
                   Gtk_New (Item, Label => Actions (Commit).all & " ("
                            & Krunch (Base_Name (Original)) & ")");
@@ -474,8 +473,7 @@ package body VCS_View_API is
             Append (Menu, Item);
             Context_Callback.Connect
               (Item, "activate",
-               Context_Callback.To_Marshaller
-                 (On_Menu_Edit_Log'Access),
+               Context_Callback.To_Marshaller (On_Menu_Edit_Log'Access),
                Context);
             Set_Sensitive (Item, Section_Active);
 
@@ -483,8 +481,7 @@ package body VCS_View_API is
             Append (Menu, Item);
             Context_Callback.Connect
               (Item, "activate",
-               Context_Callback.To_Marshaller
-                 (On_Menu_Edit_ChangeLog'Access),
+               Context_Callback.To_Marshaller (On_Menu_Edit_ChangeLog'Access),
                Context);
             Set_Sensitive (Item, Section_Active);
 
@@ -492,8 +489,7 @@ package body VCS_View_API is
             Append (Menu, Item);
             Context_Callback.Connect
               (Item, "activate",
-               Context_Callback.To_Marshaller
-                 (On_Menu_Remove_Log'Access),
+               Context_Callback.To_Marshaller (On_Menu_Remove_Log'Access),
                Context);
             Set_Sensitive (Item, Section_Active);
 
@@ -849,8 +845,8 @@ package body VCS_View_API is
 
          loop
             declare
-               L_Img   : aliased String  := Image (Line);
-               B_Line  : constant String :=
+               L_Img  : aliased String  := Image (Line);
+               B_Line : constant String :=
                  Execute_GPS_Shell_Command
                    (Kernel,
                     "Editor.get_chars",
