@@ -149,9 +149,7 @@ package body Expect_Interface is
          end;
       end if;
 
-      --  Decrement the reference counter for this instance, since the process
-      --  is dead. We have no actual control on when exactly it will be freed
-      Free (Inst);
+      D.Fd := null;
 
       --  ??? Add exception handler ?
    end Exit_Cb;
@@ -373,25 +371,28 @@ package body Expect_Interface is
                Set_Error_Msg
                  (Data, -"Could not launch command """ & Command_Line & """");
             end if;
-
-            --  Instance is automatically destroyed when the process exits.
-            Ref (Inst);
          end;
 
       elsif Command = "send" then
          Name_Parameters (Data, Send_Args);
          D := Get_Data (Data, 1);
-         Send (D.Fd.all,
-               Str => Nth_Arg (Data, 2),
-               Add_LF => Nth_Arg (Data, 3, True));
+         if D.Fd /= null then
+            Send (D.Fd.all,
+                  Str => Nth_Arg (Data, 2),
+                  Add_LF => Nth_Arg (Data, 3, True));
+         end if;
 
       elsif Command = "interrupt" then
          D := Get_Data (Data, 1);
-         Interrupt (D.Fd.all);
+         if D.Fd /= null then
+            Interrupt (D.Fd.all);
+         end if;
 
       elsif Command = "kill" then
          D := Get_Data (Data, 1);
-         Close (D.Fd.all);
+         if D.Fd /= null then
+            Close (D.Fd.all);
+         end if;
 
       elsif Command = "expect" then
          Name_Parameters (Data, Expect_Args);
