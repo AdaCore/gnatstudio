@@ -1232,7 +1232,8 @@ package body Src_Info.CPP is
 
       Trace (Info_Stream, "Create_Or_Complete_LI " & Full_Filename);
 
-      Convert_To_Parsed (File, Update_Timestamp => True);
+      Convert_To_Parsed
+        (File, File.LI.LI_Filename.all, Update_Timestamp => True);
 
       Process_File (Full_Filename, Handler, File, Project, List);
 
