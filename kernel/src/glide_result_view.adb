@@ -207,7 +207,8 @@ package body Glide_Result_View is
       Message            : String;
       Highlight_Category : String;
       Quiet              : Boolean;
-      Remove_Duplicates  : Boolean);
+      Remove_Duplicates  : Boolean;
+      Enable_Counter     : Boolean);
    --  Add a file locaton in Category.
    --  File is an absolute file name. If File is not currently open, do not
    --  create marks for File, but add it to the list of unresolved files
@@ -941,7 +942,8 @@ package body Glide_Result_View is
       Message            : String;
       Highlight_Category : String;
       Quiet              : Boolean;
-      Remove_Duplicates  : Boolean)
+      Remove_Duplicates  : Boolean;
+      Enable_Counter     : Boolean)
    is
       Category_Iter    : Gtk_Tree_Iter;
       File_Iter        : Gtk_Tree_Iter;
@@ -985,13 +987,15 @@ package body Glide_Result_View is
 
       Append (Model, Iter, File_Iter);
 
-      Set (Model, File_Iter, Number_Of_Items_Column,
-           Get_Int (Model, File_Iter, Number_Of_Items_Column) + 1);
-      Set
-        (Model, Category_Iter, Number_Of_Items_Column,
-         Get_Int (Model, Category_Iter, Number_Of_Items_Column) + 1);
+      if Enable_Counter then
+         Set (Model, File_Iter, Number_Of_Items_Column,
+              Get_Int (Model, File_Iter, Number_Of_Items_Column) + 1);
+         Set
+           (Model, Category_Iter, Number_Of_Items_Column,
+            Get_Int (Model, Category_Iter, Number_Of_Items_Column) + 1);
 
-      Redraw_Totals (View);
+         Redraw_Totals (View);
+      end if;
 
       if Highlight then
          Highlight_Line
@@ -1410,7 +1414,9 @@ package body Glide_Result_View is
       Length             : Natural := 0;
       Highlight          : Boolean := False;
       Highlight_Category : String := "";
-      Quiet              : Boolean := False)
+      Quiet              : Boolean := False;
+      Remove_Duplicates  : Boolean := True;
+      Enable_Counter     : Boolean := True)
    is
       View : constant Result_View := Get_Or_Create_Result_View (Kernel);
    begin
@@ -1419,11 +1425,56 @@ package body Glide_Result_View is
            (View, View.Tree.Model, Category, File, Line, Column, Length,
             Highlight, Text, Highlight_Category,
             Quiet             => Quiet,
-            Remove_Duplicates => True);
+            Remove_Duplicates => Remove_Duplicates,
+            Enable_Counter    => Enable_Counter);
 
          Gtkada.MDI.Highlight_Child (Find_MDI_Child (Get_MDI (Kernel), View));
       end if;
    end Insert_Result;
+
+   ----------------------
+   -- Recount_Category --
+   ----------------------
+
+   procedure Recount_Category
+     (Kernel   : access Kernel_Handle_Record'Class;
+      Category : String)
+   is
+      View : constant Result_View :=
+               Get_Or_Create_Result_View (Kernel, Allow_Creation => False);
+      Cat   : Gtk_Tree_Iter;
+      Iter  : Gtk_Tree_Iter;
+      Dummy : Boolean;
+      Total : Gint := 0;
+      Sub   : Gint := 0;
+
+   begin
+      if View = null then
+         return;
+      end if;
+
+      Get_Category_File
+        (View,
+         View.Tree.Model,
+         Category, "", VFS.No_File, Cat, Iter, Dummy, False);
+
+      if Cat = Null_Iter then
+         return;
+      end if;
+
+      Iter := Children (View.Tree.Model, Cat);
+
+      while Iter /= Null_Iter loop
+         Sub := N_Children (View.Tree.Model, Iter);
+         Set (View.Tree.Model, Iter, Number_Of_Items_Column, Sub);
+         Total := Total + Sub;
+         Next (View.Tree.Model, Iter);
+      end loop;
+
+      Set (View.Tree.Model, Cat, Number_Of_Items_Column, Total);
+
+      Redraw_Totals (View);
+   end Recount_Category;
 
    ----------------------------
    -- Remove_Result_Category --
@@ -1433,8 +1484,8 @@ package body Glide_Result_View is
      (Kernel   : access Kernel_Handle_Record'Class;
       Category : String)
    is
-      View : constant Result_View :=
-        Get_Or_Create_Result_View (Kernel, Allow_Creation => False);
+      View  : constant Result_View :=
+                Get_Or_Create_Result_View (Kernel, Allow_Creation => False);
    begin
       if View /= null then
          Remove_Category (View, Category);
@@ -2070,7 +2121,8 @@ package body Glide_Result_View is
                Get_Message (Last),
                C.all,
                Quiet             => Expand,
-               Remove_Duplicates => False);
+               Remove_Duplicates => False,
+               Enable_Counter    => False);
 
             Expand := False;
          end if;
@@ -2079,6 +2131,7 @@ package body Glide_Result_View is
       end loop;
 
       Thaw_Sort (View.Tree.Model, Sort_Col);
+      Recount_Category (Kernel, Category);
 
       if View.Sort_By_Category then
          Set_Sort_Column_Id (View.Sorting_Column, Category_Line_Column);
