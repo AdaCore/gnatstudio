@@ -96,6 +96,19 @@ package Odd.Dialogs is
       Multiple_Selection_Allowed : Boolean;
       Questions                  : Question_Array);
 
+   function Simple_Entry_Dialog
+     (Parent  : access Gtk.Window.Gtk_Window_Record'Class;
+      Title   : String;
+      Message : String;
+      Key     : String := "") return String;
+   --  Open a simple dialog, with a single entry field, and returns the
+   --  contents of this field (or "" if the user selected cancel).
+   --  The dialog is set up as a child of Parent, so that, depending on the
+   --  window manager, it isn't displayed below it.
+   --  if Key is not the empty string, then the dialog is stored in Parent's
+   --  user data, and reused next time. This can be used to provide an history
+   --  of values entered in this dialog by the user
+
 private
    type Odd_Dialog_Record is new Gtk_Dialog_Record with record
       Main_Window     : Gtk_Window;

@@ -30,6 +30,16 @@ with Interfaces.C.Strings;
 with Odd.Types;       use Odd.Types;
 with Odd.Process;     use Odd.Process;
 with Odd_Intl;        use Odd_Intl;
+with Gtk.GEntry;      use Gtk.GEntry;
+with Gtk.Widget;      use Gtk.Widget;
+with Gtk.Main;        use Gtk.Main;
+with Gtk.Dialog;      use Gtk.Dialog;
+with Gtk.Label;       use Gtk.Label;
+with Gtk.Enums;       use Gtk.Enums;
+with Gtk.Combo;       use Gtk.Combo;
+with Gtk.List;        use Gtk.List;
+with Gtk.List_Item;   use Gtk.List_Item;
+with Gtk.Object;      use Gtk.Object;
 
 package body Odd.Dialogs is
 
@@ -44,11 +54,33 @@ package body Odd.Dialogs is
      "PC" + "Subprogram" + "Source";
    --  ???  Should be translated through odd.Intl
 
+   type Simple_Entry_Dialog_Record is new Gtk_Dialog_Record with record
+      Entry_Field : Gtk_Combo;
+   end record;
+   type Simple_Entry_Dialog_Access is access
+     all Simple_Entry_Dialog_Record'Class;
+
+   package Dialog_User_Data is new Gtk.Object.User_Data
+     (Simple_Entry_Dialog_Access);
+
    procedure Initialize
      (Dialog      : access Odd_Dialog_Record'Class;
       Title       : String;
       Main_Window : Gtk_Window);
    --  Create a standard dialog.
+
+   procedure Cancel_Simple_Entry
+     (Simple_Dialog : access Gtk_Widget_Record'Class);
+   --  "Cancel" was pressed in a simple entry dialog
+
+   function Delete_Simple_Entry
+     (Simple_Dialog : access Gtk_Widget_Record'Class)
+     return Boolean;
+   --  A simple entry dialog was deleted
+
+   procedure Ok_Simple_Entry
+     (Simple_Dialog : access Gtk_Widget_Record'Class);
+   --  "Ok" was pressed in a simple entry dialog
 
    -------------
    -- Gtk_New --
@@ -328,5 +360,133 @@ package body Odd.Dialogs is
          Free (Questions (Q).Description);
       end loop;
    end Free;
+
+   -------------------------
+   -- Simple_Entry_Dialog --
+   -------------------------
+
+   function Simple_Entry_Dialog
+     (Parent  : access Gtk.Window.Gtk_Window_Record'Class;
+      Title   : String;
+      Message : String;
+      Key     : String := "") return String
+   is
+      Label       : Gtk_Label;
+      Button      : Gtk_Button;
+      Box         : Gtk_Box;
+      Dialog      : Simple_Entry_Dialog_Access;
+   begin
+      begin
+         Dialog := Dialog_User_Data.Get (Parent, Key);
+      exception
+         when Gtkada.Types.Data_Error => null;
+      end;
+
+      if Dialog = null then
+         Dialog := new Simple_Entry_Dialog_Record;
+         Initialize (Dialog);
+
+         Set_Transient_For (Dialog, Parent);
+         Set_Modal (Dialog);
+         Set_Position (Dialog, Win_Pos_Mouse);
+         Return_Callback.Connect
+           (Dialog, "delete_event",
+            Return_Callback.To_Marshaller (Delete_Simple_Entry'Access));
+         Set_Title (Dialog, Title);
+
+         Gtk_New_Hbox (Box);
+         Pack_Start (Get_Vbox (Dialog), Box, Padding => 10);
+
+         Gtk_New (Label, Message);
+         Set_Justify (Label, Justify_Center);
+         Pack_Start (Box, Label, Fill => True, Expand => True, Padding => 10);
+
+         Gtk_New (Dialog.Entry_Field);
+         Pack_Start (Box, Dialog.Entry_Field);
+         Disable_Activate (Dialog.Entry_Field);
+         Widget_Callback.Object_Connect
+           (Get_Entry (Dialog.Entry_Field), "activate",
+            Widget_Callback.To_Marshaller (Ok_Simple_Entry'Access),
+            Dialog);
+
+         Gtk_New (Button, -"Cancel");
+         Set_USize (Button, 80, -1);
+         Pack_Start (Get_Action_Area (Dialog), Button, False, False, 14);
+         Set_Flags (Button, Can_Default);
+         Widget_Callback.Object_Connect
+           (Button, "clicked",
+            Widget_Callback.To_Marshaller (Cancel_Simple_Entry'Access),
+            Dialog);
+
+         Gtk_New (Button, -"OK");
+         Set_USize (Button, 80, -1);
+         Pack_Start (Get_Action_Area (Dialog), Button, False, False, 14);
+         Set_Flags (Button, Can_Default);
+         Widget_Callback.Object_Connect
+           (Button, "clicked",
+            Widget_Callback.To_Marshaller (Ok_Simple_Entry'Access),
+            Dialog);
+
+         Dialog_User_Data.Set (Parent, Dialog, Key);
+      end if;
+
+      Set_Text (Get_Entry (Dialog.Entry_Field), "");
+      Show_All (Dialog);
+      Gtk.Main.Main;
+
+      declare
+         S : constant String := Get_Text (Get_Entry (Dialog.Entry_Field));
+         Item : Gtk_List_Item;
+      begin
+         if S /= "" then
+            Gtk_New (Item, S);
+            Show (Item);
+            Add (Get_List (Dialog.Entry_Field), Item);
+         end if;
+         Hide (Dialog);
+         return S;
+      end;
+   end Simple_Entry_Dialog;
+
+   -------------------------
+   -- Cancel_Simple_Entry --
+   -------------------------
+
+   procedure Cancel_Simple_Entry
+     (Simple_Dialog : access Gtk_Widget_Record'Class)
+   is
+   begin
+      Set_Text
+        (Get_Entry (Simple_Entry_Dialog_Access (Simple_Dialog).Entry_Field),
+         "");
+      Gtk.Main.Main_Quit;
+   end Cancel_Simple_Entry;
+
+   ---------------------
+   -- Ok_Simple_Entry --
+   ---------------------
+
+   procedure Ok_Simple_Entry
+     (Simple_Dialog : access Gtk_Widget_Record'Class)
+   is
+   begin
+      Gtk.Main.Main_Quit;
+   end Ok_Simple_Entry;
+
+   -------------------------
+   -- Delete_Simple_Entry --
+   -------------------------
+
+   function Delete_Simple_Entry
+     (Simple_Dialog : access Gtk_Widget_Record'Class)
+     return Boolean
+   is
+   begin
+      Set_Text
+        (Get_Entry (Simple_Entry_Dialog_Access (Simple_Dialog).Entry_Field),
+         "");
+      Gtk.Main.Main_Quit;
+      return False;
+   end Delete_Simple_Entry;
 
 end Odd.Dialogs;
