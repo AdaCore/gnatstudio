@@ -282,8 +282,14 @@ package body Vsearch_Ext is
    -------------------
 
    procedure Close_Vsearch (Search : access Gtk_Widget_Record'Class) is
+      Vsearch : Vsearch_Extended := Vsearch_Extended (Search);
    begin
-      Close (Get_MDI (Vsearch_Extended (Search).Kernel), Search);
+      if Vsearch.Search_Idle_Handler /= 0 then
+         Idle_Remove (Vsearch.Search_Idle_Handler);
+         Vsearch.Search_Idle_Handler := 0;
+      end if;
+
+      Close (Get_MDI (Vsearch.Kernel), Search);
    end Close_Vsearch;
 
    ----------
