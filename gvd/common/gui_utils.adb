@@ -832,6 +832,7 @@ package body GUI_Utils is
       End_Iter     : out Gtk.Text_Iter.Gtk_Text_Iter)
    is
       Ignored : Boolean;
+
    begin
       --  Search forward the end of the entity...
       Copy (Source => Start_Iter, Dest => End_Iter);
@@ -906,9 +907,9 @@ package body GUI_Utils is
      (Key  : Gdk.Types.Gdk_Key_Type;
       Mods : Gdk.Types.Gdk_Modifier_Type) return String
    is
-      Shift   : constant String := "Shift-";
-      Meta    : constant String := "Meta-";
-      Control : constant String := "Control-";
+      Shift   : constant String := "<shift>";
+      Meta    : constant String := "<alt>";
+      Control : constant String := "<control>";
       Max : constant Natural := Shift'Length + Control'Length + Meta'Length;
       Buffer : String (1 .. Max);
       Current : Natural := Buffer'First;
@@ -961,12 +962,12 @@ package body GUI_Utils is
    begin
       Mods := 0;
       for D in From'Range loop
-         if From (D) = '-' then
-            if From (Start .. D - 1) = "Shift" then
+         if From (D) = '>' then
+            if From (Start .. D) = "<shift>" then
                Mods := Mods or Shift_Mask;
-            elsif From (Start .. D - 1) = "Control" then
+            elsif From (Start .. D) = "<control>" then
                Mods := Mods or Control_Mask;
-            elsif From (Start .. D - 1) = "Meta" then
+            elsif From (Start .. D) = "<alt>" then
                Mods := Mods or Mod1_Mask;
             end if;
             Start := D + 1;
