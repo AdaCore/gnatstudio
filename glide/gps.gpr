@@ -25,6 +25,7 @@ with "../shell/shell";
 with "../keymanager/keymanager";
 with "../theme_manager/theme_manager";
 with "../refactoring/refactoring";
+with "../action_editor/action_editor";
 
 project GPS is
 
@@ -56,6 +57,7 @@ project GPS is
       case Shared.OS is
          when "Windows_NT" =>
             for Default_Switches ("Ada") use ("obj/gps.res");
+         when "unix" =>
       end case;
       --  for Default_Switches ("Ada") use ("-lgmem");
       --  for Default_Switches ("Ada") use ("-pg");
