@@ -113,6 +113,10 @@ package body Vsearch_Ext is
    --  If Find_Next is False, a new search will be started, otherwise the next
    --  occurence of the current search will be searched.
 
+   procedure Set_First_Next_Mode_Cb
+     (Handle : access GObject_Record'Class; Kernel : Kernel_Handle);
+   --  Aborts the current search pattern
+
    function Key_Press
      (Vsearch : access Gtk_Widget_Record'Class;
       Event   : Gdk_Event) return Boolean;
@@ -178,9 +182,7 @@ package body Vsearch_Ext is
    is
       pragma Unreferenced (Object);
    begin
-      Set_First_Next_Mode
-        (Vsearch_Extended (Get_Search_Module (Kernel)),
-         Find_Next => False);
+      Search_Reset (Kernel);
    end Reset_Search;
 
    ----------------
@@ -554,6 +556,21 @@ package body Vsearch_Ext is
       end if;
    end Set_First_Next_Mode;
 
+   ----------------------------
+   -- Set_First_Next_Mode_Cb --
+   ----------------------------
+
+   procedure Set_First_Next_Mode_Cb
+     (Handle : access GObject_Record'Class;
+      Kernel : Kernel_Handle)
+   is
+      pragma Unreferenced (Handle);
+   begin
+      Set_First_Next_Mode
+        (Vsearch_Extended (Get_Search_Module (Kernel)),
+         Find_Next => False);
+   end Set_First_Next_Mode_Cb;
+
    ---------------
    -- Key_Press --
    ---------------
@@ -771,6 +788,11 @@ package body Vsearch_Ext is
                    Data (Current).Label.all);
          Current := Next (Current);
       end loop;
+
+      Kernel_Callback.Connect
+        (Handle, Search_Reset_Signal,
+         Kernel_Callback.To_Marshaller (Set_First_Next_Mode_Cb'Access),
+         Handle);
 
       --  Include all the patterns that have been predefined so far, and make
       --  sure that new patterns will be automatically added.

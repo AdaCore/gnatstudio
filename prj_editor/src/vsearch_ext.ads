@@ -58,10 +58,14 @@ package Vsearch_Ext is
       Mask              : Find_Utils.Search_Options_Mask);
    --  Register a new search function.
    --  This will be available under the title Label in the search combo box.
+   --
    --  If Extra_Information is not null, then it will be displayed every time
    --  this label is selected. It can be used for instance to ask for more
-   --  information like a list of files to search. See also Reset_Search
-   --  below.
+   --  information like a list of files to search.
+   --  Whenever the data in Extra_Information changes, or for some reason the
+   --  current status of GPS no longer permits the search, you should raise the
+   --  kernel signal Search_Reset_Signal (or call Vsearch_Ext.Reset_Search).
+   --
    --  When the user then selects "Find", the function Factory is called to
    --  create the factory. The options and searched string or regexp will be
    --  set automatically on return of Factory, so you do not need to handle
@@ -77,10 +81,8 @@ package Vsearch_Ext is
    procedure Reset_Search
      (Object : access Glib.Object.GObject_Record'Class;
       Kernel : Glide_Kernel.Kernel_Handle);
-   --  Callback that resets the Find First / Find Next mode to Find First.
-   --  This should be called every time the contents of the widget in
-   --  Extra_Information has changed.
-   --  Object can be anything, and is ignored.
+   --  Raises the kernel signal Search_Reset_Signal. This is just a convenience
+   --  function. Object is ignored, and can be anything.
 
 private
    type Vsearch_Extended_Record is new Vsearch_Pkg.Vsearch_Record with record
