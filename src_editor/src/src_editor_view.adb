@@ -87,6 +87,21 @@ package body Src_Editor_View is
    --  window. It will the redraw the exposed area (this window may contains
    --  things such as line number, breakpoint icons, etc).
 
+   function Focus_Out_Event_Cb
+     (View   : access Source_View_Record'Class;
+      Event  : Gdk.Event.Gdk_Event_Focus)
+     return Boolean;
+   --  Save the current insert cursor position before the Source_View looses
+   --  the focus. This will allow us to restore it as soon as the focus is
+   --  gained back.
+
+   function Focus_In_Event_Cb
+     (View   : access Source_View_Record'Class;
+      Event  : Gdk.Event.Gdk_Event_Focus)
+     return Boolean;
+   --  Restore the previously saved insert cursor position when the Source_View
+   --  gains the focus back.
+
    procedure Map_Cb (View : access Source_View_Record'Class);
    --  This procedure is invoked when the Source_View widget is mapped.
    --  It performs various operations that can not be done before the widget
@@ -161,6 +176,44 @@ package body Src_Editor_View is
       --  clients can use it.
       return False;
    end Expose_Event_Cb;
+
+   ------------------------
+   -- Focus_Out_Event_Cb --
+   ------------------------
+
+   function Focus_Out_Event_Cb
+     (View   : access Source_View_Record'Class;
+      Event  : Gdk.Event.Gdk_Event_Focus) return Boolean
+   is
+      Buffer : constant Source_Buffer := Source_Buffer (Get_Buffer (View));
+      Insert_Iter : Gtk_Text_Iter;
+   begin
+      --  Save the current insert cursor position by moving the
+      --  Saved_Insert_Mark to the location where the "insert" mark
+      --  currently is.
+      Get_Iter_At_Mark (Buffer, Insert_Iter, Get_Insert (Buffer));
+      Move_Mark (Buffer, View.Saved_Insert_Mark, Insert_Iter);
+      return False;
+   end Focus_Out_Event_Cb;
+
+   -----------------------
+   -- Focus_In_Event_Cb --
+   -----------------------
+
+   function Focus_In_Event_Cb
+     (View   : access Source_View_Record'Class;
+      Event  : Gdk.Event.Gdk_Event_Focus) return Boolean
+   is
+      Buffer : constant Source_Buffer := Source_Buffer (Get_Buffer (View));
+      Saved_Insert_Iter : Gtk_Text_Iter;
+   begin
+      --  Restore the old cursor position before we left the Source_View
+      --  by moving the Insert Mark to the location where the Saved_Insert_Mark
+      --  currently is.
+      Get_Iter_At_Mark (Buffer, Saved_Insert_Iter, View.Saved_Insert_Mark);
+      Place_Cursor (Buffer, Saved_Insert_Iter);
+      return False;
+   end Focus_In_Event_Cb;
 
    ------------
    -- Map_Cb --
@@ -335,14 +388,20 @@ package body Src_Editor_View is
      (View              : access Source_View_Record;
       Buffer            : Src_Editor_Buffer.Source_Buffer;
       Font              : Pango.Font.Pango_Font_Description;
-      Show_Line_Numbers : Boolean) is
+      Show_Line_Numbers : Boolean)
+   is
+      Insert_Iter : Gtk_Text_Iter;
    begin
 
       --  Initialize the Source_View. Some of the fields can not be initialized
-      --  until they are realized or they are mapped. The initialization is
-      --  thus done at that point.
+      --  until the widget is realize or mapped. Their initialization is thus
+      --  done at that point.
 
       Gtk.Text_View.Initialize (View, Gtk_Text_Buffer (Buffer));
+
+      Get_Iter_At_Mark (Buffer, Insert_Iter, Get_Insert (Buffer));
+      View.Saved_Insert_Mark := Create_Mark (Buffer, Where => Insert_Iter);
+
       if Font = null then
          View.Pango_Font := Pango.Font.From_String (Default_Font_Description);
       else
@@ -370,6 +429,16 @@ package body Src_Editor_View is
          Marsh => Source_Buffer_Callback.To_Marshaller (Modified_Cb'Access),
          User_Data => Source_View (View),
          After => True);
+      Source_View_Return_Callback.Connect
+        (View, "focus_in_event",
+         Marsh => Source_View_Return_Callback.To_Marshaller
+                    (Focus_In_Event_Cb'Access),
+         After => False);
+      Source_View_Return_Callback.Connect
+        (View, "focus_out_event",
+         Marsh => Source_View_Return_Callback.To_Marshaller
+                    (Focus_Out_Event_Cb'Access),
+         After => False);
 
    end Initialize;
 
