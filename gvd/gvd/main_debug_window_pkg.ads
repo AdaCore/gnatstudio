@@ -214,4 +214,9 @@ package Main_Debug_Window_Pkg is
    --  command which was sent to the debugger with number Num.
    --  No_Such_Item is raised if no matching command is found.
 
+   procedure Preferences_Changed
+     (Window : access Main_Debug_Window_Record'Class);
+   --  Emit the "preferences_changed" signal, which indicates a change in
+   --  the preferences. The exact change is not accessible as a parameter.
+
 end Main_Debug_Window_Pkg;

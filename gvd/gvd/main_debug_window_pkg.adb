@@ -34,8 +34,16 @@ with GVD.Types;   use GVD.Types;
 with GVD.Dialogs; use GVD.Dialogs;
 with GVD.Process; use GVD.Process;
 with GVD.Memory_View; use GVD.Memory_View;
+with Gtkada.Types;
+with System;        use System;
+with Interfaces.C.Strings; use Interfaces.C.Strings;
+with Gtk.Object;    use Gtk.Object;
 
 package body Main_Debug_Window_Pkg is
+
+   Signals : constant Gtkada.Types.Chars_Ptr_Array :=
+     (1 => New_String ("preferences_changed"));
+   Class_Record : System.Address := System.Null_Address;
 
 procedure Gtk_New (Main_Debug_Window : out Main_Debug_Window_Access) is
 begin
@@ -49,6 +57,10 @@ procedure Initialize (Main_Debug_Window : access Main_Debug_Window_Record'Class)
 
 begin
    Gtk.Window.Initialize (Main_Debug_Window, Window_Toplevel);
+   Initialize_Class_Record (Main_Debug_Window, Signals, Class_Record);
+
+   Return_Callback.Connect
+     (Main_Debug_Window, "delete_event", On_Main_Debug_Window_Delete_Event'Access);
    Set_Title (Main_Debug_Window, -"The GNU Visual Debugger");
    Set_Policy (Main_Debug_Window, False, True, False);
    Set_Position (Main_Debug_Window, Win_Pos_None);
@@ -808,5 +820,16 @@ end Initialize;
                      or else Current.Command.all /= Data.all);
       end loop;
    end Find_Match;
+
+   -------------------------
+   -- Preferences_Changed --
+   -------------------------
+
+   procedure Preferences_Changed
+     (Window : access Main_Debug_Window_Record'Class) is
+   begin
+      Widget_Callback.Emit_By_Name
+        (Gtk_Widget (Window), "preferences_changed");
+   end Preferences_Changed;
 
 end Main_Debug_Window_Pkg;
