@@ -238,10 +238,8 @@ package Glide_Kernel.Modules is
       Y           : Integer := 100;
       Width       : Integer := 100;
       Height      : Integer := 100;
-      Short_Title : String := "";
-      Title       : String := "";
       State       : Gtkada.MDI.State_Type := Gtkada.MDI.Normal;
-      Dock        : Gtkada.MDI.Dock_Side := Gtkada.MDI.None;
+      Position    : Gtkada.MDI.Child_Position := Gtkada.MDI.Position_Default;
       Focus       : Boolean := False;
       Raised      : Boolean := False);
    --  Add an item to the default desktop.

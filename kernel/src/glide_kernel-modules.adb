@@ -708,10 +708,8 @@ package body Glide_Kernel.Modules is
       Y           : Integer := 100;
       Width       : Integer := 100;
       Height      : Integer := 100;
-      Short_Title : String := "";
-      Title       : String := "";
       State       : Gtkada.MDI.State_Type := Gtkada.MDI.Normal;
-      Dock        : Gtkada.MDI.Dock_Side := Gtkada.MDI.None;
+      Position    : Gtkada.MDI.Child_Position := Gtkada.MDI.Position_Default;
       Focus       : Boolean := False;
       Raised      : Boolean := False)
    is
@@ -720,8 +718,7 @@ package body Glide_Kernel.Modules is
         (Kernel.Default_Desktop,
          Node,
          X, Y, Width, Height,
-         Short_Title, Title,
-         State, Dock, Focus, Raised);
+         State, Position, Focus, Raised);
    end Add_Default_Desktop_Item;
 
    --------------------
