@@ -469,6 +469,13 @@ package body Glide_Kernel is
          Predefined_Source_Path => Get_Predefined_Source_Path (Handle),
          Predefined_Object_Path => Get_Predefined_Object_Path (Handle));
       return File;
+
+   exception
+      when Unsupported_Language =>
+         Trace (Me,
+                "Locate_From_Source_And_Complete: Unsupported_Language for "
+                & Source_Filename);
+         return No_LI_File;
    end Locate_From_Source_And_Complete;
 
    -------------------------
