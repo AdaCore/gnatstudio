@@ -2759,7 +2759,7 @@ package body Project_Explorers is
          File := File_Selection_Context_Access (Context);
 
          if Has_File_Information (File) then
-            Gtk_New (Item, Label => -"Locate in Explorer: "
+            Gtk_New (Item, Label => -"Locate in explorer: "
                      & Base_Name (File_Information (File)));
             Append (Menu, Item);
 
