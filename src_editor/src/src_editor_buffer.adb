@@ -3559,6 +3559,7 @@ package body Src_Editor_Buffer is
 
       for J in Info'Range loop
          Widths (J) := -1;
+
          if Info (J).Text /= null then
             Set_Text (Layout, String'(Info (J).Text.all));
             Get_Pixel_Size (Layout, Num, Height);
@@ -3577,8 +3578,9 @@ package body Src_Editor_Buffer is
          if Info (J).Image /= Null_Pixbuf then
             Num := Get_Width (Info (J).Image);
 
+            Widths (J) := Num;
+
             if Num > Width then
-               Widths (J) := Num;
                Width := Num;
             end if;
          end if;
