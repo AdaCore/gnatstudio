@@ -145,7 +145,7 @@ package body Creation_Wizard is
               (W, Integer (Page_Num),
                Widget_Factory
                (Get_Nth_Project_Editor_Page (W.Kernel, Integer (Page_Num - 1)),
-                No_Project,
+                Get_Project_View (W.Kernel),
                 Name_As_Directory (Get_Text (W.Project_Location)) &
                 Get_Text (W.Project_Name),
                 W.Kernel));
@@ -158,7 +158,7 @@ package body Creation_Wizard is
               (Page         => Get_Nth_Project_Editor_Page
                (W.Kernel, Integer (Page_Num - 1)),
                Widget       => Get_Nth_Page (W, Integer (Page_Num)),
-               Project_View => No_Project,
+               Project_View => Get_Project_View (W.Kernel),
                Languages    => Languages);
             Free (Languages);
          end;

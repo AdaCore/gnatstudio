@@ -34,6 +34,8 @@ package Creation_Wizard is
       Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
    --  Create a new project wizard.
    --  New pages can be added at will with Add_Page
+   --  Default values for the various pages are taken from the project
+   --  currently loaded in Kernel.
 
    procedure Initialize
      (Wiz : out Prj_Wizard;
