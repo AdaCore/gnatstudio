@@ -94,7 +94,7 @@ package body Builder_Module is
    --  The key in the history for the check button "run in external terminal"
 
    Make_Menu_Prefix : constant String := "<gps>/Build/Make/";
-   Run_Menu_Prefix : constant String := "<gps>/Build_Run/";
+   Run_Menu_Prefix : constant String := "<gps>/Build/Run/";
    --  Prefixes used in the accel path for the various menus
 
    Custom_Make_Suffix  : constant String := "Custom...";
@@ -393,6 +393,8 @@ package body Builder_Module is
          if Compile_Only then
             K := K + 1;
             R_Tmp (K) := new String'("-c");
+            K := K + 1;
+            R_Tmp (K) := new String'(Unique_Compile);
          end if;
 
          K := K + 1;
@@ -1546,7 +1548,7 @@ package body Builder_Module is
 
       if Set_Shortcut then
          Set_Accel_Path
-           (Mitem, -Make_Menu_Prefix & (-Project_Make_Suffix), Group);
+           (Mitem, Make_Menu_Prefix & (Project_Make_Suffix), Group);
       end if;
 
       File_Project_Cb.Object_Connect
@@ -1562,7 +1564,7 @@ package body Builder_Module is
 
       if Set_Shortcut then
          Set_Accel_Path
-           (Mitem, -Make_Menu_Prefix & (-All_Make_Suffix), Group);
+           (Mitem, Make_Menu_Prefix & All_Make_Suffix, Group);
       end if;
 
       File_Project_Cb.Object_Connect
@@ -1745,7 +1747,7 @@ package body Builder_Module is
       Gtk.Menu_Item.Initialize (Mitem, -Current_Make_Suffix);
       Append (Menu1, Mitem);
       Set_Accel_Path
-        (Mitem, -Make_Menu_Prefix & (-Current_Make_Suffix), Group);
+        (Mitem, Make_Menu_Prefix & Current_Make_Suffix, Group);
       File_Project_Cb.Object_Connect
         (Mitem, "activate", On_Build'Access,
          Slot_Object => Kernel,
