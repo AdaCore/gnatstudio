@@ -1170,8 +1170,12 @@ package body Src_Editor_Buffer.Line_Information is
                  := Buffer_Lines (J).Editable_Line
                  + Editable_Line_Type (Number);
 
-               Editable_Lines (Buffer_Lines (J).Editable_Line).Buffer_Line
-                 := J;
+               if Editable_Lines
+                 (Buffer_Lines (J).Editable_Line).Where = In_Buffer
+               then
+                  Editable_Lines (Buffer_Lines (J).Editable_Line).Buffer_Line
+                    := J;
+               end if;
             end if;
          end loop;
 
@@ -1182,9 +1186,13 @@ package body Src_Editor_Buffer.Line_Information is
             Buffer_Lines (Start + J).Editable_Line := Ref_Editable_Line
               + Editable_Line_Type (J);
 
-            Editable_Lines
-              (Buffer_Lines (Start + J).Editable_Line).Buffer_Line :=
-              Start + J;
+            if Editable_Lines
+              (Buffer_Lines (Start + J).Editable_Line).Where = In_Buffer
+            then
+               Editable_Lines
+                 (Buffer_Lines (Start + J).Editable_Line).Buffer_Line :=
+                 Start + J;
+            end if;
 
             Create_Side_Info (Buffer, Start + J);
          end loop;
@@ -1224,8 +1232,12 @@ package body Src_Editor_Buffer.Line_Information is
                Buffer_Lines (J).Editable_Line :=
                  Buffer_Lines (J).Editable_Line - EN;
 
-               Editable_Lines
-                 (Buffer_Lines (J).Editable_Line).Buffer_Line := J;
+               if Editable_Lines
+                 (Buffer_Lines (J).Editable_Line).Where = In_Buffer
+               then
+                  Editable_Lines
+                    (Buffer_Lines (J).Editable_Line).Buffer_Line := J;
+               end if;
             end if;
          end if;
       end loop;
@@ -1235,7 +1247,10 @@ package body Src_Editor_Buffer.Line_Information is
       for J in Buffer_Lines'Last - Number
         .. Buffer_Lines'Last
       loop
-         if Buffer_Lines (J).Editable_Line /= 0 then
+         if Buffer_Lines (J).Editable_Line /= 0
+           and then Editable_Lines
+             (Buffer_Lines (J).Editable_Line).Where = In_Buffer
+         then
             Editable_Lines
               (Buffer_Lines (J).Editable_Line).Buffer_Line := 0;
          end if;
@@ -1296,7 +1311,10 @@ package body Src_Editor_Buffer.Line_Information is
       Buffer.Modifying_Editable_Lines := True;
 
       for J in Buffer_Line_At_Blanks .. Buffer_Lines'Last loop
-         if Buffer_Lines (J).Editable_Line /= 0 then
+         if Buffer_Lines (J).Editable_Line /= 0
+           and then Editable_Lines
+             (Buffer_Lines (J).Editable_Line).Where = In_Buffer
+         then
             Editable_Lines (Buffer_Lines (J).Editable_Line).Buffer_Line :=
               Editable_Lines (Buffer_Lines (J).Editable_Line).Buffer_Line
               - Real_Number;
@@ -1524,6 +1542,10 @@ package body Src_Editor_Buffer.Line_Information is
       Buffer_Lines : Line_Data_Array_Access renames Buffer.Line_Data;
       Command : Command_Access;
    begin
+      if BL.all = null then
+         return;
+      end if;
+
       for Col in BL.all'Range loop
          if BL.all (Col).Identifier.all = Block_Info_Column then
 
@@ -1559,6 +1581,10 @@ package body Src_Editor_Buffer.Line_Information is
       Buffer_Lines : Line_Data_Array_Access renames Buffer.Line_Data;
       Command : Command_Access;
    begin
+      if BL.all = null then
+         return;
+      end if;
+
       for Col in BL.all'Range loop
          if BL.all (Col).Identifier.all = Block_Info_Column then
 
@@ -1584,5 +1610,61 @@ package body Src_Editor_Buffer.Line_Information is
          end if;
       end loop;
    end Unfold_All;
+
+   -----------------
+   -- Unfold_Line --
+   -----------------
+
+   procedure Unfold_Line
+     (Buffer : access Source_Buffer_Record'Class;
+      Line   : Editable_Line_Type)
+   is
+      BL : Columns_Config_Access renames Buffer.Buffer_Line_Info_Columns;
+      Buffer_Lines   : Line_Data_Array_Access renames Buffer.Line_Data;
+      Editable_Lines : Editable_Line_Array_Access renames
+        Buffer.Editable_Lines;
+
+      Command        : Command_Access;
+      Column         : Integer := -1;
+      Buffer_Line    : Buffer_Line_Type;
+   begin
+      for Col in BL.all'Range loop
+         if BL.all (Col).Identifier.all = Block_Info_Column then
+
+            Column := Col;
+            exit;
+         end if;
+      end loop;
+
+      if Column = -1 then
+         return;
+      end if;
+
+      while Editable_Lines (Line).Where /= In_Buffer loop
+         --  Find the command unfolding the enclosing block.
+
+         for L in reverse Line .. Editable_Lines'First loop
+            if Editable_Lines (L).Where = In_Buffer then
+               Buffer_Line := Get_Buffer_Line (Buffer, L);
+
+               if Buffer_Lines (Buffer_Line).Side_Info_Data /= null
+                 and then Buffer_Lines
+                   (Buffer_Line).Side_Info_Data (Column).Info /= null
+               then
+                  Command :=
+                    Buffer_Lines (Buffer_Line).Side_Info_Data
+                    (Column).Info.Associated_Command;
+
+                  if Command.all in Unhide_Editable_Lines_Type'Class then
+                     if Execute (Command) /= Success then
+                        return;
+                     end if;
+                  end if;
+               end if;
+               exit;
+            end if;
+         end loop;
+      end loop;
+   end Unfold_Line;
 
 end Src_Editor_Buffer.Line_Information;
