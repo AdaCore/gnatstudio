@@ -50,7 +50,6 @@ with Traces;            use Traces;
 with Glide_Intl;        use Glide_Intl;
 with Glide_Kernel.Project; use Glide_Kernel.Project;
 with Ada.Exceptions;    use Ada.Exceptions;
-with List_Utils;        use List_Utils;
 
 package body Glide_Kernel.Modules is
 
@@ -66,11 +65,6 @@ package body Glide_Kernel.Modules is
 
    package Kernel_Contextuals is new GUI_Utils.User_Contextual_Menus
      (Contextual_Menu_User_Data);
-
-   function Higher_Priority (M1, M2 : Module_ID) return Boolean;
-   --  Return true if M1 has a higher priority than M2
-
-   procedure Sort is new List_Utils.Sort (Module_List, Higher_Priority);
 
    function Create_Contextual_Menu
      (User  : Contextual_Menu_User_Data;
@@ -99,15 +93,6 @@ package body Glide_Kernel.Modules is
       Every_Line     : Boolean := True);
    --  Create the Mime info for adding/creating/removing line information,
    --  and send it.
-
-   ---------------------
-   -- Higher_Priority --
-   ---------------------
-
-   function Higher_Priority (M1, M2 : Module_ID) return Boolean is
-   begin
-      return M1.Info.Priority > M2.Info.Priority;
-   end Higher_Priority;
 
    ---------------------
    -- Compute_Tooltip --
@@ -201,19 +186,6 @@ package body Glide_Kernel.Modules is
 
       Module_List.Append (Kernel.Modules_List, Module);
    end Register_Module;
-
-   ------------------
-   -- Set_Priority --
-   ------------------
-
-   procedure Set_Priority
-     (Kernel   : access Kernel_Handle_Record'Class;
-      ID       : access Module_ID_Record'Class;
-      Priority : Module_Priority) is
-   begin
-      ID.Info.Priority := Priority;
-      Sort (Kernel.Modules_List);
-   end Set_Priority;
 
    ------------------
    -- Get_Priority --

@@ -160,12 +160,6 @@ package Glide_Kernel.Modules is
       return Module_Priority;
    --  Return the current priority of ID
 
-   procedure Set_Priority
-     (Kernel   : access Kernel_Handle_Record'Class;
-      ID       : access Module_ID_Record'Class;
-      Priority : Module_Priority);
-   --  Change the priority for a module
-
    ----------------------
    -- Desktop handling --
    ----------------------
