@@ -23,8 +23,17 @@
 --  to handle a set of casing exceptions.
 
 with String_Hash;
+with Traces;      use Traces;
 
 package Case_Handling is
+
+   type Casing_Policy is (Disabled, End_Of_Line, On_The_Fly);
+   for Casing_Policy'Size use Integer'Size;
+   pragma Convention (C, Casing_Policy);
+   --  The list of supported casing policies.
+   --  - Disable means that no auto-casing will be applied to the buffer
+   --  - End_Of_Line casing done when pressing return
+   --  - On_The_Fly casing is done when inserting a word separator
 
    type Casing_Type is (Unchanged, Upper, Lower, Mixed, Smart_Mixed);
    for Casing_Type'Size use Integer'Size;
@@ -94,6 +103,9 @@ package Case_Handling is
    procedure Destroy (C : in out Casing_Exceptions);
    --  Destroy the case exceptions handler, release all memory associated
    --  with this object.
+
+   On_The_Fly_Casing : constant Debug_Handle :=
+                         Create ("on_the_fly_casing", Off);
 
 private
 
