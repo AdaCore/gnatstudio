@@ -210,10 +210,14 @@ package body Welcome is
       if Get_Pref (Screen.Kernel, Display_Welcome) then
          Show_All (Screen);
 
-         if Run (Screen) = Gtk_Response_OK then
-            if not Get_Active (Screen.Always_Show) then
-               Set_Pref (Screen.Kernel, Display_Welcome, False);
-            end if;
+         --  Prevent deleting of the dialog through the title bar's X button
+         --  (which is shown on some window managers)
+         while Run (Screen) /= Gtk_Response_OK loop
+            null;
+         end loop;
+
+         if not Get_Active (Screen.Always_Show) then
+            Set_Pref (Screen.Kernel, Display_Welcome, False);
          end if;
 
       elsif Get_Text (Get_Entry (Screen.Open_Project)) /= "" then
