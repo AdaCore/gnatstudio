@@ -44,8 +44,6 @@ with Gtk.Widget;                  use Gtk.Widget;
 with Gtkada.Handlers;             use Gtkada.Handlers;
 with Gtkada.Types;                use Gtkada.Types;
 with Src_Editor_Buffer;           use Src_Editor_Buffer;
-with Pango.Context;               use Pango.Context;
-with Pango.Enums;                 use Pango.Enums;
 with Pango.Font;                  use Pango.Font;
 with Pango.Layout;                use Pango.Layout;
 
@@ -691,26 +689,23 @@ package body Src_Editor_View is
      (View : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
       Source  : constant Source_View := Source_View (View);
-      Context : Pango_Context;
       Descr   : Pango_Font_Description;
-      Font    : Pango_Font;
-      Metrics : Pango_Font_Metrics;
+      Layout  : Pango_Layout;
+      Height  : Gint;
 
    begin
-      Context := Get_Pango_Context (Source);
-      Descr   := Get_Pref (Kernel, Source_Editor_Font);
-      Font    := Load_Font (Context, Descr);
-      Metrics := Get_Metrics (Font);
+      --  Set the font.
+
+      Descr := Get_Pref (Kernel, Source_Editor_Font);
       Set_Font (Source, Descr);
 
-      --  ??? Apparently Get_Approximate_Char_Width does a poor job, even
-      --  on fixed size fonts. Consider using another method to compute
-      --  Char_Width.
+      --  Recalculate the width of one character.
 
-      Source.Char_Width :=
-        Get_Approximate_Char_Width (Metrics) / Pango_Scale - 1;
-      Unref (Font);
-      Unref (Metrics);
+      Layout := Create_Pango_Layout (Source_View (View));
+      Set_Font_Description (Layout, Descr);
+      Set_Text (Layout, " ");
+      Get_Pixel_Size (Layout, Source.Char_Width, Height);
+      Unref (Layout);
 
    exception
       when E : others =>
