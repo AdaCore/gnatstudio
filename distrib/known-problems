@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 2.1.1
 
+- DC06-007 Crash when selecting some fonts under Windows
+  Problem:    When selecting some particular fonts (e.g. 'Serif') in the
+              font selector under Windows, GPS will crash.
+  Workaround: Select other fonts, or type the font name in the text entry
+              directly.
+
 - DC03-021 Custom project attributes must specify a default value for files
   Problem:    If you define your own project attributes through XML files, the
               ones that are of type file or directory must specify a default
