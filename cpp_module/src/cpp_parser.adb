@@ -2649,12 +2649,17 @@ package body CPP_Parser is
          return null;
       end if;
 
-      --  If the database has changed on disk, update the in-memory contents
+      --  If the database has changed on disk, update the in-memory contents.
+      --  Likewise if the object directory itself has changed when the project
+      --  view has changed.
       Project := Get_Project_From_File (Handler.Registry, Source_Filename);
 
       if Get_Time_Stamp (Source) = VFS.No_Time
         or else Get_LI (Source) = null
         or else Database_Timestamp (Project) /= Get_Timestamp (Get_LI (Source))
+        or else Name_As_Directory (Object_Path
+          (Get_Project (Get_LI (Source)), Recursive => False)) /=
+        Dir_Name (Get_LI_Filename (Get_LI (Source))).all
       then
          Parse_File (Handler, Project, Source);
       end if;
