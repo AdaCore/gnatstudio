@@ -62,19 +62,13 @@ package body Prj_API is
    --  properly handles standard variables and variables defined through
    --  references to external environment variables.
 
-   procedure Find_Last_Declaration_Of
-     (Project    : Project_Node_Id;
-      Pkg_Name   : String := "";
-      Attr_Name  : Name_Id;
-      Attr_Index : String_Id;
-      Case_Item  : out Project_Node_Id;
-      Last_Decl  : out Project_Node_Id);
-   --  Find the last declaration for the attribute in Attr_Name, in
-   --  Project/Pkg_Name.
-   --  The declaration is searched in the declarative section matching the
-   --  current scenario (the beginning of this declarative section is returned
-   --  in Case_Item).
-   --  Last_Decl is the expression_of of the last such declaration, or
+   function Find_Last_Declaration_Of
+     (Parent  : Project_Node_Id;
+      Attr_Name  : String;
+      Attr_Index : String_Id) return Project_Node_Id;
+   --  Find the last declaration for the attribute Attr_Name, in the
+   --  declarative list contained in Parent.
+   --  The returned value is the expression_of of the last such declaration, or
    --  Empty_Node if there was none.
 
    --------------------
@@ -1085,34 +1079,39 @@ package body Prj_API is
    is
       N : constant Name_Id := Prj.Tree.Name_Of (Ref);
       Project : Project_Node_Id := Current_Project;
-      Decl, Item, Pkg : Project_Node_Id;
+      Pkg : Project_Node_Id;
+      Variable : Variable_Node_Id;
+
    begin
       if Project_Node_Of (Ref) /= Empty_Node then
          Project := Project_Node_Of (Ref);
       end if;
 
-      if Package_Node_Of (Ref) /= Empty_Node then
-         Pkg := First_Package_Of (Project);
-         while Pkg /= Package_Node_Of (Ref) loop
-            Pkg := Next_Package_In_Project (Pkg);
-         end loop;
-         Decl := First_Declarative_Item_Of (Pkg);
-      else
-         Decl := First_Declarative_Item_Of (Project_Declaration_Of (Project));
-      end if;
+      Pkg := Project;
 
-      while Decl /= Empty_Node loop
-         Item := Current_Item_Node (Decl);
+      --  ??? The commented out code searches for the variable declaration in
+      --  all the packages. However, the normalization process should really
+      --  put it at the top-level of the project.
 
-         if (Kind_Of (Item) = N_Variable_Declaration
-             or else Kind_Of (Item) = N_Typed_Variable_Declaration)
-           and then Prj.Tree.Name_Of (Item) = N
+      --      while Pkg /= Empty_Node loop
+      Variable := First_Variable_Of (Pkg);
+      while Variable /= Empty_Node loop
+         if (Kind_Of (Variable) = N_Variable_Declaration
+             or else Kind_Of (Variable) = N_Typed_Variable_Declaration)
+           and then Prj.Tree.Name_Of (Variable) = N
          then
-            return External_Reference_Of (Item);
+            return External_Reference_Of (Variable);
          end if;
 
-         Decl := Next_Declarative_Item (Decl);
+         Variable := Next_Variable (Variable);
       end loop;
+
+      --     if Pkg = Project then
+      --        Pkg := First_Package_Of (Project);
+      --     else
+      --        Pkg := Next_Package_In_Project (Pkg);
+      --     end if;
+      --  end loop;
 
       return No_String;
    end External_Variable_Name;
@@ -1235,34 +1234,24 @@ package body Prj_API is
    -- Find_Last_Declaration_Of --
    ------------------------------
 
-   procedure Find_Last_Declaration_Of
-     (Project    : Project_Node_Id;
-      Pkg_Name   : String := "";
-      Attr_Name  : Name_Id;
-      Attr_Index : String_Id;
-      Case_Item  : out Project_Node_Id;
-      Last_Decl  : out Project_Node_Id)
+   function Find_Last_Declaration_Of
+     (Parent  : Project_Node_Id;
+      Attr_Name  : String;
+      Attr_Index : String_Id) return Project_Node_Id
    is
-      Decl, Expr, Pkg : Project_Node_Id;
+      Decl, Expr : Project_Node_Id;
+      Attr_N     : Name_Id;
    begin
-      --  We need to update the last of these declarations (so that the changes
-      --  have an impact, and are not overriden by some other declaration).
+      Name_Len := Attr_Name'Length;
+      Name_Buffer (1 .. Name_Len) := Attr_Name;
+      Attr_N := Name_Find;
 
-      if Pkg_Name /= "" then
-         Pkg := Get_Or_Create_Package (Project, Pkg_Name);
-      else
-         Pkg := Empty_Node;
-      end if;
-      Case_Item := Current_Scenario_Case_Item (Project, Pkg);
-
-      Last_Decl := Empty_Node;
-
-      Decl := First_Declarative_Item_Of (Case_Item);
+      Decl := First_Declarative_Item_Of (Parent);
       while Decl /= Empty_Node loop
          Expr := Current_Item_Node (Decl);
 
          if Kind_Of (Expr) = N_Attribute_Declaration
-           and then Prj.Tree.Name_Of (Expr) = Attr_Name
+           and then Prj.Tree.Name_Of (Expr) = Attr_N
          then
             if (Attr_Index = No_String
                 and then Associative_Array_Index_Of (Expr) = No_String)
@@ -1272,12 +1261,13 @@ package body Prj_API is
                        String_Equal (Associative_Array_Index_Of (Expr),
                                      Attr_Index))
             then
-               Last_Decl := Expression_Of (Expr);
+               return Expression_Of (Expr);
             end if;
          end if;
 
          Decl := Next_Declarative_Item (Decl);
       end loop;
+      return Empty_Node;
    end Find_Last_Declaration_Of;
 
    ----------------------------------------
@@ -1294,8 +1284,64 @@ package body Prj_API is
    is
       Attribute_N : Name_Id;
       List : Project_Node_Id := Empty_Node;
-      Previous_Decl : Project_Node_Id := Empty_Node;
-      Case_Item, Decl, Expr, Term : Project_Node_Id;
+      Pkg, Term, Expr : Project_Node_Id;
+
+      procedure Add_Or_Replace (Case_Item : Project_Node_Id);
+      --  Add or replace the attribute Attribute_Name in the declarative list
+      --  for Case_Item
+
+      --------------------
+      -- Add_Or_Replace --
+      --------------------
+
+      procedure Add_Or_Replace (Case_Item : Project_Node_Id) is
+         Previous_Decl, Decl, Expr : Project_Node_Id;
+      begin
+         Previous_Decl := Find_Last_Declaration_Of
+           (Case_Item, Attribute_Name, Attribute_Index);
+
+         --  Do we already have some declarations for this attribute ? If yes,
+         --  If we found a previous declaration, update it
+
+         if Previous_Decl /= Empty_Node then
+            if Prepend then
+               Expr := First_Expression_In_List (List);
+               while Next_Expression_In_List (Expr) /= Empty_Node loop
+                  Expr := Next_Expression_In_List (Expr);
+               end loop;
+
+               Set_Next_Expression_In_List
+                 (Expr, First_Expression_In_List
+                  (Current_Term (First_Term (Previous_Decl))));
+            end if;
+
+            Set_Current_Term (First_Term (Previous_Decl), List);
+
+         --  Else create the new instruction to be added to the project
+
+         else
+            Decl := Get_Or_Create_Attribute
+              (Case_Item, Attribute_Name, Attribute_Index);
+            Expr := Enclose_In_Expression (List);
+
+            if Prepend then
+               Set_Next_Term
+                 (First_Term (Expr),
+                  Default_Project_Node (N_Term, Prj.List));
+               Term := Next_Term (First_Term (Expr));
+               Set_Current_Term
+                 (Term,
+                  Default_Project_Node (N_Attribute_Reference, Prj.List));
+               Term := Current_Term (Term);
+
+               Set_Name_Of (Term, Attribute_N);
+               Set_Project_Node_Of (Term, Project);
+            end if;
+
+            Set_Expression_Of (Decl, Expr);
+         end if;
+      end Add_Or_Replace;
+
    begin
       if Values'Length = 0 then
          --  ??? Shouldn't exist if there is already such a package => remove
@@ -1321,55 +1367,14 @@ package body Prj_API is
          Set_First_Expression_In_List (List, Expr);
       end loop;
 
-      Find_Last_Declaration_Of
-        (Project    => Project,
-         Pkg_Name   => Pkg_Name,
-         Attr_Name  => Attribute_N,
-         Attr_Index => Attribute_Index,
-         Case_Item  => Case_Item,
-         Last_Decl  => Previous_Decl);
-
-      --  Do we already have some declarations for this attribute ? If yes,
-      --  If we found a previous declaration, update it
-
-      if Previous_Decl /= Empty_Node then
-         if Prepend then
-            Expr := First_Expression_In_List (List);
-            while Next_Expression_In_List (Expr) /= Empty_Node loop
-               Expr := Next_Expression_In_List (Expr);
-            end loop;
-
-            Set_Next_Expression_In_List
-              (Expr, First_Expression_In_List
-               (Current_Term (First_Term (Previous_Decl))));
-         end if;
-
-         Set_Current_Term (First_Term (Previous_Decl), List);
-
-
-      --  Else create the new instruction to be added to the project
-
+      if Pkg_Name /= "" then
+         Pkg := Get_Or_Create_Package (Project, Pkg_Name);
       else
-         Decl := Get_Or_Create_Attribute
-           (Case_Item, Attribute_Name, Attribute_Index);
-         Expr := Enclose_In_Expression (List);
-
-         if Prepend then
-            Set_Next_Term
-              (First_Term (Expr),
-               Default_Project_Node (N_Term, Prj.List));
-            Term := Next_Term (First_Term (Expr));
-            Set_Current_Term
-              (Term,
-               Default_Project_Node (N_Attribute_Reference, Prj.List));
-            Term := Current_Term (Term);
-
-            Set_Name_Of (Term, Attribute_N);
-            Set_Project_Node_Of (Term, Project);
-         end if;
-
-         Set_Expression_Of (Decl, Expr);
+         Pkg := Empty_Node;
       end if;
+
+      For_Each_Scenario_Case_Item
+        (Project, Pkg, Add_Or_Replace'Unrestricted_Access);
    end Update_Attribute_Value_In_Scenario;
 
    ----------------------------------------
@@ -1385,8 +1390,36 @@ package body Prj_API is
    is
       Attribute_N : Name_Id;
       Val : Project_Node_Id := Empty_Node;
-      Previous_Decl : Project_Node_Id := Empty_Node;
-      Case_Item, Decl : Project_Node_Id;
+      Pkg : Project_Node_Id;
+
+      procedure Add_Or_Replace (Case_Item : Project_Node_Id);
+      --  Add or replace the attribute Attribute_Name in the declarative list
+      --  for Case_Item
+
+      --------------------
+      -- Add_Or_Replace --
+      --------------------
+
+      procedure Add_Or_Replace (Case_Item : Project_Node_Id) is
+         Previous_Decl, Decl : Project_Node_Id;
+      begin
+         Previous_Decl := Find_Last_Declaration_Of
+           (Case_Item, Attribute_Name, Attribute_Index);
+
+         --  If we found a previous declaration, update it
+
+         if Previous_Decl /= Empty_Node then
+            Set_Current_Term (First_Term (Previous_Decl), Val);
+
+         --  Else create the new instruction to be added to the project
+
+         else
+            Decl := Get_Or_Create_Attribute
+              (Case_Item, Attribute_Name, Attribute_Index, Prj.Single);
+            Set_Expression_Of (Decl, Enclose_In_Expression (Val));
+         end if;
+      end Add_Or_Replace;
+
    begin
       Name_Len := Attribute_Name'Length;
       Name_Buffer (1 .. Name_Len) := Attribute_Name;
@@ -1399,26 +1432,14 @@ package body Prj_API is
       Store_String_Chars (Value);
       Set_String_Value_Of (Val, End_String);
 
-      Find_Last_Declaration_Of
-        (Project    => Project,
-         Pkg_Name   => Pkg_Name,
-         Attr_Name  => Attribute_N,
-         Attr_Index => Attribute_Index,
-         Case_Item  => Case_Item,
-         Last_Decl  => Previous_Decl);
-
-      --  If we found a previous declaration, update it
-
-      if Previous_Decl /= Empty_Node then
-         Set_Current_Term (First_Term (Previous_Decl), Val);
-
-      --  Else create the new instruction to be added to the project
-
+      if Pkg_Name /= "" then
+         Pkg := Get_Or_Create_Package (Project, Pkg_Name);
       else
-         Decl := Get_Or_Create_Attribute
-           (Case_Item, Attribute_Name, Attribute_Index, Prj.Single);
-         Set_Expression_Of (Decl, Enclose_In_Expression (Val));
+         Pkg := Empty_Node;
       end if;
+
+      For_Each_Scenario_Case_Item
+        (Project, Pkg, Add_Or_Replace'Unrestricted_Access);
    end Update_Attribute_Value_In_Scenario;
 
 begin
