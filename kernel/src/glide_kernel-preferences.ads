@@ -138,6 +138,7 @@ package Glide_Kernel.Preferences is
    String_Font               : Param_Spec_Font;
    Tooltip_Font              : Param_Spec_Font;
    Display_Tooltip           : Param_Spec_Boolean;
+   Highlight_Delimiters      : Param_Spec_Boolean;
    Periodic_Save             : Param_Spec_Int;
    Tab_Width                 : Param_Spec_Int;
 
@@ -190,7 +191,9 @@ package Glide_Kernel.Preferences is
    Dep_Browser_Show_Implicit_Dep : Param_Spec_Boolean;
 
    -- VCS --
-   CVS_Command           : Param_Spec_String;
+   Hide_Up_To_Date     : Param_Spec_Boolean;
+   Hide_Not_Registered : Param_Spec_Boolean;
+   CVS_Command         : Param_Spec_String;
 
    --  Debugger preferences are registered in GVD.Preferences
 
