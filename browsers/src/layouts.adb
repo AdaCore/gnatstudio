@@ -182,6 +182,8 @@ package body Layouts is
       pragma Assert (Is_Directed (G));
       pragma Assert (Acyclic, "graph must be acyclic");
 
+      Layers := (others => 0);
+
       for S in Sorted'Range loop
          Max := 0;
          Eit := First (G, Dest => Sorted (S).Vertex);
