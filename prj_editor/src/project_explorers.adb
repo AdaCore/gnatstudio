@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2002                       --
+--                     Copyright (C) 2001-2003                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -210,6 +210,13 @@ package body Project_Explorers is
      (Explorer : access Project_Explorer_Record'Class;
       Node     : Gtk_Tree_Iter);
    --  Compute the children of Node, if they haven't been computed yet.
+
+   procedure Add_Object_Directories
+     (Explorer : access Project_Explorer_Record'Class;
+      Node     : Gtk_Tree_Iter;
+      Project  : Project_Type);
+   --  Add the object and exec directory nodes for Node. They are added
+   --  unconditionally
 
    ---------------------
    -- Expanding nodes --
@@ -972,9 +979,6 @@ package body Project_Explorers is
       procedure Add_Projects;
       --  Adds the subprojects.
 
-      procedure Add_Directories;
-      --  Adds the project subdirectories;
-
       procedure Add_Source_Directories;
       --  Add the source directories to the project
 
@@ -1039,48 +1043,16 @@ package body Project_Explorers is
          Free (Dirs);
       end Add_Source_Directories;
 
-      procedure Add_Directories is
-         N    : Gtk_Tree_Iter;
-         pragma Unreferenced (N);
-         Obj : constant String := Object_Path (Project, False);
-         Exec : constant String := Get_Attribute_Value
-           (Project, Exec_Dir_Attribute);
-      begin
-         Add_Source_Directories;
-
-         if Obj /= "" then
-            N := Add_Directory_Node
-              (Explorer         => Explorer,
-               Directory        => Obj,
-               Project          => Project,
-               Parent_Node      => Node,
-               Files_In_Project => null,
-               Object_Directory => True);
-         end if;
-
-         if Exec /= ""
-           and then Normalize_Pathname
-             (Exec, Project_Directory (Project), Resolve_Links => False) /= Obj
-         then
-            N := Add_Directory_Node
-              (Explorer         => Explorer,
-               Directory        => Exec,
-               Project          => Project,
-               Parent_Node      => Node,
-               Files_In_Project => null,
-               Exec_Directory   => True);
-         end if;
-
-      end Add_Directories;
-
    begin
       Push_State (Explorer.Kernel, Busy);
 
       if Projects_Before_Directories then
          Add_Projects;
-         Add_Directories;
+         Add_Source_Directories;
+         Add_Object_Directories (Explorer, Node, Project);
       else
-         Add_Directories;
+         Add_Source_Directories;
+         Add_Object_Directories (Explorer, Node, Project);
          Add_Projects;
       end if;
 
@@ -1093,6 +1065,45 @@ package body Project_Explorers is
          Free (Files);
          Pop_State (Explorer.Kernel);
    end Expand_Project_Node;
+
+   ----------------------------
+   -- Add_Object_Directories --
+   ----------------------------
+
+   procedure Add_Object_Directories
+     (Explorer : access Project_Explorer_Record'Class;
+      Node     : Gtk_Tree_Iter;
+      Project  : Project_Type)
+   is
+      Obj : constant String := Object_Path (Project, False);
+      Exec : constant String := Get_Attribute_Value
+        (Project, Exec_Dir_Attribute);
+      N   : Gtk_Tree_Iter;
+      pragma Unreferenced (N);
+   begin
+      if Obj /= "" then
+         N := Add_Directory_Node
+           (Explorer         => Explorer,
+            Directory        => Obj,
+            Project          => Project,
+            Parent_Node      => Node,
+            Files_In_Project => null,
+            Object_Directory => True);
+      end if;
+
+      if Exec /= ""
+        and then Normalize_Pathname
+          (Exec, Project_Directory (Project), Resolve_Links => False) /= Obj
+      then
+         N := Add_Directory_Node
+           (Explorer         => Explorer,
+            Directory        => Exec,
+            Project          => Project,
+            Parent_Node      => Node,
+            Files_In_Project => null,
+               Exec_Directory   => True);
+      end if;
+   end Add_Object_Directories;
 
    ---------------------------
    -- Expand_Directory_Node --
@@ -1470,15 +1481,8 @@ package body Project_Explorers is
          end loop;
 
          Free (Dirs);
-         --  Object directory
 
-         N := Add_Directory_Node
-           (Explorer         => Explorer,
-            Directory        => Object_Path (Project, False),
-            Project          => Project,
-            Parent_Node      => Node,
-            Files_In_Project => null,
-            Object_Directory => True);
+         Add_Object_Directories (Explorer, Node, Project);
       end Add_Directories;
 
       procedure Add_Projects is
@@ -1541,7 +1545,9 @@ package body Project_Explorers is
             when Obj_Directory_Node | Exec_Directory_Node =>
                Remove (Explorer.Tree.Model, N);
 
-            when Project_Node | Modified_Project_Node =>
+            when Project_Node
+              | Modified_Project_Node
+              | Extends_Project_Node =>
                --  The list of imported projects could change if another
                --  dependency was added, so we need to check for this case
                --  as well.
@@ -1574,8 +1580,13 @@ package body Project_Explorers is
          N := N2;
       end loop;
 
-      Add_Projects;
-      Add_Directories;
+      if Projects_Before_Directories then
+         Add_Projects;
+         Add_Directories;
+      else
+         Add_Directories;
+         Add_Projects;
+      end if;
    end Update_Project_Node;
 
    ---------------------------
