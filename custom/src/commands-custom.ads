@@ -34,6 +34,11 @@
 --
 --      %l, %c -> the current line and column in the current file.
 --
+--      %lpF -> a file containing a list of source files in the current project
+--      %lPf -> a file containing a list of source files in the root project
+--      %lpD -> a file containing a list of source dirs in the current project
+--      %lPD -> a file containing a list of source dirs in the root project
+--
 --      %s  -> a list of source files in the current project
 --      %S  -> a list of source files in the root project
 
