@@ -661,7 +661,6 @@ package body Src_Editor_Buffer.Line_Information is
          end loop;
 
          Recalculate_Side_Column_Width (Buffer);
-         Side_Column_Configuration_Changed (Buffer);
       end if;
 
       Side_Column_Changed (Buffer);
