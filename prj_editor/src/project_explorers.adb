@@ -78,6 +78,7 @@ with Glide_Kernel.Modules;     use Glide_Kernel.Modules;
 with Glide_Intl;               use Glide_Intl;
 with Language_Handlers.Glide;  use Language_Handlers.Glide;
 with Traces;                   use Traces;
+with File_Utils;               use File_Utils;
 
 with Unchecked_Deallocation;
 with System;
@@ -381,9 +382,6 @@ package body Project_Explorers is
    --  is directly associated with a projet, we return the importing project,
    --  note the one associated with Node.
 
-   function Has_Entries (Directory : String) return Boolean;
-   --  Return True if Directory contains some subdirectories or files.
-
    procedure Add_Dummy_Node
      (Explorer : access Project_Explorer_Record'Class; Node : Gtk_Ctree_Node);
    --  Add a dummy, invisible, child to Node. This is used to force Tree to
@@ -463,7 +461,7 @@ package body Project_Explorers is
    --  Get the iter in the file view under the cursor corresponding to Event,
    --  if any.
 
-   function File_Button_Press
+   function File_Button_Release
      (Explorer : access Gtk_Widget_Record'Class;
       Event    : Gdk_Event) return Boolean;
    --  Callback for the "button_press" event on the file view.
@@ -792,7 +790,7 @@ package body Project_Explorers is
 
       while not Is_Empty (D.Dirs) loop
          declare
-            Dir : String := Head (D.Dirs);
+            Dir : constant String := Head (D.Dirs);
          begin
             Append (D.Explorer.File_Model, Iter, D.Base);
             Set (D.Explorer.File_Model, Iter, Absolute_Name_Column,
@@ -1065,9 +1063,9 @@ package body Project_Explorers is
 
       Gtkada.Handlers.Return_Callback.Object_Connect
         (Explorer.File_Tree,
-         "button_press_event",
+         "button_release_event",
          Gtkada.Handlers.Return_Callback.To_Marshaller
-           (File_Button_Press'Access),
+           (File_Button_Release'Access),
          Explorer,
          After => False);
 
@@ -1705,7 +1703,7 @@ package body Project_Explorers is
       end if;
 
       Is_Leaf := Node_Type = Obj_Directory_Node
-        or else not Has_Entries (Node_Text.all);
+        or else Subdirectories_Count (Node_Text.all) = 0;
 
       N := Insert_Node
         (Ctree         => Explorer.Tree,
@@ -2094,19 +2092,6 @@ package body Project_Explorers is
          Thaw (T.Tree);
       end if;
    end Expand_Tree_Cb;
-
-   -----------------
-   -- Has_Entries --
-   -----------------
-
-   function Has_Entries (Directory : String) return Boolean is
-      pragma Unreferenced (Directory);
-   begin
-      --  ??? Return always True for now, since the previous implementation
-      --  was too inefficient, in particular across network disks.
-
-      return True;
-   end Has_Entries;
 
    ------------------------
    -- Get_File_From_Node --
@@ -2855,11 +2840,11 @@ package body Project_Explorers is
       return Iter;
    end Find_Iter_For_Event;
 
-   -----------------------
-   -- File_Button_Press --
-   -----------------------
+   -------------------------
+   -- File_Button_Release --
+   -------------------------
 
-   function File_Button_Press
+   function File_Button_Release
      (Explorer : access Gtk_Widget_Record'Class;
       Event    : Gdk_Event) return Boolean
    is
@@ -2925,7 +2910,7 @@ package body Project_Explorers is
       end if;
 
       return False;
-   end File_Button_Press;
+   end File_Button_Release;
 
    --------------------------
    -- Button_Press_Release --
