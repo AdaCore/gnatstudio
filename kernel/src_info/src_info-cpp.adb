@@ -187,9 +187,9 @@ package body Src_Info.CPP is
       IU     => Sym_IU_Handler'Access,
       others => Sym_Default_Handler'Access);
 
-   ------------------
-   --  To_Handler  --
-   ------------------
+   ----------------
+   -- To_Handler --
+   ----------------
 
    type To_Handler is access procedure
      (Ref     : TO_Table;
@@ -270,9 +270,9 @@ package body Src_Info.CPP is
       Project_View     : Prj.Project_Id;
       Module_Type_Defs : Module_Typedefs_List);
 
-   -------------------
-   --  To_Handlers  --
-   -------------------
+   -----------------
+   -- To_Handlers --
+   -----------------
 
    Fu_To_Handlers : constant array (Symbol_Type) of To_Handler :=
      (GV     => Fu_To_Gv_Handler'Access,
@@ -289,44 +289,37 @@ package body Src_Info.CPP is
       UN     => Fu_To_Un_Handler'Access,
       others => null);
 
-   function Ext (S : String) return String;
-   --  Used to fill Table_Type_To_Ext array
-
-   ---------
-   -- Ext --
-   ---------
-
-   function Ext (S : String) return String is
-      R : String (1 .. 3) := ASCII.NUL & ASCII.NUL & ASCII.NUL;
-   begin
-      R (S'First .. S'Last) := S;
-      return R;
-   end Ext;
-   pragma Inline (Ext);
-
    -----------------------
    -- Table_Type_To_Ext --
    -----------------------
 
-   Table_Type_To_Ext : constant array (Table_Type) of String (1 .. 3) :=
-     (FIL    => Ext ("fil"),
-      F      => Ext ("f"),
-      FD     => Ext ("fd"),
-      FU     => Ext ("fu"),
-      T      => Ext ("t"),
-      CL     => Ext ("cl"),
-      GV     => Ext ("gv"),
-      E      => Ext ("e"),
-      EC     => Ext ("ec"),
-      TO     => Ext ("to"),
-      IV     => Ext ("iv"),
-      MI     => Ext ("mi"),
-      MD     => Ext ("md"),
-      SN_IN  => Ext ("in"),
-      UN     => Ext ("un"),
-      MA     => Ext ("ma"),
-      CON    => Ext ("con"),
-      others => Ext (""));
+   function Table_Extension (Table : Table_Type) return String;
+   --  Given a table type, return the associated file extension, or "" if
+   --  there is none.
+
+   function Table_Extension (Table : Table_Type) return String is
+   begin
+      case Table is
+         when FIL    => return ".fil";
+         when F      => return ".f";
+         when FD     => return ".fd";
+         when FU     => return ".fu";
+         when T      => return ".t";
+         when CL     => return ".cl";
+         when GV     => return ".gv";
+         when E      => return ".e";
+         when EC     => return ".ec";
+         when TO     => return ".to";
+         when IV     => return ".iv";
+         when MI     => return ".mi";
+         when MD     => return ".md";
+         when SN_IN  => return ".in";
+         when UN     => return ".un";
+         when MA     => return ".ma";
+         when CON    => return ".con";
+         when others => return "";
+      end case;
+   end Table_Extension;
 
    procedure Open_DB_Files
      (DB_Prefix : in String;
@@ -361,9 +354,15 @@ package body Src_Info.CPP is
    --  physical file on the disk.
 
    --  Debugging utils
-   procedure Info (Msg : String); -- print info message
-   procedure Warn (Msg : String); -- print warning message
-   procedure Fail (Msg : String); -- print error message
+   procedure Info (Msg : String);
+   --  Print info message
+
+   procedure Warn (Msg : String);
+   --  Print warning message
+
+   procedure Fail (Msg : String);
+   --  Print error message
+
    pragma Inline (Info, Warn, Fail);
 
    function Get_SN_Dir (Project : Prj.Project_Id) return String;
@@ -646,17 +645,19 @@ package body Src_Info.CPP is
       SN_Table  : out SN_Table_Array) is
    begin
       for Table in Table_Type loop
-         if Table_Type_To_Ext (Table)(1) /= ASCII.NUL then
-            declare
-               File_Name : constant String :=
-                 DB_Prefix & "." & Table_Type_To_Ext (Table);
-            begin
-               Open (SN_Table (Table), File_Name);
-            exception
-               when others => null;
-               --  could not open table, ignore this error
-            end;
-         end if;
+         declare
+            Ext  : constant String := Table_Extension (Table);
+            File : constant String := DB_Prefix & Ext;
+         begin
+            if Ext /= "" and then Is_Regular_File (File) then
+               Open (SN_Table (Table), File);
+            end if;
+
+         exception
+            when DB_Open_Error =>
+               --  Could not open table, ignore this error
+               null;
+         end;
       end loop;
    end Open_DB_Files;
 
@@ -670,7 +671,8 @@ package body Src_Info.CPP is
          begin
             Close (SN_Table (Table));
          exception
-            when DB_Close_Error => null; -- ignore it
+            when DB_Close_Error =>
+               null; -- ignore it
          end;
       end loop;
    end Close_DB_Files;
