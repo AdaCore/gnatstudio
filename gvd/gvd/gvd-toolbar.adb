@@ -69,8 +69,7 @@ package body GVD.Toolbar is
         (Toolbar => Toolbar,
          The_Type => Toolbar_Child_Button,
          Text => "",
-         Tooltip_Text =>
-           -"Step program until it reaches a different source line",
+         Tooltip_Text => -"Step program, proceeding through subroutine calls",
          Icon => Gtk_Widget (Create_Pixmap (step_xpm, Window)));
       Widget_Callback.Object_Connect
         (Button, "clicked",
@@ -79,7 +78,8 @@ package body GVD.Toolbar is
         (Toolbar => Toolbar,
          The_Type => Toolbar_Child_Button,
          Text => "",
-         Tooltip_Text => -"Step one instruction exactly",
+         Tooltip_Text =>
+           -"Step one instruction, but proceed through subroutine calls",
          Icon => Gtk_Widget (Create_Pixmap (stepi_xpm, Window)));
       Widget_Callback.Object_Connect
         (Button, "clicked",
@@ -88,7 +88,8 @@ package body GVD.Toolbar is
         (Toolbar => Toolbar,
          The_Type => Toolbar_Child_Button,
          Text => "",
-         Tooltip_Text => -"Step program, proceeding through subroutine calls",
+         Tooltip_Text =>
+           -"Step program until it reaches a different source line",
          Icon => Gtk_Widget (Create_Pixmap (next_xpm, Window)));
       Widget_Callback.Object_Connect
         (Button, "clicked",
@@ -97,8 +98,7 @@ package body GVD.Toolbar is
         (Toolbar => Toolbar,
          The_Type => Toolbar_Child_Button,
          Text => "",
-         Tooltip_Text =>
-           -"Step one instruction, but proceed through subroutine calls",
+         Tooltip_Text => -"Step one instruction exactly",
          Icon => Gtk_Widget (Create_Pixmap (nexti_xpm, Window)));
       Widget_Callback.Object_Connect
         (Button, "clicked",
