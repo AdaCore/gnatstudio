@@ -1902,13 +1902,15 @@ package body Browsers.Canvas is
       W1, W2, H : out Gint;
       Layout    : access Pango_Layout_Record'Class)
    is
-      Descr : constant Pango_Font_Description :=
+      Descr              : constant Pango_Font_Description :=
         Get_Pref (Get_Kernel (Browser), Default_Font);
-      Font  : Pango_Font;
-      Metrics : Pango_Font_Metrics;
+      Font               : Pango_Font;
+      Metrics            : Pango_Font_Metrics;
       Longest1, Longest2 : Gint := 0;
-      H2, W    : Gint;
-      Last : Natural;
+      H2, W              : Gint;
+      Last               : Natural;
+      Line               : GNAT.Strings.String_Access;
+
    begin
       H := 0;
 
@@ -1917,48 +1919,46 @@ package body Browsers.Canvas is
          Metrics := Get_Metrics (Font);
 
          for L in List.Lines'Range loop
-            declare
-               Line : GNAT.Strings.String_Access renames List.Lines (L).Text;
-            begin
-               Last := Natural'Min (List.Lines (L).Length, Line'Length);
+            Line := List.Lines (L).Text;
+            Last := Natural'Min (List.Lines (L).Length, Line'Length);
 
-               --  First column
+            --  First column
+            declare
+               Str   : String (1 .. Last);
+               Index : Natural := Str'First;
+            begin
+               --  ??? Should use UTF8-functions to traverse the string
+               for S in Line'First .. Line'First + Last - 1 loop
+                  if Line (S) /= '@' then
+                     Str (Index) := Line (S);
+                     Index := Index + 1;
+                  end if;
+               end loop;
+
+               Set_Text (Layout, Str (Str'First .. Index - 1));
+               Get_Pixel_Size (Layout, W, H2);
+               H := H + H2;
+               Longest1 := Gint'Max (Longest1, W);
+            end;
+
+            --  Second column
+            if L < Line'Length then
                declare
-                  Str   : String (1 .. Last);
+                  Str   : String (1 .. Line'Length - Last);
                   Index : Natural := Str'First;
                begin
-                  --  ??? Should use UTF8-functions to traverse the string
-                  for S in Line'First .. Line'First + Last - 1 loop
+                  for S in Line'First + Last .. Line'Last loop
                      if Line (S) /= '@' then
                         Str (Index) := Line (S);
                         Index := Index + 1;
                      end if;
                   end loop;
+
                   Set_Text (Layout, Str (Str'First .. Index - 1));
                   Get_Pixel_Size (Layout, W, H2);
-                  H := H + H2;
-                  Longest1 := Gint'Max (Longest1, W);
+                  Longest2 := Gint'Max (Longest2, W);
                end;
-
-               --  Second column
-               if L < Line'Length then
-                  declare
-                     Str   : String (1 .. Line'Length - Last);
-                     Index : Natural := Str'First;
-                  begin
-                     for S in Line'First + Last .. Line'Last loop
-                        if Line (S) /= '@' then
-                           Str (Index) := Line (S);
-                           Index := Index + 1;
-                        end if;
-                     end loop;
-
-                     Set_Text (Layout, Str (Str'First .. Index - 1));
-                     Get_Pixel_Size (Layout, W, H2);
-                     Longest2 := Gint'Max (Longest2, W);
-                  end;
-               end if;
-            end;
+            end if;
          end loop;
 
          Unref (Metrics);
@@ -1981,55 +1981,56 @@ package body Browsers.Canvas is
       Second_Column : Gint;
       Layout        : access Pango_Layout_Record'Class)
    is
-      Browser : constant General_Browser := Get_Browser (Item);
-      X2     : Gint;
+      Browser     : constant General_Browser := Get_Browser (Item);
+      X2          : Gint;
       First, Last : Integer;
-      In_Xref : Boolean;
-      GC     : Gdk_GC;
-      W, H   : Gint;
+      In_Xref     : Boolean;
+      GC          : Gdk_GC;
+      W, H        : Gint;
       Num_In_Line : Natural;
-      Text : String_Access;
 
-      procedure Display (L : Natural);
+      procedure Display (Text : String; Line : Xref_Line);
       --  Display the slice First .. Last - 1
 
-      procedure Display (L : Natural) is
+      procedure Display (Text : String; Line : Xref_Line) is
       begin
-         if First <= Last - 1 then
-            Set_Text (Layout, List.Lines (L).Text (First .. Last - 1));
-
-            if In_Xref then
-               GC := Browser.Text_GC;
-            else
-               GC := Get_Black_GC (Get_Style (Browser));
-            end if;
-
-            Draw_Layout
-              (Drawable => Pixmap (Item),
-               GC       => GC,
-               X        => X2,
-               Y        => Y,
-               Layout   => Pango_Layout (Layout));
-
-            Get_Pixel_Size (Layout, W, H);
-
-            if In_Xref then
-               Draw_Line (Pixmap (Item), GC, X2, Y + H, X2 + W, Y + H);
-
-               if Num_In_Line <= List.Lines (L).Callbacks'Length
-                 and then List.Lines (L).Callbacks
-                 (Num_In_Line - 1 + List.Lines (L).Callbacks'First) /= null
-               then
-                  Add_Active_Area
-                    (Item,
-                     Gdk_Rectangle'(X2, Y, W, H),
-                     List.Lines (L).Callbacks
-                       (Num_In_Line - 1 + List.Lines (L).Callbacks'First).all);
-               end if;
-            end if;
-
-            X2 := X2 + W;
+         if Text'Length = 0 then
+            return;
          end if;
+
+         Set_Text (Layout, Text);
+
+         if In_Xref then
+            GC := Browser.Text_GC;
+         else
+            GC := Get_Black_GC (Get_Style (Browser));
+         end if;
+
+         Draw_Layout
+           (Drawable => Pixmap (Item),
+            GC       => GC,
+            X        => X2,
+            Y        => Y,
+            Layout   => Pango_Layout (Layout));
+
+         Get_Pixel_Size (Layout, W, H);
+
+         if In_Xref then
+            Draw_Line (Pixmap (Item), GC, X2, Y + H, X2 + W, Y + H);
+
+            if Num_In_Line <= Line.Callbacks'Length
+              and then Line.Callbacks
+                (Num_In_Line - 1 + Line.Callbacks'First) /= null
+            then
+               Add_Active_Area
+                 (Item,
+                  Gdk_Rectangle'(X2, Y, W, H),
+                  Line.Callbacks
+                    (Num_In_Line - 1 + Line.Callbacks'First).all);
+            end if;
+         end if;
+
+         X2 := X2 + W;
       end Display;
 
    begin
@@ -2038,33 +2039,41 @@ package body Browsers.Canvas is
       end if;
 
       for L in List.Lines'Range loop
-         Text  := List.Lines (L).Text;
-         First := Text'First;
-         Last := First;
-         X2   := X;
-         In_Xref := False;
-         Num_In_Line := 0;
+         declare
+            Text : constant String := List.Lines (L).Text.all;
+            --  We should not need to copy Text.all here, but for some
+            --  unknown reason if we don't, List.Lines (L).Text'First
+            --  will end up being read as 0, generating a Constraint_Error ???
 
-         while Last <= Text'Last loop
-            if Last - Text'First = List.Lines (L).Length then
-               Display (L);
-               First   := Last;
-               X2      := X + Second_Column;
-            end if;
+         begin
+            First       := Text'First;
+            Last        := First;
+            X2          := X;
+            In_Xref     := False;
+            Num_In_Line := 0;
 
-            if Text (Last) = '@' then
-               Display (L);
-               First   := Last + 1;
-               In_Xref := not In_Xref;
-               if In_Xref then
-                  Num_In_Line := Num_In_Line + 1;
+            while Last <= Text'Last loop
+               if Last - Text'First = List.Lines (L).Length then
+                  Display (Text (First .. Last - 1), List.Lines (L));
+                  First   := Last;
+                  X2      := X + Second_Column;
                end if;
-            end if;
 
-            Last := Last + 1;
-         end loop;
+               if Text (Last) = '@' then
+                  Display (Text (First .. Last - 1), List.Lines (L));
+                  First   := Last + 1;
+                  In_Xref := not In_Xref;
 
-         Display (L);
+                  if In_Xref then
+                     Num_In_Line := Num_In_Line + 1;
+                  end if;
+               end if;
+
+               Last := Last + 1;
+            end loop;
+
+            Display (Text (First .. Last - 1), List.Lines (L));
+         end;
 
          --  No need to query the size again, we just did
 
