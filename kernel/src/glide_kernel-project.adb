@@ -275,6 +275,11 @@ package body Glide_Kernel.Project is
       Output.Set_Special_Output (Report_Error'Unrestricted_Access);
       Prj.Ext.Reset;
       Free (Kernel.Scenario_Variables);
+
+      --  Reset the internal table, so that a project with the same name can be
+      --  loaded. Otherwise, GNAT reports a message "duplicate project name".
+      Prj.Tree.Tree_Private_Part.Projects_Htable.Reset;
+
       Prj.Part.Parse (New_Project, Project, True);
 
       if New_Project /= Empty_Node then
