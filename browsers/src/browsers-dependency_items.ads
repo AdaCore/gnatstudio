@@ -97,10 +97,11 @@ package Browsers.Dependency_Items is
 
 private
    procedure Resize_And_Draw
-     (Item                        : access File_Item_Record;
-      Width, Height               : Glib.Gint;
-      Width_Offset, Height_Offset : Glib.Gint;
-      Xoffset, Yoffset            : in out Glib.Gint;
+     (Item             : access File_Item_Record;
+      Width, Height    : Glib.Gint;
+      Width_Offset     : Glib.Gint;
+      Height_Offset    : Glib.Gint;
+      Xoffset, Yoffset : in out Glib.Gint;
       Layout           : access Pango.Layout.Pango_Layout_Record'Class);
    --  See doc for inherited subprogram
 

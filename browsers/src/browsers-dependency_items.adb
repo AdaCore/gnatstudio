@@ -1181,14 +1181,16 @@ package body Browsers.Dependency_Items is
    ---------------------
 
    procedure Resize_And_Draw
-     (Item                        : access File_Item_Record;
-      Width, Height               : Glib.Gint;
-      Width_Offset, Height_Offset : Glib.Gint;
-      Xoffset, Yoffset            : in out Glib.Gint;
+     (Item             : access File_Item_Record;
+      Width, Height    : Glib.Gint;
+      Width_Offset     : Glib.Gint;
+      Height_Offset    : Glib.Gint;
+      Xoffset, Yoffset : in out Glib.Gint;
       Layout           : access Pango.Layout.Pango_Layout_Record'Class) is
    begin
       --  Just reserve a little bit of space so that there is something else
-      --  than the title bar
+      --  than the title bar.
+
       Resize_And_Draw
         (Arrow_Item_Record (Item.all)'Access,
          Width, Height + 10,

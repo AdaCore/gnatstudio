@@ -73,11 +73,12 @@ private
    function Get_Background_GC
      (Item : access Type_Item_Record) return Gdk.GC.Gdk_GC;
    procedure Resize_And_Draw
-     (Item                        : access Type_Item_Record;
-      Width, Height               : Glib.Gint;
-      Width_Offset, Height_Offset : Glib.Gint;
-      Xoffset, Yoffset            : in out Glib.Gint;
-      Layout                  : access Pango.Layout.Pango_Layout_Record'Class);
+     (Item             : access Type_Item_Record;
+      Width, Height    : Glib.Gint;
+      Width_Offset     : Glib.Gint;
+      Height_Offset    : Glib.Gint;
+      Xoffset, Yoffset : in out Glib.Gint;
+      Layout           : access Pango.Layout.Pango_Layout_Record'Class);
    function Contextual_Factory
      (Item  : access Type_Item_Record;
       Browser : access Browsers.Canvas.General_Browser_Record'Class;
