@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2003                       --
+--                     Copyright (C) 2001-2004                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -207,5 +207,18 @@ package body VCS is
    begin
       return Result;
    end Parse_Status;
+
+   ----------------------------
+   -- Get_Identified_Actions --
+   ----------------------------
+
+   function Get_Identified_Actions
+     (Rep : access VCS_Record) return Action_Array
+   is
+      pragma Unreferenced (Rep);
+      Result : Action_Array;
+   begin
+      return Result;
+   end Get_Identified_Actions;
 
 end VCS;
