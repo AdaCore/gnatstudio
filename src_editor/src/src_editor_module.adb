@@ -2584,25 +2584,14 @@ package body Src_Editor_Module is
                return True;
 
             else
-               declare
-                  Base : constant String := Base_Name (File);
-               begin
-                  loop
-                     Child := Get (Iter);
+               Child := Find_Editor (Kernel, File);
 
-                     exit when Child = null
-                       or else Get_Title (Child) = File
-                       or else Get_Title (Child) = Base;
-                     Next (Iter);
-                  end loop;
+               if Child /= null then
+                  --  The editor was found.
+                  Apply_Mime_On_Child (Child);
 
-                  if Child /= null then
-                     --  The editor was found.
-                     Apply_Mime_On_Child (Child);
-
-                     return True;
-                  end if;
-               end;
+                  return True;
+               end if;
             end if;
          end;
       end if;
@@ -3170,14 +3159,44 @@ package body Src_Editor_Module is
    is
       Iter  : Child_Iterator := First_Child (Get_MDI (Kernel));
       Child : MDI_Child;
-   begin
-      loop
-         Child := Get (Iter);
-         exit when Child = null or else Get_Title (Child) = File;
-         Next (Iter);
-      end loop;
 
-      return Child;
+      Base  : String := Base_Name (File);
+   begin
+      if File /= Base then
+         --  If the file name is not a base name, the heuristics is
+         --  straightforward.
+
+         loop
+            Child := Get (Iter);
+            exit when Child = null or else Get_Title (Child) = File;
+            Next (Iter);
+         end loop;
+
+         return Child;
+
+      else
+         --  If the file name is a base name, check if the focused child
+         --  corresponds to that name, otherwise look for the first editor
+         --  that corresponds.
+
+         Child := Get_Focus_Child (Get_MDI (Kernel));
+
+         if Child /= null
+           and then Base_Name (Get_Title (Child)) = File
+         then
+            return Child;
+         end if;
+
+         loop
+            Child := Get (Iter);
+            exit when Child = null
+              or else Base_Name (Get_Title (Child)) = File;
+            Next (Iter);
+         end loop;
+
+         return Child;
+
+      end if;
    end Find_Editor;
 
 end Src_Editor_Module;
