@@ -50,15 +50,19 @@ package Switches_Editors is
    type Switches_Edit_Record is new Switches_Editor_Record with private;
    type Switches_Edit is access all Switches_Edit_Record'Class;
 
-   type Page_Filter is mod 2 ** 4;
+   type Page_Filter is mod 2 ** 32;
    Gnatmake_Page : constant Page_Filter := 2 ** 0;
-   Compiler_Page : constant Page_Filter := 2 ** 1;
-   Binder_Page   : constant Page_Filter := 2 ** 2;
-   Linker_Page   : constant Page_Filter := 2 ** 3;
+   Ada_Page      : constant Page_Filter := 2 ** 1;
+   C_Page        : constant Page_Filter := 2 ** 2;
+   Cpp_Page      : constant Page_Filter := 2 ** 3;
+   Binder_Page   : constant Page_Filter := 2 ** 4;
+   Linker_Page   : constant Page_Filter := 2 ** 5;
    All_Pages     : constant Page_Filter :=
-     Gnatmake_Page or Compiler_Page or Binder_Page or Linker_Page;
+     Gnatmake_Page or Ada_Page or C_Page or Cpp_Page or
+     Binder_Page or Linker_Page;
 
-   type Tool_Names is (Gnatmake, Compiler, Binder, Linker);
+   type Tool_Names is
+     (Gnatmake, Ada_Compiler, C_Compiler, Cpp_Compiler, Binder, Linker);
 
    procedure Gtk_New (Editor : out Switches_Edit);
    --  Create a new switches editor
@@ -172,6 +176,9 @@ private
       --  If this is True, then clicking on the toggle buttons in the
       --  editor will not refresh the command lines. This is required so that
       --  people can edit the command lines manually.
+
+      Prev_Make_Debug : Boolean := False;
+      --  Store the previous value of Make_Debug flag.
    end record;
 
 end Switches_Editors;
