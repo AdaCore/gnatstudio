@@ -36,16 +36,18 @@ package body Process_Tab_Pkg.Callbacks is
    use Gtk.Arguments;
    use String_History;
 
-   procedure Find_Match (H   : in out History_List;
-                         Num : in Natural;
-                         D   : in Direction);
+   procedure Find_Match
+     (H   : in out History_List;
+      Num : in Natural;
+      D   : in Direction);
+   --  ???
 
-
-   procedure Move_Until_Match (History : in out History_List;
-                               S : in String;
-                               D : in Direction;
-                               Index : out Integer;
-                               Found : out Boolean);
+   procedure Move_Until_Match
+     (History : in out History_List;
+      S : in String;
+      D : in Direction;
+      Index : out Integer;
+      Found : out Boolean);
    --  Scan the history to find an entry which begins like S.
    --  Index indicates the number of characters found beyond that pattern.
 
@@ -65,11 +67,11 @@ package body Process_Tab_Pkg.Callbacks is
 
       type Guint_Ptr is access all Guint;
       function To_Guint_Ptr is new Unchecked_Conversion (Address, Guint_Ptr);
+
       use Odd.Process;
+
    begin
-
       if To_Guint_Ptr (Position).all < Top.Edit_Pos then
-
          --  Move the cursor back to the end of the window, so that the text
          --  is correctly inserted. This is more user friendly that simply
          --  forbidding any key.
@@ -83,6 +85,7 @@ package body Process_Tab_Pkg.Callbacks is
          end if;
 
          Emit_Stop_By_Name (Top.Debugger_Text, "insert_text");
+
       else
          if Arg1 (Arg1'First) = ASCII.LF then
             declare
@@ -93,6 +96,7 @@ package body Process_Tab_Pkg.Callbacks is
                --  user command. Note that, with gdb, we can't simply send
                --  LF, since some internal commands might have been executed
                --  in the middle.
+
                Wind (Top.Window.Command_History, Forward);
 
                if S'Length = 0 then
@@ -121,7 +125,6 @@ package body Process_Tab_Pkg.Callbacks is
                   Set_Position (Top.Debugger_Text, Gint (Top.Edit_Pos));
                end if;
 
-
                --  Stop propagating this event.
                Emit_Stop_By_Name (Top.Debugger_Text, "insert_text");
             end;
@@ -140,6 +143,7 @@ package body Process_Tab_Pkg.Callbacks is
       Arg1 : Gint := To_Gint (Params, 1);
       Arg2 : Gint := To_Gint (Params, 2);
       Top  : constant Debugger_Process_Tab := Debugger_Process_Tab (Object);
+
    begin
       if Arg2 <= Gint (Top.Edit_Pos) then
          Emit_Stop_By_Name (Top.Debugger_Text, "delete_text");
@@ -204,8 +208,7 @@ package body Process_Tab_Pkg.Callbacks is
    procedure Find_Match
      (H   : in out History_List;
       Num : in Natural;
-      D   : in Direction)
-   is
+      D   : in Direction) is
    begin
       loop
          if D = Backward then
@@ -213,6 +216,7 @@ package body Process_Tab_Pkg.Callbacks is
          else
             Move_To_Next (H);
          end if;
+
          exit when Get_Current (H).Debugger_Num = Num
            and then Get_Current (H).Mode = User;
       end loop;
@@ -227,8 +231,7 @@ package body Process_Tab_Pkg.Callbacks is
       Params : Gtk.Arguments.Gtk_Args)
    is
    begin
-      Wind (Debugger_Process_Tab (Object).Window.Command_History,
-            Forward);
+      Wind (Debugger_Process_Tab (Object).Window.Command_History, Forward);
    end On_Debugger_Get_Focus;
 
    --------------------------------------
@@ -239,8 +242,8 @@ package body Process_Tab_Pkg.Callbacks is
      (Object : access Gtk_Widget_Record'Class;
       Params : Gtk.Arguments.Gtk_Args) return Boolean
    is
-      D : Direction;
       Arg1  : Gdk_Event := To_Event (Params, 1);
+      D     : Direction;
       Top   : Debugger_Process_Tab := Debugger_Process_Tab (Object);
       use type Gdk.Types.Gdk_Key_Type;
 
@@ -249,6 +252,7 @@ package body Process_Tab_Pkg.Callbacks is
         or else Get_Key_Val (Arg1) = GDK_Down
       then
          Emit_Stop_By_Name (Top.Debugger_Text, "key_press_event");
+
          if Get_Key_Val (Arg1) = GDK_Up then
             D := Backward;
          else
@@ -265,16 +269,17 @@ package body Process_Tab_Pkg.Callbacks is
            (Top, Get_Current
             (Top.Window.Command_History).Command.all,
             Is_Command => True);
-
       end if;
+
       return True;
+
       exception
-      when No_Such_Item =>
-         Delete_Text
-           (Top.Debugger_Text,
-            Gint (Top.Edit_Pos),
-            Gint (Get_Length (Top.Debugger_Text)));
-         return True;
+         when No_Such_Item =>
+            Delete_Text
+              (Top.Debugger_Text,
+               Gint (Top.Edit_Pos),
+               Gint (Get_Length (Top.Debugger_Text)));
+            return True;
    end On_Debugger_Text_Key_Press_Event;
 
 end Process_Tab_Pkg.Callbacks;
