@@ -227,6 +227,7 @@ package body Projects.Registry is
            and then Name (N) not in 'A' .. 'Z'
            and then Name (N) not in '0' .. '9'
            and then Name (N) /= '_'
+           and then Name (N) /= '.'
          then
             return False;
          end if;
