@@ -21,6 +21,7 @@
 with Gtk.Window; use Gtk.Window;
 with Gtkada.MDI; use Gtkada.MDI;
 with GVD.Code_Editors; use GVD.Code_Editors;
+with Gtk.Accel_Group;
 
 package Process_Tab_Pkg is
 
@@ -30,7 +31,11 @@ package Process_Tab_Pkg is
    end record;
    type Process_Tab_Access is access all Process_Tab_Record'Class;
 
-   procedure Gtk_New (Process_Tab : out Process_Tab_Access);
-   procedure Initialize (Process_Tab : access Process_Tab_Record'Class);
+   procedure Gtk_New
+     (Process_Tab : out Process_Tab_Access;
+      Group       : access Gtk.Accel_Group.Gtk_Accel_Group_Record'Class);
+   procedure Initialize
+     (Process_Tab : access Process_Tab_Record'Class;
+      Group       : access Gtk.Accel_Group.Gtk_Accel_Group_Record'Class);
 
 end Process_Tab_Pkg;

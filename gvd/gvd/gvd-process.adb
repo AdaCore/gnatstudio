@@ -1071,16 +1071,14 @@ package body GVD.Process is
       --  might need to reference it.
 
       Process.Window := Window.all'Access;
-      Process_Tab_Pkg.Initialize (Process);
+      Process_Tab_Pkg.Initialize (Process, Window.Main_Accel_Group);
       Gtk.Object.Initialize_Class_Record
         (Process, Signals, Class_Record,
          Type_Name => "GvdDebuggerProcessTab");
 
       Menu_Item :=
         Gtk_Menu_Item (Get_Widget (Window.Factory, '/' & (-"Window")));
-      Set_Submenu
-        (Menu_Item,
-         Create_Menu (Process.Process_Mdi, Window.Main_Accel_Group));
+      Set_Submenu (Menu_Item, Create_Menu (Process.Process_Mdi));
 
       Widget_Callback.Connect
         (Process, "process_stopped",

@@ -113,9 +113,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
       Update_External_Dialogs (Main, Gtk_Widget (Process));
 
       Menu_Item := Gtk_Menu_Item (Get_Widget (Main.Factory, -"/Window"));
-      Set_Submenu
-        (Menu_Item,
-         Create_Menu (Process.Process_Mdi, Main.Main_Accel_Group));
+      Set_Submenu (Menu_Item, Create_Menu (Process.Process_Mdi));
 
       if Main.Breakpoints_Editor /= null then
          Set_Process

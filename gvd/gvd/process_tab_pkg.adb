@@ -32,13 +32,17 @@ package body Process_Tab_Pkg is
      (1 => New_String ("executable_changed"));
    Class_Record : GObject_Class := Uninitialized_Class;
 
-procedure Gtk_New (Process_Tab : out Process_Tab_Access) is
+procedure Gtk_New
+  (Process_Tab : out Process_Tab_Access;
+   Group       : access Gtk.Accel_Group.Gtk_Accel_Group_Record'Class) is
 begin
    Process_Tab := new Process_Tab_Record;
-   Process_Tab_Pkg.Initialize (Process_Tab);
+   Process_Tab_Pkg.Initialize (Process_Tab, Group);
 end Gtk_New;
 
-procedure Initialize (Process_Tab : access Process_Tab_Record'Class) is
+procedure Initialize
+  (Process_Tab : access Process_Tab_Record'Class;
+   Group       : access Gtk.Accel_Group.Gtk_Accel_Group_Record'Class) is
    pragma Suppress (All_Checks);
 
 begin
@@ -53,7 +57,7 @@ begin
    Return_Callback.Connect
      (Process_Tab, "delete_event", On_Process_Tab_Delete_Event'Access);
 
-   Gtk_New (Process_Tab.Process_Mdi);
+   Gtk_New (Process_Tab.Process_Mdi, group);
    Set_Priorities
      (Process_Tab.Process_Mdi,
       (Left => 4, Right => 3, Top => 1, Bottom => 2));
