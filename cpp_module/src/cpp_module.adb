@@ -18,7 +18,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glib.Object;             use Glib.Object;
 with Glide_Kernel;            use Glide_Kernel;
 with Glide_Kernel.Console;    use Glide_Kernel.Console;
 with Glide_Kernel.Project;    use Glide_Kernel.Project;
@@ -34,10 +33,10 @@ with Glide_Intl;              use Glide_Intl;
 with Projects;                use Projects;
 with Projects.Registry;       use Projects.Registry;
 with Ada.Exceptions;          use Ada.Exceptions;
-with Glib.Properties.Creation; use Glib.Properties.Creation;
+with Glib.Properties.Creation; use Glib, Glib.Properties.Creation;
 with Glide_Intl;               use Glide_Intl;
+with Glide_Kernel.Hooks;       use Glide_Kernel.Hooks;
 with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
-with Glib.Object;              use Glib, Glib.Object;
 with Language;                 use Language;
 with Project_Viewers;          use Project_Viewers;
 with Naming_Editors;           use Naming_Editors;
@@ -58,12 +57,12 @@ package body Cpp_Module is
      (CPP_LI_Handler_Record'Class, CPP_LI_Handler);
 
    procedure Project_View_Changed
-     (K : access GObject_Record'Class; Kernel : Kernel_Handle);
+     (Kernel : access Kernel_Handle_Record'Class);
    --  Called when the project view has changed in the kernel.
    --  This resets the internal data for the C/C++ handler.
 
    procedure On_Preferences_Changed
-     (Kernel : access GObject_Record'Class; K : Kernel_Handle);
+     (Kernel : access Kernel_Handle_Record'Class);
    --  Called when the preferences have changed
 
    function C_Naming_Scheme_Editor
@@ -91,17 +90,16 @@ package body Cpp_Module is
    ----------------------------
 
    procedure On_Preferences_Changed
-     (Kernel : access GObject_Record'Class; K : Kernel_Handle)
+     (Kernel : access Kernel_Handle_Record'Class)
    is
-      pragma Unreferenced (Kernel);
       Style  : constant Indentation_Kind := Indentation_Kind'Val
-        (Get_Pref (K, C_Automatic_Indentation));
-      Tabs   : constant Boolean := Get_Pref (K, C_Use_Tabs);
+        (Get_Pref (Kernel, C_Automatic_Indentation));
+      Tabs   : constant Boolean := Get_Pref (Kernel, C_Use_Tabs);
       Params : constant Indent_Parameters :=
-        (Indent_Level      => Integer (Get_Pref (K, C_Indentation_Level)),
+        (Indent_Level      => Integer (Get_Pref (Kernel, C_Indentation_Level)),
          Indent_Continue   => 0,
          Indent_Decl       => 0,
-         Tab_Width         => Integer (Get_Pref (K, Tab_Width)),
+         Tab_Width         => Integer (Get_Pref (Kernel, Tab_Width)),
          Indent_Case_Extra => False,
          Reserved_Casing   => Unchanged,
          Ident_Casing      => Unchanged,
@@ -126,9 +124,8 @@ package body Cpp_Module is
    --------------------------
 
    procedure Project_View_Changed
-     (K : access GObject_Record'Class; Kernel : Kernel_Handle)
+     (Kernel : access Kernel_Handle_Record'Class)
    is
-      pragma Unreferenced (K);
       Handler : constant Glide_Language_Handler := Glide_Language_Handler
         (Get_Language_Handler (Kernel));
    begin
@@ -168,10 +165,8 @@ package body Cpp_Module is
          Insert (Kernel, Msg, Mode => Error);
          Unchecked_Free (LI);
       else
-         Kernel_Callback.Connect
-           (Kernel, "project_view_changed",
-            Kernel_Callback.To_Marshaller (Project_View_Changed'Access),
-            Kernel_Handle (Kernel));
+         Add_Hook
+           (Kernel, Project_View_Changed_Hook, Project_View_Changed'Access);
       end if;
 
       Register_LI_Handler (Handler, CPP_LI_Handler_Name, LI_Handler (LI));
@@ -226,12 +221,9 @@ package body Cpp_Module is
       Register_Property
         (Kernel, Param_Spec (C_Indentation_Level), -"Editor:C/C++");
 
-      Kernel_Callback.Connect
-        (Kernel, "preferences_changed",
-         Kernel_Callback.To_Marshaller (On_Preferences_Changed'Access),
-         Kernel_Handle (Kernel));
-
-      On_Preferences_Changed (Kernel, Kernel_Handle (Kernel));
+      Add_Hook
+        (Kernel, Preferences_Changed_Hook, On_Preferences_Changed'Access);
+      On_Preferences_Changed (Kernel);
 
       Register_Naming_Scheme_Editor
         (Kernel, C_String, C_Naming_Scheme_Editor'Access);
