@@ -369,6 +369,7 @@ package body Gtkada.File_Selector is
       Gtk_New
         (File_Selector, (1 => Directory_Separator), Base_Directory, Title,
          History => History);
+      Set_Position (File_Selector, Win_Pos_Mouse);
 
       if Default_Name /= "" then
          Set_Text
@@ -441,6 +442,8 @@ package body Gtkada.File_Selector is
       Gtk_New
         (File_Selector_Window,
          (1 => Directory_Separator), Base_Directory, Title, False, History);
+      Set_Position (File_Selector_Window, Win_Pos_Mouse);
+
       return Select_Directory (File_Selector_Window);
    end Select_Directory;
 
