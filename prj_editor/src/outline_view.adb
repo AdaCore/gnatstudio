@@ -240,14 +240,10 @@ package body Outline_View is
 
                Iter := Children (Model, Get_Iter_First (Model));
                while Iter /= Null_Iter loop
-                  if (Case_Insensitive
-                       and then Case_Insensitive_Equal
-                        (Get_String (Model, Iter, Entity_Name_Column),
-                         Subprogram_Name))
-                    or else
-                      (not Case_Insensitive
-                       and then Get_String (Model, Iter, Entity_Name_Column) =
-                         Subprogram_Name)
+                  if Equal
+                    (Get_String (Model, Iter, Entity_Name_Column),
+                     Subprogram_Name,
+                     Case_Sensitive => not Case_Insensitive)
                   then
                      if abs (Get_Int (Model, Iter, Line_Column) - Line) <
                        Distance
@@ -387,24 +383,15 @@ package body Outline_View is
       --  No "with", "use", "#include"
       --  No constructs ("loop", "if", ...)
 
-      if Category in Dependency_Category
-        or else Category in Construct_Category
-        or else Category = Cat_Representation_Clause
-        or else Category = Cat_Local_Variable
-      then
-         return Cat_Unknown;
-
-         --  All subprograms are grouped together
-
-      elsif Category in Subprogram_Explorer_Category then
+      if Category in Subprogram_Explorer_Category then
          return Cat_Procedure;
-
+      elsif Category in Cat_Package .. Cat_Task then
+         return Cat_Package;
       elsif Category in Type_Category then
          return Cat_Type;
-
+      else
+         return Cat_Unknown;
       end if;
-
-      return Category;
    end Filter_Category;
 
    ------------------
