@@ -883,4 +883,24 @@ package body String_Utils is
       Strncpy (Str, Item, Interfaces.C.size_t (Len));
    end Copy_String;
 
+   ----------------------------
+   -- Case_Insensitive_Equal --
+   ----------------------------
+   function Case_Insensitive_Equal (S1, S2 : String) return Boolean is
+      J1 : Natural := S1'First;
+      J2 : Natural := S2'First;
+   begin
+      if S1'Length /= S2'Length then
+         return False;
+      end if;
+      while J1 <= S1'Last loop
+         if To_Lower (S1 (J1)) /= To_Lower (S2 (J2)) then
+            return False;
+         end if;
+         J1 := J1 + 1;
+         J2 := J2 + 1;
+      end loop;
+      return True;
+   end Case_Insensitive_Equal;
+
 end String_Utils;

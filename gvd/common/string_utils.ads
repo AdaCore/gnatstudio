@@ -211,6 +211,9 @@ package String_Utils is
    --  and '-' to the appropriate characters).
    --  ??? Note: this should be modified to use the naming schemes, if needed.
 
+   function Case_Insensitive_Equal (S1, S2 : String) return Boolean;
+   --  Return True if S1 = S2 without taking into account case sensitivity.
+
    ---------------------------
    -- C String manipulation --
    ---------------------------
