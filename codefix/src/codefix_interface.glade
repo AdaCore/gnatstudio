@@ -304,7 +304,7 @@
   <name>Final_Window</name>
   <title>No more errors</title>
   <type>GTK_WINDOW_TOPLEVEL</type>
-  <position>GTK_WIN_POS_NONE</position>
+  <position>GTK_WIN_POS_MOUSE</position>
   <modal>True</modal>
   <allow_shrink>True</allow_shrink>
   <allow_grow>True</allow_grow>
