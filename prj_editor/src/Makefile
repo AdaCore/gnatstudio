@@ -10,13 +10,17 @@ RUNTIME_INC=${RUNTIME_HEAD:%=-aI%}
 GNAT_INC=${RUNTIME_INC} -aI${GNAT_SRC}
 
 CFLAGS=-g
-GNATMAKE_FLAGS=-gnaty -gnatwu -m ${CFLAGS} `gtkada-config`
+GNATMAKE_FLAGS=-gnaty -gnatwu -gnata -m ${CFLAGS} `gtkada-config`
 
 
 .PHONY: all check_gnat force
 
-all: check_gnat
-	cd ../obj; gnatmake -aI../src ${GNAT_INC} lib_make.adb ${GNATMAKE_FLAGS}
+all: check_gnat ../obj/pixmaps.o
+	cd ../obj; gnatmake -aI../src ${GNAT_INC} lib_make.adb \
+	  ${GNATMAKE_FLAGS} -largs pixmaps.o
+
+../obj/pixmaps.o: pixmaps.c logo.xpm
+	cd ../obj; gcc -c ../src/pixmaps.c -I../src
 
 check_gnat: force
 	@[ -f ${GNAT_SRC}/prj.ads ] || \
