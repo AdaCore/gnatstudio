@@ -10,6 +10,8 @@
 @set GPS
 @set GPSVersion 1.4.0
 
+@c @set python
+
 @titlepage
 
 @flushleft
@@ -6434,36 +6436,100 @@ discovered by opening the keyshortcut editor (@code{Edit->Keyshortcuts} menu).
 When an action is defined, you can use macro arguments to pass to your
 shell or external commands. Macro arguments
 are special parameters that are transformed every time the command is executed.
-The following macro arguments are provided:
+The following macro arguments are provided.
+
+@ifset python
+The equivalent python command is given for all tests. These commands are useful
+when you are writting a full python script, and want to test for yourself
+whether the context is properly defined.
+@end ifset
 
 @table @code
 @item %f
 Base name of the currently opened file.
 
+@ifset python
+   @smallexample
+   # python equivalent
+   import os.path
+   os.path.basename (GPS.current_context().file().name())
+   @end smallexample
+@end ifset
+
 @item %F
 Absolute name of the currently opened file.
+
+@ifset python
+   @smallexample
+   # python equivalent
+   GPS.current_context().file().name()
+   @end smallexample
+@end ifset
 
 @item %d
 The currently directory.
 
+@ifset python
+   @smallexample
+   # python equivalent
+   GPS.current_context().directory()
+   @end smallexample
+@end ifset
+
 @item %p
 The current project. This is the name of the project, not the project file.
 
+@ifset python
+   @smallexample
+   # python equivalent
+   GPS.current_context().project().name()
+   @end smallexample
+@end ifset
+
 @item %P
 The root project. This is the name of the project, not the project file.
+
+@ifset python
+   @smallexample
+   # python equivalent
+   GPS.Project.root().name()
+   @end smallexample
+@end ifset
 
 @item %pp
 The current project file pathname. If a file is selected, this is the project
 file to which the source file belongs.
 
+@ifset python
+   @smallexample
+   # python equivalent
+   GPS.current_context().project().file().name()
+   @end smallexample
+@end ifset
+
 @item %PP
 The root project pathname.
+
+@ifset python
+   @smallexample
+   # python equivalent
+   GPS.Project.root().file().name()
+   @end smallexample
+@end ifset
 
 @item %pps
 This is similar to @code{%pp}, except it returns the project name prepended
 with @code{-P}, or an empty string if there is no project file selected and the
 current source file doesn't belong to any project. This is mostly for use with
 the GNAT command line tools.
+
+@ifset python
+   @smallexample
+   # python equivalent
+   if GPS.current_context().project():
+      return "-P" & GPS.current_context().project().path()
+   @end smallexample
+@end ifset
 
 @item %PPs
 This is similar to @code{%PP}, except it returns the project name prepended
@@ -6489,8 +6555,22 @@ sub projects, etc@dots{}
 @item d
 list the source directories.
 
+@ifset python
+   Python equivalent
+   @smallexample
+   GPS.current_context().project().source_dirs()
+   @end smallexample
+@end ifset
+
 @item s
 list the source files.
+
+@ifset python
+   Python equivalent
+   @smallexample
+   GPS.current_context().project().sources()
+   @end smallexample
+@end ifset
 
 @item f
 output the list into a file and substitute the parameter with the
