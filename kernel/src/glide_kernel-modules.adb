@@ -452,12 +452,17 @@ package body Glide_Kernel.Modules is
             Find_Menu_Item_By_Name
               (Glide_Window (Kernel.Main_Window).Menu_Bar,
                Parent, Ref_Item, Pred, Index);
-            if Add_Before then
+            if Index = -1 then
+               if Parent = null then
+                  Append (Glide_Window (Kernel.Main_Window).Menu_Bar,
+                          Menu_Item);
+               else
+                  Append (Parent, Menu_Item);
+               end if;
+            elsif Add_Before then
                Insert (Parent, Menu_Item, Index);
-            elsif Index /= -1 then
-               Insert (Parent, Menu_Item, Index + 1);
             else
-               Append (Parent, Menu_Item);
+               Insert (Parent, Menu_Item, Index + 1);
             end if;
          else
             Append (Parent, Menu_Item);
@@ -473,12 +478,12 @@ package body Glide_Kernel.Modules is
          Find_Menu_Item_By_Name
            (Glide_Window (Kernel.Main_Window).Menu_Bar,
             Parent, Ref_Item, Pred, Index);
-         if Add_Before then
+         if Index = -1 then
+            Append (Parent, Item);
+         elsif Add_Before then
             Insert (Parent, Item, Index);
          elsif Index /= -1 then
             Insert (Parent, Item, Index + 1);
-         else
-            Append (Parent, Item);
          end if;
 
          Show_All (Item);
