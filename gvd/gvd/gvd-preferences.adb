@@ -266,9 +266,9 @@ package body GVD.Preferences is
    procedure Set
      (Var : String_Color; Value : Gdk_Color; Override : Boolean := False)
    is
-      function Normalize (V : Gushort) return String;
+      function Normalize (V : Gcolor_Int) return String;
 
-      function Normalize (V : Gushort) return String is
+      function Normalize (V : Gcolor_Int) return String is
          S : String (1 .. 8);  --  "16#....#" or "16#.#", ....
          O : String (1 .. 4) := "0000";
          Index : Natural := S'Last;
@@ -508,7 +508,7 @@ package body GVD.Preferences is
       --  Big items
       Set_Active (Dialog.Hide_Big_Items_Check, Get_Pref (Hide_Big_Items));
       Set_Value
-        (Dialog.Big_Item_Spin, Gfloat (Get_Pref (Big_Item_Height)));
+        (Dialog.Big_Item_Spin, Grange_Float (Get_Pref (Big_Item_Height)));
       Set_Sensitive (Dialog.Big_Item_Spin, Get_Pref (Hide_Big_Items));
 
       --  Detect aliases
