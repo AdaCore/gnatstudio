@@ -96,6 +96,11 @@ package body Variable_Editors is
       Editor.Var := Var;
       Editor.Kernel := Kernel_Handle (Kernel);
       Initialize (Editor);
+
+      Configure (Editor.Enumeration_Value, Kernel);
+      Configure (Editor.List_Value, Kernel);
+      Configure (Editor.Single_Value, Kernel);
+
       Set_Variable_Kind (Editor.Single_Value, Prj.Single);
       Set_Visible_Lines (Editor.Single_Value, 1);
       Allow_References (Editor.Enumeration_Value, False);

@@ -45,19 +45,11 @@ with Types;           use Types;
 with Stringt;         use Stringt;
 with Namet;           use Namet;
 
-with Prj_API;         use Prj_API;
+with Prj_API;                  use Prj_API;
+with Glide_Kernel;             use Glide_Kernel;
+with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
 
 package body Value_Editors is
-
-   Ref_Background : constant String := "#AAAAAA";
-   --  <preference> Color to use for the background of variable references
-
-   Invalid_Ref_Foreground : constant String := "#AA0000";
-   --  <preference> Color to use for the foreground of invalid variable
-   --  references.
-
-   procedure Realized (Widget : access Gtk_Widget_Record'Class);
-   --  Called when the widget is realized.
 
    procedure Insert_Text
      (Widget : access Gtk_Widget_Record'Class;
@@ -98,13 +90,24 @@ package body Value_Editors is
    procedure Initialize (Editor : access Value_Editor_Record'Class) is
    begin
       Gtk.Text.Initialize (Editor);
-      Widget_Callback.Connect
-        (Editor, "realize", Widget_Callback.To_Marshaller (Realized'Access));
+
       Editor.Insert_Id := Widget_Callback.Connect
         (Editor, "insert_text", Insert_Text'Access, After => True);
       Editor.Delete_Id := Widget_Callback.Connect
         (Editor, "delete_text", Delete_Text'Access, After => True);
    end Initialize;
+
+   ---------------
+   -- Configure --
+   ---------------
+
+   procedure Configure
+     (Editor : access Value_Editor_Record'Class;
+      Kernel : access Kernel_Handle_Record'Class) is
+   begin
+      Editor.Var_Ref := Get_Pref (Kernel, Variable_Ref_Background);
+      Editor.Invalid_Ref := Get_Pref (Kernel, Invalid_Variable_Ref_Background);
+   end Configure;
 
    -----------------
    -- Delete_Text --
@@ -264,19 +267,6 @@ package body Value_Editors is
       Highlight_Region
         (Editor, Natural (Pos) - Natural (Length), Natural (Pos));
    end Insert_Text;
-
-   --------------
-   -- Realized --
-   --------------
-
-   procedure Realized (Widget : access Gtk_Widget_Record'Class) is
-      Editor : Value_Editor := Value_Editor (Widget);
-   begin
-      Editor.Var_Ref := Parse (Ref_Background);
-      Alloc (Get_Default_Colormap, Editor.Var_Ref);
-      Editor.Invalid_Ref := Parse (Invalid_Ref_Foreground);
-      Alloc (Get_Default_Colormap, Editor.Invalid_Ref);
-   end Realized;
 
    -----------------------
    -- Set_Visible_Lines --

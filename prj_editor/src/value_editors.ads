@@ -40,6 +40,8 @@ with Gtk.Handlers;
 with Prj;
 with Prj.Tree;
 
+with Glide_Kernel;
+
 package Value_Editors is
 
    type Value_Editor_Record is new Gtk.Text.Gtk_Text_Record with private;
@@ -51,6 +53,12 @@ package Value_Editors is
    procedure Initialize (Editor : access Value_Editor_Record'Class);
    --  Internal initialization function.
    --  See the section "Creating your own widgets" in the documentation.
+
+   procedure Configure
+     (Editor : access Value_Editor_Record'Class;
+      Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
+   --  Configure the value editor with the appropriate setup based on the
+   --  preferences.
 
    procedure Set_Variable_Kind
      (Editor : access Value_Editor_Record; Expr_Kind : Prj.Variable_Kind);
