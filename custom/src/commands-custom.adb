@@ -215,10 +215,12 @@ package body Commands.Custom is
                  or else Command.Args (J).all = "%P"
                then
                   New_Args (Last) := new String'(Project_Name (Project));
+                  Last := Last + 1;
                elsif Command.Args (J).all = "%pp"
                  or else Command.Args (J).all = "%PP"
                then
                   New_Args (Last) := new String'(Project_Path (Project));
+                  Last := Last + 1;
                else
                   Recurse := (Command.Args (J).all
                               (Command.Args (J)'First + 2) = 'r');
@@ -259,7 +261,6 @@ package body Commands.Custom is
                            Last := Last + 1;
                         end loop;
 
-                        Last := Last - 1;
                         Free (List);
                         Free_Array (New_Args);
                         New_Args := New_New_Args;
@@ -279,14 +280,12 @@ package body Commands.Custom is
 
                         Free (List);
                         New_Args (Last) := new String'(Name (File));
+                        Last := Last + 1;
                         Close (File);
                      end;
                   end if;
                end if;
             end if;
-
-            Last := Last + 1;
-
          end loop;
 
          --  Arguments have been substituted, launch the command.
