@@ -330,10 +330,13 @@ package Src_Info.Queries is
       Dependencies    : out Dependency_List;
       Status          : out Dependencies_Query_Status);
    --  Return the list of units on which the units associated to the given
-   --  LI_File depend.
-   --  Note that only the direct dependencies for Source_Filename are returned
-   --  (or the implicit dependencies). If Source_Filename is a spec, then the
-   --  files imported from the body are not returned.
+   --  LI_File directly depend.
+   --  Note that only the direct dependencies for Source_Filename are returned.
+   --  If Source_Filename is a spec, then the files imported from the body are
+   --  not returned.
+   --
+   --  A separate unit always depends on the body, and a body always depends on
+   --  the separate units. All their dependencies are shared.
    --
    --  The list returned by this procedure should be deallocated after use.
 
@@ -350,11 +353,18 @@ package Src_Info.Queries is
       Include_Self    : Boolean := False;
       Predefined_Source_Path : String := "";
       Predefined_Object_Path : String := "";
+      LI_Once         : Boolean := False;
       Single_Source_File : Boolean := False);
-   --  Prepare Iterator to return the list of all files that import
-   --  one of the files associated with the Unit of Source_Filename (that is it
-   --  will return files that depend either on the spec or the body of
-   --  Source_Filename).
+   --  Prepare Iterator to return the list of all files that directly import
+   --  Source_Filename. The rule is the following:
+   --     - bodies and separate units always depend on specs
+   --     - bodies always depend on separates
+   --     - separates always depend on other separates.
+   --  The model is that the body and the separate units are considered as a
+   --  single virtual file.
+   --
+   --  No indirect dependency is considered
+   --
    --  Root_Project should be the root project under which we are looking.
    --  Source files that don't belong to Root_Project or one of its imported
    --  project will not be searched.
@@ -362,13 +372,17 @@ package Src_Info.Queries is
    --  belongs. It can optionally be left to Empty_Node if this is not known,
    --  but the search will take a little bit longer.
    --
-   --  If Include_Self is true, then the LI file for Source_Filename will also
-   --  be returned. Note, in this case the Dependency returned by Get is pretty
-   --  much irrelevant, and shouldn't be used.
+   --  If Include_Self is true, then Source_Filename itself will be
+   --  returned. Otherwise, only the other source files are returned, even if
+   --  they belong to the same LI file.
    --
-   --  if Single_Source_File is True, then the iterator returned will only
+   --  If Single_Source_File is True, then the iterator returned will only
    --  return Source_Filename. This might be used in special contexts to either
    --  work on multiple LI files or a single source file.
+   --
+   --  If LI_Once is true, then for each LI file only one source file will be
+   --  returned. This is for use when you are using the version of Get that
+   --  returns a LI_File_Ptr.
    --
    --  You must destroy the iterator when you are done with it, to avoid memory
    --  leaks.
@@ -385,6 +399,8 @@ package Src_Info.Queries is
    function Get (Iterator : Dependency_Iterator) return LI_File_Ptr;
    --  Return the LI for the file that contains the dependency. Note that this
    --  is not the LI file for Dependency, as returned by Get.
+   --  Consider setting LI_Once to True when calling Find_Ancestor_Dependencies
+   --  if you are calling this function.
 
    function Get (Iterator : Dependency_Iterator) return Prj.Project_Id;
    --  Return the current project the iterator is looking at.
@@ -591,6 +607,9 @@ private
 
    package Name_Htable is new String_Hash (Boolean, False);
 
+   type Analyzed_Part is
+     (None, Unit_Spec, Unit_Body, Unit_Separate, Unit_Dependency);
+
    type Dependency_Iterator is record
       Decl_LI : LI_File_Ptr;
       --  The file we are looking for.
@@ -621,10 +640,18 @@ private
       --  Whether we should return the LI file for Decl_LI
 
       LI : LI_File_Ptr;
-   end record;
 
-   type Analyzed_Part is
-     (None, Unit_Spec, Unit_Body, Unit_Separate, Unit_Dependency);
+      Current_Separate : File_Info_Ptr_List;
+      --  The current separate in case LI is Decl_LI (since bodies depend on
+      --  separates). If null, the last returned value was the spec, otherwise
+      --  it was Current_Separate
+
+      Current_Part : Unit_Part;
+      --  The part of LI that was returned
+
+      LI_Once : Boolean;
+      --  True if only one source file per LI should be returned.
+   end record;
 
    type Entity_Reference_Iterator is record
       Entity    : Entity_Information;

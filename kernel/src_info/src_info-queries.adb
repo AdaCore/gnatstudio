@@ -590,6 +590,7 @@ package body Src_Info.Queries is
    is
       Current_Dep : Dependency_File_Info_List;
       FI          : File_Info_Ptr;
+      List        : File_Info_Ptr_List;
       Part        : Unit_Part;
       B, S        : Boolean;
    begin
@@ -608,18 +609,50 @@ package body Src_Info.Queries is
       Dependencies := null;
 
       --  The body and separates always depends on the spec
-      if Part /= Unit_Spec
-        and then Lib_Info.LI.Spec_Info /= null
-      then
-         FI := Lib_Info.LI.Spec_Info;
-         Dependencies := new Dependency_Node'
-           (Value =>
-              (File =>
-                 (File_Name => new String'(FI.Source_Filename.all),
-                  LI_Name   => new String'(Lib_Info.LI.LI_Filename.all)),
-               Dep  => (Depends_From_Spec => False,
-                        Depends_From_Body => True)),
-            Next  => Dependencies);
+      --  The body always depends on the separates
+      --  The separates also depend on the other separates
+
+      if Part /= Unit_Spec then
+         if Lib_Info.LI.Spec_Info /= null then
+            FI := Lib_Info.LI.Spec_Info;
+            Dependencies := new Dependency_Node'
+              (Value =>
+                 (File =>
+                    (File_Name => new String'(FI.Source_Filename.all),
+                     LI_Name   => new String'(Lib_Info.LI.LI_Filename.all)),
+                  Dep  => (Depends_From_Spec => False,
+                           Depends_From_Body => True)),
+               Next  => Dependencies);
+         end if;
+
+         List := Lib_Info.LI.Separate_Info;
+         while List /= null loop
+            if List.Value.Source_Filename.all /= Source_Filename then
+               Dependencies := new Dependency_Node'
+                 (Value =>
+                    (File =>
+                     (File_Name => new String'(List.Value.Source_Filename.all),
+                      LI_Name   => new String'(Lib_Info.LI.LI_Filename.all)),
+                     Dep  => (Depends_From_Spec => False,
+                              Depends_From_Body => True)),
+                  Next  => Dependencies);
+            end if;
+            List := List.Next;
+         end loop;
+
+         if Part = Unit_Separate
+           and then Lib_Info.LI.Body_Info /= null
+         then
+            FI := Lib_Info.LI.Body_Info;
+            Dependencies := new Dependency_Node'
+              (Value =>
+                 (File =>
+                    (File_Name => new String'(FI.Source_Filename.all),
+                     LI_Name   => new String'(Lib_Info.LI.LI_Filename.all)),
+                  Dep  => (Depends_From_Spec => False,
+                           Depends_From_Body => True)),
+               Next  => Dependencies);
+         end if;
       end if;
 
       while Current_Dep /= null loop
@@ -628,7 +661,6 @@ package body Src_Info.Queries is
 
          if (Part = Unit_Spec and then S)
            or else (Part = Unit_Body and then B)
-           or else not (S or else B)
          then
             FI := Get_File_Info (Current_Dep.Value.File);
             if FI = null or else FI.Source_Filename = null then
@@ -1882,6 +1914,7 @@ package body Src_Info.Queries is
             Iterator.Decl_Iter,
             Project                => Project,
             Include_Self           => True,
+            LI_Once                => True,
             Predefined_Source_Path => Predefined_Source_Path,
             Predefined_Object_Path => Predefined_Object_Path);
       else
@@ -1890,6 +1923,7 @@ package body Src_Info.Queries is
             Iterator.Decl_Iter,
             Project                => Project,
             Include_Self           => True,
+            LI_Once                => True,
             Single_Source_File     => True,
             Predefined_Source_Path => Predefined_Source_Path,
             Predefined_Object_Path => Predefined_Object_Path);
@@ -1913,6 +1947,9 @@ package body Src_Info.Queries is
 
       function Check_LI (LI : LI_File_Ptr) return Dependency_File_Info_List;
       --  Set the iterator to examine the declarations in LI
+
+      procedure Next_Separate;
+      --  Select the next separate in the current LI, which should be examined.
 
       ----------------
       -- Check_File --
@@ -1981,6 +2018,7 @@ package body Src_Info.Queries is
                      Sep_List := Sep_List.Next;
                   end loop;
 
+                  Trace (Me, "Check_File: " & LI.LI.LI_Filename.all);
                   return Check_LI (LI);
                end if;
             end if;
@@ -1994,6 +2032,26 @@ package body Src_Info.Queries is
             return null;
       end Check_File;
 
+      -------------------
+      -- Next_Separate --
+      -------------------
+
+      procedure Next_Separate is
+      begin
+         if Iterator.Current_Separate = null then
+            Iterator.Current_Separate := Iterator.LI.LI.Separate_Info;
+         else
+            Iterator.Current_Separate := Iterator.Current_Separate.Next;
+         end if;
+
+         if Iterator.Current_Separate /= null
+           and then Iterator.Current_Separate.Value.Source_Filename.all =
+             Iterator.Source_Filename.all
+         then
+            Iterator.Current_Separate := Iterator.Current_Separate.Next;
+         end if;
+      end Next_Separate;
+
       --------------
       -- Check_LI --
       --------------
@@ -2003,26 +2061,104 @@ package body Src_Info.Queries is
       begin
          Iterator.LI := LI;
 
-         if Iterator.Include_Self and then LI = Iterator.Decl_LI then
-            --  We return a dummy value, which could be null (although there
-            --  will be one less test if it is not null).
-            return Dep;
+         if LI = Iterator.Decl_LI  then
+            --  If we shouldn't include any file from the declaration LI
+
+            Iterator.Current_Separate := null;
+
+            --  The only case where we might happen to return the spec is when
+            --  the source file itself was the spec (the spec never depends on
+            --  the body or the separates).
+
+            if Iterator.Include_Self
+              and then Iterator.LI.LI.Spec_Info /= null
+              and then Iterator.LI.LI.Spec_Info.Source_Filename.all =
+                Iterator.Source_Filename.all
+            then
+               Trace (Me, "Check_LI: spec matches");
+               Iterator.Current_Part := Unit_Spec;
+               return null;
+            end if;
+
+            Iterator.Current_Part := Unit_Body;
+
+            if Iterator.LI.LI.Body_Info /= null
+              and then (Iterator.Include_Self
+                        or else Iterator.LI.LI.Body_Info.Source_Filename.all /=
+                          Iterator.Source_Filename.all)
+            then
+               Trace (Me, "Check_LI: body matches "
+                      & Iterator.LI.LI.Body_Info.Source_Filename.all);
+               return null;
+            end if;
+
+            Next_Separate;
+
+            if Iterator.Current_Separate = null then
+               --  No dependency for this LI file
+               Trace (Me, "Check_LI: no separate or body matches");
+               Iterator.LI := null;
+            else
+               Trace (Me, "Check_LI: found separate: "
+                      & Iterator.Current_Separate.Value.Source_Filename.all);
+            end if;
+
+            return null;
          end if;
 
          while Dep /= No_Dependencies loop
-            if Dep.Value.File.LI = Iterator.Decl_LI
+            exit when (Dep.Value.Dep_Info.Depends_From_Spec
+                       or else Dep.Value.Dep_Info.Depends_From_Body)
+              and then Dep.Value.File.LI = Iterator.Decl_LI
               and then Get_Source_Filename (Dep.Value.File) =
-                Iterator.Source_Filename.all
-            then
-               return Dep;
-            end if;
-
+              Iterator.Source_Filename.all;
             Dep := Dep.Next;
          end loop;
-         return null;
+
+         if Dep /= null then
+            if Dep.Value.Dep_Info.Depends_From_Spec then
+               Iterator.Current_Part := Unit_Spec;
+               --  body will be checked on next call to Next
+            else
+               Iterator.Current_Part := Unit_Body;
+            end if;
+
+            Trace (Me, "Check_LI: found dependency "
+                   & Dep.Value.File.LI.LI.LI_Filename.all);
+         else
+            Trace (Me, "Check_LI: no more dependencies");
+         end if;
+
+         return Dep;
       end Check_LI;
 
    begin
+      --  Check the separate units if necessary. Whenever we are returning a
+      --  body, we are returning the separates as well.
+
+      if not Iterator.LI_Once then
+         if Iterator.Current_Part = Unit_Body then
+            Next_Separate;
+            if Iterator.Current_Separate /= null then
+               Trace (Me, "Next: returning next separate "
+                      & Iterator.Current_Separate.Value.Source_Filename.all);
+               return;
+            end if;
+
+            --  If we were depending on the specs, it is possible that we also
+            --  depend on the body.
+
+         elsif (Iterator.Current_Decl /= null and then
+                Iterator.Current_Decl.Value.Dep_Info.Depends_From_Body)
+           or else Iterator.LI = Iterator.Decl_LI
+         then
+            Iterator.Current_Separate := null;
+            Iterator.Current_Part := Unit_Body;
+            Trace (Me, "Next: now analyzing body");
+            return;
+         end if;
+      end if;
+
       loop
          --  Move to the next file in the current project
          loop
@@ -2030,8 +2166,7 @@ package body Src_Info.Queries is
             exit when Iterator.Current_File > Iterator.Source_Files'Last;
             Iterator.Current_Decl := Check_File;
             if Iterator.Current_Decl /= null
-              or else (Iterator.LI = Iterator.Decl_LI
-                       and then Iterator.Include_Self)
+              or else Iterator.LI = Iterator.Decl_LI
             then
                return;
             end if;
@@ -2076,11 +2211,17 @@ package body Src_Info.Queries is
       Include_Self    : Boolean := False;
       Predefined_Source_Path : String := "";
       Predefined_Object_Path : String := "";
+      LI_Once         : Boolean := False;
       Single_Source_File : Boolean := False)
    is
       Decl_Project : Project_Id := Project;
       Iterator_Decl_Project : Project_Id := Project;
    begin
+      Trace (Me, "Find_Ancestor_Dependencies: "
+             & Source_Filename
+             & " self="   & Boolean'Image (Include_Self)
+             & " single=" & Boolean'Image (Single_Source_File));
+
       if Decl_Project = No_Project then
          Decl_Project := Get_Project_From_File
            (Get_Project_View_From_Project (Root_Project), Source_Filename);
@@ -2091,8 +2232,14 @@ package body Src_Info.Queries is
          end if;
       end if;
 
-      Iterator.LI := No_LI_File;
-      Iterator.Decl_LI := Locate_From_Source (List, Source_Filename);
+      Iterator.LI               := No_LI_File;
+      Iterator.LI_Once          := LI_Once;
+      Iterator.Current_Separate := null;
+      Iterator.Current_Part     := Unit_Spec;
+      Iterator.Decl_LI          := Locate_From_Source (List, Source_Filename);
+      Iterator.Source_Filename  := new String'(Source_Filename);
+      Iterator.Include_Self     := Include_Self;
+
       Create_Or_Complete_LI
         (Handler                => Get_LI_Handler_From_File
            (Glide_Language_Handler (Lang_Handler),
@@ -2107,9 +2254,6 @@ package body Src_Info.Queries is
       Assert (Me,
               Iterator.Decl_LI /= null,
               "LI file not found for " & Source_Filename);
-
-      Iterator.Source_Filename := new String'(Source_Filename);
-      Iterator.Include_Self := Include_Self;
 
       if Single_Source_File then
          Iterator.Importing := new Project_Id_Array'(1 => Decl_Project);
@@ -2150,40 +2294,36 @@ package body Src_Info.Queries is
    is
       S : GNAT.OS_Lib.String_Access;
    begin
-      if Iterator.Current_Decl.Value.Dep_Info.Depends_From_Spec
-        and then Iterator.LI.LI.Spec_Info /= null
-      then
+      --  Is this a dependency from a separate ?
+      if Iterator.Current_Separate /= null then
+         return
+           (File => Internal_File'
+            (File_Name => new String'
+               (Iterator.Current_Separate.Value.Source_Filename.all),
+             LI_Name   => new String'(Iterator.LI.LI.LI_Filename.all)),
+            Dep => (False, True));
+      end if;
+
+      if Iterator.Current_Part = Unit_Spec then
          S := new String'(Iterator.LI.LI.Spec_Info.Source_Filename.all);
-
-      elsif Iterator.Current_Decl.Value.Dep_Info.Depends_From_Body
-        and then Iterator.LI.LI.Body_Info /= null
-      then
-         S := new String'(Iterator.LI.LI.Body_Info.Source_Filename.all);
-
-      elsif Iterator.LI.LI.Spec_Info /= null then
-         S := new String'(Iterator.LI.LI.Spec_Info.Source_Filename.all);
-
-      elsif Iterator.LI.LI.Body_Info /= null then
-         S := new String'(Iterator.LI.LI.Body_Info.Source_Filename.all);
-
       else
-         S := new String'("");
+         S := new String'(Iterator.LI.LI.Body_Info.Source_Filename.all);
       end if;
 
       if Iterator.LI = Iterator.Decl_LI then
          return
            (File => Internal_File'
-              (File_Name => S,
-               LI_Name   => new String'(Iterator.Decl_LI.LI.LI_Filename.all)),
-            Dep => (False, False));
+            (File_Name => S,
+             LI_Name   => new String'(Iterator.LI.LI.LI_Filename.all)),
+            Dep  => (False, True));
+      else
+         return
+           (File => Internal_File'
+            (File_Name => S,
+             LI_Name   => new String'
+               (Iterator.Current_Decl.Value.File.LI.LI.LI_Filename.all)),
+            Dep  => Iterator.Current_Decl.Value.Dep_Info);
       end if;
-
-      return
-        (File => Internal_File'
-           (File_Name => S,
-            LI_Name   => new String'
-              (Iterator.Current_Decl.Value.File.LI.LI.LI_Filename.all)),
-         Dep  => Iterator.Current_Decl.Value.Dep_Info);
    end Get;
 
    ---------
