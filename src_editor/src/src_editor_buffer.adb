@@ -1839,6 +1839,17 @@ package body Src_Editor_Buffer is
         and then Filename = Buffer.Filename.all
       then
          File_Saved (Buffer.Kernel, Filename);
+
+         --  Resynchronize the Real_Lines array.
+
+         declare
+            Real_Lines    : Natural_Array_Access renames Buffer.Real_Lines;
+         begin
+            for J in Real_Lines'Range loop
+               Real_Lines (J) := J;
+            end loop;
+         end;
+
          Buffer.Saved_Position := Get_Position (Buffer.Queue);
          Buffer.Current_Status := Saved;
          Status_Changed (Buffer);
@@ -3190,17 +3201,6 @@ package body Src_Editor_Buffer is
    begin
       return Buffer.Real_Lines;
    end Get_Real_Lines;
-
-   --------------------
-   -- Set_Real_Lines --
-   --------------------
-
-   procedure Set_Real_Lines
-     (Buffer     : access Source_Buffer_Record;
-      Real_Lines : Natural_Array_Access) is
-   begin
-      Buffer.Real_Lines := Real_Lines;
-   end Set_Real_Lines;
 
    ------------------------
    -- Insert_At_Position --
