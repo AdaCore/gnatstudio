@@ -80,11 +80,6 @@ package Language.Ada is
    -- Source Analyzing --
    ----------------------
 
-   function Comment_Line
-     (Lang    : access Ada_Language;
-      Line    : String;
-      Comment : Boolean := True) return String;
-
    procedure Parse_Constructs
      (Lang   : access Ada_Language;
       Buffer : String;
@@ -108,5 +103,12 @@ package Language.Ada is
 private
    type Ada_Language is new Language_Root with null record;
 
+   function Comment_Line
+     (Lang    : access Ada_Language;
+      Line    : String;
+      Comment : Boolean := True;
+      Clean   : Boolean := False) return String;
+
    Ada_Lang : constant Language_Access := new Ada_Language;
+
 end Language.Ada;

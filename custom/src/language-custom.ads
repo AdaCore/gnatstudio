@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2004                      --
---                              ACT-Europe                           --
+--                      Copyright (C) 2000-2005                      --
+--                              AdaCore                              --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -101,11 +101,6 @@ package Language.Custom is
    --  The following primitives are either defaulting to the Language_Root
    --  implementation, or redefined using a shared library specified in the
    --  xml file.
-
-   function Comment_Line
-     (Lang    : access Custom_Language;
-      Line    : String;
-      Comment : Boolean := True) return String;
 
    procedure Parse_Constructs
      (Lang   : access Custom_Language;
@@ -301,6 +296,12 @@ private
    --
    --  typedef void (*parse_entities_proc)
    --    (char *buffer, int length, entity_cb callback);
+
+   function Comment_Line
+     (Lang    : access Custom_Language;
+      Line    : String;
+      Comment : Boolean := True;
+      Clean   : Boolean := False) return String;
 
    type Custom_Language is new Language_Root with record
       Categories       : Explorer_Categories_Access;
