@@ -84,8 +84,8 @@ package body Odd.Code_Editors is
    Line_Numbers_Width : constant Positive := 5;
    --  Number of characters reserved on the left for line numbers.
 
-   File_Name_Bg_Color : constant String := "darkgrey";
-   --  Color used for the background of the file name in the editor.
+   File_Name_Bg_Color : constant String := "#BEBEBE";
+   --  Color used for the background of the file name in the editor (grey).
 
    No_Breakpoint : Breakpoint_Array (1 .. 0);
    --  Array used to reset the breakpoint list

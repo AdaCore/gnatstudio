@@ -32,17 +32,17 @@ package Odd is
    Editor_Font : constant String := "Courier";
    --  Font used in the editor.
 
-   Comments_Color : constant String := "red";
+   Comments_Color : constant String := "#FF0000";
    --  Color used for comments.
 
-   Strings_Color  : constant String := "brown";
-   --  Color used for strings.
+   Strings_Color  : constant String := "#A52A2A";
+   --  Color used for strings (brown).
 
-   Keywords_Color : constant String := "blue";
-   --  Color used for keywords.
+   Keywords_Color : constant String := "#0000FF";
+   --  Color used for keywords (blue).
 
-   Debugger_Highlight_Color : constant String := "blue";
-   --  Color used for highlighting in the debugger window.
+   Debugger_Highlight_Color : constant String := "#0000FF";
+   --  Color used for highlighting in the debugger window (blue).
 
    Debugger_Font_Size : constant Gint := 12;
    --  Size of the font used in the debugger text window.
