@@ -245,7 +245,9 @@ AC_CONFIG_SUBDIRS(kernel/src_info/sn/snsrc)
 echo ""
 echo "--------- Summary --------------"
 echo "       python: $PYTHON_BASE"
+echo "           uses --with-python=<dir> to find libpython.so"
 echo "       xmlada: $XMLADA_GPR"
+echo "           uses ADA_PROJECT_PATH to find xmlada.gpr"
 echo ""
 
 AC_OUTPUT(Makefile Makefile.common widgets/Makefile.widgets gnat/sdefault/sdefault.adb docs/Makefile po/Makefile gvd/Makefile.gvd_common gvd/common/gvd.ads python/Makefile.python python/python.gpr gtkada/gtkada.gpr)
