@@ -363,6 +363,9 @@ package body Project_Viewers is
      (Object : access GObject_Record'Class;
       Args   : Gtk_Args;
       Kernel : Kernel_Handle);
+   pragma Unreferenced (On_File_Edited);
+   --  See comments in the body of this function explaining the use of this
+   --  pragma.
    --  Called when a new file is edited
 
    type On_Reopen is new Menu_Callback_Record with record
@@ -2902,10 +2905,11 @@ package body Project_Viewers is
    begin
       if Status (Get_Project (Kernel)) = Default then
          declare
-            File : constant String := To_String (Args, 1);
-            Dir  : aliased String := Dir_Name (File);
+            File         : constant String := To_String (Args, 1);
+            Dir          : aliased String := Dir_Name (File);
             Current_Dirs : String_Array_Access := Source_Dirs
               (Get_Project (Kernel), Recursive => False);
+
          begin
             for C in Current_Dirs'Range loop
                if Current_Dirs (C).all = Dir then
@@ -3547,10 +3551,14 @@ package body Project_Viewers is
         (Kernel, Project_Changed_Signal,
          Kernel_Callback.To_Marshaller (On_Project_Changed'Access),
          Kernel_Handle (Kernel));
-      Kernel_Callback.Connect
-        (Kernel, File_Edited_Signal,
-         On_File_Edited'Access,
-         Kernel_Handle (Kernel));
+
+      --  ??? Disabled for now, pending resolution of related problems
+      --  encountered during testing
+
+      --  Kernel_Callback.Connect
+      --    (Kernel, File_Edited_Signal,
+      --     On_File_Edited'Access,
+      --     Kernel_Handle (Kernel));
 
       Register_Menu
         (Kernel, Project, -"Edit File _Switches", "",
