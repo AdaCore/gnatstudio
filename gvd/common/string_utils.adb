@@ -262,7 +262,9 @@ package body String_Utils is
       end if;
 
       In_String := Type_Str (Index) = '"';
-      Index := Index + 1;
+      if In_String then
+         Index := Index + 1;
+      end if;
 
       --  Note: this is a slightly complex loop, since a string might not
       --  appear as a single string in gdb, but can be made of multiple
