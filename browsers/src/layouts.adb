@@ -281,6 +281,18 @@ package body Layouts is
    is
       Relative_Position : Natural_Array (0 .. Max_Index (G) - 1);
 
+      function Barycenter_Weight_P (Vertex : Vertex_Access) return Integer;
+      pragma Warnings (Off, Barycenter_Weight_P);
+      --  Return the weight to use for the vertex Vertex.
+      --  This is the weight computed in the top-down loop
+      --  Currently unused, but could replace median_weight_p function below.
+
+      function Barycenter_Weight_S (Vertex : Vertex_Access) return Integer;
+      pragma Warnings (Off, Barycenter_Weight_S);
+      --  Return the weight to use for the vertex Vertex.
+      --  This is the weight computed in the bottom-up loop
+      --  Currently unused, but could replace median_weight_s function below.
+
       function Median_Weight_P (Vertex : Vertex_Access) return Integer;
       --  Return the median weight for Vertex.
       --  In case there is an even number of values, we choose an interpolated
@@ -360,6 +372,30 @@ package body Layouts is
          end if;
       end Median_Weight_P;
 
+      -------------------------
+      -- Barycenter_Weight_P --
+      -------------------------
+
+      function Barycenter_Weight_P (Vertex : Vertex_Access) return Integer is
+         Src    : Vertex_Access;
+         Iter   : Edge_Iterator := First (G, Dest => Vertex);
+         In_Deg : Natural := 0;
+         Weight : Integer := 0;
+      begin
+         while not At_End (Iter) loop
+            In_Deg := In_Deg + 1;
+            Src    := Get_Src (Get (Iter));
+            Weight := Weight + Relative_Position (Get_Index (Src));
+            Next (Iter);
+         end loop;
+
+         if In_Deg = 0 then
+            return -1;
+         else
+            return Weight / In_Deg;
+         end if;
+      end Barycenter_Weight_P;
+
       ---------------------
       -- Median_Weight_S --
       ---------------------
@@ -420,6 +456,30 @@ package body Layouts is
               (Prev * L + Relative_Position (Get_Index (Src)) * F) / (F + L);
          end if;
       end Median_Weight_S;
+
+      -------------------------
+      -- Barycenter_Weight_S --
+      -------------------------
+
+      function Barycenter_Weight_S (Vertex : Vertex_Access) return Integer is
+         Src    : Vertex_Access;
+         Iter   : Edge_Iterator := First (G, Src => Vertex);
+         In_Deg : Natural := 0;
+         Weight : Integer := 0;
+      begin
+         while not At_End (Iter) loop
+            In_Deg := In_Deg + 1;
+            Src    := Get_Dest (Get (Iter));
+            Weight := Weight + Relative_Position (Get_Index (Src));
+            Next (Iter);
+         end loop;
+
+         if In_Deg = 0 then
+            return -1;
+         else
+            return Weight / In_Deg;
+         end if;
+      end Barycenter_Weight_S;
 
       -------------------
       -- Process_Layer --
