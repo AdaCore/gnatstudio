@@ -1517,8 +1517,8 @@ package body Src_Editor_Box is
             if Has_Entity_Name_Information (Context) then
                declare
                   Name : constant String :=
-                    Krunch (Glib.Convert.Locale_To_UTF8
-                              (Entity_Name_Information (Context)));
+                    Glib.Convert.Locale_To_UTF8
+                      (Krunch (Entity_Name_Information (Context)));
                begin
                   Gtk_New (Item, -"Goto declaration of " & Name);
                   Add (Menu, Item);

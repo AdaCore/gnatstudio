@@ -518,8 +518,8 @@ package body Browsers.Entities is
          if Has_Entity_Name_Information (Entity_Context) then
             Gtk_New
               (Item, Label => (-"Examine entity ")
-               & Krunch (Locale_To_UTF8
-                           (Entity_Name_Information (Entity_Context))));
+               & Locale_To_UTF8
+                 (Krunch (Entity_Name_Information (Entity_Context))));
             Append (Menu, Item);
             Context_Callback.Connect
               (Item, "activate",

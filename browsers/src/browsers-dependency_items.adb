@@ -966,7 +966,7 @@ package body Browsers.Dependency_Items is
          if Has_File_Information (File_Context) then
             declare
                Name : constant String :=
-                 Krunch (Locale_To_UTF8 (File_Information (File_Context)));
+                 Locale_To_UTF8 (Krunch (File_Information (File_Context)));
             begin
                Gtk_New
                  (Item, Label => (-"Examine dependencies for ") & Name);
@@ -1265,7 +1265,7 @@ package body Browsers.Dependency_Items is
          Filename        => Filename,
          Use_Source_Path => True,
          Use_Object_Path => False);
-      Utf8_File : constant String := Krunch (Locale_To_UTF8 (Filename));
+      Utf8_File : constant String := Locale_To_UTF8 (Krunch (Filename));
       Mitem : Gtk_Image_Menu_Item;
       Pix   : Gtk_Image;
    begin

@@ -1278,8 +1278,8 @@ package body Browsers.Call_Graph is
                 Subprogram_Category
             then
                Gtk_New (Item, Label =>
-                          Krunch (Locale_To_UTF8
-                                    (Entity_Name_Information (Entity_Context)))
+                          Locale_To_UTF8
+                            (Krunch (Entity_Name_Information (Entity_Context)))
                         & (-" calls"));
                Append (Submenu, Item);
                Context_Callback.Connect
@@ -1289,8 +1289,8 @@ package body Browsers.Call_Graph is
                   Selection_Context_Access (Context));
 
                Gtk_New (Item, Label =>
-                          Krunch (Locale_To_UTF8
-                                    (Entity_Name_Information (Entity_Context)))
+                         Locale_To_UTF8
+                            (Krunch (Entity_Name_Information (Entity_Context)))
                         & (-" is called by"));
                Append (Submenu, Item);
                Context_Callback.Connect
@@ -1302,8 +1302,8 @@ package body Browsers.Call_Graph is
 
             declare
                Name : constant String :=
-                 Krunch (Locale_To_UTF8
-                           (Entity_Name_Information (Entity_Context)));
+                 Locale_To_UTF8
+                   (Krunch (Entity_Name_Information (Entity_Context)));
             begin
                Gtk_New (Item, Label => (-"Find all references to ") & Name);
                Append (Submenu, Item);

@@ -457,14 +457,21 @@ package body String_Utils is
    -- Krunch --
    ------------
 
-   function Krunch (S : String) return String is
-      Half : constant := (Max_String_Length - 4) / 2;
+   function Krunch
+     (S                 : String;
+      Max_String_Length : Positive := 25) return String
+   is
+      Krunch_Pattern : constant String := "[...]";
+      Half : constant Natural :=
+        (Max_String_Length - Krunch_Pattern'Length + 1) / 2;
    begin
       if S'Length <= Max_String_Length then
          return S;
+      elsif Max_String_Length <= Krunch_Pattern'Length then
+         return S (S'First .. S'First + Max_String_Length - 1);
       else
          return S (S'First .. S'First + Half - 1)
-         & "[...]" & S (S'Last - Half + 1 .. S'Last);
+         & Krunch_Pattern & S (S'Last - Half + 1 .. S'Last);
       end if;
    end Krunch;
 
