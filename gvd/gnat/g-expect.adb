@@ -118,6 +118,7 @@ package body GNAT.Expect is
    procedure Add_Input_Filter
      (Descriptor : in out Process_Descriptor;
       Filter     : Filter_Function;
+      User_Data  : System.Address := System.Null_Address;
       After      : Boolean := False)
    is
       Current : Filter_List := Descriptor.In_Filters;
@@ -129,15 +130,18 @@ package body GNAT.Expect is
 
          if Current = null then
             Descriptor.In_Filters :=
-              new Filter_List_Elem' (Filter => Filter, Next => null);
+              new Filter_List_Elem'
+                (Filter => Filter, User_Data => User_Data, Next => null);
          else
             Current.Next :=
-              new Filter_List_Elem'(Filter => Filter, Next => null);
+              new Filter_List_Elem'
+                (Filter => Filter, User_Data => User_Data, Next => null);
          end if;
       else
          Descriptor.In_Filters :=
            new Filter_List_Elem'
-             (Filter => Filter, Next => Descriptor.In_Filters);
+             (Filter => Filter, User_Data => User_Data,
+              Next => Descriptor.In_Filters);
       end if;
    end Add_Input_Filter;
 
@@ -172,6 +176,7 @@ package body GNAT.Expect is
    procedure Add_Output_Filter
      (Descriptor : in out Process_Descriptor;
       Filter     : Filter_Function;
+      User_Data  : System.Address := System.Null_Address;
       After      : Boolean := False)
    is
       Current : Filter_List := Descriptor.Out_Filters;
@@ -183,15 +188,18 @@ package body GNAT.Expect is
 
          if Current = null then
             Descriptor.Out_Filters :=
-              new Filter_List_Elem'(Filter => Filter, Next  => null);
+              new Filter_List_Elem'
+                (Filter => Filter, User_Data => User_Data, Next  => null);
          else
             Current.Next :=
-              new Filter_List_Elem'(Filter => Filter, Next => null);
+              new Filter_List_Elem'
+                (Filter => Filter, User_Data => User_Data, Next  => null);
          end if;
       else
          Descriptor.Out_Filters :=
            new Filter_List_Elem'
-             (Filter => Filter, Next => Descriptor.Out_Filters);
+             (Filter => Filter, User_Data => User_Data,
+              Next => Descriptor.Out_Filters);
       end if;
    end Add_Output_Filter;
 
@@ -373,7 +381,8 @@ package body GNAT.Expect is
 
                         while Current_Filter /= null loop
                            Current_Filter.Filter
-                             (Descriptors (J).all, Buffer (1 .. N));
+                             (Descriptors (J).all, Buffer (1 .. N),
+                              Current_Filter.User_Data);
                            Current_Filter := Current_Filter.Next;
                         end loop;
 
@@ -884,10 +893,10 @@ package body GNAT.Expect is
       end if;
 
       while Current /= null loop
-         Current.Filter (Descriptor, Str);
+         Current.Filter (Descriptor, Str, Current.User_Data);
 
          if Add_LF then
-            Current.Filter (Descriptor, "" & LF);
+            Current.Filter (Descriptor, "" & LF, Current.User_Data);
          end if;
 
          Current := Current.Next;
@@ -904,7 +913,10 @@ package body GNAT.Expect is
    -- Trace_Filter --
    ------------------
 
-   procedure Trace_Filter (Descriptor : Process_Descriptor; Str : String) is
+   procedure Trace_Filter
+     (Descriptor : Process_Descriptor;
+      Str        : String;
+      User_Data  : System.Address := System.Null_Address) is
    begin
       GNAT.IO.Put (Str);
    end Trace_Filter;
