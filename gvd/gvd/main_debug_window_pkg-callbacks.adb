@@ -19,9 +19,7 @@
 -----------------------------------------------------------------------
 
 with Gtk.Widget; use Gtk.Widget;
-with Gtk.List_Item;       use Gtk.List_Item;
 with Gtk.Main;            use Gtk.Main;
-with Gtk.List;            use Gtk.List;
 with Gtk.Notebook;        use Gtk.Notebook;
 with Odd_Preferences_Pkg; use Odd_Preferences_Pkg;
 with Gtkada.Dialogs;      use Gtkada.Dialogs;
@@ -438,8 +436,27 @@ package body Main_Debug_Window_Pkg.Callbacks is
    procedure On_Attach_To_Process1_Activate
      (Object : access Gtk_Widget_Record'Class)
    is
+      Tab : constant Debugger_Process_Tab := Get_Current_Process (Object);
    begin
-      null;
+      if Command_In_Process (Get_Process (Tab.Debugger)) then
+         return;
+      end if;
+
+      declare
+         Arguments : constant String := Simple_Entry_Dialog
+           (Parent  => Tab.Window,
+            Title   => -"Process Selection",
+            Message => -"Enter the process id to debug:",
+            Key     => "odd_process_id");
+      begin
+         if Arguments = ""
+           or else Arguments (Arguments'First) /= ASCII.NUL
+         then
+            Set_Busy_Cursor (Tab, True);
+            Attach_Process (Tab.Debugger, Arguments, Mode => User);
+            Set_Busy_Cursor (Tab, False);
+         end if;
+      end;
    end On_Attach_To_Process1_Activate;
 
    ---------------------------------
@@ -449,8 +466,15 @@ package body Main_Debug_Window_Pkg.Callbacks is
    procedure On_Detach_Process1_Activate
      (Object : access Gtk_Widget_Record'Class)
    is
+      Tab : constant Debugger_Process_Tab := Get_Current_Process (Object);
    begin
-      null;
+      if Command_In_Process (Get_Process (Tab.Debugger)) then
+         return;
+      end if;
+
+      Set_Busy_Cursor (Tab, True);
+      Detach_Process (Tab.Debugger, Mode => User);
+      Set_Busy_Cursor (Tab, False);
    end On_Detach_Process1_Activate;
 
    -----------------------------------
@@ -460,8 +484,23 @@ package body Main_Debug_Window_Pkg.Callbacks is
    procedure On_Change_Directory1_Activate
      (Object : access Gtk_Widget_Record'Class)
    is
+      Tab : constant Debugger_Process_Tab := Get_Current_Process (Object);
    begin
-      null;
+      declare
+         Arguments : constant String := Simple_Entry_Dialog
+           (Parent  => Tab.Window,
+            Title   => -"Directory Selection",
+            Message => -"Enter the directory you want to change to:",
+            Key     => "odd_directory");
+      begin
+         if Arguments = ""
+           or else Arguments (Arguments'First) /= ASCII.NUL
+         then
+            Set_Busy_Cursor (Tab, True);
+            Change_Directory (Tab.Debugger, Arguments, Mode => User);
+            Set_Busy_Cursor (Tab, False);
+         end if;
+      end;
    end On_Change_Directory1_Activate;
 
    --------------------------
@@ -632,10 +671,10 @@ package body Main_Debug_Window_Pkg.Callbacks is
            (Parent  => Tab.Window,
             Title   => -"Arguments Selection",
             Message => -"Enter the arguments to your application:",
-            Key     => -"odd_run_arguments");
+            Key     => "odd_run_arguments");
       begin
          if Arguments = ""
-           or else Arguments (Arguments'First) /= ASCII.Nul
+           or else Arguments (Arguments'First) /= ASCII.NUL
          then
             Set_Busy_Cursor (Tab, True);
             Run (Tab.Debugger, Arguments, Mode => User);
@@ -700,20 +739,6 @@ package body Main_Debug_Window_Pkg.Callbacks is
       Set_Busy_Cursor (Tab, False);
    end On_Next_Instruction1_Activate;
 
-   ------------------------
-   -- On_Until1_Activate --
-   ------------------------
-
-   procedure On_Until1_Activate
-     (Object : access Gtk_Widget_Record'Class)
-   is
-      Tab : constant Debugger_Process_Tab := Get_Current_Process (Object);
-   begin
-      Set_Busy_Cursor (Tab, True);
-      null;
-      Set_Busy_Cursor (Tab, False);
-   end On_Until1_Activate;
-
    -------------------------
    -- On_Finish1_Activate --
    -------------------------
@@ -737,6 +762,10 @@ package body Main_Debug_Window_Pkg.Callbacks is
    is
       Tab : constant Debugger_Process_Tab := Get_Current_Process (Object);
    begin
+      if Command_In_Process (Get_Process (Tab.Debugger)) then
+         return;
+      end if;
+
       Set_Busy_Cursor (Tab, True);
       Continue (Tab.Debugger, Mode => User);
       Set_Busy_Cursor (Tab, False);
@@ -819,17 +848,6 @@ package body Main_Debug_Window_Pkg.Callbacks is
    begin
       null;
    end On_Command_History1_Activate;
-
-   -----------------------------
-   -- On_Clear_Line1_Activate --
-   -----------------------------
-
-   procedure On_Clear_Line1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class)
-   is
-   begin
-      null;
-   end On_Clear_Line1_Activate;
 
    -------------------------------
    -- On_Clear_Window1_Activate --
@@ -1059,11 +1077,11 @@ package body Main_Debug_Window_Pkg.Callbacks is
            (Parent  => Tab.Window,
             Title   => -"Expression Selection",
             Message => -"Enter an expression to display:",
-            Key     => -"odd_display_expression_dialog",
+            Key     => "odd_display_expression_dialog",
             Is_Func => Is_Func'Access);
       begin
          if Expression /= ""
-           and then Expression (Expression'First) /= ASCII.Nul
+           and then Expression (Expression'First) /= ASCII.NUL
          then
             if Is_Func then
                Process_User_Command
@@ -1125,17 +1143,6 @@ package body Main_Debug_Window_Pkg.Callbacks is
    end On_On_Item1_Activate;
 
    ----------------------------
-   -- On_On_Window1_Activate --
-   ----------------------------
-
-   procedure On_On_Window1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class)
-   is
-   begin
-      null;
-   end On_On_Window1_Activate;
-
-   ----------------------------
    -- On_What_Now_1_Activate --
    ----------------------------
 
@@ -1157,61 +1164,6 @@ package body Main_Debug_Window_Pkg.Callbacks is
       null;
    end On_Tip_Of_The_Day1_Activate;
 
-   --------------------------------
-   -- On_Odd_Reference1_Activate --
-   --------------------------------
-
-   procedure On_Odd_Reference1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class)
-   is
-   begin
-      null;
-   end On_Odd_Reference1_Activate;
-
-   ---------------------------
-   -- On_Odd_News1_Activate --
-   ---------------------------
-
-   procedure On_Odd_News1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class)
-   is
-   begin
-      null;
-   end On_Odd_News1_Activate;
-
-   --------------------------------
-   -- On_Gdb_Reference1_Activate --
-   --------------------------------
-
-   procedure On_Gdb_Reference1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class)
-   is
-   begin
-      null;
-   end On_Gdb_Reference1_Activate;
-
-   ------------------------------
-   -- On_Odd_License1_Activate --
-   ------------------------------
-
-   procedure On_Odd_License1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class)
-   is
-   begin
-      null;
-   end On_Odd_License1_Activate;
-
-   -------------------------------
-   -- On_Odd_Www_Page1_Activate --
-   -------------------------------
-
-   procedure On_Odd_Www_Page1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class)
-   is
-   begin
-      null;
-   end On_Odd_Www_Page1_Activate;
-
    ----------------------------
    -- On_About_Odd1_Activate --
    ----------------------------
@@ -1230,54 +1182,6 @@ package body Main_Debug_Window_Pkg.Callbacks is
              "Click on the OK button to close this window."),
          Title => -"About...");
    end On_About_Odd1_Activate;
-
-   ------------------------
-   -- On_Print1_Activate --
-   ------------------------
-
-   procedure On_Print1_Activate
-     (Object : access Gtk_Widget_Record'Class;
-      Params : Gtk.Arguments.Gtk_Args)
-   is
-      Top       : constant Main_Debug_Window_Access :=
-        Main_Debug_Window_Access (Object);
-      Process   : constant Debugger_Process_Tab := Get_Current_Process (Top);
-      Selection : constant String := Get_Chars (Top.Toolbar_Entry);
-      Label     : Gtk_List_Item;
-
-   begin
-      if Selection'Length /= 0 then
-         Gtk_New (Label, Selection);
-         Show (Label);
-         Add (Get_List (Top.Toolbar_Combo), Label);
-         Process_User_Command
-           (Process, "graph print " & Selection, Output_Command => True);
-      end if;
-   end On_Print1_Activate;
-
-   --------------------------
-   -- On_Display1_Activate --
-   --------------------------
-
-   procedure On_Display1_Activate
-     (Object : access Gtk_Widget_Record'Class;
-      Params : Gtk.Arguments.Gtk_Args)
-   is
-      Top       : constant Main_Debug_Window_Access :=
-        Main_Debug_Window_Access (Object);
-      Process   : constant Debugger_Process_Tab := Get_Current_Process (Top);
-      Selection : constant String := Get_Chars (Top.Toolbar_Entry);
-      Label     : Gtk_List_Item;
-
-   begin
-      if Selection'Length /= 0 then
-         Gtk_New (Label, Selection);
-         Show (Label);
-         Add (Get_List (Top.Toolbar_Combo), Label);
-         Process_User_Command
-           (Process, "graph display " & Selection, Output_Command => True);
-      end if;
-   end On_Display1_Activate;
 
    ------------------------
    -- On_Start1_Activate --
