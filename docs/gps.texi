@@ -10295,20 +10295,20 @@ for new textual documentation format by providing a set of templates files.
 
 The node name to define a new documentation format is @code{docgen_backend}.
 
-The attributes for this node are :
+The attributes for this node are:
 
 @table @code
 @item name (string)
 The name of the documentation format (for example HTML).
 
 @item format (string)
-The format is either @b{text} or @b{binary}, only @b{text} is
-supported for the moment.
+The format is either @b{text} or @b{binary}. Only @b{text} is
+supported at the moment.
 @end table
 
 There are two categories of children. One is to describe the format
 itself, the other is to specify the set of template to use. In the
-later case the children's name are ending with @code{_template} :
+latter case the children's name are ending with @code{_template}:
 
 @table @code
 @item extension
