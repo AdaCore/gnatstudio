@@ -122,9 +122,7 @@ package Debugger is
       Display         : Boolean := False;
       Empty_Buffer    : Boolean := True;
       Wait_For_Prompt : Boolean := True;
-      Is_Internal     : Boolean := False)
-     return String
-     is abstract;
+      Is_Internal     : Boolean := False) return String is abstract;
    --  Same as above, but also returns the output of the debugger.
    --  The empty string is returned if Wait_For_Prompt is False.
 
@@ -261,11 +259,12 @@ package Debugger is
    --  However, since display a file requires multiple operations, it seemed
    --  better to do it in Odd.Process.Text_Output_Handler.
 
-   function Source_Files_List (Debugger : access Debugger_Root)
-                              return Odd.Types.String_Array;
-   --  Return the list of source files for the curerently loaded executable.
+   function Source_Files_List
+     (Debugger : access Debugger_Root) return Odd.Types.String_Array;
+   --  Return the list of source files for the currently loaded executable.
    --  If the debugger can not return a list of specific sources, it should
    --  return an empty array.
+   --  GDB_COMMAND: "info sources"
 
    ------------------------
    -- Execution Commands --
@@ -316,7 +315,7 @@ package Debugger is
       Display  : Boolean := False) is abstract;
    --  Continue program after signal or breakpoint.
    --  See above for details on Display.
-   --  GDB_COMMAND: "next"
+   --  GDB_COMMAND: "cont"
 
    procedure Interrupt (Debugger : access Debugger_Root) is abstract;
    --  Interrupt the debugger, or the debuggee if it is running.
