@@ -235,9 +235,8 @@ package body Process_Proxies is
    -- Is_Internal_Command --
    -------------------------
 
-   function Is_Internal_Command (Proxy : access Process_Proxy)
-                                return Boolean
-   is
+   function Is_Internal_Command
+     (Proxy : access Process_Proxy) return Boolean is
    begin
       return Proxy.Internal_Command_Stack (Proxy.Internal_Command);
    end Is_Internal_Command;
@@ -246,9 +245,9 @@ package body Process_Proxies is
    -- Set_Parse_File_Name --
    -------------------------
 
-   procedure Set_Parse_File_Name (Proxy : access Process_Proxy;
-                                  Parse : Boolean)
-   is
+   procedure Set_Parse_File_Name
+     (Proxy : access Process_Proxy;
+      Parse : Boolean) is
    begin
       Proxy.Parse_File_Name := Parse;
    end Set_Parse_File_Name;
@@ -257,9 +256,8 @@ package body Process_Proxies is
    -- Get_Parse_File_Name --
    -------------------------
 
-   function Get_Parse_File_Name (Proxy : access Process_Proxy)
-                                return Boolean
-   is
+   function Get_Parse_File_Name
+     (Proxy : access Process_Proxy) return Boolean is
    begin
       return Proxy.Parse_File_Name;
    end Get_Parse_File_Name;
