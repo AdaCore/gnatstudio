@@ -202,6 +202,8 @@ package body Glide_Kernel.Scripts is
      (1 => Action_Cst'Access);
    Scenar_Var_Parameters : constant Cst_Argument_List :=
      (1 => Prefix_Cst'Access);
+   Exit_Cmd_Parameters : constant Cst_Argument_List :=
+     (1 => Force_Cst'Access);
 
    ----------
    -- Free --
@@ -612,7 +614,9 @@ package body Glide_Kernel.Scripts is
          end;
 
       elsif Command = "exit" then
-         Quit (Glide_Window (Get_Main_Window (Kernel)));
+         Name_Parameters (Data, Exit_Cmd_Parameters);
+         Quit (Glide_Window (Get_Main_Window (Kernel)),
+               Force => Nth_Arg (Data, 1, False));
 
       elsif Command = "set_busy" then
          Push_State (Kernel, Processing);
@@ -1025,6 +1029,9 @@ package body Glide_Kernel.Scripts is
          Set_Return_Value
            (Data, Create_Project (Get_Script (Data), Get_Project (Kernel)));
 
+      elsif Command = "recompute" then
+         Recompute_View (Get_Kernel (Data));
+
       elsif Command = "root" then
          Set_Return_Value
            (Data, Create_Project (Get_Script (Data), Get_Project (Kernel)));
@@ -1308,13 +1315,15 @@ package body Glide_Kernel.Scripts is
       Register_Command
         (Kernel,
          Command      => "exit",
+         Params       => Parameter_Names_To_Usage (Exit_Cmd_Parameters, 1),
          Description  =>
            -("Exit GPS. If there are unsaved changes, a dialog is first"
              & " displayed to ask whether these should be saved. If the"
              & " user cancels the operation through the dialog, GPS will not"
-             & " exit."),
-         Minimum_Args => 0,
-         Maximum_Args => 0,
+             & " exit. If force is true, then no dialog is open, and nothing"
+             & " is saved"),
+         Minimum_Args => Exit_Cmd_Parameters'Length - 1,
+         Maximum_Args => Exit_Cmd_Parameters'Length,
          Handler      => Default_Command_Handler'Access);
 
       Register_Command
@@ -1586,6 +1595,16 @@ package body Glide_Kernel.Scripts is
          Return_Value  => "project",
          Description   =>
            -("Return the root project of the currently loaded hierarchy"),
+         Class         => Get_Project_Class (Kernel),
+         Static_Method => True,
+         Handler       => Create_Project_Command_Handler'Access);
+      Register_Command
+        (Kernel,
+         Command       => "recompute",
+         Description   =>
+            -("Recompute the contents of a project, including the list of"
+              & " source files that are automatically loaded from the"
+              & " source directories"),
          Class         => Get_Project_Class (Kernel),
          Static_Method => True,
          Handler       => Create_Project_Command_Handler'Access);
