@@ -335,6 +335,11 @@ package body Prj_Normalize is
       Project_Norm : Project_Node_Id;
       Current_Pkg  : Project_Node_Id;
 
+      Decl      : Project_Node_Id;
+      Case_Stmt : Project_Node_Id;
+      Iter      : Imported_Project_Iterator := Start (Root_Project, Recurse);
+      Project   : Project_Node_Id;
+
       procedure Process_Declarative_List
         (From, To : Project_Node_Id; Case_Stmt : in out Project_Node_Id);
       --  Process a declarative list (a project, a package, a case item,...).
@@ -401,11 +406,14 @@ package body Prj_Normalize is
                   if Name = No_String then
                      Trace (Me, "Normalizing a project with a non-scenario "
                             & "variable in case construction");
+
                      if Print_Error /= null then
                         Print_Error
                           (-"Case constructions referencing non-external"
-                           & " variables can not be modified");
+                           & " variables can not be modified",
+                           Get_Project_View_From_Project (Project));
                      end if;
+
                      raise Normalize_Error;
                   end if;
 
@@ -535,10 +543,6 @@ package body Prj_Normalize is
             Decl_Item := Next_Item;
          end loop;
       end Process_Declarative_List;
-
-      Decl, Case_Stmt : Project_Node_Id;
-      Iter : Imported_Project_Iterator := Start (Root_Project, Recurse);
-      Project : Project_Node_Id;
 
    begin
       while Current (Iter) /= Empty_Node loop
