@@ -75,33 +75,41 @@ package body Src_Highlighting is
    procedure Create_Syntax_Tags
      (Result              : in out Highlighting_Tags;
       Keyword_Color       : Gdk.Color.Gdk_Color;
-      Keyword_Font_Desc   : Pango_Font_Description := null;
+      Keyword_Color_Bg    : Gdk.Color.Gdk_Color;
+      Keyword_Font_Desc   : Pango.Font.Pango_Font_Description := null;
       Comment_Color       : Gdk.Color.Gdk_Color;
-      Comment_Font_Desc   : Pango_Font_Description := null;
+      Comment_Color_Bg    : Gdk.Color.Gdk_Color;
+      Comment_Font_Desc   : Pango.Font.Pango_Font_Description := null;
       Character_Color     : Gdk.Color.Gdk_Color;
-      Character_Font_Desc : Pango_Font_Description := null;
+      Character_Color_Bg  : Gdk.Color.Gdk_Color;
+      Character_Font_Desc : Pango.Font.Pango_Font_Description := null;
       String_Color        : Gdk.Color.Gdk_Color;
-      String_Font_Desc    : Pango_Font_Description := null) is
+      String_Color_Bg     : Gdk.Color.Gdk_Color;
+      String_Font_Desc    : Pango.Font.Pango_Font_Description := null) is
    begin
       New_Tag
         (Result (Keyword_Text),
          Keyword_Color_Tag_Name,
          Fore_Color => Keyword_Color,
+         Back_Color => Keyword_Color_Bg,
          Font_Desc  => Keyword_Font_Desc);
       New_Tag
         (Result (Comment_Text),
          Comment_Color_Tag_Name,
          Fore_Color => Comment_Color,
+         Back_Color => Comment_Color_Bg,
          Font_Desc  => Comment_Font_Desc);
       New_Tag
         (Result (String_Text),
          String_Color_Tag_Name,
          Fore_Color => String_Color,
+         Back_Color => String_Color_Bg,
          Font_Desc  => String_Font_Desc);
       New_Tag
         (Result (Character_Text),
          Character_Color_Tag_Name,
          Fore_Color => Character_Color,
+         Back_Color => Character_Color_Bg,
          Font_Desc  => Character_Font_Desc);
       --  ??? Set the tags priority...
    end Create_Syntax_Tags;
