@@ -84,6 +84,10 @@ package body Python_Module is
      (Script             : access Python_Scripting_Record;
       Command            : String;
       Display_In_Console : Boolean := True);
+   procedure Execute_File
+     (Script             : access Python_Scripting_Record;
+      Filename           : String;
+      Display_In_Console : Boolean := True);
    function Get_Name (Script : access Python_Scripting_Record) return String;
    function Is_Subclass
      (Script : access Python_Scripting_Record;
@@ -114,8 +118,7 @@ package body Python_Module is
    --  Kw_Params is used to handle keyword parameters. They map from positional
    --  index to the actual object.
 
-   function Get_Kernel (Data : Python_Callback_Data)
-      return Glide_Kernel.Kernel_Handle;
+   function Get_Script (Data : Python_Callback_Data) return Scripting_Language;
    function Number_Of_Arguments (Data : Python_Callback_Data) return Natural;
    procedure Name_Parameters
      (Data  : in out Python_Callback_Data; Names : Cst_Argument_List);
@@ -297,6 +300,8 @@ package body Python_Module is
          Set_Title (Child, -"Python");
          Set_Dock_Side (Child, Bottom);
          Dock_Child (Child);
+      else
+         Raise_Child (Child);
       end if;
    end Create_Python_Console;
 
@@ -537,6 +542,22 @@ package body Python_Module is
         (Script.Interpreter, Command, Hide_Output => not Display_In_Console);
    end Execute_Command;
 
+   ------------------
+   -- Execute_File --
+   ------------------
+
+   procedure Execute_File
+     (Script             : access Python_Scripting_Record;
+      Filename           : String;
+      Display_In_Console : Boolean := True)
+   is
+      Cmd : constant String := "execfile (""" & Filename & """)";
+   begin
+      Create_Python_Console (Script, Get_Kernel (Script));
+      Insert_Text (Script.Interpreter, Cmd & ASCII.LF);
+      Execute_Command (Script, Cmd, Display_In_Console);
+   end Execute_File;
+
    --------------
    -- Get_Name --
    --------------
@@ -548,14 +569,15 @@ package body Python_Module is
    end Get_Name;
 
    ----------------
-   -- Get_Kernel --
+   -- Get_Script --
    ----------------
 
-   function Get_Kernel (Data : Python_Callback_Data)
-      return Glide_Kernel.Kernel_Handle is
+   function Get_Script (Data : Python_Callback_Data)
+      return Scripting_Language
+   is
    begin
-      return Data.Script.Kernel;
-   end Get_Kernel;
+      return Scripting_Language (Data.Script);
+   end Get_Script;
 
    ----------------
    -- Get_Kernel --
@@ -942,7 +964,7 @@ package body Python_Module is
       return new Python_Class_Instance_Record'
         (Class_Instance_Record with
          Script => Python_Scripting (Script),
-         Data   => PyInstance_New (Klass, null));
+         Data   => PyInstance_NewRaw (Klass, null));
    end New_Instance;
 
    ---------------
