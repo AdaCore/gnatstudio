@@ -8,20 +8,20 @@ AC_PREREQ(2.5)
 
 AC_INIT(generic/tcl.h)
 
-AC_CANONICAL_HOST
+AC_CANONICAL_SYSTEM
 
 case "${host}" in
 *-*-cygwin* | *-*-mingw*)
 	CONFIGDIR="win"
 	AC_SUBST(CONFIGDIR)
+	AC_CONFIG_SUBDIRS("win")
 	;;
 *)
 	CONFIGDIR="unix"
 	AC_SUBST(CONFIGDIR)
-	AC_CONFIG_AUX_DIR($CONFIGDIR)	
+	AC_CONFIG_SUBDIRS("unix")
 	;;
 esac
 
 AC_PROG_MAKE_SET
-AC_CONFIG_SUBDIRS($CONFIGDIR)
 AC_OUTPUT(Makefile)
