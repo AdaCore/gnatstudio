@@ -21,7 +21,6 @@
 with Glib;                      use Glib;
 with Glib.Convert;              use Glib.Convert;
 with Glib.Xml_Int;              use Glib.Xml_Int;
-with Gdk.Types;                 use Gdk.Types;
 with Gtk.Enums;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;
 with Gtk.Image;                 use Gtk.Image;
@@ -39,7 +38,6 @@ with Glide_Kernel.Console;      use Glide_Kernel.Console;
 with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
 with Glide_Kernel.Scripts;      use Glide_Kernel.Scripts;
 with Glide_Intl;                use Glide_Intl;
-with GUI_Utils;                 use GUI_Utils;
 
 with Language;                  use Language;
 with Language.Custom;           use Language.Custom;
@@ -145,6 +143,8 @@ package body Custom_Module is
          Child   : Node_Ptr;
          Command, C : Custom_Command_Access;
          Description : String_Access := new String'("");
+         Context     : String_Access;
+         Context_A   : Action_Context;
       begin
          if Name = "" then
             Insert
@@ -159,8 +159,23 @@ package body Custom_Module is
          while Child /= null loop
             if To_Lower (Child.Tag.all) = "shell" then
                C := Parse_Shell_Node (Child);
+               if Command = null then
+                  Command := C;
+               else
+                  Add_Consequence_Action (Command, C);
+               end if;
+
             elsif To_Lower (Child.Tag.all) = "external" then
                C := Parse_External_Node (Child);
+               if Command = null then
+                  Command := C;
+               else
+                  Add_Consequence_Action (Command, C);
+               end if;
+
+            elsif To_Lower (Child.Tag.all) = "context" then
+               Free (Context);
+               Context := new String'(Child.Value.all);
             elsif To_Lower (Child.Tag.all) = "description" then
                Free (Description);
                Description := new String'(Child.Value.all);
@@ -176,21 +191,28 @@ package body Custom_Module is
                raise Assert_Failure;
             end if;
 
-            if Command = null then
-               Command := C;
-            else
-               Add_Consequence_Action (Command, C);
-            end if;
-
             Child := Child.Next;
          end loop;
+
+         if Context /= null then
+            Context_A := Lookup_Context (Kernel, Context.all);
+            if Context_A = null then
+               Insert
+                 (Kernel,
+                  -"Unknown action context " & Context.all,
+                  Mode => Error);
+               raise Assert_Failure;
+            end if;
+         end if;
 
          Register_Action
            (Kernel,
             Name        => Name,
             Command     => Command,
-            Description => Description.all);
+            Description => Description.all,
+            Context     => Context_A);
          Free (Description);
+         Free (Context);
       end Parse_Action_Node;
 
       --------------------
@@ -199,9 +221,6 @@ package body Custom_Module is
 
       procedure Parse_Key_Node (Node : Node_Ptr) is
          Action : constant String := Get_Attribute (Node, "action");
-         Child  : Node_Ptr;
-         Key    : Gdk_Key_Type;
-         Modif  : Gdk_Modifier_Type;
       begin
          if Action = "" then
             Insert (Kernel, -"<key> nodes must have an action attribute",
@@ -209,25 +228,23 @@ package body Custom_Module is
             raise Assert_Failure;
          end if;
 
-         Child := Node.Child;
-         while Child /= null loop
-            if To_Lower (Child.Tag.all) = "shortcut" then
-               Value (Child.Value.all, Key, Modif);
-            else
-               Insert
-                 (Kernel, -"Invalid child node for <key> tag", Mode => Error);
-               raise Assert_Failure;
-            end if;
+         if Node.Value = null then
+            Insert (Kernel,
+                    -"Invalid key binding for action " & Action,
+                    Mode => Error);
+            raise Assert_Failure;
+         end if;
 
-            Child := Child.Next;
-         end loop;
+         if Node.Child /= null then
+            Insert
+              (Kernel, -"Invalid child node for <key> tag", Mode => Error);
+            raise Assert_Failure;
+         end if;
 
          Bind_Default_Key
            (Get_Key_Handler (Kernel),
             Action      => Action,
-            Default_Key => Key,
-            Default_Mod => Modif,
-            Context     => null);
+            Default_Key => Node.Value.all);
       end Parse_Key_Node;
 
       -----------------------
@@ -240,7 +257,7 @@ package body Custom_Module is
          Title  : String_Access := new String'("");
          Pixmap : String_Access := new String'("");
          Image  : Gtk_Image;
-         Command : Interactive_Command_Access;
+         Command : Action_Record;
       begin
          if Action = "" then
             Insert (Kernel, -"<button> nodes must have an action attribute",
@@ -274,11 +291,11 @@ package body Custom_Module is
             end if;
 
             Command := Lookup_Action (Kernel, Action);
-            if Command /= null then
+            if Command.Command /= null then
                Register_Button
                  (Kernel,
                   Locale_To_UTF8 (Title.all),
-                  Command_Access (Command),
+                  Command_Access (Command.Command),
                   Image);
             end if;
          else
@@ -297,7 +314,7 @@ package body Custom_Module is
          Child  : Node_Ptr;
          Title  : String_Access := new String'("");
          Item   : Gtk_Menu_Item;
-         Command : Interactive_Command_Access;
+         Command : Action_Record;
       begin
          if Action = "" then
             Insert (Kernel, -"<menu> nodes must have an action attribute",
@@ -324,14 +341,14 @@ package body Custom_Module is
             Register_Menu (Kernel, Locale_To_UTF8 (Parent_Path), Item);
          else
             Command := Lookup_Action (Kernel, Action);
-            if Command /= null then
+            if Command.Command /= null then
                Register_Menu
                  (Kernel,
                   Locale_To_UTF8 (Parent_Path),
                   Locale_To_UTF8 (Title.all),
                   "",
                   null,
-                  Command_Access (Command));
+                  Command_Access (Command.Command));
             end if;
          end if;
          Free (Title);
