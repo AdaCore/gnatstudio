@@ -1950,9 +1950,35 @@ package body Debugger.Gdb is
          --  For such cases, we change the type once and for all, since we will
          --  never need to go back to an array type.
          --  See also "(<ref> TstringS29b) @0xbfffdba0: Index bound unknown.",
-         --  which starts with the right character but is in fact an array type
+         --  which starts with the right character but is in fact an array
+         --  type.
+         --  There is also
+         --  "(<ref> array (...) of string) @0xbffff5fc: ((null), (null))"
+         --  where the value of the array is indeed visible
 
-         if Type_Str (Index) /= Context.Array_Start
+         if Index + 11 < Type_Str'Last
+           and then Type_Str (Index + 1 .. Index + 11) = "<ref> array"
+         then
+            declare
+               Num_Open : Integer := 0;
+            begin
+               Index := Index + 12;
+               while Num_Open /= -1 loop
+                  if Type_Str (Index) = '(' then
+                     Num_Open := Num_Open + 1;
+                  elsif Type_Str (Index) = ')' then
+                     Num_Open := Num_Open - 1;
+                  end if;
+                  Index := Index + 1;
+               end loop;
+            end;
+
+            Skip_To_Char (Type_Str, Index, ':');
+            Index := Index + 2;
+            Parse_Array_Value
+              (Lang, Type_Str, Index, Array_Type_Access (Result));
+
+         elsif Type_Str (Index) /= Context.Array_Start
            or else (Index + 5 <= Type_Str'Last
                     and then Type_Str (Index + 1 .. Index + 5) = "<ref>")
          then
@@ -1962,9 +1988,9 @@ package body Debugger.Gdb is
                Free (Result, Only_Value => False);
                Result := New_Access_Type;
             end if;
-
             Internal_Parse_Value
               (Lang, Type_Str, Index, Result, Repeat_Num, Parent => Parent);
+
          else
             Parse_Array_Value
               (Lang, Type_Str, Index, Array_Type_Access (Result));
