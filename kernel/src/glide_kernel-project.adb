@@ -352,16 +352,13 @@ package body Glide_Kernel.Project is
    is
       Iter : Imported_Project_Iterator := Start (Project, Recursive);
       Modified : Boolean := False;
+      Langs        : Argument_List := Get_Languages
+        (Project, Recursive => True);
    begin
       while Current (Iter) /= No_Project loop
-         declare
-            Langs : Argument_List := Get_Languages (Current (Iter));
-         begin
-            Modified := Modified or else Project_Modified (Current (Iter));
-
-            Save_Single_Project (Kernel, Current (Iter), Langs);
-            Basic_Types.Free (Langs);
-         end;
+         Modified := Modified or else Project_Modified (Current (Iter));
+         Save_Single_Project (Kernel, Current (Iter), Langs);
+         Basic_Types.Free (Langs);
 
          Next (Iter);
       end loop;
@@ -380,7 +377,7 @@ package body Glide_Kernel.Project is
 
    procedure Save_Single_Project
      (Kernel    : access Kernel_Handle_Record'Class;
-      Project   : Project_Type;
+      Project   : Projects.Project_Type;
       Langs     : GNAT.OS_Lib.Argument_List)
    is
       procedure Report_Error (Msg : String);
