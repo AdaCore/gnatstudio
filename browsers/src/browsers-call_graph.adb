@@ -624,6 +624,8 @@ package body Browsers.Call_Graph is
          Set_Focus_Child (Child);
       end if;
 
+      Add_Navigation_Location (Kernel, -"Call graph Browser");
+
       return Child;
    end Open_Call_Graph_Browser;
 
