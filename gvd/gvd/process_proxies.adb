@@ -21,7 +21,6 @@
 with GNAT.Expect;           use GNAT.Expect;
 with GNAT.Regpat;           use GNAT.Regpat;
 with Gtk.Main;              use Gtk.Main;
-with Gdk.Event;             use Gdk.Event;
 with System;                use System;
 with Unchecked_Deallocation;
 
@@ -161,7 +160,7 @@ package body Process_Proxies is
    is
       Tmp   : Boolean;
       Num   : Integer := 1;
-      Event : Gdk_Event;
+      Num_Events : Positive;
    begin
       Proxy.Command_In_Process.all := True;
 
@@ -191,13 +190,19 @@ package body Process_Proxies is
                exit;
 
             when Expect_Timeout =>
-               --  Process the X events, and loop again.
 
-               while Gtk.Main.Events_Pending loop
-                  --  Avoid waiting for ever on null events
-                  Peek (Event);
-                  exit when To_Address (Event) = System.Null_Address;
+               --  Process the X events, and loop again.
+               --  For efficiency, we stop after a certain number. Otherwise,
+               --  it sometimes happens that we keep getting events (input
+               --  events ?), and we never exit this loop.
+               --  ??? This might not be the best workaround.
+
+               Num_Events := 1;
+               while Gtk.Main.Events_Pending
+                 and then Num_Events <= 30
+               loop
                   Tmp := Gtk.Main.Main_Iteration;
+                  Num_Events := Num_Events + 1;
                end loop;
 
             when others =>
