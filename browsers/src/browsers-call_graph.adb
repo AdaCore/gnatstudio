@@ -48,7 +48,6 @@ with Browsers.Canvas;          use Browsers.Canvas;
 
 with Glide_Intl;       use Glide_Intl;
 with Browsers.Canvas;  use Browsers.Canvas;
-with GNAT.OS_Lib;      use GNAT.OS_Lib;
 with Language;         use Language;
 
 with Ada.Exceptions;   use Ada.Exceptions;
