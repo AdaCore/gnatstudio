@@ -217,7 +217,6 @@ package body Commands.Custom is
      (Filter  : access Parameters_Filter_Record;
       Context : access Selection_Context'Class) return Boolean
    is
-      Kernel : constant Kernel_Handle := Get_Kernel (Context);
       Project : Project_Type;
    begin
       if Filter.Need_Project = 'p'
@@ -226,7 +225,6 @@ package body Commands.Custom is
          Project := Project_From_Param
            (Filter.Need_Project & ' ', Selection_Context_Access (Context));
          if Project = No_Project then
-            Insert (Kernel, -"No project specified", Mode => Error);
             return False;
          end if;
       end if;
@@ -236,7 +234,6 @@ package body Commands.Custom is
            or else not Has_File_Information
              (File_Selection_Context_Access (Context))
          then
-            Insert (Kernel, -"No file specified", Mode => Error);
             return False;
          end if;
       end if;
@@ -246,7 +243,6 @@ package body Commands.Custom is
            or else not Has_Directory_Information
              (File_Selection_Context_Access (Context))
          then
-            Insert (Kernel, -"No directory specified", Mode => Error);
             return False;
          end if;
       end if;
