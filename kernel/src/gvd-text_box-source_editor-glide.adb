@@ -18,9 +18,12 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Glib.Values;
+with Glib.Object;          use Glib.Object;
 with Gdk.Pixbuf;
 with Gtk.Container;        use Gtk.Container;
 with Gtk.Widget;           use Gtk.Widget;
+with Gtk.Handlers;         use Gtk.Handlers;
 with Basic_Types;          use Basic_Types;
 with Glide_Kernel;         use Glide_Kernel;
 with Glide_Kernel.Console; use Glide_Kernel.Console;
@@ -28,9 +31,32 @@ with Glide_Kernel.Modules; use Glide_Kernel.Modules;
 with Glide_Main_Window;    use Glide_Main_Window;
 
 with GVD.Process;          use GVD.Process;
+with GVD.Types;            use GVD.Types;
 with Debugger_Pixmaps;     use Debugger_Pixmaps;
 
+with Commands;             use Commands;
+with Commands.Debugger;    use Commands.Debugger;
+
+with Ada.Unchecked_Deallocation;
+
 package body GVD.Text_Box.Source_Editor.Glide is
+
+   --------------------
+   -- Local packages --
+   --------------------
+
+   package GEdit_Callback is new Gtk.Handlers.User_Callback
+     (GObject_Record, GEdit);
+
+   -----------------------
+   -- Local subprograms --
+   -----------------------
+
+   procedure On_Destroy
+     (Object : access GObject_Record'Class;
+      Params : Glib.Values.GValues;
+      Editor : GEdit);
+   --  Callback for the "destroy" signal.
 
    ------------
    -- Attach --
@@ -116,6 +142,17 @@ package body GVD.Text_Box.Source_Editor.Glide is
       Window : access GVD.Main_Window.GVD_Main_Window_Record'Class) is
    begin
       Editor.Window := GVD.Main_Window.GVD_Main_Window (Window);
+
+      --  ??? the following is commented out since
+      --  Get_Widget (Editor) returns null at this point.
+      --  We must find some workaround for this, or free the memory
+      --  associated to Editor in another way.
+
+      --        GEdit_Callback.Connect
+      --          (Get_Widget (Editor),
+      --           "destroy",
+      --           On_Destroy'Access,
+      --           GEdit (Editor));
    end Initialize;
 
    ---------------
@@ -223,13 +260,208 @@ package body GVD.Text_Box.Source_Editor.Glide is
    ------------------------
 
    procedure Update_Breakpoints
-     (Editor : access GEdit_Record;
-      Br     : GVD.Types.Breakpoint_Array)
+     (Editor  : access GEdit_Record;
+      Br      : GVD.Types.Breakpoint_Array;
+      Process : Gtk.Widget.Gtk_Widget)
    is
-      pragma Unreferenced (Editor, Br);
+      Kernel  : constant Kernel_Handle := Glide_Window (Editor.Window).Kernel;
+      Tab     : constant Debugger_Process_Tab :=
+        Debugger_Process_Tab (Process);
+
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Breakpoint_Array, Breakpoint_Array_Ptr);
+
+      function Copy_Bp (D : Breakpoint_Data) return Breakpoint_Data;
+      --  Deep copy of a breakpoint.
+
+      procedure Add_Unique_Info
+        (A     : in out Breakpoint_Array_Ptr;
+         N     : Breakpoint_Data;
+         Added : out Boolean);
+      --  Add an entry N in A, if A does not already contain such an entry.
+      --  N is set to an entry that contains no valid breakpoint..
+      --  Perform a resize on A if necessary.
+      --  If the entry existed in A before calling Add_Unique_Info,
+      --  Added is set to False, True otherwise.
+
+      -------------
+      -- Copy_Bp --
+      -------------
+
+      function Copy_Bp (D : Breakpoint_Data) return Breakpoint_Data
+      is
+         Result : Breakpoint_Data;
+      begin
+         if D.File /= null then
+            Result.File := new String' (D.File.all);
+            Result.Line := D.Line;
+         end if;
+
+         return Result;
+      end Copy_Bp;
+
+      ---------------------
+      -- Add_Unique_Info --
+      ---------------------
+
+      procedure Add_Unique_Info
+        (A     : in out Breakpoint_Array_Ptr;
+         N     : Breakpoint_Data;
+         Added : out Boolean)
+      is
+         First_Zero : Integer := -1;
+      begin
+         if N.File = null then
+            Added := False;
+            return;
+         end if;
+
+         if A = null then
+            A := new Breakpoint_Array (1 .. 10);
+         end if;
+
+         for J in A'Range loop
+            if A (J).File /= null
+              and then A (J).Line = N.Line
+              and then A (J).File.all = N.File.all
+            then
+               Added := False;
+               return;
+            end if;
+
+            if First_Zero = -1
+              and then A (J).File = null
+            then
+               First_Zero := J;
+            end if;
+         end loop;
+
+         Added := True;
+
+         if First_Zero = -1 then
+            --  We need to resize A.
+
+            declare
+               B : Breakpoint_Array_Ptr := new Breakpoint_Array
+                 (A'First .. A'Last + 10);
+            begin
+               B (A'First .. A'Last) := A.all;
+               B (A'Last + 1) := Copy_Bp (N);
+               --  B (A'Last + 2 .. A'Last + 10);
+
+               Unchecked_Free (A);
+               A := B;
+            end;
+
+         else
+            A (First_Zero) := Copy_Bp (N);
+         end if;
+      end Add_Unique_Info;
+
+      Result : Boolean := False;
+      Found  : Boolean := False;
+      Index  : Natural;
+
    begin
-      --  ???
-      null;
+      --  Add new breakpoints to the column information.
+      for J in Br'Range loop
+         Add_Unique_Info (Editor.Current_Breakpoints, Br (J), Result);
+
+         if Result then
+            declare
+               Other_Command : Set_Breakpoint_Command_Access;
+               L : constant Integer := Br (J).Line;
+               A : Line_Information_Array (L .. L);
+            begin
+               Create
+                 (Other_Command,
+                  Kernel,
+                  Tab.Debugger,
+                  Unset,
+                  Br (J).File.all,
+                  Br (J).Line,
+                  Br (J).Num);
+
+               A (L).Image := Line_Has_Breakpoint_Pixbuf;
+               A (L).Associated_Command := Command_Access (Other_Command);
+               Add_Line_Information
+                 (Kernel,
+                  Br (J).File.all,
+                  Breakpoints_Column_Id,
+                  new Line_Information_Array' (A));
+
+            end;
+         end if;
+      end loop;
+
+      --  Remove old breakpoints from the column information.
+      if Editor.Current_Breakpoints = null then
+         return;
+      end if;
+
+      for J in Editor.Current_Breakpoints'Range loop
+         if Editor.Current_Breakpoints (J).File /= null then
+            Found := False;
+            Index := Br'First;
+
+            while (not Found)
+              and then Index <= Br'Last
+            loop
+               if Editor.Current_Breakpoints (J).Line = Br (Index).Line
+                 and then Editor.Current_Breakpoints (J).File.all
+                 = Br (Index).File.all
+               then
+                  Found := True;
+               end if;
+
+               Index := Index + 1;
+            end loop;
+
+            if not Found then
+               declare
+                  Other_Command : Set_Breakpoint_Command_Access;
+                  L : constant Integer := Editor.Current_Breakpoints (J).Line;
+                  A : Line_Information_Array (L .. L);
+               begin
+                  Create
+                    (Other_Command,
+                     Kernel,
+                     Tab.Debugger,
+                     Set,
+                     Editor.Current_Breakpoints (J).File.all,
+                     Editor.Current_Breakpoints (J).Line);
+
+                  A (L).Image := Line_Has_Code_Pixbuf;
+                  A (L).Associated_Command := Command_Access (Other_Command);
+                  Add_Line_Information
+                    (Kernel,
+                     Editor.Current_Breakpoints (J).File.all,
+                     Breakpoints_Column_Id,
+                     new Line_Information_Array' (A));
+
+               end;
+
+               Free (Editor.Current_Breakpoints (J));
+            end if;
+         end if;
+      end loop;
    end Update_Breakpoints;
+
+   ----------------
+   -- On_Destroy --
+   ----------------
+
+   procedure On_Destroy
+     (Object : access GObject_Record'Class;
+      Params : Glib.Values.GValues;
+      Editor : GEdit)
+   is
+      pragma Unreferenced (Params, Object);
+   begin
+      Free (Editor.Current_Breakpoints);
+   end On_Destroy;
+
+   pragma Unreferenced (On_Destroy);
+   --  ??? see comment in Initialize.
 
 end GVD.Text_Box.Source_Editor.Glide;
