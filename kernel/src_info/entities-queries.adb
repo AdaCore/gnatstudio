@@ -818,10 +818,12 @@ package body Entities.Queries is
             Next (Importing);
          end loop;
 
-         Count := Parse_All_LI_Information
-           (Handler   => Iter.Handler,
-            Project   => Current (Iter.Importing),
-            Recursive => False);
+         if Iter.Handler /= null then
+            Count := Parse_All_LI_Information
+              (Handler   => Iter.Handler,
+               Project   => Current (Iter.Importing),
+               Recursive => False);
+         end if;
       end if;
    end Find_Ancestor_Dependencies;
 
