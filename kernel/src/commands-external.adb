@@ -195,11 +195,14 @@ package body Commands.External is
                Trace
                  (Me,
                   "spawn from " & Command.Dir.all & ": " &
-                  Command.Command.all & " " & Argument_List_To_String (Args));
+                  Command.Command.all & " " &
+                  Krunch (Argument_List_To_String (Args), 128));
 
             else
-               Trace (Me, "spawn: " &
-                Command.Command.all & " " & Argument_List_To_String (Args));
+               Trace
+                 (Me, "spawn: " &
+                  Command.Command.all & " " &
+                  Krunch (Argument_List_To_String (Args), 128));
             end if;
 
             --  If we are under Windows, spawn the command using "cmd /c".
