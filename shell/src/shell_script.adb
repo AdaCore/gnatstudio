@@ -1343,6 +1343,10 @@ package body Shell_Script is
       Quoted        : Boolean;
       Triple_Quoted : Boolean;
    begin
+      Trace (Me, "Execute_GPS_Shell_Command: " & Command & "--");
+
+      Errors.all := False;
+
       if Command /= "" then
          First := Command'First;
          while First <= Command'Last loop
@@ -1395,7 +1399,6 @@ package body Shell_Script is
             if Args = null or else Args'Length = 0 then
                Trace (Me, "Couldn't parse argument string for "
                       & Command (First .. Last - 1));
-               Trace (Me, "Whole command is " & Command & "--");
             else
                --  Cleanup the arguments to remove unnecessary quoting
                for J in Args'Range loop
