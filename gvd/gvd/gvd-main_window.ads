@@ -115,4 +115,8 @@ package GVD.Main_Window is
    --  Emit the "preferences_changed" signal, which indicates a change in
    --  the preferences. The exact change is not accessible as a parameter.
 
+   procedure Cleanup_Debuggers (Window : access GVD_Main_Window_Record'Class);
+   --  Close all the debuggers associated with a given main debug window
+   --  by looking at all the pages of the main notebook.
+
 end GVD.Main_Window;

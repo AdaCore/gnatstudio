@@ -18,9 +18,11 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Glib;                use Glib;
 with Gtk;                 use Gtk;
 with Gtk.Check_Menu_Item; use Gtk.Check_Menu_Item;
 with Gtk.Object;          use Gtk.Object;
+with Gtk.Notebook;        use Gtk.Notebook;
 with Gtk.Widget;          use Gtk.Widget;
 with Gtk.Accel_Group;     use Gtk.Accel_Group;
 with Gtkada.Handlers;     use Gtkada.Handlers;
@@ -30,6 +32,7 @@ with GVD.Dialogs;         use GVD.Dialogs;
 with GVD.Preferences;     use GVD.Preferences;
 with GVD.Process;         use GVD.Process;
 with GVD.Memory_View;     use GVD.Memory_View;
+with Debugger;            use Debugger;
 
 with Language.Ada; use Language.Ada;
 with Language.C;   use Language.C;
@@ -45,11 +48,57 @@ package body GVD.Main_Window is
      (1 => New_String ("preferences_changed"));
    Class_Record : System.Address := System.Null_Address;
 
+   -----------------------
+   -- Cleanup_Debuggers --
+   -----------------------
+
+   procedure Cleanup_Debuggers
+     (Window : access GVD_Main_Window_Record'Class)
+   is
+      Tab  : Debugger_Process_Tab;
+      Page : Gtk_Widget;
+
+   begin
+      --  First switch to the last page (to prevent automatic page
+      --  switching when the other pages are deleted, which would fail)
+      Set_Page (Window.Process_Notebook, -1);
+
+      loop
+         Page := Get_Nth_Page (Window.Process_Notebook, 0);
+         exit when Page = null;
+
+         Tab := Process_User_Data.Get (Page);
+         Tab.Exiting := True;
+
+         begin
+            Close (Tab.Debugger);
+         exception
+            when others =>
+               --  ??? Would be nice to handle more specific errors, but
+               --  since we are exiting, ignore any exception instead of
+               --  generating unfriendly bug boxes
+               null;
+         end;
+
+         Remove_Page (Window.Process_Notebook, 0);
+      end loop;
+
+      Free (Window.Command_History);
+   end Cleanup_Debuggers;
+
+   -------------
+   -- Gtk_New --
+   -------------
+
    procedure Gtk_New (Main_Window : out GVD_Main_Window) is
    begin
       Main_Window := new GVD_Main_Window_Record;
       GVD.Main_Window.Initialize (Main_Window);
    end Gtk_New;
+
+   ----------------
+   -- Initialize --
+   ----------------
 
    procedure Initialize (Main_Window : access GVD_Main_Window_Record'Class) is
    begin
