@@ -860,11 +860,15 @@ package body Builder_Module is
    is
       use String_List_Utils.String_List;
       Node : List_Node;
+      Instance : Class_Instance;
+      Info     : File_Info;
+      Kernel   : constant Kernel_Handle := Get_Kernel (Data);
+      D        : Compute_Xref_Data_Access;
    begin
       if Command = "compile" then
-         for Index in 1 .. Number_Of_Arguments (Data) loop
-            Compile_File (Get_Kernel (Data), Nth_Arg (Data, Index));
-         end loop;
+         Instance := Nth_Arg (Data, 1, Get_File_Class (Kernel));
+         Info := Get_Data (Instance);
+         Compile_File (Get_Kernel (Data), Get_Name (Info));
 
       elsif Command = "get_build_output" then
          Node := First
@@ -876,6 +880,15 @@ package body Builder_Module is
               (Data, String_List_Utils.String_List.Data (Node));
             Node := Next (Node);
          end loop;
+
+      elsif Command = "compute_xref" then
+         Push_State (Kernel, Processing);
+         D := new Compute_Xref_Data'
+           (Kernel, new LI_Handler_Iterator_Access, 0);
+         while Timeout_Compute_Xref (D) loop
+            null;
+         end loop;
+         Timeout_Xref_Destroy (D);
       end if;
    end Compile_Command;
 
@@ -1690,10 +1703,22 @@ package body Builder_Module is
       Register_Command
         (Kernel,
          Command      => "compile",
-         Params       => "(file1, [file2...])",
-         Description  => -"Compile a list of files from the project.",
-         Minimum_Args => 1,
-         Maximum_Args => Natural'Last,
+         Description  => -"Compile the file.",
+         Minimum_Args => 0,
+         Maximum_Args => 0,
+         Class        => Get_File_Class (Kernel),
+         Handler      => Compile_Command'Access);
+
+      Register_Command
+        (Kernel,
+         Command      => "compute_xref",
+         Description  =>
+           -("Update the cross-reference information stored in GPS. This"
+             & " needs to be called after major changes to the sources"
+             & " only, since GPS itself is able to work with partially"
+             & " up-to-date information"),
+         Minimum_Args => 0,
+         Maximum_Args => 0,
          Handler      => Compile_Command'Access);
 
       Register_Command
