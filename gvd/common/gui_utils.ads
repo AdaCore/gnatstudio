@@ -66,6 +66,7 @@ package GUI_Utils is
    --  popped up when the right mouse button is pressed.
    --  This contextual menu can be fully dynamic, since it is created through
    --  the function Menu_Create.
+   --  Menu_Create can return null, if no contextual menu should be displayed.
 
    generic
       type User_Data is private;

@@ -131,12 +131,14 @@ package body GUI_Utils is
       then
          Grab_Focus (Widget);
          Menu := Menu_Creation (Widget, Event);
-         Show_All (Menu);
-         Popup (Menu,
-                Button        => Gdk.Event.Get_Button (Event),
-                Activate_Time => Gdk.Event.Get_Time (Event));
-         Emit_Stop_By_Name (Widget, "button_press_event");
-         return True;
+         if Menu /= null then
+            Show_All (Menu);
+            Popup (Menu,
+                   Button        => Gdk.Event.Get_Button (Event),
+                   Activate_Time => Gdk.Event.Get_Time (Event));
+            Emit_Stop_By_Name (Widget, "button_press_event");
+            return True;
+         end if;
       end if;
       return False;
    end Button_Press_For_Contextual_Menu;
@@ -178,13 +180,15 @@ package body GUI_Utils is
            and then Get_Event_Type (Event) = Button_Press
          then
             Menu := User.Menu_Create (User.User, Event);
-            Grab_Focus (Widget);
-            Show_All (Menu);
-            Popup (Menu,
-                   Button        => Gdk.Event.Get_Button (Event),
-                   Activate_Time => Gdk.Event.Get_Time (Event));
-            Emit_Stop_By_Name (Widget, "button_press_event");
-            return True;
+            if Menu /= null then
+               Grab_Focus (Widget);
+               Show_All (Menu);
+               Popup (Menu,
+                      Button        => Gdk.Event.Get_Button (Event),
+                      Activate_Time => Gdk.Event.Get_Time (Event));
+               Emit_Stop_By_Name (Widget, "button_press_event");
+               return True;
+            end if;
          end if;
          return False;
       end Button_Press_For_Contextual_Menu;
