@@ -21,6 +21,7 @@
 with Glib;             use Glib;
 with Glib.Object;      use Glib.Object;
 with Gdk.Drawable;     use Gdk.Drawable;
+with Gdk.GC;           use Gdk.GC;
 with Gdk.Pixbuf;       use Gdk.Pixbuf;
 with Gdk.Event;        use Gdk.Event;
 with Gdk.Font;         use Gdk.Font;
@@ -43,6 +44,7 @@ with Glide_Kernel.Console;     use Glide_Kernel.Console;
 with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
 with Glide_Kernel.Project;     use Glide_Kernel.Project;
 with String_Utils;             use String_Utils;
+with Browsers.Canvas;          use Browsers.Canvas;
 
 with Glide_Intl;       use Glide_Intl;
 with Browsers.Canvas;  use Browsers.Canvas;
@@ -143,8 +145,13 @@ package body Browsers.Call_Graph is
 
    function Add_Entity_If_Not_Present
      (Browser : access Call_Graph_Browser_Record'Class;
-      Node : Scope_Tree_Node) return Entity_Item;
+      Entity  : Entity_Information) return Entity_Item;
    --  Add a new entity to the browser, if not already there.
+
+   function Add_Entity_If_Not_Present
+     (Browser : access Call_Graph_Browser_Record'Class;
+      Node    : Scope_Tree_Node) return Entity_Item;
+   --  Same as above
 
    procedure Destroy_Idle (Data : in out Examine_Ancestors_Idle_Data);
    --  Called when the idle loop is destroyed.
@@ -415,18 +422,32 @@ package body Browsers.Call_Graph is
 
    function Add_Entity_If_Not_Present
      (Browser : access Call_Graph_Browser_Record'Class;
-      Node : Scope_Tree_Node) return Entity_Item
+      Entity  : Entity_Information) return Entity_Item
    is
-      Entity : Entity_Information;
       Child  : Entity_Item;
    begin
-      Entity := Get_Entity (Node);
+      Trace (Me, "   Add_Entity_If_Not_Present " & Get_Name (Entity));
       Child := Entity_Item (Find_Entity (Browser, Entity));
       if Child = null then
          Gtk_New (Child, Browser, Entity => Entity);
          Put (Get_Canvas (Browser), Child);
       end if;
 
+      return Child;
+   end Add_Entity_If_Not_Present;
+
+   -------------------------------
+   -- Add_Entity_If_Not_Present --
+   -------------------------------
+
+   function Add_Entity_If_Not_Present
+     (Browser : access Call_Graph_Browser_Record'Class;
+      Node    : Scope_Tree_Node) return Entity_Item
+   is
+      Entity : Entity_Information := Get_Entity (Node);
+      Child  : Entity_Item;
+   begin
+      Child := Add_Entity_If_Not_Present (Browser, Entity);
       Destroy (Entity);
       return Child;
    end Add_Entity_If_Not_Present;
@@ -439,14 +460,15 @@ package body Browsers.Call_Graph is
      (Kernel   : access Kernel_Handle_Record'Class;
       Entity   : Entity_Information)
    is
-      Iter : Scope_Tree_Node_Iterator;
-      Item, Child : Entity_Item;
+      Iter          : Scope_Tree_Node_Iterator;
+      Item, Child   : Entity_Item;
       Child_Browser : MDI_Child;
-      Browser : Call_Graph_Browser;
-      Link : Glide_Browser_Link;
-      Tree : Scope_Tree;
-      Node : Scope_Tree_Node;
-      Lib_Info : LI_File_Ptr;
+      Browser       : Call_Graph_Browser;
+      Link          : Glide_Browser_Link;
+      Tree          : Scope_Tree;
+      Node          : Scope_Tree_Node;
+      Lib_Info      : LI_File_Ptr;
+      Rename        : Entity_Information;
 
    begin
       Push_State (Kernel_Handle (Kernel), Busy);
@@ -498,21 +520,35 @@ package body Browsers.Call_Graph is
          Item.To_Parsed := True;
          Refresh (Browser, Item);
 
-         Iter := Start (Node);
-         while Get (Iter) /= Null_Scope_Tree_Node loop
-            if Is_Subprogram (Get (Iter)) then
-               Child := Add_Entity_If_Not_Present (Browser, Get (Iter));
-               if not Has_Link (Get_Canvas (Browser), Item, Child) then
-                  Link := new Glide_Browser_Link_Record;
-                  Add_Link (Get_Canvas (Browser),
-                            Link => Link,
-                            Src => Item,
-                            Dest => Child);
-               end if;
+         --  If we have a renaming, add the entry for the renamed entity
+         Rename := Renaming_Of (Kernel, Entity);
+         if Rename /= No_Entity_Information then
+            Child := Add_Entity_If_Not_Present (Browser, Rename);
+            if not Has_Link (Get_Canvas (Browser), Item, Child) then
+               Link := new Renaming_Link_Record;
+               Add_Link
+                 (Get_Canvas (Browser), Link => Link,
+                  Src => Item, Dest => Child, Arrow => Both_Arrow);
             end if;
+            Destroy (Rename);
 
-            Next (Iter);
-         end loop;
+         else
+            Iter := Start (Node);
+            while Get (Iter) /= Null_Scope_Tree_Node loop
+               if Is_Subprogram (Get (Iter)) then
+                  Child := Add_Entity_If_Not_Present (Browser, Get (Iter));
+                  if not Has_Link (Get_Canvas (Browser), Item, Child) then
+                     Link := new Glide_Browser_Link_Record;
+                     Add_Link (Get_Canvas (Browser),
+                               Link => Link,
+                               Src => Item,
+                               Dest => Child);
+                  end if;
+               end if;
+
+               Next (Iter);
+            end loop;
+         end if;
 
          Set_Auto_Layout (Get_Canvas (Browser), True);
          Layout
@@ -560,28 +596,47 @@ package body Browsers.Call_Graph is
    function Examine_Ancestors_Call_Graph_Idle
      (Data : Examine_Ancestors_Idle_Data) return Boolean
    is
-      procedure Add_Item (Node : Scope_Tree_Node);
+      procedure Add_Item (Node : Scope_Tree_Node; Is_Renaming : Boolean);
       --  Add a new item for the entity declared in Node to the browser
 
       --------------
       -- Add_Item --
       --------------
 
-      procedure Add_Item (Node : Scope_Tree_Node) is
-         Child : Entity_Item;
-         Link : Glide_Browser_Link;
+      procedure Add_Item (Node : Scope_Tree_Node; Is_Renaming : Boolean) is
+         Child  : Entity_Item;
+         Link   : Glide_Browser_Link;
       begin
-         if Is_Subprogram (Node)
-           and then Get_Parent (Node) /= Null_Scope_Tree_Node
-         then
-            Child := Add_Entity_If_Not_Present
-              (Data.Browser, Get_Parent (Node));
+         if Is_Subprogram (Node) then
 
-            if not Has_Link (Get_Canvas (Data.Browser), Child, Data.Item) then
-               Link := new Glide_Browser_Link_Record;
-               Add_Link
-                 (Get_Canvas (Data.Browser), Link => Link,
-                  Src => Child, Dest => Data.Item);
+            --  A renaming entity ? Create a special link
+            if Is_Renaming then
+               Child := Add_Entity_If_Not_Present (Data.Browser, Node);
+               if not Has_Link
+                 (Get_Canvas (Data.Browser), Child, Data.Item)
+               then
+                  Link := new Renaming_Link_Record;
+                  Add_Link
+                    (Get_Canvas (Data.Browser), Link => Link,
+                     Src => Child, Dest => Data.Item,
+                     Arrow => Both_Arrow);
+               end if;
+
+            --  An entity that calls our entity.
+            elsif Is_Subprogram (Node)
+              and then Get_Parent (Node) /= Null_Scope_Tree_Node
+            then
+               Child := Add_Entity_If_Not_Present
+                 (Data.Browser, Get_Parent (Node));
+
+               if not Has_Link
+                 (Get_Canvas (Data.Browser), Child, Data.Item)
+               then
+                  Link := new Glide_Browser_Link_Record;
+                  Add_Link
+                    (Get_Canvas (Data.Browser), Link => Link,
+                     Src => Child, Dest => Data.Item);
+               end if;
             end if;
          end if;
       end Add_Item;
@@ -623,8 +678,11 @@ package body Browsers.Call_Graph is
    is
       Browser       : Call_Graph_Browser;
       Item          : Entity_Item;
+      Child         : Entity_Item;
       Child_Browser : MDI_Child;
       Data          : Examine_Ancestors_Idle_Data;
+      Rename        : Entity_Information;
+      Link          : Glide_Browser_Link;
    begin
       Push_State (Kernel_Handle (Kernel), Busy);
 
@@ -645,7 +703,18 @@ package body Browsers.Call_Graph is
       --  For efficiency, do not recompute the layout for each item
       Set_Auto_Layout (Get_Canvas (Browser), False);
 
-      --  Look for all the parents.
+      --  If we have a renaming, add the entry for the renamed entity
+      Rename := Renaming_Of (Kernel, Entity);
+      if Rename /= No_Entity_Information then
+         Child := Add_Entity_If_Not_Present (Browser, Rename);
+         if not Has_Link (Get_Canvas (Browser), Item, Child) then
+            Link := new Renaming_Link_Record;
+            Add_Link
+              (Get_Canvas (Browser), Link => Link,
+               Src => Item, Dest => Child, Arrow => Both_Arrow);
+         end if;
+         Destroy (Rename);
+      end if;
 
       Data := (Iter    => new Entity_Reference_Iterator,
                Browser => Browser,
@@ -656,10 +725,11 @@ package body Browsers.Call_Graph is
       Browser.Idle_Id := Examine_Ancestors_Idle.Add
         (Cb       => Examine_Ancestors_Call_Graph_Idle'Access,
          D        => Data,
-         Priority => Priority_Low_Idle,
+            Priority => Priority_Low_Idle,
          Destroy  => Destroy_Idle'Access);
 
-      --  All memory is freed at the end of Examine_Ancestors_Call_Graph_Idle
+      --  All memory is freed at the end of
+      --  Examine_Ancestors_Call_Graph_Idle
 
    exception
       when E : others =>
@@ -1131,5 +1201,37 @@ package body Browsers.Call_Graph is
       Item.To_Parsed := False;
       Item.From_Parsed := False;
    end Reset;
+
+   ---------------
+   -- Draw_Link --
+   ---------------
+
+   procedure Draw_Link
+     (Canvas      : access Gtkada.Canvas.Interactive_Canvas_Record'Class;
+      Link        : access Renaming_Link_Record;
+      Window      : Gdk.Window.Gdk_Window;
+      Invert_Mode : Boolean;
+      GC          : Gdk.GC.Gdk_GC;
+      Edge_Number : Glib.Gint)
+   is
+   begin
+      Set_Line_Attributes
+        (GC,
+         Line_Width => 0,
+         Line_Style => Line_On_Off_Dash,
+         Cap_Style  => Cap_Butt,
+         Join_Style => Join_Miter);
+
+      Draw_Link
+        (Canvas, Glide_Browser_Link_Record (Link.all)'Access,
+         Window, Invert_Mode, GC, Edge_Number);
+
+      Set_Line_Attributes
+        (GC,
+         Line_Width => 0,
+         Line_Style => Line_Solid,
+         Cap_Style  => Cap_Butt,
+         Join_Style => Join_Miter);
+   end Draw_Link;
 
 end Browsers.Call_Graph;

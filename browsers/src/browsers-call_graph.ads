@@ -18,10 +18,14 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Glib;
 with Gdk.Event;
+with Gdk.GC;
 with Gdk.Pixbuf;
+with Gdk.Window;
 with Gtk.Main;
 with Gtk.Menu;
+with Gtkada.Canvas;
 with Glide_Kernel;
 with Browsers.Canvas;
 with Src_Info.Queries;
@@ -82,6 +86,26 @@ package Browsers.Call_Graph is
       Menu  : Gtk.Menu.Gtk_Menu) return Glide_Kernel.Selection_Context_Access;
    --  Return the context to use for this item
 
+   --------------------
+   -- Renaming links --
+   --------------------
+
+   type Renaming_Link_Record is new Browsers.Canvas.Glide_Browser_Link_Record
+     with private;
+   type Renaming_Link is access all Renaming_Link_Record'Class;
+   --  The tpye of link used between an entity and the entities that rename
+   --  it.
+   --  A renaming link should always be created from the renaming entity to the
+   --  renamed entity.
+
+   procedure Draw_Link
+     (Canvas      : access Gtkada.Canvas.Interactive_Canvas_Record'Class;
+      Link        : access Renaming_Link_Record;
+      Window      : Gdk.Window.Gdk_Window;
+      Invert_Mode : Boolean;
+      GC          : Gdk.GC.Gdk_GC;
+      Edge_Number : Glib.Gint);
+   --  Override the default drawing procedure for links
 
 private
    type Entity_Item_Record is new Browsers.Canvas.Glide_Browser_Item_Record
@@ -100,4 +124,7 @@ private
         Idle_Id                 : Gtk.Main.Idle_Handler_Id;
         Left_Arrow, Right_Arrow : Gdk.Pixbuf.Gdk_Pixbuf;
      end record;
+
+   type Renaming_Link_Record is new Browsers.Canvas.Glide_Browser_Link_Record
+     with null record;
 end Browsers.Call_Graph;
