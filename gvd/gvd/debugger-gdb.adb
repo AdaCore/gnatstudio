@@ -300,14 +300,14 @@ package body Debugger.Gdb is
          Gtk_Window (Process.Window),
          Debugger,
          False,
-         Choices (1 .. 2),
+         Choices,
          Str (Matched (0).First .. Matched (0).Last));
       Show_All (Dialog);
 
-      Free (Choices (1).Choice);
-      Free (Choices (1).Description);
-      Free (Choices (2).Choice);
-      Free (Choices (2).Description);
+      for J in Choices'Range loop
+         Free (Choices (J).Choice);
+         Free (Choices (J).Description);
+      end loop;
    end Question_Filter2;
 
    ----------
