@@ -252,7 +252,6 @@ package body GVD.Text_Box.Source_Editor.Builtin is
 
       Box.Editor := Builtin (Editor);
       Editor.Widget := Gtk_Widget (Box);
-      Ref (Editor.Widget);
       Editor.Process := Gtk_Widget (Process);
       Editor.Show_Line_Nums := Get_Pref (Editor_Show_Line_Nums);
       Editor.Show_Lines_With_Code := Get_Pref (Editor_Show_Line_With_Code);
@@ -317,7 +316,12 @@ package body GVD.Text_Box.Source_Editor.Builtin is
       Parent : access Gtk_Container_Record'Class) is
    begin
       Add (Parent, Editor.Widget);
-      Unref (Editor.Widget);
+
+      if Editor.Never_Attached then
+         Editor.NEver_Attached := False;
+      else
+         Unref (Editor.Widget);
+      end if;
    end Attach;
 
    ------------

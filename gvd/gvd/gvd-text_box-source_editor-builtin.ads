@@ -201,6 +201,7 @@ private
 
       Highlight_Color     : Gdk.Color.Gdk_Color;
       Contextual_Menu     : Gtk.Menu.Gtk_Menu;
+      Never_Attached      : Boolean := True;
    end record;
 
 end GVD.Text_Box.Source_Editor.Builtin;
