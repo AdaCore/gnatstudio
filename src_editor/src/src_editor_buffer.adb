@@ -3410,15 +3410,37 @@ package body Src_Editor_Buffer is
       Free (X.Info);
    end Free;
 
+   -----------------------
+   -- Needs_To_Be_Saved --
+   -----------------------
+
+   function Needs_To_Be_Saved
+     (Buffer : access Source_Buffer_Record'Class)
+      return Boolean is
+   begin
+      case Get_Status (Buffer) is
+         when Unmodified | Saved =>
+            Buffer.Last_Saved_Position := Get_Position (Buffer.Queue);
+            return False;
+
+         when Modified =>
+            if Buffer.Last_Saved_Position /= Get_Position (Buffer.Queue) then
+               Buffer.Last_Saved_Position := Get_Position (Buffer.Queue);
+               return True;
+
+            else
+               return False;
+            end if;
+      end case;
+   end Needs_To_Be_Saved;
+
    ----------------
    -- Get_Status --
    ----------------
 
    function Get_Status
      (Buffer : access Source_Buffer_Record)
-      return Status_Type
-   is
-      Position : Integer;
+      return Status_Type is
    begin
       if (Undo_Queue_Empty (Buffer.Queue)
           and then Redo_Queue_Empty (Buffer.Queue))
@@ -3428,9 +3450,7 @@ package body Src_Editor_Buffer is
       then
          return Unmodified;
       else
-         Position := Get_Position (Buffer.Queue);
-
-         if Buffer.Saved_Position = Position then
+         if Buffer.Saved_Position = Get_Position (Buffer.Queue) then
             return Saved;
          else
             return Modified;
