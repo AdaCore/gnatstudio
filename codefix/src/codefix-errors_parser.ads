@@ -597,7 +597,7 @@ package Codefix.Errors_Parser is
       Message      : Error_Message;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
-   --  Fix 'retudant sth'.
+   --  Fix 'redundant sth'.
 
    type Unexpected_Sep is new Error_Parser
      (new String'("Unexpected_Keyword"), 1)
