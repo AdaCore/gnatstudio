@@ -91,7 +91,7 @@ package body Codefix.Text_Manager.Ada_Commands is
       Word_Chosen  : GNAT.OS_Lib.String_Access;
 
    begin
-      Cursor := File_Cursor'
+      Cursor := File_Cursor
         (Get_Current_Cursor (Current_Text, This.Cursor.all));
       Cursor_Line := Cursor;
 
