@@ -719,13 +719,11 @@ package body GVD.Process is
      (Process : access Debugger_Process_Tab_Record'Class;
       Window  : access GVD.Main_Window.GVD_Main_Window_Record'Class)
    is
-      Geometry_Info : Process_Tab_Geometry;
       Menu_Item     : Gtk_Menu_Item;
       Label         : Gtk_Label;
       Debugger_List : Debugger_List_Link;
       Debugger_Num  : Natural := 1;
       Length        : Guint;
-      Call_Stack    : Gtk_Check_Menu_Item;
       Widget        : Gtk_Widget;
 
    begin
@@ -733,22 +731,6 @@ package body GVD.Process is
       Initialize_Class_Record
         (Process, Signals, Class_Record,
          Type_Name => "GvdDebuggerProcessTab");
-
-      --  Remove the stack window if needed.
-
-      Widget := Get_Widget (Window.Factory, -"/Data/Call Stack");
-
-      if Widget = null then
-         --  This means that GVD is part of Glide
-         Widget := Get_Widget (Window.Factory, -"/Debug/Data/Call Stack");
-      end if;
-
-      Call_Stack := Gtk_Check_Menu_Item (Widget);
-
-      if not Get_Active (Call_Stack) then
-         Ref (Process.Stack_Scrolledwindow);
-         Dock_Remove (Process.Data_Paned, Process.Stack_Scrolledwindow);
-      end if;
 
       Menu_Item := Gtk_Menu_Item (Get_Widget (Window.Factory, -"/Window"));
       Set_Submenu (Menu_Item, Create_Menu (Process.Process_Mdi));
@@ -840,38 +822,6 @@ package body GVD.Process is
 
       Append_Page (Window.Process_Notebook, Process.Process_Mdi, Label);
 
-      --  Set the graphical parameters.
-
-      if Is_Regular_File (Window.Gvd_Home_Dir.all
-                          & Directory_Separator
-                          & "window_settings")
-      then
-         Geometry_Info := Get_Process_Tab_Geometry
-           (Page_Num (Window.Process_Notebook, Process.Process_Mdi));
-
-         if Get_Pref (Separate_Data) then
-            Float_Child
-              (Find_MDI_Child (Process.Process_Mdi, Process.Data_Paned),
-               True);
-
-            if Get_Active (Call_Stack) then
-               Set_Default_Size
-                 (Process,
-                  Geometry_Info.Data_Width + Geometry_Info.Stack_Width,
-                  Geometry_Info.Data_Height);
-            else
-               Set_Default_Size
-                 (Process,
-                  Geometry_Info.Data_Width,
-                  Geometry_Info.Data_Height);
-            end if;
-         end if;
-
-         if Get_Active (Call_Stack) then
-            Set_Position (Process.Data_Paned, Geometry_Info.Stack_Width);
-         end if;
-      end if;
-
       Show_All (Window.Process_Notebook);
       Set_Page (Window.Process_Notebook, -1);
 
@@ -962,8 +912,74 @@ package body GVD.Process is
       Remote_Protocol : String := "";
       Debugger_Name   : String := "")
    is
-      Child : MDI_Child;
+      Child      : MDI_Child;
+      Widget     : Gtk_Widget;
+      Call_Stack : Gtk_Check_Menu_Item;
+      Window     : constant GVD_Main_Window :=
+        GVD_Main_Window (Process.Window);
+      Geometry_Info : Process_Tab_Geometry;
+
    begin
+      --  Add debugger console and source viewer
+
+      Child :=
+        Put (Process.Process_Mdi, Process.Command_Scrolledwindow);
+      Set_Title (Child, "Debugger Console");
+      Set_Dock_Side (Child, Bottom);
+      Dock_Child (Child);
+
+      Child := Put (Process.Process_Mdi, Process.Editor_Text);
+      Set_Title (Child, "Editor");
+      Maximize_Children (Process.Process_Mdi);
+
+      --  Remove the stack window if needed.
+
+      Widget := Get_Widget (Window.Factory, -"/Data/Call Stack");
+
+      if Widget = null then
+         --  This means that GVD is part of Glide
+         Widget := Get_Widget (Window.Factory, -"/Debug/Data/Call Stack");
+      end if;
+
+      Call_Stack := Gtk_Check_Menu_Item (Widget);
+
+      if not Get_Active (Call_Stack) then
+         Ref (Process.Stack_Scrolledwindow);
+         Dock_Remove (Process.Data_Paned, Process.Stack_Scrolledwindow);
+      end if;
+
+      --  Set the graphical parameters.
+
+      if Is_Regular_File (Window.Gvd_Home_Dir.all
+                          & Directory_Separator
+                          & "window_settings")
+      then
+         Geometry_Info := Get_Process_Tab_Geometry
+           (Page_Num (Window.Process_Notebook, Process.Process_Mdi));
+
+         if Get_Pref (Separate_Data) then
+            Float_Child
+              (Find_MDI_Child (Process.Process_Mdi, Process.Data_Paned),
+               True);
+
+            if Get_Active (Call_Stack) then
+               Set_Default_Size
+                 (Process,
+                  Geometry_Info.Data_Width + Geometry_Info.Stack_Width,
+                  Geometry_Info.Data_Height);
+            else
+               Set_Default_Size
+                 (Process,
+                  Geometry_Info.Data_Width,
+                  Geometry_Info.Data_Height);
+            end if;
+         end if;
+
+         if Get_Active (Call_Stack) then
+            Set_Position (Process.Data_Paned, Geometry_Info.Stack_Width);
+         end if;
+      end if;
+
       --  Initialize the pixmaps and colors for the canvas
 
       Child := Put (Process.Process_Mdi, Process.Data_Paned);
