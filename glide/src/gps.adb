@@ -1105,7 +1105,6 @@ procedure GPS is
 
          Set_Project_Modified (Project, False);
          Recompute_View (GPS.Kernel);
-         GVD_Module.Initialize_Debugger (GPS.Kernel);
 
       elsif Project_Name = null then
          Auto_Load_Project := False;
@@ -1201,6 +1200,13 @@ procedure GPS is
 
       if Batch_File /= null then
          Execute_Batch (Batch_File.all, As_File => True);
+      end if;
+
+      if GPS.Program_Args /= null then
+         --  Initialize the debugger after having executed scripts if any,
+         --  so that it is possible to set up the environment before starting
+         --  a debug session.
+         GVD_Module.Initialize_Debugger (GPS.Kernel);
       end if;
 
       --  Load the preferences set when creating the kernel.
