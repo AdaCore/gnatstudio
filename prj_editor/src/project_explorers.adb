@@ -2864,7 +2864,9 @@ package body Project_Explorers is
       --  restore it.
 
       if Expanded then
+         Gtk.Handlers.Handler_Block (Explorer.Tree, Explorer.Expand_Id);
          Gtk.Ctree.Expand (Explorer.Tree, Node);
+         Gtk.Handlers.Handler_Unblock (Explorer.Tree, Explorer.Expand_Id);
       end if;
    end Update_Directory_Node;
 
