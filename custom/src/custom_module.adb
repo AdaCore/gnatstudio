@@ -24,25 +24,23 @@ with Gtk.Menu_Item;             use Gtk.Menu_Item;
 with Gtk.Icon_Factory;          use Gtk.Icon_Factory;
 with Gtk.Image;                 use Gtk.Image;
 with Gtk.Accel_Label;           use Gtk.Accel_Label;
-with Gtk.Menu;                  use Gtk.Menu;
 with Gtk.Widget;                use Gtk.Widget;
 with Gtk.Toolbar;               use Gtk.Toolbar;
-with Gtk.Handlers;              use Gtk.Handlers;
 with Gtkada.Handlers;           use Gtkada.Handlers;
-with Glib.Object;               use Glib.Object;
 
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with System.Assertions;         use System.Assertions;
 
 with Glide_Kernel.Console;      use Glide_Kernel.Console;
+with Glide_Kernel.Actions;      use Glide_Kernel.Actions;
 with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
 with Glide_Kernel.Scripts;      use Glide_Kernel.Scripts;
-with Glide_Kernel.Task_Manager; use Glide_Kernel.Task_Manager;
+with Glide_Kernel;              use Glide_Kernel;
 with Glide_Intl;                use Glide_Intl;
 with Projects;                  use Projects;
 
-with GUI_Utils;                 use GUI_Utils;
 with File_Utils;                use File_Utils;
+with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 
 with Language;                  use Language;
@@ -65,9 +63,6 @@ with Traces;                    use Traces;
 package body Custom_Module is
 
    Me : constant Debug_Handle := Create ("custom_module");
-
-   package Action_Callback is new Gtk.Handlers.User_Callback
-     (Glib.Object.GObject_Record, Action_Record_Access);
 
    Path_Cst        : aliased constant String := "path";
    On_Activate_Cst : aliased constant String := "on_activate";
@@ -99,95 +94,9 @@ package body Custom_Module is
       Level  : Customization_Level);
    --  Called when a new customization in parsed
 
-   procedure Contextual_Handler
-     (Object  : access Glib.Object.GObject_Record'Class;
-      Context : access Selection_Context'Class;
-      Menu    : access Gtk.Menu.Gtk_Menu_Record'Class);
-   --  Handles requests to display contextual menus
-
-   procedure Register_Contextual_Menu
-     (Kernel     : access Kernel_Handle_Record'Class;
-      Menu_Title : String;
-      Action     : Action_Record_Access);
-   --  Register a new contextual menu
-
-   procedure Contextual_Action
-     (Kernel : access GObject_Record'Class; Action : Action_Record_Access);
-   --  Execute action
-
    procedure Menu_Handler
      (Data : in out Callback_Data'Class; Command : String);
    --  Handles all shell commands for GPS.Menu
-
-   -----------------------
-   -- Contextual_Action --
-   -----------------------
-
-   procedure Contextual_Action
-     (Kernel : access GObject_Record'Class; Action : Action_Record_Access) is
-   begin
-      Launch_Background_Command
-        (Kernel          => Kernel_Handle (Kernel),
-         Command         => Action.Command,
-         Active          => True,
-         Show_Bar        => False,
-         Destroy_On_Exit => False);
-   end Contextual_Action;
-
-   ------------------------------
-   -- Register_Contextual_Menu --
-   ------------------------------
-
-   procedure Register_Contextual_Menu
-     (Kernel     : access Kernel_Handle_Record'Class;
-      Menu_Title : String;
-      Action     : Action_Record_Access)
-   is
-      pragma Unreferenced (Kernel);
-   begin
-      Custom_Module_ID.Contextual := new Contextual_Menu_Record'
-        (Title  => new String'(Menu_Title),
-         Action => Action,
-         Next   => Custom_Module_ID.Contextual);
-   end Register_Contextual_Menu;
-
-   ------------------------
-   -- Contextual_Handler --
-   ------------------------
-
-   procedure Contextual_Handler
-     (Object  : access Glib.Object.GObject_Record'Class;
-      Context : access Selection_Context'Class;
-      Menu    : access Gtk.Menu.Gtk_Menu_Record'Class)
-   is
-      pragma Unreferenced (Object);
-      Contextual : Contextual_Menu_Access := Custom_Module_ID.Contextual;
-      Item : Gtk_Menu_Item;
-   begin
-      while Contextual /= null loop
-         if Filter_Matches
-           (Contextual.Action.Filter, Selection_Context_Access (Context),
-            Get_Kernel (Context))
-         then
-            Item := Find_Or_Create_Menu_Tree
-              (Menu_Bar     => null,
-               Menu         => Gtk_Menu (Menu),
-               Path         => Contextual.Title.all,
-               Accelerators => Get_Default_Accelerators (Get_Kernel (Context)),
-               Allow_Create => True);
-
-            if Item /= null then
-               Action_Callback.Object_Connect
-                 (Item, "activate",
-                  Action_Callback.To_Marshaller (Contextual_Action'Access),
-                  User_Data   => Contextual.Action,
-                  Slot_Object => Get_Kernel (Context));
-            end if;
-         end if;
-
-         Contextual := Contextual.Next;
-      end loop;
-   end Contextual_Handler;
 
    ---------------
    -- Customize --
@@ -271,9 +180,8 @@ package body Custom_Module is
 
          Register_Contextual_Menu
            (Kernel,
-            Menu_Title => Title.all,
+            Name       => Title.all,
             Action     => Command);
-
          Free (Title);
       end Parse_Contextual_Node;
 
@@ -1028,7 +936,6 @@ package body Custom_Module is
         (Module                  => Module_ID (Custom_Module_ID),
          Kernel                  => Kernel,
          Module_Name             => "Custom",
-         Contextual_Menu_Handler => Contextual_Handler'Access,
          Priority                => Low_Priority,
          Customization_Handler   => Customize'Access);
 
