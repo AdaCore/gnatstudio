@@ -57,11 +57,11 @@ package body Task_Dialog_Pkg.Callbacks is
            -"Thread" & Gint'Image (Thread)
          then
             --  The desired thread has already a page associated with it.
+            --  Note that Set_Page will take care of the actual thread
+            --  switching.
 
             Reparent (Process.Editor_Text, Get_Child (Notebook_Page));
             Set_Page (Process.Thread_Notebook, Page);
-            Thread_Switch (Process.Debugger, Natural (Thread));
-
             return;
          end if;
 
