@@ -309,6 +309,7 @@ package body GVD.Text_Box.Source_Editor.Builtin is
          Stop_Icon);
 
       Editor.Colors (Comment_Text) := Comments_Color;
+      Editor.Colors (Character_Text)  := Strings_Color;
       Editor.Colors (String_Text)  := Strings_Color;
       Editor.Colors (Keyword_Text) := Keywords_Color;
    end Initialize;
@@ -1736,6 +1737,7 @@ package body GVD.Text_Box.Source_Editor.Builtin is
 
    begin
       Editor.Colors (Comment_Text) := Get_Pref (Comments_Color);
+      Editor.Colors (Character_Text) := Get_Pref (Strings_Color);
       Editor.Colors (String_Text) := Get_Pref (Strings_Color);
       Editor.Colors (Keyword_Text) := Get_Pref (Keywords_Color);
       Editor.Show_Line_Nums := Get_Pref (Editor_Show_Line_Nums);
