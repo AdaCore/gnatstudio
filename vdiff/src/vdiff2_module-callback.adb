@@ -60,9 +60,6 @@ package body Vdiff2_Module.Callback is
    procedure On_Compare_Three_Files
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
-      Id     : constant VDiff2_Module := VDiff2_Module (Vdiff_Module_ID);
-      Item   : Diff_Head;
-      Result : Diff_List;
       File1  : constant Virtual_File :=
         Select_File
           (Title             => -"Select Common Ancestor",
@@ -105,29 +102,12 @@ package body Vdiff2_Module.Callback is
                  History           => Get_History (Kernel));
          begin
             if File3 = VFS.No_File then
+               Visual_Diff (File1, File2);
                return;
             end if;
 
-            Trace (Me, "begin Diff3");
-            Result := Diff3 (Kernel, File1, File2, File3);
-            Trace (Me, "end Diff3 ");
-
-            if Result = Diff_Chunk_List.Null_List then
-               Button := Message_Dialog
-                 (Msg         => -"No differences found.",
-                  Buttons     => Button_OK,
-                  Parent      => Get_Main_Window (Kernel));
-               return;
-            end if;
-            Item := (List => Result,
-                     File1 => File1,
-                     File2 => File2,
-                     File3 => File3,
-                     Current_Node => First (Result),
-                     Ref_File => 2);
-            Process_Differences (Kernel, Item, Id.List_Diff);
-            Dummy := Execute (Id.Command_First);
-            --  Free (Result);
+            Change_Dir (Dir_Name (File3));
+            Visual_Diff (File2, File1, File3);
          end;
       end;
    exception
@@ -142,9 +122,6 @@ package body Vdiff2_Module.Callback is
    procedure On_Compare_Two_Files
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
-      Id     : constant VDiff2_Module := VDiff2_Module (Vdiff_Module_ID);
-      Item   : Diff_Head;
-      Result : Diff_List;
       File1  : constant Virtual_File :=
         Select_File
           (Title             => -"Select First File",
@@ -175,24 +152,7 @@ package body Vdiff2_Module.Callback is
          if File2 = VFS.No_File then
             return;
          end if;
-
-         Result := Diff (Kernel, File1, File2);
-
-         if Result = Diff_Chunk_List.Null_List then
-            Button := Message_Dialog
-              (Msg         => -"No differences found.",
-               Buttons     => Button_OK,
-               Parent      => Get_Main_Window (Kernel));
-            return;
-         end if;
-
-         Item := (List => Result,
-                  File1 => File1,
-                  File2 => File2,
-                  File3 => VFS.No_File,
-                  Current_Node => First (Result),
-                  Ref_File => 2);
-         Process_Differences (Kernel, Item, Id.List_Diff);
+         Visual_Diff (File1, File2);
       end;
 
    exception
@@ -207,9 +167,7 @@ package body Vdiff2_Module.Callback is
    procedure On_Merge_Three_Files
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
-      Id     : constant VDiff2_Module := VDiff2_Module (Vdiff_Module_ID);
       Item   : Diff_Head;
-      Result : Diff_List;
       File1  : constant Virtual_File :=
         Select_File
           (Title             => -"Select Common Ancestor",
@@ -253,27 +211,12 @@ package body Vdiff2_Module.Callback is
 
          begin
             if File3 = VFS.No_File then
+               Visual_Diff (File1, File2);
                return;
             end if;
 
             Change_Dir (Dir_Name (File3));
-            Result := Diff3 (Kernel, File1, File2, File3);
-
-            if Result = Diff_Chunk_List.Null_List then
-               Button := Message_Dialog
-                 (Msg         => -"No differences found.",
-                  Buttons     => Button_OK,
-                  Parent      => Get_Main_Window (Kernel));
-               return;
-            end if;
-
-            Item := (List => Result,
-                     File1 => File1,
-                     File2 => File2,
-                     File3 => File3,
-                     Current_Node => First (Result),
-                     Ref_File => 2);
-            Process_Differences (Kernel, Item, Id.List_Diff);
+            Visual_Diff (File2, File1, File3);
 
             declare
                Merge     : constant Virtual_File :=
@@ -305,9 +248,7 @@ package body Vdiff2_Module.Callback is
    procedure On_Merge_Two_Files
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
-      Id     : constant VDiff2_Module := VDiff2_Module (Vdiff_Module_ID);
       Item   : Diff_Head;
-      Result : Diff_List;
       File1  : constant Virtual_File :=
         Select_File
           (Title             => -"Select First File",
@@ -339,23 +280,7 @@ package body Vdiff2_Module.Callback is
          end if;
 
          Change_Dir (Dir_Name (File2));
-         Result := Diff (Kernel, File1, File2);
-
-         if Result = Diff_Chunk_List.Null_List then
-            Button := Message_Dialog
-              (Msg         => -"No differences found.",
-               Buttons     => Button_OK,
-               Parent      => Get_Main_Window (Kernel));
-            return;
-         end if;
-
-         Item := (List => Result,
-                  File1 => File1,
-                  File2 => File2,
-                  File3 => VFS.No_File,
-                  Current_Node => First (Result),
-                  Ref_File => 2);
-         Process_Differences (Kernel, Item, Id.List_Diff);
+         Visual_Diff (File1, File2);
 
          declare
             Merge     : constant Virtual_File :=
@@ -538,16 +463,6 @@ package body Vdiff2_Module.Callback is
       end loop;
 
       if Curr_Node /= Diff_Head_List.Null_Node then
-
---           if Diff.File1 = File then
---              Diff.File1 := VFS.No_File;
---           elsif Diff.File2 = File then
---              Diff.File2 := VFS.No_File;
---           elsif Diff.File3 = File then
---              Diff.File3 := VFS.No_File;
---           end if;
---           --  ??? for testing
-
          Hide_Differences (Kernel, Diff.all);
          Remove_Nodes (VDiff2_Module (Vdiff_Module_ID).List_Diff.all,
                        Prev (VDiff2_Module (Vdiff_Module_ID).List_Diff.all,
@@ -568,10 +483,23 @@ package body Vdiff2_Module.Callback is
    ------------------------------
 
    procedure On_Preferences_Changed
-     (Kernel : access GObject_Record'Class; K : Kernel_Handle) is
+     (Kernel : access GObject_Record'Class; K : Kernel_Handle)
+   is
+      Diff      : Diff_Head;
+      Curr_Node : Diff_Head_List.List_Node :=
+        First (VDiff2_Module (Vdiff_Module_ID).List_Diff.all);
       pragma Unreferenced (Kernel);
+
    begin
       Register_Highlighting (K);
+
+      while Curr_Node /= Diff_Head_List.Null_Node loop
+         Diff := Data (Curr_Node);
+         Hide_Differences (K, Diff);
+         Show_Differences3 (K, Diff);
+         Set_Data (Curr_Node, Diff);
+         Curr_Node := Next (Curr_Node);
+      end loop;
    exception
       when E : others =>
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
@@ -710,4 +638,3 @@ package body Vdiff2_Module.Callback is
    end On_Close_Difference;
 
 end Vdiff2_Module.Callback;
-
