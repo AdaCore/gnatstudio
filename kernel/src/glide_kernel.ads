@@ -22,7 +22,6 @@
 
 with Ada.Tags;
 with Basic_Mapper;
-with Basic_Types;
 with GNAT.OS_Lib;
 with Generic_List;
 with Glib.Object;
@@ -165,18 +164,6 @@ package Glide_Kernel is
      (Handle : access Kernel_Handle_Record) return String;
    --  Return the predefined Source_Path associated to the given Kernel Handle.
    --  Return the current directory if no source path has been set yet.
-
-   function Get_VCS_List
-     (Handle : access Kernel_Handle_Record)
-     return Basic_Types.String_Array_Access;
-   --  Return the list of recognized VCS systems.
-
-   procedure Register_VCS
-     (Handle         : access Kernel_Handle_Record;
-      VCS_Identifier : String);
-   --  Add a VCS identifier to the list of recognized VCS systems.
-   --  ??? This is temporary, until the VCS module can directly add a page in
-   --  the wizard or the project properties editor.
 
    -------------
    -- Queries --
@@ -621,6 +608,12 @@ private
 
    package Module_List is new Generic_List (Module_ID);
 
+   type Kernel_Module_Data_Record is abstract tagged null record;
+   type Kernel_Module_Data is access all Kernel_Module_Data_Record'Class;
+
+   procedure Destroy (Data : in out Kernel_Module_Data_Record) is abstract;
+   --  Destroy the data stored in Data.
+
    type Kernel_Handle_Record is new Glib.Object.GObject_Record with record
       Modules_List : Module_List.List;
       --  The list of all the modules that have been registered in this kernel.
@@ -693,11 +686,12 @@ private
       Lang_Handler : Language_Handlers.Language_Handler;
       --  The type used to convert from file names to languages
 
-      VCS_List : Basic_Types.String_Array_Access;
-      --  The list of all VCS systems recognized by the kernel.
-
       Default_Desktop : Glib.Xml_Int.Node_Ptr;
       --  The tree describing the default desktop.
+
+      Modules_Data : Kernel_Module_Data;
+      --  The user data associated with glide_kernel-modules.ads.
+      --  This is really of type Glide_Kernel.Modules.Real_Module_Data.
    end record;
 
 end Glide_Kernel;

@@ -75,7 +75,6 @@ with Language_Handlers.Glide;   use Language_Handlers.Glide;
 with Prj;                       use Prj;
 with Prj.Tree;                  use Prj.Tree;
 
-with Basic_Types;               use Basic_Types;
 with Traces;                    use Traces;
 
 with Unchecked_Deallocation;
@@ -123,6 +122,9 @@ package body Glide_Kernel is
    --  Decl is set to No_Entity_Information and Status to Entity_Not_Found if
    --  the user didn't select any declaration.
 
+   procedure Unchecked_Free is new Unchecked_Deallocation
+     (Kernel_Module_Data_Record'Class, Kernel_Module_Data);
+
    --------------------------
    -- Get_Language_Handler --
    --------------------------
@@ -150,11 +152,13 @@ package body Glide_Kernel is
       Handler : Glide_Language_Handler;
    begin
       Handle := new Kernel_Handle_Record;
-      Handle.Main_Window := Main_Window;
-      Handle.Home_Dir := new String' (Home_Dir);
       Glib.Object.Initialize (Handle);
       Initialize_Class_Record
         (Handle, Signals, Kernel_Class, "GlideKernel", Signal_Parameters);
+
+      Glide_Kernel.Modules.Initialize (Handle);
+      Handle.Main_Window  := Main_Window;
+      Handle.Home_Dir     := new String' (Home_Dir);
 
       --  Create the language handler. It is also set for the gvd main window,
       --  so that the embedded gvd uses the same mechanism as the rest of glide
@@ -165,10 +169,10 @@ package body Glide_Kernel is
         Handle.Lang_Handler;
 
       Handle.Project := Create_Default_Project ("default", Get_Current_Dir);
-      Handle.Project_Is_Default := True;
+      Handle.Project_Is_Default     := True;
       Handle.Predefined_Source_Path := null;
       Handle.Predefined_Object_Path := null;
-      Handle.Gnatls_Cache := null;
+      Handle.Gnatls_Cache           := null;
 
       --  Note: we do not compute the view of this project yet. This will be
       --  done only if no other project was loaded from the command line, which
@@ -360,41 +364,6 @@ package body Glide_Kernel is
       raise Program_Error;
       return False;
    end Save_All_Editors;
-
-   ------------------
-   -- Get_VCS_List --
-   ------------------
-
-   function Get_VCS_List
-     (Handle : access Kernel_Handle_Record)
-     return Basic_Types.String_Array_Access is
-   begin
-      return Handle.VCS_List;
-   end Get_VCS_List;
-
-   ------------------
-   -- Register_VCS --
-   ------------------
-
-   procedure Register_VCS
-     (Handle         : access Kernel_Handle_Record;
-      VCS_Identifier : String) is
-   begin
-      if Handle.VCS_List = null then
-         Handle.VCS_List := new String_Array'
-           (1 => new String' (VCS_Identifier));
-      else
-         declare
-            A : String_Array (1 .. Handle.VCS_List'Length + 1);
-         begin
-            A (1 .. Handle.VCS_List'Length) := Handle.VCS_List.all;
-            A (Handle.VCS_List'Length + 1) := new String' (VCS_Identifier);
-
-            Unchecked_Free (Handle.VCS_List);
-            Handle.VCS_List := new String_Array' (A);
-         end;
-      end if;
-   end Register_VCS;
 
    -------------------------------------
    -- Locate_From_Source_And_Complete --
@@ -1311,11 +1280,13 @@ package body Glide_Kernel is
          Destroy (Handle.Search);
       end if;
 
+      Destroy (Handle.Modules_Data.all);
+      Unchecked_Free (Handle.Modules_Data);
+
       Destroy (Glide_Language_Handler (Handle.Lang_Handler));
       Reset (Handle.Source_Info_List);
-      Free_Modules (Handle);
-      Free (Handle.VCS_List);
       Free (Handle.Logs_Mapper);
+      Free_Modules (Handle);
       Unref (Handle.Tooltips);
 
       --  Free the memory allocated by gtk+, and disconnect all the callbacks,
