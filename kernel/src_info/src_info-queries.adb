@@ -857,7 +857,16 @@ package body Src_Info.Queries is
          L.Start_Of_Scope := L.Decl.Location;
 
          while R /= null loop
-            if Is_Start_Reference (R.Value.Kind) then
+            --  There might be multiple bodies for a given entity (for
+            --  instance, in Ada for a rename-as-body, both the "rename" and
+            --  the real body are referenced as bodies.
+            --  We need to find the proper one
+
+            if Is_Start_Reference (R.Value.Kind)
+              and then (L.Decl.End_Of_Scope = No_Reference
+                        or else L.Decl.End_Of_Scope.Location.File =
+                        R.Value.Location.File)
+            then
                L.Start_Of_Scope := R.Value.Location;
                return;
             end if;
@@ -1142,6 +1151,7 @@ package body Src_Info.Queries is
                Start_Of_Scope => Null_File_Location,
                Parent         => null,
                Sibling        => null);
+
             Compute_Scope (New_Item, List.Value.References);
             Start_Of_Scope := New_Item.Start_Of_Scope;
 
