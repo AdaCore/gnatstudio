@@ -65,7 +65,8 @@ package body Debugger.Gdb is
    -- Constants --
    ---------------
 
-   Prompt_Regexp : constant Pattern_Matcher := Compile ("\(gdb\) ");
+   Prompt_Regexp : constant Pattern_Matcher :=
+     Compile ("^\(gdb\) ", Multiple_Lines);
    --  Regular expressions used to recognize the prompt.
    --  Note that this regexp needs to be as simple as possible, since it will
    --  be used several times when receiving long results from commands.
@@ -98,6 +99,10 @@ package body Debugger.Gdb is
      ("^(The current source language is|Current language:) +" &
       """?(auto; currently )?([^""\s]+)", Multiple_Lines);
    --  Pattern used to detect language changes in the debugger.
+
+   Running_Pattern : constant Pattern_Matcher := Compile
+     ("^Program exited normally.", Multiple_Lines);
+   --  Pattern used to detect when the debuggee terminates.
 
    Frame_Pattern : constant Pattern_Matcher := Compile
      ("^#(\d+) +((0x[0-9a-f]+) in )?(.+?)( at (.+))?$", Multiple_Lines);
@@ -156,6 +161,12 @@ package body Debugger.Gdb is
       Str     : String;
       Matched : Match_Array);
    --  Filter used to detect a change in the current language.
+
+   procedure Running_Filter
+     (Process : access Debugger_Process_Tab_Record'Class;
+      Str     : String;
+      Matched : Match_Array);
+   --  Filter used to detect when the program no longer runs.
 
    procedure Question_Filter1
      (Process : access Debugger_Process_Tab_Record'Class;
@@ -243,6 +254,18 @@ package body Debugger.Gdb is
            (Language_Debugger_Access (Language), Debugger.all'Access);
       end;
    end Language_Filter;
+
+   --------------------
+   -- Running_Filter --
+   --------------------
+
+   procedure Running_Filter
+     (Process : access Debugger_Process_Tab_Record'Class;
+      Str     : String;
+      Matched : Match_Array) is
+   begin
+      Set_Is_Started (Process.Debugger, False);
+   end Running_Filter;
 
    ---------------------
    -- Question_Filter --
@@ -558,6 +581,10 @@ package body Debugger.Gdb is
          Add_Regexp_Filter
            (Convert (Window, Debugger),
             Language_Filter'Access, Language_Pattern);
+
+         Add_Regexp_Filter
+           (Convert (Window, Debugger),
+            Running_Filter'Access, Running_Pattern);
 
          --  Set another filter to detect the cases when gdb asks questions,
          --  so that we can display dialogs.
