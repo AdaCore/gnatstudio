@@ -202,7 +202,8 @@ package body Docgen_Backend_HTML is
       Link_All         : Boolean;
       Is_Body          : Boolean;
       Process_Body     : Boolean;
-      Info             : Doc_Info)
+      Info             : Doc_Info;
+      Call_Graph_Entities : in out Type_Entity_List.List)
    is
       pragma Unreferenced (End_Line);
       Line_Body : Natural := Line_In_Body;
@@ -231,8 +232,62 @@ package body Docgen_Backend_HTML is
          Link_All,
          Is_Body,
          Process_Body,
-         Info);
-   end  Format_Identifier;
+         Info,
+         Call_Graph_Entities);
+   end Format_Identifier;
+
+   ----------------------
+   --  Print_Ref_List  --
+   ----------------------
+
+   procedure Print_Ref_List
+     (B      : access Backend_HTML;
+      Kernel : access Kernel_Handle_Record'Class;
+      File   : in Ada.Text_IO.File_Type;
+      Name_Entity : String_Access;
+      Local_List  : Type_Reference_List.List;
+      Called_Subp : Boolean) is
+      pragma Unreferenced (B);
+   begin
+      Print_Ref_List_HTML
+        (Kernel, File, Name_Entity, Local_List, Called_Subp);
+   end Print_Ref_List;
+
+   ----------------------------------
+   --  Call_Graph_Packages_Header  --
+   ----------------------------------
+
+   procedure  Call_Graph_Packages_Header
+     (B      : access Backend_HTML;
+      Kernel : access Kernel_Handle_Record'Class;
+      File   : in Ada.Text_IO.File_Type;
+      Info   : Doc_Info) is
+      pragma Unreferenced (B, Kernel);
+   begin
+      Put_Line
+        (File, "</PRE>");
+      --  It's necessary to close this tag
+      Put_Line (File, "<BR><H2> Call Graph for package <I>"
+                &Get_Name (Info.Package_Entity.Entity)
+                & "</I></H2>");
+   end Call_Graph_Packages_Header;
+
+   ----------------------------------
+   --  Call_Graph_Packages_Footer  --
+   ----------------------------------
+
+   procedure  Call_Graph_Packages_Footer
+     (B      : access Backend_HTML;
+      Kernel : access Kernel_Handle_Record'Class;
+      File   : in Ada.Text_IO.File_Type;
+      Info   : Doc_Info) is
+      pragma Unreferenced (B, Kernel, Info);
+   begin
+      Put_Line
+        (File,
+         "<PRE>");
+      --  We open this tag that we have closed in Call_Graph_Packages_Header
+   end Call_Graph_Packages_Footer;
 
    -----------------
    -- Format_Link --
