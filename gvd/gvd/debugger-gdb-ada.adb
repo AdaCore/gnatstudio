@@ -212,23 +212,6 @@ package body Debugger.Gdb.Ada is
       Result     : in out Generic_Values.Generic_Type_Access;
       Repeat_Num : out Positive)
    is
-
---       procedure Parse_Record_Value (Index  : in out Natural;
---                                     Result : in out Generic_Type_Access);
-      --  Parse a record value, ignoring the opening and closing parentheses.
-      --  The number of fields parsed is exactly the same as defined in Result.
-
-      ------------------------
-      -- Parse_Record_Value --
-      ------------------------
-
---       procedure Parse_Record_Value (Index  : in out Natural;
---                                     Result : in out Generic_Type_Access)
---       is
---       begin
-
---       end Parse_Record_Value;
-
    begin
       Repeat_Num := 1;
 
