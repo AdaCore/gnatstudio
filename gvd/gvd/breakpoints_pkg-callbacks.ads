@@ -26,10 +26,6 @@ package Breakpoints_Pkg.Callbacks is
      (Object : access Gtk_Widget_Record'Class;
       Params : Gtk.Arguments.Gtk_Args) return Boolean;
 
-   procedure On_Notebook1_Switch_Page
-     (Object : access Gtk_Widget_Record'Class;
-      Params : Gtk.Arguments.Gtk_Args);
-
    procedure On_Location_Selected_Toggled
      (Object : access Gtk_Widget_Record'Class);
 
@@ -52,6 +48,9 @@ package Breakpoints_Pkg.Callbacks is
      (Object : access Gtk_Widget_Record'Class);
 
    procedure On_Advanced_Watchpoint_Clicked
+     (Object : access Gtk_Widget_Record'Class);
+
+   procedure On_Load_Exception_List_Clicked
      (Object : access Gtk_Widget_Record'Class);
 
    procedure On_Add_Exception_Clicked

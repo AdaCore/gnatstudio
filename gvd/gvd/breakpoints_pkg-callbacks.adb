@@ -26,13 +26,12 @@ with Gtk.Arguments;           use Gtk.Arguments;
 with Ada.Text_IO;             use Ada.Text_IO;
 with Odd.Process;             use Odd.Process;
 with Debugger;                use Debugger;
-with Gtk.List_Item;           use Gtk.List_Item;
-with Gtk.List;                use Gtk.List;
 with Odd_Intl;                use Odd_Intl;
 with Gtk.Enums;               use Gtk.Enums;
 with Gtk.Handlers;            use Gtk.Handlers;
 with Gtk.Combo;               use Gtk.Combo;
 with Gtkada.Handlers;         use Gtkada.Handlers;
+with Odd.Utils;               use Odd.Utils;
 
 package body Breakpoints_Pkg.Callbacks is
 
@@ -59,51 +58,6 @@ package body Breakpoints_Pkg.Callbacks is
       Hide (Object);
       return True;
    end On_Breakpoints_Delete_Event;
-
-   ------------------------------
-   -- On_Notebook1_Switch_Page --
-   ------------------------------
-
-   procedure On_Notebook1_Switch_Page
-     (Object : access Gtk_Widget_Record'Class;
-      Params : Gtk.Arguments.Gtk_Args)
-   is
-      Editor : Breakpoints_Access := Breakpoints_Access (Object);
-      --  Arg1 : Address := To_Address (Params, 1); --  Page
-      Arg2 : Guint := To_Guint (Params, 2);     --  Page_Num
-   begin
-      --  If we selected the exceptions page, parse the list of exceptions if
-      --  required.
-
-      if Arg2 = 2
-        and then not Editor.Has_Exception_List
-      then
-         declare
-            Exception_Name_Items : String_List.Glist;
-            Exception_Arr        : Exception_Array :=
-              List_Exceptions (Editor.Process.Debugger);
-         begin
-            if Exception_Arr'Length > 0 then
-               Set_Sensitive (Editor.Hbox4, True);
-               String_List.Append (Exception_Name_Items, -"All exceptions");
-
-               for J in Exception_Arr'Range loop
-                  String_List.Append
-                    (Exception_Name_Items, Exception_Arr (J).Name.all);
-               end loop;
-
-               Gtk.Combo.Set_Popdown_Strings
-                 (Editor.Exception_Name, Exception_Name_Items);
-               Free_String_List (Exception_Name_Items);
-            else
-               Set_Sensitive (Editor.Hbox4, False);
-            end if;
-
-            Editor.Has_Exception_List := True;
-            Free (Exception_Arr);
-         end;
-      end if;
-   end On_Notebook1_Switch_Page;
 
    ----------------------------------
    -- On_Location_Selected_Toggled --
@@ -178,7 +132,6 @@ package body Breakpoints_Pkg.Callbacks is
    is
       Editor    : constant Breakpoints_Access := Breakpoints_Access (Object);
       Temporary : Boolean;
-      Label     : Gtk_List_Item;
 
    begin
       Temporary := Get_Active (Editor.Temporary_Location);
@@ -190,9 +143,8 @@ package body Breakpoints_Pkg.Callbacks is
             Line      => Integer (Get_Value_As_Int (Editor.Line_Spin)),
             Temporary => Temporary,
             Mode      => Odd.Types.Visible);
-         Gtk_New (Label, Get_Chars (Get_Entry (Editor.File_Combo)));
-         Show (Label);
-         Add (Get_List (Editor.File_Combo), Label);
+         Add_Unique_Combo_Entry
+           (Editor.File_Combo, Get_Chars (Get_Entry (Editor.File_Combo)));
 
       elsif Get_Active (Editor.Subprogram_Selected) then
          Break_Subprogram
@@ -200,9 +152,9 @@ package body Breakpoints_Pkg.Callbacks is
             Name      => Get_Chars (Get_Entry (Editor.Subprogram_Combo)),
             Temporary => Temporary,
             Mode      => Odd.Types.Visible);
-         Gtk_New (Label, Get_Chars (Get_Entry (Editor.Subprogram_Combo)));
-         Show (Label);
-         Add (Get_List (Editor.Subprogram_Combo), Label);
+         Add_Unique_Combo_Entry
+           (Editor.Subprogram_Combo,
+            Get_Chars (Get_Entry (Editor.Subprogram_Combo)));
 
       elsif Get_Active (Editor.Address_Selected) then
          Break_Address
@@ -210,9 +162,9 @@ package body Breakpoints_Pkg.Callbacks is
             Address   => Get_Chars (Get_Entry (Editor.Address_Combo)),
             Temporary => Temporary,
             Mode      => Odd.Types.Visible);
-         Gtk_New (Label, Get_Chars (Get_Entry (Editor.Address_Combo)));
-         Show (Label);
-         Add (Get_List (Editor.Address_Combo), Label);
+         Add_Unique_Combo_Entry
+           (Editor.Address_Combo,
+            Get_Chars (Get_Entry (Editor.Address_Combo)));
 
       else
          Break_Regexp
@@ -220,9 +172,9 @@ package body Breakpoints_Pkg.Callbacks is
             Regexp    => Get_Chars (Get_Entry (Editor.Regexp_Combo)),
             Temporary => Temporary,
             Mode      => Odd.Types.Visible);
-         Gtk_New (Label, Get_Chars (Get_Entry (Editor.Regexp_Combo)));
-         Show (Label);
-         Add (Get_List (Editor.Regexp_Combo), Label);
+         Add_Unique_Combo_Entry
+           (Editor.Regexp_Combo,
+            Get_Chars (Get_Entry (Editor.Regexp_Combo)));
       end if;
    end On_Add_Location_Clicked;
 
@@ -265,6 +217,42 @@ package body Breakpoints_Pkg.Callbacks is
       Free (Descriptor);
    end On_Advanced_Watchpoint_Clicked;
 
+   ------------------------------------
+   -- On_Load_Exception_List_Clicked --
+   ------------------------------------
+
+   procedure On_Load_Exception_List_Clicked
+     (Object : access Gtk_Widget_Record'Class)
+   is
+      Editor : Breakpoints_Access := Breakpoints_Access (Object);
+   begin
+      Set_Busy_Cursor (Get_Window (Editor), True);
+
+      declare
+         Exception_Arr : Exception_Array :=
+           List_Exceptions (Editor.Process.Debugger);
+      begin
+         if Exception_Arr'Length > 0 then
+            Set_Sensitive (Editor.Hbox4, True);
+            Add_Unique_Combo_Entry
+              (Editor.Exception_Name, -"All exceptions");
+            Add_Unique_Combo_Entry
+              (Editor.Exception_Name, -"All assertions");
+
+            for J in Exception_Arr'Range loop
+               Add_Unique_Combo_Entry
+                 (Editor.Exception_Name, Exception_Arr (J).Name.all);
+            end loop;
+         else
+            Set_Sensitive (Editor.Hbox4, False);
+         end if;
+
+         Free (Exception_Arr);
+      end;
+
+      Set_Busy_Cursor (Get_Window (Editor), False);
+   end On_Load_Exception_List_Clicked;
+
    ------------------------------
    -- On_Add_Exception_Clicked --
    ------------------------------
@@ -287,6 +275,14 @@ package body Breakpoints_Pkg.Callbacks is
             Unhandled => Get_Active (Editor.Stop_Not_Handled_Exception),
             Temporary => Temporary,
             Mode      => Odd.Types.Visible);
+
+      elsif Name = -"All assertions" then
+         Break_Subprogram
+           (Editor.Process.Debugger,
+            Name      => "assert",
+            Temporary => Temporary,
+            Mode      => Odd.Types.Visible);
+
       else
          Break_Exception
            (Editor.Process.Debugger,
