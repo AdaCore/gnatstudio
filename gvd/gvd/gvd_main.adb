@@ -37,6 +37,7 @@ procedure Odd_Main is
    Main_Debug_Window : Main_Debug_Window_Access;
    Id                : Glib.Gint;
    Index             : Natural := 0;
+   Debug_Type        : Debugger.Debugger_Type := Debugger.Gdb_Type;
 
 begin
    Bind_Text_Domain ("GtkAda", "/usr/local/share/locale");
@@ -54,18 +55,18 @@ begin
            (0, Input_Read, Input_Available'Access,
             Main_Debug_Window.all'Access);
 
+      elsif Argument (J) = "--jdb" then
+         Debug_Type := Debugger.Jdb_Type;
       else
          Index := Index + 1;
          List (Index) := new String' (Argument (J));
       end if;
    end loop;
 
-   --  ??? Need to add command line parsing to handle other debuggers by
-   --  default.
    --  ??? Should set the executable here, so that we can use Set_Executable
    --  and get initialization for free.
    Process_Tab := Create_Debugger
-     (Main_Debug_Window, Debugger.Gdb_Type, "", List (1 .. Index));
+     (Main_Debug_Window, Debug_Type, "", List (1 .. Index));
    Show_All (Main_Debug_Window);
    Gtk.Main.Main;
 exception
