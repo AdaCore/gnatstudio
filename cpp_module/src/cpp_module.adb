@@ -147,6 +147,7 @@ package body Cpp_Module is
       Editor : access Switches_Edit_Record'Class)
       return Switches_Editor_Page
    is
+      pragma Unreferenced (Editor);
       Frame  : Gtk_Frame;
       Box    : Gtk_Box;
       Page   : Switches_Editor_Page;
@@ -217,12 +218,6 @@ package body Cpp_Module is
         (Page, Box, -"Debug information", "-g",
          -("Produce debugging information in the operating system's"
            & " native format"));
-      Add_Dependency (Master_Page    => Get_Page (Editor, "Make"),
-                      Master_Switch  => "-g",
-                      Master_Status  => True,
-                      Slave_Page     => Page,
-                      Slave_Switch   => "-g",
-                      Slave_Activate => True);
 
       Gtk_New (Frame, -"Messages");
       Set_Border_Width (Frame, 5);
@@ -249,6 +244,7 @@ package body Cpp_Module is
       Editor : access Switches_Edit_Record'Class)
       return Switches_Editor_Page
    is
+      pragma Unreferenced (Editor);
       Frame  : Gtk_Frame;
       Box    : Gtk_Box;
       Page   : Switches_Editor_Page;
@@ -327,12 +323,6 @@ package body Cpp_Module is
         (Page, Box, -"Debug information", "-g",
          -("Produce debugging information in the operating system's"
            & " native format"));
-      Add_Dependency (Master_Page    => Get_Page (Editor, "Make"),
-                      Master_Switch  => "-g",
-                      Master_Status  => True,
-                      Slave_Page     => Page,
-                      Slave_Switch   => "-g",
-                      Slave_Activate => True);
 
       Gtk_New (Frame, -"Messages");
       Set_Border_Width (Frame, 5);
