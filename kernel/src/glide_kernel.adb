@@ -549,7 +549,7 @@ package body Glide_Kernel is
          Set_Context_Information
            (Handle.Current_Context,
             Kernel  => Handle,
-            Creator => null);
+            Creator => Module);
       end if;
 
       return Kernel.Current_Context;
