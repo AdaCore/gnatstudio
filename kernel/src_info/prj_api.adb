@@ -4101,6 +4101,18 @@ package body Prj_API is
       end if;
    end Get_Languages;
 
+   ------------------
+   -- Get_Vcs_Kind --
+   ------------------
+
+   function Get_Vcs_Kind (Project_View : Project_Id) return String is
+   begin
+      return Get_Attribute_Value
+        (Project_View,
+         Attribute_Name => Vcs_Kind_Attribute,
+         Package_Name   => Ide_Package);
+   end Get_Vcs_Kind;
+
    ----------------
    -- Initialize --
    ----------------

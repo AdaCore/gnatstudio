@@ -533,9 +533,13 @@ package Prj_API is
    Remote_Host_Attribute      : constant String := "remote_host";
    Main_Attribute             : constant String := "main";
    Exec_Dir_Attribute         : constant String := "exec_dir";
+   Vcs_File_Check             : constant String := "vcs_file_check";
+   Vcs_Log_Check              : constant String := "vcs_log_check";
 
+   --  The following attributes should be read through specialized subprograms
+   --  (Get_Languages, Get_Vcs_Kind)
+   Vcs_Kind_Attribute         : constant String := "vcs_kind";
    Languages_Attribute : constant String := "languages";
-   --  For the languages attribute, use Get_Languages below
 
    function Get_Attribute_Value
      (Project_View   : Project_Id;
@@ -562,6 +566,12 @@ package Prj_API is
    --  function instead of Get_Attribute_Value, since it will correctly default
    --  to Ada if no language was defined by the user.
    --  The returned value must be freed by the user.
+
+   function Get_Vcs_Kind (Project_View : Project_Id) return String;
+   --  Return the name of the VCS system to use for the source files in
+   --  Project_View.
+   --  The empty string is returned if this attribute wasn't defined
+   --  explicitely by the user.
 
    function Executables_Directory (Project_View : Prj.Project_Id)
       return String;
