@@ -48,6 +48,7 @@ package Src_Info.Queries is
    --  tree itself, and thus can be kept independently in a browser.
 
    type Entity_Information is private;
+   No_Entity_Information : constant Entity_Information;
 
    procedure Destroy (Entity : in out Entity_Information);
    --  Free the memory associated with the entity;
@@ -84,22 +85,27 @@ package Src_Info.Queries is
    --  The status returned by the Find_Declaration_Or_Body routine.
 
    procedure Find_Declaration_Or_Body
-     (Lib_Info           : LI_File_Ptr;
-      File_Name          : String;
-      Entity_Name        : String;
-      Line               : Positive;
-      Column             : Positive;
-      Entity_Declaration : out E_Declaration_Info;
-      Location           : out File_Location;
-      Status             : out Find_Decl_Or_Body_Query_Status);
+     (Lib_Info      : LI_File_Ptr;
+      File_Name     : String;
+      Entity_Name   : String;
+      Line          : Positive;
+      Column        : Positive;
+      Entity        : out Entity_Information;
+      Location      : out File_Location;
+      Status        : out Find_Decl_Or_Body_Query_Status);
    --  Find the location of the declaration for the entity referenced in file
    --  File_Name, at the given location.
-   --  On exit, Entity_Declaration is set to the declaration of the entity.
+   --  On exit, Entity is set to the declaration of the entity.
    --  Location is set to the location where the cursor should be moved (the
    --  next body reference, or the declaration, for instance).
    --
    --  If no entity could be found, Status is set to a value other than
-   --  Success. In that case, Entity_Declaration and Location are irrelevant.
+   --  Success. In that case, Entity and Location are irrelevant.
+   --
+   --  The memory occupied by Entity must be freed by the caller.
+   --
+   --  Note: Location has a short term life: it can no longer be used once you
+   --  reparse Lib_Info, or update its contents.
 
    ----------------
    -- References --
@@ -338,6 +344,9 @@ private
       Decl_Column : Natural;
       Decl_File   : String_Access;
    end record;
+
+   No_Entity_Information : constant Entity_Information :=
+     (null, 1, 0, null);
 
    type Scope_Node;
    type Scope_List is access Scope_Node;

@@ -1628,6 +1628,9 @@ package body Src_Info.ALI is
             Dependencies_Info        => null);
       end if;
 
+      Tmp.LI.LI_Timestamp := To_Timestamp
+        (File_Time_Stamp (Get_Name_String (New_ALI.Afile)));
+
       --  Build the rest of the structure
 
       Process_Units (Tmp, New_ALI);
@@ -1779,8 +1782,6 @@ package body Src_Info.ALI is
         (Handler, Unit, ALIs.Table (New_ALI_Id), Project,
          Predefined_Source_Path, List);
       Success := True;
-      Unit.LI.LI_Timestamp := To_Timestamp
-        (File_Time_Stamp (Unit.LI.LI_Filename.all));
 
    exception
       when ALI_Internal_Error =>

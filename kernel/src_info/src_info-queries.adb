@@ -251,28 +251,29 @@ package body Src_Info.Queries is
    ------------------------------
 
    procedure Find_Declaration_Or_Body
-     (Lib_Info           : LI_File_Ptr;
-      File_Name          : String;
-      Entity_Name        : String;
-      Line               : Positive;
-      Column             : Positive;
-      Entity_Declaration : out E_Declaration_Info;
-      Location           : out File_Location;
-      Status             : out Find_Decl_Or_Body_Query_Status)
+     (Lib_Info      : LI_File_Ptr;
+      File_Name     : String;
+      Entity_Name   : String;
+      Line          : Positive;
+      Column        : Positive;
+      Entity        : out Entity_Information;
+      Location      : out File_Location;
+      Status        : out Find_Decl_Or_Body_Query_Status)
    is
       Current_Sep : File_Info_Ptr_List;
       Current_Dep : Dependency_File_Info_List;
       Ref         : E_Reference_List;
       E_Name      : String := Entity_Name;
+      Decl        : E_Declaration_Info;
 
    begin
       if Case_Insensitive_Identifiers (Lib_Info.LI.Handler) then
          E_Name := To_Lower (E_Name);
       end if;
 
-      Entity_Declaration := No_Declaration_Info;
-      Ref                := null;
-      Status             := Entity_Not_Found;
+      Decl   := No_Declaration_Info;
+      Ref    := null;
+      Status := Entity_Not_Found;
 
       --  Search a matching entity declaration in the Spec
       if Lib_Info.LI.Spec_Info /= null
@@ -281,7 +282,7 @@ package body Src_Info.Queries is
          Find_Spec_Or_Body
            (Lib_Info.LI.Spec_Info.Declarations,
             File_Name, E_Name, Line, Column,
-            Entity_Declaration, Ref, Status);
+            Decl, Ref, Status);
       end if;
 
       --  Search in the Body
@@ -292,7 +293,7 @@ package body Src_Info.Queries is
          Find_Spec_Or_Body
            (Lib_Info.LI.Body_Info.Declarations,
             File_Name, E_Name, Line, Column,
-            Entity_Declaration, Ref, Status);
+            Decl, Ref, Status);
       end if;
 
       --  Search in the separates
@@ -303,7 +304,7 @@ package body Src_Info.Queries is
                Find_Spec_Or_Body
                  (Current_Sep.Value.Declarations,
                   File_Name, E_Name, Line, Column,
-                  Entity_Declaration, Ref, Status);
+                  Decl, Ref, Status);
 
                if Status = Success then
                   exit;
@@ -322,7 +323,7 @@ package body Src_Info.Queries is
                Find_Spec_Or_Body
                  (Current_Dep.Value.Declarations,
                   File_Name, E_Name, Line, Column,
-                  Entity_Declaration, Ref, Status);
+                  Decl, Ref, Status);
                if Status = Success then
                   exit;
                end if;
@@ -341,7 +342,7 @@ package body Src_Info.Queries is
 
       if Status = Success then
          if Ref = null or else Ref.Value.Kind = Body_Entity then
-            Ref := Find_Next_Body_Ref (Entity_Declaration, Ref);
+            Ref := Find_Next_Body_Ref (Decl, Ref);
          else
             Ref := null;
          end if;
@@ -349,9 +350,12 @@ package body Src_Info.Queries is
          if Ref /= null then
             Location := Ref.Value.Location;
          else
-            Location := Entity_Declaration.Declaration.Location;
+            Location := Decl.Declaration.Location;
          end if;
+
+         Entity := Get_Entity (Decl);
       else
+         Entity := No_Entity_Information;
          Trace (Me, "Couldn't find a valid xref for " & E_Name
                 & " line=" & Line'Img & " Column=" & Column'Img
                 & " file=" & File_Name);
@@ -361,9 +365,9 @@ package body Src_Info.Queries is
       when others =>
          --  Trap all exceptions for better robustness, and report an
          --  internal error
-         Entity_Declaration := No_Declaration_Info;
-         Ref                := null;
-         Status             := Internal_Error;
+         Entity := No_Entity_Information;
+         Ref    := null;
+         Status := Internal_Error;
    end Find_Declaration_Or_Body;
 
    -------------
@@ -1199,11 +1203,15 @@ package body Src_Info.Queries is
 
    function Copy (Entity : Entity_Information) return Entity_Information is
    begin
-      return Entity_Information'
-        (Name        => new String' (Entity.Name.all),
-         Decl_Line   => Entity.Decl_Line,
-         Decl_Column => Entity.Decl_Column,
-         Decl_File   => new String' (Entity.Decl_File.all));
+      if Entity = No_Entity_Information then
+         return No_Entity_Information;
+      else
+         return Entity_Information'
+           (Name        => new String' (Entity.Name.all),
+            Decl_Line   => Entity.Decl_Line,
+            Decl_Column => Entity.Decl_Column,
+            Decl_File   => new String' (Entity.Decl_File.all));
+      end if;
    end Copy;
 
    -------------
