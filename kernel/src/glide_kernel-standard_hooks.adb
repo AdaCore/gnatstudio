@@ -315,7 +315,8 @@ package body Glide_Kernel.Standard_Hooks is
       Column_End        : Natural := 0;
       Enable_Navigation : Boolean := True;
       New_File          : Boolean := True;
-      Force_Reload      : Boolean := False)
+      Force_Reload      : Boolean := False;
+      Focus             : Boolean := True)
    is
       Data : constant Source_File_Hooks_Args :=
         (Hooks_Data with
@@ -325,7 +326,8 @@ package body Glide_Kernel.Standard_Hooks is
          Column_End        => Column_End,
          Enable_Navigation => Enable_Navigation,
          New_File          => New_File,
-         Force_Reload      => Force_Reload);
+         Force_Reload      => Force_Reload,
+         Focus             => Focus);
    begin
       if Enable_Navigation then
          declare
@@ -363,7 +365,8 @@ package body Glide_Kernel.Standard_Hooks is
          Column_End        => 0,
          Enable_Navigation => False,
          New_File          => False,
-         Force_Reload      => False);
+         Force_Reload      => False,
+         Focus             => False);
    begin
       if not Run_Hook_Until_Success (Kernel, Open_File_Action_Hook, Data) then
          Trace (Me, "No file editor was registered");
@@ -438,7 +441,8 @@ package body Glide_Kernel.Standard_Hooks is
                Column_End        => Nth_Arg (Data, 5),
                Enable_Navigation => Nth_Arg (Data, 6),
                New_File          => Nth_Arg (Data, 7),
-               Force_Reload      => Nth_Arg (Data, 8));
+               Force_Reload      => Nth_Arg (Data, 8),
+               Focus             => Nth_Arg (Data, 9, True));
       Set_Return_Value (Data, Run_Hook_Until_Success (Kernel, Name, Args));
    end Open_File_Run_Hook_Handler;
 
@@ -932,7 +936,7 @@ package body Glide_Kernel.Standard_Hooks is
         (Kernel, Open_File_Hook_Type,
         -("Common type for all hooks related to opening files." & ASCII.LF
           & "Arguments are the following: (file, line, column, column_end,"
-          & " enable_navigation, new_file, force_reload)" & ASCII.LF
+          & " enable_navigation, new_file, force_reload, [focus])" & ASCII.LF
           & "Do not confuse with " & File_Edited_Hook & " which signals that"
           & " a file has just been opened."),
          Hook_With_Args_And_Return, Open_File_Run_Hook_Handler'Access);
