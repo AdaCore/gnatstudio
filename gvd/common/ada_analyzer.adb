@@ -1495,6 +1495,7 @@ package body Ada_Analyzer is
             if Top_Token.Token = Tok_Function
               and then
                 (Reserved = Tok_Abstract
+                 or else Reserved = Tok_Separate
                  or else
                    Start_Of_Line /= Line_Start (Buffer, Top_Token.Sloc.Index))
             then
@@ -1828,9 +1829,11 @@ package body Ada_Analyzer is
               and then (Token /= Tok_Is
                         or else In_Generic
                         or else Top_Token.Token /= Tok_Function
-                        or else not Look_For (Index_Next, "abstract"))
-               --  'is abstract' will be indented when handling 'abstract'
-               --  for functions
+                        or else not
+                          (Look_For (Index_Next, "abstract")
+                           or else Look_For (Index_Next, "separate")))
+               --  'is abstract|separate' will be indented when handling
+               --  'abstract|separate' for functions
             then
                Do_Indent (Prec, Num_Spaces);
                Num_Spaces := Num_Spaces + Indent_Level;
