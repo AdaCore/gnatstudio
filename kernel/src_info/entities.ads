@@ -102,6 +102,7 @@ package Entities is
       Label_On_Block,
       Label_On_Loop,
       Label_On_Statement,
+      Macro,
       Modular_Integer,
       Named_Number,
       Function_Or_Operator,
@@ -113,7 +114,8 @@ package Entities is
       Record_Kind,
       Signed_Integer,
       String_Kind,
-      Task_Kind);
+      Task_Kind,
+      Union);
    --  The entity kind (sorted by alphabetical order).
    --
    --  Note that Boolean is treated in a special way: it is treated as
@@ -325,6 +327,17 @@ package Entities is
    --  Returns a special source file, which should be used for all
    --  predefined entities of the languages
 
+   procedure Update_Time_Stamp
+     (File : Source_File; Timestamp : Ada.Calendar.Time := VFS.No_Time);
+   pragma Inline (Update_Time_Stamp);
+   --  Update the timestamp that indicates when LI was last parsed.
+   --  The exact meaning of that timestamp depends on the LI_Handler used to
+   --  parse the file, it isn't necessary the timestamp of the file itself.
+
+   function Get_Time_Stamp (File : Source_File) return Ada.Calendar.Time;
+   pragma Inline (Get_Time_Stamp);
+   --  Return the timestamp last set through Update_Timestamp
+
    -------------------
    -- File_Location --
    -------------------
@@ -356,14 +369,24 @@ package Entities is
    --  Change reference counting for the file. When it reaches 0, the memory
    --  is freed.
 
+   Predefined_Line   : constant Natural := 0;
+   Predefined_Column : constant Natural := 0;
+   --  Line and column to use for predefined entities
+
    function Get_Or_Create
-     (Db     : Entities_Database;
-      Name   : String;
-      File   : Source_File;
-      Line   : Natural;
-      Column : Natural) return Entity_Information;
+     (Db           : Entities_Database;
+      Name         : String := "";
+      File         : Source_File;
+      Line         : Natural;
+      Column       : Natural;
+      Allow_Create : Boolean := True) return Entity_Information;
    --  Get an existing or create a new declaration for an entity. File, Line
    --  and column are the location of irs declaration.
+   --  If Name is left to the empty string, the entity is considered as
+   --  temporarily unresolved. When used, it will be replaced, if possible,
+   --  by the actual entity at that location.
+   --  When creating an entity in the predefined file, always set Line and
+   --  Column to Predefined_Line and Predefined_Column.
 
    procedure Get_End_Of_Scope
      (Entity   : Entity_Information;
@@ -378,6 +401,13 @@ package Entities is
      (Entity : Entity_Information) return File_Location;
    pragma Inline (Get_Declaration_Of);
    --  Return the location of the declaration for the entity
+
+   function Get_Kind (Entity : Entity_Information) return E_Kind;
+   --  Return the kind of the entity.
+
+   function Get_Returned_Type
+     (Entity : Entity_Information) return Entity_Information;
+   --  Return the type returned by a subprogram
 
    ----------------------
    -- Setting entities --
@@ -432,6 +462,25 @@ package Entities is
 
    type Scope_Tree is private;
 
+   -------------------------
+   -- LI_Handler_Iterator --
+   -------------------------
+
+   type LI_Handler_Iterator is abstract tagged null record;
+   type LI_Handler_Iterator_Access is access all LI_Handler_Iterator'Class;
+
+   procedure Free (LI : in out LI_Handler_Iterator_Access);
+   --  Free the memory associated with the handler, and destroy the iterator
+
+   procedure Destroy (Iterator : in out LI_Handler_Iterator) is abstract;
+   --  Free the memory used by the iterator
+
+   procedure Continue
+     (Iterator : in out LI_Handler_Iterator;
+      Finished : out Boolean) is abstract;
+   --  Move to the next source file that must be analyzed, if the previous file
+   --  is fully parsed. Nothing is done otherwise.
+
    ----------------
    -- LI_Handler --
    ----------------
@@ -463,7 +512,19 @@ package Entities is
       In_Directory    : String := "") is abstract;
    --  Parse all the existing LI information for all the files in Project.
    --  The search is limited to files in In_Directory if this isn't the
-   --  empty string.
+   --  empty string. This should be called only after Generate_LI_For_Project.
+
+   function Generate_LI_For_Project
+     (Handler   : access LI_Handler_Record;
+      Project   : Projects.Project_Type;
+      Recursive : Boolean := False)
+      return LI_Handler_Iterator'Class is abstract;
+   --  Generate the LI information for all the source files in Project (and all
+   --  its imported projects if Recursive is True).
+   --  This function should do as few work as possible, and the iterator will
+   --  be called until all the files are processed.
+   --  Note that only the database on the disk needs to be regenerated, not the
+   --  LI structures themselves, which will be done by Get_Source_Info.
 
 private
 
@@ -535,6 +596,10 @@ private
 
    type Entity_Information_Record is tagged record
       Name                  : GNAT.OS_Lib.String_Access;
+      --  If Name'Length = 0, this is a partially defined entity: its name
+      --  couldn't be resolved when the LI file was parsed, and will need to
+      --  be computed dynamically the first time the entity is used.
+
       Kind                  : E_Kind;
 
       Declaration           : File_Location;
@@ -579,6 +644,17 @@ private
       --  The reference count for this entity. When it reaches 0, the entity
       --  is released from memory.
    end record;
+
+   function Is_Partial_Entity (Entity : Entity_Information) return Boolean;
+   pragma Inline (Is_Partial_Entity);
+   --  Return True if Entity is a partial entity (ie its name couldn't be
+   --  resolved when the LI file was parsed, and needs to be computed the first
+   --  time the entity is used).
+
+   procedure Resolve_Partial_Entity (Entity : in out Entity_Information);
+   --  If Entity is a partial entity (ie its name could not be computed when
+   --  the LI file was parsed, and an empty string was passed to Get_Or_Create)
+   --  then it is replaced, if possible, by the actual entity it stands for
 
    --------------------
    -- Entities_Table --
@@ -737,7 +813,8 @@ private
       LIs      : LI_HTable.HTable;
 
       Predefined_File : Source_File;
-      Handlers        : LI_Handler;   --  ??? should be Language_Handler
+      ALI_Handlers        : LI_Handler;   --  ??? should be Language_Handler
+      CPP_Handlers        : LI_Handler;   --  ??? Merge with previous
    end record;
    type Entities_Database is access Entities_Database_Record;
 
