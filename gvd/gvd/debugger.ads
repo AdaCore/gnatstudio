@@ -436,8 +436,12 @@ package Debugger is
      (Debugger : access Debugger_Root;
       Command : String) return Boolean is abstract;
    --  Return True if Command changes the context of the debugged process.
-   --  This is a superset of Is_Execution_Command (e.g includes also
-   --  Thread_Switch).
+   --  (e.g thread switching).
+
+   function Is_Load_Command
+     (Debugger : access Debugger_Root;
+      Command  : String) return Boolean is abstract;
+   --  Return True if Command changes the module(s) to debug (e.g load file).
 
    function Is_Break_Command
      (Debugger : access Debugger_Root;
