@@ -3593,7 +3593,7 @@ package body Src_Info.CPP is
                            and then Ref.Value.Location.Line
                               = Sym.Start_Position.Line
                            and then Ref.Value.Location.Column
-                              = Sym.Start_Position.Column
+                              = 0
                            and then Ref.Value.Kind = Reference);
                      Ref := Ref.Next;
                   end loop;
