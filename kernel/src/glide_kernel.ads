@@ -68,24 +68,14 @@ package Glide_Kernel is
    --  the modules can add entries in the menus and the MDI.
    --  Only the modules that haven't been initialized yet are processed.
 
-   procedure Set_Predefined_Source_Path
-     (Handle : access Kernel_Handle_Record;
-      Path   : String);
-   --  Set the predefined Source_Path for the given Kernel Handle. This is
-   --  the path where the compiler searches for source files when they are
-   --  not part of the Project.
+   procedure Compute_Predefined_Paths (Handle : access Kernel_Handle_Record);
+   --  Compute the predefined source and object paths, given the current
+   --  project view associated with Handle.
 
    function Get_Predefined_Source_Path
      (Handle : access Kernel_Handle_Record) return String;
    --  Return the predefined Source_Path associated to the given Kernel Handle.
    --  Return the empty string if no source path has been set yet.
-
-   procedure Set_Predefined_Object_Path
-     (Handle : access Kernel_Handle_Record;
-      Path   : String);
-   --  Set the predefined Object_Path for the given Kernel Handle. This is
-   --  the path where the compiler searches for object and ALI files when they
-   --  are not associated to a source file that is part of the project.
 
    function Get_Predefined_Object_Path
      (Handle : access Kernel_Handle_Record) return String;

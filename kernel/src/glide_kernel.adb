@@ -29,7 +29,9 @@ with Gtkada.MDI;                use Gtkada.MDI;
 with System;                    use System;
 
 with Ada.Text_IO;               use Ada.Text_IO;
+with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
+with GNAT.Expect;               use GNAT.Expect;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with Ada.Unchecked_Deallocation;
 with String_Utils;              use String_Utils;
@@ -112,20 +114,11 @@ package body Glide_Kernel is
       Reset_Source_Info_List (Handle);
 
       Gtk_New (Handle.Tooltips);
-
-      Set_Predefined_Source_Path
-        (Handle, ".:" &
-         "/usr/local/gnat/lib/gcc-lib/i686-pc-linux-gnu/2.8.1/adainclude");
-      Set_Predefined_Object_Path
-        (Handle, ".:" &
-         "/usr/local/gnat/lib/gcc-lib/i686-pc-linux-gnu/2.8.1/adalib");
-      --  ??? This is a temporary hack for the demo. We should really compute
-      --  these values from the output of gnatls -v...
-
+      Compute_Predefined_Paths (Handle);
       Load_Preferences
         (Handle, String_Utils.Name_As_Directory (Home_Dir) & "preferences");
 
-      --  ??? Shouldn't use naming schemes instead ? This duplicates the
+      --  ??? Should use naming schemes instead. This duplicates the
       --  information uselessly.
       Reset_File_Extensions;
       Add_File_Extensions (Ada_Lang, Get_Pref (Handle, Ada_Extensions));
@@ -176,43 +169,118 @@ package body Glide_Kernel is
       end loop;
    end Initialize_All_Modules;
 
-   --------------------------------
-   -- Set_Predefined_Source_Path --
-   --------------------------------
+   ------------------------------
+   -- Compute_Predefined_Paths --
+   ------------------------------
 
-   procedure Set_Predefined_Source_Path
-     (Handle : access Kernel_Handle_Record;
-      Path   : String) is
+   procedure Compute_Predefined_Paths (Handle : access Kernel_Handle_Record) is
+      Source_Path : Boolean := True;
+
+      procedure Add_Directory (S : String);
+      --  Add S to the search path.
+      --  If Source_Path is True, the source path is modified.
+      --  Otherwise, the object path is modified.
+
+      procedure Add_Directory (S : String) is
+         Tmp : String_Access;
+      begin
+         if S = "" then
+            return;
+
+         elsif S = "<Current_Directory>" then
+            if Source_Path then
+               Tmp := Handle.Predefined_Source_Path;
+               Handle.Predefined_Source_Path :=
+                 new String' (Handle.Predefined_Source_Path.all & ":.");
+
+            else
+               Tmp := Handle.Predefined_Object_Path;
+               Handle.Predefined_Object_Path :=
+                 new String' (Handle.Predefined_Object_Path.all & ":.");
+            end if;
+
+         elsif Source_Path then
+            Tmp := Handle.Predefined_Source_Path;
+            Handle.Predefined_Source_Path :=
+              new String' (Handle.Predefined_Source_Path.all & ":" & S);
+
+         else
+            Tmp := Handle.Predefined_Object_Path;
+            Handle.Predefined_Object_Path :=
+              new String' (Handle.Predefined_Object_Path.all & ":" & S);
+         end if;
+
+         Free (Tmp);
+      end Add_Directory;
+
+      Fd     : Process_Descriptor;
+      Result : Expect_Match;
+      Args   : Argument_List (1 .. 1);
+
    begin
-      GNAT.OS_Lib.Free (Handle.Predefined_Source_Path);
-      Handle.Predefined_Source_Path := new String'(Path);
-   end Set_Predefined_Source_Path;
+      --  ???
+      --  Should get name of gnatls from Handle.Project_View, and only call
+      --  gnatls if its name has changed.
+
+      if Handle.Predefined_Source_Path /= null then
+         return;
+      end if;
+
+      Handle.Predefined_Source_Path := new String' ("");
+      Handle.Predefined_Object_Path := new String' ("");
+
+      Args (1) := new String' ("-v");
+      Non_Blocking_Spawn
+        (Fd, "gnatls", Args, Buffer_Size => 0, Err_To_Out => True);
+      Free (Args (1));
+      Expect (Fd, Result, "Source Search Path:\n", Timeout => -1);
+
+      loop
+         Expect (Fd, Result, "\n", Timeout => -1);
+
+         declare
+            S : constant String := Trim (Expect_Out (Fd), Ada.Strings.Left);
+         begin
+            if S = "Object Search Path:" & ASCII.LF then
+               Source_Path := False;
+            else
+               Add_Directory (S (S'First .. S'Last - 1));
+            end if;
+         end;
+      end loop;
+
+   exception
+      when Process_Died =>
+         Close (Fd);
+   end Compute_Predefined_Paths;
 
    --------------------------------
    -- Get_Predefined_Source_Path --
    --------------------------------
 
    function Get_Predefined_Source_Path
-     (Handle : access Kernel_Handle_Record) return String is
+     (Handle : access Kernel_Handle_Record) return String
+   is
+      Gnatlist : String_Access;
    begin
       if Handle.Predefined_Source_Path = null then
-         return "";
+         --  Gnatlist := new String' (Get_Gnatlist (Handle.Project));
+         Gnatlist := new String' ("");
+
+         if Gnatlist.all = "" then
+            Free (Gnatlist);
+            Gnatlist := new String' ("gnatls");
+         end if;
+
+         --  Parse_Gnatlist (Gnatlist);
+         Free (Gnatlist);
+
+         return ".";
+
+      else
+         return Handle.Predefined_Source_Path.all;
       end if;
-
-      return Handle.Predefined_Source_Path.all;
    end Get_Predefined_Source_Path;
-
-   --------------------------------
-   -- Set_Predefined_Object_Path --
-   --------------------------------
-
-   procedure Set_Predefined_Object_Path
-     (Handle : access Kernel_Handle_Record;
-      Path   : String) is
-   begin
-      GNAT.OS_Lib.Free (Handle.Predefined_Object_Path);
-      Handle.Predefined_Object_Path := new String'(Path);
-   end Set_Predefined_Object_Path;
 
    --------------------------------
    -- Get_Predefined_Object_Path --
@@ -222,10 +290,10 @@ package body Glide_Kernel is
      (Handle : access Kernel_Handle_Record) return String is
    begin
       if Handle.Predefined_Object_Path = null then
-         return "";
+         return ".";
+      else
+         return Handle.Predefined_Object_Path.all;
       end if;
-
-      return Handle.Predefined_Object_Path.all;
    end Get_Predefined_Object_Path;
 
    -------------------------------------
