@@ -240,6 +240,16 @@ package body Src_Info.Debug is
          Put (" End=");
          Dump_Pos_And_R_Kind (ED.End_Of_Scope.Location, ED.End_Of_Scope.Kind);
       end if;
+
+      --  If there is some renaming information
+      if ED.Rename /= Null_File_Location then
+         Put (" <renames>=");
+         if ED.Rename.File /= ED.Location.File then
+            Dump_Source_File (ED.Rename.File);
+            Put ('|');
+         end if;
+         Dump_Pos_And_R_Kind (ED.Rename, Label);
+      end if;
    end Dump_E_Declaration;
 
    -----------------------------
