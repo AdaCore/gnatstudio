@@ -43,15 +43,11 @@ with Gtk.Text_Mark;               use Gtk.Text_Mark;
 with Gtk.Text_View;               use Gtk.Text_View;
 with Gtk.Widget;                  use Gtk.Widget;
 with Gtkada.Handlers;             use Gtkada.Handlers;
-with Gtkada.Types;                use Gtkada.Types;
 with Src_Editor_Buffer;           use Src_Editor_Buffer;
 with Pango.Font;                  use Pango.Font;
 with Pango.Layout;                use Pango.Layout;
 
 with GVD;
-with Commands.Editor;             use Commands.Editor;
-with Language;                    use Language;
-with Interfaces.C.Strings;        use Interfaces.C.Strings;
 with Ada.Exceptions;              use Ada.Exceptions;
 with Traces;                      use Traces;
 with Basic_Types;                 use Basic_Types;
@@ -67,10 +63,6 @@ package body Src_Editor_View is
    --  The margin left of the text.
 
    Me : constant Debug_Handle := Create ("Source_View");
-
-   function Strlen
-     (Str : Interfaces.C.Strings.chars_ptr) return Interfaces.C.size_t;
-   pragma Import (C, Strlen);
 
    use type Pango.Font.Pango_Font_Description;
    procedure Setup (Data : Source_View; Id : Gtk.Handlers.Handler_Id);
@@ -182,14 +174,6 @@ package body Src_Editor_View is
    procedure Restore_Cursor_Position
      (View : access Source_View_Record'Class);
    --  Restore the stored cursor position.
-
-   function Do_Indentation
-     (Buffer   : Source_Buffer;
-      Lang     : Language_Access;
-      New_Line : Boolean := True) return Boolean;
-   --  If supported by the language and if the preferences are activated,
-   --  automatically indent at the current cursor position.
-   --  If New_Line is True, insert a new line and insert spaces on the new line
 
    procedure Preferences_Changed
      (View : access GObject_Record'Class; Kernel : Kernel_Handle);
@@ -1316,329 +1300,6 @@ package body Src_Editor_View is
          return False;
    end Button_Press_Event_Cb;
 
-   --------------------
-   -- Do_Indentation --
-   --------------------
-
-   function Do_Indentation
-     (Buffer   : Source_Buffer;
-      Lang     : Language_Access;
-      New_Line : Boolean := True) return Boolean
-   is
-      Indent_Style  : Indentation_Kind;
-
-      Start         : Gtk_Text_Iter;
-      Pos           : Gtk_Text_Iter;
-      Iter          : Gtk_Text_Iter;
-      Indent        : Natural;
-      Next_Indent   : Natural;
-      Ignore        : Natural;
-      Line, Col     : Gint;
-      Current_Line  : Gint;
-      Offset        : Integer;
-      Global_Offset : Integer := 0;
-
-      Blanks        : Natural;
-      C_Str         : Gtkada.Types.Chars_Ptr := Gtkada.Types.Null_Ptr;
-      Line_Ends     : Boolean := True;
-      Line_Start    : Natural;
-      Line_End      : Natural;
-      Result        : Boolean;
-      Slice_Length  : Natural;
-      Slice         : Unchecked_String_Access;
-      pragma Suppress (Access_Check, Slice);
-      Index         : Integer;
-      Replace_Cmd   : Editor_Replace_Slice;
-      Tabs_Used     : Boolean := False;
-      Char          : Character;
-      Indent_Params : Indent_Parameters;
-      Use_Tabs      : Boolean := False;
-
-      Cursor_Line   : Gint;
-      Cursor_Column : Gint;
-
-      function Blank_Slice (Count : Natural; Use_Tabs : Boolean) return String;
-      --  Return a string representing count blanks.
-      --  If Use_Tabs is True, use ASCII.HT characters as much as possible,
-      --  otherwise use only spaces.
-
-      procedure Find_Non_Blank (Last : Natural);
-      --  Set Index to the first non blank character in Slice (Index .. Last)
-      --  Also set Tabs_Used to True if any tab character is found.
-
-      procedure Local_Next_Indentation
-        (Lang          : Language_Access;
-         Buffer        : String;
-         Indent        : out Natural;
-         Next_Indent   : out Natural;
-         Indent_Params : Indent_Parameters);
-      --  Wrapper around Next_Indentation to take into account Indent_Style.
-
-      -----------------
-      -- Blank_Slice --
-      -----------------
-
-      function Blank_Slice
-        (Count : Natural; Use_Tabs : Boolean) return String is
-      begin
-         if Use_Tabs then
-            return (1 .. Count / Indent_Params.Tab_Width => ASCII.HT) &
-              (1 .. Count mod Indent_Params.Tab_Width => ' ');
-         else
-            return (1 .. Count => ' ');
-         end if;
-      end Blank_Slice;
-
-      ---------------------
-      -- First_Non_Blank --
-      ---------------------
-
-      procedure Find_Non_Blank (Last : Natural) is
-      begin
-         while Index <= Last
-           and then (Slice (Index) = ' '
-                     or else Slice (Index) = ASCII.HT)
-         loop
-            if Slice (Index) = ASCII.HT then
-               Tabs_Used := True;
-            end if;
-
-            Index := Index + 1;
-         end loop;
-      end Find_Non_Blank;
-
-      ----------------------------
-      -- Local_Next_Indentation --
-      ----------------------------
-
-      procedure Local_Next_Indentation
-        (Lang          : Language_Access;
-         Buffer        : String;
-         Indent        : out Natural;
-         Next_Indent   : out Natural;
-         Indent_Params : Indent_Parameters) is
-      begin
-         if Indent_Style = Simple then
-            Next_Indentation
-              (Language_Root (Lang.all)'Access,
-               Buffer, Indent, Next_Indent, Indent_Params);
-
-         else
-            Next_Indentation
-              (Lang, Buffer, Indent, Next_Indent, Indent_Params);
-         end if;
-      end Local_Next_Indentation;
-
-   begin  --  Do_Indentation
-      if Lang = null
-        or else not Get_Language_Context (Lang).Can_Indent
-      then
-         return False;
-      end if;
-
-      Get_Indentation_Parameters
-        (Lang         => Lang,
-         Use_Tabs     => Use_Tabs,
-         Params       => Indent_Params,
-         Indent_Style => Indent_Style);
-
-      if Indent_Style = None then
-         return False;
-      end if;
-
-      if Use_Tabs then
-         Get_Screen_Position (Buffer, Cursor_Line, Cursor_Column);
-      else
-         Get_Cursor_Position (Buffer, Cursor_Line, Cursor_Column);
-      end if;
-
-      Get_Selection_Bounds (Buffer, Start, Pos, Result);
-
-      if Result then
-         --  Do not consider a line selected if only the first character
-         --  is selected.
-
-         if Get_Line_Offset (Pos) = 0 then
-            Backward_Char (Pos, Result);
-         end if;
-
-         --  Do not consider a line selected if only the last character is
-         --  selected.
-
-         if Ends_Line (Start) then
-            Forward_Char (Start, Result);
-         end if;
-      end if;
-
-      Copy (Pos, Iter);
-
-      --  Go to last char of the line pointed by Iter
-
-      if not Ends_Line (Iter) then
-         Forward_To_Line_End (Iter, Result);
-         Line_Ends := False;
-      end if;
-
-      Line := Get_Line (Iter);
-      Col  := Get_Line_Offset (Iter);
-
-      --  We're spending most of our time getting this string.
-      --  Consider saving the current line, indentation level and
-      --  the stacks used by Next_Indentation to avoid parsing
-      --  the buffer from scratch each time.
-
-      C_Str        := Get_Slice (Buffer, 0, 0, Line, Col);
-      Slice        := To_Unchecked_String (C_Str);
-      Slice_Length := Natural (Strlen (C_Str));
-
-      if New_Line then
-         Offset := Natural (Col - Get_Line_Offset (Pos));
-         Blanks := Slice_Length - Offset + 1;
-
-         if Line_Ends then
-            Slice_Length := Slice_Length + 1;
-            Slice (Slice_Length) := ASCII.LF;
-         end if;
-
-         while Blanks <= Slice_Length
-           and then (Slice (Blanks) = ' ' or else Slice (Blanks) = ASCII.HT)
-         loop
-            Blanks := Blanks + 1;
-         end loop;
-
-         if Line_Ends then
-            Local_Next_Indentation
-              (Lang, Slice (1 .. Slice_Length), Indent, Next_Indent,
-               Indent_Params);
-         else
-            Index := Integer (Get_Offset (Pos)) + 1;
-            Char  := Slice (Index);
-            Slice (Index) := ASCII.LF;
-            Local_Next_Indentation
-              (Lang, Slice (1 .. Index), Indent, Ignore, Indent_Params);
-            Slice (Index) := Char;
-
-            --  ??? Would be nice to call Local_Next_Indentation once, which
-            --  would be possible with e.g a Prev_Indent parameter
-
-            Local_Next_Indentation
-              (Lang,
-               Slice (1 .. Index - 1) & ASCII.LF &
-                 Slice (Index .. Slice_Length),
-               Next_Indent, Ignore, Indent_Params);
-         end if;
-
-         Set_Line_Offset (Iter, 0);
-         Line_Start := Natural (Get_Offset (Iter)) + 1;
-         Index      := Line_Start;
-
-         Find_Non_Blank (Slice_Length);
-
-         --  Replace everything at once, important for efficiency
-         --  and also because otherwise, undo/redo won't work properly.
-
-         if Line_Ends then
-            Slice_Length := Slice_Length - 1;
-         end if;
-
-         Create
-           (Replace_Cmd,
-            Buffer,
-            Integer (Line), 0,
-            Integer (Line), Integer (Col),
-            Blank_Slice (Indent, Use_Tabs) &
-            Slice (Index .. Slice_Length - Offset) & ASCII.LF &
-            Blank_Slice (Next_Indent, Use_Tabs) &
-            Slice (Blanks .. Slice_Length));
-         Enqueue (Buffer, Command_Access (Replace_Cmd));
-
-         --  Need to recompute iter, since the slice replacement that
-         --  we just did has invalidated iter.
-
-         if Is_Valid_Position (Buffer, Line + 1, Gint (Next_Indent)) then
-            Get_Iter_At_Line_Offset
-              (Buffer, Pos, Line + 1, Gint (Next_Indent));
-            Place_Cursor (Buffer, Pos);
-         end if;
-
-      else
-         Current_Line := Get_Line (Start);
-         Set_Line_Offset (Start, 0);
-         Col := Get_Line_Offset (Pos);
-
-         --  In the loop below, Global_Offset contains the offset between
-         --  the modified buffer, and the original buffer, caused by the
-         --  buffer replacements.
-
-         loop
-            Line_Start := Natural (Get_Offset (Start)) + 1 - Global_Offset;
-            Index      := Line_Start;
-
-            if not Ends_Line (Start) then
-               Forward_To_Line_End (Start, Result);
-            end if;
-
-            Line_End := Natural (Get_Offset (Start)) + 1 - Global_Offset;
-            Local_Next_Indentation
-              (Lang, Slice (1 .. Line_End),
-               Indent, Next_Indent, Indent_Params);
-
-            Find_Non_Blank (Line_End);
-            Offset := Index - Line_Start;
-
-            if Tabs_Used or else Offset /= Indent then
-               --  Only indent if the current indentation is wrong
-               --  ??? Would be nice to indent the whole selection at once,
-               --  this would make the undo/redo behavior more intuitive.
-
-               if Current_Line = Cursor_Line then
-                  Cursor_Column := Cursor_Column - Gint (Offset - Indent);
-
-                  if Cursor_Column < 0 then
-                     Cursor_Column := 0;
-                  end if;
-               end if;
-
-               Create
-                 (Replace_Cmd,
-                  Buffer,
-                  Integer (Current_Line), 0,
-                  Integer (Current_Line), Offset,
-                  Blank_Slice (Indent, Use_Tabs));
-               Enqueue (Buffer, Command_Access (Replace_Cmd));
-               Global_Offset := Global_Offset - Offset + Indent;
-            end if;
-
-            exit when Current_Line >= Line;
-
-            Current_Line := Current_Line + 1;
-            Get_Iter_At_Line_Offset (Buffer, Start, Current_Line);
-         end loop;
-
-         --  Replace the cursor.
-
-         if Use_Tabs then
-            Set_Screen_Position (Buffer, Cursor_Line, Cursor_Column);
-         else
-            Set_Cursor_Position (Buffer, Cursor_Line, Cursor_Column);
-         end if;
-      end if;
-
-      g_free (C_Str);
-      return True;
-
-   exception
-      when others =>
-         --  Stop propagation of exception, since doing nothing
-         --  in this callback is harmless.
-
-         if C_Str /= Gtkada.Types.Null_Ptr then
-            g_free (C_Str);
-         end if;
-
-         return False;
-   end Do_Indentation;
-
    ------------------------
    -- Key_Press_Event_Cb --
    ------------------------
@@ -1650,56 +1311,17 @@ package body Src_Editor_View is
       View           : constant Source_View   := Source_View (Widget);
       Buffer         : constant Source_Buffer :=
         Source_Buffer (Get_Buffer (View));
-      Key            : constant Gdk_Key_Type  := Get_Key_Val (Event);
-
-      Indent_Key     : Gdk_Key_Type;
-      Indent_Modif   : Gdk_Modifier_Type;
-
-      Complete_Key   : Gdk_Key_Type;
-      Complete_Modif : Gdk_Modifier_Type;
-
-      Delim_Jump_Key   : Gdk_Key_Type;
-      Delim_Jump_Modif : Gdk_Modifier_Type;
 
    begin
-      Get_Pref
-        (Get_Kernel (Buffer),
-         Delimiters_Jump_Key,
-         Delim_Jump_Modif,
-         Delim_Jump_Key);
-
-      if Key = Delim_Jump_Key
-        and then Get_State (Event) = Delim_Jump_Modif
-      then
-         Jump_To_Delimiter (Buffer);
-         return True;
-      end if;
-
       if not Get_Editable (View) then
          return False;
       end if;
 
-      Get_Pref
-        (Get_Kernel (Buffer), Indentation_Key, Indent_Modif, Indent_Key);
-
-      if Key = Indent_Key and then Get_State (Event) = Indent_Modif then
-         if Do_Indentation (Buffer, Get_Language (Buffer), False) then
-            return True;
-         end if;
-      end if;
-
-      Get_Pref
-        (Get_Kernel (Buffer), Completion_Key, Complete_Modif, Complete_Key);
-
-      if Key = Complete_Key and then Get_State (Event) = Complete_Modif then
-         Do_Completion (Buffer);
-         return True;
-      end if;
-
-      case Key is
+      case Get_Key_Val (Event) is
          when GDK_Return =>
             External_End_Action (Buffer);
 
+            --  ??? COULD BE A KEY HANDLER AS WELL
             if Do_Indentation (Buffer, Get_Language (Buffer), True) then
                return True;
             end if;
@@ -1710,11 +1332,13 @@ package body Src_Editor_View is
          =>
             External_End_Action (Buffer);
 
+         --  ??? Must be configurable
          when GDK_LC_z | GDK_Z =>
             if (Get_State (Event) and Control_Mask) /= 0 then
                Undo (Buffer);
             end if;
 
+         --  ??? Must be configurable
          when GDK_LC_r | GDK_R =>
             if (Get_State (Event) and Control_Mask) /= 0 then
                Redo (Buffer);
