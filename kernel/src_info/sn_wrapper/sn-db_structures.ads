@@ -36,310 +36,310 @@ package SN.DB_Structures is
    --------------------------------------------------------
 
    type BY_Table is record
-         Referred_Class : Segment;
-         Referred_Symbol_Name : Segment;
-         Referred_Symbol : Symbol_Type;
-         Class : Segment;
-         Symbol_Name : Segment;
-         Symbol : Symbol_Type;
-         Access_Type : Segment;
-         File_Name : Segment;
-         Position : Point;
-         Referred_Argument_Types : Segment_Vector.Node_Access;
-         Caller_Argument_Types : Segment_Vector.Node_Access;
-         Buffer : GNAT.OS_Lib.String_Access;
+      Referred_Class : Segment;
+      Referred_Symbol_Name : Segment;
+      Referred_Symbol : Symbol_Type;
+      Class : Segment;
+      Symbol_Name : Segment;
+      Symbol : Symbol_Type;
+      Access_Type : Segment;
+      File_Name : Segment;
+      Position : Point;
+      Referred_Argument_Types : Segment_Vector.Node_Access;
+      Caller_Argument_Types : Segment_Vector.Node_Access;
+      Buffer : GNAT.OS_Lib.String_Access;
    end record;
    --  Referred-By
 
    type CL_Table is record
-         Name : Segment;
-         File_Name : Segment;
-         Start_Position : Point;
-         End_Position : Point;
-         Attributes : Integer;
-         Template_Parameters : Segment;
-         Comments : Segment;
-         Buffer : GNAT.OS_Lib.String_Access;
+      Name : Segment;
+      File_Name : Segment;
+      Start_Position : Point;
+      End_Position : Point;
+      Attributes : Integer;
+      Template_Parameters : Segment;
+      Comments : Segment;
+      Buffer : GNAT.OS_Lib.String_Access;
    end record;
    --  Classes
 
    type COM_Table is record
-         Name : Segment;
-         File_Name : Segment;
-         Start_Position : Point;
-         End_Position : Point;
-         Attributes : Integer;
-         Comments : Segment;
-         Buffer : GNAT.OS_Lib.String_Access;
+      Name : Segment;
+      File_Name : Segment;
+      Start_Position : Point;
+      End_Position : Point;
+      Attributes : Integer;
+      Comments : Segment;
+      Buffer : GNAT.OS_Lib.String_Access;
    end record;
    --  Common blocks
 
    type CON_Table is record
-         Name : Segment;
-         File_Name : Segment;
-         Start_Position : Point;
-         End_Position : Point;
-         Attributes : Integer;
-         Declared_Type : Segment;
-         Comments : Segment;
-         Buffer : GNAT.OS_Lib.String_Access;
+      Name : Segment;
+      File_Name : Segment;
+      Start_Position : Point;
+      End_Position : Point;
+      Attributes : Integer;
+      Declared_Type : Segment;
+      Comments : Segment;
+      Buffer : GNAT.OS_Lib.String_Access;
    end record;
    --  Constants
 
    type COV_Table is record
-         Common_Block : Segment;
-         Name : Segment;
-         File_Name : Segment;
-         Start_Position : Point;
-         End_Position : Point;
-         Attributes : Integer;
-         Comments : Segment;
-         Buffer : GNAT.OS_Lib.String_Access;
+      Common_Block : Segment;
+      Name : Segment;
+      File_Name : Segment;
+      Start_Position : Point;
+      End_Position : Point;
+      Attributes : Integer;
+      Comments : Segment;
+      Buffer : GNAT.OS_Lib.String_Access;
    end record;
    --  Common value
 
    type E_Table is record
-         Name : Segment;
-         File_Name : Segment;
-         Start_Position : Point;
-         End_Position : Point;
-         Attributes : Integer;
-         Comments : Segment;
-         Buffer : GNAT.OS_Lib.String_Access;
+      Name : Segment;
+      File_Name : Segment;
+      Start_Position : Point;
+      End_Position : Point;
+      Attributes : Integer;
+      Comments : Segment;
+      Buffer : GNAT.OS_Lib.String_Access;
    end record;
    --  Enumerations
 
    type EC_Table is record
-         Name : Segment;
-         File_Name : Segment;
-         Start_Position : Point;
-         End_Position : Point;
-         Attributes : Integer;
-         Enumeration_Name : Segment;
-         Buffer : GNAT.OS_Lib.String_Access;
+      Name : Segment;
+      File_Name : Segment;
+      Start_Position : Point;
+      End_Position : Point;
+      Attributes : Integer;
+      Enumeration_Name : Segment;
+      Buffer : GNAT.OS_Lib.String_Access;
    end record;
    --  Enumeration constants
 
    type F_Table is record
-         Name : Segment;
-         Group : Segment;
-         Parsing_Time : Segment;
-         Highlight_File : Segment;
-         Buffer : GNAT.OS_Lib.String_Access;
+      Name : Segment;
+      Group : Segment;
+      Parsing_Time : Segment;
+      Highlight_File : Segment;
+      Buffer : GNAT.OS_Lib.String_Access;
    end record;
    --  Project File
 
    type FD_Table is record
-         Name : Segment;
-         File_Name : Segment;
-         Start_Position : Point;
-         End_Position : Point;
-         Attributes : Integer;
-         Return_Type : Segment;
-         Arg_Types : Segment_Vector.Node_Access;
-         Arg_Names : Segment_Vector.Node_Access;
-         Comments : Segment;
-         Buffer : GNAT.OS_Lib.String_Access;
+      Name : Segment;
+      File_Name : Segment;
+      Start_Position : Point;
+      End_Position : Point;
+      Attributes : Integer;
+      Return_Type : Segment;
+      Arg_Types : Segment_Vector.Node_Access;
+      Arg_Names : Segment_Vector.Node_Access;
+      Comments : Segment;
+      Buffer : GNAT.OS_Lib.String_Access;
    end record;
    --  Function declarations
 
    type FIL_Table is record
-         File_Name : Segment;
-         Start_Position : Point;
-         Class : Segment;
-         Identifier : Segment;
-         Symbol : Symbol_Type;
-         End_Position : Point;
-         Highlight_Start_Position : Point;
-         Highlight_End_Position : Point;
-         Types_Of_Arguments : Segment_Vector.Node_Access;
-         Buffer : GNAT.OS_Lib.String_Access;
+      File_Name : Segment;
+      Start_Position : Point;
+      Class : Segment;
+      Identifier : Segment;
+      Symbol : Symbol_Type;
+      End_Position : Point;
+      Highlight_Start_Position : Point;
+      Highlight_End_Position : Point;
+      Types_Of_Arguments : Segment_Vector.Node_Access;
+      Buffer : GNAT.OS_Lib.String_Access;
    end record;
    --  Symbols of files
 
    type FR_Table is record
-         Name : Segment;
-         File_Name : Segment;
-         Start_Position : Point;
-         End_Position : Point;
-         Attributes : Integer;
-         Return_Type : Segment;
-         Arg_Types : Segment_Vector.Node_Access;
-         Arg_Names : Segment_Vector.Node_Access;
-         Comments : Segment;
-         Buffer : GNAT.OS_Lib.String_Access;
+      Name : Segment;
+      File_Name : Segment;
+      Start_Position : Point;
+      End_Position : Point;
+      Attributes : Integer;
+      Return_Type : Segment;
+      Arg_Types : Segment_Vector.Node_Access;
+      Arg_Names : Segment_Vector.Node_Access;
+      Comments : Segment;
+      Buffer : GNAT.OS_Lib.String_Access;
    end record;
    --  Friends
 
    type FU_Table is record
-         Class : Segment;
-         Name : Segment;
-         File_Name : Segment;
-         Start_Position : Point;
-         End_Position : Point;
-         Attributes : Integer;
-         Return_Type : Segment;
-         Arg_Types : Segment_Vector.Node_Access;
-         Arg_Names : Segment_Vector.Node_Access;
-         Comments : Segment;
-         Buffer : GNAT.OS_Lib.String_Access;
+      Class : Segment;
+      Name : Segment;
+      File_Name : Segment;
+      Start_Position : Point;
+      End_Position : Point;
+      Attributes : Integer;
+      Return_Type : Segment;
+      Arg_Types : Segment_Vector.Node_Access;
+      Arg_Names : Segment_Vector.Node_Access;
+      Comments : Segment;
+      Buffer : GNAT.OS_Lib.String_Access;
    end record;
    --  Function implementations
    --  The same structure used for method implementations (MI)
    --  Field 'Class' for functions contains '#'
 
    type GV_Table is record
-         Name : Segment;
-         File_Name : Segment;
-         Start_Position : Point;
-         End_Position : Point;
-         Attributes : Integer;
-         Value_Type : Segment;
-         Comments : Segment;
-         Buffer : GNAT.OS_Lib.String_Access;
+      Name : Segment;
+      File_Name : Segment;
+      Start_Position : Point;
+      End_Position : Point;
+      Attributes : Integer;
+      Value_Type : Segment;
+      Comments : Segment;
+      Buffer : GNAT.OS_Lib.String_Access;
    end record;
    --  Global variables
 
    type IN_Table is record
-         Class : Segment;
-         Base_Class : Segment;
-         File_Name : Segment;
-         Start_Position : Point;
-         End_Position : Point;
-         Attributes : Integer;
-         Comments : Segment;
-         Buffer : GNAT.OS_Lib.String_Access;
+      Class : Segment;
+      Base_Class : Segment;
+      File_Name : Segment;
+      Start_Position : Point;
+      End_Position : Point;
+      Attributes : Integer;
+      Comments : Segment;
+      Buffer : GNAT.OS_Lib.String_Access;
    end record;
    --  Inheritances
 
    type IU_Table is record
-         Included_File : Segment;
-         Included_From_File : Segment;
-         Included_At_Position : Point;
-         Buffer : GNAT.OS_Lib.String_Access;
+      Included_File : Segment;
+      Included_From_File : Segment;
+      Included_At_Position : Point;
+      Buffer : GNAT.OS_Lib.String_Access;
    end record;
    --  Includes
 
    type IV_Table is record
-         Class : Segment;
-         Name : Segment;
-         File_Name : Segment;
-         Start_Position : Point;
-         End_Position : Point;
-         Attributes : Integer;
-         Value_Type : Segment;
-         Comments : Segment;
-         Buffer : GNAT.OS_Lib.String_Access;
+      Class : Segment;
+      Name : Segment;
+      File_Name : Segment;
+      Start_Position : Point;
+      End_Position : Point;
+      Attributes : Integer;
+      Value_Type : Segment;
+      Comments : Segment;
+      Buffer : GNAT.OS_Lib.String_Access;
    end record;
    --  Instance variables
 
    type LV_Table is record
-         Function_Name : Segment;
-         Name : Segment;
-         File_Name : Segment;
-         Start_Position : Point;
-         End_Position : Point;
-         Attributes : Integer;
-         Class : Segment;
-         Value_Type : Segment;
-         Arg_Types : Segment_Vector.Node_Access;
-         Buffer : GNAT.OS_Lib.String_Access;
+      Function_Name : Segment;
+      Name : Segment;
+      File_Name : Segment;
+      Start_Position : Point;
+      End_Position : Point;
+      Attributes : Integer;
+      Class : Segment;
+      Value_Type : Segment;
+      Arg_Types : Segment_Vector.Node_Access;
+      Buffer : GNAT.OS_Lib.String_Access;
    end record;
    --  Local variables
 
    type MA_Table is record
-         Name : Segment;
-         File_Name : Segment;
-         Start_Position : Point;
-         End_Position : Point;
-         Attributes : Integer;
-         Comments : Segment;
-         Buffer : GNAT.OS_Lib.String_Access;
+      Name : Segment;
+      File_Name : Segment;
+      Start_Position : Point;
+      End_Position : Point;
+      Attributes : Integer;
+      Comments : Segment;
+      Buffer : GNAT.OS_Lib.String_Access;
    end record;
    --  Macros
 
    type MD_Table is record
-         Class : Segment;
-         Name : Segment;
-         File_Name : Segment;
-         Start_Position : Point;
-         End_Position : Point;
-         Attributes : Integer;
-         Return_Type : Segment;
-         Arg_Types : Segment_Vector.Node_Access;
-         Arg_Names : Segment_Vector.Node_Access;
-         Comments : Segment;
-         Buffer : GNAT.OS_Lib.String_Access;
+      Class : Segment;
+      Name : Segment;
+      File_Name : Segment;
+      Start_Position : Point;
+      End_Position : Point;
+      Attributes : Integer;
+      Return_Type : Segment;
+      Arg_Types : Segment_Vector.Node_Access;
+      Arg_Names : Segment_Vector.Node_Access;
+      Comments : Segment;
+      Buffer : GNAT.OS_Lib.String_Access;
    end record;
    --  Method definitions
 
    type REM_Table is record
-         File_Name : Segment;
-         Position : Point;
-         Class : Segment;
-         Method_Or_Function : Segment;
-         Comments : Segment;
-         Buffer : GNAT.OS_Lib.String_Access;
+      File_Name : Segment;
+      Position : Point;
+      Class : Segment;
+      Method_Or_Function : Segment;
+      Comments : Segment;
+      Buffer : GNAT.OS_Lib.String_Access;
    end record;
    --  Remarks
 
    type SU_Table is record
-         Name : Segment;
-         File_Name : Segment;
-         Position : Point;
-         Attributes : Integer;
-         Comments : Segment;
-         Buffer : GNAT.OS_Lib.String_Access;
+      Name : Segment;
+      File_Name : Segment;
+      Position : Point;
+      Attributes : Integer;
+      Comments : Segment;
+      Buffer : GNAT.OS_Lib.String_Access;
    end record;
    --  Subroutines
 
    type T_Table is record
-         Name : Segment;
-         File_Name : Segment;
-         Start_Position : Point;
-         End_Position : Point;
-         Attributes : Integer;
-         Original : Segment;
-         Comments : Segment;
-         Buffer : GNAT.OS_Lib.String_Access;
+      Name : Segment;
+      File_Name : Segment;
+      Start_Position : Point;
+      End_Position : Point;
+      Attributes : Integer;
+      Original : Segment;
+      Comments : Segment;
+      Buffer : GNAT.OS_Lib.String_Access;
    end record;
    --  Typedefs
 
    type TA_Table is record
-         Scope          : Segment;
-         Name           : Segment;
-         Start_Position : Point;
-         File_Name      : Segment;
-         Type_Position  : Point;
-         Attributes     : Integer;
-         Buffer   : GNAT.OS_Lib.String_Access;
+      Scope          : Segment;
+      Name           : Segment;
+      Start_Position : Point;
+      File_Name      : Segment;
+      Type_Position  : Point;
+      Attributes     : Integer;
+      Buffer   : GNAT.OS_Lib.String_Access;
    end record;
       --  Template arguments
 
    type TO_Table is record
-         Class : Segment;
-         Symbol_Name : Segment;
-         Symbol : Symbol_Type;
-         Referred_Class : Segment;
-         Referred_Symbol_Name : Segment;
-         Referred_Symbol : Symbol_Type;
-         Access_Type : Segment;
-         File_Name : Segment;
-         Position : Point;
-         Caller_Argument_Types : Segment_Vector.Node_Access;
-         Referred_Argument_Types : Segment_Vector.Node_Access;
-         Buffer : GNAT.OS_Lib.String_Access;
+      Class : Segment;
+      Symbol_Name : Segment;
+      Symbol : Symbol_Type;
+      Referred_Class : Segment;
+      Referred_Symbol_Name : Segment;
+      Referred_Symbol : Symbol_Type;
+      Access_Type : Segment;
+      File_Name : Segment;
+      Position : Point;
+      Caller_Argument_Types : Segment_Vector.Node_Access;
+      Referred_Argument_Types : Segment_Vector.Node_Access;
+      Buffer : GNAT.OS_Lib.String_Access;
    end record;
    --  References-To
 
    type UN_Table is record
-         Name : Segment;
-         File_Name : Segment;
-         Start_Position : Point;
-         End_Position : Point;
-         Attributes : Integer;
-         Comments : Segment;
-         Buffer : GNAT.OS_Lib.String_Access;
+      Name : Segment;
+      File_Name : Segment;
+      Start_Position : Point;
+      End_Position : Point;
+      Attributes : Integer;
+      Comments : Segment;
+      Buffer : GNAT.OS_Lib.String_Access;
    end record;
    --  Unions
 
