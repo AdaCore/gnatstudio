@@ -312,6 +312,16 @@ package body Src_Info.Queries is
               (Current_Decl.Value.Declaration.Location,
                File_Name, Line, Column);
 
+            Trace (Me, "Find_Spec_Or_Body: Location_Matches at "
+                   & ASCII.LF
+                   & "  line=" & Line'Img
+                   & Current_Decl.Value.Declaration.Location.Line'Img
+                   & ASCII.LF
+                   & "  col=" & Column'Img
+                   & Current_Decl.Value.Declaration.Location.Column'Img
+                   & ASCII.LF
+                   & "  prox=" & Prox'Img & Proximity'Img);
+
             if Prox = 0 then
                Entity_Decl := Current_Decl.Value;
                Ref         := null;
@@ -354,9 +364,9 @@ package body Src_Info.Queries is
          Current_Decl := Current_Decl.Next;
       end loop Decl_Loop;
 
-      Entity_Decl := (No_Declaration, null);
-      Ref         := null;
-      Status      := Entity_Not_Found;
+      --  Do not change Entity_Decl, Ref, Status, since these might already
+      --  have values if we have searched the specs or bodies first (see
+      --  Internal_Find_Declaration_Or_Body).
    end Find_Spec_Or_Body;
 
    ---------------------------------------
