@@ -13,6 +13,13 @@ Known Problems fixed in GVD 2.0.0
               Program->Run/Start and specify the name of the module to debug
               in the parameters entry.
 
+- [9012-008] Cannot input data in the debugger console
+  Problem:    When debugging a program that reads standard input, it is
+              not possible to run the program and send the inputs to the
+              program, gvd treats them as gdb commands instead.
+  Workaround: Run the program under a separate shell, and attach to the
+              process; or redirect standard input from a file.
+
 - Displaying Ada strings containing backslashes
   Problem:    when a string contains a backslash (Ada mode), the latter is
               not shown in the display.
