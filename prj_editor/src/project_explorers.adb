@@ -18,10 +18,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glide_Kernel;              use Glide_Kernel;
-with Scenario_Views;            use Scenario_Views;
-with Gtk.Box;                   use Gtk.Box;
-with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with Ada.Exceptions;            use Ada.Exceptions;
@@ -42,6 +38,7 @@ with Gdk.Color;                 use Gdk.Color;
 with Gtk.Dnd;                   use Gtk.Dnd;
 with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Arguments;             use Gtk.Arguments;
+with Gtk.Box;                   use Gtk.Box;
 with Gtk.Check_Button;          use Gtk.Check_Button;
 with Gtk.Check_Menu_Item;       use Gtk.Check_Menu_Item;
 with Gtk.Frame;                 use Gtk.Frame;
@@ -56,6 +53,7 @@ with Gtk.Label;                 use Gtk.Label;
 with Gtk.Cell_Renderer_Text;    use Gtk.Cell_Renderer_Text;
 with Gtk.Cell_Renderer_Pixbuf;  use Gtk.Cell_Renderer_Pixbuf;
 with Gtk.Tree_View_Column;      use Gtk.Tree_View_Column;
+with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
 with Gtkada.MDI;                use Gtkada.MDI;
 with Gtkada.Tree_View;          use Gtkada.Tree_View;
 with Gtkada.Handlers;           use Gtkada.Handlers;
@@ -84,6 +82,7 @@ with GUI_Utils;                 use GUI_Utils;
 with String_List_Utils;
 with Histories;                 use Histories;
 with VFS;                       use VFS;
+with Scenario_Views;            use Scenario_Views;
 
 with Src_Info;
 with String_Hash;
