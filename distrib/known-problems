@@ -1,5 +1,13 @@
 Known Problems fixed in GPS 2.2.0
 
+- DB25-012 Contextual menu's filter in File View
+  Problem:    If you create a custom contextual menu through an XML file,
+              and add a filter so that it appears only in the Files View, this
+              filter will not work (module="Files_View"), since the current
+              module is considered the same as for the Project View
+  Workaround: none found, the contextual menu will appear both in the Files
+              and Project view if you use (module="Explorer")
+
 - D713-012 Improper substitution in XML files
   Problem:    When chaining multiple shell commands in an XML action, the
               second command can refer to the output of the first by using %1.
