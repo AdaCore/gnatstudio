@@ -180,10 +180,20 @@ package body Builder_Module is
       Remote_Host     : String;
       Remote_Protocol : String;
       Command         : String;
+      Arguments       : Argument_List;
       Fd              : Process_Descriptor_Access);
    --  Compute the command to be executed from Command, Remote_Host
    --  and Remote_Protocol (execution is local when
    --  Remote_Host = "" or Remote_Protocol = ""
+
+   procedure Insert_And_Launch
+     (Kernel          : Kernel_Handle;
+      Remote_Host     : String;
+      Remote_Protocol : String;
+      Cmd_Line        : String;
+      Fd              : Process_Descriptor_Access);
+   --  Similar to procedure above, except that the command and its argument
+   --  are provided as a string.
 
    --------------------
    -- Menu Callbacks --
@@ -406,41 +416,57 @@ package body Builder_Module is
       Remote_Host     : String;
       Remote_Protocol : String;
       Command         : String;
+      Arguments       : Argument_List;
       Fd              : Process_Descriptor_Access)
    is
-      New_Args     : Argument_List_Access;
-      Last_Arg     : String_Access;
+      Remote_Args : Argument_List_Access;
+      Cmd         : constant String :=
+        Command & " " & Argument_List_To_String (Arguments);
+
    begin
       Console.Raise_Console (Kernel);
 
       if Remote_Host /= ""
         and then Remote_Protocol /= ""
       then
-         New_Args := Argument_String_To_List
+         Remote_Args := Argument_String_To_List
            (Remote_Protocol & " " & Remote_Host);
-         Last_Arg := new String'(Command);
 
          Console.Insert
-           (Kernel, Remote_Protocol & " " & Remote_Host & " " & Command);
+           (Kernel, Remote_Protocol & " " & Remote_Host & " " & Cmd);
 
          Non_Blocking_Spawn
            (Fd.all,
-            New_Args (New_Args'First).all,
-            New_Args (New_Args'First + 1 .. New_Args'Last) & Last_Arg,
+            Remote_Args (Remote_Args'First).all,
+            Remote_Args (Remote_Args'First + 1 .. Remote_Args'Last) &
+              Arguments,
             Buffer_Size => 0, Err_To_Out => True);
+         Free (Remote_Args);
 
-         Free (Last_Arg);
-         Free (New_Args);
       else
-         Console.Insert (Kernel, Command);
-         New_Args := Argument_String_To_List (Command);
+         Console.Insert (Kernel, Cmd);
          Non_Blocking_Spawn
-           (Fd.all,
-            New_Args (New_Args'First).all,
-            New_Args (New_Args'First + 1 .. New_Args'Last),
-            Buffer_Size => 0, Err_To_Out => True);
-         Free (New_Args);
+           (Fd.all, Command, Arguments, Buffer_Size => 0, Err_To_Out => True);
       end if;
+   end Insert_And_Launch;
+
+   procedure Insert_And_Launch
+     (Kernel          : Kernel_Handle;
+      Remote_Host     : String;
+      Remote_Protocol : String;
+      Cmd_Line        : String;
+      Fd              : Process_Descriptor_Access)
+   is
+      Args : Argument_List_Access := Argument_String_To_List (Cmd_Line);
+   begin
+      Insert_And_Launch
+        (Kernel,
+         Remote_Host,
+         Remote_Protocol,
+         Args (Args'First).all,
+         Args (Args'First + 1 .. Args'Last),
+         Fd);
+      Free (Args);
    end Insert_And_Launch;
 
    --------------
@@ -567,11 +593,12 @@ package body Builder_Module is
         (K,
          Remote_Protocol  =>
            Get_Pref (GVD_Prefs, Remote_Protocol),
-         Remote_Host =>
+         Remote_Host      =>
            Get_Attribute_Value
              (Project_View, Remote_Host_Attribute, Ide_Package),
-         Command => Cmd.all & " " & Argument_List_To_String (Args.all),
-         Fd => Fd);
+         Command          => Cmd.all,
+         Arguments        => Args.all,
+         Fd               => Fd);
 
       Free (Cmd);
       Free (Args);
@@ -628,8 +655,7 @@ package body Builder_Module is
            Get_Attribute_Value
              (View, Compiler_Command_Attribute,
               Ide_Package, Default => "gnatmake", Index => "Ada")
-           & " -q -u -gnats "
-           & Argument_List_To_String (Default_Builder_Switches) & File;
+           & " -q -u -gnats " & File;
          Fd   : Process_Descriptor_Access;
          Args : Argument_List_Access;
          Id   : Timeout_Handler_Id;
@@ -702,6 +728,8 @@ package body Builder_Module is
      (Kernel : Kernel_Handle;
       File   : String)
    is
+      Arg1         : aliased String := "-q";
+      Arg2         : aliased String := "-u";
       Top          : constant Glide_Window :=
         Glide_Window (Get_Main_Window (Kernel));
       Project      : constant String := Get_Subproject_Name (Kernel, File);
@@ -709,7 +737,7 @@ package body Builder_Module is
       Prj          : Project_Id;
       Cmd          : String_Access;
       Fd           : Process_Descriptor_Access;
-      Command      : String_Access;
+      Local_File   : aliased String := File;
       Id           : Timeout_Handler_Id;
       pragma Unreferenced (Id);
 
@@ -749,42 +777,52 @@ package body Builder_Module is
            (Get_Attribute_Value
               (Prj, Compiler_Command_Attribute,
                Ide_Package,
-               Default => "gnatmake", Index => "Ada") & " -q -u ");
+               Default => "gnatmake", Index => "Ada"));
       end if;
 
       Push_State (Kernel, Processing);
-
       Clear_Compilation_Output (Kernel);
-
       Set_Sensitive_Menus (Kernel, False);
-
-      if Project = "" then
-         Command := new String'
-           (Cmd.all
-            & Argument_List_To_String (Default_Builder_Switches) & File);
-
-      else
-         Command := new String'
-           (Cmd.all & "-P" & Project & " "
-            & Scenario_Variables_Cmd_Line (Kernel, GNAT_Syntax)
-            & " " & File);
-      end if;
-
       Top.Interrupted := False;
       Fd := new TTY_Process_Descriptor;
 
-      Insert_And_Launch
-        (Kernel,
-         Remote_Protocol =>
-           Get_Pref (GVD_Prefs, Remote_Protocol),
-         Remote_Host =>
-           Get_Attribute_Value
-             (Project_View, Remote_Host_Attribute, Ide_Package),
-         Command => Command.all,
-         Fd => Fd);
+      if Project = "" then
+         Insert_And_Launch
+           (Kernel,
+            Remote_Protocol =>
+              Get_Pref (GVD_Prefs, Remote_Protocol),
+            Remote_Host     =>
+              Get_Attribute_Value
+                (Project_View, Remote_Host_Attribute, Ide_Package),
+            Command         => Cmd.all,
+            Arguments       => Default_Builder_Switches &
+              (Arg1'Unchecked_Access, Arg2'Unchecked_Access,
+               Local_File'Unchecked_Access),
+            Fd              => Fd);
+
+      else
+         declare
+            Args    : Argument_List_Access := Argument_String_To_List
+              ("-q -u " & Scenario_Variables_Cmd_Line (Kernel, GNAT_Syntax));
+            Prj_Arg : aliased String := "-P" & Project;
+
+         begin
+            Insert_And_Launch
+              (Kernel,
+               Remote_Protocol =>
+                 Get_Pref (GVD_Prefs, Remote_Protocol),
+               Remote_Host     =>
+                 Get_Attribute_Value
+                   (Project_View, Remote_Host_Attribute, Ide_Package),
+               Command         => Cmd.all,
+               Arguments       => Args.all &
+                 (Prj_Arg'Unchecked_Access, Local_File'Unchecked_Access),
+               Fd              => Fd);
+            Free (Args);
+         end;
+      end if;
 
       Free (Cmd);
-      Free (Command);
       Id := Process_Timeout.Add
         (Timeout, Idle_Build'Access, (Kernel, Fd, null, null, null));
 
@@ -793,7 +831,6 @@ package body Builder_Module is
          Console.Insert (Kernel, -"Invalid command", Mode => Error);
          Pop_State (Kernel);
          Set_Sensitive_Menus (Kernel, True);
-         Free (Command);
          Free (Fd);
    end Compile_File;
 
@@ -908,7 +945,6 @@ package body Builder_Module is
          Top     : constant Glide_Window :=
            Glide_Window (Get_Main_Window (Kernel));
          Fd      : Process_Descriptor_Access;
-         Args    : Argument_List_Access;
          Id      : Timeout_Handler_Id;
          pragma Unreferenced (Id);
 
@@ -920,22 +956,18 @@ package body Builder_Module is
          Push_State (Kernel, Processing);
          Clear_Compilation_Output (Kernel);
          Set_Sensitive_Menus (Kernel, False);
-         Args := Argument_String_To_List (Cmd);
 
          Top.Interrupted := False;
          Fd := new TTY_Process_Descriptor;
 
          Insert_And_Launch
            (Kernel,
-            Remote_Protocol  =>
-              Get_Pref (GVD_Prefs, Remote_Protocol),
-            Remote_Host =>
+            Remote_Protocol  => Get_Pref (GVD_Prefs, Remote_Protocol),
+            Remote_Host      =>
               Get_Attribute_Value
                 (Project_View, Remote_Host_Attribute, Ide_Package),
-            Command => Argument_List_To_String (Args.all),
-            Fd => Fd);
-
-         Free (Args);
+            Cmd_Line         => Cmd,
+            Fd               => Fd);
          Id := Process_Timeout.Add
            (Timeout, Idle_Build'Access, (Kernel, Fd, null, null, null));
 
@@ -944,7 +976,6 @@ package body Builder_Module is
             Console.Insert (Kernel, -"Invalid command", Mode => Error);
             Pop_State (Kernel);
             Set_Sensitive_Menus (Kernel, True);
-            Free (Args);
             Free (Fd);
       end;
 
