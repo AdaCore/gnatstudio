@@ -3047,11 +3047,13 @@ package body Src_Editor_Buffer is
       Current : Gint := 0;
       Tab_Len : constant Gint := Buffer.Tab_Width;
    begin
-      Assert (Me, Is_Valid_Position (Buffer, Line, 0),
-              "Invalid position for Set_Screen_Position "
-              & Full_Name (Get_Filename (Buffer)).all & Line'Img);
-
-      Get_Iter_At_Line_Offset (Buffer, Iter, Line, 0);
+      if Is_Valid_Position (Buffer, Line, 0) then
+         Get_Iter_At_Line_Offset (Buffer, Iter, Line, 0);
+      else
+         Trace (Me, "Invalid position for Set_Screen_Position "
+                & Full_Name (Get_Filename (Buffer)).all & Line'Img);
+         Get_End_Iter (Buffer, Iter);
+      end if;
 
       --  We have to test Result, in case Iter was pointing after the end of
       --  the buffer.
