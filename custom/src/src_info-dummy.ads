@@ -32,7 +32,6 @@ package Src_Info.Dummy is
      (Handler         : access Dummy_LI_Handler_Record;
       File            : in out LI_File_Ptr;
       Source_Filename : VFS.Virtual_File;
-      List            : LI_File_List;
       Project         : Projects.Project_Type;
       Check_Timestamp : Boolean := True);
    --  Dummy routine. Do nothing.
@@ -49,7 +48,6 @@ package Src_Info.Dummy is
 
    procedure Parse_All_LI_Information
      (Handler      : access Dummy_LI_Handler_Record;
-      List         : LI_File_List;
       In_Directory : String;
       Project      : Projects.Project_Type);
    --  Dummy routine, do nothing.

@@ -58,7 +58,6 @@ package Src_Info.CPP is
      (Handler                : access CPP_LI_Handler_Record;
       File                   : in out LI_File_Ptr;
       Source_Filename        : VFS.Virtual_File;
-      List                   : LI_File_List;
       Project                : Projects.Project_Type;
       Check_Timestamp        : Boolean := True);
    --  See comment in src_info.ads
@@ -70,7 +69,6 @@ package Src_Info.CPP is
 
    procedure Parse_All_LI_Information
      (Handler                : access CPP_LI_Handler_Record;
-      List                   : LI_File_List;
       In_Directory           : String;
       Project                : Projects.Project_Type);
    --  Does nothing for now.
@@ -105,9 +103,6 @@ package Src_Info.CPP is
    procedure Destroy (Iterator : in out CPP_LI_Handler_Iterator);
    --  Free the memory used by the list of source files and save xref
    --  pool.
-
-   procedure Add (HT : LI_File_List; LIFP : LI_File_Ptr);
-   --  Just wrapper for internal Add to support extended testing
 
    function Get_DB_Dir (Project : Projects.Project_Type) return String;
    pragma Inline (Get_DB_Dir);

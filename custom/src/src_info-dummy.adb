@@ -40,12 +40,11 @@ package body Src_Info.Dummy is
      (Handler         : access Dummy_LI_Handler_Record;
       File            : in out LI_File_Ptr;
       Source_Filename : VFS.Virtual_File;
-      List            : LI_File_List;
       Project         : Projects.Project_Type;
       Check_Timestamp : Boolean := True)
    is
       pragma Unreferenced
-        (Handler, File, Source_Filename, List, Project, Check_Timestamp);
+        (Handler, File, Source_Filename, Project, Check_Timestamp);
    begin
       null;
    end Create_Or_Complete_LI;
@@ -104,11 +103,10 @@ package body Src_Info.Dummy is
 
    procedure Parse_All_LI_Information
      (Handler      : access Dummy_LI_Handler_Record;
-      List         : LI_File_List;
       In_Directory : String;
       Project      : Projects.Project_Type)
    is
-      pragma Unreferenced (Handler, List, In_Directory, Project);
+      pragma Unreferenced (Handler, In_Directory, Project);
    begin
       null;
    end Parse_All_LI_Information;
