@@ -1,5 +1,13 @@
 Known Problems fixed in GPS 1.3.0
 
+- C616-002 Incorrect handling of relative exec directories
+  Problem:    If the executable directory was defined as a relative path in
+              the project file, then GPS will not be able to run or debug
+              the executable
+  Workaround: Change the current directory with File->Change Directory to be
+              the one that contains the project file before doing a run or a
+              debug.
+
 - C626-007 Extra blank lines in messages window under Windows
   Problem:    When running external processes (e.g. using a custom file)
               that output CR/LF line terminators, extra blank line are
