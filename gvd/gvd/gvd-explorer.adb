@@ -701,7 +701,7 @@ package body Odd.Explorer is
       Append (Menu, Check);
       --  Set_Tip (Tips, Check, -"Foo", "");
 
-      Gtk_New (Mitem, Label => -"Display Shared Library Files");
+      Gtk_New (Mitem, Label => -"Display Files In Shared Libraries");
       Set_Sensitive (Mitem, Is_Started (Process.Debugger));
       Tree_Cb.Object_Connect
         (Mitem, "activate",
