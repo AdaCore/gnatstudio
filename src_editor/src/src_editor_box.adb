@@ -49,6 +49,7 @@ with Gtk.Menu;                   use Gtk.Menu;
 with Gtk.Menu_Item;              use Gtk.Menu_Item;
 with Gtk.Scrolled_Window;        use Gtk.Scrolled_Window;
 with Gtk.Text_Iter;              use Gtk.Text_Iter;
+with Gtk.Text_Mark;              use Gtk.Text_Mark;
 with Gtk.Widget;                 use Gtk.Widget;
 with Gtkada.Dialogs;             use Gtkada.Dialogs;
 with Gtkada.File_Selector;       use Gtkada.File_Selector;
@@ -2201,5 +2202,58 @@ package body Src_Editor_Box is
          end if;
       end if;
    end Set_Modified_State;
+
+   ------------------
+   --  Create_Mark --
+   ------------------
+
+   function Create_Mark
+     (Editor : access Source_Editor_Box_Record;
+      Line   : Positive;
+      Column : Positive) return Gtk.Text_Mark.Gtk_Text_Mark
+   is
+      Iter : Gtk_Text_Iter;
+   begin
+      if Is_Valid_Location (Editor, Line, Column) then
+         Get_Iter_At_Line_Offset
+           (Editor.Source_Buffer,
+            Iter,
+            To_Buffer_Line (Line),
+            To_Buffer_Column (Column));
+         return Create_Mark (Editor.Source_Buffer, "", Iter);
+
+      elsif Is_Valid_Location (Editor, Line, 1) then
+         Get_Iter_At_Line_Offset
+           (Editor.Source_Buffer,
+            Iter,
+            To_Buffer_Line (Line),
+            To_Buffer_Column (1));
+         return Create_Mark (Editor.Source_Buffer, "", Iter);
+
+      else
+         Get_Iter_At_Line_Offset
+           (Editor.Source_Buffer,
+            Iter,
+            To_Buffer_Line (1),
+            To_Buffer_Column (1));
+         return Create_Mark (Editor.Source_Buffer, "", Iter);
+      end if;
+   end Create_Mark;
+
+   --------------------
+   -- Scroll_To_Mark --
+   --------------------
+
+   procedure Scroll_To_Mark
+     (Editor : access Source_Editor_Box_Record;
+      Mark   : Gtk.Text_Mark.Gtk_Text_Mark)
+   is
+      Iter : Gtk_Text_Iter;
+
+   begin
+      Scroll_To_Mark (Editor.Source_View, Mark, 0.0,  True, 1.0, 0.8);
+      Get_Iter_At_Mark (Editor.Source_Buffer, Iter, Mark);
+      Place_Cursor (Editor.Source_Buffer, Iter);
+   end Scroll_To_Mark;
 
 end Src_Editor_Box;

@@ -38,6 +38,7 @@ with Gtk.Container;
 with Gtk.Label;
 with Gtk.Menu;
 with Gtk.Menu_Item;
+with Gtk.Text_Mark;
 
 with GVD.Tooltips;
 with Language;
@@ -363,6 +364,19 @@ package Src_Editor_Box is
 
    procedure Grab_Focus (Editor : access Source_Editor_Box_Record);
    --  Set the focus on the source view.
+
+   function Create_Mark
+     (Editor : access Source_Editor_Box_Record;
+      Line   : Positive;
+      Column : Positive) return Gtk.Text_Mark.Gtk_Text_Mark;
+   --  Create a mark at Line, Column in the Editor buffer.
+   --  If the position specified by Line, Column, the mark is created
+   --  at the beginning of the buffer.
+
+   procedure Scroll_To_Mark
+     (Editor : access Source_Editor_Box_Record;
+      Mark   : Gtk.Text_Mark.Gtk_Text_Mark);
+   --  Scroll Mark onscreen, and place the cursor on Mark.
 
    ---------------------
    -- Contextual menu --
