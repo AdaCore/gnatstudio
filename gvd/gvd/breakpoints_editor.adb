@@ -132,6 +132,11 @@ package body Breakpoints_Editor is
             Widget_Callback.To_Marshaller (On_Add_Location_Clicked'Access),
             Editor);
 
+         --  ??? Until Break_Subprogram is fixed to compute asynchronously
+         --  the breakpoint id.
+
+         Set_Sensitive (Editor.Subprogram_Selected, False);
+
          --  ??? Temporary
          Set_Sensitive (Editor.Hbox3, False);
       end if;
