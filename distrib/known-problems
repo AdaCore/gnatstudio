@@ -1,5 +1,10 @@
 Known Problems fixed in GPS 1.4.0
 
+- CA02-013 Unexpected crashes under Windows.
+  Problem:    GPS sometimes crashes unexpectedly under windows. This is most
+              likely to happen after compiling files several times.
+  Workaround: None knowm
+
 - Cross-reference fail with Ada units overriden in extending projects (C825-005)
   Problem:    If you have a unit overriden in an extending project with a
               different file name, cross-references will fail for all files
