@@ -111,8 +111,13 @@ package body Traces is
    procedure Put_Stack_Trace (Handle : Debug_Handle);
    --  Print the stack trace for this handle. No locking done.
 
-   function Config_File (Default : String) return String;
+   function Config_File
+     (Filename : String;
+      Default  : String) return String;
    --  Return the name of the config file to use.
+   --  If Filename is specified, this is the file to use, providing it exists.
+   --  Otherwise, we use a .gnatdebug in the current directory, and if there is
+   --  none, Default if it exists.
    --  The empty string is returned if no such file was found.
 
    function Get_Process_Id return Integer;
@@ -135,6 +140,23 @@ package body Traces is
       end loop;
       return Tmp;
    end Find_Handle;
+
+   ------------------------
+   -- Show_Configuration --
+   ------------------------
+
+   procedure Show_Configuration (Output : Output_Proc) is
+      Tmp : Debug_Handle := Handles_List;
+   begin
+      while Tmp /= null loop
+         if Tmp.Active then
+            Output (Tmp.Name.all & "=yes");
+         else
+            Output (Tmp.Name.all & "=no");
+         end if;
+         Tmp := Tmp.Next;
+      end loop;
+   end Show_Configuration;
 
    ------------
    -- Create --
@@ -426,12 +448,15 @@ package body Traces is
    -- Config_File --
    -----------------
 
-   function Config_File (Default : String) return String is
+   function Config_File
+     (Filename : String;
+      Default : String) return String
+   is
       Env  : String_Access := Getenv (Config_File_Environment);
       Home : String_Access;
    begin
-      if Default /= "" and then File_Exists (Default) then
-         return Default;
+      if Filename /= "" and then File_Exists (Filename) then
+         return Filename;
       end if;
 
       --  First test the file described in the environment variable
@@ -487,8 +512,11 @@ package body Traces is
    -- Parse_Config_File --
    -----------------------
 
-   procedure Parse_Config_File (Default : String := "") is
-      File_Name  : aliased constant String := Config_File (Default);
+   procedure Parse_Config_File
+     (Filename : String := "";
+      Default  : String := "")
+   is
+      File_Name  : aliased constant String := Config_File (Filename, Default);
       Buffer     : String_Access;
       F          : File_Descriptor;
       Length     : Long_Integer;
@@ -531,7 +559,7 @@ package body Traces is
       begin
          while Index <= Buffer'Last
            and then Buffer (Index) /= ASCII.LF
-           and then (Stop_At_First_Blank
+           and then (not Stop_At_First_Blank
                      or else (Buffer (Index) /= ' '
                               and then Buffer (Index) /= ASCII.HT))
          loop
@@ -645,6 +673,7 @@ package body Traces is
                      while Index <= Buffer'Last
                        and then Buffer (Index) /= '='
                        and then Buffer (Index) /= '>'
+                       and then Buffer (Index) /= '-'
                        and then Buffer (Index) /= ASCII.LF
                      loop
                         Index := Index + 1;

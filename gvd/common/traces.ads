@@ -59,7 +59,8 @@ package Traces is
    --    * redirecting all modules to a file:
    --      >filename
    --      If filename is a relative path, it is relative to the location of
-   --      the configuration file.
+   --      the configuration file. $$ is automatically replaced by the process
+   --      number.
    --    * redirecting all outputs to standard error
    --      >&2
    --    * redirecting a specific module to a file
@@ -77,15 +78,22 @@ package Traces is
    --  generated to support debug traces. Otherwise, if Debug_Mode is True,
    --  then the debug traces can be activated selectively for each module.
 
-   procedure Parse_Config_File (Default : String := "");
+   procedure Parse_Config_File
+     (Filename : String := "";
+      Default  : String := "");
    --  Initializes this package, and parse the configuration file. The
    --  algorithm is the following:
-   --    - First test the file described in Config_File_Environment
+   --    - If filename is specified and exists on the disk, parse this file
+   --    - Else test the file described in Config_File_Environment
    --    - If not found, search in the current directory for a file
    --      Default_Config_File
    --    - If not found, search in the user's home directory for a file
    --      Default_Config_File
    --    - If still not found, parses Default
+
+   type Output_Proc is access procedure (Str : String);
+   procedure Show_Configuration (Output : Output_Proc);
+   --  Output on Output the current configuration for all traces.
 
    procedure Finalize;
    --  Free all the registered handles
