@@ -24,6 +24,7 @@ with Ada.IO_Exceptions;        use Ada.IO_Exceptions;
 with Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
 with GNAT.Calendar.Time_IO;    use GNAT.Calendar.Time_IO;
+with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;              use GNAT.OS_Lib;
 with GUI_Utils;                use GUI_Utils;
 with Gdk.Color;                use Gdk.Color;
@@ -42,6 +43,7 @@ with Gtk.Button;               use Gtk.Button;
 with Gtk.Cell_Renderer_Text;   use Gtk.Cell_Renderer_Text;
 with Gtk.Cell_Renderer_Toggle; use Gtk.Cell_Renderer_Toggle;
 with Gtk.Dialog;               use Gtk.Dialog;
+with Gtk.Check_Button;         use Gtk.Check_Button;
 with Gtk.Editable;             use Gtk.Editable;
 with Gtk.Enums;                use Gtk.Enums;
 with Gtk.Event_Box;            use Gtk.Event_Box;
@@ -79,6 +81,7 @@ with Default_Preferences;      use Default_Preferences;
 with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
 with Glide_Intl;               use Glide_Intl;
 with GUI_Utils;                use GUI_Utils;
+with Histories;                use Histories;
 
 package body Aliases_Module is
 
@@ -103,6 +106,7 @@ package body Aliases_Module is
    type Alias_Record is record
       Expansion : String_Access;
       Params    : Param_Access;
+      Read_Only : Boolean;
    end record;
 
    procedure Free (Alias : in out Alias_Record);
@@ -111,7 +115,7 @@ package body Aliases_Module is
    --  Return a deep copy of Alias
 
    No_Alias : constant Alias_Record :=
-     (Expansion => null, Params => null);
+     (Expansion => null, Params => null, Read_Only => False);
 
    package Aliases_Hash is new String_Hash
      (Alias_Record, Free, No_Alias);
@@ -152,6 +156,7 @@ package body Aliases_Module is
       Variables_Model : Gtk_Tree_Store;
       Expansion       : Gtk_Text_View;
       Alias_Col       : Gtk_Tree_View_Column;
+      Show_Read_Only  : Gtk_Check_Button;
 
       Current_Var     : String_Access;
       Highlight_Tag   : Gtk_Text_Tag;
@@ -190,7 +195,10 @@ package body Aliases_Module is
    --  ??? Should accept unicode
 
    function Expand_Alias
-     (Data : Event_Data; Name : String; Cursor : access Integer)
+     (Data          : Event_Data;
+      Name          : String;
+      Cursor        : access Integer;
+      Offset_Column : Gint)
       return String;
    --  Return the expanded version of Name.
    --  Cursor is the index in the returnef string for the cursor position.
@@ -201,10 +209,16 @@ package body Aliases_Module is
    --  Called when preferences'values change
 
    procedure Load_Aliases
-     (Kernel : access Kernel_Handle_Record'Class; Filename : String);
-   --  Load aliases from filename.
+     (Kernel : access Kernel_Handle_Record'Class);
+   --  Load aliases from all system files and user-specific file
 
-   procedure Save_Aliases (Filename : String);
+   procedure Parse_File
+     (Kernel    : access Kernel_Handle_Record'Class;
+      Filename  : String;
+      Read_Only : Boolean);
+   --  Load a filename, and make the resulting aliases Read_Only
+
+   procedure Save_Aliases (Kernel : access Kernel_Handle_Record'Class);
    --  Save the aliases in filename.
 
    procedure On_Edit_Aliases
@@ -240,7 +254,8 @@ package body Aliases_Module is
    procedure Add_New_Alias
      (Editor   : access Alias_Editor_Record'Class;
       Name     : String;
-      Selected : Boolean := False);
+      Selected : Boolean := False;
+      Read_Only : Boolean := False);
    --  Add a new entry in the aliases list of the editor
 
    procedure Param_Env_Changed
@@ -285,7 +300,8 @@ package body Aliases_Module is
      (Editor   : access Alias_Editor_Record'Class;
       Name     : String;
       Default  : String;
-      From_Env : Boolean);
+      From_Env : Boolean;
+      Editable : Boolean := True);
    --  Add a new variable in the variable editor
 
    procedure Update_Vars (Editor : access Alias_Editor_Record'Class);
@@ -321,6 +337,9 @@ package body Aliases_Module is
       return String;
    --  Provide expansion for some of the special entities
 
+   procedure Show_Read_Only_Toggled (Editor : access Gtk_Widget_Record'Class);
+   --  Called when the "show read-only" toggle is changed
+
    ------------------
    -- Set_Variable --
    ------------------
@@ -329,7 +348,8 @@ package body Aliases_Module is
      (Editor   : access Alias_Editor_Record'Class;
       Name     : String;
       Default  : String;
-      From_Env : Boolean)
+      From_Env : Boolean;
+      Editable : Boolean := True)
    is
       procedure Internal
         (Tree, Iter : System.Address;
@@ -338,6 +358,7 @@ package body Aliases_Module is
          Col3  : Gint := 2; Editable : Gboolean := 1;
          Col4  : Gint := 3; From_Env : Gboolean := 0;
          Col5  : Gint := 4; Seen : Gboolean := 1;
+         Col6  : Gint := 5; Activable : Gboolean := 1;
          Final : Gint := -1);
       pragma Import (C, Internal, "gtk_tree_store_set");
 
@@ -347,8 +368,9 @@ package body Aliases_Module is
       Internal
         (Get_Object (Editor.Variables_Model), Iter'Address,
          Name => Name & ASCII.NUL, Initial => Default & ASCII.NUL,
-         Editable => Boolean'Pos (not From_Env),
-         From_Env => Boolean'Pos (From_Env));
+         Editable => Boolean'Pos (Editable and then not From_Env),
+         From_Env => Boolean'Pos (From_Env),
+         Activable => Boolean'Pos (Editable));
    end Set_Variable;
 
    ----------
@@ -399,7 +421,8 @@ package body Aliases_Module is
          return No_Alias;
       else
          A := (Expansion => new String'(Alias.Expansion.all),
-               Params    => null);
+               Params    => null,
+               Read_Only => Alias.Read_Only);
 
          P := Alias.Params;
          while P /= null loop
@@ -441,7 +464,8 @@ package body Aliases_Module is
    -- Save_Aliases --
    ------------------
 
-   procedure Save_Aliases (Filename : String) is
+   procedure Save_Aliases (Kernel : access Kernel_Handle_Record'Class) is
+      Filename : constant String := Get_Home_Dir (Kernel) & "aliases";
       File, Key, Child  : Node_Ptr;
       Iter  : Iterator;
       Value : Alias_Record;
@@ -455,31 +479,36 @@ package body Aliases_Module is
          Value := Get_Element (Iter);
          exit when Value = No_Alias;
 
-         Key := new Node;
-         Key.Tag := new String'("alias");
-         Set_Attribute (Key, "name", Get_Key (Iter));
+         --  We only save user-defined aliases, not the ones that are defined
+         --  in the standard system files.
+         if not Value.Read_Only then
+            Key := new Node;
+            Key.Tag := new String'("alias");
+            Set_Attribute (Key, "name", Get_Key (Iter));
 
-         Child := new Node;
-         Child.Tag := new String'("text");
-         Child.Value := new String'(Value.Expansion.all);
-         Add_Child (Key, Child);
-
-         P := Value.Params;
-         while P /= null loop
             Child := new Node;
-            Child.Tag := new String'("param");
-            Set_Attribute (Child, "name", P.Name.all);
-
-            if P.From_Env then
-               Set_Attribute (Child, "environment", "true");
-            end if;
-
-            Child.Value := new String'(P.Initial.all);
+            Child.Tag := new String'("text");
+            Child.Value := new String'(Value.Expansion.all);
             Add_Child (Key, Child);
-            P := P.Next;
-         end loop;
 
-         Add_Child (File, Key);
+            P := Value.Params;
+            while P /= null loop
+               Child := new Node;
+               Child.Tag := new String'("param");
+               Set_Attribute (Child, "name", P.Name.all);
+
+               if P.From_Env then
+                  Set_Attribute (Child, "environment", "true");
+               end if;
+
+               Child.Value := new String'(P.Initial.all);
+               Add_Child (Key, Child);
+               P := P.Next;
+            end loop;
+
+            Add_Child (File, Key);
+         end if;
+
          Get_Next (Aliases_Module_Id.Aliases, Iter);
       end loop;
 
@@ -487,18 +516,21 @@ package body Aliases_Module is
       Free (File);
    end Save_Aliases;
 
-   ------------------
-   -- Load_Aliases --
-   ------------------
+   ----------------
+   -- Parse_File --
+   ----------------
 
-   procedure Load_Aliases
-     (Kernel : access Kernel_Handle_Record'Class; Filename : String)
+   procedure Parse_File
+     (Kernel    : access Kernel_Handle_Record'Class;
+      Filename  : String;
+      Read_Only : Boolean)
    is
       Alias       : Node_Ptr;
       File, Child : Node_Ptr;
       Expand      : String_Ptr;
       P           : Param_Access;
    begin
+      Trace (Me, "Loading " & Filename);
       File  := Parse (Filename);
       Alias := File.Child;
 
@@ -540,12 +572,14 @@ package body Aliases_Module is
                Set (Aliases_Module_Id.Aliases,
                     Get_Attribute (Alias, "name"),
                     (Expansion => new String'(Expand.all),
-                     Params    => P));
+                     Params    => P,
+                     Read_Only => Read_Only));
             else
                Set (Aliases_Module_Id.Aliases,
                     Get_Attribute (Alias, "name"),
                     (Expansion => new String'(""),
-                     Params    => P));
+                     Params    => P,
+                     Read_Only => Read_Only));
             end if;
          end;
 
@@ -566,6 +600,41 @@ package body Aliases_Module is
          Trace (Me, "Load_Aliases: unexcepted exception "
                 & Exception_Information (E));
          Free (File);
+   end Parse_File;
+
+   ------------------
+   -- Load_Aliases --
+   ------------------
+
+   procedure Load_Aliases (Kernel : access Kernel_Handle_Record'Class) is
+      Filename : constant String := Get_Home_Dir (Kernel) & "aliases";
+      Sys_Dir  : constant String :=
+        Get_System_Dir (Kernel) & "share/gps/aliases/";
+      File     : String (1 .. 1024);
+      Last     : Natural;
+      Dir      : Dir_Type;
+   begin
+      begin
+         Open (Dir, Sys_Dir);
+         loop
+            Read (Dir, File, Last);
+            exit when Last = 0;
+
+            if Is_Regular_File (Sys_Dir & File (File'First .. Last)) then
+               Parse_File (Kernel,
+                           Sys_Dir & File (File'First .. Last),
+                           Read_Only => True);
+            end if;
+         end loop;
+
+         Close (Dir);
+
+      exception
+         when Directory_Error =>
+            null;
+      end;
+
+      Parse_File (Kernel, Filename, Read_Only => False);
    end Load_Aliases;
 
    -------------------------
@@ -651,7 +720,10 @@ package body Aliases_Module is
    ------------------
 
    function Expand_Alias
-     (Data : Event_Data; Name : String; Cursor : access Integer)
+     (Data          : Event_Data;
+      Name          : String;
+      Cursor        : access Integer;
+      Offset_Column : Gint)
       return String
    is
       function Find_And_Replace_Cursor (Str : String) return String;
@@ -698,6 +770,13 @@ package body Aliases_Module is
                end if;
 
                S := S + 2;
+
+            --  Preserve the indentation as set in the expansion of aliases
+            elsif Str (S) = ASCII.LF then
+               Result := Result & Str (First .. S - 1)
+                 & ASCII.LF & (1 .. Integer (Offset_Column) => ' ');
+               S := S + 1;
+               First := S;
 
             else
                S := S + 1;
@@ -799,6 +878,7 @@ package body Aliases_Module is
    function Key_Handler (Data : Event_Data) return Boolean is
       Event : constant Gdk_Event := Get_Event (Data);
       W : Gtk_Widget;
+      Had_Focus : Boolean;
    begin
       if Get_Event_Type (Event) = Key_Press
         and then Get_State (Event) = Aliases_Module_Id.Modifier
@@ -821,7 +901,7 @@ package body Aliases_Module is
                      Replace : constant String := Expand_Alias
                        (Data,
                         Text (First + 1 .. Last - 1),
-                        Cursor'Unchecked_Access);
+                        Cursor'Unchecked_Access, 0);
                   begin
                      if Replace /= "" then
                         Delete_Text
@@ -856,22 +936,28 @@ package body Aliases_Module is
 
                   declare
                      Cursor : aliased Integer;
+                     Column : constant Gint := Get_Line_Offset (First_Iter);
                      Replace : constant String := Expand_Alias
                        (Data,
                         Get_Slice (Buffer, First_Iter, Last_Iter),
-                        Cursor'Unchecked_Access);
+                        Cursor'Unchecked_Access,
+                        Column);
                      Result : Boolean;
                      Event : Gdk_Event;
                   begin
                      if Replace /= "" then
+                        Had_Focus := Has_Focus_Is_Set (W);
+
                         --  Simulate a focus_in/focus_out event, needed for the
                         --  GPS source editor, which saves and restores the
                         --  cursor position when the focus changes (for the
                         --  handling of multiple views).
-                        Allocate (Event, Enter_Notify, Get_Window (W));
-                        Result := Return_Callback.Emit_By_Name
-                          (W, "focus_in_event", Event);
-                        Free (Event);
+                        if not Had_Focus then
+                           Allocate (Event, Enter_Notify, Get_Window (W));
+                           Result := Return_Callback.Emit_By_Name
+                             (W, "focus_in_event", Event);
+                           Free (Event);
+                        end if;
 
                         Delete (Buffer, First_Iter, Last_Iter);
                         Insert (Buffer, First_Iter, Replace);
@@ -880,10 +966,12 @@ package body Aliases_Module is
                                         Result);
                         Place_Cursor (Buffer, First_Iter);
 
-                        Allocate (Event, Leave_Notify, Get_Window (W));
-                        Result := Return_Callback.Emit_By_Name
-                          (W, "focus_out_event", Event);
-                        Free (Event);
+                        if not Had_Focus then
+                           Allocate (Event, Leave_Notify, Get_Window (W));
+                           Result := Return_Callback.Emit_By_Name
+                             (W, "focus_out_event", Event);
+                           Free (Event);
+                        end if;
                      end if;
                   end;
                   return True;
@@ -952,7 +1040,8 @@ package body Aliases_Module is
 
          Set (Editor.Local_Aliases, Editor.Current_Var.all,
               (Expansion => new String'(Get_Text (Buffer, Start, Last)),
-               Params    => P));
+               Params    => P,
+               Read_Only => False));
       end if;
    end Save_Current_Var;
 
@@ -998,13 +1087,16 @@ package body Aliases_Module is
             Set_Variable (Ed,
                           Name     => P.Name.all & ASCII.NUL,
                           Default  => P.Initial.all & ASCII.NUL,
-                          From_Env => P.From_Env);
+                          From_Env => P.From_Env,
+                          Editable => not Alias.Read_Only);
             P := P.Next;
          end loop;
       end if;
 
       Get_Bounds (Get_Buffer (Ed.Expansion), Start, Last);
       Highlight_Expansion_Range (Ed, Start, Last);
+
+      Set_Editable (Ed.Expansion, not Alias.Read_Only);
 
    exception
       when E : others =>
@@ -1032,7 +1124,9 @@ package body Aliases_Module is
                  Get_String (Ed.Aliases_Model, Iter, 0);
                Alias : constant Alias_Record := Get_Value (Ed, Old);
             begin
-               if not Is_Entity_Letter (Name (Name'First)) then
+               if Name'Length = 0
+                 or else not Is_Entity_Letter (Name (Name'First))
+               then
                   Set (Ed.Aliases_Model, Iter, 0, Old);
                   Message := Message_Dialog
                     (Msg => -"Error: invalid name for alias: " & Name
@@ -1443,6 +1537,16 @@ package body Aliases_Module is
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end Contextual_Destroy;
 
+   ----------------------------
+   -- Show_Read_Only_Toggled --
+   ----------------------------
+
+   procedure Show_Read_Only_Toggled
+     (Editor : access Gtk_Widget_Record'Class) is
+   begin
+      Update_Contents (Alias_Editor (Editor));
+   end Show_Read_Only_Toggled;
+
    -------------
    -- Gtk_New --
    -------------
@@ -1480,15 +1584,18 @@ package body Aliases_Module is
 
       --  List of aliases
 
+      Gtk_New_Vbox (Box, Homogeneous => False);
+      Pack1 (Pane, Box);
+
       Gtk_New (Frame);
-      Pack1 (Pane, Frame);
+      Pack_Start (Box, Frame, Expand => True, Fill => True);
 
       Gtk_New (Scrolled);
       Set_Policy (Scrolled, Policy_Never, Policy_Automatic);
       Add (Frame, Scrolled);
 
       Gtk_New (Editor.Aliases_Model,
-               (0 => GType_String, 1 => GType_Boolean));
+               (0 => GType_String, 1 => GType_Boolean, 2 => GType_String));
       Gtk_New (Editor.Aliases, Editor.Aliases_Model);
       Add (Scrolled, Editor.Aliases);
       Set_Mode (Get_Selection (Editor.Aliases), Selection_Single);
@@ -1499,7 +1606,7 @@ package body Aliases_Module is
       Set_Sort_Column_Id (Editor.Alias_Col, 0);
       Number := Append_Column (Editor.Aliases, Editor.Alias_Col);
       Set_Title (Editor.Alias_Col, -"Aliases");
-      Pack_Start (Editor.Alias_Col, Render, True);
+      Pack_Start (Editor.Alias_Col, Render, False);
       Add_Attribute (Editor.Alias_Col, Render, "text", 0);
       Add_Attribute (Editor.Alias_Col, Render, "editable", 1);
 
@@ -1512,6 +1619,22 @@ package body Aliases_Module is
       Widget_Callback.Object_Connect
         (Render, "edited",
          Widget_Callback.To_Marshaller (Alias_Renamed'Access), Editor);
+
+      Gtk_New (Render);
+      Pack_Start (Editor.Alias_Col, Render, False);
+      Add_Attribute (Editor.Alias_Col, Render, "text", 2);
+
+      Clicked (Editor.Alias_Col);
+
+      Gtk_New (Editor.Show_Read_Only, -"Show read-only");
+      Associate (Get_History (Kernel).all,
+                 "aliases-show-read-only",
+                 Editor.Show_Read_Only);
+      Pack_Start (Box, Editor.Show_Read_Only, Expand => False);
+      Widget_Callback.Object_Connect
+        (Editor.Show_Read_Only, "toggled",
+         Widget_Callback.To_Marshaller (Show_Read_Only_Toggled'Access),
+         Editor);
 
       --  Right part
 
@@ -1542,7 +1665,7 @@ package body Aliases_Module is
 
       Gtk_New (Editor.Variables_Model,
                (0 => GType_String, 1 => GType_String, 2 => GType_Boolean,
-                3 => GType_Boolean, 4 => GType_Boolean));
+                3 => GType_Boolean, 4 => GType_Boolean, 5 => GType_Boolean));
       Gtk_New (Editor.Variables, Editor.Variables_Model);
       Pack_Start (Box, Editor.Variables, Expand => False);
 
@@ -1556,6 +1679,8 @@ package body Aliases_Module is
       Set_Resizable (Col, True);
       Set_Sort_Column_Id (Col, 0);
 
+      Clicked (Col);
+
       Gtk_New (Toggle_Render);
       Gtk_New (Col);
       Number := Append_Column (Editor.Variables, Col);
@@ -1563,6 +1688,7 @@ package body Aliases_Module is
       Set_Resizable (Col, True);
       Pack_Start (Col, Toggle_Render, False);
       Add_Attribute (Col, Toggle_Render, "active", 3);
+      Add_Attribute (Col, Toggle_Render, "activatable", 5);
 
       Widget_Callback.Object_Connect
         (Toggle_Render, "toggled", Param_Env_Changed'Access, Editor);
@@ -1643,23 +1769,43 @@ package body Aliases_Module is
    procedure Add_New_Alias
      (Editor   : access Alias_Editor_Record'Class;
       Name     : String;
-      Selected : Boolean := False)
+      Selected : Boolean := False;
+      Read_Only : Boolean := False)
    is
       procedure Set_Alias
         (Tree, Iter : System.Address;
          Col1  : Gint; Name : String;
          Col2  : Gint := 1; Editable : Gboolean := 1;
+         Col3  : Gint := 2; Read_Only_Text : String := "" & ASCII.NUL;
          Final : Gint := -1);
       pragma Import (C, Set_Alias, "gtk_tree_store_set");
 
       Alias_Iter : Gtk_Tree_Iter;
+      Path : Gtk_Tree_Path;
    begin
       Append (Editor.Aliases_Model, Alias_Iter, Null_Iter);
-      Set_Alias
-        (Get_Object (Editor.Aliases_Model), Alias_Iter'Address,
-         0, Name & ASCII.NUL);
+
+      if Read_Only then
+         Set_Alias
+           (Get_Object (Editor.Aliases_Model), Alias_Iter'Address,
+            0, Name & ASCII.NUL, Editable => 0,
+            Read_Only_Text => -" (read-only)" & ASCII.NUL);
+      else
+         Set_Alias
+           (Get_Object (Editor.Aliases_Model), Alias_Iter'Address,
+            0, Name & ASCII.NUL);
+      end if;
 
       if Selected then
+         Path := Get_Path (Editor.Aliases_Model, Alias_Iter);
+         Scroll_To_Cell
+           (Tree_View => Editor.Aliases,
+            Path      => Path,
+            Column    => null,
+            Use_Align => False,
+            Row_Align => 0.0,
+            Col_Align => 0.0);
+         Path_Free (Path);
          Select_Iter (Get_Selection (Editor.Aliases), Alias_Iter);
       end if;
    end Add_New_Alias;
@@ -1673,17 +1819,21 @@ package body Aliases_Module is
       Value      : Alias_Record;
       It         : Gtk_Tree_Iter;
    begin
+      Clear (Editor.Aliases_Model);
       Get_First (Aliases_Module_Id.Aliases, Iter);
 
       loop
          Value := Get_Element (Iter);
          exit when Value = No_Alias;
 
-         Add_New_Alias (Editor, Get_Key (Iter));
+         if not Value.Read_Only
+           or else Get_Active (Editor.Show_Read_Only)
+         then
+            Add_New_Alias
+              (Editor, Get_Key (Iter), Read_Only => Value.Read_Only);
+         end if;
          Get_Next (Aliases_Module_Id.Aliases, Iter);
       end loop;
-
-      Clicked (Editor.Alias_Col);
 
       It := Get_Iter_First (Editor.Aliases_Model);
       if It /= Null_Iter then
@@ -1740,8 +1890,7 @@ package body Aliases_Module is
          when Gtk_Response_OK =>
             Save_Current_Var (Editor);
             Update_Aliases (Editor);
-            Save_Aliases
-              (Name_As_Directory (Get_Home_Dir (Kernel)) & "aliases");
+            Save_Aliases (Kernel);
 
          when Gtk_Response_Cancel =>
             null;
@@ -1834,8 +1983,7 @@ package body Aliases_Module is
          Add_Before => False,
          Callback   => On_Edit_Aliases'Access);
 
-      Load_Aliases
-        (Kernel, Name_As_Directory (Get_Home_Dir (Kernel)) & "aliases");
+      Load_Aliases (Kernel);
 
       Kernel_Callback.Connect
         (Kernel, "preferences_changed",
