@@ -36,7 +36,9 @@ package body Src_Info.Debug is
    --  raised).
 
    procedure Dump_Pos_And_E_Kind
-     (FL : File_Location; Kind : E_Kind := Overloaded_Entity);
+     (FL   : File_Location;
+      Kind : E_Kind;
+      Display_Kind : Boolean := True);
    --  Print the line/column position separated by the character associated
    --  to the given E_Kind.
 
@@ -77,14 +79,16 @@ package body Src_Info.Debug is
    -------------------------
 
    procedure Dump_Pos_And_E_Kind
-     (FL : File_Location; Kind : E_Kind := Overloaded_Entity) is
+     (FL   : File_Location;
+      Kind : E_Kind;
+      Display_Kind : Boolean := True) is
    begin
       if FL = Null_File_Location then
          Put ("<null file location, kind="
               & Kind'Img & ">");
       else
          Put (Get_File (FL) & ":");
-         if Kind /= Overloaded_Entity then
+         if Display_Kind then
             Put (Image (FL.Line) & Output_E_Kind (Kind) & Image (FL.Column));
          else
             Put (Image (FL.Line) & ' ' & Image (FL.Column));
@@ -250,7 +254,8 @@ package body Src_Info.Debug is
                Dump_Source_File (Fl.Value.File);
                Put ('|');
             end if;
-            Dump_Pos_And_E_Kind (Fl.Value);
+            Dump_Pos_And_E_Kind
+              (Fl.Value, Unresolved_Entity, Display_Kind => False);
             Put ('>');
          end if;
          Fl := Fl.Next;
