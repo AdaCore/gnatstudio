@@ -2480,6 +2480,16 @@ highlight_category, style_category and warning_category reference the colors to 
      <description>When GPS is running in server mode (using the --server switch), send msg to the socket identified by self.</description>
   </shell_doc>
 
+  <shell_doc name="GPS.Socket.close">
+     <param name="self">An instance of the Socket class</param>
+     <description>Closes the socket. The client that was connected to that socket will be notified by the system that the socket was closed, and react as needed</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.list" real_name="GPS.Socket.list">
+     <return>List of strings</return>
+     <description>Return a list of all the registered socket identifiers. These strings can be used to instanciate GPS.Socket.</description>
+   </shell_doc>
+
 
   <!--#################################################################
     ####   Menu class

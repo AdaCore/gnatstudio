@@ -80,6 +80,9 @@ package body Socket_Module is
 
       Name     : String_Access := new String'("");
       Next     : Read_Data_Access;
+
+      Timeout  : Timeout_Handler_Id;
+      --  The handler for Read()
    end record;
 
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
@@ -115,9 +118,18 @@ package body Socket_Module is
       Command : String);
    --  Interactive command handler for the socket module.
 
+   procedure Socket_Static_Command_Handler
+     (Data    : in out Callback_Data'Class;
+      Command : String);
+   --  Handles all shell commands for static methods
+
    function Find_Data (Id : String) return Read_Data_Access;
    --  Find the Read_Data associated with "Id"
    --  Return null if Id can't be found.
+
+   ---------------
+   -- Find_Data --
+   ---------------
 
    function Find_Data (Id : String) return Read_Data_Access is
       Module_Data : constant Socket_Module := Socket_Module (Socket_Module_ID);
@@ -169,7 +181,7 @@ package body Socket_Module is
       if Temp = R then
          Module_Data.Data_List := Temp.Next;
       else
-         while Temp.Next /= R loop
+         while Temp /= null and then Temp.Next /= R loop
             Temp := Temp.Next;
 
             pragma Assert (Temp /= null);
@@ -336,9 +348,6 @@ package body Socket_Module is
       if Status = Completed then
          declare
             Data : Read_Data_Access;
-            T    : Timeout_Handler_Id;
-            pragma Unreferenced (T);
-
          begin
             Data := new Read_Data_Record;
 
@@ -360,7 +369,7 @@ package body Socket_Module is
             Set (Data.R_Set.all, Data.Socket);
             String'Write (Data.Channel, "GPS>> ");
 
-            T := Read_Timeout.Add
+            Data.Timeout := Read_Timeout.Add
               (100, Idle_Read'Access, Data, Close'Access);
          end;
       end if;
@@ -387,8 +396,8 @@ package body Socket_Module is
    is
       Kernel       : constant Kernel_Handle := Get_Kernel (Data);
       Socket_Class : constant Class_Type := New_Class (Kernel, "Socket");
-      Read_Data : Read_Data_Access;
-      Inst      : constant Class_Instance := Nth_Arg (Data, 1, Socket_Class);
+      Read_Data    : Read_Data_Access;
+      Inst        : constant Class_Instance := Nth_Arg (Data, 1, Socket_Class);
    begin
       if Command = Constructor_Method then
          Read_Data := Find_Data (Nth_Arg (Data, 2));
@@ -400,8 +409,19 @@ package body Socket_Module is
 
       elsif Command = "send" then
          Read_Data := Find_Data (String'(Get_Data (Inst, Socket_Class)));
-         String'Write (Read_Data.Channel, Nth_Arg (Data, 2));
+         if Read_Data /= null then
+            String'Write (Read_Data.Channel, Nth_Arg (Data, 2));
+         end if;
+
+      elsif Command = "close" then
+         Read_Data := Find_Data (String'(Get_Data (Inst, Socket_Class)));
+         if Read_Data /= null then
+            Timeout_Remove (Read_Data.Timeout);
+            --  Close (Read_Data);
+         end if;
       end if;
+
+      Free (Inst);
 
    exception
       when Socket_Error | End_Error =>
@@ -410,6 +430,26 @@ package body Socket_Module is
       when E : others =>
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end Socket_Command_Handler;
+
+   -----------------------------------
+   -- Socket_Static_Command_Handler --
+   -----------------------------------
+
+   procedure Socket_Static_Command_Handler
+     (Data    : in out Callback_Data'Class;
+      Command : String)
+   is
+      Read_Data    : Read_Data_Access;
+   begin
+      if Command = "list" then
+         Set_Return_Value_As_List (Data);
+         Read_Data := Socket_Module (Socket_Module_ID).Data_List;
+         while Read_Data /= null loop
+            Set_Return_Value (Data, Read_Data.Name.all);
+            Read_Data := Read_Data.Next;
+         end loop;
+      end if;
+   end Socket_Static_Command_Handler;
 
    ---------------------
    -- Register_Module --
@@ -490,6 +530,15 @@ package body Socket_Module is
          Minimum_Args => 1,
          Maximum_Args => 1,
          Handler      => Socket_Command_Handler'Access);
+      Register_Command
+        (Kernel, "close",
+         Class        => Socket_Class,
+         Handler      => Socket_Command_Handler'Access);
+      Register_Command
+        (Kernel, "list",
+         Class         => Socket_Class,
+         Static_Method => True,
+         Handler       => Socket_Static_Command_Handler'Access);
 
    exception
       when E : others =>
