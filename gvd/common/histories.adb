@@ -21,6 +21,7 @@
 with Ada.Text_IO;   use Ada.Text_IO;
 with Glib;          use Glib;
 with GNAT.OS_Lib;   use GNAT.OS_Lib;
+with Gtk.Check_Menu_Item; use Gtk.Check_Menu_Item;
 with Gtk.Combo;     use Gtk.Combo;
 with Gtk.GEntry;    use Gtk.GEntry;
 with Glib.Xml_Int;  use Glib.Xml_Int;
@@ -29,6 +30,7 @@ with Gtk.List_Item; use Gtk.List_Item;
 with Ada.Unchecked_Deallocation;
 with GUI_Utils;     use GUI_Utils;
 with Gtk.Handlers;  use Gtk.Handlers;
+with Gtk.Widget;    use Gtk.Widget;
 with Gtk.Toggle_Button; use Gtk.Toggle_Button;
 
 package body Histories is
@@ -39,10 +41,13 @@ package body Histories is
      (History_Key_Record, History_Key_Access);
 
    package Value_Callback is new Gtk.Handlers.User_Callback
-     (Gtk_Toggle_Button_Record, History_Key_Access);
+     (Gtk_Widget_Record, History_Key_Access);
 
    procedure Update_History
-     (Button : access Gtk_Toggle_Button_Record'Class;
+     (Button : access Gtk_Widget_Record'Class;
+      Value  : History_Key_Access);
+   procedure Update_History_Item
+     (Item : access Gtk_Widget_Record'Class;
       Value  : History_Key_Access);
    --  Called when the button is toggled.
 
@@ -434,11 +439,22 @@ package body Histories is
    --------------------
 
    procedure Update_History
-     (Button : access Gtk_Toggle_Button_Record'Class;
+     (Button : access Gtk_Widget_Record'Class;
       Value  : History_Key_Access) is
    begin
-      Value.Value := Get_Active (Button);
+      Value.Value := Get_Active (Gtk_Toggle_Button (Button));
    end Update_History;
+
+   -------------------------
+   -- Update_History_Item --
+   -------------------------
+
+   procedure Update_History_Item
+     (Item  : access Gtk_Widget_Record'Class;
+      Value : History_Key_Access) is
+   begin
+      Value.Value := Get_Active (Gtk_Check_Menu_Item (Item));
+   end Update_History_Item;
 
    ---------------
    -- Associate --
@@ -461,6 +477,30 @@ package body Histories is
       Value_Callback.Connect
         (Button, "toggled",
          Value_Callback.To_Marshaller (Update_History'Access),
+         User_Data => Val);
+   end Associate;
+
+   ---------------
+   -- Associate --
+   ---------------
+
+   procedure Associate
+     (Hist : in out History_Record;
+      Key  : History_Key;
+      Item : access Gtk.Check_Menu_Item.Gtk_Check_Menu_Item_Record'Class)
+   is
+      Val : History_Key_Access := Get (Hist.Table, String (Key));
+   begin
+      --  This call is needed to ensure that Val is created and not null
+      if Val = null then
+         Set_History (Hist, Key, False);
+         Val := Get (Hist.Table, String (Key));
+      end if;
+
+      Set_Active (Item, Val.Value);
+      Value_Callback.Connect
+        (Item, "toggled",
+         Value_Callback.To_Marshaller (Update_History_Item'Access),
          User_Data => Val);
    end Associate;
 

@@ -25,6 +25,7 @@
 --  session of GPS to the other.
 
 with GNAT.OS_Lib;
+with Gtk.Check_Menu_Item;
 with Gtk.Combo;
 with Gtk.Toggle_Button;
 with String_Hash;
@@ -122,6 +123,12 @@ package Histories is
    --  The status of the button is set to the value of Key.
    --  Every time the button is toggled, the key's value is changed. Thus, its
    --  current value will be saved when Hist is saved.
+
+   procedure Associate
+     (Hist      : in out History_Record;
+      Key       : History_Key;
+      Item      : access Gtk.Check_Menu_Item.Gtk_Check_Menu_Item_Record'Class);
+   --  Same as above
 
 private
 
