@@ -69,8 +69,8 @@ package Items is
 
    type Drawing_Context is record
       GC          : Gdk.GC.Gdk_GC;
-      Xref_Gc     : Gdk.GC.Gdk_GC;
-      Modified_Gc : Gdk.GC.Gdk_GC;
+      Xref_GC     : Gdk.GC.Gdk_GC;
+      Modified_GC : Gdk.GC.Gdk_GC;
       Font        : Gdk.Font.Gdk_Font;
       Pixmap      : Gdk.Pixmap.Gdk_Pixmap;
    end record;

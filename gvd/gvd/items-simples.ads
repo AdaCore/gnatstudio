@@ -92,23 +92,23 @@ package Items.Simples is
 
    function New_Enum_Type return Generic_Type_Access;
    --  Create a new enum type.
-   
+
    -------------------
    -- Debugger types --
    -------------------
-   
+
    type Debugger_Output_Type is new Simple_Type with private;
    type Debugger_Output_Type_Access is access all Debugger_Output_Type'Class;
    --  General types, used to display directly the output of the debugger
    --  (no processing is done in that case).
-   
+
    function New_Debugger_Type (Cmd : String) return Generic_Type_Access;
-   --  Create a new Debugger item, which a specific command to send to the 
+   --  Create a new Debugger item, which a specific command to send to the
    --  debugger to get the new value.
-   
+
    function Refresh_Command (Item : Debugger_Output_Type) return String;
    --  Return the command to send to the debugger to refresh the value.
-   
+
 private
    type Simple_Type is new Generic_Type with record
       Value : Odd.Types.String_Access := null;
@@ -129,21 +129,19 @@ private
      (Item           : in out Simple_Type;
       Font           : Gdk.Font.Gdk_Font;
       Hide_Big_Items : Boolean := False);
-   function Get_Component_Name (Item : access Simple_Type;
-                                Lang : access Language.Language_Root'Class;
-                                Name : String;
-                                X, Y : Glib.Gint)
-                               return String;
-   function Get_Component (Item : access Simple_Type;
-                           X, Y : Glib.Gint)
-                          return Generic_Type_Access;
+   function Get_Component_Name
+     (Item : access Simple_Type;
+      Lang : access Language.Language_Root'Class;
+      Name : String;
+      X, Y : Glib.Gint) return String;
+   function Get_Component
+     (Item : access Simple_Type;
+      X, Y : Glib.Gint) return Generic_Type_Access;
    function Replace
      (Parent       : access Simple_Type;
       Current      : access Generic_Type'Class;
-      Replace_With : access Generic_Type'Class)
-     return Generic_Type_Access;
+      Replace_With : access Generic_Type'Class) return Generic_Type_Access;
    procedure Reset_Recursive (Item : access Simple_Type);
-
 
    type Range_Type is new Simple_Type with record
       Min, Max : Long_Integer;
@@ -152,14 +150,12 @@ private
    function Clone (Value : Range_Type) return Generic_Type_Access;
    --  Free is inherited from Simple_Type.
 
-
    type Mod_Type is new Simple_Type with record
       Modulo : Long_Integer;
    end record;
    procedure Print (Value : Mod_Type; Indent : Natural := 0);
    function Clone (Value : Mod_Type) return Generic_Type_Access;
    --  Free is inherited from Simple_Type.
-
 
    type Access_Type is new Simple_Type with null record;
    procedure Print (Value : Access_Type; Indent : Natural := 0);
@@ -169,12 +165,11 @@ private
                     Context : Drawing_Context;
                     X, Y    : Glib.Gint := 0);
 
-
    type Enum_Type is new Simple_Type with null record;
    procedure Print (Value : Enum_Type; Indent : Natural := 0);
    function Clone (Value : Enum_Type) return Generic_Type_Access;
    --  Free is inherited from Simple_Type.
-   
+
    type Debugger_Output_Type is new Simple_Type with record
       Refresh_Cmd : Odd.Types.String_Access;
    end record;

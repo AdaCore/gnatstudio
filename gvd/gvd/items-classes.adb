@@ -196,14 +196,15 @@ package body Items.Classes is
       end if;
 
       if Item.Selected then
-        Draw_Rectangle (Context.Pixmap,
-                        Context.GC,
-                        Filled => True,
-                        X      => X,
-                        Y      => Y,
-                        Width  => Item.Width,
-                        Height => Item.Height);
-        Set_Function (Context.GC, Copy_Invert);
+         Draw_Rectangle
+           (Context.Pixmap,
+            Context.GC,
+            Filled => True,
+            X      => X,
+            Y      => Y,
+            Width  => Item.Width,
+            Height => Item.Height);
+         Set_Function (Context.GC, Copy_Invert);
       end if;
 
       for A in Item.Ancestors'Range loop
@@ -225,7 +226,7 @@ package body Items.Classes is
       end if;
 
       if Item.Selected then
-        Set_Function (Context.GC, Copy);
+         Set_Function (Context.GC, Copy);
       end if;
    end Paint;
 

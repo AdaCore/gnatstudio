@@ -430,30 +430,32 @@ package body Items.Records is
       end if;
 
       if Item.Selected then
-        Draw_Rectangle (Context.Pixmap,
-                        Context.GC,
-                        Filled => True,
-                        X      => X,
-                        Y      => Y,
-                        Width  => Item.Width,
-                        Height => Item.Height);
-        Set_Function (Context.GC, Copy_Invert);
+         Draw_Rectangle
+           (Context.Pixmap,
+            Context.GC,
+            Filled => True,
+            X      => X,
+            Y      => Y,
+            Width  => Item.Width,
+            Height => Item.Height);
+         Set_Function (Context.GC, Copy_Invert);
       end if;
 
       for F in Item.Fields'Range loop
-
-         Draw_Text (Context.Pixmap,
-                    Font => Context.Font,
-                    GC   => Context.GC,
-                    X    => X + Left_Border + Border_Spacing,
-                    Y    => Current_Y + Get_Ascent (Context.Font),
-                    Text => Item.Fields (F).Name.all);
-         Draw_Text (Context.Pixmap,
-                    Font => Context.Font,
-                    GC   => Context.GC,
-                    X    => Arrow_Pos,
-                    Y    => Current_Y + Get_Ascent (Context.Font),
-                    Text => " => ");
+         Draw_Text
+           (Context.Pixmap,
+            Font => Context.Font,
+            GC   => Context.GC,
+            X    => X + Left_Border + Border_Spacing,
+            Y    => Current_Y + Get_Ascent (Context.Font),
+            Text => Item.Fields (F).Name.all);
+         Draw_Text
+           (Context.Pixmap,
+            Font => Context.Font,
+            GC   => Context.GC,
+            X    => Arrow_Pos,
+            Y    => Current_Y + Get_Ascent (Context.Font),
+            Text => " => ");
 
          --  not a variant part ?
 
@@ -488,7 +490,7 @@ package body Items.Records is
                       Height => Item.Height - 1);
 
       if Item.Selected then
-        Set_Function (Context.GC, Copy);
+         Set_Function (Context.GC, Copy);
       end if;
    end Paint;
 

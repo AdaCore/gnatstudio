@@ -183,7 +183,7 @@ package body Items.Arrays is
 
             --  Since the range can be split into two parts, keep enough space.
             Tmp      : Array_Item_Array (1 .. Item.Values'Last * 2);
-            Save     : Array_Item_Array_Access := item.Values;
+            Save     : Array_Item_Array_Access := Item.Values;
             Index    : Positive := Tmp'First;
          begin
             for J in 1 .. Item.Last_Value loop
@@ -344,7 +344,8 @@ package body Items.Arrays is
                      Item.Values (J).Value := Generic_Type_Access (Elem_Value);
                   end if;
 
-                  if Integer (Range_Index - Elem_Index) + Repeat_Num - 1 > 0
+                  if Integer (Range_Index - Elem_Index) +
+                    Repeat_Num - 1 > 0
                   then
                      Set_Value
                        (Item,
@@ -535,8 +536,8 @@ package body Items.Arrays is
                     X, Y    : Gint := 0)
    is
       Current_Y : Gint := Y + Border_Spacing;
-      Arrow_Pos : constant Gint := X + Border_Spacing + Item.Index_Width
-        +Left_Border - Text_Width (Context.Font, String'(" => "));
+      Arrow_Pos : constant Gint := X + Border_Spacing + Item.Index_Width +
+        Left_Border - Text_Width (Context.Font, String' (" => "));
    begin
       Item.X := X;
       Item.Y := Y;
@@ -563,14 +564,15 @@ package body Items.Arrays is
       end if;
 
       if Item.Selected then
-        Draw_Rectangle (Context.Pixmap,
-                        Context.GC,
-                        Filled => True,
-                        X      => X,
-                        Y      => Y,
-                        Width  => Item.Width,
-                        Height => Item.Height);
-        Set_Function (Context.GC, Copy_Invert);
+         Draw_Rectangle
+           (Context.Pixmap,
+            Context.GC,
+            Filled => True,
+            X      => X,
+            Y      => Y,
+            Width  => Item.Width,
+            Height => Item.Height);
+         Set_Function (Context.GC, Copy_Invert);
       end if;
 
       for V in Item.Values'Range loop

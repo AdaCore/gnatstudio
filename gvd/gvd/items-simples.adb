@@ -118,7 +118,7 @@ package body Items.Simples is
                     Context : Drawing_Context;
                     X, Y    : Gint := 0)
    is
-      Text_Gc : Gdk_GC := Context.GC;
+      Text_GC : Gdk_GC := Context.GC;
    begin
       Item.X := X;
       Item.Y := Y;
@@ -267,7 +267,7 @@ package body Items.Simples is
          Put (Value.Value.all & "}");
       end if;
    end Print;
-   
+
    --------------------
    -- New_Range_Type --
    --------------------
@@ -415,14 +415,15 @@ package body Items.Simples is
       end if;
 
       if Item.Selected then
-        Draw_Rectangle (Context.Pixmap,
-                        Context.GC,
-                        Filled => True,
-                        X      => X,
-                        Y      => Y,
-                        Width  => Item.Width,
-                        Height => Item.Height);
-        Set_Function (Context.GC, Copy_Invert);
+         Draw_Rectangle
+           (Context.Pixmap,
+            Context.GC,
+            Filled => True,
+            X      => X,
+            Y      => Y,
+            Width  => Item.Width,
+            Height => Item.Height);
+         Set_Function (Context.GC, Copy_Invert);
       end if;
 
       if Item.Has_Changed then
@@ -437,11 +438,10 @@ package body Items.Simples is
                  Text => Item.Value.all);
 
       if Item.Selected then
-        Set_Function (Context.GC, Copy);
+         Set_Function (Context.GC, Copy);
       end if;
    end Paint;
-   
-   
+
    -----------------------
    -- New_Debugger_Type --
    -----------------------
@@ -450,10 +450,10 @@ package body Items.Simples is
       Item : Debugger_Output_Type_Access;
    begin
       Item := new Debugger_Output_Type;
-      Item.Refresh_Cmd := new String'(Cmd);
+      Item.Refresh_Cmd := new String' (Cmd);
       return Generic_Type_Access (Item);
    end New_Debugger_Type;
-   
+
    ---------------------
    -- Refresh_Command --
    ---------------------
@@ -462,7 +462,7 @@ package body Items.Simples is
    begin
       return Item.Refresh_Cmd.all;
    end Refresh_Command;
-   
+
    -----------
    -- Print --
    -----------
@@ -475,7 +475,7 @@ package body Items.Simples is
          Put ("{Debugger_Type: " & Value.Value.all & "}");
       end if;
    end Print;
-      
+
    -----------
    -- Clone --
    -----------
@@ -489,26 +489,28 @@ package body Items.Simples is
       R.Refresh_Cmd := new String'(Value.Refresh_Cmd.all);
       return Generic_Type_Access (R);
    end Clone;
-   
+
    ----------
    -- Free --
    ----------
 
-   procedure Free (Item : access Debugger_Output_Type;
-                   Only_Value : Boolean := False)
+   procedure Free
+     (Item       : access Debugger_Output_Type;
+      Only_Value : Boolean := False)
    is
-      I : Generic_Type_Access := Generic_Type_Access (Item);
+      A_Type : Generic_Type_Access := Generic_Type_Access (Item);
    begin
       Free (Item.Refresh_Cmd);
-      
+
       if Item.Value /= null then
          Free (Item.Value);
       end if;
+
       if not Only_Value then
-         Free_Internal (I);
+         Free_Internal (A_Type);
       end if;
    end Free;
-   
+
    ------------------
    -- Size_Request --
    ------------------
@@ -521,27 +523,31 @@ package body Items.Simples is
       Num_Lines  : Gint := 1;
       Width      : Gint := 0;
       Line_Start : Positive;
+
    begin
       if Item.Valid and then Item.Value /= null then
-	 Line_Start := Item.Value'First;
-	 for J in Item.Value'Range loop
-	    if Item.Value (J) = ASCII.LF then
-	       Num_Lines := Num_Lines + 1;
-	       Width := Gint'Max
-		 (Width, Text_Width (Font, Item.Value (Line_Start .. J - 1)));
-	       Line_Start := J + 1;
-	    end if;
-	 end loop;
-	 Item.Width := Gint'Max
-	   (Item.Width, 
-	    Text_Width (Font, Item.Value (Line_Start .. Item.Value'Last)));
-	 Item.Height := (Get_Ascent (Font) + Get_Descent (Font)) * Num_Lines;
+         Line_Start := Item.Value'First;
+
+         for J in Item.Value'Range loop
+            if Item.Value (J) = ASCII.LF then
+               Num_Lines := Num_Lines + 1;
+               Width := Gint'Max
+                 (Width, Text_Width (Font, Item.Value (Line_Start .. J - 1)));
+               Line_Start := J + 1;
+            end if;
+         end loop;
+
+         Item.Width := Gint'Max
+           (Item.Width,
+            Text_Width (Font, Item.Value (Line_Start .. Item.Value'Last)));
+            Item.Height :=
+              (Get_Ascent (Font) + Get_Descent (Font)) * Num_Lines;
       else
          Item.Width := Unknown_Width;
          Item.Height := Unknown_Height;
       end if;
    end Size_Request;
-   
+
    -----------
    -- Paint --
    -----------
@@ -550,7 +556,7 @@ package body Items.Simples is
                     Context : Drawing_Context;
                     X, Y    : Gint := 0)
    is
-      Text_Gc : Gdk_GC := Context.GC;
+      Text_GC : Gdk_GC := Context.GC;
       Line    : Gint := Y;
       Line_Start : Positive;
    begin
@@ -577,33 +583,34 @@ package body Items.Simples is
       if Item.Has_Changed then
          Text_GC := Context.Modified_GC;
       end if;
-      
+
       Line_Start := Item.Value'First;
       for J in Item.Value'Range loop
-	 if Item.Value (J) = ASCII.LF then
-	    Draw_Text (Context.Pixmap,
-		       Font => Context.Font,
-		       GC   => Text_GC,
-		       X    => X,
-		       Y    => Line + Get_Ascent (Context.Font),
-		       Text => Item.Value (Line_Start .. J - 1));
-	    Line := 
-	      Line + Get_Ascent (Context.Font) + Get_Descent (Context.Font);
-	    Line_Start := J + 1;
-	 end if;
+         if Item.Value (J) = ASCII.LF then
+            Draw_Text
+              (Context.Pixmap,
+               Font => Context.Font,
+               GC   => Text_GC,
+               X    => X,
+               Y    => Line + Get_Ascent (Context.Font),
+               Text => Item.Value (Line_Start .. J - 1));
+            Line :=
+              Line + Get_Ascent (Context.Font) + Get_Descent (Context.Font);
+            Line_Start := J + 1;
+         end if;
       end loop;
-	    
-      Draw_Text (Context.Pixmap,
-		 Font => Context.Font,
-		 GC   => Text_GC,
-		 X    => X,
-		 Y    => Line + Get_Ascent (Context.Font),
-		 Text => Item.Value (Line_Start .. Item.Value'Last));
-      
+
+      Draw_Text
+        (Context.Pixmap,
+         Font => Context.Font,
+         GC   => Text_GC,
+         X    => X,
+         Y    => Line + Get_Ascent (Context.Font),
+         Text => Item.Value (Line_Start .. Item.Value'Last));
+
       if Item.Selected then
          Set_Function (Context.GC, Copy);
       end if;
    end Paint;
 
-   
 end Items.Simples;

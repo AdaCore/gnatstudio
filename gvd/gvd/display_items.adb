@@ -110,11 +110,11 @@ package body Display_Items is
    White_GC   : Gdk.GC.Gdk_GC;
    Grey_GC    : Gdk.GC.Gdk_GC;
    Black_GC   : Gdk.GC.Gdk_GC;
-   Xref_Gc    : Gdk.GC.Gdk_GC;
-   Change_Gc  : Gdk.GC.Gdk_GC;
+   Xref_GC    : Gdk.GC.Gdk_GC;
+   Change_GC  : Gdk.GC.Gdk_GC;
    Font       : Gdk.Font.Gdk_Font;
    Title_Font : Gdk.Font.Gdk_Font;
-   Refresh_Button_Gc : Gdk.GC.Gdk_GC;
+   Refresh_Button_GC : Gdk.GC.Gdk_GC;
 
    Trash_Pixmap        : Gdk_Pixmap;
    Trash_Mask          : Gdk_Bitmap;
@@ -237,7 +237,8 @@ package body Display_Items is
                --  Should display an error message somewhere.
             exception
                when Language.Unexpected_Type | Constraint_Error =>
-                  Pop_Internal_Command_Status (Get_Process (Debugger.Debugger));
+                  Pop_Internal_Command_Status
+                    (Get_Process (Debugger.Debugger));
                   return;
             end;
 
@@ -283,7 +284,7 @@ package body Display_Items is
 
          Color := Parse (Xref_Color);
          Alloc (Gtk.Widget.Get_Default_Colormap, Color);
-         Gdk_New (Xref_Gc, Win);
+         Gdk_New (Xref_GC, Win);
          Set_Foreground (Xref_GC, Color);
 
          Color := Parse (Title_Color);
@@ -299,7 +300,7 @@ package body Display_Items is
          Gdk_New (Black_GC, Win);
          Set_Foreground (Black_GC, Black (Gtk.Widget.Get_Default_Colormap));
 
-         Gdk_New (Refresh_Button_Gc, Win);
+         Gdk_New (Refresh_Button_GC, Win);
 
          Font := Get_Gdkfont (Value_Font_Name, Value_Font_Size);
          Title_Font := Get_Gdkfont (Title_Font_Name, Title_Font_Size);
@@ -448,27 +449,27 @@ package body Display_Items is
 
       --  Second button
 
-      Set_Clip_Mask (Black_Gc, Close_Mask);
+      Set_Clip_Mask (Black_GC, Close_Mask);
       Set_Clip_Origin
-        (Black_Gc, Alloc_Width - Buttons_Size - Spacing, Spacing);
+        (Black_GC, Alloc_Width - Buttons_Size - Spacing, Spacing);
       Draw_Pixmap
         (Pixmap (Item),
-         GC     => Black_Gc,
+         GC     => Black_GC,
          Src    => Close_Pixmap,
          Xsrc   => 0,
          Ysrc   => 0,
          Xdest  => Alloc_Width - Buttons_Size - Spacing,
          Ydest  => Spacing);
-      Set_Clip_Mask (Black_Gc, Null_Pixmap);
-      Set_Clip_Origin (Black_Gc, 0, 0);
+      Set_Clip_Mask (Black_GC, Null_Pixmap);
+      Set_Clip_Origin (Black_GC, 0, 0);
 
       if Item.Entity /= null then
          Paint
            (Item.Entity.all,
             Drawing_Context'(Pixmap      => Pixmap (Item),
                              GC          => Black_GC,
-                             Xref_Gc     => Xref_Gc,
-                             Modified_Gc => Change_Gc,
+                             Xref_GC     => Xref_GC,
+                             Modified_GC => Change_GC,
                              Font        => Font),
             X => Border_Spacing,
             Y => Title_Height + Border_Spacing);
@@ -498,8 +499,8 @@ package body Display_Items is
         (Component.all,
          Drawing_Context'(Pixmap      => Pixmap (Item),
                           GC          => Black_GC,
-                          Xref_Gc     => Xref_Gc,
-                          Modified_Gc => Change_Gc,
+                          Xref_GC     => Xref_GC,
+                          Modified_GC => Change_GC,
                           Font        => Font),
          X => Get_X (Component.all),
          Y => Get_Y (Component.all));
@@ -863,15 +864,15 @@ package body Display_Items is
          Width  => Buttons_Size,
          Height => Buttons_Size);
       Set_Clip_Origin
-        (Black_Gc,
+        (Black_GC,
          Width - 2 * Buttons_Size - 2 * Spacing,
          Spacing);
 
       if Item.Auto_Refresh then
-         Set_Clip_Mask (Black_Gc, Auto_Display_Mask);
+         Set_Clip_Mask (Black_GC, Auto_Display_Mask);
          Draw_Pixmap
            (Pixmap (Item),
-            GC     => Black_Gc,
+            GC     => Black_GC,
             Src    => Auto_Display_Pixmap,
             Xsrc   => 0,
             Ysrc   => 0,
@@ -879,10 +880,10 @@ package body Display_Items is
             Ydest  => Spacing);
 
       else
-         Set_Clip_Mask (Black_Gc, Locked_Mask);
+         Set_Clip_Mask (Black_GC, Locked_Mask);
          Draw_Pixmap
            (Pixmap (Item),
-            GC     => Black_Gc,
+            GC     => Black_GC,
             Src    => Locked_Pixmap,
             Xsrc   => 0,
             Ysrc   => 0,
@@ -890,8 +891,8 @@ package body Display_Items is
             Ydest  => Spacing);
       end if;
 
-      Set_Clip_Mask (Black_Gc, Null_Pixmap);
-      Set_Clip_Origin (Black_Gc, 0, 0);
+      Set_Clip_Mask (Black_GC, Null_Pixmap);
+      Set_Clip_Origin (Black_GC, 0, 0);
    end Set_Auto_Refresh;
 
    ----------
@@ -921,6 +922,11 @@ package body Display_Items is
    is
       --  This is slightly complicated since we need to get a valid item
       --  to undo the selection.
+
+      function Unselect
+        (Canvas : access Interactive_Canvas_Record'Class;
+         Item   : access Canvas_Item_Record'Class) return Boolean;
+      --  Spec needed ???
 
       function Unselect
         (Canvas : access Interactive_Canvas_Record'Class;
