@@ -18,8 +18,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Gtk.Main; use Gtk.Main;
-
 package body Advanced_Breakpoint_Pkg.Callbacks is
 
    -----------------------------
@@ -43,27 +41,5 @@ package body Advanced_Breakpoint_Pkg.Callbacks is
    begin
       null;
    end On_Stop_Record_Clicked;
-
-   -------------------------------
-   -- On_Ok_Advanced_Bp_Clicked --
-   -------------------------------
-
-   procedure On_Ok_Advanced_Bp_Clicked
-     (Object : access Gtk_Button_Record'Class)
-   is
-   begin
-      Main_Quit;
-   end On_Ok_Advanced_Bp_Clicked;
-
-   -----------------------------------
-   -- On_Cancel_Advanced_Bp_Clicked --
-   -----------------------------------
-
-   procedure On_Cancel_Advanced_Bp_Clicked
-     (Object : access Gtk_Button_Record'Class)
-   is
-   begin
-      Main_Quit;
-   end On_Cancel_Advanced_Bp_Clicked;
 
 end Advanced_Breakpoint_Pkg.Callbacks;
