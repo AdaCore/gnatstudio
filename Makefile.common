@@ -160,6 +160,24 @@ check_widgets: force
 	@[ -f ${WIDGETS_SRC}/src/make_widgets.ads ] || \
 	   (echo "widgets sources not found in ${WIDGETS_SRC}, see README"; false)
 
+################
+## VCS module ##
+################
+
+ifneq (,$(findstring vcs,$(MODULES)))
+
+# Location of vcs module sources. See the README file at the top-level for
+# information on how to setup the required links
+VCS_SRC=../../vcs
+
+MODULE_INCLUDE+=-aI${VCS_SRC}/src -aO${VCS_SRC}/obj
+endif
+
+.PHONY: check_vcs
+check_vcs: force
+	@[ -f ${VCS_SRC}/src/make_vcs.ads ] || \
+           (echo "vcs sources not found in ${VCS_SRC}, see README"; false)
+
 #####################
 ## Browsers module ##
 #####################
