@@ -736,8 +736,7 @@ package body Gtkada.MDI is
    procedure Size_Allocate_MDI_Layout
      (Layout : System.Address; Alloc : Gtk_Allocation)
    is
-      Stub : Gtk_Widget_Record;
-      L : Gtk_Widget := Gtk_Widget (Get_User_Data (Layout, Stub));
+      L : Gtk_Widget := Convert (Layout);
    begin
       --  First, register the new size of the MDI itself
       Set_Allocation (L, Alloc);
@@ -756,8 +755,7 @@ package body Gtkada.MDI is
      (MDI : System.Address; MDI_Alloc : Gtk_Allocation)
    is
       use type Widget_List.Glist;
-      Stub : MDI_Window_Record;
-      M : MDI_Window := MDI_Window (Get_User_Data (MDI, Stub));
+      M : MDI_Window := MDI_Window (Gtk.Widget.Convert (MDI));
       Alloc : Gtk_Allocation;
       Req   : Gtk_Requisition;
       List : Widget_List.Glist;
@@ -1430,9 +1428,7 @@ package body Gtkada.MDI is
       Alloc   : Gtk_Allocation;
 
    begin
-      if Get_Window (Child) /= Get_Window (Event)
-        or else MDI.Selected_Child = null
-      then
+      if Get_Window (Child) /= Get_Window (Event) then
          return False;
       end if;
 
@@ -2673,6 +2669,7 @@ package body Gtkada.MDI is
    procedure Maximize_Child_Cb (Child : access Gtk_Widget_Record'Class) is
       M : MDI_Window := MDI_Child (Child).MDI;
    begin
+      Activate_Child (MDI_Child (Child));
       Maximize_Children (M, M.Docks (None) = null);
    end Maximize_Child_Cb;
 
