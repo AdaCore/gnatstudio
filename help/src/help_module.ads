@@ -26,9 +26,6 @@ with Gtk.Widget;
 
 package Help_Module is
 
-   Help_Module_ID   : Glide_Kernel.Module_ID;
-   Help_Module_Name : constant String := "Help_Viewer";
-
    procedure Register_Module
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
    --  Register the module in the list
