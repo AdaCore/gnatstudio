@@ -64,6 +64,7 @@ with Welcome;                   use Welcome;
 with DDE;
 with GUI_Utils;                 use GUI_Utils;
 with Remote_Connections;
+with System;
 
 --  Modules registered by GPS.
 with Ada_Module;
@@ -497,11 +498,11 @@ procedure GPS is
       if Splash = null then
          Timeout_Id := Process_Timeout.Add
            (1, Finish_Setup'Unrestricted_Access,
-            (GPS.Kernel, null, null, null, null));
+            (GPS.Kernel, null, null, null, null, System.Null_Address));
       else
          Timeout_Id := Process_Timeout.Add
            (Splash_Timeout, Finish_Setup'Unrestricted_Access,
-            (GPS.Kernel, null, null, null, null));
+            (GPS.Kernel, null, null, null, null, System.Null_Address));
       end if;
    end Init_Settings;
 
@@ -734,6 +735,7 @@ procedure GPS is
    procedure Execute_Batch (Batch : String; As_File : Boolean) is
       Executed : Boolean := False;
       Script   : Scripting_Language;
+      Errors   : Boolean;
    begin
       for J in Batch'Range loop
          if Batch (J) = ':' then
@@ -749,12 +751,14 @@ procedure GPS is
                  (Script             => Script,
                   Filename           => Normalize_Pathname
                     (Batch (J + 1 .. Batch'Last), Startup_Dir.all),
-                  Display_In_Console => True);
+                  Display_In_Console => True,
+                  Errors             => Errors);
             else
                Execute_Command
                  (Script             => Script,
                   Command            => Batch (J + 1 .. Batch'Last),
-                  Display_In_Console => True);
+                  Display_In_Console => True,
+                  Errors             => Errors);
             end if;
 
             Executed := True;
