@@ -54,7 +54,7 @@ with Projects.Editor;      use Projects, Projects.Editor;
 with Glide_Kernel;         use Glide_Kernel;
 with Glide_Kernel.Project; use Glide_Kernel.Project;
 with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
-with Glide_Kernel.Modules; use Glide_Kernel.Modules;
+with Glide_Kernel.Contexts; use Glide_Kernel.Contexts;
 with Glide_Intl;           use Glide_Intl;
 with Language_Handlers;    use Language_Handlers;
 with String_Utils;         use String_Utils;

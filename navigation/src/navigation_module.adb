@@ -30,8 +30,10 @@ with Gtk.Toolbar;               use Gtk.Toolbar;
 with Gtk.Widget;                use Gtk.Widget;
 
 with Glide_Kernel.Console;      use Glide_Kernel.Console;
+with Glide_Kernel.Contexts;     use Glide_Kernel.Contexts;
 with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
 with Glide_Kernel.Scripts;      use Glide_Kernel.Scripts;
+with Glide_Kernel.Standard_Hooks; use Glide_Kernel.Standard_Hooks;
 with Glide_Result_View;         use Glide_Result_View;
 with Glide_Intl;                use Glide_Intl;
 

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2002                       --
+--                     Copyright (C) 2001-2003                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -29,6 +29,7 @@ with Gdk.Color;                 use Gdk.Color;
 with Pango.Font;                use Pango.Font;
 with Gtk.Adjustment;            use Gtk.Adjustment;
 with Glide_Kernel;              use Glide_Kernel;
+with Glide_Kernel.Contexts;     use Glide_Kernel.Contexts;
 with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
 with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
 with Gtk.Enums;                 use Gtk.Enums;

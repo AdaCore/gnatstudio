@@ -20,16 +20,18 @@
 
 with Ada.Exceptions;             use Ada.Exceptions;
 with Ada.Characters.Handling;    use Ada.Characters.Handling;
-with GNAT.OS_Lib;
+with GNAT.OS_Lib;                use GNAT.OS_Lib;
 with Glib;                       use Glib;
 with Glib.Object;                use Glib.Object;
 with Glib.Values;                use Glib.Values;
 with Glide_Kernel;               use Glide_Kernel;
 with Glide_Kernel.Console;       use Glide_Kernel.Console;
+with Glide_Kernel.Contexts;      use Glide_Kernel.Contexts;
 with Glide_Kernel.Modules;       use Glide_Kernel.Modules;
 with Glide_Kernel.Project;       use Glide_Kernel.Project;
 with Glide_Kernel.Preferences;   use Glide_Kernel.Preferences;
 with Glide_Kernel.Scripts;       use Glide_Kernel.Scripts;
+with Glide_Kernel.Standard_Hooks; use Glide_Kernel.Standard_Hooks;
 with Gdk;                        use Gdk;
 with Gdk.Color;                  use Gdk.Color;
 with Gdk.Event;                  use Gdk.Event;
@@ -415,7 +417,7 @@ package body Src_Editor_Box is
             Lib_Info           => Source_Info,
             File_Name          => Get_Filename (Editor),
             Entity_Name        => Entity_Name_Information (Context),
-            Line               => Modules.Line_Information (Context),
+            Line               => Contexts.Line_Information (Context),
             Column             => Entity_Column_Information (Context),
             Location           => Location,
             Status             => Status);
@@ -426,7 +428,7 @@ package body Src_Editor_Box is
             Lib_Info           => Source_Info,
             File_Name          => Get_Filename (Editor),
             Entity_Name        => Entity_Name_Information (Context),
-            Line               => Modules.Line_Information (Context),
+            Line               => Contexts.Line_Information (Context),
             Column             => Entity_Column_Information (Context),
             Entity             => Entity,
             Status             => Status);
@@ -598,7 +600,7 @@ package body Src_Editor_Box is
            (Lib_Info    => Source_Info,
             File_Name   => Filename,
             Entity_Name => Entity_Name_Information (Context),
-            Line        => Modules.Line_Information (Context),
+            Line        => Contexts.Line_Information (Context),
             Column      => Entity_Column_Information (Context),
             Entity      => Entity,
             Status      => Status);
@@ -2251,7 +2253,7 @@ package body Src_Editor_Box is
    procedure Add_File_Information
      (Editor     : access Source_Editor_Box_Record;
       Identifier : String;
-      Info       : Glide_Kernel.Modules.Line_Information_Data) is
+      Info       : Standard_Hooks.Line_Information_Data) is
    begin
       Add_File_Information
         (Editor.Source_Buffer,

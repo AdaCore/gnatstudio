@@ -46,7 +46,8 @@ with GVD.Tooltips;
 with Language;
 with Language_Handlers;
 with Glide_Kernel;
-with Glide_Kernel.Modules;
+with Glide_Kernel.Contexts;
+with Glide_Kernel.Standard_Hooks;
 with Src_Editor_Buffer;     use Src_Editor_Buffer;
 with Src_Editor_View;
 with VFS;
@@ -236,7 +237,7 @@ package Src_Editor_Box is
      (Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class;
       To_Body : Boolean;
       Editor  : access Source_Editor_Box_Record'Class;
-      Context : access Glide_Kernel.Modules.Entity_Selection_Context'Class);
+      Context : access Glide_Kernel.Contexts.Entity_Selection_Context'Class);
    --  Perform a Declaration-or-Body cross-reference for the entity
    --  located at (Line, Column) in Editor, or in the current editor if
    --  Editor is null. If To_Body is True, then display the next body of the
@@ -339,7 +340,7 @@ package Src_Editor_Box is
    procedure Add_File_Information
      (Editor     : access Source_Editor_Box_Record;
       Identifier : String;
-      Info       : Glide_Kernel.Modules.Line_Information_Data);
+      Info       : Glide_Kernel.Standard_Hooks.Line_Information_Data);
    --  See Glide_Kernel.Modules for more information.
 
    procedure Create_Line_Information_Column
