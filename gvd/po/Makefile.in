@@ -10,9 +10,9 @@ all:
 static:
 
 $(LANGS):
-	msgfmt -o $@.gmo $@.po
+	-msgfmt -o $@.gmo $@.po
 	$(MKDIR) $(localedir)/$@/LC_MESSAGES
-	$(INSTALL_DATA) $@.gmo $(localedir)/$@/LC_MESSAGES/gvd.mo
+	-$(INSTALL_DATA) $@.gmo $(localedir)/$@/LC_MESSAGES/gvd.mo
 
 install: $(LANGS)
 
