@@ -162,9 +162,7 @@ package body Glide_Consoles is
          end;
       end if;
 
-      Insert (Console.Text,
-              Fore  => Color,
-              Chars => New_Text.all);
+      Insert (Console.Text, Fore  => Color, Chars => New_Text.all);
       Free (New_Text);
    end Insert;
 
