@@ -533,7 +533,7 @@ package body SN.DB_Structures is
       Buffer : Unchecked_String_Access;
    begin
       CSF_Init (Key_Data_Pair.Key, Key);
-      CSF_Init (Key_Data_Pair.Data, Data, 1);
+      CSF_Init (Key_Data_Pair.Data, Data, 2);
 
       Tab.DBI  := Key_Data_Pair.DBI;
       Copy (Tab.Key, Key_Data_Pair.Key, Key_Data_Pair.Key_Size);
@@ -541,6 +541,7 @@ package body SN.DB_Structures is
       Buffer := To_Unchecked_String (Key_Data_Pair.Data);
       Parse_Key    (Key, Tab.Key, Tab.Name, Tab.File_Name, Tab.Start_Position);
       Get_Position    (Data, 1, Buffer, Tab.End_Position);
+      Get_Hex         (Data, 2, Buffer, Tab.Attributes);
    end Parse_Pair;
 
    ----------------
@@ -630,6 +631,8 @@ package body SN.DB_Structures is
 
       Get_Position
         (Data, 1, To_Unchecked_String (Key_Data_Pair.Data), Tab.End_Position);
+      Get_Hex         (Data, 2, To_Unchecked_String (Key_Data_Pair.Data),
+                       Tab.Attributes);
       Get_No_Brackets (Data, 3, Tab.Return_Type);
       Get_No_Brackets (Data, 4, Tab.Arg_Types);
       Get_No_Brackets (Data, 5, Tab.Arg_Names);
