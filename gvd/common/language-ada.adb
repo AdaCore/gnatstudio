@@ -334,13 +334,15 @@ package body Language.Debugger.Ada is
    function Get_Language_Context
      (Lang : access Ada_Language) return Language_Context is
    begin
-      return (Comment_Start_Length => 2,
-              Comment_End_Length   => 1,
-              Comment_Start        => "--",
-              Comment_End          => String' (1 => ASCII.LF),
-              String_Delimiter     => '"',
-              Quote_Character      => ASCII.NUL,
-              Constant_Character   => ''');
+      return (Comment_Start_Length          => 0,
+              Comment_End_Length            => 0,
+              New_Line_Comment_Start_Length => 2,
+              Comment_Start                 => "",
+              Comment_End                   => "",
+              New_Line_Comment_Start        => "--",
+              String_Delimiter              => '"',
+              Quote_Character               => ASCII.NUL,
+              Constant_Character            => ''');
    end Get_Language_Context;
 
 begin
