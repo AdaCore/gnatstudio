@@ -1,3 +1,23 @@
+-----------------------------------------------------------------------
+--                          G L I D E  I I                           --
+--                                                                   --
+--                        Copyright (C) 2001                         --
+--                            ACT-Europe                             --
+--                                                                   --
+-- GVD is free  software;  you can redistribute it and/or modify  it --
+-- under the terms of the GNU General Public License as published by --
+-- the Free Software Foundation; either version 2 of the License, or --
+-- (at your option) any later version.                               --
+--                                                                   --
+-- This program is  distributed in the hope that it will be  useful, --
+-- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
+-- General Public License for more details. You should have received --
+-- a copy of the GNU General Public License along with this library; --
+-- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
+-- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
+-----------------------------------------------------------------------
+
 with Glib; use Glib;
 with Gtk; use Gtk;
 with Gdk.Types;       use Gdk.Types;
@@ -7,8 +27,6 @@ with Gtk.Enums;       use Gtk.Enums;
 with Gtk.Old_Editable; use Gtk.Old_Editable;
 with Gtkada.Handlers; use Gtkada.Handlers;
 with Callbacks_Log_Editor; use Callbacks_Log_Editor;
-with Log_Editor_Intl; use Log_Editor_Intl;
-with Log_Editor_Window_Pkg.Callbacks; use Log_Editor_Window_Pkg.Callbacks;
 
 package body Log_Editor_Window_Pkg is
 
@@ -24,7 +42,7 @@ package body Log_Editor_Window_Pkg is
    begin
       Gtk_New (Label, File_Name);
       Set_Alignment (Log_Editor_Window.Files_Label, 0.0, 0.5);
-      Set_Padding (Label, 0,0);
+      Set_Padding (Label, 0, 0);
       Set_Justify (Label, Justify_Center);
       Set_Line_Wrap (Label, False);
       Pack_Start (Log_Editor_Window.Labels_Vbox, Label, False, False, 0);
@@ -78,11 +96,11 @@ package body Log_Editor_Window_Pkg is
       Hbox1 : Gtk_Hbox;
       Hbox2 : Gtk_Hbox;
 
-      Hbuttonbox1 : Gtk_Hbutton_Box;
+      Hbuttonbox1     : Gtk_Hbutton_Box;
       Scrolledwindow1 : Gtk_Scrolled_Window;
    begin
       Gtk.Window.Initialize (Log_Editor_Window, Window_Toplevel);
-      Set_Title (Log_Editor_Window, -"Log Editor");
+      Set_Title (Log_Editor_Window, "Log Editor");
       Set_Policy (Log_Editor_Window, False, True, False);
       Set_Position (Log_Editor_Window, Win_Pos_None);
       Set_Modal (Log_Editor_Window, False);
@@ -97,7 +115,7 @@ package body Log_Editor_Window_Pkg is
       Gtk_New_Vbox (Vbox3, False, 0);
       Pack_Start (Hbox2, Vbox3, False, False, 3);
 
-      Gtk_New (Log_Editor_Window.Files_Label, -("Edit log for file :"));
+      Gtk_New (Log_Editor_Window.Files_Label, "Edit log for files:");
       Set_Alignment (Log_Editor_Window.Files_Label, 0.5, 0.5);
       Set_Padding (Log_Editor_Window.Files_Label, 3, 3);
       Set_Justify (Log_Editor_Window.Files_Label, Justify_Center);
@@ -130,17 +148,6 @@ package body Log_Editor_Window_Pkg is
       Set_Flags (Log_Editor_Window.Ok_Button, Can_Default);
 
       Add (Hbuttonbox1, Log_Editor_Window.Ok_Button);
-
---       Gtk_New_From_Stock (Log_Editor_Window.Cancel_Button, Stock_Cancel);
---       Set_Relief (Log_Editor_Window.Cancel_Button, Relief_Normal);
---       Set_Flags (Log_Editor_Window.Cancel_Button, Can_Default);
-
---       Button_Callback.Connect
---         (Log_Editor_Window.Cancel_Button, "clicked",
---          Button_Callback.To_Marshaller (On_Cancel_Button_Clicked'Access));
-
---       Add (Hbuttonbox1, Log_Editor_Window.Cancel_Button);
-
    end Initialize;
 
 end Log_Editor_Window_Pkg;
