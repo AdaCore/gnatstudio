@@ -148,10 +148,11 @@ package body Codefix.File_Io is
       File     : File_Type;
       Line_Red : Dynamic_String;
    begin
+      --  ??? Need to search File in the project source path
       Open (File, In_File, Path);
 
       while not End_Of_File (File) loop
-         Line_Red := null; --  to not to erase the line red before
+         Line_Red := null; --  to avoid erasing the line red before
          Get_Line (File, Line_Red);
          Append (This.Content, Line_Red);
       end loop;
