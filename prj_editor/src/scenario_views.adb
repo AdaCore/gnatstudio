@@ -25,6 +25,7 @@ with Gdk.Color;       use Gdk.Color;
 with Gdk.Pixmap;      use Gdk.Pixmap;
 with Gtk.Button;      use Gtk.Button;
 with Gtk.Combo;       use Gtk.Combo;
+with Gtk.Dialog;      use Gtk.Dialog;
 with Gtk.Enums;       use Gtk.Enums;
 with Gtk.GEntry;      use Gtk.GEntry;
 with Gtk.Label;       use Gtk.Label;
@@ -35,6 +36,7 @@ with Gtk.Table;       use Gtk.Table;
 with Gtk.Tooltips;    use Gtk.Tooltips;
 with Gtk.Handlers;    use Gtk.Handlers;
 with Gtk.Widget;      use Gtk.Widget;
+with Gtkada.Dialogs;  use Gtkada.Dialogs;
 
 with Prj_API;          use Prj_API;
 with Glide_Kernel;     use Glide_Kernel;
@@ -50,8 +52,11 @@ with Prj.Tree; use Prj.Tree;
 with Stringt;  use Stringt;
 with Namet;    use Namet;
 with Types;    use Types;
+with Traces;   use Traces;
 
 package body Scenario_Views is
+
+   Me : Debug_Handle := Create ("Scenario_Views");
 
    procedure Refresh (View : access GObject_Record'Class; Data : GObject);
    --  Callback when the current view of the project has changed
@@ -75,6 +80,10 @@ package body Scenario_Views is
    procedure Edit_Variable
      (Button : access Gtk_Widget_Record'Class; Data : Variable_User_Data);
    --  Called when editing a variable (name and possible values)
+
+   procedure Delete_Variable
+     (Button : access Gtk_Widget_Record'Class; Data : Variable_User_Data);
+   --  Called when removing a variable
 
    package View_Callback is new Gtk.Handlers.User_Callback
      (Gtk_Widget_Record, Variable_User_Data);
@@ -120,7 +129,10 @@ package body Scenario_Views is
       --  emitted at the same time as a "project_view_changed", and we do the
       --  same thing in both cases.
       Object_User_Callback.Connect
-        (Kernel, "project_view_changed",
+        (Kernel, Project_View_Changed_Signal,
+         Object_User_Callback.To_Marshaller (Refresh'Access), GObject (View));
+      Object_User_Callback.Connect
+        (Kernel, Variable_Changed_Signal,
          Object_User_Callback.To_Marshaller (Refresh'Access), GObject (View));
 
       --  Update the viewer with the current project
@@ -181,10 +193,55 @@ package body Scenario_Views is
    is
       Edit : New_Var_Edit;
    begin
-      Gtk_New
-        (Edit, Data.View.Kernel, Data.Var, Scenario_Variable_Only => True);
+      Gtk_New (Edit, Data.View.Kernel, Data.Var);
       Show_All (Edit);
+      while Run (Edit) = Gtk_Response_OK
+        and then not Update_Variable (Edit)
+      loop
+         null;
+      end loop;
+      Destroy (Edit);
    end Edit_Variable;
+
+   ---------------------
+   -- Delete_Variable --
+   ---------------------
+
+   procedure Delete_Variable
+     (Button : access Gtk_Widget_Record'Class; Data : Variable_User_Data)
+   is
+      Ext_Variable : constant String :=
+        Get_String (External_Reference_Of (Data.Var));
+      Str : String_Id;
+      Message : constant String :=
+        "Doing so will remove all the configurations associated with"
+        & ASCII.LF
+        & "that variable, except for the currently selected value";
+
+      Response : Message_Dialog_Buttons := Message_Dialog
+        (Msg           => (-"Are you sure you want to remove the variable ")
+           & '"' & Ext_Variable & """?" & ASCII.LF & (-Message),
+         Dialog_Type   => Confirmation,
+         Buttons       => Button_OK or Button_Cancel,
+         Title         => -"Deleting a variable",
+         Justification => Justify_Left,
+         Parent        => Get_Main_Window (Data.View.Kernel));
+   begin
+      if Response = Button_OK then
+         Name_Len := Ext_Variable'Length;
+         Name_Buffer (1 .. Name_Len) := Ext_Variable;
+         Str := Prj.Ext.Value_Of (Name_Find);
+
+         Delete_External_Variable
+           (Root_Project             => Get_Project (Data.View.Kernel),
+            Ext_Variable_Name        => Ext_Variable,
+            Keep_Choice              => Get_String (Str),
+            Delete_Direct_References => False);
+         Variable_Changed (Data.View.Kernel);
+
+         Trace (Me, "Delete_Variable: " & Ext_Variable);
+      end if;
+   end Delete_Variable;
 
    -------------
    -- Refresh --
@@ -194,8 +251,8 @@ package body Scenario_Views is
       V : Scenario_View := Scenario_View (Data);
       Label : Gtk_Label;
       Combo : Gtk_Combo;
-      Row : Guint;
       Str : String_Id;
+      Row : Guint;
       Button : Gtk_Button;
       Pix    : Gtk_Pixmap;
 
@@ -260,10 +317,13 @@ package body Scenario_Views is
                  (V, Button, 1, 2, Row, Row + 1, Xoptions => 0, Yoptions => 0);
                Set_Tip
                  (Get_Tooltips (V.Kernel), Button, -"Delete variable");
+               View_Callback.Connect
+                 (Button, "clicked",
+                  View_Callback.To_Marshaller (Delete_Variable'Access),
+                  (View => V, Var => Scenar_Var (J)));
 
-               Str := External_Reference_Of (Scenar_Var (J));
-               String_To_Name_Buffer (Str);
-               Gtk_New (Label, Name_Buffer (Name_Buffer'First .. Name_Len));
+               Gtk_New
+                 (Label, Get_String (External_Reference_Of (Scenar_Var (J))));
                Set_Alignment (Label, 0.0, 0.5);
                Attach (V, Label, 2, 3, Row, Row + 1, Xoptions => Fill);
 
