@@ -77,6 +77,11 @@ package body Browsers.Call_Graph is
    --  Number of locations that will be inserted in the locations view in
    --  each idle processing.
 
+   Include_Implicit_Cst : aliased constant String := "include_implicit";
+   References_Cmd_Parameters : constant Cst_Argument_List :=
+     (1 => Include_Implicit_Cst'Access);
+
+
    function All_Refs_Category (Entity : Entity_Information) return String;
    --  Return the category title when doing a find all refs on a given entity.
 
@@ -1509,23 +1514,32 @@ package body Browsers.Call_Graph is
 
    begin
       if Command = "find_all_refs" then
+         Name_Parameters (Data, References_Cmd_Parameters);
          Find_All_References_Internal
            (Kernel, Entity,
             Category_Title   => All_Refs_Category (Entity),
             Include_Writes   => True,
             Include_Reads    => True,
-            Include_Implicit => False);
+            Include_Implicit => Nth_Arg (Data, 2, False));
 
       elsif Command = "references" then
+         Name_Parameters (Data, References_Cmd_Parameters);
          declare
+            Include_Implicit : constant Boolean := Nth_Arg (Data, 2, False);
             Iter : Entity_Reference_Iterator;
             Loc  : File_Location;
             Ref  : Entity_Reference;
+            Filter : Reference_Kind_Filter := Real_References_Filter;
          begin
+            if Include_Implicit then
+               Filter (Implicit) := True;
+            end if;
+
             Set_Return_Value_As_List (Data);
             Find_All_References
               (Iter,
                Entity                => Entity,
+               Filter                => Filter,
                File_Has_No_LI_Report => null);
 
             while not At_End (Iter) loop
@@ -1848,7 +1862,7 @@ package body Browsers.Call_Graph is
       Find_All_Refs_Command (Command.all).Include_Implicit := True;
       Register_Contextual_Menu
         (Kernel, "Find all references and implicit",
-         Label  => "References/Find all references (and implicit refs) to %e",
+         Label  => "References/Find all references (and implicit use)) to %e",
          Action => Command);
 
       Command := new Find_All_Refs_Command;
@@ -1896,10 +1910,12 @@ package body Browsers.Call_Graph is
       Register_Command
         (Kernel, "find_all_refs",
          Class        => Get_Entity_Class (Kernel),
+         Maximum_Args => 1,
          Handler      => Call_Graph_Command_Handler'Access);
       Register_Command
         (Kernel, "references",
          Class        => Get_Entity_Class (Kernel),
+         Maximum_Args => 1,
          Handler      => Call_Graph_Command_Handler'Access);
       Register_Command
         (Kernel, "calls",
