@@ -4211,7 +4211,7 @@ package body Src_Editor_Module is
          Kernel                  => Kernel,
          Module_Name             => Src_Editor_Module_Name,
          Priority                => Default_Priority,
-               Default_Context_Factory => Default_Factory'Access,
+         Default_Context_Factory => Default_Factory'Access,
          Save_Function           => Save_Function'Access,
          Customization_Handler   => Casing_Customize'Access);
       GPS.Kernel.Kernel_Desktop.Register_Desktop_Functions
