@@ -655,7 +655,7 @@ package body Glide_Kernel.Help is
       Button := Message_Dialog
         ("GPS " & GVD.Version & " (" & GVD.Source_Date &
          (-") hosted on ") & GVD.Target & ASCII.LF & ASCII.LF &
-         (-"The GNAT Programming System") & ASCII.LF & ASCII.LF &
+         (-"the GNAT Programming System") & ASCII.LF & ASCII.LF &
          "(c) 2001-2002 ACT-Europe",
          Buttons => Button_OK,
          Title   => -"About...");
@@ -715,23 +715,30 @@ package body Glide_Kernel.Help is
 
       --  Add help menus
 
-      Register_Menu (Kernel, Help, -"Open HTML File...",
-                     "", On_Open_HTML'Access);
+      Register_Menu
+        (Kernel, Help, -"Open HTML File...", "", On_Open_HTML'Access);
       Register_Menu (Kernel, Help, -"Welcome", "", On_Welcome'Access);
-      Register_Menu (Kernel, Help, -"Using the GPS Development Environment",
-                     "", On_GPS_Help'Access);
-      Register_Menu (Kernel, Help, -"Using the GNU Visual Debugger",
-                     "", On_GVD_Help'Access);
-      Register_Menu (Kernel, Help, -"GNAT User's Guide",
-                     "", On_GNAT_UG_Help'Access);
-      Register_Menu (Kernel, Help, -"GNAT Reference Manual",
-                     "", On_GNAT_RM_Help'Access);
-      Register_Menu (Kernel, Help, -"Ada 95 Reference Manual",
-                     "", On_ARM95_Help'Access);
-      Register_Menu (Kernel, Help, -"Using the GNU Debugger",
-                     "", On_GDB_Help'Access);
-      Register_Menu (Kernel, Help, -"Using GCC",
-                     "", On_GCC_Help'Access);
+      Register_Menu
+        (Kernel, Help, -"Using the GNAT Programming System", "",
+         On_GPS_Help'Access);
+      Register_Menu
+        (Kernel, Help, -"Using the GNU Visual Debugger", "",
+         On_GVD_Help'Access, Sensitive => False);
+      Register_Menu
+        (Kernel, Help, -"GNAT User's Guide", "",
+         On_GNAT_UG_Help'Access, Sensitive => False);
+      Register_Menu
+        (Kernel, Help, -"GNAT Reference Manual", "",
+         On_GNAT_RM_Help'Access, Sensitive => False);
+      Register_Menu
+        (Kernel, Help, -"Ada 95 Reference Manual", "",
+         On_ARM95_Help'Access, Sensitive => False);
+      Register_Menu
+        (Kernel, Help, -"Using the GNU Debugger", "",
+         On_GDB_Help'Access, Sensitive => False);
+      Register_Menu
+        (Kernel, Help, -"Using GCC", "",
+         On_GCC_Help'Access, Sensitive => False);
       Register_Menu (Kernel, Help, -"About...", "", On_About'Access);
    end Register_Module;
 
