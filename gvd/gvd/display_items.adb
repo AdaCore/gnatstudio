@@ -278,9 +278,6 @@ package body Display_Items is
                Entity := New_Debugger_Type
                  (Print_Value_Cmd (Debugger.Debugger, Variable_Name));
                Is_Parsable_Entity := False;
-
---                 Set_Busy (Debugger, False);
---                 return;
          end;
 
          if Entity = null then
@@ -291,8 +288,6 @@ package body Display_Items is
             Entity := New_Debugger_Type
               (Print_Value_Cmd (Debugger.Debugger, Variable_Name));
             Is_Parsable_Entity := False;
---              Set_Busy (Debugger, False);
---              return;
          end if;
       end if;
 
