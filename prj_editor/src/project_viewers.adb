@@ -18,30 +18,29 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Gdk.Color;       use Gdk.Color;
-with Gdk.Event;       use Gdk.Event;
-with Glib;            use Glib;
-with Glib.Object;     use Glib.Object;
-with Gtk.Alignment;   use Gtk.Alignment;
-with Gtk.Arguments;   use Gtk.Arguments;
-with Gtk.Check_Button; use Gtk.Check_Button;
-with Gtk.Clist;       use Gtk.Clist;
-with Gtk.Dialog;      use Gtk.Dialog;
-with Gtk.Enums;       use Gtk.Enums;
-with Gtk.Frame;       use Gtk.Frame;
-with Gtk.Label;       use Gtk.Label;
-with Gtk.Menu;        use Gtk.Menu;
-with Gtk.Menu_Item;   use Gtk.Menu_Item;
-with Gtk.Notebook;    use Gtk.Notebook;
-with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
-with Gtk.Style;       use Gtk.Style;
-with Gtk.Widget;      use Gtk.Widget;
-with Gtk.Window;      use Gtk.Window;
-with Gtkada.Handlers; use Gtkada.Handlers;
-with Gtkada.MDI;      use Gtkada.MDI;
-with Gtkada.File_Selector; use Gtkada.File_Selector;
+with Gdk.Color;                    use Gdk.Color;
+with Gdk.Event;                    use Gdk.Event;
+with Glib;                         use Glib;
+with Glib.Object;                  use Glib.Object;
+with Gtk.Alignment;                use Gtk.Alignment;
+with Gtk.Arguments;                use Gtk.Arguments;
+with Gtk.Box;                      use Gtk.Box;
+with Gtk.Check_Button;             use Gtk.Check_Button;
+with Gtk.Clist;                    use Gtk.Clist;
+with Gtk.Dialog;                   use Gtk.Dialog;
+with Gtk.Enums;                    use Gtk.Enums;
+with Gtk.Frame;                    use Gtk.Frame;
+with Gtk.Menu;                     use Gtk.Menu;
+with Gtk.Menu_Item;                use Gtk.Menu_Item;
+with Gtk.Scrolled_Window;          use Gtk.Scrolled_Window;
+with Gtk.Style;                    use Gtk.Style;
+with Gtk.Widget;                   use Gtk.Widget;
+with Gtk.Window;                   use Gtk.Window;
+with Gtkada.Handlers;              use Gtkada.Handlers;
+with Gtkada.MDI;                   use Gtkada.MDI;
+with Gtkada.File_Selector;         use Gtkada.File_Selector;
 with Gtkada.File_Selector.Filters; use Gtkada.File_Selector.Filters;
-with Gtkada.Types;    use Gtkada.Types;
+with Gtkada.Types;                 use Gtkada.Types;
 
 with Ada.Calendar;
 with Ada.Exceptions;            use Ada.Exceptions;
@@ -86,7 +85,7 @@ package body Project_Viewers is
    Default_Project_Width  : constant := 400;
    Default_Project_Height : constant := 400;
 
-   Project_Editor_Window_Name : constant String := "Project editor";
+   Project_Switches_Name : constant String := "Project Switches";
 
    type View_Display is access procedure
      (Viewer    : access Project_Viewer_Record'Class;
@@ -117,9 +116,6 @@ package body Project_Viewers is
    type View_Description (Num_Columns : Interfaces.C.size_t) is record
       Titles : Interfaces.C.Strings.chars_ptr_array (1 .. Num_Columns);
       --  The titles for all the columns
-
-      Tab_Title : String_Access;
-      --  The label for the notebook page that contains the view
 
       Display : View_Display_Array (1 .. Num_Columns);
       --  The functions to display each of the columns. null can be provided
@@ -171,46 +167,21 @@ package body Project_Viewers is
      (Viewer    : access Project_Viewer_Record'Class;
       Column    : Gint;
       Context   : File_Selection_Context_Access);
-   --  Called every time the user wans to edit some specific switches
-
-   View_System : aliased constant View_Description :=
-     (Num_Columns => 3,
-      Titles      => (-"File Name") + (-"Size") + (-"Last_Modified"),
-      Tab_Title   => new String' (-"System"),
-      Display     => (Name_Display'Access,
-                      Size_Display'Access,
-                      Timestamp_Display'Access),
-      Callbacks   => (null, null, null));
-
-   View_Version_Control : aliased constant View_Description :=
-     (Num_Columns => 3,
-      Titles      => (-"File Name") + (-"Revision") + (-"Head Revision"),
-      Tab_Title   => new String' (-"VCS"),
-      Display     => (Name_Display'Access, null, null),
-      Callbacks   => (null, null, null));
+   --  Called every time the user wants to edit some specific switches
 
    View_Switches : aliased constant View_Description :=
      (Num_Columns => 2,
       Titles      => (-"File Name") + (-"Compiler"),
-      Tab_Title   => new String' (-"Switches"),
       Display     => (Name_Display'Access,
                       Compiler_Switches_Display'Access),
       Callbacks   => (null,
                       Edit_Switches_Callback'Access));
-
-   Views : array (View_Type) of View_Description_Access :=
-     (View_System'Access, View_Version_Control'Access, View_Switches'Access);
 
    type User_Data is record
       File_Name : String_Id;
       Directory : String_Id;
    end record;
    package Project_User_Data is new Row_Data (User_Data);
-
-   function Current_Page
-     (Viewer : access Project_Viewer_Record'Class) return View_Type;
-   pragma Inline (Current_Page);
-   --  Return the view associated with the current page of Viewer.
 
    procedure Append_Line
      (Viewer           : access Project_Viewer_Record'Class;
@@ -224,7 +195,6 @@ package body Project_Viewers is
 
    function Append_Line_With_Full_Name
      (Viewer         : access Project_Viewer_Record'Class;
-      Current_View   : View_Type;
       Project_View   : Project_Id;
       File_Name      : String;
       Directory_Name : String) return Gint;
@@ -236,11 +206,6 @@ package body Project_Viewers is
      (Project_View : Project_Id; File : String) return String_Id;
    --  Return the location of File in the source dirs of Project_View.
    --  null is returned if the file wasn't found.
-
-   procedure Switch_Page
-     (Viewer : access Gtk_Widget_Record'Class; Args : Gtk_Args);
-   --  Callback when a new page is selected in Viewer.
-   --  If the page is not up-to-date, we refresh its contents
 
    procedure Select_Row
      (Viewer : access Gtk_Widget_Record'Class; Args : Gtk_Args);
@@ -286,10 +251,10 @@ package body Project_Viewers is
       Kernel : Kernel_Handle);
    --  Callback for the Project->New menu
 
-   procedure On_Edit_Project
+   procedure On_Edit_Switches
      (Widget : access GObject_Record'Class;
       Kernel : Kernel_Handle);
-   --  Callback for the Project->Edit menu
+   --  Callback for the Project->Edit Switches menu
 
    procedure On_Edit_Naming_Scheme
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
@@ -500,16 +465,15 @@ package body Project_Viewers is
 
    function Append_Line_With_Full_Name
      (Viewer         : access Project_Viewer_Record'Class;
-      Current_View   : View_Type;
       Project_View   : Project_Id;
       File_Name      : String;
       Directory_Name : String) return Gint
    is
       Line      : Gtkada.Types.Chars_Ptr_Array
-        (1 .. Views (Current_View).Num_Columns);
+        (1 .. View_Switches.Num_Columns);
       Row       : Gint;
       File_Desc : File_Descriptor;
-      Style     : array (1 .. Views (Current_View).Num_Columns) of Gtk_Style;
+      Style     : array (1 .. View_Switches.Num_Columns) of Gtk_Style;
 
    begin
       if Is_Absolute_Path (Directory_Name) then
@@ -522,8 +486,8 @@ package body Project_Viewers is
       end if;
 
       for Column in Line'Range loop
-         if Views (Current_View).Display (Column) /= null then
-            Views (Current_View).Display (Column)
+         if View_Switches.Display (Column) /= null then
+            View_Switches.Display (Column)
               (Viewer, File_Name, Directory_Name, File_Desc,
                Line (Column), Style (Column));
          else
@@ -534,12 +498,11 @@ package body Project_Viewers is
 
       Close (File_Desc);
 
-      Row := Append (Viewer.Pages (Current_View), Line);
+      Row := Append (Viewer.List, Line);
 
       for S in Style'Range loop
          Set_Cell_Style
-           (Viewer.Pages (Current_View), Row, Gint (S - Style'First),
-            Style (S));
+           (Viewer.List, Row, Gint (S - Style'First), Style (S));
       end loop;
 
       Free (Line);
@@ -556,9 +519,8 @@ package body Project_Viewers is
       File_Name        : String_Id;
       Directory_Filter : String := "")
    is
-      Current_View : constant View_Type := Current_Page (Viewer);
-      File_N       : String (1 .. Integer (String_Length (File_Name)));
-      Dir_Name     : String_Id;
+      File_N   : String (1 .. Integer (String_Length (File_Name)));
+      Dir_Name : String_Id;
 
    begin
       String_To_Name_Buffer (File_Name);
@@ -576,92 +538,11 @@ package body Project_Viewers is
 
       String_To_Name_Buffer (Dir_Name);
       Project_User_Data.Set
-        (Viewer.Pages (Current_View),
+        (Viewer.List,
          Append_Line_With_Full_Name
-           (Viewer, Current_View, Project_View,
-            File_N, Name_Buffer (1 .. Name_Len)),
+           (Viewer, Project_View, File_N, Name_Buffer (1 .. Name_Len)),
          (File_Name => File_Name, Directory => Dir_Name));
    end Append_Line;
-
-   -----------------
-   -- Switch_Page --
-   -----------------
-
-   procedure Switch_Page
-     (Viewer : access Gtk_Widget_Record'Class;
-      Args   : Gtk_Args)
-   is
-      use type Row_List.Glist;
-
-      V            : Project_Viewer := Project_Viewer (Viewer);
-      Page_Num     : constant Guint := To_Guint (Args, 2);
-      Current_View : View_Type := View_Type'Val (Page_Num);
-      Up_To_Date   : View_Type;
-      List         : Row_List.Glist;
-      User         : User_Data;
-
-   begin
-      --  No current page (happens only while V is not realized)
-      if Get_Current_Page (V) = -1 then
-         return;
-      end if;
-
-      --  Nothing to do if the page is already up-to-date
-      if V.Page_Is_Up_To_Date (Current_View) then
-         return;
-      end if;
-
-      --  Otherwise, we update the list of files based on the contents of
-      --  one of the up-to-date pages
-      Up_To_Date := View_Type'First;
-
-      loop
-         exit when V.Page_Is_Up_To_Date (Up_To_Date);
-
-         --  We haven't found an up-to-date page. This can happen for instance
-         --  when Viewer is empty and has never been associated with a
-         --  directory before.
-
-         if Up_To_Date = View_Type'Last then
-            return;
-         end if;
-
-         Up_To_Date := View_Type'Succ (Up_To_Date);
-      end loop;
-
-      Freeze (V.Pages (Current_View));
-      Clear (V.Pages (Current_View));
-
-      List := Get_Row_List (V.Pages (Up_To_Date));
-
-      while List /= Row_List.Null_List loop
-         User := Project_User_Data.Get
-           (V.Pages (Up_To_Date), Row_List.Get_Data (List));
-
-         declare
-            N : String (1 .. Integer (String_Length (User.File_Name)));
-            D : String (1 .. Integer (String_Length (User.Directory)));
-
-         begin
-            String_To_Name_Buffer (User.File_Name);
-            N := Name_Buffer (1 .. Name_Len);
-
-            String_To_Name_Buffer (User.Directory);
-            D := Name_Buffer (1 .. Name_Len);
-
-            Project_User_Data.Set
-              (V.Pages (Current_View),
-               Append_Line_With_Full_Name
-                  (V, Current_View, V.Project_Filter, N, D),
-               User);
-         end;
-
-         List := Row_List.Next (List);
-      end loop;
-
-      Thaw (V.Pages (Current_View));
-      V.Page_Is_Up_To_Date (Current_View) := True;
-   end Switch_Page;
 
    ----------------
    -- Select_Row --
@@ -671,7 +552,6 @@ package body Project_Viewers is
      (Viewer : access Gtk_Widget_Record'Class; Args : Gtk_Args)
    is
       V            : Project_Viewer := Project_Viewer (Viewer);
-      Current_View : constant View_Type := Current_Page (V);
       Row          : Gint := To_Gint (Args, 1);
       Column       : Gint := To_Gint (Args, 2);
       Event        : Gdk_Event := To_Event (Args, 3);
@@ -680,15 +560,14 @@ package body Project_Viewers is
       File         : File_Selection_Context_Access;
 
    begin
-      Callback := Views (Current_View).Callbacks
-        (Interfaces.C.size_t (Column + 1));
+      Callback := View_Switches.Callbacks (Interfaces.C.size_t (Column + 1));
 
       --  Event could be null when the row was selected programmatically
       if Event /= null
         and then Get_Event_Type (Event) = Gdk_2button_Press
         and then Callback /= null
       then
-         User := Project_User_Data.Get (V.Pages (Current_View), Row);
+         User := Project_User_Data.Get (V.List, Row);
 
          File := new File_Selection_Context;
          Set_Context_Information
@@ -712,10 +591,9 @@ package body Project_Viewers is
      (Viewer  : access Project_Viewer_Record'Class;
       Context : Selection_Context_Access)
    is
-      Current_View : constant View_Type := Current_Page (Viewer);
-      User         : User_Data;
-      Rows         : Gint;
-      File         : File_Selection_Context_Access;
+      User : User_Data;
+      Rows : Gint;
+      File : File_Selection_Context_Access;
 
    begin
       if Context /= null
@@ -732,13 +610,13 @@ package body Project_Viewers is
          end if;
 
          if Has_File_Information (File) then
-            Rows := Get_Rows (Viewer.Pages (Current_View));
+            Rows := Get_Rows (Viewer.List);
 
             for J in 0 .. Rows - 1 loop
-               User := Project_User_Data.Get (Viewer.Pages (Current_View), J);
+               User := Project_User_Data.Get (Viewer.List, J);
 
                if Get_String (User.File_Name) = File_Information (File) then
-                  Select_Row (Viewer.Pages (Current_View), J, 0);
+                  Select_Row (Viewer.List, J, 0);
                   return;
                end if;
             end loop;
@@ -780,12 +658,11 @@ package body Project_Viewers is
      (Viewer   : access Project_Viewer_Record'Class;
       Kernel   : access Kernel_Handle_Record'Class)
    is
-      Label    : Gtk_Label;
       Color    : Gdk_Color;
       Scrolled : Gtk_Scrolled_Window;
 
    begin
-      Gtk.Notebook.Initialize (Viewer);
+      Gtk.Box.Initialize_Hbox (Viewer);
       Register_Contextual_Menu
         (Kernel          => Kernel,
          Event_On_Widget => Viewer,
@@ -795,23 +672,18 @@ package body Project_Viewers is
 
       Viewer.Kernel := Kernel_Handle (Kernel);
 
-      for View in View_Type'Range loop
-         Gtk_New (Scrolled);
-         Set_Policy (Scrolled, Policy_Automatic, Policy_Automatic);
-         Gtk_New (Viewer.Pages (View),
-                  Columns => Gint (Views (View).Num_Columns),
-                  Titles  => Views (View).Titles);
-         Add (Scrolled, Viewer.Pages (View));
-         Set_Column_Auto_Resize (Viewer.Pages (View), 0, True);
-         Gtk_New (Label, Views (View).Tab_Title.all);
+      Gtk_New (Scrolled);
+      Set_Policy (Scrolled, Policy_Automatic, Policy_Automatic);
+      Add (Viewer, Scrolled);
 
-         Widget_Callback.Object_Connect
-           (Viewer.Pages (View), "select_row",  Select_Row'Access, Viewer);
+      Gtk_New (Viewer.List,
+               Columns => Gint (View_Switches.Num_Columns),
+               Titles  => View_Switches.Titles);
+      Add (Scrolled, Viewer.List);
+      Set_Column_Auto_Resize (Viewer.List, 0, True);
 
-         Append_Page (Viewer, Scrolled, Label);
-      end loop;
-
-      Widget_Callback.Connect (Viewer, "switch_page", Switch_Page'Access);
+      Widget_Callback.Object_Connect
+        (Viewer.List, "select_row",  Select_Row'Access, Viewer);
 
       Widget_Callback.Object_Connect
         (Kernel, Context_Changed_Signal,
@@ -826,22 +698,6 @@ package body Project_Viewers is
    end Initialize;
 
    ------------------
-   -- Current_Page --
-   ------------------
-
-   function Current_Page
-     (Viewer : access Project_Viewer_Record'Class) return View_Type
-   is
-      P : Gint := Get_Current_Page (Viewer);
-   begin
-      if P /= -1 then
-         return View_Type'Val (P);
-      else
-         return View_Type'First;
-      end if;
-   end Current_Page;
-
-   ------------------
    -- Show_Project --
    ------------------
 
@@ -850,24 +706,20 @@ package body Project_Viewers is
       Project_Filter   : Prj.Project_Id;
       Directory_Filter : String := "")
    is
-      Src          : String_List_Id := Projects.Table (Project_Filter).Sources;
-      Current_View : constant View_Type := Current_Page (Viewer);
-
+      Src : String_List_Id := Projects.Table (Project_Filter).Sources;
    begin
-      Viewer.Page_Is_Up_To_Date := (others => False);
-      Viewer.Page_Is_Up_To_Date (Current_View) := True;
       Viewer.Project_Filter := Project_Filter;
-
-      Freeze (Viewer.Pages (Current_View));
+      Freeze (Viewer.List);
 
       while Src /= Nil_String loop
-         Append_Line (Viewer, Project_Filter,
-                      String_Elements.Table (Src).Value,
-                      Directory_Filter);
+         Append_Line
+           (Viewer, Project_Filter,
+            String_Elements.Table (Src).Value,
+            Directory_Filter);
          Src := String_Elements.Table (Src).Next;
       end loop;
 
-      Thaw (Viewer.Pages (Current_View));
+      Thaw (Viewer.List);
    end Show_Project;
 
    -----------
@@ -875,14 +727,10 @@ package body Project_Viewers is
    -----------
 
    procedure Clear (Viewer : access Project_Viewer_Record) is
-      Current_View : constant View_Type := Current_Page (Viewer);
    begin
-      Viewer.Page_Is_Up_To_Date := (others => False);
-      Viewer.Page_Is_Up_To_Date (Current_View) := True;
-
-      Freeze (Viewer.Pages (Current_View));
-      Clear (Viewer.Pages (Current_View));
-      Thaw (Viewer.Pages (Current_View));
+      Freeze (Viewer.List);
+      Clear (Viewer.List);
+      Thaw (Viewer.List);
    end Clear;
 
    --------------------------------------
@@ -1023,11 +871,11 @@ package body Project_Viewers is
       Destroy (Wiz);
    end On_New_Project;
 
-   -------------------------
-   -- On_Debug_Executable --
-   -------------------------
+   ------------------------
+   -- On_Editor_Switches --
+   ------------------------
 
-   procedure On_Edit_Project
+   procedure On_Edit_Switches
      (Widget : access GObject_Record'Class;
       Kernel : Kernel_Handle)
    is
@@ -1044,15 +892,16 @@ package body Project_Viewers is
 
          --  The initial contents of the viewer should be read immediately from
          --  the explorer, without forcing the user to do a new selection.
+
          Explorer_Selection_Changed
            (Viewer, Get_Current_Explorer_Context (Kernel));
 
          Set_Size_Request
            (Viewer, Default_Project_Width, Default_Project_Height);
          Child := Put (Get_MDI (Kernel), Viewer);
-         Set_Title (Child, Project_Editor_Window_Name);
+         Set_Title (Child, Project_Switches_Name);
       end if;
-   end On_Edit_Project;
+   end On_Edit_Switches;
 
    -----------------------
    -- Save_All_Projects --
@@ -1350,7 +1199,6 @@ package body Project_Viewers is
       Context : File_Selection_Context_Access :=
         new File_Selection_Context;
       V : Project_Viewer := Project_Viewer (Object);
-      Current_View : constant View_Type := Current_Page (V);
       Item : Gtk_Menu_Item;
       Row, Column : Gint;
       Is_Valid : Boolean;
@@ -1360,14 +1208,14 @@ package body Project_Viewers is
       --  ??? Should call Project_Editor_Contextual
 
       Get_Selection_Info
-        (V.Pages (Current_View), Gint (Get_X (Event)), Gint (Get_Y (Event)),
+        (V.List, Gint (Get_X (Event)), Gint (Get_Y (Event)),
          Row, Column, Is_Valid);
 
       if not Is_Valid then
          return null;
       end if;
 
-      User := Project_User_Data.Get (V.Pages (Current_View), Row);
+      User := Project_User_Data.Get (V.List, Row);
       if User.File_Name /= No_String then
          Set_File_Information
            (Context,
@@ -1415,15 +1263,16 @@ package body Project_Viewers is
    is
       Project : constant String := '/' & (-"Project");
    begin
-      Register_Menu (Kernel, Project,
-                     -"New...", "", On_New_Project'Access,
-                     Ref_Item => -"Open...");
-      Register_Menu (Kernel, Project,
-                     -"Edit...", "", On_Edit_Project'Access,
-                     Ref_Item => -"Open...");
-      Register_Menu (Kernel, Project,
-                     -"Save All", "", Save_All_Projects'Access,
-                     Ref_Item => -"Edit...");
+      Register_Menu
+        (Kernel, Project, -"New...", "",
+         On_New_Project'Access, Ref_Item => -"Open...");
+      Register_Menu
+        (Kernel, Project, -"Edit Switches", "",
+         On_Edit_Switches'Access, Ref_Item => -"Open...", Add_Before => False);
+      Register_Menu
+        (Kernel, Project, -"Save All", "",
+         Save_All_Projects'Access, Ref_Item => -"Edit Switches",
+         Add_Before => False);
    end Initialize_Module;
 
    ---------------------

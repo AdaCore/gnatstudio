@@ -18,7 +18,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Gtk.Notebook; use Gtk.Notebook;
+with Gtk.Box;
 with Gtk.Clist;
 with Gtk.Style;
 
@@ -28,10 +28,8 @@ with Glide_Kernel;
 
 package Project_Viewers is
 
-   type Project_Viewer_Record is new Gtk_Notebook_Record with private;
+   type Project_Viewer_Record is new Gtk.Box.Gtk_Hbox_Record with private;
    type Project_Viewer is access all Project_Viewer_Record'Class;
-
-   type View_Type is (System, Version_Control, Switches);
 
    procedure Register_Module;
    --  Register the module into the list
@@ -69,16 +67,9 @@ package Project_Viewers is
    --  Removes all files currently displayed in Viewer.
 
 private
-   type Boolean_View_Array is array (View_Type) of Boolean;
-   type Clist_View_Array is array (View_Type) of Gtk.Clist.Gtk_Clist;
-
-   type Project_Viewer_Record is new Gtk_Notebook_Record with record
-      Page_Is_Up_To_Date : Boolean_View_Array := (others => False);
-      --  If an entry is False, then the contents of the page needs to be
-      --  refreshed upon switching to a new page.
-
-      Pages : Clist_View_Array;
-      --  The contents of all the pages in the viewer
+   type Project_Viewer_Record is new Gtk.Box.Gtk_Hbox_Record with record
+      List : Gtk.Clist.Gtk_Clist;
+      --  The actual contents of the viewer
 
       Default_Switches_Style : Gtk.Style.Gtk_Style;
       --  Style to use when displaying switches that are set at the project
