@@ -678,10 +678,7 @@ package body Python_Module is
             Read (D, File, Last);
             exit when Last = 0;
 
-            if File (1 .. Last) /= "."
-              and then File (1 .. Last) /= ".."
-              and then Last > 3 and then File (Last - 2 .. Last) = ".py"
-            then
+            if Last > 3 and then File (Last - 2 .. Last) = ".py" then
                Execute_Command
                  (Python_Module_Id.Script,
                   "import " & Base_Name (File (1 .. Last), ".py"),
