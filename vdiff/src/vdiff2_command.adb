@@ -116,21 +116,15 @@ package body Vdiff2_Command is
 
          if Curr_Node /= Diff_Head_List.Null_Node then
             Diff := Data (Curr_Node);
-            Trace (Me, "Execute Action");
-            Command.Action (Command.Kernel, Diff);
-            if Diff.List = Diff_Chunk_List.Null_List then
-               Remove_Nodes (Command.List_Diff.all,
-                             Prev (Command.List_Diff.all, Curr_Node),
-                             Curr_Node);
-               Diff := Null_Head;
-            else
-               Set_Data (Curr_Node, Diff);
-            end if;
 
          elsif Command.Last_Active_Diff /= Null_Head then
             Diff := Command.Last_Active_Diff;
+         end if;
+
+         if Diff /= Null_Head then
             Trace (Me, "Execute Action");
             Command.Action (Command.Kernel, Diff);
+
             if Diff.List = Diff_Chunk_List.Null_List then
                Remove_Nodes (Command.List_Diff.all,
                              Prev (Command.List_Diff.all, Curr_Node),
