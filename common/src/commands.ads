@@ -115,6 +115,11 @@ package Commands is
    --   - if they are not executed, then the memory associated to them
    --  is freed when Item finishes.
 
+   procedure Free (X : in out Command_Access);
+   --  Free memory associated with X.
+
+   package Command_Queues is new Generic_List (Command_Access);
+
 private
 
    function Get_Previous_Command (Queue : Command_Queue)
@@ -150,11 +155,6 @@ private
      (Queue : Command_Queue)
      return Command_Access;
    --  Return the queue change hook.
-
-   procedure Free (X : in out Command_Access);
-   --  Free memory associated with X.
-
-   package Command_Queues is new Generic_List (Command_Access);
 
    type Command_Queue_Record is record
       Command_In_Progress : Boolean := False;
