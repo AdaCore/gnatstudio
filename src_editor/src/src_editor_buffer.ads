@@ -124,6 +124,14 @@ package Src_Editor_Buffer is
       Column : out Gint);
    --  Return the current cursor position
 
+   procedure Get_Screen_Position
+     (Buffer : access Source_Buffer_Record;
+      Iter   : Gtk.Text_Iter.Gtk_Text_Iter;
+      Line   : out Gint;
+      Column : out Gint);
+   --  Return the cursor position corresponding to Iter, after expanding all
+   --  the tabs.
+
    procedure Get_Selection_Bounds
      (Buffer       : access Source_Buffer_Record;
       Start_Line   : out Gint;

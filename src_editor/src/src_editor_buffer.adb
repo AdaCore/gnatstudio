@@ -1263,6 +1263,36 @@ package body Src_Editor_Buffer is
    end Set_Cursor_Position;
 
    -------------------------
+   -- Get_Screen_Position --
+   -------------------------
+
+   procedure Get_Screen_Position
+     (Buffer : access Source_Buffer_Record;
+      Iter   : Gtk_Text_Iter;
+      Line   : out Gint;
+      Column : out Gint)
+   is
+      Start : Gtk_Text_Iter;
+   begin
+      Line := Get_Line (Iter);
+      --  Column := Get_Line_Offset (Iter);
+
+      --  ??? Important: the solution below is definitely not the best one,
+      --  since it will only handle ASCII (and Latin-1) characters, but not
+      --  other characters, since we are converting to a string. Probably we
+      --  should use pango to compute the width, but it only seems to return
+      --  the position in pixels, which isn't very useful to us.
+      Get_Iter_At_Line_Offset (Buffer, Start, Line, 0);
+      declare
+         S : constant String := Do_Tab_Expansion
+           (Get_Text (Buffer, Start, Iter),
+            Tab_Size => Integer (Get_Pref (Buffer.Kernel, Tab_Width)));
+      begin
+         Column := S'Length;
+      end;
+   end Get_Screen_Position;
+
+   -------------------------
    -- Get_Cursor_Position --
    -------------------------
 
@@ -1274,8 +1304,7 @@ package body Src_Editor_Buffer is
       Insert_Iter : Gtk_Text_Iter;
    begin
       Get_Iter_At_Mark (Buffer, Insert_Iter, Buffer.Insert_Mark);
-      Line := Get_Line (Insert_Iter);
-      Column := Get_Line_Offset (Insert_Iter);
+      Get_Screen_Position (Buffer, Insert_Iter, Line, Column);
    end Get_Cursor_Position;
 
    --------------------------
