@@ -123,7 +123,7 @@ package body Gtkada.File_Selector is
       Params : Gtk.Arguments.Gtk_Args);
 
    procedure On_File_List_End_Selection
-     (Object : access Gtk_Widget_Record'Class);
+     (Object : access Gtk_Widget_Record'Class; Args : Gtk_Args);
 
    procedure On_Selection_Entry_Changed
      (Object : access Gtk_Widget_Record'Class);
@@ -683,12 +683,14 @@ package body Gtkada.File_Selector is
    --------------------------------
 
    procedure On_File_List_End_Selection
-     (Object : access Gtk_Widget_Record'Class)
+     (Object : access Gtk_Widget_Record'Class;
+      Args   : Gtk_Args)
    is
       Win      : constant File_Selector_Window_Access :=
         File_Selector_Window_Access (Get_Toplevel (Object));
       Row_List : constant Gtk.Enums.Gint_List.Glist :=
         Get_Selection (Win.File_List);
+      Event : Gdk_Event := To_Event (Args, 3);
 
    begin
       if Gtk.Enums.Gint_List.Length (Row_List) /= 0 then
@@ -697,6 +699,10 @@ package body Gtkada.File_Selector is
             Get_Text
               (Win.File_List,
                Gtk.Enums.Gint_List.Get_Data (Row_List), 1));
+
+         if Get_Event_Type (Event) = Gdk_2button_Press then
+            Gtk.Main.Main_Quit;
+         end if;
       end if;
    end On_File_List_End_Selection;
 
@@ -1104,7 +1110,7 @@ package body Gtkada.File_Selector is
 
       Widget_Callback.Connect
         (File_Selector_Window.File_List, "select_row",
-         Widget_Callback.To_Marshaller (On_File_List_End_Selection'Access));
+         On_File_List_End_Selection'Access);
       Add (File_Selector_Window.Files_Scrolledwindow,
            File_Selector_Window.File_List);
 
