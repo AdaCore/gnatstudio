@@ -4,7 +4,7 @@
 --                     Copyright (C) 2001-2002                       --
 --                            ACT-Europe                             --
 --                                                                   --
--- GPS is free  software; you can  redistribute it and/or modify  it --
+-- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -13,7 +13,7 @@
 -- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
 -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
 -- General Public License for more details. You should have received --
--- a copy of the GNU General Public License along with this library; --
+-- a copy of the GNU General Public License along with this program; --
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
@@ -843,7 +843,7 @@ package body Src_Info.ALI is
    begin
       Initialize_ALI;
 
-      FD := Open_Read (ALI_Filename & ASCII.NUL, Fmode => Text);
+      FD := Open_Read (ALI_Filename & ASCII.NUL, Fmode => Binary);
 
       if FD = Invalid_FD then
          Trace (Me, "Couldn't open " & ALI_Filename);
@@ -864,8 +864,12 @@ package body Src_Info.ALI is
       end;
 
       declare
-         Buffer      : aliased Text_Buffer := (1 .. File_Length => ASCII.NUL);
-         Buffer_Ptr  : Text_Buffer_Ptr := Buffer'Unchecked_Access;
+         --  Do not declare Buffer aliased, since we would need to initialize
+         --  it explicitely, due to the nature of Text_Buffer, which would be
+         --  a vaste of time. Use 'Unrestricted_Access instead.
+
+         Buffer     : Text_Buffer (1 .. File_Length);
+         Buffer_Ptr : Text_Buffer_Ptr := Buffer'Unrestricted_Access;
 
       begin
          Chars_Read := Read (FD, Buffer'Address, Integer (File_Length));
