@@ -1028,11 +1028,11 @@ package body Src_Info.CPP is
       Class_Name, Return_Type : String)
       return E_Kind is
       Class_Def          : CL_Table;
-      IsTemplate         : Boolean := False;
+      Is_Template         : Boolean := False;
    begin
       begin -- check if this class is template
          Class_Def := Find (Handler.SN_Table (CL), Class_Name);
-         IsTemplate := Class_Def.Template_Parameters.First
+         Is_Template := Class_Def.Template_Parameters.First
             < Class_Def.Template_Parameters.Last;
          Free (Class_Def);
       exception
@@ -1040,13 +1040,13 @@ package body Src_Info.CPP is
             null;
       end;
       if Return_Type = "void" then
-         if IsTemplate then
+         if Is_Template then
             return Generic_Procedure;
          else
             return Non_Generic_Procedure;
          end if;
       else
-         if IsTemplate then
+         if Is_Template then
             return Generic_Function_Or_Operator;
          else
             return Non_Generic_Function_Or_Operator;
@@ -1230,7 +1230,7 @@ package body Src_Info.CPP is
       Target_Kind  : E_Kind;
    begin
       if not Is_Open (Handler.SN_Table (FD)) then
-         return; -- .md table does not exist
+         return; -- .fd table does not exist
       end if;
 
       --  First we have to find the first forward declaration
@@ -3041,10 +3041,11 @@ package body Src_Info.CPP is
       First_FD_Pos : Point := Invalid_Point;
       FD_Tab       : FD_Table;
       FD_Tab_Tmp   : FD_Table;
+      FU_Tab       : FU_Table;
       Attributes   : SN_Attributes;
-      IsStatic     : Boolean;
+      Is_Static    : Boolean;
       Match        : Boolean;
-
+      FU_File      : LI_File_Ptr;
    begin
       --  Info ("Sym_FD_Hanlder: """
       --        & Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last)
@@ -3058,7 +3059,7 @@ package body Src_Info.CPP is
          Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last));
 
       Attributes := SN_Attributes (FD_Tab.Attributes);
-      IsStatic   := (Attributes and SN_STATIC) = SN_STATIC;
+      Is_Static  := (Attributes and SN_STATIC) = SN_STATIC;
 
       Set_Cursor
         (Handler.SN_Table (FD),
@@ -3076,11 +3077,11 @@ package body Src_Info.CPP is
          --  if this is a global function, or only local (static)
          --  ones if this is a static function
          Match := True;
-         if IsStatic then
+         if Is_Static then
             Match := Match and
                Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last)
                = FD_Tab_Tmp.Buffer (FD_Tab_Tmp.File_Name.First ..
-                                   FD_Tab_Tmp.File_Name.Last);
+                                    FD_Tab_Tmp.File_Name.Last);
          end if;
 
          Match := Match and Cmp_Prototypes
@@ -3106,21 +3107,27 @@ package body Src_Info.CPP is
       else
          Target_Kind := Non_Generic_Function_Or_Operator;
       end if;
-      Free (FD_Tab);
 
-      --  create declaration (if it has not been already created)
-      Insert_Declaration
-        (Handler           => Handler,
-         File              => File,
-         List              => List,
-         Symbol_Name       =>
-           Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last),
-         Source_Filename   =>
-           Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
-         Location          => First_FD_Pos,
-         Kind              => Target_Kind,
-         Scope             => Global_Scope,
-         Declaration_Info  => Decl_Info);
+      Decl_Info := Find_Declaration
+        (File        => File,
+         Symbol_Name => Sym.Buffer
+            (Sym.Identifier.First .. Sym.Identifier.Last),
+         Location    => First_FD_Pos);
+
+      if Decl_Info = null then
+         Insert_Declaration
+           (Handler           => Handler,
+            File              => File,
+            List              => List,
+            Symbol_Name       =>
+              Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last),
+            Source_Filename   =>
+              Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
+            Location          => First_FD_Pos,
+            Kind              => Target_Kind,
+            Scope             => Global_Scope,
+            Declaration_Info  => Decl_Info);
+      end if;
 
       --  for all subsequent declarations, add reference to the first decl
       if Sym.Start_Position /= First_FD_Pos then
@@ -3129,7 +3136,60 @@ package body Src_Info.CPP is
             File,
             Sym.Start_Position,
             Reference);
+      else -- for the first declaration we lookup body
+         Set_Cursor
+           (Handler.SN_Table (FU),
+            By_Key,
+            Sym.Buffer
+               (Sym.Identifier.First .. Sym.Identifier.Last) & Field_Sep,
+            False);
+         Match := False;
+         loop
+            P := Get_Pair (Handler.SN_Table (FU), Next_By_Key);
+            exit when P = null;
+            FU_Tab := Parse_Pair (P.all);
+            Free (P);
+            Match := Cmp_Prototypes
+               (FD_Tab.Buffer,
+                FU_Tab.Buffer,
+                FD_Tab.Arg_Types,
+                FU_Tab.Arg_Types,
+                FD_Tab.Return_Type,
+                FU_Tab.Return_Type);
+            exit when Match;
+            Free (FU_Tab);
+         end loop;
+         if Match -- we found the body
+            and then FU_Tab.Buffer (FU_Tab.File_Name.First ..
+                                    FU_Tab.File_Name.Last)
+               /= FD_Tab.Buffer (FD_Tab.File_Name.First ..
+                                 FD_Tab.File_Name.Last)
+               --  and it is in another file
+         then
+            FU_File := Locate_From_Source
+               (List,
+                FU_Tab.Buffer
+                   (FU_Tab.File_Name.First .. FU_Tab.File_Name.Last));
+            if FU_File = No_LI_File then
+               Create_Stub_For_File
+                 (LI            => FU_File,
+                  Handler       => Handler,
+                  List          => List,
+                  Full_Filename => FU_Tab.Buffer
+                     (FU_Tab.File_Name.First .. FU_Tab.File_Name.Last));
+            end if;
+            Insert_Reference
+              (Decl_Info,
+               FU_File,
+               FU_Tab.Start_Position,
+               Body_Entity);
+            Set_End_Of_Scope (Decl_Info, FU_File, FU_Tab.End_Position);
+         end if;
+         if Match then
+            Free (FU_Tab);
+         end if;
       end if;
+      Free (FD_Tab);
    exception
       when DB_Error | Not_Found =>
          Fail ("unable to find function " &
@@ -3157,7 +3217,7 @@ package body Src_Info.CPP is
       Start_Position : constant Point := Sym.Start_Position;
       Body_Position  : Point := Invalid_Point;
       End_Position   : Point;
-      IsTemplate     : Boolean := False;
+      Is_Template     : Boolean := False;
       Ref            : TO_Table;
       Our_Ref        : Boolean;
 
@@ -3185,7 +3245,7 @@ package body Src_Info.CPP is
                Class_Def := Find
                  (Handler.SN_Table (CL),
                   Sym.Buffer (Sym.Class.First .. Sym.Class.Last));
-               IsTemplate := Class_Def.Template_Parameters.First
+               Is_Template := Class_Def.Template_Parameters.First
                   < Class_Def.Template_Parameters.Last;
                --  We want to add a reference to the class we belong to
                --  but there may be already a reference created in the
@@ -3230,13 +3290,13 @@ package body Src_Info.CPP is
             end;
             if MI_Tab.Buffer (MI_Tab.Return_Type.First ..
                               MI_Tab.Return_Type.Last) = "void" then
-               if IsTemplate then
+               if Is_Template then
                   Target_Kind := Generic_Procedure;
                else
                   Target_Kind := Non_Generic_Procedure;
                end if;
             else
-               if IsTemplate then
+               if Is_Template then
                   Target_Kind := Generic_Function_Or_Operator;
                else
                   Target_Kind := Non_Generic_Function_Or_Operator;
@@ -3338,8 +3398,8 @@ package body Src_Info.CPP is
             Body_Entity);
       end if;
 
-      --  Declaration inserted. Now we need to check the body for external
-      --  references.
+      --  Declaration inserted. Now we need to check the body for usage
+      --  of objects of all kinds
 
       Set_Cursor
         (Handler.SN_Table (TO),
@@ -3708,16 +3768,19 @@ package body Src_Info.CPP is
       P            : Pair_Ptr;
       First_MD_Pos : Point := Invalid_Point;
       MD_Tab       : MD_Table;
+      MI_Tab       : MI_Table;
       MD_Tab_Tmp   : MD_Table;
-      IsTemplate   : Boolean := False;
+      Is_Template  : Boolean := False;
+      Found        : Boolean;
+      MI_File      : LI_File_Ptr;
       use DB_Structures.Segment_Vector;
 
    begin
       --  Info ("Sym_MD_Hanlder: """
-      --        & Sym.Buffer (Sym.Class.First .. Sym.Class.Last) & "::"
-      --       & Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last) & " "
-      --        & Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last)
-      --        & """");
+      --      & Sym.Buffer (Sym.Class.First .. Sym.Class.Last) & "::"
+      --      & Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last) & " "
+      --      & Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last)
+      --      & """");
 
       --  Find this symbol
       MD_Tab := Find
@@ -3767,7 +3830,7 @@ package body Src_Info.CPP is
          Class_Def := Find
            (Handler.SN_Table (CL),
             Sym.Buffer (Sym.Class.First .. Sym.Class.Last));
-         IsTemplate := Class_Def.Template_Parameters.First
+         Is_Template := Class_Def.Template_Parameters.First
             < Class_Def.Template_Parameters.Last;
          --  Add reference to the class we belong to
          Find_Or_Create_Class
@@ -3792,33 +3855,39 @@ package body Src_Info.CPP is
 
       if MD_Tab.Buffer (MD_Tab.Return_Type.First ..
                         MD_Tab.Return_Type.Last) = "void" then
-         if IsTemplate then
+         if Is_Template then
             Target_Kind := Generic_Procedure;
          else
             Target_Kind := Non_Generic_Procedure;
          end if;
       else
-         if IsTemplate then
+         if Is_Template then
             Target_Kind := Generic_Function_Or_Operator;
          else
             Target_Kind := Non_Generic_Function_Or_Operator;
          end if;
       end if;
-      Free (MD_Tab);
 
-      --  create declaration (if it has not been already created)
-      Insert_Declaration
-        (Handler           => Handler,
-         File              => File,
-         List              => List,
-         Symbol_Name       =>
-            Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last),
-         Source_Filename   =>
-           Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
-         Location          => First_MD_Pos,
-         Kind              => Target_Kind,
-         Scope             => Global_Scope,
-         Declaration_Info  => Decl_Info);
+      Decl_Info := Find_Declaration
+        (File        => File,
+         Symbol_Name => Sym.Buffer
+            (Sym.Identifier.First .. Sym.Identifier.Last),
+         Location    => First_MD_Pos);
+
+      if Decl_Info = null then
+         Insert_Declaration
+           (Handler           => Handler,
+            File              => File,
+            List              => List,
+            Symbol_Name       =>
+               Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last),
+            Source_Filename   =>
+              Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
+            Location          => First_MD_Pos,
+            Kind              => Target_Kind,
+            Scope             => Global_Scope,
+            Declaration_Info  => Decl_Info);
+      end if;
 
       --  for all subsequent declarations, add reference to the first decl
       if Sym.Start_Position /= First_MD_Pos then
@@ -3827,7 +3896,64 @@ package body Src_Info.CPP is
             File             => File,
             Location         => Sym.Start_Position,
             Kind             => Reference);
+      else -- for the first declaration we lookup body
+         Set_Cursor
+           (Handler.SN_Table (MI),
+            By_Key,
+            Sym.Buffer (Sym.Class.First .. Sym.Class.Last) & Field_Sep
+               & Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last)
+               & Field_Sep,
+            False);
+         Found := False;
+         loop
+            P := Get_Pair (Handler.SN_Table (MI), Next_By_Key);
+            exit when P = null;
+            MI_Tab := Parse_Pair (P.all);
+            Free (P);
+            Found := Cmp_Prototypes
+               (MD_Tab.Buffer,
+                MI_Tab.Buffer,
+                MD_Tab.Arg_Types,
+                MI_Tab.Arg_Types,
+                MD_Tab.Return_Type,
+                MI_Tab.Return_Type);
+            exit when Found;
+            Free (MI_Tab);
+         end loop;
+         if Found -- we found the body
+            and then MI_Tab.Buffer (MI_Tab.File_Name.First ..
+                                    MI_Tab.File_Name.Last)
+               /= MD_Tab.Buffer (MD_Tab.File_Name.First ..
+                                 MD_Tab.File_Name.Last)
+               --  and it is in another file
+         then
+            MI_File := Locate_From_Source
+               (List,
+                MI_Tab.Buffer
+                   (MI_Tab.File_Name.First .. MI_Tab.File_Name.Last));
+            if MI_File = No_LI_File then
+               Create_Stub_For_File
+                 (LI            => MI_File,
+                  Handler       => Handler,
+                  List          => List,
+                  Full_Filename => MI_Tab.Buffer
+                     (MI_Tab.File_Name.First .. MI_Tab.File_Name.Last));
+            end if;
+            if MI_File /= File
+               or else MD_Tab.Start_Position /= MI_Tab.Start_Position then
+               Insert_Reference
+                 (Decl_Info,
+                  MI_File,
+                  MI_Tab.Start_Position,
+                  Body_Entity);
+            end if;
+            Set_End_Of_Scope (Decl_Info, MI_File, MI_Tab.End_Position);
+         end if;
+         if Found then
+            Free (MI_Tab);
+         end if;
       end if;
+      Free (MD_Tab);
    exception
       when DB_Error | Not_Found =>
          Fail ("unable to find method " &

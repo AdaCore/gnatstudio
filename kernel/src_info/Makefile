@@ -3,6 +3,7 @@ LARGS = -largs sn/lib/db_capi.o -Lsn/snsrc/db/PORT -ldb
 build:
 	gnatmake -Pstandalone read_ali $(LARGS)
 	gnatmake -Pstandalone read_many_ali $(LARGS)
+	gnatmake -Pstandalone read_ali_twice $(LARGS)
 	gnatmake -Pstandalone read_scope_tree $(LARGS)
 	gnatmake -Pstandalone find_ref $(LARGS)
 	gnatmake -Pstandalone find_dep $(LARGS)
