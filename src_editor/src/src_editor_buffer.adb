@@ -539,6 +539,8 @@ package body Src_Editor_Buffer is
 
          Highlight_Loop :
          loop
+            exit Highlight_Loop when Index > Slice'Last;
+
             Looking_At
               (Buffer.Lang, Slice (Index .. Slice'Last), Entity, Next_Char);
 
@@ -549,8 +551,6 @@ package body Src_Editor_Buffer is
             if Entity in Standout_Language_Entity then
                Apply_Tag (Buffer, Tags (Entity), Entity_Start, Entity_End);
             end if;
-
-            exit Highlight_Loop when Next_Char > Slice'Last;
 
             Index := Next_Char;
             Entity_Start_Offset := Entity_End_Offset;
