@@ -13,6 +13,8 @@ Known Problems fixed in GPS 2.1.0
               a different project each time. Click on the first entry that
               matches the executable you want to build
 
+- D601-005 To be completed ???
+
 Known Problems fixed in GPS 2.0.0
 
 - D415-005 Execution window is read-only after the first execution
