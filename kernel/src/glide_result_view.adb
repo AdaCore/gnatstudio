@@ -1002,7 +1002,7 @@ package body Glide_Result_View is
       Buffer_X  : Gint;
       Buffer_Y  : Gint;
       Row_Found : Boolean;
-      Success   : Boolean;
+      Success   : Command_Return_Type;
       pragma Unreferenced (Success);
 
    begin
