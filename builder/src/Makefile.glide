@@ -37,6 +37,9 @@
 #              the current list of recognized languages is: ada, c, c++
 # CC           name of the C compiler (optional)
 # CXX          name of the C++ compiler (optional)
+# AR           name of the archiver
+# AR_FLAGS     flags to create an archive
+# AR_EXT       file extension of an archive
 # GNATMAKE     name of the GNAT builder, e.g "gnatmake" (optional)
 # CFLAGS       default C compilation switches, e.g "-O2 -g" (optional)
 # CXXFLAGS     default C++ compilation switches (optional)
@@ -59,6 +62,7 @@ endif
 # Set the object search path
 
 vpath %$(OBJ_EXT) $(OBJ_DIR)
+vpath %$(AR_EXT) $(OBJ_DIR)
 
 # Default target is to build (compile/bind/link)
 all: build
@@ -139,7 +143,10 @@ DEP_FILES := $(OBJ_FILES:$(OBJ_EXT)=.d)
 # Ada compilations are taken care of automatically, so do not mess with Ada
 # objects, only with main sources.
 
-compile: $(OBJECTS) $(ADA_SOURCES)
+compile: libobjects$(AR_EXT) $(ADA_SOURCES)
+
+libobjects$(AR_EXT): $(OBJECTS)
+	$(AR) $(AR_FLAGS) $(OBJ_DIR)/libobjects$(AR_EXT) $(OBJ_FILES)
 
 # Linking rules
 
@@ -169,9 +176,9 @@ link: $(LINKER) force
 	$(GNATMAKE) -b -l -P$(PROJECT_FILE) $(ADA_SOURCES) \
 		 -largs $(OBJ_FILES) $(LARGS) $(LDFLAGS)
 
-build: $(OBJECTS) $(LINKER) force
+build: libobjects$(AR_EXT) $(LINKER) force
 	$(GNATMAKE) -P$(PROJECT_FILE) $(ADA_SOURCES) \
-		 -largs $(OBJ_FILES) $(LARGS) $(LDFLAGS)
+		 -largs $(OBJ_DIR)/libobjects$(AR_EXT) $(LARGS) $(LDFLAGS)
 
 else
 # C/C++ main
@@ -182,14 +189,14 @@ else
 
 link: $(LINKER) force
 	$(GNATMAKE) -o $(OBJ_DIR)/$(EXEC) -z -P$(PROJECT_FILE) $(ADA_SOURCES) \
-		 -bargs -n -largs $(LARGS) $(LDFLAGS) \
-		 $(OBJ_FILES)
+		 -bargs -n -largs $(OBJ_DIR)/libobjects$(AR_EXT) \
+		 $(LARGS) $(LDFLAGS)
 
-build: $(OBJECTS) $(LINKER) force
+build: libobjects$(AR_EXT) $(LINKER) force
 	$(GNATMAKE) -o $(OBJ_DIR)/$(EXEC) -z \
 		 -P$(PROJECT_FILE) $(ADA_SOURCES) \
 		 -bargs -n \
-		 -largs $(OBJ_FILES) $(LARGS) $(LDFLAGS)
+		 -largs $(OBJ_DIR)/libobjects$(AR_EXT) $(LARGS) $(LDFLAGS)
 endif
 
 else
