@@ -25,10 +25,9 @@
 --  and provide implementation for the function Execute (and for the
 --  function Undo if you want your command to be undoable).
 --
---  Once the command is created, you can then add it to the command
---  queue using Enqueue. If a command is already being run, then the
---  action will be enqueued. When an action finishes, the next action
---  pending in the queue will be executed.
+--  Commands are executed either directly (see Launch_Synchronous), or
+--  through a Command_Queue. Both mechanisms are described in more details
+--  below.
 --
 --  One very important point: the implementation of the function
 --  Execute must call Command_Finished when the action is completed,
@@ -94,6 +93,11 @@ package Commands is
    --  IMPORTANT: every implementation for Execute must guarantee
    --  that Command_Finished will be called when the action is
    --  completed. See comments above.
+   --
+   --  Do not execute this function directly. You should instead use
+   --  Launch_Synchronous or the task manager to execute a command. Otherwise,
+   --  the other actions resulting from the command (see Add_Consequence_Action
+   --  and Add_Alternate_Action) will not be executed properly.
 
    function Undo (Command : access Root_Command) return Boolean;
    --  Undo a Command. Return value indicates whether the operation was
@@ -104,69 +108,34 @@ package Commands is
    procedure Free (X : in out Root_Command);
    --  Free memory associated to X.
 
-   type Command_Queue is private;
+   procedure Destroy (X : in out Command_Access);
+   --  Free memory associated with X.
 
-   Null_Command_Queue : constant Command_Queue;
+   -----------------------
+   -- Alternate actions --
+   -----------------------
+   --  A command can be associated with consequence actions, that are
+   --  only executed depending on the result of the command.
 
-   function New_Queue return Command_Queue;
-   --  Create a new empty Command_Queue.
-
-   procedure Free_Queue (Q : in out Command_Queue);
-   --  Free memory associated with Q.
-
-   procedure Empty_Queue (Q : Command_Queue);
-   --  Free all done, undone and pending actions in Q.
-
-   procedure Enqueue
-     (Queue         : Command_Queue;
-      Action        : access Root_Command;
-      High_Priority : Boolean := False);
-   --  Adds Action to the Queue.
-   --  If High_Priority is True, the only thing that is guaranteed is
-   --  that this Action will be executed before all the actions that
-   --  were enqueued with High_Priority set to False.
-
-   function Get_Position (Queue : Command_Queue) return Integer;
-   --  Return the position in the queue (see comments for
-   --  Command_Queue_Record, below).
-
-   procedure Undo (Queue : Command_Queue);
-   --  Undo one action from the queue.
-
-   procedure Redo (Queue : Command_Queue);
-   --  Redo one action from the queue.
-
-   function Undo_Queue_Empty (Queue : Command_Queue) return Boolean;
-   function Redo_Queue_Empty (Queue : Command_Queue) return Boolean;
-   --  These function indicate whether the undo and redo queues for
-   --  the Queue are empty.
+   package Command_Queues is
+     new Generic_List (Command_Access, Free => Destroy);
 
    procedure Add_Consequence_Action
      (Item   : access Root_Command'Class;
       Action : access Root_Command'Class);
-   --  Add an action that will be enqueued if Item executes successfully.
-   --  See comments for Add_Alternate_Action.
+   --  Add an action that will be executed if Item executes successfully.
+   --  If the command is executed through a Command_Queue, the consequence
+   --  action will be added to the queue, and removed from the list of
+   --  consequence actions for the command. As a result, executing the
+   --  Command a second time will not take into account the consequence action
+   --  a second time.
 
    procedure Add_Alternate_Action
      (Item   : access Root_Command'Class;
       Action : access Root_Command'Class);
-   --  Add an action that will be enqueued if execution of Item is
+   --  Add an action that will be executed if execution of Item is
    --  unsuccessfull.
-   --
-   --  Commands associated to a command using Add_Consequence_Action
-   --  and Add_Alternate_Action are dealt with in the followin way:
-   --   - if they are actually executed, then they are enqueued to the
-   --  queue as normal commands, and are executed immediately after
-   --  Item finishes. They are accessible through Undo/Redo, and memory
-   --  associated to them is freed when the queue is freed.
-   --   - if they are not executed, then the memory associated to them
-   --  is freed when Item finishes.
-
-   procedure Destroy (X : in out Command_Access);
-   --  Free memory associated with X.
-
-   package Command_Queues is
-     new Generic_List (Command_Access, Free => Destroy);
+   --  See comment for Add_Consequence_Action
 
    function Get_Consequence_Actions
      (Item : access Root_Command'Class) return Command_Queues.List;
@@ -189,17 +158,9 @@ package Commands is
    --  consequence/alternate actions, but the actual commands will not be
    --  freed.
 
-   procedure Add_Queue_Change_Hook
-     (Queue      : Command_Queue;
-      Command    : Command_Access;
-      Identifier : String);
-   --  Set a command that will be executed every time that the state of the
-   --  queue changes.
-   --  Command queue change hooks are associated to an identifier.
-   --  If a command associated to Identifier already exists, it is freed
-   --  and replaced by Command.
-   --  The caller is responsible for freeing Command when it is no longer
-   --  used.
+   -------------------------
+   -- Executing a command --
+   -------------------------
 
    procedure Launch_Synchronous
      (Command : Command_Access;
@@ -210,6 +171,91 @@ package Commands is
    --  Launching a command this way does not free memory associated to Command.
    --  WARNING: It is not possible to execute through Launch_Synchronous a
    --  command that causes its own destruction.
+   --  This is a convenient wrapper on top of Command_Queues (see below),
+   --  except that a single command and its consequence actions are executed.
+   --  You cannot executed several independent actions one after the other
+   --  using this mechanism.
+   --
+   --  The command and its consequence actions are not modified. As a result,
+   --  you can execute the same command multiple times through calls to
+   --  Launch_Synchronous.
+
+   -------------------
+   -- Command_Queue --
+   -------------------
+   --  Command queues are used to store lists of commands, mostly for
+   --  Undo/Redo purposes.
+   --  There are also used if you need to execute several commands one after
+   --  the other, but these commands do not have strong links one to another.
+   --  If a command should only be executed depending on the result of another
+   --  command, you should use Add_Consequence_Action and Add_Alternate_Action
+   --  instead.
+   --
+   --  Commands associated with a command using Add_Consequence_Action
+   --  and Add_Alternate_Action are dealt with in the followin way:
+   --   - if they are actually executed, then they are enqueued to the
+   --     queue as normal commands, and are executed immediately after
+   --     Item finishes. They are accessible through Undo/Redo, and memory
+   --     associated to them is freed when the queue is freed.
+   --   - if they are not executed, then the memory associated to them
+   --     is freed when Item finishes.
+
+   type Command_Queue is private;
+   Null_Command_Queue : constant Command_Queue;
+
+   function New_Queue return Command_Queue;
+   --  Create a new empty Command_Queue.
+
+   procedure Free_Queue (Q : in out Command_Queue);
+   --  Free memory associated with Q.
+
+   procedure Empty_Queue (Q : Command_Queue);
+   --  Free all done, undone and pending actions in Q.
+
+   procedure Enqueue
+     (Queue         : Command_Queue;
+      Action        : access Root_Command;
+      High_Priority : Boolean := False);
+   --  Adds Action to the Queue, and start executing the command immediately
+   --  if the queue is empty, or after all commands already in the queue.
+   --  The execution is by default synchronous, ie this call will only return
+   --  when the command has finished executing. However, it can be made
+   --  asynchronous if the command registers an Idle callback.
+   --
+   --  As a side effect, when the command is executed, its consequence actions
+   --  are modified, so you cannot execute the same command exactly the same
+   --  way a second time.
+   --
+   --  If High_Priority is True, the only thing that is guaranteed is
+   --  that this Action will be executed before all the actions that
+   --  were enqueued with High_Priority set to False.
+
+   function Get_Position (Queue : Command_Queue) return Integer;
+   --  Return the position in the queue (see comments for
+   --  Command_Queue_Record, below).
+
+   procedure Undo (Queue : Command_Queue);
+   --  Undo one action from the queue.
+
+   procedure Redo (Queue : Command_Queue);
+   --  Redo one action from the queue.
+
+   function Undo_Queue_Empty (Queue : Command_Queue) return Boolean;
+   function Redo_Queue_Empty (Queue : Command_Queue) return Boolean;
+   --  These function indicate whether the undo and redo queues for
+   --  the Queue are empty.
+
+   procedure Add_Queue_Change_Hook
+     (Queue      : Command_Queue;
+      Command    : Command_Access;
+      Identifier : String);
+   --  Set a command that will be executed every time the state of the queue
+   --  changes.
+   --  Command queue change hooks are associated to an identifier.
+   --  If a command associated to Identifier already exists, it is freed
+   --  and replaced by Command.
+   --  The caller is responsible for freeing Command when it is no longer
+   --  used.
 
 private
 
