@@ -155,10 +155,6 @@ package body Browsers.Canvas is
    procedure On_Zoom (Canvas : access Gtk_Widget_Record'Class);
    --  Called when the canvas has been zoomed
 
-   procedure On_Selected (Browser : access Gtk_Widget_Record'Class);
-   --  Called when Browser gets the keyboard focus. In fact, we really want to
-   --  give this to the canvas.
-
    -------------
    -- On_Zoom --
    -------------
@@ -244,17 +240,6 @@ package body Browsers.Canvas is
       end if;
    end Draw_Background;
 
-   -----------------
-   -- On_Selected --
-   -----------------
-
-   procedure On_Selected (Browser : access Gtk_Widget_Record'Class) is
-      Canvas : constant Interactive_Canvas :=
-        Get_Canvas (General_Browser (Browser));
-   begin
-      Grab_Focus (Canvas);
-   end On_Selected;
-
    ----------------
    -- Initialize --
    ----------------
@@ -321,11 +306,6 @@ package body Browsers.Canvas is
         (Kernel, "preferences_changed",
          Widget_Callback.To_Marshaller (On_Preferences_Changed'Access),
          Browser);
-
-      Widget_Callback.Connect
-        (Browser, "grab_focus",
-         Widget_Callback.To_Marshaller (On_Selected'Access),
-         After => True);
 
       Set_Size_Request
         (Browser,
