@@ -20,6 +20,7 @@
 
 with Ada.Exceptions;             use Ada.Exceptions;
 with Glib;                       use Glib;
+with Glib.Convert;
 with Glib.Object;                use Glib.Object;
 with Glib.Values;                use Glib.Values;
 with Glide_Kernel;               use Glide_Kernel;
@@ -315,7 +316,6 @@ package body Src_Editor_Box is
       Location        : File_Location;
       L, C            : Natural;
       Length          : Natural;
-      First, Last     : Gtk_Text_Iter;
       File_Up_To_Date : Boolean;
 
    begin
@@ -465,15 +465,11 @@ package body Src_Editor_Box is
            and then Is_Valid_Location (Source, L, C + Length);
 
          if File_Up_To_Date then
-            Get_Iter_At_Line_Offset
-              (Source.Source_Buffer, First,
-               To_Buffer_Line (L), To_Buffer_Column (C));
-            Get_Iter_At_Line_Offset
-              (Source.Source_Buffer, Last,
-               To_Buffer_Line (L), To_Buffer_Column (C + Length));
-
-            File_Up_To_Date := Get_Text (Source.Source_Buffer, First, Last) =
-              Entity_Name_Information (Context);
+            File_Up_To_Date :=
+              Get_Slice (Source.Source_Buffer,
+                         To_Buffer_Line (L), To_Buffer_Column (C),
+                         To_Buffer_Line (L), To_Buffer_Column (C + Length)) =
+                Entity_Name_Information (Context);
          end if;
 
          --  Search for the closest reference to the entity if
@@ -672,7 +668,11 @@ package body Src_Editor_Box is
       Area.Height := Win_Y - Mouse_Y - Area.Y + Location.Height;
 
       declare
-         Entity_Name : constant String := Get_Text (Start_Iter, End_Iter);
+         Entity_Name : constant String :=
+           Glib.Convert.Convert
+             (Get_Text (Start_Iter, End_Iter),
+              Get_Pref (Data.Box.Kernel, Default_Charset), "UTF-8");
+
       begin
          if Entity_Name = "" then
             return;
@@ -1196,7 +1196,7 @@ package body Src_Editor_Box is
    is
       pragma Unreferenced (Buffer);
 
-      Ignored     : Boolean;
+      Ignored : Boolean;
    begin
       --  Search forward the end of the entity...
       Copy (Source => Start_Iter, Dest => End_Iter);
@@ -1348,7 +1348,10 @@ package body Src_Editor_Box is
               (Editor.Source_Buffer, Start_Iter, Line, Column);
 
             Set_Entity_Information
-              (Context, Get_Text (Start_Iter, End_Iter),
+              (Context,
+               Glib.Convert.Convert
+                 (Get_Text (Start_Iter, End_Iter),
+                  Get_Pref (Editor.Kernel, Default_Charset), "UTF-8"),
                To_Box_Line (Line), To_Box_Column (Column));
          end if;
 
