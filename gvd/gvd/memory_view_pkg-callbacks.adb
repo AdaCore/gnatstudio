@@ -120,6 +120,45 @@ package body Memory_View_Pkg.Callbacks is
       Update_Display (View);
    end On_Data_Entry_Changed;
 
+   ---------------------------
+   -- On_Show_Ascii_Toggled --
+   ---------------------------
+
+   procedure On_Show_Ascii_Toggled
+     (Object : access Gtk_Check_Button_Record'Class)
+   is
+      View : constant GVD_Memory_View :=
+        GVD_Memory_View (Get_Toplevel (Object));
+   begin
+      Update_Display (View);
+   end On_Show_Ascii_Toggled;
+
+   ---------------------
+   -- On_Pgup_Clicked --
+   ---------------------
+
+   procedure On_Pgup_Clicked
+     (Object : access Gtk_Button_Record'Class)
+   is
+      View : constant GVD_Memory_View :=
+        GVD_Memory_View (Get_Toplevel (Object));
+   begin
+      Page_Up (View);
+   end On_Pgup_Clicked;
+
+   ---------------------
+   -- On_Pgdn_Clicked --
+   ---------------------
+
+   procedure On_Pgdn_Clicked
+     (Object : access Gtk_Button_Record'Class)
+   is
+      View : constant GVD_Memory_View :=
+        GVD_Memory_View (Get_Toplevel (Object));
+   begin
+      Page_Down (View);
+   end On_Pgdn_Clicked;
+
    -----------------------------
    -- On_View_Key_Press_Event --
    -----------------------------
@@ -176,32 +215,6 @@ package body Memory_View_Pkg.Callbacks is
       when Invalid_Field =>
          return False;
    end On_View_Key_Press_Event;
-
-   ---------------------
-   -- On_Pgup_Clicked --
-   ---------------------
-
-   procedure On_Pgup_Clicked
-     (Object : access Gtk_Button_Record'Class)
-   is
-      View : constant GVD_Memory_View :=
-        GVD_Memory_View (Get_Toplevel (Object));
-   begin
-      Page_Up (View);
-   end On_Pgup_Clicked;
-
-   ---------------------
-   -- On_Pgdn_Clicked --
-   ---------------------
-
-   procedure On_Pgdn_Clicked
-     (Object : access Gtk_Button_Record'Class)
-   is
-      View : constant GVD_Memory_View :=
-        GVD_Memory_View (Get_Toplevel (Object));
-   begin
-      Page_Down (View);
-   end On_Pgdn_Clicked;
 
    -------------------------
    -- On_View_Move_Cursor --
@@ -281,18 +294,5 @@ package body Memory_View_Pkg.Callbacks is
    begin
       Hide (Get_Toplevel (Object));
    end On_Cancel_Clicked;
-
-   ---------------------------
-   -- On_Show_Ascii_Toggled --
-   ---------------------------
-
-   procedure On_Show_Ascii_Toggled
-     (Object : access Gtk_Check_Button_Record'Class)
-   is
-      View : constant GVD_Memory_View :=
-        GVD_Memory_View (Get_Toplevel (Object));
-   begin
-      Update_Display (View);
-   end On_Show_Ascii_Toggled;
 
 end Memory_View_Pkg.Callbacks;
