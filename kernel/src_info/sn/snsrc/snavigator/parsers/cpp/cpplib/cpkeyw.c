@@ -19,9 +19,21 @@ with Source-Navigator; see the file COPYING.  If not, write to
 the Free Software Foundation, 59 Temple Place - Suite 330, Boston,
 MA 02111-1307, USA.
 
-
-
 */
+
+
+/* AdaCore: Index in LexKeyWordTab is computed with the following
+ * algorithm (see cplex.c for instance):
+ *    char* word = "protected";
+ *    int ihash=0, j=0;
+ *    char* c;
+ *    for (c=word; *c; c++) {
+ *       if( j++ < 6 && ihash < HASH_MAX ) 
+ *          ihash += c_hash[ (int) (*c)];
+ *    }
+ *    printf ("hash for %s is %d\n", word, ihash);
+ */
+
 
 #include "cpdefines.h"
 #include "cpkeyw.h"
