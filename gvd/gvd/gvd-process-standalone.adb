@@ -61,6 +61,7 @@ package body GVD.Process.Standalone is
       Builtin_Source  : Builtin.Builtin;
       External_Source : Socket.Socket;
       Source          : Source_Editor;
+      Success         : Boolean;
 
    begin
       Process := new Debugger_Process_Tab_Record;
@@ -84,8 +85,15 @@ package body GVD.Process.Standalone is
       Initialize (Process, Window, Source);
       Configure
         (Process, Kind, Executable, Debugger_Args, Executable_Args,
-         Remote_Host, Remote_Target, Remote_Protocol, Debugger_Name);
-      return Process;
+         Remote_Host, Remote_Target, Remote_Protocol, Debugger_Name,
+         Success => Success);
+
+      if Success then
+         return Process;
+      else
+         Destroy (Process);
+         return null;
+      end if;
    end Create_Debugger;
 
    ---------------------
