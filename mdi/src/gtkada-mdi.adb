@@ -400,6 +400,8 @@ package body Gtkada.MDI is
       MDI.Initial_Height := Gint (Get_Allocation_Height (Child));
       MDI.Current_W := MDI.Initial_Width;
       MDI.Current_H := MDI.Initial_Height;
+      MDI.Current_X := C.X;
+      MDI.Current_Y := C.Y;
 
       Curs := Side (Child, Gint (Get_X (Event)), Gint (Get_Y (Event)));
       MDI.Current_Cursor := Curs;
@@ -427,8 +429,8 @@ package body Gtkada.MDI is
            (Get_Bin_Window (MDI),
             MDI.Resize_GC,
             Filled => False,
-            X => C.X,
-            Y => C.Y,
+            X => MDI.Current_X,
+            Y => MDI.Current_Y,
             Width => MDI.Current_W,
             Height => MDI.Current_H);
       end if;
@@ -445,8 +447,6 @@ package body Gtkada.MDI is
       Event  : Gdk_Event) return Boolean
    is
       MDI : MDI_Window := MDI_Window (Get_Parent (Child));
-      C : MDI_Child := MDI_Child (Child);
-      Delta_X, Delta_Y : Gint;
    begin
       if MDI.Selected_Child /= null then
          if Do_Grabs then
@@ -458,36 +458,16 @@ package body Gtkada.MDI is
               (Get_Bin_Window (MDI),
                MDI.Resize_GC,
                Filled => False,
-               X => C.X,
-               Y => C.Y,
+               X => MDI.Current_X,
+               Y => MDI.Current_Y,
                Width => MDI.Current_W,
                Height => MDI.Current_H);
-            Set_USize (C, MDI.Current_W, MDI.Current_H);
+            Set_USize (MDI.Selected_Child, MDI.Current_W, MDI.Current_H);
+            Move (MDI, MDI.Selected_Child, MDI.Current_X, MDI.Current_Y);
          end if;
 
-         Delta_X := Gint (Get_X_Root (Event)) - MDI.X_Root;
-         Delta_Y := Gint (Get_Y_Root (Event)) - MDI.Y_Root;
-
-         if MDI.Current_Cursor = Left_Ptr then
-            C.X := Constrain_X (MDI, C.X + Delta_X);
-            C.Y := Constrain_Y (MDI, C.Y + Delta_Y);
-         else
-            if MDI.Initial_Width - Delta_X > Min_Width
-              and then (MDI.Current_Cursor = Left_Side
-                        or else MDI.Current_Cursor = Top_Left_Corner
-                        or else MDI.Current_Cursor = Bottom_Left_Corner)
-            then
-               C.X := Constrain_X (MDI, Delta_X + C.X);
-            end if;
-
-            if MDI.Initial_Height - Delta_Y > Min_Height
-              and then (MDI.Current_Cursor = Top_Side
-                        or else MDI.Current_Cursor = Top_Left_Corner
-                        or else MDI.Current_Cursor = Top_Right_Corner)
-            then
-               C.Y := Constrain_Y (MDI, Delta_Y + C.Y);
-            end if;
-         end if;
+         MDI.Selected_Child.X := MDI.Current_X;
+         MDI.Selected_Child.Y := MDI.Current_Y;
 
          MDI.Selected_Child := null;
       end if;
@@ -519,8 +499,8 @@ package body Gtkada.MDI is
                  (Get_Bin_Window (MDI),
                   MDI.Resize_GC,
                   Filled => False,
-                  X => C.X,
-                  Y => C.Y,
+                  X => MDI.Current_X,
+                  Y => MDI.Current_Y,
                   Width => MDI.Current_W,
                   Height => MDI.Current_H);
             end if;
@@ -529,30 +509,24 @@ package body Gtkada.MDI is
             Delta_Y := Gint (Get_Y_Root (Event)) - MDI.Y_Root;
             W := MDI.Initial_Width;
             H := MDI.Initial_Height;
+            MDI.Current_X := C.X;
+            MDI.Current_Y := C.Y;
 
             case MDI.Current_Cursor is
                when Left_Ptr =>
-                  Move (MDI, C, Constrain_X (MDI, Delta_X + C.X),
-                        Constrain_Y (MDI, Delta_Y + C.Y));
+                  MDI.Current_X := Delta_X + C.X;
+                  MDI.Current_Y := Delta_Y + C.Y;
 
                when Left_Side =>
                   W := Gint'Max (Min_Width, W - Delta_X);
-                  if W /= MDI.Initial_Width then
-                     Move (MDI, C,
-                           Constrain_X (MDI, C.X + MDI.Initial_Width - W),
-                           C.Y);
-                  end if;
+                  MDI.Current_X := C.X + MDI.Initial_Width - W;
 
                when Right_Side =>
                   W := Gint'Max (Min_Width, W + Delta_X);
 
                when Top_Side =>
                   H := Gint'Max (Min_Height, H - Delta_Y);
-                  if H /= MDI.Initial_Height then
-                     Move (MDI, C,
-                           C.X,
-                           Constrain_Y (MDI, C.Y + MDI.Initial_Height - H));
-                  end if;
+                  MDI.Current_Y := C.Y + MDI.Initial_Height - H;
 
                when Bottom_Side =>
                   H := Gint'Max (Min_Height, H + Delta_Y);
@@ -560,30 +534,18 @@ package body Gtkada.MDI is
                when Top_Left_Corner =>
                   W := Gint'Max (Min_Width, W - Delta_X);
                   H := Gint'Max (Min_Height, H - Delta_Y);
-                  if W /= MDI.Initial_Width
-                    or else H /= MDI.Initial_Height
-                  then
-                     Move (MDI, C,
-                           Constrain_X (MDI, C.X + MDI.Initial_Width - W),
-                           Constrain_Y (MDI, C.Y + MDI.Initial_Height - H));
-                  end if;
+                  MDI.Current_X := C.X + MDI.Initial_Width - W;
+                  MDI.Current_Y := C.Y + MDI.Initial_Height - H;
 
                when Top_Right_Corner =>
                   W := Gint'Max (Min_Width, W + Delta_X);
                   H := Gint'Max (Min_Height, H - Delta_Y);
-                  if H /= MDI.Initial_Height then
-                     Move (MDI, C, C.X,
-                           Constrain_Y (MDI, C.Y + MDI.Initial_Height - H));
-                  end if;
+                  MDI.Current_Y := C.Y + MDI.Initial_Height - H;
 
                when Bottom_Left_Corner =>
                   W := Gint'Max (Min_Width, W - Delta_X);
                   H := Gint'Max (Min_Height, H + Delta_Y);
-                  if W /= MDI.Initial_Width then
-                     Move (MDI, C,
-                           Constrain_X (MDI, C.X + MDI.Initial_Width - W),
-                           C.Y);
-                  end if;
+                  MDI.Current_X := C.X + MDI.Initial_Width - W;
 
                when Bottom_Right_Corner =>
                   W := Gint'Max (Min_Width, W + Delta_X);
@@ -591,25 +553,37 @@ package body Gtkada.MDI is
 
                when others => null;
             end case;
+
+            MDI.Current_X := Constrain_X (MDI, MDI.Current_X);
+            MDI.Current_Y := Constrain_Y (MDI, MDI.Current_Y);
+
+            if MDI.Current_Cursor = Left_Ptr
+              or else Opaque_Resize
+            then
+               Move (MDI, C, MDI.Current_X, MDI.Current_Y);
+            end if;
+
             if MDI.Current_Cursor /= Left_Ptr
+              and then Opaque_Resize
               and then (W /= Gint (Get_Allocation_Width (C))
                         or else H /= Gint (Get_Allocation_Height (C)))
             then
-               if Opaque_Resize then
-                  Set_USize (C, W, H);
-               elsif MDI.Current_Cursor /= Left_Ptr then
-                  MDI.Current_W := W;
-                  MDI.Current_H := H;
-                  Draw_Rectangle
-                    (Get_Bin_Window (MDI),
-                     MDI.Resize_GC,
-                     Filled => False,
-                     X => C.X,
-                     Y => C.Y,
-                     Width => MDI.Current_W,
-                     Height => MDI.Current_H);
-               end if;
+               Set_USize (C, W, H);
             end if;
+
+            if MDI.Current_Cursor /= Left_Ptr then
+               MDI.Current_W := W;
+               MDI.Current_H := H;
+               Draw_Rectangle
+                 (Get_Bin_Window (MDI),
+                  MDI.Resize_GC,
+                     Filled => False,
+                  X => MDI.Current_X,
+                  Y => MDI.Current_Y,
+                  Width => MDI.Current_W,
+                  Height => MDI.Current_H);
+            end if;
+
          end if;
 
       --  A motion_event ?

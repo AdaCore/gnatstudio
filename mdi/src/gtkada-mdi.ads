@@ -150,9 +150,9 @@ private
       Focus_Child : MDI_Child := null;
       --  The widget that currently has the focus.
 
-      Current_W, Current_H : Glib.Gint;
-      --  Current size of the widget that is currently resized. This is used
-      --  for non-opaque resizing.
+      Current_W, Current_H, Current_X, Current_Y : Glib.Gint;
+      --  Current size and location of the widget that is currently
+      --  resized. This is used for non-opaque resizing.
 
       GC   : Gdk.GC.Gdk_GC;
       Resize_GC : Gdk.GC.Gdk_GC;
