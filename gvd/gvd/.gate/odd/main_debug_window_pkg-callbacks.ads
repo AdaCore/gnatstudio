@@ -90,9 +90,6 @@ package Main_Debug_Window_Pkg.Callbacks is
    procedure On_Next_Instruction1_Activate
      (Object : access Gtk_Widget_Record'Class);
 
-   procedure On_Until1_Activate
-     (Object : access Gtk_Widget_Record'Class);
-
    procedure On_Finish1_Activate
      (Object : access Gtk_Widget_Record'Class);
 
@@ -112,9 +109,6 @@ package Main_Debug_Window_Pkg.Callbacks is
      (Object : access Gtk_Widget_Record'Class);
 
    procedure On_Command_History1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class);
-
-   procedure On_Clear_Line1_Activate
      (Object : access Gtk_Menu_Item_Record'Class);
 
    procedure On_Clear_Window1_Activate
@@ -171,40 +165,14 @@ package Main_Debug_Window_Pkg.Callbacks is
    procedure On_On_Item1_Activate
      (Object : access Gtk_Menu_Item_Record'Class);
 
-   procedure On_On_Window1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class);
-
    procedure On_What_Now_1_Activate
      (Object : access Gtk_Menu_Item_Record'Class);
 
    procedure On_Tip_Of_The_Day1_Activate
      (Object : access Gtk_Menu_Item_Record'Class);
 
-   procedure On_Odd_Reference1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class);
-
-   procedure On_Odd_News1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class);
-
-   procedure On_Gdb_Reference1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class);
-
-   procedure On_Odd_License1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class);
-
-   procedure On_Odd_Www_Page1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class);
-
    procedure On_About_Odd1_Activate
      (Object : access Gtk_Menu_Item_Record'Class);
-
-   procedure On_Print1_Activate
-     (Object : access Gtk_Widget_Record'Class;
-      Params : Gtk.Arguments.Gtk_Args);
-
-   procedure On_Display1_Activate
-     (Object : access Gtk_Widget_Record'Class;
-      Params : Gtk.Arguments.Gtk_Args);
 
    procedure On_Start1_Activate
      (Object : access Gtk_Widget_Record'Class;

@@ -18,7 +18,6 @@ end Gtk_New;
 
 procedure Initialize (Main_Debug_Window : access Main_Debug_Window_Record'Class) is
    The_Accel_Group : Gtk_Accel_Group;
-   Toolbar_Combo_Items : String_List.Glist;
 
 begin
    Gtk.Window.Initialize (Main_Debug_Window, Window_Toplevel);
@@ -68,7 +67,6 @@ begin
    Set_Right_Justify (Main_Debug_Window.Open_Recent1, False);
 
    Gtk_New (Main_Debug_Window.Open_Core_Dump1, -"Open Core Dump...");
-   Set_Sensitive (Main_Debug_Window.Open_Core_Dump1, False);
    Widget_Callback.Object_Connect
      (Main_Debug_Window.Open_Core_Dump1, "activate",
       Widget_Callback.To_Marshaller (On_Open_Core_Dump1_Activate'Access), Main_Debug_Window);
@@ -348,16 +346,6 @@ begin
    Add (Main_Debug_Window.Program1_Menu, Main_Debug_Window.Next_Instruction1);
    Set_Right_Justify (Main_Debug_Window.Next_Instruction1, False);
 
-   Gtk_New (Main_Debug_Window.Until1, -"Until");
-   Set_Sensitive (Main_Debug_Window.Until1, False);
-   Add_Accelerator (Main_Debug_Window.Until1, "activate",
-     The_Accel_Group, GDK_F7, 0, Accel_Visible);
-   Widget_Callback.Object_Connect
-     (Main_Debug_Window.Until1, "activate",
-      Widget_Callback.To_Marshaller (On_Until1_Activate'Access), Main_Debug_Window);
-   Add (Main_Debug_Window.Program1_Menu, Main_Debug_Window.Until1);
-   Set_Right_Justify (Main_Debug_Window.Until1, False);
-
    Gtk_New (Main_Debug_Window.Finish1, -"Finish");
    Add_Accelerator (Main_Debug_Window.Finish1, "activate",
      The_Accel_Group, GDK_F8, 0, Accel_Visible);
@@ -431,40 +419,22 @@ begin
    Set_Submenu (Main_Debug_Window.Command1, Main_Debug_Window.Command1_Menu);
 
    Gtk_New (Main_Debug_Window.Command_History1, -"Command History...");
-   Set_Sensitive (Main_Debug_Window.Command_History1, False);
    Menu_Item_Callback.Connect
      (Main_Debug_Window.Command_History1, "activate",
       Menu_Item_Callback.To_Marshaller (On_Command_History1_Activate'Access));
    Add (Main_Debug_Window.Command1_Menu, Main_Debug_Window.Command_History1);
    Set_Right_Justify (Main_Debug_Window.Command_History1, False);
 
-   Gtk_New (Main_Debug_Window.Separator14);
-   Add (Main_Debug_Window.Command1_Menu, Main_Debug_Window.Separator14);
-   Set_Right_Justify (Main_Debug_Window.Separator14, False);
-
-   Gtk_New (Main_Debug_Window.Clear_Line1, -"Clear Line");
-   Set_Sensitive (Main_Debug_Window.Clear_Line1, False);
-   Add_Accelerator (Main_Debug_Window.Clear_Line1, "activate",
-     The_Accel_Group, GDK_u, Gdk.Types.Control_Mask, Accel_Visible);
-   Menu_Item_Callback.Connect
-     (Main_Debug_Window.Clear_Line1, "activate",
-      Menu_Item_Callback.To_Marshaller (On_Clear_Line1_Activate'Access));
-   Add (Main_Debug_Window.Command1_Menu, Main_Debug_Window.Clear_Line1);
-   Set_Right_Justify (Main_Debug_Window.Clear_Line1, False);
-
    Gtk_New (Main_Debug_Window.Clear_Window1, -"Clear Window");
-   Set_Sensitive (Main_Debug_Window.Clear_Window1, False);
-   Add_Accelerator (Main_Debug_Window.Clear_Window1, "activate",
-     The_Accel_Group, GDK_u, Gdk.Types.Control_Mask | gdk_Shift_Mask, Accel_Visible);
    Menu_Item_Callback.Connect
      (Main_Debug_Window.Clear_Window1, "activate",
       Menu_Item_Callback.To_Marshaller (On_Clear_Window1_Activate'Access));
    Add (Main_Debug_Window.Command1_Menu, Main_Debug_Window.Clear_Window1);
    Set_Right_Justify (Main_Debug_Window.Clear_Window1, False);
 
-   Gtk_New (Main_Debug_Window.Separator16);
-   Add (Main_Debug_Window.Command1_Menu, Main_Debug_Window.Separator16);
-   Set_Right_Justify (Main_Debug_Window.Separator16, False);
+   Gtk_New (Main_Debug_Window.Separator14);
+   Add (Main_Debug_Window.Command1_Menu, Main_Debug_Window.Separator14);
+   Set_Right_Justify (Main_Debug_Window.Separator14, False);
 
    Gtk_New (Main_Debug_Window.Define_Command1, -"Define Command...");
    Set_Sensitive (Main_Debug_Window.Define_Command1, False);
@@ -628,14 +598,6 @@ begin
    Add (Main_Debug_Window.Help1_Menu, Main_Debug_Window.On_Item1);
    Set_Right_Justify (Main_Debug_Window.On_Item1, False);
 
-   Gtk_New (Main_Debug_Window.On_Window1, -"On Window...");
-   Set_Sensitive (Main_Debug_Window.On_Window1, False);
-   Menu_Item_Callback.Connect
-     (Main_Debug_Window.On_Window1, "activate",
-      Menu_Item_Callback.To_Marshaller (On_On_Window1_Activate'Access));
-   Add (Main_Debug_Window.Help1_Menu, Main_Debug_Window.On_Window1);
-   Set_Right_Justify (Main_Debug_Window.On_Window1, False);
-
    Gtk_New (Main_Debug_Window.Separator29);
    Add (Main_Debug_Window.Help1_Menu, Main_Debug_Window.Separator29);
    Set_Right_Justify (Main_Debug_Window.Separator29, False);
@@ -662,122 +624,12 @@ begin
    Add (Main_Debug_Window.Help1_Menu, Main_Debug_Window.Separator30);
    Set_Right_Justify (Main_Debug_Window.Separator30, False);
 
-   Gtk_New (Main_Debug_Window.Odd_Reference1, -"GVD Reference...");
-   Set_Sensitive (Main_Debug_Window.Odd_Reference1, False);
-   Menu_Item_Callback.Connect
-     (Main_Debug_Window.Odd_Reference1, "activate",
-      Menu_Item_Callback.To_Marshaller (On_Odd_Reference1_Activate'Access));
-   Add (Main_Debug_Window.Help1_Menu, Main_Debug_Window.Odd_Reference1);
-   Set_Right_Justify (Main_Debug_Window.Odd_Reference1, False);
-
-   Gtk_New (Main_Debug_Window.Odd_News1, -"GVD News...");
-   Set_Sensitive (Main_Debug_Window.Odd_News1, False);
-   Menu_Item_Callback.Connect
-     (Main_Debug_Window.Odd_News1, "activate",
-      Menu_Item_Callback.To_Marshaller (On_Odd_News1_Activate'Access));
-   Add (Main_Debug_Window.Help1_Menu, Main_Debug_Window.Odd_News1);
-   Set_Right_Justify (Main_Debug_Window.Odd_News1, False);
-
-   Gtk_New (Main_Debug_Window.Gdb_Reference1, -"GDB Reference...");
-   Set_Sensitive (Main_Debug_Window.Gdb_Reference1, False);
-   Menu_Item_Callback.Connect
-     (Main_Debug_Window.Gdb_Reference1, "activate",
-      Menu_Item_Callback.To_Marshaller (On_Gdb_Reference1_Activate'Access));
-   Add (Main_Debug_Window.Help1_Menu, Main_Debug_Window.Gdb_Reference1);
-   Set_Right_Justify (Main_Debug_Window.Gdb_Reference1, False);
-
-   Gtk_New (Main_Debug_Window.Separator31);
-   Add (Main_Debug_Window.Help1_Menu, Main_Debug_Window.Separator31);
-   Set_Right_Justify (Main_Debug_Window.Separator31, False);
-
-   Gtk_New (Main_Debug_Window.Odd_License1, -"GVD License...");
-   Set_Sensitive (Main_Debug_Window.Odd_License1, False);
-   Menu_Item_Callback.Connect
-     (Main_Debug_Window.Odd_License1, "activate",
-      Menu_Item_Callback.To_Marshaller (On_Odd_License1_Activate'Access));
-   Add (Main_Debug_Window.Help1_Menu, Main_Debug_Window.Odd_License1);
-   Set_Right_Justify (Main_Debug_Window.Odd_License1, False);
-
-   Gtk_New (Main_Debug_Window.Odd_Www_Page1, -"GVD WWW Page...");
-   Set_Sensitive (Main_Debug_Window.Odd_Www_Page1, False);
-   Menu_Item_Callback.Connect
-     (Main_Debug_Window.Odd_Www_Page1, "activate",
-      Menu_Item_Callback.To_Marshaller (On_Odd_Www_Page1_Activate'Access));
-   Add (Main_Debug_Window.Help1_Menu, Main_Debug_Window.Odd_Www_Page1);
-   Set_Right_Justify (Main_Debug_Window.Odd_Www_Page1, False);
-
-   Gtk_New (Main_Debug_Window.Separator32);
-   Add (Main_Debug_Window.Help1_Menu, Main_Debug_Window.Separator32);
-   Set_Right_Justify (Main_Debug_Window.Separator32, False);
-
    Gtk_New (Main_Debug_Window.About_Odd1, -"About GVD...");
    Menu_Item_Callback.Connect
      (Main_Debug_Window.About_Odd1, "activate",
       Menu_Item_Callback.To_Marshaller (On_About_Odd1_Activate'Access));
    Add (Main_Debug_Window.Help1_Menu, Main_Debug_Window.About_Odd1);
    Set_Right_Justify (Main_Debug_Window.About_Odd1, False);
-
-   Gtk_New (Main_Debug_Window.Toolbar1, Orientation_Horizontal, Toolbar_Icons);
-   Pack_Start (Main_Debug_Window.Vbox1, Main_Debug_Window.Toolbar1, False, True, 0);
-   Set_Space_Size (Main_Debug_Window.Toolbar1, 5);
-   Set_Space_Style (Main_Debug_Window.Toolbar1, Toolbar_Space_Line);
-   Set_Tooltips (Main_Debug_Window.Toolbar1, True);
-   Set_Button_Relief (Main_Debug_Window.Toolbar1, Relief_None);
-   Main_Debug_Window.Button62 := Append_Element
-     (Toolbar => Main_Debug_Window.Toolbar1,
-      The_Type => Toolbar_Child_Button,
-      Text => -"",
-      Tooltip_Text => -"Lookup selection in the source",
-      Icon => Gtk_Widget (Create_Pixmap (lookup_xpm, Main_Debug_Window)));
-   Main_Debug_Window.Button63 := Append_Element
-     (Toolbar => Main_Debug_Window.Toolbar1,
-      The_Type => Toolbar_Child_Button,
-      Text => -"",
-      Tooltip_Text => -"Find selection in the source",
-      Icon => Gtk_Widget (Create_Pixmap (findfwd_xpm, Main_Debug_Window)));
-   Main_Debug_Window.Button65 := Append_Element
-     (Toolbar => Main_Debug_Window.Toolbar1,
-      The_Type => Toolbar_Child_Button,
-      Text => -"",
-      Tooltip_Text => -"Stop whenever selection changes",
-      Icon => Gtk_Widget (Create_Pixmap (watch_xpm, Main_Debug_Window)));
-   Main_Debug_Window.Button66 := Append_Element
-     (Toolbar => Main_Debug_Window.Toolbar1,
-      The_Type => Toolbar_Child_Button,
-      Text => -"",
-      Tooltip_Text => -"Print selection",
-      Icon => Gtk_Widget (Create_Pixmap (print_xpm, Main_Debug_Window)));
-   Widget_Callback.Object_Connect
-     (Main_Debug_Window.Button66, "clicked", On_Print1_Activate'Access, Main_Debug_Window);
-   Main_Debug_Window.Button67 := Append_Element
-     (Toolbar => Main_Debug_Window.Toolbar1,
-      The_Type => Toolbar_Child_Button,
-      Text => -"",
-      Tooltip_Text => -"Display selection",
-      Icon => Gtk_Widget (Create_Pixmap (display_xpm, Main_Debug_Window)));
-   Widget_Callback.Object_Connect
-     (Main_Debug_Window.Button67, "clicked", On_Display1_Activate'Access, Main_Debug_Window);
-   Main_Debug_Window.Button68 := Append_Element
-     (Toolbar => Main_Debug_Window.Toolbar1,
-      The_Type => Toolbar_Child_Button,
-      Text => -"",
-      Tooltip_Text => -"Plot selection",
-      Icon => Gtk_Widget (Create_Pixmap (plot_xpm, Main_Debug_Window)));
-
-   Gtk_New (Main_Debug_Window.Toolbar_Combo);
-   Append_Widget (Main_Debug_Window.Toolbar1, Main_Debug_Window.Toolbar_Combo);
-   Set_Case_Sensitive (Main_Debug_Window.Toolbar_Combo, False);
-   Set_Use_Arrows (Main_Debug_Window.Toolbar_Combo, True);
-   Set_Use_Arrows_Always (Main_Debug_Window.Toolbar_Combo, False);
-   String_List.Append (Toolbar_Combo_Items, -"");
-   Combo.Set_Popdown_Strings (Main_Debug_Window.Toolbar_Combo, Toolbar_Combo_Items);
-   Free_String_List (Toolbar_Combo_Items);
-
-   Main_Debug_Window.Toolbar_Entry := Get_Entry (Main_Debug_Window.Toolbar_Combo);
-   Set_Editable (Main_Debug_Window.Toolbar_Entry, True);
-   Set_Max_Length (Main_Debug_Window.Toolbar_Entry, 0);
-   Set_Text (Main_Debug_Window.Toolbar_Entry, -"");
-   Set_Visibility (Main_Debug_Window.Toolbar_Entry, True);
 
    Gtk_New (Main_Debug_Window.Toolbar2, Orientation_Horizontal, Toolbar_Icons);
    Pack_Start (Main_Debug_Window.Vbox1, Main_Debug_Window.Toolbar2, False, False, 0);
@@ -833,14 +685,6 @@ begin
       Icon => Gtk_Widget (Create_Pixmap (nexti_xpm, Main_Debug_Window)));
    Widget_Callback.Object_Connect
      (Main_Debug_Window.Button55, "clicked", On_Next_Instruction1_Activate'Access, Main_Debug_Window);
-   Main_Debug_Window.Button56 := Append_Element
-     (Toolbar => Main_Debug_Window.Toolbar2,
-      The_Type => Toolbar_Child_Button,
-      Text => -"",
-      Tooltip_Text => -"Execute until the program reaches a source line greater than the current",
-      Icon => Gtk_Widget (Create_Pixmap (until_xpm, Main_Debug_Window)));
-   Widget_Callback.Object_Connect
-     (Main_Debug_Window.Button56, "clicked", On_Until1_Activate'Access, Main_Debug_Window);
    Main_Debug_Window.Button58 := Append_Element
      (Toolbar => Main_Debug_Window.Toolbar2,
       The_Type => Toolbar_Child_Button,
@@ -857,14 +701,6 @@ begin
       Icon => Gtk_Widget (Create_Pixmap (cont_xpm, Main_Debug_Window)));
    Widget_Callback.Object_Connect
      (Main_Debug_Window.Button60, "clicked", On_Continue1_Activate'Access, Main_Debug_Window);
-   Main_Debug_Window.Button61 := Append_Element
-     (Toolbar => Main_Debug_Window.Toolbar2,
-      The_Type => Toolbar_Child_Button,
-      Text => -"",
-      Tooltip_Text => -"Interrupt debugged program",
-      Icon => Gtk_Widget (Create_Pixmap (interrupt_xpm, Main_Debug_Window)));
-   Widget_Callback.Object_Connect
-     (Main_Debug_Window.Button61, "clicked", On_Interrupt1_Activate'Access, Main_Debug_Window);
    Main_Debug_Window.Button57 := Append_Element
      (Toolbar => Main_Debug_Window.Toolbar2,
       The_Type => Toolbar_Child_Button,
@@ -881,6 +717,14 @@ begin
       Icon => Gtk_Widget (Create_Pixmap (down_xpm, Main_Debug_Window)));
    Widget_Callback.Object_Connect
      (Main_Debug_Window.Button51, "clicked", On_Down1_Activate'Access, Main_Debug_Window);
+   Main_Debug_Window.Button61 := Append_Element
+     (Toolbar => Main_Debug_Window.Toolbar2,
+      The_Type => Toolbar_Child_Button,
+      Text => -"",
+      Tooltip_Text => -"Interrupt debugged program",
+      Icon => Gtk_Widget (Create_Pixmap (interrupt_xpm, Main_Debug_Window)));
+   Widget_Callback.Object_Connect
+     (Main_Debug_Window.Button61, "clicked", On_Interrupt1_Activate'Access, Main_Debug_Window);
 
    Gtk_New (Main_Debug_Window.Frame7);
    Pack_Start (Main_Debug_Window.Vbox1, Main_Debug_Window.Frame7, True, True, 0);

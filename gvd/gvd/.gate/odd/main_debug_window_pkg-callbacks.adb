@@ -333,17 +333,6 @@ package body Main_Debug_Window_Pkg.Callbacks is
       null;
    end On_Next_Instruction1_Activate;
 
-   ------------------------
-   -- On_Until1_Activate --
-   ------------------------
-
-   procedure On_Until1_Activate
-     (Object : access Gtk_Widget_Record'Class)
-   is
-   begin
-      null;
-   end On_Until1_Activate;
-
    -------------------------
    -- On_Finish1_Activate --
    -------------------------
@@ -420,17 +409,6 @@ package body Main_Debug_Window_Pkg.Callbacks is
    begin
       null;
    end On_Command_History1_Activate;
-
-   -----------------------------
-   -- On_Clear_Line1_Activate --
-   -----------------------------
-
-   procedure On_Clear_Line1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class)
-   is
-   begin
-      null;
-   end On_Clear_Line1_Activate;
 
    -------------------------------
    -- On_Clear_Window1_Activate --
@@ -631,17 +609,6 @@ package body Main_Debug_Window_Pkg.Callbacks is
    end On_On_Item1_Activate;
 
    ----------------------------
-   -- On_On_Window1_Activate --
-   ----------------------------
-
-   procedure On_On_Window1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class)
-   is
-   begin
-      null;
-   end On_On_Window1_Activate;
-
-   ----------------------------
    -- On_What_Now_1_Activate --
    ----------------------------
 
@@ -663,61 +630,6 @@ package body Main_Debug_Window_Pkg.Callbacks is
       null;
    end On_Tip_Of_The_Day1_Activate;
 
-   --------------------------------
-   -- On_Odd_Reference1_Activate --
-   --------------------------------
-
-   procedure On_Odd_Reference1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class)
-   is
-   begin
-      null;
-   end On_Odd_Reference1_Activate;
-
-   ---------------------------
-   -- On_Odd_News1_Activate --
-   ---------------------------
-
-   procedure On_Odd_News1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class)
-   is
-   begin
-      null;
-   end On_Odd_News1_Activate;
-
-   --------------------------------
-   -- On_Gdb_Reference1_Activate --
-   --------------------------------
-
-   procedure On_Gdb_Reference1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class)
-   is
-   begin
-      null;
-   end On_Gdb_Reference1_Activate;
-
-   ------------------------------
-   -- On_Odd_License1_Activate --
-   ------------------------------
-
-   procedure On_Odd_License1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class)
-   is
-   begin
-      null;
-   end On_Odd_License1_Activate;
-
-   -------------------------------
-   -- On_Odd_Www_Page1_Activate --
-   -------------------------------
-
-   procedure On_Odd_Www_Page1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class)
-   is
-   begin
-      null;
-   end On_Odd_Www_Page1_Activate;
-
    ----------------------------
    -- On_About_Odd1_Activate --
    ----------------------------
@@ -728,30 +640,6 @@ package body Main_Debug_Window_Pkg.Callbacks is
    begin
       null;
    end On_About_Odd1_Activate;
-
-   ------------------------
-   -- On_Print1_Activate --
-   ------------------------
-
-   procedure On_Print1_Activate
-     (Object : access Gtk_Widget_Record'Class;
-      Params : Gtk.Arguments.Gtk_Args)
-   is
-   begin
-      null;
-   end On_Print1_Activate;
-
-   --------------------------
-   -- On_Display1_Activate --
-   --------------------------
-
-   procedure On_Display1_Activate
-     (Object : access Gtk_Widget_Record'Class;
-      Params : Gtk.Arguments.Gtk_Args)
-   is
-   begin
-      null;
-   end On_Display1_Activate;
 
    ------------------------
    -- On_Start1_Activate --
