@@ -65,6 +65,8 @@ with GUI_Utils;             use GUI_Utils;
 
 with Gdk.Types; use Gdk.Types;
 
+with GNAT.Directory_Operations; use GNAT.Directory_Operations;
+
 package body GVD.Text_Box.Source_Editor.Builtin is
 
    ---------------------
@@ -376,7 +378,7 @@ package body GVD.Text_Box.Source_Editor.Builtin is
          for Index in Breakpoints_Array'Range loop
             if Breakpoints_Array (Index).Line = Line
               and then Breakpoints_Array (Index).File.all =
-              Base_File_Name (Editor.Current_File.all)
+              Base_Name (Editor.Current_File.all)
             then
                Num := Breakpoints_Array (Index).Num;
                Result := True;
@@ -868,7 +870,7 @@ package body GVD.Text_Box.Source_Editor.Builtin is
 
       declare
          Base_File : constant String :=
-           Base_File_Name (Editor.Current_File.all);
+           Base_Name (Editor.Current_File.all);
       begin
          Freeze (Get_Buttons (Edit));
          Hide_All (Get_Buttons (Edit));
