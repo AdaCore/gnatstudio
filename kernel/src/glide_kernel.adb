@@ -57,10 +57,11 @@ with Glide_Intl;                use Glide_Intl;
 with Glide_Main_Window;         use Glide_Main_Window;
 with Default_Preferences;       use Default_Preferences;
 with Glide_Kernel.Custom;       use Glide_Kernel.Custom;
+with Glide_Kernel.Contexts;     use Glide_Kernel.Contexts;
 with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
 with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
 with Glide_Kernel.Project;      use Glide_Kernel.Project;
-with Glide_Kernel.Console;      use Glide_Kernel.Console;
+--  with Glide_Kernel.Console;      use Glide_Kernel.Console;
 with Glide_Kernel.Scripts;      use Glide_Kernel.Scripts;
 with GVD.Preferences;           use GVD.Preferences;
 with GVD.Main_Window;           use GVD.Main_Window;
@@ -87,30 +88,23 @@ with Traces;                    use Traces;
 
 with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Text_IO;               use Ada.Text_IO;
-with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
+with System; use System;
+with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
 
 package body Glide_Kernel is
 
    Signals : constant chars_ptr_array :=
-     (1  => New_String (Project_Changed_Signal),
-      2  => New_String (Project_View_Changed_Signal),
-      3  => New_String (Context_Changed_Signal),
-      4  => New_String (Variable_Changed_Signal),
-      5  => New_String (Source_Lines_Revealed_Signal),
+     (1  => New_String (Context_Changed_Signal),
+      2  => New_String (Source_Lines_Revealed_Signal),
 
-      6  => New_String (File_Edited_Signal),
-      7  => New_String (File_Saved_Signal),
-      8  => New_String (File_Closed_Signal),
-      9  => New_String (File_Changed_On_Disk_Signal),
-      10 => New_String (Compilation_Finished_Signal),
-
-      11 => New_String (Preferences_Changed_Signal),
-      12 => New_String (Search_Regexps_Changed_Signal),
-      13 => New_String (Search_Reset_Signal),
-      14 => New_String (Search_Functions_Changed_Signal));
+      3  => New_String (File_Edited_Signal),
+      4  => New_String (File_Saved_Signal),
+      5  => New_String (File_Closed_Signal),
+      6  => New_String (File_Changed_On_Disk_Signal),
+      7  => New_String (Compilation_Finished_Signal));
    --  The list of signals defined for this object
 
    Kernel_Class : GObject_Class := Uninitialized_Class;
@@ -120,9 +114,6 @@ package body Glide_Kernel is
 
    History_Max_Length : constant Positive := 10;
    --  <preferences> Maximum number of entries to store in each history
-
-   package Object_Callback is new Gtk.Handlers.Callback
-     (Glib.Object.GObject_Record);
 
    use Actions_Htable.String_Hash_Table;
    use Action_Filters_Htable.String_Hash_Table;
@@ -192,9 +183,8 @@ package body Glide_Kernel is
       Home_Dir    : String)
    is
       Signal_Parameters : constant Signal_Parameter_Types :=
-        (1 .. 2 | 4 | 11 .. 14 => (1 => GType_None),
-         3      | 5            => (1 => GType_Pointer),
-         6 .. 10               => (1 => GType_String));
+        (1 .. 2        => (1 => GType_Pointer),
+         3 .. 7        => (1 => GType_String));
       Handler : Glide_Language_Handler;
       Dir     : constant String := Name_As_Directory (Home_Dir);
 
@@ -685,69 +675,6 @@ package body Glide_Kernel is
          return File;
       end if;
    end Locate_From_Source_And_Complete;
-
-   ---------------------
-   -- Project_Changed --
-   ---------------------
-
-   procedure Project_Changed (Handle : access Kernel_Handle_Record) is
-   begin
-      Object_Callback.Emit_By_Name (Handle, Project_Changed_Signal);
-   end Project_Changed;
-
-   --------------------------
-   -- Project_View_Changed --
-   --------------------------
-
-   procedure Project_View_Changed (Handle : access Kernel_Handle_Record) is
-   begin
-      Object_Callback.Emit_By_Name (Handle, Project_View_Changed_Signal);
-   end Project_View_Changed;
-
-   -------------------------
-   -- Preferences_Changed --
-   -------------------------
-
-   procedure Preferences_Changed (Handle : access Kernel_Handle_Record) is
-   begin
-      Object_Callback.Emit_By_Name (Handle, Preferences_Changed_Signal);
-   end Preferences_Changed;
-
-   ----------------------------
-   -- Search_Regexps_Changed --
-   ----------------------------
-
-   procedure Search_Regexps_Changed (Handle : access Kernel_Handle_Record) is
-   begin
-      Object_Callback.Emit_By_Name (Handle, Search_Regexps_Changed_Signal);
-   end Search_Regexps_Changed;
-
-   ------------------
-   -- Search_Reset --
-   ------------------
-
-   procedure Search_Reset (Handle : access Kernel_Handle_Record) is
-   begin
-      Object_Callback.Emit_By_Name (Handle, Search_Reset_Signal);
-   end Search_Reset;
-
-   ------------------------------
-   -- Search_Functions_Changed --
-   ------------------------------
-
-   procedure Search_Functions_Changed (Handle : access Kernel_Handle_Record) is
-   begin
-      Object_Callback.Emit_By_Name (Handle, Search_Functions_Changed_Signal);
-   end Search_Functions_Changed;
-
-   ----------------------
-   -- Variable_Changed --
-   ----------------------
-
-   procedure Variable_Changed (Handle : access Kernel_Handle_Record) is
-   begin
-      Object_Callback.Emit_By_Name (Handle, Variable_Changed_Signal);
-   end Variable_Changed;
 
    ---------------------------
    -- Source_Lines_Revealed --
@@ -1981,9 +1908,9 @@ package body Glide_Kernel is
       end if;
 
       if Lib_Info = No_LI_File then
-         Insert (Kernel,
-                 -"LI file not found for "
-                 & Full_Name (Get_Declaration_File_Of (Entity)).all);
+--           Insert (Kernel,
+--                   -"LI file not found for "
+--                 & Full_Name (Get_Declaration_File_Of (Entity)).all);
          Tree := Null_Scope_Tree;
          Node := Null_Scope_Tree_Node;
          return;
@@ -2001,8 +1928,8 @@ package body Glide_Kernel is
       Node := Find_Entity_Scope (Tree, Entity);
 
       if Node = Null_Scope_Tree_Node then
-         Insert (Kernel,
-                 -"Couldn't find the scope tree for " & Get_Name (Entity));
+--           Insert (Kernel,
+--                   -"Couldn't find the scope tree for " & Get_Name (Entity));
          Trace (Me, "Couldn't find entity "
                 & Get_Name (Entity) & " in "
                 & Base_Name (Get_LI_Filename (Lib_Info))
@@ -2086,7 +2013,7 @@ package body Glide_Kernel is
       Default_Key    : String) is
    begin
       Add_Customization_String
-        (Kernel, "<key action=""" & Action & """>" & Default_Key & "</key>");
+      (Kernel, "<key action=""" & Action & """>" & Default_Key & "</key>");
    end Bind_Default_Key;
 
    ------------------------------
@@ -2562,17 +2489,13 @@ package body Glide_Kernel is
                   else
                      declare
                         Errors : aliased Boolean;
-                        R      : constant String :=
-                          Trim (Reduce (Glide_Kernel.Scripts.Execute_Command
-                                          (Lang, Filter.Shell.all,
-                                           Hide_Output => True,
-                                           Errors => Errors'Unchecked_Access)),
-                                Ada.Strings.Both);
+                        R      : constant Boolean :=
+                         Glide_Kernel.Scripts.Execute_Command
+                            (Lang, Filter.Shell.all,
+                             Hide_Output => True,
+                             Errors => Errors'Unchecked_Access);
                      begin
-                        Result := not Errors
-                          and then
-                            (R = "1"
-                             or else Case_Insensitive_Equal (R, "true"));
+                        Result := not Errors and then R;
                      end;
                   end if;
                end;
@@ -2617,5 +2540,37 @@ package body Glide_Kernel is
    begin
       Reset (Handle.Source_Info_List);
    end Reset_LI_File_List;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Hook : in out Hook_Description_Base) is
+      pragma Unreferenced (Hook);
+   begin
+      null;
+   end Free;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (L : in out Hook_Description_Base_Access) is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Hook_Description_Base'Class, Hook_Description_Base_Access);
+   begin
+      Free (L.all);
+      Unchecked_Free (L);
+   end Free;
+
+   -------------
+   -- Destroy --
+   -------------
+
+   procedure Destroy (Hook : in out Hook_Function_Record) is
+      pragma Unreferenced (Hook);
+   begin
+      null;
+   end Destroy;
 
 end Glide_Kernel;

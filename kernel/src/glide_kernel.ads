@@ -24,7 +24,6 @@ with Basic_Mapper;
 with GNAT.OS_Lib;
 with Generic_List;
 with Glib.Object;  use Glib;
-with Glib.Values;
 with Glib.Xml_Int;
 with Gdk;
 with Gtk.Handlers;
@@ -47,6 +46,7 @@ with Histories;
 with Projects.Registry;
 with Task_Manager;
 with Commands.Interactive;
+with Generic_List;
 with VFS;
 
 package Glide_Kernel is
@@ -416,25 +416,6 @@ package Glide_Kernel is
    --  use Glide_Kernel.Modules.Context_Callback below to connect signals to
    --  the items.
 
-   type Mime_Mode is (Read_Only, Read_Write);
-   --  How the data should be opened. In some cases, it might happen that some
-   --  module is the best to display data read-only, but cannot handle the
-   --  edition (think of a web browser for instance).
-
-   type GValue_Array is array (Natural range <>) of Glib.Values.GValue;
-
-   type Module_Mime_Handler is access function
-     (Kernel    : access Kernel_Handle_Record'Class;
-      Mime_Type : String;
-      Data      : GValue_Array;
-      Mode      : Mime_Mode := Read_Write) return Boolean;
-   --  A function that can be registered by the module if it wants to process
-   --  MIME types.
-   --  If the module knows how to process some data of type Mime_Type, then it
-   --  should act on Data, and return True.
-   --  Otherwise, if it doesn't know how to act on Mime_Type, it should return
-   --  False. In that case, the next module will be queried.
-
    type Module_Default_Context_Factory is access function
      (Kernel : access Kernel_Handle_Record'Class;
       Child  : Gtk.Widget.Gtk_Widget) return Selection_Context_Access;
@@ -642,9 +623,24 @@ package Glide_Kernel is
    --  Return the current action. The empty string or No_Action is returned if
    --  there are no more actions.
 
-   ------------
-   --  Tools --
-   ------------
+   -----------
+   -- Hooks --
+   -----------
+   --  See the package GlidE_Kernel.Hooks for more subprograms applying to
+   --  hooks.
+
+   type Hook_Function_Record is abstract tagged private;
+   type Hook_Function is access all Hook_Function_Record'Class;
+   --  Hooks are defined as tagged types, so that the user can easily store
+   --  his own data to be memorized with the hook.
+
+   procedure Destroy (Hook : in out Hook_Function_Record);
+   --  Destroy the memory associated with Hook.
+   --  By default, this does nothing.
+
+   -----------
+   -- Tools --
+   -----------
    --  The following subprograms are used to register the properties of the
    --  various external tools declared by the user in the customization files.
    --  These are associated with the <tool> tag.
@@ -797,19 +793,10 @@ package Glide_Kernel is
      (Glib.Object.GObject_Record, File_Project_Record);
    --  Generic callback that can be used to connect a signal to a kernel.
 
-   procedure Project_Changed (Handle : access Kernel_Handle_Record);
-   --  Emits the "project_changed" signal
-
-   procedure Project_View_Changed (Handle : access Kernel_Handle_Record);
-   --  Emits the "project_view_changed" signal
-
    procedure Context_Changed
      (Handle  : access Kernel_Handle_Record;
       Context : access Selection_Context'Class);
    --  Emits the "context_changed" signal
-
-   procedure Variable_Changed (Handle : access Kernel_Handle_Record);
-   --  Emits the "variable_changed" signal
 
    procedure Source_Lines_Revealed
      (Handle      : access Kernel_Handle_Record;
@@ -841,59 +828,12 @@ package Glide_Kernel is
       File    : VFS.Virtual_File);
    --  Emits the "compilation_finished" signal
 
-   procedure Preferences_Changed (Handle : access Kernel_Handle_Record);
-   --  Emits the "preferences_changed" signal.
-
-   procedure Search_Regexps_Changed (Handle : access Kernel_Handle_Record);
-   --  Emits the "search_regexps_changed" signal
-
-   procedure Search_Reset (Handle : access Kernel_Handle_Record);
-   --  Emits the "search_reset" signal
-
-   procedure Search_Functions_Changed (Handle : access Kernel_Handle_Record);
-   --  Emits the "search_functions_changed" signal
-
    -------------
    -- Signals --
    -------------
 
    --  <signals>
    --  The following new signals are defined for this widget:
-   --
-   --  - "project_changed"
-   --    procedure Handler (Handle : access Kernel_Handle_Record'Class);
-   --
-   --    Emitted when the project has changed. This means that a new project
-   --    has been loaded in Glide, and that all the previous settings and
-   --    caches are now obsolete.
-   --    Note: when this signal is emitted, the project view hasn't necessarily
-   --    been created yet.
-   --
-   --  - "project_view_changed"
-   --    procedure Handler (Handle : access Kernel_Handle_Record'Class);
-   --
-   --    Emitted when the project view has been changed (for instance because
-   --    one of the environment variables has changed). This means that the
-   --    list of directories, files or switches might now be different).
-   --
-   --  - "context_changed"
-   --    procedure Handler (Handle  : access Kernel_Handle_Record'Class;
-   --                       Context : Selection_Context_Access);
-   --
-   --    Emitted when a context has changed, like a new file/directory/project
-   --    selection.
-   --
-   --  - "variable_changed"
-   --    procedure Handler (Handle : access Kernel_Handle_Record'Class);
-   --
-   --    Emitted when one of the scenario variables has been renamed, removed,
-   --    or when one of its possible values has changed.
-   --
-   --  - "preferences_changed"
-   --    procedure Handler (Handle : access Kernel_Handle_Record'Class);
-   --
-   --    Emitted when the preferences have been changed. When possible, the
-   --    widgets should refresh themselves with the new preferences
    --
    --  - "source_lines_revealed"
    --    procedure Handler (Handle     : access Kernel_Handle_Record'Class;
@@ -926,23 +866,12 @@ package Glide_Kernel is
    --    with a directory_separator. In that case, the meaning of this signal
    --    is that any file in that directory might have been modified.
    --
-   --  - "search_regexps_changed"
-   --    procedure Handler (Handle : access Kernel_Handle_Record'Class);
+   --  - "context_changed"
+   --    procedure Handler (Handle  : access Kernel_Handle_Record'Class;
+   --                       Context : Selection_Context_Access);
    --
-   --    Emitted when a new regexp has been added to the list of predefined
-   --    search patterns.
-   --
-   --  - "search_reset"
-   --    procedure Handler (Handle : access Kernel_Handle_Record'Class);
-   --
-   --    Emitted when the current search pattern has been reset or changed by
-   --    the user, or when the current search is no longer possible because the
-   --    setup of GPS has changed.
-   --
-   --  - "search_functions_changed"
-   --    procedure Handler (Handle : access Kernel_Handle_Record'Class);
-   --
-   --    Emitted when the list of registered search functions has changed.
+   --    Emitted when a context has changed, like a new file/directory/project
+   --    selection.
    --
    --  - "compilation_finished"
    --    procedure Handler (Handle : access Kernel_Handle_Record'Class;
@@ -953,21 +882,22 @@ package Glide_Kernel is
    --
    --  </signals>
 
-   Project_Changed_Signal        : constant String := "project_changed";
-   Project_View_Changed_Signal   : constant String := "project_view_changed";
+   Preferences_Changed_Hook      : constant String := "preferences_changed";
+   Search_Reset_Hook             : constant String := "search_reset";
+   Search_Functions_Changed_Hook : constant String :=
+     "search_functions_changed";
+   Search_Regexps_Changed_Hook   : constant String := "search_regexps_changed";
+   Variable_Changed_Hook         : constant String := "variable_changed";
+   Project_View_Changed_Hook     : constant String := "project_view_changed";
+   Project_Changed_Hook          : constant String := "project_changed";
+
    Context_Changed_Signal        : constant String := "context_changed";
-   Variable_Changed_Signal       : constant String := "variable_changed";
    Source_Lines_Revealed_Signal  : constant String := "source_lines_revealed";
    File_Edited_Signal            : constant String := "file_edited";
    File_Saved_Signal             : constant String := "file_saved";
    File_Closed_Signal            : constant String := "file_closed";
    File_Changed_On_Disk_Signal   : constant String := "file_changed_on_disk";
    Compilation_Finished_Signal   : constant String := "compilation_finished";
-   Preferences_Changed_Signal    : constant String := "preferences_changed";
-   Search_Regexps_Changed_Signal : constant String := "search_regexps_changed";
-   Search_Reset_Signal           : constant String := "search_reset";
-   Search_Functions_Changed_Signal : constant String :=
-     "search_functions_changed";
 
 private
 
@@ -1000,7 +930,6 @@ private
       Name                  : String (1 .. Name_Length);
       Priority              : Module_Priority;
       Contextual_Menu       : Module_Menu_Handler;
-      Mime_Handler          : Module_Mime_Handler;
       Default_Factory       : Module_Default_Context_Factory;
       Save_Function         : Module_Save_Function;
       Tooltip_Handler       : Module_Tooltip_Handler;
@@ -1049,6 +978,25 @@ private
       Iterator : Actions_Htable.String_Hash_Table.Iterator;
    end record;
 
+
+
+   type Hook_Function_Record is abstract tagged record
+      Ref_Count : Natural := 0;
+   end record;
+
+   type Hook_Description_Base is abstract tagged null record;
+   type Hook_Description_Base_Access is access all Hook_Description_Base'Class;
+
+   procedure Free (Hook : in out Hook_Description_Base);
+   --  Free the memory occupied by Hook
+
+   procedure Free (L : in out Hook_Description_Base_Access);
+   package Hooks_Hash is new String_Hash
+     (Hook_Description_Base_Access, Free, null);
+
+
+
+
    type GPS_MDI_Child_Record is new Gtkada.MDI.MDI_Child_Record with record
       Module              : Module_ID;
       Desktop_Independent : Boolean;
@@ -1061,6 +1009,9 @@ private
 
       Actions : Actions_Htable.String_Hash_Table.HTable;
       --  The actions registered in the kernel
+
+      Hooks : Hooks_Hash.String_Hash_Table.HTable;
+      --  The hooks registered in the kernel
 
       Action_Filters : Action_Filters_Htable.String_Hash_Table.HTable;
       --  The action contexts registered in the kernel
