@@ -93,6 +93,79 @@ package body Glide_Interactive_Consoles is
      (Console : in Glide_Interactive_Console) return Boolean;
    --  Place the cursor at the prompt mark.
 
+   ---------------------------
+   -- Enable_Prompt_Display --
+   ---------------------------
+
+   procedure Enable_Prompt_Display
+     (Console : access Glide_Interactive_Console_Record;
+      Enable  : Boolean)
+   is
+      Last_Iter : Gtk_Text_Iter;
+   begin
+      Set_Editable (Console.View, Enable);
+      Console.Input_Blocked := not Enable;
+
+      if Enable and then Console.Message_Was_Displayed then
+         Display_Prompt (Console);
+
+         if Console.User_Input /= null then
+            Get_End_Iter (Console.Buffer, Last_Iter);
+            Insert (Console.Buffer, Last_Iter, Console.User_Input.all);
+
+            Free (Console.User_Input);
+         end if;
+
+         Console.Message_Was_Displayed := False;
+      end if;
+   end Enable_Prompt_Display;
+
+   ------------
+   -- Insert --
+   ------------
+
+   procedure Insert
+     (Console : access Glide_Interactive_Console_Record;
+      Text    : String;
+      Add_LF  : Boolean := True)
+   is
+      Prompt_Iter : Gtk_Text_Iter;
+      Last_Iter   : Gtk_Text_Iter;
+
+      Internal    : Boolean := Console.Internal_Insert;
+   begin
+      Console.Internal_Insert := True;
+
+      Get_Iter_At_Mark (Console.Buffer, Prompt_Iter, Console.Prompt_Mark);
+      Get_End_Iter (Console.Buffer, Last_Iter);
+
+      if Console.User_Input = null then
+         Console.User_Input := new String'
+           (Get_Slice (Console.Buffer, Prompt_Iter, Last_Iter));
+      end if;
+
+      if not Console.Message_Was_Displayed then
+         Insert (Console.Buffer, Last_Iter, "" & ASCII.LF);
+         Get_End_Iter (Console.Buffer, Last_Iter);
+      end if;
+
+      if Add_LF then
+         Insert (Console.Buffer, Last_Iter, Text & ASCII.LF);
+      else
+         Insert (Console.Buffer, Last_Iter, Text);
+      end if;
+
+      Get_Iter_At_Mark (Console.Buffer, Prompt_Iter, Console.Prompt_Mark);
+      Get_End_Iter (Console.Buffer, Last_Iter);
+      Apply_Tag
+        (Console.Buffer, Console.Uneditable_Tag, Prompt_Iter, Last_Iter);
+
+      Display_Prompt (Console);
+
+      Console.Message_Was_Displayed := True;
+      Console.Internal_Insert := Internal;
+   end Insert;
+
    --------------------------
    -- Button_Press_Handler --
    --------------------------
@@ -101,7 +174,6 @@ package body Glide_Interactive_Consoles is
      (Object : access Gtk_Widget_Record'Class;
       Params : Glib.Values.GValues) return Boolean
    is
-
       pragma Unreferenced (Params);
 
       Console : Glide_Interactive_Console :=
@@ -154,6 +226,10 @@ package body Glide_Interactive_Consoles is
 
       Offset : Gint;
    begin
+      if Console.Input_Blocked then
+         return;
+      end if;
+
       Get_End_Iter (Console.Buffer, First_Iter);
       Offset := Get_Offset (First_Iter);
 
@@ -209,6 +285,8 @@ package body Glide_Interactive_Consoles is
             Output  : constant String :=
               Interpret_Command (Console.Kernel, Command);
          begin
+            Get_End_Iter (Console.Buffer, Pos);
+
             Insert (Console.Buffer, Pos, Output);
 
             --  ??? Must add Command to the history.
