@@ -36,7 +36,6 @@ with Gtkada.File_Selector;      use Gtkada.File_Selector;
 with Gtkada.Dialogs;            use Gtkada.Dialogs;
 with Projects;                  use Projects;
 with Glib;                      use Glib;
-with Glib.Generic_Properties;
 with Glib.Properties.Creation;  use Glib.Properties.Creation;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with Projects.Registry;         use Projects.Registry;
@@ -56,9 +55,6 @@ package body Docgen_Module is
 
    type Docgen_Module_Record is new Module_ID_Record with record
       --  Docgen preferences
-
-      Type_Generated_File   : Param_Spec_Enum;
-      --  Type of the generated file (html, texi...)
 
       Generate_Body_Files   : Param_Spec_Boolean;
       --  Create also the body documentation
@@ -90,13 +86,8 @@ package body Docgen_Module is
    end record;
    type Docgen_Module is access all Docgen_Module_Record'Class;
 
-   package Type_Api_Doc_Properties is new
-     Glib.Generic_Properties.Generic_Enumeration_Property
-       ("Type_Api_Doc", Type_Api_Doc);
-
    procedure Set_Options
-     (Type_Of_File_P       : Type_Api_Doc := HTML;
-      Process_Body_Files_P : Boolean := False;
+     (Process_Body_Files_P : Boolean := False;
       Ignorable_Comments_P : Boolean := False;
       Show_Private_P       : Boolean := False;
       References_P         : Boolean := False;
@@ -219,9 +210,7 @@ package body Docgen_Module is
    procedure Get_Options (My_Options : in out All_Options) is
    begin
       My_Options :=
-        (Type_Of_File       =>
-           Docgen_Module (Docgen_Module_Id).Options.Type_Of_File,
-         Process_Body_Files =>
+        (Process_Body_Files =>
            Docgen_Module (Docgen_Module_Id).Options.Process_Body_Files,
          Ignorable_Comments =>
            Docgen_Module (Docgen_Module_Id).Options.Ignorable_Comments,
@@ -242,8 +231,7 @@ package body Docgen_Module is
    -----------------
 
    procedure Set_Options
-     (Type_Of_File_P       : Type_Api_Doc := HTML;
-      Process_Body_Files_P : Boolean := False;
+     (Process_Body_Files_P : Boolean := False;
       Ignorable_Comments_P : Boolean := False;
       Show_Private_P       : Boolean := False;
       References_P         : Boolean := False;
@@ -251,7 +239,6 @@ package body Docgen_Module is
       Link_All_P           : Boolean := False;
       Tagged_Types_P       : Boolean := False) is
    begin
-      Docgen_Module (Docgen_Module_Id).Options.Type_Of_File := Type_Of_File_P;
       Docgen_Module (Docgen_Module_Id).Options.Process_Body_Files :=
         Process_Body_Files_P;
       Docgen_Module (Docgen_Module_Id).Options.Ignorable_Comments :=
@@ -313,10 +300,7 @@ package body Docgen_Module is
      (Kernel : access Kernel_Handle_Record'Class) is
    begin
       Set_Options
-        (Type_Api_Doc'Val
-           (Get_Pref
-              (Kernel, Docgen_Module (Docgen_Module_Id).Type_Generated_File)),
-         Get_Pref
+        (Get_Pref
            (Kernel, Docgen_Module (Docgen_Module_Id).Generate_Body_Files),
          Get_Pref
            (Kernel, Docgen_Module (Docgen_Module_Id).Ignore_Some_Comments),
@@ -840,18 +824,6 @@ package body Docgen_Module is
          Label  => "Documentation/Generate for %f",
          Action => Command,
          Filter => Lookup_Filter (Kernel, "File"));
-
-      Docgen_Module (Docgen_Module_Id).Type_Generated_File
-        := Param_Spec_Enum
-        (Type_Api_Doc_Properties.Gnew_Enum
-           (Name    => "Doc-Output",
-            Default => HTML,
-            Blurb   => -"Choose the kind of documentation generated",
-            Nick    => -"Output"));
-      Register_Property
-        (Kernel,
-         Param_Spec (Docgen_Module (Docgen_Module_Id).Type_Generated_File),
-         -"Documentation");
 
       Docgen_Module (Docgen_Module_Id).Generate_Body_Files
         := Param_Spec_Boolean
