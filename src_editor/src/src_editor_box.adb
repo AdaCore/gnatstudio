@@ -331,6 +331,12 @@ package body Src_Editor_Box is
             Pop_State (Kernel_Handle (Kernel));
             return;
 
+         when Fuzzy_Match =>
+            Console.Insert
+              (Kernel, -("The cross-reference information isn't up-to-date."
+                         & " The result is the closest match, but might not be"
+                         & " accurate"));
+
          when Success =>
             null; --  No error message to print
       end case;
@@ -420,7 +426,7 @@ package body Src_Editor_Box is
             Entity             => Entity,
             Status             => Status);
 
-         if Status = Success then
+         if Status = Success or else Status = Fuzzy_Match then
             Line_Decl   := Get_Declaration_Line_Of (Entity);
             Column_Decl := Get_Declaration_Column_Of (Entity);
             File_Decl   := new String'(Get_Declaration_File_Of (Entity));
