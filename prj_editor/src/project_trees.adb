@@ -64,6 +64,7 @@ with String_Utils; use String_Utils;
 with Glide_Kernel; use Glide_Kernel;
 with Glide_Kernel.Project; use Glide_Kernel.Project;
 with Glide_Kernel.Editor;  use Glide_Kernel.Editor;
+with Switches_Editors;     use Switches_Editors;
 with Variable_Editors; use Variable_Editors;
 with GUI_Utils;    use GUI_Utils;
 
@@ -262,6 +263,12 @@ package body Project_Trees is
    --  full directory name, relative to the project.
    --  The return strings always ends with a directory separator.
 
+   function Get_Directory_From_Node
+     (Tree : access Project_Tree_Record'Class; Node : Gtk_Ctree_Node)
+      return String_Id;
+   --  Same as Get_Directory_From_Node above, but only return the relative name
+   --  as stored in the project file
+
    function Category_Name (Category : Language_Category) return String;
    --  Return the name of the node for Category
 
@@ -353,6 +360,7 @@ package body Project_Trees is
       Is_Valid : Boolean;
       Node : Gtk_Ctree_Node;
       Prj : Project_Id;
+      Directory, File : String_Id;
    begin
       if T.Contextual_Menu /= null then
          Destroy (T.Contextual_Menu);
@@ -383,15 +391,16 @@ package body Project_Trees is
          Append (T.Contextual_Menu, Item);
       end if;
 
-      declare
-         Dir : constant String := Get_Directory_From_Node (T, Node);
-      begin
-         if Dir /= "" then
-            Gtk_New (Item, Label => "Remove Directory " & Dir);
-            Set_Sensitive (Item, False);
-            Append (T.Contextual_Menu, Item);
-         end if;
-      end;
+      Directory := Get_Directory_From_Node (T, Node);
+      File := Get_File_From_Node (T, Node);
+
+      if Directory /= No_String then
+         String_To_Name_Buffer (Directory);
+         Gtk_New (Item, Label => "Remove Directory "
+                  & Name_Buffer (Name_Buffer'First .. Name_Len));
+         Set_Sensitive (Item, False);
+         Append (T.Contextual_Menu, Item);
+      end if;
 
       Gtk_New (Item, Label => "");
       Set_Sensitive (Item, False);
@@ -406,23 +415,31 @@ package body Project_Trees is
       if Prj /= No_Project then
          Gtk_New (Item, Label => "Edit Default Switches for "
                   & Get_Name_String (Projects.Table (Prj).Name));
-         Set_Sensitive (Item, False);
          Append (T.Contextual_Menu, Item);
+         Contextual_Callback.Connect
+           (Item, "activate",
+            Contextual_Callback.To_Marshaller
+            (Edit_Switches_From_Contextual'Access),
+            (Kernel    => T.Kernel,
+             Project   => Prj,
+             File_Name => No_String,
+             Directory => No_String));
       end if;
 
-      declare
-         --  Since we don't want the full path name, we use the String_Id
-         --  version, not the String version.
-         File : String_Id := Get_File_From_Node (T, Node);
-      begin
-         if File /= No_String then
-            String_To_Name_Buffer (File);
-            Gtk_New (Item, Label => "Edit Switches for "
-                     & Name_Buffer (Name_Buffer'First .. Name_Len));
-            Set_Sensitive (Item, False);
-            Append (T.Contextual_Menu, Item);
-         end if;
-      end;
+      if File /= No_String then
+         String_To_Name_Buffer (File);
+         Gtk_New (Item, Label => "Edit Switches for "
+                  & Name_Buffer (Name_Buffer'First .. Name_Len));
+         Append (T.Contextual_Menu, Item);
+         Contextual_Callback.Connect
+           (Item, "activate",
+            Contextual_Callback.To_Marshaller
+            (Edit_Switches_From_Contextual'Access),
+            (Kernel    => T.Kernel,
+             Project   => Prj,
+             File_Name => File,
+             Directory => Directory));
+      end if;
 
       return T.Contextual_Menu;
    end Tree_Contextual_Menu;
@@ -1099,6 +1116,31 @@ package body Project_Trees is
          end;
       end if;
    end Get_File_From_Node;
+
+   -----------------------------
+   -- Get_Directory_From_Node --
+   -----------------------------
+
+   function Get_Directory_From_Node
+     (Tree : access Project_Tree_Record'Class; Node : Gtk_Ctree_Node)
+      return String_Id
+   is
+      N : Gtk_Ctree_Node := Node;
+   begin
+      while N /= null loop
+         declare
+            User : constant User_Data := Node_Get_Row_Data (Tree, N);
+         begin
+            if User.Node_Type = Directory_Node then
+               return User.Directory;
+            end if;
+         end;
+
+         N := Row_Get_Parent (Node_Get_Row (N));
+      end loop;
+
+      return No_String;
+   end Get_Directory_From_Node;
 
    -----------------------------
    -- Get_Directory_From_Node --
