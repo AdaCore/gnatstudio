@@ -24,7 +24,7 @@ package Odd is
    -- Constants --
    ---------------
 
-   Version : constant String := "0.6w";
+   Version : constant String := "0.6";
    --  Version number of this software.
 
    Max_Frame : constant := 500;
