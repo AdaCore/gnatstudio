@@ -43,6 +43,7 @@ with Scenario_Views;  use Scenario_Views;
 with Prj_Manager;     use Prj_Manager;
 
 with Gtkada.MDI;      use Gtkada.MDI;
+with Ada.Command_Line; use Ada.Command_Line;
 
 procedure Prj_Editor is
 
@@ -85,7 +86,7 @@ procedure Prj_Editor is
 begin
    Gtk.Main.Init;
 
-   Prj.Part.Parse (Project, "root.gpr", Always_Errout_Finalize => True);
+   Prj.Part.Parse (Project, Argument (1), Always_Errout_Finalize => True);
    pragma Assert (Project /= Empty_Node);
 
    --  Project manager
