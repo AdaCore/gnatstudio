@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003 - 2004                     --
+--                     Copyright (C) 2003 - 2005                     --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -115,7 +115,7 @@ package body Glide_Kernel.Task_Manager is
       Manager   : constant Task_Manager_Access := Get_Task_Manager (Kernel);
       Dialog    : Gtk_Dialog;
       Label     : Gtk_Label;
-      Interface : Task_Manager_Interface;
+      Iface     : Task_Manager_Interface;
       Button    : Gtk_Widget;
       Response  : Gtk_Response_Type;
 
@@ -138,8 +138,8 @@ package body Glide_Kernel.Task_Manager is
       Set_Alignment (Label, 0.0, 0.0);
       Pack_Start (Get_Vbox (Dialog), Label, Expand => False, Padding => 10);
 
-      Gtk_New (Interface, Manager, Dialog => Gtk_Widget (Dialog));
-      Pack_Start (Get_Vbox (Dialog), Interface, Padding => 10);
+      Gtk_New (Iface, Manager, Dialog => Gtk_Widget (Dialog));
+      Pack_Start (Get_Vbox (Dialog), Iface, Padding => 10);
 
       Button := Add_Button (Dialog, Stock_Quit, Gtk_Response_Yes);
       Grab_Default (Button);
@@ -202,19 +202,19 @@ package body Glide_Kernel.Task_Manager is
       Allow_Creation : Boolean := True)
       return MDI_Child
    is
-      Child   : MDI_Child := Find_MDI_Child_By_Tag
+      Child : MDI_Child := Find_MDI_Child_By_Tag
         (Get_MDI (Kernel), Task_Manager_Interface_Record'Tag);
-      Interface : Task_Manager_Interface;
+      Iface : Task_Manager_Interface;
    begin
       if Child = null then
          if not Allow_Creation then
             return null;
          end if;
 
-         Gtk_New (Interface, Get_Task_Manager (Kernel));
+         Gtk_New (Iface, Get_Task_Manager (Kernel));
 
          Child := Put
-           (Kernel, Interface, Module => Task_Manager_Module_Id,
+           (Kernel, Iface, Module => Task_Manager_Module_Id,
             Desktop_Independent => True);
          Set_Focus_Child (Child);
 
