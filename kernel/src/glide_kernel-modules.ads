@@ -411,8 +411,7 @@ package Glide_Kernel.Modules is
 
    Mime_Source_File : constant String := "gps/source";
    --  There are multiple data associated with this type:
-   --     first  : full name of the source file to open (use Get_Address, and
-   --              convert to Virtual_File)
+   --     first  : full name of the source file to open (use Get_File).
    --     second : line to display initially (use Get_Int). Ignored if 0 (in
    --              this case, any existing editor should be left at its current
    --              line; if there is no existing editor, open the file on line
