@@ -18,21 +18,18 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with GNAT.Directory_Operations,
-     GNAT.IO_Aux,
-     GNAT.Expect,
-     OS_Utils,
-     Ada.Strings.Fixed;
+with GNAT.Directory_Operations; use GNAT.Directory_Operations;
+with GNAT.IO_Aux;               use GNAT.IO_Aux;
+with GNAT.Expect;               use GNAT.Expect;
+with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
+
 with Basic_Types;
 with SN.Xref_Pools; use SN.Xref_Pools;
 
+with OS_Utils;
+with File_Utils;   use File_Utils;
 with String_Utils; use String_Utils;
-with Traces; use Traces;
-
-use  GNAT.Directory_Operations,
-     GNAT.IO_Aux,
-     GNAT.Expect,
-     Ada.Strings.Fixed;
+with Traces;       use Traces;
 
 with GNAT.OS_Lib; use GNAT.OS_Lib;
 
