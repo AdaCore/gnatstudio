@@ -25,6 +25,16 @@ package body Basic_Mapper is
 
    use Double_String_Table.String_Hash_Table;
 
+   ----------------
+   -- False_Free --
+   ----------------
+
+   procedure False_Free (X : in out String_Access) is
+      pragma Unreferenced (X);
+   begin
+      null;
+   end False_Free;
+
    --------------------
    -- Get_Other_Text --
    --------------------
@@ -168,22 +178,7 @@ package body Basic_Mapper is
       procedure Unchecked_Free is new Unchecked_Deallocation
         (File_Mapper, File_Mapper_Access);
 
-      Element : String_Access;
    begin
-      Get_First (Mapper.Table_1, Element);
-
-      while Element /= No_Element loop
-         Free (Element);
-         Get_Next (Mapper.Table_1, Element);
-      end loop;
-
-      Get_First (Mapper.Table_2, Element);
-
-      while Element /= No_Element loop
-         Free (Element);
-         Get_Next (Mapper.Table_2, Element);
-      end loop;
-
       Double_String_Table.String_Hash_Table.Reset (Mapper.Table_1);
       Double_String_Table.String_Hash_Table.Reset (Mapper.Table_2);
       Unchecked_Free (Mapper);
