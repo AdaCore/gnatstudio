@@ -822,7 +822,7 @@ package body KeyManager_Module is
                              null,
                              new String'(Binding.Action.all))),
                         Destroy_On_Exit => False,
-                        Active          => False,
+                        Active          => True,
                         Show_Bar        => False,
                         Queue_Id        => "");
                      return True;
