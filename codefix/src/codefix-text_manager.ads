@@ -50,6 +50,9 @@ package Codefix.Text_Manager is
       File_Name : Dynamic_String;
    end record;
 
+   function "=" (Left, Right : File_Cursor) return Boolean;
+   --  Return true when Left is in the same position than rigth
+
    Null_File_Cursor : constant File_Cursor;
 
    procedure Free (This : in out File_Cursor);
@@ -235,12 +238,27 @@ package Codefix.Text_Manager is
    --  Return the first Contruct_Information that matche Category and name.
    --  If not found, return a Contruct_Information with Category = Cat_Unknown
 
+   function Line_Max
+     (This      : Text_Navigator_Abstr'Class;
+      File_Name : String) return Natural;
+   --  Return the number of the last line in the text loaded.
+
    ----------------------------------------------------------------------------
    --  type Extract_Line
    ----------------------------------------------------------------------------
 
    type Extract_Line is private;
    type Ptr_Extract_Line is access Extract_Line;
+
+   type Line_Context is
+     (Original_Line,
+      Line_Modified,
+      Line_Created,
+      Line_Deleted);
+
+   function Get_Context (This : Extract_Line) return Line_Context;
+
+   function Next (This : Extract_Line) return Ptr_Extract_Line;
 
    function Get_String (This : Extract_Line) return String;
    --  Returns the string memorized in an Extract_Line.
@@ -300,6 +318,21 @@ package Codefix.Text_Manager is
       Current_Text : Text_Navigator_Abstr'Class;
       Recursive : Boolean := False) return Natural;
    --  Return the length of the current text before modifications.
+
+   procedure Extend_Before
+     (This          : in out Ptr_Extract_Line;
+      Prev          : in out Ptr_Extract_Line;
+      Current_Text  : Text_Navigator_Abstr'Class;
+      Size          : Natural);
+   --  Add to the extract size lines before each beginning of paragraph
+   --  recorded.
+
+   procedure Extend_After
+     (This          : in out Ptr_Extract_Line;
+      Current_Text  : Text_Navigator_Abstr'Class;
+      Size          : Natural);
+   --  Add to the extract size lines after each beginning of paragraph
+   --  recorded.
 
    ----------------------------------------------------------------------------
    --  type Extract
@@ -418,11 +451,17 @@ package Codefix.Text_Manager is
 
    function Get_Old_Text
      (This         : Extract;
-      Current_Text : Text_Navigator_Abstr'Class) return String;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Lines_Before : Natural := 0;
+      Lines_After  : Natural := 0) return String;
    --  Return the original text contained in the extract. EOL_Str is used to
    --  make a new line.
 
-   function Get_New_Text (This : Extract) return String;
+   function Get_New_Text
+     (This         : Extract;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Lines_Before : Natural := 0;
+      Lines_After  : Natural := 0) return String;
    --  Return the current form of the text contained in the extract. EOL_Str
    --  is used to make a new line.
 
@@ -439,6 +478,18 @@ package Codefix.Text_Manager is
 
    function Get_Caption (This : Extract) return String;
    --  Return the caption associated to an extract.
+
+   function Get_First_Line (This : Extract) return Ptr_Extract_Line;
+
+   procedure Extend_Before
+     (This         : in out Extract;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Size         : Natural);
+
+   procedure Extend_After
+     (This         : in out Extract;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Size         : Natural);
 
 private
 
@@ -490,12 +541,6 @@ private
    ----------------------------------------------------------------------------
    --  type Extract_Line
    ----------------------------------------------------------------------------
-
-   type Line_Context is
-     (Original_Line,
-      Line_Modified,
-      Line_Created,
-      Line_Deleted);
 
    type Extract_Line is record
       Context         : Line_Context := Original_Line;
