@@ -530,23 +530,16 @@ package body Vsearch_Ext is
                Search_Backward => False);
             Pop_State (Vsearch.Kernel);
 
-            if not Has_Next then
-               --  Give a visual feedback that the search is terminated.
-
-               if Vsearch.Find_Next then
-                  Button := Message_Dialog
-                    (Msg     => -"No further occurrences found.",
-                     Title   => -"Search",
-                     Buttons => Button_OK,
-                     Parent  => Get_Main_Window (Vsearch.Kernel));
-               else
-                  Button := Message_Dialog
-                    (Msg     => (-"No occurrences of '") & Pattern &
-                                 (-"' found."),
-                     Title   => -"Search",
-                     Buttons => Button_OK,
-                     Parent  => Get_Main_Window (Vsearch.Kernel));
-               end if;
+            --  Give a visual feedback that the search is terminated.
+            if not Has_Next
+              and then not Vsearch.Find_Next
+            then
+               Button := Message_Dialog
+                 (Msg     => (-"No occurrences of '") & Pattern &
+                    (-"' found."),
+                  Title   => -"Search",
+                  Buttons => Button_OK,
+                  Parent  => Get_Main_Window (Vsearch.Kernel));
             end if;
 
             Set_First_Next_Mode (Vsearch, Find_Next => Has_Next);
