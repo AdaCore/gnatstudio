@@ -19,6 +19,7 @@
 -----------------------------------------------------------------------
 
 with Ada.Characters.Handling;
+with GNAT.OS_Lib; use GNAT.OS_Lib;
 
 package body String_List_Utils is
 
@@ -162,5 +163,26 @@ package body String_List_Utils is
          end if;
       end if;
    end Add_Unique_Sorted;
+
+   ---------------------------
+   -- List_To_Argument_List --
+   ---------------------------
+
+   function List_To_Argument_List
+     (L : String_List.List) return GNAT.OS_Lib.Argument_List
+   is
+      Length : constant Natural := String_List.Length (L);
+      Args   : Argument_List (1 .. Length);
+      Index  : Natural := Args'First;
+      Node   : List_Node := First (L);
+   begin
+      while Node /= Null_Node loop
+         Args (Index) := new String'(Data (Node));
+         Index := Index + 1;
+         Node := Next (Node);
+      end loop;
+
+      return Args;
+   end List_To_Argument_List;
 
 end String_List_Utils;

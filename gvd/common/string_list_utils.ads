@@ -20,6 +20,7 @@
 
 with Generic_List;
 with List_Utils;
+with GNAT.OS_Lib;
 
 package String_List_Utils is
 
@@ -59,5 +60,10 @@ package String_List_Utils is
       S : String);
    --  Insert S in L, sorted, if S does not already exist in L.
    --  L is supposed to be sorted before calling this subprogram.
+
+   function List_To_Argument_List
+     (L : String_List.List) return GNAT.OS_Lib.Argument_List;
+   --  Convert the list.
+   --  The returned memory must be freed by the user
 
 end String_List_Utils;
