@@ -334,7 +334,7 @@ package body Gtkada.File_Selector is
       Mask        : Gdk.Bitmap.Gdk_Bitmap;
       Current_Row : Gint;
       Style       : Gtk_Style;
-      Strings     : Chars_Ptr_Array (1 .. 3) := "" + "" + "";
+      Strings     : Chars_Ptr_Array (1 .. 3);
 
    begin
       if Win.Current_Directory = null then
@@ -355,6 +355,8 @@ package body Gtkada.File_Selector is
          when String_List.List_Empty =>
             return False;
       end;
+
+      Strings := "" + "" + "";
 
       case State is
          when Invisible =>
@@ -412,6 +414,10 @@ package body Gtkada.File_Selector is
       if Win.Current_Directory = null then
          return False;
       end if;
+
+      --  ??? Got an invalid data when opening/closing the file selector
+      --  rapidly on a loaded machine, when reading
+      --  Win.Current_Directory_Is_Open:
 
       if not Win.Current_Directory_Is_Open then
          return False;
