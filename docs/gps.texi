@@ -9420,7 +9420,10 @@ It has its own set of attributes:
    These two attributes define the switch that possibly forces a specific
    setting on the slave switch. In our example, they would have the values
    "Make" and "-g".
-   The switch referenced by these attributes must be of type @code{<check>}.
+   The switch referenced by these attributes must be of type @code{<check>}
+   or @code{<field>}. If the check button is selected, it forces the
+   selection of the slave check button. Likewise, if the field is set to
+   any value, it forces the selection of the slave.
 
    @item slave-page slave-switch
    These two attributes define the switch which is acted upon by the master
@@ -9434,6 +9437,8 @@ It has its own set of attributes:
    compiler debug information is also activated. However, if the make debug
    information is not activated, no specific setup is forced for the compiler
    debug information.
+   if master-status is "off" and the master switch is a field, then the
+   status of the slave will be changed when no value is set in the field.
    @end table
 
 @item <expansion>
