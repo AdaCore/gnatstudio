@@ -872,6 +872,13 @@ package body Projects.Registry is
             Read (Dir, Buffer, Length);
             exit when Length = 0;
 
+            --  Need to normalize the casing, before we call
+            --  File_In_Sources. Unfortunately,
+            --  Get_Unit_Part_And_Name_From_Filename will do the same again,
+            --  which is slightly inefficient
+
+            Canonical_Case_File_Name (Buffer (1 .. Length));
+
             --  Check if the file is in the list of sources for this project,
             --  as specified in the project file
             --  Nothing to do if the file is already registered
