@@ -894,6 +894,22 @@ package body Project_Viewers is
       declare
          Name : constant String := Run (Wiz);
       begin
+
+         --  If we have a child project, report limitations.
+
+         for J in reverse Name'Range loop
+            if Name (J) = '.' then
+               Insert
+                 (Kernel,
+                  -("Child projects must import or extend their parent"
+                    & " project. This is not done automatically by GPS, and"
+                    & " you will have to edit the project by hand to make it"
+                    & " valid."));
+               Set_Active (Load_Project, False);
+               exit;
+            end if;
+         end loop;
+
          --  Load the project if needed
 
          if Name /= ""
