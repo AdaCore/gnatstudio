@@ -744,7 +744,7 @@ package body GPS.Kernel.Preferences is
          Blurb   => -"Color to use to draw the selected item",
          Nick    => -"Selected item color"));
       Register_Property
-        (Kernel.Preferences, Param_Spec (Selected_Item_Color),  -"Browsers");
+        (Kernel.Preferences, Param_Spec (Selected_Item_Color), -"Browsers");
 
       Title_Color := Param_Spec_Color (Gnew_Color
         (Name     => "Browsers-Title-Color",
@@ -752,7 +752,8 @@ package body GPS.Kernel.Preferences is
          Blurb    => -"Color used for the background of the title",
          Flags    => Param_Readable,
          Default  => "#BEBEBE"));
-      Register_Property (Prefs, Param_Spec (Title_Color), -"Browsers");
+      Register_Property
+        (Kernel.Preferences, Param_Spec (Title_Color), -"Browsers");
 
       -- Diff_Utils --
 
