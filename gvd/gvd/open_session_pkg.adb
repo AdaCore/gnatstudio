@@ -135,7 +135,7 @@ begin
    Set_Layout (Open_Session.Hbuttonbox9, Buttonbox_Spread);
    Set_Child_Size (Open_Session.Hbuttonbox9, 85, 27);
    Set_Child_Ipadding (Open_Session.Hbuttonbox9, 7, 0);
-   Add (Open_Session.Vbox17, Open_Session.Hbuttonbox9);
+   Pack_End (Open_Session.Vbox17, Open_Session.Hbuttonbox9, False, False, 1);
 
    Gtk_New (Open_Session.Ok_Button, -"OK");
    Set_Flags (Open_Session.Ok_Button, Can_Default);
