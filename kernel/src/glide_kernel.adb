@@ -1008,10 +1008,6 @@ package body Glide_Kernel is
 
       Window := Glide_Window (Handle.Main_Window);
 
-      if State in Action_Kernel_State'Range then
-         Enable_Prompt_Display (Get_Interactive_Console (Handle), False);
-      end if;
-
       if State = Busy then
          Set_Busy_Cursor (Get_Window (Window), True, True);
          Window.Busy_Level := Window.Busy_Level + 1;
@@ -1061,8 +1057,6 @@ package body Glide_Kernel is
             --  fields that may have been deleted already
 
             if Console /= null then
-               Enable_Prompt_Display (Console, True);
-
                if Window.Timeout_Id /= 0 then
                   Timeout_Remove (Window.Timeout_Id);
                   Window.Timeout_Id := 0;
