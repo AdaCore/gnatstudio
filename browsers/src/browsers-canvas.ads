@@ -190,11 +190,12 @@ package Browsers.Canvas is
    --  Return the graphic context to use for the background of the title bar.
 
    procedure Resize_And_Draw
-     (Item                        : access Browser_Item_Record;
-      Width, Height               : Glib.Gint;
-      Width_Offset, Height_Offset : Glib.Gint;
-      Xoffset, Yoffset            : in out Glib.Gint;
-      Layout                  : access Pango.Layout.Pango_Layout_Record'Class);
+     (Item             : access Browser_Item_Record;
+      Width, Height    : Glib.Gint;
+      Width_Offset     : Glib.Gint;
+      Height_Offset    : Glib.Gint;
+      Xoffset, Yoffset : in out Glib.Gint;
+      Layout           : access Pango.Layout.Pango_Layout_Record'Class);
    --  Resize the item, and then redraw it.
    --  The chain of events should be the following:
    --   - Compute the desired size for the item
@@ -273,8 +274,8 @@ package Browsers.Canvas is
    --  Parent_Removed and Child_Removed indicate which type of sibling was
    --  removed. Both are set to True if both types of items have been removed
 
-   function Get_Browser (Item : access Browser_Item_Record'Class)
-      return General_Browser;
+   function Get_Browser
+     (Item : access Browser_Item_Record'Class) return General_Browser;
    --  Return the browser associated with this item
 
    procedure Add_Active_Area
@@ -367,8 +368,9 @@ package Browsers.Canvas is
    --  A special instanciation of the callback for cases where the user data is
    --  a widget.
 
-   function Build (Cb : Item_Active_Callback;
-                   User : access Browser_Item_Record'Class)
+   function Build
+     (Cb : Item_Active_Callback;
+      User : access Browser_Item_Record'Class)
       return Item_Active_Area_Callback'Class;
    --  Build a new callback
 
@@ -472,6 +474,7 @@ package Browsers.Canvas is
    --  and adds the standard menu entries
 
 private
+
    type General_Browser_Record is new Gtk.Box.Gtk_Box_Record with record
       Canvas    : Gtkada.Canvas.Interactive_Canvas;
       Kernel    : Glide_Kernel.Kernel_Handle;
@@ -528,8 +531,8 @@ private
    end record;
 
    procedure Redraw_Title_Bar (Item : access Arrow_Item_Record);
-   function Get_Last_Button_Number (Item : access Arrow_Item_Record)
-      return Glib.Gint;
+   function Get_Last_Button_Number
+     (Item : access Arrow_Item_Record) return Glib.Gint;
    procedure Reset
      (Item : access Arrow_Item_Record;
       Parent_Removed, Child_Removed : Boolean);
@@ -538,8 +541,9 @@ private
       User_Data : Browser_Item;
       Cb        : Item_Active_Callback;
    end record;
-   function Call (Callback : Item_Active_Area_Callback;
-                  Event    : Gdk.Event.Gdk_Event) return Boolean;
+   function Call
+     (Callback : Item_Active_Area_Callback;
+      Event    : Gdk.Event.Gdk_Event) return Boolean;
    --  See doc for inherited Call
 
    type Active_Area_Cb_Array is array (Natural range <>) of Active_Area_Cb;
