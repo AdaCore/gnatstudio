@@ -96,8 +96,8 @@ package body Project_Explorers is
          when Directory_Node | Obj_Directory_Node =>
             Directory : String_Id;
             --  The name of the directory associated with that node
-            --  ??? We String_Id might be reset if we ever decide to reset the
-            --  ??? tables. We should keep a Name_Id instead.
+            --  ??? The String_Id might be reset if we ever decide to reset the
+            --  tables. We should keep a Name_Id instead.
 
          when File_Node =>
             File : String_Id;
@@ -106,7 +106,7 @@ package body Project_Explorers is
             Category : Language_Category;
 
          when Entity_Node =>
-            Sloc_Start, Sloc_End : Source_Location;
+            Sloc_Start, Sloc_Entity, Sloc_End : Source_Location;
 
       end case;
    end record;
@@ -537,8 +537,8 @@ package body Project_Explorers is
               (Context     => Entity_Selection_Context_Access (Context),
                Entity_Name => Node_Get_Text (T.Tree, Node, 0),
                Category    => Node_Get_Row_Data (T.Tree, Parent).Category,
-               Line        => Data.Sloc_Start.Line,
-               Column      => Data.Sloc_Start.Column);
+               Line        => Data.Sloc_Entity.Line,
+               Column      => Data.Sloc_Entity.Column);
 
          else
             if Parent /= null then
@@ -869,10 +869,12 @@ package body Project_Explorers is
          Expanded      => False);
 
       Node_Set_Row_Data
-        (Explorer.Tree, N, (Entity_Node,
-                   Sloc_Start => Construct.Sloc_Start,
-                   Sloc_End   => Construct.Sloc_End,
-                   Up_To_Date => True));
+        (Explorer.Tree, N,
+         (Entity_Node,
+          Sloc_Start  => Construct.Sloc_Start,
+          Sloc_Entity => Construct.Sloc_Entity,
+          Sloc_End    => Construct.Sloc_End,
+          Up_To_Date  => True));
       return N;
    end Add_Entity_Node;
 
@@ -1259,7 +1261,7 @@ package body Project_Explorers is
          begin
             Lower_Case (S);
 
-            --  Skip the "Cat_" partx
+            --  Skip the "Cat_" part
             return S (S'First + 4 .. S'Last);
          end;
       end if;
@@ -1769,9 +1771,9 @@ package body Project_Explorers is
    is
       use type Node_List.Glist;
 
-      File    : constant String_Id := Get_File_From_Node (Explorer, Node);
-      N       : Gtk_Ctree_Node := Node;
-      User    : constant User_Data := Node_Get_Row_Data (Explorer.Tree, N);
+      File : constant String_Id := Get_File_From_Node (Explorer, Node);
+      N    : Gtk_Ctree_Node := Node;
+      User : constant User_Data := Node_Get_Row_Data (Explorer.Tree, N);
 
    begin
       case User.Node_Type is
@@ -1786,8 +1788,8 @@ package body Project_Explorers is
                Open_File_Editor
                  (Explorer.Kernel,
                   Dir_S & File_S,
-                  Line   => User.Sloc_Start.Line,
-                  Column => User.Sloc_Start.Column);
+                  Line   => User.Sloc_Entity.Line,
+                  Column => User.Sloc_Entity.Column);
             end;
 
          when File_Node =>
