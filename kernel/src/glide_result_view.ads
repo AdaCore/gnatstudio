@@ -24,7 +24,7 @@ with Gtk.Tree_View_Column;     use Gtk.Tree_View_Column;
 with Gtk.Box;                  use Gtk.Box;
 
 with Glide_Kernel;             use Glide_Kernel;
-with Glide_Kernel.Modules;     use Glide_Kernel.Modules;
+with Glide_Kernel.Standard_Hooks;  use Glide_Kernel.Standard_Hooks;
 with VFS;
 
 with Gtkada.Tree_View;         use Gtkada.Tree_View;
@@ -34,6 +34,13 @@ package Glide_Result_View is
    procedure Register_Module
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
    --  Register this module in GPS.
+
+   procedure Register_Commands (Kernel : access Kernel_Handle_Record'Class);
+   --  Register the shell commands for this module. This must be a separate
+   --  subprogram, since the console is loaded before all other modules,
+   --  including the scripting languages
+
+
 
    type Result_View_Record is new Gtk_Hbox_Record with private;
    type Result_View is access all Result_View_Record'Class;
@@ -49,6 +56,12 @@ package Glide_Result_View is
       Kernel : Kernel_Handle;
       Module : Module_ID);
    --  Internal initialization procedure.
+
+   function Get_Or_Create_Result_View
+     (Kernel         : access Kernel_Handle_Record'Class;
+      Allow_Creation : Boolean := True) return Result_View;
+   --  Return the results view widget. Create it if it doesn't exist and
+   --  Allow_Creation is true.
 
    procedure Insert
      (View               : access Result_View_Record'Class;
@@ -68,11 +81,32 @@ package Glide_Result_View is
    --  the editor with the highlighting category identified by
    --  Highlight_Category.
 
+   procedure Insert_Result
+     (Kernel             : access Kernel_Handle_Record'Class;
+      Category           : String;
+      File               : VFS.Virtual_File;
+      Text               : String;
+      Line               : Positive;
+      Column             : Positive;
+      Length             : Natural := 0;
+      Highlight          : Boolean := False;
+      Highlight_Category : String := "");
+   --  Insert a new location in the result view.
+   --  This is similar to Insert, except it creates the result view if
+   --  necessary.
+
    procedure Remove_Category
      (View          : access Result_View_Record'Class;
       Identifier    : String);
    --  Remove category Identifier from the view. All corresponding marks
    --  are deleted.
+
+   procedure Remove_Result_Category
+     (Kernel   : access Kernel_Handle_Record'Class;
+      Category : String);
+   --  Remove Category from the results view, if it exists.
+   --  Same as Remove_Category, except for the parameters type.
+
 
    procedure Next_Item
      (View      : access Result_View_Record'Class;
@@ -94,6 +128,29 @@ package Glide_Result_View is
    --  Add an action item to be associated to a specified location.
    --  If Action is null, the action item will be removed from that location.
    --  H_Category is the category to highlight the item with.
+
+   procedure Parse_File_Locations
+     (Kernel                  : access Kernel_Handle_Record'Class;
+      Text                    : String;
+      Category                : String;
+      Highlight               : Boolean := False;
+      Style_Category          : String := "";
+      Warning_Category        : String := "";
+      File_Location_Regexp    : String := "";
+      File_Index_In_Regexp    : Integer := -1;
+      Line_Index_In_Regexp    : Integer := -1;
+      Col_Index_In_Regexp     : Integer := -1;
+      Msg_Index_In_Regexp     : Integer := -1;
+      Style_Index_In_Regexp   : Integer := -1;
+      Warning_Index_In_Regexp : Integer := -1);
+   --  Perform a basic parsing on Text, and add any found file locations
+   --  to the results view in Category.
+   --  If Highlighting is True, attempt to highlight the corresponding
+   --  locations using Category as highlighting identifier.
+   --  File_Location_Regexp indicates how file locations should be recognized.
+   --  The default blank value will matches locations reported by gcc or GNAT,
+   --  ie "file:line:column message". The various index parameters indicate the
+   --  relevant parenthesis pair in the regexp.
 
 private
    type Result_View_Record is new Gtk_Hbox_Record with record
