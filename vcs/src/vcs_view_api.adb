@@ -99,7 +99,9 @@ package body VCS_View_API is
    procedure Change_Context
      (Explorer : VCS_View_Access;
       Context  : Selection_Context_Access);
-   --  Fill the explorer with files that correspond to Context
+   --  Fill the explorer with files that correspond to Context.
+   --  Context might be null, in which case the contents of the root project is
+   --  shown.
 
    procedure On_Context_Changed
      (Object  : access Gtk_Widget_Record'Class;
@@ -258,9 +260,16 @@ package body VCS_View_API is
 
    function Get_Current_Ref
      (Kernel : Kernel_Handle)
-     return VCS_Access is
+      return VCS_Access
+   is
+      C : constant Selection_Context_Access :=
+        Get_Current_Context (Kernel);
    begin
-      return Get_Current_Ref (Get_Current_Context (Kernel));
+      if C = null then
+         return Get_Current_Ref (Get_Project_View (Kernel));
+      else
+         return Get_Current_Ref (C);
+      end if;
    end Get_Current_Ref;
 
    -------------------
@@ -712,9 +721,15 @@ package body VCS_View_API is
 
       use String_List;
    begin
-      if Context = null
-        or else Explorer = null
-      then
+      if Explorer = null then
+         return;
+      end if;
+
+      if Context = null then
+         Query_Project_Files (Explorer,
+                              Get_Kernel (Explorer),
+                              Get_Project_View (Get_Kernel (Explorer)),
+                              False, False);
          return;
       end if;
 
@@ -742,6 +757,12 @@ package body VCS_View_API is
             Query_Project_Files (Explorer,
                                  Get_Kernel (Context),
                                  Project_Information (File),
+                                 False, False);
+
+         else
+            Query_Project_Files (Explorer,
+                                 Get_Kernel (Context),
+                                 Get_Project_View (Get_Kernel (Context)),
                                  False, False);
          end if;
       end if;
@@ -799,9 +820,7 @@ package body VCS_View_API is
             On_Context_Changed'Access,
             Explorer);
 
-         if Context /= null then
-            Change_Context (Explorer, Context);
-         end if;
+         Change_Context (Explorer, Context);
       end if;
    end Open_Explorer;
 
@@ -1430,11 +1449,15 @@ package body VCS_View_API is
             Files := Get_Files_In_Project
               (Project_Information (File_Context),
                Recursive);
-            Update (Ref, Files);
-            Get_Status (Ref, Files);
-
-            String_List.Free (Files);
+         else
+            Files := Get_Files_In_Project
+              (Get_Project_View (Get_Kernel (Context)), Recursive);
          end if;
+
+         Update (Ref, Files);
+         Get_Status (Ref, Files);
+
+         String_List.Free (Files);
       end if;
    end Update_Project;
 
@@ -1558,6 +1581,12 @@ package body VCS_View_API is
                Kernel,
                Project_Information (File_Context),
                False, Recursive);
+         else
+            Query_Project_Files
+              (Get_Explorer (Kernel),
+               Kernel,
+               Get_Project_View (Kernel),
+               False, Recursive);
          end if;
       end if;
    end List_Project_Files;
@@ -1616,6 +1645,12 @@ package body VCS_View_API is
               (Get_Explorer (Kernel),
                Kernel,
                Project_Information (File_Context),
+               True, Recursive);
+         else
+            Query_Project_Files
+              (Get_Explorer (Kernel),
+               Kernel,
+               Get_Project_View (Kernel),
                True, Recursive);
          end if;
       end if;
@@ -1760,7 +1795,7 @@ package body VCS_View_API is
       Files   := Get_Source_Files (Project_View, Recursive);
 
       for J in reverse Files.all'Range loop
-         String_List.Prepend (Result, Files.all (J).all);
+         String_List.Prepend (Result, Files (J).all);
       end loop;
 
       Free (Files);
