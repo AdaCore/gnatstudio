@@ -69,6 +69,14 @@ package Glide_Kernel.Project is
    --
    --  ??? What do we do if the project couldn't be loaded.
 
+   procedure Save_Project
+     (Kernel    : access Kernel_Handle_Record'Class;
+      Project   : Prj.Tree.Project_Node_Id;
+      Recursive : Boolean := False);
+   --  Save Project to a file. If Recursive is True, all the imported projects
+   --  are saved at the same time.
+   --  The kernel registers that it is no longer using the default project.
+
    function Get_Subproject_Name
      (Handle    : access Kernel_Handle_Record'Class;
       File_Name : String) return String;

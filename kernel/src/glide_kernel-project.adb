@@ -552,5 +552,18 @@ package body Glide_Kernel.Project is
       return Kernel.Scenario_Variables.all;
    end Scenario_Variables;
 
+   ------------------
+   -- Save_Project --
+   ------------------
+
+   procedure Save_Project
+     (Kernel    : access Kernel_Handle_Record'Class;
+      Project   : Project_Node_Id;
+      Recursive : Boolean := False) is
+   begin
+      Kernel.Project_Is_Default := False;
+      Save_Project (Project, Recursive);
+   end Save_Project;
+
 end Glide_Kernel.Project;
 
