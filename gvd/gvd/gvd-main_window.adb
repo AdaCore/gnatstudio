@@ -33,15 +33,11 @@ with Breakpoints_Editor;    use Breakpoints_Editor;
 with Factory_Data;
 with GVD.Dialogs;           use GVD.Dialogs;
 with GVD.Types;             use GVD.Types;
-with GVD.Preferences;       use GVD.Preferences;
 with GVD.Process;           use GVD.Process;
 with GVD.Memory_View;       use GVD.Memory_View;
 with Debugger;              use Debugger;
 with Process_Proxies;       use Process_Proxies;
 with Odd_Intl;              use Odd_Intl;
-
-with Language_Handlers;     use Language_Handlers;
-with Language_Handlers.GVD; use Language_Handlers.GVD;
 
 with Interfaces.C.Strings;  use Interfaces.C.Strings;
 
@@ -292,21 +288,9 @@ package body GVD.Main_Window is
    procedure Preferences_Changed
      (Window : access GVD_Main_Window_Record'Class)
    is
-      Handler : GVD_Language_Handler;
    begin
       Widget_Callback.Emit_By_Name
         (Gtk_Widget (Window), "preferences_changed");
-
-      if Window.Lang_Handler.all in GVD_Language_Handler_Record'Class then
-         Handler := GVD_Language_Handler (Window.Lang_Handler);
-         Reset_File_Extensions (Handler);
-         Add_File_Extensions
-           (Handler, "ada", Get_Pref (GVD_Prefs, Ada_Extensions));
-         Add_File_Extensions
-           (Handler, "c",   Get_Pref (GVD_Prefs, C_Extensions));
-         Add_File_Extensions
-           (Handler, "c++", Get_Pref (GVD_Prefs, Cpp_Extensions));
-      end if;
    end Preferences_Changed;
 
    ---------------------
