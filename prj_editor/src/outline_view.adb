@@ -266,7 +266,7 @@ package body Outline_View is
       Menu         : Gtk_Menu) return Selection_Context_Access
    is
       pragma Unreferenced (Kernel, Event_Widget, Menu);
-      Context : Entity_Selection_Context_Access;
+      Context : File_Selection_Context_Access;
       Iter    : Gtk_Tree_Iter;
       Outline : constant Outline_View_Access := Outline_View_Access (Object);
       Model : constant Gtk_Tree_Store :=
@@ -298,18 +298,19 @@ package body Outline_View is
 
          Context := new Entity_Selection_Context;
          Set_Entity_Information
-           (Context       => Context,
+           (Context       => Entity_Selection_Context_Access (Context),
             Entity_Name   => Get_String (Model, Iter, Entity_Name_Column),
             Entity_Column => Column);
-         Set_File_Information
-           (Context => Context,
-            Project => Projects.No_Project,
-            File    => Outline.File,
-            Line    => Line);
-         return Selection_Context_Access (Context);
       else
-         return null;
+         Context := new File_Selection_Context;
       end if;
+
+      Set_File_Information
+        (Context => Context,
+         Project => Projects.No_Project,
+         File    => Outline.File,
+         Line    => Line);
+      return Selection_Context_Access (Context);
    end Outline_Context_Factory;
 
    ---------------------
