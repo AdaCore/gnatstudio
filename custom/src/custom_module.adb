@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2004                       --
---                            ACT-Europe                             --
+--                     Copyright (C) 2001-2005                       --
+--                            AdaCore                                --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -143,17 +143,12 @@ package body Custom_Module is
 
       procedure Parse_Contextual_Node (Node : Node_Ptr) is
          Action  : constant String := Get_Attribute (Node, "action");
+         Before  : constant String := Get_Attribute (Node, "before", "");
+         After   : constant String := Get_Attribute (Node, "after", "");
          Child   : Node_Ptr;
          Title   : String_Access;
          Command : Action_Record_Access;
       begin
-         if Action = "" then
-            Insert (Kernel,
-                    -"<contextual> nodes must have an action attribute",
-                    Mode => Error);
-            raise Assert_Failure;
-         end if;
-
          Title := new String'(Action);
 
          Child := Node.Child;
@@ -174,20 +169,41 @@ package body Custom_Module is
             Child := Child.Next;
          end loop;
 
-         Command := Lookup_Action (Kernel, Action);
-         if Command.Command = null then
-            Insert (Kernel,
-                    -"Command not found when creating contextual menu: "
-                    & Action,
-                    Mode => Error);
-            Free (Title);
-            raise Assert_Failure;
+         if Action /= "" then
+            Command := Lookup_Action (Kernel, Action);
+            if Command.Command = null then
+               Insert (Kernel,
+                       -"Command not found when creating contextual menu: "
+                       & Action,
+                       Mode => Error);
+               Free (Title);
+               raise Assert_Failure;
+            end if;
+         else
+            Command := null;
          end if;
 
-         Register_Contextual_Menu
-           (Kernel,
-            Name       => Title.all,
-            Action     => Command);
+         if Before /= "" then
+            Register_Contextual_Menu
+              (Kernel,
+               Name       => Title.all,
+               Action     => Command,
+               Ref_Item   => Before,
+               Add_Before => True);
+         elsif After /= "" then
+            Register_Contextual_Menu
+              (Kernel,
+               Name       => Title.all,
+               Action     => Command,
+               Ref_Item   => After,
+               Add_Before => False);
+         else
+            Register_Contextual_Menu
+              (Kernel,
+               Name       => Title.all,
+               Action     => Command);
+         end if;
+
          Free (Title);
       end Parse_Contextual_Node;
 
