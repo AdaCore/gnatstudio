@@ -216,6 +216,126 @@ The whole work space is based on a multiple document interface,
 @c --------------------------------------------------------------------
 @noindent
 
+@subsection The explorer views
+
+The project explorer is composed of multiple windows, which are
+initially displayed on the left side of the GPS window. Its goal is to
+show a full view of the various components of your projects. These
+various components are presented below.
+
+The following snapshot displays the two pages side-by-side: on the
+left, the @code{Project View}, and on the right the @code{Files View}.
+
+@iftex
+@image{explorer-views, 12.7cm}
+@end iftex
+
+The various components that are displayed in these explorers are the
+following:
+
+@table @b
+@item projects
+As mentioned before, all the sources you are working with are put under
+control of projects. These projects are a way to store the switches to
+use for the various tools, as well as a number of other setup.
+
+They can be organized into a project hierarchy, where a root project
+can import other projects, with their own set of sources.
+
+Initially, a default project is created, that includes all the sources
+in the current directory.
+
+The @code{Project View} page of the explorer displays this project
+hierarchy: the top node in this view is the root project of your
+application (generally, this is where the source file that contains
+the main subprogram will be located). Then a node is displayed for
+each imported project, and recursively for their own imported
+projects.
+
+A given project might appear multiple times in the @code{Project
+View}, if it is imported by several other projects.
+
+A special icon with an exclamation mark is displayed if the project
+was modified, but not saved yet. You can choose to save it at any time
+by right-clicking on it. GPS will remind you to save it before any
+compilation. 
+
+@item directories
+The files inside a project can be organized into several physical
+directories on the disk. These directories are displayed under each
+project node in the @code{Project View}, or directly mimicking their
+physical organization on the disk (include windows drives) in the
+@code{Files View}.
+
+@item files
+The source files themselves are stored in the directories, and
+displayed under the corresponding nodes. Note that in the
+@code{Project View}, only the source files that actually belong to the
+project (ie are written in a language supported by that project and
+respect its naming scheme) are actually visible.
+
+The @code{Files View} will display all the files that actually exist
+on the disk.
+
+A given file might appear multiple times in the @code{Project View},
+if the project it belongs to is imported by several other projects.
+
+@item entities
+If you open the node for a source file, the file is parsed by one of the
+extra fast parsers integrated in GPS so that all entities declared in
+the project can be shown. These entities are grouped into various
+categories, which depend on the language. Typical categories include
+subprograms, packages, types, variables, tasks,@dots{}
+
+@end table
+
+Double-clicking on an file, or simple clicking on any entity will open
+a source editor and display respectively the first line in this file
+or the line on which the entity is defined.
+
+If you open the search dialog through the @code{Navigate->Find...}
+menu, you have the possibility to search for anything in the explorer,
+either a file or an entity. Note that searching for an entity might be
+a little slow if you have lots of files.
+
+A contextual menu is also provided when inside a source editor, or
+anywhere when you right-click on a file, whose name is @code{Locate in
+Explorer}, and that will automatically search for the first entry for
+this file in the explorer.
+
+
+
+@subsection The configuration variables
+
+As described in the GNAT User's Guide, the project files can be
+configured through external variables (typically environment
+variables). This means that the exact list of source files, or the
+exact switches to use to compile the application can be changed when
+the value of these external variables is changed.
+
+GPS provides a simple access to these variables, through a special
+area on top of the @code{Project View}. These variables are called
+@code{Configuration Variables}, since they provide various scenarios for
+the same set of project files.
+
+A combo box is displayed in this area for each of the environment
+variable the project depends on. The current value of the variable can
+be set simply by selecting it from the popdown window that appears
+when you click on the arrow on the right of the variable name
+
+New variables can be added through the contextual menu @code{Add
+Configuration Variable} in the @code{Project View}. The list of
+possible values for a variable can be changed by clicking on the
+button on the left of the variable's name.
+
+Whenever you change the value of one of the variables, the project is
+automatically recomputed, and the list of source files or directories
+is changed dynamically to reflect the new status of the
+project. Starting a new compilation at that point will use the new
+switches, and all the aspects of GPS are immediately affected
+according to the new setup.
+
+
 @c --------------------------------------------------------------------
 @node The Console
 @section The Console
@@ -282,7 +402,7 @@ buttons are displayed. The rightmost button is a cross. Clicking on
 this button will close the window
 
 @iftex
-@image{mdi-title-bar}
+@image{mdi-title-bar, 12.7cm}
 @end iftex
 
 Alternatively, you can also select the window by clicking anywhere in
@@ -301,7 +421,7 @@ one to the bottom, and a bigger one that occupies the remaining space.
 The first two will be discussed in @ref{Docked Windows}.
 The third area is the one that provides the most flexibility:
 
-@table @bullet
+@table @b
 
 @item maximized windows
 The windows in this area are initially maximized. This means that if
@@ -314,7 +434,7 @@ on the right of the tabs. Clicking on these arrows will show the
 remaining tabs.
 
 @iftex
-@image{mdi-scroll-tabs}
+@image{mdi-scroll-tabs, 12.7cm}
 @end iftex
 
 You can go back to this maximized state in two ways: either select the
@@ -347,7 +467,7 @@ top of the other, so that the top and left sides of all windows are
 visible. This way, you can easily select any window
 
 @iftex
-@image{mdi-cascade}
+@image{mdi-cascade, 12.7cm}
 @end iftex
 
 @item Window->Tile Horizontally
@@ -355,7 +475,7 @@ All the windows are resized to the same dimensions, and are put side
 by side, from left to right. No window will overlap any other.
 
 @iftex
-@image{mdi-tile-horizontal}
+@image{mdi-tile-horizontal, 12.7cm}
 @end iftex
 
 @item Window->Tile Vertically
@@ -363,7 +483,7 @@ All the windows are resized to the same dimensions, and are put side
 by side, from top to bottom. No window will overlap any other.
 
 @iftex
-@image{mdi-tile-vertical}
+@image{mdi-tile-vertical, 12.7cm}
 @end iftex
 
 @end table
@@ -383,7 +503,7 @@ When de-iconified, a window will restore the size and position it had
 before it was iconified.
 
 @iftex
-@image{mdi-icons}
+@image{mdi-icons, 12.7cm}
 @end iftex
 
 @end table
@@ -502,7 +622,7 @@ the title bar of another window to adopt the same state.
 
 Here are the various places where a window can be dropped:
 
-@table @bullet
+@table @b
 @item The central area
 The window you are dropping will get the same state as the other
 windows already in this area (maximized or unmaximized).
@@ -527,6 +647,16 @@ docking area will be created.
 Under systems that support it, if you drop a window outside of GPS (for
 instance, on the background of your screen), the window will be floated.
 This is currently only supported under Linux, when using the GNOME 2 desktop.
+
+@item Sides of the GPS window
+On each side of the GPS window, a small zone (a few pixels high or
+wide) is set up as a drop-area. If you drop a window on these zone
+(they are briefly highlighted while the mouse rests on them), then the
+window will be added to the dock on that side. If there is no dock
+area on that side, one will be created.
+
+This is especially useful if you want to put two editor windows side
+by side. Drag one of them on the drop area on the right side.
 
 @end table
 
@@ -824,12 +954,12 @@ Selecting either of these two options will pop up a dialog on the
 screen, similar to the following:
 
 @iftex
-@image{search-hide}
+@image{search-hide, 12.7cm}
 @end iftex
 
 On this screenshot, you can see three entry fields:
 
-@table @bullet
+@table @b
 @item @code{"Search for"}
 This is the location where you type the string or pattern you are
 looking for. The search widget supports two mode, either fixed strings
@@ -878,12 +1008,12 @@ The second part of the window is a row of buttons, to start the search
 it is taking too long, or to display the options.
 
 @iftex
-@image{search-options}
+@image{search-options, 12.7cm}
 @end iftex
 
 There are four check boxes in this options box.
 
-@table @bullet
+@table @b
 @item @code{"Search All Occurrences"}
 The default mode for the search widget is interactive searching: its
 stops as soon as one occurence of the pattern is found. You then have
