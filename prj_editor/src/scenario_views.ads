@@ -59,5 +59,9 @@ private
    type Scenario_View_Record is new Gtk.Table.Gtk_Table_Record with record
       Kernel      : Glide_Kernel.Kernel_Handle;
       Edit_Button : Gtk.Button.Gtk_Button;
+
+      Combo_Is_Open : Boolean := False;
+      --  Flag temporarily set to True when a user is modifying the value of
+      --  one of the scenario variable through the combo boxes.
    end record;
 end Scenario_Views;

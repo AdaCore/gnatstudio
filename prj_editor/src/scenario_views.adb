@@ -41,7 +41,6 @@ with Gtkada.Handlers; use Gtkada.Handlers;
 with Gtk.Widget;      use Gtk.Widget;
 
 with Prj_API;          use Prj_API;
-with Prj_Manager;      use Prj_Manager;
 with Glide_Kernel;     use Glide_Kernel;
 with Glide_Kernel.Project; use Glide_Kernel.Project;
 with Variable_Editors; use Variable_Editors;
@@ -165,10 +164,12 @@ package body Scenario_Views is
             Name : constant String :=
               Name_Buffer (Name_Buffer'First .. Name_Len);
          begin
-            Change_Scenario_Variable (User.View.Kernel, Name, Value);
+            Prj.Ext.Add (Name, Value);
          end;
 
+         User.View.Combo_Is_Open := True;
          Recompute_View (User.View.Kernel);
+         User.View.Combo_Is_Open := False;
       end if;
    end Variable_Value_Changed;
 
@@ -202,7 +203,36 @@ package body Scenario_Views is
       Combo : Gtk_Combo;
       Row : Guint;
       Str : String_Id;
+
+      use type Widget_List.Glist;
+      Child, Tmp : Widget_List.Glist;
    begin
+      --  There is a small problem here: Refresh might be called while one of
+      --  the combo boxes is still displayed. Thus, if we destroy it now, any
+      --  pending signal on the combo box (like hiding the popup window) will
+      --  generate a segmentation fault.
+      --  This also saves some refreshing when the values would be reflected
+      --  automatically anyway.
+
+      if V.Combo_Is_Open then
+         return;
+      end if;
+
+      --  Remove all children, except the edit button.
+
+      Child := Children (V);
+      Tmp := Widget_List.First (Child);
+
+      while Tmp /= Widget_List.Null_List loop
+         if Widget_List.Get_Data (Tmp) /= Gtk_Widget (V.Edit_Button) then
+            Destroy (Widget_List.Get_Data (Tmp));
+         end if;
+         Tmp := Widget_List.Next (Tmp);
+      end loop;
+
+      Widget_List.Free (Child);
+
+
       --  No project view => Clean up the scenario viewer
       if Get_Project_View (V.Kernel) = No_Project then
          Resize (V, Rows => 1, Columns => 2);
