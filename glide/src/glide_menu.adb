@@ -62,6 +62,12 @@ package body Glide_Menu is
       Widget : Limited_Widget);
    --  File->Save Desktop menu
 
+   procedure On_Save_Default_Desktop
+     (Object : Data_Type_Access;
+      Action : Guint;
+      Widget : Limited_Widget);
+   --  File->Save Default Desktop menu
+
    procedure On_Change_Dir
      (Object : Data_Type_Access;
       Action : Guint;
@@ -214,15 +220,29 @@ package body Glide_Menu is
       Widget : Limited_Widget)
    is
       pragma Unreferenced (Action, Widget);
-
-      Top  : constant Glide_Window := Glide_Window (Object);
    begin
-      Save_Desktop (Top.Kernel);
-
+      Save_Desktop (Glide_Window (Object).Kernel, As_Default_Desktop => False);
    exception
       when E : others =>
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Save_Desktop;
+
+   -----------------------------
+   -- On_Save_Default_Desktop --
+   -----------------------------
+
+   procedure On_Save_Default_Desktop
+     (Object : Data_Type_Access;
+      Action : Guint;
+      Widget : Limited_Widget)
+   is
+      pragma Unreferenced (Action, Widget);
+   begin
+      Save_Desktop (Glide_Window (Object).Kernel, As_Default_Desktop => True);
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+   end On_Save_Default_Desktop;
 
    --------------------
    -- On_Preferences --
@@ -260,6 +280,8 @@ package body Glide_Menu is
       return new Gtk_Item_Factory_Entry_Array'
         (Gtk_New (File & (-"Sa_ve...") & '/' & (-"Desktop"), "",
                   On_Save_Desktop'Access),
+         Gtk_New (File & (-"Sa_ve...") & '/' & (-"Default Desktop"), "",
+                  On_Save_Default_Desktop'Access),
          Gtk_New (File & "sep1", Item_Type => Separator),
          Gtk_New (File & (-"Change _Directory..."), "", "",
                   On_Change_Dir'Access),
