@@ -18,6 +18,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Gtk.Widget;
 with Glib.Object;       use Glib.Object;
 with Glide_Kernel;      use Glide_Kernel;
 with Gtk.Menu;          use Gtk.Menu;
@@ -88,11 +89,12 @@ package VCS_View_API is
    --  according to the information in Context.
 
    procedure Open_Explorer
-     (Kernel : Kernel_Handle);
+     (Kernel  : Kernel_Handle;
+      Context : Selection_Context_Access);
    --  If the VCS Explorer is not displayed, display it.
 
    function Get_Current_Ref
-     (Kernel : access Kernel_Handle_Record'Class)
+     (Context : Selection_Context_Access)
      return VCS_Access;
    --  Convenience function to get the current VCS system.
    --  If the creator of the current context is the VCS module, then
@@ -108,5 +110,10 @@ package VCS_View_API is
      (Widget : access GObject_Record'Class;
       Kernel : Kernel_Handle);
    --  Update all files in the project
+
+   function Context_Factory
+     (Kernel : access Kernel_Handle_Record'Class;
+      Child  : Gtk.Widget.Gtk_Widget) return Selection_Context_Access;
+   --  Return the current context relative to the VCS Explorer.
 
 end VCS_View_API;
