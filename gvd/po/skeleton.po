@@ -1,20 +1,77 @@
+msgid  "   --debugger DEBUG  use DEBUG as the underlying debugger."
+msgstr "   --debugger DEBUG  use DEBUG as the underlying debugger."
+
+msgid  "   --host HOST       Run inferior debugger on HOST."
+msgstr "   --host HOST       Run inferior debugger on HOST."
+
+msgid  "   --jdb             assume a java debugger."
+msgstr "   --jdb             assume a java debugger."
+
+msgid  "   --log-level [0-4] Set level of logging (Default is 3)."
+msgstr "   --log-level [0-4] Set level of logging (Default is 3)."
+
+msgid  "   --no-explorer     Do not display explorer window."
+msgstr "   --no-explorer     Do not display explorer window."
+
+msgid  "   --target TARG:PRO "
+msgstr "   --target TARG:PRO "
+
+msgid  "   --tty             Use controlling tty as additional "
+msgstr "   --tty             Use controlling tty as additional "
+
+msgid  "   --version         Show the GVD version and exit."
+msgstr "   --version         Show the GVD version and exit."
+
+msgid  "   gvd [options...] executable-file"
+msgstr "   gvd [options...] executable-file"
+
+msgid  "  debugger: "
+msgstr "  debugger: "
+
+msgid  "  machine: "
+msgstr "  machine: "
+
+msgid  "  using protocol: "
+msgstr "  using protocol: "
+
+msgid  " Could not find core file: "
+msgstr " Could not find core file: "
+
+msgid  " Could not find file: "
+msgstr " Could not find file: "
+
+msgid  " in path."
+msgstr " in path."
+
+msgid  "..."
+msgstr "..."
+
 msgid  "3D Look"
 msgstr "3D Look"
+
+msgid  ": File not found"
+msgstr ": File not found"
+
+msgid  ": The GNU Visual Debugger"
+msgstr ": The GNU Visual Debugger"
+
+msgid  "<file not found>"
+msgstr "<file not found>"
+
+msgid  "ASCII"
+msgstr "ASCII"
 
 msgid  "Abort"
 msgstr "Abort"
 
-msgid  "About..."
-msgstr "About..."
-
 msgid  "About GVD..."
 msgstr "About GVD..."
 
+msgid  "About..."
+msgstr "About..."
+
 msgid  "Action"
 msgstr "Action"
-
-msgid  "Activated only when the executable has started"
-msgstr "Activated only when the executable has started"
 
 msgid  "Add"
 msgstr "Add"
@@ -22,11 +79,11 @@ msgstr "Add"
 msgid  "Address"
 msgstr "Address"
 
-msgid  "Advanced..."
-msgstr "Advanced..."
-
 msgid  "Advanced Breakpoint Settings"
 msgstr "Advanced Breakpoint Settings"
+
+msgid  "Advanced..."
+msgstr "Advanced..."
 
 msgid  "Align On Grid"
 msgstr "Align On Grid"
@@ -40,12 +97,6 @@ msgstr "All exceptions"
 msgid  "Arguments Selection"
 msgstr "Arguments Selection"
 
-msgid  "ASCII"
-msgstr "ASCII"
-
-msgid  "as Popup Tips"
-msgstr "as Popup Tips"
-
 msgid  "Assembly"
 msgstr "Assembly"
 
@@ -55,44 +106,38 @@ msgstr "Attach To Process..."
 msgid  "Auto-Align Displays on Nearest Grid Point"
 msgstr "Auto-Align Displays on Nearest Grid Point"
 
+msgid  "Auto-Refreshed"
+msgstr "Auto-Refreshed"
+
 msgid  "Automatic Display of Button Hints"
 msgstr "Automatic Display of Button Hints"
 
 msgid  "Automatic Display of Variable Values"
 msgstr "Automatic Display of Variable Values"
 
-msgid  "Auto-Refreshed"
-msgstr "Auto-Refreshed"
-
 msgid  "Big Item Height"
 msgstr "Big Item Height"
-
-msgid  "break"
-msgstr "break"
-
-msgid  "Break on exception:"
-msgstr "Break on exception:"
 
 msgid  "Break On Exceptions"
 msgstr "Break On Exceptions"
 
+msgid  "Break on exception:"
+msgstr "Break on exception:"
+
 msgid  "Break only when following condition is true:"
 msgstr "Break only when following condition is true:"
 
-msgid  "Breakpoints"
-msgstr "Breakpoints"
-
 msgid  "Break when the variable:"
 msgstr "Break when the variable:"
+
+msgid  "Breakpoints"
+msgstr "Breakpoints"
 
 msgid  "Bug detected in GVD"
 msgstr "Bug detected in GVD"
 
 msgid  "Byte"
 msgstr "Byte"
-
-msgid  "bytes"
-msgstr "bytes"
 
 msgid  "Call Stack"
 msgstr "Call Stack"
@@ -106,20 +151,20 @@ msgstr "Cannot create config directory "
 msgid  "Cannot find sessions directory "
 msgstr "Cannot find sessions directory "
 
-msgid  "Changed Data"
-msgstr "Changed Data"
-
 msgid  "Change Directory..."
 msgstr "Change Directory..."
+
+msgid  "Changed Data"
+msgstr "Changed Data"
 
 msgid  "Clear Window"
 msgstr "Clear Window"
 
+msgid  "Click in the 'Enb' column to change the status"
+msgstr "Click in the 'Enb' column to change the status"
+
 msgid  "Clickable Item"
 msgstr "Clickable Item"
-
-msgid "Click in the \"Enb\" column to change the status"
-msgstr "Click in the \"Enb\" column to change the status"
 
 msgid  "Clone"
 msgstr "Clone"
@@ -130,17 +175,14 @@ msgstr "Close"
 msgid  "Color Hilighting"
 msgstr "Color Hilighting"
 
-msgid  " column to change the status"
-msgstr " column to change the status"
-
-msgid  "Command"
-msgstr "Command"
+msgid  "Command History"
+msgstr "Command History"
 
 msgid  "Command History..."
 msgstr "Command History..."
 
-msgid  "Command History"
-msgstr "Command History"
+msgid  "Command"
+msgstr "Command"
 
 msgid  "Commands"
 msgstr "Commands"
@@ -151,26 +193,35 @@ msgstr "Comments"
 msgid  "Condition"
 msgstr "Condition"
 
-msgid  "Continue"
-msgstr "Continue"
+msgid  "Continue Until Line"
+msgstr "Continue Until Line"
 
 msgid  "Continue program being debugged, after signal or breakpoint"
 msgstr "Continue program being debugged, after signal or breakpoint"
 
-msgid  "Continue Until Line"
-msgstr "Continue Until Line"
-
 msgid  "Continue without Signal"
 msgstr "Continue without Signal"
+
+msgid  "Continue"
+msgstr "Continue"
 
 msgid  "Copy"
 msgstr "Copy"
 
-msgid  " Could not find core file: "
-msgstr " Could not find core file: "
+msgid  "Could not find executable "
+msgstr "Could not find executable "
 
-msgid  " Could not find file: "
-msgstr " Could not find file: "
+msgid  "Could not get the type of "
+msgstr "Could not get the type of "
+
+msgid  "Could not get the value of "
+msgstr "Could not get the value of "
+
+msgid  "Could not parse type or value for "
+msgstr "Could not parse type or value for "
+
+msgid  "Could not spawn the remote process: "
+msgstr "Could not spawn the remote process: "
 
 msgid  "Created config directory "
 msgstr "Created config directory "
@@ -181,14 +232,11 @@ msgstr "Current Line"
 msgid  "Cut"
 msgstr "Cut"
 
-msgid  "Data"
-msgstr "Data"
-
 msgid  "DBX"
 msgstr "DBX"
 
-msgid  "Debugger"
-msgstr "Debugger"
+msgid  "Data"
+msgstr "Data"
 
 msgid  "Debugger Host"
 msgstr "Debugger Host"
@@ -196,14 +244,14 @@ msgstr "Debugger Host"
 msgid  "Debugger Name"
 msgstr "Debugger Name"
 
+msgid  "Debugger"
+msgstr "Debugger"
+
 msgid  "Decimal"
 msgstr "Decimal"
 
 msgid  "Define Command..."
 msgstr "Define Command..."
-
-msgid  "delete"
-msgstr "delete"
 
 msgid  "Delete Files Not Found"
 msgstr "Delete Files Not Found"
@@ -211,14 +259,11 @@ msgstr "Delete Files Not Found"
 msgid  "Detach Process"
 msgstr "Detach Process"
 
-msgid  "Detect Aliases"
-msgstr "Detect Aliases"
-
 msgid  "Detect Aliases (shared data structures)"
 msgstr "Detect Aliases (shared data structures)"
 
-msgid  "disable"
-msgstr "disable"
+msgid  "Detect Aliases"
+msgstr "Detect Aliases"
 
 msgid  "Disp"
 msgstr "Disp"
@@ -253,9 +298,6 @@ msgstr "Display Local Variables"
 msgid  "Display Registers"
 msgstr "Display Registers"
 
-msgid  "Edit"
-msgstr "Edit"
-
 msgid  "Edit Breakpoints..."
 msgstr "Edit Breakpoints..."
 
@@ -270,6 +312,9 @@ msgstr "Edit Source..."
 
 msgid  "Edit Sources"
 msgstr "Edit Sources"
+
+msgid  "Edit"
+msgstr "Edit"
 
 msgid  "Enb"
 msgstr "Enb"
@@ -307,17 +352,11 @@ msgstr "Exiting..."
 msgid  "Explorer"
 msgstr "Explorer"
 
-msgid  "Expression is a subprogram call"
-msgstr "Expression is a subprogram call"
-
 msgid  "Expression Selection"
 msgstr "Expression Selection"
 
-msgid  "File:"
-msgstr "File:"
-
-msgid  "File"
-msgstr "File"
+msgid  "Expression is a subprogram call"
+msgstr "Expression is a subprogram call"
 
 msgid  "File Location"
 msgstr "File Location"
@@ -325,17 +364,17 @@ msgstr "File Location"
 msgid  "File Name Background"
 msgstr "File Name Background"
 
-msgid  ": File not found"
-msgstr ": File not found"
-
 msgid  "File not found: "
 msgstr "File not found: "
 
-msgid  "<file not found>"
-msgstr "<file not found>"
+msgid  "File"
+msgstr "File"
 
 msgid  "File/Variable"
 msgstr "File/Variable"
+
+msgid  "File:"
+msgstr "File:"
 
 msgid  "Find"
 msgstr "Find"
@@ -355,11 +394,14 @@ msgstr "Frame Number"
 msgid  "Frozen"
 msgstr "Frozen"
 
-msgid  "GDB"
-msgstr "GDB"
+msgid  "Functions"
+msgstr "Functions"
 
 msgid  "GDB Settings..."
 msgstr "GDB Settings..."
+
+msgid  "GDB"
+msgstr "GDB"
 
 msgid  "General"
 msgstr "General"
@@ -382,14 +424,14 @@ msgstr "Helpers"
 msgid  "Hex"
 msgstr "Hex"
 
-msgid  "Hide all "
-msgstr "Hide all "
-
 msgid  "Hide Big Items"
 msgstr "Hide Big Items"
 
 msgid  "Hide System Files"
 msgstr "Hide System Files"
+
+msgid  "Hide all "
+msgstr "Hide all "
 
 msgid  "Ignore"
 msgstr "Ignore"
@@ -397,17 +439,11 @@ msgstr "Ignore"
 msgid  "Info"
 msgstr "Info"
 
-msgid  "Interrupt"
-msgstr "Interrupt"
-
 msgid  "Interrupt debugged program"
 msgstr "Interrupt debugged program"
 
-msgid  "in the Status Line"
-msgstr "in the Status Line"
-
-msgid  "is"
-msgstr "is"
+msgid  "Interrupt"
+msgstr "Interrupt"
 
 msgid  "Item Name"
 msgstr "Item Name"
@@ -421,26 +457,17 @@ msgstr "Item Value"
 msgid  "JDB"
 msgstr "JDB"
 
-msgid  "keep"
-msgstr "keep"
-
 msgid  "Keywords"
 msgstr "Keywords"
 
 msgid  "Kill"
 msgstr "Kill"
 
-msgid  "label15"
-msgstr "label15"
-
-msgid  "label16"
-msgstr "label16"
+msgid  "Line"
+msgstr "Line"
 
 msgid  "Line:"
 msgstr "Line:"
-
-msgid  "Line"
-msgstr "Line"
 
 msgid  "List Processes"
 msgstr "List Processes"
@@ -460,20 +487,14 @@ msgstr "Memory View"
 msgid  "More Status Display..."
 msgstr "More Status Display..."
 
-msgid  "ms"
-msgstr "ms"
-
 msgid  "New Debugger..."
 msgstr "New Debugger..."
-
-msgid  "Next"
-msgstr "Next"
 
 msgid  "Next Instruction"
 msgstr "Next Instruction"
 
-msgid  "(no executable)"
-msgstr "(no executable)"
+msgid  "Next"
+msgstr "Next"
 
 msgid  "No extension files"
 msgstr "No extension files"
@@ -481,11 +502,11 @@ msgstr "No extension files"
 msgid  "Num"
 msgstr "Num"
 
-msgid  "Octal"
-msgstr "Octal"
-
 msgid  "OK"
 msgstr "OK"
+
+msgid  "Octal"
+msgstr "Octal"
 
 msgid  "On Item..."
 msgstr "On Item..."
@@ -493,23 +514,38 @@ msgstr "On Item..."
 msgid  "Open Core Dump..."
 msgstr "Open Core Dump..."
 
-msgid  "Open Program..."
-msgstr "Open Program..."
-
 msgid  "Open Program in a New Debugger"
 msgstr "Open Program in a New Debugger"
+
+msgid  "Open Program..."
+msgstr "Open Program..."
 
 msgid  "Open Recent"
 msgstr "Open Recent"
 
-msgid  "Open Session..."
-msgstr "Open Session..."
-
 msgid  "Open Session"
 msgstr "Open Session"
 
+msgid  "Open Session..."
+msgstr "Open Session..."
+
+msgid  "Options:"
+msgstr "Options:"
+
+msgid  "Other arguments are passed to the underlying debugger."
+msgstr "Other arguments are passed to the underlying debugger."
+
 msgid  "Overview..."
 msgstr "Overview..."
+
+msgid  "PC"
+msgstr "PC"
+
+msgid  "PYDB"
+msgstr "PYDB"
+
+msgid  "Packages"
+msgstr "Packages"
 
 msgid  "Page size:"
 msgstr "Page size:"
@@ -520,29 +556,26 @@ msgstr "Parameters"
 msgid  "Paste"
 msgstr "Paste"
 
-msgid  "PC"
-msgstr "PC"
-
 msgid  "Perl"
 msgstr "Perl"
 
-msgid  "Preferences..."
-msgstr "Preferences..."
+msgid  "Please report with the contents of the file "
+msgstr "Please report with the contents of the file "
 
 msgid  "Preferences"
 msgstr "Preferences"
 
+msgid  "Preferences..."
+msgstr "Preferences..."
+
 msgid  "Print "
 msgstr "Print "
-
-msgid  "Processes..."
-msgstr "Processes..."
 
 msgid  "Process Selection"
 msgstr "Process Selection"
 
-msgid  "Program"
-msgstr "Program"
+msgid  "Processes..."
+msgstr "Processes..."
 
 msgid  "Program Counter"
 msgstr "Program Counter"
@@ -553,17 +586,14 @@ msgstr "Program File"
 msgid  "Program Host"
 msgstr "Program Host"
 
+msgid  "Program"
+msgstr "Program"
+
+msgid  "Protected"
+msgstr "Protected"
+
 msgid  "Protocol"
 msgstr "Protocol"
-
-msgid  "PYDB"
-msgstr "PYDB"
-
-msgid  "read"
-msgstr "read"
-
-msgid  "read or written"
-msgstr "read or written"
 
 msgid  "Recent message (most recent first):"
 msgstr "Recent message (most recent first):"
@@ -583,9 +613,6 @@ msgstr "Regular expression"
 msgid  "Reload Source"
 msgstr "Reload Source"
 
-msgid  "remote"
-msgstr "remote"
-
 msgid  "Remove"
 msgstr "Remove"
 
@@ -601,17 +628,14 @@ msgstr "Run/Start..."
 msgid  "Save Session As..."
 msgstr "Save Session As..."
 
-msgid  "Search..."
-msgstr "Search..."
-
 msgid  "Search"
 msgstr "Search"
 
+msgid  "Search..."
+msgstr "Search..."
+
 msgid  "Select All"
 msgstr "Select All"
-
-msgid  "Select all"
-msgstr "Select all"
 
 msgid  "Select and print stack frame called by this one"
 msgstr "Select and print stack frame called by this one"
@@ -622,11 +646,11 @@ msgstr "Select and print stack frame that called this one"
 msgid  "Selection :"
 msgstr "Selection :"
 
-msgid  "Session:"
-msgstr "Session:"
-
 msgid  "Session List"
 msgstr "Session List"
+
+msgid  "Session:"
+msgstr "Session:"
 
 msgid  "Set Breakpoint on Line"
 msgstr "Set Breakpoint on Line"
@@ -634,14 +658,11 @@ msgstr "Set Breakpoint on Line"
 msgid  "Set Value"
 msgstr "Set Value"
 
-msgid  "Show all "
-msgstr "Show all "
+msgid  "Show Asm Code"
+msgstr "Show Asm Code"
 
 msgid  "Show Asm and Source"
 msgstr "Show Asm and Source"
-
-msgid  "Show Asm Code"
-msgstr "Show Asm Code"
 
 msgid  "Show Current File"
 msgstr "Show Current File"
@@ -655,29 +676,32 @@ msgstr "Show Line Numbers"
 msgid  "Show Lines with Code"
 msgstr "Show Lines with Code"
 
-msgid  "Show lines with code"
-msgstr "Show lines with code"
-
 msgid  "Show Source Code"
 msgstr "Show Source Code"
 
 msgid  "Show Type"
 msgstr "Show Type"
 
+msgid  "Show Value + Type"
+msgstr "Show Value + Type"
+
 msgid  "Show Value"
 msgstr "Show Value"
 
-msgid  "Show Value + Type"
-msgstr "Show Value + Type"
+msgid  "Show all "
+msgstr "Show all "
 
 msgid  "Signals..."
 msgstr "Signals..."
 
+msgid  "Source location"
+msgstr "Source location"
+
 msgid  "Source"
 msgstr "Source"
 
-msgid  "Source location"
-msgstr "Source location"
+msgid  "Specs"
+msgstr "Specs"
 
 msgid  "Start the debugged program"
 msgstr "Start the debugged program"
@@ -688,23 +712,23 @@ msgstr "Start the debugged program, stopping at the beginning of the main proced
 msgid  "Status Bar Time Out"
 msgstr "Status Bar Time Out"
 
-msgid  "Step"
-msgstr "Step"
-
 msgid  "Step Instruction"
 msgstr "Step Instruction"
-
-msgid  "Step one instruction, but proceed through subroutine calls"
-msgstr "Step one instruction, but proceed through subroutine calls"
 
 msgid  "Step one instruction exactly"
 msgstr "Step one instruction exactly"
 
-msgid  "Step program, proceeding through subroutine calls"
-msgstr "Step program, proceeding through subroutine calls"
+msgid  "Step one instruction, but proceed through subroutine calls"
+msgstr "Step one instruction, but proceed through subroutine calls"
 
 msgid  "Step program until it reaches a different source line"
 msgstr "Step program until it reaches a different source line"
+
+msgid  "Step program, proceeding through subroutine calls"
+msgstr "Step program, proceeding through subroutine calls"
+
+msgid  "Step"
+msgstr "Step"
 
 msgid  "Stop always"
 msgstr "Stop always"
@@ -724,14 +748,14 @@ msgstr "Strings"
 msgid  "Submit changes"
 msgstr "Submit changes"
 
-msgid  "Subprogram"
-msgstr "Subprogram"
-
 msgid  "Subprogram Name"
 msgstr "Subprogram Name"
 
-msgid  "Subprogram name"
-msgstr "Subprogram name"
+msgid  "Subprogram"
+msgstr "Subprogram"
+
+msgid  "Subprograms"
+msgstr "Subprograms"
 
 msgid  "Syntax Highlighting"
 msgstr "Syntax Highlighting"
@@ -739,14 +763,17 @@ msgstr "Syntax Highlighting"
 msgid  "Task Status"
 msgstr "Task Status"
 
+msgid  "Tasks"
+msgstr "Tasks"
+
 msgid  "Temporary breakpoint"
 msgstr "Temporary breakpoint"
 
-msgid  ": The GNU Visual Debugger"
-msgstr ": The GNU Visual Debugger"
-
 msgid  "The GNU Visual Debugger"
 msgstr "The GNU Visual Debugger"
+
+msgid  "The underlying debugger died unexpectedly. Closing it"
+msgstr "The underlying debugger died unexpectedly. Closing it"
 
 msgid  "This is the About information box."
 msgstr "This is the About information box."
@@ -763,11 +790,14 @@ msgstr "Title Background"
 msgid  "Type"
 msgstr "Type"
 
-msgid  "Undo"
-msgstr "Undo"
+msgid  "Types"
+msgstr "Types"
 
 msgid  "Undo changes"
 msgstr "Undo changes"
+
+msgid  "Undo"
+msgstr "Undo"
 
 msgid  "Unit size: "
 msgstr "Unit size: "
@@ -781,20 +811,20 @@ msgstr "Unselect all"
 msgid  "Update Value"
 msgstr "Update Value"
 
+msgid  "Usage:"
+msgstr "Usage:"
+
 msgid  "Variable"
 msgstr "Variable"
+
+msgid  "Version: "
+msgstr "Version: "
 
 msgid  "View"
 msgstr "View"
 
-msgid  "vxworks"
-msgstr "vxworks"
-
 msgid  "Warn if Multiple GVD Instances are Running"
 msgstr "Warn if Multiple GVD Instances are Running"
-
-msgid  "watch"
-msgstr "watch"
 
 msgid  "Web Browser"
 msgstr "Web Browser"
@@ -802,21 +832,72 @@ msgstr "Web Browser"
 msgid  "What Now ... ?"
 msgstr "What Now ... ?"
 
-msgid  "window1"
-msgstr "window1"
-
 msgid  "Word"
 msgstr "Word"
-
-msgid  "written"
-msgstr "written"
-
-msgid  "wtx"
-msgstr "wtx"
 
 msgid  "XDB"
 msgstr "XDB"
 
 msgid  "You must select at least one of the choices"
 msgstr "You must select at least one of the choices"
+
+msgid  "and the following information:"
+msgstr "and the following information:"
+
+msgid  "as Popup Tips"
+msgstr "as Popup Tips"
+
+msgid  "break"
+msgstr "break"
+
+msgid  "bytes"
+msgstr "bytes"
+
+msgid  "delete"
+msgstr "delete"
+
+msgid  "disable"
+msgstr "disable"
+
+msgid  "in the Status Line"
+msgstr "in the Status Line"
+
+msgid  "is"
+msgstr "is"
+
+msgid  "keep"
+msgstr "keep"
+
+msgid  "label15"
+msgstr "label15"
+
+msgid  "label16"
+msgstr "label16"
+
+msgid  "list of files"
+msgstr "list of files"
+
+msgid  "ms"
+msgstr "ms"
+
+msgid  "read or written"
+msgstr "read or written"
+
+msgid  "read"
+msgstr "read"
+
+msgid  "remote"
+msgstr "remote"
+
+msgid  "vxworks"
+msgstr "vxworks"
+
+msgid  "watch"
+msgstr "watch"
+
+msgid  "written"
+msgstr "written"
+
+msgid  "wtx"
+msgstr "wtx"
 
