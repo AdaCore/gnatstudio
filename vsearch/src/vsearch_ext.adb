@@ -1316,21 +1316,6 @@ package body Vsearch_Ext is
               (Vsearch_Module_Id.Search, "delete_event", On_Delete'Access);
          end if;
 
-         --  Automatically fill the pattern text entry with the selection, if
-         --  there is one which does not contain multiple lines.
-
-         declare
-            Text : constant UTF8_String :=
-              Wait_For_Text (Gtk.Clipboard.Get (Selection_Primary));
-         begin
-            if Text /= ""
-              and then Text'Length < 128
-              and then Index (Text, (1 => ASCII.LF)) = 0
-            then
-               Set_Text (Vsearch_Module_Id.Search.Pattern_Entry, Text);
-            end if;
-         end;
-
          Child := Put (Kernel, Vsearch_Module_Id.Search,
                        All_Buttons or Float_As_Transient
                        or Always_Destroy_Float,
@@ -1351,6 +1336,22 @@ package body Vsearch_Ext is
 
          On_Options_Toggled (Vsearch_Module_Id.Search);
       end if;
+
+      --  Automatically fill the pattern text entry with the selection, if
+      --  there is one which does not contain multiple lines.
+
+      declare
+         Text : constant UTF8_String :=
+           Wait_For_Text (Gtk.Clipboard.Get (Selection_Primary));
+      begin
+         if Text /= ""
+           and then Text'Length < 128
+           and then Index (Text, (1 => ASCII.LF)) = 0
+         then
+            Set_Text (Vsearch_Module_Id.Search.Pattern_Entry, Text);
+         end if;
+      end;
+
 
       if Raise_Widget then
          Raise_Child (Child);
