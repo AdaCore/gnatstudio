@@ -69,6 +69,11 @@ package body Glide_Menu is
 
    Highlight_File : constant String := "#FF0000000000";
 
+   function Get_Current_Editor
+     (Top : Glide_Window) return Source_Editor_Box;
+   --  Return the source editor that has currently the focus in the MDI
+   --  window associated with Top, null the focus child is not an editor.
+
    --------------------
    -- Menu Callbacks --
    --------------------
@@ -77,7 +82,7 @@ package body Glide_Menu is
      (Object : Data_Type_Access;
       Action : Guint;
       Widget : Limited_Widget);
-   --  File->Open File menu
+   --  File->Open menu
 
    procedure On_New_View
      (Object : Data_Type_Access;
@@ -85,23 +90,11 @@ package body Glide_Menu is
       Widget : Limited_Widget);
    --  File->New View menu
 
-   procedure On_Open_Project
-     (Object : Data_Type_Access;
-      Action : Guint;
-      Widget : Limited_Widget);
-   --  File->Open Project menu
-
-   procedure On_New_Project
-     (Object : Data_Type_Access;
-      Action : Guint;
-      Widget : Limited_Widget);
-   --  File->New Project menu
-
    procedure On_New_File
      (Object : Data_Type_Access;
       Action : Guint;
       Widget : Limited_Widget);
-   --  File->New File menu
+   --  File->New menu
 
    procedure On_Save
      (Object : Data_Type_Access;
@@ -175,23 +168,35 @@ package body Glide_Menu is
       Widget : Limited_Widget);
    --  Edit->Search in Files menu
 
+   procedure On_Open_Project
+     (Object : Data_Type_Access;
+      Action : Guint;
+      Widget : Limited_Widget);
+   --  Project->Open menu
+
+   procedure On_New_Project
+     (Object : Data_Type_Access;
+      Action : Guint;
+      Widget : Limited_Widget);
+   --  Project->New menu
+
+   procedure On_Edit_Project
+     (Object : Data_Type_Access;
+      Action : Guint;
+      Widget : Limited_Widget);
+   --  Project->Edit menu
+
    procedure On_Build
      (Object : Data_Type_Access;
       Action : Guint;
       Widget : Limited_Widget);
-   --  Project->Build menu
+   --  Run->Build menu
 
    procedure On_Run
      (Object : Data_Type_Access;
       Action : Guint;
       Widget : Limited_Widget);
    --  Run->Run menu
-
-   procedure On_Edit_Project
-     (Object : Data_Type_Access;
-      Action : Guint;
-      Widget : Limited_Widget);
-   --  Project->Edit Project menu
 
    procedure On_Debug_Executable
      (Object : Data_Type_Access;
@@ -276,6 +281,25 @@ package body Glide_Menu is
       Action : Guint;
       Widget : Limited_Widget);
    --  Help->About menu
+
+   ------------------------
+   -- Get_Current_Editor --
+   ------------------------
+
+   function Get_Current_Editor
+     (Top : Glide_Window) return Source_Editor_Box
+   is
+      MDI       : constant MDI_Window :=
+        Glide_Page.Glide_Page (Get_Current_Process (Top)).Process_Mdi;
+      Source    : Gtk_Widget := Get_Widget (Get_Focus_Child (MDI));
+
+   begin
+      if Source.all in Source_Box_Record'Class then
+         return Source_Box (Source).Editor;
+      else
+         return null;
+      end if;
+   end Get_Current_Editor;
 
    ------------------
    -- On_Open_File --
@@ -375,9 +399,18 @@ package body Glide_Menu is
    procedure On_Save
      (Object : Data_Type_Access;
       Action : Guint;
-      Widget : Limited_Widget) is
+      Widget : Limited_Widget)
+   is
+      Top     : constant Glide_Window := Glide_Window (Object);
+      Source  : constant Source_Editor_Box := Get_Current_Editor (Top);
+      Success : Boolean;
+
    begin
-      null;
+      if Source = null then
+         return;
+      end if;
+
+      Save_To_File (Source, Success => Success);
    end On_Save;
 
    ----------------
@@ -387,9 +420,24 @@ package body Glide_Menu is
    procedure On_Save_As
      (Object : Data_Type_Access;
       Action : Guint;
-      Widget : Limited_Widget) is
+      Widget : Limited_Widget)
+   is
+      Top     : constant Glide_Window := Glide_Window (Object);
+      Source  : constant Source_Editor_Box := Get_Current_Editor (Top);
+      Success : Boolean;
+
    begin
-      null;
+      if Source = null then
+         return;
+      end if;
+
+      declare
+         Name : constant String :=
+           File_Selection_Dialog (Title => "Save File As...");
+
+      begin
+         Save_To_File (Source, Name, Success);
+      end;
    end On_Save_As;
 
    --------------
@@ -447,9 +495,17 @@ package body Glide_Menu is
    procedure On_Cut
      (Object : Data_Type_Access;
       Action : Guint;
-      Widget : Limited_Widget) is
+      Widget : Limited_Widget)
+   is
+      Top     : constant Glide_Window := Glide_Window (Object);
+      Source  : constant Source_Editor_Box := Get_Current_Editor (Top);
+
    begin
-      null;
+      if Source = null then
+         return;
+      end if;
+
+      Cut_Clipboard (Source);
    end On_Cut;
 
    -------------
@@ -459,9 +515,17 @@ package body Glide_Menu is
    procedure On_Copy
      (Object : Data_Type_Access;
       Action : Guint;
-      Widget : Limited_Widget) is
+      Widget : Limited_Widget)
+   is
+      Top     : constant Glide_Window := Glide_Window (Object);
+      Source  : constant Source_Editor_Box := Get_Current_Editor (Top);
+
    begin
-      null;
+      if Source = null then
+         return;
+      end if;
+
+      Copy_Clipboard (Source);
    end On_Copy;
 
    --------------
@@ -471,9 +535,17 @@ package body Glide_Menu is
    procedure On_Paste
      (Object : Data_Type_Access;
       Action : Guint;
-      Widget : Limited_Widget) is
+      Widget : Limited_Widget)
+   is
+      Top     : constant Glide_Window := Glide_Window (Object);
+      Source  : constant Source_Editor_Box := Get_Current_Editor (Top);
+
    begin
-      null;
+      if Source = null then
+         return;
+      end if;
+
+      Paste_Clipboard (Source);
    end On_Paste;
 
    -------------------
@@ -483,9 +555,17 @@ package body Glide_Menu is
    procedure On_Select_All
      (Object : Data_Type_Access;
       Action : Guint;
-      Widget : Limited_Widget) is
+      Widget : Limited_Widget)
+   is
+      Top     : constant Glide_Window := Glide_Window (Object);
+      Source  : constant Source_Editor_Box := Get_Current_Editor (Top);
+
    begin
-      null;
+      if Source = null then
+         return;
+      end if;
+
+      Select_All (Source);
    end On_Select_All;
 
    -----------------
@@ -1100,13 +1180,10 @@ package body Glide_Menu is
    begin
       return new Gtk_Item_Factory_Entry_Array'
         (Gtk_New (-"/_File", Item_Type => Branch),
-         Gtk_New (-"/_File/New File", "", Stock_New, On_New_File'Access),
+         Gtk_New (-"/_File/New", "", Stock_New, On_New_File'Access),
          Gtk_New (-"/_File/New View", "", On_New_View'Access),
-         Gtk_New (-"/_File/New Project...", "", On_New_Project'Access),
          Gtk_New (-"/_File/sep1", Item_Type => Separator),
          Gtk_New (-"/_File/Open...", "F3", Stock_Open, On_Open_File'Access),
-         Gtk_New (-"/_File/Open From Path...", "", On_Open_File'Access),
-         Gtk_New (-"/_File/Open Project...", "F3", On_Open_Project'Access),
          Gtk_New (-"/_File/Reopen", Item_Type => Branch),
          Gtk_New (-"/_File/sep2", Item_Type => Separator),
          Gtk_New (-"/_File/Save", "", Stock_Save, On_Save'Access),
@@ -1169,16 +1246,21 @@ package body Glide_Menu is
          Gtk_New (-"/_VCS/Annotate", "", Stock_Preferences, null),
 
          Gtk_New (-"/_Project", Item_Type => Branch),
-         Gtk_New (-"/_Project/Edit Project...", "",
+         Gtk_New (-"/_Project/New...", "", Stock_New, On_New_Project'Access),
+         Gtk_New (-"/_Project/Open...", "", Stock_Open,
+                  On_Open_Project'Access),
+         Gtk_New (-"/_Project/Edit...", "",
                   Stock_Properties, On_Edit_Project'Access),
-         Gtk_New (-"/_Project/Task Manager", "", null),
          Gtk_New (-"/_Project/sep1", Item_Type => Separator),
-         Gtk_New (-"/_Project/Check File", "", null),
-         Gtk_New (-"/_Project/Compile File", "", Stock_Convert, null),
-         Gtk_New (-"/_Project/Build", "", Stock_Refresh, On_Build'Access),
-         Gtk_New (-"/_Project/Build Library", "", On_Build'Access),
-         Gtk_New (-"/_Project/sep2", Item_Type => Separator),
-         Gtk_New (-"/_Project/Run...", "", Stock_Execute, On_Run'Access),
+         Gtk_New (-"/_Project/Task Manager", "", null),
+
+         Gtk_New (-"/_Run", Item_Type => Branch),
+         Gtk_New (-"/_Run/Check File", "", null),
+         Gtk_New (-"/_Run/Compile File", "", Stock_Convert, null),
+         Gtk_New (-"/_Run/Build", "", Stock_Refresh, On_Build'Access),
+         Gtk_New (-"/_Run/Build Library", "", null),
+         Gtk_New (-"/_Run/sep1", Item_Type => Separator),
+         Gtk_New (-"/_Run/Run...", "", Stock_Execute, On_Run'Access),
 
          Gtk_New (-"/_Debug", Item_Type => Branch),
          Gtk_New (-"/_Debug/Start", "", On_Run'Access),
