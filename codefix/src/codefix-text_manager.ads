@@ -382,6 +382,9 @@ package Codefix.Text_Manager is
    function Get_Context (This : Extract_Line) return Merge_Info;
    --  Return the context associated to an Extract_Line.
 
+   procedure Set_Context (This : in out Extract_Line; Value : Merge_Info);
+   --  Set the context associated to an Extract_Line.
+
    function Next (This : Ptr_Extract_Line) return Ptr_Extract_Line;
    --  If the Extract_Line is a component of a list (typically, a list
    --  contained in an extract), then Next returns the next entry of the list.
