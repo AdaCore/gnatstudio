@@ -86,6 +86,7 @@ with String_Utils;             use String_Utils;
 with Project_Properties;       use Project_Properties;
 with Histories;                use Histories;
 with String_List_Utils;        use String_List_Utils;
+with GUI_Utils;                use GUI_Utils;
 
 with Stringt;       use Stringt;
 with Types;         use Types;
@@ -462,9 +463,9 @@ package body Project_Viewers is
    procedure On_Reopen
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
-      Item     : constant Gtk_Menu_Item := Gtk_Menu_Item (Widget);
-      Label    : constant Gtk_Label := Gtk_Label (Get_Child (Item));
-      Filename : constant String := Get_Text (Label);
+      Mitem     : constant Full_Path_Menu_Item
+        := Full_Path_Menu_Item (Widget);
+      Filename : constant String := Get_Path (Mitem);
       Dir      : constant String := Dir_Name (Filename);
 
    begin
@@ -490,7 +491,6 @@ package body Project_Viewers is
       Value       : constant String_List_Access := Get_History
         (Get_History (Kernel).all, Project_History_Key);
       Reopen_Menu : Gtk_Menu;
-      Mitem       : Gtk_Menu_Item;
    begin
       if Get_Submenu (Prj_Editor_Module_ID.Reopen_Menu) /= null then
          Remove_Submenu (Prj_Editor_Module_ID.Reopen_Menu);
@@ -501,14 +501,20 @@ package body Project_Viewers is
 
       if Value /= null then
          for V in Value'Range loop
-            Gtk_New (Mitem, Value (V).all);
-            Append (Reopen_Menu, Mitem);
+            declare
+               Path  : constant String := Value (V).all;
+               Mitem : Full_Path_Menu_Item;
+            begin
+               Gtk_New (Mitem, Shorten (Path), Path);
+               Append (Reopen_Menu, Mitem);
 
-            Kernel_Callback.Connect
-              (Mitem,
-               "activate",
-               Kernel_Callback.To_Marshaller (On_Reopen'Access),
-               Kernel_Handle (Kernel));
+               Kernel_Callback.Connect
+                 (Mitem,
+                  "activate",
+                  Kernel_Callback.To_Marshaller (On_Reopen'Access),
+                  Kernel_Handle (Kernel));
+
+            end;
          end loop;
 
          Show_All (Reopen_Menu);
