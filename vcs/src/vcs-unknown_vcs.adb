@@ -91,9 +91,11 @@ package body VCS.Unknown_VCS is
       Clear_Logs  : Boolean := False;
       Local       : Boolean := False)
    is
-      pragma Unreferenced (Rep, Clear_Logs, Local);
+      pragma Unreferenced (Rep, Clear_Logs);
    begin
-      if Filenames /= Null_List then
+      if Filenames /= Null_List
+        and then not Local
+      then
          Error (Head (Filenames));
       end if;
    end Get_Status;
