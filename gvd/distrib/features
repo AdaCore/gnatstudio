@@ -20,6 +20,8 @@ New features in GVD 1.2.0
 - New item in the source editor contextual menu: display dereferenced variable
 - New item in the source editor contextual menu: break on subprogram
 - The option "break on exceptions" has been implemented
+- It is possible to delete an exception by pressing the 'Delete' key in
+  the Breakpoints Window.
 - The Tab key is now supported in the debugger window.
 
 New features in GVD 1.1.0
