@@ -164,6 +164,9 @@ private
 
       Categories               : Highlighting_Category_Array_Access;
       --  Contains a list of registered categories.
+
+      Blank_Lines_GC           : Gdk.GC.Gdk_GC;
+      Post_It_Note_GC          : Gdk.GC.Gdk_GC;
    end record;
    type Source_Editor_Module is access all Source_Editor_Module_Record'Class;
 
