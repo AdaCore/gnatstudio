@@ -64,4 +64,26 @@ package body Src_Editor_View.Commands is
       return Success;
    end Execute;
 
+   -------------
+   -- Execute --
+   -------------
+
+   function Execute
+     (Command : access Scroll_Command; Event : Gdk.Event.Gdk_Event)
+      return Standard.Commands.Command_Return_Type
+   is
+      pragma Unreferenced (Event);
+      View   : constant Source_View   :=
+        Source_View (Get_Current_Focus_Widget (Command.Kernel));
+   begin
+      Scroll_To_Mark
+        (View,
+         View.Saved_Cursor_Mark,
+         Within_Margin => 0.0,
+         Use_Align => True,
+         Xalign => 0.0,
+         Yalign => 0.5);
+      return Success;
+   end Execute;
+
 end Src_Editor_View.Commands;
