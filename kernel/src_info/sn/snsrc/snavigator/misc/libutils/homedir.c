@@ -44,7 +44,7 @@ char *
 GetHomeDir()
 {
   char *home;
-#if _WINDOWS
+#ifdef _WINDOWS
   if ((home = getenv("HOME")))
     {
       LOGGER((LOGFP,"Using HOME (%s) from environment\n",home));
