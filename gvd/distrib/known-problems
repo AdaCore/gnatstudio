@@ -82,7 +82,7 @@ Known Problems in GVD 1.0.0
      Ignore the highlighting, or remove tabs from comments.
   Status: Fixed in GVD 1.0.1
 
-- Under Windows NT/2000, GVD would crash not crash on directory selection
+- Under Windows NT/2000, GVD would crash on directory selection
   Problem:
      When using the "File/Change Directory" menu item under NT/2000, GVD
      would generate a bug box.
