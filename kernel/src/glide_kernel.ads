@@ -24,6 +24,7 @@ with GNAT.OS_Lib;
 with Generic_List;
 with Gint_Xml;
 with Glib.Object;
+with Glib.Values;
 with Gtk.Handlers;
 with Gtk.Accel_Group;
 with Gtk.Menu;
@@ -96,16 +97,11 @@ package Glide_Kernel is
    --  Parse the given ALI file and return the new LI_File_Ptr created if
    --  the parsing was successful.
 
-   procedure Complete_ALI_File_If_Needed
-     (Handle      : access Kernel_Handle_Record;
-      LI_File     : in out Src_Info.LI_File_Ptr);
-   --  Parse the ALI file, but only if needed and it hasn't been done yet.
-
    function Get_Source_Info_List
      (Handle : access Kernel_Handle_Record) return Src_Info.LI_File_List;
    --  Return the Source Information List for the given Kernel Handle
 
-   function Locate_From_Source
+   function Locate_From_Source_And_Complete
      (Handle            : access Kernel_Handle_Record;
       Source_Filename   : String)
       return Src_Info.LI_File_Ptr;
@@ -227,6 +223,25 @@ package Glide_Kernel is
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
    --  General type for the module initialization subprograms.
 
+   type Mime_Mode is (Read_Only, Read_Write);
+   --  How the data should be opened. In some cases, it might happen that some
+   --  module is the best to display data read-only, but cannot handle the
+   --  edition (think of a web browser for instance).
+
+   type GValue_Array is array (Natural range <>) of Glib.Values.GValue;
+
+   type Module_Mime_Handler is access function
+     (Kernel    : access Kernel_Handle_Record'Class;
+      Mime_Type : String;
+      Data      : GValue_Array;
+      Mode      : Mime_Mode := Read_Write) return Boolean;
+   --  A function that can be registered by the module if it wants to process
+   --  MIME types.
+   --  If the module knows how to process some data of type Mime_Type, then it
+   --  should act on Data, and return True.
+   --  Otherwise, if it doesn't know how to act on Mime_Type, it should return
+   --  False. In that case, the next module will be queried.
+
    ---------------------
    -- Signal emission --
    ---------------------
@@ -303,6 +318,7 @@ private
       Priority        : Module_Priority;
       Initializer     : Module_Initializer;
       Contextual_Menu : Module_Menu_Handler;
+      Mime_Handler    : Module_Mime_Handler;
       Was_Initialized : Boolean := False;
    end record;
 
@@ -353,9 +369,6 @@ private
 
       Preferences : Gint_Xml.Node_Ptr;
       --  The XML tree that contains the current preferences
-
-      Current_Editor : Gtkada.MDI.MDI_Child;
-      --  The last editor that had the focus
 
       Scenario_Variables : Prj_API.Project_Node_Array_Access := null;
       --  The (cached) list of scenario variables for the current project. Note

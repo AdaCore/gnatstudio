@@ -274,11 +274,11 @@ package body Glide_Kernel is
          Success                => Success);
    end Parse_ALI_File;
 
-   ------------------------
-   -- Locate_From_Source --
-   ------------------------
+   -------------------------------------
+   -- Locate_From_Source_And_Complete --
+   -------------------------------------
 
-   function Locate_From_Source
+   function Locate_From_Source_And_Complete
      (Handle          : access Kernel_Handle_Record;
       Source_Filename : String) return Src_Info.LI_File_Ptr
    is
@@ -292,7 +292,7 @@ package body Glide_Kernel is
          Predefined_Object_Path => Get_Predefined_Object_Path (Handle),
          File                   => File);
       return File;
-   end Locate_From_Source;
+   end Locate_From_Source_And_Complete;
 
    ----------------------------
    -- Reset_Source_Info_List --
@@ -444,48 +444,6 @@ package body Glide_Kernel is
          Predefined_Object_Path => Get_Predefined_Object_Path (Handle),
          Unit_Name              => Unit_Name);
    end Get_Unit_Name;
-
-   ---------------------------------
-   -- Complete_Ali_File_If_Needed --
-   ---------------------------------
-
-   procedure Complete_ALI_File_If_Needed
-     (Handle      : access Kernel_Handle_Record;
-      LI_File     : in out Src_Info.LI_File_Ptr)
-   is
-      Unit          : Src_Info.LI_File_Ptr;
-      Parse_Success : Boolean;
-
-   begin
-      if Is_Incomplete (LI_File) then
-         declare
-            LI_Name : constant String :=
-              Find_Object_File
-                (Handle, Get_LI_Filename (LI_File),
-                 Use_Predefined_Object_Path => True);
-         begin
-            --  ??? Should we have another version of Parse_ALI_File that takes
-            --  ??? directly a LI_File_Ptr that needs to be completed.
-
-            Parse_ALI_File
-              (Handle       => Handle,
-               ALI_Filename => LI_Name,
-               Unit         => Unit,
-               Success      => Parse_Success);
-
-            if Parse_Success then
-               LI_File := Unit;
-            else
-               LI_File := No_LI_File;
-
-               --  ??? Should be printed in the status bar
-               Put_Line
-                 ("Complete_Ali_File_If_Needed: couldn't parse ALI file "
-                  & LI_Name);
-            end if;
-         end;
-      end if;
-   end Complete_ALI_File_If_Needed;
 
    ----------
    -- Free --
