@@ -2220,7 +2220,10 @@ package body Gtkada.MDI is
          Destroy (Child.MDI.Docks (Side));
          Child.MDI.Docks (Side) := null;
       else
-         Set_Show_Tabs (Note, Get_Nth_Page (Note, 1) /= null);
+         --  ??? Temporarily removed since it creates an infinite loop in
+         --  size_allocate in some circumstances
+         --  Set_Show_Tabs (Note, Get_Nth_Page (Note, 1) /= null);
+         Set_Show_Tabs (Note, False);
       end if;
 
       Child.State := Normal;
