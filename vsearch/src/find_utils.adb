@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2001-2003                       --
+--                     Copyright (C) 2001-2004                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -20,6 +20,7 @@
 
 with Ada.Unchecked_Deallocation;
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
+with Glib.Unicode;              use Glib.Unicode;
 with Boyer_Moore;               use Boyer_Moore;
 with Glide_Kernel;              use Glide_Kernel;
 with Traces;                    use Traces;
@@ -140,37 +141,11 @@ package body Find_Utils is
    is
       Last_Line_Start : Natural := Start_Index;
 
-      procedure To_Line_Column (Pos : Natural);
-      --  Set Line and Column to the appropriate for the Pos-th character in
-      --  Buffer.
-
       procedure Re_Search;
       --  Handle the search for a regular expression
 
       procedure BM_Search;
       --  Handle the search for a constant string
-
-      --------------------
-      -- To_Line_Column --
-      --------------------
-
-      procedure To_Line_Column (Pos : Natural) is
-      begin
-         for J in Ref_Index .. Pos - 1 loop
-            if Buffer (J) = ASCII.LF
-              or else (Buffer (J) = ASCII.CR
-                       and then Buffer (J + 1) /= ASCII.LF)
-            then
-               Ref_Line        := Ref_Line + 1;
-               Ref_Column      := 1;
-               Last_Line_Start := J + 1;
-            else
-               Ref_Column := Ref_Column + 1;
-            end if;
-         end loop;
-
-         Ref_Index := Pos;
-      end To_Line_Column;
 
       ---------------
       -- Re_Search --
@@ -199,10 +174,13 @@ package body Find_Utils is
               or else Context.Sub_Matches (0).First > Buffer'Last;
 
             Pos := Context.Sub_Matches (0).First;
-            To_Line_Column (Pos);
+            To_Line_Column
+              (Buffer (Ref_Index .. Buffer'Last),
+               Pos, Ref_Line, Ref_Column, Last_Line_Start);
+            Ref_Index := Pos;
 
             declare
-               Line : constant String :=
+               Line : String renames
                  Buffer (Last_Line_Start .. End_Of_Line (Buffer, Pos));
             begin
                if not Callback (Match_Result'
@@ -210,8 +188,10 @@ package body Find_Utils is
                   Index      => Pos,
                   Line       => Ref_Line,
                   Column     => Ref_Column,
-                  End_Column =>
-                    Ref_Column + Context.Sub_Matches (0).Last - Pos + 1,
+                  End_Column => Ref_Column +
+                    Integer (UTF8_Strlen
+                      (Buffer (Ref_Column ..
+                                 Context.Sub_Matches (0).Last))),
                   Text       => Line))
                then
                   Was_Partial := True;
@@ -254,7 +234,10 @@ package body Find_Utils is
                   or else Is_Word_Delimiter
                     (Buffer (Pos + Context.Look_For'Length))))
             then
-               To_Line_Column (Pos);
+               To_Line_Column
+                 (Buffer (Ref_Index .. Buffer'Last),
+                  Pos, Ref_Line, Ref_Column, Last_Line_Start);
+               Ref_Index := Pos;
 
                declare
                   Line : constant String :=
@@ -295,6 +278,36 @@ package body Find_Utils is
       when Invalid_Context =>
          null;
    end Scan_Buffer_No_Scope;
+
+   --------------------
+   -- To_Line_Column --
+   --------------------
+
+   procedure To_Line_Column
+     (Buffer       : Glib.UTF8_String;
+      Pos          : Natural;
+      Line, Column : in out Natural;
+      Line_Start   : in out Natural)
+   is
+      J : Natural := Buffer'First;
+   begin
+      loop
+         exit when J > Pos - 1;
+
+         if Buffer (J) = ASCII.LF
+           or else (Buffer (J) = ASCII.CR
+                    and then Buffer (J + 1) /= ASCII.LF)
+         then
+            Line        := Line + 1;
+            Column      := 1;
+            Line_Start := J + 1;
+         else
+            Column := Column + 1;
+         end if;
+
+         J := UTF8_Next_Char (Buffer, J);
+      end loop;
+   end To_Line_Column;
 
    ----------------------
    -- Context_Look_For --
