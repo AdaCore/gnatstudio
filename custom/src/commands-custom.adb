@@ -69,7 +69,7 @@ package body Commands.Custom is
       Context  : constant Selection_Context_Access :=
         Get_Current_Context (Command.Kernel);
       File     : File_Selection_Context_Access;
-      Success  : Boolean;
+      Success  : Boolean := False;
       No_Args  : String_List (1 .. 0);
       New_Args : Argument_List_Access;
       Last     : Integer;
@@ -274,18 +274,18 @@ package body Commands.Custom is
 
          Free (New_Args);
 
+      elsif Command.GPS_Command then
+         Interpret_Command (Command.Kernel, Command.Command.all);
+         Success := True;
+
       else
-         if Command.GPS_Command then
-            Interpret_Command (Command.Kernel, Command.Command.all);
-         else
-            Launch_Process
-              (Command.Kernel,
-               Command.Command.all,
-               No_Args,
-               null,
-               "",
-               Success);
-         end if;
+         Launch_Process
+           (Command.Kernel,
+            Command.Command.all,
+            No_Args,
+            null,
+            "",
+            Success);
       end if;
 
       return Success;
