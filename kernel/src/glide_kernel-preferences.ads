@@ -43,6 +43,10 @@ package Glide_Kernel.Preferences is
    --  Note that as much as possible, the preferences should be registered in
    --  the modules themselves.
 
+   procedure Register_Module
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
+   --  Register the preference module
+
    procedure Save_Preferences
      (Kernel : access Kernel_Handle_Record'Class; File_Name : String);
    --  See Default_Preferences.Save_Preferences.
