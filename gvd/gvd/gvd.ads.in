@@ -32,7 +32,7 @@ package GVD is
    --  Version number of this software.
 
    Prefix : constant String := "@prefix@";
-   --  Default prefix used e.g for finding suppoer files like po files.
+   --  Default prefix used e.g for finding support files like po files.
    --  Note that this prefix can be overriden by using the GVD_ROOT
    --  environment variable.
 
