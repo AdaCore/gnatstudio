@@ -39,10 +39,10 @@ package Glide_Kernel.Timeout is
    --  terminates.
 
    type Process_Data is record
-      Kernel     : Kernel_Handle;
-      Descriptor : GNAT.Expect.Process_Descriptor_Access;
-      Callback   : Output_Callback;
-      Exit_Cb    : Exit_Callback;
+      Kernel        : Kernel_Handle;
+      Descriptor    : GNAT.Expect.Process_Descriptor_Access;
+      Callback      : Output_Callback;
+      Exit_Cb       : Exit_Callback;
       Callback_Data : System.Address;
    end record;
 
