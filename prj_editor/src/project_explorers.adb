@@ -27,8 +27,6 @@ with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
 with Interfaces.C.Strings;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
-with Unchecked_Conversion;
-with System;
 
 with Gdk.Bitmap;           use Gdk.Bitmap;
 with Gdk.Color;            use Gdk.Color;
@@ -71,9 +69,6 @@ package body Project_Explorers is
    --  Id for the explorer module
 
    subtype String_Access is Basic_Types.String_Access;
-
-   function To_Chars_Ptr is new Unchecked_Conversion
-     (System.Address, Interfaces.C.Strings.chars_ptr);
 
    subtype Tree_Chars_Ptr_Array is Chars_Ptr_Array (1 .. Number_Of_Columns);
 
@@ -997,12 +992,10 @@ package body Project_Explorers is
       Node     : Gtk_Ctree_Node)
    is
       File_Name  : constant String := Get_File_From_Node (Explorer, Node);
-      Name       : constant String := File_Name & ASCII.NUL;
       Buffer     : String_Access;
       N          : Gtk_Ctree_Node;
       F          : File_Descriptor;
       Lang       : Language_Access;
-      Indent, Next_Indent : Natural;
       Constructs : Construct_List;
       Length     : Natural;
       Category   : Language_Category;
@@ -1012,7 +1005,7 @@ package body Project_Explorers is
       Categories : Ctree_Node_Array := (others => null);
 
    begin
-      F := Open_Read (Name, Binary);
+      F := Open_Read (File_Name, Binary);
 
       if F = Invalid_FD then
          return;
@@ -1025,13 +1018,7 @@ package body Project_Explorers is
       Lang := Get_Language_From_File (File_Name);
 
       if Lang /= null then
-         Parse_Constructs
-           (Lang,
-            To_Chars_Ptr (Buffer.all'Address),
-            Buffer_Length => Length,
-            Result        => Constructs,
-            Indent        => Indent,
-            Next_Indent   => Next_Indent);
+         Parse_Constructs (Lang, Buffer (1 .. Length), Constructs);
 
          Constructs.Current := Constructs.First;
 
