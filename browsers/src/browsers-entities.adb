@@ -451,6 +451,30 @@ package body Browsers.Entities is
          Maximum_Args => 0,
          Class        => Get_Entity_Class (Kernel),
          Handler      => Show_Entity_Command_Handler'Access);
+      Register_Command
+        (Kernel,
+         Command      => "discriminants",
+         Usage        => "() -> list",
+         Description  =>
+           -("Return the list of discriminants for entity. This is a list"
+             & " of entities, empty if the type has no discriminant or"
+             & " if this notion doesn't apply to that language"),
+         Minimum_Args => 0,
+         Maximum_Args => 0,
+         Class        => Get_Entity_Class (Kernel),
+         Handler      => Show_Entity_Command_Handler'Access);
+      Register_Command
+        (Kernel,
+         Command      => "fields",
+         Usage        => "() -> list",
+         Description  =>
+           -("Return the list of fields for entity. This is a list"
+             & " of entities, empty if the type has no field. This applies to"
+             & " Ada records and tagged types, or C structs for instance."),
+         Minimum_Args => 0,
+         Maximum_Args => 0,
+         Class        => Get_Entity_Class (Kernel),
+         Handler      => Show_Entity_Command_Handler'Access);
    end Register_Module;
 
    ---------------------------------
@@ -465,13 +489,67 @@ package body Browsers.Entities is
       Instance   : constant Class_Instance :=
         Nth_Arg (Data, 1, Get_Entity_Class (Kernel));
       Entity     : constant Entity_Information := Get_Data (Instance);
-      Child      : constant MDI_Child := Open_Type_Browser_Child (Kernel);
+      Child      : MDI_Child;
       Item       : Type_Item;
-      pragma Unreferenced (Item, Command);
+      pragma Unreferenced (Item);
    begin
       if Entity /= No_Entity_Information then
-         Item := Add_Or_Select_Item
-           (Browser => Type_Browser (Get_Widget (Child)), Entity  => Entity);
+         if Command = "show" then
+            Child := Open_Type_Browser_Child (Kernel);
+            Item := Add_Or_Select_Item
+              (Browser => Type_Browser (Get_Widget (Child)),
+               Entity  => Entity);
+
+         elsif Command = "discriminants" then
+            declare
+               Lib_Info : constant LI_File_Ptr :=
+                 Locate_From_Source_And_Complete
+                   (Kernel, Get_Declaration_File_Of (Entity));
+               Discriminants : Discriminant_Iterator := Get_Discriminants
+                 (Lib_Info, Entity);
+               Discr : Entity_Information;
+            begin
+               Set_Return_Value_As_List (Data);
+               loop
+                  Discr := Get (Discriminants);
+                  exit when Discr = No_Entity_Information;
+                  Set_Return_Value
+                    (Data, Create_Entity (Get_Script (Data), Discr));
+                  Destroy (Discr);
+                  Next (Discriminants);
+               end loop;
+            end;
+
+         elsif Command = "fields" then
+            declare
+               Lib_Info : constant LI_File_Ptr :=
+                 Locate_From_Source_And_Complete
+                   (Kernel, Get_Declaration_File_Of (Entity));
+               Tree : Scope_Tree;
+               Node : Scope_Tree_Node;
+               Iter : Scope_Tree_Node_Iterator;
+               Field : Entity_Information;
+            begin
+               Set_Return_Value_As_List (Data);
+               Get_Scope_Tree (Kernel, Entity, Tree, Node, True);
+               Iter := Start (Node);
+               loop
+                  Node := Get (Iter);
+                  exit when Node = Null_Scope_Tree_Node;
+                  Field := Get_Entity (Node);
+
+                  if not Is_Discriminant (Field, Lib_Info, Entity) then
+                     Set_Return_Value
+                       (Data, Create_Entity (Get_Script (Data), Field));
+                  end if;
+
+                  Destroy (Field);
+                  Next (Iter);
+               end loop;
+
+               Free (Tree);
+            end;
+         end if;
       end if;
    end Show_Entity_Command_Handler;
 
@@ -947,35 +1025,25 @@ package body Browsers.Entities is
       end loop;
 
 
-      Get_Scope_Tree (Kernel, Item.Entity, Tree, Node);
+      Get_Scope_Tree (Kernel, Item.Entity, Tree, Node, True);
+      Iter := Start (Node);
 
-      if Node /= Null_Scope_Tree_Node then
-         Iter := Start (Node);
+      loop
+         Node := Get (Iter);
+         exit when Node = Null_Scope_Tree_Node;
+         Field := Get_Entity (Node);
 
-         loop
-            Node := Get (Iter);
-            exit when Node = Null_Scope_Tree_Node;
-
-            --  Variable declarations and variable references will all
-            --  represent variables declared in the record.
-            --  ??? Problem with a case statement in an Ada record
-
-            if Is_Declaration (Node)
-            --  or else not Get_Kind (Node).Is_Type
-            then
-               Field := Get_Entity (Node);
-
-               if Is_Enum then
-                  Add_Line (List, Get_Name (Field));
-               else
-                  Add_Type (List, Item, Lib_Info, Field, Get_Name (Field));
-               end if;
-               Destroy (Field);
+         if not Is_Discriminant (Field, Lib_Info, Item.Entity) then
+            if Is_Enum then
+               Add_Line (List, Get_Name (Field));
+            else
+               Add_Type (List, Item, Lib_Info, Field, Get_Name (Field));
             end if;
+         end if;
 
-            Next (Iter);
-         end loop;
-      end if;
+         Destroy (Field);
+         Next (Iter);
+      end loop;
 
       Free (Tree);
    end Add_Fields;
