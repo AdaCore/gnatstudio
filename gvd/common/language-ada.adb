@@ -68,10 +68,16 @@ package body Language.Ada is
    --  and types.
    --  See the description of Explorer_Categories for more information.
 
+   function Remove_Ada_Comments (Str : String) return String;
+   --  Remove all Ada comments from the string (ie from -- to the next end of
+   --  line)
+
+   Comment_RE : constant String := "([ \t]*--[^\n]*)?";
+
    Subprogram_RE : aliased Pattern_Matcher :=
      Compile
        ("^[ \t]*(procedure|function)\s+" &
-        "(\w+)(\s*|\s*\([^\)]+\))\s*" &
+        "(\w+)(" & Comment_RE & "\s*|\s*\([^\)]+\)" & Comment_RE & ")\s*" &
         "(return\s+(\w|\.)+\s*)?(is\s|;)", Multiple_Lines);
 
    Package_RE    : aliased Pattern_Matcher :=
@@ -203,6 +209,27 @@ package body Language.Ada is
       return Ada_Explorer_Categories;
    end Explorer_Regexps;
 
+   -------------------------
+   -- Remove_Ada_Comments --
+   -------------------------
+
+   function Remove_Ada_Comments (Str : String) return String is
+      Result : String (Str'Range);
+      Result_Index : Natural := Result'First;
+      J : Natural := Str'First;
+   begin
+      while J <= Str'Last loop
+         if Str (J) = '-' and then Str (J + 1) = '-' then
+            Skip_To_Char (Str, J, ASCII.LF);
+         else
+            Result (Result_Index) := Str (J);
+            Result_Index := Result_Index + 1;
+         end if;
+         J := J + 1;
+      end loop;
+      return Result (Result'First .. Result_Index - 1);
+   end Remove_Ada_Comments;
+
    ---------------------------
    -- Make_Entry_Subprogram --
    ---------------------------
@@ -222,20 +249,22 @@ package body Language.Ada is
          else
             return Str (Matched (2).First .. Matched (2).Last)
               & " "
-              & Reduce (Str (Matched (4).First .. Matched (4).Last));
+              & Reduce (Remove_Ada_Comments
+                        (Str (Matched (4).First .. Matched (4).Last)));
          end if;
 
       elsif Matched (4) = No_Match then
          return
-           Str (Matched (2).First .. Matched (2).Last) & ' ' &
-           Reduce (Str (Matched (3).First .. Matched (3).Last));
+           Str (Matched (2).First .. Matched (2).Last) & ' ' & Reduce
+           (Remove_Ada_Comments (Str (Matched (3).First .. Matched (3).Last)));
 
       else
          return
-           Str (Matched (2).First .. Matched (2).Last) & ' ' &
-           Reduce (Str (Matched (3).First .. Matched (3).Last)
-                   & " "
-                   & Str (Matched (4).First .. Matched (4).Last));
+           Str (Matched (2).First .. Matched (2).Last) & ' ' & Reduce
+           (Remove_Ada_Comments
+            (Str (Matched (3).First .. Matched (3).Last)
+             & " "
+             & Str (Matched (4).First .. Matched (4).Last)));
       end if;
    end Make_Entry_Subprogram;
 
