@@ -8,7 +8,7 @@
 --                                                                          --
 --                            $Revision$
 --                                                                          --
---           Copyright (C) 2000-2001 Ada Core Technologies, Inc.            --
+--           Copyright (C) 2000-2002 Ada Core Technologies, Inc.            --
 --                                                                          --
 -- GNAT is free software;  you can  redistribute it  and/or modify it under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -44,9 +44,6 @@ package GNAT.Expect.TTY is
    type TTY_Process_Descriptor is new Process_Descriptor with private;
    --  Similar, but the parent is set up as a full terminal (Unix sense, see
    --  tty(4)).
-
-   function TTY_Name (Descriptor : TTY_Process_Descriptor) return String;
-   --  Return the name of the tty, or "" if not relevant on the target.
 
 private
 
