@@ -30,7 +30,6 @@ package Docgen.Work_On_File is
      (Source_File_List : in out Docgen.Type_Source_File_List.List;
       Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
       Options          : Docgen.All_Options;
-      Doc_Directory    : String;
       Doc_Suffix       : String;
       Converter        : Docgen.Doc_Subprogram_Type);
    --  Process all files from Source_File_List, and generate their
