@@ -1403,8 +1403,6 @@ package body Builder_Module is
          Builder_Module.Build_Item := null;
       end if;
 
-      Remove_All_Children (Menu);
-
       for M in Mains'Range loop
          Gtk_New (Mitem, Mains (M).all);
          Append (Menu, Mitem);
@@ -1459,8 +1457,6 @@ package body Builder_Module is
          Gtk_New (Menu);
       end if;
 
-      Remove_All_Children (Menu);
-
       for M in Mains'Range loop
          declare
             Full : constant String := Base_Name (Mains (M).all);
@@ -1500,15 +1496,37 @@ package body Builder_Module is
 
    begin
       --  Only add the shortcuts for the root project
-      Add_Build_Menu
-        (Menu         => Builder_Module.Make_Menu,
-         Project      => Get_Project (Kernel),
-         Kernel       => Kernel,
-         Set_Shortcut => True);
-      Add_Run_Menu
-        (Menu         => Builder_Module.Run_Menu,
-         Project      => Get_Project (Kernel),
-         Kernel       => Kernel);
+      --  Special case: if the root project is an extending project (which is
+      --  the case as soon as one of the other projects in the hierarchy is
+      --  also an extending, for instance when files where modified locally),
+      --  we want to add the main units of the parent as well, otherwise the
+      --  build menu becomes useless as soon as we are using extending
+      --  projects.
+
+      declare
+         P : Project_Type := Get_Project (Kernel);
+      begin
+         if Builder_Module.Make_Menu /= null then
+            Remove_All_Children (Builder_Module.Make_Menu);
+         end if;
+
+         if Builder_Module.Run_Menu /= null then
+            Remove_All_Children (Builder_Module.Run_Menu);
+         end if;
+
+         while P /= No_Project loop
+            Add_Build_Menu
+              (Menu         => Builder_Module.Make_Menu,
+               Project      => P,
+               Kernel       => Kernel,
+               Set_Shortcut => True);
+            Add_Run_Menu
+              (Menu         => Builder_Module.Run_Menu,
+               Project      => P,
+               Kernel       => Kernel);
+            P := Parent_Project (P);
+         end loop;
+      end;
 
       --  No main program ?
 
