@@ -541,7 +541,7 @@ The GPS menu bar can be customized through an XML file called
 @file{custom} in the gps home directory (@file{~/.gps} on Unix
 systems).
 
-The format of this file is the following:
+Here is an example for such a file:
 
 @smallexample
 <?xml version="1.0"?>
