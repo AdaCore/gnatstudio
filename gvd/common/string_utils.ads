@@ -167,7 +167,7 @@ package String_Utils is
    --  or "" if there is none.
    --  This function is now obsolete, and you should use
    --  GNAT.Directories.File_Extension instead. it is kept for compatibility
-   --  with 3.14p only.
+   --  with 3.14 only.
 
    function Name_As_Directory
      (Name  : String;
@@ -175,7 +175,7 @@ package String_Utils is
         GNAT.Directory_Operations.System_Default) return String;
    --  Add a directory separator at the end of Name if there is none.
    --  This also normalizes the pathname (see
-   --  GNAT.Directory_Operations.Normalize_Pathname).
+   --  GNAT.Directory_Operations.Format_Pathname).
    --  ??? Should go into GNAT.Directory_Operations
 
    function Suffix_Matches
