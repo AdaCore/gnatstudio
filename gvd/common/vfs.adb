@@ -684,7 +684,12 @@ package body VFS is
      (Value : in out Glib.Values.GValue; File : Virtual_File) is
    begin
       Init (Value, Get_Virtual_File_Type);
-      Set_Boxed (Value, File.Value.all'Address);
+
+      if File.Value = null then
+         Set_Boxed (Value, System.Null_Address);
+      else
+         Set_Boxed (Value, File.Value.all'Address);
+      end if;
    end Set_File;
 
    --------------
@@ -695,7 +700,11 @@ package body VFS is
       File : Virtual_File;
    begin
       File.Value := To_Contents_Access (Get_Boxed (Value));
-      File.Value.Ref_Count := File.Value.Ref_Count + 1;
+
+      if File.Value /= null then
+         File.Value.Ref_Count := File.Value.Ref_Count + 1;
+      end if;
+
       return File;
    end Get_File;
 
