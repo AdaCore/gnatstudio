@@ -44,7 +44,9 @@ package Display_Items is
       Variable_Name  : String;
       Debugger       : access GVD.Process.Debugger_Process_Tab_Record'CLass;
       Auto_Refresh   : Boolean := True;
-      Default_Entity : Items.Generic_Type_Access := null);
+      Default_Entity : Items.Generic_Type_Access := null;
+      Link_From      : Display_Item := null;
+      Link_Name      : String := "");
    --  Create a new item to display the value of Variable_Name.
    --  Auto_Refresh should be set to True if the value of Variable should
    --  be parsed again whenever the debugger stops. This is the default
@@ -54,17 +56,9 @@ package Display_Items is
    --  or value of the variable.
    --  Default_Entity can be used to initialize the entity associated with the
    --  item. This will be used instead of Variable_Name if not null.
-
-   procedure Gtk_New_And_Put
-     (Item           : out Display_Item;
-      Win            : Gdk.Window.Gdk_Window;
-      Variable_Name  : String;
-      Debugger       : access GVD.Process.Debugger_Process_Tab_Record'Class;
-      Auto_Refresh   : Boolean := True;
-      Link_From      : access Display_Item_Record'Class;
-      Link_Name      : String := "";
-      Default_Entity : Items.Generic_Type_Access := null);
-   --  Same as above, but also create a link from Link_From to the new item.
+   --
+   --  If Link_From is not null, the new item is directly inserted in the
+   --  canvas, and a link is created between the new item and Link_From.
    --  Link_Name is the label used for the link between the two items.
 
    procedure Free
