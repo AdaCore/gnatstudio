@@ -26,7 +26,6 @@ with Gtkada.Dialogs;               use Gtkada.Dialogs;
 with Gtkada.File_Selection;        use Gtkada.File_Selection;
 with Gtkada.File_Selector;         use Gtkada.File_Selector;
 with Gtkada.File_Selector.Filters; use Gtkada.File_Selector.Filters;
-with Gtkada.MDI;                   use Gtkada.MDI;
 
 with Glide_Intl;              use Glide_Intl;
 
@@ -40,12 +39,9 @@ with Glide_Kernel;            use Glide_Kernel;
 with Glide_Kernel.Console;    use Glide_Kernel.Console;
 with Glide_Kernel.Editor;     use Glide_Kernel.Editor;
 with Glide_Kernel.Project;    use Glide_Kernel.Project;
-with Glide_Kernel.Browsers;   use Glide_Kernel.Browsers;
 
 with Glide_Main_Window;       use Glide_Main_Window;
 with Glide_Page;              use Glide_Page;
-
-with Browsers;                use Browsers;
 
 with Vdiff_Pkg;               use Vdiff_Pkg;
 with Vdiff_Utils;             use Vdiff_Utils;
@@ -243,12 +239,6 @@ package body Glide_Menu is
       Action : Guint;
       Widget : Limited_Widget);
    --  Tools->Compare->Two Files menu
-
-   procedure On_Dependency_Browser
-     (Object : Data_Type_Access;
-      Action : Guint;
-      Widget : Limited_Widget);
-   --  Tools->Dependency Browser
 
    procedure On_Manual
      (Object : Data_Type_Access;
@@ -1020,24 +1010,6 @@ package body Glide_Menu is
          Log_Exception (E);
    end On_Compare_Two_Files;
 
-   ---------------------------
-   -- On_Dependency_Browser --
-   ---------------------------
-
-   procedure On_Dependency_Browser
-     (Object : Data_Type_Access;
-      Action : Guint;
-      Widget : Limited_Widget)
-   is
-      Child : MDI_Child;
-   begin
-      Child := Open_Browser (Glide_Window (Object).Kernel, Dependency_Browser);
-
-   exception
-      when E : others =>
-         Log_Exception (E);
-   end On_Dependency_Browser;
-
    ---------------
    -- On_Manual --
    ---------------
@@ -1201,9 +1173,6 @@ package body Glide_Menu is
          Gtk_New (-"/_Tools", Item_Type => Branch),
          Gtk_New (-"/_Tools/Pretty Print", "", null),
          Gtk_New (-"/_Tools/Generate Body", "", On_Generate_Body'Access),
-         Gtk_New (-"/_Tools/Class Browser...", "", null),
-         Gtk_New (-"/_Tools/Dependency Browser...", "",
-                  On_Dependency_Browser'Access),
          Gtk_New (-"/_Tools/Call Graph...", "", null),
          Gtk_New (-"/_Tools/Metrics...", "", null),
          Gtk_New (-"/_Tools/Code Fixing...", "", null),
