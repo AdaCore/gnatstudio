@@ -1008,7 +1008,7 @@ package body Directory_Tree is
 
       if My_Dialog_Record (Dialog.all).Cancelled then
          Destroy (Dialog);
-         return (1 .. 2 => null);
+         return (2 .. 1 => null);
       else
          declare
             List : constant Argument_List := Get_Multiple_Selection (Selector);
