@@ -298,8 +298,6 @@ procedure GPS is
    ------------------
 
    function Finish_Setup (Data : Process_Data) return Boolean is
-      pragma Unreferenced (Data);
-
       System_Rc         : constant String :=
         Format_Pathname (Prefix.all & "/etc/gps/gtkrc");
       Rc                : constant String :=
@@ -310,6 +308,8 @@ procedure GPS is
         String_Utils.Name_As_Directory (Dir.all) & "custom_key";
       Auto_Load_Project : Boolean := True;
       Screen            : Welcome_Screen;
+      Had_Project_Desktop : Boolean;
+      pragma Unreferenced (Had_Project_Desktop, Data);
 
    begin
       --  Parse the system's RC file
@@ -449,9 +449,11 @@ procedure GPS is
 
          if not Auto_Load_Project then
             --  Load a default project, in case the wizard needs to be
-            --  launched.
+            --  launched. Do not load the desktop immediately, since this would
+            --  display the GPS window at the same time as the welcome dialog.
 
-            Load_Default_Project (GPS.Kernel, Get_Current_Dir);
+            Load_Default_Project
+              (GPS.Kernel, Get_Current_Dir, Load_Default_Desktop => False);
 
             --  Load the project selected by the user
 
@@ -476,6 +478,10 @@ procedure GPS is
                Gtk.Main.Main_Quit;
                return False;
             end if;
+
+            --  We can now load the desktop
+
+            Had_Project_Desktop := Load_Desktop (GPS.Kernel);
 
             Destroy (Screen);
          end if;
