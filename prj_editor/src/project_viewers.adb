@@ -1893,6 +1893,7 @@ package body Project_Viewers is
          end;
 
          if not Equal then
+            Trace (Me, "Source dirs modified");
             Update_Attribute_Value_In_Scenario
               (Project            => Project,
                Pkg_Name           => "",
@@ -1904,6 +1905,7 @@ package body Project_Viewers is
          end if;
 
       else
+         Trace (Me, "Source dirs modified since there was no project view");
          Equal := False;
          Update_Attribute_Value_In_Scenario
            (Project            => Project,
@@ -2089,7 +2091,7 @@ package body Project_Viewers is
       end if;
 
       if Project_View = No_Project
-        or else New_Dir.all /= Name_As_Directory
+        or else Get_Text (Obj_Dir.Obj_Dir) /= Name_As_Directory
         (Normalize_Pathname (Get_String
           (Prj.Projects.Table (Project_View).Object_Directory)))
       then
@@ -2107,13 +2109,19 @@ package body Project_Viewers is
                Value              => New_Dir.all);
          end if;
 
+         Trace (Me, "Object directory was modified");
          Changed := True;
       end if;
 
       if Project_View = No_Project
-        or else Exec_Dir.all /= Name_As_Directory
-        (Normalize_Pathname (Get_String
-          (Prj.Projects.Table (Project_View).Exec_Directory)))
+        or else (Get_Active (Obj_Dir.Same)
+                 and then Get_Text (Obj_Dir.Obj_Dir) /= Name_As_Directory
+                 (Normalize_Pathname (Get_String
+                    (Prj.Projects.Table (Project_View).Exec_Directory))))
+        or else (not Get_Active (Obj_Dir.Same)
+                 and then Get_Text (Obj_Dir.Exec_Dir) /= Name_As_Directory
+                 (Normalize_Pathname (Get_String
+                    (Prj.Projects.Table (Project_View).Exec_Directory))))
       then
          if Exec_Dir.all = "" then
             Delete_Attribute
@@ -2129,6 +2137,7 @@ package body Project_Viewers is
                Value              => Exec_Dir.all);
          end if;
 
+         Trace (Me, "Exec directory was modified");
          Changed := True;
       end if;
 
