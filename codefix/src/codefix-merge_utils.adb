@@ -19,8 +19,11 @@
 -----------------------------------------------------------------------
 
 with GNAT.OS_Lib; use GNAT.OS_Lib;
+with Traces; use Traces;
 
 package body Codefix.Merge_Utils is
+
+   Me : constant Debug_Handle := Create ("Codefix");
 
    -------------------
    -- Generic_Merge --
@@ -89,6 +92,7 @@ package body Codefix.Merge_Utils is
                It_1 := Next (It_1);
                It_2 := Next (It_2);
             when Unit_Deleted =>
+               Trace (Me, "Merge_Modified: Unit was deleted");
                Success := False;
             when Unit_Created =>
                Append (Internal_Result, Clone (Data (It_1)));
@@ -104,6 +108,7 @@ package body Codefix.Merge_Utils is
                It_1 := Next (It_1);
                It_2 := Next (It_2);
             when Unit_Modified =>
+               Trace (Me, "Merge_Deleted: Unit was modified");
                Success := False;
             when Unit_Deleted =>
                Append (Internal_Result, Clone (Data (It_1)));
@@ -550,6 +555,7 @@ package body Codefix.Merge_Utils is
    is
       pragma Unreferenced (Object_1, Object_2, Chronologic_Changes);
    begin
+      Trace (Me, "Merge_Null");
       Result := (Character'Val (0), Original_Unit);
       Success := False;
    end Merge_Null;
