@@ -5,14 +5,14 @@ CP=cp -p
 
 build:
 	cd standalone_obj; gcc -c ../common/file-utils.c
-	gnatmake -m -a ${GNATMAKE_FLAGS} -Pstandalone read_ali $(LARGS)
-	gnatmake -m -a ${GNATMAKE_FLAGS} -Pstandalone read_many_ali $(LARGS)
-	gnatmake -m -a ${GNATMAKE_FLAGS} -Pstandalone read_ali_twice $(LARGS)
-	gnatmake -m -a ${GNATMAKE_FLAGS} -Pstandalone read_scope_tree $(LARGS)
-	gnatmake -m -a ${GNATMAKE_FLAGS} -Pstandalone find_ref $(LARGS)
-	gnatmake -m -a ${GNATMAKE_FLAGS} -Pstandalone find_local_ref $(LARGS)
-	gnatmake -m -a ${GNATMAKE_FLAGS} -Pstandalone find_dep $(LARGS)
-	gnatmake -m -a ${GNATMAKE_FLAGS} -Pstandalone generate_db $(LARGS)
+	gnatmake -m -a ${GNATMAKE_FLAGS} -Pstandalone read_ali $(LARGS) `gtkada-config`
+	gnatmake -m -a ${GNATMAKE_FLAGS} -Pstandalone read_many_ali $(LARGS) `gtkada-config`
+	gnatmake -m -a ${GNATMAKE_FLAGS} -Pstandalone read_ali_twice $(LARGS) `gtkada-config`
+	gnatmake -m -a ${GNATMAKE_FLAGS} -Pstandalone read_scope_tree $(LARGS) `gtkada-config`
+	gnatmake -m -a ${GNATMAKE_FLAGS} -Pstandalone find_ref $(LARGS) `gtkada-config`
+	gnatmake -m -a ${GNATMAKE_FLAGS} -Pstandalone find_local_ref $(LARGS) `gtkada-config`
+	gnatmake -m -a ${GNATMAKE_FLAGS} -Pstandalone find_dep $(LARGS) `gtkada-config`
+	gnatmake -m -a ${GNATMAKE_FLAGS} -Pstandalone generate_db $(LARGS) `gtkada-config`
 
 distrib:
 	@-mkdir -p gvd gnat > /dev/null 2>&1
@@ -22,9 +22,6 @@ distrib:
 	$(CP) ../../gvd/common/htables.ad? common
 	$(CP) ../../gvd/common/string_hash.ad? common
 	$(CP) ../../gvd/common/traces.ad? common
-	$(CP) ../../gtkada/src/glib-graphs.ad? gtkada
-	$(CP) ../../gtkada/src/gtkada.ads gtkada
-	$(CP) ../../gtkada/src/gtkada-intl.ad? gtkada
 	$(CP) ../../gvd/common/basic_types.ad? gvd
 	$(CP) ../../gvd/common/os_utils.ad? gvd
 	$(CP) ../../gvd/common/vfs.ad? gvd
