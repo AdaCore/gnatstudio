@@ -294,6 +294,7 @@ package body Projects.Registry is
             Registry.Data.Root := No_Project;
          end if;
 
+         Unchecked_Free (Registry.Data.Predefined_Source_Files);
          Reset (Registry.Data.Sources);
          Reset (Registry.Data.Directories);
          Reset_Scenario_Variables_Cache (Registry);
