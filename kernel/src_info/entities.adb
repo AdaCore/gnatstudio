@@ -1,17 +1,38 @@
+-----------------------------------------------------------------------
+--                               G P S                               --
+--                                                                   --
+--                        Copyright (C) 2003                         --
+--                            ACT-Europe                             --
+--                                                                   --
+-- GPS is free  software;  you can redistribute it and/or modify  it --
+-- under the terms of the GNU General Public License as published by --
+-- the Free Software Foundation; either version 2 of the License, or --
+-- (at your option) any later version.                               --
+--                                                                   --
+-- This program is  distributed in the hope that it will be  useful, --
+-- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
+-- General Public License for more details. You should have received --
+-- a copy of the GNU General Public License along with this program; --
+-- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
+-- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
+-----------------------------------------------------------------------
+
 with Ada.Calendar; use Ada.Calendar;
 with Ada.Unchecked_Deallocation;
-with Basic_Types;
 with VFS;          use VFS;
 with GNAT.OS_Lib;  use GNAT.OS_Lib;
 with Traces;       use Traces;
 
 package body Entities is
-
-   Me : constant Debug_Handle := Create ("Entities");
+   Assert_Me : constant Debug_Handle := Create ("Entities.Assert", Off);
 
    use Entities_Tries;
    use Files_HTable;
    use LI_HTable;
+   use File_Location_Arrays;
+   use Entity_Information_Arrays;
+   use Source_File_Arrays;
 
    function String_Hash is new HTables.Hash (HTable_Header);
 
@@ -26,34 +47,30 @@ package body Entities is
    --  Add a new entity to the list of entities for this file. No check is done
    --  whether the entity is already there or not
 
-   procedure Add_And_Grow is new Basic_Types.Add_And_Grow
-     (Data       => Source_File,
-      Index      => Natural,
-      Arr        => Source_File_Array,
-      Arr_Access => Source_File_Array_Access,
-      Multiplier => 1);
-
-   procedure Add_And_Grow is new Basic_Types.Add_And_Grow
-     (Data       => Entity_Information,
-      Index      => Natural,
-      Arr        => Entity_Information_Array,
-      Arr_Access => Entity_Information_Array_Access,
-      Multiplier => 1);
-
-   procedure Add_And_Grow is new Basic_Types.Add_And_Grow
-     (Data       => File_Location,
-      Index      => Natural,
-      Arr        => File_Location_Array,
-      Arr_Access => File_Location_Array_Access,
-      Multiplier => 1);
-
    procedure Reset (Entity : Entity_Information; File : Source_File);
    --  Remove all references to File in Entity.
 
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (Entity_Information_Array, Entity_Information_Array_Access);
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (File_Location_Array, File_Location_Array_Access);
+   procedure Isolate (Entity : in out Entity_Information);
+   --  Isolate the entity from the rest of the LI structure. This should be
+   --  used when we are removing the entity from the internal tables, but the
+   --  user has kept a handle on it, to avoid memory leaks.
+
+   procedure Cleanup_All_Entities_Field (File : Source_File);
+   --  Cleanup the All_Entities field for all the files in the database,
+   --  to remove references to File.
+
+   procedure Add_All_Entities
+     (File : Source_File; Entity : Entity_Information);
+   --  Add Entity to the list of All_Entities known in File, if Entity is not
+   --  there yet and is not declared in File.
+
+   procedure Reset_All_Entities (File : Source_File);
+   --  Reset all the entities declared in File
+
+   procedure Free_All_Entities (File : Source_File);
+   --  Free all entities declared in File, and remove them from internal
+   --  tables. This ensures that the entities that are still referenced
+   --  externally will still be usable.
 
    --------------
    -- Get_Name --
@@ -76,12 +93,11 @@ package body Entities is
      (D : Entity_Information_List_Access) return String_Access is
    begin
       if D = null
-        or else D.List = null
-        or else D.List'First >= D.Past_Last
+        or else Length (D.all) = 0
       then
          return null;
       else
-         return Get_Name (D.List (D.List'First));
+         return Get_Name (D.Table (Entity_Information_Arrays.First));
       end if;
    end Get_Name;
 
@@ -105,6 +121,8 @@ package body Entities is
         (Source_File_Record'Class, Source_File);
    begin
       if F /= null then
+         Assert (Assert_Me, F.Ref_Count > 0, "Too many unref");
+
          F.Ref_Count := F.Ref_Count - 1;
          if F.Ref_Count = 0 then
             --  File not removed from htable explicitely. Unref is already
@@ -116,105 +134,136 @@ package body Entities is
       end if;
    end Unref;
 
+   --------------------------------
+   -- Cleanup_All_Entities_Field --
+   --------------------------------
+
+   procedure Cleanup_All_Entities_Field (File : Source_File) is
+      Iter : Entities_Tries.Iterator;
+      EL   : Entity_Information_List_Access;
+   begin
+      for F in Source_File_Arrays.First .. Last (File.Depended_On) loop
+         Iter := Start (File.Depended_On.Table (F).All_Entities, "");
+         loop
+            EL := Get (Iter);
+            exit when EL = null;
+
+            Next (Iter);
+
+            for E in Entity_Information_Arrays.First .. Last (EL.all) loop
+               if EL.Table (E).Declaration.File = File then
+                  Remove
+                    (File.Depended_On.Table (F).All_Entities, EL.Table (E));
+               end if;
+            end loop;
+         end loop;
+         Free (Iter);
+      end loop;
+   end Cleanup_All_Entities_Field;
+
+   ----------------------
+   -- Add_All_Entities --
+   ----------------------
+
+   procedure Add_All_Entities
+     (File : Source_File; Entity : Entity_Information) is
+   begin
+      if Entity.Declaration.File /= File then
+         Add (File.All_Entities, Entity, Check_Duplicates => True);
+      end if;
+   end Add_All_Entities;
+
+   ------------------------
+   -- Reset_All_Entities --
+   ------------------------
+
+   procedure Reset_All_Entities (File : Source_File) is
+      Iter : Entities_Tries.Iterator := Start (File.All_Entities, "");
+      EL   : Entity_Information_List_Access;
+   begin
+      loop
+         EL := Get (Iter);
+         exit when EL = null;
+
+         for E in Entity_Information_Arrays.First .. Last (EL.all) loop
+            Reset (EL.Table (E), File);
+         end loop;
+
+         Next (Iter);
+      end loop;
+      Free (Iter);
+   end Reset_All_Entities;
+
+   -----------------------
+   -- Free_All_Entities --
+   -----------------------
+
+   procedure Free_All_Entities (File : Source_File) is
+      Iter : Entities_Tries.Iterator := Start (File.Entities, "");
+      EL   : Entity_Information_List_Access;
+   begin
+      loop
+         EL := Get (Iter);
+         exit when EL = null;
+
+         for E in Entity_Information_Arrays.First .. Last (EL.all) loop
+            Remove (File.LI.Db.Entities, EL.Table (E));
+
+            if EL.Table (E).Ref_Count > 1 then
+               Isolate (EL.Table (E));
+            end if;
+
+            Unref (EL.Table (E));
+         end loop;
+
+         Next (Iter);
+      end loop;
+      Free (Iter);
+   end Free_All_Entities;
+
    -----------
    -- Reset --
    -----------
 
    procedure Reset (File : Source_File) is
-      Iter : Entities_Tries.Iterator;
-      EL   : Entity_Information_List_Access;
    begin
-      --  For all files that references some entity of File, no need to keep
-      --  a reference
-      if File.Depended_On.List /= null then
-         for F in File.Depended_On.List'First ..
-           File.Depended_On.Past_Last - 1
-         loop
-            Iter := Start (File.Depended_On.List (F).All_Entities, "");
-            loop
-               EL := Get (Iter);
-               exit when EL = null;
+      Cleanup_All_Entities_Field (File);
 
-               Next (Iter);
-
-               for E in EL.List'First .. EL.Past_Last - 1 loop
-                  if EL.List (E).Declaration.File = File then
-                     Remove (File.Depended_On.List (F).All_Entities,
-                             EL.List (E));
-                  end if;
-               end loop;
-            end loop;
-            Free (Iter);
-
-            Remove (File.Depended_On.List (F).Depends_On, File);
-         end loop;
-      end if;
-
-      if File.Depends_On.List /= null then
-         for F in File.Depends_On.List'First ..
-           File.Depends_On.Past_Last - 1
-         loop
-            Remove (File.Depends_On.List (F).Depended_On, File);
-         end loop;
-      end if;
-
-      --  For all other entities referenced in File, make sure they no longer
-      --  access File through one of their fields
-
-      Iter := Start (File.All_Entities, "");
-      loop
-         EL := Get (Iter);
-         exit when EL = null;
-
-         for E in reverse EL.List'First .. EL.Past_Last - 1 loop
-            Reset (EL.List (E), File);
-         end loop;
-
-         Next (Iter);
+      for F in Source_File_Arrays.First .. Last (File.Depended_On) loop
+         Remove (File.Depended_On.Table (F).Depends_On, File);
       end loop;
-      Free (Iter);
 
-      --  Free all the entities declared in this file. The user might of
-      --  course still have a handle on these.
-      --  This must be done last, since the tests above will access these
-      --  entities.
-
-      Iter := Start (File.Entities, "");
-      loop
-         EL := Get (Iter);
-         exit when EL = null;
-
-         for E in reverse EL.List'First .. EL.Past_Last - 1 loop
-            Remove (File.LI.Db.Entities, EL.List (E));
-
-            if EL.List (E).Ref_Count > 1 then
-               EL.List (E).End_Of_Scope    := No_File_Location;
-               Destroy (EL.List (E).Parent_Types);
-               EL.List (E).Pointed_Type    := null;
-               EL.List (E).Returned_Type   := null;
-               EL.List (E).Primitive_Op_Of := null;
-               EL.List (E).Rename          := null;
-               Destroy (EL.List (E).Primitive_Subprograms);
-               Destroy (EL.List (E).Child_Types);
-               Destroy (EL.List (E).References);
-            end if;
-
-            Unref (EL.List (E));
-         end loop;
-
-         Next (Iter);
+      for F in Source_File_Arrays.First .. Last (File.Depends_On) loop
+         Remove (File.Depends_On.Table (F).Depended_On, File);
       end loop;
-      Free (Iter);
 
-      --  Free all other fields
+      Reset_All_Entities (File);
+      Free_All_Entities (File);
 
       Clear (File.Entities);
-      Destroy (File.Depends_On);
-      Destroy (File.Depended_On);
+      Free (File.Depends_On);
+      Free (File.Depended_On);
       Destroy (File.Scope);
       Clear (File.All_Entities);
       File.Is_Valid := False;
    end Reset;
+
+   -------------
+   -- Isolate --
+   -------------
+
+   procedure Isolate (Entity : in out Entity_Information) is
+   begin
+      Entity.End_Of_Scope    := No_File_Location;
+      Entity.Pointed_Type    := null;
+      Entity.Returned_Type   := null;
+      Entity.Primitive_Op_Of := null;
+      Entity.Rename          := null;
+      Free (Entity.Parent_Types);
+      Free (Entity.Primitive_Subprograms);
+      Free (Entity.Child_Types);
+      Free (Entity.References);
+   end Isolate;
 
    -----------
    -- Reset --
@@ -224,7 +273,15 @@ package body Entities is
       procedure Check_And_Remove (E : in out Entity_Information);
       procedure Check_And_Remove (E : in out Entity_Information_List);
       procedure Check_And_Remove (E : in out File_Location_List);
+      procedure Check_And_Remove (Loc : in out File_Location);
       --  Remove all references to File in E
+
+      procedure Check_And_Remove (Loc : in out File_Location) is
+      begin
+         if Loc.File = File then
+            Loc := No_File_Location;
+         end if;
+      end Check_And_Remove;
 
       procedure Check_And_Remove (E : in out Entity_Information) is
       begin
@@ -234,58 +291,28 @@ package body Entities is
       end Check_And_Remove;
 
       procedure Check_And_Remove (E : in out Entity_Information_List) is
-         J : Integer;
       begin
-         if E.List /= null then
-            J := E.List'First;
-
-            while J < E.Past_Last loop
-               if E.List (J).Declaration.File = File then
-                  if J + 1 <= E.Past_Last - 1 then
-                     E.List (J .. E.Past_Last - 2) :=
-                       E.List (J + 1 .. E.Past_Last - 1);
-                  end if;
-                  E.Past_Last := E.Past_Last - 1;
-               else
-                  J := J + 1;
-               end if;
-            end loop;
-
-            if E.Past_Last = E.List'First then
-               Unchecked_Free (E.List);
+         for J in reverse Entity_Information_Arrays.First .. Last (E) loop
+            if E.Table (J).Declaration.File = File then
+               Remove (E, J);
             end if;
-         end if;
+         end loop;
       end Check_And_Remove;
 
       procedure Check_And_Remove (E : in out File_Location_List) is
-         J : Integer;
       begin
-         if E.List /= null then
-            J := E.List'First;
-            while J < E.Past_Last loop
-               if E.List (J).File = File then
-                  E.List (J .. E.Past_Last - 2) :=
-                    E.List (J + 1 .. E.Past_Last - 1);
-                  E.Past_Last := E.Past_Last - 1;
-               else
-                  J := J + 1;
-               end if;
-            end loop;
-
-            if E.Past_Last = E.List'First then
-               Unchecked_Free (E.List);
+         for J in reverse File_Location_Arrays.First .. Last (E) loop
+            if E.Table (J).File = File then
+               Remove (E, J);
             end if;
-         end if;
+         end loop;
       end Check_And_Remove;
 
    begin
-      Assert (Me, Entity.Declaration.File /= File,
+      Assert (Assert_Me, Entity.Declaration.File /= File,
               "Entity should have been on .Entities list, not .All_Entities");
 
-      if Entity.End_Of_Scope.File = File then
-         Entity.End_Of_Scope := No_File_Location;
-      end if;
-
+      Check_And_Remove (Entity.End_Of_Scope);
       Check_And_Remove (Entity.Parent_Types);
       Check_And_Remove (Entity.Pointed_Type);
       Check_And_Remove (Entity.Returned_Type);
@@ -295,44 +322,6 @@ package body Entities is
       Check_And_Remove (Entity.Child_Types);
       Check_And_Remove (Entity.References);
    end Reset;
-
-   ------------
-   -- Length --
-   ------------
-
-   function Length (List : Entity_Information_List) return Natural is
-   begin
-      if List.List = null then
-         return 0;
-      else
-         return List.Past_Last - List.List'First;
-      end if;
-   end Length;
-
-   ------------
-   -- Remove --
-   ------------
-
-   procedure Remove
-     (List : in out Entity_Information_List; Item : Entity_Information) is
-   begin
-      if List.List /= null then
-         for L in List.List'First .. List.Past_Last - 1 loop
-            if List.List (L) = Item then
-               if L < List.Past_Last - 1 then
-                  List.List (L .. List.Past_Last - 2) :=
-                    List.List (L + 1 .. List.Past_Last - 1);
-               end if;
-               List.Past_Last := List.Past_Last - 1;
-
-               if List.List'First = List.Past_Last then
-                  Unchecked_Free (List.List);
-               end if;
-               exit;
-            end if;
-         end loop;
-      end if;
-   end Remove;
 
    ------------
    -- Remove --
@@ -374,30 +363,6 @@ package body Entities is
       end if;
    end Destroy;
 
-   -------------
-   -- Destroy --
-   -------------
-
-   procedure Destroy (List : in out File_Location_List) is
-   begin
-      if List.List /= null then
-         Unchecked_Free (List.List);
-      end if;
-   end Destroy;
-
-   -------------
-   -- Destroy --
-   -------------
-
-   procedure Destroy (List : in out Source_File_List) is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Source_File_Array, Source_File_Array_Access);
-   begin
-      if List.List /= null then
-         Unchecked_Free (List.List);
-      end if;
-   end Destroy;
-
    -----------
    -- Unref --
    -----------
@@ -407,15 +372,16 @@ package body Entities is
         (LI_File_Record'Class, LI_File);
    begin
       if LI /= null then
+         Assert (Assert_Me, LI.Ref_Count > 0, "Too many calls to unref");
          LI.Ref_Count := LI.Ref_Count - 1;
          if LI.Ref_Count = 0 then
             --  Do not remove the file from the htable, since Unref is
             --  called after a removal, and the user shouldn't call Unref
             --  more often than Ref
-            for L in LI.Files.List'First .. LI.Files.Past_Last - 1 loop
-               LI.Files.List (L).LI := null;
+            for L in Source_File_Arrays.First .. Last (LI.Files) loop
+               LI.Files.Table (L).LI := null;
             end loop;
-            Destroy (LI.Files);
+            Free (LI.Files);
             Unchecked_Free (LI);
          end if;
       end if;
@@ -441,13 +407,14 @@ package body Entities is
         (Entity_Information_Record'Class, Entity_Information);
    begin
       if Entity /= null then
+         Assert (Assert_Me, Entity.Ref_Count > 0, "too many calls to unref");
          Entity.Ref_Count := Entity.Ref_Count - 1;
          if Entity.Ref_Count = 0 then
             Free (Entity.Name);
-            Destroy (Entity.Parent_Types);
-            Destroy (Entity.Primitive_Subprograms);
-            Destroy (Entity.Child_Types);
-            Destroy (Entity.References);
+            Free (Entity.Parent_Types);
+            Free (Entity.Primitive_Subprograms);
+            Free (Entity.Child_Types);
+            Free (Entity.References);
             Unchecked_Free (Entity);
          end if;
       end if;
@@ -464,28 +431,14 @@ package body Entities is
       end if;
    end Ref;
 
-   -------------
-   -- Destroy --
-   -------------
-
-   procedure Destroy (List : in out Entity_Information_List) is
-   begin
-      if List.List /= null then
-         Unchecked_Free (List.List);
-      end if;
-   end Destroy;
-
    ------------------
    -- Get_Filename --
    ------------------
 
    function Get_Filename (File : Source_File) return VFS.Virtual_File is
    begin
-      if File = null then
-         return VFS.No_File;
-      else
-         return File.Name;
-      end if;
+      Assert (Assert_Me, File /= null, "Null source file in Get_Filename");
+      return File.Name;
    end Get_Filename;
 
    ---------------------
@@ -494,11 +447,8 @@ package body Entities is
 
    function Get_LI_Filename (LI : LI_File) return VFS.Virtual_File is
    begin
-      if LI = null then
-         return VFS.No_File;
-      else
-         return LI.Name;
-      end if;
+      Assert (Assert_Me, LI /= null, "Null LI in Get_LI_Filename");
+      return LI.Name;
    end Get_LI_Filename;
 
    ------------
@@ -546,7 +496,8 @@ package body Entities is
       S : Source_File := Get (Db.Files, File);
    begin
       if S = null then
-         Assert (Me, LI /= null, "Null LI file passed to Get_Or_Create");
+         Assert
+           (Assert_Me, LI /= null, "Null LI file passed to Get_Or_Create");
          S := new Source_File_Record'
            (Timestamp      => Timestamp,
             Name           => File,
@@ -558,7 +509,7 @@ package body Entities is
             LI             => LI,
             Is_Valid       => True,
             Ref_Count      => 1);
-         Add (LI.Files, S);
+         Append (LI.Files, S);
          Set (Db.Files, File, S);
 
       else
@@ -567,7 +518,9 @@ package body Entities is
          end if;
       end if;
 
-      S.Is_Valid := True;
+      --  ??? Should we reset this. Probably not, unless we have a parameter
+      --  that tells us to do so.
+      --  S.Is_Valid := True;
 
       return S;
    end Get_Or_Create;
@@ -577,72 +530,16 @@ package body Entities is
    ----------
 
    function Find
-     (List : Source_File_List; File : Source_File) return Natural is
-   begin
-      if List.List /= null then
-         for L in List.List'First .. List.Past_Last - 1 loop
-            if List.List (L) = File then
-               return L;
-            end if;
-         end loop;
-      end if;
-      return Not_Found;
-   end Find;
-
-   ----------
-   -- Find --
-   ----------
-
-   function Find
      (List   : Entity_Information_List;
       Loc    : File_Location) return Entity_Information is
    begin
-      if List.List /= null then
-         for L in List.List'First .. List.Past_Last - 1 loop
-            if List.List (L).Declaration = Loc then
-               return List.List (L);
-            end if;
-         end loop;
-      end if;
+      for L in Entity_Information_Arrays.First .. Last (List) loop
+         if List.Table (L).Declaration = Loc then
+            return List.Table (L);
+         end if;
+      end loop;
       return null;
    end Find;
-
-   ---------
-   -- Add --
-   ---------
-
-   procedure Add (List : in out Source_File_List; Item : Source_File) is
-   begin
-      Add_And_Grow (List.List, List.Past_Last, Item);
-   end Add;
-
-   ------------
-   -- Remove --
-   ------------
-
-   procedure Remove (List : in out Source_File_List; Item : Source_File) is
-   begin
-      if List.List /= null then
-         for L in List.List'First .. List.Past_Last - 1 loop
-            if List.List (L) = Item then
-               List.List (L .. List.Past_Last - 2) :=
-                 List.List (L + 1 .. List.Past_Last - 1);
-               List.Past_Last := List.Past_Last - 1;
-               exit;
-            end if;
-         end loop;
-      end if;
-   end Remove;
-
-   ---------
-   -- Add --
-   ---------
-
-   procedure Add
-     (List : in out Entity_Information_List; Item : Entity_Information) is
-   begin
-      Add_And_Grow (List.List, List.Past_Last, Item);
-   end Add;
 
    --------------------
    -- Add_Depends_On --
@@ -651,7 +548,7 @@ package body Entities is
    procedure Add_Depends_On
      (File : Source_File; Depends_On : Source_File) is
    begin
-      Add (File.Depends_On, Depends_On);
+      Append (File.Depends_On, Depends_On);
       Add_Depended_On (Depends_On, File);
    end Add_Depends_On;
 
@@ -659,11 +556,10 @@ package body Entities is
    -- Add_Depended_On --
    ---------------------
 
-   procedure Add_Depended_On
-     (File : Source_File; Depended_On  : Source_File) is
+   procedure Add_Depended_On (File : Source_File; Depended_On : Source_File) is
    begin
-      if Find (File.Depended_On, Depended_On) = Not_Found then
-         Add (File.Depended_On, Depended_On);
+      if Find (File.Depended_On, Depended_On) < Source_File_Arrays.First then
+         Append (File.Depended_On, Depended_On);
       end if;
    end Add_Depended_On;
 
@@ -696,7 +592,7 @@ package body Entities is
       if not Check_Duplicates
         or else Find (EL.all, Entity.Declaration) = null
       then
-         Add (EL.all, Entity);
+         Append (EL.all, Entity);
 
          if Is_Null then
             Insert (Entities, EL);
@@ -715,6 +611,7 @@ package body Entities is
    is
       L : LI_File := Get (Db.LIs, File);
    begin
+      Assert (Assert_Me, File /= VFS.No_File, "No LI filename");
       if L = null then
          L := new LI_File_Record'
            (Db        => Db,
@@ -740,7 +637,7 @@ package body Entities is
         (Entity_Information_List, Entity_Information_List_Access);
    begin
       if D /= null then
-         Destroy (D.all);
+         Free (D.all);
          Unchecked_Free (D);
       end if;
    end Destroy;
@@ -762,10 +659,7 @@ package body Entities is
      (Entity : Entity_Information; Location : File_Location) is
    begin
       Entity.End_Of_Scope := Location;
-
-      if Entity.Declaration.File /= Location.File then
-         Add (Location.File.All_Entities, Entity, Check_Duplicates => True);
-      end if;
+      Add_All_Entities (Location.File, Entity);
    end Set_End_Of_Scope;
 
    ------------------------
@@ -776,11 +670,7 @@ package body Entities is
      (Entity : Entity_Information; Renaming_Of : Entity_Information) is
    begin
       Entity.Rename := Renaming_Of;
-
-      if Entity.Declaration.File /= Renaming_Of.Declaration.File then
-         Add (Renaming_Of.Declaration.File.All_Entities, Entity,
-              Check_Duplicates => True);
-      end if;
+      Add_All_Entities (Renaming_Of.Declaration.File, Entity);
    end Set_Is_Renaming_Of;
 
    -------------------
@@ -790,21 +680,9 @@ package body Entities is
    procedure Add_Reference
      (Entity : Entity_Information; Location : File_Location) is
    begin
-      Add (Entity.References, Location);
-
-      if Entity.Declaration.File /= Location.File then
-         Add (Location.File.All_Entities, Entity, Check_Duplicates => True);
-      end if;
+      Append (Entity.References, Location);
+      Add_All_Entities (Location.File, Entity);
    end Add_Reference;
-
-   ---------
-   -- Add --
-   ---------
-
-   procedure Add (List : in out File_Location_List; Loc : File_Location) is
-   begin
-      Add_And_Grow (List.List, List.Past_Last, Loc);
-   end Add;
 
    -----------------
    -- Set_Type_Of --
@@ -814,16 +692,13 @@ package body Entities is
      (Entity : Entity_Information; Is_Of_Type : Entity_Information)
    is
    begin
-      Add (Entity.Parent_Types, Is_Of_Type);
+      Append (Entity.Parent_Types, Is_Of_Type);
 
       if Entity.Kind.Is_Type then
-         Add (Is_Of_Type.Child_Types, Entity);
+         Append (Is_Of_Type.Child_Types, Entity);
       end if;
 
-      if Entity.Declaration.File /= Is_Of_Type.Declaration.File then
-         Add (Is_Of_Type.Declaration.File.All_Entities, Entity,
-              Check_Duplicates => True);
-      end if;
+      Add_All_Entities (Is_Of_Type.Declaration.File, Entity);
    end Set_Type_Of;
 
    ------------------------------
@@ -833,13 +708,9 @@ package body Entities is
    procedure Add_Primitive_Subprogram
      (Entity : Entity_Information; Primitive : Entity_Information) is
    begin
-      Add (Entity.Primitive_Subprograms, Primitive);
+      Append (Entity.Primitive_Subprograms, Primitive);
       Primitive.Primitive_Op_Of := Entity;
-
-      if Entity.Declaration.File /= Primitive.Declaration.File then
-         Add (Primitive.Declaration.File.All_Entities, Entity,
-              Check_Duplicates => True);
-      end if;
+      Add_All_Entities (Primitive.Declaration.File, Entity);
    end Add_Primitive_Subprogram;
 
    ----------------------
@@ -850,11 +721,7 @@ package body Entities is
      (Entity : Entity_Information; Points_To : Entity_Information) is
    begin
       Entity.Pointed_Type := Points_To;
-
-      if Entity.Declaration.File /= Points_To.Declaration.File then
-         Add (Points_To.Declaration.File.All_Entities, Entity,
-              Check_Duplicates => True);
-      end if;
+      Add_All_Entities (Points_To.Declaration.File, Entity);
    end Set_Pointed_Type;
 
    -----------------------
@@ -865,11 +732,7 @@ package body Entities is
      (Entity : Entity_Information; Returns : Entity_Information) is
    begin
       Entity.Returned_Type := Returns;
-
-      if Entity.Declaration.File /= Returns.Declaration.File then
-         Add (Returns.Declaration.File.All_Entities, Entity,
-              Check_Duplicates => True);
-      end if;
+      Add_All_Entities (Returns.Declaration.File, Entity);
    end Set_Returned_Type;
 
    -------------------
@@ -907,7 +770,7 @@ package body Entities is
             Child_Types           => Null_Entity_Information_List,
             References            => Null_File_Location_List,
             Ref_Count             => 1);
-         Add (EL.all, E);
+         Append (EL.all, E);
 
          Add_Entity (File, E);
       end if;
