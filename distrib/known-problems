@@ -1,5 +1,10 @@
 Known Problems fixed in GPS 2.0.1
 
+- File View only show files in the current directory on Windows
+  Problem:    On Windows, the File View only show the files and subdirectories
+              of the current directory.
+  Workaround: Set the current directory to c:\, close and reopen the file view
+
 - D505-015 Project Explorer is sometimes empty on Windows
   Problem:    The project explorer sometimes only show the directories of
               the project, but no source file, although these are still found
