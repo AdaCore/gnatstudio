@@ -314,6 +314,17 @@ package body Project_Viewers is
       Context : Selection_Context_Access);
    --  Remove the project dependency between the two projects in Context.
 
+   procedure Save_All_Projects
+     (Widget : access GObject_Record'Class;
+      Kernel : Kernel_Handle);
+   --  Save the project associated with the kernel, and all its imported
+   --  projects.
+
+   procedure Save_Specific_Project
+     (Widget  : access Gtk_Widget_Record'Class;
+      Context : Selection_Context_Access);
+   --  Save the project described in the context.
+
    -------------------------
    -- Find_In_Source_Dirs --
    -------------------------
@@ -1043,6 +1054,30 @@ package body Project_Viewers is
       end if;
    end On_Edit_Project;
 
+   -----------------------
+   -- Save_All_Projects --
+   -----------------------
+
+   procedure Save_All_Projects
+     (Widget : access GObject_Record'Class;
+      Kernel : Kernel_Handle) is
+   begin
+      Save_Project (Get_Project (Kernel), Recursive => True);
+   end Save_All_Projects;
+
+   ---------------------------
+   -- Save_Specific_Project --
+   ---------------------------
+
+   procedure Save_Specific_Project
+     (Widget  : access Gtk_Widget_Record'Class;
+      Context : Selection_Context_Access) is
+   begin
+      Save_Project
+        (Get_Project_From_View
+         (Project_Information (File_Selection_Context_Access (Context))));
+   end Save_Specific_Project;
+
    ---------------------------
    -- On_Edit_Naming_Scheme --
    ---------------------------
@@ -1186,6 +1221,15 @@ package body Project_Viewers is
          if Has_Project_Information (File_Context) then
             Gtk_New (Item, Label => "");
             Append (Menu, Item);
+
+            Gtk_New (Item, Label => -"Save the project "
+                     & Project_Name (Project_Information (File_Context)));
+            Append (Menu, Item);
+            Context_Callback.Connect
+              (Item, "activate",
+               Context_Callback.To_Marshaller
+               (Save_Specific_Project'Access),
+               Selection_Context_Access (Context));
 
             Gtk_New (Item, Label => -"Edit source Directories for "
                      & Project_Name (Project_Information (File_Context)));
@@ -1387,17 +1431,13 @@ package body Project_Viewers is
          Kernel_Callback.To_Marshaller (On_Edit_Project'Access),
          Kernel_Handle (Kernel));
 
-      Gtk_New (Menu_Item, -"Edit Naming Scheme...");
+      Gtk_New (Menu_Item, -"Save all");
       Register_Menu (Kernel, Project, Menu_Item, Ref_Item => -"Edit...",
                      Add_Before => False);
       Kernel_Callback.Connect
         (Menu_Item, "activate",
-         Kernel_Callback.To_Marshaller (On_Edit_Naming_Scheme'Access),
+         Kernel_Callback.To_Marshaller (Save_All_Projects'Access),
          Kernel_Handle (Kernel));
-
-      Gtk_New (Menu_Item, "");
-      Register_Menu (Kernel, Project, Menu_Item,
-                     Ref_Item => -"Edit Naming Scheme...", Add_Before => True);
    end Initialize_Module;
 
 begin
