@@ -300,6 +300,95 @@ package body Src_Editor_Module is
      (K : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Called when the preferences have changed.
 
+   function Edit_Command_Handler
+     (Kernel  : access Kernel_Handle_Record'Class;
+      Command : String;
+      Args    : String_List_Utils.String_List.List) return String;
+   --  Interactive command handler for the source editor module.
+
+   --------------------------
+   -- Edit_Command_Handler --
+   --------------------------
+
+   function Edit_Command_Handler
+     (Kernel  : access Kernel_Handle_Record'Class;
+      Command : String;
+      Args    : String_List_Utils.String_List.List) return String
+   is
+      use String_List_Utils.String_List;
+
+      Node : List_Node;
+      Filename : Basic_Types.String_Access;
+      Line   : Natural := 0;
+      Column : Natural := 0;
+   begin
+      if Command = "edit" then
+         Node := First (Args);
+
+         while Node /= Null_Node loop
+            if Data (Node) = "-c" then
+               Node := Next (Node);
+
+               if Node = Null_Node then
+                  Free (Filename);
+                  return "edit: option -c requires a value.";
+               end if;
+
+               declare
+               begin
+                  Column := Natural'Value (Data (Node));
+               exception
+                  when others =>
+                     Free (Filename);
+                     return "edit: option -c requires a numerical value";
+               end;
+
+            elsif Data (Node) = "-l" then
+               Node := Next (Node);
+
+               if Node = Null_Node then
+                  Free (Filename);
+                  return "edit: option -l requires a value.";
+               end if;
+
+               declare
+               begin
+                  Column := Natural'Value (Data (Node));
+               exception
+                  when others =>
+                     Free (Filename);
+                     return "edit: option -l requires a numerical value";
+               end;
+            end if;
+
+            if Filename = null then
+               Filename := new String'(Data (Node));
+            else
+               return "edit: too many parameters.";
+            end if;
+
+            Node := Next (Node);
+         end loop;
+
+         if Filename /= null then
+            Open_File_Editor
+              (Kernel,
+               Filename.all,
+               Line,
+               Column);
+
+            Free (Filename);
+
+            return "";
+         else
+            return "edit: missing parameter file_name.";
+         end if;
+
+      else
+         return -"Command not recognized: " & Command;
+      end if;
+   end Edit_Command_Handler;
+
    --------------------
    -- File_Edited_Cb --
    --------------------
@@ -1934,6 +2023,15 @@ package body Src_Editor_Module is
         (Kernel, Preferences_Changed_Signal,
          Kernel_Callback.To_Marshaller (Preferences_Changed'Access),
          User_Data   => Kernel_Handle (Kernel));
+
+      Register_Command
+        (Kernel,
+         Command => "edit",
+         Help    => -"Usage:" & ASCII.LF
+         & "  edit [-l line] [-c column] file_name" & ASCII.LF
+         & (-"Open a file editor for file_name."),
+         Handler => Edit_Command_Handler'Access);
+
    end Register_Module;
 
    -------------------------
