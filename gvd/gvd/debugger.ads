@@ -23,6 +23,7 @@ with Generic_Values;
 with GNAT.OS_Lib;
 with Process_Proxies;
 with GNAT.Regpat;
+with Main_Debug_Window_Pkg;
 
 package Debugger is
 
@@ -32,20 +33,48 @@ package Debugger is
 
    type Debugger_Access is access all Debugger_Root'Class;
 
+   type Debugger_Type is
+     (Gdb_Type,
+      Dbx_Type,
+      Xdb_Type,
+      Jdb_Type,
+      Pydb_Type,
+      Perl_Type,
+      Ladebug_Type);
+   --  Type of debugger handled.
+   --  Beware that some debuggers might not be available.
+
    procedure Spawn
-     (Debugger       : access Debugger_Root;
-      Arguments      : GNAT.OS_Lib.Argument_List;
-      Proxy          : Process_Proxies.Process_Proxy_Access;
-      Remote_Machine : String := "") is abstract;
+     (Debugger        : access Debugger_Root;
+      Executable      : String;
+      Arguments       : GNAT.OS_Lib.Argument_List;
+      Proxy           : Process_Proxies.Process_Proxy_Access;
+      Window          : Main_Debug_Window_Pkg.Main_Debug_Window_Access;
+      Remote_Host     : String := "";
+      Remote_Target   : String := "";
+      Remote_Protocol : String := "";
+      Debugger_Name   : String := "") is abstract;
    --  Spawn the external process.
    --  Initialize should be called afterwards, but this is done in two
    --  separate steps so that it is possible to set filters.
    --
-   --  If Remote_Machine is different from the empty string, the debugger
-   --  is spawned on the remote machine.
+   --  Executable is the name of the module to debug.
+   --
+   --  Arguments are additional arguments to pass to the debugger.
    --
    --  Proxy is assigned to the debugger, after its underlying process has
    --  been created.
+   --
+   --  Window is the main window that is associated with this debugger.
+   --
+   --  If Remote_Host is different from the empty string, the debugger
+   --  is spawned on the remote host specified.
+   --
+   --  If Remote_Target is not empty, the debugger will, if supported, connect
+   --  to the specified target using Remote_Protocol.
+   --
+   --  If Debugger_Name is not empty, use this name rather than a default as
+   --  the executable name of the debugger.
    --
    --  The Debugger should set up filters to handle the change of current
    --  language, ...
@@ -84,6 +113,8 @@ package Debugger is
      (Debugger     : access Debugger_Root;
       The_Language : Language.Language_Access);
    --  Set the language associated with a debugger.
+   --  Note that this procedure will free the previous language associated
+   --  with Debugger, if any.
 
    function Get_Language
      (Debugger : access Debugger_Root) return Language.Language_Access;
@@ -140,22 +171,17 @@ package Debugger is
    --  current context.
    --  GDB_COMMAND: "ptype"
 
-   type Value_Format is (Decimal,
-                         Binary,
-                         Hexadecimal,
-                         Octal);
+   type Value_Format is (Decimal, Binary, Hexadecimal, Octal);
 
-   function Value_Of (Debugger : access Debugger_Root;
-                      Entity   : String;
-                      Format   : Value_Format := Decimal)
-                     return String
-      is abstract;
+   function Value_Of
+     (Debugger : access Debugger_Root;
+      Entity   : String;
+      Format   : Value_Format := Decimal) return String is abstract;
    --  Return the value of the entity.
    --  GDB_COMMAND: "print"
 
-   procedure Set_Executable (Debugger : access Debugger_Root;
-                             Executable : String)
-      is abstract;
+   procedure Set_Executable
+     (Debugger : access Debugger_Root; Executable : String) is abstract;
    --  Load an executable into the debugger.
    --  Note that this can have a different meaning with some languages like
    --  Java, where Executable should be the name of the main class.
@@ -181,10 +207,22 @@ package Debugger is
    --  Step program, proceeding over subroutines.
    --  GDB_COMMAND: "next"
 
-   procedure Break_Exception (Debugger  : access Debugger_Root;
-                              Name      : String  := "";
-                              Unhandled : Boolean := False)
-      is abstract;
+   procedure Continue (Debugger : access Debugger_Root) is abstract;
+   --  Continue program after signal or breakpoint.
+   --  GDB_COMMAND: "next"
+
+   procedure Stack_Down (Debugger : access Debugger_Root) is abstract;
+   --  Select and print stack frame called by the current one.
+   --  GDB_COMMAND: "down"
+
+   procedure Stack_Up (Debugger : access Debugger_Root) is abstract;
+   --  Select and print stack frame that called the current one.
+   --  GDB_COMMAND: "up"
+
+   procedure Break_Exception
+     (Debugger  : access Debugger_Root;
+      Name      : String  := "";
+      Unhandled : Boolean := False) is abstract;
    --  Break on an exception, if the debugger and the language recognize that
    --  feature.
    --  The breakpoint is set on a specific exception Name (or all exceptions
@@ -195,9 +233,8 @@ package Debugger is
    --  not break on a specific exception only when it is unhandled).
    --  GDB_COMMAND: "break exception"
 
-   procedure Break_Subprogram (Debugger : access Debugger_Root;
-                               Name     : String)
-      is abstract;
+   procedure Break_Subprogram
+     (Debugger : access Debugger_Root; Name : String) is abstract;
    --  Break at the beginning of a specific subprogram.
    --  GDB_COMMAND: "break"
 
@@ -208,6 +245,7 @@ package Debugger is
    function Backtrace (Debugger : access Debugger_Root) return String
       is abstract;
    --  Return the current backtrace.
+   --  GDB_COMMAND: "bt"
 
    function Line_Contains_Code
      (Debugger : access Debugger_Root;

@@ -77,6 +77,7 @@ package body Debugger is
      (Debugger     : access Debugger_Root;
       The_Language : Language.Language_Access) is
    begin
+      Language.Free (Debugger.The_Language);
       Debugger.The_Language := The_Language;
    end Set_Language;
 
