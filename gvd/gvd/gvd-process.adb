@@ -177,6 +177,10 @@ package body Odd.Process is
       Thaw (Process.Debugger_Text);
    end Text_Output_Handler;
 
+   -------------------------
+   -- Text_Output_Handler --
+   -------------------------
+
    procedure Text_Output_Handler
      (Descriptor : GNAT.Expect.Process_Descriptor;
       Str        : String;
@@ -212,6 +216,7 @@ package body Odd.Process is
 
          Process.Edit_Pos := Get_Length (Process.Debugger_Text);
          Set_Point (Process.Debugger_Text, Process.Edit_Pos);
+         Set_Position (Process.Debugger_Text, Gint (Process.Edit_Pos));
       end if;
 
       --  Do we have a file name ?
