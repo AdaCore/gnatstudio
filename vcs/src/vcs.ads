@@ -106,8 +106,8 @@ package VCS is
    type File_Status_Record is record
       --  Contains all the repository information concerning one file.
 
-      File_Name : String_List.List := String_List.Null_List;
-      --  The absolute local name of the file.
+      File : VFS.Virtual_File := VFS.No_File;
+      --  The corresponding file.
 
       Status : File_Status := Unknown;
       --  The status of the file.
