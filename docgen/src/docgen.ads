@@ -88,7 +88,7 @@ package Docgen is
 
    type Reference_In_File is record
       Name         : GNAT.OS_Lib.String_Access;
-      Line         : Positive;
+      Line         : Natural;
       Column       : Natural;
       Entity       : Entity_Handle;
    end record;
@@ -105,7 +105,7 @@ package Docgen is
    function Compare_Elements_By_Line_And_Column
      (X, Y : Reference_In_File) return Boolean;
 
-   procedure Sort_List_By_Line_And_Column   is
+   procedure Sort_List_By_Line_And_Column is
      new Sort (List_Reference_In_File,
                "<" => Compare_Elements_By_Line_And_Column);
    --  Sort the list by line and column
@@ -335,11 +335,9 @@ package Docgen is
                Body_Text                     : GNAT.OS_Lib.String_Access;
          end case;
       end record;
-   --  The data structure used to pass the information
-   --  to the procedure which is defined
-   --  as the Doc_Subprogram_Type (see below) toprocedure Format_Link
-   --  be the only procedure to be defined
-   --  when a new output format should be added
+   --  The data structure used to pass the information to the procedure which
+   --  is defined as the Doc_Subprogram_Type (see below) to be the only
+   --  procedure to be defined when a new output format should be added.
 
    package Docgen_Backend is
 
@@ -348,35 +346,37 @@ package Docgen is
       type Backend_Handle is access all Backend'Class;
 
       procedure Initialize (B : access Backend; Text : String) is abstract;
-      --  It initializes the private fields before starting the documentation
-      --     process.
+      --  Initialize the private fields before starting the documentation
+      --  process.
 
       procedure Launch_Doc_Create
-        (B             : Backend_Handle;
-         Kernel        : access Glide_Kernel.Kernel_Handle_Record'Class;
-         File          : in Ada.Text_IO.File_Type;
-         List_Ref_In_File   : in out List_Reference_In_File.List;
-         Info          : in out Docgen.Doc_Info;
-         Doc_Directory : String;
-         Doc_Suffix    : String);
-      --  This method is transmited by a pointer whose type is
-      --     Doc_Subprogram_Type. In its body, it calls Doc_Create.
+        (B                : Backend_Handle;
+         Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
+         File             : in Ada.Text_IO.File_Type;
+         List_Ref_In_File : in out List_Reference_In_File.List;
+         Info             : in out Docgen.Doc_Info;
+         Doc_Directory    : String;
+         Doc_Suffix       : String);
+      --  ??? This approach seems over complicated and could probably be
+      --  simplified using standard OOP.
+      --  Transmitted via a pointer of type Doc_Subprogram_Type.
+      --  Call Doc_Create in its body.
       --  It's necessary to use Launch_Doc_Create before calling Doc_Create
-      --     because the first parameter of a Doc_Subprogram_Type procedure
-      --     is Backend (we can't have Backend'Class).
-      --  When Doc_Create is called, it uses the good method of a child object
-      --     which overrides Doc_Create.
+      --  because the first parameter of a Doc_Subprogram_Type procedure
+      --  is Backend (we can't have Backend'Class).
+      --  When Doc_Create is called, it uses the right method of a child object
+      --  which overrides Doc_Create.
 
       procedure Doc_Create
-        (B             : access Backend;
-         Kernel        : access Glide_Kernel.Kernel_Handle_Record'Class;
-         File          : in Ada.Text_IO.File_Type;
-         List_Ref_In_File   : in out List_Reference_In_File.List;
-         Info          : in out Docgen.Doc_Info;
-         Doc_Directory : String;
-         Doc_Suffix    : String) is abstract;
+        (B                : access Backend;
+         Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
+         File             : in Ada.Text_IO.File_Type;
+         List_Ref_In_File : in out List_Reference_In_File.List;
+         Info             : in out Docgen.Doc_Info;
+         Doc_Directory    : String;
+         Doc_Suffix       : String) is abstract;
       --  Doc_Create starts the process which make the documentation
-      --     for one file.
+      --  for one file.
 
       procedure Format_Comment
         (B           : access Backend;
@@ -387,8 +387,7 @@ package Docgen is
          End_Index   : Natural;
          End_Line    : Natural;
          Entity_Line : Natural) is abstract;
-      --  It's used when the text is a comment in order to write it
-      --     in the good format.
+      --  Format text as a comment
 
       procedure Format_Keyword
         (B           : access Backend;
@@ -399,8 +398,7 @@ package Docgen is
          End_Index   : Natural;
          End_Line    : Natural;
          Entity_Line : Natural) is abstract;
-      --  It's used when the text is a keyword in order to write it
-      --     in the good format.
+      --  Format text as a keyword
 
       procedure Format_String
         (B           : access Backend;
@@ -411,8 +409,7 @@ package Docgen is
          End_Index   : Natural;
          End_Line    : Natural;
          Entity_Line : Natural) is abstract;
-      --  It's used when the text is a string (between  two ") in order
-      --     to write it in the good format.
+      --  Format text as a string (between two ")
 
       procedure Format_Character
         (B           : access Backend;
@@ -423,12 +420,11 @@ package Docgen is
          End_Index   : Natural;
          End_Line    : Natural;
          Entity_Line : Natural) is abstract;
-      --  It's used when the text is a character (between  two ') in order
-      --     to write it in the good format.
+      --  Format text as a character (between two ')
 
       procedure Format_Identifier
         (B                : access Backend;
-         List_Ref_In_File   : in out List_Reference_In_File.List;
+         List_Ref_In_File : in out List_Reference_In_File.List;
          Start_Index      : Natural;
          Start_Line       : Natural;
          Start_Column     : Natural;
@@ -445,14 +441,13 @@ package Docgen is
          Link_All         : Boolean;
          Is_Body          : Boolean;
          Process_Body     : Boolean) is abstract;
-      --  It's used when the text is an identifier in order to write it
-      --     in the good format.
+      --  Format text as an identifier
 
       procedure Format_File
         (B                : access Backend'Class;
          Kernel           : access Kernel_Handle_Record'Class;
          File             : Ada.Text_IO.File_Type;
-         List_Ref_In_File   : in out List_Reference_In_File.List;
+         List_Ref_In_File : in out List_Reference_In_File.List;
          LI_Unit          : LI_File_Ptr;
          Text             : String;
          File_Name        : VFS.Virtual_File;
@@ -462,19 +457,19 @@ package Docgen is
          Link_All         : Boolean;
          Is_Body          : Boolean;
          Process_Body     : Boolean);
-      --  It generates the documentation for a type of code in the file
-      --     (eg. packages, subprograms, exceptions ...). In Format_File, all
-      --     tokens of this text are analysed by Parse_Entities().
-      --  Parse_Entities() calls the subprogram Callback() which reads the
-      --     nature of the token and starts the good subprogram on it
-      --     (Format_String, Format_Character, Format_Comment, Format_Keyword,
-      --      Format_Identifier).
+      --  Generate documentation for a type of code in the file
+      --  (eg. packages, subprograms, exceptions ...). All tokens of this text
+      --  are analysed by Parse_Entities.
+      --  Parse_Entities calls Callback which reads the
+      --  nature of the token and calls the appropriate subprogram on it
+      --  (Format_String, Format_Character, Format_Comment, Format_Keyword,
+      --  Format_Identifier).
       --  Line_In_Body is used only for subprograms to create not regular
       --  links (in this case it is not the line number of the declaration
       --  which is needed, but the line of the definition in the body.
       --  If Do_Check_Pack is set, the procedure will check if a link
       --  should be set to First_Package_Line or link it to its declaration
-      --  line.
+      --  line. ??? What is Do_Check_Pack
 
       procedure Format_Link
         (B                : access Backend;
@@ -496,36 +491,38 @@ package Docgen is
          Loc_End          : Natural;
          Loc_Start        : Natural;
          Entity_Info      : Entity_Information) is abstract;
-      --  This subprogram may be used in order to generate a link for the
-      --     element Entity_Info on its declaration.
+      --  Generate a link for the element Entity_Info on its declaration.
       --  Even if the format of the documentation doesn't use links, it's
-      --     necessary to override Format_Link with an empty body.
+      --  necessary to override Format_Link with an empty body.
 
       procedure Finish
         (B           : access Backend;
          File        : Ada.Text_IO.File_Type;
          Text        : String;
          Entity_Line : Natural) is abstract;
-      --  It achieves the process of a bloc of code which has been analysed
-      --     by Parse_Entities() + Callback + Format_xxx
+      --  Terminate processing of a block of code which has been analysed
+      --  by Parse_Entities + Callback + Format_xxx
 
       function Get_Extension (B : access Backend) return String is abstract;
-      --  It returns the extension of doc files (eg. ".htm" for an instance of
-      --     object Backend_HTML).
+      --  Return the extension of doc files (eg. ".htm" for an instance of
+      --  object Backend_HTML).
 
       function Get_Doc_Directory
-        (B : access Backend;
+        (B      : access Backend;
          Kernel : Kernel_Handle) return String is abstract;
-      --  It returns the path which must contains the documentation (eg.
-      --     "/..../gps/glide/html/" for an instance of object Backend_HTML).
+      --  Return the path which must contain the documentation (eg.
+      --  "/..../gps/glide/obj/html/" for an instance of object
+      --  Backend_HTML).
 
       function Get_Last_Index (B : Backend'Class) return Natural;
       function Get_Last_Line (B : Backend'Class) return Natural;
       procedure Set_Last_Index (B : in out Backend'Class; Value : Natural);
       procedure Set_Last_Line (B : in out Backend'Class; Value : Natural);
       --  Getters ans setters of the 2 private fields.
+      --  ??? What are these two private fields used for
 
    private
+
       type Backend is abstract tagged record
          Last_Index : Natural;
          Last_Line  : Natural;
@@ -535,18 +532,18 @@ package Docgen is
 
    use Docgen.Docgen_Backend;
    type Doc_Subprogram_Type is access procedure
-     (B             : Backend_Handle;
-      Kernel        : access Glide_Kernel.Kernel_Handle_Record'Class;
-      File          : in Ada.Text_IO.File_Type;
-      List_Ref_In_File   : in out List_Reference_In_File.List;
-      Info          : in out Doc_Info;
-      Doc_Directory : String;
-      Doc_Suffix    : String);
+     (B                : Backend_Handle;
+      Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
+      File             : in Ada.Text_IO.File_Type;
+      List_Ref_In_File : in out List_Reference_In_File.List;
+      Info             : in out Doc_Info;
+      Doc_Directory    : String;
+      Doc_Suffix       : String);
    --  The procedure to define for each new output format
 
    procedure Format_All_Link
      (B                : access Backend'Class;
-      List_Ref_In_File   : in out List_Reference_In_File.List;
+      List_Ref_In_File : in out List_Reference_In_File.List;
       Start_Index      : Natural;
       Start_Line       : Natural;
       Start_Column     : Natural;
@@ -563,24 +560,24 @@ package Docgen is
       Is_Body          : Boolean;
       Process_Body     : Boolean);
    --  This procedure is used by formats of documentation like html to
-   --     create links for each entity of the file  File_Name on their
-   --     own declaration. It's called by the method Format_Identifier of
-   --     a child instance of a Backend object (eg. Backend_HTML).
+   --  create links for each entity of the file File_Name on their
+   --  own declaration. It's called by the method Format_Identifier of
+   --  a child instance of a Backend object (eg. Backend_HTML).
    --  This process is done in Docgen because for each entity we must search
-   --     for its declaration in all concerned files: this work is
-   --     independant of the choosen format of documentation.
+   --  for its declaration in all concerned files: this work is
+   --  independant of the choosen format of documentation.
 
    function Count_Lines (Line : String) return Natural;
-   --  Returns the number of lines in the String
+   --  Return the number of lines in the String
 
    function Count_Points (Text : String) return Natural;
-   --  Returns the number of point in the given string
+   --  Return the number of point in the given string
 
    function Get_Doc_File_Name
      (Source_Filename : VFS.Virtual_File;
       Source_Path     : String;
       Doc_Suffix      : String) return String;
-   --  Returns a string with the name for the new doc file:
+   --  Return a string with the name for the new doc file:
    --  first the doc path is added in front of the created name
    --  then the "." in front of the suffix is replaced by "_",
    --  so that a new output format suffix can be added
@@ -588,7 +585,7 @@ package Docgen is
    function Source_File_In_List
      (Source_File_List : Type_Source_File_List.List;
       Name             : VFS.Virtual_File) return Boolean;
-   --  Returns true if the file is found in the source file list
+   --  Return true if the file is found in the source file list
 
    function Spec_Suffix
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
@@ -608,6 +605,6 @@ package Docgen is
    function Is_Spec_File
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
       File   : VFS.Virtual_File) return Boolean;
-   --  Returns True, if the File is a Spec file
+   --  Return whether the File is a Spec file
 
 end Docgen;
