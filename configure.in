@@ -30,10 +30,11 @@ AC_ARG_WITH(ptys,
  fi],
 USE_PTYS=True)
 
+PYTHON_PATH_WITH=no    # For now, compile without python by default
 AC_ARG_WITH(python,
 [ --with-python=<path>     Specify the full path to the Python installation],
 [PYTHON_PATH_WITH=$withval],
-PYTHON_PATH_WITH="")
+PYTHON_PATH_WITH="no")
 
 ######## checking for local tools ###
 AC_PROG_CC

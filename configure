@@ -1329,13 +1329,14 @@ else
   USE_PTYS=True
 fi;
 
+PYTHON_PATH_WITH=no    # For now, compile without python by default
 
 # Check whether --with-python or --without-python was given.
 if test "${with_python+set}" = set; then
   withval="$with_python"
   PYTHON_PATH_WITH=$withval
 else
-  PYTHON_PATH_WITH=""
+  PYTHON_PATH_WITH="no"
 fi;
 
 ######## checking for local tools ###
@@ -2676,14 +2677,8 @@ echo "${ECHO_T}no" >&6
 fi
 
 
-      if test x$PYTHON = xno ; then
-         { { echo "$as_me:$LINENO: error: I could not find python." >&5
-echo "$as_me: error: I could not find python." >&2;}
-   { (exit 1); exit 1; }; }
-      else
-         PYTHON_BASE=`dirname ${PYTHON_BASE}`
-         PYTHON_BASE=`dirname ${PYTHON_BASE}`
-      fi
+      PYTHON_BASE=`dirname ${PYTHON_BASE}`
+      PYTHON_BASE=`dirname ${PYTHON_BASE}`
    else
       PYTHON_BASE=${PYTHON_PATH_WITH}
    fi
