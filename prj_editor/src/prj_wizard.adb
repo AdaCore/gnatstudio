@@ -8,7 +8,7 @@ begin
    Gtk.Main.Init;
 
    Gtk_New (Wiz);
-   Set_Page (Wiz, 1);
+   Set_Current_Page (Wiz, 1);
    Show_All (Wiz);
 
    Main;
