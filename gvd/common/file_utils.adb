@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2004                       --
---                            ACT-Europe                             --
+--                     Copyright (C) 2001-2005                       --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -80,30 +80,32 @@ package body File_Utils is
             Normalized_Dir : constant String := Name_As_Directory
               (Current (Dirs, Iter));
          begin
-            Open (Dir, Normalized_Dir);
+            if Normalize_Dir /= "" then
+               Open (Dir, Normalized_Dir);
 
-            loop
-               Read (Dir, File, File_Last);
-               exit when File_Last = 0;
+               loop
+                  Read (Dir, File, File_Last);
+                  exit when File_Last = 0;
 
-               --  We just need one more item in the array, so doubling
-               --  is more than enough, we do not need to loop until the
-               --  length is correct
+                  --  We just need one more item in the array, so doubling
+                  --  is more than enough, we do not need to loop until the
+                  --  length is correct
 
-               if Result_Index > Result'Last then
-                  Tmp := Result;
-                  Result := new File_Array (1 .. Result'Last * 2);
-                  Result (1 .. Tmp'Last) := Tmp.all;
-                  Unchecked_Free (Tmp);
-               end if;
+                  if Result_Index > Result'Last then
+                     Tmp := Result;
+                     Result := new File_Array (1 .. Result'Last * 2);
+                     Result (1 .. Tmp'Last) := Tmp.all;
+                     Unchecked_Free (Tmp);
+                  end if;
 
-               Result (Result_Index) := Create
-                 (Full_Filename =>
-                    Normalized_Dir & File (File'First .. File_Last));
-               Result_Index := Result_Index + 1;
-            end loop;
+                  Result (Result_Index) := Create
+                    (Full_Filename =>
+                       Normalized_Dir & File (File'First .. File_Last));
+                  Result_Index := Result_Index + 1;
+               end loop;
 
-            Close (Dir);
+               Close (Dir);
+            end if;
 
          exception
             when Directory_Error =>
