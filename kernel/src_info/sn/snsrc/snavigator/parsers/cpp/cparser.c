@@ -170,6 +170,8 @@ struct sDeclarator
    LongString type;
    LongString types; /* falls function definition */
    LongString names; /* falls function definition */
+   LongString argpos;
+   LongString arg_type_pos;
    int base_typ;
    int pure;
    int lineno_beg;
@@ -296,8 +298,8 @@ extern void template_argument_skip( LongString *plstr );
 extern int namespace_name( LongString *plstr );
 extern void skip_declaration( void );
 extern int skip_member_declaration( void );
-extern void function_argument_declaration_list( LongString *types, LongString *names );
-extern void function_argument_declaration( LongString *types, LongString *names );
+extern void function_argument_declaration_list( LongString *types, LongString *names, LongString *argpos, LongString *arg_type_pos );
+extern void function_argument_declaration( LongString *types, LongString *names, LongString *argpos, LongString *arg_type_pos );
 extern void function_argument_class( int storage_class, LongString *plstr );
 extern void function_argument_enum( int storage_class, LongString *plstr );
 extern int function_argument_declarator_one( Declarator_t Declarator );
@@ -319,7 +321,7 @@ extern void create_type_argument_list( LongString *type, Declaration_t Declarati
 #endif /* VERSION_1 */
 extern char *get_scope( char *name );
 extern char *get_name( char *name );
-extern void put_cross1( int type, char *scope, char *sym_name, char *file, int start_lineno, int start_colpos, int end_lineno, int end_colpos, unsigned long attr, char *ret, char *types, char *names, char *reserved );
+extern void put_cross1( int type, char *scope, char *sym_name, char *file, int start_lineno, int start_colpos, int end_lineno, int end_colpos, unsigned long attr, char *ret, char *types, char *names, char *reserved, char* argpos, char* arg_type_pos, int ret_type_lineno, int ret_type_charno );
 extern int get_struct_name( int *plineno, int *pcharno, sString_t *psString );
 extern int is_single_parameter_list( LongString *types );
 extern int array_change_type_and_name( Array_t ArrayTypes, Array_t ArrayNames, char *type, char *name );
@@ -943,6 +945,8 @@ extern int declarator_list( Declaration_t Declaration )
    LongStringInit( &sDeclarator.type , -1 );
    LongStringInit( &sDeclarator.types, -1 );
    LongStringInit( &sDeclarator.names, -1 );
+   LongStringInit( &sDeclarator.argpos, -1 );
+   LongStringInit( &sDeclarator.arg_type_pos, -1 );
 
    while( True )
    {
@@ -950,6 +954,8 @@ extern int declarator_list( Declaration_t Declaration )
       LongStringMyFree( &sDeclarator.type  );
       LongStringMyFree( &sDeclarator.types );
       LongStringMyFree( &sDeclarator.names );
+      LongStringMyFree( &sDeclarator.argpos );
+      LongStringMyFree( &sDeclarator.arg_type_pos );
       sDeclarator.base_typ = 0;
       sDeclarator.pure     = 0;
       sDeclarator.lineno_beg = 0;
@@ -1558,7 +1564,9 @@ extern int function_operator( Declarator_t Declarator )
    if( Declarator->base_typ == 0 )
    {
       function_argument_declaration_list( &Declarator->types
-                                        , &Declarator->names );
+                                        , &Declarator->names
+                                        , &Declarator->argpos
+                                        , &Declarator->arg_type_pos );
    }
    else
    {
@@ -2352,6 +2360,8 @@ extern int member_declarator_list( Class_t Class, Declaration_t Declaration )
    LongStringInit( &sDeclarator.type , -1 );
    LongStringInit( &sDeclarator.types, -1 );
    LongStringInit( &sDeclarator.names, -1 );
+   LongStringInit( &sDeclarator.argpos, -1 );
+   LongStringInit( &sDeclarator.arg_type_pos, -1 );
 
    while( True )
    {
@@ -2359,6 +2369,8 @@ extern int member_declarator_list( Class_t Class, Declaration_t Declaration )
       LongStringMyFree( &sDeclarator.type  );
       LongStringMyFree( &sDeclarator.types );
       LongStringMyFree( &sDeclarator.names );
+      LongStringMyFree( &sDeclarator.argpos );
+      LongStringMyFree( &sDeclarator.arg_type_pos );
       sDeclarator.base_typ   = 0;
       sDeclarator.pure       = 0;
       sDeclarator.lineno_beg = 0;
@@ -3440,6 +3452,8 @@ extern int kr_argument_declarator_list( Declaration_t Declaration, Array_t Array
    LongStringInit( &sDeclarator.type , -1 );
    LongStringInit( &sDeclarator.types, -1 );
    LongStringInit( &sDeclarator.names, -1 );
+   LongStringInit( &sDeclarator.argpos, -1 );
+   LongStringInit( &sDeclarator.arg_type_pos, -1 );
 
    while( True )
    {
@@ -3447,6 +3461,8 @@ extern int kr_argument_declarator_list( Declaration_t Declaration, Array_t Array
       LongStringMyFree( &sDeclarator.type  );
       LongStringMyFree( &sDeclarator.types );
       LongStringMyFree( &sDeclarator.names );
+      LongStringMyFree( &sDeclarator.argpos );
+      LongStringMyFree( &sDeclarator.arg_type_pos );
       sDeclarator.base_typ   = 0;
       sDeclarator.pure       = 0;
       sDeclarator.lineno_beg = 0;
@@ -4006,6 +4022,10 @@ extern void function( Declaration_t Declaration, Declarator_t Declarator, int li
                 , Declarator->types.buf
                 , Declarator->names.buf
                 , (char *) 0
+                , Declarator->argpos.buf
+                , Declarator->arg_type_pos.buf
+                , Declaration->lineno_beg
+                , Declaration->charno_beg
                 );
    }
    LongStringMyFree( &type );
@@ -4308,6 +4328,10 @@ extern void class_method( Class_t Class, Declaration_t Declaration, Declarator_t
                 , Declarator->types.buf
                 , Declarator->names.buf
                 , (char *) 0
+                , Declarator->argpos.buf
+                , Declarator->arg_type_pos.buf
+                , Declaration->lineno_beg
+                , Declaration->charno_beg
                 );
 
       Put_symbol( paf_dcl
@@ -4598,7 +4622,7 @@ extern int skip_member_declaration( void )
    }
 }
 
-extern void function_argument_declaration_list( LongString *types, LongString *names )
+extern void function_argument_declaration_list( LongString *types, LongString *names, LongString *argpos, LongString *arg_type_pos )
 {
    int t;
    int i;
@@ -4607,7 +4631,7 @@ extern void function_argument_declaration_list( LongString *types, LongString *n
    if( token( 0 ) == '(' )    /* ANSI(( ... )) */
    {
       step( 1 );
-      function_argument_declaration_list( types, names );
+      function_argument_declaration_list( types, names, argpos, arg_type_pos );
       i = 0;
       while( True )
       {
@@ -4643,7 +4667,7 @@ extern void function_argument_declaration_list( LongString *types, LongString *n
 
    while( True )
    {
-      function_argument_declaration( types, names );
+      function_argument_declaration( types, names, argpos, arg_type_pos );
 
 once_more:
       t = token( 0 );
@@ -4652,6 +4676,8 @@ once_more:
       {
          LongStringMyAppend( types, "," );
          LongStringMyAppend( names, "," );
+         LongStringMyAppend( argpos, "," );
+         LongStringMyAppend( arg_type_pos, "," );
          step( 1 );
       }
       else if( t == ')' )
@@ -4665,6 +4691,8 @@ once_more:
       {
          LongStringMyAppend( types, "," );
          LongStringMyAppend( names, "," );
+         LongStringMyAppend( argpos, "," );
+         LongStringMyAppend( arg_type_pos, "," );
       }
       else
       {
@@ -4721,7 +4749,7 @@ once_more:
    }
 }
 
-extern void function_argument_declaration( LongString *types, LongString *names )
+extern void function_argument_declaration( LongString *types, LongString *names, LongString *argpos, LongString* arg_type_pos )
 {
    sDeclaration_t sDeclaration;
    sDeclarator_t sDeclarator;
@@ -4750,8 +4778,8 @@ extern void function_argument_declaration( LongString *types, LongString *names 
    LongStringInit( &sDeclaration.type_name, -1 );
    sDeclaration.type_of_type_name = 0;
    LongStringInit( &sDeclaration.complete_class_name, -1 );
-   sDeclaration.lineno_beg    = 0;
-   sDeclaration.charno_beg    = 0;
+   sDeclaration.lineno_beg    = f_lineno (0);
+   sDeclaration.charno_beg    = f_charno (0);
    sDeclaration.lineno_end    = 0;
    sDeclaration.charno_end    = 0;
 
@@ -4773,6 +4801,8 @@ extern void function_argument_declaration( LongString *types, LongString *names 
    LongStringInit( &sDeclarator.type , -1 );
    LongStringInit( &sDeclarator.types, -1 );
    LongStringInit( &sDeclarator.names, -1 );
+   LongStringInit( &sDeclarator.argpos, -1 );
+   LongStringInit( &sDeclarator.arg_type_pos, -1 );
    sDeclarator.base_typ = 0;
    sDeclarator.pure     = 0;
    sDeclarator.lineno_beg = 0;
@@ -4996,6 +5026,22 @@ end:
    create_type_argument_list( types, &sDeclaration, &sDeclarator );
 #endif
    LongStringsMyAppend( names, &sDeclarator.name );
+   {
+      char pos[32];
+      sprintf (pos, "%06d.%03d:%06d.%03d",
+                     sDeclarator.lineno_beg,
+                     sDeclarator.charno_beg,
+                     sDeclarator.lineno_end,
+                     sDeclarator.charno_end);
+      argpos->append ( argpos, pos, strlen (pos) );
+
+      sprintf (pos, "%06d.%03d:%06d.%03d",
+                     sDeclaration.lineno_beg,
+                     sDeclaration.charno_beg,
+                     sDeclaration.lineno_end,
+                     sDeclaration.charno_end);
+      arg_type_pos->append ( arg_type_pos, pos, strlen (pos) );
+   }
    LongStringMyFree( &sDeclaration.name );
         LongStringMyFree( &sDeclaration.complete_class_name );
         LongStringMyFree( &sDeclaration.sClass.name );
@@ -5006,6 +5052,8 @@ end:
    LongStringMyFree( &sDeclarator.type  );
    LongStringMyFree( &sDeclarator.types );
    LongStringMyFree( &sDeclarator.names );
+   LongStringMyFree( &sDeclarator.argpos );
+   LongStringMyFree( &sDeclarator.arg_type_pos );
    niveau--;
    return;
 }
@@ -6161,14 +6209,14 @@ extern char *get_name( char *name )
    }
 }
 
-extern void put_cross1( int type, char *scope, char *sym_name, char *file, int start_lineno, int start_colpos, int end_lineno, int end_colpos, unsigned long attr, char *ret, char *types, char *names, char *reserved )
+extern void put_cross1( int type, char *scope, char *sym_name, char *file, int start_lineno, int start_colpos, int end_lineno, int end_colpos, unsigned long attr, char *ret, char *types, char *names, char *reserved, char* argpos, char* arg_type_pos, int ret_type_lineno, int ret_type_charno )
 {
    if( cross_ref_fp )
    {
       Tcl_DString utfString;
       char tmp[1000];
 
-      snprintf(tmp, sizeof(tmp), "%d;%d;%s;%d;%d;%d;%d;%ld;%s;%s;%s;%s;%s;%d;\n"
+      snprintf(tmp, sizeof(tmp), "%d;%d;%s;%d;%d;%d;%d;%ld;%s;%s;%s;%s;%s;%d;%s;%s;%06d.%03d;\n"
           , PAF_CROSS_REF_CPP
           , type
           , null_safe( file )
@@ -6183,6 +6231,10 @@ extern void put_cross1( int type, char *scope, char *sym_name, char *file, int s
           , null_safe( types )
           , null_safe( names )
           , keyw_cpp
+          , null_safe( argpos )
+          , null_safe( arg_type_pos )
+          , ret_type_lineno
+          , ret_type_charno
           );
       Tcl_ExternalToUtfDString(NULL, tmp, -1, &utfString);
       fprintf( cross_ref_fp, "%s", Tcl_DStringValue(&utfString));

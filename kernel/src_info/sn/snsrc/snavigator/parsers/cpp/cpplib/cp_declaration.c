@@ -26,6 +26,7 @@ MA 02111-1307, USA.
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include "longstr.h"
 
 #include <tcl.h>
 
@@ -61,6 +62,7 @@ static Boolean_t f_DeclarationIsParameter( Declaration_t Declaration );
 static void _DeclarationProcess( Declaration_t Declaration, int record );
 static void _DeclarationSpecialProcess( DeclarationSpecial_t DeclarationSpecial, int record );
 static Type_t f_TypeDeclaratorConcat( Type_t Type, Declarator_t Declarator );
+unsigned long attr_from_declaration( Declaration_t Declaration );
 
 extern Declaration_t f_Declaration( int iLevel )
 {
@@ -1073,14 +1075,14 @@ static List_t __InitDeclaratorList( Boolean_t may_function )
       {
          if( token( 0 ) == LBRACE )
          {
-            f_CompoundStatement( 0, 0 );
+            f_CompoundStatement( 0, 0, 0, 0 );
             f_ListAddLast( &List, (Elem_t) Declarator );
             return List;
          }
          else if( token( 0 ) == ':' )
          {
             ctor_initializer();
-            f_CompoundStatement( 0, 0 );
+            f_CompoundStatement( 0, 0, 0, 0 );
             f_ListAddLast( &List, (Elem_t) Declarator );
             return List;
          }
@@ -1092,7 +1094,7 @@ static List_t __InitDeclaratorList( Boolean_t may_function )
             if(( DeclaratorReturn = f_InitDeclarator( False )))
             {
                if( token( 0 ) == ';' ) step( 1 );
-               f_CompoundStatement( 0, 0 );
+               f_CompoundStatement( 0, 0, 0, 0 );
                f_ListAddLast( &List, (Elem_t) Declarator );
                return List;
             }
@@ -1111,7 +1113,7 @@ static List_t __InitDeclaratorList( Boolean_t may_function )
                f_DeclaratorOldStyleFunctionDefinitionProcess( Declarator );
                if( token( 0 ) == LBRACE )
                {
-                  f_CompoundStatement( 0, 0 );
+                  f_CompoundStatement( 0, 0, 0, 0 );
                   f_ListAddLast( &List, (Elem_t) Declarator );
                   return List;
                }
@@ -1164,14 +1166,14 @@ static List_t __MemberDeclaratorList( void )
       {
          if( token( 0 ) == LBRACE )
          {
-            f_CompoundStatement( 0, 0 );
+            f_CompoundStatement( 0, 0, 0, 0 );
             f_ListAddLast( &List, (Elem_t) Declarator );
             return List;
          }
          else if( token( 0 ) == ':' )
          {
             ctor_initializer();
-            f_CompoundStatement( 0, 0 );
+            f_CompoundStatement( 0, 0, 0, 0 );
             f_ListAddLast( &List, (Elem_t) Declarator );
             return List;
          }
@@ -1538,15 +1540,46 @@ static void _DeclarationProcess( Declaration_t Declaration, int record )
                          , (void *) Type
                          , niveauComp ))
          {
+            static char acType[10000];  /* old: 1000 */
+            f_TypeToString( Type, acType, 0 );
 #ifdef SYMTAB_TRACE
-            char acType[10000];  /* old: 1000 */
-
-            f_TypeToString( Type, acType, 1 );
             printf( "recorded type: %s ----- name: %s\n"
                   , acType
                   , Declarator->Name->pcName
                   );
 #endif
+            {
+                LongString key_value, data_value;
+                char pos[11];
+                char pos1[11];
+                char attrs[16];
+                LongStringInit (&key_value,0);
+                LongStringInit (&data_value,0);
+                /*sprintf(pos, "%06d.%03d", Declaration->lineno,
+                                            Declaration->charno); */
+                sprintf(pos, "%06d.%03d", Declarator->lineno_beg,
+                                          Declarator->charno_beg);
+                sprintf(pos1, "%06d.%03d", Declarator->lineno_end,
+                                           Declarator->charno_end);
+                key_value.copystrings (&key_value,
+                                       sym_name_g, DB_FLDSEP_STR,
+                                       Declarator->Name->pcName, DB_FLDSEP_STR,
+                                       pos, DB_FLDSEP_STR,
+                                       filename_g,
+                                       NULL);
+                sprintf (attrs, "0x%X", attr_from_declaration (Declaration));
+                data_value.copystrings(&data_value,
+                    pos1,                               DB_FLDSEP_STR, /* FIXME */
+                    attrs,                              DB_FLDSEP_STR,
+                    "{", scope_g, "}",                  DB_FLDSEP_STR,
+                    "{", acType, "}",                   DB_FLDSEP_STR,
+                    "{", arg_types_g, "}",              DB_FLDSEP_STR,
+                    "{}", /* comments */
+                    NULL);
+                db_insert_entry(PAF_LOCAL_VAR_DEF, key_value.buf, data_value.buf);
+                key_value.free(&key_value);
+                data_value.free(&data_value);
+            }
          }
          else
          {
@@ -1813,7 +1846,7 @@ extern Type_t f_TypeBasic( Type_t Type, int lineno, int charno )
                    , 0
                    , filename_g
                    , lineno
-		   , charno
+                   , charno
                    , PAF_REF_READ
                    );
 
@@ -2089,4 +2122,25 @@ extern void f_PutConstructorByNewOrDelete( Type_t Type, int lineno, int charno, 
    }
 }
 
+unsigned long attr_from_declaration( Declaration_t Declaration )
+{
+    unsigned long attr = 0;
 
+    switch( Declaration->storage_class )
+    {
+       case SN_STATIC: attr |= PAF_STATIC; break;
+    }
+
+    switch( Declaration->fct_specifier )
+    {
+       case SN_INLINE : attr |= PAF_INLINE ; break;
+       case SN_VIRTUAL: attr |= PAF_VIRTUAL; break;
+    }
+
+    if( Declaration->s_volatile )
+    {
+       attr |= PAF_VOLATILE;
+    }
+
+    return attr;
+}

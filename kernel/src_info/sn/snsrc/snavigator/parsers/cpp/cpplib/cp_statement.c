@@ -27,6 +27,8 @@ MA 02111-1307, USA.
 #include <stdio.h>
 #include <string.h>
 
+#include "longstr.h"
+
 #include <tcl.h>
 
 #include "crossrefP.h"
@@ -71,7 +73,8 @@ static Boolean_t handler( void );
 static char *my_strchr( char *pc, char c );
 
 
-extern Boolean_t f_CompoundStatement( char *types, char *names )
+extern Boolean_t f_CompoundStatement( char *types, char *names, char* positions,
+                char* type_positions )
 {
    int retval;
 
@@ -87,20 +90,28 @@ extern Boolean_t f_CompoundStatement( char *types, char *names )
       SymtabClass = SymtabCreate((void (*)(void*)) f_ClassDestroy );
    }
 
-   if( types && names )
+   if( types && names && positions && type_positions )
    {
       /* feldolgozzuk a fuggveny argumentum listat */
 
       char *my_types, *types_beg, *types_end;
       char *my_names, *names_beg, *names_end;
-      int iBreak;
+      char *my_pos, *pos_beg, *pos_end, c;
+      char *my_type_pos, *type_pos_beg, *type_pos_end;
+      int iBreak, arg_lineno_beg, arg_charno_beg, arg_lineno_end, arg_charno_end;
+      int arg_type_lineno_beg, arg_type_charno_beg,
+          arg_type_lineno_end, arg_type_charno_end;
 
       my_types = SN_StrDup( types );
       my_names = SN_StrDup( names );
+      my_pos = SN_StrDup( positions );
+      my_type_pos = SN_StrDup( type_positions );
 
       types_beg = my_types;
       names_beg = my_names;
-      iBreak = False;
+      pos_beg   = my_pos;
+      type_pos_beg = my_type_pos;
+      iBreak    = False;
 
       while( ! iBreak )
       {
@@ -109,6 +120,40 @@ extern Boolean_t f_CompoundStatement( char *types, char *names )
 
          if(( names_end = my_strchr( names_beg, ',' ))) { *names_end = 0; }
          else                                           { iBreak = True; }
+
+         if(( pos_end = my_strchr( pos_beg, ',' ))) { 
+             *pos_end = 0;
+         } else {
+              iBreak = True;
+         }
+
+         if ( *pos_beg ) {
+             sscanf (pos_beg, "%d%c%d%c%d%c%d",
+                     &arg_lineno_beg, &c, &arg_charno_beg,
+                     &c, &arg_lineno_end, &c, &arg_charno_end);
+         } else {
+             arg_lineno_beg = 0;
+             arg_charno_beg = 0;
+             arg_lineno_end = 0;
+             arg_charno_end = 0;
+         }
+
+         if(( type_pos_end = my_strchr( type_pos_beg, ',' ))) { 
+             *type_pos_end = 0;
+         } else {
+              iBreak = True;
+         }
+
+         if ( *type_pos_beg ) {
+             sscanf (type_pos_beg, "%d%c%d%c%d%c%d",
+                     &arg_type_lineno_beg, &c, &arg_type_charno_beg,
+                     &c, &arg_type_lineno_end, &c, &arg_type_charno_end);
+         } else {
+             arg_type_lineno_beg = 0;
+             arg_type_charno_beg = 0;
+             arg_type_lineno_end = 0;
+             arg_type_charno_end = 0;
+         }
 
          if( *names_beg && types_beg[0] != '.' )
          {
@@ -142,22 +187,66 @@ extern Boolean_t f_CompoundStatement( char *types, char *names )
             }
 
             /* felodjuk az esetleges typedef-eket */
-            Type = f_TypeBasic( Type, start_lineno_g - 1, 0 );
+            Type = f_TypeBasic( Type, arg_type_lineno_beg, arg_type_charno_beg );
 
             if( SymtabInsert( SymtabVariable
                             , Type->Declarator->Name->pcName
                             , (void *) Type
                             , niveauComp ))
             {
-#ifdef SYMTAB_TRACE
-               char acType[10000];  /* old: 1000 */
+               static char acType[10000];  /* old: 1000 */
 
-               f_TypeToString( Type, acType, 1 );
+               f_TypeToString( Type, acType, 0 );
+#ifdef SYMTAB_TRACE
                printf( "argument type: %s ----- name: %s\n"
                      , acType
                      , Type->Declarator->Name->pcName
                      );
 #endif
+               {
+                       LongString key_value, data_value;
+                       char pos[11];
+                       char pos1[11];
+                       char attrs[16];
+                       LongStringInit (&key_value,0);
+                       LongStringInit (&data_value,0);
+
+                       sprintf(pos, "%06d.%03d", arg_lineno_beg, arg_charno_beg);
+                       key_value.copystrings (&key_value,
+                               sym_name_g,                         DB_FLDSEP_STR,
+                               Type->Declarator->Name->pcName,     DB_FLDSEP_STR,
+                               pos,                                DB_FLDSEP_STR,
+                               filename_g,
+                               NULL);
+                       sprintf (attrs, "0x%X", PAF_ABSTRACT);
+                       data_value.copystrings(&data_value,
+                               pos,                                DB_FLDSEP_STR,
+                               attrs,                              DB_FLDSEP_STR,
+                               "{", scope_g, "}",                  DB_FLDSEP_STR,
+                               "{", acType, "}",                   DB_FLDSEP_STR,
+                               "{", arg_types_g, "}",              DB_FLDSEP_STR,
+                               "{}", /* comments */
+                               NULL);
+                       db_insert_entry(PAF_LOCAL_VAR_DEF, key_value.buf,
+                                       data_value.buf);
+                       key_value.free(&key_value);
+                       data_value.free(&data_value);
+                       Put_cross_ref( PAF_REF_TO_LOCAL_VAR
+                               , scope_g[0] ? PAF_MBR_FUNC_DEF : PAF_FUNC_DEF
+                               , PAF_REF_SCOPE_LOCAL
+                               , scope_g
+                               , sym_name_g
+                               , arg_types_g
+                               , sym_name_g
+                               , Type->Declarator->Name->pcName
+                               , 0
+                               , filename_g
+                               , arg_lineno_beg
+                               , arg_charno_beg
+                               , PAF_REF_PASS
+                               );
+                   }
+
             }
             else
             {
@@ -169,11 +258,13 @@ extern Boolean_t f_CompoundStatement( char *types, char *names )
          {
             types_beg = types_end + 1;
             names_beg = names_end + 1;
+            pos_beg = pos_end + 1;
          }
       }
 
       ckfree( my_names );
       ckfree( my_types );
+      ckfree( my_pos );
    }
 
    retval = compound_statement();

@@ -478,7 +478,7 @@ extern Name_t f_NamespaceName( void );
 extern Name_t f_QualifiedName( void );
 extern Name_t f_ClassName( void );
 extern Name_t f_TemplateArgumentList( void );
-extern Boolean_t f_CompoundStatement( char *types, char *names );
+extern Boolean_t f_CompoundStatement( char *types, char *names, char* pos, char* type_pos );
 extern Type_t f_TypeName( char *pcTerminator );
 extern Type_t f_NewTypeName( void );
 extern Type_t f_ConversionTypeName( void );

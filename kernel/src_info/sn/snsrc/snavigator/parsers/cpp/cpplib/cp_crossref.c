@@ -84,6 +84,11 @@ char *scope_g;
 char *sym_name_g;
 char *arg_types_g;
 char *arg_names_g;
+char *arg_pos_g;
+char *arg_type_pos_g;
+int ret_lineno_g;
+int ret_charno_g;
+
 int yyfd = -1;
 
 extern void Paf_Cpp_Cross_Ref_Clean()
@@ -110,7 +115,7 @@ extern void Paf_Cpp_Cross_Ref_Clean()
 
 extern void Paf_insert_cross_ref_qry( char *pcLine )
 {
-   char *pcEnd;
+   char *pcEnd, c;
    int i = 0;
    static char prev_filename[MAXPATHLEN]={0};
 #if DEBUG_CROSS_REF
@@ -124,7 +129,7 @@ extern void Paf_insert_cross_ref_qry( char *pcLine )
    }
 #endif
 
-   while( pcEnd = strchr( pcLine, ';' ))
+   while( pcEnd = strchr( pcLine, ';' ) )
    {
       *pcEnd = 0;
       switch( i++ )
@@ -143,6 +148,10 @@ extern void Paf_insert_cross_ref_qry( char *pcLine )
       case 11: arg_types_g    = SN_StrDup( pcLine ); break;
       case 12: arg_names_g    = SN_StrDup( pcLine ); break;
       case 13: is_cpp_g       = atoi  ( pcLine ); break;
+      case 14: arg_pos_g      = SN_StrDup( pcLine ); break;
+      case 15: arg_type_pos_g = SN_StrDup( pcLine ); break;
+      case 16: sscanf (pcLine, "%d%c%d", &ret_lineno_g, &c, &ret_charno_g);
+                                                     break;
       }
       pcLine = pcEnd + 1;
    }
@@ -224,7 +233,14 @@ extern void Paf_insert_cross_ref_qry( char *pcLine )
    {
       if( f_lineno( 0 ) == start_lineno_g && f_charno( 0 ) == start_charno_g )
       {
-         f_CompoundStatement( arg_types_g, arg_names_g);
+         f_CompoundStatement( arg_types_g, arg_names_g, arg_pos_g, arg_type_pos_g);
+         { /* add reference to the returned type */
+            Type_t Type = f_TypeFromString( ret_g );
+
+            if( Type != 0 )
+                f_TypeBasic( Type, ret_lineno_g, ret_charno_g );
+         }
+
          if( f_lineno( -1 ) != end_lineno_g || f_charno( -1 ) != end_charno_g )
          {
 /* Ez elofordulhat, mert az elso menet okosabban meg tudja talalni
@@ -284,6 +300,16 @@ a compound statement veget.
       ckfree( (char*)arg_names_g );
       arg_names_g = NULL;
    }
+   if( arg_pos_g )
+   {
+      ckfree( (char*)arg_pos_g );
+      arg_pos_g = NULL;
+   }
+   if( arg_type_pos_g )
+   {
+      ckfree( (char*)arg_type_pos_g );
+      arg_type_pos_g = NULL;
+   }
 
    f_read_end();
 
@@ -292,9 +318,15 @@ a compound statement veget.
 
 extern int Put_symbol (int type, char *scope, char *sym_name, char *file, int start_lineno, int start_colpos, int end_lineno, int end_colpos, unsigned long attr, char *ret, char *arg_types, char *args, char *reserved, int start_lineno_highlight, int start_colpos_highlight, int end_lineno_highlight, int end_colpos_highlight )
 {
+/*
    fprintf( stderr, "Fatal error: put_symbol is called from pass2\n" );
    fflush( stderr );
-
+*/
+   /* to enable local variables during second pass */
+   put_symbol (type, scope, sym_name, file, start_lineno, start_colpos,
+               end_lineno, end_colpos, attr, ret, arg_types, args, reserved,
+               start_lineno_highlight, start_colpos_highlight,
+               end_lineno_highlight, end_colpos_highlight);
    return 0;
 }
 
