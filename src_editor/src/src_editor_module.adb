@@ -1089,7 +1089,7 @@ package body Src_Editor_Module is
         Source_Editor_Module (Src_Editor_Module_Id);
       Infos : Line_Information_Data;
       File  : constant Virtual_File :=
-        Create (Get_String (Nth (Args, 1)), Kernel);
+        Create (Full_Filename => Get_String (Nth (Args, 1)));
    begin
       if Id.Display_Line_Numbers then
          Create_Line_Information_Column
@@ -1741,6 +1741,8 @@ package body Src_Editor_Module is
 
          if File /= VFS.No_File then
             Set_Title (Child, Full_Name (File).all, Base_Name (File).all);
+            File_Edited (Kernel, Get_Filename (Child));
+
          else
             --  Determine the number of "Untitled" files open.
 
@@ -1749,6 +1751,7 @@ package body Src_Editor_Module is
                The_Child   : MDI_Child;
                Nb_Untitled : Natural := 0;
                No_Name     : constant String := -"Untitled";
+               Ident       : Virtual_File;
             begin
                The_Child := Get (Iterator);
 
@@ -1767,24 +1770,22 @@ package body Src_Editor_Module is
 
                if Nb_Untitled = 0 then
                   Set_Title (Child, No_Name);
-                  Set_File_Identifier
-                    (Editor, Create (Full_Filename => No_Name));
+                  Ident := Create (Full_Filename => No_Name);
                else
                   declare
                      Identifier : constant String :=
                        No_Name & " (" & Image (Nb_Untitled + 1) & ")";
                   begin
                      Set_Title (Child, Identifier);
-                     Set_File_Identifier
-                       (Editor, Create (Full_Filename => Identifier));
+                     Ident := Create (Full_Filename => Identifier);
                   end;
                end if;
 
+               Set_File_Identifier (Editor, Ident);
                Set_Filename (Editor, Get_Filename (Child));
+               File_Edited (Kernel, Ident);
             end;
          end if;
-
-         File_Edited (Kernel, Get_Filename (Child));
 
          Gtkada.Handlers.Return_Callback.Object_Connect
            (Box,
@@ -3774,7 +3775,10 @@ package body Src_Editor_Module is
          Child := Get (Iter);
 
          exit when Child = null
-           or else Get_Filename (Child) = File;
+           or else Get_Filename (Child) = File
+
+           --  Handling of identifiers
+           or else Get_Title (Child) = Full_Name (File).all;
 
          Next (Iter);
       end loop;
