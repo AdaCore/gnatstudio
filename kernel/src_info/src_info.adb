@@ -112,7 +112,7 @@ package body Src_Info is
    ------------
 
    function Locate
-     (List : LI_File_List;
+     (List        : LI_File_List;
       LI_Filename : VFS.Virtual_File)
       return LI_File_Ptr is
    begin
@@ -131,7 +131,7 @@ package body Src_Info is
       Short_Filename : constant String := Base_Name (Source_Filename);
       Current_LI     : LI_File_Node_Ptr;
       Current_Sep    : File_Info_Ptr_List;
-      Table : LI_File_HTable.HTable := List.Table.all;
+      Table          : LI_File_HTable.HTable := List.Table.all;
       --  ??? Make a copy of the table since Get_First and Get_Next need
       --  a Read/Writable HTable. This is temporary since we should stop
       --  using Get_First/Next soon. See ??? comment below.
@@ -689,7 +689,7 @@ package body Src_Info is
    -- Get_Location --
    ------------------
 
-   function Get_Location (Ref  : E_Reference) return File_Location is
+   function Get_Location (Ref : E_Reference) return File_Location is
    begin
       return Ref.Location;
    end Get_Location;
@@ -726,10 +726,10 @@ package body Src_Info is
    ---------------------
 
    procedure Compute_Sources
-     (Iterator     : in out LI_Handler_Iterator'Class;
-      Project      : Projects.Project_Type;
-      Recursive    : Boolean;
-      Languages    : Projects.Name_Id_Array)
+     (Iterator  : in out LI_Handler_Iterator'Class;
+      Project   : Projects.Project_Type;
+      Recursive : Boolean;
+      Languages : Projects.Name_Id_Array)
    is
       use type Basic_Types.String_Access;
    begin
@@ -982,29 +982,39 @@ package body Src_Info is
       --  translatable string find these as well
 
       case Kind.Kind is
-         when Overloaded_Entity     => return "???";
-         when Unresolved_Entity     => return "unknown"; --  -"unknown"
-         when Access_Kind       => return Get_Value ("access type", "pointer");
+         when Overloaded_Entity =>
+            return "???";
+         when Unresolved_Entity =>
+            return "unknown"; --  -"unknown"
+         when Access_Kind =>
+            return Get_Value ("access type", "pointer");
             --  -"access type"  -"pointer"
-         when Array_Kind        => return Get_Value ("array type", "array");
+         when Array_Kind =>
+            return Get_Value ("array type", "array");
             --  -"array type"   -"array"
-         when Boolean_Kind     => return Get_Value ("boolean type", "boolean");
+         when Boolean_Kind =>
+            return Get_Value ("boolean type", "boolean");
             --  -"boolean type"  -"boolean"
-         when Class_Wide => return Get_Value ("class wide type", "class wide");
+         when Class_Wide =>
+            return Get_Value ("class wide type", "class wide");
             --  -"class wide type"   -"class wide"
-         when Class => return Get_Value ("class type", "class instance");
+         when Class =>
+            return Get_Value ("class type", "class instance");
             --  -"class type"    -"class instance"
-         when Decimal_Fixed_Point   =>
-            return Get_Value ("decimal fixed point type",
-                              "decimal fixed point");
+         when Decimal_Fixed_Point =>
+            return Get_Value
+              ("decimal fixed point type", "decimal fixed point");
             --  -"decimal fixed point type"   -"decimal fixed point"
-         when Entry_Or_Entry_Family => return "entry";   --  -"entry";
-         when Enumeration_Literal   =>  return "enumeration literal";
+         when Entry_Or_Entry_Family =>
+            return "entry";   --  -"entry";
+         when Enumeration_Literal =>
+            return "enumeration literal";
             --  -"enumeration literal"
-         when Enumeration_Kind      =>
+         when Enumeration_Kind =>
             return Get_Value ("enumeration type", "enumeration");
             --  -"enumeration type"   -"enumeration"
-         when Exception_Entity      =>  return "exception";  --  -"exception"
+         when Exception_Entity =>
+            return "exception";  --  -"exception"
          when Floating_Point =>
             return Get_Value ("floating point type", "floating point");
             --  -"floating point type"  -"floating point"
@@ -1014,31 +1024,37 @@ package body Src_Info is
             return Get_Value ("package", "package");  --  -"package"
          when Procedure_Kind =>
             return Get_Value ("procedure", "procedure");  --  -"procedure"
-         when Label_On_Block               =>
+         when Label_On_Block =>
             return "block label";              --  -"block label"
-         when Label_On_Loop                =>
+         when Label_On_Loop =>
             return "loop label";               --  -"loop label"
-         when Label_On_Statement           =>
+         when Label_On_Statement =>
             return "statement label";          --  -"statement label"
-         when Modular_Integer       =>
+         when Modular_Integer =>
             return Get_Value ("unsigned integer type", "unsigned integer");
             --  -"unsigned integer type"   -"unsigned integer"
-         when Named_Number        => return "named number"; --  -"named number"
-         when Ordinary_Fixed_Point  =>
+         when Named_Number =>
+            return "named number"; --  -"named number"
+         when Ordinary_Fixed_Point =>
             return Get_Value ("fixed point type", "fixed point");
             --  -"fixed point type"   -"fixed point"
-         when Private_Type       =>  return "generic formal";
+         when Private_Type =>
+            return "generic formal";
             --  -"generic formal"
-         when Protected_Kind               =>
+         when Protected_Kind =>
             return Get_Value ("protected type", "protected object");
             --  -"protected type"   -"protected object"
-         when Record_Kind       =>  return Get_Value ("record type", "record");
+         when Record_Kind =>
+            return Get_Value ("record type", "record");
             --  -"record type"   -"record"
-         when Signed_Integer  =>  return Get_Value ("integer type", "integer");
+         when Signed_Integer =>
+            return Get_Value ("integer type", "integer");
             --  -"integer type"   -"integer"
-         when String_Kind       =>  return Get_Value ("string type", "string");
+         when String_Kind =>
+            return Get_Value ("string type", "string");
             --  -"string type"   -"string"
-         when Task_Kind              => return Get_Value ("task type", "task");
+         when Task_Kind =>
+            return Get_Value ("task type", "task");
             --  -"task type"   -"task"
       end case;
    end Kind_To_String;
