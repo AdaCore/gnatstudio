@@ -27,6 +27,10 @@
 --        - the line and column number of the insert cursor
 --  </description>
 
+with Glib;
+with Gdk.Rectangle;
+with GVD.Tooltips;
+
 with Gtk.Box;
 with Gtk.Container;
 with Gtk.Label;
@@ -363,6 +367,27 @@ package Src_Editor_Box is
 
 private
 
+   ----------------------
+   -- Tooltip Handling --
+   ----------------------
+
+   type Editor_Tooltip_Data is record
+      Box : Source_Editor_Box;
+   end record;
+
+   procedure Draw_Tooltip
+     (Widget : access Src_Editor_View.Source_View_Record'Class;
+      Data   : in out Editor_Tooltip_Data;
+      Pixmap : out Gdk.Gdk_Pixmap;
+      Width  : out Glib.Gint;
+      Height : out Glib.Gint;
+      Area   : out Gdk.Rectangle.Gdk_Rectangle);
+   --  Draw a tooltip in a text view.
+   --  See GVD.Tooltips for a complete spec of this procedure.
+
+   package Editor_Tooltips is new GVD.Tooltips
+     (Editor_Tooltip_Data, Src_Editor_View.Source_View_Record, Draw_Tooltip);
+
    type Source_Editor_Box_Record is record
       Root_Container       : Gtk.Box.Gtk_Box;
       Never_Attached       : Boolean := True;
@@ -380,6 +405,10 @@ private
       Cursor_Column_Label  : Gtk.Label.Gtk_Label;
       --  The non graphical attributes
       Filename             : String_Access;
+
+      Tooltip : Editor_Tooltips.Tooltips;
+      --  Those tooltips display the value of variables pointed to by the
+      --  mouse.
    end record;
    --  Note that it is straightforward to retrieve the Source_Buffer from
    --  the Source_View, thus making the Source_View field not absolutely

@@ -26,6 +26,10 @@ with Glide_Kernel.Editor;
 with Glide_Kernel.Project;       use Glide_Kernel.Project;
 with Gdk;                        use Gdk;
 with Gdk.Event;                  use Gdk.Event;
+with Gdk.Rectangle;              use Gdk.Rectangle;
+with Gdk.Types;
+with Gdk.Window;                 use Gdk.Window;
+
 with Gtk;                        use Gtk;
 with Gtk.Box;                    use Gtk.Box;
 with Gtk.Container;              use Gtk.Container;
@@ -46,8 +50,11 @@ with String_Utils;               use String_Utils;
 with Src_Editor_Buffer;          use Src_Editor_Buffer;
 with Src_Editor_View;            use Src_Editor_View;
 with Src_Info.Queries;
+with Traces;                     use Traces;
 
 package body Src_Editor_Box is
+
+   Me : Debug_Handle := Create ("Source_Editor");
 
    Min_Line_Number_Width : constant := 3;
    --  The minimum number of digits that the Line Number Area should be
@@ -157,6 +164,49 @@ package body Src_Editor_Box is
       Params : Glib.Values.GValues;
       Editor : Source_Editor_Box);
    --  Callback for the "Goto Declaration<->Body" contextual menu
+
+   ------------------
+   -- Draw_Tooltip --
+   ------------------
+
+   procedure Draw_Tooltip
+     (Widget        : access Source_View_Record'Class;
+      Data          : in out Editor_Tooltip_Data;
+      Pixmap        : out Gdk.Gdk_Pixmap;
+      Width, Height : out Glib.Gint;
+      Area          : out Gdk_Rectangle)
+   is
+      Line, Col    : Natural;
+      X, Y         : Gint;
+      Win_X, Win_Y : Gint;
+      Start_Iter   : Gtk_Text_Iter;
+      End_Iter     : Gtk_Text_Iter;
+      Mask         : Gdk.Types.Gdk_Modifier_Type;
+      Win          : Gdk.Gdk_Window;
+
+   begin
+      Width  := 0;
+      Height := 0;
+
+      Get_Pointer
+        (Get_Window (Widget, Text_Window_Text), Win_X, Win_Y, Mask, Win);
+      Window_To_Buffer_Coords (Widget, Text_Window_Text, Win_X, Win_Y, X, Y);
+      Get_Iter_At_Location (Widget, Start_Iter, X, Y);
+      Search_Entity_Bounds (Data.Box.Source_Buffer, Start_Iter, End_Iter);
+
+      Line := To_Box_Line (Get_Line (Start_Iter));
+      Col  := To_Box_Column (Get_Line_Offset (Start_Iter));
+
+      declare
+         Entity_Name : constant String := Get_Text (Start_Iter, End_Iter);
+      begin
+         Trace (Me, "Tooltip on " & Entity_Name);
+      end;
+
+      Pixmap := null;
+      Area := (0, 0, 0, 0);
+      return;
+   end Draw_Tooltip;
 
    -----------------
    -- To_Box_Line --
@@ -268,6 +318,8 @@ package body Src_Editor_Box is
       Frame_Hbox     : Gtk_Box;
       Scrolling_Area : Gtk_Scrolled_Window;
       Label          : Gtk_Label;
+      Data           : Editor_Tooltip_Data;
+
    begin
       Box.Kernel := Kernel;
       Gtk_New_Vbox (Box.Root_Container, Homogeneous => False);
@@ -292,6 +344,9 @@ package body Src_Editor_Box is
 
       Gtk_New (Box.Source_View, Box.Source_Buffer, Show_Line_Numbers => True);
       Add (Scrolling_Area, Box.Source_View);
+
+      Data.Box := Source_Editor_Box (Box);
+      Editor_Tooltips.New_Tooltip (Box.Source_View, Data, Box.Tooltip);
 
       --  The status bar, at the bottom of the window...
 
@@ -561,6 +616,7 @@ package body Src_Editor_Box is
 
    procedure Destroy (Box : in out Source_Editor_Box) is
    begin
+      Editor_Tooltips.Destroy_Tooltip (Box.Tooltip);
       Unref (Box.Root_Container);
       Free (Box.Filename);
       Box := null;
@@ -1045,6 +1101,7 @@ package body Src_Editor_Box is
 
       Start_Iter : Gtk_Text_Iter;
       End_Iter   : Gtk_Text_Iter;
+
    begin
       --  Get the cursor position if either Line or Column is equal to 0
       if Tmp_Line = 0 or else Tmp_Col = 0 then
