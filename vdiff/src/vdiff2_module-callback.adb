@@ -42,6 +42,8 @@ with Vdiff2_Module.Utils.Shell_Command; use Vdiff2_Module.Utils.Shell_Command;
 with OS_Utils;                          use OS_Utils;
 with VFS;                               use VFS;
 
+with GNAT.OS_Lib;                       use GNAT.OS_Lib;
+
 with Ada.Exceptions;                    use Ada.Exceptions;
 
 
@@ -536,6 +538,7 @@ package body Vdiff2_Module.Callback is
       Node          : Diff_Head_List.List_Node;
       Selected_File : Virtual_File;
       Cmd           : Diff_Command_Access;
+      Arg           : String_Access;
 
    begin
       Create
@@ -551,7 +554,16 @@ package body Vdiff2_Module.Callback is
         (Selected_File,
          VDiff2_Module (Vdiff_Module_ID).List_Diff.all);
 
+      Arg := new String'(Full_Name (Data (Node).File1).all);
+      Execute_GPS_Shell_Command
+        (Get_Kernel (Vdiff_Module_ID.all),
+         "Editor.save_buffer", (1 => Arg));
+      Free (Arg);
+
       Unchecked_Execute (Cmd, Node);
+
+      Delete (Data (Node).File1);
+
       Free (Root_Command (Cmd.all));
       return Commands.Success;
    end Execute;
