@@ -256,20 +256,19 @@ package body Docgen is
          Initialize (B, Text);
          Parse_Entities (Get_Language_From_File
                            (Get_Language_Handler (Kernel), File_Name),
-                            Text,
+                         Text,
                          Callback'Unrestricted_Access);
 
-         if Info.Doc_Info_Options.References and then
-            --  Call graphs required in the preferences
-           Info.Info_Type = Package_Info and then
-            --  The current entity is a package
-           not Type_Entity_List.Is_Empty (Call_Graph_Entities)
+         if Info.Doc_Info_Options.References
+           and then Info.Info_Type = Package_Info
+           and then not Type_Entity_List.Is_Empty (Call_Graph_Entities)
          then
             Call_Graph_Packages_Header (B, Kernel, File, Info);
             Call_Graph_Packages (Call_Graph_Entities);
             Call_Graph_Packages_Footer (B, Kernel, File, Info);
             Type_Entity_List.Free (Call_Graph_Entities, True);
          end if;
+
          Finish (B, File, Text, Entity_Line);
 
       exception
@@ -384,7 +383,8 @@ package body Docgen is
                Entity_Node := Type_Entity_List.First (Entity_List);
                Entity_Node_Succ := Type_Entity_List.Null_Node;
                Exist := False;
-               while  Entity_Node /= Type_Entity_List.Null_Node loop
+
+               while Entity_Node /= Type_Entity_List.Null_Node loop
                   if (Get_Name (Data (Entity_Node).Entity) =
                         To_Lower (Text (Loc_Start .. Loc_End)))
                     and then
@@ -394,25 +394,30 @@ package body Docgen is
                      --  This identifier is a declaration.
                      Exist := True;
                   end if;
+
                   if Exist then
                      --  Identifier removed. It won't be duplicated.
                      --  Before, Line_In_Body for those inner identifiers must
                      --  be indicated (currently the value is
                      --  No_Body_Line_Needed because we deal with a package)
+
                      Line_In_Body := Get_Line
                        (Data (Entity_Node).Line_In_Body);
+
                      if Data (Entity_Node).Kind = Subprogram_Entity then
-                        --  Trace (Me, "Inner mi a vrai");
                         Type_Entity_List.Append
                           (Call_Graph_Entities,
                            Clone (Data (Entity_Node), True));
                      end if;
+
                      Type_Entity_List.Remove_Nodes
                        (Entity_List,
                         Entity_Node_Succ,
                         Entity_Node);
                   end if;
+
                   exit when Exist = True;
+
                   Entity_Node_Succ := Entity_Node;
                   Entity_Node := Type_Entity_List.Next (Entity_Node_Succ);
                end loop;
@@ -710,7 +715,7 @@ package body Docgen is
       Source_Path     : String;
       Doc_Suffix      : String) return String
    is
-      Ext      : constant String := File_Extension (Source_Filename);
+      Ext : constant String := File_Extension (Source_Filename);
    begin
       return Source_Path &
         Base_Name (Source_Filename, Ext)
@@ -724,35 +729,26 @@ package body Docgen is
    -----------
 
    function Clone
-     (Entity : Entity_List_Information;
-      Also_Lists : Boolean)
-      return Entity_List_Information is
-      Calls  : Type_Reference_List.List;
-      Called : Type_Reference_List.List;
+     (Entity     : Entity_List_Information;
+      Copy_Lists : Boolean) return Entity_List_Information
+   is
+      Calls  : Type_Reference_List.List := Type_Reference_List.Null_List;
+      Called : Type_Reference_List.List := Type_Reference_List.Null_List;
    begin
-      if Also_Lists then
+      if Copy_Lists then
          --  Deep copy required
          Duplicate (Calls, Entity.Calls_List);
          Duplicate (Called, Entity.Called_List);
-         return
-           (Kind         => Entity.Kind,
-            Name         => new String'(Entity.Name.all),
-            Entity       => Copy (Entity.Entity),
-            Is_Private   => Entity.Is_Private,
-            Line_In_Body => Entity.Line_In_Body,
-            Calls_list   => Calls,
-            Called_List  => Called);
-      else
-         --  We don't need to copy the list used for call graph
-         return
-           (Kind         => Entity.Kind,
-            Name         => new String'(Entity.Name.all),
-            Entity       => Copy (Entity.Entity),
-            Is_Private   => Entity.Is_Private,
-            Line_In_Body => Entity.Line_In_Body,
-            Calls_list   => Type_Reference_List.Null_List,
-            Called_List  => Type_Reference_List.Null_List);
       end if;
+
+      return
+        (Kind         => Entity.Kind,
+         Name         => new String'(Entity.Name.all),
+         Entity       => Copy (Entity.Entity),
+         Is_Private   => Entity.Is_Private,
+         Line_In_Body => Entity.Line_In_Body,
+         Calls_List   => Calls,
+         Called_List  => Called);
    end Clone;
 
    -------------------------
