@@ -24,7 +24,7 @@ Index: common/src/stubs.c
 --- Makefile.gnat	Fri May 31 19:50:04 2002
 ***************
 *** 22,27 ****
---- 22,38 ----
+--- 22,44 ----
     fmap.adb \
     fname.ads \
     fname.adb \
@@ -39,6 +39,12 @@ Index: common/src/stubs.c
 +   g-os_lib.adb \
 +   g-string.ads \
 +   g-string.adb \
++   gpr2make.ads \
++   gpr2make.adb \
++   bld.ads      \
++   bld.adb      \
++   bld-io.ads   \
++   bld-io.adb   \
     gnatvsn.ads \
     hostparm.ads \
     krunch.ads \
