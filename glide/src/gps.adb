@@ -28,9 +28,8 @@ with Glide_Main_Window;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;          use GNAT.OS_Lib;
 with Glide_Kernel;         use Glide_Kernel;
-with Glide_Kernel.Editor;  use Glide_Kernel.Editor;
+with Glide_Kernel.Modules; use Glide_Kernel.Modules;
 with Glide_Kernel.Project; use Glide_Kernel.Project;
-with Glide_Toolbar;        use Glide_Toolbar;
 with Gtkada.Intl;          use Gtkada.Intl;
 with Gtkada.Dialogs;       use Gtkada.Dialogs;
 with GVD.Types;
@@ -43,14 +42,15 @@ with Prj;                  use Prj;
 --  the associated functionalities will not be available. Note that you also
 --  need to call Register_Module in the main program below.
 pragma Warnings (Off);
-with Project_Viewers;
-with Project_Explorers;
 with Aunit_Module;
 with Browsers.Dependency_Items;
 with Browsers.Projects;
-with VCS_Module;
 with GVD_Module;
 with Metrics_Module;
+with Project_Explorers;
+with Project_Viewers;
+with Src_Editor_Module;
+with VCS_Module;
 pragma Warnings (On);
 
 procedure Glide2 is
@@ -167,6 +167,7 @@ begin
    Browsers.Projects.Register_Module;
    Project_Viewers.Register_Module;
    Project_Explorers.Register_Module;
+   Src_Editor_Module.Register_Module;
 
    Gtk.Main.Set_Locale;
    Gtk.Main.Init;
@@ -200,7 +201,6 @@ begin
    end;
 
    Glide_Page.Gtk_New (Page, Glide);
-   Register_Default_Toolbar (Glide.Kernel);
    Initialize_All_Modules (Glide.Kernel);
 
    for J in 1 .. Argument_Count loop
@@ -208,7 +208,7 @@ begin
          Load_Project (Glide.Kernel, Argument (J));
          Project_Loaded := True;
       else
-         Open_Or_Create (Glide.Kernel, Argument (J));
+         Open_File_Editor (Glide.Kernel, Argument (J));
       end if;
    end loop;
 
