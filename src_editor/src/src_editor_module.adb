@@ -411,6 +411,8 @@ package body Src_Editor_Module is
             Set_Title (Child, -"No Name");
          end if;
 
+         Raise_Child (Child);
+
       else
          Console.Insert
            (Kernel, "Can not open file '" & File & "'",
