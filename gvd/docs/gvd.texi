@@ -1678,10 +1678,9 @@ saved by the user.
 @node General Limitations
 @subsection General Limitations
 @noindent
-     If command output is sent to the debugger console, it is impossible for GVD
-     to distinguish between the output of the debugged program and the output
-     of the inferior debugger. This problem can be avoided by running the
-     program in the separate execution window.
+     If command output is sent to the debugger console, it is impossible for GVD     to distinguish between the output of the debugged program and the output
+     of the inferior debugger. This problem can be avoided by launching the
+     program separately and then attaching it in GVD.
 
      Output that confuses GVD includes:
 
