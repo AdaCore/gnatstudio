@@ -22,7 +22,7 @@ with Glide_Kernel;                      use Glide_Kernel;
 with Glide_Intl;                        use Glide_Intl;
 with Glide_Kernel.MDI;                  use Glide_Kernel.MDI;
 with Glide_Kernel.Standard_Hooks;       use Glide_Kernel.Standard_Hooks;
-with Glide_Result_View;                 use Glide_Result_View;
+with GPS.Location_View;                 use GPS.Location_View;
 
 with GNAT.OS_Lib;                       use GNAT.OS_Lib;
 with Gtkada.MDI;                        use Gtkada.MDI;
@@ -38,6 +38,7 @@ with Pixmaps_Vdiff2;                    use Pixmaps_Vdiff2;
 with Gdk.Pixbuf;                        use Gdk.Pixbuf;
 with Gtkada.Dialogs;                    use Gtkada.Dialogs;
 
+with String_Utils;                      use String_Utils;
 with Traces;                            use Traces;
 with Ada.Exceptions;                    use Ada.Exceptions;
 with Ada.Unchecked_Deallocation;
@@ -356,7 +357,8 @@ package body Vdiff2_Module.Utils is
               (Kernel, VFile (J), Id_Col_Vdiff);
             Unhighlight_Range (Kernel, VFile (J), Fine_Change_Style);
 
-            Remove_Result_Category (Kernel, -"Visual differences", VFile (J));
+            Remove_Location_Category
+              (Kernel, -"Visual differences", VFile (J));
          end if;
       end loop;
    end Hide_Differences;
@@ -720,13 +722,13 @@ package body Vdiff2_Module.Utils is
          end if;
 
          if The_Range = 1 then
-            Insert_Result
+            Insert_Location
               (Kernel, -"Visual differences", Highlight_File,
-               " 1 line " & Modification, Line, 1);
+               "1 line " & Modification, Line, 1);
          else
-            Insert_Result
+            Insert_Location
               (Kernel, -"Visual differences", Highlight_File,
-               Integer'Image (The_Range) & " lines " & Modification,
+               Image (The_Range) & " lines " & Modification,
                Line, 1);
          end if;
 
