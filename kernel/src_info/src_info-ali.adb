@@ -126,6 +126,13 @@ package body Src_Info.ALI is
    --  Conversion from characters read in ALI files to the reference kind. See
    --  the function Char_To_R_Kind
 
+   type Tref_Kind_Array is array (Tref_Kind) of Parent_Kind;
+   Tref_Kind_To_Parent_Kind : constant Tref_Kind_Array :=
+     (Tref_None    => Parent_Type,  --   unused
+      Tref_Access  => Pointed_Type,
+      Tref_Derived => Parent_Type,
+      Tref_Type    => Parent_Type);
+
    type Sdep_To_Sfile_Table is array (Sdep_Id range <>) of Source_File;
    --  An array used to store the Source_File data for each Sdep ID in
    --  the Sdep table.
@@ -1358,10 +1365,19 @@ package body Src_Info.ALI is
            (Value => (File   => Copy (Sfiles (Xref_Ent.Tref_File_Num)),
                       Line   => Positive (Xref_Ent.Tref_Line),
                       Column => Positive (Xref_Ent.Tref_Col)),
+            Kind  => Tref_Kind_To_Parent_Kind (Xref_Ent.Tref),
+            Predefined_Entity_Name => No_Name,
             Next  => Decl.Parent_Location);
 
          --  This field no longer exists, but we might want it some day.
          --  Decl.Parent_Kind := Char_To_E_Kind (Xref_Ent.Tref_Type);
+
+      elsif Xref_Ent.Tref_Standard_Entity /= No_Name then
+         Decl.Parent_Location := new File_Location_Node'
+           (Value => Predefined_Entity_Location,
+            Kind  => Tref_Kind_To_Parent_Kind (Xref_Ent.Tref),
+            Predefined_Entity_Name => Xref_Ent.Tref_Standard_Entity,
+            Next  => Decl.Parent_Location);
 
       else
          Decl.Parent_Location := null;
@@ -1442,7 +1458,15 @@ package body Src_Info.ALI is
                   E_Ref.Location.Column := E_Ref.Location.Column + 1;
                end if;
 
-            elsif Decl_Info.References = null then
+            elsif E_Ref.Kind = Primitive_Operation
+              and then Decl_Info.Declaration.Primitive_Subprograms = null
+            then
+               Decl_Info.Declaration.Primitive_Subprograms :=
+                 new E_Reference_Node'(Value => E_Ref, Next => null);
+
+            elsif E_Ref.Kind /= Primitive_Operation
+              and then Decl_Info.References = null
+            then
                Decl_Info.References := new E_Reference_Node'
                  (Value => E_Ref, Next => null);
             else
@@ -1450,7 +1474,11 @@ package body Src_Info.ALI is
                --  "Find_All_References" is properly sorted.
                --  ??? Could optimize by keeping a pointer to the last element
 
-               List := Decl_Info.References;
+               if E_Ref.Kind = Primitive_Operation then
+                  List := Decl_Info.Declaration.Primitive_Subprograms;
+               else
+                  List := Decl_Info.References;
+               end if;
 
                while List.Next /= null loop
                   List := List.Next;
