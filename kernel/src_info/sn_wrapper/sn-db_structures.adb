@@ -1376,6 +1376,9 @@ package body SN.DB_Structures is
       pos := Input'First;
       for i in Input'First .. Input'Last loop
          if ((Input (i) = ',') or (i = Input'Last)) and (n > 0) then
+            if i = Input'Last then
+               n := n + 1;
+            end if;
             Buffer (Buffer_Pos .. (Buffer_Pos + n - 1)) :=
                   Input (pos .. (pos + n - 1));
             pos := pos + n + 1;
