@@ -387,20 +387,28 @@ package body Src_Editor_View is
       Event : Gdk_Event) return Gtk_Menu
    is
       V : Source_View := Source_View (View);
-      Menu : Gtk_Menu;
       Item : Gtk_Menu_Item;
    begin
-      Gtk_New (Menu);
       if Get_Window (Event) = Get_Window (V, Text_Window_Left) then
+         if V.Left_Contextual_Menu /= null then
+            Destroy (V.Left_Contextual_Menu);
+         end if;
+
+         Gtk_New (V.Left_Contextual_Menu);
          Gtk_New (Item, "go to line");
-         Add (Menu, Item);
+         Add (V.Left_Contextual_Menu, Item);
+         return V.Left_Contextual_Menu;
 
       else
-         Gtk_New (Item, "Go to body/declaration");
-         Add (Menu, Item);
-      end if;
+         if V.Contextual_Menu /= null then
+            Destroy (V.Contextual_Menu);
+         end if;
 
-      return Menu;
+         Gtk_New (V.Contextual_Menu);
+         Gtk_New (Item, "Go to body/declaration");
+         Add (V.Contextual_Menu, Item);
+         return V.Contextual_Menu;
+      end if;
    end View_Contextual_Menu;
 
    -------------

@@ -34,6 +34,7 @@
 
 with Gdk.GC;
 with Gdk.Font;
+with Gtk.Menu;
 with Gtk.Text_Mark;
 with Gtk.Text_View;
 with Pango.Font;
@@ -96,6 +97,8 @@ private
       Line_Numbers_GC     : Gdk.GC.Gdk_GC;
       Show_Line_Numbers   : Boolean;
       LNA_Width_In_Digits : Natural;
+      Contextual_Menu     : Gtk.Menu.Gtk_Menu;
+      Left_Contextual_Menu : Gtk.Menu.Gtk_Menu;
    end record;
 
 end Src_Editor_View;
