@@ -13,7 +13,7 @@ New features in GVD 1.2.1
 
 New features in GVD 1.2.0
 
-- Under Windows, the special pathnames //cygdrive/x/ and //x/ are now
+- Under Windows, the special pathnames /cygdrive/x/ and //x/ are now
   recognized and converted into appropriate names.
 - The File->New Debugger dialog now provides the ability to replace the
   current debugger by default.
