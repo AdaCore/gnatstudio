@@ -212,25 +212,29 @@ package body Naming_Editors is
             end;
          end loop;
 
-         if Row = -1 then
-            Text (0) := New_String (Unit);
-            Text (1) := New_String ("");
-            Text (2) := New_String ("");
-            Row := Append (Editor.Exception_List, Text);
-            Free (Text);
+         if Spec_Name /= Empty_Spec_Name
+           or else Body_Name /= Empty_Body_Name
+         then
+            if Row = -1 then
+               Text (0) := New_String (Unit);
+               Text (1) := New_String ("");
+               Text (2) := New_String ("");
+               Row := Append (Editor.Exception_List, Text);
+               Free (Text);
+            end if;
+
+            if Spec_Name /= Empty_Spec_Name then
+               Set_Text (Editor.Exception_List, Row, 1, Spec_Name);
+            end if;
+
+            if Body_Name /= Empty_Body_Name then
+               Set_Text (Editor.Exception_List, Row, 2, Body_Name);
+            end if;
+
+            Moveto (Editor.Exception_List, Row, 0, 0.0, 0.0);
+            Reset_Exception_Fields (Editor);
          end if;
 
-         if Spec_Name /= Empty_Spec_Name then
-            Set_Text (Editor.Exception_List, Row, 1, Spec_Name);
-         end if;
-
-         if Body_Name /= Empty_Body_Name then
-            Set_Text (Editor.Exception_List, Row, 2, Body_Name);
-         end if;
-
-         Moveto (Editor.Exception_List, Row, 0, 0.0, 0.0);
-
-         Reset_Exception_Fields (Editor);
          Grab_Focus (Editor.Unit_Name_Entry);
       end if;
    end Add_New_Exception;

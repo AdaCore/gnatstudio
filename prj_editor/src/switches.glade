@@ -1676,6 +1676,12 @@ mixedcase
 		<object>Naming_Scheme_Editor</object>
 		<last_modification_time>Wed, 16 May 2001 16:54:05 GMT</last_modification_time>
 	      </signal>
+	      <signal>
+		<name>key_press_event</name>
+		<handler>on_exception_list_key_press_event</handler>
+		<object>Naming_Scheme_Editor</object>
+		<last_modification_time>Fri, 18 May 2001 15:59:24 GMT</last_modification_time>
+	      </signal>
 	      <columns>3</columns>
 	      <column_widths>80,124,80</column_widths>
 	      <selection_mode>GTK_SELECTION_SINGLE</selection_mode>

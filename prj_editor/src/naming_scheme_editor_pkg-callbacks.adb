@@ -5,12 +5,14 @@ with Gdk.Types.Keysyms; use Gdk.Types.Keysyms;
 with Gdk.Types; use Gdk.Types;
 --  with Gtk.Accel_Group; use Gtk.Accel_Group;
 --  with Gtk.Object; use Gtk.Object;
---  with Gtk.Enums; use Gtk.Enums;
+with Gtk.Enums; use Gtk.Enums;
 --  with Gtk.Style; use Gtk.Style;
 with Gtk.Widget; use Gtk.Widget;
 with Gtk.Combo;  use Gtk.Combo;
 with Gtk.List;   use Gtk.List;
 with Naming_Editors; use Naming_Editors;
+
+with Ada.Text_IO; use Ada.Text_IO;
 
 package body Naming_Scheme_Editor_Pkg.Callbacks is
 
@@ -84,6 +86,28 @@ package body Naming_Scheme_Editor_Pkg.Callbacks is
          Set_Text (E.Body_Filename_Entry, Body_Name);
       end if;
    end On_Exceptions_List_Select_Row;
+
+   ---------------------------------------
+   -- On_Exception_List_Key_Press_Event --
+   ---------------------------------------
+
+   function On_Exception_List_Key_Press_Event
+     (Object : access Gtk_Widget_Record'Class;
+      Params : Gtk.Arguments.Gtk_Args) return Boolean
+   is
+      Event : Gdk_Event := To_Event (Params, 1);
+      use Gint_List;
+      E : Naming_Editor := Naming_Editor (Object);
+      List : constant Gint_List.Glist := Get_Selection (E.Exception_List);
+   begin
+      if Get_Key_Val (Event) = GDK_Delete then
+         if List /= Null_List then
+            Remove (E.Exception_List, Get_Data (List));
+         end if;
+         return True;
+      end if;
+      return False;
+   end On_Exception_List_Key_Press_Event;
 
    -----------------------
    -- On_Update_Clicked --
