@@ -205,6 +205,10 @@ package Debugger is
    --  Java, where Executable should be the name of the main class.
    --  GDB_COMMAND: "file"
 
+   ------------------------
+   -- Execution Commands --
+   ------------------------
+
    procedure Run (Debugger : access Debugger_Root) is abstract;
    --  Start the execution of the executable.
    --  The arguments must have been set by a call to Set_Arguments.
@@ -229,6 +233,13 @@ package Debugger is
    --  Continue program after signal or breakpoint.
    --  GDB_COMMAND: "next"
 
+   procedure Interrupt (Debugger : access Debugger_Root) is abstract;
+   --  Interrupt the debugger, or the debuggee if it is running.
+
+   ----------------------
+   -- Stack Management --
+   ----------------------
+
    procedure Stack_Down (Debugger : access Debugger_Root) is abstract;
    --  Select and print stack frame called by the current one.
    --  GDB_COMMAND: "down"
@@ -236,6 +247,31 @@ package Debugger is
    procedure Stack_Up (Debugger : access Debugger_Root) is abstract;
    --  Select and print stack frame that called the current one.
    --  GDB_COMMAND: "up"
+
+   procedure Finish (Debugger : access Debugger_Root) is abstract;
+   --  Finish executing the current frame.
+   --  GDB_COMMAND: "finish"
+
+   function Backtrace (Debugger : access Debugger_Root) return String
+      is abstract;
+   --  Return the current backtrace.
+   --  GDB_COMMAND: "bt"
+
+   -------------------------
+   -- Breakpoint Handling --
+   -------------------------
+
+   procedure Break_Subprogram
+     (Debugger : access Debugger_Root; Name : String) is abstract;
+   --  Break at the beginning of a specific subprogram.
+   --  GDB_COMMAND: "break name"
+
+   procedure Break_Source
+     (Debugger : access Debugger_Root;
+      File     : String;
+      Line     : Positive) is abstract;
+   --  Break at a specific source location.
+   --  GDB_COMMAND: "break file:line"
 
    procedure Break_Exception
      (Debugger  : access Debugger_Root;
@@ -251,19 +287,9 @@ package Debugger is
    --  not break on a specific exception only when it is unhandled).
    --  GDB_COMMAND: "break exception"
 
-   procedure Break_Subprogram
-     (Debugger : access Debugger_Root; Name : String) is abstract;
-   --  Break at the beginning of a specific subprogram.
-   --  GDB_COMMAND: "break"
-
-   procedure Finish (Debugger : access Debugger_Root) is abstract;
-   --  Finish executing the current frame.
-   --  GDB_COMMAND: "finish"
-
-   function Backtrace (Debugger : access Debugger_Root) return String
-      is abstract;
-   --  Return the current backtrace.
-   --  GDB_COMMAND: "bt"
+   --------------------
+   -- Thread Support --
+   --------------------
 
    procedure Thread_Switch
      (Debugger : access Debugger_Root'Class;
@@ -276,6 +302,10 @@ package Debugger is
       return Language.Thread_Information_Array is abstract;
    --  Return the current list of threads.
    --  GDB_COMMAND: "info threads" or "info tasks"
+
+   -----------------------------
+   -- Source Related Commands --
+   -----------------------------
 
    function Line_Contains_Code
      (Debugger : access Debugger_Root;
