@@ -515,19 +515,20 @@ project files very attractive.
 @c --------------------------------------------------------------------
 
 @noindent
-Debugging is tightly integrated with the other components of GPS, in
-particular it is possible to edit files and navigate through your sources
+Debugging is tightly integrated with the other components of GPS. For
+example, it is possible to edit files and navigate through your sources
 while debugging.
 
 To start a debug session, go to the menu @code{Debug->Initialize}, and choose
 either the name of your executable, if you have specified the name of
 your main program(s) in the project properties, or start an empty debug
 session using the @code{<no main file>} item. It is then possible to load
-any file to debug, by using the menu @code{Debug->Debug->Load File...}.
+any file to debug, by using the menu @code{Debug->Debug->Load File...}
 
 After the debugger has been initialized, you have access to two new windows:
 the data window (in the top of the working area), and the debugger console
-(in a second page, after the GPS console). All the menus under @code{Debugger}
+(in a second page, after the Messages window).
+All the menus under @code{Debugger}
 are now also accessible, and you also have access to additional contextual
 menus, in particular in the source editor where it is possible to easily
 display variables, set breakpoints, and get automatic display (via @i{tooltips})
@@ -537,10 +538,10 @@ During a debugging session, you can use all the facilities provided by GVD.
 See the GVD documentation (@url{gvd.html}) for a complete description
 of these functionalities.
 
-Once your debug session is terminated, go to the menu @code{Debug->Terminate},
-which will terminate your debug session, by closing the data window and the
-debugger console, as well as terminating the underlying debugger
-(e.g @code{gdb}) used by GPS to handle the low level debugging.
+When you want to quit the debugger without quitting GPS, go to the menu
+@code{Debug->Terminate}, which will terminate your debug session, by closing
+the data window and the debugger console, as well as terminating the underlying
+debugger (e.g @code{gdb}) used by GPS to handle the low level debugging.
 
 @c --------------------------------------------------------------------
 @node Version Control System
