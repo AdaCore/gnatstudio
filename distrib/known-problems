@@ -1,5 +1,12 @@
 Known Problems fixed in GPS 1.4.0
 
+- C917-001 Search/Replace gives wrong results when blocks are folded.
+  Problem:    When blocks are folded in the editor, searching for a string or
+              for multiple occurrences of a string gives wrong results.
+  Workaround: Unfold all blocks before searching.
+              (Note that it is not recommended to use block folding in version
+               1.3.0)
+
 - C508-001 Focus and dialog issues
   Problem:    If you start editing a file, and then click on the [x] button
               in the title bar, this opens a confirmation dialog. Selecting
