@@ -71,7 +71,7 @@ pragma Warnings (Off, Debugger.Jdb);
 
 package body Odd.Process is
 
-   Enable_Block_Search : constant Boolean := False;
+   Enable_Block_Search : constant Boolean := True;
    --  Whether we should try to find the block of a variable when printing
    --  it, and memorize it with the item.
 
@@ -124,6 +124,36 @@ package body Odd.Process is
    Graph_Cmd_Format3 : Pattern_Matcher := Compile
      ("graph\s+undisplay\s+(.*)", Case_Insensitive);
    --  Third possible set of commands
+
+   --------------------
+   -- Post processes --
+   --------------------
+   --  For reliability reasons, it is not recommanded to directly load
+   --  a file in Text_Output_Handler as soon as a file indication is found
+   --  in the output of the debugger.
+   --  Instead, we register a "post command", to be executed when the current
+   --  call to Wait or Wait_Prompt is finished.
+   --  There are a number of such functions, defined below, and that all use
+   --  the same type of User_Data.
+
+   type Load_File_Data is record
+      Process   : Debugger_Process_Tab;
+      File_Name : Odd.Types.String_Access;
+      Line      : Natural;
+   end record;
+   type Load_File_Data_Access is access Load_File_Data;
+   function Convert is new Unchecked_Conversion
+     (System.Address, Load_File_Data_Access);
+   function Convert is new Unchecked_Conversion
+     (Load_File_Data_Access, System.Address);
+
+   procedure Load_File_Post_Process (User_Data : System.Address);
+   --  Load a file, whose name was found while we were previously waiting for
+   --  a prompt.
+
+   procedure Set_Line_Post_Process (User_Data : System.Address);
+   --  Set a line, whose name was found while we were previously waiting for
+   --  a prompt.
 
    -----------------------
    -- Local Subprograms --
@@ -284,6 +314,40 @@ package body Odd.Process is
       --  not work properly.
    end Text_Output_Handler;
 
+   ----------------------------
+   -- Load_File_Post_Process --
+   ----------------------------
+
+   procedure Load_File_Post_Process (User_Data : System.Address) is
+      Data : Load_File_Data_Access := Convert (User_Data);
+   begin
+      --  Override the language currently defined in the editor.
+      --  Since the text file has been given by the debugger, the language
+      --  to use is the one currently defined by the debugger.
+      Set_Current_Language
+        (Data.Process.Editor_Text, Get_Language (Data.Process.Debugger));
+
+      --  Display the file
+
+      Push_Internal_Command_Status (Get_Process (Data.Process.Debugger), True);
+      Update_Breakpoints (Data.Process);
+      Load_File (Data.Process.Editor_Text, Data.File_Name.all);
+      Pop_Internal_Command_Status (Get_Process (Data.Process.Debugger));
+
+      --  Free unused memory
+      Free (Data.File_Name);
+   end Load_File_Post_Process;
+
+   ---------------------------
+   -- Set_Line_Post_Process --
+   ---------------------------
+
+   procedure Set_Line_Post_Process (User_Data : System.Address) is
+      Data : Load_File_Data_Access := Convert (User_Data);
+   begin
+      Set_Line (Data.Process.Editor_Text, Data.Line);
+   end Set_Line_Post_Process;
+
    -------------------------
    -- Text_Output_Handler --
    -------------------------
@@ -322,41 +386,33 @@ package body Odd.Process is
          Set_Position (Process.Debugger_Text, Gint (Process.Edit_Pos));
       end if;
 
-      --  Do we have a file name ?
+      --  Do we have a file name or line number indication: if yes, do not
+      --  process them immediatly, but wait for the current command to be
+      --  full processed (since Text_Output_Handler is called while a
+      --  call to Wait or Wait_Prompt is being processed).
+      --  The memory allocated for Load_File_Data is freed in
+      --  process_proxies.adb:Process_Post_Processes.
+      --  The memory allocated for the string is freed in
+      --  Load_File_Post_Process.
 
       if File_First /= 0 then
-
-         --  Get everything in the buffer (since the following command
-         --  needs to interact with the debugger, and we want to hide its
-         --  output).
-
-         Wait_Prompt (Process.Debugger);
-
-         --  Override the language currently defined in the editor.
-         --  Since the text file has been given by the debugger, the language
-         --  to use is the one currently defined by the debugger.
-         Set_Current_Language
-           (Process.Editor_Text, Get_Language (Process.Debugger));
-
-         --  Display the file
-
-         Push_Internal_Command_Status (Get_Process (Process.Debugger), True);
-         Update_Breakpoints (Process);
-         Load_File
-           (Process.Editor_Text,
-            Str (File_First .. File_Last));
-
-         --  Since we have eaten the prompt above, we need to make sure there
-         --  is one on exit, so that the command that was being processed
-         --  can correctly end.
-         Display_Prompt (Process.Debugger, Wait_For_Prompt => False);
-
-         Pop_Internal_Command_Status (Get_Process (Process.Debugger));
-
+         Register_Post_Cmd
+           (Get_Process (Process.Debugger),
+            Load_File_Post_Process'Access,
+            Convert (new Load_File_Data'
+                     (Process => Process,
+                      File_Name => new String'(Str (File_First .. File_Last)),
+                      Line      => 1)));
       end if;
 
       if Line /= 0 then
-         Set_Line (Process.Editor_Text, Line);
+         Register_Post_Cmd
+           (Get_Process (Process.Debugger),
+            Set_Line_Post_Process'Access,
+            Convert (new Load_File_Data'
+                     (Process   => Process,
+                      File_Name => null,
+                      Line      => Line)));
       end if;
    end Text_Output_Handler;
 
