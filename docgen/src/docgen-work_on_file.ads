@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2002                       --
+--                     Copyright (C) 2001-2003                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -22,53 +22,21 @@
 --  processing of the program structure information for the source file
 --  list passed by the procedure Docgen.
 
---  In the procedure Process_Files each file from the list will be passed
---  to the procedure Process_One_File, while collecting information about
---  types and subprograms of all spec files, to be able to create index
---  lists of these entities by calling the procedures Process_Type_Index,
---  Process_Subprogram_Index and Process_Unit_Index (the latter for the
---  source file list) in the package Docgen.Work_On_File.
-
---  The procedure Process_One_File creates for each file a list of
---  entities and passes them to the procedure Process_Source in
---  Docgen.Work_On_Source.
-
-with Ada.Text_IO;               use Ada.Text_IO;
-with GNAT.OS_Lib;               use GNAT.OS_Lib;
-with Projects.Registry;         use Projects.Registry;
-with Src_Info;                  use Src_Info;
-with Language_Handlers;         use Language_Handlers;
+with Glide_Kernel;
 
 package Docgen.Work_On_File is
 
    procedure Process_Files
-     (Source_File_List   : in out Type_Source_File_List.List;
-      Registry           : Projects.Registry.Project_Registry'Class;
-      Handler            : in out Language_Handler;
-      Project            : in out Projects.Project_Type;
-      Source_Info_List   : in out Src_Info.LI_File_List;
-      Options            : All_Options);
-   --  process all files, by creating the index lists of the type
-   --  and subprogram entities and by calling Process_One_File
-   --  for each file from the list.
-
-private
-
-   procedure Process_One_File
-     (Doc_File           : File_Type;
-      Registry           : Projects.Registry.Project_Registry'Class;
-      Source_Filename    : String;
-      Package_Name       : String;
-      Next_Package       : GNAT.OS_Lib.String_Access;
-      Prev_Package       : GNAT.OS_Lib.String_Access;
-      Source_File_List   : in out Type_Source_File_List.List;
-      Source_Info_List   : in out Src_Info.LI_File_List;
-      Handler            : in out Language_Handler;
-      Project            : in out Projects.Project_Type;
-      Options            : All_Options;
-      Process_Body_File  : Boolean);
-   --  called by Process_Files for each file from the given list
-   --  will examine that file and call the function Work_On_Source
-   --  from Docgen.Work_On_File.
+     (Source_File_List : in out Docgen.Type_Source_File_List.List;
+      Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Options          : Docgen.All_Options;
+      Doc_Directory    : String;
+      Doc_Suffix       : String;
+      Converter        : Docgen.Doc_Subprogram_Type);
+   --  Process all files from Source_File_List, and generate their
+   --  documentation. Converter indicates what format the documentation should
+   --  be generated in.
+   --
+   --  ??? Doc_Suffix suffix should be a primitive operation of the converter
 
 end Docgen.Work_On_File;

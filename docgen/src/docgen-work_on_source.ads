@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2002                       --
+--                     Copyright (C) 2001-2003                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -38,26 +38,28 @@
 --  and body files. The private functions used will call the subprogram from
 --  an output package (like Docgen.Html_Output or Docgen.Texi_Output).
 
-with Ada.Text_IO;               use Ada.Text_IO;
-with GNAT.OS_Lib;               use GNAT.OS_Lib;
-with Language;                  use Language;
-with Src_Info;                  use Src_Info;
+with GNAT.OS_Lib;
+with Src_Info;
+with VFS;
+with Glide_Kernel;
 
 package Docgen.Work_On_Source is
 
-   package GOL renames GNAT.OS_Lib;
-
    procedure Process_Source
-     (Doc_File           : File_Type;
+     (Kernel             : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Doc_File           : File_Type;
       Next_Package       : GNAT.OS_Lib.String_Access;
       Prev_Package       : GNAT.OS_Lib.String_Access;
       Source_File_List   : in out Type_Source_File_List.List;
-      Source_Filename    : String;
+      Source_Filename    : VFS.Virtual_File;
       Package_Name       : String;
       Entity_List        : in out Type_Entity_List.List;
       Process_Body_File  : Boolean;
       LI_Unit            : LI_File_Ptr;
-      Options            : All_Options);
+      Options            : All_Options;
+      Converter          : Docgen.Doc_Subprogram_Type;
+      Doc_Directory      : String;
+      Doc_Suffix         : String);
    --  with the data from the lists, the soucre file and the config file,
    --  create the Strings for the output.
    --  The order of the procedure calls can't be changed here
@@ -65,217 +67,30 @@ package Docgen.Work_On_Source is
    --  Change also: Doc_TEXI_Subtitle !!!
 
    procedure Process_Unit_Index
-     (Source_File_List : Type_Source_File_List.List;
-      Options          : All_Options);
+     (Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Source_File_List : Docgen.Type_Source_File_List.List;
+      Options          : Docgen.All_Options;
+      Converter        : Docgen.Doc_Subprogram_Type;
+      Doc_Directory    : String;
+      Doc_Suffix       : String);
    --  creates the index file for the packages
 
    procedure Process_Subprogram_Index
-     (Subprogram_Index_List : Type_Entity_List.List;
-      Options               : All_Options);
+     (Kernel                : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Subprogram_Index_List : Docgen.Type_Entity_List.List;
+      Options               : Docgen.All_Options;
+      Converter             : Docgen.Doc_Subprogram_Type;
+      Doc_Directory         : String;
+      Doc_Suffix            : String);
    --  creates the index file for the subprograms
 
    procedure Process_Type_Index
-     (Type_Index_List : Type_Entity_List.List;
-      Options          : All_Options);
+     (Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Type_Index_List : Docgen.Type_Entity_List.List;
+      Options         : All_Options;
+      Converter       : Doc_Subprogram_Type;
+      Doc_Directory   : String;
+      Doc_Suffix      : String);
    --  creates the index file for the types
-
-private
-
-   procedure Process_One_Body_File
-     (Doc_File           : File_Type;
-      Source_File        : String;
-      File_Text          : GNAT.OS_Lib.String_Access;
-      LI_Unit            : LI_File_Ptr;
-      Source_File_List   : in out Type_Source_File_List.List;
-      Options            : All_Options);
-   --  Will pass the information about the body file to the output
-   --  subprogram. This is the only subprogram working on the contents
-   --  of the body source files.
-
-   procedure Process_Open_File
-     (Doc_File         : File_Type;
-      Package_File     : String;
-      Next_Package     : GNAT.OS_Lib.String_Access;
-      Prev_Package     : GNAT.OS_Lib.String_Access;
-      Package_Name     : String;
-      Source_File_List : in out Type_Source_File_List.List;
-      Options          : All_Options);
-   --  is always the first subprogram to be called, as it creates the
-   --  very beginning of the documentation by calling the output
-   --  subprogram
-
-   procedure Process_Close_File
-     (Doc_File      : File_Type;
-      File_Name     : String;
-      Options       : All_Options);
-   --  is always the last subprogram to be called, as it creates the
-   --  very end of the documentation by calling the output subprogram
-
-   procedure Process_Package_Description
-     (Doc_File        : File_Type;
-      Package_Name    : String;
-      Text            : String;
-      Options         : All_Options);
-   --  extracts all the comment lines of the source file which are at the
-   --  beginning of it. Empty lines are ignored, the procedure stops when
-   --  first command is found. This information will be passed to the
-   --  output subprogram
-
-   procedure Process_With_Clause
-     (Doc_File         : File_Type;
-      Source_Filename  : String;
-      Package_Name     : String;
-      Parsed_List      : Construct_List;
-      File_Text        : GNAT.OS_Lib.String_Access;
-      LI_Unit          : LI_File_Ptr;
-      Source_File_List : in out Type_Source_File_List.List;
-      Options          : All_Options);
-   --  will process the lines at the beginning of the source file
-   --  starting with "with" and pass them to the output subprogram
-
-   procedure Process_Packages
-     (Doc_File         : File_Type;
-      Entity_List      : in out Type_Entity_List.List;
-      Source_Filename  : String;
-      Package_Name     : String;
-      Parsed_List      : Construct_List;
-      File_Text        : GNAT.OS_Lib.String_Access;
-      LI_Unit          : LI_File_Ptr;
-      Source_File_List : in out Type_Source_File_List.List;
-      Options          : All_Options);
-   --  will process renamed and instantiated packages and pass
-   --  them to the output subprogram
-
-   procedure Process_Vars
-     (Doc_File         : File_Type;
-      Entity_List      : in out Type_Entity_List.List;
-      Source_Filename  : String;
-      Package_Name     : String;
-      Parsed_List      : Construct_List;
-      File_Text        : GNAT.OS_Lib.String_Access;
-      LI_Unit          : LI_File_Ptr;
-      Source_File_List : in out Type_Source_File_List.List;
-      Options          : All_Options);
-   --  called by Process_Source to work on the constants
-   --  and named numbers and pass each of them to the output subprogram
-
-   procedure Process_Exceptions
-     (Doc_File         : File_Type;
-      Entity_List      : in out Type_Entity_List.List;
-      Source_Filename  : String;
-      Package_Name     : String;
-      Parsed_List      : Construct_List;
-      File_Text        : GNAT.OS_Lib.String_Access;
-      LI_Unit          : LI_File_Ptr;
-      Source_File_List : in out Type_Source_File_List.List;
-      Options          : All_Options);
-   --  called by Process_Source to work on the exceptions and
-   --  pass each of them to the output subprogram
-
-   procedure Process_Entries
-     (Doc_File           : File_Type;
-      Entity_List        : in out Type_Entity_List.List;
-      Source_Filename    : String;
-      Process_Body_File  : Boolean;
-      Package_Name       : String;
-      Parsed_List        : Construct_List;
-      File_Text          : GNAT.OS_Lib.String_Access;
-      LI_Unit            : LI_File_Ptr;
-      Source_File_List   : in out Type_Source_File_List.List;
-      Options            : All_Options);
-   --  called by Process_Source to work on the entires and entry
-   --  families and pass each of them to the output subprogram
-
-   procedure Process_Subprograms
-     (Doc_File           : File_Type;
-      Entity_List        : in out Type_Entity_List.List;
-      Source_Filename    : String;
-      Process_Body_File  : Boolean;
-      Package_Name       : String;
-      Parsed_List        : Construct_List;
-      File_Text          : GNAT.OS_Lib.String_Access;
-      LI_Unit            : LI_File_Ptr;
-      Source_File_List   : in out Type_Source_File_List.List;
-      Options            : All_Options);
-   --  called by Process_Source to work on the subprograms and
-   --  pass each of them to the output subprogram
-
-   procedure Process_Types
-     (Doc_File         : File_Type;
-      Entity_List      : in out Type_Entity_List.List;
-      Source_Filename  : String;
-      Package_Name     : String;
-      Parsed_List      : Construct_List;
-      File_Text        : GNAT.OS_Lib.String_Access;
-      LI_Unit          : LI_File_Ptr;
-      Source_File_List : in out Type_Source_File_List.List;
-      Options          : All_Options);
-   --  called by Process_Source to work on the types and
-   --  pass each of them to the output subprogram
-
-   procedure Process_Header
-     (Doc_File           : File_Type;
-      Package_Name       : String;
-      Package_File       : String;
-      Process_Body_File  : Boolean;
-      Options            : All_Options);
-   --  will call the output subprogram to create the header of
-   --  the package. This is NOT the same as Process_Open_File,
-   --  if TexInfo doc is created, the file is opened only once,
-   --  but the Header has to be set in front of each package.
-
-   procedure Process_Footer
-     (Doc_File      : File_Type;
-      Package_File  : String;
-      Options       : All_Options);
-   --  will call the output subprogram to create the footer of
-   --  the package. This is NOT the same as Process_Close_File,
-   --  if TexInfo doc is created, the file is closed only once,
-   --  but the Footer has to be set behind each package.
-
-   function Extract_Comment
-     (File_Text           : String;
-      Line                : Natural;
-      Header_Lines        : Natural;
-      Package_Description : Boolean;
-      Options             : All_Options) return GNAT.OS_Lib.String_Access;
-   --  get the doc comments from the source file. The File_Text gives the
-   --  String where to search, Line is the line number of the entity and
-   --  Header_Lines says how many lines takes the header of the entity.
-   --  Within Options it can be chosen, if the comments are placed
-   --  below or above the entity header.
-   --  If Package_Description is set, empty lines between the comment lines
-   --  will be ignored, the direction of the processing is always the same
-   --  and it stops when the first command is found.
-
-   function Line_Is_Comment
-     (Line : String) return Boolean;
-   --  Return true, if the first chars of the line are "--"
-
-   function Line_Is_Empty
-     (Line : String) return Boolean;
-   --  Return true, if there is no text in this line
-
-   function Is_Ignorable_Comment
-     (Comment_Line : String) return Boolean;
-   --  Return true, if the comment line starts with a "--!"
-   --  It must be sure, that Comment_List is a comment line!
-
-   function Kill_Prefix
-     (Comment_Line : String) return String;
-   --  Return the comment line without the "--" in front
-
-   function Get_Whole_Header
-     (File_Text   : String;
-      Parsed_List : Construct_List;
-      Entity_Name : String;
-      Entity_Line : Natural) return GNAT.OS_Lib.String_Access;
-   --  Return the Header of the entity. If no header was found,
-   --  null will be returned.
-
-   function Get_Line_From_String
-     (Text    : String;
-      Line_Nr : Natural) return String;
-   --  Return the wished Line from the String
 
 end Docgen.Work_On_Source;

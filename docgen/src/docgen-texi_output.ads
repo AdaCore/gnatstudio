@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2002                       --
+--                     Copyright (C) 2001-2003                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -41,120 +41,20 @@
 --  node and chapter info for the project file and the bye removed.
 
 
-with Ada.Text_IO; use Ada.Text_IO;
+with Ada.Text_IO;
+with Glide_Kernel;
 
 package Docgen.Texi_Output is
 
    procedure Doc_TEXI_Create
-     (File : Ada.Text_IO.File_Type;
-      Info : in out Doc_Info);
+     (Kernel        : access Glide_Kernel.Kernel_Handle_Record'Class;
+      File          : in Ada.Text_IO.File_Type;
+      Info          : in out Doc_Info;
+      Doc_Directory : String;
+      Doc_Suffix    : String);
    --  This procedure is called every time the TEXI files are concerned.
    --  What happens with the given information (which of the procedures
-   --  below will be called) depands on the contents and the kind of the
+   --  below will be called) depends on the contents and the kind of the
    --  Doc_Info type.
-
-private
-
-   procedure Doc_TEXI_Open
-     (File   : Ada.Text_IO.File_Type;
-      Info   : Doc_Info);
-   --  Called each time a new file has been created
-
-   procedure Doc_TEXI_Close
-     (File   : Ada.Text_IO.File_Type;
-      Info   : Doc_Info);
-   --  Called each time the file should be closed
-
-   procedure Doc_TEXI_Subtitle
-     (File   : Ada.Text_IO.File_Type;
-      Info   : Doc_Info);
-   --  Add a subtitle for the entity type to the documentation
-
-   procedure Doc_TEXI_Entry
-     (File   : Ada.Text_IO.File_Type;
-      Info   : Doc_Info);
-   --  Add aa entry or entry family to the documentation
-
-   procedure Doc_TEXI_Subprogram
-     (File   : Ada.Text_IO.File_Type;
-      Info   : Doc_Info);
-   --  Add a subprogram to the documentation
-
-   procedure Doc_TEXI_Pack_Desc
-     (File   : Ada.Text_IO.File_Type;
-      Info   : Doc_Info);
-   --  Add the package description to the documentation
-
-   procedure Doc_TEXI_Package
-     (File   : Ada.Text_IO.File_Type;
-      Info   : Doc_Info);
-   --  Add the renamed and instantiated package to the documentation
-
-   procedure Doc_TEXI_With
-     (File   : Ada.Text_IO.File_Type;
-      Info   : Doc_Info);
-   --  Add the dependencies to the documentation
-
-   procedure Doc_TEXI_Var
-     (File    : Ada.Text_IO.File_Type;
-      Info    : Doc_Info);
-   --  Add a constant or named number to the documentation
-
-   procedure Doc_TEXI_Exception
-     (File   : in Ada.Text_IO.File_Type;
-      Info   : Doc_Info);
-   --  Add an exception to the documentation
-
-   procedure Doc_TEXI_Type
-     (File   : in Ada.Text_IO.File_Type;
-      Info   : Doc_Info);
-   --  Add a type to the documentation
-
-   procedure Format_TEXI
-     (File          : Ada.Text_IO.File_Type;
-      Text          : String;
-      File_Name     : String;
-      Entity_Name   : String;
-      Entity_Line   : Natural;
-      Is_Body       : Boolean;
-      Process_Body  : Boolean;
-      Do_Checks     : Boolean);
-   --  Formatted Text as TEXI code and write to the docfile.
-
-   procedure Doc_TEXI_Unit_Index_Header
-        (File   : Ada.Text_IO.File_Type;
-      Info   : Doc_Info);
-   --  Create the header of the index of all packages
-   --  and also create the whole index.htm for the frames
-
-   procedure Doc_TEXI_Sub_Index_Header
-     (File   : Ada.Text_IO.File_Type;
-      Info   : Doc_Info);
-   --  Create the header of the index of all subprograms
-
-   procedure Doc_TEXI_Type_Index_Header
-     (File   : Ada.Text_IO.File_Type;
-      Info   : Doc_Info);
-   --  Create the header of the index of all types
-
-   procedure Doc_TEXI_Index_Item
-     (File   : Ada.Text_IO.File_Type;
-      Info   : Doc_Info);
-   --  Add an item to an index, used for all 3 index types
-
-   procedure Doc_TEXI_Index_End
-     (File   : Ada.Text_IO.File_Type;
-      Info   : Doc_Info);
-   --  Add the footer to the index, used for all 3 indes files
-
-   procedure Doc_TEXI_Body
-     (File   : Ada.Text_IO.File_Type;
-      Info   : in out Doc_Info);
-   --  Format the body by calling Format_TEXI for the whole body file
-   --  and write it to the doc file
-
-   function Get_Texi_File_Name (File : String) return String;
-   --  Create a .htm file name from the full path of the source file
-   --  for ex.: from util/src/docgen.adb the name docgen_adb.htm is created
 
 end Docgen.Texi_Output;

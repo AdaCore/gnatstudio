@@ -28,7 +28,11 @@ with Ada.Text_IO;               use Ada.Text_IO;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with List_Utils;                use List_Utils;
 with Src_Info;                  use Src_Info;
+with Src_Info.Queries;
 with Generic_List;
+with VFS;
+with Glide_Kernel;
+with Projects;
 
 package Docgen is
 
@@ -37,45 +41,48 @@ package Docgen is
    No_Body_Line_Needed : constant Natural := 0;
 
    type Source_File_Information is record
-      File_Name        : GNAT.OS_Lib.String_Access;
-      Prj_File_Name    : GNAT.OS_Lib.String_Access;
+      File_Name        : VFS.Virtual_File;
       Package_Name     : GNAT.OS_Lib.String_Access;
       Other_File_Found : Boolean;
    end record;
-   --  the structures for the list of the source files
+   --  Description of a source file for which documentation should be
+   --  generated.
+
    procedure Free (X : in out Source_File_Information);
+   --  Free the information associated with X
+
    package Type_Source_File_List is
      new Generic_List (Source_File_Information);
+
    function Compare_Elements (X, Y : Source_File_Information) return Boolean;
    procedure Sort_List_Name is
      new Sort (Type_Source_File_List, "<" => Compare_Elements);
-   --  sort elements by name (BUT: the spec file in front of body file)
+   --  Sort elements by name (BUT: the spec file in front of body file)
 
    type Reference_List_Information is record
-      File_Name       : GNAT.OS_Lib.String_Access;
+      Entity          : Src_Info.Queries.Entity_Information;
       Set_Link        : Boolean;   --  if False, no link will be set
-      Column          : Natural;
-      Line            : Positive;
-      Subprogram_Name : GNAT.OS_Lib.String_Access;
-      --  the structures for the list of reference entities
-      --  used in type Entity_List_Information.
-      --  This one will be used to save the positions,
-      --  where a subprogram is called or which is called by him.
    end record;
+   --  List of references for an entity: this is the list of subprograms
+   --  calling or called by the entity.
+
    procedure Free (X : in out Reference_List_Information);
+   --  Free the information associated with X
+
    package Type_Reference_List is
      new Generic_List (Reference_List_Information);
+
    function Compare_Elements_Column
      (X, Y : Reference_List_Information) return Boolean;
    function Compare_Elements_Name
      (X, Y : Reference_List_Information) return Boolean;
    procedure Sort_List_Column is
      new Sort (Type_Reference_List, "<" => Compare_Elements_Column);
-   --  sort the list by column
+   --  Sort the list by column
+
    procedure Sort_List_Name is
      new Sort (Type_Reference_List, "<" => Compare_Elements_Name);
-   --  sort the list by name
-
+   --  Sort the list by name
 
    type Entity_Type is
      (Subprogram_Entity,
@@ -85,24 +92,30 @@ package Docgen is
       Package_Entity,
       Entry_Entity,
       Other_Entity);
-   --  a simplified list of possible entity types
+   --  A simplified list of possible entity types
 
    type Entity_List_Information is record
       Kind            : Entity_Type;
       Name            : GNAT.OS_Lib.String_Access;
-      Short_Name      : GNAT.OS_Lib.String_Access;
-      File_Name       : GNAT.OS_Lib.String_Access;
-      Column          : Natural;
-      Line            : Integer;
+      Entity          : Src_Info.Queries.Entity_Information;
       Is_Private      : Boolean;
       --  The following items won't be used in the index lists
-      Line_In_Body    : Natural;  --  if 0, no link to be set!
+      Line_In_Body    : Src_Info.File_Location;
       Calls_List      : Type_Reference_List.List;
       Called_List     : Type_Reference_List.List;
    end record;
-   --  the structures for the list of entities
+   --  Description of an entity
+
+   function Clone
+     (Entity : Entity_List_Information) return Entity_List_Information;
+   --  Return a deep-copy of Entity.
+   --  Entity can be freed without impacting the copy
+
    procedure Free (X : in out Entity_List_Information);
+   --  Free the memory associated with X
+
    package Type_Entity_List is new Generic_List (Entity_List_Information);
+
    function Compare_Elements_Name
      (X, Y : Entity_List_Information) return Boolean;
    function Compare_Elements_Line
@@ -111,13 +124,15 @@ package Docgen is
      (X, Y : Entity_List_Information) return Boolean;
    procedure Sort_List_Line   is
      new Sort (Type_Entity_List, "<" => Compare_Elements_Line);
-   --  sort list by line
+   --  Sort list by line
+
    procedure Sort_List_Column is
      new Sort (Type_Entity_List, "<" => Compare_Elements_Column);
-   --  sort list by column
+   --  Sort list by column
+
    procedure Sort_List_Name   is
      new Sort (Type_Entity_List, "<" => Compare_Elements_Name);
-   --  sort the entities in alphabetical order by name,
+   --  Sort the entities in alphabetical order by name,
    --  BUT all public entites stand in front of the private
 
    type Info_Types is
@@ -131,45 +146,28 @@ package Docgen is
       Package_Info, Entry_Info);
    --  the structure used in the type Doc_Info.
 
-   type Doc_Info;
-
-   type Doc_Subprogram_Type is access
-     procedure (File      : Ada.Text_IO.File_Type;
-                Text_Type : in out Doc_Info);
-   --  the procedure to define for each new output format
-
-
    type All_Options is record
-      Doc_Subprogram       : Doc_Subprogram_Type;
-      --  subprogram to use in the output package
-      Doc_Suffix           : GNAT.OS_Lib.String_Access;
-      --  the suffix of the output file
       Process_Body_Files   : Boolean := False;
       --  create also the body documentation?
-      Info_Output          : Boolean := False;
-      --  show more information
       Ignorable_Comments   : Boolean := False;
       --  ignore all comments with "--!"
       Comments_Above       : Boolean := False;
       --  doc comments for entities above the header
       Show_Private         : Boolean := False;
       --  show also private entities
-      Doc_Directory        : GNAT.OS_Lib.String_Access;
-      --  where should the doc files be created
       References           : Boolean := False;
       --  True if the program should search for the references
       --  adding information like "subprogram called by..."
       One_Doc_File         : Boolean := False;
       --  used for TexInfo: True, if the project.texi file should be
       --  build and the package files should be included there later.
-      Project_Name         : GNAT.OS_Lib.String_Access;
-      --  The name of the main project
       Link_All             : Boolean := False;
       --  Should links be created to entities whose declaration files
       --  aren't being processed
    end record;
    --  the type containing all the information which can be
    --  set by using the opions of the command line
+
 
    --  The data structure used to pass the information
    --  to the procedure which is defined
@@ -183,28 +181,28 @@ package Docgen is
          Doc_File_List             : Type_Source_File_List.List;
 
          case Info_Type is
-               --  used to at the very beginning of the file
+               --  used at the very beginning of the file
             when Open_Info =>
                Open_Title                    : GNAT.OS_Lib.String_Access;
-               Open_File                     : GNAT.OS_Lib.String_Access;
+               Open_File                     : VFS.Virtual_File;
                Open_Package_Next             : GNAT.OS_Lib.String_Access;
                Open_Package_Prev             : GNAT.OS_Lib.String_Access;
 
                --  used at the end of the file
             when Close_Info =>
-               Close_File_Name               : GNAT.OS_Lib.String_Access;
+               Close_File_Name               : VFS.Virtual_File;
 
                --  used to start an entity information
             when Header_Info =>
                Header_Package                : GNAT.OS_Lib.String_Access;
-               Header_File                   : GNAT.OS_Lib.String_Access;
+               Header_File                   : VFS.Virtual_File;
                Header_Link                   : Boolean;
                Header_Line                   : Natural;
 
                --  used to finish an entity information
             when Footer_Info =>
                Footer_Title                  : GNAT.OS_Lib.String_Access;
-               Footer_File                   : GNAT.OS_Lib.String_Access;
+               Footer_File                   : VFS.Virtual_File;
 
                --  used to add a subtitle to the information file
             when Subtitle_Info =>
@@ -214,7 +212,7 @@ package Docgen is
 
             when With_Info =>
                With_Header                   : GNAT.OS_Lib.String_Access;
-               With_File                     : GNAT.OS_Lib.String_Access;
+               With_File                     : VFS.Virtual_File;
                With_Header_Line              : Natural;
 
             when Package_Info =>
@@ -271,7 +269,7 @@ package Docgen is
                Unit_File_List                : Type_Source_File_List.List;
                --  the name doc file name without the suffix
                Unit_Index_File_Name          : GNAT.OS_Lib.String_Access;
-               Unit_Project_Name             : GNAT.OS_Lib.String_Access;
+               Unit_Project_Name             : Projects.Project_Type;
 
                --  used to start the subprogram index file
             when Subprogram_Index_Info =>
@@ -290,13 +288,13 @@ package Docgen is
                --  used to add items to all 3 kindes of index files
             when Index_Item_Info =>
                Item_Name                     : GNAT.OS_Lib.String_Access;
-               Item_File                     : GNAT.OS_Lib.String_Access;
+               Item_File                     : VFS.Virtual_File;
                Item_Line                     : Natural;
                Item_Doc_File                 : GNAT.OS_Lib.String_Access;
 
                --  used to pass the information of one line in the body file
             when Body_Line_Info =>
-               Body_File                     : GNAT.OS_Lib.String_Access;
+               Body_File                     : VFS.Virtual_File;
                Body_Text                     : GNAT.OS_Lib.String_Access;
          end case;
       end record;
@@ -306,59 +304,52 @@ package Docgen is
    --  be the only procedure to be defined
    --  when a new output format should be added
 
-   function Count_Lines (Line : String) return Natural;
-   --  returns the number of lines in the String
+   type Doc_Subprogram_Type is access procedure
+     (Kernel        : access Glide_Kernel.Kernel_Handle_Record'Class;
+      File          : in Ada.Text_IO.File_Type;
+      Info          : in out Doc_Info;
+      Doc_Directory : String;
+      Doc_Suffix    : String);
+   --  the procedure to define for each new output format
 
-   function Get_String_Index
-     (Type_Str  : String;
-      Index     : Natural;
-      Substring : String) return Natural;
-   --  returns the index of the substring in the Type_Str.
-   --  The search starts at position Index,
-   --  if no position is found, return 0.
+   function Count_Lines (Line : String) return Natural;
+   --  Returns the number of lines in the String
+
+   function Count_Points (Text : String) return Natural;
+   --  returns the number of point in the given string
 
    function Get_Doc_File_Name
-     (Source_Filename : String;
+     (Source_Filename : VFS.Virtual_File;
       Source_Path     : String;
       Doc_Suffix      : String) return String;
-   --  returns a string with the name for the new doc file:
+   --  Returns a string with the name for the new doc file:
    --  first the doc path is added in front of the created name
    --  then the "." in front of the suffix is replaced by "_",
    --  so that a new output format suffix can be added
 
    function Source_File_In_List
      (Source_File_List : Type_Source_File_List.List;
-      Name             : String) return Boolean;
-   --  returns true if the file is found in the source file list
+      Name             : VFS.Virtual_File) return Boolean;
+   --  Returns true if the file is found in the source file list
 
-   function Count_Points (Text : String) return Natural;
-   --  returns the number of point in the given string
-
-   function Spec_Suffix (Name_Of_File : String) return String;
+   function Spec_Suffix
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+      File   : VFS.Virtual_File) return String;
    --  return the spec suffix, without the "." in front, corresponding to
    --  the given file name. This given file can be a body or a spec.
    --  As using Other_File_Name this function works for all suffix's.
+   --  ??? Wrong, due to call to Is_Spec_File
 
-   function Body_Suffix (Name_Of_File : String) return String;
+   function Body_Suffix
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+      File   : VFS.Virtual_File) return String;
    --  return the body suffix, without the "." in front, corresponding to
    --  the given file name. This given file can be a body or a spec.
    --  As using Other_File_Name this function works for all suffix's.
 
-   function File_Name_Without_Suffix
-     (Name_Of_File : String) return String;
-   --  return the file name without the point and the suffix at the end
-   --  ??? This is a duplicate of Base_Name
-
-   function Is_Spec_File (Name_Of_File : String) return Boolean;
+   function Is_Spec_File
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+      File   : VFS.Virtual_File) return Boolean;
    --  returns True, if the File is a Spec file
-   --  ??? This function is not the final implementation !!!
-
-   function Other_File_Name (Name_Of_File : String) return String;
-   --  Return the full path name to the other file associated with
-   --  Name_Of_File (the spec if Name_Of_File is a body or separate,
-   --  the body if Nme_Of_File is the spec).
-   --  The empty string is returned if the file wasn't found (and error
-   --  messages are printed to the console appropriately).
-   --  ??? This function is not the final implementation !!!
 
 end Docgen;

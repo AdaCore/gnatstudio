@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2002                       --
+--                     Copyright (C) 2001-2003                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -24,29 +24,140 @@ with Language;                  use Language;
 with Language.Ada;              use Language.Ada;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with Language.Ada;              use Language.Ada;
+with Glide_Kernel;              use Glide_Kernel;
+with Src_Info.Queries;          use Src_Info.Queries;
+with VFS;                       use VFS;
+with Projects;                  use Projects;
 
 package body Docgen.Texi_Output is
 
    package TEL  renames Type_Entity_List;
    package TSFL renames Type_Source_File_List;
 
-   procedure Doc_TEXI_Create
+   procedure Doc_TEXI_Open
+     (Kernel : access Kernel_Handle_Record'Class;
+      File   : in Ada.Text_IO.File_Type;
+      Info   : Doc_Info);
+   --  Called each time a new file has been created
+
+   procedure Doc_TEXI_Close
+     (Kernel : access Kernel_Handle_Record'Class;
+      File   : in Ada.Text_IO.File_Type;
+      Info   : Doc_Info);
+   --  Called each time the file should be closed
+
+   procedure Doc_TEXI_Subtitle
+     (File   : Ada.Text_IO.File_Type;
+      Info   : Doc_Info);
+   --  Add a subtitle for the entity type to the documentation
+
+   procedure Doc_TEXI_Entry
+     (File   : Ada.Text_IO.File_Type;
+      Info   : Doc_Info);
+   --  Add aa entry or entry family to the documentation
+
+   procedure Doc_TEXI_Subprogram
+     (Kernel : access Kernel_Handle_Record'Class;
+      File   : in Ada.Text_IO.File_Type;
+      Info   : Doc_Info);
+   --  Add a subprogram to the documentation
+
+   procedure Doc_TEXI_Pack_Desc
+     (File   : Ada.Text_IO.File_Type;
+      Info   : Doc_Info);
+   --  Add the package description to the documentation
+
+   procedure Doc_TEXI_Package
+     (File   : Ada.Text_IO.File_Type;
+      Info   : Doc_Info);
+   --  Add the renamed and instantiated package to the documentation
+
+   procedure Doc_TEXI_With
+     (File   : Ada.Text_IO.File_Type;
+      Info   : Doc_Info);
+   --  Add the dependencies to the documentation
+
+   procedure Doc_TEXI_Var
+     (File    : Ada.Text_IO.File_Type;
+      Info    : Doc_Info);
+   --  Add a constant or named number to the documentation
+
+   procedure Doc_TEXI_Exception
      (File   : in Ada.Text_IO.File_Type;
-      Info   : in out Doc_Info) is
+      Info   : Doc_Info);
+   --  Add an exception to the documentation
+
+   procedure Doc_TEXI_Type
+     (File   : in Ada.Text_IO.File_Type;
+      Info   : Doc_Info);
+   --  Add a type to the documentation
+
+   procedure Format_TEXI
+     (File          : Ada.Text_IO.File_Type;
+      Text          : String);
+   --  Formated Text as TEXI code and write to the docfile.
+
+   procedure Doc_TEXI_Unit_Index_Header
+     (Kernel        : access Kernel_Handle_Record'Class;
+      File          : Ada.Text_IO.File_Type;
+      Info          : Doc_Info;
+      Doc_Directory : String;
+      Doc_Suffix    : String);
+   --  Create the header of the index of all packages
+   --  and also create the whole index.htm for the frames
+
+   procedure Doc_TEXI_Sub_Index_Header
+     (File   : Ada.Text_IO.File_Type;
+      Info   : Doc_Info);
+   --  Create the header of the index of all subprograms
+
+   procedure Doc_TEXI_Type_Index_Header
+     (File   : Ada.Text_IO.File_Type;
+      Info   : Doc_Info);
+   --  Create the header of the index of all types
+
+   procedure Doc_TEXI_Index_Item
+     (File   : Ada.Text_IO.File_Type;
+      Info   : Doc_Info);
+   --  Add an item to an index, used for all 3 index types
+
+   procedure Doc_TEXI_Index_End
+     (File   : Ada.Text_IO.File_Type;
+      Info   : Doc_Info);
+   --  Add the footer to the index, used for all 3 indes files
+
+   procedure Doc_TEXI_Body
+     (File   : Ada.Text_IO.File_Type;
+      Info   : in out Doc_Info);
+   --  Format the body by calling Format_TEXI for the whole body file
+   --  and write it to the doc file
+
+   ---------------------
+   -- Doc_TEXI_Create --
+   ---------------------
+
+   procedure Doc_TEXI_Create
+     (Kernel        : access Glide_Kernel.Kernel_Handle_Record'Class;
+      File          : in Ada.Text_IO.File_Type;
+      Info          : in out Doc_Info;
+      Doc_Directory : String;
+      Doc_Suffix    : String) is
    begin
       case Info.Info_Type is
-         when Open_Info             => Doc_TEXI_Open (File, Info);
-         when Close_Info            => Doc_TEXI_Close (File, Info);
+         when Open_Info             => Doc_TEXI_Open (Kernel, File, Info);
+         when Close_Info            => Doc_TEXI_Close (Kernel, File, Info);
          when Subtitle_Info         => Doc_TEXI_Subtitle (File, Info);
          when Package_Desc_Info     => Doc_TEXI_Pack_Desc (File, Info);
          when With_Info             => Doc_TEXI_With (File, Info);
          when Package_Info          => Doc_TEXI_Package (File, Info);
          when Var_Info              => Doc_TEXI_Var (File, Info);
          when Entry_Info            => Doc_TEXI_Entry (File, Info);
-         when Subprogram_Info       => Doc_TEXI_Subprogram (File, Info);
+         when Subprogram_Info       =>
+            Doc_TEXI_Subprogram (Kernel, File, Info);
          when Type_Info             => Doc_TEXI_Type (File, Info);
          when Exception_Info        => Doc_TEXI_Exception (File, Info);
-         when Unit_Index_Info       => Doc_TEXI_Unit_Index_Header (File, Info);
+         when Unit_Index_Info       => Doc_TEXI_Unit_Index_Header
+              (Kernel, File, Info, Doc_Directory, Doc_Suffix);
          when Subprogram_Index_Info => Doc_TEXI_Sub_Index_Header  (File, Info);
          when Type_Index_Info       => Doc_TEXI_Type_Index_Header (File, Info);
          when Index_Item_Info       => Doc_TEXI_Index_Item (File, Info);
@@ -54,7 +165,6 @@ package body Docgen.Texi_Output is
          when Body_Line_Info        => Doc_TEXI_Body (File, Info);
          when others => null;
       end case;
-
    end Doc_TEXI_Create;
 
    -------------------
@@ -62,9 +172,10 @@ package body Docgen.Texi_Output is
    -------------------
 
    procedure Doc_TEXI_Open
-     (File   : in Ada.Text_IO.File_Type;
-      Info   : Doc_Info) is
-
+     (Kernel : access Kernel_Handle_Record'Class;
+      File   : in Ada.Text_IO.File_Type;
+      Info   : Doc_Info)
+   is
       procedure Write_Regular_Beginning;
       --  Write to the File a beginning of a regular texi file.
       --  This file can be used alone later.
@@ -79,42 +190,33 @@ package body Docgen.Texi_Output is
 
       procedure Write_Regular_Beginning is
       begin
-         Ada.Text_IO.New_Line (File);
-         Ada.Text_IO.Put_Line (File, "\input texinfo");
-         Ada.Text_IO.Put_Line (File, "@c start of header");
-         Ada.Text_IO.Put_Line (File, "@setfilename " &
-                            Get_Doc_File_Name
-                              (Info.Open_File.all,
-                               "",
-                                  ".info"));
-         if Is_Spec_File (Info.Open_File.all) then
-            Ada.Text_IO.Put_Line (File, "@settitle "
-                                  & Info.Open_Title.all);
-            Ada.Text_IO.Put_Line (File, "@c end of header");
-            Ada.Text_IO.New_Line (File);
-            Ada.Text_IO.Put_Line (File, "@titlepage");
-            Ada.Text_IO.Put_Line (File, "@title "
-                                  & Info.Open_Title.all);
-                     Ada.Text_IO.Put_Line (File, "@end titlepage");
-            Ada.Text_IO.New_Line (File);
-            Ada.Text_IO.Put_Line (File, "@c    Node  Next Last  Father");
-            Ada.Text_IO.Put_Line (File, "@node " &
-                               Info.Open_Title.all &
-                               ",     ,     , (dir)");
+         New_Line (File);
+         Put_Line (File, "\input texinfo");
+         Put_Line (File, "@c start of header");
+         Put_Line (File, "@setfilename " &
+                   Get_Doc_File_Name (Info.Open_File, "", ".info"));
+         if Is_Spec_File (Kernel, Info.Open_File) then
+            Put_Line (File, "@settitle " & Info.Open_Title.all);
+            Put_Line (File, "@c end of header");
+            New_Line (File);
+            Put_Line (File, "@titlepage");
+            Put_Line (File, "@title " & Info.Open_Title.all);
+            Put_Line (File, "@end titlepage");
+            New_Line (File);
+            Put_Line (File, "@c    Node  Next Last  Father");
+            Put_Line (File, "@node " & Info.Open_Title.all &
+                      ",     ,     , (dir)");
          else
-            Ada.Text_IO.Put_Line (File, "@settitle Body of "
-                                  & Info.Open_Title.all);
-            Ada.Text_IO.Put_Line (File, "@c end of header");
-            Ada.Text_IO.New_Line (File);
-            Ada.Text_IO.Put_Line (File, "@titlepage");
-            Ada.Text_IO.Put_Line (File, "@title Body of "
-                                  & Info.Open_Title.all);
-            Ada.Text_IO.Put_Line (File, "@end titlepage");
-            Ada.Text_IO.New_Line (File);
-            Ada.Text_IO.Put_Line (File, "@c    Node  Next Last  Father");
-            Ada.Text_IO.Put_Line (File, "@node Body of " &
-                               Info.Open_Title.all &
-                               ",     ,     , (dir)");
+            Put_Line (File, "@settitle Body of " & Info.Open_Title.all);
+            Put_Line (File, "@c end of header");
+            New_Line (File);
+            Put_Line (File, "@titlepage");
+            Put_Line (File, "@title Body of " & Info.Open_Title.all);
+            Put_Line (File, "@end titlepage");
+            New_Line (File);
+            Put_Line (File, "@c    Node  Next Last  Father");
+            Put_Line (File, "@node Body of " & Info.Open_Title.all &
+                      ",     ,     , (dir)");
          end if;
       end Write_Regular_Beginning;
 
@@ -127,58 +229,57 @@ package body Docgen.Texi_Output is
       begin
          Ada.Text_IO.Put_Line (File, "@c    Node  Next Last  Father");
          --  work on spec files
-         if Is_Spec_File (Info.Open_File.all) then
+         if Is_Spec_File (Kernel, Info.Open_File) then
             --  check if the last spec and no body files processed
             if Info.Open_Package_Next.all /= "" or
             not Info.Doc_Info_Options.Process_Body_Files then
                --  check if link to the unit index should be set
                if Info.Open_Package_Next.all = "" then
-                  Ada.Text_IO.Put_Line (File, "@node " &
-                                        Info.Open_Title.all & ", " &
-                                        " Unit Index, " &
-                                        Info.Open_Package_Prev.all & ", Top");
+                  Put_Line (File, "@node " &
+                            Info.Open_Title.all & ", " &
+                            " Unit Index, " &
+                            Info.Open_Package_Prev.all & ", Top");
                else
-                  Ada.Text_IO.Put_Line (File, "@node " &
-                                        Info.Open_Title.all & ", " &
-                                        Info.Open_Package_Next.all & ", " &
-                                        Info.Open_Package_Prev.all & ", Top");
+                  Put_Line (File, "@node " &
+                            Info.Open_Title.all & ", " &
+                            Info.Open_Package_Next.all & ", " &
+                            Info.Open_Package_Prev.all & ", Top");
                end if;
             else
                --  check if the last spec and body files will be processed:
                --  link to the first body package
                Node := Type_Source_File_List.First (Info.Doc_File_List);
-               Ada.Text_IO.Put_Line (File, "@node " &
-                                     Info.Open_Title.all & ", Body of " &
-                                     Type_Source_File_List.Data
-                                       (Node).Package_Name.all & ", " &
-                                     Info.Open_Package_Prev.all & ", Top");
+               Put_Line (File, "@node " &
+                         Info.Open_Title.all & ", Body of " &
+                         Type_Source_File_List.Data
+                           (Node).Package_Name.all & ", " &
+                         Info.Open_Package_Prev.all & ", Top");
             end if;
-            Ada.Text_IO.Put_Line (File, "@chapter " &
-                                  Info.Open_Title.all);
+            Put_Line (File, "@chapter " & Info.Open_Title.all);
             --  work on body files
+
          else
-            Ada.Text_IO.Put (File, "@node Body of " &
-                             Info.Open_Title.all);
+            Put (File, "@node Body of " & Info.Open_Title.all);
+
             if Info.Open_Package_Next.all /= "" then
-               Ada.Text_IO.Put (File, ", Body of " &
-                                Info.Open_Package_Next.all);
+               Put (File, ", Body of " & Info.Open_Package_Next.all);
             else
-               Ada.Text_IO.Put (File, ", Unit Index");
+               Put (File, ", Unit Index");
                --  Info.Open_Package_Next.all);
             end if;
+
             if Info.Open_Package_Prev.all /= "" then
-               Ada.Text_IO.Put (File, ", Body of " &
-                                Info.Open_Package_Prev.all & ", Top");
+               Put (File, ", Body of " &
+                    Info.Open_Package_Prev.all & ", Top");
             else
                --  link to the last spec package
                Node := Type_Source_File_List.Last (Info.Doc_File_List);
-               Ada.Text_IO.Put (File, ", " &
-                                Type_Source_File_List.Data
-                                       (Node).Package_Name.all & ", Top");
+               Put (File, ", " &
+                    Type_Source_File_List.Data
+                      (Node).Package_Name.all & ", Top");
             end if;
-            Ada.Text_IO.New_Line (File);
-            Ada.Text_IO.Put_Line (File, "@chapter Body of " &
-                                  Info.Open_Title.all);
+            New_Line (File);
+            Put_Line (File, "@chapter Body of " & Info.Open_Title.all);
          end if;
       end Write_Not_Regular_Beginning;
 
@@ -196,7 +297,7 @@ package body Docgen.Texi_Output is
          Write_Regular_Beginning;
       end if;
 
-      Ada.Text_IO.New_Line (File);
+      New_Line (File);
    end Doc_TEXI_Open;
 
    --------------------
@@ -204,19 +305,20 @@ package body Docgen.Texi_Output is
    --------------------
 
    procedure Doc_TEXI_Close
-     (File   : in Ada.Text_IO.File_Type;
+     (Kernel : access Kernel_Handle_Record'Class;
+      File   : in Ada.Text_IO.File_Type;
       Info   : Doc_Info) is
    begin
       --  write "bye" if this doc file not for using in project.texi
       if Info.Doc_Info_Options.One_Doc_File then
          --  check if a body file => if to write the index's
-         if Is_Spec_File (Info.Close_File_Name.all) then
-            Ada.Text_IO.New_Line (File);
-            Ada.Text_IO.Put_Line (File, "@printindex fn");
-            Ada.Text_IO.Put_Line (File, "@printindex tp");
+         if Is_Spec_File (Kernel, Info.Close_File_Name) then
+            New_Line (File);
+            Put_Line (File, "@printindex fn");
+            Put_Line (File, "@printindex tp");
          end if;
-         Ada.Text_IO.New_Line (File);
-         Ada.Text_IO.Put_Line (File, "@bye");
+         New_Line (File);
+         Put_Line (File, "@bye");
       end if;
    end Doc_TEXI_Close;
 
@@ -225,9 +327,7 @@ package body Docgen.Texi_Output is
    -----------------------
 
    procedure Doc_TEXI_Subtitle
-     (File   : in Ada.Text_IO.File_Type;
-      Info   : Doc_Info) is
-
+     (File : in Ada.Text_IO.File_Type; Info : Doc_Info) is
    begin
       --  if the order of the information is changed in Docgen-Work_On_Source:
       --  Process_Source, this contents of the strings must be changed too!
@@ -245,111 +345,85 @@ package body Docgen.Texi_Output is
       --  Entries
       --  Subprograms
 
-      Ada.Text_IO.Put_Line (File, "@c -------------------- SECTION " &
-                            "-------------------");
+      Put_Line (File, "@c -------------------- SECTION -------------------");
 
       case Info.Subtitle_Kind is
          when Package_Desc_Info     =>
-            Ada.Text_IO.Put_Line (File, "@node " &
-                                    Info.Subtitle_Package.all &
-                                    "_description, " &
-                                    Info.Subtitle_Package.all &
-                                    "_withs, " &
-                                    Info.Subtitle_Package.all &
-                                    ", " &
-                                    Info.Subtitle_Package.all);
-            Ada.Text_IO.Put_Line (File, "@section " &
-                                    Info.Subtitle_Package.all &
-                                    "_description");
+            Put_Line
+              (File, "@node " & Info.Subtitle_Package.all &
+               "_description, " & Info.Subtitle_Package.all &
+               "_withs, " & Info.Subtitle_Package.all &
+               ", " & Info.Subtitle_Package.all);
+            Put_Line
+              (File, "@section " & Info.Subtitle_Package.all & "_description");
+
          when With_Info             =>
-            Ada.Text_IO.Put_Line (File, "@node " &
-                                    Info.Subtitle_Package.all &
-                                     "_withs, " &
-                                    Info.Subtitle_Package.all &
-                                    "_packages, " &
-                                    Info.Subtitle_Package.all &
-                                    "_description, " &
-                                    Info.Subtitle_Package.all);
-            Ada.Text_IO.Put_Line (File, "@section " &
-                                    Info.Subtitle_Package.all &
-                                     "_withs");
+            Put_Line
+              (File, "@node " & Info.Subtitle_Package.all &
+               "_withs, " & Info.Subtitle_Package.all &
+               "_packages, " & Info.Subtitle_Package.all &
+               "_description, " & Info.Subtitle_Package.all);
+            Put_Line
+              (File, "@section " & Info.Subtitle_Package.all & "_withs");
+
          when Package_Info          =>
-            Ada.Text_IO.Put_Line (File, "@node " &
-                                    Info.Subtitle_Package.all &
-                                  "_packages, " &
-                                    Info.Subtitle_Package.all &
-                                  "_vars, " &
-                                    Info.Subtitle_Package.all &
-                                  "_withs, " &
-                                    Info.Subtitle_Package.all);
-            Ada.Text_IO.Put_Line (File, "@section " &
-                                    Info.Subtitle_Package.all &
-                                  "_packages");
+            Put_Line
+              (File, "@node " & Info.Subtitle_Package.all &
+               "_packages, " & Info.Subtitle_Package.all &
+               "_vars, " & Info.Subtitle_Package.all &
+               "_withs, " & Info.Subtitle_Package.all);
+            Put_Line
+              (File, "@section " & Info.Subtitle_Package.all & "_packages");
+
          when Var_Info              =>
-            Ada.Text_IO.Put_Line (File, "@node " &
-                                    Info.Subtitle_Package.all &
-                                  "_vars, " &
-                                    Info.Subtitle_Package.all &
-                                  "_exceptions, " &
-                                    Info.Subtitle_Package.all &
-                                  "_packages, " &
-                                    Info.Subtitle_Package.all);
-            Ada.Text_IO.Put_Line (File, "@section " &
-                                    Info.Subtitle_Package.all &
-                                  "_vars");
+            Put_Line
+              (File, "@node " & Info.Subtitle_Package.all &
+               "_vars, " & Info.Subtitle_Package.all &
+               "_exceptions, " & Info.Subtitle_Package.all &
+               "_packages, " & Info.Subtitle_Package.all);
+            Put_Line (File, "@section " & Info.Subtitle_Package.all & "_vars");
+
          when Exception_Info        =>
-            Ada.Text_IO.Put_Line (File, "@node " &
-                                    Info.Subtitle_Package.all &
-                                  "_exceptions, " &
-                                    Info.Subtitle_Package.all &
-                                  "_types, " &
-                                    Info.Subtitle_Package.all &
-                                  "_vars, " &
-                                    Info.Subtitle_Package.all);
-            Ada.Text_IO.Put_Line (File, "@section " &
-                                    Info.Subtitle_Package.all &
-                                  "_exceptions");
+            Put_Line
+              (File, "@node " & Info.Subtitle_Package.all &
+               "_exceptions, " & Info.Subtitle_Package.all &
+               "_types, " & Info.Subtitle_Package.all &
+               "_vars, " & Info.Subtitle_Package.all);
+            Put_Line
+              (File, "@section " & Info.Subtitle_Package.all & "_exceptions");
+
          when Type_Info             =>
-            Ada.Text_IO.Put_Line (File, "@node " &
-                                    Info.Subtitle_Package.all &
-                                  "_types, " &
-                                    Info.Subtitle_Package.all &
-                                  "_entries, " &
-                                  Info.Subtitle_Package.all &
-                                    "_exceptions, " &
-                                    Info.Subtitle_Package.all);
-            Ada.Text_IO.Put_Line (File, "@section " &
-                                    Info.Subtitle_Package.all &
-                                  "_types");
+            Put_Line
+              (File, "@node " & Info.Subtitle_Package.all &
+               "_types, " & Info.Subtitle_Package.all &
+               "_entries, " & Info.Subtitle_Package.all &
+               "_exceptions, " & Info.Subtitle_Package.all);
+            Put_Line
+              (File, "@section " & Info.Subtitle_Package.all & "_types");
+
          when Entry_Info             =>
-            Ada.Text_IO.Put_Line (File, "@node " &
-                                    Info.Subtitle_Package.all &
-                                  "_entries, " &
-                                    Info.Subtitle_Package.all &
-                                  "_subprograms, " &
-                                  Info.Subtitle_Package.all &
-                                    "_exceptions, " &
-                                    Info.Subtitle_Package.all);
-            Ada.Text_IO.Put_Line (File, "@section " &
-                                    Info.Subtitle_Package.all &
-                                  "_entries");
+            Put_Line
+              (File, "@node " & Info.Subtitle_Package.all
+               & "_entries, " & Info.Subtitle_Package.all
+               & "_subprograms, " & Info.Subtitle_Package.all
+               & "_exceptions, " & Info.Subtitle_Package.all);
+            Put_Line
+              (File, "@section " & Info.Subtitle_Package.all & "_entries");
+
          when Subprogram_Info       =>
-            Ada.Text_IO.Put_Line (File, "@node " &
-                                    Info.Subtitle_Package.all &
-                                  "_subprograms,   , " &
-                                    Info.Subtitle_Package.all &
-                                      "_entries,   , " &
-                                    Info.Subtitle_Package.all);
-            Ada.Text_IO.Put_Line (File, "@section " &
-                                    Info.Subtitle_Package.all &
-                                  "_subprograms");
+            Put_Line
+              (File, "@node "       & Info.Subtitle_Package.all &
+               "_subprograms,   , " & Info.Subtitle_Package.all &
+               "_entries,   , "     & Info.Subtitle_Package.all);
+            Put_Line
+              (File,
+               "@section " & Info.Subtitle_Package.all & "_subprograms");
          when others => null;
       end case;
 
-      Ada.Text_IO.Put_Line (File, "@c ----------------------" &
-                            "--------------------------");
-      Ada.Text_IO.New_Line (File);
-
+      Put_Line
+        (File, "@c ------------------------------------------------");
+      New_Line (File);
    end Doc_TEXI_Subtitle;
 
    ------------------------
@@ -357,11 +431,10 @@ package body Docgen.Texi_Output is
    ------------------------
 
    procedure Doc_TEXI_Pack_Desc
-     (File    : in Ada.Text_IO.File_Type;
-      Info    : Doc_Info) is
+     (File : in Ada.Text_IO.File_Type; Info : Doc_Info) is
    begin
-      Ada.Text_IO.Put_Line (File, Info.Package_Desc_Description.all);
-      Ada.Text_IO.New_Line (File);
+      Put_Line (File, Info.Package_Desc_Description.all);
+      New_Line (File);
    end Doc_TEXI_Pack_Desc;
 
    ----------------------
@@ -369,28 +442,16 @@ package body Docgen.Texi_Output is
    ----------------------
 
    procedure Doc_TEXI_Package
-     (File    : in Ada.Text_IO.File_Type;
-      Info    : Doc_Info) is
+     (File : in Ada.Text_IO.File_Type; Info : Doc_Info) is
    begin
-
       if Info.Package_Entity.Is_Private then
-         Ada.Text_IO.Put_Line (File, "@emph{private:}" & ASCII.LF);
+         Put_Line (File, "@emph{private:}" & ASCII.LF);
       end if;
-      Ada.Text_IO.Put_Line (File, "@code{");
-
-      Format_TEXI (File,
-                   Info.Package_Header.all,
-                   Info.Package_Entity.File_Name.all,
-                   Info.Package_Entity.Short_Name.all,
-                   Info.Package_Entity.Line,
-                   False,
-                   Info.Doc_Info_Options.Process_Body_Files,
-                   True);
-
-      Ada.Text_IO.Put_Line (File, "}");
-
-      Ada.Text_IO.Put_Line (File, Info.Package_Description.all);
-      Ada.Text_IO.New_Line (File);
+      Put_Line (File, "@code{");
+      Format_TEXI (File, Info.Package_Header.all);
+      Put_Line (File, "}");
+      Put_Line (File, Info.Package_Description.all);
+      New_Line (File);
    end Doc_TEXI_Package;
 
    -------------------
@@ -398,20 +459,12 @@ package body Docgen.Texi_Output is
    -------------------
 
    procedure Doc_TEXI_With
-     (File    : in Ada.Text_IO.File_Type;
-      Info    : Doc_Info) is
+     (File : in Ada.Text_IO.File_Type; Info : Doc_Info) is
    begin
-      Ada.Text_IO.Put_Line (File, "@code{");
-      Format_TEXI (File,
-                   Info.With_Header.all,
-                   Info.With_File.all,
-                   "",
-                   0,
-                   False,
-                   Info.Doc_Info_Options.Process_Body_Files,
-                   False);
-      Ada.Text_IO.Put_Line (File, "}");
-      Ada.Text_IO.New_Line (File);
+      Put_Line (File, "@code{");
+      Format_TEXI (File, Info.With_Header.all);
+      Put_Line (File, "}");
+      New_Line (File);
    end Doc_TEXI_With;
 
    ------------------
@@ -419,25 +472,16 @@ package body Docgen.Texi_Output is
    ------------------
 
    procedure Doc_TEXI_Var
-     (File    : in Ada.Text_IO.File_Type;
-      Info    : Doc_Info) is
+     (File : in Ada.Text_IO.File_Type; Info : Doc_Info) is
    begin
-
       if Info.Var_Entity.Is_Private then
-         Ada.Text_IO.Put_Line (File, "@emph{private:}" & ASCII.LF);
+         Put_Line (File, "@emph{private:}" & ASCII.LF);
       end if;
-      Ada.Text_IO.Put_Line (File, "@code{");
-      Format_TEXI (File,
-                   Info.Var_Header.all,
-                   Info.Var_Entity.File_Name.all,
-                   Info.Var_Entity.Short_Name.all,
-                   Info.Var_Entity.Line,
-                   False,
-                   Info.Doc_Info_Options.Process_Body_Files,
-                   True);
-      Ada.Text_IO.Put_Line (File, "}");
-      Ada.Text_IO.Put_Line (File, Info.Var_Description.all);
-      Ada.Text_IO.New_Line (File);
+      Put_Line (File, "@code{");
+      Format_TEXI (File, Info.Var_Header.all);
+      Put_Line (File, "}");
+      Put_Line (File, Info.Var_Description.all);
+      New_Line (File);
    end Doc_TEXI_Var;
 
    ------------------------
@@ -445,25 +489,16 @@ package body Docgen.Texi_Output is
    ------------------------
 
    procedure Doc_TEXI_Exception
-     (File    : in Ada.Text_IO.File_Type;
-      Info    : Doc_Info) is
+     (File : in Ada.Text_IO.File_Type; Info : Doc_Info) is
    begin
-
       if Info.Exception_Entity.Is_Private then
-         Ada.Text_IO.Put_Line (File, "@emph{private:}" & ASCII.LF);
+         Put_Line (File, "@emph{private:}" & ASCII.LF);
       end if;
-      Ada.Text_IO.Put_Line (File, "@code{");
-      Format_TEXI (File,
-                   Info.Exception_Header.all,
-                   Info.Exception_Entity.File_Name.all,
-                   Info.Exception_Entity.Short_Name.all,
-                   Info.Exception_Entity.Line,
-                   False,
-                   Info.Doc_Info_Options.Process_Body_Files,
-                   True);
-      Ada.Text_IO.Put_Line (File, "}");
-      Ada.Text_IO.Put_Line (File, Info.Exception_Description.all);
-      Ada.Text_IO.New_Line (File);
+      Put_Line (File, "@code{");
+      Format_TEXI (File, Info.Exception_Header.all);
+      Put_Line (File, "}");
+      Put_Line (File, Info.Exception_Description.all);
+      New_Line (File);
    end Doc_TEXI_Exception;
 
    -------------------
@@ -471,26 +506,17 @@ package body Docgen.Texi_Output is
    -------------------
 
    procedure Doc_TEXI_Type
-     (File    : in Ada.Text_IO.File_Type;
-      Info    : Doc_Info) is
+     (File : in Ada.Text_IO.File_Type; Info : Doc_Info) is
    begin
-      Ada.Text_IO.Put_Line (File, "@dindex " &
-                            Info.Type_Entity.Name.all);
+      Put_Line (File, "@dindex " & Info.Type_Entity.Name.all);
       if Info.Type_Entity.Is_Private then
-         Ada.Text_IO.Put_Line (File, "@emph{private:}" & ASCII.LF);
+         Put_Line (File, "@emph{private:}" & ASCII.LF);
       end if;
-      Ada.Text_IO.Put_Line (File, "@code{");
-      Format_TEXI (File,
-                   Info.Type_Header.all,
-                   Info.Type_Entity.File_Name.all,
-                   Info.Type_Entity.Short_Name.all,
-                   Info.Type_Entity.Line,
-                   False,
-                   Info.Doc_Info_Options.Process_Body_Files,
-                   True);
-      Ada.Text_IO.Put_Line (File, "}");
-      Ada.Text_IO.Put_Line (File, Info.Type_Description.all);
-      Ada.Text_IO.New_Line (File);
+      Put_Line (File, "@code{");
+      Format_TEXI (File, Info.Type_Header.all);
+      Put_Line (File, "}");
+      Put_Line (File, Info.Type_Description.all);
+      New_Line (File);
    end Doc_TEXI_Type;
 
    --------------------
@@ -498,23 +524,15 @@ package body Docgen.Texi_Output is
    --------------------
 
    procedure Doc_TEXI_Entry
-     (File    : in Ada.Text_IO.File_Type;
-      Info    : Doc_Info) is
+     (File : in Ada.Text_IO.File_Type; Info : Doc_Info) is
    begin
       if Info.Entry_Entity.Is_Private then
-         Ada.Text_IO.Put_Line (File, "@emph{private:}" & ASCII.LF);
+         Put_Line (File, "@emph{private:}" & ASCII.LF);
       end if;
       Ada.Text_IO.Put_Line (File, "@code{");
-      Format_TEXI (File,
-                   Info.Entry_Header.all,
-                   Info.Entry_Entity.File_Name.all,
-                   Info.Entry_Entity.Short_Name.all,
-                   Info.Entry_Entity.Line,
-                   False,
-                   Info.Doc_Info_Options.Process_Body_Files,
-                   True);
-      Ada.Text_IO.Put_Line (File, "@code}");
-      Ada.Text_IO.Put_Line (File, Info.Entry_Description.all);
+      Format_TEXI (File, Info.Entry_Header.all);
+      Put_Line (File, "@code}");
+      Put_Line (File, Info.Entry_Description.all);
    end Doc_TEXI_Entry;
 
    -------------------------
@@ -522,9 +540,10 @@ package body Docgen.Texi_Output is
    -------------------------
 
    procedure Doc_TEXI_Subprogram
-     (File      : in Ada.Text_IO.File_Type;
-      Info      : Doc_Info) is
-
+     (Kernel : access Kernel_Handle_Record'Class;
+      File   : in Ada.Text_IO.File_Type;
+      Info   : Doc_Info)
+   is
       package TRL renames Type_Reference_List;
 
       procedure Print_Ref_List
@@ -549,22 +568,18 @@ package body Docgen.Texi_Output is
       begin
          if not TRL.Is_Empty (Local_List) then
             if Called_Subp then
-               Ada.Text_IO.Put_Line
-                 (File,
-                  "@strong{Subprogram is called by:}");
+               Put_Line (File, "@strong{Subprogram is called by:}");
             else
-               Ada.Text_IO.Put_Line
-                 (File,
-                  "@strong{Subprogram calles:}");
+               Put_Line (File, "@strong{Subprogram calles:}");
             end if;
 
-            Ada.Text_IO.Put_Line (File, "@itemize @bullet");
+            Put_Line (File, "@itemize @bullet");
 
             Node := TRL.First (Local_List);
 
             --  for every reference found write the information to doc file
             for J in 1 .. TRL.Length (Local_List) loop
-               Ada.Text_IO.Put_Line (File, "@item");
+               Put_Line (File, "@item");
 
                --  check if the creating of a link is possible
                --  ??? right now no links are set, so this "if"
@@ -573,40 +588,45 @@ package body Docgen.Texi_Output is
 
                   --  if a called subprogram => link to spec
                   if Called_Subp then
-                     Suffix :=
-                       new String'("_" &
-                                   Body_Suffix (TRL.Data (Node).File_Name.all)
-                                   & ".htm");
+                     Suffix := new String'
+                       ("_" & Body_Suffix
+                          (Kernel,
+                           Get_Declaration_File_Of (TRL.Data (Node).Entity))
+                        & ".htm");
                   else
-                     Suffix :=
-                       new String'("_" &
-                                   Spec_Suffix (TRL.Data (Node).File_Name.all)
-                                   & ".htm");
+                     Suffix := new String'
+                       ("_" & Spec_Suffix
+                          (Kernel,
+                           Get_Declaration_File_Of (TRL.Data (Node).Entity))
+                        & ".htm");
                   end if;
 
-                  Ada.Text_IO.Put_Line
+                  Put_Line
                     (File,
-                     "@code{"
-                     & TRL.Data
-                       (Node).Subprogram_Name.all
+                     "@code{" & Get_Name (TRL.Data (Node).Entity)
                      & "}   in   @file{"
-                     & TRL.Data (Node).File_Name.all
+                     & Full_Name
+                       (Get_Declaration_File_Of (TRL.Data (Node).Entity)).all
                      & "},   line: "
-                     & Integer'Image (TRL.Data (Node).Line)
+                     & Integer'Image
+                       (Get_Declaration_Line_Of (TRL.Data (Node).Entity))
                      & ",   column: "
-                     & Integer'Image (TRL.Data (Node).Column));
+                     & Integer'Image
+                       (Get_Declaration_Column_Of (TRL.Data (Node).Entity)));
                --  no link at all
-               else Ada.Text_IO.Put_Line
-                       (File,
-                        "@code{"
-                        & TRL.Data
-                          (Node).Subprogram_Name.all
-                        & "}   in   @file{"
-                        & TRL.Data (Node).File_Name.all
-                        & "},   line: "
-                        & Integer'Image (TRL.Data (Node).Line)
-                        & ",   column: "
-                        & Integer'Image (TRL.Data (Node).Column));
+               else
+                  Put_Line
+                    (File,
+                     "@code{" & Get_Name (TRL.Data (Node).Entity)
+                     & "}   in   @file{"
+                     & Full_Name
+                       (Get_Declaration_File_Of (TRL.Data (Node).Entity)).all
+                     & "},   line: "
+                     & Integer'Image
+                       (Get_Declaration_Line_Of (TRL.Data (Node).Entity))
+                     & ",   column: "
+                     & Integer'Image
+                       (Get_Declaration_Column_Of (TRL.Data (Node).Entity)));
                end if;
                Node := TRL.Next (Node);
             end loop;
@@ -615,22 +635,15 @@ package body Docgen.Texi_Output is
       end Print_Ref_List;
 
    begin  --  Doc_TEXI_Subprogram
-
       if Info.Subprogram_Entity.Is_Private then
-         Ada.Text_IO.Put_Line (File, "@emph{private:}" & ASCII.LF);
+         Put_Line (File, "@emph{private:}" & ASCII.LF);
       end if;
-      Ada.Text_IO.Put_Line (File, "@code{");
-      Format_TEXI (File,
-                   Info.Subprogram_Header.all,
-                   Info.Subprogram_Entity.File_Name.all,
-                   Info.Subprogram_Entity.Short_Name.all,
-                   Info.Subprogram_Entity.Line,
-                   False,
-                   Info.Doc_Info_Options.Process_Body_Files,
-                   True);
-      Ada.Text_IO.Put_Line (File, "}");
+
+      Put_Line (File, "@code{");
+      Format_TEXI (File, Info.Subprogram_Header.all);
+      Put_Line (File, "}");
       --  write the description to doc file
-      Ada.Text_IO.Put_Line (File, Info.Subprogram_Description.all);
+      Put_Line (File, Info.Subprogram_Description.all);
       Print_Ref_List (Info.Subprogram_Entity.Called_List, True);
       Print_Ref_List (Info.Subprogram_Entity.Calls_List, False);
    end Doc_TEXI_Subprogram;
@@ -641,16 +654,8 @@ package body Docgen.Texi_Output is
 
    procedure Format_TEXI
      (File          : Ada.Text_IO.File_Type;
-      Text          : String;
-      File_Name     : String;
-      Entity_Name   : String;
-      Entity_Line   : Natural;
-      Is_Body       : Boolean;
-      Process_Body  : Boolean;
-      Do_Checks     : Boolean) is
-      pragma Unreferenced (File_Name, Entity_Name, Entity_Line,
-                           Is_Body, Process_Body, Do_Checks);
-
+      Text          : String)
+   is
       --  global variables for the callback function
       Last_Index, Last_Line : Natural;
       pragma Unreferenced (Last_Line);
@@ -789,7 +794,7 @@ package body Docgen.Texi_Output is
 
       --  write the rest of the text, since the last found parsed entity
       if Last_Index < Text'Last then
-         Ada.Text_IO.Put (File, Text (Last_Index .. Text'Last));
+         Put (File, Text (Last_Index .. Text'Last));
       end if;
    end Format_TEXI;
 
@@ -798,9 +803,12 @@ package body Docgen.Texi_Output is
    --------------------------------
 
    procedure Doc_TEXI_Unit_Index_Header
-     (File   : Ada.Text_IO.File_Type;
-      Info   : Doc_Info) is
-
+     (Kernel        : access Kernel_Handle_Record'Class;
+      File          : Ada.Text_IO.File_Type;
+      Info          : Doc_Info;
+      Doc_Directory : String;
+      Doc_Suffix    : String)
+   is
       Node  : TSFL.List_Node;
 
       procedure Write_List_Of_Files
@@ -819,23 +827,25 @@ package body Docgen.Texi_Output is
 
       procedure Write_List_Of_Files
         (File      : Ada.Text_IO.File_Type;
-         Doc_Specs : Boolean) is
+         Doc_Specs : Boolean)
+      is
+         Is_Spec : Boolean;
       begin
          Node := TSFL.First (Info.Unit_File_List);
          for J in 1 .. TSFL.Length (Info.Unit_File_List) loop
-            if (Is_Spec_File (TSFL.Data (Node).File_Name.all) and
-                  Doc_Specs) or
-              (not Is_Spec_File (TSFL.Data (Node).File_Name.all) and
-               not Doc_Specs) then
-               Ada.Text_IO.Put_Line
+            Is_Spec := Is_Spec_File (Kernel, TSFL.Data (Node).File_Name);
+
+            if (Is_Spec and then Doc_Specs)
+              or else (not Is_Spec and then not Doc_Specs)
+            then
+               Put_Line
                  (File,
                   "@include " &
                   Base_Name
                     (Get_Doc_File_Name
-                       (TSFL.Data
-                          (Node).File_Name.all,
-                        Info.Doc_Info_Options.Doc_Directory.all,
-                        Info.Doc_Info_Options.Doc_Suffix.all)));
+                       (TSFL.Data (Node).File_Name,
+                        Doc_Directory,
+                        Doc_Suffix)));
             end if;
             Node := TSFL.Next (Node);
          end loop;
@@ -851,47 +861,47 @@ package body Docgen.Texi_Output is
          --  create the file
          Create (Project_Doc_File,
                  Out_File,
-                 Info.Doc_Info_Options.Doc_Directory.all & "project.texi");
+                 Dir_Name (Name (File)) & "project.texi");
 
          --  create the header
-         Ada.Text_IO.New_Line (Project_Doc_File);
-         Ada.Text_IO.Put_Line (Project_Doc_File, "\input texinfo");
-         Ada.Text_IO.Put_Line (Project_Doc_File, "@c start of header");
-         Ada.Text_IO.Put_Line (Project_Doc_File, "@setfilename "
-                            & "project.info");
-         Ada.Text_IO.Put_Line (Project_Doc_File, "@settitle Project "
-                            & Info.Unit_Project_Name.all);
-         Ada.Text_IO.Put_Line (Project_Doc_File, "@c end of header");
-         Ada.Text_IO.New_Line (Project_Doc_File);
-         Ada.Text_IO.Put_Line (Project_Doc_File, "@titlepage");
-         Ada.Text_IO.Put_Line (Project_Doc_File, "@title Project "
-                            & Info.Unit_Project_Name.all);
-         Ada.Text_IO.Put_Line (Project_Doc_File, "@end titlepage");
-         Ada.Text_IO.New_Line (Project_Doc_File);
-         Ada.Text_IO.Put_Line (Project_Doc_File, "@ifinfo");
+         New_Line (Project_Doc_File);
+         Put_Line (Project_Doc_File, "\input texinfo");
+         Put_Line (Project_Doc_File, "@c start of header");
+         Put_Line (Project_Doc_File, "@setfilename " & "project.info");
+         Put_Line (Project_Doc_File, "@settitle Project "
+                   & Project_Name (Info.Unit_Project_Name));
+         Put_Line (Project_Doc_File, "@c end of header");
+         New_Line (Project_Doc_File);
+         Put_Line (Project_Doc_File, "@titlepage");
+         Put_Line (Project_Doc_File, "@title Project "
+                   & Project_Name (Info.Unit_Project_Name));
+         Put_Line (Project_Doc_File, "@end titlepage");
+         New_Line (Project_Doc_File);
+         Put_Line (Project_Doc_File, "@ifinfo");
          Node := TSFL.First (Info.Unit_File_List);
-         Ada.Text_IO.Put_Line (Project_Doc_File, "@node Top, " &
-                               TSFL.Data (Node).Package_Name.all &
-                               ",   , (dir)");
-         Ada.Text_IO.Put_Line (Project_Doc_File, "@top Master Menu");
-         Ada.Text_IO.Put_Line (Project_Doc_File, "@end ifinfo");
-         Ada.Text_IO.New_Line (Project_Doc_File);
+         Put_Line (Project_Doc_File, "@node Top, " &
+                   TSFL.Data (Node).Package_Name.all &
+                   ",   , (dir)");
+         Put_Line (Project_Doc_File, "@top Master Menu");
+         Put_Line (Project_Doc_File, "@end ifinfo");
+         New_Line (Project_Doc_File);
 
-         --  include all files wanted
-         --  ???
+         --  include all required files
+
          Write_List_Of_Files (Project_Doc_File, True);
+
          if Info.Doc_Info_Options.Process_Body_Files then
-            Ada.Text_IO.New_Line (Project_Doc_File);
+            New_Line (Project_Doc_File);
             Write_List_Of_Files (Project_Doc_File, False);
          end if;
 
-         Ada.Text_IO.New_Line (Project_Doc_File);
-         Ada.Text_IO.Put_Line (Project_Doc_File, "@include index_unit.texi");
-         Ada.Text_IO.Put_Line (Project_Doc_File, "@include index_sub.texi");
-         Ada.Text_IO.Put_Line (Project_Doc_File, "@include index_type.texi");
+         New_Line (Project_Doc_File);
+         Put_Line (Project_Doc_File, "@include index_unit.texi");
+         Put_Line (Project_Doc_File, "@include index_sub.texi");
+         Put_Line (Project_Doc_File, "@include index_type.texi");
 
-         Ada.Text_IO.New_Line (Project_Doc_File);
-         Ada.Text_IO.Put_Line (Project_Doc_File, "@bye");
+         New_Line (Project_Doc_File);
+         Put_Line (Project_Doc_File, "@bye");
          Close (Project_Doc_File);
       end Create_TEXI_Project_Doc_File;
 
@@ -902,34 +912,31 @@ package body Docgen.Texi_Output is
       if Info.Doc_Info_Options.One_Doc_File then
          Create_TEXI_Project_Doc_File;
          Node := TSFL.Last (Info.Unit_File_List);
-         Ada.Text_IO.Put (File, "@node Unit Index, Subprogram Index, ");
+         Put (File, "@node Unit Index, Subprogram Index, ");
          if Info.Doc_Info_Options.Process_Body_Files then
-            Ada.Text_IO.Put (File, "Body of " &
-                             TSFL.Data (Node).Package_Name.all);
+            Put (File, "Body of " & TSFL.Data (Node).Package_Name.all);
          else
-            Ada.Text_IO.Put (File, TSFL.Data (Node).Package_Name.all);
+            Put (File, TSFL.Data (Node).Package_Name.all);
          end if;
-         Ada.Text_IO.Put_Line (File, ",  Top");
-         Ada.Text_IO.Put_Line (File, "@chapter Unit Index");
+         Put_Line (File, ",  Top");
+         Put_Line (File, "@chapter Unit Index");
       else
          --  create the header for the self-standing unit index file
-         Ada.Text_IO.New_Line (File);
-         Ada.Text_IO.Put_Line (File, "\input texinfo");
-         Ada.Text_IO.Put_Line (File, "@c start of header");
-         Ada.Text_IO.Put_Line (File, "@setfilename unit_index.info");
-         Ada.Text_IO.Put_Line (File, "@settitle "
-                            & "Unit Index");
-         Ada.Text_IO.Put_Line (File, "@c end of header");
-         Ada.Text_IO.New_Line (File);
-         Ada.Text_IO.Put_Line (File, "@titlepage");
-         Ada.Text_IO.Put_Line (File, "@title "
-                               & "Unit Index");
-         Ada.Text_IO.Put_Line (File, "@end titlepage");
-         Ada.Text_IO.New_Line (File);
-         Ada.Text_IO.Put_Line (File, "@node Unit Index,  ,   , (dir)");
+         New_Line (File);
+         Put_Line (File, "\input texinfo");
+         Put_Line (File, "@c start of header");
+         Put_Line (File, "@setfilename unit_index.info");
+         Put_Line (File, "@settitle Unit Index");
+         Put_Line (File, "@c end of header");
+         New_Line (File);
+         Put_Line (File, "@titlepage");
+         Put_Line (File, "@title Unit Index");
+         Put_Line (File, "@end titlepage");
+         New_Line (File);
+         Put_Line (File, "@node Unit Index,  ,   , (dir)");
       end if;
-      Ada.Text_IO.New_Line (File);
-      Ada.Text_IO.Put_Line (File, "@itemize @bullet");
+      New_Line (File);
+      Put_Line (File, "@itemize @bullet");
    end Doc_TEXI_Unit_Index_Header;
 
    --------------------------------
@@ -940,31 +947,28 @@ package body Docgen.Texi_Output is
      (File   : in Ada.Text_IO.File_Type;
       Info   : Doc_Info) is
    begin
-
       --  check if the project.texi file should also be created
       --  and if the index file will be included later
       if Info.Doc_Info_Options.One_Doc_File then
-         Ada.Text_IO.Put_Line (File, "@node Subprogram Index,  Type Index," &
-                               " Unit Index,  Top");
-         Ada.Text_IO.Put_Line (File, "@chapter Subprogram Index");
+         Put_Line
+           (File, "@node Subprogram Index,  Type Index, Unit Index,  Top");
+         Put_Line (File, "@chapter Subprogram Index");
       else
          --  create the header for the self-standing unit index file
-         Ada.Text_IO.New_Line (File);
-         Ada.Text_IO.Put_Line (File, "\input texinfo");
-         Ada.Text_IO.Put_Line (File, "@c start of header");
-         Ada.Text_IO.Put_Line (File, "@setfilename sub_index.info");
-         Ada.Text_IO.Put_Line (File, "@settitle "
-                            & "Subprogram Index");
-         Ada.Text_IO.Put_Line (File, "@c end of header");
-         Ada.Text_IO.New_Line (File);
-         Ada.Text_IO.Put_Line (File, "@titlepage");
-         Ada.Text_IO.Put_Line (File, "@title "
-                            & "Subprogram Index");
-         Ada.Text_IO.Put_Line (File, "@end titlepage");
+         New_Line (File);
+         Put_Line (File, "\input texinfo");
+         Put_Line (File, "@c start of header");
+         Put_Line (File, "@setfilename sub_index.info");
+         Put_Line (File, "@settitle Subprogram Index");
+         Put_Line (File, "@c end of header");
+         New_Line (File);
+         Put_Line (File, "@titlepage");
+         Put_Line (File, "@title Subprogram Index");
+         Put_Line (File, "@end titlepage");
       end if;
 
-      Ada.Text_IO.New_Line (File);
-      Ada.Text_IO.Put_Line (File, "@itemize @bullet");
+      New_Line (File);
+      Put_Line (File, "@itemize @bullet");
    end Doc_TEXI_Sub_Index_Header;
 
    --------------------------------
@@ -975,34 +979,30 @@ package body Docgen.Texi_Output is
      (File   : in Ada.Text_IO.File_Type;
       Info   : Doc_Info) is
    begin
-
       --  check if the project.texi file should also be created
       --  and if the index file will be included later
       if Info.Doc_Info_Options.One_Doc_File then
-         Ada.Text_IO.Put_Line (File,
-                               "@node Type Index,   , Subprogram Index, Top");
-         Ada.Text_IO.Put_Line (File, "@chapter Type Index");
+         Put_Line (File, "@node Type Index,   , Subprogram Index, Top");
+         Put_Line (File, "@chapter Type Index");
       else
          --  create the header for the self-standing unit index file
-         Ada.Text_IO.New_Line (File);
-         Ada.Text_IO.Put_Line (File, "\input texinfo");
-         Ada.Text_IO.Put_Line (File, "@c start of header");
-         Ada.Text_IO.Put_Line (File, "@setfilename type_index.info");
-         Ada.Text_IO.Put_Line (File, "@settitle "
-                            & "Type Index");
-         Ada.Text_IO.Put_Line (File, "@c end of header");
-         Ada.Text_IO.New_Line (File);
-         Ada.Text_IO.Put_Line (File, "@titlepage");
-         Ada.Text_IO.Put_Line (File, "@title "
-                            & "Type Index");
-         Ada.Text_IO.Put_Line (File, "@end titlepage");
-         Ada.Text_IO.New_Line (File);
-         Ada.Text_IO.Put_Line (File, "@c    Node  Next Last  Father");
-         Ada.Text_IO.Put_Line (File, "@node Top,   ,   ,   (dir)");
+         New_Line (File);
+         Put_Line (File, "\input texinfo");
+         Put_Line (File, "@c start of header");
+         Put_Line (File, "@setfilename type_index.info");
+         Put_Line (File, "@settitle Type Index");
+         Put_Line (File, "@c end of header");
+         New_Line (File);
+         Put_Line (File, "@titlepage");
+         Put_Line (File, "@title Type Index");
+         Put_Line (File, "@end titlepage");
+         New_Line (File);
+         Put_Line (File, "@c    Node  Next Last  Father");
+         Put_Line (File, "@node Top,   ,   ,   (dir)");
       end if;
 
-      Ada.Text_IO.New_Line (File);
-      Ada.Text_IO.Put_Line (File, "@itemize @bullet");
+      New_Line (File);
+      Put_Line (File, "@itemize @bullet");
    end Doc_TEXI_Type_Index_Header;
 
    -------------------------
@@ -1013,10 +1013,9 @@ package body Docgen.Texi_Output is
      (File    : in Ada.Text_IO.File_Type;
       Info    : Doc_Info) is
    begin
-      Ada.Text_IO.Put_Line (File, "@item");
-      Ada.Text_IO.Put (File, Info.Item_Name.all);
-      Ada.Text_IO.Put_Line (File, "     in @file{" &
-                            Info.Item_File.all & "}");
+      Put_Line (File, "@item");
+      Put (File, Info.Item_Name.all);
+      Put_Line (File, "     in @file{" & Full_Name (Info.Item_File).all & "}");
    end Doc_TEXI_Index_Item;
 
    ------------------------
@@ -1025,12 +1024,13 @@ package body Docgen.Texi_Output is
 
    procedure Doc_TEXI_Index_End
      (File   : Ada.Text_IO.File_Type;
-      Info   : Doc_Info) is
+      Info   : Doc_Info)
+   is
       pragma Unreferenced (Info);
    begin
-      Ada.Text_IO.Put_Line (File, "@end itemize");
-      Ada.Text_IO.New_Line (File);
-      Ada.Text_IO.Put_Line (File, "@bye");
+      Put_Line (File, "@end itemize");
+      New_Line (File);
+      Put_Line (File, "@bye");
    end Doc_TEXI_Index_End;
 
    -------------------
@@ -1041,32 +1041,9 @@ package body Docgen.Texi_Output is
      (File   : in Ada.Text_IO.File_Type;
       Info   : in out Doc_Info) is
    begin
-      Ada.Text_IO.Put_Line (File, "@code{");
-      Format_TEXI (File,
-                   Info.Body_Text.all,
-                   Info.Body_File.all,
-                   "",
-                   0,
-                   True,
-                   Info.Doc_Info_Options.Process_Body_Files,
-                   True);
-      Ada.Text_IO.Put_Line (File, "}");
+      Put_Line (File, "@code{");
+      Format_TEXI (File, Info.Body_Text.all);
+      Put_Line (File, "}");
    end Doc_TEXI_Body;
-
-   ------------------------
-   -- Get_TEXI_File_Name --
-   ------------------------
-
-   function Get_Texi_File_Name
-     (File : String) return String is
-   begin
-      if Is_Spec_File (File) then
-         return File_Name_Without_Suffix (File) & "_" &
-                Spec_Suffix (File) & ".texi";
-      else
-         return File_Name_Without_Suffix (File) & "_" &
-                Body_Suffix (File) & ".texi";
-      end if;
-   end Get_Texi_File_Name;
 
 end Docgen.Texi_Output;
