@@ -1035,8 +1035,8 @@ package body GVD.Canvas is
    begin
       for J in Zoom_Levels'Range loop
          if Zoom_Levels (J) = Z then
-            if J /= Zoom_Levels'First then
-               Zoom (GVD_Canvas (Canvas), Zoom_Levels (J - 1), Zoom_Steps);
+            if J /= Zoom_Levels'Last then
+               Zoom (GVD_Canvas (Canvas), Zoom_Levels (J + 1), Zoom_Steps);
             end if;
          end if;
       end loop;
@@ -1051,8 +1051,8 @@ package body GVD.Canvas is
    begin
       for J in Zoom_Levels'Range loop
          if Zoom_Levels (J) = Z then
-            if J /= Zoom_Levels'Last then
-               Zoom (GVD_Canvas (Canvas), Zoom_Levels (J + 1), Zoom_Steps);
+            if J /= Zoom_Levels'First then
+               Zoom (GVD_Canvas (Canvas), Zoom_Levels (J - 1), Zoom_Steps);
             end if;
          end if;
       end loop;
