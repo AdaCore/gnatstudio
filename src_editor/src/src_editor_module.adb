@@ -2725,7 +2725,8 @@ package body Src_Editor_Module is
 
       --  Do not use a combo box, so that users can easily navigate to the list
       --  of completions through the keyboard (C423-005)
-      Gtk_New (Open_File_Entry, Use_Combo => False);
+      Gtk_New (Open_File_Entry, Use_Combo => False,
+               Case_Sensitive => Filenames_Are_Case_Sensitive);
       Set_Activates_Default (Get_Entry (Open_File_Entry), True);
       Pack_Start (Get_Vbox (Open_File_Dialog), Open_File_Entry,
                   Fill => True, Expand => True);
