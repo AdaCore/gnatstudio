@@ -197,7 +197,7 @@ package String_Utils is
    --  Convert all occurences of '/' to Directory_Separator.
    --  This function is now obsolete, and you should use
    --  GNAT.Directories.Normalize_Pathname instead. it is kept for
-   --  compatibility with 3.14p only.
+   --  compatibility with 3.14 only.
 
    function To_File_Name (Name : in String) return String;
    --  Returns a file name from an ada subprogram/package name (ie converts '.'
