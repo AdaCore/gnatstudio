@@ -194,16 +194,18 @@ package body Odd.Source_Editors is
       Breakpoints_Array : Odd.Types.Breakpoint_Array_Ptr :=
         Process.Breakpoints;
    begin
-      for Index in Breakpoints_Array'Range loop
-         if Breakpoints_Array (Index).Line = Line
-           and then Breakpoints_Array (Index).File.all =
-             Base_File_Name (Editor.Current_File.all)
-         then
-            Num := Breakpoints_Array (Index).Num;
-            Result := True;
-            return;
-         end if;
-      end loop;
+      if Breakpoints_Array /= null then
+         for Index in Breakpoints_Array'Range loop
+            if Breakpoints_Array (Index).Line = Line
+              and then Breakpoints_Array (Index).File.all =
+              Base_File_Name (Editor.Current_File.all)
+            then
+               Num := Breakpoints_Array (Index).Num;
+               Result := True;
+               return;
+            end if;
+         end loop;
+      end if;
 
       Result := False;
    end Is_Breakpoint;
