@@ -324,6 +324,11 @@ procedure GPS is
          Home := Getenv ("HOME");
       end if;
 
+      if Home.all = "" then
+         Free (Home);
+         Home := Getenv ("USERPROFILE");
+      end if;
+
       if Home'Length > 2
         and then Home (Home'First) = '%'
         and then Home (Home'Last) = '%'
@@ -1009,6 +1014,8 @@ procedure GPS is
       Load_All_Custom_Files (GPS.Kernel);
 
       --  Do this after the custom files, since this will override other
+      --  The comment above is unfinished ???
+
       Action_Editor.Register_Module (GPS.Kernel);
 
       --  Load preferences, but only after loading custom files, to make sure
