@@ -19,6 +19,9 @@ is
    Body_Position  : Point := Invalid_Point;
    End_Position   : Point;
 
+   Fu_Id          : String := Sym.Buffer
+     (Sym.Identifier.First .. Sym.Identifier.Last);
+
    function Find_First_Forward_Declaration
      (Fn : FU_Table) return E_Declaration_Info_List;
    --  Attempts to find the first forward declaration
@@ -27,12 +30,18 @@ is
    --  has not been yet processed
 
    function Find_First_Forward_Declaration
-     (Fn : FU_Table) return E_Declaration_Info_List is
+     (Fn : FU_Table) return E_Declaration_Info_List
+   is
       P            : Pair_Ptr;
       FD_Tab       : FD_Table;
       FD_Tab_Tmp   : FD_Table;
       First_FD_Pos : Point := Invalid_Point;
    begin
+
+      if not Is_Open (SN_Table (FD)) then
+         return null; -- .fd table does not exist
+      end if;
+
       --  First we have to find the first forward declaration
       --  that corresponds to our function, that is prototypes
       --  should be the same
@@ -44,7 +53,7 @@ is
       Set_Cursor
         (SN_Table (FD),
          By_Key,
-         Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last) & Field_Sep,
+         Fu_Id & Field_Sep,
          False);
 
       loop
@@ -69,7 +78,7 @@ is
       Set_Cursor
         (SN_Table (FD),
          By_Key,
-         Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last) & Field_Sep,
+         Fu_Id & Field_Sep,
          False);
 
       loop
@@ -99,26 +108,30 @@ is
       begin
          return Find_Declaration
            (File        => Global_LI_File,
-            Symbol_Name => Sym.Buffer
-                             (Sym.Identifier.First .. Sym.Identifier.Last),
+            Symbol_Name => Fu_Id,
             Location    => First_FD_Pos);
       exception
          when Declaration_Not_Found =>
             return null;
       end;
+
+   exception
+      when DB_Error =>
+         return null;
+
    end Find_First_Forward_Declaration;
 
 begin
-   Info ("Sym_FU_Hanlder: """
+   Info ("Sym_FU_Hanlder: '"
          & Sym.Buffer (Sym.Class.First .. Sym.Class.Last) & "."
-         & Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last)
-         & """");
+         & Fu_Id
+         & "'");
 
    if Sym.Symbol = MI then
       begin
          MI_Tab := Find (SN_Table (MI),
              Sym.Buffer (Sym.Class.First .. Sym.Class.Last),
-             Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last));
+             Fu_Id);
          if MI_Tab.Buffer (MI_Tab.Return_Type.First
                                  .. MI_Tab.Return_Type.Last) = "void" then
             Target_Kind := Non_Generic_Procedure;
@@ -128,14 +141,13 @@ begin
          End_Position := MI_Tab.End_Position;
       exception
          when DB_Error | Not_Found =>
-            Fail ("unable to find method " &
-                  Sym.Buffer (Sym.Class.First .. Sym.Class.Last) & "." &
-                  Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last));
+            Fail ("unable to find method "
+                  & Sym.Buffer (Sym.Class.First .. Sym.Class.Last) & "."
+                  & Fu_Id);
       end;
    else
       begin
-         FU_Tab := Find (SN_Table (FU),
-             Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last));
+         FU_Tab := Find (SN_Table (FU), Fu_Id);
          if FU_Tab.Buffer (FU_Tab.Return_Type.First
                                     .. FU_Tab.Return_Type.Last) = "void" then
             Target_Kind := Non_Generic_Procedure;
@@ -145,8 +157,7 @@ begin
          End_Position := FU_Tab.End_Position;
       exception
          when DB_Error | Not_Found =>
-            Fail ("unable to find function " &
-                  Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last));
+            Fail ("unable to find function " & Fu_Id);
       end;
    end if;
 
@@ -155,9 +166,9 @@ begin
    --  overloading.
    --  If exist only one, Start_Position
    --  should point to it and we have to add Body_Entity reference
-   --  Otherwise Start_Position should point directly to the body
+   --  Otherwise Start_Position should point directly to the body.
    --  We should also try to find GPS declaration created during
-   --  FD processing and not create new declaration
+   --  FD processing and not create new declaration.
    if Sym.Symbol = MI then
       Free (MI_Tab);
       begin
@@ -166,7 +177,7 @@ begin
             By_Key,
             Sym.Buffer (Sym.Class.First .. Sym.Class.Last)
                & Field_Sep
-               & Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last)
+               & Fu_Id
                & Field_Sep,
             False);
          P := Get_Pair (SN_Table (MD), Next_By_Key);
@@ -180,8 +191,7 @@ begin
                begin -- locate forward declaration
                   Decl_Info := Find_Declaration
                     (File        => Global_LI_File,
-                     Symbol_Name => Sym.Buffer
-                           (Sym.Identifier.First .. Sym.Identifier.Last),
+                     Symbol_Name => Fu_Id,
                      Class_Name  => Sym.Buffer
                            (Sym.Class.First .. Sym.Class.Last),
                      Location    => MD_Tab.Start_Position);
@@ -202,18 +212,16 @@ begin
       --  Try to find forward declaration
       Decl_Info      := Find_First_Forward_Declaration (FU_Tab);
       Body_Position  := Sym.Start_Position;
-      Start_Position.Line   := Decl_Info.Value.Declaration.Location.Line;
-      Start_Position.Column := Decl_Info.Value.Declaration.Location.Column;
       Free (FU_Tab);
    end if;
 
    if Decl_Info = null then
+      Info ("*** Decl_Info = null ***");
       Insert_Declaration
         (Handler               => LI_Handler (Global_CPP_Handler),
          File                  => Global_LI_File,
          List                  => Global_LI_File_List,
-         Symbol_Name           =>
-           Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last),
+         Symbol_Name           => Fu_Id,
          Source_Filename       =>
            Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
          Location              => Start_Position,
@@ -222,6 +230,8 @@ begin
          End_Of_Scope_Location => End_Position,
          Declaration_Info      => Decl_Info);
    else
+      Start_Position.Line   := Decl_Info.Value.Declaration.Location.Line;
+      Start_Position.Column := Decl_Info.Value.Declaration.Location.Column;
       Decl_Info.Value.Declaration.End_Of_Scope.Kind := End_Of_Body;
       Decl_Info.Value.Declaration.End_Of_Scope.Location.Line
          := End_Position.Line;
@@ -252,7 +262,7 @@ begin
      (SN_Table (TO),
       Position => By_Key,
       Key => Sym.Buffer (Sym.Class.First .. Sym.Class.Last) & Field_Sep &
-             Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last) &
+             Fu_Id &
              Field_Sep & Sym_Type.all,
       Exact_Match => False);
 
