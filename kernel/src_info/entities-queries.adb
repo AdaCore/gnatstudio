@@ -1308,14 +1308,14 @@ package body Entities.Queries is
    procedure Compute_All_Call_Graphs (Db : Entities_Database) is
       use Files_HTable;
       Iter : Files_HTable.Iterator;
-      File : Source_File;
+      File : Source_File_Item;
    begin
       Get_First (Db.Files, Iter);
       loop
          File := Get_Element (Iter);
          exit when File = null;
 
-         Compute_Callers_And_Called (File);
+         Compute_Callers_And_Called (File.File);
 
          Get_Next (Db.Files, Iter);
       end loop;
