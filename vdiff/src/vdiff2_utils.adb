@@ -63,7 +63,7 @@ package body Vdiff2_Utils is
       VStyle  : T_VStr;
       Ref     : T_Loc;
       Loc     : T_Loc);
-   --  Hightlight the Current Chunk given in VRange where action is Append
+   --  Highlight the Current Chunk given in VRange when action is Append
 
 
    procedure Show_Diff_Chunk
