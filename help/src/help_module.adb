@@ -54,6 +54,7 @@ with Generic_List;
 with Ada.Unchecked_Deallocation;
 with Ada.Strings.Unbounded;        use Ada.Strings.Unbounded;
 with Histories;                    use Histories;
+with Shell;                        use Shell;
 
 package body Help_Module is
 
@@ -196,6 +197,18 @@ package body Help_Module is
    --  Display a file selection dialog, and then open the HTML file in the
    --  help widget.
 
+   procedure Open_HTML_File
+     (Kernel : access Kernel_Handle_Record'Class;
+      File   : String;
+      Anchor : String := "");
+   --  Open an HTML file.
+
+   function Command_Handler
+     (Kernel  : access Kernel_Handle_Record'Class;
+      Command : String;
+      Args    : GNAT.OS_Lib.Argument_List) return String;
+   --  Handler for HTML commands.
+
    function Default_Factory
      (Kernel : access Kernel_Handle_Record'Class;
       Child  : Gtk.Widget.Gtk_Widget) return Selection_Context_Access;
@@ -226,6 +239,27 @@ package body Help_Module is
       Kernel : Kernel_Handle;
    end record;
    procedure Activate (Callback : access On_Recent; Item : String);
+
+   ---------------------
+   -- Command_Handler --
+   ---------------------
+
+   function Command_Handler
+     (Kernel  : access Kernel_Handle_Record'Class;
+      Command : String;
+      Args    : GNAT.OS_Lib.Argument_List) return String is
+   begin
+      if Command = "html.browse" then
+         if Args'Length = 2 then
+            Open_HTML_File
+              (Kernel, Args (Args'First).all, Args (Args'Last).all);
+         else
+            Open_HTML_File (Kernel, Args (Args'First).all);
+         end if;
+      end if;
+
+      return "";
+   end Command_Handler;
 
    --------------
    -- Activate --
@@ -883,6 +917,33 @@ package body Help_Module is
       return null;
    end Save_Desktop;
 
+   --------------------
+   -- Open_HTML_File --
+   --------------------
+
+   procedure Open_HTML_File
+     (Kernel : access Kernel_Handle_Record'Class;
+      File   : String;
+      Anchor : String := "")
+   is
+      Html   : Help_Browser;
+      Result : Boolean;
+      Vadj   : Gtk_Adjustment;
+      pragma Unreferenced (Result);
+   begin
+      Html := Display_Help (Kernel, File);
+
+      if Html /= null then
+         if Anchor /= "" then
+            Result := Jump_To_Anchor (Html.Csc, Anchor);
+         else
+            Vadj := Get_Vadjustment (Html);
+            Set_Value (Vadj, Get_Lower (Vadj));
+            Set_Vadjustment (Html, Vadj);
+         end if;
+      end if;
+   end Open_HTML_File;
+
    -----------------
    -- Mime_Action --
    -----------------
@@ -897,16 +958,26 @@ package body Help_Module is
    begin
       if Mime_Type = Mime_Html_File then
          declare
-            File   : constant String := Get_String (Data (Data'First));
-            Anchor : constant String := Get_String (Data (Data'First + 2));
-            Html  : Help_Browser;
-            Result : Boolean;
-            pragma Unreferenced (Result);
+            File     : constant String := Get_String (Data (Data'First));
+            Anchor   : constant String := Get_String (Data (Data'First + 2));
+            Navigate : constant Boolean := Get_Boolean (Data (Data'First + 1));
+            Args     : Argument_List (1 .. 3);
          begin
-            Html := Display_Help (Kernel, File);
+            Open_HTML_File (Kernel, File, Anchor);
 
-            if Html /= null and then Anchor /= "" then
-               Result := Jump_To_Anchor (Html.Csc, Anchor);
+            if Navigate then
+               Args (1) := new String'("html.browse");
+               Args (2) := new String'(File);
+               Args (3) := new String'(Anchor);
+
+               Interpret_Command
+                 (Kernel,
+                  "add_location_command",
+                  Args);
+
+               for J in Args'Range loop
+                  Free (Args (J));
+               end loop;
             end if;
          end;
 
@@ -1201,6 +1272,17 @@ package body Help_Module is
                  Recent_Menu_Item,
                  new On_Recent'(Menu_Callback_Record with
                                 Kernel => Kernel_Handle (Kernel)));
+
+      --  Register commands
+
+      Register_Command
+        (Kernel,
+         Command      => "html.browse",
+         Usage        => "html.browse URL [anchor]",
+         Description  => -"Launch a HTML viewer for URL at specified anchor.",
+         Minimum_Args => 1,
+         Maximum_Args => 2,
+         Handler      => Command_Handler'Access);
 
       declare
          Item : String_Menu_Item;
