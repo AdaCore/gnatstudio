@@ -2373,10 +2373,26 @@ package body Projects is
          declare
             From_Project : constant String := Get_Attribute_Value
               (Project, Executable_Attribute,
-               Index => File, Default => Default_Exec);
+               Index => File, Default => "");
          begin
-            --  If the executable name was uninitialized
             if From_Project = "" then
+               --  Check whether the file is a special naming scheme for an
+               --  Ada unit. If this is the case, the name of the unit is the
+               --  name of the executable
+
+               declare
+                  Base_Id : constant Name_Id := Get_String (Base);
+                  Args  : constant Associative_Array := Get_Attribute_Value
+                    (Project, Attribute => Implementation_Attribute);
+               begin
+                  for A in Args'Range loop
+                     if Args (A).Value.Value = Base_Id then
+                        return Get_String (Args (A).Index);
+                     end if;
+                  end loop;
+               end;
+
+               --  Else use the default
                return Default_Exec;
             end if;
 
