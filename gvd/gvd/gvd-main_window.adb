@@ -20,12 +20,12 @@
 
 with Glib;                use Glib;
 with Gtk;                 use Gtk;
+with Gtk.Accel_Group;     use Gtk.Accel_Group;
 with Gtk.Box;             use Gtk.Box;
 with Gtk.Menu_Bar;        use Gtk.Menu_Bar;
 with Gtk.Notebook;        use Gtk.Notebook;
 with Gtk.Object;          use Gtk.Object;
 with Gtk.Widget;          use Gtk.Widget;
-with Gtk.Accel_Group;     use Gtk.Accel_Group;
 with Gtkada.Handlers;     use Gtkada.Handlers;
 with Gtkada.Types;
 with Factory_Data;
