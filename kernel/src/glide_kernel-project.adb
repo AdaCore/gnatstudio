@@ -40,7 +40,6 @@ with Basic_Types;
 with Glide_Intl;               use Glide_Intl;
 with Glide_Kernel.Console;     use Glide_Kernel.Console;
 with Glide_Kernel.Timeout;     use Glide_Kernel.Timeout;
-with Language_Handlers.Glide;  use Language_Handlers.Glide;
 
 package body Glide_Kernel.Project is
 
@@ -249,9 +248,6 @@ package body Glide_Kernel.Project is
       Project_Changed (Kernel);
       Recompute_View (Kernel);
 
-      Set_Registry
-        (Glide_Language_Handler (Kernel.Lang_Handler), Kernel.Registry);
-
       --  Reload the default desktop
 
       if Load_Default_Desktop then
@@ -299,9 +295,6 @@ package body Glide_Kernel.Project is
       --  Reload the desktop, in case there is a project-specific setup already
       Close_All_Children (Kernel);
       Had_Project_Desktop := Load_Desktop (Kernel);
-
-      Set_Registry
-        (Glide_Language_Handler (Kernel.Lang_Handler), Kernel.Registry);
    end Load_Project;
 
    -----------------

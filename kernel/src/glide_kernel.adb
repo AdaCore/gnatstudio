@@ -191,6 +191,9 @@ package body Glide_Kernel is
       Handle.Registry := new Project_Registry;
       Load_Default_Project (Handle.Registry.all, Get_Current_Dir);
 
+      Set_Registry
+        (Glide_Language_Handler (Handle.Lang_Handler), Handle.Registry);
+
       Handle.Gnatls_Cache           := null;
 
       --  Note: we do not compute the view of this project yet. This will be
