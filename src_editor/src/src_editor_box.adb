@@ -46,6 +46,7 @@ with Gtk.Enums;                  use Gtk.Enums;
 with Gtk.Frame;                  use Gtk.Frame;
 with Gtk.Handlers;               use Gtk.Handlers;
 with Gtk.Label;                  use Gtk.Label;
+with Gtk.Main;                   use Gtk.Main;
 with Gtk.Menu;                   use Gtk.Menu;
 with Gtk.Menu_Item;              use Gtk.Menu_Item;
 with Gtk.Scrolled_Window;        use Gtk.Scrolled_Window;
@@ -183,6 +184,9 @@ package body Src_Editor_Box is
       Box : Source_Editor_Box);
    --  Called when the source editor has been scrolled with the scrollbar. It
    --  makes sure that the cursor stays in the visible area.
+
+   function Check_Timestamp_Idle (Box : GObject) return Boolean;
+   --  Idle callback to check that the timestamp of a file hasn't changed.
 
    ----------------------------------
    -- The contextual menu handling --
@@ -903,11 +907,11 @@ package body Src_Editor_Box is
       return False;
    end Key_Press;
 
-   --------------
-   -- Focus_In --
-   --------------
+   --------------------------
+   -- Check_Timestamp_Idle --
+   --------------------------
 
-   function Focus_In (Box : access GObject_Record'Class) return Boolean is
+   function Check_Timestamp_Idle (Box : GObject) return Boolean is
       B         : constant Source_Editor_Box := Source_Editor_Box (Box);
       Undo_Redo : Undo_Redo_Information;
    begin
@@ -937,6 +941,21 @@ package body Src_Editor_Box is
             Undo_Redo.Redo_Menu_Item);
       end if;
 
+      return False;
+   end Check_Timestamp_Idle;
+
+   --------------
+   -- Focus_In --
+   --------------
+
+   function Focus_In (Box : access GObject_Record'Class) return Boolean is
+      Id : Idle_Handler_Id;
+   begin
+      --  We must do the check in an idle callback: otherwise, when the dialog
+      --  is pop up on the screen, and since it is modal, then button release
+      --  event is never sent to the editor, and there is a drag selection
+      --  taking place.
+      Id := Object_Idle.Add (Check_Timestamp_Idle'Access, GObject (Box));
       return False;
    end Focus_In;
 
