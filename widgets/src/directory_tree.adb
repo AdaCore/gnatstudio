@@ -273,23 +273,21 @@ package body Directory_Tree is
    function Directory
      (Tree     : access Dir_Tree_Record'Class;
       N        : Gtk_Ctree_Node;
-      Absolute : Boolean := False) return String is
+      Absolute : Boolean := False) return String
+   is
+      S : constant String := Node_Get_Text (Tree, N, 0);
    begin
       if Absolute
         and then Row_Get_Parent (Node_Get_Row (N)) /= null
       then
          return Directory (Tree, Row_Get_Parent (Node_Get_Row (N)), Absolute)
-           & Node_Get_Text (Tree, N, 0);
+           & S;
       else
-         declare
-            S : constant String := Node_Get_Text (Tree, N, 0);
-         begin
-            if S = -Drives_String then
-               return "";
-            else
-               return Node_Get_Text (Tree, N, 0);
-            end if;
-         end;
+         if S = -Drives_String then
+            return "";
+         else
+            return S;
+         end if;
       end if;
    end Directory;
 
@@ -373,6 +371,10 @@ package body Directory_Tree is
       if Win /= null then
          Set_Busy_Cursor (Win, False);
       end if;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end Expand_Tree_Cb;
 
    ----------------------
@@ -398,11 +400,9 @@ package body Directory_Tree is
 
       Current := Row_Get_Children (Node_Get_Row (Node));
 
-      if Current = null then
-         return;
-      end if;
-
-      if Node_Get_Text (Tree, Current, 0) = -Drives_String then
+      if Current = null
+        or else Node_Get_Text (Tree, Node, 0) = -Drives_String
+      then
          return;
       end if;
 
@@ -421,6 +421,11 @@ package body Directory_Tree is
 
       Boolean_Data.Node_Set_Row_Data (Tree, Node, False);
       Thaw (Tree);
+
+   exception
+      when E : others =>
+         Thaw (Tree);
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end Collapse_Tree_Cb;
 
    -------------------------
@@ -453,29 +458,35 @@ package body Directory_Tree is
       declare
          Absolute : constant String := Directory (Tree, N, Absolute => True);
       begin
-         Open (D, Absolute);
+         begin
+            Open (D, Absolute);
 
-         loop
-            Read (D, File, Last);
+            loop
+               Read (D, File, Last);
 
-            exit when Last = 0;
+               exit when Last = 0;
 
-            Num_Subdirectories :=
-              Subdirectories_Count (Absolute & File (File'First .. Last));
+               Num_Subdirectories :=
+                 Subdirectories_Count (Absolute & File (File'First .. Last));
 
-            if Num_Subdirectories /= -1
-              and then Filter (Tree, File (File'First .. Last))
-            then
-               Num_Dir := Num_Dir + 1;
-               N2 := Add_Directory_Node
-                 (Tree,
-                  File (File'First .. Last) & Directory_Separator,
-                  N,
-                  Num_Subdirectories);
-            end if;
-         end loop;
+               if Num_Subdirectories /= -1
+                 and then Filter (Tree, File (File'First .. Last))
+               then
+                  Num_Dir := Num_Dir + 1;
+                  N2 := Add_Directory_Node
+                    (Tree,
+                     File (File'First .. Last) & Directory_Separator,
+                     N,
+                     Num_Subdirectories);
+               end if;
+            end loop;
 
-         Close (D);
+            Close (D);
+
+         exception
+            when Directory_Error =>
+               null;
+         end;
       end;
 
       --  Remove the dummy node inserted when this node was created
@@ -510,7 +521,9 @@ package body Directory_Tree is
       Last, Len : Integer;
 
       function Insert_Directory_Node
-        (Parent, Sibling : Gtk_Ctree_Node; Dir : String) return Gtk_Ctree_Node;
+        (Parent   : Gtk_Ctree_Node;
+         Dir      : String;
+         Expanded : Boolean := False) return Gtk_Ctree_Node;
       --  Insert a directory node in Tree given a parent and a sibling node.
       --  Dir is the name of the directory to insert.
 
@@ -518,8 +531,9 @@ package body Directory_Tree is
       --  Add a dummy node in Tree for a given node N.
 
       function Insert_Directory_Node
-        (Parent, Sibling : Gtk_Ctree_Node; Dir : String)
-         return Gtk_Ctree_Node
+        (Parent   : Gtk_Ctree_Node;
+         Dir      : String;
+         Expanded : Boolean := False) return Gtk_Ctree_Node
       is
          Strings : Gtkada.Types.Chars_Ptr_Array (1 .. 1);
          Node    : Gtk_Ctree_Node;
@@ -528,7 +542,7 @@ package body Directory_Tree is
          Node := Insert_Node
            (Tree,
             Parent        => Parent,
-            Sibling       => Sibling,
+            Sibling       => null,
             Text          => Strings,
             Spacing       => 5,
             Pixmap_Closed => Tree.Folder_Pix,
@@ -536,7 +550,7 @@ package body Directory_Tree is
             Pixmap_Opened => Tree.Ofolder_Pix,
             Mask_Opened   => Tree.Ofolder_Mask,
             Is_Leaf       => False,
-            Expanded      => False);
+            Expanded      => Expanded);
          Free (Strings);
          Boolean_Data.Node_Set_Row_Data (Tree, Node, False);
          return Node;
@@ -570,14 +584,13 @@ package body Directory_Tree is
          Get_Logical_Drive_Strings (Buffer, Len);
 
          if Len /= 0 then
-            N := Insert_Directory_Node (Parent, null, -Drives_String);
+            N := Insert_Directory_Node (Parent, -Drives_String, True);
             Boolean_Data.Node_Set_Row_Data (Tree, N, True);
             Last := 1;
 
             for J in 1 .. Len loop
                if Buffer (J) = ASCII.NUL then
-                  N2 := Insert_Directory_Node
-                          (N, null, Buffer (Last .. J - 1));
+                  N2 := Insert_Directory_Node (N, Buffer (Last .. J - 1));
                   Add_Dummy_Node (N2);
                   Last := J + 1;
                end if;
@@ -587,7 +600,7 @@ package body Directory_Tree is
          end if;
       end if;
 
-      N := Insert_Directory_Node (Parent, null, Dir);
+      N := Insert_Directory_Node (Parent, Dir);
 
       --  Add a dummy node so that it is possible to expand dynamically a
       --  directory
@@ -717,6 +730,11 @@ package body Directory_Tree is
          Data.Index := Dir_End;
          return True;
       end if;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         return False;
    end Select_Directory_Idle;
 
    -------------------
@@ -832,6 +850,11 @@ package body Directory_Tree is
                  Gint_List.Get_Data (Get_Selection (Selector.Directory)),
                  0, 0.0, 0.2);
       end if;
+
+   exception
+      when E : others =>
+         Thaw (Selector.List);
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end Add_Directory_Cb;
 
    ----------------------
@@ -906,6 +929,11 @@ package body Directory_Tree is
       Freeze (Selector.List);
       Remove_Directory (Selector, Recursive => True);
       Thaw (Selector.List);
+
+   exception
+      when E : others =>
+         Thaw (Selector.List);
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end Remove_Directory_Cb;
 
    -----------------------------
