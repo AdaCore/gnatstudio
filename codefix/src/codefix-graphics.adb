@@ -100,8 +100,6 @@ package body Codefix.Graphics is
    begin
       Free (Graphic_Codefix.Vdiff_List);
       Destroy (Graphic_Codefix);
-      --  Free_Parsers;  ??? Do I need to free parsers at the end of
-      --  the program ?
    end Free;
 
    ----------
@@ -399,13 +397,11 @@ package body Codefix.Graphics is
             when E : Codefix_Panic =>
                Success := False;
                Trace
-                 (Me, "No more sense for " & Get_Message
-                    (Get_Error_Message (Graphic_Codefix.Current_Error)));
+                 (Me, "Fix of current error is no longer pertinent");
                Trace (Me, "Exception got: " & Exception_Information (E));
                Insert
                  (Graphic_Codefix.Kernel,
-                  "No more sense for " & Get_Message
-                    (Get_Error_Message (Graphic_Codefix.Current_Error)));
+                  "Fix of current error is no longer pertinent");
 
                return;
          end;
