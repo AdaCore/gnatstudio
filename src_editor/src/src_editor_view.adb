@@ -30,7 +30,6 @@ with Gdk.Drawable;                use Gdk.Drawable;
 with Gdk.Color;                   use Gdk.Color;
 with Gdk.Event;                   use Gdk.Event;
 with Gdk.GC;                      use Gdk.GC;
---  with Gdk.Main;                    use Gdk.Main;
 with Gdk.Rectangle;               use Gdk.Rectangle;
 with Gdk.Window;                  use Gdk.Window;
 with Gdk.Pixmap;                  use Gdk.Pixmap;
@@ -68,7 +67,6 @@ with Glide_Kernel.Preferences;    use Glide_Kernel.Preferences;
 with Glide_Kernel.Standard_Hooks; use Glide_Kernel.Standard_Hooks;
 with VFS;                         use VFS;
 with Language;                    use Language;
-with Case_Handling;               use Case_Handling;
 
 package body Src_Editor_View is
 
@@ -1854,6 +1852,8 @@ package body Src_Editor_View is
 
       case Get_Key_Val (Event) is
          when GDK_Return =>
+            Word_Added (Buffer);
+
             External_End_Action (Buffer);
 
             --  If there is a selection, delete it
@@ -1890,19 +1890,17 @@ package body Src_Editor_View is
             External_End_Action (Buffer);
 
          when others =>
-            if Active (On_The_Fly_Casing) then
-               declare
-                  Key_Str : constant String := Get_String (Event);
-               begin
-                  if Key_Str'Length = 1
-                    and then
-                      not Is_In (Key_Str (Key_Str'First),
-                                 Word_Character_Set (Get_Language (Buffer)))
-                  then
-                     Word_Added (Buffer);
-                  end if;
-               end;
-            end if;
+            declare
+               Key_Str : constant String := Get_String (Event);
+            begin
+               if Key_Str'Length = 1
+                 and then
+                   not Is_In (Key_Str (Key_Str'First),
+                              Word_Character_Set (Get_Language (Buffer)))
+               then
+                  Word_Added (Buffer);
+               end if;
+            end;
       end case;
 
       return False;
