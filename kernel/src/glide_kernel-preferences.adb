@@ -118,6 +118,9 @@ package body Glide_Kernel.Preferences is
       Pref   : Glib.Properties.Property_Uint) return Glib.Guint is
    begin
       return Guint'Value (Get_Node (Kernel, Property (Pref)).Value.all);
+   exception
+      when Constraint_Error =>
+         return 0;
    end Get_Pref;
 
    --------------
@@ -129,6 +132,9 @@ package body Glide_Kernel.Preferences is
       Pref   : Glib.Properties.Property_Boolean) return Boolean is
    begin
       return Boolean'Value (Get_Node (Kernel, Property (Pref)).Value.all);
+   exception
+      when Constraint_Error =>
+         return False;
    end Get_Pref;
 
    --------------
