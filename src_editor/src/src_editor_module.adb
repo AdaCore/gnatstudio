@@ -2071,6 +2071,8 @@ package body Src_Editor_Module is
               Select_File
                 (Title             => -"Save File As",
                  Parent            => Get_Main_Window (Kernel),
+                 Base_Directory    => Dir_Name (Get_Filename (Source)),
+                 Default_Name      => Base_Name (Get_Filename (Source)),
                  Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs),
                  Kind              => Save_File,
                  History           => Get_History (Kernel));
