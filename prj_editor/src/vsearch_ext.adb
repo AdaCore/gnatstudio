@@ -152,6 +152,7 @@ package body Vsearch_Ext is
    procedure On_Destroy (Object : access Gtk_Widget_Record'Class) is
    begin
       Unref (Vsearch_Extended (Object).Next_Menu_Item);
+      Unref (Vsearch_Extended (Object).Prev_Menu_Item);
       Unref (Vsearch_Extended (Object).Search_Next_Button);
 
    exception
@@ -471,10 +472,12 @@ package body Vsearch_Ext is
          Show_All (Align);
 
          Set_Sensitive (Vsearch.Next_Menu_Item, True);
+         Set_Sensitive (Vsearch.Prev_Menu_Item, True);
 
       else
          Set_Label (Vsearch.Search_Next_Button, Stock_Find);
          Set_Sensitive (Vsearch.Next_Menu_Item, False);
+         Set_Sensitive (Vsearch.Prev_Menu_Item, False);
       end if;
    end Set_First_Next_Mode;
 
@@ -656,11 +659,12 @@ package body Vsearch_Ext is
          Stock_Find, Search_Menu_Cb'Access,
          Ref_Item => Goto_Decl,
          Accel_Key => GDK_F, Accel_Mods => Control_Mask);
-      Register_Menu
+      Vsearch.Prev_Menu_Item := Register_Menu
         (Handle, Navigate, -"Find Previous",
          "", Search_Previous_Cb'Access,
          Ref_Item => Goto_Decl,
          Accel_Key => GDK_P, Accel_Mods => Control_Mask);
+      Ref (Vsearch.Prev_Menu_Item);
       Vsearch.Next_Menu_Item := Register_Menu
         (Handle, Navigate, -"Find Next",
          "", Search_Next_Cb'Access,
@@ -669,6 +673,7 @@ package body Vsearch_Ext is
       Ref (Vsearch.Next_Menu_Item);
 
       Set_Sensitive (Vsearch.Next_Menu_Item, False);
+      Set_Sensitive (Vsearch.Prev_Menu_Item, False);
       Gtk_New (Mitem);
       Register_Menu (Handle, Navigate, Mitem, Ref_Item => Goto_Decl);
 
