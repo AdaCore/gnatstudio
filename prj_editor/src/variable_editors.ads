@@ -29,10 +29,12 @@
 with Glib;                    use Glib;
 with Gtk.Label;
 with Gtk.Combo;
+with Gtk.GEntry;
 with Gtk.Scrolled_Window;
 with Variable_Editor_Pkg;     use Variable_Editor_Pkg;
 with New_Variable_Editor_Pkg; use New_Variable_Editor_Pkg;
 with Value_Editors;
+with Prj_API;
 with Prj.Tree;
 
 package Variable_Editors is
@@ -77,6 +79,14 @@ package Variable_Editors is
    procedure Name_Changed (Editor : access New_Var_Edit_Record);
    --  Called when the name of a variable is changed. This is used to visually
    --  report that fact (change the label of the name frame).
+
+   procedure Display_Expr
+     (Editable : access Gtk.GEntry.Gtk_Entry_Record'Class;
+      Expr : Prj_API.String_List_Iterator);
+   --  Display Expr in GEntry, with variable references replaced with
+   --  '$<name>'.
+   --  It also displays the other expressions in the list.
+   --  GEntry is not deleted first.
 
    -------------
    -- Signals --
