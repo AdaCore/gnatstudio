@@ -21,6 +21,7 @@
 with Gdk.Color;    use Gdk.Color;
 with Gtk;          use Gtk;
 with Gtk.Text_Tag; use Gtk.Text_Tag;
+with Gtk.Widget;   use Gtk.Widget;
 with Pango.Font;   use Pango.Font;
 
 with Language;     use Language;
@@ -59,12 +60,16 @@ package body Src_Highlighting is
          Set_Property (Tag, Text_Tag.Font_Desc_Property, Font_Desc);
       end if;
 
-      if Fore_Color /= Null_Color then
+      if Fore_Color /= White (Get_Default_Colormap) then
          Set_Property (Tag, Foreground_Gdk_Property, Fore_Color);
+      else
+         Set_Property (Tag, Foreground_Gdk_Property, Null_Color);
       end if;
 
-      if Back_Color /= Null_Color then
+      if Back_Color /= White (Get_Default_Colormap) then
          Set_Property (Tag, Background_Gdk_Property, Back_Color);
+      else
+         Set_Property (Tag, Background_Gdk_Property, Null_Color);
       end if;
    end New_Tag;
 
