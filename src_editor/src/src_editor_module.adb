@@ -1968,15 +1968,15 @@ package body Src_Editor_Module is
                      No_Name : constant String := -"Untitled";
                   begin
                      --  ??? Right now, we detect that a certain MDI child
-                     --  is an editor by checking that the first character is
-                     --  "/" or that the title is "Untitled[...]"
+                     --  is an editor by checking that the title looks like an
+                     --  absolute path or is "Untitled[...]"
 
-                     if Title (Title'First) = '/'
-                       or else (Title'Length >= No_Name'Length
-                                and then Title
-                                  (Title'First
-                                     .. Title'First + No_Name'Length - 1)
-                                  = No_Name)
+                     if Is_Absolute_Path (Title)
+                       or else
+                         (Title'Length >= No_Name'Length
+                          and then Title
+                            (Title'First .. Title'First + No_Name'Length - 1)
+                             = No_Name)
                      then
                         Apply_Mime_On_Child (Child);
                      end if;
