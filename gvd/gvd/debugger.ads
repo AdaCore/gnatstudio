@@ -251,8 +251,10 @@ package Debugger is
       Name_First  : out Natural;
       Name_Last   : out Positive;
       First, Last : out Natural;
-      Line        : out Natural);
-   --  Search for a file name indication in Str.
+      Line        : out Natural;
+      Addr_First  : out Natural;
+      Addr_Last   : out Natural);
+   --  Search for a file name, line or address indication in Str.
    --  Str is a string output by the debugger, that might contain a reference
    --  to a specific file and line, that we want to display in the code editor
    --  window.
@@ -260,6 +262,7 @@ package Debugger is
    --  the line is Line.
    --  Set Name_First to 0 if no file name was found, and set Line to 0 if
    --  no line was found.
+   --  Set Addr_First to 0 if not file name was found.
    --  First and Last point to the slice of Str that should be stripped from
    --  the output. They are reset to zero when no slice should be stripped.
    --  Note that the last reference to a file or a line should be used, in case
@@ -326,6 +329,20 @@ package Debugger is
    --  Step program, proceeding over subroutines.
    --  See above for details on Display.
    --  GDB_COMMAND: "next"
+
+   procedure Step_Into_Instruction
+     (Debugger : access Debugger_Root;
+      Display  : Boolean := False) is abstract;
+   --  Step program until it reaches a different assembly line
+   --  See above for details on Display.
+   --  GDB_COMMAND: "stepu"
+
+   procedure Step_Over_Instruction
+     (Debugger : access Debugger_Root;
+      Display  : Boolean := False) is abstract;
+   --  Step program one assembly instruction, proceeding over subroutines.
+   --  See above for details on Display.
+   --  GDB_COMMAND: "nexti"
 
    procedure Continue
      (Debugger : access Debugger_Root;
@@ -551,6 +568,41 @@ package Debugger is
       File     : String;
       Line     : Positive) return Line_Kind is abstract;
    --  Indicate whether a given file and line number contain executable code.
+
+   -------------------
+   -- Assembly code --
+   -------------------
+
+   subtype Address_Type is String (1 .. 20);
+   --  A string that can contain an address.
+
+   procedure Get_Machine_Code
+     (Debugger        : access Debugger_Root;
+      Range_Start     : out Address_Type;
+      Range_End       : out Address_Type;
+      Range_Start_Len : out Natural;
+      Range_End_Len   : out Natural;
+      Code            : out Odd.Types.String_Access;
+      Start_Address   : String := "";
+      End_Address     : String := "") is abstract;
+   --  Return the machine code (or assembly code) for a specific region.
+   --  The region desassembled is Start_Address .. End_Address (where the
+   --  meaning of address depends on the target (this can be an machine
+   --  address or an offset in the JVM).
+   --  If Start_Address is "", then the code for the current frame is
+   --  returned.
+   --  The region really disassembled is Range_Start .. Range_End.
+   --  The address is given in Range_Start (1 .. Range_Start_Len).
+
+   procedure Get_Line_Address
+     (Debugger        : access Debugger_Root;
+      Line            : Natural;
+      Range_Start     : out Address_Type;
+      Range_End       : out Address_Type;
+      Range_Start_Len : out Natural;
+      Range_End_Len   : out Natural) is abstract;
+   --  Return the range of addresses for a given source line.
+   --  See Get_Machine_Code for an explanation of the parameters.
 
    ----------------
    -- Exceptions --

@@ -190,13 +190,17 @@ package body Debugger is
       Name_First  : out Natural;
       Name_Last   : out Positive;
       First, Last : out Natural;
-      Line        : out Natural) is
+      Line        : out Natural;
+      Addr_First  : out Natural;
+      Addr_Last   : out Natural) is
    begin
       First      := 0;
       Last       := 0;
       Name_First := 0;
       Name_Last  := 1;
       Line       := 0;
+      Addr_First := 0;
+      Addr_Last  := 1;
    end Found_File_Name;
 
    -----------------
