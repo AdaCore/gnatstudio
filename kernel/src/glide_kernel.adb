@@ -155,18 +155,21 @@ package body Glide_Kernel is
    ----------------------------
 
    procedure Initialize_All_Modules (Handle : access Kernel_Handle_Record) is
-      Module : Module_List.List := Global_Modules_List;
-   begin
-      while not Module_List.Is_Empty (Module) loop
-         if not Module_List.Head (Module).Was_Initialized then
-            Trace (Me, "Initializing module "
-                   & Module_List.Head (Module).Name);
+      Module : Module_List.List_Node :=
+        Module_List.First (Handle.Modules_List);
 
-            if Module_List.Head (Module).Initializer /= null then
-               Module_List.Head (Module).Initializer (Handle);
+      use type Module_List.List_Node;
+   begin
+      while Module /= Module_List.Null_Node loop
+         if not Module_List.Data (Module).Was_Initialized then
+            Trace (Me, "Initializing module "
+                   & Module_List.Data (Module).Name);
+
+            if Module_List.Data (Module).Initializer /= null then
+               Module_List.Data (Module).Initializer (Handle);
             end if;
 
-            Module_List.Head (Module).Was_Initialized := True;
+            Module_List.Data (Module).Was_Initialized := True;
          end if;
 
          Module := Module_List.Next (Module);

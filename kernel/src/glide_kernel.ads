@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                          G L I D E  I I                           --
 --                                                                   --
---                        Copyright (C) 2001                         --
+--                     Copyright (C) 2001-2002                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GLIDE is free software; you can redistribute it and/or modify  it --
@@ -372,12 +372,11 @@ private
    --  Free memory associated to a Module_ID.
 
    package Module_List is new Generic_List (Module_ID);
-   Global_Modules_List : Module_List.List;
-   --  The list of all the modules that have been loaded in Glide. This has to
-   --  be a global variable for elaboration reasons: when the modules are
-   --  registered, the kernel hasn't necessarily been created yet.
 
    type Kernel_Handle_Record is new Glib.Object.GObject_Record with record
+      Modules_List : Module_List.List;
+      --  The list of all the modules that have been registered in this kernel.
+
       Project : Prj.Tree.Project_Node_Id := Prj.Tree.Empty_Node;
       --  The project currently loaded. This is the tree form, independent of
       --  the current value of the environment variables.
