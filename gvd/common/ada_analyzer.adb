@@ -1866,7 +1866,10 @@ package body Ada_Analyzer is
                when '#' =>
                   Prev_Token := Tok_Pound;
 
-                  if Is_Letter (Buffer (P + 1)) then
+                  if (P = Buffer'First
+                      or else Buffer (P - 1) not in '0' .. '9')
+                    and then Is_Letter (Buffer (P + 1))
+                  then
                      Preprocessor_Directive;
                   end if;
 
