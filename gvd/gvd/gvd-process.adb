@@ -94,6 +94,21 @@ package body Odd.Process is
    --  Array of the signals created for this widget
    Signals : Chars_Ptr_Array := "process_stopped" + "context_changed";
 
+
+   Graph_Cmd_Format : Pattern_Matcher := Compile
+     ("graph\s+(print|display)\s+((\S+)|`([^`]+)`)\s*"
+      & "(dependent\s+on\s+(\S+)\s*)?"
+      & "(link_name\s+(\S+))?", Case_Insensitive);
+   --  Format of the graph print commands, and how to parse them
+
+   Graph_Cmd_Type_Paren          : constant := 1;
+   Graph_Cmd_Variable_Name_Paren : constant := 3;
+   Graph_Cmd_Expression_Paren    : constant := 4;
+   Graph_Cmd_Dependent_Paren     : constant := 6;
+   Graph_Cmd_Link_Paren          : constant := 8;
+   --  Indexes of the parentheses pairs in Graph_Cmd_Format for each of the
+   --  relevant fields.
+
    -----------------------
    -- Local Subprograms --
    -----------------------
@@ -119,6 +134,11 @@ package body Odd.Process is
       Event    : Gdk.Event.Gdk_Event) return Boolean;
    --  Callback for all the button press events in the debugger command window.
    --  This is used to display the contexual menu.
+
+   procedure Process_Graph_Cmd
+     (Process : access Debugger_Process_Tab_Record'Class;
+      Cmd     : String);
+   --  Parse and process a "graph print" or "graph display" command
 
    -------------
    -- Convert --
@@ -522,6 +542,133 @@ package body Odd.Process is
       Widget_Callback.Emit_By_Name (Gtk_Widget (Debugger), "process_stopped");
    end Process_Stopped;
 
+   -----------------------
+   -- Process_Graph_Cmd --
+   -----------------------
+
+   procedure Process_Graph_Cmd
+     (Process : access Debugger_Process_Tab_Record'Class;
+      Cmd     : String)
+   is
+      Matched : Match_Array (0 .. 10);
+      Item     : Display_Item;
+   begin
+      --  graph (print|display) variable [dependent on link_src]
+      --        [link_name name]
+      --  graph (print|display) `command`
+
+      Match (Graph_Cmd_Format, Cmd, Matched);
+      if Matched (0) /= No_Match then
+
+         --  A general expression  (graph print `cmd`)
+         if Matched (Graph_Cmd_Expression_Paren) /= No_Match then
+
+            declare
+               Expr : String := Cmd
+                 (Matched (Graph_Cmd_Expression_Paren).First
+                  .. Matched (Graph_Cmd_Expression_Paren).Last);
+               Entity : Items.Generic_Type_Access := New_Debugger_Type (Expr);
+            begin
+               Set_Value
+                 (Debugger_Output_Type (Entity.all),
+                  Send (Process.Debugger,
+                        Refresh_Command (Debugger_Output_Type (Entity.all)),
+                        Is_Internal => True));
+               Gtk_New
+                 (Item, Get_Window (Process.Data_Canvas),
+                  Variable_Name  => Expr,
+                  Debugger       => Process,
+                  Auto_Refresh   =>
+                    Cmd (Matched (Graph_Cmd_Type_Paren).First) = 'd',
+                  Default_Entity => Entity);
+            end;
+
+         --  A variable name
+
+         else
+            declare
+               Var : String :=
+                 Cmd (Matched (Graph_Cmd_Variable_Name_Paren).First
+                      .. Matched (Graph_Cmd_Variable_Name_Paren).Last);
+            begin
+
+               --  If we don't want any link:
+               if Matched (Graph_Cmd_Dependent_Paren) = No_Match then
+
+                  if Enable_Block_Search then
+                     Gtk_New
+                       (Item, Get_Window (Process.Data_Canvas),
+                        Variable_Name => Variable_Name_With_Frame
+                        (Process.Debugger, Var),
+                        Debugger      => Process,
+                     Auto_Refresh  =>
+                          Cmd (Matched (Graph_Cmd_Type_Paren).First) = 'd');
+                  end if;
+
+                  --  If we could not get the variable with the block, try
+                  --  without, since some debuggers (gdb most notably) can have
+                  --  more efficient algorithms to find the variable.
+
+                  if Item = null then
+                     Gtk_New
+                       (Item, Get_Window (Process.Data_Canvas),
+                        Variable_Name => Var,
+                        Debugger      => Process,
+                        Auto_Refresh  =>
+                          Cmd (Matched (Graph_Cmd_Type_Paren).First) = 'd');
+                  end if;
+
+                  if Item /= null then
+                     Put (Process.Data_Canvas, Item);
+                  end if;
+
+               --  We have a link
+               else
+                  if Matched (Graph_Cmd_Link_Paren) = No_Match then
+                     Matched (Graph_Cmd_Link_Paren) :=
+                       (First => Cmd'First, Last => Cmd'First - 1);
+                  end if;
+
+                  declare
+                     Link_Name : String :=
+                       Cmd (Matched (Graph_Cmd_Link_Paren).First
+                            .. Matched (Graph_Cmd_Link_Paren).Last);
+                     Num : Integer :=
+                       Integer'Value
+                       (Cmd (Matched (Graph_Cmd_Dependent_Paren).First
+                             .. Matched (Graph_Cmd_Dependent_Paren).Last));
+                     Link_From : Display_Item :=
+                       Find_Item (Process.Data_Canvas, Num);
+                  begin
+                     if Enable_Block_Search then
+                        Gtk_New_And_Put
+                          (Item, Get_Window (Process.Data_Canvas),
+                           Variable_Name => Variable_Name_With_Frame
+                           (Process.Debugger, Var),
+                           Debugger      => Process,
+                           Auto_Refresh  =>
+                             Cmd (Matched (Graph_Cmd_Type_Paren).First) = 'd',
+                           Link_From     => Link_From,
+                           Link_Name     => Link_Name);
+                     end if;
+
+                     if Item = null then
+                        Gtk_New_And_Put
+                          (Item, Get_Window (Process.Data_Canvas),
+                           Variable_Name => Var,
+                           Debugger      => Process,
+                           Auto_Refresh  =>
+                             Cmd (Matched (Graph_Cmd_Type_Paren).First) = 'd',
+                           Link_From     => Link_From,
+                           Link_Name     => Link_Name);
+                     end if;
+                  end;
+               end if;
+            end;
+         end if;
+      end if;
+   end Process_Graph_Cmd;
+
    --------------------------
    -- Process_User_Command --
    --------------------------
@@ -529,11 +676,8 @@ package body Odd.Process is
    procedure Process_User_Command (Debugger : Debugger_Process_Tab;
                                    Command  : String)
    is
-      Item     : Display_Item;
       Command2 : String := To_Lower (Command);
       First    : Natural := Command2'First;
-      Start    : Natural;
-      Tmp      : Natural;
       Cursor   : Gdk_Cursor;
    begin
       Append (Debugger.Command_History, Command);
@@ -555,58 +699,8 @@ package body Odd.Process is
 
       Skip_Blanks (Command2, First);
 
-      if Looking_At (Command2, First, "graph display")
-        or else Looking_At (Command2, First, "graph print")
-      then
-         Start := First + 11;
-         Skip_To_Blank (Command2, Start);
-         Skip_Blanks (Command2, Start);
-
-         if Command (Start) = '`' then
-            Tmp := Start + 1;
-            Skip_To_Char (Command, Tmp, '`');
-
-            declare
-               Entity : Items.Generic_Type_Access :=
-                 New_Debugger_Type (Command (Start + 1 .. Tmp - 1));
-            begin
-               Set_Value
-                 (Debugger_Output_Type (Entity.all),
-                  Send (Debugger.Debugger,
-                        Refresh_Command (Debugger_Output_Type (Entity.all)),
-                        Is_Internal => True));
-               Gtk_New
-                 (Item, Get_Window (Debugger.Data_Canvas),
-                  Variable_Name  => Command (Start + 1 .. Tmp - 1),
-                  Debugger       => Debugger,
-                  Auto_Refresh   => Command2 (First + 6) = 'd',
-                  Default_Entity => Entity);
-            end;
-
-         elsif Enable_Block_Search then
-            Gtk_New
-              (Item, Get_Window (Debugger.Data_Canvas),
-               Variable_Name => Variable_Name_With_Frame
-               (Debugger.Debugger, Command (Start .. Command2'Last)),
-               Debugger      => Debugger,
-               Auto_Refresh  => Command2 (First + 6) = 'd');
-         end if;
-
-         --  If we could not get the variable with the block, try without,
-         --  since some debuggers (gdb most notably) can have more efficient
-         --  algorithms to find the variable.
-
-         if Item = null then
-            Gtk_New
-              (Item, Get_Window (Debugger.Data_Canvas),
-               Variable_Name => Command (Start .. Command2'Last),
-               Debugger      => Debugger,
-               Auto_Refresh  => Command2 (First + 6) = 'd');
-         end if;
-
-         if Item /= null then
-            Put (Debugger.Data_Canvas, Item);
-         end if;
+      if Looking_At (Command2, First, "graph") then
+         Process_Graph_Cmd (Debugger, Command);
          Display_Prompt (Debugger.Debugger);
 
       elsif Command2 = "quit" then
