@@ -1,6 +1,6 @@
 
 MAIN=gnatpp gnatparse
-MODULES=gnat gvd common
-CFLAGS=-O2 -g -funroll-loops -gnatn
+MODULES=gnat debugger_common common
+CFLAGS=-O2 -g
 
 include ../../Makefile.common
