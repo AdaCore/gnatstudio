@@ -77,7 +77,7 @@ package body Log_Utils is
    is
       Mapper      : File_Mapper_Access := Get_Logs_Mapper (Kernel);
       Real_Name   : constant String := Normalize_Pathname (File_Name);
-      Return_Name : constant String := Get_Other_File (Mapper, Real_Name);
+      Return_Name : constant String := Get_Other_Text (Mapper, Real_Name);
    begin
       --  ??? Right now, we save the mapping every time that we add
       --  an entry. This is a bit inefficient, we should save the mapping
@@ -140,7 +140,7 @@ package body Log_Utils is
    is
       Mapper : constant File_Mapper_Access := Get_Logs_Mapper (Kernel);
    begin
-      return Get_Other_File (Mapper, Normalize_Pathname (Log_Name));
+      return Get_Other_Text (Mapper, Normalize_Pathname (Log_Name));
    end Get_File_From_Log;
 
    -------------
