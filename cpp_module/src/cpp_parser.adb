@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003-2004                       --
---                            ACT-Europe                             --
+--                     Copyright (C) 2003-2005                       --
+--                            AdaCore                                --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -31,6 +31,7 @@ with DB_API;            use DB_API;
 with Projects;          use Projects;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
+with GNAT.Calendar.Time_IO;     use GNAT.Calendar.Time_IO;
 with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Calendar;              use Ada.Calendar;
 with Ada.Text_IO;               use Ada.Text_IO;
@@ -134,10 +135,10 @@ package body CPP_Parser is
    --  All tables that contain type declarations
 
    type CPP_Handler_Record is new LI_Handler_Record with record
-      Db       : Entities_Database;
-      Registry : Project_Registry;
-      SN_Table : SN_Table_Array;
-      DBIMP_Path : String_Access;
+      Db            : Entities_Database;
+      Registry      : Project_Registry;
+      SN_Table      : SN_Table_Array;
+      DBIMP_Path    : String_Access;
       CBrowser_Path : String_Access;
    end record;
    type CPP_Handler is access all CPP_Handler_Record'Class;
@@ -442,6 +443,16 @@ package body CPP_Parser is
    --  Nested brackets are properly handled
    --
    --  ??? Move to string_utils.ads
+
+   function Database_Timestamp (Project : Project_Type) return Time;
+   --  Return the timestamp of the database for Project.
+
+   function File_Up_To_Date_In_DB
+     (Project   : Project_Type;
+      File_Name : VFS.Virtual_File) return Boolean;
+   --  Whether the information for File_Name in the database is up-to-date for
+   --  the file. False is returned if the file is more recent on the disk than
+   --  in the DB
 
    ---------------------
    -- Table_Extension --
@@ -2558,6 +2569,21 @@ package body CPP_Parser is
          end loop;
 
          Release_Cursor (Handler.SN_Table (FIL));
+
+         declare
+            Project          : constant Project_Type :=
+              Get_Project_From_File (Handler.Registry, Get_Filename (Source));
+            DB_Dir           : constant String := Get_DB_Dir (Project);
+            TO_File_Name     : constant Virtual_File :=
+             Create (Full_Filename => DB_Dir & SN.Browse.DB_File_Name & ".to");
+            S      : Source_File;
+         begin
+            S := Get_Or_Create
+              (Handler.Db,
+               File => Get_Filename (Source),
+               LI   => Get_Or_Create (Handler.Db, TO_File_Name, Project));
+            Set_Time_Stamp (Get_LI (S), File_Time_Stamp (TO_File_Name));
+         end;
       end if;
    end Parse_FIL_Table;
 
@@ -2570,7 +2596,6 @@ package body CPP_Parser is
       Source  : Source_File) is
    begin
       Trace (Me, "Parse_File " & Full_Name (Get_Filename (Source)).all);
-      Set_Time_Stamp (Source, File_Time_Stamp (Get_Filename (Source)));
       Parse_FIL_Table (Handler, Source);
 
    exception
@@ -2612,8 +2637,12 @@ package body CPP_Parser is
          return null;
       end if;
 
+      --  If the database has changed on disk, update the in-memory contents
       if Get_Time_Stamp (Source) = VFS.No_Time
-        or else Get_Time_Stamp (Source) /= File_Time_Stamp (Source_Filename)
+        or else Get_LI (Source) = null
+        or else Database_Timestamp
+          (Get_Project_From_File (Handler.Registry, Source_Filename)) /=
+          Get_Timestamp (Get_LI (Source))
       then
          Parse_File (Handler, Source);
       end if;
@@ -2679,7 +2708,7 @@ package body CPP_Parser is
          Free (Files (1));
 
          if Success then
-            Set_Cursor_At (Table);
+            Set_Cursor_At (Table, Filename => Invalid_String);
             loop
                Get_Pair (Table, Next_By_Key, Result => F_Pair);
                exit when F_Pair = No_Pair;
@@ -2723,6 +2752,18 @@ package body CPP_Parser is
       return LI_Handler (CPP);
    end Create_CPP_Handler;
 
+   ------------------------
+   -- Database_Timestamp --
+   ------------------------
+
+   function Database_Timestamp (Project : Project_Type) return Time is
+      DB_Dir           : constant String := Get_DB_Dir (Project);
+      TO_File_Name     : constant Virtual_File :=
+        Create (Full_Filename => DB_Dir & SN.Browse.DB_File_Name & ".to");
+   begin
+      return File_Time_Stamp (TO_File_Name);
+   end Database_Timestamp;
+
    --------------------
    -- Browse_Project --
    --------------------
@@ -2735,9 +2776,7 @@ package body CPP_Parser is
       Num_C_Files      : Natural := 0;
       Tmp_File         : File_Type;
       Success          : Boolean;
-      TO_File_Name     : constant Virtual_File :=
-        Create (Full_Filename => DB_Dir & SN.Browse.DB_File_Name & ".to");
-      TO_Timestamp     : constant Time := File_Time_Stamp (TO_File_Name);
+      TO_Timestamp     : constant Time := Database_Timestamp (Project);
       Recompute_TO     : Boolean := False;
 
    begin
@@ -2979,6 +3018,49 @@ package body CPP_Parser is
    end Set_Executables;
 
    ---------------------------
+   -- File_Up_To_Date_In_DB --
+   ---------------------------
+
+   function File_Up_To_Date_In_DB
+     (Project   : Project_Type;
+      File_Name : VFS.Virtual_File) return Boolean
+   is
+      Files   : chars_ptr_array (1 .. 1);
+      Table   : DB_File;
+      F_Pair  : Pair;
+      F_Data  : F_Table;
+      DB_Dir  : constant String := Get_DB_Dir (Project);
+      Success : Boolean;
+   begin
+      Files (1) := New_String
+        (DB_Dir & SN.Browse.DB_File_Name & Table_Extension (F));
+      DB_API.Open (Table, Files, Success);
+      Free (Files (1));
+
+      if Success then
+         Success := False;
+         Set_Cursor_At (Table, Filename => Full_Name (File_Name).all);
+         loop
+            Get_Pair (Table, Next_By_Key, Result => F_Pair);
+            exit when F_Pair = No_Pair;
+            Parse_Pair (F_Pair, F_Data);
+
+            if F_Data.Data
+                (F_Data.Timestamp.First .. F_Data.Timestamp.Last) =
+                Image (File_Time_Stamp (File_Name), "%s")
+            then
+               Success := True;
+               exit;
+            end if;
+         end loop;
+
+         Release_Cursor (Table);
+      end if;
+
+      return Success;
+   end File_Up_To_Date_In_DB;
+
+   ---------------------------
    -- Parse_File_Constructs --
    ---------------------------
 
@@ -2989,27 +3071,48 @@ package body CPP_Parser is
       Result       : out Language.Construct_List)
    is
       pragma Unreferenced (Languages);
-
+      Project         : constant Project_Type :=
+        Get_Project_From_File (Handler.Registry, File_Name);
       Constructs      : Language.Construct_List;
       P               : Pair;
       Sym             : FIL_Table;
       Info            : Construct_Access;
       C               : Construct_Access;
-      Iter            : LI_Handler_Iterator'Class := Generate_LI_For_Project
-        (Handler,
-         Project   => Get_Project_From_File
-           (Handler.Registry, File_Name),
-         Recursive => False);
       Finished        : Boolean;
+      Source          : Source_File;
 
    begin
-      --  In C/C++, it is the same cost to do it for one file or the whole
-      --  project
-      loop
-         Continue (Iter, Finished);
-         exit when Finished;
-      end loop;
-      Destroy (Iter);
+      --  This call is just to check whether we know anything of the file from
+      --  the in-memory database
+      Source := Get_Or_Create
+        (Db           => Handler.Db,
+         File         => File_Name,
+         Allow_Create => False);
+
+      --  Recreate the database on the disk if the database doesn't contain
+      --  up-to-date information for the file.
+      if Source = null
+        or else not File_Up_To_Date_In_DB (Project, File_Name)
+      then
+         declare
+            Iter : LI_Handler_Iterator'Class := Generate_LI_For_Project
+              (Handler,
+               Project   => Project,
+               Recursive => False);
+         begin
+            --  In C/C++, it is the same cost to do it for one file or the
+            --  whole project
+            loop
+               Continue (Iter, Finished);
+               exit when Finished;
+            end loop;
+            Destroy (Iter);
+         end;
+
+         Source := Get_Source_Info
+           (Handler         => Handler,
+            Source_Filename => File_Name);
+      end if;
 
       if not Is_Open (Handler.SN_Table (FIL)) then
          Open_DB_Files (Handler);
@@ -3142,6 +3245,8 @@ package body CPP_Parser is
       Release_Cursor (Handler.SN_Table (FIL));
 
    exception
+      when DB_Error =>
+         Result := Constructs;
       when E : others   =>
          Trace (Exception_Handle,
                 "Unexpected exception: " & Exception_Information (E));
