@@ -500,6 +500,7 @@ package body Source_Analyzer is
       Indent_Continue : Natural renames Indent_Params.Indent_Continue;
       Indent_Decl     : Natural renames Indent_Params.Indent_Decl;
       Indent_Return   : Natural renames Indent_Params.Indent_Return;
+      Indent_Renames  : Natural renames Indent_Params.Indent_Renames;
       Indent_With     : Natural renames Indent_Params.Indent_With;
       Indent_Use      : Natural renames Indent_Params.Indent_Use;
       Indent_Record   : Natural renames Indent_Params.Indent_Record;
@@ -712,6 +713,7 @@ package body Source_Analyzer is
 
                Subprogram_Decl := False;
                Pop (Tokens);
+               Do_Indent (Prec, Num_Spaces + Indent_Renames);
             end if;
 
          elsif not Was_Type_Decl
