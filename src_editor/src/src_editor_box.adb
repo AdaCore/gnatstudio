@@ -35,6 +35,7 @@ with Gdk.Window;                 use Gdk.Window;
 
 with Gtk;                        use Gtk;
 with Gtk.Box;                    use Gtk.Box;
+with Gtk.Clipboard;              use Gtk.Clipboard;
 with Gtk.Container;              use Gtk.Container;
 with Gtk.Enums;                  use Gtk.Enums;
 with Gtk.Frame;                  use Gtk.Frame;
@@ -1716,7 +1717,9 @@ package body Src_Editor_Box is
 
    procedure Cut_Clipboard (Editor : access Source_Editor_Box_Record) is
    begin
-      Cut_Clipboard (Editor.Source_Buffer, Default_Editable => True);
+      Cut_Clipboard
+        (Editor.Source_Buffer, Gtk.Clipboard.Get,
+         Default_Editable => Editor.Writable);
    end Cut_Clipboard;
 
    --------------------
@@ -1725,7 +1728,7 @@ package body Src_Editor_Box is
 
    procedure Copy_Clipboard (Editor : access Source_Editor_Box_Record) is
    begin
-      Copy_Clipboard (Editor.Source_Buffer);
+      Copy_Clipboard (Editor.Source_Buffer, Gtk.Clipboard.Get);
    end Copy_Clipboard;
 
    ---------------------
@@ -1734,7 +1737,9 @@ package body Src_Editor_Box is
 
    procedure Paste_Clipboard (Editor : access Source_Editor_Box_Record) is
    begin
-      Paste_Clipboard (Editor.Source_Buffer, Default_Editable => True);
+      Paste_Clipboard
+        (Editor.Source_Buffer, Gtk.Clipboard.Get,
+         Default_Editable => Editor.Writable);
    end Paste_Clipboard;
 
    --------------------
