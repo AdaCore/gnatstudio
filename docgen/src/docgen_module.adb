@@ -40,6 +40,7 @@ with Gtk.Menu_Item;            use Gtk.Menu_Item;
 with Gtk.Menu;                 use Gtk.Menu;
 with File_Utils;               use File_Utils;
 with Projects.Registry;        use Projects.Registry;
+with Src_Info.Queries;         use Src_Info.Queries;
 
 package body Docgen_Module is
 
@@ -211,12 +212,18 @@ package body Docgen_Module is
    begin
       for J in 1 .. Tab'Length loop
          File := Tab (J);
-         LI := Locate_From_Source_And_Complete (Kernel, File);
-         Append
-            (List,
-            (File_Name        => File,
-             Package_Name     => new String'(Get_Unit_Name (LI, File)),
-             Other_File_Found => True));
+         --  we don't generate the doc of body file if
+         --  the preference "Generate the body files" is disable
+         if Is_Spec_File (Kernel, File) = True
+           or (Is_Spec_File (Kernel, File) = False
+               and Options.Process_Body_Files = True) then
+                  LI := Locate_From_Source_And_Complete (Kernel, File);
+                  Append (List,
+                          (File_Name        => File,
+                           Package_Name     => new String'(Get_Unit_Name
+                                                             (LI, File)),
+                           Other_File_Found => True));
+         end if;
       end loop;
    end Array2List;
 
@@ -474,13 +481,35 @@ package body Docgen_Module is
       use Type_Source_File_List;
       Source_File_List : Type_Source_File_List.List;
       LI : LI_File_Ptr;
+      Body_File : Virtual_File;
    begin
+
+      --  if it's a body file and the preference "generate documentation
+      --  for body file" is disable, there's nothing to do
+      if Is_Spec_File (Kernel, File) = False and then
+        Options.Process_Body_Files = False then
+         return;
+      end if;
+
       LI := Locate_From_Source_And_Complete (Kernel, File);
       Append
         (Source_File_List,
          (File_Name        => File,
           Package_Name     => new String'(Get_Unit_Name (LI, File)),
           Other_File_Found => True));
+      --  if it's a spec file and the preference "generate documentation
+      --  for body file" is enable, we also create the doc for the body file
+      if Is_Spec_File (Kernel, File) = True and then
+        Options.Process_Body_Files = True then
+         Body_File := Get_Other_File_Of (LI, File);
+         if Body_File /= No_File then
+            Append (Source_File_List,
+                    (File_Name        => Body_File,
+                     Package_Name     => new String'(Get_Unit_Name
+                                                       (LI, Body_File)),
+                     Other_File_Found => True));
+         end if;
+      end if;
       Generate (Kernel, Source_File_List);
    end Generate_File;
 
