@@ -817,9 +817,18 @@ package body Src_Info.CPP is
          return;
       end if;
 
+      --  Find the existing LI, or create a stub (However, we create the file
+      --  as unparsed, for the following test).
+      Create_Stub_For_File
+        (LI            => File,
+         Handler       => Handler,
+         List          => List,
+         Full_Filename => Full_Filename,
+         Parsed        => False);
+
       --  check timestamps for the parsed file
       if File /= No_LI_File and then File.LI.Parsed then
-         if To_Timestamp (File_Time_Stamp (Full_Filename)) <=
+         if To_Timestamp (File_Time_Stamp (File.LI.LI_Filename.all)) <=
             File.LI.LI_Timestamp
          then
             return;
@@ -835,14 +844,6 @@ package body Src_Info.CPP is
 
       Trace (Info_Stream, "Create_Or_Complete_LI " & Full_Filename);
 
-      if File = No_LI_File then
-         Create_Stub_For_File
-           (LI            => File,
-            Handler       => Handler,
-            List          => List,
-            Full_Filename => Full_Filename,
-            Parsed        => True);
-      end if;
       Convert_To_Parsed (File, Update_Timestamp => True);
 
       Process_File (Full_Filename, Handler, File, Project, List);
@@ -1485,13 +1486,10 @@ package body Src_Info.CPP is
 
          if Decl_Info = null then
             Insert_Declaration
-              (Handler            => Handler,
-               File               => File,
+              (File               => File,
                List               => List,
                Symbol_Name        => Class_Def.Buffer
                  (Class_Def.Name.First .. Class_Def.Name.Last),
-               Source_Filename    => Ref.Buffer
-                 (Ref.File_Name.First .. Ref.File_Name.Last),
                Location           => Class_Def.Start_Position,
                Kind               => Record_Type,
                Scope              => Global_Scope,
@@ -1729,13 +1727,10 @@ package body Src_Info.CPP is
 
          if Decl_Info = null then
             Insert_Declaration
-              (Handler            => Handler,
-               File               => File,
+              (File               => File,
                List               => List,
                Symbol_Name        => Enum_Def.Buffer
                  (Enum_Def.Name.First .. Enum_Def.Name.Last),
-               Source_Filename    => Ref.Buffer
-                 (Ref.File_Name.First .. Ref.File_Name.Last),
                Location           => Enum_Def.Start_Position,
                Kind               => Enumeration_Type,
                Scope              => Global_Scope,
@@ -1789,12 +1784,9 @@ package body Src_Info.CPP is
 
          if Decl_Info = null then
             Insert_Declaration
-              (Handler           => Handler,
-               File              => File,
+              (File              => File,
                List              => List,
                Symbol_Name       => Ref_Id,
-               Source_Filename   =>
-                 Ref.Buffer (Ref.File_Name.First .. Ref.File_Name.Last),
                Location          => Enum_Const.Start_Position,
                Kind              => Enumeration_Literal,
                Scope             => Global_Scope,
@@ -2223,12 +2215,9 @@ package body Src_Info.CPP is
             --  function is used before
             --  declaration. Create forward declaration
             Insert_Declaration
-              (Handler            => Handler,
-               File               => File,
+              (File               => File,
                List               => List,
                Symbol_Name        => Ref_Id,
-               Source_Filename    => Ref.Buffer
-                 (Ref.File_Name.First .. Ref.File_Name.Last),
                Location           => Ref.Position,
                Kind               => Kind,
                Scope              => Global_Scope,
@@ -2465,12 +2454,9 @@ package body Src_Info.CPP is
 
          if Decl_Info = null then
             Insert_Declaration
-              (Handler            => Handler,
-               File               => File,
+              (File               => File,
                List               => List,
                Symbol_Name        => Ref_Id,
-               Source_Filename    => Ref.Buffer
-                 (Ref.File_Name.First .. Ref.File_Name.Last),
                Location           => Macro.Start_Position,
                Kind               => Unresolved_Entity,
                Scope              => Global_Scope,
@@ -2641,12 +2627,9 @@ package body Src_Info.CPP is
             --  method is used before
             --  declaration. Create forward declaration
             Insert_Declaration
-              (Handler            => Handler,
-               File               => File,
+              (File               => File,
                List               => List,
                Symbol_Name        => Ref_Id,
-               Source_Filename    => Ref.Buffer
-                 (Ref.File_Name.First .. Ref.File_Name.Last),
                Location           => Ref.Position,
                Kind               => Kind,
                Scope              => Global_Scope,
@@ -2779,12 +2762,9 @@ package body Src_Info.CPP is
             if Desc.Ancestor_Point = Invalid_Point then
                --  unknown parent
                Insert_Declaration
-                 (Handler           => Handler,
-                  File              => File,
+                 (File              => File,
                   List              => List,
                   Symbol_Name       => Ref_Id,
-                  Source_Filename   => Ref.Buffer
-                    (Ref.File_Name.First .. Ref.File_Name.Last),
                   Location          => Typedef.Start_Position,
                   Kind              => Desc.Kind,
                   Scope             => Global_Scope,
@@ -2792,12 +2772,9 @@ package body Src_Info.CPP is
             elsif Desc.Ancestor_Point = Predefined_Point then
                --  typedef for builin type
                Insert_Declaration
-                 (Handler           => Handler,
-                  File              => File,
+                 (File              => File,
                   List              => List,
                   Symbol_Name       => Ref_Id,
-                  Source_Filename   => Ref.Buffer
-                    (Ref.File_Name.First .. Ref.File_Name.Last),
                   Location          => Typedef.Start_Position,
                   Parent_Location   => Predefined_Point,
                   Kind              => Desc.Kind,
@@ -2806,12 +2783,9 @@ package body Src_Info.CPP is
             else
                --  parent type found
                Insert_Declaration
-                 (Handler           => Handler,
-                  File              => File,
+                 (File              => File,
                   List              => List,
                   Symbol_Name       => Ref_Id,
-                  Source_Filename   => Ref.Buffer
-                    (Ref.File_Name.First .. Ref.File_Name.Last),
                   Location          => Typedef.Start_Position,
                   Parent_Location   => Desc.Ancestor_Point,
                   Parent_Filename   => Desc.Ancestor_Filename.all,
@@ -2977,13 +2951,10 @@ package body Src_Info.CPP is
 
          if Decl_Info = null then
             Insert_Declaration
-              (Handler            => Handler,
-               File               => File,
+              (File               => File,
                List               => List,
                Symbol_Name        => Union_Def.Buffer
                  (Union_Def.Name.First .. Union_Def.Name.Last),
-               Source_Filename    => Ref.Buffer
-                 (Ref.File_Name.First .. Ref.File_Name.Last),
                Location           => Union_Def.Start_Position,
                Kind               => Record_Type,
                Scope              => Global_Scope,
@@ -3041,13 +3012,10 @@ package body Src_Info.CPP is
       end if;
 
       Insert_Declaration
-        (Handler               => Handler,
-         File                  => File,
+        (File                  => File,
          List                  => List,
          Symbol_Name           =>
            Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last),
-         Source_Filename       =>
-           Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
          Location              => Sym.Start_Position,
          Kind                  => Record_Type,
          Scope                 => Global_Scope,
@@ -3156,26 +3124,20 @@ package body Src_Info.CPP is
 
       if Desc.Parent_Point = Invalid_Point then
          Insert_Declaration
-           (Handler           => Handler,
-            File              => File,
+           (File              => File,
             List              => List,
             Symbol_Name       =>
               Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last),
-            Source_Filename   =>
-              Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
             Location          => Sym.Start_Position,
             Kind              => Type_To_Object (Desc.Kind),
             Scope             => Scope,
             Declaration_Info  => Decl_Info);
       else
          Insert_Declaration
-           (Handler           => Handler,
-            File              => File,
+           (File              => File,
             List              => List,
             Symbol_Name       =>
               Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last),
-            Source_Filename   =>
-              Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
             Location          => Sym.Start_Position,
             Kind              => Type_To_Object (Desc.Kind),
             Scope             => Scope,
@@ -3246,7 +3208,7 @@ package body Src_Info.CPP is
       Project_View     : Prj.Project_Id;
       Module_Type_Defs : Module_Typedefs_List)
    is
-      pragma Unreferenced (Project_View, Module_Type_Defs);
+      pragma Unreferenced (Handler, Project_View, Module_Type_Defs);
       Decl_Info : E_Declaration_Info_List;
       E_Id      : constant String := Sym.Buffer
         (Sym.Identifier.First .. Sym.Identifier.Last);
@@ -3255,12 +3217,9 @@ package body Src_Info.CPP is
       --  Info ("Sym_E_Hanlder: """ & E_Id & """");
 
       Insert_Declaration
-        (Handler           => Handler,
-         File              => File,
+        (File              => File,
          List              => List,
          Symbol_Name       => E_Id,
-         Source_Filename   =>
-           Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
          Location          => Sym.Start_Position,
          Kind              => Enumeration_Type,
          Scope             => Global_Scope,
@@ -3314,12 +3273,9 @@ package body Src_Info.CPP is
 
       if Has_Enum then -- corresponding enumeration found
          Insert_Declaration
-           (Handler           => Handler,
-            File              => File,
+           (File              => File,
             List              => List,
             Symbol_Name       => Ec_Id,
-            Source_Filename   =>
-              Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
             Location          => Sym.Start_Position,
             Kind              => Enumeration_Literal,
             Parent_Location   => Desc.Parent_Point,
@@ -3329,12 +3285,9 @@ package body Src_Info.CPP is
       else
          Fail ("could not find enum for '" & Ec_Id & "'");
          Insert_Declaration
-           (Handler           => Handler,
-            File              => File,
+           (File              => File,
             List              => List,
             Symbol_Name       => Ec_Id,
-            Source_Filename   =>
-              Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
             Location          => Sym.Start_Position,
             Kind              => Enumeration_Literal,
             Scope             => Global_Scope,
@@ -3438,13 +3391,10 @@ package body Src_Info.CPP is
 
       if Decl_Info = null then
          Insert_Declaration
-           (Handler           => Handler,
-            File              => File,
+           (File              => File,
             List              => List,
             Symbol_Name       =>
               Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last),
-            Source_Filename   =>
-              Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
             Location          => First_FD_Pos,
             Kind              => Target_Kind,
             Scope             => Global_Scope,
@@ -3701,12 +3651,9 @@ package body Src_Info.CPP is
 
       if Decl_Info = null then
          Insert_Declaration
-           (Handler               => Handler,
-            File                  => File,
+           (File                  => File,
             List                  => List,
             Symbol_Name           => Fu_Id,
-            Source_Filename       =>
-              Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
             Location              => Start_Position,
             Kind                  => Target_Kind,
             Scope                 => Global_Scope,
@@ -3844,26 +3791,20 @@ package body Src_Info.CPP is
 
       if Desc.Parent_Point = Invalid_Point then
          Insert_Declaration
-           (Handler           => Handler,
-            File              => File,
+           (File              => File,
             List              => List,
             Symbol_Name       =>
               Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last),
-            Source_Filename   =>
-              Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
             Location          => Sym.Start_Position,
             Kind              => Type_To_Object (Desc.Kind),
             Scope             => Scope,
             Declaration_Info  => Decl_Info);
       else
          Insert_Declaration
-           (Handler           => Handler,
-            File              => File,
+           (File              => File,
             List              => List,
             Symbol_Name       =>
               Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last),
-            Source_Filename   =>
-              Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
             Location          => Sym.Start_Position,
             Kind              => Type_To_Object (Desc.Kind),
             Scope             => Scope,
@@ -4001,26 +3942,20 @@ package body Src_Info.CPP is
 
       if Desc.Parent_Point = Invalid_Point then
          Insert_Declaration
-           (Handler           => Handler,
-            File              => File,
+           (File              => File,
             List              => List,
             Symbol_Name       =>
               Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last),
-            Source_Filename   =>
-              Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
             Location          => Sym.Start_Position,
             Kind              => Type_To_Object (Desc.Kind),
             Scope             => Local_Scope,
             Declaration_Info  => Decl_Info);
       else
          Insert_Declaration
-           (Handler           => Handler,
-            File              => File,
+           (File              => File,
             List              => List,
             Symbol_Name       =>
               Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last),
-            Source_Filename   =>
-              Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
             Location          => Sym.Start_Position,
             Kind              => Desc.Kind,
             Scope             => Local_Scope,
@@ -4057,7 +3992,7 @@ package body Src_Info.CPP is
       Project_View     : Prj.Project_Id;
       Module_Type_Defs : Module_Typedefs_List)
    is
-      pragma Unreferenced (Project_View, Module_Type_Defs);
+      pragma Unreferenced (Handler, Project_View, Module_Type_Defs);
       tmp_ptr    : E_Declaration_Info_List;
    begin
       --  Info ("Sym_MA_Handler: """
@@ -4065,13 +4000,10 @@ package body Src_Info.CPP is
       --        & """");
 
       Insert_Declaration
-        (Handler           => Handler,
-         File              => File,
+        (File              => File,
          List              => List,
          Symbol_Name       =>
            Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last),
-         Source_Filename   =>
-           Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
          Location          => Sym.Start_Position,
          Kind              => Unresolved_Entity,
          Scope             => Global_Scope,
@@ -4205,13 +4137,10 @@ package body Src_Info.CPP is
 
       if Decl_Info = null then
          Insert_Declaration
-           (Handler           => Handler,
-            File              => File,
+           (File              => File,
             List              => List,
             Symbol_Name       =>
                Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last),
-            Source_Filename   =>
-              Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
             Location          => First_MD_Pos,
             Kind              => Target_Kind,
             Scope             => Global_Scope,
@@ -4334,12 +4263,9 @@ package body Src_Info.CPP is
          if Desc.Ancestor_Point = Invalid_Point then
             --  unknown parent
             Insert_Declaration
-              (Handler           => Handler,
-               File              => File,
+              (File              => File,
                List              => List,
                Symbol_Name       => Identifier,
-               Source_Filename   =>
-                 Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
                Location          => Sym.Start_Position,
                Kind              => Desc.Kind,
                Scope             => Global_Scope,
@@ -4350,12 +4276,9 @@ package body Src_Info.CPP is
             --  ??? Builtin_Name is not used anywhere. We should
             --  use it (e.g. for a field like Predefined_Type_Name)
             Insert_Declaration
-              (Handler           => Handler,
-               File              => File,
+              (File              => File,
                List              => List,
                Symbol_Name       => Identifier,
-               Source_Filename   =>
-                 Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
                Location          => Sym.Start_Position,
                Parent_Location   => Predefined_Point,
                Kind              => Desc.Kind,
@@ -4365,12 +4288,9 @@ package body Src_Info.CPP is
          else
             --  Set parent location to ancestor location
             Insert_Declaration
-              (Handler           => Handler,
-               File              => File,
+              (File              => File,
                List              => List,
                Symbol_Name       => Identifier,
-               Source_Filename   =>
-                 Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
                Location          => Sym.Start_Position,
                Parent_Filename   => Desc.Ancestor_Filename.all,
                Parent_Location   => Desc.Ancestor_Point,
@@ -4420,13 +4340,10 @@ package body Src_Info.CPP is
 
       if Success then
          Insert_Declaration
-           (Handler               => Handler,
-            File                  => File,
+           (File                  => File,
             List                  => List,
             Symbol_Name           =>
               Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last),
-            Source_Filename       =>
-              Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
             Location              => Sym.Start_Position,
             Kind                  => Record_Type,
             Scope                 => Global_Scope,
