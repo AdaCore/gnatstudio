@@ -1346,7 +1346,8 @@ package body Ada_Analyzer is
                begin
                   First := P;
 
-                  while Buffer (P) = '-'
+                  while P < Buffer_Length
+                    and then Buffer (P) = '-'
                     and then Buffer (Next_Char (P)) = '-'
                   loop
                      --  If we do not indent here, then automatic indentation
