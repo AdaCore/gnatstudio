@@ -1,5 +1,9 @@
 New features in GVD 1.0.3
 
+- New command line option: --pargs to set program arguments on the command line
+- New command line option: --dargs to specify additional debugger arguments.
+- Start up of big programs have been significantly improved.
+
 New features in GVD 1.0.2
 
 - Added support for C++ in gdb.
