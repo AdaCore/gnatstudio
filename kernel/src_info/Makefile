@@ -11,3 +11,6 @@ distrib:
 	cp ../../gvd/common/os_utils.ad? gvd
 	cp ../../gvd/common/string_utils.ad? gvd
 	cp ../../gnat/*.ad? gnat
+
+clean:
+	rm -f standalone_obj/*
