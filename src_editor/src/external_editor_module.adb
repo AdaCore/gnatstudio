@@ -739,18 +739,20 @@ package body External_Editor_Module is
             Line      : constant Gint    := Get_Int (Data (Data'First + 1));
             Column    : constant Gint    := Get_Int (Data (Data'First + 2));
          begin
-            Push_State (Kernel_Handle (Kernel), Processing);
-            Current_Client := Client_User_Data.Get
-              (Kernel, External_Editor_User_Data);
-            Client_Command
-              (Kernel => Kernel,
-               Current_Client => Current_Client.all,
-               File   => File,
-               Line   => Natural (Line),
-               Column => Natural (Column));
-            Pop_State (Kernel_Handle (Kernel));
+            if Is_Regular_File (File) then
+               Push_State (Kernel_Handle (Kernel), Processing);
+               Current_Client := Client_User_Data.Get
+                 (Kernel, External_Editor_User_Data);
+               Client_Command
+                 (Kernel => Kernel,
+                  Current_Client => Current_Client.all,
+                  File   => File,
+                  Line   => Natural (Line),
+                  Column => Natural (Column));
+               Pop_State (Kernel_Handle (Kernel));
 
-            return True;
+               return True;
+            end if;
          end;
       end if;
 
