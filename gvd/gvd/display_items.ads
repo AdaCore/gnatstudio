@@ -51,9 +51,10 @@ package Display_Items is
    procedure On_Button_Click (Item   : access Display_Item_Record;
                               Event  : Gdk.Event.Gdk_Event_Button);
 
-   procedure Set_Auto_Refresh (Item         : access Display_Item_Record;
-                               Win          : Gdk.Window.Gdk_Window;
-                               Auto_Refresh : Boolean);
+   procedure Set_Auto_Refresh
+     (Item          : access Display_Item_Record;
+      Win           : Gdk.Window.Gdk_Window;
+      Auto_Refresh  : Boolean);
    --  Change the auto refresh status of the item, and update its pixmap.
 
    procedure On_Background_Click
@@ -66,13 +67,19 @@ package Display_Items is
    --  Called when the process associated with the Debugger_Process_Tab Object
    --  stops to update the display items.
 
-   function Update
+   function Update_On_Auto_Refresh
      (Canvas : access Gtkada.Canvas.Interactive_Canvas_Record'Class;
       Item   : access Gtkada.Canvas.Canvas_Item_Record'Class) return Boolean;
    --  Update the value of a specific item in the canvas. The new value is
    --  read from the debugger, parsed, and redisplayed.
+   --  Do nothing if the auto-refresh status of Item is set to false.
    --  The general prototype for this function must be compatible with
    --  Gtkada.Canvas.Item_Processor.
+
+   procedure Update
+     (Canvas : access Gtkada.Canvas.Interactive_Canvas_Record'Class;
+      Item   : access Display_Item_Record'Class);
+   --  Unconditionally update the value of Item after parsing the new value.
 
 private
    type Display_Item_Record is new Gtkada.Canvas.Canvas_Item_Record with
@@ -83,11 +90,6 @@ private
          Debugger     : Odd.Process.Debugger_Process_Tab;
 
          Title_Height : Glib.Gint;
-
-         Contents_Valid : Boolean := False;
-         --  Set to True if the value of the variable could be parsed (ie the
-         --  Entity fields contains both the types and the value). Set to
-         --  False if Entity contains only the type definition.
 
          Id           : Odd.Types.String_Access := null;
          --  Uniq ID used for the variable.

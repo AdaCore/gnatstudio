@@ -65,6 +65,11 @@ package body Odd.Menus is
       Auto_Refresh : Boolean;
    end record;
 
+   type Item_Record is record
+      Canvas : Interactive_Canvas;
+      Item   : Display_Item;
+   end record;
+
    package Menu_User_Data is new Gtk.Object.User_Data (Gtk_Menu);
 
    package Check_Canvas_Handler is new Gtk.Handlers.User_Callback
@@ -75,6 +80,8 @@ package body Odd.Menus is
      (Gtk_Widget_Record, Breakpoint_Record);
    package Widget_Variable_Handler is new Gtk.Handlers.User_Callback
      (Gtk_Widget_Record, Variable_Record);
+   package Item_Handler is new Gtk.Handlers.User_Callback
+     (Gtk_Widget_Record, Item_Record);
 
    procedure Set_Breakpoint (Widget : access Gtk_Widget_Record'Class;
                              Br     : Breakpoint_Record);
@@ -128,6 +135,19 @@ package body Odd.Menus is
       Break_Source (Br.Process.Debugger, Br.File, Br.Line);
    end Set_Breakpoint;
 
+   ---------------------
+   -- Update_Variable --
+   ---------------------
+
+   procedure Update_Variable
+     (Widget : access Gtk_Widget_Record'Class;
+      Item   : Item_Record)
+   is
+      pragma Warnings (Off, Widget);
+   begin
+      Display_Items.Update (Item.Canvas, Item.Item);
+   end Update_Variable;
+
    --------------------
    -- Print_Variable --
    --------------------
@@ -143,8 +163,6 @@ package body Odd.Menus is
                Auto_Refresh  => Var.Auto_Refresh);
       if Item /= null then
          Put (Var.Process.Data_Canvas, Item);
-     else
-         Put_Line ("???ITEM WAS NULL");
       end if;
    end Print_Variable;
 
@@ -208,6 +226,14 @@ package body Odd.Menus is
 
          Gtk_New (Mitem, Label => -"Show all");
          Set_State (Mitem, State_Insensitive);
+         Append (Menu, Mitem);
+
+         Gtk_New (Mitem, Label => -"Update Value");
+         Item_Handler.Connect
+           (Mitem, "activate",
+            Item_Handler.To_Marshaller (Update_Variable'Access),
+            Item_Record'(Canvas => Interactive_Canvas (Canvas),
+                         Item   => Display_Item (Item)));
          Append (Menu, Mitem);
 
          Show_All (Menu);

@@ -407,8 +407,8 @@ package body Display_Items is
 
       --  First button
 
-      Set_Auto_Refresh (Item, Get_Window (Item.Debugger.Data_Canvas),
-                        Item.Auto_Refresh);
+      Set_Auto_Refresh
+        (Item, Get_Window (Item.Debugger.Data_Canvas), Item.Auto_Refresh);
 
       --  Second button
 
@@ -500,30 +500,38 @@ package body Display_Items is
       return Alias_Item;
    end Search_Item;
 
+   ----------------------------
+   -- Update_On_Auto_Refresh --
+   ----------------------------
+
+   function Update_On_Auto_Refresh
+     (Canvas : access Interactive_Canvas_Record'Class;
+      Item   : access Canvas_Item_Record'Class) return Boolean
+   is
+   begin
+      if Display_Item (Item).Auto_Refresh then
+         Update (Canvas, Display_Item (Item));
+      end if;
+      return True;
+   end Update_On_Auto_Refresh;
+
    ------------
    -- Update --
    ------------
 
-   function Update
+   procedure Update
      (Canvas : access Interactive_Canvas_Record'Class;
-      Item   : access Canvas_Item_Record'Class) return Boolean
+      Item   : access Display_Item_Record'Class)
    is
       Value_Found : Boolean;
-      Entity      : Display_Item := Display_Item (Item);
    begin
-      --  Do nothing if we are not in auto-update mode.
-
-      if not Entity.Auto_Refresh then
-         return True;
-      end if;
-
       --  Parse the value
 
-      Set_Internal_Command (Get_Process (Entity.Debugger.Debugger), True);
+      Set_Internal_Command (Get_Process (Item.Debugger.Debugger), True);
 
-      Parse_Value (Entity.Debugger.Debugger, Entity.Name.all,
-                   Entity.Entity, Value_Found);
-      Set_Valid (Entity.Entity, Value_Found);
+      Parse_Value (Item.Debugger.Debugger, Item.Name.all,
+                   Item.Entity, Value_Found);
+      Set_Valid (Item.Entity, Value_Found);
 
       --  ??? Should we recompute the address ?
       --  This is part of the bigger picture for aliases detection/update.
@@ -531,26 +539,23 @@ package body Display_Items is
       --  Update graphically
 
       Size_Request
-        (Entity.Entity.all, Font, Hide_Big_Items => Hide_Big_Items);
-      if not Get_Visibility (Entity.Entity.all) then
-         Set_Visibility (Entity.Entity.all, True);
-         Size_Request (Entity.Entity.all, Font);
+        (Item.Entity.all, Font, Hide_Big_Items => Hide_Big_Items);
+      if not Get_Visibility (Item.Entity.all) then
+         Set_Visibility (Item.Entity.all, True);
+         Size_Request (Item.Entity.all, Font);
       end if;
 
-      Update_Display (Entity);
+      Update_Display (Item);
       Item_Resized (Canvas, Item);
 
-      Set_Internal_Command (Get_Process (Entity.Debugger.Debugger), False);
-
-      return True;
+      Set_Internal_Command (Get_Process (Item.Debugger.Debugger), False);
 
       --  If we got an exception while parsing the value, we register the new
       --  value as being incorrect.
    exception
       when Language.Unexpected_Type | Constraint_Error =>
-         Set_Valid (Entity.Entity, False);
-         Set_Internal_Command (Get_Process (Entity.Debugger.Debugger), False);
-         return True;
+         Set_Valid (Item.Entity, False);
+         Set_Internal_Command (Get_Process (Item.debugger.Debugger), False);
    end Update;
 
    -----------------
@@ -695,11 +700,7 @@ package body Display_Items is
                      --  If we moved back to the auto-refresh state, force an
                      --  update of the value.
                      if Item.Auto_Refresh then
-                        declare
-                           Tmp : Boolean;
-                        begin
-                           Tmp := Update (Item.Debugger.Data_Canvas, Item);
-                        end;
+                        Update (Item.Debugger.Data_Canvas, Item);
                      else
                         Item_Updated (Item.Debugger.Data_Canvas, Item);
                      end if;
@@ -770,9 +771,10 @@ package body Display_Items is
    -- Set_Auto_Refresh --
    ----------------------
 
-   procedure Set_Auto_Refresh (Item         : access Display_Item_Record;
-                               Win          : Gdk.Window.Gdk_Window;
-                               Auto_Refresh : Boolean)
+   procedure Set_Auto_Refresh
+     (Item         : access Display_Item_Record;
+      Win          : Gdk.Window.Gdk_Window;
+      Auto_Refresh : Boolean)
    is
       Width : Gint := Gint (Get_Coord (Item).Width);
    begin
@@ -870,7 +872,7 @@ package body Display_Items is
    is
       Canvas : Interactive_Canvas := Debugger_Process_Tab (Object).Data_Canvas;
    begin
-      For_Each_Item (Canvas, Update'Access);
+      For_Each_Item (Canvas, Update_On_Auto_Refresh'Access);
    end On_Canvas_Process_Stopped;
 
 end Display_Items;
