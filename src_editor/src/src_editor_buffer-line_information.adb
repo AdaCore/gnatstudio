@@ -1198,12 +1198,17 @@ package body Src_Editor_Buffer.Line_Information is
             end if;
          end loop;
 
-
          if Buffer.Modifying_Editable_Lines then
             for Line in reverse
               Ref_Editable_Line + EN .. Buffer.Last_Editable_Line + EN
             loop
-               Editable_Lines (Line) := Editable_Lines (Line - EN);
+               declare
+                  Stored_Side_Info : Line_Info_Width_Array_Access;
+               begin
+                  Stored_Side_Info := Editable_Lines (Line).Side_Info_Data;
+                  Editable_Lines (Line) := Editable_Lines (Line - EN);
+                  Editable_Lines (Line).Side_Info_Data := Stored_Side_Info;
+               end;
 
                if Editable_Lines (Line).Where = In_Buffer then
                   Editable_Lines (Line).Buffer_Line
@@ -1293,12 +1298,24 @@ package body Src_Editor_Buffer.Line_Information is
             for J in Buffer_Lines (Start_Line).Editable_Line
               .. Buffer.Last_Editable_Line - EN
             loop
-               Editable_Lines (J) := Editable_Lines (J + EN);
+               declare
+                  Stored_Side_Info : Line_Info_Width_Array_Access;
+               begin
+                  Stored_Side_Info := Editable_Lines (J).Side_Info_Data;
+                  Editable_Lines (J) := Editable_Lines (J + EN);
+                  Editable_Lines (J).Side_Info_Data := Stored_Side_Info;
+               end;
 
                if Editable_Lines (J).Where = In_Buffer then
                   Editable_Lines (J).Buffer_Line :=
                     Editable_Lines (J + EN).Buffer_Line - Number;
                end if;
+            end loop;
+
+            for J in Buffer.Last_Editable_Line - EN + 1
+              .. Buffer.Last_Editable_Line
+            loop
+               Editable_Lines (J).Side_Info_Data := null;
             end loop;
 
             Editable_Lines
