@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2002-2004                       --
+--                     Copyright (C) 2002-2005                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
@@ -171,15 +171,12 @@ package body Cpp_Module is
       else
          Add_Hook
            (Kernel, Project_View_Changed_Hook, Project_View_Changed'Access);
+         On_Project_View_Changed (LI);
+         Register_LI_Handler (Handler, CPP_LI_Handler_Name, LI);
       end if;
 
-      On_Project_View_Changed (LI);
-      Register_LI_Handler (Handler, CPP_LI_Handler_Name, LI);
-
       Register_Language (Handler, "c", C_Lang);
-      Set_Language_Handler
-        (Handler, "c",
-         LI                  => LI);
+      Set_Language_Handler (Handler, "c", LI => LI);
       Register_Default_Language_Extension
         (Get_Registry (Kernel).all,
          Language_Name       => "c",
@@ -187,9 +184,7 @@ package body Cpp_Module is
          Default_Body_Suffix => ".c");
 
       Register_Language (Handler, "c++", Cpp_Lang);
-      Set_Language_Handler
-        (Handler, "c++",
-         LI                  => LI);
+      Set_Language_Handler (Handler, "c++", LI => LI);
       Register_Default_Language_Extension
         (Get_Registry (Kernel).all,
          Language_Name       => "c++",
