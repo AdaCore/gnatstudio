@@ -324,32 +324,42 @@ package body GVD.Menu is
         Get_Current_Process (Object);
       Host_File : constant String :=
         To_Host_Pathname (Get_Current_File (Tab.Editor_Text));
-      Editor : constant String := Substitute
-        (GVD_Main_Window (Tab.Window).External_Editor.all,
-         Host_File, Get_Line (Tab.Editor_Text));
+      External_Editor : GNAT.OS_Lib.String_Access;
       Args   : Argument_List_Access;
       Pid    : GNAT.OS_Lib.Process_Id;
       Prog   : GNAT.OS_Lib.String_Access;
 
    begin
-      Output_Info (GVD_Main_Window (Tab.Window), Editor);
-
-      Args := Argument_String_To_List (Editor);
-      Prog := Locate_Exec_On_Path (Args (Args'First).all);
-
-      if Prog /= null then
-         Pid := GNAT.OS_Lib.Non_Blocking_Spawn
-           (Prog.all, Args (Args'First + 1 .. Args'Last));
-         Free (Prog);
+      External_Editor := Getenv ("GVD_EDITOR");
+      if External_Editor.all = "" then
+         Free (External_Editor);
+         External_Editor := new String' (Get_Pref (Default_External_Editor));
       end if;
 
-      if Args /= null then
-         for J in Args'Range loop
-            Free (Args (J));
-         end loop;
+      declare
+         Editor : constant String := Substitute
+           (External_Editor.all, Host_File, Get_Line (Tab.Editor_Text));
+      begin
+         Output_Info (GVD_Main_Window (Tab.Window), Editor);
+         Args := Argument_String_To_List (Editor);
+         Prog := Locate_Exec_On_Path (Args (Args'First).all);
 
-         Free (Args);
-      end if;
+         if Prog /= null then
+            Pid := GNAT.OS_Lib.Non_Blocking_Spawn
+              (Prog.all, Args (Args'First + 1 .. Args'Last));
+            Free (Prog);
+         end if;
+
+         if Args /= null then
+            for J in Args'Range loop
+               Free (Args (J));
+            end loop;
+
+            Free (Args);
+         end if;
+      end;
+
+      Free (External_Editor);
    end On_Edit_Source;
 
    --------------------
