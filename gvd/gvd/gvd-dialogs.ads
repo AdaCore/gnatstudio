@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2001                      --
+--                      Copyright (C) 2000-2002                      --
 --                              ACT-Europe                           --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -181,9 +181,6 @@ package GVD.Dialogs is
    --  user data, and reused next time. This can be used to provide an history
    --  of values entered in this dialog by the user.
    --  Position indicates where the dialog should be positionned.
-   --  If Extra_Box is not null, it is inserted below the combo box. You
-   --  can check its contents on exit (unless Key is "", in which case the
-   --  box has been destroyed).
 
    function Display_Entry_Dialog
      (Parent       : access Gtk.Window.Gtk_Window_Record'Class;
@@ -194,9 +191,7 @@ package GVD.Dialogs is
       Key          : String := "";
       Button_Active : access Boolean) return String;
    --  A dialog, like Simple_Entry_Dialog, specifically set up to enter
-   --  expressions to display. Is_Func indicates whether the expression is
-   --  a variable name or a generic expression (to be displayed with
-   --  "graph print `...`")
+   --  expressions to display.
 
    procedure Freeze (Dialog : History_Dialog_Access);
    procedure Thaw (Dialog : History_Dialog_Access);
