@@ -1756,7 +1756,10 @@ package body GVD.Process is
       Debugger.Exiting := True;
       Free (Debugger.Current_File);
       Free (Debugger.Breakpoints);
-      Close (Debugger.Debugger);
+
+      if Debugger.Debugger /= null then
+         Close (Debugger.Debugger);
+      end if;
 
       if not Debugger.Window.Standalone then
          Unref (Debugger);
@@ -1858,9 +1861,9 @@ package body GVD.Process is
          --  debugged.
 
          if (Command_In_Process (Get_Process (Debugger.Debugger))
-             and then
-               Get_Command_Mode (Get_Process (Debugger.Debugger)) /= Internal)
-           or else Debugger.Registered_Dialog /= null
+             or else Debugger.Registered_Dialog /= null)
+           and then
+             Get_Command_Mode (Get_Process (Debugger.Debugger)) /= Internal
          then
             Send
               (Debugger.Debugger, Command,
