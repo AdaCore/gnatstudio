@@ -25,13 +25,18 @@ with GNAT.OS_Lib;       use GNAT.OS_Lib;
 with Language;          use Language;
 with Language.Debugger; use Language.Debugger;
 with Debugger.Gdb.Ada;  use Debugger.Gdb.Ada;
+with Debugger.Gdb.C;    use Debugger.Gdb.C;
 with Ada.Strings.Fixed; use Ada.Strings.Fixed;
 with Process_Proxies;   use Process_Proxies;
 with Odd.Process;       use Odd.Process;
 with Main_Debug_Window_Pkg; use Main_Debug_Window_Pkg;
 with Unchecked_Conversion;
+with Odd.Strings;       use Odd.Strings;
+with Gtk.Window;        use Gtk.Window;
 
 package body Debugger.Gdb is
+
+   use String_History;
 
    ---------------
    -- Constants --
@@ -101,7 +106,7 @@ package body Debugger.Gdb is
             if Lang = "ada" then
                Language := new Gdb_Ada_Language;
             elsif Lang = "c" then
-               Language := new Gdb_Ada_Language;
+               Language := new Gdb_C_Language;
             else
                pragma Assert (False, "Language not currently supported");
                raise Program_Error;
@@ -155,6 +160,12 @@ package body Debugger.Gdb is
          S : String := Expect_Out (Get_Process (Debugger));
          Index : Natural := S'First;
       begin
+
+         --  The value is valid only if it starts with '$'
+
+         if S (S'First) /= '$' then
+            return "";
+         end if;
 
          --  Skip the '$nn =' part
          while Index <= S'Last
@@ -256,11 +267,15 @@ package body Debugger.Gdb is
       end if;
 
       --  Set up an output filter to detect changes of the current language
+      --  ??? We do that only in graphical mode, since the filter needs to
+      --  access the main_debug_window.
 
-      Add_Output_Filter
-        (Get_Descriptor (Debugger.Process).all,
-         Language_Filter'Access,
-         Window.all'Address);
+      if Proxy.all in Gui_Process_Proxy'Class then
+         Add_Output_Filter
+           (Get_Descriptor (Debugger.Process).all,
+            Language_Filter'Access,
+            Window.all'Address);
+      end if;
 
       Add_Output_Filter (Get_Descriptor (Debugger.Process).all,
                          Trace_Filter'Access);
@@ -367,8 +382,13 @@ package body Debugger.Gdb is
    -- Run --
    ---------
 
-   procedure Run (Debugger : access Gdb_Debugger) is
+   procedure Run (Debugger : access Gdb_Debugger;
+                  Window   : Gtk.Window.Gtk_Window := null) is
    begin
+      if Window /= null then
+         Text_Output_Handler (Convert (Window, Debugger),
+                              "run" & ASCII.LF, True);
+      end if;
       Send (Get_Process (Debugger), "run");
    end Run;
 
@@ -376,8 +396,14 @@ package body Debugger.Gdb is
    -- Start --
    -----------
 
-   procedure Start (Debugger : access Gdb_Debugger) is
+   procedure Start (Debugger : access Gdb_Debugger;
+                    Window   : Gtk.Window.Gtk_Window := null) is
    begin
+      if Window /= null then
+         Text_Output_Handler (Convert (Window, Debugger),
+                              "begin" & ASCII.LF, True);
+         Append (Convert (Window, Debugger).Command_History, "begin");
+      end if;
       Send (Get_Process (Debugger), "begin");
       Wait_Prompt (Debugger);
    end Start;
@@ -386,8 +412,14 @@ package body Debugger.Gdb is
    -- Step_Into --
    ---------------
 
-   procedure Step_Into (Debugger : access Gdb_Debugger) is
+   procedure Step_Into (Debugger : access Gdb_Debugger;
+                        Window   : Gtk.Window.Gtk_Window := null) is
    begin
+      if Window /= null then
+         Text_Output_Handler (Convert (Window, Debugger),
+                              "step" & ASCII.LF, True);
+         Append (Convert (Window, Debugger).Command_History, "step");
+      end if;
       Send (Get_Process (Debugger), "step");
       Wait_Prompt (Debugger);
    end Step_Into;
@@ -396,8 +428,14 @@ package body Debugger.Gdb is
    -- Step_Over --
    ---------------
 
-   procedure Step_Over (Debugger : access Gdb_Debugger) is
+   procedure Step_Over (Debugger : access Gdb_Debugger;
+                        Window   : Gtk.Window.Gtk_Window := null) is
    begin
+      if Window /= null then
+         Text_Output_Handler (Convert (Window, Debugger),
+                              "next" & ASCII.LF, True);
+         Append (Convert (Window, Debugger).Command_History, "next");
+      end if;
       Send (Get_Process (Debugger), "next");
       Wait_Prompt (Debugger);
    end Step_Over;
@@ -406,8 +444,14 @@ package body Debugger.Gdb is
    -- Continue --
    --------------
 
-   procedure Continue (Debugger : access Gdb_Debugger) is
+   procedure Continue (Debugger : access Gdb_Debugger;
+                       Window   : Gtk.Window.Gtk_Window := null) is
    begin
+      if Window /= null then
+         Text_Output_Handler (Convert (Window, Debugger),
+                              "cont" & ASCII.LF, True);
+         Append (Convert (Window, Debugger).Command_History, "cont");
+      end if;
       Send (Get_Process (Debugger), "cont");
       Wait_Prompt (Debugger);
    end Continue;
@@ -425,8 +469,14 @@ package body Debugger.Gdb is
    -- Stack_Down --
    ----------------
 
-   procedure Stack_Down (Debugger : access Gdb_Debugger) is
+   procedure Stack_Down (Debugger : access Gdb_Debugger;
+                         Window   : Gtk.Window.Gtk_Window := null) is
    begin
+      if Window /= null then
+         Text_Output_Handler (Convert (Window, Debugger),
+                              "down" & ASCII.LF, True);
+         Append (Convert (Window, Debugger).Command_History, "down");
+      end if;
       Send (Get_Process (Debugger), "down");
       Wait_Prompt (Debugger);
    end Stack_Down;
@@ -435,8 +485,14 @@ package body Debugger.Gdb is
    -- Stack_Up --
    --------------
 
-   procedure Stack_Up (Debugger : access Gdb_Debugger) is
+   procedure Stack_Up (Debugger : access Gdb_Debugger;
+                       Window   : Gtk.Window.Gtk_Window := null) is
    begin
+      if Window /= null then
+         Text_Output_Handler (Convert (Window, Debugger),
+                              "up" & ASCII.LF, True);
+         Append (Convert (Window, Debugger).Command_History, "up");
+      end if;
       Send (Get_Process (Debugger), "up");
       Wait_Prompt (Debugger);
    end Stack_Up;
@@ -513,7 +569,8 @@ package body Debugger.Gdb is
       Str : constant String := Positive'Image (Line);
    begin
       Send (Get_Process (Debugger),
-        "break " & File & ':' & Str (Str'First + 1 .. Str'Last));
+            "break " & Base_File_Name (File)
+            & ':' & Str (Str'First + 1 .. Str'Last));
       Wait_Prompt (Debugger);
    end Break_Source;
 
@@ -535,8 +592,14 @@ package body Debugger.Gdb is
    -- Finish --
    ------------
 
-   procedure Finish (Debugger : access Gdb_Debugger) is
+   procedure Finish (Debugger : access Gdb_Debugger;
+                     Window   : Gtk.Window.Gtk_Window := null) is
    begin
+      if Window /= null then
+         Text_Output_Handler (Convert (Window, Debugger),
+                              "finish" & ASCII.LF, True);
+         Append (Convert (Window, Debugger).Command_History, "finish");
+      end if;
       Send (Get_Process (Debugger), "finish");
       Wait_Prompt (Debugger);
    end Finish;
@@ -572,21 +635,9 @@ package body Debugger.Gdb is
    is
       Line_String : String := Positive'Image (Line);
       --  Use a temporary variable to remove the leading space.
-
-      Last        : Natural := File'Last;
-      --  We have to use the basename for the file, since gdb does not
-      --  recognize the full name.
-
    begin
-      while Last >= File'First loop
-         if File (Last) = GNAT.OS_Lib.Directory_Separator then
-            exit;
-         end if;
-         Last := Last - 1;
-      end loop;
-
       Send (Get_Process (Debugger), "info line "
-            & File (Last + 1 .. File'Last)
+            & Base_File_Name (File)
             & ':' &
             Line_String (Line_String'First + 1 .. Line_String'Last));
       Wait_Prompt (Debugger);
