@@ -1,10 +1,10 @@
 -----------------------------------------------------------------------
---                          G L I D E  I I                           --
+--                               G P S                               --
 --                                                                   --
 --                     Copyright (C) 2001-2002                       --
 --                            ACT-Europe                             --
 --                                                                   --
--- GLIDE is free software; you can redistribute it and/or modify  it --
+-- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -33,6 +33,7 @@ with Glide_Kernel.Modules;    use Glide_Kernel.Modules;
 with Glide_Kernel.Project;    use Glide_Kernel.Project;
 
 with Glide_Main_Window;       use Glide_Main_Window;
+with GVD;
 
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 
@@ -290,11 +291,12 @@ package body Glide_Menu is
       Button : Message_Dialog_Buttons;
    begin
       Button := Message_Dialog
-        (-"GPS" & ASCII.LF & ASCII.LF & "(c) 2001-2002 ACT-Europe",
-         Help_Msg =>
-           (-"This is the About information box.") & ASCII.LF & ASCII.LF &
-           (-"Click on the OK button to close this window."),
-         Title => -"About...");
+        ("GPS " & GVD.Version &
+         (-" hosted on ") & GVD.Target & ASCII.LF & ASCII.LF &
+         (-"A complete application development system") & ASCII.LF & ASCII.LF &
+         "(c) 2001-2002 ACT-Europe",
+         Buttons => Button_OK,
+         Title   => -"About...");
 
    exception
       when E : others =>
