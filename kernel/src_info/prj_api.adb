@@ -38,6 +38,7 @@ with GNAT.OS_Lib;      use GNAT.OS_Lib;
 with String_Utils;     use String_Utils;
 with Ada.Exceptions;   use Ada.Exceptions;
 with Project_Browsers; use Project_Browsers;
+with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 
 with Glide_Intl;    use Glide_Intl;
 
@@ -1116,26 +1117,23 @@ package body Prj_API is
       With_Clause : Project_Node_Id := First_With_Clause_Of (Project);
       Imported_Project : Project_Node_Id;
 
-      Basename : constant String := Base_File_Name (Imported_Project_Location);
-      Ext      : constant String := File_Extension (Imported_Project_Location);
-      Last     : Natural := Basename'Last;
+      Ext      : constant String := GNAT.Directory_Operations.File_Extension
+        (Imported_Project_Location);
+      Basename : constant String := Base_Name
+        (Imported_Project_Location, Ext);
       Dep_ID   : Name_Id;
       Dep_Name : Prj.Tree.Tree_Private_Part.Project_Name_And_Node;
    begin
-      if Ext /= "" then
-         --  Also remove the '.'
-         Last := Last - Ext'Length - 1;
-      end if;
-
-      Name_Len := Last - Basename'First + 1;
-      Name_Buffer (1 .. Name_Len) := Basename (Basename'First .. Last);
+      Name_Len := Basename'Length;
+      Name_Buffer (1 .. Name_Len) := Basename;
       Dep_ID := Name_Find;
 
       Dep_Name := Tree_Private_Part.Projects_Htable.Get (Dep_ID);
 
       if Dep_Name /= No_Project_Name_And_Node then
          if Get_Name_String (Path_Name_Of (Dep_Name.Node)) /=
-           Normalize_Pathname (Imported_Project_Location)
+           GNAT.Directory_Operations.Normalize_Pathname
+           (Imported_Project_Location)
          then
             Raise_Exception
               (Project_Error'Identity,
@@ -1211,8 +1209,8 @@ package body Prj_API is
       --  Cleanup the name
 
       declare
-         Clean_Name : constant String := File_Name_Sans_Extension
-           (Base_File_Name (Imported_Project));
+         Clean_Name : constant String := Base_Name
+           (Imported_Project, Project_File_Extension);
       begin
          Name_Len := Clean_Name'Length;
          Name_Buffer (1 .. Name_Len) := Clean_Name;
@@ -2266,8 +2264,6 @@ package body Prj_API is
       Project      : Project_Node_Id;
       New_Name     : String)
    is
-      Old_Name : constant String := Get_Name_String
-        (Prj.Tree.Name_Of (Project));
       Old : Project_Node_Id;
       Name : Name_Id;
 
@@ -2285,21 +2281,13 @@ package body Prj_API is
       ----------------
 
       function Substitute (Str : String) return String is
-         Suffix_End : Natural := Str'Last;
+         Dir  : constant String := Dir_Name (Str);
       begin
-         if Str'Length > Project_File_Extension'Length
-           and then Str (Str'Last - Project_File_Extension'Length + 1
-                         .. Str'Last) = Project_File_Extension
-         then
-            Suffix_End := Str'Last - Project_File_Extension'Length;
+         if Dir /= "" then
+            return Dir_Name (Str) & Directory_Separator & New_Name;
+         else
+            return New_Name;
          end if;
-
-         Assert
-           (Me,
-            Str (Suffix_End - Old_Name'Length + 1 .. Suffix_End) = Old_Name,
-            Str & " doesn't end with " & Old_Name);
-         return Str (Str'First .. Suffix_End - Old_Name'Length)
-           & New_Name;
       end Substitute;
 
       --------------------------
@@ -2951,6 +2939,51 @@ package body Prj_API is
          return Sources;
       end;
    end Source_Dirs;
+
+   -------------------------------------
+   -- Register_Default_Naming_Schemes --
+   -------------------------------------
+
+   procedure Register_Default_Naming_Schemes is
+      Spec, Impl : Name_Id;
+   begin
+      --  ??? Each known language should have its own separately registered
+      --  ??? subprogram.
+      Name_Len := 4;
+      Name_Buffer (1 .. Name_Len) := ".ads";
+      Spec := Name_Find;
+      Name_Buffer (1 .. Name_Len) := ".adb";
+      Impl := Name_Find;
+
+      Register_Default_Naming_Scheme
+        (Language => Name_Ada,
+         Default_Spec_Suffix => Spec,
+         Default_Impl_Suffix => Impl);
+
+      Name_Len := 2;
+      Name_Buffer (1 .. Name_Len) := ".h";
+      Spec := Name_Find;
+      Name_Buffer (1 .. Name_Len) := ".c";
+      Impl := Name_Find;
+
+      Register_Default_Naming_Scheme
+        (Language => Name_C,
+         Default_Spec_Suffix => Spec,
+         Default_Impl_Suffix => Impl);
+
+      Name_Len := 2;
+      Name_Buffer (1 .. Name_Len) := ".h";
+      Spec := Name_Find;
+      Name_Len := 3;
+      Name_Buffer (1 .. Name_Len) := ".cc";
+      Impl := Name_Find;
+
+      Register_Default_Naming_Scheme
+        (Language => Name_CPP,
+         Default_Spec_Suffix => Spec,
+         Default_Impl_Suffix => Impl);
+
+   end Register_Default_Naming_Schemes;
 
 begin
    Namet.Initialize;

@@ -46,6 +46,10 @@ package Prj_API is
    Cpp_String : constant String := "c++";  --  See also Snames.Name_Cpp
    --  Strings used for the various languages supported by Glide
 
+   procedure Register_Default_Naming_Schemes;
+   --  Register the default naming schemes used for the various languages
+   --  supported by Glide.
+
    function Get_String (Str : Types.String_Id) return String;
    --  This functional form returns the value of Str as a string without
    --  affecting the contents of either Name_Buffer or Name_Len.
