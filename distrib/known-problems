@@ -1,5 +1,15 @@
 Known Problems fixed in GPS 2.1.0
 
+- Changing size of a font resets its color
+  Problem:    In the preferences dialog, changing the size of a font resets
+              its foreground and background colors to the default values.
+  Workaround: Set the color again explicitely.
+
+- D531-001 Over alignment of variable declarations
+  Problem:    When aligning the colon (':') character in variable declarations,
+              the computation is not stopped when encountering a blank line.
+  Workaround: Indent manually when needed.
+
 - D614-009 Errors in C files are not displayed in the Locations window
   Problem:    Under Windows, the errors produced by compilation of C files are
               not visible in the Locations window.
@@ -7,28 +17,3 @@ Known Problems fixed in GPS 2.1.0
               "File pattern" entry to
                  "^([^:]:?[^:]*):(\d+):((\d+):)? ((warning)?(\(style)?.*)".
 
-- D603-010 Can't evaluate nested python commands
-  Problem:    When you enter interactively a command in the python console,
-              nested blocks (a if inside a while for instance), the command
-              is never executed properly and results in an error
-  Workaround: write the command in a file, and execute that file instead
-
-- D602-016 Duplicate Build menu entries with extending projects
-  Problem:    If you are using extending projects, the Build->Make menu
-              will contain apparently duplicate entries.
-  Workaround: In fact, these entries will build the same executable, but using
-              a different project each time. Click on the first entry that
-              matches the executable you want to build
-
-- D601-005 To be completed ???
-
-Known Problems fixed in GPS 2.0.0
-
-- D415-005 Execution window is read-only after the first execution
-  Problem:    If you run an external program using the menu Build->Run,
-              after the process exits, the execution window becomes read-only
-              and cannot be used to input text in following executions of the
-              program.
-  Workaround: Close the execution window before executing the second time.
-
-[...]
