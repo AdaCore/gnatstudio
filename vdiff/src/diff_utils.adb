@@ -31,11 +31,12 @@ with GNAT.OS_Lib;              use GNAT.OS_Lib;
 with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
 with String_Utils;             use String_Utils;
 with Traces;                   use Traces;
+with Generic_List;
 
 package body Diff_Utils is
-
+   use Diff_Occurrence_List;
    Me : constant Debug_Handle := Create ("diff_utils");
-
+   procedure Free_All (Link : in out Diff_List_Head);
    procedure Compute_Occurrence
      (Ret        : in out Diff_Occurrence_Link;
       Occurrence : in out Diff_Occurrence_Link;
@@ -56,6 +57,7 @@ package body Diff_Utils is
          Occurrence := Ret;
       else
          Occurrence.Next := new Diff_Occurrence;
+         Occurrence.Next.Prev := Occurrence;
          Occurrence := Occurrence.Next;
       end if;
 
@@ -190,7 +192,6 @@ package body Diff_Utils is
       Buffer     : String (1 .. 8192);
       Last       : Natural;
       Cmd_Args   : Argument_List_Access;
-
    begin
       Cmd_Args := Argument_String_To_List (Get_Pref (Kernel, Patch_Cmd));
       Cmd      := Locate_Exec_On_Path (Cmd_Args (Cmd_Args'First).all);
@@ -264,10 +265,11 @@ package body Diff_Utils is
                Tmp := Result;
             else
                Tmp.Next := new Diff_Occurrence;
+               Tmp.Next.Prev := Tmp;
                Tmp := Tmp.Next;
             end if;
 
-            Tmp.Range1 := (First, Last);
+            Tmp.Range1 := (First, Last, null);
 
          else
             if First = 0 then
@@ -279,10 +281,19 @@ package body Diff_Utils is
       return Result;
    end Fine_Diff;
 
+   -----------
+   -- Diff3 --
+   -----------
+   function Diff3 (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+                     File1, File2, File3 : String) return Diff_Occurrence_Link
+   is
+   begin
+      return Diff (Kernel, File1, File2, File3); -- ???just for test
+   end Diff3;
+
    ----------
    -- Free --
    ----------
-
    procedure Free (Link : in out Diff_Occurrence_Link) is
       First, Tmp : Diff_Occurrence_Link;
 
@@ -292,13 +303,52 @@ package body Diff_Utils is
    begin
       First := Link;
       Link := null;
-
       loop
          exit when First = null;
          Tmp := First;
          First := First.Next;
+         Free (Tmp.Range1.Mark);
+         Free (Tmp.Range2.Mark);
          Internal_Free (Tmp);
       end loop;
+   end Free;
+
+   --------------
+   -- Free_All --
+   --------------
+   procedure Free_All (Link : in out Diff_List_Head) is
+
+   begin
+      Free (Link.List);
+      Free (Link.File1);
+      Free (Link.File2);
+      Free (Link.File3);
+   end Free_All;
+   ---------------
+   -- Free_List --
+   ---------------
+   procedure Free_List (List : in out Diff_Occurrence_List.List) is
+      CurrNode : Diff_Occurrence_List.List_Node :=
+        First (List);
+      Diff : Diff_List_Head;
+   begin
+
+      while CurrNode /= Null_Node
+      loop
+         Diff := Data (CurrNode);
+         Free_All (Diff);
+         CurrNode := Next (CurrNode);
+      end loop;
+   end Free_List;
+   ----------
+   -- Free --
+   ----------
+   procedure Free (Link : in out Diff_List_Head) is
+   pragma Unreferenced (Link);
+
+   begin
+      null;
+      --  ??? just for the moment
    end Free;
 
 end Diff_Utils;
