@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2002                      --
+--                      Copyright (C) 2000-2003                      --
 --                              ACT-Europe                           --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -220,6 +220,7 @@ package body GVD.Main_Window is
       if Tab /= null
         and then not Command_In_Process (Get_Process (Tab.Debugger))
       then
+         Update (Window.Thread_Dialog, Tab);
          Update (Window.Task_Dialog, Tab);
          Update (Window.History_Dialog, Tab);
       end if;
