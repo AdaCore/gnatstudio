@@ -698,6 +698,7 @@ package body Switches_Editors is
 
    procedure Refresh_Page (Page : access Gtk_Widget_Record'Class) is
       P : constant Switches_Editor_Page := Switches_Editor_Page (Page);
+      Found : Boolean;
    begin
       --  Don't do anything if the callbacks were blocked, to avoid infinite
       --  loops while we are updating the command line, and it is updating
@@ -710,7 +711,7 @@ package body Switches_Editors is
       declare
          Current : Argument_List := Get_Switches (P, Normalize => True);
          Coalesce_Switches : Argument_List (P.Coalesce_Switches'Range) :=
-           (others => new String'(""));
+           (others => null);
          Tmp : GNAT.OS_Lib.String_Access;
       begin
          P.Block_Refresh := True;
@@ -719,11 +720,13 @@ package body Switches_Editors is
          Assert (Me, P.Switches /= null,
                  "No switches defined for " & P.Title.all);
 
+         --  Find out all selected switches through the widgets
+
          for S in P.Switches'Range loop
             declare
                Text : constant String := Get_Switch (P.Switches (S).all);
-               Found : Boolean := False;
             begin
+               Found := False;
                if Text /= "" then
                   --  For "coalesce switches", we cannot add them immediately,
                   --  since we have to coalesce them first.
@@ -734,11 +737,17 @@ package body Switches_Editors is
                              + Text'First)
                      then
                         Tmp := Coalesce_Switches (C);
-                        Coalesce_Switches (C) := new String'
-                          (Coalesce_Switches (C).all
-                           & Text (P.Coalesce_Switches (C)'Length
-                                   + Text'First .. Text'Last));
-                        Free (Tmp);
+
+                        if Coalesce_Switches (C) = null then
+                           Coalesce_Switches (C) := new String'(Text);
+                        else
+                           Coalesce_Switches (C) := new String'
+                             (Coalesce_Switches (C).all
+                              & Text (P.Coalesce_Switches (C)'Length
+                                      + Text'First .. Text'Last));
+                           Free (Tmp);
+                        end if;
+
                         Found := True;
                         exit;
                      end if;
@@ -753,33 +762,12 @@ package body Switches_Editors is
             end;
          end loop;
 
-         --  Remove the old instances of common switch from the command line,
-         --  and add the new ones
-
-         for C in Coalesce_Switches'Range loop
-            --  Add the coalesced switch to the command line. As a special
-            --  case, if the result is in fact the default value of the switch,
-            --  we try to minimize the length of the command line (ie instead
-            --  of putting -gnaty3ab we put -gnaty if these are equivalent)
-
-            if Coalesce_Switches (C).all /= "" then
-               declare
-                  Cmd : constant String :=
-                    P.Coalesce_Switches (C).all & Coalesce_Switches (C).all;
-               begin
-                  if Cmd = P.Coalesce_Switches_Default (C).all then
-                     Append_Text
-                       (P.Cmd_Line, P.Coalesce_Switches (C).all & ' ');
-                  else
-                     Append_Text (P.Cmd_Line, Cmd & ' ');
-                  end if;
-               end;
-            end if;
-
-            for Cur in Current'Range loop
+         --  Remove from current all switches that have been coalesced
+         for Cur in Current'Range loop
+            for C in P.Coalesce_Switches'Range loop
                if Current (Cur) /= null
                  and then Current (Cur)'Length >=
-                   P.Coalesce_Switches (C)'Length
+                    P.Coalesce_Switches (C)'Length
                  and then P.Coalesce_Switches (C).all = Current (Cur)
                  (Current (Cur)'First ..
                   Current (Cur)'First + P.Coalesce_Switches (C)'Length - 1)
@@ -789,6 +777,36 @@ package body Switches_Editors is
             end loop;
          end loop;
 
+         --  Remove the old instances of common switch from the command line,
+         --  and add the new ones
+
+         for C in Coalesce_Switches'Range loop
+            --  Add the coalesced switches to the command line. For instance,
+            --  this will add "-gnatwuv" instead of "-gnatwu -gnatwv".
+            --  However, if we have defined an alias for that new switch, we
+            --  use that alias directly.
+
+            Found := False;
+            if Coalesce_Switches (C) /= null then
+               for Alias in P.Coalesce_Switches'Range loop
+                  if P.Coalesce_Switches_Default (Alias).all =
+                    Coalesce_Switches (C).all
+                  then
+                     Append_Text
+                       (P.Cmd_Line, P.Coalesce_Switches (Alias).all & ' ');
+                     Found := True;
+                     exit;
+                  end if;
+               end loop;
+
+               if not Found then
+                  Append_Text
+                    (P.Cmd_Line, Coalesce_Switches (C).all & ' ');
+               end if;
+            end if;
+         end loop;
+
+         --  Now add all the switches that do not have an associated widget
 
          for K in Current'Range loop
             if Current (K) /= null then
@@ -866,8 +884,8 @@ package body Switches_Editors is
                  Normalize_Compiler_Switches (Switches (Index).all);
                --  Do not free Arr, this refers to internal strings in GNAT!
             begin
-               --  If the switch was already as simple as possible, or wasn't
-               --  recognized at all.
+               --  If the switch wasn't already as simple as possible, or
+               --  wasn't recognized at all.
                if Arr'Length > 1 then
                   Append (Output, Clone (Arr));
                   S := Switches (Index);
