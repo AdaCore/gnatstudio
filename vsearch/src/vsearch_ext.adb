@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2004                      --
---                            ACT-Europe                             --
+--                      Copyright (C) 2001-2005                      --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -313,8 +313,7 @@ package body Vsearch_Ext is
    ------------------
 
    function Save_Desktop
-     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class)
-     return Node_Ptr
+     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class) return Node_Ptr
    is
       N : Node_Ptr;
       Extended : Vsearch_Extended;
@@ -737,12 +736,14 @@ package body Vsearch_Ext is
    -- Resize_If_Needed --
    ----------------------
 
-   procedure Resize_If_Needed (Vsearch : access Vsearch_Extended_Record'Class)
+   procedure Resize_If_Needed
+     (Vsearch : access Vsearch_Extended_Record'Class)
    is
       Win : Gtk_Window;
       Child : constant MDI_Child := Find_MDI_Child
         (Get_MDI (Vsearch.Kernel), Vsearch);
       Req : Gtk_Requisition;
+
    begin
       if Child /= null then
          if Is_Floating (Child) then
@@ -754,11 +755,13 @@ package body Vsearch_Ext is
          else
             --  ??? +6 is for the notebook's border on each side
             --  Never resize in width, only in height
+
             Size_Request (Vsearch, Req);
-            Set_Size (Get_MDI (Vsearch.Kernel),
-                      Child => Child,
-                      Width  => 0,
-                      Height => Req.Height + 6);
+            Set_Size
+              (Get_MDI (Vsearch.Kernel),
+               Child => Child,
+               Width  => 0,
+               Height => Req.Height + 6);
          end if;
       end if;
    end Resize_If_Needed;
