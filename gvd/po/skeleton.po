@@ -16,6 +16,9 @@ msgstr "About GVD..."
 msgid  "Action"
 msgstr "Action"
 
+msgid  "Ada"
+msgstr "Ada"
+
 msgid  "Add"
 msgstr "Add"
 
@@ -46,9 +49,6 @@ msgstr "Arguments Selection"
 msgid  "ASCII"
 msgstr "ASCII"
 
-msgid  "as Popup Tips"
-msgstr "as Popup Tips"
-
 msgid  "Assembly"
 msgstr "Assembly"
 
@@ -57,9 +57,6 @@ msgstr "Attach To Process..."
 
 msgid  "Auto-Align Displays on Nearest Grid Point"
 msgstr "Auto-Align Displays on Nearest Grid Point"
-
-msgid  "Automatic Display of Button Hints"
-msgstr "Automatic Display of Button Hints"
 
 msgid  "Automatic Display of Variables"
 msgstr "Automatic Display of Variables"
@@ -91,8 +88,20 @@ msgstr "Break when the variable:"
 msgid  "Bug detected in GVD"
 msgstr "Bug detected in GVD"
 
+msgid  " built for "
+msgstr " built for "
+
+msgid  "by Emmanuel Briot & Arnaud Charlet"
+msgstr "by Emmanuel Briot & Arnaud Charlet"
+
 msgid  "Byte"
 msgstr "Byte"
+
+msgid  "C"
+msgstr "C"
+
+msgid  "C++"
+msgstr "C++"
 
 msgid  "Call Stack"
 msgstr "Call Stack"
@@ -126,6 +135,9 @@ msgstr "Clickable Item"
 
 msgid  "Click in the 'Enb' column to change the status"
 msgstr "Click in the 'Enb' column to change the status"
+
+msgid  "Click on the OK button to close this window."
+msgstr "Click on the OK button to close this window."
 
 msgid  "Clone"
 msgstr "Clone"
@@ -313,9 +325,6 @@ msgstr "Enter the arguments to your application:"
 msgid  "Enter the number of times to skip before stopping:"
 msgstr "Enter the number of times to skip before stopping:"
 
-msgid  "Enter the process id to debug:"
-msgstr "Enter the process id to debug:"
-
 msgid  "Examine Memory..."
 msgstr "Examine Memory..."
 
@@ -345,6 +354,9 @@ msgstr "File:"
 
 msgid  "File"
 msgstr "File"
+
+msgid  "File Extensions"
+msgstr "File Extensions"
 
 msgid  "File Location"
 msgstr "File Location"
@@ -439,9 +451,6 @@ msgstr "Interrupt"
 msgid  "Interrupt debugged program"
 msgstr "Interrupt debugged program"
 
-msgid  "in the Status Line"
-msgstr "in the Status Line"
-
 msgid  "is"
 msgstr "is"
 
@@ -489,9 +498,6 @@ msgstr "list of files"
 
 msgid  "List Processes"
 msgstr "List Processes"
-
-msgid  "List Select"
-msgstr "List Select"
 
 msgid  "Load List"
 msgstr "Load List"
@@ -586,8 +592,8 @@ msgstr "PC"
 msgid  "Perl"
 msgstr "Perl"
 
-msgid  "Please report to gvd-devel@lists.act-europe.fr"
-msgstr "Please report to gvd-devel@lists.act-europe.fr"
+msgid  "Please report with the contents of the file "
+msgstr "Please report with the contents of the file "
 
 msgid  "Preferences..."
 msgstr "Preferences..."
@@ -597,9 +603,6 @@ msgstr "Preferences"
 
 msgid  "Print "
 msgstr "Print "
-
-msgid  "Processes..."
-msgstr "Processes..."
 
 msgid  "Process Selection"
 msgstr "Process Selection"
@@ -684,9 +687,6 @@ msgstr "Select and print stack frame called by this one"
 
 msgid  "Select and print stack frame that called this one"
 msgstr "Select and print stack frame that called this one"
-
-msgid  "Selection :"
-msgstr "Selection :"
 
 msgid  "Selection"
 msgstr "Selection"
@@ -841,6 +841,9 @@ msgstr "Target: "
 msgid  "   --target TARG:PRO "
 msgstr "   --target TARG:PRO "
 
+msgid  "Tasks..."
+msgstr "Tasks..."
+
 msgid  "Tasks"
 msgstr "Tasks"
 
@@ -856,9 +859,6 @@ msgstr "Test"
 msgid  "the following information:"
 msgstr "the following information:"
 
-msgid  ": The GNU Visual Debugger"
-msgstr ": The GNU Visual Debugger"
-
 msgid  "The GNU Visual Debugger"
 msgstr "The GNU Visual Debugger"
 
@@ -870,6 +870,9 @@ msgstr "This is the About information box."
 
 msgid  "Threads..."
 msgstr "Threads..."
+
+msgid  "Thread Status"
+msgstr "Thread Status"
 
 msgid  "Title Background"
 msgstr "Title Background"
@@ -925,14 +928,8 @@ msgstr "View"
 msgid  "vxworks"
 msgstr "vxworks"
 
-msgid  "Warn if Multiple GVD Instances are Running"
-msgstr "Warn if Multiple GVD Instances are Running"
-
 msgid  "watch"
 msgstr "watch"
-
-msgid  "with the contents of the file "
-msgstr "with the contents of the file "
 
 msgid  "Word"
 msgstr "Word"

@@ -16,6 +16,9 @@ msgstr "À propos de GVD..."
 msgid  "Action"
 msgstr "Action"
 
+msgid  "Ada"
+msgstr "Ada"
+
 msgid  "Add"
 msgstr "Ajouter"
 
@@ -46,9 +49,6 @@ msgstr "Sélection des arguments"
 msgid  "ASCII"
 msgstr "ASCII"
 
-msgid  "as Popup Tips"
-msgstr "comme boites jaillissantes"
-
 msgid  "Assembly"
 msgstr "Assembleur"
 
@@ -57,9 +57,6 @@ msgstr "S'attacher à un processus..."
 
 msgid  "Auto-Align Displays on Nearest Grid Point"
 msgstr "Aligner automatiquement sur la grille"
-
-msgid  "Automatic Display of Button Hints"
-msgstr "Affichage automatique de l'aide sur les boutons"
 
 msgid  "Automatic Display of Variables"
 msgstr "Affichage automatique des variables"
@@ -90,6 +87,12 @@ msgstr "Stopper lorsque la variable :"
 
 msgid  "Bug detected in GVD"
 msgstr "Bug détecté dans GVD"
+
+msgid  " built for "
+msgstr " construit pour "
+
+msgid  "by Emmanuel Briot & Arnaud Charlet"
+msgstr "par Emmanuel Briot & Arnaud Charlet"
 
 msgid  "Byte"
 msgstr "Octet"
@@ -126,6 +129,9 @@ msgstr "Élément cliquable"
 
 msgid  "Click in the 'Enb' column to change the status"
 msgstr "Cliquer sur la colonne 'Act' pour changer le statut"
+
+msgid  "Click on the OK button to close this window."
+msgstr "Cliquer sur le bouton OK pour fermer cette fenêtre."
 
 msgid  "Clone"
 msgstr "Cloner"
@@ -313,9 +319,6 @@ msgstr "Entrer les arguments pour l'application :"
 msgid  "Enter the number of times to skip before stopping:"
 msgstr "Entrer le nombre de fois à ignorer avant de stopper :"
 
-msgid  "Enter the process id to debug:"
-msgstr "Entrer l'identifiant du processus à débogguer :"
-
 msgid  "Examine Memory..."
 msgstr "Examiner la mémoire..."
 
@@ -345,6 +348,9 @@ msgstr "Fichier :"
 
 msgid  "File"
 msgstr "Fichier"
+
+msgid  "File Extensions"
+msgstr "Extensions de fichiers"
 
 msgid  "File Location"
 msgstr "Situation d'un fichier"
@@ -439,9 +445,6 @@ msgstr "Interrompre"
 msgid  "Interrupt debugged program"
 msgstr "Interrompre le programme déboggué"
 
-msgid  "in the Status Line"
-msgstr "dans la barre de statut"
-
 msgid  "is"
 msgstr "est"
 
@@ -489,9 +492,6 @@ msgstr "liste de fichiers"
 
 msgid  "List Processes"
 msgstr "Lister les processus"
-
-msgid  "List Select"
-msgstr "Selectionner la liste"
 
 msgid  "Load List"
 msgstr "Charger la liste"
@@ -586,8 +586,8 @@ msgstr "PC"
 msgid  "Perl"
 msgstr "Perl"
 
-msgid  "Please report to gvd-devel@lists.act-europe.fr"
-msgstr "Veuillez reporter a gvd-devel@lists.act-europe.fr"
+msgid  "Please report with the contents of the file "
+msgstr "Veuillez reporter avec le contenu du fichier "
 
 msgid  "Preferences..."
 msgstr "Préférences..."
@@ -597,9 +597,6 @@ msgstr "Préférences"
 
 msgid  "Print "
 msgstr "Afficher "
-
-msgid  "Processes..."
-msgstr "Processus..."
 
 msgid  "Process Selection"
 msgstr "Sélectionner un processus"
@@ -684,9 +681,6 @@ msgstr "Sélectionner la procédure appelée"
 
 msgid  "Select and print stack frame that called this one"
 msgstr "Sélectionner la procédure appelante"
-
-msgid  "Selection :"
-msgstr "Sélection :"
 
 msgid  "Selection"
 msgstr "Sélection"
@@ -841,6 +835,9 @@ msgstr "Cible : "
 msgid  "   --target TARG:PRO "
 msgstr "   --target TARG:PRO "
 
+msgid  "Tasks..."
+msgstr "Tâches..."
+
 msgid  "Tasks"
 msgstr "Tâches"
 
@@ -856,9 +853,6 @@ msgstr "Tester"
 msgid  "the following information:"
 msgstr "les informations suivantes :"
 
-msgid  ": The GNU Visual Debugger"
-msgstr ": The GNU Visual Debugger"
-
 msgid  "The GNU Visual Debugger"
 msgstr "The GNU Visual Debugger"
 
@@ -869,7 +863,10 @@ msgid  "This is the About information box."
 msgstr "Ceci est la boite d'information à propos."
 
 msgid  "Threads..."
-msgstr "Tâches..."
+msgstr "Threads..."
+
+msgid  "Thread Status"
+msgstr "État des threads"
 
 msgid  "Title Background"
 msgstr "Titre"
@@ -925,14 +922,8 @@ msgstr "Voir"
 msgid  "vxworks"
 msgstr "vxworks"
 
-msgid  "Warn if Multiple GVD Instances are Running"
-msgstr "Avertir si plusieurs instances de GVD sont en cours d'exécution"
-
 msgid  "watch"
 msgstr "watch"
-
-msgid  "with the contents of the file "
-msgstr "avec le contenu du fichier "
 
 msgid  "Word"
 msgstr "Mot"
