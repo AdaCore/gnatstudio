@@ -412,9 +412,11 @@ package body Language.Ada is
    function Comment_Line
      (Lang    : access Ada_Language;
       Line    : String;
-      Comment : Boolean := True) return String
+      Comment : Boolean := True;
+      Clean   : Boolean := False) return String
    is
       pragma Unreferenced (Lang);
+      Local_Index : Natural;
    begin
       if Comment then
          return "--  " & Line;
@@ -440,14 +442,29 @@ package body Language.Ada is
             if Index + 3 <= Line'Last and then
               Line (Index .. Index + 3) = "--  "
             then
+               if Clean then
+                  Local_Index := Index + 4;
+                  Skip_Blanks (Line, Local_Index);
+                  return Line (Local_Index .. Line'Last);
+               end if;
                return Line (Line'First .. Index - 1) &
                  Line (Index + 4 .. Line'Last);
             elsif Index + 2 <= Line'Last and then
               Line (Index .. Index + 2) = "-- "
             then
+               if Clean then
+                  Local_Index := Index + 3;
+                  Skip_Blanks (Line, Local_Index);
+                  return Line (Local_Index .. Line'Last);
+               end if;
                return Line (Line'First .. Index - 1) &
                  Line (Index + 3 .. Line'Last);
             else
+               if Clean then
+                  Local_Index := Index + 2;
+                  Skip_Blanks (Line, Local_Index);
+                  return Line (Local_Index .. Line'Last);
+               end if;
                return Line (Line'First .. Index - 1) &
                  Line (Index + 2 .. Line'Last);
             end if;
