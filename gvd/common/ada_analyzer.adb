@@ -27,6 +27,9 @@ package body Ada_Analyzer is
    --  Return a token_Type given a string.
    --  For efficiency, S is assumed to start at index 1.
 
+   function Is_Library_Level (Stack : Token_Stack.Simple_Stack) return Boolean;
+   --  Return True if the current scope in Stack is a library level package.
+
    function Is_Word_Char (C : Character) return Boolean;
    --  Return whether C is a word character (alphanumeric or underscore).
    pragma Inline (Is_Word_Char);
@@ -320,6 +323,28 @@ package body Ada_Analyzer is
       return P - 1;
    end Prev_Char;
 
+   ----------------------
+   -- Is_Library_Level --
+   ----------------------
+
+   function Is_Library_Level
+     (Stack : Token_Stack.Simple_Stack) return Boolean
+   is
+      Tmp : Token_Stack.Simple_Stack;
+   begin
+      Tmp := Stack;
+
+      while Tmp /= null and then Tmp.Val.Token /= No_Token loop
+         if Tmp.Val.Token /= Tok_Package then
+            return False;
+         end if;
+
+         Tmp := Tmp.Next;
+      end loop;
+
+      return True;
+   end Is_Library_Level;
+
    ------------------------
    -- Analyze_Ada_Source --
    ------------------------
@@ -600,8 +625,11 @@ package body Ada_Analyzer is
                   when Tok_For =>
                      Constructs.Current.Category := Cat_Representation_Clause;
                   when Tok_Identifier =>
-                     --  Currently never set
-                     Constructs.Current.Category := Cat_Variable;
+                     if Is_Library_Level (Stack) then
+                        Constructs.Current.Category := Cat_Variable;
+                     else
+                        Constructs.Current.Category := Cat_Local_Variable;
+                     end if;
 
                   when Tok_With =>
                      Constructs.Current.Category := Cat_With;
