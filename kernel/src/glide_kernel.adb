@@ -525,23 +525,6 @@ package body Glide_Kernel is
       return Page.Process_Mdi;
    end Get_MDI;
 
-   -----------------------
-   -- Insert_In_Console --
-   -----------------------
-
-   procedure Insert_In_Console
-     (Handle         : access Kernel_Handle_Record;
-      Text           : String;
-      Highlight_Sloc : Boolean := True;
-      Add_LF         : Boolean := True)
-   is
-      Top        : constant Glide_Window := Glide_Window (Handle.Main_Window);
-      Page       : Glide_Page.Glide_Page :=
-        Glide_Page.Glide_Page (Get_Current_Process (Top));
-   begin
-      Insert (Page.Console, Text, Highlight_Sloc, Add_Lf);
-   end Insert_In_Console;
-
    ---------------------------
    -- Find_MDI_Child_By_Tag --
    ---------------------------
