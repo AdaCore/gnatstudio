@@ -2582,9 +2582,7 @@ package body Project_Viewers is
      (Data : in out Callback_Data'Class; Command : String)
    is
       Kernel     : constant Kernel_Handle := Get_Kernel (Data);
-      Instance   : constant Class_Instance :=
-        Nth_Arg (Data, 1, Get_Project_Class (Kernel));
-      Project    : constant Project_Type := Get_Data (Instance);
+      Project    : constant Project_Type := Get_Data (Data, 1);
    begin
       if Command = "add_main_unit" then
          declare
@@ -2607,9 +2605,7 @@ package body Project_Viewers is
       elsif Command = "remove_dependency" then
          Name_Parameters (Data, Remove_Dep_Cmd_Parameters);
          declare
-            Instance2 : constant Class_Instance :=
-              Nth_Arg (Data, 2, Get_Project_Class (Kernel));
-            Project2  : constant Project_Type := Get_Data (Instance2);
+            Project2  : constant Project_Type := Get_Data (Data, 2);
          begin
             Remove_Imported_Project (Project, Project2);
             Recompute_View (Kernel);
