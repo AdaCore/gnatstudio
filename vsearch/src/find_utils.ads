@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                          G L I D E  I I                           --
 --                                                                   --
---                        Copyright (C) 2001                         --
+--                     Copyright (C) 2001-2002                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GLIDE is free software; you can redistribute it and/or modify  it --
@@ -223,7 +223,7 @@ package Find_Utils is
    ---------------
 
    type Module_Search_Context_Factory is access function
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel            : access Glide_Kernel.Kernel_Handle_Record'Class;
       Extra_Information : Gtk.Widget.Gtk_Widget)
       return Search_Context_Access;
    --  Function called to create the search context.
@@ -231,24 +231,24 @@ package Find_Utils is
    --  search/replace won't be performed.
    --  The memory will be freed automatically by Glide2
 
-   ------------------------------
-   --  Standard search support --
-   ------------------------------
+   -----------------------------
+   -- Standard search support --
+   -----------------------------
 
    function Current_File_Factory
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel            : access Glide_Kernel.Kernel_Handle_Record'Class;
       Extra_Information : Gtk.Widget.Gtk_Widget)
       return Search_Context_Access;
    --  Factory for "Current File"
 
    function Files_From_Project_Factory
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel            : access Glide_Kernel.Kernel_Handle_Record'Class;
       Extra_Information : Gtk.Widget.Gtk_Widget)
       return Search_Context_Access;
    --  Factory for "Files From Project"
 
    function Files_Factory
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel            : access Glide_Kernel.Kernel_Handle_Record'Class;
       Extra_Information : Gtk.Widget.Gtk_Widget)
       return Search_Context_Access;
    --  Factory for "Files..."

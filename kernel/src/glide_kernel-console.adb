@@ -53,8 +53,9 @@ package body Glide_Kernel.Console is
       Add_LF         : Boolean := True;
       Mode           : Message_Type := Info)
    is
-      Top       : constant Glide_Window := Glide_Window (Kernel.Main_Window);
-      Console   : Glide_Console;
+      Top     : constant Glide_Window := Glide_Window (Kernel.Main_Window);
+      Console : Glide_Console;
+
    begin
       if Top = null
         or else Get_Current_Process (Top) = null

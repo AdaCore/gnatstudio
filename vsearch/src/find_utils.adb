@@ -67,12 +67,12 @@ package body Find_Utils is
    --  Callback for a match in a buffer
 
    procedure Scan_Buffer
-     (Buffer         : String;
-      Context        : access Search_Context'Class;
-      Callback       : Scan_Callback;
+     (Buffer     : String;
+      Context    : access Search_Context'Class;
+      Callback   : Scan_Callback;
       Ref_Index,
       Ref_Line,
-      Ref_Column     : in out Integer);
+      Ref_Column : in out Integer);
    --  Scan Buffer for possible matches. Buffer is assumes to be a single valid
    --  scope, and thus no scope handling is performed.
    --  Ref_Index is assumed to correspond to position Ref_Line and
@@ -126,6 +126,7 @@ package body Find_Utils is
          for R in Result'Range loop
             Unchecked_Free (Result (R));
          end loop;
+
          Unchecked_Free (Result);
       end if;
    end Free;
@@ -150,8 +151,10 @@ package body Find_Utils is
          if Buffer (J) = ASCII.LF then
             return J - 1;
          end if;
+
          J := J + 1;
       end loop;
+
       return Buffer'Last;
    end End_Of_Line;
 
@@ -160,14 +163,14 @@ package body Find_Utils is
    -----------------
 
    procedure Scan_Buffer
-     (Buffer         : String;
-      Context        : access Search_Context'Class;
-      Callback       : Scan_Callback;
+     (Buffer     : String;
+      Context    : access Search_Context'Class;
+      Callback   : Scan_Callback;
       Ref_Index,
       Ref_Line,
-      Ref_Column     : in out Integer)
+      Ref_Column : in out Integer)
    is
-      Last_Line_Start   : Natural := Buffer'First;
+      Last_Line_Start : Natural := Buffer'First;
 
       procedure To_Line_Column (Pos : Natural);
       --  Set Line and Column to the appropriate for the Pos-th character in
@@ -194,6 +197,7 @@ package body Find_Utils is
                Ref_Column := Ref_Column + 1;
             end if;
          end loop;
+
          Ref_Index := Pos;
       end To_Line_Column;
 
@@ -202,7 +206,7 @@ package body Find_Utils is
       ---------------
 
       procedure Re_Search is
-         RE : constant Pattern_Matcher := Context_As_Regexp (Context);
+         RE  : constant Pattern_Matcher := Context_As_Regexp (Context);
          Pos : Natural := Buffer'First;
       begin
          loop
@@ -244,6 +248,7 @@ package body Find_Utils is
          --  search). We then pay a small price to actually compute the
          --  buffer coordinates, but this algorithm is much faster for files
          --  that don't match.
+
          loop
             Pos := Search (BM, Buffer (Pos .. Buffer'Last));
             exit when Pos = -1;
@@ -469,6 +474,7 @@ package body Find_Utils is
       --  ??? Temporary, until we are sure that we only manipulate text
       --  files. We could also allocate buffer on the heap rather than on the
       --  stack, but the search takes very long for binary files anyway.
+
       if Len > 5_000_000 then
          Close (FD);
          return;
@@ -482,6 +488,7 @@ package body Find_Utils is
 
          --  If the language couldn't be found, we simply use the more
          --  efficient algorithm
+
          if Context.Options.Whole_Word or else Lang = null then
             Scan_Buffer
               (Buffer,
@@ -494,8 +501,8 @@ package body Find_Utils is
          declare
             Language : Language_Context := Get_Language_Context (Lang);
          begin
-            --  ALways find the long possible range, so that we can benefit as
-            --  much as possible from the efficient string searching
+            --  Always find the longest possible range, so that we can benefit
+            --  as much as possible from the efficient string searching
             --  algorithms.
 
             while Pos <= Buffer'Last loop
@@ -521,7 +528,6 @@ package body Find_Utils is
                end loop;
 
                Last_Index := Pos;
-
             end loop;
          end;
       end;
@@ -577,6 +583,7 @@ package body Find_Utils is
          if Size /= 0 then
             Tmp := Result;
             Result := new Match_Result_Array (1 .. Size);
+
             if Tmp /= null then
                Result (1 .. Tmp'Last) := Tmp.all;
                Unchecked_Free (Tmp);
@@ -771,7 +778,7 @@ package body Find_Utils is
    --------------------------
 
    function Current_File_Factory
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel            : access Glide_Kernel.Kernel_Handle_Record'Class;
       Extra_Information : Gtk.Widget.Gtk_Widget)
       return Search_Context_Access
    is
@@ -785,11 +792,12 @@ package body Find_Utils is
    --------------------------------
 
    function Files_From_Project_Factory
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel            : access Glide_Kernel.Kernel_Handle_Record'Class;
       Extra_Information : Gtk.Widget.Gtk_Widget)
       return Search_Context_Access
    is
       pragma Unreferenced (Extra_Information);
+
       Context : Files_Project_Context_Access;
    begin
       Context := new Files_Project_Context;
@@ -804,15 +812,17 @@ package body Find_Utils is
    -------------------
 
    function Files_Factory
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel            : access Glide_Kernel.Kernel_Handle_Record'Class;
       Extra_Information : Gtk.Widget.Gtk_Widget)
       return Search_Context_Access
    is
       pragma Unreferenced (Kernel);
+
       Context : Files_Context_Access;
-      Extra : Files_Extra_Info_Access := Files_Extra_Info_Access
+      Extra   : Files_Extra_Info_Access := Files_Extra_Info_Access
         (Extra_Information);
-      Re : GNAT.Regexp.Regexp;
+      Re      : GNAT.Regexp.Regexp;
+
    begin
       if Get_Text (Extra.Files_Entry) /= "" then
          Context := new Files_Context;
@@ -876,6 +886,7 @@ package body Find_Utils is
          Context.Next_Matches_In_File := Scan_File_And_Store
            (Context, Kernel, Context.Files (Context.Current_File).all);
          Context.Current_File := Context.Current_File + 1;
+
          exit when Context.Next_Matches_In_File /= null;
       end loop;
 
@@ -896,6 +907,7 @@ package body Find_Utils is
       Search_Backward : Boolean) return Boolean
    is
       pragma Unreferenced (Search_Backward);
+
       use Directory_List;
       File_Name : String (1 .. Max_Path_Len);
       Last      : Natural;
@@ -903,6 +915,7 @@ package body Find_Utils is
    begin
       --  If there are still some matches in the current file that we haven't
       --  returned , do it now.
+
       if Context.Next_Matches_In_File /= null then
          Context.Last_Match_Returned := Context.Last_Match_Returned + 1;
          if Context.Last_Match_Returned <= Context.Next_Matches_In_File'Last
@@ -932,7 +945,8 @@ package body Find_Utils is
          Read (Head (Context.Dirs).Dir, File_Name, Last);
 
          if Last = 0 then
-            Tail (Context.Dirs);
+            Next (Context.Dirs);
+
             if Context.Dirs = Null_List then
                return False;
             end if;
