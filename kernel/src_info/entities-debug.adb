@@ -327,7 +327,7 @@ package body Entities.Debug is
       Dump (File.Timestamp);
       Output_Line
         (" ref_count=" & Image (File.Ref_Count)
-         & " Has_Scope_tree=" & Boolean'Image (File.Scope_Tree_Computed));
+         & " has_scope_tree=" & Boolean'Image (File.Scope_Tree_Computed));
 
       if File.LI /= null then
          Output ("   li=");
