@@ -28,7 +28,7 @@ begin
    Set_Policy (Gui_Builder, False, True, False);
    Set_Position (Gui_Builder, Win_Pos_None);
    Set_Modal (Gui_Builder, False);
-   Set_Default_Size (Gui_Builder, 510, 400);
+   Set_Default_Size (Gui_Builder, 630, 400);
 
    Gtk_New_Vbox (Gui_Builder.Vbox4, False, 0);
    Add (Gui_Builder, Gui_Builder.Vbox4);
@@ -121,95 +121,101 @@ begin
    Set_Tab_Vborder (Gui_Builder.Notebook10, 2);
    Set_Tab_Pos (Gui_Builder.Notebook10, Pos_Top);
 
-   Gtk_New (Gui_Builder.Frame27);
-   Add (Gui_Builder.Notebook10, Gui_Builder.Frame27);
-   Set_Shadow_Type (Gui_Builder.Frame27, Shadow_Etched_In);
+   Gtk_New_Vbox (Gui_Builder.Vbox12, False, 0);
+   Add (Gui_Builder.Notebook10, Gui_Builder.Vbox12);
+
+   Gtk_New (Gui_Builder.Frame32);
+   Pack_Start (Gui_Builder.Vbox12, Gui_Builder.Frame32, True, True, 0);
+   Set_Shadow_Type (Gui_Builder.Frame32, Shadow_Etched_In);
+
+   Gtk_New_Vbox (Gui_Builder.Vbox13, False, 0);
+   Add (Gui_Builder.Frame32, Gui_Builder.Vbox13);
 
    Gtk_New (Gui_Builder.Toolbar8, Orientation_Horizontal, Toolbar_Icons);
-   Add (Gui_Builder.Frame27, Gui_Builder.Toolbar8);
+   Pack_Start (Gui_Builder.Vbox13, Gui_Builder.Toolbar8, False, False, 0);
    Set_Space_Size (Gui_Builder.Toolbar8, 5);
    Set_Space_Style (Gui_Builder.Toolbar8, Toolbar_Space_Empty);
    Set_Tooltips (Gui_Builder.Toolbar8, True);
    Set_Button_Relief (Gui_Builder.Toolbar8, Relief_None);
-   Gui_Builder.Togglebutton28 := Append_Element
+   Gui_Builder.Togglebutton67 := Append_Element
      (Toolbar => Gui_Builder.Toolbar8,
       The_Type => Toolbar_Child_ToggleButton,
       Text => -"",
       Tooltip_Text => -"Horizontal Box",
       Icon => Gtk_Widget (Create_Pixmap (hbox_xpm, Gui_Builder)));
-   Gui_Builder.Togglebutton29 := Append_Element
+   Gui_Builder.Togglebutton68 := Append_Element
      (Toolbar => Gui_Builder.Toolbar8,
       The_Type => Toolbar_Child_ToggleButton,
       Text => -"",
       Tooltip_Text => -"Vertical Box",
       Icon => Gtk_Widget (Create_Pixmap (vbox_xpm, Gui_Builder)));
-   Gui_Builder.Togglebutton30 := Append_Element
+   Gui_Builder.Togglebutton69 := Append_Element
      (Toolbar => Gui_Builder.Toolbar8,
       The_Type => Toolbar_Child_ToggleButton,
       Text => -"",
       Tooltip_Text => -"Table",
       Icon => Gtk_Widget (Create_Pixmap (table_xpm, Gui_Builder)));
-   Gui_Builder.Togglebutton31 := Append_Element
+   Gui_Builder.Togglebutton70 := Append_Element
      (Toolbar => Gui_Builder.Toolbar8,
       The_Type => Toolbar_Child_ToggleButton,
       Text => -"",
       Tooltip_Text => -"Packer",
       Icon => Gtk_Widget (Create_Pixmap (packer_xpm, Gui_Builder)));
-   Gui_Builder.Togglebutton32 := Append_Element
+   Gui_Builder.Togglebutton71 := Append_Element
      (Toolbar => Gui_Builder.Toolbar8,
       The_Type => Toolbar_Child_ToggleButton,
       Text => -"",
       Tooltip_Text => -"Fixed Positions",
       Icon => Gtk_Widget (Create_Pixmap (fixed_xpm, Gui_Builder)));
-   Gui_Builder.Togglebutton33 := Append_Element
+   Gui_Builder.Togglebutton72 := Append_Element
      (Toolbar => Gui_Builder.Toolbar8,
       The_Type => Toolbar_Child_ToggleButton,
       Text => -"",
       Tooltip_Text => -"Horizontal Button Box",
       Icon => Gtk_Widget (Create_Pixmap (hbuttonbox_xpm, Gui_Builder)));
-   Gui_Builder.Togglebutton34 := Append_Element
+   Gui_Builder.Togglebutton73 := Append_Element
      (Toolbar => Gui_Builder.Toolbar8,
       The_Type => Toolbar_Child_ToggleButton,
       Text => -"",
       Tooltip_Text => -"Vertical Button Box",
       Icon => Gtk_Widget (Create_Pixmap (vbuttonbox_xpm, Gui_Builder)));
-   Gui_Builder.Togglebutton35 := Append_Element
+   Gui_Builder.Togglebutton74 := Append_Element
      (Toolbar => Gui_Builder.Toolbar8,
       The_Type => Toolbar_Child_ToggleButton,
       Text => -"",
       Tooltip_Text => -"Horizontal Pane",
       Icon => Gtk_Widget (Create_Pixmap (hpaned_xpm, Gui_Builder)));
-   Gui_Builder.Togglebutton36 := Append_Element
+   Gui_Builder.Togglebutton75 := Append_Element
      (Toolbar => Gui_Builder.Toolbar8,
       The_Type => Toolbar_Child_ToggleButton,
       Text => -"",
       Tooltip_Text => -"Vertical Pane",
       Icon => Gtk_Widget (Create_Pixmap (vpaned_xpm, Gui_Builder)));
-   Gui_Builder.Togglebutton37 := Append_Element
+   Gui_Builder.Togglebutton76 := Append_Element
      (Toolbar => Gui_Builder.Toolbar8,
       The_Type => Toolbar_Child_ToggleButton,
       Text => -"",
       Tooltip_Text => -"Frame",
       Icon => Gtk_Widget (Create_Pixmap (frame_xpm, Gui_Builder)));
-   Gui_Builder.Togglebutton38 := Append_Element
+   Gui_Builder.Togglebutton77 := Append_Element
      (Toolbar => Gui_Builder.Toolbar8,
       The_Type => Toolbar_Child_ToggleButton,
       Text => -"",
       Tooltip_Text => -"Scrolled Window",
       Icon => Gtk_Widget (Create_Pixmap (scrolledwindow_xpm, Gui_Builder)));
-   Gui_Builder.Togglebutton39 := Append_Element
+   Gui_Builder.Togglebutton78 := Append_Element
      (Toolbar => Gui_Builder.Toolbar8,
       The_Type => Toolbar_Child_ToggleButton,
       Text => -"",
       Tooltip_Text => -"Layou",
       Icon => Gtk_Widget (Create_Pixmap (layout_xpm, Gui_Builder)));
-   Gui_Builder.Togglebutton40 := Append_Element
+   Gui_Builder.Togglebutton79 := Append_Element
      (Toolbar => Gui_Builder.Toolbar8,
       The_Type => Toolbar_Child_ToggleButton,
       Text => -"",
       Tooltip_Text => -"Viewport",
       Icon => Gtk_Widget (Create_Pixmap (viewport_xpm, Gui_Builder)));
-   Gui_Builder.Togglebutton41 := Append_Element
+   Gui_Builder.Togglebutton80 := Append_Element
      (Toolbar => Gui_Builder.Toolbar8,
       The_Type => Toolbar_Child_ToggleButton,
       Text => -"",

@@ -24,7 +24,7 @@
   <type>GTK_WINDOW_TOPLEVEL</type>
   <position>GTK_WIN_POS_NONE</position>
   <modal>False</modal>
-  <default_width>510</default_width>
+  <default_width>630</default_width>
   <default_height>400</default_height>
   <allow_shrink>False</allow_shrink>
   <allow_grow>True</allow_grow>
@@ -202,159 +202,187 @@
 	    <popup_enable>False</popup_enable>
 
 	    <widget>
-	      <class>GtkFrame</class>
-	      <name>frame27</name>
-	      <label_xalign>0</label_xalign>
-	      <shadow_type>GTK_SHADOW_ETCHED_IN</shadow_type>
+	      <class>GtkVBox</class>
+	      <name>vbox12</name>
+	      <homogeneous>False</homogeneous>
+	      <spacing>0</spacing>
 
 	      <widget>
-		<class>GtkToolbar</class>
-		<name>toolbar8</name>
-		<orientation>GTK_ORIENTATION_HORIZONTAL</orientation>
-		<type>GTK_TOOLBAR_ICONS</type>
-		<space_size>5</space_size>
-		<space_style>GTK_TOOLBAR_SPACE_EMPTY</space_style>
-		<relief>GTK_RELIEF_NONE</relief>
-		<tooltips>True</tooltips>
+		<class>GtkFrame</class>
+		<name>frame32</name>
+		<label_xalign>0</label_xalign>
+		<shadow_type>GTK_SHADOW_ETCHED_IN</shadow_type>
+		<child>
+		  <padding>0</padding>
+		  <expand>True</expand>
+		  <fill>True</fill>
+		</child>
 
 		<widget>
-		  <class>GtkToggleButton</class>
-		  <child_name>Toolbar:button</child_name>
-		  <name>togglebutton28</name>
-		  <tooltip>Horizontal Box</tooltip>
-		  <label></label>
-		  <icon>hbox_xpm</icon>
-		  <active>False</active>
-		</widget>
+		  <class>GtkVBox</class>
+		  <name>vbox13</name>
+		  <homogeneous>False</homogeneous>
+		  <spacing>0</spacing>
 
-		<widget>
-		  <class>GtkToggleButton</class>
-		  <child_name>Toolbar:button</child_name>
-		  <name>togglebutton29</name>
-		  <tooltip>Vertical Box</tooltip>
-		  <label></label>
-		  <icon>vbox_xpm</icon>
-		  <active>False</active>
-		</widget>
+		  <widget>
+		    <class>GtkToolbar</class>
+		    <name>toolbar8</name>
+		    <orientation>GTK_ORIENTATION_HORIZONTAL</orientation>
+		    <type>GTK_TOOLBAR_ICONS</type>
+		    <space_size>5</space_size>
+		    <space_style>GTK_TOOLBAR_SPACE_EMPTY</space_style>
+		    <relief>GTK_RELIEF_NONE</relief>
+		    <tooltips>True</tooltips>
+		    <child>
+		      <padding>0</padding>
+		      <expand>False</expand>
+		      <fill>False</fill>
+		    </child>
 
-		<widget>
-		  <class>GtkToggleButton</class>
-		  <child_name>Toolbar:button</child_name>
-		  <name>togglebutton30</name>
-		  <tooltip>Table</tooltip>
-		  <label></label>
-		  <icon>table_xpm</icon>
-		  <active>False</active>
-		</widget>
+		    <widget>
+		      <class>GtkToggleButton</class>
+		      <child_name>Toolbar:button</child_name>
+		      <name>togglebutton67</name>
+		      <tooltip>Horizontal Box</tooltip>
+		      <label></label>
+		      <icon>hbox_xpm</icon>
+		      <active>False</active>
+		    </widget>
 
-		<widget>
-		  <class>GtkToggleButton</class>
-		  <child_name>Toolbar:button</child_name>
-		  <name>togglebutton31</name>
-		  <tooltip>Packer</tooltip>
-		  <label></label>
-		  <icon>packer_xpm</icon>
-		  <active>False</active>
-		</widget>
+		    <widget>
+		      <class>GtkToggleButton</class>
+		      <child_name>Toolbar:button</child_name>
+		      <name>togglebutton68</name>
+		      <tooltip>Vertical Box</tooltip>
+		      <label></label>
+		      <icon>vbox_xpm</icon>
+		      <active>False</active>
+		    </widget>
 
-		<widget>
-		  <class>GtkToggleButton</class>
-		  <child_name>Toolbar:button</child_name>
-		  <name>togglebutton32</name>
-		  <tooltip>Fixed Positions</tooltip>
-		  <label></label>
-		  <icon>fixed_xpm</icon>
-		  <active>False</active>
-		</widget>
+		    <widget>
+		      <class>GtkToggleButton</class>
+		      <child_name>Toolbar:button</child_name>
+		      <name>togglebutton69</name>
+		      <tooltip>Table</tooltip>
+		      <label></label>
+		      <icon>table_xpm</icon>
+		      <active>False</active>
+		    </widget>
 
-		<widget>
-		  <class>GtkToggleButton</class>
-		  <child_name>Toolbar:button</child_name>
-		  <name>togglebutton33</name>
-		  <tooltip>Horizontal Button Box</tooltip>
-		  <label></label>
-		  <icon>hbuttonbox_xpm</icon>
-		  <active>False</active>
-		</widget>
+		    <widget>
+		      <class>GtkToggleButton</class>
+		      <child_name>Toolbar:button</child_name>
+		      <name>togglebutton70</name>
+		      <tooltip>Packer</tooltip>
+		      <label></label>
+		      <icon>packer_xpm</icon>
+		      <active>False</active>
+		    </widget>
 
-		<widget>
-		  <class>GtkToggleButton</class>
-		  <child_name>Toolbar:button</child_name>
-		  <name>togglebutton34</name>
-		  <tooltip>Vertical Button Box</tooltip>
-		  <label></label>
-		  <icon>vbuttonbox_xpm</icon>
-		  <active>False</active>
-		</widget>
+		    <widget>
+		      <class>GtkToggleButton</class>
+		      <child_name>Toolbar:button</child_name>
+		      <name>togglebutton71</name>
+		      <tooltip>Fixed Positions</tooltip>
+		      <label></label>
+		      <icon>fixed_xpm</icon>
+		      <active>False</active>
+		    </widget>
 
-		<widget>
-		  <class>GtkToggleButton</class>
-		  <child_name>Toolbar:button</child_name>
-		  <name>togglebutton35</name>
-		  <tooltip>Horizontal Pane</tooltip>
-		  <label></label>
-		  <icon>hpaned_xpm</icon>
-		  <active>False</active>
-		</widget>
+		    <widget>
+		      <class>GtkToggleButton</class>
+		      <child_name>Toolbar:button</child_name>
+		      <name>togglebutton72</name>
+		      <tooltip>Horizontal Button Box</tooltip>
+		      <label></label>
+		      <icon>hbuttonbox_xpm</icon>
+		      <active>False</active>
+		    </widget>
 
-		<widget>
-		  <class>GtkToggleButton</class>
-		  <child_name>Toolbar:button</child_name>
-		  <name>togglebutton36</name>
-		  <tooltip>Vertical Pane</tooltip>
-		  <label></label>
-		  <icon>vpaned_xpm</icon>
-		  <active>False</active>
-		</widget>
+		    <widget>
+		      <class>GtkToggleButton</class>
+		      <child_name>Toolbar:button</child_name>
+		      <name>togglebutton73</name>
+		      <tooltip>Vertical Button Box</tooltip>
+		      <label></label>
+		      <icon>vbuttonbox_xpm</icon>
+		      <active>False</active>
+		    </widget>
 
-		<widget>
-		  <class>GtkToggleButton</class>
-		  <child_name>Toolbar:button</child_name>
-		  <name>togglebutton37</name>
-		  <tooltip>Frame</tooltip>
-		  <label></label>
-		  <icon>frame_xpm</icon>
-		  <active>False</active>
-		</widget>
+		    <widget>
+		      <class>GtkToggleButton</class>
+		      <child_name>Toolbar:button</child_name>
+		      <name>togglebutton74</name>
+		      <tooltip>Horizontal Pane</tooltip>
+		      <label></label>
+		      <icon>hpaned_xpm</icon>
+		      <active>False</active>
+		    </widget>
 
-		<widget>
-		  <class>GtkToggleButton</class>
-		  <child_name>Toolbar:button</child_name>
-		  <name>togglebutton38</name>
-		  <tooltip>Scrolled Window</tooltip>
-		  <label></label>
-		  <icon>scrolledwindow_xpm</icon>
-		  <active>False</active>
-		</widget>
+		    <widget>
+		      <class>GtkToggleButton</class>
+		      <child_name>Toolbar:button</child_name>
+		      <name>togglebutton75</name>
+		      <tooltip>Vertical Pane</tooltip>
+		      <label></label>
+		      <icon>vpaned_xpm</icon>
+		      <active>False</active>
+		    </widget>
 
-		<widget>
-		  <class>GtkToggleButton</class>
-		  <child_name>Toolbar:button</child_name>
-		  <name>togglebutton39</name>
-		  <tooltip>Layou</tooltip>
-		  <label></label>
-		  <icon>layout_xpm</icon>
-		  <active>False</active>
-		</widget>
+		    <widget>
+		      <class>GtkToggleButton</class>
+		      <child_name>Toolbar:button</child_name>
+		      <name>togglebutton76</name>
+		      <tooltip>Frame</tooltip>
+		      <label></label>
+		      <icon>frame_xpm</icon>
+		      <active>False</active>
+		    </widget>
 
-		<widget>
-		  <class>GtkToggleButton</class>
-		  <child_name>Toolbar:button</child_name>
-		  <name>togglebutton40</name>
-		  <tooltip>Viewport</tooltip>
-		  <label></label>
-		  <icon>viewport_xpm</icon>
-		  <active>False</active>
-		</widget>
+		    <widget>
+		      <class>GtkToggleButton</class>
+		      <child_name>Toolbar:button</child_name>
+		      <name>togglebutton77</name>
+		      <tooltip>Scrolled Window</tooltip>
+		      <label></label>
+		      <icon>scrolledwindow_xpm</icon>
+		      <active>False</active>
+		    </widget>
 
-		<widget>
-		  <class>GtkToggleButton</class>
-		  <child_name>Toolbar:button</child_name>
-		  <name>togglebutton41</name>
-		  <tooltip>Alignment</tooltip>
-		  <label></label>
-		  <icon>alignment_xpm</icon>
-		  <active>False</active>
+		    <widget>
+		      <class>GtkToggleButton</class>
+		      <child_name>Toolbar:button</child_name>
+		      <name>togglebutton78</name>
+		      <tooltip>Layou</tooltip>
+		      <label></label>
+		      <icon>layout_xpm</icon>
+		      <active>False</active>
+		    </widget>
+
+		    <widget>
+		      <class>GtkToggleButton</class>
+		      <child_name>Toolbar:button</child_name>
+		      <name>togglebutton79</name>
+		      <tooltip>Viewport</tooltip>
+		      <label></label>
+		      <icon>viewport_xpm</icon>
+		      <active>False</active>
+		    </widget>
+
+		    <widget>
+		      <class>GtkToggleButton</class>
+		      <child_name>Toolbar:button</child_name>
+		      <name>togglebutton80</name>
+		      <tooltip>Alignment</tooltip>
+		      <label></label>
+		      <icon>alignment_xpm</icon>
+		      <active>False</active>
+		    </widget>
+		  </widget>
+
+		  <widget>
+		    <class>Placeholder</class>
+		  </widget>
 		</widget>
 	      </widget>
 	    </widget>
