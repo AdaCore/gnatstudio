@@ -55,9 +55,9 @@ package body GVD.Dialogs is
    --  ??? Should be translatable.
 
    type Simple_Entry_Dialog_Record is new Gtk_Dialog_Record with record
-      Entry_Field  : Gtk_Combo;
-      Was_Canceled : Boolean;
-      Label        : Gtk_Label;
+      Entry_Field   : Gtk_Combo;
+      Was_Cancelled : Boolean;
+      Label         : Gtk_Label;
    end record;
    type Simple_Entry_Dialog_Access is access
      all Simple_Entry_Dialog_Record'Class;
@@ -81,8 +81,7 @@ package body GVD.Dialogs is
    --  "Cancel" was pressed in a simple entry dialog
 
    function Delete_Simple_Entry
-     (Simple_Dialog : access Gtk_Widget_Record'Class)
-     return Boolean;
+     (Simple_Dialog : access Gtk_Widget_Record'Class) return Boolean;
    --  A simple entry dialog was deleted
 
    procedure Ok_Simple_Entry
@@ -612,7 +611,7 @@ package body GVD.Dialogs is
          Gtkada.Handlers.Return_Callback.Connect
            (Dialog, "delete_event",
             Gtkada.Handlers.Return_Callback.To_Marshaller
-            (Delete_Simple_Entry'Access));
+              (Delete_Simple_Entry'Access));
 
          Gtk_New_Vbox (Vbox);
          Pack_Start (Get_Vbox (Dialog), Vbox);
@@ -667,11 +666,11 @@ package body GVD.Dialogs is
 
       Set_Title (Dialog, Title);
       Set_Text (Get_Entry (Dialog.Entry_Field), "");
-      Dialog.Was_Canceled := False;
+      Dialog.Was_Cancelled := False;
       Show_All (Dialog);
       Gtk.Main.Main;
 
-      if Dialog.Was_Canceled then
+      if Dialog.Was_Cancelled then
          if Key = "" then
             Destroy (Dialog);
          else
@@ -738,7 +737,7 @@ package body GVD.Dialogs is
    procedure Cancel_Simple_Entry
      (Simple_Dialog : access Gtk_Widget_Record'Class) is
    begin
-      Simple_Entry_Dialog_Access (Simple_Dialog).Was_Canceled := True;
+      Simple_Entry_Dialog_Access (Simple_Dialog).Was_Cancelled := True;
       Gtk.Main.Main_Quit;
    end Cancel_Simple_Entry;
 
@@ -761,9 +760,9 @@ package body GVD.Dialogs is
      (Simple_Dialog : access Gtk_Widget_Record'Class)
      return Boolean is
    begin
-      Simple_Entry_Dialog_Access (Simple_Dialog).Was_Canceled := True;
+      Simple_Entry_Dialog_Access (Simple_Dialog).Was_Cancelled := True;
       Gtk.Main.Main_Quit;
-      return False;
+      return True;
    end Delete_Simple_Entry;
 
    --------------------------
