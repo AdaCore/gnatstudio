@@ -1691,7 +1691,7 @@ package body Builder_Module is
       Register_Command
         (Kernel,
          Command      => "compile",
-         Usage        => "(file1, [file2...]) -> None",
+         Params       => "(file1, [file2...])",
          Description  => -"Compile a list of files from the project.",
          Minimum_Args => 1,
          Maximum_Args => Natural'Last,
@@ -1700,7 +1700,7 @@ package body Builder_Module is
       Register_Command
         (Kernel,
          Command      => "get_build_output",
-         Usage        => "() -> list of lines",
+         Return_Value => "list of lines",
          Description  => -"Return the last compilation results.",
          Minimum_Args => 0,
          Maximum_Args => 0,
