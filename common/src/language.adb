@@ -381,27 +381,25 @@ package body Language is
       Clean   : Boolean := False) return String
    is
       Start_Of_Line : Natural := Block'First;
-      End_Of_Line   : Natural := Line_End (Block, Start_Of_Line);
-      New_Block     : Unbounded_String := To_Unbounded_String
-        (Comment_Line
-           (Language_Access (Lang),
-            Block (Start_Of_Line .. End_Of_Line),
-            Comment,
-            Clean));
-
+      End_Of_Line   : Natural;
+      New_Block     : Unbounded_String := Null_Unbounded_String;
    begin
       loop
-         Start_Of_Line := Next_Line (Block, Start_Of_Line);
-         exit when Start_Of_Line = Block'Last;
-         End_Of_Line := Line_End (Block, Start_Of_Line);
+         End_Of_Line := Next_Line (Block, Start_Of_Line);
+         if End_Of_Line /= Block'Last and then End_Of_Line /= Block'First then
+            End_Of_Line := End_Of_Line - 1;
+         end if;
 
-         Append (New_Block, ASCII.LF);
          Append
            (New_Block,
-            Comment_Line (Language_Access (Lang),
-            Block (Start_Of_Line .. End_Of_Line),
-            Comment,
-            Clean));
+            Comment_Line
+              (Language_Access (Lang),
+               Block (Start_Of_Line .. End_Of_Line),
+               Comment,
+               Clean));
+
+         Start_Of_Line := Next_Line (Block, Start_Of_Line);
+         exit when Start_Of_Line = Block'Last;
       end loop;
 
       return To_String (New_Block);
