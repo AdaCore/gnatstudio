@@ -1,5 +1,10 @@
 Known Problems fixed in GPS 1.4.1
 
+- Output of external commands not visible
+  Problem:    If you specify an external command to be executed through a
+              customization file, the command and its output were not visible in              the Messages window
+  Workaround: Do an explicit call to "echo" if your custom action
+                                                                                
 - CC11-011 Key bindings not working when num-lock or caps-lock is turned on.
   Problem:    When using user-configured key shortcuts, the shortcuts do not
               work when caps-lock or num-lock is enabled on the keyboard.
