@@ -32,14 +32,23 @@ package Commands.Interactive is
    type Interactive_Command_Access is access all Interactive_Command'Class;
 
    type Interactive_Command_Context is record
-      Event   : Gdk.Event.Gdk_Event;
+      Event   : Gdk.Event.Gdk_Event := null;
       Context : Glide_Kernel.Selection_Context_Access;
       Args    : GNAT.OS_Lib.String_List_Access;
    end record;
 
+   Null_Context : constant Interactive_Command_Context :=
+     (Event   => null,
+      Context => null,
+      Args    => null);
+
+   procedure Free (X : in out Interactive_Command_Context);
+   --  Free memory associated to X.
+
    function Execute
      (Command : access Interactive_Command;
-      Event   : Gdk.Event.Gdk_Event) return Command_Return_Type is abstract;
+      Context : Interactive_Command_Context)
+      return Command_Return_Type is abstract;
    --  Execute the command.
    --  If Event is null, it should be executed non-interactively. Otherwise,
    --  Event is set to the event that started the execution (a Gdk_Key_Event
@@ -51,7 +60,7 @@ package Commands.Interactive is
 
    procedure Launch_Synchronous_Interactive
      (Command : access Interactive_Command'Class;
-      Event   : Gdk.Event.Gdk_Event;
+      Context : Interactive_Command_Context;
       Wait    : Duration := 0.0);
    --  Execute the command synchronously.
    --  This is similar to Commands.Lauch_Synchronous, except it also propagates
@@ -59,7 +68,7 @@ package Commands.Interactive is
 
    type Interactive_Command_Proxy is new Root_Command with record
       Command : Interactive_Command_Access;
-      Event   : Gdk.Event.Gdk_Event;
+      Context : Interactive_Command_Context;
    end record;
    type Interactive_Command_Proxy_Access
       is access Interactive_Command_Proxy'Class;
@@ -70,7 +79,7 @@ package Commands.Interactive is
 
    function Create_Proxy
      (Command : access Interactive_Command'Class;
-      Event   : Gdk.Event.Gdk_Event) return Command_Access;
+      Context : Interactive_Command_Context) return Command_Access;
    --  Create a new proxy
 
    function Execute (Command : access Interactive_Command_Proxy)
