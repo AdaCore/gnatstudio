@@ -236,10 +236,11 @@ package body Find_Utils is
             declare
                Full_Name : constant String := Dir_Name & File_Name (1 .. Last);
             begin
-               --  Unlike Open_Read, Is_Directory adds ASCII.NUL automatically
-
                if Is_Directory (Full_Name) then
                   if Search.Recurse
+                     --  ??? Remove link duplicates by using Normalize_Pathname
+                     --  and a hash table.
+
                     and then File_Name (1 .. Last) /= "."
                     and then File_Name (1 .. Last) /= ".."
                   then
@@ -293,8 +294,7 @@ package body Find_Utils is
         (Name    : String;
          Context : Language_Context) return Boolean
       is
-         FD       : constant File_Descriptor :=
-           Open_Read (Name & ASCII.NUL, Text);
+         FD       : constant File_Descriptor := Open_Read (Name, Text);
          Continue : Boolean := True;
 
       begin
@@ -345,8 +345,7 @@ package body Find_Utils is
       -------------------------------
 
       function Scan_File_Without_Context (Name : String) return Boolean is
-         FD       : constant File_Descriptor :=
-           Open_Read (Name & ASCII.NUL, Text);
+         FD       : constant File_Descriptor := Open_Read (Name, Text);
          Continue : Boolean := True;
 
       begin
