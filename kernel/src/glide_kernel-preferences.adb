@@ -424,7 +424,7 @@ package body Glide_Kernel.Preferences is
 
       Tooltip_Font := Param_Spec_Font (Gnew_Font
         (Name    => "Src-Editor-Tooltip-Font",
-         Default => "Helvetica 10",
+         Default => "Sans 10",
          Blurb   => -"The font used to display tooltips in the source editor",
          Nick    => -"Tooltip font"));
       Register_Property
@@ -542,7 +542,7 @@ package body Glide_Kernel.Preferences is
 
       Switches_Editor_Title_Font := Param_Spec_Font (Gnew_Font
         (Name    => "Prj-Editor-Title-Font",
-         Default => "helvetica bold oblique 14",
+         Default => "sans bold oblique 14",
          Blurb   => -"Font to use for the switches editor dialog",
          Nick    => -"Title font",
          Flags   => Param_Readable));
@@ -606,7 +606,7 @@ package body Glide_Kernel.Preferences is
 
       Wizard_Title_Font := Param_Spec_Font (Gnew_Font
         (Name    => "Wizard-Title-Font",
-         Default => "helvetica bold oblique 10",
+         Default => "sans bold oblique 10",
          Blurb   => -"Font to use for the title of the pages in the wizard",
          Nick    => -"Title font",
          Flags   => Param_Readable));
@@ -618,7 +618,7 @@ package body Glide_Kernel.Preferences is
 
       Browsers_Link_Font := Param_Spec_Font (Gnew_Font
         (Name    => "Browsers-Link-Font",
-         Default => "Helvetica 10",
+         Default => "sans 10",
          Blurb   => -"Font used to draw the links between items",
          Nick    => -"Links font"));
       Register_Property
