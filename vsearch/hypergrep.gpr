@@ -1,10 +1,7 @@
 with "../gtkada/gtkada";
-with "../gvd/gvd";
+with "../gvd/gvd_common";
 with "../common/common";
 with "../kernel/kernel";
-with "../glide/glide";
-with "../prj_editor/prj_editor";
-with "../src_editor/src_editor";
 
 project Hypergrep is
 
