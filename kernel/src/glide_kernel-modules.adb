@@ -349,6 +349,111 @@ package body Glide_Kernel.Modules is
       return Context.Importing_Project;
    end Importing_Project_Information;
 
+   ------------------------------
+   -- Set_Location_Information --
+   ------------------------------
+
+   procedure Set_Location_Information
+     (Context     : access File_Location_Context;
+      Category    : String := "";
+      Message     : String := "";
+      Line        : Integer := 0;
+      Column      : Integer := 0) is
+   begin
+      Free (Context.Category_Name);
+      if Category /= "" then
+         Context.Category_Name := new String'(Category);
+      end if;
+
+      Free (Context.Message);
+      if Message /= "" then
+         Context.Message := new String'(Message);
+      end if;
+
+      Context.Line := Line;
+      Context.Column := Column;
+   end Set_Location_Information;
+
+   --------------------------
+   -- Has_Line_Information --
+   --------------------------
+
+   function Has_Line_Information
+     (Context : access File_Location_Context) return Boolean is
+   begin
+      return Context.Line /= 0;
+   end Has_Line_Information;
+
+   ----------------------
+   -- Line_Information --
+   ----------------------
+
+   function Line_Information
+     (Context : access File_Location_Context) return Integer is
+   begin
+      return Context.Line;
+   end Line_Information;
+
+   ----------------------------
+   -- Has_Column_Information --
+   ----------------------------
+
+   function Has_Column_Information
+     (Context : access File_Location_Context) return Boolean is
+   begin
+      return Context.Column /= 0;
+   end Has_Column_Information;
+
+   ------------------------
+   -- Column_Information --
+   ------------------------
+
+   function Column_Information
+     (Context : access File_Location_Context) return Integer is
+   begin
+      return Context.Column;
+   end Column_Information;
+
+   ------------------------------
+   -- Has_Category_Information --
+   ------------------------------
+
+   function Has_Category_Information
+     (Context : access File_Location_Context) return Boolean is
+   begin
+      return Context.Category_Name /= null;
+   end Has_Category_Information;
+
+   --------------------------
+   -- Category_Information --
+   --------------------------
+
+   function Category_Information
+     (Context : access File_Location_Context) return String is
+   begin
+      return Context.Category_Name.all;
+   end Category_Information;
+
+   -----------------------------
+   -- Has_Message_Information --
+   -----------------------------
+
+   function Has_Message_Information
+     (Context : access File_Location_Context) return Boolean is
+   begin
+      return Context.Message /= null;
+   end Has_Message_Information;
+
+   -------------------------
+   -- Message_Information --
+   -------------------------
+
+   function Message_Information
+     (Context : access File_Location_Context) return String is
+   begin
+      return Context.Message.all;
+   end Message_Information;
+
    ----------------------------
    -- Set_Entity_Information --
    ----------------------------

@@ -759,6 +759,45 @@ package Glide_Kernel.Modules is
       End_Line   : out Integer);
    --  Return the area information in Context.
 
+   ----------------------------
+   -- File_Location contexts --
+   ----------------------------
+
+   type File_Location_Context is new File_Selection_Context with private;
+   type File_Location_Context_Access is access all File_Location_Context;
+
+   procedure Set_Location_Information
+     (Context     : access File_Location_Context;
+      Category    : String := "";
+      Message     : String := "";
+      Line        : Integer := 0;
+      Column      : Integer := 0);
+   --  Set the information in the context
+
+   function Has_Line_Information
+     (Context : access File_Location_Context) return Boolean;
+   function Line_Information
+     (Context : access File_Location_Context) return Integer;
+   --  Check whether there is some line information, and return it.
+
+   function Has_Column_Information
+     (Context : access File_Location_Context) return Boolean;
+   function Column_Information
+     (Context : access File_Location_Context) return Integer;
+   --  Check whether there is some column information, and return it.
+
+   function Has_Category_Information
+     (Context : access File_Location_Context) return Boolean;
+   function Category_Information
+     (Context : access File_Location_Context) return String;
+   --  Check whether there is some category information, and return it.
+
+   function Has_Message_Information
+     (Context : access File_Location_Context) return Boolean;
+   function Message_Information
+     (Context : access File_Location_Context) return String;
+   --  Check whether there is some message information, and return it.
+
    ---------------------
    -- Entity Contexts --
    ---------------------
@@ -854,6 +893,12 @@ private
       Creator_Provided_Project : Boolean := False;
       --  Set to True if the project_view was given by the creator, instead of
       --  being computed automatically
+   end record;
+
+   type File_Location_Context is new File_Selection_Context with record
+      Category_Name : GNAT.OS_Lib.String_Access := null;
+      Message       : GNAT.OS_Lib.String_Access := null;
+      Line, Column  : Integer := 0;
    end record;
 
    type File_Area_Context is new File_Selection_Context with record
