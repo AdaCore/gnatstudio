@@ -42,7 +42,7 @@ with VCS_View_API;              use VCS_View_API;
 with VCS_View_Pkg;              use VCS_View_Pkg;
 with Basic_Types;               use Basic_Types;
 
-with VCS.Unknown_VCS;
+with VCS.Unknown_VCS;           use VCS.Unknown_VCS;
 with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
@@ -137,10 +137,16 @@ package body VCS_Module is
       Context : access Selection_Context'Class;
       Menu    : access Gtk.Menu.Gtk_Menu_Record'Class)
    is
-      Submenu      : Gtk_Menu;
-      Menu_Item    : Gtk_Menu_Item;
+      Submenu   : Gtk_Menu;
+      Menu_Item : Gtk_Menu_Item;
+
+      use type VCS.VCS_Access;
+
    begin
-      if Context.all in File_Selection_Context'Class then
+      if Context.all in File_Selection_Context'Class
+        and then Get_Current_Ref (Selection_Context_Access (Context)) /=
+          Unknown_VCS_Reference
+      then
          Gtk_New (Menu_Item, Label => -"Version Control");
          Gtk_New (Submenu);
          VCS_View_API.VCS_Contextual_Menu (Object, Context, Submenu);
