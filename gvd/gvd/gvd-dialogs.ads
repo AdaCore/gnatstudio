@@ -24,6 +24,8 @@ with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
 with Gtk.Clist; use Gtk.Clist;
 with Gtk.Hbutton_Box; use Gtk.Hbutton_Box;
 with Gtk.Button; use Gtk.Button;
+with Gtk.List; use Gtk.List;
+with Gtk.Viewport; use Gtk.Viewport;
 with Gtk.Window; use Gtk.Window;
 with Gtk.Enums;
 with Debugger; use Debugger;
@@ -43,6 +45,9 @@ package Odd.Dialogs is
 
    type Question_Dialog_Record is new Odd_Dialog_Record with private;
    type Question_Dialog_Access is access all Question_Dialog_Record'Class;
+
+   type History_Dialog_Record is new Gtk_Dialog_Record with private;
+   type History_Dialog_Access is access all History_Dialog_Record'Class;
 
    type Question_Record is record
       Choice : Odd.Types.String_Access;
@@ -107,6 +112,17 @@ package Odd.Dialogs is
       Multiple_Selection_Allowed : Boolean;
       Questions                  : Question_Array);
 
+   procedure Gtk_New
+     (History_Dialog : out History_Dialog_Access;
+      Main_Window    : Gtk_Window);
+
+   procedure Initialize
+     (History_Dialog : access History_Dialog_Record'Class);
+
+   procedure Update
+     (History_Dialog : History_Dialog_Access;
+      Debugger       : access Gtk.Widget.Gtk_Widget_Record'Class);
+
    function Simple_Entry_Dialog
      (Parent    : access Gtk.Window.Gtk_Window_Record'Class;
       Title     : String;
@@ -160,5 +176,17 @@ private
    --  We have to store the debugger for this dialog, since the user's choice
    --  should be sent to the right debugger, even if the user has switched
    --  tabs in between.
+
+   type History_Dialog_Record is new Gtk_Dialog_Record with record
+      Vbox19 : Gtk_Vbox;
+      Scrolledwindow11 : Gtk_Scrolled_Window;
+      Viewport2 : Gtk_Viewport;
+      List : Gtk_List;
+      Hbuttonbox11 : Gtk_Hbutton_Box;
+      Replay_Selection : Gtk_Button;
+      Cancel : Gtk_Button;
+      Help : Gtk_Button;
+      Window : Gtk_Window;
+   end record;
 
 end Odd.Dialogs;

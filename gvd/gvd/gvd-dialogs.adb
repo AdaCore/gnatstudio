@@ -37,12 +37,12 @@ with Gtk.Dialog;            use Gtk.Dialog;
 with Gtk.Label;             use Gtk.Label;
 with Gtk.Enums;             use Gtk.Enums;
 with Gtk.Combo;             use Gtk.Combo;
-with Gtk.List;              use Gtk.List;
 with Gtk.List_Item;         use Gtk.List_Item;
 with Gtk.Object;            use Gtk.Object;
 with Gtk.Check_Button;      use Gtk.Check_Button;
 with Process_Proxies;       use Process_Proxies;
 with Language;              use Language;
+with Main_Debug_Window_Pkg; use Main_Debug_Window_Pkg;
 
 package body Odd.Dialogs is
 
@@ -107,14 +107,22 @@ package body Odd.Dialogs is
    --  created.
 
    function Delete_Dialog
-     (Dialog : access Gtk_Widget_Record'Class)
-     return Boolean;
+     (Dialog : access Gtk_Widget_Record'Class) return Boolean;
    --  Called when the user deletes a dialog by clicking on the small
    --  button in the title bar of the window.
 
    -------------
    -- Gtk_New --
    -------------
+
+   procedure Gtk_New
+     (History_Dialog : out History_Dialog_Access;
+      Main_Window    : Gtk_Window) is
+   begin
+      History_Dialog := new History_Dialog_Record;
+      Odd.Dialogs.Initialize (History_Dialog);
+      History_Dialog.Window := Main_Window;
+   end Gtk_New;
 
    procedure Gtk_New
      (Task_Dialog : out Task_Dialog_Access;
@@ -124,10 +132,6 @@ package body Odd.Dialogs is
       Initialize (Task_Dialog, Main_Window);
    end Gtk_New;
 
-   -------------
-   -- Gtk_New --
-   -------------
-
    procedure Gtk_New
      (Backtrace_Dialog : out Backtrace_Dialog_Access;
       Main_Window      : Gtk_Window) is
@@ -135,10 +139,6 @@ package body Odd.Dialogs is
       Backtrace_Dialog := new Backtrace_Dialog_Record;
       Initialize (Backtrace_Dialog, Main_Window);
    end Gtk_New;
-
-   -------------
-   -- Gtk_New --
-   -------------
 
    procedure Gtk_New
      (Question_Dialog            : out Question_Dialog_Access;
@@ -148,8 +148,9 @@ package body Odd.Dialogs is
       Questions                  : Question_Array) is
    begin
       Question_Dialog := new Question_Dialog_Record;
-      Initialize (Question_Dialog, Main_Window, Debugger,
-                  Multiple_Selection_Allowed, Questions);
+      Initialize
+        (Question_Dialog, Main_Window, Debugger,
+         Multiple_Selection_Allowed, Questions);
    end Gtk_New;
 
    ------------
@@ -201,12 +202,7 @@ package body Odd.Dialogs is
          if Info'Length > 0 then
 
             for J in Info'First + 1 .. Info'Last loop
-               declare
-                  Info2 : Chars_Ptr_Array := Info (J).Information;
-                  --  ??? workaround a bug in GNAT 3.12p that is fixed in 3.13
-               begin
-                  Row := Append (Task_Dialog.List, Info2);
-               end;
+               Row := Append (Task_Dialog.List, Info (J).Information);
             end loop;
 
             Row := Columns_Autosize (Task_Dialog.List);
@@ -217,10 +213,6 @@ package body Odd.Dialogs is
 
       Thaw (Task_Dialog.List);
    end Update;
-
-   ------------
-   -- Update --
-   ------------
 
    procedure Update
      (Backtrace_Dialog : access Backtrace_Dialog_Record;
@@ -276,6 +268,38 @@ package body Odd.Dialogs is
       Thaw (Backtrace_Dialog.List);
    end Update;
 
+   procedure Update
+     (History_Dialog : History_Dialog_Access;
+      Debugger       : access Gtk.Widget.Gtk_Widget_Record'Class)
+   is
+      use String_History;
+
+      Tab     : constant Debugger_Process_Tab :=
+        Debugger_Process_Tab (Debugger);
+      History : History_List := Tab.Window.Command_History;
+      Data    : History_Data;
+      Item    : Gtk_List_Item;
+
+   begin
+      Remove_Items
+        (History_Dialog.List, Get_Children (History_Dialog.List));
+      Wind (History, Backward);
+
+      for J in 1 .. Length (History) loop
+         Data := Get_Current (History);
+
+         if Data.Debugger_Num = Natural (Get_Num (Tab))
+           and then Data.Mode in Odd.Types.Visible .. User
+         then
+            Gtk_New (Item, Label => Data.Command.all);
+            Show (Item);
+            Add (History_Dialog.List, Item);
+         end if;
+
+         Move_To_Next (History);
+      end loop;
+   end Update;
+
    ----------------
    -- Initialize --
    ----------------
@@ -316,10 +340,6 @@ package body Odd.Dialogs is
          Return_Callback.To_Marshaller (Delete_Dialog'Access));
    end Initialize;
 
-   ----------------
-   -- Initialize --
-   ----------------
-
    procedure Initialize
      (Task_Dialog : access Task_Dialog_Record'Class;
       Main_Window : Gtk_Window) is
@@ -341,10 +361,6 @@ package body Odd.Dialogs is
       --  We can't create the clist here, since we don't know yet how many
       --  columns there will be. This will be done on the first call to update
    end Initialize;
-
-   ----------------
-   -- Initialize --
-   ----------------
 
    procedure Initialize
      (Backtrace_Dialog : access Backtrace_Dialog_Record'Class;
@@ -370,10 +386,6 @@ package body Odd.Dialogs is
          On_Backtrace_List_Select_Row'Access);
       Add (Backtrace_Dialog.Scrolledwindow1, Backtrace_Dialog.List);
    end Initialize;
-
-   ----------------
-   -- Initialize --
-   ----------------
 
    procedure Initialize
      (Question_Dialog            : access Question_Dialog_Record'Class;
@@ -446,6 +458,67 @@ package body Odd.Dialogs is
       Set_Default_Size (Question_Dialog, Gint'Min (Width, 500), 200);
 
       Register_Dialog (Convert (Main_Window, Debugger), Question_Dialog);
+   end Initialize;
+
+   procedure Initialize
+     (History_Dialog : access History_Dialog_Record'Class) is
+   begin
+      Gtk.Window.Initialize (History_Dialog, Window_Toplevel);
+      Set_Title (History_Dialog, -"Command History");
+      Set_Policy (History_Dialog, False, True, False);
+      Set_Position (History_Dialog, Win_Pos_None);
+      Set_Modal (History_Dialog, False);
+
+      Gtk_New_Vbox (History_Dialog.Vbox19, False, 0);
+      Add (History_Dialog, History_Dialog.Vbox19);
+
+      Gtk_New (History_Dialog.Scrolledwindow11);
+      Pack_Start
+        (History_Dialog.Vbox19,
+         History_Dialog.Scrolledwindow11, True, True, 0);
+      Set_Policy
+        (History_Dialog.Scrolledwindow11, Policy_Automatic, Policy_Automatic);
+
+      Gtk_New (History_Dialog.Viewport2);
+      Add (History_Dialog.Scrolledwindow11, History_Dialog.Viewport2);
+      Set_Shadow_Type (History_Dialog.Viewport2, Shadow_In);
+
+      Gtk_New (History_Dialog.List);
+      Add (History_Dialog.Viewport2, History_Dialog.List);
+      Set_Selection_Mode (History_Dialog.List, Selection_Multiple);
+
+      Gtk_New (History_Dialog.Hbuttonbox11);
+      Pack_Start
+        (History_Dialog.Vbox19, History_Dialog.Hbuttonbox11, False, False, 0);
+      Set_Spacing (History_Dialog.Hbuttonbox11, 30);
+      Set_Layout (History_Dialog.Hbuttonbox11, Buttonbox_Spread);
+      Set_Child_Size (History_Dialog.Hbuttonbox11, 85, 27);
+      Set_Child_Ipadding (History_Dialog.Hbuttonbox11, 7, 0);
+
+      Gtk_New (History_Dialog.Replay_Selection, -"Replay selection");
+      Set_Flags (History_Dialog.Replay_Selection, Can_Default);
+      Button_Callback.Connect
+        (History_Dialog.Replay_Selection, "clicked",
+         Button_Callback.To_Marshaller (On_Replay_Selection_Clicked'Access));
+      Add (History_Dialog.Hbuttonbox11, History_Dialog.Replay_Selection);
+
+      Gtk_New (History_Dialog.Cancel, -"Close");
+      Set_Flags (History_Dialog.Cancel, Can_Default);
+      Button_Callback.Connect
+        (History_Dialog.Cancel, "clicked",
+         Button_Callback.To_Marshaller (On_History_Cancel_Clicked'Access));
+      Add (History_Dialog.Hbuttonbox11, History_Dialog.Cancel);
+
+      Gtk_New (History_Dialog.Help, -"Help");
+      Set_Flags (History_Dialog.Help, Can_Default);
+      Button_Callback.Connect
+        (History_Dialog.Help, "clicked",
+         Button_Callback.To_Marshaller (On_History_Help_Clicked'Access));
+      Add (History_Dialog.Hbuttonbox11, History_Dialog.Help);
+
+      Return_Callback.Connect
+        (History_Dialog, "delete_event",
+         Return_Callback.To_Marshaller (Delete_Dialog'Access));
    end Initialize;
 
    ----------
@@ -688,9 +761,7 @@ package body Odd.Dialogs is
    -------------------
 
    function Delete_Dialog
-     (Dialog : access Gtk_Widget_Record'Class)
-     return Boolean
-   is
+     (Dialog : access Gtk_Widget_Record'Class) return Boolean is
    begin
       Hide (Dialog);
       return True;
