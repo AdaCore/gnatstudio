@@ -693,6 +693,23 @@ package body Codefix.Text_Manager is
       end loop;
    end Update_All;
 
+   -------------------
+   -- Previous_Char --
+   -------------------
+
+   function Previous_Char
+     (This : Text_Navigator_Abstr'Class; Cursor : File_Cursor'Class)
+     return File_Cursor'Class
+   is
+      Result : File_Cursor;
+   begin
+      Result := (Text_Cursor
+                   (Previous_Char
+                      (Get_File (This, Cursor.File_Name.all).all, Cursor))
+                 with Clone (Cursor.File_Name));
+      return Result;
+   end Previous_Char;
+
    ----------------------------------------------------------------------------
    --  type Text_Interface
    ----------------------------------------------------------------------------
@@ -1399,6 +1416,42 @@ package body Codefix.Text_Manager is
    begin
       This.Structure_Up_To_Date.all := False;
    end Text_Has_Changed;
+
+   -------------------
+   -- Previous_Char --
+   -------------------
+
+   function Previous_Char
+     (This : Text_Interface'Class; Cursor : Text_Cursor'Class)
+     return Text_Cursor'Class
+   is
+      Result, Line_Cursor : Text_Cursor := Text_Cursor (Cursor);
+      Current_Line        : Dynamic_String;
+   begin
+      Line_Cursor.Col := 1;
+
+      Current_Line := new String'(Get_Line (This, Line_Cursor));
+
+      loop
+         Result.Col := Result.Col - 1;
+
+         if Result.Col = 0 then
+            Result.Line := Result.Line - 1;
+            Line_Cursor.Line := Line_Cursor.Line - 1;
+
+            if Line_Cursor.Line = 0 then
+               raise Codefix_Panic;
+            end if;
+
+            Assign (Current_Line, Get_Line (This, Line_Cursor));
+            Result.Col := Current_Line'Last;
+         end if;
+
+         if not Is_Blank (Current_Line (Result.Col)) then
+            return Result;
+         end if;
+      end loop;
+   end Previous_Char;
 
    ----------------------------------------------------------------------------
    --  type Text_Cursor
