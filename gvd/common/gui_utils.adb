@@ -26,6 +26,7 @@ with Gdk.GC;                   use Gdk.GC;
 with Gdk.Main;                 use Gdk.Main;
 with Gdk.Pixmap;               use Gdk.Pixmap;
 with Gdk.Window;               use Gdk.Window;
+with Glib.Convert;             use Glib.Convert;
 with Glib.Object;              use Glib.Object;
 with Glib.Values;              use Glib.Values;
 with Glib;                     use Glib;
@@ -119,7 +120,7 @@ package body GUI_Utils is
 
       --  Add the new item in the list
 
-      Gtk_New (Item, Text);
+      Gtk_New (Item, Locale_To_UTF8 (Text));
       Show (Item);
       Add (List, Item);
       return Item;
@@ -622,7 +623,7 @@ package body GUI_Utils is
       Label     : String;
       Path      : String) is
    begin
-      Initialize (Gtk_Menu_Item (Menu_Item), Label);
+      Initialize (Gtk_Menu_Item (Menu_Item), Locale_To_UTF8 (Label));
       Menu_Item.Full_Path := Path;
    end Initialize;
 
