@@ -1,5 +1,12 @@
 Known Problems fixed in GPS 2.0.0
 
+- D415-005 Execution window is read-only after the first execution
+  Problem:    If you run an external program using the menu Build->Run,
+              after the process exits, the execution window becomes read-only
+              and cannot be used to input text in following executions of the
+              program.
+  Workaround: Close the execution window before executing the second time.
+
 - CB20-010 Project wizard creates existing object directory
   Problem:    If you select "use relative paths" in the project wizard, it
               happens that GPS suggests the creation of the object or exec
