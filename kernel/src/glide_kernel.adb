@@ -41,11 +41,6 @@ with Gtkada.Handlers;           use Gtkada.Handlers;
 with Gtkada.MDI;                use Gtkada.MDI;
 with System;                    use System;
 
-with Ada.Tags;                  use Ada.Tags;
-with Ada.Text_IO;               use Ada.Text_IO;
-with GNAT.Directory_Operations; use GNAT.Directory_Operations;
-with GNAT.OS_Lib;               use GNAT.OS_Lib;
-with Ada.Unchecked_Deallocation;
 with String_Utils;              use String_Utils;
 with Glide_Intl;                use Glide_Intl;
 with Glide_Main_Window;         use Glide_Main_Window;
@@ -77,7 +72,12 @@ with Prj.Tree;                  use Prj.Tree;
 
 with Traces;                    use Traces;
 
-with Unchecked_Deallocation;
+with Ada.Exceptions;            use Ada.Exceptions;
+with Ada.Tags;                  use Ada.Tags;
+with Ada.Text_IO;               use Ada.Text_IO;
+with GNAT.Directory_Operations; use GNAT.Directory_Operations;
+with GNAT.OS_Lib;               use GNAT.OS_Lib;
+with Ada.Unchecked_Deallocation;
 
 package body Glide_Kernel is
 
@@ -123,7 +123,7 @@ package body Glide_Kernel is
    --  Decl is set to No_Entity_Information and Status to Entity_Not_Found if
    --  the user didn't select any declaration.
 
-   procedure Unchecked_Free is new Unchecked_Deallocation
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Kernel_Module_Data_Record'Class, Kernel_Module_Data);
 
    --------------------------
@@ -700,15 +700,22 @@ package body Glide_Kernel is
 
    begin
       if Is_Regular_File (File) then
+         Trace (Me, "loading desktop file " & File);
          Node := Parse (File);
          Kernel_Desktop.Restore_Desktop (MDI, Node, Kernel_Handle (Handle));
          Free (Handle.Default_Desktop);
          return True;
       else
+         Trace (Me, "loading default desktop");
          Kernel_Desktop.Restore_Desktop
            (MDI, Handle.Default_Desktop, Kernel_Handle (Handle));
          return False;
       end if;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         return False;
    end Load_Desktop;
 
    ----------
@@ -716,9 +723,9 @@ package body Glide_Kernel is
    ----------
 
    procedure Free (Module : in out Module_ID) is
-      procedure Unchecked_Free is new Unchecked_Deallocation
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (Module_ID_Record'Class, Module_ID);
-      procedure Unchecked_Free is new Unchecked_Deallocation
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (Module_ID_Information, Module_ID_Information_Access);
    begin
       Destroy (Module.all);
