@@ -45,9 +45,9 @@ with Glide_Kernel;
 package Docgen.Work_On_Source is
 
    procedure Process_Source
-     (B                 : Backend_Handle;
+     (B                 : Docgen_Backend.Backend_Handle;
       Kernel            : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Doc_File          : File_Type;
+      Doc_File          : File_Descriptor;
       Next_Package      : GNAT.OS_Lib.String_Access;
       Prev_Package      : GNAT.OS_Lib.String_Access;
       Source_File_List  : in out Type_Source_File_List.List;
@@ -60,7 +60,6 @@ package Docgen.Work_On_Source is
       Process_Body_File : Boolean;
       LI_Unit           : LI_File_Ptr;
       Options           : All_Options;
-      Converter         : Docgen.Doc_Subprogram_Type;
       Doc_Directory     : String;
       Doc_Suffix        : String;
       Level             : in out Natural);
@@ -80,68 +79,55 @@ package Docgen.Work_On_Source is
    --  Options          : options set by the preferences.
    --  Process_Body_File: indicate if bofy files must be processed.
    --  ???  This last parameter is redundant because Options indicate it.
-   --  Converter        : used to indicate the subprogram used in order to
-   --  start making the output (currently, it's Launch_Doc_Create).
    --  Level            : the level of the current package. By default, the
    --  level of the package file is 1, then this level is increased by 1 at
    --  each inner package
 
    procedure Process_Unit_Index
-     (B                : Backend_Handle;
+     (B                : Docgen_Backend.Backend_Handle;
       Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
       Source_File_List : Docgen.Type_Source_File_List.List;
-      List_Ref_In_File : in out List_Reference_In_File.List;
       Options          : Docgen.All_Options;
-      Converter        : Docgen.Doc_Subprogram_Type;
       Doc_Directory    : String;
       Doc_Suffix       : String;
       Level            : in out Natural);
    --  Create the index file for the packages
 
    procedure Process_Subprogram_Index
-     (B                             : Backend_Handle;
+     (B                             : Docgen_Backend.Backend_Handle;
       Kernel                        : access
         Glide_Kernel.Kernel_Handle_Record'Class;
       Subprogram_Index_List         : Docgen.Type_Entity_List.List;
       Private_Subprogram_Index_List : in out Type_Entity_List.List;
-      List_Ref_In_File              : in out List_Reference_In_File.List;
       Options                       : Docgen.All_Options;
-      Converter                     : Docgen.Doc_Subprogram_Type;
       Doc_Directory                 : String;
-      Doc_Suffix                    : String;
-      Level                         : in out Natural);
+      Doc_Suffix                    : String);
    --  Create the index file for the subprograms
    --  Subprogram_Index_List         : list of public subprograms.
    --  Private_Subprogram_Index_List : list of private subprograms.
 
    procedure Process_Type_Index
-     (B                       : Backend_Handle;
+     (B                       : Docgen_Backend.Backend_Handle;
       Kernel                  : access Glide_Kernel.Kernel_Handle_Record'Class;
       Type_Index_List         : Docgen.Type_Entity_List.List;
       Private_Type_Index_List : in out Type_Entity_List.List;
-      List_Ref_In_File        : in out List_Reference_In_File.List;
       Options                 : All_Options;
-      Converter               : Doc_Subprogram_Type;
       Doc_Directory           : String;
-      Doc_Suffix              : String;
-      Level                   : in out Natural);
+      Doc_Suffix              : String);
    --  Create the index file for the types.
    --  Type_Index_List         : list of public types.
    --  Private_Type_Index_List : list of private types.
 
    procedure Process_Tagged_Type_Index
-     (B                         : Backend_Handle;
+     (B                         : Docgen_Backend.Backend_Handle;
       Kernel                    : access
         Glide_Kernel.Kernel_Handle_Record'Class;
       Tagged_Type_Index_List    : Docgen.Type_List_Tagged_Element.List;
       Private_Tagged_Types_List : in out Type_List_Tagged_Element.List;
-      List_Ref_In_File          : in out List_Reference_In_File.List;
       Source_File_List          : in out Type_Source_File_List.List;
       Options                   : All_Options;
-      Converter                 : Doc_Subprogram_Type;
       Doc_Directory             : String;
-      Doc_Suffix                : String;
-      Level                     : in out Natural);
+      Doc_Suffix                : String);
    --  Create the index file for the tagged types.
    --  Tagged_Type_Index_List    : list of public tagged types.
    --  Private_Tagged_Types_List : list of private tagged types.
