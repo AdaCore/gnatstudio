@@ -434,8 +434,10 @@ package body Src_Editor_View is
 
       User.Buffer_Top_Line := 0;
 
-      User.Idle_Redraw_Id := Source_View_Idle.Add
-        (Idle_Column_Redraw'Access, User);
+      if User.Idle_Redraw_Id = 0 then
+         User.Idle_Redraw_Id := Source_View_Idle.Add
+           (Idle_Column_Redraw'Access, User);
+      end if;
    end Side_Columns_Config_Change_Handler;
 
    ------------------------
