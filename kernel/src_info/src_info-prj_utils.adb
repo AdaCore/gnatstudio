@@ -114,6 +114,7 @@ package body Src_Info.Prj_Utils is
    --     Spec_Filename := Units.Table (Unit).File_Names (Specification).Name;
    --     Body_Filename := Units.Table (Unit).File_Names (Body_Part).Name;
    --  end Get_Source_Filenames;
+   --  ??? Why was this code commented out and not just removed.
 
    -----------------------
    -- Get_Spec_Filename --
@@ -349,9 +350,9 @@ package body Src_Info.Prj_Utils is
    ----------------------
 
    function Find_Object_File
-     (Project_View    : Prj.Project_Id;
-      Short_File_Name : String;
-      Object_Path     : String)
+     (Project_View           : Prj.Project_Id;
+      Short_File_Name        : String;
+      Predefined_Object_Path : String := "")
       return String
    is
       Path : String_Access;
@@ -369,9 +370,9 @@ package body Src_Info.Prj_Utils is
          end;
       end if;
 
-      --  Fallback, try on the Object_Path (only if Use_Object_Path is set)
-      if Object_Path /= "" then
-         Path := Locate_Regular_File (Short_File_Name, Object_Path);
+      --  Fallback, try on the Predefined_Object_Path if set
+      if Predefined_Object_Path /= "" then
+         Path := Locate_Regular_File (Short_File_Name, Predefined_Object_Path);
          if Path /= null then
             declare
                Full_Path : constant String := Path.all;
