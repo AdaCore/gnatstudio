@@ -452,7 +452,6 @@ package body Src_Info is
    begin
       Free (FI.Unit_Name);
       Free (FI.Source_Filename);
-      Free (FI.Directory_Name);
       Free (FI.Original_Filename);
       Destroy (FI.Declarations);
    end Destroy;
@@ -573,14 +572,20 @@ package body Src_Info is
    -------------------------
 
    function Get_Source_Filename (File : Source_File) return VFS.Virtual_File is
+      F : File_Info_Ptr;
    begin
       if File = No_Source_File then
          return VFS.No_File;
       end if;
 
-      return Create
-        (Get_File_Info (File).Source_Filename.all,
-         File.LI.LI.Project, Use_Object_Path => False);
+      F := Get_File_Info (File);
+      if F.Cached_File = VFS.No_File then
+         F.Cached_File := Create
+           (F.Source_Filename.all,
+            File.LI.LI.Project, Use_Object_Path => False);
+      end if;
+
+      return F.Cached_File;
    end Get_Source_Filename;
 
    -------------------

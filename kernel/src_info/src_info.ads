@@ -905,7 +905,7 @@ private
       --  in derived type. Can be left to null otherwise.
 
       Source_Filename   : String_Access;
-      Directory_Name    : String_Access;
+      Cached_File       : VFS.Virtual_File;
       File_Timestamp    : Timestamp;
       Original_Filename : String_Access;
       Original_Line     : Positive;
