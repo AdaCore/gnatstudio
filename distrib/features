@@ -1,5 +1,15 @@
 New features in GPS 1.1.0
 
+- Tooltips available in the switch editor
+
+- Documentation updates
+
+- New preference auto-save file
+
+- New preference column highlight
+
+- New submenu VCS->Directory
+
 - Current line can be highlighted in source editors
 
 - Active MDI windows can now be changed with the keyboard
