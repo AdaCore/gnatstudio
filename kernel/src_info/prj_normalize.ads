@@ -97,6 +97,7 @@
 --
 --  </description>
 
+with Prj_API;
 with Prj.Tree;
 with Types;
 
@@ -196,11 +197,14 @@ package Prj_Normalize is
    --  do not already have a case construct.
 
    procedure For_Each_Scenario_Case_Item
-     (Project : Prj.Tree.Project_Node_Id;
-      Pkg     : Prj.Tree.Project_Node_Id := Prj.Tree.Empty_Node;
-      Action  : Matching_Item_Callback);
+     (Project            : Prj.Tree.Project_Node_Id;
+      Pkg                : Prj.Tree.Project_Node_Id := Prj.Tree.Empty_Node;
+      Scenario_Variables : Prj_API.Project_Node_Array;
+      Action             : Matching_Item_Callback);
    --  Same above, but it works directly for the current scenario (ie its gets
-   --  the value of the variables directly from the environment).
+   --  the value of the variables directly from the environment). For
+   --  efficiency, the list of scenario variables has to be provided as a
+   --  parameter.
    --  Important: Project must have been normalized first, and it is
    --  recommended to call Check_Case_Construction before
    --

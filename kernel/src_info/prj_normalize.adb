@@ -533,14 +533,9 @@ package body Prj_Normalize is
    procedure For_Each_Scenario_Case_Item
      (Project : Prj.Tree.Project_Node_Id;
       Pkg     : Prj.Tree.Project_Node_Id := Prj.Tree.Empty_Node;
+      Scenario_Variables : Project_Node_Array;
       Action  : Matching_Item_Callback)
    is
-      --  ??? This call is wrong in fact, since it doesn't fully reflect the
-      --  ??? scenario in case some of the variables were defined in some
-      --  ??? other package or projects.
-      Scenario_Variables : constant Project_Node_Array :=
-        Find_Scenario_Variables (Project);
-
       Values : External_Variable_Value_Array (1 .. Scenario_Variables'Length);
       Last_Values : Natural := Values'First - 1;
 
