@@ -101,8 +101,6 @@ Integrated Help
 Multiple Document Interface
 * Selecting Windows::
 * Closing Windows::
-* Maximized and Iconified Windows::
-* Docked Windows::
 * Splitting Windows::
 * Floating Windows::
 * Moving Windows::
@@ -1109,8 +1107,6 @@ The format of these index files is specified in @pxref{Adding documentation}.
 @menu
 * Selecting Windows::
 * Closing Windows::
-* Maximized and Iconified Windows::
-* Docked Windows::
 * Splitting Windows::
 * Floating Windows::
 * Moving Windows::
@@ -1129,12 +1125,6 @@ explorers,@dots{} windows you have opened, your system will still see only
 one window (On Windows systems, the task bar shows only one
 icon). However, you can organize the GPS windows exactly the way you
 want, all inside the GPS main window.
-
-@cindex iconify
-For instance, you can choose to iconify some windows which are
-temporarily useless to you; you can choose to put some windows on top
-of others; you can resize all the windows to the size you want; and so
-on.
 
 This section will show the various capacities that GPS provides to
 help you organize your workspace.
@@ -1179,8 +1169,8 @@ have typed. For instance, if you are currently editing the files
 @cindex title bar
 @noindent
 Wherever the windows are displayed, they are always closed in the same
-manner. In the right side of the title bar of the window, three small
-buttons are displayed. The rightmost button is a cross. Clicking on
+manner. In the right side of the title bar of the window, one small
+button is displayed, looking like a cross. Clicking on
 this button will close the window.
 
 When a window is closed, the focus is given to the window of the same
@@ -1203,192 +1193,6 @@ Alternatively, you can also select the window by clicking anywhere in
 its title bar, and then select the menu @code{Window->Close}
 
 @c --------------------------------------------------------------------
-@node Maximized and Iconified Windows
-@section Maximized and Iconified Windows
-@cindex maximized
-@cindex iconified
-@c --------------------------------------------------------------------
-
-@noindent
-The MDI is initially split into three parts: one window to the left,
-one to the bottom, and a bigger one that occupies the remaining space.
-
-The first two will be discussed in @ref{Docked Windows}.
-The third area is the one that provides the most flexibility:
-
-@table @b
-
-@item maximized windows
-The windows in this area are initially maximized. This means that if
-you have several windows, a notebook will be created, and only one
-window will be visible at any given time. You select the window you want
-to see by clicking on the appropriate tab.
-
-Note that if there are a lot of windows, two small arrows will appear
-on the right of the tabs. Clicking on these arrows will show the
-remaining tabs.
-
-@iftex
-@cindex screen shot
-@image{mdi-scroll-tabs, 12.7cm}
-@end iftex
-
-@ifhtml
-@cindex screen shot
-@image{mdi-scroll-tabs}
-@end ifhtml
-
-@cindex menu
-You can go back to this maximized state in two ways: either select the
-menu @code{Window->Maximize All}, or click on the middle button on the
-right of the title bar of any window (this button shows two small
-squares, and will toggle between maximized and unmaximized states.
-
-You can also double-click on the title bar of any of the window, or in the
-tabs that appear at the bottom when multiple windows are stored in the
-central area.
-
-
-@item unmaximized windows
-@cindex unmaximized
-@cindex menu
-Instead of putting all the windows inside a notebook, GPS lets you
-organize them freely when they are unmaximized. Select the menu
-@code{Window->Unmaximize All}, or click again in the middle button on
-the right of the title bar.
-
-In this mode, the windows can be resized freely by clicking on the
-border of any side or in one of their four corners, as usual on
-windowing systems.
-
-They can also be moved around. As a result, you can choose for
-instance to display several windows side by side, or one on top of
-the others.
-
-To make it easier to get to these standard organizations, GPS provides
-a few shortcuts through menus:
-@cindex menu
-
-@table @code
-@item Window->Cascade
-@cindex cascade
-All the windows will be resized to the same size, and be moved one on
-top of the other, so that the top and left sides of all windows are
-visible. This way, you can easily select any window
-
-@item Window->Tile Horizontally
-@cindex title
-All the windows are resized to the same dimensions, and are put side
-by side, from left to right. No window will overlap any other.
-
-@iftex
-@cindex screen shot
-@image{mdi-tile-horizontal, 10.7cm}
-@end iftex
-
-@ifhtml
-@cindex screen shot
-@image{mdi-tile-horizontal}
-@end ifhtml
-
-@item Window->Tile Vertically
-@cindex title
-All the windows are resized to the same dimensions, and are put side
-by side, from top to bottom. No window will overlap any other.
-
-@iftex
-@cindex screen shot
-@image{mdi-tile-vertical, 9.5cm}
-@end iftex
-
-@ifhtml
-@cindex screen shot
-@image{mdi-tile-vertical}
-@end ifhtml
-
-@end table
-
-
-@item Iconified windows
-@cindex iconified
-When the windows are unmaximized, you can also choose to temporarily
-iconify some of them. This is done by clicking on the leftmost button
-in the title bar (the one that shows a single line).
-
-The window will then be resized so that only part of its title bar is
-visible, and none of its actual contents. Icons can still be moved
-around as you want, but they cannot be resized. You need to first
-de-iconify the window, by clicking once again on the same button.
-
-When de-iconified, a window will restore the size and position it had
-before it was iconified.
-
-@iftex
-@cindex screen shot
-@image{mdi-icons, 9.5cm}
-@end iftex
-
-@ifhtml
-@cindex screen shot
-@image{mdi-icons}
-@end ifhtml
-
-@end table
-
-@c --------------------------------------------------------------------
-@node Docked Windows
-@section Docked Windows
-@cindex docked
-@cindex docked window
-@cindex work space
-@c --------------------------------------------------------------------
-
-@noindent
-As mentioned before, the GPS work space is initially split into three
-windows. The one on the left and the one at the bottom are called
-@b{docking area}.
-
-They have a different behavior from the central area, since windows in
-these areas are necessarily grouped into a notebook. Thus, only one of
-them is visible at any given time, and you select the one you want to
-see by clicking on its name in the tabs area.
-
-GPS includes four such areas, one on each side of the main area. Some
-visual objects will initially be displayed in one of these docking areas
-instead of in the central one, like the project explorer, the message
-window,@dots{} Although you cannot control this initial position, it is
-possible to change it later on (@ref{Moving Windows}).
-
-However, you can still choose precisely the dimension you want for
-this docking area (either its width for the left and right areas, or
-its height for the top and bottom ones).
-
-@cindex handle
-Between each docking area and the central one, there is a small handle
-(on which a series of dots are drawn), that you can move interactively
-with the mouse, to resize the docking areas). By default, when you move
-such a handle, a line will appear on top of all other windows in GPS to
-show you the new position the docking area will have when you release
-the mouse. You can set up a preference (menu @code{Edit->Preferences})
-to indicate that you want the resizing to be opaque, that is that you
-want to see the windows as you resize them.
-@cindex preferences
-
-Note that when a window is @b{docked} (i.e. put in a docking area), some
-of the buttons in its title bar are grayed out and inactive.
-
-@cindex menu
-A simple way to dock a window is to select it, and then select the
-menu @code{Window->Docked}. We will see in @ref{Moving Windows} that
-there is a more intuitive way to do the same thing.
-
-In some cases GPS will change the color and size of the title (name) of a
-window in the notebook tab. This indicates that the window content
-has been updated, but the window wasn't visible. Typically,
-this is used to indicate that new messages have been written in the
-messages or console window.
-
-@c --------------------------------------------------------------------
 @node Splitting Windows
 @section Splitting Windows
 @cindex Splitting
@@ -1407,17 +1211,10 @@ pane. You can then in turn split these remaining windows to achieve any
 layout you want.
 
 All split windows can be resized interactively by dragging the handles that
-separate them, just as is done for docked windows. A preference (menu
+separate them. A preference (menu
 @code{Edit->Preferences}) controls whether this resizing is done in opaque
 mode or border mode. In the latter case, only the new handle position will
 be displayed while the mouse is dragged.
-
-The current layout is lost when you select one of the menus
-@code{Window->Cascade}, @code{Window->Tile Horizontally},
-@code{Window->Tile Vertically} or @code{Window->Unmaximized}. It is also
-changed if you destroy the last visible window in a pane. For instance, if
-you have split the central area in two, with one editor only on each side,
-closing any editor will result in an unsplit central area.
 
 You may want to bind the key shortcuts to the menus
 @code{Window->Split Horizontally}
@@ -1427,6 +1224,17 @@ achieve an effect similar to e.g. the standard Emacs behavior (where
 @key{control-x 2} splits a window horizontally, and @key{control-x 3} splits
 a window vertically), you can use the key manager
 (@pxref{The Key Manager Dialog}).
+
+Several editors or browsers can be put in the same area of the MDI. In such
+a case, they will be grouped together in a notebook widget, and you can
+select any of them by clicking on the corresponding tab. Note that if there
+are lots of windows, two small arrows will appear on the right of the tabs.
+Clicking on these arrows will show the remaining tabs.
+
+In some cases GPS will change the color and size of the title (name) of a
+window in the notebook tab. This indicates that the window content has been
+updated, but the window wasn't visible. Typically, this is used to indicate
+that new messages have been written in the messages or console window.
 
 @c --------------------------------------------------------------------
 @node Floating Windows
@@ -1482,17 +1290,10 @@ Floating}.
 @cindex moving
 @c --------------------------------------------------------------------
 
-@cindex maximized
-@cindex unmaximized
-@cindex floating
 @noindent
-As we have seen, the windows' state can be changed at any time, from
-maximized to unmaximized to docked to floating and back, in any
-order.
-
-@cindex menu
-In all cases, the changes are done either through the buttons in the
-title bar or through the @code{Window} menu.
+As we have seen, the organization of windows can be changed at any time
+by selecting a notebook containing several editors or browsers, and selecting
+one of the Split menus in the @code{Window} menu.
 
 @cindex drag-n-drop
 A more intuitive method is also provided, based on
@@ -1502,14 +1303,10 @@ keeping the left button pressed, drop it anywhere else inside GPS.
 
 Selecting an item so that it can be dragged is done simply by clicking
 with the left mouse button in its title bar, and keep the button
-pressed while moving the mouse. Although this is the general scheme,
-this would not work for unmaximized items, since the title bar is then
-used to move them around. In that case, you need to press the
-@key{control} key in addition to the left mouse button.
+pressed while moving the mouse. 
 
-A third possibility can be used for maximized or docked windows: click
-with the left mouse button in the notebook tab that contains their
-name. This third option is not available under Microsoft Windows systems.
+If the window is inside a notebook, you can also choose to select the
+notebook tab to start dragging the window around.
 
 While you keep the mouse button pressed, and move the mouse around, the
 selected drop area is highlighted with a dashed border. This shows precisely
@@ -1519,30 +1316,12 @@ that point.
 Here are the various places where a window can be dropped:
 
 @table @b
-@item The central area
-@cindex central area
-If the windows in that area are unmaximized, the window you are dropping
-(the current window) will acquire the same state. However, if the windows are
-currently maximized in the central area, or even if the latter was split
-horizontally, vertically or any combination of these, the location of the
-current window is indicated by the dashed rectangle: either in the pane
-where you released the mouse button, or on one of the sides of that pane
-(splitting as needed).
-
-@item Docking areas
-@cindex docked
-@cindex docking area
-The window will be immediately added to this area after dropping it
-and a new notebook will be created as needed.
-
-In some cases, you might want to create a docking area that is not
-currently visible (for instance, it is often useful to put the location window
-in the right docking area).
-
-To achieve this, drop the window on the small handle that surrounds
-the whole GPS window (a black rectangle will appear on the screen when
-your mouse is over that area). If you then drop the item, a new
-docking area will be created.
+@item Inside the MDI
+The location of the current window is indicated by a dashed rectangle, and
+the window you are dragging will be positioned at the same location as that
+rectangle: either on top of the window on which you dropped it (therefore they
+will both be put inside a notebook), or to one of the sides of that window,
+splitting as needed.
 
 @item System window
 If you drop a window outside of GPS (for
