@@ -40,7 +40,6 @@ with Glide_Kernel;              use Glide_Kernel;
 with Glide_Kernel.Project;      use Glide_Kernel.Project;
 with Glide_Kernel.Console;      use Glide_Kernel.Console;
 with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
-with File_Utils;                use File_Utils;
 with String_Utils;              use String_Utils;
 with Traces;                    use Traces;
 with GNAT.Regpat;               use GNAT.Regpat;
