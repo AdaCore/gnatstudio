@@ -219,6 +219,10 @@ package body Src_Editor_Buffer is
    --  event should cancel the current user action: focus switching
    --  to another window, cursor moved, etc.
 
+   procedure User_Edit_Hook (Buffer : access Source_Buffer_Record'Class);
+   --  Actions that must be executed whenever the user edits the buffer
+   --  manually, ie inserts or deletes a character.
+
    procedure End_Action_Hook (Buffer : access Source_Buffer_Record'Class);
    --  Actions that must be executed whenever an action is ended.
 
@@ -254,6 +258,17 @@ package body Src_Editor_Buffer is
 
       return True;
    end Automatic_Save;
+
+   --------------------
+   -- User_Edit_Hook --
+   --------------------
+
+   procedure User_Edit_Hook (Buffer : access Source_Buffer_Record'Class) is
+   begin
+      --  Clear the completion data.
+
+      Clear (Buffer.Completion);
+   end User_Edit_Hook;
 
    ------------------
    -- Destroy_Hook --
@@ -486,6 +501,8 @@ package body Src_Editor_Buffer is
          return;
       end if;
 
+      User_Edit_Hook (Buffer);
+
       Get_Text_Iter (Nth (Params, 1), Pos);
 
       if Is_Null_Command (Command) then
@@ -616,60 +633,64 @@ package body Src_Editor_Buffer is
       Column_Start : Gint;
 
    begin
+      if Buffer.Inserting then
+         return;
+      end if;
+
       Get_Text_Iter (Nth (Params, 1), Start_Iter);
       Get_Text_Iter (Nth (Params, 2), End_Iter);
 
-      if not Buffer.Inserting then
-         if not Is_Null_Command (Command)
-           and then Get_Mode (Command) /= Deletion
+      User_Edit_Hook (Buffer);
+
+      if not Is_Null_Command (Command)
+        and then Get_Mode (Command) /= Deletion
+      then
+         End_Action (Buffer);
+         Command := Editor_Command (Buffer.Current_Command);
+
+         pragma Assert (Is_Null_Command (Command));
+      end if;
+
+      Line_Start   := Get_Line (Start_Iter);
+      Column_Start := Get_Line_Offset (Start_Iter);
+
+      if Is_Null_Command (Command) then
+         Get_Cursor_Position (Buffer, Line, Column);
+
+         if Line = Line_Start
+           and then Column = Column_Start
          then
-            End_Action (Buffer);
-            Command := Editor_Command (Buffer.Current_Command);
-
-            pragma Assert (Is_Null_Command (Command));
-         end if;
-
-         Line_Start   := Get_Line (Start_Iter);
-         Column_Start := Get_Line_Offset (Start_Iter);
-
-         if Is_Null_Command (Command) then
-            Get_Cursor_Position (Buffer, Line, Column);
-
-            if Line = Line_Start
-              and then Column = Column_Start
-            then
-               Direction := Backward;
-            else
-               Direction := Forward;
-            end if;
-
-            Create
-              (Command,
-               Deletion,
-               Source_Buffer (Buffer),
-               True,
-               Integer (Line_Start),
-               Integer (Column_Start),
-               Direction);
-
-            Buffer.Inserting := True;
-            Enqueue (Buffer.Queue, Command);
-            Buffer.Inserting := False;
-
+            Direction := Backward;
          else
-            Direction := Get_Direction (Command);
+            Direction := Forward;
          end if;
 
-         Add_Text
+         Create
            (Command,
-            Get_Slice (Buffer, Start_Iter, End_Iter),
+            Deletion,
+            Source_Buffer (Buffer),
+            True,
             Integer (Line_Start),
-            Integer (Column_Start));
-         Buffer.Current_Command := Command_Access (Command);
+            Integer (Column_Start),
+            Direction);
 
-         if Direction = Backward then
-            End_Action (Buffer);
-         end if;
+         Buffer.Inserting := True;
+         Enqueue (Buffer.Queue, Command);
+         Buffer.Inserting := False;
+
+      else
+         Direction := Get_Direction (Command);
+      end if;
+
+      Add_Text
+        (Command,
+         Get_Slice (Buffer, Start_Iter, End_Iter),
+         Integer (Line_Start),
+         Integer (Column_Start));
+      Buffer.Current_Command := Command_Access (Command);
+
+      if Direction = Backward then
+         End_Action (Buffer);
       end if;
 
    exception
