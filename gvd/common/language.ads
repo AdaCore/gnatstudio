@@ -150,6 +150,33 @@ package Language is
    --  separately in the explorer.
 
    ------------------------
+   -- Language Detection --
+   ------------------------
+   --  The following functions provide a way to convert from file names to
+   --  their associated language, based on regular expressions.
+
+   function Get_Language_From_File (File_Name : String)
+     return Language_Access;
+   --  Return the language to use for a specific file name.
+   --  Note that the language returned is an instance of Language_Debugger_Ada,
+   --  Language_Debugger_C, or other similar-level objects, and does not know
+   --  anything about the debugger.
+   --  null is returned if no pattern matched the file name.
+   --
+   --  The access returned points to a global instance, and should not be
+   --  modified directly.
+
+   procedure Add_File_Extension
+     (Language : Language_Access;
+      Pattern  : String);
+   --  Add a new regexp pattern.
+   --  Any file whose name matches Pattern will be associated with Language.
+   --  No copy of Language is made.
+   --
+   --  Thanks to this function, this package doesn't have to know anything
+   --  about specific languages.
+
+   ------------------------
    -- Exception Handling --
    ------------------------
 

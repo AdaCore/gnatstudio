@@ -20,8 +20,23 @@
 
 with Unchecked_Deallocation;
 with Gtkada.Types; use Gtkada.Types;
+with Odd.Types;    use Odd.Types;
+with GNAT.Regpat;  use GNAT.Regpat;
 
 package body Language is
+
+   type Language_Detection_Record is record
+      Pattern  : String_Access;
+      Language : Language_Access;
+   end record;
+   type Language_Detection_Array is array (Positive range <>)
+     of Language_Detection_Record;
+   type Language_Detection_Access is access Language_Detection_Array;
+
+   Language_Detection : Language_Detection_Access;
+   --  Global table that indicates which languages to associate with file
+   --  names, so that one can find the best language associates with a
+   --  given file name.
 
    ---------------------
    -- Break_Exception --
@@ -144,5 +159,76 @@ package body Language is
       raise Program_Error;
       return Null_Array;
    end Parse_Thread_List;
+
+   ------------------------
+   -- Add_File_Extension --
+   ------------------------
+
+   procedure Add_File_Extension
+     (Language : Language_Access;
+      Pattern  : String)
+   is
+      procedure Free is new Unchecked_Deallocation
+        (Language_Detection_Array, Language_Detection_Access);
+      Table_Index : Positive := Positive'Last;
+      Tmp         : Language_Detection_Access;
+      T           : String_Access;
+   begin
+      --  Do we already have this language in the table
+      if Language_Detection /= null then
+         for Index in Language_Detection'Range loop
+            if Language_Detection (Index).Language = Language then
+               Table_Index := Index;
+               exit;
+            end if;
+         end loop;
+      end if;
+
+      --  If not, extend the table
+      if Table_Index = Positive'Last then
+         if Language_Detection = null then
+            Tmp := new Language_Detection_Array (1 .. 1);
+            Table_Index := 1;
+         else
+            Tmp := new Language_Detection_Array
+              (Language_Detection'First .. Language_Detection'Last + 1);
+            Tmp (Language_Detection'Range) := Language_Detection.all;
+            Table_Index := Tmp'Last;
+         end if;
+         Free (Language_Detection);
+         Language_Detection := Tmp;
+      end if;
+
+      --  Add the new item in the table
+      Language_Detection (Table_Index).Language := Language;
+
+      if Language_Detection (Table_Index).Pattern = null then
+         Language_Detection (Table_Index).Pattern :=
+           new String'("(" & Pattern & ")");
+      else
+         T := Language_Detection (Table_Index).Pattern;
+         Language_Detection (Table_Index).Pattern :=
+           new String'(T.all & "|(" & Pattern & ")");
+         Free (T);
+      end if;
+   end Add_File_Extension;
+
+   ----------------------------
+   -- Get_Language_From_File --
+   ----------------------------
+
+   function Get_Language_From_File (File_Name : String)
+     return Language_Access
+   is
+   begin
+      if Language_Detection /= null then
+         for Index in Language_Detection'Range loop
+            if Match (Language_Detection (Index).Pattern.all, File_Name) then
+               return Language_Detection (Index).Language;
+            end if;
+         end loop;
+      end if;
+      return null;
+   end Get_Language_From_File;
 
 end Language;
