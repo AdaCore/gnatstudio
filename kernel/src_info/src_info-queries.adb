@@ -1584,7 +1584,9 @@ package body Src_Info.Queries is
       if Iterator.References = null then
          --  Were we processing the LI file for the source file that contains
          --  the initial declaration ?
-         if Get (Iterator.Decl_Iter) = Iterator.Decl_Iter.Decl_LI then
+         if Get (Iterator.Decl_Iter) /= null
+           and then Get (Iterator.Decl_Iter) = Iterator.Decl_Iter.Decl_LI
+         then
             Iterator.References := Check_Decl_File;
             if Iterator.References /= null then
                return;
@@ -1615,19 +1617,26 @@ package body Src_Info.Queries is
    --  We also only look in the files that are in the same language.
 
    procedure Find_All_References
-     (Root_Project : Prj.Tree.Project_Node_Id;
-      Lang_Handler : Language_Handlers.Language_Handler;
-      Entity       : Entity_Information;
-      List         : in out LI_File_List;
-      Iterator     : out Entity_Reference_Iterator;
-      Project      : Prj.Project_Id := Prj.No_Project;
-      LI_Once      : Boolean := False) is
+     (Root_Project           : Prj.Tree.Project_Node_Id;
+      Lang_Handler           : Language_Handlers.Language_Handler;
+      Entity                 : Entity_Information;
+      List                   : in out LI_File_List;
+      Iterator               : out Entity_Reference_Iterator;
+      Project                : Prj.Project_Id := Prj.No_Project;
+      LI_Once                : Boolean := False;
+      Predefined_Source_Path : String := "";
+      Predefined_Object_Path : String := "") is
    begin
       Iterator.Entity := Copy (Entity);
       Iterator.LI_Once := LI_Once;
+
       Find_Ancestor_Dependencies
         (Root_Project, Lang_Handler, Get_Declaration_File_Of (Entity), List,
-         Iterator.Decl_Iter, Project, Include_Self => True);
+         Iterator.Decl_Iter,
+         Project                => Project,
+         Include_Self           => True,
+         Predefined_Source_Path => Predefined_Source_Path,
+         Predefined_Object_Path => Predefined_Object_Path);
       Next (Lang_Handler, Iterator, List);
    end Find_All_References;
 
@@ -1781,6 +1790,10 @@ package body Src_Info.Queries is
             Full_Path => False);
          Iterator.Current_File := Iterator.Source_Files'First - 1;
       end loop;
+
+   exception
+      when E : others =>
+         Trace (Me, "Next: unexpected exception " & Exception_Message (E));
    end Next;
 
    --------------------------------
@@ -1799,10 +1812,16 @@ package body Src_Info.Queries is
       Predefined_Object_Path : String := "")
    is
       Decl_Project : Project_Id := Project;
+      Iterator_Decl_Project : Project_Id := Project;
    begin
       if Decl_Project = No_Project then
          Decl_Project := Get_Project_From_File
            (Get_Project_View_From_Project (Root_Project), Source_Filename);
+         Iterator_Decl_Project := Decl_Project;
+
+         if Decl_Project = No_Project then
+            Decl_Project := Get_Project_View_From_Project (Root_Project);
+         end if;
       end if;
 
       Iterator.LI := No_LI_File;
@@ -1825,7 +1844,7 @@ package body Src_Info.Queries is
       Iterator.Source_Filename := new String' (Source_Filename);
       Iterator.Include_Self := Include_Self;
       Iterator.Importing := new Project_Id_Array'
-        (Find_All_Projects_Importing (Root_Project, Decl_Project));
+        (Find_All_Projects_Importing (Root_Project, Iterator_Decl_Project));
       Iterator.Current_Project := Iterator.Importing'First;
       Iterator.Source_Files := Get_Source_Files
         (Get_Project_From_View (Iterator.Importing
@@ -1843,6 +1862,10 @@ package body Src_Info.Queries is
 
       when Assert_Failure =>
          Destroy (Iterator);
+
+      when E : others =>
+         Trace (Me, "Find_Ancestor_Dependencies: unexpected exception "
+                & Exception_Message (E));
    end Find_Ancestor_Dependencies;
 
    ---------
@@ -1897,6 +1920,24 @@ package body Src_Info.Queries is
    function Get (Iterator : Dependency_Iterator) return LI_File_Ptr is
    begin
       return Iterator.LI;
+   end Get;
+
+   ---------
+   -- Get --
+   ---------
+
+   function Get (Iterator : Dependency_Iterator) return Prj.Project_Id is
+   begin
+      return Iterator.Importing (Iterator.Current_Project);
+   end Get;
+
+   ---------
+   -- Get --
+   ---------
+
+   function Get (Iterator : Entity_Reference_Iterator) return Prj.Project_Id is
+   begin
+      return Get (Iterator.Decl_Iter);
    end Get;
 
    -------------

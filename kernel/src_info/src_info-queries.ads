@@ -159,13 +159,15 @@ package Src_Info.Queries is
    type Entity_Reference_Iterator_Access is access Entity_Reference_Iterator;
 
    procedure Find_All_References
-     (Root_Project : Prj.Tree.Project_Node_Id;
-      Lang_Handler : Language_Handlers.Language_Handler;
-      Entity       : Entity_Information;
-      List         : in out LI_File_List;
-      Iterator     : out Entity_Reference_Iterator;
-      Project      : Prj.Project_Id := Prj.No_Project;
-      LI_Once      : Boolean := False);
+     (Root_Project           : Prj.Tree.Project_Node_Id;
+      Lang_Handler           : Language_Handlers.Language_Handler;
+      Entity                 : Entity_Information;
+      List                   : in out LI_File_List;
+      Iterator               : out Entity_Reference_Iterator;
+      Project                : Prj.Project_Id := Prj.No_Project;
+      LI_Once                : Boolean := False;
+      Predefined_Source_Path : String := "";
+      Predefined_Object_Path : String := "");
    --  Find all the references to the entity described in Decl.
    --  Root_Project should be the root project under which we are looking.
    --  Source files that don't belong to Root_Project or one of its imported
@@ -194,6 +196,9 @@ package Src_Info.Queries is
 
    function Get_LI (Iterator : Entity_Reference_Iterator) return LI_File_Ptr;
    --  Return the current LI file
+
+   function Get (Iterator : Entity_Reference_Iterator) return Prj.Project_Id;
+   --  Return the current project the iterator is looking at.
 
    procedure Destroy (Iterator : in out Entity_Reference_Iterator);
    procedure Destroy (Iterator : in out Entity_Reference_Iterator_Access);
@@ -294,6 +299,9 @@ package Src_Info.Queries is
    function Get (Iterator : Dependency_Iterator) return LI_File_Ptr;
    --  Return the LI for the file that contains the dependency. Note that this
    --  is not the LI file for Dependency, as returned by Get.
+
+   function Get (Iterator : Dependency_Iterator) return Prj.Project_Id;
+   --  Return the current project the iterator is looking at.
 
    procedure Destroy (Iterator : in out Dependency_Iterator);
    procedure Destroy (Iterator : in out Dependency_Iterator_Access);
