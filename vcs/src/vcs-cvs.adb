@@ -594,8 +594,9 @@ package body VCS.CVS is
       use File_Status_List;
 
       Result            : File_Status_List.List;
-      Old_Dir           : constant Dir_Name_Str := Get_Current_Dir;
       New_Dir           : constant Dir_Name_Str := Dir_Name (Head (Filenames));
+      Entries           : constant String := Format_Pathname
+        (New_Dir & "CVS/Entries");
       Blank_Status      : File_Status_Record;
       Current_Status    : File_Status_Record := Blank_Status;
       File              : File_Type;
@@ -607,17 +608,15 @@ package body VCS.CVS is
       File_Timestamp    : Timestamp;
 
    begin
-      --  Note: we will restore the current directory to its previous value
-      --  (Old_Dir) at the end of this procedure.
-
-      Change_Dir (New_Dir);
+      if not GNAT.OS_Lib.Is_Regular_File (Entries) then
+         return Result;
+      end if;
 
       --  Open and parse the Entries file.
 
-      Open (File, In_File, Format_Pathname (New_Dir & "CVS/Entries"));
-
-      Entries_Timestamp :=
-        To_Timestamp (GNAT.OS_Lib.File_Time_Stamp (New_Dir & "CVS/Entries"));
+      Open (File, In_File, Entries);
+      Entries_Timestamp := To_Timestamp
+        (GNAT.OS_Lib.File_Time_Stamp (Entries));
 
       while Last >= 0
         and then not End_Of_File (File)
@@ -657,7 +656,6 @@ package body VCS.CVS is
       end loop;
 
       Close (File);
-      Change_Dir (Old_Dir);
 
       --  We have gathered information about all files in the directory,
       --  now we build a list corresponding to what the user wants.
@@ -702,11 +700,8 @@ package body VCS.CVS is
       when End_Error =>
          Close (File);
          return Result;
-      when Use_Error =>
-         return Result;
-      when Name_Error =>
-         return Result;
-      when Directory_Error =>
+
+      when Use_Error | Name_Error | Directory_Error =>
          return Result;
    end Real_Local_Get_Status;
 
