@@ -34,6 +34,8 @@ with Traces;                   use Traces;
 with Generic_List;
 with VFS;                      use VFS;
 with Basic_Types;
+with Glide_Kernel.Console;      use Glide_Kernel.Console;
+with Glide_Intl;                use Glide_Intl;
 
 package body Diff_Utils is
    use Diff_Occurrence_List;
@@ -211,7 +213,11 @@ package body Diff_Utils is
       Cmd_Args := Argument_String_To_List (Patch_Command);
       Cmd      := Locate_Exec_On_Path (Cmd_Args (Cmd_Args'First).all);
 
-      if Cmd.all = "" then
+      if Cmd = null or else Cmd.all = "" then
+         Insert (Kernel,
+                 -"Patch command not found: " & Patch_Command & ASCII.LF
+                 & (-"See the preferences if you need to change the value"),
+                 Mode => Error);
          Trace (Me, "command not found: " & Patch_Command);
          Free (Cmd);
          Free (Cmd_Args);
