@@ -42,6 +42,7 @@ package Glide_Main_Window is
       Busy_Level           : Integer := 0;
       Interrupted          : Boolean := False;
       Desktop_Loaded       : Boolean := False;
+      Public_Version       : Boolean := True;
    end record;
    type Glide_Window is access all Glide_Window_Record'Class;
 
@@ -75,6 +76,9 @@ package Glide_Main_Window is
    procedure Display_Default_Image (Kernel : Glide_Kernel.Kernel_Handle);
    --  Display the default image in the top right corner of the main window.
 
+   function GPS_Name (Window : access Glide_Window_Record) return String;
+   --  Return the name of this GPS release.
+
    procedure Quit (Main_Window : access Glide_Window_Record'Class);
    --  Exit GPS. Ask for confirmation if there are unsaved files.
    --  Save the desktop if needed.
@@ -86,7 +90,7 @@ package Glide_Main_Window is
      (Window : access Glide_Window_Record;
       Info   : String := "");
    --  Reset the title of the main window.
-   --  Info is an extra information to be displayed. By default, the name
-   --  of the root project is displayed.
+   --  Info is an extra information to be displayed, in addition of the name
+   --  of the root project which is always displayed.
 
 end Glide_Main_Window;
