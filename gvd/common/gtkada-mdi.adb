@@ -1205,22 +1205,21 @@ package body Gtkada.MDI is
 
       Widget_List.Remove (C.MDI.Items, Gtk_Widget (C));
 
-      if C.State = Floating or else C.State = Docked then
-         if C.State = Floating then
-            --  Initial_Child could be null if we are destroying a floating
-            --  child explicitly (by closing its X11 window)
+      if C.State = Floating then
+         --  Initial_Child could be null if we are destroying a floating
+         --  child explicitly (by closing its X11 window)
 
-            if C.Initial_Child /= null
-              and then Get_Parent (C.Initial_Child) /= null
-            then
-               Destroy (Get_Parent (C.Initial_Child));
-            end if;
-
-         else
-            Ref (C.Initial_Child);
-            Remove_From_Notebook (C, C.Dock);
-            Unref (C.Initial_Child);
+         if C.Initial_Child /= null
+           and then Get_Parent (C.Initial_Child) /= null
+         then
+            Destroy (Get_Parent (C.Initial_Child));
          end if;
+
+      elsif C.State = Docked then
+         Ref (C.Initial_Child);
+         Remove_From_Notebook (C, C.Dock);
+         C.State := Normal;
+         Unref (C.Initial_Child);
 
       --  for maximized children
 
@@ -2779,9 +2778,12 @@ package body Gtkada.MDI is
      (Child : access MDI_Child_Record'Class; Side : Dock_Side)
    is
       Note : Gtk_Notebook := Child.MDI.Docks (Side);
+      Page : constant Gint := Page_Num (Note, Child);
    begin
-      Remove_Page (Note, Page_Num (Note, Child));
-      Unparent (Child);
+      if Page /= -1 then
+         Remove_Page (Note, Page);
+         Unparent (Child);
+      end if;
 
       if Get_Nth_Page (Note, 0) = null then
          Destroy (Child.MDI.Docks (Side));
