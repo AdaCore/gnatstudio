@@ -82,6 +82,7 @@ package body Glide_Kernel.Project is
    procedure Load_Project
      (Kernel : access Kernel_Handle_Record'class; Project : String) is
    begin
+      Prj.Reset;
       Prj.Part.Parse (Kernel.Project, Project, True);
       Prj.Proc.Process (Kernel.Project_View, Kernel.Project);
       Project_Changed (Kernel);
