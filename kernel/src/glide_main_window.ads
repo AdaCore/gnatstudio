@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2001-2003                       --
+--                     Copyright (C) 2001-2004                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
@@ -20,29 +20,29 @@
 
 with GVD.Main_Window;
 with Glide_Kernel;
-with Gdk.Pixbuf; use Gdk.Pixbuf;
-with Gtk.Frame; use Gtk.Frame;
-with Gtk.Image; use Gtk.Image;
+with Gdk.Pixbuf;       use Gdk.Pixbuf;
+with Gtk.Frame;        use Gtk.Frame;
+with Gtk.Image;        use Gtk.Image;
 with Gtk.Item_Factory; use Gtk.Item_Factory;
-with Gtk.Toolbar; use Gtk.Toolbar;
+with Gtk.Toolbar;      use Gtk.Toolbar;
 with Gtk.Main;
 
 package Glide_Main_Window is
 
    type Glide_Window_Record is new GVD.Main_Window.GVD_Main_Window_Record with
    record
-      Kernel               : Glide_Kernel.Kernel_Handle;
-      Toolbar              : Gtk_Toolbar;
-      Animation_Frame      : Gtk_Frame;
-      Animation            : Gdk_Pixbuf_Animation;
-      Animation_Iter       : Gdk_Pixbuf_Animation_Iter;
-      Animation_Image      : Gtk_Image;
-      Timeout_Id           : Gtk.Main.Timeout_Handler_Id;
-      State_Level          : Integer := 0;
-      Busy_Level           : Integer := 0;
-      Interrupted          : Boolean := False;
-      Desktop_Loaded       : Boolean := False;
-      Public_Version       : Boolean := True;
+      Kernel          : Glide_Kernel.Kernel_Handle;
+      Toolbar         : Gtk_Toolbar;
+      Animation_Frame : Gtk_Frame;
+      Animation       : Gdk_Pixbuf_Animation;
+      Animation_Iter  : Gdk_Pixbuf_Animation_Iter;
+      Animation_Image : Gtk_Image;
+      Timeout_Id      : Gtk.Main.Timeout_Handler_Id;
+      State_Level     : Integer := 0;
+      Busy_Level      : Integer := 0;
+      Interrupted     : Boolean := False;
+      Desktop_Loaded  : Boolean := False;
+      Public_Version  : Boolean := True;
    end record;
    type Glide_Window is access all Glide_Window_Record'Class;
 
