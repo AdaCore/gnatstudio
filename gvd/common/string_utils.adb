@@ -24,6 +24,7 @@ with Ada.Strings.Fixed;       use Ada.Strings.Fixed;
 with GNAT.OS_Lib;             use GNAT.OS_Lib;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with Ada.Unchecked_Deallocation;
+with Ada.Strings.Unbounded;   use Ada.Strings.Unbounded;
 
 package body String_Utils is
 
@@ -1079,4 +1080,74 @@ package body String_Utils is
       end if;
    end Current;
 
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Substrings : in out Substitution_Array) is
+   begin
+      for S in Substrings'Range loop
+         Free (Substrings (S).Name);
+         Free (Substrings (S).Value);
+      end loop;
+   end Free;
+
+   ----------------
+   -- Substitute --
+   ----------------
+
+   function Substitute
+     (Str               : String;
+      Substitution_Char : Character;
+      Substrings        : Substitution_Array;
+      Recursive         : Boolean := False) return String
+   is
+      Result : Unbounded_String;
+      First, Last : Natural := Str'First;
+      Found : Boolean;
+   begin
+      while First <= Str'Last loop
+         Last := First;
+         while Last <= Str'Last
+           and then Str (Last) /= Substitution_Char
+         loop
+            Last := Last + 1;
+         end loop;
+
+         Result := Result & Str (First .. Last - 1);
+
+         exit when Last > Str'Last;
+
+         Found := False;
+
+         for S in Substrings'Range loop
+            if Last + Substrings (S).Name'Length <= Str'Last
+              and then Substrings (S).Name.all =
+              Str (Last + 1 .. Last + Substrings (S).Name'Length)
+            then
+               if Recursive then
+                  Result := Result & Substitute
+                    (Substrings (S).Value.all,
+                     Substitution_Char, Substrings, Recursive);
+               else
+                  Result := Result & Substrings (S).Value.all;
+               end if;
+
+               Found := True;
+               First := Last + Substrings (S).Name'Length + 1;
+               exit;
+            end if;
+         end loop;
+
+         if not Found then
+            Result := Result & Str (Last);
+            First := Last + 1;
+         end if;
+
+      end loop;
+
+      return To_String (Result);
+   end Substitute;
+
 end String_Utils;
+

@@ -180,6 +180,56 @@ package String_Utils is
    --  List might be null initially.
 
    ----------------------------
+   -- Substring substitution --
+   ----------------------------
+
+
+   type Substitution_Value is record
+      Name  : GNAT.OS_Lib.String_Access;
+      Value : GNAT.OS_Lib.String_Access;
+   end record;
+   type Substitution_Array is array (Natural range <>) of Substitution_Value;
+   --  ??? Should have a second version where Value is replaced with a function
+   --  that returns the substitution:
+
+   --  type Substitution_Function is access
+   --     function (Substring : String) return String;
+   --  Return the string that should replace substring.
+   --  Raise No_Replacement if the substitution couldn't be done in this
+   --  context.
+   --  For each substring, the callback function is called to get the
+   --  replacement. The caller should cache the result in most cases, but this
+   --  interface allows the lazy compution of substrings, in case some of these
+   --  are expansive to compute.
+
+   procedure Free (Substrings : in out Substitution_Array);
+   --  Free the memory occupied by the array
+
+   function Substitute
+     (Str               : String;
+      Substitution_Char : Character;
+      Substrings        : Substitution_Array;
+      Recursive         : Boolean := False) return String;
+   --  Replace all substrings in Str that start with Substition_Char, followed
+   --  by one of the names described in Substrings.
+   --  The first substitution that matches is used. For instance:
+   --     Substitution_Char := '%'
+   --     Substrings (1) := (Name => "a",  Value => "1")
+   --     Substrings (2) := (Name => "ab", Value => "2")
+   --
+   --     Str := "d%abc" results in "d1bc", not "d2c"
+   --
+   --
+   --  If Recursive is true, then this function will also substitute substrings
+   --  in the values specified in Substrings (for instance:
+   --      Substition_Char := %
+   --      Substrings (1) := (Name => "a", Value => "c%b")
+   --      Substrings (2) := (Name => "b", Value => "d")
+   --
+   --      Str := "%a"   results in   "cd"  if Recursive is True
+   --                    results in   "c%b" otherwise
+
+   ----------------------------
    -- File name manipulation --
    ----------------------------
 
