@@ -82,6 +82,7 @@ package Glide_Kernel.Project is
       return Prj_API.Project_Node_Array;
    --  Return a list of all the scenario variables. This list is cached, so
    --  that future calls are fast.
+   --  See also the signal "variable_changed" for the kernel.
    --  ??? This should be independent from any actual node, since the nodes
    --  ??? might be freed at some point.
 
