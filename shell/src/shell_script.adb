@@ -754,9 +754,10 @@ package body Shell_Script is
 
       Register_Menu
         (Kernel,
-         Parent_Path => "/" & (-"Tools"),
+         Parent_Path => "/" & (-"_Tools"),
          Text        => -"GPS Shell Console",
-         Callback    => Open_Shell_Console'Access);
+         Callback    => Open_Shell_Console'Access,
+         Ref_Item    => -"Window");
 
       --  Only remember the last 100 commands.
       Set_Max_Length (Get_History (Kernel).all, 100, "shell");
