@@ -71,7 +71,13 @@ package body Commands.External is
       Item := new External_Command;
       Item.Kernel  := Kernel;
       Item.Command := new String'(Command);
-      Item.Dir     := new String'(Dir);
+
+      if Dir = "" then
+         Item.Dir := new String'(Get_Current_Dir);
+      else
+         Item.Dir := new String'(Dir);
+      end if;
+
       Item.Args    := Copy_String_List (Args);
       Item.Head    := Copy_String_List (Head);
       Item.Handler := Handler;
