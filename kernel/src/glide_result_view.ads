@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2003                       --
+--                     Copyright (C) 2001-2004                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -155,6 +155,11 @@ private
 
       Idle_Handler    : Timeout_Handler_Id;
       Idle_Registered : Boolean := False;
+
+      Sort_By_Category : Boolean := False;
+      --  Whether the view should be sorted by category.
+
+      Sorting_Column   : Gtk_Tree_View_Column;
    end record;
 
 end Glide_Result_View;
