@@ -46,12 +46,12 @@ scroll_by_amount (CscHTML *html,
 {
 	GtkLayout *layout;
 	GtkAdjustment *adj;
-	gfloat new_value;
+	gdouble new_value;
 
 	layout = GTK_LAYOUT (html);
 	adj = layout->vadjustment;
 
-	new_value = adj->value + (gfloat) amount;
+	new_value = adj->value + (gdouble) amount;
 	if (new_value < adj->lower)
 		new_value = adj->lower;
 	else if (new_value > adj->upper)

@@ -221,8 +221,8 @@ idle_handler (gpointer data)
 
 	html_engine_make_cursor_visible (engine);
 
-	gtk_adjustment_set_value (GTK_LAYOUT (html)->hadjustment, (gfloat) engine->x_offset);
-	gtk_adjustment_set_value (GTK_LAYOUT (html)->vadjustment, (gfloat) engine->y_offset);
+	gtk_adjustment_set_value (GTK_LAYOUT (html)->hadjustment, (gdouble) engine->x_offset);
+	gtk_adjustment_set_value (GTK_LAYOUT (html)->vadjustment, (gdouble) engine->y_offset);
 
 	csc_html_private_calc_scrollbars (html);
 
@@ -399,18 +399,18 @@ connect_adjustments (CscHTML *html,
 static void
 inc_adjustment (GtkAdjustment *adj, gint doc_width, gint alloc_width, gint inc)
 {
-	gfloat value;
+	gdouble value;
 	gint max;
 
-	value = adj->value + (gfloat) inc;
+	value = adj->value + (gdouble) inc;
 	
 	if (doc_width > alloc_width)
 		max = doc_width - alloc_width;
 	else
 		max = 0;
 
-	if (value > (gfloat) max)
-		value = (gfloat) max;
+	if (value > (gdouble) max)
+		value = (gdouble) max;
 	else if (value < 0)
 		value = 0.0;
 
