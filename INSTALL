@@ -39,3 +39,8 @@ commands at the top level GPS source directory:
   $ make
   $ make install
 
+
+If you need to modify configure.in and then regenerate the configure script,
+you will need autoconf version 2.13 installed on your machine. Later version
+are not compatible.
+
