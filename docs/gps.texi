@@ -216,6 +216,7 @@ Scripting GPS
 * The GPS Shell::
 @ifset python
 * The Python Interpreter::
+* Python FAQ::
 @end ifset
 * Hooks::
 
@@ -8912,6 +8913,7 @@ user interactively for the name of the file to search.
 * The GPS Shell::
 @ifset python
 * The Python Interpreter::
+* Python FAQ::
 @end ifset
 * Hooks::
 @end menu
@@ -9297,6 +9299,72 @@ python, among other traces. However, it will also slow down GPS when
 there are a lot of output to process.
 
 @end ifset
+
+@c ------------------------------------------------------------------------
+@ifset python
+@node Python FAQ
+@subsection Python FAQ
+@cindex python
+@c ------------------------------------------------------------------------
+
+@noindent
+This section lists some of the problems that have been encountered while using
+Python inside GPS. This is not a general Python discussion.
+
+@itemize @bullet
+
+@item The output of spawned processes can't be redirected to a GPS window
+
+In general, it is possible to redirect the output of any Python script to
+any GPS window (either an already existing one, or creating one automatically),
+through the @code{"output"} attribute of XML configuration files.
+
+However, there is a limitation in python that the output of processes spawned
+through os.exec() or os.spawn() is redirected to the standard output, and not
+to the usual python output that GPS has overriden.
+
+There are two solutions for this:
+@itemize -
+@item Execute the external process through a pipe
+
+The output of the pipe is then redirected to Python's output, as in:
+
+@smallexample
+import os, sys
+def my_external():
+   f = os.popen ('ls')
+   for l in f.readlines():
+      sys.stdout.write ('   ' + l)
+@end smallexample
+
+This solution allows you, at the same time, to modify the output, for instance
+to indent it as in the example above.
+
+@item Execute the process through GPS
+
+You can go through the process of defining an XML customization string for
+GPS, and execute your process this way, as in:
+
+@smallexample
+GPS.parse_xml ("""
+   <action name="ls">
+     <external output="output of ls">ls</external>
+   </action>""")
+
+def my_external():
+   GPS.execute_action ("ls")
+@end smallexample
+
+This solution allows you to send the output to a different window than the
+rest of your script. But you can filter or modify the output as in the
+first solution.
+
+@end itemize
+
+@end itemize
+
+@end ifset
+
 
 @c --------------------------------------------------------------------
 @node Hooks
