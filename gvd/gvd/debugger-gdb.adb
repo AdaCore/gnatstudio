@@ -2166,6 +2166,29 @@ package body Debugger.Gdb is
    begin
       Repeat_Num := 1;
 
+      if Looking_At (Type_Str, Index, "Cannot access memory at address") then
+         while Index <= Type_Str'Last loop
+            exit when Type_Str (Index) = ','
+              or else Type_Str (Index) = ')'
+              or else Type_Str (Index) = '}'
+              or else Type_Str (Index) = '>';
+            Index := Index + 1;
+         end loop;
+
+         if Result'Tag = Simple_Type'Tag
+           or else Result'Tag = Range_Type'Tag
+           or else Result'Tag = Mod_Type'Tag
+           or else Result'Tag = Enum_Type'Tag
+         then
+            Set_Value (Simple_Type (Result.all), "<???>");
+
+         elsif Result'Tag = Access_Type'Tag then
+            Set_Value (Simple_Type (Result.all), "0x0");
+         end if;
+
+         return;
+      end if;
+
       -------------------
       -- Simple values --
       -------------------
