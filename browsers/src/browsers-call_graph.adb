@@ -1129,11 +1129,16 @@ package body Browsers.Call_Graph is
       Info := Get_Entity (Entity);
 
       if Info /= No_Entity_Information then
-         Print_Ref (Get_Kernel (Entity),
-                    Get_Declaration_File_Of (Info),
-                    Get_Declaration_Line_Of (Info),
-                    Get_Declaration_Column_Of (Info),
-                    Get_Name (Info));
+         --  Print the declaration of the entity, but only if it is in the
+         --  current file. Otherwise, this is too surprising for the use
+
+         if Get_Declaration_File_Of (Info) = File_Information (Entity) then
+            Print_Ref (Get_Kernel (Entity),
+                       Get_Declaration_File_Of (Info),
+                       Get_Declaration_Line_Of (Info),
+                       Get_Declaration_Column_Of (Info),
+                       Get_Name (Info));
+         end if;
 
          Find_All_References
            (Get_Kernel (Entity), Info, Iter,
