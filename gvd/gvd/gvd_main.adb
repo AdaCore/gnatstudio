@@ -29,6 +29,7 @@ with Gtkada.Dialogs; use Gtkada.Dialogs;
 with Odd.Process; use Odd.Process;
 with Debugger;
 with GNAT.OS_Lib; use GNAT.OS_Lib;
+with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with Ada.Command_Line; use Ada.Command_Line;
 with Ada.Exceptions; use Ada.Exceptions;
 with Ada.Text_IO; use Ada.Text_IO;
@@ -40,10 +41,57 @@ procedure Odd_Main is
    Id                : Glib.Gint;
    Index             : Natural := 0;
    Debug_Type        : Debugger.Debugger_Type := Debugger.Gdb_Type;
+   Button            : Message_Dialog_Buttons;
+
+   procedure Init;
+   --  Set up environment for Odd.
+
+   procedure Bug_Dialog (E : Exception_Occurrence);
+   --  Display a bug box on the screen with as much information as possible.
 
    function Format (Str : String; Columns : Positive) return String;
    --  Cut Str in lines of no more than Columns columns by replacing spaces
    --  by ASCII.LF characters at the most appropriate place.
+
+   procedure Init is
+      Root : String_Access;
+      Home : String_Access;
+
+   begin
+      Root := Getenv ("GVD_ROOT");
+      Home := Getenv ("HOME");
+
+      if Root /= null then
+         Bind_Text_Domain ("GtkAda", Root.all & Directory_Separator & "share" &
+           Directory_Separator & "locale");
+         Bind_Text_Domain ("Gvd", Root.all & Directory_Separator & "share" &
+           Directory_Separator & "locale");
+         Free (Root);
+      end if;
+
+      if Home /= null then
+         declare
+            Dir : constant String := Home.all & Directory_separator & ".gvd";
+         begin
+            if not Is_Directory (Dir) then
+               Make_Dir (Home.all & Directory_separator & ".gvd");
+               Button := Message_Dialog
+                 ((-"Created config directory ") & Dir,
+                  Information, Button_OK,
+                  Justification => Justify_Left);
+            end if;
+         exception
+            when Directory_Error =>
+               Button := Message_Dialog
+                 ((-"Cannot create config directory ") & Dir & ASCII.LF &
+                    (-"Exiting..."),
+                  Error, Button_OK,
+                  Justification => Justify_Left);
+         end;
+
+         Free (Home);
+      end if;
+   end Init;
 
    function Format (Str : String; Columns : Positive) return String is
       S     : String (Str'Range);
@@ -74,29 +122,24 @@ procedure Odd_Main is
       return S;
    end Format;
 
-   procedure Bug_Dialog (E : Exception_Occurrence);
-   --  Display a bug box on the screen with as much information as possible.
-
    procedure Bug_Dialog (E : Exception_Occurrence) is
-      Button : Message_Dialog_Buttons;
    begin
       Button := Message_Dialog
-        ("Please report with the following information:" & ASCII.LF &
+        ((-"Please report with the following information:") & ASCII.LF &
          Format (Exception_Information (E), Columns => 80),
          Error, Button_OK,
-         Title => "Bug detected in odd",
+         Title => -"Bug detected in odd",
          Justification => Justify_Left);
-      Put_Line (Standard_Error, "Bug detected in odd");
+      Put_Line (Standard_Error, -"Bug detected in odd");
       Put_Line (Standard_Error,
-        "Please report with the following information:");
+        -"Please report with the following information:");
       Put_Line (Standard_Error, Exception_Information (E));
    end Bug_Dialog;
 
 begin
-   Bind_Text_Domain ("GtkAda", "/usr/local/share/locale");
-   Bind_Text_Domain ("Odd", "/usr/local/share/locale");
    Gtk.Main.Set_Locale;
    Gtk.Main.Init;
+   Init;
    Gtk_New (Main_Debug_Window);
 
    for J in 1 .. Argument_Count loop
