@@ -74,14 +74,14 @@ static char pty_name[24];
 #endif
 
 struct GVD_Process {
-  int infd;       /* descriptor to read from the process */
-  int outfd;      /* descriptor by which we write to the process */
-  int subtty;     /* descriptor for the tty that the process is using */
-  int pty_flag;   /* non-nil if communicating through a pty */
-  int status;     /* Symbol indicating status of the process:
-		     Qrun, Qopen, Qclosed */
-  int pid;        /* Number of this process */
-  char *tty_name; /* Name of TTY device */
+  int infd;          /* descriptor to read from the process */
+  int outfd;         /* descriptor by which we write to the process */
+  int subtty;        /* descriptor for the tty that the process is using */
+  int pty_flag;      /* non-nil if communicating through a pty */
+  int status;        /* Symbol indicating status of the process:
+		        Qrun, Qopen, Qclosed */
+  int pid;           /* Number of this process */
+  char tty_name[24]; /* Name of TTY device */
 
   sigset_t procmask;
   int forkin, forkout;
@@ -1486,9 +1486,9 @@ gvd_setup_parent_communication
 	gvd_close (process->forkout);
 
 #ifdef HAVE_PTYS
-      process->tty_name = strdup (pty_name);
+      strcpy (process->tty_name, pty_name);
 #else
-      process->tty_name = NULL;
+      *process->tty_name = '\0';
 #endif
     }
 
@@ -1777,9 +1777,6 @@ gvd_interrupt_process (struct GVD_Process* p)
 int
 gvd_terminate_process (struct GVD_Process* p)
 {
-  if (p->tty_name != NULL)
-    free (p->tty_name);
-
   return kill (p->pid, SIGKILL);
 }
 
@@ -1981,8 +1978,5 @@ gvd_waitpid (struct GVD_Process* p)
 char *
 gvd_tty_name (struct GVD_Process* p)
 {
-  if (p->tty_name = NULL)
-    return "";
-  else
-    return p->tty_name;
+  return p->tty_name;
 }
