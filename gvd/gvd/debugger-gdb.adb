@@ -555,6 +555,8 @@ package body Debugger.Gdb is
      (Debugger   : access Gdb_Debugger;
       Executable : String) is
    begin
+      Set_Is_Started (Debugger, False);
+
       if Debugger.Remote_Target then
          Send (Debugger, "load " & Executable);
       else
@@ -595,6 +597,7 @@ package body Debugger.Gdb is
       Display  : Boolean := False) is
    begin
       Send (Debugger, "run", Display => Display);
+      Set_Is_Started (Debugger, True);
    end Run;
 
    -----------
@@ -622,6 +625,7 @@ package body Debugger.Gdb is
             Last := Last + 1;
          end loop;
       end if;
+      Set_Is_Started (Debugger, True);
    end Start;
 
    ---------------

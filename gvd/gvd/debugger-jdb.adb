@@ -187,6 +187,7 @@ package body Debugger.Jdb is
      (Debugger : access Jdb_Debugger;
       Executable : String) is
    begin
+      Set_Is_Started (Debugger, False);
       Send (Debugger, "load " & Executable);
       Executable_Changed (Convert (Debugger.Window, Debugger));
    end Set_Executable;
@@ -220,6 +221,7 @@ package body Debugger.Jdb is
                   Display  : Boolean := False) is
    begin
       Send (Debugger, "run", Display => Display);
+      Set_Is_Started (Debugger, True);
    end Run;
 
    -----------
@@ -230,6 +232,7 @@ package body Debugger.Jdb is
                     Display  : Boolean := False) is
    begin
       Send (Debugger, "run", Display => Display);
+      Set_Is_Started (Debugger, True);
    end Start;
 
    ---------------
