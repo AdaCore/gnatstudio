@@ -50,6 +50,10 @@ with Prj_API;           use Prj_API;
 
 package body Glide_Kernel.Project is
 
+   --  ??? Preferences
+   Default_Project_Width  : constant := 400;
+   Default_Project_Height : constant := 400;
+
    Project_Editor_Window_Name : constant String := "Project editor";
 
    ----------------------
@@ -239,12 +243,14 @@ package body Glide_Kernel.Project is
       end if;
 
       Child := Find_MDI_Child (MDI, Project_Editor_Window_Name);
+
       if Child /= null then
          Raise_Child (Child);
          return;
       end if;
 
       Gtk_New (Viewer, Handle, Page.Explorer);
+      Set_USize (Viewer, Default_Project_Width, Default_Project_Height);
       Child := Put (MDI, Viewer);
       Set_Title (Child, Project_Editor_Window_Name);
    end Open_Project_Editor;
