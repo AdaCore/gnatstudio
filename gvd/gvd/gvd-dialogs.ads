@@ -25,6 +25,7 @@ with Gtk.Clist; use Gtk.Clist;
 with Gtk.Hbutton_Box; use Gtk.Hbutton_Box;
 with Gtk.Button; use Gtk.Button;
 with Gtk.Window; use Gtk.Window;
+with Gtk.Enums;
 with Language; use Language;
 with Debugger; use Debugger;
 with Odd.Types;
@@ -97,17 +98,34 @@ package Odd.Dialogs is
       Questions                  : Question_Array);
 
    function Simple_Entry_Dialog
-     (Parent  : access Gtk.Window.Gtk_Window_Record'Class;
-      Title   : String;
-      Message : String;
-      Key     : String := "") return String;
+     (Parent    : access Gtk.Window.Gtk_Window_Record'Class;
+      Title     : String;
+      Message   : String;
+      Position  : Gtk.Enums.Gtk_Window_Position := Gtk.Enums.Win_Pos_Center;
+      Key       : String := "") return String;
    --  Open a simple dialog, with a single entry field, and returns the
-   --  contents of this field (or "" if the user selected cancel).
+   --  contents of this field (or ASCII.NUL) if the user selected cancel).
    --  The dialog is set up as a child of Parent, so that, depending on the
    --  window manager, it isn't displayed below it.
    --  if Key is not the empty string, then the dialog is stored in Parent's
    --  user data, and reused next time. This can be used to provide an history
-   --  of values entered in this dialog by the user
+   --  of values entered in this dialog by the user.
+   --  Position indicates where the dialog should be positionned.
+   --  If Extra_Box is not null, it is inserted below the combo box. You
+   --  can check its contents on exit (unless Key is "", in which case the
+   --  box has been destroyed).
+
+   function Display_Entry_Dialog
+     (Parent   : access Gtk.Window.Gtk_Window_Record'Class;
+      Title    : String;
+      Message  : String;
+      Position : Gtk.Enums.Gtk_Window_Position := Gtk.Enums.Win_Pos_Center;
+      Key      : String := "";
+      Is_Func  : access Boolean) return String;
+   --  A dialog, like Simple_Entry_Dialog, specifically set up to enter
+   --  expressions to display. Is_Func indicates whether the expression is
+   --  a variable name or a generic expression (to be displayed with
+   --  "graph print `...`")
 
 private
    type Odd_Dialog_Record is new Gtk_Dialog_Record with record
