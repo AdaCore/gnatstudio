@@ -26,6 +26,26 @@ package body Project_Hash is
    use Project_Htable;
 
    ----------
+   -- Free --
+   ----------
+
+   procedure Free (X : in out Project_Data_Record) is
+      pragma Unreferenced (X);
+   begin
+      null;
+   end Free;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free_Node_Id (X : in out Prj.Tree.Project_Node_Id) is
+      pragma Unreferenced (X);
+   begin
+      null;
+   end Free_Node_Id;
+
+   ----------
    -- Hash --
    ----------
 

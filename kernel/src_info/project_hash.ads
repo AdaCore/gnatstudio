@@ -37,6 +37,12 @@ package Project_Hash is
    --  The data stored for each project loaded in the kernel (ie the root
    --  project and all its imported projects).
 
+   procedure Free (X : in out Project_Data_Record);
+   --  Free memory associated to X.
+
+   procedure Free_Node_Id (X : in out Prj.Tree.Project_Node_Id);
+   --  Free memory associated to X.
+
    No_Project_Data : constant Project_Data_Record :=
      (Modified => False, Paths_Type => From_Pref);
 
@@ -48,12 +54,14 @@ package Project_Hash is
    --  Hash code to use for the project_htable
 
    package Project_Htable is new HTables.Simple_HTable
-     (Header_Num => Project_Header_Num,
-      Element    => Project_Data_Record,
-      No_Element => No_Project_Data,
-      Key        => Prj.Tree.Project_Node_Id,
-      Hash       => Hash,
-      Equal      => Prj.Tree."=");
+     (Header_Num   => Project_Header_Num,
+      Element      => Project_Data_Record,
+      Free_Element => Free,
+      No_Element   => No_Project_Data,
+      Key          => Prj.Tree.Project_Node_Id,
+      Free_Key     => Free_Node_Id,
+      Hash         => Hash,
+      Equal        => Prj.Tree."=");
 
    function Project_Modified
      (Data      : Project_Htable.HTable;

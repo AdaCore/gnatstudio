@@ -779,4 +779,20 @@ package body Src_Info.Type_Utils is
       end if;
    end Plain_Class_Name;
 
+   ----------------
+   -- False_Free --
+   ----------------
+
+   procedure False_Free_Element (X : in out Typedef_Entry) is
+      pragma Unreferenced (X);
+   begin
+      null;
+   end False_Free_Element;
+
+   procedure False_Free_Key (X : in out String_Access) is
+      pragma Unreferenced (X);
+   begin
+      null;
+   end False_Free_Key;
+
 end Src_Info.Type_Utils;

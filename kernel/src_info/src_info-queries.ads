@@ -616,7 +616,10 @@ private
       Spec_Tree      => null,
       Separate_Trees => null);
 
-   package Name_Htable is new String_Hash (Boolean, False);
+   procedure Free_Boolean (X : in out Boolean);
+   --  Free memory associated to X.
+
+   package Name_Htable is new String_Hash (Boolean, Free_Boolean, False);
 
    type Analyzed_Part is
      (None, Unit_Spec, Unit_Body, Unit_Separate, Unit_Dependency);

@@ -5951,4 +5951,20 @@ package body Src_Info.CPP is
       return DB_Dirs.all (DB_Dirs.all'First + DBI).all;
    end Get_DB_Dir;
 
+   ----------------
+   -- False_Free --
+   ----------------
+
+   procedure False_Free_Element (X : in out SN_Prj_Data) is
+      pragma Unreferenced (X);
+   begin
+      null;
+   end False_Free_Element;
+
+   procedure False_Free_Key (X : in out String_Access) is
+      pragma Unreferenced (X);
+   begin
+      null;
+   end False_Free_Key;
+
 end Src_Info.CPP;

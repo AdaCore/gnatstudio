@@ -65,7 +65,13 @@ private
 
    No_Element : constant String_Access := null;
 
-   package Double_String_Table is new String_Hash (String_Access, No_Element);
+   procedure False_Free (X : in out String_Access);
+   --  False Free procedure.
+   --  The actual freeing occurs automatically, since the elements for one
+   --  table are the keys for another table, and vice versa.
+
+   package Double_String_Table is
+     new String_Hash (String_Access, False_Free, No_Element);
 
    type File_Mapper is limited record
       Table_1 : Double_String_Table.String_Hash_Table.HTable;

@@ -269,13 +269,18 @@ private
          State : Type_Parse_State;
       end record;
 
+   procedure False_Free_Element (X : in out Typedef_Entry);
+   procedure False_Free_Key (X : in out String_Access);
+
    package String_Hash_Table is new HTables.Simple_HTable
-     (Header_Num => String_Hash_Table_Range,
-      Element    => Typedef_Entry,
-      Key        => GNAT.OS_Lib.String_Access,
-      No_Element => (null, Unknown),
-      Hash       => Type_Hash_Function,
-      Equal      => Type_Equal_Function);
+     (Header_Num   => String_Hash_Table_Range,
+      Element      => Typedef_Entry,
+      Free_Element => False_Free_Element,
+      Key          => GNAT.OS_Lib.String_Access,
+      Free_Key     => False_Free_Key,
+      No_Element   => (null, Unknown),
+      Hash         => Type_Hash_Function,
+      Equal        => Type_Equal_Function);
 
    use String_Hash_Table;
 

@@ -2720,4 +2720,14 @@ package body Src_Info.Queries is
          Kind        => Kind);
    end Create;
 
+   ------------------
+   -- Free_Boolean --
+   ------------------
+
+   procedure Free_Boolean (X : in out Boolean) is
+      pragma Unreferenced (X);
+   begin
+      null;
+   end Free_Boolean;
+
 end Src_Info.Queries;
