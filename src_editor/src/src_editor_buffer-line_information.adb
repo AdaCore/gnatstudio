@@ -980,7 +980,11 @@ package body Src_Editor_Buffer.Line_Information is
       for J in BL.all'Range loop
          if BL.all (J).Identifier.all = Block_Info_Column then
 
-            Width := Integer (Get_Width (Image));
+            if Image = null then
+               Width := 0;
+            else
+               Width := Integer (Get_Width (Image));
+            end if;
 
             Free (Buffer.Line_Data (Buffer_Line).Side_Info_Data (J));
             Buffer.Line_Data (Buffer_Line).Side_Info_Data (J) :=
@@ -1510,5 +1514,75 @@ package body Src_Editor_Buffer.Line_Information is
         (Buffer, Get_Buffer_Line (Buffer, First_Line - 1), null,
          Null_Pixbuf);
    end Unhide_Lines;
+
+   --------------
+   -- Fold_All --
+   --------------
+
+   procedure Fold_All (Buffer : access Source_Buffer_Record'Class) is
+      BL : Columns_Config_Access renames Buffer.Buffer_Line_Info_Columns;
+      Buffer_Lines : Line_Data_Array_Access renames Buffer.Line_Data;
+      Command : Command_Access;
+   begin
+      for Col in BL.all'Range loop
+         if BL.all (Col).Identifier.all = Block_Info_Column then
+
+            for Line in Buffer_Lines'Range loop
+               if Buffer_Lines (Line).Side_Info_Data /= null
+                 and then Buffer_Lines (Line).Side_Info_Data (Col).Info /= null
+               then
+                  Command :=
+                    Buffer_Lines (Line).Side_Info_Data
+                    (Col).Info.Associated_Command;
+                  if Command /= null then
+                     if Command.all in Hide_Editable_Lines_Type'Class then
+                        if Execute (Command) = Success then
+                           Fold_All (Buffer);
+                        end if;
+
+                        return;
+                     end if;
+                  end if;
+               end if;
+            end loop;
+            exit;
+         end if;
+      end loop;
+   end Fold_All;
+
+   ----------------
+   -- Unfold_All --
+   ----------------
+
+   procedure Unfold_All (Buffer : access Source_Buffer_Record'Class) is
+      BL : Columns_Config_Access renames Buffer.Buffer_Line_Info_Columns;
+      Buffer_Lines : Line_Data_Array_Access renames Buffer.Line_Data;
+      Command : Command_Access;
+   begin
+      for Col in BL.all'Range loop
+         if BL.all (Col).Identifier.all = Block_Info_Column then
+
+            for Line in Buffer_Lines'Range loop
+               if Buffer_Lines (Line).Side_Info_Data /= null
+                 and then Buffer_Lines (Line).Side_Info_Data (Col).Info /= null
+               then
+                  Command :=
+                    Buffer_Lines (Line).Side_Info_Data
+                    (Col).Info.Associated_Command;
+                  if Command /= null then
+                     if Command.all in Unhide_Editable_Lines_Type'Class then
+                        if Execute (Command) = Success then
+                           Unfold_All (Buffer);
+                        end if;
+
+                        return;
+                     end if;
+                  end if;
+               end if;
+            end loop;
+            exit;
+         end if;
+      end loop;
+   end Unfold_All;
 
 end Src_Editor_Buffer.Line_Information;
