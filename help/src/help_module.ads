@@ -21,8 +21,6 @@
 --  This package provides generic Help facilities.
 
 with Glide_Kernel;
-with Find_Utils;
-with Gtk.Widget;
 with GNAT.OS_Lib;
 
 package Help_Module is
@@ -30,28 +28,6 @@ package Help_Module is
    procedure Register_Module
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
    --  Register the module in the list
-
-   --------------------
-   -- Search context --
-   --------------------
-
-   type Help_Context is new Find_Utils.Search_Context with private;
-   type Help_Context_Access is access all Help_Context'Class;
-   --  A special context for searching in the help
-
-   function Search
-     (Context         : access Help_Context;
-      Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Search_Backward : Boolean;
-      Give_Focus      : Boolean) return Boolean;
-   --  Search function for "Help"
-
-   function Help_Factory
-     (Kernel            : access Glide_Kernel.Kernel_Handle_Record'Class;
-      All_Occurences    : Boolean;
-      Extra_Information : Gtk.Widget.Gtk_Widget)
-      return Find_Utils.Search_Context_Access;
-   --  Search factory for "Help"
 
    ------------------
    -- URL contexts --
@@ -69,11 +45,6 @@ package Help_Module is
    --  Free the memory associated with the context
 
 private
-
-   type Help_Context is new Find_Utils.Search_Context with record
-      First_Search : Boolean;
-      --  true if the next search will be the first for this context
-   end record;
 
    type URL_Context is new Glide_Kernel.Selection_Context with record
       URL : GNAT.OS_Lib.String_Access := null;
