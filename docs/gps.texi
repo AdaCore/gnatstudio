@@ -4268,41 +4268,23 @@ needs to be explicitly called by the user.
 @cindex color
 
 @table @b
-@item Keyword color
-@cindex color
-Color for highlighting keywords.
+@item Keywords
+Font and colors used to highlight keywords.
 
 @item Current line color
-@cindex color
 Color for highlighting the current line. Leave it to blank for no highlighting.
 
-@item Comment color
-@cindex color
-Color for highlighting comments.
+@item Comments
+Font and colors used to highlight comments.
 
-@item String color
-@cindex color
-Color for highlighting strings.
+@item Strings
+Font and colors used to highlight strings.
 
 @item Line highlighting color
-@cindex color
 Color for highlighting lines.
 
 @item Default font
-@cindex font
 The font used in the source editor.
-
-@item Keyword font
-@cindex font
-The font used to display keywords.
-
-@item Comment font
-@cindex font
-The font used to display comments.
-
-@item String font
-@cindex font
-The font used to display strings.
 
 @end table
 
