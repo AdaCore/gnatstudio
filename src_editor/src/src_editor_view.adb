@@ -26,6 +26,7 @@ with Gdk.Event;                   use Gdk.Event;
 with Gdk.Font;                    use Gdk.Font;
 with Gdk.GC;                      use Gdk.GC;
 with Gdk.Window;                  use Gdk.Window;
+with Gdk.Pixbuf;                  use Gdk.Pixbuf;
 with Gdk.Rectangle;               use Gdk.Rectangle;
 with Gdk.Types;                   use Gdk.Types;
 with Gdk.Types.Keysyms;           use Gdk.Types.Keysyms;
@@ -162,8 +163,9 @@ package body Src_Editor_View is
    --  Remove lines from the column info.
 
    procedure Insert_At_Position
-     (L    : in out Line_Info_List.List;
-      Info : Line_Information_Record);
+     (L     : in out Line_Info_List.List;
+      Info  : Line_Information_Record;
+      Width : Integer);
    --  Insert Info at the correct line position in L.
 
    procedure Get_Column_For_Identifier
@@ -697,16 +699,17 @@ package body Src_Editor_View is
                Node := First (View.Line_Info (Column_Index).Column_Info);
 
                while Node /= Null_Node
-                 and then Data (Node).Line < Line
+                 and then Data (Node).Info.Line < Line
                loop
                   Node := Next (Node);
                end loop;
 
                if Node /= Null_Node
-                 and then Data (Node).Line = Line
-                 and then Data (Node).Associated_Command /= null
+                 and then Data (Node).Info.Line = Line
+                 and then Data (Node).Info.Associated_Command /= null
                then
-                  Dummy_Boolean := Execute (Data (Node).Associated_Command);
+                  Dummy_Boolean
+                    := Execute (Data (Node).Info.Associated_Command);
                end if;
             end if;
          end;
@@ -745,26 +748,27 @@ package body Src_Editor_View is
    ------------------------
 
    procedure Insert_At_Position
-     (L    : in out Line_Info_List.List;
-      Info : Line_Information_Record)
+     (L     : in out Line_Info_List.List;
+      Info  : Line_Information_Record;
+      Width : Integer)
    is
       Node : List_Node;
    begin
       if Is_Empty (L) then
-         Append (L, new Line_Information_Record' (Info));
+         Append (L, (new Line_Information_Record' (Info), Width));
       else
          Node := First (L);
 
          while Next (Node) /= Null_Node
-           and then Data (Next (Node)).Line <= Info.Line
+           and then Data (Next (Node)).Info.Line <= Info.Line
          loop
             Node := Next (Node);
          end loop;
 
-         if Data (Node).Line = Info.Line then
-            Set_Data (Node, new Line_Information_Record' (Info));
+         if Data (Node).Info.Line = Info.Line then
+            Set_Data (Node, (new Line_Information_Record' (Info), Width));
          else
-            Append (L, Node, new Line_Information_Record' (Info));
+            Append (L, Node, (new Line_Information_Record' (Info), Width));
          end if;
       end if;
    end Insert_At_Position;
@@ -783,6 +787,7 @@ package body Src_Editor_View is
       Iter                       : Gtk_Text_Iter;
       Y_In_Buffer                : Gint;
       Y_In_Window                : Gint;
+      Y_Pix_In_Window            : Gint;
       Line_Height                : Gint;
       Current_Line               : Natural;
       X, Y, Width, Height, Depth : Gint;
@@ -795,7 +800,7 @@ package body Src_Editor_View is
          Nodes (J) := First (View.Line_Info (J).Column_Info);
 
          while Nodes (J) /= Null_Node
-           and then Data (Nodes (J)).Line < View.Top_Line
+           and then Data (Nodes (J)).Info.Line < View.Top_Line
          loop
             Nodes (J) := Next (Nodes (J));
          end loop;
@@ -831,27 +836,48 @@ package body Src_Editor_View is
          --  And finally add the font height (ascent + descent) to get
          --  the Y coordinates of the line base
 
+         Y_Pix_In_Window := Y_In_Window;
+
          Y_In_Window :=
            Y_In_Window + Get_Ascent (View.Font) + Get_Descent (View.Font) - 2;
 
          for J in Nodes'Range loop
             while Nodes (J) /= Null_Node
-              and then Data (Nodes (J)).Line < Current_Line
+              and then Data (Nodes (J)).Info.Line < Current_Line
             loop
                Nodes (J) := Next (Nodes (J));
             end loop;
 
             if Nodes (J) /= Null_Node
-              and then Data (Nodes (J)).Line = Current_Line
+              and then Data (Nodes (J)).Info.Line = Current_Line
             then
-               if Data (Nodes (J)).Text /= null then
+               if Data (Nodes (J)).Info.Text /= null then
                   Draw_Text
                     (Drawable => Left_Window,
                      Font => View.Font,
                      Gc => View.Line_Numbers_GC,
-                     X =>  Gint (View.Line_Info (J).Starting_X),
+                     X =>  Gint (View.Line_Info (J).Starting_X
+                                 + View.Line_Info (J).Width
+                                 - Data (Nodes (J)).Width
+                                 - 2),
                      Y => Y_In_Window,
-                     Text => Data (Nodes (J)).Text.all);
+                     Text => Data (Nodes (J)).Info.Text.all);
+               end if;
+
+               if Data (Nodes (J)).Info.Image /= Null_Pixbuf then
+                  Render_To_Drawable
+                    (Pixbuf   => Data (Nodes (J)).Info.Image,
+                     Drawable => Left_Window,
+                     Gc       => View.Line_Numbers_GC,
+                     Src_X    => 0,
+                     Src_Y    => 0,
+                     Dest_X   => Gint (View.Line_Info (J).Starting_X
+                                       + View.Line_Info (J).Width
+                                       - Data (Nodes (J)).Width
+                                       - 2),
+                     Dest_Y   => Y_Pix_In_Window,
+                     Width    => -1,
+                     Height   => -1);
                end if;
             end if;
          end loop;
@@ -871,12 +897,36 @@ package body Src_Editor_View is
    procedure Add_File_Information
      (View          : access Source_View_Record;
       Identifier    : String;
-      Width         : Integer;
       Info          : Glide_Kernel.Modules.Line_Information_Data;
       Stick_To_Data : Boolean := True)
    is
       Column : Integer;
+      Buffer : Integer;
+      Width  : Integer := 0;
+      Widths : array (Info.all'Range) of Integer;
    begin
+      for J in Info.all'Range loop
+         if Info (J).Text /= null then
+            Buffer := Integer
+              (String_Width (View.Font, String (Info (J).Text.all)));
+
+            Widths (J) := Buffer;
+
+            if Buffer > Width then
+               Width := Buffer;
+            end if;
+         end if;
+
+         if Info (J).Image /= Null_Pixbuf then
+            Buffer := Integer (Get_Width (Info (J).Image));
+
+            if Buffer > Width then
+               Widths (J) := Buffer;
+               Width := Buffer;
+            end if;
+         end if;
+      end loop;
+
       --  Refresh the stored data.
       Get_Column_For_Identifier
         (View,
@@ -887,7 +937,8 @@ package body Src_Editor_View is
       View.Line_Info (Column).Stick_To_Data := Stick_To_Data;
 
       for J in Info.all'Range loop
-         Insert_At_Position (View.Line_Info (Column).Column_Info, Info (J));
+         Insert_At_Position
+           (View.Line_Info (Column).Column_Info, Info (J), Widths (J));
       end loop;
 
       --  If some of the data was in the display range, draw it.
@@ -973,13 +1024,13 @@ package body Src_Editor_View is
             Node := First (View.Line_Info (J).Column_Info);
 
             while Node /= Null_Node
-              and then Data (Node).Line <= Start
+              and then Data (Node).Info.Line <= Start
             loop
                Node := Next (Node);
             end loop;
 
             while Node /= Null_Node loop
-               Info := Data (Node);
+               Info := Data (Node).Info;
                Info.Line := Info.Line + Number;
                Node := Next (Node);
             end loop;
@@ -1010,21 +1061,21 @@ package body Src_Editor_View is
             Node := First (View.Line_Info (J).Column_Info);
 
             while Node /= Null_Node
-              and then Data (Node).Line < Start_Line
-              and then Data (Node).Line <= End_Line
+              and then Data (Node).Info.Line < Start_Line
+              and then Data (Node).Info.Line <= End_Line
             loop
                Node := Next (Node);
             end loop;
 
             if Node /= Null_Node
-              and then Data (Node).Line <= End_Line
+              and then Data (Node).Info.Line <= End_Line
             then
                First_Node := Node;
 
                --  Find the end node.
                while Node /= Null_Node
                  and then Next (Node) /= Null_Node
-                 and then Data (Next (Node)).Line <= End_Line
+                 and then Data (Next (Node)).Info.Line <= End_Line
                loop
                   Node := Next (Node);
                end loop;
@@ -1045,7 +1096,7 @@ package body Src_Editor_View is
             end if;
 
             while Node /= Null_Node loop
-               Info := Data (Node);
+               Info := Data (Node).Info;
                Info.Line := Info.Line + Start_Line - End_Line;
                Node := Next (Node);
             end loop;
@@ -1057,12 +1108,12 @@ package body Src_Editor_View is
    -- Free --
    ----------
 
-   procedure Free (X : in out Line_Information_Access) is
+   procedure Free (X : in out Line_Info_Width) is
       procedure Free is new Unchecked_Deallocation
         (Line_Information_Record, Line_Information_Access);
    begin
-      Free (X.all);
-      Free (X);
+      Free (X.Info.all);
+      Free (X.Info);
    end Free;
 
 end Src_Editor_View;
