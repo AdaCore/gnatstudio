@@ -19,7 +19,11 @@
  *********************************************************************/
 
 #ifdef _WIN32
+
+#ifndef __MSVCRT__
 #define __MSVCRT__
+#endif
+
 #include <stdlib.h>
 #define gnat_envp environ
 
