@@ -409,6 +409,11 @@ package body Vdiff2_Module.Callback is
          Free_All (Diff.all);
       end if;
 
+      if VDiff2_Module
+        (Vdiff_Module_ID).Command_Prev.Last_Active_Diff = Diff.all then
+         Init_Prev_Diff_Cmd (Null_Head);
+      end if;
+
       Free (Diff);
 
       VDiff2_Module (Vdiff_Module_ID).Is_Active :=
