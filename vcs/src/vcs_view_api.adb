@@ -133,12 +133,9 @@ package body VCS_View_API is
    --  subprojects will be returned as well.
 
    function Get_Dirs_In_Project
-     (Kernel : Kernel_Handle) return String_List.List;
-   --  Return the source directories contained in the root project.
-
-   function String_Array_To_String_List
-     (S : String_Id_Array) return String_List.List;
-   --  Convenience function to make a string_list out of a String_Id_Array.
+     (Project   : Project_Type;
+      Recursive : Boolean := False) return String_List.List;
+   --  Return the source directories contained in Project.
 
    function Get_Current_Ref (Kernel : Kernel_Handle) return VCS_Access;
    --  Return the VCS reference corresponding to the current context in Kernel.
@@ -1924,10 +1921,7 @@ package body VCS_View_API is
       procedure Query_Status_For_Project (The_Project : Project_Type) is
          use String_List;
          Status         : File_Status_List.List;
-         Blank_Status   : File_Status_Record;
-         Current_Status : File_Status_Record;
-         Files          : String_List.List;
-         Files_Temp     : String_List.List_Node;
+         Dirs           : String_List.List;
          Ref            : constant VCS_Access := Get_Current_Ref (The_Project);
 
       begin
@@ -1937,25 +1931,18 @@ package body VCS_View_API is
                -"Warning: could not determine the VCS system for project: "
                  & Project_Name (The_Project));
          else
-            Files := Get_Files_In_Project (The_Project, False);
-            Files_Temp := String_List.First (Files);
-
-            while Files_Temp /= String_List.Null_Node loop
-               Current_Status := Blank_Status;
-               Append (Current_Status.File_Name,
-                       String_List.Data (Files_Temp));
-               Files_Temp := String_List.Next (Files_Temp);
-               File_Status_List.Append (Status, Current_Status);
-            end loop;
-
-            Display_File_Status (Kernel, Status, Ref, False, True);
-            File_Status_List.Free (Status);
+            Dirs := Get_Dirs_In_Project (The_Project);
 
             if Real_Query then
-               Get_Status (Ref, Files);
+               Get_Status (Ref, Dirs);
+
+            else
+               Status := Local_Get_Status (Ref, Dirs);
+               Display_File_Status (Kernel, Status, Ref, False, True);
+               File_Status_List.Free (Status);
             end if;
 
-            String_List.Free (Files);
+            String_List.Free (Dirs);
          end if;
       end Query_Status_For_Project;
 
@@ -2264,16 +2251,35 @@ package body VCS_View_API is
    -------------------------
 
    function Get_Dirs_In_Project
-     (Kernel : Kernel_Handle) return String_List.List
+     (Project   : Project_Type;
+      Recursive : Boolean := False) return String_List.List
    is
       Result   : String_List.List;
       Iterator : Imported_Project_Iterator :=
-        Start (Get_Project (Kernel), True);
+        Start (Project, Recursive);
    begin
       while Current (Iterator) /= No_Project loop
-         String_List.Concat (Result,
-                             String_Array_To_String_List
-                             (Source_Dirs (Current (Iterator))));
+         declare
+            A : constant String_Id_Array
+              := Source_Dirs (Current (Iterator));
+         begin
+            --  Add a directory separator if necessary.
+            --  ??? Should we really need to do that ?
+
+            for J in reverse A'Range loop
+               declare
+                  S : constant String := Get_String (A (J));
+               begin
+                  if S (S'Last) = GNAT.OS_Lib.Directory_Separator then
+                     String_List.Append (Result, S);
+                  else
+                     String_List.Append
+                       (Result, S & GNAT.OS_Lib.Directory_Separator);
+                  end if;
+               end;
+            end loop;
+         end;
+
          Next (Iterator);
       end loop;
 
@@ -2315,7 +2321,8 @@ package body VCS_View_API is
    is
       pragma Unreferenced (Widget);
 
-      Dirs : constant String_List.List := Get_Dirs_In_Project (Kernel);
+      Dirs : constant String_List.List :=
+        Get_Dirs_In_Project (Get_Project (Kernel), True);
       Ref  : constant VCS_Access := Get_Current_Ref (Kernel);
    begin
       Update (Ref, Dirs);
@@ -2324,22 +2331,6 @@ package body VCS_View_API is
       when E : others =>
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end Update_All;
-
-   ---------------------------------
-   -- String_Array_To_String_List --
-   ---------------------------------
-
-   function String_Array_To_String_List
-     (S : String_Id_Array) return String_List.List
-   is
-      Result : String_List.List;
-   begin
-      for J in reverse S'Range loop
-         String_List.Prepend (Result, Get_String (S (J)));
-      end loop;
-
-      return Result;
-   end String_Array_To_String_List;
 
    ---------------------
    -- Context_Factory --
