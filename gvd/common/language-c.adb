@@ -624,7 +624,7 @@ package body Language.C is
          if Buffer (Index) = ' ' then
             Indent := Indent + 1;
          elsif Buffer (Index) = ASCII.HT then
-            Indent := (Indent / Tab_Width + 1) * Tab_Width;
+            Indent := Indent + Tab_Width - (Indent mod Tab_Width);
          else
             exit;
          end if;
