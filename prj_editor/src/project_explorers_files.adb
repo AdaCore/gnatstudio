@@ -1138,9 +1138,10 @@ package body Project_Explorers_Files is
       if Child = null then
          Gtk_New (Files, Kernel);
          Child := Put
-           (Get_MDI (Kernel), Files,
+           (Kernel, Files,
             Default_Width  => Get_Pref (Kernel, Default_Widget_Width),
-            Default_Height => Get_Pref (Kernel, Default_Widget_Height));
+            Default_Height => Get_Pref (Kernel, Default_Widget_Height),
+            Module => Explorer_Files_Module_Id);
          Set_Focus_Child (Child);
          Set_Title
            (Child, -"Project Explorer - File View",  -"File View");
@@ -1165,14 +1166,16 @@ package body Project_Explorers_Files is
       Node : Node_Ptr;
       User : Kernel_Handle) return MDI_Child
    is
+      pragma Unreferenced (MDI);
       Files    : Project_Explorer_Files;
    begin
       if Node.Tag.all = "Project_Explorer_Files" then
          Gtk_New (Files, User);
          return Put
-           (MDI, Gtk_Widget (Files),
+           (User, Gtk_Widget (Files),
             Default_Width  => Get_Pref (User, Default_Widget_Width),
-            Default_Height => Get_Pref (User, Default_Widget_Height));
+            Default_Height => Get_Pref (User, Default_Widget_Height),
+            Module => Explorer_Files_Module_Id);
       end if;
 
       return null;
@@ -1212,8 +1215,7 @@ package body Project_Explorers_Files is
          Kernel                  => Kernel,
          Module_Name             => "Files_View",
          Priority                => Default_Priority,
-         Contextual_Menu_Handler => null,
-         MDI_Child_Tag           => Project_Explorer_Files_Record'Tag);
+         Contextual_Menu_Handler => null);
       Glide_Kernel.Kernel_Desktop.Register_Desktop_Functions
         (Save_Desktop'Access, Load_Desktop'Access);
 

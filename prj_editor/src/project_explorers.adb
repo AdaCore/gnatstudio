@@ -632,15 +632,17 @@ package body Project_Explorers is
       Node : Node_Ptr;
       User : Kernel_Handle) return MDI_Child
    is
+      pragma Unreferenced (MDI);
       Explorer : Project_Explorer;
    begin
       if Node.Tag.all = "Project_Explorer_Project" then
          Gtk_New (Explorer, User);
          Refresh (Explorer);
          return Put
-           (MDI, Explorer,
+           (User, Explorer,
             Default_Width  => Get_Pref (User, Default_Widget_Width),
-            Default_Height => Get_Pref (User, Default_Widget_Height));
+            Default_Height => Get_Pref (User, Default_Widget_Height),
+            Module          => Explorer_Module_ID);
       end if;
 
       return null;
@@ -2001,9 +2003,10 @@ package body Project_Explorers is
          Gtk_New (Explorer, Kernel);
          Refresh (Explorer);
          Child := Put
-           (Get_MDI (Kernel), Explorer,
+           (Kernel, Explorer,
             Default_Width  => Get_Pref (Kernel, Default_Widget_Width),
-            Default_Height => Get_Pref (Kernel, Default_Widget_Height));
+            Default_Height => Get_Pref (Kernel, Default_Widget_Height),
+            Module         => Explorer_Module_ID);
          Set_Title
            (Child, -"Project Explorer - Project View",  -"Project View");
          Set_Focus_Child (Child);
@@ -2741,7 +2744,6 @@ package body Project_Explorers is
          Module_Name             => Explorer_Module_Name,
          Priority                => Default_Priority,
          Contextual_Menu_Handler => Explorer_Contextual'Access,
-         MDI_Child_Tag           => Project_Explorer_Record'Tag,
          Default_Context_Factory => Default_Factory'Access);
       Glide_Kernel.Kernel_Desktop.Register_Desktop_Functions
         (Save_Desktop'Access, Load_Desktop'Access);
