@@ -31,7 +31,17 @@ begin
 
       exception
          when Declaration_Not_Found =>
-            Fail ("unable to find declaration for macro " & Ref_Id);
+            Insert_Declaration
+              (Handler            => LI_Handler (Global_CPP_Handler),
+               File               => Global_LI_File,
+               List               => Global_LI_File_List,
+               Symbol_Name        => Ref_Id,
+               Source_Filename    => Ref.Buffer
+                 (Ref.File_Name.First .. Ref.File_Name.Last),
+               Location           => Macro.Start_Position,
+               Kind               => Unresolved_Entity,
+               Scope              => Global_Scope,
+               Declaration_Info   => Decl_Info);
       end;
    else
       --  look for dependency declaration
