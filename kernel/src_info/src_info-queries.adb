@@ -2346,13 +2346,35 @@ package body Src_Info.Queries is
       --  Move to the next file to analyze
 
       function Next_Reference (Ref : E_Reference_List) return E_Reference_List;
-      --  Move to the next reference
+      --  Move to the next reference. Return null if there are no more
+      --  references for the current entity.
 
       procedure Next_Decl;
       --  Move to the next declaration
 
       function Check_File (File : File_Info_Ptr) return Boolean;
       --  Return whether File matches the iterator
+
+      procedure Next_Decl_Till_Has_Ref;
+      --  Move to the next declaration until we find one which has a reference
+      --  in the current file. Current_Decl is left to null if there are none
+
+      ----------------------------
+      -- Next_Decl_Till_Has_Ref --
+      ----------------------------
+
+      procedure Next_Decl_Till_Has_Ref is
+      begin
+         while Iterator.Current_Decl /= null
+           and then Get_Source_Filename
+             (Iterator.Current_Decl.Value.Declaration.Location.File) /=
+              Iterator.File
+           and then Next_Reference
+             (Iterator.Current_Decl.Value.References) = null
+         loop
+            Iterator.Current_Decl := Iterator.Current_Decl.Next;
+         end loop;
+      end Next_Decl_Till_Has_Ref;
 
       ----------------
       -- Check_File --
@@ -2364,7 +2386,8 @@ package body Src_Info.Queries is
            and then File.Declarations /= null
          then
             Iterator.Current_Decl := File.Declarations;
-            return True;
+            Next_Decl_Till_Has_Ref;
+            return Iterator.Current_Decl /= null;
          end if;
 
          return False;
@@ -2420,7 +2443,10 @@ package body Src_Info.Queries is
                if Iterator.Current_Dep.Value.Declarations /= null then
                   Iterator.Current_Decl :=
                     Iterator.Current_Dep.Value.Declarations;
-                  return;
+                  Next_Decl_Till_Has_Ref;
+                  if Iterator.Current_Decl /= null then
+                     return;
+                  end if;
                end if;
 
                Iterator.Current_Dep := Iterator.Current_Dep.Next;
@@ -2444,6 +2470,8 @@ package body Src_Info.Queries is
          Iterator.Reference    := null;
          Iterator.New_Decl     := True;
 
+         Next_Decl_Till_Has_Ref;
+
          if Iterator.Current_Decl = null then
             Next_File;
          end if;
@@ -2466,10 +2494,6 @@ package body Src_Info.Queries is
             E := E.Next;
          end loop;
 
-         if E = null then
-            Next_Decl;
-         end if;
-
          return E;
       end Next_Reference;
 
@@ -2481,6 +2505,9 @@ package body Src_Info.Queries is
 
       elsif Iterator.Reference /= null then
          Iterator.Reference := Next_Reference (Iterator.Reference.Next);
+         if Iterator.Reference = null then
+            Next_Decl;
+         end if;
 
       else
          if Iterator.New_Decl then
@@ -2498,6 +2525,9 @@ package body Src_Info.Queries is
          --  Move to first reference
          Iterator.Reference :=
            Next_Reference (Iterator.Current_Decl.Value.References);
+         if Iterator.Reference = null then
+            Next_Decl;
+         end if;
       end if;
    end Next;
 
