@@ -63,7 +63,7 @@ package Main_Debug_Window_Pkg.Callbacks is
      (Object : access Gtk_Menu_Item_Record'Class);
 
    procedure On_Exit1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class);
+     (Object : access Gtk_Widget_Record'Class);
 
    procedure On_Undo3_Activate
      (Object : access Gtk_Menu_Item_Record'Class);
@@ -117,13 +117,13 @@ package Main_Debug_Window_Pkg.Callbacks is
      (Object : access Gtk_Check_Menu_Item_Record'Class);
 
    procedure On_Run1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class);
+     (Object : access Gtk_Widget_Record'Class);
 
    procedure On_Run_Again1_Activate
      (Object : access Gtk_Menu_Item_Record'Class);
 
    procedure On_Start1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class);
+     (Object : access Gtk_Widget_Record'Class);
 
    procedure On_Run_In_Execution_Window1_Activate
      (Object : access Gtk_Menu_Item_Record'Class);
