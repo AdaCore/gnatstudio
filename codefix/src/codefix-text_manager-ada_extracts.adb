@@ -258,15 +258,14 @@ package body Codefix.Text_Manager.Ada_Extracts is
    procedure Get_Token
      (Line      : Ptr_Extract_Line;
       Col       : in out Integer;
-      Token     : out Token_Record) is
-
+      Token     : out Token_Record)
+   is
       Content     : constant String := Get_String (Line.all);
       Buffer      : constant String := Content (Col .. Content'Last);
       Start, Stop : Integer := Col;
 
    begin
-
-      Token.Content := null; --  ??? Why, without this line, get I a SEGV ?
+      Token.Content := null; --  Without this line, we're getting a SEGV ???
 
       Skip_Blanks (Buffer, Start);
 
@@ -308,7 +307,6 @@ package body Codefix.Text_Manager.Ada_Extracts is
         or else Token.Content (1) = ';';
       Token.Line := Line;
       Col := Token.Last_Col + 1;
-
    end Get_Token;
 
    ----------
@@ -332,7 +330,7 @@ package body Codefix.Text_Manager.Ada_Extracts is
          Last_Col     => This.Last_Col,
          Line         => This.Line,
          Is_Separator => This.Is_Separator);
-      --  Be carefull !!! The line doesn't have to be cloned, because it is the
+      --  Be careful !!! The line doesn't have to be cloned, because it is the
       --  real line contained into the Extract and not a work copy.
    end Clone;
 
@@ -524,7 +522,6 @@ package body Codefix.Text_Manager.Ada_Extracts is
       First_Used      : Natural;
 
    begin
-
       if Last = 0 then
          Last_Used := First;
       else
@@ -535,10 +532,10 @@ package body Codefix.Text_Manager.Ada_Extracts is
 
       if First_Used > 1 then
          First_Used := First_Used - 1;
-         --  -1 deletes the precedent character, the ','.
+         --  -1 deletes the previous character, the ','.
       else
          Last_Used := Last_Used + 1;
-         --  In this case, there is no precedent character, so the next ','
+         --  In this case, there is no previous character, so the next ','
          --  is deleted.
       end if;
 
@@ -598,7 +595,7 @@ package body Codefix.Text_Manager.Ada_Extracts is
    function Get_Element (This : Ada_List; Num : Natural) return Word_Cursor is
       Node   : Tokens_List.List_Node := First (This.Elements_List);
    begin
-      for I in 1 .. Num - 1 loop
+      for J in 1 .. Num - 1 loop
          Node := Next (Node);
       end loop;
 
