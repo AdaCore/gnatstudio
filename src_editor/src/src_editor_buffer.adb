@@ -4419,7 +4419,7 @@ package body Src_Editor_Buffer is
    function Blocks_Valid
      (Buffer : access Source_Buffer_Record) return Boolean is
    begin
-      return not Buffer.Blocks_Timeout_Registered;
+      return not Buffer.Blocks_Need_Parsing;
    end Blocks_Valid;
 
 end Src_Editor_Buffer;
