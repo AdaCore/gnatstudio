@@ -1586,12 +1586,12 @@ package body Debugger.Gdb is
    begin
       if Temporary then
          Send (Debugger,
-               "tbreak " & Base_Name (File).all & ":" & Image (Line),
+               "tbreak " & Base_Name (File) & ":" & Image (Line),
                Mode => Mode);
 
       else
          Send (Debugger,
-               "break " & Base_Name (File).all & ':' & Image (Line),
+               "break " & Base_Name (File) & ':' & Image (Line),
                Mode => Mode);
       end if;
    end Break_Source;
@@ -2014,7 +2014,7 @@ package body Debugger.Gdb is
 
       declare
          S : constant String := Send
-           (Debugger, "info line " & Base_Name (File).all & ':' & Image (Line),
+           (Debugger, "info line " & Base_Name (File) & ':' & Image (Line),
             Mode => Internal);
 
       begin

@@ -493,7 +493,7 @@ package body Src_Editor_Box is
          Filename := Get_File (Location);
          if Dir_Name (Filename).all = "" then
             Insert (Kernel, -"File not found: "
-                    & Base_Name (Filename).all, Mode => Error);
+                    & Base_Name (Filename), Mode => Error);
          end if;
 
       else
@@ -506,7 +506,7 @@ package body Src_Editor_Box is
 
          if Dir_Name (Filename).all = "" then
             Insert (Kernel, -"File not found: "
-                    & Base_Name (Filename).all, Mode => Error);
+                    & Base_Name (Filename), Mode => Error);
          end if;
       end if;
 
@@ -768,7 +768,7 @@ package body Src_Editor_Box is
                  ".")
               & ASCII.LF
               & (-"declared at ")
-              & Base_Name (Get_Declaration_File_Of (Entity)).all & ':'
+              & Base_Name (Get_Declaration_File_Of (Entity)) & ':'
               & Image (Get_Declaration_Line_Of (Entity));
 
          begin
@@ -2019,7 +2019,7 @@ package body Src_Editor_Box is
 
                if Is_Regular_File (Name) then
                   if Message_Dialog
-                    (Msg => Base_Name (Name).all
+                    (Msg => Base_Name (Name)
                        & (-" already exists. Do you want to overwrite ?"),
                      Dialog_Type => Confirmation,
                      Buttons => Button_OK or Button_Cancel,
@@ -2037,7 +2037,7 @@ package body Src_Editor_Box is
          else
             if not Check_Timestamp (Editor.Source_Buffer, Ask_User => False)
               and then Message_Dialog
-                (Msg => Base_Name (File).all
+                (Msg => Base_Name (File)
                         & (-" changed on disk. Do you want to overwrite ?"),
                  Dialog_Type => Confirmation,
                  Buttons => Button_OK or Button_Cancel,
@@ -2053,7 +2053,7 @@ package body Src_Editor_Box is
       else
          if Is_Regular_File (Filename) then
             if Message_Dialog
-              (Msg => Base_Name (Filename).all
+              (Msg => Base_Name (Filename)
                & (-" already exists. Do you want to overwrite ?"),
                Dialog_Type => Confirmation,
                Buttons => Button_OK or Button_Cancel,

@@ -135,7 +135,7 @@ package body Commands.Custom is
                File := File_Selection_Context_Access (Context);
 
                if Param = "f" then
-                  return Base_Name (File_Information (File)).all;
+                  return Base_Name (File_Information (File));
                else
                   return Full_Name (File_Information (File)).all;
                end if;
@@ -270,7 +270,7 @@ package body Commands.Custom is
 
                      for K in List'Range loop
                         New_New_Args (Last) :=
-                          new String'(Base_Name (List (K)).all);
+                          new String'(Base_Name (List (K)));
                         Last := Last + 1;
                      end loop;
 

@@ -698,7 +698,7 @@ package body Project_Viewers is
          Update_Contents (Viewer,
                           Project_Information (File),
                           Dir_Name (File_Information (File)).all,
-                          Base_Name (File_Information (File)).all);
+                          Base_Name (File_Information (File)));
       end if;
 
    exception
@@ -1456,7 +1456,7 @@ package body Project_Viewers is
             Append (Menu, Item);
 
             Gtk_New (Item, Label => -"Edit switches for "
-                     & Base_Name (File_Information (File_Context)).all);
+                     & Base_Name (File_Information (File_Context)));
             Append (Menu, Item);
             Context_Callback.Connect
               (Item, "activate",
@@ -1652,7 +1652,7 @@ package body Project_Viewers is
 
       begin
          if File /= VFS.No_File then
-            Add_Main_File (Ed, Base_Name (File).all);
+            Add_Main_File (Ed, Base_Name (File));
          end if;
       end Add_File;
 

@@ -613,7 +613,7 @@ package body Project_Explorers is
       if Node = Null_Iter
         or else (Get_Title (Child) = " ")
         or else (Get_Title (Child) =
-                   Base_Name (Get_File_From_Node (E.Tree.Model, Node)).all)
+                   Base_Name (Get_File_From_Node (E.Tree.Model, Node)))
       then
          return;
       end if;
@@ -1665,7 +1665,7 @@ package body Project_Explorers is
 
                while Index <= Files_In_Project'Last loop
                   if New_File (Index)
-                    and then Base_Name (Files_In_Project (Index)).all = F
+                    and then Base_Name (Files_In_Project (Index)) = F
                   then
                      New_File (Index) := False;
                      exit;
@@ -2344,7 +2344,7 @@ package body Project_Explorers is
          Iter : Imported_Project_Iterator;
 
       begin
-         Set (C.Matches, Base_Name (File).all, Mark_File);
+         Set (C.Matches, Base_Name (File), Mark_File);
 
          --  Mark the number of entries in the directory, so that if a file
          --  doesn't match we can decrease it later, and finally no longer
@@ -2412,7 +2412,7 @@ package body Project_Explorers is
                Project_Marked := False;
                for S in Sources'Range loop
                   declare
-                     Base : constant String := Base_Name (Sources (S)).all;
+                     Base : constant String := Base_Name (Sources (S));
                   begin
                      if C.Include_Entities then
                         Mark_File_And_Projects
@@ -2547,7 +2547,7 @@ package body Project_Explorers is
             --  the same base name in an extending project...
             Set_Context
               (Context  => C,
-               Look_For => Base_Name (File_Information (File_C)).all,
+               Look_For => Base_Name (File_Information (File_C)),
                Options  => (Case_Sensitive => Filenames_Are_Case_Sensitive,
                             Whole_Word     => True,
                             Regexp         => False));
@@ -2555,7 +2555,7 @@ package body Project_Explorers is
             if not Search (C, Kernel, Search_Backward => False) then
                Insert (Kernel,
                        -"File not found in the explorer: "
-                       & Base_Name (File_Information (File_C)).all,
+                       & Base_Name (File_Information (File_C)),
                        Mode => Glide_Kernel.Console.Error);
             end if;
 
@@ -2629,7 +2629,7 @@ package body Project_Explorers is
 
          if Has_File_Information (File) then
             Gtk_New (Item, Label => -"Locate in explorer: "
-                     & Krunch (Base_Name (File_Information (File)).all));
+                     & Krunch (Base_Name (File_Information (File))));
             Append (Menu, Item);
 
             Context_Callback.Connect

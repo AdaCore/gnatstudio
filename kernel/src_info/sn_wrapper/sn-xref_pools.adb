@@ -261,7 +261,7 @@ package body SN.Xref_Pools is
       Directory       : String;
       N               : Integer) return Virtual_File
    is
-      Name  : constant String := Base_Name (Source_Filename).all;
+      Name  : constant String := Base_Name (Source_Filename);
    begin
       if N = 0 then
          return Create (Full_Filename => Directory & Name & Xref_Suffix);

@@ -653,7 +653,7 @@ package body VCS_View_API is
                           (Get_Registry (Kernel), Original));
 
                      Gtk_New (Item, Label => -"Commit file "
-                              & Locale_To_UTF8 (Base_Name (Original).all));
+                              & Locale_To_UTF8 (Base_Name (Original)));
 
                      Append (Menu, Item);
                      Context_Callback.Connect

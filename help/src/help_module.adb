@@ -452,7 +452,7 @@ package body Help_Module is
          Html.Current_Help_File := File;
          Stream := HTML_Begin (Html.Csc);
 
-         if Base_Name (File).all /= Template_Index then
+         if Base_Name (File) /= Template_Index then
             HTML_Write (Html.Csc, Stream, Buffer.all);
 
          else

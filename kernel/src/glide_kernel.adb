@@ -454,7 +454,7 @@ package body Glide_Kernel is
       if Handler = null then
          Trace (Me,
                 "Locate_From_Source_And_Complete: Unsupported_Language for "
-                & Base_Name (Source_Filename).all);
+                & Base_Name (Source_Filename));
          return No_LI_File;
 
       else
@@ -1747,7 +1747,7 @@ package body Glide_Kernel is
 
       if Tree = Null_Scope_Tree then
          Trace (Me, "Couldn't create scope tree for "
-                & Base_Name (Get_LI_Filename (Lib_Info)).all);
+                & Base_Name (Get_LI_Filename (Lib_Info)));
          Node := Null_Scope_Tree_Node;
          return;
       end if;
@@ -1759,7 +1759,7 @@ package body Glide_Kernel is
                  -"Couldn't find the scope tree for " & Get_Name (Entity));
          Trace (Me, "Couldn't find entity "
                 & Get_Name (Entity) & " in "
-                & Base_Name (Get_LI_Filename (Lib_Info)).all
+                & Base_Name (Get_LI_Filename (Lib_Info))
                 & " at line" & Get_Declaration_Line_Of (Entity)'Img
                 & " column"  & Get_Declaration_Column_Of (Entity)'Img);
          Free (Tree);

@@ -1817,7 +1817,7 @@ package body Browsers.Call_Graph is
    begin
       if not Is_Predefined_Entity (Item.Entity) then
          Set_Text (Layout,
-                   Base_Name (Get_Declaration_File_Of (Item.Entity)).all
+                   Base_Name (Get_Declaration_File_Of (Item.Entity))
                    & ':' & Image (Get_Declaration_Line_Of (Item.Entity)));
       else
          Set_Text (Layout, -"<Unresolved>");

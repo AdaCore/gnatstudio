@@ -166,7 +166,7 @@ package body Docgen is
       Ext      : constant String := File_Extension (Source_Filename);
    begin
       return Source_Path &
-        Base_Name (Source_Filename, Ext).all
+        Base_Name (Source_Filename, Ext)
         & "_"
         & Ext (Ext'First + 1 .. Ext'Last)
         & Doc_Suffix;

@@ -1026,7 +1026,7 @@ package body VCS.CVS is
         Create (Full_Filename => String_List.Head (Head));
       Patch_File   : constant Virtual_File := Create
         (Full_Filename =>
-           Get_Tmp_Dir & Base_Name (Current_File).all & "$difs");
+           Get_Tmp_Dir & Base_Name (Current_File) & "$difs");
       Full       : constant String := Full_Name (Current_File).all;
       Num_Lines    : Natural := 0;
       File         : File_Type;
@@ -1132,7 +1132,7 @@ package body VCS.CVS is
             C_2       : External_Command_Access;
             Args_2    : List;
             Orig_File : constant String :=
-              Get_Tmp_Dir & Base_Name (File).all & "$orig";
+              Get_Tmp_Dir & Base_Name (File) & "$orig";
 
          begin
             Append (Command_Head, Orig_File);
@@ -1164,7 +1164,7 @@ package body VCS.CVS is
          Append (Args, "-rHEAD");
       end if;
 
-      Append (Args, Base_Name (File).all);
+      Append (Args, Base_Name (File));
 
       if Is_Empty (Command_Head) then
          Append (Command_Head, Full_Name (File).all);
@@ -1291,7 +1291,7 @@ package body VCS.CVS is
       Current_File : constant Virtual_File :=
         Create (Full_Filename => String_List.Head (Head));
       Text_File    : constant Virtual_File :=
-        Create (Full_Filename => Get_Tmp_Dir & Base_Name (Current_File).all);
+        Create (Full_Filename => Get_Tmp_Dir & Base_Name (Current_File));
       File         : File_Type;
 
    begin
@@ -1326,7 +1326,7 @@ package body VCS.CVS is
    begin
       Append (Args, "log");
       Append (Args, Locale_Base_Name (File));
-      Append (Command_Head, Base_Name (File).all & "$changelog");
+      Append (Command_Head, Base_Name (File) & "$changelog");
 
       Create
         (C,

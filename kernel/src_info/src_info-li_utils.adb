@@ -296,7 +296,7 @@ package body Src_Info.LI_Utils is
       File := new LI_File_Constrained'
         (LI =>  (Parsed        => False,
                  Handler       => Handler,
-                 LI_Filename_Key => new String'(Base_Name (LI_Filename).all),
+                 LI_Filename_Key => new String'(Base_Name (LI_Filename)),
                  LI_Filename   => LI_Filename,
                  Project       => Project,
                  Body_Info     => null,
@@ -338,7 +338,7 @@ package body Src_Info.LI_Utils is
 
       FI_Ptr := new File_Info'
         (Unit_Name         => Unit,
-         Source_Filename   => new String'(Base_Name (Full_Filename).all),
+         Source_Filename   => new String'(Base_Name (Full_Filename)),
          Directory_Name    => Dir,
          File_Timestamp    => Time,
          Original_Filename => null,

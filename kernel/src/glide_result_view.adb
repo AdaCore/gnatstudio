@@ -391,7 +391,7 @@ package body Glide_Result_View is
    begin
       if Base_Name = "" then
          Set
-           (Model, Iter, Base_Name_Column, VFS.Base_Name (Absolute_Name).all);
+           (Model, Iter, Base_Name_Column, VFS.Base_Name (Absolute_Name));
       else
          Set (Model, Iter, Base_Name_Column, Base_Name);
       end if;

@@ -244,9 +244,9 @@ package body Breakpoints_Editor is
             if Br.File /= VFS.No_File then
                Set_Active (Editor.Location_Selected, True);
                Add_Unique_Combo_Entry
-                 (Editor.File_Combo, Base_Name (Br.File).all);
+                 (Editor.File_Combo, Base_Name (Br.File));
                Set_Text
-                 (Get_Entry (Editor.File_Combo), Base_Name (Br.File).all);
+                 (Get_Entry (Editor.File_Combo), Base_Name (Br.File));
                Set_Value (Editor.Line_Spin, Grange_Float (Br.Line));
             else
                Set_Active (Editor.Address_Selected, True);
@@ -541,7 +541,7 @@ package body Breakpoints_Editor is
             --  ??? Should also check Temporary
 
             if Current = -1
-              or else Base_Name (Br.File).all /= File
+              or else Base_Name (Br.File) /= File
               or else Br.Line /= Line
             then
                Remove := True;
@@ -621,7 +621,7 @@ package body Breakpoints_Editor is
       --  Reinitialize the contents of the file combo boxes
       Set_Text
         (Get_Entry (Editor.File_Combo),
-         Base_Name (Get_Current_File (Process.Editor_Text)).all);
+         Base_Name (Get_Current_File (Process.Editor_Text)));
 
       --  Clear the contents of the exceptions combo (its contents is in fact
       --  cached in gdb, so it is fast enough to call "info exceptions" again)
@@ -785,7 +785,7 @@ package body Breakpoints_Editor is
          end if;
 
          if Br.File /= VFS.No_File then
-            Set_Text (Editor.Breakpoint_List, Row, 4, Base_Name (Br.File).all);
+            Set_Text (Editor.Breakpoint_List, Row, 4, Base_Name (Br.File));
             Set_Text (Editor.Breakpoint_List, Row, 5, Integer'Image (Br.Line));
          end if;
 

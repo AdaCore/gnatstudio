@@ -803,7 +803,7 @@ package body Projects is
       Name, Lang : Name_Id;
    begin
       Get_Unit_Part_And_Name_From_Filename
-        (Base_Name (Filename).all, Project, Unit, Name, Lang);
+        (Base_Name (Filename), Project, Unit, Name, Lang);
       return Unit;
    end Get_Unit_Part_From_Filename;
 
@@ -1005,7 +1005,7 @@ package body Projects is
       Name, Lang : Name_Id;
    begin
       Get_Unit_Part_And_Name_From_Filename
-        (Base_Name (Source_Filename).all, Project, Unit, Name, Lang);
+        (Base_Name (Source_Filename), Project, Unit, Name, Lang);
 
       case Unit is
          when Unit_Spec                 => Part := Unit_Body;
@@ -1033,7 +1033,7 @@ package body Projects is
             end;
          end if;
 
-         return Base_Name (Source_Filename).all;
+         return Base_Name (Source_Filename);
       end;
    end Other_File_Base_Name;
 
@@ -2149,7 +2149,7 @@ package body Projects is
            (Project        => Project,
             Attribute      =>
               Attribute_Pkg (In_Pkg & '#' & Get_String (Name_Switches)),
-            Index          => Base_Name (File).all);
+            Index          => Base_Name (File));
 
          if Value /= Nil_Variable_Value then
             Is_Default_Value := False;

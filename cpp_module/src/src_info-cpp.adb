@@ -207,9 +207,9 @@ package body Src_Info.CPP is
          Full_Filename => Referred_Filename);
 
       Assert (Fail_Stream, File.LI.Body_Info.Source_Filename.all /=
-              Base_Name (Referred_Filename).all,
+              Base_Name (Referred_Filename),
               "Can't insert dependency, LI file "
-              & Base_Name (Referred_LI.LI.LI_Filename).all
+              & Base_Name (Referred_LI.LI.LI_Filename)
               & " is already for file "
               & Full_Name (Referred_Filename).all);
 
@@ -443,7 +443,7 @@ package body Src_Info.CPP is
 
          if File.LI.Body_Info /= null
            and then Base_Name (File.LI.Body_Info.Source_Filename.all) =
-           Base_Name (Parent_Filename).all
+           Base_Name (Parent_Filename)
          then
             Tmp_LI_File_Ptr := File;
 
@@ -1797,7 +1797,7 @@ package body Src_Info.CPP is
       end if;
 
       if Dir_Name (Source_Filename).all = "./" then
-         Warn ("File not found: " & Base_Name (Source_Filename).all);
+         Warn ("File not found: " & Base_Name (Source_Filename));
          return;
       end if;
 

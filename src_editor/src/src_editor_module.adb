@@ -1564,7 +1564,7 @@ package body Src_Editor_Module is
             Set_Title
               (Child,
                Full_Name (Title).all & " <" & Im & ">",
-               Base_Name (Title).all & " <" & Im & ">");
+               Base_Name (Title) & " <" & Im & ">");
          end;
 
          Gtkada.Handlers.Return_Callback.Object_Connect
@@ -1750,7 +1750,7 @@ package body Src_Editor_Module is
          Raise_Child (Child);
 
          if File /= VFS.No_File then
-            Set_Title (Child, Full_Name (File).all, Base_Name (File).all);
+            Set_Title (Child, Full_Name (File).all, Base_Name (File));
             File_Edited (Kernel, Get_Filename (Child));
 
          else
@@ -1876,7 +1876,7 @@ package body Src_Editor_Module is
 
             if Old_Name /= New_Name then
                Set_Title
-                 (Child, Full_Name (New_Name).all, Base_Name (New_Name).all);
+                 (Child, Full_Name (New_Name).all, Base_Name (New_Name));
                Recompute_View (Kernel);
             end if;
          end;
@@ -1971,12 +1971,12 @@ package body Src_Editor_Module is
            new String_Array (List1'First .. List1'Last + List2'Length);
       begin
          for L in List1'Range loop
-            Completions (L) := new String'(Base_Name (List1 (L)).all);
+            Completions (L) := new String'(Base_Name (List1 (L)));
          end loop;
 
          for L in List2'Range loop
             Completions (List1'Last + L - List2'First + 1) :=
-              new String'(Base_Name (List2 (L)).all);
+              new String'(Base_Name (List2 (L)));
          end loop;
 
          Set_Completions (Open_File_Entry, Completions);
@@ -2091,7 +2091,7 @@ package body Src_Editor_Module is
                 (Title             => -"Save File As",
                  Parent            => Get_Main_Window (Kernel),
                  Base_Directory    => Dir_Name (Old_Name).all,
-                 Default_Name      => Base_Name (Old_Name).all,
+                 Default_Name      => Base_Name (Old_Name),
                  Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs),
                  Kind              => Save_File,
                  History           => Get_History (Kernel));
@@ -2925,7 +2925,7 @@ package body Src_Editor_Module is
            and then Has_File_Information (File)
          then
             Gtk_New (Mitem, -"Edit " &
-                     Base_Name (File_Information (File)).all);
+                     Base_Name (File_Information (File)));
             Append (Menu, Mitem);
             Context_Callback.Connect
               (Mitem, "activate",
@@ -2989,7 +2989,7 @@ package body Src_Editor_Module is
                return Image (Column);
 
             when 'f' =>
-               return Base_Name (Get_Filename (Box)).all;
+               return Base_Name (Get_Filename (Box));
 
             when 'd' =>
                return Dir_Name (Get_Filename (Box)).all;

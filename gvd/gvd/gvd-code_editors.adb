@@ -318,7 +318,7 @@ package body GVD.Code_Editors is
       --  Create the explorer tree
 
       if Top.Standalone and then Set_Current then
-         Set_Current_File (Editor.Explorer, Base_Name (File_Name).all);
+         Set_Current_File (Editor.Explorer, Base_Name (File_Name));
 
          if not Get_Pref (GVD_Prefs, Display_Explorer) then
             Hide (Editor.Explorer_Scroll);

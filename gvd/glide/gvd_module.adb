@@ -328,7 +328,7 @@ package body GVD_Module is
       if Exec /= VFS.No_File then
          Project := Create_Project
            (Project_Registry (Get_Registry (Kernel)),
-            "debugger_" & Base_Name (Exec).all,
+            "debugger_" & Base_Name (Exec),
             GNAT.Directory_Operations.Get_Current_Dir);
       else
          Project := Create_Project
@@ -1023,7 +1023,7 @@ package body GVD_Module is
          end if;
 
          if not Is_Regular_File (S) then
-            Exec := Locate_Exec_On_Path (Base_Name (S).all);
+            Exec := Locate_Exec_On_Path (Base_Name (S));
 
             if Exec /= null then
                S := Create (Full_Filename => Exec.all);
@@ -1035,7 +1035,7 @@ package body GVD_Module is
                Free (Exec);
             else
                Console.Insert
-                 (Kernel, (-"Could not find file: ") & Base_Name (S).all,
+                 (Kernel, (-"Could not find file: ") & Base_Name (S),
                   Mode => Error);
                S := VFS.No_File;
             end if;

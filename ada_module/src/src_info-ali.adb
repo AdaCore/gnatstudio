@@ -597,7 +597,7 @@ package body Src_Info.ALI is
          when Unit_Body =>
             Get_Unit_Source_File
               (Handler, List, Source_Filename,
-               Base_Name (Source_Filename).all, Project, Unit_Body, File);
+               Base_Name (Source_Filename), Project, Unit_Body, File);
 
          when Unit_Spec =>
             Get_Unit_Source_File
@@ -689,7 +689,7 @@ package body Src_Info.ALI is
       Subunit_Name     : Name_Id;
       File             : out Source_File)
    is
-      Base : constant Cst_UTF8_String_Access := Base_Name (Source_Filename);
+      Base : constant String := Base_Name (Source_Filename);
       ALI_Filename : constant String := Get_ALI_Filename (Sig_Base_Name);
       --   ??? Could we use Sname
       Sep          : File_Info_Ptr_List;
@@ -698,7 +698,7 @@ package body Src_Info.ALI is
       File :=
          (LI             => Get (List.Table.all, Base_Name (ALI_Filename)),
           Part           => Unit_Separate,
-         Source_Filename => new String'(Base.all));
+         Source_Filename => new String'(Base));
       --  ??? No real need to duplicate the string above, since we know with
       --  the current implementation of VFS that Base will never be freed. But
       --  this is more secure, and the implementation of ALI tables will
@@ -740,7 +740,7 @@ package body Src_Info.ALI is
       Sep := File.LI.LI.Separate_Info;
 
       while Sep /= null loop
-         exit when Sep.Value.Source_Filename.all = Base.all;
+         exit when Sep.Value.Source_Filename.all = Base;
          Sep := Sep.Next;
       end loop;
 
@@ -1277,7 +1277,7 @@ package body Src_Info.ALI is
             when Constraint_Error =>
                Assert (Me, False,
                        "Invalid Tref file_num in "
-                       & Base_Name (Get_File (Decl.Location)).all
+                       & Base_Name (Get_File (Decl.Location))
                        & Get_Line (Decl.Location)'Img
                        & Get_Column (Decl.Location)'Img);
          end;
@@ -1537,7 +1537,7 @@ package body Src_Info.ALI is
            (Handler                  => LI_Handler (Handler),
             Parsed                   => True,
             LI_Filename_Key          => new String'
-              (Base_Name (Full_ALI_Filename).all),
+              (Base_Name (Full_ALI_Filename)),
             LI_Filename              => Full_ALI_Filename,
             Project                  => Project,
             Spec_Info                => null,
@@ -1752,7 +1752,7 @@ package body Src_Info.ALI is
       case Get_Unit_Part_From_Filename (Project, Source_Filename) is
          when Unit_Body | Unit_Separate =>
             return Create
-              (Locate_ALI (Get_ALI_Filename (Base_Name (Source_Filename).all),
+              (Locate_ALI (Get_ALI_Filename (Base_Name (Source_Filename)),
                            Project));
 
          when Unit_Spec =>
@@ -1795,7 +1795,7 @@ package body Src_Info.ALI is
          declare
             LI_Name : constant Virtual_File := LI_Filename_From_Source
               (Handler, Source_Filename, Project);
-            Base : constant String := Base_Name (Source_Filename).all;
+            Base : constant String := Base_Name (Source_Filename);
          begin
             --  In some cases (sources with no associated LI file), we will
             --  not get a LI_Name. Nothing to do in this case

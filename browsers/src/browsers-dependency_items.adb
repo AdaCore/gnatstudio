@@ -542,7 +542,7 @@ package body Browsers.Dependency_Items is
       if Lib_Info = No_LI_File then
          Trace (Me,
                 "Examine_Dependencies: Couldn't find LI file for "
-                & Base_Name (File).all);
+                & Base_Name (File));
          Insert (Kernel, -"Couldn't find dependency information for "
                  & Full_Name (File).all,
                  Mode => Glide_Kernel.Console.Error);
@@ -967,7 +967,7 @@ package body Browsers.Dependency_Items is
          if Has_File_Information (File_Context) then
             declare
                Name : constant String :=
-                 Krunch (Base_Name (File_Information (File_Context)).all);
+                 Krunch (Base_Name (File_Information (File_Context)));
             begin
                Gtk_New
                  (Item, Label => (-"Show dependencies for ") & Name);
@@ -1124,7 +1124,7 @@ package body Browsers.Dependency_Items is
       Browser : access General_Browser_Record'Class;
       File  : Internal_File) is
    begin
-      Initialize (Item, Browser, Base_Name (Get_Source_Filename (File)).all,
+      Initialize (Item, Browser, Base_Name (Get_Source_Filename (File)),
                   Examine_From_Dependencies'Access,
                   Examine_Dependencies'Access);
       Item.Source := File;
@@ -1256,7 +1256,7 @@ package body Browsers.Dependency_Items is
          new File_Selection_Context;
       Src     : constant Src_Info.Internal_File := Get_Source (Item);
       Filename : constant Virtual_File := Get_Source_Filename (Src);
-      Base  : constant String := Krunch (Base_Name (Filename).all);
+      Base  : constant String := Krunch (Base_Name (Filename));
       Mitem : Gtk_Image_Menu_Item;
       Pix   : Gtk_Image;
    begin

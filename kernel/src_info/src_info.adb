@@ -116,7 +116,7 @@ package body Src_Info is
       LI_Filename : VFS.Virtual_File)
       return LI_File_Ptr is
    begin
-      return Get (List.Table.all, Base_Name (LI_Filename).all);
+      return Get (List.Table.all, Base_Name (LI_Filename));
    end Locate;
 
    ------------------------
@@ -128,8 +128,7 @@ package body Src_Info is
       Source_Filename : VFS.Virtual_File)
       return LI_File_Ptr
    is
-      Short_Filename : constant Cst_UTF8_String_Access :=
-        Base_Name (Source_Filename);
+      Short_Filename : constant String := Base_Name (Source_Filename);
       Current_LI     : LI_File_Node_Ptr;
       Current_Sep    : File_Info_Ptr_List;
       Table : LI_File_HTable.HTable := List.Table.all;
@@ -154,7 +153,7 @@ package body Src_Info is
 
          if Current_LI.Value.LI.Body_Info /= null
            and then Current_LI.Value.LI.Body_Info.Source_Filename.all =
-              Short_Filename.all
+              Short_Filename
          then
             return Current_LI.Value;
          end if;
@@ -163,7 +162,7 @@ package body Src_Info is
 
          if Current_LI.Value.LI.Spec_Info /= null
            and then Current_LI.Value.LI.Spec_Info.Source_Filename.all =
-              Short_Filename.all
+              Short_Filename
          then
             return Current_LI.Value;
          end if;
@@ -174,7 +173,7 @@ package body Src_Info is
 
          Separate_Loop :
          while Current_Sep /= null loop
-            if Current_Sep.Value.Source_Filename.all = Short_Filename.all then
+            if Current_Sep.Value.Source_Filename.all = Short_Filename then
                return Current_LI.Value;
             end if;
 
@@ -279,7 +278,7 @@ package body Src_Info is
       Assert
         (Me,
          LI_File_HTable.Get (HT, LIFP.LI.LI_Filename_Key) = null,
-         "File " & Base_Name (LIFP.LI.LI_Filename).all
+         "File " & Base_Name (LIFP.LI.LI_Filename)
          & " is already in the list");
       LI_File_HTable.Set (HT, new LI_File_Node'(Value => LIFP, Next => null));
    end Add;
@@ -591,7 +590,7 @@ package body Src_Info is
    function Get_Unit_Part
      (Lib_Info : LI_File_Ptr; File : VFS.Virtual_File) return Unit_Part
    is
-      Base : constant String := Base_Name (File).all;
+      Base : constant String := Base_Name (File);
    begin
       if Lib_Info.LI.Spec_Info /= null
         and then Lib_Info.LI.Spec_Info.Source_Filename.all = Base
@@ -850,7 +849,7 @@ package body Src_Info is
    is
       Info : File_Info_Ptr;
       List : File_Info_Ptr_List;
-      Base : constant String := Base_Name (File).all;
+      Base : constant String := Base_Name (File);
    begin
       if Lib_Info = null then
          return "";

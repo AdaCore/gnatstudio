@@ -760,7 +760,7 @@ package body Python_Module is
             Set_Return_Value
               (Data,
                Get_Name (Entity) & ':'
-               & Base_Name (Get_Declaration_File_Of (Entity)).all
+               & Base_Name (Get_Declaration_File_Of (Entity))
                & ':'
                & Image (Get_Declaration_Line_Of (Entity)) & ':'
                & Image (Get_Declaration_Column_Of (Entity)));
@@ -849,7 +849,7 @@ package body Python_Module is
         or else Command = "__repr__"
       then
          Set_Return_Value (Data,
-                           Base_Name (Get_File (Fileinfo)).all & ':'
+                           Base_Name (Get_File (Fileinfo)) & ':'
                            & Image (Get_Line (Info)) & ':'
                            & Image (Get_Column (Info)));
 

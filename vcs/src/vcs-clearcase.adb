@@ -272,7 +272,7 @@ package body VCS.ClearCase is
         Create (Full_Filename => String_List.Head (Head));
       Patch_File   : constant Virtual_File := Create
         (Full_Filename =>
-           Get_Tmp_Dir & Base_Name (Current_File).all & "$difs");
+           Get_Tmp_Dir & Base_Name (Current_File) & "$difs");
       File         : File_Type;
 
    begin
@@ -1567,7 +1567,7 @@ package body VCS.ClearCase is
       Append (Args, "lshistory");
       Append (Args, Full_Name (File).all);
 
-      Append (Command_Head, Base_Name (File).all & "$changelog");
+      Append (Command_Head, Base_Name (File) & "$changelog");
 
       Create
         (C,

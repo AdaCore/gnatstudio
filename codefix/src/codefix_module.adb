@@ -260,7 +260,7 @@ package body Codefix_Module is
            and then Has_File_Information (Location)
          then
             Assign (Error_Caption,
-                    Base_Name (File_Information (Location)).all &
+                    Base_Name (File_Information (Location)) &
                     ":" & Message_Information (Location));
          else
             return;

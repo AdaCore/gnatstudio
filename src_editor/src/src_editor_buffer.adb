@@ -624,7 +624,7 @@ package body Src_Editor_Buffer is
          Create
            (Full_Filename =>
               Dir_Name (Buffer.Filename).all
-              & ".#" & Base_Name (Buffer.Filename).all),
+              & ".#" & Base_Name (Buffer.Filename)),
          True,
          Success);
       Buffer.Modified_Auto := False;
@@ -716,7 +716,7 @@ package body Src_Editor_Buffer is
          if Buffer.Filename /= VFS.No_File then
             Delete_File
               (Dir_Name (Buffer.Filename).all & ".#" &
-               Base_Name (Buffer.Filename).all, Result);
+               Base_Name (Buffer.Filename), Result);
          end if;
       end if;
 
@@ -2146,7 +2146,7 @@ package body Src_Editor_Buffer is
          begin
             Buttons := Message_Dialog
               (Msg            => -"The file "
-                 & Base_Name (Filename).all & ASCII.LF
+                 & Base_Name (Filename) & ASCII.LF
                  & (-"is read-only. Do you want to overwrite it ?"),
                Dialog_Type    => Confirmation,
                Buttons        => Button_Yes or Button_No,
@@ -2335,7 +2335,7 @@ package body Src_Editor_Buffer is
       if Buffer.Filename /= VFS.No_File then
          Delete (Create (Full_Filename =>
                            Dir_Name (Buffer.Filename).all
-                           & ".#" & Base_Name (Buffer.Filename).all));
+                           & ".#" & Base_Name (Buffer.Filename)));
       end if;
 
       Set_Modified (Buffer, False);
@@ -3328,7 +3328,7 @@ package body Src_Editor_Buffer is
                end if;
 
                Dialog := Create_Gtk_Dialog
-                 (Msg         => Base_Name (Buffer.Filename).all
+                 (Msg         => Base_Name (Buffer.Filename)
                   & (-" changed on disk.")
                   & ASCII.LF & ASCII.LF
                   & (-"Click on Ignore to keep this editing session.")
