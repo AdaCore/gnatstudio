@@ -142,7 +142,7 @@ package body Builder_Module is
    function Compute_Arguments
      (Kernel       : Kernel_Handle;
       Syntax       : Command_Syntax;
-      Project      : String;
+      Project      : Project_Type;
       File         : Virtual_File;
       Compile_Only : Boolean := False) return Argument_List_Access;
    --  Compute the make arguments following the right Syntax
@@ -292,10 +292,11 @@ package body Builder_Module is
    function Compute_Arguments
      (Kernel       : Kernel_Handle;
       Syntax       : Command_Syntax;
-      Project      : String;
+      Project      : Project_Type;
       File         : Virtual_File;
       Compile_Only : Boolean := False) return Argument_List_Access
    is
+      Project_Str    : constant String := Project_Path (Project);
       Result         : Argument_List_Access;
       Vars           : Argument_List_Access :=
         Argument_String_To_List
@@ -319,7 +320,7 @@ package body Builder_Module is
                end if;
 
                K := K + 1;
-               R_Tmp (K) := new String'("-P" & Project);
+               R_Tmp (K) := new String'("-P" & Project_Str);
 
                if File /= VFS.No_File then
                   K := K + 1;
@@ -338,11 +339,16 @@ package body Builder_Module is
                List : constant Argument_List :=
                  ((new String'("-s"),
                    new String'("-C"),
-                   new String'(Dir_Name (Project)),
+                   new String'(Dir_Name (Project_Str)),
                    new String'("-f"),
-                   new String'("Makefile." & Base_Name (Project, ".gpr"))) &
+                   new String'("Makefile." &
+                               Base_Name (Project_Str, ".gpr"))) &
                   Vars.all);
                Base : constant String := Locale_From_UTF8 (Base_Name (File));
+               Base_Object : constant String :=
+                 Base (Base'First ..
+                         Index (Base, ".",
+                                Going => Ada.Strings.Backward)) & "o";
 
             begin
                if Compile_Only then
@@ -350,13 +356,7 @@ package body Builder_Module is
                   --  to make
 
                   Result := new Argument_List'
-                    (List &
-                     new String'
-                       (Base
-                          (Base'First ..
-                             Index (Base, ".",
-                                    Going => Ada.Strings.Backward)) &
-                        "o"));
+                    (List & new String'(Base_Object));
 
                else
                   To_Lower (Lang);
@@ -385,7 +385,17 @@ package body Builder_Module is
                      end if;
 
                   else
-                     Result := new Argument_List'(List & new String'("build"));
+                     if File = VFS.No_File then
+                        Result := new Argument_List'
+                          (List & new String'("build"));
+                     else
+                        Result := new Argument_List'
+                          (List &
+                           new String'("build") &
+                           new String'("MAIN_OBJECT=" & Base_Object) &
+                           new String'("EXEC=" &
+                                       Get_Executable_Name (Project, Base)));
+                     end if;
                   end if;
                end if;
             end;
@@ -578,8 +588,7 @@ package body Builder_Module is
                     (Clone (Default_Builder_Switches)
                      & new String'(Full_Name (F).all));
                else
-                  Args := Compute_Arguments
-                    (Kernel, Syntax, Project_Path (Prj), F);
+                  Args := Compute_Arguments (Kernel, Syntax, Prj, F);
                end if;
             end;
 
@@ -616,8 +625,7 @@ package body Builder_Module is
             end case;
 
          else
-            Args := Compute_Arguments
-              (Kernel, Syntax, Project_Path (Project), File);
+            Args := Compute_Arguments (Kernel, Syntax, Project, File);
          end if;
 
          Change_Dir (Dir_Name (Project_Path (Project)));
@@ -816,7 +824,7 @@ package body Builder_Module is
 
       else
          Args := Compute_Arguments
-           (Kernel, Syntax, Project_Path (Prj), File, Compile_Only => True);
+           (Kernel, Syntax, Prj, File, Compile_Only => True);
          Insert_And_Launch
            (Kernel,
             Remote_Protocol => Get_Pref (GVD_Prefs, Remote_Protocol),
@@ -1286,7 +1294,7 @@ package body Builder_Module is
            (Mitem, "activate",
             File_Project_Cb.To_Marshaller (On_Build'Access),
             Slot_Object => Kernel,
-            User_Data => File_Project_Record'
+            User_Data   => File_Project_Record'
               (Project => Project,
                File    => Create (Mains (M).all, Project)));
 
