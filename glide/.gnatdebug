@@ -11,6 +11,7 @@ DEBUG.ENCLOSING_ENTITY=no
 --  List of all the handles defined in the application
 AUNIT_MODULE=yes
 BROWSERS.CALL_GRAPH=yes
+BROWSERS.CANVAS=yes
 BROWSERS.DEPENDENCY=yes
 DEBUGGER=yes
 FIND_UTILS=yes
