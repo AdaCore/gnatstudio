@@ -88,7 +88,10 @@ package body Find_Utils is
    -----------
 
    function Match
-     (Context : access Root_Search_Context; Buffer : String) return Integer
+     (Context     : access Root_Search_Context;
+      Buffer      : String;
+      Start_Index : Integer := -1;
+      End_Index   : Positive := Positive'Last) return Integer
    is
       Result : Integer := -1;
 
@@ -108,9 +111,11 @@ package body Find_Utils is
       Index : Integer := Buffer'First;
       Line, Column : Integer := 0;
       Was_Partial : Boolean;
+      Start : constant Integer := Integer'Max (Start_Index, Buffer'First);
+      Last  : constant Integer := Integer'Min (End_Index, Buffer'Last);
    begin
       Scan_Buffer_No_Scope
-        (Context, Buffer, Callback'Unrestricted_Access,
+        (Context, Buffer, Start, Last, Callback'Unrestricted_Access,
          Index, Line, Column, Was_Partial);
       return Result;
    end Match;
@@ -120,15 +125,17 @@ package body Find_Utils is
    --------------------------
 
    procedure Scan_Buffer_No_Scope
-     (Context    : access Root_Search_Context;
-      Buffer     : String;
-      Callback   : Scan_Callback;
-      Ref_Index  : in out Integer;
-      Ref_Line   : in out Integer;
-      Ref_Column : in out Integer;
+     (Context     : access Root_Search_Context;
+      Buffer      : String;
+      Start_Index : Natural;
+      End_Index   : Natural;
+      Callback    : Scan_Callback;
+      Ref_Index   : in out Integer;
+      Ref_Line    : in out Integer;
+      Ref_Column  : in out Integer;
       Was_Partial : out Boolean)
    is
-      Last_Line_Start : Natural := Buffer'First;
+      Last_Line_Start : Natural := Start_Index;
 
       procedure To_Line_Column (Pos : Natural);
       --  Set Line and Column to the appropriate for the Pos-th character in
@@ -165,11 +172,12 @@ package body Find_Utils is
 
       procedure Re_Search is
          RE  : constant Pattern_Matcher := Context_As_Regexp (Context);
-         Pos : Natural := Buffer'First;
+         Pos : Natural := Start_Index;
       begin
          loop
-            Match
-              (RE, Buffer (Pos .. Buffer'Last), Context.Sub_Matches.all);
+            --  ??? Requires GNAT 3.16 >= 20021016  (BA15-007)
+            --  Match (RE, Buffer, Context.Sub_Matches.all, Pos, End_Index);
+            Match (RE, Buffer (Pos .. End_Index), Context.Sub_Matches.all);
 
             exit when Context.Sub_Matches (0) = No_Match;
 
@@ -206,7 +214,7 @@ package body Find_Utils is
 
       procedure BM_Search is
          BM  : Boyer_Moore.Pattern;
-         Pos : Integer := Buffer'First;
+         Pos : Integer := Start_Index;
       begin
          Context_As_Boyer_Moore (Context, BM);
 
@@ -217,15 +225,15 @@ package body Find_Utils is
          --  that don't match.
 
          loop
-            Pos := Search (BM, Buffer (Pos .. Buffer'Last));
+            Pos := Search (BM, Buffer (Pos .. End_Index));
             exit when Pos = -1;
 
             if not Context.Options.Whole_Word
               or else
-              ((Pos = Buffer'First
+              ((Pos = Start_Index
                 or else Is_Word_Delimiter (Buffer (Pos - 1)))
                and then
-               (Pos + Context.Look_For'Length - 1 = Buffer'Last
+               (Pos + Context.Look_For'Length - 1 = End_Index
                 or else Is_Word_Delimiter
                 (Buffer (Pos + Context.Look_For'Length))))
             then

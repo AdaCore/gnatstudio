@@ -129,9 +129,16 @@ package Find_Utils is
    --  itself.
 
    function Match
-     (Context : access Root_Search_Context; Buffer : String) return Integer;
-   --  Check if Context matches Buffer, and return the index of the first
-   --  match, or -1 if there is no match
+     (Context     : access Root_Search_Context;
+      Buffer      : String;
+      Start_Index : Integer := -1;
+      End_Index   : Positive := Positive'Last) return Integer;
+   --  Check if Context matches Buffer (Start_Index .. End_Index), and return
+   --  the index of the first match, or -1 if there is no match. Start_Index
+   --  defaults to Buffer'First, and End_Index defaults to Buffer'Last.
+   --  It is important that Buffer contains the whole file,
+   --  since otherwise regular expressions starting with "^" or ending with "$"
+   --  will not be properly recognized.
    --  This automatically uses either a regexp or a faster Boyer Moore methode
    --  for constant strings.
 
@@ -150,17 +157,22 @@ package Find_Utils is
    --  If it returns False, no more match will be checked.
 
    procedure Scan_Buffer_No_Scope
-     (Context    : access Root_Search_Context;
-      Buffer     : String;
-      Callback   : Scan_Callback;
-      Ref_Index  : in out Integer;
-      Ref_Line   : in out Integer;
-      Ref_Column : in out Integer;
+     (Context     : access Root_Search_Context;
+      Buffer      : String;
+      Start_Index : Natural;
+      End_Index   : Natural;
+      Callback    : Scan_Callback;
+      Ref_Index   : in out Integer;
+      Ref_Line    : in out Integer;
+      Ref_Column  : in out Integer;
       Was_Partial : out Boolean);
-   --  Find matches of Context in Buffer, starting at Buffer'First, and until
-   --  either the end of the buffer or Callback returns False.
-   --  Buffer is assumes to be a single valid scope, and thus no scope handling
-   --  is performed.
+   --  Find matches of Context in Buffer (Start_Index .. End_Index), and until
+   --  either End_Index or Callback returns False.
+   --  Note: it is important to pass the full file contents in Buffer, since
+   --  otherwise regular expressions starting with "^" or ending with "$" will
+   --  not workproperly.
+   --  Buffer (Start_Index .. End_Index) is assumes to be a single valid scope,
+   --  and thus no scope handling is performed.
    --  The character at index Ref_Index in Buffer is assumed to correspond to
    --  position Ref_Line and Ref_Column in the original file. They are
    --  automatically updated when new positions are computed, so that they can
