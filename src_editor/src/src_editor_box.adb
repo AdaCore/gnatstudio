@@ -1573,13 +1573,18 @@ package body Src_Editor_Box is
       Context   : access Selection_Context'Class) return String
    is
       pragma Unreferenced (Creator);
-      Entity : constant Entity_Information := Get_Entity
-        (Entity_Selection_Context_Access (Context));
+      Entity : Entity_Information;
    begin
-      if Is_Container (Get_Kind (Entity).Kind) then
-         return -"Goto body of " & Get_Name (Entity).all;
+      if Context.all in Entity_Selection_Context'Class then
+         Entity := Get_Entity
+           (Entity_Selection_Context_Access (Context));
+         if Is_Container (Get_Kind (Entity).Kind) then
+            return -"Goto body of " & Get_Name (Entity).all;
+         else
+            return -"Goto full declaration of " & Get_Name (Entity).all;
+         end if;
       else
-         return -"Goto full declaration of " & Get_Name (Entity).all;
+         return "";
       end if;
    end Get_Label;
 
