@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                   Copyright (C) 2002-2003                         --
+--                      Copyright (C) 2002-2004                      --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -2653,8 +2653,8 @@ package body Projects.Editor is
       Name : Name_Id;
    begin
       --  ??? When the project is no longer found in the hierarchy, it should
-      --  ??? also be removed from the htable in Prj.Tree, so that another
-      --  ??? project by that name can be loaded.
+      --  also be removed from the htable in Prj.Tree, so that another
+      --  project by that name can be loaded.
 
       --  Cleanup the name
 
