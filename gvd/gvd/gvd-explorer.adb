@@ -55,7 +55,7 @@ package body Odd.Explorer is
 
    function Get_Pos (Buffer : String; Index : Positive) return Position_Type is
       Result     : Position_Type;
-      Line_Start : Positive;
+      Line_Start : Positive := 1;
    begin
       Result.Line := 0;
       Result.Index := Index;
