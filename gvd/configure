@@ -1,6 +1,6 @@
 #! /bin/sh
 
-# From configure.in Revision: 1.44 
+# From configure.in Revision: 1.45 
 #############################################################
 #
 #  Checking for Gnat
@@ -576,7 +576,7 @@ TARGET_CFLAGS=""
 TARGET_LFLAGS=""
 COLOR_SELECTION="#000000"
 EXEC_COMMAND="sh -c"
-DEFAULT_PS="ps x 2> /dev/null || ps -u $USER 2> /dev/null || ps"
+DEFAULT_PS="ps x 2> /dev/null || ps -u \$USER 2> /dev/null || ps"
 HTML_BROWSER="netscape"
 
 ac_aux_dir=
