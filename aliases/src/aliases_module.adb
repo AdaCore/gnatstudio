@@ -27,6 +27,7 @@ with Gdk.Color;                use Gdk.Color;
 with Gdk.Event;                use Gdk.Event;
 with Gdk.Types.Keysyms;        use Gdk.Types.Keysyms;
 with Gdk.Types;                use Gdk.Types;
+with Glib.Values;              use Glib.Values;
 with Glib.Xml_Int;             use Glib.Xml_Int;
 with Glib;                     use Glib;
 with Glide_Kernel.Console;     use Glide_Kernel.Console;
@@ -35,19 +36,24 @@ with Glide_Kernel;             use Glide_Kernel;
 with Gtk.Box;                  use Gtk.Box;
 with Gtk.Button;               use Gtk.Button;
 with Gtk.Cell_Renderer_Text;   use Gtk.Cell_Renderer_Text;
+with Gtk.Cell_Renderer_Toggle; use Gtk.Cell_Renderer_Toggle;
 with Gtk.Dialog;               use Gtk.Dialog;
 with Gtk.Editable;             use Gtk.Editable;
 with Gtk.Enums;                use Gtk.Enums;
 with Gtk.Event_Box;            use Gtk.Event_Box;
 with Gtk.Frame;                use Gtk.Frame;
 with Gtk.Label;                use Gtk.Label;
+with Gtk.GEntry;               use Gtk.GEntry;
 with Gtk.Paned;                use Gtk.Paned;
 with Gtk.Scrolled_Window;      use Gtk.Scrolled_Window;
 with Gtk.Separator;            use Gtk.Separator;
+with Gtk.Size_Group;           use Gtk.Size_Group;
 with Gtk.Stock;                use Gtk.Stock;
 with Gtk.Style;                use Gtk.Style;
 with Gtk.Text_Buffer;          use Gtk.Text_Buffer;
 with Gtk.Text_Iter;            use Gtk.Text_Iter;
+with Gtk.Text_Tag;             use Gtk.Text_Tag;
+with Gtk.Text_Tag_Table;
 with Gtk.Text_View;            use Gtk.Text_View;
 with Gtk.Tree_Model;           use Gtk.Tree_Model;
 with Gtk.Tree_Store;           use Gtk.Tree_Store;
@@ -73,12 +79,16 @@ package body Aliases_Module is
 
    Alias_Key : Param_Spec_Key;
 
+   Highlight_Color : constant String := "#DD0000";
+   --  Color used to highlight special entities in the expansion
+
    type Param_Record;
    type Param_Access is access Param_Record;
    type Param_Record is record
-      Name    : String_Access;
-      Initial : String_Access;
-      Next    : Param_Access;
+      Name     : String_Access;
+      Initial  : String_Access;
+      From_Env : Boolean;
+      Next     : Param_Access;
    end record;
 
    type Alias_Record is record
@@ -194,6 +204,61 @@ package body Aliases_Module is
       Selected : Boolean := False);
    --  Add a new entry in the aliases list of the editor
 
+   procedure Param_Env_Changed
+     (Editor : access Gtk_Widget_Record'Class;
+      Params : Glib.Values.GValues);
+   --  Called when a variable is changed from environment variable to standard
+   --  variable.
+
+   type Param_Substitution;
+   type Param_Substitution_Access is access Param_Substitution;
+   type Param_Substitution is record
+      Param   : Param_Access;
+      Edition : Gtk_Entry;
+      Next    : Param_Substitution_Access;
+   end record;
+   --  Widget used to store the current value for parameters: Edition contains
+   --  the widget used by the user to edit the value. It is null in case the
+   --  parameter is an environment variable.
+
+   procedure Free (Param : in out Param_Substitution_Access);
+   --  Free the list of params
+
+   function Substitute_Params
+     (Text : String; Values : Param_Substitution_Access) return String;
+   --  Compute the replacement string for Text, given the currnet parameter
+   --  values.
+
+   procedure Expansion_Inserted
+     (Editor : access Gtk_Widget_Record'Class;
+      Params : Glib.Values.GValues);
+   --  Called when some new text has been inserted in Editor.Expansion
+
+   procedure Expansion_Deleted
+     (Editor : access Gtk_Widget_Record'Class;
+      Params : Glib.Values.GValues);
+   --  Called when some text has been removed from Editor.Expansion
+
+   procedure Highlight_Expansion_Range
+     (Editor : access Alias_Editor_Record'Class; First, Last : Gtk_Text_Iter);
+   --  Highlight part of Editor.Expansion
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Param : in out Param_Substitution_Access) is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Param_Substitution, Param_Substitution_Access);
+      Tmp : Param_Substitution_Access;
+   begin
+      while Param /= null loop
+         Tmp := Param;
+         Param := Param.Next;
+         Unchecked_Free (Tmp);
+      end loop;
+   end Free;
+
    -------------
    -- Destroy --
    -------------
@@ -220,9 +285,10 @@ package body Aliases_Module is
          P := Alias.Params;
          while P /= null loop
             A.Params := new Param_Record'
-              (Name    => new String'(P.Name.all),
-               Initial => new String'(P.Initial.all),
-               Next    => A.Params);
+              (Name     => new String'(P.Name.all),
+               Initial  => new String'(P.Initial.all),
+               From_Env => P.From_Env,
+               Next     => A.Params);
             P := P.Next;
          end loop;
 
@@ -284,6 +350,11 @@ package body Aliases_Module is
             Child := new Node;
             Child.Tag := new String'("param");
             Set_Attribute (Child, "name", P.Name.all);
+
+            if P.From_Env then
+               Set_Attribute (Child, "environment", "true");
+            end if;
+
             Child.Value := new String'(P.Initial.all);
             Add_Child (Key, Child);
             P := P.Next;
@@ -333,9 +404,10 @@ package body Aliases_Module is
 
                elsif Child.Tag.all = "param" then
                   P := new Param_Record'
-                    (Name    => new String'(Get_Attribute (Child, "name")),
-                     Initial => new String'(Child.Value.all),
-                     Next    => P);
+                    (Name     => new String'(Get_Attribute (Child, "name")),
+                     Initial  => new String'(Child.Value.all),
+                     From_Env => Get_Attribute (Child, "environment") = "true",
+                     Next     => P);
 
                else
                   Insert (Kernel, "Unknown XML tag in " & Filename,
@@ -401,6 +473,60 @@ package body Aliases_Module is
       end loop;
    end Find_Current_Entity;
 
+   -----------------------
+   -- Substitute_Params --
+   -----------------------
+
+   function Substitute_Params
+     (Text : String; Values : Param_Substitution_Access) return String
+   is
+      P : Param_Substitution_Access := Values;
+      Count : Natural := 0;
+   begin
+      while P /= null loop
+         Count := Count + 1;
+         P := P.Next;
+      end loop;
+
+      declare
+         Substrings : Substitution_Array (1 .. Count + 1);
+         Val        : String_Access;
+      begin
+         P := Values;
+         Count := Substrings'First + 1;
+
+         Substrings (Substrings'First) :=
+           (Name => new String'("$"), Value => new String'("$"));
+
+         while P /= null loop
+            if P.Param.From_Env then
+               Val := Getenv (P.Param.Name.all);
+               if Val.all = "" then
+                  Free (Val);
+                  Val := new String'(P.Param.Initial.all);
+               end if;
+
+            else
+               Val := new String'(Get_Text (P.Edition));
+            end if;
+
+            Substrings (Count) :=
+              (Name  => new String'("(" & P.Param.Name.all & ')'),
+               Value => Val);
+            Count := Count + 1;
+
+            P := P.Next;
+         end loop;
+
+         declare
+            Val : constant String := Substitute (Text, '$', Substrings);
+         begin
+            Free (Substrings);
+            return Val;
+         end;
+      end;
+   end Substitute_Params;
+
    ------------------
    -- Expand_Alias --
    ------------------
@@ -408,11 +534,76 @@ package body Aliases_Module is
    function Expand_Alias (Name : String) return String is
       Alias : constant Alias_Record := Get
         (Aliases_Module_Id.Aliases, Name);
+      Values : Param_Substitution_Access;
+      Dialog : Gtk_Dialog;
+      Box : Gtk_Box;
+      S : Gtk_Size_Group;
+      P : Param_Access;
+      Label : Gtk_Label;
+      W : Gtk_Widget;
    begin
       if Alias = No_Alias then
          return "";
-      else
+
+      elsif Alias.Params = null then
          return Alias.Expansion.all;
+
+      else
+         P := Alias.Params;
+         while P /= null loop
+            Values := new Param_Substitution'
+              (Param   => P,
+               Edition => null,
+               Next    => Values);
+
+            if not P.From_Env then
+               if Dialog = null then
+                  Gtk_New (Dialog,
+                           Title  => -"Alias Parameter Selection",
+                           Parent => null,
+                           Flags  => Destroy_With_Parent);
+                  Gtk_New (S);
+
+                  W := Add_Button (Dialog, Stock_Ok, Gtk_Response_OK);
+                  Grab_Default (W);
+                  W := Add_Button (Dialog, Stock_Cancel, Gtk_Response_Cancel);
+               end if;
+
+               Gtk_New_Hbox (Box, Homogeneous => False);
+               Pack_Start (Get_Vbox (Dialog), Box, Expand => False);
+
+               Gtk_New (Label, P.Name.all & ":   ");
+               Pack_Start (Box, Label, Expand => False, Fill => True);
+               Set_Alignment (Label, 0.0, 0.5);
+               Add_Widget (S, Label);
+
+               Gtk_New (Values.Edition);
+               Set_Text (Values.Edition, P.Initial.all);
+               Set_Activates_Default (Values.Edition, True);
+               Pack_Start (Box, Values.Edition, Expand => True, Fill => True);
+            end if;
+
+            P := P.Next;
+         end loop;
+
+         if Dialog /= null then
+            Show_All (Dialog);
+            if Run (Dialog) /= Gtk_Response_OK then
+               Destroy (Dialog);
+               return "";
+            end if;
+         end if;
+
+         declare
+            Val : constant String := Substitute_Params
+              (Alias.Expansion.all, Values);
+         begin
+            if Dialog /= null then
+               Destroy (Dialog);
+            end if;
+            Free (Values);
+            return Val;
+         end;
       end if;
    end Expand_Alias;
 
@@ -512,15 +703,36 @@ package body Aliases_Module is
    procedure Save_Current_Var (Editor : access Alias_Editor_Record'Class) is
       Buffer : constant Gtk_Text_Buffer := Get_Buffer (Editor.Expansion);
       Start, Last : Gtk_Text_Iter;
+      P      : Param_Access;
+      Iter   : Gtk_Tree_Iter;
    begin
       if Editor.Current_Var /= null then
+         Iter := Get_Iter_First (Editor.Variables_Model);
+         while Iter /= Null_Iter loop
+            declare
+               Name : constant String :=
+                 Get_String (Editor.Variables_Model, Iter, 0);
+               Initial : constant String :=
+                 Get_String (Editor.Variables_Model, Iter, 1);
+               From_Env : constant Boolean :=
+                 Get_Boolean (Editor.Variables_Model, Iter, 3);
+            begin
+               P := new Param_Record'
+                 (Name     => new String'(Name),
+                  Initial  => new String'(Initial),
+                  From_Env => From_Env,
+                  Next     => P);
+            end;
+
+            Next (Editor.Variables_Model, Iter);
+         end loop;
+
          Get_Start_Iter (Buffer, Start);
          Get_End_Iter   (Buffer, Last);
 
-         --  ??? Should setup params
          Set (Editor.Local_Aliases, Editor.Current_Var.all,
               (Expansion => new String'(Get_Text (Buffer, Start, Last)),
-               Params    => null));
+               Params    => P));
       end if;
    end Save_Current_Var;
 
@@ -536,6 +748,7 @@ package body Aliases_Module is
          Col1  : Gint := 0; Name : String;
          Col2  : Gint := 1; Initial : String;
          Col3  : Gint := 2; Editable : Boolean := True;
+         Col4  : Gint := 3; From_Env : Boolean := False;
          Final : Gint := -1);
       pragma Import (C, Set_Variable, "gtk_tree_store_set");
 
@@ -545,6 +758,7 @@ package body Aliases_Module is
       Iter : Gtk_Tree_Iter;
       Alias : Alias_Record := No_Alias;
       P : Param_Access;
+      Start, Last : Gtk_Text_Iter;
    begin
       Save_Current_Var (Ed);
 
@@ -573,11 +787,15 @@ package body Aliases_Module is
          while P /= null loop
             Append (Ed.Variables_Model, Iter, Null_Iter);
             Set_Variable (Get_Object (Ed.Variables_Model), Iter'Address,
-                          Name    => P.Name.all & ASCII.NUL,
-                          Initial => P.Initial.all & ASCII.NUL);
+                          Name     => P.Name.all & ASCII.NUL,
+                          Initial  => P.Initial.all & ASCII.NUL,
+                          From_Env => P.From_Env);
             P := P.Next;
          end loop;
       end if;
+
+      Get_Bounds (Get_Buffer (Ed.Expansion), Start, Last);
+      Highlight_Expansion_Range (Ed, Start, Last);
    end Alias_Selection_Changed;
 
    -------------------
@@ -673,6 +891,138 @@ package body Aliases_Module is
                 Aliases_Module_Id.Key);
    end On_Preferences_Changed;
 
+   -----------------------
+   -- Param_Env_Changed --
+   -----------------------
+
+   procedure Param_Env_Changed
+     (Editor : access Gtk_Widget_Record'Class;
+      Params : Glib.Values.GValues)
+   is
+      Ed : constant Alias_Editor := Alias_Editor (Editor);
+      Path_String : constant String := Get_String (Nth (Params, 1));
+      Iter   : constant Gtk_Tree_Iter :=
+        Get_Iter_From_String (Ed.Variables_Model, Path_String);
+   begin
+      Set (Ed.Variables_Model, Iter, 3,
+           not Get_Boolean (Ed.Variables_Model, Iter, 3));
+   end Param_Env_Changed;
+
+   ------------------------
+   -- Expansion_Inserted --
+   ------------------------
+
+   procedure Expansion_Inserted
+     (Editor : access Gtk_Widget_Record'Class;
+      Params : Glib.Values.GValues)
+   is
+      Pos, Eol  : Gtk_Text_Iter;
+      --   Text : constant String := Get_String (Nth (Params, 2));
+      Length : constant Gint := Get_Int (Nth (Params, 3));
+      Result : Boolean;
+   begin
+      Get_Text_Iter (Nth (Params, 1), Pos);
+      Copy (Source => Pos, Dest => Eol);
+
+      Set_Line_Index (Pos, 0);
+      Forward_Chars (Eol, Length, Result);
+      Forward_To_Line_End (Eol, Result);
+
+      Highlight_Expansion_Range (Alias_Editor (Editor), Pos, Eol);
+   end Expansion_Inserted;
+
+   -----------------------
+   -- Expansion_Deleted --
+   -----------------------
+
+   procedure Expansion_Deleted
+     (Editor : access Gtk_Widget_Record'Class;
+      Params : Glib.Values.GValues)
+   is
+      Start, Last : Gtk_Text_Iter;
+      Result : Boolean;
+   begin
+      Get_Text_Iter (Nth (Params, 1), Start);
+      Get_Text_Iter (Nth (Params, 2), Last);
+
+      Set_Line_Index (Start, 0);
+      Forward_To_Line_End (Last, Result);
+
+      Highlight_Expansion_Range (Alias_Editor (Editor), Start, Last);
+   end Expansion_Deleted;
+
+   -------------------------------
+   -- Highlight_Expansion_Range --
+   -------------------------------
+
+   procedure Highlight_Expansion_Range
+     (Editor : access Alias_Editor_Record'Class; First, Last : Gtk_Text_Iter)
+   is
+      Last_Offset : constant Gint := Get_Offset (Last);
+      Current, Current2 : Gtk_Text_Iter;
+      Result  : Boolean;
+      Tag     : Gtk_Text_Tag;
+      Color   : Gdk_Color;
+   begin
+      Remove_All_Tags (Get_Buffer (Editor.Expansion), First, Last);
+
+      Copy (Source => First, Dest => Current);
+
+      while Get_Offset (Current) <= Last_Offset loop
+         --  ??? Should use unicode
+
+         if Get_Char (Current) = '$' then
+            Copy (Source => Current, Dest => Current2);
+            Forward_Char (Current2, Result);
+
+            if Get_Char (Current2) = '(' then
+
+               loop
+                  Forward_Char (Current2, Result);
+                  exit when not Result
+                    or else Ends_Line (Current2);
+
+                  if Get_Char (Current2) = ')' then
+                     Forward_Char (Current2, Result);
+
+                     if Tag = null then
+                        Color := Parse (Highlight_Color);
+                        Alloc (Get_Default_Colormap, Color);
+
+                        Gtk_New (Tag);
+                        Set_Property (Tag, Foreground_Gdk_Property, Color);
+
+                        Gtk.Text_Tag_Table.Add
+                          (Get_Tag_Table (Get_Buffer (Editor.Expansion)), Tag);
+                     end if;
+
+                     Apply_Tag (Get_Buffer (Editor.Expansion),
+                                Tag,
+                                Current, Current2);
+                     exit;
+                  end if;
+               end loop;
+
+               Copy (Source => Current2, Dest => Current);
+
+            --  Handling of $$ => No highlighting to perform
+            elsif Get_Char (Current2) = '$' then
+               Forward_Char (Current2, Result);
+               Copy (Source => Current2, Dest => Current);
+
+            else
+               Forward_Char (Current, Result);
+            end if;
+         else
+            Forward_Char (Current, Result);
+         end if;
+
+         exit when not Result;
+      end loop;
+
+      Queue_Draw (Editor.Expansion);
+   end Highlight_Expansion_Range;
+
    -------------
    -- Gtk_New --
    -------------
@@ -683,6 +1033,7 @@ package body Aliases_Module is
       Box    : Gtk_Box;
       Pane   : Gtk_Paned;
       Render : Gtk_Cell_Renderer_Text;
+      Toggle_Render : Gtk_Cell_Renderer_Toggle;
       Col    : Gtk_Tree_View_Column;
       Number : Gint;
       Event  : Gtk_Event_Box;
@@ -766,7 +1117,8 @@ package body Aliases_Module is
       --  Parameters list
 
       Gtk_New (Editor.Variables_Model,
-               (0 => GType_String, 1 => GType_String, 2 => GType_Boolean));
+               (0 => GType_String, 1 => GType_String, 2 => GType_Boolean,
+                3 => GType_Boolean));
       Gtk_New (Editor.Variables, Editor.Variables_Model);
       Pack_Start (Box, Editor.Variables, Expand => False);
 
@@ -777,16 +1129,29 @@ package body Aliases_Module is
       Pack_Start (Col, Render, False);
       Add_Attribute (Col, Render, "text", 0);
       Set_Clickable (Col, True);
+      Set_Resizable (Col, True);
       Set_Sort_Column_Id (Col, 0);
+
+      Gtk_New (Toggle_Render);
+      Gtk_New (Col);
+      Number := Append_Column (Editor.Variables, Col);
+      Set_Title (Col, -"Environment");
+      Set_Resizable (Col, True);
+      Pack_Start (Col, Toggle_Render, False);
+      Add_Attribute (Col, Toggle_Render, "active", 3);
+
+      Widget_Callback.Object_Connect
+        (Toggle_Render, "toggled", Param_Env_Changed'Access, Editor);
 
       Gtk_New (Render);
       Gtk_New (Col);
       Number := Append_Column (Editor.Variables, Col);
-      Set_Title (Col, -"Initial Value");
+      Set_Title (Col, -"Default Value");
       Pack_Start (Col, Render, False);
       Add_Attribute (Col, Render, "text", 1);
       Add_Attribute (Col, Render, "editable", 2);
-      Set_Editable_And_Callback (Editor.Variables_Model, Render, 0);
+      Set_Editable_And_Callback (Editor.Variables_Model, Render, 1);
+      Set_Resizable (Col, True);
 
       Gtk_New_Hseparator (Sep);
       Pack_Start (Box, Sep, Expand => False, Padding => 2);
@@ -802,6 +1167,13 @@ package body Aliases_Module is
       Add (Scrolled, Editor.Expansion);
       Set_Wrap_Mode (Editor.Expansion, Wrap_None);
 
+      Widget_Callback.Object_Connect
+        (Expansion_Buffer, "insert_text", Expansion_Inserted'Access, Editor,
+         After => True);
+      Widget_Callback.Object_Connect
+        (Expansion_Buffer, "delete_range", Expansion_Deleted'Access, Editor,
+         After => True);
+
       --  Buttons
 
       Gtk_New_From_Stock (Button, Stock_New);
@@ -815,6 +1187,9 @@ package body Aliases_Module is
       Widget_Callback.Object_Connect
         (Button, "clicked",
          Widget_Callback.To_Marshaller (Alias_Deleted'Access), Editor);
+
+      Gtk_New_Vseparator (Sep);
+      Pack_Start (Get_Action_Area (Editor), Sep, Expand => False);
 
       W := Add_Button (Editor, Stock_Save, Gtk_Response_OK);
       W := Add_Button (Editor, Stock_Cancel, Gtk_Response_Cancel);
@@ -865,6 +1240,9 @@ package body Aliases_Module is
          Add_New_Alias (Editor, Get_Key (Iter));
          Get_Next (Aliases_Module_Id.Aliases, Iter);
       end loop;
+
+      Select_Iter (Get_Selection (Editor.Aliases),
+                   Get_Iter_First (Editor.Aliases_Model));
    end Update_Contents;
 
    --------------------
