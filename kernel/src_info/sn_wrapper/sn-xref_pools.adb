@@ -153,8 +153,7 @@ package body SN.Xref_Pools is
                   Xref_Elmt.Source_Filename :=
                     new String'(Src_Buf (Src_Buf'First .. Src_Buf_Last));
                   Xref_Elmt.Xref_Filename :=
-                    new String'(Dir_Name (Filename)
-                                & Ref_Buf (Ref_Buf'First + 1 .. Ref_Buf_Last));
+                    new String'(Ref_Buf (Ref_Buf'First + 1 .. Ref_Buf_Last));
 
                   if Ref_Buf (Ref_Buf'First) = '1' then
                      Xref_Elmt.Valid := True;
