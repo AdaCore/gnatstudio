@@ -20,15 +20,43 @@
 
 --  This package defines the module for code fixing.
 
+with Gtk.Menu_Item;          use Gtk.Menu_Item;
+
 with Glide_Kernel;
+
+with Codefix;                use Codefix;
+with Codefix.Text_Manager;   use Codefix.Text_Manager;
+with Codefix.Errors_Manager; use Codefix.Errors_Manager;
 
 package Codefix_Module is
 
-   Codefix_Module_ID   : Glide_Kernel.Module_ID;
+   type Codefix_Module_ID_Record is new Glide_Kernel.Module_ID_Record with
+   record
+      Current_Text : Ptr_Text_Navigator;
+      Corrector    : Correction_Manager;
+      Errors_Found : Ptr_Errors_Interface;
+   end record;
+
+   type Codefix_Module_ID_Access is access all Codefix_Module_ID_Record'Class;
+
+   Codefix_Module_ID   : Codefix_Module_ID_Access;
    Codefix_Module_Name : constant String := "Code_Fixing";
 
    procedure Register_Module
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
    --  Register the module into the list
+
+   type Codefix_Menu_Item_Record is new Gtk_Menu_Item_Record with record
+      Fix_Command : Ptr_Command;
+      Error       : Error_Id;
+   end record;
+
+   type Codefix_Menu_Item is access all Codefix_Menu_Item_Record;
+
+   procedure Gtk_New (This : out Codefix_Menu_Item; Label : String := "");
+
+   procedure Initialize
+     (Menu_Item : access Codefix_Menu_Item_Record;
+      Label     : String);
 
 end Codefix_Module;
