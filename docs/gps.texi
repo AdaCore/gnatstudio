@@ -156,6 +156,7 @@ Working in a Cross Environment
 
 Customizing and Extending GPS
 * The Preferences Dialog::
+* The Key Manager Dialog::
 * Customizing the Menu and Tool Bar::
 * Adding Support for New Languages::
 * Defining Text Aliases::
@@ -798,10 +799,10 @@ Display a dialog giving information about the versions of GPS and GNAT used:
 
 @iftex
 @cindex screen shot
-@image{about, 8.7cm} 
+@image{about, 8.7cm}
 @end iftex
 
-@ifhtml 
+@ifhtml
 @cindex screen shot
 @image{about}
 @end ifhtml
@@ -1462,7 +1463,7 @@ the cursor back to its original position.
 @cindex current
 You can configure the editor to highlight the current line with a certain
 color. @xref{The Preferences Dialog}.
- 
+
 @item Auto save
 @cindex auto save
 You can configure the editor to periodically save modified files.
@@ -1962,6 +1963,12 @@ Create a new test harness. See AUnit documentation for more details.
 @item Preferences
 @cindex preferences
 Give access to the preferences dialog. @xref{The Preferences Dialog}.
+
+@item Key shortcuts
+@cindex key shortcuts
+Give access to the key manager dialog, to associate commands with special
+keys. @xref{The Key Manager Dialog}.
+
 @end table
 
 @c --------------------------------------------------------------------------
@@ -2825,7 +2832,7 @@ icon:
 @image{project-modified}
 @end iftex
 
-@ifhtml 
+@ifhtml
 @cindex screen shot
 @image{project-modified}
 @end ifhtml
@@ -2912,7 +2919,7 @@ created project should replace the currently loaded ones.
 
 The project wizard is also actived when a new dependency is created
 between two projects, through the contextual menu in the project
-explorer. 
+explorer.
 
 @iftex
 @cindex screen shot
@@ -3270,10 +3277,10 @@ switches defined at the project level.
 
 @iftex
 @cindex screen shot
-@image{switch-editor-revert, 11.7cm} 
+@image{switch-editor-revert, 11.7cm}
 @end iftex
 
-@ifhtml 
+@ifhtml
 @cindex screen shot
 @image{switch-editor-revert}
 @end ifhtml
@@ -3761,7 +3768,7 @@ then their direct children are put in the second layer, and so
 on. Depending on the type of browser, these layers are organized
 either vertically or horizontally. This algorithm tries to preserve as
 much as possible the positions of the items that were moved
-interactively. 
+interactively.
 
 The @code{refresh layout} menu item in the background contextual menu
 can be used to recompute the layout of items at any time, even for
@@ -3809,7 +3816,7 @@ between items when lots of them are present in the browser.
 @item Hyper-links
 Some of the items will contain hyper links, displayed in blue by
 default, and underlined. Clicking on these will generally display new
-items. 
+items.
 
 @end table
 
@@ -4569,7 +4576,7 @@ stay synchronized.
 
 @iftex
 @cindex screen shot
-@image{visual-diff, 12.7cm} 
+@image{visual-diff, 12.7cm}
 @end iftex
 
 @ifhtml
@@ -4748,6 +4755,7 @@ machine, you can specify the name of this machine by setting the
 
 @menu
 * The Preferences Dialog::
+* The Key Manager Dialog::
 * Customizing the Menu and Tool Bar::
 * Adding Support for New Languages::
 * Defining Text Aliases::
@@ -4843,12 +4851,6 @@ calling external tools (e.g. before a build).
 Whether the desktop (size and positions of all windows) should be saved when
 exiting.
 
-@item Aliases key
-@cindex aliases
-Key to press to expand an alias in a source editor or a text entry
-anywhere in GPS.
-@end table
-
 @item Windows
 @cindex MDI
 @cindex Multiple Document Interface
@@ -4883,10 +4885,6 @@ Color to use for the title bar of unselected items.
 @item Selected title bar color
 @cindex color
 Color to use for the title bar of selected items.
-
-@item Select Window
-@cindex selection
-The key shortcut used to switch between windows.
 
 @end table
 
@@ -5092,25 +5090,6 @@ character.
 @item Default indentation
 @cindex indentation
 The number of spaces for the default indentation.
-
-@end table
-
-@item Keys
-@cindex key
-
-@table @b
-@item Auto-indentation
-@cindex indentation
-Key used for auto-indenting lines or block of lines.
-
-@item Completion
-@cindex completion
-Key used for automatic completion of identifiers.
-
-@item Jump to delimiter
-@cindex delimiter
-Key used for moving the cursor to the corresponding delimiter.
-Delimiters include parentheses, brackets, and braces.
 
 @end table
 
@@ -5402,10 +5381,24 @@ Whether paths should be absolute or relative when the projects are modified.
 
 @end table
 
+@end table
+
 @end itemize
 
+@c -----------------------------------------------------------------
+@node The Key Manager Dialog
+@section The Key Manager Dialog
+@c -----------------------------------------------------------------
+
+@noindent
+
+<not documented yet>
+
+
+@c -----------------------------------------------------------------
 @node Customizing the Menu and Tool Bar
 @section Customizing the Menu and Tool Bar
+@c -----------------------------------------------------------------
 @cindex customization
 @noindent
 You can customize the GPS menu bar in two different ways: you can
@@ -5430,10 +5423,10 @@ reason you need to edit the file manually, you need to do it outside of
 GPS, or save the file under a different name, and rename it after exiting
 GPS.
 
-@subsection Adding menu items
-@cindex menu
+@subsection Customization files
 @noindent
-The GPS menu bar can be customized through an XML file put under the
+
+The GPS menu bar can be customized through XML files put under the
 directory @file{$HOME/.gps/customize} on Unix
 systems, and @file{%HOME%\.gps\customize} on Windows systems.
 Any file in the @file{customize} directory will be loaded by GPS at
@@ -5444,134 +5437,69 @@ Files in the system directory are loaded before the files in the local
 directory, so that you can override locally any definition from the system
 directory.
 
-@cindex Unix
-@cindex Windows
-Here is an example for such a file:
+The format of these files have changed after GPS 1.2.0. A conversion program
+is provided that will automatically convert all files in the customization
+directory to the new format. This conversion tool is called
+@file{gps_convert_custom}, and must be run manually.
 
-@cindex example
-@smallexample
+@subsection Defining Actions
+@cindex <action>
+@noindent
 
-<?xml version="1.0"?>
-<Custom>
-  <Submenu>
-    <Title>custom menu</Title>
-    <Menu_Item>
-    <Title>item 1</Title>
-      <Action>external-command 1</Action>
-    </Menu_Item>
+These files distinguish the actions from their associated menus or
+keybindings. These actions can take on several forms: external commands,
+shell commands and predefined commands, as will be explained in more details
+below.
 
-    <Submenu>
-      <Title>other menu</Title>
-      <Menu_Item>
-        <Title> (etc..)
-      </Menu_Item>
+The general form to define new actions is to use the @code{<action>} tag.
+This XML tag requires one attribute, its @code{name}. It can have one or
+several children, all of which define a particular command to execute. All
+of these commands are executed one after the other, unless one of them
+fails in which case the following commands are not executed.
 
-      <Submenu>
-        (...)
-      </Submenu>
-    </Submenu>
-  </Submenu>
-</Custom>
+The following XML tags are valid children for @code{<action>}.
+@table @code
 
-@end smallexample
-
-The example above creates a top-level menu named @code{custom menu}.
-This menu contains a menu item named @code{item 1}, which is associated to the
-shell command @code{external-command 1}, a sub menu named @code{other menu},
-etc@dots{}
+@cindex <external>
+@item <external>
+This defines a command to execute through the system (ie a standard Unix or
+Windows command)
 
 Note for Windows users: like under UNIX, scripts can be called
 from custom menu. In order to do that, you must write your script in a
 @file{.bat} or @file{.cmd} file, and call this file using @code{cmd /c}.
-Thus, the @code{Action} tag would look like:
+Thus, the @code{external} tag would look like:
 
 @smallexample
-<Action>cmd /c c:\.gps\my_scripts\my_command.cmd</Action>
+<action name="my_command">
+    <external>cmd /c c:\.gps\my_scripts\my_command.cmd</external>
+</action>
 @end smallexample
 
+
+@cindex <shell>
 @cindex shell
 @cindex interactive command
+@item <shell>
 As well as external commands, you can use custom menu items to invoke GPS
-commands using the @code{GPS_Action} tag. The following example shows how to
-create a menu to invoke the @code{help} interactive command and to open the
-file @file{main.c}.
+commands using the @code{shell} tag. These are command written in one of the
+shell scripts supported by GPS.
+The following example shows how to
+create two actions to invoke the @code{help} interactive command and to open
+the file @file{main.c}.
 
-@cindex example
 @smallexample
-<Submenu>
-  <Title>Edit</Title>
-  <Menu_Item>
-    <Title>List GPS commands</Title>
-    <GPS_Action>help</GPS_Action>
-  </Menu_Item>
-  <Menu_Item>
-    <Title>Edit main.c</Title>
-    <GPS_Action>edit main.c</GPS_Action>
-  </Menu_Item>
-</Submenu>
+<action name="help">
+  <shell>help</shell>
+</action>
+<action name="edit">
+  <shell>edit main.c</shell>
+</action>
 @end smallexample
 
-See below for more information on this @code{GPS_Action} tag.
-
-
-You can define the accelerator keys for your menus, using underscores
-in the titles. Thus, if you want an accelerator on the first letter in
-a menu named @code{File}, set its title as @code{_File}.
-
-You can add items or sub menus to existing menus, using titles for
-menus that already exist. For example, this adds an item named
-@code{Robert} to the @code{Edit} menu.
-
-@cindex example
-@smallexample
-
-<Submenu>
-  <Title>Edit</Title>
-  <Menu_Item>
-    <Title>Robert</Title>
-  </Menu_Item>
-</Submenu>
-
-@end smallexample
-
-Use the @code{/} separator to identify the sub menu in a menu. For
-example, this adds a sub menu named @code{Olga} containing an item named
-@code{Item} to the @code{Edit} menu.
-
-@cindex example
-@smallexample
-
-<Submenu>
-  <Title>Edit/Olga</Title>
-  <Menu_Item>
-    <Title>Item</Title>
-  </Menu_Item>
-</Submenu>
-
-@end smallexample
-
-Adding an item with an empty title or no title at all inserts a
-menu separator.
-
-The following tags are available in a @code{Submenu} section:
-
-@table @code
-@item Title
-Found inside a @code{Submenu} or @code{Menu_Item}: set title of the submenu or
-menu item.
-
-@item Menu_Item
-A menu item inside a submenu.
-
-@item Action
-External command associated with a menu item.
-
-@item GPS_Action
-GPS specific command associated with a menu item. This is a command
-written in one of the shell scripts supported by GPS. You can specify
-the language as an attribute of the XML node. The name of the
-attribute is @code{lang}. The default value for this attribute is
-@code{shell}, ie the command is written with the GPS shell.
+By default, commands are expected to be written in the GPS shell language.
+However, you can specify the language through the @code{lang} attribute. Its
+default value is @code{"shell"}.
 
 @ifset python
 The value of this attribute could also be "python".
@@ -5580,81 +5508,152 @@ The value of this attribute could also be "python".
 When programming with the GPS shell, you can execute multiple commands
 by separating them with semicolons. Therefore, the following example
 adds a menu which lists all the files used by the current file, in a
-project browser. Note: due to some current limitation of the parsing
-of the custom files, the '%' argument must be surrounded by spaces, as
-shown in the example.
+project browser.
 
 @smallexample
-<Menu_Item>
-  <Title>Current file uses</Title>
-  <GPS_Action lang="shell">File %f ; File.uses $1</GPS_Action>
-</Menu_Item>
+<action name="current file uses">
+  <shell lang="shell">File %f</shell>
+  <shell lang="shell">File.uses $1</shell>
+</action>
 @end smallexample
+
+
+@item <description>
+@cindex <description>
+This tag contains a description for the command, which is used in the
+graphical editor for the key manager. @xref{The Key Manager}.
+
+@end table
 
 It is possible to mix both shell commands and external commands. For
 instance, the following command opens an xterm (on Unix systems only)
 in the current directory, which depends on the context.
 
 @smallexample
-<Menu_Item>
-  <Title>_Xterm in current directory</Title>
-  <GPS_Action lang="shell">cd %d</GPS_Action>
-  <Action>xterm</Action>
-</Menu_Item>
+<action "xterm in current directory">
+  <shell lang="shell">cd %d</shell>
+  <external>xterm</external>
+</action>
 @end smallexample
 
-@end table
+As seen in some of the examples above, some special strings are expanded by
+GPS just prior to executing the command. These are the "%f", "%d",.. See below
+for a full list.
+
+Some actions are also predefined in GPS itself. This include for instance
+aliases expansion, manipulating MDI windows,...
+
+
+@subsection Adding new menus
+@cindex menus
+@noindent
+
+These commands can be associated with menus, toolbar buttons and keys. All
+of these use similar syntax.
+
+Binding a menu to an action is done through the @code{<menu>} tag. This tag
+requires an @code{action} attribute which specifies which action to execute
+when the menu is selected by the user. If no action by this name was defined,
+no new menu is added.
+
+It should also have one XML child called @code{<title>} which specifies the
+label of the menu
+You can define the accelerator keys for your menus, using underscores
+in the titles. Thus, if you want an accelerator on the first letter in
+a menu named @code{File}, set its title as @code{_File}.
+
+You can specify which menu this new item is added to by puting the
+@code{<menu>} tag to a @code{<submenu>} tag. The latter also takes a
+@code{<title>} as a child. You can add items or sub menus to existing menus,
+using titles for menus that already exist.
+
+For example, this adds an item named @code{mymenu} to the standard
+@code{Edit} menu.
+
+@smallexample
+<submenu>
+  <title>Edit</title>
+  <menu action="current file uses">
+     <title>mymenu</title>
+  </menu>
+</submenu>
+@end smallexample
+
+Use the @code{/} separator to identify the submenu in a menu. For
+example, this adds a new item "stats" to the standard "unit testing" submenu
+in "tools".
+
+@smallexample
+<submenu>
+  <title>Tools/unit testing</title>
+  <menu action="execute my stats">
+    <title>stats</title>
+  </menu>
+</submenu>
+@end smallexample
+
+Adding an item with an empty title or no title at all inserts a
+menu separator.
+
+
 
 @subsection Adding tool bar buttons
 @cindex tool bar
 @noindent
+
 As an alternative to creating new menu items, you can create new
-buttons on the tool bar, with exactly the same syntax, by using
-the @code{<Toolbar_Item>} tag in place of the @code{<Submenu>} tag.
+buttons on the tool bar, with a similar syntax, by using
+the @code{<button>} tag. As for the @code{<menu>} tag, it requires an
+@code{action} attribute which specifies what should be done when the button
+is pressed. The button is not created if no such action was created.
+
 @cindex jpeg
 @cindex png
 @cindex gif
 @cindex xpm
-Within this tag, the tag @code{<Pixmap>} can be used to indicate
+Within this tag, the tag @code{<pixmap>} can be used to indicate
 the location of an image file (of the type @code{jpeg, png, gif}
 or @code{xpm}) to be used as icon for the button. An empty
-@code{<Toolbar_Item>} tag indicates a separator in the tool bar.
+@code{<button>} tag indicates a separator in the tool bar.
 
-@cindex example
+A title can also be specified with @code{<title>}. This will be visible only
+if the user choses to see both text and icons in the toolbar.
+
+The following example defines a new button:
+
 @smallexample
-
-<Toolbar_Item>
-  <Title>Custom Button</Title>
-  <Pixmap>/my_pixmaps/button.jpg</Pixmap>
-  <GPS_Action>my gps command</GPS_Action>
-</Toolbar_Item>
-
+<button action="execute my stats">
+   <title>stats</title>
+   <pixmap>/my_pixmaps/button.jpg</pixmap>
+</button>
 @end smallexample
 
-The following tags are available in a @code{Toolbar_Item} section:
 
-@table @code
-@item Title
-Name of the custom button.
+@subsection Binding actions to keys
+@cindex <key>
+@noindent
 
-@item Pixmap
-Pixmap file associated with the tool bar button.
+All the actions defined above can be bound to specific key shortcuts through
+the @code{<key>} attribute. As usual, it requires one @code{<action>}
+attribute to specify what to do when the key is pressed.
 
-@item Action
-External command associated with a tool bar button.
+This tag doesn't contain any child tag. Instead, its text contents specified
+the keyboard shortcut. The name
+of the key can be prefixed by @code{control-}, @code{alt-}, @code{shift-} or
+any combination of these to specify the key modifiers to apply.
 
-@item GPS_Action
-GPS specific command associated with a tool bar button.
+@smallexample
+<key action="expand alias">control-o</key>
+@end smallexample
 
-@end table
 
 @subsection Macro arguments
 @cindex menu
 @cindex argument
 @cindex substitution
 @noindent
-When using an @code{Action} node in a menu or tool bar item,
-you can use macro arguments to pass to your shell commands. Macro arguments
+When an action is defined, you can use macro arguments to pass to your
+shell or external commands. Macro arguments
 are special parameters that are transformed every time the command is executed.
 The following macro arguments are provided:
 
@@ -5718,6 +5717,50 @@ directories in the current project, and all imported sub projects,
 recursively.
 @end table
 
+@subsection Full example
+@noindent
+
+The following example is a full example for one of the files in the
+customization directory. The only thing that hasn't been described before is
+the first line of the file, which is required to make it a valid XML file.
+
+@smallexample
+<?xml version="1.0"?>
+<Custom>
+  <action name="action1">
+      <external>external-command 1</external>
+  </action>
+
+  <action name="action2">
+      <shell>edit %f</shell>
+  </action>
+
+  <submenu>
+    <title>custom menu</title>
+    <menu action="action1">
+       <title>item 1</title>
+    </menu>
+
+    <submenu>
+      <title>other menu</title>
+      <menu action="action2">
+        <title> (etc..)
+      </menu>
+
+      <submenu>
+        (...)
+      </submenu>
+    </submenu>
+  </submenu>
+</Custom>
+
+@end smallexample
+
+The example above creates a top-level menu named @code{custom menu}.
+This menu contains a menu item named @code{item 1}, which is associated to the
+external command @code{external-command 1}, a sub menu named @code{other menu},
+etc@dots{}
+
 @c --------------------------------------------------------------------------
 @node Adding Support for New Languages
 @section Adding Support for New Languages
@@ -5730,7 +5773,9 @@ file, explore a file (using e.g. the project explorer), and find files
 associated with a given language.
 
 As described previousely for menu items, any file in the @file{customize}
-directory will be loaded by GPS at start up.
+directory will be loaded by GPS at start up. Therefore, you can either
+define new languages in a separate file, or reuse a file where you already
+define actions and menus.
 
 The following tags are available in a @code{Language} section:
 
@@ -5800,7 +5845,7 @@ nodes:
 
    @table @code
    @item Name
-   Name of the category, which can be one of: 
+   Name of the category, which can be one of:
    package, namespace, procedure, function, task, method, constructor,
    destructor, protected, entry,
    class, structure, union, type, subtype, variable, local_variable,
@@ -6795,6 +6840,8 @@ you wish, e.g:
 >>> e=GPS.Entity (name="foo", file="file.adb")
 @end smallexample
 
+@subsubsection Python modules
+
 On startup, GPS will automatically import (with python's @code{import}
 command) all the files with the extension @file{.py} found in the directory
 @file{$HOME/.gps/python_startup}. These files are loaded only after all
@@ -6811,6 +6858,22 @@ modules will only be accessible by prefixing their name by the name of the
 file in which they are defined. For instance if a file @file{mystartup.py}
 is copied to the startup directory, and defines the function @code{func},
 then the latter will be accessible in GPS through @code{mystartup.func}.
+
+If you are writting a set of python scripts that other people will use,
+you need to provide several things:
+
+@itemize
+@item The python files themselves. This is a set of @file{.py} files, which
+ the user should install either in his @file{python_startup} directory.
+
+@item An XML file with the format described in the customization section
+ of this documentation. This XML file should create a series of actions,
+ through the @code{<action>} tag, exported to the user. This allows him
+ to either create menus to execute these commands or to bindg them to special
+ key shortcuts
+
+@end itemize
+
 
 @end ifset
 
