@@ -208,7 +208,7 @@ package body Src_Info.Debug is
    procedure Dump_E_Reference_List (ERL : E_Reference_List)
    is
       Current_File : Source_File :=
-        (LI => null, Part => Unit_Spec, Unit_Name => null);
+        (LI => null, Part => Unit_Spec, Source_Filename => null);
       --  We print the filename associated to the location only
       --  for the first reference associated to that file. All following
       --  reference locations for this file are printed without this
@@ -369,10 +369,14 @@ package body Src_Info.Debug is
       Put ("U ");
       case Part is
          when Unit_Spec =>
-            Put (LIF.Spec_Info.Unit_Name.all);
+            if LIF.Spec_Info.Unit_Name /= null then
+               Put (LIF.Spec_Info.Unit_Name.all);
+            end if;
             Put ("%s " & LIF.Spec_Info.Source_Filename.all);
          when Unit_Body =>
-            Put (LIF.Body_Info.Unit_Name.all);
+            if LIF.Body_Info.Unit_Name /= null then
+               Put (LIF.Body_Info.Unit_Name.all);
+            end if;
             Put ("%b " & LIF.Body_Info.Source_Filename.all);
          when Unit_Separate =>
             --  This is not allowed.
@@ -390,8 +394,12 @@ package body Src_Info.Debug is
              and then Current_Dep_File_Info.Value.Dep_Info.Depends_From_Body)
          then
             Put ("W ");
-            Put (Get_File_Info
-               (Current_Dep_File_Info.Value.File).Unit_Name.all);
+            if Get_File_Info
+              (Current_Dep_File_Info.Value.File).Unit_Name /= null
+            then
+               Put (Get_File_Info
+                    (Current_Dep_File_Info.Value.File).Unit_Name.all);
+            end if;
             New_Line;
          end if;
          Current_Dep_File_Info := Current_Dep_File_Info.Next;
