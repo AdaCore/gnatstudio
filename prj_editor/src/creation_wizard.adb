@@ -317,7 +317,6 @@ package body Creation_Wizard is
 
    function Generate_Prj (W : access Gtk_Widget_Record'Class) return String is
       Wiz            : constant Prj_Wizard := Prj_Wizard (W);
-      Project        : Project_Node_Id;
       Dir            : constant String := Name_As_Directory
         (Get_Text (Wiz.Project_Location));
       Name           : constant String := Base_Name
@@ -325,10 +324,10 @@ package body Creation_Wizard is
       Relative_Paths : constant Boolean := Get_Active (Wiz.Relative_Paths);
       Changed        : Boolean := False;
       Languages      : Argument_List := Get_Languages (Wiz);
+      Project        : Project_Node_Id := Create_Project
+        (Name => Name, Path => Dir);
 
    begin
-      Project := Create_Project (Name => Name, Path => Dir);
-
       Set_Project_Uses_Relative_Paths (Wiz.Kernel, Project, Relative_Paths);
 
       Update_Attribute_Value_In_Scenario
@@ -340,7 +339,10 @@ package body Creation_Wizard is
       for P in 1 .. Project_Editor_Pages_Count (Wiz.Kernel) loop
          Changed := Changed or Project_Editor
            (Get_Nth_Project_Editor_Page (Wiz.Kernel, P),
-            Project, No_Project, Wiz.Kernel, Get_Nth_Page (Wiz, 1 + P));
+            Project, No_Project,
+            Wiz.Kernel, Get_Nth_Page (Wiz, 1 + P),
+            Scenario_Variables => (1 .. 0 => Empty_Node),
+            Ref_Project => Project);
       end loop;
 
       Save_Project (Wiz.Kernel, Project, Recursive => False);
