@@ -20,8 +20,6 @@
 
 with Glib;                         use Glib;
 with Gtk.Stock;                    use Gtk.Stock;
-with Gtk.Window;                   use Gtk.Window;
-with Gtkada.Dialogs;               use Gtkada.Dialogs;
 with Gtkada.File_Selector;         use Gtkada.File_Selector;
 with Gtkada.File_Selector.Filters; use Gtkada.File_Selector.Filters;
 with Gtkada.MDI;                   use Gtkada.MDI;
@@ -167,20 +165,8 @@ package body Glide_Menu is
       Widget : Limited_Widget)
    is
       pragma Unreferenced (Action, Widget);
-
-      Button : constant Message_Dialog_Buttons :=
-        Message_Dialog
-          (Msg            => -"Are you sure you want to quit ?",
-           Dialog_Type    => Confirmation,
-           Buttons        => Button_Yes or Button_No,
-           Default_Button => Button_No,
-           Parent         => Gtk_Window (Object));
-
-      Top  : constant Glide_Window := Glide_Window (Object);
    begin
-      if Button = Button_Yes then
-         Glide_Main_Window.Quit (Top);
-      end if;
+      Confirm_And_Quit (Glide_Window (Object));
 
    exception
       when E : others =>
