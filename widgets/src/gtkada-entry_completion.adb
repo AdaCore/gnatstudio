@@ -126,13 +126,16 @@ package body Gtkada.Entry_Completion is
       Ent   : constant Gtkada_Entry := Gtkada_Entry (The_Entry);
       Model : Gtk_Tree_Model;
       Iter  : Gtk_Tree_Iter;
+
    begin
-      Get_Selected (Selection => Get_Selection (Ent.View),
-                    Model     => Model,
-                    Iter      => Iter);
+      Get_Selected
+        (Selection => Get_Selection (Ent.View),
+         Model     => Model,
+         Iter      => Iter);
 
       --  Selection could be null if we are in the process of clearing up the
       --  list
+
       if Iter /= Null_Iter then
          Set_Text (Get_Entry (Ent.Combo), Get_String (Model, Iter, 0));
          Ent.Completion_Index := Integer'First;
