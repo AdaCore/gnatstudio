@@ -459,10 +459,7 @@ package body GVD.Text_Box is
       case Get_Button (Event) is
          when 1 | 3 =>
             if Get_Event_Type (Event) = Button_Press then
-               Line := Line_From_Pixels
-                 (Box,
-                  Gint (Get_Y (Event))
-                  + Gint (Get_Value (Get_Vadj (Box.Child))));
+               Line := Line_From_Pixels (Box, Gint (Get_Y (Event)) - 1);
                return On_Pixmap_Clicked
                  (Box, Natural (Get_Button (Event)), Line);
             end if;
