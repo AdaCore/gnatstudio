@@ -22,6 +22,7 @@ with Language;
 with Generic_Values;
 with GNAT.OS_Lib;
 with Process_Proxies;
+with GNAT.Regpat;
 
 package Debugger is
 
@@ -61,6 +62,12 @@ package Debugger is
    procedure Initialize (Debugger : access Debugger_Root) is abstract;
    --  Initialize the debugger.
    --  Spawn must have been called first.
+
+   function Highlighting_Pattern (Debugger : access Debugger_Root)
+                                 return GNAT.Regpat.Pattern_Matcher
+      is abstract;
+   --  Return a regular expression that should match everything that should
+   --  be highlighted in the debugger text window.
 
    procedure Close (Debugger : access Debugger_Root) is abstract;
    --  Terminates the external process.

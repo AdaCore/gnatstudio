@@ -33,11 +33,16 @@ package body Debugger.Jdb is
    -- Constants --
    ---------------
 
-   Prompt_Regexp : constant Pattern_Matcher := Compile ("> ");
+   Prompt_Regexp : constant Pattern_Matcher :=
+     Compile ("^> ", Multiple_Lines);
    --  Regular expressions used to recognize the prompt.
 
    Prompt_Length : constant := 2;
    --  Length of the prompt ("> ").
+
+   Highlight_Pattern : constant GNAT.Regpat.Pattern_Matcher :=
+     GNAT.Regpat.Compile ("^> ");
+   --  Match everything that should be highlighted in the debugger window.
 
    -------------
    -- Type_Of --
@@ -60,10 +65,9 @@ package body Debugger.Jdb is
       Entity   : String;
       Format   : Value_Format := Decimal) return String
    is
-      Result : Expect_Match;
    begin
       --  Empty the buffer.
-      Wait (Get_Process (Debugger), Result, ".*", Timeout => 0);
+      Empty_Buffer (Get_Process (Debugger));
       Send (Get_Process (Debugger), "print " & Entity);
       Wait_Prompt (Debugger);
 
@@ -95,8 +99,10 @@ package body Debugger.Jdb is
                     Remote_Machine : String := "") is
    begin
       General_Spawn (Debugger, Arguments, "jdb", Proxy, Remote_Machine);
-      --  Add_Output_Filter (Debugger.Process.all, Trace_Filter'Access);
-      --  Add_Input_Filter (Debugger.Process.all, Trace_Filter'Access);
+      Add_Output_Filter (Get_Descriptor (Debugger.Process).all,
+                         Trace_Filter'Access);
+      Add_Input_Filter (Get_Descriptor (Debugger.Process).all,
+                        Trace_Filter'Access);
    end Spawn;
 
    ----------------
@@ -107,7 +113,10 @@ package body Debugger.Jdb is
       Language   : Language_Access;
    begin
       --  Wait for initial prompt
+      Set_Internal_Command (Get_Process (Debugger), False);
       Wait_Prompt (Debugger);
+      Set_Internal_Command (Get_Process (Debugger), True);
+
       Language := new Jdb_Java_Language;
       Set_Language (Debugger, Language);
       Set_Debugger (Language_Debugger_Access (Language), Debugger.all'Access);
@@ -214,9 +223,8 @@ package body Debugger.Jdb is
    ---------------
 
    function Backtrace (Debugger : access Jdb_Debugger) return String is
-      Result : Expect_Match;
    begin
-      Wait (Get_Process (Debugger), Result, ".*", Timeout => 0);
+      Empty_Buffer (Get_Process (Debugger));
       Send (Get_Process (Debugger), "where");
       Wait_Prompt (Debugger);
       declare
@@ -246,6 +254,17 @@ package body Debugger.Jdb is
       Send (Get_Process (Debugger), "step up");
       Wait_Prompt (Debugger);
    end Finish;
+
+   --------------------------
+   -- Highlighting_Pattern --
+   --------------------------
+
+   function Highlighting_Pattern (Debugger : access Jdb_Debugger)
+                                 return GNAT.Regpat.Pattern_Matcher
+   is
+   begin
+      return Highlight_Pattern;
+   end Highlighting_Pattern;
 
    ------------------------
    -- Line_Contains_Code --
