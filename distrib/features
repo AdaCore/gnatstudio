@@ -10,6 +10,8 @@ New features in GPS 1.2.0
 - Misc. enhancements to the GPS shell: more commands, --eval and --load command
   line switches, support for $* parameters
 
+- Native look under Windows XP, using the system theme
+
 - Improved user interface
 
 - Speed improvement when displaying many files at once in the VCS explorer
