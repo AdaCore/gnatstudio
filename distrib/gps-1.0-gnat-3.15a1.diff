@@ -41,10 +41,13 @@
     package Linker is
 Index: common/src/stubs.c
 --- /dev/null	2002-08-31 01:31:37 +0200
-+++ common/src/stubs.c	2003-10-29 16:24:07 +0100
-@@ -0,0 +1,79 @@
++++ common/src/stubs.c	2003-12-04 18:23:36 +0100
+@@ -0,0 +1,88 @@
 +#include <sys/stat.h>
++#include <sys/types.h>
 +#include <sys/param.h>
++#include <unistd.h>
++
 +#ifdef _WIN32
 +#include <windows.h>
 +#include <process.h>
@@ -121,4 +124,10 @@ Index: common/src/stubs.c
 +    statbuf.st_mode = statbuf.st_mode & 07577;
 +    chmod (name, statbuf.st_mode);
 +  }
++}
++
++int
++__gnat_lseek (int fd, long offset, int whence)
++{
++  return (int) lseek (fd, offset, whence);
 +}
