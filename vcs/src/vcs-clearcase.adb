@@ -1706,6 +1706,7 @@ package body VCS.ClearCase is
          Update       => new String'(-"Update"),
          Commit       => new String'(-"Commit"),
          History      => new String'(-"View revision history"),
+         History_Revision => null,
          Annotate     => new String'(-"Annotate"),
          Diff_Head    => new String'(-"Diff against head rev."),
          Diff         => new String'(-"Diff against specific rev."),
