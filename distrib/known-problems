@@ -82,4 +82,11 @@ Known Problems fixed in GPS 3.0.0
               chars
   Workaround: Put a blank after "%1 "
 
+- D709-005 Pattern field not initialized when search window exists
+  Problem:    When selecting the Navigate/Search for the first time, the
+              search window is open and the pattern field is initialized with
+              the text currently selected in the editor. This doesn't work
+              if the search window was already open
+  Workaround: Copy the text first, open the search dialog, and paste
+
 
