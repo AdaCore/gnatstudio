@@ -161,15 +161,15 @@ package String_Utils is
    function Base_File_Name (File_Name : String) return String;
    --  Return the base name of File_Name (ie without any directory indication)
    --  This function is now obsolete, and you should use
-   --  GNAT.Directories.Base_Name instead. it is kept for compatibility
-   --  with 3.14p only.
+   --  GNAT.Directory_Operations.Base_Name instead. it is kept for
+   --  compatibility with 3.14p only.
 
    function File_Extension (File_Name : String) return String;
    --  Return the extension of the file (ie the part after the last '.'),
    --  or "" if there is none.
    --  This function is now obsolete, and you should use
-   --  GNAT.Directories.File_Extension instead. it is kept for compatibility
-   --  with 3.14 only.
+   --  GNAT.Directory_Operations.File_Extension instead. it is kept for
+   --  compatibility with 3.14 only.
 
    function Relative_Path_Name
      (File_Name : String; Base_Name : String) return String;
