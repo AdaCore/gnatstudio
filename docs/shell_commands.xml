@@ -1522,34 +1522,97 @@ Access the various suggested fixes through the methods of the Codefix class</des
     ###################################################################-->
 
   <shell_doc name="GPS.Console">
-      <description>This class redirects its input and output to one of GPS's windows. The current console can be overriden by calls to set_console()</description>
+      <description>This class is used to create and interact with the interactive consoles in GPS. It can be used to redirect the output of scripts to various consoles in GPS, or to get input from the user has needed.</description>
       <example lang="python">
-         my_out = GPS.Console (1)
-         my_out.set_console ("New Window")
+         The following example shows how to redirect the output of a script to a new console in GPS:
+	    console = GPS.Console ("My_Script")
+	    console.write ("Hello world")  ## Explicit redirection
 
-         sys.stdout = my_out
-         print "a"      ##  Prints in "New Window"
-
-         my_out.write ("b")   ##  Also prints in "New Window"
-
-         my_out.set_console ()
-         print "c"      ##  Prints in python console
+	 The usual python's standard output can also be redirected to this console:
+	    sys.stdout = GPS.Console ("My_Script")
+	    print "Hello world, too"  ## Implicit redirection
+	    sys.stdout = GPS.Console ("Python")  ## Back to python's console
+	    sys.stdout = GPS.Console () ## Or back to GPS's console
       </example>
-      <see_also name="GPS.Console.__init__()" />
+      <example lang="python">
+         The following example shows an integration between the GPS.Console and GPS.Process classes, so that a window containing a shell can be added to GPS.
+	 
+            import GPS
+            class Console_Process (GPS.Console, GPS.Process):
+              def on_output (self, unmatched, matched):
+                self.write (unmatched + matched)
+              def on_exit (self, status, remaining_output):
+                self.destroy ()
+              def on_input (self, input):
+                self.send (input)
+              def on_destroy (self):
+                self.kill ()
+              def __init__ (self, process, args=""):
+                GPS.Console.__init__ \
+		   (self, process, \
+                    on_input=Console_Process.on_input, \
+                    on_destroy=Console_Process.on_destroy, \
+                    force=True)
+                GPS.Process.__init__ \
+		   (self, process + ' ' + args, ".+", \
+                    on_exit=Console_Process.on_exit, \
+                    on_match=Console_Process.on_output)
+
+              bash = Console_Process ("/bin/sh", "-i")
+      </example>
+      <see_also name="GPS.Process" />
+      <see_also name="GPS.Console.__init__" />
   </shell_doc>
 
   <shell_doc name="GPS.Console.__init__">
       <param name="self">The instance of GPS.Console</param>
-      <param name="capture">An integer</param>
-      <description>Build a new instance of GPS.Console. The parameter indicates whether the output to this stream should be captured by GPS, and returned when commands are executed through a GPS action. If it is set to "1", then the output can later be used with %1 in the next command executed by the GPS action</description>
+      <param name="name">A string</param>
+      <param name="force" default="False">A boolean</param>
+      <param name="on_input" default="">A subprogram, see GPS documentation</param>
+      <param name="on_destroy" default="">A subprogram</param>
+      <description>Create a new instance of GPS.Console. GPS will try to reuse any existing console with the same name. If none exists yet, or the parameter force is set to True, then GPS will create a new console. If GPS reuses an existing console, the subprogram parameters are ignored.
+      
+The subprogram on_input is called whenever the user has entered a new command in the console and pressed &lt;enter&gt; to execute it. It is called with the following parameters:
+   - $1: The instance of the GPS.Console
+   - $2: The command to execute
+
+The subprogram on_destroy is called whenever the user closes the console. It is called with a single parameter:
+   - $1: The instance of the GPS.Console</description>
   </shell_doc>
 
-  <shell_doc name="GPS.Console.set_console">
+  <shell_doc name="GPS.Console.write">
       <param name="self">The instance of GPS.Console</param>
-      <param name="console" default="">A string</param>
-      <description>Change the console to which the output of Python is sent. If an argument is specified, it should contain the name of a console to create. If no argument is specified, the Python console will be used</description>
+      <param name="text">A string</param>
+      <description>Output some text on the console</description>
   </shell_doc>
 
+  <shell_doc name="GPS.Console.clear">
+      <param name="self">The instance of GPS.Console</param>
+      <description>Clear the current contents of the console</description>
+  </shell_doc>
+  
+  <shell_doc name="GPS.Console.flush">
+      <param name="self">The instance of GPS.Console</param>
+      <description>Do nothing, needed for compatibility with Python's file class</description>
+  </shell_doc>
+  
+  <shell_doc name="GPS.Console.isatty">
+      <param name="self">The instance of GPS.Console</param>
+      <return>A boolean</return>
+      <description>Return True if the console behaves like a terminal. Mostly needed for compatibility with Python's file class</description>
+  </shell_doc>
+  
+  <shell_doc name="GPS.Console.read">
+      <param name="self">The instance of GPS.Console</param>
+      <return>A String</return>
+      <description>Read the available input in the console. Currently, this behaves exactly like readline()</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.Console.readline">
+      <param name="self">The instance of GPS.Console</param>
+      <return>A String</return>
+      <description>Ask the user to enter a new line in the console, and returns that line. GPS is blocked until enter has been pressed in the console</description>
+  </shell_doc>    
 
   <!--#################################################################
     ####   Toolbar class
@@ -1938,9 +2001,9 @@ If the force parameter is false, then a confirmation dialog is displayed so that
      <param name="msg_index" default="-1">An integer</param>
      <param name="style_index" default="-1">An integer</param>
      <param name="warning_index" default="-1">An integer</param>
-     <paran name="highlight_category" default="">A string</param>
-     <paran name="style_category" default="">A string</param>
-     <paran name="warning_category" default="">A string</param>
+     <param name="highlight_category" default="">A string</param>
+     <param name="style_category" default="">A string</param>
+     <param name="warning_category" default="">A string</param>
      <description>Parse the contents of the string, which is supposedly the output of some tool, and add the errors and warnings to the locations window. A new category is created in the locations window if it doesn't exist. Preexisting contents for that category is not removed, see locations_remove_category.
 The regular expression specifies how locations are recognized. By default, it matches file:line:column. The various indexes indicate the index of the opening parenthesis that contains the relevant information in the regular expression. Set it to 0 if that information is not available. Style_Index and Warning_Index, if they match, force the error message in a specific category.
 highlight_category, style_category and warning_category reference the colors to use in the editor to highlight the messages when the regexp has matched. If none of them is specified, no highlighting is done in the editor. Create these categories with GPS.Editor.register_highlighting(). </description>
