@@ -414,7 +414,7 @@ package body Vdiff2_Module.Callback is
 
                declare
                   Base     : constant String := Base_Name (New_File);
-                  Ref_File : constant String := Get_Tmp_Dir & Base & "$ref";
+                  Ref_File : constant String := Get_Tmp_Dir & "ref$" & Base;
                   Ref_F    : Virtual_File;
 
                begin
@@ -451,7 +451,7 @@ package body Vdiff2_Module.Callback is
 
                declare
                   Base     : constant String := Base_Name (Orig_File);
-                  Ref_File : constant String := Get_Tmp_Dir & Base & "$ref";
+                  Ref_File : constant String := Get_Tmp_Dir & "ref$" & Base;
                   Ref_F    : Virtual_File;
                begin
                   Orig_F := Create (Full_Filename => Orig_File);
@@ -522,28 +522,40 @@ package body Vdiff2_Module.Callback is
       Diff     : Diff_Head_Access := new Diff_Head;
       File     : constant Virtual_File :=
         Create (Full_Filename => Get_String (Nth (Args, 1)));
-      CurrNode : Diff_Head_List.List_Node :=
+      Curr_Node : Diff_Head_List.List_Node :=
         First (VDiff2_Module (Vdiff_Module_ID).List_Diff.all);
       pragma Unreferenced (Widget);
 
    begin
       Trace (Me, "begin Close Difference");
-      while CurrNode /= Diff_Head_List.Null_Node loop
-         Diff.all := Data (CurrNode);
+
+      while Curr_Node /= Diff_Head_List.Null_Node loop
+         Diff.all := Data (Curr_Node);
          exit when Diff.File1 = File
            or else Diff.File2 = File
            or else Diff.File3 = File;
-         CurrNode := Next (CurrNode);
+         Curr_Node := Next (Curr_Node);
       end loop;
 
-      if CurrNode /= Diff_Head_List.Null_Node then
+      if Curr_Node /= Diff_Head_List.Null_Node then
+
+--           if Diff.File1 = File then
+--              Diff.File1 := VFS.No_File;
+--           elsif Diff.File2 = File then
+--              Diff.File2 := VFS.No_File;
+--           elsif Diff.File3 = File then
+--              Diff.File3 := VFS.No_File;
+--           end if;
+--           --  ??? for testing
+
          Hide_Differences (Kernel, Diff.all);
          Remove_Nodes (VDiff2_Module (Vdiff_Module_ID).List_Diff.all,
                        Prev (VDiff2_Module (Vdiff_Module_ID).List_Diff.all,
-                             CurrNode),
-                       CurrNode);
-         Free_All (Diff.all);
+                             Curr_Node),
+                       Curr_Node);
+         Free_List (Diff.List);
       end if;
+
       Free (Diff);
       Trace (Me, "end Close Difference");
    exception
