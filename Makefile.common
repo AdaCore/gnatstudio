@@ -134,6 +134,7 @@ check_common: force
 ifneq (,$(findstring gtkada,$(MODULES)))
 MODULE_INCLUDE+=`gtkada-config --cflags`
 MODULE_LIB+=`gtkada-config --libs`
+C_MODULE_INCLUDE+=`pkg-config gtk+-2.0 --cflags`
 endif
 
 .PHONY: check_gtkada
@@ -293,7 +294,7 @@ empty:=
 space:= $(empty) $(empty)
 vpath %.c ${subst ${space},:,${dir ${C_FILES}}}
 
-C_MODULE_INCLUDE=${subst -aI,-I,${filter-out -aO%,${MODULE_INCLUDE}}}
+C_MODULE_INCLUDE+=${subst -aI,-I,${filter-out -aO%,${MODULE_INCLUDE}}}
 
 ${OBJ_DIR}/%.o: %.c
 	cd ${OBJ_DIR}; gcc ${CFLAGS} -Wall -c ../src/$< -I../src ${C_MODULE_INCLUDE}
