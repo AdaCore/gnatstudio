@@ -91,11 +91,18 @@ package body Src_Info.CPP is
 
    type Type_Parse_State is (Incomplete, Complete, Unknown);
 
+   type Typedef_Entry is
+      record
+         Key   : SN.String_Access;
+         State : Type_Parse_State;
+      end record;
+
+
    package String_Hash_Table is new HTables.Simple_HTable
      (Header_Num => String_Hash_Table_Range,
-      Element    => Type_Parse_State,
+      Element    => Typedef_Entry,
       Key        => SN.String_Access,
-      No_Element => Unknown,
+      No_Element => (null, Unknown),
       Hash       => Type_Hash_Function,
       Equal      => Type_Equal_Function);
 
@@ -113,12 +120,15 @@ package body Src_Info.CPP is
    -- Free --
    ----------
    procedure Free (HT : in out HTable) is
-      Elmt : Type_Parse_State;
+      Elmt : Typedef_Entry;
+      Key  : SN.String_Access;
    begin
       Get_First (HT, Elmt);
       loop
-         exit when Elmt = Unknown;
-         --  Remove (HT, Get_Key (???)); -- FIXME key is not deleted!
+         exit when Elmt.Key = null;
+         Key := Elmt.Key;
+         Remove (HT, Key);
+         Free (Key);
          Get_Next (HT, Elmt);
       end loop;
    end Free;
@@ -705,16 +715,12 @@ package body Src_Info.CPP is
       Success   : out Boolean)
    is
       Typedef   : T_Table;
-      State     : Type_Parse_State;
+      HTTypedef : Typedef_Entry;
       Key       : SN.String_Access;
       Seek_Key  : SN.String_Access;
    begin
 
       Success := False;
-
-      Key := new String'(Type_Name);
-      Set (Module_Typedefs, Key, Incomplete);
-      --  add this type as an unidentified one
 
       if not Is_Open (SN_Table (T)) then
          --  typedef table does not exist
@@ -723,6 +729,10 @@ package body Src_Info.CPP is
 
       Typedef   := Find (SN_Table (T), Type_Name);
 
+      Key := new String'(Type_Name);
+      Set (Module_Typedefs, Key, (Key, Incomplete));
+      --  add this type as an unidentified one
+
       --  typedef found, it is time to set Is_Typedef
       Desc.Is_Typedef := True;
 
@@ -730,10 +740,10 @@ package body Src_Info.CPP is
       --  hash table
       Seek_Key  := new String'
          (Typedef.Buffer (Typedef.Original.First .. Typedef.Original.Last));
-      State     := Get (Module_Typedefs, Seek_Key);
+      HTTypedef := Get (Module_Typedefs, Seek_Key);
       Free (Seek_Key);
 
-      if State = Incomplete then -- loop detected
+      if HTTypedef.State = Incomplete then -- loop detected
          Desc.Kind := Unresolved_Entity;
 
          --  Set parent type to ancestor type
@@ -766,7 +776,7 @@ package body Src_Info.CPP is
 
          Free (Typedef);
          Success := True;
-         Set (Module_Typedefs, Key, Complete);
+         Set (Module_Typedefs, Key, (Key, Complete));
          return;
       end if;
 
