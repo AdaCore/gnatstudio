@@ -1211,8 +1211,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
       if Main_Debug_Window_Access (Object).Breakpoints_Editor /= null then
          Set_Process
            (Breakpoints_Access
-            (Main_Debug_Window_Access (Object).Breakpoints_Editor),
-            Process);
+            (Main_Debug_Window_Access (Object).Breakpoints_Editor), Process);
       end if;
 
    exception
