@@ -158,6 +158,10 @@ package body Commands is
       Node  : List_Node;
 
    begin
+      if Queue = null then
+         return;
+      end if;
+
       Queue.Command_In_Progress := False;
 
       if Success then
@@ -193,8 +197,37 @@ package body Commands is
             Prepend (Queue.Undo_Queue, Command_Access (Action));
       end case;
 
+      if Queue.Queue_Change_Hook /= null then
+         Execute (Queue.Queue_Change_Hook);
+      end if;
+
       Execute_Next_Action (Action.Queue);
    end Command_Finished;
+
+   ---------------------------
+   -- Get_Queue_Change_Hook --
+   ---------------------------
+
+   function Get_Queue_Change_Hook
+     (Queue : Command_Queue)
+     return Command_Access
+   is
+   begin
+      return Queue.Queue_Change_Hook;
+   end Get_Queue_Change_Hook;
+
+   ---------------------------
+   -- Add_Queue_Change_Hook --
+   ---------------------------
+
+   procedure Add_Queue_Change_Hook
+     (Queue   : Command_Queue;
+      Command : Command_Access)
+   is
+   begin
+      Queue.Queue_Change_Hook := Command;
+      Command.Queue := null;
+   end Add_Queue_Change_Hook;
 
    -------------
    -- Execute --
@@ -226,8 +259,8 @@ package body Commands is
    begin
       if not Is_Empty (Queue.Undo_Queue) then
          Action := Head (Queue.Undo_Queue);
-         Enqueue (Queue, Action);
          Next (Queue.Undo_Queue);
+         Enqueue (Queue, Action);
       end if;
    end Undo;
 
@@ -240,8 +273,8 @@ package body Commands is
    begin
       if not Is_Empty (Queue.Redo_Queue) then
          Action := Head (Queue.Redo_Queue);
-         Enqueue (Queue, Action);
          Next (Queue.Redo_Queue);
+         Enqueue (Queue, Action);
       end if;
    end Redo;
 
