@@ -636,7 +636,6 @@ package body Src_Editor_Module is
 
       return Mark_Identifier_Record'
         (Id     => 0,
-         Child  => null,
          File   => VFS.No_File,
          Mark   => null,
          Line   => 0,
@@ -891,7 +890,6 @@ package body Src_Editor_Module is
                      Mark_Record.Length := Length;
 
                      if Child /= null then
-                        Mark_Record.Child := Child;
                         Box := Source_Box (Get_Widget (Child));
                         Mark_Record.Mark :=
                           Create_Mark
@@ -1081,17 +1079,20 @@ package body Src_Editor_Module is
             Identifier  : constant String := Nth_Arg (Data, 1);
             Mark_Record : constant Mark_Identifier_Record :=
               Find_Mark (Identifier);
+
+            Child       : constant MDI_Child :=
+              Find_Editor (Kernel, Mark_Record.File);
          begin
-            if Mark_Record.Child /= null then
-               Raise_Child (Mark_Record.Child);
-               Set_Focus_Child (Mark_Record.Child);
-               Grab_Focus (Source_Box (Get_Widget (Mark_Record.Child)).Editor);
+            if Child /= null then
+               Raise_Child (Child);
+               Set_Focus_Child (Child);
+               Grab_Focus (Source_Box (Get_Widget (Child)).Editor);
 
                --  If the Length is null, we set the length to 1, otherwise
                --  the cursor is not visible.
 
                Scroll_To_Mark
-                 (Source_Box (Get_Widget (Mark_Record.Child)).Editor,
+                 (Source_Box (Get_Widget (Child)).Editor,
                   Mark_Record.Mark,
                   Mark_Record.Length);
 
@@ -1122,13 +1123,17 @@ package body Src_Editor_Module is
               Find_Mark (Identifier);
             Node        : Mark_Identifier_List.List_Node;
             Prev        : Mark_Identifier_List.List_Node;
+            Child       : constant MDI_Child :=
+              Find_Editor (Kernel, Mark_Record.File);
 
             use Mark_Identifier_List;
          begin
-            if Mark_Record.Child /= null then
+            if Child /= null
+              and then Mark_Record.Mark /= null
+            then
                Delete_Mark
                  (Get_Buffer
-                    (Source_Box (Get_Widget (Mark_Record.Child)).Editor),
+                    (Source_Box (Get_Widget (Child)).Editor),
                   Mark_Record.Mark);
             end if;
 
@@ -1229,13 +1234,15 @@ package body Src_Editor_Module is
             Mark_Record : constant Mark_Identifier_Record :=
               Find_Mark (Identifier);
             Buffer      : Source_Buffer;
+            Child       : constant MDI_Child :=
+              Find_Editor (Kernel, Mark_Record.File);
          begin
             if Mark_Record.File = VFS.No_File then
                Set_Error_Msg (Data, -"mark not found");
             else
-               if Mark_Record.Child /= null then
+               if Child /= null then
                   Buffer := Get_Buffer
-                    (Source_Box (Get_Widget (Mark_Record.Child)).Editor);
+                    (Source_Box (Get_Widget (Child)).Editor);
                end if;
 
                if Command = "get_line" then
@@ -1569,7 +1576,6 @@ package body Src_Editor_Module is
 
                if Line >= 0 and then Number > 0 then
                   --  Create a new mark record and insert it in the list.
-                  Mark_Record.Child := Child;
                   Mark_Record.Line := 0;
                   Mark_Record.File := Filename;
                   Mark_Record.Id := Id.Next_Mark_Id;
@@ -1781,7 +1787,6 @@ package body Src_Editor_Module is
                  (Node,
                   Mark_Identifier_Record'
                     (Id     => Mark_Record.Id,
-                     Child  => Child,
                      File   => File,
                      Line   => Mark_Record.Line,
                      Mark   =>
@@ -1885,7 +1890,6 @@ package body Src_Editor_Module is
      (Kernel : access Kernel_Handle_Record'Class;
       Data   : Hooks_Data'Class)
    is
-      pragma Unreferenced (Kernel);
       use Mark_Identifier_List;
 
       D           : constant File_Hooks_Args := File_Hooks_Args (Data);
@@ -1895,6 +1899,7 @@ package body Src_Editor_Module is
       Mark_Record : Mark_Identifier_Record;
       Added       : Boolean := False;
       Box         : Source_Box;
+      Child       : MDI_Child;
 
    begin
       --  If the file has marks, store their location.
@@ -1908,11 +1913,11 @@ package body Src_Editor_Module is
       while Node /= Null_Node loop
          Mark_Record := Mark_Identifier_List.Data (Node);
          if Mark_Record.File = D.File then
-            if Mark_Record.Child /= null
-              and then Mark_Record.Mark /= null
+            if Mark_Record.Mark /= null
               and then Mark_Record.Line /= 0
             then
-               Box := Source_Box (Get_Widget (Mark_Record.Child));
+               Child := Find_Editor (Kernel, Mark_Record.File);
+               Box := Source_Box (Get_Widget (Child));
 
                Mark_Record.Line :=
                  Natural (Src_Editor_Buffer.Line_Information.Get_Line
@@ -1925,7 +1930,6 @@ package body Src_Editor_Module is
                  (Node,
                   Mark_Identifier_Record'
                     (Id     => Mark_Record.Id,
-                     Child  => null,
                      File   => D.File,
                      Line   => Mark_Record.Line,
                      Mark   => null,
