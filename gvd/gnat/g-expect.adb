@@ -970,10 +970,10 @@ package body GNAT.Expect is
       Add_LF     : Boolean := True;
       Empty_Buffer : Boolean := False)
    is
-      N        : Natural;
-      Full_Str : constant String := Str & ASCII.LF;
-      Last     : Natural;
-      Result   : Expect_Match;
+      N           : Natural;
+      Full_Str    : constant String := Str & ASCII.LF;
+      Last        : Natural;
+      Result      : Expect_Match;
       Descriptors : Array_Of_Pd := (1 => Descriptor'Unrestricted_Access);
 
    begin
