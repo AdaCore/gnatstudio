@@ -1,5 +1,5 @@
 build:
-	gnatmake -gnatg -Icommon -Igtkada -Igvd -Ignat *.adb
+	gnatmake -Pstandalone read_ali
 
 distrib:
 	@-mkdir gvd gnat > /dev/null 2>&1
