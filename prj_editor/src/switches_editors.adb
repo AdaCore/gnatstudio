@@ -73,22 +73,22 @@ package body Switches_Editors is
    begin
       Editor.Pages := Pages;
 
-      if (Pages and Gnatmake_Page) = 0 then
+      if (Pages and Gnatmake_Page) /= 0 then
          Destroy (Editor.Make_Switches);
          Editor.Make_Switches := null;
       end if;
 
-      if (Pages and Compiler_Page) = 0 then
+      if (Pages and Compiler_Page) /= 0 then
          Destroy (Editor.Compiler_Switches);
          Editor.Compiler_Switches := null;
       end if;
 
-      if (Pages and Binder_Page) = 0 then
+      if (Pages and Binder_Page) /= 0 then
          Destroy (Editor.Binder_Switches);
          Editor.Binder_Switches := null;
       end if;
 
-      if (Pages and Linker_Page) = 0 then
+      if (Pages and Linker_Page) /= 0 then
          Destroy (Editor.Linker_Switches);
          Editor.Linker_Switches := null;
       end if;
