@@ -32,7 +32,6 @@ with Prj.Part;    use Prj.Part;
 with Prj.Proc;    use Prj.Proc;
 with Prj.Env;     use Prj.Env;
 with Prj.Ext;     use Prj.Ext;
-with Prj.PP;      use Prj.PP;
 with Prj.Util;    use Prj.Util;
 with Prj.Tree;    use Prj.Tree;
 with Errout;      use Errout;
@@ -91,8 +90,12 @@ package body Glide_Kernel.Project is
    function Get_Project_File_Name
      (Kernel : access Kernel_Handle_Record'Class) return String is
    begin
-      return Get_Name_String (Directory_Of (Kernel.Project))
-        & Get_Name_String (Name_Of (Kernel.Project));
+      if Kernel.Project_Is_Default then
+         return "";
+      else
+         return Get_Name_String (Directory_Of (Kernel.Project))
+           & Get_Name_String (Name_Of (Kernel.Project));
+      end if;
    end Get_Project_File_Name;
 
    ------------------
@@ -102,6 +105,7 @@ package body Glide_Kernel.Project is
    procedure Load_Project
      (Kernel : access Kernel_Handle_Record'class; Project : String) is
    begin
+      Kernel.Project_Is_Default := False;
       Prj.Part.Parse (Kernel.Project, Project, True);
       Kernel.Project_View := No_Project;
       Project_Changed (Kernel);
@@ -180,8 +184,6 @@ package body Glide_Kernel.Project is
 
 
       --  Evaluate the current project
-
-      Pretty_Print (Handle.Project);
 
       Prj.Reset;
       Prj.Proc.Process

@@ -79,6 +79,7 @@ package body Glide_Kernel is
       Current_Dir_Name : Name_Id;
    begin
       Kernel.Project := Default_Project_Node (N_Project);
+      Kernel.Project_Is_Default := True;
 
       --  Adding the name of the project
       Name_Len := 7;
