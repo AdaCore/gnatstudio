@@ -129,6 +129,7 @@ package Glide_Result_View is
       Text                    : String;
       Category                : String;
       Highlight               : Boolean := False;
+      Highlight_Category      : String := "";
       Style_Category          : String := "";
       Warning_Category        : String := "";
       File_Location_Regexp    : String := "";
@@ -142,7 +143,8 @@ package Glide_Result_View is
    --  Perform a basic parsing on Text, and add any found file locations
    --  to the results view in Category.
    --  If Highlighting is True, attempt to highlight the corresponding
-   --  locations using Category as highlighting identifier.
+   --  locations using Highlight_Category, Style_Category or Warning_Category
+   --  as highlighting identifier.
    --  File_Location_Regexp indicates how file locations should be recognized.
    --  The default blank value will matches locations reported by gcc or GNAT,
    --  ie "file:line:column message". The various index parameters indicate the
