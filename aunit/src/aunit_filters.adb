@@ -29,7 +29,170 @@
 with String_Utils;              use String_Utils;
 with Ada.Text_IO;               use Ada.Text_IO;
 
+with Ada.Characters.Handling; use Ada.Characters.Handling;
+with String_Utils; use String_Utils;
+
 package body Aunit_Filters is
+
+   ----------------
+   -- Suite_Name --
+   ----------------
+
+   procedure Get_Suite_Name
+     (File_Name    : in String;
+      Package_Name : out String_Access;
+      Suite_Name   : out String_Access)
+   is
+      File         : File_Type;
+      Index        : Integer;
+      Index_End    : Integer;
+      Line         : String (1 .. 256);
+      Line_Last    : Integer;
+      Current_Name : String_Access;
+      Found        : Boolean := False;
+   begin
+      if File_Name'Length <= 4 then
+         return;
+      end if;
+
+      Ada.Text_IO.Open (File, In_File, File_Name);
+
+      while not Found loop
+         Get_Line (File, Line, Line_Last);
+         Index_End := 1;
+         Skip_To_String (Line, Index_End, " is");
+         if Index_End < Line_Last - 1 then
+            Index := Index_End - 1;
+            while Index >= Line'First
+              and then Line (Index) /= ' ' loop
+               Index := Index - 1;
+            end loop;
+            Package_Name := new String'(Line (Index + 1 .. Index_End - 1));
+            Found := True;
+         end if;
+      end loop;
+
+      Reset (File);
+      Found := False;
+
+      if File_Name (File_Name'Last - 3 .. File_Name'Last) = ".ads" then
+         while not Found loop
+            Get_Line (File, Line, Line_Last);
+            Index := 1;
+            Skip_To_String (To_Lower (Line), Index, "type");
+            if Index < Line_Last - 4 then
+               Index_End := Index;
+               Skip_To_String
+                 (To_Lower (Line), Index_End, "test_case");
+               if Index_End < Line_Last - 9 then
+                  Index := 1;
+                  Skip_To_String (To_Lower (Line), Index, "type ");
+                  Index_End := Index + 5;
+                  Skip_To_String
+                    (To_Lower (Line), Index_End, " is ");
+                  Suite_Name := new String'(Line (Index + 5 .. Index_End - 1));
+                  Found := True;
+               end if;
+            end if;
+         end loop;
+      elsif File_Name (File_Name'Last - 3 .. File_Name'Last) = ".adb" then
+         while not Found loop
+            Get_Line (File, Line, Line_Last);
+            Index := 1;
+            Skip_To_String (To_Lower (Line), Index, "function");
+            if Index < Line_Last - 8 then
+               Index_End := Index;
+               Skip_To_String
+                 (To_Lower (Line), Index_End, "access_test_suite");
+               if Index_End < Line_Last - 15 then
+                  Index := 1;
+                  Skip_To_String
+                    (To_Lower (Line), Index, "function ");
+                  Index_End := Index + 9;
+                  Skip_To_String
+                    (To_Lower (Line), Index_End, " return ");
+                  Suite_Name := new String'(Line (Index + 9 .. Index_End - 1));
+                  Found := True;
+               end if;
+            end if;
+         end loop;
+      end if;
+
+      Free (Current_Name);
+      Close (File);
+
+   exception
+      when Use_Error =>
+         null;
+      when End_Error =>
+         Close (File);
+   end Get_Suite_Name;
+
+   ---------------------
+   -- Use_File_Filter --
+   ---------------------
+
+   procedure Use_File_Filter
+     (Filter    : access Filter_Show_Suites;
+      Win       : in File_Selector_Window_Access;
+      Dir       : in String;
+      File      : in String;
+      State     : out File_State;
+      Pixmap    : out Gdk.Pixmap.Gdk_Pixmap;
+      Mask      : out Gdk.Bitmap.Gdk_Bitmap;
+      Text      : out String_Access)
+   is
+      Suite_Name   : String_Access := null;
+      Package_Name : String_Access;
+   begin
+      if File'Length > 4
+        and then File (File'Last - 3 .. File'Last) = ".adb"
+      then
+         Get_Suite_Name (Dir & File, Package_Name, Suite_Name);
+         if Suite_Name /= null then
+            State := Normal;
+            Text := Suite_Name;
+            Pixmap := Filter.Suite_Pixmap;
+            Mask := Filter.Suite_Bitmap;
+         else
+            State := Invisible;
+            Text := new String'("");
+            Pixmap := Gdk.Pixmap.Null_Pixmap;
+            Mask   := Gdk.Bitmap.Null_Bitmap;
+         end if;
+      end if;
+   end Use_File_Filter;
+
+   ---------------------
+   -- Use_File_Filter --
+   ---------------------
+
+   procedure Use_File_Filter
+     (Filter    : access Filter_Show_Tests;
+      Win       : in File_Selector_Window_Access;
+      Dir       : in String;
+      File      : in String;
+      State     : out File_State;
+      Pixmap    : out Gdk.Pixmap.Gdk_Pixmap;
+      Mask      : out Gdk.Bitmap.Gdk_Bitmap;
+      Text      : out String_Access)
+   is
+      Suite_Name   : String_Access;
+      Package_Name : String_Access;
+   begin
+      Get_Suite_Name (Dir & File, Package_Name, Suite_Name);
+      if Suite_Name /= null then
+         State := Normal;
+         Text := Suite_Name;
+         Pixmap := Filter.Suite_Pixmap;
+         Mask := Filter.Suite_Bitmap;
+      else
+         State := Invisible;
+         Text := new String'("");
+         Pixmap := Gdk.Pixmap.Null_Pixmap;
+         Mask   := Gdk.Bitmap.Null_Bitmap;
+      end if;
+   end Use_File_Filter;
 
    ---------------------
    -- Use_File_Filter --

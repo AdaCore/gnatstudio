@@ -109,12 +109,8 @@ package body Make_Harness_Window_Pkg.Callbacks is
         Make_Harness_Window_Access (Get_Toplevel (Object));
 
       S         : String := Get_Selection (Harness_Window.Explorer);
-      File      : File_Type;
-      Index     : Integer;
-      Index_End : Integer;
-      Line      : String (1 .. 256);
-      Line_Last : Integer;
-      Found     : Boolean := False;
+      Suite_Name   : String_Access;
+      Package_Name : String_Access;
       Id        : Context_Id :=
         Get_Context_Id (Harness_Window.Statusbar, "messages");
       Message   : Message_Id;
@@ -125,49 +121,21 @@ package body Make_Harness_Window_Pkg.Callbacks is
          return;
       end if;
 
-      Ada.Text_IO.Open (File, In_File, S);
+      Get_Suite_Name (S, Package_Name, Suite_Name);
+
+      if Suite_Name /= null
+        and then Package_Name /= null
+      then
+         Harness_Window.Suite_Name := Suite_Name;
+         Message := Push (Harness_Window.Statusbar,
+                          Id,
+                          "Found suite : " & Harness_Window.Suite_Name.all);
+      else
+         Message := Push (Harness_Window.Statusbar,
+                          Id,
+                          "Warning : no suite was found in that file.");
+      end if;
       Set_Text (Harness_Window.File_Name_Entry, S);
-      loop
-         Get_Line (File, Line, Line_Last);
-         Index := 1;
-         Skip_To_String (To_Lower (Line), Index, "function");
-
-         if Index < Line_Last - 8 then
-            Index_End := Index;
-            Skip_To_String
-              (To_Lower (Line), Index_End, "access_test_suite");
-
-            if Index_End < Line_Last - 15 then
-               Index := 1;
-               Skip_To_String
-                 (To_Lower (Line), Index, "function ");
-               Index_End := Index + 9;
-               Skip_To_String
-                 (To_Lower (Line), Index_End, " return ");
-
-               if Harness_Window.Suite_Name /= null then
-                  Free (Harness_Window.Suite_Name);
-               end if;
-
-               Harness_Window.Suite_Name := new String'
-                 (Line (Index + 9 .. Index_End - 1));
-               Found := True;
-            end if;
-         end if;
-      end loop;
-
-   exception
-      when End_Error =>
-         Close (File);
-         if Found then
-            Message := Push (Harness_Window.Statusbar,
-                             Id,
-                             "Found suite : " & Harness_Window.Suite_Name.all);
-         else
-            Message := Push (Harness_Window.Statusbar,
-                             Id,
-                             "Warning : no suite was found in that file.");
-         end if;
    end On_Ok_Button_Clicked;
 
    ------------------------------
@@ -196,8 +164,17 @@ package body Make_Harness_Window_Pkg.Callbacks is
 
       Filter_A : Filter_Show_All_Access := new Filter_Show_All;
       Filter_B : Filter_Show_Ada_Access := new Filter_Show_Ada;
+      Filter_C : Filter_Show_Suites_Access := new Filter_Show_Suites;
    begin
       if Harness_Window.Explorer = null then
+         Create_From_Xpm_D
+           (Filter_C.Suite_Pixmap,
+            Window => null,
+            Colormap => Get_System,
+            Mask => Filter_C.Suite_Bitmap,
+            Transparent => Null_Color,
+            Data => box_xpm);
+
          Gtk_New (Harness_Window.Explorer, "");
          Create_From_Xpm_D
            (Filter_B.Spec_Pixmap,
@@ -215,6 +192,7 @@ package body Make_Harness_Window_Pkg.Callbacks is
             Transparent => Null_Color,
             Data => package_xpm);
 
+         Register_Filter (Harness_Window.Explorer, Filter_C);
          Register_Filter (Harness_Window.Explorer, Filter_B);
          Register_Filter (Harness_Window.Explorer, Filter_A);
 

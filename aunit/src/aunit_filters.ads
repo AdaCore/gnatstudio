@@ -37,6 +37,11 @@ with Gtkada.File_Selector; use Gtkada.File_Selector;
 
 package Aunit_Filters is
 
+   procedure Get_Suite_Name
+     (File_Name : in String;
+      Package_Name : out String_Access;
+      Suite_Name : out String_Access);
+
    type Filter_Show_Ada is new File_Filter_Record (new String'("Ada Files"))
      with record
         Spec_Pixmap : Gdk.Pixmap.Gdk_Pixmap;
@@ -44,11 +49,46 @@ package Aunit_Filters is
         Spec_Bitmap : Gdk.Bitmap.Gdk_Bitmap;
         Body_Bitmap : Gdk.Bitmap.Gdk_Bitmap;
      end record;
-
    type Filter_Show_Ada_Access is access all Filter_Show_Ada'Class;
+
+   type Filter_Show_Tests is
+     new File_Filter_Record (new String'("Suite and Test files"))
+     with record
+        Suite_Pixmap : Gdk.Pixmap.Gdk_Pixmap;
+        Suite_Bitmap : Gdk.Bitmap.Gdk_Bitmap;
+     end record;
+   type Filter_Show_Tests_Access is access all Filter_Show_Tests'Class;
+
+   type Filter_Show_Suites is
+     new File_Filter_Record (new String'("Suite files"))
+     with record
+        Suite_Pixmap : Gdk.Pixmap.Gdk_Pixmap;
+        Suite_Bitmap : Gdk.Bitmap.Gdk_Bitmap;
+     end record;
+   type Filter_Show_Suites_Access is access all Filter_Show_Suites'Class;
 
    procedure Use_File_Filter
      (Filter    : access Filter_Show_Ada;
+      Win       : in File_Selector_Window_Access;
+      Dir       : in String;
+      File      : in String;
+      State     : out File_State;
+      Pixmap    : out Gdk.Pixmap.Gdk_Pixmap;
+      Mask      : out Gdk.Bitmap.Gdk_Bitmap;
+      Text      : out String_Access);
+
+   procedure Use_File_Filter
+     (Filter    : access Filter_Show_Suites;
+      Win       : in File_Selector_Window_Access;
+      Dir       : in String;
+      File      : in String;
+      State     : out File_State;
+      Pixmap    : out Gdk.Pixmap.Gdk_Pixmap;
+      Mask      : out Gdk.Bitmap.Gdk_Bitmap;
+      Text      : out String_Access);
+
+   procedure Use_File_Filter
+     (Filter    : access Filter_Show_Tests;
       Win       : in File_Selector_Window_Access;
       Dir       : in String;
       File      : in String;

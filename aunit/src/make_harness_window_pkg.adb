@@ -53,7 +53,7 @@ package body Make_Harness_Window_Pkg is
       Vbox2  : Gtk_Vbox;
       Vbox3  : Gtk_Vbox;
       Vbox4  : Gtk_Vbox;
-      Vbox5 : Gtk_Vbox;
+      Vbox5  : Gtk_Vbox;
 
       Label1 : Gtk_Label;
       Label2 : Gtk_Label;
