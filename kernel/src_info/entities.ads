@@ -482,7 +482,8 @@ package Entities is
       Kind     : out Reference_Kind);
    --  Return the current end of scope for the entity
 
-   function Get_Name (Entity : Entity_Information) return String;
+   function Get_Name
+     (Entity : Entity_Information) return GNAT.OS_Lib.String_Access;
    --  Return the name of the entity
 
    function Get_Declaration_Of
@@ -727,7 +728,6 @@ private
 
    type Entity_Information_List_Access is access Entity_Information_List;
 
-   function Get_Name (D : Entity_Information) return GNAT.OS_Lib.String_Access;
    function Get_Name
      (D : Entity_Information_List_Access) return GNAT.OS_Lib.String_Access;
    --  Return the name of the first entity in the list
