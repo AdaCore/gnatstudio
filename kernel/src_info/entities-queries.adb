@@ -883,8 +883,6 @@ package body Entities.Queries is
    procedure Destroy (Iter : in out Dependency_Iterator) is
       pragma Unreferenced (Iter);
    begin
---  ???
---      Unchecked_Free (Iter.Source_Files);
       null;
    end Destroy;
 
