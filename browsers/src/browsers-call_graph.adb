@@ -635,8 +635,6 @@ package body Browsers.Call_Graph is
 
       --  Look for an existing item corresponding to entity
       Cb.Item := Add_Entity_If_Not_Present (Cb.Browser, Entity);
-      Set_Parents_Shown (Cb.Item, True);
-      Redraw_Title_Bar (Cb.Item);
 
       Cb.Link_From_Item := True;
 
@@ -647,10 +645,9 @@ package body Browsers.Call_Graph is
          Layout (Cb.Browser, Force => False);
          Refresh_Canvas (Get_Canvas (Cb.Browser));
          Show_Item (Get_Canvas (Cb.Browser), Cb.Item);
-
-      else
-         Redraw_Title_Bar (Cb.Item);
       end if;
+
+      Redraw_Title_Bar (Cb.Item);
 
    exception
       when E : others =>
