@@ -26,7 +26,7 @@ package Odd is
    -- Constants --
    ---------------
 
-   Version : constant String := "0.5.1";
+   Version : constant String := "0.5.2";
    --  Version number of this software.
 
    Editor_Font_Size : constant Gint := 12;
