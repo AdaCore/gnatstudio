@@ -71,6 +71,7 @@ install:
 	$(MKDIR) $(docdir)/ps
 	$(MKDIR) $(docdir)/txt
 	-$(INSTALL_DATA) gps-welcome.html $(docdir)/html
+	-$(INSTALL_DATA) tutorial.html $(docdir)/html
 	-for file in gps.html $(wildcard gps_*.html); do \
 	  $(INSTALL_DATA) $$file $(docdir)/html; \
 	done
@@ -99,7 +100,7 @@ clean-temp-files:
 
 clean: clean-temp-files
 	-$(RM) gps.info*
-	-$(RM) gps_*.html gps.ps gps.txt
+	-$(RM) tutorial*.html gps_*.html gps.ps gps.txt
 
 mostlyclean: clean
 
