@@ -22,5 +22,6 @@ AUTOMAKE_OPTIONS = cygnus
 ## Process this file with automake to create Makefile.in.
 
 ## Order is important here.
-SUBDIRS = common libjcreuse toolbox assembly cobol cpp fortran java @JAVA_PARSER@ @SENDMAIL_PARSER@ tcl python m4
+#SUBDIRS = common libjcreuse toolbox assembly cobol cpp fortran java @JAVA_PARSER@ @SENDMAIL_PARSER@ tcl python m4
+SUBDIRS = cpp
 

@@ -1,6 +1,6 @@
-# Makefile.in generated automatically by automake 1.4 from Makefile.am
+# Makefile.in generated automatically by automake 1.4-p5 from Makefile.am
 
-# Copyright (C) 1994, 1995-8, 1999 Free Software Foundation, Inc.
+# Copyright (C) 1994, 1995-8, 1999, 2001 Free Software Foundation, Inc.
 # This Makefile.in is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
 # with or without modifications, as long as this notice is preserved.
@@ -211,11 +211,12 @@ sdk_LIBRARIES = libutils.a
 
 INCLUDES = $(WINFLAGS) -I$(top_srcdir)/db $(TCLHDIR)
 @HAVE_REALPATH_TRUE@REALPATH = 
-@HAVE_REALPATH_FALSE@REALPATH = realpath.c
+@HAVE_REALPATH_FALSE@REALPATH = @HAVE_REALPATH_FALSE@realpath.c
 @HAVE_GETOPT_TRUE@GETOPT = 
-@HAVE_GETOPT_FALSE@GETOPT = getopt.c
+@HAVE_GETOPT_FALSE@GETOPT = @HAVE_GETOPT_FALSE@getopt.c
 
-libutils_a_SOURCES = homedir.c mxdefine.h mxfuncs.h fileutils.h fileutils.c mxlogger.h strs.c $(GETOPT) $(REALPATH)
+libutils_a_SOURCES = homedir.c mxdefine.h mxfuncs.h \
+fileutils.h fileutils.c mxlogger.h strs.c $(GETOPT) $(REALPATH)
 
 mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
 CONFIG_HEADER = ../../config.h
@@ -228,24 +229,24 @@ CPPFLAGS = @CPPFLAGS@
 LDFLAGS = @LDFLAGS@
 LIBS = @LIBS@
 libutils_a_LIBADD = 
-@HAVE_REALPATH_TRUE@@HAVE_GETOPT_TRUE@libutils_a_OBJECTS =  \
-@HAVE_REALPATH_TRUE@@HAVE_GETOPT_TRUE@homedir.$(OBJEXT) \
-@HAVE_REALPATH_TRUE@@HAVE_GETOPT_TRUE@fileutils.$(OBJEXT) \
-@HAVE_REALPATH_TRUE@@HAVE_GETOPT_TRUE@strs.$(OBJEXT)
-@HAVE_REALPATH_TRUE@@HAVE_GETOPT_FALSE@libutils_a_OBJECTS =  \
-@HAVE_REALPATH_TRUE@@HAVE_GETOPT_FALSE@homedir.$(OBJEXT) \
-@HAVE_REALPATH_TRUE@@HAVE_GETOPT_FALSE@fileutils.$(OBJEXT) \
-@HAVE_REALPATH_TRUE@@HAVE_GETOPT_FALSE@strs.$(OBJEXT) getopt.$(OBJEXT)
-@HAVE_REALPATH_FALSE@@HAVE_GETOPT_TRUE@libutils_a_OBJECTS =  \
-@HAVE_REALPATH_FALSE@@HAVE_GETOPT_TRUE@homedir.$(OBJEXT) \
-@HAVE_REALPATH_FALSE@@HAVE_GETOPT_TRUE@fileutils.$(OBJEXT) \
-@HAVE_REALPATH_FALSE@@HAVE_GETOPT_TRUE@strs.$(OBJEXT) \
-@HAVE_REALPATH_FALSE@@HAVE_GETOPT_TRUE@realpath.$(OBJEXT)
-@HAVE_REALPATH_FALSE@@HAVE_GETOPT_FALSE@libutils_a_OBJECTS =  \
-@HAVE_REALPATH_FALSE@@HAVE_GETOPT_FALSE@homedir.$(OBJEXT) \
-@HAVE_REALPATH_FALSE@@HAVE_GETOPT_FALSE@fileutils.$(OBJEXT) \
-@HAVE_REALPATH_FALSE@@HAVE_GETOPT_FALSE@strs.$(OBJEXT) getopt.$(OBJEXT) \
-@HAVE_REALPATH_FALSE@@HAVE_GETOPT_FALSE@realpath.$(OBJEXT)
+@HAVE_GETOPT_FALSE@@HAVE_REALPATH_FALSE@libutils_a_OBJECTS =  \
+@HAVE_GETOPT_FALSE@@HAVE_REALPATH_FALSE@homedir.$(OBJEXT) \
+@HAVE_GETOPT_FALSE@@HAVE_REALPATH_FALSE@fileutils.$(OBJEXT) \
+@HAVE_GETOPT_FALSE@@HAVE_REALPATH_FALSE@strs.$(OBJEXT) getopt.$(OBJEXT) \
+@HAVE_GETOPT_FALSE@@HAVE_REALPATH_FALSE@realpath.$(OBJEXT)
+@HAVE_GETOPT_TRUE@@HAVE_REALPATH_FALSE@libutils_a_OBJECTS =  \
+@HAVE_GETOPT_TRUE@@HAVE_REALPATH_FALSE@homedir.$(OBJEXT) \
+@HAVE_GETOPT_TRUE@@HAVE_REALPATH_FALSE@fileutils.$(OBJEXT) \
+@HAVE_GETOPT_TRUE@@HAVE_REALPATH_FALSE@strs.$(OBJEXT) \
+@HAVE_GETOPT_TRUE@@HAVE_REALPATH_FALSE@realpath.$(OBJEXT)
+@HAVE_GETOPT_TRUE@@HAVE_REALPATH_TRUE@libutils_a_OBJECTS =  \
+@HAVE_GETOPT_TRUE@@HAVE_REALPATH_TRUE@homedir.$(OBJEXT) \
+@HAVE_GETOPT_TRUE@@HAVE_REALPATH_TRUE@fileutils.$(OBJEXT) \
+@HAVE_GETOPT_TRUE@@HAVE_REALPATH_TRUE@strs.$(OBJEXT)
+@HAVE_GETOPT_FALSE@@HAVE_REALPATH_TRUE@libutils_a_OBJECTS =  \
+@HAVE_GETOPT_FALSE@@HAVE_REALPATH_TRUE@homedir.$(OBJEXT) \
+@HAVE_GETOPT_FALSE@@HAVE_REALPATH_TRUE@fileutils.$(OBJEXT) \
+@HAVE_GETOPT_FALSE@@HAVE_REALPATH_TRUE@strs.$(OBJEXT) getopt.$(OBJEXT)
 AR = ar
 CFLAGS = @CFLAGS@
 COMPILE = $(CC) $(DEFS) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)

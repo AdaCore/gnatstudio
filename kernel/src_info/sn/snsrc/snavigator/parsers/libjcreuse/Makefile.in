@@ -1,6 +1,6 @@
-# Makefile.in generated automatically by automake 1.4 from Makefile.am
+# Makefile.in generated automatically by automake 1.4-p5 from Makefile.am
 
-# Copyright (C) 1994, 1995-8, 1999 Free Software Foundation, Inc.
+# Copyright (C) 1994, 1995-8, 1999, 2001 Free Software Foundation, Inc.
 # This Makefile.in is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
 # with or without modifications, as long as this notice is preserved.
@@ -210,7 +210,10 @@ INCLUDES = $(TCLHDIR)
 
 noinst_LIBRARIES = libjcreuse.a
 
-libjcreuse_a_SOURCES = DynArray.c DynArray.h Errors.c Errors.h General.c General.h Idents.c Idents.h Position.c Position.h Reuse.h Sets.c Sets.h Source.c Source.h StringM.c StringM.h rMemory.c rMemory.h rSystem.c rSystem.h ratc.h
+libjcreuse_a_SOURCES = DynArray.c DynArray.h Errors.c Errors.h \
+General.c General.h Idents.c Idents.h Position.c Position.h Reuse.h \
+Sets.c Sets.h Source.c Source.h StringM.c StringM.h \
+rMemory.c rMemory.h rSystem.c rSystem.h ratc.h
 
 mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
 CONFIG_HEADER = ../../config.h

@@ -423,21 +423,21 @@ db/Makefile
 dbutils/Makefile
 dnl packages/Makefile
 parsers/Makefile
-parsers/assembly/Makefile
+dnl parsers/assembly/Makefile
 dnl parsers/chill/Makefile
-parsers/cobol/Makefile
-parsers/common/Makefile
+dnl parsers/cobol/Makefile
+dnl parsers/common/Makefile
 parsers/cpp/Makefile
 parsers/cpp/cpplib/Makefile
-parsers/fortran/Makefile
+dnl parsers/fortran/Makefile
 dnl parsers/gcj/Makefile
-parsers/java/Makefile
-parsers/libjcreuse/Makefile
-parsers/m4/Makefile
-parsers/python/Makefile
-parsers/sendmail/Makefile
-parsers/tcl/Makefile
-parsers/toolbox/Makefile
+dnl parsers/java/Makefile
+dnl parsers/libjcreuse/Makefile
+dnl parsers/m4/Makefile
+dnl parsers/python/Makefile
+dnl parsers/sendmail/Makefile
+dnl parsers/tcl/Makefile
+dnl parsers/toolbox/Makefile
 dnl bitmaps/Makefile
 dnl etc/Makefile
 dnl etc/english.txt

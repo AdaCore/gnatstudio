@@ -1,6 +1,6 @@
-# Makefile.in generated automatically by automake 1.4 from Makefile.am
+# Makefile.in generated automatically by automake 1.4-p5 from Makefile.am
 
-# Copyright (C) 1994, 1995-8, 1999 Free Software Foundation, Inc.
+# Copyright (C) 1994, 1995-8, 1999, 2001 Free Software Foundation, Inc.
 # This Makefile.in is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
 # with or without modifications, as long as this notice is preserved.
@@ -206,12 +206,19 @@ ac_cv_c_itclsh = @ac_cv_c_itclsh@
 
 AUTOMAKE_OPTIONS = cygnus
 
-INCLUDES = $(WINFLAGS) -I$(top_srcdir)/hyper -I$(top_srcdir)/dbutils 	$(TCLHDIR)
+INCLUDES = $(WINFLAGS) -I$(top_srcdir)/hyper -I$(top_srcdir)/dbutils \
+	$(TCLHDIR)
 
 
 noinst_LIBRARIES = libcpp2.a
 
-libcpp2_a_SOURCES = cp_argument.c cp_class.c cp_crossref.c cp_declaration.c cp_declarator.c cp_enum.c cp_error.c cp_expression.c cp_init.c cp_list.c cp_literal.c cp_malloc.c cp_name.c cp_oper.c cp_process.c cp_stack.c cp_statement.c cp_step.c cp_symbol.c cp_type.c cp_typename.c cpdefines.h cplex.c cpkeyw.c cpkeyw.h crossref.h crossrefP.h operator.h symbol.h macread.c macro.c token.c expr.c process.c
+libcpp2_a_SOURCES = cp_argument.c cp_class.c cp_crossref.c \
+cp_declaration.c cp_declarator.c cp_enum.c cp_error.c cp_expression.c \
+cp_init.c cp_list.c cp_literal.c \
+cp_malloc.c cp_name.c cp_oper.c cp_process.c cp_stack.c cp_statement.c \
+cp_step.c cp_symbol.c cp_type.c cp_typename.c cpdefines.h cplex.c \
+cpkeyw.c cpkeyw.h crossref.h crossrefP.h operator.h symbol.h \
+macread.c macro.c token.c expr.c process.c
 
 mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
 CONFIG_HEADER = ../../../config.h

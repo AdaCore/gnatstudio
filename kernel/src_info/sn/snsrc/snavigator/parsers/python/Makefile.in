@@ -1,6 +1,6 @@
-# Makefile.in generated automatically by automake 1.4 from Makefile.am
+# Makefile.in generated automatically by automake 1.4-p5 from Makefile.am
 
-# Copyright (C) 1994, 1995-8, 1999 Free Software Foundation, Inc.
+# Copyright (C) 1994, 1995-8, 1999, 2001 Free Software Foundation, Inc.
 # This Makefile.in is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
 # with or without modifications, as long as this notice is preserved.
@@ -211,15 +211,22 @@ common = $(top_builddir)/parsers/common
 
 bin_PROGRAMS = pybrowser
 
-INCLUDES = $(WINFLAGS) -I$(top_srcdir)/hyper 	-I$(top_srcdir)/parsers/toolbox 	-I$(top_srcdir)/parsers/common $(TCLHDIR)
+INCLUDES = $(WINFLAGS) -I$(top_srcdir)/hyper \
+	-I$(top_srcdir)/parsers/toolbox \
+	-I$(top_srcdir)/parsers/common $(TCLHDIR)
 
 
-pybrowser_LDADD = $(toolbox)/libsnptools.a $(top_builddir)/dbutils/libdbutils.a 		 $(common)/libcommon.a $(DB_LIBDIR)/libdb.a @LEXLIB@ 		 $(top_builddir)/misc/libutils/libutils.a 		 $(TCL_BUILD_LIB_SPEC) $(TCL_LIBS)
+pybrowser_LDADD = $(toolbox)/libsnptools.a $(top_builddir)/dbutils/libdbutils.a \
+		 $(common)/libcommon.a $(DB_LIBDIR)/libdb.a @LEXLIB@ \
+		 $(top_builddir)/misc/libutils/libutils.a \
+		 $(TCL_BUILD_LIB_SPEC) $(TCL_LIBS)
 
 
 pybrowser_SOURCES = pybrowser.l
 
-pybrowser_DEPENDENCIES = $(top_builddir)/dbutils/libdbutils.a $(DB_LIBDIR)/libdb.a 			$(toolbox)/libsnptools.a $(common)/libcommon.a 			$(top_builddir)/misc/libutils/libutils.a
+pybrowser_DEPENDENCIES = $(top_builddir)/dbutils/libdbutils.a $(DB_LIBDIR)/libdb.a \
+			$(toolbox)/libsnptools.a $(common)/libcommon.a \
+			$(top_builddir)/misc/libutils/libutils.a
 
 mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
 CONFIG_HEADER = ../../config.h

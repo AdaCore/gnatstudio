@@ -1,6 +1,6 @@
-# Makefile.in generated automatically by automake 1.4 from Makefile.am
+# Makefile.in generated automatically by automake 1.4-p5 from Makefile.am
 
-# Copyright (C) 1994, 1995-8, 1999 Free Software Foundation, Inc.
+# Copyright (C) 1994, 1995-8, 1999, 2001 Free Software Foundation, Inc.
 # This Makefile.in is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
 # with or without modifications, as long as this notice is preserved.
@@ -208,16 +208,24 @@ AUTOMAKE_OPTIONS = cygnus
 
 bin_PROGRAMS = jbrowser
 
-INCLUDES = $(WINFLAGS) -I$(top_srcdir)/hyper 	-I$(top_srcdir)/parsers/libjcreuse $(TCLHDIR)
+INCLUDES = $(WINFLAGS) -I$(top_srcdir)/hyper \
+	-I$(top_srcdir)/parsers/libjcreuse $(TCLHDIR)
 
 
-jbrowser_SOURCES = Eval.c Eval.h Parser.c Parser.h Scanner.c Scanner.h Trafo.c Trafo.h Tree.c Tree.h deftab.c deftab.h yyTrafo.h yyTree.h skeleton.c
+jbrowser_SOURCES = Eval.c Eval.h Parser.c Parser.h Scanner.c Scanner.h \
+Trafo.c Trafo.h Tree.c Tree.h deftab.c deftab.h yyTrafo.h yyTree.h \
+skeleton.c
 
 
-jbrowser_LDADD = ../libjcreuse/libjcreuse.a $(top_builddir)/dbutils/libdbutils.a 		$(DB_LIBDIR)/libdb.a $(top_builddir)/misc/libutils/libutils.a 		$(TCL_BUILD_LIB_SPEC) $(TCL_LIBS)
+jbrowser_LDADD = ../libjcreuse/libjcreuse.a $(top_builddir)/dbutils/libdbutils.a \
+		$(DB_LIBDIR)/libdb.a $(top_builddir)/misc/libutils/libutils.a \
+		$(TCL_BUILD_LIB_SPEC) $(TCL_LIBS)
 
 
-jbrowser_DEPENDENCIES = ../libjcreuse/libjcreuse.a 		$(top_builddir)/misc/libutils/libutils.a 		$(top_builddir)/dbutils/libdbutils.a 		$(DB_LIBDIR)/libdb.a
+jbrowser_DEPENDENCIES = ../libjcreuse/libjcreuse.a \
+		$(top_builddir)/misc/libutils/libutils.a \
+		$(top_builddir)/dbutils/libdbutils.a \
+		$(DB_LIBDIR)/libdb.a
 
 mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
 CONFIG_HEADER = ../../config.h

@@ -1,6 +1,6 @@
-# Makefile.in generated automatically by automake 1.4 from Makefile.am
+# Makefile.in generated automatically by automake 1.4-p5 from Makefile.am
 
-# Copyright (C) 1994, 1995-8, 1999 Free Software Foundation, Inc.
+# Copyright (C) 1994, 1995-8, 1999, 2001 Free Software Foundation, Inc.
 # This Makefile.in is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
 # with or without modifications, as long as this notice is preserved.
@@ -208,17 +208,32 @@ AUTOMAKE_OPTIONS = cygnus
 
 SUBDIRS = cpplib
 
-INCLUDES = $(WINFLAGS) -I$(top_srcdir)/hyper -I$(srcdir)/cpplib 	-I$(top_srcdir)/dbutils -I$(top_srcdir)/misc/libutils -I$(DB_INCDIR) 	$(TCLHDIR)
+INCLUDES = $(WINFLAGS) -I$(top_srcdir)/hyper -I$(srcdir)/cpplib \
+	-I$(top_srcdir)/dbutils -I$(top_srcdir)/misc/libutils -I$(DB_INCDIR) \
+	$(TCLHDIR)
 
 
 bin_PROGRAMS = cbrowser
 
 cbrowser_SOURCES = cparser.c cpdefines.h skeleton.c
 
-cbrowser_LDADD = cpplib/cpkeyw.$(OBJEXT) cpplib/cplex.$(OBJEXT) 	cpplib/macro.$(OBJEXT) cpplib/macread.$(OBJEXT) 	cpplib/token.$(OBJEXT) cpplib/process.$(OBJEXT) 	cpplib/expr.$(OBJEXT) 	$(top_builddir)/dbutils/libdbutils.a 	$(top_builddir)/misc/libutils/libutils.a 	$(DB_LIBDIR)/libdb.a 	$(TCL_BUILD_LIB_SPEC) $(TCL_LIBS)
+cbrowser_LDADD = cpplib/cpkeyw.$(OBJEXT) cpplib/cplex.$(OBJEXT) \
+	cpplib/macro.$(OBJEXT) cpplib/macread.$(OBJEXT) \
+	cpplib/token.$(OBJEXT) cpplib/process.$(OBJEXT) \
+	cpplib/expr.$(OBJEXT) \
+	$(top_builddir)/dbutils/libdbutils.a \
+	$(top_builddir)/misc/libutils/libutils.a \
+	$(DB_LIBDIR)/libdb.a \
+	$(TCL_BUILD_LIB_SPEC) $(TCL_LIBS)
 
 
-cbrowser_DEPENDENCIES = cpplib/cpkeyw.$(OBJEXT) 	cpplib/cplex.$(OBJEXT) cpplib/macro.$(OBJEXT) 	cpplib/macread.$(OBJEXT) cpplib/token.$(OBJEXT) 	cpplib/process.$(OBJEXT) cpplib/expr.$(OBJEXT) 	$(top_builddir)/dbutils/libdbutils.a 	$(top_builddir)/misc/libutils/libutils.a 	$(DB_LIBDIR)/libdb.a
+cbrowser_DEPENDENCIES = cpplib/cpkeyw.$(OBJEXT) \
+	cpplib/cplex.$(OBJEXT) cpplib/macro.$(OBJEXT) \
+	cpplib/macread.$(OBJEXT) cpplib/token.$(OBJEXT) \
+	cpplib/process.$(OBJEXT) cpplib/expr.$(OBJEXT) \
+	$(top_builddir)/dbutils/libdbutils.a \
+	$(top_builddir)/misc/libutils/libutils.a \
+	$(DB_LIBDIR)/libdb.a
 
 mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
 CONFIG_HEADER = ../../config.h
@@ -347,7 +362,7 @@ maintainer-clean-recursive:
 	dot_seen=no; \
 	rev=''; list='$(SUBDIRS)'; for subdir in $$list; do \
 	  rev="$$subdir $$rev"; \
-	  test "$$subdir" = "." && dot_seen=yes; \
+	  test "$$subdir" != "." || dot_seen=yes; \
 	done; \
 	test "$$dot_seen" = "no" && rev=". $$rev"; \
 	target=`echo $@ | sed s/-recursive//`; \
