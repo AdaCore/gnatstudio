@@ -2007,7 +2007,10 @@ The regular expression specifies how locations are recognized. By default, it ma
 
   <shell_doc name="GPS.GUI.__init__">
      <param name="self">The instance of GPS.GUI</param>
-     <description>Prevents the creation of instances of GPS.GUI</description>
+     <description>Prevents the creation of instances of GPS.GUI. Such instances are created automatically by GPS as a result of calling other functions</description>
+     <see_also name="GPS.Toolbar().apppend()" />
+     <see_also name="GPS.Toolbar().entry()" />
+     <see_also name="GPS.Menu.get()" />
   </shell_doc>
 
   <shell_doc name="GPS.GUI.set_sensitive">
@@ -2015,5 +2018,69 @@ The regular expression specifies how locations are recognized. By default, it ma
      <param name="sensitive" default="True">A boolean</param>
      <description>Indicate whether the associated graphical element should respond to user interaction or not. If the element is not sensitive, then the user will not be able to click on it</description>
   </shell_doc>
+
+  <shell_doc name="GPS.GUI.destroy">
+     <param name="self">The instance of GPS.GUI</param>
+     <description>Destroy the graphical element. It will disappear from the interface, and cannot necessarily be recreated later on</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.GUI.hide">
+     <param name="self">The instance of GPS.GUI</param>
+     <description>Temporarily hide the graphical element. It can be shown again through a call to GPS.GUI.show()</description>
+     <see_also name="GPS.GUI.show()" />
+  </shell_doc>
+
+  <shell_doc name="GPS.GUI.show">
+     <param name="self">The instance of GPS.GUI</param>
+     <description>Show again the graphical element that was hidden by hide()</description>
+     <see_also name="GPS.GUI.hide()" />
+  </shell_doc>
+
+  <!--#################################################################
+    ####   Menu class
+    ###################################################################-->
+
+  <shell_doc name="GPS.Menu" >
+      <description>This class is a general interface to the menu system in GPS. It gives you control over which menus should be active, what should be executed when the menu is selected by the user,...</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.Menu.__init__">
+     <param name="self">The instance of GPS.Menu</param>
+     <description>Prevents the creation of a menu instance. Such instances can only be created internally by GPS as a result of calling GPS.Menu.get or GPS.Menu.create. This is so that you always get the same instance of GPS.Menu when
+you are refering to a given menu in GPS, and so that you can store your own
+specific data with the menu</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.get" real_name="GPS.Menu.get">
+     <param name="path">A string</param>
+     <return>The instance of GPS.Menu</return>
+     <description>Return the menu found at the given path. Path is similar to what one finds on a hard disk, starting with the main GPS menu ('/'), down to each submenus. For instance, '/VCS/Directory/Update Directory' refers to the
+submenu 'Update Directory' of the submenu 'Directory' of the menu 'VCS'. Path is case-sensitive</description>
+     <example lang="python">
+        The following example will prevent the user from using the VCS menu and
+        all its entries:
+           GPS.Menu.get ('/VCS').set_sensitive (False)
+     </example>
+  </shell_doc>
+
+  <shell_doc name="GPS.create" real_name="GPS.Menu.create">
+     <param name="path">A string</paramm>
+     <param name="on_activate" default="">A subprogram, see the GPS documentation on subprogram parameters</param>
+     <param name="ref" default="">A string</param>
+     <param name="add_before" default="True">A boolean</param>
+     <return>The instance of GPS.Menu</return>
+     <description>Create a new menu in the GPS system. The menu is added at the given location (see GPS.Menu.get for more information on the path parameter). Submenus are created as necessary so that path is valid.
+If on_activate is specified, it will be executed every time the user selects that menu. It is called with only one parameter, the instance of GPS.Menu that was just created.
+If ref and add_before are specified, they specify the name of another item in the parent menu (and not a full path) before or after which the new menu should be added</description>
+     <example lang="python">
+         def on_activate (self):
+             print "A menu was selected: " + self.data
+
+         menu = GPS.Menu.create ("/Edit/My Company/My Action", on_activate)
+         menu.data = "my own data"   ## Store your own data in the instance
+     </example>
+  </shell_doc>
+
+
 
 </docs>
