@@ -146,7 +146,7 @@ begin
 
    Gtk_New (Vsearch.Options_Frame, -"Options");
    Set_Shadow_Type (Vsearch.Options_Frame, Shadow_Etched_In);
-   Pack_Start (Vsearch.Vbox_Search, Vsearch.Options_Frame, True, True, 0);
+   Pack_Start (Vsearch.Vbox_Search, Vsearch.Options_Frame, False, False, 0);
 
    Gtk_New_Vbox (Vsearch.Options_Vbox, False, 0);
    Add (Vsearch.Options_Frame, Vsearch.Options_Vbox);
