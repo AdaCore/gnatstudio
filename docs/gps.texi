@@ -1577,6 +1577,28 @@ example, this adds a submenu named @file{Olga} containing an item named
 Adding an item with an empty title or no title at all inserts a
 menu separator.
 
+As an alternative to creating new menu items, you can create new
+buttons on the toolbar, with exactly the same syntax, by using 
+the @file{<Toolbar_Item>} tag in place of the @file{<Menuitem>} tag.
+Within this tag, the tag @file{<Pixmap>} can be used to indicate 
+the location of an image file (of the type @file{jpeg} or @file{png}) 
+to be used as icon for the button. An empty @file{<Toolbar_Item>} tag
+indicates a separator in the toolbar.
+
+@smallexample
+<Submenu>
+   <Title>Toolbar Items</Title>
+
+   <Toolbar_Item></Toolbar_Item>
+
+   <Toolbar_Item>
+     <Title>POUET</Title>
+     <Pixmap>/my_pixmaps/button.png</Pixmap>
+     <GPS_Action>my gps command</GPS_Action>
+   </Toolbar_Item>
+</Submenu>
+@end smallexample
+
 You can use macro arguments to pass to your shell
 commands. Macro arguments are special parameters that are transformed
 every time that the command is about to be executed. The following
