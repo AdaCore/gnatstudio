@@ -8,12 +8,12 @@ project Kernel is
    for Source_Dirs use
      ("src",
       "../prj_editor/src",
-      "../src_editor/src",
+      "../glide/src",
       "../gvd/common",
       "../gvd/gvd");
-   --  Note: We add prj_editor and src_editor in the source path rather than
+   --  Note: We add module directories in the source path rather than
    --  as a project dependency since this would create a circular dependency.
-   --  To avoid recompiling the prj and src editor files in the project, we
+   --  To avoid recompiling the module files in the wrong project, we
    --  also specify the list of kernel files explicitely.
 
    for Object_Dir use "obj";
@@ -21,12 +21,8 @@ project Kernel is
    for Source_Files use
      ("default_preferences.adb",
       "default_preferences.ads",
-      "glide_consoles.adb",
-      "glide_consoles.ads",
       "glide_kernel-console.adb",
       "glide_kernel-console.ads",
-      "glide_kernel-editor.adb",
-      "glide_kernel-editor.ads",
       "glide_kernel-help.adb",
       "glide_kernel-help.ads",
       "glide_kernel-modules.adb",
@@ -37,12 +33,9 @@ project Kernel is
       "glide_kernel-project.ads",
       "glide_kernel-semantic_server.adb",
       "glide_kernel-semantic_server.ads",
+      "glide_kernel-timeout.ads",
       "glide_kernel.adb",
       "glide_kernel.ads",
-      "glide_main_window.adb",
-      "glide_main_window.ads",
-      "glide_page.adb",
-      "glide_page.ads",
       "kernel.ads",
       "src_info-ali.adb",
       "src_info-ali.ads",
@@ -59,7 +52,8 @@ project Kernel is
       "gvd-text_box-source_editor-glide.adb");
 
    package Compiler is
-      for Default_Switches ("Ada") use ("-g", "-gnata", "-O2", "-gnaty", "-gnatwue");
+      for Default_Switches ("Ada") use
+        ("-g", "-gnata", "-O2", "-gnaty", "-gnatwu", "-gnatwe");
    end Compiler;
 
 end Kernel;
