@@ -77,7 +77,8 @@ package body Browsers.Dependency_Items is
       Source_Filename : String)
    is
       ALI : constant String := ALI_Filename_From_Source
-        (Source_Filename, Get_Project_View (Kernel), Get_Source_Path (Kernel));
+        (Source_Filename, Get_Project_View (Kernel),
+         Get_Predefined_Source_Path (Kernel));
    begin
       Item := new File_Item_Record;
       Initialize (Item, Win, Kernel, Make_Source_File (Source_Filename, ALI));
