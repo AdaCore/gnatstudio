@@ -279,7 +279,7 @@ package body Vdiff2_Module.Utils is
       Args_Highlight_Range : Argument_List :=
         (1 => new String'(Full_Name (File)),
          2 => new String'(Fine_Change_Style),
-         3 => new String'(Natural'Image (Line)),
+         3 => new String'(Image (Line)),
          4 => null,
          5 => null);
       Curr_Node : Diff_Chunk_List.List_Node := First (Hor_List);
@@ -311,9 +311,9 @@ package body Vdiff2_Module.Utils is
          --  ??? just for testing
 
          Args_Highlight_Range (4) :=
-           new String'(Natural'Image (First));
+           new String'(Image (First));
          Args_Highlight_Range (5) :=
-           new String'(Natural'Image (Last));
+           new String'(Image (Last));
          Execute_GPS_Shell_Command
            (Kernel, "highlight_range", Args_Highlight_Range);
          Curr_Node := Next (Curr_Node);
@@ -340,12 +340,12 @@ package body Vdiff2_Module.Utils is
       Offset_Min           : Natural;
       Args_Get_Chars_Src   : Argument_List :=
         (1 => new String'(Full_Name (Source_File)),
-         2 => new String'(Natural'Image (Source_Range.First)),
-         3 => new String'(Natural'Image (1)));
+         2 => new String'(Image (Source_Range.First)),
+         3 => new String'("1"));
       Args_Get_Chars_Dest  : Argument_List :=
         (1 => new String'(Full_Name (Dest_File)),
-         2 => new String'(Natural'Image (Dest_Range.First)),
-         3 => new String'(Natural'Image (1)));
+         2 => new String'(Image (Dest_Range.First)),
+         3 => new String'("1"));
       Current_Line_Source : String_Access;
       Current_Line_Dest   : String_Access;
       Line                : Natural := Dest_Range.First;
@@ -381,9 +381,9 @@ package body Vdiff2_Module.Utils is
             Free (Args_Get_Chars_Src (2));
             Free (Args_Get_Chars_Dest (2));
             Args_Get_Chars_Src (2) := new String'
-              (Natural'Image (Source_Range.First + J));
+              (Image (Source_Range.First + J));
             Args_Get_Chars_Dest (2) := new String'
-              (Natural'Image (Line));
+              (Image (Line));
          end loop;
       end if;
 
@@ -684,15 +684,15 @@ package body Vdiff2_Module.Utils is
       Offset_Min        : Natural := Offset_Source;
       Args_Get_Chars    : Argument_List :=
         (1 => new String'(Full_Name (Source_File)),
-         2 => new String'(Natural'Image (Source_Range.First)),
-         3 => new String'(Integer'Image (1)));
+         2 => new String'(Image (Source_Range.First)),
+         3 => new String'("1"));
       Args_Replace_Text : Argument_List :=
         (1 => new String'(Full_Name (Dest_File)),
-         2 => new String'(Natural'Image (Dest_Range.First)),
-         3 => new String'(Integer'Image (1)),
+         2 => new String'(Image (Dest_Range.First)),
+         3 => new String'("1"),
          4 => null,
-         5 => new String'(Integer'Image (-1)),
-         6 => new String'(Integer'Image (-1)));
+         5 => new String'("-1"),
+         6 => new String'("-1"));
       Current_Line      : String_Access;
 
    begin
@@ -713,9 +713,9 @@ package body Vdiff2_Module.Utils is
             Free (Args_Replace_Text (2));
             Free (Args_Replace_Text (4));
             Args_Get_Chars (2) := new String'
-              (Natural'Image (Source_Range.First + J));
+              (Image (Source_Range.First + J));
             Args_Replace_Text (2) := new String'
-              (Natural'Image (Dest_Range.First + J));
+              (Image (Dest_Range.First + J));
          end loop;
 
          if Offset_Source = Offset_Min then
@@ -723,7 +723,7 @@ package body Vdiff2_Module.Utils is
             for J in Offset_Source .. Offset_Dest loop
                Free (Args_Replace_Text (2));
                Args_Replace_Text (2) := new String'
-                 (Natural'Image (Dest_Range.First + J));
+                 (Image (Dest_Range.First + J));
                Execute_GPS_Shell_Command
                  (Kernel, "replace_text", Args_Replace_Text);
             end loop;
@@ -732,8 +732,8 @@ package body Vdiff2_Module.Utils is
          if Offset_Dest = Offset_Min then
             Free (Args_Replace_Text (5));
             Free (Args_Replace_Text (6));
-            Args_Replace_Text (5) := new String'(Integer'Image (1));
-            Args_Replace_Text (6) := new String'(Integer'Image (1));
+            Args_Replace_Text (5) := new String'("1");
+            Args_Replace_Text (6) := new String'("1");
 
             for J in Offset_Min .. Offset_Source loop
                Current_Line := new String'
@@ -746,12 +746,12 @@ package body Vdiff2_Module.Utils is
                Free (Args_Replace_Text (2));
                Free (Args_Replace_Text (4));
                Args_Get_Chars (2) := new String'
-                 (Natural'Image (Source_Range.First + J));
+                 (Image (Source_Range.First + J));
                Args_Replace_Text (2) := new String'
-                 (Natural'Image (Dest_Range.First + J));
+                 (Image (Dest_Range.First + J));
             end loop;
             Free (Args_Replace_Text (4));
-            Args_Replace_Text (4) := new String'("" & ASCII.LF);
+            Args_Replace_Text (4) := new String'(1 => ASCII.LF);
             Execute_GPS_Shell_Command
               (Kernel, "replace_text", Args_Replace_Text);
          end if;
