@@ -135,7 +135,6 @@ package body Creation_Wizard is
       Wiz.Kernel := Kernel_Handle (Kernel);
       Wizards.Initialize
         (Wiz, Kernel, "Project setup", "#0e79bd", Num_Pages => 6);
-      Set_Default_Size (Wiz, 640, -1);
 
       Create_From_Xpm_D
         (Pix, null, Get_Default_Colormap, Mask, Null_Color, logo_xpm);
