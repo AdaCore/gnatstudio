@@ -427,6 +427,28 @@ package body SN.Find_Fns is
    ----------
 
    procedure Find
+     (DB             : DB_File;
+      Class          : String := Invalid_String;
+      Name           : String := Invalid_String;
+      Start_Position : Point  := Invalid_Point;
+      Filename       : String := Invalid_String;
+      Tab            : out TA_Table;
+      Success        : out Boolean)
+   is
+      P : Pair;
+   begin
+      Get_Pair (DB, Class, Name, Start_Position, Filename, Result => P);
+      Success := P /= No_Pair;
+      if Success then
+         Parse_Pair (P, Tab);
+      end if;
+   end Find;
+
+   ----------
+   -- Find --
+   ----------
+
+   procedure Find
      (DB       : DB_File;
       Name     : String := Invalid_String;
       Position : Point  := Invalid_Point;

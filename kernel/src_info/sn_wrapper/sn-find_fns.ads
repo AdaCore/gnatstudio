@@ -203,6 +203,16 @@ package SN.Find_Fns is
 
    procedure Find
      (DB             : DB_File;
+      Class          : String := Invalid_String;
+      Name           : String := Invalid_String;
+      Start_Position : Point  := Invalid_Point;
+      Filename       : String := Invalid_String;
+      Tab            : out TA_Table;
+      Success        : out Boolean);
+   --  Find functions for the Template arguments table
+
+   procedure Find
+     (DB             : DB_File;
       Class          : String;
       Name           : String := Invalid_String;
       Start_Position : Point  := Invalid_Point;
