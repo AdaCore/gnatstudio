@@ -116,6 +116,8 @@ private
 
       Has_Focus           : Boolean := False;
       --  Whether the view currently has the focus.
+
+      Char_Width          : Gint;
    end record;
 
 end Src_Editor_View;
