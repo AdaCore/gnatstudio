@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                   Copyright (C) 2003                              --
+--                        Copyright (C) 2003                         --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -29,7 +29,6 @@ with Ada.Unchecked_Deallocation;
 with GNAT.OS_Lib;                use GNAT.OS_Lib;
 with File_Utils;                 use File_Utils;
 with OS_Utils;                   use OS_Utils;
-with String_Utils;               use String_Utils;
 with GNAT.Case_Util;             use GNAT.Case_Util;
 with Interfaces.C.Strings;       use Interfaces.C.Strings;
 with Ada.Unchecked_Conversion;
@@ -92,6 +91,7 @@ package body VFS is
            (Locale_To_UTF8 (To_Host_Pathname (Normalize_Pathname
                               (Locale_From_UTF8 (File.Value.Full_Name.all),
                                                  Resolve_Links => True))));
+
          if not File_Utils.Filenames_Are_Case_Sensitive then
             To_Lower (File.Value.Normalized_Full.all);
          end if;
