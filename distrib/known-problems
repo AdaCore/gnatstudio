@@ -1,5 +1,10 @@
 Known Problems fixed in GPS 3.0.0
 
+- E221-023 Double-click before the last character of a word doesn't select it
+  Problem:    When double-clicking right before the last character of a word,
+              the word is not selected.
+  Workaround: Select using click-and-drag, or shift+arrow keys.
+
 - E207-021 Can't load a project depending on predefined projects
   Problem:    If your project depends on project files found in the predefined
               project directory of GNAT (XML/Ada, AWS,...), GPS will not
