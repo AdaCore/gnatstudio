@@ -83,6 +83,7 @@ with Src_Editor_Module;         use Src_Editor_Module;
 with Entities;                  use Entities;
 with Entities.Queries;          use Entities.Queries;
 with Traces;                    use Traces;
+with Doc_Utils;                 use Doc_Utils;
 with VFS;                       use VFS;
 with Projects;                  use Projects;
 with Projects.Registry;         use Projects.Registry;
@@ -241,14 +242,6 @@ package body Src_Editor_Box is
      (Editor : access GObject_Record'Class) return Boolean;
    --  Callback when clicking on the line number in the status bar
 
-   procedure Find_Closest_Match
-     (Source : access Source_Editor_Box_Record'Class;
-      Line   : in out Natural;
-      Column : in out Natural;
-      Entity : String);
-   --  Find the reference to Entity in Source which is closest to (Line,
-   --  Column), and sets Line and Column to this new location
-
    procedure Add_Navigation_Location
      (Source : access Source_Editor_Box_Record'Class);
    --  Add a navigation command to mark the given location in the source
@@ -289,81 +282,6 @@ package body Src_Editor_Box is
    begin
       Add_Watch (Id, Data);
    end Setup;
-
-   ------------------------
-   -- Find_Closest_Match --
-   ------------------------
-
-   procedure Find_Closest_Match
-     (Source : access Source_Editor_Box_Record'Class;
-      Line   : in out Natural;
-      Column : in out Natural;
-      Entity : String)
-   is
-      Best_Line     : Integer := 0;
-      Best_Column   : Integer := 0;
-
-      function Callback (Match : Match_Result) return Boolean;
-      --  Called every time a reference to the entity is found
-
-      --------------
-      -- Callback --
-      --------------
-
-      function Callback (Match : Match_Result) return Boolean is
-         Line_Diff : constant Integer :=
-           abs (Match.Line - Line) - abs (Best_Line - Line);
-         Col_Diff : constant Integer :=
-           abs (Match.Column - Column) - abs (Best_Column - Column);
-      begin
-         if Line_Diff < 0
-           or else (Line_Diff = 0 and then Col_Diff < 0)
-         then
-            Best_Line := Match.Line;
-            Best_Column := Match.Column;
-         end if;
-
-         return True;
-      end Callback;
-
-
-      Context : aliased Root_Search_Context;
-      L, C : Integer := 1;
-
-      Buffer : GNAT.OS_Lib.String_Access;
-      Index  : Integer;
-      Was_Partial : Boolean;
-
-   begin
-      Buffer := Get_String (Source.Source_Buffer);
-      Index  := Buffer'First;
-
-      Set_Context
-        (Context'Access,
-         Look_For => Entity,
-         Options  =>
-           (Case_Sensitive =>
-              Get_Language_Context
-                (Get_Language (Source.Source_Buffer)).Case_Sensitive,
-            Whole_Word     => True,
-            Regexp         => False));
-
-      Scan_Buffer_No_Scope
-        (Context     => Context'Access,
-         Buffer      => Buffer.all,
-         Start_Index => Buffer'First,
-         End_Index   => Buffer'Last,
-         Callback    => Callback'Unrestricted_Access,
-         Ref_Index   => Index,
-         Ref_Line    => L,
-         Ref_Column  => C,
-         Was_Partial => Was_Partial);
-
-      Line   := Best_Line;
-      Column := Best_Column;
-
-      GNAT.OS_Lib.Free (Buffer);
-   end Find_Closest_Match;
 
    ------------------------------
    -- Goto_Declaration_Or_Body --
@@ -508,23 +426,13 @@ package body Src_Editor_Box is
          Is_Case_Sensitive := Get_Language_Context
            (Get_Language (Source.Source_Buffer)).Case_Sensitive;
 
-         if File_Up_To_Date then
-            declare
-               Entity_In_File : constant String :=
-                 Get_Text
-                   (Source.Source_Buffer,
-                    Editable_Line_Type (Line), Column,
-                    Editable_Line_Type (Line), Column + Length);
-            begin
-               File_Up_To_Date :=
-                 (Is_Case_Sensitive
-                  and then Entity_In_File = Get_Name (Entity).all)
-                 or else
-                   (not Is_Case_Sensitive
-                    and then Case_Insensitive_Equal
-                      (Entity_In_File, Get_Name (Entity).all));
-            end;
-         end if;
+         File_Up_To_Date := File_Up_To_Date
+           and then Equal (Get_Text
+                             (Source.Source_Buffer,
+                              Editable_Line_Type (Line), Column,
+                              Editable_Line_Type (Line), Column + Length),
+                           Get_Name (Entity).all,
+                           Case_Sensitive => Is_Case_Sensitive);
 
          --  Search for the closest reference to the entity if
          --  necessary. Otherwise, there's nothing to be done, since the region
@@ -539,9 +447,19 @@ package body Src_Editor_Box is
             --  Search for the closest reference to entity, and highlight the
             --  appropriate region in the editor.
 
-            L := Line;
-            C := Column;
-            Find_Closest_Match (Source, L, C, Get_Name (Entity).all);
+            declare
+               Buffer : GNAT.OS_Lib.String_Access;
+            begin
+               L := Line;
+               C := Column;
+               Buffer := Get_String (Source.Source_Buffer);
+               Find_Closest_Match
+                 (Buffer.all, L, C, Get_Name (Entity).all,
+                  Case_Sensitive => Get_Language_Context
+                    (Get_Language (Source.Source_Buffer)).Case_Sensitive);
+               GNAT.OS_Lib.Free (Buffer);
+            end;
+
             Open_File_Editor (Kernel, Filename, L, C, C + Length, False);
          end if;
       end if;
@@ -739,7 +657,9 @@ package body Src_Editor_Box is
               & Base_Name (Get_Filename
                   (Get_File (Get_Declaration_Of (Entity)))) & ':'
               & Image (Get_Line (Get_Declaration_Of (Entity)));
-            Doc : constant String := Get_Documentation (Entity);
+            Doc : constant String :=
+              Get_Documentation
+                (Get_Language_Handler (Data.Box.Kernel), Entity);
 
          begin
             if Doc /= "" then
