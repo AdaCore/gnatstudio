@@ -18,6 +18,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with System;
 with GNAT.Expect;
 with GNAT.Regpat;
 
@@ -142,6 +143,23 @@ package Process_Proxies is
       Pattern : GNAT.Regpat.Pattern_Matcher;
       Timeout : Integer := 20);
    --  In GUI mode, this processes the graphic events between each iteration.
+
+   -------------
+   -- Filters --
+   -------------
+
+   procedure TTY_Filter
+     (Descriptor : GNAT.Expect.Process_Descriptor;
+      Str        : String;
+      Proxy      : System.Address);
+   --  Can be used as a filter to simulate a command line interface.
+   --  This will print to stdout all output received when the process proxy
+   --  is not in internal state.
+   --  Proxy is the address of a Process_Proxy'Class.
+
+   ----------------
+   -- Exceptions --
+   ----------------
 
    Internal_Command_Status_Stack_Overfull : exception;
 

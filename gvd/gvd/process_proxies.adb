@@ -20,11 +20,11 @@
 
 with GNAT.Expect;           use GNAT.Expect;
 with GNAT.Regpat;           use GNAT.Regpat;
+with GNAT.IO;               use GNAT.IO;
 with Gtk.Main;              use Gtk.Main;
 with System;                use System;
+with Unchecked_Conversion;
 with Unchecked_Deallocation;
-
-with Ada.Text_IO; use Ada.Text_IO;
 
 package body Process_Proxies is
 
@@ -288,5 +288,22 @@ package body Process_Proxies is
       --  values.
       Proxy.Internal_Command := Proxy.Internal_Command - 1;
    end Pop_Internal_Command_Status;
+
+   ----------------
+   -- TTY_Filter --
+   ----------------
+
+   procedure TTY_Filter
+     (Descriptor : GNAT.Expect.Process_Descriptor;
+      Str        : String;
+      Proxy      : System.Address)
+   is
+      function To_Proxy is new Unchecked_Conversion
+        (System.Address, Process_Proxy_Access);
+   begin
+      if not Is_Internal_Command (To_Proxy (Proxy)) then
+         Put (Str);
+      end if;
+   end TTY_Filter;
 
 end Process_Proxies;
