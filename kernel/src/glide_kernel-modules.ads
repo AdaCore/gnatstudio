@@ -776,6 +776,29 @@ package Glide_Kernel.Modules is
    procedure Destroy (Context : in out Entity_Selection_Context);
    --  Destroy the memory associated with the entity
 
+   --------------------------
+   -- Interactive Commands --
+   --------------------------
+
+   procedure Register_Command
+     (Kernel  : access Kernel_Handle_Record'Class;
+      Command : String;
+      Help    : String;
+      Handler : Module_Command_Function);
+   --  Register Command, with Help as its help/usage text, and Handler
+   --  as the default command handler.
+
+   procedure Interpret_Command
+     (Kernel  : access Kernel_Handle_Record'Class;
+      Command : String);
+   --  Interprets Command.
+   --  Command is a string followed by a list of arguments, for example
+   --     "edit gps.adb"
+   --  Commands are registered using Register_Command, see above.
+   --  The following commands are recognized by the kernel:
+   --    "help"   : brings up the list of currently recognized commands.
+   --    "help X" : brings up help concerning command X.
+
 private
 
    type File_Selection_Context is new Selection_Context with record

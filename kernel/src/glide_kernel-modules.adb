@@ -49,6 +49,7 @@ with String_Utils;      use String_Utils;
 with Traces;            use Traces;
 with Glide_Intl;        use Glide_Intl;
 with Glide_Kernel.Project; use Glide_Kernel.Project;
+with Glide_Kernel.Console; use Glide_Kernel.Console;
 with Ada.Exceptions;    use Ada.Exceptions;
 with Unchecked_Deallocation;
 
@@ -1622,5 +1623,128 @@ package body Glide_Kernel.Modules is
       Real_Module_Data (Kernel.Modules_Data).Search_Regexps :=
         new Search_Regexps_Array (1 .. 0);
    end Initialize;
+
+   ----------------------
+   -- Register_Command --
+   ----------------------
+
+   procedure Register_Command
+     (Kernel  : access Kernel_Handle_Record'Class;
+      Command : String;
+      Help    : String;
+      Handler : Module_Command_Function)
+   is
+      use Command_List;
+
+      Node : List_Node := First (Kernel.Commands_List);
+   begin
+      if Command = "" then
+         return;
+      end if;
+
+      --  Check that the command is not already registered.
+
+      while Node /= Null_Node loop
+         if Data (Node).Command.all = Command then
+            Trace
+              (Me,
+               "Interactive command " & Command & " is already registered");
+
+            return;
+         end if;
+
+         Node := Next (Node);
+      end loop;
+
+      Append (Kernel.Commands_List,
+                (Command => new String'(Command),
+                 Help    => new String'(Help),
+                 Command_Handler => Handler));
+   end Register_Command;
+
+   -----------------------
+   -- Interpret_Command --
+   -----------------------
+
+   procedure Interpret_Command
+     (Kernel  : access Kernel_Handle_Record'Class;
+      Command : String)
+   is
+      use String_List_Utils.String_List;
+      use type Command_List.List_Node;
+
+      Args         : Argument_List_Access;
+      The_Command  : GNAT.OS_Lib.String_Access;
+      The_Args     : String_List_Utils.String_List.List;
+
+      Command_Node : Command_List.List_Node;
+   begin
+      if Command = "" then
+         return;
+      end if;
+
+      Args := Argument_String_To_List (Command);
+
+      The_Command := new String'(Args (Args'First).all);
+
+      for J in Args'First + 1 .. Args'Last loop
+         String_List_Utils.String_List.Append (The_Args, Args (J).all);
+      end loop;
+
+      if The_Command.all = "help" then
+         Command_Node := Command_List.First (Kernel.Commands_List);
+
+         if Is_Empty (The_Args) then
+            Insert (Kernel, "The following commands are defined :");
+         else
+            The_Command := new String'(Head (The_Args));
+         end if;
+
+         while Command_Node /= Command_List.Null_Node loop
+            declare
+               Data : Command_Information :=
+                 Command_List.Data (Command_Node);
+            begin
+               if Is_Empty (The_Args) then
+                  Insert (Kernel, "  " & Data.Command.all);
+               else
+                  if Data.Command.all = The_Command.all then
+                     Insert (Kernel, Data.Help.all);
+                  end if;
+               end if;
+            end;
+
+            Command_Node := Command_List.Next (Command_Node);
+         end loop;
+
+      else
+         Command_Node := Command_List.First (Kernel.Commands_List);
+
+         while Command_Node /= Command_List.Null_Node loop
+            declare
+               Data : Command_Information :=
+                 Command_List.Data (Command_Node);
+            begin
+               if Data.Command.all = The_Command.all then
+                  Insert (Kernel,
+                          Data.Command_Handler
+                            (Kernel,
+                             The_Command.all,
+                             The_Args),
+                          False,
+                          True);
+
+                  exit;
+               end if;
+            end;
+
+            Command_Node := Command_List.Next (Command_Node);
+         end loop;
+      end if;
+
+      Free (The_Command);
+      Free (The_Args);
+      Free (Args);
+   end Interpret_Command;
 
 end Glide_Kernel.Modules;
