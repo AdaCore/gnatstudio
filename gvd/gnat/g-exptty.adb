@@ -8,7 +8,7 @@ package body GNAT.Expect.TTY is
 
    procedure Interrupt (Descriptor : in out TTY_Process_Descriptor) is
    begin
-      Send (Descriptor, Str => "" & Character'Val (3));
+      Send (Descriptor, Str => "" & Character'Val (3), Add_LF => False);
    end Interrupt;
 
    ---------------------------
@@ -22,7 +22,7 @@ package body GNAT.Expect.TTY is
       Pipe2      : access Pipe_Type;
       Pipe3      : access Pipe_Type)
    is
-      procedure Internal (Process    : System.Address);
+      procedure Internal (Process : System.Address);
       pragma Import (C, Internal, "setupCommunication");
 
    begin
@@ -46,6 +46,7 @@ package body GNAT.Expect.TTY is
          Errorfp  : out File_Descriptor;
          Pid      : out Process_Id);
       pragma Import (C, Internal, "setupParentCommunication");
+
    begin
       Internal
         (Pid.Process, Pid.Input_Fd, Pid.Output_Fd, Pid.Error_Fd, Pid.Pid);
@@ -65,6 +66,7 @@ package body GNAT.Expect.TTY is
    is
       procedure Internal (Process   : System.Address; Argv : System.Address);
       pragma Import (C, Internal, "setupChildCommunication");
+
    begin
       Internal (Pid.Process, Args);
    end Set_Up_Child_Communications;
