@@ -57,6 +57,7 @@ with GVD;
 with Ada.Exceptions;              use Ada.Exceptions;
 with Traces;                      use Traces;
 with Glide_Kernel;                use Glide_Kernel;
+with Glide_Kernel.Hooks;          use Glide_Kernel.Hooks;
 with Glide_Kernel.Preferences;    use Glide_Kernel.Preferences;
 with VFS;                         use VFS;
 
@@ -204,8 +205,13 @@ package body Src_Editor_View is
      (View : access Source_View_Record'Class);
    --  Restore the stored cursor position.
 
-   procedure Preferences_Changed
-     (View : access GObject_Record'Class; Kernel : Kernel_Handle);
+
+   type Preferences_Hook_Record is new Hook_No_Args_Record with record
+      View : Source_View;
+   end record;
+   type Preferences_Hook is access all Preferences_Hook_Record'Class;
+   procedure Execute (Hook : Preferences_Hook_Record;
+                      Kernel : access Kernel_Handle_Record'Class);
    --  Called when the preferences have changed, to refresh the editor
    --  appropriately.
 
@@ -1088,7 +1094,7 @@ package body Src_Editor_View is
       Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
    is
       Insert_Iter : Gtk_Text_Iter;
-
+      Hook : Preferences_Hook;
       use GVD;
 
    begin
@@ -1145,8 +1151,6 @@ package body Src_Editor_View is
 
       Set_Border_Window_Size (View, Enums.Text_Window_Left, 1);
       Set_Left_Margin (View, Margin);
-
-      Preferences_Changed (View, Kernel_Handle (Kernel));
 
       Widget_Callback.Connect
         (View, "realize",
@@ -1228,11 +1232,11 @@ package body Src_Editor_View is
             After => False);
       end if;
 
-      Kernel_Callback.Object_Connect
-        (Kernel, Preferences_Changed_Signal,
-         Kernel_Callback.To_Marshaller (Preferences_Changed'Access),
-         Slot_Object => View,
-         User_Data   => Kernel_Handle (Kernel));
+      Hook := new Preferences_Hook_Record'
+        (Hook_No_Args_Record with View => Source_View (View));
+      Execute (Hook.all, Kernel);
+      Add_Hook
+        (Kernel, Preferences_Changed_Hook, Hook, Watch => GObject (View));
 
       Kernel_Callback.Object_Connect
         (Kernel, File_Saved_Signal,
@@ -1291,19 +1295,19 @@ package body Src_Editor_View is
       return False;
    end Connect_Expose;
 
-   -------------------------
-   -- Preferences_Changed --
-   -------------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure Preferences_Changed
-     (View : access GObject_Record'Class; Kernel : Kernel_Handle)
+   procedure Execute
+     (Hook : Preferences_Hook_Record;
+      Kernel : access Kernel_Handle_Record'Class)
    is
-      Source  : constant Source_View := Source_View (View);
+      Source  : constant Source_View := Source_View (Hook.View);
       Descr   : Pango_Font_Description;
       Layout  : Pango_Layout;
       Color   : Gdk_Color;
       Height  : Gint;
-
    begin
       --  Set the font.
 
@@ -1324,12 +1328,12 @@ package body Src_Editor_View is
       --  point.
 
       if Source.Current_Line_GC /= null then
-         Color := Get_Pref (Source.Kernel, Current_Line_Color);
+         Color := Get_Pref (Kernel, Current_Line_Color);
          Set_Foreground (Source.Current_Line_GC, Color);
          Source.Highlight_Current :=
            not Equal (Color, White (Get_Default_Colormap));
 
-         Color := Get_Pref (Source.Kernel, Current_Block_Color);
+         Color := Get_Pref (Kernel, Current_Block_Color);
          Set_Foreground (Source.Current_Block_GC, Color);
          Source.Highlight_Blocks := Get_Pref (Kernel, Block_Highlighting);
       end if;
@@ -1337,7 +1341,7 @@ package body Src_Editor_View is
    exception
       when E : others =>
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
-   end Preferences_Changed;
+   end Execute;
 
    ----------------
    -- File_Saved --
