@@ -99,7 +99,7 @@ package body Glide_Kernel.Task_Manager is
 
    function On_Exit_Hook
      (Kernel : access Kernel_Handle_Record'Class;
-      Data   : Hooks_Data'Class) return Boolean;
+      Data   : access Hooks_Data'Class) return Boolean;
    --  Called before GPS exits.
 
    ------------------
@@ -108,7 +108,7 @@ package body Glide_Kernel.Task_Manager is
 
    function On_Exit_Hook
      (Kernel : access Kernel_Handle_Record'Class;
-      Data   : Hooks_Data'Class) return Boolean
+      Data   : access Hooks_Data'Class) return Boolean
    is
       pragma Unreferenced (Data);
 

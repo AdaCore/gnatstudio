@@ -47,6 +47,7 @@ package body Glide_Kernel.Standard_Hooks is
    File_Hook_Type          : constant String := "file_hooks";
    Context_Hook_Type       : constant String := "context_hooks";
    Compilation_Hook_Type   : constant String := "compilation_hooks";
+   File_Location_Hook_Type : constant String := "file_location_hooks";
    --  The various names to describe the hook types defined in this package
 
    procedure General_Line_Information
@@ -117,8 +118,8 @@ package body Glide_Kernel.Standard_Hooks is
       Every_Line     : Boolean := True;
       Normalize      : Boolean := True)
    is
-      Data : File_Line_Hooks_Args :=
-        (Hooks_Data with
+      Data : aliased File_Line_Hooks_Args :=
+        (Kernel            => Kernel_Handle (Kernel),
          Identifier_Length => Identifier'Length,
          Identifier        => Identifier,
          File              => File,
@@ -128,7 +129,8 @@ package body Glide_Kernel.Standard_Hooks is
    begin
       if File /= VFS.No_File then
          if not Run_Hook_Until_Success
-           (Kernel, File_Line_Action_Hook, Data, Set_Busy => False)
+           (Kernel, File_Line_Action_Hook, Data'Unchecked_Access,
+            Set_Busy => False)
          then
             Trace (Me, "No file editor with line info display "
                    & "capability was registered");
@@ -142,7 +144,8 @@ package body Glide_Kernel.Standard_Hooks is
                Data.File := Files (Node);
 
                if not Run_Hook_Until_Success
-                 (Kernel, File_Line_Action_Hook, Data, Set_Busy => False)
+                 (Kernel, File_Line_Action_Hook, Data'Unchecked_Access,
+                  Set_Busy => False)
                then
                   Trace (Me, "No file editor with line info display "
                          & "capability was registered");
@@ -244,8 +247,9 @@ package body Glide_Kernel.Standard_Hooks is
       Message       : String;
       Action        : Action_Item)
    is
-      Data : Location_Hooks_Args :=
-        (Hooks_Data with Ident_Length => Identifier'Length,
+      Data : aliased Location_Hooks_Args :=
+        (Kernel       => Kernel_Handle (Kernel),
+         Ident_Length => Identifier'Length,
          Identifier   => Identifier,
          Cat_Length   => Category'Length,
          Category     => Category,
@@ -257,7 +261,8 @@ package body Glide_Kernel.Standard_Hooks is
          Action       => Action);
    begin
       if not Run_Hook_Until_Success
-        (Kernel, Location_Action_Hook, Data, Set_Busy => False)
+        (Kernel, Location_Action_Hook, Data'Unchecked_Access,
+         Set_Busy => False)
       then
          Trace (Me, "No location viewer registered.");
       end if;
@@ -313,8 +318,8 @@ package body Glide_Kernel.Standard_Hooks is
       Force_Reload      : Boolean := False;
       Focus             : Boolean := True)
    is
-      Data : constant Source_File_Hooks_Args :=
-        (Hooks_Data with
+      Data : aliased Source_File_Hooks_Args :=
+        (Kernel            => Kernel_Handle (Kernel),
          File              => Filename,
          Line              => Line,
          Column            => Column,
@@ -339,7 +344,8 @@ package body Glide_Kernel.Standard_Hooks is
          end;
       end if;
 
-      if not Run_Hook_Until_Success (Kernel, Open_File_Action_Hook, Data) then
+      if not Run_Hook_Until_Success
+        (Kernel, Open_File_Action_Hook, Data'Unchecked_Access) then
          Trace (Me, "No file editor was registered");
       end if;
    end Open_File_Editor;
@@ -352,8 +358,8 @@ package body Glide_Kernel.Standard_Hooks is
      (Kernel   : access Kernel_Handle_Record'Class;
       Filename : Virtual_File)
    is
-      Data : constant Source_File_Hooks_Args :=
-        (Hooks_Data with
+      Data : aliased Source_File_Hooks_Args :=
+        (Kernel            => Kernel_Handle (Kernel),
          File              => Filename,
          Line              => -1,
          Column            => 0,
@@ -363,7 +369,9 @@ package body Glide_Kernel.Standard_Hooks is
          Force_Reload      => False,
          Focus             => False);
    begin
-      if not Run_Hook_Until_Success (Kernel, Open_File_Action_Hook, Data) then
+      if not Run_Hook_Until_Success
+        (Kernel, Open_File_Action_Hook, Data'Unchecked_Access)
+      then
          Trace (Me, "No file editor was registered");
       end if;
    end Close_File_Editors;
@@ -385,14 +393,16 @@ package body Glide_Kernel.Standard_Hooks is
       end if;
 
       declare
-         Data : constant Html_Hooks_Args :=
-           (Hooks_Data with
+         Data : aliased Html_Hooks_Args :=
+           (Kernel            => Kernel_Handle (Kernel),
             Anchor_Length     => Integer'Max (0, Full'Last - Anchor),
             File              => Create (Full (Full'First .. Anchor - 1)),
             Enable_Navigation => Enable_Navigation,
             Anchor            => Full (Anchor + 1 .. Full'Last));
       begin
-         if not Run_Hook_Until_Success (Kernel, Html_Action_Hook, Data) then
+         if not Run_Hook_Until_Success
+           (Kernel, Html_Action_Hook, Data'Unchecked_Access)
+         then
             Trace (Me, "No html viewer was registered");
          end if;
       end;
@@ -408,10 +418,12 @@ package body Glide_Kernel.Standard_Hooks is
       New_File       : Virtual_File := VFS.No_File;
       Diff_File      : Virtual_File)
    is
-      Data : constant Diff_Hooks_Args :=
-        (Hooks_Data with Orig_File, New_File, Diff_File);
+      Data : aliased Diff_Hooks_Args :=
+        (Kernel_Handle (Kernel), Orig_File, New_File, Diff_File);
    begin
-      if not Run_Hook_Until_Success (Kernel, Diff_Action_Hook, Data) then
+      if not Run_Hook_Until_Success
+        (Kernel, Diff_Action_Hook, Data'Unchecked_Access)
+      then
          Trace (Me, "No diff viewer registered");
       end if;
    end Display_Differences;
@@ -425,10 +437,10 @@ package body Glide_Kernel.Standard_Hooks is
    is
       Kernel : constant Kernel_Handle := Get_Kernel (Data);
       Name   : constant String := Get_Hook_Name (Data, 1);
-      Args   : Source_File_Hooks_Args;
+      Args   : aliased Source_File_Hooks_Args;
       pragma Unreferenced (Command);
    begin
-      Args := (Hooks_Data with
+      Args := (Kernel            => Kernel,
                File              => Get_File
                  (Get_Data (Nth_Arg (Data, 2, Get_File_Class (Kernel)))),
                Line              => Nth_Arg (Data, 3),
@@ -438,7 +450,8 @@ package body Glide_Kernel.Standard_Hooks is
                New_File          => Nth_Arg (Data, 7),
                Force_Reload      => Nth_Arg (Data, 8),
                Focus             => Nth_Arg (Data, 9, True));
-      Set_Return_Value (Data, Run_Hook_Until_Success (Kernel, Name, Args));
+      Set_Return_Value
+        (Data, Run_Hook_Until_Success (Kernel, Name, Args'Unchecked_Access));
    end Open_File_Run_Hook_Handler;
 
    ----------------------------------
@@ -450,11 +463,11 @@ package body Glide_Kernel.Standard_Hooks is
    is
       Kernel : constant Kernel_Handle := Get_Kernel (Data);
       Name   : constant String := Get_Hook_Name (Data, 1);
-      Args   : constant Exit_Before_Action_Hooks_Args :=
-        (Hooks_Data with null record);
+      Args   : aliased Exit_Before_Action_Hooks_Args := (Kernel => Kernel);
       pragma Unreferenced (Command);
    begin
-      Set_Return_Value (Data, Run_Hook_Until_Failure (Kernel, Name, Args));
+      Set_Return_Value
+        (Data, Run_Hook_Until_Failure (Kernel, Name, Args'Unchecked_Access));
    end Before_Exit_Run_Hook_Handler;
 
    --------------
@@ -464,10 +477,12 @@ package body Glide_Kernel.Standard_Hooks is
    procedure Exit_GPS
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
    is
-      Data : constant Exit_Before_Action_Hooks_Args :=
-         (Hooks_Data with null record);
+      Data : aliased Exit_Before_Action_Hooks_Args :=
+         (Kernel => Kernel_Handle (Kernel));
    begin
-      if Run_Hook_Until_Failure (Kernel, Before_Exit_Action_Hook, Data) then
+      if Run_Hook_Until_Failure
+        (Kernel, Before_Exit_Action_Hook, Data'Unchecked_Access)
+      then
          Gtk.Main.Main_Quit;
       end if;
    end Exit_GPS;
@@ -482,8 +497,8 @@ package body Glide_Kernel.Standard_Hooks is
       Name   : constant String := Get_Hook_Name (Data, 1);
       Kernel : constant Kernel_Handle := Get_Kernel (Data);
       Identifier : constant String := Nth_Arg (Data, 2);
-      Args   : constant File_Line_Hooks_Args :=
-        (Hooks_Data with
+      Args   : aliased  File_Line_Hooks_Args :=
+        (Kernel            => Kernel,
          Identifier_Length => Identifier'Length,
          Identifier        => Identifier,
          File              => Get_File
@@ -493,7 +508,8 @@ package body Glide_Kernel.Standard_Hooks is
          Normalize         => Nth_Arg (Data, 5));
       pragma Unreferenced (Command);
    begin
-      Set_Return_Value (Data, Run_Hook_Until_Success (Kernel, Name, Args));
+      Set_Return_Value
+        (Data, Run_Hook_Until_Success (Kernel, Name, Args'Unchecked_Access));
    end Line_Information_Run_Hook_Handler;
 
    -------------------------------
@@ -508,8 +524,8 @@ package body Glide_Kernel.Standard_Hooks is
       Identifier : constant String := Nth_Arg (Data, 2);
       Category   : constant String := Nth_Arg (Data, 3);
       Message    : constant String := Nth_Arg (Data, 7);
-      Args   : constant Location_Hooks_Args :=
-        (Hooks_Data with
+      Args   : aliased Location_Hooks_Args :=
+        (Kernel            => Kernel,
          Ident_Length      => Identifier'Length,
          Identifier        => Identifier,
          Cat_Length        => Category'Length,
@@ -523,7 +539,8 @@ package body Glide_Kernel.Standard_Hooks is
          Action            => null);
       pragma Unreferenced (Command);
    begin
-      Set_Return_Value (Data, Run_Hook_Until_Success (Kernel, Name, Args));
+      Set_Return_Value
+        (Data, Run_Hook_Until_Success (Kernel, Name, Args'Unchecked_Access));
    end Location_Run_Hook_Handler;
 
    ---------------------------
@@ -536,8 +553,8 @@ package body Glide_Kernel.Standard_Hooks is
       Name   : constant String := Get_Hook_Name (Data, 1);
       Kernel : constant Kernel_Handle := Get_Kernel (Data);
       Anchor : constant String := Nth_Arg (Data, 4);
-      Args   : constant Html_Hooks_Args :=
-        (Hooks_Data with
+      Args   : aliased Html_Hooks_Args :=
+        (Kernel            => Kernel,
          File              => Get_File
            (Get_Data (Nth_Arg (Data, 2, Get_File_Class (Kernel)))),
          Enable_Navigation => Nth_Arg (Data, 3),
@@ -545,7 +562,8 @@ package body Glide_Kernel.Standard_Hooks is
          Anchor            => Anchor);
       pragma Unreferenced (Command);
    begin
-      Set_Return_Value (Data, Run_Hook_Until_Success (Kernel, Name, Args));
+      Set_Return_Value
+        (Data, Run_Hook_Until_Success (Kernel, Name, Args'Unchecked_Access));
    end Html_Run_Hook_Handler;
 
    ---------------------------
@@ -557,18 +575,19 @@ package body Glide_Kernel.Standard_Hooks is
    is
       Name   : constant String := Get_Hook_Name (Data, 1);
       Kernel : constant Kernel_Handle := Get_Kernel (Data);
-      Args   : Diff_Hooks_Args;
+      Args   : aliased Diff_Hooks_Args;
       pragma Unreferenced (Command);
    begin
       Args :=
-        (Hooks_Data with
+        (Kernel            => Kernel,
          Orig_File         => Get_File
            (Get_Data (Nth_Arg (Data, 2, Get_File_Class (Kernel), True))),
          New_File          => Get_File
            (Get_Data (Nth_Arg (Data, 3, Get_File_Class (Kernel), True))),
          Diff_File         => Get_File
            (Get_Data (Nth_Arg (Data, 4, Get_File_Class (Kernel), True))));
-      Set_Return_Value (Data, Run_Hook_Until_Success (Kernel, Name, Args));
+      Set_Return_Value
+        (Data, Run_Hook_Until_Success (Kernel, Name, Args'Unchecked_Access));
    end Diff_Run_Hook_Handler;
 
    ---------------------------
@@ -580,13 +599,13 @@ package body Glide_Kernel.Standard_Hooks is
    is
       Name   : constant String := Get_Hook_Name (Data, 1);
       Kernel : constant Kernel_Handle := Get_Kernel (Data);
-      Args   : File_Hooks_Args :=
-        (Hooks_Data with
-         Get_File
+      Args   : aliased File_Hooks_Args :=
+        (Kernel => Kernel,
+         File   => Get_File
            (Get_Data (Nth_Arg (Data, 2, Get_File_Class (Kernel), True))));
       pragma Unreferenced (Command);
    begin
-      Run_Hook (Kernel, Name, Args);
+      Run_Hook (Kernel, Name, Args'Unchecked_Access);
    end File_Run_Hook_Handler;
 
    ------------------------------
@@ -598,10 +617,11 @@ package body Glide_Kernel.Standard_Hooks is
    is
       Name   : constant String := Get_Hook_Name (Data, 1);
       Kernel : constant Kernel_Handle := Get_Kernel (Data);
-      Args   : Context_Hooks_Args := (Hooks_Data with Get_Data (Data, 2));
+      Args   : aliased Context_Hooks_Args :=
+        (Kernel, Context =>  Get_Data (Data, 2));
       pragma Unreferenced (Command);
    begin
-      Run_Hook (Kernel, Name, Args);
+      Run_Hook (Kernel, Name, Args'Unchecked_Access);
    end Context_Run_Hook_Handler;
 
    --------------
@@ -622,7 +642,7 @@ package body Glide_Kernel.Standard_Hooks is
      (Script    : access Glide_Kernel.Scripts.Scripting_Language_Record'Class;
       Command   : Glide_Kernel.Scripts.Subprogram_Type;
       Hook_Name : String;
-      Data      : Context_Hooks_Args) return Boolean
+      Data      : access Context_Hooks_Args) return Boolean
    is
       D : Callback_Data'Class := Create (Script, 2);
       Tmp : Boolean;
@@ -654,7 +674,7 @@ package body Glide_Kernel.Standard_Hooks is
      (Script    : access Glide_Kernel.Scripts.Scripting_Language_Record'Class;
       Command   : Glide_Kernel.Scripts.Subprogram_Type;
       Hook_Name : String;
-      Data      : File_Hooks_Args) return Boolean
+      Data      : access File_Hooks_Args) return Boolean
    is
       D : Callback_Data'Class := Create (Script, 2);
       Tmp : Boolean;
@@ -686,7 +706,7 @@ package body Glide_Kernel.Standard_Hooks is
      (Script    : access Glide_Kernel.Scripts.Scripting_Language_Record'Class;
       Command   : Glide_Kernel.Scripts.Subprogram_Type;
       Hook_Name : String;
-      Data      : Source_File_Hooks_Args) return Boolean
+      Data      : access Source_File_Hooks_Args) return Boolean
    is
       D : Callback_Data'Class := Create (Script, 8);
       Tmp  : Boolean;
@@ -725,7 +745,7 @@ package body Glide_Kernel.Standard_Hooks is
      (Script    : access Glide_Kernel.Scripts.Scripting_Language_Record'Class;
       Command   : Glide_Kernel.Scripts.Subprogram_Type;
       Hook_Name : String;
-      Data      : File_Line_Hooks_Args) return Boolean
+      Data      : access File_Line_Hooks_Args) return Boolean
    is
       D   : Callback_Data'Class := Create (Script, 5);
       Tmp : Boolean;
@@ -761,7 +781,7 @@ package body Glide_Kernel.Standard_Hooks is
      (Script    : access Glide_Kernel.Scripts.Scripting_Language_Record'Class;
       Command   : Glide_Kernel.Scripts.Subprogram_Type;
       Hook_Name : String;
-      Data      : Location_Hooks_Args) return Boolean
+      Data      : access Location_Hooks_Args) return Boolean
    is
       D : Callback_Data'Class := Create (Script, 7);
       Tmp : Boolean;
@@ -799,7 +819,7 @@ package body Glide_Kernel.Standard_Hooks is
      (Script    : access Glide_Kernel.Scripts.Scripting_Language_Record'Class;
       Command   : Glide_Kernel.Scripts.Subprogram_Type;
       Hook_Name : String;
-      Data      : Html_Hooks_Args) return Boolean
+      Data      : access Html_Hooks_Args) return Boolean
    is
       D : Callback_Data'Class := Create (Script, 4);
       Tmp : Boolean;
@@ -809,6 +829,41 @@ package body Glide_Kernel.Standard_Hooks is
       Set_Nth_Arg (D, 2, F);
       Set_Nth_Arg (D, 3, Data.Enable_Navigation);
       Set_Nth_Arg (D, 4, Data.Anchor);
+
+      Tmp := Execute (Command, D);
+      Free (F);
+      Free (D);
+      return Tmp;
+   end Execute_Shell;
+
+   --------------
+   -- Get_Name --
+   --------------
+
+   function Get_Name (Data : File_Location_Hooks_Args) return String is
+      pragma Unreferenced (Data);
+   begin
+      return File_Location_Hook_Type;
+   end Get_Name;
+
+   -------------------
+   -- Execute_Shell --
+   -------------------
+
+   function Execute_Shell
+     (Script    : access Glide_Kernel.Scripts.Scripting_Language_Record'Class;
+      Command   : Glide_Kernel.Scripts.Subprogram_Type;
+      Hook_Name : String;
+      Data      : access File_Location_Hooks_Args) return Boolean
+   is
+      D : Callback_Data'Class := Create (Script, 4);
+      Tmp : Boolean;
+      F : constant Class_Instance := Create_File (Script, Data.File);
+   begin
+      Set_Nth_Arg (D, 1, Hook_Name);
+      Set_Nth_Arg (D, 2, F);
+      Set_Nth_Arg (D, 3, Data.Line);
+      Set_Nth_Arg (D, 4, Data.Column);
 
       Tmp := Execute (Command, D);
       Free (F);
@@ -834,7 +889,7 @@ package body Glide_Kernel.Standard_Hooks is
      (Script    : access Glide_Kernel.Scripts.Scripting_Language_Record'Class;
       Command   : Glide_Kernel.Scripts.Subprogram_Type;
       Hook_Name : String;
-      Data      : Diff_Hooks_Args) return Boolean
+      Data      : access Diff_Hooks_Args) return Boolean
    is
       D : Callback_Data'Class := Create (Script, 4);
       Tmp : Boolean;
@@ -873,7 +928,7 @@ package body Glide_Kernel.Standard_Hooks is
      (Script    : access Glide_Kernel.Scripts.Scripting_Language_Record'Class;
       Command   : Glide_Kernel.Scripts.Subprogram_Type;
       Hook_Name : String;
-      Data      : Compilation_Hooks_Args) return Boolean
+      Data      : access Compilation_Hooks_Args) return Boolean
    is
       D : Callback_Data'Class := Create (Script, 3);
       Tmp : Boolean;
@@ -906,7 +961,7 @@ package body Glide_Kernel.Standard_Hooks is
      (Script    : access Glide_Kernel.Scripts.Scripting_Language_Record'Class;
       Command   : Glide_Kernel.Scripts.Subprogram_Type;
       Hook_Name : String;
-      Data      : Exit_Before_Action_Hooks_Args) return Boolean
+      Data      : access Exit_Before_Action_Hooks_Args) return Boolean
    is
       D   : Callback_Data'Class := Create (Script, 1);
       Tmp : Boolean;

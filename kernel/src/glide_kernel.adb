@@ -728,11 +728,12 @@ package body Glide_Kernel is
      (Handle  : access Kernel_Handle_Record;
       Context : access Selection_Context'Class)
    is
-      C : Selection_Context_Access := Selection_Context_Access (Context);
+      C    : Selection_Context_Access := Selection_Context_Access (Context);
+      Data : aliased Context_Hooks_Args :=
+        (Kernel  => Kernel_Handle (Handle), Context => C);
    begin
       Ref (C);
-      Run_Hook (Handle, Source_Lines_Revealed_Hook,
-                Context_Hooks_Args'(Hooks_Data with Context => C));
+      Run_Hook (Handle, Source_Lines_Revealed_Hook, Data'Unchecked_Access);
       Unref (C);
    end Source_Lines_Revealed;
 
@@ -745,6 +746,7 @@ package body Glide_Kernel is
       File   : VFS.Virtual_File)
    is
       Files : File_Array_Access := Handle.Open_Files;
+      Data  : aliased File_Hooks_Args;
    begin
       if not Is_Open (Handle, File) then
          if Files = null then
@@ -757,9 +759,9 @@ package body Glide_Kernel is
          end if;
 
          Handle.Open_Files (Handle.Open_Files'Last) := File;
-
-         Run_Hook (Handle, File_Edited_Hook,
-                   File_Hooks_Args'(Hooks_Data with File => File));
+         Data := File_Hooks_Args'
+           (Kernel => Kernel_Handle (Handle), File => File);
+         Run_Hook (Handle, File_Edited_Hook, Data'Unchecked_Access);
       end if;
    end File_Edited;
 
@@ -769,10 +771,12 @@ package body Glide_Kernel is
 
    procedure File_Saved
      (Handle : access Kernel_Handle_Record;
-      File   : VFS.Virtual_File) is
+      File   : VFS.Virtual_File)
+   is
+      Data : aliased File_Hooks_Args :=
+        (Kernel => Kernel_Handle (Handle), File => File);
    begin
-      Run_Hook (Handle, File_Saved_Hook,
-                File_Hooks_Args'(Hooks_Data with File => File));
+      Run_Hook (Handle, File_Saved_Hook, Data'Unchecked_Access);
    end File_Saved;
 
    -----------------
@@ -784,9 +788,10 @@ package body Glide_Kernel is
       File   : VFS.Virtual_File)
    is
       Files : File_Array_Access := Handle.Open_Files;
+      Data  : aliased File_Hooks_Args :=
+        (Kernel => Kernel_Handle (Handle), File => File);
    begin
-      Run_Hook (Handle, File_Closed_Hook,
-                File_Hooks_Args'(Hooks_Data with File => File));
+      Run_Hook (Handle, File_Closed_Hook, Data'Unchecked_Access);
 
       if Files /= null then
          for F in Files'Range loop
@@ -810,10 +815,12 @@ package body Glide_Kernel is
 
    procedure File_Changed_On_Disk
      (Handle : access Kernel_Handle_Record;
-      File   : VFS.Virtual_File) is
+      File   : VFS.Virtual_File)
+   is
+      Data : aliased File_Hooks_Args :=
+        (Kernel => Kernel_Handle (Handle), File => File);
    begin
-      Run_Hook (Handle, File_Changed_On_Disk_Hook,
-                File_Hooks_Args'(Hooks_Data with File => File));
+      Run_Hook (Handle, File_Changed_On_Disk_Hook, Data'Unchecked_Access);
    end File_Changed_On_Disk;
 
    --------------------------
@@ -823,16 +830,15 @@ package body Glide_Kernel is
    procedure Compilation_Finished
      (Handle   : access Kernel_Handle_Record;
       File     : VFS.Virtual_File;
-      Category : String) is
-   begin
-      Run_Hook
-        (Handle,
-         Compilation_Finished_Hook,
-         Compilation_Hooks_Args'
-           (Hooks_Data with
+      Category : String)
+   is
+      Data : aliased Compilation_Hooks_Args :=
+        (Kernel => Kernel_Handle (Handle),
             Category_Length => Category'Length,
             File            => File,
-            Category        => Category));
+            Category        => Category);
+   begin
+      Run_Hook (Handle, Compilation_Finished_Hook, Data'Unchecked_Access);
    end Compilation_Finished;
 
    -------------
@@ -874,11 +880,11 @@ package body Glide_Kernel is
 
    procedure Context_Changed (Handle  : access Kernel_Handle_Record) is
       C : Selection_Context_Access := Get_Current_Context (Handle);
+      Data : aliased Context_Hooks_Args :=
+        (Kernel => Kernel_Handle (Handle), Context => C);
    begin
       Ref (C);
-      Run_Hook
-        (Handle, Context_Changed_Hook,
-         Context_Hooks_Args'(Hooks_Data with Context => C));
+      Run_Hook (Handle, Context_Changed_Hook, Data'Unchecked_Access);
       Unref (C);
    end Context_Changed;
 

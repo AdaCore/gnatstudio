@@ -27,6 +27,7 @@ with GNAT.OS_Lib;
 with System;
 with Gdk.Pixbuf;
 with Commands;
+with Entities;
 
 package Glide_Kernel.Standard_Hooks is
 
@@ -39,16 +40,50 @@ package Glide_Kernel.Standard_Hooks is
    end record;
    --  Base type for hooks that take a single file in parameter
 
+   function Get_Name (Data : File_Hooks_Args) return String;
+   function Execute_Shell
+     (Script    : access Glide_Kernel.Scripts.Scripting_Language_Record'Class;
+      Command   : Glide_Kernel.Scripts.Subprogram_Type;
+      Hook_Name : String;
+      Data      : access File_Hooks_Args) return Boolean;
+   --  See inherited doc
+
+
+
    type Context_Hooks_Args is new Hooks_Data with record
       Context : Glide_Kernel.Selection_Context_Access;
    end record;
    --  Base type for hooks that take a single context in parameter
 
-   type Compilation_Hooks_Args (Category_Length : Natural) is new Hooks_Data
-   with record
-      File     : VFS.Virtual_File := VFS.No_File;
-      Category : String (1 .. Category_Length);
+   type Compilation_Hooks_Args (Category_Length : Natural) is
+     new File_Hooks_Args with
+      record
+         Category : String (1 .. Category_Length);
+      end record;
+
+   --------------------------
+   --  File_Location_Hooks --
+   --------------------------
+
+   type File_Location_Hooks_Args is abstract new File_Hooks_Args with record
+      Line   : Natural;
+      Column : Natural;
    end record;
+   type File_Location_Hooks_Args_Access is access all
+     File_Location_Hooks_Args'Class;
+   --  These hooks contains a location inside a source editor.
+
+   function Compute_Parent_Entity
+     (Data : access File_Location_Hooks_Args)
+      return Entities.Entity_Information is abstract;
+   --  Return the name of the entity enclosing the location. This is either
+   --  a subprogram, a package, ...
+   --  The result of this call will generally be cached in the arguments, so
+   --  that multiple calls are not more costly than one call.
+
+   Location_Changed_Hook : constant String := "location_changed";
+   --  Hook called when the location in the current editor has changed. Its
+   --  arguments are of type File_Location_Hooks_Args'Class
 
    ------------------
    -- Action hooks --
@@ -320,20 +355,12 @@ package Glide_Kernel.Standard_Hooks is
    --  diff file.
 
 private
-   function Get_Name (Data : File_Hooks_Args) return String;
-   function Execute_Shell
-     (Script    : access Glide_Kernel.Scripts.Scripting_Language_Record'Class;
-      Command   : Glide_Kernel.Scripts.Subprogram_Type;
-      Hook_Name : String;
-      Data      : File_Hooks_Args) return Boolean;
-   --  See inherited doc
-
    function Get_Name (Data : Context_Hooks_Args) return String;
    function Execute_Shell
      (Script    : access Glide_Kernel.Scripts.Scripting_Language_Record'Class;
       Command   : Glide_Kernel.Scripts.Subprogram_Type;
       Hook_Name : String;
-      Data      : Context_Hooks_Args) return Boolean;
+      Data      : access Context_Hooks_Args) return Boolean;
    --  See inherited doc
 
    function Get_Name (Data : File_Line_Hooks_Args) return String;
@@ -341,7 +368,7 @@ private
      (Script    : access Glide_Kernel.Scripts.Scripting_Language_Record'Class;
       Command   : Glide_Kernel.Scripts.Subprogram_Type;
       Hook_Name : String;
-      Data      : File_Line_Hooks_Args) return Boolean;
+      Data      : access File_Line_Hooks_Args) return Boolean;
    --  See inherited doc
 
    function Get_Name (Data : Source_File_Hooks_Args) return String;
@@ -349,7 +376,7 @@ private
      (Script    : access Glide_Kernel.Scripts.Scripting_Language_Record'Class;
       Command   : Glide_Kernel.Scripts.Subprogram_Type;
       Hook_Name : String;
-      Data      : Source_File_Hooks_Args) return Boolean;
+      Data      : access Source_File_Hooks_Args) return Boolean;
    --  See inherited doc
 
    function Get_Name (Data : Compilation_Hooks_Args) return String;
@@ -357,7 +384,7 @@ private
      (Script    : access Glide_Kernel.Scripts.Scripting_Language_Record'Class;
       Command   : Glide_Kernel.Scripts.Subprogram_Type;
       Hook_Name : String;
-      Data      : Compilation_Hooks_Args) return Boolean;
+      Data      : access Compilation_Hooks_Args) return Boolean;
    --  See inherited doc
 
    function Get_Name (Data : Location_Hooks_Args) return String;
@@ -365,7 +392,7 @@ private
      (Script    : access Glide_Kernel.Scripts.Scripting_Language_Record'Class;
       Command   : Glide_Kernel.Scripts.Subprogram_Type;
       Hook_Name : String;
-      Data      : Location_Hooks_Args) return Boolean;
+      Data      : access Location_Hooks_Args) return Boolean;
    --  See inherited doc
 
    function Get_Name (Data : Diff_Hooks_Args) return String;
@@ -373,7 +400,7 @@ private
      (Script    : access Glide_Kernel.Scripts.Scripting_Language_Record'Class;
       Command   : Glide_Kernel.Scripts.Subprogram_Type;
       Hook_Name : String;
-      Data      : Diff_Hooks_Args) return Boolean;
+      Data      : access Diff_Hooks_Args) return Boolean;
    --  See inherited doc
 
    function Get_Name (Data : Html_Hooks_Args) return String;
@@ -381,7 +408,7 @@ private
      (Script    : access Glide_Kernel.Scripts.Scripting_Language_Record'Class;
       Command   : Glide_Kernel.Scripts.Subprogram_Type;
       Hook_Name : String;
-      Data      : Html_Hooks_Args) return Boolean;
+      Data      : access Html_Hooks_Args) return Boolean;
    --  See inherited doc
 
    function Get_Name (Data : Exit_Before_Action_Hooks_Args) return String;
@@ -389,6 +416,16 @@ private
      (Script    : access Glide_Kernel.Scripts.Scripting_Language_Record'Class;
       Command   : Glide_Kernel.Scripts.Subprogram_Type;
       Hook_Name : String;
-      Data      : Exit_Before_Action_Hooks_Args) return Boolean;
+      Data      : access Exit_Before_Action_Hooks_Args) return Boolean;
+   --  See inherited doc
+
+   function Get_Name (Data : File_Location_Hooks_Args) return String;
+   function Execute_Shell
+     (Script    : access Glide_Kernel.Scripts.Scripting_Language_Record'Class;
+      Command   : Glide_Kernel.Scripts.Subprogram_Type;
+      Hook_Name : String;
+      Data      : access File_Location_Hooks_Args) return Boolean;
+   --  See inherited doc
+
 
 end Glide_Kernel.Standard_Hooks;

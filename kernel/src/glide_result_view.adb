@@ -293,7 +293,7 @@ package body Glide_Result_View is
 
    function Location_Hook
      (Kernel    : access Kernel_Handle_Record'Class;
-      Data      : Hooks_Data'Class) return Boolean;
+      Data      : access Hooks_Data'Class) return Boolean;
    --  Called when the user executes Location_Action_Hook
 
    function Load_Desktop
@@ -333,7 +333,7 @@ package body Glide_Result_View is
    procedure Execute
      (Hook   : File_Edited_Hook_Record;
       Kernel : access Kernel_Handle_Record'Class;
-      Data   : Hooks_Data'Class);
+      Data   : access Hooks_Data'Class);
    --  Callback for the "file_edited" hook.
 
    -------------
@@ -343,10 +343,10 @@ package body Glide_Result_View is
    procedure Execute
      (Hook   : File_Edited_Hook_Record;
       Kernel : access Kernel_Handle_Record'Class;
-      Data   : Hooks_Data'Class)
+      Data   : access Hooks_Data'Class)
    is
       View : Result_View renames Hook.View;
-      File : constant VFS.Virtual_File := File_Hooks_Args (Data).File;
+      File : constant VFS.Virtual_File := File_Hooks_Args (Data.all).File;
 
       Category_Iter : Gtk_Tree_Iter;
       File_Iter     : Gtk_Tree_Iter;
@@ -1767,10 +1767,10 @@ package body Glide_Result_View is
 
    function Location_Hook
      (Kernel    : access Kernel_Handle_Record'Class;
-      Data      : Hooks_Data'Class) return Boolean
+      Data      : access Hooks_Data'Class) return Boolean
    is
       View : constant Result_View := Get_Or_Create_Result_View (Kernel, False);
-      D : Location_Hooks_Args := Location_Hooks_Args (Data);
+      D : Location_Hooks_Args := Location_Hooks_Args (Data.all);
    begin
       Add_Action_Item
         (View, D.Identifier, D.Category, "", D.File,
