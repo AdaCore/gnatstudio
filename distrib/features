@@ -1,5 +1,7 @@
 New features in GPS 1.2.0
 
+- C224-009 Added support for the new limited-with statements in projects
+
 - C219-004 Major speend improvements when loading and editing big projects,
   especially when using file-specific naming schemes.
 
