@@ -321,7 +321,6 @@ package body Entities is
          --  ??? This might be costly, but we need to ensure there is a proper
          --  reference between the two files, for proper clean up
          Add_Depends_On (File, Entity.Declaration.File);
-
          Add (File.All_Entities, Entity, Check_Duplicates => True);
       end if;
    end Add_All_Entities;
@@ -383,7 +382,7 @@ package body Entities is
             Entity := EL.Table (E);
             Entity.Is_Valid := True;
 
-            --  If the entity has references in other files, do not mark is
+            --  If the entity has references in other files, do not mark it
             --  as valid, so that it isn't removed later on, or we would lose
             --  trace of these references.
             --  ??? Could be more efficient and remove ranges at once
@@ -1686,14 +1685,15 @@ package body Entities is
    -------------------
 
    function Is_Up_To_Date (File : Source_File) return Boolean is
+      From_Disk : constant Time := File_Time_Stamp (File.Name);
    begin
       if Active (Assert_Me) then
          Trace (Assert_Me, "Is_Up_To_Date: "
                 & Base_Name (Get_Filename (File))
-                & " file time:" & Image (Get_Time_Stamp (File), "%D-%T")
+                & " file time:" & Image (From_Disk, "%D-%T")
                 & " memory: " & Image (File.Timestamp, "%D-%T"));
       end if;
-      return Get_Time_Stamp (File) = File.Timestamp;
+      return From_Disk = File.Timestamp;
    end Is_Up_To_Date;
 
    ------------------------
