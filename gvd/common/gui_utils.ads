@@ -21,6 +21,7 @@
 --  This package contains a series of subprograms that can be used
 --  for misc. graphical tasks.
 
+with Gdk.Event;
 with Gdk.Window;
 with Gtk.Combo;
 with Gtk.List;
@@ -50,9 +51,12 @@ package GUI_Utils is
    --  new cursor is immediately visible for the user.
 
    type Contextual_Menu_Create is access function
-     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class)
+     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Event  : Gdk.Event.Gdk_Event)
      return Gtk.Menu.Gtk_Menu;
-   --  Function used to create the contextual menu for Widget
+   --  Function used to create the contextual menu for Widget.
+   --  This function is only called for the right mouse button, so it doesn't
+   --  need to check that.
 
    procedure Register_Contextual_Menu
      (Widget      : access Gtk.Widget.Gtk_Widget_Record'Class;

@@ -129,7 +129,7 @@ package body GUI_Utils is
       if Get_Button (Event) = 3
         and then Get_Event_Type (Event) = Button_Press
       then
-         Menu := Menu_Creation (Widget);
+         Menu := Menu_Creation (Widget, Event);
          Show_All (Menu);
          Popup (Menu,
                 Button        => Gdk.Event.Get_Button (Event),
