@@ -28,6 +28,8 @@ with Language_Handlers.Glide; use Language_Handlers.Glide;
 with GNAT.Heap_Sort_G;
 with Namet;        use Namet;
 with Projects.Registry; use Projects.Registry;
+with File_Utils;   use File_Utils;
+with Ada.Characters.Handling; use Ada.Characters.Handling;
 
 package body Entities is
    Assert_Me : constant Debug_Handle := Create ("Entities.Assert", Off);
@@ -292,7 +294,11 @@ package body Entities is
             --  and the user is not supposed to call Unref more often than Ref
             Reset (F);
 
-            Unchecked_Free (F);
+            if not Active (Debug_Me) then
+               Unchecked_Free (F);
+            else
+               F := null;
+            end if;
          end if;
       end if;
    end Unref;
@@ -498,19 +504,25 @@ package body Entities is
          for E in Entity_Information_Arrays.First .. Last (EL.all) loop
             Isolate (EL.Table (E), Clear_References => True);
 
-            Free (EL.Table (E).Name);
-            Unchecked_Free (EL.Table (E));
+            if not Active (Debug_Me) then
+               Free (EL.Table (E).Name);
+               Unchecked_Free (EL.Table (E));
+            else
+               EL.Table (E) := null;
+            end if;
          end loop;
 
          Next (Iter);
       end loop;
       Free (Iter);
 
-      Clear (File.All_Entities);
-      Clear (File.Entities);
-      Free (File.Unit_Name);
-      Free (File.Depends_On);
-      Free (File.Depended_On);
+      if not Active (Debug_Me) then
+         Clear (File.All_Entities);
+         Clear (File.Entities);
+         Free (File.Unit_Name);
+         Free (File.Depends_On);
+         Free (File.Depended_On);
+      end if;
    end Fast_Reset;
 
    -----------
@@ -569,12 +581,17 @@ package body Entities is
          Remove (File.Depends_On.Table (F).File.Depended_On, File);
       end loop;
 
-      Free (File.Depends_On);
+      if not Active (Debug_Me) then
+         Free (File.Depends_On);
+      end if;
 
       --  Clean up various other fields
 
       File.Scope_Tree_Computed := False;
-      Free (File.Unit_Name);
+
+      if not Active (Debug_Me) then
+         Free (File.Unit_Name);
+      end if;
 
       --  Fields which have not been cleaned (see comments above):
       --     - Entities
@@ -738,7 +755,11 @@ package body Entities is
             Destroy (Tree.Contents);
          end if;
 
-         Unchecked_Free (Tree);
+         if not Active (Debug_Me) then
+            Unchecked_Free (Tree);
+         else
+            Tree := null;
+         end if;
       end if;
    end Destroy;
 
@@ -760,8 +781,13 @@ package body Entities is
             for L in Source_File_Arrays.First .. Last (LI.Files) loop
                LI.Files.Table (L).LI := null;
             end loop;
-            Free (LI.Files);
-            Unchecked_Free (LI);
+
+            if not Active (Debug_Me) then
+               Free (LI.Files);
+               Unchecked_Free (LI);
+            else
+               LI := null;
+            end if;
          end if;
       end if;
    end Unref;
@@ -870,7 +896,11 @@ package body Entities is
 
    function Hash (Key : VFS.Cst_UTF8_String_Access) return HTable_Header is
    begin
-      return String_Hash (Key.all);
+      if Filenames_Are_Case_Sensitive then
+         return String_Hash (Key.all);
+      else
+         return String_Hash (To_Lower (Key.all));
+      end if;
    end Hash;
 
    --------------
@@ -906,7 +936,11 @@ package body Entities is
 
    function Equal (K1, K2 : VFS.Cst_UTF8_String_Access) return Boolean is
    begin
-      return K1 = K2 or else K1.all = K2.all;
+      if Filenames_Are_Case_Sensitive then
+         return K1 = K2 or else K1.all = K2.all;
+      else
+         return To_Lower (K1.all) = To_Lower (K2.all);
+      end if;
    end Equal;
 
    ----------
@@ -918,7 +952,11 @@ package body Entities is
         (Source_File_Item_Record, Source_File_Item);
    begin
       Unref (E.File);
-      Unchecked_Free (E);
+      if not Active (Debug_Me) then
+         Unchecked_Free (E);
+      else
+         E := null;
+      end if;
    end Free;
 
    --------------
@@ -957,7 +995,12 @@ package body Entities is
         (LI_File_Item_Record, LI_File_Item);
    begin
       Unref (E.File);
-      Unchecked_Free (E);
+
+      if not Active (Debug_Me) then
+         Unchecked_Free (E);
+      else
+         E := null;
+      end if;
    end Free;
 
    -----------
@@ -988,7 +1031,11 @@ package body Entities is
         (Entities_Database_Record, Entities_Database);
    begin
       Reset (Db);
-      Unchecked_Free (Db);
+      if not Active (Debug_Me) then
+         Unchecked_Free (Db);
+      else
+         Db := null;
+      end if;
    end Destroy;
 
    ----------------------------
@@ -1239,7 +1286,12 @@ package body Entities is
    begin
       if D /= null then
          Free (D.all);
-         Unchecked_Free (D);
+
+         if not Active (Debug_Me) then
+            Unchecked_Free (D);
+         else
+            D := null;
+         end if;
       end if;
    end Destroy;
 
