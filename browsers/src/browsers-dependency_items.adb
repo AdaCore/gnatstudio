@@ -38,6 +38,7 @@ with Gtk.Enums;         use Gtk.Enums;
 with Gtk.Style;         use Gtk.Style;
 with Gtk.Widget;        use Gtk.Widget;
 with Gtkada.MDI;        use Gtkada.MDI;
+with Pango.Font;        use Pango.Font;
 
 with Src_Info;                 use Src_Info;
 with Src_Info.ALI;             use Src_Info.ALI;
@@ -140,12 +141,19 @@ package body Browsers.Dependency_Items is
 
       Str : constant String := Get_Source_Filename (Item.Source);
       Str2 : String_Access;
-      Font : Gdk_Font := Get_Pref (Item.Kernel, Browsers_Link_Font);
+      Descr : Pango_Font_Description :=
+        Get_Pref (Item.Kernel, Browsers_Link_Font);
+      Font : Gdk_Font;
       GC   : Gdk_GC;
       Width, Height : Gint;
 
    begin
       Ensure_Browser_Link (Item);
+
+      Set_Size
+        (Descr,
+         Get_Size (Descr) * Gint (Get_Zoom (Get_Canvas (Item.Browser))) / 100);
+      Font := From_Description (Descr);
 
       Gdk_New (GC, Win);
       Set_Foreground (GC, White (Get_Default_Colormap));
@@ -262,5 +270,17 @@ package body Browsers.Dependency_Items is
    begin
       Destroy (Item.Source);
    end Destroy;
+
+   -----------------------
+   -- Refresh_File_Item --
+   -----------------------
+
+   function Refresh_File_Item
+     (Canvas : access Interactive_Canvas_Record'Class;
+      Item   : access Canvas_Item_Record'Class) return Boolean is
+   begin
+      Update_Display (File_Item (Item), Get_Window (Canvas));
+      return True;
+   end Refresh_File_Item;
 
 end Browsers.Dependency_Items;

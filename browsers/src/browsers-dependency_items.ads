@@ -78,6 +78,12 @@ package Browsers.Dependency_Items is
    procedure Destroy (Item : in out File_Item_Record);
    --  Free the memory associated with the item
 
+   function Refresh_File_Item
+     (Canvas : access Gtkada.Canvas.Interactive_Canvas_Record'Class;
+      Item   : access Gtkada.Canvas.Canvas_Item_Record'Class) return Boolean;
+   --  Recompute the size and redisplay the item. This function is meant to
+   --  be used in a For_Each_Item loop
+
    ----------------------
    -- Dependency links --
    ----------------------
