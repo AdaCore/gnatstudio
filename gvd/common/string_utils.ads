@@ -46,8 +46,8 @@ package String_Utils is
       Lines  : Integer;
       Index  : in out Natural);
    --  Skip Lines forward or backward. In all cases, Index is put to the
-   --  beginning of the line. If the buffer doesn't contain enough line,
-   --  Index is left on the last valid line encountered
+   --  beginning of the line. If the buffer doesn't contain enough lines,
+   --  Index is left on the last valid line encountered.
 
    procedure Skip_Hexa_Digit
      (Type_Str : String;
