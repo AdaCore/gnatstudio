@@ -153,6 +153,8 @@ package body Codefix.Errors_Manager is
          Get_Message (Errors_List, Source_Text, Current_Message);
 
          if Current_Message /= Invalid_Error_Message then
+
+            Solutions := Solution_List (Extract_List.Null_List);
             Get_Solutions
               (Source_Text, Errors_List, Current_Message, Solutions);
 
