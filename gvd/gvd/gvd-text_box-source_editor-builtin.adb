@@ -1407,6 +1407,7 @@ package body GVD.Text_Box.Source_Editor.Builtin is
       Process : constant Debugger_Process_Tab :=
         Debugger_Process_Tab (Editor.Process);
       Debug   : constant Debugger_Access := Process.Debugger;
+      Y : Gint;
 
    begin
       Set_Parse_File_Name (Get_Process (Debug), False);
@@ -1430,6 +1431,12 @@ package body GVD.Text_Box.Source_Editor.Builtin is
 
          Editor.Current_File_Cache.Line_Has_Code (Line) := True;
          Gtk_New (Pix, Editor.Default_Pixmap, Editor.Default_Mask);
+         Y := Pixels_From_Line (Edit, Line);
+         if Gint (Get_Height (Get_Buttons (Edit))) < Y then
+            Set_Size
+              (Get_Buttons (Edit), Get_Width (Get_Buttons (Edit)), Guint (Y));
+         end if;
+
          Put (Get_Buttons (Edit), Pix,
               X => 0,
               Y => Pixels_From_Line (Edit, Line));
