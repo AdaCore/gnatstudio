@@ -8,6 +8,7 @@ with GVD.Process;
 with GNAT.Regpat;     use GNAT.Regpat;
 with GNAT.OS_Lib;     use GNAT.OS_Lib;
 with Glide_Kernel.Project; use Glide_Kernel.Project;
+with Project_Trees;   use Project_Trees;
 
 package body Glide_Page is
 
@@ -45,6 +46,7 @@ package body Glide_Page is
       Window : access Glide_Window_Record'Class)
    is
       Child : MDI_Child;
+      Scrolled : Gtk_Scrolled_Window;
    begin
       GVD.Process.Initialize (Page, Window);
 
@@ -55,6 +57,14 @@ package body Glide_Page is
       Set_Dock_Side (Child, Bottom);
       Dock_Child (Child);
       Raise_Child (Child);
+
+      Gtk_New (Scrolled);
+      Gtk_New (Page.Explorer, Window.Kernel);
+      Add (Scrolled, Page.Explorer);
+      Child := Put (Page.Process_Mdi, Scrolled);
+      Set_Title (Child, "Project Explorer");
+      Set_Dock_Side (Child, Left);
+      Dock_Child (Child);
 
       Gtk_New (Page.Console);
       Set_Editable (Page.Console, False);
