@@ -6,6 +6,7 @@ with Odd_Preferences_Pkg; use Odd_Preferences_Pkg;
 with Process_Tab_Pkg; use Process_Tab_Pkg;
 with Breakpoints_Pkg; use Breakpoints_Pkg;
 with Advanced_Breakpoint_Pkg; use Advanced_Breakpoint_Pkg;
+with Open_Program_Pkg; use Open_Program_Pkg;
 
 procedure Odd is
 begin
@@ -21,5 +22,7 @@ begin
    Show_All (Breakpoints);
    Gtk_New (Advanced_Breakpoint);
    Show_All (Advanced_Breakpoint);
+   Gtk_New (Open_Program);
+   Show_All (Open_Program);
    Gtk.Main.Main;
 end Odd;

@@ -6,6 +6,7 @@ with Gtk.Enums;       use Gtk.Enums;
 with Gtkada.Handlers; use Gtkada.Handlers;
 with Callbacks_Odd; use Callbacks_Odd;
 with Odd_Intl; use Odd_Intl;
+with Advanced_Breakpoint_Pkg.Callbacks; use Advanced_Breakpoint_Pkg.Callbacks;
 
 package body Advanced_Breakpoint_Pkg is
 
@@ -23,8 +24,8 @@ begin
    Gtk.Window.Initialize (Advanced_Breakpoint, Window_Toplevel);
    Set_Title (Advanced_Breakpoint, -"Advanced Breakpoint Settings");
    Set_Policy (Advanced_Breakpoint, False, True, False);
-   Set_Position (Advanced_Breakpoint, Win_Pos_None);
-   Set_Modal (Advanced_Breakpoint, False);
+   Set_Position (Advanced_Breakpoint, Win_Pos_Center);
+   Set_Modal (Advanced_Breakpoint, True);
 
    Gtk_New_Vbox (Advanced_Breakpoint.Vbox11, False, 0);
    Add (Advanced_Breakpoint, Advanced_Breakpoint.Vbox11);
@@ -115,10 +116,16 @@ begin
 
    Gtk_New (Advanced_Breakpoint.Record_Button, -"Record");
    Set_Flags (Advanced_Breakpoint.Record_Button, Can_Default);
+   Button_Callback.Connect
+     (Advanced_Breakpoint.Record_Button, "clicked",
+      Button_Callback.To_Marshaller (On_Start_Record_Clicked'Access));
    Add (Advanced_Breakpoint.Hbuttonbox3, Advanced_Breakpoint.Record_Button);
 
    Gtk_New (Advanced_Breakpoint.End_Button, -"Stop recording");
    Set_Flags (Advanced_Breakpoint.End_Button, Can_Default);
+   Button_Callback.Connect
+     (Advanced_Breakpoint.End_Button, "clicked",
+      Button_Callback.To_Marshaller (On_Stop_Record_Clicked'Access));
    Add (Advanced_Breakpoint.Hbuttonbox3, Advanced_Breakpoint.End_Button);
 
    Gtk_New (Advanced_Breakpoint.Hbuttonbox5);
@@ -130,10 +137,16 @@ begin
 
    Gtk_New (Advanced_Breakpoint.Ok_Button, -"OK");
    Set_Flags (Advanced_Breakpoint.Ok_Button, Can_Default);
+   Button_Callback.Connect
+     (Advanced_Breakpoint.Ok_Button, "clicked",
+      Button_Callback.To_Marshaller (On_Ok_Advanced_Bp_Clicked'Access));
    Add (Advanced_Breakpoint.Hbuttonbox5, Advanced_Breakpoint.Ok_Button);
 
    Gtk_New (Advanced_Breakpoint.Cancel_Button, -"Cancel");
    Set_Flags (Advanced_Breakpoint.Cancel_Button, Can_Default);
+   Button_Callback.Connect
+     (Advanced_Breakpoint.Cancel_Button, "clicked",
+      Button_Callback.To_Marshaller (On_Cancel_Advanced_Bp_Clicked'Access));
    Add (Advanced_Breakpoint.Hbuttonbox5, Advanced_Breakpoint.Cancel_Button);
 
 end Initialize;

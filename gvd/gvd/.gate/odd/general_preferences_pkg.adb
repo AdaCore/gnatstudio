@@ -32,7 +32,7 @@ begin
    Set_Title (Odd_Preferences, -"Preferences");
    Set_Policy (Odd_Preferences, False, True, False);
    Set_Position (Odd_Preferences, Win_Pos_Center);
-   Set_Modal (Odd_Preferences, False);
+   Set_Modal (Odd_Preferences, True);
 
    Gtk_New_Vbox (Odd_Preferences.Vbox2, False, 0);
    Add (Odd_Preferences, Odd_Preferences.Vbox2);
