@@ -21,6 +21,7 @@
 with Ada.Text_IO;               use Ada.Text_IO;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with List_Utils;                use List_Utils;
+with Src_Info;                  use Src_Info;
 with Generic_List;
 
 package Doc_Types is
@@ -83,8 +84,6 @@ package Doc_Types is
       Line            : Integer;
       Is_Private      : Boolean;
       --  the following items can be used if necessery
-      Header          : GNAT.OS_Lib.String_Access;
-      Header_Lines    : Natural;
       Line_In_Body    : Positive;
       Ref_List        : Type_Reference_List.List;
    end record;
@@ -139,7 +138,7 @@ package Doc_Types is
                Header_Package                : GNAT.OS_Lib.String_Access;
                Header_File                   : GNAT.OS_Lib.String_Access;
                Header_Link                   : Boolean;
-               Header_Line                   : Integer;
+               Header_Line                   : Natural;
                Header_Package_Next           : GNAT.OS_Lib.String_Access;
                Header_Package_Prev           : GNAT.OS_Lib.String_Access;
 
@@ -155,12 +154,13 @@ package Doc_Types is
                Subtitle_Kind                 : Info_Types;
 
             when With_Info =>
-               With_Lines                    : GNAT.OS_Lib.String_Access;
+               With_Header                   : GNAT.OS_Lib.String_Access;
                With_List                     : Type_Entity_List.List;
                With_File                     : GNAT.OS_Lib.String_Access;
 
             when Package_Info =>
                Package_Entity                : Entity_List_Information;
+               Package_Header                : GNAT.OS_Lib.String_Access;
                Package_Description           : GNAT.OS_Lib.String_Access;
                Package_List                  : Type_Entity_List.List;
 
@@ -171,24 +171,28 @@ package Doc_Types is
                --  used to add a constant and named numbers
             when Var_Info =>
                Var_Entity                    : Entity_List_Information;
+               Var_Header                    : GNAT.OS_Lib.String_Access;
                Var_Description               : GNAT.OS_Lib.String_Access;
                Var_List                      : Type_Entity_List.List;
 
                --  used to add an exception info to the information file
             when Exception_Info =>
                Exception_Entity              : Entity_List_Information;
+               Exception_Header              : GNAT.OS_Lib.String_Access;
                Exception_Description         : GNAT.OS_Lib.String_Access;
                Exception_List                : Type_Entity_List.List;
 
                --  used to add a type info to the information file
             when Type_Info =>
                Type_Entity                   : Entity_List_Information;
+               Type_Header                   : GNAT.OS_Lib.String_Access;
                Type_Description              : GNAT.OS_Lib.String_Access;
                Type_List                     : Type_Entity_List.List;
 
                --  used to add a subprogram info to the information file
             when Subprogram_Info =>
                Subprogram_Entity             : Entity_List_Information;
+               Subprogram_Header             : GNAT.OS_Lib.String_Access;
                Subprogram_Description        : GNAT.OS_Lib.String_Access;
                Subprogram_Link               : Boolean;
                Subprogram_List               : Type_Entity_List.List;
@@ -221,9 +225,9 @@ package Doc_Types is
 
                --  used to pass the information of one line in the body file
             when Body_Line_Info =>
-               Body_Text                     : GNAT.OS_Lib.String_Access;
                Body_File                     : GNAT.OS_Lib.String_Access;
-               Body_List                     : Type_Entity_List.List;
+               Body_Text                     : GNAT.OS_Lib.String_Access;
+               Body_Entity_List              : Type_Entity_List.List;
             when others => null;  --  exception later
          end case;
       end record;
@@ -268,5 +272,10 @@ package Doc_Types is
    --  returns the index of the substring in the Type_Str
    --  the search starts at position Index
    --  if no position is found, return 0
+
+   function Kind_To_String
+     (Kind : Src_Info.E_Kind) return String;
+   --  returns the string of the E_Kind name: this is copied
+   --  from one of the kernel packages
 
 end Doc_Types;

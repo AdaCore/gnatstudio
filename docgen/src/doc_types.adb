@@ -96,7 +96,6 @@ package body Doc_Types is
       Free (X.Name);
       Free (X.Short_Name);
       Free (X.File_Name);
-      Free (X.Header);
       if not Type_Reference_List.Is_Empty (X.Ref_List) then
          Type_Reference_List.Free (X.Ref_List);
       end if;
@@ -117,7 +116,7 @@ package body Doc_Types is
       Line_Nr : Natural;
    begin
       Line_Nr := 1;
-      for J in 1 .. Line'Length loop
+      for J in Line'First .. Line'Last loop
          if Line (J) = ASCII.LF then
             Line_Nr := Line_Nr + 1;
          end if;
@@ -154,5 +153,75 @@ package body Doc_Types is
       else return New_Index;
       end if;
    end Get_String_Index;
+
+
+   --------------------
+   -- Kind_To_String --
+   --------------------
+
+   function Kind_To_String (Kind : Src_Info.E_Kind) return String is
+   begin
+      --  ??? Would be nice to do it as a primitive subprogram of the
+      --  LI_Handlers, unfortunately they currently don't have access to
+      --  Glide_Intl for proper translations.
+
+      case Kind is
+         when Overloaded_Entity            => return "???";
+         when Unresolved_Entity            => return "unknown";
+         when Access_Object                =>
+            return "access variable / pointer";
+         when Access_Type                  => return "access type / pointer";
+         when Array_Object                 => return "array";
+         when Array_Type                   => return "array type";
+         when Boolean_Object               => return "boolean";
+         when Boolean_Type                 => return "boolean type";
+         when Class_Wide_Object            => return "class wide";
+         when Class_Wide_Type              => return "class wide type";
+         when Decimal_Fixed_Point_Object   => return "decimal fixed point";
+         when Decimal_Fixed_Point_Type     =>
+            return "decimal fixed point type";
+         when Entry_Or_Entry_Family        => return "entry or entry family";
+            --  later
+         when Enumeration_Literal          => return "enumeration literal";
+            --  not used
+         when Enumeration_Object           => return "enumeration";
+         when Enumeration_Type             => return "enumeration type";
+         when Exception_Entity             => return "exception";
+         when Floating_Point_Object        => return "floating point";
+         when Floating_Point_Type          => return "floating point type";
+         when Generic_Class                => return "generic class";
+            --  later
+         when Generic_Function_Or_Operator => return "generic function";
+         when Generic_Package              => return "generic package";
+            --  later
+         when Generic_Procedure            => return "generic procedure";
+         when Label_On_Block               => return "label on block";
+            --  not used
+         when Label_On_Loop                => return "label on loop";
+            --  not used
+         when Label_On_Statement           => return "label on statement";
+            --  not used
+         when Modular_Integer_Object       => return "modular integer";
+         when Modular_Integer_Type         => return "modular integer type";
+         when Named_Number                 => return "named number";
+         when Non_Generic_Function_Or_Operator => return "function";
+         when Non_Generic_Package          => return "package";
+            --  later
+         when Non_Generic_Procedure        => return "procedure";
+         when Ordinary_Fixed_Point_Object  => return "fixed point";
+         when Ordinary_Fixed_Point_Type    => return "fixed point type";
+         when Private_Type                 => return "private type";
+         when Protected_Object             => return "protected object";
+         when Protected_Type               => return "protected type";
+         when Record_Object                => return "record / struct";
+         when Record_Type                  => return "record type / struct";
+         when Signed_Integer_Object        => return "signed integer";
+         when Signed_Integer_Type          => return "signed integer type";
+         when String_Object                => return "string";
+         when String_Type                  => return "string type";
+         when Task_Object                  => return "task";
+         when Task_Type                    => return "task type";
+      end case;
+   end Kind_To_String;
 
 end Doc_Types;
