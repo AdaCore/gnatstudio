@@ -1,0 +1,40 @@
+ifeq ($(AUNIT_PROJECT),)
+AUNIT_PROJECT=True
+
+ifeq ($(BASE_DIR),)
+   include ../Makefile.common
+   BASE_DIR=$(shell pwd)
+   AUNIT_ROOT=True
+endif
+
+AUNIT_BASE_DIR := $(BASE_DIR)
+
+BASE_DIR=$(AUNIT_BASE_DIR)/../gtkada
+include $(BASE_DIR)/Makefile.gtkada
+BASE_DIR=$(AUNIT_BASE_DIR)/../kernel
+include $(BASE_DIR)/Makefile.kernel
+BASE_DIR=$(AUNIT_BASE_DIR)/../gvd
+include $(BASE_DIR)/Makefile.gvd_common
+BASE_DIR=$(AUNIT_BASE_DIR)/../widgets
+include $(BASE_DIR)/Makefile.widgets
+
+AUNIT_SRC_DIRS = $(AUNIT_BASE_DIR)/src
+SRC_DIRS += $(AUNIT_SRC_DIRS)
+C_SRCS = \
+  $(foreach name,$(AUNIT_SRC_DIRS),$(notdir $(wildcard $(name)/*$(C_EXT))))
+AUNIT_OBJ_DIR = $(AUNIT_BASE_DIR)/obj
+OBJ_DIR = $(AUNIT_OBJ_DIR)
+
+CFLAGS = -g -O2
+ADA_SOURCES = aunit_gui.adb
+
+PROJECT_FILE = aunit
+LIBS := $(AUNIT_OBJ_DIR)/libaunit$(AR_EXT) $(LIBS)
+
+ifeq ($(AUNIT_ROOT),True)
+   include ../builder/src/Makefile.glide
+else
+   DEPS_PROJECTS += $(AUNIT_BASE_DIR)/aunit
+endif
+
+endif

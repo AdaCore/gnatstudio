@@ -1,0 +1,35 @@
+ifeq ($(BROWSERS_PROJECT),)
+BROWSERS_PROJECT=True
+
+ifeq ($(BASE_DIR),)
+   include ../Makefile.common
+   BASE_DIR=$(shell pwd)
+   BROWSERS_ROOT=True
+endif
+
+BROWSERS_BASE_DIR := $(BASE_DIR)
+
+BASE_DIR=$(BROWSERS_BASE_DIR)/../gtkada
+include $(BASE_DIR)/Makefile.gtkada
+BASE_DIR=$(BROWSERS_BASE_DIR)/../prj_editor
+include $(BASE_DIR)/Makefile.prj_editor
+
+BROWSERS_SRC_DIRS = $(BROWSERS_BASE_DIR)/src
+SRC_DIRS += $(BROWSERS_SRC_DIRS)
+C_SRCS = \
+  $(foreach name,$(BROWSERS_SRC_DIRS),$(notdir $(wildcard $(name)/*$(C_EXT))))
+BROWSERS_OBJ_DIR = $(BROWSERS_BASE_DIR)/obj
+OBJ_DIR = $(BROWSERS_OBJ_DIR)
+
+CFLAGS = -g -O2
+
+PROJECT_FILE = browsers
+LIBS := $(BROWSERS_OBJ_DIR)/libbrowsers$(AR_EXT) $(LIBS)
+
+ifeq ($(BROWSERS_ROOT),True)
+   include ../builder/src/Makefile.glide
+else
+   DEPS_PROJECTS += $(BROWSERS_BASE_DIR)/browsers
+endif
+
+endif

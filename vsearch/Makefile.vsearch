@@ -1,0 +1,37 @@
+ifeq ($(VSEARCH_PROJECT),)
+VSEARCH_PROJECT=True
+
+ifeq ($(BASE_DIR),)
+   include ../Makefile.common
+   BASE_DIR=$(shell pwd)
+   VSEARCH_ROOT=True
+endif
+
+VSEARCH_BASE_DIR := $(BASE_DIR)
+
+BASE_DIR=$(VSEARCH_BASE_DIR)/../gtkada
+include $(BASE_DIR)/Makefile.gtkada
+BASE_DIR=$(VSEARCH_BASE_DIR)/../gvd
+include $(BASE_DIR)/Makefile.gvd_common
+BASE_DIR=$(VSEARCH_BASE_DIR)/../common
+include $(BASE_DIR)/Makefile.common
+
+VSEARCH_SRC_DIRS = $(VSEARCH_BASE_DIR)/src $(VSEARCH_BASE_DIR)/tests
+SRC_DIRS += $(VSEARCH_SRC_DIRS)
+C_SRCS = \
+  $(foreach name,$(VSEARCH_SRC_DIRS),$(notdir $(wildcard $(name)/*$(C_EXT))))
+VSEARCH_OBJ_DIR = $(VSEARCH_BASE_DIR)/obj
+OBJ_DIR = $(VSEARCH_OBJ_DIR)
+
+CFLAGS = -g -O2
+
+PROJECT_FILE = vsearch
+LIBS := $(VSEARCH_OBJ_DIR)/libvsearch$(AR_EXT) $(LIBS)
+
+ifeq ($(VSEARCH_ROOT),True)
+   include ../builder/src/Makefile.glide
+else
+   DEPS_PROJECTS += $(VSEARCH_BASE_DIR)/vsearch
+endif
+
+endif

@@ -1,0 +1,32 @@
+ifeq ($(METRICS_PROJECT),)
+METRICS_PROJECT=True
+
+ifeq ($(BASE_DIR),)
+   include ../Makefile.common
+   BASE_DIR=$(shell pwd)
+   METRICS_ROOT=True
+endif
+
+METRICS_BASE_DIR := $(BASE_DIR)
+BASE_DIR=$(METRICS_BASE_DIR)/../kernel
+include $(BASE_DIR)/Makefile.kernel
+
+METRICS_SRC_DIRS = $(METRICS_BASE_DIR)/src
+SRC_DIRS += $(METRICS_SRC_DIRS)
+C_SRCS = \
+  $(foreach name,$(METRICS_SRC_DIRS),$(notdir $(wildcard $(name)/*$(C_EXT))))
+METRICS_OBJ_DIR = $(METRICS_BASE_DIR)/obj
+OBJ_DIR = $(METRICS_OBJ_DIR)
+
+CFLAGS = -g -O2
+
+PROJECT_FILE = metrics
+LIBS := $(METRICS_OBJ_DIR)/libmetrics$(AR_EXT) $(LIBS)
+
+ifeq ($(METRICS_ROOT),True)
+   include ../builder/src/Makefile.glide
+else
+   DEPS_PROJECTS += $(METRICS_BASE_DIR)/metrics
+endif
+
+endif
