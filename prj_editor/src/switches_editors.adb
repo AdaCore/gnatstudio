@@ -1811,6 +1811,9 @@ package body Switches_Editors is
                end if;
             end loop;
          end loop;
+      else
+         --  No filter => always save those switches
+         return True;
       end if;
       return False;
    end Has_Supported_Language;
