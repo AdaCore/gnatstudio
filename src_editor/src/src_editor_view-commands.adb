@@ -134,7 +134,7 @@ package body Src_Editor_View.Commands is
         Source_View (Get_Current_Focus_Widget (Command.Kernel));
       Buffer : constant Source_Buffer := Source_Buffer (Get_Buffer (View));
    begin
-      if Do_Indentation (Buffer, Get_Language (Buffer), False) then
+      if Do_Indentation (Buffer, Get_Language (Buffer)) then
          return Success;
       else
          return Failure;
