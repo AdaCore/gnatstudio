@@ -136,9 +136,18 @@ package body Src_Editor_View.Commands is
       View   : constant Source_View   :=
         Source_View (Get_Current_Focus_Widget (Command.Kernel));
       Buffer : constant Source_Buffer := Source_Buffer (Get_Buffer (View));
+      Result : Boolean;
 
    begin
-      if Do_Indentation (Buffer) then
+      if not Get_Editable (View) then
+         return Failure;
+      end if;
+
+      Push_State (Command.Kernel, Busy);
+      Result := Do_Indentation (Buffer, Force => True);
+      Pop_State (Command.Kernel);
+
+      if Result then
          return Success;
       else
          return Failure;
