@@ -111,6 +111,14 @@ package Glide_Kernel.Preferences is
    pragma Convention (C, Key_Themes);
    --  The list of supported key themes.
 
+   type Indentation_Kind is (None, Simple, Extended);
+   for Indentation_Kind'Size use Glib.Gint'Size;
+   pragma Convention (C, Indentation_Kind);
+   --  Indentation kinds:
+   --  None: no indentation should be performed
+   --  Simple: use the amount of white spaces from previous line
+   --  Extended: use a language specific parser to compute indentation
+
    -----------------------
    -- List of constants --
    -----------------------
@@ -183,13 +191,13 @@ package Glide_Kernel.Preferences is
    MDI_All_Floating      : Param_Spec_Boolean;
 
    -- Languages --
-   Ada_Automatic_Indentation : Param_Spec_Boolean;
+   Ada_Automatic_Indentation : Param_Spec_Enum;
    Ada_Use_Tabs              : Param_Spec_Boolean;
    Ada_Indentation_Level     : Param_Spec_Int;
    Ada_Continuation_Level    : Param_Spec_Int;
    Ada_Declaration_Level     : Param_Spec_Int;
    Ada_Indent_Case_Extra     : Param_Spec_Boolean;
-   C_Automatic_Indentation   : Param_Spec_Boolean;
+   C_Automatic_Indentation   : Param_Spec_Enum;
    C_Use_Tabs                : Param_Spec_Boolean;
    C_Indentation_Level       : Param_Spec_Int;
 
