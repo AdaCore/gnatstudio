@@ -7,6 +7,18 @@ with Generic_Stack;
 
 package body Format is
 
+   ---------------
+   -- Constants --
+   ---------------
+
+   None         : constant := -1;
+   Indent_Level : constant := 3;
+   Spaces       : constant String (1 .. 150) := (others => ' ');
+
+   -----------
+   -- Types --
+   -----------
+
    type Token_Type is
      (Tok_Unknown,
       Tok_Abort,
@@ -82,10 +94,26 @@ package body Format is
    package Token_Stack is new Generic_Stack (Token_Type);
    use Token_Stack;
 
-   package Indent_Stack is new Generic_Stack (Natural);
+   package Indent_Stack is new Generic_Stack (Integer);
    use Indent_Stack;
 
    subtype Word is Natural;
+
+   --------------------------
+   -- Line Buffer Handling --
+   --------------------------
+
+   --  The line buffer represents a buffer (e.g contents of a file) line
+   --  by line. Line separators (LF or CR/LF) are kept at the end of the buffer
+   --  It is recommended to take advantage of the bound information that comes
+   --  with a String_Access so that there can be a direct mapping between
+   --  the original raw buffer and a line buffer.
+   --  Len is used to keep the length of the original line stored. Since this
+   --  type is intended for making changes in buffers at a minimal cost
+   --  (e.g avoiding copies of complete buffers when inserting a few
+   --  characters), being able to convert from the original buffer's position
+   --  information to the line buffer is critical and is achieved using the Len
+   --  field.
 
    type Line_Buffer_Record;
    type Line_Buffer is access Line_Buffer_Record;
@@ -101,7 +129,6 @@ package body Format is
    type Extended_Line_Buffer is record
       First   : Line_Buffer;
       Current : Line_Buffer;
-      Padding : Integer := 0;
    end record;
 
    function To_Line_Buffer (Buffer : String) return Extended_Line_Buffer;
@@ -113,6 +140,10 @@ package body Format is
 
    procedure Free (Buffer : in out Extended_Line_Buffer);
    --  Free the contents of buffer.
+
+   ----------------------
+   -- Parsing Routines --
+   ----------------------
 
    function End_Of_Word (Buffer : String; P : Word) return Word;
    --  Return the end of the word pointed by P.
@@ -145,7 +176,11 @@ package body Format is
       Num_Parens      : in out Integer;
       String_Mismatch : in out Boolean;
       Semicolon       : in out Boolean;
-      Line_Count      : in out Word);
+      Line_Count      : in out Word;
+      Indents         : in out Indent_Stack.Simple_Stack;
+      Num_Spaces      : Integer;
+      Indent_Done     : in out Boolean);
+
    --  Starting at Buffer (P), find the location of the next word
    --  and set P accordingly.
    --  Formatting of operators is performed by this procedure.
@@ -163,6 +198,15 @@ package body Format is
       Last    : Word;
       Replace : String);
    --  Replace the slice First .. Last - 1 in Buffer by Replace.
+
+   procedure Do_Indent
+     (Buffer      : String;
+      New_Buffer  : in out Extended_Line_Buffer;
+      Prec        : Word;
+      Indents     : Indent_Stack.Simple_Stack;
+      Num_Spaces  : Integer;
+      Indent_Done : in out Boolean);
+   --  Perform indentation by inserting spaces in the buffer.
 
    ------------------
    -- Is_Word_Char --
@@ -206,6 +250,8 @@ package body Format is
       if S'Length = 1 then
          return Tok_Unknown;
       end if;
+
+      --  Use a case statement instead of a loop for efficiency
 
       case S (1) is
          when 'a' =>
@@ -498,11 +544,15 @@ package body Format is
       Num_Parens      : in out Integer;
       String_Mismatch : in out Boolean;
       Semicolon       : in out Boolean;
-      Line_Count      : in out Word)
+      Line_Count      : in out Word;
+      Indents         : in out Indent_Stack.Simple_Stack;
+      Num_Spaces      : Integer;
+      Indent_Done     : in out Boolean)
    is
       Comma         : String := ", ";
       Spaces        : String := "    ";
       End_Of_Line   : Word;
+      Start_Of_Line : Word;
       Long          : Word;
       First         : Word;
       Last          : Word;
@@ -510,6 +560,7 @@ package body Format is
       Insert_Spaces : Boolean;
       Char          : Character;
       PChar         : Character;
+      Padding       : Integer;
   
       procedure Handle_Two_Chars (Second_Char : Character);
       --  Handle a two char operator, whose second char is Second_Char.
@@ -537,12 +588,23 @@ package body Format is
 
    begin
       End_Of_Line     := Line_End (Buffer, P);
+      Start_Of_Line   := Line_Start (Buffer, P);
       String_Mismatch := False;
+
+      if New_Buffer.Current.Line'First = Start_Of_Line then
+         Padding := New_Buffer.Current.Line'Length - New_Buffer.Current.Len;
+      else
+         Padding := 0;
+         Indent_Done := False;
+      end if;
 
       loop
          if P > End_Of_Line then
-            End_Of_Line := Line_End (Buffer, P);
-            Line_Count  := Line_Count + 1;
+            End_Of_Line   := Line_End (Buffer, P);
+            Start_Of_Line := Line_Start (Buffer, P);
+            Line_Count    := Line_Count + 1;
+            Padding       := 0;
+            Indent_Done := False;
          end if;
 
          --  Skip comments
@@ -550,25 +612,53 @@ package body Format is
          while Buffer (P) = '-'
            and then Buffer (Next_Char (P)) = '-'
          loop
-            P           := Next_Line (Buffer, P);
-            End_Of_Line := Line_End (Buffer, P);
-            Line_Count  := Line_Count + 1;
+            P             := Next_Line (Buffer, P);
+            Start_Of_Line := P;
+            End_Of_Line   := Line_End (Buffer, P);
+            Line_Count    := Line_Count + 1;
+            Padding       := 0;
+            Indent_Done := False;
          end loop;
 
          exit when P = Buffer'Last or else Is_Word_Char (Buffer (P));
 
          case Buffer (P) is
             when '(' =>
-               Num_Parens := Num_Parens + 1;
-               Char       := Buffer (Prev_Char (P));
+               Char := Buffer (Prev_Char (P));
 
-               if Char /= ' ' and then Char /= ''' then
-                  Spaces (2) := Buffer (P);
-                  Replace_Text (New_Buffer, P, P + 1, Spaces (1 .. 2));
+               if Indent_Done then
+                  if Char /= ' ' and then Char /= ''' then
+                     Spaces (2) := Buffer (P);
+                     Replace_Text (New_Buffer, P, P + 1, Spaces (1 .. 2));
+                     Padding :=
+                       New_Buffer.Current.Line'Length - New_Buffer.Current.Len;
+                  end if;
+               else
+                  --  Indent with 2 extra spaces if the '(' is the first
+                  --  non blank character on the line
+
+                  Do_Indent
+                    (Buffer, New_Buffer, P, Indents,
+                     Num_Spaces + 2, Indent_Done);
+                  Padding :=
+                    New_Buffer.Current.Line'Length - New_Buffer.Current.Len;
+               end if;
+
+               --  Test if we are inside a character literal
+               --  ??? does not handle Character'('a')
+
+               if Char /= ''' or else Buffer (Next_Char (P)) /= ''' then
+                  Push (Indents, P - Start_Of_Line + Padding + 1);
+                  Num_Parens := Num_Parens + 1;
                end if;
 
             when ')' =>
-               Num_Parens := Num_Parens - 1;
+               if Buffer (Prev_Char (P)) /= '''
+                 or else Buffer (Next_Char (P)) /= '''
+               then
+                  Pop (Indents);
+                  Num_Parens := Num_Parens - 1;
+               end if;
 
             when '"' =>
                if Buffer (Prev_Char (P)) /= '''
@@ -730,16 +820,49 @@ package body Format is
       return Buffer (Buffer'First);
    end Prev_Non_Blank;
 
+   ---------------
+   -- Do_Indent --
+   ---------------
+
+   procedure Do_Indent
+     (Buffer      : String;
+      New_Buffer  : in out Extended_Line_Buffer;
+      Prec        : Word;
+      Indents     : Indent_Stack.Simple_Stack;
+      Num_Spaces  : Integer;
+      Indent_Done : in out Boolean)
+   is
+      Start       : Word;
+      Indentation : Integer;
+      Index       : Word;
+
+   begin   
+      if not Indent_Done then
+         Start := Line_Start (Buffer, Prec);
+         Index := Start;
+
+         while Buffer (Index) = ' ' or else Buffer (Index) = ASCII.HT loop
+            Index := Index + 1;
+         end loop;
+
+         if Top (Indents) = None then
+            Indentation := Num_Spaces;
+         else
+            Indentation := Top (Indents);
+         end if;
+
+         Replace_Text (New_Buffer, Start, Index, Spaces (1 .. Indentation));
+         --  Current := End_Of_Word (Buffer, Prec);
+         Indent_Done := True;
+      end if;
+   end Do_Indent;
+
    ----------------
    -- Format_Ada --
    ----------------
 
    procedure Format_Ada (Buffer : String) is
-      None         : constant := -1;
-      Indent_Level : constant := 3;
-
       New_Buffer          : Extended_Line_Buffer;
-      Index               : Word;
       Word_Count          : Integer           := 0;
       Line_Count          : Integer           := 0;
       Str                 : String (1 .. 1024);
@@ -747,8 +870,6 @@ package body Format is
       Current             : Word;
       Prec, Prec_Last     : Word              := 1;
       Num_Spaces          : Integer           := 0;
-      Param_Indent        : Integer           := None;
-      Spaces              : String (1 .. 150) := (others => ' ');
       Indent_Done         : Boolean           := False;
       Num_Parens          : Integer           := 0;
       Prev_Num_Parens     : Integer           := 0;
@@ -760,7 +881,6 @@ package body Format is
       Or_Token            : Boolean           := False;
       And_Token           : Boolean           := False;
       Subprogram_Decl     : Boolean           := False;
-      In_String           : Boolean           := False;
       String_Mismatch     : Boolean           := False;
       Syntax_Error        : Boolean           := False;
       Started             : Boolean           := False;
@@ -770,40 +890,8 @@ package body Format is
       Indents             : Indent_Stack.Simple_Stack;
       Val                 : Token_Type;
 
-      procedure Do_Indent;
-      --  Perform indentation by inserting spaces in the buffer.
-
       procedure Handle_Reserved_Word (Word : Token_Type);
       --  Handle reserved words.
-
-      ---------------
-      -- Do_Indent --
-      ---------------
-
-      procedure Do_Indent is
-         Start       : Word;
-         Indentation : Integer;
-
-      begin   
-         if not Indent_Done then
-            Start := Line_Start (Buffer, Prec);
-            Index := Start;
-
-            while Buffer (Index) = ' ' or else Buffer (Index) = ASCII.HT loop
-               Index := Index + 1;
-            end loop;
-
-            if Param_Indent = None then
-               Indentation := Num_Spaces;
-            else
-               Indentation := Param_Indent;
-            end if;
-
-            Replace_Text (New_Buffer, Start, Index, Spaces (1 .. Indentation));
-            Current := End_Of_Word (Buffer, Prec);
-            Indent_Done := True;
-         end if;
-      end Do_Indent;
 
       --------------------------
       -- Handle_Reserved_Word --
@@ -989,7 +1077,8 @@ package body Format is
                   end if;
                end if;
 
-               Do_Indent;
+               Do_Indent
+                 (Buffer, New_Buffer, Prec, Indents, Num_Spaces, Indent_Done);
                Num_Spaces := Num_Spaces + Indent_Level;
             end if;
 
@@ -1029,7 +1118,8 @@ package body Format is
             --  generic
             --     type ...;
 
-            Do_Indent;
+            Do_Indent
+              (Buffer, New_Buffer, Prec, Indents, Num_Spaces, Indent_Done);
             Num_Spaces := Num_Spaces + Indent_Level;
             In_Generic := True;
 
@@ -1048,7 +1138,8 @@ package body Format is
 
             if Val /= Tok_Declare then
                Num_Spaces := Num_Spaces - Indent_Level;
-               Do_Indent;
+               Do_Indent
+                 (Buffer, New_Buffer, Prec, Indents, Num_Spaces, Indent_Done);
                Num_Spaces := Num_Spaces + 2 * Indent_Level;
                Pop (Tokens);
                Push (Tokens, Tok_Exception);
@@ -1067,9 +1158,13 @@ package body Format is
       --  Push a dummy token so that stack will never be empty.
       Push (Tokens, Tok_Unknown);
 
+      --  Push a dummy indentation so that stack will never be empty.
+      Push (Indents, None);
+
       Next_Word
         (Buffer, New_Buffer, Prec, Num_Parens,
-         String_Mismatch, Semicolon, Line_Count);
+         String_Mismatch, Semicolon, Line_Count,
+         Indents, Num_Spaces, Indent_Done);
       Current := End_Of_Word (Buffer, Prec);
 
       while Current < Buffer'Last loop
@@ -1087,12 +1182,9 @@ package body Format is
             then
                End_Token := False;
             elsif Subprogram_Decl then
-               if Num_Parens > 0 and then Prev_Num_Parens = 0 then
-                  Param_Indent := Prec - Line_Start (Buffer, Prec);
-               elsif Num_Parens = 0 then
+               if Num_Parens = 0 then
                   if Semicolon or else Prev_Num_Parens > 0 then
                      Subprogram_Decl := False;
-                     Param_Indent    := None;
 
                      if Semicolon and then not In_Generic then
                         --  subprogram decl with no following reserved word,
@@ -1126,7 +1218,8 @@ package body Format is
          end if;
 
          if Started then
-            Do_Indent;
+            Do_Indent
+              (Buffer, New_Buffer, Prec, Indents, Num_Spaces, Indent_Done);
          else
             Started := True;
          end if;
@@ -1137,7 +1230,8 @@ package body Format is
          Prec            := Current + 1;
          Next_Word
            (Buffer, New_Buffer, Prec, Num_Parens,
-            String_Mismatch, Semicolon, Line_Count);
+            String_Mismatch, Semicolon, Line_Count,
+            Indents, Num_Spaces, Indent_Done);
 
          Syntax_Error :=
            Syntax_Error or else (Prec = Buffer'Last and then Num_Spaces > 0);
@@ -1160,9 +1254,8 @@ package body Format is
          --  A new line, reset flags.
 
          if Line_Start (Buffer, Prec) /= Line_Start (Buffer, Prec_Last) then
-            Indent_Done := False;
-            In_String   := False;
-
+            null;
+            --  Indent_Done := False;
             --  ??? Handle events, update progress bar, ...
          end if;
       end loop;
@@ -1258,6 +1351,7 @@ package body Format is
       F, L       : Word;
       Line_First : Natural;
       Line_Last  : Natural;
+      Padding    : Integer;
 
    begin
       if Buffer.Current.Line'First + Buffer.Current.Len - 1 < First then
@@ -1266,12 +1360,11 @@ package body Format is
 
             exit when Buffer.Current.Line'First + Buffer.Current.Len > First;
          end loop;
-
-         Buffer.Padding := 0;
       end if;
 
-      F := First + Buffer.Padding;
-      L := Last  + Buffer.Padding;
+      Padding := Buffer.Current.Line'Length - Buffer.Current.Len;
+      F := First + Padding;
+      L := Last  + Padding;
 
       if Last - First = Replace'Length then
          --  Simple case, no need to reallocate buffer
@@ -1291,7 +1384,6 @@ package body Format is
 
          Free (Buffer.Current.Line);
          Buffer.Current.Line := S;
-         Buffer.Padding := Buffer.Padding + Replace'Length - (Last - First);
       end if;
    end Replace_Text;
 
