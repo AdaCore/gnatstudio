@@ -136,8 +136,12 @@ begin
    Set_Shadow_Type (Process_Tab.Data_Canvas, Shadow_In);
    Add (Process_Tab.Scrolledwindow12, Process_Tab.Data_Canvas);
 
+   Gtk_New (Process_Tab.Editor_Frame);
+   Set_Shadow_Type (Process_Tab.Editor_Frame, Shadow_Etched_In);
+   Add (Process_Tab.Vpaned6, Process_Tab.Editor_Frame);
+
    Gtk_New_Hbox (Process_Tab.Editor_Text, Process_Tab);
-   Add (Process_Tab.Vpaned6, Process_Tab.Editor_Text);
+   Add (Process_Tab.Editor_Frame, Process_Tab.Editor_Text);
 
    Gtk_New (Process_Tab.Scrolledwindow7);
    Set_Policy (Process_Tab.Scrolledwindow7, Policy_Never, Policy_Always);

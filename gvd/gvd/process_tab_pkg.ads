@@ -23,6 +23,7 @@ with Gtk.Paned; use Gtk.Paned;
 with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
 with Gtk.Clist; use Gtk.Clist;
 with Gtk.Label; use Gtk.Label;
+with Gtk.Frame; use Gtk.Frame;
 with Gtk.Text; use Gtk.Text;
 with Gtk.Handlers;
 with GVD.Canvas; use GVD.Canvas;
@@ -46,6 +47,7 @@ package Process_Tab_Pkg is
       Label204 : Gtk_Label;
       Scrolledwindow12 : Gtk_Scrolled_Window;
       Data_Canvas : GVD_Canvas;
+      Editor_Frame : Gtk_Frame;
       Editor_Text : Code_Editor;
       Scrolledwindow7 : Gtk_Scrolled_Window;
       Debugger_Text : Gtk_Text;
