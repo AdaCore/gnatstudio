@@ -11,6 +11,8 @@ INSTALL = @INSTALL@
 INSTALL_DATA = @INSTALL_DATA@
 IMAGES = launch.gif
 
+TEXI2HTML_FLAGS=--split chapter -menu
+
 all: doc clean-temp-files
 non-ps: common clean-temp-files
 static:
@@ -19,7 +21,7 @@ doc: glide2.txt glide2.html glide2.info glide2.ps
 
 glide2.html: glide2.texi
 ifneq (${TEXI2HTML},)
-	perl ${TEXI2HTML} -menu -monolithic glide2.texi
+	perl ${TEXI2HTML} ${TEXI2HTML_FLAGS} glide2.texi
 else
 	@echo "----------------------------------------------------"
 	@echo "texi2html not found, cannot build HTML documentation"
@@ -71,7 +73,7 @@ install:
 	$(MKDIR) $(docdir)/ps
 	$(MKDIR) $(docdir)/txt
 	-$(INSTALL_DATA) glide-welcome.html $(docdir)/html
-	-$(INSTALL_DATA) glide2.html $(docdir)/html
+	-$(INSTALL_DATA) glide2_*.html $(docdir)/html
 	-$(INSTALL_DATA) glide2.info $(docdir)/info
 	-$(INSTALL_DATA) glide2.ps  $(docdir)/ps
 	-$(INSTALL_DATA) glide2.txt  $(docdir)/txt
@@ -95,7 +97,7 @@ clean-temp-files:
 
 clean: clean-temp-files
 	-$(RM) glide2.info*
-	-$(RM) glide2.html glide2.ps glide2.txt
+	-$(RM) glide2_*.html glide2.ps glide2.txt
 
 mostlyclean: clean
 
