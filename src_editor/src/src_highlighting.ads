@@ -26,7 +26,6 @@
 
 with Gdk.Color;
 with Gtk.Text_Tag;
-with Pango.Enums;
 with Pango.Font;
 
 with Language;
