@@ -60,7 +60,7 @@ rem	"Remarks"	filename?position?class?method_or_function;comment
  
 su	"Subroutines"	name?position?filename;attributes?{}?{}?{comment}
  
-t	"Typedefs"	name?position?filename;attributes?{original}?{}?{comment}
+t	"Typedefs"	name?position?filename;end_position?attributes?{original}?{}?{}?{comment}
 
 ta	"Templates arguments"	scope?name?start_position?filename;position;attributes
  
