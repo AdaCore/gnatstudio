@@ -1067,7 +1067,7 @@ package body Src_Editor_Buffer.Line_Information is
          end loop;
 
          Buffer.Last_Editable_Line := Buffer.Last_Editable_Line +
-           Editable_Line_Type (Number + 1);
+           Editable_Line_Type (Number);
          Buffer.Original_Text_Inserted := True;
 
       else
