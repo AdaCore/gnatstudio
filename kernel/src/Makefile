@@ -1,4 +1,4 @@
-
+CFLAGS += -gnatws
 MAIN=kernel
 MODULES=gnat gtkada common gvd src_editor vsearch prj_editor
 # This forces compilation of all files separately, without compiling the
