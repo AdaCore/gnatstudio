@@ -59,3 +59,19 @@ int __gnat_get_logical_drive_strings (char *buffer, int len)
   return 0;
 #endif
 }
+
+int
+__gnat_is_symbolic_link (name)
+     char *name;
+{
+#ifdef _WIN32
+  return 0;
+#else
+  int ret;
+  struct stat statbuf;
+
+  ret = __gnat_stat (name, &statbuf);
+  return (!ret && S_ISLNK (statbuf.st_mode));
+#endif
+}
+
