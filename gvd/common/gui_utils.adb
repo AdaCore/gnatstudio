@@ -183,18 +183,21 @@ package body GUI_Utils is
       Busy          : Boolean := True;
       Force_Refresh : Boolean := False)
    is
+      use type Gdk_Window;
       Cursor     : Gdk_Cursor;
    begin
-      if Busy then
-         Gdk_New (Cursor, Watch);
-         Set_Cursor (Window, Cursor);
-         Destroy (Cursor);
-      else
-         Set_Cursor (Window, null);
-      end if;
+      if Window /= null then
+         if Busy then
+            Gdk_New (Cursor, Watch);
+            Set_Cursor (Window, Cursor);
+            Destroy (Cursor);
+         else
+            Set_Cursor (Window, null);
+         end if;
 
-      if Force_Refresh then
-         Gdk.Main.Flush;
+         if Force_Refresh then
+            Gdk.Main.Flush;
+         end if;
       end if;
    end Set_Busy_Cursor;
 
