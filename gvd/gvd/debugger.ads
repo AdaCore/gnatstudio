@@ -46,6 +46,9 @@ package Debugger is
    --
    --  Proxy is assigned to the debugger, after its underlying process has
    --  been created.
+   --
+   --  The Debugger should set up filters to handle the change of current
+   --  language, ...
 
    procedure General_Spawn
      (Debugger       : access Debugger_Root'Class;
@@ -102,6 +105,32 @@ package Debugger is
 
    procedure Wait_Prompt (Debugger : access Debugger_Root) is abstract;
    --  Wait for the prompt.
+
+   procedure Display_Prompt (Debugger : access Debugger_Root) is abstract;
+   --  Send a command to the debugger, so that the prompt is displayed
+   --  again in the debugger window. This is used after internal commands like
+   --  "graph print", to indicate that the command has finished executing.
+
+   procedure Found_File_Name (Debugger   : access Debugger_Root;
+                              Str        : String;
+                              Name_First : out Natural;
+                              Name_Last  : out Positive;
+                              Line       : out Natural);
+   --  Search for a file name indication in Str.
+   --  Str is a string output by the debugger, that might contain a reference
+   --  to a specific file and line, that we want to display in the code editor
+   --  window.
+   --  On output, the name of the file is Str (Name_First .. Name_Last), and
+   --  the line is Line.
+   --  Set Name_First to 0 if no file name was found, and set Line to 0 if
+   --  no line was found.
+   --  Note that the last reference to a file or a line should be used, in case
+   --  multiple references are found in Str.
+   --
+   --  Implementation Note: This could have been done by adding another output
+   --  filter to the debugger, that would take care of parsing the output.
+   --  However, since display a file requires multiple operations, it seemed
+   --  better to do it in Odd.Process.Text_Output_Handler.
 
    function Type_Of
      (Debugger : access Debugger_Root;

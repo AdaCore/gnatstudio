@@ -148,4 +148,20 @@ package body Debugger is
       Set_Descriptor (Debugger.Process, Descriptor);
    end General_Spawn;
 
+   ---------------------
+   -- Found_File_Name --
+   ---------------------
+
+   procedure Found_File_Name (Debugger   : access Debugger_Root;
+                              Str        : String;
+                              Name_First : out Natural;
+                              Name_Last  : out Positive;
+                              Line       : out Natural)
+   is
+   begin
+      Name_First := 0;
+      Name_Last  := 1;
+      Line       := 0;
+   end Found_File_Name;
+
 end Debugger;
