@@ -453,13 +453,17 @@ package body Debugger is
       end if;
 
    exception
-      when Process_Died =>
+      when others =>
          --  Will close the debugger in GVD.Process when getting this
          --  exception the next time.
 
          Timeout_Remove (Process.Timeout_Id);
          Process.Timeout_Id := 0;
-         Set_Command_In_Process (Get_Process (Debugger), False);
+
+         if Debugger /= null then
+            Set_Command_In_Process (Get_Process (Debugger), False);
+         end if;
+
          Set_Busy (Process, False);
          Free (Process.Current_Command);
          Unregister_Dialog (Process);
