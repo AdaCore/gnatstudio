@@ -89,8 +89,8 @@ Preferences/Settings
 
 Customization
 
-* Customizing the Tool Bar::
 * Customizing the Menu Bar::
+* Customizing the Tool Bar::
 * Changing Colors Fonts and Pixmaps::
 
 Environment
@@ -466,17 +466,149 @@ menu to open the external editor.
 @c --------------------------------------------------------------------
 
 @menu
-* Customizing the Tool Bar::
 * Customizing the Menu Bar::
+* Customizing the Tool Bar::
 * Changing Colors Fonts and Pixmaps::
 @end menu
 
-@node Customizing the Tool Bar
-@section Customizing the Tool Bar
-@noindent
-
 @node Customizing the Menu Bar
 @section Customizing the Menu Bar
+@noindent
+
+The GPS menu bar can be customized through an XML file called
+@file{custom} in the gps home directory (@file{~/.gps} on Unix
+systems).
+
+The format of this file is the following:
+
+@smallexample
+<?xml version="1.0"?>
+
+<Custom>
+
+  <Submenu>
+    <Title>custom menu</Title>
+
+    <Menuitem>
+    <Title>item 1</Title>
+      <Action>shell command 1</Action>
+    </Menuitem>
+
+    <Submenu>
+      <Title>other menu</Title>
+      <Menuitem>
+        <Title> (etc..)
+      </Menuitem>
+
+      <Submenu>
+        (...)
+      </Submenu>
+    </Submenu>
+  </Submenu>
+
+  <Submenu>
+    <Title>custom menu number 2</Title>
+    (...)
+  </Submenu>
+
+ </Custom>
+@end smallexample
+
+The example above creates a two toplevel menus, named @file{custom menu}
+and @file{custom menu number 2}. The first one contains a menu item named
+@file{item 1}, which is associated to the shell command @file{shell command
+1}, and a submenu named @file{other menu}, and so on.
+
+You can define the accelerator keys for your menus, using underscores
+in the titles. Thus, if you want an accelerator on the first letter in
+a menu named @file{File}, set its title as @file{_File}.
+
+You can add items or submenus to existing menus, using titles for
+menus that already exist. For example, this adds an item named
+@file{Robert} to the @file{Edit} menu.
+
+@smallexample
+<Submenu>
+  <Title>Edit</Title>
+  <Menuitem>
+    <Title>Robert</Title>
+  </Menuitem>
+</Submenu>
+@end smallexample
+
+Use the @file{/} separator to identify the submenu in a menu. For
+example, this adds a submenu named @file{Olga} containing an item named
+@file{Item} to the @file{Edit} menu.
+
+@smallexample
+<Submenu>
+  <Title>Edit/Olga</Title>
+  <Menuitem>
+    <Title>Item</Title>
+  </Menuitem>
+</Submenu>
+@end smallexample
+
+Adding an item with an empty title or no title at all inserts a
+menu separator.
+
+You can use macro arguments to pass to you shell
+commands. Macro arguments are special parameters that are transformed
+every time that the command is about to be executed. The following
+macro arguments exist in GPS:
+
+@table @file
+@item %f
+Base name of the currently opened file.
+
+@item %F
+Absolute name of the currently opened file.
+
+@item %p
+The current project.
+
+@item %P
+The root project.
+
+@item %(p|P)[r](d|s)[f]
+Substituted by the contents of a project :
+
+P : the project is the root project
+
+p : the project is the current project
+
+r : indicates that the listing should be project-recursive, ie that
+sub-projects should be listed as well, and their subprojects, and so
+on. 
+
+d : list the source directories
+
+s : list the source files
+
+f : output the list into a file and substitute the parameter with the
+name of that file. 
+@end table
+
+Examples :
+
+@table @file
+
+@item %Ps
+Replaced by a list of source files in the root project.
+
+@item %prs
+Replaced by a list of files in the current project, and all imported
+subprojects, recursively.
+
+@item %prdf
+Replaced by the name of a file that contains a list of source
+directories in the current project, and all imported subprojects,
+recursively.
+@end table
+
+
+@node Customizing the Tool Bar
+@section Customizing the Tool Bar
 @noindent
 
 @node Changing Colors Fonts and Pixmaps
