@@ -108,6 +108,9 @@ package VFS is
    function "=" (File1, File2 : Virtual_File) return Boolean;
    --  Whether File1 and File2 represent the same physical file on disk.
 
+   procedure Sort (Files : in out File_Array);
+   --  Sort the array of files, in the order given by the full names.
+
    -------------------
    -- Writing files --
    -------------------

@@ -30,6 +30,7 @@ with GNAT.OS_Lib;                use GNAT.OS_Lib;
 with File_Utils;                 use File_Utils;
 with OS_Utils;                   use OS_Utils;
 with GNAT.Case_Util;             use GNAT.Case_Util;
+with GNAT.Heap_Sort;             use GNAT.Heap_Sort;
 with Interfaces.C.Strings;       use Interfaces.C.Strings;
 with Ada.Unchecked_Conversion;
 with System;
@@ -354,5 +355,46 @@ package body VFS is
    begin
       return File_Time_Stamp (Locale_Full_Name (File));
    end File_Time_Stamp;
+
+   ----------
+   -- Sort --
+   ----------
+
+   procedure Sort (Files : in out File_Array) is
+      --  ??? Right now, this sorts only on the full name. Do we want to
+      --  provide other choices for sorting ?
+
+      procedure Xchg (Op1, Op2 : Natural);
+      --  Exchanges two items in the array.
+
+      function Lt (Op1, Op2 : Natural) return Boolean;
+      --  Return True if the first item is to be sorted before the second.
+
+      procedure Xchg (Op1, Op2 : Natural) is
+         Buffer : Virtual_File;
+      begin
+         Buffer := Files (Files'First - 1 + Op1);
+         Files (Files'First - 1 + Op1) := Files (Files'First - 1 + Op2);
+         Files (Files'First - 1 + Op2) := Buffer;
+      end Xchg;
+
+      function Lt (Op1, Op2 : Natural) return Boolean is
+      begin
+         --  ??? What about case sensitivity ?
+         --  Do we lower-case file names automatically if we are on a
+         --  case-insensitive system ? would it be interesting to do so ?
+         --  We need to decide on this and then either implement the suggestion
+         --  above, or else do a case-insensitive compare just below.
+         --  (Or maybe write a "Case_Insensitive_Lt" for more efficiency).
+
+         return
+           Files (Files'First - 1 + Op2).Value.Full_Name /= null
+            and then Files (Files'First - 1 + Op1).Value.Full_Name /= null
+            and then Files (Files'First - 1 + Op1).Value.Full_Name.all
+              < Files (Files'First - 1 + Op2).Value.Full_Name.all;
+      end Lt;
+   begin
+      Sort (Files'Length, Xchg'Unrestricted_Access, Lt'Unrestricted_Access);
+   end Sort;
 
 end VFS;
