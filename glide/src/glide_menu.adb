@@ -333,13 +333,13 @@ package body Glide_Menu is
          Gtk_New (Project & (-"Open..."), "", Stock_Open,
                   On_Open_Project'Access),
          Gtk_New (Project & "sep1", Item_Type => Separator),
-         Gtk_New (Project & (-"Generate API doc"), "", Stock_Execute, null),
 
          Gtk_New (Debug & Data_Sub & (-"Call Stack"), "", null, Check_Item),
 
          Gtk_New (Tools & (-"Code Fixing"), "", null),
          Gtk_New (Tools & (-"Profile"), "", null),
          Gtk_New (Tools & (-"Memory Analyzer"), "", null),
+         Gtk_New (Tools & (-"Generate API doc"), "", null),
 
          Gtk_New (Window),
 
