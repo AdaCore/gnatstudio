@@ -175,11 +175,6 @@ Environment
 GPS is a complete integrated development environment that gives access
 to a wide range of tools and integrates them smoothly.
 
-This version is considered as beta software, meaning that you may encounter
-some instabilities or some missing features. For this reason we will
-particularly welcome bug reports, as well as suggestions for possible
-improvements (see @ref{Reporting Suggestions and Bugs}).
-
 @cindex HTML
 @cindex help
 GPS gives access to built-in file editing; HTML based help system;
