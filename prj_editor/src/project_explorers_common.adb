@@ -710,9 +710,9 @@ package body Project_Explorers_Common is
 
       Iter        : constant Gtk_Tree_Iter := Find_Iter_For_Event
         (Tree, Model, Event);
-      Parent_Iter : Gtk_Tree_Iter;
       Context     : Selection_Context_Access;
       Node_Type   : Node_Types;
+      L           : Integer := 0;
 
    begin
       if Iter /= Null_Iter then
@@ -722,12 +722,20 @@ package body Project_Explorers_Common is
          return Context;
       end if;
 
-      Parent_Iter := Parent (Gtk_Tree_Model (Model), Iter);
-
       if Node_Type = Entity_Node then
          Context := new Entity_Selection_Context;
       else
          Context := new File_Selection_Context;
+      end if;
+
+      if Node_Type = Entity_Node then
+         Set_Entity_Information
+           (Context     => Entity_Selection_Context_Access (Context),
+            Entity_Name => Entity_Base
+              (Get_String (Model, Iter, Entity_Base_Column)),
+            Entity_Column => Integer
+              (Get_Int (Model, Iter, Column_Column)));
+         L := Integer (Get_Int (Model, Iter, Line_Column));
       end if;
 
       Set_File_Information
@@ -737,19 +745,8 @@ package body Project_Explorers_Common is
          File_Name    => Get_File_From_Node (Model, Iter),
          Project      => Get_Project_From_Node (Model, Kernel, Iter, False),
          Importing_Project =>
-           Get_Project_From_Node (Model, Kernel, Iter, True));
-
-      if Node_Type = Entity_Node then
-         Set_Entity_Information
-           (Context     => Entity_Selection_Context_Access (Context),
-            Entity_Name => Entity_Base
-              (Get_String (Model, Iter, Entity_Base_Column)),
-            Category    => Get_Category_Type (Model, Parent_Iter),
-            Line        => Integer
-              (Get_Int (Model, Iter, Line_Column)),
-            Column      => Integer
-              (Get_Int (Model, Iter, Column_Column)));
-      end if;
+           Get_Project_From_Node (Model, Kernel, Iter, True),
+         Line         => L);
 
       return Context;
 
