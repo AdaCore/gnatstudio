@@ -34,31 +34,29 @@ package body Codefix.Errors_Manager is
       Current_Line        : Dynamic_String;
       Cursor_Line         : File_Cursor;
       File_Pos, Logic_Pos : Natural;
+
    begin
       Get_Direct_Message (This, Current);
-
       if Current.File_Name = null or else Current.File_Name.all = "" then
          Free (Current);
          Current := Invalid_Error_Message;
          return;
       end if;
-
       Cursor_Line := File_Cursor (Current);
       Cursor_Line.Col := 1;
-      Assign (Current_Line, Get_Line (Current_Text, Cursor_Line));
 
+      Assign (Current_Line, Get_Line (Current_Text, Cursor_Line));
       Logic_Pos := 1;
       File_Pos := 1;
       loop
+         exit when Logic_Pos = Current.Col;
          if Current_Line.all (File_Pos) = ASCII.HT then
             Logic_Pos := Logic_Pos + ((-Logic_Pos) mod Tab_Width);
          end if;
          Logic_Pos := Logic_Pos + 1;
          File_Pos := File_Pos + 1;
-         exit when Logic_Pos = Current.Col;
       end loop;
       Current.Col := File_Pos;
-
       Free (Current_Line);
    end Get_Message;
 
@@ -83,7 +81,6 @@ package body Codefix.Errors_Manager is
    begin
       while not No_More_Messages (Errors_List) loop
          Get_Message (Errors_List, Source_Text, Current_Message);
-
          if Current_Message /= Invalid_Error_Message then
             Solutions := Get_Solutions (Source_Text, Current_Message);
 
@@ -117,8 +114,10 @@ package body Codefix.Errors_Manager is
            (This.Valid_Corrections,
             Clone (Get_Extract (Data (Error.Ptr_Solutions), Choice)));
       end if;
-
-      Remove_Nodes (This.Potential_Corrections, Error.Ptr_Solutions);
+      Remove_Nodes
+        (This.Potential_Corrections,
+         Prev (This.Potential_Corrections, Error.Ptr_Solutions),
+         Error.Ptr_Solutions);
    end Validate;
 
    ------------
@@ -274,28 +273,36 @@ package body Codefix.Errors_Manager is
       Node_Line     : Line_List.List_Node;
       Line_Temp     : Extract_Line;
       Result_List   : Line_List.List;
+      Recorded      : Boolean;
 
    begin
       Node_Solution := First (List);
 
       while Node_Solution /= Extract_List.Null_Node loop
+
          for J in 1 .. Get_Number_Lines (Data (Node_Solution)) loop
             Node_Line := First (Result_List);
-            Line_Temp := Clone (Get_Record (Data (Node_Solution), J).all);
+            Line_Temp := Clone
+              (Get_Record (Data (Node_Solution), J).all,
+               False);
 
-            while Node_Line /= Line_List.Null_Node loop
+            Recorded := False;
+
+            while not Recorded and then Node_Line /= Line_List.Null_Node loop
                if Get_Cursor (Data (Node_Line)).Line >
                  Get_Cursor (Line_Temp).Line
                then
                   Prepend (Result_List, Node_Line, Line_Temp);
+                  Recorded := True;
                end if;
 
                Node_Line := Next (Node_Line);
             end loop;
 
-            if Node_Line = Line_List.Null_Node then
+            if not Recorded then
                Append (Result_List, Line_Temp);
             end if;
+
          end loop;
 
          Node_Solution := Next (Node_Solution);
