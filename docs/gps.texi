@@ -5389,11 +5389,27 @@ Whether paths should be absolute or relative when the projects are modified.
 @node The Key Manager Dialog
 @section The Key Manager Dialog
 @c -----------------------------------------------------------------
-
 @noindent
 
-<not documented yet>
+The key manager is accessible through the menu @code{Edit->Key Shortcuts}.
+This dialog provides an easy way to associate key shortcuts with actions.
+These actions are either predefined in GPS, or defined in your own
+customization files, as documented in @ref{Customizing the Menu and Tool bar}.
 
+It also provides an easy way to redefine the menu shortcuts.
+
+@c ??? Add missing screenshot
+
+Actions are referenced by their name, and are grouped into categories. These
+categories indicate when the action applies. For instance, the indentation
+command only applies in source editors, whereas the command to change the
+current window applies anywhere in GPS.
+
+Through the key manager, you can define key bindings similar to what Emacs
+uses (@key{control-x} followed by @key{control-k} for instance). To register
+such key bindings, you need to press the @code{Grab} button as usual, and then
+type the shortcut. The recording of the key binding will stop a short while
+after the last key stroke.
 
 @c -----------------------------------------------------------------
 @node Customizing the Menu and Tool Bar
@@ -5523,6 +5539,17 @@ project browser.
 This tag contains a description for the command, which is used in the
 graphical editor for the key manager. @xref{The Key Manager}.
 
+@item <context>
+@cindex <context>
+This is the name of the context in which the action applies. By default,
+actions are applicable anywhere in GPS. You can restrict for instance the
+action to the source editors by specifying "Source editor" in this field.
+This allows you to have the same key binding defined for multiple actions
+but which do not act in the same context.
+
+The list of valid context names can be seen in the
+@code{Edit->Key shortcuts} menu dialog.
+
 @end table
 
 It is possible to mix both shell commands and external commands. For
@@ -5641,6 +5668,11 @@ This tag doesn't contain any child tag. Instead, its text contents specified
 the keyboard shortcut. The name
 of the key can be prefixed by @code{control-}, @code{alt-}, @code{shift-} or
 any combination of these to specify the key modifiers to apply.
+
+You can also define multiple key bindings similar to Emacs's by separating them
+by a space. For instance, @code{control-x control-k} means that the user should
+press @key{control-x}, followed by a @key{control-k} to activate the
+corresponding action.
 
 @smallexample
 <key action="expand alias">control-o</key>
@@ -6686,7 +6718,8 @@ from the command line, you would pass the following command switches:
 gps --eval=shell:'Entity entity_name file_name; Entity.show %1'
 @end smallexample
 
-
+See the section @ref{Customizing GPS} on how to bind key shortcuts to
+shell commands.
 
 @node The GPS Shell
 @subsection The GPS Shell
@@ -6989,9 +7022,14 @@ or define support for new languages.
 @pxref{Adding Support for New Languages}.
 
    @item $HOME/.gps/custom_key
-Contains all the key bindings defined in GPS. This file is
+Contains all the menu shortcuts defined in GPS. This file is
 automatically created if you have activated the dynamic key bindings feature
 (@pxref{Customizing the Menu and Tool Bar}).
+
+   @item $HOME/.gps/keys.xml
+Contains all the key bindings for the actions defined in GPS or in the
+custom files. This only contains the key bindings overriden through the
+key shortcuts editor (@xref{The Key Manager}).
 
    @item $HOME/.gps/debugger.log
 @cindex log
