@@ -1475,7 +1475,6 @@ package body Glide_Kernel.Modules is
       Value      : GValue_Array (1 .. 6);
       File_Found : Boolean := False;
       Real_File  : Basic_Types.String_Access;
-      Length     : Integer := Column_End - Column;
 
    begin
       if From_Path then
@@ -1501,17 +1500,27 @@ package body Glide_Kernel.Modules is
       end if;
 
       if Enable_Navigation then
-         if Length < 0 then
-            Length := 0;
-         end if;
+         declare
+            Length : Integer := Column_End - Column;
+            Args   : Argument_List (1 .. 8);
+         begin
+            if Length <= 0 then
+               Length := 0;
+            end if;
 
-         Interpret_Command
-           (Kernel,
-            "add_location_command """ &
-            "edit -l " & Image (Line) & " -c " & Image (Column)
-            & " -L " & Image (Length) & " "
-            & Real_File.all
-            & """");
+            Args (1 .. 8) :=
+              (new String'("edit"),
+               new String'("-l"),
+               new String'(Image (Line)),
+               new String'("-c"),
+               new String'(Image (Column)),
+               new String'("-L"),
+               new String'(Image (Length)),
+               new String'(Real_File.all));
+
+            Interpret_Command (Kernel, "add_location_command", Args);
+            Free (Args);
+         end;
       end if;
 
       Init (Value (1), Glib.GType_String);
