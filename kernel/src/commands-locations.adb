@@ -19,7 +19,7 @@
 -----------------------------------------------------------------------
 
 with Glide_Kernel.Modules; use Glide_Kernel.Modules;
-with Shell;                use Shell;
+with Glide_Kernel.Scripts; use Glide_Kernel.Scripts;
 
 package body Commands.Locations is
 
@@ -149,12 +149,12 @@ package body Commands.Locations is
    begin
       if Command.Args /= null then
          if Command.Args'Length > 1 then
-            Interpret_Command
+            Execute_GPS_Shell_Command
               (Command.Kernel,
                Command.Args (Command.Args'First).all,
                Command.Args (Command.Args'First + 1 .. Command.Args'Last));
          else
-            Interpret_Command
+            Execute_GPS_Shell_Command
               (Command.Kernel, Command.Args (Command.Args'First).all);
          end if;
 
