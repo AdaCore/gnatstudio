@@ -36,14 +36,18 @@ package body Src_Info.CPP is
    ----------------------
    --  Symbol_Handler  --
    ----------------------
-   type Symbol_Handler is access procedure (Sym : FIL_Table);
+   type Symbol_Handler is access procedure (Sym : FIL_Table;
+                           File : in out LI_File_Ptr;
+                           SN_Table : in out SN_Table_Array);
 
    function Ext (S : String) return String;
-   procedure Sym_Default_Handler (Sym : FIL_Table);
+   procedure Sym_Default_Handler (Sym : FIL_Table; File : in out
+                            LI_File_Ptr; SN_Table : in out SN_Table_Array);
    procedure Open_DB_Files (SN_Table : in out SN_Table_Array;
                             DB_Prefix : in String);
    procedure Close_DB_Files (SN_Table : in out SN_Table_Array);
    procedure Process_File (Source_Filename : in String;
+                           File : in out LI_File_Ptr;
                            SN_Table : in out SN_Table_Array);
 
    -----------
@@ -112,6 +116,7 @@ package body Src_Info.CPP is
    --  Process_File  --
    --------------------
    procedure Process_File (Source_Filename : in String;
+                           File : in out LI_File_Ptr;
                            SN_Table : in out SN_Table_Array) is
       P : Pair_Ptr;
    begin
@@ -128,7 +133,7 @@ package body Src_Info.CPP is
          declare
             Sym : FIL_Table := Parse_Pair (P.all);
          begin
-            Symbol_Handlers (Sym.Symbol)(Sym);
+            Symbol_Handlers (Sym.Symbol)(Sym, File, SN_Table);
             Free (Sym);
          end;
 
@@ -149,7 +154,6 @@ package body Src_Info.CPP is
       Predefined_Source_Path : String;
       Predefined_Object_Path : String) is
       pragma Unreferenced (Handler);
-      pragma Unreferenced (File);
       pragma Unreferenced (List);
       pragma Unreferenced (Project);
       pragma Unreferenced (Predefined_Object_Path);
@@ -159,7 +163,7 @@ package body Src_Info.CPP is
           Predefined_Source_Path
           & Directory_Separator & Browse.DB_File_Name);
 
-      Process_File (Source_Filename, SN_Table);
+      Process_File (Source_Filename, File, SN_Table);
 
       Close_DB_Files (SN_Table);
    end Create_Or_Complete_LI;
@@ -194,11 +198,15 @@ package body Src_Info.CPP is
       return Source_Filename;
    end LI_Filename_From_Source;
 
-   ---------------------------
-   --  Sym_Default_Handler  --
-   ---------------------------
-   procedure Sym_Default_Handler (Sym : FIL_Table) is
+   -------------------------
+   -- Sym_Default_Handler --
+   -------------------------
+   procedure Sym_Default_Handler (Sym : FIL_Table;
+                           File : in out LI_File_Ptr;
+                           SN_Table : in out SN_Table_Array) is
       pragma Unreferenced (Sym);
+      pragma Unreferenced (File);
+      pragma Unreferenced (SN_Table);
    begin
       null;
    end Sym_Default_Handler;
