@@ -823,7 +823,7 @@ private
       Scope           : E_Scope;
       End_Of_Scope    : E_Reference := No_Reference;
       --  The position at which the body of the entity finishes. It doesn't
-      --  correspond to an actualy cross-reference for the entity. Its Kind
+      --  correspond to an actuall cross-reference for the entity. Its Kind
       --  should one for which Is_End_Reference (Kind) is True.
 
       Rename          : File_Location := Null_File_Location;
