@@ -20,8 +20,6 @@
 
 with Gtk.Menu;              use Gtk.Menu;
 
-with Glide_Kernel.Modules;  use Glide_Kernel.Modules;
-
 with Codefix.Formal_Errors; use Codefix.Formal_Errors;
 use Codefix.Formal_Errors.Command_List;
 
@@ -53,18 +51,22 @@ package body Commands.Codefix is
          Command.Error,
          Data (First (Get_Solutions (Command.Error))));
 
-      Remove_Location_Action
-        (Kernel        => Command.Kernel,
-         Identifier    => "--  ???",
-         Category      => Compilation_Category,
-         File          => Get_Error_Message (Command.Error).File_Name.all,
-         Line          => Get_Error_Message (Command.Error).Line,
-         Column        => Get_Error_Message (Command.Error).Col,
-         Message       =>
-             Cut_Message (Get_Message (Get_Error_Message (Command.Error))));
+      Remove_Pixmap (Command.Error);
 
       return True;
    end Execute;
+
+   ----------
+   -- Undo --
+   ----------
+
+   function Undo (Command : access Codefix_Command) return Boolean is
+   begin
+      Undo (Command.Error, Command.Current_Text.all);
+      Create_Pixmap (Command.Error);
+
+      return True;
+   end Undo;
 
    ----------
    -- Free --
