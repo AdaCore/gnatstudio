@@ -43,7 +43,6 @@ package Generic_Values is
    --  itself is never freed, the values are delete every time we need to
    --  parse a new value.
 
-
    ------------------
    -- Generic_Type --
    ------------------
@@ -191,9 +190,8 @@ package Generic_Values is
       First, Last : Long_Integer;
    end record;
 
-
-   function New_Array_Type (Num_Dimensions : Positive)
-                           return Generic_Type_Access;
+   function New_Array_Type
+     (Num_Dimensions : Positive) return Generic_Type_Access;
    --  Create a new array type with a given number of dimensions.
 
    procedure Set_Dimensions
@@ -225,7 +223,7 @@ package Generic_Values is
    --  The returned structure should not be modified!
    --  ??? Could we use an access to constant ???
 
-   procedure Set_Value (Item  : in out Array_Type;
+   procedure Set_Value (Item       : in out Array_Type;
                         Elem_Value : access Generic_Type'Class;
                         Elem_Index : Long_Integer;
                         Repeat_Num : Positive := 1);
@@ -235,13 +233,13 @@ package Generic_Values is
    --  if need be.
    --
    --  Elem_Index should be the index in a one-dimensional table that would
-   --  contain the same number of elements are Item (as in C).
+   --  contain the same number of elements as Item (as in C).
    --  The new value is repeat Repeat_Num times in adjacent cells in the array.
    --  Elem_Value is not duplicated!
 
-   function Get_Value (Item       : Array_Type;
-                       Elem_Index : Long_Integer)
-                      return Generic_Type_Access;
+   function Get_Value
+     (Item       : Array_Type;
+      Elem_Index : Long_Integer) return Generic_Type_Access;
    --  Read a value in the array at a specific Index.
    --  Elem_Index
 
@@ -488,10 +486,10 @@ private
    procedure Size_Request (Item   : in out Array_Type;
                            Font   : Gdk.Font.Gdk_Font);
 
-
    ------------
    -- Repeat --
    ------------
+
    --  To handle the '0 <repeats .. times>' case.
 
    type Repeat_Type is new Generic_Type with record
@@ -514,8 +512,9 @@ private
    procedure Size_Request (Item   : in out Repeat_Type;
                            Font   : Gdk.Font.Gdk_Font);
 
-
-
+   -----------------
+   -- Record Type --
+   -----------------
 
    type Record_Type_Array;
    type Record_Type_Array_Access is access Record_Type_Array;
@@ -559,7 +558,6 @@ private
                     X, Y    : Glib.Gint := 0);
    procedure Size_Request (Item   : in out Record_Type;
                            Font   : Gdk.Font.Gdk_Font);
-
 
    type Union_Type (Num_Fields : Natural) is new Record_Type (Num_Fields)
      with null record;

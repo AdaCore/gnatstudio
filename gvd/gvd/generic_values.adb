@@ -1251,10 +1251,10 @@ package body Generic_Values is
                            Font   : Gdk.Font.Gdk_Font)
    is
       Total_Height, Total_Width : Gint := 0;
-      Largest_Name : String_Access := null;
+      Largest_Name : String_Access;
+
    begin
       for F in Item.Fields'Range loop
-
          if Largest_Name = null
            or else Item.Fields (F).Name.all'Length > Largest_Name'Length
          then
@@ -1289,7 +1289,11 @@ package body Generic_Values is
          end if;
       end loop;
 
-      Item.Gui_Fields_Width := Text_Width (Font, Largest_Name.all & " => ");
+      if Largest_Name = null then
+         Item.Gui_Fields_Width := Text_Width (Font, String' (" => "));
+      else
+         Item.Gui_Fields_Width := Text_Width (Font, Largest_Name.all & " => ");
+      end if;
 
       --  Keep enough space for the border (Border_Spacing on each side)
       Item.Width  := Total_Width + Item.Gui_Fields_Width + 2 * Border_Spacing;
