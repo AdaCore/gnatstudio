@@ -41,7 +41,10 @@ package Codefix.Text_Manager is
    end record;
 
    function "<" (Left, Right : Text_Cursor) return Boolean;
+   --  Return True when Left is before Right.
+
    function ">" (Left, Right : Text_Cursor) return Boolean;
+   --  Return True when Left is after Right.
 
    type File_Cursor is new Text_Cursor with record
       File_Name : Dynamic_String;
@@ -133,6 +136,13 @@ package Codefix.Text_Manager is
    function Line_Max (This : Text_Interface) return Natural is abstract;
    --  Return the number of the last line in the text loaded.
 
+   function Search_Unit
+     (This     : Text_Interface'Class;
+      Category : Language_Category;
+      Name     : String) return Construct_Information;
+   --  Return the first Contruct_Information that matche Category and name.
+   --  If not found, return a Contruct_Information with Category = Cat_Unknown
+
    ----------------------------------------------------------------------------
    --  type Text_Navigator
    ----------------------------------------------------------------------------
@@ -206,6 +216,7 @@ package Codefix.Text_Manager is
 
    function New_Text_Interface (This : Text_Navigator_Abstr)
       return Ptr_Text is abstract;
+   --  Create and initialise a new Text_Interface used by the text navigator.
 
    function Search_String
      (This         : Text_Navigator_Abstr'Class;
@@ -215,6 +226,14 @@ package Codefix.Text_Manager is
       Jump_String  : Boolean := True) return File_Cursor'Class;
    --  Search a string in the text and returns a cursor at the beginning. If
    --  noting is found, then the cursor is Null_Cursor.
+
+   function Search_Unit
+     (This      : Text_Navigator_Abstr'Class;
+      File_Name : String;
+      Category  : Language_Category;
+      Name      : String) return Construct_Information;
+   --  Return the first Contruct_Information that matche Category and name.
+   --  If not found, return a Contruct_Information with Category = Cat_Unknown
 
    ----------------------------------------------------------------------------
    --  type Extract_Line
@@ -236,7 +255,8 @@ package Codefix.Text_Manager is
    --  Upate changes of the Extract_Line in the representation of the text,
 
    procedure Free (This : in out Extract_Line);
-   --  Free the memory associated to an Extract_Line.
+   --  Free the memory associated to an Extract_Line, and if this line is in
+   --  a list of line, free recursivly the whole list.
 
    function Clone
      (This      : Extract_Line;
