@@ -93,6 +93,9 @@ package body Project_Explorers is
 
    Me : constant Debug_Handle := Create ("Project_Explorers");
 
+   Explorers_Tooltips : constant Debug_Handle :=
+     Create ("Explorers.Tooltips", Off);
+
    Show_Absolute_Paths : constant History_Key :=
      "explorer-show-absolute-paths";
    Show_Flat_View : constant History_Key :=
@@ -993,7 +996,7 @@ package body Project_Explorers is
       Column     : Gtk_Tree_View_Column;
       Cell_X,
       Cell_Y     : Gint;
-      Row_Found  : Boolean;
+      Row_Found  : Boolean := False;
       Par, Iter  : Gtk_Tree_Iter;
       Node_Type  : Node_Types;
 
@@ -1007,14 +1010,14 @@ package body Project_Explorers is
       Window := Get_Bin_Window (Data.Tree);
       Get_Pointer (Window, X, Y, Mask, New_Window);
 
-      Get_Path_At_Pos
-        (Data.Tree, X, Y, Path, Column, Cell_X, Cell_Y, Row_Found);
-
       --  ??? For now, we always reset Row_Found to false, since tooltips
       --  in the explorer are too intrusive: they will appear on top of other
-      --  windows, and contextual menus.
 
-      Row_Found := False;
+      --  windows, and contextual menus.
+      if Active (Explorers_Tooltips) then
+         Get_Path_At_Pos
+           (Data.Tree, X, Y, Path, Column, Cell_X, Cell_Y, Row_Found);
+      end if;
 
       if not Row_Found then
          return;
