@@ -1542,15 +1542,28 @@ See @ref{The Preferences Dialog} for information on how to customize the
 behavior of the Speed Column.
 
 @item A status bar
-Giving information about the file.
+Giving information about the file. It is divided in two sections, one
+on the left and one on the right of the window.
+
+@table @i
+@item The left section
+
+The first box on the left shows the current subprogram name.
+
+@item The right section
+
 If the file is maintained under version control, and version control is
 supported and enabled in GPS, the first box on the left will show VCS
 information on the file: the VCS kind (e.g. @i{CVS}), followed by the revision
 number, and if available, the status of the file.
 
-The second box shows the writable state of the file.
+The second box shows the current editing mode. This is either
+@i{Insert} or @i{Overwrite} and can be changed using the insert
+keyboard keys by default.
+
+The third box shows the writable state of the file.
 You can change this state by clicking on the label directly: this will
-switch between @i{writable} and @i{read-only}.
+switch between @i{Writable} and @i{Read Only}.
 Note that this will not change the permissions of the file on disk, it will
 only change the writable state of the source editor within GPS.
 
@@ -1558,7 +1571,7 @@ When trying to save a file which is read only on the disk, GPS will ask for
 confirmation, and if possible, will force saving of the file, keeping its read
 only state.
 
-The third box shows whether the file has been modified since the last
+The fourth box shows whether the file has been modified since the last
 save. The three possible states are:
 
 @table @i
@@ -1575,8 +1588,9 @@ The file has been saved and not modified since.
 
 @end table
 
-The fourth box displays the position of the cursor in the file by a line and
+The fifth box displays the position of the cursor in the file by a line and
 a column number.
+@end table
 
 @item A contextual menu
 Displayed when you right-click on any area of the source editor.
