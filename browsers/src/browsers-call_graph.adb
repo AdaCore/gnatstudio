@@ -620,6 +620,7 @@ package body Browsers.Call_Graph is
 
       procedure Add_Item (Node : Scope_Tree_Node; Is_Renaming : Boolean) is
          Child  : Entity_Item;
+         Parent : Scope_Tree_Node;
          Link   : Glide_Browser_Link;
       begin
          if Is_Subprogram (Node) then
@@ -637,20 +638,26 @@ package body Browsers.Call_Graph is
                      Arrow => Both_Arrow);
                end if;
 
-            --  An entity that calls our entity.
-            elsif Is_Subprogram (Node)
-              and then Get_Parent (Node) /= Null_Scope_Tree_Node
-            then
-               Child := Add_Entity_If_Not_Present
-                 (Data.Browser, Get_Parent (Node));
+               --  An entity that calls our entity.
+            else
+               Parent := Get_Parent (Node);
+               while Parent /= Null_Scope_Tree_Node
+                 and then not Is_Subprogram (Parent)
+               loop
+                  Parent := Get_Parent (Parent);
+               end loop;
 
-               if not Has_Link
-                 (Get_Canvas (Data.Browser), Child, Data.Item)
-               then
-                  Link := new Glide_Browser_Link_Record;
-                  Add_Link
-                    (Get_Canvas (Data.Browser), Link => Link,
-                     Src => Child, Dest => Data.Item);
+               if Parent /= Null_Scope_Tree_Node then
+                  Child := Add_Entity_If_Not_Present (Data.Browser, Parent);
+
+                  if not Has_Link
+                    (Get_Canvas (Data.Browser), Child, Data.Item)
+                  then
+                     Link := new Glide_Browser_Link_Record;
+                     Add_Link
+                       (Get_Canvas (Data.Browser), Link => Link,
+                        Src => Child, Dest => Data.Item);
+                  end if;
                end if;
             end if;
          end if;
