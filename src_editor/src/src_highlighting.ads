@@ -61,8 +61,13 @@ package Src_Highlighting is
    --  and strings. Declared as public so that one can retrieve them from
    --  the source buffer using their names.
 
-   Highlight_Tag_Name     : constant String := "highlight_tag";
-   --  The name of the tag used to highlight parts of the buffer.
+   Highlight_Line_Tag_Name : constant String := "hl_line_tag";
+   --  The name of the tag used to highlight a line in the buffer.
+   --  Declared as public so that one can retrieve them from the
+   --  Source Buffer using its name.
+
+   Highlight_Region_Tag_Name : constant String := "hl_region_tag";
+   --  The name of the tag used to highlight regions in the buffer.
    --  Declared as public so that one can retrieve them from the
    --  Source Buffer using its name.
 
@@ -84,7 +89,7 @@ package Src_Highlighting is
    --  If some colors name can not be parsed, then no special color will
    --  be used to highlight the associated source parts.
 
-   procedure Create_Highlight_Tag
+   procedure Create_Highlight_Line_Tag
      (Tag        : out Gtk.Text_Tag.Gtk_Text_Tag;
       Color_Name : String);
    --  Create a tag and set the Background_Gdk property using the given Color.
@@ -92,5 +97,12 @@ package Src_Highlighting is
    --  syntax highlighting tags to ensure that highlighting a part of the
    --  buffer using this tag will always override their colors and font
    --  attributes.
+
+   procedure Create_Highlight_Region_Tag
+     (Tag        : out Gtk.Text_Tag.Gtk_Text_Tag;
+      Color_Name : String);
+   --  Create a tag and set the Background_Gdk property using the given Color.
+   --  The priority of this Tag is guarantied to exceed the priority of the
+   --  line highlighting tag.
 
 end Src_Highlighting;
