@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2002                       --
+--                     Copyright (C) 2001-2003                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -35,11 +35,14 @@
 
 with Ada.Text_IO;
 with Glide_Kernel;
+with Docgen_Backend_HTML;       use Docgen_Backend_HTML;
+with VFS;                       use VFS;
 
 package Docgen.Html_Output is
 
    procedure Doc_HTML_Create
-     (Kernel        : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (B             : access Backend_HTML;
+      Kernel        : access Glide_Kernel.Kernel_Handle_Record'Class;
       File          : in Ada.Text_IO.File_Type;
       Info          : in out Docgen.Doc_Info;
       Doc_Directory : String;
@@ -48,5 +51,37 @@ package Docgen.Html_Output is
    --  What happens with the given information (which of the procedures
    --  below will be called) depands on the contents and the kind of the
    --  Doc_Info type.
+
+   procedure Callback_Output
+     (B           : access Backend_HTML;
+      File        : Ada.Text_IO.File_Type;
+      Text        : String;
+      Start_Index : Natural;
+      Start_Line  : Natural;
+      End_Index   : Natural;
+      End_Line    : Natural;
+      Prefix      : String;
+      Suffix      : String;
+      Entity_Line : Natural;
+      Check_Tags  : Boolean);
+   --  Write the formatted text since the last output to doc file
+   --  Prefix and Suffix are the HTML code to be put around the
+   --  parsed entity. The both index values are needed, as for comment
+   --  lines the ASCII.LF at the line should be ignored, so you can't
+   --  used always the Sloc_Index values.
+
+   procedure Set_Name_Tags
+     (B           : access Backend_HTML;
+      File        : Ada.Text_IO.File_Type;
+      Input_Text  : String;
+      Entity_Line : Natural);
+   --  Sets a "<A name="lind_number"> <A>" in front of each line in the
+   --  given strings (if in body file) and writes it to the doc file.
+
+   function Get_Html_File_Name
+     (Kernel : access Kernel_Handle_Record'Class;
+      File   : Virtual_File) return String;
+   --  Create a .htm file name from the full path of the source file
+   --  for ex.: from util/src/docgen.adb the name docgen_adb.htm is created
 
 end Docgen.Html_Output;
