@@ -24,6 +24,7 @@ with Glib.Object; use Glib.Object;
 with Gdk;
 with Gdk.Color;  use Gdk.Color;
 with Gdk.Event;  use Gdk.Event;
+with Gtk.Enums;
 with Gdk.Pixbuf; use Gdk.Pixbuf;
 with Gdk.Types;  use Gdk.Types;
 with Gdk.Window; use Gdk.Window;
@@ -33,6 +34,7 @@ with Gtk.Box;                   use Gtk.Box;
 with Gtk.Cell_Renderer_Text;    use Gtk.Cell_Renderer_Text;
 with Gtk.Cell_Renderer_Pixbuf;  use Gtk.Cell_Renderer_Pixbuf;
 with Gtk.Enums;
+with Gtk.Handlers;              use Gtk.Handlers;
 with Gtk.Menu;                  use Gtk.Menu;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;
 with Gtk.Label;                 use Gtk.Label;
@@ -73,6 +75,7 @@ with Basic_Types;               use Basic_Types;
 with Traces;                    use Traces;
 
 with GUI_Utils;                 use GUI_Utils;
+with String_Utils;              use String_Utils;
 
 package body VCS_View_Pkg is
 
@@ -86,6 +89,9 @@ package body VCS_View_Pkg is
 
    package Explorer_Selection_Foreach is
      new Selection_Foreach (VCS_View_Record);
+
+   package Page_Status_Callback is new Gtk.Handlers.User_Callback
+     (GObject_Record, Natural);
 
    ---------------------
    -- Local constants --
@@ -123,7 +129,7 @@ package body VCS_View_Pkg is
          Name_Column               => GType_String,
          Local_Rev_Column          => GType_String,
          Rep_Rev_Column            => GType_String,
-         Status_Description_Column => GType_Int,
+         Status_Description_Column => GType_String,
          Status_Pixbuf_Column      => Gdk.Pixbuf.Get_Type,
          Log_Column                => Gdk.Pixbuf.Get_Type,
          Has_Log_Column            => GType_Boolean);
@@ -175,17 +181,21 @@ package body VCS_View_Pkg is
    procedure On_Selected (Explorer : access Gtk_Widget_Record'Class);
    --  Give the focus to the current page tree.
 
+   procedure Toggle_Show_Status
+     (Explorer : access GObject_Record'Class;
+      Index    : Natural);
+
    ---------------
    -- Callbacks --
    ---------------
 
-   procedure Change_Hide_Up_To_Date
+   procedure Show_All_Status
      (Explorer : access Gtk_Widget_Record'Class);
-   --  Callback for toggling of "Hide up-to-date files".
+   --  Callback for activation of "Show all status"
 
-   procedure Change_Hide_Not_Registered
+   procedure Hide_All_Status
      (Explorer : access Gtk_Widget_Record'Class);
-   --  Callback for toggling of "Hide not registered files".
+   --  Callback for activation of "Show all status"
 
    function Button_Press
      (View  : access Gtk_Widget_Record'Class;
@@ -262,7 +272,6 @@ package body VCS_View_Pkg is
       Cell_Y    : Gint;
       Row_Found : Boolean;
       Iter      : Gtk_Tree_Iter;
-      Status    : File_Status;
 
       Text      : String_Access;
    begin
@@ -284,9 +293,9 @@ package body VCS_View_Pkg is
       Path_Free (Path);
 
       if Column = Data.Status_Column then
-         Status := File_Status'Val
-           (Get_Int (Data.Model, Iter, Status_Description_Column));
-         Text := new String'(-"Status: " & Get_Status_Name (Status));
+         Text := new String'
+           (-"Status: "
+            & Get_String (Data.Model, Iter, Status_Description_Column));
 
       elsif Column = Data.Log_Column then
          if Get_Boolean (Data.Model, Iter, Has_Log_Column) then
@@ -370,6 +379,7 @@ package body VCS_View_Pkg is
         (Get_MDI (The_View.Kernel), VCS_View_Record'Tag);
 
       Set_Child_Visible (Child, False);
+      Hide (The_View);
       Hide (Child);
 
       return True;
@@ -425,20 +435,24 @@ package body VCS_View_Pkg is
 
       L := First (Page.Stored_Status);
 
-      while L /= Null_Node loop
-         if not (Explorer.Hide_Up_To_Date
-                   and then (Data (L).Status.Status = Up_To_Date
-                               or else Data (L).Status.Status = Unknown))
-           and then not (Explorer.Hide_Not_Registered
-                           and then Data (L).Status.Status = Not_Registered)
-         then
-            Append (Page.Model, Iter, Null_Iter);
-            Fill_Info (Page, Iter, Data (L), Success);
+      --  ??? Should avoid this costly double loop by caching the status index
+      --  in the cache lines.
 
-            if not Success then
-               Remove (Page.Model, Iter);
+      while L /= Null_Node loop
+         for J in Page.Status'Range loop
+            if Page.Status (J).Status = Data (L).Status.Status then
+               if Page.Status (J).Display then
+                  Append (Page.Model, Iter, Null_Iter);
+                  Fill_Info (Page, Iter, Data (L), Success);
+
+                  if not Success then
+                     Remove (Page.Model, Iter);
+                  end if;
+               end if;
+
+               exit;
             end if;
-         end if;
+         end loop;
 
          L := Next (L);
       end loop;
@@ -542,10 +556,23 @@ package body VCS_View_Pkg is
       Log           : Boolean;
       Sort_Id       : Gint;
 
+      Up_To_Date_Status : File_Status;
+
       use type File_Status_List.List_Node;
    begin
       --  Free the logs associated to the files that are up-to-date, and
       --  update the vcs label in the editors.
+
+      if Clear_Logs then
+         declare
+            A : constant Status_Array :=
+              Get_Registered_Status (VCS_Identifier);
+         begin
+            if A'Length >= 2 then
+               Up_To_Date_Status := A (A'First + 1);
+            end if;
+         end;
+      end if;
 
       while Status_Temp /= File_Status_List.Null_Node loop
          declare
@@ -554,7 +581,7 @@ package body VCS_View_Pkg is
             File   : constant Virtual_File := S.File;
          begin
             if Clear_Logs
-              and then S.Status = Up_To_Date
+              and then S.Status = Up_To_Date_Status
             then
                declare
                   Log   : constant Virtual_File :=
@@ -678,27 +705,30 @@ package body VCS_View_Pkg is
                Prepend (Page.Stored_Status, New_Status);
             end if;
 
-            if not (Explorer.Hide_Up_To_Date
-                    and then (New_Status.Status.Status = Up_To_Date
-                              or else New_Status.Status.Status = Unknown))
-              and then not (Explorer.Hide_Not_Registered
-                            and then New_Status.Status.Status
-                              = Not_Registered)
-            then
-               if Iter = Null_Iter
-                 and then Force_Display
-               then
-                  Append (Page.Model, Iter, Null_Iter);
-               end if;
+            --  Append the iter only if the status is currently shown.
 
-               if Iter /= Null_Iter then
-                  Fill_Info (Page, Iter, New_Status, Success);
+            for J in Page.Status'Range loop
+               if Page.Status (J).Status = New_Status.Status.Status then
+
+                  if Page.Status (J).Display then
+                     if Iter = Null_Iter
+                       and then Force_Display
+                     then
+                        Append (Page.Model, Iter, Null_Iter);
+                     end if;
+
+                     if Iter /= Null_Iter then
+                        Fill_Info (Page, Iter, New_Status, Success);
+                     end if;
+                  else
+                     if Iter /= Null_Iter then
+                        Remove (Page.Model, Iter);
+                     end if;
+                  end if;
+
+                  exit;
                end if;
-            else
-               if Iter /= Null_Iter then
-                  Remove (Page.Model, Iter);
-               end if;
-            end if;
+            end loop;
          end;
 
          Status_Temp := File_Status_List.Next (Status_Temp);
@@ -736,7 +766,9 @@ package body VCS_View_Pkg is
      (Explorer      : access VCS_Page_Record'Class;
       Iter          : Gtk_Tree_Iter;
       Line_Info     : Line_Record;
-      Success       : out Boolean) is
+      Success       : out Boolean)
+   is
+      Pixbuf : Gdk_Pixbuf;
    begin
       Success := True;
 
@@ -779,35 +811,31 @@ package body VCS_View_Pkg is
          Set (Explorer.Model, Iter, Rep_Rev_Column, -"n/a");
       end if;
 
-      case Line_Info.Status.Status is
-         when Unknown =>
-            Set (Explorer.Model, Iter, Status_Pixbuf_Column,
-                 C_Proxy (Status_Unknown_Pixbuf));
-         when Not_Registered =>
-            Set (Explorer.Model, Iter, Status_Pixbuf_Column,
-                 C_Proxy (Status_Not_Registered_Pixbuf));
-         when Up_To_Date =>
-            Set (Explorer.Model, Iter, Status_Pixbuf_Column,
-                 C_Proxy (Status_Up_To_Date_Pixbuf));
-         when Removed =>
-            Set (Explorer.Model, Iter, Status_Pixbuf_Column,
-                 C_Proxy (Status_Removed_Pixbuf));
-         when Added =>
-            Set (Explorer.Model, Iter, Status_Pixbuf_Column,
-                 C_Proxy (Status_Added_Pixbuf));
-         when Modified =>
-            Set (Explorer.Model, Iter, Status_Pixbuf_Column,
-                 C_Proxy (Status_Modified_Pixbuf));
-         when Needs_Merge =>
-            Set (Explorer.Model, Iter, Status_Pixbuf_Column,
-                 C_Proxy (Status_Needs_Merge_Pixbuf));
-         when Needs_Update =>
-            Set (Explorer.Model, Iter, Status_Pixbuf_Column,
-                 C_Proxy (Status_Needs_Update_Pixbuf));
-      end case;
+      if Line_Info.Status.Status.Stock_Id /= null then
+         Pixbuf := Render_Icon
+           (Explorer,
+            Line_Info.Status.Status.Stock_Id.all,
+            Gtk.Enums.Icon_Size_Small_Toolbar);
+      end if;
 
-      Set (Explorer.Model, Iter, Status_Description_Column,
-           Gint (File_Status'Pos (Line_Info.Status.Status)));
+      if Pixbuf /= null then
+         Set (Explorer.Model, Iter, Status_Pixbuf_Column, C_Proxy (Pixbuf));
+      else
+         Pixbuf := Render_Icon
+           (Explorer,
+            VCS.Unknown.Stock_Id.all,
+            Gtk.Enums.Icon_Size_Menu);
+
+         Set (Explorer.Model, Iter, Status_Pixbuf_Column, C_Proxy (Pixbuf));
+      end if;
+
+      if Line_Info.Status.Status.Label /= null then
+         Set (Explorer.Model, Iter, Status_Description_Column,
+              Line_Info.Status.Status.Label.all);
+      else
+         Set (Explorer.Model, Iter, Status_Description_Column,
+              VCS.Unknown.Label.all);
+      end if;
    end Fill_Info;
 
    ------------------------
@@ -966,33 +994,79 @@ package body VCS_View_Pkg is
       VCS_View_Pkg.Initialize (VCS_View, Kernel);
    end Gtk_New;
 
-   ----------------------------
-   -- Change_Hide_Up_To_Date --
-   ----------------------------
+   ---------------------
+   -- Show_All_Status --
+   ---------------------
 
-   procedure Change_Hide_Up_To_Date
+   procedure Show_All_Status
      (Explorer : access Gtk_Widget_Record'Class)
    is
-      E : constant VCS_View_Access := VCS_View_Access (Explorer);
+      E    : constant VCS_View_Access := VCS_View_Access (Explorer);
+      Page : VCS_Page_Access;
+
    begin
-      E.Hide_Up_To_Date := not E.Hide_Up_To_Date;
-      Set_Pref (E.Kernel, Hide_Up_To_Date, E.Hide_Up_To_Date);
+      Page := VCS_Page_Access
+        (Get_Nth_Page (E.Notebook, Get_Current_Page (E.Notebook)));
+
+      for J in Page.Status'Range loop
+         Page.Status (J).Display := True;
+      end loop;
+
       Refresh (E);
-   end Change_Hide_Up_To_Date;
 
-   --------------------------------
-   -- Change_Hide_Not_Registered --
-   --------------------------------
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+   end Show_All_Status;
 
-   procedure Change_Hide_Not_Registered
+   ---------------------
+   -- Hide_All_Status --
+   ---------------------
+
+   procedure Hide_All_Status
      (Explorer : access Gtk_Widget_Record'Class)
    is
-      E : constant VCS_View_Access := VCS_View_Access (Explorer);
+      E    : constant VCS_View_Access := VCS_View_Access (Explorer);
+      Page : VCS_Page_Access;
    begin
-      E.Hide_Not_Registered := not E.Hide_Not_Registered;
-      Set_Pref (E.Kernel, Hide_Not_Registered, E.Hide_Not_Registered);
+      Page := VCS_Page_Access
+        (Get_Nth_Page (E.Notebook, Get_Current_Page (E.Notebook)));
+
+      for J in Page.Status'Range loop
+         Page.Status (J).Display := False;
+      end loop;
+
       Refresh (E);
-   end Change_Hide_Not_Registered;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+   end Hide_All_Status;
+
+   ------------------------
+   -- Toggle_Show_Status --
+   ------------------------
+
+   procedure Toggle_Show_Status
+     (Explorer : access GObject_Record'Class;
+      Index    : Natural)
+   is
+      E    : constant VCS_View_Access := VCS_View_Access (Explorer);
+      Page : VCS_Page_Access;
+   begin
+      Page := VCS_Page_Access
+        (Get_Nth_Page (E.Notebook, Get_Current_Page (E.Notebook)));
+
+      if Index in Page.Status'Range then
+         Page.Status (Index).Display := not Page.Status (Index).Display;
+      end if;
+
+      Refresh (E);
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+   end Toggle_Show_Status;
 
    -----------------------
    -- Get_Path_At_Event --
@@ -1042,6 +1116,8 @@ package body VCS_View_Pkg is
       Check    : Gtk_Check_Menu_Item;
       Mitem    : Gtk_Menu_Item;
       Context  : File_Selection_Context_Access;
+
+      Submenu  : Gtk_Menu;
 
       Files    : String_List.List;
       Explorer : constant VCS_View_Access := VCS_View_Access (Object);
@@ -1098,21 +1174,43 @@ package body VCS_View_Pkg is
 
       String_List.Free (Files);
 
-      Gtk_New (Check, Label => -"Hide up-to-date files");
-      Set_Active (Check, Explorer.Hide_Up_To_Date);
-      Append (Menu, Check);
+      if Context = null then
+         Submenu := Menu;
+      else
+         Gtk_New (Mitem, -"Filters");
+         Append (Menu, Mitem);
+
+         Gtk_New (Submenu);
+         Set_Submenu (Mitem, Submenu);
+      end if;
+
+      Gtk_New (Mitem, -"Show all status");
+      Append (Submenu, Mitem);
       Widget_Callback.Object_Connect
-         (Check, "activate",
-          Widget_Callback.To_Marshaller (Change_Hide_Up_To_Date'Access),
+         (Mitem, "activate",
+          Widget_Callback.To_Marshaller (Show_All_Status'Access),
           Explorer);
 
-      Gtk_New (Check, Label => -"Hide non registered files");
-      Set_Active (Check, Explorer.Hide_Not_Registered);
-      Append (Menu, Check);
+      Gtk_New (Mitem, -"Hide all status");
+      Append (Submenu, Mitem);
       Widget_Callback.Object_Connect
-         (Check, "activate",
-          Widget_Callback.To_Marshaller (Change_Hide_Not_Registered'Access),
+         (Mitem, "activate",
+          Widget_Callback.To_Marshaller (Hide_All_Status'Access),
           Explorer);
+
+      Gtk_New (Mitem);
+      Append (Submenu, Mitem);
+
+      for J in Page.Status'Range loop
+         Gtk_New (Check, Label => -"Show " & Page.Status (J).Status.Label.all);
+         Set_Active (Check, Page.Status (J).Display);
+         Append (Submenu, Check);
+         Page_Status_Callback.Object_Connect
+           (Check, "activate",
+            Page_Status_Callback.To_Marshaller (Toggle_Show_Status'Access),
+            Explorer,
+            J);
+      end loop;
 
       if Context /= null then
          Gtk_New (Mitem);
@@ -1249,9 +1347,6 @@ package body VCS_View_Pkg is
       Initialize_Hbox (VCS_View);
 
       VCS_View.Kernel := Kernel;
-      VCS_View.Hide_Up_To_Date := Get_Pref (Kernel, Hide_Up_To_Date);
-      VCS_View.Hide_Not_Registered := Get_Pref (Kernel, Hide_Not_Registered);
-
       Gtk_New_Vbox (Vbox1, False, 0);
       Pack_Start (VCS_View, Vbox1);
 
@@ -1365,6 +1460,16 @@ package body VCS_View_Pkg is
 
       New_Tooltip (Page.Tree, Page, Page.Tooltip);
 
+      declare
+         Status : constant Status_Array := Get_Registered_Status (Identifier);
+      begin
+         Page.Status := new Page_Status_Array (Status'Range);
+
+         for J in Page.Status'Range loop
+            Page.Status (J).Status  := Status (J);
+            Page.Status (J).Display := True;
+         end loop;
+      end;
       --  Emit a "clicked" signal on the file column to sort it.
 
       Clicked (Page.File_Column);
@@ -1622,5 +1727,82 @@ package body VCS_View_Pkg is
 
       return Result;
    end Get_Cached_Status;
+
+   ----------------
+   -- Save_State --
+   ----------------
+
+   procedure Save_State
+     (Explorer : VCS_View_Access;
+      Node     : Node_Ptr)
+   is
+      N, M : Node_Ptr;
+      Page : VCS_Page_Access;
+   begin
+      for J in 1 .. Explorer.Number_Of_Pages loop
+         Page := VCS_Page_Access
+           (Get_Nth_Page (Explorer.Notebook, Gint (J - 1)));
+
+         N := new Glib.Xml_Int.Node;
+         N.Tag := new String'("page");
+         Set_Attribute (N, "vcs", Name (Page.Reference));
+         Add_Child (Node, N, True);
+
+         for J in Page.Status'Range loop
+            M := new Glib.Xml_Int.Node;
+            M.Tag := new String'("status");
+            Set_Attribute (M, "index", J'Img);
+            Set_Attribute (M, "display", Page.Status (J).Display'Img);
+            Add_Child (N, M, True);
+         end loop;
+      end loop;
+   end Save_State;
+
+   ----------------
+   -- Load_State --
+   ----------------
+
+   procedure Load_State
+     (Explorer : VCS_View_Access;
+      Node     : Node_Ptr)
+   is
+      N, M : Node_Ptr := Node.Child;
+      Page : VCS_Page_Access;
+   begin
+      while N /= null loop
+         if N.Tag.all = "page" then
+            M := N.Child;
+
+            Page := Get_Page_For_Identifier
+              (Explorer, Get_VCS_From_Id (Get_Attribute (N, "vcs")));
+
+            if Page /= null then
+               while M /= null loop
+                  if M.Tag.all = "status" then
+                     declare
+                        Index   : constant Integer := Safe_Value
+                          (Get_Attribute (M, "index", "0"));
+                     begin
+                        if Index in Page.Status'Range then
+                           Page.Status (Index).Display := Boolean'Value
+                             (Get_Attribute (M, "display", "TRUE"));
+                        end if;
+
+                     exception
+                        when E : others =>
+                           Trace
+                             (Me, "Could not parse VCS explorer desktop: "
+                              & Exception_Information (E));
+                     end;
+                  end if;
+
+                  M := M.Next;
+               end loop;
+            end if;
+         end if;
+
+         N := N.Next;
+      end loop;
+   end Load_State;
 
 end VCS_View_Pkg;
