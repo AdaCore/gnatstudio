@@ -161,6 +161,7 @@ package body Codefix.Graphics is
          if Graphic_Codefix.Start then
             declare
                Tmp : Message_Dialog_Buttons;
+               pragma Unreferenced (Tmp);
             begin
                Tmp := Message_Dialog
                  (Msg     => -"No fixable errors have been found",
