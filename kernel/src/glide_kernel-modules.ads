@@ -115,7 +115,8 @@ package Glide_Kernel.Modules is
       Contextual_Menu_Handler : Module_Menu_Handler := null;
       Mime_Handler            : Module_Mime_Handler := null;
       MDI_Child_Tag           : Ada.Tags.Tag := Kernel_Handle_Record'Tag;
-      Default_Context_Factory : Module_Default_Context_Factory := null)
+      Default_Context_Factory : Module_Default_Context_Factory := null;
+      Save_Function           : Module_Save_Function := null)
       return Module_ID;
    --  Register a new module into Glide.
    --  Module_Name can be used by other modules to check whether they want to
