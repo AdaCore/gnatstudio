@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2002                      --
+--                      Copyright (C) 2000-2004                      --
 --                              ACT-Europe                           --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -37,8 +37,11 @@ package body GVD.Trace is
    Verbose_CR    : aliased constant String := "\r";
    Verbose_HT    : aliased constant String := "\t";
 
+   pragma Warnings (Off);
+   --  This UC is safe aliasing-wise, so kill warning
    function To_Main_Window is new
      Ada.Unchecked_Conversion (System.Address, GVD_Main_Window);
+   pragma Warnings (On);
 
    ------------------
    -- Output_Error --
