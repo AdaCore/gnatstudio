@@ -181,6 +181,7 @@ package body Browsers.Call_Graph is
       Entity         : Entity_Information;
       Include_Writes : Boolean;
       Include_Reads  : Boolean;
+      Iter_Started   : Boolean;
       Category       : String_Access;
    end record;
 
@@ -1210,6 +1211,18 @@ package body Browsers.Call_Graph is
    begin
       Result := Execute_Again;
 
+      if not Data.Iter_Started then
+         Find_All_References
+           (Iter   => Data.Iter.all,
+            Entity => Data.Entity);
+         Data.Iter_Started := True;
+         Set_Progress (Command,
+                       (Running,
+                        Get_Current_Progress (Data.Iter.all),
+                        Get_Total_Progress (Data.Iter.all)));
+         return;
+      end if;
+
       while Count < Locations_At_A_Time loop
          if At_End (Data.Iter.all) then
             Recount_Category
@@ -1276,17 +1289,11 @@ package body Browsers.Call_Graph is
                      Include_Writes => Include_Writes,
                      Include_Reads  => Include_Reads,
                      Category       => new String'(Category_Title),
+                     Iter_Started   => False,
                      Entity         => Info);
 
-            Find_All_References
-              (Iter   => Data.Iter.all,
-               Entity => Info);
             Xref_Commands.Create
               (C, -"Find all refs", Data, Find_Next_Reference'Access);
-            Set_Progress (Command_Access (C),
-                          (Running,
-                           Get_Current_Progress (Data.Iter.all),
-                           Get_Total_Progress (Data.Iter.all)));
             Launch_Background_Command
               (Kernel, Command_Access (C), True, True, "xrefs");
 
