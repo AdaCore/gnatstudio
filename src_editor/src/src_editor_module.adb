@@ -2902,7 +2902,7 @@ package body Src_Editor_Module is
            File_Selection_Context_Access (Context);
          File         : constant Virtual_File :=
            File_Information (File_Context);
-         Project      : constant String := Project_Name
+         Project      : constant String := Project_Path
            (Get_Project_From_File (Get_Registry (Kernel), File));
          Success      : Boolean;
          Args, Vars   : Argument_List_Access;
