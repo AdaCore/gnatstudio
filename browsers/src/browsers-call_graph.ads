@@ -52,13 +52,17 @@ package Browsers.Call_Graph is
    procedure Gtk_New
      (Item    : out Entity_Item;
       Browser : access Browsers.Canvas.Glide_Browser_Record'Class;
-      Entity  : Src_Info.Queries.Entity_Information);
+      Entity  : Src_Info.Queries.Entity_Information;
+      May_Have_To_Dependencies : Boolean);
    --  Create a new entity item.
+   --  If May_Have_To_Dependencies is False, the right arrow will not be
+   --  displayed in the items.
 
    procedure Initialize
      (Item    : access Entity_Item_Record'Class;
       Browser : access Browsers.Canvas.Glide_Browser_Record'Class;
-      Entity  : Src_Info.Queries.Entity_Information);
+      Entity  : Src_Info.Queries.Entity_Information;
+      May_Have_To_Dependencies : Boolean);
    --  Internal initialization function
 
    procedure Refresh

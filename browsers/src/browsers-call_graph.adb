@@ -63,6 +63,10 @@ package body Browsers.Call_Graph is
 
    Margin : constant := 2;
 
+   Automatically_Check_To_Dependencies : constant Boolean := True;
+   --  If True, then every time an item is added to the call graph we check,
+   --  and if no to dependency exists, the right arrow is not displayed.
+
    type Entity_Idle_Data is record
       Kernel : Kernel_Handle;
       Iter   : Entity_Reference_Iterator_Access;
@@ -188,6 +192,13 @@ package body Browsers.Call_Graph is
       Child  : Gtk.Widget.Gtk_Widget) return Selection_Context_Access;
    --  Create a current kernel context, based on the currently selected item
 
+   procedure Get_Scope_Tree
+     (Kernel : access Kernel_Handle_Record'Class;
+      Entity : Entity_Information;
+      Tree   : out Scope_Tree;
+      Node   : out Scope_Tree_Node);
+   --  Get the scope tree and node for Entity.
+
    procedure Print_Ref
      (Kernel   : access Kernel_Handle_Record'Class;
       File     : String;
@@ -207,10 +218,11 @@ package body Browsers.Call_Graph is
    procedure Gtk_New
      (Item    : out Entity_Item;
       Browser : access Browsers.Canvas.Glide_Browser_Record'Class;
-      Entity  : Src_Info.Queries.Entity_Information) is
+      Entity  : Src_Info.Queries.Entity_Information;
+      May_Have_To_Dependencies : Boolean) is
    begin
       Item := new Entity_Item_Record;
-      Initialize (Item, Browser, Entity);
+      Initialize (Item, Browser, Entity, May_Have_To_Dependencies);
    end Gtk_New;
 
    ----------------
@@ -220,7 +232,8 @@ package body Browsers.Call_Graph is
    procedure Initialize
      (Item    : access Entity_Item_Record'Class;
       Browser : access Browsers.Canvas.Glide_Browser_Record'Class;
-      Entity  : Src_Info.Queries.Entity_Information)
+      Entity  : Src_Info.Queries.Entity_Information;
+      May_Have_To_Dependencies : Boolean)
    is
       B : constant Call_Graph_Browser := Call_Graph_Browser (Browser);
       Width, Height : Gint;
@@ -242,6 +255,9 @@ package body Browsers.Call_Graph is
          Set_Text
            (Item.Layout, Get_Name (Entity) & ASCII.LF & (-"<Unresolved>"));
       end if;
+
+      Item.From_Parsed := False;
+      Item.To_Parsed   := not May_Have_To_Dependencies;
 
       Get_Pixel_Size (Item.Layout, Width, Height);
       Width := Width + 2 * Margin
@@ -429,6 +445,76 @@ package body Browsers.Call_Graph is
       return Found;
    end Find_Entity;
 
+   --------------------
+   -- Get_Scope_Tree --
+   --------------------
+
+   procedure Get_Scope_Tree
+     (Kernel : access Kernel_Handle_Record'Class;
+      Entity : Entity_Information;
+      Tree   : out Scope_Tree;
+      Node   : out Scope_Tree_Node)
+   is
+      Lib_Info : LI_File_Ptr;
+      Location : File_Location;
+      Status   : Find_Decl_Or_Body_Query_Status;
+   begin
+      Lib_Info := Locate_From_Source_And_Complete
+        (Kernel, Get_Declaration_File_Of (Entity));
+
+      if Lib_Info /= No_LI_File then
+         --  We need to find the body of the entity in fact. In Ada, this
+         --  will always be the same LI as the spec, but this is no
+         --  longer true for C or C++.
+         Find_Next_Body
+           (Kernel             => Kernel,
+            Lib_Info           => Lib_Info,
+            File_Name          => Get_Declaration_File_Of (Entity),
+            Entity_Name        => Get_Name (Entity),
+            Line               => Get_Declaration_Line_Of (Entity),
+            Column             => Get_Declaration_Column_Of (Entity),
+            Location           => Location,
+            Status             => Status);
+
+         --  In case there is no body, do nothing.
+         if Location /= Null_File_Location then
+            Lib_Info := Locate_From_Source_And_Complete
+              (Kernel, Get_File (Location));
+         end if;
+      end if;
+
+      if Lib_Info = No_LI_File then
+         Insert (Kernel,
+                 -"LI file not found for " & Get_Declaration_File_Of (Entity));
+         Tree := Null_Scope_Tree;
+         Node := Null_Scope_Tree_Node;
+         return;
+      end if;
+
+      Tree := Create_Tree (Lib_Info);
+
+      if Tree = Null_Scope_Tree then
+         Trace (Me, "Couldn't create scope tree for "
+                & Get_LI_Filename (Lib_Info));
+         Node := Null_Scope_Tree_Node;
+         return;
+      end if;
+
+      Node := Find_Entity_Scope (Tree, Entity);
+
+      if Node = Null_Scope_Tree_Node then
+         Insert (Kernel,
+                 -"Couldn't find the call graph for " & Get_Name (Entity));
+         Trace (Me, "Couldn't find entity "
+                & Get_Name (Entity) & " in "
+                & Get_LI_Filename (Lib_Info)
+                & " at line" & Get_Declaration_Line_Of (Entity)'Img
+                & " column"  & Get_Declaration_Column_Of (Entity)'Img);
+         Free (Tree);
+         Node := Null_Scope_Tree_Node;
+      end if;
+   end Get_Scope_Tree;
+
    -------------------------------
    -- Add_Entity_If_Not_Present --
    -------------------------------
@@ -438,10 +524,35 @@ package body Browsers.Call_Graph is
       Entity  : Entity_Information) return Entity_Item
    is
       Child  : Entity_Item;
+      May_Have_To_Dependencies : Boolean := True;
+      Tree   : Scope_Tree;
+      Node   : Scope_Tree_Node;
+      Iter   : Scope_Tree_Node_Iterator;
+
    begin
       Child := Entity_Item (Find_Entity (Browser, Entity));
       if Child = null then
-         Gtk_New (Child, Browser, Entity => Entity);
+
+         if Automatically_Check_To_Dependencies then
+            Get_Scope_Tree (Get_Kernel (Browser), Entity, Tree, Node);
+
+            if Node /= Null_Scope_Tree_Node then
+               Iter := Start (Node);
+               May_Have_To_Dependencies := False;
+
+               while Get (Iter) /= Null_Scope_Tree_Node loop
+                  if Is_Subprogram (Get (Iter)) then
+                     May_Have_To_Dependencies := True;
+                     exit;
+                  end if;
+                  Next (Iter);
+               end loop;
+            end if;
+
+            Free (Tree);
+         end if;
+
+         Gtk_New (Child, Browser, Entity, May_Have_To_Dependencies);
          Put (Get_Canvas (Browser), Child);
       end if;
 
@@ -478,11 +589,8 @@ package body Browsers.Call_Graph is
       Link          : Glide_Browser_Link;
       Tree          : Scope_Tree;
       Node          : Scope_Tree_Node;
-      Lib_Info      : LI_File_Ptr;
       Rename        : Entity_Information;
       Is_Renaming   : Boolean;
-      Location      : File_Location;
-      Status        : Find_Decl_Or_Body_Query_Status;
 
       procedure Process_Item (Node : Scope_Tree_Node);
       --  Add the call graph for Node, linking the new items to Item.
@@ -522,59 +630,8 @@ package body Browsers.Call_Graph is
    begin
       Push_State (Kernel_Handle (Kernel), Busy);
 
-      Lib_Info := Locate_From_Source_And_Complete
-        (Kernel, Get_Declaration_File_Of (Entity));
-
-      if Lib_Info /= No_LI_File then
-         --  We need to find the body of the entity in fact. In Ada, this will
-         --  always be the same LI as the spec, but this is no longer true for
-         --  C or C++.
-         Find_Next_Body
-           (Kernel             => Kernel,
-            Lib_Info           => Lib_Info,
-            File_Name          => Get_Declaration_File_Of (Entity),
-            Entity_Name        => Get_Name (Entity),
-            Line               => Get_Declaration_Line_Of (Entity),
-            Column             => Get_Declaration_Column_Of (Entity),
-            Location           => Location,
-            Status             => Status);
-
-         --  In case there is no body, do nothing.
-         if Location /= Null_File_Location then
-            Lib_Info := Locate_From_Source_And_Complete
-              (Kernel, Get_File (Location));
-         end if;
-      end if;
-
-      if Lib_Info = No_LI_File then
-         Insert (Kernel,
-                 -"LI file not found for "
-                   & Get_Declaration_File_Of (Entity));
-         Pop_State (Kernel_Handle (Kernel));
-         return;
-      end if;
-
-      Tree := Create_Tree (Lib_Info);
-
-      if Tree = Null_Scope_Tree then
-         Trace (Me, "Couldn't create scope tree for "
-                & Get_LI_Filename (Lib_Info));
-         Pop_State (Kernel_Handle (Kernel));
-         return;
-      end if;
-
-      Node := Find_Entity_Scope (Tree, Entity);
-
+      Get_Scope_Tree (Kernel, Entity, Tree, Node);
       if Node = Null_Scope_Tree_Node then
-         Insert (Kernel,
-                 -"Couldn't find the call graph for " & Get_Name (Entity));
-         Trace (Me, "Couldn't find entity "
-                & Get_Name (Entity) & " in "
-                & Get_LI_Filename (Lib_Info)
-                & " at line" & Get_Declaration_Line_Of (Entity)'Img
-                & " column" & Get_Declaration_Column_Of (Entity)'Img);
-         Free (Tree);
-         Pop_State (Kernel_Handle (Kernel));
          return;
       end if;
 
@@ -776,12 +833,7 @@ package body Browsers.Call_Graph is
       Browser := Call_Graph_Browser (Get_Widget (Child_Browser));
 
       --  Look for an existing item corresponding to entity
-      Item := Entity_Item (Find_Entity (Browser, Entity));
-      if Item = null then
-         Gtk_New (Item, Browser, Entity => Entity);
-         Put (Get_Canvas (Browser), Item);
-      end if;
-
+      Item := Add_Entity_If_Not_Present (Browser, Entity);
       Item.From_Parsed := True;
       Refresh (Browser, Item);
 
