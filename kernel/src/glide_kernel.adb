@@ -56,6 +56,7 @@ with File_Utils;                use File_Utils;
 with Glide_Intl;                use Glide_Intl;
 with Glide_Main_Window;         use Glide_Main_Window;
 with Default_Preferences;       use Default_Preferences;
+with Glide_Kernel.Custom;       use Glide_Kernel.Custom;
 with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
 with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
 with Glide_Kernel.Project;      use Glide_Kernel.Project;
@@ -125,15 +126,8 @@ package body Glide_Kernel is
    use Actions_Htable.String_Hash_Table;
    use Action_Contexts_Htable.String_Hash_Table;
 
-   function Convert is new Ada.Unchecked_Conversion
-     (System.Address, Kernel_Handle);
-   function Convert is new Ada.Unchecked_Conversion
-     (Kernel_Handle, System.Address);
-
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Project_Registry'Class, Project_Registry_Access);
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (Key_Handler_Record'Class, Key_Handler_Access);
 
    function Process_Anim (Data : Process_Data) return Boolean;
    --  Process_Timeout callback to handle image animations.
@@ -152,11 +146,6 @@ package body Glide_Kernel is
    --  the entity with name Entity_Name.
    --  Decl is set to No_Entity_Information and Status to Entity_Not_Found if
    --  the user didn't select any declaration.
-
-   procedure General_Event_Handler
-     (Event : Gdk_Event; Kernel : System.Address);
-   --  Event handler called before even gtk can do its dispatching. This
-   --  intercepts all events going through the application
 
    procedure Select_All_Children (View : access Gtk_Widget_Record'Class);
    --  Callback for the "save all windows" dialog
@@ -191,27 +180,6 @@ package body Glide_Kernel is
          return Handle.GNAT_Version.all;
       end if;
    end GNAT_Version;
-
-   ---------------------------
-   -- General_Event_Handler --
-   ---------------------------
-
-   procedure General_Event_Handler
-     (Event : Gdk_Event; Kernel : System.Address)
-   is
-      K : constant Kernel_Handle := Convert (Kernel);
-   begin
-      if (Get_Event_Type (Event) = Key_Press
-          or else Get_Event_Type (Event) = Key_Release)
-      then
-         if Process_Event (K.Key_Handler, Event) then
-            return;
-         end if;
-      end if;
-
-      --  Dispatch the event in the standard gtk+ main loop
-      Gtk.Main.Do_Event (Event);
-   end General_Event_Handler;
 
    -------------
    -- Gtk_New --
@@ -274,8 +242,6 @@ package body Glide_Kernel is
       Handle.History := new History_Record;
       Load (Handle.History.all, Dir & "history");
       Set_Max_Length (Handle.History.all, History_Max_Length);
-
-      Event_Handler_Set (General_Event_Handler'Access, Convert (Handle));
 
       Glide_Kernel.Scripts.Initialize (Handle);
    end Gtk_New;
@@ -1785,9 +1751,6 @@ package body Glide_Kernel is
         (Me, "Saving preferences in " & Handle.Home_Dir.all & "preferences");
       Save_Preferences (Handle, Handle.Home_Dir.all & "preferences");
 
-      Free (Handle.Key_Handler.all);
-      Unchecked_Free (Handle.Key_Handler);
-
       Save (Handle.History.all, Handle.Home_Dir.all & "history");
       Free (Handle.History.all);
       Unchecked_Free (Handle.History);
@@ -2001,14 +1964,12 @@ package body Glide_Kernel is
    ----------------------
 
    procedure Bind_Default_Key
-     (Handler        : access Default_Key_Handler_Record;
+     (Kernel         : access Kernel_Handle_Record;
       Action         : String;
-      Default_Key    : String)
-   is
-      pragma Unreferenced
-        (Handler, Default_Key, Action);
+      Default_Key    : String) is
    begin
-      null;
+      Add_Customization_String
+        (Kernel, "<key action=""" & Action & """>" & Default_Key & "</key>");
    end Bind_Default_Key;
 
    ------------------------------
@@ -2075,52 +2036,6 @@ package body Glide_Kernel is
 
       return W;
    end Get_Current_Focus_Widget;
-
-   -------------------
-   -- Process_Event --
-   -------------------
-
-   function Process_Event
-     (Handler  : access Default_Key_Handler_Record;
-      Event    : Gdk.Event.Gdk_Event) return Boolean
-   is
-      pragma Unreferenced (Handler, Event);
-   begin
-      return False;
-   end Process_Event;
-
-   ---------------------
-   -- Set_Key_Handler --
-   ---------------------
-
-   procedure Set_Key_Handler
-     (Kernel  : access Kernel_Handle_Record;
-      Handler : access Key_Handler_Record'Class) is
-   begin
-      Free (Kernel.Key_Handler.all);
-      Unchecked_Free (Kernel.Key_Handler);
-      Kernel.Key_Handler := Key_Handler_Access (Handler);
-   end Set_Key_Handler;
-
-   ---------------------
-   -- Get_Key_Handler --
-   ---------------------
-
-   function Get_Key_Handler
-     (Kernel : access Kernel_Handle_Record) return Key_Handler_Access is
-   begin
-      return Kernel.Key_Handler;
-   end Get_Key_Handler;
-
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (Handler : in out Key_Handler_Record) is
-      pragma Unreferenced (Handler);
-   begin
-      null;
-   end Free;
 
    ----------
    -- Free --

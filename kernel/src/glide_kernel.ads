@@ -27,7 +27,6 @@ with Glib.Object;  use Glib;
 with Glib.Values;
 with Glib.Xml_Int;
 with Gdk;
-with Gdk.Event;
 with Gtk.Handlers;
 with Gtk.Accel_Group;
 with Gtk.Main;
@@ -594,45 +593,16 @@ package Glide_Kernel is
    -- Key handlers --
    ------------------
 
-   type Key_Handler_Record is abstract tagged private;
-   type Key_Handler_Access is access all Key_Handler_Record'Class;
-
    procedure Bind_Default_Key
-     (Handler        : access Key_Handler_Record;
+     (Kernel         : access Kernel_Handle_Record;
       Action         : String;
-      Default_Key    : String) is abstract;
+      Default_Key    : String);
    --  Associate a default key binding with an action.
    --  Default_Key is ignored if the key was previously overriden by the user.
    --  Its format is something like "control-o" or "control-x control-k", the
    --  second form specifies that it uses a secondary keymap.
    --  Action need not exist when the key is bound. This is why we require
    --  a string instead of an Action_Record.
-
-   function Process_Event
-     (Handler  : access Key_Handler_Record;
-      Event    : Gdk.Event.Gdk_Event) return Boolean is abstract;
-   --  Process an event.
-   --  This function should return True if the event was processed, False
-   --  if no command was bound to that key.
-
-   procedure Free (Handler : in out Key_Handler_Record);
-   --  Free the memory used by Handler. This includes saving the redefined
-   --  keys for instance.
-
-
-
-   procedure Set_Key_Handler
-     (Kernel  : access Kernel_Handle_Record;
-      Handler : access Key_Handler_Record'Class);
-   --  Set the key handler for the kernel. Only one such handler can
-   --  be set, so that the keys are all handled in a common place.
-
-   function Get_Key_Handler
-     (Kernel : access Kernel_Handle_Record) return Key_Handler_Access;
-   --  Return the key handler for the kernel.
-   --  A default handler exists in the kernel if no module has replaced it.
-   --  However, this default handler doesn't do anything (and thus all
-   --  custom keys will not be activable.
 
    ------------
    -- Saving --
@@ -927,16 +897,6 @@ private
    type Kernel_Scripting_Data is access all Kernel_Scripting_Data_Record'Class;
    --  Derived in Glide_Kernel.Scripts to store internal data
 
-   type Key_Handler_Record is abstract tagged null record;
-   type Default_Key_Handler_Record is new Key_Handler_Record with null record;
-   procedure Bind_Default_Key
-     (Handler        : access Default_Key_Handler_Record;
-      Action         : String;
-      Default_Key    : String);
-   function Process_Event
-     (Handler  : access Default_Key_Handler_Record;
-      Event    : Gdk.Event.Gdk_Event) return Boolean;
-
    procedure Free (Action : in out Action_Record);
    --  Free the memory occupied by the action
 
@@ -964,9 +924,6 @@ private
    type GPS_MDI_Child is access all GPS_MDI_Child_Record'Class;
 
    type Kernel_Handle_Record is new Glib.Object.GObject_Record with record
-      Key_Handler : Key_Handler_Access := new Default_Key_Handler_Record;
-      --  The kandler that processes all key events
-
       Actions : Actions_Htable.String_Hash_Table.HTable;
       --  The actions registered in the kernel
 
