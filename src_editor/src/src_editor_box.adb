@@ -148,6 +148,11 @@ package body Src_Editor_Box is
       Context : Selection_Context_Access);
    --  Callback for the "Goto Declaration<->Body" contextual menu
 
+   procedure On_Goto_Other_File
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context_Access);
+   --  Callback for the "Goto spec <-> body" contextual menu
+
    procedure Entity_At_Cursor
      (Editor                   : access Source_Editor_Box_Record;
       Line, Column             : Natural := 0;
@@ -712,12 +717,24 @@ package body Src_Editor_Box is
          if Menu /= null then
             Gtk_New (Item, -"Go to line...");
             Add (Menu, Item);
+            Set_Sensitive (Item, False);
+
             Gtk_New (Item, -"Go to previous reference");
             Add (Menu, Item);
+            Set_Sensitive (Item, False);
+
             Gtk_New (Item, -"Go to file spec/body");
             Add (Menu, Item);
+            Context_Callback.Object_Connect
+              (Item, "activate",
+               Context_Callback.To_Marshaller (On_Goto_Other_File'Access),
+               User_Data   => Selection_Context_Access (Context),
+               Slot_Object => Editor,
+               After       => True);
+
             Gtk_New (Item, -"Go to parent unit");
             Add (Menu, Item);
+            Set_Sensitive (Item, False);
          end if;
 
       else
@@ -776,20 +793,65 @@ package body Src_Editor_Box is
                   User_Data   => Selection_Context_Access (Context),
                   Slot_Object => Editor,
                   After       => True);
+
                Gtk_New (Item, -"Go to body of "
                           & Entity_Name_Information (Context));
                Add (Menu, Item);
+               Set_Sensitive (Item, False);
             end if;
 
             Gtk_New (Item, -"Go to file spec/body");
             Add (Menu, Item);
+            Context_Callback.Object_Connect
+              (Item, "activate",
+               Context_Callback.To_Marshaller (On_Goto_Other_File'Access),
+               User_Data   => Selection_Context_Access (Context),
+               Slot_Object => Editor,
+               After       => True);
+
             Gtk_New (Item, -"Go to parent unit");
             Add (Menu, Item);
+            Set_Sensitive (Item, False);
          end if;
       end if;
 
       return Selection_Context_Access (Context);
    end Get_Contextual_Menu;
+
+   ------------------------
+   -- On_Goto_Other_File --
+   ------------------------
+
+   procedure On_Goto_Other_File
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context_Access)
+   is
+      pragma Unreferenced (Widget);
+      C      : constant Entity_Selection_Context_Access :=
+        Entity_Selection_Context_Access (Context);
+      Kernel : constant Kernel_Handle := Get_Kernel (Context);
+
+   begin
+      Push_State (Kernel, Busy);
+
+      if Has_File_Information (C) then
+         declare
+            Other_File : constant String := Get_Other_File_Of
+              (Kernel, File_Information (C));
+         begin
+            if Other_File /= "" then
+               Open_File_Editor (Kernel, Other_File);
+            end if;
+         end;
+      end if;
+
+      Pop_State (Kernel);
+
+   exception
+      when E : others =>
+         Pop_State (Kernel);
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+   end On_Goto_Other_File;
 
    ---------------------------------
    -- On_Goto_Declaration_Or_Body --
