@@ -29,6 +29,9 @@ with Namet;       use Namet;
 with Stringt;     use Stringt;
 with Types;       use Types;
 with Output;      use Output;
+with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
+with GNAT.Expect;               use GNAT.Expect;
+with GNAT.OS_Lib;               use GNAT.OS_Lib;
 
 with Prj_API;            use Prj_API;
 with Src_Info.Prj_Utils; use Src_Info.Prj_Utils;
@@ -42,6 +45,11 @@ with Language_Handlers.Glide; use Language_Handlers.Glide;
 package body Glide_Kernel.Project is
 
    Me : Debug_Handle := Create ("glide_kernel.project");
+
+   procedure Compute_Predefined_Paths
+     (Handle : access Kernel_Handle_Record'Class);
+   --  Compute the predefined source and object paths, given the current
+   --  project view associated with Handle.
 
    ----------------------
    -- Find_Source_File --
@@ -103,6 +111,103 @@ package body Glide_Kernel.Project is
            & Get_Name_String (Prj.Tree.Name_Of (Kernel.Project));
       end if;
    end Get_Project_File_Name;
+
+
+   ------------------------------
+   -- Compute_Predefined_Paths --
+   ------------------------------
+
+   procedure Compute_Predefined_Paths
+     (Handle : access Kernel_Handle_Record'Class)
+   is
+      Source_Path : Boolean := True;
+
+      procedure Add_Directory (S : String);
+      --  Add S to the search path.
+      --  If Source_Path is True, the source path is modified.
+      --  Otherwise, the object path is modified.
+
+      procedure Add_Directory (S : String) is
+         Tmp : String_Access;
+      begin
+         if S = "" then
+            return;
+
+         elsif S = "<Current_Directory>" then
+            if Source_Path then
+               Tmp := Handle.Predefined_Source_Path;
+               Handle.Predefined_Source_Path :=
+                 new String' (Handle.Predefined_Source_Path.all & ":.");
+
+            else
+               Tmp := Handle.Predefined_Object_Path;
+               Handle.Predefined_Object_Path :=
+                 new String' (Handle.Predefined_Object_Path.all & ":.");
+            end if;
+
+         elsif Source_Path then
+            Tmp := Handle.Predefined_Source_Path;
+            Handle.Predefined_Source_Path :=
+              new String' (Handle.Predefined_Source_Path.all & ":" & S);
+
+         else
+            Tmp := Handle.Predefined_Object_Path;
+            Handle.Predefined_Object_Path :=
+              new String' (Handle.Predefined_Object_Path.all & ":" & S);
+         end if;
+
+         Free (Tmp);
+      end Add_Directory;
+
+      Fd     : Process_Descriptor;
+      Result : Expect_Match;
+      Args   : Argument_List (1 .. 1);
+      Gnatls : constant String := Get_Attribute_Value
+        (Get_Project_View (Handle), Gnatlist_Attribute,
+         Ide_Package, Default => "gnatls");
+
+   begin
+      --  If the gnatls commands hasn't changed, no need to recompute the
+      --  predefined paths.
+
+      if Handle.Gnatls_Cache /= null
+        and then Handle.Gnatls_Cache.all = Gnatls
+      then
+         return;
+      end if;
+
+      Free (Handle.Gnatls_Cache);
+      Handle.Gnatls_Cache := new String' (Gnatls);
+
+      Free (Handle.Predefined_Source_Path);
+      Free (Handle.Predefined_Object_Path);
+      Handle.Predefined_Source_Path := new String' ("");
+      Handle.Predefined_Object_Path := new String' ("");
+
+      Args (1) := new String' ("-v");
+      Non_Blocking_Spawn
+        (Fd, Gnatls, Args, Buffer_Size => 0, Err_To_Out => True);
+      Free (Args (1));
+      Expect (Fd, Result, "Source Search Path:\n", Timeout => -1);
+
+      loop
+         Expect (Fd, Result, "\n", Timeout => -1);
+
+         declare
+            S : constant String := Trim (Expect_Out (Fd), Ada.Strings.Left);
+         begin
+            if S = "Object Search Path:" & ASCII.LF then
+               Source_Path := False;
+            else
+               Add_Directory (S (S'First .. S'Last - 1));
+            end if;
+         end;
+      end loop;
+
+   exception
+      when Process_Died =>
+         Close (Fd);
+   end Compute_Predefined_Paths;
 
    ------------------
    -- Load_Project --

@@ -50,6 +50,10 @@ with Prj.Tree;
 
 package Glide_Kernel.Project is
 
+   -------------------
+   -- Project files --
+   -------------------
+
    function Get_Project_File_Name
      (Kernel : access Kernel_Handle_Record'Class) return String;
    --  Return the name of the current project, as should be used on the command
@@ -57,34 +61,6 @@ package Glide_Kernel.Project is
    --  The returned string includes the directory name for the project.
    --  If the current project is the default project (ie no other project was
    --  loaded by the user), then the empty string ("") is returned.
-
-   function Find_Source_File
-     (Kernel                     : access Kernel_Handle_Record'Class;
-      Short_File_Name            : String;
-      Use_Predefined_Source_Path : Boolean := False)
-      return String;
-   --  Search in the project source path Short_File_Name and return its
-   --  complete path, or an empty string in case of failure. If not found,
-   --  and if Use_Predefined_Source_Path is set to True, then also try to
-   --  locate the source file in the Predefined Source Path of the given
-   --  Kernel Handle.
-
-   function Find_Object_File
-     (Kernel                     : access Kernel_Handle_Record'Class;
-      Short_File_Name            : String;
-      Use_Predefined_Object_Path : Boolean := False)
-      return String;
-   --  This is the equivalent function of Find_Source_File for object files.
-   --  This also works for ali files.
-
-   function Scenario_Variables
-     (Kernel : access Kernel_Handle_Record'Class)
-      return Prj_API.Project_Node_Array;
-   --  Return a list of all the scenario variables. This list is cached, so
-   --  that future calls are fast.
-   --  See also the signal "variable_changed" for the kernel.
-   --  ??? This should be independent from any actual node, since the nodes
-   --  might be freed at some point.
 
    procedure Load_Project
      (Kernel : access Kernel_Handle_Record'Class; Project : String);
@@ -105,16 +81,33 @@ package Glide_Kernel.Project is
      (Handle : access Kernel_Handle_Record'Class) return Prj.Project_Id;
    --  Return the current project view
 
-   procedure Recompute_View
-     (Handle  : access Kernel_Handle_Record'Class);
+   procedure Recompute_View (Handle  : access Kernel_Handle_Record'Class);
    --  Recompute the view of the project, based on the current value of all
    --  scenario variables.
    --  This emits the "project_view_changed" signal.
 
-   function Scenario_Variables_Cmd_Line
-     (Handle : access Kernel_Handle_Record'Class) return String;
-   --  Return the command line to use to set up the scenario variables when
-   --  calling an external tool that handles project files
+   ------------------
+   -- Source files --
+   ------------------
+
+   function Find_Source_File
+     (Kernel                     : access Kernel_Handle_Record'Class;
+      Short_File_Name            : String;
+      Use_Predefined_Source_Path : Boolean := False)
+      return String;
+   --  Search in the project source path Short_File_Name and return its
+   --  complete path, or an empty string in case of failure. If not found,
+   --  and if Use_Predefined_Source_Path is set to True, then also try to
+   --  locate the source file in the Predefined Source Path of the given
+   --  Kernel Handle.
+
+   function Find_Object_File
+     (Kernel                     : access Kernel_Handle_Record'Class;
+      Short_File_Name            : String;
+      Use_Predefined_Object_Path : Boolean := False)
+      return String;
+   --  This is the equivalent function of Find_Source_File for object files.
+   --  This also works for ali files.
 
    function Directory_In_Source_Path
      (Handle         : access Kernel_Handle_Record'Class;
@@ -128,5 +121,23 @@ package Glide_Kernel.Project is
    --  Return True if Short_File_Name belongs to the current view of the
    --  project.
    --  Short_File_Name shouldn't include any directory specification.
+
+   --------------
+   -- Scenarii --
+   --------------
+
+   function Scenario_Variables
+     (Kernel : access Kernel_Handle_Record'Class)
+      return Prj_API.Project_Node_Array;
+   --  Return a list of all the scenario variables. This list is cached, so
+   --  that future calls are fast.
+   --  See also the signal "variable_changed" for the kernel.
+   --  ??? This should be independent from any actual node, since the nodes
+   --  might be freed at some point.
+
+   function Scenario_Variables_Cmd_Line
+     (Handle : access Kernel_Handle_Record'Class) return String;
+   --  Return the command line to use to set up the scenario variables when
+   --  calling an external tool that handles project files
 
 end Glide_Kernel.Project;
