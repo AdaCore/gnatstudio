@@ -192,6 +192,9 @@ cd ..
 tar xzvf pango-1.2.1.tar.gz
 cd pango-1.2.1
 
+# Apply this patch if you want to ease distributing stand alone executables:
+patch -p0 < .../GtkAda/contrib/pango-1.2.1.diff
+
 # Note: to get all modules included, we could use --with-included-modules=yes
 # but basic-x should be all we need. In the future, we may want to also
 # include basic-xft, which requires additional librairies. Other modules are:
@@ -212,6 +215,9 @@ cd ..
 #######
 tar xzvf gtk+-2.2.1.tar.gz
 cd gtk+-2.2.1
+
+# Apply this patch if you want to ease distributing stand alone executables:
+patch -p0 < .../GtkAda/contrib/gtk+-2.2.1.diff
 
 # Under certain platforms such as AiX or NT, a very recent version of
 # libtool may be needed. To install the most recent version of libtool,
