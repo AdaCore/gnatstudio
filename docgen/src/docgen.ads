@@ -353,24 +353,24 @@ package Docgen is
         (B                : Backend_Handle;
          Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
          File             : in Ada.Text_IO.File_Type;
+         Entity_List      : in out Type_Entity_List.List;
          List_Ref_In_File : in out List_Reference_In_File.List;
          Info             : in out Docgen.Doc_Info;
          Doc_Directory    : String;
          Doc_Suffix       : String);
+      --  This method is transmited by a pointer whose type is
+      --     Doc_Subprogram_Type. In its body, it calls Doc_Create.
+
       --  ??? This approach seems over complicated and could probably be
       --  simplified using standard OOP.
       --  Transmitted via a pointer of type Doc_Subprogram_Type.
       --  Call Doc_Create in its body.
-      --  It's necessary to use Launch_Doc_Create before calling Doc_Create
-      --  because the first parameter of a Doc_Subprogram_Type procedure
-      --  is Backend (we can't have Backend'Class).
-      --  When Doc_Create is called, it uses the right method of a child object
-      --  which overrides Doc_Create.
 
       procedure Doc_Create
         (B                : access Backend;
          Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
          File             : in Ada.Text_IO.File_Type;
+         Entity_List      : in out Type_Entity_List.List;
          List_Ref_In_File : in out List_Reference_In_File.List;
          Info             : in out Docgen.Doc_Info;
          Doc_Directory    : String;
@@ -424,7 +424,8 @@ package Docgen is
 
       procedure Format_Identifier
         (B                : access Backend;
-         List_Ref_In_File : in out List_Reference_In_File.List;
+         Entity_List      : in out Type_Entity_List.List;
+         List_Ref_In_File   : in out List_Reference_In_File.List;
          Start_Index      : Natural;
          Start_Line       : Natural;
          Start_Column     : Natural;
@@ -440,13 +441,16 @@ package Docgen is
          Source_File_List : Type_Source_File_List.List;
          Link_All         : Boolean;
          Is_Body          : Boolean;
-         Process_Body     : Boolean) is abstract;
+         Process_Body     : Boolean;
+         Info             : Doc_Info) is abstract;
       --  Format text as an identifier
+
 
       procedure Format_File
         (B                : access Backend'Class;
          Kernel           : access Kernel_Handle_Record'Class;
          File             : Ada.Text_IO.File_Type;
+         Entity_List      : in out Type_Entity_List.List;
          List_Ref_In_File : in out List_Reference_In_File.List;
          LI_Unit          : LI_File_Ptr;
          Text             : String;
@@ -456,7 +460,8 @@ package Docgen is
          Source_File_List : Type_Source_File_List.List;
          Link_All         : Boolean;
          Is_Body          : Boolean;
-         Process_Body     : Boolean);
+         Process_Body     : Boolean;
+         Info             : Doc_Info);
       --  Generate documentation for a type of code in the file
       --  (eg. packages, subprograms, exceptions ...). All tokens of this text
       --  are analysed by Parse_Entities.
@@ -535,6 +540,7 @@ package Docgen is
      (B                : Backend_Handle;
       Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
       File             : in Ada.Text_IO.File_Type;
+      Entity_List      : in out Type_Entity_List.List;
       List_Ref_In_File : in out List_Reference_In_File.List;
       Info             : in out Doc_Info;
       Doc_Directory    : String;
@@ -543,6 +549,7 @@ package Docgen is
 
    procedure Format_All_Link
      (B                : access Backend'Class;
+      Entity_List      : in out Type_Entity_List.List;
       List_Ref_In_File : in out List_Reference_In_File.List;
       Start_Index      : Natural;
       Start_Line       : Natural;
@@ -558,7 +565,8 @@ package Docgen is
       Source_File_List : Type_Source_File_List.List;
       Link_All         : Boolean;
       Is_Body          : Boolean;
-      Process_Body     : Boolean);
+      Process_Body     : Boolean;
+      Info             : Doc_Info);
    --  This procedure is used by formats of documentation like html to
    --  create links for each entity of the file File_Name on their
    --  own declaration. It's called by the method Format_Identifier of
