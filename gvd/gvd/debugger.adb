@@ -26,6 +26,8 @@ with Language;          use Language;
 with Language.Debugger; use Language.Debugger;
 with Odd.Types;         use Odd.Types;
 with Odd.Process;       use Odd.Process;
+with Ada.Strings;       use Ada.Strings;
+with Ada.Strings.Fixed; use Ada.Strings.Fixed;
 with Gtk.Window;
 
 package body Debugger is
@@ -257,7 +259,10 @@ package body Debugger is
          Text_Output_Handler
            (Convert (Debugger.Window, Debugger),
             Cmd & ASCII.LF, True);
-         Append (Convert (Debugger.Window, Debugger).Command_History, Cmd);
+         Append (Convert (Debugger.Window, Debugger).Command_History,
+                 Cmd (Index_Non_Blank (Cmd)
+                      .. Index_Non_Blank (Cmd, Backward)));
+
       end if;
 
       Send (Get_Process (Debugger), Cmd, Empty_Buffer);
