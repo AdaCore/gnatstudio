@@ -1029,8 +1029,12 @@ package body Glide_Kernel is
       Height : Gint := 480;
       X, Y   : Gint := -1;
       State  : Gdk_Window_State := 0;
+      Main_Window : constant Glide_Window := Glide_Window (Handle.Main_Window);
+      Desktop_Loaded : constant Boolean := Main_Window.Desktop_Loaded;
 
    begin
+      Main_Window.Desktop_Loaded := True;
+
       if Is_Regular_File (File) then
          Trace (Me, "loading desktop file " & File);
          Node := Parse (File);
@@ -1061,16 +1065,21 @@ package body Glide_Kernel is
             Child := Child.Next;
          end loop;
 
-         Set_Default_Size (Handle.Main_Window, Width, Height);
-         Set_UPosition (Handle.Main_Window, X, Y);
+         --  Only set the main window attributes the first time, this would be
+         --  to confusing to do it during an open session.
 
-         if (State and Window_State_Maximized) /= 0 then
-            Maximize (Handle.Main_Window);
+         if not Desktop_Loaded then
+            Set_Default_Size (Main_Window, Width, Height);
+            Set_UPosition (Main_Window, X, Y);
+
+            if (State and Window_State_Maximized) /= 0 then
+               Maximize (Main_Window);
+            end if;
          end if;
 
          --  Call Show_All before restoring the desktop, in case some
          --  children stored in the desktop have something to hide.
-         Show_All (Handle.Main_Window);
+         Show_All (Main_Window);
 
          if Desktop_Node /= null then
             Kernel_Desktop.Restore_Desktop
@@ -1085,7 +1094,7 @@ package body Glide_Kernel is
 
       else
          Trace (Me, "loading default desktop");
-         Show_All (Handle.Main_Window);
+         Show_All (Main_Window);
          Kernel_Desktop.Restore_Desktop
            (MDI, Handle.Default_Desktop, Kernel_Handle (Handle));
 
