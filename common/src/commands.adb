@@ -71,10 +71,15 @@ package body Commands is
         (Root_Command'Class, Command_Access);
    begin
       if X /= null then
-         Free (X.Next_Commands);
-         Free (X.Alternate_Commands);
-         Free (X.all);
-         Unchecked_Free (X);
+         if X.Do_Not_Free then
+            X.To_Be_Freed := True;
+         else
+            Free (X.Next_Commands);
+            Free (X.Alternate_Commands);
+            Free (X.all);
+            Unchecked_Free (X);
+            Unchecked_Free (X);
+         end if;
       end if;
    end Destroy;
 
