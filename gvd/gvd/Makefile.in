@@ -64,10 +64,12 @@ gvd_test: gvd_test.o libgvd
 gvd_test.o: gvd_test.c gvd-api.h
 	$(CC) -c $(CFLAGS) `gtk-config --cflags` gvd_test.c
 
-install: $(EXEC)
+install-nocheck: force
 	$(MKDIR) $(bindir)
 	$(STRIP) $(EXEC)
 	$(INSTALL_PROGRAM) $(EXEC) $(bindir)
+
+install: $(EXEC) install-nocheck
 
 clean:
 	-$(RM) *.o
