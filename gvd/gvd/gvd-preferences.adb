@@ -19,616 +19,441 @@
 -----------------------------------------------------------------------
 
 with Glib;                    use Glib;
-with GVD.Preferences_Dialog;  use GVD.Preferences_Dialog;
-with Glib.Xml_Int;            use Glib.Xml_Int;
-with Gtk.Widget;              use Gtk.Widget;
-with Gtk.GEntry;              use Gtk.GEntry;
-with Gtk.Extra.Font_Combo;    use Gtk.Extra.Font_Combo;
-with Gdk.Color;               use Gdk.Color;
-with Gtk.Combo;               use Gtk.Combo;
-with Gtk.Check_Button;        use Gtk.Check_Button;
-with Gtk.Spin_Button;         use Gtk.Spin_Button;
-with Gtk.Toggle_Button;       use Gtk.Toggle_Button;
-with GVD.Color_Combo;         use GVD.Color_Combo;
-with Ada.Strings.Fixed;       use Ada.Strings.Fixed;
+with Default_Preferences;     use Default_Preferences;
+with Glib.Properties.Creation; use Glib.Properties.Creation;
+with Glib.Generic_Properties;  use Glib.Generic_Properties;
+with Odd_Intl;                use Odd_Intl;
 
 package body GVD.Preferences is
 
-   Current_Preferences : Node_Ptr;
-   --  The XML tree that contains the current preferences.
-
-   Saved_Preferences : Node_Ptr := null;
-   --  The XML tree that saves the state of the preferences at the time the
-   --  dialog was initially opened.
-   --  This should be null most of the time, except when the preferences
-   --  dialog is open.
-
-   Tab_Size_Cached : Gint;
-   --  Cached value for tab size, for fast access
-
-   procedure Set
-     (Var : String_Gint; Value : Gint; Override : Boolean := False);
-   procedure Set
-     (Var : String_Guint; Value : Guint; Override : Boolean := False);
-   procedure Set
-     (Var : String_Boolean; Value : Boolean; Override : Boolean := False);
-   procedure Set
-     (Var : String_Color; Value : String; Override : Boolean := False);
-   procedure Set
-     (Var      : String_Font;
-      Size     : String_Gint;
-      Dialog   : access Gtk_Font_Combo_Record'Class;
-      Override : Boolean := False);
-   procedure Set
-     (Var : String_Tooltips_In_Source;
-      Value : Tooltips_In_Source_Type;
-      Override : Boolean := False);
-
-   procedure Set (Var : String; Value : String; Override : Boolean := False);
-   --  Create a new entry in the current preferences, or modify the value
-   --  of the existing one (only if Override is True)
-
-   procedure Set_From_Dialog
-     (Dialog : GVD.Preferences_Dialog.GVD_Preferences_Access);
-   --  Set the preferences from the contents of Dialog.
-   --  This modifies Current_PReferences, not Saved_Preferences.
-
-   ----------------------
-   -- Load_Preferences --
-   ----------------------
-
-   procedure Load_Preferences (File_Name : String) is
-   begin
-      if Current_Preferences /= null then
-         Free (Current_Preferences);
-      end if;
-
-      Current_Preferences := Parse (File_Name);
-      Set_Default_Preferences;
-   end Load_Preferences;
-
-   ----------------------
-   -- Save_Preferences --
-   ----------------------
-
-   procedure Save_Preferences (File_Name : String) is
-   begin
-      Print (Current_Preferences, File_Name => File_Name);
-   end Save_Preferences;
+   package Tooltips_Properties is new Generic_Enumeration_Property
+     ("Tooltips_In_Source", Tooltips_In_Source_Type);
 
    ------------------
    -- Get_Tab_Size --
    ------------------
 
-   function Get_Tab_Size return Gint is
+   function Get_Tab_Size (Pref : access GVD_Preferences_Manager) return Gint is
    begin
-      return Tab_Size_Cached;
+      return Pref.Tab_Size;
    end Get_Tab_Size;
 
    --------------
-   -- Get_Pref --
+   -- Set_Pref --
    --------------
 
-   function Get_Pref (Name : String_Guint) return Guint is
-      Node : constant Node_Ptr :=
-        Find_Tag (Current_Preferences.Child, String (Name));
+   procedure Set_Pref
+     (Manager : access GVD_Preferences_Manager;
+      Name    : String;
+      Value   : Glib.Gint) is
    begin
-      pragma Assert (Node /= null);
-      pragma Assert (Node.Value /= null);
-      return Guint'Value (Node.Value.all);
-   end Get_Pref;
-
-   --------------
-   -- Get_Pref --
-   --------------
-
-   function Get_Pref (Name : String_String) return String is
-      Node : constant Node_Ptr :=
-        Find_Tag (Current_Preferences.Child, String (Name));
-   begin
-      pragma Assert (Node /= null);
-      pragma Assert (Node.Value /= null);
-      return Node.Value.all;
-   end Get_Pref;
-
-   --------------
-   -- Get_Pref --
-   --------------
-
-   function Get_Pref (Name : String_Boolean) return Boolean is
-      Node : constant Node_Ptr :=
-        Find_Tag (Current_Preferences.Child, String (Name));
-   begin
-      pragma Assert (Node /= null);
-      pragma Assert (Node.Value /= null);
-      return Boolean'Value (Node.Value.all);
-   end Get_Pref;
-
-   --------------
-   -- Get_Pref --
-   --------------
-
-   function Get_Pref (Name : String_Gint) return Gint is
-      Node : constant Node_Ptr :=
-        Find_Tag (Current_Preferences.Child, String (Name));
-   begin
-      pragma Assert (Node /= null);
-      pragma Assert (Node.Value /= null);
-      return Gint'Value (Node.Value.all);
-   end Get_Pref;
-
-   --------------
-   -- Get_Pref --
-   --------------
-
-   function Get_Pref (Name : String_Color) return Gdk.Color.Gdk_Color is
-      Node  : constant Node_Ptr :=
-        Find_Tag (Current_Preferences.Child, String (Name));
-      Color : Gdk_Color;
-   begin
-      pragma Assert (Node /= null);
-      pragma Assert (Node.Value /= null);
-      Color := Parse (Node.Value.all);
-      Alloc (Gtk.Widget.Get_Default_Colormap, Color);
-      --  Alloc_Color (Get_System, Color, True, True, Success);
-      return Color;
-   end Get_Pref;
-
-   --------------
-   -- Get_Pref --
-   --------------
-
-   function Get_Pref (Name : String_Font) return String is
-      Node : constant Node_Ptr :=
-        Find_Tag (Current_Preferences.Child, String (Name));
-   begin
-      pragma Assert (Node /= null);
-      pragma Assert (Node.Value /= null);
-      return Node.Value.all;
-   end Get_Pref;
-
-   --------------
-   -- Get_Pref --
-   --------------
-
-   function Get_Pref
-     (Name : String_Tooltips_In_Source) return Tooltips_In_Source_Type
-   is
-      Node : constant Node_Ptr :=
-        Find_Tag (Current_Preferences.Child, String (Name));
-   begin
-      pragma Assert (Node /= null);
-      pragma Assert (Node.Value /= null);
-      return Tooltips_In_Source_Type'Value (Node.Value.all);
-   end Get_Pref;
-
-   ---------
-   -- Set --
-   ---------
-
-   procedure Set
-     (Var : String; Value : String; Override : Boolean := False)
-   is
-      N : Node_Ptr := Find_Tag (Current_Preferences.Child, Var);
-   begin
-      if N = null then
-         N := new Node;
-         N.Tag := new String' (Var);
-         N.Value := new String' (Value);
-         Add_Child (Current_Preferences, N);
-      elsif Override then
-         Glib.Xml_Int.Free (N.Value);
-         N.Value := new String' (Value);
+      if Name = Pspec_Name (Param_Spec (Tab_Size)) then
+         Manager.Tab_Size := Value;
       end if;
-   end Set;
+      Set_Pref (Preferences_Manager (Manager), Name, Value);
+   end Set_Pref;
 
-   ---------
-   -- Set --
-   ---------
+   ----------------------------------
+   -- Register_Default_Preferences --
+   ----------------------------------
 
-   procedure Set
-     (Var : String_Gint; Value : Gint; Override : Boolean := False) is
-   begin
-      Set (String (Var), Gint'Image (Value), Override);
-   end Set;
-
-   ---------
-   -- Set --
-   ---------
-
-   procedure Set
-     (Var : String_Guint; Value : Guint; Override : Boolean := False) is
-   begin
-      Set (String (Var), Guint'Image (Value), Override);
-   end Set;
-
-   ---------
-   -- Set --
-   ---------
-
-   procedure Set
-     (Var : String_Boolean; Value : Boolean; Override : Boolean := False) is
-   begin
-      Set (String (Var), Boolean'Image (Value), Override);
-   end Set;
-
-   ---------
-   -- Set --
-   ---------
-
-   procedure Set
-     (Var : String_Tooltips_In_Source;
-      Value : Tooltips_In_Source_Type;
-      Override : Boolean := False) is
-   begin
-      Set (String (Var), Tooltips_In_Source_Type'Image (Value), Override);
-   end Set;
-
-   ---------
-   -- Set --
-   ---------
-
-   procedure Set
-     (Var : String_Color; Value : String; Override : Boolean := False) is
-   begin
-      Set (String (Var), Value, Override);
-   end Set;
-
-   ---------
-   -- Set --
-   ---------
-
-   procedure Set
-     (Var      : String_Font;
-      Size     : String_Gint;
-      Dialog   : access Gtk_Font_Combo_Record'Class;
-      Override : Boolean := False) is
-   begin
-      Set (String (Var), Get_Text (Get_Entry (Get_Name_Combo (Dialog))),
-           Override);
-      Set (Size, Gint'Value (Get_Text (Get_Entry (Get_Size_Combo (Dialog)))),
-           Override);
-   end Set;
-
-   -----------------------------
-   -- Set_Default_Preferences --
-   -----------------------------
-
-   procedure Set_Default_Preferences is
-   begin
-      if Current_Preferences = null then
-         Current_Preferences := new Node;
-         Current_Preferences.Tag := new String' ("GVD_Preferences");
-      end if;
-
-      Set (Break_On_Exception, False);
-
-      Set (Hide_Delay, Guint' (5000));
-      Set (String (Ada_Extensions), ".ads;.adb;.ada;.a;.dg");
-      Set (String (C_Extensions), ".c;.h");
-      Set (String (Cpp_Extensions), ".cc;.cpp;.C;.hh;.H");
-
-      Set (Display_Explorer, True);
-      Set (String (File_Name_Bg_Color), "#BEBEBE");
-      Set (String (Editor_Font), "Courier");
-      Set (Editor_Font_Size, Gint' (12));
-      Set (Editor_Show_Line_Nums, True);
-      Set (Editor_Show_Line_With_Code, True);
-      Set (Do_Color_Highlighting, True);
-      Set (String (Comments_Color), "#FF0000");
-      Set (String (Strings_Color), "#A52A2A");
-      Set (String (Keywords_Color), "#0000FF");
-      Set (Editor_Highlight_Current_Line, True);
-      Set (String (Editor_Highlight_Color), "#00CC00");
-      Set (Tab_Size, Gint' (8));
-      Set (Tooltips_In_Source, Simple);
-      Set (Should_Strip_CR, Need_To_Strip_CR);
-
-      Set (String (Asm_Highlight_Color), "#FF0000");
-      Set (String (Assembly_Range_Size), "200");
-
-      Set (String (Xref_Color), "#0000FF");
-      Set (String (Title_Color), "#BEBEBE");
-      Set (String (Change_Color), "#FF0000");
-      Set (String (Selection_Color), Color_Selection);
-      Set (String (Thaw_Bg_Color), "#FFFFFF");
-      Set (String (Freeze_Bg_Color), "#AAAAAA");
-      Set (String (Title_Font), "Helvetica-Bold");
-      Set (Title_Font_Size, Default_Font_Size);
-      Set (String (Value_Font), "Helvetica");
-      Set (Value_Font_Size, Default_Font_Size);
-      Set (String (Command_Font), "Courier");
-      Set (String (Type_Font), "Helvetica-Oblique");
-      Set (Type_Font_Size, Default_Font_Size);
-      Set (Annotation_Font_Size, Default_Link_Font_Size);
-      Set (Hide_Big_Items, True);
-      Set (Big_Item_Height, Gint' (150));
-      Set (Default_Detect_Aliases, True);
-      Set (String (Debugger_Highlight_Color), "#0000FF");
-      Set (String (Debugger_Font), "Courier");
-      Set (Debugger_Font_Size, Gint' (12));
-
-      Set (String (Memory_View_Font), "Courier");
-      Set (Memory_View_Font_Size, Gint (12));
-      Set (String (Memory_View_Color), "#333399");
-      Set (String (Memory_Highlighted_Color), "#DDDDDD");
-      Set (String (Memory_Selected_Color), "#00009c");
-      Set (String (Memory_Modified_Color), "#FF0000");
-
-      Set (String (List_Processes), Default_Ps);
-      Set (String (Default_External_Editor), "glide %f -emacs +%l");
-      Set (String (Remote_Protocol), "rsh");
-      Set (String (Remote_Copy), "rcp");
-      Set (String (HTML_Browser), Default_HTML_Browser);
-
-      Tab_Size_Cached := Get_Pref (Tab_Size);
-   end Set_Default_Preferences;
-
-   -----------------
-   -- Fill_Dialog --
-   -----------------
-
-   procedure Fill_Dialog (Dialog : GVD_Preferences_Access) is
-   begin
-      --  Break on exception
-      Set_Active (Dialog.Break_Exception_Check,
-                  Get_Pref (Break_On_Exception));
-
-      --  Status bar timeout
-      Set_Text (Dialog.Statusbar_Timeout_Entry,
-                Trim (Guint'Image (Get_Pref (Hide_Delay)), Ada.Strings.Left));
-
-      --  Language Extensions
-      Set_Text (Dialog.Ada_Extensions_Entry, Get_Pref (Ada_Extensions));
-      Set_Text (Dialog.C_Extensions_Entry, Get_Pref (C_Extensions));
-      Set_Text (Dialog.Cpp_Extensions_Entry, Get_Pref (Cpp_Extensions));
-
-      --  Display Explorer Tree
-      Set_Active (Dialog.Display_Explorer_Check, Get_Pref (Display_Explorer));
-
-      --  File name background
-      Set_Color
-        (Dialog.File_Name_Bg_Combo, Get_Pref (File_Name_Bg_Color));
-
-      --  Source font (??? Should handle bold and italic)
-      Font_Combo_Select
-        (Dialog.Editor_Font_Combo,
-         Get_Pref (Editor_Font),
-         Bold => False,
-         Italic => False,
-         Height => Get_Pref (Editor_Font_Size));
-      Hide (Get_Bold_Button (Dialog.Editor_Font_Combo));
-      Hide (Get_Italic_Button (Dialog.Editor_Font_Combo));
-
-      --  Show line numbers
-      Set_Active
-        (Dialog.Show_Line_Numbers_Check, Get_Pref (Editor_Show_Line_Nums));
-
-      --  Show lines with code
-      Set_Active
-        (Dialog.Show_Lines_Code_Check, Get_Pref (Editor_Show_Line_With_Code));
-
-      --  Automatic display of variable values
-      --  ??? Should give access to the other values
-      Set_Active (Dialog.Tooltips_Check,
-                  Get_Pref (Tooltips_In_Source) /= None);
-
-      --  Syntax highlighting
-      Set_Active
-        (Dialog.Syntax_Highlight_Check, Get_Pref (Do_Color_Highlighting));
-
-      --  Strip Carriage Return
-      Set_Active (Dialog.Strip_Cr_Check, Get_Pref (Should_Strip_CR));
-
-      --  Entities color
-      Set_Color (Dialog.Comment_Color_Combo, Get_Pref (Comments_Color));
-      Set_Color (Dialog.String_Color_Combo, Get_Pref (Strings_Color));
-      Set_Color (Dialog.Keyword_Color_Combo, Get_Pref (Keywords_Color));
-
-      --  Current assembly line
-      Set_Color (Dialog.Asm_Highlight_Combo, Get_Pref (Asm_Highlight_Color));
-
-      --  Data colors
-      Set_Color (Dialog.Xref_Color_Combo, Get_Pref (Xref_Color));
-      Set_Color (Dialog.Title_Color_Combo, Get_Pref (Title_Color));
-      Set_Color (Dialog.Change_Color_Combo, Get_Pref (Change_Color));
-      Set_Color (Dialog.Thaw_Bg_Color_Combo, Get_Pref (Thaw_Bg_Color));
-      Set_Color (Dialog.Freeze_Bg_Color_Combo, Get_Pref (Freeze_Bg_Color));
-
-      --  Title font (??? Should handle bold and italic)
-      Font_Combo_Select
-        (Dialog.Title_Font_Combo,
-         Get_Pref (Title_Font),
-         Bold => False,
-         Italic => False,
-         Height => Get_Pref (Title_Font_Size));
-      Hide (Get_Bold_Button (Dialog.Title_Font_Combo));
-      Hide (Get_Italic_Button (Dialog.Title_Font_Combo));
-
-      --  Value font (??? Should handle bold and italic)
-      Font_Combo_Select
-        (Dialog.Value_Font_Combo,
-         Get_Pref (Value_Font),
-         Bold => False,
-         Italic => False,
-         Height => Get_Pref (Value_Font_Size));
-      Hide (Get_Bold_Button (Dialog.Value_Font_Combo));
-      Hide (Get_Italic_Button (Dialog.Value_Font_Combo));
-
-      --  Type font (??? Should handle bold and italic)
-      Font_Combo_Select
-        (Dialog.Type_Font_Combo,
-         Get_Pref (Type_Font),
-         Bold => False,
-         Italic => False,
-         Height => Get_Pref (Type_Font_Size));
-      Hide (Get_Bold_Button (Dialog.Type_Font_Combo));
-      Hide (Get_Italic_Button (Dialog.Type_Font_Combo));
-
-      --  Big items
-      Set_Active (Dialog.Hide_Big_Items_Check, Get_Pref (Hide_Big_Items));
-      Set_Value
-        (Dialog.Big_Item_Spin, Grange_Float (Get_Pref (Big_Item_Height)));
-      Set_Sensitive (Dialog.Big_Item_Spin, Get_Pref (Hide_Big_Items));
-
-      --  Detect aliases
-      Set_Active
-        (Dialog.Detect_Aliases_Check, Get_Pref (Default_Detect_Aliases));
-
-      --  Command window
-      Set_Color
-        (Dialog.Debug_Highlight_Combo, Get_Pref (Debugger_Highlight_Color));
-      Font_Combo_Select
-        (Dialog.Debug_Font_Combo,
-         Get_Pref (Debugger_Font),
-         Bold => False,
-         Italic => False,
-         Height => Get_Pref (Debugger_Font_Size));
-      Hide (Get_Bold_Button (Dialog.Debug_Font_Combo));
-      Hide (Get_Italic_Button (Dialog.Debug_Font_Combo));
-
-      --  Memory window
-      Font_Combo_Select
-        (Dialog.Memory_Font_Combo,
-         Get_Pref (Memory_View_Font),
-         Bold => False,
-         Italic => False,
-         Height => Get_Pref (Memory_View_Font_Size));
-      Hide (Get_Bold_Button (Dialog.Memory_Font_Combo));
-      Hide (Get_Italic_Button (Dialog.Memory_Font_Combo));
-      Set_Color (Dialog.Memory_Default_Combo, Get_Pref (Memory_View_Color));
-      Set_Color
-        (Dialog.Memory_Highlight_Combo, Get_Pref (Memory_Highlighted_Color));
-      Set_Color
-        (Dialog.Memory_Selection_Combo, Get_Pref (Memory_Selected_Color));
-      Set_Color
-        (Dialog.Memory_Modified_Combo, Get_Pref (Memory_Modified_Color));
-
-      --  Helpers
-      Set_Text (Dialog.Edit_Source_Entry, Get_Pref (Default_External_Editor));
-      Set_Text (Dialog.List_Processes_Entry, Get_Pref (List_Processes));
-      Set_Text (Dialog.Remote_Shell_Entry, Get_Pref (Remote_Protocol));
-      Set_Text (Dialog.Remote_Copy_Entry, Get_Pref (Remote_Copy));
-      Set_Text (Dialog.Html_Entry, Get_Pref (HTML_Browser));
-
-      Saved_Preferences := Current_Preferences;
-
-      --  ??? Not very efficient, we should fix the Get function to accept
-      --  an empty tree.
-      Current_Preferences := Deep_Copy (Saved_Preferences);
-   end Fill_Dialog;
-
-   ---------------------
-   -- Set_From_Dialog --
-   ---------------------
-
-   procedure Set_From_Dialog
-     (Dialog : GVD.Preferences_Dialog.GVD_Preferences_Access) is
-   begin
-      Set (Break_On_Exception,
-           Get_Active (Dialog.Break_Exception_Check), True);
-      Set (Hide_Delay, Guint'Value (Get_Text (Dialog.Statusbar_Timeout_Entry)),
-           True);
-      Set (String (Ada_Extensions),
-           Get_Text (Dialog.Ada_Extensions_Entry), True);
-      Set (String (C_Extensions), Get_Text (Dialog.C_Extensions_Entry), True);
-      Set (String (Cpp_Extensions),
-           Get_Text (Dialog.Cpp_Extensions_Entry), True);
-
-      Set (Display_Explorer, Get_Active (Dialog.Display_Explorer_Check), True);
-      Set (File_Name_Bg_Color, Get_Color (Dialog.File_Name_Bg_Combo), True);
-      Set (Editor_Font, Editor_Font_Size, Dialog.Editor_Font_Combo, True);
-
-      Set (Editor_Show_Line_Nums, Get_Active (Dialog.Show_Line_Numbers_Check),
-           True);
-      Set (Editor_Show_Line_With_Code,
-           Get_Active (Dialog.Show_Lines_Code_Check), True);
-
-      if Get_Active (Dialog.Tooltips_Check) then
-         Set (Tooltips_In_Source, Simple, True);
-      else
-         Set (Tooltips_In_Source, None, True);
-      end if;
-
-      Set (Do_Color_Highlighting, Get_Active (Dialog.Syntax_Highlight_Check),
-           True);
-      Set (Should_Strip_CR, Get_Active (Dialog.Strip_Cr_Check), True);
-      Set (Comments_Color, Get_Color (Dialog.Comment_Color_Combo), True);
-      Set (Strings_Color, Get_Color (Dialog.String_Color_Combo), True);
-      Set (Keywords_Color, Get_Color (Dialog.Keyword_Color_Combo), True);
-      Set (Asm_Highlight_Color, Get_Color (Dialog.Asm_Highlight_Combo), True);
-      Set (Xref_Color, Get_Color (Dialog.Xref_Color_Combo), True);
-      Set (Title_Color, Get_Color (Dialog.Title_Color_Combo), True);
-      Set (Change_Color, Get_Color (Dialog.Change_Color_Combo), True);
-      Set (Thaw_Bg_Color, Get_Color (Dialog.Thaw_Bg_Color_Combo), True);
-      Set (Freeze_Bg_Color, Get_Color (Dialog.Freeze_Bg_Color_Combo), True);
-      Set (Title_Font, Title_Font_Size, Dialog.Title_Font_Combo, True);
-      Set (Value_Font, Value_Font_Size, Dialog.Value_Font_Combo, True);
-      Set (Type_Font, Type_Font_Size, Dialog.Type_Font_Combo, True);
-      Set (Hide_Big_Items, Get_Active (Dialog.Hide_Big_Items_Check), True);
-      Set (Big_Item_Height, Get_Value_As_Int (Dialog.Big_Item_Spin), True);
-      Set (Default_Detect_Aliases, Get_Active (Dialog.Detect_Aliases_Check),
-           True);
-
-      Set (Debugger_Highlight_Color, Get_Color (Dialog.Debug_Highlight_Combo),
-           True);
-      Set (Debugger_Font, Debugger_Font_Size, Dialog.Debug_Font_Combo, True);
-
-      Set (Memory_View_Font, Memory_View_Font_Size, Dialog.Memory_Font_Combo,
-           True);
-      Set (Memory_View_Color, Get_Color (Dialog.Memory_Default_Combo), True);
-      Set (Memory_Highlighted_Color, Get_Color (Dialog.Memory_Highlight_Combo),
-           True);
-      Set (Memory_Selected_Color, Get_Color (Dialog.Memory_Selection_Combo),
-           True);
-      Set (Memory_Modified_Color, Get_Color (Dialog.Memory_Modified_Combo),
-           True);
-
-      Set (String (Default_External_Editor),
-           Get_Text (Dialog.Edit_Source_Entry), True);
-      Set (String (List_Processes), Get_Text (Dialog.List_Processes_Entry),
-           True);
-      Set (String (Remote_Protocol), Get_Text (Dialog.Remote_Shell_Entry),
-           True);
-      Set (String (Remote_Copy), Get_Text (Dialog.Remote_Copy_Entry), True);
-      Set (String (HTML_Browser), Get_Text (Dialog.Html_Entry), True);
-   end Set_From_Dialog;
-
-   -----------------------
-   -- Apply_Preferences --
-   -----------------------
-
-   procedure Apply_Preferences
-     (Dialog : GVD.Preferences_Dialog.GVD_Preferences_Access) is
-   begin
-      Set_From_Dialog (Dialog);
-   end Apply_Preferences;
-
-   ---------------------
-   -- Set_Preferences --
-   ---------------------
-
-   procedure Set_Preferences
-     (Dialog : GVD.Preferences_Dialog.GVD_Preferences_Access) is
-   begin
-      Set_From_Dialog (Dialog);
-      Free (Saved_Preferences);
-   end Set_Preferences;
-
-   ------------------------
-   -- Cancel_Preferences --
-   ------------------------
-
-   procedure Cancel_Preferences
-     (Dialog : GVD.Preferences_Dialog.GVD_Preferences_Access)
+   procedure Register_Default_Preferences
+     (Prefs : access Preferences_Manager_Record'Class;
+      Page_Prefix : String := "";
+      XML_Prefix  : String := "")
    is
-      pragma Unreferenced (Dialog);
+      General   : constant String := Page_Prefix & (-"General");
+      Source    : constant String := Page_Prefix & (-"Source");
+      Assembly  : constant String := Page_Prefix & (-"Assembly");
+      Data      : constant String := Page_Prefix & (-"Data");
+      Command   : constant String := Page_Prefix & (-"Command");
+      Memory    : constant String := Page_Prefix & (-"Memory");
+      Helpers   : constant String := Page_Prefix & (-"Helpers");
    begin
-      Free (Current_Preferences);
-      Current_Preferences := Saved_Preferences;
-   end Cancel_Preferences;
+      Break_On_Exception := Param_Spec_Boolean (Gnew_Boolean
+        (Name      => XML_Prefix & "Break-On-Exception",
+         Nick      => -"Break On Exceptions",
+         Blurb     => -("True if Gvd should automatically stop when"
+                        & " an exception is raised"),
+         Default   => False));
+      Register_Property (Prefs, Param_Spec (Break_On_Exception), General);
 
-begin
-   --  Initialize the default values
-   Set_Default_Preferences;
+      Hide_Delay := Param_Spec_Int (Gnew_Int
+        (Name      => XML_Prefix & "Hide-Delay",
+         Nick      => -"Status bar time out (ms)",
+         Blurb     => -("Delay before the messages in the status bar"
+                        & " disappear"),
+         Minimum   => 0,
+         Maximum   => 3600000,
+         Default   => 5000));
+      Register_Property (Prefs, Param_Spec (Hide_Delay), General);
+
+      Ada_Extensions := Param_Spec_String (Gnew_String
+        (Name      => XML_Prefix & "Ada-Extensions",
+         Nick      => -"Ada files extensions",
+         Blurb     => -"Semicolon separated list of extensions for Ada files",
+         Default   => ".ads;.adb;.ada;.a;.dg"));
+      Register_Property (Prefs, Param_Spec (Ada_Extensions), General);
+
+      C_Extensions := Param_Spec_String (Gnew_String
+        (Name      => XML_Prefix & "C-Extensions",
+         Nick      => -"C files extensions",
+         Blurb     => -"Semicolon separated list of extensions for C files",
+         Default   => ".c;.h"));
+      Register_Property (Prefs, Param_Spec (C_Extensions), General);
+
+      Cpp_Extensions := Param_Spec_String (Gnew_String
+        (Name      => XML_Prefix & "Cpp-Extensions",
+         Nick      => -"C++ files extensions",
+         Blurb     => -"Semicolon separated list of extensions for C++ files",
+         Default   => ".cc;.cpp;.C;.hh;.H"));
+      Register_Property (Prefs, Param_Spec (Cpp_Extensions), General);
+
+      Display_Explorer := Param_Spec_Boolean (Gnew_Boolean
+        (Name      => XML_Prefix & "Display-Explorer",
+         Nick      => -"Display explorer tree",
+         Blurb     => -("True if the explorer on the left side of GVD should"
+                        & " be displayed"),
+         Default   => True));
+      Register_Property  (Prefs, Param_Spec (Display_Explorer), Source);
+
+      File_Name_Bg_Color := Param_Spec_Color (Gnew_Color
+        (Name      => XML_Prefix & "File-Name-Bg-Color",
+         Nick      => -"File name background",
+         Blurb     => -("Color used for the background of the file name in the"
+                        & " editor. This is also used for the background of"
+                        & " the current frame in the call stack window"),
+         Default   => "#BEBEBE"));
+      Register_Property (Prefs, Param_Spec (File_Name_Bg_Color), Source);
+
+      Editor_Font := Param_Spec_Font (Gnew_Font
+        (Name      => XML_Prefix & "Editor-Font",
+         Nick      => -"Editor font",
+         Blurb     => -"Font used in the source editor",
+         Default   => "Courier 12"));
+      Register_Property (Prefs, Param_Spec (Editor_Font), Source);
+
+      Editor_Show_Line_Nums := Param_Spec_Boolean (Gnew_Boolean
+        (Name      => XML_Prefix & "Editor-Show-Line-Nums",
+         Nick      => -"Show line numbers",
+         Blurb   => -"True if line numbers should be displayed in the editor",
+         Default   => True));
+      Register_Property (Prefs, Param_Spec (Editor_Show_Line_Nums), Source);
+
+      Editor_Show_Line_With_Code := Param_Spec_Boolean (Gnew_Boolean
+        (Name      => XML_Prefix & "Editor-Show-Line-With-Code",
+         Nick      => -"Show lines with code",
+         Blurb     => -("True if dots should be shown in the editor for lines"
+                        & " that contain code"),
+         Default   => True));
+      Register_Property
+        (Prefs, Param_Spec (Editor_Show_Line_With_Code), Source);
+
+      Do_Color_Highlighting := Param_Spec_Boolean (Gnew_Boolean
+        (Name      => XML_Prefix & "Do-Color-Highlighting",
+         Nick      => -"Syntax highlighting",
+         Blurb     => -"True if the editor should provide syntax highlighting",
+         Default   => True));
+      Register_Property (Prefs, Param_Spec (Do_Color_Highlighting), Source);
+
+      Comments_Color := Param_Spec_Color (Gnew_Color
+        (Name     => XML_Prefix & "Comments-Color",
+         Nick     => -"Comments",
+         Blurb    => -"Color used for comments in the source editor",
+         Default  => "#FF0000"));
+      Register_Property (Prefs, Param_Spec (Comments_Color), Source);
+
+      Strings_Color := Param_Spec_Color (Gnew_Color
+        (Name     => XML_Prefix & "Strings-Color",
+         Nick     => -"Strings",
+         Blurb    => -"Color used for strings in the source editor",
+         Default  => "#A52A2A"));
+      Register_Property (Prefs, Param_Spec (Strings_Color), Source);
+
+      Keywords_Color := Param_Spec_Color (Gnew_Color
+        (Name     => XML_Prefix & "Keywords-Color",
+         Nick     => -"Keywords",
+         Blurb    => -"Color used for keywords in the source editor",
+         Default  => "#0000FF"));
+      Register_Property (Prefs, Param_Spec (Keywords_Color), Source);
+
+      Editor_Highlight_Current_Line := Param_Spec_Boolean (Gnew_Boolean
+        (Name     => XML_Prefix & "Editor-Highlight-Current-Line",
+         Nick     => -"Highlight current line",
+         Blurb    => -("True if the editor should highlight the current line"
+                       & " with a background color, in addition to the arrow"),
+         Default  => True));
+      Register_Property
+        (Prefs, Param_Spec (Editor_Highlight_Current_Line), Source);
+
+      Editor_Highlight_Color := Param_Spec_Color (Gnew_Color
+        (Name     => XML_Prefix & "Editor-Highlight-Color",
+         Nick     => -"Current line",
+         Blurb    => -"Color used to highlight the current line in the editor",
+         Default  => "#00CC00"));
+      Register_Property
+        (Prefs, Param_Spec (Editor_Highlight_Color), Source);
+
+      Tab_Size := Param_Spec_Int (Gnew_Int
+        (Name     => XML_Prefix & "Tab-Size",
+         Nick     => -"Tabulation size",
+         Blurb   => -"Number of spaces that a tabulation character represents",
+         Minimum  => 1,
+         Default  => Default_Tab_Size,
+         Maximum  => 16));
+      Register_Property (Prefs, Param_Spec (Tab_Size), Source);
+
+      Tooltips_In_Source := Param_Spec_Enum (Tooltips_Properties.Gnew_Enum
+        (Name     => XML_Prefix & "Tooltips-In-Source",
+         Nick     => -"Automatic display of variables",
+         Blurb    => -("How should the tooltips be displayed:" & ASCII.LF
+                       & " None: no tooltips is displayed" & ASCII.LF
+                       & " Simple: no processing done on the debugger output"
+                       & ASCII.LF
+                       & " Full: The output of the processor is parsed, and"
+                       & ASCII.LF
+                       & "        displayed in a manner similar to the data"
+                       & ASCII.LF
+                       & "        window"),
+         Default  => Simple));
+      Register_Property (Prefs, Param_Spec (Tooltips_In_Source), Source);
+
+      Should_Strip_CR := Param_Spec_Boolean (Gnew_Boolean
+        (Name     => XML_Prefix & "Should-Strip-CR",
+         Nick     => -"Strip Carriage return",
+         Blurb    => -("True if the carriage return characters should be"
+                       & " removed when reading a file. This is for"
+                       & " compatibility between unix and windows systems"),
+         Default  => Need_To_Strip_CR));
+      Register_Property (Prefs, Param_Spec (Should_Strip_CR), Source);
+
+      Asm_Highlight_Color := Param_Spec_Color (Gnew_Color
+        (Name     => XML_Prefix & "Asm-Highlight-Color",
+         Nick     => -"Current assembly line",
+         Blurb    => -("Color used to highlight the assembly code for the"
+                       & " current source line"),
+         Default  => "#FF0000"));
+      Register_Property
+        (Prefs, Param_Spec (Asm_Highlight_Color), Assembly);
+
+      Assembly_Range_Size := Param_Spec_Int (Gnew_Int
+        (Name     => XML_Prefix & "Assembly-Range-Size",
+         Nick     => -"Range size",
+         Blurb    => -("Number of assembly lines to display in the initial"
+                       & " display of the assembly window." & ASCII.LF
+                       & "If this size is 0, then the whole subprogram"
+                       & " is displayed, but this can take a very long time"
+                       & " on slower machines"),
+         Minimum  => 0,
+         Maximum  => 100000,
+         Default  => 200));
+      Register_Property (Prefs, Param_Spec (Assembly_Range_Size), Assembly);
+
+      Xref_Color := Param_Spec_Color (Gnew_Color
+        (Name     => XML_Prefix & "Xref-Color",
+         Nick     => -"Clickable item",
+         Blurb    => -"Color used for the items that are clickable",
+         Default  => "#0000FF"));
+      Register_Property (Prefs, Param_Spec (Xref_Color), Data);
+
+      Title_Color := Param_Spec_Color (Gnew_Color
+        (Name     => XML_Prefix & "Title-Color",
+         Nick     => -"Title background",
+         Blurb    => -"Color used for the background of the title",
+         Default  => "#BEBEBE"));
+      Register_Property (Prefs, Param_Spec (Title_Color), Data);
+
+      Change_Color := Param_Spec_Color (Gnew_Color
+        (Name     => XML_Prefix & "Change-Color",
+         Nick     => -"Changed data",
+         Blurb    => -("Color used to highlight fields that have changed"
+                       & " since the last updated"),
+         Default  => "#FF0000"));
+      Register_Property (Prefs, Param_Spec (Change_Color), Data);
+
+      Selection_Color := Param_Spec_Color (Gnew_Color
+        (Name     => XML_Prefix & "Selection-Color",
+         Nick     => -"Selection",
+         Blurb    => -"Color used for the selected items",
+         Default  => Color_Selection));
+      Register_Property (Prefs, Param_Spec (Selection_Color), Data);
+
+      Thaw_Bg_Color := Param_Spec_Color (Gnew_Color
+        (Name     => XML_Prefix & "Thaw-Bg-Color",
+         Nick     => -"Auto-Refreshed",
+         Blurb    => -("Background color for the items that are recomputed"
+                       & " every time the debugger stops"),
+         Default  => "#FFFFFF"));
+      Register_Property (Prefs, Param_Spec (Thaw_Bg_Color), Data);
+
+      Freeze_Bg_Color := Param_Spec_Color (Gnew_Color
+        (Name     => XML_Prefix & "Freeze-Bg-Color",
+         Nick     => -"Frozen",
+         Blurb    => -("Background color for the items that are never"
+                       & " recomputed"),
+         Default  => "#AAAAAA"));
+      Register_Property (Prefs, Param_Spec (Freeze_Bg_Color), Data);
+
+      Title_Font := Param_Spec_Font (Gnew_Font
+        (Name     => XML_Prefix & "Title-Font",
+         Nick     => -"Item name",
+         Blurb    => -"Font used for the name of the variables",
+         Default  => "Helvetica Bold" & Default_Font_Size'Img));
+      Register_Property (Prefs, Param_Spec (Title_Font), Data);
+
+      Value_Font := Param_Spec_Font (Gnew_Font
+        (Name     => XML_Prefix & "Value-Font",
+         Nick     => -"Item value",
+         Blurb    => -"Font used for the value of the variables",
+         Default  => "Helvetica" & Default_Font_Size'Img));
+      Register_Property (Prefs, Param_Spec (Value_Font), Data);
+
+      Command_Font := Param_Spec_Font (Gnew_Font
+        (Name     => XML_Prefix & "Command-Font",
+         Nick     => -"Debugger output",
+         Blurb    => -"Font used for the result of ""display any expression""",
+         Default  => "Courier" & Default_Font_Size'Img));
+      Register_Property (Prefs, Param_Spec (Command_Font), Data);
+
+      Type_Font := Param_Spec_Font (Gnew_Font
+        (Name     => XML_Prefix & "Type-Font",
+         Nick     => -"Item type",
+         Blurb    => -"Font used for the type of the variables",
+         Default  => "Helvetica Oblique" & Default_Font_Size'Img));
+      Register_Property (Prefs, Param_Spec (Type_Font), Data);
+
+      Annotation_Font := Param_Spec_Font (Gnew_Font
+        (Name     => XML_Prefix & "Annotation-Font",
+         Nick     => -"Annotations",
+         Blurb    => -"Font used for the links between two variables",
+         Default  => "Helvetica" & Default_Link_Font_Size'Img));
+      Register_Property (Prefs, Param_Spec (Annotation_Font), Data);
+
+      Hide_Big_Items := Param_Spec_Boolean (Gnew_Boolean
+        (Name     => XML_Prefix & "Hide-Big-Items",
+         Nick     => -"Fold big items",
+         Blurb    => -("True if items higher than a Big Item Height should"
+                       & " be folded initially"),
+         Default  => True));
+      Register_Property (Prefs, Param_Spec (Hide_Big_Items), Data);
+
+      Big_Item_Height := Param_Spec_Int (Gnew_Int
+        (Name     => XML_Prefix & "Big-Item-Height",
+         Nick     => -"Big item height",
+         Blurb    => -"See Hide Big Items",
+         Minimum  => 0,
+         Maximum  => 100000,
+         Default  => 150));
+      Register_Property (Prefs, Param_Spec (Big_Item_Height), Data);
+
+      Default_Detect_Aliases := Param_Spec_Boolean (Gnew_Boolean
+        (Name     => XML_Prefix & "Default-Detect-Aliases",
+         Nick     => -"Detect aliases (shared data structures)",
+         Blurb    => -("True if GVD shouldn't create new items when an item at"
+                       & " the same address already exists."),
+         Default  => True));
+      Register_Property (Prefs, Param_Spec (Default_Detect_Aliases), Data);
+
+      Debugger_Highlight_Color := Param_Spec_Color (Gnew_Color
+        (Name     => XML_Prefix & "Debugger-Highlight-Color",
+         Nick     => -"Color highlighting",
+         Blurb    => -"Color used for highlighting in the debugger window",
+         Default  => "#0000FF"));
+      Register_Property
+        (Prefs, Param_Spec (Debugger_Highlight_Color), Command);
+
+      Debugger_Font := Param_Spec_Font (Gnew_Font
+        (Name     => XML_Prefix & "Debugger-Font",
+         Nick     => -"Font",
+         Blurb    => -"Font used in the debugger window",
+         Default  => "Courier 12"));
+      Register_Property
+        (Prefs, Param_Spec (Debugger_Font), Command);
+
+      Memory_View_Font := Param_Spec_Font (Gnew_Font
+        (Name     => XML_Prefix & "Memory-View-Font",
+         Nick     => -"Font",
+         Blurb    => -"Font used in the memory view window",
+         Default  => "Courier 12"));
+      Register_Property (Prefs, Param_Spec (Memory_View_Font), Memory);
+
+      Memory_View_Color := Param_Spec_Color (Gnew_Color
+        (Name     => XML_Prefix & "Memory-View-Color",
+         Nick     => -"Default color",
+         Blurb    => -"Color used by default in the memory view window",
+         Default  => "#333399"));
+      Register_Property (Prefs, Param_Spec (Memory_View_Color), Memory);
+
+      Memory_Highlighted_Color := Param_Spec_Color (Gnew_Color
+        (Name     => XML_Prefix & "Memory-Highlighted-Color",
+         Nick     => -"Color highlighting",
+         Blurb    => -"Color used for highlighted items in the memory view",
+         Default  => "#DDDDDD"));
+      Register_Property
+        (Prefs, Param_Spec (Memory_Highlighted_Color), Memory);
+
+      Memory_Selected_Color := Param_Spec_Color (Gnew_Color
+        (Name     => XML_Prefix & "Memory-Selected-Color",
+         Nick     => -"Selection",
+         Blurb    => -"Color used for selected items in the memory view",
+         Default  => "#FF0000"));
+      Register_Property
+        (Prefs, Param_Spec (Memory_Selected_Color), Memory);
+
+      Memory_Modified_Color := Param_Spec_Color (Gnew_Color
+        (Name     => XML_Prefix & "Memory-Modified-Color",
+         Nick     => -"Modified",
+         Blurb    => -"Color used for modified items in the memory view",
+         Default  => "#FF0000"));
+      Register_Property
+        (Prefs, Param_Spec (Memory_Modified_Color), Memory);
+
+      List_Processes := Param_Spec_String (Gnew_String
+        (Name     => XML_Prefix & "List-Processes",
+         Nick     => -"List processes",
+         Blurb    => -"Command used to list processes running on the machine",
+         Default  => Default_Ps));
+      Register_Property
+        (Prefs, Param_Spec (List_Processes), Helpers);
+
+      Default_External_Editor := Param_Spec_String (Gnew_String
+         (Name    => XML_Prefix & "Default-External-Editor",
+          Nick    => -"Edit sources",
+          Blurb   => -("Command to start an external editor" & ASCII.LF
+                       & "%f is automatically replaced by the full path name"
+                       & " of the file." & ASCII.LF
+                       & "%l is replaced by the line number." & ASCII.LF
+                       & "This is overriden by the environment variable"
+                       & " GVD_EDITOR if it exists." & ASCII.LF
+                       & "For vi, try using " & ASCII.LF
+                       & " xterm -e /bin/vi %f +%l"),
+          Default => "glide %f -emacs +%l"));
+      Register_Property
+        (Prefs, Param_Spec (Default_External_Editor), Helpers);
+
+      Remote_Protocol := Param_Spec_String (Gnew_String
+         (Name    => XML_Prefix & "Remote-Protocol",
+          Nick    => -"Remote shell",
+          Blurb   => -"How to run a process on a remote machine ?",
+          Default => "rsh"));
+      Register_Property
+        (Prefs, Param_Spec (Remote_Protocol), Helpers);
+
+      Remote_Copy := Param_Spec_String (Gnew_String
+         (Name    => XML_Prefix & "Remote-Copy",
+          Nick    => -"Remote copy",
+          Blurb   => -"Program used to copy a file from a remote host",
+          Default => "rcp"));
+      Register_Property
+        (Prefs, Param_Spec (Remote_Copy), Helpers);
+
+      Html_Browser := Param_Spec_String (Gnew_String
+        (Name     => XML_Prefix & "HTML-Browser",
+         Nick     => -"HTML browser",
+         Blurb    => -"Program used to browser HTML pages",
+         Default  => Default_HTML_Browser));
+      Register_Property
+        (Prefs, Param_Spec (Html_Browser), Helpers);
+   end Register_Default_Preferences;
+
 end GVD.Preferences;
