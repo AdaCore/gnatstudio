@@ -93,6 +93,8 @@ package body Display_Items is
    --  If True, do not create new items when a matching item is already
    --  present in the canvas.
 
+   Hide_Big_Items : constant Boolean := True;
+   --  If True, items higher than a given limit will start in a hidden state.
 
    --  ??? Should get rid of these global variables.
    --  This could be done in a global initialization file, for all the
@@ -253,7 +255,17 @@ package body Display_Items is
          Set_Hidden_Pixmap (Box_Pixmap, Box_Mask);
       end if;
 
+      --  Compute the size, hidding if necessary the big components. However,
+      --  we never want the top level item to be hidden, so we force it to
+      --  visible (and possibly recalculate the size).
+      Size_Request (Item.Entity.all, Font, Hide_Big_Items => Hide_Big_Items);
+      if not Get_Visibility (Item.Entity.all) then
+         Set_Visibility (Item.Entity.all, True);
+         Size_Request (Item.Entity.all, Font);
+      end if;
+
       Update_Display (Item);
+      Gtkada.Canvas.Item_Resized (Item.Debugger.Data_Canvas, Item);
    end Initialize;
 
    --------------------
@@ -267,7 +279,6 @@ package body Display_Items is
    begin
       --  Compute the required size for the value itself.
 
-      Size_Request (Item.Entity.all, Font);
       Alloc_Width := Get_Width (Item.Entity.all) + 2 * Border_Spacing;
       Alloc_Height := Get_Height (Item.Entity.all) + 2 * Border_Spacing;
 
@@ -384,8 +395,6 @@ package body Display_Items is
                 X => Border_Spacing,
                 Y => Title_Height + Border_Spacing);
       end if;
-
-      Gtkada.Canvas.Item_Resized (Item.Debugger.Data_Canvas, Item);
    end Update_Display;
 
    -----------------
@@ -434,7 +443,7 @@ package body Display_Items is
                           Name : String)
    is
    begin
-      if not Has_Link (Canvas, From, To) then
+      if not Has_Link (Canvas, From, To, Name) then
          Add_Link (Canvas, From, To, End_Arrow, Name);
       end if;
    end Create_Link;
@@ -480,6 +489,8 @@ package body Display_Items is
          end if;
       else
          Create_Link (Item.Debugger.Data_Canvas, Item, New_Item, Link_Name);
+         --  Force a redraw.
+         Item_Resized (Item.Debugger.Data_Canvas, Item);
       end if;
    end Dereference_Item;
 
@@ -552,7 +563,9 @@ package body Display_Items is
                Gint (Get_Y (Event)) - Item.Title_Height - Border_Spacing);
          begin
             Set_Visibility (Component.all, not Get_Visibility (Component.all));
+            Size_Request (Item.Entity.all, Font);
             Update_Display (Item);
+            Gtkada.Canvas.Item_Resized (Item.Debugger.Data_Canvas, Item);
          end;
 
       --  Selecting a component
@@ -573,11 +586,18 @@ package body Display_Items is
             if Item.Debugger.Selected_Item /= null then
                Set_Selected
                  (Display_Item (Item.Debugger.Selected_Item).Entity, False);
-               Update_Display (Display_Item (Item.Debugger.Selected_Item));
+               if Item.Debugger.Selected_Item /= Canvas_Item (Item)  then
+
+                  --  Size hasn't change, so no need to recalculate it.
+                  Update_Display (Display_Item (Item.Debugger.Selected_Item));
+                  Gtkada.Canvas.Item_Updated
+                    (Item.Debugger.Data_Canvas, Item.Debugger.Selected_Item);
+               end if;
             end if;
 
             Set_Selected (Component, Value);
             Update_Display (Item);
+            Gtkada.Canvas.Item_Updated (Item.Debugger.Data_Canvas, Item);
             if Get_Selected (Component) then
                Item.Debugger.Selected_Item := Canvas_Item (Item);
             else
@@ -649,10 +669,11 @@ package body Display_Items is
 
    procedure Free (Item : access Display_Item_Record) is
    begin
-      Remove (Item.Debugger.Data_Canvas, Item);
       Free (Item.Name);
       Free (Item.Entity);
       Free (Item.Id);
+      Remove (Item.Debugger.Data_Canvas, Item);
+      --  Warning: the memory has been freed after Remove.
    end Free;
 
 end Display_Items;
