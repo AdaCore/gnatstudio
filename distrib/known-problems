@@ -6,10 +6,10 @@ Known Problems fixed in GPS 2.0.0
               directories, even though they already exist.
   Workaround: Answer Cancel to the dialog
 
-- Pretty_Printer package generated in projects even if it isn't used
+- Pretty_Printer package generated in projects even when not used
   Problem:    The project wizard will create a Pretty_Printer package, even if
               no switch was set by the user. This creates a problem with GNAT
-              versions older than 3.16, which didn't support this package
+              versions older than 3.16, which don't support this package
   Workaround: Edit the project file manually to remove the package
 
 - "Find all references" fails for GNAT runtime entities
