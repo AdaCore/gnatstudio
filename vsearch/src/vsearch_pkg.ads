@@ -45,7 +45,7 @@ package Vsearch_Pkg is
       Pattern_Entry : Gtk_Entry;
       Buttons_Hbox : Gtk_Hbox;
       Options_Frame : Gtk_Frame;
-      Options_Vbox : Gtk_Vbox;
+      Options_Vbox : Gtk_Table;
       Search_All_Check : Gtk_Check_Button;
       Case_Check : Gtk_Check_Button;
       Whole_Word_Check : Gtk_Check_Button;

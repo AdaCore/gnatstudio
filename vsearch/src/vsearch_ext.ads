@@ -121,7 +121,6 @@ private
       Search_Next_Button     : Gtk.Button.Gtk_Button;
       Search_Replace_Button  : Gtk.Button.Gtk_Button;
       Search_Previous_Button : Gtk.Button.Gtk_Button;
-      Stop_Button            : Gtk.Button.Gtk_Button;
       Options_Toggle         : Gtk.Toggle_Button.Gtk_Toggle_Button;
       Continue               : Boolean := True;
       Extra_Information      : Gtk.Widget.Gtk_Widget;

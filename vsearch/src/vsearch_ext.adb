@@ -244,9 +244,6 @@ package body Vsearch_Ext is
    procedure On_Search_Previous (Object : access Gtk_Widget_Record'Class);
    --  Called when button "Previous" is clicked.
 
-   procedure On_Stop_Search (Object : access Gtk_Widget_Record'Class);
-   --  Called when button "Stop" is clicked.
-
    procedure On_Options_Toggled (Object : access Gtk_Widget_Record'Class);
    --  Called when button "Options" is toggled.
 
@@ -348,16 +345,24 @@ package body Vsearch_Ext is
         Vsearch_Extended (Get_Widget (Child));
       Close_Button : Gtk_Button;
    begin
-      Set_Resizable (Gtk_Dialog (Get_Toplevel (Vsearch)), True);
+      if Is_Floating (Child) then
+         Set_Resizable (Gtk_Dialog (Get_Toplevel (Vsearch)), True);
 
-      --  Add the "Close" button.
-      Close_Button := Gtk_Button
-        (Add_Button (Gtk_Dialog (Get_Toplevel (Vsearch)),
-                     Stock_Close,
-                     Gtk_Response_Cancel));
+         --  Add the "Close" button.
+         Close_Button := Gtk_Button
+           (Add_Button (Gtk_Dialog (Get_Toplevel (Vsearch)),
+                        Stock_Close,
+                        Gtk_Response_Cancel));
 
-      Widget_Callback.Object_Connect
-        (Close_Button, "clicked", Close_Vsearch'Access, Vsearch);
+         Show_All (Vsearch.Auto_Hide_Check);
+         Set_Child_Visible (Vsearch.Auto_Hide_Check, True);
+
+         Widget_Callback.Object_Connect
+           (Close_Button, "clicked", Close_Vsearch'Access, Vsearch);
+      else
+         Hide_All (Vsearch.Auto_Hide_Check);
+         Set_Child_Visible (Vsearch.Auto_Hide_Check, False);
+      end if;
 
    exception
       when E : others =>
@@ -435,7 +440,6 @@ package body Vsearch_Ext is
          Result := Execute_Again;
       else
          Free (Data.Vsearch.Last_Search_Context);
-         Set_Sensitive (Data.Vsearch.Stop_Button, False);
          Set_Sensitive (Data.Vsearch.Search_Next_Button, True);
          Pop_State (Data.Vsearch.Kernel);
          Data.Vsearch.Search_Idle_Handler := 0;
@@ -482,7 +486,6 @@ package body Vsearch_Ext is
          Insert (Data.Vsearch.Kernel,
                  -"Finished replacing the string in all the files");
          Free (Data.Vsearch.Last_Search_Context);
-         Set_Sensitive (Data.Vsearch.Stop_Button, False);
          Set_Sensitive (Data.Vsearch.Search_Next_Button, True);
          Pop_State (Data.Vsearch.Kernel);
          Data.Vsearch.Search_Idle_Handler := 0;
@@ -584,8 +587,6 @@ package body Vsearch_Ext is
             --  Set up the search. Everything is automatically
             --  put back when the idle loop terminates.
 
-            Set_Sensitive (Vsearch.Stop_Button, True);
-
             Search_Commands.Create
               (C,
                  -"Searching",
@@ -668,7 +669,6 @@ package body Vsearch_Ext is
 
       else
          Create_Context (Vsearch);
-         Set_Sensitive (Vsearch.Stop_Button, True);
 
          Search_Commands.Create
            (C,
@@ -726,21 +726,6 @@ package body Vsearch_Ext is
          Trace (Exception_Handle,
                 "Unexpected exception: " & Exception_Information (E));
    end On_Search_Previous;
-
-   --------------------
-   -- On_Stop_Search --
-   --------------------
-
-   procedure On_Stop_Search (Object : access Gtk_Widget_Record'Class) is
-      Vsearch : constant Vsearch_Extended := Vsearch_Extended (Object);
-   begin
-      Vsearch.Continue := False;
-
-   exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
-   end On_Stop_Search;
 
    ----------------------
    -- Resize_If_Needed --
@@ -1163,15 +1148,6 @@ package body Vsearch_Ext is
         (Vsearch.Search_Previous_Button, "clicked",
          On_Search_Previous'Access, Vsearch);
 
-      Gtk_New (Vsearch.Stop_Button, -"Stop");
-      Set_Sensitive (Vsearch.Stop_Button, False);
-      Pack_Start (Vsearch.Buttons_Hbox, Vsearch.Stop_Button, False, False, 0);
-      Set_Tip
-        (Get_Tooltips (Handle), Vsearch.Stop_Button, -"Stop current search");
-      Widget_Callback.Object_Connect
-        (Vsearch.Stop_Button, "clicked",
-         On_Stop_Search'Access, Vsearch);
-
       Gtk_New (Vsearch.Options_Toggle, -"Options>>");
       Set_Active (Vsearch.Options_Toggle, True);
       Pack_Start
@@ -1339,9 +1315,12 @@ package body Vsearch_Ext is
                          Gtk_Widget (Vsearch_Module_Id.Search.Pattern_Combo),
                        Module => Vsearch_Module_Id,
                        Desktop_Independent => True);
+         Float_Vsearch (Child);
          Set_Title (Child, -"Search");
 
          Widget_Callback.Connect (Child, "float_child", Float_Vsearch'Access);
+         Widget_Callback.Connect
+           (Child, "unfloat_child", Float_Vsearch'Access);
 
          Float_Child (Child, Float_Widget);
          Set_Focus_Child (Child);
