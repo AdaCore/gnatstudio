@@ -101,8 +101,14 @@ package Commands.Custom is
    --  when Execute is called, with parameters obtained from the current
    --  context and the current project. If a parameter could not be converted,
    --  the command is not launched, and Failure is returned.
+   --
+   --  The custom commands must only be executed through the task_manager,
+   --  since they launch external processes in background mode and must wait
+   --  for their output.
 
 private
+   type Boolean_Array is array (Natural range <>) of Boolean;
+   type Boolean_Array_Access is access Boolean_Array;
 
    type Custom_Command is new Interactive_Command with record
       Kernel      : Kernel_Handle;
@@ -112,6 +118,29 @@ private
       XML         : Glib.Xml_Int.Node_Ptr;
       --  Only (Command, Script) or XML is defined, depending on what version
       --  of Create was used.
+
+      In_Process  : Boolean := False;
+      --  True if we are processing the command, but there are some external
+      --  process to run before completion
+
+      Cmd_Index   : Natural;
+      --  The current command we are executing
+
+      External_Process_In_Progress : Boolean;
+      Process_Exit_Status : Integer;
+      --  True if an external process is currently running
+
+      Outputs : Argument_List_Access;
+      --  The output of the various commands, if it was saved.
+
+      Current_Output : GNAT.OS_Lib.String_Access;
+      --  Output of the external currently executing, if we need to save it.
+
+      Save_Output : Boolean_Array_Access;
+      --  Whether we should save the output of the nth-command
+
+      Context  : Selection_Context_Access;
+      --  The process we had at the beginning of the executing
    end record;
 
 end Commands.Custom;
