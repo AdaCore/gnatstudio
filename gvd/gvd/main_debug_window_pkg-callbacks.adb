@@ -46,6 +46,7 @@ with Odd.Types;           use Odd.Types;
 with Odd.Strings;         use Odd.Strings;
 with Odd.Preferences;
 with Odd.Code_Editors;    use Odd.Code_Editors;
+with Odd.Memory_View;     use Odd.Memory_View;
 with Unchecked_Deallocation;
 
 package body Main_Debug_Window_Pkg.Callbacks is
@@ -888,8 +889,10 @@ package body Main_Debug_Window_Pkg.Callbacks is
    procedure On_Examine_Memory1_Activate
      (Object : access Gtk_Widget_Record'Class)
    is
+      Top : constant Main_Debug_Window_Access :=
+        Main_Debug_Window_Access (Object);
    begin
-      null;
+      Show_All (Top.Memory_View);
    end On_Examine_Memory1_Activate;
 
    ------------------------------------------
