@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 1.4.1
 
+- CB18-006 Duplicate entries in Help module
+  Problem:    The GNAT documentation appears twice in the Help menu.
+  Workaround: Edit the small gps wrapper, and remove the lines containing
+              GPS_DOC_PATH. On Windows, simply unset this environment
+              variable
+
 - CB17-001 Bad indentation of separate functions
   Problem:    When indenting functions declaraed as separate whose
               specification is longer than one line, the indentation will
