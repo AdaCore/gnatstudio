@@ -736,6 +736,18 @@ package Src_Editor_Buffer is
    --
    --  </signals>
 
+   function Get_Buffer_Line
+     (Buffer : access Source_Buffer_Record;
+      Line   : Editable_Line_Type) return Buffer_Line_Type;
+   --  Get the buffer line corresponding to Line.
+   --  Return 0 if no buffer line was found.
+   --  Note: Buffer lines are indexes in Buffer.Line_Data, ie are equal to
+   --  lines in the actual Gtk_Text_Buffer, plus 1.
+
+   function Blocks_Valid (Buffer : access Source_Buffer_Record) return Boolean;
+   --  Return whether the blocks stored in the buffer are valid.
+   --  (Ie if the text has not been modified since the last computation).
+
 private
 
    procedure End_Action (Buffer : access Source_Buffer_Record'Class);
@@ -864,14 +876,6 @@ private
 
    procedure Free (X : in out Line_Info_Width);
    --  Free memory associated to X.
-
-   function Get_Buffer_Line
-     (Buffer : access Source_Buffer_Record;
-      Line   : Editable_Line_Type) return Buffer_Line_Type;
-   --  Get the buffer line corresponding to Line.
-   --  Return 0 if no buffer line was found.
-   --  Note: Buffer lines are indexes in Buffer.Line_Data, ie are equal to
-   --  lines in the actual Gtk_Text_Buffer,
 
    function Get_Editable_Line
      (Buffer : access Source_Buffer_Record;
