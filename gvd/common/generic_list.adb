@@ -200,14 +200,23 @@ package body Generic_List is
       L.Last  := null;
    end Free;
 
-   ----------
+   -----------
    -- First --
-   ----------
+   -----------
 
    function First (L : List) return List_Node is
    begin
       return L.First;
    end First;
+
+   ----------
+   -- Last --
+   ----------
+
+   function Last (L : List) return List_Node is
+   begin
+      return L.Last;
+   end Last;
 
    ----------
    -- Prev --
