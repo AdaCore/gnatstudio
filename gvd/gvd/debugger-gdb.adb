@@ -622,6 +622,11 @@ package body Debugger.Gdb is
 
       Close (Get_Descriptor (Get_Process (Debugger)).all);
       Free (Debugger.Process);
+
+      exception
+         when Process_Died =>
+            Close (Get_Descriptor (Get_Process (Debugger)).all);
+            Free (Debugger.Process);
    end Close;
 
    --------------------
@@ -692,10 +697,6 @@ package body Debugger.Gdb is
       Send (Debugger, "show lang", Mode => Internal);
       Send (Debugger, "list", Mode => Internal);
       Send (Debugger, "info line", Mode => Internal);
-
-      if Debugger.Window /= null then
-         Process_Stopped (Convert (Debugger.Window, Debugger));
-      end if;
    end Load_Core_File;
 
    --------------------
@@ -716,6 +717,7 @@ package body Debugger.Gdb is
 
    begin
       Send (Debugger, "attach " & Process, Mode => Mode);
+      Wait_User_Command (Debugger);
       Set_Is_Started (Debugger, True);
 
       --  Find the first frame containing source information to be as user
@@ -805,10 +807,9 @@ package body Debugger.Gdb is
       Arguments : String := "";
       Mode      : Command_Type := Hidden) is
    begin
-      if Arguments /= "" then
-         Send (Debugger, "set args " & Arguments, Mode => Mode);
-      end if;
-      Send (Debugger, Start (Get_Language (Debugger)), Mode => Mode);
+      Send
+        (Debugger,
+         Start (Get_Language (Debugger)) & " " & Arguments, Mode => Mode);
       Set_Is_Started (Debugger, True);
    end Start;
 
@@ -896,7 +897,11 @@ package body Debugger.Gdb is
         or else (Command'Length >= 4
           and then Command (Command'First .. Command'First + 3) = "task")
         or else (Command'Length >= 4
-          and then Command (Command'First .. Command'First + 3) = "file");
+          and then Command (Command'First .. Command'First + 3) = "file")
+        or else (Command'Length >= 4
+          and then Command (Command'First .. Command'First + 3) = "core")
+        or else (Command'Length >= 6
+          and then Command (Command'First .. Command'First + 5) = "attach");
    end Is_Context_Command;
 
    --------------------------
@@ -916,10 +921,10 @@ package body Debugger.Gdb is
         or else Command = "cont"
         or else Command = "c"
         or else Command = "finish"
-        or else Command = "begin"
-        or else Command = "run"
-        or else (Command'Length >= 4
-          and then Command (Command'First .. Command'First + 3) = "run ");
+        or else (Command'Length >= 3
+          and then Command (Command'First .. Command'First + 2) = "run")
+        or else (Command'Length >= 5
+          and then Command (Command'First .. Command'First + 4) = "begin")
    end Is_Execution_Command;
 
    ----------------------
@@ -1132,10 +1137,11 @@ package body Debugger.Gdb is
    -- Finish --
    ------------
 
-   procedure Finish (Debugger : access Gdb_Debugger;
-                     Mode     : Command_Type := Hidden) is
+   procedure Finish
+     (Debugger : access Gdb_Debugger;
+      Mode     : Command_Type := Hidden) is
    begin
-         Send (Debugger, "finish", Mode => Mode);
+      Send (Debugger, "finish", Mode => Mode);
    end Finish;
 
    ------------------
@@ -1143,8 +1149,8 @@ package body Debugger.Gdb is
    ------------------
 
    function Info_Threads
-     (Debugger : access Gdb_Debugger) return Language.Thread_Information_Array
-   is
+     (Debugger : access Gdb_Debugger)
+      return Language.Thread_Information_Array is
    begin
       return Parse_Thread_List
         (Get_Language (Debugger),
@@ -1195,7 +1201,7 @@ package body Debugger.Gdb is
    --------------------
 
    procedure Display_Prompt
-     (Debugger : access Gdb_Debugger;
+     (Debugger        : access Gdb_Debugger;
       Wait_For_Prompt : Boolean := True) is
    begin
       Output_Text
@@ -2120,7 +2126,7 @@ package body Debugger.Gdb is
       Address  : in String) return String
    is
       Result       : String (1 .. Size * 2);
-      Image        : String := Integer'Image (Size);
+      Image        : constant String := Integer'Image (Size);
       S            : constant String := Send
         (Debugger,
          "x/"
@@ -2194,10 +2200,11 @@ package body Debugger.Gdb is
             return "";
          end if;
 
-         exit when S (Index - 1) = '0';
+         Index := Index - 1;
+         exit when S (Index) = '0';
       end loop;
 
-      return S (Index - 1 .. S'Last);
+      return S (Index .. S'Last);
    end Get_Variable_Address;
 
 end Debugger.Gdb;
