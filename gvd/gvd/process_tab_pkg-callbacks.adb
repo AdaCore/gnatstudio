@@ -22,6 +22,7 @@ with System; use System;
 with Glib; use Glib;
 with Gtk.Widget; use Gtk.Widget;
 with Gtk.Handlers; use Gtk.Handlers;
+with Gtk.Editable; use Gtk.Editable;
 with Unchecked_Conversion;
 with Odd.Process; use Odd.Process;
 with Gdk.Types.Keysyms;  use Gdk.Types.Keysyms;
@@ -276,6 +277,8 @@ package body Process_Tab_Pkg.Callbacks is
            (Top, Get_Current
             (Top.Window.Command_History).Command.all,
             Is_Command => True);
+         Set_Position (Gtk_Editable (Top.Debugger_Text),
+                       Gint (Get_Length (Top.Debugger_Text)));
       end if;
 
       return True;
