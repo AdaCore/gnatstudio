@@ -754,10 +754,13 @@ package body Src_Editor_Box is
          On_Box_Destroy'Access,
          User_Data => Source_Editor_Box (Box));
 
-      Box_Callback.Connect
-        (Get_Vadjustment (Scrolling_Area), "value_changed",
-         Box_Callback.To_Marshaller (Box_Scrolled'Access),
-         Source_Editor_Box (Box));
+      --  ??? See the body of Box_Scrolled for an explanation of why this is
+      --  commented out.
+
+      --  Box_Callback.Connect
+      --    (Get_Vadjustment (Scrolling_Area), "value_changed",
+      --     Box_Callback.To_Marshaller (Box_Scrolled'Access),
+      --     Source_Editor_Box (Box));
 
       Show_Cursor_Position (Source_Editor_Box (Box), Line => 0, Column => 0);
 
@@ -781,6 +784,12 @@ package body Src_Editor_Box is
    ------------------
    -- Box_Scrolled --
    ------------------
+
+   --  ??? Right now, this callback is not connected, since it causes
+   --  the editor to crash when dragging the selection causes the widget to
+   --  scroll.
+
+   pragma Unreferenced (Box_Scrolled);
 
    procedure Box_Scrolled
      (Adj : access Glib.Object.GObject_Record'Class;
