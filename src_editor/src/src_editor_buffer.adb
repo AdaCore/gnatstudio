@@ -2115,7 +2115,7 @@ package body Src_Editor_Buffer is
       if Lang_Autodetect then
          Set_Language
            (Buffer, Get_Language_From_File
-            (Get_Language_Handler (Buffer.Kernel), Filename));
+              (Get_Language_Handler (Buffer.Kernel), Filename));
       end if;
 
       Strip_CR (Contents.all, Last, CR_Found);
