@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2002                         --
+--                        Copyright (C) 2003                         --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -324,7 +324,7 @@ package body Codefix.Text_Manager is
         (Get_File (Current_Text, Mark.File_Name.all).all, Mark));
 
       if Mark.Is_First_Line then
-         Cursor.Line := 0;
+         Cursor.Line := 0; -- ???
       end if;
 
       return Cursor;
