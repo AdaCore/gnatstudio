@@ -68,6 +68,7 @@ with Glide_Kernel.Scripts;        use Glide_Kernel.Scripts;
 with Glide_Kernel.Standard_Hooks; use Glide_Kernel.Standard_Hooks;
 with GVD.Preferences;             use GVD.Preferences;
 with GVD.Main_Window;             use GVD.Main_Window;
+with GVD.Trace;                   use GVD.Trace;
 with GUI_Utils;                   use GUI_Utils;
 with String_Utils;                use String_Utils;
 with Entities;                    use Entities;
@@ -137,6 +138,27 @@ package body Glide_Kernel is
      (Kernel : access Kernel_Handle_Record'Class);
    --  Called when the preferences change
 
+   type Kernel_Output_Record is new GVD.Trace.Output_Proc_Record with record
+      Kernel : Kernel_Handle;
+   end record;
+   procedure Output
+     (Proc : Kernel_Output_Record; Str : String; Error : Boolean);
+   --  See doc from inherited subprogram
+
+   ------------
+   -- Output --
+   ------------
+
+   procedure Output
+     (Proc : Kernel_Output_Record; Str : String; Error : Boolean) is
+   begin
+      if Error then
+         Insert (Proc.Kernel, Str, Mode => Glide_Kernel.Console.Error);
+      else
+         Insert (Proc.Kernel, Str, Mode => Glide_Kernel.Console.Info);
+      end if;
+   end Output;
+
    --------------------------
    -- Get_Language_Handler --
    --------------------------
@@ -191,6 +213,9 @@ package body Glide_Kernel is
 
       Handle.Main_Window  := Main_Window;
       Handle.Home_Dir     := new String'(Dir);
+
+      GVD.Trace.Global_Output := new Kernel_Output_Record;
+      Kernel_Output_Record (GVD.Trace.Global_Output.all).Kernel := Handle;
 
       --  Create the language handler. It is also set for the gvd main window,
       --  so that the embedded gvd uses the same mechanism as the rest of glide
