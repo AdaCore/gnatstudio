@@ -791,6 +791,7 @@ package body Projects.Registry is
          String_Elements.Increment_Last;
          String_Elements.Table (String_Elements.Last) :=
            (Value    => Get_String (File),
+            Display_Value => Get_String (File),
             Flag     => False,  --  Irrelevant for files
             Location => No_Location,
             Next     => Prj.Projects.Table (Get_View (Project)).Sources);
