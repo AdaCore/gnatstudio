@@ -313,7 +313,8 @@ package SN.DB_Structures is
    --  Typedefs
 
    type TA_Table is record
-      Scope          : Segment;
+      Scope          : Segment; -- name of the class or function/method
+      Class_Name     : Segment; -- name of method's class
       Name           : Segment;
       Start_Position : Point;
       File_Name      : Segment;
@@ -321,7 +322,8 @@ package SN.DB_Structures is
       Attributes     : SN_Attributes;
       Value_Type     : Segment;
       Template_Parameters  : Segment;
-      Buffer   : GNAT.OS_Lib.String_Access;
+      Comments       : Segment;
+      Buffer         : GNAT.OS_Lib.String_Access;
    end record;
       --  Template arguments
 

@@ -4864,6 +4864,7 @@ package body Src_Info.CPP is
       Scope            : Segment;
       File_Name        : Segment;
       Template_Args    : Segment;
+      Class_Name       : Segment := (1, 0);
    begin
       if not Is_Open (Handler.SN_Table (TA)) then
          Fail (".ta table does not exist but template argument processing"
@@ -4880,7 +4881,11 @@ package body Src_Info.CPP is
          Buffer        := FU_Tab.Buffer;
          Scope         := FU_Tab.Name;
          File_Name     := FU_Tab.File_Name;
-         Template_Args := (1, 0);
+         Template_Args := FU_Tab.Template_Parameters;
+
+         if (Symbol = MD) or (Symbol = MI) then
+            Class_Name := FU_Tab.Class;
+         end if;
       end if;
 
       Set_Cursor
@@ -4900,6 +4905,8 @@ package body Src_Info.CPP is
             and Buffer (Template_Args.First .. Template_Args.Last)
                = Arg.Buffer (Arg.Template_Parameters.First ..
                   Arg.Template_Parameters.Last)
+            and Buffer (Class_Name.First .. Class_Name.Last)
+               = Arg.Buffer (Arg.Class_Name.First .. Arg.Class_Name.Last)
          then
             if Arg.Attributes = SN_TA_TYPE
               or else Arg.Attributes = SN_TA_TEMPLATE

@@ -1122,6 +1122,19 @@ package body SN.DB_Structures is
       tab.Template_Parameters.Last := cur_pos + Len - 1;
       cur_pos := cur_pos + Len;
 
+      --  Comments
+      Len := Get_Field_Length (Key_Data_Pair.Data, 6) - 2;
+      tab.Buffer (cur_pos .. (cur_pos + Len - 1)) :=
+         Remove_Brackets (Get_Field (Key_Data_Pair.Data, 6));
+      tab.Comments.First := cur_pos;
+      tab.Comments.Last := cur_pos + Len - 1;
+      cur_pos := cur_pos + Len;
+
+      tab.Class_Name := Get_Segment_From_Comment
+        (tab.Comments,
+         tab.Buffer,
+         "class");
+
       Number_Of_Allocated_Buffers := Number_Of_Allocated_Buffers + 1;
       return tab;
    end Parse_Pair;

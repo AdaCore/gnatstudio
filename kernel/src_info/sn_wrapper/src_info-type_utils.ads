@@ -196,9 +196,12 @@ package Src_Info.Type_Utils is
       Scope           : String;
       File_Name       : String;
       Template_Args   : String;
+      Class_Name      : String;
       Success         : out Boolean);
    --  Find template type argument and stores information about it
    --  in Desc. Success holds error status
+   --  When symbol is MI or MD, Class_Name should contain method's class
+   --  name. Otherwise it should be an empty string
 
    procedure Free (Desc : in out CType_Description);
    --  Frees memory used by access fields in given Desc structure.

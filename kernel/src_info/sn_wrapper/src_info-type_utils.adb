@@ -288,6 +288,7 @@ package body Src_Info.Type_Utils is
             FU_Tab.Buffer (FU_Tab.File_Name.First .. FU_Tab.File_Name.Last),
             FU_Tab.Buffer (FU_Tab.Template_Parameters.First ..
                            FU_Tab.Template_Parameters.Last),
+            FU_Tab.Buffer (FU_Tab.Class.First .. FU_Tab.Class.Last),
             Success);
          if Success then
             return;
@@ -306,6 +307,7 @@ package body Src_Info.Type_Utils is
             CL_Tab.Buffer (CL_Tab.File_Name.First .. CL_Tab.File_Name.Last),
             CL_Tab.Buffer (CL_Tab.Template_Parameters.First ..
                            CL_Tab.Template_Parameters.Last),
+            "",
             Success);
          if Success then
             return;
@@ -563,6 +565,7 @@ package body Src_Info.Type_Utils is
       Scope           : String;
       File_Name       : String;
       Template_Args   : String;
+      Class_Name      : String;
       Success         : out Boolean)
    is
       pragma Unreferenced (Symbol);
@@ -590,6 +593,8 @@ package body Src_Info.Type_Utils is
             and Template_Args
                = Arg.Buffer (Arg.Template_Parameters.First ..
                   Arg.Template_Parameters.Last)
+            and Arg.Buffer (Arg.Class_Name.First .. Arg.Class_Name.Last)
+               = Class_Name
             and Arg.Attributes /= SN_TA_VALUE
          then
             Desc.Is_Template     := Arg.Attributes = SN_TA_TEMPLATE;
