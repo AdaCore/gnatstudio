@@ -285,10 +285,13 @@ package body Diff_Utils is
    -- Diff3 --
    -----------
    function Diff3 (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
-                     File1, File2, File3 : String) return Diff_Occurrence_Link
+                   File1, File2, File3 : String) return Diff_Pair
    is
+      Result : Diff_Pair;
    begin
-      return Diff (Kernel, File1, File2, File3); -- ???just for test
+      Result.List21 := Diff (Kernel, File2, File1);
+      Result.List23 := Diff (Kernel, File2, File3);
+      return Result;
    end Diff3;
 
    ----------
