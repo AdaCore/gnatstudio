@@ -28,6 +28,7 @@ with System;
 with GNAT.OS_Lib;
 with Glib.Object;
 with Src_Info.Queries;
+with Projects;
 
 package Glide_Kernel.Scripts is
 
@@ -169,6 +170,8 @@ package Glide_Kernel.Scripts is
       return Glib.Object.GObject is abstract;
    function Get_Data (Instance : access Class_Instance_Record)
       return System.Address is abstract;
+   function Get_Data (Instance : access Class_Instance_Record)
+      return Integer is abstract;
    function Get_Data
      (Instance : access Class_Instance_Record) return String is abstract;
    --  Get the data embedded in the class.
@@ -185,6 +188,9 @@ package Glide_Kernel.Scripts is
    procedure Set_Data
      (Instance : access Class_Instance_Record;
       Value    : String) is abstract;
+   procedure Set_Data
+     (Instance : access Class_Instance_Record;
+      Value    : Integer) is abstract;
    procedure Set_Data
      (Instance   : access Class_Instance_Record;
       Value      : System.Address;
@@ -308,18 +314,25 @@ package Glide_Kernel.Scripts is
       Name    : String) return Scripting_Language;
    --  Lookup one of the registered languages by name.
 
+   No_Args : constant GNAT.OS_Lib.Argument_List := (1 .. 0 => null);
+
    function Execute_GPS_Shell_Command
      (Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class;
       Command : String;
-      Args    : GNAT.OS_Lib.Argument_List) return String;
+      Args    : GNAT.OS_Lib.Argument_List := No_Args) return String;
+   procedure Execute_GPS_Shell_Command
+     (Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Command : String;
+      Args    : GNAT.OS_Lib.Argument_List := No_Args);
    --  Execute the command in the GPS shell.
    --  This is only intended as a simpler form of
    --     Execute_Command
    --       (Lookup_Scripting_Language (Kernel, GPS_Shell_Name), Command, Args)
 
-   -------------------
-   -- Misc services --
-   -------------------
+   ------------------
+   -- Entity_Class --
+   ------------------
+
    --  The following services are provided for use in the context of GPS. They
    --  provide access to various predefined classes shared between multiple
    --  modules.
@@ -339,11 +352,14 @@ package Glide_Kernel.Scripts is
    --  You should destroy the entity passed to Set_Data, but not the value
    --  returned by Get_Data.
 
+   ----------------
+   -- File_Class --
+   ----------------
 
    function Get_File_Class
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
       return Class_Type;
-   --  Return the class to use for file types. This encapsulate a File_Info
+   --  Return the class to use for file types. This encapsulates a File_Info
 
    type File_Info is private;
    No_File : constant File_Info;
@@ -360,6 +376,22 @@ package Glide_Kernel.Scripts is
    --  Store some file information with a file entity
    --  You should free the file passed to Set_Data, but not the value returned
    --  by Get_Data.
+
+   -------------------
+   -- Project_Class --
+   -------------------
+
+   function Get_Project_Class
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
+      return Class_Type;
+   --  Return the class to use for projects. This encapsulates a Project_Type
+
+   procedure Set_Data
+     (Instance : access Class_Instance_Record'Class;
+      Project  : Projects.Project_Type);
+   function Get_Data (Instance : access Class_Instance_Record'Class)
+      return Projects.Project_Type;
+   --  Store or get some project information in Instance
 
 
 private

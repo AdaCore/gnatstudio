@@ -24,10 +24,15 @@ with GNAT.OS_Lib;          use GNAT.OS_Lib;
 with Glib.Object;          use Glib.Object;
 with Glide_Intl;           use Glide_Intl;
 with Glide_Kernel.Modules; use Glide_Kernel.Modules;
-with Src_Info.Queries;     use Src_Info.Queries;
+with Glide_Kernel.Project; use Glide_Kernel.Project;
+with Src_Info.Queries;     use Src_Info, Src_Info.Queries;
 with String_Hash;
 with System;               use System;
 with String_Utils;         use String_Utils;
+with Projects;             use Projects;
+with Projects.Registry;    use Projects.Registry;
+with Projects.Editor;      use Projects.Editor;
+with Types;                use Types;
 
 package body Glide_Kernel.Scripts is
 
@@ -50,6 +55,7 @@ package body Glide_Kernel.Scripts is
       Classes             : Classes_Hash.String_Hash_Table.HTable;
       Entity_Class        : Class_Type := No_Class;
       File_Class          : Class_Type := No_Class;
+      Project_Class       : Class_Type := No_Class;
    end record;
    type Scripting_Data is access all Scripting_Data_Record'Class;
 
@@ -80,6 +86,10 @@ package body Glide_Kernel.Scripts is
    procedure Create_File_Command_Handler
      (Data : in out Callback_Data'Class; Command : String);
    --  Handler for the "create_file" command
+
+   procedure Create_Project_Command_Handler
+     (Data : in out Callback_Data'Class; Command : String);
+   --  Handler for the "create_project" command
 
    ----------
    -- Free --
@@ -326,6 +336,45 @@ package body Glide_Kernel.Scripts is
       return Ent.all;
    end Get_Data;
 
+   --------------
+   -- Set_Data --
+   --------------
+
+   procedure Set_Data
+     (Instance : access Class_Instance_Record'Class;
+      Project  : Project_Type)
+   is
+      Script : constant Scripting_Language := Get_Script (Instance);
+   begin
+      if not Is_Subclass
+        (Script, Get_Class (Instance), Get_Project_Class (Get_Kernel (Script)))
+      then
+         raise Invalid_Data;
+      end if;
+
+      Set_Data (Instance, Value => Integer (Name_Id'(Project_Name (Project))));
+   end Set_Data;
+
+   --------------
+   -- Get_Data --
+   --------------
+
+   function Get_Data (Instance : access Class_Instance_Record'Class)
+      return Project_Type
+   is
+      Script : constant Scripting_Language := Get_Script (Instance);
+   begin
+      if not Is_Subclass
+        (Script, Get_Class (Instance), Get_Project_Class (Get_Kernel (Script)))
+      then
+         raise Invalid_Data;
+      end if;
+
+      return Get_Project_From_Name
+        (Project_Registry (Get_Registry (Get_Kernel (Script))),
+         Name_Id (Integer'(Get_Data (Instance))));
+   end Get_Data;
+
    -----------------------------
    -- Default_Command_Handler --
    -----------------------------
@@ -385,6 +434,7 @@ package body Glide_Kernel.Scripts is
       Status : Find_Decl_Or_Body_Query_Status;
       Entity : Entity_Information;
       Instance : Class_Instance;
+      Lib_Info : LI_File_Ptr;
    begin
       if Number_Of_Arguments (Data) > 2 then
          L := Nth_Arg (Data, 3);
@@ -394,9 +444,15 @@ package body Glide_Kernel.Scripts is
          end if;
       end if;
 
+      Lib_Info := Locate_From_Source_And_Complete (Kernel, File);
+      if Lib_Info = No_LI_File then
+         Set_Error_Msg (Data, -"File not found " & File);
+         return;
+      end if;
+
       Find_Declaration_Or_Overloaded
         (Kernel      => Kernel,
-         Lib_Info    => Locate_From_Source_And_Complete (Kernel, File),
+         Lib_Info    => Lib_Info,
          File_Name   => File,
          Entity_Name => Name,
          Line        => L,
@@ -405,7 +461,7 @@ package body Glide_Kernel.Scripts is
          Status      => Status);
 
       if Status /= Success and then Status /= Fuzzy_Match then
-         Set_Error_Msg (Data, "Entity not found");
+         Set_Error_Msg (Data, -"Entity not found");
       else
          Instance := New_Instance (Data, Get_Entity_Class (Kernel));
          Set_Data (Instance, Entity);
@@ -432,6 +488,29 @@ package body Glide_Kernel.Scripts is
       Free (Info);
       Set_Return_Value (Data, Instance);
    end Create_File_Command_Handler;
+
+   ------------------------------------
+   -- Create_Project_Command_Handler --
+   ------------------------------------
+
+   procedure Create_Project_Command_Handler
+     (Data : in out Callback_Data'Class; Command : String)
+   is
+      pragma Unreferenced (Command);
+      Kernel   : constant Kernel_Handle := Get_Kernel (Data);
+      Name     : constant String := Nth_Arg (Data, 1);
+      Instance : Class_Instance;
+      Project  : constant Project_Type := Get_Project_From_Name
+        (Project_Registry (Get_Registry (Kernel)), Get_String (Name));
+   begin
+      if Project = No_Project then
+         Set_Error_Msg (Data, -"No such project: " & Name);
+      else
+         Instance := New_Instance (Data, Get_Project_Class (Kernel));
+         Set_Data (Instance, Project);
+         Set_Return_Value (Data, Instance);
+      end if;
+   end Create_Project_Command_Handler;
 
    ----------------
    -- Initialize --
@@ -462,7 +541,7 @@ package body Glide_Kernel.Scripts is
       Register_Command
         (Kernel,
          Command      => "lsmod",
-         Usage        => "lsmod () -> None",
+         Usage        => "lsmod () -> list of modules",
          Description  => -"List modules currently loaded.",
          Minimum_Args => 0,
          Maximum_Args => 0,
@@ -488,6 +567,15 @@ package body Glide_Kernel.Scripts is
          Minimum_Args => 1,
          Maximum_Args => 1,
          Handler      => Create_File_Command_Handler'Access);
+
+      Register_Command
+        (Kernel,
+         Command      => "create_project",
+         Usage        => "create_project (name) -> Project",
+         Description  => -"Create a project handle, from its name.",
+         Minimum_Args => 1,
+         Maximum_Args => 1,
+         Handler      => Create_Project_Command_Handler'Access);
    end Register_Default_Script_Commands;
 
    ----------------------
@@ -523,6 +611,21 @@ package body Glide_Kernel.Scripts is
       return Scripting_Data (Kernel.Scripts).File_Class;
    end Get_File_Class;
 
+   -----------------------
+   -- Get_Project_Class --
+   -----------------------
+
+   function Get_Project_Class
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
+      return Class_Type is
+   begin
+      if Scripting_Data (Kernel.Scripts).Project_Class = No_Class then
+         Scripting_Data (Kernel.Scripts).Project_Class := New_Class
+           (Kernel, "Project", "Represents a project file");
+      end if;
+      return Scripting_Data (Kernel.Scripts).Project_Class;
+   end Get_Project_Class;
+
    -------------------------------
    -- Execute_GPS_Shell_Command --
    -------------------------------
@@ -530,10 +633,26 @@ package body Glide_Kernel.Scripts is
    function Execute_GPS_Shell_Command
      (Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class;
       Command : String;
-      Args    : GNAT.OS_Lib.Argument_List) return String is
+      Args    : GNAT.OS_Lib.Argument_List := No_Args) return String is
    begin
       return Execute_Command
         (Lookup_Scripting_Language (Kernel, GPS_Shell_Name), Command, Args);
+   end Execute_GPS_Shell_Command;
+
+   -------------------------------
+   -- Execute_GPS_Shell_Command --
+   -------------------------------
+
+   procedure Execute_GPS_Shell_Command
+     (Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Command : String;
+      Args    : GNAT.OS_Lib.Argument_List := No_Args)
+   is
+      Str : constant String := Execute_Command
+        (Lookup_Scripting_Language (Kernel, GPS_Shell_Name), Command, Args);
+      pragma Unreferenced (Str);
+   begin
+      null;
    end Execute_GPS_Shell_Command;
 
    ---------------------
