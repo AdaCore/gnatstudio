@@ -1006,7 +1006,6 @@ package body GVD.Text_Box.Source_Editor.Builtin is
          Output_Error (Process.Window, Error_Msg.all);
          Free (Error_Msg);
          File_Not_Found (Editor, File_Name);
-         Thaw (Get_Child (Edit));
          return;
       end if;
 
