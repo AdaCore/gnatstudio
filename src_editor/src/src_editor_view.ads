@@ -34,6 +34,7 @@ with Gtk.Main;
 
 with Glide_Kernel;
 with Src_Editor_Buffer;
+with Gtk.Text_Mark; use Gtk.Text_Mark;
 
 package Src_Editor_View is
 
@@ -100,13 +101,15 @@ private
 
    type Source_View_Record is new Gtk.Text_View.Gtk_Text_View_Record with
    record
-      Saved_Cursor_Line   : Gint := 1;
-      Saved_Cursor_Column : Gint := 1;
+      Kernel              : Glide_Kernel.Kernel_Handle;
+
+      Saved_Cursor_Mark   : Gtk_Text_Mark;
 
       Pango_Font          : Pango.Font.Pango_Font_Description;
       Side_Column_GC      : Gdk.GC.Gdk_GC;
       Side_Background_GC  : Gdk.GC.Gdk_GC;
       Default_GC          : Gdk.GC.Gdk_GC;
+      Current_Line_GC     : Gdk.GC.Gdk_GC;
 
       Top_Line            : Natural := 1;
       Bottom_Line         : Natural := 0;
