@@ -46,7 +46,6 @@ with Glide_Page;              use Glide_Page;
 
 with Browsers;                use Browsers;
 
-with Hyper_Grep;              use Hyper_Grep;
 with Vdiff_Pkg;               use Vdiff_Pkg;
 with Vdiff_Utils;             use Vdiff_Utils;
 with Diff_Utils;              use Diff_Utils;
@@ -158,23 +157,35 @@ package body Glide_Menu is
       Widget : Limited_Widget);
    --  Edit->Select All menu
 
+   procedure On_New_Test_Case
+     (Object : Data_Type_Access;
+      Action : Guint;
+      Widget : Limited_Widget);
+   --  Edit->Unit Testing->New Test Case menu
+
+   procedure On_New_Test_Suite
+     (Object : Data_Type_Access;
+      Action : Guint;
+      Widget : Limited_Widget);
+   --  Edit->Unit Testing->New Test Suite menu
+
+   procedure On_New_Test_Harness
+     (Object : Data_Type_Access;
+      Action : Guint;
+      Widget : Limited_Widget);
+   --  Edit->Unit Testing->New Test Harness menu
+
    procedure On_Preferences
      (Object : Data_Type_Access;
       Action : Guint;
       Widget : Limited_Widget);
    --  Edit->Preferences menu
 
-   procedure On_Search_Files
-     (Object : Data_Type_Access;
-      Action : Guint;
-      Widget : Limited_Widget);
-   --  Edit->Search in Files menu
-
    procedure On_Goto_Declaration_Or_Body
      (Object : Data_Type_Access;
       Action : Guint;
       Widget : Limited_Widget);
-   --  Search->Goto Declaration<->Body
+   --  Edit->Goto Declaration<->Body
 
    procedure On_Open_Project
      (Object : Data_Type_Access;
@@ -198,7 +209,7 @@ package body Glide_Menu is
      (Object : Data_Type_Access;
       Action : Guint;
       Widget : Limited_Widget);
-   --  Build->Build menu
+   --  Build->Make menu
 
    procedure On_Run
      (Object : Data_Type_Access;
@@ -253,24 +264,6 @@ package body Glide_Menu is
       Action : Guint;
       Widget : Limited_Widget);
    --  Tools->Generate Body menu
-
-   procedure On_New_Test_Case
-     (Object : Data_Type_Access;
-      Action : Guint;
-      Widget : Limited_Widget);
-   --  Tools->Unit Testing->New Test Case menu
-
-   procedure On_New_Test_Suite
-     (Object : Data_Type_Access;
-      Action : Guint;
-      Widget : Limited_Widget);
-   --  Tools->Unit Testing->New Test Suite menu
-
-   procedure On_New_Test_Harness
-     (Object : Data_Type_Access;
-      Action : Guint;
-      Widget : Limited_Widget);
-   --  Tools->Unit Testing->New Test Harness menu
 
    procedure On_Compare_Two_Files
      (Object : Data_Type_Access;
@@ -642,31 +635,6 @@ package body Glide_Menu is
          Log_Exception (E);
    end On_Preferences;
 
-   ---------------------
-   -- On_Search_Files --
-   ---------------------
-
-   procedure On_Search_Files
-     (Object : Data_Type_Access;
-      Action : Guint;
-      Widget : Limited_Widget)
-   is
-      Top  : constant Glide_Window := Glide_Window (Object);
-      Grep : Hyper_Grep_Access;
-      --  Id   : Message_Id;
-
-   begin
-      Gtk_New (Grep, Top.Kernel);
-      Show_All (Grep);
-      Main;
-      --  Id := Push (Top.Statusbar, 1, "end of search.");
-      Print_Message (Top.Statusbar, Help, "end of search.");
-
-   exception
-      when E : others =>
-         Log_Exception (E);
-   end On_Search_Files;
-
    ---------------------------------
    -- On_Goto_Declaration_Or_Body --
    ---------------------------------
@@ -678,10 +646,11 @@ package body Glide_Menu is
    is
       Top  : constant Glide_Window := Glide_Window (Object);
    begin
-      if not Focus_Is_Editor (Top.Kernel) then
-         --  Nothing to do, since no editor has the focus
+      if Get_Editor_Filename (Top.Kernel) = "" then
+         --  Nothing to do, since no saved editor has the focus
          return;
       end if;
+
       Goto_Declaration_Or_Body (Top.Kernel);
 
    exception
@@ -706,7 +675,7 @@ package body Glide_Menu is
       Matcher   : constant Pattern_Matcher := Compile
         ("completed ([0-9]+) out of ([0-9]+) \((.*)%\)\.\.\.$",
          Multiple_Lines);
-      Title     : constant String := Get_Focus_Title (Top.Kernel);
+      Title     : constant String := Get_Editor_Filename (Top.Kernel);
       Project   : constant String := Get_Project_File_Name (Top.Kernel);
       Cmd       : constant String :=
         "gnatmake -P" & Project & " "
@@ -714,7 +683,7 @@ package body Glide_Menu is
         & " " & Title;
 
    begin
-      if not Focus_Is_Editor (Top.Kernel) then
+      if Title = "" then
          return;
       end if;
 
@@ -1003,6 +972,7 @@ package body Glide_Menu is
    is
       Top     : constant Glide_Window := Glide_Window (Object);
       Success : Boolean;
+      Title   : constant String := Get_Editor_Filename (Top.Kernel);
 
       function Body_Name (Name : String) return String;
       --  Return the name of the body corresponding to a spec file.
@@ -1032,17 +1002,12 @@ package body Glide_Menu is
       end Gnatstub;
 
    begin
-      if Focus_Is_Editor (Top.Kernel) then
-         declare
-            --  ??? Does not handle files with pathname
-            Title : constant String := Get_Focus_Title (Top.Kernel);
-         begin
-            Gnatstub (Title, Success);
+      if Title /= "" then
+         Gnatstub (Title, Success);
 
-            if Success then
-               Open_File (Top.Kernel, Body_Name (Title), Success);
-            end if;
-         end;
+         if Success then
+            Open_File (Top.Kernel, Body_Name (Title), Success);
+         end if;
       end if;
 
    exception
@@ -1281,35 +1246,32 @@ package body Glide_Menu is
          Gtk_New (-"/_Edit/Paste", "<shift>INS", Stock_Paste, On_Paste'Access),
          Gtk_New (-"/_Edit/Select All", "<control>A", On_Select_All'Access),
          Gtk_New (-"/_Edit/sep2", Item_Type => Separator),
+         Gtk_New (-"/_Edit/Unit Testing", Item_Type => Branch),
+         Gtk_New (-"/_Edit/Unit Testing/New Test Case", "",
+                  On_New_Test_Case'Access),
+         Gtk_New (-"/_Edit/Unit Testing/Add Routine", "", null),
+         Gtk_New (-"/_Edit/Unit Testing/New Test Suite", "",
+                  On_New_Test_Suite'Access),
+         Gtk_New (-"/_Edit/Unit Testing/New Test Harness", "",
+                  On_New_Test_Harness'Access),
+         Gtk_New (-"/_Edit/sep3", Item_Type => Separator),
          Gtk_New (-"/_Edit/Preferences...", "",
                   Stock_Preferences, On_Preferences'Access),
 
-         Gtk_New (-"/_Search", Item_Type => Branch),
-         Gtk_New (-"/_Search/Search...", "", Stock_Find, null),
-         Gtk_New (-"/_Search/Search Next", "", Stock_Go_Forward, null),
-         Gtk_New (-"/_Search/Search Previous", "", Stock_Go_Back, null),
-         Gtk_New (-"/_Search/Search And Replace...", "",
-                  Stock_Find_And_Replace, null),
-         Gtk_New (-"/_Search/sep1", Item_Type => Separator),
-         Gtk_New (-"/_Search/Goto Line...", "", Stock_Jump_To, null),
-         Gtk_New (-"/_Search/Goto Declaration<->Body", "", Stock_Home,
+         Gtk_New (-"/_Goto", Item_Type => Branch),
+         Gtk_New (-"/_Goto/Goto Line...", "", Stock_Jump_To, null),
+         Gtk_New (-"/_Goto/Goto Declaration<->Body", "", Stock_Home,
                   On_Goto_Declaration_Or_Body'Access),
-         Gtk_New (-"/_Search/Goto File Spec<->Body", "", Stock_Convert, null),
-         Gtk_New (-"/_Search/Goto Previous Reference", "", Stock_Undo, null),
-         Gtk_New (-"/_Search/Goto Parent Unit", "", Stock_Go_Up, null),
-         Gtk_New (-"/_Search/List References", "", Stock_Index, null),
-         Gtk_New (-"/_Search/Syntax", Item_Type => Branch),
-         Gtk_New (-"/_Search/Syntax/Start Of Statement", "",
-                  Stock_Go_Up, null),
-         Gtk_New (-"/_Search/Syntax/End Of Statement", "",
-                  Stock_Go_Down, null),
-         Gtk_New (-"/_Search/Syntax/Next Procedure", "",
-                  Stock_Go_Forward, null),
-         Gtk_New (-"/_Search/Syntax/Previous Procedure", "",
-                  Stock_Go_Back, null),
-         Gtk_New (-"/_Search/sep2", Item_Type => Separator),
-         Gtk_New (-"/_Search/Search in Files...", "", Stock_Find,
-                  On_Search_Files'Access),
+         Gtk_New (-"/_Goto/Goto Body", "", "", null),
+         Gtk_New (-"/_Goto/Goto File Spec<->Body", "", Stock_Convert, null),
+         Gtk_New (-"/_Goto/Goto Previous Reference", "", Stock_Undo, null),
+         Gtk_New (-"/_Goto/Goto Parent Unit", "", Stock_Go_Up, null),
+         Gtk_New (-"/_Goto/List References", "", Stock_Index, null),
+         Gtk_New (-"/_Goto/sep1", Item_Type => Separator),
+         Gtk_New (-"/_Goto/Start Of Statement", "", Stock_Go_Up, null),
+         Gtk_New (-"/_Goto/End Of Statement", "", Stock_Go_Down, null),
+         Gtk_New (-"/_Goto/Next Procedure", "", Stock_Go_Forward, null),
+         Gtk_New (-"/_Goto/Previous Procedure", "", Stock_Go_Back, null),
 
          Gtk_New (-"/_VCS", Item_Type => Branch),
          Gtk_New (-"/_VCS/Check In", "", Stock_Goto_Last, null),
@@ -1397,14 +1359,6 @@ package body Glide_Menu is
          Gtk_New (-"/_Tools/Code Fixing...", "", null),
          Gtk_New (-"/_Tools/Profile", "", null),
          Gtk_New (-"/_Tools/Memory Analyzer", "", null),
-         Gtk_New (-"/_Tools/Unit Testing", Item_Type => Branch),
-         Gtk_New (-"/_Tools/Unit Testing/New Test Case", "",
-                  On_New_Test_Case'Access),
-         Gtk_New (-"/_Tools/Unit Testing/Add Routine", "", null),
-         Gtk_New (-"/_Tools/Unit Testing/New Test Suite", "",
-                  On_New_Test_Suite'Access),
-         Gtk_New (-"/_Tools/Unit Testing/New Test Harness", "",
-                  On_New_Test_Harness'Access),
          Gtk_New (-"/_Tools/Compare", Item_Type => Branch),
          Gtk_New (-"/_Tools/Compare/Two Files...", "",
                   On_Compare_Two_Files'Access),
