@@ -490,11 +490,12 @@ package Glide_Kernel.Modules is
    --              if set to -1, close all file editors that correspond
    --              to this file.
    --     third  : column to display initially (use Get_Int). Ignored if 0
-   --     fourth : True if the line should be highlighted (use Get_Boolean)
-   --     fifth  : True if the location should be stored for navigation
+   --     fourth : If non 0, the area between third and fourth arguments should
+   --              be selected. (use Get_Int).
+   --     fifth  : True if the line should be highlighted (use Get_Boolean)
+   --     sixth  : True if the location should be stored for navigation
    --              with Back/Forward.
-   --     sixth  : True if a new file should be created if needed.
-   --     seventh: True if file should be search from the project source path
+   --     seventh: True if a new file should be created if needed.
    --  See also the function Open_File_Editor.
 
    Mime_File_Line_Info : constant String := "gps/file_info";
@@ -540,6 +541,7 @@ package Glide_Kernel.Modules is
       Filename          : String;
       Line              : Natural := 0;
       Column            : Natural := 0;
+      Column_End        : Natural := 0;
       Highlight_Line    : Boolean := False;
       Enable_Navigation : Boolean := True;
       New_File          : Boolean := True;
@@ -556,7 +558,7 @@ package Glide_Kernel.Modules is
    --  If not found and New_File is True, a new file is edited.
    --
    --  If From_Path is True and the file doesn't contain any directory, then it
-   --  is search on the source path for the current project.
+   --  is searched on the source path for the current project.
 
    procedure Close_File_Editors
      (Kernel   : access Kernel_Handle_Record'Class;
