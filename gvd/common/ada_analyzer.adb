@@ -20,7 +20,12 @@ package body Source_Analyzer is
    -- Types --
    -----------
 
-   package Token_Stack is new Generic_Stack (Token_Type);
+   type Extended_Token is record
+      Token       : Token_Type;
+      Declaration : Boolean;
+   end record;
+
+   package Token_Stack is new Generic_Stack (Extended_Token);
    use Token_Stack;
 
    package Indent_Stack is new Generic_Stack (Integer);
@@ -117,9 +122,6 @@ package body Source_Analyzer is
    function Prev_Char (P : Word) return Word;
    --  Return the previous char in buffer. P is the current character.
    pragma Inline (Prev_Char);
-
-   function Prev_Non_Blank (Buffer : String; P : Word) return Character;
-   --  Return the first non blank character before Buffer (P).
 
    procedure Replace_Text
      (Buffer  : in out Extended_Line_Buffer;
@@ -766,7 +768,7 @@ package body Source_Analyzer is
                --  literal if it does not follow a right parenthesis,
                --  identifier, the keyword ALL or a literal. This means that we
                --  correctly treat constructs like:
-               --    A := CHARACTER'('A');
+               --    A := Character'('A');
 
                if Prev_Token = Tok_Identifier
                   or else Prev_Token = Tok_Right_Paren
@@ -775,7 +777,7 @@ package body Source_Analyzer is
                then
                   Prev_Token := Tok_Apostrophe;
                else
-                  P := Next_Char (P);
+                  P := Next_Char (Next_Char (P));
 
                   while P <= End_Of_Line
                     and then Buffer (P) /= '''
@@ -802,21 +804,6 @@ package body Source_Analyzer is
    begin
       return P - 1;
    end Prev_Char;
-
-   --------------------
-   -- Prev_Non_Blank --
-   --------------------
-
-   function Prev_Non_Blank (Buffer : String; P : Word) return Character is
-   begin
-      for J in reverse Buffer'First .. P - 1 loop
-         if Buffer (J) /= ' ' and then Buffer (J) /= ASCII.HT then
-            return Buffer (J);
-         end if;
-      end loop;
-
-      return Buffer (Buffer'First);
-   end Prev_Non_Blank;
 
    ---------------
    -- Do_Indent --
@@ -892,7 +879,7 @@ package body Source_Analyzer is
       Prev_Token          : Token_Type := No_Token;
       Tokens              : Token_Stack.Simple_Stack;
       Indents             : Indent_Stack.Simple_Stack;
-      Val                 : Token_Type;
+      Val                 : Extended_Token;
       Casing              : Casing_Type;
 
       procedure Handle_Reserved_Word (Word : Token_Type);
@@ -903,13 +890,14 @@ package body Source_Analyzer is
       --------------------------
 
       procedure Handle_Reserved_Word (Word : Token_Type) is
+         Temp : Extended_Token := (Word, False);
       begin
          --  Note: the order of the following conditions is important
 
          if Word = Tok_Body then
             Subprogram_Decl := False;
          elsif not End_Token and then Word = Tok_If then
-            Push (Tokens, Word);
+            Push (Tokens, Temp);
 
          elsif Prev_Reserved = Tok_Is and then not Was_Type_Decl
            and then
@@ -948,7 +936,9 @@ package body Source_Analyzer is
             if not In_Generic then
                Val := Top (Tokens);
 
-               if Val = Tok_Procedure or else Val = Tok_Function then
+               if not Val.Declaration and then
+                 (Val.Token = Tok_Procedure or else Val.Token = Tok_Function)
+               then
                   --  There was a function declaration, e.g:
                   --
                   --  procedure xxx ();
@@ -956,7 +946,7 @@ package body Source_Analyzer is
                   Pop (Tokens);
                end if;
 
-               Push (Tokens, Word);
+               Push (Tokens, Temp);
 
             elsif Prev_Reserved /= Tok_With then
                --  unindent after a generic declaration, e.g:
@@ -975,7 +965,7 @@ package body Source_Analyzer is
                end if;
 
                In_Generic := False;
-               Push (Tokens, Word);
+               Push (Tokens, Temp);
             end if;
 
          elsif Word = Tok_End or else Word = Tok_Elsif then
@@ -990,15 +980,21 @@ package body Source_Analyzer is
             if Word = Tok_End then
                Pop (Tokens, Val);
 
-               case Val is
-                  when Tok_Exception | Tok_Case =>
-                     --  Additional level of indentation, as in:
+               case Val.Token is
+                  when Tok_Exception =>
+                     --  Undo additional level of indentation, as in:
                      --     ...
                      --  exception
                      --     when =>
                      --        null;
                      --  end;
 
+                     Num_Spaces := Num_Spaces - Indent_Level;
+
+                     --  End of subprogram
+                     Pop (Tokens);
+
+                  when Tok_Case =>
                      Num_Spaces := Num_Spaces - Indent_Level;
 
                   when others =>
@@ -1020,18 +1016,17 @@ package body Source_Analyzer is
            or else (not Or_Token  and then Word = Tok_Else)
            or else (not And_Token and then Word = Tok_Then)
            or else (not End_Token and then Word = Tok_Select)
-           or else (Top (Tokens) = Tok_Select and then Word = Tok_Or)
+           or else (Top (Tokens).Token = Tok_Select and then Word = Tok_Or)
            or else (not End_Token and then Word = Tok_Loop)
            or else (not End_Token and then Prev_Reserved /= Tok_Null
                       and then Word = Tok_Record)
-           or else ((Top (Tokens) = Tok_Exception
-                       or else Top (Tokens) = Tok_Case)
+           or else ((Top (Tokens).Token = Tok_Exception
+                       or else Top (Tokens).Token = Tok_Case)
                      and then Word = Tok_When)
-           or else ((Top (Tokens) = Tok_Declare
-                       or else Top (Tokens) = Tok_Package)
-                     and then Word = Tok_Private
-                     and then Prev_Reserved /= Tok_Is
-                     and then Prev_Reserved /= Tok_With)
+           or else (Top (Tokens).Declaration
+                      and then Word = Tok_Private
+                      and then Prev_Reserved /= Tok_Is
+                      and then Prev_Reserved /= Tok_With)
          then
             --  unindent for this reserved word, and then indent again, e.g:
             --
@@ -1043,11 +1038,12 @@ package body Source_Analyzer is
             if not Type_Decl then
                if Word = Tok_Select then
                   --  Start of a select statement
-                  Push (Tokens, Word);
+                  Push (Tokens, Temp);
                end if;
 
                if Word = Tok_Else
-                 or else (Top (Tokens) = Tok_Select and then Word = Tok_Then)
+                 or else (Top (Tokens).Token = Tok_Select
+                          and then Word = Tok_Then)
                  or else Word = Tok_Begin
                  or else Word = Tok_Record
                  or else Word = Tok_When
@@ -1057,19 +1053,17 @@ package body Source_Analyzer is
                   if Word = Tok_Begin then
                      Val := Top (Tokens);
 
-                     if Val = Tok_Declare then
+                     if Val.Declaration then
                         Num_Spaces := Num_Spaces - Indent_Level;
                         Pop (Tokens);
-                        Push (Tokens, Word);
-
-                     elsif Val = Tok_Package then
-                        Num_Spaces := Num_Spaces - Indent_Level;
+                        Val.Declaration := False;
+                        Push (Tokens, Val);
                      else
-                        Push (Tokens, Word);
+                        Push (Tokens, Temp);
                      end if;
 
                   elsif Word = Tok_Record then
-                     Push (Tokens, Tok_Record);
+                     Push (Tokens, Temp);
                   else
                      Num_Spaces := Num_Spaces - Indent_Level;
                   end if;
@@ -1087,14 +1081,17 @@ package body Source_Analyzer is
 
             if Word = Tok_Do
               or else Word = Tok_Loop
-              or else Word = Tok_Declare
             then
-               Push (Tokens, Word);
+               Push (Tokens, Temp);
+            elsif Word = Tok_Declare then
+               Temp.Declaration := True;
+               Push (Tokens, Temp);
             end if;
 
             if Word = Tok_Is then
                if Prev_Reserved = Tok_Case then
-                  Push (Tokens, Tok_Case);
+                  Temp.Token := Tok_Case;
+                  Push (Tokens, Temp);
                   Num_Spaces := Num_Spaces + Indent_Level;
 
                elsif Type_Decl then
@@ -1102,13 +1099,9 @@ package body Source_Analyzer is
                   Type_Decl     := False;
 
                else
-                  Val := Top (Tokens);
-
-                  if Val /= Tok_Package then
-                     Pop (Tokens);
-                     Push (Tokens, Tok_Declare);
-                  end if;
-
+                  Pop (Tokens, Val);
+                  Val.Declaration := True;
+                  Push (Tokens, Val);
                   Subprogram_Decl := False;
                end if;
             end if;
@@ -1137,13 +1130,12 @@ package body Source_Analyzer is
          elsif Word = Tok_Exception then
             Val := Top (Tokens);
 
-            if Val /= Tok_Declare then
+            if not Val.Declaration then
                Num_Spaces := Num_Spaces - Indent_Level;
                Do_Indent
                  (Buffer, New_Buffer, Prec, Indents, Num_Spaces, Indent_Done);
                Num_Spaces := Num_Spaces + 2 * Indent_Level;
-               Pop (Tokens);
-               Push (Tokens, Tok_Exception);
+               Push (Tokens, Temp);
             end if;
          end if;
 
@@ -1157,7 +1149,7 @@ package body Source_Analyzer is
       New_Buffer := To_Line_Buffer (Buffer);
 
       --  Push a dummy token so that stack will never be empty.
-      Push (Tokens, No_Token);
+      Push (Tokens, (No_Token, False));
 
       --  Push a dummy indentation so that stack will never be empty.
       Push (Indents, None);
