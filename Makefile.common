@@ -175,7 +175,7 @@ endif
 
 .PHONY: check_browsers
 check_browsers: force
-	@[ -f ${BROWSERS_SRC}/src/make_browsers.adb ] || \
+	@[ -f ${BROWSERS_SRC}/src/browsers.ads ] || \
 	   (echo "browsers sources not found in ${BROWSERS_SRC}, see README"; false)
 
 ###################
