@@ -27,25 +27,25 @@ with String_Utils;          use String_Utils;
 
 package body Codefix.Text_Manager is
 
-   -----------------
-   -- Compare_Pkg --
-   -----------------
+   ------------------
+   -- Compare_Last --
+   ------------------
 
-   function Compare_Pkg (Pkg_1, Pkg_2 : String) return Boolean is
-      Pkg_1_Lower : String := Pkg_1;
-      Pkg_2_Lower : String := Pkg_2;
+   function Compare_Last (Str_1, Str_2 : String) return Boolean is
+      Str_1_Lower : String := Str_1;
+      Str_2_Lower : String := Str_2;
    begin
-      Lower_Case (Pkg_1_Lower);
-      Lower_Case (Pkg_2_Lower);
+      Lower_Case (Str_1_Lower);
+      Lower_Case (Str_2_Lower);
 
-      if Pkg_1'Length < Pkg_2'Length then
-         return Pkg_1_Lower = Pkg_2_Lower
-           (Pkg_2'Last - Pkg_1'Length + 1 .. Pkg_2'Last);
+      if Str_1'Length < Str_2'Length then
+         return Str_1_Lower = Str_2_Lower
+           (Str_2'Last - Str_1'Length + 1 .. Str_2'Last);
       else
-         return Pkg_2_Lower = Pkg_1_Lower
-           (Pkg_1'Last - Pkg_2'Length + 1 .. Pkg_1'Last);
+         return Str_2_Lower = Str_1_Lower
+           (Str_1'Last - Str_2'Length + 1 .. Str_1'Last);
       end if;
-   end Compare_Pkg;
+   end Compare_Last;
 
    --------------
    -- Is_Blank --
@@ -740,7 +740,7 @@ package body Codefix.Text_Manager is
       while Current_Info /= null loop
          if Current_Info.Category = Category
            and then
-             (Name = "" or else Compare_Pkg (Current_Info.Name.all, Name))
+             (Name = "" or else Compare_Last (Current_Info.Name.all, Name))
          then
             return Current_Info.all;
          end if;
@@ -1177,11 +1177,12 @@ package body Codefix.Text_Manager is
       if Prev = null then
 
          for I in 1 .. Size loop
-            exit when Line_Cursor.Line = 1;
             if Current_Line.Context /= Line_Created then
                Line_Cursor.Line := Line_Cursor.Line - 1;
             end if;
+
             exit when Line_Cursor.Line = 0;
+
             Get_Line (Current_Text, Clone (Line_Cursor), New_Line.all);
             New_Line.Next := Current_Line;
             Current_Line := New_Line;
