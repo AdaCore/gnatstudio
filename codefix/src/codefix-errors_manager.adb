@@ -93,7 +93,7 @@ package body Codefix.Errors_Manager is
 
       loop
          exit when Logic_Pos = Current.Col
-           or else File_Pos = Current_Line'Last;
+           or else File_Pos > Current_Line'Last;
 
          if Current_Line (File_Pos) = ASCII.HT then
             Logic_Pos := Logic_Pos + ((-Logic_Pos) mod Tab_Width);
