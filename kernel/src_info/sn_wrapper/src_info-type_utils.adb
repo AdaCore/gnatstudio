@@ -628,8 +628,9 @@ package body Src_Info.Type_Utils is
             and Template_Args
                = Arg.Buffer (Arg.Template_Parameters.First ..
                   Arg.Template_Parameters.Last)
-            and Arg.Buffer (Arg.Class_Name.First .. Arg.Class_Name.Last)
-               = Class_Name
+            and ((Arg.Buffer (Arg.Class_Name.First .. Arg.Class_Name.Last)
+               = Class_Name)
+               or ((Arg.Class_Name = Empty_Segment) and Class_Name = "#"))
             and Arg.Attributes /= SN_TA_VALUE
          then
             Desc.Is_Template     := Arg.Attributes = SN_TA_TEMPLATE;

@@ -1514,6 +1514,6 @@ package body SN.DB_Structures is
          return (I, J - 1);
       end if;
 
-      return (1, 0);
+      return Empty_Segment;
    end Get_Segment_From_Comment;
 end SN.DB_Structures;
