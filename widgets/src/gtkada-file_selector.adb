@@ -58,9 +58,14 @@ with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with Ada.Exceptions;            use Ada.Exceptions;
 
+with Histories;                 use Histories;
+
 package body Gtkada.File_Selector is
 
    Me : constant Debug_Handle := Create ("Gtkada.File_Selector");
+
+   Directories_Hist_Key : constant Histories.History_Key := "directories";
+   --  Key used in the history
 
    -----------------------
    -- Local subprograms --
@@ -316,14 +321,16 @@ package body Gtkada.File_Selector is
       Base_Directory    : String  := "";
       File_Pattern      : String  := "";
       Pattern_Name      : String  := "";
-      Use_Native_Dialog : Boolean := False) return String
+      Use_Native_Dialog : Boolean := False;
+      History           : Histories.History := null) return String
    is
       pragma Unreferenced (Use_Native_Dialog);
 
       File_Selector : File_Selector_Window_Access;
    begin
       Gtk_New
-        (File_Selector, (1 => Directory_Separator), Base_Directory, Title);
+        (File_Selector, (1 => Directory_Separator), Base_Directory, Title,
+         History => History);
 
       if File_Pattern /= "" then
          Register_Filter
@@ -381,7 +388,8 @@ package body Gtkada.File_Selector is
    function Select_Directory
      (Title             : String := "Select a directory";
       Base_Directory    : String := "";
-      Use_Native_Dialog : Boolean := False) return String
+      Use_Native_Dialog : Boolean := False;
+      History           : Histories.History := null) return String
    is
       pragma Unreferenced (Use_Native_Dialog);
 
@@ -389,7 +397,7 @@ package body Gtkada.File_Selector is
    begin
       Gtk_New
         (File_Selector_Window,
-         (1 => Directory_Separator), Base_Directory, Title, False);
+         (1 => Directory_Separator), Base_Directory, Title, False, History);
       return Select_Directory (File_Selector_Window);
    end Select_Directory;
 
@@ -733,6 +741,10 @@ package body Gtkada.File_Selector is
             Set_Sensitive (Win.Forward_Button, False);
 
             Add_Unique_Combo_Entry (Win.Location_Combo, Dir);
+
+            if Win.History /= null then
+               Add_To_History (Win.History.all, "directories", Dir);
+            end if;
          end if;
 
          if Get_Text (Win.Location_Combo_Entry) /= Dir then
@@ -1374,7 +1386,8 @@ package body Gtkada.File_Selector is
       Root                 : String;
       Initial_Directory    : String;
       Dialog_Title         : String;
-      Show_Files           : Boolean := True) is
+      Show_Files           : Boolean := True;
+      History              : Histories.History) is
    begin
       File_Selector_Window := new File_Selector_Window_Record;
 
@@ -1383,11 +1396,11 @@ package body Gtkada.File_Selector is
       then
          Initialize
            (File_Selector_Window, Root,
-            Initial_Directory, Dialog_Title, Show_Files);
+            Initial_Directory, Dialog_Title, Show_Files, History);
       else
          Initialize
            (File_Selector_Window, Get_Current_Dir,
-            Initial_Directory, Dialog_Title, Show_Files);
+            Initial_Directory, Dialog_Title, Show_Files, History);
       end if;
    end Gtk_New;
 
@@ -1400,7 +1413,8 @@ package body Gtkada.File_Selector is
       Root                 : String;
       Initial_Directory    : String;
       Dialog_Title         : String;
-      Show_Files           : Boolean := True)
+      Show_Files           : Boolean := True;
+      History              : Histories.History)
    is
       pragma Suppress (All_Checks);
 
@@ -1424,6 +1438,7 @@ package body Gtkada.File_Selector is
 
    begin
       Gtk.Window.Initialize (File_Selector_Window, Window_Toplevel);
+      File_Selector_Window.History := History;
 
       Style := Get_Style (File_Selector_Window);
       File_Selector_Window.Highlighted_Style := Copy (Style);
@@ -1543,6 +1558,11 @@ package body Gtkada.File_Selector is
          "hide",
          Widget_Callback.To_Marshaller (Directory_Selected'Access),
          File_Selector_Window.Location_Combo);
+
+      if History /= null then
+         Get_History (History.all, Directories_Hist_Key,
+                      File_Selector_Window.Location_Combo);
+      end if;
 
       File_Selector_Window.Location_Combo_Entry :=
         Get_Entry (File_Selector_Window.Location_Combo);

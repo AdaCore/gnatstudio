@@ -85,6 +85,8 @@ with Generic_List;
 with GNAT.OS_Lib; use GNAT.OS_Lib;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 
+with Histories;
+
 with Unchecked_Deallocation;
 
 package Gtkada.File_Selector is
@@ -94,7 +96,8 @@ package Gtkada.File_Selector is
       Base_Directory    : String  := "";
       File_Pattern      : String  := "";
       Pattern_Name      : String  := "";
-      Use_Native_Dialog : Boolean := False) return String;
+      Use_Native_Dialog : Boolean := False;
+      History           : Histories.History := null) return String;
    --  Create a file selection dialog, display it, and return the absolute file
    --  name that was selected, if any, or return an empty string.
    --  Base_Directory is the directory on which the dialog starts. If the
@@ -112,7 +115,8 @@ package Gtkada.File_Selector is
    function Select_Directory
      (Title             : String  := "Select a directory";
       Base_Directory    : String  := "";
-      Use_Native_Dialog : Boolean := False) return String;
+      Use_Native_Dialog : Boolean := False;
+      History           : Histories.History := null) return String;
    --  Create a directory selection dialog, display it, and return the absolute
    --  name of the selected directory, if any, or return an empty string.
    --  Base_Directory is the directory on which the dialog starts. If the
@@ -236,7 +240,8 @@ package Gtkada.File_Selector is
       Root                 : String;
       Initial_Directory    : String;
       Dialog_Title         : String;
-      Show_Files           : Boolean := True);
+      Show_Files           : Boolean := True;
+      History              : Histories.History);
    --  Create a new file selector.
    --  Root is the directory shown in the root node of the tree. The user will
    --  not be able to select directories higher up in the hierarchy.
@@ -251,7 +256,8 @@ package Gtkada.File_Selector is
       Root                 : String;
       Initial_Directory    : String;
       Dialog_Title         : String;
-      Show_Files           : Boolean := True);
+      Show_Files           : Boolean := True;
+      History              : Histories.History);
    --  Internal initialization function.
 
 private
@@ -368,6 +374,8 @@ private
       Selection_Entry : Gtk_Entry;
       Ok_Button : Gtk_Button;
       Cancel_Button : Gtk_Button;
+
+      History : Histories.History;
    end record;
 
 end Gtkada.File_Selector;
