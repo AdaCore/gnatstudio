@@ -6059,10 +6059,6 @@ such key bindings, you need to press the @code{Grab} button as usual, and then
 type the shortcut. The recording of the key binding will stop a short while
 after the last key stroke.
 
-If you want to define a key binding for an action not currently associated
-with any key, you can click on the @code{Add} button and choose the action
-from the list displayed.
-
 This facility for creating complex shortcuts is not available for menu
 items yet.
 
