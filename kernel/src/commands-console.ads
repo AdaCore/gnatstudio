@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2002                       --
+--                     Copyright (C) 2001-2003                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -41,11 +41,11 @@ package Commands.Console is
      return Console_Command_Access;
    --  Create a new Console_Command_Access as a copy of Item.
 
-   function Execute (Command : access Console_Command) return Boolean;
+   function Execute
+     (Command : access Console_Command) return Command_Return_Type;
    --  Execute Command.
 
-   function Undo (Command : access Console_Command) return Boolean
-     renames Execute;
+   function Undo (Command : access Console_Command) return Boolean;
 
    procedure Free (Command : in out Console_Command);
    --  Free memory associated to Command.

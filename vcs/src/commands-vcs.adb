@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2002                       --
+--                     Copyright (C) 2001-2003                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -61,11 +61,11 @@ package body Commands.VCS is
    -------------
 
    function Execute
-     (Command : access Commit_Command_Type) return Boolean is
+     (Command : access Commit_Command_Type) return Command_Return_Type is
    begin
       Commit (Command.Rep, Command.Filenames, Command.Logs);
       Command_Finished (Command, True);
-      return True;
+      return Success;
    end Execute;
 
    ------------
@@ -97,15 +97,15 @@ package body Commands.VCS is
    -------------
 
    function Execute
-     (Command : access Get_Status_Command_Type) return Boolean is
+     (Command : access Get_Status_Command_Type) return Command_Return_Type is
    begin
       Get_Status (Command.Rep, Command.Filenames, Clear_Logs => True);
       Command_Finished (Command, True);
-      return True;
+      return Success;
    end Execute;
 
    function Execute
-     (Command : access Update_Files_Command_Type) return Boolean
+     (Command : access Update_Files_Command_Type) return Command_Return_Type
    is
       use String_List;
       L_Temp : List_Node := First (Command.Filenames);
@@ -116,7 +116,7 @@ package body Commands.VCS is
       end loop;
 
       Command_Finished (Command, True);
-      return True;
+      return Success;
    end Execute;
 
 end Commands.VCS;

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2002                       --
+--                     Copyright (C) 2001-2003                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -43,7 +43,8 @@ package Commands.VCS is
    --  The log files for files that are up-to-date will be erased
    --  after this command completes.
 
-   function Execute (Command : access Commit_Command_Type) return Boolean;
+   function Execute
+     (Command : access Commit_Command_Type) return Command_Return_Type;
 
    procedure Create
      (Item      : out Get_Status_Command_Access;
@@ -59,9 +60,10 @@ package Commands.VCS is
    --  Create a new Update_Files_Command.
    --  The user must free Filenames after calling Create.
 
-   function Execute (Command : access Get_Status_Command_Type) return Boolean;
    function Execute
-     (Command : access Update_Files_Command_Type) return Boolean;
+     (Command : access Get_Status_Command_Type) return Command_Return_Type;
+   function Execute
+     (Command : access Update_Files_Command_Type) return Command_Return_Type;
 
    procedure Free (X : in out Commit_Command_Type);
    procedure Free (X : in out Get_Status_Command_Type);

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2001-2002                       --
+--                     Copyright (C) 2001-2003                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -42,7 +42,8 @@ package body Commands.Controls is
    end record;
    type Queue_Change_Access is access all Queue_Change_Command;
 
-   function Execute (Command : access Queue_Change_Command) return Boolean;
+   function Execute
+     (Command : access Queue_Change_Command) return Command_Return_Type;
 
    package Command_Callback is new User_Callback
      (Gtk_Widget_Record, Queue_Change_Access);
@@ -119,7 +120,7 @@ package body Commands.Controls is
    -------------
 
    function Execute
-     (Command : access Queue_Change_Command) return Boolean is
+     (Command : access Queue_Change_Command) return Command_Return_Type is
    begin
       if Command.Undo_Button /= null then
          Set_Sensitive (Command.Undo_Button,
@@ -141,7 +142,7 @@ package body Commands.Controls is
            (Command.Redo_Menu_Item, not Redo_Queue_Empty (Command.The_Queue));
       end if;
 
-      return True;
+      return Success;
    end Execute;
 
    ------------------

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2002                       --
+--                     Copyright (C) 2001-2003                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
@@ -31,18 +31,20 @@ package body Commands.Codefix is
    -- Execute --
    -------------
 
-   function Execute (Command : access Codefix_Command) return Boolean is
+   function Execute
+     (Command : access Codefix_Command) return Command_Return_Type
+   is
       Menu : Gtk_Menu;
    begin
       if Is_Fixed (Command.Error) then
-         return True;
+         return Success;
       end if;
 
       if Get_Number_Of_Fixes (Command.Error) > 1 then
          Menu := Create_Submenu (Command.Error);
          Show_All (Menu);
          Popup (Menu);
-         return True;
+         return Success;
       end if;
 
       Validate_And_Commit
@@ -53,7 +55,7 @@ package body Commands.Codefix is
 
       Remove_Pixmap (Command.Error);
 
-      return True;
+      return Success;
    end Execute;
 
    ----------
