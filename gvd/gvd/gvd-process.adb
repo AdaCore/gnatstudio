@@ -1570,7 +1570,7 @@ package body GVD.Process is
             Executable,
             Debugger_Args,
             Executable_Args,
-            new Gui_Process_Proxy,
+            new Process_Proxy,
             Process.Window.all'Access,
             Remote_Host,
             Remote_Target,
@@ -1579,7 +1579,7 @@ package body GVD.Process is
       else
          Spawn
            (Process.Debugger, "", Debugger_Args, Executable_Args,
-            new Gui_Process_Proxy,
+            new Process_Proxy,
             Process.Window.all'Access, Remote_Host, Remote_Target,
             Remote_Protocol, Debugger_Name);
 
