@@ -820,7 +820,8 @@ If the attribute value is stored as a simple string, a list with a single elemen
              real_name="GPS.Project.add_predefined_paths">
        <param name="sources" default="">A list of directories separated by the appropriate separator (':' or ';' depending on the system</param>
        <param name="objects" default="">As above</param>
-       <description>Add some predefined directories to the source path or the objects path. These will be searched when GPS needs to open a file by its base name, in particular from the File->Open From Project dialog</description>
+       <description>Add some predefined directories to the source path or the objects path. These will be searched when GPS needs to open a file by its base name, in particular from the File->Open From Project dialog.
+The new paths are added in front, so that they have priorities over previously defined paths.</description>
        <example lang="python">
            GPS.Project.add_predefined_paths (os.pathsep.join (sys.path))
        </example>
@@ -917,7 +918,12 @@ If the attribute value is stored as a simple string, a list with a single elemen
       <param name="column" default="1">An integer</param>
       <param name="length" default="0">An integer</param>
       <param name="force" default="false">A boolean</param>
-      <description>Open a file editor for file_name. Length is the number of characters to select after the cursor. If line and column are set to 0, then the location of the cursor is not changed if the file is already opened in an editor. If force is set to true, a reload is forced in case the file is already open.</description>
+      <description>Open a file editor for file_name. Length is the number of characters to select after the cursor. If line and column are set to 0, then the location of the cursor is not changed if the file is already opened in an editor. If force is set to true, a reload is forced in case the file is already open.
+
+The filename can be a network file name, with the following general format:
+   protocol://username@host:port/full/path
+where protocol is one of the recognized protocols (http, ftp,.. see the GPS documentation), and the username and port are optional.
+</description>
   </shell_doc>
 
   <shell_doc name="GPS.create_mark" real_name="GPS.Editor.create_mark">
@@ -1480,7 +1486,11 @@ format of the gps_index.xml files</description>
   <shell_doc name="GPS.browse" real_name="GPS.HTML.browse" >
      <param name="URL">Name of the file to browse</param>
      <param name="anchor" default="">Location in the file where to jump to</param>
-     <description>Open the GPS html viewer, and load the given URL. If anchor matches a &lt;a&gt; tag in this file, GPS will jump to it. If URL isn't an absolute file name, it is searched in the path set by the environment variable GPS_DOC_PATH.</description>
+     <description>Open the GPS html viewer, and load the given URL. If anchor matches a &lt;a&gt; tag in this file, GPS will jump to it. If URL isn't an absolute file name, it is searched in the path set by the environment variable GPS_DOC_PATH.
+
+The URL can be a network file name, with the following general format:
+   protocol://username@host:port/full/path
+where protocol is one of the recognized protocols (http, ftp,.. see the GPS documentation), and the username and port are optional.</description>
      <see_also name="GPS.HTML.add_doc_directory()"/>
      <example lang="python">
          GPS.HTML.browse ("gps.html")
