@@ -25,7 +25,7 @@ package GVD is
    -- Constants --
    ---------------
 
-   Version : constant String := "0.7w";
+   Version : constant String := "0.7.0";
    --  Version number of this software.
 
    Max_Frame : constant := 500;
