@@ -931,6 +931,7 @@ package body Codefix.Text_Manager is
                  or else (Current_Info.Sloc_End.Line = Stop.Line
                           and then Current_Info.Sloc_End.Column < Stop.Column)
                then
+                  Free (Current_Name);
                   return;
                end if;
 
@@ -961,6 +962,7 @@ package body Codefix.Text_Manager is
                      Assign
                        (Result_Name,
                         Current_Name.all & "." & Result_Name.all);
+                     Free (Current_Name);
                      return;
                   end if;
                else
