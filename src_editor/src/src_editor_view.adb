@@ -741,8 +741,7 @@ package body Src_Editor_View is
          end loop;
 
          Unchecked_Free (View.Real_Lines);
-         View.Real_Lines
-           := new Natural_Array (1 .. Max * 2);
+         View.Real_Lines := new Natural_Array (1 .. Max * 2);
 
          for J in 1 .. Max loop
             View.Real_Lines (J) := J;
