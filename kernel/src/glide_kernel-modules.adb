@@ -100,7 +100,10 @@ package body Glide_Kernel.Modules is
       Command  : Commands.Interactive.Interactive_Command_Access;
       Filter   : Glide_Kernel.Action_Filter;
 
-      Visible  : Boolean := True;
+      Submenu  : Module_Menu_Handler;
+      Is_Submenu : Boolean := False;
+
+      Visible    : Boolean := True;
 
       Filter_Matched : Boolean;
       --  Only valid while computing a contextual menu
@@ -108,7 +111,8 @@ package body Glide_Kernel.Modules is
    --  A contextual menu entry declared by a user or GPS itself internally
    --  If Action is not null, then (Command, Filter) should be ignored. We do
    --  not use a discriminated record, because we need to be able to change the
-   --  whole definition of a menu at once.
+   --  whole definition of a menu at once. Likewise, Submenu should only be
+   --  used if none of Action, Command and Filter are used.
    --  If both Action and Command are null, then we have a separator
 
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
@@ -523,6 +527,8 @@ package body Glide_Kernel.Modules is
      (User  : Contextual_Menu_User_Data;
       Event : Gdk_Event) return Gtk_Menu
    is
+      use type Gtk.Widget.Widget_List.Glist;
+
       procedure Insert_Hard_Coded_Entries
         (Context : Selection_Context_Access;
          Menu    : Gtk_Menu);
@@ -591,16 +597,19 @@ package body Glide_Kernel.Modules is
          --  menu
 
          if C.Action = null and then C.Command = null then
-            C2 := C.Next;
-            while C2 /= null loop
-               if (C2.Action /= null or else C2.Command /= null)
-                 and then C2.Filter_Matched
-               then
-                  Has_Following_Entry := True;
-                  exit;
-               end if;
-               C2 := C2.Next;
-            end loop;
+            Has_Following_Entry := C.Is_Submenu;
+            if not Has_Following_Entry then
+               C2 := C.Next;
+               while C2 /= null loop
+                  if (C2.Action /= null or else C2.Command /= null)
+                    and then C2.Filter_Matched
+                  then
+                     Has_Following_Entry := True;
+                     exit;
+                  end if;
+                  C2 := C2.Next;
+               end loop;
+            end if;
 
             if not Has_Following_Entry then
                Matches := False;
@@ -633,6 +642,7 @@ package body Glide_Kernel.Modules is
          use type GNAT.OS_Lib.String_Access;
          Image     : Gtk_Image_Menu_Item;
          Pix       : Gtk_Image;
+         Menu      : Gtk_Menu;
       begin
          if C.Label = null then
             Full_Name := new String'(C.Name.all);
@@ -643,7 +653,26 @@ package body Glide_Kernel.Modules is
          --  A separator ?
 
          if C.Action = null and then C.Command = null then
-            Gtk_New (Item, "");
+            if C.Is_Submenu then
+               Gtk_New (Item, Base_Name (Full_Name.all));
+               if C.Submenu /= null then
+                  Gtk_New (Menu);
+                  C.Submenu
+                    (Object  => User.Object,
+                     Context => Context,
+                     Menu    => Menu);
+
+                  if Children (Menu) = Gtk.Widget.Widget_List.Null_List then
+                     Destroy (Menu);
+                  else
+                     Set_Submenu (Item, Menu);
+                  end if;
+               end if;
+
+            else
+               Gtk_New (Item, "");
+            end if;
+
          elsif Full_Name.all /= "" then
             if C.Pix = null then
                Gtk_New (Item, Base_Name (Full_Name.all));
@@ -673,8 +702,6 @@ package body Glide_Kernel.Modules is
       Item    : Gtk_Menu_Item;
       Parent_Item : Gtk_Menu_Item;
       Parent_Menu : Gtk_Menu;
-
-      use type Gtk.Widget.Widget_List.Glist;
    begin
       if User.Kernel.Last_Context_For_Contextual /= null then
          Unref (User.Kernel.Last_Context_For_Contextual);
@@ -1420,6 +1447,8 @@ package body Glide_Kernel.Modules is
             Next        => null,
             Ref_Item    => null,
             Visible     => True,
+            Is_Submenu  => False,
+            Submenu     => null,
             Filter_Matched => False,
             Label       => Contextual_Menu_Label_Creator (T)),
          Ref_Item,
@@ -1456,6 +1485,8 @@ package body Glide_Kernel.Modules is
             Next        => null,
             Ref_Item    => null,
             Visible     => True,
+            Is_Submenu  => False,
+            Submenu     => null,
             Filter_Matched => False,
             Label       => Contextual_Menu_Label_Creator (Label)),
          Ref_Item,
@@ -1494,6 +1525,8 @@ package body Glide_Kernel.Modules is
             Ref_Item    => null,
             Visible     => True,
             Filter_Matched => False,
+            Is_Submenu  => False,
+            Submenu     => null,
             Label       => Contextual_Menu_Label_Creator (Label)),
          Ref_Item,
          Add_Before);
@@ -1538,6 +1571,8 @@ package body Glide_Kernel.Modules is
             Next        => null,
             Ref_Item    => null,
             Visible     => True,
+            Is_Submenu  => False,
+            Submenu     => null,
             Filter_Matched => False,
             Label       => Contextual_Menu_Label_Creator (T)),
          Ref_Item,
@@ -1599,5 +1634,45 @@ package body Glide_Kernel.Modules is
 
       return Result;
    end Get_Registered_Contextual_Menus;
+
+   ---------------------------------
+   -- Register_Contextual_Submenu --
+   ---------------------------------
+
+   procedure Register_Contextual_Submenu
+     (Kernel        : access Kernel_Handle_Record'Class;
+      Name          : String;
+      Label         : String := "";
+      Filter        : Glide_Kernel.Action_Filter := null;
+      Submenu       : Module_Menu_Handler := null;
+      Ref_Item      : String := "";
+      Add_Before    : Boolean := True)
+   is
+      T : Contextual_Label_Param;
+   begin
+      if Label /= "" then
+         T        := new Contextual_Label_Parameters;
+         T.Label  := new String'(Label);
+         T.Custom := null;
+      end if;
+
+      Add_Contextual_Menu
+        (Kernel,
+         new Contextual_Menu_Record'
+           (Name        => new String'(Name),
+            Action      => null,
+            Command     => null,
+            Filter      => Filter,
+            Pix         => null,
+            Next        => null,
+            Ref_Item    => null,
+            Visible     => True,
+            Filter_Matched => False,
+            Submenu     => Submenu,
+            Is_Submenu  => True,
+            Label       => Contextual_Menu_Label_Creator (T)),
+         Ref_Item,
+         Add_Before);
+   end Register_Contextual_Submenu;
 
 end Glide_Kernel.Modules;

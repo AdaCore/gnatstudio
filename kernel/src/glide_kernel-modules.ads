@@ -373,6 +373,22 @@ package Glide_Kernel.Modules is
    --  substituted.
    --  A separator is inserted if Action is null and the Filter matches
 
+   procedure Register_Contextual_Submenu
+     (Kernel        : access Kernel_Handle_Record'Class;
+      Name          : String;
+      Label         : String := "";
+      Filter        : Glide_Kernel.Action_Filter := null;
+      Submenu       : Module_Menu_Handler := null;
+      Ref_Item      : String := "";
+      Add_Before    : Boolean := True);
+   --  Register a new submenu. Its contents can be computed dynamically by
+   --  providing a Submenu callback. This can be left to null if all entries
+   --  are added through Register_Contextual_Menu (in which case the call to
+   --  Register_Contextual_Submenu can be used to position the parent menu
+   --  where appropriate.
+   --  Submenu is passed the submenu created for the item, so it doesn't need
+   --  to create the submenu itself
+
    procedure Set_Contextual_Menu_Visible
      (Kernel  : access Kernel_Handle_Record'Class;
       Name    : String;
