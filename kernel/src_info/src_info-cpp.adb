@@ -389,7 +389,7 @@ package body Src_Info.CPP is
    --                ^^^ this is cut
 
    Template_Type_Pat : constant Pattern_Matcher
-                     := Compile ("^([^<\s]+)\s*<");
+                     := Compile ("^([^<\s]+)\s*<(.*)>$");
    --  Regexp to find plain class name in the templatized
    --  name.
 
@@ -586,11 +586,11 @@ package body Src_Info.CPP is
       Class_Def : out CL_Table;
       Success   : out Boolean)
    is
-      Matches      : Match_Array (1 .. 1);
+      Matches      : Match_Array (1 .. 2);
    begin
       Success := False;
       Match (Template_Type_Pat, Type_Name, Matches);
-      if Matches (1) /= No_Match then
+      if Matches (1) /= No_Match and Matches (2) /= No_Match then
          Class_Def := Find (SN_Table (CL), Type_Name
             (Matches (1).First .. Matches (1).Last));
          Desc.IsTemplate := True;
@@ -605,7 +605,7 @@ package body Src_Info.CPP is
       Desc.Kind := Record_Type;
       Success := True;
    exception
-      when  DB_Error |   -- non-existent table
+      when  DB_Error | -- non-existent table
             Not_Found => -- missed, fall thru'
          null;
    end Find_Class;
