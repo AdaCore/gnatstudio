@@ -92,6 +92,10 @@ with Src_Editor_Buffer.Line_Information;
 
 with Src_Editor_Buffer.Text_Handling;   use Src_Editor_Buffer.Text_Handling;
 
+with Src_Printing;
+with Pango.Font;
+with Pango.Enums;
+
 package body Src_Editor_Module is
 
    Me : constant Debug_Handle := Create ("Src_Editor_Module");
@@ -2130,19 +2134,42 @@ package body Src_Editor_Module is
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
       pragma Unreferenced (Widget);
+      use Pango.Font, Pango.Enums;
 
-      Success : Boolean;
-      Child   : constant MDI_Child := Find_Current_Editor (Kernel);
-      Source  : constant Source_Editor_Box :=
-        Get_Source_Box_From_MDI (Find_Current_Editor (Kernel));
+      Success          : Boolean;
+      Child            : constant MDI_Child := Find_Current_Editor (Kernel);
+      Source           : constant Source_Editor_Box :=
+        Get_Source_Box_From_MDI (Child);
+      Print_Helper     : constant String := Get_Pref (Kernel, Print_Command);
+      Source_Font      : constant Pango_Font_Description :=
+        Get_Pref (Kernel, Source_Editor_Font);
+      Source_Font_Name : constant String := Get_Family (Source_Font);
+      Source_Font_Size : constant Gint := To_Pixels (Get_Size (Source_Font));
 
    begin
-      if Source /= null then
-         if Save_Child (Kernel, Child, False) /= Cancel then
+      if Source = null then
+         return;
+      end if;
+
+      if Print_Helper = "" then
+         --  Use our internal facility
+
+         Src_Printing.Print
+           (Source,
+            Font_Name  => Source_Font_Name,
+            Font_Size  => Integer (Source_Font_Size),
+            Bold       => False,
+            Italicized => False);
+
+      else
+         --  Use helper
+
+         if Save_Child
+           (Kernel, Child, Get_Pref (Kernel, Auto_Save)) /= Cancel
+         then
             declare
                Cmd : Argument_List_Access := Argument_String_To_List
-                 (Get_Pref (Kernel, Print_Command) & " " &
-                  Full_Name (Get_Filename (Source)).all);
+                 (Print_Helper & " " & Full_Name (Get_Filename (Source)).all);
             begin
                Launch_Process
                  (Kernel, Cmd (Cmd'First).all, Cmd (Cmd'First + 1 .. Cmd'Last),
