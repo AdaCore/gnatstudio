@@ -51,7 +51,7 @@ package Switches_Editor_Pkg is
       Make_Debug : Gtk_Check_Button;
       Make_Mapping_File : Gtk_Check_Button;
       Make_Switches_Entry : Gtk_Entry;
-      Label17 : Gtk_Label;
+      Make_Label : Gtk_Label;
       Ada_Switches : Gtk_Table;
       Ada_Codegen_Frame : Gtk_Frame;
       Vbox19 : Gtk_Vbox;
@@ -88,7 +88,7 @@ package Switches_Editor_Pkg is
       Ada_Language_Extensions : Gtk_Check_Button;
       Ada83_Mode : Gtk_Check_Button;
       Ada_Switches_Entry : Gtk_Entry;
-      Label18 : Gtk_Label;
+      Ada_Label : Gtk_Label;
       C_Switches : Gtk_Table;
       Frame41 : Gtk_Frame;
       Vbox48 : Gtk_Vbox;
@@ -109,7 +109,7 @@ package Switches_Editor_Pkg is
       Vbox51 : Gtk_Vbox;
       C_Debug : Gtk_Check_Button;
       C_Switches_Entry : Gtk_Entry;
-      Label56 : Gtk_Label;
+      C_Label : Gtk_Label;
       Cpp_Switches : Gtk_Table;
       Frame43 : Gtk_Frame;
       Vbox50 : Gtk_Vbox;
@@ -133,7 +133,7 @@ package Switches_Editor_Pkg is
       Frame45 : Gtk_Frame;
       Vbox52 : Gtk_Vbox;
       Cpp_Debug : Gtk_Check_Button;
-      Label57 : Gtk_Label;
+      Cpp_Label : Gtk_Label;
       Pp_Switches : Gtk_Table;
       Pp_Switches_Entry : Gtk_Entry;
       Pp_Align_Frame : Gtk_Frame;
@@ -171,7 +171,7 @@ package Switches_Editor_Pkg is
       Indent_Level : Gtk_Spin_Button;
       Label71 : Gtk_Label;
       Max_Line_Length : Gtk_Spin_Button;
-      Label62 : Gtk_Label;
+      Pp_Label : Gtk_Label;
       Binder_Switches : Gtk_Table;
       Binder_Switches_Entry : Gtk_Entry;
       Vbox27 : Gtk_Vbox;
@@ -179,14 +179,14 @@ package Switches_Editor_Pkg is
       Binder_Restrictions : Gtk_Check_Button;
       Binder_Static_Gnat : Gtk_Radio_Button;
       Binder_Shared_Gnat : Gtk_Radio_Button;
-      Label19 : Gtk_Label;
+      Binder_Label : Gtk_Label;
       Linker_Switches : Gtk_Table;
       Linker_Switches_Entry : Gtk_Entry;
       Vbox40 : Gtk_Vbox;
       Linker_Strip : Gtk_Check_Button;
       Linker_Debug : Gtk_Check_Button;
       Linker_Profile : Gtk_Check_Button;
-      Label20 : Gtk_Label;
+      Linker_Label : Gtk_Label;
       Hbuttonbox1 : Gtk_Hbutton_Box;
    end record;
    type Switches_Editor_Access is access all Switches_Editor_Record'Class;
