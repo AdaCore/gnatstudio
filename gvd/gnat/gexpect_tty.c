@@ -74,13 +74,14 @@ static char pty_name[24];
 #endif
 
 struct GVD_Process {
-  int infd;      /* descriptor to read from the process */
-  int outfd;     /* descriptor by which we write to the process */
-  int subtty;    /* descriptor for the tty that the process is using */
-  int pty_flag;  /* non-nil if communicating through a pty */
-  int status;    /* Symbol indicating status of the process:
-		    Qrun, Qopen, Qclosed */
-  int pid;       /* Number of this process */
+  int infd;       /* descriptor to read from the process */
+  int outfd;      /* descriptor by which we write to the process */
+  int subtty;     /* descriptor for the tty that the process is using */
+  int pty_flag;   /* non-nil if communicating through a pty */
+  int status;     /* Symbol indicating status of the process:
+		     Qrun, Qopen, Qclosed */
+  int pid;        /* Number of this process */
+  char *tty_name; /* Name of TTY device */
 
   sigset_t procmask;
   int forkin, forkout;
@@ -182,7 +183,7 @@ nt_spawnve (char *exe, char **argv, char *env, PROCESS_INFORMATION *procinfo)
       else
 	escape_char = '\\';
     }
-  
+
   /* do argv...  */
   arglen = 0;
   targ = argv;
@@ -297,7 +298,7 @@ nt_spawnve (char *exe, char **argv, char *env, PROCESS_INFORMATION *procinfo)
 
   memset (&start, 0, sizeof (start));
   start.cb = sizeof (start);
-  
+
 #ifdef HAVE_NTGUI
   if (NILP (Vw32_start_process_show_window))
     start.dwFlags = STARTF_USESTDHANDLES | STARTF_USESHOWWINDOW;
@@ -318,7 +319,7 @@ nt_spawnve (char *exe, char **argv, char *env, PROCESS_INFORMATION *procinfo)
   sec_attrs.nLength = sizeof (sec_attrs);
   sec_attrs.lpSecurityDescriptor = &sec_desc;
   sec_attrs.bInheritHandle = FALSE;
-  
+
   flags = (!NILP (Vw32_start_process_share_console)
 	   ? CREATE_NEW_PROCESS_GROUP
 	   : CREATE_NEW_CONSOLE);
@@ -370,15 +371,15 @@ prepare_standard_handles (int in, int out, int err, HANDLE handles[3])
   handles[2] = GetStdHandle (STD_ERROR_HANDLE);
 
   /* make inheritable copies of the new handles */
-  if (!DuplicateHandle (parent, 
+  if (!DuplicateHandle (parent,
 		       (HANDLE) _get_osfhandle (in),
 		       parent,
-		       &newstdin, 
-		       0, 
-		       TRUE, 
+		       &newstdin,
+		       0,
+		       TRUE,
 		       DUPLICATE_SAME_ACCESS))
     report_file_error ("Duplicating input handle for child", Qnil);
-  
+
   if (!DuplicateHandle (parent,
 		       (HANDLE) _get_osfhandle (out),
 		       parent,
@@ -387,7 +388,7 @@ prepare_standard_handles (int in, int out, int err, HANDLE handles[3])
 		       TRUE,
 		       DUPLICATE_SAME_ACCESS))
     report_file_error ("Duplicating output handle for child", Qnil);
-  
+
   if (!DuplicateHandle (parent,
 		       (HANDLE) _get_osfhandle (err),
 		       parent,
@@ -400,7 +401,7 @@ prepare_standard_handles (int in, int out, int err, HANDLE handles[3])
   /* and store them as our std handles */
   if (!SetStdHandle (STD_INPUT_HANDLE, newstdin))
     report_file_error ("Changing stdin handle", Qnil);
-  
+
   if (!SetStdHandle (STD_OUTPUT_HANDLE, newstdout))
     report_file_error ("Changing stdout handle", Qnil);
 
@@ -435,10 +436,10 @@ gvd_open (char* path, int oflag, int mode)
   register int rtnval;
 
 #ifdef BSD4_1
-  if (oflag & O_CREAT) 
+  if (oflag & O_CREAT)
     return creat (path, mode);
 #endif
-  
+
   while ((rtnval = open (path, oflag, mode)) == -1
          && (errno == EINTR));
   return (rtnval);
@@ -595,7 +596,7 @@ gvd_set_tty (fd, settings, flushp)
       || ioctl (fd, TIOCLSET, &settings->lmode) < 0)
     return -1;
 #endif
-  
+
   /* We have survived the tempest.  */
   return 0;
 }
@@ -744,13 +745,13 @@ setup_pty (fd)
      does this.  Also it is known that telnet mode will hang
      in such a way that Emacs must be stopped (perhaps this
      is the same problem).
-     
+
      If TIOCREMOTE is turned off, then there is a bug in
      hp-ux which sometimes loses data.  Apparently the
      code which blocks the master process when the internal
      buffer fills up does not work.  Other than this,
      though, everything else seems to work fine.
-     
+
      Since the latter lossage is more benign, we may as well
      lose that way.  -- cph */
 #ifdef FIONBIO
@@ -919,7 +920,7 @@ child_setup_tty (out)
   s.main.c_cc[VEOF] = 04;	/* insure that EOF is Control-D */
   s.main.c_cc[VERASE] = CDISABLE;	/* disable erase processing */
   s.main.c_cc[VKILL] = CDISABLE;	/* disable kill processing */
-  
+
 
 #ifdef HPUX
   s.main.c_cflag = (s.main.c_cflag & ~CBAUD) | B9600; /* baud rate sanity */
@@ -1001,7 +1002,7 @@ child_setup_tty (out)
  **  of environ around the vfork and the call to this function.
  **
  **  SET_PGRP is nonzero if we should put the subprocess into a separate
- **  process group.  
+ **  process group.
  **
  **  CURRENT_DIR is a string giving the path of the current
  **  directory the subprocess should have.  Since we can't really signal
@@ -1034,10 +1035,10 @@ child_setup (in, out, err, new_argv, set_pgrp, current_dir, process)
   /* ??? Original Emacs code had a section to deal with the setting of
      `env' to a vector of the strings in Vprocess_environment.
      This code has been removed completely. */
-  
+
 #ifdef WINDOWSNT
   prepare_standard_handles (in, out, err, handles);
-  
+
 #else  /* not WINDOWSNT */
   /* Make sure that in, out, and err are not actually already in
      descriptors zero, one, or two; this could happen if GVD is
@@ -1159,7 +1160,7 @@ gvd_setup_communication (struct GVD_Process** process_out) /* output param */
 
   if (inchannel >= 0)
     {
-#ifndef USG 
+#ifndef USG
       /* On USG systems it does not work to open the pty's tty here
 	       and then close and reopen it in the child.  */
 #ifdef O_NOCTTY
@@ -1276,10 +1277,10 @@ gvd_setup_communication (struct GVD_Process** process_out) /* output param */
   XSETINT (XPROCESS (process)->pid, -1);
 
   BLOCK_INPUT;
-  
+
   /* child_setup must clobber environ on systems with true vfork.
      Protect it from permanent change.
-     
+
      process->save_environ = environ; */
   process->forkin = forkin;
   process->forkout = forkout;
@@ -1295,7 +1296,7 @@ gvd_setup_child_communication (struct GVD_Process* process, char** new_argv)
 {
   char* current_dir = ".";
   int pid = 0;
-  
+
   int xforkin = process->forkin;
   int xforkout = process->forkout;
 
@@ -1342,12 +1343,12 @@ gvd_setup_child_communication (struct GVD_Process* process, char** new_argv)
     }
 #endif
 #endif
-#ifdef TIOCNOTTY 
+#ifdef TIOCNOTTY
   /* In 4.3BSD, the TIOCSPGRP bug has been fixed, and now you
      can do TIOCSPGRP only to the process's controlling tty.  */
   if (process->pty_flag == Qt)
     {
-      /* I wonder: would just ioctl (0, TIOCNOTTY, 0) work here? 
+      /* I wonder: would just ioctl (0, TIOCNOTTY, 0) work here?
 	 I can't test it since I don't have 4.3.  */
       int j = gvd_open ("/dev/tty", O_RDWR, 0);
       ioctl (j, TIOCNOTTY, 0);
@@ -1364,7 +1365,7 @@ gvd_setup_child_communication (struct GVD_Process* process, char** new_argv)
 #endif
     }
 #endif /* TIOCNOTTY */
-  
+
 #if !defined (RTU) && !defined (UNIPLUS) && !defined (DONT_REOPEN_PTY)
 /*** There is a suggestion that this ought to be a
      conditional on TIOCSPGRP,
@@ -1379,13 +1380,13 @@ gvd_setup_child_communication (struct GVD_Process* process, char** new_argv)
 #ifdef SET_CHILD_PTY_PGRP
       int pgrp = getpid ();
 #endif
-      
+
       /* I wonder if gvd_close (gvd_open (pty_name, ...))
 	 would work?  */
       if (xforkin >= 0)
 	gvd_close (xforkin);
       xforkout = xforkin = gvd_open (pty_name, O_RDWR, 0);
-      
+
       if (xforkin < 0)
 	{
 	  write (1, "Couldn't open the pty terminal ", 31);
@@ -1393,7 +1394,7 @@ gvd_setup_child_communication (struct GVD_Process* process, char** new_argv)
 	  write (1, "\n", 1);
 	  _exit (1);
 	}
-      
+
 #ifdef SET_CHILD_PTY_PGRP
       ioctl (xforkin, TIOCSPGRP, &pgrp);
       ioctl (xforkout, TIOCSPGRP, &pgrp);
@@ -1414,13 +1415,13 @@ gvd_setup_child_communication (struct GVD_Process* process, char** new_argv)
     signal (SIGHUP, SIG_DFL);
 #endif
 #endif /* HAVE_PTYS */
-  
+
   signal (SIGINT, SIG_DFL);
 
 #ifndef WIN32
   signal (SIGQUIT, SIG_DFL);
 #endif /* WIN32 */
-  
+
   /* Stop blocking signals in the child.  */
 #ifdef POSIX_SIGNALS
   sigprocmask (SIG_SETMASK, &(process->procmask), 0);
@@ -1435,13 +1436,13 @@ gvd_setup_child_communication (struct GVD_Process* process, char** new_argv)
 #endif /* not BSD4_1 */
 #endif /* SIGCHLD */
 #endif /* !POSIX_SIGNALS */
-  
+
   if (process->pty_flag)
     child_setup_tty (xforkout);
 #ifdef WINDOWSNT
   pid = child_setup (xforkin, xforkout, xforkout,
 		     new_argv, 1, current_dir, process);
-#else  /* not WINDOWSNT */	
+#else  /* not WINDOWSNT */
   child_setup (xforkin, xforkout, xforkout,
 	       new_argv, 1, current_dir, process);
 #endif /* not WINDOWSNT */
@@ -1465,7 +1466,7 @@ gvd_setup_parent_communication
     int*   pid_out) /* in-out parameter */
 {
   process->pid = *pid_out;
-  
+
   /* This runs in the Gvd process.  */
   if (process->pid < 0)
     {
@@ -1484,14 +1485,11 @@ gvd_setup_parent_communication
       if (process->forkin != process->forkout && process->forkout >= 0)
 	gvd_close (process->forkout);
 
-      /*
 #ifdef HAVE_PTYS
-      if (pty_flag)
-	XPROCESS (process)->tty_name = build_string (pty_name);
-      else
+      process->tty_name = strdup (pty_name);
+#else
+      process->tty_name = NULL;
 #endif
-	XPROCESS (process)->tty_name = Qnil;
-      */
     }
 
   /* Restore the signal state whether vfork succeeded or not.
@@ -1679,7 +1677,7 @@ process_send_signal (p, signo, current_group)
 #endif /* ! defined HAVE_TERMIOS */
 #endif /* ! defined (SIGNALS_VIA_CHARACTERS) */
 
-#ifdef TIOCGPGRP 
+#ifdef TIOCGPGRP
       /* Get the pgrp using the tty itself, if we have that.
 	 Otherwise, use the pty to get the pgrp.
 	 On pfa systems, saka@pfu.fujitsu.co.JP writes:
@@ -1779,6 +1777,9 @@ gvd_interrupt_process (struct GVD_Process* p)
 int
 gvd_terminate_process (struct GVD_Process* p)
 {
+  if (p->tty_name != NULL)
+    free (p->tty_name);
+
   return kill (p->pid, SIGKILL);
 }
 
@@ -1974,3 +1975,14 @@ gvd_waitpid (struct GVD_Process* p)
   return (int) exitcode;
 }
 #endif /* !WIN32 */
+
+/* Return the tty name associated with p */
+
+char *
+gvd_tty_name (struct GVD_Process* p)
+{
+  if (p->tty_name = NULL)
+    return "";
+  else
+    return p->tty_name;
+}
