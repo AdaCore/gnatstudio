@@ -106,6 +106,7 @@ private
       Pango_Font          : Pango.Font.Pango_Font_Description;
       Side_Column_GC      : Gdk.GC.Gdk_GC;
       Side_Background_GC  : Gdk.GC.Gdk_GC;
+      Default_GC          : Gdk.GC.Gdk_GC;
 
       Top_Line            : Natural := 1;
       Bottom_Line         : Natural := 0;
