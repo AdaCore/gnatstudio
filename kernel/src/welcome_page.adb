@@ -171,6 +171,7 @@ package body Welcome_Page is
       Kernel_Callback.Connect (Button, "clicked", On_Overview'Access, Kernel);
       Gtk_New (Label, -"Overview");
       Pack_Start (Vbox, Label, False, False);
+      Grab_Focus (Button);
 
       Gtk_New_Vbox (Vbox);
       Pack_Start (Hbox, Vbox, False, False, 3);
