@@ -805,6 +805,9 @@ package body Debugger is
 
       Current_Process := Get_Process (Debugger);
 
+      --  Make sure that Current_Process is not null before calling
+      --  Command_In_Process : this can happen when GVD is exiting.
+
       while Current_Process /= null
         and then Command_In_Process (Current_Process)
       loop
