@@ -1,5 +1,12 @@
 Known Problems fixed in GPS 3.0.0
 
+- E302-018 GPS hangs when modifying invalid debugger memory contents
+  Problem:    During a debugging session, trying to modify the contents
+              of the memory in the memory view of an invalid address (e.g. 0x0)
+              may hang GPS.
+  Workaround: Do not modify the contents of the memory in case of an invalid
+              address (the memory view will display only '-' characters).
+
 - E221-023 Double-click before the last character of a word doesn't select it
   Problem:    When double-clicking right before the last character of a word,
               the word is not selected.
