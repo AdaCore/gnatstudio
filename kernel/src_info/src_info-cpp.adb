@@ -23,12 +23,18 @@ with Prj_API;
 
 with SN,
      SN.DB_Structures,
+     SN.Find_Fns,
      SN.Browse,
+     Src_Info,
+--     Src_Info.CPP.LI_Utils,
      Ada.Text_IO,
      DB_API;
 
 use  SN,
      SN.DB_Structures,
+     SN.Find_Fns,
+     Src_Info,
+--     Src_Info.CPP.LI_Utils,
      Ada.Text_IO,
      DB_API;
 
@@ -52,6 +58,8 @@ package body Src_Info.CPP is
                            File : in out LI_File_Ptr;
                            SN_Table : in out SN_Table_Array);
 
+   procedure Sym_GV_Handler (Sym : FIL_Table; File : in out LI_File_Ptr;
+                           SN_Table : in out SN_Table_Array);
    ---------
    -- Ext --
    ---------
@@ -69,11 +77,15 @@ package body Src_Info.CPP is
    Table_Type_To_Ext : array (Table_Type) of String (1 .. 3) :=
       (FIL    => Ext ("fil"),
        F      => Ext ("f"),
+       T      => Ext ("t"),
+       CL     => Ext ("cl"),
+       GV     => Ext ("gv"),
        others => Ext (""));
 
 
    Symbol_Handlers : array (Symbol_Type) of Symbol_Handler :=
-      (others   => Sym_Default_Handler'Access);
+      (GV       => Sym_GV_Handler'Access,
+       others   => Sym_Default_Handler'Access);
 
 
    -------------------
@@ -160,10 +172,13 @@ package body Src_Info.CPP is
       pragma Unreferenced (List);
       pragma Unreferenced (Predefined_Source_Path);
       pragma Unreferenced (Predefined_Object_Path);
-      SN_Table : SN_Table_Array;
-      SN_Dir   : String := Prj_API.Object_Path
+      SN_Table    : SN_Table_Array;
+      SN_Dir      : String := Prj_API.Object_Path
         (Project, Recursive => False) & Browse.DB_Dir_Name;
+      DBUtils_Dir : String := "../../sn/bin";
    begin
+      Browse.Browse (Source_Filename, SN_Dir, "cbrowser", DBUtils_Dir);
+      Browse.Generate_Xrefs (SN_Dir, DBUtils_Dir);
       Open_DB_Files
         (SN_Table,
          SN_Dir & Directory_Separator & Browse.DB_File_Name);
@@ -209,10 +224,137 @@ package body Src_Info.CPP is
    procedure Sym_Default_Handler (Sym : FIL_Table;
                            File : in out LI_File_Ptr;
                            SN_Table : in out SN_Table_Array) is
-      pragma Unreferenced (Sym);
+      --  pragma Unreferenced (Sym);
       pragma Unreferenced (File);
       pragma Unreferenced (SN_Table);
    begin
+      Put_Line ("Sym_Default_Hanlder ("
+         & Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last) & ")");
       null;
    end Sym_Default_Handler;
+
+   procedure Builtin_Type_To_Kind (Type_Name : in String; Kind : out E_Kind;
+      Success : out Boolean);
+   --  Attempts to convert string into E_Kind assuming that the string
+   --  is a builtin C type. If conversion fails returns False
+
+   --------------------------
+   -- Builtin_Type_To_Kind --
+   --------------------------
+   procedure Builtin_Type_To_Kind (Type_Name : in String; Kind : out E_Kind;
+      Success : out Boolean) is
+   begin
+      if Type_Name = "char"          or Type_Name = "signed char"
+         or Type_Name = "int"        or Type_Name = "signed int"
+         or Type_Name = "long"       or Type_Name = "signed long"
+         or Type_Name = "long long"  or Type_Name = "signed long long"
+         or Type_Name = "short"      or Type_Name = "signed short" then
+         Kind := Signed_Integer_Type;
+         Success := True;
+      elsif Type_Name = "unsigned char"
+         or Type_Name = "unsigned int"
+         or Type_Name = "unsigned long"
+         or Type_Name = "unsigned long long"
+         or Type_Name = "unsigned short" then
+         Kind := Modular_Integer_Type;
+         Success := True;
+      else
+         Success := False;
+      end if;
+   end Builtin_Type_To_Kind;
+
+   procedure Type_Name_To_Kind (SN_Table : in out SN_Table_Array;
+      Type_Name : in String; Kind : out E_Kind; Success : out Boolean);
+   --  Attempts to convert type name into E_Kind. Searches up for
+   --  the name in the class, typedef, etc. tables.
+
+   -----------------------
+   -- Type_Name_To_Kind --
+   -----------------------
+   procedure Type_Name_To_Kind (SN_Table : in out SN_Table_Array;
+      Type_Name : in String; Kind : out E_Kind; Success : out Boolean) is
+   begin
+      --  first try builtin type
+      Builtin_Type_To_Kind (Type_Name, Kind, Success);
+      if Success then
+         return;
+      end if;
+
+      --  look in typedefs
+      declare
+         Typedef   : T_Table;
+      begin
+         Typedef   := Find (SN_Table (T), Type_Name);
+         Type_Name_To_Kind (SN_Table, Typedef.Buffer (
+                 Typedef.Original.First .. Typedef.Original.Last),
+                 Kind, Success);
+         if Success then
+            Free (Typedef);
+            Success := True;
+            return;
+         end if;
+         Free (Typedef);
+         --  This is a typedef but base type is not found :(
+         Success := False;
+         return;
+      exception
+         when  DB_Error |   -- non-existent table
+               Not_Found => -- missed, fall thru'
+            null;
+      end;
+
+      --  loop in classes
+      declare
+         Class_Def : CL_Table;
+      begin
+         Class_Def := Find (SN_Table (CL), Type_Name);
+         Free (Class_Def);
+         Kind := Record_Type;
+         Success := True;
+         return;
+      exception
+         when  DB_Error |   -- non-existent table
+               Not_Found => -- missed, fall thru'
+            null;
+      end;
+      --  when everything else failed
+      Success := False;
+   end Type_Name_To_Kind;
+
+   --------------------
+   -- Sym_GV_Handler --
+   --------------------
+   procedure Sym_GV_Handler (Sym : FIL_Table;
+                           File : in out LI_File_Ptr;
+                           SN_Table : in out SN_Table_Array) is
+      pragma Unreferenced (File);
+      Kind    : E_Kind;
+      Var     : GV_Table;
+      Success : Boolean;
+   begin
+      --  Lookup variable type
+      Var := Find (SN_Table (GV), Sym.Buffer
+         (Sym.Identifier.First .. Sym.Identifier.Last));
+      Type_Name_To_Kind (SN_Table, Var.Buffer
+         (Var.Value_Type.First .. Var.Value_Type.Last), Kind, Success);
+      if not Success then
+         Free (Var);
+         return; -- type not found, ignore errors
+      end if;
+--      Insert_Declaration (File,
+--         Symbol_Name =>
+--            Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last),
+--         Source_Filename =>
+--            Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
+--         Location => Sym.Start_Position,
+--         Kind => Kind,
+--         Scope => Global_Scope
+--      );
+      Free (Var);
+   exception
+      when  DB_Error |   -- non-existent table
+            Not_Found => -- no such variable
+         null;           -- ignore error
+   end Sym_GV_Handler;
 end Src_Info.CPP;
+
