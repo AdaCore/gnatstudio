@@ -172,6 +172,10 @@ package body VCS_View_API is
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access);
 
+   procedure On_Menu_Remove_Annotate
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context_Access);
+
    procedure On_Menu_Diff
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access);
@@ -544,6 +548,14 @@ package body VCS_View_API is
                  (Item, "activate",
                   Context_Callback.To_Marshaller
                   (On_Menu_Annotate'Access),
+                  Selection_Context_Access (Context));
+
+               Gtk_New (Item, Label => -"Remove annotations");
+               Append (Menu, Item);
+               Context_Callback.Connect
+                 (Item, "activate",
+                  Context_Callback.To_Marshaller
+                  (On_Menu_Remove_Annotate'Access),
                   Selection_Context_Access (Context));
 
                Gtk_New (Item, Label => -"Edit changelog");
@@ -1243,6 +1255,37 @@ package body VCS_View_API is
       when E : others =>
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Menu_Annotate;
+
+   -----------------------------
+   -- On_Menu_Remove_Annotate --
+   -----------------------------
+
+   procedure On_Menu_Remove_Annotate
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context_Access)
+   is
+      pragma Unreferenced (Widget);
+      Kernel   : constant Kernel_Handle := Get_Kernel (Context);
+      Files    : String_List.List;
+   begin
+      Files := Get_Selected_Files (Context);
+
+      if String_List.Is_Empty (Files) then
+         return;
+      end if;
+
+      while not String_List.Is_Empty (Files) loop
+         Remove_Line_Information_Column
+           (Kernel,
+            String_List.Head (Files),
+            Annotation_Id);
+         String_List.Next (Files);
+      end loop;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+   end On_Menu_Remove_Annotate;
 
    --------------------
    -- On_Menu_Update --
