@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2003                         --
---                            ACT-Europe                             --
+--                     Copyright (C) 2003-2005                       --
+--                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -39,7 +39,7 @@ package body Vdiff2_Module.Utils.Shell_Command is
       File   : Virtual_File;
       Pos    : Natural;
       Style  : String := "";
-      Number : Natural := 1) return String
+      Number : Natural := 1) return Natural
    is
       Args_Line : Argument_List :=
         (1 => new String'(Full_Name (File).all),
@@ -51,7 +51,7 @@ package body Vdiff2_Module.Utils.Shell_Command is
 
    begin
       Basic_Types.Free (Args_Line);
-      return Res;
+      return Natural'Value (Res);
    end Add_Line;
 
    -----------------
@@ -173,36 +173,6 @@ package body Vdiff2_Module.Utils.Shell_Command is
       return Natural'Value (Res);
    end Get_Line_Number;
 
-   ---------------------
-   -- Goto_Difference --
-   ---------------------
-
-   procedure Goto_Difference
-     (Kernel : Kernel_Handle;
-      Link : Diff_Chunk_Access)
-   is
-      Args : Argument_List (1 .. 1);
-   begin
-
-      if Link.Range1.Mark /= null then
-         Args := (1 => new String'(Link.Range1.Mark.all));
-         Execute_GPS_Shell_Command (Kernel, "Editor.goto_mark", Args);
-         Basic_Types.Free (Args);
-      end if;
-
-      if Link.Range2.Mark /= null then
-         Args := (1 => new String'(Link.Range2.Mark.all));
-         Execute_GPS_Shell_Command (Kernel, "Editor.goto_mark", Args);
-         Basic_Types.Free (Args);
-      end if;
-
-      if Link.Range3.Mark /= null then
-         Args := (1 => new String'(Link.Range3.Mark.all));
-         Execute_GPS_Shell_Command (Kernel, "Editor.goto_mark", Args);
-         Basic_Types.Free (Args);
-      end if;
-   end Goto_Difference;
-
    --------------------
    -- Highlight_Line --
    --------------------
@@ -251,9 +221,7 @@ package body Vdiff2_Module.Utils.Shell_Command is
          5 => new String'("-1"));
 
    begin
-
       if Line /= 0 then
-
          if End_C >= 0  and then Start_C >= 0 then
             Free (Args_Highlight_Range (5));
             Args_Highlight_Range (5) := new String'(Image (End_C));
@@ -269,27 +237,6 @@ package body Vdiff2_Module.Utils.Shell_Command is
         (Kernel, "Editor.highlight_range", Args_Highlight_Range);
       Basic_Types.Free (Args_Highlight_Range);
    end Highlight_Range;
-
-   ---------------------
-   -- Mark_Diff_Block --
-   ---------------------
-
-   function Mark_Diff_Block
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
-      File  : Virtual_File;
-      Pos   : Natural) return String
-   is
-      Args : Argument_List :=
-        (1 => new String'(Full_Name (File).all),
-         2 => new String'(Image (Pos)),
-         3 => new String'("1"));
-      Res : constant String := Execute_GPS_Shell_Command
-        (Kernel, "Editor.create_mark", Args);
-
-   begin
-      Basic_Types.Free (Args);
-      return Res;
-   end Mark_Diff_Block;
 
    ---------------------------
    -- Register_Highlighting --
@@ -350,17 +297,14 @@ package body Vdiff2_Module.Utils.Shell_Command is
 
    procedure Remove_Blank_Lines
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Mark   : in out String_Access)
+      Mark   : Natural)
    is
       Args : Argument_List (1 .. 1);
    begin
-
-      if Mark /= null then
-         Args (1) := Mark;
-         Execute_GPS_Shell_Command
-           (Kernel, "Editor.remove_blank_lines", Args);
-         Free (Mark);
-      end if;
+      Args (1) := new String'(Image (Mark));
+      Execute_GPS_Shell_Command
+        (Kernel, "Editor.remove_blank_lines", Args);
+      Free (Args (1));
    end Remove_Blank_Lines;
 
    ------------------
