@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2002                      --
+--                      Copyright (C) 2000-2003                      --
 --                              ACT-Europe                           --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -18,6 +18,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.Regpat;  use GNAT.Regpat;
 with Pixmaps_IDE;  use Pixmaps_IDE;
 with String_Utils; use String_Utils;
@@ -306,7 +307,7 @@ package body Language.Ada is
       File_Name : String) return Boolean
    is
       pragma Unreferenced (Lang);
-      Name : constant String := Base_File_Name (File_Name);
+      Name : constant String := Base_Name (File_Name);
    begin
       return
         (Name'Length > 2
@@ -353,7 +354,8 @@ package body Language.Ada is
          Quote_Character               => ASCII.NUL,
          Constant_Character            => ''',
          Can_Indent                    => True,
-         Syntax_Highlighting           => True);
+         Syntax_Highlighting           => True,
+         Case_Sensitive                => False);
    end Get_Language_Context;
 
    -------------------
@@ -522,16 +524,6 @@ package body Language.Ada is
          Current_Indent   => Next_Indent,
          Prev_Indent      => Indent);
    end Next_Indentation;
-
-   -----------------------
-   -- Is_Case_Sensitive --
-   -----------------------
-
-   function Is_Case_Sensitive (Lang : access Ada_Language) return Boolean is
-      pragma Unreferenced (Lang);
-   begin
-      return False;
-   end Is_Case_Sensitive;
 
 begin
    Compile (Keywords_List,
