@@ -821,7 +821,7 @@ package body Src_Info.CPP is
    procedure Find_Or_Create_Class
      (Handler         : access CPP_LI_Handler_Record'Class;
       CL_Tab          : CL_Table;
-      Source_Filename : VFS.Virtual_File;
+      Full_Filename   : String;
       Decl_Info       : out E_Declaration_Info_List;
       File            : in out LI_File_Ptr;
       List            : LI_File_List;
@@ -894,17 +894,13 @@ package body Src_Info.CPP is
    procedure Create_DB_Directory (DB_Dir : String);
    --  Create the database directory if it doesn't exist yet.
 
-   --  Debugging utils
-   procedure Info (Msg : String);
-   --  Print info message
-
    procedure Warn (Msg : String);
    --  Print warning message
 
    procedure Fail (Msg : String);
    --  Print error message
 
-   pragma Inline (Info, Warn, Fail);
+   pragma Inline (Warn, Fail);
 
    function Get_SN_Dirs (Project : Project_Type)
       return GNAT.OS_Lib.String_List_Access;
@@ -932,7 +928,7 @@ package body Src_Info.CPP is
    procedure Create_Overload_List
      (Name             : String;
       Class_Name       : String;
-      Filename         : VFS.Virtual_File;
+      Full_Filename    : String;
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : out LI_File_Ptr;
       List             : LI_File_List;
@@ -942,7 +938,7 @@ package body Src_Info.CPP is
 
    procedure Create_Overload_List
      (Name             : String;
-      Filename         : VFS.Virtual_File;
+      Full_Filename    : String;
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : out LI_File_Ptr;
       List             : LI_File_List);
@@ -971,12 +967,13 @@ package body Src_Info.CPP is
 
 
    procedure Find_First_Forward_Declaration
-     (Buffer       : in String_Access;
-      Class_Name   : in Segment;
-      Name         : in Segment;
-      Filename     : in VFS.Virtual_File;
-      Return_Type  : in Segment;
-      Arg_Types    : in Segment;
+     (Key          : Buffer_String;
+      Data         : Buffer_String;
+      Class_Name   : Segment;
+      Name         : Segment;
+      Full_Filename : String;
+      Return_Type  : Segment;
+      Arg_Types    : Segment;
       Handler      : access CPP_LI_Handler_Record'Class;
       File         : in out LI_File_Ptr;
       List         : LI_File_List;
@@ -989,11 +986,12 @@ package body Src_Info.CPP is
    --  are compared (see Cmp_Arg_Types).
 
    procedure Find_First_Forward_Declaration
-     (Buffer       : in String_Access;
-      Name         : in Segment;
-      Filename     : in VFS.Virtual_File;
-      Return_Type  : in Segment;
-      Arg_Types    : in Segment;
+     (Key          : Buffer_String;
+      Data         : Buffer_String;
+      Name         : Segment;
+      Full_Filename : String;
+      Return_Type  : Segment;
+      Arg_Types    : Segment;
       Handler      : access CPP_LI_Handler_Record'Class;
       File         : in out LI_File_Ptr;
       List         : LI_File_List;
@@ -1601,19 +1599,10 @@ package body Src_Info.CPP is
          Get_Pair (Handler.SN_Table (FIL), Next_By_Key, Result => P);
          exit when P = No_Pair;
 
-         begin
-            Parse_Pair (P, Sym);
-            --  apply corresponding symbol handler
+         Parse_Pair (P, Sym);
 
-            Symbol_Handlers (Sym.Symbol)
-              (Sym, Handler, File, List_Of_Files, Module_Typedefs);
-            Free (Sym);
-
-         exception
-            when others =>
-               Free (Sym);
-               raise;
-         end;
+         Symbol_Handlers (Sym.Symbol)
+           (Sym, Handler, File, List_Of_Files, Module_Typedefs);
       end loop;
 
       Release_Cursor (Handler.SN_Table (FIL));
@@ -1769,8 +1758,8 @@ package body Src_Info.CPP is
          File.LI.Dependencies_Info := null;
       end if;
 
-      Trace (Info_Stream, "Create_Or_Complete_LI "
-             & Full_Name (Source_Filename).all);
+--        Trace (Info_Stream, "Create_Or_Complete_LI "
+--               & Full_Name (Source_Filename).all);
 
       Convert_To_Parsed
         (File, File.LI.LI_Filename, Update_Timestamp => True);
@@ -1828,6 +1817,9 @@ package body Src_Info.CPP is
       DB_Dir          : constant String := Get_DB_Dir (Project);
       Files           : String_List_Access;
       Success         : Boolean;
+      Sym             : FIL_Table;
+      Info            : Construct_Access;
+      C               : Construct_Access;
 
    begin
       --  Create/update sn databases
@@ -1868,129 +1860,118 @@ package body Src_Info.CPP is
          Get_Pair (Handler.SN_Table (FIL), Next_By_Key, Result => P);
          exit when P = No_Pair;
 
-         declare
-            Sym  : FIL_Table;
-            Info : Construct_Access;
-            C    : Construct_Access;
+         Info := null;
+         C    := null;
 
-         begin
-            Parse_Pair (P, Sym);
+         Parse_Pair (P, Sym);
 
-            --  Build the next construct
+         --  Build the next construct
 
-            case Sym.Symbol is
-               when CL | CON | E | IU | T | TA | UN | GV | IV | LV
-                    | FD | FU | MA | MD | MI =>
-                  --  Build the constructs
-                  --  Use subtype instead ???
+         case Sym.Symbol is
+            when CL | CON | E | IU | T | TA | UN | GV | IV | LV
+               | FD | FU | MA | MD | MI =>
+               --  Build the constructs
+               --  Use subtype instead ???
 
-                  Info := Constructs.Current;
-                  Constructs.Current := new Construct_Information;
-                  C := Constructs.Current;
-                  C.Is_Declaration := False;
+               Info := Constructs.Current;
+               Constructs.Current := new Construct_Information;
+               C := Constructs.Current;
+               C.Is_Declaration := False;
 
-                  --  Link
+               --  Link
 
-                  if Constructs.First = null then
-                     Constructs.First := Constructs.Current;
-                  else
-                     Constructs.Current.Prev := Info;
-                     Constructs.Current.Next := Info.Next;
-                     Info.Next               := Constructs.Current;
-                  end if;
+               if Constructs.First = null then
+                  Constructs.First := Constructs.Current;
+               else
+                  Constructs.Current.Prev := Info;
+                  Constructs.Current.Next := Info.Next;
+                  Info.Next               := Constructs.Current;
+               end if;
 
-                  --  Set name and location, common to all categories
+               --  Set name and location, common to all categories
 
-                  C.Name := new String'
-                    (To_String (Sym.Buffer, Sym.Identifier));
+               C.Name := new String'
+                 (String (Sym.Key
+                            (Sym.Identifier.First .. Sym.Identifier.Last)));
 
-                  --  ??? For now, do not set the third field (absolute source
-                  --  location), since the explorer does not use it and
-                  --  computing it is not simple.
+               --  ??? For now, do not set the third field (absolute source
+               --  location), since the explorer does not use it and
+               --  computing it is not simple.
 
-                  C.Sloc_Start := (Sym.Start_Position.Line,
-                                   Sym.Start_Position.Column,
-                                   0);
-                  C.Sloc_End := (Sym.End_Position.Line,
-                                 Sym.End_Position.Column,
+               C.Sloc_Start := (Sym.Start_Position.Line,
+                                Sym.Start_Position.Column,
+                                0);
+               C.Sloc_End := (Sym.End_Position.Line,
+                              Sym.End_Position.Column,
+                              0);
+               C.Sloc_Entity := (Sym.Start_Position.Line,
+                                 Sym.Start_Position.Column,
                                  0);
-                  C.Sloc_Entity := (Sym.Start_Position.Line,
-                                    Sym.Start_Position.Column,
-                                    0);
-               when others =>
-                  null;
-            end case;
-
-            --  Set the category
-
-            case Sym.Symbol is
-               when CL | TA =>
-                  --  ??? make the distinction between struct and classes
-                  --  which category for templates ???
-
-                  C.Category := Cat_Structure;
-               when CON | GV =>
-                  C.Category := Cat_Variable;
-               when IV | LV =>
-                  C.Category := Cat_Local_Variable;
-               when E | T =>
-                  C.Category := Cat_Type;
-               when IU =>
-                  C.Category := Cat_Include;
-               when UN =>
-                  C.Category := Cat_Union;
-               when FD =>
-                  C.Category := Cat_Function;
-                  C.Is_Declaration := True;
-               when FU =>
-                  C.Category := Cat_Function;
-               when MA =>
-                  --  Macros can either be "constants" (#define a 0)
-                  --  or "functions" (#define f(a) ((a) == 0))
-                  --  For now, only consider macros with arguments as
-                  --  pseudo functions.
-
-                  if Length (Sym.Types_Of_Arguments) > 0 then
-                     C.Category := Cat_Function;
-                  else
-                     C.Category := Cat_Unknown;
-                  end if;
-
-               when MD =>
-                  C.Category := Cat_Method;
-                  C.Is_Declaration := True;
-               when MI =>
-                  C.Category := Cat_Method;
-               when others =>
-                  null;
-            end case;
-
-            --  For functions and methods, get the profile
-
-            case Sym.Symbol is
-               when FD | FU | MA | MD | MI =>
-                  --  Generate the profile
-
-                  if Length (Sym.Types_Of_Arguments) > 0 then
-                     C.Profile := new String'
-                       ('(' &
-                          Sym.Buffer (Sym.Types_Of_Arguments.First ..
-                                      Sym.Types_Of_Arguments.Last) &
-                          ')');
-                  end if;
-
-               when others =>
-                  null;
-            end case;
-
-            Free (Sym);
-
-         exception
             when others =>
-               --  Free Constructs.Current ???
-               Free (Sym);
-               raise;
-         end;
+               null;
+         end case;
+
+         --  Set the category
+
+         case Sym.Symbol is
+            when CL | TA =>
+               --  ??? make the distinction between struct and classes
+               --  which category for templates ???
+
+               C.Category := Cat_Structure;
+            when CON | GV =>
+               C.Category := Cat_Variable;
+            when IV | LV =>
+               C.Category := Cat_Local_Variable;
+            when E | T =>
+               C.Category := Cat_Type;
+            when IU =>
+               C.Category := Cat_Include;
+            when UN =>
+               C.Category := Cat_Union;
+            when FD =>
+               C.Category := Cat_Function;
+               C.Is_Declaration := True;
+            when FU =>
+               C.Category := Cat_Function;
+            when MA =>
+               --  Macros can either be "constants" (#define a 0)
+               --  or "functions" (#define f(a) ((a) == 0))
+               --  For now, only consider macros with arguments as
+               --  pseudo functions.
+
+               if Length (Sym.Types_Of_Arguments) > 0 then
+                  C.Category := Cat_Function;
+               else
+                  C.Category := Cat_Unknown;
+               end if;
+
+            when MD =>
+               C.Category := Cat_Method;
+               C.Is_Declaration := True;
+            when MI =>
+               C.Category := Cat_Method;
+            when others =>
+               null;
+         end case;
+
+         --  For functions and methods, get the profile
+
+         case Sym.Symbol is
+            when FD | FU | MA | MD | MI =>
+               --  Generate the profile
+
+               if Length (Sym.Types_Of_Arguments) > 0 then
+                  C.Profile := new String'
+                    ('('
+                     & String (Sym.Data (Sym.Types_Of_Arguments.First ..
+                                           Sym.Types_Of_Arguments.Last))
+                     & ')');
+               end if;
+
+            when others =>
+               null;
+         end case;
       end loop;
 
       Result := Constructs;
@@ -2048,15 +2029,6 @@ package body Src_Info.CPP is
          return Xref_Filename;
       end;
    end LI_Filename_From_Source;
-
-   ----------
-   -- Info --
-   ----------
-
-   procedure Info (Msg : String) is
-   begin
-      Trace (Info_Stream, Msg);
-   end Info;
 
    ----------
    -- Warn --
@@ -2129,7 +2101,7 @@ package body Src_Info.CPP is
    procedure Find_Or_Create_Class
      (Handler         : access CPP_LI_Handler_Record'Class;
       CL_Tab          : CL_Table;
-      Source_Filename : VFS.Virtual_File;
+      Full_Filename   : String;
       Decl_Info       : out E_Declaration_Info_List;
       File            : in out LI_File_Ptr;
       List            : LI_File_List;
@@ -2138,17 +2110,18 @@ package body Src_Info.CPP is
       Sym        : FIL_Table;
       Class_Kind : E_Kind := Non_Generic_Class;
    begin
-      if Full_Name (Source_Filename).all =
-        CL_Tab.Buffer (CL_Tab.File_Name.First .. CL_Tab.File_Name.Last)
+      if Full_Filename =
+        String (CL_Tab.Key (CL_Tab.File_Name.First .. CL_Tab.File_Name.Last))
       then -- this class should be declared in the current file
          Decl_Info := Find_Declaration
            (File         => File,
-            Symbol_Name  => CL_Tab.Buffer
-              (CL_Tab.Name.First .. CL_Tab.Name.Last),
+            Symbol_Name  => String
+              (CL_Tab.Key (CL_Tab.Name.First .. CL_Tab.Name.Last)),
             Location     => CL_Tab.Start_Position);
 
          if Decl_Info = null then
-            Sym.Buffer         := CL_Tab.Buffer;
+            Sym.Key            := CL_Tab.Key;
+            Sym.Data           := CL_Tab.Data;
             Sym.File_Name      := CL_Tab.File_Name;
             Sym.Start_Position := CL_Tab.Start_Position;
             Sym.Identifier     := CL_Tab.Name;
@@ -2164,8 +2137,8 @@ package body Src_Info.CPP is
       else -- this class should be declared as a dependency
          Decl_Info := Find_Dependency_Declaration
            (File         => File,
-            Symbol_Name  => CL_Tab.Buffer
-              (CL_Tab.Name.First .. CL_Tab.Name.Last),
+            Symbol_Name  => String
+              (CL_Tab.Key (CL_Tab.Name.First .. CL_Tab.Name.Last)),
             Location     => CL_Tab.Start_Position);
 
          if Is_Template (CL_Tab) then
@@ -2177,12 +2150,12 @@ package body Src_Info.CPP is
               (Handler            => Handler,
                File               => File,
                List               => List,
-               Symbol_Name        => CL_Tab.Buffer
-                 (CL_Tab.Name.First .. CL_Tab.Name.Last),
-                     --  ??? Do we really have a full name here ?
+               Symbol_Name        =>
+                 String (CL_Tab.Key (CL_Tab.Name.First .. CL_Tab.Name.Last)),
                Referred_Filename  => Create
-                 (Full_Filename => CL_Tab.Buffer
-                    (CL_Tab.File_Name.First .. CL_Tab.File_Name.Last)),
+                 (Full_Filename => String
+                    (CL_Tab.Key
+                       (CL_Tab.File_Name.First .. CL_Tab.File_Name.Last))),
                Location           => CL_Tab.Start_Position,
                Kind               => Class_Kind,
                Scope              => Global_Scope,
@@ -2258,7 +2231,6 @@ package body Src_Info.CPP is
    begin
       Find (Handler.SN_Table (CL), Class_Name, Tab => Class_Def);
       Kind := Get_Method_Kind (Class_Def, Return_Type, Attributes);
-      Free (Class_Def);
       return Kind;
    end Get_Method_Kind;
 
@@ -2267,12 +2239,13 @@ package body Src_Info.CPP is
    ------------------------------------
 
    procedure Find_First_Forward_Declaration
-     (Buffer           : in String_Access;
-      Class_Name       : in Segment;
-      Name             : in Segment;
-      Filename         : in VFS.Virtual_File;
-      Return_Type      : in Segment;
-      Arg_Types        : in Segment;
+     (Key              : Buffer_String;
+      Data             : Buffer_String;
+      Class_Name       : Segment;
+      Name             : Segment;
+      Full_Filename    : String;
+      Return_Type      : Segment;
+      Arg_Types        : Segment;
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
       List             : LI_File_List;
@@ -2287,6 +2260,7 @@ package body Src_Info.CPP is
       CL_Tab       : CL_Table;
       MD_File      : DB_File;
       Success      : Boolean;
+      MD_Tab_File  : Virtual_File;
    begin
       Decl_Info := null;
       if not Is_Open (Handler.SN_Table (MD)) then
@@ -2301,8 +2275,8 @@ package body Src_Info.CPP is
       Set_Cursor
         (MD_File,
          By_Key,
-         Buffer (Class_Name.First .. Class_Name.Last) & Field_Sep
-            & Buffer (Name.First .. Name.Last) & Field_Sep,
+         Get_Class_Name (Key, Class_Name) & Field_Sep
+           & String (Key (Name.First .. Name.Last)) & Field_Sep,
          False);
 
       loop
@@ -2318,15 +2292,13 @@ package body Src_Info.CPP is
          --  Update position of the first forward declaration
 
          exit when Cmp_Prototypes
-           (MD_Tab.Buffer,
-            Buffer,
+           (MD_Tab.Data,
+            Data,
             MD_Tab.Arg_Types,
             Arg_Types,
             MD_Tab.Return_Type,
             Return_Type,
             Strict => Strict);
-
-         Free (MD_Tab);
       end loop;
 
       Release_Cursor (MD_File);
@@ -2335,8 +2307,8 @@ package body Src_Info.CPP is
       Set_Cursor
         (MD_File,
          By_Key,
-         Buffer (Class_Name.First .. Class_Name.Last) & Field_Sep
-            & Buffer (Name.First .. Name.Last) & Field_Sep,
+         String (Key (Class_Name.First .. Class_Name.Last)) & Field_Sep
+            & String (Key (Name.First .. Name.Last)) & Field_Sep,
          False);
 
       loop
@@ -2345,12 +2317,12 @@ package body Src_Info.CPP is
          Parse_Pair (P, MD_Tab_Tmp);
 
          --  Update position of the first forward declaration
-         if MD_Tab.Buffer (MD_Tab.File_Name.First .. MD_Tab.File_Name.Last)
-            = MD_Tab_Tmp.Buffer (MD_Tab_Tmp.File_Name.First ..
+         if MD_Tab.Key (MD_Tab.File_Name.First .. MD_Tab.File_Name.Last)
+            = MD_Tab_Tmp.Key (MD_Tab_Tmp.File_Name.First ..
                                  MD_Tab_Tmp.File_Name.Last)
             and then Cmp_Prototypes
-              (MD_Tab.Buffer,
-               MD_Tab_Tmp.Buffer,
+              (MD_Tab.Data,
+               MD_Tab_Tmp.Data,
                MD_Tab.Arg_Types,
                MD_Tab_Tmp.Arg_Types,
                MD_Tab.Return_Type,
@@ -2361,7 +2333,6 @@ package body Src_Info.CPP is
          then
             First_MD_Pos := MD_Tab_Tmp.Start_Position;
          end if;
-         Free (MD_Tab_Tmp);
       end loop;
 
       Release_Cursor (MD_File);
@@ -2370,73 +2341,69 @@ package body Src_Info.CPP is
       Assert (Fail_Stream, First_MD_Pos /= Invalid_Point, "DB inconsistency");
 
       --  ??? Do we want to compare the full or base name
-      if Full_Name (Filename).all =
-        MD_Tab.Buffer  (MD_Tab.File_Name.First .. MD_Tab.File_Name.Last)
+      if Full_Filename =
+        String (MD_Tab.Key (MD_Tab.File_Name.First .. MD_Tab.File_Name.Last))
       then -- work with declarations in the same file
          Decl_Info := Find_Declaration
-           (File            => File,
-            Symbol_Name     => Buffer (Name.First .. Name.Last),
-            Class_Name      => Buffer (Class_Name.First .. Class_Name.Last),
-            Location        => First_MD_Pos);
+           (File         => File,
+            Symbol_Name  => String (Key (Name.First .. Name.Last)),
+            Class_Name   => String (Key (Class_Name.First .. Class_Name.Last)),
+            Location     => First_MD_Pos);
 
          if Decl_Info = null then
             Warn ("Someone needs function "
-               & Buffer (Name.First .. Name.Last) & " before its declaration");
+                  & String (Key (Name.First .. Name.Last)
+                            & " before its declaration"));
          end if;
 
       else -- work with dependency declarations
+         MD_Tab_File := Create
+           (String (MD_Tab.Key
+                      (MD_Tab.File_Name.First .. MD_Tab.File_Name.Last)));
+
          Decl_Info := Find_Dependency_Declaration
            (File        => File,
-            Symbol_Name => Buffer (Name.First .. Name.Last),
-            Class_Name  => Buffer (Class_Name.First .. Class_Name.Last),
-
-            --  ??? Do we really have a full name here ?
-            Filename    => Create
-              (MD_Tab.Buffer
-                 (MD_Tab.File_Name.First .. MD_Tab.File_Name.Last)),
+            Symbol_Name => String (Key (Name.First .. Name.Last)),
+            Class_Name  => String (Key (Class_Name.First .. Class_Name.Last)),
+            Filename    => MD_Tab_File,
             Location    => First_MD_Pos);
 
          if Decl_Info = null then
             begin -- create class declaration if needed
                Find
                  (Handler.SN_Table (CL),
-                  Buffer (Class_Name.First .. Class_Name.Last),
+                  String (Key (Class_Name.First .. Class_Name.Last)),
                   Tab => CL_Tab);
                Find_Or_Create_Class
                  (Handler,
                   CL_Tab,
-                  Filename,
+                  Full_Filename,
                   Decl_Info,
                   File,
                   List,
                   Module_Type_Defs);
-               Free (CL_Tab);
             exception
                when Not_Found =>
                   null;
             end;
+
             Insert_Dependency_Declaration
               (Handler            => Handler,
                File               => File,
                List               => List,
-               Symbol_Name        => Buffer (Name.First .. Name.Last),
-
-               --  ??? Do we really have a full or base name
-               Referred_Filename  => Create
-                 (MD_Tab.Buffer
-                    (MD_Tab.File_Name.First .. MD_Tab.File_Name.Last)),
+               Symbol_Name        => String (Key (Name.First .. Name.Last)),
+               Referred_Filename  => MD_Tab_File,
                Location           => First_MD_Pos,
                Kind               => Get_Method_Kind
                  (Handler,
-                  Buffer (Class_Name.First .. Class_Name.Last),
-                  Buffer (Return_Type.First .. Return_Type.Last),
+                  String (Key (Class_Name.First .. Class_Name.Last)),
+                  String (Data (Return_Type.First .. Return_Type.Last)),
                   MD_Tab.Attributes),
                Scope              => Global_Scope,
                Declaration_Info   => Decl_Info);
          end if;
       end if;
 
-      Free (MD_Tab);
    exception
       when DB_Error => null;
    end Find_First_Forward_Declaration;
@@ -2446,11 +2413,12 @@ package body Src_Info.CPP is
    ------------------------------------
 
    procedure Find_First_Forward_Declaration
-     (Buffer       : in String_Access;
-      Name         : in Segment;
-      Filename     : in Virtual_File;
-      Return_Type  : in Segment;
-      Arg_Types    : in Segment;
+     (Key          : Buffer_String;
+      Data         : Buffer_String;
+      Name         : Segment;
+      Full_Filename : String;
+      Return_Type  : Segment;
+      Arg_Types    : Segment;
       Handler      : access CPP_LI_Handler_Record'Class;
       File         : in out LI_File_Ptr;
       List         : LI_File_List;
@@ -2465,6 +2433,7 @@ package body Src_Info.CPP is
       Target_Kind  : E_Kind;
       FD_File      : DB_File;
       Success      : Boolean;
+      FD_Tab_File  : Virtual_File;
    begin
       Decl_Info := null;
 
@@ -2480,7 +2449,7 @@ package body Src_Info.CPP is
       Set_Cursor
         (FD_File,
          By_Key,
-         Buffer (Name.First .. Name.Last) & Field_Sep,
+         String (Key (Name.First .. Name.Last)) & Field_Sep,
          False);
 
       loop
@@ -2493,14 +2462,13 @@ package body Src_Info.CPP is
          Match := True;
 
          exit when Cmp_Prototypes
-           (FD_Tab.Buffer,
-            Buffer,
+           (FD_Tab.Data,
+            Data,
             FD_Tab.Arg_Types,
             Arg_Types,
             FD_Tab.Return_Type,
             Return_Type,
             Strict => Strict);
-         Free (FD_Tab);
       end loop;
 
       Release_Cursor (FD_File);
@@ -2517,7 +2485,7 @@ package body Src_Info.CPP is
       Set_Cursor
         (FD_File,
          By_Key,
-         Buffer (Name.First .. Name.Last) & Field_Sep,
+         String (Key (Name.First .. Name.Last)) & Field_Sep,
          False);
 
       loop
@@ -2526,12 +2494,12 @@ package body Src_Info.CPP is
          Parse_Pair (P, FD_Tab_Tmp);
          --  Update position of the first forward declaration
          Match :=
-            FD_Tab.Buffer (FD_Tab.File_Name.First .. FD_Tab.File_Name.Last)
-            = FD_Tab_Tmp.Buffer (FD_Tab_Tmp.File_Name.First ..
+            FD_Tab.Key (FD_Tab.File_Name.First .. FD_Tab.File_Name.Last)
+            = FD_Tab_Tmp.Key (FD_Tab_Tmp.File_Name.First ..
                                  FD_Tab_Tmp.File_Name.Last);
          Match := Match and then Cmp_Prototypes
-           (FD_Tab.Buffer,
-            FD_Tab_Tmp.Buffer,
+           (FD_Tab.Data,
+            FD_Tab_Tmp.Data,
             FD_Tab.Arg_Types,
             FD_Tab_Tmp.Arg_Types,
             FD_Tab.Return_Type,
@@ -2541,8 +2509,6 @@ package body Src_Info.CPP is
          if Match and then FD_Tab_Tmp.Start_Position < First_FD_Pos then
             First_FD_Pos := FD_Tab_Tmp.Start_Position;
          end if;
-
-         Free (FD_Tab_Tmp);
       end loop;
 
       Release_Cursor (FD_File);
@@ -2551,53 +2517,48 @@ package body Src_Info.CPP is
       Assert (Fail_Stream, First_FD_Pos /= Invalid_Point, "DB inconsistency");
 
       --  ??? Do we need to compare full or base names ?
-      if Full_Name (Filename).all =
-        FD_Tab.Buffer  (FD_Tab.File_Name.First .. FD_Tab.File_Name.Last)
+      if Full_Filename =
+        String (FD_Tab.Key (FD_Tab.File_Name.First .. FD_Tab.File_Name.Last))
       then -- work with declarations in the same file
          Decl_Info := Find_Declaration
            (File            => File,
-            Symbol_Name     => Buffer (Name.First .. Name.Last),
+            Symbol_Name     => String (Key (Name.First .. Name.Last)),
             Location        => First_FD_Pos);
 
          if Decl_Info = null then
             Warn ("Someone needs function "
-               & Buffer (Name.First .. Name.Last) & " before its declaration");
+                  & String (Key (Name.First .. Name.Last))
+                  & " before its declaration");
          end if;
 
       else -- work with dependency declarations
+         FD_Tab_File := Create
+           (String (FD_Tab.Key
+               (FD_Tab.File_Name.First .. FD_Tab.File_Name.Last)));
+
          Decl_Info := Find_Dependency_Declaration
            (File        => File,
-            Symbol_Name => Buffer (Name.First .. Name.Last),
-
-            --  ??? Do we really have a full name here ?
-            Filename    => Create
-              (FD_Tab.Buffer
-                 (FD_Tab.File_Name.First .. FD_Tab.File_Name.Last)),
+            Symbol_Name => String (Key (Name.First .. Name.Last)),
+            Filename    => FD_Tab_File,
             Location    => First_FD_Pos);
 
          if Decl_Info = null then
             Target_Kind := Get_Function_Kind
-              (Buffer (Return_Type.First .. Return_Type.Last),
+              (String (Data (Return_Type.First .. Return_Type.Last)),
                FD_Tab.Attributes);
 
             Insert_Dependency_Declaration
               (Handler            => Handler,
                File               => File,
                List               => List,
-               Symbol_Name        => Buffer (Name.First .. Name.Last),
-
-               --  ??? Do we really have a full name here
-               Referred_Filename  => Create
-                 (FD_Tab.Buffer
-                    (FD_Tab.File_Name.First .. FD_Tab.File_Name.Last)),
+               Symbol_Name        => String (Key (Name.First .. Name.Last)),
+               Referred_Filename  => FD_Tab_File,
                Location           => First_FD_Pos,
                Kind               => Target_Kind,
                Scope              => Global_Scope,
                Declaration_Info   => Decl_Info);
          end if;
       end if;
-
-      Free (FD_Tab);
 
    exception
       when DB_Error => null;
@@ -2629,8 +2590,10 @@ package body Src_Info.CPP is
       Success    : Boolean;
       Decl_Info  : E_Declaration_Info_List;
       Class_Kind : E_Kind := Non_Generic_Class;
-      Ref_Id     : constant String := Ref.Buffer
-        (Ref.Referred_Symbol_Name.First .. Ref.Referred_Symbol_Name.Last);
+      Class_Def_File : Virtual_File;
+      Ref_Id     : constant String := String
+        (Ref.Key
+           (Ref.Referred_Symbol_Name.First .. Ref.Referred_Symbol_Name.Last));
 
    begin
       --  Info ("Fu_To_Cl_Handler: " & Ref_Id);
@@ -2651,34 +2614,29 @@ package body Src_Info.CPP is
          Class_Kind.Is_Generic := True;
       end if;
 
-      if Ref.Buffer (Ref.File_Name.First .. Ref.File_Name.Last) /=
-          Class_Def.Buffer (Class_Def.File_Name.First ..
+      if Ref.Key (Ref.File_Name.First .. Ref.File_Name.Last) /=
+          Class_Def.Key (Class_Def.File_Name.First ..
                             Class_Def.File_Name.Last)
       then
+         Class_Def_File := Create
+           (String (Class_Def.Key
+               (Class_Def.File_Name.First .. Class_Def.File_Name.Last)));
          Decl_Info := Find_Dependency_Declaration
            (File        => File,
-            Symbol_Name => Class_Def.Buffer
-              (Class_Def.Name.First .. Class_Def.Name.Last),
+            Symbol_Name => String (Class_Def.Key
+              (Class_Def.Name.First .. Class_Def.Name.Last)),
             Kind        => Class_Kind,
             Location    => Class_Def.Start_Position,
-
-            --  ??? Do we really have a full name here ?
-            Filename    => Create
-              (Class_Def.Buffer
-                 (Class_Def.File_Name.First .. Class_Def.File_Name.Last)));
+            Filename    => Class_Def_File);
 
          if Decl_Info = null then
             Insert_Dependency_Declaration
               (Handler            => Handler,
                File               => File,
                List               => List,
-               Symbol_Name        => Class_Def.Buffer
-                 (Class_Def.Name.First .. Class_Def.Name.Last),
-
-               --  ??? Do we really have a full name here
-               Referred_Filename  => Create
-                 (Class_Def.Buffer
-                    (Class_Def.File_Name.First .. Class_Def.File_Name.Last)),
+               Symbol_Name        => String
+                 (Class_Def.Key (Class_Def.Name.First .. Class_Def.Name.Last)),
+               Referred_Filename  => Class_Def_File,
                Location           => Class_Def.Start_Position,
                Kind               => Class_Kind,
                Scope              => Global_Scope,
@@ -2688,16 +2646,16 @@ package body Src_Info.CPP is
       else
          Decl_Info := Find_Declaration
            (File        => File,
-            Symbol_Name => Class_Def.Buffer
-              (Class_Def.Name.First .. Class_Def.Name.Last),
+            Symbol_Name => String (Class_Def.Key
+              (Class_Def.Name.First .. Class_Def.Name.Last)),
             Kind        => Class_Kind,
             Location    => Class_Def.Start_Position);
 
          if Decl_Info = null then
             Insert_Declaration
               (File               => File,
-               Symbol_Name        => Class_Def.Buffer
-                 (Class_Def.Name.First .. Class_Def.Name.Last),
+               Symbol_Name        => String (Class_Def.Key
+                 (Class_Def.Name.First .. Class_Def.Name.Last)),
                Location           => Class_Def.Start_Position,
                Kind               => Class_Kind,
                Scope              => Global_Scope,
@@ -2710,7 +2668,6 @@ package body Src_Info.CPP is
          Declaration_Info  => Decl_Info,
          Location          => Ref.Position,
          Kind              => Reference);
-      Free (Class_Def);
       Free (Class_Desc);
    end Fu_To_Cl_Handler;
 
@@ -2732,35 +2689,40 @@ package body Src_Info.CPP is
       Success      : Boolean;
       Scope        : E_Scope := Global_Scope;
       Sym          : FIL_Table;
+      Var_File     : Virtual_File;
 
    begin
-      --  Info ("Fu_To_Con_Handler: "
-      --        & Ref.Buffer (Ref.Referred_Symbol_Name.First ..
-      --              Ref.Referred_Symbol_Name.Last));
+--        Info ("Fu_To_Con_Handler: "
+--              & String (Ref.Key (Ref.Referred_Symbol_Name.First ..
+--                                   Ref.Referred_Symbol_Name.Last)));
 
       --  we need declaration's location
 
       Find (Handler.SN_Table (CON),
-            Ref.Buffer (Ref.Referred_Symbol_Name.First ..
-                        Ref.Referred_Symbol_Name.Last),
+            String (Ref.Key (Ref.Referred_Symbol_Name.First ..
+                               Ref.Referred_Symbol_Name.Last)),
             Tab => Var);
 
       --  Find declaration
 
+      Var_File := Create
+        (String (Var.Key (Var.File_Name.First .. Var.File_Name.Last)));
+
       if Xref_Filename_For
-         (Create (Var.Buffer (Var.File_Name.First .. Var.File_Name.Last)),
-          Get_DB_Dir (Handler.DB_Dirs, Var.DBI),
-          Handler.Prj_HTable) = Get_LI_Filename (File)
+        (Var_File,
+         Get_DB_Dir (Handler.DB_Dirs, Var.DBI),
+         Handler.Prj_HTable) = Get_LI_Filename (File)
       then
          Decl_Info := Find_Declaration
            (File                    => File,
             Symbol_Name             =>
-              Ref.Buffer (Ref.Referred_Symbol_Name.First ..
-                            Ref.Referred_Symbol_Name.Last),
+              String (Ref.Key (Ref.Referred_Symbol_Name.First ..
+                                 Ref.Referred_Symbol_Name.Last)),
             Location                => Var.Start_Position);
 
          if Decl_Info = null then
-            Sym.Buffer         := Var.Buffer;
+            Sym.Key            := Var.Key;
+            Sym.Data           := Var.Data;
             Sym.Identifier     := Var.Name;
             Sym.Start_Position := Var.Start_Position;
             Sym.File_Name      := Var.File_Name;
@@ -2770,13 +2732,12 @@ package body Src_Info.CPP is
             Decl_Info := Find_Declaration
               (File                    => File,
                Symbol_Name             =>
-                 Ref.Buffer (Ref.Referred_Symbol_Name.First ..
-                               Ref.Referred_Symbol_Name.Last),
+                 String (Ref.Key (Ref.Referred_Symbol_Name.First ..
+                                    Ref.Referred_Symbol_Name.Last)),
                Location                => Var.Start_Position);
 
             if Decl_Info = null then
                Fail ("Failed to create CON declaration");
-               Free (Var);
                return;
             end if;
          end if;
@@ -2785,23 +2746,22 @@ package body Src_Info.CPP is
          Decl_Info := Find_Dependency_Declaration
            (File                    => File,
             Symbol_Name             =>
-              Ref.Buffer (Ref.Referred_Symbol_Name.First ..
-                            Ref.Referred_Symbol_Name.Last),
-            Filename                =>
-              Create (Var.Buffer (Var.File_Name.First .. Var.File_Name.Last)),
+              String (Ref.Key (Ref.Referred_Symbol_Name.First ..
+                                 Ref.Referred_Symbol_Name.Last)),
+            Filename                => Var_File,
             Location                => Var.Start_Position);
 
          if Decl_Info = null then
             --  dep decl does not yet exist Collect information about the
             --  variable: type, scope, location of type declaration...
             Type_Name_To_Kind
-              (Var.Buffer (Var.Declared_Type.First .. Var.Declared_Type.Last),
+              (String
+                (Var.Data (Var.Declared_Type.First .. Var.Declared_Type.Last)),
                Handler.SN_Table,
                Module_Type_Defs,
                Desc,
                Success);
             if not Success then -- unknown type
-               Free (Var);
                return;
             end if;
 
@@ -2815,12 +2775,11 @@ package body Src_Info.CPP is
                   File              => File,
                   List              => List,
                   Symbol_Name       =>
-                    Var.Buffer (Var.Name.First .. Var.Name.Last),
+                    String (Var.Key (Var.Name.First .. Var.Name.Last)),
                   Location          => Var.Start_Position,
                   Kind              => Type_To_Object (Desc.Kind),
                   Scope             => Scope,
-                  Referred_Filename => Create
-                    (Var.Buffer (Var.File_Name.First .. Var.File_Name.Last)),
+                  Referred_Filename => Var_File,
                   Declaration_Info  => Decl_Info);
             else
                Insert_Dependency_Declaration
@@ -2828,12 +2787,11 @@ package body Src_Info.CPP is
                   File              => File,
                   List              => List,
                   Symbol_Name       =>
-                    Var.Buffer (Var.Name.First .. Var.Name.Last),
+                    String (Var.Key (Var.Name.First .. Var.Name.Last)),
                   Location          => Var.Start_Position,
                   Kind              => Type_To_Object (Desc.Kind),
                   Scope             => Scope,
-                  Referred_Filename => Create
-                    (Var.Buffer (Var.File_Name.First .. Var.File_Name.Last)),
+                  Referred_Filename => Var_File,
                   Parent_Location   => Desc.Parent_Point,
                   Parent_Filename   => Desc.Parent_Filename,
                   Declaration_Info  => Decl_Info);
@@ -2842,9 +2800,8 @@ package body Src_Info.CPP is
             Free (Desc);
          end if;
       end if;
-      Free (Var);
 
-      if Ref.Buffer (Ref.Access_Type.First) = 'r' then
+      if Ref.Key (Ref.Access_Type.First) = 'r' then
          Ref_Kind := Reference;
       else
          Ref_Kind := Modification;
@@ -2859,8 +2816,8 @@ package body Src_Info.CPP is
    exception
       when Not_Found  | DB_Error => -- ignore
          Fail ("unable to find constant " &
-               Ref.Buffer (Ref.Referred_Symbol_Name.First ..
-                           Ref.Referred_Symbol_Name.Last));
+               String (Ref.Key (Ref.Referred_Symbol_Name.First ..
+                                  Ref.Referred_Symbol_Name.Last)));
    end Fu_To_Con_Handler;
 
    ---------------------
@@ -2875,12 +2832,14 @@ package body Src_Info.CPP is
       Module_Type_Defs : Module_Typedefs_List)
    is
       pragma Unreferenced (Module_Type_Defs);
-      Ref_Id     : constant String := Ref.Buffer
-        (Ref.Referred_Symbol_Name.First .. Ref.Referred_Symbol_Name.Last);
+      Ref_Id     : constant String := String
+        (Ref.Key
+           (Ref.Referred_Symbol_Name.First .. Ref.Referred_Symbol_Name.Last));
       Enum_Desc  : CType_Description;
       Enum_Def   : E_Table;
       Success    : Boolean;
       Decl_Info  : E_Declaration_Info_List;
+      Enum_Def_File : Virtual_File;
 
    begin
       --  Info ("Fu_To_E_Handler: " & Ref_Id);
@@ -2897,30 +2856,30 @@ package body Src_Info.CPP is
          return;
       end if;
 
-      if not (Ref.Buffer (Ref.File_Name.First .. Ref.File_Name.Last)
-         = Enum_Def.Buffer (Enum_Def.File_Name.First ..
-                            Enum_Def.File_Name.Last))
+      if not (Ref.Key (Ref.File_Name.First .. Ref.File_Name.Last)
+         = Enum_Def.Key (Enum_Def.File_Name.First .. Enum_Def.File_Name.Last))
       then
+         Enum_Def_File := Create
+           (String (Enum_Def.Key
+              (Enum_Def.File_Name.First .. Enum_Def.File_Name.Last)));
+
          Decl_Info := Find_Dependency_Declaration
            (File        => File,
-            Symbol_Name => Enum_Def.Buffer
-              (Enum_Def.Name.First .. Enum_Def.Name.Last),
+            Symbol_Name => String
+              (Enum_Def.Key
+                 (Enum_Def.Name.First .. Enum_Def.Name.Last)),
             Kind        => Enumeration_Kind_Entity,
             Location    => Enum_Def.Start_Position,
-            Filename    => Create
-              (Enum_Def.Buffer
-                 (Enum_Def.File_Name.First .. Enum_Def.File_Name.Last)));
+            Filename    => Enum_Def_File);
 
          if Decl_Info = null then
             Insert_Dependency_Declaration
               (Handler            => Handler,
                File               => File,
                List               => List,
-               Symbol_Name        => Enum_Def.Buffer
-                 (Enum_Def.Name.First .. Enum_Def.Name.Last),
-               Referred_Filename  => Create
-                 (Enum_Def.Buffer
-                    (Enum_Def.File_Name.First .. Enum_Def.File_Name.Last)),
+               Symbol_Name        => String
+                 (Enum_Def.Key (Enum_Def.Name.First .. Enum_Def.Name.Last)),
+               Referred_Filename  => Enum_Def_File,
                Location           => Enum_Def.Start_Position,
                Kind               => Enumeration_Kind_Entity,
                Scope              => Global_Scope,
@@ -2930,16 +2889,16 @@ package body Src_Info.CPP is
       else
          Decl_Info := Find_Declaration
            (File        => File,
-            Symbol_Name => Enum_Def.Buffer
-              (Enum_Def.Name.First .. Enum_Def.Name.Last),
+            Symbol_Name => String
+              (Enum_Def.Key (Enum_Def.Name.First .. Enum_Def.Name.Last)),
             Kind        => Enumeration_Kind_Entity,
            Location    => Enum_Def.Start_Position);
 
          if Decl_Info = null then
             Insert_Declaration
               (File               => File,
-               Symbol_Name        => Enum_Def.Buffer
-                 (Enum_Def.Name.First .. Enum_Def.Name.Last),
+               Symbol_Name        => String
+                 (Enum_Def.Key (Enum_Def.Name.First .. Enum_Def.Name.Last)),
                Location           => Enum_Def.Start_Position,
                Kind               => Enumeration_Kind_Entity,
                Scope              => Global_Scope,
@@ -2952,7 +2911,6 @@ package body Src_Info.CPP is
          Declaration_Info  => Decl_Info,
          Location          => Ref.Position,
          Kind              => Reference);
-      Free (Enum_Def);
       Free (Enum_Desc);
    end Fu_To_E_Handler;
 
@@ -2970,21 +2928,25 @@ package body Src_Info.CPP is
       pragma Unreferenced (Module_Type_Defs);
       Decl_Info  : E_Declaration_Info_List;
       Enum_Const : EC_Table;
-      Ref_Id     : constant String := Ref.Buffer
-        (Ref.Referred_Symbol_Name.First .. Ref.Referred_Symbol_Name.Last);
+      Enum_Const_File : Virtual_File;
+      Ref_Id     : constant String := String
+        (Ref.Key
+           (Ref.Referred_Symbol_Name.First .. Ref.Referred_Symbol_Name.Last));
 
    begin
       --  Info ("Fu_To_EC_Handler: " & Ref_Id);
 
       Find (Handler.SN_Table (EC), Ref_Id, Tab => Enum_Const);
 
+      Enum_Const_File := Create
+        (String (Enum_Const.Key
+           (Enum_Const.File_Name.First .. Enum_Const.File_Name.Last)));
+
       --  Find declaration
       if Xref_Filename_For
-        (Create
-           (Enum_Const.Buffer
-              (Enum_Const.File_Name.First .. Enum_Const.File_Name.Last)),
-          Get_DB_Dir (Handler.DB_Dirs, Enum_Const.DBI),
-          Handler.Prj_HTable) = Get_LI_Filename (File)
+        (Enum_Const_File,
+         Get_DB_Dir (Handler.DB_Dirs, Enum_Const.DBI),
+         Handler.Prj_HTable) = Get_LI_Filename (File)
       then
          Decl_Info := Find_Declaration
            (File                    => File,
@@ -3005,9 +2967,7 @@ package body Src_Info.CPP is
          Decl_Info := Find_Dependency_Declaration
            (File                    => File,
             Symbol_Name             => Ref_Id,
-            Filename                => Create
-              (Enum_Const.Buffer
-                 (Enum_Const.File_Name.First .. Enum_Const.File_Name.Last)),
+            Filename                => Enum_Const_File,
             Location                => Enum_Const.Start_Position);
 
          if Decl_Info = null then
@@ -3019,13 +2979,10 @@ package body Src_Info.CPP is
                Location          => Enum_Const.Start_Position,
                Kind              => (Enumeration_Literal, False, False, False),
                Scope             => Global_Scope,
-               Referred_Filename => Create
-                 (Enum_Const.Buffer
-                    (Enum_Const.File_Name.First .. Enum_Const.File_Name.Last)),
+               Referred_Filename => Enum_Const_File,
                Declaration_Info  => Decl_Info);
          end if;
       end if;
-      Free (Enum_Const);
 
       Insert_Reference
         (Declaration_Info => Decl_Info,
@@ -3045,7 +3002,7 @@ package body Src_Info.CPP is
    procedure Create_Overload_List
      (Name             : String;
       Class_Name       : String;
-      Filename         : Virtual_File;
+      Full_Filename    : String;
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : out LI_File_Ptr;
       List             : LI_File_List;
@@ -3056,6 +3013,7 @@ package body Src_Info.CPP is
       MBody          : FU_Table;
       Decl_Info      : E_Declaration_Info_List;
       MI_File        : LI_File_Ptr;
+      Mbody_File     : Virtual_File;
    begin
       if Is_Open (Handler.SN_Table (MD)) then
          Set_Cursor
@@ -3070,15 +3028,16 @@ package body Src_Info.CPP is
             Parse_Pair (P, MDecl);
 
             --  ??? Should we compare base or full name here ?
-            if MDecl.Buffer (MDecl.File_Name.First .. MDecl.File_Name.Last) /=
-              Full_Name (Filename).all
+            if Full_Filename /=
+             String (MDecl.Key (MDecl.File_Name.First .. MDecl.File_Name.Last))
             then
                --  this will find/create dependency declaration
                Find_First_Forward_Declaration
-                 (MDecl.Buffer,
+                 (MDecl.Key,
+                  MDecl.Data,
                   MDecl.Class,
                   MDecl.Name,
-                  Filename,
+                  Full_Filename,
                   MDecl.Return_Type,
                   MDecl.Arg_Types,
                   Handler,
@@ -3087,8 +3046,6 @@ package body Src_Info.CPP is
                   Module_Type_Defs,
                   Decl_Info);
             end if;
-
-            Free (MDecl);
          end loop;
 
          Release_Cursor (Handler.SN_Table (MD));
@@ -3108,15 +3065,16 @@ package body Src_Info.CPP is
             Parse_Pair (P, MBody);
 
             --  ??? Should we compare full or base name
-            if MBody.Buffer (MBody.File_Name.First .. MBody.File_Name.Last) /=
-              Full_Name (Filename).all
+            if Full_Filename /=
+             String (MBody.Key (MBody.File_Name.First .. MBody.File_Name.Last))
             then
                --  this will find/create dependency declaration
                Find_First_Forward_Declaration
-                 (MBody.Buffer,
+                 (MBody.Key,
+                  MBody.Data,
                   MBody.Class,
                   MBody.Name,
-                  Filename,
+                  Full_Filename,
                   MBody.Return_Type,
                   MBody.Arg_Types,
                   Handler,
@@ -3131,19 +3089,18 @@ package body Src_Info.CPP is
                  and then Decl_Info.Value.Declaration.End_Of_Scope
                    = No_Reference
                then
-                  MI_File := Locate_From_Source
-                    (List,
-                     Create (MBody.Buffer
+                  Mbody_File := Create
+                    (String (MBody.Key
                        (MBody.File_Name.First .. MBody.File_Name.Last)));
+
+                  MI_File := Locate_From_Source (List, Mbody_File);
 
                   if MI_File = No_LI_File then
                      Create_Stub_For_File
                        (LI            => MI_File,
                         Handler       => Handler,
                         List          => List,
-                        Full_Filename => Create
-                          (MBody.Buffer
-                             (MBody.File_Name.First .. MBody.File_Name.Last)));
+                        Full_Filename => Mbody_File);
                   end if;
 
                   Insert_Reference
@@ -3154,8 +3111,6 @@ package body Src_Info.CPP is
                   Set_End_Of_Scope (Decl_Info, MI_File, MBody.End_Position);
                end if;
             end if;
-
-            Free (MBody);
          end loop;
 
          Release_Cursor (Handler.SN_Table (MI));
@@ -3168,7 +3123,7 @@ package body Src_Info.CPP is
 
    procedure Create_Overload_List
      (Name     : String;
-      Filename : Virtual_File;
+      Full_Filename : String;
       Handler  : access CPP_LI_Handler_Record'Class;
       File     : out LI_File_Ptr;
       List     : LI_File_List)
@@ -3191,14 +3146,15 @@ package body Src_Info.CPP is
             Parse_Pair (P, FDecl);
 
             --  ??? Should we compare full or base name
-            if FDecl.Buffer (FDecl.File_Name.First .. FDecl.File_Name.Last) /=
-               Full_Name (Filename).all
+            if Full_Filename /=
+             String (FDecl.Key (FDecl.File_Name.First .. FDecl.File_Name.Last))
             then
                --  this will find/create dependency declaration
                Find_First_Forward_Declaration
-                 (FDecl.Buffer,
+                 (FDecl.Key,
+                  FDecl.Data,
                   FDecl.Name,
-                  Filename,
+                  Full_Filename,
                   FDecl.Return_Type,
                   FDecl.Arg_Types,
                   Handler,
@@ -3206,8 +3162,6 @@ package body Src_Info.CPP is
                   List,
                   Decl_Info);
             end if;
-
-            Free (FDecl);
          end loop;
 
          Release_Cursor (Handler.SN_Table (FD));
@@ -3223,14 +3177,15 @@ package body Src_Info.CPP is
             Parse_Pair (P, Fn);
 
             --  ??? Should we compare full or base name
-            if Fn.Buffer (Fn.File_Name.First .. Fn.File_Name.Last) /=
-               Full_Name (Filename).all
+            if String (Fn.Key (Fn.File_Name.First .. Fn.File_Name.Last)) /=
+               Full_Filename
             then
                --  this will find/create dependency declaration
                Find_First_Forward_Declaration
-                 (Fn.Buffer,
+                 (Fn.Key,
+                  Fn.Data,
                   Fn.Name,
-                  Filename,
+                  Full_Filename,
                   Fn.Return_Type,
                   Fn.Arg_Types,
                   Handler,
@@ -3240,7 +3195,8 @@ package body Src_Info.CPP is
 
                if Decl_Info = null then -- only implementation
                   Target_Kind := Get_Function_Kind
-                    (Fn.Buffer (Fn.Return_Type.First .. Fn.Return_Type.Last),
+                    (String
+                       (Fn.Data (Fn.Return_Type.First .. Fn.Return_Type.Last)),
                      Fn.Attributes);
 
                   Insert_Dependency_Declaration
@@ -3249,8 +3205,9 @@ package body Src_Info.CPP is
                      List               => List,
                      Symbol_Name        => Name,
                      Referred_Filename  => Create
-                       (Fn.Buffer
-                          (Fn.File_Name.First .. Fn.File_Name.Last)),
+                       (String
+                          (Fn.Key
+                             (Fn.File_Name.First .. Fn.File_Name.Last))),
                      Location           => Fn.Start_Position,
                      Kind               => Target_Kind,
                      Scope              => Global_Scope,
@@ -3261,7 +3218,8 @@ package body Src_Info.CPP is
                   Fn_File := Locate_From_Source
                     (List,
                      Create
-                       (Fn.Buffer (Fn.File_Name.First .. Fn.File_Name.Last)));
+                       (String
+                          (Fn.Key (Fn.File_Name.First .. Fn.File_Name.Last))));
 
                   if Fn_File = No_LI_File then
                      Create_Stub_For_File
@@ -3269,8 +3227,9 @@ package body Src_Info.CPP is
                         Handler       => Handler,
                         List          => List,
                         Full_Filename => Create
-                          (Fn.Buffer
-                             (Fn.File_Name.First .. Fn.File_Name.Last)));
+                          (String
+                             (Fn.Key
+                                (Fn.File_Name.First .. Fn.File_Name.Last))));
                   end if;
 
                   Insert_Reference
@@ -3281,8 +3240,6 @@ package body Src_Info.CPP is
                   Set_End_Of_Scope (Decl_Info, Fn_File, Fn.End_Position);
                end if;
             end if;
-
-            Free (Fn);
          end loop;
 
          Release_Cursor (Handler.SN_Table (FU));
@@ -3311,9 +3268,9 @@ package body Src_Info.CPP is
       Kind           : E_Kind;
       FDecl          : FD_Table;
       FDecl_Tmp      : FD_Table;
-      Ref_Id         : constant String := Ref.Buffer
-        (Ref.Referred_Symbol_Name.First .. Ref.Referred_Symbol_Name.Last);
-      Buffer         : String_Access;
+      Ref_Id         : constant String := String (Ref.Key
+        (Ref.Referred_Symbol_Name.First .. Ref.Referred_Symbol_Name.Last));
+      Data           : Buffer_String;
       Return_Type    : Segment;
 
    begin
@@ -3333,12 +3290,11 @@ package body Src_Info.CPP is
                Forward_Declared := True;
             else
                Overloaded := not Cmp_Arg_Types -- skip multiple fwd decls
-                  (FDecl.Buffer,
-                   FDecl_Tmp.Buffer,
+                  (FDecl.Data,
+                   FDecl_Tmp.Data,
                    FDecl.Arg_Types,
                    FDecl_Tmp.Arg_Types,
                    Strict => True);
-               Free (FDecl_Tmp);
 
                exit when Overloaded;
             end if;
@@ -3372,15 +3328,14 @@ package body Src_Info.CPP is
                --  with the same name
 
                Overloaded := True;
-               Free (Fn_Tmp);
 
             elsif Forward_Declared and No_Body then
                --  We have found some forward declaration, but no body
                --  is yet found. Do we have overloading here?
 
                Overloaded := not Cmp_Arg_Types
-                  (Fn_Tmp.Buffer,
-                   FDecl.Buffer,
+                  (Fn_Tmp.Data,
+                   FDecl.Data,
                    Fn_Tmp.Arg_Types,
                    FDecl.Arg_Types,
                    Strict => True);
@@ -3388,8 +3343,6 @@ package body Src_Info.CPP is
                if not Overloaded then -- we found the body!
                   No_Body := False;
                   Fn      := Fn_Tmp;
-               else
-                  Free (Fn_Tmp); -- it's not our body, but it's overloading
                end if;
 
             else -- Forward_Declared and not No_Body
@@ -3397,7 +3350,6 @@ package body Src_Info.CPP is
                --  all other bodies should be overloading functions
 
                Overloaded := True;
-               Free (Fn_Tmp);
             end if;
 
             exit when Overloaded;
@@ -3413,15 +3365,15 @@ package body Src_Info.CPP is
 
       if not Overloaded then
          if Forward_Declared then
-            Buffer         := FDecl.Buffer;
+            Data           := FDecl.Data;
             Return_Type    := FDecl.Return_Type;
          else
-            Buffer         := Fn.Buffer;
+            Data           := Fn.Data;
             Return_Type    := Fn.Return_Type;
          end if;
 
          Kind := Get_Function_Kind
-           (Buffer (Return_Type.First .. Return_Type.Last),
+           (String (Data (Return_Type.First .. Return_Type.Last)),
             Fn.Attributes);
 
          --  this is a function defined in the current file
@@ -3430,10 +3382,10 @@ package body Src_Info.CPP is
 
          if Forward_Declared then
             Find_First_Forward_Declaration
-              (FDecl.Buffer,
+              (FDecl.Key,
+               FDecl.Data,
                FDecl.Name,
-               Create
-                 (Ref.Buffer (Ref.File_Name.First .. Ref.File_Name.Last)),
+               String (Ref.Key (Ref.File_Name.First .. Ref.File_Name.Last)),
                FDecl.Return_Type,
                FDecl.Arg_Types,
                Handler,
@@ -3445,7 +3397,7 @@ package body Src_Info.CPP is
          else -- when only body is available
             Decl_Info := Find_Declaration
               (File        => File,
-               Symbol_Name => Fn.Buffer (Fn.Name.First .. Fn.Name.Last),
+               Symbol_Name => String (Fn.Key (Fn.Name.First .. Fn.Name.Last)),
                Location    => Fn.Start_Position);
          end if;
 
@@ -3470,7 +3422,7 @@ package body Src_Info.CPP is
 
          Create_Overload_List
            (Ref_Id,
-            Create (Ref.Buffer (Ref.File_Name.First .. Ref.File_Name.Last)),
+            String (Ref.Key (Ref.File_Name.First .. Ref.File_Name.Last)),
             Handler,
             File,
             List);
@@ -3496,14 +3448,6 @@ package body Src_Info.CPP is
 
             File.LI.Body_Info.Declarations := Decl_Info;
          end if;
-      end if;
-
-      if Forward_Declared then
-         Free (FDecl);
-      end if;
-
-      if not No_Body then
-         Free (Fn);
       end if;
 
       Insert_Reference
@@ -3533,20 +3477,24 @@ package body Src_Info.CPP is
       Desc         : CType_Description;
       Success      : Boolean;
       Scope        : E_Scope := Global_Scope;
-      Ref_Id       : constant String := Ref.Buffer
-        (Ref.Referred_Symbol_Name.First .. Ref.Referred_Symbol_Name.Last);
+      Ref_Id       : constant String := String (Ref.Key
+        (Ref.Referred_Symbol_Name.First .. Ref.Referred_Symbol_Name.Last));
       Sym          : FIL_Table;
+      Var_File     : Virtual_File;
    begin
-      --  Info ("Fu_To_GV_Handler: " & Ref_Id);
+--        Info ("Fu_To_GV_Handler: " & Ref_Id);
 
       --  we need declaration's location
       Find (Handler.SN_Table (GV), Ref_Id, Tab => Var);
 
+      Var_File := Create
+        (String (Var.Key (Var.File_Name.First .. Var.File_Name.Last)));
+
       --  Find declaration
       if Xref_Filename_For
-         (Create (Var.Buffer (Var.File_Name.First .. Var.File_Name.Last)),
-          Get_DB_Dir (Handler.DB_Dirs, Var.DBI),
-          Handler.Prj_HTable) = Get_LI_Filename (File)
+        (Var_File,
+         Get_DB_Dir (Handler.DB_Dirs, Var.DBI),
+         Handler.Prj_HTable) = Get_LI_Filename (File)
       then
          Decl_Info := Find_Declaration
            (File                    => File,
@@ -3555,7 +3503,8 @@ package body Src_Info.CPP is
 
          if Decl_Info = null then
 --          Info ("Forward reference to the variable: " & Ref_Id);
-            Sym.Buffer         := Var.Buffer;
+            Sym.Key            := Var.Key;
+            Sym.Data           := Var.Data;
             Sym.Identifier     := Var.Name;
             Sym.Start_Position := Var.Start_Position;
             Sym.File_Name      := Var.File_Name;
@@ -3565,7 +3514,6 @@ package body Src_Info.CPP is
             if Decl_Info = null then
                Fail ("unable to create declaration for global variable "
                        & Ref_Id);
-               Free (Var);
                return;
             end if;
          end if;
@@ -3575,21 +3523,19 @@ package body Src_Info.CPP is
            (File                    => File,
             Symbol_Name             => Ref_Id,
             Filename                => Create
-              (Var.Buffer (Var.File_Name.First .. Var.File_Name.Last)),
+              (String (Var.Key (Var.File_Name.First .. Var.File_Name.Last))),
             Location                => Var.Start_Position);
 
          if Decl_Info = null then
             --  Collect information about the variable:
             --  type, scope, location of type declaration...
             Type_Name_To_Kind
-              (Var.Buffer
-                 (Var.Value_Type.First .. Var.Value_Type.Last),
+              (String (Var.Data (Var.Value_Type.First .. Var.Value_Type.Last)),
                Handler.SN_Table,
                Module_Type_Defs,
                Desc,
                Success);
             if not Success then -- unknown type
-               Free (Var);
                return;
             end if;
 
@@ -3603,12 +3549,11 @@ package body Src_Info.CPP is
                   File              => File,
                   List              => List,
                   Symbol_Name       =>
-                    Var.Buffer (Var.Name.First .. Var.Name.Last),
+                    String (Var.Key (Var.Name.First .. Var.Name.Last)),
                   Location          => Var.Start_Position,
                   Kind              => Type_To_Object (Desc.Kind),
                   Scope             => Scope,
-                  Referred_Filename => Create
-                    (Var.Buffer (Var.File_Name.First .. Var.File_Name.Last)),
+                  Referred_Filename => Var_File,
                   Declaration_Info  => Decl_Info);
             else
                Insert_Dependency_Declaration
@@ -3616,12 +3561,11 @@ package body Src_Info.CPP is
                   File              => File,
                   List              => List,
                   Symbol_Name       =>
-                    Var.Buffer (Var.Name.First .. Var.Name.Last),
+                    String (Var.Key (Var.Name.First .. Var.Name.Last)),
                   Location          => Var.Start_Position,
                   Kind              => Type_To_Object (Desc.Kind),
                   Scope             => Scope,
-                  Referred_Filename => Create
-                    (Var.Buffer (Var.File_Name.First .. Var.File_Name.Last)),
+                  Referred_Filename => Var_File,
                   Parent_Location   => Desc.Parent_Point,
                   Parent_Filename   => Desc.Parent_Filename,
                   Declaration_Info  => Decl_Info);
@@ -3629,9 +3573,8 @@ package body Src_Info.CPP is
             Free (Desc);
          end if;
       end if;
-      Free (Var);
 
-      if Ref.Buffer (Ref.Access_Type.First) = 'r' then
+      if Ref.Key (Ref.Access_Type.First) = 'r' then
          Ref_Kind := Reference;
       else
          Ref_Kind := Modification;
@@ -3663,12 +3606,13 @@ package body Src_Info.CPP is
       Var          : IV_Table;
       Desc         : CType_Description;
       Success      : Boolean;
-      Ref_Class    : constant String := Ref.Buffer
-        (Ref.Referred_Class.First .. Ref.Referred_Class.Last);
-      Ref_Id       : constant String := Ref.Buffer
-        (Ref.Referred_Symbol_Name.First .. Ref.Referred_Symbol_Name.Last);
+      Ref_Class    : constant String := String (Ref.Key
+        (Ref.Referred_Class.First .. Ref.Referred_Class.Last));
+      Ref_Id       : constant String := String (Ref.Key
+        (Ref.Referred_Symbol_Name.First .. Ref.Referred_Symbol_Name.Last));
       Sym          : FIL_Table;
       Class_Def    : CL_Table;
+      Var_File     : Virtual_File;
    begin
       --  Info ("Fu_To_Iv_Handler: " & Ref_Id);
 
@@ -3680,11 +3624,14 @@ package body Src_Info.CPP is
       --  we need declaration's location
       Find (Handler.SN_Table (IV), Ref_Class, Ref_Id, Tab => Var);
 
+      Var_File := Create
+        (String (Var.Key (Var.File_Name.First .. Var.File_Name.Last)));
+
       --  Find declaration
       if Xref_Filename_For
-         (Create (Var.Buffer (Var.File_Name.First .. Var.File_Name.Last)),
-          Get_DB_Dir (Handler.DB_Dirs, Var.DBI),
-          Handler.Prj_HTable) = Get_LI_Filename (File)
+        (Var_File,
+         Get_DB_Dir (Handler.DB_Dirs, Var.DBI),
+         Handler.Prj_HTable) = Get_LI_Filename (File)
       then
          Decl_Info := Find_Declaration
            (File                    => File,
@@ -3694,7 +3641,8 @@ package body Src_Info.CPP is
 
          if Decl_Info = null then
 --          Info ("Forward reference to the instance variable: " & Ref_Id);
-            Sym.Buffer         := Var.Buffer;
+            Sym.Key            := Var.Key;
+            Sym.Data           := Var.Data;
             Sym.Class          := Var.Class;
             Sym.Identifier     := Var.Name;
             Sym.Start_Position := Var.Start_Position;
@@ -3705,7 +3653,6 @@ package body Src_Info.CPP is
             if Decl_Info = null then
                Fail ("unable to create declaration for instance variable "
                      & Ref_Id & ' ' & Ref_Class);
-               Free (Var);
                return;
             end if;
          end if;
@@ -3715,8 +3662,7 @@ package body Src_Info.CPP is
            (File                    => File,
             Class_Name              => Ref_Class,
             Symbol_Name             => Ref_Id,
-            Filename                => Create
-              (Var.Buffer (Var.File_Name.First .. Var.File_Name.Last)),
+            Filename                => Var_File,
             Location                => Var.Start_Position);
 
          if Decl_Info = null then
@@ -3743,7 +3689,6 @@ package body Src_Info.CPP is
                   & Ref_Class
                   & " for instance variable "
                   & Ref_Id);
-               Free (Var);
                return;
             end if;
 
@@ -3753,24 +3698,20 @@ package body Src_Info.CPP is
             Find_Or_Create_Class
               (Handler,
                Class_Def,
-               Get_LI_Filename (File),
+               Full_Name (Get_LI_Filename (File)).all,
                Decl_Info,
                File,
                List,
                Module_Type_Defs);
 
-            Free (Class_Def);
-
             Type_Name_To_Kind
-              (Var.Buffer
-                 (Var.Value_Type.First .. Var.Value_Type.Last),
+              (String (Var.Data (Var.Value_Type.First .. Var.Value_Type.Last)),
                Handler.SN_Table,
                Module_Type_Defs,
                Desc,
                Success);
 
             if not Success then -- unknown type
-               Free (Var);
                return;
             end if;
 
@@ -3783,8 +3724,7 @@ package body Src_Info.CPP is
                   Location          => Var.Start_Position,
                   Kind              => Type_To_Object (Desc.Kind),
                   Scope             => Local_Scope,
-                  Referred_Filename => Create
-                    (Var.Buffer (Var.File_Name.First .. Var.File_Name.Last)),
+                  Referred_Filename => Var_File,
                   Declaration_Info  => Decl_Info);
             else
                Insert_Dependency_Declaration
@@ -3795,8 +3735,7 @@ package body Src_Info.CPP is
                   Location          => Var.Start_Position,
                   Kind              => Type_To_Object (Desc.Kind),
                   Scope             => Local_Scope,
-                  Referred_Filename => Create
-                    (Var.Buffer (Var.File_Name.First .. Var.File_Name.Last)),
+                  Referred_Filename => Var_File,
                   Parent_Location   => Desc.Parent_Point,
                   Parent_Filename   => Desc.Parent_Filename,
                   Declaration_Info  => Decl_Info);
@@ -3804,9 +3743,8 @@ package body Src_Info.CPP is
             Free (Desc);
          end if;
       end if;
-      Free (Var);
 
-      if Ref.Buffer (Ref.Access_Type.First) = 'r' then
+      if Ref.Key (Ref.Access_Type.First) = 'r' then
          Ref_Kind := Reference;
       else
          Ref_Kind := Modification;
@@ -3835,24 +3773,25 @@ package body Src_Info.CPP is
    is
       pragma Unreferenced (Module_Type_Defs);
       Macro  : MA_Table;
-      Ref_Id : constant String := Ref.Buffer
-        (Ref.Referred_Symbol_Name.First .. Ref.Referred_Symbol_Name.Last);
+      Ref_Id : constant String := String (Ref.Key
+        (Ref.Referred_Symbol_Name.First .. Ref.Referred_Symbol_Name.Last));
       Decl_Info : E_Declaration_Info_List;
+      Macro_File : Virtual_File;
    begin
       if not Is_Open (Handler.SN_Table (MA)) then
          --  .ma table does not exist
          return;
       end if;
 
-      --  Info ("Fu_To_Ma: " & Ref_Id);
-
       Find (Handler.SN_Table (MA), Ref_Id, Tab => Macro);
 
+      Macro_File := Create
+        (String (Macro.Key (Macro.File_Name.First .. Macro.File_Name.Last)));
+
       if Xref_Filename_For
-        (Create
-           (Macro.Buffer (Macro.File_Name.First .. Macro.File_Name.Last)),
-          Get_DB_Dir (Handler.DB_Dirs, Macro.DBI),
-          Handler.Prj_HTable) = Get_LI_Filename (File)
+        (Macro_File,
+         Get_DB_Dir (Handler.DB_Dirs, Macro.DBI),
+         Handler.Prj_HTable) = Get_LI_Filename (File)
       then
          --  look for declaration in current file
          Decl_Info := Find_Declaration
@@ -3875,9 +3814,7 @@ package body Src_Info.CPP is
          Decl_Info := Find_Dependency_Declaration
            (File                 => File,
             Symbol_Name          => Ref_Id,
-            Filename             => Create
-              (Macro.Buffer
-                 (Macro.File_Name.First .. Macro.File_Name.Last)),
+            Filename             => Macro_File,
             Location             => Macro.Start_Position);
 
          if Decl_Info = null then
@@ -3889,9 +3826,7 @@ package body Src_Info.CPP is
                Location          => Macro.Start_Position,
                Kind              => Unresolved_Entity_Kind,
                Scope             => Global_Scope,
-               Referred_Filename => Create
-                 (Macro.Buffer
-                    (Macro.File_Name.First .. Macro.File_Name.Last)),
+               Referred_Filename => Macro_File,
                Declaration_Info  => Decl_Info);
          end if;
       end if;
@@ -3901,8 +3836,6 @@ package body Src_Info.CPP is
          File             => File,
          Location         => Ref.Position,
          Kind             => Reference);
-
-      Free (Macro);
 
    exception
       when DB_Error | Not_Found =>
@@ -3928,10 +3861,10 @@ package body Src_Info.CPP is
       Overloaded    : Boolean := False;
       Init          : Boolean := True;
       Kind          : E_Kind;
-      Ref_Id        : constant String := Ref.Buffer
-        (Ref.Referred_Symbol_Name.First .. Ref.Referred_Symbol_Name.Last);
-      Ref_Class     : constant String := Ref.Buffer
-        (Ref.Referred_Class.First .. Ref.Referred_Class.Last);
+      Ref_Id        : constant String := String (Ref.Key
+        (Ref.Referred_Symbol_Name.First .. Ref.Referred_Symbol_Name.Last));
+      Ref_Class     : constant String := String (Ref.Key
+        (Ref.Referred_Class.First .. Ref.Referred_Class.Last));
 
    begin
       --  Info ("Fu_To_Mi_Handler: " & Ref_Id);
@@ -3951,12 +3884,11 @@ package body Src_Info.CPP is
             MDecl := MDecl_Tmp;
          else
             Overloaded := not Cmp_Arg_Types -- skip multiple fws decls
-              (MDecl_Tmp.Buffer,
-               MDecl.Buffer,
+              (MDecl_Tmp.Data,
+               MDecl.Data,
                MDecl_Tmp.Arg_Types,
                MDecl.Arg_Types,
                Strict => True);
-            Free (MDecl_Tmp);
             exit when Overloaded;
          end if;
       end loop;
@@ -3988,14 +3920,13 @@ package body Src_Info.CPP is
             Init := False;
 
             exit when Cmp_Arg_Types
-              (MDecl.Buffer,
-               Fn.Buffer,
+              (MDecl.Data,
+               Fn.Data,
                MDecl.Arg_Types,
                Fn.Arg_Types,
                Strict => True);
 
             Init := True;
-            Free (Fn);
          end loop;
 
          Release_Cursor (Handler.SN_Table (MI));
@@ -4005,26 +3936,23 @@ package body Src_Info.CPP is
             if (MDecl.Attributes and SN_PUREVIRTUAL) /= SN_PUREVIRTUAL then
                Fail ("failed to locate method implementation, but it is not"
                   & " an abstract one: " & Ref_Class & "::" & Ref_Id);
-               Free (MDecl);
-
                return;
             end if;
-
-         else
-            Free (Fn);
          end if;
 
          Kind := Get_Method_Kind
            (Handler,
             Ref_Class,
-            MDecl.Buffer (MDecl.Return_Type.First .. MDecl.Return_Type.Last),
+            String
+              (MDecl.Data (MDecl.Return_Type.First .. MDecl.Return_Type.Last)),
             MDecl.Attributes);
 
          Find_First_Forward_Declaration
-           (MDecl.Buffer,
+           (MDecl.Key,
+            MDecl.Data,
             MDecl.Class,
             MDecl.Name,
-            Create (Ref.Buffer (Ref.File_Name.First .. Ref.File_Name.Last)),
+            String (Ref.Key (Ref.File_Name.First .. Ref.File_Name.Last)),
             MDecl.Return_Type,
             MDecl.Arg_Types,
             Handler,
@@ -4051,7 +3979,7 @@ package body Src_Info.CPP is
          Create_Overload_List
            (Ref_Id,
             Ref_Class,
-            Create (Ref.Buffer (Ref.File_Name.First .. Ref.File_Name.Last)),
+            String (Ref.Key (Ref.File_Name.First .. Ref.File_Name.Last)),
             Handler,
             File,
             List,
@@ -4088,17 +4016,13 @@ package body Src_Info.CPP is
                File.LI.Body_Info.Declarations := Decl_Info;
             end if;
 
-            Free (Class_Def);
-
          exception
             when DB_Error | Not_Found =>
                Fail ("Failed to lookup class " & Ref_Class
                   & " for method " & Ref_Id);
-               Free (MDecl);
                return;
          end;
       end if;
-      Free (MDecl);
 
       Insert_Reference
         (Decl_Info,
@@ -4123,11 +4047,12 @@ package body Src_Info.CPP is
       Module_Type_Defs : Module_Typedefs_List)
    is
       Typedef   : T_Table;
-      Ref_Id    : constant String := Ref.Buffer
-        (Ref.Referred_Symbol_Name.First .. Ref.Referred_Symbol_Name.Last);
+      Ref_Id    : constant String := String (Ref.Key
+        (Ref.Referred_Symbol_Name.First .. Ref.Referred_Symbol_Name.Last));
       Decl_Info : E_Declaration_Info_List;
       Desc      : CType_Description;
       Success   : Boolean := False;
+      Typedef_File : Virtual_File;
    begin
       if not Is_Open (Handler.SN_Table (T)) then
          --  .t table does not exist
@@ -4138,11 +4063,14 @@ package body Src_Info.CPP is
 
       Find (Handler.SN_Table (T), Ref_Id, Tab => Typedef);
 
+      Typedef_File := Create
+        (String (Typedef.Key
+           (Typedef.File_Name.First .. Typedef.File_Name.Last)));
+
       if Xref_Filename_For
-        (Create
-          (Typedef.Buffer (Typedef.File_Name.First .. Typedef.File_Name.Last)),
-          Get_DB_Dir (Handler.DB_Dirs, Typedef.DBI),
-          Handler.Prj_HTable) = Get_LI_Filename (File)
+        (Typedef_File,
+         Get_DB_Dir (Handler.DB_Dirs, Typedef.DBI),
+         Handler.Prj_HTable) = Get_LI_Filename (File)
       then
          --  look for declaration in current file
          Decl_Info := Find_Declaration
@@ -4161,7 +4089,6 @@ package body Src_Info.CPP is
             if not Success then
                Fail ("unable to find type for typedef " & Ref_Id);
                Free (Desc);
-               Free (Typedef);
                return;
             end if;
 
@@ -4206,9 +4133,7 @@ package body Src_Info.CPP is
          Decl_Info := Find_Dependency_Declaration
            (File                 => File,
             Symbol_Name          => Ref_Id,
-            Filename             => Create
-              (Typedef.Buffer
-                 (Typedef.File_Name.First .. Typedef.File_Name.Last)),
+            Filename             => Typedef_File,
             Location             => Typedef.Start_Position);
 
          if Decl_Info = null then
@@ -4222,7 +4147,6 @@ package body Src_Info.CPP is
             if not Success then
                Fail ("unable to find type for typedef " & Ref_Id);
                Free (Desc);
-               Free (Typedef);
                return;
             end if;
 
@@ -4236,9 +4160,7 @@ package body Src_Info.CPP is
                   Location          => Typedef.Start_Position,
                   Kind              => Desc.Kind,
                   Scope             => Global_Scope,
-                  Referred_Filename => Create
-                    (Typedef.Buffer
-                       (Typedef.File_Name.First .. Typedef.File_Name.Last)),
+                  Referred_Filename => Typedef_File,
                   Declaration_Info  => Decl_Info);
             elsif Desc.Ancestor_Point = Predefined_Point then
                --  typedef for builtin type
@@ -4251,9 +4173,7 @@ package body Src_Info.CPP is
                   Parent_Location   => Predefined_Point,
                   Kind              => Desc.Kind,
                   Scope             => Global_Scope,
-                  Referred_Filename => Create
-                    (Typedef.Buffer
-                       (Typedef.File_Name.First .. Typedef.File_Name.Last)),
+                  Referred_Filename => Typedef_File,
                   Declaration_Info  => Decl_Info);
             else
                --  parent type found
@@ -4267,9 +4187,7 @@ package body Src_Info.CPP is
                   Parent_Filename   => Desc.Ancestor_Filename,
                   Kind              => Desc.Kind,
                   Scope             => Global_Scope,
-                  Referred_Filename => Create
-                    (Typedef.Buffer
-                       (Typedef.File_Name.First .. Typedef.File_Name.Last)),
+                  Referred_Filename => Typedef_File,
                   Declaration_Info  => Decl_Info);
             end if;
          end if;
@@ -4281,7 +4199,6 @@ package body Src_Info.CPP is
          Location             => Ref.Position,
          Kind                 => Reference);
 
-      Free (Typedef);
       Free (Desc);
 
    exception
@@ -4301,12 +4218,13 @@ package body Src_Info.CPP is
       Module_Type_Defs : Module_Typedefs_List)
    is
       pragma Unreferenced (Module_Type_Defs);
-      Ref_Id : constant String := Ref.Buffer
-        (Ref.Referred_Symbol_Name.First .. Ref.Referred_Symbol_Name.Last);
+      Ref_Id : constant String := String (Ref.Key
+        (Ref.Referred_Symbol_Name.First .. Ref.Referred_Symbol_Name.Last));
       Union_Desc : CType_Description;
       Union_Def  : UN_Table;
       Success    : Boolean;
       Decl_Info  : E_Declaration_Info_List;
+      Union_File : Virtual_File;
 
    begin
       --  Info ("Fu_To_Un_Handler: " & Ref_Id);
@@ -4323,30 +4241,30 @@ package body Src_Info.CPP is
          return;
       end if;
 
-      if not (Ref.Buffer (Ref.File_Name.First .. Ref.File_Name.Last)
-         = Union_Def.Buffer (Union_Def.File_Name.First ..
+      if not (Ref.Key (Ref.File_Name.First .. Ref.File_Name.Last)
+         = Union_Def.Key (Union_Def.File_Name.First ..
                              Union_Def.File_Name.Last))
       then
+         Union_File := Create
+           (String (Union_Def.Key
+               (Union_Def.File_Name.First .. Union_Def.File_Name.Last)));
+
          Decl_Info := Find_Dependency_Declaration
            (File        => File,
-            Symbol_Name => Union_Def.Buffer
-              (Union_Def.Name.First .. Union_Def.Name.Last),
+            Symbol_Name => String (Union_Def.Key
+              (Union_Def.Name.First .. Union_Def.Name.Last)),
             Kind        => Non_Generic_Class,
             Location    => Union_Def.Start_Position,
-            Filename    => Create
-              (Union_Def.Buffer
-                 (Union_Def.File_Name.First .. Union_Def.File_Name.Last)));
+            Filename    => Union_File);
 
          if Decl_Info = null then
             Insert_Dependency_Declaration
               (Handler            => Handler,
                File               => File,
                List               => List,
-               Symbol_Name        => Union_Def.Buffer
-                 (Union_Def.Name.First .. Union_Def.Name.Last),
-               Referred_Filename  => Create
-                 (Union_Def.Buffer
-                    (Union_Def.File_Name.First .. Union_Def.File_Name.Last)),
+               Symbol_Name        => String (Union_Def.Key
+                 (Union_Def.Name.First .. Union_Def.Name.Last)),
+               Referred_Filename  => Union_File,
                Location           => Union_Def.Start_Position,
                Kind               => Non_Generic_Class,
                Scope              => Global_Scope,
@@ -4356,16 +4274,16 @@ package body Src_Info.CPP is
       else
          Decl_Info := Find_Declaration
            (File        => File,
-            Symbol_Name => Union_Def.Buffer
-              (Union_Def.Name.First .. Union_Def.Name.Last),
+            Symbol_Name => String (Union_Def.Key
+              (Union_Def.Name.First .. Union_Def.Name.Last)),
             Kind        => Non_Generic_Class,
             Location    => Union_Def.Start_Position);
 
          if Decl_Info = null then
             Insert_Declaration
               (File               => File,
-               Symbol_Name        => Union_Def.Buffer
-                 (Union_Def.Name.First .. Union_Def.Name.Last),
+               Symbol_Name        => String (Union_Def.Key
+                 (Union_Def.Name.First .. Union_Def.Name.Last)),
                Location           => Union_Def.Start_Position,
                Kind               => Non_Generic_Class,
                Scope              => Global_Scope,
@@ -4378,7 +4296,6 @@ package body Src_Info.CPP is
          Declaration_Info  => Decl_Info,
          Location          => Ref.Position,
          Kind              => Reference);
-      Free (Union_Def);
       Free (Union_Desc);
    end Fu_To_Un_Handler;
 
@@ -4427,7 +4344,7 @@ package body Src_Info.CPP is
       --        & """");
 
       Find_Class
-        (Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last),
+        (String (Sym.Key (Sym.Identifier.First .. Sym.Identifier.Last)),
          Handler.SN_Table,
          Desc,
          Class_Def,
@@ -4435,14 +4352,15 @@ package body Src_Info.CPP is
 
       if not Success then
          Warn ("Class not found: "
-               & Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last));
+               & String
+                 (Sym.Key (Sym.Identifier.First .. Sym.Identifier.Last)));
          return;
       end if;
 
       Insert_Declaration
         (File                  => File,
          Symbol_Name           =>
-           Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last),
+           String (Sym.Key (Sym.Identifier.First .. Sym.Identifier.Last)),
          Location              => Sym.Start_Position,
          Kind                  => Desc.Kind,
          Scope                 => Global_Scope,
@@ -4471,8 +4389,9 @@ package body Src_Info.CPP is
                By_Key,
                --  Use name from Class_Def for it does not hold <> when
                --  template class is encountered
-               Class_Def.Buffer (Class_Def.Name.First .. Class_Def.Name.Last)
-                  & Field_Sep,
+               String
+                 (Class_Def.Key (Class_Def.Name.First .. Class_Def.Name.Last))
+                 & Field_Sep,
                False);
 
             loop
@@ -4484,8 +4403,8 @@ package body Src_Info.CPP is
                --  Lookup base class definition to find its precise location
 
                Find_Class
-                 (Super.Buffer
-                    (Super.Base_Class.First .. Super.Base_Class.Last),
+                 (String (Super.Key
+                    (Super.Base_Class.First .. Super.Base_Class.Last)),
                   Handler.SN_Table,
                   Super_Desc,
                   Super_Def,
@@ -4494,14 +4413,12 @@ package body Src_Info.CPP is
                   Set_Parent_Location
                     (File, List, Decl_Info,
                      Parent_Filename => Create
-                       (Super_Def.Buffer
+                       (String (Super_Def.Key
                           (Super_Def.File_Name.First ..
-                             Super_Def.File_Name.Last)),
+                             Super_Def.File_Name.Last))),
                      Parent_Location => Super_Def.Start_Position);
                   Free (Super_Desc);
-                  Free (Super_Def);
                end if;
-               Free (Super);
             end loop;
             Release_Cursor (Handler.SN_Table (SN_IN));
          exception
@@ -4511,7 +4428,6 @@ package body Src_Info.CPP is
       end if;
 
       Free (Desc);
-      Free (Class_Def);
    exception
       when DB_Error => -- something went wrong, ignore it
          null;
@@ -4535,9 +4451,9 @@ package body Src_Info.CPP is
       Decl_Info         : E_Declaration_Info_List;
       Scope             : E_Scope := Global_Scope;
    begin
-      --  Info ("Sym_CON_Handler: """
-      --        & Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last)
-      --        & """");
+--        Info ("Sym_CON_Handler: """
+--            & String (Sym.Key (Sym.Identifier.First .. Sym.Identifier.Last))
+--              & """");
 
       if not Is_Open (Handler.SN_Table (CON)) then
          --  CON table does not exist, nothing to do ...
@@ -4547,12 +4463,11 @@ package body Src_Info.CPP is
       --  Lookup variable type
       Find
         (Handler.SN_Table (CON),
-         Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last),
+         String (Sym.Key (Sym.Identifier.First .. Sym.Identifier.Last)),
          Tab => Var);
 
       Type_Name_To_Kind
-        (Var.Buffer
-           (Var.Value_Type.First .. Var.Value_Type.Last),
+        (String (Var.Data (Var.Value_Type.First .. Var.Value_Type.Last)),
          Handler.SN_Table,
          Module_Type_Defs,
          Desc,
@@ -4572,7 +4487,7 @@ package body Src_Info.CPP is
          Insert_Declaration
            (File              => File,
             Symbol_Name       =>
-              Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last),
+              String (Sym.Key (Sym.Identifier.First .. Sym.Identifier.Last)),
             Location          => Sym.Start_Position,
             Kind              => Type_To_Object (Desc.Kind),
             Scope             => Scope,
@@ -4581,7 +4496,7 @@ package body Src_Info.CPP is
          Insert_Declaration
            (File              => File,
             Symbol_Name       =>
-              Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last),
+              String (Sym.Key (Sym.Identifier.First .. Sym.Identifier.Last)),
             Location          => Sym.Start_Position,
             Kind              => Type_To_Object (Desc.Kind),
             Scope             => Scope,
@@ -4596,7 +4511,8 @@ package body Src_Info.CPP is
             --  template specialization
             Refer_Type
               (Plain_Class_Name
-                 (Var.Buffer (Var.Value_Type.First .. Var.Value_Type.Last)),
+                 (String
+                    (Var.Data (Var.Value_Type.First .. Var.Value_Type.Last))),
                Desc.Parent_Point,
                File,
                Var.Type_Start_Position,
@@ -4604,7 +4520,7 @@ package body Src_Info.CPP is
          else
             --  default reference kind
             Refer_Type
-              (Var.Buffer (Var.Value_Type.First .. Var.Value_Type.Last),
+              (String (Var.Data (Var.Value_Type.First .. Var.Value_Type.Last)),
                Desc.Parent_Point,
                File,
                Var.Type_Start_Position);
@@ -4612,7 +4528,6 @@ package body Src_Info.CPP is
 
       end if;
 
-      Free (Var);
       Free (Desc);
    exception
       when  DB_Error |   -- non-existent table
@@ -4655,8 +4570,8 @@ package body Src_Info.CPP is
    is
       pragma Unreferenced (Handler, Module_Type_Defs, List);
       Decl_Info : E_Declaration_Info_List;
-      E_Id      : constant String := Sym.Buffer
-        (Sym.Identifier.First .. Sym.Identifier.Last);
+      E_Id      : constant String := String (Sym.Key
+        (Sym.Identifier.First .. Sym.Identifier.Last));
 
    begin
       --  Info ("Sym_E_Hanlder: """ & E_Id & """");
@@ -4684,8 +4599,8 @@ package body Src_Info.CPP is
       pragma Unreferenced (Module_Type_Defs);
 
       Decl_Info : E_Declaration_Info_List;
-      Ec_Id     : constant String := Sym.Buffer
-        (Sym.Identifier.First ..  Sym.Identifier.Last);
+      Ec_Id     : constant String := String (Sym.Key
+        (Sym.Identifier.First ..  Sym.Identifier.Last));
       Desc      : CType_Description;
       Has_Enum  : Boolean := False;
 
@@ -4703,16 +4618,13 @@ package body Src_Info.CPP is
             Find (Handler.SN_Table (EC),
                   Ec_Id, Sym.Start_Position, Tab => EC_Def);
             Find_Enum
-              (EC_Def.Buffer
+              (String (EC_Def.Data
                  (EC_Def.Enumeration_Name.First ..
-                  EC_Def.Enumeration_Name.Last),
+                  EC_Def.Enumeration_Name.Last)),
                Handler.SN_Table, Desc, E_Def, Has_Enum);
-            Free (E_Def);
-            Free (EC_Def);
          exception
             when DB_Error | Not_Found => -- ignore
-               Free (E_Def);
-               Free (EC_Def);
+               null;
          end;
       end if;
 
@@ -4763,6 +4675,7 @@ package body Src_Info.CPP is
       Is_Static    : Boolean;
       Match        : Boolean;
       FU_File      : LI_File_Ptr;
+      FU_Tab_File  : Virtual_File;
 
    begin
       --  Info ("Sym_FD_Hanlder: """
@@ -4772,9 +4685,9 @@ package body Src_Info.CPP is
       --  Find this symbol
       Find
         (Handler.SN_Table (FD),
-         Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last),
+         String (Sym.Key (Sym.Identifier.First .. Sym.Identifier.Last)),
          Sym.Start_Position,
-         Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
+         String (Sym.Key (Sym.File_Name.First .. Sym.File_Name.Last)),
          Tab => FD_Tab);
 
       Is_Static  := (FD_Tab.Attributes and SN_STATIC) = SN_STATIC;
@@ -4782,7 +4695,8 @@ package body Src_Info.CPP is
       Set_Cursor
         (Handler.SN_Table (FD),
          By_Key,
-         Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last) & Field_Sep,
+         String (Sym.Key (Sym.Identifier.First .. Sym.Identifier.Last))
+           & Field_Sep,
          False);
 
       loop
@@ -4799,15 +4713,15 @@ package body Src_Info.CPP is
          Match := True;
 
          if Is_Static then
-            Match := Match and
-               Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last)
-               = FD_Tab_Tmp.Buffer (FD_Tab_Tmp.File_Name.First ..
-                                    FD_Tab_Tmp.File_Name.Last);
+            Match := Match and then
+               Sym.Key (Sym.File_Name.First .. Sym.File_Name.Last)
+               = FD_Tab_Tmp.Key (FD_Tab_Tmp.File_Name.First ..
+                                   FD_Tab_Tmp.File_Name.Last);
          end if;
 
          Match := Match and Cmp_Prototypes
-           (FD_Tab.Buffer,
-            FD_Tab_Tmp.Buffer,
+           (FD_Tab.Data,
+            FD_Tab_Tmp.Data,
             FD_Tab.Arg_Types,
             FD_Tab_Tmp.Arg_Types,
             FD_Tab.Return_Type,
@@ -4819,8 +4733,6 @@ package body Src_Info.CPP is
          then
             First_FD_Pos := FD_Tab_Tmp.Start_Position;
          end if;
-
-         Free (FD_Tab_Tmp);
       end loop;
 
       Release_Cursor (Handler.SN_Table (FD));
@@ -4828,20 +4740,21 @@ package body Src_Info.CPP is
       Assert (Fail_Stream, First_FD_Pos /= Invalid_Point, "DB inconsistency");
 
       Target_Kind := Get_Function_Kind
-        (FD_Tab.Buffer (FD_Tab.Return_Type.First .. FD_Tab.Return_Type.Last),
+        (String
+           (FD_Tab.Data (FD_Tab.Return_Type.First .. FD_Tab.Return_Type.Last)),
          FD_Tab.Attributes);
 
       Decl_Info := Find_Declaration
         (File        => File,
-         Symbol_Name => Sym.Buffer
-            (Sym.Identifier.First .. Sym.Identifier.Last),
+         Symbol_Name => String (Sym.Key
+            (Sym.Identifier.First .. Sym.Identifier.Last)),
          Location    => First_FD_Pos);
 
       if Decl_Info = null then
          Insert_Declaration
            (File              => File,
             Symbol_Name       =>
-              Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last),
+              String (Sym.Key (Sym.Identifier.First .. Sym.Identifier.Last)),
             Location          => First_FD_Pos,
             Kind              => Target_Kind,
             Scope             => Global_Scope,
@@ -4859,8 +4772,8 @@ package body Src_Info.CPP is
          Set_Cursor
            (Handler.SN_Table (FU),
             By_Key,
-            Sym.Buffer
-               (Sym.Identifier.First .. Sym.Identifier.Last) & Field_Sep,
+            String (Sym.Key (Sym.Identifier.First .. Sym.Identifier.Last))
+              & Field_Sep,
             False);
          Match := False;
 
@@ -4870,8 +4783,8 @@ package body Src_Info.CPP is
 
             Parse_Pair (P, FU_Tab);
             Match := Cmp_Prototypes
-               (FD_Tab.Buffer,
-                FU_Tab.Buffer,
+               (FD_Tab.Data,
+                FU_Tab.Data,
                 FD_Tab.Arg_Types,
                 FU_Tab.Arg_Types,
                 FD_Tab.Return_Type,
@@ -4879,33 +4792,27 @@ package body Src_Info.CPP is
                 Strict => True);
 
             exit when Match;
-
-            Free (FU_Tab);
          end loop;
 
          Release_Cursor (Handler.SN_Table (FU));
 
          if Match -- we found the body
-            and then FU_Tab.Buffer (FU_Tab.File_Name.First ..
-                                    FU_Tab.File_Name.Last)
-               /= FD_Tab.Buffer (FD_Tab.File_Name.First ..
-                                 FD_Tab.File_Name.Last)
+           and then FU_Tab.Key
+             (FU_Tab.File_Name.First .. FU_Tab.File_Name.Last)
+             /= FD_Tab.Key (FD_Tab.File_Name.First .. FD_Tab.File_Name.Last)
                --  and it is in another file
          then
-            FU_File := Locate_From_Source
-               (List,
-               Create
-                 (FU_Tab.Buffer
-                    (FU_Tab.File_Name.First .. FU_Tab.File_Name.Last)));
+            FU_Tab_File := Create
+              (String (FU_Tab.Key
+                  (FU_Tab.File_Name.First .. FU_Tab.File_Name.Last)));
+            FU_File := Locate_From_Source (List, FU_Tab_File);
 
             if FU_File = No_LI_File then
                Create_Stub_For_File
                  (LI            => FU_File,
                   Handler       => Handler,
                   List          => List,
-                  Full_Filename => Create
-                    (FU_Tab.Buffer
-                       (FU_Tab.File_Name.First .. FU_Tab.File_Name.Last)));
+                  Full_Filename => FU_Tab_File);
             end if;
 
             Insert_Reference
@@ -4915,18 +4822,12 @@ package body Src_Info.CPP is
                Body_Entity);
             Set_End_Of_Scope (Decl_Info, FU_File, FU_Tab.End_Position);
          end if;
-
-         if Match then
-            Free (FU_Tab);
-         end if;
       end if;
-
-      Free (FD_Tab);
 
    exception
       when DB_Error | Not_Found =>
          Fail ("unable to find function " &
-               Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last));
+               String (Sym.Key (Sym.Identifier.First .. Sym.Identifier.Last)));
    end Sym_FD_Handler;
 
    --------------------
@@ -4951,8 +4852,8 @@ package body Src_Info.CPP is
       Our_Ref         : Boolean;
       Class_Def       : CL_Table := Invalid_CL_Table;
       Class_Decl_Info : E_Declaration_Info_List;
-      Fu_Id           : constant String := Sym.Buffer
-        (Sym.Identifier.First .. Sym.Identifier.Last);
+      Fu_Id           : constant String := String (Sym.Key
+        (Sym.Identifier.First .. Sym.Identifier.Last));
 
    begin
       --  Info ("Sym_FU_Hanlder: """
@@ -4964,27 +4865,27 @@ package body Src_Info.CPP is
          begin
             Find
               (Handler.SN_Table (MI),
-               Sym.Buffer (Sym.Class.First .. Sym.Class.Last),
+               String (Sym.Key (Sym.Class.First .. Sym.Class.Last)),
                Fu_Id,
                Sym.Start_Position,
-               Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
+               String (Sym.Key (Sym.File_Name.First .. Sym.File_Name.Last)),
                Tab => FU_Tab);
 
             begin -- check if this class is template
                Find
                  (Handler.SN_Table (CL),
-                  Sym.Buffer (Sym.Class.First .. Sym.Class.Last),
+                  String (Sym.Key (Sym.Class.First .. Sym.Class.Last)),
                   Tab => Class_Def);
                Target_Kind := Get_Method_Kind
                  (Class_Def,
-                  FU_Tab.Buffer (FU_Tab.Return_Type.First ..
-                                 FU_Tab.Return_Type.Last),
+                  String (FU_Tab.Data (FU_Tab.Return_Type.First ..
+                                         FU_Tab.Return_Type.Last)),
                   FU_Tab.Attributes);
                Find_Or_Create_Class
                   (Handler,
                    Class_Def,
-                  Create
-                    (Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last)),
+                   String
+                     (Sym.Key (Sym.File_Name.First .. Sym.File_Name.Last)),
                    Class_Decl_Info,
                    File,
                    List,
@@ -5011,8 +4912,8 @@ package body Src_Info.CPP is
          exception
             when DB_Error | Not_Found =>
                Fail ("unable to find method "
-                     & Sym.Buffer (Sym.Class.First .. Sym.Class.Last) & "."
-                     & Fu_Id);
+                     & String (Sym.Key (Sym.Class.First .. Sym.Class.Last))
+                     & "." & Fu_Id);
                return;
          end;
       else
@@ -5021,11 +4922,11 @@ package body Src_Info.CPP is
               (Handler.SN_Table (FU),
                Fu_Id,
                Sym.Start_Position,
-               Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
+               String (Sym.Key (Sym.File_Name.First .. Sym.File_Name.Last)),
                Tab => FU_Tab);
             Target_Kind := Get_Function_Kind
-               (FU_Tab.Buffer (FU_Tab.Return_Type.First ..
-                               FU_Tab.Return_Type.Last),
+               (String (FU_Tab.Data (FU_Tab.Return_Type.First ..
+                                      FU_Tab.Return_Type.Last)),
                 FU_Tab.Attributes);
             End_Position := FU_Tab.End_Position;
          exception
@@ -5046,10 +4947,11 @@ package body Src_Info.CPP is
 
       if Sym.Symbol = MI then
          Find_First_Forward_Declaration
-           (FU_Tab.Buffer,
+           (FU_Tab.Key,
+            FU_Tab.Data,
             FU_Tab.Class,
             FU_Tab.Name,
-            Create (Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last)),
+            String (Sym.Key (Sym.File_Name.First .. Sym.File_Name.Last)),
             FU_Tab.Return_Type,
             FU_Tab.Arg_Types,
             Handler,
@@ -5065,9 +4967,10 @@ package body Src_Info.CPP is
       else
          --  Try to find forward declaration
          Find_First_Forward_Declaration
-           (FU_Tab.Buffer,
+           (FU_Tab.Key,
+            FU_Tab.Data,
             FU_Tab.Name,
-            Create (Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last)),
+            String (Sym.Key (Sym.File_Name.First .. Sym.File_Name.Last)),
             FU_Tab.Return_Type,
             FU_Tab.Arg_Types,
             Handler,
@@ -5112,62 +5015,43 @@ package body Src_Info.CPP is
             Module_Type_Defs);
       end if;
 
-      if (Sym.Symbol = MI) and (Class_Def /= Invalid_CL_Table) then
-         Free (Class_Def);
-      end if;
-
       --  Declaration inserted. Now we need to check the body for usage
       --  of objects of all kinds
 
       Set_Cursor
         (Handler.SN_Table (TO),
          Position => By_Key,
-         Key => Sym.Buffer (Sym.Class.First .. Sym.Class.Last) & Field_Sep &
-                Fu_Id &
-                Field_Sep & To_String (Sym.Symbol) & Field_Sep,
+         Key => String (Sym.Key (Sym.Class.First .. Sym.Class.Last))
+                & Field_Sep & Fu_Id
+                & Field_Sep & To_String (Sym.Symbol) & Field_Sep,
          Exact_Match => False);
 
       loop
          Get_Pair (Handler.SN_Table (TO), Next_By_Key, Result => P);
          exit when P = No_Pair;
 
-         begin
-            Parse_Pair (P, Ref);
+         Parse_Pair (P, Ref);
 
-            if Fu_To_Handlers (Ref.Referred_Symbol) /= null then
-               Our_Ref := Cmp_Arg_Types
-                 (Ref.Buffer,
-                  FU_Tab.Buffer,
-                  Ref.Caller_Argument_Types,
-                  FU_Tab.Arg_Types);
+         if Fu_To_Handlers (Ref.Referred_Symbol) /= null then
+            Our_Ref := Cmp_Arg_Types
+              (Ref.Data,
+               FU_Tab.Data,
+               Ref.Caller_Argument_Types,
+               FU_Tab.Arg_Types);
 
-               if Our_Ref and then
-                  Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last) =
-                  Ref.Buffer (Ref.File_Name.First .. Ref.File_Name.Last)
-               then
-                  Fu_To_Handlers (Ref.Referred_Symbol)
-                    (Ref, Handler, File, List, Module_Type_Defs);
-               end if;
+            if Our_Ref and then
+              Sym.Key (Sym.File_Name.First .. Sym.File_Name.Last) =
+              Ref.Key (Ref.File_Name.First .. Ref.File_Name.Last)
+            then
+               Fu_To_Handlers (Ref.Referred_Symbol)
+                 (Ref, Handler, File, List, Module_Type_Defs);
             end if;
-
-            Free (Ref);
-
-         exception
-            when others =>
-               --  unexpected exception in Fu_To_XX handler
-               Free (Ref);
-               --  ??? Probably we want to report this exception and
-               --  continue to work further, but now we reraise that
-               --  exception
-               raise;
-         end;
+         end if;
       end loop;
       Release_Cursor (Handler.SN_Table (TO));
 
       Process_Local_Variables
         (FU_Tab, Sym.Symbol, Handler, File, List, Module_Type_Defs);
-
-      Free (FU_Tab);
 
    exception
       when DB_Error => null; -- non-existent table .to, ignore it
@@ -5210,9 +5094,9 @@ package body Src_Info.CPP is
    begin
       Decl_Info := null;
 
-      --  Info ("Sym_GV_Handler: """
-      --        & Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last)
-      --        & """");
+--        Info ("Sym_GV_Handler: """
+--            & String (Sym.Key (Sym.Identifier.First .. Sym.Identifier.Last))
+--              & """");
 
       if not Is_Open (Handler.SN_Table (GV)) then
          --  GV table does not exist, nothing to do ...
@@ -5222,12 +5106,11 @@ package body Src_Info.CPP is
       --  Lookup variable type
       Find
        (Handler.SN_Table (GV),
-        Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last),
+        String (Sym.Key (Sym.Identifier.First .. Sym.Identifier.Last)),
         Tab => Var);
 
       Type_Name_To_Kind
-        (Var.Buffer
-           (Var.Value_Type.First .. Var.Value_Type.Last),
+        (String (Var.Data (Var.Value_Type.First .. Var.Value_Type.Last)),
          Handler.SN_Table,
          Module_Type_Defs,
          Desc,
@@ -5247,7 +5130,7 @@ package body Src_Info.CPP is
          Insert_Declaration
            (File              => File,
             Symbol_Name       =>
-              Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last),
+              String (Sym.Key (Sym.Identifier.First .. Sym.Identifier.Last)),
             Location          => Sym.Start_Position,
             Kind              => Type_To_Object (Desc.Kind),
             Scope             => Scope,
@@ -5256,7 +5139,7 @@ package body Src_Info.CPP is
          Insert_Declaration
            (File              => File,
             Symbol_Name       =>
-              Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last),
+              String (Sym.Key (Sym.Identifier.First .. Sym.Identifier.Last)),
             Location          => Sym.Start_Position,
             Kind              => Type_To_Object (Desc.Kind),
             Scope             => Scope,
@@ -5271,7 +5154,8 @@ package body Src_Info.CPP is
             --  template specialization
             Refer_Type
               (Plain_Class_Name
-                 (Var.Buffer (Var.Value_Type.First .. Var.Value_Type.Last)),
+                 (String
+                    (Var.Data (Var.Value_Type.First .. Var.Value_Type.Last))),
                Desc.Parent_Point,
                File,
                Var.Type_Start_Position,
@@ -5279,14 +5163,13 @@ package body Src_Info.CPP is
          else
             --  default reference kind
             Refer_Type
-              (Var.Buffer (Var.Value_Type.First .. Var.Value_Type.Last),
+              (String (Var.Data (Var.Value_Type.First .. Var.Value_Type.Last)),
                Desc.Parent_Point,
                File,
                Var.Type_Start_Position);
          end if;
       end if;
 
-      Free (Var);
       Free (Desc);
    exception
       when  DB_Error |   -- non-existent table
@@ -5307,39 +5190,27 @@ package body Src_Info.CPP is
    is
       pragma Unreferenced (Module_Type_Defs);
 
-      Filename : constant String := Sym.Buffer
-        (Sym.Identifier.First .. Sym.Identifier.Last);
-
-      --  ??? We shouldn't use Base_Name below, but should allow find file to
-      --  recognize directories in the name.
-      Full_Included : constant String := Get_Full_Path_From_File
-        (Registry        => Project_Registry
-         (Get_Registry (Handler.Root_Project)),
-         Filename        => Base_Name (Filename),
-         Use_Source_Path => True,
+      Filename : constant String := String (Sym.Key
+        (Sym.Identifier.First .. Sym.Identifier.Last));
+      Full_Included : constant Virtual_File := Create
+        (Filename,
+         Project         => Handler.Root_Project,
          Use_Object_Path => False);
 
    begin
-      --  Info ("Sym_IU_Handler: """
-      --        & Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last)
-      --        & " depends on """ & Full_Included
-      --        & """/""" & Filename & """");
-
-      if Full_Included = "" then
-         Info ("File not found on path: " & Filename);
-
+      if Full_Included = VFS.No_File then
          --  Put xref files for missing includes to the root project DB dir
          Insert_Dependency
            (Handler           => Handler,
             File              => File,
             List              => List,
-            Referred_Filename => Create (Filename));
+            Referred_Filename => Create_From_Base (Filename));
       else
          Insert_Dependency
            (Handler           => Handler,
             File              => File,
             List              => List,
-            Referred_Filename => Create (Full_Included));
+            Referred_Filename => Full_Included);
       end if;
    end Sym_IU_Handler;
 
@@ -5392,12 +5263,12 @@ package body Src_Info.CPP is
       --  Lookup instance variable
       Find
         (Handler.SN_Table (IV),
-         Sym.Buffer (Sym.Class.First .. Sym.Class.Last),
-         Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last),
+         String (Sym.Key (Sym.Class.First .. Sym.Class.Last)),
+         String (Sym.Key (Sym.Identifier.First .. Sym.Identifier.Last)),
          Tab => Inst_Var);
 
       Find_Class
-        (Sym.Buffer (Sym.Class.First .. Sym.Class.Last),
+        (String (Sym.Key (Sym.Class.First .. Sym.Class.Last)),
          Handler.SN_Table,
          Desc,
          Class_Def,
@@ -5405,7 +5276,7 @@ package body Src_Info.CPP is
 
       if not Success then -- try unions
          Find_Union
-           (Sym.Buffer (Sym.Class.First .. Sym.Class.Last),
+           (String (Sym.Key (Sym.Class.First .. Sym.Class.Last)),
             Handler.SN_Table,
             Desc,
             Class_Def,
@@ -5414,10 +5285,9 @@ package body Src_Info.CPP is
 
       if not Success then
          Fail ("Failed to locate class/union: "
-            & Sym.Buffer (Sym.Class.First .. Sym.Class.Last)
+            & String (Sym.Key (Sym.Class.First .. Sym.Class.Last))
             & " for instance variable "
-            & Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last));
-         Free (Inst_Var);
+            & String (Sym.Key (Sym.Identifier.First .. Sym.Identifier.Last)));
          return;
       end if;
 
@@ -5425,8 +5295,8 @@ package body Src_Info.CPP is
       if Desc.Is_Template then
          Free (Desc);
          Type_Name_To_Kind
-           (Inst_Var.Buffer
-              (Inst_Var.Value_Type.First .. Inst_Var.Value_Type.Last),
+           (String (Inst_Var.Data
+              (Inst_Var.Value_Type.First .. Inst_Var.Value_Type.Last)),
             Handler.SN_Table,
             Module_Type_Defs,
             Desc,
@@ -5437,28 +5307,49 @@ package body Src_Info.CPP is
       else
          Free (Desc);
          Type_Name_To_Kind
-           (Inst_Var.Buffer
-              (Inst_Var.Value_Type.First .. Inst_Var.Value_Type.Last),
+           (String (Inst_Var.Data
+              (Inst_Var.Value_Type.First .. Inst_Var.Value_Type.Last)),
             Handler.SN_Table,
             Module_Type_Defs,
             Desc,
             Success);
       end if;
 
-      Free (Class_Def);
-
       if not Success then
-         Fail ("Failed to determine type of instance");
+         --  Pretend we have a predefined type, so that we can at least do
+         --  something useful
+
+         Desc.Parent_Point    := Invalid_Point;
+         Desc.Parent_Filename := VFS.No_File;
+         Desc.Kind            :=
+           (Private_Type,
+            Is_Generic  => False,
+            Is_Type     => False,
+            Is_Abstract => False);
+         Desc.Parent_Point := Predefined_Point;
+         Desc.Builtin_Name := new String'
+           (String (Inst_Var.Data
+             (Inst_Var.Value_Type.First .. Inst_Var.Value_Type.Last)));
+
+--           Fail
+--             ("Failed to determine type of instance in IV "
+--              & String (Sym.Key (Sym.Class.First .. Sym.Class.Last))
+--              & "::"
+--             & String (Sym.Key (Sym.Identifier.First .. Sym.Identifier.Last))
+--              & ' '
+--              & String (Sym.Key (Sym.File_Name.First .. Sym.File_Name.Last))
+--              & ' '
+--              & String (Inst_Var.Data
+--                 (Inst_Var.Value_Type.First .. Inst_Var.Value_Type.Last)));
          --  Cannot determine type of this instance variable
-         Free (Inst_Var);
-         return;
+--         return;
       end if;
 
       if Desc.Parent_Point = Invalid_Point then
          Insert_Declaration
            (File              => File,
             Symbol_Name       =>
-              Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last),
+              String (Sym.Key (Sym.Identifier.First .. Sym.Identifier.Last)),
             Location          => Sym.Start_Position,
             Kind              => Type_To_Object (Desc.Kind),
             Scope             => Local_Scope,
@@ -5467,7 +5358,7 @@ package body Src_Info.CPP is
          Insert_Declaration
            (File              => File,
             Symbol_Name       =>
-              Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last),
+              String (Sym.Key (Sym.Identifier.First .. Sym.Identifier.Last)),
             Location          => Sym.Start_Position,
             Kind              => Type_To_Object (Desc.Kind),
             Scope             => Local_Scope,
@@ -5488,15 +5379,14 @@ package body Src_Info.CPP is
 
             --  add reference to the type of this field
          Refer_Type
-           (Inst_Var.Buffer
-              (Inst_Var.Value_Type.First .. Inst_Var.Value_Type.Last),
+           (String (Inst_Var.Data
+              (Inst_Var.Value_Type.First .. Inst_Var.Value_Type.Last)),
             Desc.Parent_Point,
             File,
             Sym.Start_Position);
       end if;
 
       Free (Desc);
-      Free (Inst_Var);
    exception
       when  DB_Error |   -- non-existent table
             Not_Found => -- no such variable
@@ -5518,14 +5408,14 @@ package body Src_Info.CPP is
       pragma Unreferenced (Handler, List, Module_Type_Defs);
       tmp_ptr    : E_Declaration_Info_List;
    begin
-      --  Info ("Sym_MA_Handler: """
-      --        & Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last)
-      --        & """");
+--        Info ("Sym_MA_Handler: """
+--             & String (Sym.Key (Sym.Identifier.First .. Sym.Identifier.Last))
+--              & """");
 
       Insert_Declaration
         (File              => File,
          Symbol_Name       =>
-           Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last),
+           String (Sym.Key (Sym.Identifier.First .. Sym.Identifier.Last)),
          Location          => Sym.Start_Position,
          Kind              => Unresolved_Entity_Kind,
          Scope             => Global_Scope,
@@ -5552,28 +5442,24 @@ package body Src_Info.CPP is
       MD_Tab_Tmp   : MD_Table;
       Found        : Boolean;
       MI_File      : LI_File_Ptr;
+      MI_Tab_File  : Virtual_File;
 
    begin
---        Info ("Sym_MD_Hanlder: """
---            & Sym.Buffer (Sym.Class.First .. Sym.Class.Last) & "::"
---            & Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last) & " "
---            & Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last)
---            & """");
-
       --  Find this symbol
       Find
         (Handler.SN_Table (MD),
-         Sym.Buffer (Sym.Class.First .. Sym.Class.Last),
-         Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last),
+         String (Sym.Key (Sym.Class.First .. Sym.Class.Last)),
+         String (Sym.Key (Sym.Identifier.First .. Sym.Identifier.Last)),
          Sym.Start_Position,
-         Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
+         String (Sym.Key (Sym.File_Name.First .. Sym.File_Name.Last)),
          MD_Tab);
 
       Set_Cursor
         (Handler.SN_Table (MD),
          By_Key,
-         Sym.Buffer (Sym.Class.First .. Sym.Class.Last) & Field_Sep
-         & Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last)
+         String (Sym.Key (Sym.Class.First .. Sym.Class.Last))
+         & Field_Sep
+         & String (Sym.Key (Sym.Identifier.First .. Sym.Identifier.Last))
          & Field_Sep,
          False);
 
@@ -5584,12 +5470,12 @@ package body Src_Info.CPP is
 
          --  Update position of the first forward declaration
 
-         if Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last)
-            = MD_Tab_Tmp.Buffer (MD_Tab_Tmp.File_Name.First ..
+         if Sym.Key (Sym.File_Name.First .. Sym.File_Name.Last)
+            = MD_Tab_Tmp.Key (MD_Tab_Tmp.File_Name.First ..
                                 MD_Tab_Tmp.File_Name.Last)
            and then Cmp_Prototypes
-             (MD_Tab.Buffer,
-              MD_Tab_Tmp.Buffer,
+             (MD_Tab.Data,
+              MD_Tab_Tmp.Data,
               MD_Tab.Arg_Types,
               MD_Tab_Tmp.Arg_Types,
               MD_Tab.Return_Type,
@@ -5600,8 +5486,6 @@ package body Src_Info.CPP is
          then
             First_MD_Pos := MD_Tab_Tmp.Start_Position;
          end if;
-
-         Free (MD_Tab_Tmp);
       end loop;
 
       Release_Cursor (Handler.SN_Table (MD));
@@ -5613,18 +5497,18 @@ package body Src_Info.CPP is
       begin -- check if this class is template
          Find
            (Handler.SN_Table (CL),
-            Sym.Buffer (Sym.Class.First .. Sym.Class.Last),
+            String (Sym.Key (Sym.Class.First .. Sym.Class.Last)),
             Tab => Class_Def);
          Target_Kind := Get_Method_Kind
            (Class_Def,
-            MD_Tab.Buffer (MD_Tab.Return_Type.First ..
-                           MD_Tab.Return_Type.Last),
+            String (MD_Tab.Data (MD_Tab.Return_Type.First ..
+                                  MD_Tab.Return_Type.Last)),
             MD_Tab.Attributes);
          --  Add reference to the class we belong to
          Find_Or_Create_Class
            (Handler,
             Class_Def,
-            Create (Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last)),
+            String (Sym.Key (Sym.File_Name.First .. Sym.File_Name.Last)),
             Class_Decl_Info, File, List, Module_Type_Defs);
 
          if Class_Decl_Info /= null then
@@ -5635,8 +5519,6 @@ package body Src_Info.CPP is
                Primitive_Operation);
          end if;
 
-         Free (Class_Def);
-
       exception
          when DB_Error | Not_Found =>
             null;
@@ -5644,15 +5526,15 @@ package body Src_Info.CPP is
 
       Decl_Info := Find_Declaration
         (File        => File,
-         Symbol_Name => Sym.Buffer
-            (Sym.Identifier.First .. Sym.Identifier.Last),
+         Symbol_Name =>
+           String (Sym.Key (Sym.Identifier.First .. Sym.Identifier.Last)),
          Location    => First_MD_Pos);
 
       if Decl_Info = null then
          Insert_Declaration
            (File              => File,
             Symbol_Name       =>
-               Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last),
+               String (Sym.Key (Sym.Identifier.First .. Sym.Identifier.Last)),
             Location          => First_MD_Pos,
             Kind              => Target_Kind,
             Scope             => Global_Scope,
@@ -5672,9 +5554,10 @@ package body Src_Info.CPP is
          Set_Cursor
            (Handler.SN_Table (MI),
             By_Key,
-            Sym.Buffer (Sym.Class.First .. Sym.Class.Last) & Field_Sep
-               & Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last)
-               & Field_Sep,
+            String (Sym.Key (Sym.Class.First .. Sym.Class.Last))
+            & Field_Sep
+            & String (Sym.Key (Sym.Identifier.First .. Sym.Identifier.Last))
+            & Field_Sep,
             False);
          Found := False;
 
@@ -5684,8 +5567,8 @@ package body Src_Info.CPP is
 
             Parse_Pair (P, MI_Tab);
             Found := Cmp_Prototypes
-               (MD_Tab.Buffer,
-                MI_Tab.Buffer,
+               (MD_Tab.Data,
+                MI_Tab.Data,
                 MD_Tab.Arg_Types,
                 MI_Tab.Arg_Types,
                 MD_Tab.Return_Type,
@@ -5693,33 +5576,28 @@ package body Src_Info.CPP is
                 Strict => True);
 
             exit when Found;
-
-            Free (MI_Tab);
          end loop;
 
          Release_Cursor (Handler.SN_Table (MI));
 
          if Found -- we found the body
-           and then MI_Tab.Buffer (MI_Tab.File_Name.First ..
+           and then MI_Tab.Key (MI_Tab.File_Name.First ..
                                    MI_Tab.File_Name.Last)
-             /= MD_Tab.Buffer (MD_Tab.File_Name.First ..
+             /= MD_Tab.Key (MD_Tab.File_Name.First ..
                                MD_Tab.File_Name.Last)
          --  and it is in another file
          then
-            MI_File := Locate_From_Source
-              (List,
-               Create
-                 (MI_Tab.Buffer
-                    (MI_Tab.File_Name.First .. MI_Tab.File_Name.Last)));
+            MI_Tab_File := Create
+              (String (MI_Tab.Key
+                  (MI_Tab.File_Name.First .. MI_Tab.File_Name.Last)));
+            MI_File := Locate_From_Source (List, MI_Tab_File);
 
             if MI_File = No_LI_File then
                Create_Stub_For_File
                  (LI            => MI_File,
                   Handler       => Handler,
                   List          => List,
-                  Full_Filename => Create
-                    (MI_Tab.Buffer
-                       (MI_Tab.File_Name.First .. MI_Tab.File_Name.Last)));
+                  Full_Filename => MI_Tab_File);
             end if;
 
             if MI_File /= File
@@ -5734,18 +5612,12 @@ package body Src_Info.CPP is
 
             Set_End_Of_Scope (Decl_Info, MI_File, MI_Tab.End_Position);
          end if;
-
-         if Found then
-            Free (MI_Tab);
-         end if;
       end if;
-
-      Free (MD_Tab);
 
    exception
       when DB_Error | Not_Found =>
          Fail ("unable to find method " &
-               Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last));
+               String (Sym.Key (Sym.Identifier.First .. Sym.Identifier.Last)));
    end Sym_MD_Handler;
 
    --------------------
@@ -5763,7 +5635,7 @@ package body Src_Info.CPP is
       Desc       : CType_Description;
       Success    : Boolean;
       Identifier : constant String :=
-        Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last);
+        String (Sym.Key (Sym.Identifier.First .. Sym.Identifier.Last));
 
    begin
       --  Info ("Sym_T_Hanlder: """ & Identifier & """");
@@ -5858,7 +5730,7 @@ package body Src_Info.CPP is
       --        & """");
 
       Find_Union
-        (Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last),
+        (String (Sym.Key (Sym.Identifier.First .. Sym.Identifier.Last)),
          Handler.SN_Table,
          Desc,
          Union_Def,
@@ -5868,7 +5740,7 @@ package body Src_Info.CPP is
          Insert_Declaration
            (File                  => File,
             Symbol_Name           =>
-              Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last),
+              String (Sym.Key (Sym.Identifier.First .. Sym.Identifier.Last)),
             Location              => Sym.Start_Position,
             Kind                  => Desc.Kind,
             Scope                 => Global_Scope,
@@ -5882,7 +5754,6 @@ package body Src_Info.CPP is
             Kind                  => End_Of_Spec);
 
          Free (Desc);
-         Free (Union_Def);
       end if;
    end Sym_UN_Handler;
 
@@ -5917,8 +5788,8 @@ package body Src_Info.CPP is
       Var         : LV_Table;
       Decl_Info   : E_Declaration_Info_List;
 
-      Fu_Id       : constant String := FU_Tab.Buffer
-        (FU_Tab.Name.First .. FU_Tab.Name.Last);
+      Fu_Id       : constant String := String (FU_Tab.Key
+        (FU_Tab.Name.First .. FU_Tab.Name.Last));
    begin
       if not Is_Open (Handler.SN_Table (LV)) then
          --  .lv table does not exist
@@ -5943,15 +5814,15 @@ package body Src_Info.CPP is
          --  compare file names
          --  compare arg types
          if (Symbol = FU or else
-            Var.Buffer (Var.Class.First ..  Var.Class.Last) =
-            FU_Tab.Buffer (FU_Tab.Class.First .. FU_Tab.Class.Last))
+            Var.Data (Var.Class.First ..  Var.Class.Last) =
+            FU_Tab.Key (FU_Tab.Class.First .. FU_Tab.Class.Last))
          and then
-            Var.Buffer (Var.File_Name.First .. Var.File_Name.Last) =
-            FU_Tab.Buffer (FU_Tab.File_Name.First .. FU_Tab.File_Name.Last)
+            Var.Key (Var.File_Name.First .. Var.File_Name.Last) =
+            FU_Tab.Key (FU_Tab.File_Name.First .. FU_Tab.File_Name.Last)
          and then
             Cmp_Arg_Types
-              (FU_Tab.Buffer,
-               Var.Buffer,
+              (FU_Tab.Data,
+               Var.Data,
                FU_Tab.Arg_Types,
                Var.Arg_Types,
                Strict => True)
@@ -5974,7 +5845,8 @@ package body Src_Info.CPP is
             begin
                if (Symbol = MI) or (Symbol = MD) then
                   Find_Class
-                    (FU_Tab.Buffer (FU_Tab.Class.First .. FU_Tab.Class.Last),
+                    (String
+                       (FU_Tab.Key (FU_Tab.Class.First .. FU_Tab.Class.Last)),
                      Handler.SN_Table,
                      Desc,
                      Class_Def,
@@ -5982,8 +5854,8 @@ package body Src_Info.CPP is
 
                   if not CL_Success then -- try unions
                      Find_Union
-                       (FU_Tab.Buffer (FU_Tab.Class.First ..
-                           FU_Tab.Class.Last),
+                       (String
+                        (FU_Tab.Key (FU_Tab.Class.First .. FU_Tab.Class.Last)),
                         Handler.SN_Table,
                         Desc,
                         Class_Def,
@@ -5991,12 +5863,13 @@ package body Src_Info.CPP is
                   end if;
 
                   if not CL_Success then
-                     Fail ("Failed to locate class/union: "
-                        & FU_Tab.Buffer (FU_Tab.Class.First ..
-                           FU_Tab.Class.Last)
-                        & " for member function "
-                        & FU_Tab.Buffer (FU_Tab.Name.First ..
-                           FU_Tab.Name.Last));
+                     Fail
+                      (String
+                        ("Failed to locate class/union: "
+                         & FU_Tab.Key (FU_Tab.Class.First .. FU_Tab.Class.Last)
+                         & " for member function "
+                         & FU_Tab.Key
+                           (FU_Tab.Name.First .. FU_Tab.Name.Last)));
                      exit;
                   end if;
 
@@ -6004,7 +5877,8 @@ package body Src_Info.CPP is
                end if;
 
                Type_Name_To_Kind
-                 (Var.Buffer (Var.Value_Type.First .. Var.Value_Type.Last),
+                 (String
+                    (Var.Data (Var.Value_Type.First .. Var.Value_Type.Last)),
                   Handler.SN_Table,
                   Module_Type_Defs,
                   Desc,
@@ -6012,10 +5886,6 @@ package body Src_Info.CPP is
                   Symbol,
                   FU_Tab,
                   Class_Def);
-
-               if CL_Success then
-                  Free (Class_Def);
-               end if;
 
                if not Success then -- type not found
                   --  Set kind to Unresolved_Entity for local variables
@@ -6030,8 +5900,8 @@ package body Src_Info.CPP is
                if Desc.Parent_Point = Invalid_Point then
                   Insert_Declaration
                     (File              => File,
-                     Symbol_Name       => Var.Buffer
-                       (Var.Name.First .. Var.Name.Last),
+                     Symbol_Name       =>
+                       String (Var.Key (Var.Name.First .. Var.Name.Last)),
                      Location          => Var.Start_Position,
                      Kind              => Type_To_Object (Desc.Kind),
                      Scope             => Scope,
@@ -6039,8 +5909,8 @@ package body Src_Info.CPP is
                else
                   Insert_Declaration
                     (File              => File,
-                     Symbol_Name       => Var.Buffer
-                       (Var.Name.First .. Var.Name.Last),
+                     Symbol_Name       =>
+                       String (Var.Key (Var.Name.First .. Var.Name.Last)),
                      Location          => Var.Start_Position,
                      Kind              => Type_To_Object (Desc.Kind),
                      Scope             => Scope,
@@ -6054,16 +5924,16 @@ package body Src_Info.CPP is
                   if Desc.Is_Template then
                      Refer_Type
                        (Plain_Class_Name
-                          (Var.Buffer (Var.Value_Type.First ..
-                                       Var.Value_Type.Last)),
+                          (String (Var.Data
+                             (Var.Value_Type.First .. Var.Value_Type.Last))),
                         Desc.Parent_Point,
                         File,
                         Var.Type_Start_Position,
                         Instantiation_Reference);
                   else
                      Refer_Type
-                       (Var.Buffer
-                         (Var.Value_Type.First .. Var.Value_Type.Last),
+                       (String (Var.Data
+                                (Var.Value_Type.First .. Var.Value_Type.Last)),
                         Desc.Parent_Point,
                         File,
                         Var.Type_Start_Position);
@@ -6077,17 +5947,16 @@ package body Src_Info.CPP is
             end;
 
             if Decl_Info = null then
-               Fail ("unable to create declaration for local variable " &
-                 Var.Buffer (Var.Name.First .. Var.Name.Last));
-               Free (Var);
+               Fail ("unable to create declaration for local variable "
+                     & String (Var.Key (Var.Name.First .. Var.Name.Last)));
                exit;
             end if;
 
             Process_Local_Variable
               (Var_Name           =>
-                  Var.Buffer (Var.Name.First .. Var.Name.Last),
+                  String (Var.Key (Var.Name.First .. Var.Name.Last)),
                Var_File_Name      => Create
-                 (Var.Buffer (Var.File_Name.First .. Var.File_Name.Last)),
+                (String (Var.Key (Var.File_Name.First .. Var.File_Name.Last))),
                Var_Start_Position => Var.Start_Position,
                FU_Tab             => FU_Tab,
                Symbol             => Symbol,
@@ -6097,7 +5966,6 @@ package body Src_Info.CPP is
                Decl_Info          => Decl_Info);
 
          end if;
-         Free (Var);
       end loop;
       Release_Cursor (Handler.SN_Table (LV));
    end Process_Local_Variables;
@@ -6120,29 +5988,23 @@ package body Src_Info.CPP is
       P        : Pair;
       Ref      : TO_Table;
       Ref_Kind : Reference_Kind;
+      Class    : constant String := Get_Class_Name (FU_Tab.Key, FU_Tab.Class);
    begin
---    Info (FU_Tab.Buffer (FU_Tab.Class.First .. FU_Tab.Class.Last) &
---       "::" &
---       FU_Tab.Buffer (FU_Tab.Name.First .. FU_Tab.Name.Last) &
---       ", lv: " &
---       Var.Buffer (Var.Name.First .. Var.Name.Last));
-
       --  Look thru' .to table for specified local variable (or argument)
       --  usage within current function/method body.
+
       Set_Cursor
         (DB          => Handler.SN_Table (TO),
          Position    => By_Key,
          Key         =>
-           FU_Tab.Buffer (FU_Tab.Class.First .. FU_Tab.Class.Last) &
-           Field_Sep &
-           FU_Tab.Buffer (FU_Tab.Name.First .. FU_Tab.Name.Last) &
-           Field_Sep &
-           To_String (Symbol) &
-           Field_Sep &
-           FU_Tab.Buffer (FU_Tab.Name.First .. FU_Tab.Name.Last) &
-           Field_Sep &
-           Var_Name &
-           Field_Sep & To_String (Referred_Symbol) & Field_Sep,
+           Class & Field_Sep
+           & String (FU_Tab.Key (FU_Tab.Name.First .. FU_Tab.Name.Last))
+           & Field_Sep
+           & To_String (Symbol)
+           & Field_Sep
+           & String (FU_Tab.Key (FU_Tab.Name.First .. FU_Tab.Name.Last))
+           & Field_Sep
+           & Var_Name & Field_Sep & To_String (Referred_Symbol) & Field_Sep,
          Exact_Match => False);
 
       loop
@@ -6154,12 +6016,11 @@ package body Src_Info.CPP is
          --  Check if we found the right lv usage: comapre file name
          --  and argument types
 
-         --  ??? Should we compare full or base names
-         if Ref.Buffer (Ref.File_Name.First .. Ref.File_Name.Last) =
+         if String (Ref.Key (Ref.File_Name.First .. Ref.File_Name.Last)) =
            Full_Name (Var_File_Name).all
            and then Cmp_Arg_Types
-             (FU_Tab.Buffer,
-              Ref.Buffer,
+             (FU_Tab.Data,
+              Ref.Data,
               FU_Tab.Arg_Types,
               Ref.Caller_Argument_Types,
               Strict => True)
@@ -6170,7 +6031,7 @@ package body Src_Info.CPP is
             --  variable usage with the same location.
 
             if Ref.Position /= Var_Start_Position then
-               if Ref.Buffer
+               if Ref.Key
                  (Ref.Access_Type.First .. Ref.Access_Type.Last) = "w"
                then
                   Ref_Kind := Modification;
@@ -6181,8 +6042,6 @@ package body Src_Info.CPP is
                Insert_Reference (Decl_Info, File, Ref.Position, Ref_Kind);
             end if;
          end if;
-
-         Free (Ref);
       end loop;
 
       Release_Cursor (Handler.SN_Table (TO));
@@ -6207,15 +6066,17 @@ package body Src_Info.CPP is
         (DB          => Handler.SN_Table (TO),
          Position    => By_Key,
          Key         =>
-           "#" & Field_Sep &
-           CL_Tab.Buffer (CL_Tab.Name.First .. CL_Tab.Name.Last) &
-           Field_Sep &
-           To_String (CL) &
-           Field_Sep &
-           CL_Tab.Buffer (CL_Tab.Name.First .. CL_Tab.Name.Last) &
-           Field_Sep &
-           Arg.Buffer (Arg.Name.First .. Arg.Name.Last) &
-           Field_Sep & To_String (TA) & Field_Sep,
+           "#"
+           & Field_Sep
+           & String (CL_Tab.Key (CL_Tab.Name.First .. CL_Tab.Name.Last))
+           & Field_Sep
+           & To_String (CL)
+           & Field_Sep
+           & String (CL_Tab.Key (CL_Tab.Name.First .. CL_Tab.Name.Last))
+           & Field_Sep
+           & String (Arg.Key (Arg.Name.First .. Arg.Name.Last))
+           & Field_Sep
+           & To_String (TA) & Field_Sep,
          Exact_Match => False);
 
       loop
@@ -6225,7 +6086,7 @@ package body Src_Info.CPP is
 
          Parse_Pair (P, Ref);
 
-         if Ref.Buffer (Ref.Access_Type.First .. Ref.Access_Type.Last)
+         if Ref.Key (Ref.Access_Type.First .. Ref.Access_Type.Last)
            = "w"
          then
             Ref_Kind := Modification;
@@ -6234,7 +6095,6 @@ package body Src_Info.CPP is
          end if;
 
          Insert_Reference (Decl_Info, File, Ref.Position, Ref_Kind);
-         Free (Ref);
       end loop;
 
       Release_Cursor (Handler.SN_Table (TO));
@@ -6258,11 +6118,11 @@ package body Src_Info.CPP is
       Decl_Info        : E_Declaration_Info_List;
       Desc             : CType_Description;
       Success          : Boolean;
-      Buffer           : GNAT.OS_Lib.String_Access;
+      Key, Data        : Buffer_String;
       Scope            : Segment;
       File_Name        : Segment;
       Template_Args    : Segment;
-      Class_Name       : Segment := (1, 0);
+      Class_Name       : Segment := Empty_Segment;
       TA_File          : DB_File;
    begin
       if not Is_Open (Handler.SN_Table (TA)) then
@@ -6272,12 +6132,14 @@ package body Src_Info.CPP is
       end if;
 
       if Symbol = CL then
-         Buffer        := CL_Tab.Buffer;
+         Key           := CL_Tab.Key;
+         Data          := CL_Tab.Data;
          Scope         := CL_Tab.Name;
          File_Name     := CL_Tab.File_Name;
          Template_Args := CL_Tab.Template_Parameters;
       else
-         Buffer        := FU_Tab.Buffer;
+         Key           := FU_Tab.Key;
+         Data          := FU_Tab.Data;
          Scope         := FU_Tab.Name;
          File_Name     := FU_Tab.File_Name;
          Template_Args := FU_Tab.Template_Parameters;
@@ -6291,7 +6153,7 @@ package body Src_Info.CPP is
       Set_Cursor
         (TA_File,
          Position    => By_Key,
-         Key         => Buffer (Scope.First .. Scope.Last) & Field_Sep,
+         Key         => String (Key (Scope.First .. Scope.Last)) & Field_Sep,
          Exact_Match => False);
 
       loop
@@ -6300,13 +6162,13 @@ package body Src_Info.CPP is
 
          Parse_Pair (P, Arg);
 
-         if Buffer (File_Name.First .. File_Name.Last)
-           = Arg.Buffer (Arg.File_Name.First .. Arg.File_Name.Last)
-           and then Buffer (Template_Args.First .. Template_Args.Last)
-             = Arg.Buffer (Arg.Template_Parameters.First ..
+         if Key (File_Name.First .. File_Name.Last)
+           = Arg.Key (Arg.File_Name.First .. Arg.File_Name.Last)
+           and then Data (Template_Args.First .. Template_Args.Last)
+             = Arg.Data (Arg.Template_Parameters.First ..
                            Arg.Template_Parameters.Last)
-           and then Buffer (Class_Name.First .. Class_Name.Last)
-             = Arg.Buffer (Arg.Class_Name.First .. Arg.Class_Name.Last)
+           and then Key (Class_Name.First .. Class_Name.Last)
+             = Arg.Data (Arg.Class_Name.First .. Arg.Class_Name.Last)
          then
             if Arg.Attributes = SN_TA_TYPE
               or else Arg.Attributes = SN_TA_TEMPLATE
@@ -6314,7 +6176,7 @@ package body Src_Info.CPP is
                Insert_Declaration
                  (File             => File,
                   Symbol_Name      =>
-                     Arg.Buffer (Arg.Name.First .. Arg.Name.Last),
+                     String (Arg.Key (Arg.Name.First .. Arg.Name.Last)),
                   Location         => Arg.Start_Position,
                   Kind             => (Private_Type, False, False, False),
                   Scope            => Local_Scope,
@@ -6322,8 +6184,8 @@ package body Src_Info.CPP is
 
             elsif Arg.Attributes = SN_TA_VALUE then
                Type_Name_To_Kind
-                 (Arg.Buffer
-                    (Arg.Value_Type.First .. Arg.Value_Type.Last),
+                 (String
+                    (Arg.Data (Arg.Value_Type.First .. Arg.Value_Type.Last)),
                   Handler.SN_Table,
                   Module_Type_Defs,
                   Desc,
@@ -6340,7 +6202,7 @@ package body Src_Info.CPP is
                   Insert_Declaration
                     (File             => File,
                      Symbol_Name      =>
-                        Arg.Buffer (Arg.Name.First .. Arg.Name.Last),
+                        String (Arg.Key (Arg.Name.First .. Arg.Name.Last)),
                      Location         => Arg.Start_Position,
                      Kind             => Type_To_Object (Desc.Kind),
                      Scope            => Local_Scope,
@@ -6349,7 +6211,7 @@ package body Src_Info.CPP is
                   Insert_Declaration
                     (File             => File,
                      Symbol_Name      =>
-                        Arg.Buffer (Arg.Name.First .. Arg.Name.Last),
+                        String (Arg.Key (Arg.Name.First .. Arg.Name.Last)),
                      Location         => Arg.Start_Position,
                      Kind             => Type_To_Object (Desc.Kind),
                      Scope            => Local_Scope,
@@ -6362,7 +6224,8 @@ package body Src_Info.CPP is
 
                if Arg.Attributes = SN_TA_VALUE then
                   Refer_Type
-                    (Arg.Buffer (Arg.Value_Type.First .. Arg.Value_Type.Last),
+                    (String
+                      (Arg.Data (Arg.Value_Type.First .. Arg.Value_Type.Last)),
                      Desc.Parent_Point,
                      File,
                      Arg.Type_Position);
@@ -6375,9 +6238,11 @@ package body Src_Info.CPP is
               or else Symbol = MD or else Symbol = MI
             then
                Process_Local_Variable
-                 (Arg.Buffer (Arg.Name.First .. Arg.Name.Last),
-                  Create (FU_Tab.Buffer
-                            (FU_Tab.File_Name.First .. FU_Tab.File_Name.Last)),
+                 (String (Arg.Key (Arg.Name.First .. Arg.Name.Last)),
+                  Create
+                    (String
+                       (FU_Tab.Key
+                          (FU_Tab.File_Name.First .. FU_Tab.File_Name.Last))),
                   Arg.Start_Position,
                   FU_Tab,
                   Symbol,
@@ -6403,7 +6268,8 @@ package body Src_Info.CPP is
                      Set_Cursor
                        (MI_File,
                         By_Key,
-                        CL_Tab.Buffer (CL_Tab.Name.First .. CL_Tab.Name.Last)
+                        String
+                          (CL_Tab.Key (CL_Tab.Name.First .. CL_Tab.Name.Last))
                            & Field_Sep,
                         False);
 
@@ -6414,11 +6280,11 @@ package body Src_Info.CPP is
                         Parse_Pair (P, MI_Tab);
 
                         Process_Local_Variable
-                          (Arg.Buffer (Arg.Name.First .. Arg.Name.Last),
+                          (String (Arg.Key (Arg.Name.First .. Arg.Name.Last)),
                            Create
-                             (MI_Tab.Buffer
-                                (MI_Tab.File_Name.First ..
-                                   MI_Tab.File_Name.Last)),
+                             (String (MI_Tab.Key
+                                        (MI_Tab.File_Name.First ..
+                                           MI_Tab.File_Name.Last))),
                            Arg.Start_Position,
                            MI_Tab,
                            MI,
@@ -6426,7 +6292,6 @@ package body Src_Info.CPP is
                            Handler,
                            File,
                            Decl_Info);
-                        Free (MI_Tab);
                      end loop;
                   end if;
 
@@ -6435,8 +6300,6 @@ package body Src_Info.CPP is
                end;
             end if;
          end if;
-
-         Free (Arg);
       end loop;
 
       Release_Cursor (TA_File);
