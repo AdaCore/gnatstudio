@@ -25,7 +25,7 @@ with Gdk.Types.Keysyms; use Gdk.Types.Keysyms;
 with Gdk.Types; use Gdk.Types;
 --  with Gtk.Accel_Group; use Gtk.Accel_Group;
 --  with Gtk.Object; use Gtk.Object;
-with Gtk.Enums; use Gtk.Enums;
+--  with Gtk.Enums; use Gtk.Enums;
 --  with Gtk.Style; use Gtk.Style;
 with Gtk.Widget; use Gtk.Widget;
 with Gtk.Combo;  use Gtk.Combo;
@@ -140,7 +140,6 @@ package body Naming_Scheme_Editor_Pkg.Callbacks is
       Params : Gtk.Arguments.Gtk_Args) return Boolean
    is
       Event : constant Gdk_Event := To_Event (Params, 1);
-      use Gint_List;
       E     : constant Naming_Scheme_Editor_Access :=
         Naming_Scheme_Editor_Access (Object);
       --  List  : constant Gint_List.Glist := Get_Selection (E.Exception_List);
