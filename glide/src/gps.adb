@@ -269,6 +269,7 @@ procedure GPS is
       File        : File_Type;
       Charset     : String_Access;
       Make_Root   : String_Access;
+      Tmp         : String_Access;
       Ignored     : Log_Handler_Id;
       pragma Unreferenced (Ignored);
 
@@ -290,6 +291,18 @@ procedure GPS is
       if Home.all = "" then
          Free (Home);
          Home := Getenv ("HOME");
+      end if;
+
+      if Home'Length > 2
+        and then Home (Home'First) = '%'
+        and then Home (Home'Last) = '%'
+      then
+         --  Some Windows systems set %HOME% to another env variable, e.g.
+         --  %USERPROFILE%
+
+         Tmp := Home;
+         Home := Getenv (Tmp (Tmp'First + 1 .. Tmp'Last - 1));
+         Free (Tmp);
       end if;
 
       if Home.all = "" then
