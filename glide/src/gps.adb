@@ -464,6 +464,7 @@ begin
    Free (Dir);
    Free (Prefix);
 
+   Free_Preferences (GPS.Kernel);
    Prj_API.Finalize;
 
 exception
