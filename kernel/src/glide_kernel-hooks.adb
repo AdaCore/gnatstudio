@@ -28,6 +28,7 @@ with Ada.Unchecked_Deallocation;
 with Glide_Intl; use Glide_Intl;
 with Glide_Kernel.Console; use Glide_Kernel.Console;
 with Glide_Kernel.Scripts; use Glide_Kernel.Scripts;
+with Glide_Kernel.Standard_Hooks; use Glide_Kernel.Standard_Hooks;
 with System;
 with System.Address_Image;
 
@@ -1132,7 +1133,9 @@ package body Glide_Kernel.Hooks is
       Register_Hook
         (Kernel, File_Edited_Hook,
          -("Hook called when a file editor has been opened for a file that"
-           & " wasn't already opened before"),
+           & " wasn't already opened before. Do not confuse with "
+           & Open_File_Action_Hook & " which is used to request the"
+           & " opening of a file"),
          Type_Name => "file_hooks");
       Register_Hook
         (Kernel, File_Closed_Hook,
