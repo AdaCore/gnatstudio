@@ -631,7 +631,6 @@ package body Docgen_Module is
       use Type_Source_File_List;
       use Docgen.Docgen_Backend;
    begin
-
       Push_State (Kernel, Busy);
 
       --  Reset all the LI files currently in memory. For optimization
@@ -640,8 +639,6 @@ package body Docgen_Module is
       --  a clean list.
 
       Reset_LI_File_List (Kernel);
-      --  ??? The instruction above generate an stack exception. It must
-      --  be commented while the bug is not fixed.
 
       case Docgen_Module (Docgen_Module_ID).Options.Type_Of_File is
          when HTML =>
@@ -671,9 +668,7 @@ package body Docgen_Module is
          List,
          Kernel,
          Docgen_Module (Docgen_Module_ID).Options,
-         Doc_Suffix => Get_Extension (Docgen_Module (Docgen_Module_ID).B),
-         Converter  =>
-           Launch_Doc_Create'Access);
+         Doc_Suffix => Get_Extension (Docgen_Module (Docgen_Module_ID).B));
       Free (List);
 
       --  ??? <frameset> not supported by internal html viewer.
