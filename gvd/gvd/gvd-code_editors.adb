@@ -211,6 +211,17 @@ package body GVD.Code_Editors is
       return Editor.Source;
    end Get_Source;
 
+   -------------------------
+   -- Get_Explorer_Scroll --
+   -------------------------
+
+   function Get_Explorer_Scroll
+     (Editor : access Code_Editor_Record'Class)
+      return Gtk.Scrolled_Window.Gtk_Scrolled_Window is
+   begin
+      return Editor.Explorer_Scroll;
+   end Get_Explorer_Scroll;
+
    -------------
    -- Get_Asm --
    -------------

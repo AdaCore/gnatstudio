@@ -127,6 +127,11 @@ package GVD.Code_Editors is
       return GVD.Source_Editors.Source_Editor;
    --  Return the widget used to display the source code
 
+   function Get_Explorer_Scroll
+     (Editor : access Code_Editor_Record'Class)
+      return Gtk.Scrolled_Window.Gtk_Scrolled_Window;
+   --  Return the window containing the Explorer.
+
    function Get_Asm
      (Editor : access Code_Editor_Record'Class)
       return GVD.Asm_Editors.Asm_Editor;
