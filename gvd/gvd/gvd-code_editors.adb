@@ -167,7 +167,7 @@ package body GVD.Code_Editors is
          --  If the assembly code is displayed, highlight the code for the
          --  current line
 
-         if Editor.Mode = Asm or else Editor.Mode = Source then
+         if Editor.Mode = Asm or else Editor.Mode = Source_Asm then
             Highlight_Address_Range (Editor.Asm, Line);
          end if;
 
