@@ -2138,8 +2138,8 @@ package body Gtkada.MDI is
    ---------------------
 
    procedure Set_Focus_Child (Child : access MDI_Child_Record'Class) is
-      Old  : MDI_Child := Child.MDI.Focus_Child;
-      C    : MDI_Child := MDI_Child (Child);
+      Old : MDI_Child := Child.MDI.Focus_Child;
+      C   : MDI_Child := MDI_Child (Child);
 
    begin
       --  Be lazy. And avoid infinite loop when updating the MDI menu...
@@ -2187,21 +2187,23 @@ package body Gtkada.MDI is
 
    procedure Cascade_Children (MDI : access MDI_Window_Record) is
       use type Widget_List.Glist;
-      Level : Gint := 0;
-      W, H : Gint;
-      List : Widget_List.Glist := First (MDI.Items);
-      C : MDI_Child;
+      Level        : Gint := 0;
+      W, H         : Gint;
+      List         : Widget_List.Glist := First (MDI.Items);
+      C            : MDI_Child;
       Num_Children : Gint := 0;
-      Alloc : Gtk_Allocation;
+      Alloc        : Gtk_Allocation;
 
    begin
       Maximize_Children (MDI, False);
 
       while List /= Null_List loop
          C := MDI_Child (Get_Data (List));
+
          if C.State = Normal or else C.State = Iconified then
             Num_Children := Num_Children + 1;
          end if;
+
          List := Widget_List.Next (List);
       end loop;
 
@@ -2216,6 +2218,7 @@ package body Gtkada.MDI is
       --  we want it to be on top)
       while List /= Null_List loop
          C := MDI_Child (Get_Data (List));
+
          if (C.State = Normal or else C.State = Iconified)
            and then C /= MDI.Focus_Child
          then
@@ -2230,6 +2233,7 @@ package body Gtkada.MDI is
             Raise_Child (C);
             Level := Level + Title_Bar_Height;
          end if;
+
          List := Widget_List.Next (List);
       end loop;
 
@@ -2253,18 +2257,21 @@ package body Gtkada.MDI is
 
    procedure Tile_Horizontally (MDI : access MDI_Window_Record) is
       use type Widget_List.Glist;
-      Level : Gint := 0;
-      W, H : Gint;
-      List : Widget_List.Glist := First (MDI.Items);
-      C : MDI_Child;
+
+      Level        : Gint := 0;
+      W, H         : Gint;
+      List         : Widget_List.Glist := First (MDI.Items);
+      C            : MDI_Child;
       Num_Children : Gint := 0;
-      Alloc : Gtk_Allocation;
+      Alloc        : Gtk_Allocation;
       Max_W, Max_H : Gint;
+
    begin
       if MDI.Docks (None) /= null then
          Max_W := Gint (Get_Allocation_Width (MDI.Docks (None)));
          Max_H := Gint (Get_Allocation_Height (MDI.Docks (None)));
          Maximize_Children (MDI, False);
+
       else
          Max_W := Gint (Get_Allocation_Width (MDI.Layout));
          Max_H := Gint (Get_Allocation_Height (MDI.Layout));
@@ -2272,10 +2279,12 @@ package body Gtkada.MDI is
 
       while List /= Null_List loop
          C := MDI_Child (Get_Data (List));
+
          if C.State = Normal or else C.State = Iconified then
             Num_Children := Num_Children + 1;
             Minimize_Child (C, False);
          end if;
+
          List := Widget_List.Next (List);
       end loop;
 
@@ -2283,8 +2292,10 @@ package body Gtkada.MDI is
       H := Max_H;
 
       List := First (MDI.Items);
+
       while List /= Null_List loop
          C := MDI_Child (Get_Data (List));
+
          if C.State = Normal then
             C.X := Level;
             C.Y := 0;
@@ -2296,8 +2307,10 @@ package body Gtkada.MDI is
             Size_Allocate (C, Alloc);
             Level := Level + W;
          end if;
+
          List := Widget_List.Next (List);
       end loop;
+
       Queue_Resize (MDI);
    end Tile_Horizontally;
 
@@ -2307,12 +2320,13 @@ package body Gtkada.MDI is
 
    procedure Tile_Vertically (MDI : access MDI_Window_Record) is
       use type Widget_List.Glist;
-      Level : Gint := 0;
-      W, H : Gint;
-      List : Widget_List.Glist := First (MDI.Items);
-      C : MDI_Child;
+
+      Level        : Gint := 0;
+      W, H         : Gint;
+      List         : Widget_List.Glist := First (MDI.Items);
+      C            : MDI_Child;
       Num_Children : Gint := 0;
-      Alloc : Gtk_Allocation;
+      Alloc        : Gtk_Allocation;
       Max_W, Max_H : Gint;
 
    begin
@@ -2320,6 +2334,7 @@ package body Gtkada.MDI is
          Max_W := Gint (Get_Allocation_Width (MDI.Docks (None)));
          Max_H := Gint (Get_Allocation_Height (MDI.Docks (None)));
          Maximize_Children (MDI, False);
+
       else
          Max_W := Gint (Get_Allocation_Width (MDI.Layout));
          Max_H := Gint (Get_Allocation_Height (MDI.Layout));
@@ -2327,10 +2342,12 @@ package body Gtkada.MDI is
 
       while List /= Null_List loop
          C := MDI_Child (Get_Data (List));
+
          if C.State = Normal or else C.State = Iconified then
             Num_Children := Num_Children + 1;
             Minimize_Child (C, False);
          end if;
+
          List := Widget_List.Next (List);
       end loop;
 
@@ -2338,8 +2355,10 @@ package body Gtkada.MDI is
       H := Max_H / Num_Children;
 
       List := First (MDI.Items);
+
       while List /= Null_List loop
          C := MDI_Child (Get_Data (List));
+
          if C.State = Normal or else C.State = Iconified then
             C.X := 0;
             C.Y := Level;
@@ -2349,10 +2368,9 @@ package body Gtkada.MDI is
                       Allocation_Int (C.Uniconified_Width),
                       Allocation_Int (C.Uniconified_Height));
             Size_Allocate (C, Alloc);
-            --  Move (MDI.Layout, C, Gint16 (C.X), Gint16 (C.Y));
-            --  Set_Size_Request (C, C.Uniconified_Width, C.Uniconified_Height);
             Level := Level + H;
          end if;
+
          List := Widget_List.Next (List);
       end loop;
    end Tile_Vertically;
@@ -3200,31 +3218,31 @@ package body Gtkada.MDI is
       end if;
    end Set_Focus_Child;
 
-   --------------
-   -- Sessions --
-   --------------
+   ----------------------
+   -- Desktop Handling --
+   ----------------------
 
-   package body Sessions is
+   package body Desktop is
 
       --------------------------------
-      -- Register_Session_Functions --
+      -- Register_Desktop_Functions --
       --------------------------------
 
-      procedure Register_Session_Functions
-        (Save : Save_Session_Function;
-         Load : Load_Session_Function) is
+      procedure Register_Desktop_Functions
+        (Save : Save_Desktop_Function;
+         Load : Load_Desktop_Function) is
       begin
          Registers := new Register_Node_Record'
            (Save => Save,
             Load => Load,
             Next => Registers);
-      end Register_Session_Functions;
+      end Register_Desktop_Functions;
 
       ---------------------
-      -- Restore_Session --
+      -- Restore_Desktop --
       ---------------------
 
-      procedure Restore_Session
+      procedure Restore_Desktop
         (MDI       : access MDI_Window_Record'Class;
          From_Tree : Gint_Xml.Node_Ptr;
          User      : User_Data)
@@ -3326,14 +3344,14 @@ package body Gtkada.MDI is
 
             Child_Node := Child_Node.Next;
          end loop;
-      end Restore_Session;
+      end Restore_Desktop;
 
       ------------------
-      -- Save_Session --
+      -- Save_Desktop --
       ------------------
 
-      function Save_Session (MDI : access MDI_Window_Record'Class)
-         return Gint_XML.Node_Ptr
+      function Save_Desktop
+        (MDI : access MDI_Window_Record'Class) return Gint_Xml.Node_Ptr
       is
          use type Widget_List.Glist;
 
@@ -3374,24 +3392,25 @@ package body Gtkada.MDI is
             --  Save the widget
             Register := Registers;
             Widget_Node := null;
+
             while Widget_Node = null and then Register /= null loop
                Widget_Node := Register.Save (Get_Widget (Child));
                Register := Register.Next;
             end loop;
 
             if Widget_Node /= null then
-
                --  Note: We need to insert the children in the opposite order
-               --  from Restore_Session, since the children are added at the
+               --  from Restore_Desktop, since the children are added at the
                --  beginning of the list.
-
 
                Child_Node := new Node;
                Child_Node.Tag := new String' ("Child");
 
                if Child.State = Iconified then
-                  Add ("Uniconified_Height", Gint'Image (Child.Uniconified_Height));
-                  Add ("Uniconified_Width", Gint'Image (Child.Uniconified_Width));
+                  Add ("Uniconified_Height",
+                       Gint'Image (Child.Uniconified_Height));
+                  Add ("Uniconified_Width",
+                       Gint'Image (Child.Uniconified_Width));
                   Add ("Uniconified_Y", Gint'Image (Child.Uniconified_Y));
                   Add ("Uniconified_X", Gint'Image (Child.Uniconified_X));
                end if;
@@ -3412,9 +3431,9 @@ package body Gtkada.MDI is
          end loop;
 
          return Root;
-      end Save_Session;
+      end Save_Desktop;
 
-   end Sessions;
+   end Desktop;
 
    -----------------
    -- First_Child --
@@ -3423,7 +3442,7 @@ package body Gtkada.MDI is
    function First_Child
      (MDI : access MDI_Window_Record) return Child_Iterator is
    begin
-      return (Iter => Mdi.Items);
+      return (Iter => MDI.Items);
    end First_Child;
 
    ----------
