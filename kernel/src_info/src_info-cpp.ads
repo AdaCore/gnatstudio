@@ -37,7 +37,7 @@ package Src_Info.CPP is
    --  and LI_File_Ptr. It seems to be the main routine for this package.
 
    function Case_Insensitive_Identifiers
-         (Handler : access CPP_LI_Handler_Record) return Boolean;
+     (Handler : access CPP_LI_Handler_Record) return Boolean;
    pragma Inline (Case_Insensitive_Identifiers);
    --  Is identifiers in given language case insensitive? Always returns
    --  False since identifiers are case sensitive in C and C++.
