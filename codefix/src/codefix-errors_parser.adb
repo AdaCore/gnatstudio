@@ -1677,8 +1677,8 @@ begin
 --   Add_Parser (new Bad_Casing_Standard);
 --   Add_Parser (new Bad_Casing_Declared);
 --   Add_Parser (new Bad_Casing_Keyword);
---   Add_Parser (new Object_Not_Referenced);
-   --  Add_Parser (new Pkg_Not_Referenced);
+   Add_Parser (new Object_Not_Referenced);
+   Add_Parser (new Pkg_Not_Referenced);
 --   Add_Parser (new Pragma_Missplaced);
 --   Add_Parser (new Constant_Expected);
 --   Add_Parser (new Possible_Interpretation);
