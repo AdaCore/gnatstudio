@@ -813,7 +813,6 @@ package body VCS_View_Pkg is
       Kernel   : Kernel_Handle)
    is
       Vbox1           : Gtk_Vbox;
-      VCS_List        : String_Array_Access;
       Dummy_Page      : VCS_Page_Access;
 
    begin
@@ -837,13 +836,14 @@ package body VCS_View_Pkg is
          VCS_View,
          After => False);
 
-      VCS_List := Get_VCS_List (Kernel);
-
-      for J in VCS_List'Range loop
-         Dummy_Page := Get_Page_For_Identifier
-           (VCS_View,
-            Get_VCS_From_Id (VCS_List (J).all));
-      end loop;
+      declare
+         VCS_List : GNAT.OS_Lib.Argument_List := Get_VCS_List (VCS_Module_ID);
+      begin
+         for J in VCS_List'Range loop
+            Dummy_Page := Get_Page_For_Identifier
+              (VCS_View, Get_VCS_From_Id (VCS_List (J).all));
+         end loop;
+      end;
    end Initialize;
 
    -----------------------------
