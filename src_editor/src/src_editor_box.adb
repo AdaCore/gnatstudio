@@ -379,7 +379,6 @@ package body Src_Editor_Box is
       Context : access Entity_Selection_Context'Class)
    is
       Source          : Source_Editor_Box;
-      Status          : Find_Decl_Or_Body_Query_Status;
       Entity          : Entity_Information;
       Location        : File_Location;
       L, C            : Natural;
@@ -397,15 +396,7 @@ package body Src_Editor_Box is
 
       Push_State (Kernel_Handle (Kernel), Busy);
 
-      Find_Declaration_Or_Overloaded
-        (Kernel      => Kernel,
-         File        => Get_Or_Create
-           (Get_Database (Kernel), Get_Filename (Editor)),
-         Entity_Name => Entity_Name_Information (Context),
-         Line        => Contexts.Line_Information (Context),
-         Column      => Entity_Column_Information (Context),
-         Entity      => Entity,
-         Status      => Status);
+      Entity := Get_Entity (Context);
 
       if Entity = null then
          --  Probably means that we either could not locate the ALI file,
@@ -423,54 +414,14 @@ package body Src_Editor_Box is
          return;
       end if;
 
-      case Status is
-         when Entity_Not_Found | Overloaded_Entity_Found =>
-            Console.Insert
-              (Kernel, -"Cross-reference failed for "
-                 & Entity_Name_Information (Context),
-               Mode           => Error);
-            Pop_State (Kernel_Handle (Kernel));
-            return;
-
-         when Internal_Error =>
-            Console.Insert
-              (Kernel, -"Cross-reference internal error detected",
-               Mode => Error);
-            Pop_State (Kernel_Handle (Kernel));
-            return;
-
-         when No_Body_Entity_Found =>
-            if To_Body then
-               Console.Insert
-                 (Kernel,
-                  -"This entity does not have an associated body",
-                  Mode => Error);
-            else
-               Console.Insert
-                 (Kernel,
-                  -"This entity does not have an associated declaration",
-                  Mode => Error);
-            end if;
-
-            Pop_State (Kernel_Handle (Kernel));
-            return;
-
-         when Fuzzy_Match =>
-            Console.Insert
-              (Kernel, -("The cross-reference information isn't up-to-date."
-                         & " The result is the closest match, but might not be"
-                         & " accurate"));
-
-         when Success =>
-            null; --  No error message to print
-      end case;
-
-      Length := Entity_Name_Information (Context)'Length;
-
       if To_Body then
          Find_Next_Body
            (Entity      => Entity,
             Location    => Location);
+
+         if Location = Entities.No_File_Location then
+            Location := Get_Declaration_Of (Entity);
+         end if;
 
          --  Open the file, and reset Source to the new editor in order to
          --  highlight the region returned by the Xref query.
@@ -499,6 +450,8 @@ package body Src_Editor_Box is
                     & Base_Name (Filename), Mode => Error);
          end if;
       end if;
+
+      Length := Get_Name (Entity)'Length;
 
       if Dir_Name (Filename).all /= "" then
          Add_Navigation_Location (Editor);
@@ -1557,6 +1510,7 @@ package body Src_Editor_Box is
                   Name   : constant String :=
                     Krunch (Entity_Name_Information (Context));
                   Entity : constant Entity_Information := Get_Entity (Context);
+                  Location : Entities.File_Location;
 
                begin
                   if Entity /= null then
@@ -1570,20 +1524,26 @@ package body Src_Editor_Box is
                         Slot_Object => Editor,
                         After       => True);
 
-                     if Is_Container (Get_Kind (Entity).Kind) then
-                        Gtk_New (Item, -"Goto body of " & Name);
-                     else
-                        Gtk_New (Item, -"Goto full declaration of " & Name);
-                     end if;
+                     Find_Next_Body
+                       (Entity   => Entity,
+                        Location => Location);
 
-                     Add (Menu, Item);
-                     Context_Callback.Object_Connect
-                       (Item, "activate",
-                        Context_Callback.To_Marshaller
-                          (On_Goto_Next_Body'Access),
-                        User_Data   => Selection_Context_Access (Context),
-                        Slot_Object => Editor,
-                        After       => True);
+                     if Location /= Entities.No_File_Location then
+                        if Is_Container (Get_Kind (Entity).Kind) then
+                           Gtk_New (Item, -"Goto body of " & Name);
+                        else
+                           Gtk_New (Item, -"Goto full declaration of " & Name);
+                        end if;
+
+                        Add (Menu, Item);
+                        Context_Callback.Object_Connect
+                          (Item, "activate",
+                           Context_Callback.To_Marshaller
+                             (On_Goto_Next_Body'Access),
+                           User_Data   => Selection_Context_Access (Context),
+                           Slot_Object => Editor,
+                           After       => True);
+                     end if;
                   end if;
                end;
 
