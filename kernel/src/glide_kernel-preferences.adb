@@ -784,6 +784,14 @@ package body Glide_Kernel.Preferences is
       Register_Property
         (Kernel.Preferences, Param_Spec (Patch_Cmd), -"Visual diff");
 
+      Old_Vdiff := Param_Spec_Boolean (Gnew_Boolean
+        (Name    => "Diff-Utils-Old-Vdiff",
+         Nick    => -"Use old diff (requires restart)",
+         Blurb   => -("Use the old version of visual differences."
+                      & " Changing this parameter requires restarting GPS."),
+         Default => False));
+      Register_Property
+        (Kernel.Preferences, Param_Spec (Old_Vdiff), -"Visual diff");
       -- Messages --
 
       Message_Highlight := Param_Spec_Color (Gnew_Color
