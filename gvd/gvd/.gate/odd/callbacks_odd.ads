@@ -1,4 +1,5 @@
 with Gtk.Handlers;
+pragma Elaborate_All (Gtk.Handlers);
 with Gtk.Menu_Item; use Gtk.Menu_Item;
 with Gtk.Clist; use Gtk.Clist;
 with Gtk.Button; use Gtk.Button;
