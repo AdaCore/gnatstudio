@@ -52,7 +52,8 @@ package body Commands.Debugger is
    function Execute (Command : access Set_Breakpoint_Command) return Boolean
    is
       Other_Command : Set_Breakpoint_Command_Access;
-      A            : Line_Information_Array (1 .. 1);
+      L             : Integer := Command.Line;
+      A             : Line_Information_Array (L .. L);
    begin
       case Command.BMode is
          when Set =>
@@ -70,9 +71,8 @@ package body Commands.Debugger is
                Command.Line);
             Other_Command.BP := Command.BP;
 
-            A (1).Line := Command.Line;
-            A (1).Image := Line_Has_Breakpoint_Pixbuf;
-            A (1).Associated_Command := Command_Access (Other_Command);
+            A (L).Image := Line_Has_Breakpoint_Pixbuf;
+            A (L).Associated_Command := Command_Access (Other_Command);
             Add_Line_Information
               (Command.Kernel,
                Command.File.all,
@@ -92,9 +92,8 @@ package body Commands.Debugger is
                Command.File.all,
                Command.Line);
 
-            A (1).Line := Command.Line;
-            A (1).Image := Line_Has_Code_Pixbuf;
-            A (1).Associated_Command := Command_Access (Other_Command);
+            A (L).Image := Line_Has_Code_Pixbuf;
+            A (L).Associated_Command := Command_Access (Other_Command);
             Add_Line_Information
               (Command.Kernel,
                Command.File.all,
