@@ -10256,7 +10256,7 @@ The format is either @b{text} or @b{binary}, only @b{text} is
 supported for the moment.
 @end table
 
-There are two categories of children. One is to describe the fomrat
+There are two categories of children. One is to describe the format
 itself, the other is to specify the set of template to use. In the
 later case the children's name are ending with @code{_template} :
 
