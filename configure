@@ -270,7 +270,7 @@ PACKAGE_VERSION=
 PACKAGE_STRING=
 PACKAGE_BUGREPORT=
 
-ac_unique_file="glide/src/gps-main.adb"
+ac_unique_file="gps/src/gps-main.adb"
 # Factoring default headers for most tests.
 ac_includes_default="\
 #include <stdio.h>
@@ -4773,7 +4773,7 @@ echo "       xmlada: $XMLADA_GPR"
 echo "           uses ADA_PROJECT_PATH to find xmlada.gpr"
 echo ""
 
-                                                                                                                        ac_config_files="$ac_config_files Makefile Makefile.common gnat/sdefault/sdefault.adb docs/Makefile po/Makefile common/Makefile.common common/src/config.ads python/Makefile.python python/python.gpr gtkada/gtkada.gpr common/common.gpr:common/common_${XMLADA_GPR}.gpr.in glide/src/gpslink.adb"
+                                                                                                                        ac_config_files="$ac_config_files Makefile Makefile.common gnat/sdefault/sdefault.adb docs/Makefile po/Makefile common/Makefile.common common/src/config.ads python/Makefile.python python/python.gpr gtkada/gtkada.gpr common/common.gpr:common/common_${XMLADA_GPR}.gpr.in gps/src/gpslink.adb"
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
 # tests run on this system so they can be shared between configure
@@ -5335,7 +5335,7 @@ do
   "python/python.gpr" ) CONFIG_FILES="$CONFIG_FILES python/python.gpr" ;;
   "gtkada/gtkada.gpr" ) CONFIG_FILES="$CONFIG_FILES gtkada/gtkada.gpr" ;;
   "common/common.gpr" ) CONFIG_FILES="$CONFIG_FILES common/common.gpr:common/common_${XMLADA_GPR}.gpr.in" ;;
-  "glide/src/gpslink.adb" ) CONFIG_FILES="$CONFIG_FILES glide/src/gpslink.adb" ;;
+  "gps/src/gpslink.adb" ) CONFIG_FILES="$CONFIG_FILES gps/src/gpslink.adb" ;;
   *) { { echo "$as_me:$LINENO: error: invalid argument: $ac_config_target" >&5
 echo "$as_me: error: invalid argument: $ac_config_target" >&2;}
    { (exit 1); exit 1; }; };;
