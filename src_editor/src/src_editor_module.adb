@@ -1599,10 +1599,22 @@ package body Src_Editor_Module is
       Insert_Space (Toolbar, Position => 6);
       Button := Insert_Stock
         (Toolbar, Stock_Cut, -"Cut to Clipboard", Position => 7);
+      Kernel_Callback.Connect
+        (Button, "clicked",
+         Kernel_Callback.To_Marshaller (On_Cut'Access),
+         Kernel_Handle (Kernel));
       Button := Insert_Stock
         (Toolbar, Stock_Copy, -"Copy to Clipboard", Position => 8);
+      Kernel_Callback.Connect
+        (Button, "clicked",
+         Kernel_Callback.To_Marshaller (On_Copy'Access),
+         Kernel_Handle (Kernel));
       Button := Insert_Stock
         (Toolbar, Stock_Paste, -"Paste from Clipboard", Position => 9);
+      Kernel_Callback.Connect
+        (Button, "clicked",
+         Kernel_Callback.To_Marshaller (On_Paste'Access),
+         Kernel_Handle (Kernel));
 
       Undo_Redo_Data.Set (Kernel, Undo_Redo, Undo_Redo_Id);
 
