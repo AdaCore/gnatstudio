@@ -30,6 +30,8 @@ with Items.Arrays;  use Items.Arrays;
 with Items.Records; use Items.Records;
 with Items.Classes; use Items.Classes;
 
+with Ada.Text_IO; use Ada.Text_IO;
+
 package body Debugger.Gdb.Ada is
 
    use Language;
@@ -895,5 +897,29 @@ package body Debugger.Gdb.Ada is
    begin
       return "set variable " & Var_Name & " := " & Value;
    end Set_Variable;
+
+   ---------------------------
+   -- Can_Tooltip_On_Entity --
+   ---------------------------
+
+   function Can_Tooltip_On_Entity
+     (Lang : access Gdb_Ada_Language;
+      Entity : String) return Boolean
+   is
+      --  Note: It is not possible to directly get the result of "ptype"
+      --  or "whatis" for the entity, since gdb in fact gives the type of the
+      --  return value.
+      --  Instead, we get the info for a pointer to the entity.
+      Info : constant String :=
+        Type_Of (Get_Debugger (Lang), "&" & Entity);
+   begin
+      return Info /= ""
+        and then
+        (Info'Length < 16
+         or else Info (Info'First .. Info'First + 15) /= "access procedure")
+        and then
+        (Info'Length < 15
+         or else Info (Info'First .. Info'First + 14) /= "access function");
+   end Can_Tooltip_On_Entity;
 
 end Debugger.Gdb.Ada;

@@ -93,7 +93,11 @@ package Debugger.Gdb.Ada is
 
    function Get_Language_Debugger_Context
      (Lang : access Gdb_Ada_Language)
-      return Language.Debugger.Language_Debugger_Context;
+     return Language.Debugger.Language_Debugger_Context;
+
+   function Can_Tooltip_On_Entity
+     (Lang : access Gdb_Ada_Language;
+      Entity : String) return Boolean;
 
 private
 

@@ -335,4 +335,15 @@ package body Language is
       return null;
    end Get_Language_From_File;
 
+   ---------------------------
+   -- Can_Tooltip_On_Entity --
+   ---------------------------
+
+   function Can_Tooltip_On_Entity
+     (Lang : access Language_Root;
+      Entity : String) return Boolean is
+   begin
+      return True;
+   end Can_Tooltip_On_Entity;
+
 end Language;

@@ -69,6 +69,19 @@ package Language is
    --  Return a regular expression that matches the keywords for the current
    --  language.
 
+   ----------------------------
+   -- Tooltips in the editor --
+   ----------------------------
+
+   function Can_Tooltip_On_Entity
+     (Lang : access Language_Root;
+      Entity : String) return Boolean;
+   --  Return True if we should display a tooltip for the Entity.
+   --  Note that Entity is analyzed in the current context. This is used at
+   --  least for the gdb Ada mode, since we don't want to evaluate subprograms
+   --  when the type of tooltips in Simple.
+   --  By default, this simply returns True.
+
    ------------------------
    -- Naming conventions --
    ------------------------
