@@ -24,26 +24,61 @@ package body Commands.VCS is
    -- Create --
    ------------
 
-   function Create
-     (Rep       : VCS_Access;
+   procedure Create
+     (Item      : out Commit_Command_Access;
+      Rep       : VCS_Access;
       Filenames : String_List.List;
-      Logs      : String_List.List) return Commit_Command
-   is
-      Result : Commit_Command;
+      Logs      : String_List.List) is
    begin
-      Result.Rep       := Rep;
-      Result.Filenames := Copy_String_List (Filenames);
-      Result.Logs      := Copy_String_List (Logs);
-      return Result;
+      Item := new Commit_Command_Type;
+      Item.Rep       := Rep;
+      Item.Filenames := Copy_String_List (Filenames);
+      Item.Logs      := Copy_String_List (Logs);
    end Create;
 
    -------------
    -- Execute --
    -------------
 
-   function Execute (Command : access Commit_Command) return Boolean is
+   function Execute
+     (Command : access Commit_Command_Type) return Boolean is
    begin
       Commit (Command.Rep, Command.Filenames, Command.Logs);
+
+      if Command.Queue /= null then
+         Command_Finished (Command.Queue);
+      end if;
+
+      return True;
+   end Execute;
+
+   ------------
+   -- Create --
+   ------------
+
+   procedure Create
+     (Item      : out Get_Status_Command_Access;
+      Rep       : VCS_Access;
+      Filenames : String_List.List) is
+   begin
+      Item := new Get_Status_Command_Type;
+      Item.Rep       := Rep;
+      Item.Filenames := Copy_String_List (Filenames);
+   end Create;
+
+   -------------
+   -- Execute --
+   -------------
+
+   function Execute
+     (Command : access Get_Status_Command_Type) return Boolean is
+   begin
+      Get_Status (Command.Rep, Command.Filenames);
+
+      if Command.Queue /= null then
+         Command_Finished (Command.Queue);
+      end if;
+
       return True;
    end Execute;
 
