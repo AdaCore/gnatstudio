@@ -103,6 +103,20 @@ package Src_Info.Queries is
    --  Note: Location has a short term life: it can no longer be used once you
    --  reparse Lib_Info, or update its contents.
 
+   ---------------------------
+   -- Spec <-> Body queries --
+   ---------------------------
+
+   function Get_Other_File_Of
+     (Lib_Info : LI_File_Ptr; Source_Filename : String) return String;
+   --  Return the name of the spec or body for Source_Filename.
+   --  If Source_Filename is a separate, then the spec of the unit is returned.
+   --  The empty string is returned if there is no other file (for instance, a
+   --  body without a spec).
+   --  Only the short path name is returned.
+   --
+   --  This method is based on LI files.
+
    ----------------
    -- References --
    ----------------

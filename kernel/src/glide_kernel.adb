@@ -38,6 +38,7 @@ with Gint_Xml;                  use Gint_Xml;
 with Glide_Main_Window;         use Glide_Main_Window;
 with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
 with Glide_Kernel.Project;      use Glide_Kernel.Project;
+with Glide_Kernel.Console;      use Glide_Kernel.Console;
 with Glide_Page;                use Glide_Page;
 with GVD.Process;               use GVD.Process;
 with GVD.Main_Window;           use GVD.Main_Window;
@@ -689,5 +690,40 @@ package body Glide_Kernel is
    begin
       Handle.Logs_Mapper := Mapper;
    end Set_Logs_Mapper;
+
+   -----------------------
+   -- Get_Other_File_Of --
+   -----------------------
+
+   function Get_Other_File_Of
+     (Kernel       : access Kernel_Handle_Record;
+      Source_Filename : String) return String
+   is
+      Lib_Info : LI_File_Ptr;
+   begin
+      Lib_Info := Locate_From_Source_And_Complete (Kernel, Source_Filename);
+      if Lib_Info /= No_LI_File then
+         declare
+            Other_File : constant String := Get_Other_File_Of
+              (Lib_Info, Source_Filename);
+         begin
+            if Other_File /= "" then
+               declare
+                  Full_Name : constant String :=
+                    Find_Source_File (Kernel, Other_File, True);
+               begin
+                  if Full_Name /= "" then
+                     return Full_Name;
+                  else
+                     Insert (Kernel, "Path for " & Other_File & " not found");
+                  end if;
+               end;
+            else
+               Insert (Kernel, "No other file found", Mode => Error);
+            end if;
+         end;
+      end if;
+      return "";
+   end Get_Other_File_Of;
 
 end Glide_Kernel;

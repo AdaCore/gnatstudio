@@ -1808,4 +1808,29 @@ package body Src_Info.Queries is
       Unchecked_Free (Iterator);
    end Destroy;
 
+   -----------------------
+   -- Get_Other_File_Of --
+   -----------------------
+
+   function Get_Other_File_Of
+     (Lib_Info : LI_File_Ptr; Source_Filename : String) return String
+   is
+      Part : constant Unit_Part := Get_Unit_Part (Lib_Info, Source_Filename);
+   begin
+      Assert (Me, not Is_Incomplete (Lib_Info), "LI file is not up-to-date");
+
+      case Part is
+         when Unit_Body | Unit_Separate =>
+            if Lib_Info.LI.Spec_Info /= null then
+               return Lib_Info.LI.Spec_Info.Source_Filename.all;
+            end if;
+
+         when Unit_Spec =>
+            if Lib_Info.LI.Body_Info /= null then
+               return Lib_Info.LI.Body_Info.Source_Filename.all;
+            end if;
+      end case;
+      return "";
+   end Get_Other_File_Of;
+
 end Src_Info.Queries;

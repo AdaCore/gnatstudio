@@ -172,6 +172,15 @@ package Glide_Kernel is
       return Src_Info.LI_File_Ptr;
    --  Find the ALI file for Source_Filename, and return a handle to it.
 
+   function Get_Other_File_Of
+     (Kernel       : access Kernel_Handle_Record;
+      Source_Filename : String) return String;
+   --  Return the full path name to the other file associated with
+   --  Source_Filename (the spec if Source_Filename is a body or separate, the
+   --  body if Source_Filename is the spec).
+   --  The empty string is returned if the file wasn't found (and error
+   --  messages are printed to the console appropriately).
+
    procedure Find_All_References
      (Kernel       : access Kernel_Handle_Record;
       Entity       : Src_Info.Queries.Entity_Information;
