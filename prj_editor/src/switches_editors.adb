@@ -159,7 +159,7 @@ package body Switches_Editors is
       is
          use Widget_List;
          List  : Gtk_List := Get_List (Combo);
-         Value : Gint;
+         Value : Integer;
 
       begin
          --  Check whether there is an actual selection. With gtk+2.0, the
@@ -168,8 +168,8 @@ package body Switches_Editors is
          --  callback is called again later on.
 
          if Get_Selection (List) /= Null_List then
-            Value := Child_Position
-              (List, Get_Data (Get_Selection (List)));
+            Value := Integer (Child_Position
+              (List, Get_Data (Get_Selection (List))));
 
             if Value /= 0 then
                Arr (Index) := new String' (Switch & Image (Value));
@@ -202,8 +202,8 @@ package body Switches_Editors is
                Check_Toggle (Editor.Make_Debug, "-g", Arr, Index);
 
                if Get_Active (Editor.Make_Multiprocessing) then
-                  Arr (Index) := new String'
-                    ("-j" & Image (Get_Value_As_Int (Editor.Num_Processes)));
+                  Arr (Index) := new String' ("-j" &
+                    Image (Integer (Get_Value_As_Int (Editor.Num_Processes))));
                   Index := Index + 1;
                end if;
 
