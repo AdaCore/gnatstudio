@@ -51,7 +51,6 @@ with Vdiff_Utils;           use Vdiff_Utils;
 with Diff_Utils;            use Diff_Utils;
 
 with Prj_Editor_Window;     use Prj_Editor_Window;
-with Src_Editor_Box;        use Src_Editor_Box;
 
 with GVD.Dialogs;           use GVD.Dialogs;
 
@@ -69,13 +68,6 @@ with Make_Suite_Window_Pkg; use Make_Suite_Window_Pkg;
 package body Glide_Menu is
 
    Highlight_File        : constant String := "#FF0000000000";
-   Default_Editor_Width  : constant := 400;
-   Default_Editor_Height : constant := 400;
-
-   function Get_Current_Editor
-     (Top : Glide_Window) return Source_Editor_Box;
-   --  Return the source editor that has currently the focus in the MDI
-   --  window associated with Top, null the focus child is not an editor.
 
    --------------------
    -- Menu Callbacks --
@@ -285,25 +277,6 @@ package body Glide_Menu is
       Widget : Limited_Widget);
    --  Help->About menu
 
-   ------------------------
-   -- Get_Current_Editor --
-   ------------------------
-
-   function Get_Current_Editor
-     (Top : Glide_Window) return Source_Editor_Box
-   is
-      --  MDI       : constant MDI_Window :=
-      --    Glide_Page.Glide_Page (Get_Current_Process (Top)).Process_Mdi;
-      --  Source    : Gtk_Widget := Get_Widget (Get_Focus_Child (MDI));
-
-   begin
-      --  ??? if Source.all in Source_Box_Record'Class then
-      --     return Source_Box (Source).Editor;
-      --  else
-      return null;
-      --  end if;
-   end Get_Current_Editor;
-
    ------------------
    -- On_Open_File --
    ------------------
@@ -313,7 +286,6 @@ package body Glide_Menu is
       Action : Guint;
       Widget : Limited_Widget)
    is
-      Top      : constant Glide_Window := Glide_Window (Object);
       Filename : constant String :=
         File_Selection_Dialog (Title => "Open File", Must_Exist => True);
 
@@ -322,7 +294,7 @@ package body Glide_Menu is
          return;
       end if;
 
-      Open_File (Top.Kernel, Filename);
+      Open_File (Glide_Window (Object).Kernel, Filename);
    end On_Open_File;
 
    ---------------------
@@ -334,13 +306,12 @@ package body Glide_Menu is
       Action : Guint;
       Widget : Limited_Widget)
    is
-      Top      : constant Glide_Window := Glide_Window (Object);
       Filename : constant String :=
         File_Selection_Dialog (Title => "Open Project", Must_Exist => True);
 
    begin
       if Filename /= "" then
-         Load_Project (Top.Kernel, Filename);
+         Load_Project (Glide_Window (Object).Kernel, Filename);
       end if;
    end On_Open_Project;
 
@@ -368,11 +339,9 @@ package body Glide_Menu is
    procedure On_New_File
      (Object : Data_Type_Access;
       Action : Guint;
-      Widget : Limited_Widget)
-   is
-      Top : constant Glide_Window := Glide_Window (Object);
+      Widget : Limited_Widget) is
    begin
-      New_Editor (Top.Kernel);
+      New_Editor (Glide_Window (Object).Kernel);
    end On_New_File;
 
    -------------
@@ -384,16 +353,9 @@ package body Glide_Menu is
       Action : Guint;
       Widget : Limited_Widget)
    is
-      Top     : constant Glide_Window := Glide_Window (Object);
-      Source  : constant Source_Editor_Box := Get_Current_Editor (Top);
       Success : Boolean;
-
    begin
-      if Source = null then
-         return;
-      end if;
-
-      Save_To_File (Source, Success => Success);
+      Save_To_File (Glide_Window (Object).Kernel, Success => Success);
    end On_Save;
 
    ----------------
@@ -405,21 +367,14 @@ package body Glide_Menu is
       Action : Guint;
       Widget : Limited_Widget)
    is
-      Top     : constant Glide_Window := Glide_Window (Object);
-      Source  : constant Source_Editor_Box := Get_Current_Editor (Top);
       Success : Boolean;
-
    begin
-      if Source = null then
-         return;
-      end if;
-
       declare
          Name : constant String :=
            File_Selection_Dialog (Title => "Save File As...");
 
       begin
-         Save_To_File (Source, Name, Success);
+         Save_To_File (Glide_Window (Object).Kernel, Name, Success);
       end;
    end On_Save_As;
 
@@ -478,17 +433,9 @@ package body Glide_Menu is
    procedure On_Cut
      (Object : Data_Type_Access;
       Action : Guint;
-      Widget : Limited_Widget)
-   is
-      Top     : constant Glide_Window := Glide_Window (Object);
-      Source  : constant Source_Editor_Box := Get_Current_Editor (Top);
-
+      Widget : Limited_Widget) is
    begin
-      if Source = null then
-         return;
-      end if;
-
-      Cut_Clipboard (Source);
+      Cut_Clipboard (Glide_Window (Object).Kernel);
    end On_Cut;
 
    -------------
@@ -498,17 +445,9 @@ package body Glide_Menu is
    procedure On_Copy
      (Object : Data_Type_Access;
       Action : Guint;
-      Widget : Limited_Widget)
-   is
-      Top     : constant Glide_Window := Glide_Window (Object);
-      Source  : constant Source_Editor_Box := Get_Current_Editor (Top);
-
+      Widget : Limited_Widget) is
    begin
-      if Source = null then
-         return;
-      end if;
-
-      Copy_Clipboard (Source);
+      Copy_Clipboard (Glide_Window (Object).Kernel);
    end On_Copy;
 
    --------------
@@ -518,17 +457,9 @@ package body Glide_Menu is
    procedure On_Paste
      (Object : Data_Type_Access;
       Action : Guint;
-      Widget : Limited_Widget)
-   is
-      Top     : constant Glide_Window := Glide_Window (Object);
-      Source  : constant Source_Editor_Box := Get_Current_Editor (Top);
-
+      Widget : Limited_Widget) is
    begin
-      if Source = null then
-         return;
-      end if;
-
-      Paste_Clipboard (Source);
+      Paste_Clipboard (Glide_Window (Object).Kernel);
    end On_Paste;
 
    -------------------
@@ -538,17 +469,9 @@ package body Glide_Menu is
    procedure On_Select_All
      (Object : Data_Type_Access;
       Action : Guint;
-      Widget : Limited_Widget)
-   is
-      Top     : constant Glide_Window := Glide_Window (Object);
-      Source  : constant Source_Editor_Box := Get_Current_Editor (Top);
-
+      Widget : Limited_Widget) is
    begin
-      if Source = null then
-         return;
-      end if;
-
-      Select_All (Source);
+      Select_All (Glide_Window (Object).Kernel);
    end On_Select_All;
 
    -----------------
