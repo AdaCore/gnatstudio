@@ -859,6 +859,18 @@ package body Glide_Kernel.Preferences is
         (Kernel.Preferences, Param_Spec (Wizard_Title_Font),
          -"Project wizard");
 
+      -- Help --
+
+      Help_Font_Adjust := Param_Spec_Int (Gnew_Int
+        (Name    => "Help-Font-Adjust",
+         Minimum => -10,
+         Maximum => 10,
+         Default => 0, --  ie undefined, see help_module.adb
+         Blurb   => -"Zoom level for help windows",
+         Nick    => -"Font Adjustment",
+         Flags   => Param_Readable));
+      Register_Property
+        (Kernel.Preferences, Param_Spec (Help_Font_Adjust), -"Help");
 
       -- VCS --
 
@@ -992,6 +1004,18 @@ package body Glide_Kernel.Preferences is
      (Kernel : access Kernel_Handle_Record'Class;
       Pref   : Param_Spec_Boolean;
       Value  : Boolean) is
+   begin
+      Set_Pref (Kernel.Preferences, Pspec_Name (Param_Spec (Pref)), Value);
+   end Set_Pref;
+
+   --------------
+   -- Set_Pref --
+   --------------
+
+   procedure Set_Pref
+     (Kernel : access Kernel_Handle_Record'Class;
+      Pref   : Param_Spec_Int;
+      Value  : Glib.Gint) is
    begin
       Set_Pref (Kernel.Preferences, Pspec_Name (Param_Spec (Pref)), Value);
    end Set_Pref;

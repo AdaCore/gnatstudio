@@ -82,6 +82,10 @@ package Glide_Kernel.Preferences is
      (Kernel : access Kernel_Handle_Record'Class;
       Pref   : Param_Spec_Boolean;
       Value  : Boolean);
+   procedure Set_Pref
+     (Kernel : access Kernel_Handle_Record'Class;
+      Pref   : Param_Spec_Int;
+      Value  : Glib.Gint);
    --  See Default_Preferences.Set_Pref
 
    ------------------
@@ -193,6 +197,9 @@ package Glide_Kernel.Preferences is
    -- Wizards --
    Wizard_Toc_Highlight_Color : Param_Spec_Color;
    Wizard_Title_Font : Param_Spec_Font;
+
+   -- Help --
+   Help_Font_Adjust : Param_Spec_Int;
 
    -- Browsers --
    Browsers_Bg_Color         : Param_Spec_Color;
