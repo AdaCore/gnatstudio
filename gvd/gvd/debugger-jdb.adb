@@ -141,8 +141,9 @@ package body Debugger.Jdb is
            (Get_Descriptor (Debugger.Process).all,
             Input_Filter'Access,
             Window.all'Address);
+      end if;
 
-      elsif Main_Debug_Window_Access (Window).TTY_Mode then
+      if Main_Debug_Window_Access (Window).TTY_Mode then
          Add_Output_Filter
            (Get_Descriptor (Debugger.Process).all,
             TTY_Filter'Access,

@@ -463,29 +463,28 @@ package body Debugger.Gdb is
 
       --  ??? Should avoid the duplication of this code
 
-      if Window /= null
-        and then Main_Debug_Window_Access (Window).Debug_Mode
-      then
-         Add_Output_Filter
-           (Get_Descriptor (Debugger.Process).all,
-            Output_Filter'Access,
-            Window.all'Address);
-         Add_Input_Filter
-           (Get_Descriptor (Debugger.Process).all,
-            Input_Filter'Access,
-            Window.all'Address);
+      if Window /= null then
+         if Main_Debug_Window_Access (Window).Debug_Mode then
+            Add_Output_Filter
+              (Get_Descriptor (Debugger.Process).all,
+               Output_Filter'Access,
+               Window.all'Address);
+            Add_Input_Filter
+              (Get_Descriptor (Debugger.Process).all,
+               Input_Filter'Access,
+               Window.all'Address);
+         end if;
 
-      elsif Window /= null
-        and then Main_Debug_Window_Access (Window).TTY_Mode
-      then
-         Add_Output_Filter
-           (Get_Descriptor (Debugger.Process).all,
-            TTY_Filter'Access,
-            Debugger.Process.all'Address);
-         Add_Input_Filter
-           (Get_Descriptor (Debugger.Process).all,
-            TTY_Filter'Access,
-            Debugger.Process.all'Address);
+         if Main_Debug_Window_Access (Window).TTY_Mode then
+            Add_Output_Filter
+              (Get_Descriptor (Debugger.Process).all,
+               TTY_Filter'Access,
+               Debugger.Process.all'Address);
+            Add_Input_Filter
+              (Get_Descriptor (Debugger.Process).all,
+               TTY_Filter'Access,
+               Debugger.Process.all'Address);
+         end if;
       end if;
    end Spawn;
 
