@@ -464,8 +464,14 @@ procedure GPS is
         (Format_Pathname (GPS.Prefix_Directory.all & "/share/gps/about.txt"));
 
       if About_Contents = null then
-         GPS.Public_Version := False;
          About_Contents := new String'("");
+      end if;
+
+      if Is_Regular_File
+        (Format_Pathname
+           (GPS.Prefix_Directory.all & "/share/gps/gps-pro.txt"))
+      then
+         GPS.Public_Version := False;
       end if;
 
       Reset_Title (GPS);
@@ -861,8 +867,9 @@ procedure GPS is
 
       Glide_Kernel.Console.Register_Module (GPS.Kernel);
 
-      --  Register the remote protcols early so that other modules can access
+      --  Register the remote protocols early so that other modules can access
       --  remote files.
+
       SSH_Protocol.Register_Protocol;
 
       --  Register all modules (scripting languages must be registered first)
@@ -905,7 +912,7 @@ procedure GPS is
       Glide_Kernel.Task_Manager.Register_Module (GPS.Kernel);
       Custom_Module.Register_Module (GPS.Kernel);
       Glide_Result_View.Register_Module (GPS.Kernel);
-      --  Docgen_Module.Register_Module (GPS.Kernel);
+--      Docgen_Module.Register_Module (GPS.Kernel);
 
       --  Register the supported languages and their associated LI handlers.
 
