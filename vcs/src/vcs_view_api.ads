@@ -208,6 +208,6 @@ package VCS_View_API is
    procedure VCS_Command_Handler
      (Data    : in out Glide_Kernel.Scripts.Callback_Data'Class;
       Command : String);
-   --  Handler for VCS commands.
+   --  Handler for VCS commands, that take a file name as their first parameter
 
 end VCS_View_API;
