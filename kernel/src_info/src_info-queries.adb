@@ -394,10 +394,6 @@ package body Src_Info.Queries is
             Current_Dep := Current_Dep.Next;
          end loop;
       end if;
-
-      Trace (Me, "Internal_Find_Declaration_Or_Body: Status="
-             & Status'Img
-             & " Proximity=" & Proximity'Img);
    end Internal_Find_Declaration_Or_Body;
 
    ----------------------
