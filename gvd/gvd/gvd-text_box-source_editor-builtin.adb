@@ -469,6 +469,8 @@ package body Odd.Source_Editors is
       Entity      : Language_Entity;
       Next_Char   : Positive;
 
+      Line_Start_Position : Guint := 0;
+
    begin
       if Editor.Show_Line_Nums then
          Insert (Editor, Chars => Line_Number_String (1));
@@ -489,10 +491,30 @@ package body Odd.Source_Editors is
                Line := Line + 1;
                Index := Index + 1;
                Line_Start := Index;
+               Line_Start_Position := Get_Length (Get_Child (Editor));
 
                if Editor.Show_Line_Nums then
                   Insert (Editor, Chars => Line_Number_String (Line));
                end if;
+
+            when ASCII.HT =>
+               declare
+                  Offset : Guint;
+               begin
+                  if Editor.Show_Line_Nums then
+                     Offset :=
+                       (Line_Start_Position - Get_Length (Get_Child (Editor))
+                        + Guint (Line_Numbers_Width) - 1) mod Guint (Tab_Size);
+                  else
+                     Offset :=
+                       (Line_Start_Position - 1 -
+                        Get_Length (Get_Child (Editor))) mod Guint (Tab_Size);
+                  end if;
+                  for J in 0 .. Offset loop
+                     Insert (Editor, Chars => " ");
+                  end loop;
+                  Index := Index + 1;
+               end;
 
             when others =>
                if Do_Color_Highlighting then
