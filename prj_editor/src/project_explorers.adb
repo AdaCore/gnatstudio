@@ -143,7 +143,7 @@ package body Project_Explorers is
       Directory        : String;
       Parent_Node      : Gtk_Ctree_Node := null;
       Current_Dir      : String;
-      Directory_String : String_Id := No_String;
+      Directory_String : String_Id;
       Object_Directory : Boolean := False) return Gtk_Ctree_Node;
    --  Add a new directory node in the tree, for Directory.
    --  Current_Dir is used to resolve Directory to an absolute directory if
@@ -705,7 +705,7 @@ package body Project_Explorers is
       Directory        : String;
       Parent_Node      : Gtk_Ctree_Node := null;
       Current_Dir      : String;
-      Directory_String : String_Id := No_String;
+      Directory_String : String_Id;
       Object_Directory : Boolean := False) return Gtk_Ctree_Node
    is
       N : Gtk_Ctree_Node;
@@ -1370,6 +1370,7 @@ package body Project_Explorers is
             User : constant User_Data :=
               Node_Get_Row_Data (Explorer.Tree, N);
             Prj  : Project_Id;
+            Obj  : String_Id;
          begin
             case User.Node_Type is
                when Directory_Node =>
@@ -1393,12 +1394,18 @@ package body Project_Explorers is
                when Obj_Directory_Node =>
                   Prj := Get_Project_From_Node (Explorer, N);
                   Remove_Node (Explorer.Tree, N);
+                  Start_String;
+                  Store_String_Chars
+                    (Get_Name_String (Projects.Table
+                                        (Project).Object_Directory));
+                  Obj := End_String;
                   Tmp := Add_Directory_Node
                     (Explorer,
                      Directory   => Get_Name_String
                      (Projects.Table (Prj).Object_Directory),
                      Parent_Node => Node,
                      Current_Dir => Current_Dir,
+                     Directory_String => Obj,
                      Object_Directory => True);
 
                when Project_Node =>
