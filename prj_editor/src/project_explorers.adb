@@ -157,11 +157,9 @@ package body Project_Explorers is
    -- Searching --
    ---------------
 
-   type Search_Status is (Match, Indirect_Match, No_Match);
+   type Search_Status is (Match, No_Match);
    --  Values stored in the String_Status hash table:
    --    - Match: the entry is a direct match
-   --    - Indirect_Match: the entry is only relevant because one of its
-   --      imported subprojects, directories or files matches
    --    - No_Match: the node doesn't match and neither do its chidlren.
 
    procedure Nop (X : in out Search_Status);
@@ -517,10 +515,8 @@ package body Project_Explorers is
       --  Use basename so that we get proper handling of case-insensitive file
       --  systems.
 
-      Text1 : constant String := Node_Get_Text (T, N1, 0);
-      --  Base_Name (Node_Get_Text (T, N1, 0));
-      Text2 : constant String := Node_Get_Text (T, N2, 0);
-      --  Base_Name (Node_Get_Text (T, N2, 0));
+      Text1 : constant String := Base_Name (Node_Get_Text (T, N1, 0));
+      Text2 : constant String := Base_Name (Node_Get_Text (T, N2, 0));
 
    begin
       --  At least one of the nodes is a project
@@ -2591,43 +2587,16 @@ package body Project_Explorers is
          Dir  : constant String := Full_Name
            (Full_Name'First ..
             Full_Name'Last - Base'Length - 1);
-         Status : Search_Status;
 
       begin
          Set (C.Matches, new String'(Base), Match);
-
-         Status := Get (C.Matches, Dir'Unrestricted_Access);
-         case Status is
-            when No_Match       =>
-               Set (C.Matches, new String'(Dir), Match);
-
-            when Indirect_Match =>
-               Set (C.Matches, Dir'Unrestricted_Access, Match);
-
-            when Match          =>
-               null;
-         end case;
+         Set (C.Matches, new String'(Dir), Match);
 
          if not Project_Marked then
             --  Mark the current project and all its importing
             --  projects as matching
 
-            declare
-               P_Name : aliased constant String := Project_Name (Project);
-            begin
-               Status := Get (C.Matches, P_Name'Unrestricted_Access);
-               case Status is
-                  when No_Match       =>
-                     Set (C.Matches, new String'(P_Name), Match);
-
-                  when Indirect_Match =>
-                     Set (C.Matches, P_Name'Unrestricted_Access,  Match);
-
-                  when Match          =>
-                     null;
-               end case;
-            end;
-
+            Set (C.Matches, new String'(Project_Name (Project)), Match);
 
             declare
                Prjs : constant Project_Id_Array := Find_All_Projects_Importing
@@ -2635,21 +2604,7 @@ package body Project_Explorers is
                   Project      => Project);
             begin
                for P in Prjs'Range loop
-                  declare
-                     P_Name : aliased constant String :=
-                       Project_Name (Prjs (P));
-                  begin
-                     Status := Get (C.Matches, P_Name'Unrestricted_Access);
-
-                     case Status is
-                        when No_Match               =>
-                           Set
-                             (C.Matches, new String'(P_Name), Indirect_Match);
-
-                        when Indirect_Match | Match =>
-                           null;
-                     end case;
-                  end;
+                  Set (C.Matches, new String'(Project_Name (Prjs (P))), Match);
                end loop;
             end;
 
