@@ -18,6 +18,12 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+
+--  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+--  !!   This package is now obsolete, do not use
+--  !!   Use Glide_Kernel.Scripts instead
+--  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 with Glide_Kernel;
 with GNAT.OS_Lib;
 with Glib.Object;
