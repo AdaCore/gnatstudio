@@ -1,5 +1,13 @@
 Known Problems fixed in GVD 1.2.0
 
+- Load a module on the debugger console does not update the explorer
+
+  Problem:    When using the load or file command in the debugger console
+              window, the source explorer is not updated.
+
+  Workaround: Either load using the File->Open Program... menu, or use the
+              "Reload Sources" in the explorer contextual menu.
+
 - Displaying list of tasks on a non running program.
 
   Problem:    Opening the menu Data->Tasks... will generate a bug box when the
