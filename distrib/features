@@ -1,17 +1,16 @@
 New features in GPS 1.2.0
 
-- BB13-008: There is now a confirmation dialog asking the user whether he
-  wants to wrap around the search.
+- BB13-008 Confirmation dialog asking to wrap around during a search
 
-- B820-007: Executable names can be changed in the project properties editor
+- B820-007 Executable names can be changed in the project properties editor
 
-- Errors highlighting in the source editor.
+- Errors highlighting in the source editor
 
-- Block highlighting in the source editor.
+- Block highlighting in the source editor
 
-- Ability to add support for new languages through XML files.
+- Ability to add support for new languages through XML files
 
-- Ability to create text aliases (Edit->Aliases).
+- Ability to create text aliases (Edit->Aliases)
 
 - New documentation can now be added through simple XML index files
   A new menu Help->Contents provides a list of all registered documentation.
