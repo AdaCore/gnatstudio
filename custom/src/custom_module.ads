@@ -97,55 +97,10 @@
 
 with Glide_Kernel;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
-with GNAT.Expect;
-with GNAT.Regpat;
 with Glide_Kernel.Actions;      use Glide_Kernel.Actions;
 with Glide_Kernel;              use Glide_Kernel;
-with Glide_Kernel.Scripts;      use Glide_Kernel.Scripts;
-with Generic_List;
-
-with Ada.Unchecked_Deallocation;
 
 package Custom_Module is
-
-   ---------------------------------------------
-   -- Definitions for the interface to expect --
-   ---------------------------------------------
-
-   type Pattern_Matcher_Access is access GNAT.Regpat.Pattern_Matcher;
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (GNAT.Regpat.Pattern_Matcher, Pattern_Matcher_Access);
-
-   type Expect_Filter is record
-      Pattern : Pattern_Matcher_Access;
-      Action  : Glide_Kernel.Scripts.Subprogram_Type;
-   end record;
-
-   procedure Free (X : in out Expect_Filter);
-   --  Free memory associated to X.
-
-   package Expect_Filter_List is new Generic_List (Expect_Filter);
-
-   type Custom_Action_Record is record
-      Pattern    : Pattern_Matcher_Access;
-      Command    : Argument_List_Access;
-      On_Match   : Glide_Kernel.Scripts.Subprogram_Type;
-      On_Exit    : Glide_Kernel.Scripts.Subprogram_Type;
-      Fd         : GNAT.Expect.Process_Descriptor_Access;
-
-      Processed_Output : String_Access;
-      Unmatched_Output : String_Access;
-
-      Filters    : Expect_Filter_List.List;
-   end record;
-
-   type Custom_Action_Access is access all Custom_Action_Record;
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (Custom_Action_Record, Custom_Action_Access);
-
-   procedure Free (X : in out Custom_Action_Access);
-   procedure Free (X : in out Custom_Action_Record);
-   --  Free memory associated to X.
 
    --------------------------------------
    -- Definitions for contextual menus --

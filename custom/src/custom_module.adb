@@ -1062,39 +1062,4 @@ package body Custom_Module is
          Handler       => Menu_Handler'Access);
    end Register_Module;
 
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (X : in out Custom_Action_Record) is
-   begin
-      Free (X.Command);
-      Unchecked_Free (X.Pattern);
-      Free (X.Unmatched_Output);
-      Free (X.Processed_Output);
-      Free (X.On_Exit);
-      Free (X.On_Match);
-   end Free;
-
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (X : in out Custom_Action_Access) is
-   begin
-      if X /= null then
-         Free (X.all);
-         Unchecked_Free (X);
-      end if;
-   end Free;
-
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (X : in out Expect_Filter) is
-   begin
-      Unchecked_Free (X.Pattern);
-   end Free;
-
 end Custom_Module;
