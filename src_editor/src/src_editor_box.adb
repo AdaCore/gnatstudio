@@ -1171,16 +1171,16 @@ package body Src_Editor_Box is
      (Editor : access Source_Editor_Box_Record)
    is
       B : Boolean;
+      pragma Unreferenced (B);
+
    begin
+      Editor.Timestamp_Mode := Check_At_Modify;
+
       if Get_Status (Editor.Source_Buffer) = Unmodified then
          B := Check_Timestamp
            (Editor.Source_Buffer, Ask_User => False, Force => True);
       else
          B := Check_Timestamp (Editor.Source_Buffer, Ask_User => True);
-
-         if B then
-            Editor.Timestamp_Mode := Check_At_Modify;
-         end if;
       end if;
    end Check_Timestamp;
 
