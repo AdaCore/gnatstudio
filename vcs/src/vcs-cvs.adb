@@ -239,10 +239,22 @@ package body VCS.CVS is
    is
       use String_List;
 
+      Dir  : constant String := Dir_Name (Head (Filenames));
       C    : External_Command_Access;
       Args : List;
 
    begin
+      --  Do not launch a CVS action if there is no "CVS" directory in the
+      --  directory.
+
+      if not GNAT.OS_Lib.Is_Directory (Dir & "CVS") then
+         Insert
+           (Rep.Kernel,
+            -"There is no CVS information for directory: " & Dir,
+            Mode => Info);
+         return;
+      end if;
+
       declare
          Args_Temp : List_Node := First (Arguments);
       begin
@@ -252,7 +264,7 @@ package body VCS.CVS is
          end loop;
       end;
 
-      if Head (Filenames) /= Dir_Name (Head (Filenames)) then
+      if Head (Filenames) /= Dir then
          declare
             Files_Temp : List_Node := First (Filenames);
          begin
@@ -541,6 +553,13 @@ package body VCS.CVS is
       Dir             : constant String := Dir_Name (Data (Files));
 
    begin
+      --  Do not launch a CVS action if there is no "CVS" directory in the
+      --  directory.
+
+      if not GNAT.OS_Lib.Is_Directory (Dir & "CVS") then
+         return;
+      end if;
+
       Append (Command_Head, Dir_Name (Data (Files)));
       Append (Command_Head, Boolean'Image (Clear_Logs));
 
