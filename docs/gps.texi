@@ -4773,7 +4773,7 @@ course you can run these commands again to get a new reference.
 Python is an interpreted object-oriented language, created by Guido
 Van Rossum. It is similar in its capabilities to languages such as
 Perl, Tcl or Lisp. This section is not a tutorial on python
-programming. See @url{http://www.python.orgdoc/current/} to access the
+programming. See @url{http://www.python.org/doc/current/} to access the
 documentation for the current version of python.
 
 The python shell is accessible through the @code{Python} window at the
