@@ -14,22 +14,9 @@ with GNAT.OS_Lib;
 --  - handles multiple views of the MDI (through several top-level windows)
 --  - Provide automatic initial placement of widgets
 --  - Saving and restoring sessions (window location,...)
---  - When in a scrolled window, shouldn't constrain the possible coordinates
 --  - Icons should be put at the bottom, and automatically moved when the
 --    MDI window is resized.
---  - When items are maximized, they should be put in a notebook.
 --  - Icons should be placed correctly when there are also docked items
---  - Implementation: see if we could have a cleaner approach for docks, by
---    having them implemented as special MDI_Child that act as proxies for
---    their children.
---  - How to specify the priorities in the docks ?
---  - Dock an item at Top and Bottom => They can be made to overlap.
---  - Items docked in the middle => Can't be resized
---
---  From GNOME MDI documentation:
---  - GnomeMDI also provides means to create global menus and toolbar that
---    apply for each document and for merging document-specific menus with the
---    global ones
 
 package Gtkada.MDI is
 
@@ -52,6 +39,14 @@ package Gtkada.MDI is
    --  Order is important, since items docked on the left or right will
    --  occupy the whole height of MDI, whereas the ones on top or bottom will
    --  occupy the full width minus the left and right docks.
+
+   type Priorities_Array is array (Left .. Bottom) of Integer;
+   --  The priorities for the docks on each side of MDI. The lower priority
+   --  dock will be resized first, and thus will occupy the maximum space
+   --  available (for instance, if Left has a lower priority that Bottom, then
+   --  the dock on the left side will occupy the full height of MDI, whereas
+   --  the dock at the bottom will occupy the full width minus the width of
+   --  the left dock).
 
    procedure Gtk_New (MDI : out MDI_Window);
    --  Create a new MDI window.
@@ -105,7 +100,8 @@ package Gtkada.MDI is
    --  Change the minimized state of a child.
    --  If the child was floating, it is first put back in the MDI
 
-   procedure Maximize_Children (MDI : access MDI_Window_Record);
+   procedure Maximize_Children
+     (MDI : access MDI_Window_Record; Maximize : Boolean := True);
    --  All windows, except docked and floating ones, are maximized and occupy
    --  as much space as possible in MDI.
 
@@ -160,6 +156,11 @@ package Gtkada.MDI is
    -----------------------------------
    -- Floating and docking children --
    -----------------------------------
+
+   procedure Set_Priorites
+     (MDI : access MDI_Window_Record; Prio : Priorities_Array);
+   --  Set the priorities to use for the docks (see description of
+   --  Priorities_Array).
 
    procedure Float_Child
      (Child : access MDI_Child_Record'Class; Float : Boolean);
@@ -328,6 +329,8 @@ private
       MDI_Width, MDI_Height : Glib.Guint := 0;
       --  Size of the MDI. This is used to avoid infinite loops in
       --  size_allocate
+
+      Priorities : Priorities_Array := (0, 1, 2, 3);
 
       Menu : Gtk.Menu.Gtk_Menu;
       Dock_Menu_Item : Gtk.Check_Menu_Item.Gtk_Check_Menu_Item;
