@@ -478,7 +478,7 @@ $T2H_EXAMPLE_INDENT_CELL = '<td>&nbsp;</td>';
 # same as above, only for @small
 $T2H_SMALL_EXAMPLE_INDENT_CELL = '<td>&nbsp;</td>';
 # font size for @small
-$T2H_SMALL_FONT_SIZE = '-1';
+$T2H_SMALL_FONT_SIZE = '+0';
 
 # if non-empty, and no @..heading appeared in Top node, then
 # use this as header for top node/section, otherwise use value of 
