@@ -480,4 +480,17 @@ package body Python is
       Internal (Obj, Msg & ASCII.NUL);
    end Print_Refcount;
 
+   ------------------------
+   -- PyFile_WriteString --
+   ------------------------
+
+   function PyFile_WriteString
+     (Text : String; File : PyObject) return Boolean
+   is
+      function Internal (Text : String; File : PyObject) return Integer;
+      pragma Import (C, Internal, "PyFile_WriteString");
+   begin
+      return Internal (Text & ASCII.NUL, File) /= 0;
+   end PyFile_WriteString;
+
 end Python;

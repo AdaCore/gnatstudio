@@ -444,6 +444,16 @@ package Python is
    --  Return an object from the sys module,
    --  Returned object must not be Py_DECREF by the caller.
 
+   -----------
+   -- Files --
+   -----------
+
+   function PyFile_WriteString (Text : String; File : PyObject) return Boolean;
+   --  Write a string to an instance of file. You can for instance get such an
+   --  instance by using
+   --     PySys_GetObject ("stdout")
+   --  Return False if the string couldn't be written
+
    ------------------------
    -- Executing commands --
    ------------------------
