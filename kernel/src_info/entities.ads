@@ -287,9 +287,10 @@ package Entities is
      (File                : Source_File;
       Depends_On          : Source_File;
       Explicit_Dependency : Boolean := False);
-   --  Add a new dependency to File. No check is done to ensure the dependency
-   --  is not already listed. File is automatically added to the list of
-   --  files that Depends_On imports.
+   --  Add a new dependency to File. Nothing is done if the dependency has
+   --  already been registered.
+   --  File is automatically added to the list of files that Depends_On
+   --  imports.
    --  If Explicit_Dependency is true, this indicates an explicit #include
    --  or with statement in the file.
 
@@ -688,7 +689,7 @@ private
    -----------------------
 
    type Entities_Database_Record is record
-      Entities : Entities_Tries.Trie_Tree;
+      Entities : Entities_Tries.Trie_Tree := Entities_Tries.Empty_Trie_Tree;
       Files    : Files_HTable.HTable;
       LIs      : LI_HTable.HTable;
 
