@@ -293,6 +293,10 @@ package body Project_Explorers_Common is
       Handler    : constant Src_Info.LI_Handler :=
         Get_LI_Handler_From_File (Languages, File_Name);
    begin
+      if Handler = null then
+         return;
+      end if;
+
       Push_State (Kernel, Busy);
 
       Lang := Get_Language_From_File
