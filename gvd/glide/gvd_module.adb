@@ -95,6 +95,7 @@ with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
 with Debugger_Pixmaps;          use Debugger_Pixmaps;
 
 with Commands;                  use Commands;
+with Commands.Interactive;      use Commands.Interactive;
 with Commands.Debugger;         use Commands.Debugger;
 
 with GVD.Text_Box.Source_Editor; use GVD.Text_Box.Source_Editor;
@@ -192,13 +193,6 @@ package body GVD_Module is
    procedure Destroy (Id : in out GVD_Module_Record);
    --  Terminate the debugger the module, and kill the underlying debugger.
 
-   procedure GVD_Contextual
-     (Object  : access GObject_Record'Class;
-      Context : access Selection_Context'Class;
-      Menu    : access Gtk.Menu.Gtk_Menu_Record'Class);
-   --  Generate the contextual menu entries for contextual menus in other
-   --  modules than the debugger.
-
    procedure Tooltip_Handler
      (Sel_Context : access Selection_Context'Class;
       Pixmap      : out Gdk.Gdk_Pixmap;
@@ -289,6 +283,108 @@ package body GVD_Module is
 
    procedure On_Debug_Terminate_Single (Widget : access GObject_Record'Class);
    --  Callback for the "debugger_closed" singla.
+
+   --------------------
+   -- GVD_Contextual --
+   --------------------
+
+   Is_Printable_Entity : constant array (E_Kinds) of Boolean :=
+     (Overloaded_Entity     => True,
+      Unresolved_Entity     => True,
+      Access_Kind           => True,
+      Array_Kind            => True,
+      Boolean_Kind          => True,
+      Class_Wide            => True,
+      Class                 => True,
+      Decimal_Fixed_Point   => True,
+      Enumeration_Literal   => True,
+      Enumeration_Kind      => True,
+      Exception_Entity      => True,
+      Floating_Point        => True,
+      Modular_Integer       => True,
+      Named_Number          => True,
+      Ordinary_Fixed_Point  => True,
+      Record_Kind           => True,
+      Signed_Integer        => True,
+      String_Kind           => True,
+      others                => False);
+   --  Set of printable entities
+
+   Is_Access_Entity : constant array (E_Kinds) of Boolean :=
+     (Overloaded_Entity => True,
+      Unresolved_Entity => True,
+      Access_Kind       => True,
+      Array_Kind        => True,
+      String_Kind       => True,
+      others            => False);
+   --  Set of potentially dereferenceable entities
+
+   ----------------
+   -- Contextual --
+   ----------------
+
+   type Debugger_Active_Filter is new Action_Filter_Record with null record;
+   function Filter_Matches_Primitive
+     (Filter  : access Debugger_Active_Filter;
+      Context : Selection_Context_Access;
+      Kernel  : access Kernel_Handle_Record'Class) return Boolean;
+
+   type Printable_Variable_Filter is new Action_Filter_Record with null record;
+   function Filter_Matches_Primitive
+     (Filter  : access Printable_Variable_Filter;
+      Context : Selection_Context_Access;
+      Kernel  : access Kernel_Handle_Record'Class) return Boolean;
+
+   type Access_Variable_Filter is new Action_Filter_Record with null record;
+   function Filter_Matches_Primitive
+     (Filter  : access Access_Variable_Filter;
+      Context : Selection_Context_Access;
+      Kernel  : access Kernel_Handle_Record'Class) return Boolean;
+
+   type Subprogram_Variable_Filter
+     is new Action_Filter_Record with null record;
+   function Filter_Matches_Primitive
+     (Filter  : access Subprogram_Variable_Filter;
+      Context : Selection_Context_Access;
+      Kernel  : access Kernel_Handle_Record'Class) return Boolean;
+
+   type Print_Variable_Command is new Interactive_Command with record
+      Display     : Boolean := False;
+      Dereference : Boolean := False;
+   end record;
+   function Execute
+     (Command : access Print_Variable_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+
+   type Set_Value_Command is new Interactive_Command with null record;
+   function Execute
+     (Command : access Set_Value_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+
+   type View_Memory_Command is new Interactive_Command with null record;
+   function Execute
+     (Command : access View_Memory_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+
+   type Show_Location_Command is new Interactive_Command with null record;
+   function Execute
+     (Command : access Show_Location_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+
+   type Set_Breakpoint_Command is new Interactive_Command with record
+      On_Line       : Boolean := False;  --  If False, on entity
+      Continue_Till : Boolean := False;  --  Continue until given line ?
+   end record;
+   function Execute
+     (Command : access Set_Breakpoint_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+
+   type Var_Name_Label is new Contextual_Menu_Label_Creator_Record with record
+      Command : Interactive_Command_Access;
+   end record;
+   function Get_Label
+     (Creator   : access Var_Name_Label;
+      Context   : access Selection_Context'Class) return String;
 
    ----------------------------------
    -- Load_Project_From_Executable --
@@ -672,60 +768,6 @@ package body GVD_Module is
    procedure On_Debug_Terminate
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Debug->Terminate
-
-   -------------------------------
-   -- Contextual Menu Callbacks --
-   -------------------------------
-
-   procedure Set_Breakpoint
-     (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access);
-   --  Set a breakpoint on a specific line.
-
-   procedure Set_Subprogram_Breakpoint
-     (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access);
-   --  Set a breakpoint at the beginning of a specified subprogram.
-
-   procedure Till_Breakpoint
-     (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access);
-   --  Set a temporary breakpoint on a line, and continue execution.
-
-   procedure Print_Variable
-     (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access);
-   --  Callback for the "print" contextual menu items.
-
-   procedure Graph_Display_Variable
-     (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access);
-   --  Callback for the "display" contextual menu items.
-
-   procedure Print_Dereference_Variable
-     (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access);
-   --  Callback for the "print" dereferenced entity contextual menu items.
-
-   procedure Graph_Display_Dereference_Variable
-     (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access);
-   --  Callback for the "display" dereferenced entity contextual menu items.
-
-   procedure View_Into_Memory
-     (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access);
-   --  Callback for the "view memory at address of" contextual menu item.
-
-   procedure Set_Value
-     (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access);
-   --  Callback for the "set value of" contextual menu item.
-
-   procedure Show_Current_Line_Menu
-     (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access);
-   --  Display the current file and current line in the editor.
 
    -----------------------
    -- Toolbar Callbacks --
@@ -1246,197 +1288,239 @@ package body GVD_Module is
                 "Unexpected exception: " & Exception_Information (E));
    end On_Load_Core;
 
-   --------------------
-   -- GVD_Contextual --
-   --------------------
+   ---------------
+   -- Get_Label --
+   ---------------
 
-   Is_Printable_Entity : constant array (E_Kinds) of Boolean :=
-     (Overloaded_Entity     => True,
-      Unresolved_Entity     => True,
-      Access_Kind           => True,
-      Array_Kind            => True,
-      Boolean_Kind          => True,
-      Class_Wide            => True,
-      Class                 => True,
-      Decimal_Fixed_Point   => True,
-      Enumeration_Literal   => True,
-      Enumeration_Kind      => True,
-      Exception_Entity      => True,
-      Floating_Point        => True,
-      Modular_Integer       => True,
-      Named_Number          => True,
-      Ordinary_Fixed_Point  => True,
-      Record_Kind           => True,
-      Signed_Integer        => True,
-      String_Kind           => True,
-      others                => False);
-   --  Set of printable entities
-
-   Is_Access_Entity : constant array (E_Kinds) of Boolean :=
-     (Overloaded_Entity => True,
-      Unresolved_Entity => True,
-      Access_Kind       => True,
-      Array_Kind        => True,
-      String_Kind       => True,
-      others            => False);
-   --  Set of potentially dereferenceable entities
-
-   procedure GVD_Contextual
-     (Object  : access GObject_Record'Class;
-      Context : access Selection_Context'Class;
-      Menu    : access Gtk.Menu.Gtk_Menu_Record'Class)
+   function Get_Label
+     (Creator   : access Var_Name_Label;
+      Context   : access Selection_Context'Class) return String
    is
-      pragma Unreferenced (Object);
-
-      Process  : constant Visual_Debugger :=
-        Get_Current_Process (Get_Main_Window (Get_Kernel (Context)));
-      Entity   : Entity_Selection_Context_Access;
-      Mitem    : Gtk_Menu_Item;
-      Submenu  : Gtk_Menu;
-      Line     : Integer;
-      Debugger : Debugger_Access;
-
+      Name : constant String := Get_Variable_Name
+        (Selection_Context_Access (Context),
+         Print_Variable_Command (Creator.Command.all).Dereference);
    begin
-      if Process = null
-        or else Process.Debugger = null
-        or else Context.all not in Entity_Selection_Context'Class
-      then
-         return;
+      if Print_Variable_Command (Creator.Command.all).Display then
+         return -"Debug/Display " & Krunch (Name);
+      else
+         return -"Debug/Print " & Krunch (Name);
       end if;
+   end Get_Label;
 
-      Entity   := Entity_Selection_Context_Access (Context);
-      Debugger := Process.Debugger;
+   -------------
+   -- Execute --
+   -------------
 
-      Gtk_New (Mitem, Label => -"Debug");
-      Gtk_New (Submenu);
-      Set_Submenu (Mitem, Gtk_Widget (Submenu));
-      Append (Menu, Mitem);
+   function Execute
+     (Command : access Show_Location_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
+   is
+      pragma Unreferenced (Command);
+      Top  : constant Glide_Window :=
+        Glide_Window (Get_Main_Window (Get_Kernel (Context.Context)));
+      Edit : constant GEdit := GEdit (Get_Source
+        (Visual_Debugger (Get_Current_Process (Top)).Editor_Text));
+      Name : constant Virtual_File := Get_Current_File (Edit);
+   begin
+      if Name /= VFS.No_File then
+         Highlight_Current_Line (Edit);
+      end if;
+      return Commands.Success;
+   end Execute;
 
-      if not Command_In_Process (Get_Process (Debugger)) then
-         if Has_Entity_Name_Information (Entity) then
-            declare
-               Ent       : constant String :=
-                 Krunch (Get_Variable_Name
-                           (Selection_Context_Access (Context), False));
-               Ent_Deref : constant String :=
-                 Krunch (Get_Variable_Name
-                           (Selection_Context_Access (Context), True));
-               Entity_Info : constant Entity_Information :=
-                 Get_Entity (Entity);
-               Kind        : E_Kind;
+   -------------
+   -- Execute --
+   -------------
 
-            begin
-               if Entity_Info /= null then
-                  Kind := Get_Kind (Entity_Info);
-               end if;
-
-               if Entity_Info = null
-                 or else (not Kind.Is_Type
-                          and then Is_Printable_Entity (Kind.Kind))
-               then
-                  Gtk_New (Mitem, -"Print " & Ent);
-                  Append (Submenu, Mitem);
-                  Context_Callback.Connect
-                    (Mitem, "activate",
-                     Context_Callback.To_Marshaller (Print_Variable'Access),
-                     Selection_Context_Access (Context));
-                  Gtk_New (Mitem, -"Display " & Ent);
-                  Append (Submenu, Mitem);
-                  Context_Callback.Connect
-                    (Mitem, "activate",
-                     Context_Callback.To_Marshaller
-                       (Graph_Display_Variable'Access),
-                     Selection_Context_Access (Context));
-               end if;
-
-               if Entity_Info = null
-                 or else (not Kind.Is_Type
-                          and then Is_Access_Entity (Kind.Kind))
-               then
-                  Gtk_New (Mitem, -"Print " & Ent_Deref);
-                  Append (Submenu, Mitem);
-                  Context_Callback.Connect
-                    (Mitem, "activate",
-                     Context_Callback.To_Marshaller
-                       (Print_Dereference_Variable'Access),
-                     Selection_Context_Access (Context));
-                  Gtk_New (Mitem, -"Display " & Ent_Deref);
-                  Append (Submenu, Mitem);
-                  Context_Callback.Connect
-                    (Mitem, "activate",
-                     Context_Callback.To_Marshaller
-                       (Graph_Display_Dereference_Variable'Access),
-                     Selection_Context_Access (Context));
-               end if;
-
-               if Entity_Info = null
-               or else (not Kind.Is_Type
-                        and then Is_Printable_Entity (Kind.Kind))
-               then
-                  Gtk_New (Mitem, -"Set value of " & Ent);
-                  Append (Submenu, Mitem);
-                  Context_Callback.Connect
-                    (Mitem, "activate",
-                     Context_Callback.To_Marshaller
-                       (Set_Value'Access),
-                     Selection_Context_Access (Context));
-
-                  Gtk_New (Mitem, -"View memory at address of " & Ent);
-                  Append (Submenu, Mitem);
-                  Context_Callback.Connect
-                    (Mitem, "activate",
-                     Context_Callback.To_Marshaller
-                       (View_Into_Memory'Access),
-                     Selection_Context_Access (Context));
-                  Gtk_New (Mitem);
-                  Append (Submenu, Mitem);
-               end if;
-
-               if Entity_Info = null
-                 or else Is_Subprogram (Entity_Info)
-               then
-                  Gtk_New (Mitem, -"Set breakpoint on " & Ent);
-                  Append (Submenu, Mitem);
-                  Context_Callback.Connect
-                    (Mitem, "activate",
-                     Context_Callback.To_Marshaller
-                       (Set_Subprogram_Breakpoint'Access),
-                     Selection_Context_Access (Context));
-               end if;
-            end;
-         end if;
-
-         if Has_Line_Information (Entity) then
-            Line := Line_Information (Entity);
-            Gtk_New (Mitem, -"Set breakpoint on line" & Line'Img);
-            Append (Submenu, Mitem);
-            Context_Callback.Connect
-              (Mitem, "activate",
-               Context_Callback.To_Marshaller (Set_Breakpoint'Access),
-               Selection_Context_Access (Context));
-            Gtk_New (Mitem, -"Continue until line" & Line'Img);
-            Append (Submenu, Mitem);
-            Context_Callback.Connect
-              (Mitem, "activate",
-               Context_Callback.To_Marshaller (Till_Breakpoint'Access),
-               Selection_Context_Access (Context));
-            Gtk_New (Mitem);
-            Append (Submenu, Mitem);
+   function Execute
+     (Command : access Print_Variable_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
+   is
+      Process : constant Visual_Debugger :=
+        Get_Current_Process (Get_Main_Window (Get_Kernel (Context.Context)));
+      Debugger : constant Debugger_Access := Process.Debugger;
+      Name     : constant String :=
+        Get_Variable_Name (Context.Context, Command.Dereference);
+   begin
+      if Name /= "" then
+         if Command.Display then
+            Process_User_Command
+              (Process, "graph display " & Name, Output_Command => True);
+         else
+            Send (Debugger, Print_Value_Cmd (Debugger, Name),
+                  Mode => GVD.Types.Visible);
          end if;
       end if;
+      return Commands.Success;
+   end Execute;
 
-      Gtk_New (Mitem, -"Show Current Location");
-      Append (Submenu, Mitem);
-      Context_Callback.Connect
-        (Mitem, "activate",
-         Context_Callback.To_Marshaller (Show_Current_Line_Menu'Access),
-         Selection_Context_Access (Context));
+   -------------
+   -- Execute --
+   -------------
 
-   exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
-   end GVD_Contextual;
+   function Execute
+     (Command : access Set_Value_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
+   is
+      pragma Unreferenced (Command);
+      Process : constant Visual_Debugger :=
+        Get_Current_Process (Get_Main_Window (Get_Kernel (Context.Context)));
+      Entity  : constant Entity_Selection_Context_Access :=
+        Entity_Selection_Context_Access (Context.Context);
+      Variable : constant String := Entity_Name_Information (Entity);
+      S        : constant String :=
+        Simple_Entry_Dialog
+          (Parent   => Process.Window,
+           Title    => -"Setting value of " & Variable,
+           Message  => -"Setting value of " & Variable & ':',
+           Position => Win_Pos_Mouse,
+           Key      => "gvd_set_value_dialog");
+   begin
+      if S /= "" and then S (S'First) /= ASCII.NUL then
+         Set_Variable (Process.Debugger, Variable, S);
+      end if;
+      return Commands.Success;
+   end Execute;
+
+   -------------
+   -- Execute --
+   -------------
+
+   function Execute
+     (Command : access View_Memory_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
+   is
+      pragma Unreferenced (Command);
+      Entity  : constant Entity_Selection_Context_Access :=
+        Entity_Selection_Context_Access (Context.Context);
+      Top  : constant Glide_Window :=
+        Glide_Window (Get_Main_Window (Get_Kernel (Entity)));
+   begin
+      if Top.Memory_View = null then
+         Gtk_New (Top.Memory_View, Gtk_Widget (Top));
+      end if;
+
+      Show_All (Top.Memory_View);
+      Display_Memory (Top.Memory_View, Entity_Name_Information (Entity));
+      Gdk_Raise (Get_Window (Top.Memory_View));
+      return Commands.Success;
+   end Execute;
+
+   -------------
+   -- Execute --
+   -------------
+
+   function Execute
+     (Command : access Set_Breakpoint_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
+   is
+      Entity   : constant Entity_Selection_Context_Access :=
+        Entity_Selection_Context_Access (Context.Context);
+      Debugger : constant Debugger_Access :=
+        Get_Current_Process (Get_Main_Window (Get_Kernel (Entity))).Debugger;
+   begin
+      if not Command.On_Line then
+         Break_Subprogram
+           (Debugger,
+            Entity_Name_Information (Entity),
+            Mode => GVD.Types.Visible);
+      elsif Command.Continue_Till then
+         Break_Source
+           (Debugger,
+            File_Information (Entity),
+            Line_Information (Entity),
+            Temporary => True);
+         Continue (Debugger, Mode => GVD.Types.Visible);
+      else
+         Break_Source
+           (Debugger,
+            File_Information (Entity),
+            Line_Information (Entity),
+            Mode => GVD.Types.Visible);
+      end if;
+
+      return Commands.Success;
+   end Execute;
+
+   ------------------------------
+   -- Filter_Matches_Primitive --
+   ------------------------------
+
+   function Filter_Matches_Primitive
+     (Filter  : access Debugger_Active_Filter;
+      Context : Selection_Context_Access;
+      Kernel  : access Kernel_Handle_Record'Class) return Boolean
+   is
+      pragma Unreferenced (Filter);
+      Process  : constant Visual_Debugger :=
+        Get_Current_Process (Get_Main_Window (Kernel));
+   begin
+      return Process /= null
+        and then Process.Debugger /= null
+        and then Context.all in Entity_Selection_Context'Class
+        and then not Command_In_Process (Get_Process (Process.Debugger));
+   end Filter_Matches_Primitive;
+
+   ------------------------------
+   -- Filter_Matches_Primitive --
+   ------------------------------
+
+   function Filter_Matches_Primitive
+     (Filter  : access Subprogram_Variable_Filter;
+      Context : Selection_Context_Access;
+      Kernel  : access Kernel_Handle_Record'Class) return Boolean
+   is
+      pragma Unreferenced (Filter, Kernel);
+      Entity : Entity_Information;
+   begin
+      if Context.all in Entity_Selection_Context'Class then
+         Entity := Get_Entity (Entity_Selection_Context_Access (Context));
+         return Entity = null or else Is_Subprogram (Entity);
+      end if;
+      return False;
+   end Filter_Matches_Primitive;
+
+   ------------------------------
+   -- Filter_Matches_Primitive --
+   ------------------------------
+
+   function Filter_Matches_Primitive
+     (Filter  : access Printable_Variable_Filter;
+      Context : Selection_Context_Access;
+      Kernel  : access Kernel_Handle_Record'Class) return Boolean
+   is
+      pragma Unreferenced (Filter, Kernel);
+      Entity : Entity_Information;
+   begin
+      if Context.all in Entity_Selection_Context'Class then
+         Entity := Get_Entity (Entity_Selection_Context_Access (Context));
+         return Entity = null
+           or else (not Get_Kind (Entity).Is_Type
+                    and then Is_Printable_Entity (Get_Kind (Entity).Kind));
+      end if;
+      return False;
+   end Filter_Matches_Primitive;
+
+   ------------------------------
+   -- Filter_Matches_Primitive --
+   ------------------------------
+
+   function Filter_Matches_Primitive
+     (Filter  : access Access_Variable_Filter;
+      Context : Selection_Context_Access;
+      Kernel  : access Kernel_Handle_Record'Class) return Boolean
+   is
+      pragma Unreferenced (Filter, Kernel);
+      Entity : Entity_Information;
+   begin
+      if Context.all in Entity_Selection_Context'Class then
+         Entity := Get_Entity (Entity_Selection_Context_Access (Context));
+         return Entity = null
+           or else (not Get_Kind (Entity).Is_Type
+                    and then Is_Access_Entity (Get_Kind (Entity).Kind));
+      end if;
+      return False;
+   end Filter_Matches_Primitive;
 
    ---------------------
    -- Tooltip_Handler --
@@ -1853,6 +1937,10 @@ package body GVD_Module is
       Pop_State (Kernel);
    end Debug_Terminate;
 
+   ---------------------
+   -- Debug_Terminate --
+   ---------------------
+
    procedure Debug_Terminate (Kernel : Kernel_Handle) is
       Top              : constant Glide_Window :=
         Glide_Window (Get_Main_Window (Kernel));
@@ -1921,87 +2009,6 @@ package body GVD_Module is
         (GVD_Module (GVD_Module_ID).Kernel, Visual_Debugger (Widget));
    end On_Debug_Terminate_Single;
 
-   --------------------
-   -- Set_Breakpoint --
-   --------------------
-
-   procedure Set_Breakpoint
-     (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access)
-   is
-      Entity   : constant Entity_Selection_Context_Access :=
-        Entity_Selection_Context_Access (Context);
-      Debugger : constant Debugger_Access :=
-        Get_Current_Process (Get_Main_Window (Get_Kernel (Context))).Debugger;
-      pragma Unreferenced (Widget);
-
-   begin
-      Break_Source
-        (Debugger,
-         File_Information (Entity),
-         Line_Information (Entity),
-         Mode => GVD.Types.Visible);
-
-   exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
-   end Set_Breakpoint;
-
-   -------------------------------
-   -- Set_Subprogram_Breakpoint --
-   -------------------------------
-
-   procedure Set_Subprogram_Breakpoint
-     (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access)
-   is
-      Entity   : constant Entity_Selection_Context_Access :=
-        Entity_Selection_Context_Access (Context);
-      Debugger : constant Debugger_Access :=
-        Get_Current_Process (Get_Main_Window (Get_Kernel (Context))).Debugger;
-      pragma Unreferenced (Widget);
-
-   begin
-      Break_Subprogram
-        (Debugger,
-         Entity_Name_Information (Entity),
-         Mode => GVD.Types.Visible);
-
-   exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
-   end Set_Subprogram_Breakpoint;
-
-   ---------------------
-   -- Till_Breakpoint --
-   ---------------------
-
-   procedure Till_Breakpoint
-     (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access)
-   is
-      Entity   : constant Entity_Selection_Context_Access :=
-        Entity_Selection_Context_Access (Context);
-      Debugger : constant Debugger_Access :=
-        Get_Current_Process (Get_Main_Window (Get_Kernel (Context))).Debugger;
-      pragma Unreferenced (Widget);
-
-   begin
-      Break_Source
-        (Debugger,
-         File_Information (Entity),
-         Line_Information (Entity),
-         Temporary => True);
-      Continue (Debugger, Mode => GVD.Types.Visible);
-
-   exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
-   end Till_Breakpoint;
-
    -----------------------
    -- Get_Variable_Name --
    -----------------------
@@ -2040,222 +2047,6 @@ package body GVD_Module is
 
       return "";
    end Get_Variable_Name;
-
-   --------------------
-   -- Print_Variable --
-   --------------------
-
-   procedure Print_Variable
-     (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access)
-   is
-      pragma Unreferenced (Widget);
-
-      Debugger : constant Debugger_Access :=
-        Get_Current_Process (Get_Main_Window (Get_Kernel (Context))).Debugger;
-      Name     : constant String := Get_Variable_Name (Context, False);
-   begin
-      if Name /= "" then
-         Send (Debugger, Print_Value_Cmd (Debugger, Name),
-               Mode => GVD.Types.Visible);
-      end if;
-
-   exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
-   end Print_Variable;
-
-   --------------------------------
-   -- Print_Dereference_Variable --
-   --------------------------------
-
-   procedure Print_Dereference_Variable
-     (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access)
-   is
-      pragma Unreferenced (Widget);
-
-      Debugger : constant Debugger_Access :=
-        Get_Current_Process (Get_Main_Window (Get_Kernel (Context))).Debugger;
-      Name     : constant String := Get_Variable_Name (Context, True);
-   begin
-      if Name /= "" then
-         Send (Debugger, Print_Value_Cmd (Debugger, Name),
-               Mode => GVD.Types.Visible);
-      end if;
-
-   exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
-   end Print_Dereference_Variable;
-
-   ----------------------------------------
-   -- Graph_Display_Dereference_Variable --
-   ----------------------------------------
-
-   procedure Graph_Display_Dereference_Variable
-     (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access)
-   is
-      pragma Unreferenced (Widget);
-      Process : constant Visual_Debugger :=
-        Get_Current_Process (Get_Main_Window (Get_Kernel (Context)));
-      Name    : constant String := Get_Variable_Name (Context, True);
-
-   begin
-      if Name /= "" then
-         Process_User_Command
-           (Process,
-            "graph display " & Name,
-            Output_Command => True);
-      end if;
-
-   exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
-   end Graph_Display_Dereference_Variable;
-
-   ----------------------------
-   -- Graph_Display_Variable --
-   ----------------------------
-
-   procedure Graph_Display_Variable
-     (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access)
-   is
-      pragma Unreferenced (Widget);
-      Process : constant Visual_Debugger :=
-        Get_Current_Process (Get_Main_Window (Get_Kernel (Context)));
-      Name    : constant String := Get_Variable_Name (Context, False);
-
-   begin
-      if Name /= "" then
-         Process_User_Command
-           (Process,
-            "graph display " & Name,
-            Output_Command => True);
-      end if;
-
-   exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
-   end Graph_Display_Variable;
-
-   ----------------------
-   -- View_Into_Memory --
-   ----------------------
-
-   procedure View_Into_Memory
-     (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access)
-   is
-      pragma Unreferenced (Widget);
-      Top  : constant Glide_Window :=
-        Glide_Window (Get_Main_Window (Get_Kernel (Context)));
-      Entity  : Entity_Selection_Context_Access;
-   begin
-      if Context = null
-        or else not (Context.all in Entity_Selection_Context'Class)
-      then
-         return;
-      end if;
-
-      Entity := Entity_Selection_Context_Access (Context);
-
-      if Has_Entity_Name_Information (Entity) then
-         if Top.Memory_View = null then
-            Gtk_New (Top.Memory_View, Gtk_Widget (Top));
-         end if;
-
-         Show_All (Top.Memory_View);
-         Display_Memory
-           (Top.Memory_View,
-            Entity_Name_Information (Entity));
-         Gdk_Raise (Get_Window (Top.Memory_View));
-      end if;
-
-   exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
-   end View_Into_Memory;
-
-   ---------------
-   -- Set_Value --
-   ---------------
-
-   procedure Set_Value
-     (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access)
-   is
-      pragma Unreferenced (Widget);
-      Process  : constant Visual_Debugger :=
-        Get_Current_Process (Get_Main_Window (Get_Kernel (Context)));
-      Entity  : Entity_Selection_Context_Access;
-
-   begin
-      if Context = null
-        or else not (Context.all in Entity_Selection_Context'Class)
-      then
-         return;
-      end if;
-
-      Entity := Entity_Selection_Context_Access (Context);
-
-      if Has_Entity_Name_Information (Entity) then
-         declare
-            Variable : constant String := Entity_Name_Information (Entity);
-            S        : constant String :=
-              Simple_Entry_Dialog
-                (Parent   => Process.Window,
-                 Title    => -"Setting value of " & Variable,
-                 Message  => -"Setting value of " & Variable & ':',
-                 Position => Win_Pos_Mouse,
-                 Key      => "gvd_set_value_dialog");
-
-         begin
-            if S /= "" and then S (S'First) /= ASCII.NUL then
-               Set_Variable (Process.Debugger, Variable, S);
-            end if;
-         end;
-      end if;
-
-   exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
-   end Set_Value;
-
-   ----------------------------
-   -- Show_Current_Line_Menu --
-   ----------------------------
-
-   procedure Show_Current_Line_Menu
-     (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access)
-   is
-      pragma Unreferenced (Widget);
-
-      Top  : constant Glide_Window :=
-        Glide_Window (Get_Main_Window (Get_Kernel (Context)));
-      Edit : constant GEdit := GEdit (Get_Source
-        (Visual_Debugger (Get_Current_Process (Top)).Editor_Text));
-      Name : constant Virtual_File := Get_Current_File (Edit);
-
-   begin
-      if Name /= VFS.No_File then
-         Highlight_Current_Line (Edit);
-      end if;
-
-   exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
-   end Show_Current_Line_Menu;
 
    -----------------------
    -- On_Start_Continue --
@@ -2572,6 +2363,13 @@ package body GVD_Module is
       Menu           : Gtk_Menu;
       Debugger_Class : constant Glide_Kernel.Scripts.Class_Type :=
         Glide_Kernel.Scripts.New_Class (Kernel, "Debugger");
+      Command        : Interactive_Command_Access;
+      Filter         : Action_Filter;
+      Debugger_Filter   : Action_Filter;
+      Printable_Filter  : Action_Filter;
+      Access_Filter     : Action_Filter;
+      Subprogram_Filter : Action_Filter;
+      Label             : Contextual_Menu_Label_Creator;
 
    begin
       GVD_Module_ID := new GVD_Module_Record;
@@ -2584,8 +2382,99 @@ package body GVD_Module is
          Kernel                  => Kernel,
          Module_Name             => GVD_Module_Name,
          Priority                => Default_Priority + 20,
-         Contextual_Menu_Handler => GVD_Contextual'Access,
          Tooltip_Handler         => Tooltip_Handler'Access);
+
+      Debugger_Filter := new Debugger_Active_Filter;
+      Register_Filter (Kernel, Debugger_Filter, "Debugger active");
+
+      Printable_Filter  := new Printable_Variable_Filter;
+      Access_Filter     := new Access_Variable_Filter;
+      Subprogram_Filter := new Subprogram_Variable_Filter;
+
+      Filter := Action_Filter (Debugger_Filter and Printable_Filter);
+      Command := new Print_Variable_Command;
+      Label := new Var_Name_Label'(Command => Command);
+      Register_Contextual_Menu
+        (Kernel, "Debug print variable",
+         Label  => Label,
+         Action => Command,
+         Filter => Filter);
+
+      Command := new Print_Variable_Command;
+      Print_Variable_Command (Command.all).Display := True;
+      Label := new Var_Name_Label'(Command => Command);
+      Register_Contextual_Menu
+        (Kernel, "Debug display variable",
+         Label  => Label,
+         Action => Command,
+         Filter => Filter);
+
+      Filter := Action_Filter
+        (Debugger_Filter and Printable_Filter and Access_Filter);
+      Command := new Print_Variable_Command;
+      Print_Variable_Command (Command.all).Display := False;
+      Print_Variable_Command (Command.all).Dereference := True;
+      Label := new Var_Name_Label'(Command => Command);
+      Register_Contextual_Menu
+        (Kernel, "Debug print dereferenced variable",
+         Label  => Label,
+         Action => Command,
+         Filter => Filter);
+
+      Command := new Print_Variable_Command;
+      Print_Variable_Command (Command.all).Display := True;
+      Print_Variable_Command (Command.all).Dereference := True;
+      Label := new Var_Name_Label'(Command => Command);
+      Register_Contextual_Menu
+        (Kernel, "Debug display dereferenced variable",
+         Label  => Label,
+         Action => Command,
+         Filter => Filter);
+
+      Command := new Set_Value_Command;
+      Register_Contextual_Menu
+        (Kernel, "Debug set value",
+         Label  => -"Debug/Set value of %e",
+         Action => Command,
+         Filter => Action_Filter (Debugger_Filter and Printable_Filter));
+
+      Command := new View_Memory_Command;
+      Register_Contextual_Menu
+        (Kernel, "Debug view memory",
+         Label  => -"Debug/View memory at address of %e",
+         Action => Command,
+         Filter => Action_Filter (Debugger_Filter and Printable_Filter));
+
+      Command := new Set_Breakpoint_Command;
+      Register_Contextual_Menu
+        (Kernel, "Debug set subprogram breakpoint",
+         Label  => -"Debug/Set breakpoint on %e",
+         Action => Command,
+         Filter => Action_Filter (Debugger_Filter and Subprogram_Filter));
+
+      Command := new Set_Breakpoint_Command;
+      Set_Breakpoint_Command (Command.all).On_Line := True;
+      Register_Contextual_Menu
+        (Kernel, "Debug set line breakpoint",
+         Label  => -"Debug/Set breakpoint on line %l",
+         Action => Command,
+         Filter => Debugger_Filter);
+
+      Command := new Set_Breakpoint_Command;
+      Set_Breakpoint_Command (Command.all).On_Line := True;
+      Set_Breakpoint_Command (Command.all).Continue_Till := True;
+      Register_Contextual_Menu
+        (Kernel, "Debug continue until",
+         Label  => -"Debug/Continue until line %l",
+         Action => Command,
+         Filter => Debugger_Filter);
+
+      Command := new Show_Location_Command;
+      Register_Contextual_Menu
+        (Kernel, "Debug show current location",
+         Label  => -"Debug/Show current location",
+         Action => Command,
+         Filter => Debugger_Filter);
 
       --  Dynamic Initialize menu
       Mitem := Register_Menu (Kernel, Debug, -"Initialize", "", null,
