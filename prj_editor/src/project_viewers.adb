@@ -459,6 +459,10 @@ package body Project_Viewers is
    begin
       O_Time := File_Time_Stamp (Fd);
       localtime_r (O_Time, T);
+
+      --  Make sure the values returned by localtime are in the
+      --  appropriate range
+      T.tm_mon := T.tm_mon + 1;
       A_Time := Time_Of (1900 + T.tm_year, T.tm_mon, T.tm_mday,
                          T.tm_hour, T.tm_min, T.tm_sec);
       Line := New_String (Image (A_Time, Timestamp_Picture));
