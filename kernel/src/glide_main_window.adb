@@ -280,7 +280,9 @@ package body Glide_Main_Window is
         (Main_Window.Kernel,
          Name        => "Move to next window",
          Command     => Command,
-         Description => -"Select the next window in GPS");
+         Description =>
+           -("Select the next window in GPS. Any key binding should use a"
+             & " modifier such as control for best usage of this function."));
       Bind_Default_Key
         (Handler        => Get_Key_Handler (Main_Window.Kernel),
          Action          => "Move to next window",
@@ -293,7 +295,9 @@ package body Glide_Main_Window is
         (Main_Window.Kernel,
          Name        => "Move to previous window",
          Command     => Command,
-         Description => -"Select the previous window in GPS");
+         Description =>
+           -("Select the previous window in GPS. Any key binding should use a"
+             & " modifier such as control for best usage of this function."));
       Bind_Default_Key
         (Handler        => Get_Key_Handler (Main_Window.Kernel),
          Action         => "Move to previous window",
