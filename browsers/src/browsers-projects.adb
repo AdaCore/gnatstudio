@@ -37,9 +37,8 @@ with Gtk.Stock;                use Gtk.Stock;
 with Gtk.Widget;               use Gtk.Widget;
 with Gtkada.Canvas;            use Gtkada.Canvas;
 with Gtkada.MDI;               use Gtkada.MDI;
-with Prj;                      use Prj;
-with Prj.Tree;                 use Prj.Tree;
-with Prj_API;                  use Prj_API;
+with Projects;                 use Projects;
+with Projects.Registry;        use Projects.Registry;
 with Types;                    use Types;
 with Ada.Exceptions;           use Ada.Exceptions;
 with Traces;                   use Traces;
@@ -56,7 +55,7 @@ package body Browsers.Projects is
 
    procedure Examine_Project_Hierarchy
      (Browser : access Project_Browser_Record'Class;
-      Project : Prj.Tree.Project_Node_Id;
+      Project : Project_Type;
       Recursive : Boolean);
    --  Display the project hierarchy for Project in the canvas.
    --  If Recursive is True, then the projects imported indirectly are also
@@ -92,6 +91,10 @@ package body Browsers.Projects is
       return Gtkada.MDI.MDI_Child;
    --  Find, or create, a project browser
 
+   function Project_Of (Item : access Browser_Project_Vertex)
+      return Project_Type;
+   --  Return the project associated with Item
+
    function Load_Desktop
      (Node : Node_Ptr; User : Kernel_Handle) return Gtk_Widget;
    function Save_Desktop
@@ -123,13 +126,13 @@ package body Browsers.Projects is
 
    function Add_Project_If_Not_Present
      (Browser : access Project_Browser_Record'Class;
-      Project : Project_Node_Id) return Browser_Project_Vertex_Access;
+      Project : Project_Type) return Browser_Project_Vertex_Access;
    --  Add a new item for Project if there is currently none in the browser
 
    procedure Examine_Ancestor_Project_Hierarchy
      (Browser          : access Project_Browser_Record'Class;
-      Root_Project     : Prj.Tree.Project_Node_Id;
-      Project          : Prj.Tree.Project_Node_Id);
+      Root_Project     : Project_Type;
+      Project          : Project_Type);
    --  Add to the browser all the projects that with Project.
 
    procedure On_Examine_Prj_Hierarchy
@@ -137,6 +140,17 @@ package body Browsers.Projects is
    procedure On_Examine_Ancestor_Hierarchy
      (Item : access Arrow_Item_Record'Class);
    --  Callbacks for the button in the title bar
+
+   ----------------
+   -- Project_Of --
+   ----------------
+
+   function Project_Of (Item : access Browser_Project_Vertex)
+      return Project_Type is
+   begin
+      return Get_Project_From_Name
+        (Get_Registry (Get_Kernel (Get_Browser (Item))), Item.Name);
+   end Project_Of;
 
    ------------------
    -- Find_Project --
@@ -164,10 +178,10 @@ package body Browsers.Projects is
 
    function Add_Project_If_Not_Present
      (Browser : access Project_Browser_Record'Class;
-      Project : Project_Node_Id) return Browser_Project_Vertex_Access
+      Project : Project_Type) return Browser_Project_Vertex_Access
    is
       V : Browser_Project_Vertex_Access := Find_Project
-        (Browser, Prj.Tree.Name_Of (Project));
+        (Browser, Project_Name (Project));
    begin
       if V = null then
          Gtk_New (V, Browser, Project);
@@ -185,18 +199,16 @@ package body Browsers.Projects is
    procedure Gtk_New
      (V       : out Browser_Project_Vertex_Access;
       Browser : access Project_Browser_Record'Class;
-      Project : Project_Node_Id)
-   is
-      Name : constant Name_Id := Prj.Tree.Name_Of (Project);
+      Project : Project_Type) is
    begin
       V := new Browser_Project_Vertex;
       Initialize (V, Browser,
-                  Get_String (Name) & Prj.Project_File_Extension,
+                  Project_Name (Project) & Project_File_Extension,
                   On_Examine_Ancestor_Hierarchy'Access,
                   On_Examine_Prj_Hierarchy'Access);
-      V.Name           := Name;
-      Set_Children_Shown
-        (V, First_With_Clause_Of (Project) = Empty_Node);
+      V.Name := Project_Name (Project);
+
+      Set_Children_Shown (V, not Has_Imported_Projects (Project));
    end Gtk_New;
 
    -------------------------------
@@ -205,13 +217,13 @@ package body Browsers.Projects is
 
    procedure Examine_Project_Hierarchy
      (Browser          : access Project_Browser_Record'Class;
-      Project          : Prj.Tree.Project_Node_Id;
+      Project          : Project_Type;
       Recursive        : Boolean)
    is
       Kernel : constant Kernel_Handle := Get_Kernel (Browser);
 
       procedure Process_Project
-        (Local : Project_Node_Id; Src : Browser_Project_Vertex_Access);
+        (Local : Project_Type; Src : Browser_Project_Vertex_Access);
       --  Display all the imported projects from Local.
       --  Src is the item associated with Local
 
@@ -220,11 +232,11 @@ package body Browsers.Projects is
       ---------------------
 
       procedure Process_Project
-        (Local : Project_Node_Id; Src : Browser_Project_Vertex_Access)
+        (Local : Project_Type; Src : Browser_Project_Vertex_Access)
       is
-         With_Clause : Project_Node_Id := First_With_Clause_Of (Local);
          L           : Browser_Link;
          Dest        : Browser_Project_Vertex_Access;
+         Iter        : Imported_Project_Iterator;
       begin
          Set_Children_Shown (Src, True);
 
@@ -235,20 +247,24 @@ package body Browsers.Projects is
             Set_Parents_Shown (Src, True);
          end if;
 
-         while With_Clause /= Empty_Node loop
-            Dest := Add_Project_If_Not_Present
-              (Browser, Project_Node_Of (With_Clause));
+         Iter := Start (Local, Recursive => True, Direct_Only => True);
+
+         while Current (Iter) /= No_Project loop
+            Dest := Add_Project_If_Not_Present (Browser, Current (Iter));
 
             if not Has_Link (Get_Canvas (Browser), Src, Dest) then
                L := new Browser_Link_Record;
                Add_Link (Get_Canvas (Browser), L, Src, Dest);
             end if;
 
+            --  ??? Could be more efficient if we could use Direct_Only =>
+            --  False in the call to Start.
+
             if Recursive and then not Children_Shown (Dest) then
-               Process_Project (Project_Node_Of (With_Clause), Dest);
+               Process_Project (Current (Iter), Dest);
             end if;
 
-            With_Clause := Next_With_Clause_Of (With_Clause);
+            Next (Iter);
          end loop;
 
          Redraw_Title_Bar (Browser_Item (Src));
@@ -258,10 +274,10 @@ package body Browsers.Projects is
       Item_Was_Present : Boolean;
    begin
       Trace (Me, "Examine_Project_Hierarchy for "
-             & Get_String (Prj.Tree.Name_Of (Project)));
+             & Project_Name (Project));
       Push_State (Kernel, Busy);
 
-      Src := Find_Project (Browser, Prj.Tree.Name_Of (Project));
+      Src := Find_Project (Browser, Project_Name (Project));
       Item_Was_Present := Src /= null;
 
       if Src = null then
@@ -299,38 +315,34 @@ package body Browsers.Projects is
 
    procedure Examine_Ancestor_Project_Hierarchy
      (Browser          : access Project_Browser_Record'Class;
-      Root_Project     : Prj.Tree.Project_Node_Id;
-      Project          : Prj.Tree.Project_Node_Id)
+      Root_Project     : Project_Type;
+      Project          : Project_Type)
    is
       Kernel      : constant Kernel_Handle := Get_Kernel (Browser);
-      With_Clause : Project_Node_Id;
       Src, Dest   : Browser_Project_Vertex_Access;
       L           : Browser_Link;
-      Iter        : Imported_Project_Iterator := Start
-        (Root_Project => Root_Project, Recursive => True);
+      Iter        : Imported_Project_Iterator;
    begin
       Trace (Me, "Examine_Ancestor_Project_Hierarchy for "
-             & Get_String (Prj.Tree.Name_Of (Project)));
+             & Project_Name (Project));
       Push_State (Kernel, Busy);
 
       Dest := Add_Project_If_Not_Present (Browser, Project);
       Set_Parents_Shown (Dest, True);
 
+      Iter := Find_All_Projects_Importing
+        (Root_Project => Root_Project,
+         Project      => Project,
+         Include_Self => False,
+         Direct_Only  => True);
+
       while Current (Iter) /= No_Project loop
-         With_Clause := First_With_Clause_Of (Current (Iter));
+         Src := Add_Project_If_Not_Present (Browser, Current (Iter));
 
-         while With_Clause /= Empty_Node loop
-            if Project_Node_Of (With_Clause) = Project then
-               Src := Add_Project_If_Not_Present (Browser, Current (Iter));
-
-               if not Has_Link (Get_Canvas (Browser), Src, Dest) then
-                  L := new Browser_Link_Record;
-                  Add_Link (Get_Canvas (Browser), L, Src, Dest);
-               end if;
-            end if;
-
-            With_Clause := Next_With_Clause_Of (With_Clause);
-         end loop;
+         if not Has_Link (Get_Canvas (Browser), Src, Dest) then
+            L := new Browser_Link_Record;
+            Add_Link (Get_Canvas (Browser), L, Src, Dest);
+         end if;
 
          Next (Iter);
       end loop;
@@ -399,8 +411,7 @@ package body Browsers.Projects is
    begin
       Examine_Project_Hierarchy
         (Project_Browser (Get_Widget (Browser)),
-         Get_Project_From_View
-         (Project_Information (File_Selection_Context_Access (Context))),
+         Project_Information (File_Selection_Context_Access (Context)),
          Recursive        => False);
    end On_Examine_Prj_Hierarchy;
 
@@ -413,7 +424,7 @@ package body Browsers.Projects is
    begin
       Examine_Project_Hierarchy
         (Project_Browser (Get_Browser (Item)),
-         Get_Project_From_Name (Browser_Project_Vertex_Access (Item).Name),
+         Project_Of (Browser_Project_Vertex_Access (Item)),
          Recursive        => False);
    end On_Examine_Prj_Hierarchy;
 
@@ -429,8 +440,7 @@ package body Browsers.Projects is
       Examine_Ancestor_Project_Hierarchy
         (Browser      => B,
          Root_Project => Get_Project (Get_Kernel (B)),
-         Project      => Get_Project_From_Name
-         (Browser_Project_Vertex_Access (Item).Name));
+         Project      => Project_Of (Browser_Project_Vertex_Access (Item)));
    end On_Examine_Ancestor_Hierarchy;
 
    -----------------------------------
@@ -447,8 +457,7 @@ package body Browsers.Projects is
    begin
       Examine_Project_Hierarchy
         (Project_Browser (Get_Widget (Browser)),
-         Get_Project_From_View
-         (Project_Information (File_Selection_Context_Access (Context))),
+         Project_Information (File_Selection_Context_Access (Context)),
          Recursive        => True);
    end On_Examine_Full_Prj_Hierarchy;
 
@@ -467,8 +476,7 @@ package body Browsers.Projects is
    begin
       Examine_Ancestor_Project_Hierarchy
         (B, Get_Project (Get_Kernel (B)),
-         Get_Project_From_View
-         (Project_Information (File_Selection_Context_Access (Context))));
+         Project_Information (File_Selection_Context_Access (Context)));
    end On_Examine_Ancestor_From_Contextual;
 
    ------------------------
@@ -490,7 +498,7 @@ package body Browsers.Projects is
    begin
       Set_File_Information
         (File_Selection_Context_Access (Context),
-         Project_View => Get_Project_View_From_Name (Item.Name));
+         Project => Project_Of (Item));
 
       if Menu /= null then
          Gtk_New (Mitem, Label => (-"Examine dependencies for ") & Name);

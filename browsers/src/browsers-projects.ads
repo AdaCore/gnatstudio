@@ -26,7 +26,7 @@ with Glide_Kernel;
 with Gdk.Event;
 with Gtk.Menu;
 with Types;
-with Prj.Tree;
+with Projects;
 with Pango.Layout;
 
 package Browsers.Projects is
@@ -64,7 +64,7 @@ private
    procedure Gtk_New
      (V       : out Browser_Project_Vertex_Access;
       Browser : access Project_Browser_Record'Class;
-      Project : Prj.Tree.Project_Node_Id);
+      Project : Standard.Projects.Project_Type);
    --  Create a new project vertex
 
    type Browser_Project_Vertex is new Browsers.Canvas.Arrow_Item_Record with
