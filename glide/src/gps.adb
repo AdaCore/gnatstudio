@@ -162,8 +162,13 @@ procedure GPS is
 
    procedure Init_Settings is
       Dir_Created : Boolean := False;
-      File : File_Type;
+      File        : File_Type;
    begin
+      --  Set the TERM variable to a dummy value, since we only know how to
+      --  handle simple terminals
+
+      Setenv ("TERM", "dumb");
+
       Home := Getenv ("GPS_HOME");
 
       if Home.all = "" then
