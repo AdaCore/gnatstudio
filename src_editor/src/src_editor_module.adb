@@ -262,6 +262,33 @@ package body Src_Editor_Module is
       Params : Glib.Values.GValues) return Boolean;
    --  Callback for the "delete_event" signal.
 
+   procedure File_Edited_Cb
+     (Widget  : access Glib.Object.GObject_Record'Class;
+      Args    : GValues;
+      Kernel  : Kernel_Handle);
+   --  Callback for the "file_edited" signal.
+
+   --------------------
+   -- File_Edited_Cb --
+   --------------------
+
+   procedure File_Edited_Cb
+     (Widget  : access Glib.Object.GObject_Record'Class;
+      Args    : GValues;
+      Kernel  : Kernel_Handle)
+   is
+      pragma Unreferenced (Widget);
+
+      File  : String := Get_String (Nth (Args, 1));
+   begin
+      Create_Line_Information_Column
+        (Kernel,
+         File,
+         Src_Editor_Module_Name,
+         Stick_To_Data => False,
+         Every_Line    => True);
+   end File_Edited_Cb;
+
    ---------------------
    -- Delete_Callback --
    ---------------------
@@ -336,15 +363,13 @@ package body Src_Editor_Module is
                Directory_Information (Area_Context) &
                File_Information (Area_Context),
                Src_Editor_Module_Name,
-               Infos,
-               False);
+               Infos);
          else
             Add_Line_Information
               (Kernel,
                "",
                Src_Editor_Module_Name,
-               Infos,
-               False);
+               Infos);
          end if;
       end if;
    end On_Lines_Revealed;
@@ -620,6 +645,12 @@ package body Src_Editor_Module is
          else
             Set_Title (Child, -"No Name");
          end if;
+
+
+         --  We have created a new file editor : emit the corresponding signal.
+         --  ??? what do we do when opening an editor with no name ?
+
+         File_Edited (Kernel, File);
 
          --  Update and save the "Reopen" menu state.
          declare
@@ -1257,30 +1288,74 @@ package body Src_Editor_Module is
               To_Line_Information (Get_Address (Data (Data'First + 2)));
             Stick_To_Data : constant Boolean :=
               Get_Boolean (Data (Data'First + 3));
+            Every_Line : constant Boolean :=
+              Get_Boolean (Data (Data'First + 4));
             Child : MDI_Child;
             Iter  : Child_Iterator := First_Child (MDI);
+
+            procedure Apply_Mime_On_Child (Child : MDI_Child);
+            --  Apply the mime information on Child.
+
+            procedure Apply_Mime_On_Child (Child : MDI_Child) is
+            begin
+               if Info'First = 0 then
+                  Create_Line_Information_Column
+                    (Source_Box (Get_Widget (Child)).Editor,
+                     Id,
+                     Stick_To_Data,
+                     Every_Line);
+
+               elsif Info'Length = 0 then
+                  Remove_Line_Information_Column
+                    (Source_Box (Get_Widget (Child)).Editor, Id);
+
+               else
+                  Add_File_Information
+                    (Source_Box (Get_Widget (Child)).Editor, Id, Info);
+               end if;
+            end Apply_Mime_On_Child;
 
          begin
             --  Look for the corresponding file editor.
 
-            loop
-               Child := Get (Iter);
-               exit when Child = null
-                 or else Get_Title (Child) = File
-                 or else (File = "" and then Get_Title (Child) = -"No Name");
-               --  ??? It is dangerous to rely on 'No Name' for a new file
-               Next (Iter);
-            end loop;
+            if File = "" then
+               loop
+                  Child := Get (Iter);
+                  exit when Child = null;
 
-            if Child /= null then
-               --  The editor was found.
-               Add_File_Information
-                 (Source_Box (Get_Widget (Child)).Editor,
-                  Id,
-                  Info,
-                  Stick_To_Data);
+                  declare
+                     Title : String := Get_Title (Child);
+                  begin
+                     --  ??? Right now, we detect that a certain MDI child
+                     --  is an editor by looking at the first character of
+                     --  the title. This is very wrong !
+
+                     if Title (Title'First) = '/' then
+                        Apply_Mime_On_Child (Child);
+                     end if;
+                  end;
+
+                  Next (Iter);
+               end loop;
 
                return True;
+
+            else
+               loop
+                  Child := Get (Iter);
+                  exit when Child = null
+                    or else Get_Title (Child) = File
+                    or else Get_Title (Child) = -"No Name";
+                  --  ??? It is dangerous to rely on 'No Name' for a new file
+                  Next (Iter);
+               end loop;
+
+               if Child /= null then
+                  --  The editor was found.
+                  Apply_Mime_On_Child (Child);
+
+                  return True;
+               end if;
             end if;
          end;
       end if;
@@ -1537,6 +1612,12 @@ package body Src_Editor_Module is
         (Kernel,
          Source_Lines_Revealed_Signal,
          On_Lines_Revealed'Access,
+         Kernel_Handle (Kernel));
+
+      Kernel_Callback.Connect
+        (Kernel,
+         File_Edited_Signal,
+         File_Edited_Cb'Access,
          Kernel_Handle (Kernel));
    end Register_Module;
 
