@@ -770,6 +770,11 @@ package body Projects.Registry is
       Languages  : Argument_List := Get_Languages (Project);
       Languages2 : Name_Id_Array (Languages'Range);
       Languages3 : Name_Id_Array (Languages'Range);
+      --  The list of languages. Languages2 is a precomputed version of
+      --  Languages to speed up string comparison. Languages3's contents is
+      --  reset to No_Name if at least one file exists for the given language.
+      --  Thus we can easily issue warnings when a language has no file.
+
       Dirs      : String_Array_Access;
       Dir       : Dir_Type;
       Length    : Natural;
