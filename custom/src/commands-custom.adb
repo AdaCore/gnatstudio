@@ -258,6 +258,7 @@ package body Commands.Custom is
             Interpret_Command
               (Command.Kernel,
                Command_To_String (Command.Command.all, New_Args.all));
+            Success := True;
          else
             Launch_Process
               (Command.Kernel,
