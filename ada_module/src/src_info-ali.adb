@@ -1479,7 +1479,12 @@ package body Src_Info.ALI is
                   if Decl.End_Of_Scope = No_Reference
                     or else E_Ref.Location.File.Part = Unit_Body
                   then
-                     Decl.End_Of_Scope := E_Ref;
+                     Decl.End_Of_Scope :=
+                       (Kind     => E_Ref.Kind,
+                        Location =>
+                          (File   => Copy (Current_Sfile),
+                           Line   => Positive (Current_Xref.Line),
+                           Column => Natural (Current_Xref.Col)));
 
                      --  For an operator, ignore the quotes
                      if Is_Operator then
