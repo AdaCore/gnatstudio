@@ -20,7 +20,6 @@
 
 --  This package is the root of the glide's kernel API.
 
-with Ada.Tags;
 with GNAT.OS_Lib;
 with Generic_List;
 with Gint_Xml;
@@ -137,11 +136,6 @@ package Glide_Kernel is
    function Get_Tooltips (Handle : access Kernel_Handle_Record)
       return Gtk.Tooltips.Gtk_Tooltips;
    --  Return the widget used to register tooltips for the graphical interface.
-
-   function Find_MDI_Child_By_Tag
-     (Handle : access Kernel_Handle_Record; Tag : Ada.Tags.Tag)
-      return Gtkada.MDI.MDI_Child;
-   --  Return the first child matching Tag
 
    --------------
    -- Contexts --

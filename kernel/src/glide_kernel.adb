@@ -26,7 +26,6 @@ with Gtkada.MDI;                use Gtkada.MDI;
 with System;                    use System;
 
 with Ada.Text_IO;               use Ada.Text_IO;
-with Ada.Tags;                  use Ada.Tags;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with Unchecked_Deallocation;
@@ -533,28 +532,6 @@ package body Glide_Kernel is
    begin
       return Page.Process_Mdi;
    end Get_MDI;
-
-   ---------------------------
-   -- Find_MDI_Child_By_Tag --
-   ---------------------------
-
-   function Find_MDI_Child_By_Tag
-     (Handle : access Kernel_Handle_Record; Tag : Ada.Tags.Tag)
-      return Gtkada.MDI.MDI_Child
-   is
-      MDI   : MDI_Window := Get_MDI (Handle);
-      Child : MDI_Child;
-      Iter  : Child_Iterator := First_Child (MDI);
-   begin
-      loop
-         Child := Get (Iter);
-         exit when Child = null
-           or else Get_Widget (Child)'Tag = Tag;
-         Next (Iter);
-      end loop;
-
-      return Get (Iter);
-   end Find_MDI_Child_By_Tag;
 
    -------------
    -- Destroy --
