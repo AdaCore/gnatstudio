@@ -115,7 +115,7 @@ package body Browsers.Call_Graph is
    --  Show the list of subprograms that call the one described in Context.
 
    function Find_Entity
-     (In_Browser : access Glide_Browser_Record'Class;
+     (In_Browser : access General_Browser_Record'Class;
       Entity     : Entity_Information)
       return Canvas_Item;
    --  Return the child that shows Item_Name in the browser, or null if
@@ -237,7 +237,7 @@ package body Browsers.Call_Graph is
 
    procedure Gtk_New
      (Item    : out Entity_Item;
-      Browser : access Browsers.Canvas.Glide_Browser_Record'Class;
+      Browser : access Browsers.Canvas.General_Browser_Record'Class;
       Entity  : Src_Info.Queries.Entity_Information;
       May_Have_To_Dependencies : Boolean) is
    begin
@@ -251,19 +251,19 @@ package body Browsers.Call_Graph is
 
    procedure Initialize
      (Item    : access Entity_Item_Record'Class;
-      Browser : access Browsers.Canvas.Glide_Browser_Record'Class;
+      Browser : access Browsers.Canvas.General_Browser_Record'Class;
       Entity  : Src_Info.Queries.Entity_Information;
       May_Have_To_Dependencies : Boolean) is
    begin
       Item.Entity   := Copy (Entity);
 
       if Get_Declaration_File_Of (Entity) /= "" then
-         Browsers.Canvas.Initialize
+         Initialize
            (Item, Browser, Get_Name (Entity) & ASCII.LF
             & Get_Declaration_File_Of (Entity)
             & ':' & Image (Get_Declaration_Line_Of (Entity)));
       else
-         Browsers.Canvas.Initialize
+         Initialize
            (Item, Browser, Get_Name (Entity) & ASCII.LF & (-"<Unresolved>"));
       end if;
 
@@ -277,7 +277,7 @@ package body Browsers.Call_Graph is
 
    procedure Destroy (Item : in out Entity_Item_Record) is
    begin
-      Destroy (Glide_Browser_Text_Item_Record (Item));
+      Destroy (Text_Item_Record (Item));
       Destroy (Item.Entity);
    end Destroy;
 
@@ -347,47 +347,19 @@ package body Browsers.Call_Graph is
    -----------------
 
    function Find_Entity
-     (In_Browser : access Glide_Browser_Record'Class;
+     (In_Browser : access General_Browser_Record'Class;
       Entity     : Entity_Information)
       return Canvas_Item
    is
       Found : Canvas_Item := null;
-
-      function Check_Item
-        (Canvas : access Interactive_Canvas_Record'Class;
-         Item   : access Canvas_Item_Record'Class) return Boolean;
-      --  Check whether Item contains File
-
-      ----------------
-      -- Check_Item --
-      ----------------
-
-      function Check_Item
-        (Canvas : access Interactive_Canvas_Record'Class;
-         Item   : access Canvas_Item_Record'Class) return Boolean
-      is
-         pragma Unreferenced (Canvas);
-         Info : Entity_Information;
-      begin
-         if Item.all in Entity_Item_Record'Class then
-            Info := Entity_Item (Item).Entity;
-            --  ??? Should we check the file name as well
-            if Get_Name (Info)  = Get_Name (Entity)
-              and then Get_Declaration_Line_Of (Info) =
-                Get_Declaration_Line_Of (Entity)
-              and then Get_Declaration_Column_Of (Info) =
-                Get_Declaration_Column_Of (Entity)
-            then
-               Found := Canvas_Item (Item);
-               return False;
-            end if;
-         end if;
-
-         return True;
-      end Check_Item;
-
+      Iter : Item_Iterator := Start (Get_Canvas (In_Browser));
    begin
-      For_Each_Item (Get_Canvas (In_Browser), Check_Item'Unrestricted_Access);
+      loop
+         Found := Get (Iter);
+         exit when Found = null
+           or else Is_Equal (Entity_Item (Found).Entity, Entity);
+         Next (Iter);
+      end loop;
       return Found;
    end Find_Entity;
 
@@ -532,7 +504,7 @@ package body Browsers.Call_Graph is
       Item, Child   : Entity_Item;
       Child_Browser : MDI_Child;
       Browser       : Call_Graph_Browser;
-      Link          : Glide_Browser_Link;
+      Link          : Browser_Link;
       Tree          : Scope_Tree;
       Node          : Scope_Tree_Node;
       Rename        : Entity_Information;
@@ -548,13 +520,13 @@ package body Browsers.Call_Graph is
       procedure Process_Item (Node : Scope_Tree_Node) is
          Iter  : Scope_Tree_Node_Iterator := Start (Node);
          Child : Entity_Item;
-         Link  : Glide_Browser_Link;
+         Link  : Browser_Link;
       begin
          while Get (Iter) /= Null_Scope_Tree_Node loop
             if Is_Subprogram (Get (Iter)) then
                Child := Add_Entity_If_Not_Present (Browser, Get (Iter));
                if not Has_Link (Get_Canvas (Browser), Item, Child) then
-                  Link := new Glide_Browser_Link_Record;
+                  Link := new Browser_Link_Record;
                   Add_Link (Get_Canvas (Browser),
                             Link => Link,
                             Src  => Item,
@@ -684,7 +656,7 @@ package body Browsers.Call_Graph is
       procedure Add_Item (Node : Scope_Tree_Node; Is_Renaming : Boolean) is
          Child  : Entity_Item;
          Parent : Scope_Tree_Node;
-         Link   : Glide_Browser_Link;
+         Link   : Browser_Link;
       begin
          if Is_Subprogram (Node) then
 
@@ -717,7 +689,7 @@ package body Browsers.Call_Graph is
                   if not Has_Link
                     (Get_Canvas (Data.Browser), Child, Data.Item)
                   then
-                     Link := new Glide_Browser_Link_Record;
+                     Link := new Browser_Link_Record;
                      Add_Link
                        (Get_Canvas (Data.Browser), Link => Link,
                         Src => Child, Dest => Data.Item);
@@ -741,6 +713,7 @@ package body Browsers.Call_Graph is
                  (Tree, Data.Entity, Add_Item'Unrestricted_Access);
                Free (Tree);
             end if;
+
 
             Next (Get_Kernel (Data.Browser), Data.Iter.all);
             return True;
@@ -769,7 +742,7 @@ package body Browsers.Call_Graph is
       Child_Browser : MDI_Child;
       Data          : Examine_Ancestors_Idle_Data;
       Rename        : Entity_Information;
-      Link          : Glide_Browser_Link;
+      Link          : Browser_Link;
       Is_Renaming   : Boolean;
    begin
       Push_State (Kernel_Handle (Kernel), Busy);
@@ -1338,7 +1311,7 @@ package body Browsers.Call_Graph is
 
    function Contextual_Factory
      (Item  : access Entity_Item_Record;
-      Browser : access Browsers.Canvas.Glide_Browser_Record'Class;
+      Browser : access Browsers.Canvas.General_Browser_Record'Class;
       Event : Gdk.Event.Gdk_Event;
       Menu  : Gtk.Menu.Gtk_Menu) return Glide_Kernel.Selection_Context_Access
    is
@@ -1462,7 +1435,7 @@ package body Browsers.Call_Graph is
       end if;
 
       return Contextual_Factory
-        (Item    => Glide_Browser_Item (Selected_Item (Browser)),
+        (Item    => Browser_Item (Selected_Item (Browser)),
          Browser => Browser,
          Event   => null,
          Menu    => null);
@@ -1545,7 +1518,7 @@ package body Browsers.Call_Graph is
          Join_Style => Join_Miter);
 
       Draw_Link
-        (Canvas, Glide_Browser_Link_Record (Link.all)'Access,
+        (Canvas, Browser_Link_Record (Link.all)'Access,
          Window, Invert_Mode, GC, Edge_Number);
 
       Set_Line_Attributes

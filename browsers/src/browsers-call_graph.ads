@@ -31,7 +31,7 @@ with Src_Info.Queries;
 
 package Browsers.Call_Graph is
 
-   type Call_Graph_Browser_Record is new Browsers.Canvas.Glide_Browser_Record
+   type Call_Graph_Browser_Record is new Browsers.Canvas.General_Browser_Record
      with private;
    type Call_Graph_Browser is access all Call_Graph_Browser_Record'Class;
 
@@ -44,12 +44,12 @@ package Browsers.Call_Graph is
    ------------------
 
    type Entity_Item_Record is new
-     Browsers.Canvas.Glide_Browser_Text_Item_Record with private;
+     Browsers.Canvas.Text_Item_With_Arrows_Record with private;
    type Entity_Item is access all Entity_Item_Record'Class;
 
    procedure Gtk_New
      (Item    : out Entity_Item;
-      Browser : access Browsers.Canvas.Glide_Browser_Record'Class;
+      Browser : access Browsers.Canvas.General_Browser_Record'Class;
       Entity  : Src_Info.Queries.Entity_Information;
       May_Have_To_Dependencies : Boolean);
    --  Create a new entity item.
@@ -58,7 +58,7 @@ package Browsers.Call_Graph is
 
    procedure Initialize
      (Item    : access Entity_Item_Record'Class;
-      Browser : access Browsers.Canvas.Glide_Browser_Record'Class;
+      Browser : access Browsers.Canvas.General_Browser_Record'Class;
       Entity  : Src_Info.Queries.Entity_Information;
       May_Have_To_Dependencies : Boolean);
    --  Internal initialization function
@@ -69,7 +69,7 @@ package Browsers.Call_Graph is
 
    function Contextual_Factory
      (Item  : access Entity_Item_Record;
-      Browser : access Browsers.Canvas.Glide_Browser_Record'Class;
+      Browser : access Browsers.Canvas.General_Browser_Record'Class;
       Event : Gdk.Event.Gdk_Event;
       Menu  : Gtk.Menu.Gtk_Menu) return Glide_Kernel.Selection_Context_Access;
    --  Return the context to use for this item
@@ -84,7 +84,7 @@ package Browsers.Call_Graph is
    -- Renaming links --
    --------------------
 
-   type Renaming_Link_Record is new Browsers.Canvas.Glide_Browser_Link_Record
+   type Renaming_Link_Record is new Browsers.Canvas.Browser_Link_Record
      with private;
    type Renaming_Link is access all Renaming_Link_Record'Class;
    --  The tpye of link used between an entity and the entities that rename
@@ -103,16 +103,16 @@ package Browsers.Call_Graph is
 
 private
    type Entity_Item_Record is new
-     Browsers.Canvas.Glide_Browser_Text_Item_Record
+     Browsers.Canvas.Text_Item_With_Arrows_Record
    with record
       Entity      : Src_Info.Queries.Entity_Information;
    end record;
 
-   type Call_Graph_Browser_Record is new Browsers.Canvas.Glide_Browser_Record
+   type Call_Graph_Browser_Record is new Browsers.Canvas.General_Browser_Record
      with record
         Idle_Id                 : Gtk.Main.Idle_Handler_Id;
      end record;
 
-   type Renaming_Link_Record is new Browsers.Canvas.Glide_Browser_Link_Record
+   type Renaming_Link_Record is new Browsers.Canvas.Browser_Link_Record
      with null record;
 end Browsers.Call_Graph;
