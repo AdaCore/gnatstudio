@@ -459,7 +459,7 @@ package body String_Utils is
 
    function Krunch
      (S                 : String;
-      Max_String_Length : Positive := 25) return String
+      Max_String_Length : Positive := 20) return String
    is
       Krunch_Pattern : constant String := "[...]";
       Half : constant Natural :=

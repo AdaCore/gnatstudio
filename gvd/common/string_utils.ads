@@ -125,7 +125,7 @@ package String_Utils is
 
    function Krunch
      (S                 : String;
-      Max_String_Length : Positive := 25) return String;
+      Max_String_Length : Positive := 20) return String;
    --  If String is less than Max_String_Length characters long, return it,
    --  otherwise return a krunched string no longer than Max_String_Length.
 
@@ -269,7 +269,7 @@ package String_Utils is
    --  where x is an arbitrary character
 
    function To_Host_Pathname (Path : String) return String;
-   --  Convert all occurences of '/' to Directory_Separator.
+   --  Convert all occurrences of '/' to Directory_Separator.
    --  This function is now obsolete, and you should use
    --  GNAT.Directories.Normalize_Pathname instead. it is kept for
    --  compatibility with 3.14 only.
