@@ -18,33 +18,33 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glib;                 use Glib;
-with Gdk.Color;            use Gdk.Color;
-with Gtk.Adjustment;       use Gtk.Adjustment;
-with Gtk.Enums;            use Gtk.Enums;
-with Gtk.Scrolled_Window;  use Gtk.Scrolled_Window;
-with Gtk.Text;             use Gtk.Text;
-with Gtk.Widget;           use Gtk.Widget;
-with Gtkada.Handlers;      use Gtkada.Handlers;
+with Glib;                     use Glib;
+with Gdk.Color;                use Gdk.Color;
+with Gtk.Adjustment;           use Gtk.Adjustment;
+with Gtk.Enums;                use Gtk.Enums;
+with Gtk.Scrolled_Window;      use Gtk.Scrolled_Window;
+with Gtk.Text;                 use Gtk.Text;
+with Gtk.Widget;               use Gtk.Widget;
+with Gtkada.Handlers;          use Gtkada.Handlers;
 
-with Gint_Xml;             use Gint_Xml;
-with Glide_Kernel;         use Glide_Kernel;
-with Glide_Kernel.Modules; use Glide_Kernel.Modules;
-with Glide_Kernel.Console; use Glide_Kernel.Console;
-with Traces;               use Traces;
+with Gint_Xml;                 use Gint_Xml;
+with Glide_Intl;               use Glide_Intl;
+with Glide_Kernel;             use Glide_Kernel;
+with Glide_Kernel.Console;     use Glide_Kernel.Console;
+with Glide_Kernel.Modules;     use Glide_Kernel.Modules;
+with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
+with Traces;                   use Traces;
 
-with GNAT.Regpat;          use GNAT.Regpat;
-with GNAT.OS_Lib;          use GNAT.OS_Lib;
+with GNAT.Regpat;              use GNAT.Regpat;
+with GNAT.OS_Lib;              use GNAT.OS_Lib;
 
 package body Glide_Consoles is
 
-   Highlight_File : constant String := "#FF0000000000";
-   --  <preference>
+   Me : Debug_Handle := Create (Console_Module_Name);
 
-   Highlight_Error : constant String := "#FF0000000000";
-   --  <preference>
-
-   Me : Debug_Handle := Create ("Glide_Consoles");
+   procedure Initialize_Module
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
+   --  Initialize Console module.
 
    function On_Button_Release
      (Widget : access Gtk_Widget_Record'Class) return Boolean;
@@ -122,7 +122,7 @@ package body Glide_Consoles is
       Freeze (Console.Text);
 
       if Mode = Error then
-         Color := Parse (Highlight_Error);
+         Color := Get_Pref (Console.Kernel, Highlight_Error);
       else
          Color := Null_Color;
       end if;
@@ -143,7 +143,7 @@ package body Glide_Consoles is
             Last : Natural;
 
          begin
-            Highlight := Parse (Highlight_File);
+            Highlight := Get_Pref (Console.Kernel, Highlight_File);
             Alloc (Get_Default_Colormap, Highlight);
 
             while Start <= New_Text'Last loop
@@ -293,6 +293,40 @@ package body Glide_Consoles is
 
       return null;
    end Save_Desktop;
+
+   -----------------------
+   -- Initialize_Module --
+   -----------------------
+
+   procedure Initialize_Module
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
+   is
+      Console : constant String := '/' & (-"File") & '/' & (-"Console");
+
+   begin
+      Register_Menu
+        (Kernel, Console, Ref_Item => -"Save Desktop");
+      Register_Menu
+        (Kernel, Console, -"Save As...", "", null);
+      --             On_Save_Console_As'Access);
+      Register_Menu
+        (Kernel, Console, -"Load Contents...", "", null);
+      --             On_Load_To_Console'Access);
+   end Initialize_Module;
+
+   ---------------------
+   -- Register_Module --
+   ---------------------
+
+   procedure Register_Module
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class) is
+   begin
+      Console_Module_Id := Register_Module
+        (Kernel       => Kernel,
+         Module_Name  => Console_Module_Name,
+         Priority     => Default_Priority,
+         Initializer  => Initialize_Module'Access);
+   end Register_Module;
 
 begin
    Glide_Kernel.Kernel_Desktop.Register_Desktop_Functions

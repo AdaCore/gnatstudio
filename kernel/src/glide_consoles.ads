@@ -28,9 +28,16 @@ with Glide_Kernel.Console; use Glide_Kernel.Console;
 
 package Glide_Consoles is
 
+   Console_Module_Id   : Glide_Kernel.Module_ID;
+   Console_Module_Name : constant String := "Glide_Console";
+
    type Glide_Console_Record is new
      Gtk.Scrolled_Window.Gtk_Scrolled_Window_Record with private;
    type Glide_Console is access all Glide_Console_Record'Class;
+
+   procedure Register_Module
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
+   --  Register the console module into the list
 
    procedure Gtk_New
      (Console : out Glide_Console;
@@ -60,9 +67,9 @@ private
 
    type Glide_Console_Record is new
      Gtk.Scrolled_Window.Gtk_Scrolled_Window_Record with
-      record
-         Kernel : Glide_Kernel.Kernel_Handle;
-         Text   : Gtk.Text.Gtk_Text;
-      end record;
+   record
+      Kernel : Glide_Kernel.Kernel_Handle;
+      Text   : Gtk.Text.Gtk_Text;
+   end record;
 
 end Glide_Consoles;
