@@ -292,6 +292,9 @@ package body SN.Xref_Pools is
             Full_Name   : constant String := Directory & Name;
             FD          : File_Descriptor;
          begin
+            if not Is_Directory (Directory) then
+               Make_Dir (Directory);
+            end if;
             if not Is_Regular_File (Full_Name) then
                Data.Xref_Filename := new String'(Full_Name);
 
