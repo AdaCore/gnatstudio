@@ -8159,8 +8159,7 @@ whether the context is properly defined.
 
 @table @code
 @item %f
-Base name of the currently opened file.
-
+Base name of the currently selected file.
 @ifset python
 Python equivalent:
 @smallexample
@@ -8171,7 +8170,6 @@ os.path.basename (GPS.current_context().file().name())
 
 @item %F
 Absolute name of the currently opened file.
-
 @ifset python
 Python equivalent:
 @smallexample
@@ -8179,9 +8177,14 @@ GPS.current_context().file().name()
 @end smallexample
 @end ifset
 
+@item %fk
+Krunched base name of the currently selected file.
+This is the same as %f, except that long names are shortened, and their middle
+letters are replaced by "[...]". This should be used in particular in menu
+labels, to keep the menus narrow.
+
 @item %e
 Name of the entity the user clicked on.
-
 @ifset python
 Python equivalent:
 @smallexample
@@ -8189,9 +8192,12 @@ GPS.current_context().entity().name()
 @end smallexample
 @end ifset
 
-@item %d
-The currently directory.
+@item %ek
+Krunched name of the entity the user clicked on.
+This is the same as @code{%e}, except long names are shorted as in @code{%fk}.
 
+@item %d
+The current directory.
 @ifset python
 Python equivalent:
 @smallexample
@@ -8199,9 +8205,43 @@ GPS.current_context().directory()
 @end smallexample
 @end ifset
 
-@item %p
-The current project. This is the name of the project, not the project file.
+@item %dk
+The krunched name of the current directory.
 
+@item %l
+This is the line number on which the user clicked.
+@ifset python
+Python equivalent:
+@smallexample
+GPS.current_context().line()
+@end smallexample
+@end ifset
+
+@item %c
+This is the column number on which the user clicked.
+@ifset python
+Python equivalent:
+@smallexample
+GPS.current_context().column()
+@end smallexample
+@end ifset
+
+@item %a
+If the user clicked within the Locations Window, this is the name of the
+category to which the current line belongs
+
+@item %i
+If the user clicked within the Project View, this is the name of the parent
+project, ie the one that is importing the one the user clicked on. Note that
+with this definition of parent project, a given project might have multiple
+parents. The one that is returned is read from the Project View itself.
+
+@item %p
+The current project. This is the name of the project, not the project file, ie
+the @file{.gpr} extension is not included in this name, and the casing is the
+one found inside the project file, not the one of the file name itself.
+If the current context is an editor, this is the name of the project to which
+the source file belongs.
 @ifset python
 Python equivalent:
 @smallexample
@@ -8211,7 +8251,6 @@ GPS.current_context().project().name()
 
 @item %P
 The root project. This is the name of the project, not the project file.
-
 @ifset python
 Python equivalent:
 @smallexample
@@ -8222,7 +8261,6 @@ GPS.Project.root().name()
 @item %pp
 The current project file pathname. If a file is selected, this is the project
 file to which the source file belongs.
-
 @ifset python
 Python equivalent:
 @smallexample
@@ -8232,7 +8270,6 @@ GPS.current_context().project().file().name()
 
 @item %PP
 The root project pathname.
-
 @ifset python
 Python equivalent:
 @smallexample
@@ -8245,7 +8282,6 @@ This is similar to @code{%pp}, except it returns the project name prepended
 with @code{-P}, or an empty string if there is no project file selected and the
 current source file doesn't belong to any project. This is mostly for use with
 the GNAT command line tools.
-
 @ifset python
 Python equivalent:
 @smallexample
@@ -8743,36 +8779,8 @@ Therefore, you can create submenus by using a title of the form
 "Parent1/Parent2/Menu".
 
 Special characters can be used in the title, and will be automatically
-expended based on the current context. These special characters are:
-
-@table @bullet
-@item @code{%f}
-Current file
-
-@item @code{%d}
-Current directory
-
-@item @code{%p}
-Current project name
-
-@item @code{%l}
-Current line
-
-@item @code{%c}
-Current column
-
-@item @code{%a}
-Current category when the user clicked in the location window
-
-@item @code{%e}
-Current entity name
-
-@item @code{%i}
-Name of the project importing the current one. This is only available for
-contextual menus in the Project View
-
-@end table
-
+expended based on the current context. These are exactly the ones described
+in the section for macros arguments, @xref{Macro arguments}.
 
 The new contextual menu will only be shown if the filters associated with the
 action match the current context.
