@@ -124,10 +124,10 @@ private
 
       Side_Columns_Up_To_Date : Boolean := False;
 
-      Connect_Expose_Id : Gtk.Main.Idle_Handler_Id;
+      Connect_Expose_Id : Gtk.Main.Idle_Handler_Id := 0;
       --  Handler ID for the Connect_Expose idle callback.
 
-      Idle_Redraw_Id : Gtk.Main.Idle_Handler_Id;
+      Idle_Redraw_Id : Gtk.Main.Idle_Handler_Id := 0;
       --  Handler ID for Idle redraw of the side columns.
 
       Has_Focus           : Boolean := False;
