@@ -93,7 +93,6 @@ procedure GVD_Main is
    procedure Init is
       Dir_Created : Boolean := False;
    begin
-      Prefix := Getenv ("GVD_ROOT");
       Home := Getenv ("GVD_HOME");
 
       if Home.all = "" then
@@ -101,14 +100,21 @@ procedure GVD_Main is
          Home := Getenv ("HOME");
       end if;
 
+      Prefix := Getenv ("GVD_ROOT");
+
       if Prefix.all = "" then
          Free (Prefix);
 
-         Prefix := new String '(Executable_Location);
+         Prefix := Getenv ("GNAT_ROOT");
 
          if Prefix.all = "" then
             Free (Prefix);
-            Prefix := new String' (GVD.Prefix);
+            Prefix := new String' (Executable_Location);
+
+            if Prefix.all = "" then
+               Free (Prefix);
+               Prefix := new String' (GVD.Prefix);
+            end if;
          end if;
       end if;
 
