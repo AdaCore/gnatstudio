@@ -68,7 +68,7 @@ package body GVD.Preferences is
       Assembly       : constant String := Page_Prefix & (-"Assembly");
       Data           : constant String := Page_Prefix & (-"Data");
       Memory         : constant String := Page_Prefix & (-"Memory");
-      Helpers        : constant String := -"Helpers";
+      Helpers        : constant String := -"External Commands";
       Source_Flags   : Param_Flags := Param_Readable;
       External_Flags : Param_Flags := Param_Readable;
       HTML_Flags     : Param_Flags;
