@@ -54,6 +54,7 @@ with Language_Handlers;         use Language_Handlers;
 with Ada.Unchecked_Deallocation;
 with Scenario_Selectors;        use Scenario_Selectors;
 with Traces;                    use Traces;
+with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with Ada.Exceptions;            use Ada.Exceptions;
 with Project_Viewers;           use Project_Viewers;
 with Languages_Lists;           use Languages_Lists;
@@ -328,7 +329,7 @@ package body Project_Properties is
                      -"Name of the compiler to use for the language " & S);
          end;
 
-         if Languages (L).all = "ada" then
+         if To_Lower (Languages (L).all) = "ada" then
             Gtk_New (Combo);
             Set_Width_Chars (Get_Entry (Combo), 0);
             Pack_Start (Hbox, Combo);
@@ -940,7 +941,7 @@ package body Project_Properties is
 
                      if Is_Selected (Editor.Languages, Languages (J).all) then
                         Different := False;
-                        if Languages (J).all = "Ada" then
+                        if To_Lower (Languages (J).all) = "ada" then
                            Different := Get_Attribute_Value
                              (Project, Compiler_Command_Attribute,
                               Ide_Package, Default => "gnatmake",
