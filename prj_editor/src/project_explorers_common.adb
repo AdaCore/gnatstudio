@@ -31,7 +31,8 @@ with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
 with String_Utils;              use String_Utils;
 with Src_Info;
 with Gtk.Tree_View_Column;      use Gtk.Tree_View_Column;
-with Gtk.Tree_Selection; use Gtk.Tree_Selection;
+with Gtk.Tree_Selection;        use Gtk.Tree_Selection;
+with GNAT.OS_Lib;               use GNAT.OS_Lib;
 
 package body Project_Explorers_Common is
 
@@ -51,7 +52,8 @@ package body Project_Explorers_Common is
          Column_Column        => GType_Int,
          Project_Column       => GType_Int,
          Category_Column      => GType_Int,
-         Up_To_Date_Column    => GType_Boolean);
+         Up_To_Date_Column    => GType_Boolean,
+         Entity_Base_Column   => GType_String);
    end Columns_Types;
 
    -------------------
@@ -149,6 +151,7 @@ package body Project_Explorers_Common is
 
    function Append_Category_Node
      (Model       : Gtk_Tree_Store;
+      File        : String;
       Category    : Language_Category;
       Parent_Iter : Gtk_Tree_Iter) return Gtk_Tree_Iter
    is
@@ -175,7 +178,7 @@ package body Project_Explorers_Common is
          end if;
       end if;
 
-      Set (Model, N, Absolute_Name_Column, "");
+      Set (Model, N, Absolute_Name_Column, File);
       Set (Model, N, Base_Name_Column, Name);
       Set (Model, N, Icon_Column,
            C_Proxy (Close_Pixbufs (Category_Node)));
@@ -240,6 +243,9 @@ package body Project_Explorers_Common is
               Construct.Name.all);
       end if;
 
+      Set (Model, N, Entity_Base_Column,
+           Construct.Name.all);
+
       Set (Model, N, Icon_Column,
            C_Proxy (Close_Pixbufs (Entity_Node)));
       Set (Model, N, Node_Type_Column,
@@ -301,6 +307,7 @@ package body Project_Explorers_Common is
                   if Categories (Category) = Null_Iter then
                      Categories (Category) := Append_Category_Node
                        (Model,
+                        File_Name,
                         Category    => Category,
                         Parent_Iter => Node);
                   end if;
@@ -571,5 +578,134 @@ package body Project_Explorers_Common is
    begin
       return Get_String (Model, Node, Absolute_Name_Column);
    end Get_Absolute_Name;
+
+   ------------------------
+   -- Get_File_From_Node --
+   ------------------------
+
+   function Get_File_From_Node
+     (Model     : Gtk_Tree_Store;
+      Node      : Gtk_Tree_Iter;
+      Full_Path : Boolean := False)
+      return String
+   is
+      S : constant String := Get_String (Model, Node, Absolute_Name_Column);
+   begin
+      if S = "" then
+         return "";
+      else
+         if Full_Path then
+            return S;
+         else
+            return Base_Name (S);
+         end if;
+      end if;
+   end Get_File_From_Node;
+
+   -----------------------------
+   -- Get_Directory_From_Node --
+   -----------------------------
+
+   function Get_Directory_From_Node
+     (Model : Gtk_Tree_Store;
+      Node  : Gtk_Tree_Iter)
+      return String
+   is
+      S : constant String :=
+        Get_String (Model,
+                    Node, Absolute_Name_Column);
+   begin
+      if S = "" then
+         return "";
+      else
+         if Get_Node_Type (Model, Node) = Directory_Node then
+            return S;
+         else
+            return Dir_Name (S);
+         end if;
+      end if;
+   end Get_Directory_From_Node;
+
+   ---------------------
+   -- Context_Factory --
+   ---------------------
+
+   function Context_Factory
+     (Kernel     : Kernel_Handle;
+      Tree       : access Gtk_Tree_View_Record'Class;
+      Model      : Gtk_Tree_Store;
+      Event      : Gdk_Event;
+      Menu       : Gtk_Menu) return Selection_Context_Access
+   is
+      pragma Unreferenced (Kernel, Menu);
+
+      function Entity_Base (Name : String) return String;
+      --  Return the "basename" for the entity, ie convert "parent.name" to
+      --  "name", in the case of Ada parent packages.
+      --  ??? Should this be done by the parser itself
+
+      function Entity_Base (Name : String) return String is
+      begin
+         for C in reverse Name'Range loop
+            if Name (C) = '.' then
+               return Name (C + 1 .. Name'Last);
+            end if;
+         end loop;
+         return Name;
+      end Entity_Base;
+
+      Iter        : constant Gtk_Tree_Iter := Find_Iter_For_Event
+        (Tree, Model, Event);
+      File        : GNAT.OS_Lib.String_Access := null;
+      Parent_Iter : Gtk_Tree_Iter;
+      Context     : Selection_Context_Access;
+      Node_Type   : Node_Types;
+
+   begin
+      if Iter /= Null_Iter then
+         Node_Type := Get_Node_Type (Model, Iter);
+
+      else
+         return Context;
+      end if;
+
+      Parent_Iter := Parent (Gtk_Tree_Model (Model), Iter);
+
+      if Node_Type = Entity_Node then
+         Context := new Entity_Selection_Context;
+      else
+         Context := new File_Selection_Context;
+      end if;
+
+      if Node_Type = File_Node
+        or else Node_Type = Directory_Node
+        or else Node_Type = Entity_Node
+      then
+         File := new String'(Get_String (Model, Iter, Absolute_Name_Column));
+      end if;
+
+      if File /= null then
+         Set_File_Information
+           (Context   => File_Selection_Context_Access (Context),
+            Directory => Dir_Name (File.all),
+            File_Name => Base_Name (File.all));
+         Free (File);
+      end if;
+
+      if Node_Type = Entity_Node then
+         Set_Entity_Information
+           (Context     => Entity_Selection_Context_Access (Context),
+            Entity_Name => Entity_Base
+              (Get_String (Model, Iter, Entity_Base_Column)),
+            Category    => Get_Category_Type (Model, Parent_Iter),
+            Line        => Integer
+              (Get_Int (Model, Iter, Line_Column)),
+            Column      => Integer
+              (Get_Int (Model, Iter, Column_Column)));
+      end if;
+
+      return Context;
+
+   end Context_Factory;
 
 end Project_Explorers_Common;
