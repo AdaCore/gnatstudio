@@ -1,5 +1,10 @@
 Known Problems fixed in GPS 1.3.0
 
+- Changes to the Ada tools in project properties not taken into account
+  Problem:    Changing the name of the compiler or the debugger through the
+              project properties editor is not properly taken into account
+  Workaround: Modify the project manually (package Ide)
+
 - C513-008 Untitled files saved in desktop
   Problem:    When saving a desktop GPS will improperly save untitled files,
               and generate an error when trying to load the desktop.
