@@ -535,6 +535,11 @@ package body Gtkada.File_Selector is
       Set_Busy (Parent, True);
 
       if Base_Directory = "" then
+         if Last_Directory.all = "." then
+            Free (Last_Directory);
+            Last_Directory := new String'(Get_Current_Dir);
+         end if;
+
          Gtk_New
            (File_Selector_Window,
             (1 => Directory_Separator), Last_Directory.all,
