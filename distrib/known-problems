@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 2.0.0
 
+- CB20-010 Project wizard creates existing object directory
+  Problem:    If you select "use relative paths" in the project wizard, it
+              happens that GPS suggests the creation of the object or exec
+              directories, even though they already exist.
+  Workaround: Answer Cancel to the dialog
+
 - Pretty_Printer package generated in projects even if it isn't used
   Problem:    The project wizard will create a Pretty_Printer package, even if
               no switch was set by the user. This creates a problem with GNAT
