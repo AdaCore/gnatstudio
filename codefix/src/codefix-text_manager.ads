@@ -21,7 +21,7 @@
 with Ada.Unchecked_Deallocation;
 
 with Ada_Analyzer; use Ada_Analyzer;
-with Language; use Language;
+with Language;     use Language;
 
 with Generic_List;
 
@@ -50,10 +50,10 @@ package Codefix.Text_Manager is
       File_Name : Dynamic_String;
    end record;
 
-   function "=" (Left, Right : File_Cursor) return Boolean;
-   --  Return true when Left is in the same position than rigth
-
    Null_File_Cursor : constant File_Cursor;
+
+   function "=" (Left, Right : File_Cursor) return Boolean;
+   --  Return true when Left is in the same position than rigth.
 
    procedure Free (This : in out File_Cursor);
    --  Frees the memory used by fields of File_Cursor.
@@ -257,8 +257,11 @@ package Codefix.Text_Manager is
       Line_Deleted);
 
    function Get_Context (This : Extract_Line) return Line_Context;
+   --  Return the context associated to an Extract_Line.
 
    function Next (This : Extract_Line) return Ptr_Extract_Line;
+   --  If the Extract_Line is a component of a list (typically, a list
+   --  contained in an extract), then Next returns the next entry of the list.
 
    function Get_String (This : Extract_Line) return String;
    --  Returns the string memorized in an Extract_Line.
@@ -480,16 +483,21 @@ package Codefix.Text_Manager is
    --  Return the caption associated to an extract.
 
    function Get_First_Line (This : Extract) return Ptr_Extract_Line;
+   --  Return the first line recored in an extract.
 
    procedure Extend_Before
      (This         : in out Extract;
       Current_Text : Text_Navigator_Abstr'Class;
       Size         : Natural);
+   --  Add to the extract size lines before each beginning of paragraph
+   --  recorded.
 
    procedure Extend_After
      (This         : in out Extract;
       Current_Text : Text_Navigator_Abstr'Class;
       Size         : Natural);
+   --  Add to the extract size lines after each beginning of paragraph
+   --  recorded.
 
 private
 
@@ -551,7 +559,7 @@ private
    end record;
 
    procedure Add_Element
-    (This, Precedent, Element : Ptr_Extract_Line;
+    (This, Previous, Element : Ptr_Extract_Line;
      Container : in out Extract);
    procedure Free is
       new Ada.Unchecked_Deallocation (Extract_Line, Ptr_Extract_Line);
