@@ -85,7 +85,7 @@ package body Builder_Module is
    Run_External_Key : constant History_Key := "run_external_terminal";
    --  The key in the history for the check button "run in external terminal"
 
-   Builder_Category : constant String := "builder_results";
+   Builder_Category : constant String := "Builder Results";
 
    Me : constant Debug_Handle := Create (Builder_Module_Name);
 
