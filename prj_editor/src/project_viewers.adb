@@ -2465,7 +2465,10 @@ package body Project_Viewers is
           Add_Before => False),
          Tip_Text => -("Recompute the contents of the project after"
                        & " modifications outside of GPS. This isn't needed"
-                       & " for modifications through GPS."));
+                       & " for modifications through GPS. Note also that"
+                       & " this doesn't reparse the physical project file"
+                       & " on disk, and you should simply reload the project"
+                       & " if you have done manual modifications to it."));
 
       Register_Project_Editor_Page
         (Kernel,
