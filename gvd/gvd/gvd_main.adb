@@ -22,13 +22,18 @@ with Gtk; use Gtk;
 with Gtk.Main;
 with Main_Debug_Window_Pkg; use Main_Debug_Window_Pkg;
 with Gtkada.Intl; use Gtkada.Intl;
-with GNAT.OS_Lib; use GNAT.OS_Lib;
 with Odd.Process; use Odd.Process;
+with Debugger;
+with GNAT.OS_Lib; use GNAT.OS_Lib;
 with Ada.Command_Line; use Ada.Command_Line;
+with Ada.Exceptions; use Ada.Exceptions;
+with Ada.Text_IO; use Ada.Text_IO;
 
 procedure Odd_Main is
-   Process_Tab : Debugger_Process_Tab;
-   List : Argument_List (1 .. Argument_Count);
+   Process_Tab       : Debugger_Process_Tab;
+   List              : Argument_List (1 .. Argument_Count);
+   Main_Debug_Window : Main_Debug_Window_Access;
+
 begin
    Bind_Text_Domain ("GtkAda", "/usr/local/share/locale");
    Bind_Text_Domain ("Odd", "/usr/local/share/locale");
@@ -40,7 +45,14 @@ begin
       List (J) := new String'(Argument (J));
    end loop;
 
-   Process_Tab := Create_Debugger (List, "");
+   --  ??? Need to add command line parsing to handle other debuggers by
+   --  default.
+   Process_Tab := Create_Debugger
+     (Main_Debug_Window, Debugger.Gdb_Type, "", List);
    Show_All (Main_Debug_Window);
    Gtk.Main.Main;
+exception
+   when E : others =>
+      Put_Line ("Bug detected in odd");
+      Put_Line ("Exception Information: " & Exception_Information (E));
 end Odd_Main;
