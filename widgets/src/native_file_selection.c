@@ -103,16 +103,15 @@ NativeWin32FileSelection
 
   if (patternname != 0)
     {
-      l_index += strlen (patternname);
       strcpy (l_Filter, patternname);
-      ++l_index;
+      l_index += strlen (patternname) + 1;
     }
 
   if (filepattern != 0)
     {
-      strcat (& (l_Filter [l_index]), filepattern);
-      l_index += strlen (filepattern);
-      l_Filter [l_index+1] = '\0';
+      strcpy (l_Filter + l_index, filepattern);
+      l_index += strlen (filepattern) + 1;
+      l_Filter [l_index] = '\0';
     }
 
   if (defaultname)
