@@ -22,10 +22,10 @@
 
 with Glide_Kernel;         use Glide_Kernel;
 with Commands;             use Commands;
-with Diff_Utils2;          use Diff_Utils2;
 with Commands.Interactive; use Commands.Interactive;
+
+with Diff_Utils2;          use Diff_Utils2;
 with Gdk.Event;
-with VFS;
 
 package Vdiff2_Command is
 
@@ -65,11 +65,6 @@ package Vdiff2_Command is
    --  Search in the global List of Diff the current diff end apply Action on
    --  this
 
-   function Is_In_Diff_List
-     (Selected_File : VFS.Virtual_File;
-      List          : Diff_Head_List.List)
-      return Diff_Head_List.List_Node;
-   --  ???
    procedure Next_Difference
      (Kernel : Kernel_Handle;
       Diff   : in out  Diff_Head_Access);
@@ -92,7 +87,7 @@ package Vdiff2_Command is
 
    procedure Reload_Difference
      (Kernel : Kernel_Handle;
-      Diff   : in out Diff_Head_Access);
+      Item   : in out Diff_Head_Access);
    --  Remove the highlighting, recalculate differences and show difference
 
    procedure Remove_Difference
@@ -110,12 +105,10 @@ package Vdiff2_Command is
       Diff   : in out Diff_Head_Access);
    --  Remove the highlighting from all file of diff
 
-   procedure Goto_Difference
-     (Kernel : Kernel_Handle;
-      Link   : Diff_Chunk_Access);
-
    procedure Change_Ref_File
      (Kernel : Kernel_Handle;
       Diff   : in out Diff_Head_Access);
 
 end Vdiff2_Command;
+
+
